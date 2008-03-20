@@ -72,13 +72,13 @@ public:
     ~Coords3DParameterName()
     {}
     
-    const PropertyName& coordinates() const
+    const QString& coordinates() const
     {
         return coords_param;
     }
 
 private:
-    static PropertyName coords_param;
+    static QString coords_param;
 };
 
 /** This class holds a 3D molecule for a 3n D potential energy
@@ -107,7 +107,7 @@ public:
     
     FFMolecule3D(const PartialMolecule &molecule,
                  PTNL &forcefield,
-                 const PropertyMap &map);
+                 const PropertyMap &map = PropertyMap());
     
     FFMolecule3D(const FFMolecule3D<PTNL> &other);
     
@@ -166,6 +166,9 @@ public:
     typedef typename FFMolecules<PTNL>::ParameterNames ParameterNames;
 
     FFMolecules3D();
+    
+    FFMolecules3D(const MolGroup &molgroup, PTNL &forcefield,
+                  const PropertyMap &map = PropertyMap());
     
     FFMolecules3D(const FFMolecules3D<PTNL> &other);
     
@@ -421,6 +424,27 @@ template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 FFMolecules3D<PTNL>::FFMolecules3D() : FFMolecules<PTNL>()
 {}
+
+/** Construct by converting a MolGroup */
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+FFMolecules3D<PTNL>::FFMolecules3D(const MolGroup &molgroup,
+                                   PTNL &forcefield, const PropertyMap &map)
+                    : FFMolecules<PTNL>(molgroup, forcefield, map)
+{
+    //get all of the AABoxes
+    int nmols = this->mols_by_idx.count();
+    
+    aaboxes_by_idx = QVector<AABox>(nmols);
+    
+    const Molecule *mols_by_idx_array = this->mols_by_idx.constData();
+    AABox *aaboxes_by_idx_array = aaboxes_by_idx.data();
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        aaboxes_by_idx_array[i] = mols_by_idx_array[i].aaBox();
+    }
+}
 
 /** Copy constructor */
 template<class PTNL>

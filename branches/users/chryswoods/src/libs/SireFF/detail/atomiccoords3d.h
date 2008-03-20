@@ -79,10 +79,6 @@ public:
                    const PropertyName &coords_property);
     
     AtomicCoords3D(const CoordGroupArray &coords);
-    
-    template<class T>
-    AtomicCoords3D(const PartialMolecule &molecule,
-                   const T &parameternames);
                    
     AtomicCoords3D(const AtomicCoords3D &other);
     
@@ -111,15 +107,6 @@ private:
         arranged by CutGroup */
     CoordGroupArray coords;
 };
-
-/** Construct from a molecule and the passed parameter property sources */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-AtomicCoords3D::AtomicCoords3D(const PartialMolecule &molecule,
-                               const T &properties)
-{
-    this->operator=( AtomicCoords3D(molecule, properties.coordinates()) );
-}
 
 /** Return the 3D coordinates of the atoms in the forcefield */
 inline const CoordGroupArray& AtomicCoords3D::atomicCoordinates() const

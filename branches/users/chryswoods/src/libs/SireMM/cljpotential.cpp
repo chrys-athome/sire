@@ -29,10 +29,14 @@
 #include "SireBase/sparsematrix.hpp"
 
 #include "cljpotential.h"
+#include "ljparameter.h"
 
 #include "SireMol/mover.hpp"
+#include "SireMol/atomcoords.h"
 
 #include "SireMaths/maths.h"
+
+#include "SireUnits/units.h"
 
 #include "SireError/errors.h"
 
@@ -41,6 +45,8 @@ using namespace SireMM::detail;
 
 using namespace SireFF;
 using namespace SireFF::detail;
+
+using namespace SireMol;
 
 using namespace SireMaths;
 
@@ -94,11 +100,297 @@ template
 class FFMolecule3D<InterCLJPotential>;
 
 template
+class ChangedMolecule<InterCLJPotential::Molecule>;
+
+template
 class FFMolecule3D<IntraCLJPotential>;
+
+template
+class ChangedMolecule<IntraCLJPotential::Molecule>;
+
+/** Internal function used to get the charge and LJ parameters from a molecule
+    and convert them into a PackedArray of reduced charges and LJ parameter IDs */
+static PackedArray2D<CLJParameter> getCLJParameters(const PartialMolecule &molecule,
+                                                    const PropertyName &charge_property,
+                                                    const PropertyName &lj_property)
+{
+    const AtomCharges &chgs = molecule.property(charge_property)->asA<AtomCharges>();
+    const AtomLJs &ljs = molecule.property(lj_property)->asA<AtomLJs>();
+    
+    const AtomSelection &selected_atoms = molecule.selection();
+    
+    if (selected_atoms.selectedNone())
+        return PackedArray2D<CLJParameter>();
+    
+    //create space for the parameters - only need space for CutGroups
+    //that contain at least one selected atom
+    QVector< QVector<CLJParameter> > cljparams( selected_atoms.nSelectedCutGroups() );
+    QVector<CLJParameter>* cljparams_array = cljparams.data();
+
+    const double sqrt_4pieps0 = std::sqrt(SireUnits::one_over_four_pi_eps0);
+
+    try
+    {
+
+    LJParameterDB::lock();
+
+    if (selected_atoms.selectedAllCutGroups())
+    {
+        const int ncg = molecule.data().info().nCutGroups();
+    
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            const int nats = molecule.data().info().nAtoms(i);
+            
+            QVector<CLJParameter> group_cljs(nats);
+            CLJParameter *group_cljs_array = group_cljs.data();
+            
+            //get the arrays containing the charge and LJ parameters
+            //for this CutGroup
+            const SireUnits::Dimension::Charge *group_chgs = chgs.constData(i);
+            const LJParameter *group_ljs = ljs.constData(i);
+            
+            if (selected_atoms.selectedAll(i))
+            {
+                for (Index j(0); j<nats; ++j)
+                {
+                    group_cljs_array[j].reduced_charge = group_chgs[j] * sqrt_4pieps0;
+                    group_cljs_array[j].ljid = 
+                            LJParameterDB::_locked_addLJParameter(group_ljs[j]);
+                }
+            }
+            else
+            {
+                foreach (Index j, selected_atoms.selectedAtoms(i))
+                {
+                    group_cljs_array[j].reduced_charge = group_chgs[j] * sqrt_4pieps0;
+                    group_cljs_array[j].ljid =
+                            LJParameterDB::_locked_addLJParameter(group_ljs[j]);
+                }
+            }
+            
+            cljparams_array[i] = group_cljs;
+        }
+    }
+    else
+    {
+        foreach (CGIdx i, selected_atoms.selectedCutGroups())
+        {
+            const int nats = molecule.data().info().nAtoms(i);
+            
+            QVector<CLJParameter> group_cljs(nats);
+            CLJParameter *group_cljs_array = group_cljs.data();
+            
+            //get the arrays containing the charge and LJ parameters
+            //for this CutGroup
+            const SireUnits::Dimension::Charge *group_chgs = chgs.constData(i);
+            const LJParameter *group_ljs = ljs.constData(i);
+            
+            if (selected_atoms.selectedAll(i))
+            {
+                for (Index j(0); j<nats; ++j)
+                {
+                    group_cljs_array[j].reduced_charge = group_chgs[j] * sqrt_4pieps0;
+                    group_cljs_array[j].ljid = 
+                            LJParameterDB::_locked_addLJParameter(group_ljs[j]);
+                }
+            }
+            else
+            {
+                foreach (Index j, selected_atoms.selectedAtoms(i))
+                {
+                    group_cljs_array[j].reduced_charge = group_chgs[j] * sqrt_4pieps0;
+                    group_cljs_array[j].ljid =
+                            LJParameterDB::_locked_addLJParameter(group_ljs[j]);
+                }
+            }
+            
+            cljparams_array[i] = group_cljs;
+        }
+    }
+    
+    LJParameterDB::unlock();
+    
+    }
+    catch(...)
+    {
+        LJParameterDB::unlock();
+        throw;
+    }
+    
+    return PackedArray2D<CLJParameter>( cljparams );
+}
 
 /////////////
 ///////////// Implementation of InterCLJPotential
 /////////////
+
+/** Return all of the parameters needed by this potential for 
+    the molecule 'molecule', using the supplied property map to
+    find the properties that contain those parameters
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+InterCLJPotential::Parameters 
+InterCLJPotential::getParameters(const PartialMolecule &molecule,
+                                 const PropertyMap &map)
+{
+    return Parameters( molecule, map[parameters().coordinates()],
+                       getCLJParameters(molecule, map[parameters().charge()],
+                                        map[parameters().lj()]) );
+}
+
+/** Update the parameters for the molecule going from 'old_molecule' to 
+    'new_molecule', with the parameters found using the property map 'map'
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+InterCLJPotential::Parameters
+InterCLJPotential::updateParameters(const InterCLJPotential::Parameters &old_params,
+                                    const PartialMolecule &old_molecule,
+                                    const PartialMolecule &new_molecule,
+                                    const PropertyMap &map)
+{
+    if (old_molecule.selection() != new_molecule.selection())
+        //the selection has changed - just get completely new parameters
+        return this->getParameters(new_molecule, map);
+
+    //get the property names
+    const PropertyName &coords_property = map[parameters().coordinates()];
+    const PropertyName &chg_property = map[parameters().charge()];
+    const PropertyName &lj_property = map[parameters().lj()];
+    
+    //get what has changed
+    bool new_coords = old_molecule.version(coords_property) !=
+                         new_molecule.version(coords_property);
+                             
+    bool new_clj = ( old_molecule.version(chg_property) !=
+                         new_molecule.version(chg_property) ) or
+                   ( old_molecule.version(lj_property) !=
+                         new_molecule.version(lj_property) );
+
+    if (new_coords and new_clj)
+    {
+        //everything has changed
+        return Parameters( new_molecule, coords_property,
+                           getCLJParameters(new_molecule, chg_property, lj_property) );
+    }
+    else if (new_coords)
+    {
+        //only the coordinates have changed
+        return Parameters( new_molecule, coords_property,
+                           old_params.atomicParameters() );
+    }
+    else if (new_clj)
+    {
+        //only the CLJ parameters have changed
+        return Parameters( old_params,
+                           getCLJParameters(new_molecule, chg_property, lj_property) );
+    }
+    else
+    {
+        //nothing has changed
+        return old_params;
+    }
+}
+                 
+/** Update the parameters for the molecule going from 'old_molecule' to 
+    'new_molecule', also while the parameters of 'old_molecule'
+    where found in 'old_map', now get the parameters using 'new_map'
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+InterCLJPotential::Parameters
+InterCLJPotential::updateParameters(const InterCLJPotential::Parameters &old_params,
+                                    const PartialMolecule &old_molecule,
+                                    const PartialMolecule &new_molecule,
+                                    const PropertyMap &old_map, 
+                                    const PropertyMap &new_map)
+{
+    if (old_molecule.selection() != new_molecule.selection())
+        //the selection has changed - just get completely new parameters
+        return this->getParameters(new_molecule, new_map);
+
+    //get the property names
+    const PropertyName &old_coords = old_map[parameters().coordinates()];
+    const PropertyName &old_chg = old_map[parameters().charge()];
+    const PropertyName &old_lj = old_map[parameters().lj()];
+    
+    const PropertyName &new_coords = new_map[parameters().coordinates()];
+    const PropertyName &new_chg = new_map[parameters().charge()];
+    const PropertyName &new_lj = new_map[parameters().lj()];
+    
+    //get what has changed
+    bool changed_coords = (new_coords != old_coords) or
+                           old_molecule.version(old_coords) !=
+                           new_molecule.version(old_coords);
+                             
+    bool changed_clj = (new_chg != old_chg or new_lj != old_lj) or
+                       ( old_molecule.version(old_chg) !=
+                         new_molecule.version(old_chg) ) or
+                       ( old_molecule.version(old_lj) !=
+                         new_molecule.version(old_lj) );
+
+    if (changed_coords and changed_clj)
+    {
+        //everything has changed
+        return Parameters( new_molecule, new_coords,
+                           getCLJParameters(new_molecule, new_chg, new_lj) );
+    }
+    else if (changed_coords)
+    {
+        //only the coordinates have changed
+        return Parameters( new_molecule, new_coords,
+                           old_params.atomicParameters() );
+    }
+    else if (changed_clj)
+    {
+        //only the CLJ parameters have changed
+        return Parameters( old_params,
+                           getCLJParameters(new_molecule, new_chg, new_lj) );
+    }
+    else
+    {
+        //nothing has changed
+        return old_params;
+    }
+}
+
+/** Return the InterCLJPotential::Molecule representation of 'molecule',
+    using the supplied PropertyMap to find the properties that contain
+    the necessary forcefield parameters
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+InterCLJPotential::Molecule
+InterCLJPotential::parameterise(const PartialMolecule &molecule,
+                                const PropertyMap &map)
+{
+    return InterCLJPotential::Molecule(molecule, *this, map);
+}
+
+/** Concert the passed group of molecules into InterCLJPotential::Molecules,
+    using the supplied PropertyMap to find the properties that contain
+    the necessary forcefield parameters in each molecule
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+InterCLJPotential::Molecules 
+InterCLJPotential::parameterise(const MolGroup &molecules,
+                                const PropertyMap &map)
+{
+    return InterCLJPotential::Molecules(molecules, *this, map);
+}
 
 /** Return the total charge of the parameters for the group in 'params' */
 double InterCLJPotential::totalCharge(

@@ -36,8 +36,14 @@
 
 #include "SireVol/space.h"
 
+#include "SireMol/atomproperty.hpp"
+
+#include "SireUnits/dimensions.h"
+
 #include "cljcomponent.h"
 #include "cljnbpairs.h"
+
+#include "ljparameter.h"
 
 #include "detail/intrascaledatomicparameters.hpp"
 
@@ -86,6 +92,9 @@ using SireMol::MolGroup;
 
 using SireFF::MolForceTable;
 
+typedef SireMol::AtomProperty<SireUnits::Dimension::Charge> AtomCharges;
+typedef SireMol::AtomProperty<LJParameter> AtomLJs;
+
 namespace detail
 {
 
@@ -100,13 +109,13 @@ public:
     ~ChargeParameterName()
     {}
     
-    const PropertyName& charge() const
+    const QString& charge() const
     {
         return chg_param;
     }
     
 private:
-    static PropertyName chg_param;
+    static QString chg_param;
 };
 
 /** This class provides the default name of the 
@@ -120,13 +129,13 @@ public:
     ~LJParameterName()
     {}
     
-    const PropertyName& lj() const
+    const QString& lj() const
     {
         return lj_param;
     }
     
 private:
-    static PropertyName lj_param;
+    static QString lj_param;
 };
 
 /** This class provides the default name of the properties
@@ -241,6 +250,8 @@ public:
 
     typedef SireFF::detail::FFMolecule3D<InterCLJPotential> Molecule;
     typedef SireFF::detail::FFMolecules3D<InterCLJPotential> Molecules;
+
+    typedef SireFF::detail::ChangedMolecule<Molecule> ChangedMolecule;
 
     InterCLJPotential();
     
@@ -376,6 +387,8 @@ public:
     typedef SireFF::detail::FFMolecule3D<IntraCLJPotential> Molecule;
     typedef SireFF::detail::FFMolecules3D<IntraCLJPotential> Molecules;
 
+    typedef SireFF::detail::ChangedMolecule<Molecule> ChangedMolecule;
+
     IntraCLJPotential();
     
     IntraCLJPotential(const IntraCLJPotential &other);
@@ -487,6 +500,9 @@ InterCLJPotential::calculateForce(const InterCLJPotential::Molecule &mol0,
 }
 
 }
+
+Q_DECLARE_METATYPE( SireMM::AtomCharges );
+Q_DECLARE_METATYPE( SireMM::AtomLJs );
 
 Q_DECLARE_TYPEINFO( SireMM::detail::CLJParameter, Q_MOVABLE_TYPE );
 

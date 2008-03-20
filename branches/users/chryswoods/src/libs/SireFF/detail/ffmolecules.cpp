@@ -301,6 +301,29 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
 FFMoleculesBase::FFMoleculesBase()
 {}
 
+/** Construct space for all of the contained molecules */
+FFMoleculesBase::FFMoleculesBase(const MolGroup &molgroup, const PropertyMap &map)
+{
+    int nmols = molgroup.nMolecules();
+
+    parameter_names = QVector<PropertyMap>(nmols, map);
+
+    molnums_by_idx = QVector<MolNum>(nmols);
+    idxs_by_molnum.reserve(nmols);
+    
+    quint32 i = 0;
+    MolNum *molnums_by_idx_array = molnums_by_idx.data();
+    
+    for (MolGroup::const_iterator it = molgroup.constBegin();
+         it != molgroup.constEnd();
+         ++it)
+    {
+        molnums_by_idx_array[i] = it->number();
+        idxs_by_molnum.insert( it->number(), i );
+        ++i;
+    }
+}
+
 /** Copy constructor */
 FFMoleculesBase::FFMoleculesBase(const FFMoleculesBase &other)
                 : parameter_names(other.parameter_names),

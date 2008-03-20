@@ -198,7 +198,8 @@ IntraScaledParameters<SCALE_FACTORS>::IntraScaledParameters(
                               const PartialMolecule &molecule,
                               const PropertyName &scale_property)
 {
-    sclfactors = molecule.property(scale_property)->asA<SCALE_FACTORS>();
+    const SireBase::Property &property = molecule.property(scale_property);
+    sclfactors = property->asA<SCALE_FACTORS>();
 }
 
 /** Construct by combining some AtomicParameters3D with some scale factors */
@@ -322,7 +323,7 @@ void IntraScaledParameters<SCALE_FACTORS>::addChangedGroups(
     if (sclfactors != other.sclfactors)
     {
         //all groups have changed
-        for (CGIdx i(0); i<quint32(this->nGroups()); ++i)
+        for (CGIdx i(0); i<this->nGroups(); ++i)
         {
             changed_groups.insert(i);
         }

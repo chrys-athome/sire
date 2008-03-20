@@ -56,7 +56,8 @@ public:
     AtomicParameters3D();
     
     AtomicParameters3D(const PartialMolecule &molecule,
-                       const PropertyName &coords_property);
+                       const PropertyName &coords_property,
+                       const Parameters &parameters);
      
     AtomicParameters3D(const AtomicCoords3D &coords,
                        const AtomicParameters<PARAM> &parameters);
@@ -126,6 +127,22 @@ void AtomicParameters3D<PARAM>::assertCompatible(
     else
         SireFF::detail::throwAtomicParametersIncompatibleError(
                 params.count(), this->atomicCoordinates().count());
+}
+
+/** Construct from the passed molecule (used to get the coordinates via
+    the passed coordinates property) and passed parameters
+    
+    \throw SireError::incompatible_error
+*/
+template<class PARAM>
+SIRE_OUTOFLINE_TEMPLATE
+AtomicParameters3D<PARAM>::AtomicParameters3D(const PartialMolecule &molecule,
+                                              const PropertyName &coords_property,
+                                              const Parameters &parameters)
+                          : AtomicParameters<PARAM>(parameters),
+                            AtomicCoords3D(molecule, coords_property)
+{
+    this->assertCompatible( this->params );
 }
 
 /** Construct from the passed 3D coordinates and CLJ parameters */
