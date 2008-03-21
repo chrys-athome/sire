@@ -20,23 +20,16 @@ set ( SIREMM_HEADERS
       assign_bonds.h
       assign_dihedrals.h
       assign_internals.hpp
-      atomiccharges.h
-      atomicljs.h
       atompairs.hpp
       bonddb.h
       bondgenerator.h
       bondtable.h
       bondtable.hpp
       chargedb.h
-      chargeparameter.h
       chargetable.h
       cljcomponent.h
-      cljff.h
       cljpotential.h
       cljnbpairs.h
-      cljpair.h
-      cljparameter.h
-      combiningrules.h
       coulombff.h
       dihedraldb.h
       dihedralgenerator.h
@@ -89,21 +82,14 @@ set ( SIREMM_SOURCES
       assign_angles.cpp
       assign_bonds.cpp
       assign_dihedrals.cpp
-      atomiccharges.cpp
-      atomicljs.cpp
       bonddb.cpp
       bondgenerator.cpp
       bondtable.cpp
       chargedb.cpp
-      chargeparameter.cpp
       chargetable.cpp
       cljcomponent.cpp
-      cljff.cpp
       cljpotential.cpp
       cljnbpairs.cpp
-      cljpair.cpp
-      cljparameter.cpp
-      combiningrules.cpp
       coulombff.cpp
       dihedraldb.cpp
       dihedralgenerator.cpp
