@@ -58,6 +58,7 @@ namespace SireMM
 {
 class InterCLJPotential;
 class IntraCLJPotential;
+class CLJPotential;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMM::InterCLJPotential&);
@@ -65,6 +66,9 @@ QDataStream& operator>>(QDataStream&, SireMM::InterCLJPotential&);
 
 QDataStream& operator<<(QDataStream&, const SireMM::IntraCLJPotential&);
 QDataStream& operator>>(QDataStream&, SireMM::IntraCLJPotential&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::CLJPotential&);
+QDataStream& operator>>(QDataStream&, SireMM::CLJPotential&);
 
 namespace SireMol
 {
@@ -86,6 +90,7 @@ using SireBase::PropertyMap;
 using SireBase::PropertyName;
 
 using SireVol::Space;
+using SireVol::SpaceBase;
 
 using SireMol::PartialMolecule;
 using SireMol::MolGroup;
@@ -218,6 +223,67 @@ public:
 
 } // end of namespace detail
 
+/** This is the common base class of InterCLJPotential and IntraCLJPotential
+
+    @author Christopher Woods
+*/
+class SIREMM_EXPORT CLJPotential
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const CLJPotential&);
+friend QDataStream& ::operator>>(QDataStream&, CLJPotential&);
+
+public:
+    ~CLJPotential();
+
+    void startEvaluation();
+    void finishedEvaluation();
+
+    const Properties& properties() const;
+    
+    bool setProperty(const QString &name, const PropertyBase &value);
+
+    bool setSpace(const Space &new_space);
+    bool setSwitchingFunction(const SwitchingFunction &new_switchfunc);
+    bool setShiftElectrostatics(bool switchelectro);
+    bool setCombiningRules(const QString &combiningrules);
+    
+    const SpaceBase& space() const;
+    const SwitchFunc& switchingFunction() const;
+    bool shiftElectrostatics() const;
+    const QString& combiningRules() const;
+
+protected:
+    CLJPotential();
+    CLJPotential(const CLJPotential &other);
+    
+    CLJPotential& operator=(const CLJPotential &other);
+    
+    /** All possible LJ parameter pair combinations, arranged
+        in a symmetric 2D array */
+    LJPairMatrix ljpairs;
+
+    /** The current values of the properties of this functional */
+    Properties props;
+    
+    /** The space in which this functional operates */
+    Space spce;
+    
+    /** The nonbonded switching function */
+    SwitchingFunction switchfunc;
+
+    /** The combining rules to use to get mixed LJ parameters */
+    LJParameterDB::CombiningRules combining_rules;
+    
+    /** Whether or not the LJ pair matrix needs to be rebuilt */
+    bool need_update_ljpairs;
+    
+    /** Whether or not electrostatic potential shifting is used
+        (this shifts the entire electrostatic potential so that it
+        is zero at the cutoff distance) */
+    bool use_electrostatic_shifting;
+};
+
 /** This class provides all of the functions and containers  
     necessary to provide an interface to calculate the
     intermolecular interatomic potentials using the Coulomb 
@@ -226,10 +292,31 @@ public:
     This is a 3D potential class, namely it requires that
     the atoms possess 3D coordinates, thereby allowing this
     potential to also be used to calculate 3D forces on the atoms.
-=    
+
+    This potential has the following properties (parameters);
+    
+    (1) space               : This is the 3D space in which the molecules exist
+    (2) switchingFunction   : This is the switching function used to scale the 
+                              energies / forces to zero at the cutoff
+    (3) shiftElectrostatics : This is a boolean - if it is true then the 
+                              group-group electrostatic interactions are scaled 
+                              so that they are zero at the cutoff
+    (4) combiningRules      : This is a string specifying the LJ combining rules
+                              (currently "arithmetic" or "geometric")
+                              
+    The molecules used with this potential must contain the following 
+    properties (defined in parameters(), e.g. parameters().coordinates())
+    
+    (1) .coordinates()      : These are the 3D coordinates of each atom, must be
+                              a property of type AtomCoords
+    (2) .charge()           : These are the partial charges of each atom, must
+                              be a property of type AtomCharges
+    (3) .lj()               : These are the LJ parameters for each atom, must
+                              be a property of type AtomLJs
+    
     @author Christopher Woods
 */
-class SIREMM_EXPORT InterCLJPotential
+class SIREMM_EXPORT InterCLJPotential : public CLJPotential
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const InterCLJPotential&);
@@ -313,10 +400,6 @@ public:
                         InterCLJPotential::ForceWorkspace &workspace,
                         double scale_force=1) const;
 
-    const Properties& properties() const;
-    
-    bool setProperty(const QString &name, const PropertyBase &value);
-
 private:
     double totalCharge(const InterCLJPotential::Parameters::Array &params) const;
 
@@ -332,24 +415,6 @@ private:
                              MolForceTable &forces1,
                              InterCLJPotential::ForceWorkspace &workspace,
                              double scale_force) const;
-
-    /** The current values of the properties of this functional */
-    Properties props;
-    
-    /** The space in which this functional operates */
-    Space spce;
-    
-    /** The nonbonded switching function */
-    SwitchingFunction switchfunc;
-    
-    /** All possible LJ parameter pair combinations, arranged
-        in a symmetric 2D array */
-    LJPairMatrix ljpairs;
-    
-    /** Whether or not electrostatic potential shifting is used
-        (this shifts the entire electrostatic potential so that it
-        is zero at the cutoff distance) */
-    bool use_electrostatic_shifting;
 };
 
 /** This class provides all of the functions and containers  
@@ -360,10 +425,34 @@ private:
     This is a 3D potential class, namely it requires that
     the atoms possess 3D coordinates, thereby allowing this
     potential to also be used to calculate 3D forces on the atoms.
+
+    This potential has the following properties (parameters);
+    
+    (1) space               : This is the 3D space in which the molecules exist
+    (2) switchingFunction   : This is the switching function used to scale the 
+                              energies / forces to zero at the cutoff
+    (3) shiftElectrostatics : This is a boolean - if it is true then the 
+                              group-group electrostatic interactions are scaled 
+                              so that they are zero at the cutoff
+    (4) combiningRules      : This is a string specifying the LJ combining rules
+                              (currently "arithmetic" or "geometric")
+                              
+    The molecules used with this potential must contain the following 
+    properties (defined in parameters(), e.g. parameters().coordinates())
+    
+    (1) .coordinates()       : These are the 3D coordinates of each atom, must be
+                               a property of type AtomCoords
+    (2) .charge()            : These are the partial charges of each atom, must
+                               be a property of type AtomCharges
+    (3) .lj()                : These are the LJ parameters for each atom, must
+                               be a property of type AtomLJs
+    (4) .intraScaleFactors() : These are the intramolecular atomic scaling factors,
+                               used to scale the intramolecular coulomb and LJ
+                               energies, must be a property of type CLJNBPairs
     
     @author Christopher Woods
 */
-class SIREMM_EXPORT IntraCLJPotential
+class SIREMM_EXPORT IntraCLJPotential : public CLJPotential
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const IntraCLJPotential&);
@@ -448,24 +537,6 @@ public:
 
 private:
     double totalCharge(const IntraCLJPotential::Parameters::Array &params) const;
-
-    /** The current values of the properties of this functional */
-    Properties props;
-    
-    /** The space in which this functional operates */
-    Space spce;
-    
-    /** The nonbonded switching function */
-    SwitchingFunction switchfunc;
-    
-    /** All possible LJ parameter pair combinations, arranged
-        in a symmetric 2D array */
-    LJPairMatrix ljpairs;
-    
-    /** Whether or not electrostatic potential shifting is used
-        (this shifts the entire electrostatic potential so that it
-        is zero at the cutoff distance) */
-    bool use_electrostatic_shifting;
 };
 
 /** Calculate the coulomb and LJ energy between the passed pair

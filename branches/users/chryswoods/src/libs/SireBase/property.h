@@ -310,6 +310,18 @@ public:
     {
         return "SireBase::VariantProperty";
     }
+    
+    template<class T>
+    T convertTo() const
+    {
+        if (not this->canConvert<T>())
+            this->throwInvalidCast( QMetaType::typeName( qMetaTypeId<T>() ) );
+            
+        return this->value<T>();
+    }
+
+private:
+    void throwInvalidCast(const QString &typname) const;
 };
 
 /** This is the polymorphic pointer holder for the entire

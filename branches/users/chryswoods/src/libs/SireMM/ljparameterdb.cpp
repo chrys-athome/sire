@@ -26,10 +26,54 @@
   *
 \*********************************************/
 
+#include <QStringList>
+
 #include "ljparameterdb.h"
+
+#include "SireError/errors.h"
 
 using namespace SireMM;
 using namespace SireBase;
+
+static QHash<QString,LJParameterDB::CombiningRules> rule_types;
+
+/** Convert the passed string into the CombiningRules ID */
+LJParameterDB::CombiningRules LJParameterDB::interpret(const QString &rule)
+{
+    if (rule_types.isEmpty())
+    {
+        LJParameterDB::lock();
+        
+        rule_types.insert("arithmetic", ARITHMETIC);
+        rule_types.insert("geometric", GEOMETRIC);
+        
+        LJParameterDB::unlock();
+    }
+    
+    QHash<QString,CombiningRules>::const_iterator it = rule_types.constFind(rule);
+    
+    if (it == rule_types.constEnd())
+        throw SireError::invalid_arg( QObject::tr(
+            "There is no combining rule available that matches the ID \"%1\". "
+            "Available rules are [ %2 ].")
+                .arg(rule, QStringList(rule_types.keys()).join(", ")), CODELOC );
+                
+    return *it;
+}
+
+/** Convert the passed rule into the string representing that rule */
+const QString& LJParameterDB::toString(LJParameterDB::CombiningRules rule)
+{
+    switch (rule)
+    {
+        case ARITHMETIC:
+            return rule_types.constFind("arithmetic").key();
+        case GEOMETRIC:
+            return rule_types.constFind("geometric").key();
+    }
+    
+    return rule_types.constFind("arithmetic").key();
+}
 
 /** Constructor */
 LJParameterDB::LJParameterDBData::LJParameterDBData()

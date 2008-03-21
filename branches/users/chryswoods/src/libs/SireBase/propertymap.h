@@ -94,6 +94,7 @@ friend QDataStream& ::operator>>(QDataStream&, PropertyName&);
 
 public:
     PropertyName();
+    PropertyName(const char* source);
     PropertyName(const QString &source);
     PropertyName(const Property &value);
 

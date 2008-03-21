@@ -73,6 +73,12 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, PropertyName &propname)
 PropertyName::PropertyName()
 {}
 
+/** Construct a PropertyName that searches for the
+    property using the source 'source' */
+PropertyName::PropertyName(const char *source)
+             : src(source)
+{}
+
 /** Construct a PropertyName that searches for the 
     property using the source 'source' */
 PropertyName::PropertyName(const QString &source)

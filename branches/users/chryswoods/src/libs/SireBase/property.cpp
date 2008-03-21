@@ -227,6 +227,14 @@ VariantProperty::VariantProperty(const VariantProperty &other)
 VariantProperty::~VariantProperty()
 {}
 
+/** Throw an invalid cast error */
+void VariantProperty::throwInvalidCast(const QString &typname) const
+{
+    throw SireError::invalid_cast( QObject::tr(
+        "Cannot convert an object of type %1 to an object of type %2.")
+            .arg(QVariant::typeName()).arg(typname), CODELOC );
+}
+
 /** Assignment operator from a QVariant */
 VariantProperty& VariantProperty::operator=(const QVariant &other)
 {

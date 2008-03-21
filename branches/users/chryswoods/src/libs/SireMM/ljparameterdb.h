@@ -67,6 +67,9 @@ public:
     static LJPairMatrix getLJPairs(CombiningRules type);
     static quint32 addLJParameter(const LJParameter &ljparam);
 
+    static CombiningRules interpret(const QString &rule);
+    static const QString& toString(CombiningRules rule);
+
     static void lock();
     
     static quint32 _locked_addLJParameter(const LJParameter &ljparam);

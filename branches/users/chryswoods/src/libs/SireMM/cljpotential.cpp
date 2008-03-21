@@ -30,15 +30,21 @@
 
 #include "cljpotential.h"
 #include "ljparameter.h"
+#include "switchingfunction.h"
 
 #include "SireMol/mover.hpp"
 #include "SireMol/atomcoords.h"
+
+#include "SireVol/cartesian.h"
 
 #include "SireMaths/maths.h"
 
 #include "SireUnits/units.h"
 
+#include "SireBase/errors.h"
 #include "SireError/errors.h"
+
+#include "SireStream/datastream.h"
 
 using namespace SireMM;
 using namespace SireMM::detail;
@@ -47,10 +53,13 @@ using namespace SireFF;
 using namespace SireFF::detail;
 
 using namespace SireMol;
+using namespace SireVol;
 
 using namespace SireMaths;
 
 using namespace SireBase;
+
+using namespace SireStream;
 
 ///////
 /////// Implementation of CoulombComponent
@@ -238,8 +247,285 @@ static PackedArray2D<CLJParameter> getCLJParameters(const PartialMolecule &molec
 }
 
 /////////////
+///////////// Implementation of CLJPotential
+/////////////
+
+static const Space default_space = Cartesian();
+static const SwitchingFunction default_switchfunc = NoCutoff();
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
+                                      const CLJPotential &cljpot)
+{
+    ds << cljpot.props;
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
+                                      CLJPotential &cljpot)
+{
+    ds >> cljpot.props;
+    
+    //extract all of the properties
+    cljpot.spce = cljpot.props.property("space")->asA<SpaceBase>();
+    cljpot.switchfunc = cljpot.props.property("switchingFunction")
+                                          ->asA<SwitchFunc>();
+    
+    cljpot.combining_rules = LJParameterDB::interpret(
+                                cljpot.props.property("combiningRules")
+                                    ->asA<VariantProperty>().convertTo<QString>() );
+
+    cljpot.use_electrostatic_shifting = cljpot.props.property("shiftElectrostatics")
+                                    ->asA<VariantProperty>().convertTo<bool>();
+                                    
+    cljpot.need_update_ljpairs = true;
+    
+    return ds;
+}
+
+/** Constructor */
+CLJPotential::CLJPotential()
+             : spce(default_space), switchfunc(default_switchfunc),
+               combining_rules( LJParameterDB::interpret("arithmetic") ),
+               need_update_ljpairs(true), use_electrostatic_shifting(false)
+{
+    //record the defaults
+    props.setProperty( "space", spce );
+    props.setProperty( "switchingFunction", switchfunc );
+    props.setProperty( "combiningRules", 
+                       VariantProperty( LJParameterDB::toString(combining_rules) ) );
+    props.setProperty( "shiftElectrostatics",
+                       VariantProperty(use_electrostatic_shifting) );
+}
+
+/** Copy constructor */
+CLJPotential::CLJPotential(const CLJPotential &other)
+             : ljpairs(other.ljpairs), props(other.props),
+               spce(other.spce), switchfunc(other.switchfunc),
+               combining_rules(other.combining_rules),
+               need_update_ljpairs(other.need_update_ljpairs),
+               use_electrostatic_shifting(other.use_electrostatic_shifting)
+{}
+
+/** Destructor */
+CLJPotential::~CLJPotential()
+{}
+
+/** Copy assignment operator */
+CLJPotential& CLJPotential::operator=(const CLJPotential &other)
+{
+    if (this != &other)
+    {
+        ljpairs = other.ljpairs;
+        props = other.props;
+        spce = other.spce;
+        switchfunc = other.switchfunc;
+        combining_rules = other.combining_rules;
+        need_update_ljpairs = other.need_update_ljpairs;
+        use_electrostatic_shifting = other.use_electrostatic_shifting;
+    }
+    
+    return *this;
+}
+
+/** You need to call this function before you start a block of 
+    energy of force evaluation using this forcefield. You should
+    also call 'finishedEvaluation()' once you have finished. */
+void CLJPotential::startEvaluation()
+{
+    if (need_update_ljpairs)
+    {
+        //get the LJPairs array from the LJParameterDB
+        ljpairs = LJParameterDB::getLJPairs(combining_rules);
+        need_update_ljpairs = false;
+    }
+}
+
+/** You should call this function once you have finished a block of
+    force or energy evaluation using this potential */
+void CLJPotential::finishedEvaluation()
+{}
+
+/** Return all of the properties set in this forcefield */
+const Properties& CLJPotential::properties() const
+{
+    return props;
+}
+
+/** Set the 3D space in which the molecules in this potential are evaluated */
+bool CLJPotential::setSpace(const Space &new_space)
+{
+    if (spce != new_space)
+    {
+        spce = new_space;
+        props.setProperty( "space", new_space );
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Set the switching function used to scale the interactions between
+    CutGroups to zero at the cutoff */
+bool CLJPotential::setSwitchingFunction(const SwitchingFunction &new_switchfunc)
+{
+    if (switchfunc != new_switchfunc)
+    {
+        switchfunc = new_switchfunc;
+        props.setProperty( "switchingFunction", new_switchfunc );
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Set whether or not to shift the electrostatics between CutGroups so that
+    the group-group net electrostatic interaction energy between CutGroups
+    is zero at the cutoff */
+bool CLJPotential::setShiftElectrostatics(bool switchelectro)
+{
+    if (switchelectro != use_electrostatic_shifting)
+    {
+        use_electrostatic_shifting = switchelectro;
+        props.setProperty( "shiftElectrostatics", VariantProperty(switchelectro) );
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Set the combining rules to use to obtain mixed LJ parameters */
+bool CLJPotential::setCombiningRules(const QString &combiningrules)
+{
+    LJParameterDB::CombiningRules new_rules = LJParameterDB::interpret(combiningrules);
+    
+    if (new_rules != combining_rules)
+    {
+        combining_rules = new_rules;
+        need_update_ljpairs = true;
+        props.setProperty( "combiningRules", VariantProperty(combiningrules) );
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Set the property 'name' to the value 'value'. Returns whether or not
+    this changes this forcefield.
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+bool CLJPotential::setProperty(const QString &name, const PropertyBase &value)
+{
+    if (name == QLatin1String("space"))
+    {
+        return this->setSpace( value.asA<SpaceBase>() );
+    }
+    else if (name == QLatin1String("switchingFunction"))
+    {
+        return this->setSwitchingFunction( value.asA<SwitchFunc>() );
+    }
+    else if (name == QLatin1String("shiftElectrostatics"))
+    {
+        return this->setShiftElectrostatics( value.asA<VariantProperty>()
+                                                     .convertTo<bool>() );
+    }
+    else if (name == QLatin1String("combiningRules"))
+    {
+        return this->setCombiningRules( value.asA<VariantProperty>()
+                                                     .convertTo<QString>() );
+    }
+    else
+        throw SireBase::missing_property( QObject::tr(
+            "The CLJ potentials do not have a property called \"%1\" that "
+            "can be changed. Available properties are [ %2 ].")
+                .arg(name, QStringList(props.propertyKeys()).join(", ")), CODELOC );
+                
+    return false;
+}
+
+/** Return the 3D space in which this potential is evaluated */
+const SpaceBase& CLJPotential::space() const
+{
+    return *spce;
+}
+
+/** Return the switching function used to scale the group-group
+    interactions to zero at the cutoff */
+const SwitchFunc& CLJPotential::switchingFunction() const
+{
+    return *switchfunc;
+}
+
+/** Return whether or not the net group-group electrostatic interaction
+    energy is shifted so that it is zero at the cutoff */
+bool CLJPotential::shiftElectrostatics() const
+{
+    return use_electrostatic_shifting;
+}
+
+/** Return the string identifying the combining rules used to 
+    obtain the mixed LJ parameters */
+const QString& CLJPotential::combiningRules() const
+{
+    return LJParameterDB::toString(combining_rules);
+}
+
+/////////////
 ///////////// Implementation of InterCLJPotential
 /////////////
+
+static const RegisterMetaType<InterCLJPotential> r_interclj( MAGIC_ONLY,
+                                            InterCLJPotential::typeName() );
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
+                                      const InterCLJPotential &interclj)
+{
+    writeHeader(ds, r_interclj, 1);
+    
+    ds << static_cast<const CLJPotential&>(interclj);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
+                                      InterCLJPotential &interclj)
+{
+    VersionID v = readHeader(ds, r_interclj);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<CLJPotential&>(interclj);
+    }
+    else
+        throw version_error(v, "1", r_interclj, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+InterCLJPotential::InterCLJPotential() : CLJPotential()
+{}
+
+/** Copy constructor */
+InterCLJPotential::InterCLJPotential(const InterCLJPotential &other)
+                  : CLJPotential(other)
+{}
+
+/** Destructor */
+InterCLJPotential::~InterCLJPotential()
+{}
+
+/** Copy assignment operator */
+InterCLJPotential& InterCLJPotential::operator=(const InterCLJPotential &other)
+{
+    CLJPotential::operator=(other);
+    return *this;
+}
 
 /** Return all of the parameters needed by this potential for 
     the molecule 'molecule', using the supplied property map to
@@ -809,6 +1095,56 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
 /////////////
 ///////////// Implementation of IntraCLJPotential
 /////////////
+
+static const RegisterMetaType<IntraCLJPotential> r_intraclj( MAGIC_ONLY,
+                                            IntraCLJPotential::typeName() );
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
+                                      const IntraCLJPotential &intraclj)
+{
+    writeHeader(ds, r_intraclj, 1);
+    
+    ds << static_cast<const CLJPotential&>(intraclj);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
+                                      IntraCLJPotential &intraclj)
+{
+    VersionID v = readHeader(ds, r_intraclj);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<CLJPotential&>(intraclj);
+    }
+    else
+        throw version_error(v, "1", r_intraclj, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+IntraCLJPotential::IntraCLJPotential() : CLJPotential()
+{}
+
+/** Copy constructor */
+IntraCLJPotential::IntraCLJPotential(const IntraCLJPotential &other)
+                  : CLJPotential(other)
+{}
+
+/** Destructor */
+IntraCLJPotential::~IntraCLJPotential()
+{}
+
+/** Copy assignment operator */
+IntraCLJPotential& IntraCLJPotential::operator=(const IntraCLJPotential &other)
+{
+    CLJPotential::operator=(other);
+    return *this;
+}
 
 /** Return all of the parameters needed by this potential for 
     the molecule 'molecule', using the supplied property map to
