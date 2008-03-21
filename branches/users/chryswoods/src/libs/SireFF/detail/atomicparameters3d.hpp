@@ -70,12 +70,6 @@ public:
     
     bool operator==(const AtomicParameters3D<PARAM> &other) const;
     bool operator!=(const AtomicParameters3D<PARAM> &other) const;
-    
-    void setAtomicParameters(const Parameters &parameters);
-    void setAtomicParameters(const AtomicParameters<PARAM> &parameters);
-
-    void setAtomicCoordinates(const CoordGroupArray &coordinates);
-    void setAtomicCoordinates(const AtomicCoords3D &coordinates);
 
     bool changedAllGroups(const AtomicParameters3D<PARAM> &params) const;
     
@@ -85,9 +79,6 @@ public:
                           QSet<quint32> &changed_groups) const;
     
     AtomicParameters3D<PARAM> applyMask(const QSet<quint32> &idxs) const;
-
-    void assertCompatible(const Parameters &parameters) const;
-    void assertCompatible(const CoordGroupArray &coordinates) const;
 };
 
 /** Null constructor */
@@ -97,37 +88,6 @@ AtomicParameters3D<PARAM>::AtomicParameters3D()
                           : AtomicParameters<PARAM>(),
                             AtomicCoords3D()
 {}
-
-/** Assert that the supplied parameters are compatible with the
-    3D parameters already part of this object
-    
-    \throw SireError::incompatible_error
-*/
-template<class PARAM>
-SIRE_OUTOFLINE_TEMPLATE
-void AtomicParameters3D<PARAM>::assertCompatible(
-                    const typename AtomicParameters3D<PARAM>::Parameters &params) const
-{
-    if (params.count() == this->atomicCoordinates().count())
-    {
-        quint32 ngroups = params.count();
-        
-        const CoordGroup *cgroup_array = this->atomicCoordinates().constData();
-        const typename Parameters::Array *params_array = params.constData();
-        
-        for (quint32 i=0; i<ngroups; ++i)
-        {
-            if (cgroup_array[i].count() != params_array[i].count())
-            {
-                SireFF::detail::throwAtomicParametersIncompatibleError(
-                        i, cgroup_array[i].count(), params_array[i].count());
-            }
-        }
-    }
-    else
-        SireFF::detail::throwAtomicParametersIncompatibleError(
-                params.count(), this->atomicCoordinates().count());
-}
 
 /** Construct from the passed molecule (used to get the coordinates via
     the passed coordinates property) and passed parameters
@@ -141,9 +101,7 @@ AtomicParameters3D<PARAM>::AtomicParameters3D(const PartialMolecule &molecule,
                                               const Parameters &parameters)
                           : AtomicParameters<PARAM>(parameters),
                             AtomicCoords3D(molecule, coords_property)
-{
-    this->assertCompatible( this->params );
-}
+{}
 
 /** Construct from the passed 3D coordinates and CLJ parameters */
 template<class PARAM>
@@ -152,9 +110,7 @@ AtomicParameters3D<PARAM>::AtomicParameters3D(const AtomicCoords3D &coords3d,
                                               const AtomicParameters<PARAM> &parameters)
               : AtomicParameters<PARAM>(parameters),
                 AtomicCoords3D(coords3d)
-{
-    this->assertCompatible( this->params );
-}
+{}
 
 /** Copy constructor */
 template<class PARAM>

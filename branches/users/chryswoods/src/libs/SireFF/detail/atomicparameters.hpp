@@ -45,9 +45,6 @@ using SireBase::PackedArray2D;
 
 bool selectedAll(const QSet<quint32> &idxs, quint32 n);
 
-void throwAtomicParametersIncompatibleError(int i, int ncoords, int nparams);
-void throwAtomicParametersIncompatibleError(int ncoordgroups, int nparamgroups);
-
 /** This class hold parameters of type PARAM, one for each atom
 
     @author Christopher Woods
@@ -78,7 +75,8 @@ public:
     int nGroups() const;
 
     const Parameters& atomicParameters() const;
-    void setAtomicParameters(const Parameters &parameters);
+
+    void setAtomicParameters(const AtomicParameters<PARAM> &other);
 
     bool changedAllGroups(const AtomicParameters<PARAM> &params) const;
     
@@ -88,8 +86,6 @@ public:
                           QSet<quint32> &changed_groups) const;
     
     AtomicParameters<PARAM> applyMask(const QSet<quint32> &idxs) const;
-
-    void assertCompatible(const Parameters &parameters) const;
 
 protected:
     /** The atomic parameters, arranged by CutGroup */
@@ -102,40 +98,6 @@ template<class PARAM>
 SIRE_OUTOFLINE_TEMPLATE
 AtomicParameters<PARAM>::AtomicParameters()
 {}
-
-/** Assert that the passed parameters are compatible with the
-    parameters that are already part of this object
-    
-    \throw SireError::incompatible_error
-*/
-template<class PARAM>
-SIRE_OUTOFLINE_TEMPLATE
-void AtomicParameters<PARAM>::assertCompatible(
-                    const typename AtomicParameters<PARAM>::Parameters &other) const
-{
-    if (params.isEmpty())
-        return;
-
-    if (params.count() == other.params.count())
-    {
-        quint32 ngroups = params.count();
-        
-        const typename Parameters::Array *other_array = other.params.constData();
-        const typename Parameters::Array *params_array = params.constData();
-        
-        for (quint32 i=0; i<ngroups; ++i)
-        {
-            if (other_array[i].count() != params_array[i].count())
-            {
-                SireFF::detail::throwAtomicParametersIncompatibleError(
-                        i, other_array[i].count(), params_array[i].count());
-            }
-        }
-    }
-    else
-        SireFF::detail::throwAtomicParametersIncompatibleError(
-                params.count(), other.params.count());
-}
 
 /** Construct from the passed parameters */
 template<class PARAM>
@@ -183,6 +145,23 @@ SIRE_OUTOFLINE_TEMPLATE
 bool AtomicParameters<PARAM>::operator!=(const AtomicParameters<PARAM> &other) const
 {
     return params != other.params;
+}
+
+/** Return the actual atomic parameters */
+template<class PARAM>
+SIRE_INLINE_TEMPLATE
+const typename AtomicParameters<PARAM>::Parameters& 
+AtomicParameters<PARAM>::atomicParameters() const
+{
+    return params;
+}
+
+/** Set the atomic parameters */
+template<class PARAM>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomicParameters<PARAM>::setAtomicParameters(const AtomicParameters<PARAM> &other)
+{
+    params = other.params;
 }
 
 /** Return whether or not all of the groups have changed parameters

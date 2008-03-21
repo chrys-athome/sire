@@ -406,7 +406,7 @@ FFMolecule3D<PTNL>::getDifferences(const FFMolecule<PTNL> &newmol) const
     return FFMolecule3D<PTNL>( FFMolecule<PTNL>::getDifferences(newmol) );
 }
 
-/** Set the coordinates - this is used by FFMolecules3D when it 
+/** Protected function to set the coordinates - this is used by FFMolecules3D when it 
     packs the coordinates together into a single contiguous block of memory */
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE

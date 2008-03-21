@@ -69,26 +69,6 @@ bool SIREFF_EXPORT SireFF::detail::selectedAll(const QSet<quint32> &changed_grou
     return false;
 }
 
-void SIREFF_EXPORT SireFF::detail::throwAtomicParametersIncompatibleError(
-                            int i, int natoms, int nparams)
-{
-    throw SireError::incompatible_error( QObject::tr(
-             "The passed parameters are incompatible as the group "
-             "at index %1 has space for %2 atoms, but the "
-             "passed parameters only provides parameters for %3 atoms.")
-                  .arg(i).arg(natoms).arg(nparams), CODELOC );
-}
-
-void SIREFF_EXPORT SireFF::detail::throwAtomicParametersIncompatibleError(
-                            int ngroups, int nparamgroups)
-{
-    throw SireError::incompatible_error( QObject::tr(
-       "The passed parameters are incompatible as the parameters "
-       "are for %1 CutGroups, while this only has space "
-       "for %2 CutGroups.")
-            .arg(nparamgroups).arg(ngroups), CODELOC );
-}
-
 /** Null constructor */
 AtomicCoords3D::AtomicCoords3D()
 {}
@@ -160,18 +140,10 @@ bool AtomicCoords3D::operator!=(const AtomicCoords3D &other) const
     return coords != other.coords;
 }
 
-/** Set the coordinates manually */
-void AtomicCoords3D::setAtomicCoordinates(const CoordGroupArray &new_coords)
+/** Set the coordinates */
+void AtomicCoords3D::setAtomicCoordinates(const AtomicCoords3D &other)
 {
-    BOOST_ASSERT( coords.count() == new_coords.count() );
-    
-    for (int i=0; i<new_coords.count(); ++i)
-    {
-        BOOST_ASSERT( coords.constData()[i].count() ==
-                      new_coords.constData()[i].count() );
-    }
-
-    coords = new_coords;
+    coords = other.coords;
 }
 
 /** Have all of the parameters in this group changed? */

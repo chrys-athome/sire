@@ -58,13 +58,13 @@ public:
     ~IntraScaleParameterName()
     {}
     
-    const PropertyName& intraScaleFactors() const
+    const QString& intraScaleFactors() const
     {
         return nbscl_param;
     }
 
 private:
-    static PropertyName nbscl_param;
+    static QString nbscl_param;
 };
 
 /** This class represents parameters that are scaled using information
@@ -84,10 +84,6 @@ public:
                           const PropertyName &scale_property);
                           
     IntraScaledParameters(const SCALE_FACTORS &scale_factors);
-    
-    template<class T>
-    IntraScaledParameters(const PartialMolecule &molecule,
-                          const T &propertynames);
                           
     IntraScaledParameters(const IntraScaledParameters<SCALE_FACTORS> &other);
     
@@ -101,9 +97,9 @@ public:
     
     int nGroups() const;
     
-    const ScaleFactors& scaleFactors() const;
+    const ScaleFactors& intraScaleFactors() const;
     
-    void setScaleFactors(const ScaleFactors &scale_factors);
+    void setIntraScaleFactors(const IntraScaledParameters<SCALE_FACTORS> &other);
     
     bool changedAllGroups(const IntraScaledParameters<SCALE_FACTORS> &other) const;
     
@@ -139,10 +135,6 @@ public:
                           
     IntraScaledAtomicParameters(const ATOMPARAM &parameters,
                                 const INTRASCALE &sclfactors);
-    
-    template<class T>
-    IntraScaledAtomicParameters(const PartialMolecule &molecule,
-                                const T &propertynames);
                           
     IntraScaledAtomicParameters(
             const IntraScaledAtomicParameters<ATOMPARAM,INTRASCALE> &other);
@@ -171,9 +163,6 @@ public:
     
     IntraScaledAtomicParameters<ATOMPARAM,INTRASCALE> 
     applyMask(const QSet<quint32> &idxs) const;
-
-protected:
-    void assertSane() const;
 };
 
 /////////
@@ -209,25 +198,6 @@ IntraScaledParameters<SCALE_FACTORS>::IntraScaledParameters(
                               const SCALE_FACTORS &scale_factors)
                 : sclfactors(scale_factors)
 {}
-
-/** Construct the parameters for the passed molecule using 'propertynames' 
-    to find the right properties for the parameters
-    
-    \throw SireBase::missing_property
-    \throw SireError::invalid_cast
-*/
-template<class SCALE_FACTORS>
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-IntraScaledParameters<SCALE_FACTORS>::IntraScaledParameters(
-                              const PartialMolecule &molecule,
-                              const T &propertynames)
-{
-    const SireBase::Property &property 
-                    = molecule.property( propertynames.intraScaleFactors() );
-    
-    sclfactors = property->asA<SCALE_FACTORS>();
-}
                               
 /** Copy constructor */
 template<class SCALE_FACTORS>
@@ -283,23 +253,18 @@ int IntraScaledParameters<SCALE_FACTORS>::nGroups() const
     intramolecular atom-atom interactions */
 template<class SCALE_FACTORS>
 SIRE_OUTOFLINE_TEMPLATE
-const SCALE_FACTORS& IntraScaledParameters<SCALE_FACTORS>::scaleFactors() const
+const SCALE_FACTORS& IntraScaledParameters<SCALE_FACTORS>::intraScaleFactors() const
 {
     return sclfactors;
 }
 
-/** Set the inter-atomic intramolecular scale factors for the 
-    intramolecular atom-atom interactions 
-    
-    \throw SireError::incompatible_error
-*/
+/** Set the scale factors */
 template<class SCALE_FACTORS>
 SIRE_OUTOFLINE_TEMPLATE
-void IntraScaledParameters<SCALE_FACTORS>::setScaleFactors(
-                                            const SCALE_FACTORS &scale_factors)
+void IntraScaledParameters<SCALE_FACTORS>::setIntraScaleFactors(
+                                    const IntraScaledParameters<SCALE_FACTORS> &other)
 {
-    this->assertCompatible(scale_factors);
-    sclfactors = scale_factors;
+    sclfactors = other.sclfactors;
 }
 
 /** Return whether or not all CutGroups in this molecule have changed compared
@@ -379,24 +344,6 @@ IntraScaledAtomicParameters<ATOMPARAM,INTRASCALE>::IntraScaledAtomicParameters(
                             const INTRASCALE &sclfactors)
               : ATOMPARAM(parameters),
                 INTRASCALE(sclfactors)
-{
-    this->assertSane();
-}
-
-/** Construct for the passed molecule, using the specified parameters to
-    obtain the parameters 
-    
-    \throw SireBase::missing_parameter
-    \throw SireError::invalid_cast
-*/
-template<class ATOMPARAM, class INTRASCALE>
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-IntraScaledAtomicParameters<ATOMPARAM,INTRASCALE>::IntraScaledAtomicParameters(
-                            const PartialMolecule &molecule,
-                            const T &propertynames)
-              : ATOMPARAM(molecule, propertynames),
-                INTRASCALE(molecule, propertynames)
 {}
  
 /** Copy constructor */                     

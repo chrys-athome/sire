@@ -407,6 +407,11 @@ public:
         return IntraCLJPotential::typeName();
     }
     
+    static ParameterNames parameters()
+    {
+        return ParameterNames();
+    }
+    
     IntraCLJPotential::Parameters 
     getParameters(const PartialMolecule &molecule,
                   const PropertyMap &map = PropertyMap());

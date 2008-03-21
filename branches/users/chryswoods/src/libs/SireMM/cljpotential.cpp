@@ -97,13 +97,29 @@ CLJComponent::~CLJComponent()
 ///////
 
 template
+class AtomicParameters3D<CLJParameter>;
+
+template
+class IntraScaledParameters<CLJNBPairs>;
+
+template
+class IntraScaledAtomicParameters< AtomicParameters3D<CLJParameter>,
+                                   IntraScaledParameters<CLJNBPairs> >;
+
+template
 class FFMolecule3D<InterCLJPotential>;
+
+template
+class FFMolecules3D<InterCLJPotential>;
 
 template
 class ChangedMolecule<InterCLJPotential::Molecule>;
 
 template
 class FFMolecule3D<IntraCLJPotential>;
+
+template
+class FFMolecules3D<IntraCLJPotential>;
 
 template
 class ChangedMolecule<IntraCLJPotential::Molecule>;
@@ -259,6 +275,8 @@ InterCLJPotential::updateParameters(const InterCLJPotential::Parameters &old_par
         //the selection has changed - just get completely new parameters
         return this->getParameters(new_molecule, map);
 
+    Parameters new_params = old_params;
+
     //get the property names
     const PropertyName &coords_property = map[parameters().coordinates()];
     const PropertyName &chg_property = map[parameters().charge()];
@@ -273,29 +291,15 @@ InterCLJPotential::updateParameters(const InterCLJPotential::Parameters &old_par
                    ( old_molecule.version(lj_property) !=
                          new_molecule.version(lj_property) );
 
-    if (new_coords and new_clj)
-    {
-        //everything has changed
-        return Parameters( new_molecule, coords_property,
-                           getCLJParameters(new_molecule, chg_property, lj_property) );
-    }
-    else if (new_coords)
-    {
-        //only the coordinates have changed
-        return Parameters( new_molecule, coords_property,
-                           old_params.atomicParameters() );
-    }
-    else if (new_clj)
-    {
-        //only the CLJ parameters have changed
-        return Parameters( old_params,
-                           getCLJParameters(new_molecule, chg_property, lj_property) );
-    }
-    else
-    {
-        //nothing has changed
-        return old_params;
-    }
+    if (new_coords)
+        new_params.setAtomicCoordinates( AtomicCoords3D(new_molecule, 
+                                                        coords_property) );
+
+    if (new_clj)
+        new_params.setAtomicParameters( getCLJParameters(new_molecule,
+                                                         chg_property, lj_property) );
+
+    return new_params;
 }
                  
 /** Update the parameters for the molecule going from 'old_molecule' to 
@@ -317,6 +321,8 @@ InterCLJPotential::updateParameters(const InterCLJPotential::Parameters &old_par
         //the selection has changed - just get completely new parameters
         return this->getParameters(new_molecule, new_map);
 
+    Parameters new_params = old_params;
+
     //get the property names
     const PropertyName &old_coords = old_map[parameters().coordinates()];
     const PropertyName &old_chg = old_map[parameters().charge()];
@@ -337,29 +343,15 @@ InterCLJPotential::updateParameters(const InterCLJPotential::Parameters &old_par
                        ( old_molecule.version(old_lj) !=
                          new_molecule.version(old_lj) );
 
-    if (changed_coords and changed_clj)
-    {
-        //everything has changed
-        return Parameters( new_molecule, new_coords,
-                           getCLJParameters(new_molecule, new_chg, new_lj) );
-    }
-    else if (changed_coords)
-    {
-        //only the coordinates have changed
-        return Parameters( new_molecule, new_coords,
-                           old_params.atomicParameters() );
-    }
-    else if (changed_clj)
-    {
-        //only the CLJ parameters have changed
-        return Parameters( old_params,
-                           getCLJParameters(new_molecule, new_chg, new_lj) );
-    }
-    else
-    {
-        //nothing has changed
-        return old_params;
-    }
+    if (changed_coords)
+        new_params.setAtomicCoordinates( AtomicCoords3D(new_molecule, 
+                                                        new_coords) );
+
+    if (changed_clj)
+        new_params.setAtomicParameters( getCLJParameters(new_molecule,
+                                                         new_chg, new_lj) );
+
+    return new_params;
 }
 
 /** Return the InterCLJPotential::Molecule representation of 'molecule',
@@ -818,6 +810,171 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
 ///////////// Implementation of IntraCLJPotential
 /////////////
 
+/** Return all of the parameters needed by this potential for 
+    the molecule 'molecule', using the supplied property map to
+    find the properties that contain those parameters
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+IntraCLJPotential::Parameters 
+IntraCLJPotential::getParameters(const PartialMolecule &molecule,
+                                 const PropertyMap &map)
+{
+    return Parameters( AtomicParameters3D<CLJParameter>(
+                               molecule, map[parameters().coordinates()],
+                               getCLJParameters(molecule, 
+                                                map[parameters().charge()],
+                                                map[parameters().lj()]) ),
+              IntraScaledParameters<CLJNBPairs>(
+                               molecule, map[parameters().intraScaleFactors()] )
+                     );
+}
+
+/** Update the parameters for the molecule going from 'old_molecule' to 
+    'new_molecule', with the parameters found using the property map 'map'
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+IntraCLJPotential::Parameters
+IntraCLJPotential::updateParameters(const IntraCLJPotential::Parameters &old_params,
+                                    const PartialMolecule &old_molecule,
+                                    const PartialMolecule &new_molecule,
+                                    const PropertyMap &map)
+{
+    if (old_molecule.selection() != new_molecule.selection())
+        //the selection has changed - just get completely new parameters
+        return this->getParameters(new_molecule, map);
+
+    Parameters new_params = old_params;
+
+    //get the property names
+    const PropertyName &coords_property = map[parameters().coordinates()];
+    const PropertyName &chg_property = map[parameters().charge()];
+    const PropertyName &lj_property = map[parameters().lj()];
+    const PropertyName &scl_property = map[parameters().intraScaleFactors()];
+    
+    //get what has changed
+    bool new_coords = old_molecule.version(coords_property) !=
+                         new_molecule.version(coords_property);
+                             
+    bool new_clj = ( old_molecule.version(chg_property) !=
+                         new_molecule.version(chg_property) ) or
+                   ( old_molecule.version(lj_property) !=
+                         new_molecule.version(lj_property) );
+
+    bool new_scl = ( old_molecule.version(scl_property) !=
+                         new_molecule.version(scl_property) );
+
+    if (new_coords)
+        new_params.setAtomicCoordinates( AtomicCoords3D(new_molecule, 
+                                                        coords_property) );
+
+    if (new_clj)
+        new_params.setAtomicParameters( getCLJParameters(new_molecule,
+                                            chg_property, lj_property) );
+
+    if (new_scl)
+        new_params.setIntraScaleFactors( 
+                IntraScaledParameters<CLJNBPairs>(new_molecule, scl_property) );
+
+    return new_params;
+}
+                 
+/** Update the parameters for the molecule going from 'old_molecule' to 
+    'new_molecule', also while the parameters of 'old_molecule'
+    where found in 'old_map', now get the parameters using 'new_map'
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+IntraCLJPotential::Parameters
+IntraCLJPotential::updateParameters(const IntraCLJPotential::Parameters &old_params,
+                                    const PartialMolecule &old_molecule,
+                                    const PartialMolecule &new_molecule,
+                                    const PropertyMap &old_map, 
+                                    const PropertyMap &new_map)
+{
+    if (old_molecule.selection() != new_molecule.selection())
+        //the selection has changed - just get completely new parameters
+        return this->getParameters(new_molecule, new_map);
+
+    Parameters new_params = old_params;
+
+    //get the property names
+    const PropertyName &old_coords = old_map[parameters().coordinates()];
+    const PropertyName &old_chg = old_map[parameters().charge()];
+    const PropertyName &old_lj = old_map[parameters().lj()];
+    const PropertyName &old_scl = old_map[parameters().intraScaleFactors()];
+    
+    const PropertyName &new_coords = new_map[parameters().coordinates()];
+    const PropertyName &new_chg = new_map[parameters().charge()];
+    const PropertyName &new_lj = new_map[parameters().lj()];
+    const PropertyName &new_scl = new_map[parameters().intraScaleFactors()];
+    
+    //get what has changed
+    bool changed_coords = (new_coords != old_coords) or
+                           old_molecule.version(old_coords) !=
+                           new_molecule.version(old_coords);
+                             
+    bool changed_clj = (new_chg != old_chg or new_lj != old_lj) or
+                       ( old_molecule.version(old_chg) !=
+                         new_molecule.version(old_chg) ) or
+                       ( old_molecule.version(old_lj) !=
+                         new_molecule.version(old_lj) );
+
+    bool changed_scl = (new_scl != old_scl) or
+                        old_molecule.version(old_scl) !=
+                        new_molecule.version(old_scl);
+
+    if (changed_coords)
+        new_params.setAtomicCoordinates( AtomicCoords3D(new_molecule, new_coords) );
+
+    if (changed_clj)
+        new_params.setAtomicParameters( getCLJParameters(new_molecule,
+                                                         new_chg, new_lj) );
+
+    if (changed_scl)
+        new_params.setIntraScaleFactors( 
+                        IntraScaledParameters<CLJNBPairs>(new_molecule, new_scl) );
+
+    return new_params;
+}
+
+/** Return the IntraCLJPotential::Molecule representation of 'molecule',
+    using the supplied PropertyMap to find the properties that contain
+    the necessary forcefield parameters
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+IntraCLJPotential::Molecule
+IntraCLJPotential::parameterise(const PartialMolecule &molecule,
+                                const PropertyMap &map)
+{
+    return IntraCLJPotential::Molecule(molecule, *this, map);
+}
+
+/** Concert the passed group of molecules into IntraCLJPotential::Molecules,
+    using the supplied PropertyMap to find the properties that contain
+    the necessary forcefield parameters in each molecule
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+IntraCLJPotential::Molecules 
+IntraCLJPotential::parameterise(const MolGroup &molecules,
+                                const PropertyMap &map)
+{
+    return IntraCLJPotential::Molecules(molecules, *this, map);
+}
+
 /** Return the total charge of the parameters for the group in 'params' */
 double IntraCLJPotential::totalCharge(
                         const IntraCLJPotential::Parameters::Array &params) const
@@ -854,7 +1011,7 @@ void IntraCLJPotential::calculateEnergy(const IntraCLJPotential::Molecule &mol,
     const Parameters::Array *molparams_array 
                             = mol.parameters().atomicParameters().constData();
 
-    const CLJNBPairs &nbpairs = mol.parameters().scaleFactors();
+    const CLJNBPairs &nbpairs = mol.parameters().intraScaleFactors();
     
     double cnrg = 0;
     double ljnrg = 0;
@@ -1062,7 +1219,7 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
     
     const MolForceTable::Array *forces_array = forces.constData();
 
-    const CLJNBPairs &nbpairs = mol.parameters().scaleFactors();
+    const CLJNBPairs &nbpairs = mol.parameters().intraScaleFactors();
     
     //loop over all pairs of CutGroups in the molecule
     for (quint32 igroup=0; igroup<ngroups; ++igroup)

@@ -1049,7 +1049,7 @@ FFMolecules<PTNL>::remove(const PartialMolecule &molecule,
     if (record_changes)
     {
     
-        PartialMolecule old_mol = mols_array[i];
+        typename FFMolecules<PTNL>::Molecule old_mol = mols_array[i];
         
         if (mols_array[i].remove(molecule.selection(), forcefield,
                                  parameter_names.constData()[i]))
@@ -1087,6 +1087,8 @@ FFMolecules<PTNL>::remove(const PartialMolecule &molecule,
                 parameter_names.remove(i);
             }
         }
+        
+        return ChangedMolecule();
     }
 }
 

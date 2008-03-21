@@ -91,7 +91,7 @@ public:
     
     const CoordGroupArray& atomicCoordinates() const;
     
-    void setAtomicCoordinates(const CoordGroupArray &coords);
+    void setAtomicCoordinates(const AtomicCoords3D &other);
     
     bool changedAllGroups(const AtomicCoords3D &params) const;
     
