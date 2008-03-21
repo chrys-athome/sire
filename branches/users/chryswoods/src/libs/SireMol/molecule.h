@@ -215,12 +215,12 @@ public:
                                 const PropertyName &metakey) const;
 
 protected:
-    void setProperty(const PropertyName &key, const Property &value);
+    void setProperty(const QString &key, const Property &value);
     
-    void setMetadata(const PropertyName &metakey,
+    void setMetadata(const QString &metakey,
                      const Property &value);
                      
-    void setMetadata(const PropertyName &key, const PropertyName &metakey,
+    void setMetadata(const QString &key, const QString &metakey,
                      const Property &value);
 };
 

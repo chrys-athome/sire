@@ -576,7 +576,7 @@ const Property& Molecule::metadata(const PropertyName &key,
     
     \throw SireError::incompatible_error
 */
-void Molecule::setProperty(const PropertyName &key, const Property &value)
+void Molecule::setProperty(const QString &key, const Property &value)
 {
     if (value->isA<MolViewProperty>())
         value->asA<MolViewProperty>().assertCompatibleWith(d->info());
@@ -590,8 +590,7 @@ void Molecule::setProperty(const PropertyName &key, const Property &value)
     
     \throw SireError::incompatible_error
 */
-void Molecule::setMetadata(const PropertyName &metakey,
-                           const Property &value)
+void Molecule::setMetadata(const QString &metakey, const Property &value)
 {
     if (value->isA<MolViewProperty>())
         value->asA<MolViewProperty>().assertCompatibleWith(d->info());
@@ -605,7 +604,7 @@ void Molecule::setMetadata(const PropertyName &metakey,
     
     \throw SireError::incompatible_error
 */
-void Molecule::setMetadata(const PropertyName &key, const PropertyName &metakey,
+void Molecule::setMetadata(const QString &key, const QString &metakey,
                            const Property &value)
 {
     if (value->isA<MolViewProperty>())

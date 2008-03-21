@@ -371,7 +371,7 @@ void Atom::assertContainsProperty(const PropertyName &key) const
     if (not this->hasProperty(key))
         throw SireBase::missing_property( QObject::tr(
             "There is no AtomProperty at key '%1' for this atom.")
-                .arg(key), CODELOC );
+                .arg(key.toString()), CODELOC );
 }
 
 /** Assert that this atom has an AtomProperty piece of metadata
@@ -385,7 +385,7 @@ void Atom::assertContainsMetadata(const PropertyName &metakey) const
         throw SireBase::missing_property( QObject::tr(
             "There is no AtomProperty metadata at metakey '%1' for "
             "this atom.")
-                .arg(metakey), CODELOC );
+                .arg(metakey.toString()), CODELOC );
 }
 
 /** Assert that the property at key 'key' has an AtomProperty
@@ -400,7 +400,7 @@ void Atom::assertContainsMetadata(const PropertyName &key,
         throw SireBase::missing_property( QObject::tr(
             "There is no AtomProperty metadata at metakey '%1' "
             "for the property at key '%2' for this atom.")
-                .arg(metakey, key), CODELOC );
+                .arg(metakey.toString(), key.toString()), CODELOC );
 }
 
 bool detail::has_property(const Atom*, const MoleculeData &moldata,

@@ -499,7 +499,7 @@ void Chain::assertContainsProperty(const PropertyName &key) const
     if (not this->hasProperty(key))
         throw SireBase::missing_property( QObject::tr(
             "There is no ChainProperty at key '%1' for this chain.")
-                .arg(key), CODELOC );
+                .arg(key.toString()), CODELOC );
 }
 
 /** Assert that this chain has an ChainProperty piece of metadata
@@ -513,7 +513,7 @@ void Chain::assertContainsMetadata(const PropertyName &metakey) const
         throw SireBase::missing_property( QObject::tr(
             "There is no ChainProperty metadata at metakey '%1' for "
             "this chain.")
-                .arg(metakey), CODELOC );
+                .arg(metakey.toString()), CODELOC );
 }
 
 /** Assert that the property at key 'key' has an ChainProperty
@@ -528,7 +528,7 @@ void Chain::assertContainsMetadata(const PropertyName &key,
         throw SireBase::missing_property( QObject::tr(
             "There is no ChainProperty metadata at metakey '%1' "
             "for the property at key '%2' for this chain.")
-                .arg(metakey, key), CODELOC );
+                .arg(metakey.toString(), key.toString()), CODELOC );
 }
 
 bool detail::has_property(const Chain*, const MoleculeData &moldata,

@@ -34,7 +34,7 @@
 #include "bondid.h"
 #include "angleid.h"
 #include "dihedralid.h"
-#include "improperid.h"˚
+#include "improperid.h"
 
 #include "tostring.h"
 
@@ -403,7 +403,8 @@ void MoverBase::translate(MoleculeData &moldata,
     MoverBase::translate(coords, selected_atoms, delta);
 
     //set the new property
-    moldata.setProperty(coord_property, coords);
+    if (coord_property.hasSource())
+        moldata.setProperty(coord_property.source(), coords);
 }
 
 /** Rotate the selected atoms in the molecule whose data
@@ -433,7 +434,8 @@ void MoverBase::rotate(MoleculeData &moldata,
     MoverBase::rotate(coords, selected_atoms, rotmat, point);
 
     //set the new property
-    moldata.setProperty(coord_property, coords);
+    if (coord_property.hasSource())
+        moldata.setProperty(coord_property.source(), coords);
 }
 
 /** This function maps the selected atoms from their current
@@ -458,7 +460,8 @@ void MoverBase::mapInto(MoleculeData &moldata,
     MoverBase::mapInto(coords, selected_atoms, axes);
 
     //save the new coordinates
-    moldata.setProperty(coord_property, coords);
+    if (coord_property.hasSource())
+        moldata.setProperty(coord_property.source(), coords);
 }
 
 /** This function maps the selected atoms from the frame
@@ -484,7 +487,8 @@ void MoverBase::changeFrame(MoleculeData &moldata,
     MoverBase::changeFrame(coords, selected_atoms, from_frame, to_frame);
 
     //save the new coordinates
-    moldata.setProperty(coord_property, coords);
+    if (coord_property.hasSource())
+        moldata.setProperty(coord_property.source(), coords);
 }
 
 /** Map the atoms we are allowed to move into the passed axes,
@@ -700,7 +704,8 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
         MoverBase::translate(coords, group1, weight1 * unit_vec);
 
     //save the new coordinates
-    moldata.setProperty(coord_property, coords);
+    if (coord_property.hasSource())
+        moldata.setProperty(coord_property.source(), coords);
 }
 
 /** Change the size of the angle identified by 'angle' by 'delta',
@@ -826,7 +831,8 @@ void MoverBase::change(MoleculeData &moldata, const AngleID &angle,
                           Quaternion(weight1*delta, perp), coords1);
 
     //save the new coordinates
-    moldata.setProperty(coord_property, coords);
+    if (coord_property.hasSource())
+        moldata.setProperty(coord_property.source(), coords);
 }
 
 /** Change the size of the dihedral identified by 'dihedra' by 'delta',
@@ -948,7 +954,8 @@ void MoverBase::change(MoleculeData &moldata, const DihedralID &dihedral,
                           Quaternion(weight1*delta, dihvec), coords2);
 
     //save the new coordinates
-    moldata.setProperty(coord_property, coords);
+    if (coord_property.hasSource())
+        moldata.setProperty(coord_property.source(), coords);
 }
 
 /** Change the size of the dihedral identified by 'bond' by 'delta',
@@ -1062,7 +1069,8 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
                           Quaternion(weight1*delta, dihvec), coords1);
 
     //save the new coordinates
-    moldata.setProperty(coord_property, coords);
+    if (coord_property.hasSource())
+        moldata.setProperty(coord_property.source(), coords);
 }
 
 /** Change the size of the improper identified by 'improper' by 'delta',
@@ -1185,7 +1193,8 @@ void MoverBase::change(MoleculeData &moldata, const ImproperID &improper,
                           Quaternion(weight1*delta, impvec), coords1);
 
     //save the new coordinates
-    moldata.setProperty(coord_property, coords);
+    if (coord_property.hasSource())
+        moldata.setProperty(coord_property.source(), coords);
 }
 
 /** Set the length of the bond identified by 'bond' to 'value',

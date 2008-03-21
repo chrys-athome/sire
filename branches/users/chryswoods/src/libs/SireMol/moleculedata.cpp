@@ -317,7 +317,7 @@ quint64 MoleculeData::version(const PropertyName &key) const
     if (key.hasValue())
         return 0;
     else
-        return prop_vrsns.value(key, 0);
+        return prop_vrsns.value(key.source(), 0);
 }
 
 /** Return whether this molecule contains a property at key 'key' */

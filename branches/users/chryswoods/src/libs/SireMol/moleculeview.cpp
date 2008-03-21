@@ -206,7 +206,7 @@ void MoleculeView::assertHasProperty(const PropertyName &key) const
             "does not have a valid property at key \"%3\".")
                 .arg(d->name())
                 .arg(this->what())
-                .arg(key), CODELOC );
+                .arg(key.toString()), CODELOC );
 }
 
 /** Assert that this contains some metadata at metakey 'metakey' 
@@ -221,7 +221,7 @@ void MoleculeView::assertHasMetadata(const PropertyName &metakey) const
             "does not have some valid metadata at metakey \"%3\".")
                 .arg(d->name())
                 .arg(this->what())
-                .arg(metakey), CODELOC );
+                .arg(metakey.toString()), CODELOC );
 }
 
 /** Assert that this contains some metadata at metakey 'metakey' 
@@ -239,5 +239,6 @@ void MoleculeView::assertHasMetadata(const PropertyName &key,
             "for the property at key \"%4\".")
                 .arg(d->name())
                 .arg(this->what())
-                .arg(key), CODELOC );
+                .arg(metakey.toString())
+                .arg(key.toString()), CODELOC );
 }

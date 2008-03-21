@@ -410,7 +410,7 @@ void Segment::assertContainsProperty(const PropertyName &key) const
     if (not this->hasProperty(key))
         throw SireBase::missing_property( QObject::tr(
             "There is no SegProperty at key '%1' for this segment.")
-                .arg(key), CODELOC );
+                .arg(key.toString()), CODELOC );
 }
 
 /** Assert that this segment has an SegProperty piece of metadata
@@ -424,7 +424,7 @@ void Segment::assertContainsMetadata(const PropertyName &metakey) const
         throw SireBase::missing_property( QObject::tr(
             "There is no SegProperty metadata at metakey '%1' for "
             "this segment.")
-                .arg(metakey), CODELOC );
+                .arg(metakey.toString()), CODELOC );
 }
 
 /** Assert that the property at key 'key' has an SegProperty
@@ -433,13 +433,13 @@ void Segment::assertContainsMetadata(const PropertyName &metakey) const
     \throw SireBase::missing_property
 */
 void Segment::assertContainsMetadata(const PropertyName &key,
-                                  const PropertyName &metakey) const
+                                     const PropertyName &metakey) const
 {
     if (not this->hasMetadata(key, metakey))
         throw SireBase::missing_property( QObject::tr(
             "There is no SegProperty metadata at metakey '%1' "
             "for the property at key '%2' for this segment.")
-                .arg(metakey, key), CODELOC );
+                .arg(metakey.toString(), key.toString()), CODELOC );
 }
 
 bool SireMol::detail::has_property(const Segment*, const MoleculeData &moldata,
