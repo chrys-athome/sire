@@ -31,6 +31,10 @@
 
 #include "SireCAS/symbol.h"
 
+#include "SireFF/ffname.h"
+
+#include "SireUnits/dimensions.h"
+
 #include <QLatin1String>
 
 SIRE_BEGIN_HEADER
@@ -38,8 +42,7 @@ SIRE_BEGIN_HEADER
 namespace SireFF
 {
 
-namespace detail
-{
+class TotalComponent;
 
 /** This is the base class of all Symbols that represent forcefield
     components.
@@ -56,19 +59,21 @@ public:
         return "SireFF::FFComponent";
     }
     
-    quint64 UID() const;
+    FFName forceFieldName() const;
 
-    QString name() const;
+    QString componentName() const;
+
+    virtual const FFComponent& total() const=0;
 
 protected:
-    FFComponent(quint64 ffuid, const QLatin1String &name);
+    FFComponent(const FFName &ffname, const QLatin1String &name);
     FFComponent(const SireCAS::Symbol &symbol, const QLatin1String &name);
     
     FFComponent(const FFComponent &other);
     
-    static QString symbolName(quint64 ffuid, const QLatin1String &name)
+    static QString symbolName(const FFName &ffname, const QLatin1String &name)
     {
-        return QString("E^{FF:%1}_{%2}").arg(ffuid).arg(name);
+        return QString("E_{%1}^{%2}").arg(ffname).arg(name);
     }
 };
 
@@ -116,17 +121,25 @@ public:
         return nrg;
     }
     
+    double total() const
+    {
+        return nrg;
+    }
+    
     operator double() const
     {
         return nrg;
+    }
+    
+    operator SireUnits::Dimension::Energy() const
+    {
+        return SireUnits::Dimension::Energy(nrg);
     }
     
 private:
     /** The component of the energy */
     double nrg;
 };
-
-} // end of namespace detail
 
 } // end of namespace SireFF
 

@@ -62,46 +62,6 @@ using namespace SireBase;
 using namespace SireStream;
 
 ///////
-/////// Implementation of CoulombComponent
-///////
-
-/** Constructor */
-CoulombComponent::CoulombComponent(quint64 ffuid)
-                 : FFComponent(ffuid, QLatin1String("coulomb"))
-{}
-
-/** Destructor */
-CoulombComponent::~CoulombComponent()
-{}
-
-///////
-/////// Implementation of LJComponent
-///////
-
-/** Constructor */
-LJComponent::LJComponent(quint64 ffuid)
-            : FFComponent(ffuid, QLatin1String("LJ"))
-{}
-
-/** Destructor */
-LJComponent::~LJComponent()
-{}
-
-///////
-/////// Implementation of CLJComponent
-///////
-
-/** Constructor */
-CLJComponent::CLJComponent(quint64 ffuid)
-             : FFComponent(ffuid, QLatin1String("CLJ")), 
-               coul_component(ffuid), lj_component(ffuid)
-{}
-
-/** Destructor */
-CLJComponent::~CLJComponent()
-{}
-
-///////
 /////// Completely instantiate the CLJPotential ancillary classes
 ///////
 

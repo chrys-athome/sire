@@ -394,7 +394,8 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
     
     SharedDataStream sds(ds);
     
-    sds << molinfo.atoms_by_index
+    sds << molinfo.uid
+        << molinfo.atoms_by_index
         << molinfo.res_by_index << molinfo.chains_by_index
         << molinfo.seg_by_index << molinfo.cg_by_index;
         
@@ -533,18 +534,6 @@ void MoleculeInfoData::rebuildNameAndNumberIndexes()
         cg_by_name.squeeze();
 }
 
-static quint64 last_molinfo_uid = 0;
-static QMutex molinfo_uid_mutex;
-
-/** Return a new, unique ID number for a MoleculeInfoData */
-static quint64 getNewMolInfoUID()
-{
-    QMutexLocker lkr(&molinfo_uid_mutex);
-    ++last_molinfo_uid;
-    
-    return last_molinfo_uid;
-}
-
 /** Extract from a binary datastream */
 QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
                                        MoleculeInfoData &molinfo)
@@ -555,15 +544,13 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     {
         SharedDataStream sds(ds);
         
-        sds >> molinfo.atoms_by_index
+        sds >> molinfo.uid
+            >> molinfo.atoms_by_index
             >> molinfo.res_by_index >> molinfo.chains_by_index
             >> molinfo.seg_by_index >> molinfo.cg_by_index;
             
         //reconstruct the name and number indexes
         molinfo.rebuildNameAndNumberIndexes();
-            
-        //finally get a new UID for this molinfo
-        molinfo.uid = getNewMolInfoUID();
     }
     else
         throw version_error( v, "1", r_molinfo, CODELOC );
@@ -572,7 +559,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-MoleculeInfoData::MoleculeInfoData() : QSharedData(), uid(0)
+MoleculeInfoData::MoleculeInfoData() : QSharedData()
 {}
     
 /** Construct from the passed StructureEditor */
@@ -787,7 +774,7 @@ MoleculeInfoData::MoleculeInfoData(const StructureEditor &editor)
     this->rebuildNameAndNumberIndexes();
     
     //... and of course get a UID for this layout
-    uid = getNewMolInfoUID();
+    uid = QUuid::createUuid();
 }
     
 /** Copy constructor */
@@ -1009,7 +996,7 @@ bool MoleculeInfoData::operator!=(const MoleculeInfoData &other) const
 }
 
 /** Return the unique ID number for this molecule layout */
-quint64 MoleculeInfoData::UID() const
+const QUuid& MoleculeInfoData::UID() const
 {
     return uid;
 }
@@ -1139,7 +1126,7 @@ MoleculeInfoData MoleculeInfoData::rename(AtomIdx atomidx,
     atom.name = newname;
     
     //ok, we must now get a new uid for this info object
-    newinfo.uid = getNewMolInfoUID();
+    newinfo.uid = QUuid::createUuid();
     
     return newinfo;
 }
@@ -1168,7 +1155,7 @@ MoleculeInfoData MoleculeInfoData::renumber(AtomIdx atomidx,
     
     atom.number = newnum;
     
-    newinfo.uid = getNewMolInfoUID();
+    newinfo.uid = QUuid::createUuid();
     
     return newinfo;
 }
@@ -1198,7 +1185,7 @@ MoleculeInfoData MoleculeInfoData::rename(ResIdx residx,
     residue.name = newname;
     
     //update the fingerprint
-    newinfo.uid = getNewMolInfoUID();
+    newinfo.uid = QUuid::createUuid();
     
     return newinfo;
 }
@@ -1227,7 +1214,7 @@ MoleculeInfoData MoleculeInfoData::renumber(ResIdx residx,
         
     residue.number = newnum;
     
-    newinfo.uid = getNewMolInfoUID();
+    newinfo.uid = QUuid::createUuid();
     
     return newinfo;
 }
@@ -1256,7 +1243,7 @@ MoleculeInfoData MoleculeInfoData::rename(CGIdx cgidx,
         
     cgroup.name = newname;
     
-    newinfo.uid = getNewMolInfoUID();
+    newinfo.uid = QUuid::createUuid();
     
     return newinfo;
 }
@@ -1285,7 +1272,7 @@ MoleculeInfoData MoleculeInfoData::rename(ChainIdx chainidx,
         
     chain.name = newname;
     
-    newinfo.uid = getNewMolInfoUID();
+    newinfo.uid = QUuid::createUuid();
     
     return newinfo;
 }
@@ -1314,7 +1301,7 @@ MoleculeInfoData MoleculeInfoData::rename(SegIdx segidx,
         
     segment.name = newname;
     
-    newinfo.uid = getNewMolInfoUID();
+    newinfo.uid = QUuid::createUuid();
     
     return newinfo;
 }

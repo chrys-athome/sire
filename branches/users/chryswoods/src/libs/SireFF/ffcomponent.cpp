@@ -33,18 +33,14 @@
 #include <QRegExp>
 
 using namespace SireFF;
-using namespace SireFF::detail;
 
 using namespace SireCAS;
 
-static QRegExp uid_regexp( "E_\\{FF:(\\d+)\\}" );
-static QRegExp name_regexp( "E_{FF:\\d+}\\^\\{(.+)\\}" );
-
-static QRegExp all_regexp( "E_\\{FF:(\\d+)\\}\\^\\{(._)\\}" );
+static QRegExp name_regexp( "E\\^\\{(.+)\\}\\_\\{(.+)\\}" );
 
 /** Constructor */
-FFComponent::FFComponent(quint64 ffuid, const QLatin1String &name)
-            : Symbol( FFComponent::symbolName(ffuid, name) )
+FFComponent::FFComponent(const FFName &ffname, const QLatin1String &name)
+            : Symbol( FFComponent::symbolName(ffname, name) )
 {}
 
 /** Construct from a passed symbol 
@@ -54,26 +50,17 @@ FFComponent::FFComponent(quint64 ffuid, const QLatin1String &name)
 FFComponent::FFComponent(const Symbol &symbol, const QLatin1String &name)
             : Symbol(symbol)
 {
-    QRegExp local_copy = all_regexp;
+    QRegExp local_copy = name_regexp;
     
     if (local_copy.indexIn( Symbol::toString() ) == -1)
         //we could not interpret the symbol
         throw SireError::incompatible_error( QObject::tr(
             "The symbol \"%1\" is not a valid FFComponent symbol. "
-            "FFComponent symbols have the form E_{FF:<UID>}^{<NAME>} "
-            "where <UID> is the UID of the potential energy function "
-            "and <NAME> is the name of the component on that surface. ")
+            "FFComponent symbols have the form E^{<FF_NAME>}^{<COMPONENT_NAME>} "
+            "where <FF_NAME> is the name of the forcefield that contains this "
+            "component and <COMPONENT_NAME> is the name of the component itself.")
                 .arg(symbol.toString()), CODELOC );
-                
-    bool ok;
-    local_copy.cap(1).toULong(&ok);
-    
-    if (not ok)
-        throw SireError::incompatible_error( QObject::tr(
-            "Could not interpret the UID of the potential energy "
-            "surface from \"%1\" (from the symbol \"%2\")")
-                .arg(local_copy.cap(1), symbol.toString()), CODELOC );
-                
+                                
     if (name != local_copy.cap(2))
         throw SireError::incompatible_error( QObject::tr(
             "The symbol \"%1\" is for the wrong component! (%2). "
@@ -91,11 +78,10 @@ FFComponent::FFComponent(const FFComponent &other)
 FFComponent::~FFComponent()
 {}
 
-/** Return the unique ID of the potential energy surface
-    to which this component belongs */
-quint64 FFComponent::UID() const
+/** Return the name of the forcefield that owns this component */
+FFName FFComponent::forceFieldName() const
 {
-    QRegExp local_copy = uid_regexp;
+    QRegExp local_copy = name_regexp;
     
     if (local_copy.indexIn( Symbol::toString() ) == -1)
         //we could not interpret the name!
@@ -103,12 +89,12 @@ quint64 FFComponent::UID() const
             "Could not interpret this symbol (%1) as an FFComponent.")
                 .arg(Symbol::toString()), CODELOC );
                 
-    return local_copy.cap(1).toULong();
+    return FFName( local_copy.cap(1) );
 }
 
 /** Return the name of the component of the potential energy
     surface that this symbol represents */
-QString FFComponent::name() const
+QString FFComponent::componentName() const
 {
     QRegExp local_copy = name_regexp;
     

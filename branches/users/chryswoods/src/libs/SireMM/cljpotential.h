@@ -324,7 +324,7 @@ friend QDataStream& ::operator>>(QDataStream&, InterCLJPotential&);
 
 public:
 
-    typedef detail::CLJEnergy Energy;
+    typedef CLJEnergy Energy;
     typedef Energy::Components Components;
 
     typedef detail::CLJParameterNames3D ParameterNames;
@@ -459,7 +459,7 @@ friend QDataStream& ::operator<<(QDataStream&, const IntraCLJPotential&);
 friend QDataStream& ::operator>>(QDataStream&, IntraCLJPotential&);
 
 public:
-    typedef detail::CLJEnergy Energy;
+    typedef CLJEnergy Energy;
     typedef Energy::Components Components;
     
     typedef detail::ScaledCLJParameterNames3D ParameterNames;

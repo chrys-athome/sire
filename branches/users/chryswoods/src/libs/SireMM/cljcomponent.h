@@ -36,14 +36,13 @@ SIRE_BEGIN_HEADER
 namespace SireMM
 {
 
-namespace detail
-{
+using SireFF::FFName;
 
 /** This class represents a Coulomb component of a forcefield */
-class SIREMM_EXPORT CoulombComponent : public SireFF::detail::FFComponent
+class SIREMM_EXPORT CoulombComponent : public SireFF::FFComponent
 {
 public:
-    CoulombComponent(quint64 ffuid = 0);
+    CoulombComponent(const FFName &ffname = FFName());
     CoulombComponent(const SireCAS::Symbol &symbol);
     
     CoulombComponent(const CoulombComponent &other);
@@ -72,10 +71,10 @@ public:
 };
 
 /** This class represents a LJ component of a forcefield */
-class SIREMM_EXPORT LJComponent : public SireFF::detail::FFComponent
+class SIREMM_EXPORT LJComponent : public SireFF::FFComponent
 {
 public:
-    LJComponent(quint64 ffuid = 0);
+    LJComponent(const FFName &ffname = FFName());
     LJComponent(const SireCAS::Symbol &symbol);
     
     LJComponent(const LJComponent &other);
@@ -105,10 +104,10 @@ public:
 
 /** This class represents the sum of the coulomb and LJ components
     of the forcefield */
-class SIREMM_EXPORT CLJComponent : public SireFF::detail::FFComponent
+class SIREMM_EXPORT CLJComponent : public SireFF::FFComponent
 {
 public:
-    CLJComponent(quint64 ffuid = 0);
+    CLJComponent(const FFName &name = FFName());
     CLJComponent(const SireCAS::Symbol &symbol);
     
     CLJComponent(const CLJComponent &other);
@@ -123,6 +122,11 @@ public:
     const LJComponent& lj() const
     {
         return lj_component;
+    }
+    
+    const CLJComponent& total() const
+    {
+        return *this;
     }
     
     static const char* typeName()
@@ -140,11 +144,6 @@ public:
         return new CLJComponent(*this);
     }
 
-    const CLJComponent& total() const
-    {
-        return *this;
-    }
-
 protected:
     /** The coulomb component */
     CoulombComponent coul_component;
@@ -153,8 +152,8 @@ protected:
     LJComponent lj_component;
 };
 
-typedef SireFF::detail::ComponentEnergy<CoulombComponent> CoulombEnergy;
-typedef SireFF::detail::ComponentEnergy<LJComponent> LJEnergy;
+typedef SireFF::ComponentEnergy<CoulombComponent> CoulombEnergy;
+typedef SireFF::ComponentEnergy<LJComponent> LJEnergy;
 
 /** This class holds the coulomb and Lennard-Jones (LJ) components
     of the energy.
@@ -227,10 +226,20 @@ public:
         return iljnrg;
     }
     
+    double total() const
+    {
+        return icnrg + iljnrg;
+    }
+    
     operator double() const
     {
         //return the total energy
         return icnrg + iljnrg;
+    }
+    
+    operator SireUnits::Dimension::Energy() const
+    {
+        return SireUnits::Dimension::Energy(icnrg + iljnrg);
     }
     
     operator CoulombEnergy() const
@@ -247,8 +256,6 @@ private:
     /** The coulomb and LJ components of the energy */
     double icnrg, iljnrg;
 };
-
-} // end of namespace detail
 
 } // end of namespace SireMM
 

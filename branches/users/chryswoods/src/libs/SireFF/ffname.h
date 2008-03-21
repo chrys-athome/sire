@@ -26,3 +26,90 @@
   *
 \*********************************************/
 
+#ifndef SIREFF_FFNAME_H
+#define SIREFF_FFNAME_H
+
+#include "SireID/name.h"
+
+#include "ffid.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireFF
+{
+
+/** This class holds the name of a forcefield
+    
+    @author Christopher Woods
+*/
+class SIREFF_EXPORT FFName : public SireID::Name, public FFID
+{
+
+public:
+    FFName();
+    explicit FFName(const QString &name);
+    
+    FFName(const FFName &other);
+    
+    ~FFName();
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<FFName>() );
+    }
+    
+    const char* what() const
+    {
+        return FFName::typeName();
+    }
+    
+    FFName* clone() const
+    {
+        return new FFName(*this);
+    }
+    
+    bool isNull() const
+    {
+        return SireID::Name::isNull();
+    }
+    
+    uint hash() const
+    {
+        return qHash(_name);
+    }
+    
+    QString toString() const
+    {
+        return QString("FFName('%1')").arg(_name);
+    }
+    
+    FFName& operator=(const FFName &other)
+    {
+        SireID::Name::operator=(other);
+        FFID::operator=(other);
+        return *this;
+    }
+    
+    bool operator==(const SireID::ID &other) const
+    {
+        return SireID::ID::compare<FFName>(*this, other);
+    }
+    
+    bool operator==(const FFName &other) const
+    {
+        return _name == other._name;
+    }
+    
+    bool operator!=(const FFName &other) const
+    {
+        return _name != other._name;
+    }
+};
+
+}
+
+Q_DECLARE_METATYPE(SireFF::FFName);
+
+SIRE_END_HEADER
+
+#endif

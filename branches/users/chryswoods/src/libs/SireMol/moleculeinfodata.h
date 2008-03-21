@@ -34,6 +34,7 @@
 #include <QVector>
 #include <QMultiHash>
 #include <QSet>
+#include <QUuid>
 
 #include "molinfo.h"
 
@@ -140,7 +141,7 @@ public:
     bool operator==(const MoleculeInfoData &other) const;
     bool operator!=(const MoleculeInfoData &other) const;
     
-    quint64 UID() const;
+    const QUuid& UID() const;
     
     const ChainName& name(const ChainID &chainid) const;
     const ChainName& name(ChainIdx chainidx) const;
@@ -337,9 +338,9 @@ private:
     
     QVector<CGAtomIdx> _pvt_cgAtomIdxs(const QList<AtomIdx> &atomidxs) const;
 
-    /** The unique ID number that identifies this particular
+    /** The unique ID that identifies this particular
         molecule layout. */
-    quint64 uid;
+    QUuid uid;
 
     /** All of the atoms in the molecule, in the order they were
         added to the molecule */

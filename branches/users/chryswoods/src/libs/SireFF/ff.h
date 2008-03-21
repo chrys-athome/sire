@@ -29,11 +29,18 @@
 #ifndef SireFF_FF_H
 #define SireFF_FF_H
 
+#include <QUuid>
+
+#include <boost/shared_ptr.hpp>
+
 #include "ffname.h"
-#include "ffnum.h"
+#include "ffcomponent.h"
+
+#include "SireBase/incremint.h"
 
 #include "SireMol/molgroups.h"
 #include "SireBase/properties.h"
+#include "SireCAS/values.h"
 
 SIRE_BEGIN_HEADER
 
@@ -47,6 +54,19 @@ QDataStream& operator>>(QDataStream&, SireFF::FF&);
 
 namespace SireFF
 {
+
+using SireBase::Properties;
+using SireBase::Property;
+using SireBase::PropertyMap;
+
+using SireCAS::Symbol;
+using SireCAS::Values;
+
+using SireMol::MoleculeView;
+using SireMol::ViewsOfMol;
+using SireMol::Molecules;
+using SireMol::MolGroup;
+using SireMol::MGID;
 
 /** This class is the base class of all of the forcefield classes. 
     A forcefield is a collection of molecule groups (SireMol::MolGroups) 
@@ -81,58 +101,16 @@ namespace SireFF
     FF3D - interface for all 3-dimensional forcefields
            (can be used to calculate forces in 3D space)
     
-    template<class Pot2B>
-    Inter2BFF : public G1FF, protected Pot2B
-    
-    template<class Pot2B3D>
-    Inter2B3DFF : public Inter2BFF<Pot2B3D>, public FF3D
-    
-    InterCLJFF : public Inter2B3DFF< Potential2B3D<CLJTerms> >
-    
-    template<class Pot2B>
-    Intra2BFF : public G1FF, protected Pot2B
-    
-    template<class Pot2B3D>
-    Intra2B3DFF : public Intra2BFF<Pot2B3D>, public FF3D
-    
-    IntraCLJFF : public Intra2BodyFF< TwoBodyPotential<CLJTerms> >
-    
-    template<class Pot2B>
-    Inter2G2BFF : public G2FF, protected Pot2B
-    
-    template<class Pot2B3D>
-    Inter2G2B3DFF : public Inter2G2BFF<Pot2B3D>, public FF3D
-    
-    InterGroupCLJFF : Inter2G2B3DFF< Potential2B3D<CLJTerms> >
-    
-    BondFF : public G1FF, public FF3D
-    AngleFF : public G1FF, public FF3D
-    DihedralFF : public G1FF, public FF3D
-    
-    Bond2DFF : public G1FF, public FF2D
-    Angle2DFF : public G1FF, public FF2D
-    Dihedral2DFF : public G1FF, public FF2D
-    
-    MultiFF : public FF
-      - this is a FF that can hold multiple groups - it also
-      - does its best to shared underlying MoleculeGroups...
-    
-    AmberFF : public MultiFF
-      - contains InterCLJFF, IntraCLJFF, BondFF, 
-                 AngleFF, DihedralFF in an array?
-                  - has array of pointers for MultiFF?
-
-    Amber2DFF : public MultiFF
-      - contains InterCLJ2DFF, IntraCLJ2DFF, Bond2DFF,
-                 Angle2DFF, Dihedral2DFF
+    InterCLJFF  == Inter2B3DG1FF<InterCLJPotential>
+    IntraCLJFF  == Intra2B3DG1FF<IntraCLJPotential>
 
     @author Christopher Woods
 */
 class SIREFF_EXPORT FF : public SireMol::MolGroupsBase
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const FFBase&);
-friend QDataStream& ::operator>>(QDataStream&, FFBase&);
+friend QDataStream& ::operator<<(QDataStream&, const FF&);
+friend QDataStream& ::operator>>(QDataStream&, FF&);
 
 public:
     virtual ~FF();
@@ -142,21 +120,27 @@ public:
         return "SireFF::FF";
     }
 
+    bool operator==(const FF &other) const;
+    bool operator!=(const FF &other) const;
+
     /** Return the class name of the forcefield */
     virtual const char* what() const=0;
 
     /** Return a clone of this forcefield */
     virtual FF* clone() const=0;
 
+    /** Return an object that describes all of the components
+        of this forcefield (complete with SireCAS::Symbols to 
+        uniquely ID each component) */
+    virtual const FFComponent& components() const=0;
+
     virtual QString toString() const;
 
-    const FFName& name() const;
-    void setName(const QString &name);
+    const QUuid& UID() const;
+    quint64 version() const;
 
-    FFNum number() const;
-    
-    quint64 majorVersion() const;
-    quint64 minorVersion() const;
+    const FFName& name() const;
+    void setName(const FFName &name);
 
     SireUnits::Dimension::Energy energy();
     SireUnits::Dimension::Energy energy(const Symbol &component);
@@ -164,23 +148,130 @@ public:
     Values energies(const QSet<Symbol> &components);
     Values energies();
 
-    bool setProperty(const QString &name, const Property &value);
+    /** Set the property with name 'name' to have the value 'value'
+    
+        \throw SireBase::missing_property
+        \throw SireError::invalid_cast
+        \throw SireError::incompatible_error
+    */
+    virtual bool setProperty(const QString &name, const Property &value)=0;
+    
+    /** Return the property that has the name 'name'
+    
+        \throw SireBase::missing_property
+    */
+    virtual const Property& property(const QString &name) const=0;
 
-    Property getProperty(const QString &name) const;
+    /** Return whether or not this forcefield contains a property
+        called 'name' */
+    virtual bool containsProperty(const QString &name) const=0;
 
-    bool containsProperty(const QString &name) const;
-
-    const Properties& properties() const;
+    /** Return the values of all of the properties of this forcefield */
+    virtual const Properties& properties() const=0;
 
     /** Tell the forcefield that it has to recalculate everything from
         scratch */
     virtual void mustNowRecalculateFromScratch()=0;
 
-    bool isDirty() const;
-    bool isClean() const;
+    /** Add the passed view of the molecule to the molecule groups 
+        identified by 'mgid' using the passed PropertyMap to find
+        the parameters of this molecule in this forcefield
+        
+        \throw SireBase::missing_property
+        \throw SireError::invalid_cast
+        \throw SireError::incompatible_error
+    */
+    virtual void add(const MoleculeView &molview, const MGID &mgid,
+                     const PropertyMap &map)=0;
 
-    ForceFieldID ID() const;
-    const Version& version() const;
+    /** Add the passed views of the molecule to the molecule groups 
+        identified by 'mgid' using the passed PropertyMap to find
+        the parameters of this molecule in this forcefield
+        
+        \throw SireBase::missing_property
+        \throw SireError::invalid_cast
+        \throw SireError::incompatible_error
+    */
+    virtual void add(const ViewsOfMol &molviews, const MGID &mgid,
+                     const PropertyMap &map)=0;
+                     
+    /** Add the passed molecules to the molecule groups 
+        identified by 'mgid' using the passed PropertyMap to find
+        the parameters of this molecule in this forcefield
+        
+        \throw SireBase::missing_property
+        \throw SireError::invalid_cast
+        \throw SireError::incompatible_error
+    */
+    virtual void add(const Molecules &molecules, const MGID &mgid,
+                     const PropertyMap &map)=0;
+                     
+    /** Add the molecules in the passed MolGroup to the molecule groups 
+        identified by 'mgid' using the passed PropertyMap to find
+        the parameters of this molecule in this forcefield
+        
+        \throw SireBase::missing_property
+        \throw SireError::invalid_cast
+        \throw SireError::incompatible_error
+    */
+    virtual void add(const MolGroup &molgroup, const MGID &mgid,
+                     const PropertyMap &map)=0;
+    
+    /** Add the passed view of the molecule to the molecule groups 
+        identified by 'mgid' using the passed PropertyMap to find
+        the parameters of this molecule in this forcefield.
+        
+        Only add this view to groups that don't already contain
+        this view (the whole view, not part of it)
+        
+        \throw SireBase::missing_property
+        \throw SireError::invalid_cast
+        \throw SireError::incompatible_error
+    */
+    virtual void addIfUnique(const MoleculeView &molview, const MGID &mgid,
+                             const PropertyMap &map)=0;
+                             
+    /** Add the passed views of the molecule to the molecule groups 
+        identified by 'mgid' using the passed PropertyMap to find
+        the parameters of this molecule in this forcefield.
+        
+        Only add views to groups that don't already contain
+        them (the whole view, not part of it, and can add some views)
+        
+        \throw SireBase::missing_property
+        \throw SireError::invalid_cast
+        \throw SireError::incompatible_error
+    */
+    virtual void addIfUnique(const ViewsOfMol &molviews, const MGID &mgid,
+                             const PropertyMap &map)=0;
+                             
+    /** Add the passed molecules to the molecule groups 
+        identified by 'mgid' using the passed PropertyMap to find
+        the parameters of this molecule in this forcefield.
+        
+        Only add the views of molecules to groups that don't already contain
+        them (the whole view, not part of it)
+        
+        \throw SireBase::missing_property
+        \throw SireError::invalid_cast
+        \throw SireError::incompatible_error
+    */
+    virtual void addIfUnique(const Molecules &molecules, const MGID &mgid,
+                             const PropertyMap &map)=0;
+                             
+    /** Add the molecules in the passed MolGroup to the molecule groups 
+        identified by 'mgid' using the passed PropertyMap to find
+        the parameters of this molecule in this forcefield.
+        
+        Only add the views of molecules to groups that don't already contain
+        them (the whole view, not part of it)
+        
+        \throw SireBase::missing_property
+        \throw SireError::invalid_cast
+        \throw SireError::incompatible_error
+    */
+    virtual void addIfUnique(const MolGroup &molgroup, const MGID &mgid,
+                             const PropertyMap &map)=0;
 
     void add(const MoleculeView &molview, const MGID &mgid);
     void add(const ViewsOfMol &molviews, const MGID &mgid);
@@ -192,27 +283,10 @@ public:
     void addIfUnique(const Molecules &molecules, const MGID &mgid);
     void addIfUnique(const MolGroup &molgroup, const MGID &mgid);
 
-    virtual void add(const MoleculeView &molview, 
-                     const MGID &mgid, const ParameterMap &map)=0;
-    virtual void add(const ViewOfMol &molviews, 
-                     const MGID &mgid, const ParameterMap &map)=0;
-    virtual void add(const Molecules &molecules, 
-                     const MGID &mgid, const ParameterMap &map)=0;
-    virtual void add(const MolGroup &molgroup, 
-                     const MGID &mgid, const ParameterMap &map)=0;
-    
-    virtual void addIfUnique(const MoleculeView &molview, 
-                             const MGID &mgid, const ParameterMap &map)=0;
-    virtual void addIfUnique(const ViewOfMol &molviews, 
-                             const MGID &mgid, const ParameterMap &map)=0;
-    virtual void addIfUnique(const Molecules &molecules, 
-                             const MGID &mgid, const ParameterMap &map)=0;
-    virtual void addIfUnique(const MolGroup &molgroup, 
-                             const MGID &mgid, const ParameterMap &map)=0;
+    bool isDirty() const;
+    bool isClean() const;
 
 protected:
-    class Molecule;
-
     FF();
     FF(const QString &name);
 
@@ -222,6 +296,8 @@ protected:
 
     void setComponent(const Symbol &component, double nrg);
     void changeComponent(const Symbol &component, double delta);
+
+    void incrementVersion();
 
     void setDirty();
     void setClean();
@@ -233,16 +309,25 @@ protected:
     virtual void recalculateEnergy()=0;
 
 private:
+    /** The unique ID for this forcefield - this uniquely identifies
+        this forcefield */
+    QUuid uid;
+    
+    /** The version number of this forcefield - this is incremented every
+        time this forcefield is changed. The combination of the uid and 
+        version number is guaranteed to be unique, so that if two
+        forcefields have the same uid and version number, then they
+        are guaranteed to be identical (although there will be rollover
+        in the version number after about 2^63 moves on 64 bit 
+        machines, or 2^31 moves on 32 bit machines) */
+    quint64 versn;
+
+    /** Pointer to the incremint used to increment the version for
+        this forcefield */
+    boost::shared_ptr<SireBase::Incremint> version_ptr;
+
     /** The name of this forcefield */
     FFName ffname;
-
-    /** The number of this forcefield - this is a unique number
-        used to provide a unique ID to all of the symbols in 
-        this forcefield */
-    FFNum ffnum;
-
-    /** The values of all of the properties of this forcefield */
-    Properties props;
 
     /** All of the cached energy components in this forcefield, indexed
         by their symbol ID number (includes the total energy) */
@@ -253,7 +338,7 @@ private:
 };
 
 /** Set the energy value of the component 'comp' */
-inline void FFBase::setComponent(const Symbol &component, double nrg)
+inline void FF::setComponent(const Symbol &component, double nrg)
 {
     nrg_components.set(component,nrg);
 }
@@ -278,13 +363,19 @@ inline bool FF::isClean() const
     return not isDirty();
 }
 
+/** Record that this forcefield is now clean (has calculated the 
+    energy of the current state) */
+inline void FF::setClean()
+{
+    isdirty = false;
 }
 
-QDataStream& operator<<(QDataStream&, const SireFF::FF::Molecule&);
-QDataStream& operator>>(QDataStream&, SireFF::FF::Molecule&);
-
-namespace SireFF
+/** Record that this forcefield is dirty (the energy of the 
+    current state is unknown) */
+inline void FF::setDirty()
 {
+    isdirty = true;
+}
 
 }
 

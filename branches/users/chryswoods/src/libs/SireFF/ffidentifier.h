@@ -26,3 +26,71 @@
   *
 \*********************************************/
 
+#ifndef SIREFF_FFIDENTIFIER_H
+#define SIREFF_FFIDENTIFIER_H
+
+#include "ffid.h"
+
+#include <boost/shared_ptr.hpp>
+
+namespace SireFF
+{
+
+/** This is a generic holder for any FFID class! 
+
+    @author Christopher Woods
+*/
+class FFIdentifier : public FFID
+{
+public:
+    FFIdentifier();
+    FFIdentifier(const FFID &ffid);
+    FFIdentifier(const FFIdentifier &other);
+    
+    ~FFIdentifier();
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<FFIdentifier>() );
+    }
+    
+    const char* what() const
+    {
+        return FFIdentifier::typeName();
+    }
+    
+    FFIdentifier* clone() const
+    {
+        return new FFIdentifier(*this);
+    }
+    
+    bool isNull() const;
+    
+    uint hash() const;
+                
+    QString toString() const;
+    
+    const FFID& base() const;
+    
+    FFIdentifier& operator=(const FFIdentifier &other);
+    FFIdentifier& operator=(const FFID &other);
+    
+    bool operator==(const SireID::ID &other) const;
+    using SireID::ID::operator!=;
+   
+    bool operator==(const FFIdentifier &other) const;
+    bool operator!=(const FFIdentifier &other) const;
+    
+    bool operator==(const FFID &other) const;
+    bool operator!=(const FFID &other) const;
+
+private:
+    /** Pointer to the FFID */
+    boost::shared_ptr<FFID> d;
+};
+
+}
+
+Q_DECLARE_METATYPE(SireFF::FFIdentifier);
+
+#endif

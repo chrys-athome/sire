@@ -29,10 +29,7 @@
 #include "cljcomponent.h"
 
 using namespace SireMM;
-using namespace SireMM::detail;
-
 using namespace SireFF;
-using namespace SireFF::detail;
 
 using namespace SireCAS;
 
@@ -41,8 +38,8 @@ using namespace SireCAS;
 //////
 
 /** Constructor */
-CoulombComponent::CoulombComponent(quint64 ffuid)
-                 : FFComponent(ffuid, QLatin1String("coulomb"))
+CoulombComponent::CoulombComponent(const FFName &ffname)
+                 : FFComponent(ffname, QLatin1String("coulomb"))
 {}
 
 /** Construct from a symbol
@@ -67,8 +64,8 @@ CoulombComponent::~CoulombComponent()
 //////
 
 /** Constructor */
-LJComponent::LJComponent(quint64 ffuid)
-            : FFComponent(ffuid, QLatin1String("LJ"))
+LJComponent::LJComponent(const FFName &ffname)
+            : FFComponent(ffname, QLatin1String("LJ"))
 {}
 
 /** Construct from a symbol
@@ -93,9 +90,9 @@ LJComponent::~LJComponent()
 //////
 
 /** Constructor */
-CLJComponent::CLJComponent(quint64 ffuid)
-            : FFComponent(ffuid, QLatin1String("CLJ")),
-               coul_component(ffuid), lj_component(ffuid)
+CLJComponent::CLJComponent(const FFName &ffname)
+            : FFComponent(ffname, QLatin1String("CLJ")),
+               coul_component(ffname), lj_component(ffname)
 {}
 
 /** Construct from a symbol
@@ -105,8 +102,8 @@ CLJComponent::CLJComponent(quint64 ffuid)
 CLJComponent::CLJComponent(const SireCAS::Symbol &symbol)
             : FFComponent(symbol, QLatin1String("CLJ"))
 {
-    coul_component = CoulombComponent( this->UID() );
-    lj_component = LJComponent( this->UID() );
+    coul_component = CoulombComponent( this->forceFieldName() );
+    lj_component = LJComponent( this->forceFieldName() );
 }
 
 /** Copy constructor */  

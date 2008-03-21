@@ -26,3 +26,53 @@
   *
 \*********************************************/
 
+#include "ffid.h"
+#include "ffidx.h"
+#include "ffname.h"
+
+using namespace SireFF;
+
+///////
+/////// Implementation of FFID
+///////
+
+FFID::FFID() : SireID::ID()
+{}
+
+FFID::FFID(const FFID &other) : SireID::ID(other)
+{}
+
+FFID::~FFID()
+{}
+
+///////
+/////// Implementation of FFIdx
+///////
+
+FFIdx::FFIdx() : SireID::Index_T_<FFIdx>(), FFID()
+{}
+
+FFIdx::FFIdx(qint32 idx) : SireID::Index_T_<FFIdx>(idx), FFID()
+{}
+
+FFIdx::FFIdx(const FFIdx &other) : SireID::Index_T_<FFIdx>(other), FFID(other)
+{}
+
+FFIdx::~FFIdx()
+{}
+
+///////
+/////// Implementation of FFName
+///////
+
+FFName::FFName() : SireID::Name(), FFID()
+{}
+
+FFName::FFName(const QString &name) : SireID::Name(name), FFID()
+{}
+
+FFName::FFName(const FFName &other) : SireID::Name(other), FFID(other)
+{}
+
+FFName::~FFName()
+{}

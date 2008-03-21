@@ -26,41 +26,44 @@
   *
 \*********************************************/
 
-#ifndef SIREFF_FORCEFIELDID_H
-#define SIREFF_FORCEFIELDID_H
+#ifndef SIREFF_FFID_H
+#define SIREFF_FFID_H
 
-#include "SireMol/id.h"
+#include "SireID/id.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireFF
 {
 
-/** This ID number is used to identify a ForceField.
+class FFIdx;
+class FFIdentifier;
+class FFName;
+
+/** The base class of all ForceField identifiers
 
     @author Christopher Woods
 */
-class SIREFF_EXPORT ForceFieldID : public SireMol::IDBase
+class SIREFF_EXPORT FFID : public SireID::ID
 {
-
 public:
-    ForceFieldID() : IDBase()
-    {}
+    typedef FFIdx Index;
+    typedef FFIdentifier Identifier;
 
-    ForceFieldID(quint32 id) : IDBase(id)
-    {}
+    FFID();
+    FFID(const FFID &other);
 
-    ForceFieldID(const ForceFieldID &other) : IDBase(other)
-    {}
-
-    ~ForceFieldID()
-    {}
+    virtual ~FFID();
+    
+    static const char* typeName()
+    {
+        return "SireFF::FFID";
+    }
+    
+    virtual FFID* clone() const;
 };
 
 }
-
-/** This is a movable type */
-Q_DECLARE_TYPEINFO(SireFF::ForceFieldID, Q_MOVABLE_TYPE);
 
 SIRE_END_HEADER
 
