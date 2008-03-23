@@ -120,6 +120,8 @@ public:
     
     int nCutGroups() const;
     
+    CGIdx cgIdx(quint32 i) const;
+    
     const PartialMolecule& molecule() const;
 
     MolNum number() const;
@@ -138,6 +140,10 @@ protected:
 private:
     /** Copy of the view that this object represents */
     PartialMolecule mol;
+    
+    /** List of the CutGroups that are selected as part of this 
+        molecule, in the order that they appear */
+    QList<CGIdx> idx_to_cgidx;
 };
 
 /** This is the forcefield specific part of the FFMolecule class

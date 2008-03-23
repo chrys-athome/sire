@@ -26,3 +26,47 @@
   *
 \*********************************************/
 
+#ifndef SIREFF_FF3D_H
+#define SIREFF_FF3D_H
+
+#include "forcetable.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireFF
+{
+
+/** This class provides the virtual interface for the 3D
+    forcefields. These are forcefields that use 3D coordinates
+    for the atoms, and therefore you can calculate 3D forces 
+    on the atoms. This class provides a virtual interface,
+    and should be multiply inherited with FF to be used.
+    
+    @author Christopher Woods
+*/
+class SIREFF_EXPORT FF3D
+{
+public:
+    FF3D();
+    FF3D(const FF3D &other);
+    
+    virtual ~FF3D();
+    
+    /** Calculate all of the forces acting on all of the 
+        molecules in the forcetable 'forcetable' due to the
+        molecules' interactions in this forcefield */
+    virtual void force(ForceTable &forcetable, double scale_force=1)=0;
+
+    /** Calculate all of the forces acting on all of the 
+        molecules in the forcetable 'forcetable' due to the
+        specified component of the molecules' interactions in 
+        this forcefield */
+    virtual void force(ForceTable &forcetable, const Symbol &component,
+                       double scale_force=1)=0;
+};
+
+}
+
+SIRE_END_HEADER
+
+#endif

@@ -50,6 +50,7 @@
 #include "ljparameterdb.h"
 #include "switchingfunction.h"
 
+#include "SireFF/forcetable.h"
 #include "SireFF/detail/ffmolecules3d.h"
 
 SIRE_BEGIN_HEADER
@@ -74,11 +75,6 @@ namespace SireMol
 {
 class PartialMolecule;
 class MolGroup;
-}
-
-namespace SireFF
-{
-typedef SireBase::PackedArray2D<SireMaths::Vector> MolForceTable;
 }
 
 namespace SireMM
@@ -395,10 +391,21 @@ public:
 
     void calculateForce(const InterCLJPotential::Molecule &mol0, 
                         const InterCLJPotential::Molecule &mol1,
-                        MolForceTable &forces0, 
-                        MolForceTable &forces1,
+                        MolForceTable &forces0,
                         InterCLJPotential::ForceWorkspace &workspace,
                         double scale_force=1) const;
+
+    void calculateCoulombForce(const InterCLJPotential::Molecule &mol0, 
+                               const InterCLJPotential::Molecule &mol1,
+                               MolForceTable &forces0,
+                               InterCLJPotential::ForceWorkspace &workspace,
+                               double scale_force=1) const;
+
+    void calculateLJForce(const InterCLJPotential::Molecule &mol0, 
+                          const InterCLJPotential::Molecule &mol1,
+                          MolForceTable &forces0,
+                          InterCLJPotential::ForceWorkspace &workspace,
+                          double scale_force=1) const;
 
 private:
     double totalCharge(const InterCLJPotential::Parameters::Array &params) const;
@@ -412,7 +419,6 @@ private:
     void _pvt_calculateForce(const InterCLJPotential::Molecule &mol0, 
                              const InterCLJPotential::Molecule &mol1,
                              MolForceTable &forces0, 
-                             MolForceTable &forces1,
                              InterCLJPotential::ForceWorkspace &workspace,
                              double scale_force) const;
 };
@@ -535,6 +541,16 @@ public:
                         IntraCLJPotential::ForceWorkspace &workspace,
                         double scale_force=1) const;
 
+    void calculateCoulombForce(const IntraCLJPotential::Molecule &mol,
+                               MolForceTable &forces,
+                               IntraCLJPotential::ForceWorkspace &workspace,
+                               double scale_force=1) const;
+                               
+    void calculateLJForce(const IntraCLJPotential::Molecule &mol,
+                          MolForceTable &forces,
+                          IntraCLJPotential::ForceWorkspace &workspace,
+                          double scale_force=1) const;
+                               
 private:
     double totalCharge(const IntraCLJPotential::Parameters::Array &params) const;
 };
@@ -563,14 +579,13 @@ inline void
 InterCLJPotential::calculateForce(const InterCLJPotential::Molecule &mol0, 
                                   const InterCLJPotential::Molecule &mol1,
                                   MolForceTable &forces0, 
-                                  MolForceTable &forces1,
                                   InterCLJPotential::ForceWorkspace &workspace,
                                   double scale_force) const
 {
     if ( scale_force != 0 and not spce->beyond(switchfunc->cutoffDistance(),
                                                mol0.aaBox(), mol1.aaBox()) )
     {
-        this->_pvt_calculateForce(mol0, mol1, forces0, forces1,
+        this->_pvt_calculateForce(mol0, mol1, forces0,
                                   workspace, scale_force);
     }
 }

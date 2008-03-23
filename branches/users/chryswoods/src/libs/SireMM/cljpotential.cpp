@@ -779,16 +779,17 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     energy += Energy(scale_energy * cnrg, scale_energy * ljnrg);
 }
 
-/** Calculate the coulomb and LJ forces on the atoms between the passed pair
-    of molecules and add these energies onto 'forces'. This uses
-    the passed workspace to perform the calculation */
+/** Add to the forces in 'forces0' the forces acting on 'mol0' caused
+    by 'mol1' */
 void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &mol0, 
                                             const InterCLJPotential::Molecule &mol1,
                                             MolForceTable &forces0, 
-                                            MolForceTable &forces1,
                                             InterCLJPotential::ForceWorkspace &distmat,
                                             double scale_force) const
 {
+    BOOST_ASSERT( mol0.molecule().data().info().nCutGroups() == forces0.nCutGroups() );
+    BOOST_ASSERT( mol0.molecule().data().number() == forces0.molNum() );
+
     const quint32 ngroups0 = mol0.nCutGroups();
     const quint32 ngroups1 = mol1.nCutGroups();
     
@@ -803,15 +804,23 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
     const Parameters::Array *molparams1_array
                                     = mol1.parameters().atomicParameters().constData();
     
-    BOOST_ASSERT(forces0.count() == int(ngroups0));
-    BOOST_ASSERT(forces1.count() == int(ngroups1));
-    
     const MolForceTable::Array *forces0_array = forces0.constData();
-    const MolForceTable::Array *forces1_array = forces1.constData();
     
     //loop over all pairs of CutGroups in the two molecules
     for (quint32 igroup=0; igroup<ngroups0; ++igroup)
     {
+        //get the CGIdx of this group
+        CGIdx cgidx_igroup = mol0.cgIdx(igroup);
+
+        //get the index of this CutGroup in the forces array
+        int force0_idx = forces0.map(cgidx_igroup);
+        
+        if (force0_idx == -1)
+            //there is no space for the forces on this CutGroup in 
+            //the forcetable - were are therefore not interested in
+            //this CutGroup
+            continue;
+
         const Parameters::Array &params0 = molparams0_array[igroup];
 
         const CoordGroup &group0 = groups0_array[igroup];
@@ -820,11 +829,14 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
         const Parameter *params0_array = params0.constData();
     
         //get the table that holds the forces acting on all of the
-        //atoms of this CutGroup
-        BOOST_ASSERT(forces0_array[igroup].count() == int(nats0));
+        //atoms of this CutGroup (tables are indexed by CGIdx)
+        BOOST_ASSERT(forces0_array[force0_idx].count() == int(nats0));
     
-        Vector *group_forces0_array = forces0.data(igroup);
-    
+        Vector *group_forces0_array = forces0.data(force0_idx);
+
+        //ok, we are interested in the forces acting on this CutGroup
+        // - calculate all of the forces on this group interacting
+        //   with all of the CutGroups in mol1 
         for (quint32 jgroup=0; jgroup<ngroups1; ++jgroup)
         {
             const CoordGroup &group1 = groups1_array[jgroup];
@@ -849,12 +861,6 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                 continue;
 
             const quint32 nats1 = group1.count();
-
-            //get the table that holds all of the forces acting on the
-            //atoms of this CutGroup
-            BOOST_ASSERT(forces1_array[jgroup].count() == int(nats1));
-            
-            Vector *group_forces1_array = forces1.data(jgroup);
             
             //loop over all interatomic pairs and calculate the energies
             const Parameter *params1_array = params1.constData();
@@ -889,6 +895,8 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                     distmat.setOuterIndex(i);
                     const Parameter &param0 = params0_array[i];
                 
+                    Vector total_force;
+                
                     if (param0.ljid == 0)
                     {
                         //null LJ parameter - only add on the coulomb energy
@@ -907,12 +915,8 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                                  distmat[j].direction()) +
                                              
                                                 ((cnrg-shift_coul) * dscl_coul);
-
-                                //add this force onto the tables for the two atoms
-                                cforce *= scale_force;
                         
-                                group_forces0_array[i] -= cforce;
-                                group_forces1_array[j] += cforce;
+                                total_force -= cforce;
                             }
                         }
                     }
@@ -965,14 +969,13 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                             
                                           + (ljnrg * dscl_lj);
                             }
-                        
-                            //add the force onto the tables
-                            force *= scale_force;
-                        
-                            group_forces0_array[i] -= force;
-                            group_forces1_array[j] += force;
+
+                            total_force -= force;
                         }
                     }
+                    
+                    //update the forces array
+                    group_forces0_array[i] += scale_force * total_force;
                 }
             }
             else
@@ -985,24 +988,25 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                 {
                     distmat.setOuterIndex(i);
                     const Parameter &param0 = params0_array[i];
+
+                    Vector total_force;
                 
                     if (param0.ljid == 0)
                     {
                         //null LJ parameter - only add on the coulomb energy
                         for (quint32 j=0; j<nats1; ++j)
                         {
-                            //calculate the coulomb force
-                            Vector cforce = -(param0.reduced_charge *
-                                              params1_array[j].reduced_charge / 
-                                              distmat[j].length2()) *
-                                             
-                                              distmat[j].direction();
-
-                            //add this force onto the tables for the two atoms
-                            cforce *= scale_force;
+                            const double q2 = param0.reduced_charge * 
+                                              params1_array[j].reduced_charge;
                         
-                            group_forces0_array[i] -= cforce;
-                            group_forces1_array[j] += cforce;
+                            //calculate the coulomb force
+                            if (q2 != 0)
+                            {
+                                Vector cforce = -(q2 / distmat[j].length2()) *
+                                                    distmat[j].direction();
+                        
+                                total_force -= cforce;
+                            }
                         }
                     }
                     else
@@ -1039,17 +1043,19 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                         * distmat[j].direction();
                             }
                         
-                            //add the force onto the tables
-                            force *= scale_force;
-                        
-                            group_forces0_array[i] -= force;
-                            group_forces1_array[j] += force;
+                            total_force -= force;
                         }
                     }
-                }
-            }
-        }
-    }
+                    
+                    group_forces0_array[i] += scale_force * total_force;
+
+                } // end of loop over i atoms
+
+            } // end of if within feather
+
+        } // end of loop over jgroup CutGroups
+
+    } // end of loop over igroup CutGroups
 }
 
 /////////////
@@ -1511,7 +1517,8 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
     const Parameters::Array *molparams_array 
                             = mol.parameters().atomicParameters().constData();
     
-    BOOST_ASSERT(forces.count() == int(ngroups));
+    BOOST_ASSERT(forces.nCutGroups() == mol.molecule().data().info().nCutGroups());
+    BOOST_ASSERT(forces.molNum() == mol.molecule().data().number());
     
     const MolForceTable::Array *forces_array = forces.constData();
 
@@ -1527,18 +1534,32 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
         const quint32 nats0 = group0.count();
         const Parameter *params0_array = params0.constData();
     
+        //get the CGIdx of this CutGroup
+        CGIdx cgidx_igroup = mol.cgIdx(igroup);
+        
+        //now get the index of the force table for this CutGroup
+        int force_idx = forces.map(cgidx_igroup);
+        
+        if (force_idx == -1)
+            //we are not interested in the forces on this CutGroup
+            continue;
+        
         //get the table that holds the forces acting on all of the
         //atoms of this CutGroup
-        BOOST_ASSERT(forces_array[igroup].count() == int(nats0));
-        Vector *group_forces0_array = forces.data(igroup);
+        BOOST_ASSERT(forces_array[force_idx].count() == int(nats0));
+        Vector *group_forces0_array = forces.data(force_idx);
     
-        for (quint32 jgroup=igroup; jgroup<ngroups; ++jgroup)
+        //get the forces acting on this group from all other groups
+        //(yes, we are doing a full n2 loop, and not taking advantages
+        // of equal and opposite forces)
+        for (quint32 jgroup=0; jgroup<ngroups; ++jgroup)
         {
             const CoordGroup &group1 = groups_array[jgroup];
             const Parameters::Array &params1 = molparams_array[jgroup];
 
             //check first that these two CoordGroups could be within cutoff
-            const bool outside_cutoff = spce->beyond(switchfunc->cutoffDistance(), 
+            const bool outside_cutoff = igroup != jgroup and 
+                                        spce->beyond(switchfunc->cutoffDistance(), 
                                                      aabox0, group1.aaBox());
             
             if (outside_cutoff)
@@ -1553,11 +1574,6 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
                 continue;
 
             const quint32 nats1 = group1.count();
-
-            //get the table that holds all of the forces acting on the
-            //atoms of this CutGroup
-            BOOST_ASSERT(forces_array[jgroup].count() == int(nats1));
-            Vector *group_forces1_array = forces.data(jgroup);
             
             //loop over all interatomic pairs and calculate the energies
             const Parameter *params1_array = params1.constData();
@@ -1599,6 +1615,8 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
                     {
                         distmat.setOuterIndex(i);
                         const Parameter &param0 = params0_array[i];
+
+                        Vector total_force;
                 
                         if (param0.ljid == 0)
                         {
@@ -1620,16 +1638,7 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
                                              
                                                     ((cnrg-shift_coul) * dscl_coul);
 
-                                    //add this force onto the tables for the two atoms
-                                    cforce *= scale_force;
-                            
-                                    //if this is the same group, then must scale the 
-                                    //force by half to prevent double-counting
-                                    if (igroup == jgroup)
-                                        cforce *= 0.5;
-                            
-                                    group_forces0_array[i] -= cforce;
-                                    group_forces1_array[j] += cforce;
+                                    total_force -= cforce;
                                 }
                             }
                         }
@@ -1683,18 +1692,11 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
                                             + (ljnrg * dscl_lj);
                                 }
                         
-                                //add the force onto the tables
-                                force *= scale_force;
-                        
-                                //if this is the same group then half the force
-                                //to prevent double counting
-                                if (igroup == jgroup)
-                                    force *= 0.5;
-                            
-                                group_forces0_array[i] -= force;
-                                group_forces1_array[j] += force;
+                                total_force -= force;
                             }
                         }
+                        
+                        group_forces0_array[i] += scale_force * total_force;
                     }
                 }
                 else
@@ -1706,6 +1708,8 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
                     {
                         distmat.setOuterIndex(i);
                         const Parameter &param0 = params0_array[i];
+                
+                        Vector total_force;
                 
                         if (param0.ljid == 0)
                         {
@@ -1732,18 +1736,8 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
                                                         distmat[j].direction()) +
                                              
                                                         ((cnrg-shift_coul) * dscl_coul);
-
-                                        //add this force onto the tables 
-                                        //for the two atoms
-                                        cforce *= scale_force;
                             
-                                        //if this is the same group, then must scale the 
-                                        //force by half to prevent double-counting
-                                        if (igroup == jgroup)
-                                            cforce *= 0.5;
-                            
-                                        group_forces0_array[i] -= cforce;
-                                        group_forces1_array[j] += cforce;
+                                        total_force -= cforce;
                                     }
                                 }
                             }
@@ -1806,19 +1800,12 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
                                             + (ljnrg * dscl_lj);
                                     }
                         
-                                    //add the force onto the tables
-                                    force *= scale_force;
-                        
-                                    //if this is the same group then half the force
-                                    //to prevent double counting
-                                    if (igroup == jgroup)
-                                        force *= 0.5;
-                            
-                                    group_forces0_array[i] -= force;
-                                    group_forces1_array[j] += force;
+                                    total_force -= force;
                                 }
                             }
                         }
+                        
+                        group_forces0_array[i] += scale_force * total_force;
                     }
                 }
             }
@@ -1837,6 +1824,8 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
                         distmat.setOuterIndex(i);
                         const Parameter &param0 = params0_array[i];
                 
+                        Vector total_force;
+                
                         if (param0.ljid == 0)
                         {
                             //null LJ parameter - only add on the coulomb energy
@@ -1849,16 +1838,7 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
                                              
                                                   distmat[j].direction();
 
-                                //add this force onto the tables for the two atoms
-                                cforce *= scale_force;
-                        
-                                //if this is the same group then half the force
-                                //to prevent double counting
-                                if (igroup == jgroup)
-                                    cforce *= 0.5;
-
-                                group_forces0_array[i] -= cforce;
-                                group_forces1_array[j] += cforce;
+                                total_force -= cforce;
                             }
                         }
                         else
@@ -1894,19 +1874,12 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
                                                                   12.0*sig_over_dist12))
                                             * distmat[j].direction();
                                 }
-                        
-                                //add the force onto the tables
-                                force *= scale_force;
 
-                                //if this is the same group then half the force
-                                //to prevent double counting
-                                if (igroup == jgroup)
-                                    force *= 0.5;
-
-                                group_forces0_array[i] -= force;
-                                group_forces1_array[j] += force;
+                                total_force -= force;
                             }
                         }
+                        
+                        group_forces0_array[i] += scale_force * total_force;
                     }
                 }
                 else
@@ -1917,6 +1890,8 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
                     {
                         distmat.setOuterIndex(i);
                         const Parameter &param0 = params0_array[i];
+                
+                        Vector total_force;
                 
                         if (param0.ljid == 0)
                         {
@@ -1935,16 +1910,7 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
                                              
                                                       distmat[j].direction();
 
-                                    //add this force onto the tables for the two atoms
-                                    cforce *= scale_force;
-                        
-                                    //if this is the same group then half the force
-                                    //to prevent double counting
-                                    if (igroup == jgroup)
-                                        cforce *= 0.5;
-
-                                    group_forces0_array[i] -= cforce;
-                                    group_forces1_array[j] += cforce;
+                                    total_force -= cforce;
                                 }
                             }
                         }
@@ -1988,23 +1954,21 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
                                                                       12.0*sig_over_dist12))
                                                 * distmat[j].direction();
                                     }
-                        
-                                    //add the force onto the tables
-                                    force *= scale_force;
 
-                                    //if this is the same group then half the force
-                                    //to prevent double counting
-                                    if (igroup == jgroup)
-                                        force *= 0.5;
-
-                                    group_forces0_array[i] -= force;
-                                    group_forces1_array[j] += force;
+                                    total_force -= force;
                                 }
                             }
                         }
-                    }
-                }
-            }
-        }
-    }
+                        
+                        group_forces0_array[i] += scale_force * total_force;
+
+                    } // end of loop over i atoms
+
+                } // end of whether there are intra scale factors
+
+            } // end of whether within feather region
+
+        } // end of loop over CutGroups (jgroup)
+
+    } // end of loop over CutGroups (igroup)
 }

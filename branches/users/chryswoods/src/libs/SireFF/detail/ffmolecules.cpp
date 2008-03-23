@@ -88,7 +88,7 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
     writeHeader(ds, r_ffmolbase, 1);
     
     SharedDataStream sds(ds);
-    sds << ffmol.mol;
+    sds << ffmol.mol << ffmol.idx_to_cgidx;
     
     return ds;
 }
@@ -102,7 +102,7 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        sds >> ffmol.mol;
+        sds >> ffmol.mol >> ffmol.idx_to_cgidx;
     }
     else
         throw version_error(v, "1", r_ffmolbase, CODELOC);
@@ -118,7 +118,10 @@ FFMoleculeBase::FFMoleculeBase()
     in 'molview' */
 FFMoleculeBase::FFMoleculeBase(const PartialMolecule &molview)
            : mol(molview)
-{}
+{
+    if (not molview.selection().selectedAllCutGroups())
+        idx_to_cgidx = molview.selection().selectedCutGroups();
+}
 
 /** Destructor */
 FFMoleculeBase::~FFMoleculeBase()
@@ -128,6 +131,7 @@ FFMoleculeBase::~FFMoleculeBase()
 FFMoleculeBase& FFMoleculeBase::operator=(const FFMoleculeBase &other)
 {
     mol = other.mol;
+    idx_to_cgidx = other.idx_to_cgidx;
     return *this;
 }
 
@@ -159,6 +163,41 @@ MolNum FFMoleculeBase::number() const
 bool FFMoleculeBase::isEmpty() const
 {
     return mol.selection().selectedNone();
+}
+
+/** Return the CGIdx of the ith CutGroup that is selected as
+    part of this molecule
+    
+    \throw SireError::invalid_index
+*/
+CGIdx FFMoleculeBase::cgIdx(quint32 i) const
+{
+    if (this->isEmpty())
+        throw SireError::invalid_index( QObject::tr(
+            "Invalid index (%1) as there are no CutGroups selected "
+            "as part of this molecule!").arg(i), CODELOC );
+
+    else if (idx_to_cgidx.isEmpty())
+    {
+        //all of the CutGroups are selected
+        if (i >= mol.data().info().nCutGroups())
+            throw SireError::invalid_index( QObject::tr(
+                "Invalid index (%1) as the number of CutGroups in "
+                "this molecule is only %2!")
+                    .arg(i).arg(mol.data().info().nCutGroups()), CODELOC );
+                    
+        return CGIdx(i);
+    }
+    else
+    {
+        if (i >= idx_to_cgidx.count())
+            throw SireError::invalid_index( QObject::tr(
+                "Invalid index (%1) as the number of CutGroups "
+                "selected as part of this molecule is only %2!")
+                    .arg(i).arg(idx_to_cgidx.count()), CODELOC );
+                    
+        return idx_to_cgidx.at(i);
+    }
 }
 
 /** Return the number of CutGroups in this view of the molecule
