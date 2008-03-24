@@ -421,6 +421,18 @@ private:
                              MolForceTable &forces0, 
                              InterCLJPotential::ForceWorkspace &workspace,
                              double scale_force) const;
+
+    void _pvt_calculateCoulombForce(const InterCLJPotential::Molecule &mol0, 
+                                    const InterCLJPotential::Molecule &mol1,
+                                    MolForceTable &forces0, 
+                                    InterCLJPotential::ForceWorkspace &workspace,
+                                    double scale_force) const;
+
+    void _pvt_calculateLJForce(const InterCLJPotential::Molecule &mol0, 
+                               const InterCLJPotential::Molecule &mol1,
+                               MolForceTable &forces0, 
+                               InterCLJPotential::ForceWorkspace &workspace,
+                               double scale_force) const;
 };
 
 /** This class provides all of the functions and containers  
@@ -573,8 +585,9 @@ InterCLJPotential::calculateEnergy(const InterCLJPotential::Molecule &mol0,
 }
 
 /** Calculate the coulomb and LJ forces on the atoms between the passed pair
-    of molecules and add these energies onto 'forces'. This uses
-    the passed workspace to perform the calculation */
+    of molecules and add the forces on 'mol0' onto 'forces'. This uses
+    the passed workspace to perform the calculation. The forces
+    are scaled by the optional 'scaled_forces' */
 inline void 
 InterCLJPotential::calculateForce(const InterCLJPotential::Molecule &mol0, 
                                   const InterCLJPotential::Molecule &mol1,
@@ -587,6 +600,44 @@ InterCLJPotential::calculateForce(const InterCLJPotential::Molecule &mol0,
     {
         this->_pvt_calculateForce(mol0, mol1, forces0,
                                   workspace, scale_force);
+    }
+}
+
+/** Calculate the coulomb forces on the atoms between the passed pair
+    of molecules and add the forces on 'mol0' onto 'forces'. This uses
+    the passed workspace to perform the calculation. The forces
+    are scaled by the optional 'scaled_forces' */
+inline void 
+InterCLJPotential::calculateCoulombForce(const InterCLJPotential::Molecule &mol0, 
+                                         const InterCLJPotential::Molecule &mol1,
+                                         MolForceTable &forces0, 
+                                         InterCLJPotential::ForceWorkspace &workspace,
+                                         double scale_force) const
+{
+    if ( scale_force != 0 and not spce->beyond(switchfunc->cutoffDistance(),
+                                               mol0.aaBox(), mol1.aaBox()) )
+    {
+        this->_pvt_calculateCoulombForce(mol0, mol1, forces0,
+                                         workspace, scale_force);
+    }
+}
+
+/** Calculate the LJ forces on the atoms between the passed pair
+    of molecules and add the forces on 'mol0' onto 'forces'. This uses
+    the passed workspace to perform the calculation. The forces
+    are scaled by the optional 'scaled_forces' */
+inline void 
+InterCLJPotential::calculateLJForce(const InterCLJPotential::Molecule &mol0, 
+                                    const InterCLJPotential::Molecule &mol1,
+                                    MolForceTable &forces0, 
+                                    InterCLJPotential::ForceWorkspace &workspace,
+                                    double scale_force) const
+{
+    if ( scale_force != 0 and not spce->beyond(switchfunc->cutoffDistance(),
+                                               mol0.aaBox(), mol1.aaBox()) )
+    {
+        this->_pvt_calculateLJForce(mol0, mol1, forces0,
+                                    workspace, scale_force);
     }
 }
 
