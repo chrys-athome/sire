@@ -29,9 +29,9 @@
 #ifndef SIREFF_FORCEFIELD_H
 #define SIREFF_FORCEFIELD_H
 
-#include "SireBase/sharedpolypointer.hpp"
+#include "ff.h"
 
-#include "ffbase.h"
+#include "SireBase/property.h"
 
 SIRE_BEGIN_HEADER
 
@@ -43,39 +43,23 @@ class ForceField;
 QDataStream& operator<<(QDataStream&, const SireFF::ForceField&);
 QDataStream& operator>>(QDataStream&, SireFF::ForceField&);
 
-namespace SireMol
-{
-class PartialMolecule;
-class Molecule;
-class Residue;
-class NewAtom;
-class Molecules;
-
-class MoleculeID;
-class ResNum;
-class ResID;
-}
-
 namespace SireFF
 {
 
-using SireMol::MoleculeID;
-using SireMol::Molecule;
-using SireMol::Molecules;
-using SireMol::Residue;
-using SireMol::ResNum;
-using SireMol::ResID;
-using SireMol::NewAtom;
-using SireMol::IDMolAtom;
-using SireMol::PartialMolecule;
+using SireBase::PropertyBase;
 
-/**
-This class is the "user" interface to all forcefield classes. This holds an implicitly
-shared copy of the forcefield class.
-
-@author Christopher Woods
+/** This is the polymorphic pointer holder for the 
+    ForceField (FF derived) classes.
+    
+    ForceField are ForceField that contain functions
+    that allow the intermolecular potential energy of the
+    group(s) of molecules to be evaluated. As such, they 
+    are central to the concept of a molecular simulation
+    program
+    
+    @author Christopher Woods
 */
-class SIREFF_EXPORT ForceField
+class SIREFF_EXPORT ForceField : public SireBase::Property
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const ForceField&);
@@ -83,119 +67,30 @@ friend QDataStream& ::operator>>(QDataStream&, ForceField&);
 
 public:
     ForceField();
+    ForceField(const PropertyBase &property);
+    ForceField(const FF &molgroup);
+
     ForceField(const ForceField &other);
-    ForceField(const FFBase &ffbase);
-    ForceField(const SireBase::SharedPolyPointer<FFBase> &ffptr);
-
+    
     ~ForceField();
+    
+    virtual ForceField& operator=(const PropertyBase &property);
+    virtual ForceField& operator=(const FF &other);
 
-    ForceField& operator=(const ForceField &other);
-    ForceField& operator=(const FFBase &ffbase);
+    const FF* operator->() const;
+    const FF& operator*() const;
+    
+    const FF& read() const;
+    FF& edit();
+    
+    const FF* data() const;
+    const FF* constData() const;
+    
+    FF* data();
+    
+    operator const FF&() const;
 
-    const FFBase& base() const;
-
-    template<class T>
-    bool isA() const
-    {
-        return d.isA<T>();
-    }
-
-    template<class T>
-    const T& asA() const
-    {
-        return d.asA<T>();
-    }
-
-    template<class T>
-    T& asA()
-    {
-        return d.asA<T>();
-    }
-
-    const char* what() const;
-
-    const QString& name() const;
-    void setName(const QString& name);
-
-    const FFBase::Components& components() const;
-    const FFBase::Parameters& parameters() const;
-    const FFBase::Groups& groups() const;
-
-    double energy();
-    double energy(const FFComponent &component);
-    double energy(const Function &component);
-    double energy(const Symbol &component);
-
-    Values energies();
-    Values energies(const QSet<FFComponent> &components);
-
-    bool setProperty(const QString &name, const Property &value);
-    Property getProperty(const QString &name) const;
-    bool containsProperty(const QString &name) const;
-
-    QHash<QString,Property> properties() const;
-
-    void mustNowRecalculateFromScratch();
-
-    bool change(const PartialMolecule &molecule);
-    bool change(const Molecules &molecules);
-
-    bool add(const PartialMolecule &molecule,
-             const ParameterMap &map = ParameterMap());
-
-    bool add(const Molecules &molecules,
-             const ParameterMap &map = ParameterMap());
-
-    bool addTo(const FFBase::Group &group, const PartialMolecule &molecule,
-               const ParameterMap &map = ParameterMap());
-
-    bool addTo(const FFBase::Group &group,
-               const Molecules &molecules,
-               const ParameterMap &map = ParameterMap());
-
-    bool remove(const PartialMolecule &molecule);
-
-    bool remove(const Molecules &molecules);
-
-    bool removeFrom(const FFBase::Group &group,
-                    const PartialMolecule &molecule);
-
-    bool removeFrom(const FFBase::Group &group,
-                    const Molecules &molecules);
-
-    bool contains(const PartialMolecule &molecule) const;
-
-    bool contains(const PartialMolecule &molecule, const FFBase::Group &group) const;
-
-    bool refersTo(MoleculeID molid) const;
-    bool refersTo(MoleculeID molid, const FFBase::Group &group) const;
-
-    QSet<FFBase::Group> groupsReferringTo(MoleculeID molid) const;
-
-    QSet<MoleculeID> moleculeIDs() const;
-    QSet<MoleculeID> moleculeIDs(const FFBase::Group &group) const;
-
-    PartialMolecule molecule(MoleculeID molid) const;
-    PartialMolecule molecule(MoleculeID molid, const FFBase::Group &group) const;
-
-    Molecules molecules() const;
-    Molecules molecules(const FFBase::Group &group) const;
-    Molecules molecules(const QSet<MoleculeID> &molids) const;
-
-    Molecules contents(const FFBase::Group &group) const;
-    Molecules contents() const;
-
-    bool isDirty() const;
-    bool isClean() const;
-
-    ForceFieldID ID() const;
-    const Version& version() const;
-
-    void assertContains(const FFComponent &component) const;
-
-private:
-    /** Shared pointer to the actual forcefield */
-    SireBase::SharedPolyPointer<FFBase> d;
+    static const ForceField& shared_null();
 };
 
 }

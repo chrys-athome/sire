@@ -55,6 +55,8 @@ QDataStream& operator>>(QDataStream&, SireFF::FF&);
 namespace SireFF
 {
 
+class FFMolGroup;
+
 using SireBase::Properties;
 using SireBase::Property;
 using SireBase::PropertyMap;
@@ -66,7 +68,10 @@ using SireMol::MoleculeView;
 using SireMol::ViewsOfMol;
 using SireMol::Molecules;
 using SireMol::MolGroup;
+using SireMol::Molecule;
+using SireMol::MoleculeData;
 using SireMol::MGID;
+using SireMol::MolNum;
 
 /** This class is the base class of all of the forcefield classes. 
     A forcefield is a collection of molecule groups (SireMol::MolGroups) 
@@ -111,6 +116,8 @@ class SIREFF_EXPORT FF : public SireMol::MolGroupsBase
 
 friend QDataStream& ::operator<<(QDataStream&, const FF&);
 friend QDataStream& ::operator>>(QDataStream&, FF&);
+
+friend class FFMolGroup; // so can call the group_???() functions
 
 public:
     virtual ~FF();
@@ -173,105 +180,30 @@ public:
         scratch */
     virtual void mustNowRecalculateFromScratch()=0;
 
-    /** Add the passed view of the molecule to the molecule groups 
-        identified by 'mgid' using the passed PropertyMap to find
-        the parameters of this molecule in this forcefield
-        
-        \throw SireBase::missing_property
-        \throw SireError::invalid_cast
-        \throw SireError::incompatible_error
-    */
-    virtual void add(const MoleculeView &molview, const MGID &mgid,
-                     const PropertyMap &map)=0;
-
-    /** Add the passed views of the molecule to the molecule groups 
-        identified by 'mgid' using the passed PropertyMap to find
-        the parameters of this molecule in this forcefield
-        
-        \throw SireBase::missing_property
-        \throw SireError::invalid_cast
-        \throw SireError::incompatible_error
-    */
-    virtual void add(const ViewsOfMol &molviews, const MGID &mgid,
-                     const PropertyMap &map)=0;
-                     
-    /** Add the passed molecules to the molecule groups 
-        identified by 'mgid' using the passed PropertyMap to find
-        the parameters of this molecule in this forcefield
-        
-        \throw SireBase::missing_property
-        \throw SireError::invalid_cast
-        \throw SireError::incompatible_error
-    */
-    virtual void add(const Molecules &molecules, const MGID &mgid,
-                     const PropertyMap &map)=0;
-                     
-    /** Add the molecules in the passed MolGroup to the molecule groups 
-        identified by 'mgid' using the passed PropertyMap to find
-        the parameters of this molecule in this forcefield
-        
-        \throw SireBase::missing_property
-        \throw SireError::invalid_cast
-        \throw SireError::incompatible_error
-    */
-    virtual void add(const MolGroup &molgroup, const MGID &mgid,
-                     const PropertyMap &map)=0;
+    void add(const MoleculeView &molview, const MGID &mgid,
+             const PropertyMap &map);
+    void add(const ViewsOfMol &molviews, const MGID &mgid,
+             const PropertyMap &map);
+    void add(const Molecules &molecules, const MGID &mgid,
+             const PropertyMap &map);
+    void add(const MolGroup &molgroup, const MGID &mgid,
+             const PropertyMap &map);
     
-    /** Add the passed view of the molecule to the molecule groups 
-        identified by 'mgid' using the passed PropertyMap to find
-        the parameters of this molecule in this forcefield.
-        
-        Only add this view to groups that don't already contain
-        this view (the whole view, not part of it)
-        
-        \throw SireBase::missing_property
-        \throw SireError::invalid_cast
-        \throw SireError::incompatible_error
-    */
-    virtual void addIfUnique(const MoleculeView &molview, const MGID &mgid,
-                             const PropertyMap &map)=0;
-                             
-    /** Add the passed views of the molecule to the molecule groups 
-        identified by 'mgid' using the passed PropertyMap to find
-        the parameters of this molecule in this forcefield.
-        
-        Only add views to groups that don't already contain
-        them (the whole view, not part of it, and can add some views)
-        
-        \throw SireBase::missing_property
-        \throw SireError::invalid_cast
-        \throw SireError::incompatible_error
-    */
-    virtual void addIfUnique(const ViewsOfMol &molviews, const MGID &mgid,
-                             const PropertyMap &map)=0;
-                             
-    /** Add the passed molecules to the molecule groups 
-        identified by 'mgid' using the passed PropertyMap to find
-        the parameters of this molecule in this forcefield.
-        
-        Only add the views of molecules to groups that don't already contain
-        them (the whole view, not part of it)
-        
-        \throw SireBase::missing_property
-        \throw SireError::invalid_cast
-        \throw SireError::incompatible_error
-    */
-    virtual void addIfUnique(const Molecules &molecules, const MGID &mgid,
-                             const PropertyMap &map)=0;
-                             
-    /** Add the molecules in the passed MolGroup to the molecule groups 
-        identified by 'mgid' using the passed PropertyMap to find
-        the parameters of this molecule in this forcefield.
-        
-        Only add the views of molecules to groups that don't already contain
-        them (the whole view, not part of it)
-        
-        \throw SireBase::missing_property
-        \throw SireError::invalid_cast
-        \throw SireError::incompatible_error
-    */
-    virtual void addIfUnique(const MolGroup &molgroup, const MGID &mgid,
-                             const PropertyMap &map)=0;
+    void addIfUnique(const MoleculeView &molview, const MGID &mgid,
+                     const PropertyMap &map);
+    void addIfUnique(const ViewsOfMol &molviews, const MGID &mgid,
+                     const PropertyMap &map);
+    void addIfUnique(const Molecules &molecules, const MGID &mgid,
+                     const PropertyMap &map);
+    void addIfUnique(const MolGroup &molgroup, const MGID &mgid,
+                     const PropertyMap &map);
+
+    //write explicit all MolGroups editing functions here, and implement
+    //them in terms of the group_add, group_remove functions etc.
+    
+    //the group_add, group_remove functions etc. do their work without 
+    //worrying about the other groups - this class does everything 
+    //necessary to keep all of the molecule versions in sync...
 
     void add(const MoleculeView &molview, const MGID &mgid);
     void add(const ViewsOfMol &molviews, const MGID &mgid);
@@ -282,6 +214,21 @@ public:
     void addIfUnique(const ViewsOfMol &molviews, const MGID &mgid);
     void addIfUnique(const Molecules &molecules, const MGID &mgid);
     void addIfUnique(const MolGroup &molgroup, const MGID &mgid);
+
+    void setContents(const MGID &mgid, const MoleculeView &molview);
+    void setContents(const MGID &mgid, const ViewsOfMol &molview);
+    void setContents(const MGID &mgid, const Molecules &molecules);
+    void setContents(const MGID &mgid, const MolGroup &molgroup);
+
+    void setContents(const MGID &mgid, const MoleculeView &molview, 
+                     const PropertyMap &map);
+
+    void setContents(const MGID &mgid, const ViewsOfMol &molviews, 
+                     const PropertyMap &map);
+    void setContents(const MGID &mgid, const Molecules &molecules, 
+                     const PropertyMap &map);
+    void setContents(const MGID &mgid, const MolGroup &molgroup, 
+                     const PropertyMap &map);
 
     bool isDirty() const;
     bool isClean() const;
@@ -307,6 +254,57 @@ protected:
     /** Virtual function used to trigger a recalculation of the total energy
         and of all of the component energies */
     virtual void recalculateEnergy()=0;
+
+    /** Virtual functions used to add, remove or modify molecules in 
+        this forcefield */
+    virtual void group_setName(quint32 i, const QString &new_name);
+        
+    virtual void group_add(quint32 i, const MoleculeView &molview,
+                           const PropertyMap &map)=0;
+    virtual void group_add(quint32 i, const ViewsOfMol &molviews, 
+                           const PropertyMap &map)=0;
+    virtual void group_add(quint32 i, const Molecules &molecules, 
+                           const PropertyMap &map)=0;
+    virtual void group_add(quint32 i, const MolGroup &molgroup, 
+                           const PropertyMap &map)=0;
+    
+    virtual bool group_addIfUnique(quint32 i, const MoleculeView &molview, 
+                                   const PropertyMap &map)=0;
+    virtual ViewsOfMol group_addIfUnique(quint32 i, const ViewsOfMol &molviews, 
+                                         const PropertyMap &map)=0;
+    virtual QList<ViewsOfMol> group_addIfUnique(quint32 i, const Molecules &molecules, 
+                                                const PropertyMap &map)=0;
+    virtual QList<ViewsOfMol> group_addIfUnique(quint32 i, const MolGroup &molgroup, 
+                                                const PropertyMap &map)=0;
+
+    virtual bool group_remove(quint32 i, const MoleculeView &molview)=0;
+    virtual ViewsOfMol group_remove(quint32 i, const ViewsOfMol &molviews)=0;
+    virtual QList<ViewsOfMol> group_remove(quint32 i, const Molecules &molecules)=0;
+    virtual QList<ViewsOfMol> group_remove(quint32 i, const MolGroup &molgroup)=0;
+    
+    virtual bool group_removeAll(quint32 i, const MoleculeView &molview)=0;
+    virtual ViewsOfMol group_removeAll(quint32 i, const ViewsOfMol &molviews)=0;
+    virtual QList<ViewsOfMol> group_removeAll(quint32 i, const Molecules &molecules)=0;
+    virtual QList<ViewsOfMol> group_removeAll(quint32 i, const MolGroup &molgroup)=0;
+
+    virtual ViewsOfMol group_remove(quint32 i, MolNum molnum)=0;
+    virtual QList<ViewsOfMol> group_remove(quint32 i, const QSet<MolNum> &molnums)=0;
+
+    virtual void group_removeAll(quint32 i)=0;
+
+    virtual bool group_update(quint32 i, const MoleculeData &moldata)=0;
+
+    virtual QList<Molecule> group_update(quint32 i, const Molecules &molecules)=0;
+    virtual QList<Molecule> group_update(quint32 i, const MolGroup &molgroup)=0;
+    
+    virtual bool group_setContents(quint32 i, const MoleculeView &molview, 
+                                   const PropertyMap &map)=0;
+    virtual bool group_setContents(quint32 i, const ViewsOfMol &molviews, 
+                                   const PropertyMap &map)=0;
+    virtual bool group_setContents(quint32 i, const Molecules &molecules, 
+                                   const PropertyMap &map)=0;
+    virtual bool group_setContents(quint32 i, const MolGroup &molgroup, 
+                                   const PropertyMap &map)=0;
 
 private:
     /** The unique ID for this forcefield - this uniquely identifies

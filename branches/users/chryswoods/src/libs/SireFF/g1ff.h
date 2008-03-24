@@ -64,40 +64,40 @@ public:
     ///////
     
     void add(const MoleculeView &molview, 
-             const ParameterMap &map = ParameterMap());
+             const ParameterMap &map = PropertyMap());
     void add(const ViewsOfMol &molviews,
-             const ParameterMap &map = ParameterMap());
+             const ParameterMap &map = PropertyMap());
     void add(const Molecules &molecules,
-             const ParameterMap &map = ParameterMap());
+             const ParameterMap &map = PropertyMap());
     void add(const MolGroup &molgroup,
-             const ParameterMap &map = ParameterMap());
+             const ParameterMap &map = PropertyMap());
                             
     void addIfUnique(const MoleculeView &molview,
-                     const ParameterMap &map);
+                     const PropertyMap &map = PropertyMap());
     void addIfUnique(const ViewsOfMol &molviews,
-                     const ParameterMap &map);
+                     const PropertyMap &map = PropertyMap());
     void addIfUnique(const Molecules &molecules,
-                     const ParameterMap &map);
+                     const PropertyMap &map = PropertyMap());
     void addIfUnique(const MolGroup &molgroup,
-                     const ParameterMap &map);
+                     const PropertyMap &map = PropertyMap());
                             
     void add(const MoleculeView &molview, const MGID &mgid,
-             const ParameterMap &map);
+             const PropertyMap &map);
     void add(const ViewsOfMol &molviews, const MGID &mgid,
-             const ParameterMap &map);
+             const PropertyMap &map);
     void add(const Molecules &molecules, const MGID &mgid,
-             const ParameterMap &map);
+             const PropertyMap &map);
     void add(const MolGroup &molgroup, const MGID &mgid,
-             const ParameterMap &map);
+             const PropertyMap &map);
     
     void addIfUnique(const MoleculeView &molview, const MGID &mgid,
-                     const ParameterMap &map);
+                     const PropertyMap &map);
     void addIfUnique(const ViewsOfMol &molviews, const MGID &mgid
-                     const ParameterMap &map);
+                     const PropertyMap &map);
     void addIfUnique(const Molecules &molecules, const MGID &mgid
-                     const ParameterMap &map);
+                     const PropertyMap &map);
     void addIfUnique(const MolGroup &molgroup, const MGID &mgid
-                     const ParameterMap &map);
+                     const PropertyMap &map);
     
     void remove(const MoleculeView &molview);
     void remove(const ViewsOfMol &molviews);
@@ -134,10 +134,23 @@ public:
     void update(const Molecules &molecules);
     void update(const MolGroup &molgroup);
     
-    void setContents(const MGID &mgid, const MoleculeView &molview);
-    void setContents(const MGID &mgid, const ViewsOfMol &molviews);
-    void setContents(const MGID &mgid, const Molecules &molecules);
-    void setContents(const MGID &mgid, const MolGroup &molgroup);
+    void setContents(const MGID &mgid, const MoleculeView &molview,
+                     const PropertyMap &map);
+    void setContents(const MGID &mgid, const ViewsOfMol &molviews,
+                     const PropertyMap &map);
+    void setContents(const MGID &mgid, const Molecules &molecules,
+                     const PropertyMap &map);
+    void setContents(const MGID &mgid, const MolGroup &molgroup,
+                     const PropertyMap &map);
+
+    void setContents(const MoleculeView &molview,
+                     const PropertyMap &map = PropertyMap());
+    void setContents(const ViewsOfMol &molviews,
+                     const PropertyMap &map = PropertyMap());
+    void setContents(const Molecules &molecules,
+                     const PropertyMap &map = PropertyMap());
+    void setContents(const MolGroup &molgroup,
+                     const PropertyMap &map = PropertyMap());
 
 protected:
     G1FF();
@@ -160,6 +173,28 @@ protected:
 
     QHash<MGNum,MolGroup*> getGroups();
     QHash<MGNum,const MolGroup*> getGroups() const;
+
+    ////
+    //// Virtual functions that must be overridden by
+    //// derived virtual forcefields
+    ////
+    
+    virtual void _pvt_updated(const MoleculeData &moldata)=0;
+    virtual void _pvt_updated(const Molecules &molecules)=0;
+    
+    virtual void _pvt_added(const PartialMolecule &molview, 
+                            const PropertyMap &map)=0;
+                            
+    virtual void _pvt_added(const Molecules &molecules, 
+                            const PropertyMap &map)=0;
+                            
+    virtual void _pvt_removed(const PartialMolecule &molview,
+                              const PropertyMap &map)=0;
+
+    virtual void _pvt_removed(const Molecules &molecules, 
+                              const PropertyMap &map)=0;
+
+    virtual void _pvt_removedAll()=0;
 
 private:
     /** The single group of molecules in this forcefield */

@@ -26,711 +26,147 @@
   *
 \*********************************************/
 
-#include "SireCAS/qhash_sirecas.h"
-
 #include "forcefield.h"
-#include "ffbase.h"
 
-#include "SireBase/property.h"
-
-#include "SireMol/molecule.h"
-#include "SireMol/molecules.h"
-#include "SireMol/partialmolecule.h"
-#include "SireMol/residue.h"
-#include "SireMol/newatom.h"
-
-#include "SireMol/errors.h"
+#include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 
-using namespace SireStream;
-using namespace SireBase;
 using namespace SireFF;
+using namespace SireBase;
+using namespace SireStream;
 
-static const RegisterMetaType<ForceField> r_forcefield;
+static const RegisterMetaType<ForceField> r_ff;
 
-/** Serialise to a binary data stream */
-QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const ForceField&)
+/** Serialise a ForceField to a binary datastream */
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
+                                      const ForceField &ff)
 {
-    writeHeader(ds, r_forcefield, 0);
+    writeHeader(ds, r_ff, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << static_cast<const Property&>(ff);
+    
     return ds;
 }
 
-/** Deserialise from a binary data stream */
-QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, ForceField&)
+/** Deserialise a ForceField from a binary datastream */
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
+                                      ForceField &ff)
 {
-    VersionID v = readHeader(ds, r_forcefield);
-
-    if (v != 0)
-        throw version_error(v, "1", r_forcefield, CODELOC);
-
-    return ds;
-}
-
-namespace SireFF
-{
-namespace detail
-{
-class NullFF;
-}
-}
-
-QDataStream& operator<<(QDataStream&, const SireFF::detail::NullFF&);
-QDataStream& operator>>(QDataStream&, SireFF::detail::NullFF&);
-
-namespace SireFF
-{
-namespace detail
-{
-
-/** This is a null forcefield, which is used to provide a null object
-    to prevent segfaults when using the null ForceField class.
-
-    @author Christopher Woods
-*/
-class NullFF : public FFBase
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const NullFF&);
-friend QDataStream& ::operator>>(QDataStream&, NullFF&);
-
-public:
-    NullFF() : FFBase()
-    {}
-
-    NullFF(const NullFF &other) : FFBase(other)
-    {}
-
-    ~NullFF()
-    {}
-
-    class SIREFF_EXPORT Parameters : public FFBase::Parameters
-    {
-    public:
-        Parameters()
-        {}
-
-        ~Parameters()
-        {}
-
-        static Parameters default_parameter;
-    };
-
-    const Parameters& parameters() const
-    {
-        return Parameters::default_parameter;
-    }
-
-    static const char* typeName()
-    {
-        return "SireFF::detail::NullFF";
-    }
-
-    const char* what() const
-    {
-        return NullFF::typeName();
-    }
-
-    NullFF* clone() const
-    {
-        return new NullFF(*this);
-    }
-
-    void mustNowRecalculateFromScratch()
-    {}
-
-    bool change(const PartialMolecule&)
-    {
-        return false;
-    }
-
-    bool add(const PartialMolecule&, const ParameterMap&)
-    {
-        return false;
-    }
-
-    bool remove(const PartialMolecule&)
-    {
-        return false;
-    }
-
-    bool contains(const PartialMolecule&) const
-    {
-        return false;
-    }
-
-    bool refersTo(MoleculeID) const
-    {
-        return false;
-    }
-
-    QSet<FFBase::Group> groupsReferringTo(MoleculeID molid) const
-    {
-        throw SireMol::missing_molecule( QObject::tr(
-                "There are no groups in the Null ForceField that refer "
-                "to the molecule with ID == %1.").arg(molid),
-                    CODELOC );
-    }
-
-    QSet<MoleculeID> moleculeIDs() const
-    {
-        return QSet<MoleculeID>();
-    }
-
-    PartialMolecule molecule(MoleculeID molid) const
-    {
-        throw SireMol::missing_molecule( QObject::tr(
-                  "There is no molecule with ID == %1 in the Null ForceField!")
-                        .arg(molid), CODELOC );
-
-        return PartialMolecule();
-    }
-
-    Molecules contents() const
-    {
-        return Molecules();
-    }
-
-protected:
-    void recalculateEnergy()
-    {}
-
-    void _pvt_copy(const FFBase&)
-    {}
-
-    /** Null molecule returned by the null forcefield */
-    static Molecule null_molecule;
-};
-
-NullFF::Parameters NullFF::Parameters::default_parameter;
-
-} // detail
-} // SireFF
-
-////////////
-//////////// Implementation of NullFF
-////////////
-
-Q_DECLARE_METATYPE(SireFF::detail::NullFF)
-
-using namespace SireFF::detail;
-
-static const RegisterMetaType<NullFF> r_nullff;
-
-/** Serialise to a binary datastream */
-QDataStream &operator<<(QDataStream &ds, const NullFF &nullff)
-{
-    writeHeader(ds, r_nullff, 1)
-                  << static_cast<const FFBase&>(nullff);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream &operator>>(QDataStream &ds, NullFF &nullff)
-{
-    VersionID v = readHeader(ds, r_nullff);
-
+    VersionID v = readHeader(ds, r_ff);
+    
     if (v == 1)
     {
-        ds >> static_cast<FFBase&>(nullff);
+        SharedDataStream sds(ds);
+        sds >> static_cast<Property&>(ff);
     }
     else
-        throw version_error(v, "1", r_nullff, CODELOC);
-
+        throw version_error(v, "1", r_ff, CODELOC);
+        
     return ds;
 }
 
-Molecule NullFF::null_molecule;
+static ForceField *_pvt_shared_null = 0;
 
-////////////
-//////////// Implementation of ForceField
-////////////
-
-static const SharedPolyPointer<FFBase> shared_null( new NullFF() );
-
-/** Constructor */
-ForceField::ForceField() : d(shared_null)
-{}
-
-/** Construct from the passed FFBase forcefield */
-ForceField::ForceField(const FFBase &ffield) : d(ffield)
-{}
-
-/** Construct from a shared pointer to a forcefield */
-ForceField::ForceField(const SharedPolyPointer<FFBase> &ffptr)
-           : d(ffptr)
+const ForceField& ForceField::shared_null()
 {
-    if (not d.constData())
-        d = shared_null;
+    if (_pvt_shared_null == 0)
+        #warning Probably want to write a NullFF forcefield.
+        _pvt_shared_null = new ForceField();
+        
+    return *_pvt_shared_null;
 }
+
+/** Null constructor - constructs a simple, NullFF() object */
+ForceField::ForceField() : Property(ForceField::shared_null())
+{}
+
+/** Construct from a passed property
+
+    \throw SireError::invalid_cast
+*/
+ForceField::ForceField(const PropertyBase &property)
+           : Property(property.asA<FF>())
+{}
+
+/** Construct from passed FF */
+ForceField::ForceField(const FF &ff) : Property(ff)
+{} 
 
 /** Copy constructor */
 ForceField::ForceField(const ForceField &other)
-           : d(other.d)
+           : Property(other)
 {}
 
 /** Destructor */
 ForceField::~ForceField()
 {}
 
-/** Assignment operator */
-ForceField& ForceField::operator=(const ForceField &other)
+/** Copy assignment operator from a Property object
+
+    \throw SireError::invalid_cast
+*/
+ForceField& ForceField::operator=(const PropertyBase &property)
 {
-    d = other.d;
+    Property::operator=(property.asA<FF>());
     return *this;
 }
 
-/** Assignment operator */
-ForceField& ForceField::operator=(const FFBase &other)
+/** Copy assignment operator from another FF */
+ForceField& ForceField::operator=(const FF &other)
 {
-    d = other;
+    Property::operator=(other);
     return *this;
 }
 
-/** Return the actual FFBase object that contains the
-    implementation of this forcefield */
-const FFBase& ForceField::base() const
+/** Dereference this pointer */
+const FF* ForceField::operator->() const
 {
-    return *d;
+    return static_cast<const FF*>(&(d()));
 }
 
-/** Return the class name of the forcefield */
-const char* ForceField::what() const
+/** Dereference this pointer */
+const FF& ForceField::operator*() const
 {
-    return d->what();
+    return static_cast<const FF&>(d());
 }
 
-/** Return the name of this forcefield - this is used as the root of all of
-    the components of the forcefield, e.g. if the name was "Ligand CLJ", then
-    the "coul" component would have the function: E_{Ligand CLJ}_{coul}(x,y,z) */
-const QString& ForceField::name() const
+/** Return a read-only reference to the contained object */
+const FF& ForceField::read() const
 {
-    return d->name();
+    return static_cast<const FF&>(d());
 }
 
-/** Set the name of this forcefield - this will change the names of all
-    of the forcefield components, so beware if you are already using functions
-    that are derived from components of this forcefield */
-void ForceField::setName(const QString& name)
+/** Return a modifiable reference to the contained object.
+    This will trigger a copy of the object if more than
+    one pointer is pointing to it. */
+FF& ForceField::edit()
 {
-    d->setName(name);
+    return static_cast<FF&>(d());
+}
+    
+/** Return a raw pointer to the FF object */
+const FF* ForceField::data() const
+{
+    return static_cast<const FF*>(&(d()));
 }
 
-/** Return the object describing the components of this
-    forcefield */
-const FFBase::Components& ForceField::components() const
+/** Return a raw pointer to the FF object */
+const FF* ForceField::constData() const
 {
-    return d->components();
+    return static_cast<const FF*>(&(d()));
+}
+    
+/** Return a raw pointer to the FF object */
+FF* ForceField::data()
+{
+    return static_cast<FF*>(&(d()));
 }
 
-/** Return the object containing the names of the parameters
-    used by this forcefield */
-const FFBase::Parameters& ForceField::parameters() const
+/** Automatic casting operator */
+ForceField::operator const FF&() const
 {
-    return d->parameters();
-}
-
-/** Return the object containing the names of the
-    groups used by this forcefield */
-const FFBase::Groups& ForceField::groups() const
-{
-    return d->groups();
-}
-
-/** Return the total energy of this forcefield. This will return the cached
-    value if nothing has changed, or will recalculate if something has changed. */
-double ForceField::energy()
-{
-    return d->energy();
-}
-
-/** Return the energy of the component represented by the function
-    'component'
-
-    \throw SireFF::missing_component
-*/
-double ForceField::energy(const FFComponent &component)
-{
-    return d->energy(component);
-}
-
-/** Return the energy of the component represented by the function
-    'component'
-
-    \throw SireFF::missing_component
-*/
-double ForceField::energy(const Function &component)
-{
-    return d->energy(component);
-}
-
-/** Return the energy of the component represented by the function
-    'component'
-
-    \throw SireFF::missing_component
-*/
-double ForceField::energy(const Symbol &component)
-{
-    return d->energy(component);
-}
-
-/** Return the values of all of the energy components of this forcefield */
-Values ForceField::energies()
-{
-    return d->energies();
-}
-
-/** Return the values of all of the specified energy components in this
-    forcefield
-
-    \throw SireFF::missing_component
-*/
-Values ForceField::energies(const QSet<FFComponent> &components)
-{
-    return d->energies(components);
-}
-
-/** Set the property 'name' to the value 'value'. This
-    returns whether or not this changes the forcefield,
-    and therefore the energy of the forcefield will need
-    to be recalculated
-
-    Note that you can only set pre-defined properties
-    of forcefields - an exception will be thrown if
-    you try to set the value of a property that does
-    not exist in this forcefield.
-
-    \throw SireBase::missing_property
-*/
-bool ForceField::setProperty(const QString &name, const Property &value)
-{
-    return d->setProperty(name,value);
-}
-
-/** Return the property associated with the name 'name'
-
-    \throw SireBase::missing_property
-*/
-Property ForceField::getProperty(const QString &name) const
-{
-    return d->getProperty(name);
-}
-
-/** Return whether or not this contains a property with the name 'name' */
-bool ForceField::containsProperty(const QString &name) const
-{
-    return d->containsProperty(name);
-}
-
-/** Return all of the properties of this forcefield, indexed by name */
-QHash<QString,Property> ForceField::properties() const
-{
-    return d->properties();
-}
-
-/** Tell the forcefield that it has to recalculate everything from
-    scratch */
-void ForceField::mustNowRecalculateFromScratch()
-{
-    d->mustNowRecalculateFromScratch();
-}
-
-/** Change the molecule 'molecule' (e.g. move it, or change its
-    parameters). This does nothing if the molecule is not
-    in this forcefield. Returns whether or not the forcefield
-    has been changed by this change, and thus whether the
-    energy needs to be recalculated. The same parameter map
-    that was used when this molecule was added will be used
-    to extract any necessary parameters from the molecule's
-    properties
-
-    \throw SireBase::missing_property
-    \throw SireError::invalid_cast
-    \throw SireError::invalid_operation
-*/
-bool ForceField::change(const PartialMolecule &molecule)
-{
-    return d->change(molecule);
-}
-
-/** Change a whole load of partial molecules
-
-    \throw SireBase::missing_property
-    \throw SireError::invalid_cast
-    \throw SireError::invalid_operation
-*/
-bool ForceField::change(const Molecules &molecules)
-{
-    return d->change(molecules);
-}
-
-/** Add the molecule 'molecule' to this forcefield using the
-    optional parameter map to find any necessay parameters
-    from properties of the atom. This will replace any
-    existing copy of the atom that already exists in
-    this forcefield. This returns whether or not the
-    forcefield has been changed by this addition, and therefore
-    whether its energy needs recalculating.
-
-    This will throw an exception if this forcefield doens't
-    support partial molecules.
-
-    \throw SireError::invalid_operation
-    \throw SireBase::missing_property
-    \throw SireError::invalid_cast
-*/
-bool ForceField::add(const PartialMolecule &molecule, const ParameterMap &map)
-{
-    return d->add(molecule, map);
-}
-
-/** Add lots of molecules
-
-    \throw SireError::invalid_operation
-    \throw SireBase::missing_property
-    \throw SireError::invalid_cast
-*/
-bool ForceField::add(const Molecules &molecules,
-                     const ParameterMap &map)
-{
-    return d->add(molecules, map);
-}
-
-/** Add the molecule 'molecule' to the group 'group' in this forcefield using
-    the optional parameter map to find any necessary parameters
-    from properties of the molecule. This will replace any
-    existing copy of the molecule that already exists in
-    this forcefield. This returns whether or not the
-    forcefield has been changed by this addition, and therefore
-    whether its energy needs recalculating.
-
-    \throw SireBase::missing_property
-    \throw SireError::invalid_cast
-    \throw SireError::invalid_operation
-    \throw SireFF::invalid_group
-*/
-bool ForceField::addTo(const FFBase::Group &group, const PartialMolecule &molecule,
-                       const ParameterMap &map)
-{
-    return d->addTo(group, molecule, map);
-}
-
-/** Adds lots of molecules to the group 'group'
-
-    \throw SireBase::missing_property
-    \throw SireMol::invalid_cast
-    \throw SireMol::invalid_operation
-    \throw SireFF::invalid_group
-*/
-bool ForceField::addTo(const FFBase::Group &group,
-                       const Molecules &molecules,
-                       const ParameterMap &map)
-{
-    return d->addTo(group, molecules, map);
-}
-
-/** Remove the molecule 'molecule' from this forcefield - this
-    does nothing if the molecule is not in this forcefield. This
-    returns whether this has changed the forcefield (therefore
-    necessitating a recalculation of the energy)
-
-    \throw SireError::invalid_operation
-*/
-bool ForceField::remove(const PartialMolecule &molecule)
-{
-    return d->remove(molecule);
-}
-
-/** Remove a whole load of molecules */
-bool ForceField::remove(const Molecules &molecules)
-{
-    return d->remove(molecules);
-}
-
-/** Remove the molecule 'molecule' from the group 'group'
-    from this forcefield - this does nothing if the molecule
-    is not in this forcefield. This returns whether or not
-    this has changed the forcefield (therefore necessitating
-    a recalculation of the energy)
-
-    \throw SireFF::invalid_group
-*/
-bool ForceField::removeFrom(const FFBase::Group &group,
-                            const PartialMolecule &molecule)
-{
-    return d->removeFrom(group, molecule);
-}
-
-/** Remove lots of molecules from the group 'group'
-
-    \throw SireFF::invalid_group
-*/
-bool ForceField::removeFrom(const FFBase::Group &group,
-                            const Molecules &molecules)
-{
-    return d->removeFrom(group, molecules);
-}
-
-/** Return whether this forcefield contains a complete copy of
-    any version of the partial molecule 'molecule' */
-bool ForceField::contains(const PartialMolecule &molecule) const
-{
-    return d->contains(molecule);
-}
-
-/** Return whether this forcefield contains a complete copy of
-    any version of the partial molecule 'molecule' in the group 'group'
-
-    \throw SireFF::invalid_group
-*/
-bool ForceField::contains(const PartialMolecule &molecule,
-                          const FFBase::Group &group) const
-{
-    return d->contains(molecule, group);
-}
-
-/** Return whether or not this forcefield contains *any part* of
-    any version of the molecule with ID 'molid' */
-bool ForceField::refersTo(MoleculeID molid) const
-{
-    return d->refersTo(molid);
-}
-
-/** Return whether or not the group 'group' in this forcefield
-    contains *any part* of any version of the molecule with ID
-    'molid'
-
-    \throw SireFF::invalid_group
-*/
-bool ForceField::refersTo(MoleculeID molid, const FFBase::Group &group) const
-{
-    return d->refersTo(molid, group);
-}
-
-/** Return all of the groups that refer to the molecule with ID == molid
-
-    \throw SireMol::missing_molecule
-*/
-QSet<FFBase::Group> ForceField::groupsReferringTo(MoleculeID molid) const
-{
-    return d->groupsReferringTo(molid);
-}
-
-/** Return the set of all of the ID numbers of all of the
-    molecules that are referred to by this forcefield
-    (i.e. all molecules that have at least some part
-    in this forcefield) */
-QSet<MoleculeID> ForceField::moleculeIDs() const
-{
-    return d->moleculeIDs();
-}
-
-/** Return the set of all of the ID numbers of all of the
-    molecules that are referred to by group 'group' in
-    this forcefield (i.e. all molecules that have at least
-    some part in this group in this forcefield)
-
-    \throw SireFF::invalid_group
-*/
-QSet<MoleculeID> ForceField::moleculeIDs(const FFBase::Group &group) const
-{
-    return d->moleculeIDs(group);
-}
-
-/** Return the copy of the molecule in this forcefield that
-    has the ID == molid
-
-    \throw SireMol::missing_molecule
-*/
-PartialMolecule ForceField::molecule(MoleculeID molid) const
-{
-    return d->molecule(molid);
-}
-
-/** Return a copy of the molecule with ID == molid in the group 'group'
-
-    \throw SireMol::missing_molecule
-    \throw SireFF::missing_group
-*/
-PartialMolecule ForceField::molecule(MoleculeID molid,
-                                     const FFBase::Group &group) const
-{
-    return d->molecule(molid, group);
-}
-
-/** Return copies of the molecules in this forcefield whose IDs
-    are in 'molids'
-
-    \throw SireMol::missing_molecule
-*/
-Molecules ForceField::molecules(const QSet<MoleculeID> &molids) const
-{
-    return d->molecules(molids);
-}
-
-/** Return copies of all of the molecules that are in the group 'group'
-
-    \throw SireFF::missing_group
-*/
-Molecules ForceField::molecules(const FFBase::Group &group) const
-{
-    return d->molecules(group);
-}
-
-/** Return copies of all of the molecules that are in this forcefield */
-Molecules ForceField::molecules() const
-{
-    return d->molecules();
-}
-
-/** Return the contents of the group 'group' in this forcefield
-
-    \throw SireFF::invalid_group
-*/
-Molecules ForceField::contents(const FFBase::Group &group) const
-{
-    return d->contents(group);
-}
-
-/** Return all of the molecules (and parts of molecules) that
-    are in this forcefield */
-Molecules ForceField::contents() const
-{
-    return d->contents();
-}
-
-/** Return whether or not the forcefield is dirty (the energy
-    needs to be recalculated) */
-bool ForceField::isDirty() const
-{
-    return d->isDirty();
-}
-
-/** Return whether or not the forcefield is clean (the energy
-    does not need to be recalculated) */
-bool ForceField::isClean() const
-{
-    return d->isClean();
-}
-
-/** Return the ID number of the forcefield */
-ForceFieldID ForceField::ID() const
-{
-    return d->ID();
-}
-
-/** Return the version number of the forcefield */
-const Version& ForceField::version() const
-{
-    return d->version();
-}
-
-/** Assert that this forcefield contains the component 'component'
-
-    \throw SireFF::missing_component
-*/
-void ForceField::assertContains(const FFComponent &component) const
-{
-    d->assertContains(component);
+    return static_cast<const FF&>(d());
 }

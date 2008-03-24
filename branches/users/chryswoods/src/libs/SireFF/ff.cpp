@@ -362,3 +362,55 @@ void FF::addIfUnique(const MolGroup &molgroup, const MGID &mgid)
 {
     this->addIfUnique(molgroup, mgid, PropertyMap());
 }
+
+/** Set the contents of this forcefield to just contain 'molview', 
+    using the default locations to find the properties that contain
+    the forcefield parameters for this molecule
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void FF::setContents(const MGID &mgid, const MoleculeView &molview)
+{
+    this->setContents(mgid, molview, PropertyMap());
+}
+
+/** Set the contents of this forcefield to the molecule views in 'molviews', 
+    using the default locations to find the properties that contain
+    the forcefield parameters for this molecule
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void FF::setContents(const MGID &mgid, const ViewsOfMol &molviews)
+{
+    this->setContents(mgid, molviews, PropertyMap());
+}
+
+/** Set the contents of this forcefield to the molecules 'molecules', 
+    using the default locations to find the properties that contain
+    the forcefield parameters for this molecule
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void FF::setContents(const MGID &mgid, const Molecules &molecules)
+{
+    this->setContents(mgid, molecules, PropertyMap());
+}
+                         
+/** Set the contents of this forcefield to contains the molecules in 'molgroup', 
+    using the default locations to find the properties that contain
+    the forcefield parameters for this molecule
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void FF::setContents(const MGID &mgid, const MolGroup &molgroup)
+{
+    this->setContents(mgid, molgroup, PropertyMap());
+}

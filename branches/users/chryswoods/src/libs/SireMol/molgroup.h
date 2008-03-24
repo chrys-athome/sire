@@ -130,6 +130,8 @@ public:
         return new MolGroup(*this);
     }
 
+    MolGroup& operator=(const MolGroup &other);
+
     virtual bool operator==(const MolGroup &other) const;
     virtual bool operator!=(const MolGroup &other) const;
     
@@ -228,6 +230,8 @@ public:
 
     const MGName& name() const;
     MGNum number() const;
+    
+    virtual void setName(const QString &new_name);
     
     quint64 majorVersion() const;
     quint64 minorVersion() const;

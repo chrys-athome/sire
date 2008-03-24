@@ -354,6 +354,14 @@ MolGroup::MolGroup(const MolGroup &other)
 MolGroup::~MolGroup()
 {}
 
+/** Copy assignment operator */
+MolGroup& MolGroup::operator=(const MolGroup &other)
+{
+    PropertyBase::operator=(other);
+    d = other.d;
+    return *this;
+}
+
 /** Comparison operator */
 bool MolGroup::operator==(const MolGroup &other) const
 {
@@ -1040,8 +1048,19 @@ MGNum MolGroup::number() const
     return d->number;
 }
 
+/** Change the name of this group */
+void MolGroup::setName(const QString &new_name)
+{
+    if (new_name != this->name())
+    {
+        d->name = MGName(new_name);
+        d->incrementMajor();
+    }
+}
+
 /** Return the major version number of this group. This number
-    changes whenever views are added or removed from this group */
+    changes whenever views are added or removed from this group,
+    or when the name of this group changes */
 quint64 MolGroup::majorVersion() const
 {
     return d->major_version;
