@@ -1725,6 +1725,18 @@ Molecules MolGroupsBase::matchToExistingVersion(const Molecules &molecules) cons
     return updated_mols;
 }
 
+/** Update the index with the new name of a molecule group */
+void MolGroupsBase::changeNameIndex(MGNum mgnum, const MGName &old_name,
+                                    const MGName &new_name)
+{
+    mgname_to_mgnum[old_name].removeAll(mgnum);
+    
+    if (mgname_to_mgnum[old_name].isEmpty())
+        mgname_to_mgnum.remove(old_name);
+        
+    mgname_to_mgnum[new_name].append(mgnum);
+}
+
 /** Add the molecule group and all of its contained molecules to the index */
 void MolGroupsBase::addToIndex(const MolGroup &molgroup)
 {

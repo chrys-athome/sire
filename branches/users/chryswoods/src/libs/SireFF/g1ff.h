@@ -59,15 +59,43 @@ friend QDataStream& ::operator>>(QDataStream&, G1FF&);
 public:
     ~G1FF();
 
+    void assertContains(MGNum mgnum) const;
+
 protected:
-    G1FF();
+    G1FF(bool allow_overlap_of_atoms=false);
     G1FF(const G1FF &other);
     
     G1FF& operator=(const G1FF &other);
 
     ////
-    //// Virtual functions that must be overridden by
-    //// derived virtual forcefields
+    //// Virtual functions that must be implemented
+    //// by derived forcefields
+    ////
+    virtual void _pvt_rebuild(MolNum molnum)=0;
+    virtual void _pvt_rebuild(const QList<ViewsOfMol> &molecules)=0;
+    
+    virtual void _pvt_rebuild(MolNum molnum,
+                              const PropertyMap &map)=0;
+                              
+    virtual void _pvt_rebuild(const QList<ViewsOfMol> &molecules,
+                              const PropertyMap &map)=0;
+    
+    virtual void _pvt_update(const MoleculeData &moldata)=0;
+    virtual void _pvt_update(const QList<Molecule> &molecules)=0;
+    
+    virtual bool _pvt_changedProperties(MolNum molnum,
+                                        const PropertyMap &map)=0;
+    
+    virtual bool _pvt_changedProperties(const Molecules &molecules,
+                                        const PropertyMap &map)=0;
+    
+    virtual void _pvt_removeAll()=0;
+
+    //must also implement void _pvt_restore(const ForceField &ffield)=0
+    //from FF
+
+    ////
+    //// Implementation of FF virtual functions
     ////
 
     const MolGroup& getGroup(MGNum mgnum) const;
@@ -126,9 +154,21 @@ protected:
     bool group_setContents(quint32 i, const MolGroup &molgroup, 
                            const PropertyMap &map);
 
+    void group_validateSane(quint32 i) const;
+
 private:
+    void assertValidGroup(quint32 i) const;
+
+    void assertNoOverlap(const MoleculeView &molview) const;
+    void assertNoOverlap(const MolGroup &molgroup,
+                         const MoleculeView &molview) const;
+
     /** The single group of molecules in this forcefield */
     detail::FFMolGroupPvt molgroup;
+    
+    /** Whether or not this forcefield allows overlap of atoms
+        (e.g. allowing an atom to appear several times in the forcefield) */
+    bool allow_overlap_of_atoms;
 };
 
 }

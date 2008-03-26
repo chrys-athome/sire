@@ -1031,6 +1031,39 @@ QList<AtomIdx> ViewsOfMol::atomIdxs() const
     return selected_atoms.selectedAtoms().toList();
 }
 
+/** Assert that none of the views contain the same atoms
+    (i.e. there is no overlap between each view)
+    
+    \throw SireMol::duplicate_atom
+*/
+void ViewsOfMol::assertNoOverlap() const
+{
+    int nviews = this->nViews();
+
+    if (nviews < 2)
+        return;
+        
+    //compare each pair of views...
+    for (int i=0; i<nviews-1; ++i)
+    {
+        const AtomSelection &view0 = views.at(i);
+    
+        for (int j=i+1; j<nviews; ++j)
+        {
+            const AtomSelection &view1 = views.at(j);
+            
+            if (view0.intersects(view1))
+                //there are some common atoms...!
+                throw SireMol::duplicate_atom( QObject::tr(
+                    "The views (%1 and %2) of molecule %3 (%4) contain "
+                    "overlapping atoms.")
+                        .arg(i).arg(j)
+                        .arg(this->name()).arg(this->number()),
+                            CODELOC );
+        }
+    }
+}
+
 ////////
 //////// Explicitly instantiate templates
 ////////

@@ -155,7 +155,9 @@ public:
     quint64 version() const;
 
     const FFName& name() const;
-    void setName(const FFName &name);
+    void setName(const QString &name);
+
+    void setName(const MGID &mgid, const QString &name);
 
     SireUnits::Dimension::Energy energy();
     SireUnits::Dimension::Energy energy(const Symbol &component);
@@ -216,21 +218,7 @@ public:
     void addIfUnique(const Molecules &molecules, const MGID &mgid);
     void addIfUnique(const MolGroup &molgroup, const MGID &mgid);
 
-    void remove(const MoleculeView &molview);
-    void remove(const ViewsOfMol &molviews);
-    void remove(const Molecules &molecules);
-    void remove(const MolGroup &molgroup);
-    
-    void removeAll(const MoleculeView &molview);
-    void removeAll(const ViewsOfMol &molviews);
-    void removeAll(const Molecules &molecules);
-    void removeAll(const MolGroup &molgroup);
-
-    void remove(MolNum molnum);
-    void remove(const QSet<MolNum> &molnums);
-
     void removeAll(const MGID &mgid);
-    void removeAll();
     
     void remove(const MoleculeView &molview, const MGID &mgid);
     void remove(const ViewsOfMol &molviews, const MGID &mgid);
@@ -291,7 +279,7 @@ protected:
 
     /** Virtual functions used to add, remove or modify molecules in 
         this forcefield */
-    virtual void group_setName(quint32 i, const QString &new_name);
+    virtual void group_setName(quint32 i, const QString &new_name)=0;
         
     virtual void group_add(quint32 i, const MoleculeView &molview,
                            const PropertyMap &map)=0;
@@ -340,9 +328,12 @@ protected:
     virtual bool group_setContents(quint32 i, const MolGroup &molgroup, 
                                    const PropertyMap &map)=0;
 
+    virtual void group_validateSane(quint32 i) const=0;
+
     virtual void _pvt_restore(const ForceField &ffield)=0;
 
 private:
+
     /** The unique ID for this forcefield - this uniquely identifies
         this forcefield */
     QUuid uid;

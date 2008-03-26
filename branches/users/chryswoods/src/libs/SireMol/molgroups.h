@@ -340,6 +340,9 @@ protected:
     void removeFromIndex(MGNum mgnum, MolNum molnum);
     void removeFromIndex(MGNum mgnum, const QSet<MolNum> &molnums);
 
+    void changeNameIndex(MGNum mgnum, const MGName &old_name, 
+                         const MGName &new_name);
+
     void clearIndex(MGNum mgnum);
 
 private:

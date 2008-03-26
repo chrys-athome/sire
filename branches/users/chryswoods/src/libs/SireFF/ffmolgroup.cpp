@@ -35,6 +35,10 @@
 #include "SireMol/molnum.h"
 #include "SireMol/molecule.h"
 
+#include "SireMol/partialmolecule.h"
+#include "SireMol/viewsofmol.h"
+#include "SireMol/molecules.h"
+
 #include "SireMol/mover.hpp"
 
 #include "SireStream/datastream.h"
@@ -284,115 +288,96 @@ void FFMolGroup::setName(const QString &name)
     updateGroup();
 }
 
-void FFMolGroup::add(const MoleculeView &molview)
-{
-    assertNotNull();
-    ffield.edit().group_add(mgidx, molview, PropertyMap());
-    updateGroup();
-}
-
-void FFMolGroup::add(const ViewsOfMol &molviews)
-{
-    assertNotNull();
-    ffield.edit().group_add(mgidx, molviews, PropertyMap());
-    updateGroup();
-}
-
-void FFMolGroup::add(const Molecules &molecules)
-{
-    assertNotNull();
-    ffield.edit().group_add(mgidx, molecules, PropertyMap());
-    updateGroup();
-}
-
-void FFMolGroup::add(const MolGroup &molgroup)
-{
-    assertNotNull();
-    ffield.edit().group_add(mgidx, molgroup, PropertyMap());
-    updateGroup();
-}
-
 void FFMolGroup::add(const MoleculeView &molview, const PropertyMap &map)
 {
     assertNotNull();
-    ffield.edit().group_add(mgidx, molview, map);
+    
+    ffield.edit().add(molview, this->number(), map);
+    
+    //get the new version of the group
     updateGroup();
 }
 
 void FFMolGroup::add(const ViewsOfMol &molviews, const PropertyMap &map)
 {
     assertNotNull();
-    ffield.edit().group_add(mgidx, molviews, map);
+    
+    ffield.edit().add(molviews, this->number(), map);
+    
+    //get the new version of the group
     updateGroup();
 }
 
 void FFMolGroup::add(const Molecules &molecules, const PropertyMap &map)
 {
     assertNotNull();
-    ffield.edit().group_add(mgidx, molecules, map);
+    
+    ffield.edit().add(molecules, this->number(), map);
+    
+    //get the new version of the group
     updateGroup();
 }
 
 void FFMolGroup::add(const MolGroup &molgroup, const PropertyMap &map)
 {
-    assertNotNull();
-    ffield.edit().group_add(mgidx, molgroup, map);
-    updateGroup();
+    this->add(molgroup.molecules(), map);
 }
 
-bool FFMolGroup::addIfUnique(const MoleculeView &molview)
+void FFMolGroup::add(const MoleculeView &molview)
+{
+    this->add(molview, PropertyMap());
+}
+
+void FFMolGroup::add(const ViewsOfMol &molviews)
+{
+    this->add(molviews, PropertyMap());
+}
+
+void FFMolGroup::add(const Molecules &molecules)
+{
+    this->add(molecules, PropertyMap());
+}
+
+void FFMolGroup::add(const MolGroup &molgroup)
+{
+    this->add(molgroup, PropertyMap());
+}
+
+bool FFMolGroup::addIfUnique(const MoleculeView &molview, const PropertyMap &map)
 {
     assertNotNull();
-    bool ret = ffield.edit().group_addIfUnique(mgidx, molview, PropertyMap());
+    
+    //update to the existing version of the molecule
+    PartialMolecule view(molview);
+    view.update( ffield->matchToExistingVersion(view.data()) );
+    
+    //add the molecule
+    bool ret = ffield.edit().group_addIfUnique(mgidx, view, map);
+    
+    //update the index
+    ffield.edit().addToIndex( this->number(), view.number() );
+    
+    //get the new version of the group
     updateGroup();
     
     return ret;
 }
 
-ViewsOfMol FFMolGroup::addIfUnique(const ViewsOfMol &molviews)
+ViewsOfMol FFMolGroup::addIfUnique(const ViewsOfMol &molviews, const PropertyMap &map)
 {
     assertNotNull();
-    ViewsOfMol ret = ffield.edit().group_addIfUnique(mgidx, molviews, PropertyMap());
-    updateGroup();
-    
-    return ret;
-}
 
-QList<ViewsOfMol> FFMolGroup::addIfUnique(const Molecules &molecules)
-{
-    assertNotNull();
-    QList<ViewsOfMol> ret = ffield.edit().group_addIfUnique(mgidx, molecules, 
-                                                            PropertyMap());
-    updateGroup();
-    
-    return ret;
-}
+    //get the current version of the molecule
+    ViewsOfMol views(molviews);
+    views.update( ffield->matchToExistingVersion(views.data()) );
 
-QList<ViewsOfMol> FFMolGroup::addIfUnique(const MolGroup &molgroup)
-{
-    assertNotNull();
-    QList<ViewsOfMol> ret = ffield.edit().group_addIfUnique(mgidx, molgroup, 
-                                                            PropertyMap());
-    updateGroup();
-    
-    return ret;
-}
+    //add the views
+    ViewsOfMol ret = ffield.edit().group_addIfUnique(mgidx, views, map);
 
-bool FFMolGroup::addIfUnique(const MoleculeView &molview, 
-                             const PropertyMap &map)
-{
-    assertNotNull();
-    bool ret = ffield.edit().group_addIfUnique(mgidx, molview, map);
-    updateGroup();
-    
-    return ret;
-}
+    //update the index
+    ffield.edit().addToIndex( this->number(), views.number() );
 
-ViewsOfMol FFMolGroup::addIfUnique(const ViewsOfMol &molviews, 
-                                   const PropertyMap &map)
-{
-    assertNotNull();
-    ViewsOfMol ret = ffield.edit().group_addIfUnique(mgidx, molviews, map);
+    //get the latest version of the group
     updateGroup();
     
     return ret;
@@ -401,28 +386,64 @@ ViewsOfMol FFMolGroup::addIfUnique(const ViewsOfMol &molviews,
 QList<ViewsOfMol> FFMolGroup::addIfUnique(const Molecules &molecules, 
                                           const PropertyMap &map)
 {
-
     assertNotNull();
-    QList<ViewsOfMol> ret = ffield.edit().group_addIfUnique(mgidx, molecules, map);
+    
+    //match to the versions already in this forcefield
+    Molecules mols = ffield->matchToExistingVersion(molecules);
+    
+    //add the molecules
+    QList<ViewsOfMol> ret = ffield.edit().group_addIfUnique(mgidx, mols, map); 
+
+    //update the index
+    ffield.edit().addToIndex(this->number(), mols.molNums());
+
+    //get the latest version of the group
     updateGroup();
     
     return ret;
 }
 
-QList<ViewsOfMol> FFMolGroup::addIfUnique(const MolGroup &molgroup, 
+QList<ViewsOfMol> FFMolGroup::addIfUnique(const MolGroup &molgroup,
                                           const PropertyMap &map)
 {
-    assertNotNull();
-    QList<ViewsOfMol> ret = ffield.edit().group_addIfUnique(mgidx, molgroup, map);
-    updateGroup();
-    
-    return ret;
+    return this->addIfUnique(molgroup.molecules(), map);
+}
+
+bool FFMolGroup::addIfUnique(const MoleculeView &molview)
+{
+    return this->addIfUnique(molview, PropertyMap());
+}
+
+ViewsOfMol FFMolGroup::addIfUnique(const ViewsOfMol &molviews)
+{
+    return this->addIfUnique(molviews, PropertyMap());
+}
+
+QList<ViewsOfMol> FFMolGroup::addIfUnique(const Molecules &molecules)
+{
+    return this->addIfUnique(molecules, PropertyMap());
+}
+
+QList<ViewsOfMol> FFMolGroup::addIfUnique(const MolGroup &molgroup)
+{
+    return this->addIfUnique(molgroup, PropertyMap());
 }
 
 bool FFMolGroup::remove(const MoleculeView &molview)
 {
     assertNotNull();
+
+    //remove the molecule
     bool ret = ffield.edit().group_remove(mgidx, molview);
+
+    if (ret)
+    {
+        if (not ffield->group(this->number()).contains(molview.data().number()))
+            //update the index
+            ffield.edit().removeFromIndex(this->number(), molview.data().number());
+    }
+
+    //get the latest version of the group
     updateGroup();
     
     return ret;
@@ -431,7 +452,18 @@ bool FFMolGroup::remove(const MoleculeView &molview)
 ViewsOfMol FFMolGroup::remove(const ViewsOfMol &molviews)
 {
     assertNotNull();
+    
+    //remove the views
     ViewsOfMol ret = ffield.edit().group_remove(mgidx, molviews);
+    
+    if (not ret.isEmpty())
+    {
+        if (not ffield->group(this->number()).contains(molviews.number()))
+            //update the index
+            ffield.edit().removeFromIndex(this->number(), molviews.number());
+    }
+    
+    //get the latest version of the group
     updateGroup();
     
     return ret;
@@ -440,7 +472,25 @@ ViewsOfMol FFMolGroup::remove(const ViewsOfMol &molviews)
 QList<ViewsOfMol> FFMolGroup::remove(const Molecules &molecules)
 {
     assertNotNull();
+    
+    //remove the molecules
     QList<ViewsOfMol> ret = ffield.edit().group_remove(mgidx, molecules);
+    
+    if (not ret.isEmpty())
+    {
+        const MolGroup &group = ffield->group(this->number());
+        QSet<MolNum> removed_molnums;
+        
+        foreach (const ViewsOfMol &removed_mol, ret)
+        {
+            if (not group.contains(removed_mol.number()))
+                removed_molnums.insert(removed_mol.number());
+        }
+        
+        if (not removed_molnums.isEmpty())
+            ffield.edit().removeFromIndex(this->number(), removed_molnums);
+    }
+    
     updateGroup();
     
     return ret;
@@ -448,17 +498,24 @@ QList<ViewsOfMol> FFMolGroup::remove(const Molecules &molecules)
 
 QList<ViewsOfMol> FFMolGroup::remove(const MolGroup &molgroup)
 {
-    assertNotNull();
-    QList<ViewsOfMol> ret = ffield.edit().group_remove(mgidx, molgroup);
-    updateGroup();
-    
-    return ret;
+    return this->remove(molgroup.molecules());
 }
 
 bool FFMolGroup::removeAll(const MoleculeView &molview)
 {
     assertNotNull();
+
+    //remove the molecule
     bool ret = ffield.edit().group_removeAll(mgidx, molview);
+
+    if (ret)
+    {
+        if (not ffield->group(this->number()).contains(molview.data().number()))
+            //update the index
+            ffield.edit().removeFromIndex(this->number(), molview.data().number());
+    }
+
+    //get the latest version of the group
     updateGroup();
     
     return ret;
@@ -467,7 +524,18 @@ bool FFMolGroup::removeAll(const MoleculeView &molview)
 ViewsOfMol FFMolGroup::removeAll(const ViewsOfMol &molviews)
 {
     assertNotNull();
+    
+    //remove the views
     ViewsOfMol ret = ffield.edit().group_removeAll(mgidx, molviews);
+    
+    if (not ret.isEmpty())
+    {
+        if (not ffield->group(this->number()).contains(molviews.number()))
+            //update the index
+            ffield.edit().removeFromIndex(this->number(), molviews.number());
+    }
+    
+    //get the latest version of the group
     updateGroup();
     
     return ret;
@@ -476,7 +544,25 @@ ViewsOfMol FFMolGroup::removeAll(const ViewsOfMol &molviews)
 QList<ViewsOfMol> FFMolGroup::removeAll(const Molecules &molecules)
 {
     assertNotNull();
+    
+    //remove the molecules
     QList<ViewsOfMol> ret = ffield.edit().group_removeAll(mgidx, molecules);
+    
+    if (not ret.isEmpty())
+    {
+        const MolGroup &group = ffield->group(this->number());
+        QSet<MolNum> removed_molnums;
+        
+        foreach (const ViewsOfMol &removed_mol, ret)
+        {
+            if (not group.contains(removed_mol.number()))
+                removed_molnums.insert(removed_mol.number());
+        }
+        
+        if (not removed_molnums.isEmpty())
+            ffield.edit().removeFromIndex(this->number(), removed_molnums);
+    }
+    
     updateGroup();
     
     return ret;
@@ -484,17 +570,20 @@ QList<ViewsOfMol> FFMolGroup::removeAll(const Molecules &molecules)
 
 QList<ViewsOfMol> FFMolGroup::removeAll(const MolGroup &molgroup)
 {
-    assertNotNull();
-    QList<ViewsOfMol> ret = ffield.edit().group_removeAll(mgidx, molgroup);
-    updateGroup();
-    
-    return ret;
+    return this->removeAll(molgroup.molecules());
 }
 
 ViewsOfMol FFMolGroup::remove(MolNum molnum)
 {
     assertNotNull();
+
     ViewsOfMol ret = ffield.edit().group_remove(mgidx, molnum);
+
+    if (not ret.isEmpty())
+    {
+        ffield.edit().removeFromIndex(this->number(), molnum);
+    }
+
     updateGroup();
     
     return ret;
@@ -503,7 +592,19 @@ ViewsOfMol FFMolGroup::remove(MolNum molnum)
 QList<ViewsOfMol> FFMolGroup::remove(const QSet<MolNum> &molnums)
 {
     assertNotNull();
+
     QList<ViewsOfMol> ret = ffield.edit().group_remove(mgidx, molnums);
+
+    QSet<MolNum> removed_molnums;
+    
+    foreach (const ViewsOfMol &removed_mol, ret)
+    {
+        removed_molnums.insert(removed_mol.number());
+    }
+    
+    if (not removed_molnums.isEmpty())
+        ffield.edit().removeFromIndex(this->number(), removed_molnums);
+
     updateGroup();
     
     return ret;
@@ -512,24 +613,43 @@ QList<ViewsOfMol> FFMolGroup::remove(const QSet<MolNum> &molnums)
 void FFMolGroup::removeAll()
 {
     assertNotNull();
-    ffield.edit().group_removeAll(mgidx);
+    ffield.edit().removeAll(this->number());
     updateGroup();
 }
 
 bool FFMolGroup::update(const MoleculeData &moldata)
 {
     assertNotNull();
-    bool ret = ffield.edit().group_update(mgidx, moldata);
-    updateGroup();
     
-    return ret;
+    //update in a copy of the group (so get the return value)
+    ForceField copy = ffield;
+    bool ret = copy.edit().group_update(mgidx, moldata);
+
+    if (ret)
+    {
+        //we have to do the update for real
+        ffield.edit().update(moldata);
+        updateGroup();
+    }
+    
+    return false;
 }
 
 QList<Molecule> FFMolGroup::update(const Molecules &molecules)
 {
     assertNotNull();
-    QList<Molecule> ret = ffield.edit().group_update(mgidx, molecules);
-    updateGroup();
+
+    //perform the update in a copy so that we can get the return 
+    //value
+    ForceField copy = ffield;
+    QList<Molecule> ret = copy.edit().group_update(mgidx, molecules);
+    
+    if (not ret.isEmpty())
+    {
+        //we have to update the entire forcefield
+        ffield.edit().update(molecules);
+        updateGroup();
+    }
     
     return ret;
 }
@@ -537,44 +657,18 @@ QList<Molecule> FFMolGroup::update(const Molecules &molecules)
 QList<Molecule> FFMolGroup::update(const MolGroup &molgroup)
 {
     assertNotNull();
-    QList<Molecule> ret = ffield.edit().group_update(mgidx, molgroup);
-    updateGroup();
-    
-    return ret;
-}
 
-bool FFMolGroup::setContents(const MoleculeView &molview)
-{
-    assertNotNull();
-    bool ret = ffield.edit().group_setContents(mgidx, molview, PropertyMap());
-    updateGroup();
+    //perform the update in a copy so that we can get the return 
+    //value
+    ForceField copy = ffield;
+    QList<Molecule> ret = copy.edit().group_update(mgidx, molgroup);
     
-    return ret;
-}
-
-bool FFMolGroup::setContents(const ViewsOfMol &molviews)
-{
-    assertNotNull();
-    bool ret = ffield.edit().group_setContents(mgidx, molviews, PropertyMap());
-    updateGroup();
-    
-    return ret;
-}
-
-bool FFMolGroup::setContents(const Molecules &molecules)
-{
-    assertNotNull();
-    bool ret = ffield.edit().group_setContents(mgidx, molecules, PropertyMap());
-    updateGroup();
-    
-    return ret;
-}
-
-bool FFMolGroup::setContents(const MolGroup &molgroup)
-{
-    assertNotNull();
-    bool ret = ffield.edit().group_setContents(mgidx, molgroup, PropertyMap());
-    updateGroup();
+    if (not ret.isEmpty())
+    {
+        //we have to update the entire forcefield
+        ffield.edit().update(molgroup);
+        updateGroup();
+    }
     
     return ret;
 }
@@ -582,35 +676,95 @@ bool FFMolGroup::setContents(const MolGroup &molgroup)
 bool FFMolGroup::setContents(const MoleculeView &molview, const PropertyMap &map)
 {
     assertNotNull();
-    bool ret = ffield.edit().group_setContents(mgidx, molview, map);
+
+    //what's the old version of this group?
+    quint32 majver = this->majorVersion();
+    quint32 minver = this->minorVersion();
+    
+    //make the change
+    ffield.edit().setContents(this->number(), molview, map);
+    
+    //update this group
     updateGroup();
     
-    return ret;
+    //has there been a change
+    return majver != this->majorVersion() or 
+           minver != this->minorVersion();
 }
 
 bool FFMolGroup::setContents(const ViewsOfMol &molviews, const PropertyMap &map)
 {
     assertNotNull();
-    bool ret = ffield.edit().group_setContents(mgidx, molviews, map);
+
+    //what's the old version of this group?
+    quint32 majver = this->majorVersion();
+    quint32 minver = this->minorVersion();
+    
+    //make the change
+    ffield.edit().setContents(this->number(), molviews, map);
+    
+    //update this group
     updateGroup();
     
-    return ret;
+    //has there been a change
+    return majver != this->majorVersion() or 
+           minver != this->minorVersion();
 }
 
 bool FFMolGroup::setContents(const Molecules &molecules, const PropertyMap &map)
 {
     assertNotNull();
-    bool ret = ffield.edit().group_setContents(mgidx, molecules, map);
+
+    //what's the old version of this group?
+    quint32 majver = this->majorVersion();
+    quint32 minver = this->minorVersion();
+    
+    //make the change
+    ffield.edit().setContents(this->number(), molecules, map);
+    
+    //update this group
     updateGroup();
     
-    return ret;
+    //has there been a change
+    return majver != this->majorVersion() or 
+           minver != this->minorVersion();
 }
 
 bool FFMolGroup::setContents(const MolGroup &molgroup, const PropertyMap &map)
 {
     assertNotNull();
-    bool ret = ffield.edit().group_setContents(mgidx, molgroup, map);
+
+    //what's the old version of this group?
+    quint32 majver = this->majorVersion();
+    quint32 minver = this->minorVersion();
+    
+    //make the change
+    ffield.edit().setContents(this->number(), molgroup, map);
+    
+    //update this group
     updateGroup();
     
-    return ret;
+    //has there been a change
+    return majver != this->majorVersion() or 
+           minver != this->minorVersion();
+}
+
+bool FFMolGroup::setContents(const MoleculeView &molview)
+{
+    return this->setContents(molview, PropertyMap());
+}
+
+bool FFMolGroup::setContents(const ViewsOfMol &molviews)
+{
+    return this->setContents(molviews, PropertyMap());
+}
+
+bool FFMolGroup::setContents(const Molecules &molecules)
+{
+    return this->setContents(molecules, PropertyMap());
+}
+
+bool FFMolGroup::setContents(const MolGroup &molgroup)
+{
+    return this->setContents(molgroup, PropertyMap());
 }

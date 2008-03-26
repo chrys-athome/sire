@@ -236,6 +236,8 @@ public:
    
     void removeAll();
    
+    void assertNoOverlap() const;
+   
 private:
     template<class T>
     void setEqualTo(const Selector<T> &selection);
