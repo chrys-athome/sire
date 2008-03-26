@@ -291,6 +291,23 @@ MGNum MolGroupsBase::getGroupNumber(const MGID &mgid) const
     return mgnums.first();
 }
 
+/** Return the index of the group with number 'mgnum'
+
+    \throw SireMol::missing_group
+*/
+MGIdx MolGroupsBase::mgIdx(MGNum mgnum) const
+{
+    int i = mgidx_to_num.indexOf(mgnum);
+    
+    if (i == -1)
+        throw SireMol::missing_group( QObject::tr(
+            "There is no molecule group with number %1 in this set. "
+            "Available groups are %2.")
+                .arg(mgnum).arg( Sire::toString(mgidx_to_num) ), CODELOC );
+                
+    return MGIdx(i);
+}
+
 /** Return the numbers of all groups in this set that are called
     'mgname'
     
@@ -2678,24 +2695,6 @@ void MolGroups::setContents(const MGID &mgid, const MolGroup &molgroup)
     }
 }
 
-/** Protected function used to return a modifiable reference to the 
-    group with number 'mgnum'
-    
-    \throw SireMol::missing_group
-*/
-MolGroup& MolGroups::getGroup(MGNum mgnum)
-{
-    QHash<MGNum,MoleculeGroup>::iterator it = mgroups.find(mgnum);
-    
-    if (it == mgroups.end())
-        throw SireMol::missing_group( QObject::tr(
-            "Cannot find the MoleculeGroup with number %1. Available "
-            "groups are %2")
-                .arg(mgnum).arg(Sire::toString(mgroups.keys())), CODELOC );
-
-    return it->edit();
-}
-
 /** Protected function used to return a const reference to the 
     group with number 'mgnum'
     
@@ -2712,33 +2711,6 @@ const MolGroup& MolGroups::getGroup(MGNum mgnum) const
                 .arg(mgnum).arg(Sire::toString(mgroups.keys())), CODELOC );
 
     return it->read();
-}
-
-/** Protected function used to return modifiable pointers to the
-    groups whose numbers are in 'mgnums'
-    
-    \throw SireMol::missing_group
-*/
-void MolGroups::getGroups(const QList<MGNum> &mgnums,
-                          QVarLengthArray<MolGroup*,10> &groups)
-{
-    groups.clear();
-    
-    QHash<MGNum,MoleculeGroup>::iterator it;
-    
-    foreach (MGNum mgnum, mgnums)
-    {
-        it = mgroups.find(mgnum);
-        
-        if (it == mgroups.end())
-            throw SireMol::missing_group( QObject::tr(
-                "Cannot find the MoleculeGroup with number %1. Available "
-                "groups are %2")
-                    .arg(mgnum).arg(Sire::toString(mgroups.keys())), CODELOC );
-        
-    
-        groups.append( it->data() );
-    }
 }
 
 /** Protected function used to return const pointers to the
@@ -2766,24 +2738,6 @@ void MolGroups::getGroups(const QList<MGNum> &mgnums,
     
         groups.append( it->constData() );
     }
-}
-
-/** Protected function used to return a hash of modifiable 
-    pointers to all of the groups in this set. */
-QHash<MGNum,MolGroup*> MolGroups::getGroups()
-{
-    QHash<MGNum,MolGroup*> groups;
-    
-    groups.reserve(mgroups.count());
-    
-    for (QHash<MGNum,MoleculeGroup>::iterator it = mgroups.begin();
-         it != mgroups.end();
-         ++it)
-    {
-        groups.insert( it.key(), it->data() );
-    }
-    
-    return groups;
 }
 
 /** Protected function used to return a hash of const 

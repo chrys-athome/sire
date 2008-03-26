@@ -28,8 +28,18 @@
 
 #include "ff.h"
 #include "ffcomponent.h"
+#include "forcefield.h"
 
 #include "tostring.h"
+
+#include "SireMol/mgnum.h"
+#include "SireMol/mgidx.h"
+#include "SireMol/partialmolecule.h"
+#include "SireMol/viewsofmol.h"
+#include "SireMol/molecules.h"
+#include "SireMol/molgroup.h"
+
+#include "SireMol/mover.hpp"
 
 #include "SireFF/errors.h"
 
@@ -246,6 +256,434 @@ Values FF::energies()
         
     return nrg_components;
 }
+
+/** Add the molecule viewed in 'molview' to the forcefield groups
+    identified by 'mgid' using the supplied map to find the properties
+    of the molecule that contain the forcefield parameters
+  
+    Note that if this molecule exists already in this forcefield, then
+    the version of the molecule that is in this forcefield will be used,
+    not the version of 'molview'
+      
+    \throw SireMol::missing_group
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void FF::add(const MoleculeView &molview, const MGID &mgid,
+             const PropertyMap &map)
+{
+    //get the numbers of the forcefield groups...
+    QList<MGNum> mgnums = mgid.map(*this);
+    
+    if (mgnums.isEmpty())
+        return;
+    
+    //update the molecule so that it is at the same version as 
+    //any existing copies
+    PartialMolecule view(molview);
+    view.update( this->matchToExistingVersion(view.data()) );
+                
+    if (mgnums.count() == 1)
+    {
+        //no need to checkpoint as the order of operations can
+        //be used to preserve state
+        MGIdx mgidx = this->mgIdx( *(mgnums.constBegin()) );
+        
+        this->group_add(mgidx, view, map);
+        this->addToIndex( *(mgnums.constBegin()), view.number() );
+    }
+    else
+    {
+        //we need to save state as an exception could be thrown
+        //when adding to the nth group
+        ForceField old_state = *this;
+        old_state.detach();
+        
+        try
+        {
+            //add the molecule to each group in turn...
+            foreach (MGNum mgnum, mgnums)
+            {
+                MGIdx mgidx = this->mgIdx(mgnum);
+                
+                this->group_add(mgidx, view, map);
+                this->addToIndex(mgnum, view.number());
+            }
+        }
+        catch(...)
+        {
+            //restore the old state of the forcefield
+            this->_pvt_restore(old_state);
+            throw;
+        }
+    }
+}
+
+/** Add the views of the molecule viewed in 'molviews' to the forcefield groups
+    identified by 'mgid' using the supplied map to find the properties
+    of the molecule that contain the forcefield parameters
+  
+    Note that if this molecule exists already in this forcefield, then
+    the version of the molecule that is in this forcefield will be used,
+    not the version of 'molview'
+      
+    \throw SireMol::missing_group
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void FF::add(const ViewsOfMol &molviews, const MGID &mgid,
+             const PropertyMap &map)
+{
+    QList<MGNum> mgnums = mgid.map(*this);
+    
+    if (mgnums.isEmpty())
+        return;
+        
+    ViewsOfMol views(molviews);
+    views.update( this->matchToExistingVersion(views.data()) );
+    
+    if (mgnums.count() == 1)
+    {
+        MGNum mgnum = *(mgnums.constBegin());
+        MGIdx mgidx = this->mgIdx(mgnum);
+        
+        this->group_add(mgidx, views, map);
+        this->addToIndex(mgnum, views.number());
+    }
+    else
+    {
+        ForceField old_state = *this;
+        old_state.detach();
+        
+        try
+        {
+            foreach (MGNum mgnum, mgnums)
+            {
+                MGIdx mgidx = this->mgIdx(mgnum);
+                this->group_add(mgidx, views, map);
+                this->addToIndex(mgnum, views.number());
+            }
+        }
+        catch(...)
+        {
+            this->_pvt_restore(old_state);
+            throw;
+        }
+    }
+}
+
+/** Add all of the molecules in 'molecules' to the forcefield groups
+    identified by 'mgid' using the supplied map to find the properties
+    of the molecule that contain the forcefield parameters
+  
+    Note that if a molecule exists already in this forcefield, then
+    the version of the molecule that is in this forcefield will be used,
+    not the version in 'molecules'
+      
+    \throw SireMol::missing_group
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void FF::add(const Molecules &molecules, const MGID &mgid,
+             const PropertyMap &map)
+{
+    QList<MGNum> mgnums = mgid.map(*this);
+    
+    if (mgnums.isEmpty())
+        return;
+    
+    Molecules mols = this->matchToExistingVersion(molecules);
+    QSet<MolNum> molnums = mols.molNums();
+    
+    if (mgnums.count() == 1)
+    {
+        MGNum mgnum = *(mgnums.constBegin());
+        MGIdx mgidx = this->mgIdx(mgnum);
+        
+        this->group_add(mgidx, molecules, map);
+        this->addToIndex(mgnum, molnums);
+    }
+    else
+    {
+        ForceField old_state = *this;
+        old_state.detach();
+        
+        try
+        {
+            foreach (MGNum mgnum, mgnums)
+            {
+                MGIdx mgidx = this->mgIdx(mgnum);
+                
+                this->group_add(mgidx, molecules, map);
+                this->addToIndex(mgnum, molnums);
+            }
+        }
+        catch(...)
+        {
+            this->_pvt_restore(old_state);
+            throw;
+        }
+    }
+}
+             
+/** Add all of the molecules in the group 'molgroup' to the forcefield groups
+    identified by 'mgid' using the supplied map to find the properties
+    of the molecule that contain the forcefield parameters
+  
+    Note that if a molecule exists already in this forcefield, then
+    the version of the molecule that is in this forcefield will be used,
+    not the version in 'molecules'
+      
+    \throw SireMol::missing_group
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void FF::add(const MolGroup &molgroup, const MGID &mgid,
+             const PropertyMap &map)
+{
+    this->add(molgroup.molecules(), mgid, map);
+}
+
+/** Add the molecule viewed in 'molview' to the forcefield groups
+    identified by 'mgid' using the supplied map to find the properties
+    of the molecule that contain the forcefield parameters
+
+    This only adds the view to groups that don't already contain it.
+  
+    Note that if this molecule exists already in this forcefield, then
+    the version of the molecule that is in this forcefield will be used,
+    not the version of 'molview'
+      
+    \throw SireMol::missing_group
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void FF::addIfUnique(const MoleculeView &molview, const MGID &mgid,
+                     const PropertyMap &map)
+{
+    QList<MGNum> mgnums = mgid.map(*this);
+    
+    if (mgnums.isEmpty())
+        return;
+        
+    PartialMolecule view(molview);
+    view.update( this->matchToExistingVersion(view.data()) );
+    
+    if (mgnums.count() == 1)
+    {
+        MGNum mgnum = *(mgnums.constBegin());
+        MGIdx mgidx = this->mgIdx(mgnum);
+        
+        this->group_addIfUnique(mgidx, view, map);
+        this->addToIndex(mgnum, view.number());
+    }
+    else
+    {
+        ForceField old_state = *this;
+        old_state.detach();
+        
+        try
+        {
+            foreach (MGNum mgnum, mgnums)
+            {
+                MGIdx mgidx = this->mgIdx(mgnum);
+                
+                this->group_addIfUnique(mgidx, view, map);
+                this->addToIndex(mgnum, view.number());
+            }
+        }
+        catch(...)
+        {
+            this->_pvt_restore(old_state);
+            throw;
+        }
+    }
+}
+
+/** Add the views of the molecule viewed in 'molviews' to the forcefield groups
+    identified by 'mgid' using the supplied map to find the properties
+    of the molecule that contain the forcefield parameters
+
+    This only adds views to groups that don't already contain them.
+  
+    Note that if this molecule exists already in this forcefield, then
+    the version of the molecule that is in this forcefield will be used,
+    not the version of 'molview'
+      
+    \throw SireMol::missing_group
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void FF::addIfUnique(const ViewsOfMol &molviews, const MGID &mgid,
+                     const PropertyMap &map)
+{
+    QList<MGNum> mgnums = mgid.map(*this);
+    
+    if (mgnums.isEmpty())
+        return;
+        
+    ViewsOfMol views(molviews);
+    views.update( this->matchToExistingVersion(views.data()) );
+    
+    if (mgnums.count() == 1)
+    {
+        MGNum mgnum = *(mgnums.constBegin());
+        MGIdx mgidx = this->mgIdx(mgnum);
+        
+        this->group_addIfUnique(mgidx, views, map);
+        this->addToIndex(mgnum, views.number());
+    }
+    else
+    {
+        ForceField old_state = *this;
+        old_state.detach();
+        
+        try
+        {
+            foreach (MGNum mgnum, mgnums)
+            {
+                MGIdx mgidx = this->mgIdx(mgnum);
+                
+                this->group_addIfUnique(mgidx, views, map);
+                this->addToIndex(mgnum, views.number());
+            }
+        }
+        catch(...)
+        {
+            this->_pvt_restore(old_state);
+            throw;
+        }
+    }
+}
+
+/** Add all of the molecules in 'molecules' to the forcefield groups
+    identified by 'mgid' using the supplied map to find the properties
+    of the molecule that contain the forcefield parameters
+
+    This only adds molecules to groups that don't already contain them.
+
+    Note that if a molecule exists already in this forcefield, then
+    the version of the molecule that is in this forcefield will be used,
+    not the version in 'molecules'
+      
+    \throw SireMol::missing_group
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void FF::addIfUnique(const Molecules &molecules, const MGID &mgid,
+                     const PropertyMap &map)
+{
+    QList<MGNum> mgnums = mgid.map(*this);
+    
+    if (mgnums.isEmpty())
+        return;
+        
+    Molecules mols = this->matchToExistingVersion(molecules);
+    QSet<MolNum> molnums = mols.molNums();
+    
+    if (mgnums.count() == 1)
+    {
+        MGNum mgnum = *(mgnums.constBegin());
+        MGIdx mgidx = this->mgIdx(mgnum);
+        
+        this->group_addIfUnique(mgidx, mols, map);
+        this->addToIndex(mgnum, molnums);
+    }
+    else
+    {
+        ForceField old_state = *this;
+        old_state.detach();
+        
+        try
+        {
+            foreach (MGNum mgnum, mgnums)
+            {
+                MGIdx mgidx = this->mgIdx(mgnum);
+                
+                this->group_addIfUnique(mgidx, mols, map);
+                this->addToIndex(mgnum, molnums);
+            }
+        }
+        catch(...)
+        {
+            this->_pvt_restore(old_state);
+            throw;
+        }
+    }
+}
+
+/** Add all of the molecules in the group 'molgroup' to the forcefield groups
+    identified by 'mgid' using the supplied map to find the properties
+    of the molecule that contain the forcefield parameters
+
+    This only adds molecules to groups that don't already contain them.
+  
+    Note that if a molecule exists already in this forcefield, then
+    the version of the molecule that is in this forcefield will be used,
+    not the version in 'molecules'
+      
+    \throw SireMol::missing_group
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void FF::addIfUnique(const MolGroup &molgroup, const MGID &mgid,
+                     const PropertyMap &map)
+{
+    this->addIfUnique(molgroup.molecules(), mgid, map);
+}
+
+/*
+void FF::remove(const MoleculeView &molview);
+void FF::remove(const ViewsOfMol &molviews);
+void FF::remove(const Molecules &molecules);
+void FF::remove(const MolGroup &molgroup);
+
+void FF::removeAll(const MoleculeView &molview);
+void FF::removeAll(const ViewsOfMol &molviews);
+void FF::removeAll(const Molecules &molecules);
+void FF::removeAll(const MolGroup &molgroup);
+
+void FF::remove(MolNum molnum);
+void FF::remove(const QSet<MolNum> &molnums);
+
+void FF::removeAll(const MGID &mgid);
+void FF::removeAll();
+
+void FF::remove(const MoleculeView &molview, const MGID &mgid);
+void FF::remove(const ViewsOfMol &molviews, const MGID &mgid);
+void FF::remove(const Molecules &molecules, const MGID &mgid);
+void FF::remove(const MolGroup &molgroup, const MGID &mgid);
+
+void FF::removeAll(const MoleculeView &molview, const MGID &mgid);
+void FF::removeAll(const ViewsOfMol &molviews, const MGID &mgid);
+void FF::removeAll(const Molecules &molecules, const MGID &mgid);
+void FF::removeAll(const MolGroup &molgroup, const MGID &mgid);
+
+void FF::remove(MolNum molnum, const MGID &mgid);
+void FF::remove(const QSet<MolNum> &molnums, const MGID &mgid);
+
+void FF::update(const MoleculeData &moldata);
+
+void FF::update(const Molecules &molecules);
+void FF::update(const MolGroup &molgroup);
+
+void FF::setContents(const MGID &mgid, const MoleculeView &molview, 
+                 const PropertyMap &map);
+void FF::setContents(const MGID &mgid, const ViewsOfMol &molviews, 
+                 const PropertyMap &map);
+void FF::setContents(const MGID &mgid, const Molecules &molecules, 
+                 const PropertyMap &map);
+void FF::setContents(const MGID &mgid, const MolGroup &molgroup, 
+                 const PropertyMap &map);
+*/
 
 /** Add the passed view of the molecule to the molecule groups 
     identified by 'mgid' using the default properties to

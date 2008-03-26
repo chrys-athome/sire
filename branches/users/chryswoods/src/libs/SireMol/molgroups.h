@@ -130,6 +130,8 @@ public:
     MGNum getGroupNumber(const MGName &mgname) const;
     MGNum getGroupNumber(const MGID &mgid) const;
     
+    MGIdx mgIdx(MGNum mgnum) const;
+    
     QList<MGNum> map(MGNum mgnum) const;
     QList<MGNum> map(MGIdx mgidx) const;
     QList<MGNum> map(const MGName &mgname) const;
@@ -315,16 +317,11 @@ protected:
 
     MolGroupsBase& operator=(const MolGroupsBase &other);
 
-    virtual MolGroup& getGroup(MGNum mgnum)=0; 
     virtual const MolGroup& getGroup(MGNum mgnum) const=0;
     
     virtual void getGroups(const QList<MGNum> &mgnums,
-                           QVarLengthArray<MolGroup*,10> &groups)=0;
-
-    virtual void getGroups(const QList<MGNum> &mgnums,
                            QVarLengthArray<const MolGroup*,10> &groups) const=0;
 
-    virtual QHash<MGNum,MolGroup*> getGroups()=0;
     virtual QHash<MGNum,const MolGroup*> getGroups() const=0;
 
     bool needToUpdate(const MoleculeData &moldata) const;
@@ -466,16 +463,11 @@ public:
     void setContents(const MGID &mgid, const MolGroup &molgroup);
  
 protected:
-    MolGroup& getGroup(MGNum mgnum);
     const MolGroup& getGroup(MGNum mgnum) const;
-
-    void getGroups(const QList<MGNum> &mgnums,
-                   QVarLengthArray<MolGroup*,10> &groups);
 
     void getGroups(const QList<MGNum> &mgnums,
                    QVarLengthArray<const MolGroup*,10> &groups) const;
 
-    QHash<MGNum,MolGroup*> getGroups();
     QHash<MGNum,const MolGroup*> getGroups() const;
 
 private:

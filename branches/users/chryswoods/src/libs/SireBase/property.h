@@ -363,6 +363,8 @@ public:
 
     const PropertyBase* data() const;
     const PropertyBase* constData() const;
+
+    void detach();
     
     PropertyBase* data();
     

@@ -52,10 +52,16 @@ class FF;
 QDataStream& operator<<(QDataStream&, const SireFF::FF&);
 QDataStream& operator>>(QDataStream&, SireFF::FF&);
 
+namespace SireMol
+{
+class Molecule;
+}
+
 namespace SireFF
 {
 
 class FFMolGroup;
+class ForceField;
 
 using SireBase::Properties;
 using SireBase::Property;
@@ -71,6 +77,8 @@ using SireMol::MolGroup;
 using SireMol::Molecule;
 using SireMol::MoleculeData;
 using SireMol::MGID;
+using SireMol::MGIdx;
+using SireMol::MGNum;
 using SireMol::MolNum;
 
 /** This class is the base class of all of the forcefield classes. 
@@ -198,13 +206,6 @@ public:
     void addIfUnique(const MolGroup &molgroup, const MGID &mgid,
                      const PropertyMap &map);
 
-    //write explicit all MolGroups editing functions here, and implement
-    //them in terms of the group_add, group_remove functions etc.
-    
-    //the group_add, group_remove functions etc. do their work without 
-    //worrying about the other groups - this class does everything 
-    //necessary to keep all of the molecule versions in sync...
-
     void add(const MoleculeView &molview, const MGID &mgid);
     void add(const ViewsOfMol &molviews, const MGID &mgid);
     void add(const Molecules &molecules, const MGID &mgid);
@@ -215,6 +216,40 @@ public:
     void addIfUnique(const Molecules &molecules, const MGID &mgid);
     void addIfUnique(const MolGroup &molgroup, const MGID &mgid);
 
+    void remove(const MoleculeView &molview);
+    void remove(const ViewsOfMol &molviews);
+    void remove(const Molecules &molecules);
+    void remove(const MolGroup &molgroup);
+    
+    void removeAll(const MoleculeView &molview);
+    void removeAll(const ViewsOfMol &molviews);
+    void removeAll(const Molecules &molecules);
+    void removeAll(const MolGroup &molgroup);
+
+    void remove(MolNum molnum);
+    void remove(const QSet<MolNum> &molnums);
+
+    void removeAll(const MGID &mgid);
+    void removeAll();
+    
+    void remove(const MoleculeView &molview, const MGID &mgid);
+    void remove(const ViewsOfMol &molviews, const MGID &mgid);
+    void remove(const Molecules &molecules, const MGID &mgid);
+    void remove(const MolGroup &molgroup, const MGID &mgid);
+    
+    void removeAll(const MoleculeView &molview, const MGID &mgid);
+    void removeAll(const ViewsOfMol &molviews, const MGID &mgid);
+    void removeAll(const Molecules &molecules, const MGID &mgid);
+    void removeAll(const MolGroup &molgroup, const MGID &mgid);
+
+    void remove(MolNum molnum, const MGID &mgid);
+    void remove(const QSet<MolNum> &molnums, const MGID &mgid);
+
+    void update(const MoleculeData &moldata);
+    
+    void update(const Molecules &molecules);
+    void update(const MolGroup &molgroup);
+
     void setContents(const MGID &mgid, const MoleculeView &molview);
     void setContents(const MGID &mgid, const ViewsOfMol &molview);
     void setContents(const MGID &mgid, const Molecules &molecules);
@@ -222,7 +257,6 @@ public:
 
     void setContents(const MGID &mgid, const MoleculeView &molview, 
                      const PropertyMap &map);
-
     void setContents(const MGID &mgid, const ViewsOfMol &molviews, 
                      const PropertyMap &map);
     void setContents(const MGID &mgid, const Molecules &molecules, 
@@ -305,6 +339,8 @@ protected:
                                    const PropertyMap &map)=0;
     virtual bool group_setContents(quint32 i, const MolGroup &molgroup, 
                                    const PropertyMap &map)=0;
+
+    virtual void _pvt_restore(const ForceField &ffield)=0;
 
 private:
     /** The unique ID for this forcefield - this uniquely identifies

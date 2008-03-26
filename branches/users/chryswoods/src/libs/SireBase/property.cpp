@@ -395,6 +395,12 @@ PropertyBase* Property::data()
     return &(d());
 }
 
+/** Detach this property from shared storage */
+void Property::detach()
+{
+    ptr.detach();
+}
+
 /** Allow implicit casting to a PropertyBase object */
 Property::operator const PropertyBase&() const
 {
