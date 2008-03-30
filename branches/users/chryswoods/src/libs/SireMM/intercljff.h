@@ -29,62 +29,24 @@
 #ifndef SIREMM_INTERCLJFF_H
 #define SIREMM_INTERCLJFF_H
 
-#include "cljff.h"
-#include "inter2bodyff.hpp"
+#include "cljpotential.h"
+
+#include "SireFF/inter2b3dff.hpp"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMM
 {
-class InterCLJFF;
-}
 
-QDataStream& operator<<(QDataStream&, const SireMM::InterCLJFF&);
-QDataStream& operator>>(QDataStream&, SireMM::InterCLJFF&);
+typedef SireFF::Inter2B3DFF< CLJPotentialInterface<InterCLJPotential> > InterCLJFF;
 
-namespace SireMM
-{
-
-/** An InterCLJFF is used to calculate the
-    intermolecular coulomb and LJ
-    energy of a group of molecules.
-
-    @author Christopher Woods
-*/
-class SIREMM_EXPORT InterCLJFF : public Inter2BodyFF<CLJFF>
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const InterCLJFF&);
-friend QDataStream& ::operator>>(QDataStream&, InterCLJFF&);
-
-public:
-    InterCLJFF();
-
-    InterCLJFF(const Space &space, const SwitchingFunction &switchingfunction);
-
-    InterCLJFF(const InterCLJFF &other);
-
-    ~InterCLJFF();
-
-    static const char* typeName()
-    {
-        return "SireMM::InterCLJFF";
-    }
-
-    const char* what() const
-    {
-        return InterCLJFF::typeName();
-    }
-
-    InterCLJFF* clone() const
-    {
-        return new InterCLJFF(*this);
-    }
-};
+//typedef SireFF::Inter2B2G3DFF< CLJPotentialInterface<InterCLJPotential> >
+                        // InterGroupCLJFF;
 
 }
 
 Q_DECLARE_METATYPE(SireMM::InterCLJFF);
+//Q_DECLARE_METATYPE(SireMM::InterGroupCLJFF);
 
 SIRE_END_HEADER
 

@@ -42,6 +42,8 @@ SIRE_BEGIN_HEADER
 namespace SireFF
 {
 
+class FF;
+
 class TotalComponent;
 
 /** This is the base class of all Symbols that represent forcefield
@@ -70,6 +72,9 @@ protected:
     FFComponent(const SireCAS::Symbol &symbol, const QLatin1String &name);
     
     FFComponent(const FFComponent &other);
+    
+    void setEnergy(FF &ff, const Symbol &symbol, double value) const;
+    void changeEnergy(FF &ff, const Symbol &symbol, double delta) const;
     
     static QString symbolName(const FFName &ffname, const QLatin1String &name)
     {
@@ -109,6 +114,16 @@ public:
     {
         nrg -= other.nrg;
         return *this;
+    }
+    
+    ComponentEnergy<T> operator+(const ComponentEnergy<T> &other) const
+    {
+        return ComponentEnergy<T>(nrg + other.nrg);
+    }
+    
+    ComponentEnergy<T> operator-(const ComponentEnergy<T> &other) const
+    {
+        return ComponentEnergy<T>(nrg - other.nrg);
     }
     
     Components components() const

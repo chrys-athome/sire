@@ -33,6 +33,11 @@
 
 SIRE_BEGIN_HEADER
 
+namespace SireCAS
+{
+class Symbol;
+}
+
 namespace SireFF
 {
 
@@ -61,7 +66,7 @@ public:
         molecules in the forcetable 'forcetable' due to the
         specified component of the molecules' interactions in 
         this forcefield */
-    virtual void force(ForceTable &forcetable, const Symbol &component,
+    virtual void force(ForceTable &forcetable, const SireCAS::Symbol &component,
                        double scale_force=1)=0;
 };
 

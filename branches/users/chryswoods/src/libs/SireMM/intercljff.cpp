@@ -28,60 +28,14 @@
 
 #include "intercljff.h"
 
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
+#include "SireMol/partialmolecule.h"
+
+#include "SireMol/mover.hpp"
 
 using namespace SireMM;
-using namespace SireStream;
+using namespace SireFF;
 
-static const RegisterMetaType<InterCLJFF> r_intercljff;
+template class CLJPotentialInterface<InterCLJPotential>;
 
-/** Serialise to a binary data stream */
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
-                                      const InterCLJFF &intercljff)
-{
-    writeHeader(ds, r_intercljff, 1);
-
-    SharedDataStream sds(ds);
-
-    sds << static_cast<const Inter2BodyFF<CLJFF>&>(intercljff);
-
-    return ds;
-}
-
-/** Deserialise from a binary data stream */
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
-                                      InterCLJFF &intercljff)
-{
-    VersionID v = readHeader(ds, r_intercljff);
-
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-
-        sds >> static_cast<Inter2BodyFF<CLJFF>&>(intercljff);
-    }
-    else
-        throw version_error(v, "1", r_intercljff, CODELOC);
-
-    return ds;
-}
-
-/** Constructor */
-InterCLJFF::InterCLJFF() : Inter2BodyFF<CLJFF>()
-{}
-
-/** Construct a CLJ forcefield using the passed Space, combining rules and
-    switching function */
-InterCLJFF::InterCLJFF(const Space &space, const SwitchingFunction &switchfunc)
-           : Inter2BodyFF<CLJFF>(space, switchfunc)
-{}
-
-/** Copy constructor */
-InterCLJFF::InterCLJFF(const InterCLJFF &other)
-           : Inter2BodyFF<CLJFF>(other)
-{}
-
-/** Destructor */
-InterCLJFF::~InterCLJFF()
-{}
+template class Inter2B3DFF< CLJPotentialInterface<InterCLJPotential> >;
+//template class Inter2B2G3DFF< CLJPotentialInterface<InterCLJPotential> >;

@@ -84,6 +84,9 @@ using SireBase::Properties;
 using SireBase::PropertyBase;
 using SireBase::PropertyMap;
 using SireBase::PropertyName;
+using SireBase::Property;
+
+using SireCAS::Symbol;
 
 using SireVol::Space;
 using SireVol::SpaceBase;
@@ -230,12 +233,11 @@ friend QDataStream& ::operator<<(QDataStream&, const CLJPotential&);
 friend QDataStream& ::operator>>(QDataStream&, CLJPotential&);
 
 public:
-    ~CLJPotential();
-
-    void startEvaluation();
-    void finishedEvaluation();
+    virtual ~CLJPotential();
 
     const Properties& properties() const;
+    const Property& property(const QString &name) const;
+    bool containsProperty(const QString &name) const;
     
     bool setProperty(const QString &name, const PropertyBase &value);
 
@@ -254,6 +256,11 @@ protected:
     CLJPotential(const CLJPotential &other);
     
     CLJPotential& operator=(const CLJPotential &other);
+
+    void startEvaluation();
+    void finishedEvaluation();
+    
+    virtual void changedPotential()=0;
     
     /** All possible LJ parameter pair combinations, arranged
         in a symmetric 2D array */
@@ -395,6 +402,14 @@ public:
                         InterCLJPotential::ForceWorkspace &workspace,
                         double scale_force=1) const;
 
+    void calculateForce(const InterCLJPotential::Molecule &mol0,
+                        const InterCLJPotential::Molecule &mol1,
+                        MolForceTable &forces0,
+                        const Symbol &symbol,
+                        const Components &components,
+                        InterCLJPotential::ForceWorkspace &workspace,
+                        double scale_force=1) const;
+
     void calculateCoulombForce(const InterCLJPotential::Molecule &mol0, 
                                const InterCLJPotential::Molecule &mol1,
                                MolForceTable &forces0,
@@ -409,6 +424,9 @@ public:
 
 private:
     double totalCharge(const InterCLJPotential::Parameters::Array &params) const;
+
+    void throwMissingForceComponent(const Symbol &symbol,
+                                    const Components &components) const;
 
     void _pvt_calculateEnergy(const InterCLJPotential::Molecule &mol0, 
                               const InterCLJPotential::Molecule &mol1,
@@ -553,6 +571,13 @@ public:
                         IntraCLJPotential::ForceWorkspace &workspace,
                         double scale_force=1) const;
 
+    void calculateForce(const IntraCLJPotential::Molecule &mol, 
+                        MolForceTable &forces,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraCLJPotential::ForceWorkspace &workspace,
+                        double scale_force=1) const;
+
     void calculateCoulombForce(const IntraCLJPotential::Molecule &mol,
                                MolForceTable &forces,
                                IntraCLJPotential::ForceWorkspace &workspace,
@@ -565,7 +590,95 @@ public:
                                
 private:
     double totalCharge(const IntraCLJPotential::Parameters::Array &params) const;
+
+    void throwMissingForceComponent(const Symbol &symbol,
+                                    const Components &components) const;
 };
+
+/** This small class is used to hide most of the public interfaces of the 
+    CLJPotential derived class, so that only the property-related functions
+    are publically available. This provides a better interface when deriving
+    a full forcefield class from a CLJ potential.
+    
+    @author Christopher Woods
+*/
+template<class CLJPot>
+class CLJPotentialInterface : protected CLJPot
+{
+public:
+    CLJPotentialInterface() : CLJPot()
+    {}
+    
+    CLJPotentialInterface(const CLJPotentialInterface &other) : CLJPot(other)
+    {}
+    
+    ~CLJPotentialInterface()
+    {}
+    
+    const Properties& properties() const
+    {
+        return CLJPot::properties();
+    }
+    
+    const Property& property(const QString &name) const
+    {
+        return CLJPot::property(name);
+    }
+    
+    bool containsProperty(const QString &name) const
+    {
+        return CLJPot::containsProperty(name);
+    }
+    
+    bool setProperty(const QString &name, const PropertyBase &value)
+    {
+        return CLJPot::setProperty(name, value);
+    }
+
+    bool setSpace(const Space &new_space)
+    {
+        return CLJPot::setSpace(new_space);
+    }
+    
+    bool setSwitchingFunction(const SwitchingFunction &new_switchfunc)
+    {
+        return CLJPot::setSwitchingFunction(new_switchfunc);
+    }
+    
+    bool setShiftElectrostatics(bool switchelectro)
+    {
+        return CLJPot::setShiftElectrostatics(switchelectro);
+    }
+    
+    bool setCombiningRules(const QString &combiningrules)
+    {
+        return CLJPot::setCombiningRules(combiningrules);
+    }
+    
+    const SpaceBase& space() const
+    {
+        return CLJPot::space();
+    }
+    
+    const SwitchFunc& switchingFunction() const
+    {
+        return CLJPot::switchingFunction();
+    }
+
+    bool shiftElectrostatics() const
+    {
+        return CLJPot::shiftElectrostatics();
+    }
+    
+    const QString& combiningRules() const
+    {
+        return CLJPot::combiningRules();
+    }
+};
+
+//////
+////// Inline functions of InterCLJPotential
+//////
 
 /** Calculate the coulomb and LJ energy between the passed pair
     of molecules and add these energies onto 'energy'. This uses
@@ -577,8 +690,10 @@ InterCLJPotential::calculateEnergy(const InterCLJPotential::Molecule &mol0,
                                    InterCLJPotential::EnergyWorkspace &workspace,
                                    double scale_energy) const
 {
-    if (scale_energy != 0 and not spce->beyond(switchfunc->cutoffDistance(),
-                                               mol0.aaBox(), mol1.aaBox()))
+    if (scale_energy != 0 and 
+        not (mol0.isEmpty() or mol1.isEmpty()) and
+        not spce->beyond(switchfunc->cutoffDistance(),
+                         mol0.aaBox(), mol1.aaBox()))
     {
         this->_pvt_calculateEnergy(mol0, mol1, energy, workspace, scale_energy);
     }
@@ -595,8 +710,10 @@ InterCLJPotential::calculateForce(const InterCLJPotential::Molecule &mol0,
                                   InterCLJPotential::ForceWorkspace &workspace,
                                   double scale_force) const
 {
-    if ( scale_force != 0 and not spce->beyond(switchfunc->cutoffDistance(),
-                                               mol0.aaBox(), mol1.aaBox()) )
+    if ( scale_force != 0 and 
+         not (mol0.isEmpty() or mol1.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol0.aaBox(), mol1.aaBox()) )
     {
         this->_pvt_calculateForce(mol0, mol1, forces0,
                                   workspace, scale_force);
@@ -614,8 +731,10 @@ InterCLJPotential::calculateCoulombForce(const InterCLJPotential::Molecule &mol0
                                          InterCLJPotential::ForceWorkspace &workspace,
                                          double scale_force) const
 {
-    if ( scale_force != 0 and not spce->beyond(switchfunc->cutoffDistance(),
-                                               mol0.aaBox(), mol1.aaBox()) )
+    if ( scale_force != 0 and 
+         not (mol0.isEmpty() or mol1.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol0.aaBox(), mol1.aaBox()) )
     {
         this->_pvt_calculateCoulombForce(mol0, mol1, forces0,
                                          workspace, scale_force);
@@ -633,12 +752,68 @@ InterCLJPotential::calculateLJForce(const InterCLJPotential::Molecule &mol0,
                                     InterCLJPotential::ForceWorkspace &workspace,
                                     double scale_force) const
 {
-    if ( scale_force != 0 and not spce->beyond(switchfunc->cutoffDistance(),
-                                               mol0.aaBox(), mol1.aaBox()) )
+    if ( scale_force != 0 and 
+         not (mol0.isEmpty() or mol1.isEmpty()) and
+         not spce->beyond(switchfunc->cutoffDistance(),
+                          mol0.aaBox(), mol1.aaBox()) )
     {
         this->_pvt_calculateLJForce(mol0, mol1, forces0,
                                     workspace, scale_force);
     }
+}
+
+/** Calculate the component of the force represented by 'symbol' between the 
+    passed pair of molecules, and add the forces on 'mol0' onto 'forces0'.
+    This uses the passed workspace to perform the calculation. The forces
+    are scaled by the optional 'scaled_forces' */
+inline void 
+InterCLJPotential::calculateForce(const InterCLJPotential::Molecule &mol0,
+                                  const InterCLJPotential::Molecule &mol1,
+                                  MolForceTable &forces0,
+                                  const Symbol &symbol,
+                                  const InterCLJPotential::Components &components,
+                                  InterCLJPotential::ForceWorkspace &workspace,
+                                  double scale_force) const
+{
+    if (symbol == components.total())
+        this->calculateForce(mol0, mol1, forces0, workspace, scale_force);
+       
+    else if (symbol == components.coulomb())
+        this->calculateCoulombForce(mol0, mol1, forces0, workspace, scale_force);
+        
+    else if (symbol == components.lj())
+        this->calculateLJForce(mol0, mol1, forces0, workspace, scale_force);
+        
+    else
+        throwMissingForceComponent(symbol, components);
+}
+
+//////
+////// Inline functions of IntraCLJPotential
+//////
+
+/** Calculate the forces represented by the symbol 'symbol' between the 
+    atoms in the molecule 'mol' and add these forces onto 'forces'. This uses
+    the passed workspace to perform the calculation */
+inline void 
+IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol, 
+                                  MolForceTable &forces,
+                                  const Symbol &symbol,
+                                  const IntraCLJPotential::Components &components,
+                                  IntraCLJPotential::ForceWorkspace &workspace,
+                                  double scale_force) const
+{
+    if (symbol == components.total())
+        this->calculateForce(mol, forces, workspace, scale_force);
+        
+    else if (symbol == components.coulomb())
+        this->calculateCoulombForce(mol, forces, workspace, scale_force);
+        
+    else if (symbol == components.lj())
+        this->calculateLJForce(mol, forces, workspace, scale_force);
+        
+    else
+        throwMissingForceComponent(symbol, components);
 }
 
 }

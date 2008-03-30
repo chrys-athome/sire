@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "ffcomponent.h"
+#include "ff.h"
 
 #include "SireError/errors.h"
 
@@ -105,4 +106,18 @@ QString FFComponent::componentName() const
                 .arg(Symbol::toString()), CODELOC );
 
     return local_copy.cap(1);
+}
+
+/** Protected function used to set the energy of the component with symbol
+    'symbol' in the forcefield 'ff' to the value 'value' */
+void FFComponent::setEnergy(FF &ff, const Symbol &symbol, double value) const
+{
+    ff.setComponent(symbol, value);
+}
+
+/** Protected function used to change the energy of the component with symbol
+    'symbol' in the forcefield 'ff' by 'delta' */
+void FFComponent::changeEnergy(FF &ff, const Symbol &symbol, double delta) const
+{
+    ff.changeComponent(symbol, delta);
 }

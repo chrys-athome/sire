@@ -33,10 +33,24 @@
 
 SIRE_BEGIN_HEADER
 
+namespace SireFF
+{
+class FF;
+}
+
 namespace SireMM
 {
 
+using SireFF::FF;
 using SireFF::FFName;
+
+class CoulombComponent;
+class LJComponent;
+
+typedef SireFF::ComponentEnergy<CoulombComponent> CoulombEnergy;
+typedef SireFF::ComponentEnergy<LJComponent> LJEnergy;
+
+class CLJEnergy;
 
 /** This class represents a Coulomb component of a forcefield */
 class SIREMM_EXPORT CoulombComponent : public SireFF::FFComponent
@@ -68,6 +82,9 @@ public:
     {
         return *this;
     }
+
+    void setEnergy(FF &ff, const CoulombEnergy &ljnrg) const;
+    void changeEnergy(FF &ff, const CoulombEnergy &ljnrg) const;
 };
 
 /** This class represents a LJ component of a forcefield */
@@ -100,6 +117,9 @@ public:
     {
         return *this;
     }
+
+    void setEnergy(FF &ff, const LJEnergy &ljnrg) const;
+    void changeEnergy(FF &ff, const LJEnergy &ljnrg) const;
 };
 
 /** This class represents the sum of the coulomb and LJ components
@@ -144,6 +164,9 @@ public:
         return new CLJComponent(*this);
     }
 
+    void setEnergy(FF &ff, const CLJEnergy &cljnrg) const;
+    void changeEnergy(FF &ff, const CLJEnergy &cljnrg) const;
+
 protected:
     /** The coulomb component */
     CoulombComponent coul_component;
@@ -151,9 +174,6 @@ protected:
     /** The LJ component */
     LJComponent lj_component;
 };
-
-typedef SireFF::ComponentEnergy<CoulombComponent> CoulombEnergy;
-typedef SireFF::ComponentEnergy<LJComponent> LJEnergy;
 
 /** This class holds the coulomb and Lennard-Jones (LJ) components
     of the energy.
@@ -194,6 +214,16 @@ public:
         icnrg -= other.icnrg;
         iljnrg -= other.iljnrg;
         return *this;
+    }
+    
+    CLJEnergy operator+(const CLJEnergy &other) const
+    {
+        return CLJEnergy( icnrg + other.icnrg, iljnrg + other.iljnrg );
+    }
+    
+    CLJEnergy operator-(const CLJEnergy &other) const
+    {
+        return CLJEnergy( icnrg - other.icnrg, iljnrg - other.iljnrg );
     }
     
     Components components() const

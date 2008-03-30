@@ -81,6 +81,11 @@ using SireMol::MGIdx;
 using SireMol::MGNum;
 using SireMol::MolNum;
 
+namespace detail
+{
+void throwForceFieldRestoreBug(const char *this_what, const char *ffield_what);
+}
+
 /** This class is the base class of all of the forcefield classes. 
     A forcefield is a collection of molecule groups (SireMol::MolGroups) 
     that had additional code to allow the energies, forces (and
@@ -126,6 +131,7 @@ friend QDataStream& ::operator<<(QDataStream&, const FF&);
 friend QDataStream& ::operator>>(QDataStream&, FF&);
 
 friend class FFMolGroup; // so can call the group_???() functions
+friend class FFComponent; // so can call setComponent and changeComponent
 
 public:
     virtual ~FF();
@@ -147,7 +153,10 @@ public:
     /** Return an object that describes all of the components
         of this forcefield (complete with SireCAS::Symbols to 
         uniquely ID each component) */
-    virtual const FFComponent& components() const=0;
+    const FFComponent& components() const
+    {
+        return this->_pvt_components();
+    }
 
     virtual QString toString() const;
 
@@ -272,6 +281,9 @@ protected:
     void setClean();
 
     const Values& currentEnergies() const;
+
+    /** Return the components of the potential of this forcefield */
+    virtual const FFComponent& _pvt_components() const=0;
 
     /** Virtual function used to trigger a recalculation of the total energy
         and of all of the component energies */

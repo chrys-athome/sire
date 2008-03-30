@@ -180,7 +180,7 @@ CGIdx FFMoleculeBase::cgIdx(quint32 i) const
     else if (idx_to_cgidx.isEmpty())
     {
         //all of the CutGroups are selected
-        if (i >= mol.data().info().nCutGroups())
+        if (i >= quint32(mol.data().info().nCutGroups()))
             throw SireError::invalid_index( QObject::tr(
                 "Invalid index (%1) as the number of CutGroups in "
                 "this molecule is only %2!")
@@ -190,7 +190,7 @@ CGIdx FFMoleculeBase::cgIdx(quint32 i) const
     }
     else
     {
-        if (i >= idx_to_cgidx.count())
+        if (i >= quint32(idx_to_cgidx.count()))
             throw SireError::invalid_index( QObject::tr(
                 "Invalid index (%1) as the number of CutGroups "
                 "selected as part of this molecule is only %2!")
@@ -219,7 +219,7 @@ int FFMoleculeBase::nCutGroups() const
 
     \throw SireError::incompatible_error
 */
-bool FFMoleculeBase::change(const PartialMolecule &molecule)
+bool FFMoleculeBase::change(const SireMol::Molecule &molecule)
 {
     if (molecule.number() != mol.number())
         throw SireError::incompatible_error( QObject::tr(
@@ -231,7 +231,7 @@ bool FFMoleculeBase::change(const PartialMolecule &molecule)
     if (mol.data().version() != molecule.data().version())
     {
         if (mol.selection().selectedAll())
-            mol = molecule.molecule();
+            mol = molecule;
             
         else if (mol.data().info().UID() != molecule.data().info().UID())
         {
@@ -393,6 +393,12 @@ bool FFMoleculesBase::operator==(const FFMoleculesBase &other) const
 bool FFMoleculesBase::operator!=(const FFMoleculesBase &other) const
 {
     return molnums_by_idx != other.molnums_by_idx;
+}
+
+/** Return the number of molecules in this group */
+int FFMoleculesBase::count() const
+{
+    return molnums_by_idx.count();
 }
 
 /** Return the array that maps the index in the group to the 

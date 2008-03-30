@@ -122,14 +122,9 @@ public:
     
     const AABox& aaBox() const;
     
-    bool change(const PartialMolecule &molecule,
+    bool change(const SireMol::Molecule &molecule,
                 PTNL &forcefield,
                 const PropertyMap &map);
-    
-    bool change(const PartialMolecule &molecule,
-                const PropertyMap &new_map,
-                PTNL &forcefield,
-                const PropertyMap &old_map);
 
     bool add(const AtomSelection &selected_atoms,
              PTNL &forcefield,
@@ -183,12 +178,7 @@ public:
     
     void packCoordinates();
 
-    ChangedMolecule change(const PartialMolecule &molecule,
-                           PTNL &forcefield,
-                           bool record_changes = true);
-                           
-    ChangedMolecule change(const PartialMolecule &molecule,
-                           const PropertyMap &new_map,
+    ChangedMolecule change(const SireMol::Molecule &molecule,
                            PTNL &forcefield,
                            bool record_changes = true);
                            
@@ -315,7 +305,7 @@ const AABox& FFMolecule3D<PTNL>::aaBox() const
 */
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
-bool FFMolecule3D<PTNL>::change(const PartialMolecule &molecule,
+bool FFMolecule3D<PTNL>::change(const SireMol::Molecule &molecule,
                                 PTNL &forcefield, const PropertyMap &map)
 {
     if (FFMolecule<PTNL>::change(molecule, forcefield, map))
@@ -323,28 +313,6 @@ bool FFMolecule3D<PTNL>::change(const PartialMolecule &molecule,
         //we need to update the global AABox
         aabox = this->parameters().atomicCoordinates().aaBox();
         
-        return true;
-    }
-    else
-        return false;
-}
-
-/** Change this molecule so that it is equal to 'new_molecule' and
-    so that it gets its parameters from 'new_map'
-
-    The names of the properties used to originally get the 
-    parameters for this molecule are in 'old_map'
-*/
-template<class PTNL>
-SIRE_OUTOFLINE_TEMPLATE
-bool FFMolecule3D<PTNL>::change(const PartialMolecule &molecule,
-                                const PropertyMap &new_map,
-                                PTNL &forcefield, const PropertyMap &old_map)
-{
-    if (FFMolecule<PTNL>::change(molecule, new_map, forcefield, old_map))
-    {
-        //we need to update the aabox
-        aabox = this->parameters().atomicCoordinates().aaBox();
         return true;
     }
     else
@@ -564,39 +532,11 @@ void FFMolecules3D<PTNL>::updateAABox(MolNum molnum)
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 typename FFMolecules3D<PTNL>::ChangedMolecule 
-FFMolecules3D<PTNL>::change(const PartialMolecule &molecule,
+FFMolecules3D<PTNL>::change(const SireMol::Molecule &molecule,
                             PTNL &forcefield, bool record_changes)
 {
     ChangedMolecule changed_mol = FFMolecules<PTNL>::change(molecule, forcefield,
                                                             record_changes);
-                                                            
-    //update the AABox for this molecule
-    this->updateAABox(molecule.number());
-    
-    return changed_mol;
-}
-                       
-/** Change the molecule 'new_molecule' (which is in the forcefield 'forcefield'),
-    also changing the source of its parameters to 'new_params'.
-    This does nothing if this molecule is not in this group. If 
-    'record_changes' is true then this returns a ChangedMolecule that
-    records the change from the current version of the molecule 
-    to 'new_molecule'. If there is no change, or record_changes is false,
-    then a null (isEmpty()) ChangedMolecule is returned
-
-    \throw SireError::incompatible_error
-    \throw SireError::invalid_cast
-    \throw SireBase::missing_property
-*/
-template<class PTNL>
-SIRE_OUTOFLINE_TEMPLATE
-typename FFMolecules3D<PTNL>::ChangedMolecule 
-FFMolecules3D<PTNL>::change(const PartialMolecule &molecule,
-                            const PropertyMap &new_map,
-                            PTNL &forcefield, bool record_changes)
-{
-    ChangedMolecule changed_mol = FFMolecules<PTNL>::change(molecule, new_map,
-                                                            forcefield, record_changes);
                                                             
     //update the AABox for this molecule
     this->updateAABox(molecule.number());

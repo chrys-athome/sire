@@ -59,6 +59,20 @@ CoulombComponent::CoulombComponent(const CoulombComponent &other)
 CoulombComponent::~CoulombComponent()
 {}
 
+/** Set the coulomb component of the energy in the forcefield 'ff'
+    to equal to the passed CoulombEnergy */
+void CoulombComponent::setEnergy(FF &ff, const CoulombEnergy &cnrg) const
+{
+    FFComponent::setEnergy(ff, this->total(), cnrg);
+}
+
+/** Change the coulomb component of the energy in the forcefield 'ff'
+    by 'delta' */
+void CoulombComponent::changeEnergy(FF &ff, const CoulombEnergy &delta) const
+{
+    FFComponent::changeEnergy(ff, this->total(), delta);
+}
+
 //////
 ////// Implementation of LJComponent
 //////
@@ -84,6 +98,20 @@ LJComponent::LJComponent(const LJComponent &other)
 /** Destructor */  
 LJComponent::~LJComponent()
 {}
+
+/** Set the LJ component of the energy in the forcefield 'ff'
+    to equal to the passed LJEnergy */
+void LJComponent::setEnergy(FF &ff, const LJEnergy &ljnrg) const
+{
+    FFComponent::setEnergy(ff, this->total(), ljnrg);
+}
+
+/** Change the LJ component of the energy in the forcefield 'ff'
+    by 'delta' */
+void LJComponent::changeEnergy(FF &ff, const LJEnergy &delta) const
+{
+    FFComponent::changeEnergy(ff, this->total(), delta);
+}
 
 //////
 ////// Implementation of CLJComponent
@@ -115,3 +143,19 @@ CLJComponent::CLJComponent(const CLJComponent &other)
 /** Destructor */  
 CLJComponent::~CLJComponent()
 {}
+
+/** Set the CLJ components of the forcefield 'ff' to the passed values */
+void CLJComponent::setEnergy(FF &ff, const CLJEnergy &value) const
+{
+    FFComponent::setEnergy(ff, this->total(), value.total());
+    FFComponent::setEnergy(ff, this->coulomb(), value.coulomb());
+    FFComponent::setEnergy(ff, this->lj(), value.lj());
+}
+
+/** Change the CLJ components of the forcefield 'ff' by 'delta' */
+void CLJComponent::changeEnergy(FF &ff, const CLJEnergy &delta) const
+{
+    FFComponent::changeEnergy(ff, this->total(), delta.total());
+    FFComponent::changeEnergy(ff, this->coulomb(), delta.coulomb());
+    FFComponent::changeEnergy(ff, this->lj(), delta.lj());
+}

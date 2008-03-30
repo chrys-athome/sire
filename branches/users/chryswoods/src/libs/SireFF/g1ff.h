@@ -42,8 +42,15 @@ class G1FF;
 QDataStream& operator<<(QDataStream&, const SireFF::G1FF&);
 QDataStream& operator>>(QDataStream&, SireFF::G1FF&);
 
+namespace SireMol
+{
+class PartialMolecule;
+}
+
 namespace SireFF
 {
+
+using SireMol::PartialMolecule;
 
 /** This is the base class of all forcefields that hold just
     a single group of molecules
@@ -71,28 +78,33 @@ protected:
     //// Virtual functions that must be implemented
     //// by derived forcefields
     ////
-    virtual void _pvt_rebuild(MolNum molnum)=0;
-    virtual void _pvt_rebuild(const QList<ViewsOfMol> &molecules)=0;
-    
-    virtual void _pvt_rebuild(MolNum molnum,
-                              const PropertyMap &map)=0;
-                              
-    virtual void _pvt_rebuild(const QList<ViewsOfMol> &molecules,
-                              const PropertyMap &map)=0;
-    
-    virtual void _pvt_update(const MoleculeData &moldata)=0;
-    virtual void _pvt_update(const QList<Molecule> &molecules)=0;
-    
-    virtual bool _pvt_changedProperties(MolNum molnum,
-                                        const PropertyMap &map)=0;
-    
-    virtual bool _pvt_changedProperties(const Molecules &molecules,
-                                        const PropertyMap &map)=0;
-    
-    virtual void _pvt_removeAll()=0;
+    virtual void _pvt_added(const PartialMolecule &mol,
+                            const PropertyMap &map)=0;
 
+    virtual void _pvt_removed(const PartialMolecule &mol)=0;
+
+    virtual void _pvt_changed(const Molecule &molecule)=0;
+    virtual void _pvt_changed(const QList<Molecule> &molecules)=0;
+    
+    virtual void _pvt_removedAll()=0;
+        
+    virtual bool _pvt_wouldChangeProperties(MolNum molnum, 
+                                            const PropertyMap &map) const=0;
+        
     //must also implement void _pvt_restore(const ForceField &ffield)=0
     //from FF
+
+    ////
+    //// Virtual functions that must be changed if this 
+    //// forcefield allows overlapping atoms (most don't!)
+    ////
+    virtual void _pvt_added(const ViewsOfMol &mol,
+                            const PropertyMap &map);
+                            
+    virtual void _pvt_removed(const ViewsOfMol &mol);
+
+    virtual void _pvt_removedAll(const PartialMolecule &mol);
+    virtual void _pvt_removedAll(const ViewsOfMol &mol);
 
     ////
     //// Implementation of FF virtual functions

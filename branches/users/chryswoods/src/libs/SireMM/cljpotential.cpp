@@ -43,6 +43,7 @@
 
 #include "SireBase/errors.h"
 #include "SireError/errors.h"
+#include "SireFF/errors.h"
 
 #include "SireStream/datastream.h"
 
@@ -313,6 +314,21 @@ const Properties& CLJPotential::properties() const
     return props;
 }
 
+/** Return whether or not this potential has a property called 'name' */
+bool CLJPotential::containsProperty(const QString &name) const
+{
+    return props.hasProperty(name);
+}
+
+/** Return the property with name 'name'
+
+    \throw SireBase::missing_property
+*/
+const Property& CLJPotential::property(const QString &name) const
+{
+    return props.property(name);
+}
+
 /** Set the 3D space in which the molecules in this potential are evaluated */
 bool CLJPotential::setSpace(const Space &new_space)
 {
@@ -320,6 +336,7 @@ bool CLJPotential::setSpace(const Space &new_space)
     {
         spce = new_space;
         props.setProperty( "space", new_space );
+        this->changedPotential();
         return true;
     }
     else
@@ -334,6 +351,7 @@ bool CLJPotential::setSwitchingFunction(const SwitchingFunction &new_switchfunc)
     {
         switchfunc = new_switchfunc;
         props.setProperty( "switchingFunction", new_switchfunc );
+        this->changedPotential();
         return true;
     }
     else
@@ -349,6 +367,7 @@ bool CLJPotential::setShiftElectrostatics(bool switchelectro)
     {
         use_electrostatic_shifting = switchelectro;
         props.setProperty( "shiftElectrostatics", VariantProperty(switchelectro) );
+        this->changedPotential();
         return true;
     }
     else
@@ -365,6 +384,7 @@ bool CLJPotential::setCombiningRules(const QString &combiningrules)
         combining_rules = new_rules;
         need_update_ljpairs = true;
         props.setProperty( "combiningRules", VariantProperty(combiningrules) );
+        this->changedPotential();
         return true;
     }
     else
@@ -485,6 +505,17 @@ InterCLJPotential& InterCLJPotential::operator=(const InterCLJPotential &other)
 {
     CLJPotential::operator=(other);
     return *this;
+}
+
+void InterCLJPotential::throwMissingForceComponent(const Symbol &symbol,
+                              const IntraCLJPotential::Components &components) const
+{
+    throw SireFF::missing_component( QObject::tr(
+        "There is no force component in potential %1 - available "
+        "components are %1, %2 and %3.")
+            .arg(this->what())
+            .arg(components.total().toString(), components.coulomb().toString(),
+                 components.lj().toString()), CODELOC );
 }
 
 /** Return all of the parameters needed by this potential for 
@@ -1493,6 +1524,17 @@ IntraCLJPotential& IntraCLJPotential::operator=(const IntraCLJPotential &other)
     return *this;
 }
 
+void IntraCLJPotential::throwMissingForceComponent(const Symbol &symbol,
+                              const IntraCLJPotential::Components &components) const
+{
+    throw SireFF::missing_component( QObject::tr(
+        "There is no force component in potential %1 - available "
+        "components are %1, %2 and %3.")
+            .arg(this->what())
+            .arg(components.total().toString(), components.coulomb().toString(),
+                 components.lj().toString()), CODELOC );
+}
+
 /** Return all of the parameters needed by this potential for 
     the molecule 'molecule', using the supplied property map to
     find the properties that contain those parameters
@@ -1683,7 +1725,7 @@ void IntraCLJPotential::calculateEnergy(const IntraCLJPotential::Molecule &mol,
                                         IntraCLJPotential::EnergyWorkspace &distmat,
                                         double scale_energy) const
 {
-    if (scale_energy == 0)
+    if (scale_energy == 0 or mol.isEmpty())
         return;
 
     const quint32 ngroups = mol.nCutGroups();
@@ -1887,7 +1929,7 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
                                        IntraCLJPotential::ForceWorkspace &distmat,
                                        double scale_force) const
 {
-    if (scale_force == 0)
+    if (scale_force == 0 or mol.isEmpty())
         return;
     
     const quint32 ngroups = mol.nCutGroups();
@@ -2362,7 +2404,7 @@ void IntraCLJPotential::calculateCoulombForce(
                                        IntraCLJPotential::ForceWorkspace &distmat,
                                        double scale_force) const
 {
-    if (scale_force == 0)
+    if (scale_force == 0 or mol.isEmpty())
         return;
     
     const quint32 ngroups = mol.nCutGroups();
@@ -2640,7 +2682,7 @@ void IntraCLJPotential::calculateLJForce(const IntraCLJPotential::Molecule &mol,
                                          IntraCLJPotential::ForceWorkspace &distmat,
                                          double scale_force) const
 {
-    if (scale_force == 0)
+    if (scale_force == 0 or mol.isEmpty())
         return;
     
     const quint32 ngroups = mol.nCutGroups();
