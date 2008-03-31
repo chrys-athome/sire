@@ -14,8 +14,6 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIREMM_HEADERS
       angledb.h
       anglegenerator.h
-      angletable.h
-      angletable.hpp
       assign_angles.h
       assign_bonds.h
       assign_dihedrals.h
@@ -23,42 +21,26 @@ set ( SIREMM_HEADERS
       atompairs.hpp
       bonddb.h
       bondgenerator.h
-      bondtable.h
-      bondtable.hpp
       chargedb.h
-      chargetable.h
       cljcomponent.h
       cljpotential.h
       cljnbpairs.h
-      coulombff.h
       dihedraldb.h
       dihedralgenerator.h
-      dihedraltable.h
-      dihedraltable.hpp
       errors.h
-      harmonicff.h
-      inter2bodyff.hpp
       intercljff.h
       intercoulombff.h
-      intergroup2bodyff.hpp
-      intergroupcljff.h
-      intergroupcoulombff.h
-      intergroupljff.h
       interljff.h
       internaldatatypes.h
       internaldb.hpp
       internalgenerator.hpp
       internaltable.hpp
       internaltablebase.hpp
-      intra2bodyff.hpp
       intracljff.h
-      intragroup2bodyff.hpp
       ljdb.h
-      ljff.h
       ljpair.h
       ljparameter.h
       ljparameterdb.h
-      ljtable.h
       molangleinfo.h
       molbondinfo.h
       moldihedralinfo.h
@@ -78,37 +60,26 @@ set ( SIREMM_HEADERS
 set ( SIREMM_SOURCES
       angledb.cpp
       anglegenerator.cpp
-      angletable.cpp
       assign_angles.cpp
       assign_bonds.cpp
       assign_dihedrals.cpp
       bonddb.cpp
       bondgenerator.cpp
-      bondtable.cpp
       chargedb.cpp
-      chargetable.cpp
       cljcomponent.cpp
       cljpotential.cpp
       cljnbpairs.cpp
-      coulombff.cpp
       dihedraldb.cpp
       dihedralgenerator.cpp
-      dihedraltable.cpp
       errors.cpp
-      harmonicff.cpp
       intercljff.cpp
       intercoulombff.cpp
-      intergroupcoulombff.cpp
-      intergroupcljff.cpp
-      intergroupljff.cpp
       interljff.cpp
       internaldatatypes.cpp
       ljdb.cpp
-      ljff.cpp
       ljpair.cpp
       ljparameter.cpp
       ljparameterdb.cpp
-      ljtable.cpp
       molangleinfo.cpp
       molbondinfo.cpp
       moldihedralinfo.cpp
