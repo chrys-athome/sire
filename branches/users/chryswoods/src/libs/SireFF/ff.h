@@ -342,6 +342,7 @@ protected:
 
     virtual void group_validateSane(quint32 i) const=0;
 
+    virtual void _pvt_updateName()=0;
     virtual void _pvt_restore(const ForceField &ffield)=0;
 
 private:

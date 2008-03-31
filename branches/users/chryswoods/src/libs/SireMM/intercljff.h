@@ -38,6 +38,7 @@ SIRE_BEGIN_HEADER
 namespace SireMM
 {
 
+typedef SireFF::Inter2BFF< CLJPotentialInterface<InterCLJPotential> > InterCLJFFBase;
 typedef SireFF::Inter2B3DFF< CLJPotentialInterface<InterCLJPotential> > InterCLJFF;
 
 //typedef SireFF::Inter2B2G3DFF< CLJPotentialInterface<InterCLJPotential> >
@@ -45,6 +46,7 @@ typedef SireFF::Inter2B3DFF< CLJPotentialInterface<InterCLJPotential> > InterCLJ
 
 }
 
+Q_DECLARE_METATYPE(SireMM::InterCLJFFBase);
 Q_DECLARE_METATYPE(SireMM::InterCLJFF);
 //Q_DECLARE_METATYPE(SireMM::InterGroupCLJFF);
 

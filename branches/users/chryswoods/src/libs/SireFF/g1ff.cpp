@@ -103,6 +103,30 @@ G1FF& G1FF::operator=(const G1FF &other)
     return *this;
 }
 
+/** Return the molecule group with number 'mgnum'
+
+    \throw SireMol::missing_group
+*/
+const MolGroup& G1FF::at(MGNum mgnum) const
+{
+    if (molgroup.number() != mgnum)
+        throw SireMol::missing_group( QObject::tr(
+            "The forcefield %1 (%2) does not contain molecule group "
+            "with number %3. The only group it contains has number "
+            "%4.")
+                .arg(this->name()).arg(this->what())
+                .arg(mgnum).arg(molgroup.number()), CODELOC );
+                
+    return molgroup;
+}
+
+/** Update the name of the molecule group in this forcefield so that
+    it matches the name of the forcefield */
+void G1FF::_pvt_updateName()
+{
+    molgroup.setName( this->name() );
+}
+
 /** Assert that this forcefield contains the group with number 'mgnum'
 
     \throw SireMol::missing_group

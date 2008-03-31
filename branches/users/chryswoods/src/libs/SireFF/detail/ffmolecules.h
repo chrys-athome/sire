@@ -252,6 +252,8 @@ protected:
     void _pvt_remove(MolNum molnum);
     void _pvt_remove(const QList<MolNum> &molnums);
 
+    void clear();
+
     /** The names of the properties used to get the parameters for
         each molecule */
     QVector<PropertyMap> parameter_names;
@@ -322,6 +324,8 @@ public:
     bool wouldChangeProperties(MolNum molnum, const PropertyMap &map) const;
     
     const QVector<Molecule>& moleculesByIndex() const;
+    
+    void clear();
     
 protected:
     /** The array of forcefield-specialised molecules in this group */
@@ -775,6 +779,15 @@ SIRE_OUTOFLINE_TEMPLATE
 bool FFMolecules<PTNL>::operator!=(const FFMolecules<PTNL> &other) const
 {
     return not this->operator==(other);
+}
+
+/** Completely remove all of the molecules */
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+void FFMolecules<PTNL>::clear()
+{
+    mols_by_idx.clear();
+    FFMoleculesBase::clear();
 }
 
 /** Change the molecule 'new_molecule' (which is in the forcefield 'forcefield').

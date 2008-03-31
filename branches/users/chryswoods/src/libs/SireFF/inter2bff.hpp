@@ -56,7 +56,8 @@ namespace SireFF
     @author Christopher Woods
 */
 template<class Potential>
-class Inter2BFF : public G1FF, public Potential
+class Inter2BFF : public SireBase::ConcreteProperty<Inter2BFF<Potential>, G1FF>, 
+                  public Potential
 {
 
 friend QDataStream& ::operator<<<>(QDataStream&, const Inter2BFF<Potential>&);
@@ -127,13 +128,15 @@ protected:
 
     void _pvt_removed(const PartialMolecule &mol);
 
-    void _pvt_changed(const Molecule &molecule);
-    void _pvt_changed(const QList<Molecule> &molecules);
+    void _pvt_changed(const SireMol::Molecule &molecule);
+    void _pvt_changed(const QList<SireMol::Molecule> &molecules);
     
     void _pvt_removedAll();
         
     bool _pvt_wouldChangeProperties(MolNum molnum, 
                                     const PropertyMap &map) const;
+
+    void _pvt_updateName();
 
     /** The parameterised version of the molecules in this forcefield, 
         arranged in the same order that they appear in the Molecule group
@@ -158,7 +161,8 @@ protected:
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
 Inter2BFF<Potential>::Inter2BFF() 
-                     : G1FF(), Potential(),
+                     : SireBase::ConcreteProperty<Inter2BFF<Potential>,G1FF>(), 
+                       Potential(),
                        ffcomponents(this->name())
 {}
 
@@ -166,15 +170,19 @@ Inter2BFF<Potential>::Inter2BFF()
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
 Inter2BFF<Potential>::Inter2BFF(const QString &ffname)
-                     : G1FF(ffname), Potential(),
+                     : SireBase::ConcreteProperty<Inter2BFF<Potential>,G1FF>(), 
+                       Potential(),
                        ffcomponents(this->name())
-{}
+{
+    FF::setName(ffname);
+}
 
 /** Copy constructor */
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
 Inter2BFF<Potential>::Inter2BFF(const Inter2BFF<Potential> &other)
-                     : G1FF(other), Potential(other),
+                     : SireBase::ConcreteProperty<Inter2BFF<Potential>,G1FF>(other), 
+                       Potential(other),
                        mols(other.mols), changed_mols(other.changed_mols),
                        removed_mols(other.removed_mols), 
                        ffcomponents(other.ffcomponents)
@@ -230,6 +238,16 @@ SIRE_OUTOFLINE_TEMPLATE
 const typename Potential::Components& Inter2BFF<Potential>::components() const
 {
     return ffcomponents;
+}
+
+/** Function used to perform the work of changing the name of this 
+    forcefield - this renames the component symbols and the molecule group */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+void Inter2BFF<Potential>::_pvt_updateName()
+{
+    ffcomponents = Components( this->name() );
+    G1FF::_pvt_updateName();
 }
 
 /** Set the property called 'name' to the value 'value'
@@ -359,10 +377,10 @@ template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
 void Inter2BFF<Potential>::_pvt_restore(const ForceField &ffield)
 {
-    if (not ffield.isA< Inter2BFF<Potential> >())
+    if (not ffield->isA< Inter2BFF<Potential> >())
         detail::throwForceFieldRestoreBug(this->what(), ffield->what());
         
-    this->operator=( ffield.asA< Inter2BFF<Potential> >() );
+    this->operator=( ffield->asA< Inter2BFF<Potential> >() );
 }
 
 /** Record the fact that the molecule 'mol' has been added to this forcefield 
@@ -373,33 +391,33 @@ void Inter2BFF<Potential>::_pvt_restore(const ForceField &ffield)
 */
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
-void Inter2BFF<Potential>::_pvt_added(const PartialMolecule &mol, 
+void Inter2BFF<Potential>::_pvt_added(const PartialMolecule &molecule, 
                                       const PropertyMap &map)
 {
     if (this->recordingChanges())
     {
-        ChangedMolecule mol = mols.add(mol, map, *this, true);
+        ChangedMolecule mol = mols.add(molecule, map, *this, true);
         this->recordChange(mol);
     }
     else
     {
-        mols.add(mol, map, *this, false);
+        mols.add(molecule, map, *this, false);
     }
 }
 
 /** Record the fact that the molecule 'mol' has been removed from this forcefield */
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
-void Inter2BFF<Potential>::_pvt_removed(const PartialMolecule &mol)
+void Inter2BFF<Potential>::_pvt_removed(const PartialMolecule &molecule)
 {
     if (this->recordingChanges())
     {
-        ChangedMolecule mol = mols.remove(mol, *this, true);
+        ChangedMolecule mol = mols.remove(molecule, *this, true);
         this->recordChange(mol);
     }
     else
     {
-        mols.remove(mol, *this, false);
+        mols.remove(molecule, *this, false);
     }
 }
 
@@ -411,7 +429,7 @@ void Inter2BFF<Potential>::_pvt_removed(const PartialMolecule &mol)
 */
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
-void Inter2BFF<Potential>::_pvt_changed(const Molecule &molecule)
+void Inter2BFF<Potential>::_pvt_changed(const SireMol::Molecule &molecule)
 {
     if (this->recordingChanges())
     {
@@ -432,7 +450,7 @@ void Inter2BFF<Potential>::_pvt_changed(const Molecule &molecule)
 */
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
-void Inter2BFF<Potential>::_pvt_changed(const QList<Molecule> &molecules)
+void Inter2BFF<Potential>::_pvt_changed(const QList<SireMol::Molecule> &molecules)
 {
     Molecules old_mols = mols;
     QHash<MolNum,ChangedMolecule> old_changed_mols = changed_mols;
@@ -441,7 +459,7 @@ void Inter2BFF<Potential>::_pvt_changed(const QList<Molecule> &molecules)
     {
         if (this->recordingChanges())
         {   
-            foreach (const Molecule &molecule, molecules)
+            foreach (const SireMol::Molecule &molecule, molecules)
             {
                 ChangedMolecule change = mols.change(molecule, *this, true);
                 this->recordChange(change);
@@ -449,7 +467,7 @@ void Inter2BFF<Potential>::_pvt_changed(const QList<Molecule> &molecules)
         }
         else
         {
-            foreach (const Molecule &molecule, molecules)
+            foreach (const SireMol::Molecule &molecule, molecules)
             {
                 mols.change(molecule, *this, false);
             }
@@ -493,7 +511,8 @@ SIRE_OUTOFLINE_TEMPLATE
 void Inter2BFF<Potential>::recalculateEnergy()
 {
     int nmols = mols.count();
-    const Molecule *mols_array = mols.moleculesByIndex().constData();
+    const typename Potential::Molecule *mols_array 
+                            = mols.moleculesByIndex().constData();
 
     if (changed_mols.count() == nmols)
         //all of the molecules have changed!
@@ -515,11 +534,11 @@ void Inter2BFF<Potential>::recalculateEnergy()
         //loop over all pairs of molecules
         for (int i=0; i<nmols-1; ++i)
         {
-            const Molecule &mol0 = mols_array[i];
+            const typename Potential::Molecule &mol0 = mols_array[i];
         
             for (int j=i+1; j<nmols; ++j)
             {
-                const Molecule &mol1 = mols_array[j];
+                const typename Potential::Molecule &mol1 = mols_array[j];
                 Potential::calculateEnergy(mol0, mol1, total_nrg, workspace);
             }
         }
@@ -538,7 +557,7 @@ void Inter2BFF<Potential>::recalculateEnergy()
         
         for (int i=0; i<nmols; ++i)
         {
-            const Molecule &mol0 = mols_array[i];
+            const typename Potential::Molecule &mol0 = mols_array[i];
             
             typename QHash<MolNum,ChangedMolecule>::const_iterator it
                                                = changed_mols.constFind(mol0.number());
@@ -562,7 +581,7 @@ void Inter2BFF<Potential>::recalculateEnergy()
                                                new_nrg, new_workspace);
                 }
             }
-            else if (changed_mols().count() > 1)
+            else if (changed_mols.count() > 1)
             {
                 //this molecule has changed - calculate its energy with all
                 //of the changed molecules that lie after it in the changed_mols

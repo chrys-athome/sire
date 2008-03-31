@@ -46,7 +46,9 @@ namespace SireFF
     @author Christopher Woods
 */
 template<class Potential>
-class Inter2B3DFF : public Inter2BFF<Potential>, public FF3D
+class Inter2B3DFF : public SireBase::ConcreteProperty< Inter2B3DFF<Potential>,
+                                                       Inter2BFF<Potential> >, 
+                    public FF3D
 {
 public:
     Inter2B3DFF();
@@ -89,21 +91,24 @@ protected:
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
 Inter2B3DFF<Potential>::Inter2B3DFF()
-                       : Inter2BFF<Potential>(), FF3D()
+  : SireBase::ConcreteProperty< Inter2B3DFF<Potential>,Inter2BFF<Potential> >(), 
+    FF3D()
 {}
 
 /** Construct, giving this forcefield a name */
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
 Inter2B3DFF<Potential>::Inter2B3DFF(const QString &name)
-                       : Inter2BFF<Potential>(name), FF3D()
+  : SireBase::ConcreteProperty< Inter2B3DFF<Potential>,Inter2BFF<Potential> >(name), 
+    FF3D()
 {}
 
 /** Copy constructor */
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
 Inter2B3DFF<Potential>::Inter2B3DFF(const Inter2B3DFF<Potential> &other)
-                       : Inter2BFF<Potential>(other), FF3D(other)
+  : SireBase::ConcreteProperty< Inter2B3DFF<Potential>,Inter2BFF<Potential> >(other), 
+    FF3D(other)
 {}
 
 /** Destructor */
@@ -164,7 +169,8 @@ void Inter2B3DFF<Potential>::force(ForceTable &forcetable, double scale_force)
     typename Potential::ForceWorkspace workspace;
     
     MolForceTable *forcetable_array = forcetable.data();
-    Molecule *mols_array = this->mols.moleculesByIndex().constData();
+    const typename Potential::Molecule *mols_array 
+                            = this->mols.moleculesByIndex().constData();
     
     for (int i=0; i<nforcemols; ++i)
     {
@@ -179,7 +185,7 @@ void Inter2B3DFF<Potential>::force(ForceTable &forcetable, double scale_force)
             
         //get the copy of this molecule from this forcefield
         int imol = this->mols.indexOf(molnum);
-        const Molecule &mol0 = mols_array[imol];
+        const typename Potential::Molecule &mol0 = mols_array[imol];
             
         //calculate the force acting on this molecule caused by all of the 
         //other molecules in this forcefield
@@ -188,7 +194,7 @@ void Inter2B3DFF<Potential>::force(ForceTable &forcetable, double scale_force)
             if (j == imol)
                 continue;
                 
-            const Molecule &mol1 = mols_array[j];
+            const typename Potential::Molecule &mol1 = mols_array[j];
             
             Potential::calculateForce(mol0, mol1, moltable, workspace, scale_force);
         }
@@ -210,7 +216,8 @@ void Inter2B3DFF<Potential>::force(ForceTable &forcetable, const Symbol &symbol,
     typename Potential::ForceWorkspace workspace;
     
     MolForceTable *forcetable_array = forcetable.data();
-    Molecule *mols_array = this->mols.moleculesByIndex().constData();
+    const typename Potential::Molecule *mols_array 
+                            = this->mols.moleculesByIndex().constData();
     
     for (int i=0; i<nforcemols; ++i)
     {
@@ -225,7 +232,7 @@ void Inter2B3DFF<Potential>::force(ForceTable &forcetable, const Symbol &symbol,
             
         //get the copy of this molecule from this forcefield
         int imol = this->mols.indexOf(molnum);
-        const Molecule &mol0 = mols_array[imol];
+        const typename Potential::Molecule &mol0 = mols_array[imol];
             
         //calculate the force acting on this molecule caused by all of the 
         //other molecules in this forcefield
@@ -234,10 +241,10 @@ void Inter2B3DFF<Potential>::force(ForceTable &forcetable, const Symbol &symbol,
             if (j == imol)
                 continue;
                 
-            const Molecule &mol1 = mols_array[j];
+            const typename Potential::Molecule &mol1 = mols_array[j];
             
             Potential::calculateForce(mol0, mol1, moltable, symbol,
-                                      workspace, scale_force);
+                                      this->components(), workspace, scale_force);
         }
     }
 }

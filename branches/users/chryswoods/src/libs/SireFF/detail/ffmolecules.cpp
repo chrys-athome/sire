@@ -433,6 +433,13 @@ quint32 FFMoleculesBase::indexOf(MolNum molnum) const
     return *it;
 }
 
+/** Completely remove all molecules */
+void FFMoleculesBase::clear()
+{
+    molnums_by_idx.clear();
+    idxs_by_molnum.clear();
+}
+
 /** Return whether or not this group contains the molecule with 
     number 'molnum' */
 bool FFMoleculesBase::contains(MolNum molnum) const

@@ -199,6 +199,8 @@ void FF::setName(const QString &name)
         ffname = FFName(name);
         this->incrementVersion();
     }
+    
+    this->_pvt_updateName();
 }
 
 /** Set the name of the forcefield groups identified by 'mgid' 

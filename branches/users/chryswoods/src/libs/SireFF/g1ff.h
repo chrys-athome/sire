@@ -66,6 +66,8 @@ friend QDataStream& ::operator>>(QDataStream&, G1FF&);
 public:
     ~G1FF();
 
+    const MolGroup& at(MGNum mgnum) const;
+
     void assertContains(MGNum mgnum) const;
 
 protected:
@@ -167,6 +169,8 @@ protected:
                            const PropertyMap &map);
 
     void group_validateSane(quint32 i) const;
+
+    void _pvt_updateName();
 
 private:
     void assertValidGroup(quint32 i) const;
