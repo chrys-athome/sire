@@ -37,5 +37,8 @@ using namespace SireFF;
 
 template class CLJPotentialInterface<InterCLJPotential>;
 
+template class Inter2BFF< CLJPotentialInterface<InterCLJPotential> >;
 template class Inter2B3DFF< CLJPotentialInterface<InterCLJPotential> >;
-//template class Inter2B2G3DFF< CLJPotentialInterface<InterCLJPotential> >;
+
+template class Inter2B2GFF< CLJPotentialInterface<InterCLJPotential> >;
+template class Inter2B2G3DFF< CLJPotentialInterface<InterCLJPotential> >;

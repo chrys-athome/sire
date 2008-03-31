@@ -1363,7 +1363,6 @@ void FF::setContents(const MGID &mgid, const MoleculeView &molview,
             {
                 MGIdx mgidx = this->mgIdx(mgnum);
                 this->group_setContents(mgidx, view, map);
-                this->group_validateSane(mgidx);
                 
                 this->addToIndex(mgnum, view.number());
             }
@@ -1430,7 +1429,6 @@ void FF::setContents(const MGID &mgid, const ViewsOfMol &molviews,
             {
                 MGIdx mgidx = this->mgIdx(mgnum);
                 this->group_setContents(mgidx, views, map);
-                this->group_validateSane(mgidx);
                 
                 this->addToIndex(mgnum, views.number());
             }
@@ -1498,7 +1496,6 @@ void FF::setContents(const MGID &mgid, const Molecules &molecules,
             {
                 MGIdx mgidx = this->mgIdx(mgnum);
                 this->group_setContents(mgidx, mols, map);
-                this->group_validateSane(mgidx);
                 
                 this->addToIndex(mgnum, molnums);
             }

@@ -138,9 +138,7 @@ protected:
 
     void _pvt_updateName();
 
-    /** The parameterised version of the molecules in this forcefield, 
-        arranged in the same order that they appear in the Molecule group
-        for this forcefield */
+    /** The parameterised version of the molecules in this forcefield */
     Molecules mols;
 
     /** The list of molecules that have changed since the last evaluation.
@@ -162,17 +160,17 @@ template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
 Inter2BFF<Potential>::Inter2BFF() 
                      : SireBase::ConcreteProperty<Inter2BFF<Potential>,G1FF>(), 
-                       Potential(),
-                       ffcomponents(this->name())
-{}
+                       Potential()
+{
+    this->_pvt_updateName();
+}
 
 /** Construct this forcefield, providing it with a name */
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
 Inter2BFF<Potential>::Inter2BFF(const QString &ffname)
                      : SireBase::ConcreteProperty<Inter2BFF<Potential>,G1FF>(), 
-                       Potential(),
-                       ffcomponents(this->name())
+                       Potential()
 {
     FF::setName(ffname);
 }
@@ -323,6 +321,9 @@ SIRE_OUTOFLINE_TEMPLATE
 void Inter2BFF<Potential>::recordChange(
                     const typename Potential::ChangedMolecule &change)
 {
+    if (change.isEmpty())
+        return;
+
     MolNum molnum = change.number();
     
     if (changed_mols.contains(molnum))
@@ -350,6 +351,9 @@ void Inter2BFF<Potential>::recordChange(
     if (change.newMolecule().isEmpty())
         //the molecule has been removed
         removed_mols.insert(molnum);
+    else
+        //the molecule may have been re-added
+        removed_mols.remove(molnum);
 }
 
 /** Virtual function used to return the components of the forcefield
@@ -454,6 +458,7 @@ void Inter2BFF<Potential>::_pvt_changed(const QList<SireMol::Molecule> &molecule
 {
     Molecules old_mols = mols;
     QHash<MolNum,ChangedMolecule> old_changed_mols = changed_mols;
+    QSet<MolNum> old_removed_mols = removed_mols;
 
     try
     {
@@ -477,6 +482,7 @@ void Inter2BFF<Potential>::_pvt_changed(const QList<SireMol::Molecule> &molecule
     {
         mols = old_mols;
         changed_mols = old_changed_mols;
+        removed_mols = old_removed_mols;
         throw;
     }
 }
@@ -487,8 +493,6 @@ SIRE_OUTOFLINE_TEMPLATE
 void Inter2BFF<Potential>::_pvt_removedAll()
 {
     mols.clear();
-    changed_mols.clear();
-    removed_mols.clear();
     this->mustNowRecalculateFromScratch();
 }
  

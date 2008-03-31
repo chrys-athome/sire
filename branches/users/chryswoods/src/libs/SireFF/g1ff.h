@@ -168,8 +168,6 @@ protected:
     bool group_setContents(quint32 i, const MolGroup &molgroup, 
                            const PropertyMap &map);
 
-    void group_validateSane(quint32 i) const;
-
     void _pvt_updateName();
 
 private:

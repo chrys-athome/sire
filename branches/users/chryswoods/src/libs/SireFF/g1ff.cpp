@@ -1092,21 +1092,3 @@ bool G1FF::group_setContents(quint32 i, const MolGroup &new_group,
     
     return false;
 }
-
-/** Validate that the ith group is sane - i.e. if no overlap is
-    allowed, then that there is no overlap!
-    
-    \throw SireMol::duplicate_atom
-*/
-void G1FF::group_validateSane(quint32 i) const
-{
-    if (not allow_overlap_of_atoms)
-    {
-        for (MolGroup::const_iterator it = molgroup.constBegin();
-             it != molgroup.constEnd();
-             ++it)
-        {
-            it->assertNoOverlap();
-        }
-    }
-}

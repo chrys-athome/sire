@@ -163,6 +163,9 @@ template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
 void Inter2B3DFF<Potential>::force(ForceTable &forcetable, double scale_force)
 {
+    if (scale_force == 0)
+        return;
+
     int nforcemols = forcetable.count();
     int nmols = this->mols.count();
     
@@ -210,6 +213,9 @@ SIRE_OUTOFLINE_TEMPLATE
 void Inter2B3DFF<Potential>::force(ForceTable &forcetable, const Symbol &symbol,
                                    double scale_force)
 {
+    if (scale_force == 0)
+        return;
+
     int nforcemols = forcetable.count();
     int nmols = this->mols.count();
     

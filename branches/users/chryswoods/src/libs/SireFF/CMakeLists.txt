@@ -29,16 +29,10 @@ set ( SIREFF_HEADERS
       forcetable.h
       g1ff.h
       g2ff.h
-      inter2b2g3dff.h
       inter2b2g3dff.hpp
-      inter2b2gff.h
       inter2b2gff.hpp
-      inter2b3dff.h
       inter2b3dff.hpp
-      inter2bff.h
       inter2bff.hpp
-      multiff.h
-      twobodyfunctional.hpp
 
       detail/atomiccoords3d.h
       detail/atomicparameters.hpp
@@ -65,11 +59,6 @@ set ( SIREFF_SOURCES
       forcetable.cpp
       g1ff.cpp
       g2ff.cpp
-      inter2b2g3dff.cpp
-      inter2b2gff.cpp
-      inter2b3dff.cpp
-      inter2bff.cpp
-      multiff.cpp
 
       detail/atomiccoords3d.cpp
       detail/ffmolecules.cpp

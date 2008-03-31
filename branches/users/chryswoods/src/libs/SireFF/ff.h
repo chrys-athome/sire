@@ -340,8 +340,6 @@ protected:
     virtual bool group_setContents(quint32 i, const MolGroup &molgroup, 
                                    const PropertyMap &map)=0;
 
-    virtual void group_validateSane(quint32 i) const=0;
-
     virtual void _pvt_updateName()=0;
     virtual void _pvt_restore(const ForceField &ffield)=0;
 
