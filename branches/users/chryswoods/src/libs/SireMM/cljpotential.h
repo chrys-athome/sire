@@ -636,6 +636,15 @@ private:
                          const quint32 nats0, const quint32 nats1,
                          double &icnrg, double &iljnrg) const;
 
+    void calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
+                         const QSet<SireID::Index> &atoms0, 
+                         const QSet<SireID::Index> &atoms1,
+                         IntraCLJPotential::EnergyWorkspace &workspace,
+                         const Parameter *params0_array,
+                         const Parameter *params1_array,
+                         const quint32 nats0, const quint32 nats1,
+                         double &icnrg, double &iljnrg) const;
+
     void calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                         const CoordGroup &group0, const CoordGroup &group1,
                         const double mindist,
@@ -643,6 +652,18 @@ private:
                         const IntraCLJPotential::Parameter *params0_array,
                         const IntraCLJPotential::Parameter *params1_array,
                         const quint32 nats0, const quint32 nats1,
+                        const double shift_coul,
+                        Vector *group_forces0_array,
+                        const double scale_force) const;
+
+    void calculateForce(const CLJNBPairs::CGPairs &group_pairs,
+                        const QSet<SireID::Index> &atoms0,
+                        const QSet<SireID::Index> &atoms1,
+                        const CoordGroup &group0, const CoordGroup &group1,
+                        const double mindist,
+                        IntraCLJPotential::ForceWorkspace &workspace,
+                        const IntraCLJPotential::Parameter *params0_array,
+                        const IntraCLJPotential::Parameter *params1_array,
                         const double shift_coul,
                         Vector *group_forces0_array,
                         const double scale_force) const;
@@ -658,6 +679,18 @@ private:
                                Vector *group_forces0_array,
                                const double scale_force) const;
 
+    void calculateCoulombForce(const CLJNBPairs::CGPairs &group_pairs,
+                               const QSet<SireID::Index> &atoms0,
+                               const QSet<SireID::Index> &atoms1,
+                               const CoordGroup &group0, const CoordGroup &group1,
+                               const double mindist,
+                               IntraCLJPotential::ForceWorkspace &workspace,
+                               const IntraCLJPotential::Parameter *params0_array,
+                               const IntraCLJPotential::Parameter *params1_array,
+                               const double shift_coul,
+                               Vector *group_forces0_array,
+                               const double scale_force) const;
+
     void calculateLJForce(const CLJNBPairs::CGPairs &group_pairs,
                           const CoordGroup &group0, const CoordGroup &group1,
                           const double mindist,
@@ -665,6 +698,17 @@ private:
                           const IntraCLJPotential::Parameter *params0_array,
                           const IntraCLJPotential::Parameter *params1_array,
                           const quint32 nats0, const quint32 nats1,
+                          Vector *group_forces0_array,
+                          const double scale_force) const;
+
+    void calculateLJForce(const CLJNBPairs::CGPairs &group_pairs,
+                          const QSet<SireID::Index> &atoms0,
+                          const QSet<SireID::Index> &atoms1,
+                          const CoordGroup &group0, const CoordGroup &group1,
+                          const double mindist,
+                          IntraCLJPotential::ForceWorkspace &workspace,
+                          const IntraCLJPotential::Parameter *params0_array,
+                          const IntraCLJPotential::Parameter *params1_array,
                           Vector *group_forces0_array,
                           const double scale_force) const;
 

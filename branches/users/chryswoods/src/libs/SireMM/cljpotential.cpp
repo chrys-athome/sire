@@ -1828,6 +1828,121 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
     }
 }
 
+void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs, 
+                            const QSet<Index> &atoms0, const QSet<Index> &atoms1,
+                            IntraCLJPotential::EnergyWorkspace &distmat,
+                            const IntraCLJPotential::Parameter *params0_array, 
+                            const IntraCLJPotential::Parameter *params1_array,
+                            const quint32 nats0, const quint32 nats1, 
+                            double &icnrg, double &iljnrg) const
+{
+    if (atoms0.isEmpty() or atoms1.isEmpty())
+        return;
+
+    if (group_pairs.isEmpty())
+    {
+        //there are no scale factors between groups...
+        foreach (Index i, atoms0)
+        {
+            distmat.setOuterIndex(i);
+            const Parameter &param0 = params0_array[i];
+                
+            if (param0.ljid == 0)
+            {
+                //null LJ parameter - only add on the coulomb energy
+                foreach (Index j, atoms1)
+                {
+                    icnrg += param0.reduced_charge * 
+                             params1_array[j].reduced_charge / distmat[j];
+                }
+            }
+            else
+            {
+                foreach (Index j, atoms1)
+                {
+                    //do both coulomb and LJ
+                    const Parameter &param1 = params1_array[j];
+                        
+                    const double invdist = double(1) / distmat[j];
+                        
+                    icnrg += param0.reduced_charge * param1.reduced_charge
+                                                   * invdist;
+                              
+                    if (param1.ljid != 0)
+                    {
+                        const LJPair &ljpair = ljpairs.constData()[
+                                                  ljpairs.map(param0.ljid,
+                                                              param1.ljid)];
+                        
+                        double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                        double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                        iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
+                                                      sig_over_dist6);
+                    }
+                }
+            }
+        } 
+    }
+    else
+    {
+        //there are different nb scale factors between
+        //the atoms. We need to calculate the energies using
+        //them...
+        foreach (Index i, atoms0)
+        {
+            distmat.setOuterIndex(i);
+            const Parameter &param0 = params0_array[i];
+                
+            if (param0.ljid == 0)
+            {
+                //null LJ parameter - only add on the coulomb energy
+                foreach (Index j, atoms1)
+                {
+                    const CLJScaleFactor &cljscl = group_pairs(i,j);
+                            
+                    if (cljscl.coulomb() != 0)
+                           icnrg += cljscl.coulomb() * 
+                                    param0.reduced_charge * 
+                                    params1_array[j].reduced_charge / distmat[j];
+                }
+            }
+            else
+            {
+                foreach (Index j, atoms1)
+                {
+                    //do both coulomb and LJ
+                    const CLJScaleFactor &cljscl = group_pairs(i,j);
+
+                    if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
+                    {
+                        const Parameter &param1 = params1_array[j];
+                        
+                        const double invdist = double(1) / distmat[j];
+                        
+                        icnrg += cljscl.coulomb() *  
+                                 param0.reduced_charge * 
+                                 param1.reduced_charge * invdist;
+                              
+                        if (cljscl.lj() != 0 and param1.ljid != 0)
+                        {
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                     ljpairs.map(param0.ljid,
+                                                                 param1.ljid)];
+                        
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            iljnrg += cljscl.lj() * ljpair.epsilon() * 
+                                       (sig_over_dist12 - sig_over_dist6);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 /** Calculate the intramolecular CLJ energy of the passed molecule, and
     add this onto 'energy'. This uses the passed workspace when
     performing the calculation */
@@ -1936,32 +2051,6 @@ void IntraCLJPotential::calculateEnergy(const IntraCLJPotential::Molecule &mol,
     energy += Energy(scale_energy * cnrg, scale_energy * ljnrg);
 }
 
-static bool intersects(const QSet<Index> &atoms0, const QSet<Index> &atoms1)
-{
-    if (atoms0.count() <= atoms1.count())
-    {
-        for (QSet<Index>::const_iterator it = atoms0.constBegin();
-             it != atoms0.constEnd();
-             ++it)
-        {
-            if (atoms1.contains(*it))
-                return true;
-        }
-    }
-    else
-    {
-        for (QSet<Index>::const_iterator it = atoms1.constBegin();
-             it != atoms1.constEnd();
-             ++it)
-        {
-            if (atoms0.contains(*it))
-                return true;
-        }
-    }
-    
-    return false;
-}
-
 /** Calculate the intramolecular CLJ energy of the passed molecule
     interacting with the rest of the same molecule in 'rest_of_mol', and
     add this onto 'energy'. This uses the passed workspace when
@@ -2006,7 +2095,7 @@ void IntraCLJPotential::calculateEnergy(const IntraCLJPotential::Molecule &mol,
     double ljnrg = 0;
     
     //calculate the energy of all of the atoms in 'mol' interacting with
-    //all of the atoms in 'rest_of_mol'
+    //all of the atoms in 'rest_of_mol' that aren't in 'mol'
     for (quint32 igroup=0; igroup<ngroups0; ++igroup)
     {
         const Parameters::Array &params0 = molparams0_array[igroup];
@@ -2025,6 +2114,10 @@ void IntraCLJPotential::calculateEnergy(const IntraCLJPotential::Molecule &mol,
             const Parameters::Array &params1 = molparams1_array[jgroup];
 
             CGIdx cgidx_jgroup = rest_of_mol.cgIdx(jgroup);
+
+            //skip this CutGroup if it is in 'mol'
+            if (mol.molecule().selection().selectedAll(cgidx_jgroup))
+                continue;
 
             //check first that these two CoordGroups could be within cutoff
             //(don't test igroup==jgroup as this is the same CutGroup
@@ -2056,72 +2149,33 @@ void IntraCLJPotential::calculateEnergy(const IntraCLJPotential::Molecule &mol,
             const quint32 nats1 = group1.count();
             const Parameter *params1_array = params1.constData();
             
-            if (cgidx_igroup == cgidx_jgroup)
+            if (cgidx_igroup == cgidx_jgroup
+                or mol.molecule().selection().selected(cgidx_jgroup))
             {
-                //this is the same CutGroup - we must be careful not to 
-                //calculate the energy between overlapping atoms
+                //this is the same CutGroup, or some of CutGroup jgroup
+                //is present in 'mol' - we must be careful not to 
+                //double-count the energy between atoms in both 'mol'
+                //and 'rest_of_mol'
                 
                 //get the atoms from this CutGroup that are contained in 
                 //each part of the molecule
                 QSet<Index> atoms0 = mol.molecule()
                                         .selection().selectedAtoms(cgidx_igroup);
-                                        
+                                      
+                QSet<Index> mol_atoms1 = atoms0;
+                
+                if (cgidx_igroup != cgidx_jgroup)
+                    mol_atoms1 = mol.molecule().selection().selectedAtoms(cgidx_jgroup);
+                                            
                 QSet<Index> atoms1 = rest_of_mol.molecule()
                                         .selection().selectedAtoms(cgidx_jgroup);
                                         
-                BOOST_ASSERT( not ::intersects(atoms0, atoms1) );
+                //remove from atoms1 atoms that are part of 'mol'
+                atoms1 -= mol_atoms1;
                 
-                foreach (Index i, atoms0)
-                {
-                    distmat.setOuterIndex(i);
-                    const Parameter &param0 = params0_array[i];
-
-                    if (param0.ljid == 0)
-                    {
-                        //null LJ parameter - only add on the coulomb energy
-                        foreach (Index j, atoms1)
-                        {
-                            const CLJScaleFactor &cljscl = group_pairs(i,j);
-                            
-                            if (cljscl.coulomb() != 0)
-                                icnrg += cljscl.coulomb() * 
-                                         param0.reduced_charge * 
-                                         params1_array[j].reduced_charge / distmat[j];
-                        }
-                    }
-                    else
-                    {
-                        foreach (Index j, atoms1)
-                        {
-                            //do both coulomb and LJ
-                            const CLJScaleFactor &cljscl = group_pairs(i,j);
-
-                            if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
-                            {
-                                const Parameter &param1 = params1_array[j];
-                        
-                                const double invdist = double(1) / distmat[j];
-                        
-                                icnrg += cljscl.coulomb() *  
-                                        param0.reduced_charge * 
-                                        param1.reduced_charge * invdist;
-                              
-                                if (cljscl.lj() != 0 and param1.ljid != 0)
-                                {
-                                    const LJPair &ljpair = ljpairs.constData()[
-                                                            ljpairs.map(param0.ljid,
-                                                                        param1.ljid)];
-                        
-                                    double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
-                                    double sig_over_dist12 = pow_2(sig_over_dist6);
-
-                                    iljnrg += cljscl.lj() * ljpair.epsilon() * 
-                                                (sig_over_dist12 - sig_over_dist6);
-                                }
-                            }
-                        }
-                    }
-                }
+                calculateEnergy(group_pairs, atoms0, atoms1, distmat,
+                                params0_array, params1_array, 
+                                nats0, nats1, icnrg, iljnrg);
             }
             else
             {
@@ -2542,6 +2596,400 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
     } // end of whether within feather region
 }
 
+void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
+                             const QSet<Index> &atoms0, const QSet<Index> &atoms1,
+                             const CoordGroup &group0, const CoordGroup &group1,
+                             const double mindist,
+                             IntraCLJPotential::ForceWorkspace &distmat,
+                             const IntraCLJPotential::Parameter *params0_array,
+                             const IntraCLJPotential::Parameter *params1_array,
+                             const double shift_coul,
+                             Vector *group_forces0_array,
+                             const double scale_force) const
+{
+    if (atoms0.isEmpty() or atoms1.isEmpty())
+        return;
+
+    if (mindist > switchfunc->featherDistance())
+    {
+        //we need to calculate the forces taking into account
+        //the derivative of the switching function!
+                
+        //calculate the switching scale factors and their 
+        //derivatives
+        const double scl_coul = switchfunc->electrostaticScaleFactor(mindist);
+        const double scl_lj = switchfunc->vdwScaleFactor(mindist);
+                
+        Vector group_sep = (group1.aaBox().center() -
+                            group0.aaBox().center()).normalise(); 
+                
+        Vector dscl_coul = switchfunc->dElectrostaticScaleFactor(mindist) 
+                                     * group_sep;
+                                     
+        Vector dscl_lj = switchfunc->dVDWScaleFactor(mindist)
+                                     * group_sep;
+
+        if (group_pairs.isEmpty())
+        {
+            //there are no scale factors between atoms in these groups
+            foreach (Index i, atoms0)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+
+                Vector total_force;
+                
+                if (param0.ljid == 0)
+                {
+                    //null LJ parameter - only add on the coulomb energy
+                    foreach (Index j, atoms1)
+                    {
+                        const double q2 = param0.reduced_charge *
+                                          params1_array[j].reduced_charge;
+                                
+                        if (q2 != 0)
+                        {
+                            //calculate the coulomb energy
+                            const double cnrg = scl_coul * q2 /
+                                                distmat[j].length();
+
+                            //calculate the coulomb force
+                            Vector cforce = (-cnrg / distmat[j].length() *
+                                                     distmat[j].direction()) +
+                                             
+                                                    ((cnrg-shift_coul) * dscl_coul);
+
+                            total_force -= cforce;
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (Index j, atoms1)
+                    {
+                        //do both coulomb and LJ
+                        const Parameter &param1 = params1_array[j];
+                        
+                        const double invdist = double(1) / distmat[j].length();
+                        
+                        Vector force;
+
+                        const double q2 = param0.reduced_charge *
+                                          param1.reduced_charge;
+                                
+                        if (q2 != 0)
+                        {
+                            //calculate the energy
+                            const double cnrg = scl_coul * q2 * invdist;
+
+                            //calculate the force
+                            force = (-cnrg / distmat[j].length() *
+                                             distmat[j].direction()) +
+                                             
+                                             ((cnrg-shift_coul) * dscl_coul);
+                        }
+                              
+                        if (param1.ljid != 0)
+                        {
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param1.ljid)];
+                        
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            //calculate the energy
+                            const double ljnrg = ljpair.epsilon() *
+                                                   (sig_over_dist12 - sig_over_dist6);
+
+                            // dU/dr requires an extra power of r
+                            sig_over_dist6 *= invdist;
+                            sig_over_dist12 *= invdist;
+
+                            force += ((scl_lj * ljpair.epsilon() * 
+                                       (6.0*sig_over_dist6 - 12.0*sig_over_dist12))
+                                           * distmat[j].direction())
+                                            
+                                     + (ljnrg * dscl_lj);
+                        }
+                        
+                        total_force -= force;
+                    }
+                }
+                        
+                group_forces0_array[i] += scale_force * total_force;
+            }
+        }
+        else
+        {
+            //there are different nb scale factors between
+            //the atoms. We need to calculate the forces
+            //using them...
+            foreach (Index i, atoms0)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+                
+                Vector total_force;
+                
+                if (param0.ljid == 0)
+                {
+                    //null LJ parameter - only add on the coulomb energy
+                    foreach (Index j, atoms1)
+                    {
+                        const CLJScaleFactor &cljscl = group_pairs(i,j);
+                            
+                        if (cljscl.coulomb() != 0)
+                        {
+                            const double q2 = param0.reduced_charge * 
+                                              params1_array[j].reduced_charge;
+                                                      
+                            if (q2 != 0)
+                            {
+                                //calculate the coulomb energy
+                                const double cnrg = cljscl.coulomb() *
+                                                      scl_coul * q2
+                                                      / distmat[j].length();
+                                               
+                                //calculate the coulomb force
+                                Vector cforce = (-cnrg 
+                                                  / distmat[j].length() *
+                                                    distmat[j].direction()) +
+                                             
+                                                  ((cnrg-shift_coul) * dscl_coul);
+                            
+                                total_force -= cforce;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (Index j, atoms1)
+                    {
+                        //do both coulomb and LJ
+                        const CLJScaleFactor &cljscl = group_pairs(i,j);
+                                
+                        if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
+                        {
+                            const Parameter &param1 = params1_array[j];
+                        
+                            const double invdist = double(1) 
+                                                     / distmat[j].length();
+                        
+                            Vector force;
+                                    
+                            const double q2 = param0.reduced_charge *
+                                              param1.reduced_charge;
+
+                            if (q2 != 0)
+                            {
+                                //calculate the energy
+                                const double cnrg = cljscl.coulomb() *
+                                                            scl_coul * q2 * invdist;
+                        
+                                //calculate the force
+                                force = (scl_coul * -cnrg 
+                                           / distmat[j].length() *
+                                             distmat[j].direction()) +
+                                             
+                                        ((cnrg-shift_coul) * dscl_coul);
+                            }
+                            
+                            if (cljscl.lj() != 0 and param1.ljid != 0)
+                            {
+                                const LJPair &ljpair = ljpairs.constData()[
+                                                        ljpairs.map(param0.ljid,
+                                                                    param1.ljid)];
+                            
+                                double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                                double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                                //calculate the energy
+                                const double ljnrg = cljscl.lj() *
+                                                      ljpair.epsilon() *
+                                                   (sig_over_dist12 - sig_over_dist6);
+
+                                // dU/dr requires an extra power of r
+                                sig_over_dist6 *= invdist;
+                                sig_over_dist12 *= invdist;
+
+                                force += ((scl_lj * ljpair.epsilon() * 
+                                         (6.0*sig_over_dist6 - 12.0*sig_over_dist12))
+                                          * distmat[j].direction())
+                                            
+                                          + (ljnrg * dscl_lj);
+                            }
+                        
+                            total_force -= force;
+                        }
+                    }
+                }
+                        
+                group_forces0_array[i] += scale_force * total_force;
+            }
+        }
+    }
+    else
+    {
+        //not in the feather region, so can calculate the forces
+        //directly (also, no need to calculate shift, as 
+        //the shifting function is constant, so does not
+        //affect the gradient)
+                
+        if (group_pairs.isEmpty())
+        {
+            //no nb scale factors to worry about
+            foreach (Index i, atoms0)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+                
+                Vector total_force;
+                
+                if (param0.ljid == 0)
+                {
+                    //null LJ parameter - only add on the coulomb energy
+                    foreach (Index j, atoms1)
+                    {
+                        //calculate the coulomb force
+                        Vector cforce = -(param0.reduced_charge *
+                                          params1_array[j].reduced_charge / 
+                                          distmat[j].length2()) *
+                                             
+                                          distmat[j].direction();
+
+                        total_force -= cforce;
+                    }
+                }
+                else
+                {
+                    foreach (Index j, atoms1)
+                    {
+                        //do both coulomb and LJ
+                        const Parameter &param1 = params1_array[j];
+                            
+                        const double invdist = double(1) / distmat[j].length();
+                        const double invdist2 = pow_2(invdist);
+                        
+                        //calculate the force
+                        Vector force = -(param0.reduced_charge * 
+                                         param1.reduced_charge * invdist2) 
+                                            
+                                         * distmat[j].direction();
+                              
+                        if (param1.ljid != 0)
+                        {
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                    ljpairs.map(param0.ljid,
+                                                                param1.ljid)];
+                        
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            // dU/dr requires an extra power of r
+                            sig_over_dist6 *= invdist;
+                            sig_over_dist12 *= invdist;
+
+                            force += (ljpair.epsilon() * (6.0*sig_over_dist6 - 
+                                                         12.0*sig_over_dist12))
+                                      * distmat[j].direction();
+                        }
+
+                        total_force -= force;
+                    }
+                }
+                        
+                group_forces0_array[i] += scale_force * total_force;
+            }
+        }
+        else
+        {
+            //there are different nb scale factors between
+            //different atoms...
+            foreach (Index i, atoms0)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+                
+                Vector total_force;
+                
+                if (param0.ljid == 0)
+                {
+                    //null LJ parameter - only add on the coulomb energy
+                    foreach (Index j, atoms1)
+                    {
+                        const CLJScaleFactor &cljscl = group_pairs(i,j);
+                            
+                        if (cljscl.coulomb() != 0)
+                        {
+                            //calculate the coulomb force
+                            Vector cforce = -(cljscl.coulomb() *
+                                              param0.reduced_charge *
+                                              params1_array[j].reduced_charge / 
+                                              distmat[j].length2()) *
+                                             
+                                              distmat[j].direction();
+
+                            total_force -= cforce;
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (Index j, atoms1)
+                    {
+                        //do both coulomb and LJ
+                        const CLJScaleFactor &cljscl = group_pairs(i,j);
+                                
+                        if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
+                        {
+                            const Parameter &param1 = params1_array[j];
+                            
+                            const double invdist = double(1)    
+                                                    / distmat[j].length();
+                            const double invdist2 = pow_2(invdist);
+                        
+                            //calculate the force
+                            Vector force = -(cljscl.coulomb() *
+                                             param0.reduced_charge * 
+                                             param1.reduced_charge * invdist2) 
+                                            
+                                             * distmat[j].direction();
+                              
+                            if (cljscl.lj() != 0 and param1.ljid != 0)
+                            {
+                                const LJPair &ljpair = ljpairs.constData()[
+                                                         ljpairs.map(param0.ljid,
+                                                                     param1.ljid)];
+                        
+                                double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                                double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                                // dU/dr requires an extra power of r
+                                sig_over_dist6 *= invdist;
+                                sig_over_dist12 *= invdist;
+
+                                force += (cljscl.lj() *
+                                          ljpair.epsilon() * (6.0*sig_over_dist6 - 
+                                                             12.0*sig_over_dist12))
+                                           * distmat[j].direction();
+                            }
+
+                            total_force -= force;
+                        }
+                    }
+                }
+                        
+                group_forces0_array[i] += scale_force * total_force;
+
+            } // end of loop over i atoms
+
+        } // end of whether there are intra scale factors
+
+    } // end of whether within feather region
+}
+
 /** Calculate the coulomb and LJ forces between the atoms in the molecule 'mol'
     and add these forces onto 'forces'. This uses
     the passed workspace to perform the calculation */
@@ -2647,8 +3095,7 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
 
 /** Calculate the total forces acting on the atoms in 'mol' caused by the 
     other atoms in the same molecule contained in 'rest_of_mol'. This calculates
-    the forces and adds them onto 'forces' (which are for 'mol'). Note that
-    'mol' and 'rest_of_mol' must not overlap, and also that they must
+    the forces and adds them onto 'forces' (which are for 'mol'). Note that they must
     use the same layout UID and same intra-nonbonded scaling factors
     
     \throw SireError::incompatible_error
@@ -2715,6 +3162,11 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
         {
             CGIdx cgidx_jgroup = rest_of_mol.cgIdx(jgroup);
 
+            if (mol.molecule().selection().selectedAll(cgidx_jgroup))
+                //all of this CutGroup is in 'mol', so don't evaluate
+                //the force from it
+                continue;
+
             const CoordGroup &group1 = groups1_array[jgroup];
             const Parameters::Array &params1 = molparams1_array[jgroup];
 
@@ -2744,95 +3196,38 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
             const CLJNBPairs::CGPairs &group_pairs = nbpairs(cgidx_igroup,
                                                              cgidx_jgroup);
             
-            if (cgidx_igroup == cgidx_jgroup)
+            if (cgidx_igroup == cgidx_jgroup or
+                mol.molecule().selection().selected(cgidx_jgroup))
             {
-                //we have to be careful to not calculate the forces of
-                //overlapping atoms...
+                //some of the atoms in jgroup are selected as part of 'mol'.
+                //We must be careful not to double-count the interactions
+                //with these atoms
                 
                 QSet<Index> atoms0 = mol.molecule().selection()
                                                .selectedAtoms(cgidx_igroup);
-                                               
+                                  
+                QSet<Index> mol_atoms1 = atoms0;
+                
+                if (cgidx_igroup != cgidx_jgroup)
+                    mol_atoms1 = mol.molecule().selection().selectedAtoms(cgidx_jgroup);
+                                                                         
                 QSet<Index> atoms1 = rest_of_mol.molecule().selection()
                                                .selectedAtoms(cgidx_jgroup);
                                          
-                BOOST_ASSERT( not ::intersects(atoms0, atoms1) );
+                //remove the atoms from 'rest_of_mol' that are part of 'mol'
+                atoms1 -= mol_atoms1;
                                                            
-                foreach (Index i, atoms0)
-                {
-                    distmat.setOuterIndex(i);
-                    const Parameter &param0 = params0_array[i];
+                double shift_coul = 0;
+            
+                if (use_electrostatic_shifting and cgidx_igroup != cgidx_jgroup)
+                    shift_coul = this->totalCharge(params0) * this->totalCharge(params1)
+                                / switchfunc->electrostaticCutoffDistance();
                 
-                    Vector total_force;
-                
-                    if (param0.ljid == 0)
-                    {
-                        //null LJ parameter - only add on the coulomb energy
-                        foreach (Index j, atoms1)
-                        {
-                            const CLJScaleFactor &cljscl = group_pairs(i,j);
-                            
-                            if (cljscl.coulomb() != 0)
-                            {
-                                //calculate the coulomb force
-                                Vector cforce = -(cljscl.coulomb() *
-                                                  param0.reduced_charge *
-                                                  params1_array[j].reduced_charge / 
-                                                  distmat[j].length2()) *
-                                             
-                                                  distmat[j].direction();
-
-                                total_force -= cforce;
-                            }
-                        }
-                    }
-                    else
-                    {
-                        foreach (Index j, atoms1)
-                        {
-                            //do both coulomb and LJ
-                            const CLJScaleFactor &cljscl = group_pairs(i,j);
-                                
-                            if (cljscl.coulomb() != 0 or cljscl.lj() != 0)
-                            {
-                                const Parameter &param1 = params1_array[j];
-                            
-                                const double invdist = double(1)    
-                                                        / distmat[j].length();
-                                const double invdist2 = pow_2(invdist);
-                        
-                                //calculate the force
-                                Vector force = -(cljscl.coulomb() *
-                                                 param0.reduced_charge * 
-                                                 param1.reduced_charge * invdist2) 
-                                            
-                                                 * distmat[j].direction();
-                              
-                                if (cljscl.lj() != 0 and param1.ljid != 0)
-                                {
-                                    const LJPair &ljpair = ljpairs.constData()[
-                                                            ljpairs.map(param0.ljid,
-                                                                        param1.ljid)];
-                        
-                                    double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
-                                    double sig_over_dist12 = pow_2(sig_over_dist6);
-
-                                    // dU/dr requires an extra power of r
-                                    sig_over_dist6 *= invdist;
-                                    sig_over_dist12 *= invdist;
-
-                                    force += (cljscl.lj() *
-                                            ljpair.epsilon() * (6.0*sig_over_dist6 - 
-                                                                12.0*sig_over_dist12))
-                                            * distmat[j].direction();
-                                }
-
-                                total_force -= force;
-                            }
-                        }
-                    }
-                        
-                    group_forces0_array[i] += scale_force * total_force;
-                }
+                calculateForce(group_pairs, atoms0, atoms1,
+                               group0, group1, mindist, distmat,
+                               params0_array, params1_array,
+                               shift_coul,
+                               group_forces0_array, scale_force);
             }
             else
             {
@@ -3045,6 +3440,202 @@ void IntraCLJPotential::calculateCoulombForce(const CLJNBPairs::CGPairs &group_p
     } // end of whether within feather region
 }
 
+void IntraCLJPotential::calculateCoulombForce(const CLJNBPairs::CGPairs &group_pairs,
+                             const QSet<Index> &atoms0, const QSet<Index> &atoms1,
+                             const CoordGroup &group0, const CoordGroup &group1,
+                             const double mindist,
+                             IntraCLJPotential::ForceWorkspace &distmat,
+                             const IntraCLJPotential::Parameter *params0_array,
+                             const IntraCLJPotential::Parameter *params1_array,
+                             const double shift_coul,
+                             Vector *group_forces0_array,
+                             const double scale_force) const
+{
+    if (atoms0.isEmpty() or atoms1.isEmpty())
+        return;
+
+    if (mindist > switchfunc->featherDistance())
+    {
+        //we need to calculate the forces taking into account
+        //the derivative of the switching function!
+                
+        //calculate the switching scale factors and their 
+        //derivatives
+        const double scl_coul = switchfunc->electrostaticScaleFactor(mindist);
+                
+        Vector group_sep = (group1.aaBox().center() -
+                            group0.aaBox().center()).normalise(); 
+                
+        Vector dscl_coul = switchfunc->dElectrostaticScaleFactor(mindist) 
+                              * group_sep;
+
+        if (group_pairs.isEmpty())
+        {
+            //there are no scale factors between atoms in these groups
+            foreach (Index i, atoms0)
+            {
+                const Parameter &param0 = params0_array[i];
+
+                if (param0.reduced_charge == 0)
+                    return;
+
+                distmat.setOuterIndex(i);
+
+                Vector total_force;
+                
+                foreach (Index j, atoms1)
+                {
+                    const double q2 = param0.reduced_charge *
+                                      params1_array[j].reduced_charge;
+                                
+                    if (q2 != 0)
+                    {
+                        //calculate the coulomb energy
+                        const double cnrg = scl_coul * q2 /
+                                            distmat[j].length();
+
+                        //calculate the coulomb force
+                        Vector cforce = (-cnrg / distmat[j].length() *
+                                                 distmat[j].direction()) +
+                                             
+                                                ((cnrg-shift_coul) * dscl_coul);
+
+                        total_force -= cforce;
+                    }
+                }
+                        
+                group_forces0_array[i] += scale_force * total_force;
+            }
+        }
+        else
+        {
+            //there are different nb scale factors between
+            //the atoms. We need to calculate the forces
+            //using them...
+            foreach (Index i, atoms0)
+            {
+                const Parameter &param0 = params0_array[i];
+
+                if (param0.reduced_charge == 0)
+                    continue;
+                
+                distmat.setOuterIndex(i);
+
+                Vector total_force;
+                
+                foreach (Index j, atoms1)
+                {
+                    const CLJScaleFactor &cljscl = group_pairs(i,j);
+                            
+                    if (cljscl.coulomb() != 0)
+                    {
+                        const double q2 = param0.reduced_charge * 
+                                          params1_array[j].reduced_charge;
+                                                      
+                        if (q2 != 0)
+                        {
+                            //calculate the coulomb energy
+                            const double cnrg = cljscl.coulomb() *
+                                                  scl_coul * q2
+                                                  / distmat[j].length();
+                                               
+                            //calculate the coulomb force
+                            Vector cforce = (-cnrg 
+                                             / distmat[j].length() *
+                                               distmat[j].direction()) +
+                                             
+                                              ((cnrg-shift_coul) * dscl_coul);
+                            
+                            total_force -= cforce;
+                        }
+                    }
+                }
+                        
+                group_forces0_array[i] += scale_force * total_force;
+            }
+        }
+    }
+    else
+    {
+        //not in the feather region, so can calculate the forces
+        //directly (also, no need to calculate shift, as 
+        //the shifting function is constant, so does not
+        //affect the gradient)
+                
+        if (group_pairs.isEmpty())
+        {
+            //no nb scale factors to worry about
+            foreach (Index i, atoms0)
+            {
+                const Parameter &param0 = params0_array[i];
+
+                if (param0.reduced_charge == 0)
+                    continue;
+                    
+                distmat.setOuterIndex(i);
+                
+                Vector total_force;
+                
+                foreach (Index j, atoms1)
+                {
+                    if (params1_array[j].reduced_charge != 0)
+                    {
+                        //calculate the coulomb force
+                        Vector cforce = -(param0.reduced_charge *
+                                          params1_array[j].reduced_charge / 
+                                          distmat[j].length2()) *
+                                             
+                                          distmat[j].direction();
+
+                        total_force -= cforce;
+                    }
+                }
+                        
+                group_forces0_array[i] += scale_force * total_force;
+            }
+        }
+        else
+        {
+            //there are different nb scale factors between
+            //different atoms...
+            foreach (Index i, atoms0)
+            {
+                const Parameter &param0 = params0_array[i];
+                
+                if (param0.reduced_charge == 0)    
+                    continue;
+                
+                distmat.setOuterIndex(i);
+
+                Vector total_force;
+                
+                foreach (Index j, atoms1)
+                {
+                    const CLJScaleFactor &cljscl = group_pairs(i,j);
+                          
+                    double cscale = cljscl.coulomb() 
+                                      * params1_array[j].reduced_charge;
+                           
+                    if (cscale != 0)
+                    {
+                        //calculate the coulomb force
+                        Vector cforce = -(cscale *
+                                          param0.reduced_charge /
+                                          distmat[j].length2()) *
+                                             
+                                          distmat[j].direction();
+
+                        total_force -= cforce;
+                    }
+                }
+                        
+                group_forces0_array[i] += scale_force * total_force;
+
+            } // end of loop over i atoms
+        } // end of whether there are intra scale factors
+    } // end of whether within feather region
+}
+
 /** Calculate the coulomb forces between the atoms in the molecule 'mol'
     and add these forces onto 'forces'. This uses
     the passed workspace to perform the calculation */
@@ -3220,6 +3811,10 @@ void IntraCLJPotential::calculateCoulombForce(
         {
             CGIdx cgidx_jgroup = rest_of_mol.cgIdx(jgroup);
 
+            if (mol.molecule().selection().selectedAll(cgidx_jgroup))
+                //all of this CutGroup is part of 'mol', so ignore it
+                continue;
+
             const CoordGroup &group1 = groups1_array[jgroup];
             const Parameters::Array &params1 = molparams1_array[jgroup];
 
@@ -3249,46 +3844,37 @@ void IntraCLJPotential::calculateCoulombForce(
             const CLJNBPairs::CGPairs &group_pairs = nbpairs(cgidx_igroup,
                                                              cgidx_jgroup);
             
-            if (cgidx_igroup == cgidx_jgroup)
+            if (cgidx_igroup == cgidx_jgroup or
+                mol.molecule().selection().selected(cgidx_jgroup))
             {
-                //we have to be careful to not calculate the forces of
-                //overlapping atoms...
+                //some of the atoms in jgroup are selected as part of 'mol'.
                 
                 QSet<Index> atoms0 = mol.molecule().selection()
                                                .selectedAtoms(cgidx_igroup);
                                                
+                QSet<Index> mol_atoms1 = atoms0;
+                
+                if (cgidx_igroup != cgidx_jgroup)
+                    mol_atoms1 = mol.molecule().selection().selectedAtoms(cgidx_jgroup);
+                                               
                 QSet<Index> atoms1 = rest_of_mol.molecule().selection()
                                                .selectedAtoms(cgidx_jgroup);
                                          
-                BOOST_ASSERT( not ::intersects(atoms0, atoms1) );
-                                                           
-                foreach (Index i, atoms0)
-                {
-                    distmat.setOuterIndex(i);
-                    const Parameter &param0 = params0_array[i];
-                
-                    Vector total_force;
-                
-                    foreach (Index j, atoms1)
-                    {
-                        const CLJScaleFactor &cljscl = group_pairs(i,j);
-                            
-                        if (cljscl.coulomb() != 0)
-                        {
-                            //calculate the coulomb force
-                            Vector cforce = -(cljscl.coulomb() *
-                                              param0.reduced_charge *
-                                              params1_array[j].reduced_charge / 
-                                              distmat[j].length2()) *
-                                             
-                                              distmat[j].direction();
+                //remove the atoms in jgroup that are part of 'mol'
+                atoms1 -= mol_atoms1;
 
-                            total_force -= cforce;
-                        }
-                    }
-                        
-                    group_forces0_array[i] += scale_force * total_force;
-                }
+                double shift_coul = 0;
+            
+                if (use_electrostatic_shifting and cgidx_igroup != cgidx_jgroup)
+                    shift_coul = this->totalCharge(params0) * this->totalCharge(params1)
+                                / switchfunc->electrostaticCutoffDistance();
+
+                calculateCoulombForce(group_pairs, atoms0, atoms1,
+                                      group0, group1,
+                                      mindist, distmat,
+                                      params0_array, params1_array,
+                                      shift_coul,
+                                      group_forces0_array, scale_force);
             }
             else
             {
@@ -3542,6 +4128,243 @@ void IntraCLJPotential::calculateLJForce(const CLJNBPairs::CGPairs &group_pairs,
     } // end of whether within feather region
 }
 
+void IntraCLJPotential::calculateLJForce(const CLJNBPairs::CGPairs &group_pairs,
+                             const QSet<Index> &atoms0, const QSet<Index> &atoms1,
+                             const CoordGroup &group0, const CoordGroup &group1,
+                             const double mindist,
+                             IntraCLJPotential::ForceWorkspace &distmat,
+                             const IntraCLJPotential::Parameter *params0_array,
+                             const IntraCLJPotential::Parameter *params1_array,
+                             Vector *group_forces0_array,
+                             const double scale_force) const
+{
+    if (atoms0.isEmpty() or atoms1.isEmpty())
+        return;
+
+    if (mindist > switchfunc->featherDistance())
+    {
+        //we need to calculate the forces taking into account
+        //the derivative of the switching function!
+        
+        //calculate the switching scale factors and their 
+        //derivatives
+        const double scl_lj = switchfunc->vdwScaleFactor(mindist);
+        
+        Vector group_sep = (group1.aaBox().center() -
+                            group0.aaBox().center()).normalise(); 
+                             
+        Vector dscl_lj = switchfunc->dVDWScaleFactor(mindist)
+                             * group_sep;
+
+        if (group_pairs.isEmpty())
+        {
+            //there are no scale factors between atoms in these groups
+            foreach (Index i, atoms0)
+            {
+                const Parameter &param0 = params0_array[i];
+
+                Vector total_force;
+        
+                if (param0.ljid != 0)
+                {
+                    distmat.setOuterIndex(i);
+
+                    foreach (Index j, atoms1)
+                    {
+                        const Parameter &param1 = params1_array[j];
+                      
+                        if (param1.ljid != 0)
+                        {
+                            const double invdist = double(1) / distmat[j].length();
+                
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                   ljpairs.map(param0.ljid,
+                                                               param1.ljid)];
+                
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            //calculate the energy
+                            const double ljnrg = ljpair.epsilon() *
+                                              (sig_over_dist12 - sig_over_dist6);
+
+                            // dU/dr requires an extra power of r
+                            sig_over_dist6 *= invdist;
+                            sig_over_dist12 *= invdist;
+
+                            const Vector force = 
+                                    ((scl_lj * ljpair.epsilon() * 
+                                    (6.0*sig_over_dist6 - 12.0*sig_over_dist12))
+                                    * distmat[j].direction())
+                                    
+                                    + (ljnrg * dscl_lj);
+
+                            total_force -= force;
+                        }
+                    }
+                }
+                
+                group_forces0_array[i] += scale_force * total_force;
+            }
+        }
+        else
+        {
+            //there are different nb scale factors between
+            //the atoms. We need to calculate the forces
+            //using them...
+            foreach (Index i, atoms0)
+            {
+                const Parameter &param0 = params0_array[i];
+        
+                Vector total_force;
+        
+                if (param0.ljid != 0)
+                {
+                    distmat.setOuterIndex(i);
+
+                    foreach (Index j, atoms1)
+                    {
+                        const Parameter &param1 = params1_array[j];
+                        const CLJScaleFactor &cljscl = group_pairs(i,j);
+                        
+                        if (cljscl.lj() != 0 and param1.ljid != 0)
+                        {
+                            const double invdist = double(1) / distmat[j].length();
+                            
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                   ljpairs.map(param0.ljid,
+                                                               param1.ljid)];
+                
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            //calculate the energy
+                            const double ljnrg = cljscl.lj() *
+                                                 ljpair.epsilon() *
+                                          (sig_over_dist12 - sig_over_dist6);
+
+                            // dU/dr requires an extra power of r
+                            sig_over_dist6 *= invdist;
+                            sig_over_dist12 *= invdist;
+
+                            const Vector force = 
+                                   ((scl_lj * ljpair.epsilon() * 
+                                    (6.0*sig_over_dist6 - 12.0*sig_over_dist12))
+                                   * distmat[j].direction())
+                                   
+                                   + (ljnrg * dscl_lj);
+
+                            total_force -= force;
+                        }
+                    }
+                }
+                
+                group_forces0_array[i] += scale_force * total_force;
+            }
+        }
+    }
+    else
+    {
+        //not in the feather region, so can calculate the forces
+        //directly
+        if (group_pairs.isEmpty())
+        {
+            //no nb scale factors to worry about
+            foreach (Index i, atoms0)
+            {
+                distmat.setOuterIndex(i);
+                const Parameter &param0 = params0_array[i];
+        
+                Vector total_force;
+        
+                if (param0.ljid != 0)
+                {
+                    foreach (Index j, atoms1)
+                    {
+                        const Parameter &param1 = params1_array[j];
+                
+                        if (param1.ljid != 0)
+                        {
+                            const double invdist = double(1) / distmat[j].length();
+                            
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                   ljpairs.map(param0.ljid,
+                                                               param1.ljid)];
+                
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            // dU/dr requires an extra power of r
+                            sig_over_dist6 *= invdist;
+                            sig_over_dist12 *= invdist;
+
+                            const Vector force =
+                                (ljpair.epsilon() * (6.0*sig_over_dist6 - 
+                                                     12.0*sig_over_dist12))
+                                 * distmat[j].direction();
+
+                            total_force -= force;
+                        }
+                    }
+                }
+                
+                group_forces0_array[i] += scale_force * total_force;
+            }
+        }
+        else
+        {
+            //there are different nb scale factors between
+            //different atoms...
+            foreach (Index i, atoms0)
+            {
+                const Parameter &param0 = params0_array[i];
+        
+                Vector total_force;
+        
+                if (param0.ljid != 0)
+                {
+                    distmat.setOuterIndex(i);
+
+                    foreach (Index j, atoms1)
+                    {
+                        const Parameter &param1 = params1_array[j];
+                        const CLJScaleFactor &cljscl = group_pairs(i,j);
+                        
+                        if (cljscl.lj() != 0 and param1.ljid != 0)
+                        {
+                            const double invdist = double(1) / distmat[j].length();
+
+                            const LJPair &ljpair = ljpairs.constData()[
+                                                   ljpairs.map(param0.ljid,
+                                                               param1.ljid)];
+                
+                            double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
+                            double sig_over_dist12 = pow_2(sig_over_dist6);
+
+                            // dU/dr requires an extra power of r
+                            sig_over_dist6 *= invdist;
+                            sig_over_dist12 *= invdist;
+
+                            const Vector force = 
+                                  (cljscl.lj() *
+                                   ljpair.epsilon() * (6.0*sig_over_dist6 - 
+                                                       12.0*sig_over_dist12))
+                                   * distmat[j].direction();
+
+                            total_force -= force;
+                        }
+                    }
+                }
+                
+                group_forces0_array[i] += scale_force * total_force;
+
+            } // end of loop over i atoms
+
+        } // end of whether there are intra scale factors
+
+    } // end of whether within feather region
+}
+
 /** Calculate the LJ forces between the atoms in the molecule 'mol'
     and add these forces onto 'forces'. This uses
     the passed workspace to perform the calculation */
@@ -3709,6 +4532,9 @@ void IntraCLJPotential::calculateLJForce(
         {
             CGIdx cgidx_jgroup = rest_of_mol.cgIdx(jgroup);
 
+            if (mol.molecule().selection().selectedAll(cgidx_jgroup))
+                continue;
+
             const CoordGroup &group1 = groups1_array[jgroup];
             const Parameters::Array &params1 = molparams1_array[jgroup];
 
@@ -3738,62 +4564,30 @@ void IntraCLJPotential::calculateLJForce(
             const CLJNBPairs::CGPairs &group_pairs = nbpairs(cgidx_igroup,
                                                              cgidx_jgroup);
             
-            if (cgidx_igroup == cgidx_jgroup)
+            if (cgidx_igroup == cgidx_jgroup or
+                mol.molecule().selection().selected(cgidx_jgroup))
             {
-                //we have to be careful to not calculate the forces of
-                //overlapping atoms...
+                //some of the atoms in jgroup are also selected in 'mol'
                 
                 QSet<Index> atoms0 = mol.molecule().selection()
                                                .selectedAtoms(cgidx_igroup);
                                                
+                QSet<Index> mol_atoms1 = atoms0;
+                
+                if (cgidx_jgroup != cgidx_igroup)
+                    mol_atoms1 = mol.molecule().selection().selectedAtoms(cgidx_jgroup);
+                                               
                 QSet<Index> atoms1 = rest_of_mol.molecule().selection()
                                                .selectedAtoms(cgidx_jgroup);
                                          
-                BOOST_ASSERT( not ::intersects(atoms0, atoms1) );
+                //remove the atoms in 'rest_of_mol' that are part of 'mol'
+                atoms1 -= mol_atoms1;
                                                            
-                foreach (Index i, atoms0)
-                {
-                    distmat.setOuterIndex(i);
-                    const Parameter &param0 = params0_array[i];
-                
-                    Vector total_force;
-                
-                    if (param0.ljid != 0)
-                    {
-                        foreach (Index j, atoms1)
-                        {
-                            const CLJScaleFactor &cljscl = group_pairs(i,j);
-                            
-                            const Parameter &param1 = params1_array[j];
-                            
-                            if (cljscl.lj() != 0 and param1.ljid != 0)
-                            {
-                                const double invdist = double(1) /
-                                                  distmat(j).length();
-                            
-                                const LJPair &ljpair = ljpairs.constData()[
-                                                         ljpairs.map(param0.ljid,
-                                                                     param1.ljid)];
-                        
-                                double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
-                                double sig_over_dist12 = pow_2(sig_over_dist6);
-
-                                // dU/dr requires an extra power of r
-                                sig_over_dist6 *= invdist;
-                                sig_over_dist12 *= invdist;
-
-                                const Vector force = (cljscl.lj() *
-                                          ljpair.epsilon() * (6.0*sig_over_dist6 - 
-                                                             12.0*sig_over_dist12))
-                                         * distmat[j].direction();
-
-                                total_force -= force;
-                            }
-                        }
-                        
-                        group_forces0_array[i] += scale_force * total_force;
-                    }
-                }
+                calculateLJForce(group_pairs, atoms0, atoms1,
+                                 group0, group1,
+                                 mindist, distmat,
+                                 params0_array, params1_array,
+                                 group_forces0_array, scale_force);
             }
             else
             {

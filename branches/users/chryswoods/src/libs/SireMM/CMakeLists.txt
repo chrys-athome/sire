@@ -76,6 +76,7 @@ set ( SIREMM_SOURCES
       intercoulombff.cpp
       interljff.cpp
       internaldatatypes.cpp
+      intracljff.cpp
       ljdb.cpp
       ljpair.cpp
       ljparameter.cpp

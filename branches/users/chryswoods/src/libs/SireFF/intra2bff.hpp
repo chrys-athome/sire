@@ -147,10 +147,6 @@ protected:
         molecule at the last energy evaluation. */
     QHash<MolNum,ChangedMolecule> changed_mols;
 
-    /** The numbers of the molecules that have been removed since
-        the last energy evaluation */
-    QSet<MolNum> removed_mols;
-
     /** The energy components available for this forcefield */
     Components ffcomponents;
 };
@@ -182,7 +178,6 @@ Intra2BFF<Potential>::Intra2BFF(const Intra2BFF<Potential> &other)
                      : SireBase::ConcreteProperty<Intra2BFF<Potential>,G1FF>(other), 
                        Potential(other),
                        mols(other.mols), changed_mols(other.changed_mols),
-                       removed_mols(other.removed_mols), 
                        ffcomponents(other.ffcomponents)
 {}
 
@@ -205,7 +200,6 @@ Intra2BFF<Potential>::operator=(const Intra2BFF<Potential> &other)
         
         mols = other.mols;
         changed_mols = other.changed_mols;
-        removed_mols = other.removed_mols;
         ffcomponents = other.ffcomponents;
     }
     
@@ -302,7 +296,6 @@ void Intra2BFF<Potential>::mustNowRecalculateFromScratch()
     
     //now clear any delta information
     changed_mols.clear();
-    removed_mols.clear();
 }
 
 /** Return whether or not we need to record the changes to this   
@@ -334,7 +327,6 @@ void Intra2BFF<Potential>::recordChange(
         {
             //we have reverted the change!
             changed_mols.remove(molnum);
-            removed_mols.remove(molnum);
             return;
         }
         else
@@ -347,13 +339,6 @@ void Intra2BFF<Potential>::recordChange(
     {
         changed_mols.insert(molnum, change);
     }
-    
-    if (change.newMolecule().isEmpty())
-        //the molecule has been removed
-        removed_mols.insert(molnum);
-    else
-        //the molecule may have been re-added
-        removed_mols.remove(molnum);
 }
 
 /** Virtual function used to return the components of the forcefield
@@ -458,7 +443,6 @@ void Intra2BFF<Potential>::_pvt_changed(const QList<SireMol::Molecule> &molecule
 {
     Molecules old_mols = mols;
     QHash<MolNum,ChangedMolecule> old_changed_mols = changed_mols;
-    QSet<MolNum> old_removed_mols = removed_mols;
 
     try
     {
@@ -482,7 +466,6 @@ void Intra2BFF<Potential>::_pvt_changed(const QList<SireMol::Molecule> &molecule
     {
         mols = old_mols;
         changed_mols = old_changed_mols;
-        removed_mols = old_removed_mols;
         throw;
     }
 }
@@ -535,16 +518,11 @@ void Intra2BFF<Potential>::recalculateEnergy()
         EnergyWorkspace workspace;
         Energy total_nrg;
 
-        //loop over all pairs of molecules
-        for (int i=0; i<nmols-1; ++i)
+        //loop over all molecules and calculate their intramolecular energies
+        for (int i=0; i<nmols; ++i)
         {
-            const typename Potential::Molecule &mol0 = mols_array[i];
-        
-            for (int j=i+1; j<nmols; ++j)
-            {
-                const typename Potential::Molecule &mol1 = mols_array[j];
-                Potential::calculateEnergy(mol0, mol1, total_nrg, workspace);
-            }
+            const typename Potential::Molecule &mol = mols_array[i];
+            Potential::calculateEnergy(mol, total_nrg, workspace);
         }
         
         //set the energy
@@ -558,137 +536,30 @@ void Intra2BFF<Potential>::recalculateEnergy()
 
         EnergyWorkspace old_workspace;
         EnergyWorkspace new_workspace;
-        
-        for (int i=0; i<nmols; ++i)
-        {
-            const typename Potential::Molecule &mol0 = mols_array[i];
-            
-            typename QHash<MolNum,ChangedMolecule>::const_iterator it
-                                               = changed_mols.constFind(mol0.number());
-                                               
-            if (it == changed_mols.constEnd())
-            {
-                //this molecule has not changed - just calculate its
-                //energy with all of the changed molecules - as this molecule
-                //hasn't changed, we only need to calculate the change
-                //in energy between this molecule and the changed parts
-                //of the changed molecules
-                for (typename QHash<MolNum,ChangedMolecule>::const_iterator
-                                      it2 = changed_mols.constBegin();
-                     it2 != changed_mols.constEnd();
-                     ++it2)
-                {
-                    Potential::calculateEnergy(mol0, it2->oldParts(),
-                                               old_nrg, old_workspace);
-                                               
-                    Potential::calculateEnergy(mol0, it2->newParts(),
-                                               new_nrg, new_workspace);
-                }
-            }
-            else if (changed_mols.count() > 1)
-            {
-                //this molecule has changed - calculate its energy with all
-                //of the changed molecules that lie after it in the changed_mols
-                //hash (thus ensuring we don't double-count)
-                typename QHash<MolNum,ChangedMolecule>::const_iterator it2 = it;
-                
-                bool this_changed_all = it->changedAll();
-                
-                if (this_changed_all)
-                {
-                    //all of this molecule has changed - so we need to 
-                    //calculate the energy of this molecule with *all* of
-                    //the parts of the other changed molecules
-                    for (++it2; it2 != changed_mols.constEnd(); ++it2)
-                    {
-                        Potential::calculateEnergy(it->oldMolecule(),
-                                                   it2->oldMolecule(),
-                                                   old_nrg, old_workspace);
-                                                   
-                        Potential::calculateEnergy(it->newMolecule(),
-                                                   it2->newMolecule(),
-                                                   new_nrg, new_workspace);
-                    }
-                }
-                else
-                {
-                    for (++it2; it2 != changed_mols.constEnd(); ++it2)
-                    {
-                        if (it2->changedAll())
-                        {
-                            //all of the other molecule has changed - we need
-                            //to calculate the energy of the whole molecules
-                            //interaction
-                            Potential::calculateEnergy(it->oldMolecule(),
-                                                       it2->oldMolecule(),
-                                                       old_nrg, old_workspace);
-                            
-                            Potential::calculateEnergy(it->newMolecule(),
-                                                       it2->newMolecule(),
-                                                       new_nrg, new_workspace);
-                        }
-                        else
-                        {
-                            //both a part of this molecule and a part of the 
-                            //other molecule have changed
-                           
-                            //the change in energy associated with changing 
-                            //the first molecule...
-                            Potential::calculateEnergy(it->oldParts(),
-                                                       it2->oldMolecule(),
-                                                       old_nrg, old_workspace);
-                                                       
-                            Potential::calculateEnergy(it->newParts(),
-                                                       it2->newMolecule(),
-                                                       new_nrg, new_workspace);
-                                                       
-                           //now the change in energy associated with changing
-                           //the second molecule...
-                           Potential::calculateEnergy(it2->oldParts(),
-                                                      it->oldMolecule(),
-                                                      old_nrg, old_workspace);
-                                                     
-                           Potential::calculateEnergy(it2->newParts(),
-                                                      it->newMolecule(),
-                                                      new_nrg, new_workspace);
-                                                      
-                           //now remove double counted changed in mol1 with
-                           //change in mol2
-                           Potential::calculateEnergy(it->oldParts(),
-                                                      it2->oldParts(),
-                                                      old_nrg, old_workspace, -1);
-                                                      
-                           Potential::calculateEnergy(it->newParts(),
-                                                      it2->newParts(),
-                                                      new_nrg, new_workspace, -1);
-                        }
-                    }
-                }
-            }
-        }
 
-        //finally, loop over all of the molecules that have been removed - the energy
-        //of non-changed molecules with removed molecules has already been calculated,
-        //as has the energy of moved molecules that are before the removed molecules
-        //in the moved list. We only now have to calculate the energy of the removed
-        //molecules with all of the molecules that lie above us in the moved list
-        for (typename QSet<MolNum>::const_iterator it = removed_mols.constBegin();
-             it != removed_mols.constEnd();
+        for (typename QHash<MolNum,ChangedMolecule>::const_iterator it
+                                                = changed_mols.constBegin();
+             it != changed_mols.constEnd();
              ++it)
         {
-            typename QSet<MolNum>::const_iterator it2 = it;
-            
-            const ChangedMolecule &mol0 = *(changed_mols.constFind(*it));
-            
-            for (++it2; it2 != removed_mols.constEnd(); ++it2)
+            if (it->changedAll())
             {
-                const ChangedMolecule &mol1 = *(changed_mols.constFind(*it2));
-            
-                Potential::calculateEnergy(mol0.oldMolecule(),
-                                           mol1.oldMolecule(),
+                //calculate the change in energy of this whole molecule
+                Potential::calculateEnergy(it->oldMolecule(),
+                                           old_nrg, old_workspace);
+                    
+                Potential::calculateEnergy(it->newMolecule(),
+                                           new_nrg, new_workspace);
+            }
+            else
+            {
+                //calculate the change in energy of the changed part
+                //of the molecule
+                Potential::calculateEnergy(it->oldParts(), it->oldMolecule(),
                                            old_nrg, old_workspace);
                                            
-                //molecule has been removed, so no new energy
+                Potential::calculateEnergy(it->newParts(), it->newMolecule(),
+                                           new_nrg, new_workspace);
             }
         }
          

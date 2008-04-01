@@ -28,121 +28,17 @@
 
 #include "intracljff.h"
 
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
+#include "SireMol/partialmolecule.h"
+
+#include "SireMol/mover.hpp"
 
 using namespace SireMM;
-using namespace SireStream;
+using namespace SireFF;
 
-/////////////
-///////////// Implementation of IntraCLJFF::Parameters
-/////////////
+template class CLJPotentialInterface<IntraCLJPotential>;
 
-/** Constructor */
-IntraCLJFF::Parameters::Parameters()
-           : CLJFF::Parameters(), nbscl_params("nbscale", "nbscale")
-{}
+template class Intra2BFF< CLJPotentialInterface<IntraCLJPotential> >;
+template class Intra2B3DFF< CLJPotentialInterface<IntraCLJPotential> >;
 
-/** Copy constructor */
-IntraCLJFF::Parameters::Parameters(const IntraCLJFF::Parameters &other)
-           : CLJFF::Parameters(other),
-             nbscl_params(other.nbscl_params)
-{}
-
-/** Destructor */
-IntraCLJFF::Parameters::~Parameters()
-{}
-
-/** Static object returned by IntraCLJFF::parameters() */
-IntraCLJFF::Parameters IntraCLJFF::Parameters::default_sources;
-
-
-/////////////
-///////////// Implementation of IntraCLJFF
-/////////////
-
-
-/** Serialise to a binary datastream */
-QDataStream SIRE_EXPORT &operator<<(QDataStream &ds, const )
-{
-    writeHeader(ds, , 1)
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRE_EXPORT &operator>>(QDataStream &ds, )
-{
-    VersionID v = readHeader(ds, );
-    if (v == 1)
-    {
-        ds >>
-    }
-    else
-        throw version_error(v, "1", , CODELOC);
-    return ds;
-}
-
-IntraCLJFF::IntraCLJFF();
-
-IntraCLJFF::IntraCLJFF(const Space &space, const SwitchingFunction &switchfunc);
-
-IntraCLJFF::IntraCLJFF(const IntraCLJFF &other);
-
-IntraCLJFF::~IntraCLJFF();
-
-void IntraCLJFF::mustNowRecalculateFromScratch();
-
-bool IntraCLJFF::change(const PartialMolecule &molecule);
-bool IntraCLJFF::change(const Molecules &molecules);
-
-bool IntraCLJFF::add(const PartialMolecule &molecule,
-           const ParameterMap &map = ParameterMap());
-
-bool IntraCLJFF::add(const Molecules &molecules,
-           const ParameterMap &map = ParameterMap());
-
-bool IntraCLJFF::remove(const PartialMolecule &molecule);
-bool IntraCLJFF::remove(const Molecules &molecules);
-
-bool IntraCLJFF::contains(const PartialMolecule &molecule) const;
-
-bool IntraCLJFF::refersTo(MoleculeID molid) const;
-
-QSet<FFBase::Group> IntraCLJFF::groupsReferringTo(MoleculeID molid) const;
-
-QSet<MoleculeID> IntraCLJFF::moleculeIDs() const;
-
-PartialMolecule IntraCLJFF::molecule(MoleculeID molid) const;
-
-Molecules IntraCLJFF::contents() const;
-
-void IntraCLJFF::_pvt_copy(const FFBase &other);
-
-void IntraCLJFF::recalculateViaDelta();
-
-/** Recalculate the total energy of this forcefield from scratch */
-void IntraCLJFF::recalculateTotalEnergy()
-{
-    //calculate the CLJ energy of each molecule
-    CLJEnergy cljnrg(0,0);
-
-    int nmols = mols.count();
-
-    const CLJMolecule *mols_array = mols.constData();
-
-    DistMatrix distmat(30,30);
-    CLJPairMatrix cljmat(30,30);
-
-    //loop over all molecules
-    for (int i=0; i<nmols; ++i)
-    {
-        const CLJMolecule &mol = mols_array[i];
-        const CLJNBPairs &nbpair = *(mol_nbpairs.constFind(mol.ID()));
-
-
-        //add the energy of this molecule
-
-    }
-}
-
-void IntraCLJFF::recalculateEnergy();
+//template class Intra2B2GFF< CLJPotentialInterface<IntraCLJPotential> >;
+//template class Intra2B2G3DFF< CLJPotentialInterface<IntraCLJPotential> >;
