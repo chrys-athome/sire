@@ -88,8 +88,11 @@ using SireBase::Property;
 
 using SireCAS::Symbol;
 
+using SireMaths::Vector;
+
 using SireVol::Space;
 using SireVol::SpaceBase;
+using SireVol::CoordGroup;
 
 using SireMol::PartialMolecule;
 using SireMol::MolGroup;
@@ -566,7 +569,19 @@ public:
                          IntraCLJPotential::EnergyWorkspace &workspace,
                          double scale_energy=1) const;
 
+    void calculateEnergy(const IntraCLJPotential::Molecule &mol,
+                         const IntraCLJPotential::Molecule &rest_of_mol,
+                         IntraCLJPotential::Energy &energy,
+                         IntraCLJPotential::EnergyWorkspace &workspace,
+                         double scale_energy=1) const;
+
     void calculateForce(const IntraCLJPotential::Molecule &mol, 
+                        MolForceTable &forces,
+                        IntraCLJPotential::ForceWorkspace &workspace,
+                        double scale_force=1) const;
+
+    void calculateForce(const IntraCLJPotential::Molecule &mol,
+                        const IntraCLJPotential::Molecule &rest_of_mol,
                         MolForceTable &forces,
                         IntraCLJPotential::ForceWorkspace &workspace,
                         double scale_force=1) const;
@@ -578,10 +593,30 @@ public:
                         IntraCLJPotential::ForceWorkspace &workspace,
                         double scale_force=1) const;
 
+    void calculateForce(const IntraCLJPotential::Molecule &mol,
+                        const IntraCLJPotential::Molecule &rest_of_mol,
+                        MolForceTable &forces,
+                        const Symbol &symbol,
+                        const Components &components,
+                        IntraCLJPotential::ForceWorkspace &workspace,
+                        double scale_force=1) const;
+
     void calculateCoulombForce(const IntraCLJPotential::Molecule &mol,
                                MolForceTable &forces,
                                IntraCLJPotential::ForceWorkspace &workspace,
                                double scale_force=1) const;
+
+    void calculateCoulombForce(const IntraCLJPotential::Molecule &mol,
+                               const IntraCLJPotential::Molecule &rest_of_mol,
+                               MolForceTable &forces,
+                               IntraCLJPotential::ForceWorkspace &workspace,
+                               double scale_force=1) const;
+                               
+    void calculateLJForce(const IntraCLJPotential::Molecule &mol,
+                          const IntraCLJPotential::Molecule &rest_of_mol,
+                          MolForceTable &forces,
+                          IntraCLJPotential::ForceWorkspace &workspace,
+                          double scale_force=1) const;
                                
     void calculateLJForce(const IntraCLJPotential::Molecule &mol,
                           MolForceTable &forces,
@@ -590,6 +625,48 @@ public:
                                
 private:
     double totalCharge(const IntraCLJPotential::Parameters::Array &params) const;
+
+    void assertCompatible(const IntraCLJPotential::Molecule &mol,
+                          const IntraCLJPotential::Molecule &rest_of_mol) const;
+
+    void calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
+                         IntraCLJPotential::EnergyWorkspace &workspace,
+                         const Parameter *params0_array,
+                         const Parameter *params1_array,
+                         const quint32 nats0, const quint32 nats1,
+                         double &icnrg, double &iljnrg) const;
+
+    void calculateForce(const CLJNBPairs::CGPairs &group_pairs,
+                        const CoordGroup &group0, const CoordGroup &group1,
+                        const double mindist,
+                        IntraCLJPotential::ForceWorkspace &workspace,
+                        const IntraCLJPotential::Parameter *params0_array,
+                        const IntraCLJPotential::Parameter *params1_array,
+                        const quint32 nats0, const quint32 nats1,
+                        const double shift_coul,
+                        Vector *group_forces0_array,
+                        const double scale_force) const;
+
+    void calculateCoulombForce(const CLJNBPairs::CGPairs &group_pairs,
+                               const CoordGroup &group0, const CoordGroup &group1,
+                               const double mindist,
+                               IntraCLJPotential::ForceWorkspace &workspace,
+                               const IntraCLJPotential::Parameter *params0_array,
+                               const IntraCLJPotential::Parameter *params1_array,
+                               const quint32 nats0, const quint32 nats1,
+                               const double shift_coul,
+                               Vector *group_forces0_array,
+                               const double scale_force) const;
+
+    void calculateLJForce(const CLJNBPairs::CGPairs &group_pairs,
+                          const CoordGroup &group0, const CoordGroup &group1,
+                          const double mindist,
+                          IntraCLJPotential::ForceWorkspace &workspace,
+                          const IntraCLJPotential::Parameter *params0_array,
+                          const IntraCLJPotential::Parameter *params1_array,
+                          const quint32 nats0, const quint32 nats1,
+                          Vector *group_forces0_array,
+                          const double scale_force) const;
 
     void throwMissingForceComponent(const Symbol &symbol,
                                     const Components &components) const;
@@ -811,6 +888,35 @@ IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
         
     else if (symbol == components.lj())
         this->calculateLJForce(mol, forces, workspace, scale_force);
+        
+    else
+        throwMissingForceComponent(symbol, components);
+}
+
+/** Calculate the forces represented by the symbol 'symbol' acting on the 
+    atoms in 'mol1' caused by the atoms in the rest of the same molecule 
+    in 'rest_of_mol', and add these forces onto 'forces'. This uses the 
+    passed workspace to perform the calculation
+    
+    \throw SireError::incompatible_error
+*/
+inline void
+IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
+                                  const IntraCLJPotential::Molecule &rest_of_mol,
+                                  MolForceTable &forces,
+                                  const Symbol &symbol,
+                                  const IntraCLJPotential::Components &components,
+                                  IntraCLJPotential::ForceWorkspace &workspace,
+                                  double scale_force) const
+{
+    if (symbol == components.total())
+        this->calculateForce(mol, rest_of_mol, forces, workspace, scale_force);
+        
+    else if (symbol == components.coulomb())
+        this->calculateCoulombForce(mol, rest_of_mol, forces, workspace, scale_force);
+        
+    else if (symbol == components.lj())
+        this->calculateLJForce(mol, rest_of_mol, forces, workspace, scale_force);
         
     else
         throwMissingForceComponent(symbol, components);

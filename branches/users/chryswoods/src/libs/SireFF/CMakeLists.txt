@@ -33,6 +33,8 @@ set ( SIREFF_HEADERS
       inter2b2gff.hpp
       inter2b3dff.hpp
       inter2bff.hpp
+      intra2bff.hpp
+      intra2b3dff.hpp
 
       detail/atomiccoords3d.h
       detail/atomicparameters.hpp
