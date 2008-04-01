@@ -121,7 +121,7 @@ class SegInfo;
     
     @author Christopher Woods
 */
-class MoleculeInfoData : public MolInfo, public QSharedData
+class SIREMOL_EXPORT MoleculeInfoData : public MolInfo, public QSharedData
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MoleculeInfoData&);

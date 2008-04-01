@@ -32,7 +32,7 @@
 #include "cljpotential.h"
 
 #include "SireFF/intra2b3dff.hpp"
-//#include "SireFF/intra2b2g3dff.hpp"
+#include "SireFF/intra2b2g3dff.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -41,22 +41,22 @@ namespace SireMM
 
 using SireFF::Intra2BFF;
 using SireFF::Intra2B3DFF;
-//using SireFF::Intra2B2GFF;
-//using SireFF::Intra2B2G3DFF;
+using SireFF::Intra2B2GFF;
+using SireFF::Intra2B2G3DFF;
 
 typedef Intra2BFF< CLJPotentialInterface<IntraCLJPotential> > IntraCLJFFBase;
 typedef Intra2B3DFF< CLJPotentialInterface<IntraCLJPotential> > IntraCLJFF;
 
-//typedef Intra2B2GFF< CLJPotentialInterface<IntraCLJPotential> > IntraGroupCLJFFBase;
-//typedef Intra2B2G3DFF< CLJPotentialInterface<IntraCLJPotential> > IntraGroupCLJFF;
+typedef Intra2B2GFF< CLJPotentialInterface<IntraCLJPotential> > IntraGroupCLJFFBase;
+typedef Intra2B2G3DFF< CLJPotentialInterface<IntraCLJPotential> > IntraGroupCLJFF;
 
 }
 
 Q_DECLARE_METATYPE(SireMM::IntraCLJFFBase);
 Q_DECLARE_METATYPE(SireMM::IntraCLJFF);
 
-//Q_DECLARE_METATYPE(SireMM::IntraGroupCLJFFBase);
-//Q_DECLARE_METATYPE(SireMM::IntraGroupCLJFF);
+Q_DECLARE_METATYPE(SireMM::IntraGroupCLJFFBase);
+Q_DECLARE_METATYPE(SireMM::IntraGroupCLJFF);
 
 SIRE_END_HEADER
 

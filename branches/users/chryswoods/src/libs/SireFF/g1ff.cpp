@@ -103,6 +103,10 @@ G1FF& G1FF::operator=(const G1FF &other)
     return *this;
 }
 
+/** Destructor */
+G1FF::~G1FF()
+{}
+
 /** Return the molecule group with number 'mgnum'
 
     \throw SireMol::missing_group

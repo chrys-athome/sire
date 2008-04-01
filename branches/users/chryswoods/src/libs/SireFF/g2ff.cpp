@@ -49,6 +49,25 @@ using namespace SireFF::detail;
 using namespace SireMol;
 using namespace SireStream;
 
+namespace SireFF
+{
+namespace detail
+{
+
+void throwIntra2B2GFFIncompatibeScaleFactorsError(
+                const QString &molname, MolNum molnum, quint64 v0, quint64 v1)
+{
+    throw SireError::incompatible_error( QObject::tr(
+        "Cannot add or update the molecule %1 (%2) as the intramolecular "
+        "non-bonded scaling factors are different in the added or "
+        "changed molecule (version %3) to those in the molecule that "
+        "is already present in this forcefield (version %4).")
+            .arg(molname).arg(molnum).arg(v0).arg(v1), CODELOC );
+}
+
+} // end of namespace detail
+} // end of namespace SireFF
+
 static const RegisterMetaType<G2FF> r_g2ff( MAGIC_ONLY, "SireFF::G2FF" );
 
 /** Serialise to a binary datastream */
@@ -97,6 +116,10 @@ G2FF::G2FF(const G2FF &other)
     molgroup[0] = other.molgroup[0];
     molgroup[1] = other.molgroup[1];
 }
+
+/** Destructor */
+G2FF::~G2FF()
+{}
 
 /** Copy assignment operator */
 G2FF& G2FF::operator=(const G2FF &other)

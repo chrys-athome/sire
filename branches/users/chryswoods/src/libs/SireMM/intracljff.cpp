@@ -40,5 +40,5 @@ template class CLJPotentialInterface<IntraCLJPotential>;
 template class Intra2BFF< CLJPotentialInterface<IntraCLJPotential> >;
 template class Intra2B3DFF< CLJPotentialInterface<IntraCLJPotential> >;
 
-//template class Intra2B2GFF< CLJPotentialInterface<IntraCLJPotential> >;
-//template class Intra2B2G3DFF< CLJPotentialInterface<IntraCLJPotential> >;
+template class Intra2B2GFF< CLJPotentialInterface<IntraCLJPotential> >;
+template class Intra2B2G3DFF< CLJPotentialInterface<IntraCLJPotential> >;

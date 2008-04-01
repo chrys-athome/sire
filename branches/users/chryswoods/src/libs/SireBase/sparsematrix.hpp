@@ -95,7 +95,7 @@ public:
 
 } // end of namespace SireBase
 
-uint qHash(const SireBase::detail::Index &idx)
+inline uint qHash(const SireBase::detail::Index &idx)
 {
     return (idx.i << 16) & (idx.j | 0x0000FFFF);
 }

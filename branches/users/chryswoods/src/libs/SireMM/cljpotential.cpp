@@ -1535,6 +1535,39 @@ void IntraCLJPotential::throwMissingForceComponent(const Symbol &symbol,
                  components.lj().toString()), CODELOC );
 }
 
+/** Assert that 'rest_of_mol' is compatible with 'mol'. They are only 
+    compatible if they are both part of the same molecule (not necessarily
+    the same version) with the same layout UID.
+    
+    \throw SireError::incompatible_error
+*/
+void IntraCLJPotential::assertCompatible(const IntraCLJPotential::Molecule &mol,
+                                const IntraCLJPotential::Molecule &rest_of_mol) const
+{
+    if (mol.number() != rest_of_mol.number() or
+        mol.molecule().data().info().UID() 
+                        != rest_of_mol.molecule().data().info().UID())
+    {
+        throw SireError::incompatible_error( QObject::tr(
+            "Problem adding the molecule %1 (%2). It doesn't appear to be "
+            "in the same molecule as %3 (%4), or the molecule layout "
+            "IDs may be different!")
+                .arg(mol.molecule().name()).arg(mol.number())
+                .arg(rest_of_mol.molecule().name()).arg(rest_of_mol.number()),
+                    CODELOC );
+    }
+    else if (mol.parameters().intraScaleFactors() != 
+                rest_of_mol.parameters().intraScaleFactors())
+    {
+        throw SireError::incompatible_error( QObject::tr(
+            "The non-bonded scaling factors for the molecule %1 (%2) "
+            "are different to the ones for the rest of the molecule. "
+            "This is probably caused by a program bug...")
+                .arg(mol.molecule().name()).arg(mol.number()),
+                    CODELOC );
+    }
+}
+
 /** Return all of the parameters needed by this potential for 
     the molecule 'molecule', using the supplied property map to
     find the properties that contain those parameters

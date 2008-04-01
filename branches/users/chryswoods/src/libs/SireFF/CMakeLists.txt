@@ -4,9 +4,6 @@
 #
 ########################################
 
-# Third Party dependencies of this module
-include_directories(${QT_QTSQL_INCLUDE_DIR})
-
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
@@ -16,7 +13,6 @@ set ( SIREFF_HEADERS
       ff.h
       ff3d.h
       ffcomponent.h
-      ffgroupid.h
       ffid.h
       ffidentifier.h
       ffidx.h
@@ -25,7 +21,6 @@ set ( SIREFF_HEADERS
       ffnum.h
       forcefield.h
       forcefields.h
-      forcefieldsbase.h
       forcetable.h
       g1ff.h
       g2ff.h
@@ -34,7 +29,9 @@ set ( SIREFF_HEADERS
       inter2b3dff.hpp
       inter2bff.hpp
       intra2bff.hpp
+      intra2b2gff.hpp
       intra2b3dff.hpp
+      intra2b2g3dff.hpp
 
       detail/atomiccoords3d.h
       detail/atomicparameters.hpp
@@ -51,13 +48,11 @@ set ( SIREFF_SOURCES
       ff.cpp
       ff3d.cpp
       ffcomponent.cpp
-      ffgroupid.cpp
       ffid.cpp
       ffidentifier.cpp
       ffmolgroup.cpp
       forcefield.cpp
       forcefields.cpp
-      forcefieldsbase.cpp
       forcetable.cpp
       g1ff.cpp
       g2ff.cpp
@@ -78,10 +73,10 @@ set_target_properties (SireFF PROPERTIES
 
 # Link to other Sire libraries
 target_link_libraries (SireFF
-                       SireDB
-                       SireCluster
+                       SireMol
+                       SireCAS
+                       SireMaths
                        SireBase
-                       ${QT_QTSQL_LIBRARY}
                        )
 
 # installation
@@ -93,3 +88,4 @@ install( TARGETS SireFF
 
 install( FILES ${SIREFF_HEADERS} 
          DESTINATION ${SIRE_INCLUDES}/SireFF )
+

@@ -70,7 +70,7 @@ using SireVol::CoordGroupArray;
     @author Christopher Woods
 */
 template<>
-class AtomProperty<Vector>
+class SIREMOL_EXPORT AtomProperty<Vector>
        : public SireBase::ConcreteProperty<AtomProperty<Vector>,AtomProp>
 {
 

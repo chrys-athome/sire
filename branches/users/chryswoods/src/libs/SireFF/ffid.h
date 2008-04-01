@@ -60,7 +60,7 @@ public:
         return "SireFF::FFID";
     }
     
-    virtual FFID* clone() const;
+    virtual FFID* clone() const=0;
 };
 
 }
