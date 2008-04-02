@@ -40,3 +40,9 @@ using namespace SireFF::detail;
 
 using namespace SireMol;
 using namespace SireVol;
+
+////////
+//////// Static data for Coords3DParameterName
+////////
+
+QString Coords3DParameterName::coords_param( "coordinates" );

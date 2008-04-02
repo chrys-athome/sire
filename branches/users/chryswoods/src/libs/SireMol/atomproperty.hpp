@@ -64,7 +64,7 @@ using SireBase::PackedArray2D;
 
 /** Small class used to give a common base to all
     AtomProperty classes */
-class AtomProp : public MolViewProperty
+class SIREMOL_EXPORT AtomProp : public MolViewProperty
 {
 public:
     AtomProp();

@@ -288,6 +288,14 @@ const AABox& FFMolecule3D<PTNL>::aaBox() const
     return aabox;
 }
 
+/** Return the coordinates of the atoms in this molecule */
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+const CoordGroupArray& FFMolecule3D<PTNL>::coordinates() const
+{
+    return this->parameters().atomicCoordinates();
+}
+
 /** Change this molecule so that it is equal to 'new_molecule'.
 
     Note that you can only change a molecule's molecule layout ID

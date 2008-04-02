@@ -32,6 +32,9 @@
 #include "ff.h"
 #include "g1ff.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireFF
@@ -582,6 +585,69 @@ void Intra2BFF<Potential>::recalculateEnergy()
     }
 }
 
+}
+
+namespace SireFF
+{
+namespace detail
+{
+
+template<class Potential>
+struct Intra2BRMT
+{
+    static const RegisterMetaType< SireFF::Intra2BFF<Potential> > r_intra2bff;
+};
+
+template<class Potential>
+const RegisterMetaType< SireFF::Intra2BFF<Potential> > 
+Intra2BRMT<Potential>::r_intra2bff;
+
+}
+}
+
+/** Serialise to a binary datastream */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds,
+                        const SireFF::Intra2BFF<Potential> &intra2bff)
+{
+    SireStream::writeHeader(ds, SireFF::detail::Intra2BRMT<Potential>::r_intra2bff, 1);
+    
+    SireStream::SharedDataStream sds(ds);
+    
+    sds << intra2bff.mols << intra2bff.changed_mols
+        << static_cast<const Potential&>(intra2bff)
+        << static_cast<const SireFF::G1FF&>(intra2bff);
+        
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds,
+                        SireFF::Intra2BFF<Potential> &intra2bff)
+{
+    SireStream::VersionID v = SireStream::readHeader(ds, 
+                                SireFF::detail::Intra2BRMT<Potential>::r_intra2bff);
+                                        
+    if (v == 1)
+    {
+        SireStream::SharedDataStream sds(ds);
+        
+        sds >> intra2bff.mols >> intra2bff.changed_mols
+            >> static_cast<Potential&>(intra2bff)
+            >> static_cast<SireFF::G1FF&>(intra2bff);
+            
+        intra2bff._pvt_updateName();
+        
+        return ds;
+    }
+    else
+        throw SireStream::version_error(v, "1",
+                    SireFF::detail::Intra2BRMT<Potential>::r_intra2bff, CODELOC );
+
+    return ds;
 }
 
 SIRE_END_HEADER

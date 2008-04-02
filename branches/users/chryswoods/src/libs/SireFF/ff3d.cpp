@@ -26,3 +26,18 @@
   *
 \*********************************************/
 
+#include "ff3d.h"
+
+using namespace SireFF;
+
+/** Constructor */
+FF3D::FF3D()
+{}
+
+/** Copy constructor */
+FF3D::FF3D(const FF3D&)
+{}
+
+/** Destructor */
+FF3D::~FF3D()
+{}

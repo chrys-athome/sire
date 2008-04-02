@@ -50,6 +50,9 @@ class FFMolecule;
 
 template<class PTNL>
 class FFMolecules;
+
+template<class FFMOL>
+class ChangedMolecule;
 }
 
 }
@@ -69,6 +72,11 @@ template<class PTNL>
 QDataStream& operator<<(QDataStream&, const SireFF::detail::FFMolecules<PTNL>&);
 template<class PTNL>
 QDataStream& operator>>(QDataStream&, SireFF::detail::FFMolecules<PTNL>&);
+
+template<class FFMOL>
+QDataStream& operator<<(QDataStream&, const SireFF::detail::ChangedMolecule<FFMOL>&);
+template<class FFMOL>
+QDataStream& operator>>(QDataStream&, SireFF::detail::ChangedMolecule<FFMOL>&);
 
 namespace SireMol
 {

@@ -713,6 +713,69 @@ void Inter2BFF<Potential>::recalculateEnergy()
 
 }
 
+namespace SireFF
+{
+namespace detail
+{
+
+template<class Potential>
+struct Inter2BRMT
+{
+    static const RegisterMetaType< SireFF::Inter2BFF<Potential> > r_inter2bff;
+};
+
+template<class Potential>
+const RegisterMetaType< SireFF::Inter2BFF<Potential> > 
+Inter2BRMT<Potential>::r_inter2bff;
+
+}
+}
+
+/** Serialise to a binary datastream */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds,
+                        const SireFF::Inter2BFF<Potential> &inter2bff)
+{
+    SireStream::writeHeader(ds, SireFF::detail::Inter2BRMT<Potential>::r_inter2bff, 1);
+    
+    SireStream::SharedDataStream sds(ds);
+    
+    sds << inter2bff.mols << inter2bff.changed_mols << inter2bff.removed_mols
+        << static_cast<const Potential&>(inter2bff)
+        << static_cast<const SireFF::G1FF&>(inter2bff);
+        
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds,
+                        SireFF::Inter2BFF<Potential> &inter2bff)
+{
+    SireStream::VersionID v = SireStream::readHeader(ds, 
+                                 SireFF::detail::Inter2BRMT<Potential>::r_inter2bff);
+                                        
+    if (v == 1)
+    {
+        SireStream::SharedDataStream sds(ds);
+        
+        sds >> inter2bff.mols >> inter2bff.changed_mols >> inter2bff.removed_mols
+            >> static_cast<Potential&>(inter2bff)
+            >> static_cast<SireFF::G1FF&>(inter2bff);
+            
+        inter2bff._pvt_updateName();
+        
+        return ds;
+    }
+    else
+        throw SireStream::version_error(v, "1",
+                     SireFF::detail::Inter2BRMT<Potential>::r_inter2bff, CODELOC );
+
+    return ds;
+}
+
 SIRE_END_HEADER
 
 #endif

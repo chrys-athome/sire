@@ -147,6 +147,14 @@ bool AtomicParameters<PARAM>::operator!=(const AtomicParameters<PARAM> &other) c
     return params != other.params;
 }
 
+/** Return the number of groups */
+template<class PARAM>
+SIRE_OUTOFLINE_TEMPLATE
+int AtomicParameters<PARAM>::nGroups() const
+{
+    return params.count();
+}
+
 /** Return the actual atomic parameters */
 template<class PARAM>
 SIRE_INLINE_TEMPLATE

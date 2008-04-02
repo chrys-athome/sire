@@ -63,6 +63,15 @@ using namespace SireBase;
 using namespace SireStream;
 
 ///////
+/////// Static data for ChargeParameterName, LJParameterName
+/////// and IntraScaleParameterName
+///////
+
+QString ChargeParameterName::chg_param( "charge" );
+QString LJParameterName::lj_param( "LJ" );
+QString IntraScaleParameterName::nbscl_param( "intrascale" );
+
+///////
 /////// Completely instantiate the CLJPotential ancillary classes
 ///////
 

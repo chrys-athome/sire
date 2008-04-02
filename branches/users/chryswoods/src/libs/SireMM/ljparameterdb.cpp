@@ -37,6 +37,8 @@ using namespace SireBase;
 
 static QHash<QString,LJParameterDB::CombiningRules> rule_types;
 
+LJParameterDB::LJParameterDBData LJParameterDB::ljdb;
+
 /** Convert the passed string into the CombiningRules ID */
 LJParameterDB::CombiningRules LJParameterDB::interpret(const QString &rule)
 {

@@ -54,7 +54,7 @@ namespace SireFF
 namespace detail
 {
 
-void throwIntra2B2GFFIncompatibeScaleFactorsError(
+void SIREFF_EXPORT throwIntra2B2GFFIncompatibeScaleFactorsError(
                 const QString &molname, MolNum molnum, quint64 v0, quint64 v1)
 {
     throw SireError::incompatible_error( QObject::tr(

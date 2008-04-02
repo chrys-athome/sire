@@ -44,6 +44,7 @@
 #include "SireMol/mover.hpp"
 
 #include "SireFF/errors.h"
+#include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -52,6 +53,15 @@ using namespace SireFF;
 using namespace SireMol;
 using namespace SireBase;
 using namespace SireStream;
+
+void SIREFF_EXPORT SireFF::detail::throwForceFieldRestoreBug(const char *this_what, 
+                                                             const char *ffield_what)
+{
+    throw SireError::program_bug( QObject::tr(
+        "Something went wrong, as we are trying to restore a forcefield "
+        "of type %1 using a saved state forcefield of type %2...??")
+            .arg(this_what).arg(ffield_what), CODELOC );
+}
 
 static const RegisterMetaType<FF> r_ff( MAGIC_ONLY, FF::typeName() );
 

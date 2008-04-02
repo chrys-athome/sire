@@ -60,6 +60,9 @@ namespace SireMM
 class InterCLJPotential;
 class IntraCLJPotential;
 class CLJPotential;
+
+template<class CLJPot>
+class CLJPotentialInterface;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMM::InterCLJPotential&);
@@ -70,6 +73,11 @@ QDataStream& operator>>(QDataStream&, SireMM::IntraCLJPotential&);
 
 QDataStream& operator<<(QDataStream&, const SireMM::CLJPotential&);
 QDataStream& operator>>(QDataStream&, SireMM::CLJPotential&);
+
+template<class CLJPot>
+QDataStream& operator<<(QDataStream&, const SireMM::CLJPotentialInterface<CLJPot>&);
+template<class CLJPot>
+QDataStream& operator>>(QDataStream&, SireMM::CLJPotentialInterface<CLJPot>&);
 
 namespace SireMol
 {
@@ -726,6 +734,10 @@ private:
 template<class CLJPot>
 class CLJPotentialInterface : protected CLJPot
 {
+
+friend QDataStream& ::operator<<<>(QDataStream&, const CLJPotentialInterface<CLJPot>&);
+friend QDataStream& ::operator>><>(QDataStream&, CLJPotentialInterface<CLJPot>&);
+
 public:
     CLJPotentialInterface() : CLJPot()
     {}
@@ -966,6 +978,22 @@ IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
         throwMissingForceComponent(symbol, components);
 }
 
+}
+
+template<class CLJPot>
+QDataStream& operator<<(QDataStream &ds,
+                        const SireMM::CLJPotentialInterface<CLJPot> &cljpot)
+{
+    ds << static_cast<const CLJPot&>(cljpot);
+    return ds;
+}
+
+template<class CLJPot>
+QDataStream& operator>>(QDataStream &ds,
+                        SireMM::CLJPotentialInterface<CLJPot> &cljpot)
+{
+    ds >> static_cast<CLJPot&>(cljpot);
+    return ds;
 }
 
 Q_DECLARE_METATYPE( SireMM::AtomCharges );

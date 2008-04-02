@@ -708,6 +708,72 @@ void Inter2B2GFF<Potential>::recalculateEnergy()
 
 }
 
+namespace SireFF
+{
+namespace detail
+{
+
+template<class Potential>
+struct Inter2B2GRMT
+{
+    static const RegisterMetaType< SireFF::Inter2B2GFF<Potential> > r_inter2b2gff;
+};
+
+template<class Potential>
+const RegisterMetaType< SireFF::Inter2B2GFF<Potential> > 
+Inter2B2GRMT<Potential>::r_inter2b2gff;
+
+}
+}
+
+/** Serialise to a binary datastream */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds,
+                        const SireFF::Inter2B2GFF<Potential> &inter2b2gff)
+{
+    SireStream::writeHeader(ds, 
+                SireFF::detail::Inter2B2GRMT<Potential>::r_inter2b2gff, 1);
+    
+    SireStream::SharedDataStream sds(ds);
+    
+    sds << inter2b2gff.mols[0] << inter2b2gff.mols[1] 
+        << inter2b2gff.changed_mols[0] << inter2b2gff.changed_mols[1]
+        << static_cast<const Potential&>(inter2b2gff)
+        << static_cast<const SireFF::G2FF&>(inter2b2gff);
+        
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds,
+                        SireFF::Inter2B2GFF<Potential> &inter2b2gff)
+{
+    SireStream::VersionID v = SireStream::readHeader(ds, 
+                               SireFF::detail::Inter2B2GRMT<Potential>::r_inter2b2gff);
+                                        
+    if (v == 1)
+    {
+        SireStream::SharedDataStream sds(ds);
+        
+        sds >> inter2b2gff.mols[0] >> inter2b2gff.mols[1] 
+            >> inter2b2gff.changed_mols[0] >> inter2b2gff.changed_mols[1]
+            >> static_cast<Potential&>(inter2b2gff)
+            >> static_cast<SireFF::G2FF&>(inter2b2gff);
+            
+        inter2b2gff._pvt_updateName();
+        
+        return ds;
+    }
+    else
+        throw SireStream::version_error(v, "1",
+                 SireFF::detail::Inter2B2GRMT<Potential>::r_inter2b2gff, CODELOC );
+
+    return ds;
+}
+
 SIRE_END_HEADER
 
 #endif
