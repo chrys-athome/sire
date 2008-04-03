@@ -37,6 +37,20 @@ SIRE_BEGIN_HEADER
 
 namespace SireFF
 {
+namespace detail
+{
+template<class PARAM>
+class AtomicParameters;
+}
+}
+
+template<class PARAM>
+QDataStream& operator<<(QDataStream&, const SireFF::detail::AtomicParameters<PARAM>&);
+template<class PARAM>
+QDataStream& operator>>(QDataStream&, SireFF::detail::AtomicParameters<PARAM>&);
+
+namespace SireFF
+{
 
 namespace detail
 {
@@ -52,6 +66,9 @@ bool selectedAll(const QSet<quint32> &idxs, quint32 n);
 template<class PARAM>
 class SIREFF_EXPORT AtomicParameters
 {
+
+friend QDataStream& ::operator<<<>(QDataStream&, const AtomicParameters<PARAM>&);
+friend QDataStream& ::operator>><>(QDataStream&, AtomicParameters<PARAM>&);
 
 public:
 
@@ -274,6 +291,26 @@ AtomicParameters<PARAM> AtomicParameters<PARAM>::applyMask(
 } //end of namespace detail
 
 } //end of namespace SireFF
+
+/** Serialise to a binary datastream */
+template<class PARAM>
+QDataStream& operator<<(QDataStream &ds,
+                        const SireFF::detail::AtomicParameters<PARAM> &params)
+{
+    ds << params.params;
+
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class PARAM>
+QDataStream& operator>>(QDataStream &ds,
+                        SireFF::detail::AtomicParameters<PARAM> &params)
+{
+    ds >> params.params;
+
+    return ds;
+}
 
 SIRE_END_HEADER
 

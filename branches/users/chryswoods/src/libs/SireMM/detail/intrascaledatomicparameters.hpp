@@ -40,6 +40,32 @@ SIRE_BEGIN_HEADER
 
 namespace SireMM
 {
+namespace detail
+{
+template<class SCALE_FACTORS>
+class IntraScaledParameters;
+
+template<class ATOMPARAM, class INTRASCALE>
+class IntraScaledAtomicParameters;
+}
+}
+
+template<class SCALE_FACTORS>
+QDataStream& operator<<(QDataStream&, 
+                        const SireMM::detail::IntraScaledParameters<SCALE_FACTORS>&);
+template<class SCALE_FACTORS>
+QDataStream& operator>>(QDataStream&, 
+                        SireMM::detail::IntraScaledParameters<SCALE_FACTORS>&);
+
+template<class ATOMPARAM, class INTRASCALE>
+QDataStream& operator<<(QDataStream&,
+              const SireMM::detail::IntraScaledAtomicParameters<ATOMPARAM,INTRASCALE>&);
+template<class ATOMPARAM, class INTRASCALE>
+QDataStream& operator>>(QDataStream&,
+              SireMM::detail::IntraScaledAtomicParameters<ATOMPARAM,INTRASCALE>&);
+
+namespace SireMM
+{
 
 namespace detail
 {
@@ -75,6 +101,12 @@ private:
 template<class SCALE_FACTORS>
 class IntraScaledParameters
 {
+
+friend QDataStream& ::operator<<<>(QDataStream&, 
+                                   const IntraScaledParameters<SCALE_FACTORS>&);
+friend QDataStream& ::operator>><>(QDataStream&, 
+                                   IntraScaledParameters<SCALE_FACTORS>&);
+
 public:
     typedef SCALE_FACTORS ScaleFactors;
 
@@ -126,6 +158,12 @@ protected:
 template<class ATOMPARAM, class INTRASCALE>
 class IntraScaledAtomicParameters : public ATOMPARAM, public INTRASCALE
 {
+
+friend QDataStream& ::operator<<<>(QDataStream&, 
+                         const IntraScaledAtomicParameters<ATOMPARAM,INTRASCALE>&);
+friend QDataStream& ::operator>><>(QDataStream&, 
+                         IntraScaledAtomicParameters<ATOMPARAM,INTRASCALE>&);
+
 public:
     typedef typename ATOMPARAM::Parameter Parameter;
     typedef typename ATOMPARAM::Parameters Parameters;
@@ -454,6 +492,46 @@ IntraScaledAtomicParameters<ATOMPARAM,INTRASCALE>::applyMask(
 } // end of namespace detail
 
 } // end of namespace SireMM
+
+/** Serialise to a binary datastream */
+template<class INTRASCALE>
+QDataStream& operator<<(QDataStream &ds, 
+                        const SireMM::detail::IntraScaledParameters<INTRASCALE> &params)
+{
+    ds << params.sclfactors;
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class INTRASCALE>
+QDataStream& operator>>(QDataStream &ds, 
+                        SireMM::detail::IntraScaledParameters<INTRASCALE> &params)
+{
+    ds >> params.sclfactors;
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+template<class ATOMPARAM, class INTRASCALE>
+QDataStream& operator<<(QDataStream &ds, 
+      const SireMM::detail::IntraScaledAtomicParameters<ATOMPARAM,INTRASCALE> &params)
+{
+    ds << static_cast<const ATOMPARAM&>(params)
+       << static_cast<const INTRASCALE&>(params);
+       
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class ATOMPARAM, class INTRASCALE>
+QDataStream& operator>>(QDataStream &ds, 
+      SireMM::detail::IntraScaledAtomicParameters<ATOMPARAM,INTRASCALE> &params)
+{
+    ds >> static_cast<ATOMPARAM&>(params)
+       >> static_cast<INTRASCALE&>(params);
+       
+    return ds;
+}
 
 SIRE_END_HEADER
 

@@ -45,6 +45,22 @@ using namespace SireFF::detail;
 using namespace SireVol;
 using namespace SireMol;
 
+/** Serialise to a binary datastream */
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
+                                      const AtomicCoords3D &coords)
+{
+    ds << coords.coords;
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
+                                      AtomicCoords3D &coords)
+{
+    ds >> coords.coords;
+    return ds;
+}
+
 bool SIREFF_EXPORT SireFF::detail::selectedAll(const QSet<quint32> &changed_groups, 
                                                quint32 n)
 {

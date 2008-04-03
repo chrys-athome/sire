@@ -50,6 +50,16 @@ class FFMolecules3D;
 }
 }
 
+template<class PTNL>
+QDataStream& operator<<(QDataStream&, const SireFF::detail::FFMolecule3D<PTNL>&);
+template<class PTNL>
+QDataStream& operator>>(QDataStream&, SireFF::detail::FFMolecule3D<PTNL>&);
+
+template<class PTNL>
+QDataStream& operator<<(QDataStream&, const SireFF::detail::FFMolecules3D<PTNL>&);
+template<class PTNL>
+QDataStream& operator>>(QDataStream&, SireFF::detail::FFMolecules3D<PTNL>&);
+
 namespace SireFF
 {
 
@@ -98,6 +108,9 @@ class FFMolecule3D : public FFMolecule<PTNL>
 {
 
 friend class FFMolecules3D<PTNL>;  //so can call setCoordinates(...)
+
+friend QDataStream& ::operator<<<>(QDataStream&, const FFMolecule3D<PTNL>&);
+friend QDataStream& ::operator>><>(QDataStream&, FFMolecule3D<PTNL>&);
 
 public:
     typedef typename FFMolecule<PTNL>::Parameters Parameters;
@@ -155,6 +168,10 @@ private:
 template<class PTNL>
 class FFMolecules3D : public FFMolecules<PTNL>
 {
+
+friend QDataStream& ::operator<<<>(QDataStream&, const FFMolecules3D<PTNL>&);
+friend QDataStream& ::operator>><>(QDataStream&, FFMolecules3D<PTNL>&);
+
 public:
     typedef typename FFMolecules<PTNL>::Molecule Molecule;
     typedef typename FFMolecules<PTNL>::ChangedMolecule ChangedMolecule;
@@ -192,6 +209,7 @@ public:
                            bool record_changes = true);
     
 private:
+    void updateAABoxes();
     void updateAABox(MolNum molnum);
 
     /** The bounding boxes that completely encompasses all of  
@@ -526,6 +544,32 @@ void FFMolecules3D<PTNL>::updateAABox(MolNum molnum)
     }
 }
 
+/** Update all of the AABoxes in this group */
+template<class PTNL>
+SIRE_OUTOFLINE_TEMPLATE
+void FFMolecules3D<PTNL>::updateAABoxes()
+{
+    int nmols = this->mols_by_idx.count();
+    
+    if (nmols == 0)
+    {
+        aaboxes_by_idx.clear();
+        return;
+    }
+    
+    if (nmols != aaboxes_by_idx.count())
+        aaboxes_by_idx = QVector<AABox>(nmols);
+        
+    const FFMolecule3D<PTNL> *mols_by_idx_array = this->mols_by_idx.constData();
+    AABox *aaboxes_by_idx_array = aaboxes_by_idx.data();
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        aaboxes_by_idx_array[i] = mols_by_idx_array[i].parameters()
+                                                      .atomicCoordinates().aaBox();
+    }
+}
+
 /** Change the molecule 'new_molecule' (which is in the forcefield 'forcefield').
     This does nothing if this molecule is not in this group. If 
     'record_changes' is true then this returns a ChangedMolecule that
@@ -655,6 +699,48 @@ FFMolecules3D<PTNL>::remove(const PartialMolecule &molecule,
 } // end of namespace SireFF::detail
 
 } // end of namespace SireFF
+
+/** Serialise to a binary datastream */
+template<class PTNL>
+QDataStream& operator<<(QDataStream &ds, 
+                        const SireFF::detail::FFMolecule3D<PTNL> &ffmol)
+{
+    ds << static_cast<const SireFF::detail::FFMolecule<PTNL>&>(ffmol);
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class PTNL>
+QDataStream& operator>>(QDataStream &ds,
+                        SireFF::detail::FFMolecule3D<PTNL> &ffmol)
+{
+    ds >> static_cast<SireFF::detail::FFMolecule<PTNL>&>(ffmol);
+    
+    ffmol.aabox = ffmol.parameters().atomicCoordinates().aaBox();
+    
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+template<class PTNL>
+QDataStream& operator<<(QDataStream &ds, 
+                        const SireFF::detail::FFMolecules3D<PTNL> &ffmols)
+{
+    ds << static_cast<const SireFF::detail::FFMolecules<PTNL>&>(ffmols);
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class PTNL>
+QDataStream& operator>>(QDataStream &ds,
+                        SireFF::detail::FFMolecules3D<PTNL> &ffmols)
+{
+    ds >> static_cast<SireFF::detail::FFMolecules<PTNL>&>(ffmols);
+    
+    ffmols.updateAABoxes();
+    
+    return ds;
+}
 
 SIRE_END_HEADER
 

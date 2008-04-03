@@ -693,6 +693,50 @@ bool AtomPairs<T>::isCompatibleWith(const MoleculeInfoData &info) const
     return *molinfo == info;
 }
 
+static const SireStream::RegisterMetaType...
+
+}
+
+/** Serialise to a binary datastream */
+template<class T>
+QDataStream& operator<<(QDataStream &ds,
+                        const SireMM::CGAtomPairs<T> &cgpairs)
+{
+    ds << cgpairs.data;
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class T>
+QDataStream& operator>>(QDataStream &ds,
+                        SireMM::CGAtomPairs<T> &cgpairs)
+{
+    ds >> cgpairs.data;
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+template<class T>
+QDataStream& operator<<(QDataStream &ds,
+                        const SireMM::AtomPairs<T> &atompairs)
+{
+    SireStream::SharedDataStream sds(ds);
+
+    sds << atompairs.molinfo >> atompairs.cgpairs;
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class T>
+QDataStream& operator>>(QDataStream &ds,
+                        SireMM::AtomPairs<T> &atompairs)
+{
+    SireStream::SharedDataStream sds(ds);
+
+    sds >> atompairs.molinfo >> atompairs.cgpairs;
+
+    return ds;
 }
 
 SIRE_END_HEADER

@@ -35,6 +35,8 @@
 
 #include "SireBase/propertymap.h"
 
+#include "SireStream/shareddatastream.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireFF
@@ -293,6 +295,10 @@ private:
 template<class PTNL>
 class FFMolecules : public FFMoleculesBase
 {
+
+friend QDataStream& ::operator<<<>(QDataStream&, const FFMolecules<PTNL>&);
+friend QDataStream& ::operator>><>(QDataStream&, FFMolecules<PTNL>&);
+
 public:
     typedef typename PTNL::Molecule Molecule;
     typedef typename PTNL::ChangedMolecule ChangedMolecule;
@@ -355,6 +361,10 @@ protected:
 template<class FFMOL>
 class ChangedMolecule
 {
+
+friend QDataStream& ::operator<<<>(QDataStream&, const ChangedMolecule<FFMOL>&);
+friend QDataStream& ::operator>><>(QDataStream&, ChangedMolecule<FFMOL>&);
+
 public:
     typedef FFMOL Molecule;
 
@@ -1291,6 +1301,84 @@ ChangedMolecule<FFMOL>& ChangedMolecule<FFMOL>::change(
 
 }
 
+}
+
+/** Serialise to a binary datastream */
+template<class PTNL>
+QDataStream& operator<<(QDataStream &ds, 
+                        const SireFF::detail::FFMolecule<PTNL> &ffmol)
+{
+    SireStream::SharedDataStream sds(ds);
+
+    sds << static_cast<const SireFF::detail::FFMoleculeBase&>(ffmol)
+        << ffmol.params;
+        
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class PTNL>
+QDataStream& operator>>(QDataStream &ds,
+                        SireFF::detail::FFMolecule<PTNL> &ffmol)
+{
+    SireStream::SharedDataStream sds(ds);
+
+    sds >> static_cast<SireFF::detail::FFMoleculeBase&>(ffmol)
+        >> ffmol.params;
+    
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+template<class PTNL>
+QDataStream& operator<<(QDataStream &ds, 
+                        const SireFF::detail::FFMolecules<PTNL> &ffmols)
+{
+    SireStream::SharedDataStream sds(ds);
+
+    sds << static_cast<const SireFF::detail::FFMoleculesBase&>(ffmols)
+        << ffmols.mols_by_idx;
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class PTNL>
+QDataStream& operator>>(QDataStream &ds,
+                        SireFF::detail::FFMolecules<PTNL> &ffmols)
+{
+    SireStream::SharedDataStream sds(ds);
+
+    ds >> static_cast<SireFF::detail::FFMoleculesBase&>(ffmols)
+       >> ffmols.mols_by_idx;
+    
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+template<class FFMOL>
+QDataStream& operator<<(QDataStream &ds, 
+                        const SireFF::detail::ChangedMolecule<FFMOL> &changedmol)
+{
+    SireStream::SharedDataStream sds(ds);
+
+    sds << changedmol.old_molecule << changedmol.new_molecule
+        << changedmol.old_parts << changedmol.new_parts;
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class FFMOL>
+QDataStream& operator>>(QDataStream &ds,
+                        SireFF::detail::ChangedMolecule<FFMOL> &changedmol)
+{
+    SireStream::SharedDataStream sds(ds);
+
+    ds >> changedmol.old_molecule >> changedmol.new_molecule
+       >> changedmol.old_parts >> changedmol.new_parts;
+    
+    return ds;
 }
 
 SIRE_END_HEADER

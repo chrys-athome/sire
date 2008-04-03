@@ -36,6 +36,20 @@ SIRE_BEGIN_HEADER
 
 namespace SireFF
 {
+namespace detail
+{
+template<class PARAM>
+class AtomicParameters3D;
+}
+}
+
+template<class PARAM>
+QDataStream& operator<<(QDataStream&, const SireFF::detail::AtomicParameters3D<PARAM>&);
+template<class PARAM>
+QDataStream& operator>>(QDataStream&, SireFF::detail::AtomicParameters3D<PARAM>&);
+
+namespace SireFF
+{
 
 namespace detail
 {
@@ -48,6 +62,10 @@ template<class PARAM>
 class AtomicParameters3D : public AtomicParameters<PARAM>,
                            public AtomicCoords3D
 {
+
+friend QDataStream& ::operator<<<>(QDataStream&, const AtomicParameters3D<PARAM>&);
+friend QDataStream& ::operator>><>(QDataStream&, AtomicParameters3D<PARAM>&);
+
 public:
     typedef typename AtomicParameters<PARAM>::Parameter Parameter;
     typedef typename AtomicParameters<PARAM>::Parameters Parameters;
@@ -229,6 +247,28 @@ AtomicParameters3D<PARAM> AtomicParameters3D<PARAM>::applyMask(
 } // end of namespace detail
 
 } // end of namespace SireFF
+
+/** Serialise to a binary datastream */
+template<class PARAM>
+QDataStream& operator<<(QDataStream &ds,
+                        const SireFF::detail::AtomicParameters3D<PARAM> &params)
+{
+    ds << static_cast<const SireFF::detail::AtomicParameters<PARAM>&>(params)
+       << static_cast<const SireFF::detail::AtomicCoords3D&>(params);
+
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class PARAM>
+QDataStream& operator>>(QDataStream &ds,
+                        SireFF::detail::AtomicParameters3D<PARAM> &params)
+{
+    ds >> static_cast<SireFF::detail::AtomicParameters<PARAM>&>(params)
+       >> static_cast<SireFF::detail::AtomicCoords3D&>(params);
+
+    return ds;
+}
 
 SIRE_END_HEADER
 

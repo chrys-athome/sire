@@ -33,6 +33,11 @@
 
 SIRE_BEGIN_HEADER
 
+namespace SireFF { namespace detail { class AtomicCoords3D; } }
+
+QDataStream& operator<<(QDataStream&, const SireFF::detail::AtomicCoords3D&);
+QDataStream& operator>>(QDataStream&, SireFF::detail::AtomicCoords3D&);
+
 namespace SireVol
 {
 class CoordGroup;
@@ -72,6 +77,10 @@ bool selectedAll(const QSet<quint32> &idxs, quint32 n);
 */
 class SIREFF_EXPORT AtomicCoords3D
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const AtomicCoords3D&);
+friend QDataStream& ::operator>>(QDataStream&, AtomicCoords3D&);
+
 public:
     AtomicCoords3D();
     
