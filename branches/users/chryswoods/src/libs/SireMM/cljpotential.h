@@ -985,6 +985,20 @@ IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
 
 }
 
+inline QDataStream& operator<<(QDataStream &ds, 
+                               const SireMM::detail::CLJParameter &cljparam)
+{
+    ds << cljparam.reduced_charge << cljparam.ljid;
+    return ds;
+}
+
+inline QDataStream& operator>>(QDataStream &ds, 
+                               SireMM::detail::CLJParameter &cljparam)
+{
+    ds >> cljparam.reduced_charge >> cljparam.ljid;
+    return ds;
+}
+
 template<class CLJPot>
 QDataStream& operator<<(QDataStream &ds,
                         const SireMM::CLJPotentialInterface<CLJPot> &cljpot)

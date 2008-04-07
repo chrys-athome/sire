@@ -52,6 +52,10 @@ namespace SireMM
     LJ parameters for the intramolecular energy. */
 class SIREMM_EXPORT CLJScaleFactor
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const CLJScaleFactor&);
+friend QDataStream& ::operator>>(QDataStream&, CLJScaleFactor&);
+
 public:
     CLJScaleFactor(double scl=0)
           : cscl(scl), ljscl(scl)

@@ -44,6 +44,26 @@ static const RegisterMetaType<CLJNBPairs> r_cljnbpairs;
 template class AtomPairs<CLJScaleFactor>;
 template class CGAtomPairs<CLJScaleFactor>;
 
+////////
+//////// Implementation of CLJScaleFactor
+////////
+
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJScaleFactor &sclfac)
+{
+    ds << sclfac.cscl << sclfac.ljscl;
+    return ds;
+}
+
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJScaleFactor &sclfac)
+{
+    ds >> sclfac.cscl >> sclfac.ljscl;
+    return ds;
+}
+
+////////
+//////// Implementation of CLJNBPairs
+////////
+
 /** Serialise to a binary datastream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJNBPairs &cljnbpairs)
 {

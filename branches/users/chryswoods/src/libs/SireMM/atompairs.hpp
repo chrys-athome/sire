@@ -36,6 +36,9 @@
 #include "SireMol/moleculeinfodata.h"
 #include "SireMol/molviewproperty.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 #include "SireError/errors.h"
 
 SIRE_BEGIN_HEADER
@@ -693,8 +696,6 @@ bool AtomPairs<T>::isCompatibleWith(const MoleculeInfoData &info) const
     return *molinfo == info;
 }
 
-static const SireStream::RegisterMetaType...
-
 }
 
 /** Serialise to a binary datastream */
@@ -722,7 +723,7 @@ QDataStream& operator<<(QDataStream &ds,
 {
     SireStream::SharedDataStream sds(ds);
 
-    sds << atompairs.molinfo >> atompairs.cgpairs;
+    sds << atompairs.molinfo << atompairs.cgpairs;
     
     return ds;
 }

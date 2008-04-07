@@ -51,6 +51,9 @@ QDataStream& operator<<(QDataStream&, const SireBase::SparseMatrix<T>&);
 template<class T>
 QDataStream& operator>>(QDataStream&, SireBase::SparseMatrix<T>&);
 
+QDataStream& operator<<(QDataStream&, const SireBase::detail::Index&);
+QDataStream& operator>>(QDataStream&, SireBase::detail::Index&);
+
 namespace SireBase
 {
 
@@ -126,6 +129,10 @@ namespace SireBase
 template<class T>
 class SIREBASE_EXPORT SparseMatrix
 {
+
+friend QDataStream& ::operator<<<>(QDataStream&, const SparseMatrix<T>&);
+friend QDataStream& ::operator>><>(QDataStream&, SparseMatrix<T>&);
+
 public:
     SparseMatrix(const T &default_value = T(), 
                  bool is_symmetric=false);
@@ -155,9 +162,9 @@ private:
     /** Possible state of the sparse matrix */
     enum MATRIX_STATE
     {
-        NORMAL,     //normal matrix
-        TRANSPOSE,  //the transpose of the matrix is stored
-        SYMMETRIC   //this is a symmetrix matrix
+        NORMAL     = 1,     //normal matrix
+        TRANSPOSE  = 2,     //the transpose of the matrix is stored
+        SYMMETRIC  = 4      //this is a symmetrix matrix
     };
     
     /** The state of this matrix */
@@ -335,6 +342,59 @@ SparseMatrix<T> SparseMatrix<T>::transpose() const
 }
 
 }
+
+inline QDataStream& operator<<(QDataStream &ds, const SireBase::detail::Index &idx)
+{
+    ds << idx.i << idx.j;
+    return ds;
+}
+
+inline QDataStream& operator>>(QDataStream &ds, SireBase::detail::Index &idx)
+{
+    ds >> idx.i >> idx.j;
+    return ds;
+}
+
+/** Serialise to a binary datastream */
+template<class T>
+QDataStream& operator<<(QDataStream &ds, const SireBase::SparseMatrix<T> &matrix)
+{
+    ds << qint32(matrix.current_state)
+       << matrix.def
+       << matrix.data;
+       
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class T>
+QDataStream& operator>>(QDataStream &ds, SireBase::SparseMatrix<T> &matrix)
+{
+    qint32 typ;
+    
+    ds >> typ >> matrix.def >> matrix.data;
+    
+    switch (typ)
+    {
+        case SireBase::SparseMatrix<T>::NORMAL:
+            matrix.current_state = SireBase::SparseMatrix<T>::NORMAL;
+            break;
+        
+        case SireBase::SparseMatrix<T>::TRANSPOSE:
+            matrix.current_state = SireBase::SparseMatrix<T>::TRANSPOSE;
+            break;
+        
+        case SireBase::SparseMatrix<T>::SYMMETRIC:
+            matrix.current_state = SireBase::SparseMatrix<T>::SYMMETRIC;
+            break;
+        
+        default:
+            matrix.current_state = SireBase::SparseMatrix<T>::NORMAL;
+    }
+    
+    return ds;
+}
+
 
 SIRE_END_HEADER
 
