@@ -20,6 +20,9 @@ set ( SIREMM_HEADERS
       intercljff.h
       intercoulombff.h
       interljff.h
+      internalcomponent.h
+      internalff.h
+      internalparameters.h
       intracljff.h
       ljpair.h
       ljparameter.h
@@ -39,6 +42,9 @@ set ( SIREMM_SOURCES
       intercljff.cpp
       intercoulombff.cpp
       interljff.cpp
+      internalcomponent.cpp
+      internalff.cpp
+      internalparameters.cpp
       intracljff.cpp
       ljpair.cpp
       ljparameter.cpp

@@ -78,13 +78,28 @@ public:
         return new Intra2B3DFF<Potential>(*this);
     }
     
+    const Components& components() const;
+
+    bool setProperty(const QString &name, const Property &property);
+    const Property& property(const QString &name) const;
+    bool containsProperty(const QString &name) const;
+    const Properties& properties() const;
+
+    void mustNowRecalculateFromScratch();    
+    
     void force(ForceTable &forcetable, double scale_force=1);
     
     void force(ForceTable &forcetable, const Symbol &symbol,
                double scale_force=1);
 
 protected:
+    void recalculateEnergy();
+
+    const FFComponent& _pvt_components() const;
+
     void _pvt_restore(const ForceField &ffield);
+
+
 };
 
 /** Constructor (without giving the forcefield a name!) */

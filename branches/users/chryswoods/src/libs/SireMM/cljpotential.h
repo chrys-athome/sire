@@ -177,7 +177,8 @@ class SIREMM_EXPORT CLJParameterNames3D : public CLJParameterNames,
                                           public SireFF::detail::Coords3DParameterName
 {
 public:
-    CLJParameterNames3D()
+    CLJParameterNames3D() : CLJParameterNames(),
+                            SireFF::detail::Coords3DParameterName()
     {}
     
     ~CLJParameterNames3D()
