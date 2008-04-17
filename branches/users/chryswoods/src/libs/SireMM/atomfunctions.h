@@ -97,7 +97,7 @@ protected:
     
 private:
     /** The function acting between the atoms */
-    SireCAS::Expression ptnl;
+    SireCAS::Expression func;
 };
 
 /** This is the base class of all of the AtomFunctions molecular
@@ -155,7 +155,7 @@ private:
 /** Return the function that acts between the atoms */
 inline const Expression& AtomFunction::function() const
 {
-    return ptnl;
+    return func;
 }
 
 ////////

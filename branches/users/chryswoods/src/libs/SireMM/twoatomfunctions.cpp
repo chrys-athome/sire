@@ -141,10 +141,7 @@ uint qHash(const IDPair &idpair)
 
 IDPair::IDPair(quint32 atm0, quint32 atm1) 
        : atom0(atm0), atom1(atm1)
-{
-    if (atom0 > atom1)
-        qSwap(atom0,atom1);
-}
+{}
 
 IDPair::IDPair(const IDPair &other)
        : atom0(other.atom0), atom1(other.atom1)
@@ -289,13 +286,21 @@ void TwoAtomFunctions::set(const AtomID &atom0, const AtomID &atom1,
 /** Set the potential energy function used for the bond identified by 'bondid'
     to be equal to 'expression' - this replaces any existing expression
     
+    Note that this replaces both 1-2 and 2-1
+    
     \throw SireMol::missing_atom
     \throw SireMol::duplicate_atom
     \throw SireError::invalid_index
 */
 void TwoAtomFunctions::set(const BondID &bondid, const Expression &expression)
 {
-    this->set( bondid.atom0(), bondid.atom1(), expression );
+    AtomIdx atom0 = info().atomIdx(bondid.atom0());
+    AtomIdx atom1 = info().atomIdx(bondid.atom1());
+    
+    this->clear(atom0, atom1);
+    this->clear(atom1, atom0);
+
+    this->set( atom0, atom1, expression );
 }
 
 /** Check if any of the symbols in 'symbols' need to be removed... */
@@ -386,12 +391,15 @@ void TwoAtomFunctions::clear(const AtomID &atom0, const AtomID &atom1)
 
 /** Clear the potential that acts over the bond identified by 'bondid'
 
+    Note that this removes both 1-2 and 2-1
+
     \throw SireMol::missing_atom
     \throw SireError::invalid_index
 */
 void TwoAtomFunctions::clear(const BondID &bondid)
 {
     this->clear( bondid.atom0(), bondid.atom1() );
+    this->clear( bondid.atom1(), bondid.atom0() );
 }
 
 /** Completely clear all of the functions from this set */
@@ -456,13 +464,27 @@ Expression TwoAtomFunctions::potential(const AtomID &atom0,
     This returns an empty expression if there is no expression on
     this bond
     
+    This searches first for the function 1-2, and if that is not
+    found then it returns the function for 2-1
+    
     \throw SireMol::missing_atom
     \throw SireMol::duplicate_atom
     \throw SireError::invalid_index
 */
 Expression TwoAtomFunctions::potential(const BondID &bondid) const
 {
-    return this->potential( bondid.atom0(), bondid.atom1() );
+    AtomIdx atom0 = info().atomIdx(bondid.atom0());
+    AtomIdx atom1 = info().atomIdx(bondid.atom1());
+
+    quint32 atm0 = atom0.map( info().nAtoms() );
+    quint32 atm1 = atom1.map( info().nAtoms() );
+
+    if (potentials_by_atoms.contains( IDPair(atm0,atm1) ))
+    {
+        return potentials_by_atoms.value( IDPair(atm0,atm1) );
+    }
+    else
+        return potentials_by_atoms.value( IDPair(atm1,atm0) );
 }
 
 /** Return the force (derivative of the potential with respect to 'symbol')
@@ -491,6 +513,9 @@ Expression TwoAtomFunctions::force(const AtomID &atom0, const AtomID &atom1,
 
 /** Return the force (derivative of the potential with respect to 'symbol')
     on the bond identified by 'bondid'
+    
+    This searches first for the function 1-2, and if that is not
+    found then it returns the function for 2-1
     
     \throw SireMol::missing_atom
     \throw SireMol::duplicate_atom

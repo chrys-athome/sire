@@ -26,3 +26,214 @@
   *
 \*********************************************/
 
+#ifndef SIREMM_FOURATOMFUNCTIONS_H
+#define SIREMM_FOURATOMFUNCTIONS_H
+
+#include "atomfunctions.h"
+
+#include "SireMol/cgatomidx.h"
+#include "SireMol/atomidx.h"
+#include "SireMol/atomid.h"
+
+#include "SireMol/dihedralid.h"
+#include "SireMol/improperid.h"
+
+namespace SireMM
+{
+class FourAtomFunction;
+class FourAtomFunctions;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMM::FourAtomFunction&);
+QDataStream& operator>>(QDataStream&, SireMM::FourAtomFunction&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::FourAtomFunctions&);
+QDataStream& operator>>(QDataStream&, SireMM::FourAtomFunctions&);
+
+namespace SireMM
+{
+
+using SireMol::CGAtomIdx;
+using SireMol::AtomIdx;
+using SireMol::AtomID;
+using SireMol::DihedralID;
+using SireMol::ImproperID;
+
+/** This class holds a function that acts using the 
+    coordinate information of just four atoms */
+class SIREMM_EXPORT FourAtomFunction : public AtomFunction
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const FourAtomFunction&);
+friend QDataStream& ::operator>>(QDataStream&, FourAtomFunction&);
+
+public:
+    FourAtomFunction();
+    FourAtomFunction(const CGAtomIdx &atom0, const CGAtomIdx &atom1,
+                     const CGAtomIdx &atom2, const CGAtomIdx &atom3,
+                     const SireCAS::Expression &function);
+                  
+    FourAtomFunction(const FourAtomFunction &other);
+    
+    ~FourAtomFunction();
+
+    FourAtomFunction& operator=(const FourAtomFunction &other);
+    
+    bool operator==(const FourAtomFunction &other) const;
+    bool operator!=(const FourAtomFunction &other) const;
+    
+    const CGAtomIdx& atom0() const;
+    const CGAtomIdx& atom1() const;
+    const CGAtomIdx& atom2() const;
+    const CGAtomIdx& atom3() const;
+
+private:
+    /** The indicies of the four atoms */
+    CGAtomIdx atm0, atm1, atm2, atm3;
+};
+
+namespace detail
+{
+
+class IDQuad
+{
+public:
+    IDQuad(quint32 atom0=0, quint32 atom1=0, 
+           quint32 atom2=0, quint32 atom3=0);
+           
+    IDQuad(const IDQuad &other);
+    
+    ~IDQuad();
+    
+    IDQuad& operator=(const IDQuad &other);
+    
+    bool operator==(const IDQuad &other) const;
+    bool operator!=(const IDQuad &other) const;
+    
+    quint32 atom0;
+    quint32 atom1;
+    quint32 atom2;
+    quint32 atom3;
+};
+
+}
+
+/** This class holds the set of FourAtomFunction potentials that
+    act between the atoms in a molecule
+    
+    @author Christopher Woods
+*/
+class SIREMM_EXPORT FourAtomFunctions
+        : public SireBase::ConcreteProperty<FourAtomFunctions,AtomFunctions>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const FourAtomFunctions&);
+friend QDataStream& ::operator>>(QDataStream&, FourAtomFunctions&);
+
+public:
+    FourAtomFunctions();
+    
+    FourAtomFunctions(const MoleculeData &moldata);
+    
+    FourAtomFunctions(const FourAtomFunctions &other);
+    
+    ~FourAtomFunctions();
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<FourAtomFunctions>() );
+    }
+    
+    FourAtomFunctions& operator=(const FourAtomFunctions &other);
+    
+    bool operator==(const FourAtomFunctions &other) const;
+    bool operator!=(const FourAtomFunctions &other) const;
+
+    void set(AtomIdx atom0, AtomIdx atom1, 
+             AtomIdx atom2, AtomIdx atom3,
+             const Expression &expression);
+             
+    void set(const AtomID &atom0, const AtomID &atom1,
+             const AtomID &atom2, const AtomID &atom3,
+             const Expression &expression);
+             
+    void set(const DihedralID &dihedralid, const Expression &expression);
+    void set(const ImproperID &improperid, const Expression &expression);
+
+    void clear(AtomIdx atom);
+    void clear(const AtomID &atom);
+
+    void clear(AtomIdx atom0, AtomIdx atom1, 
+               AtomIdx atom2, AtomIdx atom3);
+    void clear(const AtomID &atom0, const AtomID &atom1,
+               const AtomID &atom2, const AtomID &atom3);
+
+    void clear(const DihedralID &dihedralid);
+    void clear(const ImproperID &improperid);
+    
+    void clear();
+
+    void substitute(const Identities &identities);
+
+    Expression potential(AtomIdx atom0, AtomIdx atom1,
+                         AtomIdx atom2, AtomIdx atom3) const;
+    Expression potential(const AtomID &atom0, const AtomID &atom1,
+                         const AtomID &atom2, const AtomID &atom3) const;
+
+    Expression potential(const DihedralID &dihedralid) const;
+    Expression potential(const ImproperID &improperid) const;
+    
+    Expression force(AtomIdx atom0, AtomIdx atom1, 
+                     AtomIdx atom2, AtomIdx atom3,
+                     const Symbol &symbol) const;
+    Expression force(const AtomID &atom0, const AtomID &atom1,
+                     const AtomID &atom2, const AtomID &atom3,
+                     const Symbol &symbol) const;
+
+    Expression force(const DihedralID &dihedralid, const Symbol &symbol) const;
+    Expression force(const ImproperID &improperid, const Symbol &symbol) const;
+
+    QVector<FourAtomFunction> potentials() const;
+    QVector<FourAtomFunction> forces(const Symbol &symbol) const;
+    
+private:
+    void removeSymbols(QSet<Symbol> symbols);
+
+    /** All of the potential functions, identified by the atom quad
+        that contains that function */
+    QHash<detail::IDQuad,Expression> potentials_by_atoms;
+};
+
+//////
+////// Inline functions of FourAtomFunction
+//////
+
+/** Return the first atom of the quad */
+inline const CGAtomIdx& FourAtomFunction::atom0() const
+{
+    return atm0;
+}
+
+/** Return the second atom of the quad */
+inline const CGAtomIdx& FourAtomFunction::atom1() const
+{
+    return atm1;
+}
+
+/** Return the third atom of the quad */
+inline const CGAtomIdx& FourAtomFunction::atom2() const
+{
+    return atm2;
+}
+
+/** Return the fourth atom of the quad */
+inline const CGAtomIdx& FourAtomFunction::atom3() const
+{
+    return atm3;
+}
+
+}
+
+Q_DECLARE_METATYPE( SireMM::FourAtomFunctions );
+
+#endif
