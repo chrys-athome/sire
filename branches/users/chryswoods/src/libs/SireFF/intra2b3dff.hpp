@@ -51,6 +51,8 @@ class Intra2B3DFF : public SireBase::ConcreteProperty< Intra2B3DFF<Potential>,
                     public FF3D
 {
 public:
+    typedef typename Potential::Components Components;
+
     Intra2B3DFF();
     Intra2B3DFF(const QString &name);
     

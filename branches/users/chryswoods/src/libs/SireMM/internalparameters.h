@@ -29,6 +29,10 @@
 #ifndef SIREMM_INTERNALPARAMETERS_H
 #define SIREMM_INTERNALPARAMETERS_H
 
+#include "twoatomfunctions.h"
+#include "threeatomfunctions.h"
+#include "fouratomfunctions.h"
+
 namespace SireMM
 {
 
@@ -45,97 +49,6 @@ QDataStream& operator>>(QDataStream&, SireMM::GroupInternalParameters&);
 
 namespace SireMM
 {
-
-/** This class holds a potential function that acts using the 
-    coordinate information of just three atoms */
-class ThreeAtomFunction : public AtomFunction
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const ThreeAtomFunction&);
-friend QDataStream& ::operator>>(QDataStream&, ThreeAtomFunction&);
-
-public:
-    ThreeAtomFunction();
-    ThreeAtomFunction(const CGAtomIdx &atom0, const CGAtomIdx &atom1,
-                      const CGAtomIdx &atom2,
-                      const SireCAS::Expression &potential);
-                  
-    ThreeAtomFunction(const ThreeAtomFunction &other);
-    
-    ~ThreeAtomFunction();
-
-    ThreeAtomFunction& operator=(const ThreeAtomFunction &other);
-    
-    bool operator==(const ThreeAtomFunction &other) const;
-    bool operator!=(const ThreeAtomFunction &other) const;
-    
-    const CGAtomIdx& atom0() const
-    {
-        return atm0;
-    }
-    
-    const CGAtomIdx& atom1() const
-    {
-        return atm1;
-    }
-
-    const CGAtomIdx &atom2() const
-    {
-        return atm2;
-    }
-    
-private:
-    /** The indicies of the three atoms */
-    CGAtomIdx atm0, atm1, atm2;
-};
-
-/** This class holds a potential function that acts using the 
-    coordinate information of just four atoms */
-class FourAtomFunction : public AtomFunction
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const FourAtomFunction&);
-friend QDataStream& ::operator>>(QDataStream&, FourAtomFunction&);
-
-public:
-    FourAtomFunction();
-    FourAtomFunction(const CGAtomIdx &atom0, const CGAtomIdx &atom1,
-                     const CGAtomIdx &atom2, const CGAtomIdx &atom3,
-                     const SireCAS::Expression &potential);
-                  
-    FourAtomFunction(const FourAtomFunction &other);
-    
-    ~FourAtomFunction();
-
-    FourAtomFunction& operator=(const FourAtomFunction &other);
-    
-    bool operator==(const FourAtomFunction &other) const;
-    bool operator!=(const FourAtomFunction &other) const;
-    
-    const CGAtomIdx& atom0() const
-    {
-        return atm0;
-    }
-    
-    const CGAtomIdx& atom1() const
-    {
-        return atm1;
-    }
-
-    const CGAtomIdx& atom2() const
-    {
-        return atm2;
-    }
-    
-    const CGAtomIdx& atom3() const
-    {
-        return atm3;
-    }
-    
-private:
-    /** The indicies of the four atoms */
-    CGAtomIdx atm0, atm1, atm2, atm3;
-};
 
 /** This class holds all of the internal parameters for one group
     combination within a molecule
@@ -164,8 +77,8 @@ private:
                                         theta123, theta324, theta421 
     
     Stretch-Bend    : Input Dihedral - function uses torsion (1-2-3-4), phi,
-      -Torsion                         distances (1-2), (2-3), (3-4),
-                                       r12, r23, r34, and angles
+      -Torsion                         distances (1-2), (2-3), (3-4), (1-4)
+                                       r12, r23, r34, r14 and angles
                                        (1-2-3) and (2-3-4), theta123, theta234
     
     @author Christopher Woods
@@ -196,21 +109,91 @@ public:
     bool refersTo(const QSet<CGIdx> &cgidxs) const;
 
     const QVector<TwoAtomFunction>& bondParameters() const;
+    const QVector<TwoAtomFunction>& bondForces() const;
     
     const QVector<ThreeAtomFunction>& angleParameters() const;
+    const QVector<ThreeAtomFunction>& angleForces() const;
+    
     const QVector<FourAtomFunction>& dihedralParameters() const;
+    const QVector<FourAtomFunction>& dihedralForces() const;
     
     const QVector<FourAtomFunction>& improperParameters() const;
+    const QVector<FourAtomFunction>& improper_Theta_Forces() const;
+    const QVector<FourAtomFunction>& improper_Phi_Forces() const;
+    
     const QVector<TwoAtomFunction>& ureyBradleyParameters() const;
+    const QVector<TwoAtomFunction>& ureyBradleyForces() const;
     
     const QVector<ThreeAtomFunction>& stretchStretchParameters() const;
+    const QVector<ThreeAtomFunction>& stretchStretch_R01_Forces() const;
+    const QVector<ThreeAtomFunction>& stretchStretch_R21_Forces() const;
+    
     const QVector<ThreeAtomFunction>& stretchBendParameters() const;
+    const QVector<ThreeAtomFunction>& stretchBend_Theta_Forces() const;
+    const QVector<ThreeAtomFunction>& stretchBend_R01_Forces() const;
+    const QVector<ThreeAtomFunction>& stretchBend_R21_Forces() const;
+    
     const QVector<FourAtomFunction>& bendBendParameters() const;
+    const QVector<FourAtomFunction>& bendBend_Theta123_Forces() const;
+    const QVector<FourAtomFunction>& bendBend_Theta324_Forces() const;
+    const QVector<FourAtomFunction>& bendBend_Theta421_Forces() const;
+    
     const QVector<FourAtomFunction>& stretchBendTorsionParameters() const;
+    const QVector<FourAtomFunction>& stretchBendTorsion_Phi_Forces() const;
+    const QVector<FourAtomFunction>& stretchBendTorsion_R01_Forces() const;
+    const QVector<FourAtomFunction>& stretchBendTorsion_R12_Forces() const;
+    const QVector<FourAtomFunction>& stretchBendTorsion_R32_Forces() const;
+    const QVector<FourAtomFunction>& stretchBendTorsion_R03_Forces() const;
+    const QVector<FourAtomFunction>& stretchBendTorsion_Theta012_Forces() const;
+    const QVector<FourAtomFunction>& stretchBendTorsion_Theta321_Forces() const;
+
+    void setBondParameters(const QVector<TwoAtomFunction> &potential,
+                           const QVector<TwoAtomFunction> &forces);
+                           
+    void setAngleParameters(const QVector<ThreeAtomFunction> &potential,
+                            const QVector<ThreeAtomFunction> &forces);
+    
+    void setDihedralParameters(const QVector<FourAtomFunction> &potential,
+                               const QVector<FourAtomFunction> &forces);
+    
+    void setImproperParameters(const QVector<FourAtomFunction> &potential,
+                               const QVector<FourAtomFunction> &theta_forces,
+                               const QVector<FourAtomFunction> &phi_forces);
+                               
+    void setUreyBradleyParameters(const QVector<TwoAtomFunction> &potential,
+                                  const QVector<TwoAtomFunction> &forces);
+    
+    void setStretchStretchParameters(const QVector<ThreeAtomFunction> &ssparams);
+    void setStretchBendParameters(const QVector<ThreeAtomFunction> &sbparams);
+    void setBendBendParameters(const QVector
 
     GroupInternalParameters includeOnly(const AtomSelection &selected_atoms) const;
 
 private:
+    class GroupInternalCrossParameters : public QSharedData
+    {
+    public:
+        GroupInternalCrossParameters();
+        GroupInternalCrossParameters(const GroupInternalCrossParameters &other);
+        
+        ~GroupInternalCrossParameters();
+        
+        GroupInternalCrossParameters& operator=(
+                                const GroupInternalCrossParameters &other);
+    
+        /** The array of stretch-stretch parameters */
+        QVector<ThreeAtomFunction> stretch_stretch_params;
+    
+        /** The array of stretch-bend parameters */
+        QVector<ThreeAtomFunction> stretch_bend_params;
+    
+        /** The array of bend-bend parameters */
+        QVector<FourAtomFunction> bend_bend_params;
+    
+        /** The array of stretch-bend-torsion parameters */
+        QVector<FourAtomFunction> stretch_bend_torsion_params;
+    };
+
     class GroupInternalParametersData : public QSharedData
     {
     public:
@@ -221,6 +204,8 @@ private:
         
         GroupInternalParametersData& operator=(
                                 const GroupInternalParametersData &other);
+
+        bool hasCrossTerms() const;
 
         bool singleCutGroup() const;
         bool twoCutGroups() const;
@@ -235,32 +220,28 @@ private:
             CutGroups, then cgidx3 == cgidx2 == cgidx1 != cgidx0 */
         CGIdx cgidx0, cgidx1, cgidx2, cgidx3;
 
-        /** The array of bond parameters */
-        QVector<TwoAtomFunction> bond_params;
+        /** The array of bond parameters and forces */
+        QVector<TwoAtomFunction> bond_params, bond_forces;
     
-        /** The array of angle parameters */
-        QVector<ThreeAtomFunction> angle_params;
+        /** The array of angle parameters and forces */
+        QVector<ThreeAtomFunction> angle_params, angle_forces;
     
-        /** The array of dihedral parameters */
-        QVector<FourAtomFunction> dihedral_params;
+        /** The array of dihedral parameters and forces */
+        QVector<FourAtomFunction> dihedral_params, dihedral_forces;
     
         /** The array of improper parameters */
         QVector<FourAtomFunction> improper_params;
     
-        /** The array of Urey-Bradley parameters */
-        QVector<TwoAtomFunction> ub_params;
+        /** The improper forces, acting on theta and phi */
+        QVector<FourAtomFunction> improper_theta_forces, improper_phi_forces;
     
-        /** The array of stretch-stretch parameters */
-        QVector<ThreeAtomFunction> stretch_stretch_params;
-    
-        /** The array of stretch-bend parameters */
-        QVector<ThreeAtomFunction> stretch_bend_params;
-    
-        /** The array of bend-bend parameters */
-        QVector<FourAtomFunction> bend_bend_params;
-    
-        /** The array of stretch-bend-torsion parameters */
-        QVector<FourAtomFunction> stretch_bend_torsion_params;
+        /** The array of Urey-Bradley parameters and forces */
+        QVector<TwoAtomFunction> ub_params, ub_forces;
+        
+        /** Shared pointer to the cross-term internal parameters
+            (double-pointer so as to save memory, as cross-terms
+            tend not to be used with very large molecules) */
+        QSharedDataPointer<GroupInternalCrossParameters> cross_terms;
     };
 
     /** Implicitly shared pointer to the data of this class */
@@ -324,6 +305,27 @@ public:
     QVector<GroupInternalParameters> groupParameters(const QSet<CGIdx> &cgidxs) const;
     
 private:
+    quint32 getIndex(quint32 cgidx0) const;
+    quint32 getIndex(quint32 cgidx0, quint32 cgidx1) const;
+    quint32 getIndex(quint32 cgidx0, quint32 cgidx1,
+                     quint32 cgidx2) const;
+    quint32 getIndex(quint32 cgidx0, quint32 cgidx1,
+                     quint32 cgidx2, quint32 cgidx3) const;
+    
+    const GroupInternalParameters& getGroup(quint32 cgidx0) const;
+    const GroupInternalParameters& getGroup(quint32 cgidx0, quint32 cgidx1) const;
+    const GroupInternalParameters& getGroup(quint32 cgidx0, quint32 cgidx1,
+                                            quint32 cgidx2) const;
+    const GroupInternalParameters& getGroup(quint32 cgidx0, quint32 cgidx1,
+                                            quint32 cgidx2, quint32 cgidx3) const;
+    
+    GroupInternalParameters& addGroup(quint32 cgidx0);
+    GroupInternalParameters& addGroup(quint32 cgidx0, quint32 cgidx1);
+    GroupInternalParameters& addGroup(quint32 cgidx0, quint32 cgidx1,
+                                      quint32 cgidx2);
+    GroupInternalParameters& addGroup(quint32 cgidx0, quint32 cgidx1,
+                                      quint32 cgidx2, quint32 cgidx3);
+    
     /** All of the groups of internal parameters */
     QVector<GroupInternalParameters> group_params;
     
@@ -331,6 +333,9 @@ private:
         that involve a particular CutGroup, indexed by the CGIdx
         of that CutGroup */
     QSet< CGIdx, QSet<quint32> > groups_by_cgidx;
+    
+    /** The index of each CutGroup combination */
+    QHash<detail::IDQuad,quint32> groups_by_combination;
 };
 
 }

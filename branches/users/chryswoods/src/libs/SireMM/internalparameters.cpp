@@ -26,3 +26,15 @@
   *
 \*********************************************/
 
+#include "internalparameters.h"
+
+using namespace SireMM;
+using namespace SireMM::detail;
+
+using namespace SireBase;
+using namespace SireCAS;
+using namespace SireMol;
+using namespace SireFF;
+
+using namespace SireStream;
+
