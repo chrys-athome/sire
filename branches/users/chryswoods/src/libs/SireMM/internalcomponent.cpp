@@ -154,6 +154,46 @@ void DihedralComponent::changeEnergy(FF &ff, const DihedralEnergy &delta) const
 }
 
 //////
+////// Implementation of ImproperComponent
+//////
+
+/** Constructor */
+ImproperComponent::ImproperComponent(const FFName &ffname)
+                  : FFComponent(ffname, QLatin1String("improper"))
+{}
+
+/** Construct from a symbol
+
+    \throw SireError::incompatible_error
+*/
+ImproperComponent::ImproperComponent(const SireCAS::Symbol &symbol)
+                  : FFComponent(symbol, QLatin1String("improper"))
+{}
+
+/** Copy constructor */  
+ImproperComponent::ImproperComponent(const ImproperComponent &other)
+                  : FFComponent(other)
+{}
+  
+/** Destructor */  
+ImproperComponent::~ImproperComponent()
+{}
+
+/** Set the component of the energy in the forcefield 'ff'
+    to be equal to the passed energy */
+void ImproperComponent::setEnergy(FF &ff, const ImproperEnergy &nrg) const
+{
+    FFComponent::setEnergy(ff, this->total(), nrg);
+}
+
+/** Change the component of the energy in the forcefield 'ff'
+    by 'delta' */
+void ImproperComponent::changeEnergy(FF &ff, const ImproperEnergy &delta) const
+{
+    FFComponent::changeEnergy(ff, this->total(), delta);
+}
+
+//////
 ////// Implementation of UreyBradleyComponent
 //////
 
@@ -194,6 +234,170 @@ void UreyBradleyComponent::changeEnergy(FF &ff, const UreyBradleyEnergy &delta) 
 }
 
 //////
+////// Implementation of StretchStretchComponent
+//////
+
+/** Constructor */
+StretchStretchComponent::StretchStretchComponent(const FFName &ffname)
+                        : FFComponent(ffname, QLatin1String("stretch-stretch"))
+{}
+
+/** Construct from a symbol
+
+    \throw SireError::incompatible_error
+*/
+StretchStretchComponent::StretchStretchComponent(const SireCAS::Symbol &symbol)
+                        : FFComponent(symbol, QLatin1String("stretch-stretch"))
+{}
+
+/** Copy constructor */  
+StretchStretchComponent::StretchStretchComponent(const StretchStretchComponent &other)
+                        : FFComponent(other)
+{}
+  
+/** Destructor */  
+StretchStretchComponent::~StretchStretchComponent()
+{}
+
+/** Set the component of the energy in the forcefield 'ff'
+    to be equal to the passed energy */
+void StretchStretchComponent::setEnergy(FF &ff, const StretchStretchEnergy &nrg) const
+{
+    FFComponent::setEnergy(ff, this->total(), nrg);
+}
+
+/** Change the component of the energy in the forcefield 'ff'
+    by 'delta' */
+void StretchStretchComponent::changeEnergy(FF &ff, 
+                                           const StretchStretchEnergy &delta) const
+{
+    FFComponent::changeEnergy(ff, this->total(), delta);
+}
+
+//////
+////// Implementation of StretchBendComponent
+//////
+
+/** Constructor */
+StretchBendComponent::StretchBendComponent(const FFName &ffname)
+                     : FFComponent(ffname, QLatin1String("stretch-bend"))
+{}
+
+/** Construct from a symbol
+
+    \throw SireError::incompatible_error
+*/
+StretchBendComponent::StretchBendComponent(const SireCAS::Symbol &symbol)
+                     : FFComponent(symbol, QLatin1String("stretch-bend"))
+{}
+
+/** Copy constructor */  
+StretchBendComponent::StretchBendComponent(const StretchBendComponent &other)
+                     : FFComponent(other)
+{}
+  
+/** Destructor */  
+StretchBendComponent::~StretchBendComponent()
+{}
+
+/** Set the component of the energy in the forcefield 'ff'
+    to be equal to the passed energy */
+void StretchBendComponent::setEnergy(FF &ff, const StretchBendEnergy &nrg) const
+{
+    FFComponent::setEnergy(ff, this->total(), nrg);
+}
+
+/** Change the component of the energy in the forcefield 'ff'
+    by 'delta' */
+void StretchBendComponent::changeEnergy(FF &ff, const StretchBendEnergy &delta) const
+{
+    FFComponent::changeEnergy(ff, this->total(), delta);
+}
+
+//////
+////// Implementation of BendBendComponent
+//////
+
+/** Constructor */
+BendBendComponent::BendBendComponent(const FFName &ffname)
+                  : FFComponent(ffname, QLatin1String("bend-bend"))
+{}
+
+/** Construct from a symbol
+
+    \throw SireError::incompatible_error
+*/
+BendBendComponent::BendBendComponent(const SireCAS::Symbol &symbol)
+                  : FFComponent(symbol, QLatin1String("bend-bend"))
+{}
+
+/** Copy constructor */  
+BendBendComponent::BendBendComponent(const BendBendComponent &other)
+                  : FFComponent(other)
+{}
+  
+/** Destructor */  
+BendBendComponent::~BendBendComponent()
+{}
+
+/** Set the component of the energy in the forcefield 'ff'
+    to be equal to the passed energy */
+void BendBendComponent::setEnergy(FF &ff, const BendBendEnergy &nrg) const
+{
+    FFComponent::setEnergy(ff, this->total(), nrg);
+}
+
+/** Change the component of the energy in the forcefield 'ff'
+    by 'delta' */
+void BendBendComponent::changeEnergy(FF &ff, const BendBendEnergy &delta) const
+{
+    FFComponent::changeEnergy(ff, this->total(), delta);
+}
+
+//////
+////// Implementation of StretchBendTorsionComponent
+//////
+
+/** Constructor */
+StretchBendTorsionComponent::StretchBendTorsionComponent(const FFName &ffname)
+                  : FFComponent(ffname, QLatin1String("stretch-bend-torsion"))
+{}
+
+/** Construct from a symbol
+
+    \throw SireError::incompatible_error
+*/
+StretchBendTorsionComponent::StretchBendTorsionComponent(const SireCAS::Symbol &symbol)
+                  : FFComponent(symbol, QLatin1String("stretch-bend-torsion"))
+{}
+
+/** Copy constructor */  
+StretchBendTorsionComponent::StretchBendTorsionComponent(
+                                        const StretchBendTorsionComponent &other)
+              : FFComponent(other)
+{}
+  
+/** Destructor */  
+StretchBendTorsionComponent::~StretchBendTorsionComponent()
+{}
+
+/** Set the component of the energy in the forcefield 'ff'
+    to be equal to the passed energy */
+void StretchBendTorsionComponent::setEnergy(FF &ff, 
+                                        const StretchBendTorsionEnergy &nrg) const
+{
+    FFComponent::setEnergy(ff, this->total(), nrg);
+}
+
+/** Change the component of the energy in the forcefield 'ff'
+    by 'delta' */
+void StretchBendTorsionComponent::changeEnergy(FF &ff, 
+                                        const StretchBendTorsionEnergy &delta) const
+{
+    FFComponent::changeEnergy(ff, this->total(), delta);
+}
+
+//////
 ////// Implementation of InternalComponent
 //////
 
@@ -201,7 +405,10 @@ void UreyBradleyComponent::changeEnergy(FF &ff, const UreyBradleyEnergy &delta) 
 InternalComponent::InternalComponent(const FFName &ffname)
                   : FFComponent(ffname, QLatin1String("internal")),
                     bond_component(ffname), angle_component(ffname),
-                    dihedral_component(ffname), ub_component(ffname)
+                    dihedral_component(ffname), 
+                    improper_component(ffname), ub_component(ffname),
+                    ss_component(ffname), sb_component(ffname),
+                    bb_component(ffname), sbt_component(ffname)
 {}
 
 /** Construct from a symbol
@@ -214,7 +421,14 @@ InternalComponent::InternalComponent(const SireCAS::Symbol &symbol)
     bond_component = BondComponent( this->forceFieldName() );
     angle_component = AngleComponent( this->forceFieldName() );
     dihedral_component = DihedralComponent( this->forceFieldName() );
+    
+    improper_component = ImproperComponent( this->forceFieldName() );
     ub_component = UreyBradleyComponent( this->forceFieldName() );
+    
+    ss_component = StretchStretchComponent( this->forceFieldName() );
+    sb_component = StretchBendComponent( this->forceFieldName() );
+    bb_component = BendBendComponent( this->forceFieldName() );
+    sbt_component = StretchBendTorsionComponent( this->forceFieldName() );
 }
 
 /** Copy constructor */  
@@ -223,7 +437,12 @@ InternalComponent::InternalComponent(const InternalComponent &other)
                     bond_component(other.bond_component),
                     angle_component(other.angle_component),
                     dihedral_component(other.dihedral_component),
-                    ub_component(other.ub_component)
+                    improper_component(other.improper_component),
+                    ub_component(other.ub_component),
+                    ss_component(other.ss_component),
+                    sb_component(other.sb_component),
+                    bb_component(other.bb_component),
+                    sbt_component(other.sbt_component)
 {}
   
 /** Destructor */  
@@ -237,7 +456,14 @@ void InternalComponent::setEnergy(FF &ff, const InternalEnergy &value) const
     FFComponent::setEnergy(ff, this->bond(), value.bond());
     FFComponent::setEnergy(ff, this->angle(), value.angle());
     FFComponent::setEnergy(ff, this->dihedral(), value.dihedral());
+    
+    FFComponent::setEnergy(ff, this->improper(), value.improper());
     FFComponent::setEnergy(ff, this->ureyBradley(), value.ureyBradley());
+    
+    FFComponent::setEnergy(ff, this->stretchStretch(), value.stretchStretch());
+    FFComponent::setEnergy(ff, this->stretchBend(), value.stretchBend());
+    FFComponent::setEnergy(ff, this->bendBend(), value.bendBend());
+    FFComponent::setEnergy(ff, this->stretchBendTorsion(), value.stretchBendTorsion());
 }
 
 /** Change the internal components of the forcefield 'ff' by 'delta' */
@@ -247,7 +473,15 @@ void InternalComponent::changeEnergy(FF &ff, const InternalEnergy &delta) const
     FFComponent::changeEnergy(ff, this->bond(), delta.bond());
     FFComponent::changeEnergy(ff, this->angle(), delta.angle());
     FFComponent::changeEnergy(ff, this->dihedral(), delta.dihedral());
+    
+    FFComponent::changeEnergy(ff, this->improper(), delta.improper());
     FFComponent::changeEnergy(ff, this->ureyBradley(), delta.ureyBradley());
+    
+    FFComponent::changeEnergy(ff, this->stretchStretch(), delta.stretchStretch());
+    FFComponent::changeEnergy(ff, this->stretchBend(), delta.stretchBend());
+    FFComponent::changeEnergy(ff, this->bendBend(), delta.bendBend());
+    FFComponent::changeEnergy(ff, this->stretchBendTorsion(), 
+                              delta.stretchBendTorsion());
 }
 
 /////////
@@ -256,18 +490,26 @@ void InternalComponent::changeEnergy(FF &ff, const InternalEnergy &delta) const
 
 /** Constructor */
 InternalEnergy::InternalEnergy(double bondnrg, double anglenrg,
-                               double dihedralnrg, double ubnrg)
+                               double dihedralnrg, 
+                               double impropernrg, double ubnrg,
+                               double ssnrg, double sbnrg,
+                               double bbnrg, double sbtnrg)
                : ibndnrg(bondnrg), iangnrg(anglenrg),
-                 idihnrg(dihedralnrg), iubnrg(ubnrg)
+                 idihnrg(dihedralnrg), 
+                 iimpnrg(impropernrg), iubnrg(ubnrg),
+                 issnrg(ssnrg), isbnrg(sbnrg),
+                 ibbnrg(bbnrg), isbtnrg(sbtnrg)
 {}
   
 /** Copy constructor */  
 InternalEnergy::InternalEnergy(const InternalEnergy &other)
                : ibndnrg(other.ibndnrg), iangnrg(other.iangnrg),
-                 idihnrg(other.idihnrg), iubnrg(other.iubnrg)
+                 idihnrg(other.idihnrg), 
+                 iimpnrg(other.iimpnrg), iubnrg(other.iubnrg),
+                 issnrg(other.issnrg), isbnrg(other.isbnrg),
+                 ibbnrg(other.ibbnrg), isbtnrg(other.isbtnrg)
 {}
   
 /** Destructor */  
 InternalEnergy::~InternalEnergy()
 {}
-

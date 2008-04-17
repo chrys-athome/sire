@@ -537,8 +537,13 @@ public:
         iangnrg += other.iangnrg;
         idihnrg += other.idihnrg;
         
-        
+        iimpnrg += other.iimpnrg;
         iubnrg += other.iubnrg;
+        
+        issnrg += other.issnrg;
+        isbnrg += other.isbnrg;
+        ibbnrg += other.ibbnrg;
+        isbtnrg += other.isbtnrg;
     
         return *this;
     }
@@ -548,7 +553,14 @@ public:
         ibndnrg -= other.ibndnrg;
         iangnrg -= other.iangnrg;
         idihnrg -= other.idihnrg;
+        
+        iimpnrg -= other.iimpnrg;
         iubnrg -= other.iubnrg;
+        
+        issnrg -= other.issnrg;
+        isbnrg -= other.isbnrg;
+        ibbnrg -= other.ibbnrg;
+        isbtnrg -= other.isbtnrg;
     
         return *this;
     }
@@ -558,7 +570,12 @@ public:
         return InternalEnergy( ibndnrg + other.ibndnrg,
                                iangnrg + other.iangnrg,
                                idihnrg + other.idihnrg,
-                               iubnrg + other.iubnrg );
+                               iimpnrg + other.iimpnrg,
+                               iubnrg + other.iubnrg,
+                               issnrg + other.issnrg,
+                               isbnrg + other.isbnrg,
+                               ibbnrg + other.ibbnrg,
+                               isbtnrg + other.isbtnrg );
     }
     
     InternalEnergy operator-(const InternalEnergy &other) const
@@ -566,7 +583,12 @@ public:
         return InternalEnergy( ibndnrg - other.ibndnrg,
                                iangnrg - other.iangnrg,
                                idihnrg - other.idihnrg,
-                               iubnrg - other.iubnrg );
+                               iimpnrg - other.iimpnrg,
+                               iubnrg - other.iubnrg,
+                               issnrg - other.issnrg,
+                               isbnrg - other.isbnrg,
+                               ibbnrg - other.ibbnrg,
+                               isbtnrg - other.isbtnrg );
     }
     
     Components components() const
@@ -589,14 +611,41 @@ public:
         return idihnrg;
     }
     
+    double component(const ImproperComponent&) const
+    {
+        return iimpnrg;
+    }
+    
     double component(const UreyBradleyComponent&) const
     {
         return iubnrg;
     }
     
+    double component(const StretchStretchComponent&) const
+    {
+        return issnrg;
+    }
+    
+    double component(const StretchBendComponent&) const
+    {
+        return isbnrg;
+    }
+    
+    double component(const BendBendComponent&) const
+    {
+        return ibbnrg;
+    }
+    
+    double component(const StretchBendTorsionComponent&) const
+    {
+        return isbtnrg;
+    }
+    
     double component(const InternalComponent&) const
     {
-        return ibndnrg + iangnrg + idihnrg + iubnrg;
+        return ibndnrg + iangnrg + idihnrg + 
+               iimpnrg + iubnrg +
+               issnrg + isbnrg + ibbnrg + isbtnrg;
     }
     
     double bond() const
@@ -614,14 +663,41 @@ public:
         return idihnrg;
     }
     
+    double improper() const
+    {
+        return iimpnrg;
+    }
+    
     double ureyBradley() const
     {
         return iubnrg;
     }
     
+    double stretchStretch() const
+    {
+        return issnrg;
+    }
+    
+    double stretchBend() const
+    {
+        return isbnrg;
+    }
+    
+    double bendBend() const
+    {
+        return ibbnrg;
+    }
+    
+    double stretchBendTorsion() const
+    {
+        return isbtnrg;
+    }
+    
     double total() const
     {
-        return ibndnrg + iangnrg + idihnrg + iubnrg;
+        return ibndnrg + iangnrg + idihnrg + 
+               iimpnrg + iubnrg +
+               issnrg + isbnrg + ibbnrg + isbtnrg;
     }
     
     operator double() const
@@ -650,15 +726,41 @@ public:
         return DihedralEnergy(idihnrg);
     }
     
+    operator ImproperEnergy() const
+    {
+        return ImproperEnergy(iimpnrg);
+    }
+    
     operator UreyBradleyEnergy() const
     {
         return UreyBradleyEnergy(iubnrg);
     }
 
+    operator StretchStretchEnergy() const
+    {
+        return StretchStretchEnergy(issnrg);
+    }
+
+    operator StretchBendEnergy() const
+    {
+        return StretchBendEnergy(isbnrg);
+    }
+    
+    operator BendBendEnergy() const
+    {
+        return BendBendEnergy(ibbnrg);
+    }
+    
+    operator StretchBendTorsionEnergy() const
+    {
+        return StretchBendTorsionEnergy(isbtnrg);
+    }
+
 private:
-    /** The bond, angle, dihedral and Urey-Bradley components
-        of the energy */
-    double ibndnrg, iangnrg, idihnrg, iubnrg;
+    /** All of the component energies */
+    double ibndnrg, iangnrg, idihnrg, 
+           iimpnrg, iubnrg,
+           issnrg, isbnrg, ibbnrg, isbtnrg;
 };
 
 } // end of namespace SireMM

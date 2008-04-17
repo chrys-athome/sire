@@ -12,11 +12,13 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the headers in SireMM
 set ( SIREMM_HEADERS
+      atomfunctions.h
       atompairs.hpp
       cljcomponent.h
       cljpotential.h
       cljnbpairs.h
       errors.h
+      fouratomfunctions.h
       intercljff.h
       intercoulombff.h
       interljff.h
@@ -29,16 +31,20 @@ set ( SIREMM_HEADERS
       ljparameterdb.h
       qhash_siremm.h
       switchingfunction.h
+      threeatomfunctions.h
+      twoatomfunctions.h
 
       detail/intrascaledatomicparameters.hpp
     )
 
 # Define the sources in SireMM
 set ( SIREMM_SOURCES
+      atomfunctions.cpp
       cljcomponent.cpp
       cljpotential.cpp
       cljnbpairs.cpp
       errors.cpp
+      fouratomfunctions.cpp
       intercljff.cpp
       intercoulombff.cpp
       interljff.cpp
@@ -50,7 +56,9 @@ set ( SIREMM_SOURCES
       ljparameter.cpp
       ljparameterdb.cpp
       switchingfunction.cpp
-    
+      threeatomfunctions.cpp
+      twoatomfunctions.cpp    
+
       ${SIREMM_HEADERS}
     )
 

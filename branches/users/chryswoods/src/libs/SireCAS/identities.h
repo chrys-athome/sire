@@ -50,10 +50,13 @@ QDataStream& operator>>(QDataStream&, SireCAS::Identities&);
 namespace SireCAS
 {
 
-/**
-This class holds a collection of identities. These are symbols, and the expressions that they are equal to, e.g. x == y.squared() + sin(z). These identities can then be substituted into expressions, with all instances of the variable being replaced by the equivalent expression.
+/** This class holds a collection of identities. 
+    These are symbols, and the expressions that they are equal to, 
+    e.g. x == y.squared() + sin(z). These identities can then be 
+    substituted into expressions, with all instances of the variable 
+    being replaced by the equivalent expression.
 
-@author Christopher Woods
+    @author Christopher Woods
 */
 class SIRECAS_EXPORT Identities
 {
