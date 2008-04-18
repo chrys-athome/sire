@@ -708,24 +708,28 @@ QVector<FourAtomFunction> FourAtomFunctions::potentials() const
     quads of atoms, for the given symbol */
 QVector<FourAtomFunction> FourAtomFunctions::forces(const Symbol &symbol) const
 {
-    QVector<FourAtomFunction> forces( potentials_by_atoms.count() );
-    
-    FourAtomFunction *forces_array = forces.data();
-    
-    int i = 0;
+    QVector<FourAtomFunction> forces;
+    forces.reserve(potentials_by_atoms.count());
     
     for (QHash<IDQuad,Expression>::const_iterator
                                     it = potentials_by_atoms.constBegin();
          it != potentials_by_atoms.constEnd();
          ++it)
     {
-        forces_array[i] = FourAtomFunction( info().cgAtomIdx( AtomIdx(it.key().atom0) ),
-                                            info().cgAtomIdx( AtomIdx(it.key().atom1) ),
-                                            info().cgAtomIdx( AtomIdx(it.key().atom2) ),
-                                            info().cgAtomIdx( AtomIdx(it.key().atom3) ),
-                                            it.value().differentiate(symbol) );
+        Expression force = it.value().differentiate(symbol);
+        
+        if (not force.isZero())
+        {
+            NEED TO MAKE THIS CHANGE TO TWO AND THREE ATOMFUNCTIONS
+        
+            forces.append( FourAtomFunction( 
+                              info().cgAtomIdx( AtomIdx(it.key().atom0) ),
+                              info().cgAtomIdx( AtomIdx(it.key().atom1) ),
+                              info().cgAtomIdx( AtomIdx(it.key().atom2) ),
+                              info().cgAtomIdx( AtomIdx(it.key().atom3) ),
+                              it.value().differentiate(symbol) ) );
     
-        ++i;
+        }
     }
     
     return forces;
