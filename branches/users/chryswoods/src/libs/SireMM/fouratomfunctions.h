@@ -175,6 +175,8 @@ public:
 
     void substitute(const Identities &identities);
 
+    bool isEmpty() const;
+
     Expression potential(AtomIdx atom0, AtomIdx atom1,
                          AtomIdx atom2, AtomIdx atom3) const;
     Expression potential(const AtomID &atom0, const AtomID &atom1,

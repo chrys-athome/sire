@@ -457,6 +457,12 @@ void ThreeAtomFunctions::substitute(const Identities &identities)
     }
 }
 
+/** Return whether or not this is empty (has no potentials for any internals) */
+bool ThreeAtomFunctions::isEmpty() const
+{
+    return potentials_by_atoms.isEmpty();
+}
+
 /** Return the function acting between the atoms 'atom0' to 'atom2'.
     This returns an empty expression if there is no expression between
     these atoms 
@@ -594,23 +600,24 @@ QVector<ThreeAtomFunction> ThreeAtomFunctions::potentials() const
     triples of atoms, for the given symbol */
 QVector<ThreeAtomFunction> ThreeAtomFunctions::forces(const Symbol &symbol) const
 {
-    QVector<ThreeAtomFunction> forces( potentials_by_atoms.count() );
-    
-    ThreeAtomFunction *forces_array = forces.data();
-    
-    int i = 0;
+    QVector<ThreeAtomFunction> forces;
+    forces.reserve(potentials_by_atoms.count());
     
     for (QHash<IDTriple,Expression>::const_iterator
                                     it = potentials_by_atoms.constBegin();
          it != potentials_by_atoms.constEnd();
          ++it)
     {
-        forces_array[i] = ThreeAtomFunction( info().cgAtomIdx( AtomIdx(it.key().atom0) ),
-                                             info().cgAtomIdx( AtomIdx(it.key().atom1) ),
-                                             info().cgAtomIdx( AtomIdx(it.key().atom2) ),
-                                             it.value().differentiate(symbol) );
-    
-        ++i;
+        Expression force = it.value().differentiate(symbol);
+        
+        if (not force.isZero())
+        {
+            forces.append( ThreeAtomFunction( 
+                              info().cgAtomIdx( AtomIdx(it.key().atom0) ),
+                              info().cgAtomIdx( AtomIdx(it.key().atom1) ),
+                              info().cgAtomIdx( AtomIdx(it.key().atom2) ),
+                              force ) );
+        }
     }
     
     return forces;

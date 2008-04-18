@@ -426,6 +426,12 @@ void TwoAtomFunctions::substitute(const Identities &identities)
     }
 }
 
+/** Return whether or not this is empty (has no potentials for any internals) */
+bool TwoAtomFunctions::isEmpty() const
+{
+    return potentials_by_atoms.isEmpty();
+}
+
 /** Return the function acting between the atoms 'atom0' and 'atom1'.
     This returns an empty expression if there is no expression between
     these atoms 
@@ -555,22 +561,23 @@ QVector<TwoAtomFunction> TwoAtomFunctions::potentials() const
     pairs of atoms, for the given symbol */
 QVector<TwoAtomFunction> TwoAtomFunctions::forces(const Symbol &symbol) const
 {
-    QVector<TwoAtomFunction> forces( potentials_by_atoms.count() );
-    
-    TwoAtomFunction *forces_array = forces.data();
-    
-    int i = 0;
+    QVector<TwoAtomFunction> forces;
+    forces.reserve(potentials_by_atoms.count());
     
     for (QHash<IDPair,Expression>::const_iterator
                                     it = potentials_by_atoms.constBegin();
          it != potentials_by_atoms.constEnd();
          ++it)
     {
-        forces_array[i] = TwoAtomFunction( info().cgAtomIdx( AtomIdx(it.key().atom0) ),
-                                           info().cgAtomIdx( AtomIdx(it.key().atom1) ),
-                                           it.value().differentiate(symbol) );
-    
-        ++i;
+        Expression force = it.value().differentiate(symbol);
+        
+        if (not force.isZero())
+        {
+            forces.append( TwoAtomFunction( 
+                              info().cgAtomIdx( AtomIdx(it.key().atom0) ),
+                              info().cgAtomIdx( AtomIdx(it.key().atom1) ),
+                              force ) );
+        }
     }
     
     return forces;

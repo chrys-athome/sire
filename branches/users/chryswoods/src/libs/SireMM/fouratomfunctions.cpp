@@ -515,6 +515,12 @@ void FourAtomFunctions::substitute(const Identities &identities)
     }
 }
 
+/** Return whether or not this is empty (has no potentials for any internals) */
+bool FourAtomFunctions::isEmpty() const
+{
+    return potentials_by_atoms.isEmpty();
+}
+
 /** Return the function acting between the atoms 'atom0' to 'atom3'.
     This returns an empty expression if there is no expression between
     these atoms 
@@ -720,15 +726,12 @@ QVector<FourAtomFunction> FourAtomFunctions::forces(const Symbol &symbol) const
         
         if (not force.isZero())
         {
-            NEED TO MAKE THIS CHANGE TO TWO AND THREE ATOMFUNCTIONS
-        
             forces.append( FourAtomFunction( 
                               info().cgAtomIdx( AtomIdx(it.key().atom0) ),
                               info().cgAtomIdx( AtomIdx(it.key().atom1) ),
                               info().cgAtomIdx( AtomIdx(it.key().atom2) ),
                               info().cgAtomIdx( AtomIdx(it.key().atom3) ),
-                              it.value().differentiate(symbol) ) );
-    
+                              force ) );
         }
     }
     

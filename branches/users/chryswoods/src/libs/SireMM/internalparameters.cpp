@@ -34,13 +34,14 @@ uint qHash(const SireMM::detail::CGIDQuad&);
 
 #include "internalparameters.h"
 
+#include "SireMol/partialmolecule.h"
+
 using namespace SireMM;
 using namespace SireMM::detail;
 
 using namespace SireBase;
 using namespace SireCAS;
 using namespace SireMol;
-using namespace SireFF;
 
 using namespace SireStream;
 
@@ -64,7 +65,7 @@ uint qHash(const CGIDQuad &idquad)
 */
 qint32 InternalParameters::getIndex(CGIdx cgidx0) const
 {
-    QSet< CGIdx, QSet<qint32> >::const_iterator 
+    QHash< CGIdx, QSet<qint32> >::const_iterator 
                                     it = groups_by_cgidx.constFind(cgidx0);
                                     
     if (it != groups_by_cgidx.constEnd())
@@ -89,10 +90,10 @@ qint32 InternalParameters::getIndex(CGIdx cgidx0) const
 */
 qint32 InternalParameters::getIndex(CGIdx cgidx0, CGIdx cgidx1) const
 {
-    QSet< CGIdx, QSet<qint32> >::const_iterator 
+    QHash< CGIdx, QSet<qint32> >::const_iterator 
                                     it0 = groups_by_cgidx.constFind(cgidx0);
 
-    QSet< CGIdx, QSet<qint32> >::const_iterator 
+    QHash< CGIdx, QSet<qint32> >::const_iterator 
                                     it1 = groups_by_cgidx.constFind(cgidx1);
                                     
     if (it0 != groups_by_cgidx.constEnd() and
@@ -122,13 +123,13 @@ qint32 InternalParameters::getIndex(CGIdx cgidx0, CGIdx cgidx1) const
 qint32 InternalParameters::getIndex(CGIdx cgidx0, CGIdx cgidx1,
                                     CGIdx cgidx2) const
 {
-    QSet< CGIdx, QSet<qint32> >::const_iterator 
+    QHash< CGIdx, QSet<qint32> >::const_iterator 
                                     it0 = groups_by_cgidx.constFind(cgidx0);
 
-    QSet< CGIdx, QSet<qint32> >::const_iterator 
+    QHash< CGIdx, QSet<qint32> >::const_iterator 
                                     it1 = groups_by_cgidx.constFind(cgidx1);
 
-    QSet< CGIdx, QSet<qint32> >::const_iterator 
+    QHash< CGIdx, QSet<qint32> >::const_iterator 
                                     it2 = groups_by_cgidx.constFind(cgidx2);
                                     
     if (it0 != groups_by_cgidx.constEnd() and
@@ -160,16 +161,16 @@ qint32 InternalParameters::getIndex(CGIdx cgidx0, CGIdx cgidx1,
 qint32 InternalParameters::getIndex(CGIdx cgidx0, CGIdx cgidx1,
                                     CGIdx cgidx2, CGIdx cgidx3) const
 {
-    QSet< CGIdx, QSet<qint32> >::const_iterator 
+    QHash< CGIdx, QSet<qint32> >::const_iterator 
                                     it0 = groups_by_cgidx.constFind(cgidx0);
 
-    QSet< CGIdx, QSet<qint32> >::const_iterator 
+    QHash< CGIdx, QSet<qint32> >::const_iterator 
                                     it1 = groups_by_cgidx.constFind(cgidx1);
 
-    QSet< CGIdx, QSet<qint32> >::const_iterator 
+    QHash< CGIdx, QSet<qint32> >::const_iterator 
                                     it2 = groups_by_cgidx.constFind(cgidx2);
 
-    QSet< CGIdx, QSet<qint32> >::const_iterator 
+    QHash< CGIdx, QSet<qint32> >::const_iterator 
                                     it3 = groups_by_cgidx.constFind(cgidx3);
                                     
     if (it0 != groups_by_cgidx.constEnd() and
@@ -213,6 +214,8 @@ qint32 InternalParameters::getIndex(const CGIDQuad &idquad) const
         return this->getIndex(idquad.cgIdx0(), idquad.cgIdx1(),
                               idquad.cgIdx2(), idquad.cgIdx3());
 }
+
+static const GroupInternalParameters shared_empty_group_params;
 
 /** Return the potential and force parameters for all of the internals
     that involve only atoms in the CutGroup at index 'cgidx0'
@@ -330,11 +333,9 @@ qint32 InternalParameters::addGroup(const CGIDQuad &idquad)
 }
 
 GroupInternalParameters&
-InternalParameters:getGroup(CGIdx cgidx0, CGIdx cgidx1, CGIdx cgidx2,
-                            CGIdx cgidx3, QHash<IDQuad,qint32> &cached_groups)
+InternalParameters::getGroup(const CGIDQuad &idquad, 
+                             QHash<CGIDQuad,qint32> &cached_groups)
 {
-    IDQuad idquad(cgidx0, cgidx1, cgidx2, cgidx3);
-    
     qint32 i = cached_groups.value(idquad, -1);
     
     if (i < 0)
@@ -344,7 +345,7 @@ InternalParameters:getGroup(CGIdx cgidx0, CGIdx cgidx1, CGIdx cgidx2,
         cached_groups.insert(idquad, i);
     }
     
-    return groups_params.data()[i];
+    return group_params.data()[i];
 }
 
 /** This adds all of the bond parameters and forces in 'bondparams'
@@ -352,23 +353,26 @@ InternalParameters:getGroup(CGIdx cgidx0, CGIdx cgidx1, CGIdx cgidx2,
 void InternalParameters::addBonds(const TwoAtomFunctions &bondparams,
                                   QHash<CGIDQuad,qint32> &cached_groups)
 {
+    if (bondparams.isEmpty())
+        return;
+
     //assert that these are functions only of the bond length
     this->assertContainsOnly(this->symbols().bond(), bondparams.symbols());
     
     //get the potential and forces
-    QVector<TwoBodyFunction> potentials = bondparams.potentials();
-    QVector<TwoBodyFunction> forces = bondparams.forces(this->symbols().bond().r());
+    QVector<TwoAtomFunction> potentials = bondparams.potentials();
+    QVector<TwoAtomFunction> forces = bondparams.forces(this->symbols().bond().r());
     
     //sort the internals into groups
-    QHash< CGIDQuad, QVector<TwoBodyFunction> > group_potentials;
-    QHash< CGIDQuad, QVector<TwoBodyFunction> > group_forces;
+    QHash< CGIDQuad, QVector<TwoAtomFunction> > group_potentials;
+    QHash< CGIDQuad, QVector<TwoAtomFunction> > group_forces;
     
-    const TwoBodyFunction *potentials_array = potential.constData();
+    const TwoAtomFunction *potentials_array = potentials.constData();
     int n = potentials.count();
     
     for (int i=0; i<n; ++i)
     {
-        const TwoBodyFunction &potential = potentials_array[i]
+        const TwoAtomFunction &potential = potentials_array[i];
     
         CGIDQuad idquad(potential.atom0().cutGroup(),
                         potential.atom1().cutGroup());
@@ -378,14 +382,12 @@ void InternalParameters::addBonds(const TwoAtomFunctions &bondparams,
 
     //do forces separately as not all potentials may have a force
     //(as potential could be constant with r)
-    const TwoBodyFunction *forces_array = forces.constData();
+    const TwoAtomFunction *forces_array = forces.constData();
     n = forces.count();
-
-    NEED TO MAKE THIS CHANGE TO THREE AND FOUR ATOM FUNCTIONS
 
     for (int i=0; i<n; ++i)
     {
-        const TwoBodyFunction &force = forces_array[i];
+        const TwoAtomFunction &force = forces_array[i];
         
         CGIDQuad idquad(force.atom0().cutGroup(),
                         force.atom1().cutGroup());
@@ -394,17 +396,17 @@ void InternalParameters::addBonds(const TwoAtomFunctions &bondparams,
     }
     
     //add the groups into this set
-    for (QHash< IDQuad,QVector<TwoBodyFunction> >::iterator
+    for (QHash< CGIDQuad,QVector<TwoAtomFunction> >::iterator
                                         it = group_potentials.begin();
          it != group_potentials.end();
          ++it)
     {
         it.value().squeeze();
         
-        QVector<TwoBodyFunction> &group_force = group_forces[it.key()];
+        QVector<TwoAtomFunction> &group_force = group_forces[it.key()];
         group_force.squeeze();
         
-        this->addGroup(it.key(), cached_groups)
+        this->getGroup(it.key(), cached_groups)
                         .setBondPotential( it.value(), group_force );
     }
 }
@@ -414,111 +416,127 @@ void InternalParameters::addBonds(const TwoAtomFunctions &bondparams,
 void InternalParameters::addAngles(const ThreeAtomFunctions &angleparams,
                                    QHash<CGIDQuad,qint32> &cached_groups)
 {
+    if (angleparams.isEmpty())
+        return;
+
     //assert that these are functions only of the angle (theta)
     this->assertContainsOnly(this->symbols().angle(), angleparams.symbols());
     
     //get the potential and forces
-    QVector<ThreeBodyFunction> potentials = angleparams.potentials();
-    QVector<ThreeBodyFunction> forces = angleparams.forces(this->symbols()
+    QVector<ThreeAtomFunction> potentials = angleparams.potentials();
+    QVector<ThreeAtomFunction> forces = angleparams.forces(this->symbols()
                                                             .angle().theta());
     
     //sort the internals into groups
-    QHash< CGIDQuad, QVector<ThreeBodyFunction> > group_potentials;
-    QHash< CGIDQuad, QVector<ThreeBodyFunction> > group_forces;
+    QHash< CGIDQuad, QVector<ThreeAtomFunction> > group_potentials;
+    QHash< CGIDQuad, QVector<ThreeAtomFunction> > group_forces;
     
-    const ThreeBodyFunction *potentials_array = potential.constData();
-    const ThreeBodyFunction *forces_array = forces.constData();
-    
+    const ThreeAtomFunction *potentials_array = potentials.constData();
     int n = potentials.count();
-    BOOST_ASSERT(n == forces.count();
     
-    for (int i=0; i<npotentials; ++i)
+    for (int i=0; i<n; ++i)
     {
-        const ThreeBodyFunction &potential = potentials_array[i]
-        const ThreeBodyFunction &force = forces_array[i];
+        const ThreeAtomFunction &potential = potentials_array[i];
     
         CGIDQuad idquad(potential.atom0().cutGroup(),
                         potential.atom1().cutGroup(),
                         potential.atom2().cutGroup());
-                        
-        BOOST_ASSERT( idquad == CGIDQuad(force.atom0().cutGroup(),
-                                         force.atom1().cutGroup(),
-                                         force.atom2().cutGroup()) );
                                          
         group_potentials[idquad].append(potential);
+    }
+
+    const ThreeAtomFunction *forces_array = forces.constData();
+    n = forces.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const ThreeAtomFunction &force = forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup(),
+                        force.atom2().cutGroup());
+                        
         group_forces[idquad].append(force);
     }
     
     //add the groups into this set
-    for (QHash< IDQuad,QVector<ThreeBodyFunction> >::iterator
+    for (QHash< CGIDQuad,QVector<ThreeAtomFunction> >::iterator
                                         it = group_potentials.begin();
          it != group_potentials.end();
          ++it)
     {
         it.value().squeeze();
         
-        QVector<ThreeBodyFunction> &group_force = group_forces[it.key()];
+        QVector<ThreeAtomFunction> &group_force = group_forces[it.key()];
         group_force.squeeze();
         
-        this->addGroup(it.key(), cached_groups)
+        this->getGroup(it.key(), cached_groups)
                         .setAnglePotential( it.value(), group_force );
     }
 }
 
 /** This adds all of the dihedral parameters and forces in 'dihedralparams'
     to the list of parameters */
-void InternalParameters::addDihedrals(const FourAtomFunctions &dihedraparams,
+void InternalParameters::addDihedrals(const FourAtomFunctions &dihedralparams,
                                       QHash<CGIDQuad,qint32> &cached_groups)
 {
+    if (dihedralparams.isEmpty())
+        return;
+
     //assert that these are functions only of the torsion (phi)
     this->assertContainsOnly(this->symbols().dihedral(), dihedralparams.symbols());
     
     //get the potential and forces
-    QVector<FourBodyFunction> potentials = dihedralparams.potentials();
-    QVector<FourBodyFunction> forces = dihedralparams.forces(this->symbols()
+    QVector<FourAtomFunction> potentials = dihedralparams.potentials();
+    QVector<FourAtomFunction> forces = dihedralparams.forces(this->symbols()
                                                             .dihedral().phi());
     
     //sort the internals into groups
-    QHash< CGIDQuad, QVector<FourBodyFunction> > group_potentials;
-    QHash< CGIDQuad, QVector<FourBodyFunction> > group_forces;
+    QHash< CGIDQuad, QVector<FourAtomFunction> > group_potentials;
+    QHash< CGIDQuad, QVector<FourAtomFunction> > group_forces;
     
-    const FourBodyFunction *potentials_array = potential.constData();
-    const FourBodyFunction *forces_array = forces.constData();
-    
+    const FourAtomFunction *potentials_array = potentials.constData();
     int n = potentials.count();
-    BOOST_ASSERT(n == forces.count();
     
-    for (int i=0; i<npotentials; ++i)
+    for (int i=0; i<n; ++i)
     {
-        const FourBodyFunction &potential = potentials_array[i]
-        const FourBodyFunction &force = forces_array[i];
+        const FourAtomFunction &potential = potentials_array[i];
     
         CGIDQuad idquad(potential.atom0().cutGroup(),
                         potential.atom1().cutGroup(),
                         potential.atom2().cutGroup(),
                         potential.atom3().cutGroup());
-                        
-        BOOST_ASSERT( idquad == CGIDQuad(force.atom0().cutGroup(),
-                                         force.atom1().cutGroup(),
-                                         force.atom2().cutGroup(),
-                                         force.atom3().cutGroup()) );
                                          
         group_potentials[idquad].append(potential);
-        group_forces[idquad].append(force);
+    }
+
+    const FourAtomFunction *forces_array = forces.constData();
+    n = forces.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const FourAtomFunction &force = forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup(),
+                        force.atom2().cutGroup(),
+                        force.atom3().cutGroup());
+                        
+        group_forces[idquad].append(force);                        
     }
     
     //add the groups into this set
-    for (QHash< IDQuad,QVector<FourBodyFunction> >::iterator
+    for (QHash< CGIDQuad,QVector<FourAtomFunction> >::iterator
                                         it = group_potentials.begin();
          it != group_potentials.end();
          ++it)
     {
         it.value().squeeze();
         
-        QVector<FourBodyFunction> &group_force = group_forces[it.key()];
+        QVector<FourAtomFunction> &group_force = group_forces[it.key()];
         group_force.squeeze();
         
-        this->addGroup(it.key(), cached_groups)
+        this->getGroup(it.key(), cached_groups)
                         .setDihedralPotential( it.value(), group_force );
     }
 }
@@ -528,56 +546,645 @@ void InternalParameters::addDihedrals(const FourAtomFunctions &dihedraparams,
 void InternalParameters::addImpropers(const FourAtomFunctions &improperparams,
                                       QHash<CGIDQuad,qint32> &cached_groups)
 {
+    if (improperparams.isEmpty())
+        return;
+
     //assert that these are functions only of the angle (theta or phi)
     this->assertContainsOnly(this->symbols().improper(), improperparams.symbols());
     
     //get the potential and forces
-    QVector<FourBodyFunction> potentials = improperparams.potentials();
-    QVector<FourBodyFunction> theta_forces = improperparams.forces(this->symbols()
+    QVector<FourAtomFunction> potentials = improperparams.potentials();
+    
+    QVector<FourAtomFunction> theta_forces = improperparams.forces(this->symbols()
                                                             .improper().theta());
-    QVector<FourBodyFunction> phi_forces = improperparams.forces(this->symbols()
+    QVector<FourAtomFunction> phi_forces = improperparams.forces(this->symbols()
                                                             .improper().phi());
     
     //sort the internals into groups
-    QHash< CGIDQuad, QVector<ThreeBodyFunction> > group_potentials;
-    QHash< CGIDQuad, QVector<ThreeBodyFunction> > group_forces;
+    QHash< CGIDQuad, QVector<FourAtomFunction> > group_potentials;
     
-    const ThreeBodyFunction *potentials_array = potential.constData();
-    const ThreeBodyFunction *forces_array = forces.constData();
+    QHash< CGIDQuad, QVector<FourAtomFunction> > group_theta_forces;
+    QHash< CGIDQuad, QVector<FourAtomFunction> > group_phi_forces;
     
+    const FourAtomFunction *potentials_array = potentials.constData();
     int n = potentials.count();
-    BOOST_ASSERT(n == forces.count();
     
-    for (int i=0; i<npotentials; ++i)
+    for (int i=0; i<n; ++i)
     {
-        const ThreeBodyFunction &potential = potentials_array[i]
-        const ThreeBodyFunction &force = forces_array[i];
+        const FourAtomFunction &potential = potentials_array[i];
     
         CGIDQuad idquad(potential.atom0().cutGroup(),
                         potential.atom1().cutGroup(),
-                        potential.atom2().cutGroup());
+                        potential.atom2().cutGroup(),
+                        potential.atom3().cutGroup());
                         
-        BOOST_ASSERT( idquad == CGIDQuad(force.atom0().cutGroup(),
-                                         force.atom1().cutGroup(),
-                                         force.atom2().cutGroup()) );
-                                         
         group_potentials[idquad].append(potential);
-        group_forces[idquad].append(force);
+    }
+
+    const FourAtomFunction *theta_forces_array = theta_forces.constData();
+    n = theta_forces.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const FourAtomFunction &force = theta_forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup(),
+                        force.atom2().cutGroup(),
+                        force.atom3().cutGroup());
+                        
+        group_theta_forces[idquad].append(force);
+    }
+    
+    const FourAtomFunction *phi_forces_array = phi_forces.constData();
+    n = phi_forces.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const FourAtomFunction &force = phi_forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup(),
+                        force.atom2().cutGroup(),
+                        force.atom3().cutGroup());
+                        
+        group_phi_forces[idquad].append(force);
     }
     
     //add the groups into this set
-    for (QHash< IDQuad,QVector<ThreeBodyFunction> >::iterator
+    for (QHash< CGIDQuad,QVector<FourAtomFunction> >::iterator
                                         it = group_potentials.begin();
          it != group_potentials.end();
          ++it)
     {
         it.value().squeeze();
         
-        QVector<ThreeBodyFunction> &group_force = group_forces[it.key()];
+        QVector<FourAtomFunction> &group_theta_force = group_theta_forces[it.key()];
+        QVector<FourAtomFunction> &group_phi_force = group_phi_forces[it.key()];
+        
+        group_theta_force.squeeze();
+        group_phi_force.squeeze();
+        
+        this->getGroup(it.key(), cached_groups)
+                        .setImproperPotential( it.value(), 
+                                               group_theta_force, group_phi_force );
+    }
+}
+
+/** This adds all of the bond parameters and forces in 'bondparams'
+    to the list of parameters */
+void InternalParameters::addUBs(const TwoAtomFunctions &ubparams,
+                                QHash<CGIDQuad,qint32> &cached_groups)
+{
+    if (ubparams.isEmpty())
+        return;
+
+    //assert that these are functions only of the bond length
+    this->assertContainsOnly(this->symbols().ureyBradley(), ubparams.symbols());
+    
+    //get the potential and forces
+    QVector<TwoAtomFunction> potentials = ubparams.potentials();
+    QVector<TwoAtomFunction> forces = ubparams.forces(this->symbols()
+                                                    .ureyBradley().r());
+    
+    //sort the internals into groups
+    QHash< CGIDQuad, QVector<TwoAtomFunction> > group_potentials;
+    QHash< CGIDQuad, QVector<TwoAtomFunction> > group_forces;
+    
+    const TwoAtomFunction *potentials_array = potentials.constData();
+    int n = potentials.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const TwoAtomFunction &potential = potentials_array[i];
+    
+        CGIDQuad idquad(potential.atom0().cutGroup(),
+                        potential.atom1().cutGroup());
+                                         
+        group_potentials[idquad].append(potential);
+    }
+
+    //do forces separately as not all potentials may have a force
+    //(as potential could be constant with r)
+    const TwoAtomFunction *forces_array = forces.constData();
+    n = forces.count();
+
+    for (int i=0; i<n; ++i)
+    {
+        const TwoAtomFunction &force = forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup());
+                        
+        group_forces[idquad].append(force);
+    }
+    
+    //add the groups into this set
+    for (QHash< CGIDQuad,QVector<TwoAtomFunction> >::iterator
+                                        it = group_potentials.begin();
+         it != group_potentials.end();
+         ++it)
+    {
+        it.value().squeeze();
+        
+        QVector<TwoAtomFunction> &group_force = group_forces[it.key()];
         group_force.squeeze();
         
-        this->addGroup(it.key(), cached_groups)
-                        .setAnglePotential( it.value(), group_force );
+        this->getGroup(it.key(), cached_groups)
+                        .setUreyBradleyPotential( it.value(), group_force );
+    }
+}
+
+/** This adds all of the stretch-stretch parameters and forces in 'ssparams'
+    to the list of parameters */
+void InternalParameters::addSSs(const ThreeAtomFunctions &ssparams,
+                                QHash<CGIDQuad,qint32> &cached_groups)
+{
+    if (ssparams.isEmpty())
+        return;
+
+    //assert that these are functions only of the angle (theta)
+    this->assertContainsOnly(this->symbols().stretchStretch(), 
+                             ssparams.symbols());
+    
+    //get the potential and forces
+    QVector<ThreeAtomFunction> potentials = ssparams.potentials();
+
+    QVector<ThreeAtomFunction> r01_forces = ssparams.forces(this->symbols()
+                                                      .stretchStretch().r01());
+    QVector<ThreeAtomFunction> r21_forces = ssparams.forces(this->symbols()
+                                                      .stretchStretch().r21());
+    
+    //sort the internals into groups
+    QHash< CGIDQuad, QVector<ThreeAtomFunction> > group_potentials;
+
+    QHash< CGIDQuad, QVector<ThreeAtomFunction> > group_r01_forces;
+    QHash< CGIDQuad, QVector<ThreeAtomFunction> > group_r21_forces;
+    
+    const ThreeAtomFunction *potentials_array = potentials.constData();
+    int n = potentials.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const ThreeAtomFunction &potential = potentials_array[i];
+    
+        CGIDQuad idquad(potential.atom0().cutGroup(),
+                        potential.atom1().cutGroup(),
+                        potential.atom2().cutGroup());
+                                         
+        group_potentials[idquad].append(potential);
+    }
+
+    const ThreeAtomFunction *r01_forces_array = r01_forces.constData();
+    n = r01_forces.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const ThreeAtomFunction &force = r01_forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup(),
+                        force.atom2().cutGroup());
+                        
+        group_r01_forces[idquad].append(force);
+    }
+
+    const ThreeAtomFunction *r21_forces_array = r21_forces.constData();
+    n = r21_forces.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const ThreeAtomFunction &force = r21_forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup(),
+                        force.atom2().cutGroup());
+                        
+        group_r21_forces[idquad].append(force);
+    }
+    
+    //add the groups into this set
+    for (QHash< CGIDQuad,QVector<ThreeAtomFunction> >::iterator
+                                        it = group_potentials.begin();
+         it != group_potentials.end();
+         ++it)
+    {
+        it.value().squeeze();
+        
+        QVector<ThreeAtomFunction> &group_r01_force = group_r01_forces[it.key()];
+        QVector<ThreeAtomFunction> &group_r21_force = group_r21_forces[it.key()];
+        
+        group_r01_force.squeeze();
+        group_r21_force.squeeze();
+        
+        this->getGroup(it.key(), cached_groups)
+                        .setStretchStretchPotential( it.value(), 
+                                            group_r01_force, group_r21_force );
+    }
+}
+
+/** This adds all of the stretch-bend parameters and forces in 'sbparams'
+    to the list of parameters */
+void InternalParameters::addSBs(const ThreeAtomFunctions &sbparams,
+                                QHash<CGIDQuad,qint32> &cached_groups)
+{
+    if (sbparams.isEmpty())
+        return;
+
+    //assert that these are functions only of the angle (theta)
+    this->assertContainsOnly(this->symbols().stretchBend(), 
+                             sbparams.symbols());
+    
+    //get the potential and forces
+    QVector<ThreeAtomFunction> potentials = sbparams.potentials();
+
+    QVector<ThreeAtomFunction> theta_forces = sbparams.forces(this->symbols()
+                                                      .stretchBend().theta());
+    QVector<ThreeAtomFunction> r01_forces = sbparams.forces(this->symbols()
+                                                      .stretchBend().r01());
+    QVector<ThreeAtomFunction> r21_forces = sbparams.forces(this->symbols()
+                                                      .stretchBend().r21());
+    
+    //sort the internals into groups
+    QHash< CGIDQuad, QVector<ThreeAtomFunction> > group_potentials;
+
+    QHash< CGIDQuad, QVector<ThreeAtomFunction> > group_theta_forces;
+    QHash< CGIDQuad, QVector<ThreeAtomFunction> > group_r01_forces;
+    QHash< CGIDQuad, QVector<ThreeAtomFunction> > group_r21_forces;
+    
+    const ThreeAtomFunction *potentials_array = potentials.constData();
+    int n = potentials.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const ThreeAtomFunction &potential = potentials_array[i];
+    
+        CGIDQuad idquad(potential.atom0().cutGroup(),
+                        potential.atom1().cutGroup(),
+                        potential.atom2().cutGroup());
+                                         
+        group_potentials[idquad].append(potential);
+    }
+
+    const ThreeAtomFunction *theta_forces_array = theta_forces.constData();
+    n = theta_forces.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const ThreeAtomFunction &force = theta_forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup(),
+                        force.atom2().cutGroup());
+                        
+        group_theta_forces[idquad].append(force);
+    }
+
+    const ThreeAtomFunction *r01_forces_array = r01_forces.constData();
+    n = r01_forces.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const ThreeAtomFunction &force = r01_forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup(),
+                        force.atom2().cutGroup());
+                        
+        group_r01_forces[idquad].append(force);
+    }
+
+    const ThreeAtomFunction *r21_forces_array = r21_forces.constData();
+    n = r21_forces.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const ThreeAtomFunction &force = r21_forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup(),
+                        force.atom2().cutGroup());
+                        
+        group_r21_forces[idquad].append(force);
+    }
+    
+    //add the groups into this set
+    for (QHash< CGIDQuad,QVector<ThreeAtomFunction> >::iterator
+                                        it = group_potentials.begin();
+         it != group_potentials.end();
+         ++it)
+    {
+        it.value().squeeze();
+        
+        QVector<ThreeAtomFunction> &group_theta_force = group_theta_forces[it.key()];
+        QVector<ThreeAtomFunction> &group_r01_force = group_r01_forces[it.key()];
+        QVector<ThreeAtomFunction> &group_r21_force = group_r21_forces[it.key()];
+        
+        group_theta_force.squeeze();
+        group_r01_force.squeeze();
+        group_r21_force.squeeze();
+        
+        this->getGroup(it.key(), cached_groups)
+                        .setStretchBendPotential( it.value(), group_theta_force,
+                                            group_r01_force, group_r21_force );
+    }
+}
+
+/** This adds all of the bend-bend parameters and forces in 'bbparams'
+    to the list of parameters */
+void InternalParameters::addBBs(const FourAtomFunctions &bbparams,
+                                QHash<CGIDQuad,qint32> &cached_groups)
+{
+    if (bbparams.isEmpty())
+        return;
+
+    //assert that these are functions only of the angle (theta)
+    this->assertContainsOnly(this->symbols().bendBend(), 
+                             bbparams.symbols());
+    
+    //get the potential and forces
+    QVector<FourAtomFunction> potentials = bbparams.potentials();
+
+    QVector<FourAtomFunction> theta012_forces = bbparams.forces(this->symbols()
+                                                      .bendBend().theta012());
+    QVector<FourAtomFunction> theta213_forces = bbparams.forces(this->symbols()
+                                                      .bendBend().theta213());
+    QVector<FourAtomFunction> theta310_forces = bbparams.forces(this->symbols()
+                                                      .bendBend().theta310());
+    
+    //sort the internals into groups
+    QHash< CGIDQuad, QVector<FourAtomFunction> > group_potentials;
+
+    QHash< CGIDQuad, QVector<FourAtomFunction> > group_theta012_forces;
+    QHash< CGIDQuad, QVector<FourAtomFunction> > group_theta213_forces;
+    QHash< CGIDQuad, QVector<FourAtomFunction> > group_theta310_forces;
+    
+    const FourAtomFunction *potentials_array = potentials.constData();
+    int n = potentials.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const FourAtomFunction &potential = potentials_array[i];
+    
+        CGIDQuad idquad(potential.atom0().cutGroup(),
+                        potential.atom1().cutGroup(),
+                        potential.atom2().cutGroup(),
+                        potential.atom3().cutGroup());
+                                         
+        group_potentials[idquad].append(potential);
+    }
+
+    const FourAtomFunction *theta012_forces_array = theta012_forces.constData();
+    n = theta012_forces.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const FourAtomFunction &force = theta012_forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup(),
+                        force.atom2().cutGroup(),
+                        force.atom3().cutGroup());
+                        
+        group_theta012_forces[idquad].append(force);
+    }
+
+    const FourAtomFunction *theta213_forces_array = theta213_forces.constData();
+    n = theta213_forces.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const FourAtomFunction &force = theta213_forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup(),
+                        force.atom2().cutGroup(),
+                        force.atom3().cutGroup());
+                        
+        group_theta213_forces[idquad].append(force);
+    }
+
+    const FourAtomFunction *theta310_forces_array = theta310_forces.constData();
+    n = theta310_forces.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const FourAtomFunction &force = theta310_forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup(),
+                        force.atom2().cutGroup(),
+                        force.atom3().cutGroup());
+                        
+        group_theta310_forces[idquad].append(force);
+    }
+    
+    //add the groups into this set
+    for (QHash< CGIDQuad,QVector<FourAtomFunction> >::iterator
+                                        it = group_potentials.begin();
+         it != group_potentials.end();
+         ++it)
+    {
+        it.value().squeeze();
+        
+        QVector<FourAtomFunction> &group_theta012_force 
+                                        = group_theta012_forces[it.key()];
+        QVector<FourAtomFunction> &group_theta213_force 
+                                        = group_theta213_forces[it.key()];
+        QVector<FourAtomFunction> &group_theta310_force 
+                                        = group_theta310_forces[it.key()];
+        
+        group_theta012_force.squeeze();
+        group_theta213_force.squeeze();
+        group_theta310_force.squeeze();
+        
+        this->getGroup(it.key(), cached_groups)
+                        .setBendBendPotential( it.value(), group_theta012_force,
+                                        group_theta213_force, group_theta310_force );
+    }
+}
+
+/** This adds all of the stretch-bend-torsion parameters and forces in 'sbtparams'
+    to the list of parameters */
+void InternalParameters::addSBTs(const FourAtomFunctions &sbtparams,
+                                QHash<CGIDQuad,qint32> &cached_groups)
+{
+    if (sbtparams.isEmpty())
+        return;
+
+    //assert that these are functions only of the angle (theta)
+    this->assertContainsOnly(this->symbols().stretchBendTorsion(), 
+                             sbtparams.symbols());
+    
+    //get the potential and forces
+    QVector<FourAtomFunction> potentials = sbtparams.potentials();
+
+    QVector<FourAtomFunction> phi_forces = sbtparams.forces(this->symbols()
+                                                  .stretchBendTorsion().phi());
+
+    QVector<FourAtomFunction> theta012_forces = sbtparams.forces(this->symbols()
+                                                  .stretchBendTorsion().theta012());
+    QVector<FourAtomFunction> theta321_forces = sbtparams.forces(this->symbols()
+                                                  .stretchBendTorsion().theta321());
+
+    QVector<FourAtomFunction> r01_forces = sbtparams.forces(this->symbols()
+                                                  .stretchBendTorsion().r01());
+    QVector<FourAtomFunction> r12_forces = sbtparams.forces(this->symbols()
+                                                  .stretchBendTorsion().r12());
+    QVector<FourAtomFunction> r32_forces = sbtparams.forces(this->symbols()
+                                                  .stretchBendTorsion().r32());
+
+    //sort the internals into groups
+    QHash< CGIDQuad, QVector<FourAtomFunction> > group_potentials;
+
+    QHash< CGIDQuad, QVector<FourAtomFunction> > group_phi_forces;
+
+    QHash< CGIDQuad, QVector<FourAtomFunction> > group_theta012_forces;
+    QHash< CGIDQuad, QVector<FourAtomFunction> > group_theta321_forces;
+
+    QHash< CGIDQuad, QVector<FourAtomFunction> > group_r01_forces;
+    QHash< CGIDQuad, QVector<FourAtomFunction> > group_r12_forces;
+    QHash< CGIDQuad, QVector<FourAtomFunction> > group_r32_forces;
+    
+    const FourAtomFunction *potentials_array = potentials.constData();
+    int n = potentials.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const FourAtomFunction &potential = potentials_array[i];
+    
+        CGIDQuad idquad(potential.atom0().cutGroup(),
+                        potential.atom1().cutGroup(),
+                        potential.atom2().cutGroup(),
+                        potential.atom3().cutGroup());
+                                         
+        group_potentials[idquad].append(potential);
+    }
+
+    const FourAtomFunction *phi_forces_array = phi_forces.constData();
+    n = phi_forces.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const FourAtomFunction &force = phi_forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup(),
+                        force.atom2().cutGroup(),
+                        force.atom3().cutGroup());
+                        
+        group_phi_forces[idquad].append(force);
+    }
+
+    const FourAtomFunction *theta012_forces_array = theta012_forces.constData();
+    n = theta012_forces.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const FourAtomFunction &force = theta012_forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup(),
+                        force.atom2().cutGroup(),
+                        force.atom3().cutGroup());
+                        
+        group_theta012_forces[idquad].append(force);
+    }
+
+    const FourAtomFunction *theta321_forces_array = theta321_forces.constData();
+    n = theta321_forces.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const FourAtomFunction &force = theta321_forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup(),
+                        force.atom2().cutGroup(),
+                        force.atom3().cutGroup());
+                        
+        group_theta321_forces[idquad].append(force);
+    }
+
+    const FourAtomFunction *r01_forces_array = r01_forces.constData();
+    n = r01_forces.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const FourAtomFunction &force = r01_forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup(),
+                        force.atom2().cutGroup(),
+                        force.atom3().cutGroup());
+                        
+        group_r01_forces[idquad].append(force);
+    }
+
+    const FourAtomFunction *r12_forces_array = r12_forces.constData();
+    n = r12_forces.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const FourAtomFunction &force = r12_forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup(),
+                        force.atom2().cutGroup(),
+                        force.atom3().cutGroup());
+                        
+        group_r12_forces[idquad].append(force);
+    }
+
+    const FourAtomFunction *r32_forces_array = r32_forces.constData();
+    n = r32_forces.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        const FourAtomFunction &force = r32_forces_array[i];
+        
+        CGIDQuad idquad(force.atom0().cutGroup(),
+                        force.atom1().cutGroup(),
+                        force.atom2().cutGroup(),
+                        force.atom3().cutGroup());
+                        
+        group_r32_forces[idquad].append(force);
+    }
+    
+    //add the groups into this set
+    for (QHash< CGIDQuad,QVector<FourAtomFunction> >::iterator
+                                        it = group_potentials.begin();
+         it != group_potentials.end();
+         ++it)
+    {
+        it.value().squeeze();
+        
+        QVector<FourAtomFunction> &group_phi_force = group_phi_forces[it.key()];
+        
+        QVector<FourAtomFunction> &group_theta012_force 
+                                        = group_theta012_forces[it.key()];
+        QVector<FourAtomFunction> &group_theta321_force 
+                                        = group_theta321_forces[it.key()];
+
+        QVector<FourAtomFunction> &group_r01_force = group_r01_forces[it.key()];
+        QVector<FourAtomFunction> &group_r12_force = group_r12_forces[it.key()];
+        QVector<FourAtomFunction> &group_r32_force = group_r32_forces[it.key()];
+        
+        group_phi_force.squeeze();
+
+        group_theta012_force.squeeze();
+        group_theta321_force.squeeze();
+
+        group_r01_force.squeeze();
+        group_r12_force.squeeze();
+        group_r32_force.squeeze();
+        
+        this->getGroup(it.key(), cached_groups)
+                        .setStretchBendTorsionPotential( it.value(), 
+                                        group_phi_force,
+                                        group_theta012_force, group_theta321_force,
+                                        group_r01_force, group_r12_force,
+                                        group_r32_force );
     }
 }
 
@@ -600,7 +1207,7 @@ InternalParameters::InternalParameters(const PartialMolecule &molecule,
                                        bool isstrict
                                        )
 {
-    QHash<IDQuad,qint32> cached_groups;
+    QHash<CGIDQuad,qint32> cached_groups;
     
     if (not bond_params.isNull())
     {
@@ -620,7 +1227,7 @@ InternalParameters::InternalParameters(const PartialMolecule &molecule,
                                                         ->asA<ThreeAtomFunctions>();
                                                         
         if (molecule.selection().selectedAll())
-            this->addAngless(angleparams, cached_groups);
+            this->addAngles(angleparams, cached_groups);
         else
             this->addAngles(angleparams.includeOnly(molecule.selection(), isstrict),
                             cached_groups);

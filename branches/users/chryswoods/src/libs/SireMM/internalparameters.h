@@ -29,9 +29,13 @@
 #ifndef SIREMM_INTERNALPARAMETERS_H
 #define SIREMM_INTERNALPARAMETERS_H
 
+#include <QVector>
+
 #include "twoatomfunctions.h"
 #include "threeatomfunctions.h"
 #include "fouratomfunctions.h"
+
+#include "SireMol/cgidx.h"
 
 namespace SireMM
 {
@@ -47,8 +51,25 @@ QDataStream& operator>>(QDataStream&, SireMM::InternalParameters&);
 QDataStream& operator<<(QDataStream&, const SireMM::GroupInternalParameters&);
 QDataStream& operator>>(QDataStream&, SireMM::GroupInternalParameters&);
 
+namespace SireBase
+{
+class PropertyName;
+}
+
+namespace SireMol
+{
+class AtomSelection;
+class PartialMolecule;
+}
+
 namespace SireMM
 {
+
+using SireMol::CGIdx;
+using SireMol::AtomSelection;
+using SireMol::PartialMolecule;
+
+using SireBase::PropertyName;
 
 namespace detail
 {
@@ -252,7 +273,7 @@ class SIREMM_EXPORT GroupInternalParameters
 friend QDataStream& ::operator<<(QDataStream&, const GroupInternalParameters&);
 friend QDataStream& ::operator>>(QDataStream&, GroupInternalParameters&);
 
-friend InternalParameters;  // so can call editing functions
+friend class InternalParameters;  // so can call editing functions
 
 public:
     GroupInternalParameters();
@@ -326,7 +347,7 @@ public:
 
 protected:
     //these editing functions can be called only by InternalParameters
-    GroupInternalParameters(const CGIDQuad &cgids);
+    GroupInternalParameters(const detail::CGIDQuad &cgids);
 
     void setBondPotential(const QVector<TwoAtomFunction> &potential,
                           const QVector<TwoAtomFunction> &forces);
@@ -368,7 +389,211 @@ protected:
 
 private:
     /** Implicitly shared pointer to the data of this class */
-    QSharedDataPointer<GroupInternalParametersData> d;
+    QSharedDataPointer<detail::GroupInternalParametersData> d;
+};
+
+/** This is the base of all of the classes used to hold the symbols
+    for the internal parameters */
+class SIREMM_EXPORT InternalSymbolsBase
+{
+public:
+    operator QSet<Symbol>() const
+    {
+        return symbols;
+    }
+
+protected:
+    InternalSymbolsBase();
+    ~InternalSymbolsBase();
+    
+    QSet<Symbol> symbols;
+};
+
+/** This class holds the symbols required for the bond 
+    and Urey-Bradley parameters */
+class SIREMM_EXPORT BondSymbols : public InternalSymbolsBase
+{
+public:
+    BondSymbols();
+    ~BondSymbols();
+    
+    const Symbol& r() const;
+    
+private:
+    /** The symbol for the length of a bond */
+    Symbol _r:
+};
+
+/** This class holds the symbols required for the angle parameters */
+class SIREMM_EXPORT AngleSymbols : public InternalSymbolsBase
+{
+public:
+    AngleSymbols();
+    ~AngleSymbols();
+    
+    const Symbol& theta() const;
+    
+private:
+    /** The symbol for the size of the angle */
+    Symbol _theta:
+};
+
+/** This class holds the symbols required for the dihedral parameters */
+class SIREMM_EXPORT DihedralSymbols : public InternalSymbolsBase
+{
+public:
+    DihedralSymbols();
+    ~DihedralSymbols();
+    
+    const Symbol& phi() const;
+    
+private:
+    /** The symbol for the size of the torsion */
+    Symbol _phi:
+};
+
+/** This class holds the symbols required for the improper parameters */
+class SIREMM_EXPORT ImproperSymbols : public InternalSymbolsBase
+{
+public:
+    ImproperSymbols();
+    ~ImproperSymbols();
+    
+    const Symbol& theta() const;
+    const Symbol& phi() const;
+    
+private:
+    /** The symbol for the angle made by the improper bond
+        with the plane of the other atoms */
+    Symbol _theta:
+    
+    /** The symbol for the size of the improper torsion */
+    Symbol _phi;
+};
+
+/** This class holds the symbols required for the stretch-stretch parameters */
+class SIREMM_EXPORT StretchStretchSymbols : public InternalSymbolsBase
+{
+public:
+    StretchStretchSymbols();
+    ~StretchStretchSymbols();
+    
+    const Symbol& r01() const;
+    const Symbol& r21() const;
+    
+private:
+    /** The symbol for the length of the bond 0->1 */
+    Symbol _r01:
+    
+    /** The symbol for the length of the bond 1<-2 */
+    Symbol _r21;
+};
+
+/** This class holds the symbols required for the stretch-bend parameters */
+class SIREMM_EXPORT StretchBendSymbols : public InternalSymbolsBase
+{
+public:
+    StretchBendSymbols();
+    ~StretchBendSymbols();
+    
+    const Symbol& theta() const;
+    const Symbol& r01() const;
+    const Symbol& r21() const;
+    
+private:
+    /** The symbol for the size of the angle */
+    Symbol _theta;
+
+    /** The symbol for the length of the bond 0->1 */
+    Symbol _r01:
+    
+    /** The symbol for the length of the bond 1<-2 */
+    Symbol _r21;
+};
+
+/** This class holds the symbols required for the bend-bend parameters */
+class SIREMM_EXPORT BendBendSymbols : public InternalSymbolsBase
+{
+public:
+    BendBendSymbols();
+    ~BendBendSymbols();
+    
+    const Symbol& theta012() const;
+    const Symbol& theta213() const;
+    const Symbol& theta310() const;
+    
+private:
+    /** The symbol for the size of the angle 0->1<-2 */
+    Symbol _theta012:
+    /** The symbol for the size of the angle 2->1<-3 */
+    Symbol _theta213:
+    /** The symbol for the size of the angle 3->1<-0 */
+    Symbol _theta310:
+};
+
+/** This class holds the symbols required for the stretch-bend-torsion parameters */
+class SIREMM_EXPORT StretchBendTorsionSymbols : public InternalSymbolsBase
+{
+public:
+    StretchBendTorsionSymbols();
+    ~StretchBendTorsionSymbols();
+    
+    const Symbol& phi() const;
+    
+    const Symbol& theta012() const;
+    const Symbol& theta321() const;
+    
+    const Symbol& r01() const;
+    const Symbol& r12() const;
+    const Symbol& r32() const;
+    
+private:
+    /** The symbol for the size of the torsion */
+    Symbol _phi;
+
+    /** The symbol for the angle 0->1<-2 */
+    Symbol _theta012;
+    /** The symbol for the angle 3->2<-1 */
+    Symbol _theta321;
+    
+    /** The symbol for the length of the bond 0->1 */
+    Symbol _r01:
+    /** The symbol for the length of the bond 1->2 */
+    Symbol _r12:
+    /** The symbol for the length of the bond 3->2 */
+    Symbol _r32:
+};
+
+/** This class holds all of the symbols used by all of the
+    internal parameters */
+class SIREMM_EXPORT InternalSymbols : public InternalSymbolsBase
+{
+public:
+    InternalSymbols();
+    ~InternalSymbols();
+
+    const BondSymbols& bond() const;
+    const AngleSymbols& angle() const;
+    const DihedralSymbols& dihedral() const;
+    
+    const ImproperSymbols& improper() const;
+    const BondSymbols& ureyBradley() const;
+    
+    const StretchStretchSymbols& stretchStretch() const;
+    const StretchBendSymbols& stretchBend() const;
+    const BendBendSymbols& bendBend() const;
+    const StretchBendTorsionSymbols& stretchBendTorsion() const;
+
+private:
+    BondSymbols _bond;
+    AngleSymbols _angle;
+    DihedralSymbols _dihedral;
+    ImproperSymbols _improper;
+    BondSymbols _ureybradley;
+    StretchStretchSymbols _stretchstretch;
+    StretchBendSymbols _stretchbend;
+    BendBendSymbols _bendbend;
+    StretchBendTorsionSymbols _stretchbendtorsion;
 };
 
 /** This class holds the internal parameters for a molecule
@@ -427,6 +652,8 @@ public:
     bool operator==(const InternalParameters &other) const;
     bool operator!=(const InternalParameters &other) const;
     
+    const InternalSymbols& symbols() const;
+    
     bool changedAllGroups(const InternalParameters &other) const;
 
     void addChangedGroups(const InternalParameters &other, 
@@ -465,13 +692,37 @@ private:
     GroupInternalParameters& getGroup(const detail::CGIDQuad &cgids,
                                       QHash<detail::CGIDQuad,qint32> &cached_groups);
     
+    void assertContainsOnly(const QSet<Symbol> &have_symbols,
+                            const QSet<Symbol> &test_symbols) const; 
+    
+    void addBonds(const TwoAtomFunctions &bondparams,
+                  QHash<detail::CGIDQuad,qint32> &cached_groups);
+    void addAngles(const ThreeAtomFunctions &angleparams,
+                   QHash<detail::CGIDQuad,qint32> &cached_groups);
+    void addDihedrals(const FourAtomFunctions &dihedralparams,
+                      QHash<detail::CGIDQuad,qint32> &cached_groups);
+
+    void addImpropers(const FourAtomFunctions &improperparams,
+                      QHash<detail::CGIDQuad,qint32> &cached_groups);
+    void addUBs(const TwoAtomFunctions &ubparams,
+                QHash<detail::CGIDQuad,qint32> &cached_groups);
+
+    void addSSs(const ThreeAtomFunctions &ssparams,
+                QHash<detail::CGIDQuad,qint32> &cached_groups);
+    void addSBs(const ThreeAtomFunctions &sbparams,
+                QHash<detail::CGIDQuad,qint32> &cached_groups);
+    void addBBs(const FourAtomFunctions &bbparams,
+                QHash<detail::CGIDQuad,qint32> &cached_groups);
+    void addSBTs(const FourAtomFunctions &sbtparams,
+                QHash<detail::CGIDQuad,qint32> &cached_groups);
+    
     /** All of the groups of internal parameters */
     QVector<GroupInternalParameters> group_params;
     
     /** The indicies of the groups that contains the parameters
         that involve a particular CutGroup, indexed by the CGIdx
         of that CutGroup */
-    QSet< CGIdx, QSet<qint32> > groups_by_cgidx;
+    QHash< CGIdx, QSet<qint32> > groups_by_cgidx;
 };
 
 }
