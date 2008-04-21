@@ -110,6 +110,8 @@ public:
     bool hasSource() const;
     bool hasValue() const;
 
+    bool isNull() const;
+
     const QString& source() const;
     const Property& value() const;
 

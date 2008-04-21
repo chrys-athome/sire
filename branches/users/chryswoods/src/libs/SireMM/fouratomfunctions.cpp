@@ -37,6 +37,7 @@ uint qHash(const SireMM::detail::IDQuad&);
 #include "SireCAS/symbols.h"
 
 #include "SireMol/moleculeinfodata.h"
+#include "SireMol/atomselection.h"
 
 #include "SireMol/errors.h"
 
@@ -634,7 +635,7 @@ Expression FourAtomFunctions::force(AtomIdx atom0, AtomIdx atom1,
                                     AtomIdx atom2, AtomIdx atom3,
                                     const Symbol &symbol) const
 {
-    return this->potential(atom0,atom1,atom2,atom3).differentiate(symbol);
+    return -(this->potential(atom0,atom1,atom2,atom3).differentiate(symbol));
 }
                                  
 /** Return the force (derivative of the potential with respect to 'symbol')
@@ -648,7 +649,7 @@ Expression FourAtomFunctions::force(const AtomID &atom0, const AtomID &atom1,
                                     const AtomID &atom2, const AtomID &atom3,
                                     const Symbol &symbol) const
 {
-    return this->potential(atom0,atom1,atom2,atom3).differentiate(symbol);
+    return -(this->potential(atom0,atom1,atom2,atom3).differentiate(symbol));
 }
 
 /** Return the force (derivative of the potential with respect to 'symbol')
@@ -664,7 +665,7 @@ Expression FourAtomFunctions::force(const AtomID &atom0, const AtomID &atom1,
 Expression FourAtomFunctions::force(const DihedralID &dihedralid, 
                                     const Symbol &symbol) const
 {
-    return this->potential(dihedralid).differentiate(symbol);
+    return -(this->potential(dihedralid).differentiate(symbol));
 }
 
 /** Return the force (derivative of the potential with respect to 'symbol')
@@ -680,7 +681,7 @@ Expression FourAtomFunctions::force(const DihedralID &dihedralid,
 Expression FourAtomFunctions::force(const ImproperID &improperid, 
                                     const Symbol &symbol) const
 {
-    return this->potential(improperid).differentiate(symbol);
+    return -(this->potential(improperid).differentiate(symbol));
 }
 
 /** Return the potential energy functions acting between the identified
@@ -731,9 +732,55 @@ QVector<FourAtomFunction> FourAtomFunctions::forces(const Symbol &symbol) const
                               info().cgAtomIdx( AtomIdx(it.key().atom1) ),
                               info().cgAtomIdx( AtomIdx(it.key().atom2) ),
                               info().cgAtomIdx( AtomIdx(it.key().atom3) ),
-                              force ) );
+                              -force ) );
         }
     }
     
     return forces;
+}
+
+/** Return the set of functions where only functions that involve the 
+    atoms in 'selected_atoms' are included. If 'isstrict' is true, then
+    only include functions where all of the atoms are in 'selected_atoms',
+    while if 'isstrict' is false, include functions where at least one
+    atom is in 'selected_atoms' */
+FourAtomFunctions FourAtomFunctions::includeOnly(const AtomSelection &selected_atoms,
+                                                 bool isstrict) const
+{
+    FourAtomFunctions ret(*this);
+
+    QMutableHashIterator<IDQuad,Expression> it(ret.potentials_by_atoms);
+
+    if (isstrict)
+    {
+        while (it.hasNext())
+        {
+            it.next();
+            
+            if (not (selected_atoms.selected(AtomIdx(it.key().atom0)) and
+                     selected_atoms.selected(AtomIdx(it.key().atom1)) and
+                     selected_atoms.selected(AtomIdx(it.key().atom2)) and
+                     selected_atoms.selected(AtomIdx(it.key().atom3)) ) )
+            {
+                it.remove();
+            }
+        }
+    }
+    else
+    {
+        while (it.hasNext())
+        {
+            it.next();
+            
+            if (not (selected_atoms.selected(AtomIdx(it.key().atom0)) or
+                     selected_atoms.selected(AtomIdx(it.key().atom1)) or
+                     selected_atoms.selected(AtomIdx(it.key().atom2)) or
+                     selected_atoms.selected(AtomIdx(it.key().atom3)) ) )
+            {
+                it.remove();
+            }
+        }
+    }
+    
+    return ret;
 }

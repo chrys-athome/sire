@@ -32,9 +32,12 @@ namespace SireMM { namespace detail { class CGIDQuad; } }
 
 uint qHash(const SireMM::detail::CGIDQuad&);
 
+#include <algorithm>
+
 #include "internalparameters.h"
 
 #include "SireMol/partialmolecule.h"
+#include "SireMol/mover.hpp"
 
 using namespace SireMM;
 using namespace SireMM::detail;
@@ -49,14 +52,1391 @@ using namespace SireStream;
 ////////// Implementation of SireMM::detail::CGIDQuad
 //////////
 
+/** Serialise to a binary datastream */
+QDataStream& operator<<(QDataStream &ds, const CGIDQuad &quad)
+{
+    ds << quad.cgIdx0() << quad.cgIdx1()
+       << quad.cgIdx2() << quad.cgIdx3();
+       
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream& operator>>(QDataStream &ds, CGIDQuad &quad)
+{
+    CGIdx cgidx0, cgidx1, cgidx2, cgidx3;
+    
+    ds >> cgidx0 >> cgidx1 >> cgidx2 >> cgidx3;
+    
+    quad = CGIDQuad(cgidx0, cgidx1, cgidx2, cgidx3);
+    
+    return ds;
+}
+
+/** Constructor */
+CGIDQuad::CGIDQuad()
+{}
+
+/** Construct the ID for a single CutGroup */
+CGIDQuad::CGIDQuad(CGIdx cg0)
+{
+    cgidxs[0] = cg0;
+    cgidxs[1] = cg0;
+    cgidxs[2] = cg0;
+    cgidxs[3] = cg0;
+}
+
+/** Construct the ID for a pair of CutGroups */
+CGIDQuad::CGIDQuad(CGIdx cg0, CGIdx cg1)
+{
+    if (cg0 <= cg1)
+    {
+        cgidxs[0] = cg0;
+        cgidxs[1] = cg1;
+    }
+    else
+    {
+        cgidxs[0] = cg1;
+        cgidxs[1] = cg0;
+    }
+
+    cgidxs[2] = cgidxs[1];
+    cgidxs[3] = cgidxs[1];
+}
+
+/** Construct the ID for a triple of CutGroups */
+CGIDQuad::CGIDQuad(CGIdx cg0, CGIdx cg1, CGIdx cg2)
+{
+    cgidxs[0] = cg0;
+    cgidxs[1] = cg1;
+    cgidxs[2] = cg2;
+    
+    std::sort(cgidxs, cgidxs+2);
+    
+    cgidxs[3] = cgidxs[2];
+    
+    if (cgidxs[0] == cgidxs[1])
+        cgidxs[1] = cgidxs[2];
+}
+
+/** Construct the ID for a quadruplet of CutGroups */
+CGIDQuad::CGIDQuad(CGIdx cg0, CGIdx cg1, CGIdx cg2, CGIdx cg3)
+{
+    cgidxs[0] = cg0;
+    cgidxs[1] = cg1;
+    cgidxs[2] = cg2;
+    cgidxs[3] = cg3;
+    
+    std::sort(cgidxs, cgidxs+3);
+    
+    if (cgidxs[0] == cgidxs[1])
+    {
+        cgidxs[1] = cgidxs[2];
+        cgidxs[2] = cgidxs[3];
+    }
+    
+    if (cgidxs[1] == cgidxs[2])
+        cgidxs[2] = cgidxs[3];
+}
+
+/** Copy constructor */
+CGIDQuad::CGIDQuad(const CGIDQuad &other)
+{
+    cgidxs[0] = other.cgidxs[0];
+    cgidxs[1] = other.cgidxs[1];
+    cgidxs[2] = other.cgidxs[2];
+    cgidxs[3] = other.cgidxs[3];
+}
+
+/** Destructor */
+CGIDQuad::~CGIDQuad()
+{}
+
+/** Copy assignment operator */
+CGIDQuad& CGIDQuad::operator=(const CGIDQuad &other)
+{
+    if (this != &other)
+    {
+        cgidxs[0] = other.cgidxs[0];
+        cgidxs[1] = other.cgidxs[1];
+        cgidxs[2] = other.cgidxs[2];
+        cgidxs[3] = other.cgidxs[3];
+    }
+
+    return *this;
+}
+
+/** Comparison operator */
+bool CGIDQuad::operator==(const CGIDQuad &other) const
+{
+    return cgidxs[0] == other.cgidxs[0] and cgidxs[1] == other.cgidxs[1] and
+           cgidxs[2] == other.cgidxs[2] and cgidxs[3] == other.cgidxs[3];
+}
+
+/** Comparison operator */
+bool CGIDQuad::operator!=(const CGIDQuad &other) const
+{
+    return cgidxs[0] != other.cgidxs[0] or cgidxs[1] != other.cgidxs[1] or
+           cgidxs[2] != other.cgidxs[2] or cgidxs[3] != other.cgidxs[3];
+}
+
+/** Return whether this IDs only a single CutGroup */
+bool CGIDQuad::isSingleCutGroup() const
+{
+    return cgidxs[0] == cgidxs[1];
+}
+
+/** Return whether this IDs a pair of CutGroups */
+bool CGIDQuad::isDoubleCutGroup() const
+{
+    return cgidxs[1] == cgidxs[2];
+}
+
+/** Return whether this IDs a triple of CutGroups */
+bool CGIDQuad::isTripleCutGroup() const
+{
+    return cgidxs[2] == cgidxs[3];
+}
+
+/** Return whether this IDs four distinct CutGroups */
+bool CGIDQuad::isQuadrupleCutGroup() const
+{
+    return cgidxs[2] != cgidxs[3];
+}
+
+/** Return the index of the first identified CutGroup */
+CGIdx CGIDQuad::cgIdx0() const
+{
+    return cgidxs[0];
+}
+
+/** Return the index of the first identified CutGroup */
+CGIdx CGIDQuad::cgIdx1() const
+{
+    return cgidxs[1];
+}
+
+/** Return the index of the first identified CutGroup */
+CGIdx CGIDQuad::cgIdx2() const
+{
+    return cgidxs[2];
+}
+
+/** Return the index of the first identified CutGroup */
+CGIdx CGIDQuad::cgIdx3() const
+{
+    return cgidxs[3];
+}
+
+/** Return a hash of this ID */
+uint CGIDQuad::hash() const
+{
+    return ( quint32(cgidxs[0]) << 24 ) |
+           ( (quint32(cgidxs[1]) << 16) & 0x00FF0000 ) |
+           ( (quint32(cgidxs[2]) <<  8) & 0x0000FF00 ) |
+           ( quint32(cgidxs[3]) & 0x000000FF );
+}
+
 uint qHash(const CGIDQuad &idquad)
 {
     return idquad.hash();
 }
 
 //////////
+////////// Implementation of GroupInternalNonPhysParameters
+//////////
+
+/** Serialise to a binary datastream */
+QDataStream& operator<<(QDataStream &ds,
+                        const GroupInternalNonPhysParameters &group)
+{
+    SharedDataStream sds(ds);
+    
+    sds << group.improper_params
+        << group.improper_theta_forces << group.improper_phi_forces
+        << group.ub_params << group.ub_forces;
+        
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream& operator>>(QDataStream &ds,
+                        GroupInternalNonPhysParameters &group)
+{
+    SharedDataStream sds(ds);
+    
+    sds >> group.improper_params
+        >> group.improper_theta_forces >> group.improper_phi_forces
+        >> group.ub_params >> group.ub_forces;
+        
+    return ds;
+}
+
+/** Constructor */
+GroupInternalNonPhysParameters::GroupInternalNonPhysParameters()
+                               : QSharedData()
+{}
+
+GroupInternalNonPhysParameters::GroupInternalNonPhysParameters(
+                                    const GroupInternalNonPhysParameters &other)
+        : QSharedData(),
+          improper_params(other.improper_params),
+          improper_theta_forces(other.improper_theta_forces),
+          improper_phi_forces(other.improper_phi_forces),
+          ub_params(other.ub_params), ub_forces(other.ub_forces)
+{}
+
+/** Destructor */
+GroupInternalNonPhysParameters::~GroupInternalNonPhysParameters()
+{}
+
+/** Copy assignment operator */
+GroupInternalNonPhysParameters& GroupInternalNonPhysParameters::operator=(
+                                        const GroupInternalNonPhysParameters &other)
+{
+    if (this != &other)
+    {
+        improper_params = other.improper_params;
+        improper_theta_forces = other.improper_theta_forces;
+        improper_phi_forces = other.improper_phi_forces;
+        
+        ub_params = other.ub_params;
+        ub_forces = other.ub_forces;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool GroupInternalNonPhysParameters::operator==(
+                            const GroupInternalNonPhysParameters &other) const
+{
+    return improper_params == other.improper_params and
+           ub_params == other.ub_params;
+}
+
+/** Comparison operator */
+bool GroupInternalNonPhysParameters::operator!=(
+                            const GroupInternalNonPhysParameters &other) const
+{
+    return not this->operator==(other);
+}
+
+//////////
+////////// Implementation of GroupInternalCrossParameters
+//////////
+
+/** Serialise to a binary datastream */
+QDataStream& operator<<(QDataStream &ds,
+                        const GroupInternalCrossParameters &group)
+{
+    SharedDataStream sds(ds);
+    
+    sds << group.stretch_stretch_params << group.stretch_stretch_r01_forces
+        << group.stretch_stretch_r21_forces
+
+        << group.stretch_bend_params << group.stretch_bend_theta_forces
+        << group.stretch_bend_r01_forces << group.stretch_bend_r21_forces
+    
+        << group.bend_bend_params << group.bend_bend_theta012_forces
+        << group.bend_bend_theta213_forces << group.bend_bend_theta310_forces
+
+        << group.stretch_bend_torsion_params
+        << group.stretch_bend_torsion_phi_forces
+        << group.stretch_bend_torsion_r01_forces
+        << group.stretch_bend_torsion_r12_forces
+        << group.stretch_bend_torsion_r32_forces
+        << group.stretch_bend_torsion_r03_forces
+        << group.stretch_bend_torsion_theta012_forces
+        << group.stretch_bend_torsion_theta321_forces;
+
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream& operator>>(QDataStream &ds,
+                        GroupInternalCrossParameters &group)
+{
+    SharedDataStream sds(ds);
+    
+    sds >> group.stretch_stretch_params >> group.stretch_stretch_r01_forces
+        >> group.stretch_stretch_r21_forces
+
+        >> group.stretch_bend_params >> group.stretch_bend_theta_forces
+        >> group.stretch_bend_r01_forces >> group.stretch_bend_r21_forces
+    
+        >> group.bend_bend_params >> group.bend_bend_theta012_forces
+        >> group.bend_bend_theta213_forces >> group.bend_bend_theta310_forces
+
+        >> group.stretch_bend_torsion_params
+        >> group.stretch_bend_torsion_phi_forces
+        >> group.stretch_bend_torsion_r01_forces
+        >> group.stretch_bend_torsion_r12_forces
+        >> group.stretch_bend_torsion_r32_forces
+        >> group.stretch_bend_torsion_r03_forces
+        >> group.stretch_bend_torsion_theta012_forces
+        >> group.stretch_bend_torsion_theta321_forces;
+
+    return ds;
+}
+
+/** Constructor */
+GroupInternalCrossParameters::GroupInternalCrossParameters()
+                             : QSharedData()
+{}
+
+/** Copy constructor */
+GroupInternalCrossParameters::GroupInternalCrossParameters(
+                                    const GroupInternalCrossParameters &other)
+    : QSharedData(),
+      stretch_stretch_params(other.stretch_stretch_params),
+      stretch_stretch_r01_forces(other.stretch_stretch_r01_forces),
+      stretch_stretch_r21_forces(other.stretch_stretch_r21_forces),
+      stretch_bend_params(other.stretch_bend_params),
+      stretch_bend_theta_forces(other.stretch_bend_theta_forces),
+      stretch_bend_r01_forces(other.stretch_bend_r01_forces),
+      stretch_bend_r21_forces(other.stretch_bend_r21_forces),
+      bend_bend_params(other.bend_bend_params),
+      bend_bend_theta012_forces(other.bend_bend_theta012_forces),
+      bend_bend_theta213_forces(other.bend_bend_theta213_forces),
+      bend_bend_theta310_forces(other.bend_bend_theta310_forces),
+      stretch_bend_torsion_params(other.stretch_bend_torsion_params),
+      stretch_bend_torsion_phi_forces(other.stretch_bend_torsion_phi_forces),
+      stretch_bend_torsion_r01_forces(other.stretch_bend_torsion_r01_forces),
+      stretch_bend_torsion_r12_forces(other.stretch_bend_torsion_r12_forces),
+      stretch_bend_torsion_r32_forces(other.stretch_bend_torsion_r32_forces),
+      stretch_bend_torsion_r03_forces(other.stretch_bend_torsion_r03_forces),
+      stretch_bend_torsion_theta012_forces(other.stretch_bend_torsion_theta012_forces),
+      stretch_bend_torsion_theta321_forces(other.stretch_bend_torsion_theta321_forces)
+{}
+
+/** Destructor */    
+GroupInternalCrossParameters::~GroupInternalCrossParameters()
+{}
+  
+/** Copy assignment operator */  
+GroupInternalCrossParameters& GroupInternalCrossParameters::operator=(
+                                        const GroupInternalCrossParameters &other)
+{
+    if (this != &other)
+    {
+      stretch_stretch_params = other.stretch_stretch_params;
+      stretch_stretch_r01_forces = other.stretch_stretch_r01_forces;
+      stretch_stretch_r21_forces = other.stretch_stretch_r21_forces;
+      stretch_bend_params = other.stretch_bend_params;
+      stretch_bend_theta_forces = other.stretch_bend_theta_forces;
+      stretch_bend_r01_forces = other.stretch_bend_r01_forces;
+      stretch_bend_r21_forces = other.stretch_bend_r21_forces;
+      bend_bend_params = other.bend_bend_params;
+      bend_bend_theta012_forces = other.bend_bend_theta012_forces;
+      bend_bend_theta213_forces = other.bend_bend_theta213_forces;
+      bend_bend_theta310_forces = other.bend_bend_theta310_forces;
+      stretch_bend_torsion_params = other.stretch_bend_torsion_params;
+      stretch_bend_torsion_phi_forces = other.stretch_bend_torsion_phi_forces;
+      stretch_bend_torsion_r01_forces = other.stretch_bend_torsion_r01_forces;
+      stretch_bend_torsion_r12_forces = other.stretch_bend_torsion_r12_forces;
+      stretch_bend_torsion_r32_forces = other.stretch_bend_torsion_r32_forces;
+      stretch_bend_torsion_r03_forces = other.stretch_bend_torsion_r03_forces;
+      stretch_bend_torsion_theta012_forces = other.stretch_bend_torsion_theta012_forces;
+      stretch_bend_torsion_theta321_forces = other.stretch_bend_torsion_theta321_forces;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool GroupInternalCrossParameters::operator==(
+                                    const GroupInternalCrossParameters &other) const
+{
+    return stretch_stretch_params == other.stretch_stretch_params and
+           stretch_bend_params == other.stretch_bend_params and
+           bend_bend_params == other.bend_bend_params and
+           stretch_bend_torsion_params == other.stretch_bend_torsion_params;
+}
+
+//////////
+////////// Implementation of GroupInternalParametersData
+//////////
+
+/** Serialise to a binary datastream */
+QDataStream& operator<<(QDataStream &ds,
+                        const GroupInternalParametersData &group)
+{
+    SharedDataStream sds(ds);
+    
+    sds << group.idquad 
+        << group.bond_params << group.bond_forces
+        << group.angle_params << group.angle_forces
+        << group.dihedral_params << group.dihedral_forces
+        << group.nonphys_terms << group.cross_terms;
+        
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream& operator>>(QDataStream &ds,
+                        GroupInternalParametersData &group)
+{
+    SharedDataStream sds(ds);
+    
+    sds >> group.idquad
+        >> group.bond_params >> group.bond_forces
+        >> group.angle_params >> group.angle_forces
+        >> group.dihedral_params >> group.dihedral_forces
+        >> group.nonphys_terms >> group.cross_terms;
+        
+    return ds;
+}
+
+static QSharedDataPointer<GroupInternalNonPhysParameters> 
+                    null_nonphys( new GroupInternalNonPhysParameters() );
+
+static QSharedDataPointer<GroupInternalCrossParameters>
+                    null_cross( new GroupInternalCrossParameters() );
+
+/** Constructor */
+GroupInternalParametersData::GroupInternalParametersData()
+                            : QSharedData(),
+                              nonphys_terms( null_nonphys ),
+                              cross_terms( null_cross )
+{}
+
+/** Construct for the specified combination of CutGroups */
+GroupInternalParametersData::GroupInternalParametersData(const CGIDQuad &cgids)
+                            : QSharedData(),
+                              idquad(cgids),
+                              nonphys_terms( null_nonphys ),
+                              cross_terms( null_cross )
+{}                              
+
+/** Copy constructor */
+GroupInternalParametersData::GroupInternalParametersData(
+                                       const GroupInternalParametersData &other)
+      : QSharedData(),
+        idquad(other.idquad),
+        bond_params(other.bond_params), bond_forces(other.bond_forces),
+        angle_params(other.angle_params), angle_forces(other.angle_forces),
+        dihedral_params(other.dihedral_params), dihedral_forces(other.dihedral_forces),
+        nonphys_terms(other.nonphys_terms),
+        cross_terms(other.cross_terms)
+{}
+
+/** Destructor */
+GroupInternalParametersData::~GroupInternalParametersData()
+{}
+
+/** Copy assignment operator */
+GroupInternalParametersData& GroupInternalParametersData::operator=(
+                                        const GroupInternalParametersData &other)
+{
+    if (this != &other)
+    {
+        idquad = other.idquad;
+        bond_params = other.bond_params;
+        bond_forces = other.bond_forces;
+        angle_params = other.angle_params;
+        angle_forces = other.angle_forces;
+        dihedral_params = other.dihedral_params;
+        dihedral_forces = other.dihedral_forces;
+        nonphys_terms = other.nonphys_terms;
+        cross_terms = other.cross_terms;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool GroupInternalParametersData::operator==(
+                                    const GroupInternalParametersData &other) const
+{
+    return idquad == other.idquad and 
+           bond_params == other.bond_params and
+           angle_params == other.angle_params and
+           dihedral_params == other.dihedral_params and
+           
+           (nonphys_terms.constData() == other.nonphys_terms.constData() or
+            *(nonphys_terms) == *(other.nonphys_terms)) and
+            
+           (cross_terms.constData() == other.cross_terms.constData() or
+            *(cross_terms) == *(other.cross_terms));
+}
+
+/** Comparison operator */
+bool GroupInternalParametersData::operator!=(
+                            const GroupInternalParametersData &other) const
+{
+    return not this->operator==(other);
+}
+
+/** Return whether or not this group has any cross terms */
+bool GroupInternalParametersData::hasCrossTerms() const
+{
+    return cross_terms.constData() != null_cross.constData();
+}
+
+/** Return whether or not this group has any non-physical parameters */
+bool GroupInternalParametersData::hasNonPhysicalParameters() const
+{
+    return nonphys_terms.constData() != null_nonphys.constData();
+}
+
+//////////
+////////// Implementation of GroupInternalParameters
+//////////
+
+/** Serialise to a binary datastream */
+QDataStream& operator<<(QDataStream &ds,
+                        const GroupInternalParameters &group)
+{
+    SharedDataStream sds(ds);
+    sds << group.d;
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream& operator>>(QDataStream &ds,
+                        GroupInternalParameters &group)
+{
+    SharedDataStream sds(ds);
+    sds >> group.d;
+    
+    return ds;
+}
+
+static QSharedDataPointer<GroupInternalParametersData>
+                            null_data( new GroupInternalParametersData() );
+
+/** Constructor */
+GroupInternalParameters::GroupInternalParameters()
+                        : d(null_data)
+{}
+
+/** Construct for the specified CutGroups */
+GroupInternalParameters::GroupInternalParameters(const detail::CGIDQuad &cgids)
+                        : d( new GroupInternalParametersData(cgids) )
+{}
+
+/** Copy constructor */
+GroupInternalParameters::GroupInternalParameters(const GroupInternalParameters &other)
+                        : d(other.d)
+{}
+
+/** Destructor */
+GroupInternalParameters::~GroupInternalParameters()
+{}
+
+/** Copy assignment operator */
+GroupInternalParameters& GroupInternalParameters::operator=(
+                                                const GroupInternalParameters &other)
+{
+    d = other.d;
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool GroupInternalParameters::operator==(const GroupInternalParameters &other) const
+{
+    return d.constData() == other.d.constData() or
+           *d == *(other.d);
+}
+
+/** Comparison operator */
+bool GroupInternalParameters::operator!=(const GroupInternalParameters &other) const
+{
+    return d.constData() != other.d.constData() and
+           *d != *(other.d);
+}
+
+/** Return whether or not this has any physical parameters
+    (bond, angle or dihedral) */
+bool GroupInternalParameters::hasPhysicalParameters() const
+{
+    return not (d->bond_params.isEmpty() and d->angle_params.isEmpty() and
+                d->dihedral_params.isEmpty());
+}
+
+/** Return whether or not this has any non-physical parameters
+    (Urey-Bradley or improper terms) */
+bool GroupInternalParameters::hasNonPhysicalParameters() const
+{
+    return d->hasNonPhysicalParameters();
+}
+
+/** Return whether or not this has any cross terms
+    (stretch-stretch, stretch-bend, bend-bend, stretch-bend-torsion) */
+bool GroupInternalParameters::hasCrossTerms() const
+{
+    return d->hasCrossTerms();
+}
+
+/** Return whether this group is empty (contains no parameters) */
+bool GroupInternalParameters::isEmpty() const
+{
+    return d.constData() == null_data.constData() or
+           not (this->hasPhysicalParameters() or
+                this->hasNonPhysicalParameters() or
+                this->hasCrossTerms());
+}
+
+/** Return whether or not this group contains parameters from only
+    a single CutGroup */
+bool GroupInternalParameters::isSingleCutGroup() const
+{
+    return d->idquad.isSingleCutGroup();
+}
+
+/** Return whether or not this group contains parameters from only
+    two CutGroups */
+bool GroupInternalParameters::isDoubleCutGroup() const
+{
+    return d->idquad.isDoubleCutGroup();
+}
+
+/** Return whether or not this group contains parameters from only
+    three CutGroups */
+bool GroupInternalParameters::isTripleCutGroup() const
+{
+    return d->idquad.isTripleCutGroup();
+}
+
+/** Return whether or not this group contains parameters from
+    four CutGroups */
+bool GroupInternalParameters::isQuadrupleCutGroup() const
+{
+    return d->idquad.isQuadrupleCutGroup();
+}
+
+/** Return whether or not this group contains parameters from
+    only a single CutGroup, with index 'cgidx0' */
+bool GroupInternalParameters::isSingleCutGroup(CGIdx cgidx0) const
+{
+    return d->idquad == CGIDQuad(cgidx0);
+}
+
+/** Return whether or not this group contains parameters from
+    only two CutGroups, with indicies 'cgidx0' and 'cgidx1' */
+bool GroupInternalParameters::isDoubleCutGroup(CGIdx cgidx0, CGIdx cgidx1) const
+{
+    return d->idquad == CGIDQuad(cgidx0,cgidx1);
+}
+
+/** Return whether or not this group contains parameters from
+    three CutGroups, with indicies 'cgidx0', 'cgidx1' and 'cgidx2' */
+bool GroupInternalParameters::isTripleCutGroup(CGIdx cgidx0, CGIdx cgidx1, 
+                                               CGIdx cgidx2) const
+{
+    return d->idquad == CGIDQuad(cgidx0,cgidx1,cgidx2);
+}
+
+/** Return whether or not this group contains parameters from
+    four CutGroups, with indicies 'cgidx0', 'cgidx1', 'cgidx2' and 'cgidx3' */
+bool GroupInternalParameters::isQuadrupleCutGroup(CGIdx cgidx0, CGIdx cgidx1,
+                                                  CGIdx cgidx2, CGIdx cgidx3) const
+{
+    return d->idquad == CGIDQuad(cgidx0,cgidx1,cgidx2,cgidx3);
+}
+
+/** Return whether or not this group contains parameters 
+    that involve atoms in the CutGroup at index 'cgidx' */
+bool GroupInternalParameters::refersTo(CGIdx cgidx) const
+{
+    return d->idquad.cgIdx0() == cgidx or
+           d->idquad.cgIdx1() == cgidx or
+           d->idquad.cgIdx2() == cgidx or
+           d->idquad.cgIdx3() == cgidx;
+}
+
+/** Return whether or not this group contains parameters
+    that involve atoms in any of the CutGroups whose indicies are
+    in 'cgidxs' */
+bool GroupInternalParameters::refersTo(const QSet<CGIdx> &cgidxs) const
+{
+    foreach (CGIdx cgidx, cgidxs)
+    {
+        if (this->refersTo(cgidx))
+            return true;
+    }
+    
+    return false;
+}
+
+/** Return the index of the first group */
+CGIdx GroupInternalParameters::cgIdx0() const
+{
+    return d->idquad.cgIdx0();
+}
+
+/** Return the index of the first group */
+CGIdx GroupInternalParameters::cgIdx1() const
+{
+    return d->idquad.cgIdx1();
+}
+
+/** Return the index of the first group */
+CGIdx GroupInternalParameters::cgIdx2() const
+{
+    return d->idquad.cgIdx2();
+}
+
+/** Return the index of the first group */
+CGIdx GroupInternalParameters::cgIdx3() const
+{
+    return d->idquad.cgIdx3();
+}
+
+/** Return all of the bond potentials for this group */
+const QVector<TwoAtomFunction>& GroupInternalParameters::bondPotential() const
+{
+    return d->bond_params;
+}
+
+/** Return the bond force ( -dE/dr ) */
+const QVector<TwoAtomFunction>& GroupInternalParameters::bondForces() const
+{
+    return d->bond_forces;
+}
+
+/** Return the angle potentials for this group */
+const QVector<ThreeAtomFunction>& GroupInternalParameters::anglePotential() const
+{
+    return d->angle_params;
+}
+
+/** Return the angle force ( -dE/dtheta ) */
+const QVector<ThreeAtomFunction>& GroupInternalParameters::angleForces() const
+{
+    return d->angle_forces;
+}
+
+/** Return the dihedral potentials for this group */
+const QVector<FourAtomFunction>& GroupInternalParameters::dihedralPotential() const
+{
+    return d->dihedral_params;
+}
+
+/** Return the dihedral force ( -dE/dphi ) */
+const QVector<FourAtomFunction>& GroupInternalParameters::dihedralForces() const
+{
+    return d->dihedral_forces;
+}
+
+/** Return the improper potentials for this group */
+const QVector<FourAtomFunction>& GroupInternalParameters::improperPotential() const
+{
+    return d->nonphys_terms->improper_params;
+}
+
+/** Return the improper force ( -dE/dtheta ) */
+const QVector<FourAtomFunction>& GroupInternalParameters::improper_Theta_Forces() const
+{
+    return d->nonphys_terms->improper_theta_forces;
+}
+
+/** Return the improper force ( -dE/dphi ) */
+const QVector<FourAtomFunction>& GroupInternalParameters::improper_Phi_Forces() const
+{
+    return d->nonphys_terms->improper_phi_forces;
+}
+
+/** Return the Urey-Bradley potentials for this group */
+const QVector<TwoAtomFunction>& GroupInternalParameters::ureyBradleyPotential() const
+{
+    return d->nonphys_terms->ub_params;
+}
+
+/** Return the Urey-Bradley force ( -dE/dr ) */
+const QVector<TwoAtomFunction>& GroupInternalParameters::ureyBradleyForces() const
+{
+    return d->nonphys_terms->ub_forces;
+}
+
+/** Return the stretch-stretch potentials for this group */
+const QVector<ThreeAtomFunction>& 
+GroupInternalParameters::stretchStretchPotential() const
+{
+    return d->cross_terms->stretch_stretch_params;
+}
+
+/** Return the stretch-stretch force ( -dE/dr_01 ) */
+const QVector<ThreeAtomFunction>& 
+GroupInternalParameters::stretchStretch_R01_Forces() const
+{
+    return d->cross_terms->stretch_stretch_r01_forces;
+}
+
+/** Return the stretch-stretch force ( -dE/dr_01 ) */
+const QVector<ThreeAtomFunction>& 
+GroupInternalParameters::stretchStretch_R21_Forces() const
+{
+    return d->cross_terms->stretch_stretch_r01_forces;
+}
+
+/** Return the stretch-bend potentials for this group */
+const QVector<ThreeAtomFunction>& 
+GroupInternalParameters::stretchBendPotential() const
+{
+    return d->cross_terms->stretch_bend_params;
+}
+
+/** Return the stretch-bend force ( -dE/dtheta ) */
+const QVector<ThreeAtomFunction>& 
+GroupInternalParameters::stretchBend_Theta_Forces() const
+{
+    return d->cross_terms->stretch_bend_theta_forces;
+}
+
+/** Return the stretch-bend force ( -dE/dtheta ) */
+const QVector<ThreeAtomFunction>& 
+GroupInternalParameters::stretchBend_R01_Forces() const
+{
+    return d->cross_terms->stretch_bend_r01_forces;
+}
+
+/** Return the stretch-bend force ( -dE/dtheta ) */
+const QVector<ThreeAtomFunction>& 
+GroupInternalParameters::stretchBend_R21_Forces() const
+{
+    return d->cross_terms->stretch_bend_r21_forces;
+}
+
+/** Return the bend-bend potentials for this group */
+const QVector<FourAtomFunction>& 
+GroupInternalParameters::bendBendPotential() const
+{
+    return d->cross_terms->bend_bend_params;
+}
+
+/** Return bend-bend force ( -dE/dtheta_012 ) */
+const QVector<FourAtomFunction>& 
+GroupInternalParameters::bendBend_Theta012_Forces() const
+{
+    return d->cross_terms->bend_bend_theta012_forces;
+}
+
+/** Return bend-bend force ( -dE/dtheta_012 ) */
+const QVector<FourAtomFunction>& 
+GroupInternalParameters::bendBend_Theta213_Forces() const
+{
+    return d->cross_terms->bend_bend_theta213_forces;
+}
+
+/** Return bend-bend force ( -dE/dtheta_012 ) */
+const QVector<FourAtomFunction>& 
+GroupInternalParameters::bendBend_Theta310_Forces() const
+{
+    return d->cross_terms->bend_bend_theta310_forces;
+}
+
+/** Return the stretch-bend-torsion potentials for this group */
+const QVector<FourAtomFunction>& 
+GroupInternalParameters::stretchBendTorsionPotential() const
+{
+    return d->cross_terms->stretch_bend_torsion_params;
+}
+
+/** Return the stretch-bend-torsion force ( -dE/dphi ) */
+const QVector<FourAtomFunction>& 
+GroupInternalParameters::stretchBendTorsion_Phi_Forces() const
+{
+    return d->cross_terms->stretch_bend_torsion_phi_forces;
+}
+
+/** Return the stretch-bend-torsion force ( -dE/dr_01 ) */
+const QVector<FourAtomFunction>& 
+GroupInternalParameters::stretchBendTorsion_R01_Forces() const
+{
+    return d->cross_terms->stretch_bend_torsion_r01_forces;
+}
+
+/** Return the stretch-bend-torsion force ( -dE/dr_12 ) */
+const QVector<FourAtomFunction>& 
+GroupInternalParameters::stretchBendTorsion_R12_Forces() const
+{
+    return d->cross_terms->stretch_bend_torsion_r12_forces;
+}
+
+/** Return the stretch-bend-torsion force ( -dE/dr_32 ) */
+const QVector<FourAtomFunction>& 
+GroupInternalParameters::stretchBendTorsion_R32_Forces() const
+{
+    return d->cross_terms->stretch_bend_torsion_r32_forces;
+}
+
+/** Return the stretch-bend-torsion force ( -dE/dr_03 ) */
+const QVector<FourAtomFunction>& 
+GroupInternalParameters::stretchBendTorsion_R03_Forces() const
+{
+    return d->cross_terms->stretch_bend_torsion_r03_forces;
+}
+
+/** Return the stretch-bend-torsion force ( -dE/dtheta_012 ) */
+const QVector<FourAtomFunction>& 
+GroupInternalParameters::stretchBendTorsion_Theta012_Forces() const
+{
+    return d->cross_terms->stretch_bend_torsion_theta012_forces;
+}
+
+/** Return the stretch-bend-torsion force ( -dE/dtheta_321 ) */
+const QVector<FourAtomFunction>& 
+GroupInternalParameters::stretchBendTorsion_Theta321_Forces() const
+{
+    return d->cross_terms->stretch_bend_torsion_theta321_forces;
+}
+
+/** Internal function used to set the bond parameters */
+void GroupInternalParameters::setBondPotential(
+                                    const QVector<TwoAtomFunction> &potential,
+                                    const QVector<TwoAtomFunction> &forces)
+{
+    d->bond_params = potential;
+    d->bond_forces = forces;
+}
+                       
+/** Internal function used to set the angle parameters */
+void GroupInternalParameters::setAnglePotential(
+                                    const QVector<ThreeAtomFunction> &potential,
+                                    const QVector<ThreeAtomFunction> &forces)
+{
+    d->angle_params = potential;
+    d->angle_forces = forces;
+}
+
+/** Internal function used to set the dihedral parameters */
+void GroupInternalParameters::setDihedralPotential(
+                                    const QVector<FourAtomFunction> &potential,
+                                    const QVector<FourAtomFunction> &forces)
+{
+    d->dihedral_params = potential;
+    d->dihedral_forces = forces;
+}
+
+/** Internal function used to set the improper parameters */
+void GroupInternalParameters::setImproperPotential(
+                                const QVector<FourAtomFunction> &potential,
+                                const QVector<FourAtomFunction> &theta_forces,
+                                const QVector<FourAtomFunction> &phi_forces)
+{
+    d->nonphys_terms->improper_params = potential;
+    d->nonphys_terms->improper_theta_forces = theta_forces;
+    d->nonphys_terms->improper_phi_forces = phi_forces;
+}
+                           
+/** Internal function used to set the Urey-Bradley parameters */
+void GroupInternalParameters::setUreyBradleyPotential(
+                                const QVector<TwoAtomFunction> &potential,
+                                const QVector<TwoAtomFunction> &forces)
+{
+    d->nonphys_terms->ub_params = potential;
+    d->nonphys_terms->ub_forces = forces;
+}
+
+/** Internal function used to set the stretch-stretch parameters */
+void GroupInternalParameters::setStretchStretchPotential(
+                                const QVector<ThreeAtomFunction> &potential,
+                                const QVector<ThreeAtomFunction> &r01_forces,
+                                const QVector<ThreeAtomFunction> &r21_forces)
+{
+    d->cross_terms->stretch_stretch_params = potential;
+    d->cross_terms->stretch_stretch_r01_forces = r01_forces;
+    d->cross_terms->stretch_stretch_r21_forces = r21_forces;
+}
+                                 
+/** Internal function used to set the stretch-bend parameters */
+void GroupInternalParameters::setStretchBendPotential(
+                                const QVector<ThreeAtomFunction> &potential,
+                                const QVector<ThreeAtomFunction> &theta_forces,
+                                const QVector<ThreeAtomFunction> &r01_forces,
+                                const QVector<ThreeAtomFunction> &r21_forces)
+{
+    d->cross_terms->stretch_bend_params = potential;
+    d->cross_terms->stretch_bend_theta_forces = theta_forces;
+    d->cross_terms->stretch_bend_r01_forces = r01_forces;
+    d->cross_terms->stretch_bend_r21_forces = r21_forces;
+}
+                              
+/** Internal function used to set the bend-bend parameters */
+void GroupInternalParameters::setBendBendPotential(
+                                const QVector<FourAtomFunction> &potential,
+                                const QVector<FourAtomFunction> &theta012_forces,
+                                const QVector<FourAtomFunction> &theta213_forces,
+                                const QVector<FourAtomFunction> &theta310_forces)
+{
+    d->cross_terms->bend_bend_params = potential;
+    d->cross_terms->bend_bend_theta012_forces = theta012_forces;
+    d->cross_terms->bend_bend_theta213_forces = theta213_forces;
+    d->cross_terms->bend_bend_theta310_forces = theta310_forces;
+}
+
+/** Internal function used to set the stretch-bend-torsion parameters */
+void GroupInternalParameters::setStretchBendTorsionPotential(
+                                 const QVector<FourAtomFunction> &potential,
+                                 const QVector<FourAtomFunction> &phi_forces,
+                                 const QVector<FourAtomFunction> &r01_forces,
+                                 const QVector<FourAtomFunction> &r12_forces,
+                                 const QVector<FourAtomFunction> &r32_forces,
+                                 const QVector<FourAtomFunction> &theta012_forces,
+                                 const QVector<FourAtomFunction> &theta321_forces)
+{
+    d->cross_terms->stretch_bend_torsion_params = potential;
+    d->cross_terms->stretch_bend_torsion_phi_forces = phi_forces;
+    d->cross_terms->stretch_bend_torsion_r01_forces = r01_forces;
+    d->cross_terms->stretch_bend_torsion_r12_forces = r12_forces;
+    d->cross_terms->stretch_bend_torsion_r32_forces = r32_forces;
+    d->cross_terms->stretch_bend_torsion_theta012_forces = theta012_forces;
+    d->cross_terms->stretch_bend_torsion_theta321_forces = theta321_forces;
+}
+
+//////////
+////////// Implementation of InternalSymbolsBase
+//////////
+
+InternalSymbolsBase::InternalSymbolsBase()
+{}
+
+InternalSymbolsBase::~InternalSymbolsBase()
+{}
+
+//////////
+////////// Implementation of BondSymbols
+//////////
+
+BondSymbols::BondSymbols() : _r("r")
+{
+    symbols.insert(_r);
+}
+
+BondSymbols::~BondSymbols()
+{}
+    
+/** Return the symbol representing the vector along the bond (r) */
+const Symbol& BondSymbols::r() const
+{
+    return _r;
+}
+
+//////////
+////////// Implementation of AngleSymbols
+//////////
+
+AngleSymbols::AngleSymbols() : _theta("theta")
+{
+    symbols.insert(_theta);
+}
+
+AngleSymbols::~AngleSymbols()
+{}
+    
+/** Return the symbols representing the angle (theta) */
+const Symbol& AngleSymbols::theta() const
+{
+    return _theta;
+}
+
+//////////
+////////// Implementation of DihedralSymbols
+//////////
+
+DihedralSymbols::DihedralSymbols() : _phi("phi")
+{
+    symbols.insert(_phi);
+}
+
+DihedralSymbols::~DihedralSymbols()
+{}
+    
+/** Return the symbol representing the torsion (phi) */
+const Symbol& DihedralSymbols::phi() const
+{
+    return _phi;
+}
+
+//////////
+////////// Implementation of ImproperSymbols
+//////////
+
+ImproperSymbols::ImproperSymbols() : _theta("theta"), _phi("phi")
+{
+    symbols.insert(_theta);
+    symbols.insert(_phi);
+}
+
+ImproperSymbols::~ImproperSymbols()
+{}
+  
+/** Return the symbol representing the angle between the improper
+    and the plane formed by atoms 1-3 */  
+const Symbol& ImproperSymbols::theta() const
+{
+    return _theta;
+}
+
+/** Return the symbol representing the torsion 0-1-2-3 */
+const Symbol& ImproperSymbols::phi() const
+{
+    return _phi;
+}
+
+//////////
+////////// Implementation of StretchStretchSymbols
+//////////
+
+StretchStretchSymbols::StretchStretchSymbols()
+                      : _r01("r_{01}"), _r21("r_{21}")
+{
+    symbols.insert(_r01);
+    symbols.insert(_r21);
+}
+
+StretchStretchSymbols::~StretchStretchSymbols()
+{}
+    
+/** Return the symbol representing the bond length r_{01} */
+const Symbol& StretchStretchSymbols::r01() const
+{
+    return _r01;
+}
+
+/** Return the symbol representing the bond length r_{21} */
+const Symbol& StretchStretchSymbols::r21() const
+{
+    return _r21;
+}
+
+//////////
+////////// Implementation of StretchBendSymbols
+//////////
+
+StretchBendSymbols::StretchBendSymbols()
+                   : _theta("theta"), _r01("r_{01}"), _r21("r_{21}")
+{
+    symbols.insert(_theta);
+    symbols.insert(_r01);
+    symbols.insert(_r21);
+}
+
+StretchBendSymbols::~StretchBendSymbols()
+{}
+
+/** Return the symbol representing the angle, theta */  
+const Symbol& StretchBendSymbols::theta() const
+{
+    return _theta;
+}
+
+/** Return the symbol representing the bond length, r_{01} */  
+const Symbol& StretchBendSymbols::r01() const
+{
+    return _r01;
+}
+
+/** Return the symbol representing the bond length, r_{21} */  
+const Symbol& StretchBendSymbols::r21() const
+{
+    return _r21;
+}
+
+//////////
+////////// Implementation of BendBendSymbols
+//////////
+
+BendBendSymbols::BendBendSymbols()
+                : _theta012("theta_{012}"), _theta213("theta_{213}"),
+                  _theta310("theta_{310}")
+{
+    symbols.insert(_theta012);
+    symbols.insert(_theta213);
+    symbols.insert(_theta310);
+}
+
+BendBendSymbols::~BendBendSymbols()
+{}
+
+/** Return the symbol representing the angle between atoms 0-1-2, theta_{012} */
+const Symbol& BendBendSymbols::theta012() const
+{
+    return _theta012;
+}
+
+/** Return the symbol representing the angle between atoms 2-1-3, theta_{213} */
+const Symbol& BendBendSymbols::theta213() const
+{
+    return _theta213;
+}
+
+/** Return the symbol representing the angle between atoms 3-1-0, theta_{310} */
+const Symbol& BendBendSymbols::theta310() const
+{
+    return _theta310;
+}
+
+//////////
+////////// Implementation of StretchBendTorsionSymbols
+//////////
+
+StretchBendTorsionSymbols::StretchBendTorsionSymbols()
+                          : _phi("phi"), _theta012("theta_{012}"),
+                            _theta321("theta_{321}"), _r01("r_{01}"),
+                            _r12("r_{12}"), _r32("r_{32}")
+{
+    symbols.insert(_phi);
+    symbols.insert(_theta012);
+    symbols.insert(_theta321);
+    symbols.insert(_r01);
+    symbols.insert(_r12);
+    symbols.insert(_r32);
+}
+
+StretchBendTorsionSymbols::~StretchBendTorsionSymbols()
+{}
+
+/** Return the symbol representing the torsion, phi */
+const Symbol& StretchBendTorsionSymbols::phi() const
+{
+    return _phi;
+}
+
+/** Return the symbol representing the angle between atoms 0-1-2, theta_{012} */
+const Symbol& StretchBendTorsionSymbols::theta012() const
+{
+    return _theta012;
+}
+
+/** Return the symbol representing the angle between atoms 3-2-1, theta_{321} */
+const Symbol& StretchBendTorsionSymbols::theta321() const
+{
+    return _theta321;
+}
+
+/** Return the symbol representing the bond between atoms 0-1, r_{01} */
+const Symbol& StretchBendTorsionSymbols::r01() const
+{
+    return _r01;
+}
+
+/** Return the symbol representing the bond between atoms 1-2, r_{12} */
+const Symbol& StretchBendTorsionSymbols::r12() const
+{
+    return _r12;
+}
+
+/** Return the symbol representing the bond between atoms 3-2, r_{32} */
+const Symbol& StretchBendTorsionSymbols::r32() const
+{
+    return _r32;
+}
+
+//////////
+////////// Implementation of InternalSymbols
+//////////
+
+InternalSymbols::InternalSymbols()
+{
+    symbols += _bond;
+    symbols += _angle;
+    symbols += _dihedral;
+    symbols += _improper;
+    symbols += _ureybradley;
+    symbols += _stretchstretch;
+    symbols += _stretchbend;
+    symbols += _bendbend;
+    symbols += _stretchbendtorsion; 
+}
+
+InternalSymbols::~InternalSymbols()
+{}
+
+/** Return all of the symbols used in the bond parameters */
+const BondSymbols& InternalSymbols::bond() const
+{
+    return _bond;
+}
+
+/** Return all of the symbols used in the angle parameters */
+const AngleSymbols& InternalSymbols::angle() const
+{
+    return _angle;
+}
+
+/** Return all of the symbols used in the dihedral parameters */
+const DihedralSymbols& InternalSymbols::dihedral() const
+{
+    return _dihedral;
+}
+
+/** Return all of the symbols used in the improper parameters */
+const ImproperSymbols& InternalSymbols::improper() const
+{
+    return _improper;
+}
+
+/** Return all of the symbols used in the Urey-Bradley parameters */
+const BondSymbols& InternalSymbols::ureyBradley() const
+{
+    return _ureybradley;
+}
+
+/** Return all of the symbols used in the stretch-stretch parameters */
+const StretchStretchSymbols& InternalSymbols::stretchStretch() const
+{
+    return _stretchstretch;
+}
+
+/** Return all of the symbols used in the stretch-bend parameters */
+const StretchBendSymbols& InternalSymbols::stretchBend() const
+{
+    return _stretchbend;
+}
+
+/** Return all of the symbols used in the bend-bend parameters */
+const BendBendSymbols& InternalSymbols::bendBend() const
+{
+    return _bendbend;
+}
+
+/** Return all of the symbols used in the stretch-bend-torsion parameters */
+const StretchBendTorsionSymbols& InternalSymbols::stretchBendTorsion() const
+{
+    return _stretchbendtorsion;
+}
+
+//////////
 ////////// Implementation of InternalParameters
 //////////
+
+static const RegisterMetaType<InternalParameters> r_params;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
+                                      const InternalParameters &params)
+{
+    writeHeader(ds, r_params, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << params.group_params << params.groups_by_cgidx;
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
+                                      InternalParameters &params)
+{
+    VersionID v = readHeader(ds, r_params);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> params.group_params >> params.groups_by_cgidx;
+    }
+    else
+        throw version_error( v, "1", r_params, CODELOC );
+        
+    return ds;
+}
 
 /** Return the index of the group that contains the potential and forces
     for the internals that act only within the CutGroup with index 'cgidx0'.
@@ -1317,29 +2697,308 @@ InternalParameters::InternalParameters(const PartialMolecule &molecule,
                           cached_groups);
     }
 
+    //squeeze all of the data to minimise memory use
+    group_params.squeeze();
+    
+    for (QHash< CGIdx,QSet<qint32> >::iterator it = groups_by_cgidx.begin();
+         it != groups_by_cgidx.end();
+         ++it)
+    {
+        it->squeeze();
+    }
+    
+    groups_by_cgidx.squeeze();
 }
 
-InternalParameters::InternalParameters(const InternalParameters &other);
+/** Null constructor */
+InternalParameters::InternalParameters()
+{}
 
-InternalParameters::~InternalParameters();
+/** Copy constructor */
+InternalParameters::InternalParameters(const InternalParameters &other)
+                   : group_params(other.group_params),
+                     groups_by_cgidx(other.groups_by_cgidx)
+{}
 
-InternalParameters& InternalParameters::operator=(const InternalParameters &other);
+/** Destructor */
+InternalParameters::~InternalParameters()
+{}
 
-bool InternalParameters::operator==(const InternalParameters &other) const;
-bool InternalParameters::operator!=(const InternalParameters &other) const;
+/** Copy assignment operator */
+InternalParameters& InternalParameters::operator=(const InternalParameters &other)
+{
+    group_params = other.group_params;
+    groups_by_cgidx = other.groups_by_cgidx;
+    
+    return *this;
+}
 
-bool InternalParameters::changedAllGroups(const InternalParameters &other) const;
+/** Comparison operator */
+bool InternalParameters::operator==(const InternalParameters &other) const
+{
+    return group_params == other.group_params;
+}
 
+/** Comparison operator */
+bool InternalParameters::operator!=(const InternalParameters &other) const
+{
+    return group_params != other.group_params;
+}
+
+/** Return whether all of the parameters for all CutGroups have changed
+    compared to 'other' */
+bool InternalParameters::changedAllGroups(const InternalParameters &other) const
+{
+    if (groups_by_cgidx == other.groups_by_cgidx)
+    {
+        BOOST_ASSERT( group_params.count() == other.group_params.count() );
+        
+        int n = group_params.count();
+        const GroupInternalParameters *this_array = group_params.constData();
+        const GroupInternalParameters *other_array = other.group_params.constData();
+        
+        if (this_array == other_array)
+            return false;
+            
+        for (int i=0; i<n; ++i)
+        {
+            if (this_array[i] == other_array[i])
+                return false;
+        }
+        
+        return true;
+    }
+    else
+        return true;
+}
+
+/** Add the indicies of CutGroups that have changed on to 'changed_groups' */
 void InternalParameters::addChangedGroups(const InternalParameters &other, 
-                      const QSet<CGIdx> &changed_groups) const;
-                      
-QSet<CGIdx> InternalParameters::getChangedGroups(const InternalParameters &other) const;
+                                          QSet<CGIdx> &changed_groups) const
+{
+    if (this->changedAllGroups(other))
+    {
+        for (QHash< CGIdx,QSet<qint32> >::const_iterator 
+                                                    it = groups_by_cgidx.constBegin();
+             it != groups_by_cgidx.constEnd();
+             ++it)
+        {
+            changed_groups.insert(it.key());
+        }
+        
+        return;
+    }
+    else
+    {
+        //the groups_by_cgidx objects for both set of parameters are now
+        //guaranteed to be equal, so the group_params arrays are directly
+        //comparable
+        int n = group_params.count();
+        
+        BOOST_ASSERT(group_params.count() == other.group_params.count());
+        
+        const GroupInternalParameters *this_array = group_params.constData();
+        const GroupInternalParameters *other_array = other.group_params.constData();
+        
+        if (this_array == other_array)
+            return;
+            
+        for (int i=0; i<n; ++i)
+        {
+            if (this_array[i] != other_array[i])
+            {
+                const GroupInternalParameters &group = this_array[i];
+                
+                if (group.isSingleCutGroup())
+                {
+                    changed_groups.insert(group.cgIdx0());
+                }
+                else if (group.isDoubleCutGroup())
+                {
+                    changed_groups.insert(group.cgIdx0());
+                    changed_groups.insert(group.cgIdx1());
+                }
+                else if (group.isTripleCutGroup())
+                {
+                    changed_groups.insert(group.cgIdx0());
+                    changed_groups.insert(group.cgIdx1());
+                    changed_groups.insert(group.cgIdx2());
+                }
+                else
+                {
+                    changed_groups.insert(group.cgIdx0());
+                    changed_groups.insert(group.cgIdx1());
+                    changed_groups.insert(group.cgIdx2());
+                    changed_groups.insert(group.cgIdx3());
+                }
+            }
+        }
+        
+        return;
+    }
+}
+        
+/** Return the CGIdxs of the CutGroups that have changed from this group
+    compared to the paramters held in 'other' */              
+QSet<CGIdx> InternalParameters::getChangedGroups(const InternalParameters &other) const
+{
+    QSet<CGIdx> changed_groups;
+    
+    this->addChangedGroups(other, changed_groups);
+    
+    return changed_groups;
+}
 
-InternalParameters InternalParameters::includeOnly(const AtomSelection &selected_atoms) const;
+/** Return whether or not this contains only parameters that affect the atoms
+    in the CutGroups whose indicies are in 'cgidxs' */
+bool InternalParameters::containsOnly(const QSet<CGIdx> &cgidxs) const
+{
+    if (cgidxs.count() >= groups_by_cgidx.count())
+    {
+        //do we only contain valid groups?
+        for (QHash< CGIdx, QSet<qint32> >::const_iterator
+                                            it = groups_by_cgidx.constBegin();
+             it != groups_by_cgidx.constEnd();
+             ++it)
+        {
+            if (not cgidxs.contains(it.key()))
+                return false;
+        }
+        
+        return true;
+    }
+    
+    return false;
+}
 
-InternalParameters InternalParameters::applyMask(const QSet<CGIdx> &cgidxs) const;
+/** Reindex the parameters */
+void InternalParameters::reindex()
+{
+    if (group_params.isEmpty())
+    {
+        groups_by_cgidx.clear();
+        return;
+    }
+    
+    qint32 n = group_params.count();
+    const GroupInternalParameters *groups_array = group_params.constData();
+    
+    for (qint32 i=0; i<n; ++i)
+    {
+        const GroupInternalParameters &group = groups_array[i];
+        
+        if (group.isSingleCutGroup())
+        {
+            groups_by_cgidx[group.cgIdx0()].insert(i);
+        }
+        else if (group.isDoubleCutGroup())
+        {
+            groups_by_cgidx[group.cgIdx0()].insert(i);
+            groups_by_cgidx[group.cgIdx1()].insert(i);
+        }
+        else if (group.isTripleCutGroup())
+        {
+            groups_by_cgidx[group.cgIdx0()].insert(i);
+            groups_by_cgidx[group.cgIdx1()].insert(i);
+            groups_by_cgidx[group.cgIdx2()].insert(i);
+        }
+        else
+        {
+            groups_by_cgidx[group.cgIdx0()].insert(i);
+            groups_by_cgidx[group.cgIdx1()].insert(i);
+            groups_by_cgidx[group.cgIdx2()].insert(i);
+            groups_by_cgidx[group.cgIdx3()].insert(i);
+        }
+    }
+    
+    for (QHash< CGIdx,QSet<qint32> >::iterator it = groups_by_cgidx.begin();
+         it != groups_by_cgidx.end();
+         ++it)
+    {
+        it->squeeze();
+    }
+    
+    groups_by_cgidx.squeeze();
+}
 
-const QVector<GroupInternalParameters>& InternalParameters::groupParameters() const;
+/** Return all of the parameters that involve any of the CutGroups whose
+    indicies are in 'cgidxs' */
+QVector<GroupInternalParameters> InternalParameters::groupParameters(
+                                                    const QSet<CGIdx> &cgidxs) const
+{
+    //build up the set of groups to include...
+    QSet<qint32> idxs;
+    idxs.reserve(group_params.count());
+    
+    foreach (CGIdx cgidx, cgidxs)
+    {
+        idxs += groups_by_cgidx.value(cgidx);
+    }
+    
+    if (idxs.isEmpty())
+        return QVector<GroupInternalParameters>();
 
-QVector<GroupInternalParameters> InternalParameters::groupParameters(CGIdx cgidx) const;
-QVector<GroupInternalParameters> InternalParameters::groupParameters(const QSet<CGIdx> &cgidxs) const;
+    else if (idxs.count() == group_params.count())
+        return group_params;
+        
+    QVector<GroupInternalParameters> params(idxs.count());
+    
+    const GroupInternalParameters *params_array = group_params.constData();
+    GroupInternalParameters *new_array = params.data();
+    
+    int i = 0;
+    
+    foreach (qint32 idx, idxs)
+    {
+        new_array[i] = params_array[idx];
+        ++i;
+    }
+    
+    return params;
+}
+
+/** Mask this set so that only the parameters for the specified CutGroups are
+    included in the returned group. */
+InternalParameters InternalParameters::applyMask(const QSet<CGIdx> &cgidxs) const
+{
+    if (this->containsOnly(cgidxs))
+        return *this;
+        
+    InternalParameters ret;
+    
+    ret.group_params = this->groupParameters(cgidxs);
+    ret.reindex();
+    
+    return ret;
+}
+
+/** Return the array of all of the internal parameters */
+const QVector<GroupInternalParameters>& InternalParameters::groupParameters() const
+{
+    return group_params;
+}
+
+/** Return the array of all of the parameters that involve the CutGroup with index
+    'cgidx'. This returns an empty array if there are no parameters for this CutGroup */
+QVector<GroupInternalParameters> InternalParameters::groupParameters(CGIdx cgidx) const
+{
+    QSet<qint32> idxs = groups_by_cgidx.value(cgidx);
+    
+    if (idxs.isEmpty())
+        return QVector<GroupInternalParameters>();
+        
+    QVector<GroupInternalParameters> params(idxs.count());
+    GroupInternalParameters *new_array = params.data();
+    
+    const GroupInternalParameters *groups_array = group_params.constData();
+    
+    int i = 0;
+    
+    foreach (qint32 idx, idxs)
+    {
+        new_array[i] = groups_array[idx];
+        ++i;
+    }
+    
+    return params;
+}

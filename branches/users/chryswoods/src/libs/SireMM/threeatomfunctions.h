@@ -49,6 +49,11 @@ QDataStream& operator>>(QDataStream&, SireMM::ThreeAtomFunction&);
 QDataStream& operator<<(QDataStream&, const SireMM::ThreeAtomFunctions&);
 QDataStream& operator>>(QDataStream&, SireMM::ThreeAtomFunctions&);
 
+namespace SireMol
+{
+class AtomSelection;
+}
+
 namespace SireMM
 {
 
@@ -56,6 +61,7 @@ using SireMol::CGAtomIdx;
 using SireMol::AtomIdx;
 using SireMol::AtomID;
 using SireMol::AngleID;
+using SireMol::AtomSelection;
 
 /** This class holds a function that acts using the 
     coordinate information of just three atoms */
@@ -180,6 +186,9 @@ public:
 
     QVector<ThreeAtomFunction> potentials() const;
     QVector<ThreeAtomFunction> forces(const Symbol &symbol) const;
+    
+    ThreeAtomFunctions includeOnly(const AtomSelection &selected_atoms,
+                                   bool isstrict=true) const;
     
 private:
     void removeSymbols(QSet<Symbol> symbols);

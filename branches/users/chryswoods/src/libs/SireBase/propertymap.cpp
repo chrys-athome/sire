@@ -133,6 +133,12 @@ bool PropertyName::hasValue() const
     return not val.isNull();
 }
 
+/** Return whether this property is null */
+bool PropertyName::isNull() const
+{
+    return src.isNull() and val.isNull();
+}
+
 /** Return the source of the property - this is only valid
     if .hasSource() is true */
 const QString& PropertyName::source() const

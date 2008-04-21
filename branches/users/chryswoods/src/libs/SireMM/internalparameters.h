@@ -80,6 +80,7 @@ class CGIDQuad
 public:
     CGIDQuad();
     
+    CGIDQuad(CGIdx cgidx0);
     CGIDQuad(CGIdx cgidx0, CGIdx cgidx1);
     CGIDQuad(CGIdx cgidx0, CGIdx cgidx1, CGIdx cgidx2);
     CGIDQuad(CGIdx cgidx0, CGIdx cgidx1, CGIdx cgidx2, CGIdx cgidx3);
@@ -98,15 +99,15 @@ public:
     bool isTripleCutGroup() const;
     bool isQuadrupleCutGroup() const;
     
-    const CGIdx& cgIdx0() const;
-    const CGIdx& cgIdx1() const;
-    const CGIdx& cgIdx2() const;
-    const CGIdx& cgIdx3() const;
+    CGIdx cgIdx0() const;
+    CGIdx cgIdx1() const;
+    CGIdx cgIdx2() const;
+    CGIdx cgIdx3() const;
 
     uint hash() const;
 
 private:
-    CGIdx cgidx0, cgidx1, cgidx2, cgidx3;
+    CGIdx cgidxs[4];
 };
 
 /** Internal class used to hold the non-physical parameters
@@ -121,6 +122,9 @@ public:
     
     GroupInternalNonPhysParameters& operator=(
                               const GroupInternalNonPhysParameters &other);
+
+    bool operator==(const GroupInternalNonPhysParameters &other) const;
+    bool operator!=(const GroupInternalNonPhysParameters &other) const;
     
     /** The array of improper parameters */
     QVector<FourAtomFunction> improper_params;
@@ -144,6 +148,9 @@ public:
     
     GroupInternalCrossParameters& operator=(
                             const GroupInternalCrossParameters &other);
+
+    bool operator==(const GroupInternalCrossParameters &other) const;
+    bool operator!=(const GroupInternalCrossParameters &other) const;
 
     /** The array of stretch-stretch parameters */
     QVector<ThreeAtomFunction> stretch_stretch_params;
@@ -205,6 +212,9 @@ public:
     
     GroupInternalParametersData& operator=(
                             const GroupInternalParametersData &other);
+
+    bool operator==(const GroupInternalParametersData &other) const;
+    bool operator!=(const GroupInternalParametersData &other) const;
 
     bool hasCrossTerms() const;
     bool hasNonPhysicalParameters() const;
@@ -284,6 +294,9 @@ public:
     
     GroupInternalParameters& operator=(const GroupInternalParameters &other);
 
+    bool operator==(const GroupInternalParameters &other) const;
+    bool operator!=(const GroupInternalParameters &other) const;
+
     bool isEmpty() const;
 
     bool hasPhysicalParameters() const;
@@ -303,6 +316,11 @@ public:
 
     bool refersTo(CGIdx cgidx) const;
     bool refersTo(const QSet<CGIdx> &cgidxs) const;
+
+    CGIdx cgIdx0() const;
+    CGIdx cgIdx1() const;
+    CGIdx cgIdx2() const;
+    CGIdx cgIdx3() const;
 
     const QVector<TwoAtomFunction>& bondPotential() const;
     const QVector<TwoAtomFunction>& bondForces() const;
@@ -342,8 +360,6 @@ public:
     const QVector<FourAtomFunction>& stretchBendTorsion_R03_Forces() const;
     const QVector<FourAtomFunction>& stretchBendTorsion_Theta012_Forces() const;
     const QVector<FourAtomFunction>& stretchBendTorsion_Theta321_Forces() const;
-
-    GroupInternalParameters includeOnly(const AtomSelection &selected_atoms) const;
 
 protected:
     //these editing functions can be called only by InternalParameters
@@ -421,7 +437,7 @@ public:
     
 private:
     /** The symbol for the length of a bond */
-    Symbol _r:
+    Symbol _r;
 };
 
 /** This class holds the symbols required for the angle parameters */
@@ -435,7 +451,7 @@ public:
     
 private:
     /** The symbol for the size of the angle */
-    Symbol _theta:
+    Symbol _theta;
 };
 
 /** This class holds the symbols required for the dihedral parameters */
@@ -449,7 +465,7 @@ public:
     
 private:
     /** The symbol for the size of the torsion */
-    Symbol _phi:
+    Symbol _phi;
 };
 
 /** This class holds the symbols required for the improper parameters */
@@ -465,7 +481,7 @@ public:
 private:
     /** The symbol for the angle made by the improper bond
         with the plane of the other atoms */
-    Symbol _theta:
+    Symbol _theta;
     
     /** The symbol for the size of the improper torsion */
     Symbol _phi;
@@ -483,7 +499,7 @@ public:
     
 private:
     /** The symbol for the length of the bond 0->1 */
-    Symbol _r01:
+    Symbol _r01;
     
     /** The symbol for the length of the bond 1<-2 */
     Symbol _r21;
@@ -505,7 +521,7 @@ private:
     Symbol _theta;
 
     /** The symbol for the length of the bond 0->1 */
-    Symbol _r01:
+    Symbol _r01;
     
     /** The symbol for the length of the bond 1<-2 */
     Symbol _r21;
@@ -524,11 +540,11 @@ public:
     
 private:
     /** The symbol for the size of the angle 0->1<-2 */
-    Symbol _theta012:
+    Symbol _theta012;
     /** The symbol for the size of the angle 2->1<-3 */
-    Symbol _theta213:
+    Symbol _theta213;
     /** The symbol for the size of the angle 3->1<-0 */
-    Symbol _theta310:
+    Symbol _theta310;
 };
 
 /** This class holds the symbols required for the stretch-bend-torsion parameters */
@@ -557,11 +573,11 @@ private:
     Symbol _theta321;
     
     /** The symbol for the length of the bond 0->1 */
-    Symbol _r01:
+    Symbol _r01;
     /** The symbol for the length of the bond 1->2 */
-    Symbol _r12:
+    Symbol _r12;
     /** The symbol for the length of the bond 3->2 */
-    Symbol _r32:
+    Symbol _r32;
 };
 
 /** This class holds all of the symbols used by all of the
@@ -621,6 +637,8 @@ friend QDataStream& ::operator<<(QDataStream&, const InternalParameters&);
 friend QDataStream& ::operator>>(QDataStream&, InternalParameters&);
 
 public:
+    InternalParameters();
+    
     InternalParameters(const PartialMolecule &molecule,
                        const PropertyName &bond_params,
                        const PropertyName &angle_params,
@@ -657,11 +675,9 @@ public:
     bool changedAllGroups(const InternalParameters &other) const;
 
     void addChangedGroups(const InternalParameters &other, 
-                          const QSet<CGIdx> &changed_groups) const;
+                          QSet<CGIdx> &changed_groups) const;
                           
     QSet<CGIdx> getChangedGroups(const InternalParameters &other) const;
-    
-    InternalParameters includeOnly(const AtomSelection &selected_atoms) const;
     
     InternalParameters applyMask(const QSet<CGIdx> &cgidxs) const;
 
@@ -715,6 +731,10 @@ private:
                 QHash<detail::CGIDQuad,qint32> &cached_groups);
     void addSBTs(const FourAtomFunctions &sbtparams,
                 QHash<detail::CGIDQuad,qint32> &cached_groups);
+    
+    bool containsOnly(const QSet<CGIdx> &cgidxs) const;
+    
+    void reindex();
     
     /** All of the groups of internal parameters */
     QVector<GroupInternalParameters> group_params;

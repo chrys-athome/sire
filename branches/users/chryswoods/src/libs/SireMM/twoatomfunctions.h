@@ -49,6 +49,11 @@ QDataStream& operator>>(QDataStream&, SireMM::TwoAtomFunction&);
 QDataStream& operator<<(QDataStream&, const SireMM::TwoAtomFunctions&);
 QDataStream& operator>>(QDataStream&, SireMM::TwoAtomFunctions&);
 
+namespace SireMol
+{
+class AtomSelection;
+}
+
 namespace SireMM
 {
 
@@ -56,6 +61,7 @@ using SireMol::CGAtomIdx;
 using SireMol::AtomIdx;
 using SireMol::AtomID;
 using SireMol::BondID;
+using SireMol::AtomSelection;
 
 /** This class holds a function that acts using the 
     coordinate information of just two atoms */
@@ -172,6 +178,9 @@ public:
 
     QVector<TwoAtomFunction> potentials() const;
     QVector<TwoAtomFunction> forces(const Symbol &symbol) const;
+    
+    TwoAtomFunctions includeOnly(const AtomSelection &selection,
+                                 bool isstrict=true) const;
     
 private:
     void removeSymbols(QSet<Symbol> symbols);

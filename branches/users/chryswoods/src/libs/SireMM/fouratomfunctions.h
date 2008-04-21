@@ -50,6 +50,11 @@ QDataStream& operator>>(QDataStream&, SireMM::FourAtomFunction&);
 QDataStream& operator<<(QDataStream&, const SireMM::FourAtomFunctions&);
 QDataStream& operator>>(QDataStream&, SireMM::FourAtomFunctions&);
 
+namespace SireMol
+{
+class AtomSelection;
+}
+
 namespace SireMM
 {
 
@@ -58,6 +63,7 @@ using SireMol::AtomIdx;
 using SireMol::AtomID;
 using SireMol::DihedralID;
 using SireMol::ImproperID;
+using SireMol::AtomSelection;
 
 /** This class holds a function that acts using the 
     coordinate information of just four atoms */
@@ -197,6 +203,9 @@ public:
 
     QVector<FourAtomFunction> potentials() const;
     QVector<FourAtomFunction> forces(const Symbol &symbol) const;
+    
+    FourAtomFunctions includeOnly(const AtomSelection &selected_atoms,
+                                  bool isstrict=true) const;
     
 private:
     void removeSymbols(QSet<Symbol> symbols);

@@ -37,6 +37,7 @@ uint qHash(const SireMM::detail::IDPair&);
 #include "SireCAS/symbols.h"
 
 #include "SireMol/moleculeinfodata.h"
+#include "SireMol/atomselection.h"
 
 #include "SireMol/errors.h"
 
@@ -501,7 +502,7 @@ Expression TwoAtomFunctions::potential(const BondID &bondid) const
 Expression TwoAtomFunctions::force(AtomIdx atom0, AtomIdx atom1, 
                                    const Symbol &symbol) const
 {
-    return this->potential(atom0,atom1).differentiate(symbol);
+    return -(this->potential(atom0,atom1).differentiate(symbol));
 }
                                  
 /** Return the force (derivative of the potential with respect to 'symbol')
@@ -514,7 +515,7 @@ Expression TwoAtomFunctions::force(AtomIdx atom0, AtomIdx atom1,
 Expression TwoAtomFunctions::force(const AtomID &atom0, const AtomID &atom1,
                                    const Symbol &symbol) const
 {
-    return this->potential(atom0,atom1).differentiate(symbol);
+    return -(this->potential(atom0,atom1).differentiate(symbol));
 }
 
 /** Return the force (derivative of the potential with respect to 'symbol')
@@ -529,7 +530,7 @@ Expression TwoAtomFunctions::force(const AtomID &atom0, const AtomID &atom1,
 */
 Expression TwoAtomFunctions::force(const BondID &bondid, const Symbol &symbol) const
 {
-    return this->potential(bondid).differentiate(symbol);
+    return -(this->potential(bondid).differentiate(symbol));
 }
 
 /** Return the potential energy functions acting between the identified
@@ -576,9 +577,51 @@ QVector<TwoAtomFunction> TwoAtomFunctions::forces(const Symbol &symbol) const
             forces.append( TwoAtomFunction( 
                               info().cgAtomIdx( AtomIdx(it.key().atom0) ),
                               info().cgAtomIdx( AtomIdx(it.key().atom1) ),
-                              force ) );
+                              -force ) );
         }
     }
     
     return forces;
+}
+
+/** Return the set of functions where only functions that involve the 
+    atoms in 'selected_atoms' are included. If 'isstrict' is true, then
+    only include functions where all of the atoms are in 'selected_atoms',
+    while if 'isstrict' is false, include functions where at least one
+    atom is in 'selected_atoms' */
+TwoAtomFunctions TwoAtomFunctions::includeOnly(const AtomSelection &selected_atoms,
+                                               bool isstrict) const
+{
+    TwoAtomFunctions ret(*this);
+
+    QMutableHashIterator<IDPair,Expression> it(ret.potentials_by_atoms);
+
+    if (isstrict)
+    {
+        while (it.hasNext())
+        {
+            it.next();
+            
+            if (not (selected_atoms.selected(AtomIdx(it.key().atom0)) and
+                     selected_atoms.selected(AtomIdx(it.key().atom1)) ) )
+            {
+                it.remove();
+            }
+        }
+    }
+    else
+    {
+        while (it.hasNext())
+        {
+            it.next();
+            
+            if (not (selected_atoms.selected(AtomIdx(it.key().atom0)) or
+                     selected_atoms.selected(AtomIdx(it.key().atom1)) ) )
+            {
+                it.remove();
+            }
+        }
+    }
+    
+    return ret;
 }
