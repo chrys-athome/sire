@@ -36,15 +36,20 @@ uint qHash(const SireMM::detail::CGIDQuad&);
 
 #include "internalparameters.h"
 
+#include "SireMol/molecule.h"
 #include "SireMol/partialmolecule.h"
 #include "SireMol/mover.hpp"
+
+#include "SireVol/coordgroup.h"
 
 using namespace SireMM;
 using namespace SireMM::detail;
 
 using namespace SireBase;
 using namespace SireCAS;
+using namespace SireVol;
 using namespace SireMol;
+using namespace SireFF::detail;
 
 using namespace SireStream;
 
@@ -3001,4 +3006,169 @@ QVector<GroupInternalParameters> InternalParameters::groupParameters(CGIdx cgidx
     }
     
     return params;
+}
+
+//////////
+////////// Implementation of InternalParameters3D
+//////////
+
+/** Null constructor */
+InternalParameters3D::InternalParameters3D()
+                     : InternalParameters(), AtomicCoords3D()
+{}
+
+/** Internal constructor */
+InternalParameters3D::InternalParameters3D(const AtomicCoords3D &coords,
+                                           const InternalParameters &params)
+                     : InternalParameters(params),
+                       AtomicCoords3D(coords)
+{}
+
+/** Construct, creating the parameters from the passed molecule 
+    using the supplied property names
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+InternalParameters3D::InternalParameters3D(const PartialMolecule &molecule,
+                                           const PropertyName &coords_property,
+                                           const PropertyName &bond_params,
+                                           const PropertyName &angle_params,
+                                           const PropertyName &dihedral_params,
+                                           const PropertyName &improper_params,
+                                           const PropertyName &ub_params,
+                                           const PropertyName &ss_params,
+                                           const PropertyName &sb_params,
+                                           const PropertyName &bb_params,
+                                           const PropertyName &sbt_params,
+                                           bool isstrict)
+     : InternalParameters(molecule, bond_params, angle_params,
+                          dihedral_params, improper_params,
+                          ub_params, ss_params, sb_params,
+                          bb_params, sbt_params, isstrict),
+       AtomicCoords3D( molecule.molecule(), coords_property )
+{}
+
+/** Copy constructor */
+InternalParameters3D::InternalParameters3D(const InternalParameters3D &other)
+                     : InternalParameters(other), AtomicCoords3D(other)
+{}
+
+/** Destructor */
+InternalParameters3D::~InternalParameters3D()
+{}
+
+/** Copy assignment operator */
+InternalParameters3D& InternalParameters3D::operator=(const InternalParameters3D &other)
+{
+    InternalParameters::operator=(other);
+    AtomicCoords3D::operator=(other);
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool InternalParameters3D::operator==(const InternalParameters3D &other) const
+{
+    return AtomicCoords3D::operator==(other) and 
+           InternalParameters::operator==(other);
+}
+
+/** Comparison operator */
+bool InternalParameters3D::operator!=(const InternalParameters3D &other) const
+{
+    return AtomicCoords3D::operator!=(other) or
+           InternalParameters::operator!=(other);
+}
+
+/** Return the coordinates */
+const CoordGroupArray& InternalParameters3D::atomicCoordinates() const
+{
+    return AtomicCoords3D::atomicCoordinates();
+}
+
+/** Return the number of CutGroups in the molecule whose parameters are
+    contained in this object */
+int InternalParameters3D::nCutGroups() const
+{
+    return AtomicCoords3D::atomicCoordinates().count();
+}
+
+/** Return whether or not all of the CutGroup have changed compared to 'other' */
+bool InternalParameters3D::changedAllGroups(const InternalParameters3D &other) const
+{
+    if (AtomicCoords3D::changedAllGroups(other) or
+        InternalParameters::changedAllGroups(other))
+    {
+        return true;
+    }
+    else
+    {
+        //maybe some coordinates have changed, and some internal parameters.
+        // However it takes too long to test for this, so we won't!
+        return false;
+    }
+}
+
+/** Add the changed groups that are different in 'other' compared to this
+    to 'changed_groups' */
+void InternalParameters3D::addChangedGroups(const InternalParameters3D &other, 
+                                            QSet<CGIdx> &changed_groups) const
+{
+    const CoordGroup *this_coords_array = this->atomicCoordinates().constData();
+
+    const CoordGroup *other_coords_array = other.atomicCoordinates().constData();
+
+    if (this_coords_array != other_coords_array)
+    {
+        int ngroups = qMin(this->atomicCoordinates().count(),
+                           other.atomicCoordinates().count());
+                       
+        for (CGIdx i(0); i<CGIdx(ngroups); ++i)
+        {
+            if ( this_coords_array[i] != other_coords_array[i] )
+                changed_groups.insert(i);
+        }
+    }
+    
+    //check to see whether all of the groups have changed
+    if (changed_groups.count() >= this->nCutGroups())
+    {
+        int count = 0;
+    
+        foreach (CGIdx cgidx, changed_groups)
+        {
+            if (cgidx < CGIdx(this->nCutGroups()) and
+                cgidx >= 0)
+            {
+                ++count;
+            }
+        }
+        
+        if (count >= this->nCutGroups())
+            return;
+    }
+    
+    //now add on changed parameters
+    InternalParameters::addChangedGroups(other, changed_groups);
+}
+                      
+/** Return the indicies of the CutGroups that have changed in 'other' compared
+    to this set of parameters */
+QSet<CGIdx> InternalParameters3D::getChangedGroups(
+                                        const InternalParameters3D &other) const
+{
+    QSet<CGIdx> changed_groups;
+    
+    this->addChangedGroups(other, changed_groups);
+    
+    return changed_groups;
+}
+
+/** Mask these parameters so that only the parameters for the CutGroups
+    whose indicies are in 'cgidxs' are contained. */
+InternalParameters3D InternalParameters3D::applyMask(const QSet<CGIdx> &cgidxs) const
+{
+    return InternalParameters3D( *this, InternalParameters::applyMask(cgidxs) );
 }

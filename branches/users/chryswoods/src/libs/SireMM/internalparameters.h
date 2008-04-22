@@ -37,16 +37,23 @@
 
 #include "SireMol/cgidx.h"
 
+#include "SireFF/detail/atomiccoords3d.h"
+
 namespace SireMM
 {
 
 class InternalParameters;
+class InternalParameters3D;
+
 class GroupInternalParameters;
 
 }
 
 QDataStream& operator<<(QDataStream&, const SireMM::InternalParameters&);
 QDataStream& operator>>(QDataStream&, SireMM::InternalParameters&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::InternalParameters3D&);
+QDataStream& operator>>(QDataStream&, SireMM::InternalParameters3D&);
 
 QDataStream& operator<<(QDataStream&, const SireMM::GroupInternalParameters&);
 QDataStream& operator>>(QDataStream&, SireMM::GroupInternalParameters&);
@@ -64,6 +71,8 @@ class PartialMolecule;
 
 namespace SireMM
 {
+
+using SireVol::CoordGroupArray;
 
 using SireMol::CGIdx;
 using SireMol::AtomSelection;
@@ -745,8 +754,74 @@ private:
     QHash< CGIdx, QSet<qint32> > groups_by_cgidx;
 };
 
+/** This class holds intramolecular bonding parameters for 3D molecules
+    (so it also contains the 3D coordinates of the molecule)
+    
+    @author Christopher Woods
+*/
+class SIREMM_EXPORT InternalParameters3D
+              : public InternalParameters, protected SireFF::detail::AtomicCoords3D
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const InternalParameters3D&);
+friend QDataStream& ::operator>>(QDataStream&, InternalParameters3D&);
+
+public:
+    InternalParameters3D();
+    
+    InternalParameters3D(const PartialMolecule &molecule,
+                         const PropertyName &coords_property,
+                         const PropertyName &bond_params,
+                         const PropertyName &angle_params,
+                         const PropertyName &dihedral_params,
+                         const PropertyName &improper_params,
+                         const PropertyName &ub_params,
+                         const PropertyName &ss_params,
+                         const PropertyName &sb_params,
+                         const PropertyName &bb_params,
+                         const PropertyName &sbt_params,
+                         bool isstrict);
+    
+    InternalParameters3D(const InternalParameters3D &other);                     
+    
+    ~InternalParameters3D();
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<InternalParameters3D>() );
+    }
+    
+    const char* what() const
+    {
+        return InternalParameters3D::typeName();
+    }
+    
+    InternalParameters3D& operator=(const InternalParameters3D &other);
+    
+    bool operator==(const InternalParameters3D &other) const;
+    bool operator!=(const InternalParameters3D &other) const;
+    
+    const CoordGroupArray& atomicCoordinates() const;
+    
+    int nCutGroups() const;
+    
+    bool changedAllGroups(const InternalParameters3D &other) const;
+
+    void addChangedGroups(const InternalParameters3D &other, 
+                          QSet<CGIdx> &changed_groups) const;
+                          
+    QSet<CGIdx> getChangedGroups(const InternalParameters3D &other) const;
+    
+    InternalParameters3D applyMask(const QSet<CGIdx> &cgidxs) const;
+
+private:
+    InternalParameters3D(const AtomicCoords3D &coords,
+                         const InternalParameters &params);
+};
+
 }
 
 Q_DECLARE_METATYPE( SireMM::InternalParameters );
+Q_DECLARE_METATYPE( SireMM::InternalParameters3D );
 
 #endif
