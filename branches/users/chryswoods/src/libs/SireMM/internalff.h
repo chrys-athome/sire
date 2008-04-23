@@ -31,8 +31,12 @@
 
 #include "SireFF/g1ff.h"
 #include "SireFF/ff3d.h"
+#include "SireFF/forcetable.h"
+
+#include "SireFF/detail/ffmolecules3d.h"
 
 #include "internalcomponent.h"
+#include "internalparameters.h"
 
 namespace SireMM
 {
@@ -42,11 +46,25 @@ class InternalFF;
 QDataStream &operator<<(QDataStream&, const SireMM::InternalFF&);
 QDataStream &operator>>(QDataStream&, SireMM::InternalFF&);
 
+namespace SireVol
+{
+class CoordGroup;
+}
+
 namespace SireMM
 {
 
+using SireFF::ForceField;
 using SireFF::G1FF;
 using SireFF::FF3D;
+using SireFF::ForceTable;
+using SireFF::MolForceTable;
+
+using SireMol::MolNum;
+
+using SireVol::CoordGroup;
+
+using SireBase::PropertyMap;
 
 namespace detail
 {
@@ -286,14 +304,16 @@ public:
     
     typedef detail::InternalParameterNames3D ParameterNames;
     
-    typedef InternalParameters Parameters;
+    typedef InternalParameters3D Parameters;
     
-    typedef SireFF::detail::FFMolecule3D<InternalPotential> Molecule;
-    typedef SireFF::detail::FFMolecules3D<InternalPotential> Molecules;
+    typedef SireFF::detail::FFMolecule<InternalPotential> Molecule;
+    typedef SireFF::detail::FFMolecules<InternalPotential> Molecules;
     
     typedef SireFF::detail::ChangedMolecule<InternalPotential> ChangedMolecule;
 
     ~InternalPotential();
+    
+    static const InternalSymbols& symbols();
     
 protected:
     InternalPotential();
@@ -350,6 +370,22 @@ protected:
                         const Symbol &symbol,
                         const Components &components,
                         double scale_force=1) const;
+
+private:
+    void calculatePhysicalEnergy(const GroupInternalParameters &group_params,
+                                 const CoordGroup *cgroup_array,
+                                 InternalPotential::Energy &energy,
+                                 double scale_energy) const;
+
+    void calculateNonPhysicalEnergy(const GroupInternalParameters &group_params,
+                                    const CoordGroup *cgroup_array,
+                                    InternalPotential::Energy &energy,
+                                    double scale_energy) const;
+
+    void calculateCrossEnergy(const GroupInternalParameters &group_params,
+                              const CoordGroup *cgroup_array,
+                              InternalPotential::Energy &energy,
+                              double scale_energy) const;
 };
 
 /** This is a forcefield that calculates the energies and forces
@@ -368,8 +404,6 @@ friend QDataStream& ::operator<<(QDataStream&, const InternalFF&);
 friend QDataStream& ::operator>>(QDataStream&, InternalFF&);
 
 public:
-    typedef SireMM::detail::InternalComponents Components;
-
     InternalFF();
     InternalFF(const QString &name);
     
@@ -422,5 +456,7 @@ protected:
 };
 
 }
+
+Q_DECLARE_METATYPE( SireMM::InternalFF );
 
 #endif

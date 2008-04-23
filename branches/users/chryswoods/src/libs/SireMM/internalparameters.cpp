@@ -1283,7 +1283,7 @@ const Symbol& BendBendSymbols::theta310() const
 StretchBendTorsionSymbols::StretchBendTorsionSymbols()
                           : _phi("phi"), _theta012("theta_{012}"),
                             _theta321("theta_{321}"), _r01("r_{01}"),
-                            _r12("r_{12}"), _r32("r_{32}")
+                            _r12("r_{12}"), _r32("r_{32}"), _r03("r_{03}")
 {
     symbols.insert(_phi);
     symbols.insert(_theta012);
@@ -1291,6 +1291,7 @@ StretchBendTorsionSymbols::StretchBendTorsionSymbols()
     symbols.insert(_r01);
     symbols.insert(_r12);
     symbols.insert(_r32);
+    symbols.insert(_r03);
 }
 
 StretchBendTorsionSymbols::~StretchBendTorsionSymbols()
@@ -1330,6 +1331,12 @@ const Symbol& StretchBendTorsionSymbols::r12() const
 const Symbol& StretchBendTorsionSymbols::r32() const
 {
     return _r32;
+}
+
+/** Return the symbol representing the distance from atom 0 to 3, r_{03} */
+const Symbol& StretchBendTorsionSymbols::r03() const
+{
+    return _r03;
 }
 
 //////////

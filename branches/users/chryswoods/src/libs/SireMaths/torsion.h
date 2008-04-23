@@ -75,6 +75,8 @@ public:
 
     Angle angle() const;
 
+    Angle improperAngle() const;
+
     Line line03() const;
     Line line12() const;
 

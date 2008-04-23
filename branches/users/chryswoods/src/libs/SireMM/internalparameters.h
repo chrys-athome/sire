@@ -571,6 +571,7 @@ public:
     const Symbol& r01() const;
     const Symbol& r12() const;
     const Symbol& r32() const;
+    const Symbol& r03() const;
     
 private:
     /** The symbol for the size of the torsion */
@@ -587,6 +588,8 @@ private:
     Symbol _r12;
     /** The symbol for the length of the bond 3->2 */
     Symbol _r32;
+    /** The symbol for the distance between the 0 and 3 atoms */
+    Symbol _r03;
 };
 
 /** This class holds all of the symbols used by all of the

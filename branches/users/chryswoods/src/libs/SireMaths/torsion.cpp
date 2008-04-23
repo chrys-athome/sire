@@ -95,6 +95,21 @@ Angle Torsion::angle() const
     return Vector::dihedral(points[0], points[1], points[2], points[3]);
 }
 
+/** Return the improper angle of this torsion (the acute angle between the 
+    vector 0-1 and the plane formed by 1-2-3) */
+Angle Torsion::improperAngle() const
+{
+    //get the vector perpendicular to the plane
+    Vector perp = Vector::cross( points[2] - points[1], points[3] - points[1] );
+    
+    //get the angle between the perpendicular and the vector
+    //from 0-1
+    Angle angle = Vector::angle( points[0] - points[1], perp );
+    
+    //return 90 - angle
+    return (90*degrees) - angle;
+}
+
 /** Return the line from point 0 to point 3 */
 Line Torsion::line03() const
 {

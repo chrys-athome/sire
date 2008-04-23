@@ -591,6 +591,114 @@ public:
                                isbtnrg - other.isbtnrg );
     }
     
+    InternalEnergy& operator+=(const BondEnergy &bndnrg)
+    {
+        ibndnrg += bndnrg.total();
+        return *this;
+    }
+    
+    InternalEnergy& operator+=(const AngleEnergy &angnrg)
+    {
+        iangnrg += angnrg.total();
+        return *this;
+    }
+    
+    InternalEnergy& operator+=(const DihedralEnergy &dihnrg)
+    {
+        idihnrg += dihnrg.total();
+        return *this;
+    }
+    
+    InternalEnergy& operator+=(const ImproperEnergy &impnrg)
+    {
+        iimpnrg += impnrg.total();
+        return *this;
+    }
+    
+    InternalEnergy& operator+=(const UreyBradleyEnergy &ubnrg)
+    {
+        iubnrg += ubnrg.total();
+        return *this;
+    }
+    
+    InternalEnergy& operator+=(const StretchStretchEnergy &ssnrg)
+    {
+        issnrg += ssnrg.total();
+        return *this;
+    }
+    
+    InternalEnergy& operator+=(const StretchBendEnergy &sbnrg)
+    {
+        isbnrg += sbnrg.total();
+        return *this;
+    }
+    
+    InternalEnergy& operator+=(const BendBendEnergy &bbnrg)
+    {
+        ibbnrg += bbnrg.total();
+        return *this;
+    }
+    
+    InternalEnergy& operator+=(const StretchBendTorsionEnergy sbtnrg)
+    {
+        isbtnrg += sbtnrg.total();
+        return *this;
+    }
+    
+    InternalEnergy& operator-=(const BondEnergy &bndnrg)
+    {
+        ibndnrg -= bndnrg.total();
+        return *this;
+    }
+    
+    InternalEnergy& operator-=(const AngleEnergy &angnrg)
+    {
+        iangnrg -= angnrg.total();
+        return *this;
+    }
+    
+    InternalEnergy& operator-=(const DihedralEnergy &dihnrg)
+    {
+        idihnrg -= dihnrg.total();
+        return *this;
+    }
+    
+    InternalEnergy& operator-=(const ImproperEnergy &impnrg)
+    {
+        iimpnrg -= impnrg.total();
+        return *this;
+    }
+    
+    InternalEnergy& operator-=(const UreyBradleyEnergy &ubnrg)
+    {
+        iubnrg -= ubnrg.total();
+        return *this;
+    }
+    
+    InternalEnergy& operator-=(const StretchStretchEnergy &ssnrg)
+    {
+        issnrg -= ssnrg.total();
+        return *this;
+    }
+    
+    InternalEnergy& operator-=(const StretchBendEnergy &sbnrg)
+    {
+        isbnrg -= sbnrg.total();
+        return *this;
+    }
+    
+    InternalEnergy& operator-=(const BendBendEnergy &bbnrg)
+    {
+        ibbnrg -= bbnrg.total();
+        return *this;
+    }
+    
+    InternalEnergy& operator-=(const StretchBendTorsionEnergy sbtnrg)
+    {
+        isbtnrg -= sbtnrg.total();
+        return *this;
+    }
+    
     Components components() const
     {
         return Components();

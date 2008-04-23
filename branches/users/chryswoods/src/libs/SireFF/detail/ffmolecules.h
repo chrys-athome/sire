@@ -170,7 +170,6 @@ friend QDataStream& ::operator<<<>(QDataStream&, const FFMolecule<PTNL>&);
 friend QDataStream& ::operator>><>(QDataStream&, FFMolecule<PTNL>&);
 
 public:
-    typedef typename PTNL::Parameter Parameter;
     typedef typename PTNL::Parameters Parameters;
     typedef typename PTNL::ParameterNames ParameterNames;
 
@@ -303,9 +302,7 @@ public:
     typedef typename PTNL::Molecule Molecule;
     typedef typename PTNL::ChangedMolecule ChangedMolecule;
 
-    typedef typename PTNL::Parameter Parameter;
     typedef typename PTNL::Parameters Parameters;
-
     typedef typename PTNL::ParameterNames ParameterNames;
 
     FFMolecules();

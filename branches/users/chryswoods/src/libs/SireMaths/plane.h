@@ -47,10 +47,11 @@ QDataStream& operator>>(QDataStream&, SireMaths::Plane&);
 namespace SireMaths
 {
 
-/**
-This class represents an infinite plane, represented by a normal vector perpendicular to the plane, and the distance from the origin along that normal vector.
+/** This class represents an infinite plane, represented by a normal vector 
+    perpendicular to the plane, and the distance from the origin 
+    along that normal vector.
  
-@author Christopher Woods
+    @author Christopher Woods
 */
 class SIREMATHS_EXPORT Plane
 {
