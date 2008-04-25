@@ -1443,6 +1443,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
         SharedDataStream sds(ds);
         
         sds >> params.group_params >> params.groups_by_cgidx;
+        
+        params.updateState();
     }
     else
         throw version_error( v, "1", r_params, CODELOC );
@@ -2598,6 +2600,7 @@ InternalParameters::InternalParameters(const PartialMolecule &molecule,
                                        const PropertyName &sbt_params,
                                        bool isstrict
                                        )
+                   : state(EMPTY)
 {
     QHash<CGIDQuad,qint32> cached_groups;
     
@@ -2720,15 +2723,18 @@ InternalParameters::InternalParameters(const PartialMolecule &molecule,
     }
     
     groups_by_cgidx.squeeze();
+    
+    this->updateState();
 }
 
 /** Null constructor */
-InternalParameters::InternalParameters()
+InternalParameters::InternalParameters() : state(EMPTY)
 {}
 
 /** Copy constructor */
 InternalParameters::InternalParameters(const InternalParameters &other)
-                   : group_params(other.group_params),
+                   : state(other.state),
+                     group_params(other.group_params),
                      groups_by_cgidx(other.groups_by_cgidx)
 {}
 
@@ -2739,6 +2745,7 @@ InternalParameters::~InternalParameters()
 /** Copy assignment operator */
 InternalParameters& InternalParameters::operator=(const InternalParameters &other)
 {
+    state = other.state;
     group_params = other.group_params;
     groups_by_cgidx = other.groups_by_cgidx;
     
@@ -2748,13 +2755,15 @@ InternalParameters& InternalParameters::operator=(const InternalParameters &othe
 /** Comparison operator */
 bool InternalParameters::operator==(const InternalParameters &other) const
 {
-    return group_params == other.group_params;
+    return state == other.state and
+           group_params == other.group_params;
 }
 
 /** Comparison operator */
 bool InternalParameters::operator!=(const InternalParameters &other) const
 {
-    return group_params != other.group_params;
+    return state != other.state or
+           group_params != other.group_params;
 }
 
 /** Return whether all of the parameters for all CutGroups have changed
@@ -2883,6 +2892,59 @@ bool InternalParameters::containsOnly(const QSet<CGIdx> &cgidxs) const
     return false;
 }
 
+/** Update the state */
+void InternalParameters::updateState()
+{
+    state = EMPTY;
+    
+    if (group_params.isEmpty())
+        return;
+        
+    int ngroups = group_params.count();
+    const GroupInternalParameters *groups_array = group_params.constData();
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        const GroupInternalParameters &group = groups_array[i];
+        
+        if (group.hasPhysicalParameters())
+        {
+            if (not group.bondPotential().isEmpty())
+                state |= HAS_BOND;
+                
+            if (not group.anglePotential().isEmpty())
+                state |= HAS_ANGLE;
+                
+            if (not group.dihedralPotential().isEmpty())
+                state |= HAS_DIHEDRAL;
+        }
+        
+        if (group.hasNonPhysicalParameters())
+        {
+            if (not group.improperPotential().isEmpty())
+                state |= HAS_IMPROPER;
+            
+            if (not group.ureyBradleyPotential().isEmpty())
+                state |= HAS_UB;
+        }
+        
+        if (group.hasCrossTerms())
+        {
+            if (not group.stretchStretchPotential().isEmpty())
+                state |= HAS_SS;
+                
+            if (not group.stretchBendPotential().isEmpty())
+                state |= HAS_SB;
+                
+            if (not group.bendBendPotential().isEmpty())
+                state |= HAS_BB;
+                
+            if (not group.stretchBendTorsionPotential().isEmpty())
+                state |= HAS_SBT;
+        }
+    }
+}
+
 /** Reindex the parameters */
 void InternalParameters::reindex()
 {
@@ -2931,6 +2993,8 @@ void InternalParameters::reindex()
     }
     
     groups_by_cgidx.squeeze();
+    
+    this->updateState();
 }
 
 /** Return all of the parameters that involve any of the CutGroups whose

@@ -449,6 +449,30 @@ InternalComponent::InternalComponent(const InternalComponent &other)
 InternalComponent::~InternalComponent()
 {}
 
+/** Return all of the components in this set */
+QSet<Symbol> InternalComponent::contents() const
+{
+    QSet<Symbol> symbls;
+    
+    symbls.reserve(10);
+    
+    symbls.insert(*this);
+    
+    symbls.insert(bond_component);
+    symbls.insert(angle_component);
+    symbls.insert(dihedral_component);
+    
+    symbls.insert(improper_component);
+    symbls.insert(ub_component);
+    
+    symbls.insert(ss_component);
+    symbls.insert(sb_component);
+    symbls.insert(bb_component);
+    symbls.insert(sbt_component);
+    
+    return symbls;
+}
+
 /** Set the internal components of the forcefield 'ff' to the passed values */
 void InternalComponent::setEnergy(FF &ff, const InternalEnergy &value) const
 {

@@ -684,6 +684,26 @@ public:
     
     const InternalSymbols& symbols() const;
     
+    bool isEmpty() const;
+    
+    bool hasBondParameters() const;
+    bool hasAngleParameters() const;
+    bool hasDihedralParameters() const;
+    
+    bool hasPhysicalParameters() const;
+    
+    bool hasImproperParameters() const;
+    bool hasUreyBradleyParameters() const;
+    
+    bool hasNonPhysicalParameters() const;
+    
+    bool hasStretchStretchParameters() const;
+    bool hasStretchBendParameters() const;
+    bool hasBendBendParameters() const;
+    bool hasStretchBendTorsionParameters() const;
+    
+    bool hasCrossTerms() const;
+    
     bool changedAllGroups(const InternalParameters &other) const;
 
     void addChangedGroups(const InternalParameters &other, 
@@ -746,7 +766,26 @@ private:
     
     bool containsOnly(const QSet<CGIdx> &cgidxs) const;
     
+    void updateState();
     void reindex();
+    
+    /** enum giving the state of these parameters */
+    enum { EMPTY        = 0x0000,
+           HAS_BOND     = 0x0001,
+           HAS_ANGLE    = 0x0002,
+           HAS_DIHEDRAL = 0x0004,
+           HAS_PHYSICAL = 0x000f,
+           HAS_IMPROPER = 0x0010,
+           HAS_UB       = 0x0020,
+           HAS_NONPHYS  = 0x00f0,
+           HAS_SS       = 0x0100,
+           HAS_SB       = 0x0200,
+           HAS_BB       = 0x0400,
+           HAS_SBT      = 0x0800,
+           HAS_CROSS    = 0x0f00 };
+    
+    /** The current state of the parameters */
+    uint state;
     
     /** All of the groups of internal parameters */
     QVector<GroupInternalParameters> group_params;
@@ -821,6 +860,90 @@ private:
     InternalParameters3D(const AtomicCoords3D &coords,
                          const InternalParameters &params);
 };
+
+///////
+/////// Inline functions for InternalParameters
+///////
+
+/** Return whether or not this is empty (contains no parameters) */
+inline bool InternalParameters::isEmpty() const
+{
+    return state == EMPTY;
+}
+
+/** Return whether or not there are any bond parameters */
+inline bool InternalParameters::hasBondParameters() const
+{
+    return state & HAS_BOND;
+}
+
+/** Return whether or not there are any angle parameters */
+inline bool InternalParameters::hasAngleParameters() const
+{
+    return state & HAS_ANGLE;
+}
+
+/** Return whether or not there are any dihedral parameters */
+inline bool InternalParameters::hasDihedralParameters() const
+{
+    return state & HAS_DIHEDRAL;
+}
+
+/** Return whether or not there are any physical (bond, angle 
+    or dihedral) parameters */
+inline bool InternalParameters::hasPhysicalParameters() const
+{
+    return state & HAS_PHYSICAL;
+}
+
+/** Return whether or not there are any improper parameters */
+inline bool InternalParameters::hasImproperParameters() const
+{
+    return state & HAS_IMPROPER;
+}
+
+/** Return whether or not there are any Urey-Bradley parameters */
+inline bool InternalParameters::hasUreyBradleyParameters() const
+{
+    return state & HAS_UB;
+}
+
+/** Return whether or not there are any non-physical (improper or
+    Urey-Bradley) parameters */
+inline bool InternalParameters::hasNonPhysicalParameters() const
+{
+    return state & HAS_NONPHYS;
+}
+
+/** Return whether or not there are any stretch-stretch parameters */
+inline bool InternalParameters::hasStretchStretchParameters() const
+{
+    return state & HAS_SS;
+}
+
+/** Return whether or not there are any stretch-bend parameters */
+inline bool InternalParameters::hasStretchBendParameters() const
+{
+    return state & HAS_SB;
+}
+
+/** Return whether or not there are any bend-bend parameters */
+inline bool InternalParameters::hasBendBendParameters() const
+{
+    return state & HAS_BB;
+}
+
+/** Return whether or not there are any stretch-bend-torsion parameters */
+inline bool InternalParameters::hasStretchBendTorsionParameters() const
+{
+    return state & HAS_SBT;
+}
+
+/** Return whether or not there are any cross (stretch-stretch etc.) parameters */
+inline bool InternalParameters::hasCrossTerms() const
+{
+    return state & HAS_CROSS;
+}
 
 }
 

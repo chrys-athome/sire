@@ -118,6 +118,8 @@ public:
 
     bool selectedAll() const;
 
+    bool selected(CGIdx cgidx) const;
+
     MolNum molNum() const;
     
     int map(CGIdx cgidx) const;
@@ -245,6 +247,18 @@ inline int MolForceTable::nSelectedCutGroups() const
 inline bool MolForceTable::selectedAll() const
 {
     return this->nCutGroups() == this->nSelectedCutGroups();
+}
+
+/** Return whether or not the CutGroup at index 'cgidx' has been
+    selected 
+    
+    \throw SireError::invalid_index
+*/
+inline bool MolForceTable::selected(CGIdx cgidx) const
+{
+    cgidx = CGIdx(cgidx.map(this->nCutGroups()));
+    
+    return this->selectedAll() or cgidx_to_idx.contains(cgidx);
 }
 
 /** Return the index of the forcetable for the CutGroup at index

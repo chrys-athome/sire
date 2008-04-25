@@ -29,6 +29,8 @@
 #ifndef SIREMM_INTERNALCOMPONENT_H
 #define SIREMM_INTERNALCOMPONENT_H
 
+#include <QSet>
+
 #include "SireFF/ffcomponent.h"
 
 SIRE_BEGIN_HEADER
@@ -43,6 +45,8 @@ namespace SireMM
 
 using SireFF::FF;
 using SireFF::FFName;
+
+using SireCAS::Symbol;
 
 class BondComponent;
 class AngleComponent;
@@ -464,6 +468,8 @@ public:
 
     void setEnergy(FF &ff, const InternalEnergy &nrg) const;
     void changeEnergy(FF &ff, const InternalEnergy &nrg) const;
+
+    QSet<Symbol> contents() const;
 
 protected:
     /** The bond component */
