@@ -330,6 +330,11 @@ void Intra2BFF<Potential>::recordChange(
         {
             //we have reverted the change!
             changed_mols.remove(molnum);
+            
+            if (changed_mols.isEmpty())
+                //there are no changes
+                G1FF::setClean();
+            
             return;
         }
         else
@@ -342,6 +347,8 @@ void Intra2BFF<Potential>::recordChange(
     {
         changed_mols.insert(molnum, change);
     }
+    
+    G1FF::setDirty();
 }
 
 /** Virtual function used to return the components of the forcefield

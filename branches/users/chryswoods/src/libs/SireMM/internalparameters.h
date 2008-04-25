@@ -707,16 +707,16 @@ public:
     bool changedAllGroups(const InternalParameters &other) const;
 
     void addChangedGroups(const InternalParameters &other, 
-                          QSet<CGIdx> &changed_groups) const;
+                          QSet<quint32> &changed_groups) const;
                           
-    QSet<CGIdx> getChangedGroups(const InternalParameters &other) const;
+    QSet<quint32> getChangedGroups(const InternalParameters &other) const;
     
-    InternalParameters applyMask(const QSet<CGIdx> &cgidxs) const;
+    InternalParameters applyMask(const QSet<quint32> &cgidxs) const;
 
     const QVector<GroupInternalParameters>& groupParameters() const;
     
-    QVector<GroupInternalParameters> groupParameters(CGIdx cgidx) const;
-    QVector<GroupInternalParameters> groupParameters(const QSet<CGIdx> &cgidxs) const;
+    QVector<GroupInternalParameters> groupParameters(quint32 cgidx) const;
+    QVector<GroupInternalParameters> groupParameters(const QSet<quint32> &cgidxs) const;
     
 private:
     qint32 getIndex(CGIdx cgidx0) const;
@@ -764,7 +764,7 @@ private:
     void addSBTs(const FourAtomFunctions &sbtparams,
                 QHash<detail::CGIDQuad,qint32> &cached_groups);
     
-    bool containsOnly(const QSet<CGIdx> &cgidxs) const;
+    bool containsOnly(const QSet<quint32> &cgidxs) const;
     
     void updateState();
     void reindex();
@@ -845,16 +845,18 @@ public:
     
     const CoordGroupArray& atomicCoordinates() const;
     
+    void setAtomicCoordinates(const AtomicCoords3D &coords);
+    
     int nCutGroups() const;
     
     bool changedAllGroups(const InternalParameters3D &other) const;
 
     void addChangedGroups(const InternalParameters3D &other, 
-                          QSet<CGIdx> &changed_groups) const;
+                          QSet<quint32> &changed_groups) const;
                           
-    QSet<CGIdx> getChangedGroups(const InternalParameters3D &other) const;
+    QSet<quint32> getChangedGroups(const InternalParameters3D &other) const;
     
-    InternalParameters3D applyMask(const QSet<CGIdx> &cgidxs) const;
+    InternalParameters3D applyMask(const QSet<quint32> &cgidxs) const;
 
 private:
     InternalParameters3D(const AtomicCoords3D &coords,

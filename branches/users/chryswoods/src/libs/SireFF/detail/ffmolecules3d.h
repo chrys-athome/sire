@@ -174,7 +174,7 @@ friend QDataStream& ::operator>><>(QDataStream&, FFMolecules3D<PTNL>&);
 
 public:
     typedef typename FFMolecules<PTNL>::Molecule Molecule;
-    typedef typename FFMolecules<PTNL>::ChangedMolecule ChangedMolecule;
+    typedef ChangedMolecule<Molecule> ChangedMolecule;
     typedef typename FFMolecules<PTNL>::ParameterNames ParameterNames;
 
     FFMolecules3D();

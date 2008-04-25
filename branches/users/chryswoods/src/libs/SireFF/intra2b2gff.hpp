@@ -382,6 +382,11 @@ void Intra2B2GFF<Potential>::recordChange(quint32 groupid,
         {
             //we have reverted the change!
             changed_mols[groupid].remove(molnum);
+            
+            if (changed_mols[0].isEmpty() and changed_mols[1].isEmpty())    
+                //there is now no change
+                G2FF::setClean();
+            
             return;
         }
         else
@@ -394,6 +399,8 @@ void Intra2B2GFF<Potential>::recordChange(quint32 groupid,
     {
         changed_mols[groupid].insert(molnum, change);
     }
+    
+    G2FF::setDirty();
 }
 
 /** Virtual function used to return the components of the forcefield

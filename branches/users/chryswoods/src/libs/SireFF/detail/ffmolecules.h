@@ -300,10 +300,10 @@ friend QDataStream& ::operator>><>(QDataStream&, FFMolecules<PTNL>&);
 
 public:
     typedef typename PTNL::Molecule Molecule;
-    typedef typename PTNL::ChangedMolecule ChangedMolecule;
+    typedef ChangedMolecule<Molecule> ChangedMolecule;
 
-    typedef typename PTNL::Parameters Parameters;
-    typedef typename PTNL::ParameterNames ParameterNames;
+    typedef typename Molecule::Parameters Parameters;
+    typedef typename Molecule::ParameterNames ParameterNames;
 
     FFMolecules();
     

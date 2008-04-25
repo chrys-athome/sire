@@ -335,6 +335,11 @@ void Inter2BFF<Potential>::recordChange(
             //we have reverted the change!
             changed_mols.remove(molnum);
             removed_mols.remove(molnum);
+            
+            if (changed_mols.isEmpty())
+                //there are now no changes
+                G1FF::setClean();
+            
             return;
         }
         else
@@ -354,6 +359,8 @@ void Inter2BFF<Potential>::recordChange(
     else
         //the molecule may have been re-added
         removed_mols.remove(molnum);
+
+    G1FF::setDirty();
 }
 
 /** Virtual function used to return the components of the forcefield

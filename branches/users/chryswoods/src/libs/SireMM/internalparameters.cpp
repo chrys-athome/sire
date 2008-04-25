@@ -29,7 +29,9 @@
 #include "sireglobal.h"
 
 namespace SireMM { namespace detail { class CGIDQuad; } }
+namespace SireMol { class CGIdx; }
 
+uint qHash(const SireMol::CGIdx);
 uint qHash(const SireMM::detail::CGIDQuad&);
 
 #include <algorithm>
@@ -39,8 +41,11 @@ uint qHash(const SireMM::detail::CGIDQuad&);
 #include "SireMol/molecule.h"
 #include "SireMol/partialmolecule.h"
 #include "SireMol/mover.hpp"
+#include "SireMol/cgidx.h"
 
 #include "SireVol/coordgroup.h"
+
+#include "SireError/errors.h"
 
 using namespace SireMM;
 using namespace SireMM::detail;
@@ -2795,7 +2800,7 @@ bool InternalParameters::changedAllGroups(const InternalParameters &other) const
 
 /** Add the indicies of CutGroups that have changed on to 'changed_groups' */
 void InternalParameters::addChangedGroups(const InternalParameters &other, 
-                                          QSet<CGIdx> &changed_groups) const
+                                          QSet<quint32> &changed_groups) const
 {
     if (this->changedAllGroups(other))
     {
@@ -2861,9 +2866,9 @@ void InternalParameters::addChangedGroups(const InternalParameters &other,
         
 /** Return the CGIdxs of the CutGroups that have changed from this group
     compared to the paramters held in 'other' */              
-QSet<CGIdx> InternalParameters::getChangedGroups(const InternalParameters &other) const
+QSet<quint32> InternalParameters::getChangedGroups(const InternalParameters &other) const
 {
-    QSet<CGIdx> changed_groups;
+    QSet<quint32> changed_groups;
     
     this->addChangedGroups(other, changed_groups);
     
@@ -2872,7 +2877,7 @@ QSet<CGIdx> InternalParameters::getChangedGroups(const InternalParameters &other
 
 /** Return whether or not this contains only parameters that affect the atoms
     in the CutGroups whose indicies are in 'cgidxs' */
-bool InternalParameters::containsOnly(const QSet<CGIdx> &cgidxs) const
+bool InternalParameters::containsOnly(const QSet<quint32> &cgidxs) const
 {
     if (cgidxs.count() >= groups_by_cgidx.count())
     {
@@ -3000,15 +3005,15 @@ void InternalParameters::reindex()
 /** Return all of the parameters that involve any of the CutGroups whose
     indicies are in 'cgidxs' */
 QVector<GroupInternalParameters> InternalParameters::groupParameters(
-                                                    const QSet<CGIdx> &cgidxs) const
+                                                    const QSet<quint32> &cgidxs) const
 {
     //build up the set of groups to include...
     QSet<qint32> idxs;
     idxs.reserve(group_params.count());
     
-    foreach (CGIdx cgidx, cgidxs)
+    foreach (quint32 cgidx, cgidxs)
     {
-        idxs += groups_by_cgidx.value(cgidx);
+        idxs += groups_by_cgidx.value( CGIdx(cgidx) );
     }
     
     if (idxs.isEmpty())
@@ -3035,7 +3040,7 @@ QVector<GroupInternalParameters> InternalParameters::groupParameters(
 
 /** Mask this set so that only the parameters for the specified CutGroups are
     included in the returned group. */
-InternalParameters InternalParameters::applyMask(const QSet<CGIdx> &cgidxs) const
+InternalParameters InternalParameters::applyMask(const QSet<quint32> &cgidxs) const
 {
     if (this->containsOnly(cgidxs))
         return *this;
@@ -3056,9 +3061,9 @@ const QVector<GroupInternalParameters>& InternalParameters::groupParameters() co
 
 /** Return the array of all of the parameters that involve the CutGroup with index
     'cgidx'. This returns an empty array if there are no parameters for this CutGroup */
-QVector<GroupInternalParameters> InternalParameters::groupParameters(CGIdx cgidx) const
+QVector<GroupInternalParameters> InternalParameters::groupParameters(quint32 cgidx) const
 {
-    QSet<qint32> idxs = groups_by_cgidx.value(cgidx);
+    QSet<qint32> idxs = groups_by_cgidx.value( CGIdx(cgidx) );
     
     if (idxs.isEmpty())
         return QVector<GroupInternalParameters>();
@@ -3159,6 +3164,38 @@ const CoordGroupArray& InternalParameters3D::atomicCoordinates() const
     return AtomicCoords3D::atomicCoordinates();
 }
 
+/** Set the coordinates used by these parameters */
+void InternalParameters3D::setAtomicCoordinates(const AtomicCoords3D &coords)
+{
+    const int ngroups = coords.atomicCoordinates().count();
+
+    //there must be the same number of CutGroups as in the parameters!
+    if (ngroups != atomicCoordinates().count())
+    {
+        throw SireError::program_bug( QObject::tr(
+            "Error setting incompatible coordinates!!! %1 vs. %2")
+                .arg(ngroups)
+                .arg(atomicCoordinates().count()),
+                    CODELOC );
+    }
+    
+    const CoordGroup *this_array = atomicCoordinates().constData();
+    const CoordGroup *other_array = coords.atomicCoordinates().constData();
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        if (this_array[i].count() != other_array[i].count())
+            throw SireError::program_bug( QObject::tr(
+                "Error setting incompatible coordinates in group %1. %2 vs. %3.")
+                    .arg(i).arg(this_array[i].count())
+                    .arg(other_array[i].count()),
+                        CODELOC );
+    }
+    
+    //ok, the coordinates are compatible
+    AtomicCoords3D::operator=(coords);
+}
+
 /** Return the number of CutGroups in the molecule whose parameters are
     contained in this object */
 int InternalParameters3D::nCutGroups() const
@@ -3185,7 +3222,7 @@ bool InternalParameters3D::changedAllGroups(const InternalParameters3D &other) c
 /** Add the changed groups that are different in 'other' compared to this
     to 'changed_groups' */
 void InternalParameters3D::addChangedGroups(const InternalParameters3D &other, 
-                                            QSet<CGIdx> &changed_groups) const
+                                            QSet<quint32> &changed_groups) const
 {
     const CoordGroup *this_coords_array = this->atomicCoordinates().constData();
 
@@ -3193,10 +3230,10 @@ void InternalParameters3D::addChangedGroups(const InternalParameters3D &other,
 
     if (this_coords_array != other_coords_array)
     {
-        int ngroups = qMin(this->atomicCoordinates().count(),
-                           other.atomicCoordinates().count());
+        quint32 ngroups = qMin(this->atomicCoordinates().count(),
+                               other.atomicCoordinates().count());
                        
-        for (CGIdx i(0); i<CGIdx(ngroups); ++i)
+        for (quint32 i=0; i<ngroups; ++i)
         {
             if ( this_coords_array[i] != other_coords_array[i] )
                 changed_groups.insert(i);
@@ -3208,10 +3245,9 @@ void InternalParameters3D::addChangedGroups(const InternalParameters3D &other,
     {
         int count = 0;
     
-        foreach (CGIdx cgidx, changed_groups)
+        foreach (quint32 cgidx, changed_groups)
         {
-            if (cgidx < CGIdx(this->nCutGroups()) and
-                cgidx >= 0)
+            if ( cgidx < quint32(this->nCutGroups()) )
             {
                 ++count;
             }
@@ -3227,10 +3263,10 @@ void InternalParameters3D::addChangedGroups(const InternalParameters3D &other,
                       
 /** Return the indicies of the CutGroups that have changed in 'other' compared
     to this set of parameters */
-QSet<CGIdx> InternalParameters3D::getChangedGroups(
+QSet<quint32> InternalParameters3D::getChangedGroups(
                                         const InternalParameters3D &other) const
 {
-    QSet<CGIdx> changed_groups;
+    QSet<quint32> changed_groups;
     
     this->addChangedGroups(other, changed_groups);
     
@@ -3239,7 +3275,7 @@ QSet<CGIdx> InternalParameters3D::getChangedGroups(
 
 /** Mask these parameters so that only the parameters for the CutGroups
     whose indicies are in 'cgidxs' are contained. */
-InternalParameters3D InternalParameters3D::applyMask(const QSet<CGIdx> &cgidxs) const
+InternalParameters3D InternalParameters3D::applyMask(const QSet<quint32> &cgidxs) const
 {
     return InternalParameters3D( *this, InternalParameters::applyMask(cgidxs) );
 }

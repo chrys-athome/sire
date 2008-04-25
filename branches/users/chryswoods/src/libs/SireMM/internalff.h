@@ -59,11 +59,16 @@ using SireFF::G1FF;
 using SireFF::FF3D;
 using SireFF::ForceTable;
 using SireFF::MolForceTable;
+using SireFF::FFComponent;
 
 using SireMol::MolNum;
+using SireMol::PartialMolecule;
+using SireMol::MolGroup;
 
 using SireVol::CoordGroup;
 
+using SireBase::Property;
+using SireBase::Properties;
 using SireBase::PropertyMap;
 
 namespace detail
@@ -305,18 +310,44 @@ public:
     typedef detail::InternalParameterNames3D ParameterNames;
     
     typedef InternalParameters3D Parameters;
-    
+
     typedef SireFF::detail::FFMolecule<InternalPotential> Molecule;
     typedef SireFF::detail::FFMolecules<InternalPotential> Molecules;
+    typedef Molecules::ChangedMolecule ChangedMolecule;
     
-    typedef SireFF::detail::ChangedMolecule<InternalPotential> ChangedMolecule;
-
     ~InternalPotential();
     
     static const InternalSymbols& symbols();
     
+    static const ParameterNames& parameters();
+
+    InternalPotential::Parameters
+    getParameters(const PartialMolecule &molecule,
+                  const PropertyMap &map) const;
+
+    InternalPotential::Parameters
+    updateParameters(const InternalPotential::Parameters &old_params,
+                     const PartialMolecule &old_molecule,
+                     const PartialMolecule &new_molecule,
+                     const PropertyMap &map) const;
+
+    InternalPotential::Parameters
+    updateParameters(const InternalPotential::Parameters &old_params,
+                     const PartialMolecule &old_molecule,
+                     const PartialMolecule &new_molecule,
+                     const PropertyMap &old_map,
+                     const PropertyMap &new_map) const;
+
+    InternalPotential::Molecule
+    parameterise(const PartialMolecule &molecule,
+                 const PropertyMap &map) const;
+                 
+    InternalPotential::Molecules
+    parameterise(const MolGroup &molecules,
+                 const PropertyMap &map) const;
+    
 protected:
-    InternalPotential();
+    InternalPotential(bool isstrict=false);
     InternalPotential(const InternalPotential &other);
     
     InternalPotential& operator=(const InternalPotential &other);
@@ -371,6 +402,8 @@ protected:
                         const Components &components,
                         double scale_force=1) const;
 
+    bool isstrict;
+
 private:
     void calculatePhysicalEnergy(const GroupInternalParameters &group_params,
                                  const CoordGroup *cgroup_array,
@@ -386,6 +419,9 @@ private:
                               const CoordGroup *cgroup_array,
                               InternalPotential::Energy &energy,
                               double scale_energy) const;
+
+    static ParameterNames param_names;
+    static InternalSymbols internal_symbols;
 };
 
 /** This is a forcefield that calculates the energies and forces
@@ -404,6 +440,9 @@ friend QDataStream& ::operator<<(QDataStream&, const InternalFF&);
 friend QDataStream& ::operator>>(QDataStream&, InternalFF&);
 
 public:
+    typedef InternalPotential::Components Components;
+    typedef InternalPotential::ParameterNames ParameterNames;
+
     InternalFF();
     InternalFF(const QString &name);
     
@@ -430,13 +469,31 @@ public:
     
     bool operator==(const InternalFF &other) const;
     bool operator!=(const InternalFF &other) const;
+
+    const InternalSymbols& symbols() const;
+    const ParameterNames& parameters() const;
+    const Components& components() const;
+
+    bool setStrict(bool isstrict);
+    bool isStrict() const;
+
+    bool setProperty(const QString &name, const Property &property);
+    const Property& property(const QString &name) const;
+    bool containsProperty(const QString &name) const;
+    const Properties& properties() const;
     
     void force(ForceTable &forcetable, double scale_force=1);
     
     void force(ForceTable &forcetable, const Symbol &symbol,
                double scale_force=1);
+
+    void mustNowRecalculateFromScratch();    
                
 protected:
+    const FFComponent& _pvt_components() const;
+
+    void recalculateEnergy();
+
     void _pvt_restore(const ForceField &ffield);
 
     void _pvt_added(const PartialMolecule &mol, const PropertyMap &map);
@@ -453,7 +510,61 @@ protected:
 
     void _pvt_updateName();
 
+private:
+    typedef InternalPotential::Molecule Molecule;
+    typedef InternalPotential::Molecules Molecules;
+    typedef InternalPotential::ChangedMolecule ChangedMolecule;
+    
+    bool recordingChanges() const;
+    void recordChange(const ChangedMolecule &change);
+    
+    /** All of the molecules currently in this forcefield */
+    Molecules mols;
+
+    /** The list of molecules that have changed since the last evaluation.
+        While ffmols only contains the newest version of the molecule,
+        this list contains both the newest version, and the version of the
+        molecule at the last energy evaluation. */
+    QHash<MolNum,ChangedMolecule> changed_mols;
+
+    /** The energy components available for this forcefield */
+    Components ffcomponents;
+    
+    /** The properties of this forcefield */
+    Properties props;
 };
+
+////////
+//////// Inline functions of InternalFF
+////////
+
+/** Return all of the symbols used in the internal energy functions */
+inline const InternalSymbols& InternalFF::symbols() const
+{
+    return InternalPotential::symbols();
+}
+
+/** Return the names of all of the properties used to store the 
+    parameters for this potential */
+inline const InternalFF::ParameterNames& InternalFF::parameters() const
+{
+    return InternalPotential::parameters();
+}
+
+/** Return all of the symbols representing the components
+    of this forcefield */
+inline const InternalFF::Components& InternalFF::components() const
+{
+    return ffcomponents;
+}
+
+/** Return whether or not this strictly include terms that
+    involve *only* selected atoms. Otherwise this includes
+    terms that involve at least one selected atom */
+inline bool InternalFF::isStrict() const
+{
+    return isstrict;
+}
 
 }
 

@@ -32,10 +32,15 @@
 #include "SireMaths/triangle.h"
 #include "SireMaths/torsion.h"
 
+#include "SireBase/property.h"
+
 #include "SireMol/mover.hpp"
 
+#include "SireFF/detail/atomiccoords3d.h"
+
 #include "SireFF/errors.h"
-#include "SireError/errors.h"˚
+#include "SireBase/errors.h"
+#include "SireError/errors.h"
 
 #include "SireUnits/dimensions.h"
 
@@ -46,13 +51,255 @@
 
 using namespace SireMM;
 using namespace SireFF;
+using namespace SireFF::detail;
 using namespace SireMaths;
+using namespace SireBase;
 using namespace SireUnits::Dimension;
 using namespace SireStream;
 
 ////////
+//////// Fully instantiate template classes
+////////
+
+template class FFMolecule<InternalPotential>;
+template class FFMolecules<InternalPotential>;
+template class ChangedMolecule<InternalPotential::Molecule>;
+
+////////
 //////// Implementation of InternalPotential
 ////////
+
+/** Constructor - if 'isstrict' is true then this only calculates
+    the energies and forces of parameters that only involve selected
+    atoms. If 'isstrict' is false, then parameters that involve
+    at least one selected atom are used. */
+InternalPotential::InternalPotential(bool strict) : isstrict(strict)
+{}
+
+/** Copy constructor */
+InternalPotential::InternalPotential(const InternalPotential &other)
+                  : isstrict(other.isstrict)
+{}
+
+/** Destructor */
+InternalPotential::~InternalPotential()
+{}
+
+/** Copy assignment operator */
+InternalPotential& InternalPotential::operator=(const InternalPotential &other)
+{
+    isstrict = other.isstrict;
+    return *this;
+}
+
+InternalPotential::ParameterNames InternalPotential::param_names;
+InternalSymbols InternalPotential::internal_symbols;
+
+/** Return all of the symbols used in the internal energy functions */
+const InternalSymbols& InternalPotential::symbols()
+{
+    return internal_symbols;
+}
+
+/** Return the names of all of the properties used to store the 
+    parameters for this potential */
+const InternalPotential::ParameterNames& InternalPotential::parameters()
+{
+    return param_names;
+}
+
+/** Return all of the required parameters for the molecule 'molecule',
+    using the supplied map to find the required properties
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+InternalPotential::Parameters
+InternalPotential::getParameters(const PartialMolecule &molecule,
+                                 const PropertyMap &map) const
+{
+    return InternalPotential::Parameters(molecule,
+                                         map[parameters().coordinates()],
+                                         map[parameters().bond()],
+                                         map[parameters().angle()],
+                                         map[parameters().dihedral()],
+                                         map[parameters().improper()],
+                                         map[parameters().ureyBradley()],
+                                         map[parameters().stretchStretch()],
+                                         map[parameters().stretchBend()],
+                                         map[parameters().bendBend()],
+                                         map[parameters().stretchBendTorsion()],
+                                         isstrict);
+}
+
+static inline bool changed(const PartialMolecule &old_molecule,
+                           const PartialMolecule &new_molecule,
+                           const PropertyName &property)
+{
+    return old_molecule.version(property) != new_molecule.version(property);
+}
+
+/** Return updated parameters for the molecule that has changed from 
+    'old_molecule' to 'new_molecule', with the map 'map' used to find
+    the properties of these parameters in both versions of the molecule.
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+InternalPotential::Parameters
+InternalPotential::updateParameters(const InternalPotential::Parameters &old_params,
+                                    const PartialMolecule &old_molecule,
+                                    const PartialMolecule &new_molecule,
+                                    const PropertyMap &map) const
+{
+    if (old_molecule.selection() != new_molecule.selection())
+        //the selection has changed - just return completely
+        //new parameters
+        return this->getParameters(new_molecule, map);
+        
+    //we can only update things if just the coordinates have changed
+    if ( changed(old_molecule, new_molecule, map[parameters().bond()]) or
+         changed(old_molecule, new_molecule, map[parameters().angle()]) or
+         changed(old_molecule, new_molecule, map[parameters().dihedral()]) or
+         changed(old_molecule, new_molecule, map[parameters().improper()]) or
+         changed(old_molecule, new_molecule, map[parameters().ureyBradley()]) or
+         changed(old_molecule, new_molecule, map[parameters().stretchStretch()]) or
+         changed(old_molecule, new_molecule, map[parameters().stretchBend()]) or
+         changed(old_molecule, new_molecule, map[parameters().bendBend()]) or
+         changed(old_molecule, new_molecule, map[parameters().stretchBendTorsion()]) )
+    {
+        //the internal parameters have changed, so we need to update
+        //everything
+        return this->getParameters(new_molecule, map);
+    }
+    
+    const PropertyName &coords_property = map[parameters().coordinates()];
+    
+    if ( changed(old_molecule, new_molecule, coords_property) )
+    {
+        //just the coordinates have changed - just update these
+        Parameters new_params = old_params;
+        new_params.setAtomicCoordinates( AtomicCoords3D(new_molecule.molecule(),
+                                                        coords_property) );
+                                          
+        return new_params;
+    }
+    else
+        //nothing important has changed
+        return old_params;
+}
+
+static inline bool changed(const PartialMolecule &old_molecule,
+                           const PartialMolecule &new_molecule,
+                           const PropertyName &old_property,
+                           const PropertyName &new_property)
+{
+    return old_property != new_property or
+           old_molecule.version(old_property) != 
+                                    new_molecule.version(new_property);
+}
+
+/** Return updated parameters for the molecule that has changed from 
+    'old_molecule' to 'new_molecule', with the map 'old_map' used to find
+    the properties of these parameters in the old version of the molecule,
+    and 'new_map' used to find the properties in the new version
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+InternalPotential::Parameters
+InternalPotential::updateParameters(const InternalPotential::Parameters &old_params,
+                                    const PartialMolecule &old_molecule,
+                                    const PartialMolecule &new_molecule,
+                                    const PropertyMap &old_map,
+                                    const PropertyMap &new_map) const
+{
+    if (old_molecule.selection() != new_molecule.selection())
+        //we need to rebuild the parameters from scratch
+        return this->getParameters(new_molecule, new_map);
+        
+    if ( changed(old_molecule, new_molecule,
+                 old_map[parameters().bond()], new_map[parameters().bond()]) or
+         changed(old_molecule, new_molecule,
+                 old_map[parameters().angle()], new_map[parameters().angle()]) or
+         changed(old_molecule, new_molecule,
+                 old_map[parameters().dihedral()], new_map[parameters().dihedral()]) or
+         changed(old_molecule, new_molecule,
+                 old_map[parameters().improper()], new_map[parameters().improper()]) or
+         changed(old_molecule, new_molecule,
+                 old_map[parameters().ureyBradley()], 
+                 new_map[parameters().ureyBradley()]) or
+         changed(old_molecule, new_molecule,
+                 old_map[parameters().stretchStretch()], 
+                 new_map[parameters().stretchStretch()]) or
+         changed(old_molecule, new_molecule,
+                 old_map[parameters().stretchBend()], 
+                 new_map[parameters().stretchBend()]) or
+         changed(old_molecule, new_molecule,
+                 old_map[parameters().stretchBendTorsion()], 
+                 new_map[parameters().stretchBendTorsion()]) )
+    {
+        //some of the parameters have changed - we have to rebuild from scratch
+        return this->getParameters(new_molecule, new_map);
+    }
+
+    if ( changed(old_molecule, new_molecule,
+                 old_map[parameters().coordinates()],
+                 new_map[parameters().coordinates()]) )
+    {
+        //only the coordinates have changed
+        Parameters new_params = old_params;
+        
+        new_params.setAtomicCoordinates( AtomicCoords3D(new_molecule.molecule(),
+                                              new_map[parameters().coordinates()]) );
+                                              
+        return new_params;
+    }
+    else
+        //nothing relavant has changed
+        return old_params;
+}
+
+/** Return a fully parameterised version 'molecule', using the supplied
+    property map to find the properties containing the required 
+    parameters.
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+InternalPotential::Molecule
+InternalPotential::parameterise(const PartialMolecule &molecule,
+                                const PropertyMap &map) const 
+{
+    //honestly, this is const, but the interface in FFMolecule
+    //requires non-const...
+    return InternalPotential::Molecule(molecule, 
+                                       const_cast<InternalPotential&>(*this), 
+                                       map);
+}
+
+/** Return the fully parameterised set of molecules from 'molecules', 
+    using the supplied property map to find the properties containing the 
+    required parameters.
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+InternalPotential::Molecules 
+InternalPotential::parameterise(const MolGroup &molecules,
+                                const PropertyMap &map) const
+{
+    //honestly, this is const, but the interface in FFMolecules
+    //requires non-const...
+    return InternalPotential::Molecules(molecules, 
+                                        const_cast<InternalPotential&>(*this), 
+                                        map);
+}
 
 /** Return the coordinates of the atom 'atom' using the coordinates in 'cgroup_array' */
 static const Vector& getCoords(const CGAtomIdx &atom,
@@ -1951,3 +2198,485 @@ void InternalPotential::calculateForce(const InternalPotential::Molecule &molecu
 ////////
 //////// Implementation of InternalFF
 ////////
+
+static const RegisterMetaType<InternalFF> r_internalff;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
+                                      const InternalFF &internalff)
+{
+    writeHeader(ds, r_internalff, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << internalff.mols << internalff.changed_mols
+        << internalff.props
+        << static_cast<const G1FF&>(internalff);
+        
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
+                                      InternalFF &internalff)
+{
+    VersionID v = readHeader(ds, r_internalff);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> internalff.mols >> internalff.changed_mols
+            >> internalff.props
+            >> static_cast<G1FF&>(internalff);
+            
+        internalff._pvt_updateName();
+        internalff.isstrict = internalff.props.property("strict")
+                                        ->asA<VariantProperty>()
+                                          .convertTo<bool>();
+    }
+    else
+        throw version_error(v, "1", r_internalff, CODELOC);
+    
+    return ds;
+}
+
+/** Constructor */
+InternalFF::InternalFF()
+           : ConcreteProperty<InternalFF,G1FF>(),
+             FF3D(), InternalPotential()
+{
+    props.setProperty("strict", VariantProperty(true));
+}
+
+/** Construct a named internal forcefield */
+InternalFF::InternalFF(const QString &name)
+           : ConcreteProperty<InternalFF,G1FF>(),
+             FF3D(), InternalPotential()
+{
+    G1FF::setName(name);
+    props.setProperty("strict", VariantProperty(true));
+}
+
+/** Copy constructor */
+InternalFF::InternalFF(const InternalFF &other)
+           : ConcreteProperty<InternalFF,G1FF>(other),
+             FF3D(other), InternalPotential(other),
+             mols(other.mols), changed_mols(other.changed_mols),
+             ffcomponents(other.ffcomponents), props(other.props)
+{}
+
+/** Destructor */
+InternalFF::~InternalFF()
+{}
+
+/** Copy assignment operator */
+InternalFF& InternalFF::operator=(const InternalFF &other)
+{
+    if (this != &other)
+    {
+        G1FF::operator=(other);
+        FF3D::operator=(other);
+        InternalPotential::operator=(other);
+        
+        mols = other.mols;
+        changed_mols = other.changed_mols;
+        ffcomponents = other.ffcomponents;
+        props = other.props;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool InternalFF::operator==(const InternalFF &other) const
+{
+    return G1FF::operator==(other);
+}
+
+/** Comparison operator */
+bool InternalFF::operator!=(const InternalFF &other) const
+{
+    return G1FF::operator!=(other);
+}
+
+/** Function used to perform the work of changing the name of this 
+    forcefield - this renames the component symbols and the molecule group */
+void InternalFF::_pvt_updateName()
+{
+    ffcomponents = Components( this->name() );
+    G1FF::_pvt_updateName();
+}
+
+/** Are we recording changes? */
+bool InternalFF::recordingChanges() const
+{
+    return not (G1FF::isDirty() and changed_mols.isEmpty());
+}
+
+/** Record the change described in 'change' */
+void InternalFF::recordChange(const InternalFF::ChangedMolecule &change)
+{
+    if (change.isEmpty())
+        return;
+
+    MolNum molnum = change.number();
+    
+    if (changed_mols.contains(molnum))
+    {
+        ChangedMolecule &old_change = changed_mols[molnum];
+        
+        if (old_change.oldMolecule() == change.newMolecule())
+        {
+            //we have reverted the change!
+            changed_mols.remove(molnum);
+            
+            if (changed_mols.isEmpty())
+                //there are no changes left, so this forcefield 
+                //must now be clean
+                G1FF::setClean();
+            
+            return;
+        }
+        else
+        {
+            //this is yet another change
+            changed_mols[molnum].change( change.newMolecule() );
+        }
+    }
+    else
+    {
+        changed_mols.insert(molnum, change);
+    }
+
+    G1FF::setDirty();
+}
+
+/** Set whether or not this strictly include terms that
+    involve *only* selected atoms. Otherwise this includes
+    terms that involve at least one selected atom */
+bool InternalFF::setStrict(bool strict)
+{
+    if (isstrict == strict)
+        return false;
+        
+    //change - this requires completely reparameterising all
+    //partial molecules...
+    try
+    {
+        isstrict = strict;
+    
+        const InternalFF::Molecule *mols_array = mols.moleculesByIndex().constData();
+        const PropertyMap *property_array = mols.parameterNamesByIndex().constData();
+
+        int nmols = mols.count();
+        
+        InternalFF::Molecules new_mols;
+        
+        for (int i=0; i<nmols; ++i)
+        {
+            new_mols.add( mols_array[i].molecule(), 
+                          property_array[i], *this, false );
+        }
+        
+        mols = new_mols;
+        this->mustNowRecalculateFromScratch();
+    }
+    catch(...)
+    {
+        isstrict = not isstrict;
+        throw;
+    }
+    
+    props.setProperty( "strict", VariantProperty(isstrict) );
+    
+    return true;
+}
+
+/** Set the property 'name' to the value 'value'
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+bool InternalFF::setProperty(const QString &name, const Property &value)
+{
+    if (name == QLatin1String("strict"))
+    {
+        return this->setStrict( value->asA<VariantProperty>()
+                                     .convertTo<bool>() );
+    }
+    else
+        throw SireBase::missing_property( QObject::tr(
+            "InternalFF does not have a property called \"%1\" that "
+            "can be changed. Available properties are [ strict ].")
+                .arg(name), CODELOC );
+}
+
+/** Return the property with name 'name'
+
+    \throw SireBase::missing_property
+*/
+const Property& InternalFF::property(const QString &name) const
+{
+    return props.property(name);
+}
+
+/** Return whether this forcefield contains the property called 'name' */
+bool InternalFF::containsProperty(const QString &name) const
+{
+    return props.hasProperty(name);
+}
+
+/** Return the values of all of the properties of this forcefield */
+const Properties& InternalFF::properties() const
+{
+    return props;
+}
+
+/** Calculate the forces acting on molecules in the passed force table 
+    caused by this potential, and add them onto the forces already
+    in the force table (optionally scaled by 'scale_force') */
+void InternalFF::force(ForceTable &forcetable, double scale_force)
+{
+    if (scale_force == 0)
+        return;
+        
+    int nforcemols = forcetable.count();
+    MolForceTable *forcetable_array = forcetable.data();
+    
+    const InternalFF::Molecule *mols_array = mols.moleculesByIndex().constData();
+
+    for (int i=0; i<nforcemols; ++i)
+    {
+        MolForceTable &moltable = forcetable_array[i];
+        
+        MolNum molnum = moltable.molNum();
+        
+        if (mols.contains(molnum))
+        {
+            InternalPotential::calculateForce(mols_array[mols.indexOf(molnum)],
+                                              moltable, scale_force);
+        }
+    }
+}
+
+/** Calculate the forces acting on molecules in the passed force table 
+    caused by the component of this potential represented by 
+    'symbol', and add them onto the forces already
+    in the force table (optionally scaled by 'scale_force') */
+void InternalFF::force(ForceTable &forcetable, const Symbol &symbol,
+                       double scale_force)
+{
+    if (scale_force == 0)
+        return;
+        
+    int nforcemols = forcetable.count();
+    MolForceTable *forcetable_array = forcetable.data();
+    
+    const InternalFF::Molecule *mols_array = mols.moleculesByIndex().constData();
+
+    for (int i=0; i<nforcemols; ++i)
+    {
+        MolForceTable &moltable = forcetable_array[i];
+        
+        MolNum molnum = moltable.molNum();
+        
+        if (mols.contains(molnum))
+        {
+            InternalPotential::calculateForce(mols_array[mols.indexOf(molnum)],
+                                              moltable, symbol,
+                                              components(), scale_force);
+        }
+    }
+}
+
+/** Set it that the forcefield must now be recalculate from scratch */
+void InternalFF::mustNowRecalculateFromScratch()
+{
+    //record that the forcefield is dirty
+    G1FF::setDirty();
+    
+    //clear any delta information
+    changed_mols.clear();
+}
+
+/** Internal function used to get a handle on the forcefield components */
+const FFComponent& InternalFF::_pvt_components() const
+{
+    return ffcomponents;
+}
+
+/** Recalculate the energy of the current state of this forcefield. This
+    will recalculate the energy using the quickest possible route, e.g.
+    if will only recalculate the energies of molecules that have changed
+    since the last evaluation */
+void InternalFF::recalculateEnergy()
+{
+    if (changed_mols.isEmpty())
+    {
+        //nothing appears to have changed, so lets recalculate
+        //everything from scratch
+        int nmols = mols.count();
+        const InternalPotential::Molecule *mols_array 
+                                            = mols.moleculesByIndex().constData();
+        
+        Energy total_nrg;
+        
+        for (int i=0; i<nmols; ++i)
+        {
+            InternalPotential::calculateEnergy( mols_array[i], total_nrg );
+        }
+        
+        this->components().setEnergy(*this, total_nrg);
+    }
+    else
+    {
+        //only some of the molecules have changed - calculate the
+        //change in energy
+        Energy old_nrg;
+        Energy new_nrg;
+        
+        for (QHash<MolNum,ChangedMolecule>::const_iterator 
+                                        it = changed_mols.constBegin();
+             it != changed_mols.constEnd();
+             ++it)
+        {
+            if (it->changedAll())
+            {
+                //must recalculate the total change in energy
+                InternalPotential::calculateEnergy( it->oldMolecule(), old_nrg );
+                InternalPotential::calculateEnergy( it->newMolecule(), new_nrg );
+            }
+            else
+            {
+                //can just calculte the change in energy of the changed parts
+                InternalPotential::calculateEnergy( it->oldParts(), old_nrg );
+                InternalPotential::calculateEnergy( it->newParts(), new_nrg );
+            }
+        }
+        
+        this->components().changeEnergy(*this, new_nrg - old_nrg);
+        
+        //can now forget about the changes :-)
+        changed_mols.clear();
+    }
+    
+    this->setClean();
+}
+
+/** Restore the contents of this forcefield from 'ffield' */
+void InternalFF::_pvt_restore(const ForceField &ffield)
+{
+    if (ffield->isA<InternalFF>())
+        throw SireError::program_bug( QObject::tr(
+            "Cannot restore a %1 from a %2. This is a program bug!!!")
+                .arg(this->what()).arg(ffield->what()),
+                    CODELOC );
+                    
+    this->operator=( ffield->asA<InternalFF>() );
+}
+
+/** Record that the molecule in 'mol' has been added, using the 
+    passed property map to get the required forcefield parameters
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void InternalFF::_pvt_added(const PartialMolecule &molecule, const PropertyMap &map)
+{
+    if (this->recordingChanges())
+    {
+        ChangedMolecule mol = mols.add(molecule, map, *this, true);
+        this->recordChange(mol);
+    }
+    else
+    {
+        mols.add(molecule, map, *this, false);
+    }
+}
+
+/** Record the fact that the molecule 'mol' has been removed from this forcefield */
+void InternalFF::_pvt_removed(const PartialMolecule &molecule)
+{
+    if (this->recordingChanges())
+    {
+        ChangedMolecule mol = mols.remove(molecule, *this, true);
+        this->recordChange(mol);
+    }
+    else
+    {
+        mols.remove(molecule, *this, false);
+    }
+}
+
+/** Record that fact that the molecule 'molecule' has been changed
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void InternalFF::_pvt_changed(const SireMol::Molecule &molecule)
+{
+    if (this->recordingChanges())
+    {
+        ChangedMolecule mol = mols.change(molecule, *this, true);
+        this->recordChange(mol);
+    }
+    else
+    {
+        mols.change(molecule, *this, false);
+    }
+}
+
+/** Record that the provided list of molecules have changed 
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void InternalFF::_pvt_changed(const QList<SireMol::Molecule> &molecules)
+{
+    InternalFF::Molecules old_mols = mols;
+    QHash<MolNum,ChangedMolecule> old_changed_mols = changed_mols;
+
+    try
+    {
+        if (this->recordingChanges())
+        {   
+            foreach (const SireMol::Molecule &molecule, molecules)
+            {
+                ChangedMolecule change = mols.change(molecule, *this, true);
+                this->recordChange(change);
+            }
+        }
+        else
+        {
+            foreach (const SireMol::Molecule &molecule, molecules)
+            {
+                mols.change(molecule, *this, false);
+            }
+        }
+    }
+    catch(...)
+    {
+        mols = old_mols;
+        changed_mols = old_changed_mols;
+        throw;
+    }
+}
+
+/** Record that all of the molecules have been removed */
+void InternalFF::_pvt_removedAll()
+{
+    mols.clear();
+    this->mustNowRecalculateFromScratch();
+}
+    
+/** Return whether or not the supplied property map contains different
+    properties for the molecule with number 'molnum' */       
+bool InternalFF::_pvt_wouldChangeProperties(MolNum molnum, 
+                                            const PropertyMap &map) const
+{
+    return mols.wouldChangeProperties(molnum, map);
+}
