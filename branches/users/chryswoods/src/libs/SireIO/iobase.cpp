@@ -28,8 +28,7 @@
 
 #include "iobase.h"
 
-#include "SireMol/molecule.h"
-#include "SireMol/editmol.h"
+#include "SireMol/mover.hpp"
 
 #include "SireError/errors.h"
 
@@ -37,15 +36,25 @@
 
 using namespace SireIO;
 using namespace SireMol;
-using namespace SireStream;
+using namespace SireBase;
 
-IOBase::IOBase()
+/** Constructor */
+IOBase::IOBase() : PropertyBase()
 {}
 
+/** Copy constructor */
+IOBase::IOBase(const IOBase &other) : PropertyBase(other)
+{}
+
+/** Destructor */
 IOBase::~IOBase()
 {}
 
-QList<Molecule> IOBase::read(QString filename, const CuttingFunction &cutfunc) const
+/** Read all of the molecules contained in the file 'filename', using
+    the (optional) passed properties in 'map', and returning a molecule
+    group containing the molecules in the same order as they appear
+    in the file, and with the molecule group name being 'filename' */
+MoleculeGroup IOBase::read(const QString &filename, const PropertyMap &map) const
 {
     //open the file for reading
     QFile fle(filename);
@@ -54,13 +63,26 @@ QList<Molecule> IOBase::read(QString filename, const CuttingFunction &cutfunc) c
         throw SireError::file_error(fle, CODELOC);
     }
 
-    //set the name of the object to 'filename' - this helps with debugging
-    fle.setObjectName(filename);
+    //get all of the data out of the file
+    QByteArray contents = fle.readAll();
+    fle.close();
 
-    return this->read(fle, cutfunc);
+    if (contents.isEmpty())
+        return MoleculeGroup();
+
+    MoleculeGroup molecules = this->read(contents, map);
+    
+    molecules.edit().setName(filename);
+
+    return molecules;
 }
 
-QList<Molecule> IOBase::read(QIODevice &dev, const CuttingFunction &cutfunc) const
+/** Read all of the molecules contained in the IO device 'dev', using
+    the (optional) passed properties in 'map', and returning a molecule
+    group containing the molecules in the same order as they appear
+    on the device, and with the molecule group name being taken
+    from the device */
+MoleculeGroup IOBase::read(QIODevice &dev, const PropertyMap &map) const
 {
     if (not dev.isReadable())
     {
@@ -68,109 +90,91 @@ QList<Molecule> IOBase::read(QIODevice &dev, const CuttingFunction &cutfunc) con
                                               "device!"), CODELOC );
     }
 
-    //see if there is any data that is immediately ready for reading
-    //(e.g. if the device is a file)
-    QByteArray data;
-    if (dev.bytesAvailable() > 0)
-    {
-        data += dev.readAll();
-    }
+    //get all of the data from the device
+    QByteArray contents = dev.readAll();
 
-    //keep reading data until none has arrived for 2 seconds. A QFile has
-    //no more data for reading, so this will immediately exit
-    while (dev.waitForReadyRead(2000))
-    {
-        data += dev.readAll();
-    }
+    if (contents.isEmpty())
+        return MoleculeGroup();
 
-    if (data.isEmpty())
-    {
-        return QList<Molecule>();
-    }
+    MoleculeGroup molecules = this->readMols(contents, map);
 
-    //now use a virtual function to obtain a list of EditMols from this data...
-    return this->readMols(data, cutfunc);
+    //maybe one day try to name the group...
+
+    return molecules;
 }
 
-void IOBase::write(const QList<Molecule> &molecules, QString filename) const
+/** Write the molecules in the passed group to the file called 'filename'.
+    This writes the molecules in the same order as they appear in the
+    passed group. */
+void IOBase::write(const MolGroup &molgroup, const QString &filename,
+                   const PropertyMap &map) const
 {
+    //write the group to a binary blob
+    QByteArray data = this->writeMols(molgroup, map);
+
     //open a file into which to write the molecules
     QFile fle(filename);
+    
     if (not fle.open(QIODevice::WriteOnly|QIODevice::Text))
     {
         throw SireError::file_error(fle);
     }
-
-    fle.setObjectName(filename);
-
-    this->write(molecules,fle);
+    
+    //dump the blob into the file
+    if (fle.write(data) == -1)
+    {
+        throw SireError::file_error(fle);
+    }
 }
 
-void IOBase::write(const QList<EditMol> &molecules, QString filename) const
+/** Write the molecules in the passed group to the file called 'filename'. */
+void IOBase::write(const Molecules &molecules, const QString &filename,
+                   const PropertyMap &map) const
 {
+    //write the group to a binary blob
+    QByteArray data = this->writeMols(molecules, map);
+
+    //open a file into which to write the molecules
     QFile fle(filename);
+    
     if (not fle.open(QIODevice::WriteOnly|QIODevice::Text))
     {
         throw SireError::file_error(fle);
     }
-
-    fle.setObjectName(filename);
-
-    this->write(molecules,fle);
-}
-
-void IOBase::write(const QList<Molecule> &molecules, QIODevice &dev) const
-{
-    if (not dev.isWritable())
+    
+    //dump the blob into the file
+    if (fle.write(data) == -1)
     {
-        throw SireError::io_error(QObject::tr("Cannot write molecules to a read-only "
-                                              "device!"), CODELOC);
+        throw SireError::file_error(fle);
     }
-
-    //use a virtual function to get a bytearray containing the molecules
-    QByteArray data = this->writeMols(molecules);
-
-    //now write this data to the device
-    dev.write(data);
 }
 
-void IOBase::write(const QList<EditMol> &molecules, QIODevice &dev) const
+/** Write the molecules in the passed group to the IO device 'dev'.
+    This writes the molecules in the same order as they appear in the
+    passed group. */
+void IOBase::write(const MolGroup &molgroup, QIODevice &dev,
+                   const PropertyMap &map) const
 {
-    if (not dev.isWritable())
+    //write the group to a binary blob
+    QByteArray data = this->writeMols(molgroup, map);
+
+    //dump the blob to the device
+    if (dev.write(data) == -1)
     {
-        throw SireError::io_error(QObject::tr("Cannot write molecules to a read-only "
-                                              "device!"), CODELOC);
+        throw SireError::file_error(dev.errorString(), CODELOC);
     }
-
-    QByteArray data = this->writeMols(molecules);
-
-    dev.write(data);
 }
 
-void IOBase::write(const Molecule &mol, QString filename) const
+/** Write the molecules in the passed group to the IO device 'dev'. */
+void IOBase::write(const Molecules &molecules, QIODevice &dev,
+                   const PropertyMap &map) const
 {
-    QList<Molecule> l;
-    l.append(mol);
-    this->write(l,filename);
-}
+    //write the group to a binary blob
+    QByteArray data = this->writeMols(molecules, map);
 
-void IOBase::write(const EditMol &mol, QString filename) const
-{
-    QList<EditMol> l;
-    l.append(mol);
-    this->write(l, filename);
-}
-
-void IOBase::write(const Molecule &mol, QIODevice &dev) const
-{
-    QList<Molecule> l;
-    l.append(mol);
-    this->write(l,dev);
-}
-
-void IOBase::write(const EditMol &mol, QIODevice &dev) const
-{
-    QList<EditMol> l;
-    l.append(mol);
-    this->write(l,dev);
+    //dump the blob into the file
+    if (dev.write(data) == -1)
+    {
+        throw SireError::file_error(dev.errorString(), CODELOC);
+    }
 }

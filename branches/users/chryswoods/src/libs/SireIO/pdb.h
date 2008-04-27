@@ -35,31 +35,57 @@ SIRE_BEGIN_HEADER
 
 namespace SireIO
 {
+class PDB;
+}
 
-/**
-This is a IOBase object that has been specialised to read and write PDB format files.
+QDataStream& operator<<(QDataStream&, const SireIO::PDB&);
+QDataStream& operator>>(QDataStream&, SireIO::PDB&);
 
-@author Christopher Woods
+namespace SireIO
+{
+
+/** This is a IOBase object that has been specialised to read and 
+    write PDB format files.
+
+    @author Christopher Woods
 */
-class SIREIO_EXPORT PDB : public IOBase
+class SIREIO_EXPORT PDB : public SireBase::ConcreteProperty<PDB,IOBase>
 {
 public:
     PDB();
+    PDB(const PDB &other);
+    
     ~PDB();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<PDB>() );
+    }
+
+    const char* what() const
+    {
+        return PDB::typeName();
+    }
+
+    PDB& operator=(const PDB &other);
+    
+    bool operator==(const PDB &other) const;
+    bool operator!=(const PDB &other) const;
+
 protected:
-    /** Read and return some molecules from the data */
-    QList<Molecule> readMols(const QByteArray &data,
-                             const CuttingFunction &cutfunc) const;
+    MoleculeGroup readMols(const QByteArray &data,
+                           const PropertyMap &map) const;
 
-    /** Write the list of molecules to a bytearray and return it */
-    QByteArray writeMols(const QList<Molecule> &molecules) const;
+    QByteArray writeMols(const MolGroup &molgroup,
+                         const PropertyMap &map) const;
 
-    QByteArray writeMols(const QList<EditMol> &molecules) const;
-
+    QByteArray writeMols(const Molecules &molecules,
+                         const PropertyMap &map) const;
 };
 
 }
+
+Q_DECLARE_METATYPE( SireIO::PDB );
 
 SIRE_END_HEADER
 

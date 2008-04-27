@@ -39,7 +39,7 @@ set_target_properties (SireIO PROPERTIES
 
 # Link to other Sire libraries
 target_link_libraries (SireIO
-                       #SireMM
+                       SireMM
                        SireMol
                        )
 
