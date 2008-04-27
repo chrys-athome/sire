@@ -29,10 +29,10 @@
 #include "sireglobal.h"
 
 namespace SireMM { namespace detail { class CGIDQuad; } }
-namespace SireMol { class CGIdx; }
+namespace SireID { class IndexBase; }
 
-uint qHash(const SireMol::CGIdx);
 uint qHash(const SireMM::detail::CGIDQuad&);
+uint qHash(const SireID::IndexBase&);
 
 #include <algorithm>
 
@@ -46,6 +46,8 @@ uint qHash(const SireMM::detail::CGIDQuad&);
 #include "SireVol/coordgroup.h"
 
 #include "SireError/errors.h"
+
+#include "tostring.h"
 
 using namespace SireMM;
 using namespace SireMM::detail;
@@ -1457,6 +1459,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
     return ds;
 }
 
+InternalSymbols InternalParameters::function_symbols;
+
 /** Return the index of the group that contains the potential and forces
     for the internals that act only within the CutGroup with index 'cgidx0'.
     
@@ -1745,6 +1749,38 @@ InternalParameters::getGroup(const CGIDQuad &idquad,
     }
     
     return group_params.data()[i];
+}
+
+/** Assert that the symbols in 'test_symbols' are all present in 'have_symbols'.
+    This is to make sure that the function of 'test_symbols' is not using
+    anything that isn't provided (only symbols in 'have_symbols are provided)
+    
+    \throw SireError::incompatible_error
+*/
+void InternalParameters::assertContainsOnly(const QSet<Symbol> &have_symbols,
+                                            const QSet<Symbol> &test_symbols) const
+{
+    QList<Symbol> extra_symbols;
+
+    for (QSet<Symbol>::const_iterator it = test_symbols.constBegin();
+         it != test_symbols.constEnd();
+         ++it)
+    {
+        if (not have_symbols.contains(*it))
+            extra_symbols.append(*it);
+    }
+    
+    if (not extra_symbols.isEmpty())
+        throw SireError::incompatible_error( QObject::tr(
+            "This is an incompatible function, as it requires symbols "
+            "that are not provided by the internal function, %1")
+                .arg( Sire::toString(extra_symbols) ), CODELOC );
+}
+
+/** Return the symbols used by the internal functions */
+const InternalSymbols& InternalParameters::symbols() const
+{
+    return function_symbols;
 }
 
 /** This adds all of the bond parameters and forces in 'bondparams'

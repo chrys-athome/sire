@@ -794,6 +794,9 @@ private:
         that involve a particular CutGroup, indexed by the CGIdx
         of that CutGroup */
     QHash< CGIdx, QSet<qint32> > groups_by_cgidx;
+    
+    /** All of the symbols used by the internal functions */
+    static InternalSymbols function_symbols;
 };
 
 /** This class holds intramolecular bonding parameters for 3D molecules
