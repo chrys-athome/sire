@@ -50,6 +50,7 @@
 #include "tostring.h"
 
 using namespace SireMM;
+using namespace SireMM::detail;
 using namespace SireFF;
 using namespace SireFF::detail;
 using namespace SireMaths;
@@ -64,6 +65,18 @@ using namespace SireStream;
 template class FFMolecule<InternalPotential>;
 template class FFMolecules<InternalPotential>;
 template class ChangedMolecule<InternalPotential::Molecule>;
+
+//////// Parameter names
+
+QString BondParameterName::bond_param( "bond" );
+QString AngleParameterName::angle_param( "angle" );
+QString DihedralParameterName::dihedral_param( "dihedral" );
+QString ImproperParameterName::improper_param( "improper" );
+QString UreyBradleyParameterName::ub_param( "Urey-Bradley" );
+QString StretchStretchParameterName::ss_param( "stretch-stretch" );
+QString StretchBendParameterName::sb_param( "stretch-bend" );
+QString BendBendParameterName::bb_param( "bend-bend" );
+QString StretchBendTorsionParameterName::sbt_param( "stretch-bend-torsion" );
 
 ////////
 //////// Implementation of InternalPotential

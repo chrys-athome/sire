@@ -3088,6 +3088,41 @@ QVector<GroupInternalParameters> InternalParameters::groupParameters(quint32 cgi
 ////////// Implementation of InternalParameters3D
 //////////
 
+static const RegisterMetaType<InternalParameters3D> r_params3d;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
+                                      const InternalParameters3D &params3d)
+{
+    writeHeader(ds, r_params3d, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << static_cast<const InternalParameters&>(params3d)
+        << static_cast<const AtomicCoords3D&>(params3d);
+        
+    return ds;
+}              
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
+                                      InternalParameters3D &params3d)
+{
+    VersionID v = readHeader(ds, r_params3d);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> static_cast<InternalParameters&>(params3d)
+            >> static_cast<AtomicCoords3D&>(params3d);
+    }
+    else
+        throw version_error(v, "1", r_params3d, CODELOC);
+        
+    return ds;
+}                        
+
 /** Null constructor */
 InternalParameters3D::InternalParameters3D()
                      : InternalParameters(), AtomicCoords3D()
