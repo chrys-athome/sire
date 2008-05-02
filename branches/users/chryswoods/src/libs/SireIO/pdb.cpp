@@ -103,18 +103,18 @@ using namespace SireStream;
 
     // 000000000011111111112222222222333333333344444444445555555555666666666677777777778
     // 012345678901234567890123456789012345678901234567890123456789012345678901234567890 
-    // ATOM      1  N   MET     2     -15.160  18.227  60.039  1.00 13.87      MA   N
-    // ATOM    145  N   VAL A  25      32.433  16.336  57.540  1.00 11.92           N 
-    // ATOM    146  CA  VAL A  25      31.132  16.439  58.160  1.00 11.85           C 
-    // ATOM    147  C   VAL A  25      30.447  15.105  58.363  1.00 12.34           C  
-    // ATOM    148  O   VAL A  25      29.520  15.059  59.174  1.00 15.65           O 
-    // ATOM    149  CB AVAL A  25      30.385  17.437  57.230  0.28 13.88           C 
-    // ATOM    150  CB BVAL A  25      30.166  17.399  57.373  0.72 15.41           C 
-    // ATOM    151  CG1AVAL A  25      28.870  17.401  57.336  0.28 12.64           C 
-    // ATOM    152  CG1BVAL A  25      30.805  18.788  57.449  0.72 15.11           C 
-    // ATOM    153  CG2AVAL A  25      30.835  18.826  57.661  0.28 13.58           C 
-    // ATOM    154  CG2BVAL A  25      29.909  16.996  55.922  0.72 13.25           C 
-    // ATOM    155 CA   CAL A  26      -5.000   3.234 -10.034  1.00  1.00           CA2+
+    // ATOM      1  N   MET     2     -15.160  18.227  60.039  1.00 13.87      MA  N
+    // ATOM    145  N   VAL A  25      32.433  16.336  57.540  1.00 11.92          N 
+    // ATOM    146  CA  VAL A  25      31.132  16.439  58.160  1.00 11.85          C 
+    // ATOM    147  C   VAL A  25      30.447  15.105  58.363  1.00 12.34          C  
+    // ATOM    148  O   VAL A  25      29.520  15.059  59.174  1.00 15.65          O 
+    // ATOM    149  CB AVAL A  25      30.385  17.437  57.230  0.28 13.88          C 
+    // ATOM    150  CB BVAL A  25      30.166  17.399  57.373  0.72 15.41          C 
+    // ATOM    151  CG1AVAL A  25      28.870  17.401  57.336  0.28 12.64          C 
+    // ATOM    152  CG1BVAL A  25      30.805  18.788  57.449  0.72 15.11          C 
+    // ATOM    153  CG2AVAL A  25      30.835  18.826  57.661  0.28 13.58          C 
+    // ATOM    154  CG2BVAL A  25      29.909  16.996  55.922  0.72 13.25          C 
+    // ATOM    155 CA   CAL A  26      -5.000   3.234 -10.034  1.00  1.00          CA2+
 
     @author Christopher Woods
 */
@@ -288,7 +288,7 @@ PDBAtom PDBAtom::readFromLine(const QString &line, int linenum)
             "Line %1 does not have a valid PDB z coordinate (%2)\n%3")
                 .arg(linenum).arg(line.mid(46,8).trimmed(), line), CODELOC );
 
-    if (line.length() >= 60)
+    if (line.length() >= 55)
     {
         //we can read the occupancy
         atom.occupancy = line.mid(54,6).toDouble(&ok);
@@ -300,7 +300,7 @@ PDBAtom PDBAtom::readFromLine(const QString &line, int linenum)
     else
         atom.occupancy = 1;
     
-    if (line.length() >= 66)
+    if (line.length() >= 61)
     {
         //try to read the temperature factor
         atom.tempfactor = line.mid(60,6).toDouble(&ok);
@@ -314,12 +314,12 @@ PDBAtom PDBAtom::readFromLine(const QString &line, int linenum)
     
     if (line.length() >= 73)
     {
-        atom.segid = line.mid(73,4).trimmed();
+        atom.segid = line.mid(72,4).trimmed();
     }
     else
         atom.segid = QString::null;
     
-    if (line.length() >= 78)
+    if (line.length() >= 77)
     {
         atom.element = line.mid(76,2).trimmed();
     }
@@ -346,36 +346,30 @@ PDBAtom PDBAtom::readFromLine(const QString &line, int linenum)
     }
     else
         atom.charge = 0;
-
-    qDebug() << "Read: " << atom.toString();
-    qDebug() << atom.writeToLine();
         
     return atom;
 }
 
 QString PDBAtom::writeToLine() const
 {
-    char chg[3];
-    chg[2] = '\0';
+    QString chg;
     
     if (charge > 0)
-        qsnprintf(chg, 2, "%1d+", charge);
+        chg = QString("%1+").arg(charge);
     else if (charge < 0)
-        qsnprintf(chg, 2, "%1d-", charge);
-    else
-        qsnprintf(chg, 2, "  ");
+        chg = QString("%1-").arg(charge);
 
-    char line[81];
-    line[80] = '\0';
+    char line[82];
+    line[81] = '\0';
     
-    qsnprintf(line, 80,
-     "%6s%5d %4s%1s%3s %1s%4d%1s   %8.3f%8.3f%8.3f%6.2f%6.2f      %s4%s2%s2\n",
+    qsnprintf(line, 81,
+     "%6-s%5d %4s%1s%3s %1s%4d%1s   %8.3_f%8.3_f%8.3_f%6.2_f%6.2_f      %4s%2s%2s",
             qPrintable(record_name), serial, qPrintable(name),
             qPrintable(altloc), qPrintable(resname), qPrintable(chainid),
             resseq, qPrintable(icode), x, y, z, occupancy, tempfactor,
-            qPrintable(segid), qPrintable(element), chg);
+            qPrintable(segid), qPrintable(element), qPrintable(chg));
 
-    return QString::fromLocal8Bit(line);
+    return QString::fromLocal8Bit(line).trimmed();
 }
 
 bool PDBAtom::isATOM() const
@@ -421,8 +415,10 @@ void PDBMolecule::closeFrame()
     if (current_frame != -1)
     {
         if (frames.constFind(current_frame)->isEmpty())
+        {
             frames.remove(current_frame);
             current_frame = -1;
+        }
     }
 }
 
@@ -445,7 +441,6 @@ QList<int> PDBMolecule::availableFrames() const
 {
     return frames.keys();
 }
-
 
 bool PDBMolecule::isEmpty() const
 {
@@ -520,7 +515,12 @@ PDBMolecule& PDBMolecules::nextMolecule()
     ++current_molecule;
 
     if (current_molecule >= mols.count())
+    {
         mols.append(PDBMolecule());
+        
+        if (last_frame > 0)
+            mols[current_molecule].openFrame(last_frame);
+    }
         
     molecule_opened = true;
         
@@ -634,6 +634,12 @@ bool PDB::operator!=(const PDB&) const
     return false;
 }
 
+/** Convert a PDBMolecule to a Molecule */
+static Molecule convert(const PDBMolecule &pdbmol)
+{
+    
+}
+
 /** Read a group of molecules from the data */
 MoleculeGroup PDB::readMols(const QByteArray &data,
                             const PropertyMap &map) const
@@ -650,7 +656,7 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
     PDBMolecules pdbmols;
     int linenum = -1;
 
-    PDBMolecule &current_molecule = pdbmols.nextMolecule();
+    PDBMolecule *current_molecule = &(pdbmols.nextMolecule());
     
     while (not ts.atEnd())
     {
@@ -672,9 +678,9 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
             line.startsWith("HETATM", Qt::CaseInsensitive))
         {
             if (not pdbmols.moleculeOpened())
-                current_molecule = pdbmols.nextMolecule();
+                current_molecule = &(pdbmols.nextMolecule());
         
-            current_molecule.addAtom( PDBAtom::readFromLine(line, linenum) );
+            current_molecule->addAtom( PDBAtom::readFromLine(line, linenum) );
         }
         else if (line.startsWith("TER", Qt::CaseInsensitive))
         {
@@ -715,7 +721,15 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
         pdbmols.closeFrame();
     }
 
-    return MoleculeGroup();
+    //we now need to convert each PDBMolecule into a real molecule
+    MolGroup molgroup;
+    
+    foreach (const PDBMolecule &pdbmol, pdbmols.molecules())
+    {
+        molgroup.add( convert(pdbmol) );
+    }
+
+    return molgroup;
 }
 
 /** Write a group of molecules to a bytearray */
