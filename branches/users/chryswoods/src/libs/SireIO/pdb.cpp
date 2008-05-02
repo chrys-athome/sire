@@ -33,72 +33,23 @@
 
 #include "pdb.h"
 
+#include "SireMol/element.h"
 #include "SireMol/mover.hpp"
 
+#include "SireError/errors.h"
+#include "SireIO/errors.h"
+
 #include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
+#include "tostring.h"
+
+#include <QDebug>
 
 using namespace SireMol;
 using namespace SireBase;
 using namespace SireIO;
 using namespace SireStream;
-
-static const RegisterMetaType<PDB> r_pdb;
-
-/** Serialise to a binary datastream */
-QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds, const PDB &pdb)
-{
-    writeHeader(ds, r_pdb, 1);
-    
-    ds << static_cast<const IOBase&>(pdb);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, PDB &pdb)
-{
-    VersionID v = readHeader(ds, r_pdb);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<IOBase&>(pdb);
-    }
-    else
-        throw version_error(v, "1", r_pdb, CODELOC);
-        
-    return ds;
-}
-
-/** Constructor */
-PDB::PDB() : ConcreteProperty<PDB,IOBase>()
-{}
-
-/** Copy constructor */
-PDB::PDB(const PDB &other) : ConcreteProperty<PDB,IOBase>(other)
-{}
-
-/** Destructor */
-PDB::~PDB()
-{}
-
-/** Copy assignment operator */
-PDB& PDB::operator=(const PDB &other)
-{
-    IOBase::operator=(other);
-    return *this;
-}
-
-/** Comparison operator */
-bool PDB::operator==(const PDB&) const
-{
-    return true;
-}
-
-/** Comparison operator */
-bool PDB::operator!=(const PDB&) const
-{
-    return false;
-}
 
 /** This internal class is used to store all of the data
     that is used in a PDB ATOM line 
@@ -176,6 +127,8 @@ public:
 
     static PDBAtom readFromLine(const QString &line, int linenum);
     
+    QString toString() const;
+    
     QString writeToLine() const;
     
     bool isATOM() const;
@@ -211,21 +164,25 @@ public:
     ~PDBMolecule();
     
     void addAtom(const PDBAtom &atom);
-    void addFrameAtom(const PDBAtom &atom);
     
-    bool hasMultipleOccupancy() const;
+    QList<int> availableFrames() const;
+    
+    const QList<PDBAtom>& atoms(int frame=1) const;
+    
+    bool hasMultipleOccupancy(int frame=1) const;
     bool hasMultipleFrames() const;
     
     void openFrame(int framenum);
-    bool closeFrame();
+    void closeFrame();
     
-    /** All of the atoms in the molecule, as read from 
-        the PDB file */
-    QList<PDBAtom> atoms;
-    
+    bool isEmpty() const;
+
+private:    
     /** Extra sets of coordinates (in case of multiple models,
         e.g. from NMR or from a trajectory) */
     QHash< int, QList<PDBAtom> > frames;
+    
+    int current_frame;
 };
 
 /** The collection of all molecules read from a PDB file */
@@ -235,24 +192,25 @@ public:
     PDBMolecules();
     ~PDBMolecules();
     
-    PDBMolecule& openMolecule();
+    PDBMolecule& nextMolecule();
     void closeMolecule();
     
     void openFrame(int frame_number);
     void closeFrame();
     
-    bool moleculeOpened() const;
     bool frameOpened() const;
-    
-    PDBMolecule& getMolecule(int index);
+    bool moleculeOpened() const;
 
-    void closeCurrent();
+    const QList<PDBMolecule>& molecules() const;
 
 private:
     QList<PDBMolecule> mols;
     
-    bool first_model;
-    bool open_frame;
+    int last_frame;
+    int current_molecule;
+    
+    bool frame_opened;
+    bool molecule_opened;
 };
 
 ////////
@@ -265,6 +223,15 @@ PDBAtom::PDBAtom()
 PDBAtom::~PDBAtom()
 {}
 
+QString PDBAtom::toString() const
+{
+    return QString("%1 %2 %3 %4 %5 %6 %7 %8 %9 %10 %11 %12 %13 %14 %15 %16")
+                .arg(record_name).arg(serial).arg(name)
+                .arg(altloc).arg(resname).arg(chainid).arg(resseq)
+                .arg(icode).arg(x).arg(y).arg(z).arg(occupancy)
+                .arg(tempfactor).arg(segid).arg(element).arg(charge);
+}
+
 PDBAtom PDBAtom::readFromLine(const QString &line, int linenum)
 {
     if (line.length() < 54)
@@ -274,45 +241,47 @@ PDBAtom PDBAtom::readFromLine(const QString &line, int linenum)
             "%2 characters, when it should contain at least 54.\n%3.")
                 .arg(linenum).arg(line.length()).arg(line), CODELOC );
 
+    PDBAtom atom;
+
     bool ok = true;
 
-    record_name = line.mid(0,6).trimmed();
+    atom.record_name = line.mid(0,6).trimmed();
     
-    serial = line.mid(6,5).toInt(&ok);
+    atom.serial = line.mid(6,5).toInt(&ok);
     
     if (not ok)
         throw SireIO::parse_error( QObject::tr(
             "Line %1 does not have a valid PDB atom number (%2).\n%3")
                 .arg(linenum).arg(line.mid(6,5).trimmed(), line), CODELOC );
 
-    name = line.mid(12,4);
-    altloc = line.mid(16,1).trimmed();
-    resname = line.mid(17,3);
-    chainid = line.mid(21,1).trimmed();
-    resseq = line.mid(22,4).toInt(&ok);
+    atom.name = line.mid(12,4);
+    atom.altloc = line.mid(16,1).trimmed();
+    atom.resname = line.mid(17,3);
+    atom.chainid = line.mid(21,1).trimmed();
+    atom.resseq = line.mid(22,4).toInt(&ok);
     
     if (not ok)
         throw SireIO::parse_error( QObject::tr(
             "Line %1 does not have a valid PDB residue number (%2).\n%3")
-                .arg(linenum).arg(resseq.mid(22,4).trimmed(), line), CODELOC );
+                .arg(linenum).arg(line.mid(22,4).trimmed(), line), CODELOC );
                 
-    icode = line.mid(26,1).trimmed();
+    atom.icode = line.mid(26,1).trimmed();
     
-    x = line.mid(30,8).toDouble(&ok);
+    atom.x = line.mid(30,8).toDouble(&ok);
     
     if (not ok)
         throw SireIO::parse_error( QObject::tr(
             "Line %1 does not have a valid PDB x coordinate (%2)\n%3")
                 .arg(linenum).arg(line.mid(30,8).trimmed(), line), CODELOC );
     
-    y = line.mid(38,8).toDouble(&ok);
+    atom.y = line.mid(38,8).toDouble(&ok);
     
     if (not ok)
         throw SireIO::parse_error( QObject::tr(
             "Line %1 does not have a valid PDB y coordinate (%2)\n%3")
                 .arg(linenum).arg(line.mid(38,8).trimmed(), line), CODELOC );
     
-    z = line.mid(46,8).toDouble(&ok);
+    atom.z = line.mid(46,8).toDouble(&ok);
     
     if (not ok)
         throw SireIO::parse_error( QObject::tr(
@@ -322,32 +291,40 @@ PDBAtom PDBAtom::readFromLine(const QString &line, int linenum)
     if (line.length() >= 60)
     {
         //we can read the occupancy
-        occupancy = line.mid(54,6).toDouble(&ok);
+        atom.occupancy = line.mid(54,6).toDouble(&ok);
         
         if (not ok)
             //something went wrong reading the occupancy - ignore the error
-            occupancy = 1;
+            atom.occupancy = 1;
     }
+    else
+        atom.occupancy = 1;
     
     if (line.length() >= 66)
     {
         //try to read the temperature factor
-        tempfactor = line.mid(60,6).toDouble(&ok);
+        atom.tempfactor = line.mid(60,6).toDouble(&ok);
         
         if (not ok)
             //something went wrong
-            tempfactor = -1;
+            atom.tempfactor = 0;
     }
+    else
+        atom.tempfactor = 0;
     
     if (line.length() >= 73)
     {
-        segid = line.mid(73,4).trimmed();
+        atom.segid = line.mid(73,4).trimmed();
     }
+    else
+        atom.segid = QString::null;
     
     if (line.length() >= 78)
     {
-        element = line.mid(76,2).trimmed();
+        atom.element = line.mid(76,2).trimmed();
     }
+    else
+        atom.element = QString::null;
     
     if (line.length() >= 79)
     {
@@ -361,17 +338,44 @@ PDBAtom PDBAtom::readFromLine(const QString &line, int linenum)
             
         chgstring.remove("-").remove("+");
         
-        charge = factor * chgstring.toInt(&ok);
+        atom.charge = factor * chgstring.toInt(&ok);
         
         if (not ok)
             //something went wrong - ignore the charge
-            charge = 0;
+            atom.charge = 0;
     }
+    else
+        atom.charge = 0;
+
+    qDebug() << "Read: " << atom.toString();
+    qDebug() << atom.writeToLine();
+        
+    return atom;
 }
 
 QString PDBAtom::writeToLine() const
 {
-    return QString::null;
+    char chg[3];
+    chg[2] = '\0';
+    
+    if (charge > 0)
+        qsnprintf(chg, 2, "%1d+", charge);
+    else if (charge < 0)
+        qsnprintf(chg, 2, "%1d-", charge);
+    else
+        qsnprintf(chg, 2, "  ");
+
+    char line[81];
+    line[80] = '\0';
+    
+    qsnprintf(line, 80,
+     "%6s%5d %4s%1s%3s %1s%4d%1s   %8.3f%8.3f%8.3f%6.2f%6.2f      %s4%s2%s2\n",
+            qPrintable(record_name), serial, qPrintable(name),
+            qPrintable(altloc), qPrintable(resname), qPrintable(chainid),
+            resseq, qPrintable(icode), x, y, z, occupancy, tempfactor,
+            qPrintable(segid), qPrintable(element), chg);
+
+    return QString::fromLocal8Bit(line);
 }
 
 bool PDBAtom::isATOM() const
@@ -406,13 +410,229 @@ Vector PDBAtom::coordinates() const
 //////// Implementation of PDBMolecule
 ////////
 
+void PDBMolecule::openFrame(int framenum)
+{
+    frames.insert(framenum, QList<PDBAtom>());
+    current_frame = framenum;
+}
+
+void PDBMolecule::closeFrame()
+{
+    if (current_frame != -1)
+    {
+        if (frames.constFind(current_frame)->isEmpty())
+            frames.remove(current_frame);
+            current_frame = -1;
+    }
+}
+
+PDBMolecule::PDBMolecule() : current_frame(-1)
+{}
+
+PDBMolecule::~PDBMolecule()
+{}
+
+void PDBMolecule::addAtom(const PDBAtom &atom)
+{
+    if (current_frame == -1)
+        //open the default frame (1)
+        this->openFrame(1);
+
+    frames[current_frame].append(atom);
+}
+
+QList<int> PDBMolecule::availableFrames() const
+{
+    return frames.keys();
+}
+
+
+bool PDBMolecule::isEmpty() const
+{
+    return frames.isEmpty();
+}
+
+const QList<PDBAtom>& PDBMolecule::atoms(int frame) const
+{
+    QHash< int,QList<PDBAtom> >::const_iterator it = frames.constFind(frame);
+    
+    if (it == frames.constEnd())
+        throw SireError::invalid_index( QObject::tr(    
+            "There is no frame at index %1. Available frames are %2.")
+                .arg(frame).arg( Sire::toString(frames.keys()) ), CODELOC );
+
+    return *it;
+}
+
+bool PDBMolecule::hasMultipleOccupancy(int frame) const
+{
+    foreach (const PDBAtom &atom, frames.value(frame))
+    {
+        if (atom.occupancy < 1)
+            //as the sum of occupancies for a site must equal 1,
+            //this implies that we do have multiple occupancy in this frame
+            return true;
+    }
+    
+    return false;
+}
+
+bool PDBMolecule::hasMultipleFrames() const
+{
+    return frames.count() > 1;
+}
+
 ////////
 //////// Implementation of PDBMolecules
 ////////
 
+PDBMolecules::PDBMolecules() : last_frame(0), current_molecule(-1), 
+                               frame_opened(false), molecule_opened(false)
+{}
+
+PDBMolecules::~PDBMolecules()
+{}
+
+void PDBMolecules::closeMolecule()
+{
+    if (molecule_opened)
+    {
+        PDBMolecule &mol = mols[current_molecule];
+        mol.closeFrame();
+    
+        if (mol.isEmpty())
+        {
+            //remove the empty molecule
+            mols.removeAt(current_molecule);
+            
+            --current_molecule;
+        }
+    }
+    
+    molecule_opened = false;
+}
+
+PDBMolecule& PDBMolecules::nextMolecule()
+{
+    if (molecule_opened)
+        this->closeMolecule();
+
+    ++current_molecule;
+
+    if (current_molecule >= mols.count())
+        mols.append(PDBMolecule());
+        
+    molecule_opened = true;
+        
+    return mols[current_molecule];
+}
+
+void PDBMolecules::openFrame(int frame_number)
+{
+    if (frame_number <= 0)
+        frame_number = last_frame + 1;
+
+    current_molecule = -1;
+    
+    for (QList<PDBMolecule>::iterator it = mols.begin();
+         it != mols.end();
+         ++it)
+    {
+        it->openFrame(frame_number);
+    }
+    
+    frame_opened = true;
+    last_frame = frame_number;
+}
+
+void PDBMolecules::closeFrame()
+{
+    for (QList<PDBMolecule>::iterator it = mols.begin();
+         it != mols.end();
+         ++it)
+    {
+        it->closeFrame();
+    }
+    
+    frame_opened = false;
+}
+
+bool PDBMolecules::frameOpened() const
+{
+    return frame_opened;
+}
+
+bool PDBMolecules::moleculeOpened() const
+{
+    return molecule_opened;
+}
+
+const QList<PDBMolecule>& PDBMolecules::molecules() const
+{
+    return mols;
+}
+
 ////////
 //////// Implementation of PDB
 ////////
+
+static const RegisterMetaType<PDB> r_pdb;
+
+/** Serialise to a binary datastream */
+QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds, const PDB &pdb)
+{
+    writeHeader(ds, r_pdb, 1);
+    
+    ds << static_cast<const IOBase&>(pdb);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, PDB &pdb)
+{
+    VersionID v = readHeader(ds, r_pdb);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<IOBase&>(pdb);
+    }
+    else
+        throw version_error(v, "1", r_pdb, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+PDB::PDB() : ConcreteProperty<PDB,IOBase>()
+{}
+
+/** Copy constructor */
+PDB::PDB(const PDB &other) : ConcreteProperty<PDB,IOBase>(other)
+{}
+
+/** Destructor */
+PDB::~PDB()
+{}
+
+/** Copy assignment operator */
+PDB& PDB::operator=(const PDB &other)
+{
+    IOBase::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool PDB::operator==(const PDB&) const
+{
+    return true;
+}
+
+/** Comparison operator */
+bool PDB::operator!=(const PDB&) const
+{
+    return false;
+}
 
 /** Read a group of molecules from the data */
 MoleculeGroup PDB::readMols(const QByteArray &data,
@@ -428,8 +648,9 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
     QTextStream ts(data, QIODevice::ReadOnly | QIODevice::Text);
 
     PDBMolecules pdbmols;
+    int linenum = -1;
 
-    PDBMolecule &current_molecule = pdbmols.openMolecule();
+    PDBMolecule &current_molecule = pdbmols.nextMolecule();
     
     while (not ts.atEnd())
     {
@@ -451,12 +672,9 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
             line.startsWith("HETATM", Qt::CaseInsensitive))
         {
             if (not pdbmols.moleculeOpened())
-                current_molecule = pdbmols.openMolecule();
+                current_molecule = pdbmols.nextMolecule();
         
-            if (first_model)
-                current_molecule.addAtom( PDBAtom::readFromLine(line, linenum) );
-            else
-                current_molecule.addFrameAtom( PDBAtom::readFromLine(line, linenum) );
+            current_molecule.addAtom( PDBAtom::readFromLine(line, linenum) );
         }
         else if (line.startsWith("TER", Qt::CaseInsensitive))
         {
@@ -474,7 +692,11 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
                         .arg(linenum), CODELOC );
             }
                 
-            frame_number = getModelFrameNumber(line, pdbmols.lastFrame());
+            bool ok;
+            int frame_number = line.mid(10,4).toInt(&ok);
+            if (not ok)
+                frame_number = -1;
+            
             pdbmols.openFrame(frame_number);
         }
         else if (line.startsWith("ENDMDL", Qt::CaseInsensitive))

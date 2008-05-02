@@ -12,6 +12,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the headers in SireIO
 set ( SIREIO_HEADERS
+      errors.h
       iobase.h
       pdb.h
 #      protoms.h
@@ -21,6 +22,7 @@ set ( SIREIO_HEADERS
 
 # Define the sources in SireIO
 set ( SIREIO_SOURCES
+      errors.cpp
       iobase.cpp
       pdb.cpp
 #      protoms.cpp

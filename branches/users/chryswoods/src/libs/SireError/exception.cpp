@@ -52,8 +52,11 @@ exception::exception(QString error, QString place) : err(error), plce(place)
 
     //remove the top two items from the backtrace as they are 'getBackTrace'
     //and this constructor
-    bt.removeFirst();
-    bt.removeFirst();
+    if (bt.count() > 2)
+    {
+        bt.removeFirst();
+        bt.removeFirst();
+    }
 }
 
 /** Copy constructor */

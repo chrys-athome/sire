@@ -33,6 +33,7 @@
 #include "SireError/errors.h"
 
 #include <QFile>
+#include <QDebug>
 
 using namespace SireIO;
 using namespace SireMol;
@@ -57,7 +58,12 @@ IOBase::~IOBase()
 MoleculeGroup IOBase::read(const QString &filename, const PropertyMap &map) const
 {
     //open the file for reading
-    QFile fle(filename);
+    QFile fle(filename); 
+    
+    if (not fle.exists())
+        throw SireError::file_error( QObject::tr(
+            "Cannot find the file \"%1\".").arg(filename), CODELOC );
+    
     if (not fle.open(QIODevice::ReadOnly|QIODevice::Text))
     {
         throw SireError::file_error(fle, CODELOC);
@@ -70,7 +76,7 @@ MoleculeGroup IOBase::read(const QString &filename, const PropertyMap &map) cons
     if (contents.isEmpty())
         return MoleculeGroup();
 
-    MoleculeGroup molecules = this->read(contents, map);
+    MoleculeGroup molecules = this->readMols(contents, map);
     
     molecules.edit().setName(filename);
 

@@ -118,13 +118,6 @@ QList<MGNum> MGNum::map(const MolGroupsBase &molgroups) const
     return molgroups.map(*this);
 }
 
-static Incremint last_number(0);
-
-MGNum MGNum::getUniqueNumber()
-{
-    return MGNum( last_number.increment() );
-}
-
 ////////
 //////// Implementation of MGNumList
 ////////

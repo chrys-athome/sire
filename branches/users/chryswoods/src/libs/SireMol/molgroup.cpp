@@ -45,6 +45,9 @@
 
 #include "tostring.h"
 
+#include "SireBase/incremint.h"
+#include "SireBase/majorminorversion.h"
+
 #include "SireMol/errors.h"
 #include "SireError/errors.h"
 
@@ -54,6 +57,32 @@
 using namespace SireMol;
 using namespace SireStream;
 using namespace SireBase;
+
+////////
+//////// Objects relating to the global registry of MolGroups
+////////
+
+template class VersionRegistry<MGNum>;
+
+static VersionRegistry<MGNum> mgnum_registry;
+
+static Incremint last_number(0);
+
+MGNum MGNum::getUniqueNumber()
+{
+    MGNum new_num( last_number.increment() );
+
+    while ( mgnum_registry.registered(new_num) )
+    {
+        new_num = MGNum(last_number.increment());
+    }
+    
+    return new_num;
+}
+
+////////
+//////// Functions relating to the MolNumUInt tuple
+////////
 
 typedef boost::tuple<MolNum,quint32> MolNumUInt;
 
@@ -121,8 +150,7 @@ public:
     MGName name;
     MGNum number;
     
-    quint64 major_version;
-    quint64 minor_version;
+    MajorMinorVersion version;
 };
 
 } // end of namespace detail
@@ -141,9 +169,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
         << molgrouppvt.molviewidx_to_num
         << molgrouppvt.molname_to_num
         << molgrouppvt.name
-        << molgrouppvt.number
-        << molgrouppvt.major_version
-        << molgrouppvt.minor_version;
+        << molgrouppvt.number;
 
     return ds;
 }
@@ -159,9 +185,9 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
         >> molgrouppvt.molviewidx_to_num
         >> molgrouppvt.molname_to_num
         >> molgrouppvt.name
-        >> molgrouppvt.number
-        >> molgrouppvt.major_version
-        >> molgrouppvt.minor_version;
+        >> molgrouppvt.number;
+
+    molgrouppvt.version = mgnum_registry.registerObject(molgrouppvt.number);
     
     return ds;
 }
@@ -181,8 +207,7 @@ MolGroupPvt::MolGroupPvt()
             : QSharedData(),
               name("unnamed"),
               number( MGNum::getUniqueNumber() ),
-              major_version(0),
-              minor_version(0)
+              version(1,0)
 {}
 
 /** Construct an empty, named MolGroupPvt */
@@ -190,8 +215,7 @@ MolGroupPvt::MolGroupPvt(const QString &nme)
             : QSharedData(),
               name(nme),
               number( MGNum::getUniqueNumber() ),
-              major_version(0),
-              minor_version(0)
+              version(1,0)
 {}
 
 /** Construct a named group that contains the same molecules as 'other' */
@@ -204,8 +228,7 @@ MolGroupPvt::MolGroupPvt(const QString &nme,
               molname_to_num(other.molname_to_num),
               name(nme),
               number( MGNum::getUniqueNumber() ),
-              major_version(0),
-              minor_version(0)
+              version(1,0)
 {}
 
 /** Copy constructor */
@@ -217,8 +240,7 @@ MolGroupPvt::MolGroupPvt(const MolGroupPvt &other)
               molname_to_num(other.molname_to_num),
               name(other.name),
               number(other.number),
-              major_version(other.major_version),
-              minor_version(other.minor_version)
+              version(other.version)
 {}
                    
 /** Destructor */
@@ -236,8 +258,7 @@ MolGroupPvt& MolGroupPvt::operator=(const MolGroupPvt &other)
         molname_to_num = other.molname_to_num;
         name = other.name;
         number = other.number;
-        major_version = other.major_version;
-        minor_version = other.minor_version;
+        version = other.version;
     }
     
     return *this;
@@ -246,25 +267,23 @@ MolGroupPvt& MolGroupPvt::operator=(const MolGroupPvt &other)
 bool MolGroupPvt::operator==(const MolGroupPvt &other) const
 {
     return number == other.number and
-           major_version == other.major_version and
-           minor_version == other.minor_version;
+           version == other.version;
 }
 
 bool MolGroupPvt::operator!=(const MolGroupPvt &other) const
 {
     return number != other.number or
-           major_version != other.major_version or
-           minor_version != other.minor_version;
+           version != other.version;
 }
 
 void MolGroupPvt::incrementMajor()
 {
-    throw SireError::incomplete_code("Unimplemented", CODELOC);
+    version.incrementMajor();
 }
 
 void MolGroupPvt::incrementMinor()
 {
-    throw SireError::incomplete_code("Unimplemented", CODELOC);
+    version.incrementMinor();
 }
 
 ////////////
@@ -1058,12 +1077,24 @@ void MolGroup::setName(const QString &new_name)
     }
 }
 
+/** Change the number of this group */
+void MolGroup::setNumber(quint32 new_number)
+{
+    MGNum new_num(new_number);
+
+    if (new_num != this->number())
+    {
+        d->number = new_num;
+        d->version = mgnum_registry.registerObject(d->number);
+    }
+}
+
 /** Return the major version number of this group. This number
     changes whenever views are added or removed from this group,
     or when the name of this group changes */
 quint64 MolGroup::majorVersion() const
 {
-    return d->major_version;
+    return d->version.majorVersion();
 }
 
 /** Return the minor version number of this group. This number
@@ -1072,7 +1103,7 @@ quint64 MolGroup::majorVersion() const
     version number of this group is changed. */
 quint64 MolGroup::minorVersion() const
 {
-    return d->minor_version;
+    return d->version.minorVersion();
 }
 
 /** Add the view of the molecule in 'molview' to this group. 

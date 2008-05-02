@@ -21,6 +21,7 @@ set ( SIREBASE_HEADERS
       findexe.h
       increment.h
       incremint.h
+      majorminorversion.h
       md5sum.h
       packedarray2d.h
       packedarray2d.hpp
@@ -40,6 +41,7 @@ set ( SIREBASE_SOURCES
       array2d.cpp
       errors.cpp
       findexe.cpp
+      majorminorversion.cpp
       md5sum.cpp
       packedarray2d.cpp
       properties.cpp
