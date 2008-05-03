@@ -824,6 +824,8 @@ static Molecule convert(const QList<PDBAtom> &pdbatoms)
             }
             else
                 current_res = -1;
+
+            old_res = pdbres;
         }
                 
         resparent_array[i] = current_res;
@@ -1075,6 +1077,27 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
             qDebug() << atom.name() << atom.number()
                      << atom.residue().name() << atom.residue().number()
                      << atom.cutGroup().name();
+        }
+        
+        for (ResIdx i(0); i<new_molecule.nResidues(); ++i)
+        {
+            Residue residue = new_molecule.residue(i);
+            
+            qDebug() << residue.name() << residue.number() << residue.nAtoms();
+        }
+        
+        for (ChainIdx i(0); i<new_molecule.nChains(); ++i)
+        {
+            Chain chain = new_molecule.chain(i);
+            
+            qDebug() << chain.name() << chain.nResidues();
+        }
+        
+        for (SegIdx i(0); i<new_molecule.nSegments(); ++i)
+        {
+            Segment segment = new_molecule.segment(i);
+            
+            qDebug() << segment.name() << segment.nAtoms();
         }
         
         if (new_molecule.nAtoms() != 0)
