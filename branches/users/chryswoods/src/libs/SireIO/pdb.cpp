@@ -30,11 +30,23 @@
 #include <QByteArray>
 #include <QString>
 #include <QStringList>
+#include <QMap>
 
 #include "pdb.h"
 
 #include "SireMol/element.h"
+
 #include "SireMol/mover.hpp"
+#include "SireMol/selector.hpp"
+
+#include "SireMol/molecule.h"
+#include "SireMol/moleculegroup.h"
+#include "SireMol/moleditor.h"
+#include "SireMol/segeditor.h"
+#include "SireMol/chaineditor.h"
+#include "SireMol/reseditor.h"
+#include "SireMol/cgeditor.h"
+#include "SireMol/atomeditor.h"
 
 #include "SireError/errors.h"
 #include "SireIO/errors.h"
@@ -153,6 +165,10 @@ public:
     QString   segid;
     QString   element;
     int       charge;
+  
+    /** This is an ID string that is used 
+        to help index an atom */
+    QString idstring;
 };
 
 /** The collection of all information read about 
@@ -180,7 +196,7 @@ public:
 private:    
     /** Extra sets of coordinates (in case of multiple models,
         e.g. from NMR or from a trajectory) */
-    QHash< int, QList<PDBAtom> > frames;
+    QMap< int, QList<PDBAtom> > frames;
     
     int current_frame;
 };
@@ -195,11 +211,13 @@ public:
     PDBMolecule& nextMolecule();
     void closeMolecule();
     
-    void openFrame(int frame_number);
+    int openFrame(int frame_number);
     void closeFrame();
     
     bool frameOpened() const;
     bool moleculeOpened() const;
+
+    bool isEmpty() const;
 
     const QList<PDBMolecule>& molecules() const;
 
@@ -347,6 +365,16 @@ PDBAtom PDBAtom::readFromLine(const QString &line, int linenum)
     else
         atom.charge = 0;
         
+    char idline[31];
+    idline[30] = '\0';
+    
+    qsnprintf(idline, 30, "%4s %3s %1s %4d%1s %4s",
+              qPrintable(atom.name), qPrintable(atom.resname),
+              qPrintable(atom.chainid), atom.resseq,
+              qPrintable(atom.icode), qPrintable(atom.segid));
+        
+    atom.idstring = QString::fromLocal8Bit(idline);
+        
     return atom;
 }
 
@@ -449,7 +477,7 @@ bool PDBMolecule::isEmpty() const
 
 const QList<PDBAtom>& PDBMolecule::atoms(int frame) const
 {
-    QHash< int,QList<PDBAtom> >::const_iterator it = frames.constFind(frame);
+    QMap< int,QList<PDBAtom> >::const_iterator it = frames.constFind(frame);
     
     if (it == frames.constEnd())
         throw SireError::invalid_index( QObject::tr(    
@@ -527,7 +555,7 @@ PDBMolecule& PDBMolecules::nextMolecule()
     return mols[current_molecule];
 }
 
-void PDBMolecules::openFrame(int frame_number)
+int PDBMolecules::openFrame(int frame_number)
 {
     if (frame_number <= 0)
         frame_number = last_frame + 1;
@@ -543,6 +571,8 @@ void PDBMolecules::openFrame(int frame_number)
     
     frame_opened = true;
     last_frame = frame_number;
+
+    return frame_number;
 }
 
 void PDBMolecules::closeFrame()
@@ -570,6 +600,11 @@ bool PDBMolecules::moleculeOpened() const
 const QList<PDBMolecule>& PDBMolecules::molecules() const
 {
     return mols;
+}
+
+bool PDBMolecules::isEmpty() const
+{
+    return mols.isEmpty();
 }
 
 ////////
@@ -634,10 +669,286 @@ bool PDB::operator!=(const PDB&) const
     return false;
 }
 
-/** Convert a PDBMolecule to a Molecule */
-static Molecule convert(const PDBMolecule &pdbmol)
+class PDBResidue
 {
+public:
+    PDBResidue()
+    {}
+
+    PDBResidue(const PDBAtom &atom)
+         : resname(atom.resname), resnum(atom.resseq),
+           icode(atom.icode), chainname(atom.chainid)
+    {}
+
+    ~PDBResidue()
+    {}
     
+    bool operator==(const PDBResidue &other) const
+    {
+        return resname == other.resname and resnum == other.resnum and
+               icode == other.icode and chainname == other.chainname;
+    }
+    
+    bool operator!=(const PDBResidue &other) const
+    {
+        return resname != other.resname or resnum != other.resnum or
+               icode != other.icode or chainname != other.chainname;
+    }
+    
+    bool isEmpty() const
+    {
+        return resname.isEmpty() and resnum.isNull() and icode.isEmpty()
+                  and chainname.isEmpty();
+    }
+    
+    ResName resname;
+    ResNum resnum;
+    QString icode;
+    ChainName chainname;
+};
+
+/** Convert a list of PDBAtoms into a molecule */
+static Molecule convert(const QList<PDBAtom> &pdbatoms)
+{
+    if (pdbatoms.isEmpty())
+        return Molecule();
+
+    //editor for the molecule
+    MolStructureEditor moleditor;
+
+    //create the array that holds the location of each atom in the
+    //molecule. This is because some of these atoms may be alternates,
+    //so are not included directly in the molecule. This means that
+    //the ith atom in pdbatoms may not be the ith atom in the molecule.
+    //The 'atomlocations' array maps the ith atom in pdbatoms to 
+    //the jth atom in the molecule (or -1 if this is an alternate)
+    int natoms = pdbatoms.count();
+    
+    QVector<int> atomlocations(natoms);
+    int *atomlocations_array = atomlocations.data();
+    
+    //create an array that holds the index of the residue to which
+    //the ith atom in pdbatoms belongs (or -1 if this atom is an 
+    //alternate or does not belong in any residue)
+    QVector<int> resparent(natoms);
+    int *resparent_array = resparent.data();
+
+    //this is a list of all of the residues in the order they
+    //appear in pdbatoms
+    QList<PDBResidue> pdbresidues;
+
+    //this contains the index of the primary atom of a set
+    //of alternates (each alternate must have an identical idstring)
+    QHash<QString,int> atom_idstrings;
+
+    int atomidx = 0;
+    int residx = 0;
+    int current_res = -1;
+
+    //create the 'old_res' residue - a new residue is created
+    //whenever the residue information for the current atom is
+    //different to that of the previous atom
+    PDBResidue old_res(pdbatoms.at(0));
+    
+    if (not old_res.isEmpty())
+    {
+        pdbresidues.append(old_res);
+        current_res = residx;
+        
+        ++residx;
+    }
+
+    //read through all of the atoms, and as a first step,
+    //just assign each one to a place in the molecule and to a residue
+    for (int i=0; i<natoms; ++i)
+    {
+        const PDBAtom &pdbatom = pdbatoms.at(i);
+    
+        if (not pdbatom.altloc.isEmpty())
+        {
+            //this atom has an alternate location ID
+            if (atom_idstrings.contains(pdbatom.idstring))
+            {
+                //one of the other alternates of this atom has 
+                //already been read, so we don't need to include
+                //this atom in the molecule directly
+                
+                //though we do want to find the atom with the largest
+                //occupancy...
+                int alt_idx = atom_idstrings.value(pdbatom.idstring);
+                const PDBAtom &alt_atom = pdbatoms.at(alt_idx);
+                
+                if (alt_atom.occupancy < pdbatom.occupancy)
+                {
+                    //this atom has a higher occupancy - make it the
+                    //dominant alternative atom
+                    atomlocations_array[i] = atomlocations_array[alt_idx];
+                    atomlocations_array[alt_idx] = -1;
+                    
+                    resparent_array[i] = resparent_array[alt_idx];
+                    resparent_array[alt_idx] = -1;
+                    
+                    atom_idstrings[pdbatom.idstring] = i;
+                }
+                else
+                {
+                    atomlocations_array[i] = -1;
+                    resparent_array[i] = -1; 
+                }
+                
+                //we've now finished with this atom
+                continue;
+            }
+            else
+            {
+                //this is the first of a (possible) set of alternate
+                //atoms. Record its location
+                atom_idstrings.insert(pdbatom.idstring, i);
+            }
+        }
+
+        //add this new atom to the molecule
+        atomlocations_array[i] = atomidx;
+        ++atomidx;
+                
+        PDBResidue pdbres(pdbatom);
+                
+        if (pdbres != old_res)
+        {
+            //this is a new residue as well
+            if (not pdbres.isEmpty())
+            {
+                pdbresidues.append(pdbres);
+                current_res = residx;
+                ++residx;
+            }
+            else
+                current_res = -1;
+        }
+                
+        resparent_array[i] = current_res;
+    }
+    
+    //we now know the location of every residue in the molecule,
+    //so lets create them all!
+    QSet<ChainName> created_chains;
+    
+    foreach (const PDBResidue &pdbresidue, pdbresidues)
+    {
+        ResStructureEditor reseditor = moleditor.add(pdbresidue.resnum);
+        
+        if (not pdbresidue.resname.isEmpty())
+            reseditor.rename(pdbresidue.resname);
+    
+        if (not pdbresidue.chainname.isEmpty())
+        {
+            //this residue is part of a chain - add the residue to the chain
+            if (not created_chains.contains(pdbresidue.chainname))
+            {
+                moleditor.add( pdbresidue.chainname );
+                created_chains.insert(pdbresidue.chainname);
+            }
+        
+            reseditor.reparent( pdbresidue.chainname );
+       }
+    }
+    
+    //now we have created all of the residues, we can now create
+    //all of the atoms
+    atomidx = 0;
+    QSet<QString> created_segments;
+    
+    for (int i=0; i<natoms; ++i)
+    {
+        //is this an alternative atom?
+        if (atomlocations_array[i] == -1)
+        {
+            //yes it is - we don't add these directly to the molecule
+            continue;
+        }
+        
+        const PDBAtom &pdbatom = pdbatoms.at(i);
+        
+        //add the atom to the molecule
+        BOOST_ASSERT(atomlocations_array[i] == atomidx);
+        ++atomidx;
+        
+        AtomStructureEditor atomeditor = moleditor.add( AtomNum(pdbatom.serial) );
+        
+        if (not pdbatom.name.isEmpty())
+            atomeditor.rename( AtomName(pdbatom.name) );
+            
+        //place this atom into a residue (if it belongs in one)
+        if (resparent_array[i] != -1)
+            atomeditor.reparent( ResIdx(resparent_array[i]) );
+            
+        //place this atom into a segment (if it belongs in one)
+        if (not pdbatom.segid.isEmpty())
+        {
+            if (not created_segments.contains(pdbatom.segid))
+            {
+                moleditor.add( SegName(pdbatom.segid) );
+                created_segments.insert(pdbatom.segid);
+            }
+            
+            atomeditor.reparent( SegName(pdbatom.segid) );
+        }
+    }
+    
+    moleditor.add( CGName("1") );
+    
+    for (AtomIdx i(0); i<moleditor.nAtoms(); ++i)
+    {
+        moleditor.select( AtomIdx(i) ).reparent( CGIdx(0) );
+    }
+    
+    //now we have the layout, use the supplied function to 
+    //break this molecule down into CutGroups...
+    //cgdivider.splitIntoCutGroups(moleditor);
+    
+    //ok, we've now built the structure of the molecule, so commit it!
+    Molecule molecule = moleditor.commit();
+    
+    return molecule;
+}
+
+/** Convert a PDBMolecule to a Molecule */
+static Molecule convert(const PDBMolecule &pdbmol, int first_frame,
+                        int last_frame)
+{
+    BOOST_ASSERT( first_frame <= last_frame );
+
+    QList<int> available_frames = pdbmol.availableFrames();
+    
+    if (available_frames.isEmpty())
+        return Molecule();
+        
+    //create a molecule from the first frame
+    int first_available_frame = available_frames.takeFirst();
+    
+    BOOST_ASSERT( first_available_frame >= first_frame and
+                  first_available_frame <= last_frame );
+    
+    Molecule molecule = convert(pdbmol.atoms(first_available_frame));
+    
+    if (not available_frames.isEmpty())
+    {
+        ///there are more frames to read...
+        foreach (int framenum, available_frames)
+        {
+            Molecule next_frame = convert(pdbmol.atoms(framenum));
+            
+            //add this frame onto the molecule
+        }
+    }
+    else if (first_available_frame != first_frame or
+             first_frame != last_frame)
+    {
+        //tell the molecule that it exists only at a single
+        //frame within an animation
+    }
+    
+    return molecule;
 }
 
 /** Read a group of molecules from the data */
@@ -657,6 +968,8 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
     int linenum = -1;
 
     PDBMolecule *current_molecule = &(pdbmols.nextMolecule());
+    
+    QList<int> opened_frames;
     
     while (not ts.atEnd())
     {
@@ -700,10 +1013,11 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
                 
             bool ok;
             int frame_number = line.mid(10,4).toInt(&ok);
+            
             if (not ok)
                 frame_number = -1;
             
-            pdbmols.openFrame(frame_number);
+            opened_frames.append( pdbmols.openFrame(frame_number) );
         }
         else if (line.startsWith("ENDMDL", Qt::CaseInsensitive))
         {
@@ -721,12 +1035,52 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
         pdbmols.closeFrame();
     }
 
+    if (pdbmols.isEmpty())
+        //no molecules have been loaded!
+        return MoleculeGroup();
+
+    int first_frame, last_frame;
+
+    //get the range of frames loaded
+    if (not opened_frames.isEmpty())
+    {
+        qSort(opened_frames);
+    
+        first_frame = opened_frames.first();
+        last_frame = opened_frames.last();
+    }
+    else
+    {
+        //this wasn't an animation
+        first_frame = 1;
+        last_frame = 1;
+    }
+    
     //we now need to convert each PDBMolecule into a real molecule
     MolGroup molgroup;
     
     foreach (const PDBMolecule &pdbmol, pdbmols.molecules())
     {
-        molgroup.add( convert(pdbmol) );
+        Molecule new_molecule = convert(pdbmol, first_frame, last_frame);
+        
+        qDebug() << "Created molecule" << new_molecule.number()
+                 << new_molecule.name() << new_molecule.nAtoms() 
+                 << new_molecule.nResidues() << new_molecule.nCutGroups()
+                 << new_molecule.nChains() << new_molecule.nSegments();
+        
+        for (AtomIdx i(0); i<new_molecule.nAtoms(); ++i)
+        {
+            Atom atom = new_molecule.atom(i);
+        
+            qDebug() << atom.name() << atom.number()
+                     << atom.residue().name() << atom.residue().number()
+                     << atom.cutGroup().name();
+        }
+        
+        if (new_molecule.nAtoms() != 0)
+        {
+            molgroup.add(new_molecule);
+        }
     }
 
     return molgroup;

@@ -322,6 +322,8 @@ public:
 
     void assertEqualTo(const MoleculeInfoData &other) const;
     
+    static const MoleculeInfoData& null();
+    
 private:
     
     void rebuildNameAndNumberIndexes();

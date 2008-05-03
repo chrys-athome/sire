@@ -40,6 +40,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireStream;
 using namespace SireMol;
 using namespace SireBase;
@@ -170,7 +172,7 @@ MoleculeData::registerMolecule(MolNum molnum)
 
     boost::shared_ptr<PropVersions> vrsns 
                     = version_registry[molnum].lock();
-                    
+
     if (not vrsns)
     {
         vrsns.reset( new PropVersions() );
@@ -188,6 +190,8 @@ MoleculeData::registerMolecule(MolNum molnum)
             
             while( it.hasNext() )
             {
+                it.next();
+            
                 if (it.value().expired())
                     it.remove();
             }
@@ -199,7 +203,10 @@ MoleculeData::registerMolecule(MolNum molnum)
 
 /** Null constructor */
 MoleculeData::MoleculeData()
-             : QSharedData(), vrsn(0), molnum(0),
+             : QSharedData(),
+               molinfo( MoleculeInfoData::null() ),
+               vrsn(0), 
+               molnum(0),
                vrsns( MoleculeData::registerMolecule(molnum) )
 {}
 

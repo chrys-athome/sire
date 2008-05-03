@@ -79,6 +79,11 @@ public:
         return _name.isNull();
     }
 
+    bool isEmpty() const
+    {
+        return _name.isEmpty();
+    }
+
 protected:
     explicit Name(const QString &name = QString::null) : _name(name)
     {}

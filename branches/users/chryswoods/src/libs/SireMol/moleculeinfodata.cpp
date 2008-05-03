@@ -42,6 +42,8 @@
 
 #include <boost/tuple/tuple.hpp>
 
+#include <QDebug>
+
 using namespace SireMol;
 using namespace SireID;
 using namespace SireStream;
@@ -561,6 +563,18 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 /** Null constructor */
 MoleculeInfoData::MoleculeInfoData() : QSharedData()
 {}
+    
+static SharedDataPointer<MoleculeInfoData> shared_null;
+
+const MoleculeInfoData& MoleculeInfoData::null()
+{
+    if (shared_null.constData() == 0)
+    {
+        shared_null = SharedDataPointer<MoleculeInfoData>(new MoleculeInfoData());
+    }
+    
+    return *(shared_null.constData());
+}
     
 /** Construct from the passed StructureEditor */
 MoleculeInfoData::MoleculeInfoData(const StructureEditor &editor)

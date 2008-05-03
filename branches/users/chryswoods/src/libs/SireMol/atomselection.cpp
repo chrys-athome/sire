@@ -38,6 +38,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireMol;
 using namespace SireBase;
 using namespace SireStream;
@@ -78,6 +80,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 /** Null constructor */
 AtomSelection::AtomSelection() 
               : ConcreteProperty<AtomSelection,MoleculeProperty>(),
+                d(MoleculeInfoData::null()),
                 nselected(0)
 {}
 

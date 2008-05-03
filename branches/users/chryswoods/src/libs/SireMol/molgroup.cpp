@@ -54,6 +54,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireMol;
 using namespace SireStream;
 using namespace SireBase;

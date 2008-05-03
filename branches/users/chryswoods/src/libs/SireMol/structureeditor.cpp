@@ -2731,7 +2731,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-StructureEditor::StructureEditor()
+StructureEditor::StructureEditor() : d( new EditMolData() )
 {}
 
 /** Assign so that this will edit a copy of 'moldata' */
