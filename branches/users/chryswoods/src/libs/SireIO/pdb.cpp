@@ -48,6 +48,8 @@
 #include "SireMol/cgeditor.h"
 #include "SireMol/atomeditor.h"
 
+#include "SireBase/stringmangler.h"
+
 #include "SireError/errors.h"
 #include "SireIO/errors.h"
 
@@ -62,6 +64,37 @@ using namespace SireMol;
 using namespace SireBase;
 using namespace SireIO;
 using namespace SireStream;
+
+///////////
+/////////// Implementation of PDBParameters
+///////////
+
+PDBParameters::PDBParameters() : IOParametersBase()
+{}
+
+PDBParameters::~PDBParameters()
+{}
+
+PropertyName PDBParameters::animation_property("animation_frames");
+PropertyName PDBParameters::alternatives_property("alternative");
+PropertyName PDBParameters::icode_property("icode");
+PropertyName PDBParameters::bfactor_property("b-factor");
+PropertyName PDBParameters::formalcharge_property("formal-charge");
+
+PropertyName PDBParameters::pdbatomnames_property("PDB-atom-name");
+PropertyName PDBParameters::pdbresnames_property("PDB-residue-name");
+PropertyName PDBParameters::pdbchainnames_property("PDB-chain-name");
+PropertyName PDBParameters::pdbsegnames_property("PDB-segment-name");
+
+PropertyName PDBParameters::frame_selector( PropertyName::none() );
+PropertyName PDBParameters::atomname_mangler( TrimString::toProperty() );
+PropertyName PDBParameters::resname_mangler( TrimString::toProperty() );
+PropertyName PDBParameters::chainname_mangler( TrimString::toProperty() );
+PropertyName PDBParameters::segname_mangler( TrimString::toProperty() );
+
+///////////
+/////////// Implementation of everything to get the PDB reader/writer working
+///////////
 
 /** This internal class is used to store all of the data
     that is used in a PDB ATOM line 
@@ -708,10 +741,31 @@ public:
 };
 
 /** Convert a list of PDBAtoms into a molecule */
-static Molecule convert(const QList<PDBAtom> &pdbatoms)
+static Molecule convert(const QList<PDBAtom> &pdbatoms,
+                        const PropertyMap &map)
 {
     if (pdbatoms.isEmpty())
         return Molecule();
+
+    //get the manglers for the atom, residue, chain and segment names
+    StringMangler atommangler, resmangler, chainmangler, segmangler;
+
+    PropertyName atommangler_property = map[PDB::parameters().atomNameMangler()];
+    PropertyName resmangler_property = map[PDB::parameters().residueNameMangler()];
+    PropertyName chainmangler_property = map[PDB::parameters().chainNameMangler()];
+    PropertyName segmangler_property = map[PDB::parameters().segmentNameMangler()];
+    
+    if (atommangler_property.hasValue())
+        atommangler = atommangler_property.asA<StringManglerBase>();
+    
+    if (resmangler_property.hasValue())
+        resmangler = resmangler_property.asA<StringManglerBase>();
+    
+    if (chainmangler_property.hasValue())
+        chainmangler = chainmangler_property.asA<StringManglerBase>();
+    
+    if (segmangler_property.hasValue())
+        segmangler = segmangler_property.asA<StringManglerBase>();
 
     //editor for the molecule
     MolStructureEditor moleditor;
@@ -840,18 +894,18 @@ static Molecule convert(const QList<PDBAtom> &pdbatoms)
         ResStructureEditor reseditor = moleditor.add(pdbresidue.resnum);
         
         if (not pdbresidue.resname.isEmpty())
-            reseditor.rename(pdbresidue.resname);
+            reseditor.rename( ResName(resmangler->mangle(pdbresidue.resname)) );
     
         if (not pdbresidue.chainname.isEmpty())
         {
             //this residue is part of a chain - add the residue to the chain
             if (not created_chains.contains(pdbresidue.chainname))
             {
-                moleditor.add( pdbresidue.chainname );
+                moleditor.add( ChainName(chainmangler->mangle(pdbresidue.chainname)) );
                 created_chains.insert(pdbresidue.chainname);
             }
         
-            reseditor.reparent( pdbresidue.chainname );
+            reseditor.reparent( ChainName(chainmangler->mangle(pdbresidue.chainname)) );
        }
     }
     
@@ -878,7 +932,7 @@ static Molecule convert(const QList<PDBAtom> &pdbatoms)
         AtomStructureEditor atomeditor = moleditor.add( AtomNum(pdbatom.serial) );
         
         if (not pdbatom.name.isEmpty())
-            atomeditor.rename( AtomName(pdbatom.name) );
+            atomeditor.rename( AtomName(atommangler->mangle(pdbatom.name)) );
             
         //place this atom into a residue (if it belongs in one)
         if (resparent_array[i] != -1)
@@ -889,11 +943,11 @@ static Molecule convert(const QList<PDBAtom> &pdbatoms)
         {
             if (not created_segments.contains(pdbatom.segid))
             {
-                moleditor.add( SegName(pdbatom.segid) );
+                moleditor.add( SegName(segmangler->mangle(pdbatom.segid)) );
                 created_segments.insert(pdbatom.segid);
             }
             
-            atomeditor.reparent( SegName(pdbatom.segid) );
+            atomeditor.reparent( SegName(segmangler->mangle(pdbatom.segid)) );
         }
     }
     
@@ -911,49 +965,55 @@ static Molecule convert(const QList<PDBAtom> &pdbatoms)
     //ok, we've now built the structure of the molecule, so commit it!
     Molecule molecule = moleditor.commit();
 
-    //now build the coordinates - it is inefficient to do this
-    //atom by atom, as the bounding sphere for each CutGroup would
-    //be calculated after setting the coordinates of each atom. We
-    //therefore have to place the coordinates all into a large
-    //array, and then convert them into CoordGroups in one go
-    QVector< QVector<Vector> > atomcoords( molecule.nCutGroups() );
-    QVector<Vector> *atomcoords_array = atomcoords.data();
+    PropertyName coords_property = map[PDB::parameters().coordinates()];
     
-    for (CGIdx i(0); i<molecule.nCutGroups(); ++i)
+    if (coords_property.hasSource())
     {
-        atomcoords_array[i] = QVector<Vector>( molecule.data().info().nAtoms(i) );
-    }
-
-    for (int i=0; i<natoms; ++i)
-    {
-        //is this an alternative atom?
-        if (atomlocations_array[i] == -1)
+        //now build the coordinates - it is inefficient to do this
+        //atom by atom, as the bounding sphere for each CutGroup would
+        //be calculated after setting the coordinates of each atom. We
+        //therefore have to place the coordinates all into a large
+        //array, and then convert them into CoordGroups in one go
+        QVector< QVector<Vector> > atomcoords( molecule.nCutGroups() );
+        QVector<Vector> *atomcoords_array = atomcoords.data();
+    
+        for (CGIdx i(0); i<molecule.nCutGroups(); ++i)
         {
-            //yes it is - we need to add this to the alternative
-            //atoms property...
-            continue;
+            atomcoords_array[i] = QVector<Vector>( molecule.data().info().nAtoms(i) );
         }
+
+        for (int i=0; i<natoms; ++i)
+        {
+            //is this an alternative atom?
+            if (atomlocations_array[i] == -1)
+            {
+                //yes it is - we need to add this to the alternative
+                //atoms property...
+                continue;
+            }
         
-        const PDBAtom &pdbatom = pdbatoms.at(i);
+            const PDBAtom &pdbatom = pdbatoms.at(i);
         
-        const CGAtomIdx &cgatomidx = molecule.data().info()
-                                        .cgAtomIdx(AtomIdx(atomlocations_array[i]));
+            const CGAtomIdx &cgatomidx = molecule.data().info()
+                                           .cgAtomIdx(AtomIdx(atomlocations_array[i]));
         
-        //set the coordinates
-        atomcoords_array[cgatomidx.cutGroup()][cgatomidx.atom()]
-                             = Vector(pdbatom.x, pdbatom.y, pdbatom.z);
-    }
+            //set the coordinates
+            atomcoords_array[cgatomidx.cutGroup()][cgatomidx.atom()]
+                                = Vector(pdbatom.x, pdbatom.y, pdbatom.z);
+        }
     
-    molecule = molecule.edit()
-                       .setProperty("coordinates", AtomCoords(atomcoords))
+        molecule = molecule.edit()
+                       .setProperty(coords_property, AtomCoords(atomcoords))
                        .commit();
+    }
     
     return molecule;
 }
 
 /** Convert a PDBMolecule to a Molecule */
 static Molecule convert(const PDBMolecule &pdbmol, int first_frame,
-                        int last_frame)
+                        int last_frame,
+                        const PropertyMap &map)
 {
     BOOST_ASSERT( first_frame <= last_frame );
 
@@ -968,14 +1028,14 @@ static Molecule convert(const PDBMolecule &pdbmol, int first_frame,
     BOOST_ASSERT( first_available_frame >= first_frame and
                   first_available_frame <= last_frame );
     
-    Molecule molecule = convert(pdbmol.atoms(first_available_frame));
+    Molecule molecule = convert(pdbmol.atoms(first_available_frame), map);
     
     if (not available_frames.isEmpty())
     {
         ///there are more frames to read...
         foreach (int framenum, available_frames)
         {
-            Molecule next_frame = convert(pdbmol.atoms(framenum));
+            Molecule next_frame = convert(pdbmol.atoms(framenum), map);
             
             //add this frame onto the molecule
         }
@@ -1100,7 +1160,7 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
     
     foreach (const PDBMolecule &pdbmol, pdbmols.molecules())
     {
-        Molecule new_molecule = convert(pdbmol, first_frame, last_frame);
+        Molecule new_molecule = convert(pdbmol, first_frame, last_frame, map);
         
         if (new_molecule.nAtoms() != 0)
         {

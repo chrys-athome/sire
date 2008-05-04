@@ -96,6 +96,7 @@ public:
     PropertyName();
     PropertyName(const char* source);
     PropertyName(const QString &source);
+    PropertyName(const PropertyBase &value);
     PropertyName(const Property &value);
 
     PropertyName(const PropertyName &other);
@@ -116,6 +117,8 @@ public:
     const Property& value() const;
 
     QString toString() const;
+
+    static PropertyName none();
 
 private:
     /** The name to use to find the property in the  

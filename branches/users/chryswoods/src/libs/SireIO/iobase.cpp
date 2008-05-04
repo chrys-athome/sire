@@ -29,6 +29,7 @@
 #include "iobase.h"
 
 #include "SireMol/mover.hpp"
+#include "SireMol/residuecutting.h"
 
 #include "SireError/errors.h"
 
@@ -38,6 +39,25 @@
 using namespace SireIO;
 using namespace SireMol;
 using namespace SireBase;
+
+////////////
+//////////// Implementation of IOParameterBase
+////////////
+
+IOParametersBase::IOParametersBase()
+{}
+
+IOParametersBase::~IOParametersBase()
+{}
+
+PropertyName IOParametersBase::coords_property("coordinates");
+PropertyName IOParametersBase::elements_property("element");
+
+PropertyName IOParametersBase::cutting_function( ResidueCutting() );
+
+////////////
+//////////// Implementation of IOBase
+////////////
 
 /** Constructor */
 IOBase::IOBase() : PropertyBase()

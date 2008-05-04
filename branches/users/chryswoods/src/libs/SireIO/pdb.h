@@ -44,6 +44,215 @@ QDataStream& operator>>(QDataStream&, SireIO::PDB&);
 namespace SireIO
 {
 
+/** This class holds all of the sources and default values of the
+    properties and parameters used by the PDB reader/writer
+    
+    @author Christopher Woods
+*/
+class SIREIO_EXPORT PDBParameters : public IOParametersBase
+{
+public:
+    PDBParameters();
+    ~PDBParameters();
+
+    //// Locations of the properties into which to place data
+
+    /** Return the name of the property that will contain all of
+        the animation frames of the molecule (if there are any!) 
+        
+        default == "animation-frames"
+    */
+    const PropertyName& animationFrames() const
+    {
+        return animation_property;
+    }
+
+    /** Return the name of the property that will contain all of the 
+        alternative atom positions as read from the PDB file 
+        
+        default == "alternative"
+    */
+    const PropertyName& alternatives() const
+    {
+        return alternatives_property;
+    }
+    
+    /** Return the name of the property that will contain all of the
+        residue insertion codes
+        
+        default == "icode"
+    */
+    const PropertyName& iCode() const
+    {
+        return icode_property;
+    }
+    
+    /** Return the name of the property that will contain all of the 
+        (temperature) b-factors
+        
+        default == "b-factor"
+    */
+    const PropertyName& bFactor() const
+    {
+        return bfactor_property;
+    }
+    
+    /** Return the name of the property that will contain all of the
+        formal charges of the atoms as read from the PDB file
+        
+        default == "formal-charge"
+    */
+    const PropertyName& formalCharge() const
+    {
+        return formalcharge_property;
+    }
+
+    /** Return the name of the property that will contain all of the
+        names of the atoms as exactly as they were read from the 
+        PDB file
+        
+        default == "PDB-atom-name"
+    */
+    const PropertyName& pdbAtomName() const
+    {
+        return pdbatomnames_property;
+    }
+
+    /** Return the name of the property that will contain all of 
+        the names of the residues in exactly the format as read from the 
+        PDB file
+        
+        default == "PDB-residue-name"
+    */
+    const PropertyName& pdbResidueName() const
+    {
+        return pdbresnames_property;
+    }
+
+    /** Return the name of the property that will contain all of 
+        the names of the chains in exactly the format as read from the 
+        PDB file
+        
+        default == "PDB-chain-name"
+    */
+    const PropertyName& pdbChainName() const
+    {
+        return pdbchainnames_property;
+    }
+
+    /** Return the name of the property that will contain all of 
+        the names of the segments in exactly the format as read from the 
+        PDB file
+        
+        default == "PDB-segment-name"
+    */
+    const PropertyName& pdbSegmentName() const
+    {
+        return pdbsegnames_property;
+    }
+
+    ////// Parameters that control the reader or writer
+    
+    /** The function used to select or skip animation frames from each molecule
+    
+        default == PropertyBase::none
+    */
+    const PropertyName& animationFrameSelector() const
+    {
+        return frame_selector;
+    }
+    
+    /** The function used to process atom names. Must be a StringMangler()
+    
+        default == TrimString()
+    */
+    const PropertyName& atomNameMangler() const
+    {
+        return atomname_mangler;
+    }
+    
+    /** The function used to process residue names. Must be a StringMangler()
+    
+        default == TrimString()
+    */
+    const PropertyName& residueNameMangler() const
+    {
+        return resname_mangler;
+    }
+    
+    /** The function used to process chain names. Must be a StringMangler()
+    
+        default == TrimString()
+    */
+    const PropertyName& chainNameMangler() const
+    {
+        return chainname_mangler;
+    }
+    
+    /** The function used to process segment names. Must be a StringMangler()
+    
+        default == TrimString()
+    */
+    const PropertyName& segmentNameMangler() const
+    {
+        return segname_mangler;
+    }
+
+private:
+    ///////
+    /////// Properties that hold the data of the molecule
+    ///////
+    
+    /** The default name of the animation property */
+    static PropertyName animation_property;
+    
+    /** The default name in which to store the alternative atoms.
+        This is also used to store the occupancy */
+    static PropertyName alternatives_property;
+    
+    /** The default name of the residue insertion code property */
+    static PropertyName icode_property;
+    
+    /** The default name of the property containing the temperature
+        factor */
+    static PropertyName bfactor_property;
+    
+    /** The property containing the formal charges on the atoms */
+    static PropertyName formalcharge_property;
+    
+    /** The property containing the original PDB atom names */
+    static PropertyName pdbatomnames_property;
+
+    /** The property containing the original PDB residue names */
+    static PropertyName pdbresnames_property;
+    
+    /** The property containing the original PDB chain names */
+    static PropertyName pdbchainnames_property;
+    
+    /** The property containing the original PDB segment names */
+    static PropertyName pdbsegnames_property;
+    
+    ///////
+    /////// Parameters that control how the reader works
+    ///////
+    
+    /** The function used to decide which animation frames
+        to read (or skip) */
+    static PropertyName frame_selector;
+    
+    /** The mangler used for atom names */
+    static PropertyName atomname_mangler;
+    
+    /** The mangler used for residue names */
+    static PropertyName resname_mangler;
+    
+    /** The mangler used for chain names */
+    static PropertyName chainname_mangler;
+    
+    /** The mangler used for segment names */
+    static PropertyName segname_mangler;
+};
+
 /** This is a IOBase object that has been specialised to read and 
     write PDB format files.
 

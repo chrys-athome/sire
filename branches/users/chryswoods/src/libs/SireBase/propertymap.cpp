@@ -85,6 +85,12 @@ PropertyName::PropertyName(const QString &source)
              : src(source)
 {}
 
+/** Construct a PropertyName that uses the supplied
+    value, rather than searching for the property */
+PropertyName::PropertyName(const PropertyBase &value)
+             : val(value)
+{}
+
 /** Construct a PropertyName that uses the supplied 
     value, rather than searching for the property */
 PropertyName::PropertyName(const Property &value)
@@ -119,6 +125,12 @@ bool PropertyName::operator==(const PropertyName &other) const
 bool PropertyName::operator!=(const PropertyName &other) const
 {
     return src != other.src or val != other.val;
+}
+
+/** Return a PropertyName that says that this property is not set */
+PropertyName PropertyName::none()
+{
+    return PropertyName();
 }
 
 /** Return whether or not the source has been set */

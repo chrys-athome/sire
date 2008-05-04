@@ -44,10 +44,75 @@ namespace SireIO
 {
 
 using SireBase::PropertyMap;
+using SireBase::PropertyName;
 
 using SireMol::Molecules;
 using SireMol::MoleculeGroup;
 using SireMol::MolGroup;
+
+/** This is the base class of the object that contains the 
+    default sources of the properties into which this molecule
+    reader/writer will place data, and the default values of
+    the parameters that control how this reader/writer works.
+    
+    @author Christopher Woods
+*/
+class SIREIO_EXPORT IOParametersBase
+{
+public:
+    IOParametersBase();
+    ~IOParametersBase();
+    
+    /** Return the default name of the property into which
+        the coordinates of the atoms will be placed 
+        
+        default == "coordinates"
+    */
+    const PropertyName& coordinates() const
+    {
+        return coords_property;
+    }
+    
+    /** Return the default source of the property into which
+        the chemical elements of each atom will be placed 
+        
+        default == "element"
+    */
+    const PropertyName& element() const
+    {
+        return elements_property;
+    }
+    
+    /** Return the function used to split the molecule
+        into CutGroups (must be an object of type CuttingFunction)
+        
+        default == ResidueCutting()
+    */
+    const PropertyName& cuttingFunction() const
+    {
+        return cutting_function;
+    }
+    
+private:
+    ///////
+    /////// Properties that hold the data of the molecule
+    ///////
+
+    /** The default property in which to store the coordinates */
+    static PropertyName coords_property;
+    
+    /** The default property in which to store the elements */
+    static PropertyName elements_property;
+    
+    ///////
+    /////// Parameters that control how the reader works
+    ///////
+    
+    /** The function used to split a molecule into CutGroups
+         - by default a ResidueCutting() function is used that
+           places each residue into its own CutGroup */
+    static PropertyName cutting_function;
+};
 
 /** This is the virtual base class of all molecule readers and writers.
 
