@@ -52,7 +52,7 @@ using namespace SireMol;
 using namespace SireStream;
 
 // fully instantiate Editor<CutGroup>
-template class Editor<CutGroup>;
+template class Editor<CGEditor,CutGroup>;
 //template class Selector< Editor<CutGroup> >;
 
 ////////
@@ -67,7 +67,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_cgeditor, 1);
     
-    ds << static_cast<const Editor<CutGroup>&>(cgeditor);
+    ds << static_cast<const Editor<CGEditor,CutGroup>&>(cgeditor);
     
     return ds;
 }
@@ -80,7 +80,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     
     if (v == 1)
     {
-        ds >> static_cast<Editor<CutGroup>&>(cgeditor);
+        ds >> static_cast<Editor<CGEditor,CutGroup>&>(cgeditor);
     }
     else
         throw version_error( v, "1", r_cgeditor, CODELOC );
@@ -89,15 +89,15 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-CGEditor::CGEditor() : Editor<CutGroup>()
+CGEditor::CGEditor() : Editor<CGEditor,CutGroup>()
 {}
 
 /** Construct to edit a copy of the CutGroup 'cutgroup' */
-CGEditor::CGEditor(const CutGroup &cutgroup) : Editor<CutGroup>(cutgroup)
+CGEditor::CGEditor(const CutGroup &cutgroup) : Editor<CGEditor,CutGroup>(cutgroup)
 {}
 
 /** Copy constructor */
-CGEditor::CGEditor(const CGEditor &other) : Editor<CutGroup>(other)
+CGEditor::CGEditor(const CGEditor &other) : Editor<CGEditor,CutGroup>(other)
 {}
 
 /** Destructor */
@@ -107,14 +107,14 @@ CGEditor::~CGEditor()
 /** Assign this editor so that it edits a copy of the CutGroup 'cutgroup' */
 CGEditor& CGEditor::operator=(const CutGroup &cutgroup)
 {
-    Editor<CutGroup>::operator=(cutgroup);
+    Editor<CGEditor,CutGroup>::operator=(cutgroup);
     return *this;
 }
 
 /** Copy assignment operator */
 CGEditor& CGEditor::operator=(const CGEditor &other)
 {
-    Editor<CutGroup>::operator=(other);
+    Editor<CGEditor,CutGroup>::operator=(other);
     return *this;
 }
 

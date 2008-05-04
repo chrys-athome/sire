@@ -364,7 +364,8 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
         cgarrayarray->cgarray0 = idx;
         
         //the first CGArrayData lies at this index + narrays*sizeof(CoordGroupArray)
-        cgarrayarray->cgarraydata0 = idx + (narrays * sizeof(CoordGroupArray));
+        if (narrays > 0)
+            cgarrayarray->cgarraydata0 = idx + (narrays * sizeof(CoordGroupArray));
 
         if (narrays > 0)
         {
@@ -401,6 +402,9 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
             //we need to create space for the null CoordGroupArray
             quint32 data_idx = idx + sizeof(CoordGroupArray);
             CGArrayData *cgarray = new (storage + data_idx) CGArrayData(data_idx);
+            
+            //tell the parent where this null data is located
+            cgarrayarray->cgarraydata0 = data_idx;
             
             new (storage + idx) CoordGroupArray(cgarray);
             
@@ -485,6 +489,9 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
             CGData *cgroup = new (storage + dataidx) CGData(idx);
             new (storage + idx) CoordGroup(cgroup);
             
+            //tell the parent where this null CoordGroup is located
+            cgarrayarray->cgdata0 = dataidx;
+            
             cgroup->ncoords = 0;
             cgroup->coords0 = 0;
             cgroup->aabox = 0;
@@ -498,7 +505,7 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
         
         //we should now be at the end of the storage
         BOOST_ASSERT( idx + spare_space == sz );
-                
+                                      
         return storage;
     } 
     catch(...)
@@ -764,7 +771,7 @@ const CGArrayData* CGArrayArrayData::nullArray() const
     BOOST_ASSERT( ncgarrays == 0 );
     BOOST_ASSERT( cgarray0 != 0 );
     
-    return (const CGArrayData*)( memory()[cgarraydata0] );
+    return (const CGArrayData*)( &(memory()[cgarraydata0]) );
 }
 
 /** Return a pointer to the null CoordGroup */
@@ -773,7 +780,7 @@ const CGData* CGArrayArrayData::nullCGroup() const
     BOOST_ASSERT( ncgroups == 0 );
     BOOST_ASSERT( cgdata0 != 0 );
     
-    return (const CGData*)( memory()[cgdata0] );
+    return (const CGData*)( &(memory()[cgdata0]) );
 }
 
 /** Return a pointer to a CGArrayArrayData copy of this that has

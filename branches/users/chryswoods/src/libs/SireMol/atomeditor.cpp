@@ -57,7 +57,7 @@ using namespace SireMol;
 using namespace SireStream;
 
 //fully instantiate the Editor<Atom> and Editor< Selector<Atom> > classes
-template class Editor<Atom>;
+template class Editor<AtomEditor, Atom>;
 //template class Editor< Selector<Atom> >;
 
 /////////
@@ -72,7 +72,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_atomeditor, 1);
     
-    ds << static_cast<const Editor<Atom>&>(atomeditor);
+    ds << static_cast<const Editor<AtomEditor,Atom>&>(atomeditor);
     
     return ds;
 }
@@ -85,7 +85,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     
     if (v == 1)
     {
-        ds >> static_cast<Editor<Atom>&>(atomeditor);
+        ds >> static_cast<Editor<AtomEditor,Atom>&>(atomeditor);
     }
     else
         throw version_error(v, "1", r_atomeditor, CODELOC);
@@ -94,17 +94,17 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-AtomEditor::AtomEditor() : Editor<Atom>()
+AtomEditor::AtomEditor() : Editor<AtomEditor,Atom>()
 {}
 
 /** Construct an editor that edits a copy of 'atom' */
 AtomEditor::AtomEditor(const Atom &atom)
-           : Editor<Atom>(atom)
+           : Editor<AtomEditor,Atom>(atom)
 {}
 
 /** Copy constructor */
 AtomEditor::AtomEditor(const AtomEditor &other)
-           : Editor<Atom>(other)
+           : Editor<AtomEditor,Atom>(other)
 {}
 
 /** Destructor */
@@ -114,14 +114,14 @@ AtomEditor::~AtomEditor()
 /** Set this editor so that it is editing a copy of 'atom' */
 AtomEditor& AtomEditor::operator=(const Atom &atom)
 {
-    Editor<Atom>::operator=(atom);
+    Editor<AtomEditor,Atom>::operator=(atom);
     return *this;
 }
 
 /** Copy assignment operator */
 AtomEditor& AtomEditor::operator=(const AtomEditor &other)
 {
-    Editor<Atom>::operator=(other);
+    Editor<AtomEditor,Atom>::operator=(other);
     return *this;
 }
 

@@ -73,7 +73,7 @@ class ResID;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT ChainEditor : public Editor<Chain>
+class SIREMOL_EXPORT ChainEditor : public Editor<ChainEditor, Chain>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const ChainEditor&);

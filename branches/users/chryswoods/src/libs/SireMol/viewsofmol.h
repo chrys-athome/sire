@@ -47,7 +47,7 @@ namespace SireMol
 
 template<class T>
 class Mover;
-template<class T>
+template<class Parent, class T>
 class Editor;
 template<class T>
 class Selector;

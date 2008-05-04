@@ -897,19 +897,56 @@ static Molecule convert(const QList<PDBAtom> &pdbatoms)
         }
     }
     
+    //now we have the layout, use the supplied function to 
+    //break this molecule down into CutGroups...
+    //cgdivider.splitIntoCutGroups(moleditor);
+    
     moleditor.add( CGName("1") );
     
     for (AtomIdx i(0); i<moleditor.nAtoms(); ++i)
     {
         moleditor.select( AtomIdx(i) ).reparent( CGIdx(0) );
     }
-    
-    //now we have the layout, use the supplied function to 
-    //break this molecule down into CutGroups...
-    //cgdivider.splitIntoCutGroups(moleditor);
-    
+
     //ok, we've now built the structure of the molecule, so commit it!
     Molecule molecule = moleditor.commit();
+
+    //now build the coordinates - it is inefficient to do this
+    //atom by atom, as the bounding sphere for each CutGroup would
+    //be calculated after setting the coordinates of each atom. We
+    //therefore have to place the coordinates all into a large
+    //array, and then convert them into CoordGroups in one go
+    QVector< QVector<Vector> > atomcoords( molecule.nCutGroups() );
+    QVector<Vector> *atomcoords_array = atomcoords.data();
+    
+    for (CGIdx i(0); i<molecule.nCutGroups(); ++i)
+    {
+        atomcoords_array[i] = QVector<Vector>( molecule.data().info().nAtoms(i) );
+    }
+
+    for (int i=0; i<natoms; ++i)
+    {
+        //is this an alternative atom?
+        if (atomlocations_array[i] == -1)
+        {
+            //yes it is - we need to add this to the alternative
+            //atoms property...
+            continue;
+        }
+        
+        const PDBAtom &pdbatom = pdbatoms.at(i);
+        
+        const CGAtomIdx &cgatomidx = molecule.data().info()
+                                        .cgAtomIdx(AtomIdx(atomlocations_array[i]));
+        
+        //set the coordinates
+        atomcoords_array[cgatomidx.cutGroup()][cgatomidx.atom()]
+                             = Vector(pdbatom.x, pdbatom.y, pdbatom.z);
+    }
+    
+    molecule = molecule.edit()
+                       .setProperty("coordinates", AtomCoords(atomcoords))
+                       .commit();
     
     return molecule;
 }
@@ -1065,6 +1102,11 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
     {
         Molecule new_molecule = convert(pdbmol, first_frame, last_frame);
         
+        if (new_molecule.nAtoms() != 0)
+        {
+            molgroup.add(new_molecule);
+        }
+        
         qDebug() << "Created molecule" << new_molecule.number()
                  << new_molecule.name() << new_molecule.nAtoms() 
                  << new_molecule.nResidues() << new_molecule.nCutGroups()
@@ -1074,7 +1116,10 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
         {
             Atom atom = new_molecule.atom(i);
         
+            Vector coords = atom.property<Vector>("coordinates");
+        
             qDebug() << atom.name() << atom.number()
+                     << coords.toString()
                      << atom.residue().name() << atom.residue().number()
                      << atom.cutGroup().name();
         }
@@ -1098,11 +1143,6 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
             Segment segment = new_molecule.segment(i);
             
             qDebug() << segment.name() << segment.nAtoms();
-        }
-        
-        if (new_molecule.nAtoms() != 0)
-        {
-            molgroup.add(new_molecule);
         }
     }
 

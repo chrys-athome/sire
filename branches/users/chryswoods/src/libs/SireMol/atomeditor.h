@@ -76,7 +76,7 @@ class ResID;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT AtomEditor : public Editor<Atom>
+class SIREMOL_EXPORT AtomEditor : public Editor<AtomEditor, Atom>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const AtomEditor&);

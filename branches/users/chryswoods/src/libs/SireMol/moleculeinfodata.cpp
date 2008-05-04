@@ -1321,14 +1321,14 @@ MoleculeInfoData MoleculeInfoData::rename(SegIdx segidx,
 }
 
 /** Return the CGAtomIdx of the atom at index 'atomidx' */
-CGAtomIdx MoleculeInfoData::cgAtomIdx(AtomIdx atomidx) const
+const CGAtomIdx& MoleculeInfoData::cgAtomIdx(AtomIdx atomidx) const
 {
     atomidx = atomidx.map(atoms_by_index.count());
     return atoms_by_index.constData()[atomidx].cgatomidx;
 }
 
 /** Return the CGAtomIdx of the atom with ID 'atomid' */
-CGAtomIdx MoleculeInfoData::cgAtomIdx(const AtomID &atomid) const
+const CGAtomIdx& MoleculeInfoData::cgAtomIdx(const AtomID &atomid) const
 {
     return atoms_by_index[ this->atomIdx(atomid) ].cgatomidx;
 }

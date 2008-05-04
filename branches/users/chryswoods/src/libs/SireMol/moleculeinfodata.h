@@ -174,8 +174,8 @@ public:
     MoleculeInfoData rename(ChainIdx chainidx, const ChainName &newname) const;
     MoleculeInfoData rename(SegIdx segidx, const SegName &newname) const;
     
-    CGAtomIdx cgAtomIdx(AtomIdx atomidx) const;
-    CGAtomIdx cgAtomIdx(const AtomID &atomid) const;
+    const CGAtomIdx& cgAtomIdx(AtomIdx atomidx) const;
+    const CGAtomIdx& cgAtomIdx(const AtomID &atomid) const;
     
     QVector<CGAtomIdx> cgAtomIdxs(AtomIdx atomidx) const;
     QVector<CGAtomIdx> cgAtomIdxs(CGIdx cgidx) const;

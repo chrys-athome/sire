@@ -765,6 +765,45 @@ void MoleculeData::removeProperty(const QString &key)
     }
 }
 
+/** Remove the property at key 'key', returning the value
+    of that property
+    
+    \throw SireBase::missing_property
+*/
+Property MoleculeData::takeProperty(const QString &key)
+{
+    Property value = this->property(key);
+    this->removeProperty(key);
+    
+    return value;
+}
+
+/** Remove the metadata at metakey 'metakey', returning the value
+    of the metadata
+    
+    \throw SireBase::missing_property
+*/
+Property MoleculeData::takeMetadata(const QString &metakey)
+{
+    Property value = this->metadata(metakey);
+    this->removeMetadata(metakey);
+    
+    return value;
+}
+
+/** Remove the metadata at metakey 'metakey' from the property
+    at key 'key', returning the value of the metadata
+    
+    \throw SireBase::missing_property
+*/
+Property MoleculeData::takeMetadata(const QString &key, const QString &metakey)
+{
+    Property value = this->metadata(key, metakey);
+    this->removeMetadata(key,metakey);
+    
+    return value;
+}
+
 /** Set the value of the metadata at metakey 'metakey' to 
     the value 'value' */
 void MoleculeData::setMetadata(const QString &metakey, const Property &value)

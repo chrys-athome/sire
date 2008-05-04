@@ -73,7 +73,7 @@ class ResID;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT SegEditor : public Editor<Segment>
+class SIREMOL_EXPORT SegEditor : public Editor<SegEditor, Segment>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const SegEditor&);

@@ -216,6 +216,12 @@ AtomIdx Atom::index() const
     return atomidx;
 }
 
+/** Return the CGAtomIdx of this atom */
+const CGAtomIdx& Atom::cgAtomIdx() const
+{
+    return d->info().cgAtomIdx(atomidx);
+}
+
 /** Return a Mover that can be used to move this atom */
 Mover<Atom> Atom::move() const
 {

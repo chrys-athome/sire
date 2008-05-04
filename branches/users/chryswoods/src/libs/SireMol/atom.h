@@ -33,6 +33,9 @@
 
 #include "moleculeview.h"
 #include "atomproperty.hpp"
+#include "atomcoords.h"
+
+#include "cgatomidx.h"
 
 SIRE_BEGIN_HEADER
 
@@ -239,8 +242,8 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void Atom::setProperty(const QString &key, const T &value)
 {
-    MoleculeView::setProperty<Atom,AtomProperty<T>,T>(this->cgAtomIdx(), *d,
-                                                      key, value);
+    MoleculeView::setProperty<CGAtomIdx,AtomProperty<T>,T>(*d, key, 
+                                                           this->cgAtomIdx(), value);
 }
 
 /** Set the metadata at metakey 'metakey' for this atom */
@@ -248,8 +251,8 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void Atom::setMetadata(const QString &metakey, const T &value)
 {
-    MoleculeView::setMetadata<Atom,AtomProperty<T>,T>(this->cgAtomIdx(), *d,
-                                                      metakey, value);
+    MoleculeView::setMetadata<CGAtomIdx,AtomProperty<T>,T>(*d, metakey, 
+                                                           this->cgAtomIdx(), value);
 }
 
 /** Set the metadata at metakey 'metakey' for the property at 
@@ -258,8 +261,8 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void Atom::setMetadata(const QString &key, const QString &metakey, const T &value)
 {
-    MoleculeView::setMetadata<Atom,AtomProperty<T>,T>(this->cgAtomIdx(), *d,
-                                                      key, metakey, value);
+    MoleculeView::setMetadata<CGAtomIdx,AtomProperty<T>,T>(*d, key, metakey, 
+                                                           this->cgAtomIdx(), value);
 }
 
 namespace detail

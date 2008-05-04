@@ -78,7 +78,7 @@ class ResID;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT CGEditor : public Editor<CutGroup>
+class SIREMOL_EXPORT CGEditor : public Editor<CGEditor, CutGroup>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const CGEditor&);

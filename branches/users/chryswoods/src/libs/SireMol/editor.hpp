@@ -41,64 +41,64 @@ namespace SireMol
     
     @author Christopher Woods
 */
-template<class T>
+template<class Parent, class T>
 class Editor : public T
 {
 public:
     ~Editor();
     
-    Editor<T>& operator=(const Editor<T> &other);
-    Editor<T>& operator=(const T &other);
+    Editor<Parent,T>& operator=(const Editor<Parent,T> &other);
+    Editor<Parent,T>& operator=(const T &other);
 
     template<class V>
-    Editor<T>& setProperty(const QString &key, const V &value);
+    Parent& setProperty(const QString &key, const V &value);
                            
     template<class V>
-    Editor<T>& setMetadata(const QString &metakey, const V &value);
+    Parent& setMetadata(const QString &metakey, const V &value);
     
     template<class V>
-    Editor<T>& setMetadata(const QString &key, const QString &metakey,
-                           const V &value);
+    Parent& setMetadata(const QString &key, const QString &metakey,
+                        const V &value);
                            
-    Editor<T>& removeProperty(const QString &key);
-    Editor<T>& removeMetadata(const QString &metakey);
-    Editor<T>& removeMetadata(const QString &key, const QString &metakey);
+    Parent& removeProperty(const QString &key);
+    Parent& removeMetadata(const QString &metakey);
+    Parent& removeMetadata(const QString &key, const QString &metakey);
 
 protected:
     Editor();
     Editor(const T &view);
     
-    Editor(const Editor<T> &other);
+    Editor(const Editor<Parent,T> &other);
 };
 
 /** Null constructor */
-template<class T>
+template<class Parent, class T>
 SIRE_OUTOFLINE_TEMPLATE
-Editor<T>::Editor() : T()
+Editor<Parent, T>::Editor() : T()
 {}
 
 /** Construct an editor of the passed view */
-template<class T>
+template<class Parent, class T>
 SIRE_OUTOFLINE_TEMPLATE
-Editor<T>::Editor(const T &view) : T(view)
+Editor<Parent, T>::Editor(const T &view) : T(view)
 {}
 
 /** Copy constructor */
-template<class T>
+template<class Parent, class T>
 SIRE_OUTOFLINE_TEMPLATE
-Editor<T>::Editor(const Editor<T> &other) : T(other)
+Editor<Parent, T>::Editor(const Editor<Parent,T> &other) : T(other)
 {}
 
 /** Destructor */
-template<class T>
+template<class Parent, class T>
 SIRE_OUTOFLINE_TEMPLATE
-Editor<T>::~Editor()
+Editor<Parent, T>::~Editor()
 {}
 
 /** Copy assignment operator */
-template<class T>
+template<class Parent, class T>
 SIRE_OUTOFLINE_TEMPLATE
-Editor<T>& Editor<T>::operator=(const Editor<T> &other)
+Editor<Parent, T>& Editor<Parent, T>::operator=(const Editor<Parent,T> &other)
 {
     T::operator=(other);
     
@@ -106,9 +106,9 @@ Editor<T>& Editor<T>::operator=(const Editor<T> &other)
 }
 
 /** Copy assignment from an object of type T */
-template<class T>
+template<class Parent, class T>
 SIRE_OUTOFLINE_TEMPLATE
-Editor<T>& Editor<T>::operator=(const T &other)
+Editor<Parent, T>& Editor<Parent, T>::operator=(const T &other)
 {
     T::operator=(other);
     
@@ -116,37 +116,37 @@ Editor<T>& Editor<T>::operator=(const T &other)
 }
 
 /** Expose the protected 'T::setProperty()' function */
-template<class T>
+template<class Parent, class T>
 template<class V>
 SIRE_OUTOFLINE_TEMPLATE
-Editor<T>& Editor<T>::setProperty(const QString &key, const V &value)
+Parent& Editor<Parent, T>::setProperty(const QString &key, const V &value)
 {
     T::setProperty(key, value);
-    return *this;
+    return static_cast<Parent&>(*this);
 }
 
 /** Expose the protected 'T::setMetadata()' function */
-template<class T>
+template<class Parent, class T>
 template<class V>
 SIRE_OUTOFLINE_TEMPLATE
-Editor<T>& Editor<T>::setMetadata(const QString &metakey, const V &value)
+Parent& Editor<Parent, T>::setMetadata(const QString &metakey, const V &value)
 {
     T::setMetadata(metakey, value);
-    return *this;
+    return static_cast<Parent&>(*this);
 }
 
 /** Expose the protected 'T::setMetadata()' function 
 
     \throw SireBase::missing_property
 */
-template<class T>
+template<class Parent, class T>
 template<class V>
 SIRE_OUTOFLINE_TEMPLATE
-Editor<T>& Editor<T>::setMetadata(const QString &key, const QString &metakey,
+Parent& Editor<Parent, T>::setMetadata(const QString &key, const QString &metakey,
                                   const V &value)
 {
     T::setMetadata(key, metakey, value);
-    return *this;
+    return static_cast<Parent&>(*this);
 }
 
 /** Completely remove the property 'key', if this is valid
@@ -157,13 +157,13 @@ Editor<T>& Editor<T>::setMetadata(const QString &key, const QString &metakey,
     
     \throw SireBase::missing_property
 */
-template<class T>
+template<class Parent, class T>
 SIRE_OUTOFLINE_TEMPLATE
-Editor<T>& Editor<T>::removeProperty(const QString &key)
+Parent& Editor<Parent, T>::removeProperty(const QString &key)
 {
     T::assertContainsProperty(key);
     this->d->removeProperty(key);
-    return *this;
+    return static_cast<Parent&>(*this);
 }
 
 /** Completely remove the metadata 'metakey', if this is valid
@@ -174,13 +174,13 @@ Editor<T>& Editor<T>::removeProperty(const QString &key)
     
     \throw SireBase::missing_property
 */
-template<class T>
+template<class Parent, class T>
 SIRE_OUTOFLINE_TEMPLATE
-Editor<T>& Editor<T>::removeMetadata(const QString &metakey)
+Parent& Editor<Parent, T>::removeMetadata(const QString &metakey)
 {
     T::assertContainsMetadata(metakey);
     this->d->removeMetadata(metakey);
-    return *this;
+    return static_cast<Parent&>(*this);
 }
 
 /** Completely remove metadata with metakey 'metakey' from
@@ -192,13 +192,13 @@ Editor<T>& Editor<T>::removeMetadata(const QString &metakey)
     
     \throw SireBase::missing_property
 */
-template<class T>
+template<class Parent, class T>
 SIRE_OUTOFLINE_TEMPLATE
-Editor<T>& Editor<T>::removeMetadata(const QString &key, const QString &metakey)
+Parent& Editor<Parent, T>::removeMetadata(const QString &key, const QString &metakey)
 {
     T::assertContainsMetadata(key, metakey);
     this->d->removeMetadata(key, metakey);
-    return *this;
+    return static_cast<Parent&>(*this);
 }
 
 }

@@ -52,7 +52,7 @@ using namespace SireMol;
 using namespace SireStream;
 
 // fully instantiate Editor<Segment>
-template class Editor<Segment>;
+template class Editor<SegEditor,Segment>;
 //template class Selector< Editor<Segment> >;
 
 ////////
@@ -67,7 +67,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_segeditor, 1);
     
-    ds << static_cast<const Editor<Segment>&>(segeditor);
+    ds << static_cast<const Editor<SegEditor,Segment>&>(segeditor);
     
     return ds;
 }
@@ -80,7 +80,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     
     if (v == 1)
     {
-        ds >> static_cast<Editor<Segment>&>(segeditor);
+        ds >> static_cast<Editor<SegEditor,Segment>&>(segeditor);
     }
     else
         throw version_error( v, "1", r_segeditor, CODELOC );
@@ -89,15 +89,15 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-SegEditor::SegEditor() : Editor<Segment>()
+SegEditor::SegEditor() : Editor<SegEditor,Segment>()
 {}
 
 /** Construct to edit a copy of the Segment 'segment' */
-SegEditor::SegEditor(const Segment &segment) : Editor<Segment>(segment)
+SegEditor::SegEditor(const Segment &segment) : Editor<SegEditor,Segment>(segment)
 {}
 
 /** Copy constructor */
-SegEditor::SegEditor(const SegEditor &other) : Editor<Segment>(other)
+SegEditor::SegEditor(const SegEditor &other) : Editor<SegEditor,Segment>(other)
 {}
 
 /** Destructor */
@@ -107,14 +107,14 @@ SegEditor::~SegEditor()
 /** Assign this editor so that it edits a copy of the Segment 'segment' */
 SegEditor& SegEditor::operator=(const Segment &segment)
 {
-    Editor<Segment>::operator=(segment);
+    Editor<SegEditor,Segment>::operator=(segment);
     return *this;
 }
 
 /** Copy assignment operator */
 SegEditor& SegEditor::operator=(const SegEditor &other)
 {
-    Editor<Segment>::operator=(other);
+    Editor<SegEditor,Segment>::operator=(other);
     return *this;
 }
 

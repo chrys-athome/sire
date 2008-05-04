@@ -40,6 +40,8 @@
 
 #include "SireError/errors.h"
 
+SIRE_BEGIN_HEADER
+
 namespace SireMol
 {
 class AtomProp;
@@ -781,5 +783,7 @@ QDataStream& operator>>(QDataStream &ds, SireMol::AtomProperty<T> &prop)
         
     return ds;
 }
+
+SIRE_END_HEADER
 
 #endif

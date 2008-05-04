@@ -53,7 +53,7 @@ using namespace SireMol;
 using namespace SireStream;
 
 // fully instantiate Editor<Chain>
-template class Editor<Chain>;
+template class Editor<ChainEditor,Chain>;
 //template class Selector< Editor<Chain> >;
 
 ////////
@@ -68,7 +68,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_chaineditor, 1);
     
-    ds << static_cast<const Editor<Chain>&>(chaineditor);
+    ds << static_cast<const Editor<ChainEditor,Chain>&>(chaineditor);
     
     return ds;
 }
@@ -81,7 +81,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     
     if (v == 1)
     {
-        ds >> static_cast<Editor<Chain>&>(chaineditor);
+        ds >> static_cast<Editor<ChainEditor,Chain>&>(chaineditor);
     }
     else
         throw version_error( v, "1", r_chaineditor, CODELOC );
@@ -90,15 +90,15 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-ChainEditor::ChainEditor() : Editor<Chain>()
+ChainEditor::ChainEditor() : Editor<ChainEditor,Chain>()
 {}
 
 /** Construct to edit a copy of the Chain 'chain' */
-ChainEditor::ChainEditor(const Chain &chain) : Editor<Chain>(chain)
+ChainEditor::ChainEditor(const Chain &chain) : Editor<ChainEditor,Chain>(chain)
 {}
 
 /** Copy constructor */
-ChainEditor::ChainEditor(const ChainEditor &other) : Editor<Chain>(other)
+ChainEditor::ChainEditor(const ChainEditor &other) : Editor<ChainEditor,Chain>(other)
 {}
 
 /** Destructor */
@@ -108,14 +108,14 @@ ChainEditor::~ChainEditor()
 /** Assign this editor so that it edits a copy of the Chain 'chain' */
 ChainEditor& ChainEditor::operator=(const Chain &chain)
 {
-    Editor<Chain>::operator=(chain);
+    Editor<ChainEditor,Chain>::operator=(chain);
     return *this;
 }
 
 /** Copy assignment operator */
 ChainEditor& ChainEditor::operator=(const ChainEditor &other)
 {
-    Editor<Chain>::operator=(other);
+    Editor<ChainEditor,Chain>::operator=(other);
     return *this;
 }
 

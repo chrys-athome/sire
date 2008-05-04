@@ -160,57 +160,64 @@ protected:
     bool operator==(const MoleculeView &other) const;
     bool operator!=(const MoleculeView &other) const;
 
-    template<class ViewType, class PropType, class T>
-    static void setProperty(const typename ViewType::Index &idx,
-                            MoleculeData &data,
-                            const QString &key, const T &value);
+    template<class Index, class PropType, class T>
+    static void setProperty(MoleculeData &data,
+                            const QString &key, 
+                            const Index &idx, const T &value);
 
-    template<class ViewType, class PropType, class T>
-    static void setMetadata(const typename ViewType::Index &idx,
-                            MoleculeData &data,
-                            const QString &metakey, const T &value);
+    template<class Index, class PropType, class T>
+    static void setMetadata(MoleculeData &data,
+                            const QString &metakey, 
+                            const Index &idx, const T &value);
 
-    template<class ViewType, class PropType, class T>
-    static void setMetadata(const typename ViewType::Index &idx, 
-                            MoleculeData &data,
+    template<class Index, class PropType, class T>
+    static void setMetadata(MoleculeData &data,
                             const QString &key, const QString &metakey,
-                            const T &value);
+                            const Index &idx, const T &value);
                             
 
     /** Shared pointer to the raw data of the molecule */
     SireBase::SharedDataPointer<MoleculeData> d;
 };
 
-template<class ViewType, class PropType, class T>
+template<class Index, class PropType, class T>
 SIRE_OUTOFLINE_TEMPLATE
-void MoleculeView::setProperty(const typename ViewType::Index &idx, 
-                               MoleculeData &data,
-                               const QString &key, const T &value)
+void MoleculeView::setProperty(MoleculeData &data,
+                               const QString &key, 
+                               const Index &idx, const T &value)
 {
     PropType props;
     
     if (data.hasProperty(key))
-        props = data.property(key);
-        
+    {
+        //take the property to prevent unnecessary copying caused
+        //by implicit sharing of the property
+        Property old_property = data.takeProperty(key);
+        props = old_property->asA<PropType>();
+    }
     else
-        props = PropType(data);
+        props = PropType(data.info());
         
     props.set(idx, value);
     
     data.setProperty(key, props);
 }
 
-template<class ViewType, class PropType, class T>
+template<class Index, class PropType, class T>
 SIRE_OUTOFLINE_TEMPLATE
-void MoleculeView::setMetadata(const typename ViewType::Index &idx, 
-                               MoleculeData &data,
-                               const QString &metakey, const T &value)
+void MoleculeView::setMetadata(MoleculeData &data,
+                               const QString &metakey, 
+                               const Index &idx, const T &value)
 {
     PropType props;
     
     if (data.hasMetadata(metakey))
-        props = data.metadata(metakey);
-        
+    {
+        //take the metadata to prevent unnecessary copying caused
+        //by implicit sharing of the property
+        Property old_metadata = data.takeMetadata(metakey);
+        props = old_metadata->asA<PropType>();
+    }
     else
         props = PropType(data);
         
@@ -219,18 +226,21 @@ void MoleculeView::setMetadata(const typename ViewType::Index &idx,
     data.setMetadata(metakey, props);
 }
 
-template<class ViewType, class PropType, class T>
+template<class Index, class PropType, class T>
 SIRE_OUTOFLINE_TEMPLATE
-void MoleculeView::setMetadata(const typename ViewType::Index &idx, 
-                               MoleculeData &data,
+void MoleculeView::setMetadata(MoleculeData &data,
                                const QString &key, const QString &metakey,
-                               const T &value)
+                               const Index &idx, const T &value)
 {
     PropType props;
     
     if (data.hasMetadata(key, metakey))
-        props = data.metadata(key, metakey);
-        
+    {
+        //take the metadata to prevent unnecessary copying caused
+        //by implicit sharing of the property
+        Property old_metadata = data.takeMetadata(key, metakey);
+        props = old_metadata->asA<PropType>();
+    }
     else
         props = PropType(data);
         

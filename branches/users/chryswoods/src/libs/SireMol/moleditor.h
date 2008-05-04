@@ -77,7 +77,7 @@ class ResID;
     
     @author Christopher Woods
 */
-class SIREMOL_EXPORT MolEditor : public Editor<Molecule>
+class SIREMOL_EXPORT MolEditor : public Editor<MolEditor,Molecule>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MolEditor&);

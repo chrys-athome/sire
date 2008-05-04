@@ -95,7 +95,7 @@ be used in your own code.
 
 @author Christopher Woods
 */
-class MoleculeData : public QSharedData
+class SIREMOL_EXPORT MoleculeData : public QSharedData
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MoleculeData&);
@@ -235,6 +235,10 @@ public:
 
     void removeMetadata(const QString &metakey);
     void removeMetadata(const QString &key, const QString &metakey);
+
+    Property takeProperty(const QString &key);
+    Property takeMetadata(const QString &metakey);
+    Property takeMetadata(const QString &key, const QString &metakey);
 
     void assertHasProperty(const PropertyName &key) const;
     void assertHasMetadata(const PropertyName &metakey) const;

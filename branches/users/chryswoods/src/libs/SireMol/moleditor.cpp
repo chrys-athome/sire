@@ -50,7 +50,7 @@ using namespace SireMol;
 using namespace SireStream;
 
 //instantiate the underlying Editor class
-template class Editor<Molecule>;
+template class Editor<MolEditor, Molecule>;
 
 //////////
 ////////// Implementation of MolEditor
@@ -64,7 +64,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_moleditor, 1);
     
-    ds << static_cast<const Editor<Molecule>&>(moleditor);
+    ds << static_cast<const Editor<MolEditor, Molecule>&>(moleditor);
     
     return ds;
 }
@@ -77,7 +77,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     
     if (v == 1)
     {
-        ds >> static_cast<Editor<Molecule>&>(moleditor);
+        ds >> static_cast<Editor<MolEditor, Molecule>&>(moleditor);
     }
     else
         throw version_error(v, "1", r_moleditor, CODELOC);
@@ -86,17 +86,17 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-MolEditor::MolEditor() : Editor<Molecule>()
+MolEditor::MolEditor() : Editor<MolEditor, Molecule>()
 {}
 
 /** Construct an editor to edit a copy of 'molecule' */
 MolEditor::MolEditor(const Molecule &molecule)
-          : Editor<Molecule>(molecule)
+          : Editor<MolEditor, Molecule>(molecule)
 {}
 
 /** Copy constructor */
 MolEditor::MolEditor(const MolEditor &other)
-          : Editor<Molecule>(other)
+          : Editor<MolEditor, Molecule>(other)
 {}
 
 /** Destructor */
@@ -106,14 +106,14 @@ MolEditor::~MolEditor()
 /** Assign so that this edits a copy of 'molecule' */
 MolEditor& MolEditor::operator=(const Molecule &molecule)
 {
-    Editor<Molecule>::operator=(molecule);
+    Editor<MolEditor, Molecule>::operator=(molecule);
     return *this;
 }
 
 /** Copy assignment operator */
 MolEditor& MolEditor::operator=(const MolEditor &other)
 {
-    Editor<Molecule>::operator=(other);
+    Editor<MolEditor, Molecule>::operator=(other);
     return *this;
 }
 

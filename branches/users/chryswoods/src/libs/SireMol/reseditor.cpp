@@ -51,7 +51,7 @@ using namespace SireMol;
 using namespace SireStream;
 
 //instantiate Editor<Residue> fully
-template class Editor<Residue>;
+template class Editor<ResEditor,Residue>;
 //template class Editor< Selector<Residue> >;
 
 //////////
@@ -66,7 +66,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_reseditor, 1);
     
-    ds << static_cast<const Editor<Residue>&>(reseditor);
+    ds << static_cast<const Editor<ResEditor,Residue>&>(reseditor);
     
     return ds;
 }
@@ -79,7 +79,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     
     if (v == 1)
     {
-        ds >> static_cast<Editor<Residue>&>(reseditor);
+        ds >> static_cast<Editor<ResEditor,Residue>&>(reseditor);
     }
     else
         throw version_error( v, "1", r_reseditor, CODELOC );
@@ -88,16 +88,16 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-ResEditor::ResEditor() : Editor<Residue>()
+ResEditor::ResEditor() : Editor<ResEditor,Residue>()
 {}
 
 /** Construct an editor that edits a copy of the residue 'residue' */
-ResEditor::ResEditor(const Residue &residue) : Editor<Residue>(residue)
+ResEditor::ResEditor(const Residue &residue) : Editor<ResEditor,Residue>(residue)
 {}
 
 /** Copy constructor */
 ResEditor::ResEditor(const ResEditor &other) 
-          : Editor<Residue>(other)
+          : Editor<ResEditor,Residue>(other)
 {}
 
 /** Destructor */
@@ -107,14 +107,14 @@ ResEditor::~ResEditor()
 /** Copy assignment so that this will edit a copy of 'residue */
 ResEditor& ResEditor::operator=(const Residue &residue)
 {
-    Editor<Residue>::operator=(residue);
+    Editor<ResEditor,Residue>::operator=(residue);
     return *this;
 }
 
 /** Copy assignment operator */
 ResEditor& ResEditor::operator=(const ResEditor &other)
 {
-    Editor<Residue>::operator=(other);
+    Editor<ResEditor,Residue>::operator=(other);
     return *this;
 }
 
