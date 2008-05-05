@@ -86,6 +86,7 @@ public:
     /** Return the function used to split the molecule
         into CutGroups (must be an object of type CuttingFunction)
         
+        source  == "cutting-function"
         default == ResidueCutting()
     */
     const PropertyName& cuttingFunction() const

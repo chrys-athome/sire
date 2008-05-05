@@ -364,6 +364,46 @@ MolStructureEditor MolEditor::remove(const SegID &segid) const
     return editor.remove(segid);
 }
 
+/** Remove all atoms from this molecule. This returns an editor that
+    can be used to further edit the structure of this molecule */
+MolStructureEditor MolEditor::removeAllAtoms() const
+{
+    MolStructureEditor editor(*this);
+    return editor.removeAllAtoms();
+}
+
+/** Remove all CutGroups from this molecule. This returns an editor that
+    can be used to further edit the structure of this molecule */
+MolStructureEditor MolEditor::removeAllCutGroups() const
+{
+    MolStructureEditor editor(*this);
+    return editor.removeAllCutGroups();
+}
+
+/** Remove all residues from this molecule. This returns an editor that
+    can be used to further edit the structure of this molecule */
+MolStructureEditor MolEditor::removeAllResidues() const
+{
+    MolStructureEditor editor(*this);
+    return editor.removeAllResidues();
+}
+
+/** Remove all chains from this molecule. This returns an editor that
+    can be used to further edit the structure of this molecule */
+MolStructureEditor MolEditor::removeAllChains() const
+{
+    MolStructureEditor editor(*this);
+    return editor.removeAllChains();
+}
+
+/** Remove all segments from this molecule. This returns an editor that
+    can be used to further edit the structure of this molecule */
+MolStructureEditor MolEditor::removeAllSegments() const
+{
+    MolStructureEditor editor(*this);
+    return editor.removeAllSegments();
+}
+
 /** Commit these changes and return a copy of the
     edited molecule */
 Molecule MolEditor::commit() const
@@ -722,6 +762,41 @@ MolStructureEditor& MolStructureEditor::remove(const ChainID &chainid)
 MolStructureEditor& MolStructureEditor::remove(const SegID &segid)
 {
     this->removeSegments(segid);
+    return *this;
+}
+
+/** Remove all atoms from this molecule */
+MolStructureEditor& MolStructureEditor::removeAllAtoms()
+{
+    StructureEditor::removeAllAtoms();
+    return *this;
+}
+
+/** Remove all CutGroups from this molecule */
+MolStructureEditor& MolStructureEditor::removeAllCutGroups()
+{
+    StructureEditor::removeAllCutGroups();
+    return *this;
+}
+
+/** Remove all residues from this molecule */
+MolStructureEditor& MolStructureEditor::removeAllResidues()
+{
+    StructureEditor::removeAllResidues();
+    return *this;
+}
+
+/** Remove all chains from this molecule */
+MolStructureEditor& MolStructureEditor::removeAllChains()
+{
+    StructureEditor::removeAllChains();
+    return *this;
+}
+
+/** Remove all segments from this molecule */
+MolStructureEditor& MolStructureEditor::removeAllSegments()
+{
+    StructureEditor::removeAllSegments();
     return *this;
 }
 

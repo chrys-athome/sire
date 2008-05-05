@@ -25,3 +25,58 @@
   *  at http://siremol.org
   *
 \*********************************************/
+
+#ifndef SIREMOL_RESIDUECUTTING_H
+#define SIREMOL_RESIDUECUTTING_H
+
+#include "cuttingfunction.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMol
+{
+class ResidueCutting;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::ResidueCutting&);
+QDataStream& operator>>(QDataStream&, SireMol::ResidueCutting&);
+
+namespace SireMol
+{
+
+/** This is a cutting function that divides up a molecule into 
+    CutGroups based on residue - each residue is placed into 
+    a different CutGroup
+    
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT ResidueCutting 
+        : public SireBase::ConcreteProperty<ResidueCutting,CuttingFunctionBase>
+{
+public:
+    ResidueCutting();
+    
+    ResidueCutting(const ResidueCutting &other);
+    
+    ~ResidueCutting();
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<ResidueCutting>() );
+    }
+    
+    ResidueCutting& operator=(const ResidueCutting &other);
+    
+    bool operator==(const ResidueCutting &other) const;
+    bool operator!=(const ResidueCutting &other) const;
+    
+    MolStructureEditor operator()(MolStructureEditor &moleditor) const;
+}; 
+
+}
+
+Q_DECLARE_METATYPE( SireMol::ResidueCutting );
+
+SIRE_END_HEADER
+
+#endif

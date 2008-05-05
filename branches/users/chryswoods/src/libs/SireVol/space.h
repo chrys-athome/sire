@@ -316,6 +316,11 @@ public:
     virtual Space& operator=(const SpaceBase &other);
     virtual Space& operator=(const SireBase::PropertyBase &other);
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Space>() );
+    }
+
     const SpaceBase* operator->() const;
     const SpaceBase& operator*() const;
     

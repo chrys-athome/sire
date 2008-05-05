@@ -29,7 +29,7 @@
 #include "iobase.h"
 
 #include "SireMol/mover.hpp"
-#include "SireMol/residuecutting.h"
+#include "SireMol/cuttingfunction.h"
 
 #include "SireError/errors.h"
 
@@ -53,7 +53,8 @@ IOParametersBase::~IOParametersBase()
 PropertyName IOParametersBase::coords_property("coordinates");
 PropertyName IOParametersBase::elements_property("element");
 
-PropertyName IOParametersBase::cutting_function( ResidueCutting() );
+PropertyName IOParametersBase::cutting_function( "cutting-function",
+                                                 CuttingFunction() );
 
 ////////////
 //////////// Implementation of IOBase

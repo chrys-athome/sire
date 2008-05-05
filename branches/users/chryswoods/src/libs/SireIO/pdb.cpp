@@ -48,6 +48,8 @@
 #include "SireMol/cgeditor.h"
 #include "SireMol/atomeditor.h"
 
+#include "SireMol/cuttingfunction.h"
+
 #include "SireBase/stringmangler.h"
 
 #include "SireError/errors.h"
@@ -86,11 +88,16 @@ PropertyName PDBParameters::pdbresnames_property("PDB-residue-name");
 PropertyName PDBParameters::pdbchainnames_property("PDB-chain-name");
 PropertyName PDBParameters::pdbsegnames_property("PDB-segment-name");
 
-PropertyName PDBParameters::frame_selector( PropertyName::none() );
-PropertyName PDBParameters::atomname_mangler( TrimString::toProperty() );
-PropertyName PDBParameters::resname_mangler( TrimString::toProperty() );
-PropertyName PDBParameters::chainname_mangler( TrimString::toProperty() );
-PropertyName PDBParameters::segname_mangler( TrimString::toProperty() );
+PropertyName PDBParameters::frame_selector( "animation-frame-selector",
+                                            Property() );
+PropertyName PDBParameters::atomname_mangler( "atom-name-mangler",
+                                              TrimString::toProperty() );
+PropertyName PDBParameters::resname_mangler( "residue-name-mangler",
+                                             TrimString::toProperty() );
+PropertyName PDBParameters::chainname_mangler( "chain-name-mangler", 
+                                               TrimString::toProperty() );
+PropertyName PDBParameters::segname_mangler( "segment-name-mangler",
+                                             TrimString::toProperty() );
 
 ///////////
 /////////// Implementation of everything to get the PDB reader/writer working
@@ -756,16 +763,16 @@ static Molecule convert(const QList<PDBAtom> &pdbatoms,
     PropertyName segmangler_property = map[PDB::parameters().segmentNameMangler()];
     
     if (atommangler_property.hasValue())
-        atommangler = atommangler_property.asA<StringManglerBase>();
+        atommangler = atommangler_property.value()->asA<StringManglerBase>();
     
     if (resmangler_property.hasValue())
-        resmangler = resmangler_property.asA<StringManglerBase>();
+        resmangler = resmangler_property.value()->asA<StringManglerBase>();
     
     if (chainmangler_property.hasValue())
-        chainmangler = chainmangler_property.asA<StringManglerBase>();
+        chainmangler = chainmangler_property.value()->asA<StringManglerBase>();
     
     if (segmangler_property.hasValue())
-        segmangler = segmangler_property.asA<StringManglerBase>();
+        segmangler = segmangler_property.value()->asA<StringManglerBase>();
 
     //editor for the molecule
     MolStructureEditor moleditor;
@@ -953,14 +960,14 @@ static Molecule convert(const QList<PDBAtom> &pdbatoms,
     
     //now we have the layout, use the supplied function to 
     //break this molecule down into CutGroups...
-    //cgdivider.splitIntoCutGroups(moleditor);
+    CuttingFunction cutfunc;
     
-    moleditor.add( CGName("1") );
+    PropertyName cutfunc_property = map[PDB::parameters().cuttingFunction()];
     
-    for (AtomIdx i(0); i<moleditor.nAtoms(); ++i)
-    {
-        moleditor.select( AtomIdx(i) ).reparent( CGIdx(0) );
-    }
+    if (cutfunc_property.hasValue())
+        cutfunc = cutfunc_property.value()->asA<CuttingFunctionBase>();
+        
+    moleditor = cutfunc(moleditor);
 
     //ok, we've now built the structure of the molecule, so commit it!
     Molecule molecule = moleditor.commit();
@@ -1003,7 +1010,7 @@ static Molecule convert(const QList<PDBAtom> &pdbatoms,
         }
     
         molecule = molecule.edit()
-                       .setProperty(coords_property, AtomCoords(atomcoords))
+                       .setProperty(coords_property.source(), AtomCoords(atomcoords))
                        .commit();
     }
     

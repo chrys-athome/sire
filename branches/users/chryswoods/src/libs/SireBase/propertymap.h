@@ -95,7 +95,10 @@ friend QDataStream& ::operator>>(QDataStream&, PropertyName&);
 public:
     PropertyName();
     PropertyName(const char* source);
+    
     PropertyName(const QString &source);
+    PropertyName(const QString &source, const PropertyBase &default_value);
+    
     PropertyName(const PropertyBase &value);
     PropertyName(const Property &value);
 
@@ -111,6 +114,8 @@ public:
     bool hasSource() const;
     bool hasValue() const;
 
+    bool hasDefaultValue() const;
+
     bool isNull() const;
 
     const QString& source() const;
@@ -125,8 +130,11 @@ private:
         Properties container */
     QString src;
     
-    /** The default value of the property */
+    /** The supplied or default value of the property */
     Property val;
+    
+    /** Is the supplied value a default value? */
+    bool value_is_default;
 };
 
 /** This is the class that holds the collection of user-supplied
@@ -172,9 +180,13 @@ public:
     bool operator==(const PropertyMap &other) const;
     bool operator!=(const PropertyMap &other) const;
 
+    PropertyName operator[](const char *name) const;
     PropertyName operator[](const QString &name) const;
+    PropertyName operator[](const PropertyName &name) const;
 
+    bool specified(const char *name) const;
     bool specified(const QString &name) const;
+    bool specified(const PropertyName &name) const;
 
     void set(const QString &name, const PropertyName &source);
 

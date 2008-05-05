@@ -155,6 +155,7 @@ public:
     
     /** The function used to select or skip animation frames from each molecule
     
+        source  == "animation-frame-selector"
         default == PropertyBase::none
     */
     const PropertyName& animationFrameSelector() const
@@ -164,6 +165,7 @@ public:
     
     /** The function used to process atom names. Must be a StringMangler()
     
+        source  == "atom-name-mangler"
         default == TrimString()
     */
     const PropertyName& atomNameMangler() const
@@ -173,6 +175,7 @@ public:
     
     /** The function used to process residue names. Must be a StringMangler()
     
+        source  == "residue-name-mangler"
         default == TrimString()
     */
     const PropertyName& residueNameMangler() const
@@ -182,6 +185,7 @@ public:
     
     /** The function used to process chain names. Must be a StringMangler()
     
+        source  == "chain-name-mangler"
         default == TrimString()
     */
     const PropertyName& chainNameMangler() const
@@ -191,6 +195,7 @@ public:
     
     /** The function used to process segment names. Must be a StringMangler()
     
+        source  == "segment-name-mangler"
         default == TrimString()
     */
     const PropertyName& segmentNameMangler() const
@@ -276,6 +281,11 @@ public:
         return PDB::typeName();
     }
 
+    static const PDBParameters& parameters()
+    {
+        return pdbparams;
+    }
+
     PDB& operator=(const PDB &other);
     
     bool operator==(const PDB &other) const;
@@ -290,6 +300,11 @@ protected:
 
     QByteArray writeMols(const Molecules &molecules,
                          const PropertyMap &map) const;
+
+private:
+    /** All of the default sources and parameters used to 
+        control the reading and writing of PDB molecules */
+    static PDBParameters pdbparams;
 };
 
 }

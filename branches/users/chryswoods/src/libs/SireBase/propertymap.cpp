@@ -48,7 +48,7 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
     
     SharedDataStream sds(ds);
     
-    sds << propname.src << propname.val;
+    sds << propname.src << propname.val << propname.value_is_default;
     
     return ds;
 }
@@ -61,7 +61,7 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, PropertyName &propname)
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        sds >> propname.src >> propname.val;
+        sds >> propname.src >> propname.val >> propname.value_is_default;
     }
     else
         throw version_error(v, "1", r_propname, CODELOC);
@@ -70,19 +70,19 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, PropertyName &propname)
 }
 
 /** Null constructor */
-PropertyName::PropertyName()
+PropertyName::PropertyName() : value_is_default(false)
 {}
 
 /** Construct a PropertyName that searches for the
     property using the source 'source' */
 PropertyName::PropertyName(const char *source)
-             : src(source)
+             : src(source), value_is_default(false)
 {}
 
 /** Construct a PropertyName that searches for the 
     property using the source 'source' */
 PropertyName::PropertyName(const QString &source)
-             : src(source)
+             : src(source), value_is_default(false)
 {}
 
 /** Construct a PropertyName that uses the supplied
@@ -91,15 +91,26 @@ PropertyName::PropertyName(const PropertyBase &value)
              : val(value)
 {}
 
+/** Construct a PropertyName that searches for the property
+    using the source 'source', but only if that source is
+    specifically provided - otherwise the supplied default
+    value of the property is used instead */
+PropertyName::PropertyName(const QString &source, 
+                           const PropertyBase &default_value)
+             : src(source), val(default_value), value_is_default(true)
+{
+    BOOST_ASSERT(not source.isEmpty());
+}
+
 /** Construct a PropertyName that uses the supplied 
     value, rather than searching for the property */
 PropertyName::PropertyName(const Property &value)
-             : val(value)
+             : val(value), value_is_default(false)
 {}
 
 /** Copy constructor */
 PropertyName::PropertyName(const PropertyName &other)
-             : src(other.src), val(other.val)
+             : src(other.src), val(other.val), value_is_default(other.value_is_default)
 {}
 
 /** Destructor */
@@ -111,6 +122,7 @@ PropertyName& PropertyName::operator=(const PropertyName &other)
 {
     src = other.src;
     val = other.val;
+    value_is_default = other.value_is_default;
     
     return *this;
 }
@@ -118,13 +130,15 @@ PropertyName& PropertyName::operator=(const PropertyName &other)
 /** Comparison operator */
 bool PropertyName::operator==(const PropertyName &other) const
 {
-    return src == other.src and val == other.val;
+    return src == other.src and val == other.val and
+           value_is_default == other.value_is_default;
 }
 
 /** Comparison operator */
 bool PropertyName::operator!=(const PropertyName &other) const
 {
-    return src != other.src or val != other.val;
+    return src != other.src or val != other.val or 
+           value_is_default != other.value_is_default;
 }
 
 /** Return a PropertyName that says that this property is not set */
@@ -143,6 +157,12 @@ bool PropertyName::hasSource() const
 bool PropertyName::hasValue() const
 {
     return not val.isNull();
+}
+
+/** Return whether or not this has a default value */
+bool PropertyName::hasDefaultValue() const
+{
+    return value_is_default;
 }
 
 /** Return whether this property is null */
@@ -169,7 +189,12 @@ const Property& PropertyName::value() const
 QString PropertyName::toString() const
 {
     if (this->hasSource())
-        return src;
+    {
+        if (value_is_default)
+            return QString("%1 {default: %2}").arg(src).arg(val->what());
+        else
+            return src;
+    }
     else if (this->hasValue())
         return val->what();
     else
@@ -278,11 +303,57 @@ PropertyName PropertyMap::operator[](const QString &name) const
     return propmap.value(name);
 }
 
+/** Map the property called 'name' to the source or value of 
+    that property */
+PropertyName PropertyMap::operator[](const char *name) const
+{
+    return propmap.value(name);
+}
+
+/** Map the property in 'propname' to the source or value of
+    that property. */
+PropertyName PropertyMap::operator[](const PropertyName &propname) const
+{
+    if (propname.hasSource())
+    {
+        QHash<QString,PropertyName>::const_iterator 
+                                        it = propmap.constFind(propname.source());
+                                        
+        if (it != propmap.constEnd())
+            return it.value();
+            
+        else if (propname.hasDefaultValue())
+            return PropertyName( propname.value() );
+            
+        else
+            return PropertyName( propname.source() );
+    }
+    else
+        return propname;
+}
+
 /** Return whether or not this map specifies the source or value
     of the property called 'name' */
 bool PropertyMap::specified(const QString &name) const
 {
     return propmap.contains(name);
+}
+
+/** Return whether or not this map specifies the source or value
+    of the property called 'name' */
+bool PropertyMap::specified(const char *name) const
+{
+    return propmap.contains(name);
+}
+
+/** Return whether or not this map specifies the source or value
+    of the property called 'name' */
+bool PropertyMap::specified(const PropertyName &propname) const
+{
+    if (propname.hasSource())
+        return propmap.contains(propname.source());
+    else
+        return propname.hasValue();
 }
 
 /** Set the property called 'name' to have the source or value

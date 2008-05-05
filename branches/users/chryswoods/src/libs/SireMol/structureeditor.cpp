@@ -4014,6 +4014,86 @@ void StructureEditor::removeSegments(const SegID &segid)
     d->cached_molinfo = 0;
 }
 
+/** Remove all atoms from this molecule */
+void StructureEditor::removeAllAtoms()
+{
+    QList<quint32> atoms_by_index = d->atoms_by_index;
+    
+    if (not atoms_by_index.isEmpty())
+    {
+        foreach (quint32 atom, atoms_by_index)
+        {
+            this->removeAtom(atom);
+        }
+        
+        d->cached_molinfo = 0;
+    }
+}
+
+/** Remove all CutGroups from this molecule */
+void StructureEditor::removeAllCutGroups()
+{
+    QList<quint32> cg_by_index = d->cg_by_index;
+    
+    if (not cg_by_index.isEmpty())
+    {
+        foreach (quint32 cg, cg_by_index)
+        {
+            this->removeCutGroup(cg);
+        }
+        
+        d->cached_molinfo = 0;
+    }
+}
+
+/** Remove all residues from this molecule */
+void StructureEditor::removeAllResidues()
+{
+    QList<quint32> res_by_index = d->res_by_index;
+    
+    if (not res_by_index.isEmpty())
+    {
+        foreach (quint32 res, res_by_index)
+        {
+            this->removeResidue(res);
+        }
+        
+        d->cached_molinfo = 0;
+    }
+}
+
+/** Remove all chains from this molecule */
+void StructureEditor::removeAllChains()
+{
+    QList<quint32> chains_by_index = d->chains_by_index;
+    
+    if (not chains_by_index.isEmpty())
+    {
+        foreach (quint32 chain, chains_by_index)
+        {
+            this->removeChain(chain);
+        }
+        
+        d->cached_molinfo = 0;
+    }
+}
+
+/** Remove all segments from this molecule */
+void StructureEditor::removeAllSegments()
+{
+    QList<quint32> seg_by_index = d->seg_by_index;
+    
+    if (not seg_by_index.isEmpty())
+    {
+        foreach (quint32 seg, seg_by_index)
+        {
+            this->removeSegment(seg);
+        }
+        
+        d->cached_molinfo = 0;
+    }
+}
+
 /** Move the atom identified by 'uid' into the CutGroup at index 'cgidx'
 
     \throw SireMol::missing_atom

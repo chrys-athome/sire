@@ -143,6 +143,12 @@ public:
     MolStructureEditor remove(const ChainID &chainid) const;
     MolStructureEditor remove(const SegID &segid) const;
     
+    MolStructureEditor removeAllAtoms() const;
+    MolStructureEditor removeAllCutGroups() const;
+    MolStructureEditor removeAllResidues() const;
+    MolStructureEditor removeAllChains() const;
+    MolStructureEditor removeAllSegments() const;
+        
     Molecule commit() const;
 };
 
@@ -225,6 +231,12 @@ public:
     MolStructureEditor& remove(const ResID &resid);
     MolStructureEditor& remove(const ChainID &chainid);
     MolStructureEditor& remove(const SegID &segid);
+    
+    MolStructureEditor& removeAllAtoms();
+    MolStructureEditor& removeAllCutGroups();
+    MolStructureEditor& removeAllResidues();
+    MolStructureEditor& removeAllChains();
+    MolStructureEditor& removeAllSegments();
     
     Molecule commit() const;
     operator Molecule() const;

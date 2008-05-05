@@ -265,6 +265,12 @@ protected:
     void removeChains(const ChainID &chainid);
     void removeSegments(const SegID &segid);
     
+    void removeAllAtoms();
+    void removeAllCutGroups();
+    void removeAllResidues();
+    void removeAllChains();
+    void removeAllSegments();
+    
     void reparentAtom(quint32 uid, CGIdx cgidx);
     void reparentAtom(quint32 uid, ResIdx residx);
     void reparentAtom(quint32 uid, SegIdx segidx);
