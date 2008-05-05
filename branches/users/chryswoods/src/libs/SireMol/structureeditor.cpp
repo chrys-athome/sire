@@ -26,6 +26,9 @@
   *
 \*********************************************/
 
+#include <QHash>
+#include <QMutex>
+
 #include "structureeditor.h"
 
 #include "atom.h"
@@ -88,6 +91,34 @@ using namespace SireID;
 using namespace SireStream;
 
 using boost::tuple;
+
+/////////
+///////// Implementation of name_cache
+/////////
+
+static QHash<QString,QString> name_cache;
+static QMutex name_cache_mutex;
+
+/** This function is used to cache all name strings of molecules.
+    This is useful, as most names used in molecules are repeated many
+    times (think about how many "O" atoms there are in a box of water!).
+    This allows each equal string to share the same data, rather than
+    have multiple copies */
+static QString cacheName(const QString &name)
+{
+    if (name_cache.contains(name))
+        return name_cache.value(name);
+ 
+    QMutexLocker lkr(&name_cache_mutex);
+    
+    if (name_cache.contains(name))
+        return name_cache.value(name);
+    else
+    {
+        name_cache.insert(name, name);
+        return name;
+    }
+}
 
 /////////
 ///////// Implementation of detail::EditMolData
@@ -3544,7 +3575,7 @@ SegIdx StructureEditor::segIdx(const SegID &segid) const
 /** Rename this molecule to 'newname' */
 void StructureEditor::renameMolecule(const MolName &newname)
 {
-    d->molname = newname;
+    d->molname = MolName( cacheName(newname) );
 }
 
 /** Give this molecule a new, unique, number */
@@ -3569,7 +3600,7 @@ void StructureEditor::renameAtom(quint32 uid, const AtomName &newname)
     
     if (atom.name != newname)
     {
-        atom.name = newname;
+        atom.name = AtomName( cacheName(newname) );
         d->cached_molinfo = 0;
     }
 }
@@ -3633,7 +3664,7 @@ void StructureEditor::renameCutGroup(quint32 uid, const CGName &newname)
 {
     if ( this->cgName(uid) != newname )
     {
-        d->cutGroup(uid).name = newname;
+        d->cutGroup(uid).name = CGName( cacheName(newname) );
         d->cached_molinfo = 0;
     }
 }
@@ -3660,7 +3691,7 @@ void StructureEditor::renameResidue(quint32 uid, const ResName &newname)
 {
     if (this->resName(uid) != newname)
     {
-        d->residue(uid).name = newname;
+        d->residue(uid).name = ResName( cacheName(newname) );
         d->cached_molinfo = 0;
     }
 }
@@ -3700,7 +3731,7 @@ void StructureEditor::renameChain(quint32 uid, const ChainName &newname)
 {
     if (this->chainName(uid) != newname)
     {
-        d->chain(uid).name = newname;
+        d->chain(uid).name = ChainName( cacheName(newname) );
         d->cached_molinfo = 0;
     }
 }
@@ -3727,7 +3758,7 @@ void StructureEditor::renameSegment(quint32 uid, const SegName &newname)
 {
     if (this->segName(uid) != newname)
     {
-        d->segment(uid).name = newname;
+        d->segment(uid).name = SegName( cacheName(newname) );
         d->cached_molinfo = 0;
     }
 }
