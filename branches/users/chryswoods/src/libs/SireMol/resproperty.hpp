@@ -58,8 +58,12 @@ QDataStream& operator>>(QDataStream&, SireMol::ResProperty<T>&);
 namespace SireMol
 {
 
+typedef ResProperty<QString> ResStringProperty;
+typedef ResProperty<qint64>  ResIntProperty;
+typedef ResProperty<double>  ResFloatProperty;
+
 /** Small class used to provide a common base for all ResProperty types */
-class ResProp : public MolViewProperty
+class SIREMOL_EXPORT ResProp : public MolViewProperty
 {
 public:
     ResProp();
@@ -139,6 +143,8 @@ public:
     
     QVector<QVariant> toVariant() const;
     
+    bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
+    
     bool canConvert(const QVariant &value) const;
     
     void assertCanConvert(const QVariant &value) const;
@@ -193,7 +199,7 @@ void ResProperty<T>::assertCanConvert(const QVariant &value) const
         throw SireError::invalid_cast( QObject::tr(
             "Cannot convert an object of type %1 to an object "
             "of type %2, as required by a %3.")
-                .arg(value.typeName()).arg(T::typeName())
+                .arg(value.typeName()).arg( QMetaType::typeName(qMetaTypeId<T>()) )
                 .arg(this->what()), CODELOC );
     }
 }
@@ -393,6 +399,15 @@ int ResProperty<T>::nResidues() const
     return props.count();
 }
 
+/** Is this property compatible with the molecule that is represented
+    by 'molinfo' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool ResProperty<T>::isCompatibleWith(const MoleculeInfoData &molinfo) const
+{
+    return molinfo.nResidues() == this->nResidues();
+}
+
 }
 
 /** Serialise this property to a binary datastream */
@@ -417,6 +432,10 @@ QDataStream& operator>>(QDataStream &ds, SireMol::ResProperty<T> &prop)
         
     return ds;
 }
+
+Q_DECLARE_METATYPE( SireMol::ResStringProperty );
+Q_DECLARE_METATYPE( SireMol::ResIntProperty );
+Q_DECLARE_METATYPE( SireMol::ResFloatProperty );
 
 SIRE_END_HEADER
 

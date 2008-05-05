@@ -58,8 +58,13 @@ QDataStream& operator>>(QDataStream&, SireMol::CGProperty<T>&);
 namespace SireMol
 {
 
+////// Typedef the basic types
+typedef CGProperty<QString> CGStringProperty;
+typedef CGProperty<qint64>  CGIntProperty;
+typedef CGProperty<double>  CGFloatProperty;
+
 /** Small class used to provide a common base for all CGProperty types */
-class CGProp : public MolViewProperty
+class SIREMOL_EXPORT CGProp : public MolViewProperty
 {
 public:
     CGProp();
@@ -144,6 +149,8 @@ public:
     
     void assertCanConvert(const QVariant &value) const;
 
+    bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
+
 private:
     /** The actual CutGroup property values */
     QVector<T> props;
@@ -194,7 +201,7 @@ void CGProperty<T>::assertCanConvert(const QVariant &value) const
         throw SireError::invalid_cast( QObject::tr(
             "Cannot convert an object of type %1 to an object "
             "of type %2, as required by a %3.")
-                .arg(value.typeName()).arg(T::typeName())
+                .arg(value.typeName()).arg( QMetaType::typeName(qMetaTypeId<T>()) )
                 .arg(this->what()), CODELOC );
     }
 }
@@ -394,6 +401,15 @@ int CGProperty<T>::nCutGroups() const
     return props.count();
 }
 
+/** Is this property compatible with the molecule that is represented
+    by 'molinfo' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool CGProperty<T>::isCompatibleWith(const MoleculeInfoData &molinfo) const
+{
+    return molinfo.nCutGroups() == this->nCutGroups();
+}
+
 }
 
 /** Serialise this property to a binary datastream */
@@ -418,6 +434,10 @@ QDataStream& operator>>(QDataStream &ds, SireMol::CGProperty<T> &prop)
         
     return ds;
 }
+
+Q_DECLARE_METATYPE( SireMol::CGStringProperty );
+Q_DECLARE_METATYPE( SireMol::CGIntProperty );
+Q_DECLARE_METATYPE( SireMol::CGFloatProperty );
 
 SIRE_END_HEADER
 

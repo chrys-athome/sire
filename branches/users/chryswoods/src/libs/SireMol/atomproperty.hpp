@@ -61,6 +61,11 @@ QDataStream& operator>>(QDataStream&, SireMol::AtomProperty<T>&);
 namespace SireMol
 {
 
+//typedef the basic types
+typedef AtomProperty<QString> AtomStringProperty;
+typedef AtomProperty<qint64>  AtomIntProperty;
+typedef AtomProperty<double>  AtomFloatProperty;
+
 using SireBase::Property;
 using SireBase::PackedArray2D;
 
@@ -204,7 +209,7 @@ void AtomProperty<T>::assertCanConvert(const QVariant &value) const
         throw SireError::invalid_cast( QObject::tr(
             "It is not possible to convert the value of type %1 to "
             "type %2, as is required for storing in the AtomProperty %3.")
-                .arg(value.typeName()).arg(T::typeName())
+                .arg(value.typeName()).arg( QMetaType::typeName(qMetaTypeId<T>()) )
                 .arg(this->what()), CODELOC );
     }
 }
@@ -230,7 +235,6 @@ AtomProperty<T>::AtomProperty(const MoleculeInfoData &molinfo)
     {
         //create space for each CutGroup
         QVector< QVector<T> > tmp_props = QVector< QVector<T> >(ncg);
-        
         QVector<T> *tmp_props_array = tmp_props.data();
         
         for (CGIdx i(0); i<ncg; ++i)
@@ -783,6 +787,14 @@ QDataStream& operator>>(QDataStream &ds, SireMol::AtomProperty<T> &prop)
         
     return ds;
 }
+
+///////
+/////// Declare the basic types
+///////
+
+Q_DECLARE_METATYPE( SireMol::AtomStringProperty );
+Q_DECLARE_METATYPE( SireMol::AtomIntProperty );
+Q_DECLARE_METATYPE( SireMol::AtomFloatProperty );
 
 SIRE_END_HEADER
 

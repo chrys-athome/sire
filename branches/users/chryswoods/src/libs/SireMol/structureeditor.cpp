@@ -104,9 +104,12 @@ static QMutex name_cache_mutex;
     times (think about how many "O" atoms there are in a box of water!).
     This allows each equal string to share the same data, rather than
     have multiple copies */
-static QString cacheName(const QString &name)
+QString SIREMOL_EXPORT SireMol::cacheName(const QString &name)
 {
-    if (name_cache.contains(name))
+    if (name.isEmpty())
+        return name;
+
+    else if (name_cache.contains(name))
         return name_cache.value(name);
  
     QMutexLocker lkr(&name_cache_mutex);

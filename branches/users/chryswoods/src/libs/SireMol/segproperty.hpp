@@ -58,8 +58,12 @@ QDataStream& operator>>(QDataStream&, SireMol::SegProperty<T>&);
 namespace SireMol
 {
 
+typedef SegProperty<QString> SegStringProperty;
+typedef SegProperty<qint64>  SegIntProperty;
+typedef SegProperty<double>  SegFloatProperty;
+
 /** Small class used to provide a common base for all SegProperty types */
-class SegProp : public MolViewProperty
+class SIREMOL_EXPORT SegProp : public MolViewProperty
 {
 public:
     SegProp();
@@ -139,6 +143,8 @@ public:
     
     QVector<QVariant> toVariant() const;
     
+    bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
+    
     bool canConvert(const QVariant &value) const;
     
     void assertCanConvert(const QVariant &value) const;
@@ -193,7 +199,7 @@ void SegProperty<T>::assertCanConvert(const QVariant &value) const
         throw SireError::invalid_cast( QObject::tr(
             "Cannot convert an object of type %1 to an object "
             "of type %2, as required by a %3.")
-                .arg(value.typeName()).arg(T::typeName())
+                .arg(value.typeName()).arg( QMetaType::typeName(qMetaTypeId<T>()) )
                 .arg(this->what()), CODELOC );
     }
 }
@@ -393,6 +399,15 @@ int SegProperty<T>::nSegments() const
     return props.count();
 }
 
+/** Is this property compatible with the molecule that is represented
+    by 'molinfo' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool SegProperty<T>::isCompatibleWith(const MoleculeInfoData &molinfo) const
+{
+    return molinfo.nSegments() == this->nSegments();
+}
+
 }
 
 /** Serialise this property to a binary datastream */
@@ -417,6 +432,10 @@ QDataStream& operator>>(QDataStream &ds, SireMol::SegProperty<T> &prop)
         
     return ds;
 }
+
+Q_DECLARE_METATYPE( SireMol::SegStringProperty );
+Q_DECLARE_METATYPE( SireMol::SegIntProperty );
+Q_DECLARE_METATYPE( SireMol::SegFloatProperty );
 
 SIRE_END_HEADER
 

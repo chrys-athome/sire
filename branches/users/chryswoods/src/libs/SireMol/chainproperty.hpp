@@ -58,8 +58,12 @@ QDataStream& operator>>(QDataStream&, SireMol::ChainProperty<T>&);
 namespace SireMol
 {
 
+typedef ChainProperty<QString> ChainStringProperty;
+typedef ChainProperty<qint64> ChainIntProperty;
+typedef ChainProperty<double> ChainFloatProperty;
+
 /** Small class used to provide a common base for all ChainProperty types */
-class ChainProp : public MolViewProperty
+class SIREMOL_EXPORT ChainProp : public MolViewProperty
 {
 public:
     ChainProp();
@@ -139,6 +143,8 @@ public:
     
     QVector<QVariant> toVariant() const;
     
+    bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
+    
     bool canConvert(const QVariant &value) const;
     
     void assertCanConvert(const QVariant &value) const;
@@ -193,7 +199,7 @@ void ChainProperty<T>::assertCanConvert(const QVariant &value) const
         throw SireError::invalid_cast( QObject::tr(
             "Cannot convert an object of type %1 to an object "
             "of type %2, as required by a %3.")
-                .arg(value.typeName()).arg(T::typeName())
+                .arg(value.typeName()).arg( QMetaType::typeName(qMetaTypeId<T>()) )
                 .arg(this->what()), CODELOC );
     }
 }
@@ -393,6 +399,15 @@ int ChainProperty<T>::nChains() const
     return props.count();
 }
 
+/** Is this property compatible with the molecule that is represented
+    by 'molinfo' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool ChainProperty<T>::isCompatibleWith(const MoleculeInfoData &molinfo) const
+{
+    return molinfo.nChains() == this->nChains();
+}
+
 }
 
 /** Serialise this property to a binary datastream */
@@ -417,6 +432,10 @@ QDataStream& operator>>(QDataStream &ds, SireMol::ChainProperty<T> &prop)
         
     return ds;
 }
+
+Q_DECLARE_METATYPE( SireMol::ChainStringProperty );
+Q_DECLARE_METATYPE( SireMol::ChainIntProperty );
+Q_DECLARE_METATYPE( SireMol::ChainFloatProperty );
 
 SIRE_END_HEADER
 

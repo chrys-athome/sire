@@ -32,6 +32,8 @@
 #include "packedarray2d.h"
 #include <boost/assert.hpp>
 
+#include <QDebug>
+
 SIRE_BEGIN_HEADER
 
 namespace SireBase
@@ -1016,10 +1018,10 @@ static const SharedArray2DPtr< PackedArray2DData<T> >& getSharedNull()
     {
         detail::PackedArray2DMemory<T>::shared_null 
                 = (PackedArray2DData<T>*)( PackedArray2DMemory<T>::create(0,0) );
-                
+
         detail::PackedArray2DMemory<T>::shared_null->close();
     }
-    
+
     return detail::PackedArray2DMemory<T>::shared_null;
 }
 
@@ -1036,7 +1038,7 @@ static SharedArray2DPtr< PackedArray2D_ArrayData<T> > createNullArray()
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 PackedArray2D_Array<T>::PackedArray2D_Array()
-                     : d( SireBase::detail::createNullArray<T>() )
+                       : d( SireBase::detail::createNullArray<T>() )
 {}
 
 template<class T>
@@ -1047,12 +1049,13 @@ static SharedArray2DPtr< PackedArray2D_ArrayData<T> > createArray(quint32 sz)
         
     //construct space for 1 array of sz objects
     char *storage = PackedArray2DMemory<T>::create(1, sz);
-        
+
     PackedArray2DData<T> *array = (PackedArray2DData<T>*)storage;
-        
+
     array->setNValuesInArray(0, sz);
+
     array->close();
-    
+
     return SharedArray2DPtr< PackedArray2D_ArrayData<T> >( &(array->arrayDataData()[0]) );
 }
 
@@ -1337,10 +1340,38 @@ createArray(quint32 narrays, quint32 nvals)
 
 }
 
+/** Construct from an array of values */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+PackedArray2D<T>::PackedArray2D(const QVector<T> &values)
+                 : d( SireBase::detail::getSharedNull<T>() )
+{
+    if (values.isEmpty())
+        return;
+
+    //count the number of values
+    quint32 nvals = values.count();
+    
+    d = SireBase::detail::createArray<T>(1, nvals);
+    
+    detail::PackedArray2DData<T> *dptr = d.data();
+    T *new_values = dptr->valueData();
+    
+    //dimension the packed array
+    dptr->setNValuesInArray(0, nvals);
+    dptr->close();
+    
+    //now copy all of the data
+    void *output = qMemCopy(new_values, values.constData(), nvals*sizeof(T));
+
+    BOOST_ASSERT( output == new_values );
+}
+
 /** Construct from an array of arrays */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 PackedArray2D<T>::PackedArray2D(const QVector<PackedArray2D<T>::Array> &arrays)
+                 : d( SireBase::detail::getSharedNull<T>() )
 {
     if (arrays.isEmpty())
         return;
@@ -1390,18 +1421,11 @@ PackedArray2D<T>::PackedArray2D(const QVector<PackedArray2D<T>::Array> &arrays)
     }
 }
 
-/** Construct from an array of values */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-PackedArray2D<T>::PackedArray2D(const QVector<T> &values)
-{
-    this->operator=( PackedArray2D<T>(Array(values)) ); 
-}
-
 /** Construct from an array of array of values */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 PackedArray2D<T>::PackedArray2D(const QVector< QVector<T> > &values)
+                 : d( SireBase::detail::getSharedNull<T>() )
 {
     if (values.isEmpty())
         return;
@@ -1417,7 +1441,7 @@ PackedArray2D<T>::PackedArray2D(const QVector< QVector<T> > &values)
     
     const QVector<T> *values_data = values.constData();
     quint32 narrays = values.count();
-    
+
     for (quint32 i=0; i<narrays; ++i)
     {
         nvals += values_data[i].count();
@@ -1442,6 +1466,7 @@ PackedArray2D<T>::PackedArray2D(const QVector< QVector<T> > &values)
     for (quint32 i=0; i<narrays; ++i)
     {
         const QVector<T> &array = values_data[i];
+
         const T *array_values = array.constData();
         
         void *output = qMemCopy(values_array, array_values, array.count()*sizeof(T));
@@ -1456,7 +1481,7 @@ PackedArray2D<T>::PackedArray2D(const QVector< QVector<T> > &values)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 PackedArray2D<T>::PackedArray2D(const PackedArray2D<T> &other)
-               : d(other.d)
+                 : d(other.d)
 {}
 
 /** Destructor */

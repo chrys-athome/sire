@@ -15,6 +15,7 @@ set ( SIREMOL_HEADERS
       atom.h
       atomaliases.h
       atomatomid.h
+      atomcharges.h
       atomcoords.h
       atomcutting.h
       atomeditor.h
