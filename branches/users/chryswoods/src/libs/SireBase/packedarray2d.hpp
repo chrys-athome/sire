@@ -29,8 +29,12 @@
 #ifndef SIREBASE_PACKEDARRAY2D_HPP
 #define SIREBASE_PACKEDARRAY2D_HPP
 
+#include <QVariant>
+
 #include "packedarray2d.h"
+
 #include <boost/assert.hpp>
+#include <boost/type_traits/is_class.hpp>
 
 #include <QDebug>
 
@@ -434,6 +438,10 @@ public:
 
     void assertValidIndex(quint32 i) const;
 
+    PackedArray2D<QVariant> toVariant() const;
+    
+    static PackedArray2D<T> fromVariant(const PackedArray2D<QVariant> &variant);
+
 private:
     /** Implicitly shared pointer to the array data */
     detail::SharedArray2DPtr< detail::PackedArray2DData<T> > d;
@@ -555,15 +563,21 @@ char* PackedArray2DMemory<T>::create(quint32 narrays, quint32 nvalues)
         //we are now at the location of the first item in the array
         PackedArray2DMemoryBase::setValue0(arraydata, idx);
         
-        //loop over each object and create it in place
-        for (quint32 i=0; i<nvalues; ++i)
+        //only call constructors if this is a complex type
+        if (QTypeInfo<T>::isComplex)
         {
-            BOOST_ASSERT(idx + sizeof(T) <= sz);
+            //loop over each object and create it in place
+            for (quint32 i=0; i<nvalues; ++i)
+            {
+                BOOST_ASSERT(idx + sizeof(T) <= sz);
 
-            new (storage + idx) T();
-                
-            idx += sizeof(T);
+                new (storage + idx) T();
+                    
+                idx += sizeof(T);
+            }
         }
+        else
+            idx += nvalues * sizeof(T);
         
         //we should now be at the end of the storage
         BOOST_ASSERT( idx == sz );
@@ -606,7 +620,8 @@ void PackedArray2DMemory<T>::destroy(PackedArray2DData<T> *array)
 
     char *storage = (char*)array;
         
-    if (nvalues > 0)
+    //only call destructors if this is a complex type
+    if (nvalues > 0 and QTypeInfo<T>::isComplex)
     {
         T *values = array->valueData();
         
@@ -676,6 +691,23 @@ char* PackedArray2DMemory<T>::detach(char *this_ptr, quint32 this_idx)
 
         //the first part of the data is the PackedArray2DData object
         PackedArray2DData<T> *new_arraydata = (PackedArray2DData<T>*) new_storage;
+
+        //call the copy constructor if this is a complex type
+        if (QTypeInfo<T>::isComplex)
+        {
+            T *new_array = new_arraydata->valueData();
+            const T *old_array = arraydata->valueData();
+            
+            int nvals = arraydata->nValues();
+            
+            for (int i=0; i<nvals; ++i)
+            {
+                new (new_array) T(*old_array);
+                
+                ++new_array;
+                ++old_array;
+            }
+        }
         
         //set the reference count of this copy to 1
         new_arraydata->ref = 1;
@@ -1750,6 +1782,121 @@ QVector< QVector<T> > PackedArray2D<T>::toQVectorVector() const
     return ret;
 }
 
+namespace detail
+{
+
+void throwCannotConvertVariantError(const char *this_type, 
+                                    const char *type_t,
+                                    const QString &codeloc);
+template<class T>
+struct VariantConverter
+{
+    static PackedArray2D<QVariant> output(const PackedArray2D<T> &array)
+    {
+        if (array.isEmpty())
+            return PackedArray2D<QVariant>();
+            
+        int narrays = array.nArrays();
+        
+        QVector< QVector<QVariant> > variant(narrays);
+        QVector<QVariant> *variant_array = variant.data();
+        const typename PackedArray2D<T>::Array *array_array = array.constData();
+        
+        for (int i=0; i<narrays; ++i)
+        {
+            const typename PackedArray2D<T>::Array &this_array = array_array[i];
+        
+            int nvalues = this_array.count();
+            const T *this_array_array = this_array.constData();
+            
+            QVector<QVariant> this_variant(nvalues);
+            QVariant *this_variant_array = this_variant.data();
+            
+            for (int j=0; j<nvalues; ++j)
+            {
+                this_variant_array[j] = QVariant::fromValue<T>(this_array_array[j]);
+            }
+            
+            variant_array[i] = this_variant;
+        }
+        
+        return PackedArray2D<QVariant>(variant);
+    }
+    
+    static PackedArray2D<T> input(const PackedArray2D<QVariant> &variant)
+    {
+        if (variant.isEmpty())
+            return PackedArray2D<T>();
+            
+        int narrays = variant.nArrays();
+        
+        QVector< QVector<T> > array(narrays);
+        QVector<T> *array_array = array.data();
+        const typename PackedArray2D<QVariant>::Array *variant_array 
+                                                            = variant.constData();
+        
+        for (int i=0; i<narrays; ++i)
+        {
+            const typename PackedArray2D<QVariant>::Array &this_variant 
+                                                                = variant_array[i];
+        
+            int nvalues = this_variant.count();
+            const QVariant *this_variant_array = this_variant.constData();
+            
+            QVector<T> this_array(nvalues);
+            T *this_array_array = this_array.data();
+            
+            for (int j=0; j<nvalues; ++j)
+            {
+                const QVariant &value = this_variant_array[j];
+                
+                if (not value.canConvert<T>())
+                    throwCannotConvertVariantError(value.typeName(),
+                                            QMetaType::typeName( qMetaTypeId<T>() ),
+                                            CODELOC );
+            
+                this_array_array[j] = value.value<T>();
+            }
+            
+            array_array[i] = this_array;
+        }
+        
+        return PackedArray2D<T>(array);
+    }
+};
+
+template<>
+struct SIREBASE_EXPORT VariantConverter<QVariant>
+{
+    static PackedArray2D<QVariant> output(const PackedArray2D<QVariant> &array)
+    {
+        return array;
+    }
+    
+    static PackedArray2D<QVariant> input(const PackedArray2D<QVariant> &variant)
+    {
+        return variant;
+    }
+};
+
+}
+
+/** Return this array converted into an array of QVariants */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+PackedArray2D<QVariant> PackedArray2D<T>::toVariant() const
+{
+    return detail::VariantConverter<T>::output(*this);
+}
+
+/** Return a PackedArray constructed from an array of QVariants */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+PackedArray2D<T> PackedArray2D<T>::fromVariant(const PackedArray2D<QVariant> &variant)
+{
+    return detail::VariantConverter<T>::input(variant);
+}
+
 /** Update the ith array so that it has the same contents as 'array'
 
     \throw SireError::incompatible_error
@@ -1887,6 +2034,9 @@ QDataStream& operator>>(QDataStream &ds,
     
     return ds;
 }
+
+//we need to have qMetaTypeId<QVariant> declared so we can get it's typename...
+Q_DECLARE_METATYPE( QVariant );
 
 SIRE_END_HEADER
 

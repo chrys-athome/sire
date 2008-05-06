@@ -282,10 +282,10 @@ public:
     
     quint32 getNewUID();
     
-    QVector< QVector<QVariant> > atomProperty(const QString &key) const;
-    QVector< QVector<QVariant> > atomMetadata(const QString &key) const;
-    QVector< QVector<QVariant> > atomMetadata(const QString &key,
-                                              const QString &metakey) const;
+    AtomVariantProperty atomProperty(const QString &key) const;
+    AtomVariantProperty atomMetadata(const QString &key) const;
+    AtomVariantProperty atomMetadata(const QString &key,
+                                     const QString &metakey) const;
                                               
     QVector<QVariant> cgProperty(const QString &key) const;
     QVector<QVariant> cgMetadata(const QString &metakey) const;
@@ -658,16 +658,16 @@ void EditMolData::extractProperty(const QString &key,
 {
     //convert the properties for each atom into an array of array
     //of QVariants. These are arranged in CutGroups, in CGAtomIdx order...
-    QVector< QVector<QVariant> > values = atom_property.toVariant();
+    PackedArray2D<QVariant> values = atom_property.toVariant().array();
     
     int ngroups = values.count();
     BOOST_ASSERT( ngroups == cg_by_index.count() );
     
-    const QVector<QVariant> *values_array = values.constData();
+    const PackedArray2D<QVariant>::Array *values_array = values.constData();
     
     for (int i=0; i<ngroups; ++i)
     {
-        const QVector<QVariant> &group_values = values_array[i];
+        const PackedArray2D<QVariant>::Array &group_values = values_array[i];
     
         //get the CutGroup at index i
         const EditCGData &cgroup = this->cutGroup(cg_by_index.at(i));
@@ -806,16 +806,16 @@ void EditMolData::extractMetadata(const QString &key,
 {
     //convert the properties for each atom into an array of array
     //of QVariants. These are arranged in CutGroups, in CGAtomIdx order...
-    QVector< QVector<QVariant> > values = atom_property.toVariant();
+    PackedArray2D<QVariant> values = atom_property.toVariant().array();
     
     int ngroups = values.count();
     BOOST_ASSERT( ngroups == cg_by_index.count() );
     
-    const QVector<QVariant> *values_array = values.constData();
+    const PackedArray2D<QVariant>::Array *values_array = values.constData();
     
     for (int i=0; i<ngroups; ++i)
     {
-        const QVector<QVariant> &group_values = values_array[i];
+        const PackedArray2D<QVariant>::Array &group_values = values_array[i];
     
         //get the CutGroup at index i
         const EditCGData &cgroup = this->cutGroup(cg_by_index.at(i));
@@ -954,16 +954,16 @@ void EditMolData::extractMetadata(const QString &key, const QString &metakey,
 {
     //convert the properties for each atom into an array of array
     //of QVariants. These are arranged in CutGroups, in CGAtomIdx order...
-    QVector< QVector<QVariant> > values = atom_property.toVariant();
+    PackedArray2D<QVariant> values = atom_property.toVariant().array();
     
     int ngroups = values.count();
     BOOST_ASSERT( ngroups == cg_by_index.count() );
     
-    const QVector<QVariant> *values_array = values.constData();
+    const PackedArray2D<QVariant>::Array *values_array = values.constData();
     
     for (int i=0; i<ngroups; ++i)
     {
-        const QVector<QVariant> &group_values = values_array[i];
+        const PackedArray2D<QVariant>::Array &group_values = values_array[i];
     
         //get the CutGroup at index i
         const EditCGData &cgroup = this->cutGroup(cg_by_index.at(i));
@@ -1655,7 +1655,7 @@ void EditMolData::assertHasSegMetadata(const QString &key,
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-QVector< QVector<QVariant> > EditMolData::atomProperty(const QString &key) const
+AtomVariantProperty EditMolData::atomProperty(const QString &key) const
 {
     //ensure that this atom property exists...
     this->assertHasAtomProperty(key);
@@ -1663,7 +1663,6 @@ QVector< QVector<QVariant> > EditMolData::atomProperty(const QString &key) const
     int ngroups = cg_by_index.count();
     
     QVector< QVector<QVariant> > values(ngroups);
-    values.squeeze();
     
     QVector<QVariant> *values_array = values.data();
     
@@ -1678,7 +1677,6 @@ QVector< QVector<QVariant> > EditMolData::atomProperty(const QString &key) const
         else
         {
             QVector<QVariant> group_vals(nats);
-            group_vals.squeeze();
             QVariant *group_vals_array = group_vals.data();
             
             for (int j=0; j<nats; ++j)
@@ -1691,7 +1689,7 @@ QVector< QVector<QVariant> > EditMolData::atomProperty(const QString &key) const
         }
     }
     
-    return values;
+    return AtomVariantProperty( PackedArray2D<QVariant>(values) );
 }
 
 /** Return the values of the atom metadata at metakey 'metakey'
@@ -1699,7 +1697,7 @@ QVector< QVector<QVariant> > EditMolData::atomProperty(const QString &key) const
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-QVector< QVector<QVariant> > EditMolData::atomMetadata(const QString &metakey) const
+AtomVariantProperty EditMolData::atomMetadata(const QString &metakey) const
 {
     //ensure that this atom metadata exists...
     this->assertHasAtomMetadata(metakey);
@@ -1707,7 +1705,6 @@ QVector< QVector<QVariant> > EditMolData::atomMetadata(const QString &metakey) c
     int ngroups = cg_by_index.count();
     
     QVector< QVector<QVariant> > values(ngroups);
-    values.squeeze();
     
     QVector<QVariant> *values_array = values.data();
     
@@ -1722,7 +1719,6 @@ QVector< QVector<QVariant> > EditMolData::atomMetadata(const QString &metakey) c
         else
         {
             QVector<QVariant> group_vals(nats);
-            group_vals.squeeze();
             QVariant *group_vals_array = group_vals.data();
             
             for (int j=0; j<nats; ++j)
@@ -1735,7 +1731,7 @@ QVector< QVector<QVariant> > EditMolData::atomMetadata(const QString &metakey) c
         }
     }
     
-    return values;
+    return AtomVariantProperty( PackedArray2D<QVariant>(values) );
 }
 
 /** Return the values of the atom metadata for the property at
@@ -1744,8 +1740,8 @@ QVector< QVector<QVariant> > EditMolData::atomMetadata(const QString &metakey) c
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-QVector< QVector<QVariant> > EditMolData::atomMetadata(const QString &key,
-                                                       const QString &metakey) const
+AtomVariantProperty EditMolData::atomMetadata(const QString &key,
+                                              const QString &metakey) const
 {
     //ensure that this atom metadata exists...
     this->assertHasAtomMetadata(key, metakey);
@@ -1753,7 +1749,6 @@ QVector< QVector<QVariant> > EditMolData::atomMetadata(const QString &key,
     int ngroups = cg_by_index.count();
     
     QVector< QVector<QVariant> > values(ngroups);
-    values.squeeze();
     
     QVector<QVariant> *values_array = values.data();
     
@@ -1768,7 +1763,6 @@ QVector< QVector<QVariant> > EditMolData::atomMetadata(const QString &key,
         else
         {
             QVector<QVariant> group_vals(nats);
-            group_vals.squeeze();
             QVariant *group_vals_array = group_vals.data();
             
             for (int j=0; j<nats; ++j)
@@ -1781,7 +1775,7 @@ QVector< QVector<QVariant> > EditMolData::atomMetadata(const QString &key,
         }
     }
     
-    return values;
+    return AtomVariantProperty( PackedArray2D<QVariant>(values) );
 }                                                     
             
 /** Return the values of the CutGroup property at key 'key'
@@ -4293,7 +4287,7 @@ SegStructureEditor StructureEditor::addSegment()
 
 /** Return an AtomSelection based on the bool AtomProperty 'values' */
 AtomSelection StructureEditor::extractAtomSelection(
-                                    const QVector< QVector<QVariant> > &values) const
+                                    const AtomVariantProperty &values) const
 {
     //create an AtomSelection using the current MoleculeInfo object
     if (this->needsInfoRebuild())
@@ -4303,11 +4297,11 @@ AtomSelection StructureEditor::extractAtomSelection(
     selected_atoms.selectNone();
     
     int ncg = values.count();
-    const QVector<QVariant> *values_array = values.constData();
+    const PackedArray2D<QVariant>::Array *values_array = values.array().constData();
     
     for (CGIdx i(0); i<ncg; ++i)
     {
-        const QVector<QVariant> &group_values = values_array[i];
+        const PackedArray2D<QVariant>::Array &group_values = values_array[i];
         int nats = group_values.count();
         const QVariant *group_values_array = group_values.constData();
         

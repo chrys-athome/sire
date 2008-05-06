@@ -31,7 +31,13 @@
 
 #include "sireglobal.h"
 
-#include <QAtomic>
+#if QT_VERSION >= 0x040400
+  #include <QAtomicInt>
+#elif QT_VERSION >= 0x040100
+  #include <QAtomic>
+#else
+  #error You need at least Qt Version 4.1
+#endif
 
 SIRE_BEGIN_HEADER
 
@@ -56,15 +62,20 @@ public:
 
 private:
     /** The volatile integer that is being incremented */
-    volatile int atomic;
+    #if QT_VERSION >= 0x040400
+    QAtomicInt atomic_int;
+    #elif QT_VERSION >= 0x040100
+    volatile int atomic_int;
+    #endif
 };
 
 /** Constructor */
-inline Incremint::Incremint(int value) : atomic(value)
+inline Incremint::Incremint(int value) : atomic_int(value)
 {}
 
 /** Copy constructor */
-inline Incremint::Incremint(const Incremint &other) : atomic(other.atomic)
+inline Incremint::Incremint(const Incremint &other) 
+                 : atomic_int(other.atomic_int)
 {}
 
 /** Destructor */
@@ -74,15 +85,31 @@ inline Incremint::~Incremint()
 /** Increment the Incremint and return its new value */
 inline int Incremint::increment()
 {
-    register int oldValue;
+    #if QT_VERSION >= 0x040400
     
-    do
-    {
-        oldValue = atomic;
+        register int oldValue;
+        
+        do
+        {
+            oldValue = atomic_int;
+        
+        } while (not atomic_int.testAndSetAcquire(oldValue, oldValue+1));
+        
+        return oldValue + 1;
     
-    } while ( not q_atomic_test_and_set_int(&atomic, oldValue, oldValue+1) );
+    #elif QT_VERSION >= 0x040100
+
+        register int oldValue;
     
-    return oldValue + 1;
+        do
+        {
+            oldValue = atomic_int;
+    
+        } while ( not q_atomic_test_and_set_int(&atomic, oldValue, oldValue+1) );
+    
+        return oldValue + 1;
+    
+    #endif
 }
 
 }

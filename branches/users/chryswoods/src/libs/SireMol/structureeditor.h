@@ -95,6 +95,11 @@ class ResStructureEditor;
 class CGStructureEditor;
 class AtomStructureEditor;
 
+template<class T>
+class AtomProperty;
+
+typedef AtomProperty<QVariant> AtomVariantProperty;
+
 namespace detail
 {
 class EditMolData;
@@ -390,8 +395,7 @@ protected:
     void assertValidSegment(quint32 uid) const;
 
 private:
-    AtomSelection extractAtomSelection(
-                        const QVector< QVector<QVariant> > &values) const;
+    AtomSelection extractAtomSelection(const AtomVariantProperty &values) const;
 
     Properties& _pvt_properties();
 

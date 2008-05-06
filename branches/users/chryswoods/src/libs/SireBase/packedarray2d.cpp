@@ -37,6 +37,17 @@ using namespace SireBase::detail;
 
 using namespace SireStream;
 
+void SIREBASE_EXPORT 
+SireBase::detail::throwCannotConvertVariantError(const char *this_type, 
+                                                 const char *type_t,
+                                                 const QString &codeloc)
+{
+    throw SireError::invalid_cast( QObject::tr(
+            "Cannot cast a QVariant of type %1 so that is can be "
+            "placed into a PackedArray2D of type %2.")
+                .arg(this_type).arg(type_t), CODELOC );
+}
+
 void SIREBASE_EXPORT SireBase::detail::throwPackedArray2D_invalidIndex(
                                                     quint32 i, quint32 nvals)
 {

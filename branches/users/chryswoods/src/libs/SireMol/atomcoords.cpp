@@ -112,74 +112,6 @@ AtomProperty<Vector>::AtomProperty(const CoordGroupArray &cgroups)
                        coords(cgroups)
 {}
 
-static void assertCanConvert(const QVariant &value)
-{
-    if (not value.canConvert<Vector>())
-    {
-        throw SireError::invalid_cast( QObject::tr(
-            "Cannot convert an object of type %1 to a SireMaths::Vector, "
-            "as is required to allow this object to be part of an "
-            "AtomCoords property.")
-                .arg(value.typeName()), CODELOC );
-    }
-}
-
-static CoordGroup makeCoordGroup(const QVector<QVariant> &values)
-{
-    if (values.isEmpty())
-        return CoordGroup();
-        
-    int nvals = values.count();
-    const QVariant *values_array = values.constData();
-
-    QVector<Vector> tmp_coords(nvals);
-    
-    for (int i=0; i<nvals; ++i)
-    {
-        const QVariant &value = values_array[i];
-        assertCanConvert(value);
-        
-        tmp_coords[i] = value.value<Vector>();
-    }
-    
-    return CoordGroup(tmp_coords);
-}
-
-/** Construct from an array of QVariants 
-
-    \throw SireError::invalid_cast
-*/
-AtomProperty<Vector>::AtomProperty(const QVector<QVariant> &values)
-                     : ConcreteProperty<AtomProperty<Vector>,AtomProp>()
-{
-    if (not values.isEmpty())
-        coords = makeCoordGroup(values);
-}
-
-/** Construct from an array of an array of QVariants - each QVariant array
-    contains the coordinates for one CutGroup
-    
-    \throw SireError::invalid_cast
-*/
-AtomProperty<Vector>::AtomProperty(const QVector< QVector<QVariant> > &values)
-                     : ConcreteProperty<AtomProperty<Vector>,AtomProp>()
-{
-    if (values.isEmpty())
-        return;
-        
-    int ngroups = values.count();
-    
-    QVector<CoordGroup> tmp_coords(ngroups);
-    const QVector<QVariant> *values_array = values.constData();
-    
-    for (int i=0; i<ngroups; ++i)
-    {
-        tmp_coords[i] = makeCoordGroup( values_array[i] );
-    }
-    
-    coords = tmp_coords;
-}
-
 /** Copy constructor */
 AtomProperty<Vector>::AtomProperty(const AtomProperty<Vector> &other)
                      : ConcreteProperty<AtomProperty<Vector>,AtomProp>(other),
@@ -218,10 +150,10 @@ const CoordGroup& AtomProperty<Vector>::operator[](CGIdx cgidx) const
 
 /** Convert the coordinates to an array of array of vectors - each
     array holds the coordinates of one CutGroup */
-QVector< QVector<QVariant> > AtomProperty<Vector>::toVariant() const
+AtomProperty<QVariant> AtomProperty<Vector>::toVariant() const
 {
     if (coords.count() == 0)
-        return QVector< QVector<QVariant> >();
+        return PackedArray2D<QVariant>();
         
     int ngroups = coords.count();
     
@@ -255,19 +187,67 @@ QVector< QVector<QVariant> > AtomProperty<Vector>::toVariant() const
         }
     }
     
-    return converted_coords;
+    return AtomProperty<QVariant>( PackedArray2D<QVariant>(converted_coords) );
 }
 
-/** Assign this from an array of QVariants */
-void AtomProperty<Vector>::assignFrom(const QVector<QVariant> &values)
+static void assertCanConvert(const QVariant &value)
 {
-    this->operator=( AtomProperty<Vector>(values) );
+    if (not value.canConvert<Vector>())
+    {
+        throw SireError::invalid_cast( QObject::tr(
+            "Cannot convert an object of type %1 to a SireMaths::Vector, "
+            "as is required to allow this object to be part of an "
+            "AtomCoords property.")
+                .arg(value.typeName()), CODELOC );
+    }
 }
 
-/** Assign this from an array of array of QVariants */
-void AtomProperty<Vector>::assignFrom(const QVector< QVector<QVariant> > &values)
+static CoordGroup makeCoordGroup(const PackedArray2D<QVariant>::Array &values)
 {
-    this->operator=( AtomProperty<Vector>(values) );
+    if (values.isEmpty())
+        return CoordGroup();
+        
+    int nvals = values.count();
+    const QVariant *values_array = values.constData();
+
+    QVector<Vector> tmp_coords(nvals);
+    
+    for (int i=0; i<nvals; ++i)
+    {
+        const QVariant &value = values_array[i];
+        assertCanConvert(value);
+        
+        tmp_coords[i] = value.value<Vector>();
+    }
+    
+    return CoordGroup(tmp_coords);
+}
+
+/** Return a set of AtomCoords that have been converted from an array of QVariants */
+AtomProperty<Vector> AtomProperty<Vector>::fromVariant(
+                                        const AtomProperty<QVariant> &variantprop)
+{
+    const PackedArray2D<QVariant> &variant = variantprop.array();
+
+    if (variant.isEmpty())
+        return AtomProperty<Vector>();
+        
+    int ngroups = variant.count();
+    
+    QVector<CoordGroup> coords(ngroups);
+    const PackedArray2D<QVariant>::Array *variant_array = variant.constData();
+    
+    for (int i=0; i<ngroups; ++i)
+    {
+        coords[i] = makeCoordGroup( variant_array[i] );
+    }
+    
+    return AtomProperty<Vector>( CoordGroupArray(coords) );
+}
+
+void AtomProperty<Vector>::assignFrom(const AtomProperty<QVariant> &variant)
+{
+    this->operator=( AtomProperty<Vector>::fromVariant(variant) );
 }
 
 /** Return whether or not this set of coordinates is compatible with

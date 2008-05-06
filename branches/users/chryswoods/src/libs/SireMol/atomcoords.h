@@ -85,9 +85,6 @@ public:
     AtomProperty(const CoordGroup &cgroup);
     AtomProperty(const CoordGroupArray &cgroups);
 
-    AtomProperty(const QVector<QVariant> &values);
-    AtomProperty(const QVector< QVector<QVariant> > &values);
-
     AtomProperty(const AtomProperty<Vector> &other);
 
     ~AtomProperty();
@@ -111,10 +108,11 @@ public:
 
     bool canConvert(const QVariant &value) const;
 
-    void assignFrom(const QVector<QVariant> &values);
-    void assignFrom(const QVector< QVector<QVariant> > &values);
+    void assignFrom(const AtomProperty<QVariant> &values);
 
-    QVector< QVector<QVariant> > toVariant() const;
+    AtomProperty<QVariant> toVariant() const;
+
+    static AtomProperty<Vector> fromVariant(const AtomProperty<QVariant> &variant);
 
     const CoordGroup& operator[](CGIdx cgidx) const;
 

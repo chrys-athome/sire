@@ -62,9 +62,10 @@ namespace SireMol
 {
 
 //typedef the basic types
-typedef AtomProperty<QString> AtomStringProperty;
-typedef AtomProperty<qint64>  AtomIntProperty;
-typedef AtomProperty<double>  AtomFloatProperty;
+typedef AtomProperty<QString>  AtomStringProperty;
+typedef AtomProperty<qint64>   AtomIntProperty;
+typedef AtomProperty<double>   AtomFloatProperty;
+typedef AtomProperty<QVariant> AtomVariantProperty;
 
 using SireBase::Property;
 using SireBase::PackedArray2D;
@@ -79,12 +80,17 @@ public:
     
     virtual ~AtomProp();
     
+    AtomProp& operator=(const AtomVariantProperty &other)
+    {
+        this->assignFrom(other);
+        return *this;
+    }
+    
     virtual bool canConvert(const QVariant &value) const=0;
     
-    virtual void assignFrom(const QVector<QVariant> &values)=0;
-    virtual void assignFrom(const QVector< QVector<QVariant> > &values)=0;
+    virtual void assignFrom(const AtomVariantProperty &values)=0;
     
-    virtual QVector< QVector<QVariant> > toVariant() const=0;
+    virtual AtomVariantProperty toVariant() const=0;
     
     virtual void assertCanConvert(const QVariant &value) const=0;
 };
@@ -117,9 +123,6 @@ public:
     
     AtomProperty(const T &value);
     AtomProperty(const PackedArray2D<T> &values);
-
-    AtomProperty(const QVector< QVector<QVariant> > &values);
-    AtomProperty(const QVector<QVariant> &values);
     
     AtomProperty(const AtomProperty<T> &other);
     
@@ -140,10 +143,10 @@ public:
     bool operator==(const AtomProperty<T> &other) const;
     bool operator!=(const AtomProperty<T> &other) const;
 
-    QVector< QVector<QVariant> > toVariant() const;
+    AtomProperty<QVariant> toVariant() const;
+    static AtomProperty<T> fromVariant(const AtomProperty<QVariant> &variant);
     
-    void assignFrom(const QVector<QVariant> &values);
-    void assignFrom(const QVector< QVector<QVariant> > &values);
+    void assignFrom(const AtomProperty<QVariant> &values);
 
     const typename PackedArray2D<T>::Array& operator[](CGIdx cgidx) const;
     const typename PackedArray2D<T>::Array& at(CGIdx cgidx) const;
@@ -267,82 +270,6 @@ AtomProperty<T>::AtomProperty(const PackedArray2D<T> &values)
                   props(values)
 {}
 
-/** Construct the Atom property from the array of QVariants.
-    
-    \throw SireError::invalid_cast
-*/
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-AtomProperty<T>::AtomProperty(const QVector<QVariant> &values)
-                : SireBase::ConcreteProperty<AtomProperty<T>,AtomProp>()
-{
-    if (values.isEmpty())
-        return;
-    
-    int nvals = values.count();
-    const QVariant *values_array = values.constData();
-    
-    QVector<T> converted_vals(nvals);
-    T *converted_vals_array = converted_vals.data();
-    
-    for (int i=0; i<nvals; ++i)
-    {
-        const QVariant &value = values_array[i];
-        AtomProperty<T>::assertCanConvert(value);
-
-        converted_vals_array[i] = value.value<T>();
-    }
-    
-    props = PackedArray2D<T>(converted_vals);
-}
-
-/** Construct the Atom property from the array of array of QVariants.
-     Each array contains the properties for a single CutGroup
-    
-    \throw SireError::invalid_cast
-*/
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-AtomProperty<T>::AtomProperty(const QVector< QVector<QVariant> > &values)
-                : SireBase::ConcreteProperty<AtomProperty<T>,AtomProp>()
-{
-    if (values.isEmpty())
-        return;
-        
-    int ngroups = values.count();
-    const QVector<QVariant> *values_array = values.constData();
-            
-    QVector< QVector<T> > tmp_props = QVector< QVector<T> >(ngroups);
-    QVector<T> *tmp_props_array = tmp_props.data();
-    
-    for (int i=0; i<ngroups; ++i)
-    {
-        const QVector<QVariant> &group_values = values_array[i];
-        int nvals = group_values.count();
-        
-        if (nvals == 0)
-            tmp_props_array[i] = QVector<T>();
-        else
-        {
-            QVector<T> converted_vals(nvals);
-            T *converted_vals_array = converted_vals.data();
-            const QVariant *group_values_array = group_values.constData();
-
-            for (int j=0; j<nvals; ++j)
-            {
-                const QVariant &value = group_values_array[j];
-                AtomProperty<T>::assertCanConvert(value);
-                
-                converted_vals_array[j] = value.value<T>();
-            }
-            
-            tmp_props_array[i] = converted_vals;
-        }
-    }
-    
-    props = PackedArray2D<T>(tmp_props);
-}
-
 /** Copy constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -398,43 +325,9 @@ const typename PackedArray2D<T>::Array& AtomProperty<T>::operator[](CGIdx cgidx)
     There is one array per CutGroup */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-QVector< QVector<QVariant> > AtomProperty<T>::toVariant() const
+AtomProperty<QVariant> AtomProperty<T>::toVariant() const
 {
-    if (props.isEmpty())
-        return QVector< QVector<QVariant> >();
-        
-    int ngroups = props.count();
-    const typename PackedArray2D<T>::Array *props_array = props.constData();
-    
-    QVector< QVector<QVariant> > variant_vals(ngroups);
-    variant_vals.squeeze();
-    QVector<QVariant> *variant_vals_array = variant_vals.data();
-    
-    for (int i=0; i<ngroups; ++i)
-    {
-        const typename PackedArray2D<T>::Array &group_props = props_array[i];
-        
-        if (group_props.isEmpty())
-            variant_vals_array[i] = QVector<QVariant>();
-        else
-        {
-            int nvals = group_props.count();
-            const T *group_props_array = group_props.constData();
-            
-            QVector<QVariant> converted_vals(nvals);
-            converted_vals.squeeze();
-            QVariant *converted_vals_array = converted_vals.data();
-            
-            for (int j=0; j<nvals; ++j)
-            {
-                converted_vals_array[j].setValue<T>( group_props_array[j] );
-            }
-            
-            variant_vals_array[i] = converted_vals;
-        }
-    }
-    
-    return variant_vals;
+    return AtomProperty<QVariant>( props.toVariant() );
 }
 
 /** Assign the values of the properties from the array of QVariants
@@ -443,21 +336,17 @@ QVector< QVector<QVariant> > AtomProperty<T>::toVariant() const
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void AtomProperty<T>::assignFrom(const QVector<QVariant> &values) 
+void AtomProperty<T>::assignFrom(const AtomProperty<QVariant> &variant) 
 {
-    this->operator=( AtomProperty<T>(values) );
+    props = SireBase::PackedArray2D<T>::fromVariant(variant.array());
 }
 
-/** Assign the values of the properties from the array of array
-    of QVariants
-    
-    \throw SireError::invalid_cast
-*/
+/** Return an AtomProperty constructed from an array of QVariants */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void AtomProperty<T>::assignFrom(const QVector< QVector<QVariant> > &values)
+AtomProperty<T> AtomProperty<T>::fromVariant(const AtomProperty<QVariant> &variant)
 {
-    this->operator=( AtomProperty<T>(values) );
+    return AtomProperty<T>( SireBase::PackedArray2D<T>::fromVariant(variant.array()) );
 }
 
 /** Return the array of properties for the atoms in the CutGroup
@@ -795,6 +684,7 @@ QDataStream& operator>>(QDataStream &ds, SireMol::AtomProperty<T> &prop)
 Q_DECLARE_METATYPE( SireMol::AtomStringProperty );
 Q_DECLARE_METATYPE( SireMol::AtomIntProperty );
 Q_DECLARE_METATYPE( SireMol::AtomFloatProperty );
+Q_DECLARE_METATYPE( SireMol::AtomVariantProperty );
 
 SIRE_END_HEADER
 
