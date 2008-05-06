@@ -58,9 +58,10 @@ QDataStream& operator>>(QDataStream&, SireMol::ResProperty<T>&);
 namespace SireMol
 {
 
-typedef ResProperty<QString> ResStringProperty;
-typedef ResProperty<qint64>  ResIntProperty;
-typedef ResProperty<double>  ResFloatProperty;
+typedef ResProperty<QString>  ResStringProperty;
+typedef ResProperty<qint64>   ResIntProperty;
+typedef ResProperty<double>   ResFloatProperty;
+typedef ResProperty<QVariant> ResVariantProperty;
 
 /** Small class used to provide a common base for all ResProperty types */
 class SIREMOL_EXPORT ResProp : public MolViewProperty
@@ -73,9 +74,9 @@ public:
     
     virtual bool canConvert(const QVariant &value) const=0;
     
-    virtual void assignFrom(const QVector<QVariant> &values)=0;
+    virtual void assignFrom(const ResProperty<QVariant> &values)=0;
     
-    virtual QVector<QVariant> toVariant() const=0;
+    virtual ResProperty<QVariant> toVariant() const=0;
     
     virtual void assertCanConvert(const QVariant &value) const=0;
 };
@@ -104,7 +105,6 @@ public:
     ResProperty(const MoleculeInfoData &molinfo);
     
     ResProperty(const QVector<T> &values);
-    ResProperty(const QVector<QVariant> &values);
     
     ResProperty(const ResProperty<T> &other);
     
@@ -139,9 +139,11 @@ public:
     
     int nResidues() const;
 
-    void assignFrom(const QVector<QVariant> &values);
+    void assignFrom(const ResProperty<QVariant> &values);
     
-    QVector<QVariant> toVariant() const;
+    static ResProperty<T> fromVariant(const ResProperty<QVariant> &values);
+    
+    ResProperty<QVariant> toVariant() const;
     
     bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
     
@@ -201,34 +203,6 @@ void ResProperty<T>::assertCanConvert(const QVariant &value) const
             "of type %2, as required by a %3.")
                 .arg(value.typeName()).arg( QMetaType::typeName(qMetaTypeId<T>()) )
                 .arg(this->what()), CODELOC );
-    }
-}
-
-/** Construct from an array of variants
-
-    \throw SireError::invalid_cast
-*/
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-ResProperty<T>::ResProperty(const QVector<QVariant> &values)
-               : SireBase::ConcreteProperty<ResProperty<T>,ResProp>()
-{
-    if (values.isEmpty())
-        return;
-        
-    int nvals = values.count();
-    const QVariant *values_array = values.constData();
-    
-    props = QVector<T>(nvals);
-    props.squeeze();
-    T *props_array = props.data();
-    
-    for (int i=0; i<nvals; ++i)
-    {
-        const QVariant &value = values_array[i];
-        ResProperty<T>::assertCanConvert(value);
-        
-        props_array[i] = value.value<T>();
     }
 }
 
@@ -292,6 +266,15 @@ bool ResProperty<T>::canConvert(const QVariant &value) const
     return value.canConvert<T>();
 }
 
+template<class T>
+ResProperty<T> ResProperty<T>::fromVariant(const ResProperty<QVariant> &variant)
+{
+    ResProperty<T> array;
+    array.assignFrom(variant);
+    
+    return array;
+}
+
 /** Assign the values of this property from the array of variants
     in 'values'
     
@@ -299,18 +282,37 @@ bool ResProperty<T>::canConvert(const QVariant &value) const
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void ResProperty<T>::assignFrom(const QVector<QVariant> &values)
+void ResProperty<T>::assignFrom(const ResProperty<QVariant> &variant)
 {
-    this->operator=( ResProperty<T>(values) );
+    if (variant.count() == 0)
+    {
+        props.clear();
+        return;
+    }
+        
+    int nvals = variant.count();
+    const QVariant *variant_array = variant.constData();
+    
+    props = QVector<T>(nvals);
+    props.squeeze();
+    T *props_array = props.data();
+    
+    for (int i=0; i<nvals; ++i)
+    {
+        const QVariant &value = variant_array[i];
+        ResProperty<T>::assertCanConvert(value);
+        
+        props_array[i] = value.value<T>();
+    }
 }
 
 /** Convert the properties into an array of QVariants */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-QVector<QVariant> ResProperty<T>::toVariant() const
+ResProperty<QVariant> ResProperty<T>::toVariant() const
 {
     if (props.isEmpty())
-        return QVector<QVariant>();
+        return ResProperty<QVariant>();
         
     int nvals = props.count();
     const T *props_array = props.constData();
@@ -324,7 +326,7 @@ QVector<QVariant> ResProperty<T>::toVariant() const
         converted_vals_array[i].setValue<T>(props_array[i]);
     }
     
-    return converted_vals;
+    return ResProperty<QVariant>(converted_vals);
 }
 
 /** Return the property for the residue at index 'residx' 
@@ -436,6 +438,7 @@ QDataStream& operator>>(QDataStream &ds, SireMol::ResProperty<T> &prop)
 Q_DECLARE_METATYPE( SireMol::ResStringProperty );
 Q_DECLARE_METATYPE( SireMol::ResIntProperty );
 Q_DECLARE_METATYPE( SireMol::ResFloatProperty );
+Q_DECLARE_METATYPE( SireMol::ResVariantProperty );
 
 SIRE_END_HEADER
 

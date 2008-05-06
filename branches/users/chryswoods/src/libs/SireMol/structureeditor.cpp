@@ -287,25 +287,25 @@ public:
     AtomVariantProperty atomMetadata(const QString &key,
                                      const QString &metakey) const;
                                               
-    QVector<QVariant> cgProperty(const QString &key) const;
-    QVector<QVariant> cgMetadata(const QString &metakey) const;
-    QVector<QVariant> cgMetadata(const QString &key, 
+    CGVariantProperty cgProperty(const QString &key) const;
+    CGVariantProperty cgMetadata(const QString &metakey) const;
+    CGVariantProperty cgMetadata(const QString &key, 
                                  const QString &metakey) const;
                                               
-    QVector<QVariant> resProperty(const QString &key) const;
-    QVector<QVariant> resMetadata(const QString &metakey) const;
-    QVector<QVariant> resMetadata(const QString &key, 
-                                  const QString &metakey) const;
+    ResVariantProperty resProperty(const QString &key) const;
+    ResVariantProperty resMetadata(const QString &metakey) const;
+    ResVariantProperty resMetadata(const QString &key, 
+                                   const QString &metakey) const;
                                               
-    QVector<QVariant> chainProperty(const QString &key) const;
-    QVector<QVariant> chainMetadata(const QString &metakey) const;
-    QVector<QVariant> chainMetadata(const QString &key, 
-                                    const QString &metakey) const;
+    ChainVariantProperty chainProperty(const QString &key) const;
+    ChainVariantProperty chainMetadata(const QString &metakey) const;
+    ChainVariantProperty chainMetadata(const QString &key, 
+                                       const QString &metakey) const;
                                               
-    QVector<QVariant> segProperty(const QString &key) const;
-    QVector<QVariant> segMetadata(const QString &metakey) const;
-    QVector<QVariant> segMetadata(const QString &key, 
-                                  const QString &metakey) const;
+    SegVariantProperty segProperty(const QString &key) const;
+    SegVariantProperty segMetadata(const QString &metakey) const;
+    SegVariantProperty segMetadata(const QString &key, 
+                                   const QString &metakey) const;
     
     void assertHasAtomProperty(const QString &key) const;
     void assertHasAtomMetadata(const QString &metakey) const;
@@ -691,7 +691,7 @@ void EditMolData::extractProperty(const QString &key,
                                   const ResProp &res_property)
 {
     //convert each property to a QVariant, in ResIdx order
-    QVector<QVariant> values = res_property.toVariant();
+    ResVariantProperty values = res_property.toVariant();
     
     int nres = values.count();
     BOOST_ASSERT( nres == res_by_index.count() );
@@ -710,7 +710,7 @@ void EditMolData::extractProperty(const QString &key,
                                   const CGProp &cg_property)
 {
     //convert each property to a QVariant, in CGIdx order
-    QVector<QVariant> values = cg_property.toVariant();
+    CGVariantProperty values = cg_property.toVariant();
     
     int ncg = values.count();
     BOOST_ASSERT( ncg == cg_by_index.count() );
@@ -729,7 +729,7 @@ void EditMolData::extractProperty(const QString &key,
                                   const ChainProp &chain_property)
 {
     //convert each property to a QVariant, in ChainIdx order
-    QVector<QVariant> values = chain_property.toVariant();
+    ChainVariantProperty values = chain_property.toVariant();
     
     int nchains = values.count();
     BOOST_ASSERT( nchains == chains_by_index.count() );
@@ -748,7 +748,7 @@ void EditMolData::extractProperty(const QString &key,
                                   const SegProp &seg_property)
 {
     //convert each property to a QVariant, in ResIdx order
-    QVector<QVariant> values = seg_property.toVariant();
+    SegVariantProperty values = seg_property.toVariant();
     
     int nseg = values.count();
     BOOST_ASSERT( nseg == seg_by_index.count() );
@@ -839,7 +839,7 @@ void EditMolData::extractMetadata(const QString &key,
                                   const ResProp &res_property)
 {
     //convert each property to a QVariant, in ResIdx order
-    QVector<QVariant> values = res_property.toVariant();
+    ResVariantProperty values = res_property.toVariant();
     
     int nres = values.count();
     BOOST_ASSERT( nres == res_by_index.count() );
@@ -858,7 +858,7 @@ void EditMolData::extractMetadata(const QString &key,
                                   const CGProp &cg_property)
 {
     //convert each property to a QVariant, in CGIdx order
-    QVector<QVariant> values = cg_property.toVariant();
+    CGVariantProperty values = cg_property.toVariant();
     
     int ncg = values.count();
     BOOST_ASSERT( ncg == cg_by_index.count() );
@@ -877,7 +877,7 @@ void EditMolData::extractMetadata(const QString &key,
                                   const ChainProp &chain_property)
 {
     //convert each property to a QVariant, in ChainIdx order
-    QVector<QVariant> values = chain_property.toVariant();
+    ChainVariantProperty values = chain_property.toVariant();
     
     int nchains = values.count();
     BOOST_ASSERT( nchains == chains_by_index.count() );
@@ -896,7 +896,7 @@ void EditMolData::extractMetadata(const QString &key,
                                   const SegProp &seg_property)
 {
     //convert each property to a QVariant, in ResIdx order
-    QVector<QVariant> values = seg_property.toVariant();
+    SegVariantProperty values = seg_property.toVariant();
     
     int nseg = values.count();
     BOOST_ASSERT( nseg == seg_by_index.count() );
@@ -987,7 +987,7 @@ void EditMolData::extractMetadata(const QString &key, const QString &metakey,
                                   const ResProp &res_property)
 {
     //convert each property to a QVariant, in ResIdx order
-    QVector<QVariant> values = res_property.toVariant();
+    ResVariantProperty values = res_property.toVariant();
     
     int nres = values.count();
     BOOST_ASSERT( nres == res_by_index.count() );
@@ -1006,7 +1006,7 @@ void EditMolData::extractMetadata(const QString &key, const QString &metakey,
                                   const CGProp &cg_property)
 {
     //convert each property to a QVariant, in CGIdx order
-    QVector<QVariant> values = cg_property.toVariant();
+    CGVariantProperty values = cg_property.toVariant();
     
     int ncg = values.count();
     BOOST_ASSERT( ncg == cg_by_index.count() );
@@ -1025,7 +1025,7 @@ void EditMolData::extractMetadata(const QString &key, const QString &metakey,
                                   const ChainProp &chain_property)
 {
     //convert each property to a QVariant, in ChainIdx order
-    QVector<QVariant> values = chain_property.toVariant();
+    ChainVariantProperty values = chain_property.toVariant();
     
     int nchains = values.count();
     BOOST_ASSERT( nchains == chains_by_index.count() );
@@ -1044,7 +1044,7 @@ void EditMolData::extractMetadata(const QString &key, const QString &metakey,
                                   const SegProp &seg_property)
 {
     //convert each property to a QVariant, in ResIdx order
-    QVector<QVariant> values = seg_property.toVariant();
+    SegVariantProperty values = seg_property.toVariant();
     
     int nseg = values.count();
     BOOST_ASSERT( nseg == seg_by_index.count() );
@@ -1783,7 +1783,7 @@ AtomVariantProperty EditMolData::atomMetadata(const QString &key,
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-QVector<QVariant> EditMolData::cgProperty(const QString &key) const
+CGVariantProperty EditMolData::cgProperty(const QString &key) const
 {
     this->assertHasCGProperty(key);
     
@@ -1808,7 +1808,7 @@ QVector<QVariant> EditMolData::cgProperty(const QString &key) const
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-QVector<QVariant> EditMolData::cgMetadata(const QString &metakey) const
+CGVariantProperty EditMolData::cgMetadata(const QString &metakey) const
 {
     this->assertHasCGMetadata(metakey);
     
@@ -1834,7 +1834,7 @@ QVector<QVariant> EditMolData::cgMetadata(const QString &metakey) const
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-QVector<QVariant> EditMolData::cgMetadata(const QString &key, 
+CGVariantProperty EditMolData::cgMetadata(const QString &key, 
                                           const QString &metakey) const
 {
     this->assertHasCGMetadata(key, metakey);
@@ -1860,7 +1860,7 @@ QVector<QVariant> EditMolData::cgMetadata(const QString &key,
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-QVector<QVariant> EditMolData::resProperty(const QString &key) const
+ResVariantProperty EditMolData::resProperty(const QString &key) const
 {
     this->assertHasResProperty(key);
     
@@ -1885,7 +1885,7 @@ QVector<QVariant> EditMolData::resProperty(const QString &key) const
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-QVector<QVariant> EditMolData::resMetadata(const QString &metakey) const
+ResVariantProperty EditMolData::resMetadata(const QString &metakey) const
 {
     this->assertHasResMetadata(metakey);
     
@@ -1911,7 +1911,7 @@ QVector<QVariant> EditMolData::resMetadata(const QString &metakey) const
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-QVector<QVariant> EditMolData::resMetadata(const QString &key, 
+ResVariantProperty EditMolData::resMetadata(const QString &key, 
                                            const QString &metakey) const
 {
     this->assertHasResMetadata(key, metakey);
@@ -1937,7 +1937,7 @@ QVector<QVariant> EditMolData::resMetadata(const QString &key,
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-QVector<QVariant> EditMolData::chainProperty(const QString &key) const
+ChainVariantProperty EditMolData::chainProperty(const QString &key) const
 {
     this->assertHasChainProperty(key);
     
@@ -1962,7 +1962,7 @@ QVector<QVariant> EditMolData::chainProperty(const QString &key) const
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-QVector<QVariant> EditMolData::chainMetadata(const QString &metakey) const
+ChainVariantProperty EditMolData::chainMetadata(const QString &metakey) const
 {
     this->assertHasChainMetadata(metakey);
     
@@ -1988,7 +1988,7 @@ QVector<QVariant> EditMolData::chainMetadata(const QString &metakey) const
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-QVector<QVariant> EditMolData::chainMetadata(const QString &key, 
+ChainVariantProperty EditMolData::chainMetadata(const QString &key, 
                                              const QString &metakey) const
 {
     this->assertHasChainMetadata(key,metakey);
@@ -2014,7 +2014,7 @@ QVector<QVariant> EditMolData::chainMetadata(const QString &key,
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-QVector<QVariant> EditMolData::segProperty(const QString &key) const
+SegVariantProperty EditMolData::segProperty(const QString &key) const
 {
     this->assertHasSegProperty(key);
     
@@ -2039,7 +2039,7 @@ QVector<QVariant> EditMolData::segProperty(const QString &key) const
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-QVector<QVariant> EditMolData::segMetadata(const QString &metakey) const
+SegVariantProperty EditMolData::segMetadata(const QString &metakey) const
 {
     this->assertHasSegMetadata(metakey);
     
@@ -2065,7 +2065,7 @@ QVector<QVariant> EditMolData::segMetadata(const QString &metakey) const
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-QVector<QVariant> EditMolData::segMetadata(const QString &key, 
+SegVariantProperty EditMolData::segMetadata(const QString &key, 
                                            const QString &metakey) const
 {
     this->assertHasSegMetadata(key, metakey);

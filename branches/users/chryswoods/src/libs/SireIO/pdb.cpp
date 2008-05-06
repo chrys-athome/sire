@@ -1365,51 +1365,6 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
         {
             molgroup.add(new_molecule);
         }
-        
-        qDebug() << "Created molecule" << new_molecule.number()
-                 << new_molecule.name() << new_molecule.nAtoms() 
-                 << new_molecule.nResidues() << new_molecule.nCutGroups()
-                 << new_molecule.nChains() << new_molecule.nSegments();
-        
-        for (AtomIdx i(0); i<new_molecule.nAtoms(); ++i)
-        {
-            Atom atom = new_molecule.atom(i);
-        
-            qDebug() << atom.name() << atom.number()
-                     << atom.property<Vector>(parameters().coordinates()).toString()
-                     << atom.property<Element>(parameters().element()).toString()
-                     << atom.property<SireUnits::Dimension::Charge>(
-                                                        parameters().formalCharge())
-                     << atom.property<double>(parameters().bFactor())
-                     << atom.property<QString>(parameters().pdbAtomName())
-                     << atom.residue().name() << atom.residue().number()
-                     << atom.cutGroup().name();
-        }
-        
-        for (ResIdx i(0); i<new_molecule.nResidues(); ++i)
-        {
-            Residue residue = new_molecule.residue(i);
-            
-            qDebug() << residue.name() << residue.number() << residue.nAtoms()
-                     << residue.property<QString>(parameters().iCode())
-                     << residue.property<QString>(parameters().pdbResidueName());
-        }
-        
-        for (ChainIdx i(0); i<new_molecule.nChains(); ++i)
-        {
-            Chain chain = new_molecule.chain(i);
-            
-            qDebug() << chain.name() << chain.nResidues()
-                     << chain.property<QString>(parameters().pdbChainName());
-        }
-        
-        for (SegIdx i(0); i<new_molecule.nSegments(); ++i)
-        {
-            Segment segment = new_molecule.segment(i);
-            
-            qDebug() << segment.name() << segment.nAtoms()
-                     << segment.property<QString>(parameters().pdbSegmentName());
-        }
     }
 
     return molgroup;

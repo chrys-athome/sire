@@ -58,9 +58,10 @@ QDataStream& operator>>(QDataStream&, SireMol::ChainProperty<T>&);
 namespace SireMol
 {
 
-typedef ChainProperty<QString> ChainStringProperty;
-typedef ChainProperty<qint64> ChainIntProperty;
-typedef ChainProperty<double> ChainFloatProperty;
+typedef ChainProperty<QString>  ChainStringProperty;
+typedef ChainProperty<qint64>   ChainIntProperty;
+typedef ChainProperty<double>   ChainFloatProperty;
+typedef ChainProperty<QVariant> ChainVariantProperty;
 
 /** Small class used to provide a common base for all ChainProperty types */
 class SIREMOL_EXPORT ChainProp : public MolViewProperty
@@ -73,9 +74,9 @@ public:
 
     virtual bool canConvert(const QVariant &value) const=0;
     
-    virtual void assignFrom(const QVector<QVariant> &values)=0;
+    virtual void assignFrom(const ChainProperty<QVariant> &values)=0;
     
-    virtual QVector<QVariant> toVariant() const=0;
+    virtual ChainProperty<QVariant> toVariant() const=0;
     
     virtual void assertCanConvert(const QVariant &value) const=0;
 };
@@ -104,7 +105,6 @@ public:
     ChainProperty(const MoleculeInfoData &molinfo);
     
     ChainProperty(const QVector<T> &values);
-    ChainProperty(const QVector<QVariant> &values);
     
     ChainProperty(const ChainProperty<T> &other);
     
@@ -139,9 +139,11 @@ public:
     
     int nChains() const;
 
-    void assignFrom(const QVector<QVariant> &values);
+    void assignFrom(const ChainProperty<QVariant> &values);
     
-    QVector<QVariant> toVariant() const;
+    static ChainProperty<T> fromVariant(const ChainProperty<QVariant> &values);
+    
+    ChainProperty<QVariant> toVariant() const;
     
     bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
     
@@ -201,34 +203,6 @@ void ChainProperty<T>::assertCanConvert(const QVariant &value) const
             "of type %2, as required by a %3.")
                 .arg(value.typeName()).arg( QMetaType::typeName(qMetaTypeId<T>()) )
                 .arg(this->what()), CODELOC );
-    }
-}
-
-/** Construct from an array of variants
-
-    \throw SireError::invalid_cast
-*/
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-ChainProperty<T>::ChainProperty(const QVector<QVariant> &values)
-                 : SireBase::ConcreteProperty<ChainProperty<T>,ChainProp>()
-{
-    if (values.isEmpty())
-        return;
-        
-    int nvals = values.count();
-    const QVariant *values_array = values.constData();
-    
-    props = QVector<T>(nvals);
-    props.squeeze();
-    T *props_array = props.data();
-    
-    for (int i=0; i<nvals; ++i)
-    {
-        const QVariant &value = values_array[i];
-        ChainProperty<T>::assertCanConvert(value);
-        
-        props_array[i] = value.value<T>();
     }
 }
 
@@ -292,6 +266,15 @@ bool ChainProperty<T>::canConvert(const QVariant &value) const
     return value.canConvert<T>();
 }
 
+template<class T>
+ChainProperty<T> ChainProperty<T>::fromVariant(const ChainProperty<QVariant> &variant)
+{
+    ChainProperty<T> array;
+    array.assignFrom(variant);
+    
+    return array;
+}
+
 /** Assign the values of this property from the array of variants
     in 'values'
     
@@ -299,18 +282,37 @@ bool ChainProperty<T>::canConvert(const QVariant &value) const
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void ChainProperty<T>::assignFrom(const QVector<QVariant> &values)
+void ChainProperty<T>::assignFrom(const ChainProperty<QVariant> &variant)
 {
-    this->operator=( ChainProperty<T>(values) );
+    if (variant.count() == 0)
+    {
+        props.clear();
+        return;
+    }
+        
+    int nvals = variant.count();
+    const QVariant *variant_array = variant.constData();
+    
+    props = QVector<T>(nvals);
+    props.squeeze();
+    T *props_array = props.data();
+    
+    for (int i=0; i<nvals; ++i)
+    {
+        const QVariant &value = variant_array[i];
+        ChainProperty<T>::assertCanConvert(value);
+        
+        props_array[i] = value.value<T>();
+    }
 }
 
 /** Convert the properties into an array of QVariants */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-QVector<QVariant> ChainProperty<T>::toVariant() const
+ChainProperty<QVariant> ChainProperty<T>::toVariant() const
 {
     if (props.isEmpty())
-        return QVector<QVariant>();
+        return ChainProperty<QVariant>();
         
     int nvals = props.count();
     const T *props_array = props.constData();
@@ -324,7 +326,7 @@ QVector<QVariant> ChainProperty<T>::toVariant() const
         converted_vals_array[i].setValue<T>(props_array[i]);
     }
     
-    return converted_vals;
+    return ChainProperty<QVariant>(converted_vals);
 }
 
 /** Return the property for the chain at index 'chainidx' 
@@ -436,6 +438,7 @@ QDataStream& operator>>(QDataStream &ds, SireMol::ChainProperty<T> &prop)
 Q_DECLARE_METATYPE( SireMol::ChainStringProperty );
 Q_DECLARE_METATYPE( SireMol::ChainIntProperty );
 Q_DECLARE_METATYPE( SireMol::ChainFloatProperty );
+Q_DECLARE_METATYPE( SireMol::ChainVariantProperty );
 
 SIRE_END_HEADER
 

@@ -110,6 +110,7 @@ set ( SIREMOL_HEADERS
       selector.hpp
       specify.hpp
       structureeditor.h
+      trajectory.h
       viewsofmol.h
       weightfunction.h
     )
@@ -174,6 +175,7 @@ set ( SIREMOL_SOURCES
       segidentifier.cpp
       segment.cpp
       structureeditor.cpp
+      trajectory.cpp
       viewsofmol.cpp
       weightfunction.cpp
     
