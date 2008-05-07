@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2008  Christopher Woods
+  *  Copyright (C) 2007  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -25,4 +25,26 @@
   *  at http://siremol.org
   *
 \*********************************************/
+
+#ifndef SIREMM_ATOMLJS_H
+#define SIREMM_ATOMLJS_H
+
+#include "SireMol/atomproperty.hpp"
+
+#include "ljparameter.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMM
+{
+
+typedef SireMol::AtomProperty<LJParameter> AtomLJs;
+
+}
+
+Q_DECLARE_METATYPE( SireMM::AtomLJs );
+
+SIRE_END_HEADER
+
+#endif
 

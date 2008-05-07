@@ -85,7 +85,9 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
 
 /** Constructor */
 G1FF::G1FF(bool allow_overlap) : FF(), allow_overlap_of_atoms(allow_overlap)
-{}
+{
+    MolGroupsBase::addToIndex(molgroup);
+}
 
 /** Copy constructor */
 G1FF::G1FF(const G1FF &other) 
@@ -1095,4 +1097,179 @@ bool G1FF::group_setContents(quint32 i, const MolGroup &new_group,
     }
     
     return false;
+}
+
+void G1FF::add(const MoleculeView &molview, const PropertyMap &map)
+{
+    FF::add(molview, MGIdx(0), map);
+}
+
+void G1FF::add(const ViewsOfMol &molviews, const PropertyMap &map)
+{
+    FF::add(molviews, MGIdx(0), map);
+}
+
+void G1FF::add(const Molecules &molecules, const PropertyMap &map)
+{
+    FF::add(molecules, MGIdx(0), map);
+}
+
+void G1FF::add(const MolGroup &group, const PropertyMap &map)
+{
+    FF::add(group, MGIdx(0), map);
+}
+
+void G1FF::addIfUnique(const MoleculeView &molview, const PropertyMap &map)
+{
+    FF::addIfUnique(molview, MGIdx(0), map);
+}
+
+void G1FF::addIfUnique(const ViewsOfMol &molviews, const PropertyMap &map)
+{
+    FF::addIfUnique(molviews, MGIdx(0), map);
+}
+
+void G1FF::addIfUnique(const Molecules &molecules, const PropertyMap &map)
+{
+    FF::addIfUnique(molecules, MGIdx(0), map);
+}
+
+void G1FF::addIfUnique(const MolGroup &group, const PropertyMap &map)
+{
+    FF::addIfUnique(group, MGIdx(0), map);
+}
+
+void G1FF::add(const MoleculeView &molview)
+{
+    FF::add(molview, MGIdx(0));
+}
+
+void G1FF::add(const ViewsOfMol &molviews)
+{
+    FF::add(molviews, MGIdx(0));
+}
+
+void G1FF::add(const Molecules &molecules)
+{
+    FF::add(molecules, MGIdx(0));
+}
+
+void G1FF::add(const MolGroup &group)
+{
+    FF::add(group, MGIdx(0));
+}
+
+void G1FF::addIfUnique(const MoleculeView &molview)
+{
+    FF::addIfUnique(molview, MGIdx(0));
+}
+
+void G1FF::addIfUnique(const ViewsOfMol &molviews)
+{
+    FF::addIfUnique(molviews, MGIdx(0));
+}
+
+void G1FF::addIfUnique(const Molecules &molecules)
+{
+    FF::addIfUnique(molecules, MGIdx(0));
+}
+
+void G1FF::addIfUnique(const MolGroup &group)
+{
+    FF::addIfUnique(group, MGIdx(0));
+}
+
+void G1FF::removeAll()
+{
+    FF::removeAll(MGIdx(0));
+}
+
+void G1FF::remove(const MoleculeView &molview)
+{
+    FF::remove(molview, MGIdx(0));
+}
+
+void G1FF::remove(const ViewsOfMol &molviews)
+{
+    FF::remove(molviews, MGIdx(0));
+}
+
+void G1FF::remove(const Molecules &molecules)
+{
+    FF::remove(molecules, MGIdx(0));
+}
+
+void G1FF::remove(const MolGroup &group)
+{
+    FF::remove(group, MGIdx(0));
+}
+
+void G1FF::removeAll(const MoleculeView &molview)
+{
+    FF::removeAll(molview, MGIdx(0));
+}
+
+void G1FF::removeAll(const ViewsOfMol &molviews)
+{
+    FF::removeAll(molviews, MGIdx(0));
+}
+
+void G1FF::removeAll(const Molecules &molecules)
+{
+    FF::removeAll(molecules, MGIdx(0));
+}
+
+void G1FF::removeAll(const MolGroup &group)
+{
+    FF::removeAll(group, MGIdx(0));
+}
+
+void G1FF::remove(MolNum molnum)
+{
+    FF::remove(molnum, MGIdx(0));
+}
+
+void G1FF::remove(const QSet<MolNum> &molnums)
+{
+    FF::remove(molnums, MGIdx(0));
+}
+
+void G1FF::setContents(const MoleculeView &molview)
+{
+    FF::setContents(MGIdx(0), molview);
+}
+
+void G1FF::setContents(const ViewsOfMol &molviews)
+{
+    FF::setContents(MGIdx(0), molviews);
+}
+
+void G1FF::setContents(const Molecules &molecules)
+{
+    FF::setContents(MGIdx(0), molecules);
+}
+
+void G1FF::setContents(const MolGroup &group)
+{
+    FF::setContents(MGIdx(0), group);
+}
+
+void G1FF::setContents(const MoleculeView &molview, const PropertyMap &map)
+{
+    FF::setContents(MGIdx(0), molview, map);
+}
+
+void G1FF::setContents(const ViewsOfMol &molviews, const PropertyMap &map)
+{
+    FF::setContents(MGIdx(0), molviews, map);
+}
+
+void G1FF::setContents(const Molecules &molecules, const PropertyMap &map)
+{
+    FF::setContents(MGIdx(0), molecules, map);
+}
+
+void G1FF::setContents(const MolGroup &group, const PropertyMap &map)
+{
+    FF::setContents(MGIdx(0), group, map);
 }

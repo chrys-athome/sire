@@ -33,6 +33,8 @@
 
 #include "SireBase/property.h"
 
+#include "SireDB/diskcache.h"
+
 #include "SireMol/molviewproperty.h"
 #include "SireMol/partialmolecule.h"
 
@@ -111,6 +113,8 @@ public:
     
     bool operator==(const Trajectory &other) const;
     bool operator!=(const Trajectory &other) const;
+    
+    bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
 };
 
 /** This class provides the functionality necessary to edit a trajectory

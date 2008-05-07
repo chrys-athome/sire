@@ -194,6 +194,7 @@ set_target_properties (SireMol PROPERTIES
 target_link_libraries (SireMol
                        SireVol
                        SireID
+                       SireDB
                        )
 
 # installation

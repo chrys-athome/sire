@@ -70,6 +70,57 @@ public:
 
     void assertContains(MGNum mgnum) const;
 
+    using FF::add;
+    using FF::addIfUnique;
+    using FF::removeAll;
+    using FF::remove;
+    using FF::setContents;
+
+    void add(const MoleculeView &molview, const PropertyMap &map);
+    void add(const ViewsOfMol &molviews, const PropertyMap &map);
+    void add(const Molecules &molecules, const PropertyMap &map);
+    void add(const MolGroup &molgroup, const PropertyMap &map);
+    
+    void addIfUnique(const MoleculeView &molview, const PropertyMap &map);
+    void addIfUnique(const ViewsOfMol &molviews, const PropertyMap &map);
+    void addIfUnique(const Molecules &molecules, const PropertyMap &map);
+    void addIfUnique(const MolGroup &molgroup, const PropertyMap &map);
+
+    void add(const MoleculeView &molview);
+    void add(const ViewsOfMol &molviews);
+    void add(const Molecules &molecules);
+    void add(const MolGroup &molgroup);
+    
+    void addIfUnique(const MoleculeView &molview);
+    void addIfUnique(const ViewsOfMol &molviews);
+    void addIfUnique(const Molecules &molecules);
+    void addIfUnique(const MolGroup &molgroup);
+
+    void removeAll();
+    
+    void remove(const MoleculeView &molview);
+    void remove(const ViewsOfMol &molviews);
+    void remove(const Molecules &molecules);
+    void remove(const MolGroup &molgroup);
+    
+    void removeAll(const MoleculeView &molview);
+    void removeAll(const ViewsOfMol &molviews);
+    void removeAll(const Molecules &molecules);
+    void removeAll(const MolGroup &molgroup);
+
+    void remove(MolNum molnum);
+    void remove(const QSet<MolNum> &molnums);
+
+    void setContents(const MoleculeView &molview);
+    void setContents(const ViewsOfMol &molview);
+    void setContents(const Molecules &molecules);
+    void setContents(const MolGroup &molgroup);
+
+    void setContents(const MoleculeView &molview, const PropertyMap &map);
+    void setContents(const ViewsOfMol &molviews, const PropertyMap &map);
+    void setContents(const Molecules &molecules, const PropertyMap &map);
+    void setContents(const MolGroup &molgroup, const PropertyMap &map);
+
 protected:
     G1FF(bool allow_overlap_of_atoms=false);
     G1FF(const G1FF &other);

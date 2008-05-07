@@ -37,6 +37,7 @@
 #include "SireVol/space.h"
 
 #include "SireMol/atomproperty.hpp"
+#include "SireMol/atomcharges.h"
 
 #include "SireUnits/dimensions.h"
 
@@ -44,6 +45,7 @@
 #include "cljnbpairs.h"
 
 #include "ljparameter.h"
+#include "atomljs.h"
 
 #include "detail/intrascaledatomicparameters.hpp"
 
@@ -112,8 +114,7 @@ using SireMol::MolGroup;
 
 using SireFF::MolForceTable;
 
-typedef SireMol::AtomProperty<SireUnits::Dimension::Charge> AtomCharges;
-typedef SireMol::AtomProperty<LJParameter> AtomLJs;
+using SireMol::AtomCharges;
 
 namespace detail
 {
@@ -1015,9 +1016,6 @@ QDataStream& operator>>(QDataStream &ds,
     ds >> static_cast<CLJPot&>(cljpot);
     return ds;
 }
-
-Q_DECLARE_METATYPE( SireMM::AtomCharges );
-Q_DECLARE_METATYPE( SireMM::AtomLJs );
 
 Q_DECLARE_TYPEINFO( SireMM::detail::CLJParameter, Q_MOVABLE_TYPE );
 
