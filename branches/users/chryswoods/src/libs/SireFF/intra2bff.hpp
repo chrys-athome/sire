@@ -458,17 +458,21 @@ void Intra2BFF<Potential>::_pvt_changed(const QList<SireMol::Molecule> &molecule
     {
         if (this->recordingChanges())
         {   
-            foreach (const SireMol::Molecule &molecule, molecules)
+            for (QList<SireMol::Molecule>::const_iterator it = molecules.constBegin();
+                 it != molecules.constEnd();
+                 ++it)
             {
-                ChangedMolecule change = mols.change(molecule, *this, true);
+                ChangedMolecule change = mols.change(*it, *this, true);
                 this->recordChange(change);
             }
         }
         else
         {
-            foreach (const SireMol::Molecule &molecule, molecules)
+            for (QList<SireMol::Molecule>::const_iterator it = molecules.constBegin();
+                 it != molecules.constEnd();
+                 ++it)
             {
-                mols.change(molecule, *this, false);
+                mols.change(*it, *this, false);
             }
         }
     }

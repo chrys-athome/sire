@@ -29,10 +29,12 @@
 #include <limits>
 #include <cmath>
 
-#define _SIRE_USE_MANUAL_SSE_
-
 #ifdef _SIRE_USE_MANUAL_SSE_
+
+#ifdef _HAVE_ACCELERATE_H_
 #include <Accelerate/Accelerate.h>
+#endif
+
 #endif
 
 #include "cartesian.h"

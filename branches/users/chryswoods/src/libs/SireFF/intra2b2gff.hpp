@@ -539,23 +539,27 @@ void Intra2B2GFF<Potential>::_pvt_changed(quint32 groupid,
     {
         if (this->recordingChanges())
         {   
-            foreach (const SireMol::Molecule &molecule, molecules)
+            for (QList<SireMol::Molecule>::const_iterator it = molecules.constBegin();
+                 it != molecules.constEnd();
+                 ++it)
             {
-                ChangedMolecule change = mols[groupid].change(molecule, *this, true);
-                this->assertSameIntraScaleFactors(molecule.number());
+                ChangedMolecule change = mols[groupid].change(*it, *this, true);
+                this->assertSameIntraScaleFactors(it->number());
                 
                 this->recordChange(groupid, change);
             }
         }
         else
         {
-            foreach (const SireMol::Molecule &molecule, molecules)
+            for (QList<SireMol::Molecule>::const_iterator it = molecules.constBegin();
+                 it != molecules.constEnd();
+                 ++it)
             {
                 //we cannot add a molecule to this group that has a different
                 //intramolecular non-bonded scale factor than that that already
                 //exists...
-                mols[groupid].change(molecule, *this, false);
-                this->assertSameIntraScaleFactors(molecule.number());
+                mols[groupid].change(*it, *this, false);
+                this->assertSameIntraScaleFactors(it->number());
             }
         }
     }

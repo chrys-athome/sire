@@ -42,8 +42,6 @@ class QString;
 
 #include "SireUnits/dimensions.h"
 
-#include <Accelerate/Accelerate.h>
-
 SIRE_BEGIN_HEADER
 
 namespace SireMaths

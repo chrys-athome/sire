@@ -477,17 +477,21 @@ void Inter2B2GFF<Potential>::_pvt_changed(quint32 groupid,
     {
         if (this->recordingChanges())
         {   
-            foreach (const SireMol::Molecule &molecule, molecules)
+            for (QList<SireMol::Molecule>::const_iterator it = molecules.constBegin();
+                 it != molecules.constEnd();
+                 ++it)
             {
-                ChangedMolecule change = mols[groupid].change(molecule, *this, true);
+                ChangedMolecule change = mols[groupid].change(*it, *this, true);
                 this->recordChange(groupid, change);
             }
         }
         else
         {
-            foreach (const SireMol::Molecule &molecule, molecules)
+            for (QList<SireMol::Molecule>::const_iterator it = molecules.constBegin();
+                 it != molecules.constEnd();
+                 ++it)
             {
-                mols[groupid].change(molecule, *this, false);
+                mols[groupid].change(*it, *this, false);
             }
         }
     }

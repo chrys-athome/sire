@@ -104,8 +104,8 @@ inline int Incremint::increment()
         do
         {
             oldValue = atomic_int;
-    
-        } while ( not q_atomic_test_and_set_int(&atomic, oldValue, oldValue+1) );
+ 
+        } while ( not q_atomic_test_and_set_int(&atomic_int, oldValue, oldValue+1) );
     
         return oldValue + 1;
     
