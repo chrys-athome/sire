@@ -6,6 +6,14 @@
 
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+# Is backtrace available on this system?
+check_symbol_exists( backtrace "execinfo.h" HAVE_BACKTRACE )
+
+if (HAVE_BACKTRACE)
+   message( "Backtrace functionality is available." )
+   add_definitions( -D_HAVE_EXECINFO_H_ )
+endif()
+
 set ( SIREERROR_HEADERS
       errors.h
       exception.h

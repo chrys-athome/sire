@@ -31,6 +31,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireBase;
 using namespace SireStream;
 
@@ -300,14 +302,20 @@ bool PropertyMap::operator!=(const PropertyMap &other) const
     that property */
 PropertyName PropertyMap::operator[](const QString &name) const
 {
-    return propmap.value(name);
+    QHash<QString,PropertyName>::const_iterator
+                                    it = propmap.constFind(name);
+                                    
+    if (it == propmap.constEnd())
+        return PropertyName(name);
+    else
+        return it.value();
 }
 
 /** Map the property called 'name' to the source or value of 
     that property */
 PropertyName PropertyMap::operator[](const char *name) const
 {
-    return propmap.value(name);
+    return this->operator[](QLatin1String(name));
 }
 
 /** Map the property in 'propname' to the source or value of

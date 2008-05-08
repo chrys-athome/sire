@@ -30,6 +30,8 @@
 #include "atomeditor.h"
 #include "atomproperty.hpp"
 
+#include "atomcharges.h"
+
 #include "mover.hpp"
 #include "evaluator.h"
 
@@ -435,3 +437,9 @@ template class Selector<Atom>;
 template class Mover<Atom>;
 
 template class Mover< Selector<Atom> >;
+
+///////
+/////// Explicitly instantiate the AtomProperty classes...
+///////
+
+template class AtomProperty<SireUnits::Dimension::Charge>;

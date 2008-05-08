@@ -47,6 +47,8 @@
 
 #include "SireStream/datastream.h"
 
+#include <QDebug>
+
 using namespace SireMM;
 using namespace SireMM::detail;
 
@@ -109,7 +111,14 @@ static PackedArray2D<CLJParameter> getCLJParameters(const PartialMolecule &molec
                                                     const PropertyName &charge_property,
                                                     const PropertyName &lj_property)
 {
+    const Property &p = molecule.property(charge_property);
+
+    qDebug() << p->what() << p->isA<AtomCharges>();
+
     const AtomCharges &chgs = molecule.property(charge_property)->asA<AtomCharges>();
+
+    qDebug() << CODELOC;
+
     const AtomLJs &ljs = molecule.property(lj_property)->asA<AtomLJs>();
     
     const AtomSelection &selected_atoms = molecule.selection();

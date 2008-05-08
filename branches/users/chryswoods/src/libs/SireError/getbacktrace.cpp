@@ -56,6 +56,11 @@ namespace SireError
 //              (unit )  (symbol)   (offset)          (address)
 QRegExp regexp("([^(]+)\\(([^)^+]+)(\\+[^)]+)\\)\\s(\\[[^]]+\\])");
 
+//However, on OS X the output looks something like this;
+//2 libSireBase.0.dylib 0x00da01a5 _ZNK8SireBase10PropertiesixERKNS_12PropertyNameE + 595
+//
+// Word 2 is the library, word 3 is the symbol address, word 4 is the symbol
+// itself and word 6 is the offset(?)
 
 /** Obtain a backtrace and return as a QStringList.
     This is not well-optimised, requires compilation with "-rdynamic" on linux
@@ -106,14 +111,53 @@ QStringList SIREBASE_EXPORT getBackTrace()
                 delete demangled;
             }
 
+
             //put this all together
-            ret.append( QString("%1 %2 from %3").arg(symbol,address,unit) );
+            ret.append( QString("(%1) %2 (%3 +%4)\n  -- %5\n")
+                                .arg(QString::number(i), 3)
+                                .arg(unit).arg(address,offset)
+                                .arg(symbol) );
         }
         else
         {
-            //I don't recognise this string - just add the raw
-            //string to the backtrace
-            ret.append(symbols[i]);
+            //split line into words
+            QStringList words = QString(symbols[i])
+                                    .split(" ", QString::SkipEmptyParts);
+            
+            if (words.count() == 6 and words[4] == "+")
+            {
+                //this is probably an OS X line...
+
+                //get the library or app that contains this symbol
+                QString unit = words[1];
+                //get the symbol
+                QString symbol = words[3];
+                //get the offset
+                QString offset = words[5];
+                //get the address
+                QString address = words[2];
+        
+                //now try and demangle the symbol
+                int stat;
+                char *demangled = 
+                        abi::__cxa_demangle(qPrintable(symbol),0,0,&stat);
+        
+                if (demangled)
+                {
+                    symbol = demangled;
+                    delete demangled;
+                }
+
+                //put this all together
+                ret.append( QString("(%1) %2 (%3 +%4)\n  -- %5\n")
+                                    .arg(QString::number(i), 3)
+                                    .arg(unit).arg(address,offset)
+                                    .arg(symbol) );
+            }
+            else
+                //I don't recognise this string - just add the raw
+                //string to the backtrace
+                ret.append(symbols[i]);
         }
     }
     
@@ -125,7 +169,10 @@ QStringList SIREBASE_EXPORT getBackTrace()
 
 #else
     return QStringList( QObject::tr(
-                "Backtrace is not available without execinfo.h")
+                "Backtrace is not available on this system. Backtrace is "
+                "available on Linux, Mac OS X (>=10.5) and any other system "
+                "that provides the backtrace_symbols() API found in "
+                "execinfo.h")
                       );
 #endif
 
