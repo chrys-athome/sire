@@ -330,6 +330,10 @@ endif()
 # Add this to all shared libraries
 set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SIRE_LINK_FLAGS}" )
 
+# Add the compiler test directory - this allows us to run some compiler
+# tests to make sure that Sire will compile properly
+add_subdirectory (build/test_compiler)
+
 # Recurse into the src/libs and src/apps subdirectories
 add_subdirectory (src/libs)
 add_subdirectory (src/apps)
