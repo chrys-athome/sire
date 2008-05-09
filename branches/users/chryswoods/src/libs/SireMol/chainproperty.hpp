@@ -92,7 +92,7 @@ public:
     @author Christopher Woods
 */
 template<class T>
-class ChainProperty 
+class SIREMOL_EXPORT ChainProperty 
     : public SireBase::ConcreteProperty<ChainProperty<T>, ChainProp>
 {
 

@@ -42,7 +42,7 @@ bool testFoo_Int(const FooBase &foo);
 bool testFoo_Double(const FooBase &foo);
 
 template<class T>
-class Foo : public FooBase
+class Q_DECL_EXPORT Foo : public FooBase
 {
 public:
     Foo();

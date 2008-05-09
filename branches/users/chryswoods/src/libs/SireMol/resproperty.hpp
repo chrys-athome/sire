@@ -92,7 +92,7 @@ public:
     @author Christopher Woods
 */
 template<class T>
-class ResProperty 
+class SIREMOL_EXPORT ResProperty 
     : public SireBase::ConcreteProperty<ResProperty<T>, ResProp>
 {
 

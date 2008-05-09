@@ -93,7 +93,7 @@ public:
     @author Christopher Woods
 */
 template<class T>
-class CGProperty 
+class SIREMOL_EXPORT CGProperty 
     : public SireBase::ConcreteProperty<CGProperty<T>, CGProp>
 {
 

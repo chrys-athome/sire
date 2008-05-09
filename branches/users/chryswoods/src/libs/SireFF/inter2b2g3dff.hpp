@@ -47,7 +47,8 @@ namespace SireFF
     @author Christopher Woods
 */
 template<class Potential>
-class Inter2B2G3DFF : public SireBase::ConcreteProperty< Inter2B2G3DFF<Potential>,
+class SIREFF_EXPORT Inter2B2G3DFF 
+                    : public SireBase::ConcreteProperty< Inter2B2G3DFF<Potential>,
                                                          Inter2B2GFF<Potential> >, 
                       public FF3D
 {

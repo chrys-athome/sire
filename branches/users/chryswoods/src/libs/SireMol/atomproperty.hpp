@@ -109,7 +109,7 @@ public:
     @author Christopher Woods
 */
 template<class T>
-class AtomProperty 
+class SIREMOL_EXPORT AtomProperty 
     : public SireBase::ConcreteProperty<AtomProperty<T>, AtomProp>
 {
 

@@ -92,7 +92,7 @@ public:
     @author Christopher Woods
 */
 template<class T>
-class SegProperty 
+class SIREMOL_EXPORT SegProperty 
     : public SireBase::ConcreteProperty<SegProperty<T>, SegProp>
 {
 

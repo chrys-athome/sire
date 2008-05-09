@@ -66,7 +66,8 @@ void throwIntra2B2GFFIncompatibeScaleFactorsError(const QString &molname,
     @author Christopher Woods
 */
 template<class Potential>
-class Intra2B2GFF : public SireBase::ConcreteProperty<Intra2B2GFF<Potential>, G2FF>, 
+class SIREFF_EXPORT Intra2B2GFF 
+                  : public SireBase::ConcreteProperty<Intra2B2GFF<Potential>, G2FF>, 
                     public Potential
 {
 
