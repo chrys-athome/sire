@@ -5,7 +5,7 @@
 ########################################
 
 #create the library
-add_library (libFoo libFoo.h libfoo.cpp)
+add_library (libFoo libfoo.h libfoo.cpp)
 
 set_target_properties (libFoo PROPERTIES
                        VERSION ${SIRE_VERSION}
