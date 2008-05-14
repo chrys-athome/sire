@@ -13,8 +13,13 @@
 #include "SireMol/selector.hpp"
 
 #include "SireMol/atomcharges.h"
+
 #include "SireMM/atomljs.h"
 #include "SireMM/intercljff.h"
+#include "SireMM/switchingfunction.h"
+
+#include "SireVol/periodicbox.h"
+#include "SireVol/cartesian.h"
 
 #include "SireUnits/dimensions.h"
 #include "SireUnits/units.h"
@@ -24,6 +29,7 @@
 using namespace SireIO;
 using namespace SireMol;
 using namespace SireMM;
+using namespace SireVol;
 
 using SireUnits::Dimension::Charge;
 using SireUnits::mod_electron;
@@ -40,7 +46,7 @@ int main(int argc, char **argv)
         
         qDebug() << "nmols =" << mols->nMolecules();
         
-        BOOST_ASSERT(mols->nMolecules() == 1679);
+        //BOOST_ASSERT(mols->nMolecules() == 1679);
         
         //parameterise each molecule...
         qDebug() << "Parameterising the molecules...";
@@ -53,6 +59,7 @@ int main(int argc, char **argv)
                              .setProperty("charge", 0 * mod_electron)
                              .setProperty("LJ", LJParameter(3.15363 * angstrom,
                                                             0.155 * kcal_per_mol) )
+                             .setProperty("LJ", LJParameter::dummy())
                              .molecule();
                  
         moleditor = moleditor.select( AtomName("H01") )
@@ -87,6 +94,14 @@ int main(int argc, char **argv)
         
         qDebug() << "Adding to the forcefield...";
         InterCLJFF cljff;
+        
+        //cljff.setSwitchingFunction( HarmonicSwitchingFunction(150.0, 0.0) );
+        
+        //cljff.setSpace( PeriodicBox(Vector(-18.3854,-18.66855,-18.4445),
+        //                            Vector( 18.3854, 18.66855, 18.4445)) );
+
+        //cljff.setSpace( Cartesian() );
+
         
         cljff.add( *mols );
         
