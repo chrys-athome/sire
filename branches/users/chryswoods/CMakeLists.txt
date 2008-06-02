@@ -232,7 +232,7 @@ set( SIRE_PLATFORM_OPTIONS "" )
 #       "-arch i386 -Wno-long-double -no-cpp-precomp -mno-fused-madd -fno-common" )
 #endif()
 
-set( SIRE_C_FLAGS_RELEASE "-Wall -O2 ${SIRE_PLATFORM_OPTIONS}" )
+set( SIRE_C_FLAGS_RELEASE "-Wall -O2 -fomit-frame-pointer ${SIRE_PLATFORM_OPTIONS}" )
 set( SIRE_CXX_FLAGS_RELEASE ${SIRE_C_FLAGS_RELEASE} )
 
 set( SIRE_C_FLAGS_DEBUG "-Wall -g -O2 ${SIRE_PLATFORM_OPTIONS}" )
@@ -293,6 +293,13 @@ if ( CMAKE_COMPILER_IS_GNUCC )
       #   ADD_DEFINITIONS( -march=native )
       #endif()
 
+      # gcc-4.2 and above has openMP - turn it on
+      if ( GCC_MINOR_VERSION GREATER 1 )
+          message( "Turning on openMP parallelisation!")
+          ADD_DEFINITIONS( -fopenmp )
+          set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -fopenmp" )
+      endif()
+
       # add symbol hiding if the compiler supports it and it is
       # requested
       if ( SIRE_SYMBOL_HIDING )
@@ -322,13 +329,16 @@ message( STATUS "Compiler flags = ${SIRE_CXX_FLAGS_RELEASE}" )
 
 # Ensure that the libraries don't contain any undefined symbols
 if(APPLE)
-  set( SIRE_LINK_FLAGS "-Wl" )
+  set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -Wl" )
 else(UNIX)
-  set( SIRE_LINK_FLAGS "-Wl,--no-undefined" )
+  set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -Wl,--no-undefined" )
 endif()
 
 # Add this to all shared libraries
 set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SIRE_LINK_FLAGS}" )
+set( CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} ${SIRE_LINK_FLAGS}" )
+
+message( STATUS "Linker flags = ${CMAKE_SHARED_LINKER_FLAGS}" )
 
 # Add the compiler test directory - this allows us to run some compiler
 # tests to make sure that Sire will compile properly

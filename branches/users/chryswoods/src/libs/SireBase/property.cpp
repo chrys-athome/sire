@@ -93,12 +93,14 @@ PropertyBase& PropertyBase::operator=(const PropertyBase&)
 /** Comparison operator */
 bool PropertyBase::operator==(const PropertyBase&) const
 {
+    qDebug() << CODELOC;
     return true;
 }
 
 /** Comparison operator */
 bool PropertyBase::operator!=(const PropertyBase&) const
 {
+    qDebug() << CODELOC;
     return false;
 }
 

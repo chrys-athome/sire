@@ -352,13 +352,9 @@ HarmonicSwitchingFunction::HarmonicSwitchingFunction()
     cutoff of both the electrostatic and vdw interactions at a distance
     of 'cutoffdist' */
 HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist)
-     : ConcreteProperty<HarmonicSwitchingFunction,SwitchFunc>(cutoffdist)
+     : ConcreteProperty<HarmonicSwitchingFunction,SwitchFunc>()
 {
-    cut_elec2 = SireMaths::pow_2(cut_elec);
-    cut_vdw2 = cut_elec2;
-    
-    norm_elec = 0;
-    norm_vdw = 0;
+    this->set(cutoffdist, cutoffdist, cutoffdist, cutoffdist);
 }
 
 /** Construct an harmonic switching function which represents the smoothed
@@ -367,21 +363,9 @@ HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist)
     then this represents a hard cutoff */
 HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist,
                                                      double featherdist)
-    : ConcreteProperty<HarmonicSwitchingFunction,SwitchFunc>(cutoffdist)
+    : ConcreteProperty<HarmonicSwitchingFunction,SwitchFunc>()
 {
-    cut_elec2 = SireMaths::pow_2(cut_elec);
-    cut_vdw2 = cut_elec2;
-    
-    if (cut_elec != feather_elec)
-    {
-        norm_elec = 1.0 / (cut_elec2 - SireMaths::pow_2(feather_elec));
-        norm_vdw = norm_elec;
-    }
-    else
-    {
-        norm_elec = 0;
-        norm_vdw = 0;
-    }
+    this->set(cutoffdist, featherdist, cutoffdist, featherdist);
 }
 
 /** Construct an harmonic switching function which represents the smoothed
@@ -394,7 +378,7 @@ HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist,
 HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist,
                                                      double elecfeather,
                                                      double vdwfeather)
-     : ConcreteProperty<HarmonicSwitchingFunction,SwitchFunc>(cutoffdist)
+     : ConcreteProperty<HarmonicSwitchingFunction,SwitchFunc>()
 {
     this->set(cutdist,elecfeather,cutdist,vdwfeather);
 }

@@ -62,6 +62,11 @@ public:
 
     virtual ~Cartesian();
 
+    Cartesian& operator=(const Cartesian &other);
+    
+    bool operator==(const Cartesian &other) const;
+    bool operator!=(const Cartesian &other) const;
+
     static const char* typeName()
     {
         return QMetaType::typeName( qMetaTypeId<Cartesian>() );

@@ -25,6 +25,7 @@
 #include "SireUnits/units.h"
 
 #include <QDebug>
+#include <QTime>
 
 using namespace SireIO;
 using namespace SireMol;
@@ -42,6 +43,8 @@ int main(int argc, char **argv)
 
     try
     {
+        QTime t;
+    
         MoleculeGroup mols = pdb.read("test/io/water.pdb");
         
         qDebug() << "nmols =" << mols->nMolecules();
@@ -95,7 +98,7 @@ int main(int argc, char **argv)
         qDebug() << "Adding to the forcefield...";
         InterCLJFF cljff;
         
-        //cljff.setSwitchingFunction( HarmonicSwitchingFunction(150.0, 0.0) );
+        cljff.setSwitchingFunction( HarmonicSwitchingFunction(15.0, 14.5) );
         
         //cljff.setSpace( PeriodicBox(Vector(-18.3854,-18.66855,-18.4445),
         //                            Vector( 18.3854, 18.66855, 18.4445)) );
@@ -106,7 +109,12 @@ int main(int argc, char **argv)
         cljff.add( *mols );
         
         qDebug() << "Calculating the the energy...";
-        qDebug() << cljff.energy() << "kcal mol-1";
+        
+        t.start();
+        double nrg = cljff.energy();
+        int ms = t.elapsed();
+        
+        qDebug() << nrg << "kcal mol-1 (" << ms / 1000.0 << " s)";
     }
     catch(const SireError::exception &e)
     {

@@ -100,6 +100,36 @@ PeriodicBox::PeriodicBox(const PeriodicBox &other)
 PeriodicBox::~PeriodicBox()
 {}
 
+/** Copy assignment operator */
+PeriodicBox& PeriodicBox::operator=(const PeriodicBox &other)
+{
+    if (this != &other)
+    {
+        mincoords = other.mincoords;
+        maxcoords = other.maxcoords;
+        boxlength = other.boxlength;
+        halflength = other.halflength;
+        invlength = other.invlength;
+        PropertyBase::operator=(other);
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool PeriodicBox::operator==(const PeriodicBox &other) const
+{
+    return this == &other or
+           (mincoords == other.mincoords and boxlength == other.boxlength);
+}
+
+/** Comparison operator */
+bool PeriodicBox::operator!=(const PeriodicBox &other) const
+{
+    return this != &other and
+           (mincoords != other.mincoords or boxlength != other.boxlength);
+}
+
 /** Return the volume of the central box of this space.  */
 SireUnits::Dimension::Volume PeriodicBox::volume() const
 {

@@ -7,8 +7,8 @@ streamfatal STDOUT
 streamheader STDOUT
 streaminfo STDOUT
 
-cutoff 1000.00
-feather 0.0
+cutoff 15.0
+feather 0.5
 
 boundary none
 

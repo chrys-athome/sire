@@ -33,6 +33,7 @@
 
 #include <QVariant>
 #include <QSharedData>
+#include <QDebug>
 
 SIRE_BEGIN_HEADER
 

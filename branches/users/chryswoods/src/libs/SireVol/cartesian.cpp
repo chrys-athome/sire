@@ -90,6 +90,25 @@ Cartesian::Cartesian(const Cartesian &other)
 Cartesian::~Cartesian()
 {}
 
+/** Copy assignment operator */
+Cartesian& Cartesian::operator=(const Cartesian &other)
+{
+    PropertyBase::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool Cartesian::operator==(const Cartesian &other) const
+{
+    return other.what() == Cartesian::typeName();
+}
+
+/** Comparison operator */
+bool Cartesian::operator!=(const Cartesian &other) const
+{
+    return other.what() != Cartesian::typeName();
+}
+
 /** Throw an exception as an infinite space doesn't have a volume! */
 SireUnits::Dimension::Volume Cartesian::volume() const
 {
