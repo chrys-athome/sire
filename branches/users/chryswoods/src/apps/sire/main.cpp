@@ -59,7 +59,7 @@ int main(int argc, char **argv)
                              .setProperty("charge", 0 * mod_electron)
                              .setProperty("LJ", LJParameter(3.15363 * angstrom,
                                                             0.155 * kcal_per_mol) )
-                             .setProperty("LJ", LJParameter::dummy())
+                             //.setProperty("LJ", LJParameter::dummy())
                              .molecule();
                  
         moleditor = moleditor.select( AtomName("H01") )

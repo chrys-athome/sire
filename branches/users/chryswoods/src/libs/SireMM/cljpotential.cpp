@@ -819,7 +819,8 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     }
     
     //add this molecule pair's energy onto the total
-    energy += Energy(scale_energy * cnrg, scale_energy * ljnrg);
+    //(also multiply LJ by 4 as it is 4 * epsilon ((sig/r)^12 - (sig/r)^6))
+    energy += Energy(scale_energy * cnrg, 4 * scale_energy * ljnrg);
 }
 
 /** Add to the forces in 'forces0' the forces acting on 'mol0' caused
@@ -999,7 +1000,7 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                 double sig_over_dist12 = pow_2(sig_over_dist6);
 
                                 //calculate the energy
-                                const double ljnrg = ljpair.epsilon() *
+                                const double ljnrg = 4 * ljpair.epsilon() *
                                                       (sig_over_dist12 - sig_over_dist6);
 
                                 // dU/dr requires an extra power of r
@@ -1081,7 +1082,7 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                                 sig_over_dist6 *= invdist;
                                 sig_over_dist12 *= invdist;
 
-                                force += (ljpair.epsilon() * (6.0*sig_over_dist6 - 
+                                force += (4 * ljpair.epsilon() * (6.0*sig_over_dist6 - 
                                                               12.0*sig_over_dist12))
                                         * distmat[j].direction();
                             }
@@ -1407,14 +1408,14 @@ void InterCLJPotential::_pvt_calculateLJForce(
                                 double sig_over_dist12 = pow_2(sig_over_dist6);
 
                                 //calculate the energy
-                                const double ljnrg = ljpair.epsilon() *
+                                const double ljnrg = 4 * ljpair.epsilon() *
                                                       (sig_over_dist12 - sig_over_dist6);
 
                                 // dU/dr requires an extra power of r
                                 sig_over_dist6 *= invdist;
                                 sig_over_dist12 *= invdist;
 
-                                Vector force = ((scl_lj * ljpair.epsilon() * 
+                                Vector force = ((scl_lj * 4 * ljpair.epsilon() * 
                                             (6.0*sig_over_dist6 - 12.0*sig_over_dist12))
                                                * distmat[j].direction())
                                             
@@ -1462,7 +1463,8 @@ void InterCLJPotential::_pvt_calculateLJForce(
                                 sig_over_dist6 *= invdist;
                                 sig_over_dist12 *= invdist;
 
-                                Vector force = (ljpair.epsilon() * (6.0*sig_over_dist6 - 
+                                Vector force = (4 * ljpair.epsilon() * 
+                                                               (6.0*sig_over_dist6 - 
                                                                 12.0*sig_over_dist12))
                                                 * distmat[j].direction();
 
