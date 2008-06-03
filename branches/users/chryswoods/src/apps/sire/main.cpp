@@ -100,8 +100,8 @@ int main(int argc, char **argv)
         
         cljff.setSwitchingFunction( HarmonicSwitchingFunction(15.0, 14.5) );
         
-        //cljff.setSpace( PeriodicBox(Vector(-18.3854,-18.66855,-18.4445),
-        //                            Vector( 18.3854, 18.66855, 18.4445)) );
+        cljff.setSpace( PeriodicBox(Vector(-18.3854,-18.66855,-18.4445),
+                                    Vector( 18.3854, 18.66855, 18.4445)) );
 
         //cljff.setSpace( Cartesian() );
 
