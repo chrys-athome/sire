@@ -97,6 +97,8 @@ public:
 
 Q_DECLARE_METATYPE(SireCAS::I)
 
+SIRE_EXPOSE_CLASS( SireCAS::I )
+
 SIRE_END_HEADER
 
 #endif

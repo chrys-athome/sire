@@ -138,6 +138,7 @@ def scanFiles(dir, module_dir):
 if __name__ == "__main__":
     
     modules = { "Base" : "SireBase",
+                "CAS" : "SireCAS",
                 "Maths" : "SireMaths",
                 "Vol" : "SireVol" }
         

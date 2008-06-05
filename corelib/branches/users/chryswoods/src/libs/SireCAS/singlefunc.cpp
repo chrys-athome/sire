@@ -27,6 +27,9 @@
 \*********************************************/
 
 #include "singlefunc.h"
+#include "values.h"
+#include "complexvalues.h"
+#include "identities.h"
 
 #include "SireCAS/errors.h"
 

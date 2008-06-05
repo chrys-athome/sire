@@ -66,6 +66,8 @@ private:
 
 }
 
+SIRE_EXPOSE_CLASS( SireCAS::SymbolValue )
+
 SIRE_END_HEADER
 
 #endif

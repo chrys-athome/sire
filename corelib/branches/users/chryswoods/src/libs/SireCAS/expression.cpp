@@ -35,6 +35,8 @@
 #include "functions.h"
 #include "power.h"
 #include "powerconstant.h"
+#include "identities.h"
+#include "values.h"
 #include "complexvalues.h"
 #include "i.h"
 #include "integrationconstant.h"

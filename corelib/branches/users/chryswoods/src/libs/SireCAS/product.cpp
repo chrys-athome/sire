@@ -37,6 +37,7 @@
 #include "power.h"
 #include "integrationconstant.h"
 #include "complexvalues.h"
+#include "identities.h"
 #include "i.h"
 
 #include "SireCAS/errors.h"

@@ -374,6 +374,12 @@ Q_DECLARE_METATYPE(SireCAS::RationalPower)
 Q_DECLARE_METATYPE(SireCAS::RealPower)
 Q_DECLARE_METATYPE(SireCAS::ComplexPower)
 
+SIRE_EXPOSE_CLASS( SireCAS::PowerConstant )
+SIRE_EXPOSE_CLASS( SireCAS::IntegerPower )
+SIRE_EXPOSE_CLASS( SireCAS::RationalPower )
+SIRE_EXPOSE_CLASS( SireCAS::RealPower )
+SIRE_EXPOSE_CLASS( SireCAS::ComplexPower )
+
 SIRE_END_HEADER
 
 #endif

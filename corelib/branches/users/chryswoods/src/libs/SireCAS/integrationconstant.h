@@ -88,6 +88,8 @@ public:
 
 Q_DECLARE_METATYPE(SireCAS::IntegrationConstant)
 
+SIRE_EXPOSE_CLASS( SireCAS::IntegrationConstant )
+
 SIRE_END_HEADER
 
 #endif

@@ -33,6 +33,7 @@
 #include "symbols.h"
 #include "values.h"
 #include "complexvalues.h"
+#include "identities.h"
 #include "integrationconstant.h"
 
 #include "SireStream/datastream.h"

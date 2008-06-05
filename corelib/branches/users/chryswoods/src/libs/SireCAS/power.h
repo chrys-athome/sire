@@ -169,6 +169,8 @@ private:
 
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the core of the power (e.g. return x for x^y) */
 inline Expression Power::core() const
 {
@@ -181,9 +183,14 @@ inline Expression Power::power() const
     return pwr;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireCAS::Power)
+
+SIRE_EXPOSE_CLASS( SireCAS::PowerFunction )
+SIRE_EXPOSE_CLASS( SireCAS::Power )
 
 SIRE_END_HEADER
 

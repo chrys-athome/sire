@@ -135,6 +135,8 @@ private:
 
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Reserve space for at least 'n' items */
 inline void Values::reserve(int n)
 {
@@ -165,9 +167,13 @@ inline const QHash<SymbolID,double>& Values::values() const
     return vals;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireCAS::Values)
+
+SIRE_EXPOSE_CLASS( SireCAS::Values )
 
 SIRE_END_HEADER
 

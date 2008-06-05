@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2007  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -25,56 +25,10 @@
   *  at http://siremol.org
   *
 \*********************************************/
+#ifndef PYWRAP_SIRECAS_CONTAINERS_H
+#define PYWRAP_SIRECAS_CONTAINERS_H
 
-#ifndef SIRECAS_SYMBOLCOMPLEX_H
-#define SIRECAS_SYMBOLCOMPLEX_H
-
-#include "symbolvalue.h"
-
-#include "SireMaths/complex.h"
-
-SIRE_BEGIN_HEADER
-
-namespace SireCAS
-{
-
-using SireMaths::Complex;
-
-/** Small class that holds a SymbolID number and an associated complex value */
-class SIRECAS_EXPORT SymbolComplex
-{
-public:
-    SymbolComplex(SymbolID id, const Complex &val) : _val(val), _id(id)
-    {}
-    
-    SymbolComplex(SymbolID id, double val) : _val(val), _id(id)
-    {}
-    
-    SymbolComplex(const SymbolValue &val) : _val(val.value()), _id(val.ID())
-    {}
-    
-    ~SymbolComplex()
-    {}
-    
-    SymbolID ID() const
-    {
-        return _id;
-    }
-    
-    const Complex& value() const
-    {
-        return _val;
-    }
-private:
-
-    Complex _val;
-    SymbolID _id;
-};
-
-}
-
-SIRE_EXPOSE_CLASS( SireCAS::SymbolComplex )
-
-SIRE_END_HEADER
+void register_SireCAS_containers();
 
 #endif
+

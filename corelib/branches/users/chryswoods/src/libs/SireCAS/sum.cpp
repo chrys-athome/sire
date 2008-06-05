@@ -33,6 +33,8 @@
 #include "symbols.h"
 #include "functions.h"
 #include "complexvalues.h"
+#include "values.h"
+#include "identities.h"
 #include "i.h"
 #include "integrationconstant.h"
 

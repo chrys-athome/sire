@@ -151,6 +151,8 @@ inline uint qHash(const SireCAS::ExpressionBase &ex)
 
 Q_DECLARE_METATYPE(SireCAS::ExpressionBase)
 
+SIRE_EXPOSE_CLASS( SireCAS::ExpressionBase )
+
 SIRE_END_HEADER
 
 #endif

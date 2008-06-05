@@ -152,15 +152,21 @@ private:
     QHash<FunctionSignature, Expression> funchash;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Add the SymbolExpression to this set of identities */
 inline void Identities::add(const SymbolExpression &symex0)
 {
     set( symex0.symbol(), symex0.expression() );
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireCAS::Identities)
+
+SIRE_EXPOSE_CLASS( SireCAS::Identities )
 
 SIRE_END_HEADER
 

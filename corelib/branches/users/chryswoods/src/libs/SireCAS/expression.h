@@ -177,6 +177,8 @@ private:
     double fac;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return a list of all children of type 'T' in this expression */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -388,6 +390,8 @@ inline Expression cbrt(const Expression &ex0)
     return ex0.root(3);
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 /** Return a hash for an expression */
@@ -397,6 +401,11 @@ inline uint qHash(const SireCAS::Expression &ex)
 }
 
 Q_DECLARE_METATYPE(SireCAS::Expression)
+
+SIRE_EXPOSE_CLASS( SireCAS::Expression )
+SIRE_EXPOSE_FUNCTION( SireCAS::pow )
+SIRE_EXPOSE_FUNCTION( SireCAS::sqrt )
+SIRE_EXPOSE_FUNCTION( SireCAS::cbrt )
 
 SIRE_END_HEADER
 

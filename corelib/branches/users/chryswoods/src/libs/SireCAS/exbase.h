@@ -248,6 +248,9 @@ inline uint qHash(const SireCAS::ExBase &ex)
     return ex.hash();
 }
 
+SIRE_EXPOSE_CLASS( SireCAS::ExBase )
+SIRE_EXPOSE_FUNCTION( SireCAS::pow )
+
 SIRE_END_HEADER
 
 #endif

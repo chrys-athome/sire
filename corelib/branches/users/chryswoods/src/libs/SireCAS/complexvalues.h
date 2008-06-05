@@ -54,7 +54,8 @@ namespace SireCAS
 class Symbol;
 
 /**
-This class holds a set of Symbols and their associated complex values. This is used when numerically evaluating an equation using complex maths.
+This class holds a set of Symbols and their associated complex values. 
+This is used when numerically evaluating an equation using complex maths.
 
 @author Christopher Woods
 */
@@ -151,6 +152,8 @@ private:
 
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Add a SymbolComplex to the set of values */
 inline void ComplexValues::add(const SymbolComplex &val0)
 {
@@ -169,9 +172,13 @@ inline const QHash<SymbolID,Complex>& ComplexValues::values() const
     return vals;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireCAS::ComplexValues)
+
+SIRE_EXPOSE_CLASS( SireCAS::ComplexValues )
 
 SIRE_END_HEADER
 

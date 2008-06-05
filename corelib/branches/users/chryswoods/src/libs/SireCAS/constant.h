@@ -101,6 +101,8 @@ public:
 
 Q_DECLARE_METATYPE(SireCAS::Constant)
 
+SIRE_EXPOSE_CLASS( SireCAS::Constant )
+
 SIRE_END_HEADER
 
 #endif

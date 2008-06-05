@@ -106,6 +106,8 @@ protected:
     Expression ex;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the single argument to this function */
 inline const Expression& SingleFunc::argument() const
 {
@@ -124,6 +126,8 @@ inline uint SingleFunc::hash() const
 {
     return (magic() << 16) | (ex.hash() & 0x0000FFFF);
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 /** To declare a new function, copy the below;
 
@@ -184,6 +188,8 @@ static RegisterExpression<MyFunc> RegisterMyFunc;
 */
 
 }
+
+SIRE_EXPOSE_CLASS( SireCAS::SingleFunc )
 
 SIRE_END_HEADER
 

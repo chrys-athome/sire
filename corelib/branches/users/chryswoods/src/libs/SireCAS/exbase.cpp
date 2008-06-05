@@ -28,6 +28,9 @@
 
 #include "exbase.h"
 #include "values.h"
+#include "identities.h"
+#include "complexvalues.h"
+#include "functions.h"
 #include "expressionbase.h"
 #include "expression.h"
 

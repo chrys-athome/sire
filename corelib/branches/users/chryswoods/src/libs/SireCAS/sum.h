@@ -135,6 +135,8 @@ private:
 
 Q_DECLARE_METATYPE(SireCAS::Sum)
 
+SIRE_EXPOSE_CLASS( SireCAS::Sum )
+
 SIRE_END_HEADER
 
 #endif

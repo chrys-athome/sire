@@ -163,6 +163,8 @@ inline uint qHash(const SireCAS::Symbol &symbol)
 
 Q_DECLARE_METATYPE(SireCAS::Symbol)
 
+SIRE_EXPOSE_CLASS( SireCAS::Symbol )
+
 SIRE_END_HEADER
 
 #endif

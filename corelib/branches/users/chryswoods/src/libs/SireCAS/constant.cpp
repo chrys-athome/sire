@@ -31,6 +31,9 @@
 #include "expressions.h"
 #include "symbol.h"
 #include "symbols.h"
+#include "values.h"
+#include "complexvalues.h"
+#include "identities.h"
 #include "functions.h"
 #include "integrationconstant.h"
 

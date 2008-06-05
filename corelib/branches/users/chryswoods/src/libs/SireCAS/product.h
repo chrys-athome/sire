@@ -159,6 +159,8 @@ private:
 
 Q_DECLARE_METATYPE(SireCAS::Product)
 
+SIRE_EXPOSE_CLASS( SireCAS::Product )
+
 SIRE_END_HEADER
 
 #endif

@@ -31,6 +31,7 @@
 #include "powerconstant.h"
 #include "values.h"
 #include "complexvalues.h"
+#include "identities.h"
 #include "integrationconstant.h"
 
 #include "SireMaths/complex.h"
