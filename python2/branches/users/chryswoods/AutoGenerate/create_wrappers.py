@@ -1,0 +1,320 @@
+####################################################
+#
+# This script uses Py++ to create the Python 
+# wrappers for Sire. This script should be run
+# in a directory that contains the results
+# of scanheaders.py
+#
+#
+
+import os
+import sys
+import pickle
+import re
+
+from glob import glob
+
+from pyplusplus.module_builder import module_builder_t
+from pyplusplus.decl_wrappers import calldef_wrapper
+from pyplusplus.code_creators import class_t
+from pyplusplus.code_creators import algorithm
+
+from pygccxml.declarations.matchers import access_type_matcher_t
+from pygccxml import declarations
+import pygccxml
+
+all_exposed_classes = {}
+
+def _generate_bases(self, base_creators):
+    """This is a new version of the Py++ generate_bases function that only
+       adds in bases that are known to be exposed (known via the global list
+       of exposed classes)"""
+
+    bases = []
+    assert isinstance( self.declaration, declarations.class_t )
+    
+    for base_desc in self.declaration.bases:
+        assert isinstance( base_desc, declarations.hierarchy_info_t )
+        if base_desc.access != declarations.ACCESS_TYPES.PUBLIC:
+            continue
+
+        #only include bases that are in the global list
+        if (base_desc.related_class.demangled in all_exposed_classes):
+            bases.append( algorithm.create_identifier( self, base_desc.related_class.decl_string ) )
+    
+    if not bases:
+        return None
+    
+    bases_identifier = algorithm.create_identifier( self, '::boost::python::bases' )
+    
+    return declarations.templates.join( bases_identifier, bases )
+
+class_t._generate_bases = _generate_bases    
+
+#fix broken "operators" function
+def operators( self, name=None, symbol=None, function=None, return_type=None, arg_types=None, decl_type=None, header_dir=None, header_file=None, recursive=None ):
+    """Please see L{decl_wrappers.scopedef_t} class documentation"""
+    return self.global_ns.operators( name=name
+                                     , symbol=symbol
+                                     , function=function
+                                     , return_type=return_type
+                                     , arg_types=arg_types
+                                     , header_dir=header_dir
+                                     , header_file=header_file
+                                     , recursive=recursive )
+
+module_builder_t.operators = operators
+
+def has_datastream_operators(mb, c):
+   """Return whether or not the class has QDataStream streaming operators"""
+
+   try:
+       d = mb.operators(arg_types=["::QDataStream &","%s &" % c.decl_string])
+       return len(d) > 0
+
+   except:
+       return False
+
+def has_function(c, funcname):
+   """Recursively move through this class and its bases to find
+      if it has a function called 'funcname'"""
+   
+   try:
+       c.decl(funcname)
+       return True
+   except:
+       
+       for base in c.bases:
+           if has_function(base.related_class, funcname):
+               return True
+       
+       return False
+
+def export_class(mb, classname, aliases, includes, special_code):
+   """Do all the work necessary to allow the class called 'classname'
+      to be exported, using the supplied aliases, and using the 
+      supplied special code, and adding the header files in 'includes'
+      to the generated C++"""
+
+   #find the class in the declarations
+   c = mb.class_(classname)
+   
+   #include the class in the wrapper
+   c.include()
+
+   #add the extra include files for this class
+   for include_file in includes:
+       c.add_declaration_code("#include %s" % include_file)
+
+   #ensure that the list of bases includes *all* bases,
+   # - this is to fix problems with typeerror being
+   #   thrown for derived types
+   c.bases = c.recursive_bases
+
+   #exclude any "clone" functions
+   c.decls( "clone", allow_empty=True ).exclude()
+
+   #remove any declarations that return a pointer to something
+   #(special code is needed in these cases!)
+   for decl in c.decls():
+       try:
+           if str(decl.return_type) != "char const *":
+               if str(decl.return_type).endswith("*"):
+                   decl.exclude()
+       except:
+           pass
+
+   #run any class specific code
+   if (classname in special_code):
+     special_code[classname](c)
+
+   #if this is a noncopyable class then remove all constructors!
+   if c.noncopyable:
+      c.constructors().exclude()
+   else:
+      #if there is a copy-constructor then ensure that
+      #it is exposed!
+      decls = c.decls()
+      
+      for decl in decls:
+          try:
+              if decl.is_copy_constructor:
+                  #create a __copy__ function
+                  class_name = re.sub(r"\s\[class\]","",str(c))
+                  
+                  c.add_declaration_code( \
+                       "%s __copy__(const %s &other){ return %s(other); }" \
+                          % (class_name, class_name, class_name) )
+                       
+                  c.add_registration_code( "def( \"__copy__\", &__copy__)" )
+                  
+                  #only do this once for the class
+                  break
+                  
+          except AttributeError:
+              pass
+
+   #if this class can be streamed to a QDataStream then add
+   #streaming operators
+   if has_datastream_operators(mb,c):
+       print "%s has streaming operators!" % c
+       c.add_declaration_code( "#include \"Qt/qdatastream.hpp\"" )
+
+       c.add_registration_code(
+            """def( \"__rlshift__\", &__rlshift__QDataStream< %s >,
+                    bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )""" % c.decl_string )
+       c.add_registration_code(
+            """def( \"__rrshift__\", &__rrshift__QDataStream< %s >,
+                    bp::return_internal_reference<1, bp::with_custodian_and_ward<1,2> >() )""" % c.decl_string )
+
+   #is there a "toString" function for this class?
+   if has_function(c, "toString"):
+       #there is a .toString() member function - we can thus use the 
+       #templer __str__ function provided in the Helpers directory
+       c.add_declaration_code( "#include \"Helpers/str.hpp\"" )
+       
+       c.add_registration_code( "def( \"__str__\", &__str__< %s > )" % c.decl_string )
+   
+   else:
+       #there is no .toString() function
+       # - instead create a new __str__ that just returns a pretty form
+       #   of the name of the class
+       name = str(c.decl_string)
+       
+       if name.startswith("::"):
+           name = name[2:]
+       
+       c.add_declaration_code( "const char* pvt_get_name(const %s&){ return \"%s\";}" % (name,name) )
+       
+       c.add_registration_code("def( \"__str__\", &pvt_get_name)")
+           
+   #provide an alias for this class
+   if (classname in aliases):
+      c.alias = aliases[classname]
+
+def register_implicit_conversions(mb, implicitly_convertible):
+    """This function sets the wrapper generator to use only the implicit conversions
+       that have been specifically specified in 'implicitly_convertible'"""
+
+    #remove all existing implicit conversions
+    mb.constructors().allow_implicit_conversion = False
+    mb.casting_operators().exclude()
+    
+    #add our manual implicit conversions to the declaration section
+    for conversion in implicitly_convertible:
+       mb.add_registration_code("bp::implicitly_convertible< %s, %s >();" % conversion)
+
+def write_wrappers(mb, module, huge_classes):
+   """This function performs the actual work of writing the wrappers to disk"""
+                   
+   #make sure that the protected and private member functions and 
+   #data aren't wrapped
+   mb.calldefs( access_type_matcher_t( 'protected' ) ).exclude()
+   mb.calldefs( access_type_matcher_t( 'private' ) ).exclude()
+ 
+   #build a code creator - this must be done after the above, as
+   #otherwise our modifications above won't take effect
+   mb.build_code_creator( module_name="_%s" % module )
+
+   #get rid of the standard headers
+   mb.code_creator.replace_included_headers( [] )
+
+   #give each piece of code the GPL license header
+   mb.code_creator.license = "// (C) Christopher Woods, GPL >= 2 License\n"
+
+   #use local directory paths
+   mb.code_creator.user_defined_directories.append(".")
+
+   #create all the wrappers for the module in the 
+   #directory "autogen_files"
+   mb.split_module( ".", huge_classes )
+
+def fixMB(mb):
+   pass
+
+if __name__ == "__main__":
+
+    #read in the information about this module
+    lines = open("module_info", "r").readlines()
+
+    module = lines[0].split()[1]
+    sourcedir = lines[1].split()[1]
+    rootdir = lines[2].split()[1]
+
+    #load up the dictionary of all exposed classes
+    all_exposed_classes = pickle.load( open("../classdb.data", "r") )
+    
+    #load up the active headers object
+    active_headers = pickle.load( open("active_headers.data", "r") )
+
+    #get the special code, big classes and implicit conversions
+    implicitly_convertible = []
+    special_code = {}
+    huge_classes = []
+
+    if os.path.exists("special_code.py"):
+        sys.path.append(".")
+        from special_code import *
+        
+    sire_include_dirs = [ rootdir, "%s/%s" % (rootdir,sourcedir) ]
+    qt_include_dirs = [ "/usr/local/include/Qt4/", "/usr/local/include/Qt4/QtCore" ]
+    boost_include_dirs = [ "/usr/local/include/boost-1_34_1" ]
+    gsl_include_dirs = [ "/usr/local/include" ]
+
+    #construct a module builder that will build all of the wrappers for this module
+    mb = module_builder_t( files = [ "active_headers.h" ],
+                           include_paths = sire_include_dirs + qt_include_dirs +
+                                           boost_include_dirs + gsl_include_dirs,
+                           define_symbols = ["GCCXML_PARSE",
+                                             "SIRE_SKIP_INLINE_FUNCTIONS"] )
+
+    #get rid of all virtual python functions - this is to stop slow wrapper code
+    #from being generated for C++ virtual objects
+    for calldef in mb.calldefs():
+        try:
+            calldef.virtuality = declarations.VIRTUALITY_TYPES.NOT_VIRTUAL
+        except:
+            pass
+
+    #add calls to additional hand-written code
+    if os.path.exists("%s_containers.h" % sourcedir):
+        mb.add_declaration_code( "#include \"%s_containers.h\"" % sourcedir )
+        mb.add_registration_code( "register_%s_containers();" % sourcedir, tail=False )
+
+    mb.calldefs().create_with_signature = True
+
+    #export each of the classes in this module in turn
+    for header in active_headers:
+        classes = active_headers[header][0]
+        includes = active_headers[header][2]
+        aliases = active_headers[header][3]
+
+        for clas in classes:
+            export_class(mb, clas.split("::")[-1], aliases, includes, special_code)
+
+    #remove all implicit implicit conversions and add the explicit implicit conversions (!)
+    register_implicit_conversions(mb, implicitly_convertible)
+
+    #now perform any last-minute fixes
+    fixMB(mb)
+
+    write_wrappers(mb, module, huge_classes)  
+
+    #now write a CMakeFile that contains all of the autogenerated files
+    FILE = open("CMakeAutogenFile.txt", "w")
+
+    print >>FILE,"# WARNING - AUTOGENERATED FILE - CONTENTS WILL BE OVERWRITTEN!"
+    print >>FILE,"set ( PYPP_SOURCES"
+
+    pyppfiles = glob("*.pypp.cpp")
+
+    for pyppfile in pyppfiles:
+        print >>FILE,"       %s" % pyppfile
+
+    if os.path.exists("%s_containers.cpp" % sourcedir):
+        print >>FILE,"       %s_containers.cpp" % sourcedir
+
+    print >>FILE,"    )"
+
+    FILE.close()
+
