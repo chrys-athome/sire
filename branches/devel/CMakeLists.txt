@@ -183,14 +183,14 @@ find_library( BOOST_PYTHON_LIBRARY
             )
 
 # Need to ensure that we are linking to boost_python shared library!
-if (UNIX)
-  if ( BOOST_PYTHON_LIBRARY MATCHES "(\\.so$)" OR BOOST_PYTHON_LIBRARY MATCHES "(\\.SO$)" )
-  else ( BOOST_PYTHON_LIBRARY MATCHES "(\\.so$)" OR BOOST_PYTHON_LIBRARY MATCHES "(\\.SO$)" )
-    message( FATAL_ERROR "Need to link to shared boost::python library (should be "
-                         "boost_python.so, "
-                         "not ${BOOST_PYTHON_LIBRARY})" )
-  endif ( BOOST_PYTHON_LIBRARY MATCHES "(\\.so$)" OR BOOST_PYTHON_LIBRARY MATCHES "(\\.SO$)" )
-endif (UNIX)
+#if (UNIX)
+#  if ( BOOST_PYTHON_LIBRARY MATCHES "(\\.so$)" OR BOOST_PYTHON_LIBRARY MATCHES "(\\.SO$)" )
+#  else ( BOOST_PYTHON_LIBRARY MATCHES "(\\.so$)" OR BOOST_PYTHON_LIBRARY MATCHES "(\\.SO$)" )
+#    message( FATAL_ERROR "Need to link to shared boost::python library (should be "
+#                         "boost_python.so, "
+#                         "not ${BOOST_PYTHON_LIBRARY})" )
+#  endif ( BOOST_PYTHON_LIBRARY MATCHES "(\\.so$)" OR BOOST_PYTHON_LIBRARY MATCHES "(\\.SO$)" )
+#endif (UNIX)
 
 message( STATUS "Boost python library = ${BOOST_PYTHON_LIBRARY}" )
 
@@ -298,7 +298,7 @@ set( CMAKE_C_FLAGS ${SIRE_C_FLAGS_RELEASE} )
 set( CMAKE_CXX_FLAGS ${SIRE_CXX_FLAGS_RELEASE} )
 
 # Ensure that the libraries don't contain any undefined symbols
-set( SIRE_LINK_FLAGS "-Wl,--no-undefined" )
+set( SIRE_LINK_FLAGS "-Wl" )
 
 # Add this to all shared libraries
 set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SIRE_LINK_FLAGS}" )

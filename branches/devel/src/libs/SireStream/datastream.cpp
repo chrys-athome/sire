@@ -89,3 +89,6 @@ VersionID SIRESTREAM_EXPORT readHeader(QDataStream &ds,
 }
 
 }
+
+}
+

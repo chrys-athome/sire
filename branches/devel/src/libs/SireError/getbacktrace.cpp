@@ -33,7 +33,7 @@
 #include <QRegExp>
 #include <QDebug>
 
-#define _HAVE_EXECINFO_H_ 1
+// #define _HAVE_EXECINFO_H_ 1
 
 #ifdef _HAVE_EXECINFO_H_
   #include <execinfo.h>
