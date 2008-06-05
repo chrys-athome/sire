@@ -134,6 +134,8 @@ private:
     double rad;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Copy operator */
 inline const AABox& AABox::operator=(const AABox &box)
 {
@@ -174,11 +176,14 @@ inline double AABox::radius() const
     return rad;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireVol::AABox)
 Q_DECLARE_TYPEINFO(SireVol::AABox, Q_MOVABLE_TYPE);
 
+SIRE_EXPOSE_CLASS( SireVol::AABox )
 
 SIRE_END_HEADER
 

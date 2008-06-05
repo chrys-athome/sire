@@ -161,6 +161,8 @@ protected:
     Vector invlength;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the minimum coordinates of the box (the origin) */
 inline const Vector& PeriodicBox::minCoords() const
 {
@@ -221,9 +223,13 @@ inline bool PeriodicBox::contains(const Vector &point) const
             point.z() <= maxcoords.z());
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireVol::PeriodicBox)
+
+SIRE_EXPOSE_CLASS( SireVol::PeriodicBox )
 
 SIRE_END_HEADER
 

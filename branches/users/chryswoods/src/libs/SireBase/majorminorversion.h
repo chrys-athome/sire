@@ -125,6 +125,32 @@ private:
     quint64 minor_version;
 };
 
+/** This class provides a registry of that last version number
+    assigned to the objects identified by keys of type 'T' 
+    
+    @author Christopher Woods
+*/
+template<class T>
+class VersionRegistry
+{
+public:
+    VersionRegistry();
+    ~VersionRegistry();
+
+    MajorMinorVersion registerObject(const T &key);
+
+    bool registered(const T &key);
+
+private:
+    /** Mutex used to protect access to the registry */
+    QMutex registry_mutex;
+    
+    /** The data for the registry */
+    QHash< T, boost::weak_ptr<detail::MajorMinorVersionData> > registry;
+};
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Copy assingment operator */
 inline MajorMinorVersion& MajorMinorVersion::operator=(const MajorMinorVersion &other)
 {
@@ -163,30 +189,6 @@ inline quint64 MajorMinorVersion::minorVersion() const
 {
     return minor_version;
 }
-
-/** This class provides a registry of that last version number
-    assigned to the objects identified by keys of type 'T' 
-    
-    @author Christopher Woods
-*/
-template<class T>
-class VersionRegistry
-{
-public:
-    VersionRegistry();
-    ~VersionRegistry();
-
-    MajorMinorVersion registerObject(const T &key);
-
-    bool registered(const T &key);
-
-private:
-    /** Mutex used to protect access to the registry */
-    QMutex registry_mutex;
-    
-    /** The data for the registry */
-    QHash< T, boost::weak_ptr<detail::MajorMinorVersionData> > registry;
-};
 
 /** Constructor */
 template<class T>
@@ -260,6 +262,8 @@ MajorMinorVersion VersionRegistry<T>::registerObject(const T &key)
     
     return v;
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 } // end of namespace SireBase
 

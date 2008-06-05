@@ -200,6 +200,18 @@ void Vector::setB(double z)
     sc[2] = z;
 }
 
+/** Return the unit vector pointing in the direction of this vector */
+Vector Vector::direction() const
+{
+    return this->normalise();
+}
+
+/** Return the length of this vector */
+double Vector::magnitude() const
+{
+    return this->length();
+}
+
 /** Return the bearing of this vector against (0,1,0) (north) on the xy plane */
 Angle Vector::bearing() const
 {

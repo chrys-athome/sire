@@ -325,12 +325,6 @@ public:
 
     CoordGroupEditor edit() const;
 
-    template<class T>
-    static CoordGroup combine(const T &groups);
-
-    template<class T>
-    static T split(const CoordGroup &group, const T &groups);
-
 private:
     CoordGroup(const CoordGroupEditor &other);
 
@@ -650,6 +644,12 @@ Q_DECLARE_METATYPE( SireVol::CoordGroup );
 Q_DECLARE_METATYPE( SireVol::CoordGroupEditor );
 Q_DECLARE_METATYPE( SireVol::CoordGroupArray );
 Q_DECLARE_METATYPE( SireVol::CoordGroupArrayArray );
+
+SIRE_EXPOSE_CLASS( SireVol::CoordGroupBase )
+SIRE_EXPOSE_CLASS( SireVol::CoordGroup )
+SIRE_EXPOSE_CLASS( SireVol::CoordGroupEditor )
+SIRE_EXPOSE_CLASS( SireVol::CoordGroupArray )
+SIRE_EXPOSE_CLASS( SireVol::CoordGroupArrayArray )
 
 SIRE_END_HEADER
 

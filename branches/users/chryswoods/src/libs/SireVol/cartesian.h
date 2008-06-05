@@ -131,6 +131,8 @@ public:
 
 Q_DECLARE_METATYPE(SireVol::Cartesian)
 
+SIRE_EXPOSE_CLASS( SireVol::Cartesian )
+
 SIRE_END_HEADER
 
 #endif

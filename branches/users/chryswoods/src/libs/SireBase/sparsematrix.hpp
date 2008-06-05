@@ -177,6 +177,8 @@ private:
     QHash<detail::Index,T> data;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Construct an empty sparse matrix */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -341,7 +343,11 @@ SparseMatrix<T> SparseMatrix<T>::transpose() const
     return ret;
 }
 
-}
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
+} // end of namespace SireBase
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 inline QDataStream& operator<<(QDataStream &ds, const SireBase::detail::Index &idx)
 {
@@ -395,6 +401,7 @@ QDataStream& operator>>(QDataStream &ds, SireBase::SparseMatrix<T> &matrix)
     return ds;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 SIRE_END_HEADER
 

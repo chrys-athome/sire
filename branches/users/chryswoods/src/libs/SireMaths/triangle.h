@@ -100,7 +100,7 @@ private:
     Vector points[3];
 };
 
-#ifndef SKIP_TEMPLATE_DEFINITIONS
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 /** Return the number of elements in this triangle (3) */
 inline int Triangle::count() const
@@ -193,12 +193,14 @@ inline Angle Triangle::angle() const
     return this->angle1();
 }
 
-#endif // end of '#ifndef SKIP_TEMPLATE_DEFINITIONS'
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 
 Q_DECLARE_METATYPE(SireMaths::Triangle)
 Q_DECLARE_TYPEINFO(SireMaths::Triangle, Q_MOVABLE_TYPE);
+
+SIRE_EXPOSE_CLASS( SireMaths::Triangle )
 
 SIRE_END_HEADER
 

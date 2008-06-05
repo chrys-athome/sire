@@ -69,6 +69,8 @@ private:
     #endif
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Constructor */
 inline Incremint::Incremint(int value) : atomic_int(value)
 {}
@@ -112,7 +114,11 @@ inline int Incremint::increment()
     #endif
 }
 
-}
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
+} // end of namespace SireBase
+
+SIRE_EXPOSE_CLASS( SireBase::Incremint )
 
 SIRE_END_HEADER
 

@@ -314,6 +314,36 @@ Angle DistVector::bearingYZ(const DistVector &v) const
     return this->direction().bearingYZ( v.direction() );
 }
 
+/** Set this Vector so that it has the maximum x/y/z components out of
+    this and 'other' (e.g. this->x = max(this->x(),other.x() etc.) */
+void DistVector::setMax(const DistVector &other)
+{
+    this->operator=( Vector(*this).max( Vector(other) ) );
+}
+
+/** Set this Vector so that it has the minimum x/y/z components */
+void DistVector::setMin(const DistVector &other)
+{
+    this->operator=( Vector(*this).min( Vector(other) ) );
+}
+
+/** Return a vector that has the maximum x/y/z components out of this
+    and 'other' */
+DistVector DistVector::max(const DistVector &other) const
+{
+    DistVector ret(*this);
+    ret.setMax(other);
+    return ret;
+}
+
+/** Return a vector that has the minimum components */
+DistVector DistVector::min(const DistVector &other) const
+{
+    DistVector ret(*this);
+    ret.setMin(other);
+    return ret;
+}
+
 /** Return the angle between vectors 'v0' and 'v1' - this is the smallest
     angle, and will always lie between 0 and 180 degrees */
 Angle DistVector::angle(const DistVector &v0, const DistVector &v1)

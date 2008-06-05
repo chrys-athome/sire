@@ -116,6 +116,8 @@ protected:
     double wx,wy,wz,ww;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the identiy matrix */
 inline Matrix4 Matrix4::identity()
 {
@@ -129,10 +131,14 @@ inline Matrix4 Matrix4::zero()
                    0.0,0.0,0.0,0.0, 0.0,0.0,0.0,0.0 );
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireMaths::Matrix4)
 Q_DECLARE_TYPEINFO(SireMaths::Matrix4, Q_MOVABLE_TYPE);
+
+SIRE_EXPOSE_CLASS( SireMaths::Matrix4 )
 
 SIRE_END_HEADER
 

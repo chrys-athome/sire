@@ -48,6 +48,8 @@ inline Vector rotate(const Vector &input, const Matrix &rotmat, const Vector &po
 
 }
 
+SIRE_EXPOSE_FUNCTION( SireMaths::rotate )
+
 SIRE_END_HEADER
 
 #endif

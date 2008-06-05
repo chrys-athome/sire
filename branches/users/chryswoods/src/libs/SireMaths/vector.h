@@ -229,6 +229,8 @@ protected:
     double sc[4];
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Copy constructor */
 inline Vector::Vector(const Vector& other)
 {
@@ -407,10 +409,14 @@ inline Vector Vector::min(const Vector &other) const
     return v;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireMaths::Vector)
 Q_DECLARE_TYPEINFO(SireMaths::Vector, Q_MOVABLE_TYPE);
+
+SIRE_EXPOSE_CLASS( SireMaths::Vector )
 
 SIRE_END_HEADER
 

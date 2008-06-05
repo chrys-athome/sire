@@ -120,6 +120,8 @@ private:
 
 Q_DECLARE_METATYPE(SireMaths::RanGenerator);
 
+SIRE_EXPOSE_CLASS( SireMaths::RanGenerator )
+
 SIRE_END_HEADER
 
 #endif

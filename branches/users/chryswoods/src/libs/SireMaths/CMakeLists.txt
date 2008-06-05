@@ -15,7 +15,6 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 # Define the headers in SireMaths
 set ( SIREMATHS_HEADERS
       axisset.h
-      circularangle.h
       complex.h
       constants.h
       distvector.h
@@ -33,7 +32,6 @@ set ( SIREMATHS_HEADERS
       torsion.h
       triangle.h
       vector.h
-      vectorvector.h
     )
 
 # Define the sources in SireMaths

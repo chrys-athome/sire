@@ -80,6 +80,8 @@ private:
     quint32 nrows, ncolumns;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the number of rows in the matrix */
 inline quint32 Array2DBase::nRows() const
 {
@@ -107,6 +109,8 @@ inline void Array2DBase::assertValidIndex(quint32 i, quint32 j) const
     if (i >= nrows or j >= ncolumns)
         throwInvalidIndex(i,j);
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

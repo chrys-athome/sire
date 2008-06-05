@@ -82,9 +82,12 @@ namespace SireMaths
 {
 
 /**
-This class represents a complex number to the same precision as 'double'. This is merely a thin wrapper around the gsl_complex struct, and the gsl_complex functions.
+This class represents a complex number to the same precision as 'double'. 
+This is merely a thin wrapper around the gsl_complex struct, and the 
+gsl_complex functions.
 
-(indeed, this is publically derived from gsl_complex, so you can use this class whereever you would normally use a gsl_complex)
+(indeed, this is publically derived from gsl_complex, so you can use 
+this class whereever you would normally use a gsl_complex)
 
 @author Christopher Woods
 */
@@ -388,6 +391,8 @@ public:
         return gsl_complex_negative(*this);
     }
 };
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 /** Comparison with std::complex */
 template<typename T>
@@ -756,10 +761,14 @@ inline Complex arccoth(const Complex &z)
     return gsl_complex_arccoth(z);
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireMaths::Complex)
 Q_DECLARE_TYPEINFO(SireMaths::Complex, Q_MOVABLE_TYPE);
+
+SIRE_EXPOSE_CLASS( SireMaths::Complex )
 
 SIRE_END_HEADER
 

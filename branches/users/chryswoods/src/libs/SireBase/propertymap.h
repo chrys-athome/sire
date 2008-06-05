@@ -202,6 +202,9 @@ private:
 Q_DECLARE_METATYPE(SireBase::PropertyName);
 Q_DECLARE_METATYPE(SireBase::PropertyMap);
 
+SIRE_EXPOSE_CLASS( SireBase::PropertyMap )
+SIRE_EXPOSE_CLASS( SireBase::PropertyName )
+
 SIRE_END_HEADER
 
 #endif

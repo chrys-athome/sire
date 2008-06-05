@@ -125,6 +125,8 @@ private:
 Q_DECLARE_METATYPE(SireMaths::Quaternion)
 Q_DECLARE_TYPEINFO(SireMaths::Quaternion, Q_MOVABLE_TYPE);
 
+SIRE_EXPOSE_CLASS( SireMaths::Quaternion )
+
 SIRE_END_HEADER
 
 #endif

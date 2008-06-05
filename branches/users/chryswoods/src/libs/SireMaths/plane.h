@@ -84,6 +84,8 @@ private:
 
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the (normalised) normal vector to the plane */
 inline const Vector& Plane::normal() const
 {
@@ -126,10 +128,14 @@ inline double Plane::distance(const Vector &point) const
     return Vector::dot(norm, point) + dist;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireMaths::Plane)
 Q_DECLARE_TYPEINFO(SireMaths::Plane, Q_MOVABLE_TYPE);
+
+SIRE_EXPOSE_CLASS( SireMaths::Plane )
 
 SIRE_END_HEADER
 

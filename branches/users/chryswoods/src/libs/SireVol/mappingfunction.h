@@ -263,6 +263,10 @@ Q_DECLARE_METATYPE(SireVol::MapFromCartesianFunction);
 Q_DECLARE_METATYPE(SireVol::MapFromSelfFunction);
 Q_DECLARE_METATYPE(SireVol::MappingFunction);
 
+SIRE_EXPOSE_CLASS( SireVol::MapFunc )
+SIRE_EXPOSE_CLASS( SireVol::MapFromCartesianFunction )
+SIRE_EXPOSE_CLASS( SireVol::MapFromSelfFunction )
+
 SIRE_END_HEADER
 
 #endif

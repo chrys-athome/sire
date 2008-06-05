@@ -29,6 +29,12 @@
 #define SIRE_BEGIN_HEADER QT_BEGIN_HEADER
 #define SIRE_END_HEADER QT_END_HEADER
 
+//create keywords that control whether classes or functions are
+//exposed to a scripting language
+#define SIRE_EXPOSE_FUNCTION(f)  /* Exposing function #1 */
+#define SIRE_EXPOSE_CLASS(c)     /* Exposing class #1 */
+#define SIRE_EXPOSE_ALIAS(c,a)   /* Exposing class #1 as alias #2 */
+
 //create the keyword used to export a symbol - this
 //is a copy of Q_DECL_EXPORT, which will definitely
 //be set to the correct value

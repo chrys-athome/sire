@@ -3003,6 +3003,27 @@ CoordGroupArrayArray& CoordGroupArrayArray::operator=(
     return *this;
 }
 
+/** Comparison operator */
+bool CoordGroupArrayArray::operator==(const CoordGroupArrayArray &other) const
+{
+    if (this->coordGroupData() == other.coordGroupData())
+        return true;
+        
+    for (quint32 i=0; i<d->nCGroups(); ++i)
+    {
+        if (this->coordGroupData()[i] != other.coordGroupData()[i])
+            return false;
+    }
+    
+    return true;
+}                                   
+
+/** Comparison operator */
+bool CoordGroupArrayArray::operator!=(const CoordGroupArrayArray &other) const
+{
+    return not this->operator==(other);
+}
+
 /** Assert that i is a valid index for a CoordGroupArray 
 
     \throw SireError::invalid_index

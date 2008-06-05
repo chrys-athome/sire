@@ -100,6 +100,8 @@ private:
     QVector<T> array;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Construct a null Array2D */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -262,7 +264,11 @@ Array2D<T> Array2D<T>::transpose() const
     }
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 /** Serialise to a binary datastream */
 template<class T>
@@ -289,6 +295,8 @@ QDataStream& operator>>(QDataStream &ds, SireBase::Array2D<T> &array)
         
     return ds;
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 SIRE_END_HEADER
 

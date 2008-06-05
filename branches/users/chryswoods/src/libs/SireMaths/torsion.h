@@ -102,6 +102,8 @@ private:
 Q_DECLARE_METATYPE(SireMaths::Torsion)
 Q_DECLARE_TYPEINFO(SireMaths::Torsion, Q_MOVABLE_TYPE);
 
+SIRE_EXPOSE_CLASS( SireMaths::Torsion )
+
 SIRE_END_HEADER
 
 #endif

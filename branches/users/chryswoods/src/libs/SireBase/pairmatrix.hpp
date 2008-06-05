@@ -116,6 +116,8 @@ private:
     unsigned int n_elements;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 PairMatrix<T>::PairMatrix() : array(0), n_outer(0), n_inner(0), n_elements(0)
@@ -243,6 +245,8 @@ void PairMatrix<T>::redimension(unsigned int i, unsigned int j)
         array = new T[n_elements];
     }
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

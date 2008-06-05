@@ -91,6 +91,8 @@ protected:
     
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Returns a reference to the matrix representing this AxisSet */
 inline const Matrix& AxisSet::matrix() const
 {
@@ -109,10 +111,14 @@ inline const Vector& AxisSet::origin() const
     return orgn;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireMaths::AxisSet);
 Q_DECLARE_TYPEINFO(SireMaths::AxisSet, Q_MOVABLE_TYPE);
+
+SIRE_EXPOSE_CLASS( SireMaths::AxisSet )
 
 SIRE_END_HEADER
 

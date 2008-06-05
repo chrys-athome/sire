@@ -205,6 +205,8 @@ private:
     T *d;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Null constructor */
 template<class T>
 Q_INLINE_TEMPLATE
@@ -740,7 +742,12 @@ bool SharedPolyPointer<T>::operator!=(const T *other_ptr) const
 }
 
 const MagicID sharedpolypointer_magic = getMagic("SireBase::SharedPolyPointer");
-}
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
+} // end of namespace SireBase
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 /** Serialise to a binary data stream
 
@@ -813,6 +820,8 @@ inline T* get_pointer(SireBase::SharedPolyPointer<T> &p)
 {
     return p.data();
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 SIRE_END_HEADER
 

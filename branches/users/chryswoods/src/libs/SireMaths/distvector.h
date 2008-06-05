@@ -120,6 +120,9 @@ public:
     static double dot(const DistVector &v0, const DistVector &v1);
     static DistVector cross(const DistVector &v0, const DistVector &v1);
 
+    void setMax(const DistVector &other);
+    void setMin(const DistVector &other);
+
     DistVector max(const DistVector &other) const;
     DistVector min(const DistVector &other) const;
 
@@ -154,6 +157,8 @@ public:
 
 Q_DECLARE_TYPEINFO(SireMaths::DistVector, Q_MOVABLE_TYPE);
 Q_DECLARE_METATYPE(SireMaths::DistVector);
+
+SIRE_EXPOSE_CLASS( SireMaths::DistVector )
 
 SIRE_END_HEADER
 

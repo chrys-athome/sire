@@ -4,9 +4,17 @@
 #
 ########################################
 
+# Define the headers in ThirdParty
+set ( THIRDPARTY_HEADERS
+      md5.h
+      MersenneTwister.h
+    )      
+
 # Define the sources in ThirdParty
 set ( THIRDPARTY_SOURCES
       md5.c
+
+      ${THIRDPARTY_HEADERS}
     )
 
 # Other Sire libraries
@@ -25,3 +33,7 @@ install( TARGETS ThirdParty
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
+
+install( FILES ${THIRDPARTY_HEADERS}
+         DESTINATION ${SIRE_INCLUDES}/ThirdParty )
+

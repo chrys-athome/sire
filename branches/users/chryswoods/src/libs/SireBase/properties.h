@@ -193,6 +193,8 @@ private:
     QSharedDataPointer<detail::PropertiesData> d;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the keys of all properties that are of type T */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -288,9 +290,13 @@ bool Properties::hasMetadataOfType(const PropertyName &key,
            this->metadata(key, metakey)->isA<T>();
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireBase::Properties);
+
+SIRE_EXPOSE_CLASS( SireBase::Properties )
 
 SIRE_END_HEADER
 

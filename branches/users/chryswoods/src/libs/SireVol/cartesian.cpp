@@ -32,7 +32,7 @@
 #ifdef _SIRE_USE_MANUAL_SSE_
 
 #ifdef _HAVE_ACCELERATE_H_
-#include <Accelerate/Accelerate.h>
+#include <Accelerate/Accelerate.h>     // CONDITIONAL_INCLUDE
 #endif
 
 #endif

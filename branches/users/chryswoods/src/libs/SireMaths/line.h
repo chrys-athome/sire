@@ -80,6 +80,8 @@ private:
     Vector points[2];
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the number of elements in this line (2) */
 inline int Line::count() const
 {
@@ -116,10 +118,14 @@ inline double Line::length() const
     return vector().length();
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireMaths::Line)
 Q_DECLARE_TYPEINFO(SireMaths::Line, Q_MOVABLE_TYPE);
+
+SIRE_EXPOSE_CLASS( SireMaths::Line )
 
 SIRE_END_HEADER
 

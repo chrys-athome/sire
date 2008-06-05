@@ -46,6 +46,8 @@ QFileInfo findExe(const QString &exe);
 
 }
 
+SIRE_EXPOSE_FUNCTION( SireBase::findExe )
+
 SIRE_END_HEADER
 
 #endif

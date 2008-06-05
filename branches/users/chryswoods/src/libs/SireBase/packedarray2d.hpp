@@ -455,6 +455,8 @@ namespace SireBase
 namespace detail
 {
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 ////////
 //////// Implementation of PackedArray2DMemory
 ////////
@@ -1324,7 +1326,11 @@ void PackedArray2D_Array<T>::update(const PackedArray2D_Array<T> &other)
     BOOST_ASSERT( output == this->data() );
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 } // end of namespace detail
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 /////////
 ///////// Implementation of PackedArray2D
@@ -1909,7 +1915,11 @@ void PackedArray2D<T>::update(quint32 i, const Array &array)
     d->arrayData()[i].update(array);
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 } // end of namespace SireBase
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 /** Serialise a PackedArray2D<T>::Array to a binary datastream */
 template<class T>
@@ -2034,6 +2044,8 @@ QDataStream& operator>>(QDataStream &ds,
     
     return ds;
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 //we need to have qMetaTypeId<QVariant> declared so we can get it's typename...
 Q_DECLARE_METATYPE( QVariant );

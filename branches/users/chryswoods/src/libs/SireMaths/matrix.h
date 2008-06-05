@@ -137,6 +137,8 @@ protected:
     double zx,zy,zz;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the identiy matrix */
 inline Matrix Matrix::identity()
 {
@@ -197,10 +199,14 @@ inline const Matrix operator*(const Matrix &m1, const Matrix &m2)
                   szx,szy,szz);
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireMaths::Matrix)
 Q_DECLARE_TYPEINFO(SireMaths::Matrix, Q_MOVABLE_TYPE);
+
+SIRE_EXPOSE_CLASS( SireMaths::Matrix )
 
 SIRE_END_HEADER
 

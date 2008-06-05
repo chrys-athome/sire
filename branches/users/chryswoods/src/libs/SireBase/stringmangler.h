@@ -249,6 +249,12 @@ Q_DECLARE_METATYPE( SireBase::TrimString );
 Q_DECLARE_METATYPE( SireBase::UpperCaseString );
 Q_DECLARE_METATYPE( SireBase::LowerCaseString );
 
+SIRE_EXPOSE_CLASS( SireBase::StringManglerBase )
+SIRE_EXPOSE_CLASS( SireBase::NoMangling )
+SIRE_EXPOSE_CLASS( SireBase::TrimString )
+SIRE_EXPOSE_CLASS( SireBase::UpperCaseString )
+SIRE_EXPOSE_CLASS( SireBase::LowerCaseString )
+
 SIRE_END_HEADER
 
 #endif

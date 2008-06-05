@@ -86,6 +86,8 @@ private:
     double _radius;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the position of the center of the sphere */
 inline const Vector& Sphere::position() const
 {
@@ -104,10 +106,14 @@ inline double Sphere::radius() const
     return _radius;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireMaths::Sphere)
 Q_DECLARE_TYPEINFO(SireMaths::Sphere, Q_MOVABLE_TYPE);
+
+SIRE_EXPOSE_CLASS( SireMaths::Sphere )
 
 SIRE_END_HEADER
 

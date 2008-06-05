@@ -82,6 +82,8 @@ protected:
                         quint32 sizeof_T);
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** This converts the pointer to the object
     that starts at 'this_ptr' to a pointer to the first element
     of the storage array (given the location of the object at
@@ -100,6 +102,8 @@ inline const char* PackedArray2DMemoryBase::getRoot(const char *this_ptr,
 {
     return this_ptr - this_idx;
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 /** The template independent parts of the PackedArray2D metadata */
 class SIREBASE_EXPORT PackedArray2DDataBase : public QSharedData
@@ -202,6 +206,7 @@ private:
     quint32 nvalues;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 inline void PackedArray2DMemoryBase::setArray0(PackedArray2DDataBase *array, 
                                                quint32 idx)
@@ -235,6 +240,8 @@ PackedArray2DMemoryBase::setValue0(PackedArray2DDataBase *array,
 {
     array->value0 = value0;
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 
