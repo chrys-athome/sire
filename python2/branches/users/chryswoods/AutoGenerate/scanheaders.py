@@ -70,8 +70,8 @@ def scanFiles(dir, module_dir):
        the classes that are being exposed, and placing meta information
        into the directory 'module_dir'""" 
 
-    h_files = getFiles(dir, "*.h")
-    hpp_files = getFiles(dir, "*.hpp")
+    h_files = getFiles(dir, "*.h") + getFiles(module_dir, "*.h")
+    hpp_files = getFiles(dir, "*.hpp") + getFiles(module_dir, "*.hpp")
 
     #dictionary mapping files to exposed classes
     active_files = {}
@@ -81,7 +81,10 @@ def scanFiles(dir, module_dir):
 
     #read each file, looking for SIRE_EXPOSE_FUNCTION or SIRE_EXPOSE_CLASS
     for file in h_files + hpp_files:
-        lines = open("%s/%s" % (dir,file), "r").readlines()
+        try:
+            lines = open("%s/%s" % (dir,file), "r").readlines()
+        except:
+            lines = open("%s/%s" % (module_dir,file), "r").readlines()
 
         for line in lines:
             m = re.search(r"SIRE_EXPOSE_CLASS\(\s*([<>\w\d:]+)\s*\)", line)
@@ -91,7 +94,9 @@ def scanFiles(dir, module_dir):
 
             if m:
                 if file not in active_files:
-                    active_files[file] = ( [], [], getDependencies(dir, file), {} )
+                    active_files[file] = ( [], [], 
+                                           getDependencies(dir, file) + getDependencies(module_dir,file), 
+                                           {} )
 
                 active_files[file][0].append(m.groups()[0])
                 exposed_classes.append(m.groups()[0])
@@ -105,7 +110,9 @@ def scanFiles(dir, module_dir):
                 m = re.search(r"SIRE_EXPOSE_FUNCTION\(\s*([\w\d:]+)\s*\)", line)
                 if m:
                     if file not in active_files:
-                        active_files[file] = ( [], [], getDependencies(dir, file), {} )
+                        active_files[file] = ( [], [], 
+                                               getDependencies(dir, file) + getDependencies(module_dir,file), 
+                                               {} )
 
                     active_files[file][1].append(m.groups()[0])
 
@@ -139,9 +146,20 @@ if __name__ == "__main__":
     
     modules = { "Base" : "SireBase",
                 "CAS" : "SireCAS",
+                "Cluster" : "SireCluster",
+                "DB" : "SireDB",
+                "FF" : "SireFF",
                 "ID" : "SireID",
+                "IO" : "SireIO",
                 "Maths" : "SireMaths",
+                "MM" : "SireMM",
+                "MMDB" : "SireMMDB",
                 "Mol" : "SireMol",
+                "Move" : "SireMove",
+                "Sim" : "SireSim",
+                "Squire" : "Squire",
+                "System" : "SireSystem",
+                "Units" : "SireUnits",
                 "Vol" : "SireVol" }
         
     if len(sys.argv) < 3:
@@ -173,6 +191,7 @@ if __name__ == "__main__":
 
         for clas in module_classes:
             exposed_classes[clas] = 1
+
 
     #write the set of exposed classes to a data file to be used
     #by other scripts

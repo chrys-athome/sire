@@ -30,6 +30,7 @@ set (SIRECAS_LIBRARY "-L${SIRE_LIB_DIR} -lSireCAS" )
 set (SIREID_LIBRARY "-L${SIRE_LIB_DIR} -lSireID" )
 set (SIREMOL_LIBRARY "-L${SIRE_LIB_DIR} -lSireMol" )
 set (SIRESTREAM_LIBRARY "-L${SIRE_LIB_DIR} -lSireStream" )
+set (SIREUNITS_LIBRARY "-L${SIRE_LIB_DIR} -lSireUnits" )
 set (SIREVOL_LIBRARY "-L${SIRE_LIB_DIR} -lSireVol" )
 
 # project version
@@ -297,6 +298,7 @@ add_subdirectory (Base)
 add_subdirectory (CAS)
 add_subdirectory (ID)
 add_subdirectory (Maths)
+add_subdirectory (Units)
 add_subdirectory (Vol)
 
 install( FILES __init__.py
