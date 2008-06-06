@@ -266,6 +266,19 @@ ChainStructureEditor ChainEditor::remove(int i) const
     return editor;
 }
 
+/** Remove the atom that matches the ID 'atomid' from this chain
+
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+ChainStructureEditor ChainEditor::remove(const AtomID &atomid) const
+{
+    ChainStructureEditor editor(*this);
+    editor.remove(atomid);
+    
+    return editor;
+}
+
 /** Transfer all residues that match the ID 'resid' in this Chain 
     to the Chain that matches the ID 'cgid'
     
@@ -487,6 +500,18 @@ AtomStructureEditor ChainStructureEditor::select(const AtomID &atomid)
     return AtomStructureEditor(*this, atomIdx( this->index() + atomid ));
 }
 
+/** Return an editor for the residue that matches the ID 'resid' in
+    this chain
+    
+    \throw SireMol::missing_residue
+    \throw SireMol::duplicate_residue
+    \throw SireError::invalid_index
+*/
+ResStructureEditor ChainStructureEditor::select(const ResID &resid)
+{
+    return ResStructureEditor(*this, resIdx( this->index() + resid ));
+}
+
 /** Rename this Chain to 'newname' */
 ChainStructureEditor& ChainStructureEditor::rename(const ChainName &newname)
 {
@@ -555,6 +580,18 @@ ChainStructureEditor& ChainStructureEditor::remove(const ResID &resid)
 ChainStructureEditor& ChainStructureEditor::remove(int i)
 {
     this->removeResidues( resIdx(residueInChain(uid,i)) );
+    return *this;
+}
+
+/** Completely remove all atoms that match the ID 'atomid' from
+    all of the residues that are part of this chain
+    
+    \throw SireMol::missing_atom
+    \throw SireError::invalid_index
+*/
+ChainStructureEditor& ChainStructureEditor::remove(const AtomID &atomid)
+{
+    this->removeAtoms( this->index() + atomid );
     return *this;
 }
 

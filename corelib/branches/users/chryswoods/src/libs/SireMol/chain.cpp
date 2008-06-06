@@ -531,20 +531,20 @@ void Chain::assertContainsMetadata(const PropertyName &key,
                 .arg(metakey.toString(), key.toString()), CODELOC );
 }
 
-bool detail::has_property(const Chain*, const MoleculeData &moldata,
-                          const PropertyName &key)
+bool SIREMOL_EXPORT detail::has_property(const Chain*, const MoleculeData &moldata,
+                                         const PropertyName &key)
 {
     return moldata.hasPropertyOfType<ChainProp>(key);
 }
 
-bool detail::has_metadata(const Chain*, const MoleculeData &moldata,
-                          const PropertyName &metakey)
+bool SIREMOL_EXPORT detail::has_metadata(const Chain*, const MoleculeData &moldata,
+                                         const PropertyName &metakey)
 {
     return moldata.hasMetadataOfType<ChainProp>(metakey);
 }
 
-bool detail::has_metadata(const Chain*, const MoleculeData &moldata,
-                          const PropertyName &key, const PropertyName &metakey)
+bool SIREMOL_EXPORT detail::has_metadata(const Chain*, const MoleculeData &moldata,
+                                         const PropertyName &key, const PropertyName &metakey)
 {
     return moldata.hasMetadataOfType<ChainProp>(key, metakey);
 }

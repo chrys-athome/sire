@@ -442,20 +442,20 @@ void Segment::assertContainsMetadata(const PropertyName &key,
                 .arg(metakey.toString(), key.toString()), CODELOC );
 }
 
-bool SireMol::detail::has_property(const Segment*, const MoleculeData &moldata,
-                          const PropertyName &key)
+bool SIREMOL_EXPORT SireMol::detail::has_property(const Segment*, const MoleculeData &moldata,
+                                                  const PropertyName &key)
 {
     return moldata.hasPropertyOfType<SegProp>(key);
 }
 
-bool SireMol::detail::has_metadata(const Segment*, const MoleculeData &moldata,
-                                   const PropertyName &metakey)
+bool SIREMOL_EXPORT SireMol::detail::has_metadata(const Segment*, const MoleculeData &moldata,
+                                                  const PropertyName &metakey)
 {
     return moldata.hasMetadataOfType<SegProp>(metakey);
 }
 
-bool SireMol::detail::has_metadata(const Segment*, const MoleculeData &moldata,
-                                   const PropertyName &key, const PropertyName &metakey)
+bool SIREMOL_EXPORT SireMol::detail::has_metadata(const Segment*, const MoleculeData &moldata,
+                                                  const PropertyName &key, const PropertyName &metakey)
 {
     return moldata.hasMetadataOfType<SegProp>(key, metakey);
 }

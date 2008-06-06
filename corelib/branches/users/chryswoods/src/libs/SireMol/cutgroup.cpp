@@ -436,20 +436,20 @@ void CutGroup::assertContainsMetadata(const PropertyName &key,
                 .arg(metakey.toString(), key.toString()), CODELOC );
 }
 
-bool detail::has_property(const CutGroup*, const MoleculeData &moldata,
-                          const PropertyName &key)
+bool SIREMOL_EXPORT detail::has_property(const CutGroup*, const MoleculeData &moldata,
+                                         const PropertyName &key)
 {
     return moldata.hasPropertyOfType<CGProp>(key);
 }
 
-bool detail::has_metadata(const CutGroup*, const MoleculeData &moldata,
-                          const PropertyName &metakey)
+bool SIREMOL_EXPORT detail::has_metadata(const CutGroup*, const MoleculeData &moldata,
+                                         const PropertyName &metakey)
 {
     return moldata.hasMetadataOfType<CGProp>(metakey);
 }
 
-bool detail::has_metadata(const CutGroup*, const MoleculeData &moldata,
-                          const PropertyName &key, const PropertyName &metakey)
+bool SIREMOL_EXPORT detail::has_metadata(const CutGroup*, const MoleculeData &moldata,
+                                         const PropertyName &key, const PropertyName &metakey)
 {
     return moldata.hasMetadataOfType<CGProp>(key, metakey);
 }

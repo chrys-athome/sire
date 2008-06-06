@@ -204,6 +204,7 @@ public:
     ResStructureEditor add(ResNum resnum);
     
     ChainStructureEditor& remove(const ResID &resid);
+    ChainStructureEditor& remove(const AtomID &atomid);
 
     ChainStructureEditor& remove(int i);
     

@@ -486,20 +486,24 @@ QStringList Residue::metadataKeys(const PropertyName &key) const
     return d->properties().metadataKeysOfType<ResProp>(key);
 }
 
-bool SireMol::detail::has_property(const Residue*, const MoleculeData &moldata,
-                          const PropertyName &key)
+bool SIREMOL_EXPORT SireMol::detail::has_property(const Residue*, 
+                                                  const MoleculeData &moldata,
+                                                  const PropertyName &key)
 {
     return moldata.hasPropertyOfType<ResProp>(key);
 }
 
-bool SireMol::detail::has_metadata(const Residue*, const MoleculeData &moldata,
-                                   const PropertyName &metakey)
+bool SIREMOL_EXPORT SireMol::detail::has_metadata(const Residue*, 
+                                                  const MoleculeData &moldata,
+                                                  const PropertyName &metakey)
 {
     return moldata.hasMetadataOfType<ResProp>(metakey);
 }
 
-bool SireMol::detail::has_metadata(const Residue*, const MoleculeData &moldata,
-                                   const PropertyName &key, const PropertyName &metakey)
+bool SIREMOL_EXPORT SireMol::detail::has_metadata(const Residue*, 
+                                                  const MoleculeData &moldata,
+                                                  const PropertyName &key, 
+                                                  const PropertyName &metakey)
 {
     return moldata.hasMetadataOfType<ResProp>(key, metakey);
 }

@@ -411,20 +411,20 @@ void Atom::assertContainsMetadata(const PropertyName &key,
                 .arg(metakey.toString(), key.toString()), CODELOC );
 }
 
-bool detail::has_property(const Atom*, const MoleculeData &moldata,
-                          const PropertyName &key)
+bool SIREMOL_EXPORT detail::has_property(const Atom*, const MoleculeData &moldata,
+                                         const PropertyName &key)
 {
     return moldata.hasPropertyOfType<AtomProp>(key);
 }
 
-bool detail::has_metadata(const Atom*, const MoleculeData &moldata,
-                          const PropertyName &metakey)
+bool SIREMOL_EXPORT detail::has_metadata(const Atom*, const MoleculeData &moldata,
+                                         const PropertyName &metakey)
 {
     return moldata.hasMetadataOfType<AtomProp>(metakey);
 }
 
-bool detail::has_metadata(const Atom*, const MoleculeData &moldata,
-                          const PropertyName &key, const PropertyName &metakey)
+bool SIREMOL_EXPORT detail::has_metadata(const Atom*, const MoleculeData &moldata,
+                                         const PropertyName &key, const PropertyName &metakey)
 {
     return moldata.hasMetadataOfType<AtomProp>(key, metakey);
 }
