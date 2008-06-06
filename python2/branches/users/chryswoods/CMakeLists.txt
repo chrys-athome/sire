@@ -298,6 +298,7 @@ add_subdirectory (Base)
 add_subdirectory (CAS)
 add_subdirectory (ID)
 add_subdirectory (Maths)
+add_subdirectory (Mol)
 add_subdirectory (Units)
 add_subdirectory (Vol)
 
