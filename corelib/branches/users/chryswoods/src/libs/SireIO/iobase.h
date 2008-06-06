@@ -175,6 +175,9 @@ protected:
 
 }
 
+SIRE_EXPOSE_CLASS( SireIO::IOParametersBase )
+SIRE_EXPOSE_CLASS( SireIO::IOBase )
+
 SIRE_END_HEADER
 
 #endif

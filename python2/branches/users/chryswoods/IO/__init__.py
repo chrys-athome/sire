@@ -6,7 +6,7 @@
 ## and write molecule files.
 ##
 
-import Sire.MM
+import Sire.Mol
 
 # Import all of the classes and functions from the C++ library
 from Sire.IO._IO import *

@@ -32,6 +32,8 @@
 #include "moleculeview.h"
 #include "atomselection.h"
 
+#include "mover.hpp"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol

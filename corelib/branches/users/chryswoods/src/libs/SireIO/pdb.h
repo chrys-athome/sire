@@ -311,6 +311,9 @@ private:
 
 Q_DECLARE_METATYPE( SireIO::PDB );
 
+SIRE_EXPOSE_CLASS( SireIO::PDBParameters )
+SIRE_EXPOSE_CLASS( SireIO::PDB )
+
 SIRE_END_HEADER
 
 #endif

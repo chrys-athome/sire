@@ -684,6 +684,8 @@ QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, PDB &pdb)
     return ds;
 }
 
+PDBParameters PDB::pdbparams;
+
 /** Constructor */
 PDB::PDB() : ConcreteProperty<PDB,IOBase>()
 {}
