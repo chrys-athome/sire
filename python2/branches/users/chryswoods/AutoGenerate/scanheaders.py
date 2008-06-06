@@ -139,7 +139,9 @@ if __name__ == "__main__":
     
     modules = { "Base" : "SireBase",
                 "CAS" : "SireCAS",
+                "ID" : "SireID",
                 "Maths" : "SireMaths",
+                "Mol" : "SireMol",
                 "Vol" : "SireVol" }
         
     if len(sys.argv) < 3:
