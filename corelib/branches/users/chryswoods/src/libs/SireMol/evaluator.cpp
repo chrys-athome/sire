@@ -30,6 +30,7 @@
 #include "atomcoords.h"
 #include "atommasses.h"
 #include "atomelements.h"
+#include "atommatcher.h"
 
 #include "SireVol/coordgroup.h"
 
@@ -732,7 +733,6 @@ Vector Evaluator::centerOfMass(const PropertyMap &map) const
                 .arg(p->what()), CODELOC );
 }
 
-
 AxisSet Evaluator::alignmentAxes(const MoleculeView &other, 
                                  const AtomMatcher &matcher,
                                  const PropertyMap &map) const
@@ -749,3 +749,4 @@ AxisSet Evaluator::alignmentAxes(const MoleculeView &other,
     throw SireError::incomplete_code(CODELOC);
     return AxisSet();
 }
+

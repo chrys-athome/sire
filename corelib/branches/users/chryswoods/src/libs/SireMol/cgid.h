@@ -113,6 +113,8 @@ public:
 Q_DECLARE_METATYPE( SireMol::Specify<SireMol::CGID> );
 Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::CGID> );
 
+SIRE_EXPOSE_CLASS( SireMol::CGID )
+
 SIRE_END_HEADER
 
 #endif

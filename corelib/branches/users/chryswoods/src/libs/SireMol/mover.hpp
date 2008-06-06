@@ -131,6 +131,8 @@ public:
                       const PropertyMap &map1);
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Null constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -494,6 +496,8 @@ Mover<T>& Mover<T>::alignTo(const MoleculeView &other,
 {
     return this->alignTo(other, aligning_atoms, matcher, map, map);
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

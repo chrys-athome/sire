@@ -162,6 +162,8 @@ private:
 
 Q_DECLARE_METATYPE(SireMol::BondID);
 
+SIRE_EXPOSE_CLASS( SireMol::BondID )
+
 SIRE_END_HEADER
 
 #endif

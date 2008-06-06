@@ -240,6 +240,8 @@ private:
     quint32 uid;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the value for this residue of the property at key 'key'.
     Note that this property *must* be of type ResProperty<T> for
     this to work!
@@ -350,10 +352,15 @@ ResStructureEditor& ResStructureEditor::setMetadata(const QString &key,
     return *this;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE( SireMol::ResEditor );
 Q_DECLARE_METATYPE( SireMol::ResStructureEditor );
+
+SIRE_EXPOSE_CLASS( SireMol::ResEditor )
+SIRE_EXPOSE_CLASS( SireMol::ResStructureEditor )
 
 SIRE_END_HEADER
 

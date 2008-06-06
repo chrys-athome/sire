@@ -507,6 +507,8 @@ inline SireMol::AtomSelection operator-(const SireMol::AtomSelection &a,
 
 Q_DECLARE_METATYPE(SireMol::AtomSelection);
 
+SIRE_EXPOSE_CLASS( SireMol::AtomSelection )
+
 SIRE_END_HEADER
 
 #endif

@@ -31,6 +31,8 @@
 
 #include "SireID/id.h"
 
+#include "specify.hpp"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -103,6 +105,8 @@ public:
 #include "atomidentifier.h"
 
 Q_DECLARE_METATYPE( SireMol::Specify<SireMol::AtomID> );
+
+SIRE_EXPOSE_CLASS( SireMol::AtomID )
 
 SIRE_END_HEADER
 

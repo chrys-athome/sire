@@ -119,6 +119,8 @@ Q_DECLARE_METATYPE( SireMol::Specify<SireMol::ChainID> );
 Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::ChainID> );
 Q_DECLARE_METATYPE( SireMol::ResIn<SireMol::ChainID> );
 
+SIRE_EXPOSE_CLASS( SireMol::ChainID )
+
 SIRE_END_HEADER
 
 #endif

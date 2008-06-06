@@ -36,7 +36,7 @@
 namespace SireMol
 {
 
-class ResIdentifier : public ResID
+class SIREMOL_EXPORT ResIdentifier : public ResID
 {
 public:
     ResIdentifier();

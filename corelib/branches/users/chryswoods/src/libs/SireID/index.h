@@ -291,6 +291,9 @@ inline QDataStream& operator>>(QDataStream &ds, SireID::IndexBase &idx)
     return ds;
 }
 
+SIRE_EXPOSE_CLASS( SireID::IndexBase )
+SIRE_EXPOSE_CLASS( SireID::Index )
+
 SIRE_END_HEADER
 
 #endif

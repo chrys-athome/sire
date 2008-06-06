@@ -38,7 +38,7 @@ namespace SireMol
 
 class ChainIdx;
 
-class ChainIdentifier : public ChainID
+class SIREMOL_EXPORT ChainIdentifier : public ChainID
 {
 public:
     ChainIdentifier();

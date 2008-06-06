@@ -156,6 +156,8 @@ private:
     QVector<T> props;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Null constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -409,6 +411,8 @@ bool ChainProperty<T>::isCompatibleWith(const MoleculeInfoData &molinfo) const
 {
     return molinfo.nChains() == this->nChains();
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

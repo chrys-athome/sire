@@ -177,6 +177,8 @@ private:
 
 Q_DECLARE_METATYPE(SireMol::AngleID);
 
+SIRE_EXPOSE_CLASS( SireMol::AngleID )
+
 SIRE_END_HEADER
 
 #endif

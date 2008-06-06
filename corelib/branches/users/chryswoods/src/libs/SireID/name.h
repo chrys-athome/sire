@@ -123,4 +123,6 @@ inline QDataStream& operator>>(QDataStream &ds, SireID::Name &name)
 
 SIRE_END_HEADER
 
+SIRE_EXPOSE_CLASS( SireID::Name )
+
 #endif

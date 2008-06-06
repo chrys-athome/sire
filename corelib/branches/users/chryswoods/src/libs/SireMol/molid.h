@@ -122,6 +122,8 @@ private:
 
 }
 
+SIRE_EXPOSE_CLASS( SireMol::MolID )
+
 SIRE_END_HEADER
 
 #endif

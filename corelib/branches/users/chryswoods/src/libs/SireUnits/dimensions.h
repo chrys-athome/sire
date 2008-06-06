@@ -485,6 +485,8 @@ Q_DECLARE_TYPEINFO( SireUnits::Dimension::Capacitance, Q_MOVABLE_TYPE );
 Q_DECLARE_TYPEINFO( SireUnits::Dimension::Current, Q_MOVABLE_TYPE );
 Q_DECLARE_TYPEINFO( SireUnits::Dimension::Potential, Q_MOVABLE_TYPE );
 
+SIRE_EXPOSE_CLASS( SireUnits::Unit )
+
 SIRE_END_HEADER
 
 #endif

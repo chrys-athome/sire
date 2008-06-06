@@ -25,6 +25,7 @@ set ( SIREMOL_HEADERS
       atomidentifier.h
       atomidx.h
       atommasses.h
+      atommatcher.h
       atomname.h
       atomnum.h
       atomproperty.hpp
@@ -126,6 +127,7 @@ set ( SIREMOL_SOURCES
       atomid.cpp
       atomidentifier.cpp
       atomcutting.cpp
+      atommatcher.cpp
       atomselection.cpp
       bondid.cpp
       cgeditor.cpp

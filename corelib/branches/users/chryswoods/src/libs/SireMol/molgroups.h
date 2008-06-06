@@ -35,6 +35,8 @@
 
 #include "SireBase/property.h"
 
+SIRE_BEGIN_HEADER
+
 namespace SireMol
 {
 class MolGroupsBase;
@@ -410,19 +412,20 @@ public:
     bool operator==(const MolGroups &other) const;
     bool operator!=(const MolGroups &other) const;
     
-    MolGroupsBase& operator+=(const MolGroup &molgroup);
-    MolGroupsBase& operator-=(const MolGroup &molgroup);
+    MolGroups& operator+=(const MolGroup &molgroup);
+    MolGroups& operator-=(const MolGroup &molgroup);
     
-    MolGroupsBase& operator-=(const MGID &mgid);
+    MolGroups& operator-=(const MGID &mgid);
     
-    MolGroupsBase& operator-=(const Molecules &molecules);
-    MolGroupsBase& operator-=(const MolID &molid);
+    MolGroups& operator-=(const Molecules &molecules);
+    MolGroups& operator-=(const MolID &molid);
 
     void add(const MolGroup &molgroup);
     void remove(MGNum mgnum);
 
     void remove(const MolGroup &molgroup);
     void remove(const MGID &mgid);
+    void remove(const MolID &molid);
     
     ///////////////////////////////////////////////
     /// Pure virtual functions of MolGroupsBase ///
@@ -482,5 +485,10 @@ private:
 }
 
 Q_DECLARE_METATYPE(SireMol::MolGroups);
+
+SIRE_EXPOSE_CLASS( SireMol::MolGroupsBase )
+SIRE_EXPOSE_CLASS( SireMol::MolGroups )
+
+SIRE_END_HEADER
 
 #endif

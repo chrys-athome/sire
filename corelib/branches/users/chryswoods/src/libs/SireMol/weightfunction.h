@@ -442,6 +442,12 @@ Q_DECLARE_METATYPE(SireMol::RelFromNumber);
 Q_DECLARE_METATYPE(SireMol::AbsFromMass);
 Q_DECLARE_METATYPE(SireMol::AbsFromNumber);
 
+SIRE_EXPOSE_CLASS( SireMol::WeightFunc )
+SIRE_EXPOSE_CLASS( SireMol::RelFromMass )
+SIRE_EXPOSE_CLASS( SireMol::RelFromNumber )
+SIRE_EXPOSE_CLASS( SireMol::AbsFromMass )
+SIRE_EXPOSE_CLASS( SireMol::AbsFromNumber )
+
 SIRE_END_HEADER
 
 #endif

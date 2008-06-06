@@ -202,6 +202,8 @@ private:
     AtomSelection selected_atoms;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the property (of type T) at key 'key' that is 
     specifically assigned to this chain. This will only work
     if the property at this key is a chain property (i.e.
@@ -416,6 +418,8 @@ bool has_metadata(const Chain*, const MoleculeData &moldata,
 
 } //end of namespace detail
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireMol::Chain);
@@ -423,6 +427,8 @@ Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Chain>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Chain>);
 
 Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Chain> >);
+
+SIRE_EXPOSE_CLASS( SireMol::Chain )
 
 SIRE_END_HEADER
 

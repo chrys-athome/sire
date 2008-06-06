@@ -122,6 +122,8 @@ private:
     SireID::Index strt, end;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Null constructor */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
@@ -231,6 +233,8 @@ QList<typename ID::Index> Specify<ID>::map(const MolInfo &molinfo) const
         return specified_idxs;
     }
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

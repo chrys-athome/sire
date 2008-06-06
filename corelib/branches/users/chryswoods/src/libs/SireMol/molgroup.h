@@ -38,6 +38,8 @@
 
 #include "molecules.h"
 
+SIRE_BEGIN_HEADER
+
 namespace SireMol
 {
 class MolGroup;
@@ -297,5 +299,9 @@ private:
 }
 
 Q_DECLARE_METATYPE(SireMol::MolGroup);
+
+SIRE_EXPOSE_CLASS( SireMol::MolGroup )
+
+SIRE_END_HEADER
 
 #endif

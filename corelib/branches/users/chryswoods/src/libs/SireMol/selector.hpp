@@ -248,6 +248,8 @@ private:
     QSet<typename T::Index> idxs_set;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Null constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -1252,6 +1254,8 @@ QStringList Selector<T>::metadataKeys(const PropertyName &key) const
     else
         return this->at(0).metadataKeys(key);
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

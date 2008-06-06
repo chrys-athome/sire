@@ -93,6 +93,10 @@ inline double convert(double val, const Dimension::Unit &to_units)
 
 }
 
+SIRE_EXPOSE_FUNCTION( SireUnits::convert )
+SIRE_EXPOSE_FUNCTION( SireUnits::convertTo )
+SIRE_EXPOSE_FUNCTION( SireUnits::convertFrom )
+
 SIRE_END_HEADER
 
 #endif

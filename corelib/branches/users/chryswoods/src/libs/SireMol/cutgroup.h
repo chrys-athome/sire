@@ -183,6 +183,8 @@ private:
     CGIdx cgidx;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the property (of type T) at key 'key' that is 
     specifically assigned to this CutGroup. This will only work
     if the property at this key is a CutGroup property (i.e.
@@ -397,6 +399,8 @@ bool has_metadata(const CutGroup*, const MoleculeData &moldata,
 
 } //end of namespace detail
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireMol::CutGroup);
@@ -404,6 +408,8 @@ Q_DECLARE_METATYPE(SireMol::Mover<SireMol::CutGroup>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::CutGroup>);
 
 Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::CutGroup> >);
+
+SIRE_EXPOSE_CLASS( SireMol::CutGroup )
 
 SIRE_END_HEADER
 

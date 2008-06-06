@@ -315,6 +315,10 @@ public:
 Q_DECLARE_METATYPE(SireMol::Connectivity);
 Q_DECLARE_METATYPE(SireMol::ConnectivityEditor);
 
+SIRE_EXPOSE_CLASS( SireMol::ConnectivityBase )
+SIRE_EXPOSE_CLASS( SireMol::Connectivity )
+SIRE_EXPOSE_CLASS( SireMol::ConnectivityEditor )
+
 SIRE_END_HEADER
 
 #endif

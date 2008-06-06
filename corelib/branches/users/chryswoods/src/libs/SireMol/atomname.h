@@ -32,6 +32,7 @@
 #include "SireID/name.h"
 
 #include "atomid.h"
+#include "atomidx.h"
 #include "molinfo.h"
 
 SIRE_BEGIN_HEADER
@@ -132,6 +133,8 @@ public:
 }
 
 Q_DECLARE_METATYPE(SireMol::AtomName);
+
+SIRE_EXPOSE_CLASS( SireMol::AtomName )
 
 SIRE_END_HEADER
 

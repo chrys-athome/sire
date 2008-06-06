@@ -131,7 +131,9 @@ private:
     /** Pointer to the object containing the data for this element */
     ElementData *eldata;
 };
-    
+  
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+        
 /** Comparison operators. These are very quick */
 inline bool Element::operator==(const Element &other) const
 {
@@ -144,6 +146,8 @@ inline bool Element::operator!=(const Element &other) const
     return eldata != other.eldata;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 inline uint qHash(const SireMol::Element &element)
@@ -153,6 +157,8 @@ inline uint qHash(const SireMol::Element &element)
 
 Q_DECLARE_METATYPE(SireMol::Element);
 Q_DECLARE_TYPEINFO(SireMol::Element, Q_MOVABLE_TYPE);
+
+SIRE_EXPOSE_CLASS( SireMol::Element )
 
 SIRE_END_HEADER
 

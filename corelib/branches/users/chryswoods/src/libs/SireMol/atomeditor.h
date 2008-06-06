@@ -227,6 +227,8 @@ private:
     quint32 uid;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the value for this atom of the property at key 'key'.
     Note that this property *must* be of type AtomProperty<T> for
     this to work!
@@ -337,10 +339,15 @@ AtomStructureEditor& AtomStructureEditor::setMetadata(const QString &key,
     return *this;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE( SireMol::AtomEditor );
 Q_DECLARE_METATYPE( SireMol::AtomStructureEditor );
+
+SIRE_EXPOSE_CLASS( SireMol::AtomEditor )
+SIRE_EXPOSE_CLASS( SireMol::AtomStructureEditor )
 
 SIRE_END_HEADER
 

@@ -1997,6 +1997,13 @@ void MolGroups::add(const MolGroup &molgroup)
     mgroups.insert(new_group.read().number(), new_group);
 }
 
+/** Addition operator */
+MolGroups& MolGroups::operator+=(const MolGroup &molgroup)
+{
+    this->add(molgroup);
+    return *this;
+}
+
 /** Update the group 'molgroup'. If this group is in this set,
     then it updates the group to the same version. Then, regardless
     of whether the group is in this set, it then updates all
@@ -2079,6 +2086,49 @@ void MolGroups::remove(const MGID &mgid)
     }
     catch(...)
     {}
+}
+
+/** Remove the molecules that match the ID 'molid' from this set.
+    This does nothing if there are no molecules that match this
+    ID in this set */
+void MolGroups::remove(const MolID &molid)
+{
+    try
+    {
+        QList<MolNum> molnums = this->map(molid);
+        
+        MolGroupsBase::remove( molnums.toSet() );
+    }
+    catch(...)
+    {}
+}
+
+/** Remove operator */
+MolGroups& MolGroups::operator-=(const MolID &molid)
+{
+    this->remove(molid);
+    return *this;
+}
+
+/** Remove operator */
+MolGroups& MolGroups::operator-=(const MGID &mgid)
+{
+    this->remove(mgid);
+    return *this;
+}
+
+/** Remove operator */
+MolGroups& MolGroups::operator-=(const MolGroup &molgroup)
+{
+    this->remove(molgroup);
+    return *this;
+}
+
+/** Remove operator */
+MolGroups& MolGroups::operator-=(const Molecules &molecules)
+{
+    this->remove(molecules);
+    return *this;
 }
 
 /** Add the view of the molecule in 'molview' to the groups

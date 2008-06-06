@@ -196,6 +196,8 @@ private:
 Q_DECLARE_METATYPE(SireMol::PartialMolecule);
 Q_DECLARE_METATYPE(SireMol::Mover<SireMol::PartialMolecule>);
 
+SIRE_EXPOSE_CLASS( SireMol::PartialMolecule )
+
 SIRE_END_HEADER
 
 #endif

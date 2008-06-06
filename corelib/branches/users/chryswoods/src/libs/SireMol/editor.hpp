@@ -71,6 +71,8 @@ protected:
     Editor(const Editor<Parent,T> &other);
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Null constructor */
 template<class Parent, class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -200,6 +202,8 @@ Parent& Editor<Parent, T>::removeMetadata(const QString &key, const QString &met
     this->d->removeMetadata(key, metakey);
     return static_cast<Parent&>(*this);
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

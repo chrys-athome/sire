@@ -200,6 +200,8 @@ private:
 
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Molecules Molecules::from(const T &molecules)
@@ -248,9 +250,13 @@ Molecules::Molecules(const QVector<T> &molecules)
     *this = Molecules::from(molecules);
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireMol::Molecules);
+
+SIRE_EXPOSE_CLASS( SireMol::Molecules )
 
 SIRE_END_HEADER
 

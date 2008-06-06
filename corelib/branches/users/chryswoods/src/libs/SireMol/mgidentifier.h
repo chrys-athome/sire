@@ -40,7 +40,7 @@ namespace SireMol
 
     @author Christopher Woods
 */
-class MGIdentifier : public MGID
+class SIREMOL_EXPORT MGIdentifier : public MGID
 {
 public:
     MGIdentifier();

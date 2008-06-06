@@ -114,6 +114,8 @@ public:
 Q_DECLARE_METATYPE( SireMol::Specify<SireMol::SegID> );
 Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::SegID> );
 
+SIRE_EXPOSE_CLASS( SireMol::SegID )
+
 SIRE_END_HEADER
 
 #endif

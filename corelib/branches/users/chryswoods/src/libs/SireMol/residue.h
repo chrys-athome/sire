@@ -188,6 +188,8 @@ private:
     AtomSelection selected_atoms;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the property (of type T) at key 'key' that is 
     specifically assigned to this residue. This will only work
     if the property at this key is a residue property (i.e.
@@ -403,6 +405,8 @@ bool has_metadata(const Residue*, const MoleculeData &moldata,
 
 } //end of namespace detail
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 } //end of namespace SireMol
 
 Q_DECLARE_METATYPE(SireMol::Residue);
@@ -410,6 +414,8 @@ Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Residue>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Residue>);
 
 Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Residue> >);
+
+SIRE_EXPOSE_CLASS( SireMol::Residue )
 
 SIRE_END_HEADER
 

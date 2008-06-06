@@ -143,6 +143,8 @@ public:
 Q_DECLARE_TYPEINFO(SireMol::SegIdx, Q_MOVABLE_TYPE);
 Q_DECLARE_METATYPE(SireMol::SegIdx);
 
+SIRE_EXPOSE_CLASS( SireMol::SegIdx )
+
 SIRE_END_HEADER
 
 #endif

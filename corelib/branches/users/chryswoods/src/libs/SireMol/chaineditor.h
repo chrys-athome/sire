@@ -240,6 +240,8 @@ private:
     quint32 uid;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the value for this chain of the property at key 'key'.
     Note that this property *must* be of type ChainProperty<T> for
     this to work!
@@ -350,10 +352,15 @@ ChainStructureEditor& ChainStructureEditor::setMetadata(const QString &key,
     return *this;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE( SireMol::ChainEditor );
 Q_DECLARE_METATYPE( SireMol::ChainStructureEditor );
+
+SIRE_EXPOSE_CLASS( SireMol::ChainEditor )
+SIRE_EXPOSE_CLASS( SireMol::ChainStructureEditor )
 
 SIRE_END_HEADER
 

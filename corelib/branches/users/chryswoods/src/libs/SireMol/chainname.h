@@ -133,6 +133,8 @@ public:
 
 Q_DECLARE_METATYPE(SireMol::ChainName);
 
+SIRE_EXPOSE_CLASS( SireMol::ChainName )
+
 SIRE_END_HEADER
 
 #endif

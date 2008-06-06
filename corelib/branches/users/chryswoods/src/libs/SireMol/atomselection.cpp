@@ -3609,3 +3609,163 @@ void AtomSelection::assertCompatibleWith(const AtomSelection &other) const
                 .arg(other.info().UID())
                 .arg(d->UID()), CODELOC );
 }
+
+AtomSelection& AtomSelection::select(const QSet<SireMol::ResIdx> &ids)
+{
+    return this->select(ids.toList());
+}
+
+AtomSelection& AtomSelection::selectOnly(const QSet<SireMol::ResIdx> &ids)
+{
+    return this->selectOnly(ids.toList());
+}
+
+AtomSelection& AtomSelection::selectOnly(const QSet<SireMol::CGIdx> &ids)
+{
+    return this->selectOnly(ids.toList());
+}
+
+AtomSelection& AtomSelection::intersect(const QSet<SireMol::CGIdx> &ids)
+{
+    return this->intersect(ids.toList());
+}
+
+AtomSelection& AtomSelection::subtract(const QSet<SireMol::ResIdx> &ids)
+{
+    return this->subtract(ids.toList());
+}
+
+AtomSelection& AtomSelection::subtract(const QSet<SireMol::AtomIdx> &ids)
+{
+    return this->subtract(ids.toList());
+}
+
+AtomSelection& AtomSelection::unite(const QSet<SireMol::SegIdx> &ids)
+{
+    return this->unite(ids.toList());
+}
+
+AtomSelection& AtomSelection::mask(const QSet<SireMol::AtomIdx> &ids)
+{
+    return this->select(ids.toList());
+}
+
+AtomSelection& AtomSelection::selectOnly(const QSet<SireMol::ChainIdx> &ids)
+{
+    return this->selectOnly(ids.toList());
+}
+
+AtomSelection& AtomSelection::select(const QSet<SireMol::ChainIdx> &ids)
+{
+    return this->select(ids.toList());
+}
+
+AtomSelection& AtomSelection::mask(const QSet<SireMol::SegIdx> &ids)
+{
+    return this->mask(ids.toList());
+}
+
+AtomSelection& AtomSelection::intersect(const QSet<SireMol::SegIdx> &ids)
+{
+    return this->intersect(ids.toList());
+}
+
+AtomSelection& AtomSelection::deselect(const QSet<SireMol::SegIdx> &ids)
+{
+    return this->deselect(ids.toList());
+}
+
+AtomSelection& AtomSelection::unite(const QSet<SireMol::ResIdx> &ids)
+{
+    return this->unite(ids.toList());
+}
+
+AtomSelection& AtomSelection::select(const QSet<SireMol::CGIdx> &ids)
+{
+    return this->select(ids.toList());
+}
+
+AtomSelection& AtomSelection::mask(const QSet<SireMol::ResIdx> &ids)
+{
+    return this->mask(ids.toList());
+}
+
+AtomSelection& AtomSelection::intersect(const QSet<SireMol::ResIdx> &ids)
+{
+    return this->intersect(ids.toList());
+}
+
+AtomSelection& AtomSelection::deselect(const QSet<SireMol::ResIdx> &ids)
+{
+    return this->deselect(ids.toList());
+}
+
+AtomSelection& AtomSelection::intersect(const QSet<SireMol::AtomIdx> &ids)
+{
+    return this->intersect(ids.toList());
+}
+
+AtomSelection& AtomSelection::intersect(const QSet<SireMol::ChainIdx> &ids)
+{
+    return this->intersect(ids.toList());
+}
+
+AtomSelection& AtomSelection::deselect(const QSet<SireMol::CGIdx> &ids)
+{
+    return this->deselect(ids.toList());
+}
+
+AtomSelection& AtomSelection::unite(const QSet<SireMol::ChainIdx> &ids)
+{
+    return this->unite(ids.toList());
+}
+
+AtomSelection& AtomSelection::select(const QSet<SireMol::SegIdx> &ids)
+{
+    return this->select(ids.toList());
+}
+
+AtomSelection& AtomSelection::selectOnly(const QSet<SireMol::SegIdx> &ids)
+{
+    return this->selectOnly(ids.toList());
+}
+
+AtomSelection& AtomSelection::subtract(const QSet<SireMol::CGIdx> &ids)
+{
+    return this->subtract(ids.toList());
+}
+
+AtomSelection& AtomSelection::deselect(const QSet<SireMol::ChainIdx> &ids)
+{
+    return this->deselect(ids.toList());
+}
+
+AtomSelection& AtomSelection::subtract(const QSet<SireMol::SegIdx> &ids)
+{
+    return this->subtract(ids.toList());
+}
+
+AtomSelection& AtomSelection::unite(const QSet<SireMol::CGIdx> &ids)
+{
+    return this->unite(ids.toList());
+}
+
+AtomSelection& AtomSelection::mask(const QSet<SireMol::ChainIdx> &ids)
+{
+    return this->mask(ids.toList());
+}
+
+AtomSelection& AtomSelection::mask(const QSet<SireMol::CGIdx> &ids)
+{
+    return this->mask(ids.toList());
+}
+
+AtomSelection& AtomSelection::subtract(const QSet<SireMol::ChainIdx> &ids)
+{
+    return this->subtract(ids.toList());
+}
+
+AtomSelection& AtomSelection::unite(const QSet<SireMol::AtomIdx> &ids)
+{
+    return this->unite(ids.toList());
+}

@@ -129,6 +129,8 @@ protected:
 
 }
 
+SIRE_EXPOSE_CLASS( SireID::ID )
+
 SIRE_END_HEADER
 
 #endif

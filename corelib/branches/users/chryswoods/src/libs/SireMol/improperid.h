@@ -188,6 +188,8 @@ private:
 
 Q_DECLARE_METATYPE(SireMol::ImproperID);
 
+SIRE_EXPOSE_CLASS( SireMol::ImproperID )
+
 SIRE_END_HEADER
 
 #endif

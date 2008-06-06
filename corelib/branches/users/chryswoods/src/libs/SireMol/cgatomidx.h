@@ -179,6 +179,8 @@ inline QDataStream& operator>>(QDataStream &ds,
 Q_DECLARE_TYPEINFO(SireMol::CGAtomIdx, Q_MOVABLE_TYPE);
 Q_DECLARE_METATYPE(SireMol::CGAtomIdx);
 
+SIRE_EXPOSE_CLASS( SireMol::CGAtomIdx )
+
 SIRE_END_HEADER
 
 #endif

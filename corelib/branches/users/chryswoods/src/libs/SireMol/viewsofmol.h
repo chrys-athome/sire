@@ -255,6 +255,8 @@ private:
 Q_DECLARE_METATYPE( SireMol::ViewsOfMol );
 Q_DECLARE_METATYPE( SireMol::Mover<SireMol::ViewsOfMol> );
 
+SIRE_EXPOSE_CLASS( SireMol::ViewsOfMol )
+
 SIRE_END_HEADER
 
 #endif

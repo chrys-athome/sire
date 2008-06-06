@@ -113,6 +113,8 @@ private:
     SireID::Index strt,end;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Null constructor */
 template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
@@ -248,6 +250,8 @@ QList<ResIdx> ResIn<GROUP>::map(const MolInfo &molinfo) const
         return specified_residxs;
     }
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

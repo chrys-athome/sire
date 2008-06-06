@@ -173,6 +173,8 @@ private:
 
 Q_DECLARE_METATYPE(SireMol::DihedralID);
 
+SIRE_EXPOSE_CLASS( SireMol::DihedralID )
+
 SIRE_END_HEADER
 
 #endif

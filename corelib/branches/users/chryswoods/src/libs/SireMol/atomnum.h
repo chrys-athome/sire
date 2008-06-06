@@ -30,6 +30,7 @@
 #define SIREMOL_ATOMNUM_H
 
 #include "atomid.h"
+#include "atomidx.h"
 #include "molinfo.h"
 
 #include "SireID/number.h"
@@ -139,6 +140,8 @@ public:
 
 Q_DECLARE_TYPEINFO(SireMol::AtomNum, Q_MOVABLE_TYPE);
 Q_DECLARE_METATYPE(SireMol::AtomNum);
+
+SIRE_EXPOSE_CLASS( SireMol::AtomNum )
 
 SIRE_END_HEADER
 

@@ -180,6 +180,8 @@ protected:
     SireBase::SharedDataPointer<MoleculeData> d;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 template<class Index, class PropType, class T>
 SIRE_OUTOFLINE_TEMPLATE
 void MoleculeView::setProperty(MoleculeData &data,
@@ -436,7 +438,11 @@ void set_metadata(MoleculeData &moldata,
 
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
+
+SIRE_EXPOSE_CLASS( SireMol::MoleculeView )
 
 SIRE_END_HEADER
 

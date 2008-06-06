@@ -40,7 +40,7 @@ namespace SireMol
 
     @author Christopher Woods
 */
-class MolIdentifier : public MolID
+class SIREMOL_EXPORT MolIdentifier : public MolID
 {
 public:
     MolIdentifier();

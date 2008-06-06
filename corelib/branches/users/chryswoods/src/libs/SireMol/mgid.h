@@ -119,6 +119,8 @@ private:
 
 }
 
+SIRE_EXPOSE_CLASS( SireMol::MGID )
+
 SIRE_END_HEADER
 
 #endif

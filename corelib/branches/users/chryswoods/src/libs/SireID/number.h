@@ -118,6 +118,8 @@ inline QDataStream& operator>>(QDataStream &ds, SireID::Number &number)
     return ds;
 }
 
+SIRE_EXPOSE_CLASS( SireID::Number )
+
 SIRE_END_HEADER
 
 #endif

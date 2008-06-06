@@ -229,6 +229,8 @@ protected:
 Q_DECLARE_METATYPE(SireMol::Molecule);
 Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Molecule>);
 
+SIRE_EXPOSE_CLASS( SireMol::Molecule )
+
 SIRE_END_HEADER
 
 #endif

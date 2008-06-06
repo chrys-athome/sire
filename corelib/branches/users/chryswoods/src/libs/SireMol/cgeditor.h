@@ -234,6 +234,8 @@ private:
     quint32 uid;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the value for this CutGroup of the property at key 'key'.
     Note that this property *must* be of type CGProperty<T> for
     this to work!
@@ -344,10 +346,15 @@ CGStructureEditor& CGStructureEditor::setMetadata(const QString &key,
     return *this;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE( SireMol::CGEditor );
 Q_DECLARE_METATYPE( SireMol::CGStructureEditor );
+
+SIRE_EXPOSE_CLASS( SireMol::CGEditor )
+SIRE_EXPOSE_CLASS( SireMol::CGStructureEditor )
 
 SIRE_END_HEADER
 

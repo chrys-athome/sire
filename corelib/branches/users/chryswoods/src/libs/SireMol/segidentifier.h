@@ -38,7 +38,7 @@ namespace SireMol
 
 class SegIdx;
 
-class SegIdentifier : public SegID
+class SIREMOL_EXPORT SegIdentifier : public SegID
 {
 public:
     SegIdentifier();

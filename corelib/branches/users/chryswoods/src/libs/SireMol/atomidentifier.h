@@ -50,7 +50,7 @@ class AtomIdx;
 
     @author Christopher Woods
 */
-class AtomIdentifier : public AtomID
+class SIREMOL_EXPORT AtomIdentifier : public AtomID
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const AtomIdentifier&);

@@ -33,6 +33,9 @@
 #include "segproperty.hpp"
 #include "atomselection.h"
 
+#include "mover.hpp"
+#include "selector.hpp"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -182,6 +185,8 @@ private:
     /** The atoms that are part of this segment */
     AtomSelection selected_atoms;
 };
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 /** Return the property (of type T) at key 'key' that is 
     specifically assigned to this segment. This will only work
@@ -397,6 +402,8 @@ bool has_metadata(const Segment*, const MoleculeData &moldata,
 
 } //end of namespace detail
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireMol::Segment);
@@ -404,6 +411,8 @@ Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Segment>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Segment>);
 
 Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Segment> >);
+
+SIRE_EXPOSE_CLASS( SireMol::Segment )
 
 SIRE_END_HEADER
 

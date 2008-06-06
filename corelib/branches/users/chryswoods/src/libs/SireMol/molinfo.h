@@ -139,6 +139,8 @@ public:
 
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the intersection of the objects in 'list0' and 'list1'. This returns
     a list that contains only those items that are in both lists. The order
     of the list is the same as the input, namely if both list0 and list1 are
@@ -188,6 +190,10 @@ QList<typename T::Index> getAll(const MolInfo &molinfo,
                                 const AtomSelection &selected_atoms);
 
 } //end of namespace detail
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
+SIRE_EXPOSE_CLASS( SireMol::MolInfo )
 
 }
 

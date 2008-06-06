@@ -247,6 +247,9 @@ public:
 Q_DECLARE_METATYPE( SireMol::MolEditor );
 Q_DECLARE_METATYPE( SireMol::MolStructureEditor );
 
+SIRE_EXPOSE_CLASS( SireMol::MolEditor )
+SIRE_EXPOSE_CLASS( SireMol::MolStructureEditor )
+
 SIRE_END_HEADER
 
 #endif

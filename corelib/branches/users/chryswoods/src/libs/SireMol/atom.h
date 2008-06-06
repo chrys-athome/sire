@@ -179,6 +179,8 @@ private:
     AtomIdx atomidx;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the property (of type T) at key 'key' that is 
     specifically assigned to this atom. This will only work
     if the property at this key is an Atomic property (i.e.
@@ -512,6 +514,8 @@ bool has_metadata(const Atom*, const MoleculeData &moldata,
 
 } // end of namespace detail
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 } // end of namespace SireMol
 
 Q_DECLARE_METATYPE(SireMol::Atom);
@@ -519,6 +523,8 @@ Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Atom>);
 Q_DECLARE_METATYPE(SireMol::Selector<SireMol::Atom>);
 
 Q_DECLARE_METATYPE(SireMol::Mover< SireMol::Selector<SireMol::Atom> >);
+
+SIRE_EXPOSE_CLASS( SireMol::Atom )
 
 SIRE_END_HEADER
 

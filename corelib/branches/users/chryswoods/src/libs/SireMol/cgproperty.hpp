@@ -157,6 +157,8 @@ private:
     QVector<T> props;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Null constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -410,6 +412,8 @@ bool CGProperty<T>::isCompatibleWith(const MoleculeInfoData &molinfo) const
 {
     return molinfo.nCutGroups() == this->nCutGroups();
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

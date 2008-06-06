@@ -415,12 +415,13 @@ public:
     }
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 inline Fahrenheit operator*(double value, const Fahrenheit &temp)
 {
     return temp * value;
 }
 
-#ifndef SKIP_BROKEN_GCCXML_PARTS
 inline Dimension::PhysUnit<0,0,0,0,-1,0,0> operator/(double value, const Fahrenheit &temp)
 {
     return Dimension::PhysUnit<0,0,0,0,-1,0,0>(value / temp.convertFromInternal());
@@ -430,17 +431,22 @@ inline Dimension::PhysUnit<0,0,0,0,-1,0,0> operator/(int value, const Fahrenheit
 {
     return Dimension::PhysUnit<0,0,0,0,-1,0,0>(value / temp.convertFromInternal());
 }
-#endif
 
 inline Fahrenheit operator*(int value, const Fahrenheit &temp)
 {
     return temp * value;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 const Celsius celsius(1);
 const Fahrenheit fahrenheit(1);
 
 }
+
+SIRE_EXPOSE_CLASS( SireUnits::TempBase )
+SIRE_EXPOSE_CLASS( SireUnits::Celsius )
+SIRE_EXPOSE_CLASS( SireUnits::Fahrenheit )
 
 SIRE_END_HEADER
 

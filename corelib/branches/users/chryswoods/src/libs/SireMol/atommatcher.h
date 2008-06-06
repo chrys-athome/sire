@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2008  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,59 +26,33 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_RESIDUECUTTING_H
-#define SIREMOL_RESIDUECUTTING_H
+#ifndef SIREMOL_ATOMMATCHER_H
+#define SIREMOL_ATOMMATCHER_H
 
-#include "cuttingfunction.h"
-
-SIRE_BEGIN_HEADER
-
-namespace SireMol
-{
-class ResidueCutting;
-}
-
-QDataStream& operator<<(QDataStream&, const SireMol::ResidueCutting&);
-QDataStream& operator>>(QDataStream&, SireMol::ResidueCutting&);
+#include "sireglobal.h"
 
 namespace SireMol
 {
 
-/** This is a cutting function that divides up a molecule into 
-    CutGroups based on residue - each residue is placed into 
-    a different CutGroup
+/** Class that will eventually be used to match atoms from 
+    on molecule to atoms in another. This is used, for
+    example, when aligning two molecules against one another.
     
     @author Christopher Woods
 */
-class SIREMOL_EXPORT ResidueCutting 
-        : public SireBase::ConcreteProperty<ResidueCutting,CuttingFunctionBase>
+class SIREMOL_EXPORT AtomMatcher
 {
 public:
-    ResidueCutting();
+    AtomMatcher();
+    AtomMatcher(const AtomMatcher &other);
     
-    ResidueCutting(const ResidueCutting &other);
+    ~AtomMatcher();
     
-    ~ResidueCutting();
-    
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ResidueCutting>() );
-    }
-    
-    ResidueCutting& operator=(const ResidueCutting &other);
-    
-    bool operator==(const ResidueCutting &other) const;
-    bool operator!=(const ResidueCutting &other) const;
-    
-    MolStructureEditor operator()(MolStructureEditor &moleditor) const;
-}; 
+    AtomMatcher& operator=(const AtomMatcher &other);
+};
 
 }
 
-Q_DECLARE_METATYPE( SireMol::ResidueCutting );
-
-SIRE_EXPOSE_CLASS( SireMol::ResidueCutting )
-
-SIRE_END_HEADER
+SIRE_EXPOSE_CLASS( SireMol::AtomMatcher )
 
 #endif

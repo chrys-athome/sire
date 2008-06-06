@@ -38,7 +38,7 @@ namespace SireMol
 
 class CGIdx;
 
-class CGIdentifier : public CGID
+class SIREMOL_EXPORT CGIdentifier : public CGID
 {
 public:
     CGIdentifier();

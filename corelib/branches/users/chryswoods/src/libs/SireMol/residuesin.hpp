@@ -110,6 +110,8 @@ private:
     SireID::Index strt,end;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 template<class GROUP>
 QString ResiduesIn<GROUP>::typname 
                     = QString("SireMol::ResiduesIn<%1>").arg(GROUP::typeName());
@@ -235,6 +237,8 @@ QList<ResIDx> ResiduesIn<GROUP>::map(const MoleculeInfoData &molinfo) const
         return specified_residxs;
     }
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

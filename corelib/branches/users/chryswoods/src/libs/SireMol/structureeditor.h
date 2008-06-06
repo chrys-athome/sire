@@ -419,6 +419,8 @@ private:
     boost::shared_ptr<detail::EditMolData> d;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Protected template function used by the property() functions */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -547,6 +549,8 @@ void StructureEditor::_pvt_createSpaceForMetadata(const QString &key,
         //(necessary for casting reasons)
         props.setMetadata( key, metakey, T() );
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 /** This class is used to query a StructureEditor (to map
     from an ID to the index)

@@ -229,6 +229,8 @@ private:
     quint32 uid;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the value for this segment of the property at key 'key'.
     Note that this property *must* be of type SegProperty<T> for
     this to work!
@@ -339,10 +341,15 @@ SegStructureEditor& SegStructureEditor::setMetadata(const QString &key,
     return *this;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE( SireMol::SegEditor );
 Q_DECLARE_METATYPE( SireMol::SegStructureEditor );
+
+SIRE_EXPOSE_CLASS( SireMol::SegEditor )
+SIRE_EXPOSE_CLASS( SireMol::SegStructureEditor )
 
 SIRE_END_HEADER
 

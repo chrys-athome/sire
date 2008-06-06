@@ -177,6 +177,8 @@ private:
 
 Q_DECLARE_METATYPE(SireMol::Evaluator)
 
+SIRE_EXPOSE_CLASS( SireMol::Evaluator )
+
 SIRE_END_HEADER
 
 #endif

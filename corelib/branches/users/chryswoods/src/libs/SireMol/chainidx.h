@@ -141,6 +141,8 @@ public:
 Q_DECLARE_TYPEINFO(SireMol::ChainIdx, Q_MOVABLE_TYPE);
 Q_DECLARE_METATYPE(SireMol::ChainIdx);
 
+SIRE_EXPOSE_CLASS( SireMol::ChainIdx )
+
 SIRE_END_HEADER
 
 #endif

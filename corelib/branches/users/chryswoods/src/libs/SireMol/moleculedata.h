@@ -321,6 +321,8 @@ private:
     boost::shared_ptr<PropVersions> vrsns;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return whether or not this molecule has a property called 'key'
     that is of type 'T' */
 template<class T>
@@ -351,6 +353,8 @@ bool MoleculeData::hasMetadataOfType(const PropertyName &key,
 {
     return props.hasMetadataOfType<T>(key, metakey);
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

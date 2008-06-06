@@ -251,6 +251,8 @@ AtomProperty<T>::AtomProperty(const MoleculeInfoData &molinfo)
     }
 }
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Construct an Atom property that holds a single value (only
     suitable for a molecule that has just one atom in just one CutGroup) */
 template<class T>
@@ -651,6 +653,8 @@ AtomProperty<T> AtomProperty<T>::matchToSelection(
         return AtomProperty<T>(new_props);
     }
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

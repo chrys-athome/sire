@@ -132,6 +132,8 @@ public:
 
 Q_DECLARE_METATYPE(SireMol::ResName);
 
+SIRE_EXPOSE_CLASS( SireMol::ResName )
+
 SIRE_END_HEADER
 
 #endif
