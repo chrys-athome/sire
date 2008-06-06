@@ -45,6 +45,7 @@ set_target_properties (Mol
 target_link_libraries (Mol
                        ${SIREMOL_LIBRARY}
                        ${SIREID_LIBRARY}
+                       ${SIREVOL_LIBRARY}
                        ${SIREMATHS_LIBRARY}
                        ${SIREBASE_LIBRARY}
                        ${SIRESTREAM_LIBRARY}
