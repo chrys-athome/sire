@@ -65,6 +65,8 @@ public:
 
 }
 
+SIRE_EXPOSE_CLASS( FF::FFID )
+
 SIRE_END_HEADER
 
 #endif

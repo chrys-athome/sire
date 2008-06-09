@@ -97,6 +97,8 @@ public:
 
 Q_DECLARE_METATYPE(SireFF::ForceField);
 
+SIRE_EXPOSE_PROPERTY( SireFF::ForceField, SireFF::FF )
+
 SIRE_END_HEADER
 
 #endif

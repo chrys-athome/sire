@@ -217,6 +217,8 @@ private:
     QHash<MolNum,quint32> molnum_to_idx;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 //////
 ////// Inline functions for MolForceTable
 //////
@@ -361,10 +363,15 @@ inline const MolForceTable* ForceTable::constData() const
     return tables_by_idx.constData();
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE(SireFF::ForceTable);
 Q_DECLARE_METATYPE(SireFF::MolForceTable);
+
+SIRE_EXPOSE_CLASS( SireFF::ForceTable )
+SIRE_EXPOSE_CLASS( SireFF::MolForceTable )
 
 SIRE_END_HEADER
 

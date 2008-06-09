@@ -64,6 +64,45 @@ def getDependencies(dir, file):
 
     return [ "\"%s\"" % file ]
 
+class HeaderInfo:
+    def __init__(self, filename, dir, module_dir):
+        self._filename = filename
+        self._dependencies = getDependencies(dir, filename) + getDependencies(module_dir, filename)
+        self._classes = []
+        self._functions = []
+        self._aliases = {}
+        self._properties = []
+
+    def addClass(self, classname):
+        self._classes.append(classname)
+
+    def addFunction(self, func):
+        self._functions.append(func)
+
+    def addAlias(self, classname, alias):
+        self._aliases[classname] = alias
+
+    def addProperty(self, prop, propbase):
+        self._properties.append( [prop, propbase] )
+
+    def dependencies(self):
+        return self._dependencies
+
+    def classes(self):
+        return self._classes
+
+    def functions(self):
+        return self._functions
+
+    def aliases(self):
+        return self._aliases
+
+    def properties(self):
+        return self._properties
+
+    def hasProperties(self):
+        return len(self._properties) > 0
+
 def scanFiles(dir, module_dir):
     """Scan the header files in the passed directory to get information
        about all of the exposed classes, returning a list of all of 
@@ -94,28 +133,29 @@ def scanFiles(dir, module_dir):
 
             if m:
                 if file not in active_files:
-                    active_files[file] = ( [], [], 
-                                           getDependencies(dir, file) + getDependencies(module_dir,file), 
-                                           {} )
+                    active_files[file] = HeaderInfo(file, dir, module_dir)
 
-                active_files[file][0].append(m.groups()[0])
+                active_files[file].addClass(m.groups()[0])
                 exposed_classes.append(m.groups()[0])
 
                 try:
-                    active_files[file][3][m.groups()[0]] = m.groups()[1]
+                    active_files[file].addAlias(m.groups()[0], m.groups()[1])
                 except:
                     pass
 
-            else:
-                m = re.search(r"SIRE_EXPOSE_FUNCTION\(\s*([\w\d:]+)\s*\)", line)
-                if m:
-                    if file not in active_files:
-                        active_files[file] = ( [], [], 
-                                               getDependencies(dir, file) + getDependencies(module_dir,file), 
-                                               {} )
+            m = re.search(r"SIRE_EXPOSE_FUNCTION\(\s*([\w\d:]+)\s*\)", line)
+            if m:
+                if file not in active_files:
+                    active_files[file] = HeaderInfo(file, dir, module_dir)
 
-                    active_files[file][1].append(m.groups()[0])
+                active_files[file].addFunction(m.groups()[0])
 
+            m = re.search(r"SIRE_EXPOSE_PROPERTY\(\s*([\w\d:]+)\s*,\s*([\w\d:]+)\s*\)", line)
+            if m:
+                if file not in active_files:
+                    active_files[file] = HeaderInfo(file, dir, module_dir)
+
+                active_files[file].addProperty(m.groups()[0], m.groups()[1])
 
     #now add each active file to a single header file that can be parsed by Py++
     FILE = open("%s/active_headers.h" % module_dir, "w")

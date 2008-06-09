@@ -343,6 +343,8 @@ Q_DECLARE_METATYPE(SireVol::Space)
 
 SIRE_EXPOSE_CLASS( SireVol::SpaceBase )
 
+SIRE_EXPOSE_PROPERTY( SireVol::Space, SireVol::SpaceBase )
+
 SIRE_END_HEADER
 
 #endif

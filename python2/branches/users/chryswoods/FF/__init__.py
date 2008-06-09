@@ -7,8 +7,6 @@
 ##
 
 import Sire.Mol
-import Sire.DB
-import Sire.Cluster
 
 # Import all of the classes and functions from the C++ library
 from Sire.FF._FF import *

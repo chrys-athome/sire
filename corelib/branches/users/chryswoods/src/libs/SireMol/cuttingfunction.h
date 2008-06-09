@@ -120,6 +120,8 @@ Q_DECLARE_METATYPE( SireMol::CuttingFunction );
 
 SIRE_EXPOSE_CLASS( SireMol::CuttingFunctionBase )
 
+SIRE_EXPOSE_PROPERTY( SireMol::CuttingFunction, SireMol::CuttingFunctionBase )
+
 SIRE_END_HEADER
 
 #endif

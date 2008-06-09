@@ -110,6 +110,8 @@ protected:
 
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Null constructor */
 template<class PARAM>
 SIRE_OUTOFLINE_TEMPLATE
@@ -287,6 +289,8 @@ AtomicParameters<PARAM> AtomicParameters<PARAM>::applyMask(
     
     return AtomicParameters<PARAM>( Parameters(group_params) );
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 } //end of namespace detail
 

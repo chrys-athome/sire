@@ -267,6 +267,8 @@ SIRE_EXPOSE_CLASS( SireVol::MapFunc )
 SIRE_EXPOSE_CLASS( SireVol::MapFromCartesianFunction )
 SIRE_EXPOSE_CLASS( SireVol::MapFromSelfFunction )
 
+SIRE_EXPOSE_PROPERTY( SireVol::MappingFunction, SireVol::MapFunc )
+
 SIRE_END_HEADER
 
 #endif

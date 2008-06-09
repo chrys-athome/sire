@@ -390,6 +390,8 @@ Q_DECLARE_METATYPE(SireBase::VariantProperty);
 
 SIRE_EXPOSE_CLASS( SireBase::PropertyBase )
 
+SIRE_EXPOSE_PROPERTY( SireBase::Property, SireBase::PropertyBase )
+
 SIRE_END_HEADER
 
 #endif

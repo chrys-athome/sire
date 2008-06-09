@@ -28,6 +28,8 @@
 
 #include "ff3d.h"
 
+#include "SireCAS/symbol.h"
+
 using namespace SireFF;
 
 /** Constructor */

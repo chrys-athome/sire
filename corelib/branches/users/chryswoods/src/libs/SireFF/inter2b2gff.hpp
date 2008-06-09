@@ -157,6 +157,8 @@ protected:
     Components ffcomponents;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Constructor */
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
@@ -735,8 +737,11 @@ template<class Potential>
 const RegisterMetaType< SireFF::Inter2B2GFF<Potential> > 
 Inter2B2GRMT<Potential>::r_inter2b2gff;
 
-}
-}
+} // end of namespace detail
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
+} // end of namespace SireFF
 
 /** Serialise to a binary datastream */
 template<class Potential>

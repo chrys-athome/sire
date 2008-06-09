@@ -33,18 +33,6 @@
 
 SIRE_BEGIN_HEADER
 
-namespace SireFF
-{
-class ParameterSource;
-class ParameterName;
-class FFGroupID;
-}
-
-uint qHash(const SireFF::ParameterSource&);
-uint qHash(const SireFF::ParameterName&);
-
-uint qHash(const SireFF::FFGroupID&);
-
 SIRE_END_HEADER
 
 #endif

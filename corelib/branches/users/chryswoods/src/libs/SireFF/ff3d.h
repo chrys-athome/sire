@@ -72,6 +72,8 @@ public:
 
 }
 
+SIRE_EXPOSE_CLASS( SireFF::FF3D )
+
 SIRE_END_HEADER
 
 #endif

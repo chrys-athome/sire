@@ -193,7 +193,7 @@ namespace detail
     
     @author Christopher Woods
 */
-class FFMolGroupPvt : public MolGroup
+class SIREFF_EXPORT FFMolGroupPvt : public MolGroup
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const FFMolGroupPvt&);
@@ -267,6 +267,8 @@ private:
 } // end of namespace SireFF
 
 Q_DECLARE_METATYPE(SireFF::FFMolGroup);
+
+SIRE_EXPOSE_CLASS( SireFF::FFMolGroup )
 
 SIRE_END_HEADER
 

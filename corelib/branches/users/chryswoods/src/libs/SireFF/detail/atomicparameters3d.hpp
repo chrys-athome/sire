@@ -99,6 +99,8 @@ public:
     AtomicParameters3D<PARAM> applyMask(const QSet<quint32> &idxs) const;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Null constructor */
 template<class PARAM>
 SIRE_OUTOFLINE_TEMPLATE
@@ -243,6 +245,8 @@ AtomicParameters3D<PARAM> AtomicParameters3D<PARAM>::applyMask(
     return AtomicParameters3D<PARAM>( masked_coords,
                                       AtomicParameters<PARAM>::applyMask(idxs) );
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 } // end of namespace detail
 

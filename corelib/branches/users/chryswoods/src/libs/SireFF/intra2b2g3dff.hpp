@@ -92,6 +92,8 @@ protected:
     void _pvt_restore(const ForceField &ffield);
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Constructor (without giving the forcefield a name!) */
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
@@ -254,6 +256,8 @@ void Intra2B2G3DFF<Potential>::force(ForceTable &forcetable, const Symbol &symbo
         }
     }
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 } // end of namespace SireFF
 

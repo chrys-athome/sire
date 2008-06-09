@@ -155,6 +155,8 @@ protected:
     Components ffcomponents;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Constructor */
 template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
@@ -596,6 +598,8 @@ void Intra2BFF<Potential>::recalculateEnergy()
         throw;
     }
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

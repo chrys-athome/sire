@@ -110,6 +110,8 @@ public:
 
 Q_DECLARE_METATYPE(SireFF::FFName);
 
+SIRE_EXPOSE_CLASS( SireFF::FFName )
+
 SIRE_END_HEADER
 
 #endif

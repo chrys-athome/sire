@@ -255,6 +255,8 @@ SIRE_EXPOSE_CLASS( SireBase::TrimString )
 SIRE_EXPOSE_CLASS( SireBase::UpperCaseString )
 SIRE_EXPOSE_CLASS( SireBase::LowerCaseString )
 
+SIRE_EXPOSE_PROPERTY( SireBase::StringMangler, SireBase::StringManglerBase )
+
 SIRE_END_HEADER
 
 #endif

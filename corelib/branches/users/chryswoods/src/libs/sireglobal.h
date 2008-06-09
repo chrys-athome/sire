@@ -34,6 +34,7 @@
 #define SIRE_EXPOSE_FUNCTION(f)  /* Exposing function #1 */
 #define SIRE_EXPOSE_CLASS(c)     /* Exposing class #1 */
 #define SIRE_EXPOSE_ALIAS(c,a)   /* Exposing class #1 as alias #2 */
+#define SIRE_EXPOSE_PROPERTY(c,a)  /* Exposing property #1 of base class #2 */
 
 //create the keyword used to export a symbol - this
 //is a copy of Q_DECL_EXPORT, which will definitely

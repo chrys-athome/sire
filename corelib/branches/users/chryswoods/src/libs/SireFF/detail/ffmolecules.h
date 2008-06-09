@@ -412,6 +412,8 @@ private:
     FFMOL new_parts;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 ////////
 //////// Implementation of FFMolecule
 ////////
@@ -1295,6 +1297,8 @@ ChangedMolecule<FFMOL>& ChangedMolecule<FFMOL>::change(
     
     return *this;
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

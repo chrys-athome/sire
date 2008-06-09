@@ -117,11 +117,15 @@ private:
     CoordGroupArray coords;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the 3D coordinates of the atoms in the forcefield */
 inline const CoordGroupArray& AtomicCoords3D::atomicCoordinates() const
 {
     return coords;
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 } // end of namespace detail
 

@@ -373,6 +373,8 @@ private:
     bool isdirty;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Set the energy value of the component 'comp' */
 inline void FF::setComponent(const Symbol &component, double nrg)
 {
@@ -413,7 +415,11 @@ inline void FF::setDirty()
     isdirty = true;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
+
+SIRE_EXPOSE_CLASS( SireFF::FF )
 
 SIRE_END_HEADER
 

@@ -14,6 +14,9 @@ import re
 
 from glob import glob
 
+sys.path.append("../AutoGenerate")
+from scanheaders import *
+
 from pyplusplus.module_builder import module_builder_t
 from pyplusplus.decl_wrappers import calldef_wrapper
 from pyplusplus.code_creators import class_t
@@ -229,6 +232,59 @@ def write_wrappers(mb, module, huge_classes):
    #directory "autogen_files"
    mb.split_module( ".", huge_classes )
 
+def needPropertyWrappers(active_headers):
+   for header in active_headers:
+       if active_headers[header].hasProperties():
+           return True
+
+   return False
+
+def writePropertyWrappers(mb, sourcedir, active_headers):
+   """This function writes the property wrappers that are required for this module"""
+   
+   #are there any wrappers?
+   if not needPropertyWrappers(active_headers):
+       return
+
+   #create the files
+   FILE = open("%s_properties.h" % sourcedir, "w")
+
+   print >>FILE,"#ifndef %s_PROPERTIES_H" % sourcedir
+   print >>FILE,"#define %s_PROPERTIES_H\n" % sourcedir
+   print >>FILE,"void register_%s_properties();\n" % sourcedir
+   print >>FILE,"#endif"
+
+   FILE.close()
+
+   FILE = open("%s_properties.cpp" % sourcedir, "w")
+
+   print >>FILE,"#include <Python.h>"
+   print >>FILE,"#include <boost/python.hpp>\n"
+   print >>FILE,"#include \"Base/convertproperty.hpp\""
+   print >>FILE,"#include \"%s_properties.h\"\n" % sourcedir
+
+   for header in active_headers:
+       active_header = active_headers[header]
+       if active_header.hasProperties():
+           for dependency in active_header.dependencies():
+               print >>FILE,"#include %s" % dependency
+
+   print >>FILE,"void register_%s_properties()" % sourcedir
+   print >>FILE,"{"
+   
+   for header in active_headers:
+       active_header = active_headers[header]
+       if active_header.hasProperties():
+           for property in active_header.properties():
+               print >>FILE,"    register_property_container< %s, %s >();" % (property[0], property[1])
+
+   print >>FILE,"}"
+
+   FILE.close()
+
+   mb.add_declaration_code("#include \"%s_properties.h\"" % sourcedir)
+   mb.add_registration_code("register_%s_properties();" % sourcedir)
+
 def fixMB(mb):
    pass
 
@@ -285,12 +341,15 @@ if __name__ == "__main__":
 
     #export each of the classes in this module in turn
     for header in active_headers:
-        classes = active_headers[header][0]
-        includes = active_headers[header][2]
-        aliases = active_headers[header][3]
+        classes = active_headers[header].classes()
+        includes = active_headers[header].dependencies()
+        aliases = active_headers[header].aliases()
 
         for clas in classes:
             export_class(mb, clas.split("::")[-1], aliases, includes, special_code)
+
+    #write the code that wraps up the Property classes
+    writePropertyWrappers(mb, sourcedir, active_headers)
 
     #remove all implicit implicit conversions and add the explicit implicit conversions (!)
     register_implicit_conversions(mb, implicitly_convertible)
@@ -313,6 +372,9 @@ if __name__ == "__main__":
 
     if os.path.exists("%s_containers.cpp" % sourcedir):
         print >>FILE,"       %s_containers.cpp" % sourcedir
+
+    if os.path.exists("%s_properties.cpp" % sourcedir):
+        print >>FILE,"       %s_properties.cpp" % sourcedir
 
     print >>FILE,"    )"
 

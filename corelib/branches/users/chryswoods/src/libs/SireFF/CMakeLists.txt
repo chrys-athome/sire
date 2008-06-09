@@ -18,9 +18,7 @@ set ( SIREFF_HEADERS
       ffidx.h
       ffmolgroup.h
       ffname.h
-      ffnum.h
       forcefield.h
-      forcefields.h
       forcetable.h
       g1ff.h
       g2ff.h

@@ -204,6 +204,8 @@ private:
 
 }
 
+SIRE_EXPOSE_CLASS( SireFF::G2FF )
+
 SIRE_END_HEADER
 
 #endif

@@ -217,6 +217,8 @@ private:
     QVector<AABox> aaboxes_by_idx;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 ///////
 /////// Implementation of FFMolecule3D<PTNL>
 ///////
@@ -695,6 +697,8 @@ FFMolecules3D<PTNL>::remove(const PartialMolecule &molecule,
     
     return changed_mol;
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 } // end of namespace SireFF::detail
 

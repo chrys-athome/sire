@@ -448,6 +448,8 @@ SIRE_EXPOSE_CLASS( SireMol::RelFromNumber )
 SIRE_EXPOSE_CLASS( SireMol::AbsFromMass )
 SIRE_EXPOSE_CLASS( SireMol::AbsFromNumber )
 
+SIRE_EXPOSE_PROPERTY( SireMol::WeightFunction, SireMol::WeightFunc )
+
 SIRE_END_HEADER
 
 #endif
