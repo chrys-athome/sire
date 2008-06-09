@@ -49,6 +49,7 @@ target_link_libraries (Mol
                        ${SIREMATHS_LIBRARY}
                        ${SIREBASE_LIBRARY}
                        ${SIRESTREAM_LIBRARY}
+                       ${SIREERROR_LIBRARY}
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARY}
                        ${QT_QTCORE_LIBRARY}

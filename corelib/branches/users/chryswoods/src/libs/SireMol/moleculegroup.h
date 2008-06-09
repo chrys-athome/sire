@@ -116,6 +116,8 @@ public:
 
 Q_DECLARE_METATYPE(SireMol::MoleculeGroup);
 
+SIRE_EXPOSE_PROPERTY( SireMol::MoleculeGroup, SireMol::MolGroup )
+
 SIRE_END_HEADER
 
 #endif

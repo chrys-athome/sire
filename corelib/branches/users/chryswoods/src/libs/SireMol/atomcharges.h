@@ -44,6 +44,8 @@ typedef AtomProperty< SireUnits::Dimension::Charge > AtomCharges;
 
 Q_DECLARE_METATYPE( SireMol::AtomCharges );
 
+SIRE_EXPOSE_ATOM_PROPERTY( SireUnits::Dimension::Charge, SireMol::AtomCharges )
+
 SIRE_END_HEADER
 
 #endif

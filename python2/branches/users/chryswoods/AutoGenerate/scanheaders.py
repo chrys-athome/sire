@@ -64,6 +64,26 @@ def getDependencies(dir, file):
 
     return [ "\"%s\"" % file ]
 
+class Properties:
+    def __init__(self):
+        self._dependencies = {}
+        self._properties = []
+
+    def addProperty(self, property, alias):
+        self._properties.append( (property,alias) )
+
+    def properties(self):
+        return self._properties
+
+    def addDependency(self, headerfile, dir, module_dir):
+        deps = getDependencies(dir, headerfile) + getDependencies(module_dir, headerfile)
+        
+        for dep in deps:
+            self._dependencies[dep] = 1
+
+    def dependencies(self):
+        return self._dependencies.keys()
+
 class HeaderInfo:
     def __init__(self, filename, dir, module_dir):
         self._filename = filename
@@ -83,7 +103,7 @@ class HeaderInfo:
         self._aliases[classname] = alias
 
     def addProperty(self, prop, propbase):
-        self._properties.append( [prop, propbase] )
+        self._properties.append( (prop, propbase) )
 
     def dependencies(self):
         return self._dependencies
@@ -103,7 +123,7 @@ class HeaderInfo:
     def hasProperties(self):
         return len(self._properties) > 0
 
-def scanFiles(dir, module_dir):
+def scanFiles(dir, module_dir, atom_properties):
     """Scan the header files in the passed directory to get information
        about all of the exposed classes, returning a list of all of 
        the classes that are being exposed, and placing meta information
@@ -156,6 +176,11 @@ def scanFiles(dir, module_dir):
                     active_files[file] = HeaderInfo(file, dir, module_dir)
 
                 active_files[file].addProperty(m.groups()[0], m.groups()[1])
+
+            m = re.search(r"SIRE_EXPOSE_ATOM_PROPERTY\(\s*([\w\d:]+)\s*,\s*([\w\d:]+)\s*\)", line)
+            if m:
+                atom_properties.addDependency(file, dir, module_dir)
+                atom_properties.addProperty(m.groups()[0], m.groups()[1])
 
     #now add each active file to a single header file that can be parsed by Py++
     FILE = open("%s/active_headers.h" % module_dir, "w")
@@ -211,6 +236,8 @@ if __name__ == "__main__":
 
     exposed_classes = {}
 
+    atom_properties = Properties()
+
     for module in modules:
         
         try:
@@ -227,7 +254,8 @@ if __name__ == "__main__":
         FILE.close()
 
         module_classes = scanFiles( "%s/%s" % (siredir,modules[module]),
-                                    "%s/%s" % (outdir,module) ) 
+                                    "%s/%s" % (outdir,module),
+                                    atom_properties ) 
 
         for clas in module_classes:
             exposed_classes[clas] = 1
@@ -236,3 +264,5 @@ if __name__ == "__main__":
     #write the set of exposed classes to a data file to be used
     #by other scripts
     pickle.dump( exposed_classes, open("%s/classdb.data" % outdir, "w") )
+
+    pickle.dump( atom_properties, open("%s/Mol/atomprops.data" % outdir, "w") )

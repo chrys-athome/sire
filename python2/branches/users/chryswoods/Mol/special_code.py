@@ -5,7 +5,28 @@
 #
 #
 
+import sys
+import pickle
+
 from pyplusplus.module_builder import call_policies
+
+sys.path.append("../AutoGenerate")
+from scanheaders import *
+
+atomprops = pickle.load( open("atomprops.data") )
+
+return_policy = "bp::return_value_policy<bp::copy_const_reference>()"
+
+def fix_Atom(c):
+   #add accessor functions for all of the atom properties
+   for atomprop in atomprops.properties():
+       p = atomprop[0]
+       c.add_registration_code( "def( \"_get_property_%s\", &SireMol::Atom::property<%s>, %s)" \
+                                      % (p.replace("::","_"), p, return_policy) )
+
+   #now add in all of the header files
+   for header in atomprops.dependencies():
+       c.add_declaration_code( "#include %s" % header )
 
 def fix_AtomEditor(c):
    c.decls( "rename" ).call_policies = call_policies.return_self()
@@ -105,7 +126,8 @@ def fix_MolInfo(c):
     c.add_declaration_code( "#include \"moleculeinfodata.h\"" )
     c.add_declaration_code( "#include \"atomselection.h\"" )
 
-special_code = { "AtomEditor" : fix_AtomEditor,
+special_code = { "Atom" : fix_Atom,
+                 "AtomEditor" : fix_AtomEditor,
                  "AtomSelection" : fix_AtomSelection,
                  "AtomStructureEditor" : fix_AtomStructureEditor,
                  "CGEditor" : fix_CGEditor,

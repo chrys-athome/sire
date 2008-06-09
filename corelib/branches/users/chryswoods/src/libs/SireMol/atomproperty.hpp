@@ -690,6 +690,11 @@ Q_DECLARE_METATYPE( SireMol::AtomIntProperty );
 Q_DECLARE_METATYPE( SireMol::AtomFloatProperty );
 Q_DECLARE_METATYPE( SireMol::AtomVariantProperty );
 
+SIRE_EXPOSE_ATOM_PROPERTY( QString, SireMol::AtomStringProperty )
+SIRE_EXPOSE_ATOM_PROPERTY( qint64, SireMol::AtomIntProperty )
+SIRE_EXPOSE_ATOM_PROPERTY( double, SireMol::AtomFloatProperty )
+SIRE_EXPOSE_ATOM_PROPERTY( QVariant, SireMol::AtomVariantProperty )
+
 SIRE_END_HEADER
 
 #endif

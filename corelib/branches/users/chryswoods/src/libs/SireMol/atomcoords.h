@@ -179,6 +179,8 @@ typedef AtomProperty<Vector> AtomCoords;
 
 Q_DECLARE_METATYPE( SireMol::AtomCoords );
 
+SIRE_EXPOSE_ATOM_PROPERTY( SireMaths::Vector, SireMol::AtomCoords )
+
 SIRE_END_HEADER
 
 #endif

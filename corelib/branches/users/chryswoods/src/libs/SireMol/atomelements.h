@@ -43,6 +43,8 @@ typedef AtomProperty<Element> AtomElements;
 
 Q_DECLARE_METATYPE( SireMol::AtomElements );
 
+SIRE_EXPOSE_ATOM_PROPERTY( SireMol::Element, SireMol::AtomElements )
+
 SIRE_END_HEADER
 
 #endif
