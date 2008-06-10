@@ -18,15 +18,30 @@ atomprops = pickle.load( open("atomprops.data") )
 return_policy = "bp::return_value_policy<bp::copy_const_reference>()"
 
 def fix_Atom(c):
-   #add accessor functions for all of the atom properties
-   for atomprop in atomprops.properties():
-       p = atomprop[0]
-       c.add_registration_code( "def( \"_get_property_%s\", &SireMol::Atom::property<%s>, %s)" \
-                                      % (p.replace("::","_"), p, return_policy) )
-
    #now add in all of the header files
    for header in atomprops.dependencies():
        c.add_declaration_code( "#include %s" % header )
+
+   #add accessor functions for all of the atom properties
+   for atomprop in atomprops.properties():
+       p = atomprop[0]
+       prop = atomprop[1].replace("::","_")
+
+       c.add_registration_code( "def( \"_get_property_%s\", &SireMol::Atom::property<%s>, %s)" \
+                                      % (prop, p, return_policy) )
+       c.add_registration_code( "def( \"_get_metadata_%s\", get_Metadata_%s_function1, %s)" \
+                                      % (prop, prop, return_policy) )
+       c.add_registration_code( "def( \"_get_metadata_%s\", &get_Metadata_%s_function2, %s)" \
+                                      % (prop, prop, return_policy) )
+
+       c.add_declaration_code( """ const %s& get_Metadata_%s_function1(const SireMol::Atom &atom,
+                                   const QString &metakey){ return atom.metadata<%s>(metakey); }""" \
+                                      % (p, prop, p) )
+ 
+       c.add_declaration_code( """ const %s& get_Metadata_%s_function2(const SireMol::Atom &atom,
+                                   const QString &key, const QString &metakey){
+                                        return atom.metadata<%s>(key, metakey); }""" \
+                                      % (p, prop, p) )
 
 def fix_AtomEditor(c):
    c.decls( "rename" ).call_policies = call_policies.return_self()

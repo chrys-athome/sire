@@ -11,19 +11,26 @@ import Sire.ID
 
 from Sire.Mol._Mol import *
 
-__atom_property_types__ = { "SireMol::AtomCoords" : "SireMaths_Vector",
-                            "SireMol::AtomElements" : "SireMol_Element",
-                            "SireMol::AtomCharges" : "SireUnits_Dimension_Charge",
-                            "SireMol::AtomIntProperty" : "qint64",
-                            "SireMol::AtomStringProperty" : "QString",
-                            "SireMol::AtomFloatProperty" : "double",
-                            "SireMol::AtomVariantProperty" : "QVariant" }
+def __get_atom_property__(atom, key):
+    property_type = atom.propertyType(key).replace("::","_")
 
-def __get_atom_property__(atom, property_name):
-    property_type = atom.propertyType(property_name)
-    property_type = __atom_property_types__[property_type]
+    return getattr(atom, "_get_property_%s" % property_type)(key)
 
-    return getattr(atom, "_get_property_%s" % property_type)(property_name)
+def __get_atom_metadata__(atom, *args):
+
+    if len(args) == 1:
+        metakey = args[0]
+        property_type = atom.metadataType(metakey).replace("::","_")
+        return getattr(atom, "_get_metadata_%s" % property_type)(metakey)
+
+    elif len(args) == 2:
+         (key, metakey) = args
+         property_type = atom.metadataType(key, metakey).replace("::","_")
+         return getattr(atom, "_get_metadata_%s" % property_type)(key, metakey)
+
+    else:
+        raise "ERROR"
 
 Atom.property = __get_atom_property__
+Atom.metadata = __get_atom_metadata__
 
