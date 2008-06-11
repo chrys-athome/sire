@@ -185,17 +185,11 @@ set( SIRE_PLATFORM_OPTIONS "" )
 #       "-arch i386 -Wno-long-double -no-cpp-precomp -mno-fused-madd -fno-common" )
 #endif()
 
-set( SIRE_C_FLAGS_RELEASE "-Wall -O2 -fomit-frame-pointer ${SIRE_PLATFORM_OPTIONS}" )
+set( SIRE_C_FLAGS_RELEASE "-Wall -Os -fomit-frame-pointer ${SIRE_PLATFORM_OPTIONS}" )
 set( SIRE_CXX_FLAGS_RELEASE ${SIRE_C_FLAGS_RELEASE} )
 
-set( SIRE_C_FLAGS_DEBUG "-Wall -g -O2 ${SIRE_PLATFORM_OPTIONS}" )
+set( SIRE_C_FLAGS_DEBUG "-Wall -Os -g ${SIRE_PLATFORM_OPTIONS}" )
 set( SIRE_CXX_FLAGS_DEBUG ${SIRE_C_FLAGS_DEBUG} )
-
-# Also set flags for size-optimised compile - this is used for
-# all of the python wrappers, which can grow to enormous sizes 
-# otherwise! (and aren't performance critical)
-set( SIRE_C_FLAGS_SMALL "-Wall -Os ${SIRE_PLATFORM_OPTIONS}" )
-set( SIRE_CXX_FLAGS_SMALL ${SIRE_C_FLAGS_SMALL} )
 
 # Add machine definition (supplied by user?)
 ADD_DEFINITIONS( ${SIRE_TARGET_OPTIONS} )

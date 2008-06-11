@@ -22,8 +22,14 @@ namespace SireUnits
 namespace Dimension
 {
 
+class GeneralUnit;
 class TempBase;
 class _Pvt_Kelvin;
+
+namespace detail
+{
+void registerTypeName(const GeneralUnit &unit, const char *typnam);
+}
 
 class GeneralUnit : public Unit
 {
@@ -40,11 +46,15 @@ public:
         temperature = D::TEMPERATURE();
         Quantity = D::QUANTITY();
         Angle = D::ANGLE();
+        detail::registerTypeName(*this, D::typeName());
     }
     
     GeneralUnit(const GeneralUnit &other);
     
     ~GeneralUnit();
+
+    QString typeName() const;
+    QString what() const;
 
     int MASS() const;
     int LENGTH() const;
@@ -237,7 +247,7 @@ void register_dimension()
 
 }
 
-SIRE_EXPOSE_CLASS( SireUnits::GeneralUnit )
+SIRE_EXPOSE_CLASS( SireUnits::Dimension::GeneralUnit )
 
 SIRE_END_HEADER
 

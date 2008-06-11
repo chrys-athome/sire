@@ -8,29 +8,72 @@
 import Sire.Maths
 import Sire.Base
 import Sire.ID
+import Sire.Qt
 
 from Sire.Mol._Mol import *
 
-def __get_atom_property__(atom, key):
-    property_type = atom.propertyType(key).replace("::","_")
+def __get_property__(molview, key):
+    property_type = molview.propertyType(key).replace("::","_")
 
-    return getattr(atom, "_get_property_%s" % property_type)(key)
+    return getattr(molview, "_get_property_%s" % property_type)(key)
 
-def __get_atom_metadata__(atom, *args):
+def __get_metadata__(molview, *args):
 
     if len(args) == 1:
         metakey = args[0]
-        property_type = atom.metadataType(metakey).replace("::","_")
-        return getattr(atom, "_get_metadata_%s" % property_type)(metakey)
+        property_type = molview.metadataType(metakey).replace("::","_")
+        return getattr(molview, "_get_metadata_%s" % property_type)(metakey)
 
     elif len(args) == 2:
          (key, metakey) = args
-         property_type = atom.metadataType(key, metakey).replace("::","_")
-         return getattr(atom, "_get_metadata_%s" % property_type)(key, metakey)
+         property_type = molview.metadataType(key, metakey).replace("::","_")
+         return getattr(molview, "_get_metadata_%s" % property_type)(key, metakey)
 
     else:
-        raise "ERROR"
+        raise AttributeError( "Only molview.metadata(metakey) or molview.metadata(key, metakey) are valid!" )
 
-Atom.property = __get_atom_property__
-Atom.metadata = __get_atom_metadata__
+def __get_typename__(obj):
+    try:
+        return (obj.typeName().replace("::","_"), obj)
+    except:
+        if isinstance(obj, float):
+            return ("double", obj)
+        elif isinstance(obj, int):
+            return ("qint64", obj)
+        elif isinstance(obj, str):
+            return ("QString", obj)
+        else:
+            return ("QVariant", Sire.Qt.QVariant(obj)) 
+
+def __set_property__(molview, key, property):
+    (typename, property) = __get_typename__(property)
+
+    return getattr(molview, "_set_property_%s" % typename)(key, property)     
+
+def __set_metadata__(molview, *args):
+
+    if len(args) == 2:
+        metakey = args[0]
+        property = args[1]
+
+        (typename, property) = __get_typename__(property)
+
+        return getattr(molview, "_set_metadata_%s" % typename)(metakey, property)
+
+    elif len(args) == 3:
+         (key, metakey, property) = args
+
+         (typename, property) = __get_typename__(property)         
+
+         return getattr(molview, "_set_metadata_%s" % typename)(key, metakey, property)
+
+    else:
+        raise AttributeError( "Only molview.setMetadata(metakey, property) " + \
+                              "or molview.setMetadata(key, metakey, property) are valid!" )
+
+
+Atom.property = __get_property__
+AtomEditorBase.setProperty = __set_property__
+Atom.metadata = __get_metadata__
+AtomEditorBase.setMetadata = __set_metadata__
 

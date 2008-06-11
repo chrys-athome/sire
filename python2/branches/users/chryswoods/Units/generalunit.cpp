@@ -3,6 +3,8 @@
 #include <boost/python.hpp>
 
 #include <QStringList>
+#include <QMutex>
+#include <QHash>
 
 #include "generalunit.h"
 
@@ -11,6 +13,54 @@
 
 using namespace SireUnits;
 using namespace SireUnits::Dimension;
+
+namespace SireUnits
+{
+namespace Dimension
+{
+namespace detail
+{
+
+static QHash<QString,QString> typename_registry;
+static QMutex registry_mutex;
+
+static QString getKey(const GeneralUnit &unit)
+{
+    return QString("%1-%2-%3-%4-%5-%6-%7")
+              .arg(unit.MASS()).arg(unit.LENGTH()).arg(unit.TIME())
+              .arg(unit.CHARGE()).arg(unit.TEMPERATURE())
+              .arg(unit.QUANTITY()).arg(unit.ANGLE());
+}
+
+void registerTypeName(const GeneralUnit &unit, const char *typnam)
+{
+    QString key = getKey(unit);
+
+    QMutexLocker lkr(&registry_mutex);
+    if (not typename_registry.contains(key))
+    {
+        typename_registry.insert( key, QString(typnam) );
+    }
+}
+
+static QString getTypeName(const GeneralUnit &unit)
+{
+    QString key = getKey(unit);
+
+    QMutexLocker lkr(&registry_mutex);
+
+    if (typename_registry.contains(key))
+        return typename_registry.value(key);
+    else
+        return QString("SireUnits::Dimension::PhysUnit<%1,%2,%3,%4,%5,%6,%7>")
+                 .arg(unit.MASS()).arg(unit.LENGTH()).arg(unit.TIME())
+                 .arg(unit.CHARGE()).arg(unit.TEMPERATURE())
+                 .arg(unit.QUANTITY()).arg(unit.ANGLE());
+}
+
+} // end of namespace detail
+} // end of namespace Dimension
+} // end of namespace SireUnits
 
 GeneralUnit::GeneralUnit() : Unit(0)
 {
@@ -36,6 +86,18 @@ GeneralUnit::GeneralUnit(const GeneralUnit &other) : Unit(other)
 
 GeneralUnit::~GeneralUnit()
 {}
+
+/** Return the C++ type that this particular GeneralUnit corresponds to */
+QString GeneralUnit::typeName() const
+{
+    return detail::getTypeName(*this);
+}
+
+/** Return the C++ type that this particular GeneralUnit corresponds to */
+QString GeneralUnit::what() const
+{
+    return detail::getTypeName(*this);
+}
 
 void GeneralUnit::assertCompatible(const GeneralUnit &other) const
 {
@@ -154,8 +216,8 @@ GeneralUnit& GeneralUnit::operator=(const GeneralUnit &other)
     Charge = other.CHARGE();
     temperature = other.TEMPERATURE();
     Quantity = other.QUANTITY();
-    Angle = other.ANGLE();
-    
+    Angle = other.ANGLE();    
+
     return *this;
 }
 

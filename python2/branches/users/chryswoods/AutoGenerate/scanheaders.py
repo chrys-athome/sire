@@ -10,6 +10,7 @@ import sys
 import os
 import re
 import pickle
+import string
 
 from glob import glob
 
@@ -123,6 +124,12 @@ class HeaderInfo:
     def hasProperties(self):
         return len(self._properties) > 0
 
+match_class = r"SIRE_EXPOSE_CLASS\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
+match_alias = r"SIRE_EXPOSE_ALIAS\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*,\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
+match_function = r"SIRE_EXPOSE_FUNCTION\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
+match_property = r"SIRE_EXPOSE_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
+match_atom_property = r"SIRE_EXPOSE_ATOM_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
+
 def scanFiles(dir, module_dir, atom_properties):
     """Scan the header files in the passed directory to get information
        about all of the exposed classes, returning a list of all of 
@@ -145,42 +152,38 @@ def scanFiles(dir, module_dir, atom_properties):
         except:
             lines = open("%s/%s" % (module_dir,file), "r").readlines()
 
-        for line in lines:
-            m = re.search(r"SIRE_EXPOSE_CLASS\(\s*([<>\w\d:]+)\s*\)", line)
+        text = string.join(lines)
 
-            if not m:
-               m = re.search(r"SIRE_EXPOSE_ALIAS\(\s*([<>\w\d:]+)\s*,\s*([<>\w\d:]+)\s*\)", line)
+        for m in re.finditer(match_class, text):
+            if file not in active_files:
+                active_files[file] = HeaderInfo(file, dir, module_dir)
 
-            if m:
-                if file not in active_files:
-                    active_files[file] = HeaderInfo(file, dir, module_dir)
+            active_files[file].addClass(m.groups()[0].strip())
+            exposed_classes.append(m.groups()[0].strip())
 
-                active_files[file].addClass(m.groups()[0])
-                exposed_classes.append(m.groups()[0])
+        for m in re.finditer(match_alias, text):
+            if file not in active_files:
+                active_files[file] = HeaderInfo(file, dir, module_dir)
 
-                try:
-                    active_files[file].addAlias(m.groups()[0], m.groups()[1])
-                except:
-                    pass
+            active_files[file].addClass(m.groups()[0].strip())
+            active_files[file].addAlias(m.groups()[0].strip(), m.groups()[1].strip())
+            exposed_classes.append(m.groups()[0].strip())
 
-            m = re.search(r"SIRE_EXPOSE_FUNCTION\(\s*([\w\d:]+)\s*\)", line)
-            if m:
-                if file not in active_files:
-                    active_files[file] = HeaderInfo(file, dir, module_dir)
+        for m in re.finditer(match_function, text):
+            if file not in active_files:
+                active_files[file] = HeaderInfo(file, dir, module_dir)
 
-                active_files[file].addFunction(m.groups()[0])
+            active_files[file].addFunction(m.groups()[0].strip())
 
-            m = re.search(r"SIRE_EXPOSE_PROPERTY\(\s*([\w\d:]+)\s*,\s*([\w\d:]+)\s*\)", line)
-            if m:
-                if file not in active_files:
-                    active_files[file] = HeaderInfo(file, dir, module_dir)
+        for m in re.finditer(match_property, text):
+            if file not in active_files:
+                active_files[file] = HeaderInfo(file, dir, module_dir)
 
-                active_files[file].addProperty(m.groups()[0], m.groups()[1])
+            active_files[file].addProperty(m.groups()[0].strip(), m.groups()[1].strip())
 
-            m = re.search(r"SIRE_EXPOSE_ATOM_PROPERTY\(\s*([\w\d:]+)\s*,\s*([\w\d:]+)\s*\)", line)
-            if m:
-                atom_properties.addDependency(file, dir, module_dir)
-                atom_properties.addProperty(m.groups()[0], m.groups()[1])
+        for m in re.finditer(match_atom_property, text):
+            atom_properties.addDependency(file, dir, module_dir)
+            atom_properties.addProperty(m.groups()[0].strip(), m.groups()[1].strip())
 
     #now add each active file to a single header file that can be parsed by Py++
     FILE = open("%s/active_headers.h" % module_dir, "w")

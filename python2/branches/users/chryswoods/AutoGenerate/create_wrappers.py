@@ -93,6 +93,15 @@ def has_function(c, funcname):
        
        return False
 
+def find_class(mb, classname):
+   for clas in mb.classes():
+       if str(clas).find("%s [class]" % classname) != -1:
+           return clas
+       elif str(clas).find("%s [struct]" % classname) != -1:
+           return clas
+
+   raise "Cannot find the class %s" % classname
+
 def export_class(mb, classname, aliases, includes, special_code):
    """Do all the work necessary to allow the class called 'classname'
       to be exported, using the supplied aliases, and using the 
@@ -100,7 +109,7 @@ def export_class(mb, classname, aliases, includes, special_code):
       to the generated C++"""
 
    #find the class in the declarations
-   c = mb.class_(classname)
+   c = find_class(mb, classname)
    
    #include the class in the wrapper
    c.include()
@@ -144,6 +153,7 @@ def export_class(mb, classname, aliases, includes, special_code):
               if decl.is_copy_constructor:
                   #create a __copy__ function
                   class_name = re.sub(r"\s\[class\]","",str(c))
+                  class_name = re.sub(r"\s\[struct\]","",class_name)
                   
                   c.add_declaration_code( \
                        "%s __copy__(const %s &other){ return %s(other); }" \
@@ -193,7 +203,7 @@ def export_class(mb, classname, aliases, includes, special_code):
            
    #provide an alias for this class
    if (classname in aliases):
-      c.alias = aliases[classname]
+      c.alias = string.join( aliases[classname].split("::")[1:] )
 
 def register_implicit_conversions(mb, implicitly_convertible):
     """This function sets the wrapper generator to use only the implicit conversions
@@ -322,7 +332,8 @@ if __name__ == "__main__":
                            include_paths = sire_include_dirs + qt_include_dirs +
                                            boost_include_dirs + gsl_include_dirs,
                            define_symbols = ["GCCXML_PARSE",
-                                             "SIRE_SKIP_INLINE_FUNCTIONS"] )
+                                             "SIRE_SKIP_INLINE_FUNCTIONS",
+                                             "SIRE_INSTANTIATE_TEMPLATES"] )
 
     #get rid of all virtual python functions - this is to stop slow wrapper code
     #from being generated for C++ virtual objects
@@ -346,7 +357,7 @@ if __name__ == "__main__":
         aliases = active_headers[header].aliases()
 
         for clas in classes:
-            export_class(mb, clas.split("::")[-1], aliases, includes, special_code)
+            export_class(mb, clas, aliases, includes, special_code)
 
     #write the code that wraps up the Property classes
     writePropertyWrappers(mb, sourcedir, active_headers)
