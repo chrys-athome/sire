@@ -1794,6 +1794,25 @@ namespace detail
 void throwCannotConvertVariantError(const char *this_type, 
                                     const char *type_t,
                                     const QString &codeloc);
+
+template<class T>
+T default_construct()
+{
+    return T();
+}
+
+template<>
+inline double default_construct()
+{
+    return double(0);
+}
+
+template<>
+inline qint64 default_construct()
+{
+    return qint64(0);
+}
+
 template<class T>
 struct VariantConverter
 {
@@ -1855,13 +1874,20 @@ struct VariantConverter
             for (int j=0; j<nvalues; ++j)
             {
                 const QVariant &value = this_variant_array[j];
-                
-                if (not value.canConvert<T>())
+             
+                if (value.isNull())
+                {
+                    //use a default-constructed value
+                    this_array_array[j] = SireBase::detail::default_construct<T>();
+                }
+                else if (not value.canConvert<T>())
+                {
                     throwCannotConvertVariantError(value.typeName(),
                                             QMetaType::typeName( qMetaTypeId<T>() ),
                                             CODELOC );
-            
-                this_array_array[j] = value.value<T>();
+                }
+                else
+                    this_array_array[j] = value.value<T>();
             }
             
             array_array[i] = this_array;

@@ -31,6 +31,7 @@
 #include "connectivity.h"
 #include "weightfunction.h"
 
+#include "atommatcher.h"
 #include "bondid.h"
 #include "angleid.h"
 #include "dihedralid.h"

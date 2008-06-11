@@ -109,6 +109,20 @@ bool MoleculeView::operator!=(const MoleculeView &other) const
     return d != other.d and *d != *(other.d);
 }
 
+/** Return whether or not this view is of the same molecule as 'other'
+    (albeit perhaps a different version of the molecule) */
+bool MoleculeView::isSameMolecule(const MoleculeData &other) const
+{
+    return d->number() == other.number();
+}
+
+/** Return whether or not this view is of the same molecule as 'other'
+    (albeit perhaps a different version of the molecule) */
+bool MoleculeView::isSameMolecule(const MoleculeView &other) const
+{
+    return this->isSameMolecule(other.data());
+}
+
 /** Assert that this view is looking at the molecule whose data is 
     in 'other' (albeit perhaps a different version of that molecule)
     

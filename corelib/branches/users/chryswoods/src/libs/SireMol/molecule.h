@@ -231,6 +231,16 @@ Q_DECLARE_METATYPE(SireMol::Mover<SireMol::Molecule>);
 
 SIRE_EXPOSE_CLASS( SireMol::Molecule )
 
+SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::Molecule>, SireMol::Mover_Molecule_ )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+
+#include "mover.hpp"
+
+template class SireMol::Mover<SireMol::Molecule>;
+
+#endif //SIRE_INSTANTIATE_TEMPLATES
+
 SIRE_END_HEADER
 
 #endif

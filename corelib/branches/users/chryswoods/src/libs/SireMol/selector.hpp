@@ -187,10 +187,6 @@ public:
     Evaluator evaluate(int i) const;
     Evaluator evaluate(int i, int j) const;
     
-//    Editor< Selector<T> > edit() const;
-//    Editor< Selector<T> > edit(int i) const;
-//    Editor< Selector<T> > edit(int i, int j) const;
-    
     Selector<T> selector() const;
     Selector<T> selector(int i) const;
     Selector<T> selector(int i, int j) const;
@@ -849,6 +845,14 @@ bool Selector<T>::contains(const typename T::ID &id) const
     }
 }
 
+/** Return whether or not this set contains the view 'view' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool Selector<T>::intersects(const T &view) const
+{
+    return this->isSameMolecule(view) and idxs.contains(view.index());
+} 
+
 /** Return whether this set contains some of the views
     identified by the ID 'id' */
 template<class T>
@@ -984,31 +988,6 @@ Evaluator Selector<T>::evaluate(int i, int j) const
 {
     return Evaluator(*this, this->selection(i,j));
 }
-
-/** Return an editor that can edit all of the views in 
-    this set */
-//template<class T>
-//SIRE_OUTOFLINE_TEMPLATE
-//Editor< Selector<T> > Selector<T>::edit() const
-//{
-//    return Editor< Selector<T> >(*this);
-//}
-
-/** Return an editor that can edit the ith view in this set */
-//template<class T>
-//SIRE_OUTOFLINE_TEMPLATE
-//Editor< Selector<T> > Selector<T>::edit(int i) const
-//{
-//    return Editor< Selector<T> >(*this, this->selection(i));
-//}
-
-/** Return an editor that can edit the ith to jth views in this set */
-//template<class T>
-//SIRE_OUTOFLINE_TEMPLATE
-//Editor< Selector<T> > Selector<T>::edit(int i, int j) const
-//{
-//    return Editor< Selector<T> >(*this, this->selection(i,j));
-//}
 
 /** Return a selector that can change the selection of this view */
 template<class T>
@@ -1258,6 +1237,23 @@ QStringList Selector<T>::metadataKeys(const PropertyName &key) const
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+
+#include "mover.hpp"
+
+template class SireMol::Selector<SireMol::Segment>;
+template class SireMol::Mover< SireMol::Selector<SireMol::Segment> >;
+template class SireMol::Selector<SireMol::Residue>;
+template class SireMol::Mover< SireMol::Selector<SireMol::Residue> >;
+template class SireMol::Selector<SireMol::CutGroup>;
+template class SireMol::Mover< SireMol::Selector<SireMol::CutGroup> >;
+template class SireMol::Selector<SireMol::Chain>;
+template class SireMol::Mover< SireMol::Selector<SireMol::Chain> >;
+template class SireMol::Selector<SireMol::Atom>;
+template class SireMol::Mover< SireMol::Selector<SireMol::Atom> >;
+
+#endif
 
 SIRE_END_HEADER
 

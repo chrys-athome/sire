@@ -67,6 +67,9 @@ class CGID;
 class ResIdx;
 class ResID;
 
+class AtomEditor;
+typedef Editor<AtomEditor, Atom> AtomEditorBase;
+
 /** This class is used to edit an atom in a molecule. This
     class is able to edit everything about the molecule
     *except* for its relationship to other parts of the
@@ -76,7 +79,7 @@ class ResID;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT AtomEditor : public Editor<AtomEditor, Atom>
+class SIREMOL_EXPORT AtomEditor : public AtomEditorBase
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const AtomEditor&);
@@ -345,6 +348,9 @@ AtomStructureEditor& AtomStructureEditor::setMetadata(const QString &key,
 
 Q_DECLARE_METATYPE( SireMol::AtomEditor );
 Q_DECLARE_METATYPE( SireMol::AtomStructureEditor );
+
+SIRE_EXPOSE_ALIAS( (SireMol::Editor<SireMol::AtomEditor, SireMol::Atom>),
+                    SireMol::AtomEditorBase )
 
 SIRE_EXPOSE_CLASS( SireMol::AtomEditor )
 SIRE_EXPOSE_CLASS( SireMol::AtomStructureEditor )

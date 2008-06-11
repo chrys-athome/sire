@@ -444,7 +444,7 @@ const Fahrenheit fahrenheit(1);
 
 }
 
-SIRE_EXPOSE_CLASS( SireUnits::TempBase )
+SIRE_EXPOSE_CLASS( SireUnits::Dimension::TempBase )
 SIRE_EXPOSE_CLASS( SireUnits::Celsius )
 SIRE_EXPOSE_CLASS( SireUnits::Fahrenheit )
 

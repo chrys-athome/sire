@@ -32,6 +32,8 @@
 #include "mover.h"
 #include "evaluator.h"
 
+#include "SireBase/propertymap.h"
+
 #include "SireMaths/axisset.h"
 
 SIRE_BEGIN_HEADER

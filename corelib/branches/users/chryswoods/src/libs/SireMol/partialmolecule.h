@@ -198,6 +198,18 @@ Q_DECLARE_METATYPE(SireMol::Mover<SireMol::PartialMolecule>);
 
 SIRE_EXPOSE_CLASS( SireMol::PartialMolecule )
 
+SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::PartialMolecule>, 
+                   SireMol::Mover_PartialMolecule_ )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+
+#include "mover.hpp"
+#include "selector.hpp"
+
+template class SireMol::Mover<SireMol::PartialMolecule>;
+
+#endif //SIRE_INSTANTIATE_TEMPLATES
+
 SIRE_END_HEADER
 
 #endif

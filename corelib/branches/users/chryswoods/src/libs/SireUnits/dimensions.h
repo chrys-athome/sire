@@ -445,7 +445,9 @@ Q_DECLARE_METATYPE( SireUnits::Dimension::Area );
 Q_DECLARE_METATYPE( SireUnits::Dimension::Volume );
 Q_DECLARE_METATYPE( SireUnits::Dimension::MolarVolume );
 Q_DECLARE_METATYPE( SireUnits::Dimension::Velocity );
+Q_DECLARE_METATYPE( SireUnits::Dimension::AngularVelocity );
 Q_DECLARE_METATYPE( SireUnits::Dimension::Acceleration );
+Q_DECLARE_METATYPE( SireUnits::Dimension::AngularAcceleration );
 Q_DECLARE_METATYPE( SireUnits::Dimension::Energy );
 Q_DECLARE_METATYPE( SireUnits::Dimension::MolarEnergy );
 Q_DECLARE_METATYPE( SireUnits::Dimension::Power );
@@ -472,7 +474,9 @@ Q_DECLARE_TYPEINFO( SireUnits::Dimension::Area, Q_MOVABLE_TYPE );
 Q_DECLARE_TYPEINFO( SireUnits::Dimension::Volume, Q_MOVABLE_TYPE );
 Q_DECLARE_TYPEINFO( SireUnits::Dimension::MolarVolume, Q_MOVABLE_TYPE );
 Q_DECLARE_TYPEINFO( SireUnits::Dimension::Velocity, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::AngularVelocity, Q_MOVABLE_TYPE );
 Q_DECLARE_TYPEINFO( SireUnits::Dimension::Acceleration, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireUnits::Dimension::AngularAcceleration, Q_MOVABLE_TYPE );
 Q_DECLARE_TYPEINFO( SireUnits::Dimension::Energy, Q_MOVABLE_TYPE );
 Q_DECLARE_TYPEINFO( SireUnits::Dimension::MolarEnergy, Q_MOVABLE_TYPE );
 Q_DECLARE_TYPEINFO( SireUnits::Dimension::Power, Q_MOVABLE_TYPE );
@@ -485,7 +489,7 @@ Q_DECLARE_TYPEINFO( SireUnits::Dimension::Capacitance, Q_MOVABLE_TYPE );
 Q_DECLARE_TYPEINFO( SireUnits::Dimension::Current, Q_MOVABLE_TYPE );
 Q_DECLARE_TYPEINFO( SireUnits::Dimension::Potential, Q_MOVABLE_TYPE );
 
-SIRE_EXPOSE_CLASS( SireUnits::Unit )
+SIRE_EXPOSE_CLASS( SireUnits::Dimension::Unit )
 
 SIRE_END_HEADER
 

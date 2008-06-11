@@ -191,6 +191,8 @@ protected:
     AtomSelection movable_atoms;
 };
 
+SIRE_EXPOSE_CLASS( SireMol::MoverBase )
+
 }
 
 SIRE_END_HEADER

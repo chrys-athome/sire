@@ -140,6 +140,9 @@ public:
     const char* metadataType(const PropertyName &key,
                              const PropertyName &metakey) const;
 
+    bool isSameMolecule(const MoleculeView &other) const;
+    bool isSameMolecule(const MoleculeData &other) const;
+
     void assertHasProperty(const PropertyName &key) const;
     void assertHasMetadata(const PropertyName &metakey) const;
     void assertHasMetadata(const PropertyName &key,
@@ -221,7 +224,7 @@ void MoleculeView::setMetadata(MoleculeData &data,
         props = old_metadata->asA<PropType>();
     }
     else
-        props = PropType(data);
+        props = PropType(data.info());
         
     props.set(idx, value);
     
@@ -244,7 +247,7 @@ void MoleculeView::setMetadata(MoleculeData &data,
         props = old_metadata->asA<PropType>();
     }
     else
-        props = PropType(data);
+        props = PropType(data.info());
         
     props.set(idx, value);
     

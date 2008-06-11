@@ -259,6 +259,16 @@ Q_DECLARE_METATYPE( SireMol::Mover<SireMol::ViewsOfMol> );
 
 SIRE_EXPOSE_CLASS( SireMol::ViewsOfMol )
 
+SIRE_EXPOSE_ALIAS( SireMol::Mover<SireMol::ViewsOfMol>, SireMol::Mover_ViewsOfMol_ )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+
+#include "mover.hpp"
+
+template class SireMol::Mover<SireMol::ViewsOfMol>;
+
+#endif //SIRE_INSTANTIATE_TEMPLATES
+
 SIRE_END_HEADER
 
 #endif
