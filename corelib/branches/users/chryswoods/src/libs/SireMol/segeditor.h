@@ -69,6 +69,9 @@ class CGID;
 class ResIdx;
 class ResID;
 
+class SegEditor;
+typedef Editor<SegEditor, Segment> SegEditorBase;
+
 /** This class is used to edit the non-structural parts of a segment
 
     @author Christopher Woods
@@ -350,6 +353,9 @@ Q_DECLARE_METATYPE( SireMol::SegStructureEditor );
 
 SIRE_EXPOSE_CLASS( SireMol::SegEditor )
 SIRE_EXPOSE_CLASS( SireMol::SegStructureEditor )
+
+SIRE_EXPOSE_ALIAS( (SireMol::Editor<SireMol::SegEditor, SireMol::Segment>),
+                    SireMol::SegEditorBase )
 
 SIRE_END_HEADER
 

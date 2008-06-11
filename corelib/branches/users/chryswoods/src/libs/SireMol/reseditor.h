@@ -69,6 +69,9 @@ class CGID;
 class ResIdx;
 class ResID;
 
+class ResEditor;
+typedef Editor<ResEditor, Residue> ResEditorBase;
+
 /** This class is used to edit the non-structural parts of a residue
 
     @author Christopher Woods
@@ -361,6 +364,9 @@ Q_DECLARE_METATYPE( SireMol::ResStructureEditor );
 
 SIRE_EXPOSE_CLASS( SireMol::ResEditor )
 SIRE_EXPOSE_CLASS( SireMol::ResStructureEditor )
+
+SIRE_EXPOSE_ALIAS( (SireMol::Editor<SireMol::ResEditor, SireMol::Residue>),
+                    SireMol::ResEditorBase )
 
 SIRE_END_HEADER
 

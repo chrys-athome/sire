@@ -890,6 +890,8 @@ AtomSelection Selector<T>::selection() const
 {
     AtomSelection selected_atoms(*d);
     
+    selected_atoms.selectNone();
+    
     foreach (typename T::Index idx, idxs)
     {
         selected_atoms.select(idx);

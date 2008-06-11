@@ -444,6 +444,11 @@ Q_DECLARE_METATYPE( SireMol::SegIntProperty );
 Q_DECLARE_METATYPE( SireMol::SegFloatProperty );
 Q_DECLARE_METATYPE( SireMol::SegVariantProperty );
 
+SIRE_EXPOSE_SEGMENT_PROPERTY( QString, SireMol::SegStringProperty )
+SIRE_EXPOSE_SEGMENT_PROPERTY( qint64, SireMol::SegIntProperty )
+SIRE_EXPOSE_SEGMENT_PROPERTY( double, SireMol::SegFloatProperty )
+SIRE_EXPOSE_SEGMENT_PROPERTY( QVariant, SireMol::SegVariantProperty )
+
 SIRE_END_HEADER
 
 #endif

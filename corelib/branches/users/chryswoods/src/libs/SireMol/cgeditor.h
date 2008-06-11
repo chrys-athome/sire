@@ -74,6 +74,9 @@ class CGID;
 class ResIdx;
 class ResID;
 
+class CGEditor;
+typedef Editor<CGEditor, CutGroup> CGEditorBase;
+
 /** This class is used to edit the non-structural parts of a CutGroup
 
     @author Christopher Woods
@@ -352,6 +355,9 @@ CGStructureEditor& CGStructureEditor::setMetadata(const QString &key,
 
 Q_DECLARE_METATYPE( SireMol::CGEditor );
 Q_DECLARE_METATYPE( SireMol::CGStructureEditor );
+
+SIRE_EXPOSE_ALIAS( (SireMol::Editor<SireMol::CGEditor, SireMol::CutGroup>),
+                    SireMol::CGEditorBase )
 
 SIRE_EXPOSE_CLASS( SireMol::CGEditor )
 SIRE_EXPOSE_CLASS( SireMol::CGStructureEditor )

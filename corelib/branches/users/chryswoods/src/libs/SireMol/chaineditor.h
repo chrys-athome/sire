@@ -69,6 +69,9 @@ class CGID;
 class ResIdx;
 class ResID;
 
+class ChainEditor;
+typedef Editor<ChainEditor, Chain> ChainEditorBase;
+
 /** This class is used to edit the non-structural parts of a chain
 
     @author Christopher Woods
@@ -359,6 +362,9 @@ ChainStructureEditor& ChainStructureEditor::setMetadata(const QString &key,
 
 Q_DECLARE_METATYPE( SireMol::ChainEditor );
 Q_DECLARE_METATYPE( SireMol::ChainStructureEditor );
+
+SIRE_EXPOSE_ALIAS( (SireMol::Editor<SireMol::ChainEditor, SireMol::Chain>),
+                    SireMol::ChainEditorBase )
 
 SIRE_EXPOSE_CLASS( SireMol::ChainEditor )
 SIRE_EXPOSE_CLASS( SireMol::ChainStructureEditor )

@@ -444,6 +444,11 @@ Q_DECLARE_METATYPE( SireMol::ResIntProperty );
 Q_DECLARE_METATYPE( SireMol::ResFloatProperty );
 Q_DECLARE_METATYPE( SireMol::ResVariantProperty );
 
+SIRE_EXPOSE_RESIDUE_PROPERTY( QString, SireMol::ResStringProperty )
+SIRE_EXPOSE_RESIDUE_PROPERTY( qint64, SireMol::ResIntProperty )
+SIRE_EXPOSE_RESIDUE_PROPERTY( double, SireMol::ResFloatProperty )
+SIRE_EXPOSE_RESIDUE_PROPERTY( QVariant, SireMol::ResVariantProperty )
+
 SIRE_END_HEADER
 
 #endif

@@ -90,6 +90,9 @@ public:
     }
 };
 
+SIRE_EXPOSE_CLASS( SireMol::MolViewProperty )
+SIRE_EXPOSE_CLASS( SireMol::MoleculeProperty )
+
 }
 
 SIRE_END_HEADER

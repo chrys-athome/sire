@@ -246,8 +246,8 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void CutGroup::setProperty(const QString &key, const T &value)
 {
-    MoleculeView::setProperty<CutGroup,CGProperty<T>,T>(this->index(), *d,
-                                                        key, value);
+    MoleculeView::setProperty<CGIdx,CGProperty<T>,T>(*d, key, this->index(),
+                                                     value);
 }
 
 /** Set the metadata at metakey 'metakey' to the value 'value' 
@@ -259,8 +259,8 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void CutGroup::setMetadata(const QString &metakey, const T &value)
 {
-    MoleculeView::setMetadata<CutGroup,CGProperty<T>,T>(this->index(), *d,
-                                                        metakey, value);
+    MoleculeView::setMetadata<CGIdx,CGProperty<T>,T>(*d, metakey, this->index(),
+                                                     value);
 }
 
 /** Set the metadata at metakey 'metakey' for the property at key
@@ -273,8 +273,8 @@ SIRE_OUTOFLINE_TEMPLATE
 void CutGroup::setMetadata(const QString &key, const QString &metakey,
                            const T &value)
 {
-    MoleculeView::setMetadata<CutGroup,CGProperty<T>,T>(this->index(), *d, 
-                                                        key, metakey, value);
+    MoleculeView::setMetadata<CGIdx,CGProperty<T>,T>(*d, key, metakey, this->index(), 
+                                                     value);
 }
 
 namespace detail

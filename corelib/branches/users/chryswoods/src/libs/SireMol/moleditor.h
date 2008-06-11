@@ -69,6 +69,9 @@ class CGID;
 class ResIdx;
 class ResID;
 
+class MolEditor;
+typedef Editor<MolEditor, Molecule> MolEditorBase;
+
 /** This class is used to edit non-structural parts of a molecule 
     (e.g. its name, number, properties etc.). To add, move or remove
     atoms, residues, CutGroups, chains or segments, you need to 
@@ -249,6 +252,9 @@ Q_DECLARE_METATYPE( SireMol::MolStructureEditor );
 
 SIRE_EXPOSE_CLASS( SireMol::MolEditor )
 SIRE_EXPOSE_CLASS( SireMol::MolStructureEditor )
+
+SIRE_EXPOSE_ALIAS( (SireMol::Editor<SireMol::MolEditor, SireMol::Molecule>),
+                    SireMol::MolEditorBase )
 
 SIRE_END_HEADER
 

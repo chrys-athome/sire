@@ -444,6 +444,11 @@ Q_DECLARE_METATYPE( SireMol::ChainIntProperty );
 Q_DECLARE_METATYPE( SireMol::ChainFloatProperty );
 Q_DECLARE_METATYPE( SireMol::ChainVariantProperty );
 
+SIRE_EXPOSE_CHAIN_PROPERTY( QString, SireMol::ChainStringProperty )
+SIRE_EXPOSE_CHAIN_PROPERTY( qint64, SireMol::ChainIntProperty )
+SIRE_EXPOSE_CHAIN_PROPERTY( double, SireMol::ChainFloatProperty )
+SIRE_EXPOSE_CHAIN_PROPERTY( QVariant, SireMol::ChainVariantProperty )
+
 SIRE_END_HEADER
 
 #endif

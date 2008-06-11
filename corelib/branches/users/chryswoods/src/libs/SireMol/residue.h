@@ -251,8 +251,8 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void Residue::setProperty(const QString &key, const T &value)
 {
-    MoleculeView::setProperty<Residue,ResProperty<T>,T>(this->index(), *d,
-                                                        key, value);
+    MoleculeView::setProperty<ResIdx,ResProperty<T>,T>(*d, key, this->index(),
+                                                       value);
 }
 
 /** Set the metadata at metakey 'metakey' to the value 'value' 
@@ -264,8 +264,8 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void Residue::setMetadata(const QString &metakey, const T &value)
 {
-    MoleculeView::setMetadata<Residue,ResProperty<T>,T>(this->index(), *d,
-                                                        metakey, value);
+    MoleculeView::setMetadata<ResIdx,ResProperty<T>,T>(*d, metakey, this->index(),
+                                                       value);
 }
 
 /** Set the metadata at metakey 'metakey' for the property at key
@@ -278,8 +278,8 @@ SIRE_OUTOFLINE_TEMPLATE
 void Residue::setMetadata(const QString &key, const QString &metakey,
                           const T &value)
 {
-    MoleculeView::setMetadata<Residue,ResProperty<T>,T>(this->index(), *d, 
-                                                        key, metakey, value);
+    MoleculeView::setMetadata<ResIdx,ResProperty<T>,T>(*d, key, metakey, this->index(),
+                                                       value);
 }
 
 namespace detail
