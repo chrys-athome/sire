@@ -14,10 +14,10 @@ sys.path.append("../AutoGenerate")
 from scanheaders import *
 
 atomprops = pickle.load( open("atomprops.data") )
-chainprops = Properties()
-cgprops = Properties()
-resprops = Properties()
-segprops = Properties()
+chainprops = pickle.load( open("chainprops.data") )
+cgprops = pickle.load( open("cgprops.data") )
+resprops = pickle.load( open("resprops.data") )
+segprops = pickle.load( open("segprops.data") )
 
 active_headers = pickle.load( open("active_headers.data") )
 
@@ -64,6 +64,10 @@ def fix_Residue(c):
 
 def fix_Segment(c):
    fix_MolView(c, "SireMol::Segment", segprops)
+
+def fix_MolEditorBase(c):
+   c.decls( "removeProperty" ).call_policies = call_policies.return_self()
+   c.decls( "removeMetadata" ).call_policies = call_policies.return_self()   
 
 def fix_MolViewEditorBase(c, molview, props):
    c.decls( "removeProperty" ).call_policies = call_policies.return_self()
@@ -264,6 +268,7 @@ special_code = { "SireMol::Atom" : fix_Atom,
                  "SireMol::Mover<SireMol::Selector<SireMol::Segment> >" : fix_Mover,
 
                  "SireMol::MolEditor" : fix_MolEditor,
+                 "SireMol::Editor<SireMol::MolEditor, SireMol::Molecule>" : fix_MolEditorBase,
                  "SireMol::MolStructureEditor" : fix_MolStructureEditor,
                  "SireMol::Mover<SireMol::Molecule>" : fix_Mover,
                  "SireMol::Mover<SireMol::PartialMolecule>" : fix_Mover,

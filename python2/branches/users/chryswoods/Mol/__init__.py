@@ -77,3 +77,23 @@ AtomEditorBase.setProperty = __set_property__
 Atom.metadata = __get_metadata__
 AtomEditorBase.setMetadata = __set_metadata__
 
+CutGroup.property = __get_property_
+CGEditorBase.setProperty = __set_property__
+CutGroup.metadata = __get_metadata__
+CGEditorBase.setMetadata = __set_metadata__
+
+Residue.property = __get_property__
+ResEditorBase.setProperty = __set_property__
+Residue.metadata = __get_metadata__
+ResEditorBase.setMetadata = __set_metadata__
+
+Chain.property = __get_property__
+ChainEditorBase.setProperty = __set_property__
+Chain.metadata = __get_metadata__
+ChainEditorBase.setMetadata = __set_metadata__
+
+Segment.property = __get_property__
+SegEditorBase.setProperty = __set_property__
+Segment.metadata = __get_metadata__
+SegEditorBase.setMetadata = __set_metadata__
+

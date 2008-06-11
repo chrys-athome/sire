@@ -129,8 +129,13 @@ match_alias = r"SIRE_EXPOSE_ALIAS\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*,\n*\s*\(
 match_function = r"SIRE_EXPOSE_FUNCTION\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
 match_property = r"SIRE_EXPOSE_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
 match_atom_property = r"SIRE_EXPOSE_ATOM_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
+match_res_property = r"SIRE_EXPOSE_RESIDUE_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
+match_cg_property = r"SIRE_EXPOSE_CUTGROUP_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
+match_chain_property = r"SIRE_EXPOSE_CHAIN_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
+match_seg_property = r"SIRE_EXPOSE_SEGMENT_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
 
-def scanFiles(dir, module_dir, atom_properties):
+def scanFiles(dir, module_dir, atom_properties, cg_properties,
+                               res_properties, chain_properties, seg_properties):
     """Scan the header files in the passed directory to get information
        about all of the exposed classes, returning a list of all of 
        the classes that are being exposed, and placing meta information
@@ -184,6 +189,22 @@ def scanFiles(dir, module_dir, atom_properties):
         for m in re.finditer(match_atom_property, text):
             atom_properties.addDependency(file, dir, module_dir)
             atom_properties.addProperty(m.groups()[0].strip(), m.groups()[1].strip())
+
+        for m in re.finditer(match_cg_property, text):
+            cg_properties.addDependency(file, dir, module_dir)
+            cg_properties.addProperty(m.groups()[0].strip(), m.groups()[1].strip())
+
+        for m in re.finditer(match_res_property, text):
+            res_properties.addDependency(file, dir, module_dir)
+            res_properties.addProperty(m.groups()[0].strip(), m.groups()[1].strip())
+
+        for m in re.finditer(match_chain_property, text):
+            chain_properties.addDependency(file, dir, module_dir)
+            chain_properties.addProperty(m.groups()[0].strip(), m.groups()[1].strip())
+
+        for m in re.finditer(match_seg_property, text):
+            seg_properties.addDependency(file, dir, module_dir)
+            seg_properties.addProperty(m.groups()[0].strip(), m.groups()[1].strip())
 
     #now add each active file to a single header file that can be parsed by Py++
     FILE = open("%s/active_headers.h" % module_dir, "w")
@@ -240,6 +261,10 @@ if __name__ == "__main__":
     exposed_classes = {}
 
     atom_properties = Properties()
+    cg_properties = Properties()
+    res_properties = Properties()
+    chain_properties = Properties()
+    seg_properties = Properties()
 
     for module in modules:
         
@@ -258,7 +283,8 @@ if __name__ == "__main__":
 
         module_classes = scanFiles( "%s/%s" % (siredir,modules[module]),
                                     "%s/%s" % (outdir,module),
-                                    atom_properties ) 
+                                    atom_properties, cg_properties, res_properties,
+                                    chain_properties, seg_properties ) 
 
         for clas in module_classes:
             exposed_classes[clas] = 1
@@ -269,3 +295,7 @@ if __name__ == "__main__":
     pickle.dump( exposed_classes, open("%s/classdb.data" % outdir, "w") )
 
     pickle.dump( atom_properties, open("%s/Mol/atomprops.data" % outdir, "w") )
+    pickle.dump( cg_properties, open("%s/Mol/cgprops.data" % outdir, "w") )
+    pickle.dump( res_properties, open("%s/Mol/resprops.data" % outdir, "w") )
+    pickle.dump( chain_properties, open("%s/Mol/chainprops.data" % outdir, "w") )
+    pickle.dump( seg_properties, open("%s/Mol/segprops.data" % outdir, "w") )
