@@ -29,6 +29,7 @@ set ( SIREBASE_HEADERS
       properties.h
       property.h
       propertymap.h
+      qvariant_metatype.h
       shareddatapointer.hpp
       sharedpolypointer.hpp
       sharedpolypointer_cast.hpp

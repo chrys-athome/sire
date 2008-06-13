@@ -30,7 +30,8 @@
 #define SIREMOL_CGPROPERTY_HPP
 
 #include <QVector>
-#include <QVariant>
+
+#include "SireBase/qvariant_metatype.h"
 
 #include "moleculeinfodata.h"
 #include "molviewproperty.h"
@@ -445,10 +446,19 @@ Q_DECLARE_METATYPE( SireMol::CGIntProperty );
 Q_DECLARE_METATYPE( SireMol::CGFloatProperty );
 Q_DECLARE_METATYPE( SireMol::CGVariantProperty );
 
+SIRE_EXPOSE_CLASS( SireMol::CGProp )
+
 SIRE_EXPOSE_CUTGROUP_PROPERTY( QString, SireMol::CGStringProperty )
 SIRE_EXPOSE_CUTGROUP_PROPERTY( qint64, SireMol::CGIntProperty )
 SIRE_EXPOSE_CUTGROUP_PROPERTY( double, SireMol::CGFloatProperty )
 SIRE_EXPOSE_CUTGROUP_PROPERTY( QVariant, SireMol::CGVariantProperty )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class SireMol::CGProperty<QString>;
+template class SireMol::CGProperty<qint64>;
+template class SireMol::CGProperty<double>;
+template class SireMol::CGProperty<QVariant>;
+#endif
 
 SIRE_END_HEADER
 

@@ -120,7 +120,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Residue &res)
         sds >> res.residx >> static_cast<MoleculeView&>(res);
         
         res.selected_atoms = AtomSelection(res.data());
-        res.selected_atoms.select(res.residx);
+        res.selected_atoms.selectOnly(res.residx);
     }
     else
         throw version_error(v, "1", r_res, CODELOC);
@@ -147,7 +147,7 @@ Residue::Residue(const MoleculeData &moldata, const ResID &resid)
 {
     residx = moldata.info().resIdx(resid);
     selected_atoms = AtomSelection(moldata);
-    selected_atoms.select(residx);
+    selected_atoms.selectOnly(residx);
 }
         
 /** Copy constructor */

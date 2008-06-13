@@ -30,7 +30,8 @@
 #define SIREMOL_ATOMPROPERTY_HPP
 
 #include <QVector>
-#include <QVariant>
+
+#include "SireBase/qvariant_metatype.h"
 
 #include "molviewproperty.h"
 #include "moleculeinfodata.h"
@@ -690,10 +691,19 @@ Q_DECLARE_METATYPE( SireMol::AtomIntProperty );
 Q_DECLARE_METATYPE( SireMol::AtomFloatProperty );
 Q_DECLARE_METATYPE( SireMol::AtomVariantProperty );
 
+SIRE_EXPOSE_CLASS( SireMol::AtomProp )
+
 SIRE_EXPOSE_ATOM_PROPERTY( QString, SireMol::AtomStringProperty )
 SIRE_EXPOSE_ATOM_PROPERTY( qint64, SireMol::AtomIntProperty )
 SIRE_EXPOSE_ATOM_PROPERTY( double, SireMol::AtomFloatProperty )
 SIRE_EXPOSE_ATOM_PROPERTY( QVariant, SireMol::AtomVariantProperty )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class SireMol::AtomProperty<QString>;
+template class SireMol::AtomProperty<qint64>;
+template class SireMol::AtomProperty<double>;
+template class SireMol::AtomProperty<QVariant>;
+#endif
 
 SIRE_END_HEADER
 

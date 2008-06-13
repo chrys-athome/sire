@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007  Christopher Woods
+  *  Copyright (C) 2008  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,29 +26,13 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_ATOMELEMENTS_H
-#define SIREMOL_ATOMELEMENTS_H
+#ifndef SIREBASE_QVARIANT_METATYPE_H
+#define SIREBASE_QVARIANT_METATYPE_H
 
-#include "atomproperty.hpp"
-#include "element.h"
+#include <QVariant>
 
-SIRE_BEGIN_HEADER
-
-namespace SireMol
-{
-
-typedef AtomProperty<Element> AtomElements;
-
-}
-
-Q_DECLARE_METATYPE( SireMol::AtomElements );
-
-SIRE_EXPOSE_ATOM_PROPERTY( SireMol::Element, SireMol::AtomElements )
-
-#ifdef SIRE_INSTANTIATE_TEMPLATES
-template class SireMol::AtomProperty<SireMol::Element>;
-#endif
-
-SIRE_END_HEADER
+Q_DECLARE_METATYPE( QVariant )
 
 #endif
+
+

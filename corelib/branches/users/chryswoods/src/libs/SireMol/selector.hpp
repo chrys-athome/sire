@@ -910,7 +910,7 @@ AtomSelection Selector<T>::selection(int i) const
 {
     AtomSelection selected_atoms(*d);
     
-    selected_atoms.select( idxs.at( SireID::Index(i).map(idxs.count()) ) );
+    selected_atoms.selectOnly( idxs.at( SireID::Index(i).map(idxs.count()) ) );
     
     return selected_atoms;
 }
@@ -924,6 +924,7 @@ SIRE_OUTOFLINE_TEMPLATE
 AtomSelection Selector<T>::selection(int i, int j) const
 {
     AtomSelection selected_atoms(*d);
+    selected_atoms.selectNone();
     
     i = SireID::Index(i).map(idxs.count());
     j = SireID::Index(j).map(idxs.count());

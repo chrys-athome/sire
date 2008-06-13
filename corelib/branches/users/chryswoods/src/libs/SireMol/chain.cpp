@@ -118,7 +118,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Chain &chain)
         sds >> chain.chainidx >> static_cast<MoleculeView&>(chain);
         
         chain.selected_atoms = AtomSelection(chain.data());
-        chain.selected_atoms.select(chain.chainidx);
+        chain.selected_atoms.selectOnly(chain.chainidx);
     }
     else
         throw version_error(v, "1", r_chain, CODELOC);
@@ -141,7 +141,7 @@ Chain::Chain(const MoleculeData &moldata, const ChainID &chainid)
       : MoleculeView(moldata), chainidx( moldata.info().chainIdx(chainid) )
 {
     selected_atoms = AtomSelection(moldata);
-    selected_atoms.select(chainidx);
+    selected_atoms.selectOnly(chainidx);
 }
 
 /** Copy constructor */

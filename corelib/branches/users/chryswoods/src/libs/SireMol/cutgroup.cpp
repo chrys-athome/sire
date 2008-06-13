@@ -44,6 +44,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireMol;
 using namespace SireStream;
 
@@ -172,7 +174,8 @@ bool CutGroup::operator!=(const CutGroup &other) const
 AtomSelection CutGroup::selection() const
 {
     AtomSelection selected_atoms(this->data());
-    selected_atoms.select(cgidx);
+    selected_atoms.selectOnly(cgidx);
+    
     return selected_atoms;
 }
 

@@ -30,7 +30,8 @@
 #define SIREMOL_RESPROPERTY_HPP
 
 #include <QVector>
-#include <QVariant>
+
+#include "SireBase/qvariant_metatype.h"
 
 #include "moleculeinfodata.h"
 #include "molviewproperty.h"
@@ -444,10 +445,19 @@ Q_DECLARE_METATYPE( SireMol::ResIntProperty );
 Q_DECLARE_METATYPE( SireMol::ResFloatProperty );
 Q_DECLARE_METATYPE( SireMol::ResVariantProperty );
 
+SIRE_EXPOSE_CLASS( SireMol::ResProp )
+
 SIRE_EXPOSE_RESIDUE_PROPERTY( QString, SireMol::ResStringProperty )
 SIRE_EXPOSE_RESIDUE_PROPERTY( qint64, SireMol::ResIntProperty )
 SIRE_EXPOSE_RESIDUE_PROPERTY( double, SireMol::ResFloatProperty )
 SIRE_EXPOSE_RESIDUE_PROPERTY( QVariant, SireMol::ResVariantProperty )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class SireMol::ResProperty<QString>;
+template class SireMol::ResProperty<qint64>;
+template class SireMol::ResProperty<double>;
+template class SireMol::ResProperty<QVariant>;
+#endif
 
 SIRE_END_HEADER
 

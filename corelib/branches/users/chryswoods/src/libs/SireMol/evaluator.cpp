@@ -41,6 +41,8 @@
 
 #include "SireStream/datastream.h"
 
+#include <QDebug>
+
 using namespace SireMol;
 using namespace SireMaths;
 using namespace SireVol;
@@ -174,7 +176,7 @@ AABox Evaluator::aaBox(const PropertyMap &map) const
     
     //now get the minimum and maximum coordinates...
     Vector mincoords( std::numeric_limits<double>::max() );
-    Vector maxcoords( -std::numeric_limits<double>::min() );
+    Vector maxcoords( -std::numeric_limits<double>::max() );
     
     if (selected_atoms.selectedAll())
     {

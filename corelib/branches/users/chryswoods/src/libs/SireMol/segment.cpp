@@ -116,7 +116,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Segment &seg)
         sds >> seg.segidx >> static_cast<MoleculeView&>(seg);
         
         seg.selected_atoms = AtomSelection(seg.data());
-        seg.selected_atoms.select(seg.segidx);
+        seg.selected_atoms.selectOnly(seg.segidx);
     }
     else
         throw version_error(v, "1", r_seg, CODELOC);
@@ -139,7 +139,7 @@ Segment::Segment(const MoleculeData &moldata, const SegID &segid)
       : MoleculeView(moldata), segidx( moldata.info().segIdx(segid) )
 {
     selected_atoms = AtomSelection(moldata);
-    selected_atoms.select(segidx);
+    selected_atoms.selectOnly(segidx);
 }
 
 /** Copy constructor */

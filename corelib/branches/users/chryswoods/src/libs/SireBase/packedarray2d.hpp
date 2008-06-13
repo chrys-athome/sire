@@ -29,7 +29,7 @@
 #ifndef SIREBASE_PACKEDARRAY2D_HPP
 #define SIREBASE_PACKEDARRAY2D_HPP
 
-#include <QVariant>
+#include "qvariant_metatype.h"
 
 #include "packedarray2d.h"
 
@@ -2072,9 +2072,6 @@ QDataStream& operator>>(QDataStream &ds,
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
-
-//we need to have qMetaTypeId<QVariant> declared so we can get it's typename...
-Q_DECLARE_METATYPE( QVariant );
 
 SIRE_END_HEADER
 

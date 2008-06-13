@@ -194,8 +194,7 @@ bool Atom::operator!=(const Atom &other) const
 AtomSelection Atom::selection() const
 {
     AtomSelection selected_atoms(data());
-    
-    selected_atoms.select(atomidx);
+    selected_atoms.selectOnly(atomidx);
     
     return selected_atoms;
 }

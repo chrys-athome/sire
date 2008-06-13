@@ -387,7 +387,9 @@ protected:
     void _pvt_setSegMetadata(quint32 uid, const QString &key,
                              const QString &metakey,
                              const QVariant &value);
-                              
+             
+    void assertSane() const;
+                                                                
     void assertValidAtom(quint32 uid) const;
     void assertValidCutGroup(quint32 uid) const;
     void assertValidResidue(quint32 uid) const;

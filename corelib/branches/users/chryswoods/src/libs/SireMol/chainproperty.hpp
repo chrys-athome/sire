@@ -30,7 +30,8 @@
 #define SIREMOL_CHAINPROPERTY_HPP
 
 #include <QVector>
-#include <QVariant>
+
+#include "SireBase/qvariant_metatype.h"
 
 #include "moleculeinfodata.h"
 #include "molviewproperty.h"
@@ -444,10 +445,19 @@ Q_DECLARE_METATYPE( SireMol::ChainIntProperty );
 Q_DECLARE_METATYPE( SireMol::ChainFloatProperty );
 Q_DECLARE_METATYPE( SireMol::ChainVariantProperty );
 
+SIRE_EXPOSE_CLASS( SireMol::ChainProp )
+
 SIRE_EXPOSE_CHAIN_PROPERTY( QString, SireMol::ChainStringProperty )
 SIRE_EXPOSE_CHAIN_PROPERTY( qint64, SireMol::ChainIntProperty )
 SIRE_EXPOSE_CHAIN_PROPERTY( double, SireMol::ChainFloatProperty )
 SIRE_EXPOSE_CHAIN_PROPERTY( QVariant, SireMol::ChainVariantProperty )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class SireMol::ChainProperty<QString>;
+template class SireMol::ChainProperty<qint64>;
+template class SireMol::ChainProperty<double>;
+template class SireMol::ChainProperty<QVariant>;
+#endif
 
 SIRE_END_HEADER
 

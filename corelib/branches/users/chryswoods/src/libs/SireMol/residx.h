@@ -105,7 +105,7 @@ public:
 
     QString toString() const
     {
-        return QString("AtomID(%1)").arg(_idx);
+        return QString("ResIdx(%1)").arg(_idx);
     }
     
     ResIdx& operator=(const ResIdx &other)

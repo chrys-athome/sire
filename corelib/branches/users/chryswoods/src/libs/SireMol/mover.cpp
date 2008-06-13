@@ -100,10 +100,7 @@ void MoverBase::translate(AtomCoords &coords,
     if (selected_atoms.selectedAll())
     {
         //we are moving everything!
-        for (int i=0; i<ncg; ++i)
-        {
-            coords.translate(delta);
-        }
+        coords.translate(delta);
     }
     else if (selected_atoms.selectedAllCutGroups())
     {
@@ -173,10 +170,7 @@ void MoverBase::rotate(AtomCoords &coords,
     if (selected_atoms.selectedAll())
     {
         //we are rotating everything
-        for (int i=0; i<ncg; ++i)
-        {
-            coords.rotate(rotmat,point);
-        }
+        coords.rotate(rotmat,point);
     }
     else if (selected_atoms.selectedAllCutGroups())
     {
@@ -253,11 +247,7 @@ void MoverBase::mapInto(AtomCoords &coords,
 
     if (selected_atoms.selectedAll())
     {
-        //we are moving everything
-        for (int i=0; i<ncg; ++i)
-        {
-            coords.mapInto(axes);
-        }
+        coords.mapInto(axes);
     }
     else if (selected_atoms.selectedAllCutGroups())
     {
@@ -327,10 +317,7 @@ void MoverBase::changeFrame(AtomCoords &coords,
     if (selected_atoms.selectedAll())
     {
         //we are moving everything
-        for (int i=0; i<ncg; ++i)
-        {
-            coords.changeFrame(from_frame, to_frame);
-        }
+        coords.changeFrame(from_frame, to_frame);
     }
     else if (selected_atoms.selectedAllCutGroups())
     {

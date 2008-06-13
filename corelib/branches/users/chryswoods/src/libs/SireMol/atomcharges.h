@@ -46,6 +46,10 @@ Q_DECLARE_METATYPE( SireMol::AtomCharges );
 
 SIRE_EXPOSE_ATOM_PROPERTY( SireUnits::Dimension::Charge, SireMol::AtomCharges )
 
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class SireMol::AtomProperty<SireUnits::Dimension::Charge>;
+#endif
+
 SIRE_END_HEADER
 
 #endif

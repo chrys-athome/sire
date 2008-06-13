@@ -30,7 +30,8 @@
 #define SIREMOL_SEGPROPERTY_HPP
 
 #include <QVector>
-#include <QVariant>
+
+#include "SireBase/qvariant_metatype.h"
 
 #include "moleculeinfodata.h"
 #include "molviewproperty.h"
@@ -444,10 +445,19 @@ Q_DECLARE_METATYPE( SireMol::SegIntProperty );
 Q_DECLARE_METATYPE( SireMol::SegFloatProperty );
 Q_DECLARE_METATYPE( SireMol::SegVariantProperty );
 
+SIRE_EXPOSE_CLASS( SireMol::SegProp )
+
 SIRE_EXPOSE_SEGMENT_PROPERTY( QString, SireMol::SegStringProperty )
 SIRE_EXPOSE_SEGMENT_PROPERTY( qint64, SireMol::SegIntProperty )
 SIRE_EXPOSE_SEGMENT_PROPERTY( double, SireMol::SegFloatProperty )
 SIRE_EXPOSE_SEGMENT_PROPERTY( QVariant, SireMol::SegVariantProperty )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class SireMol::SegProperty<QString>;
+template class SireMol::SegProperty<qint64>;
+template class SireMol::SegProperty<double>;
+template class SireMol::SegProperty<QVariant>;
+#endif
 
 SIRE_END_HEADER
 

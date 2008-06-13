@@ -2786,6 +2786,14 @@ StructureEditor::StructureEditor(const StructureEditor &other)
 StructureEditor::~StructureEditor()
 {}
 
+/** Assert that we have a valid shared pointer */
+void StructureEditor::assertSane() const
+{
+    if (d.get() == 0)
+        throw SireError::program_bug( QObject::tr(
+            "PROGRAM BUG! Null shared_ptr<detail::EditMolData>!"), CODELOC );
+}
+
 /** Copy assignment operator - this is fast as this class is 
     explicitly shared */
 StructureEditor& StructureEditor::operator=(const StructureEditor &other)
@@ -2827,6 +2835,8 @@ SegIdx EditMolData::segIdx(const EditAtomData &atom) const
 tuple<AtomName,AtomNum,CGAtomIdx,ResIdx,SegIdx> 
 StructureEditor::getAtomData(AtomIdx atomidx) const
 {
+    this->assertSane();
+
     quint32 atomuid = getUID(atomidx);
     const EditAtomData &atom = d->atom(atomuid);
     
@@ -2842,6 +2852,8 @@ StructureEditor::getAtomData(AtomIdx atomidx) const
 boost::tuple< CGName,QList<AtomIdx> >
 StructureEditor::getCGData(CGIdx cgidx) const
 {
+    this->assertSane();
+
     const EditCGData &cgroup = d->cutGroup( getUID(cgidx) );
     
     if (cgroup.atoms.isEmpty())
@@ -2874,6 +2886,8 @@ ChainIdx EditMolData::chainIdx(const EditResData &residue) const
 boost::tuple< ResName,ResNum,ChainIdx,QList<AtomIdx> >
 StructureEditor::getResData(ResIdx residx) const
 {
+    this->assertSane();
+
     const EditResData &residue = d->residue( getUID(residx) );
     
     QList<AtomIdx> atomidxs;
@@ -2894,6 +2908,8 @@ StructureEditor::getResData(ResIdx residx) const
 boost::tuple< ChainName,QList<ResIdx> >
 StructureEditor::getChainData(ChainIdx chainidx) const
 {
+    this->assertSane();
+
     const EditChainData &chain = d->chain( getUID(chainidx) );
     
     QList<ResIdx> residxs;
@@ -2913,6 +2929,8 @@ StructureEditor::getChainData(ChainIdx chainidx) const
 boost::tuple< SegName,QList<AtomIdx> >
 StructureEditor::getSegData(SegIdx segidx) const
 {
+    this->assertSane();
+
     const EditSegData &segment = d->segment( getUID(segidx) );
     
     QList<AtomIdx> atomidxs;
@@ -2929,6 +2947,8 @@ StructureEditor::getSegData(SegIdx segidx) const
     needs to be rebuilt */
 bool StructureEditor::needsInfoRebuild() const
 {
+    this->assertSane();
+
     return d->cached_molinfo.data() == 0;
 }
 
@@ -2938,6 +2958,8 @@ bool StructureEditor::needsInfoRebuild() const
 */
 const MoleculeInfoData& StructureEditor::info() const
 {
+    this->assertSane();
+
     if (d->cached_molinfo.constData() == 0)
         throw SireError::program_bug( QObject::tr(
             "We must never access the info object when it is invalid!"),
@@ -2950,6 +2972,8 @@ const MoleculeInfoData& StructureEditor::info() const
     layout from the current system */
 const MoleculeInfoData& StructureEditor::commitInfo()
 {
+    this->assertSane();
+
     if (this->needsInfoRebuild())
         d->cached_molinfo = new MoleculeInfoData(*this);
         
@@ -2960,6 +2984,8 @@ const MoleculeInfoData& StructureEditor::commitInfo()
     all of the data in this editor */
 MoleculeData StructureEditor::commitChanges() const
 {
+    this->assertSane();
+
     return MoleculeData(*this);
 }
 
@@ -2969,6 +2995,8 @@ MoleculeData StructureEditor::commitChanges() const
 */
 int StructureEditor::nAtomsInResidue(quint32 uid) const
 {
+    this->assertSane();
+
     return d->residue(uid).atoms.count();
 }
 
@@ -2978,6 +3006,8 @@ int StructureEditor::nAtomsInResidue(quint32 uid) const
 */
 int StructureEditor::nAtomsInCutGroup(quint32 uid) const
 {
+    this->assertSane();
+
     return d->cutGroup(uid).atoms.count();
 }
 
@@ -2987,6 +3017,8 @@ int StructureEditor::nAtomsInCutGroup(quint32 uid) const
 */
 int StructureEditor::nResiduesInChain(quint32 uid) const
 {
+    this->assertSane();
+
     return d->chain(uid).residues.count();
 }
 
@@ -2996,6 +3028,8 @@ int StructureEditor::nResiduesInChain(quint32 uid) const
 */
 int StructureEditor::nAtomsInChain(quint32 uid) const
 {
+    this->assertSane();
+
     int nats = 0;
     
     foreach (quint32 resuid, d->chain(uid).residues)
@@ -3012,36 +3046,48 @@ int StructureEditor::nAtomsInChain(quint32 uid) const
 */
 int StructureEditor::nAtomsInSegment(quint32 uid) const
 {
+    this->assertSane();
+
     return d->segment(uid).atoms.count();
 }
 
 /** Return the number of atoms this molecule */
 int StructureEditor::nAtomsInMolecule() const
 {
+    this->assertSane();
+
     return d->atoms.count();
 }
 
 /** Return the number of residues in this molecule */
 int StructureEditor::nResiduesInMolecule() const
 {
+    this->assertSane();
+
     return d->residues.count();
 }
 
 /** Return the number of chains in this molecule */
 int StructureEditor::nChainsInMolecule() const
 {
+    this->assertSane();
+
     return d->chains.count();
 }
 
 /** Return the number of segments in this molecule */
 int StructureEditor::nSegmentsInMolecule() const
 {
+    this->assertSane();
+
     return d->segments.count();
 }
 
 /** Return the number of CutGroups in this molecule */
 int StructureEditor::nCutGroupsInMolecule() const
 {
+    this->assertSane();
+
     return d->cutgroups.count();
 }
 
@@ -3051,6 +3097,8 @@ int StructureEditor::nCutGroupsInMolecule() const
 */
 void StructureEditor::assertValidAtom(quint32 uid) const
 {
+    this->assertSane();
+
     d->atom(uid);
 }
 
@@ -3060,6 +3108,8 @@ void StructureEditor::assertValidAtom(quint32 uid) const
 */
 void StructureEditor::assertValidCutGroup(quint32 uid) const
 {
+    this->assertSane();
+
     d->cutGroup(uid);
 }
 
@@ -3069,6 +3119,8 @@ void StructureEditor::assertValidCutGroup(quint32 uid) const
 */
 void StructureEditor::assertValidResidue(quint32 uid) const
 {
+    this->assertSane();
+
     d->residue(uid);
 }
 
@@ -3078,6 +3130,8 @@ void StructureEditor::assertValidResidue(quint32 uid) const
 */
 void StructureEditor::assertValidChain(quint32 uid) const
 {
+    this->assertSane();
+
     d->chain(uid);
 }
 
@@ -3087,6 +3141,8 @@ void StructureEditor::assertValidChain(quint32 uid) const
 */
 void StructureEditor::assertValidSegment(quint32 uid) const
 {
+    this->assertSane();
+
     d->segment(uid);
 }
 
@@ -3096,6 +3152,8 @@ void StructureEditor::assertValidSegment(quint32 uid) const
 */
 quint32 StructureEditor::getUID(AtomIdx atomidx) const
 {
+    this->assertSane();
+
     return d->atoms_by_index.at( atomidx.map(nAtomsInMolecule()) );
 }
 
@@ -3105,6 +3163,8 @@ quint32 StructureEditor::getUID(AtomIdx atomidx) const
 */
 quint32 StructureEditor::getUID(CGIdx cgidx) const
 {
+    this->assertSane();
+
     return d->cg_by_index.at( cgidx.map(nCutGroupsInMolecule()) );
 }
 
@@ -3114,6 +3174,8 @@ quint32 StructureEditor::getUID(CGIdx cgidx) const
 */
 quint32 StructureEditor::getUID(ResIdx residx) const
 {
+    this->assertSane();
+
     return d->res_by_index.at( residx.map(nResiduesInMolecule()) );
 }
 
@@ -3123,6 +3185,8 @@ quint32 StructureEditor::getUID(ResIdx residx) const
 */
 quint32 StructureEditor::getUID(ChainIdx chainidx) const
 {
+    this->assertSane();
+
     return d->chains_by_index.at( chainidx.map(nChainsInMolecule()) );
 }
 
@@ -3132,6 +3196,8 @@ quint32 StructureEditor::getUID(ChainIdx chainidx) const
 */
 quint32 StructureEditor::getUID(SegIdx segidx) const
 {
+    this->assertSane();
+
     return d->seg_by_index.at( segidx.map(nSegmentsInMolecule()) );
 }
 
@@ -3143,6 +3209,8 @@ quint32 StructureEditor::getUID(SegIdx segidx) const
 */
 quint32 StructureEditor::getUID(const AtomID &atomid) const
 {
+    this->assertSane();
+
     return this->getUID( atomIdx(atomid) );
 }
 
@@ -3154,6 +3222,8 @@ quint32 StructureEditor::getUID(const AtomID &atomid) const
 */
 quint32 StructureEditor::getUID(const CGID &cgid) const
 {
+    this->assertSane();
+
     return this->getUID( cgIdx(cgid) );
 }
 
@@ -3165,6 +3235,8 @@ quint32 StructureEditor::getUID(const CGID &cgid) const
 */
 quint32 StructureEditor::getUID(const ResID &resid) const
 {
+    this->assertSane();
+
     return this->getUID( resIdx(resid) );
 }
 
@@ -3176,6 +3248,8 @@ quint32 StructureEditor::getUID(const ResID &resid) const
 */
 quint32 StructureEditor::getUID(const ChainID &chainid) const
 {
+    this->assertSane();
+
     return this->getUID( chainIdx(chainid) );
 }
 
@@ -3187,6 +3261,8 @@ quint32 StructureEditor::getUID(const ChainID &chainid) const
 */
 quint32 StructureEditor::getUID(const SegID &segid) const
 {
+    this->assertSane();
+
     return this->getUID( segIdx(segid) );
 }
 
@@ -3197,6 +3273,8 @@ quint32 StructureEditor::getUID(const SegID &segid) const
 */
 quint32 StructureEditor::atomInCutGroup(quint32 uid, int i) const
 {
+    this->assertSane();
+
     const EditCGData &cgroup = d->cutGroup(uid);
     
     return cgroup.atoms.at( Index(i).map(cgroup.atoms.count()) );
@@ -3209,6 +3287,8 @@ quint32 StructureEditor::atomInCutGroup(quint32 uid, int i) const
 */
 quint32 StructureEditor::atomInResidue(quint32 uid, int i) const
 {
+    this->assertSane();
+
     const EditResData &residue = d->residue(uid);
     
     return residue.atoms.at( Index(i).map(residue.atoms.count()) );
@@ -3222,6 +3302,8 @@ quint32 StructureEditor::atomInResidue(quint32 uid, int i) const
 */
 quint32 StructureEditor::atomInSegment(quint32 uid, int i) const
 {
+    this->assertSane();
+
     const EditSegData &segment = d->segment(uid);
     
     return segment.atoms.at( Index(i).map(segment.atoms.count()) );
@@ -3235,6 +3317,8 @@ quint32 StructureEditor::atomInSegment(quint32 uid, int i) const
 */
 quint32 StructureEditor::residueInChain(quint32 uid, int i) const
 {
+    this->assertSane();
+
     const EditChainData &chain = d->chain(uid);
     
     return chain.residues.at( Index(i).map(chain.residues.count()) );
@@ -3248,6 +3332,8 @@ quint32 StructureEditor::residueInChain(quint32 uid, int i) const
 */
 quint32 StructureEditor::cutGroupParentOfAtom(quint32 uid) const
 {
+    this->assertSane();
+
     const EditAtomData &atom = d->atom(uid);
     
     if (atom.cg_parent == 0)
@@ -3266,6 +3352,8 @@ quint32 StructureEditor::cutGroupParentOfAtom(quint32 uid) const
 */
 quint32 StructureEditor::residueParentOfAtom(quint32 uid) const
 {
+    this->assertSane();
+
     const EditAtomData &atom = d->atom(uid);
     
     if (atom.res_parent == 0)
@@ -3284,6 +3372,8 @@ quint32 StructureEditor::residueParentOfAtom(quint32 uid) const
 */
 quint32 StructureEditor::chainParentOfResidue(quint32 uid) const
 {
+    this->assertSane();
+
     const EditResData &residue = d->residue(uid);
     
     if (residue.chain_parent == 0)
@@ -3314,6 +3404,8 @@ quint32 StructureEditor::chainParentOfAtom(quint32 uid) const
 */
 quint32 StructureEditor::segmentParentOfAtom(quint32 uid) const
 {
+    this->assertSane();
+
     const EditAtomData &atom = d->atom(uid);
     
     if (atom.seg_parent == 0)
@@ -3327,12 +3419,16 @@ quint32 StructureEditor::segmentParentOfAtom(quint32 uid) const
 /** Return the name of this molecule */
 const MolName& StructureEditor::molName() const
 {
+    this->assertSane();
+
     return d->molname;
 }
 
 /** Return the number of this molecule */
 MolNum StructureEditor::molNum() const
 {
+    this->assertSane();
+
     return d->molnum;
 }
 
@@ -3342,6 +3438,8 @@ MolNum StructureEditor::molNum() const
 */
 const AtomName& StructureEditor::atomName(quint32 uid) const
 {
+    this->assertSane();
+
     return d->atom(uid).name;
 }
 
@@ -3351,6 +3449,8 @@ const AtomName& StructureEditor::atomName(quint32 uid) const
 */
 AtomNum StructureEditor::atomNum(quint32 uid) const
 {
+    this->assertSane();
+
     return d->atom(uid).number;
 }
 
@@ -3360,6 +3460,8 @@ AtomNum StructureEditor::atomNum(quint32 uid) const
 */
 AtomIdx StructureEditor::atomIdx(quint32 uid) const
 {
+    this->assertSane();
+
     int i = d->atoms_by_index.indexOf(uid);
     
     if (i == -1)
@@ -3376,6 +3478,8 @@ AtomIdx StructureEditor::atomIdx(quint32 uid) const
 */
 const CGName& StructureEditor::cgName(quint32 uid) const
 {
+    this->assertSane();
+
     return d->cutGroup(uid).name;
 }
 
@@ -3385,6 +3489,8 @@ const CGName& StructureEditor::cgName(quint32 uid) const
 */
 CGIdx StructureEditor::cgIdx(quint32 uid) const
 {
+    this->assertSane();
+
     int i = d->cg_by_index.indexOf(uid);
     
     if (i == -1)
@@ -3401,6 +3507,8 @@ CGIdx StructureEditor::cgIdx(quint32 uid) const
 */
 const ResName& StructureEditor::resName(quint32 uid) const
 {
+    this->assertSane();
+
     return d->residue(uid).name;
 }
 
@@ -3410,6 +3518,8 @@ const ResName& StructureEditor::resName(quint32 uid) const
 */
 ResNum StructureEditor::resNum(quint32 uid) const
 {
+    this->assertSane();
+
     return d->residue(uid).number;
 }
 
@@ -3419,6 +3529,8 @@ ResNum StructureEditor::resNum(quint32 uid) const
 */
 ResIdx StructureEditor::resIdx(quint32 uid) const
 {
+    this->assertSane();
+
     int i = d->res_by_index.indexOf(uid);
     
     if (i == -1)
@@ -3435,6 +3547,8 @@ ResIdx StructureEditor::resIdx(quint32 uid) const
 */
 const ChainName& StructureEditor::chainName(quint32 uid) const
 {
+    this->assertSane();
+
     return d->chain(uid).name;
 }
 
@@ -3444,6 +3558,8 @@ const ChainName& StructureEditor::chainName(quint32 uid) const
 */
 ChainIdx StructureEditor::chainIdx(quint32 uid) const
 {
+    this->assertSane();
+
     int i = d->chains_by_index.indexOf(uid);
     
     if (i == -1)
@@ -3460,6 +3576,8 @@ ChainIdx StructureEditor::chainIdx(quint32 uid) const
 */
 const SegName& StructureEditor::segName(quint32 uid) const
 {
+    this->assertSane();
+
     return d->segment(uid).name;
 }
 
@@ -3469,6 +3587,8 @@ const SegName& StructureEditor::segName(quint32 uid) const
 */
 SegIdx StructureEditor::segIdx(quint32 uid) const
 {
+    this->assertSane();
+
     int i = d->seg_by_index.indexOf(uid);
     
     if (i == -1)
@@ -3487,6 +3607,8 @@ SegIdx StructureEditor::segIdx(quint32 uid) const
 */
 AtomIdx StructureEditor::atomIdx(const AtomID &atomid) const
 {
+    this->assertSane();
+
     QList<AtomIdx> atomidxs = atomid.map( EditMolInfo(*this) );
     
     if (atomidxs.count() > 1)
@@ -3505,6 +3627,8 @@ AtomIdx StructureEditor::atomIdx(const AtomID &atomid) const
 */
 CGIdx StructureEditor::cgIdx(const CGID &cgid) const
 {
+    this->assertSane();
+
     QList<CGIdx> cgidxs = cgid.map( EditMolInfo(*this) );
     
     if (cgidxs.count() > 1)
@@ -3523,6 +3647,8 @@ CGIdx StructureEditor::cgIdx(const CGID &cgid) const
 */
 ResIdx StructureEditor::resIdx(const ResID &resid) const
 {
+    this->assertSane();
+
     QList<ResIdx> residxs = resid.map( EditMolInfo(*this) );
     
     if (residxs.count() > 1)
@@ -3541,6 +3667,8 @@ ResIdx StructureEditor::resIdx(const ResID &resid) const
 */
 ChainIdx StructureEditor::chainIdx(const ChainID &chainid) const
 {
+    this->assertSane();
+
     QList<ChainIdx> chainidxs = chainid.map( EditMolInfo(*this) );
     
     if (chainidxs.count() > 1)
@@ -3559,6 +3687,8 @@ ChainIdx StructureEditor::chainIdx(const ChainID &chainid) const
 */
 SegIdx StructureEditor::segIdx(const SegID &segid) const
 {
+    this->assertSane();
+
     QList<SegIdx> segidxs = segid.map( EditMolInfo(*this) );
     
     if (segidxs.count() > 1)
@@ -3572,18 +3702,24 @@ SegIdx StructureEditor::segIdx(const SegID &segid) const
 /** Rename this molecule to 'newname' */
 void StructureEditor::renameMolecule(const MolName &newname)
 {
+    this->assertSane();
+
     d->molname = MolName( cacheName(newname) );
 }
 
 /** Give this molecule a new, unique, number */
 void StructureEditor::renumberMolecule()
 {
+    this->assertSane();
+
     d->molnum = MolNum::getUniqueNumber();
 }
 
 /** Renumber this molecule to 'newnum' */
 void StructureEditor::renumberMolecule(MolNum newnum)
 {
+    this->assertSane();
+
     d->molnum = newnum;
 }
 
@@ -3593,6 +3729,8 @@ void StructureEditor::renumberMolecule(MolNum newnum)
 */
 void StructureEditor::renameAtom(quint32 uid, const AtomName &newname)
 {
+    this->assertSane();
+
     EditAtomData &atom = d->atom(uid);
     
     if (atom.name != newname)
@@ -3608,6 +3746,8 @@ void StructureEditor::renameAtom(quint32 uid, const AtomName &newname)
 */
 void StructureEditor::renumberAtom(quint32 uid, AtomNum newnum)
 {
+    this->assertSane();
+
     EditAtomData &atom = d->atom(uid);
     
     if (atom.number != newnum)
@@ -3645,6 +3785,8 @@ static void changeIndex(QList<quint32> &uids, quint32 uid, int newidx)
 */
 void StructureEditor::reindexAtom(quint32 uid, AtomIdx newidx)
 {
+    this->assertSane();
+
     AtomIdx old_idx = this->atomIdx(uid);
 
     changeIndex( d->atoms_by_index, uid, newidx );
@@ -3659,6 +3801,8 @@ void StructureEditor::reindexAtom(quint32 uid, AtomIdx newidx)
 */
 void StructureEditor::renameCutGroup(quint32 uid, const CGName &newname)
 {
+    this->assertSane();
+
     if ( this->cgName(uid) != newname )
     {
         d->cutGroup(uid).name = CGName( cacheName(newname) );
@@ -3672,6 +3816,8 @@ void StructureEditor::renameCutGroup(quint32 uid, const CGName &newname)
 */
 void StructureEditor::reindexCutGroup(quint32 uid, CGIdx newidx)
 {
+    this->assertSane();
+
     CGIdx old_idx = this->cgIdx(uid);
 
     changeIndex( d->cg_by_index, uid, newidx );
@@ -3686,6 +3832,8 @@ void StructureEditor::reindexCutGroup(quint32 uid, CGIdx newidx)
 */
 void StructureEditor::renameResidue(quint32 uid, const ResName &newname)
 {
+    this->assertSane();
+
     if (this->resName(uid) != newname)
     {
         d->residue(uid).name = ResName( cacheName(newname) );
@@ -3699,6 +3847,8 @@ void StructureEditor::renameResidue(quint32 uid, const ResName &newname)
 */
 void StructureEditor::renumberResidue(quint32 uid, ResNum newnum)
 {
+    this->assertSane();
+
     if (this->resNum(uid) != newnum)
     {
         d->residue(uid).number = newnum;
@@ -3712,6 +3862,8 @@ void StructureEditor::renumberResidue(quint32 uid, ResNum newnum)
 */
 void StructureEditor::reindexResidue(quint32 uid, ResIdx newidx)
 {
+    this->assertSane();
+
     ResIdx old_idx = this->resIdx(uid);
     
     changeIndex( d->res_by_index, uid, newidx );
@@ -3726,6 +3878,8 @@ void StructureEditor::reindexResidue(quint32 uid, ResIdx newidx)
 */
 void StructureEditor::renameChain(quint32 uid, const ChainName &newname)
 {
+    this->assertSane();
+
     if (this->chainName(uid) != newname)
     {
         d->chain(uid).name = ChainName( cacheName(newname) );
@@ -3739,6 +3893,8 @@ void StructureEditor::renameChain(quint32 uid, const ChainName &newname)
 */
 void StructureEditor::reindexChain(quint32 uid, ChainIdx newidx)
 {
+    this->assertSane();
+
     ChainIdx old_idx = this->chainIdx(uid);
     
     changeIndex( d->chains_by_index, uid, newidx );
@@ -3753,6 +3909,8 @@ void StructureEditor::reindexChain(quint32 uid, ChainIdx newidx)
 */
 void StructureEditor::renameSegment(quint32 uid, const SegName &newname)
 {
+    this->assertSane();
+
     if (this->segName(uid) != newname)
     {
         d->segment(uid).name = SegName( cacheName(newname) );
@@ -3763,6 +3921,8 @@ void StructureEditor::renameSegment(quint32 uid, const SegName &newname)
 /** Change the index of the segment identified by 'uid' to 'newidx' */
 void StructureEditor::reindexSegment(quint32 uid, SegIdx newidx)
 {
+    this->assertSane();
+
     SegIdx old_idx = this->segIdx(uid);
     
     changeIndex( d->seg_by_index, uid, newidx );
@@ -3777,6 +3937,8 @@ void StructureEditor::reindexSegment(quint32 uid, SegIdx newidx)
 */
 void StructureEditor::removeAtom(quint32 uid)
 {
+    this->assertSane();
+
     const EditAtomData &atom = d->atom(uid);
     
     //remove the atom from its parent groups...
@@ -3804,6 +3966,8 @@ void StructureEditor::removeAtom(quint32 uid)
 */
 void StructureEditor::removeCutGroup(quint32 uid)
 {
+    this->assertSane();
+
     const EditCGData &cgroup = d->cutGroup(uid);
     
     //tell the atoms that they don't now have a CG parent
@@ -3824,6 +3988,8 @@ void StructureEditor::removeCutGroup(quint32 uid)
 */
 void StructureEditor::removeResidue(quint32 uid)
 {
+    this->assertSane();
+
     const EditResData &residue = d->residue(uid);
     
     //tell the parent Chain that this residue is leaving...
@@ -3848,6 +4014,8 @@ void StructureEditor::removeResidue(quint32 uid)
 */
 void StructureEditor::removeChain(quint32 uid)
 {
+    this->assertSane();
+
     const EditChainData &chain = d->chain(uid);
     
     //tell each residue that this chain is leaving
@@ -3868,6 +4036,8 @@ void StructureEditor::removeChain(quint32 uid)
 */
 void StructureEditor::removeSegment(quint32 uid)
 {
+    this->assertSane();
+
     const EditSegData &segment = d->segment(uid);
     
     //tell each atom that this segment is leaving
@@ -3889,6 +4059,8 @@ void StructureEditor::removeSegment(quint32 uid)
 */
 void StructureEditor::removeAtoms(const AtomID &atomid)
 {
+    this->assertSane();
+
     QList<AtomIdx> atomidxs = atomid.map( EditMolInfo(*this) );
     
     if (atomidxs.count() == 1)
@@ -3921,6 +4093,8 @@ void StructureEditor::removeAtoms(const AtomID &atomid)
 */
 void StructureEditor::removeCutGroups(const CGID &cgid)
 {
+    this->assertSane();
+
     QList<CGIdx> cgidxs = cgid.map( EditMolInfo(*this) );
     
     if (cgidxs.count() == 1)
@@ -3953,6 +4127,8 @@ void StructureEditor::removeCutGroups(const CGID &cgid)
 */
 void StructureEditor::removeResidues(const ResID &resid)
 {
+    this->assertSane();
+
     QList<ResIdx> residxs = resid.map( EditMolInfo(*this) );
     
     if (residxs.count() == 1)
@@ -3985,6 +4161,8 @@ void StructureEditor::removeResidues(const ResID &resid)
 */
 void StructureEditor::removeChains(const ChainID &chainid)
 {
+    this->assertSane();
+
     QList<ChainIdx> chainidxs = chainid.map( EditMolInfo(*this) );
     
     if (chainidxs.count() == 1)
@@ -4017,6 +4195,8 @@ void StructureEditor::removeChains(const ChainID &chainid)
 */
 void StructureEditor::removeSegments(const SegID &segid)
 {
+    this->assertSane();
+
     QList<SegIdx> segidxs = segid.map( EditMolInfo(*this) );
     
     if (segidxs.count() == 1)
@@ -4045,6 +4225,8 @@ void StructureEditor::removeSegments(const SegID &segid)
 /** Remove all atoms from this molecule */
 void StructureEditor::removeAllAtoms()
 {
+    this->assertSane();
+
     QList<quint32> atoms_by_index = d->atoms_by_index;
     
     if (not atoms_by_index.isEmpty())
@@ -4061,6 +4243,8 @@ void StructureEditor::removeAllAtoms()
 /** Remove all CutGroups from this molecule */
 void StructureEditor::removeAllCutGroups()
 {
+    this->assertSane();
+
     QList<quint32> cg_by_index = d->cg_by_index;
     
     if (not cg_by_index.isEmpty())
@@ -4077,6 +4261,8 @@ void StructureEditor::removeAllCutGroups()
 /** Remove all residues from this molecule */
 void StructureEditor::removeAllResidues()
 {
+    this->assertSane();
+
     QList<quint32> res_by_index = d->res_by_index;
     
     if (not res_by_index.isEmpty())
@@ -4093,6 +4279,8 @@ void StructureEditor::removeAllResidues()
 /** Remove all chains from this molecule */
 void StructureEditor::removeAllChains()
 {
+    this->assertSane();
+
     QList<quint32> chains_by_index = d->chains_by_index;
     
     if (not chains_by_index.isEmpty())
@@ -4109,6 +4297,8 @@ void StructureEditor::removeAllChains()
 /** Remove all segments from this molecule */
 void StructureEditor::removeAllSegments()
 {
+    this->assertSane();
+
     QList<quint32> seg_by_index = d->seg_by_index;
     
     if (not seg_by_index.isEmpty())
@@ -4129,6 +4319,8 @@ void StructureEditor::removeAllSegments()
 */
 void StructureEditor::reparentAtom(quint32 uid, CGIdx cgidx)
 {
+    this->assertSane();
+
     EditAtomData &atom = d->atom(uid);
     
     quint32 cg_uid = this->getUID(cgidx);
@@ -4156,6 +4348,8 @@ void StructureEditor::reparentAtom(quint32 uid, CGIdx cgidx)
 */
 void StructureEditor::reparentAtom(quint32 uid, ResIdx residx)
 {
+    this->assertSane();
+
     EditAtomData &atom = d->atom(uid);
     
     quint32 res_uid = this->getUID(residx);
@@ -4183,6 +4377,8 @@ void StructureEditor::reparentAtom(quint32 uid, ResIdx residx)
 */
 void StructureEditor::reparentAtom(quint32 uid, SegIdx segidx)
 {
+    this->assertSane();
+
     EditAtomData &atom = d->atom(uid);
     
     quint32 seg_uid = this->getUID(segidx);
@@ -4210,6 +4406,8 @@ void StructureEditor::reparentAtom(quint32 uid, SegIdx segidx)
 */
 void StructureEditor::reparentResidue(quint32 uid, ChainIdx chainidx)
 {
+    this->assertSane();
+
     EditResData &residue = d->residue(uid);
     
     quint32 chain_uid = this->getUID(chainidx);
@@ -4233,6 +4431,8 @@ void StructureEditor::reparentResidue(quint32 uid, ChainIdx chainidx)
 /** Add a new atom to the molecule, returning an editor for that atom */
 AtomStructureEditor StructureEditor::addAtom()
 {
+    this->assertSane();
+
     quint32 uid = d->getNewUID();
     d->atoms.insert( uid, EditAtomData() );
     d->atoms_by_index.append(uid);
@@ -4244,6 +4444,8 @@ AtomStructureEditor StructureEditor::addAtom()
 /** Add a new CutGroup to the molecule, returning an editor for that CutGroup */
 CGStructureEditor StructureEditor::addCutGroup()
 {
+    this->assertSane();
+
     quint32 uid = d->getNewUID();
     d->cutgroups.insert( uid, EditCGData() );
     d->cg_by_index.append(uid);
@@ -4255,6 +4457,8 @@ CGStructureEditor StructureEditor::addCutGroup()
 /** Add a new residue to the molecule, returning an editor for that residue */
 ResStructureEditor StructureEditor::addResidue()
 {
+    this->assertSane();
+
     quint32 uid = d->getNewUID();
     d->residues.insert( uid, EditResData() );
     d->res_by_index.append(uid);
@@ -4266,6 +4470,8 @@ ResStructureEditor StructureEditor::addResidue()
 /** Add a new chain to the molecule, returning an editor for that chain */
 ChainStructureEditor StructureEditor::addChain()
 {
+    this->assertSane();
+
     quint32 uid = d->getNewUID();
     d->chains.insert( uid, EditChainData() );
     d->chains_by_index.append(uid);
@@ -4277,6 +4483,8 @@ ChainStructureEditor StructureEditor::addChain()
 /** Add a new segment to the molecule, returning an editor for that segment */
 SegStructureEditor StructureEditor::addSegment()
 {
+    this->assertSane();
+
     quint32 uid = d->getNewUID();
     d->segments.insert( uid, EditSegData() );
     d->seg_by_index.append(uid);
@@ -4289,6 +4497,8 @@ SegStructureEditor StructureEditor::addSegment()
 AtomSelection StructureEditor::extractAtomSelection(
                                     const AtomVariantProperty &values) const
 {
+    this->assertSane();
+
     //create an AtomSelection using the current MoleculeInfo object
     if (this->needsInfoRebuild())
         const_cast<StructureEditor*>(this)->commitInfo();
@@ -4331,6 +4541,8 @@ AtomSelection StructureEditor::extractAtomSelection(
     way will mean that the properties will have to be recalculated */
 Properties StructureEditor::properties() const
 {
+    this->assertSane();
+
     //go through each property in turn and extract it based
     //on its current type
     Properties updated_properties = d->properties;
@@ -4494,6 +4706,8 @@ Properties StructureEditor::properties() const
 const QVariant& StructureEditor::getAtomProperty(quint32 uid, 
                                                  const QString &key) const
 {
+    this->assertSane();
+
     const EditAtomData &atom = d->atom(uid);
 
     QHash<QString,QVariant>::const_iterator it = atom.properties.constFind(key);
@@ -4517,6 +4731,8 @@ const QVariant& StructureEditor::getAtomProperty(quint32 uid,
 const QVariant& StructureEditor::getResProperty(quint32 uid, 
                                                 const QString &key) const
 {
+    this->assertSane();
+
     const EditResData &residue = d->residue(uid);
 
     QHash<QString,QVariant>::const_iterator it = residue.properties.constFind(key);
@@ -4540,6 +4756,8 @@ const QVariant& StructureEditor::getResProperty(quint32 uid,
 const QVariant& StructureEditor::getCGProperty(quint32 uid,
                                                const QString &key) const
 {
+    this->assertSane();
+
     const EditCGData &cgroup = d->cutGroup(uid);
 
     QHash<QString,QVariant>::const_iterator it = cgroup.properties.constFind(key);
@@ -4563,6 +4781,8 @@ const QVariant& StructureEditor::getCGProperty(quint32 uid,
 const QVariant& StructureEditor::getChainProperty(quint32 uid, 
                                                   const QString &key) const
 {
+    this->assertSane();
+
     const EditChainData &chain = d->chain(uid);
 
     QHash<QString,QVariant>::const_iterator it = chain.properties.constFind(key);
@@ -4586,6 +4806,8 @@ const QVariant& StructureEditor::getChainProperty(quint32 uid,
 const QVariant& StructureEditor::getSegProperty(quint32 uid, 
                                                 const QString &key) const
 {
+    this->assertSane();
+
     const EditSegData &segment = d->segment(uid);
 
     QHash<QString,QVariant>::const_iterator it = segment.properties.constFind(key);
@@ -4609,6 +4831,8 @@ const QVariant& StructureEditor::getSegProperty(quint32 uid,
 const QVariant& StructureEditor::getAtomMetadata(quint32 uid, 
                                                  const QString &metakey) const
 {
+    this->assertSane();
+
     const EditAtomData &atom = d->atom(uid);
 
     QHash<QString,QVariant>::const_iterator 
@@ -4633,6 +4857,8 @@ const QVariant& StructureEditor::getAtomMetadata(quint32 uid,
 const QVariant& StructureEditor::getResMetadata(quint32 uid, 
                                                 const QString &metakey) const
 {
+    this->assertSane();
+
     const EditResData &residue = d->residue(uid);
 
     QHash<QString,QVariant>::const_iterator 
@@ -4657,6 +4883,8 @@ const QVariant& StructureEditor::getResMetadata(quint32 uid,
 const QVariant& StructureEditor::getCGMetadata(quint32 uid,
                                                const QString &metakey) const
 {
+    this->assertSane();
+
     const EditCGData &cgroup = d->cutGroup(uid);
 
     QHash<QString,QVariant>::const_iterator 
@@ -4681,6 +4909,8 @@ const QVariant& StructureEditor::getCGMetadata(quint32 uid,
 const QVariant& StructureEditor::getChainMetadata(quint32 uid, 
                                                   const QString &metakey) const
 {
+    this->assertSane();
+
     const EditChainData &chain = d->chain(uid);
 
     QHash<QString,QVariant>::const_iterator 
@@ -4705,6 +4935,8 @@ const QVariant& StructureEditor::getChainMetadata(quint32 uid,
 const QVariant& StructureEditor::getSegMetadata(quint32 uid, 
                                                 const QString &metakey) const
 {
+    this->assertSane();
+
     const EditSegData &segment = d->segment(uid);
 
     QHash<QString,QVariant>::const_iterator 
@@ -4729,6 +4961,8 @@ const QVariant& StructureEditor::getSegMetadata(quint32 uid,
 const QVariant& StructureEditor::getAtomMetadata(quint32 uid, const QString &key,
                                                  const QString &metakey) const
 {
+    this->assertSane();
+
     const EditAtomData &atom = d->atom(uid);
 
     QHash< QString,QHash<QString,QVariant> >::const_iterator
@@ -4764,6 +4998,8 @@ const QVariant& StructureEditor::getAtomMetadata(quint32 uid, const QString &key
 const QVariant& StructureEditor::getResMetadata(quint32 uid, const QString &key,
                                                 const QString &metakey) const
 {
+    this->assertSane();
+
     const EditResData &residue = d->residue(uid);
 
     QHash< QString,QHash<QString,QVariant> >::const_iterator
@@ -4799,6 +5035,8 @@ const QVariant& StructureEditor::getResMetadata(quint32 uid, const QString &key,
 const QVariant& StructureEditor::getCGMetadata(quint32 uid, const QString &key,
                                                const QString &metakey) const
 {
+    this->assertSane();
+
     const EditCGData &cgroup = d->cutGroup(uid);
 
     QHash< QString,QHash<QString,QVariant> >::const_iterator
@@ -4834,6 +5072,8 @@ const QVariant& StructureEditor::getCGMetadata(quint32 uid, const QString &key,
 const QVariant& StructureEditor::getChainMetadata(quint32 uid, const QString &key,
                                                   const QString &metakey) const
 {
+    this->assertSane();
+
     const EditChainData &chain = d->chain(uid);
 
     QHash< QString,QHash<QString,QVariant> >::const_iterator
@@ -4869,6 +5109,8 @@ const QVariant& StructureEditor::getChainMetadata(quint32 uid, const QString &ke
 const QVariant& StructureEditor::getSegMetadata(quint32 uid, const QString &key,
                                                 const QString &metakey) const
 {
+    this->assertSane();
+
     const EditSegData &segment = d->segment(uid);
 
     QHash< QString,QHash<QString,QVariant> >::const_iterator
@@ -4914,6 +5156,8 @@ void StructureEditor::_pvt_invalidPropertyCast(const QString &key,
 void StructureEditor::_pvt_setAtomProperty(quint32 uid, const QString &key, 
                                            const QVariant &value)
 {
+    this->assertSane();
+
     d->atom(uid).properties.insert(key, value);
 }
 
@@ -4924,6 +5168,8 @@ void StructureEditor::_pvt_setAtomProperty(quint32 uid, const QString &key,
 void StructureEditor::_pvt_setAtomMetadata(quint32 uid, const QString &metakey,
                                            const QVariant &value)
 {
+    this->assertSane();
+
     d->atom(uid).molecule_metadata.insert(metakey, value);
 }
                           
@@ -4936,6 +5182,8 @@ void StructureEditor::_pvt_setAtomMetadata(quint32 uid, const QString &key,
                                            const QString &metakey,
                                            const QVariant &value)
 {
+    this->assertSane();
+
     d->atom(uid).property_metadata[key].insert(metakey, value);
 }
 
@@ -4946,6 +5194,8 @@ void StructureEditor::_pvt_setAtomMetadata(quint32 uid, const QString &key,
 void StructureEditor::_pvt_setResProperty(quint32 uid, const QString &key, 
                                           const QVariant &value)
 {
+    this->assertSane();
+
     d->residue(uid).properties.insert(key, value);
 }
 
@@ -4956,6 +5206,8 @@ void StructureEditor::_pvt_setResProperty(quint32 uid, const QString &key,
 void StructureEditor::_pvt_setResMetadata(quint32 uid, const QString &metakey,
                                           const QVariant &value)
 {
+    this->assertSane();
+
     d->residue(uid).molecule_metadata.insert(metakey, value);
 }
                           
@@ -4968,6 +5220,8 @@ void StructureEditor::_pvt_setResMetadata(quint32 uid, const QString &key,
                                           const QString &metakey,
                                           const QVariant &value)
 {
+    this->assertSane();
+
     d->residue(uid).property_metadata[key].insert(metakey, value);
 }
 
@@ -4978,6 +5232,8 @@ void StructureEditor::_pvt_setResMetadata(quint32 uid, const QString &key,
 void StructureEditor::_pvt_setCGProperty(quint32 uid, const QString &key, 
                                          const QVariant &value)
 {
+    this->assertSane();
+
     d->cutGroup(uid).properties.insert(key, value);
 }
 
@@ -4988,6 +5244,8 @@ void StructureEditor::_pvt_setCGProperty(quint32 uid, const QString &key,
 void StructureEditor::_pvt_setCGMetadata(quint32 uid, const QString &metakey,
                                          const QVariant &value)
 {
+    this->assertSane();
+
     d->cutGroup(uid).molecule_metadata.insert(metakey, value);
 }
                           
@@ -5000,6 +5258,8 @@ void StructureEditor::_pvt_setCGMetadata(quint32 uid, const QString &key,
                                          const QString &metakey,
                                          const QVariant &value)
 {
+    this->assertSane();
+
     d->cutGroup(uid).property_metadata[key].insert(metakey, value);
 }
 
@@ -5010,6 +5270,8 @@ void StructureEditor::_pvt_setCGMetadata(quint32 uid, const QString &key,
 void StructureEditor::_pvt_setChainProperty(quint32 uid, const QString &key, 
                                             const QVariant &value)
 {
+    this->assertSane();
+
     d->chain(uid).properties.insert(key, value);
 }
 
@@ -5020,6 +5282,8 @@ void StructureEditor::_pvt_setChainProperty(quint32 uid, const QString &key,
 void StructureEditor::_pvt_setChainMetadata(quint32 uid, const QString &metakey,
                                             const QVariant &value)
 {
+    this->assertSane();
+
     d->chain(uid).molecule_metadata.insert(metakey, value);
 }
                           
@@ -5032,6 +5296,8 @@ void StructureEditor::_pvt_setChainMetadata(quint32 uid, const QString &key,
                                             const QString &metakey,
                                             const QVariant &value)
 {
+    this->assertSane();
+
     d->chain(uid).property_metadata[key].insert(metakey, value);
 }
 
@@ -5042,6 +5308,8 @@ void StructureEditor::_pvt_setChainMetadata(quint32 uid, const QString &key,
 void StructureEditor::_pvt_setSegProperty(quint32 uid, const QString &key, 
                                           const QVariant &value)
 {
+    this->assertSane();
+
     d->segment(uid).properties.insert(key, value);
 }
 
@@ -5052,6 +5320,8 @@ void StructureEditor::_pvt_setSegProperty(quint32 uid, const QString &key,
 void StructureEditor::_pvt_setSegMetadata(quint32 uid, const QString &metakey,
                                           const QVariant &value)
 {
+    this->assertSane();
+
     d->segment(uid).molecule_metadata.insert(metakey, value);
 }
                           
@@ -5064,5 +5334,7 @@ void StructureEditor::_pvt_setSegMetadata(quint32 uid, const QString &key,
                                            const QString &metakey,
                                            const QVariant &value)
 {
+    this->assertSane();
+
     d->segment(uid).property_metadata[key].insert(metakey, value);
 }

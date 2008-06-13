@@ -227,7 +227,7 @@ bool AtomSelection::selected(CGIdx cgidx) const
 {
     cgidx = CGIdx( cgidx.map(info().nCutGroups()) );
     
-    return this->selectedAll() or selected_atoms.contains(cgidx);
+    return this->selectedAll(cgidx) or selected_atoms.value(cgidx).count() > 0;
 }
 
 /** Return whether or not any atoms in the residue
@@ -802,9 +802,16 @@ QList<CGIdx> AtomSelection::selectedCutGroups() const
     }
     else
     {
-        QList<CGIdx> cgs = selected_atoms.keys();
-        qSort(cgs);
-        return cgs;
+        QList<CGIdx> selected_cgroups;
+        int ncg = info().nCutGroups();
+        
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            if (selectedAll(i) or selected_atoms.value(i).count() > 0)
+                selected_cgroups.append(i);
+        }
+        
+        return selected_cgroups;
     }
 }
 
@@ -1268,8 +1275,23 @@ int AtomSelection::nSelectedCutGroups() const
 {
     if (this->selectedAll())
         return info().nCutGroups();
+        
+    else if (this->selectedNone())
+        return 0;
+    
     else
-        return selected_atoms.count();
+    {
+        int nselected_cgroups = 0;
+        int ncgroups = info().nCutGroups();
+        
+        for (CGIdx i(0); i<ncgroups; ++i)
+        {
+            if (this->_pvt_selectedAll(i) or selected_atoms.value(i).count() > 0)
+                ++nselected_cgroups;
+        }
+    
+        return nselected_cgroups;
+    }
 }
 
 /** Return the number of residues that contain at
@@ -1382,7 +1404,7 @@ void AtomSelection::_pvt_select(const CGAtomIdx &cgatomidx)
         
         for (CGIdx i(0); i<ncg; ++i)
         {
-            int nats = info().nAtoms(cgatomidx.cutGroup());
+            int nats = info().nAtoms(i);
             
             BOOST_ASSERT(nats > 0);
         
@@ -1526,13 +1548,48 @@ void AtomSelection::_pvt_select(CGIdx cgidx)
 {
     if (this->selectedAll(cgidx))
         return;
+    
+    else if (this->selectedNone())
+    {
+        if (info().nCutGroups() == 1)
+            nselected = info().nAtoms();
+            
+        else
+        {
+            //we are selecting the first CutGroup in the molecule...
+            int ncg = info().nCutGroups();
         
-    QSet<Index> atoms = selected_atoms.take(cgidx);
+            //create space for all of the atoms in all of the CutGroups
+            selected_atoms.reserve(ncg);
+        
+            for (CGIdx i(0); i<ncg; ++i)
+            {
+                if (i != cgidx)
+                {
+                    int nats = info().nAtoms(i);
+            
+                    BOOST_ASSERT(nats > 0);
+        
+                    selected_atoms.insert(i, QSet<Index>())
+                                  .value().reserve( nats-1 );
+                }
+            }
+            
+            nselected = info().nAtoms(cgidx);
+        }
+    }
+    else
+    {
+        QSet<Index> atoms = selected_atoms.take(cgidx);
     
-    if (selected_atoms.isEmpty())
-        selected_atoms.clear();
-    
-    nselected += info().nAtoms(cgidx) - atoms.count();
+        if (selected_atoms.isEmpty())
+        {
+            selected_atoms.clear();
+            nselected = info().nAtoms();
+        }
+        else    
+            nselected += info().nAtoms(cgidx) - atoms.count();
+    }
 }
 
 void AtomSelection::_pvt_deselect(CGIdx cgidx)
