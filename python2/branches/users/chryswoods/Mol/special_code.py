@@ -242,6 +242,15 @@ def fix_AtomCoords(c):
     c.add_declaration_code("#include \"SireVol/aabox.h\"")
     c.add_declaration_code("#include \"SireMaths/axisset.h\"")
 
+def fix_CGAtomIdx(c):
+    c.add_declaration_code("#include \"cgidx.h\"")
+    c.add_declaration_code("#include \"SireID/index.h\"")
+
+def fix_CGIdx(c):
+    c.add_declaration_code("#include \"SireID/index.h\"")
+    c.add_declaration_code("#include \"cgatomidx.h\"")
+    c.add_registration_code("def( other<SireID::Index>() + self )")
+
 special_code = { "SireMol::Atom" : fix_Atom,
                  "SireMol::Editor<SireMol::AtomEditor, SireMol::Atom>" : fix_AtomEditorBase,
                  "SireMol::AtomEditor" : fix_AtomEditor,
@@ -317,5 +326,8 @@ special_code = { "SireMol::Atom" : fix_Atom,
                  "SireMol::MolNum" : fix_MolNum,
                  "SireMol::MolName" : fix_MolName,
                  "SireMol::MolIdx" : fix_MolIdx,
-                 "SireMol::MolInfo" : fix_MolInfo }
+                 "SireMol::MolInfo" : fix_MolInfo, 
+
+                 "SireMol::CGIdx" : fix_CGIdx,
+                 "SireMol::CGAtomIdx" : fix_CGAtomIdx }
 

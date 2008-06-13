@@ -53,6 +53,9 @@ def findGlobals():
 
     print >>FILE, "}\n"
 
+def fix_GeneralUnit(c):
+    c.add_registration_code("def( other<double>() * self )")
+
 def fixMB(mb):
    mb.add_declaration_code("#include \"SireUnits/temperature.h\"")
    mb.add_declaration_code("#include \"sireunits_dimensions.h\"")
@@ -65,6 +68,8 @@ def fixMB(mb):
    #add all of the global physical constants to the module
    findGlobals()
 
+
+special_code = { "SireUnits::Dimension::GeneralUnit" : fix_GeneralUnit }
 
 implicitly_convertible = [ ("SireUnits::Dimension::TempBase",
                             "SireUnits::Dimension::Temperature"),
