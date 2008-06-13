@@ -190,21 +190,51 @@ def scanFiles(dir, module_dir, atom_properties, cg_properties,
             atom_properties.addDependency(file, dir, module_dir)
             atom_properties.addProperty(m.groups()[0].strip(), m.groups()[1].strip())
 
+            if file not in active_files:
+                active_files[file] = HeaderInfo(file, dir, module_dir)
+
+            active_files[file].addClass(m.groups()[1].split("::")[-1].strip())
+            exposed_classes.append(m.groups()[1].split("::")[-1].strip())
+
         for m in re.finditer(match_cg_property, text):
             cg_properties.addDependency(file, dir, module_dir)
             cg_properties.addProperty(m.groups()[0].strip(), m.groups()[1].strip())
+
+            if file not in active_files:
+                active_files[file] = HeaderInfo(file, dir, module_dir)
+
+            active_files[file].addClass(m.groups()[1].split("::")[-1].strip())
+            exposed_classes.append(m.groups()[1].split("::")[-1].strip())
 
         for m in re.finditer(match_res_property, text):
             res_properties.addDependency(file, dir, module_dir)
             res_properties.addProperty(m.groups()[0].strip(), m.groups()[1].strip())
 
+            if file not in active_files:
+                active_files[file] = HeaderInfo(file, dir, module_dir)
+
+            active_files[file].addClass(m.groups()[1].split("::")[-1].strip())
+            exposed_classes.append(m.groups()[1].split("::")[-1].strip())
+
         for m in re.finditer(match_chain_property, text):
             chain_properties.addDependency(file, dir, module_dir)
             chain_properties.addProperty(m.groups()[0].strip(), m.groups()[1].strip())
 
+            if file not in active_files:
+                active_files[file] = HeaderInfo(file, dir, module_dir)
+
+            active_files[file].addClass(m.groups()[1].split("::")[-1].strip())
+            exposed_classes.append(m.groups()[1].split("::")[-1].strip())
+
         for m in re.finditer(match_seg_property, text):
             seg_properties.addDependency(file, dir, module_dir)
             seg_properties.addProperty(m.groups()[0].strip(), m.groups()[1].strip())
+
+            if file not in active_files:
+                active_files[file] = HeaderInfo(file, dir, module_dir)
+
+            active_files[file].addClass(m.groups()[1].split("::")[-1].strip())
+            exposed_classes.append(m.groups()[1].split("::")[-1].strip())
 
     #now add each active file to a single header file that can be parsed by Py++
     FILE = open("%s/active_headers.h" % module_dir, "w")

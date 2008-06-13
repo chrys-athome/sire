@@ -9,6 +9,7 @@ import Sire.Maths
 import Sire.Base
 import Sire.ID
 import Sire.Qt
+import Sire.Vol
 
 from Sire.Mol._Mol import *
 
@@ -77,7 +78,7 @@ AtomEditorBase.setProperty = __set_property__
 Atom.metadata = __get_metadata__
 AtomEditorBase.setMetadata = __set_metadata__
 
-CutGroup.property = __get_property_
+CutGroup.property = __get_property__
 CGEditorBase.setProperty = __set_property__
 CutGroup.metadata = __get_metadata__
 CGEditorBase.setMetadata = __set_metadata__

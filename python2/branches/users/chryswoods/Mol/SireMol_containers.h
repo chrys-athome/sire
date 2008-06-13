@@ -25,37 +25,10 @@
   *  at http://siremol.org
   *
 \*********************************************/
+#ifndef PYWRAP_SIREMOL_CONTAINERS_H
+#define PYWRAP_SIREMOL_CONTAINERS_H
 
-#ifndef PYWRAP_SIREPY_CONVERTSHAREDPOINTER_HPP
-#define PYWRAP_SIREPY_CONVERTSHAREDPOINTER_HPP
-
-namespace bp = boost::python;
-
-#include "SireBase/sharedpolypointer.hpp"
-
-SIRE_BEGIN_HEADER
-
-using SireBase::SharedPolyPointer;
-
-template<class P, class Base>
-struct to_base_object
-{
-    static PyObject* convert(const P &object_container)
-    {
-        return bp::incref( object( SireBase::SharedPolyPointer<Base>(object_container.base()) ).ptr() );
-    }
-};
-
-template<class P, class Base>
-void register_container()
-{
-    bp::to_python_converter< P, to_base_object<P,Base> >();
-
-    bp::implicitly_convertible< Base, P >();
-
-    bp::register_ptr_to_python< SharedPolyPointer<Base> >();
-}
-
-SIRE_END_HEADER
+void register_SireMol_containers();
 
 #endif
+

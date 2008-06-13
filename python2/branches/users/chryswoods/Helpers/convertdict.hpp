@@ -34,7 +34,7 @@
 #include <boost/python.hpp>
 #include <boost/tuple/tuple.hpp>
 
-using namespace boost::python;
+namespace bp = boost::python;
 
 SIRE_BEGIN_HEADER
 
@@ -47,10 +47,10 @@ struct from_py_dict
         for this type */
     from_py_dict()
     {
-        boost::python::converter::registry::push_back(
+        bp::converter::registry::push_back(
             &convertible,
             &construct,
-            type_id< C >());
+            bp::type_id< C >());
     }
 
     /** Test whether or not it is possible to convert the PyObject
@@ -61,19 +61,19 @@ struct from_py_dict
         if ( PyDict_Check(obj_ptr) )
         {
             //check the tuple elements... - convert to a boost::tuple object
-            boost::python::dict d( handle<>(borrowed(obj_ptr)) );
+            bp::dict d( bp::handle<>(bp::borrowed(obj_ptr)) );
 
             //check the items in the dict (items is a list of 2-tuples key-value
-            list items = d.items();
+            bp::list items = d.items();
 
-            int nitems = extract<int>(items.attr("__len__")())();
+            int nitems = bp::extract<int>(items.attr("__len__")())();
 
             for (int i=0; i<nitems; ++i)
             {
-                tuple item = extract<tuple>(items[i])();
+                bp::tuple item = bp::extract<bp::tuple>(items[i])();
 
-                if ( not (extract<key_type>(item[0]).check() and
-                          extract<mapped_type>(item[1]).check()) )
+                if ( not (bp::extract<key_type>(item[0]).check() and
+                          bp::extract<mapped_type>(item[1]).check()) )
                 {
                     //either the key of value is wrong
                     return 0;
@@ -92,14 +92,14 @@ struct from_py_dict
         by 'obj_ptr' */
     static void construct(
         PyObject* obj_ptr,
-        boost::python::converter::rvalue_from_python_stage1_data* data)
+        bp::converter::rvalue_from_python_stage1_data* data)
     {
         //convert the PyObject to a boost::python::dict
-        dict d( handle<>(borrowed(obj_ptr)) );
+        bp::dict d( bp::handle<>(bp::borrowed(obj_ptr)) );
 
         //locate the storage space for the result
         void* storage =
-            ( (converter::rvalue_from_python_storage<C>*)data )->storage.bytes;
+            ( (bp::converter::rvalue_from_python_storage<C>*)data )->storage.bytes;
 
         //create the container
         new (storage) C();
@@ -108,16 +108,16 @@ struct from_py_dict
 
         //add all of the elements from the dict - do this by converting
         //to a list and then extracting each item
-        list items = d.items();
+        bp::list items = d.items();
 
-        int nitems = extract<int>(items.attr("__len__")())();
+        int nitems = bp::extract<int>(items.attr("__len__")())();
 
         for (int i=0; i<nitems; ++i)
         {
-            tuple item = extract<tuple>(items[i])();
+            bp::tuple item = bp::extract<bp::tuple>(items[i])();
 
-            container->insert( extract<key_type>(item[0])(),
-                               extract<mapped_type>(item[1])() );
+            container->insert( bp::extract<key_type>(item[0])(),
+                               bp::extract<mapped_type>(item[1])() );
         }
 
         data->convertible = storage;
@@ -129,7 +129,7 @@ struct to_py_dict
 {
     static PyObject* convert(const C &cpp_dict)
     {
-        dict python_dict;
+        bp::dict python_dict;
 
         //add all items to the python dictionary
         for (typename C::const_iterator it = cpp_dict.begin();
@@ -139,7 +139,7 @@ struct to_py_dict
             python_dict[it.key()] = it.value();
         }
 
-        return incref( python_dict.ptr() );
+        return bp::incref( python_dict.ptr() );
     }
 };
 
@@ -149,21 +149,21 @@ void register_dict()
     typedef typename C::key_type key_type;
     typedef typename C::mapped_type mapped_type;
 
-    to_python_converter< C, to_py_dict<C> >();
+    bp::to_python_converter< C, to_py_dict<C> >();
 
-    converter::registry::push_back( &from_py_dict<C,key_type,mapped_type>::convertible,
-                                    &from_py_dict<C,key_type,mapped_type>::construct,
-                                    type_id<C>() );
+    bp::converter::registry::push_back( &from_py_dict<C,key_type,mapped_type>::convertible,
+                                        &from_py_dict<C,key_type,mapped_type>::construct,
+                                        bp::type_id<C>() );
 }
 
 template<class C, class key_type, class mapped_type>
 void register_dict()
 {
-    to_python_converter< C, to_py_dict<C> >();
+    bp::to_python_converter< C, to_py_dict<C> >();
 
-    converter::registry::push_back( &from_py_dict<C,key_type,mapped_type>::convertible,
-                                    &from_py_dict<C,key_type,mapped_type>::construct,
-                                    type_id<C>() );
+    bp::converter::registry::push_back( &from_py_dict<C,key_type,mapped_type>::convertible,
+                                        &from_py_dict<C,key_type,mapped_type>::construct,
+                                        bp::type_id<C>() );
 }
 
 SIRE_END_HEADER

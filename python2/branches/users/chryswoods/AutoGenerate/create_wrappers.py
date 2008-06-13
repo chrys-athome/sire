@@ -99,6 +99,8 @@ def find_class(mb, classname):
            return clas
        elif str(clas).find("%s [struct]" % classname) != -1:
            return clas
+       elif clas.alias == classname:
+           return clas
 
    raise "Cannot find the class %s" % classname
 
@@ -108,7 +110,7 @@ def export_class(mb, classname, aliases, includes, special_code):
       supplied special code, and adding the header files in 'includes'
       to the generated C++"""
 
-   #find the class in the declarations
+   #find the class in the declarations   
    c = find_class(mb, classname)
    
    #include the class in the wrapper

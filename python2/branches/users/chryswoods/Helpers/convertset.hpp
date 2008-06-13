@@ -34,7 +34,7 @@
 #include <boost/python.hpp>
 #include <boost/tuple/tuple.hpp>
 
-using namespace boost::python;
+namespace bp = boost::python;
 
 SIRE_BEGIN_HEADER
 
@@ -47,10 +47,10 @@ struct from_py_set
         for this type */
     from_py_set()
     {
-        boost::python::converter::registry::push_back(
+        bp::converter::registry::push_back(
             &convertible,
             &construct,
-            type_id< C >());
+            bp::type_id< C >());
     }
 
     /** Test whether or not it is possible to convert the PyObject
@@ -61,7 +61,7 @@ struct from_py_set
         if ( PyTuple_Check(obj_ptr) )
         {
             //check the tuple elements... - convert to a boost::tuple object
-            boost::python::tuple t( handle<>(borrowed(obj_ptr)) );
+            bp::tuple t( bp::handle<>(bp::borrowed(obj_ptr)) );
 
             //how many elements are there?
             int n = PyTuple_Size(obj_ptr);
@@ -69,7 +69,7 @@ struct from_py_set
             //can they all be converted to type 'T'?
             for (int i=0; i<n; ++i)
             {
-                if (not boost::python::extract<T>(t[i]).check())
+                if (not bp::extract<T>(t[i]).check())
                     return 0;
             }
 
@@ -80,7 +80,7 @@ struct from_py_set
         else if ( PyList_Check(obj_ptr) )
         {
             //check that all of the list elements can be converted to the right type
-            boost::python::list l( handle<>(borrowed(obj_ptr)) );
+            bp::list l( bp::handle<>(bp::borrowed(obj_ptr)) );
 
             //how many elements are there?
             int n = PyList_Size(obj_ptr);
@@ -88,7 +88,7 @@ struct from_py_set
             //can all of the elements be converted to type 'T'?
             for (int i=0; i<n; ++i)
             {
-                if (not boost::python::extract<T>(l[i]).check())
+                if (not bp::extract<T>(l[i]).check())
                     return 0;
             }
 
@@ -104,16 +104,16 @@ struct from_py_set
         by 'obj_ptr' */
     static void construct(
         PyObject* obj_ptr,
-        boost::python::converter::rvalue_from_python_stage1_data* data)
+        bp::converter::rvalue_from_python_stage1_data* data)
     {
         if (PyTuple_Check(obj_ptr))
         {
             //convert the PyObject to a boost::python::object
-            boost::python::tuple t( handle<>(borrowed(obj_ptr)) );
+            bp::tuple t( bp::handle<>(bp::borrowed(obj_ptr)) );
 
             //locate the storage space for the result
             void* storage =
-                ( (converter::rvalue_from_python_storage<C>*)data )->storage.bytes;
+                ( (bp::converter::rvalue_from_python_storage<C>*)data )->storage.bytes;
 
             //create the T container
             new (storage) C();
@@ -125,7 +125,7 @@ struct from_py_set
 
             for (int i=0; i<n; ++i)
             {
-                container->insert( extract<T>(t[i])() );
+                container->insert( bp::extract<T>(t[i])() );
             }
 
             data->convertible = storage;
@@ -133,11 +133,11 @@ struct from_py_set
         else if (PyList_Check(obj_ptr))
         {
             //convert the PyObject to a boost::python::object
-            boost::python::list l( handle<>(borrowed(obj_ptr)) );
+            bp::list l( bp::handle<>(bp::borrowed(obj_ptr)) );
 
             //locate the storage space for the result
             void* storage =
-                ( (converter::rvalue_from_python_storage<C>*)data )->storage.bytes;
+                ( (bp::converter::rvalue_from_python_storage<C>*)data )->storage.bytes;
 
             //create the T container
             new (storage) C();
@@ -149,7 +149,7 @@ struct from_py_set
 
             for (int i=0; i<n; ++i)
             {
-                container->insert( extract<T>(l[i])() );
+                container->insert( bp::extract<T>(l[i])() );
             }
 
             data->convertible = storage;
@@ -162,7 +162,7 @@ struct to_py_set
 {
     static PyObject* convert(const C &cpp_set)
     {
-        list python_set;
+        bp::list python_set;
 
         //add all items to the python dictionary
         for (typename C::const_iterator it = cpp_set.begin();
@@ -172,30 +172,30 @@ struct to_py_set
             python_set.append(*it);
         }
 
-        return incref( python_set.ptr() );
+        return bp::incref( python_set.ptr() );
     }
 };
 
 template<class C>
 void register_set()
 {
-    to_python_converter< C, to_py_set<C> >();
+    bp::to_python_converter< C, to_py_set<C> >();
 
     typedef typename C::value_type value_type;
     
-    converter::registry::push_back( &from_py_set<C,value_type>::convertible,
-                                    &from_py_set<C,value_type>::construct,
-                                    type_id<C>() );
+    bp::converter::registry::push_back( &from_py_set<C,value_type>::convertible,
+                                        &from_py_set<C,value_type>::construct,
+                                        bp::type_id<C>() );
 }
 
 template<class C, class value_type>
 void register_set()
 {
-    to_python_converter< C, to_py_set<C> >();
+    bp::to_python_converter< C, to_py_set<C> >();
     
-    converter::registry::push_back( &from_py_set<C,value_type>::convertible,
-                                    &from_py_set<C,value_type>::construct,
-                                    type_id<C>() );
+    bp::converter::registry::push_back( &from_py_set<C,value_type>::convertible,
+                                        &from_py_set<C,value_type>::construct,
+                                        bp::type_id<C>() );
 }
 
 SIRE_END_HEADER

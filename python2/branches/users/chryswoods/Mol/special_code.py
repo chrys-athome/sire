@@ -231,6 +231,17 @@ def fix_Mover(c):
     for header in active_headers["mover.h"].dependencies():
         c.add_declaration_code( "#include %s" % header )    
 
+def fix_MolViewProperty(c):
+    c.decls("set").call_policies = call_policies.return_self()
+
+def fix_AtomCoords(c):
+    fix_MolViewProperty(c)
+
+    c.add_declaration_code("#include \"SireMaths/quaternion.h\"")
+    c.add_declaration_code("#include \"SireMaths/matrix.h\"")
+    c.add_declaration_code("#include \"SireVol/aabox.h\"")
+    c.add_declaration_code("#include \"SireMaths/axisset.h\"")
+
 special_code = { "SireMol::Atom" : fix_Atom,
                  "SireMol::Editor<SireMol::AtomEditor, SireMol::Atom>" : fix_AtomEditorBase,
                  "SireMol::AtomEditor" : fix_AtomEditor,
@@ -273,6 +284,31 @@ special_code = { "SireMol::Atom" : fix_Atom,
                  "SireMol::Mover<SireMol::Molecule>" : fix_Mover,
                  "SireMol::Mover<SireMol::PartialMolecule>" : fix_Mover,
                  "SireMol::Mover<SireMol::ViewsOfMol>" : fix_Mover,
+
+                 "AtomStringProperty" : fix_MolViewProperty,
+                 "AtomIntProperty" : fix_MolViewProperty,
+                 "AtomFloatProperty" : fix_MolViewProperty,
+                 "AtomVariantProperty" : fix_MolViewProperty,
+                 "CGStringProperty" : fix_MolViewProperty,
+                 "CGIntProperty" : fix_MolViewProperty,
+                 "CGFloatProperty" : fix_MolViewProperty,
+                 "CGVariantProperty" : fix_MolViewProperty,
+                 "ResStringProperty" : fix_MolViewProperty,
+                 "ResIntProperty" : fix_MolViewProperty,
+                 "ResFloatProperty" : fix_MolViewProperty,
+                 "ResVariantProperty" : fix_MolViewProperty,
+                 "ChainStringProperty" : fix_MolViewProperty,
+                 "ChainIntProperty" : fix_MolViewProperty,
+                 "ChainFloatProperty" : fix_MolViewProperty,
+                 "ChainVariantProperty" : fix_MolViewProperty,
+                 "SegStringProperty" : fix_MolViewProperty,
+                 "SegIntProperty" : fix_MolViewProperty,
+                 "SegFloatProperty" : fix_MolViewProperty,
+                 "SegVariantProperty" : fix_MolViewProperty,
+
+                 "AtomCoords" : fix_AtomCoords,
+                 "AtomCharges" : fix_MolViewProperty,
+                 "AtomElements" : fix_MolViewProperty,                
 
                  "SireMol::ConnectivityEditor" : fix_ConnectivityEditor,
                  "SireMol::MGName" : fix_MGName,
