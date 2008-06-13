@@ -30,6 +30,10 @@
 #include "cgidentifier.h"
 #include "specify.hpp"
 
+#include "cgcgid.h"
+#include "groupatomids.h"
+#include "groupgroupids.h"
+
 #include "atom.h"
 #include "selector.hpp"
 
@@ -84,6 +88,36 @@ Specify<CGID> CGID::operator()(int i) const
 Specify<CGID> CGID::operator()(int i, int j) const
 {
     return Specify<CGID>(*this, i, j);
+}
+
+/** Combine with another ID */
+CGCGID CGID::operator+(const CGID &other) const
+{
+    return CGCGID(*this, other);
+}
+
+/** Combine with another ID */
+GroupAtomID<CGID,AtomID> CGID::operator+(const AtomID &other) const
+{
+    return GroupAtomID<CGID,AtomID>(*this, other);
+}
+
+/** Combine with another ID */
+GroupGroupID<SegID,CGID> CGID::operator+(const SegID &other) const
+{
+    return GroupGroupID<SegID,CGID>(other, *this);
+}
+
+/** Combine with another ID */
+GroupGroupID<CGID,ChainID> CGID::operator+(const ChainID &other) const
+{
+    return GroupGroupID<CGID,ChainID>(*this, other);
+}
+
+/** Combine with another ID */
+GroupGroupID<CGID,ResID> CGID::operator+(const ResID &other) const
+{
+    return GroupGroupID<CGID,ResID>(*this, other);
 }
 
 /** Return the atoms in the matching residues */

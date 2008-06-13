@@ -42,6 +42,14 @@ namespace SireMol
 template<class T>
 class Selector;
 
+template<class GROUPID, class ATOMID>
+class GroupAtomID;
+
+template<class G0, class G1>
+class GroupGroupID;
+
+class SegSegID;
+
 class MolInfo;
 
 class SegIdx;
@@ -75,6 +83,12 @@ public:
     Specify<SegID> operator[](int i) const;
     Specify<SegID> operator()(int i) const;
     Specify<SegID> operator()(int i, int j) const;
+
+    SegSegID operator+(const SegID &other) const;
+    GroupAtomID<SegID,AtomID> operator+(const AtomID &other) const;
+    GroupGroupID<SegID,CGID> operator+(const CGID &other) const;
+    GroupGroupID<SegID,ResID> operator+(const ResID &other) const;
+    GroupGroupID<SegID,ChainID> operator+(const ChainID &other) const;
 
     AtomsIn<SegID> atoms() const;
     AtomsIn<SegID> atom(int i) const;
@@ -115,6 +129,13 @@ Q_DECLARE_METATYPE( SireMol::Specify<SireMol::SegID> );
 Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::SegID> );
 
 SIRE_EXPOSE_CLASS( SireMol::SegID )
+SIRE_EXPOSE_ALIAS( SireMol::Specify<SireMol::SegID>, SireMol::Specify_SegID_ )
+SIRE_EXPOSE_ALIAS( SireMol::AtomsIn<SireMol::SegID>, SireMol::AtomsIn_SegID_ )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class SireMol::Specify<SireMol::SegID>;
+template class SireMol::AtomsIn<SireMol::SegID>;
+#endif
 
 SIRE_END_HEADER
 

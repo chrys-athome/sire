@@ -160,6 +160,21 @@ private:
     SireID::Index _atmidx;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+/** Combine a CGIdx with an Index */
+inline CGAtomIdx CGIdx::operator+(const SireID::Index &other) const
+{
+    return CGAtomIdx(*this, other);
+}
+
+inline CGAtomIdx operator+(const SireID::Index &idx, const CGIdx &cgidx)
+{
+    return CGAtomIdx(cgidx, idx);
+}
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 inline QDataStream& operator<<(QDataStream &ds, 

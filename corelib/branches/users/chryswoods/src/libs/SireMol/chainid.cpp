@@ -30,6 +30,11 @@
 #include "chainidentifier.h"
 #include "specify.hpp"
 
+#include "chainchainid.h"
+#include "chainresid.h"
+#include "groupatomids.h"
+#include "groupgroupids.h"
+
 #include "atom.h"
 #include "selector.hpp"
 
@@ -67,6 +72,36 @@ ChainID::ChainID(const ChainID &other) : ID(other)
 /** Destructor */
 ChainID::~ChainID()
 {}
+
+/** Combine with another ID object */
+ChainChainID ChainID::operator+(const ChainID &other) const
+{
+    return ChainChainID(*this, other);
+}
+
+/** Combine with another ID object */
+ChainResID ChainID::operator+(const ResID &other) const
+{
+    return ChainResID(*this, other);
+}
+
+/** Combine with another ID object */
+GroupAtomID<ChainID,AtomID> ChainID::operator+(const AtomID &other) const
+{
+    return GroupAtomID<ChainID,AtomID>(*this, other);
+}
+
+/** Combine with another ID object */
+GroupGroupID<SegID,ChainID> ChainID::operator+(const SegID &other) const
+{
+    return GroupGroupID<SegID,ChainID>(other, *this);
+}
+
+/** Combine with another ID object */
+GroupGroupID<CGID,ChainID> ChainID::operator+(const CGID &other) const
+{
+    return GroupGroupID<CGID,ChainID>(other, *this);
+}
 
 /** Return the atoms in the matching residues */
 AtomsIn<ChainID> ChainID::atoms() const

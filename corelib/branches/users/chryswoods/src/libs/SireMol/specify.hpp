@@ -45,7 +45,7 @@ namespace SireMol
     @author Christopher Woods
 */
 template<class ID>
-class Specify : public ID
+class SIREMOL_EXPORT Specify : public ID
 {
 
 public:
@@ -57,67 +57,39 @@ public:
     
     ~Specify();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< Specify<ID> >() );
-    }
+    static const char* typeName();
     
-    const char* what() const
-    {
-        return Specify<ID>::typeName();
-    }
+    const char* what() const;
     
-    Specify<ID>* clone() const
-    {
-        return new Specify<ID>(*this);
-    }
+    Specify<ID>* clone() const;
 
     Specify<ID>& operator=(const Specify<ID> &other);
     
     bool operator==(const Specify<ID> &other) const;
     bool operator==(const SireID::ID &other) const;
 
-    bool operator!=(const Specify<ID> &other) const
-    {
-        return not this->operator==(other);
-    }
+    bool operator!=(const Specify<ID> &other) const;
     
-    bool operator!=(const SireID::ID &other) const
-    {
-        return not this->operator==(other);
-    }
+    bool operator!=(const SireID::ID &other) const;
     
-    Specify<ID> operator[](int i) const
-    {
-        return Specify<ID>(*this, i);
-    }
+    Specify<ID> operator[](int i) const;
     
-    Specify<ID> operator()(int i) const
-    {
-        return Specify<ID>(*this, i);
-    }
+    Specify<ID> operator()(int i) const;
     
-    Specify<ID> operator()(int i, int j) const
-    {
-        return Specify<ID>(*this, i, j);
-    }
+    Specify<ID> operator()(int i, int j) const;
     
-    uint hash() const
-    {
-        return id.hash() + strt + end;
-    }
+    uint hash() const;
     
-    bool isNull() const
-    {
-        return id.isNull();
-    }
+    bool isNull() const;
     
     QString toString() const;
     
     QList<typename ID::Index> map(const MolInfo &molinfo) const;
 
 private:
+    #ifndef SIRE_SKIP_INLINE_FUNCTIONS
     typename ID::Identifier id;
+    #endif //SIRE_SKIP_INLINE_FUNCTIONS
 
     SireID::Index strt, end;
 };
@@ -232,6 +204,76 @@ QList<typename ID::Index> Specify<ID>::map(const MolInfo &molinfo) const
         
         return specified_idxs;
     }
+}
+
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+const char* Specify<ID>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< Specify<ID> >() );
+}
+
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+const char* Specify<ID>::what() const
+{
+    return Specify<ID>::typeName();
+}
+
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+Specify<ID>* Specify<ID>::clone() const
+{
+    return new Specify<ID>(*this);
+}
+
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+bool Specify<ID>::operator!=(const Specify<ID> &other) const
+{
+    return not this->operator==(other);
+}
+
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+bool Specify<ID>::operator!=(const SireID::ID &other) const
+{
+    return not this->operator==(other);
+}
+
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+Specify<ID> Specify<ID>::operator[](int i) const
+{
+    return Specify<ID>(*this, i);
+}
+
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+Specify<ID> Specify<ID>::operator()(int i) const
+{
+    return Specify<ID>(*this, i);
+}
+
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+Specify<ID> Specify<ID>::operator()(int i, int j) const
+{
+    return Specify<ID>(*this, i, j);
+}
+
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+uint Specify<ID>::hash() const
+{
+    return id.hash() + strt + end;
+}
+
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+bool Specify<ID>::isNull() const
+{
+    return id.isNull();
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS

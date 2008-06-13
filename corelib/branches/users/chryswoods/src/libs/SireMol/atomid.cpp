@@ -30,6 +30,9 @@
 #include "atomidentifier.h"
 #include "specify.hpp"
 
+#include "atomatomid.h"
+#include "groupatomids.h"
+
 #include "atom.h"
 #include "selector.hpp"
 
@@ -81,6 +84,36 @@ Specify<AtomID> AtomID::operator()(int i) const
 Specify<AtomID> AtomID::operator()(int i, int j) const
 {
     return Specify<AtomID>(*this, i, j);
+}
+
+/** Combine with other ID types */
+AtomAtomID AtomID::operator+(const AtomID &other) const
+{
+    return AtomAtomID(*this, other);
+}
+
+/** Combine with other ID types */
+CGAtomID AtomID::operator+(const CGID &other) const
+{
+    return CGAtomID(other, *this);
+}
+
+/** Combine with other ID types */
+ResAtomID AtomID::operator+(const ResID &other) const
+{
+    return ResAtomID(other, *this);
+}
+
+/** Combine with other ID types */
+ChainAtomID AtomID::operator+(const ChainID &other) const
+{
+    return ChainAtomID(other, *this);
+}
+
+/** Combine with other ID types */
+SegAtomID AtomID::operator+(const SegID &other) const
+{
+    return SegAtomID(other, *this);
 }
 
 /** Return all of the atoms from the 'molecules' that match

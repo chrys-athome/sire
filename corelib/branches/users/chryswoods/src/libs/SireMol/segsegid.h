@@ -26,87 +26,87 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_RESRESID_H
-#define SIREMOL_RESRESID_H
+#ifndef SIREMOL_SEGSEGID_H
+#define SIREMOL_SEGSEGID_H
 
-#include "residentifier.h"
+#include "segidentifier.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
 
-/** This class holds a pair of ResIDs, which are used together
+/** This class holds a pair of SegIDs, which are used together
     to identify atom(s)
     
     @author Christopher Woods
 */
-class SIREMOL_EXPORT ResResID : public ResID
+class SIREMOL_EXPORT SegSegID : public SegID
 {
 public:
-    ResResID();
+    SegSegID();
     
-    ResResID(const ResID &id0, const ResID &id1);
+    SegSegID(const SegID &id0, const SegID &id1);
     
-    ResResID(const ResResID &other);
+    SegSegID(const SegSegID &other);
     
-    ~ResResID();
+    ~SegSegID();
     
     static const char* typeName()
     {
-        return QMetaType::typeName( qMetaTypeId<ResResID>() );
+        return QMetaType::typeName( qMetaTypeId<SegSegID>() );
     }
     
     const char* what() const
     {
-        return ResResID::typeName();
+        return SegSegID::typeName();
     }
 
-    ResResID* clone() const
+    SegSegID* clone() const
     {
-        return new ResResID(*this);
+        return new SegSegID(*this);
     }
 
     QString toString() const;
 
-    bool operator==(const ResResID &other) const
+    bool operator==(const SegSegID &other) const
     {
-        return (resid0 == other.resid0 and resid1 == other.resid1) or
-               (resid0 == other.resid1 and resid1 == other.resid0);
+        return (segid0 == other.segid0 and segid1 == other.segid1) or
+               (segid0 == other.segid1 and segid1 == other.segid0);
     }
 
-    bool operator!=(const ResResID &other) const
+    bool operator!=(const SegSegID &other) const
     {
         return not this->operator==(other);
     }
 
     bool operator==(const SireID::ID &other) const
     {
-        return SireID::ID::compare<ResResID>(*this, other);
+        return SireID::ID::compare<SegSegID>(*this, other);
     }
 
     uint hash() const
     {
-        return resid0.hash() + resid1.hash();
+        return segid0.hash() + segid1.hash();
     }
 
     bool isNull() const
     {
-        return resid0.isNull() and resid1.isNull();
+        return segid0.isNull() and segid1.isNull();
     }
 
-    QList<ResIdx> map(const MolInfo &molinfo) const;
+    QList<SegIdx> map(const MolInfo &molinfo) const;
 
 private:
     /** The pair of IDs that are combined */
-    ResIdentifier resid0, resid1;
+    SegIdentifier segid0, segid1;
 };
 
 }
 
-Q_DECLARE_METATYPE(SireMol::ResResID);
+Q_DECLARE_METATYPE(SireMol::SegSegID);
 
-SIRE_EXPOSE_CLASS( SireMol::ResResID )
+SIRE_EXPOSE_CLASS( SireMol::SegSegID )
 
 SIRE_END_HEADER
 

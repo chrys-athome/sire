@@ -49,7 +49,7 @@ class MoleculeInfoData;
     @author Christopher Woods
 */
 template<class GROUP>
-class AtomsIn : public AtomID
+class SIREMOL_EXPORT AtomsIn : public AtomID
 {
 
 public:

@@ -28,8 +28,8 @@
 
 #include <QSet>
 
-#include "atomatomid.h"
-#include "atomidx.h"
+#include "cgcgid.h"
+#include "cgidx.h"
 #include "molinfo.h"
 
 #include "SireMol/errors.h"
@@ -37,63 +37,63 @@
 using namespace SireMol;
 
 /** Constructor */
-AtomAtomID::AtomAtomID() : AtomID()
+CGCGID::CGCGID() : CGID()
 {}
 
-/** Construct from two AtomIDs */
-AtomAtomID::AtomAtomID(const AtomID &id0, const AtomID &id1)
-           : AtomID(), atomid0(id0), atomid1(id1)
+/** Construct from two CGIDs */
+CGCGID::CGCGID(const CGID &id0, const CGID &id1)
+       : CGID(), cgid0(id0), cgid1(id1)
 {}
 
 /** Copy constructor */
-AtomAtomID::AtomAtomID(const AtomAtomID &other)
-           : AtomID(other),
-             atomid0(other.atomid0), atomid1(other.atomid1)
+CGCGID::CGCGID(const CGCGID &other)
+       : CGID(other),
+         cgid0(other.cgid0), cgid1(other.cgid1)
 {}
 
 /** Destructor */
-AtomAtomID::~AtomAtomID()
+CGCGID::~CGCGID()
 {}
 
 /** Return a string representation of this ID */
-QString AtomAtomID::toString() const
+QString CGCGID::toString() const
 {
     if (this->isNull())
         return "*";
-    else if (atomid0.isNull())
-        return atomid1.toString();
-    else if (atomid1.isNull())
-        return atomid0.toString();
+    else if (cgid0.isNull())
+        return cgid1.toString();
+    else if (cgid1.isNull())
+        return cgid0.toString();
     else
-        return QString("%1 and %2").arg(atomid0.toString(), atomid1.toString());
+        return QString("%1 and %2").arg(cgid0.toString(), cgid1.toString());
 }
 
-/** Map this pair of Atom IDs to the indicies of matching atoms 
+/** Map this pair of CutGroup IDs to the indicies of matching CutGroups
 
-    \throw SireMol::missing_atom
+    \throw SireMol::missing_cutgroup
     \throw SireError::invalid_index
 */
-QList<AtomIdx> AtomAtomID::map(const MolInfo &molinfo) const
+QList<CGIdx> CGCGID::map(const MolInfo &molinfo) const
 {
     if (this->isNull())
-        return molinfo.getAtoms();
-    else if (atomid0.isNull())
-        return atomid1.map(molinfo);
-    else if (atomid1.isNull())
-        return atomid0.map(molinfo);
+        return molinfo.getCutGroups();
+    else if (cgid0.isNull())
+        return cgid1.map(molinfo);
+    else if (cgid1.isNull())
+        return cgid0.map(molinfo);
     else
     {
-        QList<AtomIdx> atomidxs = 
-                         MolInfo::intersection( atomid0.map(molinfo),
-                                                atomid1.map(molinfo) );
+        QList<CGIdx> cgidxs = 
+                         MolInfo::intersection( cgid0.map(molinfo),
+                                                cgid1.map(molinfo) );
                 
-        if (atomidxs.isEmpty())
-            throw SireMol::missing_atom( QObject::tr(
-                "There is no atom matching the ID %1.")
+        if (cgidxs.isEmpty())
+            throw SireMol::missing_cutgroup( QObject::tr(
+                "There is no CutGroup matching the ID %1.")
                     .arg(this->toString()), CODELOC );
     
-        qSort(atomidxs);
+        qSort(cgidxs);
         
-        return atomidxs;
+        return cgidxs;
     }
 }

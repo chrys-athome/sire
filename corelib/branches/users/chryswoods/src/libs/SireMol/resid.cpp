@@ -31,6 +31,11 @@
 
 #include "specify.hpp"
 
+#include "resresid.h"
+#include "chainresid.h"
+#include "groupatomids.h"
+#include "groupgroupids.h"
+
 #include "atom.h"
 #include "selector.hpp"
 
@@ -85,6 +90,36 @@ Specify<ResID> ResID::operator()(int i) const
 Specify<ResID> ResID::operator()(int i, int j) const
 {
     return Specify<ResID>(*this, i, j);
+}
+
+/** Combine with another ID type */
+ResResID ResID::operator+(const ResID &other) const
+{
+    return ResResID(*this, other);
+}
+
+/** Combine with another ID type */
+ChainResID ResID::operator+(const ChainID &other) const
+{
+    return ChainResID(other, *this);
+}
+
+/** Combine with another ID type */
+GroupAtomID<ResID,AtomID> ResID::operator+(const AtomID &other) const
+{
+    return GroupAtomID<ResID,AtomID>(*this, other);
+}
+
+/** Combine with another ID type */
+GroupGroupID<SegID,ResID> ResID::operator+(const SegID &other) const
+{
+    return GroupGroupID<SegID,ResID>(other, *this);
+}
+
+/** Combine with another ID type */
+GroupGroupID<CGID,ResID> ResID::operator+(const CGID &other) const
+{
+    return GroupGroupID<CGID,ResID>(other, *this);
 }
 
 /** Return the atoms in the matching residues */

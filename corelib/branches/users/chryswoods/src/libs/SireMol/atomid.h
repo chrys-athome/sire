@@ -44,6 +44,11 @@ class Specify;
 template<class T>
 class Selector;
 
+template<class GROUPID, class ATOMID>
+class GroupAtomID;
+
+class AtomAtomID;
+
 class Atom;
 
 class MolInfo;
@@ -76,6 +81,12 @@ public:
     Specify<AtomID> operator()(int i) const;
     Specify<AtomID> operator()(int i, int j) const;
 
+    AtomAtomID operator+(const AtomID &other) const;
+    GroupAtomID<CGID,AtomID> operator+(const CGID &other) const;
+    GroupAtomID<ResID,AtomID> operator+(const ResID &other) const;
+    GroupAtomID<ChainID,AtomID> operator+(const ChainID &other) const;
+    GroupAtomID<SegID,AtomID> operator+(const SegID &other) const;
+
     static const char* typeName()
     {
         return "SireMol::AtomID";
@@ -107,6 +118,11 @@ public:
 Q_DECLARE_METATYPE( SireMol::Specify<SireMol::AtomID> );
 
 SIRE_EXPOSE_CLASS( SireMol::AtomID )
+SIRE_EXPOSE_ALIAS( SireMol::Specify<SireMol::AtomID>, SireMol::Specify_AtomID_ )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class SireMol::Specify<SireMol::AtomID>;
+#endif
 
 SIRE_END_HEADER
 

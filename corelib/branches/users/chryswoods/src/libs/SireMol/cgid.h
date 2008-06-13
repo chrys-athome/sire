@@ -42,6 +42,14 @@ namespace SireMol
 template<class T>
 class Selector;
 
+template<class GROUPID, class ATOMID>
+class GroupAtomID;
+
+template<class GROUP0, class GROUP1>
+class GroupGroupID;
+
+class CGCGID;
+
 class MolInfo;
 
 class CGIdx;
@@ -74,6 +82,12 @@ public:
     Specify<CGID> operator[](int i) const;
     Specify<CGID> operator()(int i) const;
     Specify<CGID> operator()(int i, int j) const;
+    
+    CGCGID operator+(const CGID &other) const;
+    GroupAtomID<CGID,AtomID> operator+(const AtomID &other) const;
+    GroupGroupID<SegID,CGID> operator+(const SegID &other) const;
+    GroupGroupID<CGID,ChainID> operator+(const ChainID &other) const;
+    GroupGroupID<CGID,ResID> operator+(const ResID &other) const;
     
     AtomsIn<CGID> atoms() const;
     AtomsIn<CGID> atom(int i) const;
@@ -114,6 +128,13 @@ Q_DECLARE_METATYPE( SireMol::Specify<SireMol::CGID> );
 Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::CGID> );
 
 SIRE_EXPOSE_CLASS( SireMol::CGID )
+SIRE_EXPOSE_ALIAS( (SireMol::Specify<SireMol::CGID>), SireMol::Specify_CGID_ )
+SIRE_EXPOSE_ALIAS( (SireMol::AtomsIn<SireMol::CGID>), SireMol::AtomsIn_CGID_ )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class SireMol::Specify<SireMol::CGID>;
+template class SireMol::AtomsIn<SireMol::CGID>;
+#endif
 
 SIRE_END_HEADER
 

@@ -40,5 +40,8 @@
 #include "chainresid.h"
 #include "resresid.h"
 
+#include "cgcgid.h"
+#include "segsegid.h"
+
 #endif
 

@@ -34,6 +34,7 @@ set ( SIREMOL_HEADERS
       bondid.h
       calculateaxes.hpp
       cgatomidx.h
+      cgcgid.h
       cgeditor.h
       cgid.h
       cgidentifier.h
@@ -108,6 +109,7 @@ set ( SIREMOL_HEADERS
       segname.h
       segment.h
       segproperty.hpp
+      segsegid.h
       selector.hpp
       specify.hpp
       structureeditor.h
@@ -131,6 +133,7 @@ set ( SIREMOL_SOURCES
       atomselection.cpp
       bondid.cpp
       cgeditor.cpp
+      cgcgid.cpp
       cgid.cpp
       cgidentifier.cpp
       chain.cpp
@@ -176,6 +179,7 @@ set ( SIREMOL_SOURCES
       segid.cpp
       segidentifier.cpp
       segment.cpp
+      segsegid.cpp
       structureeditor.cpp
       trajectory.cpp
       viewsofmol.cpp

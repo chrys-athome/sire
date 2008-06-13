@@ -28,8 +28,8 @@
 
 #include <QSet>
 
-#include "atomatomid.h"
-#include "atomidx.h"
+#include "segsegid.h"
+#include "segidx.h"
 #include "molinfo.h"
 
 #include "SireMol/errors.h"
@@ -37,63 +37,63 @@
 using namespace SireMol;
 
 /** Constructor */
-AtomAtomID::AtomAtomID() : AtomID()
+SegSegID::SegSegID() : SegID()
 {}
 
-/** Construct from two AtomIDs */
-AtomAtomID::AtomAtomID(const AtomID &id0, const AtomID &id1)
-           : AtomID(), atomid0(id0), atomid1(id1)
+/** Construct from two SegIDs */
+SegSegID::SegSegID(const SegID &id0, const SegID &id1)
+         : SegID(), segid0(id0), segid1(id1)
 {}
 
 /** Copy constructor */
-AtomAtomID::AtomAtomID(const AtomAtomID &other)
-           : AtomID(other),
-             atomid0(other.atomid0), atomid1(other.atomid1)
+SegSegID::SegSegID(const SegSegID &other)
+         : SegID(other),
+           segid0(other.segid0), segid1(other.segid1)
 {}
 
 /** Destructor */
-AtomAtomID::~AtomAtomID()
+SegSegID::~SegSegID()
 {}
 
 /** Return a string representation of this ID */
-QString AtomAtomID::toString() const
+QString SegSegID::toString() const
 {
     if (this->isNull())
         return "*";
-    else if (atomid0.isNull())
-        return atomid1.toString();
-    else if (atomid1.isNull())
-        return atomid0.toString();
+    else if (segid0.isNull())
+        return segid1.toString();
+    else if (segid1.isNull())
+        return segid0.toString();
     else
-        return QString("%1 and %2").arg(atomid0.toString(), atomid1.toString());
+        return QString("%1 and %2").arg(segid0.toString(), segid1.toString());
 }
 
-/** Map this pair of Atom IDs to the indicies of matching atoms 
+/** Map this pair of segment IDs to the indicies of matching segments
 
-    \throw SireMol::missing_atom
+    \throw SireMol::missing_segment
     \throw SireError::invalid_index
 */
-QList<AtomIdx> AtomAtomID::map(const MolInfo &molinfo) const
+QList<SegIdx> SegSegID::map(const MolInfo &molinfo) const
 {
     if (this->isNull())
-        return molinfo.getAtoms();
-    else if (atomid0.isNull())
-        return atomid1.map(molinfo);
-    else if (atomid1.isNull())
-        return atomid0.map(molinfo);
+        return molinfo.getSegments();
+    else if (segid0.isNull())
+        return segid1.map(molinfo);
+    else if (segid1.isNull())
+        return segid0.map(molinfo);
     else
     {
-        QList<AtomIdx> atomidxs = 
-                         MolInfo::intersection( atomid0.map(molinfo),
-                                                atomid1.map(molinfo) );
+        QList<SegIdx> segidxs = 
+                         MolInfo::intersection( segid0.map(molinfo),
+                                                segid1.map(molinfo) );
                 
-        if (atomidxs.isEmpty())
-            throw SireMol::missing_atom( QObject::tr(
-                "There is no atom matching the ID %1.")
+        if (segidxs.isEmpty())
+            throw SireMol::missing_segment( QObject::tr(
+                "There is no segment matching the ID %1.")
                     .arg(this->toString()), CODELOC );
     
-        qSort(atomidxs);
+        qSort(segidxs);
         
-        return atomidxs;
+        return segidxs;
     }
 }

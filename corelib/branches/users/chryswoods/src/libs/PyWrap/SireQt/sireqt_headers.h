@@ -1,6 +1,0 @@
-#ifndef PYPLUSPLUS_SIREQT_HEADERS_H
-#define PYPLUSPLUS_SIREQT_HEADERS_H
-
-#include <QtCore>
-
-#endif

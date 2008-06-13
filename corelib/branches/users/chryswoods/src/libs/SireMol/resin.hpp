@@ -47,7 +47,7 @@ class MolInfo;
     @author Christopher Woods
 */
 template<class GROUP>
-class ResIn : public ResID
+class SIREMOL_EXPORT ResIn : public ResID
 {
 
 public:

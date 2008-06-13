@@ -41,7 +41,7 @@ namespace SireMol
     
     @author Christopher Woods
 */
-class ChainResID : public ResID
+class SIREMOL_EXPORT ChainResID : public ResID
 {
 public:
     ChainResID();
@@ -106,12 +106,11 @@ private:
     ResIdentifier resid;
 };
 
-ChainResID operator+(const ChainID &chainid, const ResID &resid);
-ChainResID operator+(const ResID &resid, const ChainID &chainid);
-
 }
 
 Q_DECLARE_METATYPE(SireMol::ChainResID);
+
+SIRE_EXPOSE_CLASS( SireMol::ChainResID )
 
 SIRE_END_HEADER
 

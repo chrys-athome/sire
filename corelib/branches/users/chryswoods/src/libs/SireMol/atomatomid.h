@@ -41,7 +41,7 @@ namespace SireMol
     
     @author Christopher Woods
 */
-class AtomAtomID : public AtomID
+class SIREMOL_EXPORT AtomAtomID : public AtomID
 {
 public:
     AtomAtomID();
@@ -102,11 +102,11 @@ private:
     AtomIdentifier atomid0, atomid1;
 };
 
-AtomAtomID operator+(const AtomID &id0, const AtomID &id1);
-
 }
 
 Q_DECLARE_METATYPE(SireMol::AtomAtomID);
+
+SIRE_EXPOSE_CLASS( SireMol::AtomAtomID )
 
 SIRE_END_HEADER
 

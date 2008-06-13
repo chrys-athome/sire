@@ -30,6 +30,10 @@
 #include "segidentifier.h"
 #include "specify.hpp"
 
+#include "segsegid.h"
+#include "groupatomids.h"
+#include "groupgroupids.h"
+
 #include "atom.h"
 #include "selector.hpp"
 
@@ -84,6 +88,36 @@ Specify<SegID> SegID::operator()(int i) const
 Specify<SegID> SegID::operator()(int i, int j) const
 {
     return Specify<SegID>(*this, i, j);
+}
+
+/** Combine two ID types */
+SegSegID SegID::operator+(const SegID &other) const
+{
+    return SegSegID(*this, other);
+}
+
+/** Combine two ID types */
+GroupAtomID<SegID,AtomID> SegID::operator+(const AtomID &other) const
+{
+    return GroupAtomID<SegID,AtomID>(*this, other);
+}
+
+/** Combine two ID types */
+GroupGroupID<SegID,CGID> SegID::operator+(const CGID &other) const
+{
+    return GroupGroupID<SegID,CGID>(*this, other);
+}
+
+/** Combine two ID types */
+GroupGroupID<SegID,ResID> SegID::operator+(const ResID &other) const
+{
+    return GroupGroupID<SegID,ResID>(*this, other);
+}
+
+/** Combine two ID types */
+GroupGroupID<SegID,ChainID> SegID::operator+(const ChainID &other) const
+{
+    return GroupGroupID<SegID,ChainID>(*this, other);
 }
 
 /** Return the atoms in the matching residues */

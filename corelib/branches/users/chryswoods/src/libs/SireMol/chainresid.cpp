@@ -74,13 +74,3 @@ QList<ResIdx> ChainResID::map(const MolInfo &molinfo) const
             
     return residxs;
 }
-
-ChainResID SireMol::operator+(const ChainID &chainid, const ResID &resid)
-{
-    return ChainResID(chainid, resid);
-}
-
-ChainResID SireMol::operator+(const ResID &resid, const ChainID &chainid)
-{
-    return ChainResID(chainid, resid);
-}

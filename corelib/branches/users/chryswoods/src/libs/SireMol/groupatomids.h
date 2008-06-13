@@ -34,6 +34,12 @@
 #include "molinfo.h"
 #include "atomidx.h"
 
+#include "atomid.h"
+#include "cgid.h"
+#include "resid.h"
+#include "chainid.h"
+#include "segid.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -49,7 +55,7 @@ class CGID;
     
     @author Christopher Woods
 */
-class GroupAtomIDBase : public AtomID
+class SIREMOL_EXPORT GroupAtomIDBase : public AtomID
 {
 public:
     GroupAtomIDBase();
@@ -69,7 +75,7 @@ protected:
     @author Christopher Woods
 */
 template<class GROUP, class ATOM>
-class GroupAtomID : public GroupAtomIDBase
+class SIREMOL_EXPORT GroupAtomID : public GroupAtomIDBase
 {
 
 public:
@@ -195,24 +201,29 @@ typedef GroupAtomID<ChainID,AtomID> ChainAtomID;
 typedef GroupAtomID<SegID,AtomID> SegAtomID;
 typedef GroupAtomID<CGID,AtomID> CGAtomID;
 
-ResAtomID operator+(const ResID &resid, const AtomID &atomid);
-ResAtomID operator+(const AtomID &atomid, const ResID &resid);
-
-ChainAtomID operator+(const ChainID &chainid, const AtomID &atomid);
-ChainAtomID operator+(const AtomID &atomid, const ChainID &chainid);
-
-SegAtomID operator+(const SegID &segid, const AtomID &atomid);
-SegAtomID operator+(const AtomID &atomid, const SegID &segid);
-
-CGAtomID operator+(const CGID &cgid, const AtomID &atomid);
-CGAtomID operator+(const AtomID &atomid, const CGID &cgid);
-
 }
 
 Q_DECLARE_METATYPE(SireMol::ResAtomID);
 Q_DECLARE_METATYPE(SireMol::ChainAtomID);
 Q_DECLARE_METATYPE(SireMol::SegAtomID);
 Q_DECLARE_METATYPE(SireMol::CGAtomID);
+
+SIRE_EXPOSE_CLASS( SireMol::GroupAtomIDBase )
+SIRE_EXPOSE_ALIAS( (SireMol::GroupAtomID<SireMol::ResID, SireMol::AtomID>), 
+                    SireMol::ResAtomID )
+SIRE_EXPOSE_ALIAS( (SireMol::GroupAtomID<SireMol::ChainID, SireMol::AtomID>), 
+                    SireMol::ChainAtomID )
+SIRE_EXPOSE_ALIAS( (SireMol::GroupAtomID<SireMol::SegID, SireMol::AtomID>), 
+                    SireMol::SegAtomID )
+SIRE_EXPOSE_ALIAS( (SireMol::GroupAtomID<SireMol::CGID, SireMol::AtomID>), 
+                    SireMol::CGAtomID )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class SireMol::GroupAtomID<SireMol::ResID,SireMol::AtomID>;
+template class SireMol::GroupAtomID<SireMol::ChainID,SireMol::AtomID>;
+template class SireMol::GroupAtomID<SireMol::SegID,SireMol::AtomID>;
+template class SireMol::GroupAtomID<SireMol::CGID,SireMol::AtomID>;
+#endif
 
 SIRE_END_HEADER
 

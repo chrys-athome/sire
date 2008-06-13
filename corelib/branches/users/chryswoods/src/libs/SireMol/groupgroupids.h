@@ -31,16 +31,24 @@
 
 #include "groupatomids.h"
 
+#include "atomid.h"
+#include "cgid.h"
+#include "resid.h"
+#include "chainid.h"
+#include "segid.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
 
 template<class G0, class G1>
-class GroupGroupID : public GroupAtomIDBase
+class SIREMOL_EXPORT GroupGroupID : public GroupAtomIDBase
 {
 public:
     GroupGroupID();
+    
+    GroupGroupID(const G0 &group0, const G1 &group1);
     
     GroupGroupID(const GroupGroupID<G0,G1> &other);
     
@@ -97,6 +105,31 @@ private:
     typename G1::Identifier g1;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+/** Constructor */
+template<class G0, class G1>
+GroupGroupID<G0,G1>::GroupGroupID() : GroupAtomIDBase()
+{}
+
+/** Construct the combination of the two groups */
+template<class G0, class G1>
+GroupGroupID<G0,G1>::GroupGroupID(const G0 &group0, const G1 &group1)
+                    : GroupAtomIDBase(), g0(group0), g1(group1)
+{}
+
+/** Copy constructor */
+template<class G0, class G1>
+GroupGroupID<G0,G1>::GroupGroupID(const GroupGroupID<G0,G1> &other)
+                    : GroupAtomIDBase(),
+                      g0(other.g0), g1(other.g1)
+{}
+
+/** Destructor */
+template<class G0, class G1>
+GroupGroupID<G0,G1>::~GroupGroupID()
+{}
+
 /** Return a string representation of this match */
 template<class G0, class G1>
 QString GroupGroupID<G0,G1>::toString() const
@@ -125,9 +158,9 @@ QList<AtomIdx> GroupGroupID<G0,G1>::map(const MolInfo &molinfo) const
     if (this->isNull())
         return molinfo.getAtoms();
     else if (g0.isNull())
-        return g1.map(molinfo);
+        return molinfo.getAtomsIn(g1);
     else if (g1.isNull())
-        return g0.map(molinfo);
+        return molinfo.getAtomsIn(g0);
         
     QList<AtomIdx> atomidxs = 
                      MolInfo::intersection(molinfo.getAtomsIn(g0),
@@ -140,27 +173,14 @@ QList<AtomIdx> GroupGroupID<G0,G1>::map(const MolInfo &molinfo) const
     return atomidxs;
 }
 
+#endif
+
 typedef GroupGroupID<SegID,ResID> SegResID;
 typedef GroupGroupID<SegID,ChainID> SegChainID;
 typedef GroupGroupID<SegID,CGID> SegCGID;
 
 typedef GroupGroupID<CGID,ResID> CGResID;
 typedef GroupGroupID<CGID,ChainID> CGChainID;
-
-SegResID operator+(const SegID &segid, const ResID &resid);
-SegResID operator+(const ResID &resid, const SegID &segid);
-
-SegChainID operator+(const SegID &segid, const ChainID &chainid);
-SegChainID operator+(const ChainID &chainid, const SegID &segid);
-
-SegCGID operator+(const SegID &segid, const CGID &cgid);
-SegCGID operator+(const CGID &cgid, const SegID &segid);
-
-CGResID operator+(const CGID &cgid, const ResID &resid);
-CGResID operator+(const ResID &resid, const CGID &cgid);
-
-CGChainID operator+(const CGID &cgid, const ChainID &chainid);
-CGChainID operator+(const ChainID &chainid, const CGID &cgid);
 
 }
 
@@ -169,6 +189,25 @@ Q_DECLARE_METATYPE(SireMol::SegChainID);
 Q_DECLARE_METATYPE(SireMol::SegCGID);
 Q_DECLARE_METATYPE(SireMol::CGResID);
 Q_DECLARE_METATYPE(SireMol::CGChainID);
+
+SIRE_EXPOSE_ALIAS( (SireMol::GroupGroupID<SireMol::SegID, SireMol::ResID>), 
+                    SireMol::SegResID )
+SIRE_EXPOSE_ALIAS( (SireMol::GroupGroupID<SireMol::SegID, SireMol::ChainID>), 
+                    SireMol::SegChainID )
+SIRE_EXPOSE_ALIAS( (SireMol::GroupGroupID<SireMol::SegID, SireMol::CGID>), 
+                    SireMol::SegCGID )
+SIRE_EXPOSE_ALIAS( (SireMol::GroupGroupID<SireMol::CGID, SireMol::ResID>), 
+                    SireMol::CGResID )
+SIRE_EXPOSE_ALIAS( (SireMol::GroupGroupID<SireMol::CGID, SireMol::ChainID>), 
+                    SireMol::CGChainID )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class SireMol::GroupGroupID<SireMol::SegID,SireMol::ResID>;
+template class SireMol::GroupGroupID<SireMol::SegID,SireMol::ChainID>;
+template class SireMol::GroupGroupID<SireMol::SegID,SireMol::CGID>;
+template class SireMol::GroupGroupID<SireMol::CGID,SireMol::ResID>;
+template class SireMol::GroupGroupID<SireMol::CGID,SireMol::ChainID>;
+#endif
 
 SIRE_END_HEADER
 

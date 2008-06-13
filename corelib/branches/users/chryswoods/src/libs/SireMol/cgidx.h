@@ -47,6 +47,8 @@ XMLStream& operator>>(XMLStream&, SireMol::CGIdx&);
 namespace SireMol
 {
 
+class CGAtomIdx;
+
 /** This is an ID object that is used to index CutGroups
 
     @author Christopher Woods
@@ -87,6 +89,10 @@ public:
     {
         return CGIdx();
     }
+    
+    using CGID::operator+;
+    
+    CGAtomIdx operator+(const SireID::Index &other) const;
     
     bool isNull() const
     {
