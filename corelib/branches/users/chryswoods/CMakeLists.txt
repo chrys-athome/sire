@@ -55,9 +55,6 @@ set (SIRE_INCLUDES "include/Sire")
 # Path to the project's extra cmake files
 set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
 
-# Add option to disable compilation of Spier (removes openGL dependency)
-option ( SIRE_BUILD_SPIER "Build Spier molecular viewer (requires openGL)" ON )
-
 # Add option to disable compilation of the molpro forcefield
 option ( SIRE_BUILD_MOLPRO
          "Build the Molpro forcefield (requires MolproClient)" ON )
