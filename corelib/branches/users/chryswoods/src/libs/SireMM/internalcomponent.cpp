@@ -28,6 +28,8 @@
 
 #include "internalcomponent.h"
 
+#include "SireFF/ff.h"
+
 using namespace SireMM;
 using namespace SireFF;
 

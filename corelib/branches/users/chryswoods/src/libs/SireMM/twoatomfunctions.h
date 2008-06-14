@@ -37,6 +37,8 @@
 
 #include "SireMol/bondid.h"
 
+SIRE_BEGIN_HEADER
+
 namespace SireMM
 {
 class TwoAtomFunction;
@@ -190,6 +192,8 @@ private:
     QHash<detail::IDPair,Expression> potentials_by_atoms;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 //////
 ////// Inline functions of TwoAtomFunction
 //////
@@ -206,8 +210,15 @@ inline const CGAtomIdx& TwoAtomFunction::atom1() const
     return atm1;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE( SireMM::TwoAtomFunctions );
+
+SIRE_EXPOSE_CLASS( SireMM::TwoAtomFunction )
+SIRE_EXPOSE_CLASS( SireMM::TwoAtomFunctions )
+
+SIRE_END_HEADER
 
 #endif

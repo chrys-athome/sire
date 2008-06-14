@@ -103,6 +103,8 @@ private:
     double eps;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the sigma value */
 inline double LJPair::sigma() const
 {
@@ -139,6 +141,8 @@ inline LJPair LJPair::arithmetic(const LJParameter &lj0, const LJParameter &lj1)
 
     return ljpair;
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

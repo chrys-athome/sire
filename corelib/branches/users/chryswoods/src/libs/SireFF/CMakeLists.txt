@@ -31,13 +31,15 @@ set ( SIREFF_HEADERS
       intra2b3dff.hpp
       intra2b2g3dff.hpp
 
+      qhash_sireff.h
+    )
+
+set ( SIREFF_DETAIL_HEADERS
       detail/atomiccoords3d.h
       detail/atomicparameters.hpp
       detail/atomicparameters3d.hpp
       detail/ffmolecules.h
       detail/ffmolecules3d.h
-
-      qhash_sireff.h
     )
 
 # Define the sources in SireFF
@@ -60,6 +62,7 @@ set ( SIREFF_SOURCES
       detail/ffmolecules3d.cpp   
 
       ${SIREFF_HEADERS}
+      ${SIREFF_DETAIL_HEADERS}
     )
 
 add_library (SireFF ${SIREFF_SOURCES})
@@ -86,4 +89,7 @@ install( TARGETS SireFF
 
 install( FILES ${SIREFF_HEADERS} 
          DESTINATION ${SIRE_INCLUDES}/SireFF )
+
+install( FILES ${SIREFF_DETAIL_HEADERS}
+         DESTINATION ${SIRE_INCLUDES}/SireFF/detail )
 

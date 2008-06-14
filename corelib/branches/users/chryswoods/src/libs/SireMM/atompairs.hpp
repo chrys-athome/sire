@@ -199,6 +199,8 @@ private:
     SireBase::SparseMatrix< CGAtomPairs<T> > cgpairs;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 ////////
 //////// Implementation of CGAtomPairs<T>
 ////////
@@ -696,7 +698,9 @@ bool AtomPairs<T>::isCompatibleWith(const MoleculeInfoData &info) const
     return *molinfo == info;
 }
 
-}
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
+} // end of namespace SireMM
 
 /** Serialise to a binary datastream */
 template<class T>

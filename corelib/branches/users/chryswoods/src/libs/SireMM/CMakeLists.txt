@@ -13,6 +13,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 # Define the headers in SireMM
 set ( SIREMM_HEADERS
       atomfunctions.h
+      atomljs.h
       atompairs.hpp
       cljcomponent.h
       cljpotential.h
@@ -33,7 +34,9 @@ set ( SIREMM_HEADERS
       switchingfunction.h
       threeatomfunctions.h
       twoatomfunctions.h
+    )
 
+set ( SIREMM_DETAIL_HEADERS
       detail/intrascaledatomicparameters.hpp
     )
 
@@ -60,6 +63,7 @@ set ( SIREMM_SOURCES
       twoatomfunctions.cpp    
 
       ${SIREMM_HEADERS}
+      ${SIREMM_DETAIL_HEADERS}
     )
 
 add_library (SireMM ${SIREMM_SOURCES})
@@ -87,3 +91,4 @@ install( TARGETS SireMM
        )
 
 install( FILES ${SIREMM_HEADERS} DESTINATION ${SIRE_INCLUDES}/SireMM )
+install( FILES ${SIREMM_DETAIL_HEADERS} DESTINATION ${SIRE_INCLUDES}/SireMM/detail )

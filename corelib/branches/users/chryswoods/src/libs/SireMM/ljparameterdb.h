@@ -110,6 +110,8 @@ private:
     static LJParameterDBData ljdb;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the matrix of LJ pairs for the given combining rules */
 inline LJPairMatrix LJParameterDB::getLJPairs(CombiningRules type)
 {
@@ -148,6 +150,8 @@ inline void LJParameterDB::unlock()
 {
     ljdb.unlock();
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

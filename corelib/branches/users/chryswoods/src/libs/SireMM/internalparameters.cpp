@@ -597,8 +597,8 @@ bool GroupInternalParametersData::hasNonPhysicalParameters() const
 //////////
 
 /** Serialise to a binary datastream */
-QDataStream& operator<<(QDataStream &ds,
-                        const GroupInternalParameters &group)
+QDataStream SIREMM_EXPORT  &operator<<(QDataStream &ds,
+                                       const GroupInternalParameters &group)
 {
     SharedDataStream sds(ds);
     sds << group.d;
@@ -607,8 +607,8 @@ QDataStream& operator<<(QDataStream &ds,
 }
 
 /** Extract from a binary datastream */
-QDataStream& operator>>(QDataStream &ds,
-                        GroupInternalParameters &group)
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
+                                      GroupInternalParameters &group)
 {
     SharedDataStream sds(ds);
     sds >> group.d;

@@ -116,9 +116,6 @@ using SireFF::MolForceTable;
 
 using SireMol::AtomCharges;
 
-namespace detail
-{
-
 /** This class provides the default name of the 
     property that contains the charge parameters */
 class SIREMM_EXPORT ChargeParameterName
@@ -200,6 +197,9 @@ public:
     ~ScaledCLJParameterNames3D()
     {}
 };
+
+namespace detail
+{
 
 /** This class holds the CLJ parameter used by both the Inter- and Intra-
     CLJPotentials. It is just the charge of the atom in reduced units
@@ -348,7 +348,7 @@ public:
     typedef CLJEnergy Energy;
     typedef Energy::Components Components;
 
-    typedef detail::CLJParameterNames3D ParameterNames;
+    typedef CLJParameterNames3D ParameterNames;
 
     typedef detail::CLJParameter Parameter;
     typedef SireFF::detail::AtomicParameters3D<Parameter> Parameters;
@@ -516,7 +516,7 @@ public:
     typedef CLJEnergy Energy;
     typedef Energy::Components Components;
     
-    typedef detail::ScaledCLJParameterNames3D ParameterNames;
+    typedef ScaledCLJParameterNames3D ParameterNames;
 
     typedef detail::CLJParameter Parameter;
     
@@ -816,6 +816,8 @@ public:
     }
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 //////
 ////// Inline functions of InterCLJPotential
 //////
@@ -985,6 +987,8 @@ IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
         throwMissingForceComponent(symbol, components);
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 inline QDataStream& operator<<(QDataStream &ds, 
@@ -1018,6 +1022,12 @@ QDataStream& operator>>(QDataStream &ds,
 }
 
 Q_DECLARE_TYPEINFO( SireMM::detail::CLJParameter, Q_MOVABLE_TYPE );
+
+SIRE_EXPOSE_CLASS( SireMM::ChargeParameterName )
+SIRE_EXPOSE_CLASS( SireMM::LJParameterName )
+SIRE_EXPOSE_CLASS( SireMM::CLJParameterNames )
+SIRE_EXPOSE_CLASS( SireMM::CLJParameterNames3D )
+SIRE_EXPOSE_CLASS( SireMM::ScaledCLJParameterNames3D )
 
 SIRE_END_HEADER
 

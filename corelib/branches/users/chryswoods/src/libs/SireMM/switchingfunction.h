@@ -136,6 +136,8 @@ protected:
     double feather_vdw;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return the cutoff distance beyond which both the electrostatic
     and vdw energies are scaled to zero */
 inline double SwitchFunc::cutoffDistance() const
@@ -176,6 +178,8 @@ inline double SwitchFunc::vdwFeatherDistance() const
 {
     return feather_vdw;
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 /** This class implements no cutoffs (e.g. there is no cutoff, 
     and no switching function!).
@@ -391,6 +395,13 @@ Q_DECLARE_METATYPE(SireMM::SwitchingFunction)
 Q_DECLARE_METATYPE(SireMM::NoCutoff)
 Q_DECLARE_METATYPE(SireMM::HarmonicSwitchingFunction)
 Q_DECLARE_METATYPE(SireMM::CHARMMSwitchingFunction)
+
+SIRE_EXPOSE_CLASS( SireMM::SwitchFunc )
+SIRE_EXPOSE_CLASS( SireMM::NoCutoff )
+SIRE_EXPOSE_CLASS( SireMM::HarmonicSwitchingFunction )
+SIRE_EXPOSE_CLASS( SireMM::CHARMMSwitchingFunction )
+
+SIRE_EXPOSE_PROPERTY( SireMM::SwitchingFunction, SireMM::SwitchFunc )
 
 SIRE_END_HEADER
 

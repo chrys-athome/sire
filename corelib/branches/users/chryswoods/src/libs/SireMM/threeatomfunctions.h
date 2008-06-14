@@ -37,6 +37,8 @@
 
 #include "SireMol/angleid.h"
 
+SIRE_BEGIN_HEADER
+
 namespace SireMM
 {
 class ThreeAtomFunction;
@@ -198,6 +200,8 @@ private:
     QHash<detail::IDTriple,Expression> potentials_by_atoms;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 //////
 ////// Inline functions of ThreeAtomFunction
 //////
@@ -220,8 +224,15 @@ inline const CGAtomIdx& ThreeAtomFunction::atom2() const
     return atm2;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE( SireMM::ThreeAtomFunctions );
+
+SIRE_EXPOSE_CLASS( SireMM::ThreeAtomFunction )
+SIRE_EXPOSE_CLASS( SireMM::ThreeAtomFunctions )
+
+SIRE_END_HEADER
 
 #endif

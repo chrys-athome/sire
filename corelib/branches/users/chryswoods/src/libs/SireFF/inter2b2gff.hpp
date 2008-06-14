@@ -720,6 +720,8 @@ void Inter2B2GFF<Potential>::recalculateEnergy()
     }
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 namespace SireFF
@@ -738,8 +740,6 @@ const RegisterMetaType< SireFF::Inter2B2GFF<Potential> >
 Inter2B2GRMT<Potential>::r_inter2b2gff;
 
 } // end of namespace detail
-
-#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 } // end of namespace SireFF
 

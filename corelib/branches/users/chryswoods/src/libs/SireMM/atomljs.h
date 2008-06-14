@@ -44,6 +44,12 @@ typedef SireMol::AtomProperty<LJParameter> AtomLJs;
 
 Q_DECLARE_METATYPE( SireMM::AtomLJs );
 
+SIRE_EXPOSE_ATOM_PROPERTY( SireMM::LJParameter, SireMM::AtomLJs )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class SireMol::AtomProperty<SireMM::LJParameter>;
+#endif
+
 SIRE_END_HEADER
 
 #endif

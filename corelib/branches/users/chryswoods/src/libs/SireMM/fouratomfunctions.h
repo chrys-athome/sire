@@ -38,6 +38,8 @@
 #include "SireMol/dihedralid.h"
 #include "SireMol/improperid.h"
 
+SIRE_BEGIN_HEADER
+
 namespace SireMM
 {
 class FourAtomFunction;
@@ -215,6 +217,8 @@ private:
     QHash<detail::IDQuad,Expression> potentials_by_atoms;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 //////
 ////// Inline functions of FourAtomFunction
 //////
@@ -243,8 +247,15 @@ inline const CGAtomIdx& FourAtomFunction::atom3() const
     return atm3;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE( SireMM::FourAtomFunctions );
+
+SIRE_EXPOSE_CLASS( SireMM::FourAtomFunction )
+SIRE_EXPOSE_CLASS( SireMM::FourAtomFunctions )
+
+SIRE_END_HEADER
 
 #endif

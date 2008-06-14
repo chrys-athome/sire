@@ -58,6 +58,42 @@ Q_DECLARE_METATYPE(SireMM::InterCLJFF);
 Q_DECLARE_METATYPE(SireMM::InterGroupCLJFFBase);
 Q_DECLARE_METATYPE(SireMM::InterGroupCLJFF);
 
+SIRE_EXPOSE_ALIAS(SireMM::CLJPotentialInterface<SireMM::InterCLJPotential>,
+                  SireMM::CLJPotentialInterface_InterCLJPotential_)
+
+SIRE_EXPOSE_ALIAS( 
+    SireFF::Inter2BFF<SireMM::CLJPotentialInterface<SireMM::InterCLJPotential> >,
+    SireMM::InterCLJFFBase )
+    
+SIRE_EXPOSE_ALIAS(
+    SireFF::Inter2B3DFF<SireMM::CLJPotentialInterface<SireMM::InterCLJPotential> >,
+    SireMM::InterCLJFF )
+    
+SIRE_EXPOSE_ALIAS(
+    SireFF::Inter2B2GFF<SireMM::CLJPotentialInterface<SireMM::InterCLJPotential> >,
+    SireMM::InterGroupCLJFFBase)
+    
+SIRE_EXPOSE_ALIAS(
+    SireFF::Inter2B2G3DFF<SireMM::CLJPotentialInterface<SireMM::InterCLJPotential> >,
+    SireMM::InterGroupCLJFF )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class 
+SireMM::CLJPotentialInterface<SireMM::InterCLJPotential>;
+
+template class 
+SireFF::Inter2BFF<SireMM::CLJPotentialInterface<SireMM::InterCLJPotential> >;
+
+template class
+SireFF::Inter2B3DFF<SireMM::CLJPotentialInterface<SireMM::InterCLJPotential> >;
+
+template class
+SireFF::Inter2B2GFF<SireMM::CLJPotentialInterface<SireMM::InterCLJPotential> >;
+
+template class
+SireFF::Inter2B2G3DFF<SireMM::CLJPotentialInterface<SireMM::InterCLJPotential> >;
+#endif
+
 SIRE_END_HEADER
 
 #endif

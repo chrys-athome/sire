@@ -39,6 +39,8 @@
 
 #include "SireFF/detail/atomiccoords3d.h"
 
+SIRE_BEGIN_HEADER
+
 namespace SireMM
 {
 
@@ -422,6 +424,8 @@ private:
 class SIREMM_EXPORT InternalSymbolsBase
 {
 public:
+    ~InternalSymbolsBase();
+
     operator QSet<Symbol>() const
     {
         return symbols;
@@ -429,7 +433,6 @@ public:
 
 protected:
     InternalSymbolsBase();
-    ~InternalSymbolsBase();
     
     QSet<Symbol> symbols;
 };
@@ -866,6 +869,8 @@ private:
                          const InternalParameters &params);
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 ///////
 /////// Inline functions for InternalParameters
 ///////
@@ -950,9 +955,28 @@ inline bool InternalParameters::hasCrossTerms() const
     return state & HAS_CROSS;
 }
 
+#endif
+
 }
 
 Q_DECLARE_METATYPE( SireMM::InternalParameters );
 Q_DECLARE_METATYPE( SireMM::InternalParameters3D );
+
+SIRE_EXPOSE_CLASS( SireMM::GroupInternalParameters )
+SIRE_EXPOSE_CLASS( SireMM::InternalParameters )
+SIRE_EXPOSE_CLASS( SireMM::InternalParameters3D )
+
+SIRE_EXPOSE_CLASS( SireMM::InternalSymbolsBase )
+SIRE_EXPOSE_CLASS( SireMM::BondSymbols )
+SIRE_EXPOSE_CLASS( SireMM::AngleSymbols )
+SIRE_EXPOSE_CLASS( SireMM::DihedralSymbols )
+SIRE_EXPOSE_CLASS( SireMM::ImproperSymbols )
+SIRE_EXPOSE_CLASS( SireMM::StretchStretchSymbols )
+SIRE_EXPOSE_CLASS( SireMM::StretchBendSymbols )
+SIRE_EXPOSE_CLASS( SireMM::BendBendSymbols )
+SIRE_EXPOSE_CLASS( SireMM::StretchBendTorsionSymbols )
+SIRE_EXPOSE_CLASS( SireMM::InternalSymbols )
+
+SIRE_END_HEADER
 
 #endif

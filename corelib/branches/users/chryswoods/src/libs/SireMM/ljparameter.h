@@ -109,6 +109,8 @@ private:
     double sqrteps;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return whether or not two LJParameters are equal */
 inline bool LJParameter::operator==(const LJParameter &other) const
 {
@@ -161,10 +163,14 @@ inline double LJParameter::sqrtEpsilon() const
     return sqrteps;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_TYPEINFO(SireMM::LJParameter, Q_MOVABLE_TYPE);
 Q_DECLARE_METATYPE(SireMM::LJParameter);
+
+SIRE_EXPOSE_CLASS( SireMM::LJParameter )
 
 SIRE_END_HEADER
 

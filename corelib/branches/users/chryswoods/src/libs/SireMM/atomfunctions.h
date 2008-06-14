@@ -40,6 +40,8 @@
 #include "SireCAS/symbol.h"
 #include "SireCAS/identities.h"
 
+SIRE_BEGIN_HEADER
+
 namespace SireMM
 {
 class AtomFunction;
@@ -148,6 +150,8 @@ private:
     QSet<Symbol> symbls;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 ////////
 //////// Inline functions of AtomFunction
 ////////
@@ -169,6 +173,13 @@ inline const QSet<Symbol>& AtomFunctions::symbols() const
     return symbls;
 }
 
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
+
 }
+
+SIRE_EXPOSE_CLASS( SireMM::AtomFunction )
+SIRE_EXPOSE_CLASS( SireMM::AtomFunctions )
+
+SIRE_END_HEADER
 
 #endif

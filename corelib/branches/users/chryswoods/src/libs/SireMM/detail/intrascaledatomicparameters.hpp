@@ -203,6 +203,8 @@ public:
     applyMask(const QSet<quint32> &idxs) const;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /////////
 ///////// Implementation of IntraScaledParameters
 /////////
@@ -488,6 +490,8 @@ IntraScaledAtomicParameters<ATOMPARAM,INTRASCALE>::applyMask(
                                 ATOMPARAM::applyMask(idxs),
                                 INTRASCALE::applyMask(idxs) );
 }
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 } // end of namespace detail
 

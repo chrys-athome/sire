@@ -879,6 +879,18 @@ private:
 
 } // end of namespace SireMM
 
+SIRE_EXPOSE_CLASS( SireMM::BondComponent )
+SIRE_EXPOSE_CLASS( SireMM::AngleComponent )
+SIRE_EXPOSE_CLASS( SireMM::DihedralComponent )
+SIRE_EXPOSE_CLASS( SireMM::ImproperComponent )
+SIRE_EXPOSE_CLASS( SireMM::UreyBradleyComponent )
+SIRE_EXPOSE_CLASS( SireMM::StretchStretchComponent )
+SIRE_EXPOSE_CLASS( SireMM::StretchBendComponent )
+SIRE_EXPOSE_CLASS( SireMM::BendBendComponent )
+SIRE_EXPOSE_CLASS( SireMM::StretchBendTorsionComponent )
+
+SIRE_EXPOSE_CLASS( SireMM::InternalComponent )
+
 SIRE_END_HEADER
 
 #endif

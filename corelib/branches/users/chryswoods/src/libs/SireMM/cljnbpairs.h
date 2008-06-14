@@ -157,6 +157,11 @@ Q_DECLARE_METATYPE(SireMM::CLJNBPairs)
 
 Q_DECLARE_TYPEINFO( SireMM::CLJScaleFactor, Q_MOVABLE_TYPE );
 
+SIRE_EXPOSE_CLASS( SireMM::CLJScaleFactor )
+SIRE_EXPOSE_CLASS( SireMM::CLJNBPairs )
+SIRE_EXPOSE_ALIAS( SireMM::AtomPairs<SireMM::CLJScaleFactor>,
+                   SireMM::AtomPairs_CLJScaleFactor_ )
+
 SIRE_END_HEADER
 
 #endif

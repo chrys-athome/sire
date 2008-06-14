@@ -71,9 +71,6 @@ using SireBase::Property;
 using SireBase::Properties;
 using SireBase::PropertyMap;
 
-namespace detail
-{
-
 /** This class provides the default name of the 
     property that contains the bond parameters */
 class SIREMM_EXPORT BondParameterName
@@ -293,21 +290,19 @@ public:
     {}
 };
 
-} // end of namespace detail
-
 /** This potential provides energies and forces caused by 
     molecular mechanics style internal intramolecular 
     terms, e.g. bond, angle, dihedral, urey bradley
     
     @author Christopher Woods
 */
-class InternalPotential
+class SIREMM_EXPORT InternalPotential
 {
 public:
     typedef InternalEnergy Energy;
     typedef Energy::Components Components;
     
-    typedef detail::InternalParameterNames3D ParameterNames;
+    typedef InternalParameterNames3D ParameterNames;
     
     typedef InternalParameters3D Parameters;
 
@@ -534,6 +529,8 @@ private:
     Properties props;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 ////////
 //////// Inline functions of InternalFF
 ////////
@@ -566,8 +563,23 @@ inline bool InternalFF::isStrict() const
     return isstrict;
 }
 
+#endif
+
 }
 
 Q_DECLARE_METATYPE( SireMM::InternalFF );
+
+SIRE_EXPOSE_CLASS( SireMM::BondParameterName )
+SIRE_EXPOSE_CLASS( SireMM::AngleParameterName )
+SIRE_EXPOSE_CLASS( SireMM::DihedralParameterName )
+SIRE_EXPOSE_CLASS( SireMM::ImproperParameterName )
+SIRE_EXPOSE_CLASS( SireMM::UreyBradleyParameterName )
+SIRE_EXPOSE_CLASS( SireMM::StretchStretchParameterName )
+SIRE_EXPOSE_CLASS( SireMM::StretchBendParameterName )
+SIRE_EXPOSE_CLASS( SireMM::BendBendParameterName )
+SIRE_EXPOSE_CLASS( SireMM::StretchBendTorsionParameterName )
+SIRE_EXPOSE_CLASS( SireMM::InternalParameterNames )
+SIRE_EXPOSE_CLASS( SireMM::InternalParameterNames3D )
+SIRE_EXPOSE_CLASS( SireMM::InternalFF )
 
 #endif
