@@ -9,8 +9,8 @@
 ## contains all of the MM forcefields.
 ##
 
-import Sire.DB
 import Sire.FF
+import Sire.CAS
 
 # Import all of the classes and functions from the C++ library
 from Sire.MM._MM import *

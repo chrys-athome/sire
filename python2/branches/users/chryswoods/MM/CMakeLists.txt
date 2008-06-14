@@ -1,6 +1,6 @@
 ########################################
 #
-# CMake file for Python wrapper:_Mol
+# CMake file for Python wrapper:_MM
 #
 ########################################
 
@@ -9,8 +9,8 @@ include_directories( ${BOOST_INCLUDE_DIR}
                      ${PYTHON_INCLUDE_DIR} )
 
 # Sire include paths
-include_directories( ${SIRE_INCLUDE_DIR}/SireMol
-                     ${SIRE_INCLUDE_DIR}/SireMM
+include_directories( ${SIRE_INCLUDE_DIR}/SireMM
+                     ${SIRE_INCLUDE_DIR}/SireMol
                      ${SIRE_INCLUDE_DIR} )
 
 # Qt4
@@ -23,31 +23,33 @@ include_directories(${CMAKE_SOURCE_DIR})
 include(CMakeAutogenFile.txt)
 
 # Define the sources in Mol
-set ( WRAPMOL_SOURCES
+set ( WRAPMM_SOURCES
 
-      _Mol.main.cpp
+      _MM.main.cpp
      
       ${PYPP_SOURCES}
 
     )
 
 # Create the library that holds all of the class wrappers
-add_library (Mol ${WRAPMOL_SOURCES})
+add_library (MM ${WRAPMM_SOURCES})
 
-set_target_properties (Mol  
+set_target_properties (MM  
                        PROPERTIES
                          VERSION ${SIRE_VERSION}
                          SOVERSION ${SIRE_VERSION_MAJOR}
-                         OUTPUT_NAME "Mol"
+                         OUTPUT_NAME "MM"
                          PREFIX "_"
                          SUFFIX ${PYTHON_MODULE_EXTENSION}
 		       )
 		       
-target_link_libraries (Mol
-                       ${SIREMOL_LIBRARY}
+target_link_libraries (MM
                        ${SIREMM_LIBRARY}
+                       ${SIREFF_LIBRARY}
+                       ${SIREMOL_LIBRARY}
                        ${SIREID_LIBRARY}
                        ${SIREVOL_LIBRARY}
+                       ${SIRECAS_LIBRARY}
                        ${SIREMATHS_LIBRARY}
                        ${SIREBASE_LIBRARY}
                        ${SIRESTREAM_LIBRARY}
@@ -58,9 +60,9 @@ target_link_libraries (Mol
                       )
 
 # installation
-set( INSTALLDIR ${SIRE_PYTHON}/Sire/Mol )
+set( INSTALLDIR ${SIRE_PYTHON}/Sire/MM )
 
-install( TARGETS Mol
+install( TARGETS MM
          LIBRARY DESTINATION ${INSTALLDIR}
        )
 
