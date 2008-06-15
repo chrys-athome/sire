@@ -38,6 +38,7 @@
 #include "Helpers/convertdict.hpp"
 #include "Helpers/convertset.hpp"
 #include "Helpers/tuples.hpp"
+#include "Base/convertpackedarray.hpp"
 
 #include "SireMol/atom.h"
 #include "SireMol/cutgroup.h"

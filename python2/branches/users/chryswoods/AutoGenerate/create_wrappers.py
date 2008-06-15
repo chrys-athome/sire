@@ -189,7 +189,8 @@ def export_class(mb, classname, aliases, includes, special_code):
        c.add_declaration_code( "#include \"Helpers/str.hpp\"" )
        
        c.add_registration_code( "def( \"__str__\", &__str__< %s > )" % c.decl_string )
-   
+       c.add_registration_code( "def( \"__repr__\", &__str__< %s > )" % c.decl_string )   
+
    else:
        #there is no .toString() function
        # - instead create a new __str__ that just returns a pretty form
@@ -202,6 +203,7 @@ def export_class(mb, classname, aliases, includes, special_code):
        c.add_declaration_code( "const char* pvt_get_name(const %s&){ return \"%s\";}" % (name,name) )
        
        c.add_registration_code("def( \"__str__\", &pvt_get_name)")
+       c.add_registration_code("def( \"__repr__\", &pvt_get_name)")
            
    #provide an alias for this class
    if (classname in aliases):

@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) <year>  <name of author>
+  *  Copyright (C) 2007  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -25,29 +25,10 @@
   *  at http://siremol.org
   *
 \*********************************************/
+#ifndef PYWRAP_SIREMM_CONTAINERS_H
+#define PYWRAP_SIREMM_CONTAINERS_H
 
-#include <Python.h>
-#include <boost/python.hpp>
+void register_SireMM_containers();
 
-#include <QVector>
-#include <QSet>
-
-#include <boost/tuple/tuple.hpp>
-
-#include "Helpers/convertlist.hpp"
-#include "Helpers/convertdict.hpp"
-#include "Helpers/convertset.hpp"
-#include "Helpers/tuples.hpp"
-
-#include "SireBase/property.h"
-
-#include "Base/convertproperty.hpp"
-
-#include "SireVol/space.h"
-#include "SireVol/mappingfunction.h"
-
-using boost::python::register_tuple;
-
-void register_SireVol_containers()
-{}
+#endif
 

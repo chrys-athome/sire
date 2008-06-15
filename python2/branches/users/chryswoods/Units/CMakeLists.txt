@@ -49,6 +49,7 @@ set_target_properties (Units
 target_link_libraries (Units
                        ${SIREUNITS_LIBRARY}
                        ${SIRESTREAM_LIBRARY}
+                       ${SIREBASE_LIBRARY}
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARY}
                        ${QT_QTCORE_LIBRARY}

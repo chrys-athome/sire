@@ -38,10 +38,13 @@
 #include "Helpers/convertlist.hpp"
 #include "Helpers/convertdict.hpp"
 #include "Helpers/convertset.hpp"
+#include "Base/convertpackedarray.hpp"
 
 #include "sireqt_headers.h"
 
 #include "Helpers/tuples.hpp"
+
+#include "SireBase/packedarray2d.hpp"
 
 using boost::python::register_tuple;
 
@@ -76,6 +79,11 @@ void register_SireQt_containers()
     register_list< QList<QVariant> >();
 
     register_tuple< boost::tuple<double,double,double> >();
+
+    register_PackedArray< SireBase::PackedArray2D<qint64> >();
+    register_PackedArray< SireBase::PackedArray2D<double> >();
+    register_PackedArray< SireBase::PackedArray2D<QString> >();
+    register_PackedArray< SireBase::PackedArray2D<QVariant> >();
 
     #if QT_VERSION >= 0x402000
     register_set< QSet<QString> >();

@@ -336,6 +336,7 @@ export_QString()
         .def( init<const QString&>() )
 
         .def( "__str__", &convert )
+        .def( "__repr__", &convert )
 
         .def( "append", (QString& (QString::*)(const QString&))
                                         &QString::append,

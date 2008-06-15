@@ -69,6 +69,27 @@ def fix_MolEditorBase(c):
    c.decls( "removeProperty" ).call_policies = call_policies.return_self()
    c.decls( "removeMetadata" ).call_policies = call_policies.return_self()   
 
+   c.add_registration_code( """def( \"setProperty\",
+                               &SireMol::MolEditorBase::setProperty<SireBase::PropertyBase>, %s )""" \
+                               % (return_self ) )
+   
+   c.add_registration_code( "def( \"setMetadata\", &set_Metadata_function1, %s)" \
+                               % (return_self) )
+
+   c.add_registration_code( "def( \"setMetadata\", &set_Metadata_function2, %s)" \
+                               % (return_self) )
+
+   c.add_declaration_code( """SireMol::MolEditorBase& set_Metadata_function1(
+                              SireMol::MolEditorBase &molview,
+                              const QString &metakey, const SireBase::PropertyBase &p)
+                              { return molview.setMetadata<SireBase::PropertyBase>(metakey, p); }""" )
+
+   c.add_declaration_code( """SireMol::MolEditorBase& set_Metadata_function2(
+                              SireMol::MolEditorBase &molview,
+                              const QString &key, const QString &metakey, 
+                              const SireBase::PropertyBase &p)
+                              { return molview.setMetadata<SireBase::PropertyBase>(key, metakey, p); }""" )
+
 def fix_MolViewEditorBase(c, molview, props):
    c.decls( "removeProperty" ).call_policies = call_policies.return_self()
    c.decls( "removeMetadata" ).call_policies = call_policies.return_self()

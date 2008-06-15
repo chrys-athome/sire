@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) <year>  <name of author>
+  *  Copyright (C) 2007   Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -38,16 +38,18 @@
 #include "Helpers/convertdict.hpp"
 #include "Helpers/convertset.hpp"
 #include "Helpers/tuples.hpp"
+#include "Base/convertpackedarray.hpp"
 
-#include "SireBase/property.h"
+#include "SireUnits/dimensions.h"
 
-#include "Base/convertproperty.hpp"
+#include "SireBase/packedarray2d.hpp"
 
-#include "SireVol/space.h"
-#include "SireVol/mappingfunction.h"
+using namespace SireUnits;
 
 using boost::python::register_tuple;
 
-void register_SireVol_containers()
-{}
-
+void register_SireUnits_containers()
+{
+    register_PackedArray< SireBase::PackedArray2D<Dimension::Charge> >();
+    register_PackedArray< SireBase::PackedArray2D<Dimension::Mass> >();
+}

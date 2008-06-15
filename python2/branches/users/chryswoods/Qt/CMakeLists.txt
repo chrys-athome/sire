@@ -58,6 +58,7 @@ add_library (Qt ${WRAPQT_SOURCES})
 
 target_link_libraries (Qt
                        ${SIREMATHS_LIBRARY}
+                       ${SIREBASE_LIBRARY}
                        ${QT_QTCORE_LIBRARY}
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARY}

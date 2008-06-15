@@ -14,7 +14,7 @@ def fix_CoordGroupEditor(c):
    c.decls( "mapInto" ).call_policies = call_policies.return_self()
    c.decls( "changeFrame" ).call_policies = call_policies.return_self()
 
-special_code = { "CoordGroupEditor" : fix_CoordGroupEditor }
+special_code = { "SireVol::CoordGroupEditor" : fix_CoordGroupEditor }
 
 def fixMB(mb):
    mb.add_declaration_code("#include <QVector>")
