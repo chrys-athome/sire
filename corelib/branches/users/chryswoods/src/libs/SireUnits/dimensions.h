@@ -124,7 +124,7 @@ template<int M, int L, int T,
 class PhysUnit : public Unit
 {
 public:
-    PhysUnit() : Unit(1)
+    PhysUnit() : Unit(0)
     {}
 
     explicit PhysUnit(double scale_factor)

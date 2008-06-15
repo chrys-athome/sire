@@ -384,6 +384,7 @@ friend QDataStream& ::operator>><>(QDataStream&, PackedArray2D<T>&);
 
 public:
     typedef typename detail::PackedArray2D_Array<T> Array;
+    typedef T value_type;
 
     PackedArray2D();
     
@@ -415,6 +416,7 @@ public:
     
     int nArrays() const;
     int nValues() const;
+    int nValues(quint32 i) const;
 
     bool isEmpty() const;
 
@@ -1663,6 +1665,17 @@ SIRE_OUTOFLINE_TEMPLATE
 int PackedArray2D<T>::nValues() const
 {
     return d->nValues();
+}
+
+/** Return the total number of values in the ith array
+
+    \throw SireError::invalid_index
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+int PackedArray2D<T>::nValues(quint32 i) const
+{
+    return this->at(i).nValues();
 }
 
 /** Return whether or not this array is empty (contains no arrays) */

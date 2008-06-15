@@ -364,8 +364,6 @@ bool CLJPotential::setSwitchingFunction(const SwitchingFunction &new_switchfunc)
         switchfunc = new_switchfunc;
         props.setProperty( "switchingFunction", new_switchfunc );
         
-        qDebug() << switchfunc->cutoffDistance() << switchfunc->featherDistance();
-        
         this->changedPotential();
         return true;
     }
