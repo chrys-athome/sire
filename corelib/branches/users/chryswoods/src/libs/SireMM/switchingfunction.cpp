@@ -291,7 +291,7 @@ void HarmonicSwitchingFunction::set(double cutelec, double featherelec,
     feather_elec = qMin( cut_elec, std::abs(featherelec) );
 
     if (cut_elec != feather_elec)
-        norm_elec = 1.0 / (cut_elec2 - SireMaths::pow_2(featherelec));
+        norm_elec = 1.0 / (cut_elec2 - SireMaths::pow_2(feather_elec));
     else
         norm_elec = 0;
 
@@ -300,7 +300,7 @@ void HarmonicSwitchingFunction::set(double cutelec, double featherelec,
     feather_vdw = qMin( cut_vdw, std::abs(feathervdw) );
 
     if (cut_vdw != feather_vdw)
-        norm_vdw = 1.0 / (cut_vdw2 - SireMaths::pow_2(feathervdw));
+        norm_vdw = 1.0 / (cut_vdw2 - SireMaths::pow_2(feather_vdw));
     else
         norm_vdw = 0;
         

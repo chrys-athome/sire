@@ -37,6 +37,8 @@
 #include "SireVol/coordgroup.h"
 #include "SireVol/aabox.h"
 
+#include <QDebug>
+
 SIRE_BEGIN_HEADER
 
 namespace SireFF
@@ -630,23 +632,19 @@ FFMolecules3D<PTNL>::add(const PartialMolecule &molecule,
                          const PropertyMap &map, PTNL &forcefield, 
                          bool record_changes)
 {
+    int old_nmols = FFMolecules<PTNL>::count();
+
     ChangedMolecule changed_mol = FFMolecules<PTNL>::add(molecule, map,
                                                          forcefield, record_changes);
                                                          
-    if (changed_mol.oldMolecule().isEmpty())
+    if (old_nmols != FFMolecules<PTNL>::count())
     {
         //the molecule has been added from scratch - create space
         //for the AABox
-        BOOST_ASSERT( FFMoleculesBase::molNumsByIndex().count() ==
-                      aaboxes_by_idx.count() + 1 );
-                      
-        aaboxes_by_idx.append( changed_mol.newMolecule().aaBox() );
+        aaboxes_by_idx.resize( FFMolecules<PTNL>::count() );
     }
-    else
-    {
-        //the molecule has just been altered
-        this->updateAABox(molecule.number());
-    }
+
+    this->updateAABox(molecule.number());
     
     return changed_mol;
 }

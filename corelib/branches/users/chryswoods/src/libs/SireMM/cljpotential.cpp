@@ -747,9 +747,11 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
             const double mindist = spce->calcDist(group0, group1, distmat);
             
             if (mindist > switchfunc->cutoffDistance())
+            {
                 //all of the atoms are definitely beyond cutoff
                 continue;
-                
+            }
+               
             double icnrg = 0;
             double iljnrg = 0;
             

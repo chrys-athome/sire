@@ -55,7 +55,7 @@ namespace SireUnits
 */
 
 /** Avogadro's number */
-const Dimension::Quantity mole( 6.0221419947e23 );
+const Dimension::Quantity mole( 6.02214179e23 );
 
 const Dimension::Quantity dozen( 12 );
 

@@ -70,6 +70,12 @@ mols = cljff.molecules()
 #    print charges, ljs
 
 t.start()
+cljff.packCoordinates()
+ms = t.elapsed()
+
+print "Packing the coordinates took %d ms" % ms
+
+t.start()
 nrg = cljff.energy()
 ms = t.elapsed()
 print nrg

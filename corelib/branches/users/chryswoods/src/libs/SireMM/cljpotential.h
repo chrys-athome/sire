@@ -833,9 +833,7 @@ InterCLJPotential::calculateEnergy(const InterCLJPotential::Molecule &mol0,
                                    double scale_energy) const
 {
     if (scale_energy != 0 and 
-        not (mol0.isEmpty() or mol1.isEmpty()) and
-        not spce->beyond(switchfunc->cutoffDistance(),
-                         mol0.aaBox(), mol1.aaBox()))
+        not (mol0.isEmpty() or mol1.isEmpty()))
     {
         this->_pvt_calculateEnergy(mol0, mol1, energy, workspace, scale_energy);
     }
