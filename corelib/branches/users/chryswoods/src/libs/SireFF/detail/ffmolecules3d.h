@@ -515,7 +515,7 @@ void FFMolecules3D<PTNL>::packCoordinates()
     
     for (int i=0; i<nmols; ++i)
     {
-        coords_array[nmols] = mols_array[i].coordinates();
+        coords_array[i] = mols_array[i].coordinates();
     }
     
     //now convert the array of CoordGroupArrays into a single

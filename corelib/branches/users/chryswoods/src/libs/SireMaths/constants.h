@@ -53,7 +53,7 @@ const double sqrt_half = M_SQRT1_2;   /* sqrt(1/2) */
 
 const double sqrt_three = M_SQRT3;   /* sqrt(3) */
 
-const double pi = M_PI;    /* pi */
+const double pi = 3.141592653589793238462643383279;    /* pi */
 
 const double two_pi = double(2) * pi;  /* 2 * pi */
 

@@ -29,6 +29,13 @@
 #include <limits>
 #include <cmath>
 
+#define USE_SSE
+//#undef USE_SSE
+
+#ifdef USE_SSE
+#include <emmintrin.h>
+#endif
+
 #include "periodicbox.h"
 #include "coordgroup.h"
 
@@ -220,25 +227,80 @@ double PeriodicBox::calcDist(const CoordGroup &group0, const CoordGroup &group1,
     const Vector *array0 = group0.constData();
     const Vector *array1 = group1.constData();
 
-    for (int i=0; i<n0; ++i)
+    #ifdef USE_SSE
     {
-        //add the delta to the coordinates of atom0
-        Vector point0 = array0[i] + wrapdelta;
-        mat.setOuterIndex(i);
+        //version of the algorithm suitable for use with SSE2 or above
+        const int remainder = n1 % 2;
+    
+        __m128d sse_mindist = { mindist, mindist };
 
-        for (int j=0; j<n1; ++j)
+        for (int i=0; i<n0; ++i)
         {
-            //calculate the distance between the two atoms
-            const double tmpdist = Vector::distance(point0,array1[j]);
+            //add the delta to the coordinates of atom0
+            Vector point0 = array0[i] + wrapdelta;
+            mat.setOuterIndex(i);
 
-            //store the minimum distance, the value expected to be the minimum
-            //value is most efficiently placed as the second argument
-            mindist = qMin(tmpdist,mindist);
+            __m128d sse_x0 = { point0.x(), point0.x() };
+            __m128d sse_y0 = { point0.y(), point0.y() };
+            __m128d sse_z0 = { point0.z(), point0.z() };
 
-            //place this distance into the matrix
-            mat[j] = tmpdist;
+            //process the other points, two at a time
+            for (int j=0; j < n1-remainder; j+=2)
+            {
+                const Vector &point1 = array1[j];
+                const Vector &point2 = array1[j+1];
+        
+                __m128d sse_x1 = { point1.x(), point2.x() };
+                __m128d sse_y1 = { point1.y(), point2.y() };
+                __m128d sse_z1 = { point1.z(), point2.z() };
+            
+                __m128d dx = sse_x0 - sse_x1;
+                __m128d tmpdist = dx * dx;
+            
+                dx = sse_y0 - sse_y1;
+                tmpdist += dx * dx;
+            
+                dx = sse_z0 - sse_z1;
+                tmpdist += dx * dx;
+
+                tmpdist = _mm_sqrt_pd(tmpdist);
+
+                sse_mindist = _mm_min_pd( sse_mindist, tmpdist );
+
+                //place this distance into the matrix
+                mat[j] = *((const double*)&tmpdist);
+                mat[j+1] = *( ((const double*)&tmpdist) + 1 );
+            }
+        
+            mindist = qMin( *((const double*)&sse_mindist),
+                            *( ((const double*)&sse_mindist) + 1 ) );
+        
+            if (remainder == 1)
+            {
+                const double tmpdist = Vector::distance(point0, array1[n1-1]);
+                mindist = qMin(tmpdist,mindist);
+                mat[n1-1] = tmpdist;
+            }
         }
     }
+    #else
+    {
+        //generic version suitable for any processor
+        for (int i=0; i<n0; ++i)
+        {
+            //add the delta to the coordinates of atom0
+            Vector point0 = array0[i] + wrapdelta;
+            mat.setOuterIndex(i);
+
+            for (int j=0; j<n1; ++j)
+            {
+                const double dist = Vector::distance(point0, array1[j]);
+                mindist = qMin(mindist, dist);
+                mat[j] = dist;
+            }
+        }
+    }
+    #endif
 
     //return the minimum distance
     return mindist;

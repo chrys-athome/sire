@@ -17,9 +17,9 @@ mincoords = Vector(-18.3854, -18.66855, -18.4445)
 maxcoords = Vector( 18.3854,  18.66855,  18.4445)
 
 vol = PeriodicBox(mincoords, maxcoords)
-switchfunc = HarmonicSwitchingFunction(15, 14.5)
+switchfunc = HarmonicSwitchingFunction(80, 80)
 
-cljff.setSpace(vol)
+#cljff.setSpace(vol)
 cljff.setSwitchingFunction(switchfunc)
 
 mols = PDB().read("test/io/water.pdb")
@@ -69,16 +69,17 @@ mols = cljff.molecules()
 #
 #    print charges, ljs
 
-t.start()
-cljff.packCoordinates()
-ms = t.elapsed()
-
-print "Packing the coordinates took %d ms" % ms
+#t.start()
+#cljff.packCoordinates()
+#ms = t.elapsed()
+#
+#print "Packing the coordinates took %d ms" % ms
 
 t.start()
 nrg = cljff.energy()
 ms = t.elapsed()
 print nrg
+print nrg.value()
 print "Took %d ms" % ms
 
 print "Done!"

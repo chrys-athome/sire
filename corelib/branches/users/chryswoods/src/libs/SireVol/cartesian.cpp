@@ -29,12 +29,11 @@
 #include <limits>
 #include <cmath>
 
-#ifdef _SIRE_USE_MANUAL_SSE_
+#define USE_SSE
+//#undef USE_SSE
 
-#ifdef _HAVE_ACCELERATE_H_
-#include <Accelerate/Accelerate.h>     // CONDITIONAL_INCLUDE
-#endif
-
+#ifdef USE_SSE
+#include <emmintrin.h>
 #endif
 
 #include "cartesian.h"
@@ -311,64 +310,79 @@ double Cartesian::calcDist(const CoordGroup &group0, const CoordGroup &group1,
     const Vector *array0 = group0.constData();
     const Vector *array1 = group1.constData();
 
-    const int remainder = n1 % 2;
-
-    for (int i=0; i<n0; ++i)
+    #ifdef USE_SSE
     {
-        const Vector& point0 = array0[i];
-        mat.setOuterIndex(i);
+        //version of the code for processors with SSE2 or above
+        const int remainder = n1 % 2;
 
-        // Process points in pairs to give the compiler a chance
-        // to perform two sqrts simultaneously
-        for (int j=0; j < n1-remainder; j+=2)
+        for (int i=0; i<n0; ++i)
         {
-            #ifdef _SIRE_USE_MANUAL_SSE_
-            __m128d tmpdist;
+            const Vector& point0 = array0[i];
+            mat.setOuterIndex(i);
             
-            double *tmpdist0 = (double*)(&tmpdist);
-            double *tmpdist1 = tmpdist0 + 1;
-        
-            //calculate the distance between the two points
-            *tmpdist0 = Vector::distance2(point0,array1[j]);
-            *tmpdist1 = Vector::distance2(point0,array1[j+1]);
+            __m128d sse_x0 = { point0.x(), point0.x() };
+            __m128d sse_y0 = { point0.y(), point0.y() };
+            __m128d sse_z0 = { point0.z(), point0.z() };
+            
+            __m128d sse_mindist = { mindist, mindist };
 
-            //this is an SSE instruction that performs the
-            //sqrts on the two doubles above in parallel
-            tmpdist = _mm_sqrt_pd(tmpdist);
+            // Process points in pairs
+            for (int j=0; j < n1-remainder; j+=2)
+            {
+                const Vector &point1 = array1[j];
+                const Vector &point2 = array1[j+1];
+                
+                __m128d sse_x1 = { point1.x(), point2.x() };
+                __m128d sse_y1 = { point1.y(), point2.y() };
+                __m128d sse_z1 = { point1.z(), point2.z() };
+                
+                __m128d delta = sse_x0 - sse_x1;
+                __m128d tmpdist = delta * delta;
 
-            //store the minimum distance, the value expected to be the minimum
-            //value is most efficiently placed as the second argument
-            mindist = qMin(*tmpdist0,mindist);
-            mindist = qMin(*tmpdist1,mindist);
+                delta = sse_y0 - sse_y1;
+                tmpdist += delta*delta;
+                
+                delta = sse_z0 - sse_z1;
+                tmpdist += delta*delta;
+                
+                tmpdist = _mm_sqrt_pd(tmpdist);
 
-            //place this distance into the matrix
-            mat[j] = *tmpdist0;
-            mat[j+1] = *tmpdist1;
+                sse_mindist = _mm_min_pd( sse_mindist, tmpdist );
+
+                //place this distance into the matrix
+                mat[j]   = *((const double*)&tmpdist);
+                mat[j+1] = *( ((const double*)&tmpdist) + 1 );
+            }
             
-            #else
+            mindist = qMin( *((const double*)&sse_mindist),
+                            *( ((const double*)&sse_mindist) + 1 ) );
             
-            double tmpdist0 = Vector::distance2(point0,array1[j]);
-            double tmpdist1 = Vector::distance2(point0,array1[j+1]);
-            
-            tmpdist0 = std::sqrt(tmpdist0);
-            tmpdist1 = std::sqrt(tmpdist1);
-            
-            mindist = qMin(tmpdist0,mindist);
-            mindist = qMin(tmpdist1,mindist);
-            
-            mat[j] = tmpdist0;
-            mat[j+1] = tmpdist1;
-            
-            #endif
-        }
-        
-        if (remainder == 1)
-        {
-            const double tmpdist = Vector::distance(point0, array1[n1-1]);
-            mindist = qMin(tmpdist,mindist);
-            mat[n1-1] = tmpdist;
+            if (remainder == 1)
+            {
+                const double tmpdist = Vector::distance(point0, array1[n1-1]);
+                mindist = qMin(tmpdist,mindist);
+                mat[n1-1] = tmpdist;
+            }
         }
     }
+    #else
+    {
+        //version suitable for all processors
+        for (int i=0; i<n0; ++i)
+        {
+            const Vector &point0 = array0[i];
+            mat.setOuterIndex(i);
+            
+            for (int j=0; j<n1; ++j)
+            {
+                const double tmpdist = Vector::distance(point0, array1[j]);
+                mindist = qMin(mindist, tmpdist);
+                
+                mat[j] = tmpdist;
+            }
+        }
+    }
+    #endif
 
     //return the minimum distance
     return mindist;

@@ -35,9 +35,9 @@ INCLUDE_DIRECTORIES( BEFORE ${SIRE_SOURCE_DIR} )
 # Build shared libraries by default
 set (BUILD_SHARED_LIBS ON)
 
-# Target an i686 by default
-set (SIRE_TARGET_OPTIONS "-march=i686" CACHE STRING
-            "Compiler option used to specify the target processor.")
+# This is where you set your own compiler flags
+set (SIRE_USER_CFLAGS "-march=i686 -O2 -fomit-frame-pointer -msse2 -mfpmath=sse")
+set (SIRE_USER_CPPFLAGS "-march=i686 -O2 -fomit-frame-pointer -msse2 -mfpmath=sse")
 
 # Name of executable install dir
 set (SIRE_BIN "bin")
@@ -229,11 +229,11 @@ set( SIRE_PLATFORM_OPTIONS "" )
 #       "-arch i386 -Wno-long-double -no-cpp-precomp -mno-fused-madd -fno-common" )
 #endif()
 
-set( SIRE_C_FLAGS_RELEASE "-Wall -O2 -fomit-frame-pointer ${SIRE_PLATFORM_OPTIONS}" )
-set( SIRE_CXX_FLAGS_RELEASE ${SIRE_C_FLAGS_RELEASE} )
+set( SIRE_C_FLAGS_RELEASE "-Wall ${SIRE_USER_CFLAGS} ${SIRE_PLATFORM_OPTIONS}" )
+set( SIRE_CXX_FLAGS_RELEASE "-Wall ${SIRE_USER_CPPFLAGS} ${SIRE_PLATFORM_OPTIONS}" )
 
-set( SIRE_C_FLAGS_DEBUG "-Wall -g -O2 ${SIRE_PLATFORM_OPTIONS}" )
-set( SIRE_CXX_FLAGS_DEBUG ${SIRE_C_FLAGS_DEBUG} )
+set( SIRE_C_FLAGS_DEBUG "-Wall -g ${SIRE_USER_CFLAGS} -O0 ${SIRE_PLAFORM_OPTIONS}" )
+set( SIRE_CXX_FLAGS_DEBUG "-Wall -g ${SIRE_USER_CPPFLAGS} -O0 ${SIRE_PLATFORM_OPTIONS}" )
 
 # Also set flags for size-optimised compile - this is used for
 # all of the python wrappers, which can grow to enormous sizes 
