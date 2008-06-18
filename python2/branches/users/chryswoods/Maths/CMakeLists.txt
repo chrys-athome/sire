@@ -28,6 +28,7 @@ include(CMakeAutogenFile.txt)
 set ( WRAPMATHS_SOURCES
 
       _Maths.main.cpp
+      _Maths_global_variables.pyman.cpp
      
       ${PYPP_SOURCES}
 
