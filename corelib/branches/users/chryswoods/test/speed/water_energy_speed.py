@@ -75,11 +75,13 @@ mols = cljff.molecules()
 #
 #print "Packing the coordinates took %d ms" % ms
 
-t.start()
-nrg = cljff.energy()
-ms = t.elapsed()
-print nrg
-print nrg.value()
-print "Took %d ms" % ms
+for i in range(0,5):
+    t.start()
+    cljff.mustNowRecalculateFromScratch()
+    nrg = cljff.energy()
+    ms = t.elapsed()
+    print nrg
+    print nrg.value()
+    print "Took %d ms" % ms
 
 print "Done!"
