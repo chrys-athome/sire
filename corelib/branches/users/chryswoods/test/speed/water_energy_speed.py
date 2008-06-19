@@ -19,7 +19,7 @@ maxcoords = Vector( 18.3854,  18.66855,  18.4445)
 vol = PeriodicBox(mincoords, maxcoords)
 switchfunc = HarmonicSwitchingFunction(15, 14.5)
 
-cljff.setSpace(vol)
+#cljff.setSpace(vol)
 cljff.setSwitchingFunction(switchfunc)
 
 mols = PDB().read("test/io/water.pdb")
@@ -78,10 +78,14 @@ mols = cljff.molecules()
 for i in range(0,5):
     t.start()
     cljff.mustNowRecalculateFromScratch()
+    before_energy = FlopsMark()
     nrg = cljff.energy()
+    after_energy = FlopsMark()
     ms = t.elapsed()
     print nrg
     print nrg.value()
     print "Took %d ms" % ms
+    print "Speed is at least %f MFLOPS" % (0.000001 * (after_energy - before_energy))
 
 print "Done!"
+

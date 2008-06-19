@@ -32,6 +32,8 @@
 #include "ff3d.h"
 #include "inter2bff.hpp"
 
+#include "SireBase/countflops.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireFF

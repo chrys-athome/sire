@@ -39,6 +39,8 @@
 #include "cartesian.h"
 #include "coordgroup.h"
 
+#include "SireBase/countflops.h"
+
 #include "SireError/errors.h"
 #include "SireStream/datastream.h"
 
@@ -310,6 +312,10 @@ double Cartesian::calcDist(const CoordGroup &group0, const CoordGroup &group1,
     const Vector *array0 = group0.constData();
     const Vector *array1 = group1.constData();
 
+    #ifdef SIRE_TIME_ROUTINES
+    int nflops = 0;
+    #endif
+
     #ifdef USE_SSE
     {
         //version of the code for processors with SSE2 or above
@@ -336,16 +342,20 @@ double Cartesian::calcDist(const CoordGroup &group0, const CoordGroup &group1,
                 __m128d sse_y1 = { point1.y(), point2.y() };
                 __m128d sse_z1 = { point1.z(), point2.z() };
                 
-                __m128d delta = sse_x0 - sse_x1;
-                __m128d tmpdist = delta * delta;
+                __m128d delta = sse_x0 - sse_x1;      // 2 flops
+                __m128d tmpdist = delta * delta;      // 2 flops
 
-                delta = sse_y0 - sse_y1;
-                tmpdist += delta*delta;
+                delta = sse_y0 - sse_y1;              // 2 flops
+                tmpdist += delta*delta;               // 4 flops
                 
-                delta = sse_z0 - sse_z1;
-                tmpdist += delta*delta;
+                delta = sse_z0 - sse_z1;              // 2 flops
+                tmpdist += delta*delta;               // 4 flops
                 
-                tmpdist = _mm_sqrt_pd(tmpdist);
+                tmpdist = _mm_sqrt_pd(tmpdist);       // 2 flops
+
+                #ifdef SIRE_TIME_ROUTINES
+                nflops += 18;
+                #endif
 
                 sse_mindist = _mm_min_pd( sse_mindist, tmpdist );
 
@@ -360,6 +370,11 @@ double Cartesian::calcDist(const CoordGroup &group0, const CoordGroup &group1,
             if (remainder == 1)
             {
                 const double tmpdist = Vector::distance(point0, array1[n1-1]);
+                
+                #ifdef SIRE_TIME_ROUTINES
+                nflops += 9;
+                #endif
+                
                 mindist = qMin(tmpdist,mindist);
                 mat[n1-1] = tmpdist;
             }
@@ -376,12 +391,21 @@ double Cartesian::calcDist(const CoordGroup &group0, const CoordGroup &group1,
             for (int j=0; j<n1; ++j)
             {
                 const double tmpdist = Vector::distance(point0, array1[j]);
+                
+                #ifdef SIRE_TIME_ROUTINES
+                nflops += 9;
+                #endif
+                
                 mindist = qMin(mindist, tmpdist);
                 
                 mat[j] = tmpdist;
             }
         }
     }
+    #endif
+
+    #ifdef SIRE_TIME_ROUTINES
+    ADD_FLOPS(nflops);
     #endif
 
     //return the minimum distance
@@ -596,6 +620,10 @@ double Cartesian::calcDistVectors(const CoordGroup &group0, const CoordGroup &gr
     and 'aabox1' are definitely beyond the cutoff distance */
 bool Cartesian::beyond(double dist, const AABox &aabox0, const AABox &aabox1) const
 {
+    #ifdef SIRE_TIME_ROUTINES
+    ADD_FLOPS( 8 );
+    #endif
+
     return Vector::distance2(aabox0.center(), aabox1.center()) >
                 SireMaths::pow_2(dist + aabox0.radius() + aabox1.radius());
 }

@@ -26,3 +26,124 @@
   *
 \*********************************************/
 
+#ifndef SIREBASE_COUNTFLOPS_H
+#define SIREBASE_COUNTFLOPS_H
+
+#include "sireglobal.h"
+
+#define SIRE_TIME_ROUTINES
+//#undef SIRE_TIME_ROUTINES
+
+#ifdef SIRE_TIME_ROUTINES
+#if QT_VERSION >= 0x040400    //only usable with Qt >= 4.4
+
+#include <QTime>
+#include <QAtomicInt>
+
+SIRE_BEGIN_HEADER
+
+namespace SireBase
+{
+
+class CountFlops;
+
+/** This class contains a marker that may be
+    used to get the flops per second
+    
+    @author Christopher Woods
+*/
+class SIREBASE_EXPORT FlopsMark
+{
+
+friend class CountFlops;
+
+public:
+    FlopsMark();
+    FlopsMark(const FlopsMark &other);
+    
+    ~FlopsMark();
+    
+    FlopsMark& operator=(const FlopsMark &other);
+    
+    double operator-(const FlopsMark &other) const;
+    
+protected:
+    FlopsMark(int nflops, int ms);
+    
+private:
+    /** The number of flops carried out by at this mark */
+    int nflops;
+    
+    /** The time that this mark was taken (in ms) */
+    int ms;
+};
+
+/** This is the singleton class that can be used
+    to count floating point operations in the program
+    
+    @author Christopher Woods
+*/
+class SIREBASE_EXPORT CountFlops
+{
+public:
+    ~CountFlops();
+    
+    static void addFlops(int nflops);
+    static FlopsMark mark();
+
+private:
+    CountFlops();
+    
+    /** The global FLOP counter */
+    static CountFlops global_counter;
+    
+    /** The atomic integer that contains the number of flops */
+    QAtomicInt flop_count;
+    
+    /** The timer used to get the flop rate */
+    QTime flop_timer;
+};
+
+} // end of namespace SireBase
+
+#else // #if QT_VERSION >= 0x040400
+
+//we can't do any timing
+#warning Cannot get FLOPS without Qt version >= 4.4
+#undef SIRE_TIME_ROUTINES
+
+#endif // #if QT_VERSION >= 0x040400
+#endif // #ifdef SIRE_TIME_ROUTINES
+
+#ifdef ADD_FLOPS
+#undef ADD_FLOPS
+#endif
+
+#ifdef SIRE_TIME_ROUTINES
+#define ADD_FLOPS(n)  SireBase::CountFlops::addFlops(n);
+#else
+
+#define ADD_FLOPS(n) /* Not adding n flops */
+
+class SIREBASE_EXPORT FlopsMark
+{
+public:
+    FlopsMark()
+    {}
+    
+    ~FlopsMark()
+    {}
+    
+    double operator-(const FlopsMark&) const
+    {
+        return 0;
+    }
+};
+
+#endif
+
+SIRE_EXPOSE_CLASS( SireBase::FlopsMark )
+
+SIRE_END_HEADER
+
+#endif

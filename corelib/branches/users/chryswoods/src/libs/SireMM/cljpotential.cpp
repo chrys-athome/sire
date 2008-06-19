@@ -37,6 +37,8 @@
 
 #include "SireVol/cartesian.h"
 
+#include "SireBase/countflops.h"
+
 #include "SireMaths/maths.h"
 
 #include "SireUnits/units.h"
@@ -717,6 +719,10 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     double cnrg = 0;
     double ljnrg = 0;
     
+    #ifdef SIRE_TIME_ROUTINES
+    int nflops = 0;
+    #endif
+
     //loop over all pairs of CutGroups in the two molecules
     for (quint32 igroup=0; igroup<ngroups0; ++igroup)
     {
@@ -771,6 +777,10 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                     {
                         icnrg += param0.reduced_charge * 
                                  params1_array[j].reduced_charge / distmat[j];
+                                 
+                        #ifdef SIRE_TIME_ROUTINES
+                        nflops += 3;
+                        #endif
                     }
                 }
                 else
@@ -784,7 +794,11 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                         
                         icnrg += param0.reduced_charge * param1.reduced_charge 
                                       * invdist;
-                              
+                        
+                        #ifdef SIRE_TIME_ROUTINES
+                        nflops += 4;
+                        #endif
+                                          
                         if (param1.ljid != 0)
                         {
                             const LJPair &ljpair = ljpairs.constData()[
@@ -796,6 +810,10 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
 
                             iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
                                                           sig_over_dist6);
+                                                          
+                            #ifdef SIRE_TIME_ROUTINES
+                            nflops += 8;
+                            #endif
                         }
                     }
                 }
@@ -803,8 +821,14 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
             
             //are we shifting the electrostatic potential?
             if (use_electrostatic_shifting)
+            {
                 icnrg -= this->totalCharge(params0) * this->totalCharge(params1)
                               / switchfunc->electrostaticCutoffDistance();
+                        
+                #ifdef SIRE_TIME_ROUTINES      
+                nflops += 3;
+                #endif
+            }
             
             //now add these energies onto the total for the molecule,
             //scaled by any non-bonded feather factor
@@ -812,11 +836,19 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
             {
                 cnrg += switchfunc->electrostaticScaleFactor(mindist) * icnrg;
                 ljnrg += switchfunc->vdwScaleFactor(mindist) * iljnrg;
+                
+                #ifdef SIRE_TIME_ROUTINES
+                nflops += 4;
+                #endif
             }
             else
             {
                 cnrg += icnrg;
                 ljnrg += iljnrg;
+                
+                #ifdef SIRE_TIME_ROUTINES
+                nflops += 2;
+                #endif
             }
         }
     }
@@ -824,6 +856,11 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     //add this molecule pair's energy onto the total
     //(also multiply LJ by 4 as it is 4 * epsilon ((sig/r)^12 - (sig/r)^6))
     energy += Energy(scale_energy * cnrg, 4 * scale_energy * ljnrg);
+    
+    #ifdef SIRE_TIME_ROUTINES
+    nflops += 5;
+    ADD_FLOPS(nflops);
+    #endif
 }
 
 /** Add to the forces in 'forces0' the forces acting on 'mol0' caused

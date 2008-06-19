@@ -39,6 +39,8 @@
 #include "periodicbox.h"
 #include "coordgroup.h"
 
+#include "SireBase/countflops.h"
+
 #include "SireError/errors.h"
 #include "SireStream/datastream.h"
 
@@ -217,11 +219,19 @@ double PeriodicBox::calcDist(const CoordGroup &group0, const CoordGroup &group1,
     const int n0 = group0.count();
     const int n1 = group1.count();
 
+    #ifdef SIRE_TIME_ROUTINES
+    int nflops = 0;
+    #endif
+
     //redimension the matrix to hold all of the pairs
     mat.redimension(n0, n1);
 
     //see if we need to wrap the coordinates...
     Vector wrapdelta = this->wrapDelta(group0.aaBox().center(), group1.aaBox().center());
+
+    #ifdef SIRE_TIME_ROUTINES
+    nflops += 3;  // above is at least three operations, sometimes more!
+    #endif
 
     //get raw pointers to the arrays - this provides more efficient access
     const Vector *array0 = group0.constData();
@@ -238,6 +248,11 @@ double PeriodicBox::calcDist(const CoordGroup &group0, const CoordGroup &group1,
         {
             //add the delta to the coordinates of atom0
             Vector point0 = array0[i] + wrapdelta;
+            
+            #ifdef SIRE_TIME_ROUTINES
+            nflops += 3;
+            #endif
+            
             mat.setOuterIndex(i);
 
             __m128d sse_x0 = { point0.x(), point0.x() };
@@ -254,16 +269,20 @@ double PeriodicBox::calcDist(const CoordGroup &group0, const CoordGroup &group1,
                 __m128d sse_y1 = { point1.y(), point2.y() };
                 __m128d sse_z1 = { point1.z(), point2.z() };
             
-                __m128d dx = sse_x0 - sse_x1;
-                __m128d tmpdist = dx * dx;
+                __m128d dx = sse_x0 - sse_x1;    // 2 flops
+                __m128d tmpdist = dx * dx;       // 2 flops
             
-                dx = sse_y0 - sse_y1;
-                tmpdist += dx * dx;
+                dx = sse_y0 - sse_y1;            // 2 flops
+                tmpdist += dx * dx;              // 4 flops
             
-                dx = sse_z0 - sse_z1;
-                tmpdist += dx * dx;
+                dx = sse_z0 - sse_z1;            // 2 flops
+                tmpdist += dx * dx;              // 4 flops
 
-                tmpdist = _mm_sqrt_pd(tmpdist);
+                tmpdist = _mm_sqrt_pd(tmpdist);  // 2 flops
+
+                #ifdef SIRE_TIME_ROUTINES
+                nflops += 18;
+                #endif
 
                 sse_mindist = _mm_min_pd( sse_mindist, tmpdist );
 
@@ -278,6 +297,11 @@ double PeriodicBox::calcDist(const CoordGroup &group0, const CoordGroup &group1,
             if (remainder == 1)
             {
                 const double tmpdist = Vector::distance(point0, array1[n1-1]);
+                
+                #ifdef SIRE_TIME_ROUTINES
+                nflops += 9;
+                #endif
+                
                 mindist = qMin(tmpdist,mindist);
                 mat[n1-1] = tmpdist;
             }
@@ -290,16 +314,30 @@ double PeriodicBox::calcDist(const CoordGroup &group0, const CoordGroup &group1,
         {
             //add the delta to the coordinates of atom0
             Vector point0 = array0[i] + wrapdelta;
+            
+            #ifdef SIRE_TIME_ROUTINES
+            nflops += 3;
+            #endif
+            
             mat.setOuterIndex(i);
 
             for (int j=0; j<n1; ++j)
             {
                 const double dist = Vector::distance(point0, array1[j]);
+                
+                #ifdef SIRE_TIME_ROUTINES
+                nflops += 9;
+                #endif
+                
                 mindist = qMin(mindist, dist);
                 mat[j] = dist;
             }
         }
     }
+    #endif
+
+    #ifdef SIRE_TIME_ROUTINES
+    ADD_FLOPS(nflops);
     #endif
 
     //return the minimum distance
@@ -499,6 +537,10 @@ bool PeriodicBox::beyond(double dist, const AABox &aabox0, const AABox &aabox1) 
 {
     //see if we need to wrap the coordinates...
     Vector wrapdelta = this->wrapDelta(aabox0.center(), aabox1.center());
+
+    #ifdef SIRE_TIME_ROUTINES
+    ADD_FLOPS( 14 );
+    #endif
 
     return Vector::distance2( aabox0.center()+wrapdelta, aabox1.center() ) >
                       SireMaths::pow_2(dist + aabox0.radius() + aabox1.radius());

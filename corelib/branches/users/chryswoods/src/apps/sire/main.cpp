@@ -21,6 +21,8 @@
 #include "SireVol/periodicbox.h"
 #include "SireVol/cartesian.h"
 
+#include "SireBase/countflops.h"
+
 #include "SireUnits/dimensions.h"
 #include "SireUnits/units.h"
 
@@ -31,6 +33,7 @@ using namespace SireIO;
 using namespace SireMol;
 using namespace SireMM;
 using namespace SireVol;
+using namespace SireBase;
 
 using SireUnits::Dimension::Charge;
 using SireUnits::mod_electron;
@@ -111,10 +114,14 @@ int main(int argc, char **argv)
         qDebug() << "Calculating the the energy...";
         
         t.start();
+        FlopsMark before_energy;
         double nrg = cljff.energy();
+        FlopsMark after_energy;
         int ms = t.elapsed();
         
         qDebug() << nrg << "kcal mol-1 (" << ms / 1000.0 << " s)";
+        
+        qDebug() << "Calculation ran at" << (after_energy - before_energy) << "flops";
     }
     catch(const SireError::exception &e)
     {
