@@ -17,6 +17,7 @@ set ( SIREBASE_HEADERS
 
       array2d.hpp
       array2d.h
+      countflops.h
       errors.h
       findexe.h
       increment.h
@@ -41,6 +42,7 @@ set ( SIREBASE_HEADERS
 set ( SIREBASE_SOURCES
 
       array2d.cpp
+      countflops.cpp
       errors.cpp
       findexe.cpp
       majorminorversion.cpp

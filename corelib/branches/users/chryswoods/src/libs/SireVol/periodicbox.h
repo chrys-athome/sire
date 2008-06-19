@@ -33,6 +33,8 @@
 
 #include "SireMaths/vector.h"
 
+#include <QDebug>
+
 SIRE_BEGIN_HEADER
 
 namespace SireVol
@@ -186,7 +188,7 @@ inline Vector PeriodicBox::center() const
     and 'halflgth' is half the length of the box along the dimension of 'del'. */
 inline int PeriodicBox::getWrapVal(double del, double invlgth, double halflgth)
 {
-    if (del < halflgth and del > -halflgth)  // we are in the same box
+    if (del <= halflgth and del >= -halflgth)  // we are in the same box
         return 0;
     else
         // 'int()' always rounds down (e.g. 1.6 -> 1, 1.2 -> 1, -1.2 -> -1, -1.8 -> -1)

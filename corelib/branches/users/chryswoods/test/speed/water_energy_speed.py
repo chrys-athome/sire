@@ -17,9 +17,9 @@ mincoords = Vector(-18.3854, -18.66855, -18.4445)
 maxcoords = Vector( 18.3854,  18.66855,  18.4445)
 
 vol = PeriodicBox(mincoords, maxcoords)
-switchfunc = HarmonicSwitchingFunction(80, 80)
+switchfunc = HarmonicSwitchingFunction(15, 14.5)
 
-#cljff.setSpace(vol)
+cljff.setSpace(vol)
 cljff.setSwitchingFunction(switchfunc)
 
 mols = PDB().read("test/io/water.pdb")
