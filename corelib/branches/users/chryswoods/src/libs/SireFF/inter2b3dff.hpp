@@ -238,7 +238,7 @@ void Inter2B3DFF<Potential>::recalculateEnergy()
                     }
                 }
             }
-        
+              
             #pragma omp critical
             {
                 total_nrg += my_total_nrg;

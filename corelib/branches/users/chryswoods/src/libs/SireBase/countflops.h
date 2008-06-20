@@ -39,6 +39,7 @@
 
 #include <QTime>
 #include <QAtomicInt>
+#include <QMutex>
 
 SIRE_BEGIN_HEADER
 
@@ -67,10 +68,22 @@ public:
     
     double operator-(const FlopsMark &other) const;
     
+    static double benchmark();
+    static double benchmarkSum();
+    static double benchmarkProduct();
+    static double benchmarkQuotient();
+    
 protected:
     FlopsMark(int nflops, int ms);
     
 private:
+    /** Save the sum from the last benchmark - this prevents
+        the compiler from optimising the benchmark away! */
+    static double benchmark_sum;
+    
+    /** Mutex to ensure that only one benchmark is performed at a time */
+    static QMutex benchmark_mutex;
+
     /** The number of flops carried out by at this mark */
     int nflops;
     
@@ -135,6 +148,11 @@ public:
     {}
     
     double operator-(const FlopsMark&) const
+    {
+        return 0;
+    }
+    
+    static double benchmark()
     {
         return 0;
     }

@@ -27,6 +27,8 @@ set (SIRE_VERSION_PATCH "1")
 
 set (SIRE_VERSION "${SIRE_VERSION_MAJOR}.${SIRE_VERSION_MINOR}.${SIRE_VERSION_PATCH}")
 
+set (SIRE_USE_SSE ON)
+
 # Ensure that the Sire's directories are searched for header files
 # before the system directories - this prevents problems in case
 # an older version of Sire is already installed on the system
@@ -36,8 +38,8 @@ INCLUDE_DIRECTORIES( BEFORE ${SIRE_SOURCE_DIR} )
 set (BUILD_SHARED_LIBS ON)
 
 # This is where you set your own compiler flags
-set (SIRE_USER_CFLAGS "-march=i686 -O2 -fomit-frame-pointer -msse2 -mfpmath=sse")
-set (SIRE_USER_CPPFLAGS "-march=i686 -O2 -fomit-frame-pointer -msse2 -mfpmath=sse")
+set (SIRE_USER_CFLAGS "-mtune=native -O3 -fomit-frame-pointer")
+set (SIRE_USER_CPPFLAGS "-mtune=native -O3 -fomit-frame-pointer")
 
 # Name of executable install dir
 set (SIRE_BIN "bin")
@@ -222,27 +224,10 @@ add_definitions( ${QT_DEFINITIONS} )
 
 # Set compile flags for debug and release
 
-set( SIRE_PLATFORM_OPTIONS "" )
-
-#if(APPLE)
-#   set( SIRE_PLATFORM_OPTIONS 
-#       "-arch i386 -Wno-long-double -no-cpp-precomp -mno-fused-madd -fno-common" )
-#endif()
-
-set( SIRE_C_FLAGS_RELEASE "-Wall ${SIRE_USER_CFLAGS} ${SIRE_PLATFORM_OPTIONS}" )
-set( SIRE_CXX_FLAGS_RELEASE "-Wall ${SIRE_USER_CPPFLAGS} ${SIRE_PLATFORM_OPTIONS}" )
-
-set( SIRE_C_FLAGS_DEBUG "-Wall -g ${SIRE_USER_CFLAGS} -O0 ${SIRE_PLAFORM_OPTIONS}" )
-set( SIRE_CXX_FLAGS_DEBUG "-Wall -g ${SIRE_USER_CPPFLAGS} -O0 ${SIRE_PLATFORM_OPTIONS}" )
-
-# Also set flags for size-optimised compile - this is used for
-# all of the python wrappers, which can grow to enormous sizes 
-# otherwise! (and aren't performance critical)
-set( SIRE_C_FLAGS_SMALL "-Wall -Os ${SIRE_PLATFORM_OPTIONS}" )
-set( SIRE_CXX_FLAGS_SMALL ${SIRE_C_FLAGS_SMALL} )
-
-# Add machine definition (supplied by user?)
-ADD_DEFINITIONS( ${SIRE_TARGET_OPTIONS} )
+if (SIRE_USE_SSE)
+  set (SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -msse2 -mfpmath=sse -ffast-math")
+  ADD_DEFINITIONS( -DSIRE_USE_SSE )
+endif()
 
 # Add compiler specific flags
 if ( CMAKE_COMPILER_IS_GNUCC )
@@ -273,13 +258,13 @@ if ( CMAKE_COMPILER_IS_GNUCC )
     endif()
 
     # Add options common to all gcc version
-    ADD_DEFINITIONS( -pipe )
+    set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -pipe" )
         
     # Now gcc 4 specific options
     if ( GCC_MAJOR_VERSION GREATER 3 )
       # remove warnings about strict aliasing (lots from Qt4
       # when compiling with GCC 4, and they are annoying!)
-      ADD_DEFINITIONS( -Wno-strict-aliasing )
+      set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -Wno-strict-aliasing" )
 
       # gcc-4.2 has -march=native, that autodetects best compiler
       # for the current machine
@@ -293,7 +278,7 @@ if ( CMAKE_COMPILER_IS_GNUCC )
       # gcc-4.2 and above has openMP - turn it on
       if ( GCC_MINOR_VERSION GREATER 1 )
           message( "Turning on openMP parallelisation!")
-          ADD_DEFINITIONS( -fopenmp )
+          set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -fopenmp" )
           set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -fopenmp" )
       endif()
 
@@ -302,7 +287,7 @@ if ( CMAKE_COMPILER_IS_GNUCC )
       if ( SIRE_SYMBOL_HIDING )
 
         ADD_DEFINITIONS( -DSIRE_VISIBILITY_AVAILABLE )
-        ADD_DEFINITIONS( -fvisibility=hidden -fvisibility-inlines-hidden )
+        set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -fvisibility=hidden -fvisibility-inlines-hidden" )
 
       else()
   
@@ -317,6 +302,18 @@ if ( CMAKE_COMPILER_IS_GNUCC )
     endif()
     
 endif()
+
+set( SIRE_C_FLAGS_RELEASE "-Wall ${SIRE_USER_CFLAGS} ${SIRE_PLATFORM_OPTIONS}" )
+set( SIRE_CXX_FLAGS_RELEASE "-Wall ${SIRE_USER_CPPFLAGS} ${SIRE_PLATFORM_OPTIONS}" )
+
+set( SIRE_C_FLAGS_DEBUG "-Wall -g ${SIRE_USER_CFLAGS} -O0 ${SIRE_PLAFORM_OPTIONS}" )
+set( SIRE_CXX_FLAGS_DEBUG "-Wall -g ${SIRE_USER_CPPFLAGS} -O0 ${SIRE_PLATFORM_OPTIONS}" )
+
+# Also set flags for size-optimised compile - this is used for
+# all of the python wrappers, which can grow to enormous sizes
+# otherwise! (and aren't performance critical)
+set( SIRE_C_FLAGS_SMALL "-Wall -Os ${SIRE_PLATFORM_OPTIONS}" )
+set( SIRE_CXX_FLAGS_SMALL ${SIRE_C_FLAGS_SMALL} )
 
 # Copy the Sire compile flags to CMake
 set( CMAKE_C_FLAGS ${SIRE_C_FLAGS_RELEASE} )

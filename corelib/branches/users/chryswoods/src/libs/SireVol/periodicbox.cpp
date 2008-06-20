@@ -29,10 +29,7 @@
 #include <limits>
 #include <cmath>
 
-#define USE_SSE
-//#undef USE_SSE
-
-#ifdef USE_SSE
+#ifdef SIRE_USE_SSE
 #include <emmintrin.h>
 #endif
 
@@ -237,7 +234,7 @@ double PeriodicBox::calcDist(const CoordGroup &group0, const CoordGroup &group1,
     const Vector *array0 = group0.constData();
     const Vector *array1 = group1.constData();
 
-    #ifdef USE_SSE
+    #ifdef SIRE_USE_SSE
     {
         //version of the algorithm suitable for use with SSE2 or above
         const int remainder = n1 % 2;

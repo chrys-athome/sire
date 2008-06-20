@@ -19,7 +19,7 @@ maxcoords = Vector( 18.3854,  18.66855,  18.4445)
 vol = PeriodicBox(mincoords, maxcoords)
 switchfunc = HarmonicSwitchingFunction(15, 14.5)
 
-#cljff.setSpace(vol)
+cljff.setSpace(vol)
 cljff.setSwitchingFunction(switchfunc)
 
 mols = PDB().read("test/io/water.pdb")
@@ -72,8 +72,18 @@ mols = cljff.molecules()
 #t.start()
 #cljff.packCoordinates()
 #ms = t.elapsed()
-#
 #print "Packing the coordinates took %d ms" % ms
+
+#get the benchmark times
+benchmark = 0.000001 * FlopsMark.benchmark()
+benchmark_sum = 0.000001 * FlopsMark.benchmarkSum()
+benchmark_quot = 0.000001 * FlopsMark.benchmarkQuotient()
+benchmark_prod = 0.000001 * FlopsMark.benchmarkProduct()
+
+print "\nThis machine can run at; %.1f MFLOPS for sum, %.1f MFLOPS for sum+product," % \
+                (benchmark_sum, benchmark_prod)
+print "%.1f MFLOPS for sum+quotient and %.1f MFLOPS for sum+product+sqrt.\n" % \
+                (benchmark_quot, benchmark)
 
 for i in range(0,5):
     t.start()
@@ -84,8 +94,15 @@ for i in range(0,5):
     ms = t.elapsed()
     print nrg
     print nrg.value()
-    print "Took %d ms" % ms
-    print "Speed is at least %f MFLOPS" % (0.000001 * (after_energy - before_energy))
+
+    mflops = 0.000001 * (after_energy - before_energy)
+
+    print "Took %d ms. " % ms,
+    print "Speed is at least %.1f MFLOPS" % mflops
+
+    print "(This is %.2f %% of the benchmark  (%.2f %%, %.2f %%, %.2f %%))" % \
+             ( 100 * (mflops / benchmark), 100 * (mflops / benchmark_quot), \
+               100 * (mflops / benchmark_sum), 100 * (mflops / benchmark_prod) )
 
 print "Done!"
 

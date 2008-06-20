@@ -29,10 +29,7 @@
 #include <limits>
 #include <cmath>
 
-#define USE_SSE
-//#undef USE_SSE
-
-#ifdef USE_SSE
+#ifdef SIRE_USE_SSE
 #include <emmintrin.h>
 #endif
 
@@ -316,7 +313,7 @@ double Cartesian::calcDist(const CoordGroup &group0, const CoordGroup &group1,
     int nflops = 0;
     #endif
 
-    #ifdef USE_SSE
+    #ifdef SIRE_USE_SSE
     {
         //version of the code for processors with SSE2 or above
         const int remainder = n1 % 2;

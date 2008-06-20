@@ -31,6 +31,11 @@
 #ifdef SIRE_TIME_ROUTINES
 
 #include <QDebug>
+#include <cmath>
+
+#ifdef SIRE_USE_SSE
+#include <emmintrin.h>
+#endif
 
 using namespace SireBase;
 
@@ -114,6 +119,309 @@ double FlopsMark::operator-(const FlopsMark &other) const
         dms = 1;
         
     return (1000.0 * dnflops) / dms;
+}
+
+double FlopsMark::benchmark_sum(0);
+QMutex FlopsMark::benchmark_mutex;
+
+/** Perform a simple benchmark to work out what the realistic maximum
+    FLOPS count for this processor (compiled with this compiler)
+    if only additions are used */
+double FlopsMark::benchmarkSum()
+{
+    QMutexLocker lkr( &benchmark_mutex );
+
+    const int nvals = 1000;
+    const int nloops = 100000;
+    
+    double values[nvals];
+    
+    //fill this up with random rubbish
+    for (int i=0; i<nvals; ++i)
+    {
+        values[i] = 5 * std::rand();
+    }
+    
+    //now calculate the sum of the square root of each value with
+    //the previous value
+    FlopsMark before_sum;
+    
+    double sum = 0;
+    
+    #pragma omp parallel
+    {
+        const double *my_values = values;
+        double my_sum = 0;
+
+        #pragma omp for schedule(static)
+        for (int j=0; j<nloops; ++j)
+        {
+            #ifdef SIRE_USE_SSE
+            {
+                for (int i=2; i<nvals; i+=2)
+                {
+                    __m128d low_pair = { my_values[i-1], my_values[i-2] };
+                    __m128d high_pair = { my_values[i], my_values[i-1] };
+                    
+                    //__m128d sse_sum = _mm_sqrt_pd( low_pair * high_pair );
+                    __m128d sse_sum = low_pair + high_pair;
+                    
+                    my_sum += ( *((const double*)(&sse_sum)) +
+                                *( ((const double*)(&sse_sum)) + 1 ) );
+                }
+            }
+            #else
+            {
+                for (int i=1; i<nvals; ++i)
+                {
+                    my_sum += my_values[i] + my_values[i-1];
+                }
+            }
+            #endif
+        }
+    
+        #pragma omp critical
+        {
+            sum += my_sum;
+        }
+    }
+    
+    int nflops = nloops * (2 * (nvals-1));
+    
+    ADD_FLOPS(nflops);
+    
+    FlopsMark after_sum;
+    
+    //save the sum - this prevents the compiler from optimising 
+    //away the benchmark
+    benchmark_sum = sum;
+    
+    return after_sum - before_sum;
+}
+
+/** Perform a simple benchmark to work out what the realistic maximum
+    FLOPS count for this processor (compiled with this compiler)
+    if a mixture of additions and products are used */
+double FlopsMark::benchmarkProduct()
+{
+    QMutexLocker lkr( &benchmark_mutex );
+
+    const int nvals = 1000;
+    const int nloops = 100000;
+    
+    double values[nvals];
+    
+    //fill this up with random rubbish
+    for (int i=0; i<nvals; ++i)
+    {
+        values[i] = 5 * std::rand();
+    }
+    
+    //now calculate the sum of the square root of each value with
+    //the previous value
+    FlopsMark before_sum;
+    
+    double sum = 0;
+    
+    #pragma omp parallel
+    {
+        const double *my_values = values;
+        double my_sum = 0;
+
+        #pragma omp for schedule(static)
+        for (int j=0; j<nloops; ++j)
+        {
+            #ifdef SIRE_USE_SSE
+            {
+                for (int i=2; i<nvals; i+=2)
+                {
+                    __m128d low_pair = { my_values[i-1], my_values[i-2] };
+                    __m128d high_pair = { my_values[i], my_values[i-1] };
+                    
+                    //__m128d sse_sum = _mm_sqrt_pd( low_pair * high_pair );
+                    __m128d sse_sum = low_pair * high_pair;
+                    
+                    my_sum += ( *((const double*)(&sse_sum)) +
+                                *( ((const double*)(&sse_sum)) + 1 ) );
+                }
+            }
+            #else
+            {
+                for (int i=1; i<nvals; ++i)
+                {
+                    my_sum += my_values[i] * my_values[i-1];
+                }
+            }
+            #endif
+        }
+    
+        #pragma omp critical
+        {
+            sum += my_sum;
+        }
+    }
+    
+    int nflops = nloops * (2 * (nvals-1));
+    
+    ADD_FLOPS(nflops);
+    
+    FlopsMark after_sum;
+    
+    //save the sum - this prevents the compiler from optimising 
+    //away the benchmark
+    benchmark_sum = sum;
+    
+    return after_sum - before_sum;
+}
+
+/** Perform a simple benchmark to work out what the realistic maximum
+    FLOPS count for this processor (compiled with this compiler)
+    if a mixture of additions and divides are used */
+double FlopsMark::benchmarkQuotient()
+{
+    QMutexLocker lkr( &benchmark_mutex );
+
+    const int nvals = 1000;
+    const int nloops = 100000;
+    
+    double values[nvals];
+    
+    //fill this up with random rubbish
+    for (int i=0; i<nvals; ++i)
+    {
+        values[i] = 5 * std::rand();
+    }
+    
+    //now calculate the sum of the square root of each value with
+    //the previous value
+    FlopsMark before_sum;
+    
+    double sum = 0;
+    
+    #pragma omp parallel
+    {
+        const double *my_values = values;
+        double my_sum = 0;
+
+        #pragma omp for schedule(static)
+        for (int j=0; j<nloops; ++j)
+        {
+            #ifdef SIRE_USE_SSE
+            {
+                for (int i=2; i<nvals; i+=2)
+                {
+                    __m128d low_pair = { my_values[i-1], my_values[i-2] };
+                    __m128d high_pair = { my_values[i], my_values[i-1] };
+                    
+                    //__m128d sse_sum = _mm_sqrt_pd( low_pair * high_pair );
+                    __m128d sse_sum = low_pair / high_pair;
+                    
+                    my_sum += ( *((const double*)(&sse_sum)) +
+                                *( ((const double*)(&sse_sum)) + 1 ) );
+                }
+            }
+            #else
+            {
+                for (int i=1; i<nvals; ++i)
+                {
+                    my_sum += my_values[i] / my_values[i-1];
+                }
+            }
+            #endif
+        }
+    
+        #pragma omp critical
+        {
+            sum += my_sum;
+        }
+    }
+    
+    int nflops = nloops * (2 * (nvals-1));
+    
+    ADD_FLOPS(nflops);
+    
+    FlopsMark after_sum;
+    
+    //save the sum - this prevents the compiler from optimising 
+    //away the benchmark
+    benchmark_sum = sum;
+    
+    return after_sum - before_sum;
+}
+
+/** Perform a simple benchmark to work out what the realistic maximum
+    FLOPS count for this processor (compiled with this compiler)
+    if a mixture of additions, products and sqrts are used */
+double FlopsMark::benchmark()
+{
+    QMutexLocker lkr( &benchmark_mutex );
+
+    const int nvals = 1000;
+    const int nloops = 100000;
+    
+    double values[nvals];
+    
+    //fill this up with random rubbish
+    for (int i=0; i<nvals; ++i)
+    {
+        values[i] = 5 * std::rand();
+    }
+    
+    //now calculate the sum of the square root of each value with
+    //the previous value
+    FlopsMark before_sum;
+    
+    double sum = 0;
+    
+    #pragma omp parallel
+    {
+        const double *my_values = values;
+        double my_sum = 0;
+
+        #pragma omp for schedule(static)
+        for (int j=0; j<nloops; ++j)
+        {
+            #ifdef SIRE_USE_SSE
+            {
+                for (int i=2; i<nvals; i+=2)
+                {
+                    __m128d low_pair = { my_values[i-1], my_values[i-2] };
+                    __m128d high_pair = { my_values[i], my_values[i-1] };
+                    
+                    //__m128d sse_sum = _mm_sqrt_pd( low_pair * high_pair );
+                    __m128d sse_sum = _mm_sqrt_pd( low_pair * high_pair );
+                    
+                    my_sum += ( *((const double*)(&sse_sum)) +
+                                *( ((const double*)(&sse_sum)) + 1 ) );
+                }
+            }
+            #else
+            {
+                for (int i=1; i<nvals; ++i)
+                {
+                    my_sum += std::sqrt(my_values[i] * my_values[i-1]);
+                }
+            }
+            #endif
+        }
+    
+        #pragma omp critical
+        {
+            sum += my_sum;
+        }
+    }
+    
+    int nflops = nloops * (3 * (nvals-1));
+    
+    ADD_FLOPS(nflops);
+    
+    FlopsMark after_sum;
+    
+    //save the sum - this prevents the compiler from optimising 
+    //away the benchmark
+    benchmark_sum = sum;
+    
+    return after_sum - before_sum;
 }
 
 #endif // #ifdef SIRE_TIME_ROUTINES
