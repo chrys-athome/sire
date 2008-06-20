@@ -31,6 +31,10 @@
 
 #include "SireFF/ffcomponent.h"
 
+#ifdef SIRE_USE_SSE
+#include <emmintrin.h>
+#endif
+
 SIRE_BEGIN_HEADER
 
 namespace SireFF
@@ -183,10 +187,22 @@ class SIREMM_EXPORT CLJEnergy
 public:
     typedef CLJComponent Components;
 
-    CLJEnergy(double cnrg=0, double ljnrg=0) : icnrg(cnrg), iljnrg(ljnrg)
-    {}
+    CLJEnergy(double cnrg=0, double ljnrg=0)
+    {
+        #ifdef SIRE_USE_SSE
+        nrgs = _mm_set_pd(cnrg, ljnrg);
+        #else
+        icnrg = cnrg;
+        iljnrg = ljnrg;
+        #endif
+    }
     
-    CLJEnergy(const CLJEnergy &other) : icnrg(other.icnrg), iljnrg(other.iljnrg)
+    CLJEnergy(const CLJEnergy &other)
+          #ifdef SIRE_USE_SSE
+          : nrgs(other.nrgs)
+          #else
+          : icnrg(other.icnrg), iljnrg(other.iljnrg)
+          #endif
     {}
     
     ~CLJEnergy()
@@ -204,26 +220,40 @@ public:
     
     CLJEnergy& operator+=(const CLJEnergy &other)
     {
+        #ifdef SIRE_USE_SSE
+        nrgs += other.nrgs;
+        #else
         icnrg += other.icnrg;
         iljnrg += other.iljnrg;
+        #endif
+        
         return *this;
     }
     
     CLJEnergy& operator-=(const CLJEnergy &other)
     {
+        #ifdef SIRE_USE_SSE
+        nrgs -= other.nrgs;
+        #else
         icnrg -= other.icnrg;
         iljnrg -= other.iljnrg;
+        #endif
+        
         return *this;
     }
     
     CLJEnergy operator+(const CLJEnergy &other) const
     {
-        return CLJEnergy( icnrg + other.icnrg, iljnrg + other.iljnrg );
+        CLJEnergy ret(*this);
+        ret += other;
+        return ret;
     }
     
     CLJEnergy operator-(const CLJEnergy &other) const
     {
-        return CLJEnergy( icnrg - other.icnrg, iljnrg - other.iljnrg );
+        CLJEnergy ret(*this);
+        ret -= other;
+        return ret;
     }
     
     Components components() const
@@ -231,60 +261,72 @@ public:
         return Components();
     }
     
-    double component(const CoulombComponent&) const
-    {
-        return icnrg;
-    }
-    
-    double component(const LJComponent&) const
-    {
-        return iljnrg;
-    }
-    
-    double component(const CLJComponent&) const
-    {
-        return icnrg + iljnrg;
-    }
-    
     double coulomb() const
     {
+        #ifdef SIRE_USE_SSE
+        return *((const double*)&nrgs);
+        #else
         return icnrg;
+        #endif
     }
     
     double lj() const
     {
+        #ifdef SIRE_USE_SSE
+        return *( ((const double*)&nrgs) + 1 );
+        #else
         return iljnrg;
+        #endif
     }
     
     double total() const
     {
-        return icnrg + iljnrg;
+        return coulomb() + lj();
+    }
+    
+    double component(const CoulombComponent&) const
+    {
+        return coulomb();
+    }
+    
+    double component(const LJComponent&) const
+    {
+        return lj();
+    }
+    
+    double component(const CLJComponent&) const
+    {
+        return total();
     }
     
     operator double() const
     {
         //return the total energy
-        return icnrg + iljnrg;
+        return total();
     }
     
     operator SireUnits::Dimension::Energy() const
     {
-        return SireUnits::Dimension::Energy(icnrg + iljnrg);
+        return SireUnits::Dimension::Energy(total());
     }
     
     operator CoulombEnergy() const
     {
-        return CoulombEnergy(icnrg);
+        return CoulombEnergy(coulomb());
     }
 
     operator LJEnergy() const
     {
-        return LJEnergy(iljnrg);
+        return LJEnergy(lj());
     }
 
 private:
     /** The coulomb and LJ components of the energy */
+    #ifdef SIRE_USE_SSE
+    __m128d nrgs;
+    #else
     double icnrg, iljnrg;
+    #endif
 };
 
 } // end of namespace SireMM
