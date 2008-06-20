@@ -46,6 +46,11 @@ int main(int argc, char **argv)
 
     try
     {
+        qDebug() << 0.000001 * FlopsMark::benchmark();
+        qDebug() << 0.000001 * FlopsMark::benchmarkSum();
+        qDebug() << 0.000001 * FlopsMark::benchmarkProduct();
+        qDebug() << 0.000001 * FlopsMark::benchmarkQuotient();
+
         QTime t;
     
         MoleculeGroup mols = pdb.read("test/io/water.pdb");

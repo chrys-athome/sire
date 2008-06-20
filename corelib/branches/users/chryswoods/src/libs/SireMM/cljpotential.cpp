@@ -702,8 +702,8 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                                              InterCLJPotential::EnergyWorkspace &distmat,
                                              double scale_energy) const
 {
-    const quint32 ngroups0 = mol0.nCutGroups();
-    const quint32 ngroups1 = mol1.nCutGroups();
+    const quint32 ngroups0 = mol0.coordinates().count();
+    const quint32 ngroups1 = mol1.coordinates().count();
     
     const CoordGroup *groups0_array = mol0.coordinates().constData();
     const CoordGroup *groups1_array = mol1.coordinates().constData();

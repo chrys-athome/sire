@@ -183,35 +183,6 @@ inline Vector PeriodicBox::center() const
     return 0.5 * (maxcoords + mincoords);
 }
 
-/** Return the number of boxes that are covered by the distance 'del', where
-    'invlgth' is the inverse of the length of the box along the dimension of 'del',
-    and 'halflgth' is half the length of the box along the dimension of 'del'. */
-inline int PeriodicBox::getWrapVal(double del, double invlgth, double halflgth)
-{
-    if (del <= halflgth and del >= -halflgth)  // we are in the same box
-        return 0;
-    else
-        // 'int()' always rounds down (e.g. 1.6 -> 1, 1.2 -> 1, -1.2 -> -1, -1.8 -> -1)
-        //  (0.5 * ((del > 0)*2 - 1)) will equal
-        //  + 0.5 if del > 0, and will equal -0.5 if del < 0. This ensures that
-        // the call to int() will now round to the nearest integer, rather than
-        // rounding down. (e.g. 1.3 -> 1, 1.6 -> 2, -1.3 -> -1 and -1.8 -> -2)
-        return int( (del * invlgth) + (0.5 * ((del > 0)*2 - 1)) );
-}
-
-/** Calculate the delta that needs to be subtracted from the interatomic
-    distances so that the molecules are all wrapped into the same periodic box */
-inline Vector PeriodicBox::wrapDelta(const Vector &v0, const Vector &v1) const
-{
-    return Vector( getWrapVal( v1.x()-v0.x(), invlength.x(), halflength.x())
-                                          * boxlength.x(),
-                   getWrapVal( v1.y()-v0.y(), invlength.y(), halflength.y())
-                                          * boxlength.y(),
-                   getWrapVal( v1.z()-v0.z(), invlength.z(), halflength.z())
-                                          * boxlength.z()
-                 );
-}
-
 /** Return whether this box contains the point 'point' (without the need
     for periodic translation) */
 inline bool PeriodicBox::contains(const Vector &point) const
