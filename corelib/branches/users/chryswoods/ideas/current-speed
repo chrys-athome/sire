@@ -213,3 +213,8 @@ normal mode)
 with the 3.2 GFLOPS I expect for this processor - given that I am working with
 doubles that take twice as long to process)
 
+Also note that these are the timings that include the flop counting. Removing
+the flop count code means that the energy now takes just 440ms for a single core,
+and 234ms for a dual core. This means that I am now finally getting some decent
+scaling over two cores. (as there are 196903896 flops, this translates into
+447.5 MFLOPS for single core and 841.5 MFLOPS for dual core!)

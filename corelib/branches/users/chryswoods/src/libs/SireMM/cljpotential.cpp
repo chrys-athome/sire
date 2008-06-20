@@ -771,6 +771,8 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                 
                 __m128d sse_cnrg = { 0, 0 };
                 __m128d sse_ljnrg = { 0, 0 };
+
+                const __m128d sse_one = { 1.0, 1.0 };
                 
                 for (quint32 i=0; i<nats0; ++i)
                 {
@@ -801,7 +803,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                         __m128d sse_sig = { ljpair0.sigma(), ljpair1.sigma() };
                         __m128d sse_eps = { ljpair0.epsilon(), ljpair1.epsilon() };
                         
-                        __m128d sse_one = { 1.0, 1.0 };
                         sse_dist = sse_one / sse_dist;
                         
                         //calculate the coulomb energy
