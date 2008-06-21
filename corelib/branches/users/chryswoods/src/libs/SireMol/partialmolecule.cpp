@@ -183,6 +183,30 @@ int PartialMolecule::nAtoms() const
     return selected_atoms.nSelected();
 }
 
+/** Return the number of CutGroups in this view */
+int PartialMolecule::nCutGroups() const
+{
+    return selected_atoms.nSelectedCutGroups();
+}
+
+/** Return the number of residues in this view */
+int PartialMolecule::nResidues() const
+{
+    return selected_atoms.nSelectedResidues();
+}
+
+/** Return the number of chains in this view */
+int PartialMolecule::nChains() const
+{
+    return selected_atoms.nSelectedChains();
+}
+
+/** Return the number of segments in this view */
+int PartialMolecule::nSegments() const
+{
+    return selected_atoms.nSelectedSegments();
+}
+
 /** Return a mover that can move all of the atoms in this view */
 Mover<PartialMolecule> PartialMolecule::move() const
 {

@@ -69,10 +69,10 @@ mols = cljff.molecules()
 #
 #    print charges, ljs
 
-#t.start()
-#cljff.packCoordinates()
-#ms = t.elapsed()
-#print "Packing the coordinates took %d ms" % ms
+t.start()
+cljff.packCoordinates()
+ms = t.elapsed()
+print "Packing the coordinates took %d ms" % ms
 
 #get the benchmark times
 benchmark = 0.000001 * FlopsMark.benchmark()
@@ -105,4 +105,24 @@ for i in range(0,5):
                100 * (mflops / benchmark_sum), 100 * (mflops / benchmark_prod) )
 
 print "Done!"
+
+#now how long does it take to calculate a change in energy?
+mols = cljff.molecules()
+molnums = mols.molNums()
+
+mol0 = mols[molnums[0]]
+
+print mol0.evaluate().center()
+
+newmol = mol0.move().translate( Vector(1,0,0) ).commit()
+
+print mol0.evaluate().center()
+
+cljff.update( newmol )
+
+print "%s  (%f)" % (cljff.energy(), cljff.energy().value())
+
+cljff.update( mol0 )
+
+print "%s  (%f)" % (cljff.energy(), cljff.energy().value())
 

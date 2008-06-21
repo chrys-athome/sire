@@ -162,7 +162,7 @@ MolNum FFMoleculeBase::number() const
 /** Return whether or not this molecule is empty (contains no atoms) */
 bool FFMoleculeBase::isEmpty() const
 {
-    return mol.selection().selectedNone();
+    return mol.nAtoms() == 0;
 }
 
 /** Return the CGIdx of the ith CutGroup that is selected as
@@ -205,7 +205,7 @@ CGIdx FFMoleculeBase::cgIdx(quint32 i) const
     one selected atom) */
 int FFMoleculeBase::nCutGroups() const
 {
-    return mol.selection().nSelectedCutGroups();
+    return mol.nCutGroups();
 }
 
 /** Change this view to use the same molecule data version

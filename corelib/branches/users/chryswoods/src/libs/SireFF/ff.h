@@ -243,6 +243,7 @@ public:
     void remove(const QSet<MolNum> &molnums, const MGID &mgid);
 
     void update(const MoleculeData &moldata);
+    void update(const MoleculeView &molview);
     
     void update(const Molecules &molecules);
     void update(const MolGroup &molgroup);

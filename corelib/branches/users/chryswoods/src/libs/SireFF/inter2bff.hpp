@@ -447,7 +447,7 @@ void Inter2BFF<Potential>::_pvt_changed(const SireMol::Molecule &molecule)
 {
     if (this->recordingChanges())
     {
-        ChangedMolecule mol = mols.change(molecule, *this, false);
+        ChangedMolecule mol = mols.change(molecule, *this, true);
         this->recordChange(mol);
     }
     else

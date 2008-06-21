@@ -4,6 +4,7 @@
 
 #include "SireMol/moleculegroup.h"
 #include "SireMol/molecule.h"
+#include "SireMol/viewsofmol.h"
 #include "SireMol/atom.h"
 
 #include "SireMol/moleditor.h"
@@ -21,6 +22,8 @@
 #include "SireVol/periodicbox.h"
 #include "SireVol/cartesian.h"
 
+#include "SireMaths/rangenerator.h"
+
 #include "SireBase/countflops.h"
 
 #include "SireUnits/dimensions.h"
@@ -34,6 +37,7 @@ using namespace SireMol;
 using namespace SireMM;
 using namespace SireVol;
 using namespace SireBase;
+using namespace SireMaths;
 
 using SireUnits::Dimension::Charge;
 using SireUnits::mod_electron;
@@ -127,6 +131,37 @@ int main(int argc, char **argv)
         qDebug() << nrg << "kcal mol-1 (" << ms / 1000.0 << " s)";
         
         qDebug() << "Calculation ran at" << (after_energy - before_energy) << "flops";
+        
+        //now run 100 moves!
+        const int nmoves = 500;
+        QList<MolNum> molnums = cljff.molNums();
+        int nmols = molnums.count();
+        
+        RanGenerator rand;
+        
+        t.start();
+        
+        FlopsMark before_moves;
+        
+        for (int i=0; i<nmoves; ++i)
+        {
+            ViewsOfMol mol = cljff.molecule( molnums.at( rand.randInt(0,nmols-1) ) );
+            
+            mol = mol.move().translate( Vector( rand.rand(-0.15, 0.15), 
+                                                rand.rand(-0.15, 0.15), 
+                                                rand.rand(-0.15, 0.15) ) );
+                                                
+            cljff.update(mol);
+            cljff.energy();
+        }
+        
+        FlopsMark after_moves;
+        
+        ms = t.elapsed();
+        
+        qDebug() << nmoves << "moves took" << ms << "ms";
+        qDebug() << "Calculation ran at" << (after_moves - before_moves) << "flops";
+
     }
     catch(const SireError::exception &e)
     {

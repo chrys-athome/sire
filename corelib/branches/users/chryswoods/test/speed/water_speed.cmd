@@ -15,4 +15,6 @@ SIRE_COMPATIBILITY_MODE off
 boundary solvent
 
 chunk1 singlepoint
+chunk2 equilibrate 500 solvent=1
+chunk3 equilibrate 500 solvent=1
 

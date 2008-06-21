@@ -1224,6 +1224,13 @@ void FF::update(const MoleculeData &moldata)
     }
 }
 
+/** Update the data of the molecule that is view in 'molview'. This
+    updates all atoms, even those that are not part of the view */
+void FF::update(const MoleculeView &molview)
+{
+    this->update(molview.data());
+}
+
 /** Update the molecules in this forcefield so that they have the 
     same version as in 'molecules'. The molecules will use the existing
     property names to find the properties that contain the forcefield

@@ -109,6 +109,10 @@ public:
     quint64 version(const PropertyName &key) const;
 
     int nAtoms() const;
+    int nCutGroups() const;
+    int nResidues() const;
+    int nChains() const;
+    int nSegments() const;
 
     Mover<PartialMolecule> move() const;
     
