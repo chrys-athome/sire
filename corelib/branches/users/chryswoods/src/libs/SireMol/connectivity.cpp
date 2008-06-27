@@ -33,6 +33,7 @@
 #include "connectivity.h"
 #include "moleculedata.h"
 #include "moleculeinfodata.h"
+#include "moleculeview.h"
 
 #include "angleid.h"
 #include "bondid.h"
@@ -43,6 +44,8 @@
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
+
+#include <QDebug>
 
 using namespace SireStream;
 using namespace SireMol;
@@ -381,10 +384,6 @@ void ConnectivityBase::traceRoute(AtomIdx start, AtomIdx root,
                                   const QSet<AtomIdx> &exclude,
                                   QSet<AtomIdx> &group) const
 {
-    if (group.contains(start))
-        //we have already processed this atom
-        return;
-
     //add this atom to the group
     group.insert(start);
 
@@ -399,13 +398,15 @@ void ConnectivityBase::traceRoute(AtomIdx start, AtomIdx root,
         //if this is the root atom then ignore it, as we don't
         //want to move backwards!
         if (*it == root)
+        {
             continue;
-    
+        }
         //has this atom or residue already been selected?
         else if (group.contains(*it))
+        {
             //yes, this atom or residue is already included!
             continue;
-
+        }
         //is this atom already excluded?
         else if (exclude.contains(*it))
         {
@@ -444,9 +445,8 @@ void ConnectivityBase::traceRoute(const AtomSelection &selected_atoms,
                                   const QSet<AtomIdx> &exclude,
                                   QSet<AtomIdx> &group) const
 {
-    if (group.contains(start) or not selected_atoms.selected(start))
-        //we have already processed this atom or it
-        //is not one of the selected atoms
+    if (not selected_atoms.selected(start))
+        //the atom is not one of the selected atoms
         return;
 
     //add this atom to the group
@@ -558,7 +558,7 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1) const
     //add the atoms bonded to atom0 to group0
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
     {
-        if (not bonded_atom == atom1)
+        if (bonded_atom != atom1)
         {
             this->traceRoute(bonded_atom, atom0, group1, group0);
         }
@@ -567,7 +567,7 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1) const
     //now add the atoms bonded to atom1 to group1
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom1))
     {
-        if (not bonded_atom == atom0)
+        if (bonded_atom != atom0)
         {
             if (group0.contains(bonded_atom))
                 throw SireMol::ring_error( QObject::tr(
@@ -672,7 +672,7 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
     //add the atoms bonded to atom0 to group0
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
     {
-        if ( (not bonded_atom == atom1) and 
+        if ( (bonded_atom != atom1) and 
              selected_atoms.selected(bonded_atom) )
         {
             this->traceRoute(selected_atoms, bonded_atom, 
@@ -683,7 +683,7 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
     //now add the atoms bonded to atom1 to group1
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom1))
     {
-        if ( (not bonded_atom == atom0) and
+        if ( (bonded_atom != atom0) and
              selected_atoms.selected(bonded_atom) )
         {
             if (group0.contains(bonded_atom))
@@ -786,7 +786,7 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2) const
     //add the atoms bonded to atom0 to group0
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
     {
-        if (not bonded_atom == atom1)
+        if (bonded_atom != atom1)
         {
             this->traceRoute(bonded_atom, atom0, group1, group0);
         }
@@ -795,7 +795,7 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2) const
     //now add the atoms bonded to atom1 to group1
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom2))
     {
-        if (not bonded_atom == atom1)
+        if (bonded_atom != atom1)
         {
             if (group0.contains(bonded_atom))
                 throw SireMol::ring_error( QObject::tr(
@@ -903,7 +903,7 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2,
     //add the atoms bonded to atom0 to group0
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
     {
-        if ( (not bonded_atom == atom1) and 
+        if ( (bonded_atom != atom1) and 
              selected_atoms.selected(bonded_atom) )
         {
             this->traceRoute(selected_atoms, bonded_atom, 
@@ -914,7 +914,7 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2,
     //now add the atoms bonded to atom1 to group1
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom2))
     {
-        if ( (not bonded_atom == atom1) and
+        if ( (bonded_atom != atom1) and
              selected_atoms.selected(bonded_atom) )
         {
             if (group0.contains(bonded_atom))
@@ -1028,7 +1028,7 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
     //add the atoms bonded to atom0 to group0
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
     {
-        if (not bonded_atom == atom1)
+        if (bonded_atom != atom1)
         {
             this->traceRoute(bonded_atom, atom0, group1, group0);
         }
@@ -1037,7 +1037,7 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
     //now add the atoms bonded to atom1 to group1
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom3))
     {
-        if (not bonded_atom == atom2)
+        if (bonded_atom != atom2)
         {
             if (group0.contains(bonded_atom))
                 throw SireMol::ring_error( QObject::tr(
@@ -1164,7 +1164,7 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
     //add the atoms bonded to atom0 to group0
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom0))
     {
-        if ( (not bonded_atom == atom1) and 
+        if ( (bonded_atom != atom1) and 
              selected_atoms.selected(bonded_atom) )
         {
             this->traceRoute(selected_atoms, bonded_atom, 
@@ -1175,7 +1175,7 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
     //now add the atoms bonded to atom1 to group1
     foreach (const AtomIdx &bonded_atom, this->_pvt_connectedTo(atom3))
     {
-        if ( (not bonded_atom == atom2) and
+        if ( (bonded_atom != atom2) and
              selected_atoms.selected(bonded_atom) )
         {
             if (group0.contains(bonded_atom))
@@ -1307,6 +1307,18 @@ Connectivity::Connectivity()
 Connectivity::Connectivity(const MoleculeData &moldata)
              : ConcreteProperty<Connectivity,ConnectivityBase>(moldata)
 {}
+
+    
+/** Construct the connectivity for the molecule viewed in the 
+    passed view. This automatically uses the bond hunting 
+    function to add all of the bonds for the atoms in this view */
+Connectivity::Connectivity(const MoleculeView &molview,
+                           const BondHunter &bondhunter,
+                           const PropertyMap &map)
+             : ConcreteProperty<Connectivity,ConnectivityBase>()
+{
+    this->operator=( bondhunter(molview, map) );
+}
 
 /** Construct the connectivity from the passed editor */
 Connectivity::Connectivity(const ConnectivityEditor &editor)

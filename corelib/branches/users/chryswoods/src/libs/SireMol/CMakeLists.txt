@@ -31,6 +31,7 @@ set ( SIREMOL_HEADERS
       atomproperty.hpp
       atomselection.h
       atomsin.hpp
+      bondhunter.h
       bondid.h
       calculateaxes.hpp
       cgatomidx.h
@@ -131,6 +132,7 @@ set ( SIREMOL_SOURCES
       atomcutting.cpp
       atommatcher.cpp
       atomselection.cpp
+      bondhunter.cpp
       bondid.cpp
       cgeditor.cpp
       cgcgid.cpp

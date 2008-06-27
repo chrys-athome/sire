@@ -44,8 +44,6 @@ namespace SireFF
 
 class FF;
 
-class TotalComponent;
-
 /** This is the base class of all Symbols that represent forcefield
     components.
     

@@ -35,6 +35,8 @@
 
 #include <boost/tuple/tuple.hpp>
 
+#include "bondhunter.h"
+
 #include "SireBase/property.h"
 #include "SireBase/shareddatapointer.hpp"
 
@@ -239,6 +241,10 @@ public:
     Connectivity();
 
     Connectivity(const MoleculeData &moldata);
+
+    Connectivity(const MoleculeView &molview,
+                 const BondHunter &bondhunter = CovalentBondHunter(),
+                 const PropertyMap &map = PropertyMap());
 
     Connectivity(const ConnectivityEditor &editor);
     Connectivity(const Connectivity &other);

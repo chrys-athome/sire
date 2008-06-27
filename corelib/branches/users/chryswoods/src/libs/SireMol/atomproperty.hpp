@@ -118,6 +118,8 @@ friend QDataStream& ::operator<<<>(QDataStream&, const AtomProperty<T>&);
 friend QDataStream& ::operator>><>(QDataStream&, AtomProperty<T>&);
 
 public:
+    typedef typename PackedArray2D<T>::Array Array;
+
     AtomProperty();
 
     AtomProperty(const MoleculeInfoData &molinfo);
