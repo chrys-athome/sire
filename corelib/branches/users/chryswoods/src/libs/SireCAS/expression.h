@@ -177,6 +177,33 @@ private:
     double fac;
 };
 
+Expression operator+(const Expression &ex0, const Expression &ex1);
+Expression operator+(const Expression &ex, double val);
+Expression operator+(double val, const Expression &ex);
+Expression operator+(const Expression &ex, const Complex &val);
+Expression operator+(const Complex &val, const Expression &ex);
+Expression operator-(const Expression &ex0, const Expression &ex1);
+Expression operator-(const Expression &ex, double val);
+Expression operator-(double val, const Expression &ex);
+Expression operator*(const Expression &ex0, const Expression &ex1);
+Expression operator*(double val, const Expression &ex);
+Expression operator*(const Expression &ex, double val);
+Expression operator*(const Complex &val, const Expression &ex);
+Expression operator*(const Expression &ex, const Complex &val);
+Expression operator/(const Expression &ex0, const Expression &ex1);
+Expression operator/(const Expression &ex, double val);
+Expression operator/(double val, const Expression &ex);
+Expression operator/(const Expression &ex, const Complex &val);
+Expression operator/(const Complex &val, const Expression &ex);
+Expression pow(const Expression &ex0, int n);
+Expression pow(const Expression &ex0, const SireMaths::Rational &n);
+Expression pow(const Expression &ex0, double n);
+Expression pow(const Expression &ex0, const Expression &n);
+Expression pow(const Expression &ex0, const Complex &n);
+Expression root(const Expression &ex0, int n);
+Expression sqrt(const Expression &ex0);
+Expression cbrt(const Expression &ex0);
+
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 /** Return a list of all children of type 'T' in this expression */

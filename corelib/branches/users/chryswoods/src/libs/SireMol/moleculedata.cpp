@@ -32,6 +32,7 @@
 #include "moleculedata.h"
 #include "moleculeinfodata.h"
 #include "structureeditor.h"
+#include "moleculeview.h"
 
 #include "SireBase/incremint.h"
 
@@ -209,6 +210,13 @@ MoleculeData::MoleculeData()
                molnum(0),
                vrsns( MoleculeData::registerMolecule(molnum) )
 {}
+
+/** Get the underlying data viewed by the passed molecule view */
+MoleculeData::MoleculeData(const MoleculeView &molview)
+             : QSharedData()
+{
+    this->operator=( molview.data() );
+}
 
 static SharedDataPointer<MoleculeData> shared_null( new MoleculeData() );
 

@@ -1,4 +1,5 @@
 from Sire.Mol import *
+from Sire.MM import *
 from Sire.FF import *
 from Sire.IO import *
 from Sire.Maths import *
@@ -31,3 +32,11 @@ testSplit(O00, H01)
 testSplit(H01, O00)
 testSplit(M03, O00)
 testSplit(H02, O00)
+
+internalff = InternalFF()
+
+bondfuncs = TwoAtomFunctions(tip4p)
+
+r = internalff.symbols().bond().r()
+
+bondfuncs.set( O00, H01, 5 * pow( 1.0 - r, 2 ))

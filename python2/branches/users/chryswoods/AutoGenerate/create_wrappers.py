@@ -104,6 +104,24 @@ def find_class(mb, classname):
 
    raise "Cannot find the class %s" % classname
 
+def export_function(mb, function, includes):
+   """Do all the work necessary to allow the function 'function'
+      to be exported, adding the header files in 'includes'
+      to the generated C++"""
+
+   name = function.split("::")[-1]
+   root = "::".join(function.split("::")[0:-1]) + "::"
+
+   for f in mb.free_functions(name):
+       demangled = f.demangled
+       
+       if demangled:
+           if demangled.find(root) != -1:
+               f.include()
+
+               for include in includes:
+                   f.add_declaration_code("#include %s" % include)
+
 def export_class(mb, classname, aliases, includes, special_code):
    """Do all the work necessary to allow the class called 'classname'
       to be exported, using the supplied aliases, and using the 
@@ -359,9 +377,18 @@ if __name__ == "__main__":
         classes = active_headers[header].classes()
         includes = active_headers[header].dependencies()
         aliases = active_headers[header].aliases()
+        functions = active_headers[header].functions()
 
         for clas in classes:
             export_class(mb, clas, aliases, includes, special_code)
+
+        for func in functions:
+            export_function(mb, func, includes)
+
+    #now export all of the operators
+    for operator in mb.operators():
+        if str(operator).find(module) != -1:
+            operator.include()        
 
     #write the code that wraps up the Property classes
     writePropertyWrappers(mb, sourcedir, active_headers)

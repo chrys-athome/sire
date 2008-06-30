@@ -67,6 +67,8 @@ class CGIdx;
 class CGName;
 class CGID;
 
+class MoleculeView;
+
 class ResNum;
 class ResIdx;
 class ResName;
@@ -104,6 +106,8 @@ friend QDataStream& ::operator>>(QDataStream&, MoleculeData&);
 public:
     MoleculeData();
     MoleculeData(const StructureEditor &editor);
+
+    MoleculeData(const MoleculeView &molview);
 
     MoleculeData(const MoleculeData &other);
 

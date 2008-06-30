@@ -37,13 +37,13 @@ SIRE_BEGIN_HEADER
 namespace SireBase
 {
 
-QString increment(const QString &name);
+QString increment(QString name);
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 /** A small function that increments a name, e.g. the name foobar_1 will be incremented
     to foobar_2, or foobar will be incremented to foobar_1 */
-inline QString increment(const QString &name)
+inline QString increment(QString name)
 {
     QRegExp nummatch("_(\\d+)$");
     
