@@ -34,36 +34,6 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
-///////////////
-/////////////// Implementation of NullProperty
-///////////////
-
-namespace SireBase
-{
-
-/** This is a null property */
-class SIREBASE_EXPORT NullProperty
-              : public ConcreteProperty<NullProperty,PropertyBase>
-{
-public:
-    NullProperty() : ConcreteProperty<NullProperty,PropertyBase>()
-    {}
-
-    NullProperty(const NullProperty &other)
-            : ConcreteProperty<NullProperty,PropertyBase>(other)
-    {}
-
-    ~NullProperty()
-    {}
-
-    static const char* typeName()
-    {
-        return "SireBase::NullProperty";
-    }
-};
-
-}
-
 using namespace SireBase;
 using namespace SireBase;
 using namespace SireStream;
@@ -303,6 +273,12 @@ static SharedPolyPointer<PropertyBase> shared_null( new NullProperty() );
 /** Null constructor - constructs a null property */
 Property::Property() : ptr(shared_null)
 {}
+
+/** Return a null property */
+Property Property::null()
+{
+    return Property();
+}
 
 /** Construct from the passed property */
 Property::Property(const PropertyBase &property)

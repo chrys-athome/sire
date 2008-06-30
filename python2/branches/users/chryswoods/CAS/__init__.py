@@ -19,4 +19,6 @@ from Sire.CAS._CAS import *
 # Now define some pure Python functions and classes that are part of
 # this library...
 
-
+#enable ** operator for exbase types
+ExBase.__pow__ = pow
+Expression.__pow__ = pow

@@ -39,4 +39,12 @@ bondfuncs = TwoAtomFunctions(tip4p)
 
 r = internalff.symbols().bond().r()
 
-bondfuncs.set( O00, H01, 5 * pow( 1.0 - r, 2 ))
+bondfuncs.set( O00.index(), H01.index(), 5 * ( 5.0 - r )**2 )
+bondfuncs.set( O00.index(), H02.index(), 5 * ( 5.0 - r )**2 )
+
+tip4p = tip4p.edit().setProperty( "bond", bondfuncs )
+
+internalff.add( tip4p )
+
+print internalff.energy()
+

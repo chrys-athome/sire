@@ -329,12 +329,8 @@ PropertyName PropertyMap::operator[](const PropertyName &propname) const
                                         
         if (it != propmap.constEnd())
             return it.value();
-            
-        else if (propname.hasDefaultValue())
-            return PropertyName( propname.value() );
-            
         else
-            return PropertyName( propname.source() );
+            return propname;
     }
     else
         return propname;

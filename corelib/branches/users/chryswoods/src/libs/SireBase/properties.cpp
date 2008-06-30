@@ -293,7 +293,8 @@ Properties::const_iterator Properties::constEnd() const
 */
 void Properties::assertContainsProperty(const PropertyName &key) const
 {
-    if (key.hasSource() and not d->properties.contains(key.source()))
+    if (key.hasSource() and not d->properties.contains(key.source())
+                        and not key.hasDefaultValue())
     {
         throw SireBase::missing_property( QObject::tr(
             "There is no property with key \"%1\". Available keys are ( %2 ).")
@@ -333,7 +334,7 @@ void Properties::assertContainsMetadata(const PropertyName &key,
     this->assertContainsProperty(key);
     
     if (metakey.hasSource() and 
-        not this->allMetadata(key).hasProperty(metakey.source()))
+        not this->allMetadata(key).hasProperty(metakey))
     {
         throw SireBase::missing_property( QObject::tr(
             "There is no metadata with metakey \"%1\" for the property \"%2\". "
@@ -346,7 +347,8 @@ void Properties::assertContainsMetadata(const PropertyName &key,
 /** Return whether or not this contains a property with key 'key' */
 bool Properties::hasProperty(const PropertyName &key) const
 {
-    return key.hasValue() or d->properties.contains(key.source());
+    return key.hasValue() or d->properties.contains(key.source())
+                          or key.hasDefaultValue();
 }
 
 /** Return whether or not this contains the metadata with metakey 'metakey' */
@@ -370,10 +372,13 @@ const Property& Properties::operator[](const PropertyName &key) const
 
         if (it == d->properties.constEnd())
         {
-            throw SireBase::missing_property( QObject::tr(
-                "There is no property with name \"%1\". "
-                "Available properties are [ %2 ].")
-                    .arg(key.source(), this->propertyKeys().join(", ")), CODELOC );
+            if (key.hasDefaultValue())
+                return key.value();
+            else
+                throw SireBase::missing_property( QObject::tr(
+                    "There is no property with name \"%1\". "
+                    "Available properties are [ %2 ].")
+                        .arg(key.source(), this->propertyKeys().join(", ")), CODELOC );
         }
 
         return *it;
@@ -403,10 +408,13 @@ const Properties& Properties::allMetadata(const PropertyName &key) const
 
         if (it == d->props_metadata.constEnd())
         {
-            throw SireBase::missing_property( QObject::tr(
-                "There is no property with name \"%1\". "
-                "Available properties are [ %2 ].")
-                    .arg(key.source(), propertyKeys().join(", ")), CODELOC );
+            if (key.hasDefaultValue())  
+                return null_properties;
+            else
+                throw SireBase::missing_property( QObject::tr(
+                    "There is no property with name \"%1\". "
+                    "Available properties are [ %2 ].")
+                        .arg(key.source(), propertyKeys().join(", ")), CODELOC );
         }
 
         return *it;

@@ -29,6 +29,8 @@
 #ifndef SIREMM_INTERNALFF_H
 #define SIREMM_INTERNALFF_H
 
+#include "SireBase/propertymap.h"
+
 #include "SireFF/g1ff.h"
 #include "SireFF/ff3d.h"
 #include "SireFF/forcetable.h"
@@ -70,6 +72,7 @@ using SireVol::CoordGroup;
 using SireBase::Property;
 using SireBase::Properties;
 using SireBase::PropertyMap;
+using SireBase::PropertyName;
 
 /** This class provides the default name of the 
     property that contains the bond parameters */
@@ -82,13 +85,13 @@ public:
     ~BondParameterName()
     {}
     
-    const QString& bond() const
+    const PropertyName& bond() const
     {
         return bond_param;
     }
     
 private:
-    static QString bond_param;
+    static PropertyName bond_param;
 };
 
 /** This class provides the default name of the 
@@ -102,13 +105,13 @@ public:
     ~AngleParameterName()
     {}
     
-    const QString& angle() const
+    const PropertyName& angle() const
     {
         return angle_param;
     }
     
 private:
-    static QString angle_param;
+    static PropertyName angle_param;
 };
 
 /** This class provides the default name of the 
@@ -122,13 +125,13 @@ public:
     ~DihedralParameterName()
     {}
     
-    const QString& dihedral() const
+    const PropertyName& dihedral() const
     {
         return dihedral_param;
     }
     
 private:
-    static QString dihedral_param;
+    static PropertyName dihedral_param;
 };
 
 /** This class provides the default name of the 
@@ -142,13 +145,13 @@ public:
     ~ImproperParameterName()
     {}
     
-    const QString& improper() const
+    const PropertyName& improper() const
     {
         return improper_param;
     }
     
 private:
-    static QString improper_param;
+    static PropertyName improper_param;
 };
 
 /** This class provides the default name of the 
@@ -162,13 +165,13 @@ public:
     ~UreyBradleyParameterName()
     {}
     
-    const QString& ureyBradley() const
+    const PropertyName& ureyBradley() const
     {
         return ub_param;
     }
     
 private:
-    static QString ub_param;
+    static PropertyName ub_param;
 };
 
 /** This class provides the default name of the 
@@ -182,13 +185,13 @@ public:
     ~StretchStretchParameterName()
     {}
     
-    const QString& stretchStretch() const
+    const PropertyName& stretchStretch() const
     {
         return ss_param;
     }
     
 private:
-    static QString ss_param;
+    static PropertyName ss_param;
 };
 
 /** This class provides the default name of the 
@@ -202,13 +205,13 @@ public:
     ~StretchBendParameterName()
     {}
     
-    const QString& stretchBend() const
+    const PropertyName& stretchBend() const
     {
         return sb_param;
     }
     
 private:
-    static QString sb_param;
+    static PropertyName sb_param;
 };
 
 /** This class provides the default name of the 
@@ -222,13 +225,13 @@ public:
     ~BendBendParameterName()
     {}
     
-    const QString& bendBend() const
+    const PropertyName& bendBend() const
     {
         return bb_param;
     }
     
 private:
-    static QString bb_param;
+    static PropertyName bb_param;
 };
 
 /** This class provides the default name of the 
@@ -242,13 +245,13 @@ public:
     ~StretchBendTorsionParameterName()
     {}
     
-    const QString& stretchBendTorsion() const
+    const PropertyName& stretchBendTorsion() const
     {
         return sbt_param;
     }
     
 private:
-    static QString sbt_param;
+    static PropertyName sbt_param;
 };
 
 /** This class provides the default name of the properties

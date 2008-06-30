@@ -49,6 +49,8 @@
 
 #include "tostring.h"
 
+#include <QDebug>
+
 using namespace SireMM;
 using namespace SireMM::detail;
 using namespace SireFF;
@@ -68,15 +70,18 @@ template class ChangedMolecule<InternalPotential::Molecule>;
 
 //////// Parameter names
 
-QString BondParameterName::bond_param( "bond" );
-QString AngleParameterName::angle_param( "angle" );
-QString DihedralParameterName::dihedral_param( "dihedral" );
-QString ImproperParameterName::improper_param( "improper" );
-QString UreyBradleyParameterName::ub_param( "Urey-Bradley" );
-QString StretchStretchParameterName::ss_param( "stretch-stretch" );
-QString StretchBendParameterName::sb_param( "stretch-bend" );
-QString BendBendParameterName::bb_param( "bend-bend" );
-QString StretchBendTorsionParameterName::sbt_param( "stretch-bend-torsion" );
+PropertyName BondParameterName::bond_param( "bond", Property::null() );
+PropertyName AngleParameterName::angle_param( "angle", Property::null() );
+PropertyName DihedralParameterName::dihedral_param( "dihedral", Property::null() );
+PropertyName ImproperParameterName::improper_param( "improper", Property::null() );
+PropertyName UreyBradleyParameterName::ub_param( "Urey-Bradley", Property::null() );
+PropertyName StretchStretchParameterName::ss_param( "stretch-stretch", 
+                                                    Property::null() );
+PropertyName StretchBendParameterName::sb_param( "stretch-bend", 
+                                                 Property::null() );
+PropertyName BendBendParameterName::bb_param( "bend-bend", Property::null() );
+PropertyName StretchBendTorsionParameterName::sbt_param( "stretch-bend-torsion", 
+                                                         Property::null() );
 
 ////////
 //////// Implementation of InternalPotential

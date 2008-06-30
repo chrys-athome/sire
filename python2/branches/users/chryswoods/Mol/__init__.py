@@ -10,6 +10,7 @@ import Sire.Base
 import Sire.ID
 import Sire.Qt
 import Sire.Vol
+import Sire.Units
 
 from Sire.Mol._Mol import *
 

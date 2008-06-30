@@ -325,6 +325,27 @@ private:
     void throwInvalidCast(const QString &typname) const;
 };
 
+/** This is a null property */
+class SIREBASE_EXPORT NullProperty
+              : public ConcreteProperty<NullProperty,PropertyBase>
+{
+public:
+    NullProperty() : ConcreteProperty<NullProperty,PropertyBase>()
+    {}
+
+    NullProperty(const NullProperty &other)
+            : ConcreteProperty<NullProperty,PropertyBase>(other)
+    {}
+
+    ~NullProperty()
+    {}
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<NullProperty>() );
+    }
+};
+
 /** This is the polymorphic pointer holder for the entire
     PropertyBase class hierarchy. This can hold implicitly 
     shared pointers to any property class.
@@ -371,6 +392,8 @@ public:
     
     operator const PropertyBase&() const;
 
+    static Property null();
+
 protected:
     const PropertyBase& d() const;
 
@@ -386,9 +409,12 @@ private:
 }
 
 Q_DECLARE_METATYPE(SireBase::Property);
+Q_DECLARE_METATYPE(SireBase::NullProperty);
 Q_DECLARE_METATYPE(SireBase::VariantProperty);
 
 SIRE_EXPOSE_CLASS( SireBase::PropertyBase )
+SIRE_EXPOSE_CLASS( SireBase::NullProperty )
+SIRE_EXPOSE_CLASS( SireBase::VariantProperty )
 
 SIRE_EXPOSE_PROPERTY( SireBase::Property, SireBase::PropertyBase )
 
