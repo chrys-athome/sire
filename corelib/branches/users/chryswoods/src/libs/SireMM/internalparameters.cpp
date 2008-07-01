@@ -1197,10 +1197,11 @@ const Symbol& ImproperSymbols::phi() const
 //////////
 
 StretchStretchSymbols::StretchStretchSymbols()
-                      : _r01("r_{01}"), _r21("r_{21}")
+                      : _r01("r_{01}"), _r21("r_{21}"), _r12("r_{12}")
 {
     symbols.insert(_r01);
     symbols.insert(_r21);
+    symbols.insert(_r12);
 }
 
 StretchStretchSymbols::~StretchStretchSymbols()
@@ -1218,16 +1219,23 @@ const Symbol& StretchStretchSymbols::r21() const
     return _r21;
 }
 
+/** Return the symbol representing the bond length r_{12} */
+const Symbol& StretchStretchSymbols::r12() const
+{
+    return _r12;
+}
+
 //////////
 ////////// Implementation of StretchBendSymbols
 //////////
 
 StretchBendSymbols::StretchBendSymbols()
-                   : _theta("theta"), _r01("r_{01}"), _r21("r_{21}")
+                   : _theta("theta"), _r01("r_{01}"), _r21("r_{21}"), _r12("r_{12}")
 {
     symbols.insert(_theta);
     symbols.insert(_r01);
     symbols.insert(_r21);
+    symbols.insert(_r12);
 }
 
 StretchBendSymbols::~StretchBendSymbols()
@@ -1249,6 +1257,12 @@ const Symbol& StretchBendSymbols::r01() const
 const Symbol& StretchBendSymbols::r21() const
 {
     return _r21;
+}
+
+/** Return the symbol representing the bond length r_{12} */
+const Symbol& StretchBendSymbols::r12() const
+{
+    return _r12;
 }
 
 //////////

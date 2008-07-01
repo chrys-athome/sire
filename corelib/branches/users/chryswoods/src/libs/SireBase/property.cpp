@@ -113,7 +113,7 @@ void PropertyBase::throwInvalidCast(const char *typenam) const
     throw SireError::invalid_cast( QObject::tr(
             "Cannot cast from an object of class \"%1\" to an object "
             "of class \"%2\".")
-                .arg(typenam).arg(this->what()), CODELOC );
+                .arg(this->what()).arg(typenam), CODELOC );
 }
 
 static const RegisterMetaType<PropertyBase> r_propbase(MAGIC_ONLY,
@@ -234,6 +234,48 @@ bool VariantProperty::operator!=(const VariantProperty &other) const
 {
     return QVariant::operator!=(other);
 }
+
+///////////////
+/////////////// Implementation of NullProperty
+///////////////
+
+static const RegisterMetaType<NullProperty> r_nullprop;
+
+/** Serialise to a binary datastream */
+QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const NullProperty &property)
+{
+    writeHeader(ds, r_nullprop, 1);
+
+    ds << static_cast<const PropertyBase&>(property);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, NullProperty &property)
+{
+    VersionID v = readHeader(ds, r_nullprop);
+
+    if (v == 1)
+    {
+        ds >> static_cast<PropertyBase&>(property);
+    }
+    else
+        throw version_error(v, "1", r_nullprop, CODELOC);
+
+    return ds;
+}
+
+NullProperty::NullProperty()
+             : ConcreteProperty<NullProperty,PropertyBase>()
+{}
+
+NullProperty::NullProperty(const NullProperty &other)
+             : ConcreteProperty<NullProperty,PropertyBase>(other)
+{}
+
+NullProperty::~NullProperty()
+{}
 
 ///////////////
 /////////////// Implementation of Property

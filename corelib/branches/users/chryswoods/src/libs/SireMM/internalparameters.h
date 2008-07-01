@@ -438,7 +438,9 @@ protected:
 };
 
 /** This class holds the symbols required for the bond 
-    and Urey-Bradley parameters */
+    and Urey-Bradley parameters. These are functions
+    that act between two atoms, using the distance
+    between the atoms (r) as the input variable */
 class SIREMM_EXPORT BondSymbols : public InternalSymbolsBase
 {
 public:
@@ -452,7 +454,9 @@ private:
     Symbol _r;
 };
 
-/** This class holds the symbols required for the angle parameters */
+/** This class holds the symbols required for the angle parameters.
+    These are functions of the angle 0-1-2 (theta) of three
+    atoms (where atom 1 is the central atom of the angle) */
 class SIREMM_EXPORT AngleSymbols : public InternalSymbolsBase
 {
 public:
@@ -466,7 +470,10 @@ private:
     Symbol _theta;
 };
 
-/** This class holds the symbols required for the dihedral parameters */
+/** This class holds the symbols required for the dihedral parameters.
+    These are functions of the dihedral (0-1-2-3) (phi) made 
+    by four atoms, of atoms 0 and 3 about the bond between
+    atoms 1 and 2 (measured clockwise) */
 class SIREMM_EXPORT DihedralSymbols : public InternalSymbolsBase
 {
 public:
@@ -480,7 +487,10 @@ private:
     Symbol _phi;
 };
 
-/** This class holds the symbols required for the improper parameters */
+/** This class holds the symbols required for the improper parameters.
+    These are functions of the dihedral (0-1-2-3) (phi) and also
+    of the improper angle made between the bond 0-1 and the plane
+    formed by atoms 1-2-3 (theta) */
 class SIREMM_EXPORT ImproperSymbols : public InternalSymbolsBase
 {
 public:
@@ -499,7 +509,9 @@ private:
     Symbol _phi;
 };
 
-/** This class holds the symbols required for the stretch-stretch parameters */
+/** This class holds the symbols required for the stretch-stretch parameters.
+    These are functions of the bond distances among three atoms, 0 1 and 2,
+    so distances between atoms 0-1 (r01), 2-1 (r21) and 1-2 (r12) */
 class SIREMM_EXPORT StretchStretchSymbols : public InternalSymbolsBase
 {
 public:
@@ -508,6 +520,7 @@ public:
     
     const Symbol& r01() const;
     const Symbol& r21() const;
+    const Symbol& r12() const;
     
 private:
     /** The symbol for the length of the bond 0->1 */
@@ -515,9 +528,14 @@ private:
     
     /** The symbol for the length of the bond 1<-2 */
     Symbol _r21;
+    
+    /** The symbol for the length of the bond 1->2 */
+    Symbol _r12;
 };
 
-/** This class holds the symbols required for the stretch-bend parameters */
+/** This class holds the symbols required for the stretch-bend parameters.
+    These are a function of the angle of atoms 0-1-2 (theta) and
+    the distances between each pair of atoms (r01, r21 and r12) */
 class SIREMM_EXPORT StretchBendSymbols : public InternalSymbolsBase
 {
 public:
@@ -527,6 +545,7 @@ public:
     const Symbol& theta() const;
     const Symbol& r01() const;
     const Symbol& r21() const;
+    const Symbol& r12() const;
     
 private:
     /** The symbol for the size of the angle */
@@ -537,9 +556,15 @@ private:
     
     /** The symbol for the length of the bond 1<-2 */
     Symbol _r21;
+    
+    /** The symbol for the length of the bond 1->2 */
+    Symbol _r12;
 };
 
-/** This class holds the symbols required for the bend-bend parameters */
+/** This class holds the symbols required for the bend-bend parameters.
+    These are functions of the three angles within the four atoms
+    0, 1, 2, 3, where atom 1 is in the middle. The angles are
+    therefore 0-1-2 (theta012), 2-1-3 (theta213) and 3-1-0 (theta310) */
 class SIREMM_EXPORT BendBendSymbols : public InternalSymbolsBase
 {
 public:
@@ -559,7 +584,12 @@ private:
     Symbol _theta310;
 };
 
-/** This class holds the symbols required for the stretch-bend-torsion parameters */
+/** This class holds the symbols required for the stretch-bend-torsion parameters
+    These are functions over four atoms, 0, 1, 2, 3 and 4, of the dihedral
+    formed over the four atoms 0-1-2-3 (phi), the angles 0-1-2 (theta012)
+    and 3-2-1 (theta321) and the distances between atoms, 0-1 (r01),
+    1-2 (r12), 3-2 (r32) and 0-3 (r03)
+*/
 class SIREMM_EXPORT StretchBendTorsionSymbols : public InternalSymbolsBase
 {
 public:

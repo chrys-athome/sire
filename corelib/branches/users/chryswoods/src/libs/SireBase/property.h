@@ -42,6 +42,7 @@ namespace SireBase
 class PropertyBase;
 class Property;
 class VariantProperty;
+class NullProperty;
 }
 
 QDataStream& operator<<(QDataStream&, const SireBase::PropertyBase&);
@@ -53,14 +54,8 @@ QDataStream& operator>>(QDataStream&, SireBase::VariantProperty&);
 QDataStream& operator<<(QDataStream&, const SireBase::Property&);
 QDataStream& operator>>(QDataStream&, SireBase::Property&);
 
-XMLStream& operator<<(XMLStream&, const SireBase::Property&);
-XMLStream& operator>>(XMLStream&, SireBase::Property&);
-
-XMLStream& operator<<(XMLStream&, const SireBase::PropertyBase&);
-XMLStream& operator>>(XMLStream&, SireBase::PropertyBase&);
-
-QTextStream& operator<<(QTextStream&, const SireBase::PropertyBase&);
-QTextStream& operator<<(QTextStream&, const SireBase::Property&);
+QDataStream& operator<<(QDataStream&, const SireBase::NullProperty&);
+QDataStream& operator>>(QDataStream&, SireBase::NullProperty&);
 
 namespace SireBase
 {
@@ -84,9 +79,6 @@ class SIREBASE_EXPORT PropertyBase : public QSharedData
 
 friend QDataStream& ::operator<<(QDataStream&, const PropertyBase&);
 friend QDataStream& ::operator>>(QDataStream&, PropertyBase&);
-
-friend XMLStream& ::operator<<(XMLStream&, const PropertyBase&);
-friend XMLStream& ::operator>>(XMLStream&, PropertyBase&);
 
 public:
     PropertyBase();
@@ -165,7 +157,7 @@ protected:
     @author Christopher Woods
 */
 template<class Derived, class Base>
-class ConcreteProperty : public Base
+class SIREBASE_EXPORT ConcreteProperty : public Base
 {
 public:
     ConcreteProperty() : Base()
@@ -330,15 +322,11 @@ class SIREBASE_EXPORT NullProperty
               : public ConcreteProperty<NullProperty,PropertyBase>
 {
 public:
-    NullProperty() : ConcreteProperty<NullProperty,PropertyBase>()
-    {}
+    NullProperty();
+    
+    NullProperty(const NullProperty &other);
 
-    NullProperty(const NullProperty &other)
-            : ConcreteProperty<NullProperty,PropertyBase>(other)
-    {}
-
-    ~NullProperty()
-    {}
+    ~NullProperty();
 
     static const char* typeName()
     {
@@ -357,9 +345,6 @@ class SIREBASE_EXPORT Property
 
 friend QDataStream& ::operator<<(QDataStream&, const Property&);
 friend QDataStream& ::operator>>(QDataStream&, Property&);
-
-friend XMLStream& ::operator<<(XMLStream&, const Property&);
-friend XMLStream& ::operator>>(XMLStream&, Property&);
 
 public:
     Property();

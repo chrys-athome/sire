@@ -455,7 +455,9 @@ const Property& Properties::property(const PropertyName &key,
                                      const Property &default_value) const
 {
     if (key.hasValue())
+    {
         return key.value();
+    }
     else
     {
         QHash<QString,Properties>::const_iterator 

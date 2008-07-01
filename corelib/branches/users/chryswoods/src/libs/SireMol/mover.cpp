@@ -50,9 +50,6 @@
 using namespace SireMol;
 using namespace SireVol;
 
-/** The default weighting function used by Mover */
-static Property default_weightfunc;
-
 /** Constructor */
 MoverBase::MoverBase()
 {}
@@ -661,7 +658,7 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
         //sides of the move
         const WeightFunc &weightfunc =
             moldata.property(map["weight function"],
-                             default_weightfunc)->asA<WeightFunc>();
+                             WeightFunction())->asA<WeightFunc>();
 
         tuple<double,double> weights = weightfunc(moldata, group0,
                                                   group1, map);
@@ -788,7 +785,7 @@ void MoverBase::change(MoleculeData &moldata, const AngleID &angle,
         //two sides of the move
         const WeightFunc &weightfunc =
                 moldata.property(map["weight function"],
-                                 default_weightfunc)->asA<WeightFunc>();
+                                 WeightFunction())->asA<WeightFunc>();
 
         tuple<double,double> weights = weightfunc(moldata, group0,
                                                   group1, map);
@@ -911,7 +908,7 @@ void MoverBase::change(MoleculeData &moldata, const DihedralID &dihedral,
     {
         const WeightFunc &weightfunc =
                       moldata.property(map["weight function"],
-                                       default_weightfunc)->asA<WeightFunc>();
+                                       WeightFunction())->asA<WeightFunc>();
 
         tuple<double,double> weights = weightfunc(moldata, group0,
                                                   group1, map);
@@ -1026,7 +1023,7 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
     {
         const WeightFunc &weightfunc =
                      moldata.property(map["weight function"],
-                                      default_weightfunc)->asA<WeightFunc>();
+                                      WeightFunction())->asA<WeightFunc>();
 
         tuple<double,double> weights = weightfunc(moldata, group0,
                                                   group1, map);
@@ -1150,7 +1147,7 @@ void MoverBase::change(MoleculeData &moldata, const ImproperID &improper,
     {
         const WeightFunc &weightfunc =
                    moldata.property(map["weight function"],
-                                    default_weightfunc)->asA<WeightFunc>();
+                                    WeightFunction())->asA<WeightFunc>();
 
         tuple<double,double> weights = weightfunc(moldata, group0,
                                                   group1, map);
