@@ -1857,6 +1857,14 @@ void MolGroupsBase::clearIndex(MGNum mgnum)
     }
 }
 
+/** Completely clear the entire index of molecules and molecule groups */
+void MolGroupsBase::clearIndex()
+{
+    mgidx_to_num.clear();
+    mgname_to_mgnum.clear();
+    molnum_to_mgnum.clear();
+}
+
 /////////////
 ///////////// Implementation of MolGroups
 /////////////

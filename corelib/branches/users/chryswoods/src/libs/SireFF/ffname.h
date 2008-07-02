@@ -104,6 +104,8 @@ public:
     {
         return _name != other._name;
     }
+    
+    QList<FFIdx> map(const ForceFields &ffields) const;
 };
 
 }

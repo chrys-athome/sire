@@ -86,6 +86,25 @@ QString qstr(const T &obj)
                          ::type::qstr(obj);
 }
 
+/** Used to return a string representation of a QString! */
+template<>
+inline QString qstr(const QString &string)
+{
+    return string;
+}
+
+/** Used to return a string representation of a QStringList */
+template<>
+inline QString qstr(const QStringList &strings)
+{
+    if (strings.isEmpty())
+        return QString("[ ]");
+    else if (strings.count() == 1)
+        return strings.at(0);
+    else
+        return QString("[ %1 ]").arg( strings.join(", ") );
+}
+
 /** Used to return a string representation of a QList */
 template<class T>
 QString qstr(const QList<T> &objs)

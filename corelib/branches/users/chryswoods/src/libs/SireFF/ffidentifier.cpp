@@ -27,6 +27,9 @@
 \*********************************************/
 
 #include "ffidentifier.h"
+#include "forcefields.h"
+#include "ffidx.h"
+#include "ffname.h"
 
 using namespace SireFF;
 using namespace SireID;
@@ -151,4 +154,56 @@ bool FFIdentifier::operator!=(const FFID &other) const
         return this->operator!=(other.asA<FFIdentifier>());
     else
         return d->operator!=(other);
+}
+
+/** Map this name to the index of the matching forcefield in the 
+    passed ForceFields object 
+    
+    \throw SireFF::missing_forcefield
+*/
+QList<FFIdx> FFName::map(const ForceFields &ffields) const
+{
+    QList<FFIdx> ffidxs;
+    
+    ffidxs.append( ffields.ffIdx(*this) );
+    
+    return ffidxs;
+}
+
+/** Short cut function to map this index to the index of the
+    matching forcefield in the passed ForceFields object
+    
+    \throw SireError::invalid_index
+*/
+QList<FFIdx> FFIdx::map(const ForceFields &ffields) const
+{
+    QList<FFIdx> ffidxs;
+    
+    ffidxs.append( ffields.ffIdx(*this) );
+    
+    return ffidxs;
+}
+
+/** Map this identifier to the indicies of the matching
+    forcefields in the passed ForceFields object 
+    
+    \throw SireFF::missing_forcefield
+    \throw SireError::invalid_index
+*/
+QList<FFIdx> FFIdentifier::map(const ForceFields &ffields) const
+{
+    if (d.get() == 0)
+    {
+        int nffields = ffields.nForceFields();
+        QList<FFIdx> ffidxs;
+        
+        for (int i=0; i<nffields; ++i)
+        {
+            ffidxs.append( FFIdx(i) );
+        }
+        
+        return ffidxs;
+    }
+    else
+        return d->map(ffields);
 }

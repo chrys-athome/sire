@@ -29,6 +29,8 @@
 #ifndef SIREFF_FFID_H
 #define SIREFF_FFID_H
 
+#include <QList>
+
 #include "SireID/id.h"
 
 SIRE_BEGIN_HEADER
@@ -39,6 +41,8 @@ namespace SireFF
 class FFIdx;
 class FFIdentifier;
 class FFName;
+
+class ForceFields;
 
 /** The base class of all ForceField identifiers
 
@@ -61,6 +65,8 @@ public:
     }
     
     virtual FFID* clone() const=0;
+    
+    virtual QList<FFIdx> map(const ForceFields &ffields) const=0;
 };
 
 }

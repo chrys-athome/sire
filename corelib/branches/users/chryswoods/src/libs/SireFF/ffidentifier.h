@@ -84,6 +84,8 @@ public:
     bool operator==(const FFID &other) const;
     bool operator!=(const FFID &other) const;
 
+    QList<FFIdx> map(const ForceFields &ffields) const;
+
 private:
     /** Pointer to the FFID */
     boost::shared_ptr<FFID> d;

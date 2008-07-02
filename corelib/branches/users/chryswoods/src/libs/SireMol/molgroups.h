@@ -346,6 +346,7 @@ protected:
                          const MGName &new_name);
 
     void clearIndex(MGNum mgnum);
+    void clearIndex();
 
 private:
     /** This index keeps an order of MolGroup objects */

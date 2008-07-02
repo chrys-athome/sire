@@ -1711,3 +1711,9 @@ void FF::setContents(const MGID &mgid, const MolGroup &molgroup)
 {
     this->setContents(mgid, molgroup, PropertyMap());
 }
+
+/** Return the names of all of the properties available to this forcefield */
+QStringList FF::propertyKeys() const
+{
+    return this->properties().propertyKeys();
+}

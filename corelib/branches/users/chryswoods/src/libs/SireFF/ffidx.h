@@ -112,6 +112,8 @@ public:
     using SireID::Index_T_<FFIdx>::operator--;
     
     using SireID::Index_T_<FFIdx>::map;
+    
+    QList<FFIdx> map(const ForceFields &ffields) const;
 };
     
 }

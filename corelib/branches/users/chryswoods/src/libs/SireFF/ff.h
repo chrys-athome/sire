@@ -195,6 +195,8 @@ public:
     /** Return the values of all of the properties of this forcefield */
     virtual const Properties& properties() const=0;
 
+    virtual QStringList propertyKeys() const;
+
     /** Tell the forcefield that it has to recalculate everything from
         scratch */
     virtual void mustNowRecalculateFromScratch()=0;
