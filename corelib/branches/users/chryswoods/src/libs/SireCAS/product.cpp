@@ -1032,3 +1032,8 @@ Expression Product::conjugate() const
 
     return ret.reduce();
 }
+
+QList<Factor> Product::factorise(const Symbol &symbol) const
+{
+...
+}

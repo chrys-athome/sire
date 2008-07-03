@@ -28,6 +28,8 @@
 
 #include "qhash_sirecas.h"
 
+#include <QMap>
+
 #include "sum.h"
 #include "expression.h"
 #include "symbols.h"
@@ -683,4 +685,59 @@ Expressions Sum::children() const
 bool Sum::isCompound() const
 {
     return posparts.count() + negparts.count() >= ( 2 - (not SireMaths::isZero(strtval)) );
+}
+
+QList<Factor> Sum::factorise(const Symbol &symbol) const
+{
+    QHash<Expression, Expression> factors;
+    
+    for (QHash<ExpressionBase, Expression>::const_iterator it = posparts.constBegin();
+         it != posparts.constEnd();
+         ++it)
+    {
+        QList<Factor> facs = it->factorise(symbol);
+        
+        if (facs.isEmpty())
+        {
+            //this part has no factors of this symbol
+            factors[ Expression(0) ] += it.value();
+        }
+        else
+        {
+            foreach (const Factor &fac, facs)
+            {
+                factors[fac.power()] += fac.factor();
+            }
+        }
+    }
+
+    for (QHash<ExpressionBase, Expression>::const_iterator it = negparts.constBegin();
+         it != negparts.constEnd();
+         ++it)
+    {
+        QList<Factor> facs = it->factorise(symbol);
+        
+        if (facs.isEmpty())
+        {
+            factors[ Expression(0) ] += it.value();
+        }
+        else
+        {
+            foreach (const Factor &fac, facs)
+            {
+                factors[fac.power()] -= fac.factor();
+            }
+        }
+    }
+    
+    QList<Factor> ret;
+    
+    for (QHash<Expression,Expression>::const_iterator it = factors.constBegin();
+         it != factors.constEnd();
+         ++it)
+    {
+        ret.append( Factor( it.value(), it.key() ) );
+    }
+    
+    return ret;
 }

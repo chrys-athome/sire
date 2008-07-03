@@ -62,6 +62,7 @@ class Functions;
 class Expression;
 class Expressions;
 class Identities;
+class Factor;
 
 class ExpressionBase;
 class Expression;
@@ -198,6 +199,14 @@ public:
 
     /** Return the child expressions of this Expression */
     virtual Expressions children() const=0;
+    
+    /** Factorise this expression into the form
+        m x^i + n x^j + ... + constant
+        and return the factors and powers of x
+        
+        \throw SireCAS::non_factorisable
+    */
+    virtual QList<Factor> factorise(const Symbol &symbol) const=0;
 
 };
 

@@ -46,6 +46,47 @@
 using namespace SireStream;
 using namespace SireCAS;
 
+////////
+//////// Implementation of Factor
+////////
+
+Factor::Factor() : f(1), p(1)
+{}
+
+Factor::Factor(const Expression &factor, const Expression &power)
+       : f(factor), p(power)
+{}
+
+Factor::Factor(double factor, double power) : f(factor), p(power)
+{}
+
+Factor::Factor(const Factor &other) : f(other.f), p(other.p)
+{}
+
+Factor::~Factor()
+{}
+
+Factor& Factor::operator=(const Factor &other)
+{
+    f = other.f;
+    p = other.p;
+    return *this;
+}
+
+bool Factor::operator==(const Factor &other) const
+{
+    return f == other.f and p == other.p;
+}
+
+bool Factor::operator!=(const Factor &other) const
+{
+    return f != other.f or p != other.p;
+}
+
+////////
+//////// Implementation of Symbol
+////////
+
 typedef struct
 {
 QHash<QString,SymbolID> name2id;
@@ -266,4 +307,16 @@ bool Symbol::isFunction(const Symbol &sym) const
 bool Symbol::isConstant() const
 {
     return false;
+}
+
+QList<Factor> Symbol::factorise(const Symbol &symbol) const
+{
+    QList<Factor> factors;
+
+    if ( *this == symbol )
+    {
+        factors.append( Factor(1,1) );
+    }
+    
+    return factors;
 }

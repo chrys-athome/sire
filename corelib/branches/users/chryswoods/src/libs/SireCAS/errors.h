@@ -153,12 +153,37 @@ public:
     }
 };
 
+/** This class is thrown when an attempt is made to factorise
+    a expression which is not factorisable */
+class SIRECAS_EXPORT non_factorisable : public sirecas_error
+{
+public:
+    non_factorisable() : sirecas_error()
+    {}
+
+    non_factorisable(QString err, QString place = QString::null)
+              : sirecas_error(err,place)
+    {}
+
+    non_factorisable(const non_factorisable &other) : sirecas_error(other)
+    {}
+
+    ~non_factorisable() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireCAS::non_factorisable";
+    }
+};
+
 }
 
 Q_DECLARE_METATYPE(SireCAS::sirecas_error)
 Q_DECLARE_METATYPE(SireCAS::unavailable_differential)
 Q_DECLARE_METATYPE(SireCAS::unavailable_integral)
 Q_DECLARE_METATYPE(SireCAS::unregistered_expression)
+Q_DECLARE_METATYPE(SireCAS::non_factorisable)
 
 SIRE_END_HEADER
 

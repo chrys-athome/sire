@@ -599,3 +599,28 @@ Functions Expression::functions() const
 {
     return exbase.functions();
 }
+
+/** Return the factors and powers for the symbol 'symbol', given the values of the 
+    other symbols in 'values'. This attempts to rearrange this equation
+    so that it is of the form 'm * symbol^i + n * symbol^j ... + constant', 
+    and it returns the values of 'm,i', 'n,j' etc.. 
+    Note that this will fail if such a rearrangement is not possible
+    
+    \throw SireCAS::non_factorisable
+*/
+QList<Factor> Expression::factorise(const Symbol &symbol)
+{
+    QList<Factor> factors = exbase.factorise(symbol, values);
+    
+    if (fac != 1)
+    {
+        for (QList<Factor>::iterator it = factors.begin();
+             it != factors.end();
+             ++it)
+        {
+            *it = Factor( fac * it->factor(), it->power() );
+        }
+    }
+    
+    return factors;
+}

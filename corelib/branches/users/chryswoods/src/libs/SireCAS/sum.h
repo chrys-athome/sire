@@ -114,6 +114,8 @@ public:
         return new Sum(*this);
     }
 
+    QList<Factor> factorise(const Symbol &symbol) const;
+
 private:
 
     void add(const Expression &ex);

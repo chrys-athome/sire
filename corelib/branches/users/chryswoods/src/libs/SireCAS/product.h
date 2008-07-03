@@ -118,6 +118,8 @@ public:
         return new Product(*this);
     }
 
+    QList<Factor> factorise(const Symbol &symbol, const Values &values) const;
+
 private:
 
     void rebuild();

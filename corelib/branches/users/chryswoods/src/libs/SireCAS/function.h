@@ -391,6 +391,8 @@ public:
                         const Symbol &sym6, const Symbol &sym7, const Symbol &sym8,
                         const Symbol &sym9) const;
 
+    QList<Factor> factorise(const Symbol &symbol) const;
+
 private:
 
     Function(const FunctionPvt &other);

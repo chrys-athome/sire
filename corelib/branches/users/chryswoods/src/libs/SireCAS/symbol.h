@@ -52,10 +52,45 @@ namespace SireCAS
 class Symbols;
 class Values;
 
-/**
-This class represents an algebraic symbol in the equation (e.g. 'x' or 'y')
+/** This is a small class that can hold the factor and power of a symbol
 
-@author Christopher Woods
+    @author Christopher Woods
+*/
+class SIRECAS_EXPORT Factor
+{
+public:
+    Factor();
+    
+    Factor(double factor, double power);
+    Factor(const Expression &factor, const Expression &power);
+    
+    Factor(const Factor &other);
+    
+    ~Factor();
+    
+    Factor& operator=(const Factor &other);
+    
+    bool operator==(const Factor &other) const;
+    bool operator!=(const Factor &other) const;
+    
+    const Expression& factor() const
+    {
+        return f;
+    }
+    
+    const Expression& power() const
+    {
+        return p;
+    }
+
+private:
+    /** The factor and power */
+    Expression f, p;
+};
+
+/** This class represents an algebraic symbol in the equation (e.g. 'x' or 'y')
+
+    @author Christopher Woods
 */
 class SIRECAS_EXPORT Symbol : public ExBase
 {
@@ -141,6 +176,8 @@ public:
     Symbols symbols() const;
     Functions functions() const;
     Expressions children() const;
+
+    QList<Factor> factorise(const Symbol &symbol) const;
 
 protected:
 

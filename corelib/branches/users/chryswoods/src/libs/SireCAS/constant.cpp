@@ -145,3 +145,8 @@ Expressions Constant::children() const
 {
     return Expressions();
 }
+
+QList<Factor> Constant::factorise(const Symbol&) const
+{
+    return QList<Factor>();
+}

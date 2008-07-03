@@ -54,6 +54,7 @@ using SireMaths::Rational;
 class Identities;
 class Symbols;
 class Functions;
+class Factor;
 
 /**
 An Expression is the base class of all algebraic entities.
@@ -164,6 +165,8 @@ public:
     Symbols symbols() const;
     Functions functions() const;
     Expressions children() const;
+
+    QList<Factor> factorise(const Symbol &symbol) const;
 
     template<class T>
     QList<T> children() const;

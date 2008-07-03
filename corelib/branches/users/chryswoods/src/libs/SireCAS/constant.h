@@ -95,6 +95,7 @@ public:
 
     Expressions children() const;
 
+    QList<Factor> factorise(const Symbol &symbol) const;
 };
 
 }

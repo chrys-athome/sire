@@ -1687,19 +1687,194 @@ void ForceFields::update(const MolGroup &molgroup)
     this->update( molgroup.molecules() );
 }
 
-/*
-void ForceFields::setContents(const MGID &mgid, const MoleculeView &molview,
-                              const PropertyMap &map);
-void ForceFields::setContents(const MGID &mgid, const ViewOfMol &molviews,
-                              const PropertyMap &map);
-void ForceFields::setContents(const MGID &mgid, const Molecules &molecules,
-                              const PropertyMap &map);
-void ForceFields::setContents(const MGID &mgid, const MolGroup &molgroup,
-                              const PropertyMap &map);
-
-void ForceFields::setContents(const MGID &mgid, const MoleculeView &molview);
-void ForceFields::setContents(const MGID &mgid, const ViewsOfMol &molviews);
-void ForceFields::setContents(const MGID &mgid, const Molecules &molecules);
-void ForceFields::setContents(const MGID &mgid, const MolGroup &molgroup);    
-
+/** Set the contents of the molecule groups identified by the ID 'mgid'
+    so that they only contain the view of the molecule in 'molview'.
+    The passed property map is used to find any properties that are
+    needed by the forcefields
+    
+    \throw SireMol::missing_group
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
 */
+void ForceFields::setContents(const MGID &mgid, const MoleculeView &molview,
+                              const PropertyMap &map)
+{
+    QList<MGNum> mgnums = mgid.map(*this);
+    
+    ForceFields old_state( *this );
+    
+    try
+    {
+        foreach (const MGNum &mgnum, mgnums)
+        {
+            this->_pvt_forceField(mgnum).setContents(mgnum, molview, map);
+        }
+        
+        this->rebuildIndex();
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
+}
+
+/** Set the contents of the molecule groups identified by the ID 'mgid'
+    so that they only contain the views of the molecule in 'molviews'.
+    The passed property map is used to find any properties that are
+    needed by the forcefields
+    
+    \throw SireMol::missing_group
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void ForceFields::setContents(const MGID &mgid, const ViewsOfMol &molviews,
+                              const PropertyMap &map)
+{
+    QList<MGNum> mgnums = mgid.map(*this);
+    
+    ForceFields old_state( *this );
+    
+    try
+    {
+        foreach (const MGNum &mgnum, mgnums)
+        {
+            this->_pvt_forceField(mgnum).setContents(mgnum, molviews, map);
+        }
+        
+        this->rebuildIndex();
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
+}
+
+/** Set the contents of the molecule groups identified by the ID 'mgid'
+    so that they only contain the molecules in 'molecules'.
+    The passed property map is used to find any properties that are
+    needed by the forcefields
+    
+    \throw SireMol::missing_group
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void ForceFields::setContents(const MGID &mgid, const Molecules &molecules,
+                              const PropertyMap &map)
+{
+    QList<MGNum> mgnums = mgid.map(*this);
+    
+    ForceFields old_state( *this );
+    
+    try
+    {
+        foreach (const MGNum &mgnum, mgnums)
+        {
+            this->_pvt_forceField(mgnum).setContents(mgnum, molecules, map);
+        }
+        
+        this->rebuildIndex();
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
+}
+
+/** Set the contents of the molecule groups identified by the ID 'mgid'
+    so that they only contain the molecules in the group 'molgroup'.
+    The passed property map is used to find any properties that are
+    needed by the forcefields
+    
+    \throw SireMol::missing_group
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void ForceFields::setContents(const MGID &mgid, const MolGroup &molgroup,
+                              const PropertyMap &map)
+{
+    QList<MGNum> mgnums = mgid.map(*this);
+    
+    ForceFields old_state( *this );
+    
+    try
+    {
+        foreach (const MGNum &mgnum, mgnums)
+        {
+            this->_pvt_forceField(mgnum).setContents(mgnum, molgroup, map);
+        }
+        
+        this->rebuildIndex();
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
+}
+
+/** Set the contents of the molecule groups identified by the ID 'mgid'
+    so that they only contain the view of the molecule in 'molview'.
+    Properties required by the forcefields are searched for in the
+    default properties.
+    
+    \throw SireMol::missing_group
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void ForceFields::setContents(const MGID &mgid, const MoleculeView &molview)
+{
+    this->setContents(mgid, molview, PropertyMap());
+}
+
+/** Set the contents of the molecule groups identified by the ID 'mgid'
+    so that they only contain the views of the molecule in 'molviews'.
+    Properties required by the forcefields are searched for in the
+    default properties.
+    
+    \throw SireMol::missing_group
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void ForceFields::setContents(const MGID &mgid, const ViewsOfMol &molviews)
+{
+    this->setContents(mgid, molviews, PropertyMap());
+}
+
+/** Set the contents of the molecule groups identified by the ID 'mgid'
+    so that they only contain the molecules in 'molecules'.
+    Properties required by the forcefields are searched for in the
+    default properties.
+    
+    \throw SireMol::missing_group
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void ForceFields::setContents(const MGID &mgid, const Molecules &molecules)
+{
+    this->setContents(mgid, molecules, PropertyMap());
+}
+
+/** Set the contents of the molecule groups identified by the ID 'mgid'
+    so that they only contain the molecules in the molecule group 'molgroup'.
+    Properties required by the forcefields are searched for in the
+    default properties.
+    
+    \throw SireMol::missing_group
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void ForceFields::setContents(const MGID &mgid, const MolGroup &molgroup)
+{
+    this->setContents(mgid, molgroup, PropertyMap());
+}

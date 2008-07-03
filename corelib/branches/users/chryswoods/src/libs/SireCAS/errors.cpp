@@ -41,3 +41,6 @@ RegisterMetaType<unavailable_differential> r_diff;
 
 static const
 RegisterMetaType<unavailable_integral> r_int;
+
+static const
+RegisterMetaType<non_factorisable> r_nonfact;
