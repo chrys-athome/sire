@@ -158,7 +158,10 @@ def export_class(mb, classname, aliases, includes, special_code):
 
    #run any class specific code
    if (classname in special_code):
+     print "Running special code for %s" % classname
      special_code[classname](c)
+   else:
+     print "No special code needed for %s" % classname
 
    #if this is a noncopyable class then remove all constructors!
    if c.noncopyable:
