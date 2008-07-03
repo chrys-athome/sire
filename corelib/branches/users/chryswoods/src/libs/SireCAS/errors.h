@@ -153,27 +153,27 @@ public:
     }
 };
 
-/** This class is thrown when an attempt is made to factorise
-    a expression which is not factorisable */
-class SIRECAS_EXPORT non_factorisable : public sirecas_error
+/** This class is thrown when an attempt is made to rearrange
+    an equation in a way that is not possible */
+class SIRECAS_EXPORT rearrangement_error : public sirecas_error
 {
 public:
-    non_factorisable() : sirecas_error()
+    rearrangement_error() : sirecas_error()
     {}
 
-    non_factorisable(QString err, QString place = QString::null)
+    rearrangement_error(QString err, QString place = QString::null)
               : sirecas_error(err,place)
     {}
 
-    non_factorisable(const non_factorisable &other) : sirecas_error(other)
+    rearrangement_error(const rearrangement_error &other) : sirecas_error(other)
     {}
 
-    ~non_factorisable() throw()
+    ~rearrangement_error() throw()
     {}
 
     const char* what() const throw()
     {
-        return "SireCAS::non_factorisable";
+        return "SireCAS::rearrangement_error";
     }
 };
 
@@ -183,7 +183,7 @@ Q_DECLARE_METATYPE(SireCAS::sirecas_error)
 Q_DECLARE_METATYPE(SireCAS::unavailable_differential)
 Q_DECLARE_METATYPE(SireCAS::unavailable_integral)
 Q_DECLARE_METATYPE(SireCAS::unregistered_expression)
-Q_DECLARE_METATYPE(SireCAS::non_factorisable)
+Q_DECLARE_METATYPE(SireCAS::rearrangement_error)
 
 SIRE_END_HEADER
 

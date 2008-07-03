@@ -200,13 +200,13 @@ public:
     /** Return the child expressions of this Expression */
     virtual Expressions children() const=0;
     
-    /** Factorise this expression into the form
+    /** Rearrange this expression into the form
         m x^i + n x^j + ... + constant
         and return the factors and powers of x
         
-        \throw SireCAS::non_factorisable
+        \throw SireCAS::rearrangement_error
     */
-    virtual QList<Factor> factorise(const Symbol &symbol) const=0;
+    virtual QList<Factor> expand(const Symbol &symbol) const=0;
 
 };
 

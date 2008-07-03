@@ -102,6 +102,8 @@ public:
     Expression simplify(int options=0) const;
 
     Expression expand() const;
+    QList<Factor> expand(const Symbol &symbol) const;
+
     Expression collapse() const;
     Expression conjugate() const;
 

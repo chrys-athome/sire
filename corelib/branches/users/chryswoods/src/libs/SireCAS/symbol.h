@@ -73,6 +73,8 @@ public:
     bool operator==(const Factor &other) const;
     bool operator!=(const Factor &other) const;
     
+    QString toString() const;
+    
     const Expression& factor() const
     {
         return f;
@@ -177,7 +179,7 @@ public:
     Functions functions() const;
     Expressions children() const;
 
-    QList<Factor> factorise(const Symbol &symbol) const;
+    QList<Factor> expand(const Symbol &symbol) const;
 
 protected:
 
@@ -201,6 +203,7 @@ inline uint qHash(const SireCAS::Symbol &symbol)
 Q_DECLARE_METATYPE(SireCAS::Symbol)
 
 SIRE_EXPOSE_CLASS( SireCAS::Symbol )
+SIRE_EXPOSE_CLASS( SireCAS::Factor )
 
 SIRE_END_HEADER
 

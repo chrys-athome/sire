@@ -36,7 +36,12 @@
 
 #include "SireMaths/complex.h"
 
+#include "SireError/errors.h"
+#include "SireCAS/errors.h"
+
 #include "SireStream/datastream.h"
+
+#include <QDebug>
 
 using namespace SireStream;
 using namespace SireCAS;
@@ -323,6 +328,72 @@ Expression PowerFunction::reduce() const
             return *this;
         }
     }
+}
+
+QList<Factor> PowerFunction::expand(const Symbol &symbol) const
+{
+    QList<Factor> ret;
+
+    if (not this->isFunction(symbol))
+    {
+        ret.append( Factor(*this, 0) );
+        return ret;
+    }
+
+    //get the core
+    Expression ex = core();
+    
+    //expand the core in powers of this symbol
+    QList<Factor> core_factors = ex.expand(symbol);
+
+    //get the power...
+    Expression pwr = power();
+
+    //we cannot expand if the power is a function of the symbol
+    if (pwr.isFunction(symbol))
+        throw SireCAS::rearrangement_error( QObject::tr(
+            "The expression %1 cannot be rearranged in terms of powers of %2 "
+            "as this power is itself a function of %2.")
+                .arg(this->toString(), symbol.toString()), CODELOC );
+
+    //if there is only a single power of the symbol, then it doesn't
+    //matter what the power is
+    if (core_factors.count() == 1)
+    {
+        core_factors[0] = Factor( core_factors[0].factor(),
+                                  pwr * core_factors[0].power() );
+                                  
+        return core_factors;
+    }
+
+    //we can only expand if the power is a constant integer...
+    Complex pwrval = pwr.evaluate(ComplexValues());
+
+    if (pwrval.isZero())
+    {
+        //this expression is just equal to 1
+        ret.append( Factor(1,0) );
+        return ret;
+    }
+    else if (pwrval.isReal() and SireMaths::isInteger(pwrval.real()))
+    {
+        qDebug() << CODELOC;
+    
+        int int_power = int(pwrval.real());
+        int abs_power = std::abs(int_power);
+
+        throw SireError::incomplete_code( QObject::tr(
+            "I need to write the code to allow expansion of a product..."),
+                CODELOC );
+    }
+    else
+        throw SireCAS::rearrangement_error( QObject::tr(
+            "The expression %1 cannot be rearranged in terms of powers of %2 "
+            "because it involves a non-integer power of a compound expression "
+            "involving %2.")
+                .arg(this->toString(), symbol.toString()), CODELOC );
+    
+    return ret;
 }
 
 ////////////

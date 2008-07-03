@@ -273,3 +273,16 @@ Expressions ExpressionBase::children() const
 {
     return d->children();
 }
+
+/** Return the factors and powers for the symbol 'symbol', given the values of the 
+    other symbols in 'values'. This attempts to rearrange this equation
+    so that it is of the form 'm * symbol^i + n * symbol^j ... + constant', 
+    and it returns the values of 'm,i', 'n,j' etc.. 
+    Note that this will fail if such a rearrangement is not possible
+    
+    \throw SireCAS::rearrangement_error
+*/
+QList<Factor> ExpressionBase::expand(const Symbol &symbol) const
+{
+    return d->expand(symbol);
+}

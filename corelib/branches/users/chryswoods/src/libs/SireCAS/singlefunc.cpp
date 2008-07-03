@@ -199,3 +199,19 @@ Expression SingleFunc::integ() const
 
     return 0;
 }
+
+QList<Factor> SingleFunc::expand(const Symbol &symbol) const
+{
+    if (this->isFunction(symbol))
+    {
+        //we cannot expand a function of this symbol...
+        throw SireCAS::rearrangement_error( QObject::tr(
+            "You cannot expand the function %1 in terms of the symbol %2.")
+                .arg(this->toString(), symbol.toString()), CODELOC );
+    }
+
+    QList<Factor> ret;
+    ret.append( Factor(*this, 0) );
+    
+    return ret;
+}

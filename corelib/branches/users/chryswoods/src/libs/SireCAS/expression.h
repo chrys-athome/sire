@@ -132,6 +132,8 @@ public:
     Expression simplify(int options=0) const;
 
     Expression expand() const;
+    QList<Factor> expand(const Symbol &symbol) const;
+
     Expression collapse() const;
 
     double factor() const;
@@ -165,8 +167,6 @@ public:
     Symbols symbols() const;
     Functions functions() const;
     Expressions children() const;
-
-    QList<Factor> factorise(const Symbol &symbol) const;
 
     template<class T>
     QList<T> children() const;

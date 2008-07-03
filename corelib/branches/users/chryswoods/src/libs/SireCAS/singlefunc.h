@@ -93,6 +93,8 @@ public:
     Expression differentiate(const Symbol &symbol) const;
     Expression integrate(const Symbol &symbol) const;
 
+    QList<Factor> expand(const Symbol &symbol) const;
+
 protected:
 
     virtual Expression functionOf(const Expression &arg) const=0;

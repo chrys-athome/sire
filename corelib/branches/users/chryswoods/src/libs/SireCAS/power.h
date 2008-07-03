@@ -108,6 +108,8 @@ public:
     bool isConstant() const;
 
     Expression reduce() const;
+    
+    QList<Factor> expand(const Symbol &symbol) const;
 };
 
 /**

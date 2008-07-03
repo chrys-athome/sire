@@ -146,7 +146,9 @@ Expressions Constant::children() const
     return Expressions();
 }
 
-QList<Factor> Constant::factorise(const Symbol&) const
+QList<Factor> Constant::expand(const Symbol&) const
 {
-    return QList<Factor>();
+    QList<Factor> ret;
+    ret.append( Factor( 1, 0 ) );
+    return ret;
 }

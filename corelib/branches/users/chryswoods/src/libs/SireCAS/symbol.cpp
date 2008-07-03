@@ -83,6 +83,11 @@ bool Factor::operator!=(const Factor &other) const
     return f != other.f or p != other.p;
 }
 
+QString Factor::toString() const
+{
+    return QString("(%1)(x)^(%2)").arg(f.toString(), p.toString());
+}
+
 ////////
 //////// Implementation of Symbol
 ////////
@@ -309,13 +314,17 @@ bool Symbol::isConstant() const
     return false;
 }
 
-QList<Factor> Symbol::factorise(const Symbol &symbol) const
+QList<Factor> Symbol::expand(const Symbol &symbol) const
 {
     QList<Factor> factors;
 
     if ( *this == symbol )
     {
         factors.append( Factor(1,1) );
+    }
+    else
+    {
+        factors.append( Factor(*this,0) );
     }
     
     return factors;

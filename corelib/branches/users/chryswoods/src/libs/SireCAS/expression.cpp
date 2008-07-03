@@ -606,11 +606,11 @@ Functions Expression::functions() const
     and it returns the values of 'm,i', 'n,j' etc.. 
     Note that this will fail if such a rearrangement is not possible
     
-    \throw SireCAS::non_factorisable
+    \throw SireCAS::rearrangement_error
 */
-QList<Factor> Expression::factorise(const Symbol &symbol)
+QList<Factor> Expression::expand(const Symbol &symbol) const
 {
-    QList<Factor> factors = exbase.factorise(symbol, values);
+    QList<Factor> factors = exbase.expand(symbol);
     
     if (fac != 1)
     {

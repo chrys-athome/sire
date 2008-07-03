@@ -1033,7 +1033,88 @@ Expression Product::conjugate() const
     return ret.reduce();
 }
 
-QList<Factor> Product::factorise(const Symbol &symbol) const
+static QList<Factor> multiply(const QList<Factor> &f0s, const QList<Factor> &f1s)
 {
-...
+    if (f0s.isEmpty())
+        return f1s;
+    else if (f1s.isEmpty())
+        return f0s;
+
+    QHash<Expression,Expression> factors;
+    
+    foreach (const Factor &f0, f0s)
+    {
+        foreach (const Factor &f1, f1s)
+        {
+            factors[ f0.power() + f1.power() ] += (f0.factor() * f1.factor());
+        }
+    }
+    
+    QList<Factor> ret;
+    
+    for (QHash<Expression,Expression>::const_iterator it = factors.constBegin();
+         it != factors.constEnd();
+         ++it)
+    {
+        ret.append( Factor( it.value(), it.key() ) );
+    }
+    
+    return ret;
+}
+
+static QList<Factor> expand(const QHash<Expression,Expression> &product,
+                            const Symbol &symbol)
+{
+    QList<Factor> ret;
+
+    for (QHash<Expression,Expression>::const_iterator it = product.constBegin();
+         it != product.constEnd();
+         ++it)
+    {
+        QList<Factor> factors = it->expand(symbol);
+        
+        ret = multiply(ret, factors);
+    }
+    
+    return ret;
+}
+
+QList<Factor> Product::expand(const Symbol &symbol) const
+{
+    if (strtval == 0)
+        return QList<Factor>();
+
+    QList<Factor> denom_factors = ::expand(denomparts, symbol);
+
+    if (denom_factors.count() > 1)
+    {
+        //we cannot expand functions like ( mx^i + nx^j )^-1
+        throw SireCAS::rearrangement_error( QObject::tr(
+            "The product %1 cannot be expanded in terms of the symbol %2 "
+            "as the denominator contains more than one power of %2.")
+                .arg(this->toString(), symbol.toString()), CODELOC );
+    }
+    
+    QList<Factor> num_factors = ::expand(numparts, symbol);
+    
+    //multiply the numerator by the constant...
+    if (strtval != 1)
+    {
+        for (QList<Factor>::iterator it = num_factors.begin();
+             it != num_factors.end();
+             ++it)
+        {
+            *it = Factor( strtval * it->factor(), it->power() );
+        }
+    }
+    
+    //now invert the power of the denominator...
+    for (QList<Factor>::iterator it = denom_factors.begin();
+         it != denom_factors.end();
+         ++it)
+    {
+        *it = Factor( it->factor(), -(it->power()) );
+    }
+    
+    return ::multiply(num_factors, denom_factors);
 }

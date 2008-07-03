@@ -118,7 +118,7 @@ public:
         return new Product(*this);
     }
 
-    QList<Factor> factorise(const Symbol &symbol, const Values &values) const;
+    QList<Factor> expand(const Symbol &symbol) const;
 
 private:
 

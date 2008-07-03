@@ -687,7 +687,7 @@ bool Sum::isCompound() const
     return posparts.count() + negparts.count() >= ( 2 - (not SireMaths::isZero(strtval)) );
 }
 
-QList<Factor> Sum::factorise(const Symbol &symbol) const
+QList<Factor> Sum::expand(const Symbol &symbol) const
 {
     QHash<Expression, Expression> factors;
     
@@ -695,19 +695,11 @@ QList<Factor> Sum::factorise(const Symbol &symbol) const
          it != posparts.constEnd();
          ++it)
     {
-        QList<Factor> facs = it->factorise(symbol);
-        
-        if (facs.isEmpty())
+        QList<Factor> facs = it->expand(symbol);
+
+        foreach (const Factor &fac, facs)
         {
-            //this part has no factors of this symbol
-            factors[ Expression(0) ] += it.value();
-        }
-        else
-        {
-            foreach (const Factor &fac, facs)
-            {
-                factors[fac.power()] += fac.factor();
-            }
+            factors[fac.power()] += fac.factor();
         }
     }
 
@@ -715,18 +707,11 @@ QList<Factor> Sum::factorise(const Symbol &symbol) const
          it != negparts.constEnd();
          ++it)
     {
-        QList<Factor> facs = it->factorise(symbol);
-        
-        if (facs.isEmpty())
+        QList<Factor> facs = it->expand(symbol);
+
+        foreach (const Factor &fac, facs)
         {
-            factors[ Expression(0) ] += it.value();
-        }
-        else
-        {
-            foreach (const Factor &fac, facs)
-            {
-                factors[fac.power()] -= fac.factor();
-            }
+            factors[fac.power()] -= fac.factor();
         }
     }
     
@@ -737,6 +722,11 @@ QList<Factor> Sum::factorise(const Symbol &symbol) const
          ++it)
     {
         ret.append( Factor( it.value(), it.key() ) );
+    }
+    
+    if (strtval != 0)
+    {
+        ret.append( Factor(strtval, 0) );
     }
     
     return ret;

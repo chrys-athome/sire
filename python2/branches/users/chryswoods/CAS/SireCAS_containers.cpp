@@ -54,6 +54,8 @@ void register_SireCAS_containers()
 {
     register_list< QList<Expression> >();
     register_list< QVector<Expression> >();
+
+    register_list< QList<Factor> >();
     
     register_list< QList<Symbol> >();
     register_list< QVector<Symbol> >();
