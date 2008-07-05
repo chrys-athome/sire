@@ -131,10 +131,7 @@ public:
     Expression substitute(const Identities &identities) const;
     Expression simplify(int options=0) const;
 
-    Expression expand() const;
     QList<Factor> expand(const Symbol &symbol) const;
-
-    Expression collapse() const;
 
     double factor() const;
 

@@ -90,18 +90,6 @@ SingleFunc& SingleFunc::operator=(const SingleFunc &other)
     return *this;
 }
 
-/** Expand this function */
-Expression SingleFunc::expand() const
-{
-    return functionOf( ex.expand() );
-}
-
-/** Collapse this function */
-Expression SingleFunc::collapse() const
-{
-    return functionOf( ex.collapse() );
-}
-
 /** Return the conjugate of this function */
 Expression SingleFunc::conjugate() const
 {
@@ -211,7 +199,7 @@ QList<Factor> SingleFunc::expand(const Symbol &symbol) const
     }
 
     QList<Factor> ret;
-    ret.append( Factor(*this, 0) );
+    ret.append( Factor(symbol, *this, 0) );
     
     return ret;
 }

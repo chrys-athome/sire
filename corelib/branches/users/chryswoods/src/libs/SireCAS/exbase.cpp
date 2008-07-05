@@ -131,18 +131,6 @@ Expression ExBase::simplify(int) const
     return Expression(*this);
 }
 
-/** Expand this expression (if possible) */
-Expression ExBase::expand() const
-{
-    return Expression(*this);
-}
-
-/** Collapse this expression (if possible) */
-Expression ExBase::collapse() const
-{
-    return Expression(*this);
-}
-
 /** Return the complex conjugate of this expression */
 Expression ExBase::conjugate() const
 {

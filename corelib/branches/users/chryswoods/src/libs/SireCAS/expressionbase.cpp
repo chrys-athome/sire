@@ -156,18 +156,6 @@ Expression ExpressionBase::simplify(int options) const
     return d->simplify(options);
 }
 
-/** Expand this expression (if possible) */
-Expression ExpressionBase::expand() const
-{
-    return d->expand();
-}
-
-/** Collapse this expression (if possible) */
-Expression ExpressionBase::collapse() const
-{
-    return d->collapse();
-}
-
 /** Return the complex conjugate of this expression */
 Expression ExpressionBase::conjugate() const
 {

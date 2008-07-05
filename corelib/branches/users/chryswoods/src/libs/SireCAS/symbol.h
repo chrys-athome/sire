@@ -52,44 +52,6 @@ namespace SireCAS
 class Symbols;
 class Values;
 
-/** This is a small class that can hold the factor and power of a symbol
-
-    @author Christopher Woods
-*/
-class SIRECAS_EXPORT Factor
-{
-public:
-    Factor();
-    
-    Factor(double factor, double power);
-    Factor(const Expression &factor, const Expression &power);
-    
-    Factor(const Factor &other);
-    
-    ~Factor();
-    
-    Factor& operator=(const Factor &other);
-    
-    bool operator==(const Factor &other) const;
-    bool operator!=(const Factor &other) const;
-    
-    QString toString() const;
-    
-    const Expression& factor() const
-    {
-        return f;
-    }
-    
-    const Expression& power() const
-    {
-        return p;
-    }
-
-private:
-    /** The factor and power */
-    Expression f, p;
-};
-
 /** This class represents an algebraic symbol in the equation (e.g. 'x' or 'y')
 
     @author Christopher Woods
@@ -191,6 +153,53 @@ protected:
 
     /** String representation of this symbol */
     QString stringrep;
+};
+
+/** This is a small class that can hold the factor and power of a symbol
+
+    @author Christopher Woods
+*/
+class SIRECAS_EXPORT Factor
+{
+public:
+    Factor();
+    
+    Factor(const Symbol &symbol, double factor, double power);
+    Factor(const Symbol &symbol,
+           const Expression &factor, const Expression &power);
+    
+    Factor(const Factor &other);
+    
+    ~Factor();
+    
+    Factor& operator=(const Factor &other);
+    
+    bool operator==(const Factor &other) const;
+    bool operator!=(const Factor &other) const;
+    
+    QString toString() const;
+    
+    const Symbol& symbol() const
+    {
+        return s;
+    }
+    
+    const Expression& factor() const
+    {
+        return f;
+    }
+    
+    const Expression& power() const
+    {
+        return p;
+    }
+
+private:
+    /** The symbol for the factor */
+    Symbol s;
+
+    /** The factor and power */
+    Expression f, p;
 };
 
 }

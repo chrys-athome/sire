@@ -74,8 +74,6 @@ public:
 
     Expression simplify(int options=0) const;
 
-    Expression expand() const;
-    Expression collapse() const;
     Expression conjugate() const;
 
     bool isFunction(const Symbol&) const;

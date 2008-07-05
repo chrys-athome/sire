@@ -542,19 +542,32 @@ SireUnits::Dimension::Energy ForceFields::energy()
     or it may represent a function of the forcefield components
     
     \throw SireFF::missing_component
-*//*
+*/
 SireUnits::Dimension::Energy ForceFields::energy(const Symbol &component)
 {
+    return SireUnits::Dimension::Energy(0);
 }
 
-Values ForceFields::energies(const QSet<Symbol> &components);
-Values ForceFields::energies();
+Values ForceFields::energies(const QSet<Symbol> &components)
+{
+    return Values();
+}
 
-void ForceFields::force(ForceTable &forcetable, double scale_force=1);
+Values ForceFields::energies()
+{
+    return Values();
+}
+
+void ForceFields::force(ForceTable &forcetable, double scale_force)
+{
+    return;
+}
+
 void ForceFields::force(ForceTable &forcetable, const Symbol &component,
-           double scale_force=1);
-
-*/
+                        double scale_force)
+{
+    return;
+}
 
 /** Set the property 'name' to have the value 'value' in *all* of the 
     forcefields contained in this set

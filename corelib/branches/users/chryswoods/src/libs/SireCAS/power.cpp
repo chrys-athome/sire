@@ -330,13 +330,42 @@ Expression PowerFunction::reduce() const
     }
 }
 
+static QList<Factor> multiply(const QList<Factor> &f0s, const QList<Factor> &f1s)
+{
+    if (f0s.isEmpty())
+        return f1s;
+    else if (f1s.isEmpty())
+        return f0s;
+
+    QHash<Expression,Expression> factors;
+    
+    foreach (const Factor &f0, f0s)
+    {
+        foreach (const Factor &f1, f1s)
+        {
+            factors[ f0.power() + f1.power() ] += (f0.factor() * f1.factor());
+        }
+    }
+    
+    QList<Factor> ret;
+    
+    for (QHash<Expression,Expression>::const_iterator it = factors.constBegin();
+         it != factors.constEnd();
+         ++it)
+    {
+        ret.append( Factor( f0s.at(0).symbol(), it.value(), it.key() ) );
+    }
+    
+    return ret;
+}
+
 QList<Factor> PowerFunction::expand(const Symbol &symbol) const
 {
     QList<Factor> ret;
 
     if (not this->isFunction(symbol))
     {
-        ret.append( Factor(*this, 0) );
+        ret.append( Factor(symbol, *this, 0) );
         return ret;
     }
 
@@ -360,7 +389,8 @@ QList<Factor> PowerFunction::expand(const Symbol &symbol) const
     //matter what the power is
     if (core_factors.count() == 1)
     {
-        core_factors[0] = Factor( core_factors[0].factor(),
+        core_factors[0] = Factor( core_factors[0].symbol(),
+                                  core_factors[0].factor(),
                                   pwr * core_factors[0].power() );
                                   
         return core_factors;
@@ -372,19 +402,46 @@ QList<Factor> PowerFunction::expand(const Symbol &symbol) const
     if (pwrval.isZero())
     {
         //this expression is just equal to 1
-        ret.append( Factor(1,0) );
+        ret.append( Factor(symbol,1,0) );
         return ret;
     }
     else if (pwrval.isReal() and SireMaths::isInteger(pwrval.real()))
     {
-        qDebug() << CODELOC;
-    
         int int_power = int(pwrval.real());
-        int abs_power = std::abs(int_power);
 
-        throw SireError::incomplete_code( QObject::tr(
-            "I need to write the code to allow expansion of a product..."),
-                CODELOC );
+        if (int_power == 1)
+            return core_factors;
+        else if (int_power == 0)
+        {
+            QList<Factor> ret;
+            ret.append( Factor(symbol,1,0) );
+            return ret;
+        }
+        else if (int_power < 0)
+        {
+            if (core_factors.count() > 1)
+                throw SireCAS::rearrangement_error( QObject::tr(
+                    "The expression %1 cannot be rearranged in terms of powers of %2 "
+                    "because multiple powers of %2 are raised to a negative power.")
+                        .arg(this->toString(), symbol.toString()), CODELOC );
+                        
+            core_factors[0] = Factor(  core_factors[0].symbol(),
+                                       core_factors[0].factor(), 
+                                       int_power * core_factors[0].power() );
+                                      
+            return core_factors;
+        }
+        else
+        {
+            QList<Factor> ret = core_factors;
+            
+            for (int i=1; i<int_power; ++i)
+            {
+                ret = ::multiply(ret, core_factors);
+            }
+            
+            return ret;
+        }
     }
     else
         throw SireCAS::rearrangement_error( QObject::tr(

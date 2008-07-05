@@ -461,40 +461,6 @@ Expression Sum::integrate(const Symbol &symbol) const
     return integ.reduce();
 }
 
-/** Expand this sum */
-Expression Sum::expand() const
-{
-    Sum expanded;
-
-    //add the expansions of all of the positive parts...
-    for (QHash<ExpressionBase,Expression>::const_iterator it = posparts.begin();
-         it != posparts.end();
-         ++it)
-    {
-        expanded.add( it->expand() );
-    }
-
-    //now add the expansions of all of the negative parts...
-    for (QHash<ExpressionBase,Expression>::const_iterator it = negparts.begin();
-         it != negparts.end();
-         ++it)
-    {
-        expanded.add( -(it->expand()) );
-    }
-
-    expanded.strtval = strtval;
-
-    return expanded.reduce();
-}
-
-/** Collapse this sum - this searches for common factors and tries to collapse
-    them together into products... */
-Expression Sum::collapse() const
-{
-    #warning - need to write Sum::collapse()
-    return *this;
-}
-
 /** Return a series expansion of this sum about 'symbol' to order 'n' */
 Expression Sum::series(const Symbol &symbol, int n) const
 {
@@ -721,12 +687,12 @@ QList<Factor> Sum::expand(const Symbol &symbol) const
          it != factors.constEnd();
          ++it)
     {
-        ret.append( Factor( it.value(), it.key() ) );
+        ret.append( Factor( symbol, it.value(), it.key() ) );
     }
     
     if (strtval != 0)
     {
-        ret.append( Factor(strtval, 0) );
+        ret.append( Factor(symbol, strtval, 0) );
     }
     
     return ret;

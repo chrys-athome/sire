@@ -414,22 +414,6 @@ Expression Expression::substitute(const Identities &identities) const
     return ret;
 }
 
-/** Return an expanded form of this expression (where possible products of
-    sums multiplied out to form sums of products) */
-Expression Expression::expand() const
-{
-    Sum sum(*this);
-    return sum.expand();
-}
-
-/** Return a collapsed form of this expression (common factors collected together,
-    where possible sums of products collected together into products of sums) */
-Expression Expression::collapse() const
-{
-    Product product(*this);
-    return product.collapse();
-}
-
 /** Return the complex conjugate of this expression */
 Expression Expression::conjugate() const
 {
@@ -618,7 +602,7 @@ QList<Factor> Expression::expand(const Symbol &symbol) const
              it != factors.end();
              ++it)
         {
-            *it = Factor( fac * it->factor(), it->power() );
+            *it = Factor( it->symbol(), fac * it->factor(), it->power() );
         }
     }
     

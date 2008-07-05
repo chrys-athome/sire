@@ -995,21 +995,6 @@ Expression Product::simplify(int options) const
     return ret.reduce();
 }
 
-/** Expand this product - this multiplies out any products of sums
-    to form sums of products */
-Expression Product::expand() const
-{
-#warning Need to write Product::expand()
-    return *this;
-}
-
-/** Collapse this product down by collecting together common factors */
-Expression Product::collapse() const
-{
-#warning Need to write Product::collapse()
-    return *this;
-}
-
 /** Return the complex conjugate of this product */
 Expression Product::conjugate() const
 {
@@ -1056,7 +1041,7 @@ static QList<Factor> multiply(const QList<Factor> &f0s, const QList<Factor> &f1s
          it != factors.constEnd();
          ++it)
     {
-        ret.append( Factor( it.value(), it.key() ) );
+        ret.append( Factor( f0s.at(0).symbol(), it.value(), it.key() ) );
     }
     
     return ret;
@@ -1104,7 +1089,7 @@ QList<Factor> Product::expand(const Symbol &symbol) const
              it != num_factors.end();
              ++it)
         {
-            *it = Factor( strtval * it->factor(), it->power() );
+            *it = Factor( symbol, strtval * it->factor(), it->power() );
         }
     }
     
@@ -1113,7 +1098,7 @@ QList<Factor> Product::expand(const Symbol &symbol) const
          it != denom_factors.end();
          ++it)
     {
-        *it = Factor( it->factor(), -(it->power()) );
+        *it = Factor( it->symbol(), it->factor(), -(it->power()) );
     }
     
     return ::multiply(num_factors, denom_factors);

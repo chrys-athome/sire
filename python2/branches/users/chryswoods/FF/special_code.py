@@ -14,7 +14,11 @@ def fix_FFID(c):
 def fix_ForceTable(c):
    c.decls( "getTable" )[0].exclude()
 
+def fix_ForceFields(c):
+   c.add_declaration_code("#include \"forcetable.h\"")
+
 special_code = { "SireFF::ForceTable" : fix_ForceTable,
                  "SireFF::FFID" : fix_FFID,
                  "SireFF::FFIdx" : fix_FFID,
-                 "SireFF::FFName" : fix_FFID }
+                 "SireFF::FFName" : fix_FFID,
+                 "SireFF::ForceFields" : fix_ForceFields }

@@ -74,8 +74,6 @@ public:
     const Expression& argument() const;
     const Expression& x() const;
 
-    Expression expand() const;
-    Expression collapse() const;
     Expression conjugate() const;
 
     bool isFunction(const Symbol &symbol) const;

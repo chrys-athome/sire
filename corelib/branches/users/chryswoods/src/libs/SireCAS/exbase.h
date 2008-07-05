@@ -136,8 +136,6 @@ public:
 
     virtual Expression simplify(int options=0) const;
 
-    virtual Expression expand() const;
-    virtual Expression collapse() const;
     virtual Expression conjugate() const;
 
     virtual bool isFunction(const Symbol&) const;

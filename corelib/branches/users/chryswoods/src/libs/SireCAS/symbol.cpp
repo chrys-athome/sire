@@ -53,14 +53,17 @@ using namespace SireCAS;
 Factor::Factor() : f(1), p(1)
 {}
 
-Factor::Factor(const Expression &factor, const Expression &power)
-       : f(factor), p(power)
+Factor::Factor(const Symbol &symbol,
+               const Expression &factor, const Expression &power)
+       : s(symbol), f(factor), p(power)
 {}
 
-Factor::Factor(double factor, double power) : f(factor), p(power)
+Factor::Factor(const Symbol &symbol, 
+               double factor, double power) 
+       : s(symbol), f(factor), p(power)
 {}
 
-Factor::Factor(const Factor &other) : f(other.f), p(other.p)
+Factor::Factor(const Factor &other) : s(other.s), f(other.f), p(other.p)
 {}
 
 Factor::~Factor()
@@ -70,22 +73,34 @@ Factor& Factor::operator=(const Factor &other)
 {
     f = other.f;
     p = other.p;
+    s = other.s;
+    
     return *this;
 }
 
 bool Factor::operator==(const Factor &other) const
 {
-    return f == other.f and p == other.p;
+    return f == other.f and p == other.p and s == other.s;
 }
 
 bool Factor::operator!=(const Factor &other) const
 {
-    return f != other.f or p != other.p;
+    return f != other.f or p != other.p or s != other.s;
+}
+
+static QString get_string(const Expression &expression)
+{
+    if (expression.isCompound())
+    {
+        return QString("[%1]").arg(expression.toString());
+    }
+    else
+        return expression.toString();
 }
 
 QString Factor::toString() const
 {
-    return QString("(%1)(x)^(%2)").arg(f.toString(), p.toString());
+    return QString("%1 %2^%3").arg(::get_string(f), s.toString(), ::get_string(p));
 }
 
 ////////
@@ -320,11 +335,11 @@ QList<Factor> Symbol::expand(const Symbol &symbol) const
 
     if ( *this == symbol )
     {
-        factors.append( Factor(1,1) );
+        factors.append( Factor(symbol, 1,1) );
     }
     else
     {
-        factors.append( Factor(*this,0) );
+        factors.append( Factor(symbol, *this,0) );
     }
     
     return factors;
