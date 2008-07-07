@@ -48,10 +48,495 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <boost/shared_ptr.hpp>
+
 using namespace SireFF;
 using namespace SireMol;
 using namespace SireBase;
 using namespace SireStream;
+
+using SireUnits::Dimension::Energy;
+
+namespace SireFF
+{
+namespace detail
+{
+
+/** This is a private hierarchy of classes that is used just by ForceFields
+    to relate a symbol to an energy component, forcefield expression or
+    constant */
+class FFSymbol
+{
+public:
+    FFSymbol();
+    FFSymbol(const Symbol &symbol);
+    
+    FFSymbol(const FFSymbol &other);
+    
+    virtual ~FFSymbol();
+    
+    virtual double value() const=0;
+    
+    virtual Energy energy(QVector<ForceField> &forcefields,
+                          const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                          double scale_energy=1) const=0;
+                          
+    virtual void force(ForceTable &forcetable,
+                       QVector<ForceField> &forcefields,
+                       const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                       double scale_force=1) const=0;
+
+    const Symbol& symbol() const;
+
+    template<class T>
+    bool isA() const
+    {
+        return dynamic_cast<const T*>(this) != 0;
+    }
+    
+    template<class T>
+    const T& asA() const
+    {
+        return dynamic_cast<const T&>(*this);
+    }
+
+private:
+    /** The symbol that this object represents */
+    Symbol s;
+};
+
+/** This is an FFSymbol that holds just a single value */
+class FFSymbolValue : public FFSymbol
+{
+public:
+    FFSymbolValue();
+    FFSymbolValue(const Symbol &symbol, double value);
+    
+    FFSymbolValue(const FFSymbolValue &other);
+    
+    ~FFSymbolValue();
+    
+    double value() const;
+    
+    Energy energy(QVector<ForceField> &forcefields,
+                  const QHash<Symbol,FFSymbolPtr> &ffsymbols) const;
+    
+    void force(ForceTable &forcetable,
+               QVector<ForceField> &forcefields,
+               const QHash<Symbol,FFSymbolPtr> &ffsymbols) const;
+    
+private:
+    /** The value of this symbol */
+    double v;
+};
+
+/** This is an FFSymbol that holds a single forcefield component */
+class FFSymbolFF : public FFSymbol
+{
+public:
+    FFSymbolFF();
+    FFSymbolFF(FFIdx ffidx, const Symbol &component);
+    
+    FFSymbolFF(const FFSymbolFF &other);
+    
+    ~FFSymbolFF();
+    
+    FFIdx ffIdx() const;
+    
+    double value() const;
+    
+    Energy energy(QVector<ForceField> &forcefields,
+                  const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                  double scale_energy) const;
+                  
+    void force(ForceTable &forcetable, QVector<ForceField> &forcefields,
+               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+               double scale_force) const;
+
+private:
+    /** The index of the forcefield that contains this component */
+    FFIdx ffidx;
+};
+
+/** This is an FFSymbol that represents a complete forcefield expression */
+class FFSymbolExpression : public FFSymbol
+{
+public:
+    FFSymbolExpression();
+    FFSymbolExpression(const Symbol &symbol, const Expression &expression);
+    
+    FFSymbolExpression(const FFSymbolExpression &other);
+    
+    ~FFSymbolExpression();
+    
+    const Expression& expression() const;
+    
+    void expandInTermsOf(const QSet<Symbol> &ffsymbols);
+    
+    double value() const;
+    
+    Energy energy(QVector<ForceField> &forcefields,
+                  const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                  double scale_energy) const;
+                  
+    void force(ForceTable &forcetable, QVector<ForceField> &forcefields,
+               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+               double scale_force) const;
+
+private:
+    class Component
+    {
+    public:
+        Component();
+        Component(const Expression &scale_factor, const Symbol &component);
+        
+        Component(const Component &other);
+        
+        ~Component();
+        
+        int nDependents() const;
+        const QVector<Symbol>& dependents() const;
+        
+        double scalingFactor(const Values &values) const;
+        
+        const Symbol& symbol() const;
+        
+    private:
+        /** The symbol for this component */
+        Symbol s;
+        
+        /** The symbols used in the scaling factor */
+        QVector<Symbol> deps;
+        
+        /** The expression for the scaling factor */
+        Expression sclfac;
+    };
+
+    /** The forcefield expression */
+    Expression ffexpression;
+    
+    /** All of the components of this expression */
+    QVector<Component> components;
+};
+
+/** This is an FFSymbol that represents just a simple total of the energy
+    of the forcefields */
+class FFTotalExpression : public FFSymbol
+{
+public:
+    FFTotalExpression();
+    FFTotalExpression(const Symbol &symbol);
+    
+    ~FFTotalExpression();
+    
+    double value() const;
+    
+    Energy energy(QVector<ForceField> &forcefields,
+                  const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                  double scale_energy) const;
+                  
+    void force(ForceTable &forcetable, QVector<ForceField &forcefields,
+               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+               double scale_force) const;
+};
+
+} // end of namespace detail
+
+} // end of namespace SireFF
+
+///////////
+/////////// Implementation of FFSymbol
+///////////
+
+FFSymbol::FFSymbol()
+{}
+
+FFSymbol::FFSymbol(const Symbol &symbol) : s(symbol)
+{}
+
+FFSymbol::FFSymbol(const FFSymbol &other) : s(other.s)
+{}
+
+FFSymbol::~FFSymbol()
+{}
+
+const Symbol& FFSymbol::symbol() const
+{
+    return s;
+}
+
+///////////
+/////////// Implementation of FFSymbolValue
+///////////
+
+FFSymbolValue::FFSymbolValue() : FFSymbol(), value(0)
+{}
+
+FFSymbolValue::FFSymbolValue(const Symbol &symbol, double value) 
+              : FFSymbol(symbol), v(value)
+{}
+
+FFSymbolValue::FFSymbolValue(const FFSymbolValue &other)
+               : FFSymbol(other), v(other.v)
+{}
+
+FFSymbolValue::~FFSymbolValue()
+{}
+
+double FFSymbolValue::value() const
+{
+    return v;
+}
+
+Energy FFSymbolValue::energy(QVector<ForceField> &forcefields,
+                             const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                             double scale_energy) const
+{
+    return Energy(scale_energy * v);
+}
+
+void FFSymbolValue::force(ForceTable &forcetable,
+                          QVector<ForceField> &forcefields,
+                          const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                          double scale_force) const
+{
+    return;
+}
+
+///////////
+/////////// Implementation of FFSymbolFF
+///////////
+
+FFSymbolFF::FFSymbolFF() : FFSymbol(), ffidx(0)
+{}
+
+FFSymbolFF::FFSymbolFF(FFIdx ffindex, const Symbol &component)
+           : FFSymbol(component), ffidx(ffindex)
+{}
+
+FFSymbolFF::FFSymbolFF(const FFSymbolFF &other)
+           : FFSymbol(other), ffidx(other.ffidx)
+{}
+
+FFSymbolFF::~FFSymbolFF()
+{}
+
+FFIdx FFSymbolFF::ffIdx() const
+{
+    return ffidx;
+}
+
+double FFSymbolFF::value() const
+{
+    throw SireError::program_bug( QObject::tr(
+        "There is no value associated with a forcefield (%1, %2)")
+            .arg(ffidx).arg(this->symbol().toString()), CODELOC );
+            
+    return 0;
+}
+
+Energy FFSymbolFF::energy(QVector<ForceField> &forcefields,
+                          const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                          double scale_energy) const
+{
+    return forcefields[ffidx].edit().energy(this->symbol(), scale_energy);
+}
+
+void FFSymbolFF::force(ForceTable &forcetable, QVector<ForceField> &forcefields,
+                       const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                       double scale_force) const
+{
+    ForceField &ffield = forcefields[ffidx];
+    
+    if (not ffield->isA<FF3D>())
+        throw SireFF::missing_derivative( QObject::tr(
+            "The forcefield of type %1 does not inherit from FF3D so does "
+            "not provide a force function.")
+                .arg(ffield->what()), CODELOC );
+
+    ffield.edit().asA<FF3D>().force(forcetable, this->symbol(), scale_force);
+}
+
+///////////
+/////////// Implementation of FFSymbolExpression
+///////////
+
+FFSymbolExpression::FFSymbolExpression() : FFSymbol()
+{}
+
+FFSymbolExpression::FFSymbolExpression(const Symbol &symbol, 
+                                       const Expression &expression)
+                   : FFSymbol(symbol), ffexpression(expression)
+{}
+
+FFSymbolExpression::FFSymbolExpression(const FFSymbolExpression &other)
+                   : FFSymbol(other), ffexpression(other.ffexpression),
+                     components(other.components)
+{}
+
+FFSymbolExpression::~FFSymbolExpression()
+{}
+
+const Expression& FFSymbolExpression::expression() const
+{
+    return ffexpression;
+}
+
+void FFSymbolExpression::expandInTermsOf(const QSet<Symbol> &ffsymbols)
+{
+    //get all of the symbols in which to expand this expression
+    QSet<Symbol> symbols = ffexpression.symbols();
+    symbols.intersect(ffsymbols);
+    
+    foreach (const Symbol &symbol, symbols)
+    {
+        QList<Factor> factors = ffexpression.expand(symbol);
+        
+        foreach (const Factor &factor, factors)
+        {
+            if (factor.power().isZero())
+                //this is just 1!
+                constant += factor.factor();
+            else
+            {
+                if (factor.power() != Expression(1))
+                    throw SireError::incompatible_error( QObject::tr(
+                        "You cannot raise a forcefield energy component (%1) "
+                        "to any power (%2) other than 1 as this is not "
+                        "dimensionally correct.")
+                            .arg(symbol.toString(), factor.power().toString()),
+                                CODELOC );
+                
+                components.append( Component(factor.factor(), symbol) );
+            }
+        }
+    }
+}
+
+double FFSymbolExpression::value() const
+{
+    throw SireError::incompatible_error( QObject::tr(
+        "You cannot multiply one forcefield component by another in "
+        "the forcefield expression %1.")
+            .arg(ffexpression.toString()), CODELOC );
+            
+    return 0;
+}
+
+Energy FFSymbolExpression::energy(QVector<ForceField> &forcefields,
+                                  const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                                  double scale_energy) const
+{
+    //loop over each component of the expression
+    Energy nrg(0);
+    
+    int ncomponents = 0;
+    const Component *components_array[i] = components.constData();
+    
+    Values values;
+    
+    for (int i=0; i<ncomponents; ++i)
+    {
+        const Component &component = components_array[i];
+        
+        //evaluate all of the dependent symbols...
+        int ndeps = component.nDependents();
+        const Symbol *deps_array = component.dependents().constData();
+        
+        for (int j=0; j<ndeps; ++j)
+        {
+            const Symbol &symbol = deps_array[j];
+
+            if (not values.contains(symbol))
+                values.insert( symbol, ffsymbols[symbol].value() );
+        }
+        
+        //now evaluate the scaling factor...
+        scale_energy *= component.scalingFactor(values);
+        
+        nrg += ffsymbols[component.symbol()].energy(forcefields, ffsymbols,
+                                                    scale_energy);
+    }
+
+    return nrg;
+}
+
+void FFSymbolExpression::force(ForceTable &forcetable,
+                               QVector<ForceField> &forcefields,
+                               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                               double scale_force) const
+{
+    int ncomponents = 0;
+    const Component *components_array[i] = components.constData();
+    
+    Values values;
+    
+    for (int i=0; i<ncomponents; ++i)
+    {
+        const Component &component = components_array[i];
+        
+        //evaluate all of the dependent symbols...
+        int ndeps = component.nDependents();
+        const Symbol *deps_array = component.dependents().constData();
+        
+        for (int j=0; j<ndeps; ++j)
+        {
+            const Symbol &symbol = deps_array[j];
+
+            if (not values.contains(symbol))
+                values.insert( symbol, ffsymbols[symbol].value() );
+        }
+        
+        //now evaluate the scaling factor...
+        scale_force *= component.scalingFactor(values);
+        
+        ffsymbols[component.symbol()].force(forcetable, forcefields, 
+                                            ffsymbols, scale_force);
+    }
+}
+
+///////////
+/////////// Implementation of FFTotalExpression
+///////////
+
+Energy FFTotalExpression::energy(QVector<ForceField> &forcefields,
+                                 const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                                 double scale_energy) const
+{
+    Energy nrg(0);
+    
+    int nffields = forcefields.count();
+    
+    ForceField *ffields_array = forcefields.data();
+    
+    for (int i=0; i<nffields; ++i)
+    {
+        nrg += ffields_array[i].edit().energy();
+    }
+    
+    return nrg * scale_energy;
+}
+
+void FFTotalExpression::force(ForceTable &forcetable,
+                              QVector<ForceField> &forcefields,
+                              const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                              double scale_force) const
+{
+    int nffields = forcefields.count();
+    ForceField *ffields_array = forcefields.data();
+    
+    for (int i=0; i<nffields; ++i)
+    {
+        ForceField &ffield = ffields_array[i];
+        
+        if (ffield->isA<FF3D>())
+            ffield.edit().asA<FF3D>().force(forcetable, scale_force);
+    }
+}
+
+///////////
+/////////// Implementation of ForceFields
+///////////
 
 static const RegisterMetaType<ForceFields> r_ffields;
 

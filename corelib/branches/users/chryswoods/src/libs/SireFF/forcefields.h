@@ -31,6 +31,8 @@
 
 #include "forcefield.h"
 
+#include <boost/shared_ptr.hpp>
+
 SIRE_BEGIN_HEADER
 
 namespace SireFF
@@ -52,6 +54,12 @@ using SireMol::MGID;
 using SireMol::Molecules;
 using SireMol::ViewsOfMol;
 using SireMol::MoleculeView;
+
+namespace detail
+{
+class FFSymbol;
+typedef boost::shared_ptr<FFSymbol> FFSymbolPtr;
+}
 
 /** A ForceFields object contains a collection of forcefields,
     together with energy functions that allow energies/forces
@@ -249,6 +257,10 @@ private:
     /** Map from molecule group number to the name of the 
         forcefield that contains that group */
     QHash<MGNum, FFName> mgroups_by_num;
+    
+    /** All of the energy components, expressions and constants
+        available in this collection of forcefields */
+    QHash<Symbol, detail::FFSymbolPtr> ffsymbols;
 };
 
 }
