@@ -379,6 +379,56 @@ void FFSymbolFF::force(ForceTable &forcetable, QVector<ForceField> &forcefields,
 /////////// Implementation of FFSymbolExpression
 ///////////
 
+FFSymbolExpression::Component::Component()
+{}
+
+FFSymbolExpression::Component::Component(const Expression &scale_factor, 
+                                         const Symbol &component)
+                   : s(component), sclfac(scale_factor)
+{
+    Symbols dependents = scale_factor.symbols();
+    
+    if (not dependents.isEmpty())
+    {
+        deps = QVector<Symbol>( dependents.count() );
+        Symbol *deps_array = deps.data();
+        
+        int i = 0;
+        foreach (const Symbol &dependent, dependents)
+        {
+            deps_array[i] = dependent;
+            ++i;
+        }
+    }
+}
+
+FFSymbolExpression::Component::Component(const Component &other)
+                   : s(other.s), deps(other.deps), sclfac(other.sclfac)
+{}
+
+FFSymbolExpression::Component::~Component()
+{}
+
+int FFSymbolExpression::Component::nDependents() const
+{
+    return deps.count();
+}
+
+const QVector<Symbol>& FFSymbolExpression::Component::dependents() const
+{
+    return deps;
+}
+
+double FFSymbolExpression::Component::scalingFactor(const Values &values) const
+{
+    return sclfac.evaluate(values);
+}
+
+const Symbol& FFSymbolExpression::Component::symbol() const
+{
+    return s;
+}
+
 FFSymbolExpression::FFSymbolExpression() : FFSymbol()
 {}
 
@@ -526,6 +576,15 @@ FFTotalExpression::FFTotalExpression(const FFTotalExpression &other)
   
 FFTotalExpression::~FFTotalExpression()
 {}
+
+double FFTotalExpression::value() const
+{
+    throw SireError::program_bug( QObject::tr(
+        "An FFTotalExpression should never be used in a situation where "
+        "its value must be determined..."), CODELOC );
+        
+    return 0;
+}
 
 Energy FFTotalExpression::energy(QVector<ForceField> &forcefields,
                                  const QHash<Symbol,FFSymbolPtr> &ffsymbols,

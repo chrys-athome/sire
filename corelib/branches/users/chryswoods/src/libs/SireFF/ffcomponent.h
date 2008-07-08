@@ -42,6 +42,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireFF
 {
+class FFComponent;
+}
+
+QDataStream& operator<<(QDataStream&, const SireFF::FFComponent&);
+QDataStream& operator>>(QDataStream&, SireFF::FFComponent&);
+
+namespace SireFF
+{
 
 class FF;
 
@@ -59,6 +67,10 @@ public:
     {
         return "SireFF::FFComponent";
     }
+    
+    virtual const char* what() const=0;
+    
+    virtual FFComponent* clone() const=0;
     
     FFName forceFieldName() const;
 
@@ -158,6 +170,8 @@ private:
 };
 
 } // end of namespace SireFF
+
+SIRE_EXPOSE_CLASS( FFComponent )
 
 SIRE_END_HEADER
 

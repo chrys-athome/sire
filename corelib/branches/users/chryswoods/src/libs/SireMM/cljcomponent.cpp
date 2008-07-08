@@ -28,14 +28,41 @@
 
 #include "cljcomponent.h"
 
+#include "SireStream/datastream.h"
+
 using namespace SireMM;
 using namespace SireFF;
-
 using namespace SireCAS;
+using namespace SireStream;
 
 //////
 ////// Implementation of CoulombComponent
 //////
+
+static const RegisterMetaType<CoulombComponent> r_coul;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CoulombComponent &coul)
+{
+    writeHeader(ds, r_coul, 1);
+    ds << static_cast<const FFComponent&>(coul);
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CoulombComponent &coul)
+{
+    VersionID v = readHeader(ds, r_coul);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<FFComponent&>(coul);
+    }
+    else
+        throw version_error(v, "1", r_coul, CODELOC);
+        
+    return ds;
+}
 
 /** Constructor */
 CoulombComponent::CoulombComponent(const FFName &ffname)
@@ -77,6 +104,31 @@ void CoulombComponent::changeEnergy(FF &ff, const CoulombEnergy &delta) const
 ////// Implementation of LJComponent
 //////
 
+static const RegisterMetaType<LJComponent> r_lj;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const LJComponent &lj)
+{
+    writeHeader(ds, r_lj, 1);
+    ds << static_cast<const FFComponent&>(lj);
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, LJComponent &lj)
+{
+    VersionID v = readHeader(ds, r_lj);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<FFComponent&>(lj);
+    }
+    else
+        throw version_error(v, "1", r_lj, CODELOC);
+        
+    return ds;
+}
+
 /** Constructor */
 LJComponent::LJComponent(const FFName &ffname)
             : FFComponent(ffname, QLatin1String("LJ"))
@@ -116,6 +168,34 @@ void LJComponent::changeEnergy(FF &ff, const LJEnergy &delta) const
 //////
 ////// Implementation of CLJComponent
 //////
+
+static const RegisterMetaType<CLJComponent> r_clj;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CLJComponent &clj)
+{
+    writeHeader(ds, r_clj, 1);
+    ds << static_cast<const FFComponent&>(clj)
+       << clj.coul_component << clj.lj_component;
+       
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJComponent &clj)
+{
+    VersionID v = readHeader(ds, r_clj);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<FFComponent&>(clj)
+           >> clj.coul_component >> clj.lj_component;
+    }
+    else
+        throw version_error(v, "1", r_clj, CODELOC);
+        
+    return ds;
+}
 
 /** Constructor */
 CLJComponent::CLJComponent(const FFName &ffname)
@@ -158,4 +238,16 @@ void CLJComponent::changeEnergy(FF &ff, const CLJEnergy &delta) const
     FFComponent::changeEnergy(ff, this->total(), delta.total());
     FFComponent::changeEnergy(ff, this->coulomb(), delta.coulomb());
     FFComponent::changeEnergy(ff, this->lj(), delta.lj());
+}
+
+Symbols CLJComponent::symbols() const
+{
+    Symbols symbls;
+    symbls.reserve(3);
+    
+    symbls.insert(coul_component);
+    symbls.insert(lj_component);
+    symbls.insert(*this);
+    
+    return symbls;
 }

@@ -33,6 +33,8 @@
 
 #include "symbol.h"
 
+#include "tostring.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireCAS
@@ -66,6 +68,11 @@ public:
     
     ~Symbols()
     {}
+    
+    QString toString() const
+    {
+        return Sire::toString( QSet<Symbol>(*this) );
+    }
     
     void insert(const Symbol &symbol)
     {

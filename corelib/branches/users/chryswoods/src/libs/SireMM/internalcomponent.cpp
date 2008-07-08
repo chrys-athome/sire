@@ -30,14 +30,42 @@
 
 #include "SireFF/ff.h"
 
+#include "SireStream/datastream.h"
+
 using namespace SireMM;
 using namespace SireFF;
-
 using namespace SireCAS;
+using namespace SireStream;
 
 //////
 ////// Implementation of BondComponent
 //////
+
+static const RegisterMetaType<BondComponent> r_bond;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const BondComponent &bond)
+{
+    writeHeader(ds, r_bond, 1);
+    ds << static_cast<const FFComponent&>(bond);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, BondComponent &bond)
+{
+    VersionID v = readHeader(ds, r_bond);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<FFComponent&>(bond);
+    }
+    else
+        throw version_error(v, "1", r_bond, CODELOC);
+        
+    return ds;
+}
 
 /** Constructor */
 BondComponent::BondComponent(const FFName &ffname)
@@ -79,6 +107,32 @@ void BondComponent::changeEnergy(FF &ff, const BondEnergy &delta) const
 ////// Implementation of AngleComponent
 //////
 
+static const RegisterMetaType<AngleComponent> r_angle;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const AngleComponent &angle)
+{
+    writeHeader(ds, r_angle, 1);
+    ds << static_cast<const FFComponent&>(angle);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, AngleComponent &angle)
+{
+    VersionID v = readHeader(ds, r_angle);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<FFComponent&>(angle);
+    }
+    else
+        throw version_error(v, "1", r_angle, CODELOC);
+        
+    return ds;
+}
+
 /** Constructor */
 AngleComponent::AngleComponent(const FFName &ffname)
                : FFComponent(ffname, QLatin1String("angle"))
@@ -118,6 +172,32 @@ void AngleComponent::changeEnergy(FF &ff, const AngleEnergy &delta) const
 //////
 ////// Implementation of DihedralComponent
 //////
+
+static const RegisterMetaType<DihedralComponent> r_dihedral;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const DihedralComponent &dihedral)
+{
+    writeHeader(ds, r_dihedral, 1);
+    ds << static_cast<const FFComponent&>(dihedral);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, DihedralComponent &dihedral)
+{
+    VersionID v = readHeader(ds, r_dihedral);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<FFComponent&>(dihedral);
+    }
+    else
+        throw version_error(v, "1", r_dihedral, CODELOC);
+        
+    return ds;
+}
 
 /** Constructor */
 DihedralComponent::DihedralComponent(const FFName &ffname)
@@ -159,6 +239,32 @@ void DihedralComponent::changeEnergy(FF &ff, const DihedralEnergy &delta) const
 ////// Implementation of ImproperComponent
 //////
 
+static const RegisterMetaType<ImproperComponent> r_improper;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const ImproperComponent &improper)
+{
+    writeHeader(ds, r_improper, 1);
+    ds << static_cast<const FFComponent&>(improper);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, ImproperComponent &improper)
+{
+    VersionID v = readHeader(ds, r_improper);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<FFComponent&>(improper);
+    }
+    else
+        throw version_error(v, "1", r_improper, CODELOC);
+        
+    return ds;
+}
+
 /** Constructor */
 ImproperComponent::ImproperComponent(const FFName &ffname)
                   : FFComponent(ffname, QLatin1String("improper"))
@@ -199,6 +305,32 @@ void ImproperComponent::changeEnergy(FF &ff, const ImproperEnergy &delta) const
 ////// Implementation of UreyBradleyComponent
 //////
 
+static const RegisterMetaType<UreyBradleyComponent> r_ub;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const UreyBradleyComponent &ub)
+{
+    writeHeader(ds, r_ub, 1);
+    ds << static_cast<const FFComponent&>(ub);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, UreyBradleyComponent &ub)
+{
+    VersionID v = readHeader(ds, r_ub);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<FFComponent&>(ub);
+    }
+    else
+        throw version_error(v, "1", r_ub, CODELOC);
+        
+    return ds;
+}
+
 /** Constructor */
 UreyBradleyComponent::UreyBradleyComponent(const FFName &ffname)
                      : FFComponent(ffname, QLatin1String("urey-bradley"))
@@ -238,6 +370,32 @@ void UreyBradleyComponent::changeEnergy(FF &ff, const UreyBradleyEnergy &delta) 
 //////
 ////// Implementation of StretchStretchComponent
 //////
+
+static const RegisterMetaType<StretchStretchComponent> r_ss;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const StretchStretchComponent &ss)
+{
+    writeHeader(ds, r_ss, 1);
+    ds << static_cast<const FFComponent&>(ss);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, StretchStretchComponent &ss)
+{
+    VersionID v = readHeader(ds, r_ss);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<FFComponent&>(ss);
+    }
+    else
+        throw version_error(v, "1", r_ss, CODELOC);
+        
+    return ds;
+}
 
 /** Constructor */
 StretchStretchComponent::StretchStretchComponent(const FFName &ffname)
@@ -280,6 +438,32 @@ void StretchStretchComponent::changeEnergy(FF &ff,
 ////// Implementation of StretchBendComponent
 //////
 
+static const RegisterMetaType<StretchBendComponent> r_sb;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const StretchBendComponent &sb)
+{
+    writeHeader(ds, r_sb, 1);
+    ds << static_cast<const FFComponent&>(sb);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, StretchBendComponent &sb)
+{
+    VersionID v = readHeader(ds, r_sb);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<FFComponent&>(sb);
+    }
+    else
+        throw version_error(v, "1", r_sb, CODELOC);
+        
+    return ds;
+}
+
 /** Constructor */
 StretchBendComponent::StretchBendComponent(const FFName &ffname)
                      : FFComponent(ffname, QLatin1String("stretch-bend"))
@@ -320,6 +504,32 @@ void StretchBendComponent::changeEnergy(FF &ff, const StretchBendEnergy &delta) 
 ////// Implementation of BendBendComponent
 //////
 
+static const RegisterMetaType<BendBendComponent> r_bb;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const BendBendComponent &bb)
+{
+    writeHeader(ds, r_bb, 1);
+    ds << static_cast<const FFComponent&>(bb);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, BendBendComponent &bb)
+{
+    VersionID v = readHeader(ds, r_bb);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<FFComponent&>(bb);
+    }
+    else
+        throw version_error(v, "1", r_bb, CODELOC);
+        
+    return ds;
+}
+
 /** Constructor */
 BendBendComponent::BendBendComponent(const FFName &ffname)
                   : FFComponent(ffname, QLatin1String("bend-bend"))
@@ -359,6 +569,33 @@ void BendBendComponent::changeEnergy(FF &ff, const BendBendEnergy &delta) const
 //////
 ////// Implementation of StretchBendTorsionComponent
 //////
+
+static const RegisterMetaType<StretchBendTorsionComponent> r_sbt;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, 
+                                      const StretchBendTorsionComponent &sbt)
+{
+    writeHeader(ds, r_sbt, 1);
+    ds << static_cast<const FFComponent&>(sbt);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, StretchBendTorsionComponent &sbt)
+{
+    VersionID v = readHeader(ds, r_sbt);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<FFComponent&>(sbt);
+    }
+    else
+        throw version_error(v, "1", r_bond, CODELOC);
+        
+    return ds;
+}
 
 /** Constructor */
 StretchBendTorsionComponent::StretchBendTorsionComponent(const FFName &ffname)
@@ -402,6 +639,51 @@ void StretchBendTorsionComponent::changeEnergy(FF &ff,
 //////
 ////// Implementation of InternalComponent
 //////
+
+static const RegisterMetaType<InternalComponent> r_internal;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const InternalComponent &internal)
+{
+    writeHeader(ds, r_internal, 1);
+    
+    ds << static_cast<const FFComponent&>(internal)
+       << internal.bond_component
+       << internal.angle_component
+       << internal.dihedral_component
+       << internal.improper_component
+       << internal.ub_component
+       << internal.ss_component
+       << internal.sb_component
+       << internal.bb_component
+       << internal.sbt_component;
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, InternalComponent &internal)
+{
+    VersionID v = readHeader(ds, r_internal);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<FFComponent&>(internal)
+           >> internal.bond_component
+           >> internal.angle_component
+           >> internal.dihedral_component
+           >> internal.improper_component
+           >> internal.ub_component
+           >> internal.ss_component
+           >> internal.sb_component
+           >> internal.bb_component
+           >> internal.sbt_component;
+    }
+    else
+        throw version_error(v, "1", r_internal, CODELOC);
+        
+    return ds;
+}
 
 /** Constructor */
 InternalComponent::InternalComponent(const FFName &ffname)
@@ -452,11 +734,11 @@ InternalComponent::~InternalComponent()
 {}
 
 /** Return all of the components in this set */
-QSet<Symbol> InternalComponent::contents() const
+Symbols InternalComponent::symbols() const
 {
-    QSet<Symbol> symbls;
+    Symbols symbls;
     
-    symbls.reserve(10);
+    symbls.reserve(11);
     
     symbls.insert(*this);
     

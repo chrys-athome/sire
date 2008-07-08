@@ -32,8 +32,56 @@
 #include <QSet>
 
 #include "SireFF/ffcomponent.h"
+#include "SireFF/ff.h"
 
 SIRE_BEGIN_HEADER
+
+namespace SireMM
+{
+class BondComponent;
+class AngleComponent;
+class DihedralComponent;
+
+class ImproperComponent;
+class UreyBradleyComponent;
+
+class StretchStretchComponent;
+class StretchBendComponent;
+class BendBendComponent;
+class StretchBendTorsionComponent;
+
+class InternalComponent;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMM::BondComponent&);
+QDataStream& operator>>(QDataStream&, SireMM::BondComponent&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::AngleComponent&);
+QDataStream& operator>>(QDataStream&, SireMM::AngleComponent&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::DihedralComponent&);
+QDataStream& operator>>(QDataStream&, SireMM::DihedralComponent&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::ImproperComponent&);
+QDataStream& operator>>(QDataStream&, SireMM::ImproperComponent&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::UreyBradleyComponent&);
+QDataStream& operator>>(QDataStream&, SireMM::UreyBradleyComponent&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::StretchStretchComponent&);
+QDataStream& operator>>(QDataStream&, SireMM::StretchStretchComponent&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::StretchBendComponent&);
+QDataStream& operator>>(QDataStream&, SireMM::StretchBendComponent&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::BendBendComponent&);
+QDataStream& operator>>(QDataStream&, SireMM::BendBendComponent&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::StretchBendTorsionComponent&);
+QDataStream& operator>>(QDataStream&, SireMM::StretchBendTorsionComponent&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::InternalComponent&);
+QDataStream& operator>>(QDataStream&, SireMM::InternalComponent&);
 
 namespace SireFF
 {
@@ -47,18 +95,6 @@ using SireFF::FF;
 using SireFF::FFName;
 
 using SireCAS::Symbol;
-
-class BondComponent;
-class AngleComponent;
-class DihedralComponent;
-
-class ImproperComponent;
-class UreyBradleyComponent;
-
-class StretchStretchComponent;
-class StretchBendComponent;
-class BendBendComponent;
-class StretchBendTorsionComponent;
 
 typedef SireFF::ComponentEnergy<BondComponent> BondEnergy;
 typedef SireFF::ComponentEnergy<AngleComponent> AngleEnergy;
@@ -107,6 +143,11 @@ public:
 
     void setEnergy(FF &ff, const BondEnergy &bondnrg) const;
     void changeEnergy(FF &ff, const BondEnergy &bondnrg) const;
+
+    SireCAS::Symbols symbols() const
+    {
+        return *this;
+    }
 };
 
 /** This class represents a Angle component of a forcefield */
@@ -142,6 +183,11 @@ public:
 
     void setEnergy(FF &ff, const AngleEnergy &angnrg) const;
     void changeEnergy(FF &ff, const AngleEnergy &angnrg) const;
+
+    SireCAS::Symbols symbols() const
+    {
+        return *this;
+    }
 };
 
 /** This class represents a Dihedral component of a forcefield */
@@ -177,6 +223,11 @@ public:
 
     void setEnergy(FF &ff, const DihedralEnergy &dihnrg) const;
     void changeEnergy(FF &ff, const DihedralEnergy &dihnrg) const;
+
+    SireCAS::Symbols symbols() const
+    {
+        return *this;
+    }
 };
 
 /** This class represents a Improper component of a forcefield */
@@ -212,6 +263,11 @@ public:
 
     void setEnergy(FF &ff, const ImproperEnergy &impnrg) const;
     void changeEnergy(FF &ff, const ImproperEnergy &impnrg) const;
+
+    SireCAS::Symbols symbols() const
+    {
+        return *this;
+    }
 };
 
 /** This class represents a UreyBradley component of a forcefield */
@@ -247,6 +303,11 @@ public:
 
     void setEnergy(FF &ff, const UreyBradleyEnergy &ubnrg) const;
     void changeEnergy(FF &ff, const UreyBradleyEnergy &ubnrg) const;
+
+    SireCAS::Symbols symbols() const
+    {
+        return *this;
+    }
 };
 
 /** This class represents a StretchStretch component of a forcefield */
@@ -282,6 +343,11 @@ public:
 
     void setEnergy(FF &ff, const StretchStretchEnergy &ssnrg) const;
     void changeEnergy(FF &ff, const StretchStretchEnergy &ssnrg) const;
+
+    SireCAS::Symbols symbols() const
+    {
+        return *this;
+    }
 };
 
 /** This class represents a StretchBend component of a forcefield */
@@ -317,6 +383,11 @@ public:
 
     void setEnergy(FF &ff, const StretchBendEnergy &sbnrg) const;
     void changeEnergy(FF &ff, const StretchBendEnergy &sbnrg) const;
+
+    SireCAS::Symbols symbols() const
+    {
+        return *this;
+    }
 };
 
 /** This class represents a BendBend component of a forcefield */
@@ -352,6 +423,11 @@ public:
 
     void setEnergy(FF &ff, const BendBendEnergy &bbnrg) const;
     void changeEnergy(FF &ff, const BendBendEnergy &bbnrg) const;
+
+    SireCAS::Symbols symbols() const
+    {
+        return *this;
+    }
 };
 
 /** This class represents a StretchBendTorsion component of a forcefield */
@@ -387,12 +463,21 @@ public:
 
     void setEnergy(FF &ff, const StretchBendTorsionEnergy &sbtnrg) const;
     void changeEnergy(FF &ff, const StretchBendTorsionEnergy &sbtnrg) const;
+
+    SireCAS::Symbols symbols() const
+    {
+        return *this;
+    }
 };
 
 /** This class represents the sum of the internal MM energy
     components (bond, angle, dihedral, Urey-Bradley) */
 class SIREMM_EXPORT InternalComponent : public SireFF::FFComponent
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const InternalComponent&);
+friend QDataStream& ::operator>>(QDataStream&, InternalComponent&);
+
 public:
     InternalComponent(const FFName &name = FFName());
     InternalComponent(const SireCAS::Symbol &symbol);
@@ -469,7 +554,7 @@ public:
     void setEnergy(FF &ff, const InternalEnergy &nrg) const;
     void changeEnergy(FF &ff, const InternalEnergy &nrg) const;
 
-    QSet<Symbol> contents() const;
+    SireCAS::Symbols symbols() const;
 
 protected:
     /** The bond component */
@@ -890,6 +975,17 @@ SIRE_EXPOSE_CLASS( SireMM::BendBendComponent )
 SIRE_EXPOSE_CLASS( SireMM::StretchBendTorsionComponent )
 
 SIRE_EXPOSE_CLASS( SireMM::InternalComponent )
+
+Q_DECLARE_METATYPE( SireMM::BondComponent )
+Q_DECLARE_METATYPE( SireMM::AngleComponent )
+Q_DECLARE_METATYPE( SireMM::DihedralComponent )
+Q_DECLARE_METATYPE( SireMM::ImproperComponent )
+Q_DECLARE_METATYPE( SireMM::UreyBradleyComponent )
+Q_DECLARE_METATYPE( SireMM::StretchStretchComponent )
+Q_DECLARE_METATYPE( SireMM::StretchBendComponent )
+Q_DECLARE_METATYPE( SireMM::BendBendComponent )
+Q_DECLARE_METATYPE( SireMM::StretchBendTorsionComponent )
+Q_DECLARE_METATYPE( SireMM::InternalComponent )
 
 SIRE_END_HEADER
 

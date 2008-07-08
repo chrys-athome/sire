@@ -30,12 +30,29 @@
 #define SIREMM_CLJCOMPONENT_H
 
 #include "SireFF/ffcomponent.h"
+#include "SireFF/ff.h"
 
 #ifdef SIRE_USE_SSE
 #include <emmintrin.h>
 #endif
 
 SIRE_BEGIN_HEADER
+
+namespace SireMM
+{
+class CoulombComponent;
+class LJComponent;
+class CLJComponent;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMM::CoulombComponent&);
+QDataStream& operator>>(QDataStream&, SireMM::CoulombComponent&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::LJComponent&);
+QDataStream& operator>>(QDataStream&, SireMM::LJComponent&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::CLJComponent&);
+QDataStream& operator>>(QDataStream&, SireMM::CLJComponent&);
 
 namespace SireFF
 {
@@ -89,6 +106,11 @@ public:
 
     void setEnergy(FF &ff, const CoulombEnergy &ljnrg) const;
     void changeEnergy(FF &ff, const CoulombEnergy &ljnrg) const;
+    
+    SireCAS::Symbols symbols() const
+    {
+        return *this;
+    }
 };
 
 /** This class represents a LJ component of a forcefield */
@@ -124,12 +146,21 @@ public:
 
     void setEnergy(FF &ff, const LJEnergy &ljnrg) const;
     void changeEnergy(FF &ff, const LJEnergy &ljnrg) const;
+    
+    SireCAS::Symbols symbols() const
+    {
+        return *this;
+    }
 };
 
 /** This class represents the sum of the coulomb and LJ components
     of the forcefield */
 class SIREMM_EXPORT CLJComponent : public SireFF::FFComponent
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const CLJComponent&);
+friend QDataStream& ::operator>>(QDataStream&, CLJComponent&);
+
 public:
     CLJComponent(const FFName &name = FFName());
     CLJComponent(const SireCAS::Symbol &symbol);
@@ -170,6 +201,8 @@ public:
 
     void setEnergy(FF &ff, const CLJEnergy &cljnrg) const;
     void changeEnergy(FF &ff, const CLJEnergy &cljnrg) const;
+    
+    SireCAS::Symbols symbols() const;
 
 protected:
     /** The coulomb component */
@@ -330,6 +363,14 @@ private:
 };
 
 } // end of namespace SireMM
+
+SIRE_EXPOSE_CLASS( SireMM::CoulombComponent )
+SIRE_EXPOSE_CLASS( SireMM::LJComponent )
+SIRE_EXPOSE_CLASS( SireMM::CLJComponent )
+
+Q_DECLARE_METATYPE( SireMM::CoulombComponent )
+Q_DECLARE_METATYPE( SireMM::LJComponent )
+Q_DECLARE_METATYPE( SireMM::CLJComponent )
 
 SIRE_END_HEADER
 

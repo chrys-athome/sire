@@ -2209,7 +2209,7 @@ void InternalPotential::calculateForce(const InternalPotential::Molecule &molecu
         throw SireFF::missing_component( QObject::tr(
             "There is no component %1 in this potential. Available "
             "components are %2.")
-                .arg(symbol.toString(), Sire::toString(components.contents())),
+                .arg(symbol.toString(), Sire::toString(components.symbols())),
                     CODELOC );
 }
 

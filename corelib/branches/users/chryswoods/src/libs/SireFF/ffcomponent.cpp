@@ -29,13 +29,42 @@
 #include "ffcomponent.h"
 #include "ff.h"
 
+#include "SireStream/datastream.h"
+
 #include "SireError/errors.h"
 
 #include <QRegExp>
 
 using namespace SireFF;
-
 using namespace SireCAS;
+using namespace SireStream;
+
+static const RegisterMetaType<FFComponent> r_ffcomp( MAGIC_ONLY,
+                                                     "SireFF::FFComponent" );
+                                                     
+/** Serialise to a binary datastream */
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FFComponent &ffcomp)
+{
+    writeHeader(ds, r_ffcomp, 1);
+    ds << static_cast<const Symbol&>(ffcomp);
+
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFComponent &ffcomp)
+{
+    VersionID v = readHeader(ds, r_ffcomp);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<Symbol&>(ffcomp);
+    }
+    else
+        throw version_error(v, "1", r_ffcomp, CODELOC);
+        
+    return ds;
+}
 
 static QRegExp name_regexp( "E\\^\\{(.+)\\}\\_\\{(.+)\\}" );
 
