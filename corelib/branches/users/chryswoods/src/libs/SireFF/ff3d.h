@@ -57,6 +57,11 @@ public:
     
     virtual ~FF3D();
     
+    static const char* typeName()
+    {
+        return "SireFF::FF3D";
+    }
+    
     /** Calculate all of the forces acting on all of the 
         molecules in the forcetable 'forcetable' due to the
         molecules' interactions in this forcefield */

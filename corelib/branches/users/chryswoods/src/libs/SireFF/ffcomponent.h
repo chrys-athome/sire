@@ -30,6 +30,7 @@
 #define SIREFF_FFCOMPONENT_H
 
 #include "SireCAS/symbol.h"
+#include "SireCAS/symbols.h"
 
 #include "SireFF/ffname.h"
 
@@ -64,6 +65,8 @@ public:
     QString componentName() const;
 
     virtual const FFComponent& total() const=0;
+
+    virtual SireCAS::Symbols symbols() const=0;
 
 protected:
     FFComponent(const FFName &ffname, const QLatin1String &name);

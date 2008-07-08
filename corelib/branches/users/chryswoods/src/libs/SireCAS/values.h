@@ -124,6 +124,8 @@ public:
 
     int count() const;
 
+    bool contains(const Symbol &symbol) const;
+
     void reserve(int n);
 
     Values& operator+=(const Values &other);
@@ -165,6 +167,12 @@ inline void Values::set(const Symbol &symbol, double value)
 inline const QHash<SymbolID,double>& Values::values() const
 {
     return vals;
+}
+
+/** Return whether or not a value for the symbol 'symbol' has been set */
+inline bool Values::contains(const Symbol &symbol) const
+{
+    return vals.contains(symbol.ID());
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
