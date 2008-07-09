@@ -218,3 +218,44 @@ the flop count code means that the energy now takes just 440ms for a single core
 and 234ms for a dual core. This means that I am now finally getting some decent
 scaling over two cores. (as there are 196903896 flops, this translates into
 447.5 MFLOPS for single core and 841.5 MFLOPS for dual core!)
+
+Here's the timing for the latest version of Sire (which has the new flop counter
+that takes a negligable amount of time)
+
+Read in 1679 molecules!
+Parameterised all of the water molecules (in 941 ms)!
+Packing the coordinates took 3 ms
+
+This machine can run at; 1833.0 MFLOPS for sum, 1722.4 MFLOPS for sum+product,
+540.0 MFLOPS for sum+quotient and 527.6 MFLOPS for sum+product+sqrt.
+
+-16364.5 M L^2 T-2
+-16364.5444965
+Took 234 ms.  Speed is at least 841.5 MFLOPS
+406.9 MFLOPS for thread 0  
+(This is 159.48 % of the benchmark  (155.83 %, 45.91 %, 48.85 %))
+-16364.5 M L^2 T-2
+-16364.5444965
+Took 247 ms.  Speed is at least 797.2 MFLOPS
+412.8 MFLOPS for thread 0  384.4 MFLOPS for thread 1  
+(This is 151.08 % of the benchmark  (147.63 %, 43.49 %, 46.28 %))
+-16364.5 M L^2 T-2
+-16364.5444965
+Took 241 ms.  Speed is at least 817.0 MFLOPS
+399.1 MFLOPS for thread 0  417.9 MFLOPS for thread 1  
+(This is 154.85 % of the benchmark  (151.30 %, 44.57 %, 47.44 %))
+-16364.5 M L^2 T-2
+-16364.5444965
+Took 233 ms.  Speed is at least 845.1 MFLOPS
+422.2 MFLOPS for thread 0  422.9 MFLOPS for thread 1  
+(This is 160.16 % of the benchmark  (156.50 %, 46.10 %, 49.06 %))
+-16364.5 M L^2 T-2
+-16364.5444965
+Took 234 ms.  Speed is at least 841.5 MFLOPS
+414.4 MFLOPS for thread 0  427.1 MFLOPS for thread 1  
+(This is 159.48 % of the benchmark  (155.83 %, 45.91 %, 48.85 %))
+Done!
+( 14.8395, -16.012, -11.5855 )
+( 14.8395, -16.012, -11.5855 )
+-16213.7 M L^2 T-2  (-16213.730068)
+-16364.5 M L^2 T-2  (-16364.544496)
