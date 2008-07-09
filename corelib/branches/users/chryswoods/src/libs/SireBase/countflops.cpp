@@ -33,6 +33,8 @@
 #include <QDebug>
 #include <cmath>
 
+#include "SireError/errors.h"
+
 #ifdef SIRE_USE_SSE
 #include <emmintrin.h>
 #endif
@@ -43,12 +45,28 @@ using namespace SireBase;
 /////// Implementation of CountFlops
 ///////
 
+QList<CountFlops::ThreadFlops*> CountFlops::ThreadFlops::thread_flops;
+QMutex CountFlops::ThreadFlops::thread_flops_mutex;
+
+CountFlops::ThreadFlops::ThreadFlops() : nflops(0)
+{
+    QMutexLocker lkr(&thread_flops_mutex);
+    thread_flops.append(this);
+}
+
+CountFlops::ThreadFlops::~ThreadFlops()
+{
+    QMutexLocker lkr(&thread_flops_mutex);
+    thread_flops.removeAll(this);
+}
+
 /** Singleton copy of the counter */
 CountFlops CountFlops::global_counter;
 
 /** Constructor */
-CountFlops::CountFlops() : flop_count(0)
+CountFlops::CountFlops()
 {
+    pthread_key_create(&thread_key, NULL);
     flop_timer.start();
 }
 
@@ -56,21 +74,23 @@ CountFlops::CountFlops() : flop_count(0)
 CountFlops::~CountFlops()
 {}
 
-/** Add 'nflops' to the total number of floating point operations */
-void CountFlops::addFlops(int nflops)
-{
-    register int c = global_counter.flop_count;
-
-    while (not global_counter.flop_count.testAndSetOrdered(c, c+nflops))
-    {
-        c = global_counter.flop_count;
-    }
-}
-
 /** Return a mark for the current time and number of flops */
 FlopsMark CountFlops::mark()
 {
-    return FlopsMark(global_counter.flop_count, 
+    QMutexLocker lkr( &ThreadFlops::thread_flops_mutex );
+
+    int nthreads = ThreadFlops::thread_flops.count();
+    QVector<int> thread_flops(nthreads);
+    int *thread_flops_array = thread_flops.data();
+
+    int i = 0;
+    foreach (const ThreadFlops *ptr, ThreadFlops::thread_flops)
+    {
+        thread_flops_array[i] = ptr->nflops;
+        ++i;
+    }
+
+    return FlopsMark(thread_flops, 
                      global_counter.flop_timer.elapsed());
 }
 
@@ -94,7 +114,7 @@ FlopsMark::FlopsMark()
 }
 
 /** Constructor used by CountFlops */
-FlopsMark::FlopsMark(int _nflops, int _ms)
+FlopsMark::FlopsMark(const QVector<int> &_nflops, int _ms)
           : nflops(_nflops), ms(_ms)
 {}
 
@@ -107,11 +127,58 @@ FlopsMark::FlopsMark(const FlopsMark &other)
 FlopsMark::~FlopsMark()
 {}
 
+/** Return the total number of flops from all threads up to this point */
+int FlopsMark::nFlops() const
+{
+    int total_nflops = 0;
+    
+    foreach (int thread_nflops, nflops)
+    {
+        total_nflops += thread_nflops;
+    }
+    
+    return total_nflops;
+}
+
+/** Return the total number of threads that contributed to this 
+    flop count */
+int FlopsMark::nThreads() const
+{
+    return nflops.count();
+}
+
+/** Return a FlopsMark object that contains just the information
+    for the ith thread
+    
+    \throw SireError::invalid_index
+*/
+FlopsMark FlopsMark::threadFlops(int i) const
+{
+    if (i < 0 or i >= this->nThreads())
+        throw SireError::invalid_index( QObject::tr(
+            "Invalid index %1. The number of available threads == %2.")
+                .arg(i).arg(this->nThreads()), CODELOC );
+
+    QVector<int> thread_nflops(1, nflops.at(i));
+    
+    return FlopsMark(thread_nflops, ms);
+}
+
+/** Return a FlopsMark object that contains just the information
+    for the ith thread
+    
+    \throw SireError::invalid_index
+*/
+FlopsMark FlopsMark::operator[](int i) const
+{
+    return this->threadFlops(i);
+}
+
 /** Return the average number of floating point operations
     performed since the mark 'other' */
 double FlopsMark::operator-(const FlopsMark &other) const
 {
-    int dnflops = nflops - other.nflops;
+    int dnflops = this->nFlops() - other.nFlops();
     int dms = ms - other.ms;
     
     if (dms == 0)

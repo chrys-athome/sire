@@ -64,6 +64,8 @@ print "Parameterised all of the water molecules (in %d ms)!" % ms
 
 forcefields.add(cljff)
 
+print forcefields.properties()
+
 x = Symbol("x")
 
 forcefields.setComponent(x, 32)

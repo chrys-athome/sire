@@ -35,11 +35,12 @@
 //#undef SIRE_TIME_ROUTINES
 
 #ifdef SIRE_TIME_ROUTINES
-#if QT_VERSION >= 0x040400    //only usable with Qt >= 4.4
 
 #include <QTime>
-#include <QAtomicInt>
+#include <QVector>
 #include <QMutex>
+
+#include <pthread.h>
 
 SIRE_BEGIN_HEADER
 
@@ -68,13 +69,20 @@ public:
     
     double operator-(const FlopsMark &other) const;
     
+    FlopsMark operator[](int i) const;
+    
+    int nFlops() const;
+    int nThreads() const;
+    
+    FlopsMark threadFlops(int i) const;
+    
     static double benchmark();
     static double benchmarkSum();
     static double benchmarkProduct();
     static double benchmarkQuotient();
     
 protected:
-    FlopsMark(int nflops, int ms);
+    FlopsMark(const QVector<int> &nflops, int ms);
     
 private:
     /** Save the sum from the last benchmark - this prevents
@@ -84,8 +92,9 @@ private:
     /** Mutex to ensure that only one benchmark is performed at a time */
     static QMutex benchmark_mutex;
 
-    /** The number of flops carried out by at this mark */
-    int nflops;
+    /** The number of flops carried out by at this mark
+        for each thread */
+    QVector<int> nflops;
     
     /** The time that this mark was taken (in ms) */
     int ms;
@@ -109,23 +118,42 @@ private:
     
     /** The global FLOP counter */
     static CountFlops global_counter;
-    
-    /** The atomic integer that contains the number of flops */
-    QAtomicInt flop_count;
+
+    class ThreadFlops
+    {
+    public:
+        ThreadFlops();
+        ~ThreadFlops();
+        
+        int nflops;
+        
+        static QList<ThreadFlops*> thread_flops;
+        static QMutex thread_flops_mutex;
+    };
+
+    pthread_key_t thread_key;
     
     /** The timer used to get the flop rate */
     QTime flop_timer;
 };
 
+/** Add 'nflops' floating point operations to the count of floating
+    point operations for this thread */
+inline void CountFlops::addFlops(int nflops)
+{
+    ThreadFlops *ptr = (ThreadFlops*)(pthread_getspecific(global_counter.thread_key));
+    
+    if (ptr == 0)
+    {
+        ptr = new ThreadFlops();
+        pthread_setspecific(global_counter.thread_key, ptr);
+    }
+    
+    ptr->nflops += nflops;
+}
+
 } // end of namespace SireBase
 
-#else // #if QT_VERSION >= 0x040400
-
-//we can't do any timing
-#warning Cannot get FLOPS without Qt version >= 4.4
-#undef SIRE_TIME_ROUTINES
-
-#endif // #if QT_VERSION >= 0x040400
 #endif // #ifdef SIRE_TIME_ROUTINES
 
 #ifdef ADD_FLOPS

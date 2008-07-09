@@ -100,6 +100,12 @@ for i in range(0,5):
     print "Took %d ms. " % ms,
     print "Speed is at least %.1f MFLOPS" % mflops
 
+    for j in range(0,before_energy.nThreads()):
+        mflops_j = 0.000001 * (after_energy[j] - before_energy[j])
+        print "%.1f MFLOPS for thread %d " % (mflops_j, j),
+
+    print "\n",
+
     print "(This is %.2f %% of the benchmark  (%.2f %%, %.2f %%, %.2f %%))" % \
              ( 100 * (mflops / benchmark), 100 * (mflops / benchmark_quot), \
                100 * (mflops / benchmark_sum), 100 * (mflops / benchmark_prod) )
