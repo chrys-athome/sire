@@ -106,7 +106,24 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
 
 /** Constructor */
 G2FF::G2FF(bool allow_overlap) : FF(), allow_overlap_of_atoms(allow_overlap)
-{}
+{
+    molgroup[0] = FFMolGroupPvt( QString("%1_A").arg(this->name()), 0, this );
+    molgroup[1] = FFMolGroupPvt( QString("%1_B").arg(this->name()), 1, this );
+    
+    molgroup[0].setParent(this);
+    molgroup[1].setParent(this);
+    
+    MolGroupsBase::addToIndex(molgroup[0]);
+    MolGroupsBase::addToIndex(molgroup[1]);
+}
+
+/** Update the name of the molecule group in this forcefield so that
+    it matches the name of the forcefield */
+void G2FF::_pvt_updateName()
+{
+    molgroup[0].setName( QString("%1_A").arg(this->name()) );
+    molgroup[1].setName( QString("%1_B").arg(this->name()) );
+}
 
 /** Copy constructor */
 G2FF::G2FF(const G2FF &other) 
@@ -115,6 +132,12 @@ G2FF::G2FF(const G2FF &other)
 {
     molgroup[0] = other.molgroup[0];
     molgroup[1] = other.molgroup[1];
+    
+    molgroup[0].setParent(this);
+    molgroup[1].setParent(this);
+    
+    molgroup[0].setIndex(0);
+    molgroup[1].setIndex(1);
 }
 
 /** Destructor */
@@ -127,18 +150,15 @@ G2FF& G2FF::operator=(const G2FF &other)
     molgroup[0] = other.molgroup[0];
     molgroup[1] = other.molgroup[1];
     
+    molgroup[0].setParent(this);
+    molgroup[1].setParent(this);
+    molgroup[0].setIndex(0);
+    molgroup[1].setIndex(1);
+    
     allow_overlap_of_atoms = other.allow_overlap_of_atoms;
     FF::operator=(other);
     
     return *this;
-}
-
-/** Update the name of the molecule group in this forcefield so that
-    it matches the name of the forcefield */
-void G2FF::_pvt_updateName()
-{
-    molgroup[0].setName( QString("%1_A").arg(this->name()) );
-    molgroup[1].setName( QString("%1_B").arg(this->name()) );
 }
 
 /** Assert that this forcefield contains the group with number 'mgnum'

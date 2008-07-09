@@ -726,7 +726,7 @@ void ForceFields::rebuildIndex()
         
             throw SireFF::duplicate_forcefield( QObject::tr(
                 "Cannot have two forcefields in the same set that both "
-                "have the same name! (%1, %2 version %3 vs. %3 version %4)")
+                "have the same name! (%1, %2 version %3 vs. %4 version %5)")
                     .arg(ffield->name())
                     .arg(ffield->UID().toString()).arg(ffield->version())
                     .arg(old_ffield->UID().toString()).arg(old_ffield->version()),
@@ -743,8 +743,8 @@ void ForceFields::rebuildIndex()
                 
                 throw SireMol::duplicate_group( QObject::tr(
                     "Cannot have two different forcefields containing the same "
-                    "molecule group - %1 (%2 version %3 [%4] vs. "
-                    "%5 version %6 [%7])")
+                    "molecule group - %1 (%2 version %3 %4 vs. "
+                    "%5 version %6 %7)")
                         .arg(mgnum)
                         .arg(ffield->name()).arg(ffield->version())
                         .arg(ffield->UID().toString())

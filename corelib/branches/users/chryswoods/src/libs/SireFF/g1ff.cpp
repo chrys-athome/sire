@@ -86,8 +86,11 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Constructor */
-G1FF::G1FF(bool allow_overlap) : FF(), allow_overlap_of_atoms(allow_overlap)
+G1FF::G1FF(bool allow_overlap) 
+     : FF(), allow_overlap_of_atoms(allow_overlap)
 {
+    molgroup = FFMolGroupPvt(this->name(), 0, this);
+    molgroup.setParent(this);
     MolGroupsBase::addToIndex(molgroup);
 }
 
@@ -95,12 +98,18 @@ G1FF::G1FF(bool allow_overlap) : FF(), allow_overlap_of_atoms(allow_overlap)
 G1FF::G1FF(const G1FF &other) 
      : FF(other), molgroup(other.molgroup),
        allow_overlap_of_atoms(other.allow_overlap_of_atoms)
-{}
+{
+    molgroup.setParent(this);
+    molgroup.setIndex(0);
+}
 
 /** Copy assignment operator */
 G1FF& G1FF::operator=(const G1FF &other)
 {
     molgroup = other.molgroup;
+    molgroup.setParent(this);
+    molgroup.setIndex(0);
+    
     allow_overlap_of_atoms = other.allow_overlap_of_atoms;
     FF::operator=(other);
     

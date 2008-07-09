@@ -473,6 +473,12 @@ MolGroup& MolGroup::operator-=(const Molecules &molecules)
     return *this;
 }
 
+/** Return a string representation of this MolGroup */
+QString MolGroup::toString() const
+{
+    return QString("MolGroup(%1, %2)").arg(this->name()).arg(this->number());
+}
+
 /** Return the views of the molecule with number 'molnum' from this group.
 
     \throw SireMol::missing_molecule

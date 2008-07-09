@@ -233,6 +233,8 @@ public:
     const MGName& name() const;
     MGNum number() const;
     
+    virtual QString toString() const;
+    
     virtual void setName(const QString &new_name);
     virtual void setNumber(quint32 new_number);
     

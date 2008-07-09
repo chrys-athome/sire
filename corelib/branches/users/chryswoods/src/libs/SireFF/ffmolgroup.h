@@ -95,7 +95,7 @@ public:
     
     FFMolGroup(const FFMolGroup &other);
     
-    ~FFMolGroup();
+    virtual ~FFMolGroup();
     
     static const char* typeName()
     {
@@ -206,7 +206,7 @@ public:
     
     FFMolGroupPvt(const FFMolGroupPvt &other);
     
-    ~FFMolGroupPvt();
+    virtual ~FFMolGroupPvt();
 
     static const char* typeName()
     {
