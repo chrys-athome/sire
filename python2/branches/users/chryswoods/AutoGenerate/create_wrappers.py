@@ -21,6 +21,7 @@ from pyplusplus.module_builder import module_builder_t
 from pyplusplus.decl_wrappers import calldef_wrapper
 from pyplusplus.code_creators import class_t
 from pyplusplus.code_creators import algorithm
+from pyplusplus.decl_wrappers import call_policies
 
 from pygccxml.declarations.matchers import access_type_matcher_t
 from pygccxml import declarations
@@ -122,6 +123,15 @@ def export_function(mb, function, includes):
                for include in includes:
                    f.add_declaration_code("#include %s" % include)
 
+def has_clone_function(t):
+    c = mb.class_( str(t.base).split(" ")[0].split("::")[-1] )
+
+    try:
+        c.mem_funs("clone")
+        return True
+    except:
+        return False
+
 def export_class(mb, classname, aliases, includes, special_code):
    """Do all the work necessary to allow the class called 'classname'
       to be exported, using the supplied aliases, and using the 
@@ -144,7 +154,23 @@ def export_class(mb, classname, aliases, includes, special_code):
    c.bases = c.recursive_bases
 
    #exclude any "clone" functions
-   c.decls( "clone", allow_empty=True ).exclude()
+   try:
+       c.decls( "clone" ).exclude()
+   except:
+       pass
+
+   #now replace copy_const_reference with clone_const_reference for suitable classes
+   try:
+       #all copy_const_reference call policies with clone_const_reference
+       funs = c.mem_funs( lambda f: declarations.is_reference( f.return_type ) )
+
+       for f in funs:
+           if has_clone_function(f.return_type):
+               f.call_policies = call_policies.custom_call_policies( \
+                     "bp::return_value_policy<bp::clone_const_reference>", \
+                     "Helpers/clone_const_reference.hpp" )
+   except:
+       pass
 
    #remove any declarations that return a pointer to something
    #(special code is needed in these cases!)

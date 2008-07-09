@@ -265,7 +265,7 @@ void FFMolGroup::assertNotNull() const
 const FF& FFMolGroup::forceField() const
 {
     assertNotNull();
-    return *ffield;
+    return ffield.read();
 }
 
 /** Return the index of this group in the parent forcefield */
