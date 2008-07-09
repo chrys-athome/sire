@@ -78,6 +78,8 @@ public:
     
     virtual ~FFSymbol();
     
+    virtual Expression toExpression() const=0;
+    
     virtual double value() const=0;
     
     virtual Energy energy(QVector<ForceField> &forcefields,
@@ -125,6 +127,8 @@ public:
     
     ~FFSymbolValue();
     
+    Expression toExpression() const;
+    
     double value() const;
     
     Energy energy(QVector<ForceField> &forcefields,
@@ -151,6 +155,8 @@ public:
     FFSymbolFF(const FFSymbolFF &other);
     
     ~FFSymbolFF();
+
+    Expression toExpression() const;
     
     FFIdx ffIdx() const;
     
@@ -179,6 +185,8 @@ public:
     FFSymbolExpression(const FFSymbolExpression &other);
     
     ~FFSymbolExpression();
+
+    Expression toExpression() const;
     
     const Expression& expression() const;
     
@@ -209,6 +217,7 @@ private:
         const QVector<Symbol>& dependents() const;
         
         double scalingFactor(const Values &values) const;
+        const Expression& scalingExpression() const;
         
         const Symbol& symbol() const;
         
@@ -242,6 +251,8 @@ public:
     
     ~FFTotalExpression();
     
+    Expression toExpression() const;
+
     double value() const;
     
     Energy energy(QVector<ForceField> &forcefields,
@@ -298,6 +309,11 @@ FFSymbolValue::FFSymbolValue(const FFSymbolValue &other)
 FFSymbolValue::~FFSymbolValue()
 {}
 
+Expression FFSymbolValue::toExpression() const
+{
+    return Expression(v);
+}
+
 double FFSymbolValue::value() const
 {
     return v;
@@ -339,6 +355,11 @@ FFSymbolFF::~FFSymbolFF()
 FFIdx FFSymbolFF::ffIdx() const
 {
     return ffidx;
+}
+
+Expression FFSymbolFF::toExpression() const
+{
+    return Expression(this->symbol());
 }
 
 double FFSymbolFF::value() const
@@ -419,6 +440,11 @@ const QVector<Symbol>& FFSymbolExpression::Component::dependents() const
     return deps;
 }
 
+const Expression& FFSymbolExpression::Component::scalingExpression() const
+{
+    return sclfac;
+}
+
 double FFSymbolExpression::Component::scalingFactor(const Values &values) const
 {
     return sclfac.evaluate(values);
@@ -464,6 +490,9 @@ void FFSymbolExpression::expandInTermsOf(const QSet<Symbol> &ffsymbols)
         
         foreach (const Factor &factor, factors)
         {
+            if (factor.power().isZero())
+                continue;
+        
             if (factor.power() != Expression(1))
                 throw SireError::incompatible_error( QObject::tr(
                     "You cannot raise a forcefield energy component (%1) "
@@ -475,6 +504,11 @@ void FFSymbolExpression::expandInTermsOf(const QSet<Symbol> &ffsymbols)
             components.append( Component(factor.factor(), symbol) );
         }
     }
+}
+
+Expression FFSymbolExpression::toExpression() const
+{
+    return ffexpression;
 }
 
 double FFSymbolExpression::value() const
@@ -493,8 +527,11 @@ Energy FFSymbolExpression::energy(QVector<ForceField> &forcefields,
 {
     //loop over each component of the expression
     Energy nrg(0);
+
+    if (scale_energy == 0)
+        return nrg;
     
-    int ncomponents = 0;
+    int ncomponents = components.count();
     const Component *components_array = components.constData();
     
     Values values;
@@ -515,11 +552,8 @@ Energy FFSymbolExpression::energy(QVector<ForceField> &forcefields,
                 values.set( symbol, ffsymbols[symbol]->value() );
         }
         
-        //now evaluate the scaling factor...
-        scale_energy *= component.scalingFactor(values);
-        
         nrg += ffsymbols[component.symbol()]->energy(forcefields, ffsymbols,
-                                                     scale_energy);
+                                 scale_energy * component.scalingFactor(values));
     }
 
     return nrg;
@@ -576,6 +610,11 @@ FFTotalExpression::FFTotalExpression(const FFTotalExpression &other)
   
 FFTotalExpression::~FFTotalExpression()
 {}
+
+Expression FFTotalExpression::toExpression() const
+{
+    return Expression(this->symbol());
+}
 
 double FFTotalExpression::value() const
 {
@@ -657,6 +696,14 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, ForceFields &ffields)
         throw version_error(v, "1", r_ffields, CODELOC);
 
     return ds;
+}
+
+Symbol ForceFields::total_component("E_{total}");
+
+/** Return the symbol representing the total energy component */
+const Symbol& ForceFields::totalComponent() const
+{
+    return total_component;
 }
 
 /** Constructor */
@@ -824,6 +871,13 @@ void ForceFields::rebuildIndex()
         {
             it.value()->asA<FFSymbolExpression>().expandInTermsOf(all_symbols);
         }
+    }
+    
+    //if there isn't a total energy component, then add the default one
+    if (not new_symbols.contains( this->totalComponent() ))
+    {
+        new_symbols.insert(this->totalComponent(),
+                           FFSymbolPtr(new FFTotalExpression()));
     }
     
     ffsymbols = new_symbols;
@@ -1148,23 +1202,69 @@ QString ForceFields::toString() const
     return QObject::tr("ForceField( nForceFields() == %1 )").arg(this->nForceFields());
 }
 
-/** Return the energy of this set of forcefields. This uses the supplied
-    total energy function to calculate the energy, if one exists,
-    or it just calculates the sum of the total energies of all of the
-    contained forcefields */
-SireUnits::Dimension::Energy ForceFields::energy()
+/** Set the component represented by the symbol 'symbol' equal to the 
+    value 'value'. This replaces any existing component with this value.
+    Note that an exception will be raised if you try to replace a component
+    that exists in one of the constituent forcefields.
+    
+    \throw SireFF::duplicate_component
+*/
+void ForceFields::setComponent(const Symbol &symbol, double value)
 {
-    SireUnits::Dimension::Energy total_nrg(0);
-    
-    int nffields = ffields_by_idx.count();
-    ForceField *ffields_array = ffields_by_idx.data();
-    
-    for (int i=0; i<nffields; ++i)
+    ForceFields old_state( *this );
+
+    try
     {
-        total_nrg += ffields_array[i].edit().energy();
+        ffsymbols.insert( symbol, 
+                          FFSymbolPtr(new FFSymbolValue(symbol, value)) );
+        this->rebuildIndex();
     }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
+}
+
+/** Set the component represented by the symbol 'symbol' equal to the expression
+    contained in 'expression'. This replaces any existing component with 
+    this expression. Note that an exception will be raised if you try to 
+    replace a component that exists in one of the constituent forcefields
     
-    return total_nrg;
+    \throw SireFF::duplicate_component
+*/
+void ForceFields::setComponent(const Symbol &symbol, const Expression &expression)
+{
+    ForceFields old_state( *this );
+    
+    try
+    {
+        ffsymbols.insert( symbol, 
+                          FFSymbolPtr(new FFSymbolExpression(symbol, expression)) );
+        this->rebuildIndex();
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
+}
+
+/** Return the forcefield component symbol, value or expression that matches
+    the component represented by the symbol 'symbol'
+    
+    \throw SireFF::missing_component
+*/
+Expression ForceFields::getComponent(const Symbol &symbol) const
+{
+    if (not ffsymbols.contains(symbol))
+        throw SireFF::missing_component( QObject::tr(
+            "There is no component represented by the symbol %1. "
+            "Available components are %2.")
+                .arg(symbol.toString(), Sire::toString(ffsymbols.keys())),
+                    CODELOC );
+                    
+    return ffsymbols[symbol]->toExpression();
 }
 
 /** Return the energy associated with the symbol 'component'. This component 
@@ -1175,28 +1275,73 @@ SireUnits::Dimension::Energy ForceFields::energy()
 */
 SireUnits::Dimension::Energy ForceFields::energy(const Symbol &component)
 {
-    return SireUnits::Dimension::Energy(0);
+    if (not ffsymbols.contains(component))
+        throw SireFF::missing_component( QObject::tr(   
+            "There is no component of the energy represented by the "
+            "symbol %1. Available components are %2.")
+                .arg(component.toString(), Sire::toString(ffsymbols.keys())),
+                    CODELOC );
+
+    return ffsymbols.value(component)->energy(ffields_by_idx, ffsymbols);
 }
 
+/** Return the energy of this set of forcefields. This uses the supplied
+    total energy function to calculate the energy, if one exists,
+    or it just calculates the sum of the total energies of all of the
+    contained forcefields */
+SireUnits::Dimension::Energy ForceFields::energy()
+{
+    return this->energy( this->totalComponent() );
+}
+
+/** Return the energies of all of the components whose symbols are 
+    listed in 'components'
+    
+    \throw SireFF::missing_component
+*/
 Values ForceFields::energies(const QSet<Symbol> &components)
 {
-    return Values();
+    Values vals;
+    
+    foreach (const Symbol &component, components)
+    {
+        vals.set(component, this->energy(component).value());
+    }
+    
+    return vals;
 }
 
+/** Return the energies of all of the components of all of the forcefields,
+    constants and expressions */
 Values ForceFields::energies()
 {
-    return Values();
+    return this->energies( ffsymbols.keys().toSet() );
 }
 
-void ForceFields::force(ForceTable &forcetable, double scale_force)
-{
-    return;
-}
-
+/** Add the force due to the component 'component' to the molecules
+    in the force table 'forcetable', scaled by 'scale_force'
+    
+    \throw SireFF::missing_component
+*/
 void ForceFields::force(ForceTable &forcetable, const Symbol &component,
                         double scale_force)
 {
-    return;
+    if (not ffsymbols.contains(component))
+        throw SireFF::missing_component( QObject::tr(   
+            "There is no component of the energy represented by the "
+            "symbol %1. Available components are %2.")
+                .arg(component.toString(), Sire::toString(ffsymbols.keys())),
+                    CODELOC );
+
+    ffsymbols.value(component)->force(forcetable, ffields_by_idx, 
+                                      ffsymbols, scale_force);
+}
+
+/** Add the forces due to the forcefields in this set to the molecules
+    in the force table 'forcetable', scaled by 'scale_force' */
+void ForceFields::force(ForceTable &forcetable, double scale_force)
+{
+    this->force(forcetable, this->totalComponent(), scale_force);
 }
 
 /** Set the property 'name' to have the value 'value' in *all* of the 

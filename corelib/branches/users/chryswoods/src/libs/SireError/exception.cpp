@@ -49,14 +49,6 @@ exception::exception(QString error, QString place) : err(error), plce(place)
 {
     pidstr = QObject::tr("unidentified thread");
     bt = getBackTrace();
-
-    //remove the top two items from the backtrace as they are 'getBackTrace'
-    //and this constructor
-    if (bt.count() > 2)
-    {
-        bt.removeFirst();
-        bt.removeFirst();
-    }
 }
 
 /** Copy constructor */

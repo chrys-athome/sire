@@ -122,6 +122,8 @@ public:
     
     QString toString() const;
     
+    const Symbol& totalComponent() const;
+    
     SireUnits::Dimension::Energy energy();
     SireUnits::Dimension::Energy energy(const Symbol &component);
     
@@ -134,6 +136,11 @@ public:
     
     void setProperty(const QString &name, const Property &value);
     void setProperty(const FFID &ffid, const QString &name, const Property &value);
+    
+    void setComponent(const Symbol &symbol, double value);
+    void setComponent(const Symbol &symbol, const SireCAS::Expression &expression);
+    
+    SireCAS::Expression getComponent(const Symbol &symbol) const;
     
     QHash<FFName,Property> property(const QString &name) const;
 
@@ -247,6 +254,10 @@ private:
     FF& _pvt_forceField(const MGNum &mgnum);
 
     void _pvt_remove(int i);
+
+    /** The global symbol used to refer to the total energy of a collection
+        of forcefields */
+    static Symbol total_component;
 
     /** All of the forcefields arranged by FFIdx */
     QVector<ForceField> ffields_by_idx;
