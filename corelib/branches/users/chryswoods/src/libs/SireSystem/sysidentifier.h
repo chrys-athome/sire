@@ -26,42 +26,42 @@
   *
 \*********************************************/
 
-#ifndef SIREFF_FFIDENTIFIER_H
-#define SIREFF_FFIDENTIFIER_H
+#ifndef SIRESYSTEM_SYSIDENTIFIER_H
+#define SIRESYSTEM_SYSIDENTIFIER_H
 
-#include "ffid.h"
+#include "sysid.h"
 
 #include <boost/shared_ptr.hpp>
 
-namespace SireFF
+namespace SireSystem
 {
 
-/** This is a generic holder for any FFID class! 
+/** This is a generic holder for any SysID class! 
 
     @author Christopher Woods
 */
-class SIREFF_EXPORT FFIdentifier : public FFID
+class SIRESYSTEM_EXPORT SysIdentifier : public SysID
 {
 public:
-    FFIdentifier();
-    FFIdentifier(const FFID &ffid);
-    FFIdentifier(const FFIdentifier &other);
+    SysIdentifier();
+    SysIdentifier(const SysID &sysid);
+    SysIdentifier(const SysIdentifier &other);
     
-    ~FFIdentifier();
+    ~SysIdentifier();
     
     static const char* typeName()
     {
-        return QMetaType::typeName( qMetaTypeId<FFIdentifier>() );
+        return QMetaType::typeName( qMetaTypeId<SysIdentifier>() );
     }
     
     const char* what() const
     {
-        return FFIdentifier::typeName();
+        return SysIdentifier::typeName();
     }
     
-    FFIdentifier* clone() const
+    SysIdentifier* clone() const
     {
-        return new FFIdentifier(*this);
+        return new SysIdentifier(*this);
     }
     
     bool isNull() const;
@@ -70,29 +70,27 @@ public:
                 
     QString toString() const;
     
-    const FFID& base() const;
+    const SysID& base() const;
     
-    FFIdentifier& operator=(const FFIdentifier &other);
-    FFIdentifier& operator=(const FFID &other);
+    SysIdentifier& operator=(const SysIdentifier &other);
+    SysIdentifier& operator=(const SysID &other);
     
     bool operator==(const SireID::ID &other) const;
     using SireID::ID::operator!=;
    
-    bool operator==(const FFIdentifier &other) const;
-    bool operator!=(const FFIdentifier &other) const;
+    bool operator==(const SysIdentifier &other) const;
+    bool operator!=(const SysIdentifier &other) const;
     
-    bool operator==(const FFID &other) const;
-    bool operator!=(const FFID &other) const;
-
-    QList<FFIdx> map(const ForceFields &ffields) const;
+    bool operator==(const SysID &other) const;
+    bool operator!=(const SysID &other) const;
 
 private:
-    /** Pointer to the FFID */
-    boost::shared_ptr<FFID> d;
+    /** Pointer to the SysID */
+    boost::shared_ptr<SysID> d;
 };
 
 }
 
-Q_DECLARE_METATYPE(SireFF::FFIdentifier);
+Q_DECLARE_METATYPE(SireSystem::SysIdentifier);
 
 #endif

@@ -455,7 +455,6 @@ double FlopsMark::benchmark()
                     __m128d low_pair = { my_values[i-1], my_values[i-2] };
                     __m128d high_pair = { my_values[i], my_values[i-1] };
                     
-                    //__m128d sse_sum = _mm_sqrt_pd( low_pair * high_pair );
                     __m128d sse_sum = _mm_sqrt_pd( low_pair * high_pair );
                     
                     my_sum += ( *((const double*)(&sse_sum)) +

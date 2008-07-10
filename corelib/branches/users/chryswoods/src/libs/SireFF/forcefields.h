@@ -164,7 +164,6 @@ public:
     using SireMol::MolGroupsBase::update;
     
     void add(const FF &forcefield);
-    void update(const FF &forcefield);
     
     void remove(const FFIdx &ffidx);
     void remove(const FFName &ffname);

@@ -10,7 +10,7 @@ streaminfo STDOUT
 cutoff  15.0
 feather 0.5
 
-SIRE_COMPATIBILITY_MODE off
+SIRE_COMPATIBILITY_MODE on
 
 boundary solvent
 

@@ -29,10 +29,9 @@
 #ifndef SIRESYSTEM_CHECKPOINT_H
 #define SIRESYSTEM_CHECKPOINT_H
 
-#include "systemdata.h"
-#include "systemmonitors.h"
+#include "system.h"
 
-#include "SireFF/forcefields.h"
+#include "SireBase/property.h"
 
 SIRE_BEGIN_HEADER
 
@@ -47,14 +46,14 @@ QDataStream& operator>>(QDataStream&, SireSystem::CheckPoint&);
 namespace SireSystem
 {
 
-class System;
-class QuerySystem;
-
-/** This class holds a checkpoint for a running simulation
-
+/** This class holds a checkpoint of a system. This allows you to 
+    save the current state of a system so that you can restore
+    it at a later point (or even save it to disk/database)
+    
     @author Christopher Woods
 */
 class SIRESYSTEM_EXPORT CheckPoint
+          : public SireBase::ConcreteProperty<CheckPoint,SireBase::PropertyBase>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const CheckPoint&);
@@ -62,80 +61,40 @@ friend QDataStream& ::operator>>(QDataStream&, CheckPoint&);
 
 public:
     CheckPoint();
-
-    CheckPoint(System &system);
-    CheckPoint(const QuerySystem &system);
-
+    CheckPoint(const System &system);
+    
     CheckPoint(const CheckPoint &other);
-
+    
     ~CheckPoint();
-
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<CheckPoint>() );
+    }
+    
+    CheckPoint* clone() const
+    {
+        return new CheckPoint(*this);
+    }
+    
+    CheckPoint& operator=(const System &system);
     CheckPoint& operator=(const CheckPoint &other);
-    CheckPoint& operator=(System &system);
-    CheckPoint& operator=(const QuerySystem &system);
-
+    
     bool operator==(const CheckPoint &other) const;
     bool operator!=(const CheckPoint &other) const;
-
-    SystemID ID() const;
-    const Version& version() const;
-
-    const ForceFields& forceFields() const;
-    const SystemData& info() const;
-    const SystemMonitors& monitors() const;
+    
+    operator System() const;
 
 private:
-    /** The name of the system */
-    QString nme;
-
-    /** Metainfo about the system */
-    SystemData sysdata;
-
-    /** Copies of the forcefields that describe the
-        potential energy surface */
-    ForceFields ffields;
-
-    /** Copies of the monitors that are used
-        to monitor properties and energies during
-        the simulation */
-    SystemMonitors sysmonitors;
+    /** A copy of the system that has been checkpointed */
+    System old_system;
 };
 
-/** Return the ID number of the system being checkpointed */
-inline SystemID CheckPoint::ID() const
-{
-    return sysdata.ID();
 }
 
-/** Return the version number of the forcefield at this checkpoint */
-inline const Version& CheckPoint::version() const
-{
-    return sysdata.version();
-}
+Q_DECLARE_METATYPE( SireSystem::CheckPoint )
 
-/** Return the metadata describing the system */
-inline const SystemData& CheckPoint::info() const
-{
-    return sysdata;
-}
-
-/** Return the forcefields that describe the potential
-    energy surface of the system */
-inline const ForceFields& CheckPoint::forceFields() const
-{
-    return ffields;
-}
-
-/** Return the monitors that are used to monitor properties
-    and energies during the simulation */
-inline const SystemMonitors& CheckPoint::monitors() const
-{
-    return sysmonitors;
-}
-
-}
-
-Q_DECLARE_METATYPE(SireSystem::CheckPoint);
+SIRE_EXPOSE_CLASS( SireSystem::CheckPoint )
 
 SIRE_END_HEADER
 

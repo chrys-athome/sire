@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007  Christopher Woods
+  *  Copyright (C) 2008  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,31 +26,49 @@
   *
 \*********************************************/
 
-#include "localsimsystem.h"
-#include "checkpoint.h"
+#ifndef SIRESYSTEM_SYSID_H
+#define SIRESYSTEM_SYSID_H
 
-using namespace SireSystem;
+#include <QList>
 
-/** Construct a simulation that will simulate a copy of a
-    system at the checkpoint 'checkpoint' */
-LocalSimSystem::LocalSimSystem(const CheckPoint &checkpoint)
-               : SimSystem()
+#include "SireID/id.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireSystem
 {
-    this->rollBack(checkpoint);
+
+class SysIdx;
+class SysIdentifier;
+class SysName;
+
+/** The base class of all system identifiers
+
+    @author Christopher Woods
+*/
+class SIRESYSTEM_EXPORT SysID : public SireID::ID
+{
+public:
+    typedef SysIdx Index;
+    typedef SysIdentifier Identifier;
+
+    SysID();
+    SysID(const SysID &other);
+
+    virtual ~SysID();
+    
+    static const char* typeName()
+    {
+        return "SireSystem::SysID";
+    }
+    
+    virtual SysID* clone() const=0;
+};
+
 }
 
-/** Destructor */
-LocalSimSystem::~LocalSimSystem()
-{}
+SIRE_EXPOSE_CLASS( SireSystem::SysID )
 
-/** Roll this simulation back to a previous checkpoint */
-void LocalSimSystem::rollBack(const CheckPoint &checkpoint)
-{
-    local_sysdata = checkpoint.info();
-    local_ffields = checkpoint.forceFields();
-    local_monitors = checkpoint.monitors();
+SIRE_END_HEADER
 
-    SimSystem::setSystem(local_sysdata,
-                         local_ffields,
-                         local_monitors);
-}
+#endif

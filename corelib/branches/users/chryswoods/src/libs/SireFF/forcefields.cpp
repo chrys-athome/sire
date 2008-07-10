@@ -36,9 +36,12 @@
 #include "SireMol/mgidx.h"
 
 #include "SireMol/moleculeview.h"
+#include "SireMol/partialmolecule.h"
+#include "SireMol/molecule.h"
 #include "SireMol/viewsofmol.h"
 #include "SireMol/molecules.h"
 #include "SireMol/molgroup.h"
+#include "SireMol/moleculegroup.h"
 
 #include "tostring.h"
 
@@ -896,6 +899,22 @@ ForceFields::ForceFields(const QList<ForceField> &forcefields)
             : ConcreteProperty<ForceFields,MolGroupsBase>()
 {
     ffields_by_idx = forcefields.toVector();
+    
+    int nffields = ffields_by_idx.count();
+    
+    if (nffields > 1)
+    {
+        Molecules mols;
+        
+        ForceField *ffields_array = ffields_by_idx.data();
+        
+        for (int i=1; i<nffields; ++i)
+        {
+            mols += ffields_array[i-1]->molecules();
+            ffields_array[i].edit().update(mols);
+        }
+    }
+    
     this->rebuildIndex();
 }
 
@@ -1554,54 +1573,30 @@ bool ForceFields::isClean() const
 
 /** Add the forcefield 'forcefield' to this set. This will raise
     an exception if this forcefield (or one with the same name)
-    is already present in this set.
+    is already present in this set. Note that if the added
+    forcefield will be updated to contain the versions of 
+    any molecules that are already present in any of the 
+    other forcefields.
 
     \throw SireFF::duplicate_forcefield
     \throw SireMol::duplicate_group
 */
 void ForceFields::add(const FF &forcefield)
 {
+    ForceField ff( forcefield );
+    ff.edit().update( this->molecules() );
+
     ForceFields old_state( *this );
     
     try
     {
-        ffields_by_idx.append(forcefield);
+        ffields_by_idx.append(ff);
         this->rebuildIndex();
     }
     catch(...)
     {
         this->operator=(old_state);
         throw;
-    }
-}
-
-/** Update the forcefield 'forcefield' so that it is equal
-    to 'forcefield'. Note that this performs the update by
-    name - e.g. the forcefield that has the same name as 'forcefield'
-    is replaced with 'forcefield'. Nothing occurs if this
-    forcefield is not in this set, but an error will be raised
-    if the new forcefield is present in this set under a different 
-    name
-    
-    \throw SireFF::duplicate_forcefield
-    \throw SireMol::duplicate_molgroup
-*/
-void ForceFields::update(const FF &forcefield)
-{
-    if (ffields_by_name.contains(forcefield.name()))
-    {
-        ForceFields old_state( *this );
-    
-        try
-        {
-            ffields_by_idx[ ffields_by_name.value(forcefield.name()) ] = forcefield;
-            this->rebuildIndex();
-        }
-        catch(...)
-        {
-            this->operator=(old_state);
-            throw;
-        }
     }
 }
 
@@ -1696,6 +1691,9 @@ void ForceFields::add(const MoleculeView &molview, const MGID &mgid,
                       const PropertyMap &map)
 {
     QList<MGNum> mgnums = mgid.map(*this);
+
+    PartialMolecule view(molview);
+    view.update( this->matchToExistingVersion(view.data()) );
     
     ForceFields old_state( *this );
     
@@ -1703,8 +1701,8 @@ void ForceFields::add(const MoleculeView &molview, const MGID &mgid,
     {
         foreach (const MGNum &mgnum, mgnums)
         {
-            this->_pvt_forceField(mgnum).add(molview, mgnum, map);
-            MolGroupsBase::addToIndex(mgnum, molview.data().number());
+            this->_pvt_forceField(mgnum).add(view, mgnum, map);
+            MolGroupsBase::addToIndex(mgnum, view.data().number());
         }
     }
     catch(...)
@@ -1727,6 +1725,9 @@ void ForceFields::add(const ViewsOfMol &molviews, const MGID &mgid,
                       const PropertyMap &map)
 {
     QList<MGNum> mgnums = mgid.map(*this);
+
+    ViewsOfMol views(molviews);
+    views.update( this->matchToExistingVersion(views.data()) );
     
     ForceFields old_state( *this );
     
@@ -1734,8 +1735,8 @@ void ForceFields::add(const ViewsOfMol &molviews, const MGID &mgid,
     {
         foreach (const MGNum mgnum, mgnums)
         {
-            this->_pvt_forceField(mgnum).add(molviews, mgnum, map);
-            MolGroupsBase::addToIndex(mgnum, molviews.number());
+            this->_pvt_forceField(mgnum).add(views, mgnum, map);
+            MolGroupsBase::addToIndex(mgnum, views.number());
         }
     }
     catch(...)
@@ -1759,15 +1760,17 @@ void ForceFields::add(const Molecules &molecules, const MGID &mgid,
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
+    Molecules mols = this->matchToExistingVersion(molecules);
+
     ForceFields old_state( *this );
     
     try
     {
         foreach (const MGNum &mgnum, mgnums)
         {
-            this->_pvt_forceField(mgnum).add(molecules, mgnum, map);
+            this->_pvt_forceField(mgnum).add(mols, mgnum, map);
 
-            MolGroupsBase::addToIndex(mgnum, molecules.molNums());
+            MolGroupsBase::addToIndex(mgnum, mols.molNums());
         }
     }
     catch(...)
@@ -1791,15 +1794,20 @@ void ForceFields::add(const MolGroup &molgroup, const MGID &mgid,
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
+    //update the group to match the molecule versions
+    //already present in this group...
+    MoleculeGroup group(molgroup);
+    group.edit().update( this->matchToExistingVersion(group.read().molecules()) );
+
     ForceFields old_state( *this );
     
     try
     {
         foreach (const MGNum &mgnum, mgnums)
         {
-            this->_pvt_forceField(mgnum).add(molgroup, mgnum, map);
+            this->_pvt_forceField(mgnum).add(group, mgnum, map);
             
-            MolGroupsBase::addToIndex(mgnum, molgroup.molNums().toSet());
+            MolGroupsBase::addToIndex(mgnum, group->molNums().toSet());
         }
     }
     catch(...)
@@ -1823,6 +1831,9 @@ void ForceFields::addIfUnique(const MoleculeView &molview, const MGID &mgid,
                               const PropertyMap &map)
 {
     QList<MGNum> mgnums = mgid.map(*this);
+
+    PartialMolecule view(molview);
+    view.update( this->matchToExistingVersion(view.data()) );
     
     ForceFields old_state( *this );
     
@@ -1830,9 +1841,9 @@ void ForceFields::addIfUnique(const MoleculeView &molview, const MGID &mgid,
     {
         foreach (const MGNum &mgnum, mgnums)
         {
-            this->_pvt_forceField(mgnum).addIfUnique(molview, mgnum, map);
+            this->_pvt_forceField(mgnum).addIfUnique(view, mgnum, map);
                                                      
-            MolGroupsBase::addToIndex(mgnum, molview.data().number());
+            MolGroupsBase::addToIndex(mgnum, view.data().number());
         }
     }
     catch(...)
@@ -1856,6 +1867,9 @@ void ForceFields::addIfUnique(const ViewsOfMol &molviews, const MGID &mgid,
                               const PropertyMap &map)
 {
     QList<MGNum> mgnums = mgid.map(*this);
+
+    ViewsOfMol views(molviews);
+    views.update( this->matchToExistingVersion(views.data()) );
     
     ForceFields old_state( *this );
     
@@ -1863,9 +1877,9 @@ void ForceFields::addIfUnique(const ViewsOfMol &molviews, const MGID &mgid,
     {
         foreach (const MGNum &mgnum, mgnums)
         {
-            this->_pvt_forceField(mgnum).addIfUnique(molviews, mgnum, map);
+            this->_pvt_forceField(mgnum).addIfUnique(views, mgnum, map);
             
-            MolGroupsBase::addToIndex(mgnum, molviews.number());
+            MolGroupsBase::addToIndex(mgnum, views.number());
         }
     }
     catch(...)
@@ -1890,15 +1904,18 @@ void ForceFields::addIfUnique(const Molecules &molecules, const MGID &mgid,
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
+    Molecules mols = this->matchToExistingVersion(molecules);
+    QSet<MolNum> molnums = mols.molNums();
+
     ForceFields old_state( *this );
     
     try
     {
         foreach (const MGNum &mgnum, mgnums)
         {
-            this->_pvt_forceField(mgnum).addIfUnique(molecules, mgnum, map);
+            this->_pvt_forceField(mgnum).addIfUnique(mols, mgnum, map);
             
-            MolGroupsBase::addToIndex(mgnum, molecules.molNums());
+            MolGroupsBase::addToIndex(mgnum, mols.molNums());
         }
     }
     catch(...)
@@ -1922,6 +1939,10 @@ void ForceFields::addIfUnique(const MolGroup &molgroup, const MGID &mgid,
                               const PropertyMap &map)
 {
     QList<MGNum> mgnums = mgid.map(*this);
+
+    //update the group...
+    MolGroup group(molgroup);
+    group.update( this->matchToExistingVersion(group.molecules()) );
     
     ForceFields old_state( *this );
     
@@ -1929,9 +1950,9 @@ void ForceFields::addIfUnique(const MolGroup &molgroup, const MGID &mgid,
     {
         foreach (const MGNum &mgnum, mgnums)
         {
-            this->_pvt_forceField(mgnum).addIfUnique(molgroup, mgnum, map);
+            this->_pvt_forceField(mgnum).addIfUnique(group, mgnum, map);
             
-            MolGroupsBase::addToIndex(mgnum, molgroup.molNums().toSet());
+            MolGroupsBase::addToIndex(mgnum, group.molNums().toSet());
         }
     }
     catch(...)
@@ -2490,13 +2511,16 @@ void ForceFields::setContents(const MGID &mgid, const MoleculeView &molview,
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
+    PartialMolecule view(molview);
+    view.update( this->matchToExistingVersion(view.data()) );
+
     ForceFields old_state( *this );
     
     try
     {
         foreach (const MGNum &mgnum, mgnums)
         {
-            this->_pvt_forceField(mgnum).setContents(mgnum, molview, map);
+            this->_pvt_forceField(mgnum).setContents(mgnum, view, map);
         }
         
         this->rebuildIndex();
@@ -2523,13 +2547,16 @@ void ForceFields::setContents(const MGID &mgid, const ViewsOfMol &molviews,
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
+    ViewsOfMol views(molviews);
+    views.update( this->matchToExistingVersion(views.data()) );
+
     ForceFields old_state( *this );
     
     try
     {
         foreach (const MGNum &mgnum, mgnums)
         {
-            this->_pvt_forceField(mgnum).setContents(mgnum, molviews, map);
+            this->_pvt_forceField(mgnum).setContents(mgnum, views, map);
         }
         
         this->rebuildIndex();
@@ -2555,6 +2582,8 @@ void ForceFields::setContents(const MGID &mgid, const Molecules &molecules,
                               const PropertyMap &map)
 {
     QList<MGNum> mgnums = mgid.map(*this);
+
+    Molecules mols = this->matchToExistingVersion(molecules);
     
     ForceFields old_state( *this );
     
@@ -2562,7 +2591,7 @@ void ForceFields::setContents(const MGID &mgid, const Molecules &molecules,
     {
         foreach (const MGNum &mgnum, mgnums)
         {
-            this->_pvt_forceField(mgnum).setContents(mgnum, molecules, map);
+            this->_pvt_forceField(mgnum).setContents(mgnum, mols, map);
         }
         
         this->rebuildIndex();
@@ -2589,13 +2618,16 @@ void ForceFields::setContents(const MGID &mgid, const MolGroup &molgroup,
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
+    MolGroup group(molgroup);
+    group.update( this->matchToExistingVersion(group.molecules()) );
+
     ForceFields old_state( *this );
     
     try
     {
         foreach (const MGNum &mgnum, mgnums)
         {
-            this->_pvt_forceField(mgnum).setContents(mgnum, molgroup, map);
+            this->_pvt_forceField(mgnum).setContents(mgnum, group, map);
         }
         
         this->rebuildIndex();

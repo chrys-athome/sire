@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2008  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,51 +26,53 @@
   *
 \*********************************************/
 
-#ifndef SIRESYSTEM_LOCALSIMSYSTEM_H
-#define SIRESYSTEM_LOCALSIMSYSTEM_H
+#include "sysid.h"
+#include "sysidx.h"
+#include "sysname.h"
 
-#include "simsystem.h"
+using namespace SireSystem;
 
-#include "systemdata.h"
-#include "systemmonitors.h"
+///////
+/////// Implementation of SysID
+///////
 
-#include "SireFF/forcefields.h"
+SysID::SysID() : SireID::ID()
+{}
 
-SIRE_BEGIN_HEADER
+SysID::SysID(const SysID &other) : SireID::ID(other)
+{}
 
-namespace SireSystem
-{
+SysID::~SysID()
+{}
 
-class CheckPoint;
+///////
+/////// Implementation of SysIdx
+///////
 
-/** This is a simulation system that performs the entire simulation
-    in the local thread.
+SysIdx::SysIdx() : SireID::Index_T_<SysIdx>(), SysID()
+{}
 
-    @author Christopher Woods
-*/
-class SIRESYSTEM_EXPORT LocalSimSystem : public SimSystem
-{
-public:
-    LocalSimSystem(const CheckPoint &checkpoint);
+SysIdx::SysIdx(qint32 idx) : SireID::Index_T_<SysIdx>(idx), SysID()
+{}
 
-    ~LocalSimSystem();
+SysIdx::SysIdx(const SysIdx &other) : SireID::Index_T_<SysIdx>(other), SysID(other)
+{}
 
-    void rollBack(const CheckPoint &checkpoint);
+SysIdx::~SysIdx()
+{}
 
-private:
-    /** The metadata for this system */
-    SystemData local_sysdata;
+///////
+/////// Implementation of SysName
+///////
 
-    /** The monitors that monitor properties of this system */
-    SystemMonitors local_monitors;
+SysName::SysName() : SireID::Name(), SysID()
+{}
 
-    /** The forcefields that describe the potential
-        energy surface */
-    ForceFields local_ffields;
-};
+SysName::SysName(const QString &name) : SireID::Name(name), SysID()
+{}
 
-}
+SysName::SysName(const SysName &other) : SireID::Name(other), SysID(other)
+{}
 
-SIRE_END_HEADER
-
-#endif
+SysName::~SysName()
+{}

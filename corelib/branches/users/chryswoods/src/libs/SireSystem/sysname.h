@@ -26,73 +26,92 @@
   *
 \*********************************************/
 
-#ifndef SIREFF_FFIDENTIFIER_H
-#define SIREFF_FFIDENTIFIER_H
+#ifndef SIRESYSTEM_SYSNAME_H
+#define SIRESYSTEM_SYSNAME_H
 
-#include "ffid.h"
+#include "SireID/name.h"
 
-#include <boost/shared_ptr.hpp>
+#include "sysid.h"
 
-namespace SireFF
+SIRE_BEGIN_HEADER
+
+namespace SireSystem
 {
 
-/** This is a generic holder for any FFID class! 
-
+/** This class holds the name of a simulation system
+    
     @author Christopher Woods
 */
-class SIREFF_EXPORT FFIdentifier : public FFID
+class SIRESYSTEM_EXPORT SysName : public SireID::Name, public SysID
 {
+
 public:
-    FFIdentifier();
-    FFIdentifier(const FFID &ffid);
-    FFIdentifier(const FFIdentifier &other);
+    SysName();
+    explicit SysName(const QString &name);
     
-    ~FFIdentifier();
+    SysName(const SysName &other);
+    
+    ~SysName();
     
     static const char* typeName()
     {
-        return QMetaType::typeName( qMetaTypeId<FFIdentifier>() );
+        return QMetaType::typeName( qMetaTypeId<SysName>() );
     }
     
     const char* what() const
     {
-        return FFIdentifier::typeName();
+        return SysName::typeName();
     }
     
-    FFIdentifier* clone() const
+    SysName* clone() const
     {
-        return new FFIdentifier(*this);
+        return new SysName(*this);
     }
     
-    bool isNull() const;
+    bool isNull() const
+    {
+        return SireID::Name::isNull();
+    }
     
-    uint hash() const;
-                
-    QString toString() const;
+    uint hash() const
+    {
+        return qHash(_name);
+    }
     
-    const FFID& base() const;
+    QString toString() const
+    {
+        return QString("SysName('%1')").arg(_name);
+    }
     
-    FFIdentifier& operator=(const FFIdentifier &other);
-    FFIdentifier& operator=(const FFID &other);
+    SysName& operator=(const SysName &other)
+    {
+        SireID::Name::operator=(other);
+        SysID::operator=(other);
+        return *this;
+    }
     
-    bool operator==(const SireID::ID &other) const;
-    using SireID::ID::operator!=;
-   
-    bool operator==(const FFIdentifier &other) const;
-    bool operator!=(const FFIdentifier &other) const;
+    bool operator==(const SireID::ID &other) const
+    {
+        return SireID::ID::compare<SysName>(*this, other);
+    }
     
-    bool operator==(const FFID &other) const;
-    bool operator!=(const FFID &other) const;
-
-    QList<FFIdx> map(const ForceFields &ffields) const;
-
-private:
-    /** Pointer to the FFID */
-    boost::shared_ptr<FFID> d;
+    bool operator==(const SysName &other) const
+    {
+        return _name == other._name;
+    }
+    
+    bool operator!=(const SysName &other) const
+    {
+        return _name != other._name;
+    }
 };
 
 }
 
-Q_DECLARE_METATYPE(SireFF::FFIdentifier);
+Q_DECLARE_METATYPE( SireSystem::SysName );
+
+SIRE_EXPOSE_CLASS( SireSystem::SysName )
+
+SIRE_END_HEADER
 
 #endif

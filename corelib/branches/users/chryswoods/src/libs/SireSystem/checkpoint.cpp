@@ -28,129 +28,96 @@
 
 #include "checkpoint.h"
 
-#include "system.h"
-#include "querysystem.h"
-
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireSystem;
-using namespace SireFF;
+using namespace SireBase;
 using namespace SireStream;
 
-static const RegisterMetaType<CheckPoint> r_checkpoint;
+static const RegisterMetaType<CheckPoint> r_ckpt;
 
 /** Serialise to a binary datastream */
-QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds,
-                                          const CheckPoint &checkpoint)
+QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const CheckPoint &ckpt)
 {
-    writeHeader(ds, r_checkpoint, 1);
-
+    writeHeader(ds, r_ckpt, 1);
+    
     SharedDataStream sds(ds);
-
-    sds << checkpoint.sysdata
-        << checkpoint.ffields
-        << checkpoint.sysmonitors;
-
+    sds << ckpt.old_system;
+    
     return ds;
 }
 
-/** Deserialise from a binary datastream */
-QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
-                                          CheckPoint &checkpoint)
+/** Extract from a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, CheckPoint &ckpt)
 {
-    VersionID v = readHeader(ds, r_checkpoint);
-
+    VersionID v = readHeader(ds, r_ckpt);
+    
     if (v == 1)
     {
         SharedDataStream sds(ds);
-
-        sds >> checkpoint.sysdata
-            >> checkpoint.ffields
-            >> checkpoint.sysmonitors;
+        sds >> ckpt.old_system;
     }
     else
-        throw version_error(v, "1", r_checkpoint, CODELOC);
-
+        throw version_error(v, "1", r_ckpt, CODELOC);
+        
     return ds;
 }
 
-/** Null constructor */
-CheckPoint::CheckPoint()
+/** The global null system */
+static System null_system;
+
+/** Create a null (empty) checkpoint */
+CheckPoint::CheckPoint() : ConcreteProperty<CheckPoint,PropertyBase>(),
+                           old_system(null_system)
 {}
 
-/** Construct a checkpoint of 'system' */
-CheckPoint::CheckPoint(System &system)
-{
-    this->operator=(system);
-}
-
-/** Construct from a running simulation system */
-CheckPoint::CheckPoint(const QuerySystem &system)
-           : sysdata(system.info()),
-             ffields(system.forceFields()),
-             sysmonitors(system.monitors())
+/** Construct a checkpoint to hold the current state of the system 'system' */
+CheckPoint::CheckPoint(const System &system)
+           : ConcreteProperty<CheckPoint,PropertyBase>(),
+             old_system(system)
 {}
 
 /** Copy constructor */
 CheckPoint::CheckPoint(const CheckPoint &other)
-           : sysdata(other.sysdata),
-             ffields(other.ffields),
-             sysmonitors(other.sysmonitors)
+           : ConcreteProperty<CheckPoint,PropertyBase>(other),
+             old_system(other.old_system)
 {}
 
 /** Destructor */
 CheckPoint::~CheckPoint()
 {}
 
+/** Set this equal to the checkpoint of the system 'system' */
+CheckPoint& CheckPoint::operator=(const System &system)
+{
+    old_system = system;
+    return *this;
+}
+
 /** Copy assignment operator */
 CheckPoint& CheckPoint::operator=(const CheckPoint &other)
 {
-    if (this != &other)
-    {
-        sysdata = other.sysdata;
-        ffields = other.ffields;
-        sysmonitors = other.sysmonitors;
-    }
-
+    old_system = other.old_system;
+    PropertyBase::operator=(other);
+    
     return *this;
 }
 
-/** Copy assignment from a System */
-CheckPoint& CheckPoint::operator=(System &system)
-{
-    //must ensure that the system is consistent
-    system.prepareForSimulation();
-
-    sysdata = system.info();
-    ffields = system.forceFields();
-    sysmonitors = system.monitors();
-
-    return *this;
-}
-
-/** Copy assignment from a running simulation */
-CheckPoint& CheckPoint::operator=(const QuerySystem &system)
-{
-    sysdata = system.info();
-    ffields = system.forceFields();
-    sysmonitors = system.monitors();
-
-    return *this;
-}
-
-/** Comparison operator - two checkpoints are equal if they
-    have the same ID and version */
+/** Comparison operator */
 bool CheckPoint::operator==(const CheckPoint &other) const
 {
-    return (this == &other) or
-           ( ID() == other.ID() and version() == other.version() );
+    return old_system == other.old_system;
 }
 
-/** Comparison operator - two checkpoints are equal if they
-    have the same ID and version */
+/** Comparison operator */
 bool CheckPoint::operator!=(const CheckPoint &other) const
 {
-    return (this != &other) and
-           ( ID() != other.ID() or version() != other.version() );
+    return old_system != other.old_system;
+}
+
+/** Allow automatic conversion of a CheckPoint to a System */
+CheckPoint::operator System() const
+{
+    return old_system;
 }

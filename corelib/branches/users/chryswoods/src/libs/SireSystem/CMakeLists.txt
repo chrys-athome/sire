@@ -13,17 +13,16 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIRESYSTEM_HEADERS
       checkpoint.h
       errors.h
-      localsimsystem.h
-      monitorenergy.h
       move.h
       moves.h
       qhash_siresystem.h
-      querysystem.h
-      rdfmonitor.h
       simsystem.h
+      sysid.h
+      sysidentifier.h
+      sysidx.h
+      sysname.h
       system.h
       systemdata.h
-      systemid.h
       systemmonitor.h
       systemmonitors.h
     )
@@ -32,13 +31,11 @@ set ( SIRESYSTEM_HEADERS
 set ( SIRESYSTEM_SOURCES
       checkpoint.cpp
       errors.cpp
-      localsimsystem.cpp
-      monitorenergy.cpp
       move.cpp
       moves.cpp
-      querysystem.cpp
-      rdfmonitor.cpp
       simsystem.cpp
+      sysid.cpp
+      sysidentifier.cpp
       system.cpp
       systemdata.cpp
       systemmonitor.cpp
@@ -71,3 +68,4 @@ install( TARGETS SireSystem
 
 install( FILES ${SIRESYSTEM_HEADERS}
          DESTINATION ${SIRE_INCLUDES}/SireSystem )
+
