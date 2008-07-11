@@ -26,20 +26,24 @@
   *
 \*********************************************/
 
+#include <cmath>
+
 #include "montecarlo.h"
 
-#include <cmath>
+#include "SireFF/forcefields.h"
 
 #include "SireUnits/units.h"
 #include "SireUnits/temperature.h"
 
 #include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 #include <QDebug>
 
 using namespace SireMove;
 using namespace SireUnits;
 using namespace SireSystem;
+using namespace SireFF;
 using namespace SireStream;
 
 static const RegisterMetaType<MonteCarlo> r_mc(MAGIC_ONLY, "SireMove::MonteCarlo");
@@ -65,9 +69,11 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MonteCarlo &mc)
 
     if (v == 1)
     {
-        ds >> mc.rangenerator >> mc.beta
-           >> mc.naccept >> mc.nreject
-           >> static_cast<MoveBase&>(mc);
+        SharedDataStream sds(ds);
+    
+        sds >> mc.rangenerator >> mc.beta
+            >> mc.naccept >> mc.nreject
+            >> static_cast<MoveBase&>(mc);
     }
     else
         throw version_error(v, "1", r_mc, CODELOC);
@@ -76,8 +82,9 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MonteCarlo &mc)
 }
 
 /** Construct using the supplied random number generator */
-MonteCarlo::MonteCarlo(const RanGenerator &generator)
-           : MoveBase(), rangenerator(generator),
+MonteCarlo::MonteCarlo()
+           : MoveBase(), 
+             nrg_component( ForceFields::totalComponent() ),
              naccept(0), nreject(0)
 {
     setTemperature( 25 * celsius );
@@ -86,6 +93,7 @@ MonteCarlo::MonteCarlo(const RanGenerator &generator)
 /** Copy constructor */
 MonteCarlo::MonteCarlo(const MonteCarlo &other)
            : MoveBase(other), rangenerator(other.rangenerator),
+             nrg_component(other.nrg_component),
              beta(other.beta),
              naccept(other.naccept), nreject(other.nreject)
 {}
@@ -98,6 +106,7 @@ MonteCarlo::~MonteCarlo()
 MonteCarlo& MonteCarlo::operator=(const MonteCarlo &other)
 {
     rangenerator = other.rangenerator;
+    nrg_component = other.nrg_component;
     beta = other.beta;
     naccept = other.naccept;
     nreject = other.nreject;
@@ -117,6 +126,20 @@ void MonteCarlo::setTemperature(Temperature temperature)
 Temperature MonteCarlo::temperature() const
 {
     return Temperature( 1.0 / (k_boltz * beta) );
+}
+
+/** Set the symbol representing the component of the energy
+    on which this Monte Carlo move samples */
+void MonteCarlo::setEnergyComponent(const Symbol &symbol)
+{
+    nrg_component = symbol;
+}
+
+/** Return the symbol of the energy component on which this Monte Carlo
+    move samples */
+const Symbol& MonteCarlo::energyComponent() const
+{
+    return nrg_component;
 }
 
 /** Set the random number generator to use for these moves */

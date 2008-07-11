@@ -31,6 +31,8 @@
 
 #include "move.h"
 
+#include "SireCAS/symbol.h"
+
 #include "SireUnits/dimensions.h"
 
 #include "SireMaths/rangenerator.h"
@@ -57,6 +59,8 @@ using SireMaths::RanGenerator;
 
 using SireUnits::Dimension::Temperature;
 
+using SireCAS::Symbol;
+
 /** This is the base class of all Monte Carlo moves
 
     @author Christopher Woods
@@ -68,7 +72,8 @@ friend QDataStream& ::operator<<(QDataStream&, const MonteCarlo&);
 friend QDataStream& ::operator>>(QDataStream&, MonteCarlo&);
 
 public:
-    MonteCarlo(const RanGenerator &generator = RanGenerator());
+    MonteCarlo();
+    
     MonteCarlo(const MonteCarlo &other);
 
     ~MonteCarlo();
@@ -92,6 +97,9 @@ public:
     void setTemperature(Temperature temperature);
     Temperature temperature() const;
 
+    void setEnergyComponent(const Symbol &component);
+    const Symbol& energyComponent() const;
+
 protected:
     MonteCarlo& operator=(const MonteCarlo &other);
 
@@ -103,9 +111,14 @@ protected:
     bool test(double new_energy,
               double old_energy);
 
+private:
     /** The random number generator used during the moves
         and in the test */
     RanGenerator rangenerator;
+
+    /** The symbol representing the energy component that
+        this Monte Carlo move is sampling */
+    Symbol nrg_component;
 
     /** beta (== 1 / kT) */
     double beta;

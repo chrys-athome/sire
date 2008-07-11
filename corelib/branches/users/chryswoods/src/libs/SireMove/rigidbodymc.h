@@ -29,12 +29,8 @@
 #ifndef SIREMOVE_RIGIDBODYMC_H
 #define SIREMOVE_RIGIDBODYMC_H
 
-#include <QHash>
-
 #include "montecarlo.h"
 #include "sampler.h"
-
-#include "SireSystem/checkpoint.h"
 
 SIRE_BEGIN_HEADER
 
@@ -84,15 +80,10 @@ friend QDataStream& ::operator<<(QDataStream&, const RigidBodyMC&);
 friend QDataStream& ::operator>>(QDataStream&, RigidBodyMC&);
 
 public:
-    RigidBodyMC(const RanGenerator &generator = RanGenerator());
+    RigidBodyMC();
 
-    RigidBodyMC(const Sampler &sampler,
-                const RanGenerator &generator = RanGenerator());
-
-    RigidBodyMC(const Sampler &sampler,
-                SireUnits::Dimension::Length max_translation,
-                SireUnits::Dimension::Angle max_rotation,
-                const RanGenerator &generator = RanGenerator());
+    RigidBodyMC(const MolGroup &molgroup);
+    RigidBodyMC(const Sampler &sampler);
 
     RigidBodyMC(const RigidBodyMC &other);
 
@@ -102,7 +93,7 @@ public:
 
     static const char* typeName()
     {
-        return QMetaType::typeName( qMetaTypeID<RigidBodyMC>() );
+        return QMetaType::typeName( qMetaTypeId<RigidBodyMC>() );
     }
 
     RigidBodyMC* clone() const
@@ -110,56 +101,23 @@ public:
         return new RigidBodyMC(*this);
     }
 
+    void setSampler(const Sampler &sampler);
+    void setSampler(const MolGroup &molgroup);
+
+    const SamplerBase& sampler() const;
+    const MolGroup& moleculeGroup() const;
+
     void setMaximumTranslation(SireUnits::Dimension::Length max_translation);
     void setMaximumRotation(SireUnits::Dimension::Angle max_rotation);
 
     SireUnits::Dimension::Length maximumTranslation() const;
     SireUnits::Dimension::Angle maximumRotation() const;
 
-    void move(SimSystem &system);
-
-    void assertCompatibleWith(QuerySystem &system) const;
-
-protected:
-    class CheckPoint
-    {
-    public:
-        CheckPoint();
-
-        CheckPoint(const SireSystem::CheckPoint &checkpoint,
-                   const Sampler &sampler);
-
-        CheckPoint(const CheckPoint &other);
-
-        ~CheckPoint();
-
-        const SireSystem::CheckPoint& system() const
-        {
-            return sys_ckpt;
-        }
-
-        const Sampler& sampler() const
-        {
-            return smplr_ckpt;
-        }
-
-    private:
-        /** Checkpoint of the system */
-        SireSystem::CheckPoint sys_ckpt;
-
-        /** Checkpoint of the sampler */
-        Sampler smplr_ckpt;
-    };
-
-    RigidBodyMC::CheckPoint checkPoint(QuerySystem &system) const;
-
-    void rollBack(SimSystem &system,
-                  const RigidBodyMC::CheckPoint &checkpoint);
+    void move(System &system, int nmoves);
 
 private:
-    /** The sampler used to select random molecules from the
-        MoleculeGroup */
-    Sampler _sampler;
+    /** The sampler used to select random molecules for the move */
+    Sampler smplr;
 
     /** The maximum translation */
     double adel;

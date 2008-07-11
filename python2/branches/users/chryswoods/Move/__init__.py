@@ -10,4 +10,3 @@ import Sire.Mol
 import Sire.System
 
 from Sire.Move._Move import *
-

@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007  Christopher Woods
+  *  Copyright (C) 2008  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -27,11 +27,11 @@
 \*********************************************/
 
 #include "rigidbodymc.h"
+#include "uniformsampler.h"
 
-#include "SireSystem/simsystem.h"
+#include "SireSystem/system.h"
 
-#include "SireMol/moleculemover.h"
-#include "SireMol/propertyextractor.h"
+#include "SireMol/partialmolecule.h"
 
 #include "SireMaths/quaternion.h"
 
@@ -49,35 +49,6 @@ using namespace SireUnits;
 using namespace SireStream;
 using namespace SireMaths;
 
-/////////////
-///////////// Implementation of RigidBodyMC::CheckPoint
-/////////////
-
-/** Null constructor */
-RigidBodyMC::CheckPoint::CheckPoint()
-{}
-
-/** Construct using the passed system checkpoint and sampler */
-RigidBodyMC::CheckPoint::CheckPoint(const SireSystem::CheckPoint &checkpoint,
-                                    const Sampler &sampler)
-            : sys_ckpt(checkpoint),
-              smplr_ckpt(sampler)
-{}
-
-/** Copy constructor */
-RigidBodyMC::CheckPoint::CheckPoint(const CheckPoint &other)
-            : sys_ckpt(other.sys_ckpt),
-              smplr_ckpt(other.smplr_ckpt)
-{}
-
-/** Destructor */
-RigidBodyMC::CheckPoint::~CheckPoint()
-{}
-
-/////////////
-///////////// Implementation of RigidBodyMC
-/////////////
-
 static const RegisterMetaType<RigidBodyMC> r_rbmc;
 
 /** Serialise to a binary datastream */
@@ -88,7 +59,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
 
     SharedDataStream sds(ds);
 
-    sds << rbmc._sampler
+    sds << rbmc.smplr
         << rbmc.adel << double(rbmc.rdel)
         << static_cast<const MonteCarlo&>(rbmc);
 
@@ -106,7 +77,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
 
         double rdel;
 
-        sds >> rbmc._sampler
+        sds >> rbmc.smplr
             >> rbmc.adel >> rdel
             >> static_cast<MonteCarlo&>(rbmc);
             
@@ -119,38 +90,31 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
 }
 
 /** Null constructor */
-RigidBodyMC::RigidBodyMC(const RanGenerator &generator)
-            : MonteCarlo(generator),
+RigidBodyMC::RigidBodyMC() : ConcreteProperty<RigidBodyMC,MonteCarlo>(),
+                             adel( 0.15 * angstrom ), rdel( 15 * degrees )
+{}
+
+/** Construct a move that moves molecules returned by the sampler 'sampler' */
+RigidBodyMC::RigidBodyMC(const Sampler &sampler)
+            : ConcreteProperty<RigidBodyMC,MonteCarlo>(), 
+              smplr(sampler),
               adel( 0.15 * angstrom ),
               rdel( 15 * degrees )
 {}
 
-/** Construct a move that moves molecules returned by the sampler 'sampler',
-    using the supplied optional random number generator */
-RigidBodyMC::RigidBodyMC(const Sampler &sampler, const RanGenerator &generator)
-            : MonteCarlo(generator),
-              _sampler(sampler),
-              adel( 0.15 * angstrom ),
-              rdel( 15 * degrees )
-{}
-
-/** Construct a move that moves molecules returned by the sampler 'sampler',
-    performing moves with a maximum translation of 'max_translation' and a
-    maximum rotation of 'max_rotation' */
-RigidBodyMC::RigidBodyMC(const Sampler &sampler,
-                         Dimension::Length max_translation,
-                         Dimension::Angle max_rotation,
-                         const RanGenerator &generator)
-            : MonteCarlo(generator),
-              _sampler(sampler),
-              adel(max_translation),
-              rdel(max_rotation)
+/** Construct a move that moves molecule views from the molecule group 'molgroup',
+    selecting views randomly, with each view having an equal chance of
+    being chosen */
+RigidBodyMC::RigidBodyMC(const MolGroup &molgroup)
+            : ConcreteProperty<RigidBodyMC,MonteCarlo>(), 
+              smplr( UniformSampler(molgroup) ),
+              adel( 0.15 * angstrom ), rdel( 15 * degrees )
 {}
 
 /** Copy constructor */
 RigidBodyMC::RigidBodyMC(const RigidBodyMC &other)
-            : MonteCarlo(other),
-              _sampler(other._sampler),
+            : ConcreteProperty<RigidBodyMC,MonteCarlo>(other), 
+              smplr(other.smplr),
               adel(other.adel), rdel(other.rdel)
 {}
 
@@ -163,7 +127,7 @@ RigidBodyMC& RigidBodyMC::operator=(const RigidBodyMC &other)
 {
     if (this != &other)
     {
-        _sampler = other._sampler;
+        smplr = other.smplr;
         adel = other.adel;
         rdel = other.rdel;
         MonteCarlo::operator=(other);
@@ -196,80 +160,100 @@ Dimension::Angle RigidBodyMC::maximumRotation() const
     return rdel;
 }
 
-/** Checkpoint this move */
-RigidBodyMC::CheckPoint RigidBodyMC::checkPoint(QuerySystem &system) const
+/** Set the sampler (and contained molecule group) that provides
+    the random molecules to be moved */
+void RigidBodyMC::setSampler(const Sampler &sampler)
 {
-    return RigidBodyMC::CheckPoint( system.checkPoint(), _sampler );
+    smplr = sampler;
 }
 
-/** Rollback to a previous checkpoint */
-void RigidBodyMC::rollBack(SimSystem &system,
-                           const RigidBodyMC::CheckPoint &checkpoint)
+/** Set the sampler to be one that selects views at random 
+    from the molecule group 'molgroup' (each view has an
+    equal chance of being chosen) */
+void RigidBodyMC::setSampler(const MolGroup &molgroup)
 {
-    system.rollBack(checkpoint.system());
-    _sampler = checkpoint.sampler();
+    smplr = UniformSampler(molgroup);
 }
 
-/** Assert that this move is compatible with the passed system - this is 
-    to try and catch any silly errors before the simulation starts... */
-void RigidBodyMC::assertCompatibleWith(QuerySystem &system) const
+/** Return the sampler that is used to draw random molecules */
+const SamplerBase& RigidBodyMC::sampler() const
 {
-    _sampler.assertCompatibleWith(system);
-    MonteCarlo::assertCompatibleWith(system);
+    return smplr;
 }
 
-/** Attempt a single rigid-body move */
-void RigidBodyMC::move(SimSystem &system)
+/** Return the molecule group from which random molecule views 
+    are drawn */
+const MolGroup& RigidBodyMC::moleculeGroup() const
+{
+    return smplr->group();
+}
+
+/** Attempt 'n' rigid body moves of the views of the system 'system' */
+void RigidBodyMC::move(System &system, int nmoves)
 {
     //get the current total energy of the system
-    double old_nrg = energy(system);
+    double old_nrg = system.energy( this->energyComponent() );
     
-    //checkpoint the simulation - we only need to save
-    //the system and our sampler...
-    RigidBodyMC::CheckPoint checkpoint = checkPoint(system);
-
+    //save our, and the system's, current state
+    RigidBodyMC old_state(*this);
+    System old_system_state(system);
+    
     try
     {
-        //randomly select a molecule to move
-        tuple<PartialMolecule,double> mol_and_bias = _sampler.sample(system);
+        for (int i=0; i<nmoves; ++i)
+        {
+            System old_system(system);
+            Sampler old_sampler(smplr);
+    
+            //update the sampler with the latest version of the molecule group
+            MGNum mgnum = smplr.read().group().number();
+            smplr.edit().setGroup( system.at(mgnum) );
+    
+            //randomly select a molecule to move
+            tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
 
-        double old_bias = mol_and_bias.get<1>();
+            double old_bias = mol_and_bias.get<1>();
 
-        //now translate and rotate the molecule
-        Vector delta = rangenerator.vectorOnSphere(adel);
+            //now translate and rotate the molecule
+            Vector delta = generator().vectorOnSphere(adel);
 
-        Quaternion rotdelta( rdel * rangenerator.rand(),
-                             rangenerator.vectorOnSphere() );
+            Quaternion rotdelta( rdel * generator().rand(),
+                                 generator().vectorOnSphere() );
 
-        const PartialMolecule &oldmol = mol_and_bias.get<0>();
+            const PartialMolecule &oldmol = mol_and_bias.get<0>();
 
-        PartialMolecule newmol = oldmol.move().translateAndRotate(
-                                                delta,
-                                                rotdelta,
-                                                oldmol.extract().geometricCenter()
-                                               );
+            PartialMolecule newmol = oldmol.move()
+                                        .rotate(rotdelta, 
+                                                oldmol.evaluate().centerOfGeometry())
+                                        .translate(delta)
+                                        .commit();
 
-        //update the simulation with the new coordinates
-        newmol = system.change(newmol);
+            //update the simulation with the new coordinates
+            system.update(newmol);
 
-        //calculate the energy of the system
-        double new_nrg = energy(system);
+            //calculate the energy of the system
+            double new_nrg = system.energy( this->energyComponent() );
 
-        //get the new bias on this molecule
-        double new_bias = _sampler.probabilityOf(newmol, system);
+            //get the new bias on this molecule
+            smplr.edit().setGroup( system.at(mgnum) );
+        
+            double new_bias = smplr.read().probabilityOf(newmol);
 
-        //accept or reject the move based on the change of energy
-        //and the biasing factors
-        if (not this->test(new_nrg, old_nrg, new_bias, old_bias))
-            //the move has been rejected - reset the state
-            rollBack(system, checkpoint);
+            //accept or reject the move based on the change of energy
+            //and the biasing factors
+            if (not this->test(new_nrg, old_nrg, new_bias, old_bias))
+            {
+                //the move has been rejected - reset the state
+                smplr = old_sampler;
+                system = old_system;
+            }
+        }
     }
     catch(...)
     {
-        //rollback to before the move
-        rollBack(system, checkpoint);
+        system = old_system_state;
+        this->operator=(old_state);
 
-        //rethrow the exception
         throw;
     }
 }

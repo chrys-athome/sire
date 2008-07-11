@@ -122,7 +122,7 @@ public:
     
     QString toString() const;
     
-    const Symbol& totalComponent() const;
+    static const Symbol& totalComponent();
     
     SireUnits::Dimension::Energy energy();
     SireUnits::Dimension::Energy energy(const Symbol &component);

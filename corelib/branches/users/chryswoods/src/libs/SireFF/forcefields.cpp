@@ -704,7 +704,7 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, ForceFields &ffields)
 Symbol ForceFields::total_component("E_{total}");
 
 /** Return the symbol representing the total energy component */
-const Symbol& ForceFields::totalComponent() const
+const Symbol& ForceFields::totalComponent()
 {
     return total_component;
 }

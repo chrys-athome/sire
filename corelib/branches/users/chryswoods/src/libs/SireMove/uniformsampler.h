@@ -87,7 +87,7 @@ public:
 
 Q_DECLARE_METATYPE(SireMove::UniformSampler)
 
-SIRE_EXPOSE_CLASS( SireMol::UniformSampler )
+SIRE_EXPOSE_CLASS( SireMove::UniformSampler )
 
 SIRE_END_HEADER
 

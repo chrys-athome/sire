@@ -50,6 +50,7 @@
 #include "SireMol/moleculegroup.h"
 #include "SireMol/moleculegroups.h"
 #include "SireMol/mgnum.h"
+#include "SireMol/partialmolecule.h"
 
 using namespace SireMol;
 
@@ -78,6 +79,8 @@ void register_SireMol_containers()
     register_tuple< boost::tuple<AtomIdx,AtomIdx,AtomIdx,AtomIdx> >();
 
     register_tuple< boost::tuple<AtomSelection,AtomSelection> >();    
+
+    register_tuple< boost::tuple<PartialMolecule,double> >();
 
     #if QT_VERSION >= 0x402000
     register_dict< QHash<MolNum,Selector<Atom> >();

@@ -11,126 +11,72 @@ from Sire.Units import *
 from Sire.System import *
 from Sire.Move import *
 
-import copy
+t = QTime()
 
-timer = QTime()
+cljff = InterCLJFF()
 
-#read in all of the molecules
-print "Loading the molecules..."
-timer.start()
+mincoords = Vector(-18.3854, -18.66855, -18.4445)
+maxcoords = Vector( 18.3854,  18.66855,  18.4445)
+
+vol = PeriodicBox(mincoords, maxcoords)
+switchfunc = HarmonicSwitchingFunction(15, 14.5)
+
+cljff.setSpace(vol)
+cljff.setSwitchingFunction(switchfunc)
+
 mols = PDB().read("test/io/water.pdb")
+                                                
+print "Read in %d molecules!" % mols.nMolecules()
 
-ms = timer.elapsed()
-print "... took %d ms" % ms
+i = 0
 
-#specify the space in which the molecules are placed
-space = Cartesian()
+t.start()
+mol = mols.moleculeAt(0).molecule()
 
-space = PeriodicBox( (-18.3854,-18.66855,-18.4445),
-                     ( 18.3854, 18.66855, 18.4445) )
+mol = mol.edit().atom( AtomName("O00") ) \
+                    .setProperty("LJ", LJParameter(3.15363,  \
+                                                   0.1550)).molecule() \
+                .atom( AtomName("H01") ) \
+                    .setProperty("charge", 0.520 * mod_electron).molecule() \
+                .atom( AtomName("H02") ) \
+                    .setProperty("charge", 0.520 * mod_electron).molecule() \
+                .atom( AtomName("M03") ) \
+                    .setProperty("charge", -1.04 * mod_electron).molecule() \
+         .commit()
 
-#specify the type of switching function to use
-switchfunc = HarmonicSwitchingFunction(80.0)
-switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
+charges = mol.property("charge")
+ljs = mol.property("LJ")
 
-cljff_a = InterCLJFF(space, switchfunc)
-cljff_b = InterCLJFF(space, switchfunc)
+cljff.add(mol)
 
-cljff_a_b = InterGroupCLJFF(space, switchfunc)
+for i in range(1, mols.nMolecules()):
+    mol = mols.moleculeAt(i).molecule()
 
-#parametise each molecule and add it to the forcefield
-print "Parametising the molecules..."
+    mol = mol.edit().rename( MolName("T4P") ) \
+                    .setProperty("charge", charges) \
+                    .setProperty("LJ", ljs) \
+             .commit()
 
-chgs = AtomicCharges( [0.0, 0.52 * mod_electron,
-                            0.52 * mod_electron,
-                           -1.04 * mod_electron] )
+    cljff.add(mol)
 
-ljs = AtomicLJs( [ LJParameter( 3.15365 * angstrom, \
-                                0.1550 * kcal_per_mol ), \
-                   LJParameter.dummy(), \
-                   LJParameter.dummy(), \
-                   LJParameter.dummy() ] )
+ms = t.elapsed()
+print "Parameterised all of the water molecules (in %d ms)!" % ms
 
-timer.start()
+system = System()
 
-rand = RanGenerator()
+system.add(cljff)
 
-n_in_a = 0
-n_in_b = 0
+mc = RigidBodyMC(cljff.group(MGIdx(0)))
 
-for mol in mols:
+print "Running 1000 moves..."
 
-      mol.setProperty( "charges", chgs )
-      mol.setProperty( "ljs", ljs )
-
-      #randomly divide the molecules into the two groups
-      if (rand.rand() < 0.5):
-          cljff_a.add(mol, {cljff_a.parameters().coulomb() : "charges",
-                            cljff_a.parameters().lj() : "ljs"})
-
-          cljff_a_b.addTo(cljff_a_b.groups().A(),
-                          mol, {cljff_a_b.parameters().coulomb() : "charges",
-                                cljff_a_b.parameters().lj() : "ljs"})
-
-          n_in_a = n_in_a + 1
-      else:
-          cljff_b.add(mol, {cljff_b.parameters().coulomb() : "charges",
-                            cljff_b.parameters().lj() : "ljs"})
-
-          cljff_a_b.addTo(cljff_a_b.groups().B(),
-                          mol, {cljff_a_b.parameters().coulomb() : "charges",
-                                cljff_a_b.parameters().lj() : "ljs"})
-
-          n_in_b = n_in_b + 1
-
-ms = timer.elapsed()
-print "... took %d ms" % ms
-
-print "(%d molecules in group A, %d in group B)" % (n_in_a, n_in_b)
-
-#add the forcefields to a forcefields object
-ffields = ForceFields()
-ffields.add(cljff_a)
-ffields.add(cljff_b)
-ffields.add(cljff_a_b)
-
-print ffields.nForceFields()
-
-#now create the molecule groups
-group = MoleculeGroup("solvent", mols)
-
-system = System(group, ffields)
-system.setSpace(space)
-
-mc = RigidBodyMC( UniformSampler(group) )
-
-PDB().write(system.info().groups().molecules(), "test000.pdb")
-
-nmoves = 50000
-nblocks = 200
-
-nmoves = 1000
-nblocks = 5
-
-print "Running %d blocks, %d moves per block..." % (nblocks, nmoves)
-
-for i in range(1,nblocks+1):
-    print "Block %d of %d..." % (i,nblocks)
-
-    print "Energy = %f kcal mol-1" % system.forceFields().energy()
-
-    timer.start()
-    moves = system.run(mc, nmoves)
-    ms = timer.elapsed()
-
-    PDB().write(system.info().groups().molecules(), "test%003d.pdb" % i)
-
-    move = moves.moves()[0].clone()
-    
-    print "Energy = %f kcal mol-1" % system.forceFields().energy()
-
-    print "%d moves took %d ms (%d accept out of %d)" % (nmoves,ms,
-                                                         move.nAccepted(),
-                                                         move.nAttempted())
+t.start()
+mc.move(system, 1000)
+ms = t.elapsed()
 
 print "Done!"
+
+print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
+                            mc.nRejected(), 100 * mc.acceptanceRatio())
+
+print "Took %d ms" % ms
