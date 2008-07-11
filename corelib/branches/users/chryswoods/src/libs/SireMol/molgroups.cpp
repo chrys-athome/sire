@@ -1785,6 +1785,16 @@ void MolGroupsBase::addToIndex(MGNum mgnum, const QSet<MolNum> &molnums)
     }
 }
 
+/** Add the set of molecules whose numbers are in 'molnums' to the 
+    index of the group whose number is in 'mgnum' */
+void MolGroupsBase::addToIndex(MGNum mgnum, const QList<MolNum> &molnums)
+{
+    foreach (MolNum molnum, molnums)
+    {
+        this->addToIndex(mgnum, molnum);
+    }
+}
+
 /** Completely remove the group with number 'mgnum' from the index */
 void MolGroupsBase::removeFromIndex(MGNum mgnum)
 {

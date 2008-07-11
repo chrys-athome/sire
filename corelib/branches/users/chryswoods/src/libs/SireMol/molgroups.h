@@ -335,6 +335,7 @@ protected:
     void addToIndex(const MolGroup &molgroup);
     void addToIndex(MGNum mgnum, MolNum molnum);
     void addToIndex(MGNum mgnum, const QSet<MolNum> &molnums);
+    void addToIndex(MGNum mgnum, const QList<MolNum> &molnums);
     
     void removeFromIndex(MGNum mgnum);
     void removeFromIndex(MolNum molnum);

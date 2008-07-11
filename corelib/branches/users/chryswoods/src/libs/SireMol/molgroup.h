@@ -53,6 +53,11 @@ namespace SireID
 class Index;
 }
 
+namespace SireBase
+{
+class Version;
+}
+
 namespace SireMol
 {
 
@@ -78,6 +83,7 @@ class MGNum;
 
 using SireBase::ConcreteProperty;
 using SireBase::PropertyBase;
+using SireBase::Version;
 
 /** This is the virtual base class of all MoleculeGroup type
     objects. Molecule groups are groups of molecules that also
@@ -232,6 +238,7 @@ public:
 
     const MGName& name() const;
     MGNum number() const;
+    const Version& version() const;
     
     virtual QString toString() const;
     

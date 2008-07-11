@@ -31,12 +31,32 @@
 using namespace SireBase;
 using namespace SireBase::detail;
 
+/** Constructor */
+Version::Version(quint64 major, quint64 minor)
+        : maj(major), min(minor)
+{}
+
+/** Copy constructor */
+Version::Version(const Version &other)
+        : maj(other.maj), min(other.min)
+{}
+
+/** Destructor */
+Version::~Version()
+{}
+
+/** Return a string representation of this version number */
+QString Version::toString() const
+{
+    return QString("%1.%2").arg(maj).arg(min);
+}
+
 boost::shared_ptr<MajorMinorVersionData> 
 MajorMinorVersion::shared_null( new MajorMinorVersionData() );
 
 /** Null constructor */
 MajorMinorVersion::MajorMinorVersion() 
-                  : d(shared_null), major_version(0), minor_version(0)
+                  : d(shared_null), v(0,0)
 {}
 
 /** Construct from a raw data object - this should only be called by 
@@ -47,20 +67,18 @@ MajorMinorVersion::MajorMinorVersion(
 {
     QMutexLocker lkr( &(d->version_mutex) );
     
-    major_version = d->last_major_version;
-    minor_version = d->last_minor_version;
+    v = Version(d->last_major_version, d->last_minor_version);
 }
 
 /** Construct the object for a specific version */
 MajorMinorVersion::MajorMinorVersion(quint64 vmaj, quint64 vmin)
                   : d( new MajorMinorVersionData(vmaj, vmin) ),
-                    major_version(vmaj), minor_version(vmin)
+                    v(vmaj, vmin)
 {}
 
 /** Copy constructor */
 MajorMinorVersion::MajorMinorVersion(const MajorMinorVersion &other)
-                  : d(other.d), major_version(other.major_version),
-                    minor_version(other.minor_version)
+                  : d(other.d), v(other.v)
 {}
 
 /** Destructor */
@@ -76,8 +94,7 @@ void MajorMinorVersion::incrementMajor()
     ++(d->last_major_version);
     d->last_minor_version = 0;
     
-    major_version = d->last_major_version;
-    minor_version = 0;
+    v = Version(d->last_major_version, 0);
 }
 
 /** Increment the minor version number */
@@ -87,5 +104,5 @@ void MajorMinorVersion::incrementMinor()
     
     ++(d->last_minor_version);
     
-    minor_version = d->last_minor_version;
+    v = Version(v.major(), d->last_minor_version);
 }

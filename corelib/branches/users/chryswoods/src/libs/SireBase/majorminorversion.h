@@ -68,6 +68,29 @@ public:
 
 } // end of namespace detail
 
+/** This is a simple class that holds a major and minor version number */
+class SIREBASE_EXPORT Version
+{
+public:
+    Version(quint64 major=0, quint64 minor=0);
+    Version(const Version &other);
+    
+    ~Version();
+    
+    Version& operator=(const Version &other);
+    
+    bool operator==(const Version &other) const;
+    bool operator!=(const Version &other) const;
+    
+    QString toString() const;
+    
+    quint64 major() const;
+    quint64 minor() const;
+
+private:
+    quint64 maj, min;
+};
+
 /** This is a class that provides a version numbering scheme that
     is guaranteed to provide unique version numbers, even for 
     different copies of this object 
@@ -104,6 +127,8 @@ public:
     void incrementMajor();
     void incrementMinor();
     
+    const Version& version() const;
+    
     quint64 majorVersion() const;
     quint64 minorVersion() const;
     
@@ -119,10 +144,8 @@ private:
         version object */
     boost::shared_ptr<detail::MajorMinorVersionData> d;
     
-    /** The major version number of this object */
-    quint64 major_version;
-    /** The minor version number of this object */
-    quint64 minor_version;
+    /** The major and minor version of this object */
+    Version v;
 };
 
 /** This class provides a registry of that last version number
@@ -151,14 +174,45 @@ private:
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
+/** Copy assignment operator */
+inline Version& Version::operator=(const Version &other)
+{
+    maj = other.maj;
+    min = other.min;
+    return *this;
+}
+
+/** Comparison operator */
+inline bool Version::operator==(const Version &other) const
+{
+    return maj == other.maj and min == other.min;
+}
+
+/** Comparison operator */
+inline bool Version::operator!=(const Version &other) const
+{
+    return maj != other.maj or min != other.min;
+}
+
+/** Return the major version number */
+inline quint64 Version::major() const
+{
+    return maj;
+}
+
+/** Return the minor version number */
+inline quint64 Version::minor() const
+{
+    return min;
+}
+
 /** Copy assingment operator */
 inline MajorMinorVersion& MajorMinorVersion::operator=(const MajorMinorVersion &other)
 {
     if (this != &other)
     {
         d = other.d;
-        major_version = other.major_version;
-        minor_version = other.minor_version;
+        v = other.v;
     }
     
     return *this;
@@ -167,27 +221,31 @@ inline MajorMinorVersion& MajorMinorVersion::operator=(const MajorMinorVersion &
 /** Comparision operator */
 inline bool MajorMinorVersion::operator==(const MajorMinorVersion &other) const
 {
-    return major_version == other.major_version and
-           minor_version == other.minor_version;
+    return v == other.v;
 }
 
 /** Comparison operator */
 inline bool MajorMinorVersion::operator!=(const MajorMinorVersion &other) const
 {
-    return major_version != other.major_version or
-           minor_version != other.minor_version;
+    return v != other.v;
+}
+
+/** Return the actual version */
+inline const Version& MajorMinorVersion::version() const
+{
+    return v;
 }
 
 /** Return the major version number */
 inline quint64 MajorMinorVersion::majorVersion() const
 {
-    return major_version;
+    return v.major();
 }
 
 /** Return the minor version number */
 inline quint64 MajorMinorVersion::minorVersion() const
 {
-    return minor_version;
+    return v.minor();
 }
 
 /** Constructor */
@@ -268,6 +326,8 @@ MajorMinorVersion VersionRegistry<T>::registerObject(const T &key)
 } // end of namespace SireBase
 
 Q_DECLARE_METATYPE( SireBase::MajorMinorVersion )
+
+SIRE_EXPOSE_CLASS( SireBase::Version )
 
 SIRE_END_HEADER
 

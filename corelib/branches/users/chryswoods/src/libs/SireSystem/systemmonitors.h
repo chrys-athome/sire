@@ -59,6 +59,8 @@ public:
     SystemMonitors();
     
     ~SystemMonitors();
+    
+    bool isEmpty() const;
 };
 
 }

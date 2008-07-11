@@ -169,6 +169,8 @@ public:
     void remove(const FFName &ffname);
     void remove(const FFID &ffid);
 
+    void removeAllForceFields();
+
     //overloading MolGroupsBase virtual functions
     const MolGroup& at(MGNum mgnum) const;
 

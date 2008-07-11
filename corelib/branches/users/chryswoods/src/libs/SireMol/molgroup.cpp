@@ -1075,6 +1075,12 @@ MGNum MolGroup::number() const
     return d->number;
 }
 
+/** Return the version number of this group */
+const Version& MolGroup::version() const
+{
+    return d->version.version();
+}
+
 /** Change the name of this group */
 void MolGroup::setName(const QString &new_name)
 {

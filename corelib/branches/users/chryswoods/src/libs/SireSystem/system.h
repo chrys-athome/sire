@@ -92,6 +92,7 @@ using SireBase::Property;
 using SireBase::Properties;
 using SireBase::PropertyMap;
 using SireBase::MajorMinorVersion;
+using SireBase::Version;
 
 /** This is a simulation system. If contains molecules, forcefields that
     provide energy functions of those molecules, and monitors that
@@ -139,7 +140,7 @@ public:
     
     const QUuid& UID() const;
     const SysName& name() const;
-    const MajorMinorVersion& version() const;
+    const Version& version() const;
 
     void setName(const SysName &newname);
 
@@ -171,11 +172,6 @@ public:
     void force(ForceTable &forcetable, double scale_force=1);
     void force(ForceTable &forcetable, const Symbol &component,
                double scale_force=1);
-
-    void setSpace(const SpaceBase &space);
-    void setSpace(const SpaceBase &space, const MappingFunction &mapfunc);
-    
-    SpaceBase& space() const;
     
     void setProperty(const QString &name, const Property &value);
     void setProperty(const FFID &ffid, const QString &name, const Property &value);
@@ -209,15 +205,18 @@ public:
     void add(const FF &forcefield);
     void add(const MolGroup &molgroup);
     
-    void remove(const FFIdx &ffidx);
-    void remove(const FFName &ffname);
     void remove(const FFID &ffid);
     void remove(const FF &ff);
 
-    void remove(MGNum mgnum);
-    void remove(const MolGroup &molgroup);
     void remove(const MGID &mgid);
+    void remove(const MolGroup &molgroup);
+
     void remove(const MolID &molid);
+
+    void removeAllMolecules();
+    void removeAllMoleculeGroups();
+    void removeAllForceFields();
+    void removeAllMonitors();
 
     //overloading MolGroupsBase virtual functions
     const MolGroup& at(MGNum mgnum) const;
@@ -249,6 +248,8 @@ public:
     void addIfUnique(const ViewsOfMol &molviews, const MGID &mgid);
     void addIfUnique(const Molecules &molecules, const MGID &mgid);
     void addIfUnique(const MolGroup &molgroup, const MGID &mgid);
+
+    using MolGroupsBase::removeAll;
 
     void removeAll(const MGID &mgid);
     void remove(const MoleculeView &molview, const MGID &mgid);
@@ -329,9 +330,6 @@ private:
     /** All of the monitors that monitor this system */
     SystemMonitors sysmonitors;
     
-    /** The space within which all molecules will be mapped */
-    Space sysspace;
-    
     /** The index of which of the two set of MoleculeGroups each
         individual molecule group in this set is in */
     QHash<MGNum,int> mgroups_by_num;
@@ -352,9 +350,9 @@ inline const SysName& System::name() const
 }
 
 /** Return a reference to the version of this system */
-inline const MajorMinorVersion& System::version() const
+inline const Version& System::version() const
 {
-    return sysversion;
+    return sysversion.version();
 }
 
 /** Return a reference to all of the monitors that

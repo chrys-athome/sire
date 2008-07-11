@@ -55,3 +55,9 @@ SystemMonitors::SystemMonitors()
 /** Destructor */
 SystemMonitors::~SystemMonitors()
 {}
+
+/** Return whether or not this is empty (contains no monitors) */
+bool SystemMonitors::isEmpty() const
+{
+    return true;
+}

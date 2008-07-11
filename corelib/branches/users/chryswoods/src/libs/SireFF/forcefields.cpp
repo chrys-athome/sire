@@ -1584,7 +1584,7 @@ bool ForceFields::isClean() const
 void ForceFields::add(const FF &forcefield)
 {
     ForceField ff( forcefield );
-    ff.edit().update( this->molecules() );
+    ff.edit().update( this->matchToExistingVersion(forcefield.molecules()) );
 
     ForceFields old_state( *this );
     
@@ -1653,6 +1653,26 @@ void ForceFields::remove(const FFID &ffid)
             this->_pvt_remove(ffidx);
         }
         
+        this->rebuildIndex();
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
+}
+
+/** Remove all of the forcefields from this set */
+void ForceFields::removeAllForceFields()
+{
+    ForceFields old_state(*this);
+    
+    try
+    {
+        ffields_by_idx.clear();
+        ffields_by_name.clear();
+        mgroups_by_num.clear();
+        this->clearIndex();
         this->rebuildIndex();
     }
     catch(...)
@@ -2367,21 +2387,30 @@ void ForceFields::remove(MolNum molnum, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
-    ForceFields old_state( *this );
-    
-    try
+    if (mgnums.count() == 1)
     {
-        foreach (const MGNum &mgnum, mgnums)
-        {
-            this->_pvt_forceField(mgnum).remove(molnum, mgnum);
-            
-            MolGroupsBase::removeFromIndex(mgnum, molnum);
-        }
+        MGNum mgnum = mgnums.at(0);
+        this->_pvt_forceField(mgnum).remove(molnum, mgnum);
+        MolGroupsBase::removeFromIndex(mgnum, molnum);
     }
-    catch(...)
+    else
     {
-        this->operator=(old_state);
-        throw;
+        ForceFields old_state( *this );
+    
+        try
+        {
+            foreach (const MGNum &mgnum, mgnums)
+            {
+                this->_pvt_forceField(mgnum).remove(molnum, mgnum);
+            
+                MolGroupsBase::removeFromIndex(mgnum, molnum);
+            }
+        }
+        catch(...)
+        {
+            this->operator=(old_state);
+            throw;
+        }
     }
 }
 
@@ -2429,19 +2458,26 @@ void ForceFields::update(const MoleculeData &moldata)
     
     BOOST_ASSERT(not mgnums.isEmpty());
 
-    ForceFields old_state( *this );
-    
-    try
+    if (mgnums.count() == 1)
     {
-        foreach (const MGNum &mgnum, mgnums)
-        {
-            this->_pvt_forceField(mgnum).update(moldata);
-        }
+        this->_pvt_forceField(mgnums.at(0)).update(moldata);
     }
-    catch(...)
+    else
     {
-        this->operator=(old_state);
-        throw;
+        ForceFields old_state( *this );
+    
+        try
+        {
+            foreach (const MGNum &mgnum, mgnums)
+            {
+                this->_pvt_forceField(mgnum).update(moldata);
+            }
+        }
+        catch(...)
+        {
+            this->operator=(old_state);
+            throw;
+        }
     }
 }
 
