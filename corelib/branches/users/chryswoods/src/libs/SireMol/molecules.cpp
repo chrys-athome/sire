@@ -724,7 +724,17 @@ bool Molecules::contains(const MoleculeView &molview) const
     QHash<MolNum,ViewsOfMol>::const_iterator it = mols.find(molview.data().number());
     
     if (it != mols.end())
-        return it->contains(molview.selection());
+    {
+        AtomSelection selected_atoms = molview.selection();
+        
+        foreach (const AtomSelection &selection, it->selections())
+        {
+            if (selected_atoms == selection)
+                return true;
+        }
+        
+        return false;
+    }
     else
         return false;
 }
@@ -737,7 +747,26 @@ bool Molecules::contains(const ViewsOfMol &molviews) const
     QHash<MolNum,ViewsOfMol>::const_iterator it = mols.find(molviews.number());
     
     if (it != mols.end())
-        return it->contains(molviews.selections());
+    {
+        foreach (const AtomSelection &selected_atoms, molviews.selections())
+        {
+            bool found = false;
+        
+            foreach (const AtomSelection &selection, it->selections())
+            {
+                if (selection == selected_atoms)
+                {
+                    found = true;
+                    break;
+                }
+            }
+            
+            if (not found)
+                return false;
+        }
+    
+        return true;
+    }
     else
         return false;
 }

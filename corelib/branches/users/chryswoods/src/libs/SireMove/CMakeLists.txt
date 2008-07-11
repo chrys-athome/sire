@@ -11,14 +11,14 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the headers in SireMove
 set ( SIREMOVE_HEADERS
-      molmappingfunction.h
       montecarlo.h
+      move.h
+      moves.h
       mtsmc.h
       prefsampler.h
       rigidbodymc.h
       sampler.h
       uniformsampler.h
-      volchangingfunction.h
       volumemove.h
       weightedmoves.h
     )
@@ -26,21 +26,15 @@ set ( SIREMOVE_HEADERS
 # Define the sources in SireMove
 set ( SIREMOVE_SOURCES
 
-      molmappingfunction.cpp
       montecarlo.cpp
+      move.cpp
+      moves.cpp
       mtsmc.cpp
-
       prefsampler.cpp
-
       rigidbodymc.cpp
-
       sampler.cpp
-
       uniformsampler.cpp
-
       weightedmoves.cpp
-
-      volchangingfunction.cpp
       volumemove.cpp
     
       ${SIREMOVE_HEADERS}
@@ -57,7 +51,7 @@ set_target_properties (SireMove PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SireMove
                        SireSystem
-           SireMaths
+                       SireMaths
                        )
 
 # installation
@@ -69,3 +63,4 @@ install( TARGETS SireMove
 
 install( FILES ${SIREMOVE_HEADERS}
          DESTINATION ${SIRE_INCLUDES}/SireMove )
+

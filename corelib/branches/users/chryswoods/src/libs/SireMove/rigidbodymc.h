@@ -76,7 +76,8 @@ using SireMol::PartialMolecule;
 
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT RigidBodyMC : public MonteCarlo
+class SIREMOVE_EXPORT RigidBodyMC 
+        : public SireBase::ConcreteProperty<RigidBodyMC,MonteCarlo>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const RigidBodyMC&);
@@ -101,12 +102,7 @@ public:
 
     static const char* typeName()
     {
-        return "SireMove::RigidBodyMC";
-    }
-
-    const char* what() const
-    {
-        return RigidBodyMC::typeName();
+        return QMetaType::typeName( qMetaTypeID<RigidBodyMC>() );
     }
 
     RigidBodyMC* clone() const
@@ -177,6 +173,8 @@ private:
 }
 
 Q_DECLARE_METATYPE(SireMove::RigidBodyMC);
+
+SIRE_EXPOSE_CLASS( SireMove::RigidBodyMC )
 
 SIRE_END_HEADER
 

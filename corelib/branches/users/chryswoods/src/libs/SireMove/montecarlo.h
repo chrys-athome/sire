@@ -29,7 +29,7 @@
 #ifndef SIREMOVE_MONTECARLO_H
 #define SIREMOVE_MONTECARLO_H
 
-#include "SireSystem/move.h"
+#include "move.h"
 
 #include "SireUnits/dimensions.h"
 
@@ -53,9 +53,6 @@ class SimSystem;
 namespace SireMove
 {
 
-using SireSystem::SimSystem;
-using SireSystem::MoveBase;
-
 using SireMaths::RanGenerator;
 
 using SireUnits::Dimension::Temperature;
@@ -76,7 +73,10 @@ public:
 
     ~MonteCarlo();
 
-    MonteCarlo& operator=(const MonteCarlo &other);
+    static const char* typeName()
+    {
+        return "SireMove::MonteCarlo";
+    }
 
     quint32 nAttempted() const;
     quint32 nAccepted() const;
@@ -93,6 +93,8 @@ public:
     Temperature temperature() const;
 
 protected:
+    MonteCarlo& operator=(const MonteCarlo &other);
+
     bool test(double new_energy,
               double old_energy,
               double new_bias,
@@ -116,6 +118,8 @@ protected:
 };
 
 }
+
+SIRE_EXPOSE_CLASS( SireMove::MonteCarlo )
 
 SIRE_END_HEADER
 

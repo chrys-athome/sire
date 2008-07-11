@@ -31,7 +31,9 @@
 
 #include <boost/tuple/tuple.hpp>
 
-#include "SireBase/sharedpolypointer.hpp"
+#include "SireMol/molgroup.h"
+#include "SireMol/moleculegroup.h"
+
 #include "SireBase/property.h"
 
 #include "SireMaths/rangenerator.h"
@@ -55,24 +57,18 @@ namespace SireMol
 class PartialMolecule;
 }
 
-namespace SireSystem
-{
-class QuerySystem;
-}
-
 namespace SireMove
 {
 
 using boost::tuple;
 
 using SireBase::PropertyBase;
-using SireBase::SharedPolyPointer;
 
 using SireMaths::RanGenerator;
 
 using SireMol::PartialMolecule;
-
-using SireSystem::QuerySystem;
+using SireMol::MolGroup;
+using SireMol::MoleculeGroup;
 
 /** This is the base class of all Samplers. A Sampler is used
     to pick a random molecule from a MoleculeGroup
@@ -86,13 +82,12 @@ friend QDataStream& ::operator<<(QDataStream&, const SamplerBase&);
 friend QDataStream& ::operator>>(QDataStream&, SamplerBase&);
 
 public:
-    SamplerBase(const RanGenerator &rangenerator);
+    SamplerBase();
+    SamplerBase(const MolGroup &molgroup);
 
     SamplerBase(const SamplerBase &other);
 
-    ~SamplerBase();
-
-    SamplerBase& operator=(const SamplerBase &other);
+    virtual ~SamplerBase();
 
     virtual SamplerBase* clone() const=0;
 
@@ -101,38 +96,57 @@ public:
         return "SireMove::SamplerBase";
     }
 
-    static SharedPolyPointer<SamplerBase> null_sampler();
-
     void setGenerator(const RanGenerator &generator);
     const RanGenerator& generator() const;
 
-    virtual tuple<PartialMolecule,double> sample(const QuerySystem &system)=0;
+    const MolGroup& group() const;
+    
+    virtual void setGroup(const MolGroup &molgroup);
 
-    virtual double probabilityOf(const PartialMolecule &molecule,
-                                 const QuerySystem &system)=0;
+    virtual tuple<PartialMolecule,double> sample() const=0;
 
-    virtual void assertCompatibleWith(const QuerySystem &system) const=0;
+    virtual double probabilityOf(const PartialMolecule &molecule) const=0;
 
 protected:
-    RanGenerator& _pvt_generator();
+    SamplerBase& operator=(const SamplerBase &other);
+    
+    bool operator==(const SamplerBase &other) const;
+    bool operator!=(const SamplerBase &other) const;
 
 private:
+    /** The molecule group from which molecules are sampled */
+    MoleculeGroup molgroup;
+
     /** The random number generator used by the sampler */
     RanGenerator rangen;
 };
 
-/** Internal function used to return a reference to the random
-    number generator used by this sampler */
-inline RanGenerator& SamplerBase::_pvt_generator()
-{
-    return rangen;
-}
-
-/** This is a convienient holder for a SharedPolyPointer<SamplerBase>
+/** This is the polymorphic pointer holder for the 
+    Sampler hierarchy of classes (objects to randomly
+    choose molecules from a molecule group)
+    
+    Like all Property polymorphic pointer holder classes,
+    this class holds the polymorphic Sampler object as 
+    an implicitly shared pointer. You can access the 
+    const functions of this object by dereferencing this
+    pointer, or by using the Sampler::read() function, e.g.;
+    
+    mol_and_prob = sampler->sample();
+    mol_and_prob = sampler.read().sample();
+    
+    You must use the Sampler::edit() function to
+    access the non-const member functions, e.g.;
+    
+    sampler.edit().setGroup(molgroup);
+    
+    Because an implicitly shared pointer is held, this
+    class can be copied and passed around quickly. A copy
+    is only made when the object being pointed to is
+    edited via the .edit() function.
 
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT Sampler
+class SIREMOVE_EXPORT Sampler : public SireBase::Property
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Sampler&);
@@ -140,33 +154,56 @@ friend QDataStream& ::operator>>(QDataStream&, Sampler&);
 
 public:
     Sampler();
-
-    Sampler(const SamplerBase &sampler);
+    Sampler(const SireBase::PropertyBase &property);
+    Sampler(const SamplerBase &molgroup);
 
     Sampler(const Sampler &other);
-
+    
     ~Sampler();
+    
+    virtual Sampler& operator=(const SireBase::PropertyBase &property);
+    virtual Sampler& operator=(const SamplerBase &other);
 
-    Sampler& operator=(const Sampler &other);
+    const SamplerBase* operator->() const;
+    const SamplerBase& operator*() const;
+    
+    const SamplerBase& read() const;
+    SamplerBase& edit();
+    
+    const SamplerBase* data() const;
+    const SamplerBase* constData() const;
+    
+    SamplerBase* data();
+    
+    operator const SamplerBase&() const;
 
-    tuple<PartialMolecule,double> sample(const QuerySystem &system);
-
-    double probabilityOf(const PartialMolecule &molecule,
-                         const QuerySystem &system);
-
-    void setGenerator(const RanGenerator &generator);
-    const RanGenerator& generator() const;
-
-    void assertCompatibleWith(const QuerySystem &system) const;
-
-private:
-    /** Implicitly shared pointer to the sampler implementation */
-    SireBase::SharedPolyPointer<SamplerBase> d;
+    static const Sampler& shared_null();
 };
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+/** Return the molecule group from which a molecule will be sampled */
+inline const MolGroup& SamplerBase::group() const
+{
+    return molgroup;
+}
+
+/** Internal function used to return a reference to the random
+    number generator used by this sampler */
+inline const RanGenerator& SamplerBase::generator() const
+{
+    return rangen;
+}
+
+#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 
-Q_DECLARE_METATYPE(SireMove::Sampler);
+Q_DECLARE_METATYPE(SireMove::Sampler)
+
+SIRE_EXPOSE_CLASS( SireMove::SamplerBase )
+
+SIRE_EXPOSE_PROPERTY( SireMove::Sampler, SireMove::SamplerBase )
 
 SIRE_END_HEADER
 

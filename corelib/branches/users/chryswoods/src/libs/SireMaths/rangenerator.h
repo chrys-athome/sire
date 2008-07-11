@@ -87,31 +87,33 @@ public:
     void seed(const QVector<quint32> &seed);
     void seed(const RanGenerator &other);
 
-    double rand();
-    double rand(double maxval);
-    double rand(double minval, double maxval);
+    double rand() const;
+    double rand(double maxval) const;
+    double rand(double minval, double maxval) const;
 
-    double rand53();
-    double rand53(double maxval);
-    double rand53(double minval, double maxval);
+    double rand53() const;
+    double rand53(double maxval) const;
+    double rand53(double minval, double maxval) const;
 
-    double randNorm(double mean, double variance);
+    double randNorm(double mean, double variance) const;
 
-    Vector vectorOnSphere();
-    Vector vectorOnSphere(double radius);
+    Vector vectorOnSphere() const;
+    Vector vectorOnSphere(double radius) const;
 
-    quint32 randInt();
-    quint32 randInt(quint32 maxval);
-    qint32 randInt(qint32 minval, qint32 maxval);
+    quint32 randInt() const;
+    quint32 randInt(quint32 maxval) const;
+    qint32 randInt(qint32 minval, qint32 maxval) const;
 
-    quint64 randInt64();
-    quint64 randInt64(quint64 maxval);
-    qint64 randInt64(qint64 minval, qint64 maxval);
+    quint64 randInt64() const;
+    quint64 randInt64(quint64 maxval) const;
+    qint64 randInt64(qint64 minval, qint64 maxval) const;
 
-    QVector<quint32> getState();
+    QVector<quint32> getState() const;
     void setState(const QVector<quint32> &state);
 
 private:
+    detail::RanGeneratorPvt& nonconst_d() const;
+
     /** Shared pointer to the actual generator */
     boost::shared_ptr<detail::RanGeneratorPvt> d;
 };

@@ -30,21 +30,13 @@
 
 #include "SireMol/partialmolecule.h"
 
-#include "SireMol/moleculegroup.h"
-#include "SireMol/moleculegroups.h"
-
-#include "SireMol/moleculeid.h"
-
-#include "SireSystem/systemdata.h"
-#include "SireSystem/querysystem.h"
-
 #include "SireMol/errors.h"
 
 #include "SireStream/datastream.h"
 
 using namespace SireMol;
 using namespace SireMove;
-using namespace SireSystem;
+using namespace SireBase;
 using namespace SireStream;
 
 static const RegisterMetaType<UniformSampler> r_sampler;
@@ -54,7 +46,6 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
                                         const UniformSampler &sampler)
 {
     writeHeader(ds, r_sampler, 1)
-          << sampler.groupid
           << static_cast<const SamplerBase&>(sampler);
 
     return ds;
@@ -67,12 +58,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, UniformSampler &sampler
 
     if (v == 1)
     {
-        UniformSampler newsampler;
-        
-        ds >> sampler.groupid
-           >> static_cast<SamplerBase&>(newsampler);
-        
-        sampler = newsampler;
+        ds >> static_cast<SamplerBase&>(sampler);
     }
     else
         throw version_error(v, "1", r_sampler, CODELOC);
@@ -81,35 +67,19 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, UniformSampler &sampler
 }
 
 /** Constructor */
-UniformSampler::UniformSampler(const RanGenerator &rangenerator) 
-               : SamplerBase(rangenerator), groupid(0), majver(0)
+UniformSampler::UniformSampler() 
+               : ConcreteProperty<UniformSampler,SamplerBase>()
 {}
 
-/** Update the statistics regarding the current group... */
-void UniformSampler::updateFrom(const MoleculeGroup &group)
-{
-    if (majver != group.version().major())
-    {
-        //recreate the list of MoleculeIDs
-        molids = group.moleculeIDs().toList();
-        majver = group.version().major();
-    }
-}
-
-/** Constructor */
-UniformSampler::UniformSampler(const MoleculeGroup &molgroup,
-                               const RanGenerator &generator)
-               : SamplerBase(generator),
-                 groupid(molgroup.ID()), majver(0)
-{
-    this->updateFrom(molgroup);
-}
+/** Constructor a sampler that chooses views at random from the 
+    passed molecule group */
+UniformSampler::UniformSampler(const MolGroup &molgroup)
+               : ConcreteProperty<UniformSampler,SamplerBase>(molgroup)
+{}
 
 /** Copy constructor */
 UniformSampler::UniformSampler(const UniformSampler &other)
-               : SamplerBase(other),
-                 molids(other.molids),
-                 groupid(other.groupid), majver(other.groupid)
+               : ConcreteProperty<UniformSampler,SamplerBase>(other)
 {}
 
 /** Destructor */
@@ -120,107 +90,40 @@ UniformSampler::~UniformSampler()
 UniformSampler& UniformSampler::operator=(const UniformSampler &other)
 {
     SamplerBase::operator=(other);
-    
-    molids = other.molids;
-    groupid = other.groupid;
-    majver = other.majver;
 
     return *this;
 }
 
-/** Set the group from which molecules will be sampled */
-void UniformSampler::setGroup(const MoleculeGroup &group)
+/** Return a random view molecule from the molecule group, together with
+    the probability of choosing that view. */
+tuple<PartialMolecule,double> UniformSampler::sample() const
 {
-    if (not (group.ID() == groupid and group.version().major() == majver))
-    {
-        groupid = group.ID();
-        majver = 0;
-        this->updateFrom(group);
-    }
-}
+    //how many molecule views are there in this molecule group?
+    int nviews = group().nViews();
 
-/** Comparison operator */
-bool UniformSampler::_pvt_isEqual(const PropertyBase &other) const
-{
-    BOOST_ASSERT( other.isA<UniformSampler>() );
-    
-    const UniformSampler &sampler = other.asA<UniformSampler>();
-    
-    return groupid == sampler.groupid and majver == sampler.majver;
-}
-
-/** Return a random molecule from the passed System. This
-    throws an exception if there are no molecules in the group,
-    or the group is not in the system!
-
-    \throw SireMol::missing_molecule
-    \throw SireMol::missing_group
-*/
-tuple<PartialMolecule,double> UniformSampler::sample(const QuerySystem &system)
-{
-    if (groupid == 0)
-        throw SireMol::missing_group( QObject::tr(
-            "You must supply the sampler with a group to sample!"),
-                CODELOC );
-
-    //get the group from the system
-    const MoleculeGroup &group = system.groups().group(groupid);
-
-    if (group.isEmpty())
+    if (nviews == 0)
         throw SireMol::missing_molecule( QObject::tr(
             "The MoleculeGroup is empty, so we can't choose a molecule!"),
                 CODELOC );
     
-    //update the statistics to mirror 'group'
-    this->updateFrom(group);
+    else if (nviews == 1)
+        return tuple<PartialMolecule,double>(group().viewAt(0), 1);
+
+    //choose a random view
+    quint32 i = generator().randInt(nviews-1);
     
-    int nmols = molids.count();
-  
-    BOOST_ASSERT(nmols != 0);
-  
-    if (nmols == 1)
-        return tuple<PartialMolecule,double>(group.molecule(molids.at(0)),
-                                             1.0);
+    //return the matching molecule
+    return tuple<PartialMolecule,double>(group().viewAt(i), 1.0 / nviews);
+}
+
+/** Return the probability of selecting the view in 'molview' from
+    the system 'system'. A probability of zero is returned if
+    this view cannot be chosen from the molecule group. */
+double UniformSampler::probabilityOf(const PartialMolecule &molecule) const
+{
+    if (group().contains(molecule))
+        return 1.0 / group().nViews();
+        
     else
-    {
-        //choose a random molecule ID...
-        quint32 i = _pvt_generator().randInt(molids.count()-1);
-    
-        //return the matching molecule
-        return tuple<PartialMolecule,double>(group.molecule( molids.at(i) ),
-                                             1.0 / molids.count());
-    }
-}
-
-/** Return the probability of selecting the molecule 'molecule' from
-    the system 'system'. An exception will be thrown if it in not
-    possible to select this molecule from the passed group,
-    or if the group is not in the system.
-    
-    \throw SireMol::missing_molecule
-    \throw SireMol::missing_group
-*/
-double UniformSampler::probabilityOf(const PartialMolecule &molecule,
-                                     const QuerySystem &system)
-{
-    const MoleculeGroup &group = system.groups().group(groupid);
-    
-    if (not group.refersTo(molecule.ID()))
-        throw SireMol::missing_molecule( QObject::tr(
-            "The molecule \"%1\" (%2) is not in the group with ID == %3.")
-                .arg(molecule.name()).arg(molecule.ID())
-                .arg(groupid), CODELOC );
-    
-    this->updateFrom(group);
-
-    return 1.0 / molids.count();
-}
-
-/** Assert that this sampler is compatible with the system 'system'
-
-    \throw SireMol::missing_group
-*/
-void UniformSampler::assertCompatibleWith(const QuerySystem &system) const
-{
-    system.info().groups().assertContains(groupid);
+        return 0;
 }

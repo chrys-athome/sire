@@ -30,12 +30,12 @@
 #include "uniformsampler.h"
 
 #include "SireMol/partialmolecule.h"
-#include "SireMol/moleculegroup.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireMove;
+using namespace SireMol;
 using namespace SireBase;
 using namespace SireStream;
 
@@ -53,7 +53,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
     writeHeader(ds, r_samplerbase, 1);
 
     SharedDataStream sds(ds);
-    sds << samplerbase.rangen
+    sds << samplerbase.molgroup << samplerbase.rangen
         << static_cast<const PropertyBase&>(samplerbase);
 
     return ds;
@@ -68,7 +68,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        sds >> samplerbase.rangen
+        sds >> samplerbase.molgroup >> samplerbase.rangen
             >> static_cast<PropertyBase&>(samplerbase);
     }
     else
@@ -77,14 +77,19 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
     return ds;
 }
 
-/** Construct with a specified random number generator */
-SamplerBase::SamplerBase(const RanGenerator &generator)
-            : PropertyBase(), rangen(generator)
+/** Empty constructor */
+SamplerBase::SamplerBase() : PropertyBase()
+{}
+
+/** Construct a sampler that picks molecules at random from the 
+    molecule group 'molgroup' */
+SamplerBase::SamplerBase(const MolGroup &moleculegroup)
+            : PropertyBase(), molgroup(moleculegroup)
 {}
 
 /** Copy constructor */
 SamplerBase::SamplerBase(const SamplerBase &other) 
-            : PropertyBase(other), rangen(other.rangen)
+            : PropertyBase(other), molgroup(other.molgroup), rangen(other.rangen)
 {}
 
 /** Destructor */
@@ -96,9 +101,22 @@ SamplerBase& SamplerBase::operator=(const SamplerBase &other)
 {
     PropertyBase::operator=(other);
 
+    molgroup = other.molgroup;
     rangen = other.rangen;
 
     return *this;
+}
+
+/** Comparison operator */
+bool SamplerBase::operator==(const SamplerBase &other) const
+{
+    return molgroup == other.molgroup;
+}
+
+/** Comparison operator */
+bool SamplerBase::operator!=(const SamplerBase &other) const
+{
+    return molgroup != other.molgroup;
 }
 
 /** Set the random number generator used by this sampler */
@@ -107,22 +125,10 @@ void SamplerBase::setGenerator(const RanGenerator &generator)
     rangen = generator;
 }
 
-/** Return a const reference to the random number generator 
-    used by this sampler */
-const RanGenerator& SamplerBase::generator() const
+/** Set the molecule group from which random molecules will be sampled */    
+void SamplerBase::setGroup(const MolGroup &moleculegroup)
 {
-    return rangen;
-}
-
-static SharedPolyPointer<SamplerBase> shared_null;
-
-/** Return the global null sampler */
-SharedPolyPointer<SamplerBase> SamplerBase::null_sampler()
-{
-    if (shared_null.constData() == 0)
-        shared_null = new UniformSampler();
-        
-    return shared_null;
+    molgroup = moleculegroup;
 }
 
 //////////
@@ -131,85 +137,130 @@ SharedPolyPointer<SamplerBase> SamplerBase::null_sampler()
 
 static const RegisterMetaType<Sampler> r_sampler;
 
-/** Serialise to a binary datastream */
+/** Serialise a Sampler to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Sampler &sampler)
 {
     writeHeader(ds, r_sampler, 1);
-
-    SharedDataStream(ds) << sampler.d;
-
+    
+    SharedDataStream sds(ds);
+    
+    sds << static_cast<const Property&>(sampler);
+    
     return ds;
 }
 
-/** Deserialise from a binary datastream */
+/** Deserialise a Sampler from a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Sampler &sampler)
 {
     VersionID v = readHeader(ds, r_sampler);
-
+    
     if (v == 1)
     {
-        SharedDataStream(ds) >> sampler.d;
+        SharedDataStream sds(ds);
+        sds >> static_cast<Property&>(sampler);
     }
     else
         throw version_error(v, "1", r_sampler, CODELOC);
-
+        
     return ds;
 }
 
-/** Null constructor */
-Sampler::Sampler() : d(SamplerBase::null_sampler())
+static Sampler *_pvt_shared_null = 0;
+
+const Sampler& Sampler::shared_null()
+{
+    if (_pvt_shared_null == 0)
+        _pvt_shared_null = new Sampler( UniformSampler() );
+        
+    return *_pvt_shared_null;
+}
+
+/** Null constructor - constructs a simple, empty SamplerBase */
+Sampler::Sampler() : Property(Sampler::shared_null())
 {}
 
-/** Construct from the passed sampler */
-Sampler::Sampler(const SamplerBase &sampler)
-        : d(sampler)
+/** Construct from a passed property
+
+    \throw SireError::invalid_cast
+*/
+Sampler::Sampler(const PropertyBase &property) : Property(property.asA<SamplerBase>())
+{}
+
+/** Construct from passed SamplerBase */
+Sampler::Sampler(const SamplerBase &sampler) : Property(sampler)
 {}
 
 /** Copy constructor */
-Sampler::Sampler(const Sampler &other)
-        : d(other.d)
+Sampler::Sampler(const Sampler &other) : Property(other)
 {}
 
 /** Destructor */
 Sampler::~Sampler()
 {}
 
-/** Copy assignment */
-Sampler& Sampler::operator=(const Sampler &other)
+/** Copy assignment operator from a Property object
+
+    \throw SireError::invalid_cast
+*/
+Sampler& Sampler::operator=(const PropertyBase &property)
 {
-    d = other.d;
+    Property::operator=(property.asA<SamplerBase>());
     return *this;
 }
 
-/** Return a random molecule from the system, together with the probability
-    that this molecule had of being chosen. */
-tuple<PartialMolecule,double> Sampler::sample(const QuerySystem &system)
+/** Copy assignment operator from another SamplerBase */
+Sampler& Sampler::operator=(const SamplerBase &other)
 {
-    return d->sample(system);
+    Property::operator=(other);
+    return *this;
 }
 
-/** Return the probability that the molecule 'molecule' has
-    of being chosen in the System 'system' */
-double Sampler::probabilityOf(const PartialMolecule &molecule,
-                              const QuerySystem &system)
+/** Dereference this pointer */
+const SamplerBase* Sampler::operator->() const
 {
-    return d->probabilityOf(molecule, system);
+    return static_cast<const SamplerBase*>(&(d()));
 }
 
-/** Set the random number generator to be used by this sampler */
-void Sampler::setGenerator(const RanGenerator &generator)
+/** Dereference this pointer */
+const SamplerBase& Sampler::operator*() const
 {
-    d->setGenerator(generator);
+    return static_cast<const SamplerBase&>(d());
 }
 
-/** Return the random number generator that is used by this sampler */
-const RanGenerator& Sampler::generator() const
+/** Return a read-only reference to the contained object */
+const SamplerBase& Sampler::read() const
 {
-    return d->generator();
+    return static_cast<const SamplerBase&>(d());
 }
 
-/** Assert that this sampler is compatible with the passed system */
-void Sampler::assertCompatibleWith(const QuerySystem &system) const
+/** Return a modifiable reference to the contained object.
+    This will trigger a copy of the object if more than
+    one pointer is pointing to it. */
+SamplerBase& Sampler::edit()
 {
-    d->assertCompatibleWith(system);
+    return static_cast<SamplerBase&>(d());
+}
+    
+/** Return a raw pointer to the SamplerBase object */
+const SamplerBase* Sampler::data() const
+{
+    return static_cast<const SamplerBase*>(&(d()));
+}
+
+/** Return a raw pointer to the SamplerBase object */
+const SamplerBase* Sampler::constData() const
+{
+    return static_cast<const SamplerBase*>(&(d()));
+}
+    
+/** Return a raw pointer to the SamplerBase object */
+SamplerBase* Sampler::data()
+{
+    return static_cast<SamplerBase*>(&(d()));
+}
+
+/** Automatic casting operator */
+Sampler::operator const SamplerBase&() const
+{
+    return static_cast<const SamplerBase&>(d());
 }

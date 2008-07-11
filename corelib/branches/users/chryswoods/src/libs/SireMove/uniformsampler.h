@@ -31,20 +31,11 @@
 
 #include "sampler.h"
 
-#include "SireMol/moleculeid.h"
-#include "SireMol/moleculegroupid.h"
-
 SIRE_BEGIN_HEADER
 
 namespace SireMove
 {
 class UniformSampler;
-}
-
-namespace SireMol
-{
-class MoleculeGroup;
-class MoleculeGroupID;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMove::UniformSampler&);
@@ -53,28 +44,23 @@ QDataStream& operator>>(QDataStream&, SireMove::UniformSampler&);
 namespace SireMove
 {
 
-using SireMol::MoleculeID;
-using SireMol::MoleculeGroup;
-using SireMol::MoleculeGroupID;
-
 /** This class is used to pick a molecule at random
-    from a specified MoleculeGroup in a System. Each
-    molecule in the MoleculeGroup has an equal chance
-    of being picked.
-
+    from the molecule group. Each view of each molecule
+    has an equal chance of being chosen.
+    
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT UniformSampler : public SamplerBase
+class SIREMOVE_EXPORT UniformSampler 
+        : public SireBase::ConcreteProperty<UniformSampler,SamplerBase>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const UniformSampler&);
 friend QDataStream& ::operator>>(QDataStream&, UniformSampler&);
 
 public:
-    UniformSampler(const RanGenerator &rangenerator = RanGenerator());
+    UniformSampler();
 
-    UniformSampler(const MoleculeGroup &group,
-                   const RanGenerator &rangenerator = RanGenerator());
+    UniformSampler(const MolGroup &molgroup);
 
     UniformSampler(const UniformSampler &other);
 
@@ -82,16 +68,9 @@ public:
 
     UniformSampler& operator=(const UniformSampler &other);
 
-    void setGroup(const MoleculeGroup &group);
-
     static const char* typeName()
     {
-        return "SireMove::UniformSampler";
-    }
-
-    const char* what() const
-    {
-        return UniformSampler::typeName();
+        return QMetaType::typeName( qMetaTypeId<UniformSampler>() );
     }
 
     UniformSampler* clone() const
@@ -99,34 +78,16 @@ public:
         return new UniformSampler(*this);
     }
 
-    tuple<PartialMolecule,double> sample(const QuerySystem &system);
+    tuple<PartialMolecule,double> sample() const;
 
-    double probabilityOf(const PartialMolecule &molecule,
-                         const QuerySystem &system);
-
-    void assertCompatibleWith(const QuerySystem &system) const;
-
-protected:
-    bool _pvt_isEqual(const PropertyBase &other) const;
-
-private:
-    void updateFrom(const MoleculeGroup &group);
-
-    /** List of IDs of all of the molecules that could be selected */
-    QList<MoleculeID> molids;
-
-    /** The ID of the MoleculeGroup from which the molecule
-        will be sampled */
-    MoleculeGroupID groupid;
-
-    /** The current major version number of the group from which the
-        molecule will be sampled */
-    quint32 majver;
+    double probabilityOf(const PartialMolecule &molecule) const;
 };
 
 }
 
-Q_DECLARE_METATYPE(SireMove::UniformSampler);
+Q_DECLARE_METATYPE(SireMove::UniformSampler)
+
+SIRE_EXPOSE_CLASS( SireMol::UniformSampler )
 
 SIRE_END_HEADER
 

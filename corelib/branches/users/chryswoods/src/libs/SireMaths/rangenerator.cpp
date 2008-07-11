@@ -359,6 +359,11 @@ bool RanGenerator::operator!=(const RanGenerator &other) const
     return d != other.d;
 }
 
+RanGeneratorPvt& RanGenerator::nonconst_d() const
+{
+    return const_cast<RanGeneratorPvt&>(*d);
+}
+
 /** See the generator with a new, random seed - this will detach
     this explicitly shared copy of the generator */
 void RanGenerator::seed()
@@ -398,51 +403,51 @@ void RanGenerator::seed(const RanGenerator &other)
 }
 
 /** Return a random real number on [0,1) */
-double RanGenerator::rand()
+double RanGenerator::rand() const
 {
-    QMutexLocker lkr( &(d->mutex) );
-    return d->mersenne_generator.rand();
+    QMutexLocker lkr( &(nonconst_d().mutex) );
+    return nonconst_d().mersenne_generator.rand();
 }
 
 /** Return a random real number on [0,maxval) */
-double RanGenerator::rand(double maxval)
+double RanGenerator::rand(double maxval) const
 {
     return maxval * rand();
 }
 
 /** Return a random real number on [minval,maxval) */
-double RanGenerator::rand(double minval, double maxval)
+double RanGenerator::rand(double minval, double maxval) const
 {
     return minval + rand() * (maxval-minval);
 }
 
 /** Return a high-precision random real number on [0,1) */
-double RanGenerator::rand53()
+double RanGenerator::rand53() const
 {
-    QMutexLocker lkr( &(d->mutex) );
-    return d->mersenne_generator.rand53();
+    QMutexLocker lkr( &(nonconst_d().mutex) );
+    return nonconst_d().mersenne_generator.rand53();
 }
 
 /** Return a high-precision random real number on [0,1) */
-double RanGenerator::rand53(double maxval)
+double RanGenerator::rand53(double maxval) const
 {
     return maxval * rand53();
 }
 
 /** Return a high-precision random real number on [minval,maxval) */
-double RanGenerator::rand53(double minval, double maxval)
+double RanGenerator::rand53(double minval, double maxval) const
 {
     return minval + rand53()*(maxval-minval);
 }
 
 /** Return a high-precision random number from the normal distribution
     with supplied mean and variance. */
-double RanGenerator::randNorm(double mean, double variance)
+double RanGenerator::randNorm(double mean, double variance) const
 {
-    QMutexLocker lkr( &(d->mutex) );
+    QMutexLocker lkr( &(nonconst_d().mutex) );
 
-    double rand0 = d->mersenne_generator.rand53();
-    double rand1 = d->mersenne_generator.rand53();
+    double rand0 = nonconst_d().mersenne_generator.rand53();
+    double rand1 = nonconst_d().mersenne_generator.rand53();
 
     lkr.unlock();
 
@@ -455,18 +460,18 @@ double RanGenerator::randNorm(double mean, double variance)
 }
 
 /** Return a random vector on the unit sphere */
-Vector RanGenerator::vectorOnSphere()
+Vector RanGenerator::vectorOnSphere() const
 {
-    QMutexLocker lkr( &(d->mutex) );
+    QMutexLocker lkr( &(nonconst_d().mutex) );
 
     while( true )
     {
         //use von Neumann acceptance/rejection method
         Vector v;
 
-        v.setX( 1.0 - 2.0 * d->mersenne_generator.rand53() );
-        v.setY( 1.0 - 2.0 * d->mersenne_generator.rand53() );
-        v.setZ( 1.0 - 2.0 * d->mersenne_generator.rand53() );
+        v.setX( 1.0 - 2.0 * nonconst_d().mersenne_generator.rand53() );
+        v.setY( 1.0 - 2.0 * nonconst_d().mersenne_generator.rand53() );
+        v.setZ( 1.0 - 2.0 * nonconst_d().mersenne_generator.rand53() );
 
         double lgth2 = v.length2();
 
@@ -479,27 +484,27 @@ Vector RanGenerator::vectorOnSphere()
 }
 
 /** Return a random vector on the sphere with radius 'radius' */
-Vector RanGenerator::vectorOnSphere(double radius)
+Vector RanGenerator::vectorOnSphere(double radius) const
 {
     return radius * this->vectorOnSphere();
 }
 
 /** Return a random 32bit unsigned integer in [0,2^32 - 1] */
-quint32 RanGenerator::randInt()
+quint32 RanGenerator::randInt() const
 {
-    QMutexLocker lkr( &(d->mutex) );
-    return d->mersenne_generator.randInt();
+    QMutexLocker lkr( &(nonconst_d().mutex) );
+    return nonconst_d().mersenne_generator.randInt();
 }
 
 /** Return a random 32bit unsigned integer in [0,maxval] */
-quint32 RanGenerator::randInt(quint32 maxval)
+quint32 RanGenerator::randInt(quint32 maxval) const
 {
-    QMutexLocker lkr( &(d->mutex) );
-    return d->mersenne_generator.randInt(maxval);
+    QMutexLocker lkr( &(nonconst_d().mutex) );
+    return nonconst_d().mersenne_generator.randInt(maxval);
 }
 
 /** Return a random 32bit integer in [minval,maxval] */
-qint32 RanGenerator::randInt(qint32 minval, qint32 maxval)
+qint32 RanGenerator::randInt(qint32 minval, qint32 maxval) const
 {
     if (maxval == minval)
         return maxval;
@@ -518,21 +523,21 @@ static quint64 randInt64(MTRand &mersenne_generator)
 }
 
 /** Return a random 64bit unsigned integer on [0,2^64 - 1] */
-quint64 RanGenerator::randInt64()
+quint64 RanGenerator::randInt64() const
 {
-    QMutexLocker lkr( &(d->mutex) );
-    return ::randInt64(d->mersenne_generator);
+    QMutexLocker lkr( &(nonconst_d().mutex) );
+    return ::randInt64(nonconst_d().mersenne_generator);
 }
 
 /** Return a random 64bit unsigned integer on [0,maxval] */
-quint64 RanGenerator::randInt64(quint64 maxval)
+quint64 RanGenerator::randInt64(quint64 maxval) const
 {
-    QMutexLocker lkr( &(d->mutex) );
+    QMutexLocker lkr( &(nonconst_d().mutex) );
 
     if (maxval <= std::numeric_limits<quint32>::max())
         //maxval can fit into a 32bit int - there is no
         //point using a 64bit generator!
-        return d->mersenne_generator.randInt( quint32(maxval) );
+        return nonconst_d().mersenne_generator.randInt( quint32(maxval) );
 
     //use same algorithm in MersenneTwister.h
     quint64 used = maxval;
@@ -548,14 +553,14 @@ quint64 RanGenerator::randInt64(quint64 maxval)
 
     do
     {
-        i = ::randInt64(d->mersenne_generator) & used;
+        i = ::randInt64(nonconst_d().mersenne_generator) & used;
     } while ( i > maxval );
 
     return i;
 }
 
 /** Return a random 64bit integer on [minval,maxval] */
-qint64 RanGenerator::randInt64(qint64 minval, qint64 maxval)
+qint64 RanGenerator::randInt64(qint64 minval, qint64 maxval) const
 {
     if (maxval == minval)
         return maxval;
@@ -568,9 +573,9 @@ qint64 RanGenerator::randInt64(qint64 minval, qint64 maxval)
 /** Return the current state of the random number generator.
     Use this if you truly wish to get reproducible sequences
     of random numbers */
-QVector<quint32> RanGenerator::getState()
+QVector<quint32> RanGenerator::getState() const
 {
-    return d->getState();
+    return nonconst_d().getState();
 }
 
 /** Load the state into this generator - the state must have
