@@ -66,6 +66,8 @@ system = System()
 
 system.add(cljff)
 
+print "Initial energy = %s" % system.energy()
+
 mc = RigidBodyMC(cljff.group(MGIdx(0)))
 
 print "Running 1000 moves..."
@@ -75,6 +77,8 @@ mc.move(system, 1000)
 ms = t.elapsed()
 
 print "Done!"
+
+print "Final energy = %s" % system.energy()
 
 print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
                             mc.nRejected(), 100 * mc.acceptanceRatio())

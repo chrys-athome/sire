@@ -191,9 +191,6 @@ const MolGroup& RigidBodyMC::moleculeGroup() const
 /** Attempt 'n' rigid body moves of the views of the system 'system' */
 void RigidBodyMC::move(System &system, int nmoves)
 {
-    //get the current total energy of the system
-    double old_nrg = system.energy( this->energyComponent() );
-    
     //save our, and the system's, current state
     RigidBodyMC old_state(*this);
     System old_system_state(system);
@@ -202,6 +199,10 @@ void RigidBodyMC::move(System &system, int nmoves)
     {
         for (int i=0; i<nmoves; ++i)
         {
+            //get the old total energy of the system
+            double old_nrg = system.energy( this->energyComponent() );
+
+            //save the old system and sampler
             System old_system(system);
             Sampler old_sampler(smplr);
     
