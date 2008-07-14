@@ -79,9 +79,10 @@ public:
     
     virtual MoveBase* clone() const=0;
     
-    virtual void move(System &system, int nmoves)=0;
+    virtual void move(System &system, int nmoves, bool record_stats)=0;
 
     void move(System &system);
+    void move(System &system, int nmoves);
 };
 
 /** This is a null move - it doesn't change the system at all! */
@@ -108,7 +109,7 @@ public:
         return new NullMove(*this);
     }
     
-    void move(System &system, int nmoves);
+    void move(System &system, int nmoves, bool record_stats);
 };
 
 /** This is the polymorphic pointer holder for the 
@@ -144,7 +145,7 @@ friend QDataStream& ::operator>>(QDataStream&, Move&);
 public:
     Move();
     Move(const SireBase::PropertyBase &property);
-    Move(const MoveBase &molgroup);
+    Move(const MoveBase &move);
 
     Move(const Move &other);
     

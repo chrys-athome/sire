@@ -189,7 +189,7 @@ const MolGroup& RigidBodyMC::moleculeGroup() const
 }
 
 /** Attempt 'n' rigid body moves of the views of the system 'system' */
-void RigidBodyMC::move(System &system, int nmoves)
+void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
 {
     //save our, and the system's, current state
     RigidBodyMC old_state(*this);
@@ -248,6 +248,9 @@ void RigidBodyMC::move(System &system, int nmoves)
                 smplr = old_sampler;
                 system = old_system;
             }
+            
+            if (record_stats)
+                system.collectStats();
         }
     }
     catch(...)

@@ -442,6 +442,12 @@ void System::setName(const SysName &newname)
     }
 }
 
+/** Collect statistics about the current configuration */
+void System::collectStats()
+{
+    qDebug() << "Cannot collect stats yet...";
+}
+
 /** Return the forcefield with ID 'ffid' in this system
 
     \throw SireFF::missing_forcefield

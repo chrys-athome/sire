@@ -113,7 +113,7 @@ public:
     SireUnits::Dimension::Length maximumTranslation() const;
     SireUnits::Dimension::Angle maximumRotation() const;
 
-    void move(System &system, int nmoves);
+    void move(System &system, int nmoves, bool record_stats);
 
 private:
     /** The sampler used to select random molecules for the move */

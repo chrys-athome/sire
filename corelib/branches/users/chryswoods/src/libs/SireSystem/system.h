@@ -146,6 +146,8 @@ public:
 
     const SystemMonitors& monitors() const;
 
+    void collectStats();
+
     using SireMol::MolGroupsBase::at;
     
     const FF& at(const FFID &ffid) const;

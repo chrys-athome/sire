@@ -82,10 +82,18 @@ MoveBase::MoveBase(const MoveBase &other) : PropertyBase(other)
 MoveBase::~MoveBase()
 {}
 
-/** Perform a single move on the system 'system' */
+/** Perform a single move on the system 'system' without 
+    recording any statistics */
 void MoveBase::move(System &system)
 {
-    this->move(system, 1);
+    this->move(system, 1, false);
+}
+
+/** Perform 'n' moves on the system without recording any 
+    statistics */
+void MoveBase::move(System &system, int nmoves)
+{
+    this->move(system, nmoves, false);
 }
 
 ///////
@@ -284,7 +292,7 @@ bool NullMove::operator!=(const NullMove &other) const
 }
 
 /** NullMove doesn't perform any moves - no matter how hard you try! */
-void NullMove::move(System &system, int nmoves)
+void NullMove::move(System &system, int nmoves, bool record_stats)
 {
     return;
 }
