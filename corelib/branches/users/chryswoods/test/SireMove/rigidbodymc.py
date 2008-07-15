@@ -70,10 +70,12 @@ print "Initial energy = %s" % system.energy()
 
 mc = RigidBodyMC(cljff.group(MGIdx(0)))
 
+moves = SameMoves(mc)
+
 print "Running 1000 moves..."
 
 t.start()
-mc.move(system, 1000)
+system = moves.move(system, 1000)
 ms = t.elapsed()
 
 print "Done!"

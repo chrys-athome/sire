@@ -176,7 +176,7 @@ System SameMoves::move(const System &system, int nmoves, bool record_stats)
 {
     System new_system(system);
     
-    mv.move(new_system, nmoves, record_stats);
+    mv.edit().move(new_system, nmoves, record_stats);
     
     return new_system;
 }
@@ -229,7 +229,7 @@ static Moves *_pvt_shared_null = 0;
 const Moves& Moves::shared_null()
 {
     if (_pvt_shared_null == 0)
-        _pvt_shared_null = new Moves( NullMoves() );
+        _pvt_shared_null = new Moves( SameMoves() );
         
     return *_pvt_shared_null;
 }

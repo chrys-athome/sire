@@ -29,4 +29,92 @@
 #ifndef SIREMOVE_WEIGHTEDMOVES_H
 #define SIREMOVE_WEIGHTEDMOVES_H
 
+#include "moves.h"
+
+#include "SireMaths/rangenerator.h"
+
+#include <boost/tuple/tuple.hpp>
+
+SIRE_BEGIN_HEADER
+
+namespace SireMove
+{
+class WeightedMoves;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMove::WeightedMoves&);
+QDataStream& operator>>(QDataStream&, SireMove::WeightedMoves&);
+
+namespace SireMove
+{
+
+using SireMaths::RanGenerator;
+
+/** This is a collection of moves, with each move in the collection
+    chosen at random according to its weight
+
+    @author Christopher Woods
+*/
+class SIREMOVE_EXPORT WeightedMoves 
+          : public SireBase::ConcreteProperty<WeightedMoves,MovesBase>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const WeightedMoves&);
+friend QDataStream& ::operator>>(QDataStream&, WeightedMoves&);
+
+public:
+    WeightedMoves();
+    
+    WeightedMoves(const WeightedMoves &other);
+    
+    ~WeightedMoves();
+    
+    WeightedMoves& operator=(const WeightedMoves &other);
+    
+    bool operator==(const WeightedMoves &other) const;
+    bool operator!=(const WeightedMoves &other) const;
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<WeightedMoves>() );
+    }
+    
+    WeightedMoves* clone() const
+    {
+        return new WeightedMoves(*this);
+    }
+    
+    void add(const MoveBase &move, double weight=1);
+    
+    using MovesBase::move;
+    
+    System move(const System &system, int nmoves, bool record_stats);
+    
+    QList<Move> moves() const;
+
+    void setGenerator(const RanGenerator &rangenerator);
+    
+    const RanGenerator& generator() const;
+
+private:
+    void recalculateWeights();
+    
+    /** The list of moves, together with their associated weights */
+    QVector< boost::tuple<Move,double> > mvs;
+    
+    /** The random number generator used to pick moves */
+    RanGenerator rangenerator;
+    
+    /** The value of the maximum weight */
+    double maxweight;
+};
+
+}
+
+Q_DECLARE_METATYPE( SireMove::WeightedMoves )
+
+SIRE_EXPOSE_CLASS( SireMove::WeightedMoves )
+
+SIRE_END_HEADER
+
 #endif

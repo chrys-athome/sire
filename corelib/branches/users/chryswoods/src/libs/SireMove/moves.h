@@ -27,6 +27,7 @@
 \*********************************************/
 
 #ifndef SIREMOVE_MOVES_H
+#define SIREMOVE_MOVES_H
 
 #include <QList>
 
@@ -116,6 +117,8 @@ public:
     
     bool operator==(const SameMoves &other) const;
     bool operator!=(const SameMoves &other) const;
+    
+    using MovesBase::move;
     
     System move(const System &system, int nmoves, bool record_stats);
     
