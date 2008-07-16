@@ -75,14 +75,28 @@ moves = SameMoves(mc)
 print "Running 1000 moves..."
 
 t.start()
-system = moves.move(system, 1000)
+system = moves.move(system, 1000, False)
 ms = t.elapsed()
 
 print "Done!"
 
 print "Final energy = %s" % system.energy()
 
+system.mustNowRecalculateFromScratch();
+
+print "Are we sure? = %s" % system.energy()
+
+mc = moves.moves()[0]
+
 print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
                             mc.nRejected(), 100 * mc.acceptanceRatio())
 
 print "Took %d ms" % ms
+
+moves = WeightedMoves()
+moves.add( mc, 100 )
+
+system = moves.move(system, 100, False)
+
+print "Final energy = %s" % system.energy()
+
