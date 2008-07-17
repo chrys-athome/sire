@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007  Christopher Woods
+  *  Copyright (C) 2008  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,10 +26,53 @@
   *
 \*********************************************/
 
-#include "SireSystem/errors.h"
+#ifndef SIRESYSTEM_MONITORID_H
+#define SIRESYSTEM_MONITORID_H
 
-using namespace SireSystem;
+#include <QList>
 
-static const RegisterMetaType<siresystem_error> r_sys;
-static const RegisterMetaType<missing_monitor> r_missmonitor;
-static const RegisterMetaType<duplicate_monitor> r_dupmonitor;
+#include "SireID/id.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireSystem
+{
+
+class MonitorIdx;
+class MonitorIdentifier;
+class MonitorName;
+
+class SystemMonitors;
+
+/** The base class of all system monitor identifiers
+
+    @author Christopher Woods
+*/
+class SIRESYSTEM_EXPORT MonitorID : public SireID::ID
+{
+public:
+    typedef MonitorIdx Index;
+    typedef MonitorIdentifier Identifier;
+
+    MonitorID();
+    MonitorID(const MonitorID &other);
+
+    virtual ~MonitorID();
+    
+    static const char* typeName()
+    {
+        return "SireSystem::MonitorID";
+    }
+    
+    virtual MonitorID* clone() const=0;
+    
+    virtual QList<MonitorName> map(const SystemMonitors &monitors) const=0;
+};
+
+}
+
+SIRE_EXPOSE_CLASS( SireSystem::MonitorID )
+
+SIRE_END_HEADER
+
+#endif

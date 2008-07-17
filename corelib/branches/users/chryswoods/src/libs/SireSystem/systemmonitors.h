@@ -29,7 +29,7 @@
 #ifndef SIRESYSTEM_MONITORS_H
 #define SIRESYSTEM_MONITORS_H
 
-#include "sireglobal.h"
+#include "systemmonitor.h"
 
 SIRE_BEGIN_HEADER
 
@@ -43,6 +43,10 @@ QDataStream& operator>>(QDataStream&, SireSystem::SystemMonitors&);
 
 namespace SireSystem
 {
+
+class MonitorID;
+class MonitorIdx;
+class MonitorName;
 
 /** This class holds a set of SystemMonitor objects, and controls
     when those monitors are evaluated on a system
@@ -58,9 +62,60 @@ friend QDataStream& ::operator>>(QDataStream&, SystemMonitors&);
 public:
     SystemMonitors();
     
+    SystemMonitors(const SystemMonitors &other);
+    
     ~SystemMonitors();
+
+    SystemMonitors& operator=(const SystemMonitors &other);
+    
+    bool operator==(const SystemMonitors &other) const;
+    bool operator!=(const SystemMonitors &other) const;
+    
+    const SysMonBase& operator[](const MonitorID &monid) const;
+
+    const SysMonBase& at(const MonitorID &monid) const;
     
     bool isEmpty() const;
+
+    QList<MonitorName> map(const MonitorName &monname) const;
+    QList<MonitorName> map(const MonitorIdx &monidx) const;
+    QList<MonitorName> map(const MonitorID &monid) const;
+
+    QList<MonitorName> monitorNames() const;
+
+    void add(const MonitorID &monid, const SysMonBase &monitor,
+             int frequency = 1) const;
+    
+    void remove(const MonitorID &monid);
+    void removeAll();
+    
+    void setFrequency(const MonitorID &monid, int frequency);
+    
+    const SysMonBase& monitor(const MonitorID &monid) const;
+    
+    QList<SystemMonitor> monitors(const MonitorID &monid) const;
+    
+    QList<SystemMonitor> monitors() const;
+    
+    int nMonitors() const;
+    int count() const;
+    int size() const;
+    
+    void monitor(System &system);
+    
+private:
+    /** All of the monitors, indexed by name */
+    QHash<MonitorName,SystemMonitor> mons_by_name;
+    
+    /** The names of all of the monitors in the order they
+        appear in this collection */
+    QList<MonitorName> mons_by_idx;
+    
+    /** The frequency of each monitor */
+    QHash<qint32,MonitorName> mons_by_frequency;
+    
+    /** The current step number of this set of monitors */
+    qint32 stepnum;
 };
 
 }

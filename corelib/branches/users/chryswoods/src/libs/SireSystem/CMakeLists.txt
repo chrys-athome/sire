@@ -13,6 +13,10 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIRESYSTEM_HEADERS
       checkpoint.h
       errors.h
+      monitorid.h
+      monitoridentifier.h
+      monitoridx.h
+      monitorname.h
       sysid.h
       sysidentifier.h
       sysidx.h
@@ -26,6 +30,8 @@ set ( SIRESYSTEM_HEADERS
 set ( SIRESYSTEM_SOURCES
       checkpoint.cpp
       errors.cpp
+      monitorid.cpp
+      monitoridentifier.cpp
       sysid.cpp
       sysidentifier.cpp
       system.cpp

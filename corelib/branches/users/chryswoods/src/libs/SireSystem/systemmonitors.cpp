@@ -28,6 +28,9 @@
 
 #include "systemmonitors.h"
 
+#include "monitorname.h"
+#include "monitoridx.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -39,25 +42,81 @@ static const RegisterMetaType<SystemMonitors> r_sysmons;
 /** Serialise to a binary datastream */
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const SystemMonitors &sysmons)
 {
+    writeHeader(ds, r_sysmons, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << sysmons.mons_by_name << sysmons.mons_by_idx
+        << sysmons.mons_by_freqency << sysmons.stepnum;
+
     return ds;
 }
 
 /** Extract from a binary datastream */
 QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, SystemMonitors &sysmons)
 {
+    VersionID v = readHeader(ds, r_sysmons);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> sysmons.mons_by_name >> sysmons.mons_by_idx
+            >> sysmons.mons_by_frequency >> sysmons.stepnum;
+    }
+    else
+        throw version_error(v, "1", r_sysmons, CODELOC);
+
     return ds;
 }
 
 /** Constructor */
-SystemMonitors::SystemMonitors()
+SystemMonitors::SystemMonitors() : stepnum(0)
+{}
+
+/** Copy constructor */
+SystemMonitors::SystemMonitors(const SystemMonitors &other)
+               : mons_by_name(other.mons_by_name),
+                 mons_by_idx(other.mons_by_idx),
+                 mons_by_frequency(other.mons_by_frequency),
+                 stepnum(other.stepnum)
 {}
 
 /** Destructor */
 SystemMonitors::~SystemMonitors()
 {}
 
+/** Copy assignment operator */
+SystemMonitors& SystemMonitors::operator=(const SystemMonitors &other)
+{
+    if (this != &other)
+    {
+        mons_by_name = other.mons_by_name;
+        mons_by_idx = other.mons_by_idx;
+        mons_by_frequency = other.mons_by_frequency;
+        stepnum = other.stepnum;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool SystemMonitors::operator==(const SystemMonitors &other) const
+{
+    return mons_by_name == other.mons_by_name and
+           mons_by_idx == other.mons_by_idx and
+           mons_by_frequency == other.mons_by_frequency and
+           stepnum == other.stepnum;
+}
+
+/** Comparison operator */
+bool SystemMonitors::operator!=(const SystemMonitors &other) const
+{
+    return not this->operator==(other);
+}
+
 /** Return whether or not this is empty (contains no monitors) */
 bool SystemMonitors::isEmpty() const
 {
-    return true;
+    return mons_by_idx.isEmpty();
 }

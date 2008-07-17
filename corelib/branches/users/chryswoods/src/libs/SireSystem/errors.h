@@ -92,10 +92,38 @@ public:
     }
 };
 
+/** This exception is thrown when multiple monitors match an ID
+    but only one monitor was requested
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT duplicate_monitor : public siresystem_error
+{
+public:
+    duplicate_monitor() : siresystem_error()
+    {}
+
+    duplicate_monitor(QString err, QString place = QString::null)
+              : siresystem_error(err,place)
+    {}
+
+    duplicate_monitor(const duplicate_monitor &other) : siresystem_error(other)
+    {}
+
+    ~duplicate_monitor() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireSystem::duplicate_monitor";
+    }
+};
+
 }
 
 Q_DECLARE_METATYPE(SireSystem::siresystem_error)
 Q_DECLARE_METATYPE(SireSystem::missing_monitor)
+Q_DECLARE_METATYPE(SireSystem::duplicate_monitor)
 
 SIRE_END_HEADER
 
