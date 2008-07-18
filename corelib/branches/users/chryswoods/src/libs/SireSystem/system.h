@@ -129,6 +129,8 @@ public:
 
     const FF& operator[](const FFID &ffid) const;
     
+    const SysMonBase& operator[](const MonitorID &monid) const;
+    
     System& operator+=(const FF &forcefield);
     System& operator+=(const MolGroup &molgroup);
     
@@ -144,22 +146,28 @@ public:
 
     void setName(const SysName &newname);
 
-    const SystemMonitors& monitors() const;
-
     void collectStats();
 
     using SireMol::MolGroupsBase::at;
     
     const FF& at(const FFID &ffid) const;
+    const SysMonBase& at(const MonitorID &monid) const;
     
     const FF& forceField(const FFID &ffid) const;
     const FF& forceField(const MGID &mgid) const;
+    
+    const SysMonBase& monitor(const MonitorID &monid) const;
+
+    QList<SystemMonitor> monitors(const MonitorID &monid) const;
 
     int nForceFields() const;
+    int nMonitors() const;
     
     FFIdx ffIdx(const FFID &ffid) const;
     
     const FFName& ffName(const FFID &ffid) const;
+
+    const MonitorName& monitorName(const MonitorID &monid) const;
     
     QString toString() const;
     
@@ -192,6 +200,9 @@ public:
     
     QHash<FFName,Properties> properties() const;
     
+    QList<SystemMonitor> monitors() const;
+    QList<MonitorName> monitorNames() const;
+    
     const QVector<ForceField>& forceFields() const;
     QList<FFName> ffNames() const;
     
@@ -204,8 +215,13 @@ public:
     using SireMol::MolGroupsBase::remove;
     using SireMol::MolGroupsBase::update;
     
+    void add(const QString &name, const SysMonBase &monitor,
+             int frequency = 1);
+    
     void add(const FF &forcefield);
     void add(const MolGroup &molgroup);
+    
+    void remove(const MonitorID &monid);
     
     void remove(const FFID &ffid);
     void remove(const FF &ff);
@@ -355,13 +371,6 @@ inline const SysName& System::name() const
 inline const Version& System::version() const
 {
     return sysversion.version();
-}
-
-/** Return a reference to all of the monitors that
-    are monitoring this system */
-inline const SystemMonitors& System::monitors() const
-{
-    return sysmonitors;
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS

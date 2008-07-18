@@ -81,10 +81,12 @@ public:
     QList<MonitorName> map(const MonitorIdx &monidx) const;
     QList<MonitorName> map(const MonitorID &monid) const;
 
+    const MonitorName& monitorName(const MonitorID &monid) const;
+
     QList<MonitorName> monitorNames() const;
 
-    void add(const MonitorID &monid, const SysMonBase &monitor,
-             int frequency = 1) const;
+    void add(const QString &name, const SysMonBase &monitor,
+             int frequency = 1);
     
     void remove(const MonitorID &monid);
     void removeAll();
@@ -112,10 +114,10 @@ private:
     QList<MonitorName> mons_by_idx;
     
     /** The frequency of each monitor */
-    QHash<qint32,MonitorName> mons_by_frequency;
+    QHash< quint32, QList<MonitorName> > mons_by_frequency;
     
     /** The current step number of this set of monitors */
-    qint32 stepnum;
+    quint32 stepnum;
 };
 
 }

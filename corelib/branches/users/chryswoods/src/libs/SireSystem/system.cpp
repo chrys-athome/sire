@@ -31,6 +31,8 @@
 
 #include "system.h"
 
+#include "monitorname.h"
+
 #include "SireFF/ffidx.h"
 #include "SireFF/forcefield.h"
 #include "SireFF/ff.h"
@@ -383,6 +385,17 @@ const FF& System::operator[](const FFID &ffid) const
     return this->_pvt_forceFields()[ffid];
 }
 
+/** Return the monitor at ID 'monid'
+
+    \throw SireSystem::missing_monitor
+    \throw SireSystem::duplicate_monitor
+    \throw SireError::invalid_index
+*/
+const SysMonBase& System::operator[](const MonitorID &monid) const
+{
+    return sysmonitors[monid];
+}
+
 /** Convienient syntax for System::add */
 System& System::operator+=(const FF &forcefield)
 {
@@ -445,7 +458,8 @@ void System::setName(const SysName &newname)
 /** Collect statistics about the current configuration */
 void System::collectStats()
 {
-    qDebug() << "Cannot collect stats yet...";
+    sysmonitors.monitor(*this);
+    sysversion.incrementMinor();
 }
 
 /** Return the forcefield with ID 'ffid' in this system
@@ -457,6 +471,38 @@ void System::collectStats()
 const FF& System::at(const FFID &ffid) const
 {
     return this->_pvt_forceFields().at(ffid);
+}
+
+/** Return the monitor at ID 'monid'
+
+    \throw SireSystem::missing_monitor
+    \throw SireSystem::duplicate_monitor
+    \throw SireError::invalid_index
+*/
+const SysMonBase& System::at(const MonitorID &monid) const
+{
+    return sysmonitors.at(monid);
+}
+
+/** Return the monitor at ID 'monid'
+
+    \throw SireSystem::missing_monitor
+    \throw SireSystem::duplicate_monitor
+    \throw SireError::invalid_index
+*/
+const SysMonBase& System::monitor(const MonitorID &monid) const
+{
+    return sysmonitors.monitor(monid);
+}
+
+/** Return the monitors with ID 'monid'
+
+    \throw SireSystem::missing_monitor
+    \throw SireError::invalid_index
+*/
+QList<SystemMonitor> System::monitors(const MonitorID &monid) const
+{
+    return sysmonitors.monitors(monid);
 }
 
 /** Return the forcefield with ID 'ffid' in this system
@@ -482,6 +528,12 @@ const FF& System::forceField(const MGID &mgid) const
     return this->_pvt_forceFields().forceField( this->getGroupNumber(mgid) );
 }
 
+/** Return the number of monitors in this system */
+int System::nMonitors() const
+{
+    return sysmonitors.count();
+}
+
 /** Return the number of forcefields in this system */
 int System::nForceFields() const
 {
@@ -499,6 +551,17 @@ FFIdx System::ffIdx(const FFID &ffid) const
     return this->_pvt_forceFields().ffIdx(ffid);
 }
 
+/** Return the name of the monitor at ID 'monid'
+
+    \throw SireSystem::missing_monitor
+    \throw SireSystem::duplicate_monitor
+    \throw SireError::invalid_index
+*/
+const MonitorName& System::monitorName(const MonitorID &monid) const
+{
+    return sysmonitors.monitorName(monid);
+}
+
 /** Return the name of the forcefield with ID 'ffid'
 
     \throw SireFF::missing_forcefield
@@ -513,10 +576,12 @@ const FFName& System::ffName(const FFID &ffid) const
 /** Return a string representation of this system */
 QString System::toString() const
 {
-    return QString("System( name=%1, nForceFields=%2, nMolecules=%3 )")
+    return QString("System( name=%1, nForceFields=%2, nMolecules=%3 "
+                           "nMonitors()=%4 )")
                 .arg(this->name())
                 .arg(this->nForceFields())
-                .arg(this->nMolecules());
+                .arg(this->nMolecules())
+                .arg(this->nMonitors());
 }
 
 /** Return the symbol that represents the total energy component
@@ -678,6 +743,18 @@ QHash<FFName,Properties> System::properties() const
     return this->_pvt_forceFields().properties();
 }
 
+/** Return the list of all monitors of this system */
+QList<SystemMonitor> System::monitors() const
+{
+    return sysmonitors.monitors();
+}
+
+/** Return the names of all of the monitors of this system */
+QList<MonitorName> System::monitorNames() const
+{
+    return sysmonitors.monitorNames();
+}
+
 /** Return an array of all of the forcefields in this system */
 const QVector<ForceField>& System::forceFields() const
 {
@@ -709,6 +786,17 @@ bool System::isDirty() const
 bool System::isClean() const
 {
     return this->_pvt_forceFields().isClean();
+}
+
+/** Add a system monitor 'monitor', identified by the name 'name', which
+    will be updated every 'frequency' steps.
+    
+    \throw SireSystem::duplicate_monitor
+*/
+void System::add(const QString &name, const SysMonBase &monitor, int frequency)
+{
+    sysmonitors.add(name, monitor, frequency);
+    sysversion.incrementMajor();
 }
 
 /** Add the forcefield 'forcefield' to this system. This will raise
@@ -781,6 +869,17 @@ void System::add(const MolGroup &molgroup)
             throw;
         }
     }
+}
+
+/** Remove all monitors that match the ID 'monid'
+
+    \throw SireSystem::missing_monitor
+    \throw SireError::invalid_index
+*/
+void System::remove(const MonitorID &monid)
+{
+    sysmonitors.remove(monid);
+    sysversion.incrementMajor();
 }
 
 /** Remove the forcefield(s) that match the ID 'ffid'
@@ -928,6 +1027,16 @@ void System::removeAllMoleculeGroups()
     sysversion.incrementMajor();
 }
 
+/** Completely remove all monitors from this system */
+void System::removeAllMonitors()
+{
+    if (not sysmonitors.isEmpty())
+    {
+        sysmonitors.removeAll();
+        sysversion.incrementMajor();
+    }
+}
+
 /** Completely remove all of the forcefields (and their contained
     molecule groups) from this system */
 void System::removeAllForceFields()
@@ -945,16 +1054,6 @@ void System::removeAllForceFields()
     }
     
     sysversion.incrementMajor();
-}
-
-/** Completely remove all of the monitors from this system */
-void System::removeAllMonitors()
-{
-    if (not sysmonitors.isEmpty())
-    {
-        sysmonitors = SystemMonitors();
-        sysversion.incrementMajor();
-    }
 }
 
 /** Return the molecule group with number 'mgnum'
