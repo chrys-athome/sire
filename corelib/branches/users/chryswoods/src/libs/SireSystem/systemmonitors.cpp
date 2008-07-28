@@ -28,6 +28,8 @@
 
 #include "systemmonitors.h"
 
+#include "system.h"
+
 #include "monitorname.h"
 #include "monitoridx.h"
 

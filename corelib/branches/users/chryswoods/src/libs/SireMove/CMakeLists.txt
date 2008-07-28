@@ -14,10 +14,13 @@ set ( SIREMOVE_HEADERS
       montecarlo.h
       move.h
       moves.h
+      mpisim.h
       mtsmc.h
       prefsampler.h
       rigidbodymc.h
       sampler.h
+      simulation.h
+      threadsim.h
       uniformsampler.h
       volumemove.h
       weightedmoves.h
@@ -29,10 +32,13 @@ set ( SIREMOVE_SOURCES
       montecarlo.cpp
       move.cpp
       moves.cpp
+      mpisim.cpp
       mtsmc.cpp
       prefsampler.cpp
       rigidbodymc.cpp
       sampler.cpp
+      simulation.cpp
+      threadsim.cpp
       uniformsampler.cpp
       weightedmoves.cpp
       volumemove.cpp
