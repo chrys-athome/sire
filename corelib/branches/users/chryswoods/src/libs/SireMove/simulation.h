@@ -31,6 +31,8 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include <QMutex>
+
 #include "moves.h"
 
 #include "SireSystem/system.h"
@@ -47,6 +49,71 @@ namespace SireMove
 {
 
 using namespace SireSystem;
+
+/** This class provides a way of following (and controlling) moves
+    as they are being performed */
+class SIREMOVE_EXPORT MoveMutex
+{
+public:
+    MoveMutex();
+    ~MoveMutex();
+
+    void initialise(int nmoves, const System &system, 
+                                const Moves &moves);
+    
+    bool isRunning();
+    
+    bool nextMove();
+    
+    int nMoves();
+    int nCompleted();
+    
+    System system();
+    Moves moves();
+    
+    void pause();
+    void resume();
+    void abort();
+    
+private:
+    MoveMutex(const MoveMutex&)
+    {}
+    
+    MoveMutex& operator=(const MoveMutex&)
+    {
+        return *this;
+    }
+    
+    QMutex mutex;
+    
+    int nmoves;
+    int ncompleted;
+    
+    const System *sim_system;
+    const Moves *sim_moves;
+};
+
+/** This class makes it easier to manage the locking and unlocking of a simulation */
+class MoveMutexLocker
+{
+public:
+    MoveMutexLocker() : mutex(0)
+    {}
+    
+    MoveMutexLocker(MoveMutex &movemutex) : mutex( &movemutex )
+    {
+        mutex->pause();
+    }
+     
+    ~MoveMutexLocker()
+    {
+        if (mutex)
+            mutex->resume();
+    }
+    
+private:
+    MoveMutex *mutex;
+};
 
 /** This the virtual base class provides the interface to the handle
     by which 'Simulation' actually controls a running simulation

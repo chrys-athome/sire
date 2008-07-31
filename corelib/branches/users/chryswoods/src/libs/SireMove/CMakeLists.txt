@@ -19,6 +19,7 @@ set ( SIREMOVE_HEADERS
       prefsampler.h
       rigidbodymc.h
       sampler.h
+      simcontroller.h
       simulation.h
       threadsim.h
       uniformsampler.h
@@ -37,6 +38,7 @@ set ( SIREMOVE_SOURCES
       prefsampler.cpp
       rigidbodymc.cpp
       sampler.cpp
+      simcontroller.cpp
       simulation.cpp
       threadsim.cpp
       uniformsampler.cpp

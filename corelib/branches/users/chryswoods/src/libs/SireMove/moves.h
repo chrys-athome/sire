@@ -54,6 +54,8 @@ QDataStream &operator>>(QDataStream&, SireMove::SameMoves&);
 namespace SireMove
 {
 
+class SimController;
+
 /** This is the base class of all Moves objects. These are objects
     that contain a collection of moves that are applied to a system
     
@@ -75,7 +77,22 @@ public:
         return "SireMove::MovesBase";
     }
     
-    virtual System move(const System &system, int nmoves, bool record_stats)=0;
+    void pause();
+    void resume();
+    
+    void abort();
+    
+    bool isRunning();
+    bool hasFinished();
+    
+    int nMoves();
+    int nCompletedMoves();
+    
+    virtual System move(const System &system, int nmoves,
+                        bool record_stats)=0;
+    
+    virtual System move(const System &system, int nmoves, 
+                        bool record_stats, SimController &controller)=0;
     
     System move(const System &system, int nmoves);
     System move(const System &system);
@@ -119,6 +136,9 @@ public:
     bool operator!=(const SameMoves &other) const;
     
     using MovesBase::move;
+    
+    System move(const System &system, int nmoves, 
+                bool record_stats, SimController &controller);
     
     System move(const System &system, int nmoves, bool record_stats);
     
