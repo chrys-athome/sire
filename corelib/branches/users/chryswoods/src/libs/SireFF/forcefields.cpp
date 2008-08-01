@@ -81,6 +81,8 @@ public:
     
     virtual ~FFSymbol();
     
+    virtual const char* what() const=0;
+    
     virtual Expression toExpression() const=0;
     
     virtual double value() const=0;
@@ -130,6 +132,11 @@ public:
     
     ~FFSymbolValue();
     
+    const char* what() const
+    {
+        return "SireFF::FFSymbolValue";
+    }
+    
     Expression toExpression() const;
     
     double value() const;
@@ -158,6 +165,11 @@ public:
     FFSymbolFF(const FFSymbolFF &other);
     
     ~FFSymbolFF();
+    
+    const char* what() const
+    {
+        return "SireFF::FFSymbolFF";
+    }
 
     Expression toExpression() const;
     
@@ -188,6 +200,11 @@ public:
     FFSymbolExpression(const FFSymbolExpression &other);
     
     ~FFSymbolExpression();
+    
+    const char* what() const
+    {
+        return "SireFF::FFSymbolExpression";
+    }
 
     Expression toExpression() const;
     
@@ -253,6 +270,11 @@ public:
     FFTotalExpression(const FFTotalExpression &other);
     
     ~FFTotalExpression();
+    
+    const char* what() const
+    {
+        return "SireFF::FFTotalExpression";
+    }
     
     Expression toExpression() const;
 
@@ -632,16 +654,28 @@ Energy FFTotalExpression::energy(QVector<ForceField> &forcefields,
                                  const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                                  double scale_energy) const
 {
+    qDebug() << CODELOC;
+    qDebug() << "********* HERE **********";
+
     Energy nrg(0);
     
+    qDebug() << CODELOC << "COUNT" << forcefields.count();
     int nffields = forcefields.count();
     
+    qDebug() << CODELOC;
     ForceField *ffields_array = forcefields.data();
     
+    qDebug() << ffields_array;
+    
+    qDebug() << CODELOC;
     for (int i=0; i<nffields; ++i)
     {
+        qDebug() << CODELOC << i;
+        qDebug() << ffields_array[i]->what();
         nrg += ffields_array[i].edit().energy();
     }
+
+    qDebug() << CODELOC << nrg * scale_energy;
     
     return nrg * scale_energy;
 }
@@ -1294,12 +1328,19 @@ Expression ForceFields::getComponent(const Symbol &symbol) const
 */
 SireUnits::Dimension::Energy ForceFields::energy(const Symbol &component)
 {
+    qDebug() << CODELOC;
+
     if (not ffsymbols.contains(component))
         throw SireFF::missing_component( QObject::tr(   
             "There is no component of the energy represented by the "
             "symbol %1. Available components are %2.")
                 .arg(component.toString(), Sire::toString(ffsymbols.keys())),
                     CODELOC );
+
+    qDebug() << CODELOC;
+    qDebug() << component.toString();
+    qDebug() << ffsymbols.contains(component);
+    qDebug() << ffsymbols.value(component)->what();
 
     return ffsymbols.value(component)->energy(ffields_by_idx, ffsymbols);
 }

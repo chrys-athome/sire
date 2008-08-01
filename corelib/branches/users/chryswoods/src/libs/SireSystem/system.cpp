@@ -50,6 +50,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireSystem;
 using namespace SireFF;
 using namespace SireMol;
@@ -230,7 +232,9 @@ bool System::operator!=(const System &other) const
     this system */
 ForceFields& System::_pvt_forceFields()
 {
+    qDebug() << CODELOC;
     BOOST_ASSERT( molgroups[0]->isA<ForceFields>() );
+    qDebug() << CODELOC;
     return molgroups[0].edit().asA<ForceFields>();
 }
 
@@ -604,6 +608,7 @@ Energy System::energy()
 */
 Energy System::energy(const Symbol &component)
 {
+    qDebug() << CODELOC;
     return this->_pvt_forceFields().energy(component);
 }
 

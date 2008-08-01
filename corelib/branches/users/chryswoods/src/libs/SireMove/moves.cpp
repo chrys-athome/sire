@@ -35,6 +35,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireMove;
 using namespace SireSystem;
 using namespace SireBase;
@@ -197,37 +199,63 @@ System SameMoves::move(const System &system, int nmoves, bool record_stats)
 System SameMoves::move(const System &system, int nmoves, bool record_stats,
                        SimController &controller)
 {
+    qDebug() << CODELOC;
+
     if (nmoves == 0)
         return system;
 
+    qDebug() << CODELOC;
+
     SameMoves old_state(*this);
+
+    qDebug() << CODELOC;
+
     System new_system(system);
     
     try
     {
+        qDebug() << CODELOC;
+
         controller.initialise(new_system, *this, nmoves, record_stats);
+
+        qDebug() << CODELOC;
     
         MoveBase *move = &(mv.edit());
+
+        qDebug() << move;
+        qDebug() << move->what();
+        qDebug() << CODELOC;
     
         do
         {
+            qDebug() << CODELOC;
             move->move(new_system, 1, record_stats);
+            qDebug() << CODELOC;
         }
         while (controller.nextMove());
+
+        qDebug() << CODELOC;
     }
     catch(...)
     {
+        qDebug() << CODELOC;
         this->operator=(old_state);
+        qDebug() << CODELOC;
         throw;
     }
+
+    qDebug() << CODELOC;
         
     if (not controller.aborted())
     {
+        qDebug() << CODELOC;
         return new_system;
     }
     else
     {
+        qDebug() << CODELOC;
         this->operator=(old_state);
+        qDebug() << CODELOC;
         return system;
     }
 }

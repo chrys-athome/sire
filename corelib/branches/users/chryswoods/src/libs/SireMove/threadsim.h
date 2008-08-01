@@ -26,3 +26,56 @@
   *
 \*********************************************/
 
+#ifndef SIREMOVE_THREADSIM_H
+#define SIREMOVE_THREADSIM_H
+
+#include <QThread>
+#include <QMutex>
+#include <QWaitCondition>
+
+#include "simulation.h"
+#include "moves.h"
+
+#include "SireSystem/system.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMove
+{
+
+/** This is the simulation handle that lets a simulation run in a background thread
+
+    @author Christopher Woods
+*/
+class SIREMOVE_EXPORT ThreadSim : public LocalSim, private QThread
+{
+public:
+    ThreadSim();
+    ThreadSim(const System &system, const MovesBase &moves,
+              int nmoves, bool record_stats);
+              
+    ~ThreadSim();
+    
+    void start();
+
+    bool isRunning();
+    bool hasStarted();
+    
+    bool wait(int time);
+    void wait();
+
+protected:
+    void run();
+
+private:
+    bool isStarting();
+
+    QWaitCondition starter;
+    bool sim_starting;
+};
+
+}
+
+SIRE_END_HEADER
+
+#endif

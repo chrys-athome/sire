@@ -30,7 +30,7 @@
 #include <QWaitCondition>
 
 #include "simulation.h"
-#include "simcontroller.h"
+#include "threadsim.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -44,7 +44,7 @@ using namespace SireStream;
 /////////
 
 /** Constructor */
-SimHandle::SimHandle()
+SimHandle::SimHandle() : boost::noncopyable()
 {}
 
 /** Destructor */
@@ -54,70 +54,6 @@ SimHandle::~SimHandle()
 /////////
 ///////// Implementation of LocalSim
 /////////
-
-/** This is a simple class that provides a simulation that
-    runs within the current thread */
-class LocalSim : public SimHandle
-{
-public:
-    LocalSim();
-
-    LocalSim(const System &system, const MovesBase &moves,
-             int nmoves, int ncomp, bool record_stats);
-    
-    ~LocalSim();
-    
-    System system();
-    Moves moves();
-
-    int nMoves();
-    int nCompleted();
-    double progress();
-    
-    bool recordingStatistics();
-    
-    void start();
-    
-    void pause();
-    void resume();
-    
-    void abort();
-    void stop();
-    
-    bool isRunning();
-    bool hasStarted();
-    bool hasFinished();
-    
-    void wait();
-    bool wait(int time);
-
-private:
-    /** The simulation controller */
-    SimController controller;
-
-    /** Mutex to protect access to the data of this simulation */
-    QMutex data_mutex;
-
-    /** Mutex to ensure that only one copy of this simulation is 
-        running at a time */
-    QMutex run_mutex;
-
-    /** A copy of the system being simulated */
-    System sim_system;
-    
-    /** A copy of the moves being applied to the system */
-    Moves sim_moves;
-    
-    /** The number of moves to run */
-    int nmoves;
-    
-    /** The number of moves completed */
-    int ncompleted;
-    
-    /** Whether or not statistics are being collected during this
-        simulation */
-    bool record_stats;
-};
 
 /** Constructor */
 LocalSim::LocalSim() : SimHandle(),
@@ -141,7 +77,10 @@ LocalSim::LocalSim(const System &system, const MovesBase &moves,
 
 /** Destructor */
 LocalSim::~LocalSim()
-{}
+{
+    this->abort();
+    this->wait();
+}
 
 /** Return a copy of the system being simulated */
 System LocalSim::system()
@@ -185,7 +124,7 @@ int LocalSim::nCompleted()
     int ncurrent_completed = controller.nCompleted();
     
     QMutexLocker lkr(&data_mutex);
-    return ncurrent_completed + ncompleted;
+    return qMin(ncurrent_completed + ncompleted, nmoves);
 }
 
 /** Return the current progress of the simulation (percentage of 
@@ -198,7 +137,10 @@ double LocalSim::progress()
     if (nmoves == 0)
         return 0;
     else
-        return (100.0 * (ncurrent_completed + ncompleted)) / nmoves;
+    {
+        ncurrent_completed = qMin(ncurrent_completed + ncompleted, nmoves);
+        return (100.0 * ncurrent_completed) / nmoves;
+    }
 }
 
 /** Return whether or not statistics are being recorded during
@@ -235,13 +177,16 @@ void LocalSim::start()
     System new_system = moves->move(sim_system, nremaining_moves, record_stats,
                                     controller);
 
-    int njust_completed = controller.nCompleted();
-
-    //critical section
+    if (not controller.aborted())
     {
-        QMutexLocker lkr(&data_mutex);
-        ncompleted += njust_completed;
-        sim_system = new_system;
+        int njust_completed = controller.nCompleted();
+
+        //critical section
+        {
+            QMutexLocker lkr(&data_mutex);
+            ncompleted += njust_completed;
+            sim_system = new_system;
+        }
     }
 }
 
@@ -392,6 +337,19 @@ Simulation Simulation::run(const System &system, const MovesBase &moves,
                            int nmoves, bool record_stats)
 {
     Simulation sim(system, moves, nmoves, record_stats);
+    sim.start();
+    
+    return sim;
+}
+
+/** Run a simulation consisting of nmoves moves on the system 'system' using
+    the 'moves' object to actually perform the moves, in a background thread */
+Simulation Simulation::runBG(const System &system, const MovesBase &moves,
+                             int nmoves, bool record_stats)
+{
+    Simulation sim;
+    sim.d.reset( new ThreadSim(system, moves, nmoves, record_stats) );
+    
     sim.start();
     
     return sim;

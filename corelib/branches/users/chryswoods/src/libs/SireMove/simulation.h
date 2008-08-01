@@ -30,10 +30,12 @@
 #define SIREMOVE_SIMULATION_H
 
 #include <boost/shared_ptr.hpp>
+#include <boost/utility.hpp>
 
 #include <QMutex>
 
 #include "moves.h"
+#include "simcontroller.h"
 
 #include "SireSystem/system.h"
 
@@ -55,7 +57,7 @@ using namespace SireSystem;
     
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT SimHandle
+class SIREMOVE_EXPORT SimHandle : public boost::noncopyable
 {
 public:
     SimHandle();
@@ -85,6 +87,70 @@ public:
     
     virtual void wait()=0;
     virtual bool wait(int time)=0;
+};
+
+/** This is a simple class that provides a simulation that
+    runs within the current thread */
+class LocalSim : public SimHandle
+{
+public:
+    LocalSim();
+
+    LocalSim(const System &system, const MovesBase &moves,
+             int nmoves, int ncomp, bool record_stats);
+    
+    ~LocalSim();
+    
+    System system();
+    Moves moves();
+
+    int nMoves();
+    int nCompleted();
+    double progress();
+    
+    bool recordingStatistics();
+    
+    void start();
+    
+    void pause();
+    void resume();
+    
+    void abort();
+    void stop();
+    
+    bool isRunning();
+    bool hasStarted();
+    bool hasFinished();
+    
+    void wait();
+    bool wait(int time);
+
+protected:
+    /** The simulation controller */
+    SimController controller;
+
+    /** Mutex to protect access to the data of this simulation */
+    QMutex data_mutex;
+
+    /** Mutex to ensure that only one copy of this simulation is 
+        running at a time */
+    QMutex run_mutex;
+
+    /** A copy of the system being simulated */
+    System sim_system;
+    
+    /** A copy of the moves being applied to the system */
+    Moves sim_moves;
+    
+    /** The number of moves to run */
+    int nmoves;
+    
+    /** The number of moves completed */
+    int ncompleted;
+    
+    /** Whether or not statistics are being collected during this
+        simulation */
+    bool record_stats;
 };
 
 /** This class provides a user controllable handle to a running
@@ -127,6 +193,9 @@ public:
 
     static Simulation run(const System &system, const MovesBase &moves,
                           int nmoves, bool record_stats=true);
+    
+    static Simulation runBG(const System &system, const MovesBase &moves,
+                            int nmoves, bool record_stats=true);
     
     System system();
     Moves moves();
