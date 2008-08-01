@@ -26,8 +26,9 @@
   *
 \*********************************************/
 
-#include "simcontroller.h"
+#include <QTime>
 
+#include "simcontroller.h"
 #include "moves.h"
 
 #include "SireSystem/system.h"
@@ -61,6 +62,28 @@ void SimController::wait()
         run_mutex.lock();
         run_mutex.unlock();
     }
+}
+
+/** Wait until the simulation has finished or for 'time' milliseconds,
+    whichever comes sooner. Returns whether or not the simulation
+    has finished */
+bool SimController::wait(int time)
+{
+    QTime t;
+    t.start();
+
+    while ( this->isRunning() )
+    {
+        bool got_lock = run_mutex.tryLock( time - t.elapsed() );
+        
+        if (got_lock)
+            run_mutex.unlock();
+            
+        if (t.elapsed() > time)
+            return this->isRunning();
+    }
+    
+    return true;
 }
 
 /** This function is called by the Moves object to initialise this controller */

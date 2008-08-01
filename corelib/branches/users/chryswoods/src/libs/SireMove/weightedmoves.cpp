@@ -28,6 +28,7 @@
 
 #include "weightedmoves.h"
 #include "move.h"
+#include "simcontroller.h"
 
 #include "SireSystem/system.h"
 
@@ -209,41 +210,118 @@ System WeightedMoves::move(const System &system, int nmoves, bool record_stats)
     if (mvs.isEmpty())
         return system;
 
-    int n = mvs.count();
-    tuple<Move,double> *mvs_array = mvs.data();
-
+    WeightedMoves old_state(*this);
     System run_system(system);
 
-    if (n == 1)
+    try
     {
-        mvs_array[0].get<0>().edit().move(run_system, nmoves, record_stats);
-        return run_system;
-    }
+        int n = mvs.count();
+        tuple<Move,double> *mvs_array = mvs.data();
 
-    for (int i=0; i<nmoves; ++i)
-    {
-        //use the von Neumann rejection method to choose a random move
-        //using the supplied weights
-        //  rejection method - choose random
-        //  move, then choose random number from 0 to maxweight. If
-        //  probability of the move <= the random number, then accept
-        //  this move, else go back to the beginning and try again...
-        while (true)
+        if (n == 1)
         {
-            quint32 i = generator().randInt(n-1);
+            mvs_array[0].get<0>().edit().move(run_system, nmoves, record_stats);
+            return run_system;
+        }
 
-            tuple<Move,double> &move = mvs_array[i];
-
-            if ( generator().rand(maxweight) <= move.get<1>() )
+        for (int i=0; i<nmoves; ++i)
+        {
+            //use the von Neumann rejection method to choose a random move
+            //using the supplied weights
+            //  rejection method - choose random
+            //  move, then choose random number from 0 to maxweight. If
+            //  probability of the move <= the random number, then accept
+            //  this move, else go back to the beginning and try again...
+            while (true)
             {
-                //use this move
-                move.get<0>().edit().move(run_system, 1, record_stats);
-                break;
+                quint32 i = generator().randInt(n-1);
+    
+                tuple<Move,double> &move = mvs_array[i];
+    
+                if ( generator().rand(maxweight) <= move.get<1>() )
+                {
+                    //use this move
+                    move.get<0>().edit().move(run_system, 1, record_stats);
+                    break;
+                    }
             }
         }
     }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
 
     return run_system;
+}
+
+/** Perform 'nmoves' moves on the system 'system' and return the result */
+System WeightedMoves::move(const System &system, int nmoves, bool record_stats,
+                           SimController &controller)
+{
+    if (mvs.isEmpty() or nmoves == 0)
+        return system;
+
+    WeightedMoves old_state( *this );
+    System run_system(system);
+    
+    try
+    {
+        int n = mvs.count();
+        tuple<Move,double> *mvs_array = mvs.data();
+
+        controller.initialise(run_system, *this, nmoves, record_stats);
+
+        do
+        {
+            if (n == 1)
+            {
+                mvs_array[0].get<0>().edit().move(run_system, 1, record_stats);
+            }
+            else
+            {
+                for (int i=0; i<nmoves; ++i)
+                {
+                    //use the von Neumann rejection method to choose a random move
+                    //using the supplied weights
+                    //  rejection method - choose random
+                    //  move, then choose random number from 0 to maxweight. If
+                    //  probability of the move <= the random number, then accept
+                    //  this move, else go back to the beginning and try again...
+                    while (true)
+                    {
+                        quint32 i = generator().randInt(n-1);
+
+                        tuple<Move,double> &move = mvs_array[i];
+    
+                        if ( generator().rand(maxweight) <= move.get<1>() )
+                        {
+                            //use this move
+                            move.get<0>().edit().move(run_system, 1, record_stats);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        while (controller.nextMove());
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
+    
+    if (not controller.aborted())
+    {
+        return run_system;
+    }
+    else
+    {
+        this->operator=(old_state);
+        return system;
+    }
 }
 
 /** Return the moves available in this set */

@@ -176,9 +176,18 @@ bool SameMoves::operator!=(const SameMoves &other) const
     the result */
 System SameMoves::move(const System &system, int nmoves, bool record_stats)
 {
+    SameMoves old_state(*this);
     System new_system(system);
     
-    mv.edit().move(new_system, nmoves, record_stats);
+    try
+    {
+        mv.edit().move(new_system, nmoves, record_stats);
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
     
     return new_system;
 }
@@ -191,24 +200,34 @@ System SameMoves::move(const System &system, int nmoves, bool record_stats,
     if (nmoves == 0)
         return system;
 
+    SameMoves old_state(*this);
     System new_system(system);
     
-    controller.initialise(new_system, *this, nmoves, record_stats);
-    
-    MoveBase *move = &(mv.edit());
-    
-    do
+    try
     {
-        move->move(new_system, 1, record_stats);
-    }
-    while (controller.nextMove());
+        controller.initialise(new_system, *this, nmoves, record_stats);
     
+        MoveBase *move = &(mv.edit());
+    
+        do
+        {
+            move->move(new_system, 1, record_stats);
+        }
+        while (controller.nextMove());
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
+        
     if (not controller.aborted())
     {
         return new_system;
     }
     else
     {
+        this->operator=(old_state);
         return system;
     }
 }

@@ -77,17 +77,6 @@ public:
         return "SireMove::MovesBase";
     }
     
-    void pause();
-    void resume();
-    
-    void abort();
-    
-    bool isRunning();
-    bool hasFinished();
-    
-    int nMoves();
-    int nCompletedMoves();
-    
     virtual System move(const System &system, int nmoves,
                         bool record_stats)=0;
     

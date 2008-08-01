@@ -30,6 +30,7 @@
 #include <QWaitCondition>
 
 #include "simulation.h"
+#include "simcontroller.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -37,139 +38,6 @@
 using namespace SireMove;
 using namespace SireSystem;
 using namespace SireStream;
-
-/////////
-///////// Implementation of MoveMutex
-/////////
-
-/** Constructor */
-MoveMutex::MoveMutex() : mutex( QMutex::Recursive ), nmoves(0), ncompleted(0)
-{}
-
-/** Destructor */
-MoveMutex::~MoveMutex()
-{
-    //make sure we have finished
-    mutex.lock();
-    mutex.unlock();
-}
-
-/** Initialise with 'nmoves' moves of simulation */
-void MoveMutex::initialise(int nmvs, const System &system,
-                                     const Moves &moves)
-{
-    QMutexLocker lkr(&mutex);
-
-    if (nmvs <= 0)
-    {
-        nmvs = 0;
-        ncompleted = 0;
-        sim_system = 0;
-        sim_moves = 0;
-    }
-    else
-    {
-        nmoves = nmvs;
-        ncompleted = 0;
-        sim_system = &system;
-        sim_moves = &moves;
-    }
-}
-
-/** Increment the move counter and return whether or not there
-    is another move to perform */
-bool MoveMutex::nextMove()
-{
-    if (ncompleted == nmoves)
-        return false;
-
-    //have we completed any moves yet?
-    if (ncompleted > 0)
-        //release the mutex - this gives a chance to stop or
-        //abort this simulation
-        mutex.unlock();
-
-    mutex.lock();
-
-    if (ncompleted < nmoves-1)
-    {
-        //there are more moves to run
-        ++ncompleted;
-        return true;
-    }
-    else
-    {
-        ncompleted = nmoves;
-        sim_system = 0;
-        sim_moves = 0;
-        
-        mutex.unlock();
-    
-        return false;
-    }
-}
-
-/** Return whether the simulation is in progress */
-bool MoveMutex::isRunning()
-{
-    QMutexLocker lkr(&mutex);
-    return sim_system != 0;
-}
-
-/** Return the number of moves to run */
-int MoveMutex::nMoves()
-{
-    QMutexLocker lkr(&mutex);
-    return nmoves;
-}
-
-/** Return the number of completed moves */
-int MoveMutex::nCompleted()
-{
-    QMutexLocker lkr(&mutex);
-    return ncompleted;
-}
-
-/** Return a copy of the system being simulated, in its current form */
-System MoveMutex::system()
-{
-    QMutexLocker lkr(&mutex);
-    
-    if (sim_system)
-        return *sim_system;
-    else
-        return System();
-}
-
-/** Return a copy of the moves object that is used to perform the moves */
-Moves MoveMutex::moves()
-{
-    QMutexLocker lkr(&mutex);
-    
-    if (sim_moves)
-        return *sim_moves;
-    else
-        return Moves();
-}
-
-/** Pause the simulation */
-void MoveMutex::pause()
-{
-    mutex.lock();
-}
-
-/** Resume the simulation */
-void MoveMutex::resume()
-{
-    mutex.unlock();
-}
-
-/** Abort the current simulation */
-void MoveMutex::abort()
-{
-    QMutexLocker lkr(&mutex);
-    nmoves = ncompleted;
-}
 
 /////////
 ///////// Implementation of SimHandle
@@ -203,7 +71,8 @@ public:
     Moves moves();
 
     int nMoves();
-    int nCompletedMoves();
+    int nCompleted();
+    double progress();
     
     bool recordingStatistics();
     
@@ -212,22 +81,41 @@ public:
     void pause();
     void resume();
     
+    void abort();
     void stop();
     
     bool isRunning();
+    bool hasStarted();
     bool hasFinished();
     
-    bool wait(unsigned long time);
+    void wait();
+    bool wait(int time);
 
 private:
-    MoveMutex sim_mutex;
+    /** The simulation controller */
+    SimController controller;
 
+    /** Mutex to protect access to the data of this simulation */
+    QMutex data_mutex;
+
+    /** Mutex to ensure that only one copy of this simulation is 
+        running at a time */
+    QMutex run_mutex;
+
+    /** A copy of the system being simulated */
     System sim_system;
+    
+    /** A copy of the moves being applied to the system */
     Moves sim_moves;
     
+    /** The number of moves to run */
     int nmoves;
+    
+    /** The number of moves completed */
     int ncompleted;
     
+    /** Whether or not statistics are being collected during this
+        simulation */
     bool record_stats;
 };
 
@@ -258,94 +146,166 @@ LocalSim::~LocalSim()
 /** Return a copy of the system being simulated */
 System LocalSim::system()
 {
-    MoveMutexLocker lkr(&sim_mutex);
-    
-    if (sim_mutex.isRunning())
-        return sim_mutex.system();
-    else
+    try
+    {
+        return controller.system();
+    }
+    catch(detail::sim_not_in_progress)
+    {
+        QMutexLocker lkr(&data_mutex);
         return sim_system;
+    }
 }
 
 /** Return a copy of the moves being applied to the system */
 Moves LocalSim::moves()
 {
-    MoveMutexLocker lkr(&sim_mutex);
-    
-    if (sim_mutex.isRunning())
-        return sim_mutex.moves();
-    else
+    try
+    {
+        return controller.moves();
+    }
+    catch(detail::sim_not_in_progress)
+    {
+        QMutexLocker lkr(&data_mutex);
         return sim_moves;
+    }
 }
 
 /** Return the total number of moves to be applied to the system
     during this simulation */
 int LocalSim::nMoves()
 {
+    QMutexLocker lkr(&data_mutex);
     return nmoves;
 }
 
 /** Return the number of moves that have been completed */
-int LocalSim::nCompletedMoves()
+int LocalSim::nCompleted()
 {
-    return move_mutex.nCompletedMoves();
+    int ncurrent_completed = controller.nCompleted();
+    
+    QMutexLocker lkr(&data_mutex);
+    return ncurrent_completed + ncompleted;
+}
+
+/** Return the current progress of the simulation (percentage of 
+    completed moves) */
+double LocalSim::progress()
+{
+    int ncurrent_completed = controller.nCompleted();
+    
+    QMutexLocker lkr(&data_mutex);
+    if (nmoves == 0)
+        return 0;
+    else
+        return (100.0 * (ncurrent_completed + ncompleted)) / nmoves;
 }
 
 /** Return whether or not statistics are being recorded during
     this simulation */
 bool LocalSim::recordingStatistics()
 {
+    QMutexLocker lkr(&data_mutex);
     return record_stats;
 }
 
 /** Start running the simulation */
 void LocalSim::start()
 {
-    move_mutex.wait();
+    QMutexLocker lkr(&run_mutex);
 
-    if (ncompleted < nmoves)
+    int nremaining_moves = 0;
+    MovesBase *moves = 0;
+
+    //critical section
     {
-        sim_system = sim_moves.edit()
-                              .move(sim_system, nmoves - ncompleted, record_stats,
-                                    move_mutex);
-    }
+        QMutexLocker lkr(&data_mutex);
     
-    ncompleted = nmoves;
+        if (ncompleted >= nmoves)
+        {
+            ncompleted = nmoves;
+            data_mutex.unlock();
+            return;
+        }
+        
+        nremaining_moves = nmoves - ncompleted;
+        moves = &(sim_moves.edit());
+    }
+
+    System new_system = moves->move(sim_system, nremaining_moves, record_stats,
+                                    controller);
+
+    int njust_completed = controller.nCompleted();
+
+    //critical section
+    {
+        QMutexLocker lkr(&data_mutex);
+        ncompleted += njust_completed;
+        sim_system = new_system;
+    }
 }
 
 /** Pause the simulation */
 void LocalSim::pause()
 {
-    move_mutex.pause();
+    controller.pause();
 }
 
 /** Resume the simulation */
 void LocalSim::resume()
 {
-    move_mutex.resume();
+    controller.resume();
 }
 
 /** Stop the simulation */
 void LocalSim::stop()
 {
-    move_mutex.abort();
+    controller.stop();
+}
+
+/** Abort the simulation */
+void LocalSim::abort()
+{
+    controller.abort();
 }
 
 /** Is the simulation running? */
 bool LocalSim::isRunning()
 {
-    return move_mutex.isRunning();
+    return controller.isRunning();
+}
+
+/** Has the simulation started? */
+bool LocalSim::hasStarted()
+{
+    //critical section
+    {
+        QMutexLocker lkr(&data_mutex);
+        if (ncompleted > 0)
+            return true;
+    }
+    
+    return controller.hasStarted();
 }
 
 /** Has the simulation finished? */
 bool LocalSim::hasFinished()
 {
-    return move_mutex.hasFinished();
+    QMutexLocker lkr(&data_mutex);
+    return ncompleted == nmoves and ncompleted > 0;
+}
+
+/** Wait until the simulation has finished, or 'time' milliseconds
+    has passed */
+bool LocalSim::wait(int time)
+{
+    return controller.wait(time);
 }
 
 /** Wait until the simulation has finished */
-bool LocalSim::wait(unsigned long time)
+void LocalSim::wait()
 {
-    move_mutex.wait();
+    controller.wait();
 }
 
 /////////
@@ -366,7 +326,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Simulation &sim)
     d->pause();
     
     sds << d->system() << d->moves()
-        << quint64( d->nMoves() ) << quint64( d->nCompletedMoves() )
+        << quint64( d->nMoves() ) << quint64( d->nCompleted() )
         << d->recordingStatistics();
         
     d->resume();
@@ -426,6 +386,17 @@ Simulation::Simulation(const Simulation &other)
 Simulation::~Simulation()
 {}
 
+/** Run a simulation consisting of nmoves moves on the system 'system' using
+    the 'moves' object to actually perform the moves */
+Simulation Simulation::run(const System &system, const MovesBase &moves,
+                           int nmoves, bool record_stats)
+{
+    Simulation sim(system, moves, nmoves, record_stats);
+    sim.start();
+    
+    return sim;
+}
+
 /** Copy assignment operator */
 Simulation& Simulation::operator=(const Simulation &other)
 {
@@ -466,9 +437,15 @@ int Simulation::nMoves()
 }
 
 /** Return the number of moves that have been completed */
-int Simulation::nCompletedMoves()
+int Simulation::nCompleted()
 {
-    return d->nCompletedMoves();
+    return d->nCompleted();
+}
+
+/** Return the progress of the simulation (percentage completed) */
+double Simulation::progress()
+{
+    return d->progress();
 }
 
 /** Return whether or not statistics will be recorded during
@@ -498,11 +475,22 @@ void Simulation::resume()
 }
 
 /** Stop the current simulation. This will stop the simulation
-    at the next sane point, and blocks until the simulation
-    has stopped */
+    at the next sane point. This will not block, so the simulation
+    may take some time to stop. Use Simulation::wait() to block
+    until the simulation has finished */
 void Simulation::stop()
 {
     d->stop();
+}
+
+/** Abort the current simulation. This will abort the simulation
+    and return the system to where it was before the simulation
+    started. This will not block, so the simulation
+    may take some time to stop. Use Simulation::wait() to block
+    until the simulation has finished */
+void Simulation::abort()
+{
+    d->abort();
 }
 
 /** Return whether or not the current simulation is running */
@@ -511,16 +499,29 @@ bool Simulation::isRunning()
     return d->isRunning();
 }
 
+/** Return whether or not the simulation has started */
+bool Simulation::hasStarted()
+{
+    return d->hasStarted();
+}
+
 /** Return whether or not the current simulation has finished */
 bool Simulation::hasFinished()
 {
     return d->hasFinished();
 }
 
-/** Wait until the simulation has finished (or 'time' milliseconds,
-    whichever comes first). This returns whether or not the 
-    simulation has finished. */
-bool Simulation::wait(unsigned long time)
+/** Wait until the simulation has finished, stopped or been aborted
+    (or 'time' milliseconds, whichever comes first). This returns whether 
+    or not the simulation has finished. */
+bool Simulation::wait(int time)
 {
     return d->wait(time);
+}
+
+/** Wait indefinitely until the simulation has finished, stopped or been
+    aborted */
+void Simulation::wait()
+{
+    d->wait();
 }

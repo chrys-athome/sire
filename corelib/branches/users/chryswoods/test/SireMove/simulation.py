@@ -72,15 +72,23 @@ mc = RigidBodyMC(cljff.group(MGIdx(0)))
 
 moves = SameMoves(mc)
 
-sim = Simulation( system, moves, 1000 )
+print "Running 1000 moves directly..."
+t.start()
+system = moves.move(system, 1000, True)
+ms = t.elapsed()
+print "Direct moves took %d ms" % ms
 
 print "Running 1000 moves..."
 
 t.start()
-sim.start()
+sim = Simulation.run(system, moves, 1000)
 ms = t.elapsed()
 
 print "Done!"
+
+print sim.hasFinished()
+print sim.hasStarted()
+print sim.isRunning()
 
 system = sim.system()
 

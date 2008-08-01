@@ -50,71 +50,6 @@ namespace SireMove
 
 using namespace SireSystem;
 
-/** This class provides a way of following (and controlling) moves
-    as they are being performed */
-class SIREMOVE_EXPORT MoveMutex
-{
-public:
-    MoveMutex();
-    ~MoveMutex();
-
-    void initialise(int nmoves, const System &system, 
-                                const Moves &moves);
-    
-    bool isRunning();
-    
-    bool nextMove();
-    
-    int nMoves();
-    int nCompleted();
-    
-    System system();
-    Moves moves();
-    
-    void pause();
-    void resume();
-    void abort();
-    
-private:
-    MoveMutex(const MoveMutex&)
-    {}
-    
-    MoveMutex& operator=(const MoveMutex&)
-    {
-        return *this;
-    }
-    
-    QMutex mutex;
-    
-    int nmoves;
-    int ncompleted;
-    
-    const System *sim_system;
-    const Moves *sim_moves;
-};
-
-/** This class makes it easier to manage the locking and unlocking of a simulation */
-class MoveMutexLocker
-{
-public:
-    MoveMutexLocker() : mutex(0)
-    {}
-    
-    MoveMutexLocker(MoveMutex &movemutex) : mutex( &movemutex )
-    {
-        mutex->pause();
-    }
-     
-    ~MoveMutexLocker()
-    {
-        if (mutex)
-            mutex->resume();
-    }
-    
-private:
-    MoveMutex *mutex;
-};
-
 /** This the virtual base class provides the interface to the handle
     by which 'Simulation' actually controls a running simulation
     
@@ -131,7 +66,8 @@ public:
     virtual Moves moves()=0;
 
     virtual int nMoves()=0;
-    virtual int nCompletedMoves()=0;
+    virtual int nCompleted()=0;
+    virtual double progress()=0;
     
     virtual bool recordingStatistics()=0;
     
@@ -139,13 +75,16 @@ public:
     
     virtual void pause()=0;
     virtual void resume()=0;
-    
+
+    virtual void abort()=0;
     virtual void stop()=0;
     
     virtual bool isRunning()=0;
+    virtual bool hasStarted()=0;
     virtual bool hasFinished()=0;
     
-    virtual bool wait(unsigned long time)=0;
+    virtual void wait()=0;
+    virtual bool wait(int time)=0;
 };
 
 /** This class provides a user controllable handle to a running
@@ -161,8 +100,6 @@ friend QDataStream& ::operator>>(QDataStream&, Simulation&);
 
 public:
     Simulation();
-    Simulation(const System &system, const MovesBase &moves,
-               int nmoves, bool record_stats = true);
     
     Simulation(const Simulation &other);
     
@@ -187,12 +124,16 @@ public:
     {
         return new Simulation(*this);
     }
+
+    static Simulation run(const System &system, const MovesBase &moves,
+                          int nmoves, bool record_stats=true);
     
     System system();
     Moves moves();
 
     int nMoves();
-    int nCompletedMoves();
+    int nCompleted();
+    double progress();
     
     bool recordingStatistics();
     
@@ -201,14 +142,20 @@ public:
     void pause();
     void resume();
     
+    void abort();
     void stop();
     
     bool isRunning();
+    bool hasStarted();
     bool hasFinished();
     
-    bool wait(unsigned long time = ULONG_MAX);
+    void wait();
+    bool wait(int time);
 
 private:
+    Simulation(const System &system, const MovesBase &moves,
+               int nmoves, bool record_stats = true);
+
     Simulation(const System &system, const MovesBase &moves,
                int nmoves, int ncompleted, bool record_stats);
 

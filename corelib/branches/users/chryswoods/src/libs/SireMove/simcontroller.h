@@ -88,6 +88,7 @@ public:
     bool aborted();
     
     void wait();
+    bool wait(int time);
     
     int nMoves();
     int nCompleted();
