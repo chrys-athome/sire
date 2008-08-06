@@ -9,7 +9,7 @@
 # require cmake >= 2.4.1
 cmake_minimum_required(VERSION 2.4.1 FATAL_ERROR)
 
-# use loose loop syntax in CMakeLists files
+# use loose loop syntax in CMakeLists files
 set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 
 # Absolutely can't run cmake in the source directory!
@@ -99,9 +99,6 @@ if (SIRE_BUILD_MOLPRO)
 
       set ( MOLPRO_DEFINITIONS "-D_BUILD_MOLPRO_" )
  
-      message ( STATUS "MolproClient paths ${MOLPRO_CLIENT_LIBRARIES} | "
-                       "${MOLPRO_CLIENT_INCLUDE_DIR}" )
-
     endif()
 
   endif()
@@ -277,7 +274,6 @@ if ( CMAKE_COMPILER_IS_GNUCC )
 
       # gcc-4.2 and above has openMP - turn it on
       if ( GCC_MINOR_VERSION GREATER 1 )
-          message( "Turning on openMP parallelisation!")
           set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -fopenmp" )
           set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -fopenmp" )
       endif()
@@ -323,9 +319,9 @@ message( STATUS "Compiler flags = ${SIRE_CXX_FLAGS_RELEASE}" )
 
 # Ensure that the libraries don't contain any undefined symbols
 if(APPLE)
-  set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -Wl" )
+  set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -rdynamic -Wl" )
 else(UNIX)
-  set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -Wl,--no-undefined" )
+  set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -rdynamic -Wl,--no-undefined" )
 endif()
 
 # Add this to all shared libraries
@@ -335,7 +331,7 @@ set( CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} ${SIRE_LINK_FLAGS}" )
 message( STATUS "Linker flags = ${CMAKE_SHARED_LINKER_FLAGS}" )
 
 # Add the compiler test directory - this allows us to run some compiler
-# tests to make sure that Sire will compile properly
+# tests to make sure that Sire will compile properly
 add_subdirectory (build/test_compiler)
 
 # Recurse into the src/libs and src/apps subdirectories
