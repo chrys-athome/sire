@@ -49,6 +49,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireFF;
 using namespace SireMol;
 using namespace SireBase;
@@ -241,9 +243,16 @@ void FF::setName(const MGID &mgid, const QString &name)
 */
 SireUnits::Dimension::Energy FF::energy(const Symbol &component)
 {
+    qDebug() << CODELOC;
+
     if (this->isDirty())
+    {
+        qDebug() << CODELOC;
         this->recalculateEnergy();
-        
+    }
+     
+    qDebug() << CODELOC;
+              
     if (not nrg_components.values().contains(component.ID()))
         throw SireFF::missing_component( QObject::tr(
             "There is no component in this forcefield represented by "
@@ -251,12 +260,16 @@ SireUnits::Dimension::Energy FF::energy(const Symbol &component)
                 .arg(component.toString())
                 .arg( Sire::toString( nrg_components.values().keys() ) ), CODELOC );
 
+    qDebug() << CODELOC;
+
     return SireUnits::Dimension::Energy( nrg_components.value(component) );
 }
 
 /** Return the energy of this forcefield in its current state */
 SireUnits::Dimension::Energy FF::energy()
 {
+    qDebug() << CODELOC;
+
     return this->energy( this->components().total() );
 }
 

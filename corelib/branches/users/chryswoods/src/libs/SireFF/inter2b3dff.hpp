@@ -34,6 +34,8 @@
 
 #include "SireBase/countflops.h"
 
+#include <QDebug>
+
 SIRE_BEGIN_HEADER
 
 namespace SireFF
@@ -190,19 +192,29 @@ template<class Potential>
 SIRE_OUTOFLINE_TEMPLATE
 void Inter2B3DFF<Potential>::recalculateEnergy()
 {
+    qDebug() << CODELOC;
+
     int nmols = this->mols.count();
     const typename Potential::Molecule *mols_array 
                             = this->mols.moleculesByIndex().constData();
+
+    qDebug() << CODELOC;
 
     if (this->changed_mols.count() == nmols)
         //all of the molecules have changed!
         this->changed_mols.clear();
 
+    qDebug() << CODELOC;
+
     //tell the potential that we are starting an evaluation
     Potential::startEvaluation();
 
+    qDebug() << CODELOC;
+
     try
     {
+
+    qDebug() << CODELOC;
 
     if (this->changed_mols.isEmpty())
     {
@@ -215,12 +227,16 @@ void Inter2B3DFF<Potential>::recalculateEnergy()
             EnergyWorkspace workspace;
             Energy my_total_nrg;
 
+            qDebug() << CODELOC;
+
             const typename Potential::Molecule *my_mols_array = mols_array;
             const SireVol::AABox *aaboxes_array = this->mols.aaBoxesByIndex().constData();
             const int my_nmols = nmols;
 
             const SireVol::SpaceBase &spce = this->space();
             const double cutoff = this->switchingFunction().cutoffDistance();
+
+            qDebug() << CODELOC;
 
             //loop over all pairs of molecules
             #pragma omp for schedule(dynamic)
@@ -244,18 +260,28 @@ void Inter2B3DFF<Potential>::recalculateEnergy()
                 total_nrg += my_total_nrg;
             }
         }
+
+        qDebug() << CODELOC;
         
         //set the energy
         this->components().setEnergy(*this, total_nrg);
+
+        qDebug() << CODELOC;
     }
     else
     {
+        qDebug() << CODELOC;
+        
         //just calculate the changes in energy
         Energy old_nrg;
         Energy new_nrg;
 
+        qDebug() << CODELOC;
+
         #pragma omp parallel
         {
+            qDebug() << CODELOC;
+
             EnergyWorkspace old_workspace;
             EnergyWorkspace new_workspace;
 
@@ -273,6 +299,8 @@ void Inter2B3DFF<Potential>::recalculateEnergy()
             #pragma omp for schedule(static)
             for (int i=0; i<my_nmols; ++i)
             {
+                qDebug() << CODELOC;
+
                 const typename Potential::Molecule &mol0 = my_mols_array[i];
             
                 typename QHash<MolNum,ChangedMolecule>::const_iterator it
@@ -387,6 +415,8 @@ void Inter2B3DFF<Potential>::recalculateEnergy()
                     }
                 }
             }
+            
+            qDebug() << CODELOC;
 
             #pragma omp critical
             {
@@ -394,7 +424,11 @@ void Inter2B3DFF<Potential>::recalculateEnergy()
                 new_nrg += my_new_nrg;
             }
 
+            qDebug() << CODELOC;
+
         } // end of parallel block
+
+        qDebug() << CODELOC;
 
         if ( not this->removed_mols.isEmpty() )
         {
@@ -435,9 +469,15 @@ void Inter2B3DFF<Potential>::recalculateEnergy()
         this->changed_mols.clear();
     }
 
+    qDebug() << CODELOC;
+
     Potential::finishedEvaluation();
+
+    qDebug() << CODELOC;
     
     this->setClean();
+
+    qDebug() << CODELOC;
     
     }
     catch(...)
@@ -445,6 +485,8 @@ void Inter2B3DFF<Potential>::recalculateEnergy()
         Potential::finishedEvaluation();
         throw;
     }
+
+    qDebug() << CODELOC;
 }
 
 /** Calculate the forces acting on the molecules in the passed forcetable
