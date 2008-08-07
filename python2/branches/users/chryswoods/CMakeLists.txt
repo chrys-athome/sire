@@ -245,7 +245,7 @@ if ( CMAKE_COMPILER_IS_GNUCC )
 
       # gcc-4.2 and above has openMP - turn it on
       if ( GCC_MINOR_VERSION GREATER 1 )
-          message( "Turning on openMP parallelisation!")
+          message( STATUS "Turning on openMP parallelisation!")
           ADD_DEFINITIONS( -fopenmp )
           set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -fopenmp" )
       endif()
