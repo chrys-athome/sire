@@ -272,8 +272,8 @@ if ( CMAKE_COMPILER_IS_GNUCC )
       #   ADD_DEFINITIONS( -march=native )
       #endif()
 
-      # gcc-4.2 and above has openMP - turn it on
-      if ( GCC_MINOR_VERSION GREATER 1 )
+      # gcc-4.2 and above has openMP - turn it on (except for Mac as libgomp is broken!)
+      if ( GCC_MINOR_VERSION GREATER 1 AND NOT APPLE )
           set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -fopenmp" )
           set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -fopenmp" )
       endif()

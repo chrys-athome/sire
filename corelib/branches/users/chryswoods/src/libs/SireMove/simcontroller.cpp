@@ -119,8 +119,6 @@ void SimController::initialise(const System &system, const Moves &moves,
     This also increments the number of steps that have already run */
 bool SimController::nextMove()
 {
-    qDebug() << "SimController::nextMove()";
-
     if (this->hasFinished())
         return false;
         

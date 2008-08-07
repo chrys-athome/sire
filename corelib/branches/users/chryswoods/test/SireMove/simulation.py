@@ -72,23 +72,23 @@ mc = RigidBodyMC(cljff.group(MGIdx(0)))
 
 moves = SameMoves(mc)
 
-#print "Running 1000 moves directly..."
-#t.start()
-#system = moves.move(system, 1000, True)
-#ms = t.elapsed()
-#print "Direct moves took %d ms" % ms
-#
-#print "Running 1000 moves..."
-#
-#t.start()
-#sim = Simulation.run(system, moves, 1000)
-#ms = t.elapsed()
-#
-#print "Done! - took %d ms" % ms
-#
-#print sim.hasFinished()
-#print sim.hasStarted()
-#print sim.isRunning()
+print "Running 1000 moves directly..."
+t.start()
+system = moves.move(system, 1000, True)
+ms = t.elapsed()
+print "Direct moves took %d ms" % ms
+
+print "Running 1000 moves..."
+
+t.start()
+sim = Simulation.run(system, moves, 1000)
+ms = t.elapsed()
+
+print "Done! - took %d ms" % ms
+
+print sim.hasFinished()
+print sim.hasStarted()
+print sim.isRunning()
 
 print "Running 1000 background steps..."
 t.start()
@@ -106,18 +106,18 @@ sim.wait()
 ms = t.elapsed()
 print "Done - took %d ms" % ms 
 
-#system = sim.system()
-#
-#print "Final energy = %s" % system.energy()
-#
-#system.mustNowRecalculateFromScratch();
-#
-#print "Are we sure? = %s" % system.energy()
-#
-#mc = sim.moves().moves()[0]
-#
-#print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
-#                            mc.nRejected(), 100 * mc.acceptanceRatio())
+system = sim.system()
+
+print "Final energy = %s" % system.energy()
+
+system.mustNowRecalculateFromScratch();
+
+print "Are we sure? = %s" % system.energy()
+
+mc = sim.moves().moves()[0]
+
+print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
+                            mc.nRejected(), 100 * mc.acceptanceRatio())
 
 print "Took %d ms" % ms
 

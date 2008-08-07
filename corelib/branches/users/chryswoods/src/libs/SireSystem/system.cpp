@@ -232,9 +232,7 @@ bool System::operator!=(const System &other) const
     this system */
 ForceFields& System::_pvt_forceFields()
 {
-    qDebug() << CODELOC;
     BOOST_ASSERT( molgroups[0]->isA<ForceFields>() );
-    qDebug() << CODELOC;
     return molgroups[0].edit().asA<ForceFields>();
 }
 
@@ -608,7 +606,6 @@ Energy System::energy()
 */
 Energy System::energy(const Symbol &component)
 {
-    qDebug() << CODELOC;
     return this->_pvt_forceFields().energy(component);
 }
 

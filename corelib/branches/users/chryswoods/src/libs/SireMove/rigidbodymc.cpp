@@ -191,52 +191,38 @@ const MolGroup& RigidBodyMC::moleculeGroup() const
 /** Attempt 'n' rigid body moves of the views of the system 'system' */
 void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
 {
-    qDebug() << CODELOC;
-
     //save our, and the system's, current state
     RigidBodyMC old_state(*this);
-    qDebug() << CODELOC;
     System old_system_state(system);
     
-    qDebug() << CODELOC;
     try
     {
-        qDebug() << CODELOC;
         for (int i=0; i<nmoves; ++i)
         {
-            qDebug() << CODELOC;
             //get the old total energy of the system
             double old_nrg = system.energy( this->energyComponent() );
 
-            qDebug() << CODELOC;
             //save the old system and sampler
             System old_system(system);
             Sampler old_sampler(smplr);
     
-            qDebug() << CODELOC;
             //update the sampler with the latest version of the molecule group
             MGNum mgnum = smplr.read().group().number();
             smplr.edit().setGroup( system.at(mgnum) );
     
-            qDebug() << CODELOC;
             //randomly select a molecule to move
             tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
 
-            qDebug() << CODELOC;
             double old_bias = mol_and_bias.get<1>();
 
-            qDebug() << CODELOC;
             //now translate and rotate the molecule
             Vector delta = generator().vectorOnSphere(adel);
 
-            qDebug() << CODELOC;
             Quaternion rotdelta( rdel * generator().rand(),
                                  generator().vectorOnSphere() );
 
-            qDebug() << CODELOC;
             const PartialMolecule &oldmol = mol_and_bias.get<0>();
 
-            qDebug() << CODELOC;
             PartialMolecule newmol = oldmol.move()
                                         .rotate(rotdelta, 
                                                 oldmol.evaluate().centerOfGeometry())
@@ -244,51 +230,34 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
                                         .commit();
 
             //update the simulation with the new coordinates
-            qDebug() << CODELOC;
             system.update(newmol);
 
             //calculate the energy of the system
-            qDebug() << CODELOC;
             double new_nrg = system.energy( this->energyComponent() );
 
             //get the new bias on this molecule
-            qDebug() << CODELOC;
             smplr.edit().setGroup( system.at(mgnum) );
         
-            qDebug() << CODELOC;
             double new_bias = smplr.read().probabilityOf(newmol);
 
             //accept or reject the move based on the change of energy
             //and the biasing factors
-            qDebug() << CODELOC;
             if (not this->test(new_nrg, old_nrg, new_bias, old_bias))
             {
-                qDebug() << CODELOC;
                 //the move has been rejected - reset the state
                 smplr = old_sampler;
                 system = old_system;
             }
             
-            qDebug() << CODELOC;
-            
             if (record_stats)
                 system.collectStats();
-
-            qDebug() << CODELOC;
         }
-        
-        qDebug() << CODELOC;
     }
     catch(...)
     {
-        qDebug() << CODELOC;
         system = old_system_state;
-        qDebug() << CODELOC;
         this->operator=(old_state);
-        qDebug() << CODELOC;
 
         throw;
     }
-
-    qDebug() << CODELOC;
 }

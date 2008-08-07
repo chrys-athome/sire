@@ -243,15 +243,10 @@ void FF::setName(const MGID &mgid, const QString &name)
 */
 SireUnits::Dimension::Energy FF::energy(const Symbol &component)
 {
-    qDebug() << CODELOC;
-
     if (this->isDirty())
     {
-        qDebug() << CODELOC;
         this->recalculateEnergy();
     }
-     
-    qDebug() << CODELOC;
               
     if (not nrg_components.values().contains(component.ID()))
         throw SireFF::missing_component( QObject::tr(
@@ -260,16 +255,12 @@ SireUnits::Dimension::Energy FF::energy(const Symbol &component)
                 .arg(component.toString())
                 .arg( Sire::toString( nrg_components.values().keys() ) ), CODELOC );
 
-    qDebug() << CODELOC;
-
     return SireUnits::Dimension::Energy( nrg_components.value(component) );
 }
 
 /** Return the energy of this forcefield in its current state */
 SireUnits::Dimension::Energy FF::energy()
 {
-    qDebug() << CODELOC;
-
     return this->energy( this->components().total() );
 }
 

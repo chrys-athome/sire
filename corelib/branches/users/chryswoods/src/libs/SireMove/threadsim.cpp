@@ -67,11 +67,10 @@ void ThreadSim::start()
         return;
 
     sim_starting = false;
-    qDebug() << "Starting background thread...";
+
     QThread::start();
     
     starter.wait(&data_mutex);
-    qDebug() << "Thread has definitely started!";
     
     data_lkr.unlock();
     run_lkr.unlock();
@@ -80,8 +79,6 @@ void ThreadSim::start()
 /** This is what is run by the background thread */
 void ThreadSim::run()
 {
-    qDebug() << "ThreadSim::run()";
-
     data_mutex.lock();
     sim_starting = true;
     data_mutex.unlock();
@@ -109,7 +106,6 @@ void ThreadSim::run()
         sim_starting = false;
     }
 
-    qDebug() << "Starting the simulation";
     System new_system = moves->move(sim_system, nremaining_moves, record_stats,
                                     controller);
 
@@ -125,8 +121,6 @@ void ThreadSim::run()
             sim_system = new_system;
         }
     }
-    
-    qDebug() << "Simulation complete!";
 }
 
 /** Return whether or not the simulation is starting up */
