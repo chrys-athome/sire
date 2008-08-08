@@ -38,3 +38,4 @@ set ( SIRE_HEADERS
     
 install( FILES ${SIRE_HEADERS}
          DESTINATION ${SIRE_INCLUDES} )
+

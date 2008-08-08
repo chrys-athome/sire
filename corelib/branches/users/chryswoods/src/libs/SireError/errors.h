@@ -390,6 +390,30 @@ public:
     }
 };
 
+/** This exception is thrown whenever a request is made of a resource
+    that is just not available */
+class SIREERROR_EXPORT unavailable_resource : public SireError::exception
+{
+public:
+    unavailable_resource() : exception()
+    {}
+
+    unavailable_resource(QString err, QString place=QString::null)
+              : exception(err,place)
+    {}
+
+    unavailable_resource(const unavailable_resource &other) : exception(other)
+    {}
+
+    ~unavailable_resource() throw()
+    {}
+
+    const char* what() const throw()
+    {
+        return "SireError::unavailable_resource";
+    }
+};
+
 /** This exception is thrown whenever there is an input/output error */
 class SIREERROR_EXPORT io_error : public SireError::exception
 {
@@ -640,6 +664,7 @@ Q_DECLARE_METATYPE(SireError::file_error)
 Q_DECLARE_METATYPE(SireError::io_error)
 Q_DECLARE_METATYPE(SireError::invalid_arg)
 Q_DECLARE_METATYPE(SireError::invalid_state)
+Q_DECLARE_METATYPE(SireError::unavailable_resource)
 Q_DECLARE_METATYPE(SireError::incomplete_code)
 Q_DECLARE_METATYPE(SireError::std_exception)
 Q_DECLARE_METATYPE(SireError::unknown_exception)

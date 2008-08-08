@@ -27,7 +27,13 @@ set (SIRE_VERSION_PATCH "1")
 
 set (SIRE_VERSION "${SIRE_VERSION_MAJOR}.${SIRE_VERSION_MINOR}.${SIRE_VERSION_PATCH}")
 
+# Whether or not to use manual SSE (will probably be removed
+# in favour of compile-time detection)
 set (SIRE_USE_SSE ON)
+
+# Whether or not to include MPI - only the SireMPI library is compiled
+# to use MPI
+set (SIRE_USE_MPI ON)
 
 # Ensure that the Sire's directories are searched for header files
 # before the system directories - this prevents problems in case

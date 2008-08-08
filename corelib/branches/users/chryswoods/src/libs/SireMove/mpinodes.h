@@ -26,64 +26,72 @@
   *
 \*********************************************/
 
-#ifndef SIREMOVE_MPISIM_H
-#define SIREMOVE_MPISIM_H
+#ifndef SIREMOVE_MPINODES_H
+#define SIREMOVE_MPINODES_H
 
-#include <QThread>
-#include <QMutex>
-#include <QWaitCondition>
-
-#include "simulation.h"
-#include "moves.h"
-
-#include "SireSystem/system.h"
+#include "mpinode.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMove
 {
 
-/** This is a simulation handle that can be used to run a simulation on
-    a remote node using MPI
+namespace detail
+{
+class MPINodesData;
+}
+
+/** This class represents the groups of MPI nodes that are available
+    within a single communicator
     
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT MPISim : public SimHandle, private QThread
+class SIREMOVE_EXPORT MPINodes
 {
+
+friend class MPINode;
+
+friend class detail::MPINodeData;
+friend class detail::MPINodesData;
+
 public:
-    MPISim(const MPINode &node);
+    MPINodes();
     
-    ~MPISim();
+    MPINodes(const MPINodes &other);
     
-    System system();
-    Moves moves();
+    ~MPINodes();
+
+    MPINodes& operator=(const MPINodes &other);
     
-    int nMoves();
-    int nCompleted();
-    double progress();
+    bool operator==(const MPINodes &other) const;
+    bool operator!=(const MPINodes &other) const;
     
-    bool recordingStatistics();
+    MPINode getFreeNode();
+    QList<MPINode> getNFreeNodes(int count);
     
-    void start();
+    MPINode getFreeNode(int time);
+    QList<MPINode> getNFreeNodes(int count, int time);
     
-    void pause();
-    void resume();
+    int nFreeNodes() const;
+    int nBusyNodes() const;
+    int nNodes() const;
+    int count() const;
     
-    void abort();
-    void stop();
-    
-    bool isRunning();
-    bool hasStarted();
-    bool hasFinished();
-    
-    void wait();
-    bool wait(int time);
+    static MPINodes world();
 
 private:
-    void run();
+    MPINodes(const boost::shared_ptr<detail::MPINodesData> &data);
 
+    /** Shared pointer to the private implementation of this
+        class - this is used to provide binary compatibility between
+        versions of Sire linked with and without MPI */
+    boost::shared_ptr<detail::MPINodesData> d;
 };
 
 }
+
+SIRE_EXPOSE_CLASS( SireMove::MPINodes )
+
+SIRE_END_HEADER
 
 #endif
