@@ -36,6 +36,8 @@
 #include "simulation.h"
 #include "moves.h"
 
+#include "mpinode.h"
+
 #include "SireSystem/system.h"
 
 SIRE_BEGIN_HEADER
@@ -51,7 +53,10 @@ namespace SireMove
 class SIREMOVE_EXPORT MPISim : public SimHandle, private QThread
 {
 public:
-    MPISim(const MPINode &node);
+    MPISim();
+
+    MPISim(const MPINode &node, const System &system, const MovesBase &moves,
+           int nmoves, bool record_stats);
     
     ~MPISim();
     
@@ -82,6 +87,28 @@ public:
 private:
     void run();
 
+    bool isStarting();
+
+    /** The node that will be used to run this simulation */
+    MPINode mpinode;
+
+    /** Mutex locked while the simulation is running */
+    QMutex run_mutex;
+
+    /** Mutex protecting access to the data of this simulation */
+    QMutex data_mutex;
+    
+    /** Condition used while the simulation is starting */
+    QWaitCondition starter;
+
+    /** The handle used to get the result of the running simulation */
+    MPIPromise< tuple<System,Moves,int> > sim_result;
+    
+    /** Is the simulation in the process of being started */
+    bool sim_starting;
+    
+    /** Has the simulation started? */
+    bool has_started;
 };
 
 }

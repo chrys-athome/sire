@@ -87,6 +87,8 @@ void ThreadSim::run()
 
     QMutexLocker lkr(&run_mutex);
 
+    Moves old_moves = sim_moves;
+
     int nremaining_moves = 0;
     MovesBase *moves = 0;
 
@@ -97,7 +99,6 @@ void ThreadSim::run()
         if (ncompleted >= nmoves)
         {
             ncompleted = nmoves;
-            data_mutex.unlock();
             return;
         }
         
@@ -121,6 +122,11 @@ void ThreadSim::run()
             sim_system = new_system;
         }
     }
+    else
+    {
+        QMutexLocker lkr(&data_mutex);
+        sim_moves = old_moves;
+    }
 }
 
 /** Return whether or not the simulation is starting up */
@@ -133,7 +139,18 @@ bool ThreadSim::isStarting()
 /** Is the simulation running? */
 bool ThreadSim::isRunning()
 {
-    return this->isStarting() or controller.isRunning();
+    if (this->isStarting())
+        return true;
+    else
+    {
+        if (run_mutex.tryLock())
+        {
+            run_mutex.unlock();
+            return false;
+        }
+        else
+            return true;
+    }
 }
 
 /** Has the simulation started? */
@@ -177,7 +194,13 @@ bool ThreadSim::wait(int time)
         }
     }
 
-    return controller.wait(time);
+    if (run_mutex.tryLock(time))
+    {
+        run_mutex.unlock();
+        return true;
+    }
+    else
+        return false;
 }
 
 /** Wait until the simulation has finished */
@@ -201,5 +224,6 @@ void ThreadSim::wait()
         }
     }
 
-    controller.wait();
+    run_mutex.lock();
+    run_mutex.unlock();
 }

@@ -64,9 +64,23 @@ public:
     
     ~MPINodeData();
 
+    bool isBusy() const;
+    
+    void wait();
+    bool wait(int time);
+    
+    void lock();
+    void unlock();
+
     boost::weak_ptr<MPINodesData> parent;
+    
+    QMutex data_mutex;
+    QMutex run_mutex;
+    
     int rank;
     QUuid uid;
+    
+    bool is_busy;
     bool is_master;
 };
 

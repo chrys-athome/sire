@@ -61,6 +61,8 @@ class SIREMOVE_EXPORT MPINode
 
 friend class MPINodes;
 
+friend class MPINodeLocker;
+
 friend class detail::MPINodeData;
 friend class detail::MPINodesData;
 
@@ -82,7 +84,7 @@ public:
 
     bool isNull() const;
 
-    bool isBusy();
+    bool isBusy() const;
         
     void wait();    
     bool wait(int time);
@@ -96,12 +98,57 @@ protected:
     MPINode(const MPINodes &communicator, int rank, bool is_master);
     MPINode(const boost::shared_ptr<detail::MPINodeData> &data);
 
+    void lock();
+    void unlock();
+
 private:
     /** Shared pointer to the data for this node - this
         is used to hide the implementation to ensure binary
         compatibility between versions of Sire that have MPI
         and those that don't */
     boost::shared_ptr<detail::MPINodeData> d;
+};
+
+class SIREMOVE_EXPORT MPINodeWorker
+{
+public:
+    MPINodeWorker();
+    MPINodeWorker(MPINode *node);
+    
+    ~MPINodeWorker();
+
+    Promise< tuple<System,Moves,int> > runSim(const System &system,
+                                              const MovesBase &moves,
+                                              int nmoves, bool record_stats);
+
+private:
+    /** Pointer to the MPI node used to do the work */
+    MPINode *mpinode;
+};
+
+class SIREMOVE_EXPORT MPIPromiseBase
+{
+public:
+    MPIPromiseBase();
+    ~MPIPromiseBase();
+};
+
+template<class T>
+class SIREMOVE_EXPORT MPIPromise : public MPIPromiseBase
+{
+public:
+    MPIPromise();
+    ~MPIPromise();
+
+    void getLatestValue();
+    
+    const T& value();
+    
+    bool isError();
+    
+    void throwError();
+
+    void wait();
 };
 
 }

@@ -42,23 +42,33 @@ using namespace SireMove::detail;
 ////////// Implementation of MPINodeData
 //////////
 
-MPINodeData::MPINodeData() : rank(0), is_master(false)
+MPINodeData::MPINodeData() : rank(0), is_busy(false), is_master(false)
 {}
 
 MPINodeData::MPINodeData(const MPINodes &communicator, 
                          int processor_rank, bool ismaster)
             : parent(communicator.d), rank(processor_rank),
-              uid( QUuid::createUuid() ), is_master(ismaster)
+              uid( QUuid::createUuid() ), 
+              is_busy(false),
+              is_master(ismaster)
 {
     BOOST_ASSERT( rank >= 0 );
 }
 
 MPINodeData::MPINodeData(const MPINodeData &other)
-            : parent(other.parent), rank(other.rank), uid(other.uid)
+            : parent(other.parent), rank(other.rank), uid(other.uid),
+              is_busy(false), is_master(other.is_master)
 {}
 
 MPINodeData::~MPINodeData()
 {
+    //wait until this node is no longer busy...
+    run_mutex.lock();
+    data_mutex.lock();
+    is_busy = false;
+    data_mutex.unlock();
+    run_mutex.unlock();
+
     boost::shared_ptr<MPINodesData> communicator = parent.lock();
 
     if (communicator.get() != 0)
@@ -68,6 +78,52 @@ MPINodeData::~MPINodeData()
         
         communicator->returnNode( MPINode(data_copy) );
     }
+}
+
+bool MPINodeData::isBusy() const
+{
+    QMutexLocker lkr( &(const_cast<MPINodeData*>(this)->data_mutex) );
+    return is_busy;
+}
+
+void MPINodeData::wait()
+{
+    run_mutex.lock();
+    run_mutex.unlock();
+}
+
+bool MPINodeData::wait(int time)
+{
+    if (run_mutex.tryLock(time))
+    {
+        run_mutex.unlock();
+        return true;
+    }
+    else
+        return false;
+}
+
+void MPINodeData::lock()
+{
+    run_mutex.lock();
+    data_mutex.lock();
+    is_busy = true;
+    data_mutex.unlock();
+}
+
+void MPINodeData::unlock()
+{
+    data_mutex.lock();
+    
+    if (not is_busy)
+    {
+        data_mutex.unlock();
+        return;
+    }
+    
+    is_busy = false;
+    data_mutex.unlock();
+    run_mutex.unlock();
 }
 
 //////////
@@ -178,14 +234,15 @@ bool MPINode::isMaster() const
 }
 
 /** Return whether or not this node is busy doing some work */
-bool MPINode::isBusy()
+bool MPINode::isBusy() const
 {
-    return false;
+    return d->isBusy();
 }
     
 /** Wait until this node is no longer busy doing work */
 void MPINode::wait()
 {
+    d->wait();
 }
 
 /** Wait until this node is no longer busy doing work, or until
@@ -193,5 +250,48 @@ void MPINode::wait()
     the nodes is not busy */
 bool MPINode::wait(int time)
 {
-    return true;
+    return d->wait(time);
+}
+
+void MPINode::lock()
+{
+    d->lock();
+}
+
+void MPINode::unlock()
+{
+    d->unlock();
+}
+
+////////
+//////// Implementation of MPINodeWorker
+////////
+
+MPINodeWorker::MPINodeWorker() : mpinode(0)
+{}
+
+MPINodeWorker::MPINodeWorker(MPINode *node) : mpinode(node)
+{
+    mpinode->lock();
+}
+
+MPINodeWorker::~MPINodeWorker()
+{
+    if (mpinode)
+        mpinode->unlock();
+}
+
+MPIPromise< tuple<System,Moves,int> > 
+MPINodeWorker::runSim(const System &system, const Moves &moves, 
+                      int nmoves, bool record_stats)
+{
+    //transmit the data to the node
+
+    //create the promise
+    
+    //start the simulation
+    
+    //return the promise
+    
+    return promise;
 }
