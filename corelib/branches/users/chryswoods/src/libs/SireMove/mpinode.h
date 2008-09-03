@@ -32,13 +32,20 @@
 #include <QUuid>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/tuple/tuple.hpp>
 
-#include "sireglobal.h"
+#include "mpipromise.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMove
 {
+
+using boost::tuple;
+
+class System;
+class MovesBase;
+class Moves;
 
 class MPINodes;
 

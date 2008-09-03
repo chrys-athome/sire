@@ -85,6 +85,9 @@ public:
     virtual bool hasStarted()=0;
     virtual bool hasFinished()=0;
     
+    virtual bool isError()=0;
+    virtual void throwError()=0;
+    
     virtual void wait()=0;
     virtual bool wait(int time)=0;
 };
@@ -122,6 +125,8 @@ public:
     bool hasStarted();
     bool hasFinished();
     
+    bool isError();
+    
     void wait();
     bool wait(int time);
 
@@ -141,6 +146,9 @@ protected:
     
     /** A copy of the moves being applied to the system */
     Moves sim_moves;
+    
+    /** Pointer to any error that has occurred during the simulation */
+    boost::shared_ptr<SireError::exception> error_ptr;
     
     /** The number of moves to run */
     int nmoves;
@@ -197,6 +205,10 @@ public:
     static Simulation runBG(const System &system, const MovesBase &moves,
                             int nmoves, bool record_stats=true);
     
+    static Simulation run(const MPINode &node, const System &system,
+                          const MovesBase &moves, int nmoves,
+                          bool record_stats=true);
+    
     System system();
     Moves moves();
 
@@ -217,6 +229,8 @@ public:
     bool isRunning();
     bool hasStarted();
     bool hasFinished();
+    
+    bool isError();
     
     void wait();
     bool wait(int time);

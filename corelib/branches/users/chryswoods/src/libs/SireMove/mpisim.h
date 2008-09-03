@@ -80,6 +80,9 @@ public:
     bool isRunning();
     bool hasStarted();
     bool hasFinished();
+
+    bool isError();
+    void throwError();
     
     void wait();
     bool wait(int time);
@@ -88,6 +91,7 @@ private:
     void run();
 
     bool isStarting();
+    void setError();
 
     /** The node that will be used to run this simulation */
     MPINode mpinode;
@@ -102,7 +106,10 @@ private:
     QWaitCondition starter;
 
     /** The handle used to get the result of the running simulation */
-    MPIPromise< tuple<System,Moves,int> > sim_result;
+    MPIPromise< tuple<System,Moves,qint32> > sim_result;
+    
+    /** Pointer to a possible error condition */
+    boost::shared_ptr<SireError::exception> error_ptr;
     
     /** Is the simulation in the process of being started */
     bool sim_starting;

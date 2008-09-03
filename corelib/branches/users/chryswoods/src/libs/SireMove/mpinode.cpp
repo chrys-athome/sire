@@ -42,23 +42,41 @@ using namespace SireMove::detail;
 ////////// Implementation of MPINodeData
 //////////
 
-MPINodeData::MPINodeData() : rank(0), is_busy(false), is_master(false)
-{}
+MPINodeData::MPINodeData() : is_busy(false), is_master(false)
+{
+    #ifdef __SIRE_USE_MPI__
+        mpirank = 0;
+        mpicomm = 0;
+    #endif
+}
 
 MPINodeData::MPINodeData(const MPINodes &communicator, 
                          int processor_rank, bool ismaster)
-            : parent(communicator.d), rank(processor_rank),
+            : parent(communicator.d),
               uid( QUuid::createUuid() ), 
               is_busy(false),
               is_master(ismaster)
 {
-    BOOST_ASSERT( rank >= 0 );
+    BOOST_ASSERT( not parent.expired() );
+    BOOST_ASSERT( processor_rank >= 0 );
+    
+    #ifdef __SIRE_USE_MPI__
+        mpirank = processor_rank;
+        mpicomm = parent.lock()->mpicomm;
+        
+        BOOST_ASSERT( mpicomm != 0 );
+    #endif
 }
 
 MPINodeData::MPINodeData(const MPINodeData &other)
-            : parent(other.parent), rank(other.rank), uid(other.uid),
+            : parent(other.parent), uid(other.uid),
               is_busy(false), is_master(other.is_master)
-{}
+{
+    #ifdef __SIRE_USE_MPI__
+        mpirank = other.mpirank;
+        mpicomm = other.mpicomm;
+    #endif
+}
 
 MPINodeData::~MPINodeData()
 {
@@ -224,7 +242,11 @@ MPINodes MPINode::communicator() const
 /** Return the rank of this node in its communicator */
 int MPINode::rank() const
 {
-    return d->rank;
+    #ifdef __SIRE_USE_MPI__
+        return d->mpirank;
+    #else
+        return 0;
+    #endif
 }
 
 /** Return whether this node is the master node for the communicator */
@@ -276,7 +298,7 @@ MPIWorker::~MPIWorker()
 }
 
 /** Return whether or not the worker has finished */
-bool MPIWorker::isFinished()
+bool MPIWorker::hasFinished()
 {
     QMutexLocker lkr(&data_mutex);
     return current_status & MPIWORKER_IS_FINISHED;
@@ -315,26 +337,95 @@ QByteArray MPIWorker::processResult()
     }
 }
 
+#ifdef __SIRE_USE_MPI__
+    static void sendMessage(MPINodeData *nodedata, const void *message, int size,
+                            const MPI::Datatype &datatype)
+    {
+        BOOST_ASSERT( nodedata != 0 );
+        
+        boost::shared_ptr<MPINodesData> nodesdata = nodedata->parent.lock();
+        BOOST_ASSERT( nodesdata.get() != 0 );
+
+        MPI::Comm *mpicomm = nodedatas->mpiCommunicator();
+        BOOST_ASSERT( mpicomm != 0 );
+
+        int mpirank = nodedata->mpirank;
+    
+        mpicomm->Isend( message, size, datatype, mpirank, 0 );
+    }
+
+    static void receiveMessage(MPINodeData *nodedata, void *message, int size,
+                               const MPI::Datatype &datatype)
+    {
+        BOOST_ASSERT( nodedata != 0 );
+        
+        boost::shared_ptr<MPINodesData> nodesdata = nodedata->parent.lock();
+        BOOST_ASSERT( nodesdata.get() != 0 );
+
+        MPI::Comm *mpicomm = nodedatas->mpiCommunicator();
+        BOOST_ASSERT( mpicomm != 0 );
+
+        int mpirank = nodedata->mpirank;
+        
+        mpicomm->Recv( message, size, datatype, mpirank, 0 );
+    }
+#endif
+
+void MPIWorker::sendMessage(int *message, int size)
+{
+    #ifdef __SIRE_USE_MPI__
+        sendMessage(nodedata, message, size, MPI::INT);
+    #else
+        #error NOT IMPLEMENTED!!!
+    #endif
+}
+
+void MPIWorker::sendMessage(const QByteArray &data)
+{
+    #ifdef __SIRE_USE_MPI__
+        sendMessage(nodedata, data.constData(), data.count(), MPI::BYTE);
+    #else
+        #error NOT IMPLEMENTED!!!
+    #endif
+}
+
+void MPIWorker::receiveMessage( int *message, int size )
+{
+    #ifdef __SIRE_USE_MPI__
+        receiveMessage(nodedata, message, size, MPI::INT);
+    #else
+        #error NOT IMPLEMENTED!!!
+    #endif
+}
+
+void MPIWorker::receiveMessage( QByteArray &data, int size )
+{
+    //ensure there is sufficient space to receive the message
+    if (data.count() < size )
+    {
+        data = QByteArray( size + 1, " " );
+    }
+    
+    #ifdef __SIRE_USE_MPI__
+        receiveMessage(nodedata, data.data(), size, MPI::BYTE);
+    #else
+        #error NOT IMPLEMENTED!!!
+    #endif
+}
+
 /** Return the interim result of the calculation - this blocks
     until an interim (or indeed final) result is available */
 QByteArray MPIWorker::interimResult()
 {
     QMutexLocker lkr(&data_mutex);
 
-    if ( current_status & MPIWORKER_HAS_FINISHED )
+    if ( current_status & MPIWORKER_IS_FINISHED )
     {
         return this->processResult();
     }
     
-    //send a request to the back-end for an interim result
-    BOOST_ASSERT( nodedata != 0 );
-    
-    MPI::Comm *mpicomm = nodedata->mpicomm;
-    int mpirank = nodedata->mpirank;
-    
     int message = MPIWORKER_INTERIM;
-    
-    mpicomm.Isend( &message, 1, MPI::INT, mpirank, 0 );
+    this->sendMessage( &message );
     
     //wait for a result
     interim_waiter.wait( &data_mutex );
@@ -348,7 +439,7 @@ QByteArray MPIWorker::result()
 {
     QMutexLocker lkr(&data_mutex);
     
-    if (not current_status & MPIWORKER_HAS_FINISHED)
+    if (not current_status & MPIWORKER_IS_FINISHED)
     {
         //wait for a result
         result_waiter.wait( &data_mutex );
@@ -363,7 +454,7 @@ void MPIWorker::wait()
 {
     QMutexLocker lkr(&data_mutex);
     
-    if (not current_status & MPIWORKER_HAS_FINISHED)
+    if (not current_status & MPIWORKER_IS_FINISHED)
     {
         //wait for the result
         result_waiter.wait( &data_mutex );
@@ -378,7 +469,7 @@ bool MPIWorker::wait(int ms)
 {
     QMutexLocker lkr(&data_mutex);
     
-    if (not current_status & MPIWORKER_HAS_FINISHED)
+    if (not current_status & MPIWORKER_IS_FINISHED)
     {
         //wait for the result
         return result_waiter.wait( &data_mutex, ms );
@@ -396,12 +487,7 @@ void MPIWorker::abort()
     if (not current_status & MPIWORKER_IS_FINISHED)
     {
         int message = MPIWORKER_ABORTED;
-
-        BOOST_ASSERT( nodedata != 0 );
-        MPI::Comm *mpicomm = nodedata->mpicomm;
-        int mpirank = nodedata->mpirank;
-        
-        mpicomm->Isend(&message, 1, MPI::INT, mpirank, 0);
+        this->sendMessage( &message );
         
         //wait for a response
         result_waiter.wait(&data_mutex);
@@ -418,12 +504,7 @@ void MPIWorker::stop()
     if (not current_status & MPIWORKER_IS_FINISHED)
     {
         int message = MPIWORKER_STOPPED;
-        
-        BOOST_ASSERT( nodedata != 0 );
-        MPI::Comm *mpicomm = nodedata->mpicomm;
-        int mpirank = nodedata->mpirank;
-        
-        mpicomm->Isend(&message, 1, MPI::INT, mpirank, 0);
+        this->sendMessage( &message );
         
         //wait for a response
         result_waiter.wait(&data_mutex);
@@ -443,13 +524,7 @@ double MPIWorker::progress()
     
     //ask for the current progress
     int message = MPIWORKER_PROGRESS;
-    
-    BOOST_ASSERT( nodedata != 0 );
-    
-    MPI::Comm *mpicomm = nodedata->mpicomm;
-    int mpirank = nodedata->mpirank;
-    
-    mpicomm->Isend( &message, 1, MPI::INT, mpirank, 0 );
+    this->sendMessage( &message );
     
     //wait for a response
     progress_waiter.wait( &data_mutex );
@@ -552,8 +627,29 @@ void MPIWorker::setAborted()
     result_waiter.wakeAll();
 }
 
-/** This runs a simulation on the back-end node */
-void MPIWorker::runSim_0(MPI::Comm *mpicomm, int mpimaster,
+/** This function is used by the backend node to send a reply to the master */
+void MPIWorker::sendReply(MPI::Comm *mpicomm, int mpimaster, int message,
+                          const QByteArray &arguments)
+{
+    BOOST_ASSERT( mpicomm != 0 );
+    
+    int envelope[2];
+    
+    envelope[0] = message;
+    envelope[1] = arguments.count();
+    
+    mpicomm->Send( &envelope, 2, MPI::INT, mpimaster, 0 );
+    
+    if (arguments.count() > 0)
+    {
+        mpicomm->Send( arguments.constData(), arguments.count(), MPI::BYTE,
+                       mpimaster, 0 );
+    }
+}
+
+/** This runs a simulation on the back-end node. This returns whether or
+    not to remain in the current MPI mode (SireMove::MPIWorker) */
+bool MPIWorker::runSim_0(MPI::Comm *mpicomm, int mpimaster,
                          QDataStream &ds)
 {
     //extract the arguments to this function
@@ -577,6 +673,14 @@ void MPIWorker::runSim_0(MPI::Comm *mpicomm, int mpimaster,
             int message;
             mpicomm->Recv(&message, 1, MPI::INT, mpimaster, 0);
             
+            if (message == 0)
+            {
+                //we have been told to exit from this mode immediately
+                simulation.abort();
+                simulation.wait();
+                return false;
+            }
+            
             QByteArray response;
             
             switch (message)
@@ -587,7 +691,7 @@ void MPIWorker::runSim_0(MPI::Comm *mpicomm, int mpimaster,
                     simulation.wait();
                     MPIWorker::sendReply(mpicomm, mpimaster, MPIWORKER_ABORTED,
                                          response);
-                    return;
+                    return true;
                     
                 case MPIWORKER_STOPPED:
                     //stop this job
@@ -598,7 +702,7 @@ void MPIWorker::runSim_0(MPI::Comm *mpicomm, int mpimaster,
                     {
                         MPIWorker::sendReply(mpicomm, mpimaster, MPIWORKER_ABORTED,
                                              response);
-                        return;
+                        return true;
                     }
                     
                     break;
@@ -646,6 +750,9 @@ void MPIWorker::runSim_0(MPI::Comm *mpicomm, int mpimaster,
         
         if (simulation.hasFinished())
         {
+            if (simulation.isError())
+                simulation.throwError();
+        
             //return the result
             QByteArray response;
 
@@ -660,19 +767,21 @@ void MPIWorker::runSim_0(MPI::Comm *mpicomm, int mpimaster,
             MPIWorker::sendReply(mpicomm, mpimaster, MPIWORKER_FINISHED,
                                  response);
             
-            return;
+            return true;
         }
     
     } // end of event loop
+    
+    return true;
 }
 
 /** This function is used by the back-end node to act on the message that it
     has received */
-void MPIWorker::actOnMessage(MPI::Comm *mpicomm, int mpimaster,
+bool MPIWorker::actOnMessage(MPI::Comm *mpicomm, int mpimaster,
                              const QByteArray &message)
 {
     if (message.isEmpty())
-        return;
+        return true;
 
     QDataStream ds(message);
     
@@ -681,7 +790,7 @@ void MPIWorker::actOnMessage(MPI::Comm *mpicomm, int mpimaster,
     
     if (message_type == QLatin1String("runSim_0"))
     {
-        MPIWorker::runSim_0(mpicomm, mpimaster, ds);
+        return MPIWorker::runSim_0(mpicomm, mpimaster, ds);
     }
     else
     {
@@ -689,6 +798,8 @@ void MPIWorker::actOnMessage(MPI::Comm *mpicomm, int mpimaster,
             "Invalid message \"%1\" cannot be interpreted!")
                 .arg(message_type), CODELOC );
     }
+    
+    return true;
 }
 
 /** This function is run by an MPI back-end node */
@@ -716,7 +827,11 @@ void MPIWorker::backendLoop(MPI::Comm *mpicomm, int mpimaster)
             mpicomm->Recv( message_data.data(), message_size, MPI::BYTE, mpimaster, 0 );
             
             //act on the message
-            MPIWorker::actOnMessage(mpicomm, mpimaster, message_data);
+            bool stay_in_mode = MPIWorker::actOnMessage(mpicomm, mpimaster, 
+                                                        message_data);
+                                                        
+            if (not stay_in_mode)
+                return;
         }
         catch( const SireError::exception &e )
         {
@@ -751,13 +866,11 @@ void MPIWorker::run()
         start_mutex.lock();
         start_waiter.wakeAll();
 
-        MPI::Comm *mpicomm = nodedata->mpicomm;
-        int mpirank = nodedata->mpirank;
-
         //send instructions to the node to tell it what to run
         int message_size = args_data.size();
-        mpicomm->Send( &message_size, 1, MPI::INT, mpirank, 0 );
-        mpicomm->Send( args_data.constData(), message_size, MPI::BYTE, mpirank, 0 );
+
+        this->sendMessage( &message_size );
+        this->sendMessage( args_data );
         
         bool keep_looping = true;
     
@@ -765,6 +878,8 @@ void MPIWorker::run()
         {
             //get the size of the incoming message
             int message_envelope[2];
+        
+            this->receiveMessage( message_envelope, 2 );
         
             mpicomm->Recv( message_envelope, 2, MPI::INT, mpirank, 0 );
         
@@ -775,11 +890,8 @@ void MPIWorker::run()
         
             if (message_size > 0)
             {
-                //allocate enough space
-                message_data = QByteArray( message_size + 1, " " );
-        
                 //receive the message
-                mpicomm->Recv( message_data.data(), message_size, MPI::BYTE, 0 );
+                this->receiveMessage( &message_data, message_size );
             }
         
             switch( message_type )

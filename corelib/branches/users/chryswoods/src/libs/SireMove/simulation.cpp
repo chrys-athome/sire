@@ -151,42 +151,86 @@ bool LocalSim::recordingStatistics()
     return record_stats;
 }
 
+/** Set an error condition */
+void LocalSim::setError(const SireError::exception &e)
+{
+    QMutexLocker lkr(&data_mutex);
+    error_ptr.reset( e.clone() );
+}
+
+/** Return whether or not we are in an error condition */
+bool LocalSim::isError()
+{
+    QMutexLocker lkr(&data_mutex);
+    return error_ptr.get() != 0;
+}
+
+/** Throw the exception that represents the error condition */
+void LocalSim::throwError()
+{
+    QMutexLocker lkr(&data_mutex);
+    
+    if (error_ptr.get() != 0)
+    {
+        boost::shared_ptr<SireError::exception> error = error_ptr;
+        error_ptr.reset();
+    
+        error->throwSelf();
+    }
+}
+
 /** Start running the simulation */
 void LocalSim::start()
 {
-    QMutexLocker lkr(&run_mutex);
-
-    int nremaining_moves = 0;
-    MovesBase *moves = 0;
-
-    //critical section
+    try
     {
-        QMutexLocker lkr(&data_mutex);
-    
-        if (ncompleted >= nmoves)
-        {
-            ncompleted = nmoves;
-            data_mutex.unlock();
-            return;
-        }
-        
-        nremaining_moves = nmoves - ncompleted;
-        moves = &(sim_moves.edit());
-    }
+        QMutexLocker lkr(&run_mutex);
 
-    System new_system = moves->move(sim_system, nremaining_moves, record_stats,
-                                    controller);
-
-    if (not controller.aborted())
-    {
-        int njust_completed = controller.nCompleted();
+        int nremaining_moves = 0;
+        MovesBase *moves = 0;
 
         //critical section
         {
             QMutexLocker lkr(&data_mutex);
-            ncompleted += njust_completed;
-            sim_system = new_system;
+    
+            if (ncompleted >= nmoves)
+            {
+                ncompleted = nmoves;
+                data_mutex.unlock();
+                return;
+            }
+        
+            nremaining_moves = nmoves - ncompleted;
+            moves = &(sim_moves.edit());
         }
+
+        System new_system = moves->move(sim_system, nremaining_moves, record_stats,
+                                        controller);
+
+        if (not controller.aborted())
+        {
+            int njust_completed = controller.nCompleted();
+
+            //critical section
+            {
+                QMutexLocker lkr(&data_mutex);
+                ncompleted += njust_completed;
+                sim_system = new_system;
+            }
+        }
+    }
+    catch( const SireError::exception &e )
+    {
+        this->setError(e);
+    }
+    catch( const std::exception &e )
+    {
+        this->setError( SireError::std_exception(e) );
+    }
+    catch(...)
+    {
+        this->setError( SireError::unknown_exception( QObject::tr(
+            "An unknown error occurred!"), CODELOC ) );
     }
 }
 

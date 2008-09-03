@@ -37,61 +37,104 @@ using namespace SireMove;
     
     ~MPISim();
 
+/** Set an error condition */
+void MPISim::setError(const SireError::exception &e)
+{
+    QMutexLocker lkr(&data_mutex);
+    error_ptr.reset( e.clone() );
+}
+
+/** Return whether or not we are in an error condition */
+void MPISim::isError()
+{
+    QMutexLocker lkr(&data_mutex);
+    return error_ptr.get() != 0;
+}
+
+/** Throw the exception that represents the error condition */
+void MPISim::throwError()
+{
+    QMutexLocker lkr(&data_mutex);
+    
+    if (error_ptr.get() != 0)
+    {
+        boost::shared_ptr<SireError::exception> error = error_ptr;
+        error_ptr.reset();
+    
+        error->throwSelf();
+    }
+}
+
 /** Actually run this simulation - this occurs in a background thread
     so that it can block waiting for status updates from the 
     MPINode doing the work */
 void MPISim::run()
 {
-    data_mutex.lock();
-    sim_starting = true;
-    data_mutex.unlock();
-    
-    starter.wakeAll();
-
-    //yes - the simulation is now running!
-    QMutexLocker lkr(&run_mutex);
-
-    int nremaining_moves = 0;
-
-    //critical section
+    try
     {
-        QMutexLocker lkr(&data_mutex);
+        data_mutex.lock();
+        sim_starting = true;
+        data_mutex.unlock();
     
-        if (ncompleted >= nmoves)
-        {
-            ncompleted = nmoves;
-            return;
-        }
-        
-        nremaining_moves = nmoves - ncompleted;
-        sim_starting = false;
-    }
-    
-    //tell the node to run the simulation
-    sim_result = mpinode.runSim(sim_system, sim_moves, nremaining_moves, record_stats);
-    
-    //wait until the worker has finished
-    sim_result.wait();
-    
-    if (sim_result.isError())
-    {
-        sim_result.throwError();
-    }
-    else if (not sim_result.isEmpty())
-    {
-        int njust_completed = sim_result.value().get<2>();
-        
-        if (njust_completed > 0)
+        starter.wakeAll();
+
+        //yes - the simulation is now running!
+        QMutexLocker lkr(&run_mutex);
+
+        int nremaining_moves = 0;
+
+        //critical section
         {
             QMutexLocker lkr(&data_mutex);
-            ncompleted += njust_completed;
-            sim_system = sim_result.value().get<0>();
-            sim_moves = sim_result.value().get<1>();
-        }
-    }
     
-    //clear the result as it is no longer needed
-    sim_result.clear();
+            if (ncompleted >= nmoves)
+            {
+                ncompleted = nmoves;
+                return;
+            }
+        
+            nremaining_moves = nmoves - ncompleted;
+            sim_starting = false;
+
+            //tell the node to run the simulation
+            sim_result = mpinode.runSim(sim_system, sim_moves, 
+                                        nremaining_moves, record_stats);
+        }
+    
+        //wait until the worker has finished
+        sim_result.wait();
+    
+        if (not sim_result.isAborted())
+        {
+            int njust_completed = sim_result.result().get<2>();
+        
+            if (njust_completed > 0)
+            {
+                QMutexLocker lkr(&data_mutex);
+                ncompleted += njust_completed;
+                sim_system = sim_result.result().get<0>();
+                sim_moves = sim_result.result().get<1>();
+            }
+        }
+    
+        //clear the result as it is no longer needed
+        data_mutex.lock();
+        sim_result = MPIPromise<System,Moves,qint32>();
+        data_mutex.unlock();
+    }
+    catch(const SireError::exception &e)
+    {
+        this->setError(e);
+    }
+    catch(const std::exception &e)
+    {
+        this->setError( SireError::std_exception(e) );
+    }
+    catch(...)
+    {
+        this->setError( SireError::unknown_error( QObject::tr(
+            "An unknown error occurred!"), CODELOC );
+    }
 }
     
 /** Return the latest copy of the system */

@@ -89,11 +89,10 @@ public:
     QMutex data_mutex;
     QMutex run_mutex;
     
-    int rank;
     QUuid uid;
     
     #ifdef __SIRE_USE_MPI__
-    MPI::Comm *mpicomm;
+    int mpirank;
     #endif
     
     bool is_busy;
@@ -140,12 +139,14 @@ private:
     void setInterim(const QByteArray &result_data);
     void setAborted();
     
-    enum { MPIWORKER_ERROR    = 0,
-           MPIWORKER_FINISHED = 1,
-           MPIWORKER_PROGRESS = 2,
-           MPIWORKER_INTERIM  = 4,
-           MPIWORKER_ABORTED  = 8,
-           MPIWORKER_STOPPED  = 16 };
+    QByteArray processResult();
+    
+    enum { MPIWORKER_ERROR    = 1,
+           MPIWORKER_FINISHED = 2,
+           MPIWORKER_PROGRESS = 4,
+           MPIWORKER_INTERIM  = 8,
+           MPIWORKER_ABORTED  = 16,
+           MPIWORKER_STOPPED  = 32 };
     
     enum { MPIWORKER_IS_NULL     = 0,
            MPIWORKER_IS_BUSY     = 1,
@@ -181,6 +182,9 @@ private:
 /** Private class used by the MPINodes class */
 class MPINodesData
 {
+
+friend class MPINodeData;   // so can see the MPI::Comm pointer
+
 public:
     static MPINodes construct();
     
@@ -201,6 +205,11 @@ public:
     QList<MPINode> getNFreeNodes(int count, int time);
 
     void returnNode(const MPINode &node);
+
+    #ifdef __SIRE_USE_MPI__
+        MPI::Comm* mpiCommunicator();
+        int masterRank();
+    #endif
 
 private:
     MPINodesData();
@@ -223,16 +232,16 @@ private:
     QList< boost::weak_ptr<MPINodeData> > busy_nodes;
 
     #ifdef __SIRE_USE_MPI__
-    /** The MPI communicator used to communicate with 
-        the nodes of this group */
-    MPI::Comm *mpicomm;
+        /** The MPI communicator used to communicate with 
+            the nodes of this group */
+        MPI::Comm *mpicomm;
+
+        /** This rank of this master node in the communicator */
+        int my_mpirank;
+
+        /** The total number of nodes in this communicator */
+        int nnodes;
     #endif
-
-    /** The total number of nodes in this communicator */
-    int nnodes;
-
-    /** This rank of this node in this communicator */
-    int my_rank;
 };
 
 }

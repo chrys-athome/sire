@@ -79,53 +79,68 @@ void ThreadSim::start()
 /** This is what is run by the background thread */
 void ThreadSim::run()
 {
-    data_mutex.lock();
-    sim_starting = true;
-    data_mutex.unlock();
-    
-    starter.wakeAll();
-
-    QMutexLocker lkr(&run_mutex);
-
-    Moves old_moves = sim_moves;
-
-    int nremaining_moves = 0;
-    MovesBase *moves = 0;
-
-    //critical section
+    try
     {
-        QMutexLocker lkr(&data_mutex);
+        data_mutex.lock();
+        sim_starting = true;
+        data_mutex.unlock();
     
-        if (ncompleted >= nmoves)
-        {
-            ncompleted = nmoves;
-            return;
-        }
-        
-        nremaining_moves = nmoves - ncompleted;
-        moves = &(sim_moves.edit());
-        sim_starting = false;
-    }
+        starter.wakeAll();
 
-    System new_system = moves->move(sim_system, nremaining_moves, record_stats,
-                                    controller);
+        QMutexLocker lkr(&run_mutex);
 
+        Moves old_moves = sim_moves;
 
-    if (not controller.aborted())
-    {
-        int njust_completed = controller.nCompleted();
-
+        int nremaining_moves = 0;
+        MovesBase *moves = 0;
+    
         //critical section
         {
             QMutexLocker lkr(&data_mutex);
-            ncompleted += njust_completed;
-            sim_system = new_system;
+    
+            if (ncompleted >= nmoves)
+            {
+                ncompleted = nmoves;
+                return;
+            }
+        
+            nremaining_moves = nmoves - ncompleted;
+            moves = &(sim_moves.edit());
+            sim_starting = false;
+        }
+
+        System new_system = moves->move(sim_system, nremaining_moves, record_stats,
+                                        controller);
+
+        if (not controller.aborted())
+        {
+            int njust_completed = controller.nCompleted();
+
+            //critical section
+            {
+                QMutexLocker lkr(&data_mutex);
+                ncompleted += njust_completed;
+                sim_system = new_system;
+            }
+        }
+        else
+        {
+            QMutexLocker lkr(&data_mutex);
+            sim_moves = old_moves;
         }
     }
-    else
+    catch( const SireError::exception &e )
     {
-        QMutexLocker lkr(&data_mutex);
-        sim_moves = old_moves;
+        this->setError( e );
+    }
+    catch( const std::exception &e )
+    {
+        this->setError( SireError::std_exception(e) );
+    }
+    catch(...)
+    {
+        this->setError( SireError::unknown_exception( QObject::tr(
+            "An unknown error occurred!"), CODELOC ) );
     }
 }
 
@@ -133,6 +148,7 @@ void ThreadSim::run()
 bool ThreadSim::isStarting()
 {
     QMutexLocker lkr(&data_mutex);
+    
     return sim_starting;
 }
 
@@ -159,6 +175,7 @@ bool ThreadSim::hasStarted()
     //critical section
     {
         QMutexLocker lkr(&data_mutex);
+
         if (sim_starting or ncompleted > 0)
             return true;
     }
