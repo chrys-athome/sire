@@ -30,6 +30,8 @@
 
 #include "detail/mpidetail.h"   // CONDITIONAL INCLUDE
 
+#include "SireError/errors.h"
+
 using namespace SireMove;
 using namespace SireMove::detail;
 
@@ -39,6 +41,11 @@ using namespace SireMove::detail;
 
 /** Null constructor */
 MPIPromiseBase::MPIPromiseBase()
+{}
+
+/** Copy constructor */
+MPIPromiseBase::MPIPromiseBase(const MPIPromiseBase &other)
+               : worker_ptr(other.worker_ptr)
 {}
 
 /** Private constructor used to pass the MPIWorker that is doing the 

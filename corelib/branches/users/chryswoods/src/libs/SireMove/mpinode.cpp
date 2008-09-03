@@ -357,6 +357,36 @@ QByteArray MPIWorker::result()
     return this->processResult();
 }
 
+/** Wait until the result is available - this blocks until the work has finished,
+    or an error has occured, or the calculation was aborted */
+void MPIWorker::wait()
+{
+    QMutexLocker lkr(&data_mutex);
+    
+    if (not current_status & MPIWORKER_HAS_FINISHED)
+    {
+        //wait for the result
+        result_waiter.wait( &data_mutex );
+    }
+}
+
+/** Wait until the result is available, or 'ms' milliseconds has passed. This
+    blocks until the work has finished (by either a successful completion, 
+    error being thrown or calculation aborted) or until 'ms' milliseconds has
+    passed. If the work finishes within the time, then 'true' is returned. */
+bool MPIWorker::wait(int ms)
+{
+    QMutexLocker lkr(&data_mutex);
+    
+    if (not current_status & MPIWORKER_HAS_FINISHED)
+    {
+        //wait for the result
+        return result_waiter.wait( &data_mutex, ms );
+    }
+    else
+        return true;
+}
+
 /** Abort the work if it is still running. This blocks until the 
     process has aborted */
 void MPIWorker::abort()
@@ -367,6 +397,28 @@ void MPIWorker::abort()
     {
         int message = MPIWORKER_ABORTED;
 
+        BOOST_ASSERT( nodedata != 0 );
+        MPI::Comm *mpicomm = nodedata->mpicomm;
+        int mpirank = nodedata->mpirank;
+        
+        mpicomm->Isend(&message, 1, MPI::INT, mpirank, 0);
+        
+        //wait for a response
+        result_waiter.wait(&data_mutex);
+    }
+}
+
+/** Stop the work. This stops the work at its current point. This may abort
+    the job, or may stop the job at an interim state, depending on how far
+    along the work is, and whether or not interim states are possible */
+void MPIWorker::stop()
+{
+    QMutexLocker lkr(&data_mutex);
+    
+    if (not current_status & MPIWORKER_IS_FINISHED)
+    {
+        int message = MPIWORKER_STOPPED;
+        
         BOOST_ASSERT( nodedata != 0 );
         MPI::Comm *mpicomm = nodedata->mpicomm;
         int mpirank = nodedata->mpirank;
@@ -535,6 +587,20 @@ void MPIWorker::runSim_0(MPI::Comm *mpicomm, int mpimaster,
                     simulation.wait();
                     MPIWorker::sendReply(mpicomm, mpimaster, MPIWORKER_ABORTED,
                                          response);
+                    return;
+                    
+                case MPIWORKER_STOPPED:
+                    //stop this job
+                    simulation.stop();
+                    simulation.wait();
+                    
+                    if (simulation.nCompleted() == 0)
+                    {
+                        MPIWorker::sendReply(mpicomm, mpimaster, MPIWORKER_ABORTED,
+                                             response);
+                        return;
+                    }
+                    
                     break;
                     
                 case MPIWORKER_PROGRESS:
@@ -551,6 +617,7 @@ void MPIWorker::runSim_0(MPI::Comm *mpicomm, int mpimaster,
                     
                 case MPIWORKER_INTERIM:
                     //get the interim result
+                    try
                     {
                         simulation.pause();
                         
@@ -560,6 +627,11 @@ void MPIWorker::runSim_0(MPI::Comm *mpicomm, int mpimaster,
                                                           simulation.nCompleted() );
 
                         simulation.resume();
+                    }
+                    catch(...)
+                    {
+                        simulation.resume();
+                        throw;
                     }
                     
                     MPIWorker::sendReply(mpicomm, mpimaster, MPIWORKER_INTERIM,

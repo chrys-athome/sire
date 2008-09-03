@@ -33,16 +33,28 @@
 #include <mpi.h>
 #endif
 
+#include <QThread>
 #include <QMutex>
 #include <QSemaphore>
+#include <QWaitCondition>
+#include <QUUid>
 
 #include "sireglobal.h"
+
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
+#include <boost/noncopyable.hpp>
 
 SIRE_BEGIN_HEADER
 
 namespace SireMove
 {
 
+class System;
+class Moves;
+class MovesBase;
+
+class MPINode;
 class MPINodes;
 
 namespace detail
@@ -108,6 +120,9 @@ public:
     void stop();
     void abort();
 
+    void wait();
+    bool wait(int ms);
+
     QByteArray interimResult();
 
     QByteArray result();
@@ -129,7 +144,8 @@ private:
            MPIWORKER_FINISHED = 1,
            MPIWORKER_PROGRESS = 2,
            MPIWORKER_INTERIM  = 4,
-           MPIWORKER_ABORTED  = 8 };
+           MPIWORKER_ABORTED  = 8,
+           MPIWORKER_STOPPED  = 16 };
     
     enum { MPIWORKER_IS_NULL     = 0,
            MPIWORKER_IS_BUSY     = 1,

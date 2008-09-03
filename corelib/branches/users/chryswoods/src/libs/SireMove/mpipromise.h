@@ -31,6 +31,8 @@
 
 #include "sireglobal.h"
 
+#include <boost/shared_ptr.hpp>
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
@@ -68,7 +70,11 @@ public:
     
 protected:
     MPIPromiseBase();
+    MPIPromiseBase(const MPIPromiseBase &other);
+    
     MPIPromiseBase(const boost::shared_ptr<detail::MPIWorker> &worker);
+
+    void throwJobAbortedError();
 
     QByteArray resultData();
     QByteArray interimResultData();
@@ -77,6 +83,15 @@ private:
     boost::shared_ptr<detail::MPIWorker> worker_ptr;
 };
 
+/** This class provides a handle to a result of a calculation
+    that is being performed on another node that communicates
+    to this node via MPI. This handle provides the functions
+    that allow you to wait for the result, query it before 
+    it arrives, test for an error, get intermediate results,
+    abort the job and, of course, get the final answer!
+    
+    @author Christopher Woods
+*/
 template<class T>
 class SIREMOVE_EXPORT MPIPromise : public MPIPromiseBase
 {
@@ -102,18 +117,36 @@ private:
     boost::shared_ptr<T> interim_result;
 };
 
+/** Null constructor */
 template<class T>
-MPIPromise<T>::MPIPromise();
+MPIPromise<T>::MPIPromise() : MPIPromiseBase()
+{}
 
+/** Copy constructor */
 template<class T>
-MPIPromise<T>::MPIPromise(const MPIPromise<T> &other);
+MPIPromise<T>::MPIPromise(const MPIPromise<T> &other)
+              : MPIPromiseBase(other)
+{}
 
+/** Private constructor used by MPINode */
 template<class T>
-MPIPromise<T>::MPIPromise(const boost::shared_ptr<detail::MPIWorker> &worker);
+MPIPromise<T>::MPIPromise(const boost::shared_ptr<detail::MPIWorker> &worker)
+              : MPIPromiseBase(worker)
+{}
 
+/** Destructor */
 template<class T>
-MPIPromise<T>::~MPIPromise();
+MPIPromise<T>::~MPIPromise()
+{}
 
+/** Return the result of the calculation. This blocks until the result
+    is available, an error occured or the job was aborted. This only returns
+    a result if there is one - if an error occurred then the exception will be
+    thrown here, while if the job was aborted then a job_aborted exception
+    will be thrown.
+    
+    \throw SireMove::job_aborted
+*/
 template<class T>
 const T& MPIPromise<T>::result()
 {
@@ -126,6 +159,8 @@ const T& MPIPromise<T>::result()
             //the job was aborted!
             current_result.reset();
             interim_result.reset();
+            
+            MPIPromiseBase::throwJobAbortedError();
         }
         else
         {
@@ -142,6 +177,15 @@ const T& MPIPromise<T>::result()
     return *current_result;
 }
 
+/** Return the interim result of the calculation - this will try to return
+    the result as it currently stands (not all computations provide an
+    intermediate result). This blocks until an intermediate result
+    is available, or the final result is available, or an error occured,
+    or the work was aborted. This has the same error behaviour as 
+    MPIPromise<T>::result()
+    
+    \throw SireMove::job_aborted
+*/
 template<class T>
 const T& MPIPromise<T>::interimResult()
 {
