@@ -27,6 +27,7 @@ set ( SIREMOVE_HEADERS
       moves.h
       mpinode.h
       mpinodes.h
+      mpipromise.h
       mpisim.h
       mtsmc.h
       prefsampler.h
@@ -48,6 +49,7 @@ set ( SIREMOVE_SOURCES
       moves.cpp
       mpinode.cpp
       mpinodes.cpp
+      mpipromise.cpp
       mpisim.cpp
       mtsmc.cpp
       prefsampler.cpp
@@ -80,6 +82,18 @@ target_link_libraries (SireMove
 
                        ${SIREMOVE_EXTRA_LIBRARIES}
                        )
+
+# Are we compiling with SireMPI?
+if (SIRE_USE_MPI)
+   add_definitions( -D__SIRE_USE_MPI__ )
+
+   message( STATUS "Compiling SireMove with support for SireMPI" )
+
+   target_link_libraries (SireMove 
+                          SireMPI
+                         )
+endif()
+
 
 # installation
 install( TARGETS SireMove

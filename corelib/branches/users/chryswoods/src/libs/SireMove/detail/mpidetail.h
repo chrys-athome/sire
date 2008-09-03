@@ -80,8 +80,86 @@ public:
     int rank;
     QUuid uid;
     
+    #ifdef __SIRE_USE_MPI__
+    MPI::Comm *mpicomm;
+    #endif
+    
     bool is_busy;
     bool is_master;
+};
+
+/** Private class used by MPINode and MPIPromise */
+class MPIWorker : private QThread, public boost::noncopyable
+{
+public:
+    ~MPIWorker();
+    
+    static boost::shared_ptr<MPIWorker> 
+                runSim(MPINodeData *nodedata,
+                       const System &system, const MovesBase &moves,
+                       int nmoves, bool record_stats);
+
+    static void backendLoop(MPI::Comm *mpicomm, int mpimaster);
+
+    bool hasFinished();
+    bool isError();
+    bool isAborted();
+
+    void stop();
+    void abort();
+
+    QByteArray interimResult();
+
+    QByteArray result();
+
+    double progress();
+
+private:
+    MPIWorker();
+    
+    void run();
+    
+    void setError(const QByteArray &error_data);
+    void setResult(const QByteArray &result_data);
+    void setProgress(const QByteArray &progress_data);
+    void setInterim(const QByteArray &result_data);
+    void setAborted();
+    
+    enum { MPIWORKER_ERROR    = 0,
+           MPIWORKER_FINISHED = 1,
+           MPIWORKER_PROGRESS = 2,
+           MPIWORKER_INTERIM  = 4,
+           MPIWORKER_ABORTED  = 8 };
+    
+    enum { MPIWORKER_IS_NULL     = 0,
+           MPIWORKER_IS_BUSY     = 1,
+           MPIWORKER_IS_ERROR    = 2,
+           MPIWORKER_IS_ABORTED  = 4,
+           MPIWORKER_IS_FINISHED = 8 };
+    
+    /** Mutex used to serialise access to the data */
+    QMutex data_mutex;
+
+    /** Wait condition used to get the progress of the work */
+    QWaitCondition progress_waiter;
+    
+    /** Wait condition used to get the interim results of the work */
+    QWaitCondition interim_waiter;
+    
+    /** Wait condition used to get the latest result of the work */
+    QMutex result_waiter; 
+
+    /** Pointer to the data of the node that is being worked on */
+    MPINodeData *nodedata;
+
+    /** The current progress of the work */
+    double current_progress;
+    
+    /** Current status of this worker */
+    int current_status;
+    
+    /** Any result or error data that has come back from the node */
+    QByteArray returned_data;
 };
 
 /** Private class used by the MPINodes class */

@@ -48,9 +48,6 @@ void MPISim::run()
     
     starter.wakeAll();
 
-    //get an MPINodeWorker that uses this node
-    MPINodeWorker worker( &mpinode );
-
     //yes - the simulation is now running!
     QMutexLocker lkr(&run_mutex);
 
@@ -70,8 +67,8 @@ void MPISim::run()
         sim_starting = false;
     }
     
-    //tell the worker to run the simulation on the back-end
-    sim_result = worker.runSim(sim_system, sim_moves, nremaining_moves, record_stats);
+    //tell the node to run the simulation
+    sim_result = mpinode.runSim(sim_system, sim_moves, nremaining_moves, record_stats);
     
     //wait until the worker has finished
     sim_result.wait();
