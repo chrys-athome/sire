@@ -7,4 +7,5 @@
 
 # Add each test
 add_subdirectory (test_template_rtti)
+add_subdirectory (test_error_packing)
 

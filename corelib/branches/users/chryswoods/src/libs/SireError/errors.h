@@ -75,9 +75,19 @@ public:
     ~program_bug() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<program_bug>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::program_bug";
+        return program_bug::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw program_bug(*this);
     }
 };
 
@@ -101,9 +111,19 @@ public:
     ~unsupported() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<unsupported>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::unsupported";
+        return unsupported::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw unsupported(*this);
     }
 };
 
@@ -126,9 +146,19 @@ public:
     ~invalid_key() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<invalid_key>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::invalid_key";
+        return invalid_key::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw invalid_key(*this);
     }
 };
 
@@ -151,9 +181,19 @@ public:
     ~invalid_index() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<invalid_index>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::invalid_index";
+        return invalid_index::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw invalid_index(*this);
     }
 };
 
@@ -176,9 +216,19 @@ public:
     ~invalid_cast() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<invalid_cast>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::invalid_cast";
+        return invalid_cast::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw invalid_cast(*this);
     }
 };
 
@@ -202,9 +252,19 @@ public:
     ~incompatible_error() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<incompatible_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::incompatible_error";
+        return incompatible_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw incompatible_error(*this);
     }
 };
 
@@ -228,9 +288,19 @@ public:
     ~unknown_type() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<unknown_type>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::unknown_type";
+        return unknown_type::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw unknown_type(*this);
     }
 };
 
@@ -253,9 +323,19 @@ public:
     ~noncopyable_error() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<noncopyable_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::noncopyable_error";
+        return noncopyable_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw noncopyable_error(*this);
     }
 };
 
@@ -277,9 +357,19 @@ public:
     ~nullptr_error() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<nullptr_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::nullptr_error";
+        return nullptr_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw nullptr_error(*this);
     }
 };
 
@@ -302,9 +392,19 @@ public:
     ~lock_error() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<lock_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::lock_error";
+        return lock_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw lock_error(*this);
     }
 };
 
@@ -329,9 +429,19 @@ public:
     ~assertation_failed() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<assertation_failed>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::assertation_failed";
+        return assertation_failed::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw assertation_failed(*this);
     }
 };
 
@@ -356,9 +466,19 @@ public:
     ~file_error() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<file_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::file_error";
+        return file_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw file_error(*this);
     }
 };
 
@@ -384,9 +504,19 @@ public:
     ~process_error() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<process_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::process_error";
+        return process_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw process_error(*this);
     }
 };
 
@@ -408,9 +538,19 @@ public:
     ~unavailable_resource() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<unavailable_resource>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::unavailable_resource";
+        return unavailable_resource::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw unavailable_resource(*this);
     }
 };
 
@@ -431,9 +571,19 @@ public:
     ~io_error() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<io_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::io_error";
+        return io_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw io_error(*this);
     }
 };
 
@@ -457,9 +607,19 @@ public:
     ~invalid_arg() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<invalid_arg>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::invalid_arg";
+        return invalid_arg::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw invalid_arg(*this);
     }
 };
 
@@ -483,9 +643,19 @@ public:
     ~invalid_state() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<invalid_state>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::invalid_state";
+        return invalid_state::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw invalid_state(*this);
     }
 };
 
@@ -508,9 +678,19 @@ public:
     ~invalid_operation() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<invalid_operation>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::invalid_operation";
+        return invalid_operation::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw invalid_operation(*this);
     }
 };
 
@@ -534,9 +714,19 @@ public:
     ~incomplete_code() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<incomplete_code>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::incomplete_code";
+        return incomplete_code::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw incomplete_code(*this);
     }
 };
 
@@ -559,9 +749,19 @@ public:
 
     ~std_exception() throw();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<std_exception>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::std_exception";
+        return std_exception::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw std_exception(*this);
     }
 
 protected:
@@ -588,9 +788,19 @@ public:
     ~unknown_exception() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<unknown_exception>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::unknown_exception";
+        return unknown_exception::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw unknown_exception(*this);
     }
 };
 
@@ -615,9 +825,19 @@ public:
     ~dependency_error() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<dependency_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::dependency_error";
+        return dependency_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw dependency_error(*this);
     }
 };
 
@@ -642,9 +862,19 @@ public:
     ~id_error() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<id_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::id_error";
+        return id_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw id_error(*this);
     }
 };
 
@@ -660,14 +890,18 @@ Q_DECLARE_METATYPE(SireError::noncopyable_error)
 Q_DECLARE_METATYPE(SireError::nullptr_error)
 Q_DECLARE_METATYPE(SireError::lock_error)
 Q_DECLARE_METATYPE(SireError::assertation_failed)
+Q_DECLARE_METATYPE(SireError::incompatible_error)
 Q_DECLARE_METATYPE(SireError::file_error)
 Q_DECLARE_METATYPE(SireError::io_error)
+Q_DECLARE_METATYPE(SireError::process_error)
 Q_DECLARE_METATYPE(SireError::invalid_arg)
 Q_DECLARE_METATYPE(SireError::invalid_state)
+Q_DECLARE_METATYPE(SireError::invalid_operation)
 Q_DECLARE_METATYPE(SireError::unavailable_resource)
 Q_DECLARE_METATYPE(SireError::incomplete_code)
 Q_DECLARE_METATYPE(SireError::std_exception)
 Q_DECLARE_METATYPE(SireError::unknown_exception)
+Q_DECLARE_METATYPE(SireError::unknown_type)
 Q_DECLARE_METATYPE(SireError::dependency_error)
 
 SIRE_END_HEADER

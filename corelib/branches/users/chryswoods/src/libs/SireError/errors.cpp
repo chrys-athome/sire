@@ -35,6 +35,8 @@
 
 using namespace SireError;
 
+static const RegisterMetaType<unknown_exception> r_unknown_exception;
+
 namespace boost
 {
 

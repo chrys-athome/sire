@@ -29,12 +29,28 @@
 #include "SireError/exception.h"
 #include "SireStream/datastream.h"
 
+#include "SireError/errors.h"
+
 #include "getbacktrace.h"
 
 #include <QDataStream>
 
 using namespace SireError;
 using namespace SireStream;
+
+QDataStream SIREERROR_EXPORT &operator<<(QDataStream &ds, 
+                                         const SireError::exception &e)
+{
+    ds << e.err << e.plce << e.bt << e.pidstr;
+    return ds;
+}
+
+QDataStream SIREERROR_EXPORT &operator>>(QDataStream &ds,
+                                         SireError::exception &e)
+{
+    ds >> e.err >> e.plce >> e.bt >> e.pidstr;
+    return ds;
+}
 
 /** Construct a null exception */
 exception::exception()
@@ -60,6 +76,75 @@ exception::exception(const exception &other)
 exception::~exception() throw()
 {}
 
+/** Pack this exception into a binary QByteArray - this packs the exception
+    with its type information */
+QByteArray exception::pack() const
+{
+    QByteArray data;
+    QDataStream ds(&data, QIODevice::WriteOnly);
+    
+    //get the ID number of this type
+    int id = QMetaType::type( this->what() );
+
+    if ( id == 0 or not QMetaType::isRegistered(id) )
+        throw SireError::unknown_type(QObject::tr(
+            "The exception with type \"%1\" does not appear to have been "
+            "registered with QMetaType. It cannot be streamed! (%2, %3)")
+                .arg(this->what()).arg(id).arg(QMetaType::isRegistered(id)), CODELOC);
+
+    //save the object type name
+    ds << QString(this->what());
+
+    //use the QMetaType streaming function to save this table
+    if (not QMetaType::save(ds, id, this))
+        throw SireError::program_bug(QObject::tr(
+            "There was an error saving the exception of type \"%1\"")
+                .arg(this->what()), CODELOC);
+
+    return data;
+}
+
+/** Unpack an exception from the raw data in the passed bytearray */
+boost::shared_ptr<SireError::exception> exception::unpack(const QByteArray &data)
+{
+    QDataStream ds(data);
+    
+    //read the type of exception first
+    QString type_name;
+    
+    ds >> type_name;
+    
+    //get the type that represents this name
+    int id = QMetaType::type( type_name.toLatin1().constData() );
+
+    if ( id == 0 or not QMetaType::isRegistered(id) )
+        throw SireError::unknown_type( QObject::tr(
+              "Cannot deserialise an exception of type \"%1\". "
+              "Ensure that the library or module containing "
+              "this exception has been loaded and that it has been registered "
+              "with QMetaType.").arg(type_name), CODELOC );
+    
+    //construct an exception of this type
+    boost::shared_ptr<exception> ptr(  
+                        static_cast<exception*>(QMetaType::construct(id,0)) );
+                        
+    //load the object from the datastream
+    if ( not QMetaType::load(ds, id, ptr.get()) )
+        throw SireError::program_bug(QObject::tr(
+            "There was an error loading the exception of type \"%1\"")
+                 .arg(type_name), CODELOC);
+
+    return ptr;
+}
+
+/** Unpack the exception contained in the raw binary data 'data', and then
+    throw that exception */
+void exception::unpackAndThrow(const QByteArray &data)
+{
+    boost::shared_ptr<exception> e = exception::unpack(data);
+    e->throwSelf();
+}
+
 /** Return a pretty string representation of all of the information stored
     in the exception, suitable for printing to the screen or to a log file. */
 QString exception::toString() const throw()
@@ -71,14 +156,6 @@ QString exception::toString() const throw()
                        "%5\n"
                        "__EndTrace__")
              .arg(what()).arg(pid()).arg(why()).arg(where()).arg(bt.join("\n"));
-}
-
-/** Return the type of exception. This should be overloaded by each derived
-    class so that it remains correct.
-*/
-const char* exception::what() const throw()
-{
-    return "SireError::exception";
 }
 
 /** Return the error message associated with this exception.

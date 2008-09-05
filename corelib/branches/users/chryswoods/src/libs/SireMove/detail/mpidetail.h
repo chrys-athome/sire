@@ -110,7 +110,9 @@ public:
                        const System &system, const MovesBase &moves,
                        int nmoves, bool record_stats);
 
-    static void backendLoop(MPI::Comm *mpicomm, int mpimaster);
+    #ifdef __SIRE_USE_MPI__
+        static void backendLoop(MPI::Comm *mpicomm, int mpimaster);
+    #endif
 
     bool hasFinished();
     bool isError();
@@ -129,9 +131,29 @@ public:
     double progress();
 
 private:
+    #ifdef __SIRE_USE_MPI__
+        static void sendReply(MPI::Comm *mpicomm, int mpimaster, int message,
+                              const QByteArray &arguments);
+                             
+        static void sendError(MPI::Comm *mpicomm, int mpimaster,
+                              const SireError::exception &e);
+                                
+        static bool runSim_0(MPI::Comm *mpicomm, int mpimaster, 
+                             QDataStream &ds);
+                             
+        static bool actOnMessage(MPI::Comm *mpicomm, int mpimaster, 
+                                 const QByteArray &message);
+    #endif
+
     MPIWorker();
     
     void run();
+    
+    void sendMessage(int *message, int size=1, bool blocking=false);
+    void sendMessage(const QByteArray &data, bool blocking=false);
+    
+    void receiveMessage(int *message, int size=1);
+    void receiveMessage(QByteArray &data, int size);
     
     void setError(const QByteArray &error_data);
     void setResult(const QByteArray &result_data);
@@ -149,13 +171,18 @@ private:
            MPIWORKER_STOPPED  = 32 };
     
     enum { MPIWORKER_IS_NULL     = 0,
-           MPIWORKER_IS_BUSY     = 1,
-           MPIWORKER_IS_ERROR    = 2,
-           MPIWORKER_IS_ABORTED  = 4,
-           MPIWORKER_IS_FINISHED = 8 };
+           MPIWORKER_IS_STARTING = 1,
+           MPIWORKER_IS_BUSY     = 2,
+           MPIWORKER_IS_ERROR    = 4,
+           MPIWORKER_IS_ABORTED  = 8,
+           MPIWORKER_IS_FINISHED = 16 };
     
     /** Mutex used to serialise access to the data */
     QMutex data_mutex;
+
+    /** Mutex and wait condition used to start the background thread */
+    QMutex start_mutex;
+    QWaitCondition start_waiter;
 
     /** Wait condition used to get the progress of the work */
     QWaitCondition progress_waiter;
@@ -164,7 +191,7 @@ private:
     QWaitCondition interim_waiter;
     
     /** Wait condition used to get the latest result of the work */
-    QMutex result_waiter; 
+    QWaitCondition result_waiter; 
 
     /** Pointer to the data of the node that is being worked on */
     MPINodeData *nodedata;
@@ -175,8 +202,8 @@ private:
     /** Current status of this worker */
     int current_status;
     
-    /** Any result or error data that has come back from the node */
-    QByteArray returned_data;
+    /** A databuffer used by the MPI communication system */
+    QByteArray databuffer;
 };
 
 /** Private class used by the MPINodes class */

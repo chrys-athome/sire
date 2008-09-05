@@ -57,9 +57,19 @@ public:
     ~version_error() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<version_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireError::version_error";
+        return version_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw version_error(*this);
     }
 };
 

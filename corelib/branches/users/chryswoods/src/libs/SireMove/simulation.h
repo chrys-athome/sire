@@ -50,6 +50,8 @@ QDataStream& operator>>(QDataStream&, SireMove::Simulation&);
 namespace SireMove
 {
 
+class MPINode;
+
 using namespace SireSystem;
 
 /** This the virtual base class provides the interface to the handle

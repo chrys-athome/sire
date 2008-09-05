@@ -38,12 +38,18 @@
 
 SIRE_BEGIN_HEADER
 
+namespace SireSystem
+{
+class System;
+}
+
 namespace SireMove
 {
 
 using boost::tuple;
 
-class System;
+using SireSystem::System;
+
 class MovesBase;
 class Moves;
 

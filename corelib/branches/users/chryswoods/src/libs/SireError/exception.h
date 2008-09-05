@@ -34,6 +34,8 @@
 #include <QString>
 #include <QStringList>
 
+#include <boost/shared_ptr.hpp>
+
 #include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
@@ -72,7 +74,17 @@ public:
 
     virtual ~exception() throw();
 
-    virtual const char* what() const throw();
+    static const char* typeName()
+    {
+        return "SireError::exception";
+    }
+
+    virtual const char* what() const throw()=0;
+
+    QByteArray pack() const;
+    static boost::shared_ptr<SireError::exception> unpack(const QByteArray &data);
+    
+    static void unpackAndThrow(const QByteArray &errordata);
 
     QString error() const throw();
     QString from() const throw();
@@ -83,6 +95,8 @@ public:
 
     QString toString() const throw();
 
+    virtual void throwSelf() const=0;
+
 protected:
     QString err;  ///< The error associated with the exception.
     QString plce; ///< Description of from where the exception was thrown.
@@ -92,8 +106,6 @@ protected:
 };
 
 }
-
-Q_DECLARE_METATYPE(SireError::exception);
 
 SIRE_END_HEADER
 
