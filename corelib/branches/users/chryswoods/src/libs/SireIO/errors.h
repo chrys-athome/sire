@@ -57,7 +57,7 @@ public:
     ~sireio_error() throw()
     {}
     
-    const char* what() const throw()
+    static const char* typeName()
     {
         return "SireIO::sireio_error";
     }
@@ -83,10 +83,20 @@ public:
     
     ~parse_error() throw()
     {}
-    
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<parse_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireIO::parse_error";
+        return parse_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw parse_error(*this);
     }
 };
 

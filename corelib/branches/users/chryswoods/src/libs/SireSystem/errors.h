@@ -58,7 +58,7 @@ public:
     ~siresystem_error() throw()
     {}
 
-    const char* what() const throw()
+    static const char* typeName()
     {
         return "SireSystem::siresystem_error";
     }
@@ -86,9 +86,19 @@ public:
     ~missing_monitor() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_monitor>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireSystem::missing_monitor";
+        return missing_monitor::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_monitor(*this);
     }
 };
 
@@ -113,15 +123,24 @@ public:
     ~duplicate_monitor() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<duplicate_monitor>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireSystem::duplicate_monitor";
+        return duplicate_monitor::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw duplicate_monitor(*this);
     }
 };
 
 }
 
-Q_DECLARE_METATYPE(SireSystem::siresystem_error)
 Q_DECLARE_METATYPE(SireSystem::missing_monitor)
 Q_DECLARE_METATYPE(SireSystem::duplicate_monitor)
 

@@ -58,7 +58,7 @@ public:
     ~siremm_error() throw()
     {}
     
-    const char* what() const throw()
+    static const char* typeName()
     {
         return "SireMM::siremm_error";
     }
@@ -84,10 +84,20 @@ public:
     
     ~missing_bond() throw()
     {}
-    
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_bond>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMM::missing_bond";
+        return missing_bond::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_bond(*this);
     }
 };
 
@@ -110,10 +120,20 @@ public:
     
     ~missing_angle() throw()
     {}
-    
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_angle>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMM::missing_angle";
+        return missing_angle::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_angle(*this);
     }
 };
 
@@ -136,10 +156,20 @@ public:
     
     ~missing_dihedral() throw()
     {}
-    
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_dihedral>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMM::missing_dihedral";
+        return missing_dihedral::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_dihedral(*this);
     }
 };
 

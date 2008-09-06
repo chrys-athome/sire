@@ -41,7 +41,8 @@ using namespace SireError;
 // This is to remove the circular dependency of SireError on SireStream
 
 /** Implementation of SireError::exception */
-static const RegisterMetaType<exception> r_exception;
+static const RegisterMetaType<exception> r_exception( MAGIC_ONLY,
+                                                      "SireError::exception" );
 
 /** Serialise to a binary data stream */
 QDataStream SIRESTREAM_EXPORT &operator<<(QDataStream &ds, const exception &e)
@@ -68,24 +69,29 @@ QDataStream SIRESTREAM_EXPORT &operator>>(QDataStream &ds, exception &e)
 }
 
 
-static RegisterMetaType<program_bug> r_bug;
-static RegisterMetaType<unsupported> r_unsupported;
-static RegisterMetaType<id_error> r_id;
-static RegisterMetaType<invalid_key> r_key;
-static RegisterMetaType<invalid_index> r_index;
-static RegisterMetaType<invalid_cast> r_cast;
-static RegisterMetaType<noncopyable_error> r_noncopy;
-static RegisterMetaType<nullptr_error> r_nullptr;
-static RegisterMetaType<lock_error> r_lock;
-static RegisterMetaType<assertation_failed> r_assert;
-static RegisterMetaType<file_error> r_file;
-static RegisterMetaType<io_error> r_io;
-static RegisterMetaType<invalid_arg> r_arg;
-static RegisterMetaType<invalid_state> r_state;
-static RegisterMetaType<incomplete_code> r_incomplete;
-static RegisterMetaType<std_exception> r_std;
-static RegisterMetaType<dependency_error> r_depend;
-static RegisterMetaType<unknown_exception> r_unknown;
-static RegisterMetaType<SireError::version_error> r_version;
+static const RegisterMetaType<SireError::program_bug> r_program_bug;
+static const RegisterMetaType<SireError::unsupported> r_unsupported;
+static const RegisterMetaType<SireError::id_error> r_id_error;
+static const RegisterMetaType<SireError::invalid_key> r_invalid_key;
+static const RegisterMetaType<SireError::invalid_index> r_invalid_index;
+static const RegisterMetaType<SireError::invalid_cast> r_invalid_cast;
+static const RegisterMetaType<SireError::noncopyable_error> r_noncopyable_error;
+static const RegisterMetaType<SireError::nullptr_error> r_nullptr_error;
+static const RegisterMetaType<SireError::lock_error> r_lock_error;
+static const RegisterMetaType<SireError::assertation_failed> r_assertation_failed;
+static const RegisterMetaType<SireError::incompatible_error> r_incompatible_error;
+static const RegisterMetaType<SireError::file_error> r_file_error;
+static const RegisterMetaType<SireError::io_error> r_io_error;
+static const RegisterMetaType<SireError::process_error> r_process_error;
+static const RegisterMetaType<SireError::invalid_arg> r_invalid_arg;
+static const RegisterMetaType<SireError::invalid_state> r_invalid_state;
+static const RegisterMetaType<SireError::invalid_operation> r_invalid_operation;
+static const RegisterMetaType<SireError::unavailable_resource> r_unavailable_resource;
+static const RegisterMetaType<SireError::incomplete_code> r_incomplete_code;
+static const RegisterMetaType<SireError::std_exception> r_std_exception;
+static const RegisterMetaType<SireError::unknown_exception> r_unknown_exception;
+static const RegisterMetaType<SireError::unknown_type> r_unknown_type;
+static const RegisterMetaType<SireError::dependency_error> r_dependency_error;
+static const RegisterMetaType<SireError::version_error> r_version_error;
 
 static RegisterMetaType<magic_error> r_magic_error;

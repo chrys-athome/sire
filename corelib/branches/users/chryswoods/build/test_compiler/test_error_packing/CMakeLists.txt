@@ -13,5 +13,5 @@ set_target_properties (test_exception_packing PROPERTIES
                        LINK_FLAGS ${SIRE_LINK_FLAGS}
                       )
 
-target_link_libraries( test_exception_packing SireError )
+target_link_libraries( test_exception_packing SireStream )
 

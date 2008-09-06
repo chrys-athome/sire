@@ -74,9 +74,19 @@ public:
     ~version_error() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<SireStream::version_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireStream::version_error";
+        return SireStream::version_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw SireStream::version_error(*this);
     }
 };
 

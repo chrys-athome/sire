@@ -30,7 +30,6 @@
 
 using namespace SireMol;
 
-static const RegisterMetaType<siremol_error> r_mol;
 static const RegisterMetaType<missing_atom> r_matom;
 static const RegisterMetaType<missing_group> r_mgrp;
 static const RegisterMetaType<duplicate_atom> r_datom;

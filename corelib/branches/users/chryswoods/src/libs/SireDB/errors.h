@@ -57,7 +57,7 @@ public:
     ~siredb_error() throw()
     {}
     
-    const char* what() const throw()
+    static const char* typeName()
     {
         return "SireIO::siredb_error";
     }
@@ -83,10 +83,20 @@ public:
     
     ~database_error() throw()
     {}
-    
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<database_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireDB::database_error";
+        return database_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw database_error(*this);
     }
 };
 

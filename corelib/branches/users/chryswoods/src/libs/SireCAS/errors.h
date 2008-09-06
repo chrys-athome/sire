@@ -55,7 +55,7 @@ public:
     ~sirecas_error() throw()
     {}
 
-    const char* what() const throw()
+    static const char* typeName()
     {
         return "SireCAS::sirecas_error";
     }
@@ -78,9 +78,19 @@ public:
     ~unavailable_differential() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<unavailable_differential>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireCAS::unavailable_differential";
+        return unavailable_differential::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw unavailable_differential(*this);
     }
 };
 
@@ -101,9 +111,19 @@ public:
     ~unavailable_integral() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<unavailable_integral>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireCAS::unavailable_integral";
+        return unavailable_integral::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw unavailable_integral(*this);
     }
 };
 
@@ -124,9 +144,19 @@ public:
     ~unregistered_expression() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<unregistered_expression>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireCAS::unregistered_expression";
+        return unregistered_expression::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw unregistered_expression(*this);
     }
 };
 
@@ -147,9 +177,19 @@ public:
     ~invalid_symbol() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<invalid_symbol>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireCAS::invalid_symbol";
+        return invalid_symbol::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw invalid_symbol(*this);
     }
 };
 
@@ -171,18 +211,28 @@ public:
     ~rearrangement_error() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<rearrangement_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireCAS::rearrangement_error";
+        return rearrangement_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw rearrangement_error(*this);
     }
 };
 
 }
 
-Q_DECLARE_METATYPE(SireCAS::sirecas_error)
 Q_DECLARE_METATYPE(SireCAS::unavailable_differential)
 Q_DECLARE_METATYPE(SireCAS::unavailable_integral)
 Q_DECLARE_METATYPE(SireCAS::unregistered_expression)
+Q_DECLARE_METATYPE(SireCAS::invalid_symbol)
 Q_DECLARE_METATYPE(SireCAS::rearrangement_error)
 
 SIRE_END_HEADER

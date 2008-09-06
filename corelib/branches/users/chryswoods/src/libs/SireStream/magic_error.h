@@ -76,9 +76,19 @@ public:
     ~magic_error() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<magic_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireStream::magic_error";
+        return magic_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw magic_error(*this);
     }
 };
 

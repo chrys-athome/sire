@@ -55,7 +55,7 @@ public:
     ~siremaths_error() throw()
     {}
     
-    const char* what() const throw()
+    static const char* typeName()
     {
         return "SireMaths::siremaths_error";
     }
@@ -77,10 +77,20 @@ public:
     
     ~math_error() throw()
     {}
-    
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<math_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMaths::math_error";
+        return math_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw math_error(*this);
     }
 };
 
@@ -100,16 +110,25 @@ public:
     
     ~domain_error() throw()
     {}
-    
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<domain_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMaths::domain_error";
+        return domain_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw domain_error(*this);
     }
 };
 
 }
 
-Q_DECLARE_METATYPE(SireMaths::siremaths_error)
 Q_DECLARE_METATYPE(SireMaths::math_error)
 Q_DECLARE_METATYPE(SireMaths::domain_error)
 

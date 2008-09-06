@@ -694,6 +694,8 @@ void MPIWorker::setAborted()
     {
         QByteArray error_data;
         QDataStream ds(&error_data, QIODevice::WriteOnly);
+        
+        
     }
 
     /** This runs a simulation on the back-end node. This returns whether or

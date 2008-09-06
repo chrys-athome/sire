@@ -58,7 +58,7 @@ public:
     ~siremol_error() throw()
     {}
 
-    const char* what() const throw()
+    static const char* typeName()
     {
         return "SireMol::siremol_error";
     }
@@ -85,9 +85,19 @@ public:
     ~missing_atom() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_atom>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMol::missing_atom";
+        return missing_atom::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_atom(*this);
     }
 };
 
@@ -112,9 +122,19 @@ public:
     ~duplicate_atom() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<duplicate_atom>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMol::duplicate_atom";
+        return duplicate_atom::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw duplicate_atom(*this);
     }
 };
 
@@ -138,9 +158,19 @@ public:
     ~missing_residue() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_residue>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMol::missing_residue";
+        return missing_residue::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_residue(*this);
     }
 };
 
@@ -165,9 +195,19 @@ public:
     ~duplicate_residue() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<duplicate_residue>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMol::duplicate_residue";
+        return duplicate_residue::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw duplicate_residue(*this);
     }
 };
 
@@ -191,9 +231,19 @@ public:
     ~missing_cutgroup() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_cutgroup>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMol::missing_cutgroup";
+        return missing_cutgroup::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_cutgroup(*this);
     }
 };
 
@@ -218,9 +268,19 @@ public:
     ~duplicate_cutgroup() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<duplicate_cutgroup>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMol::duplicate_cutgroup";
+        return duplicate_cutgroup::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw duplicate_cutgroup(*this);
     }
 };
 
@@ -244,9 +304,19 @@ public:
     ~missing_chain() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_chain>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMol::missing_chain";
+        return missing_chain::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_chain(*this);
     }
 };
 
@@ -271,9 +341,19 @@ public:
     ~duplicate_chain() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<duplicate_chain>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMol::duplicate_chain";
+        return duplicate_chain::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw duplicate_chain(*this);
     }
 };
 
@@ -297,9 +377,19 @@ public:
     ~missing_segment() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_segment>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMol::missing_segment";
+        return missing_segment::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_segment(*this);
     }
 };
 
@@ -324,9 +414,19 @@ public:
     ~duplicate_segment() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<duplicate_segment>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMol::duplicate_segment";
+        return duplicate_segment::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw duplicate_segment(*this);
     }
 };
 
@@ -350,9 +450,19 @@ public:
     ~missing_group() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_group>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMol::missing_group";
+        return missing_group::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_group(*this);
     }
 };
 
@@ -379,9 +489,19 @@ public:
     ~duplicate_group() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<duplicate_group>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMol::duplicate_group";
+        return duplicate_group::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw duplicate_group(*this);
     }
 };
 
@@ -405,9 +525,19 @@ public:
     ~missing_molecule() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_molecule>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMol::missing_molecule";
+        return missing_molecule::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_molecule(*this);
     }
 };
 
@@ -432,9 +562,19 @@ public:
     ~duplicate_molecule() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<duplicate_molecule>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMol::duplicate_molecule";
+        return duplicate_molecule::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw duplicate_molecule(*this);
     }
 };
 
@@ -459,9 +599,19 @@ public:
     ~template_error() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<template_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMol::template_error";
+        return template_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw template_error(*this);
     }
 };
 
@@ -486,9 +636,19 @@ public:
     ~anchor_error() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<anchor_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMol::anchor_error";
+        return anchor_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw anchor_error(*this);
     }
 };
 
@@ -513,9 +673,19 @@ public:
     ~ring_error() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<ring_error>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMol::ring_error";
+        return ring_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw ring_error(*this);
     }
 };
 
@@ -540,15 +710,24 @@ public:
     ~incompatible_molecule() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<incompatible_molecule>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireMol::incompatible_molecule";
+        return incompatible_molecule::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw incompatible_molecule(*this);
     }
 };
 
 }
 
-Q_DECLARE_METATYPE(SireMol::siremol_error)
 Q_DECLARE_METATYPE(SireMol::missing_atom)
 Q_DECLARE_METATYPE(SireMol::duplicate_atom)
 Q_DECLARE_METATYPE(SireMol::missing_residue)

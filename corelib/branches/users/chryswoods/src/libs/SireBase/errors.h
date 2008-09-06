@@ -52,7 +52,7 @@ public:
     ~sirebase_error() throw()
     {}
 
-    const char* what() const throw()
+    static const char* typeName()
     {
         return "SireBase::sirebase_error";
     }
@@ -78,9 +78,19 @@ public:
     ~missing_property() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_property>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireBase::missing_property";
+        return missing_property::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_property(*this);
     }
 };
 
@@ -106,9 +116,19 @@ public:
     ~duplicate_property() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<duplicate_property>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireBase::duplicate_property";
+        return duplicate_property::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw duplicate_property(*this);
     }
 };
 

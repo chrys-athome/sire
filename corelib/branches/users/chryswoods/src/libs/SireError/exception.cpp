@@ -38,20 +38,6 @@
 using namespace SireError;
 using namespace SireStream;
 
-QDataStream SIREERROR_EXPORT &operator<<(QDataStream &ds, 
-                                         const SireError::exception &e)
-{
-    ds << e.err << e.plce << e.bt << e.pidstr;
-    return ds;
-}
-
-QDataStream SIREERROR_EXPORT &operator>>(QDataStream &ds,
-                                         SireError::exception &e)
-{
-    ds >> e.err >> e.plce >> e.bt >> e.pidstr;
-    return ds;
-}
-
 /** Construct a null exception */
 exception::exception()
 {}
@@ -98,7 +84,8 @@ QByteArray exception::pack() const
     //use the QMetaType streaming function to save this table
     if (not QMetaType::save(ds, id, this))
         throw SireError::program_bug(QObject::tr(
-            "There was an error saving the exception of type \"%1\"")
+            "There was an error saving the exception of type \"%1\". "
+            "Has the programmer added a RegisterMetaType for this exception?")
                 .arg(this->what()), CODELOC);
 
     return data;

@@ -30,6 +30,5 @@
 
 using namespace SireSystem;
 
-static const RegisterMetaType<siresystem_error> r_sys;
 static const RegisterMetaType<missing_monitor> r_missmonitor;
 static const RegisterMetaType<duplicate_monitor> r_dupmonitor;

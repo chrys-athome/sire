@@ -31,9 +31,6 @@
 using namespace SireCAS;
 
 static const
-RegisterMetaType<sirecas_error> r_error;
-
-static const
 RegisterMetaType<unregistered_expression> r_unreg;
 
 static const

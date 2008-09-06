@@ -58,7 +58,7 @@ public:
     ~sireff_error() throw()
     {}
 
-    const char* what() const throw()
+    static const char* typeName()
     {
         return "SireMol::sireff_error";
     }
@@ -86,9 +86,19 @@ public:
     ~missing_component() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_component>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireFF::missing_component";
+        return missing_component::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_component(*this);
     }
 };
 
@@ -113,9 +123,19 @@ public:
     ~missing_function() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_function>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireFF::missing_function";
+        return missing_function::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_function(*this);
     }
 };
 
@@ -140,9 +160,19 @@ public:
     ~missing_forcefield() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_forcefield>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireFF::missing_forcefield";
+        return missing_forcefield::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_forcefield(*this);
     }
 };
 
@@ -168,9 +198,19 @@ public:
     ~missing_derivative() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_derivative>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireFF::missing_derivative";
+        return missing_derivative::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_derivative(*this);
     }
 };
 
@@ -195,9 +235,19 @@ public:
     ~duplicate_forcefield() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<duplicate_forcefield>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireFF::duplicate_forcefield";
+        return duplicate_forcefield::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw duplicate_forcefield(*this);
     }
 };
 
@@ -222,9 +272,19 @@ public:
     ~duplicate_component() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<duplicate_component>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireFF::duplicate_component";
+        return duplicate_component::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw duplicate_component(*this);
     }
 };
 
@@ -249,9 +309,19 @@ public:
     ~duplicate_function() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<duplicate_function>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireFF::duplicate_function";
+        return duplicate_function::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw duplicate_function(*this);
     }
 };
 
@@ -276,15 +346,24 @@ public:
     ~invalid_group() throw()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<invalid_group>() );
+    }
+
     const char* what() const throw()
     {
-        return "SireFF::invalid_group";
+        return invalid_group::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw invalid_group(*this);
     }
 };
 
 }
 
-Q_DECLARE_METATYPE(SireFF::sireff_error)
 Q_DECLARE_METATYPE(SireFF::missing_component)
 Q_DECLARE_METATYPE(SireFF::missing_function)
 Q_DECLARE_METATYPE(SireFF::missing_forcefield)
@@ -292,6 +371,7 @@ Q_DECLARE_METATYPE(SireFF::missing_derivative)
 Q_DECLARE_METATYPE(SireFF::duplicate_component)
 Q_DECLARE_METATYPE(SireFF::duplicate_function)
 Q_DECLARE_METATYPE(SireFF::duplicate_forcefield)
+Q_DECLARE_METATYPE(SireFF::invalid_group)
 
 SIRE_END_HEADER
 
