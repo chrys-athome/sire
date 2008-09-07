@@ -89,6 +89,7 @@ public:
     
     virtual bool isError()=0;
     virtual void throwError()=0;
+    virtual void clearError()=0;
     
     virtual void wait()=0;
     virtual bool wait(int time)=0;
@@ -128,11 +129,15 @@ public:
     bool hasFinished();
     
     bool isError();
+    void throwError();
+    void clearError();
     
     void wait();
     bool wait(int time);
 
 protected:
+    void setError(const SireError::exception &e);
+
     /** The simulation controller */
     SimController controller;
 
@@ -233,6 +238,8 @@ public:
     bool hasFinished();
     
     bool isError();
+    void throwError();
+    void clearError();
     
     void wait();
     bool wait(int time);

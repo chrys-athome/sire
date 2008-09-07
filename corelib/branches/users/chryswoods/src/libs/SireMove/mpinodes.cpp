@@ -82,18 +82,16 @@ MPINodes MPINodesData::construct()
         d->nnodes = d->mpicomm->Get_size();
         
         //what is our rank?
-        d->my_rank = d->mpicomm->Get_rank();
+        d->my_mpirank = d->mpicomm->Get_rank();
         
         //now create MPINode objects to represent each node
         for (int i=0; i<d->nnodes; ++i)
         {
-            d->free_nodes.append( MPINode(communicator, i, i == d->my_rank) );
+            d->free_nodes.append( MPINode(communicator, i, i == d->my_mpirank) );
         }
     }
     
     #else
-    d->nnodes = 1;
-    d->my_rank = 0;
     d->free_nodes.append( MPINode(communicator, 0, true) );
     
     #endif
@@ -138,6 +136,15 @@ MPINodesData::~MPINodesData()
     }
     #endif
 }
+
+/** Return the MPI communicator */
+#ifdef __SIRE_USE_MPI__
+    MPI::Comm* MPINodesData::mpiCommunicator()
+    {
+        QMutexLocker lkr(&data_mutex);
+        return mpicomm;
+    }
+#endif
 
 /** Return the number of nodes in this communicator */
 int MPINodesData::count() const
@@ -185,7 +192,10 @@ void MPINodesData::returnNode(const MPINode &node)
         
         if (my_node->uid == node.UID())
         {
-            BOOST_ASSERT( my_node->rank == node.rank() );
+            #ifdef __SIRE_USE_MPI__
+                BOOST_ASSERT( my_node->mpirank == node.rank() );
+            #endif
+                
             it.remove();
             
             qDebug() << "Returning node" << node.UID().toString();

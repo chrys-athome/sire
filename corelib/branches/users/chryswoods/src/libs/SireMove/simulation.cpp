@@ -35,6 +35,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include "SireError/errors.h"
+
 using namespace SireMove;
 using namespace SireSystem;
 using namespace SireStream;
@@ -92,6 +94,15 @@ System LocalSim::system()
     catch(detail::sim_not_in_progress)
     {
         QMutexLocker lkr(&data_mutex);
+        
+        if (error_ptr.get() != 0)
+        {
+            boost::shared_ptr<SireError::exception> ptr = error_ptr;
+            error_ptr.reset();
+            
+            ptr->throwSelf();
+        }
+        
         return sim_system;
     }
 }
@@ -106,6 +117,15 @@ Moves LocalSim::moves()
     catch(detail::sim_not_in_progress)
     {
         QMutexLocker lkr(&data_mutex);
+
+        if (error_ptr.get() != 0)
+        {
+            boost::shared_ptr<SireError::exception> ptr = error_ptr;
+            error_ptr.reset();
+            
+            ptr->throwSelf();
+        }
+
         return sim_moves;
     }
 }
@@ -124,6 +144,7 @@ int LocalSim::nCompleted()
     int ncurrent_completed = controller.nCompleted();
     
     QMutexLocker lkr(&data_mutex);
+
     return qMin(ncurrent_completed + ncompleted, nmoves);
 }
 
@@ -177,6 +198,13 @@ void LocalSim::throwError()
     
         error->throwSelf();
     }
+}
+
+/** Clear any error condition */
+void LocalSim::clearError()
+{
+    QMutexLocker lkr(&data_mutex);
+    error_ptr.reset();
 }
 
 /** Start running the simulation */
@@ -511,6 +539,25 @@ bool Simulation::hasStarted()
 bool Simulation::hasFinished()
 {
     return d->hasFinished();
+}
+
+/** Return whether or not the simulation is in an error state */
+bool Simulation::isError()
+{
+    return d->isError();
+}
+
+/** Throw the exception associated with the error state (this does
+    nothing if isError() is false) */
+void Simulation::throwError()
+{
+    d->throwError();
+}
+
+/** Clear any error state */
+void Simulation::clearError()
+{
+    d->clearError();
 }
 
 /** Wait until the simulation has finished, stopped or been aborted

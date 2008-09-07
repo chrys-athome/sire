@@ -81,6 +81,8 @@ public:
 
     virtual const char* what() const throw()=0;
 
+    exception* clone() const;
+
     QByteArray pack() const;
     static boost::shared_ptr<SireError::exception> unpack(const QByteArray &data);
     

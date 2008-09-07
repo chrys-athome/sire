@@ -89,9 +89,6 @@ if (SIRE_USE_MPI)
 
    message( STATUS "Compiling SireMove with support for SireMPI" )
 
-   target_link_libraries (SireMove 
-                          SireMPI
-                         )
 endif()
 
 

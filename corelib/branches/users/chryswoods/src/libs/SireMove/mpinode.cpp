@@ -58,22 +58,6 @@ static QDataStream& operator<<(QDataStream &ds,
     return ds;
 }
 
-static QDataStream& operator>>(QDataStream &ds,
-                               tuple<System,Moves,qint32> &t)
-{
-    SharedDataStream sds(ds);
-    
-    System system;
-    Moves moves;
-    qint32 nmoves = 0;
-    
-    sds >> system >> moves >> nmoves;
-    
-    t = tuple<System,Moves,qint32>(system, moves, nmoves);
-    
-    return ds;
-}
-
 //////////
 ////////// Implementation of MPINodeData
 //////////
@@ -363,7 +347,8 @@ QByteArray MPIWorker::processResult()
     }
     else if ( current_status & MPIWORKER_IS_ERROR )
     {
-        SireError::unpackAndThrow(databuffer);
+        SireError::exception::unpackAndThrow(databuffer);
+        return QByteArray();
     }
     else
     {
@@ -926,10 +911,17 @@ void MPIWorker::run()
 
         //send instructions to the node to tell it what to run
         //(block as we need to clear the data in the databuffer)
-        int message_size = args_data.size();
-
         {
             QMutexLocker lkr(&data_mutex);
+
+            int message_size = databuffer.size();
+            
+            if (message_size == 0)
+            {
+                //there is nothing to run!
+                nodedata->unlock();
+                return;
+            }
 
             this->sendMessage( &message_size, true );
             this->sendMessage( databuffer, true );

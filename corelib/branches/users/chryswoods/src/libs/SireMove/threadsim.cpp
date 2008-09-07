@@ -29,6 +29,8 @@
 #include "threadsim.h"
 #include "simcontroller.h"
 
+#include "SireError/errors.h"
+
 #include <QDebug>
 
 using namespace SireMove;

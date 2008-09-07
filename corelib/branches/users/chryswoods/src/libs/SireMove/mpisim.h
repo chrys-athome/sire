@@ -83,6 +83,7 @@ public:
 
     bool isError();
     void throwError();
+    void clearError();
     
     void wait();
     bool wait(int time);
@@ -91,7 +92,7 @@ private:
     void run();
 
     bool isStarting();
-    void setError();
+    void setError(const SireError::exception &e);
 
     /** The node that will be used to run this simulation */
     MPINode mpinode;
@@ -105,11 +106,26 @@ private:
     /** Condition used while the simulation is starting */
     QWaitCondition starter;
 
+    /** The system that will be simulated */
+    System sim_system;
+    
+    /** The moves that will be applied to the system */
+    Moves sim_moves;
+
     /** The handle used to get the result of the running simulation */
     MPIPromise< tuple<System,Moves,qint32> > sim_result;
     
     /** Pointer to a possible error condition */
     boost::shared_ptr<SireError::exception> error_ptr;
+    
+    /** The number of moves to apply to the system */
+    int nmoves;
+
+    /** The number of moves that have been completed */
+    int ncompleted;
+
+    /** Whether or not statistics should be recorded during the simulation */
+    bool record_stats;
     
     /** Is the simulation in the process of being started */
     bool sim_starting;

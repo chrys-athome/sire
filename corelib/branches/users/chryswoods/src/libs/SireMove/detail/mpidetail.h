@@ -39,7 +39,7 @@
 #include <QWaitCondition>
 #include <QUUid>
 
-#include "sireglobal.h"
+#include "SireError/exception.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>

@@ -28,14 +28,56 @@
 
 #include "mpisim.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
+#include "SireError/errors.h"
+
 using namespace SireMove;
+using namespace SireStream;
 
-    MPISim();
-
-    MPISim(const MPINode &node, const System &system, const MovesBase &moves,
-           int nmoves, bool record_stats);
+static QDataStream& operator>>(QDataStream &ds,
+                               tuple<System,Moves,qint32> &t)
+{
+    SharedDataStream sds(ds);
     
-    ~MPISim();
+    System system;
+    Moves moves;
+    qint32 nmoves = 0;
+    
+    sds >> system >> moves >> nmoves;
+    
+    t = tuple<System,Moves,qint32>(system, moves, nmoves);
+    
+    return ds;
+}
+
+/** Null constructor */
+MPISim::MPISim() : SimHandle(), QThread(),
+                   nmoves(0), ncompleted(0), record_stats(false),
+                   sim_starting(false), has_started(false)
+{}
+
+/** Construct the MPI simulation to perform the moves in 'moves' on the 
+    system 'system' - 'nmoves' will be performed, and statistics recorded
+    if 'record_stats' is true */
+MPISim::MPISim(const MPINode &node, const System &system, const MovesBase &moves,
+               int num_moves, bool record_statistics)
+       : SimHandle(), QThread(),
+         sim_system(system), sim_moves(moves), 
+         nmoves(num_moves), ncompleted(0), record_stats(record_statistics),
+         sim_starting(false), has_started(false)
+{}       
+
+/** Destructor */
+MPISim::~MPISim()
+{
+    if (QThread::isRunning())
+    {
+        this->abort();
+        this->wait();
+    }
+}
 
 /** Set an error condition */
 void MPISim::setError(const SireError::exception &e)
@@ -45,7 +87,7 @@ void MPISim::setError(const SireError::exception &e)
 }
 
 /** Return whether or not we are in an error condition */
-void MPISim::isError()
+bool MPISim::isError()
 {
     QMutexLocker lkr(&data_mutex);
     return error_ptr.get() != 0;
@@ -63,6 +105,13 @@ void MPISim::throwError()
     
         error->throwSelf();
     }
+}
+
+/** Clear the error condition */
+void MPISim::clearError()
+{
+    QMutexLocker lkr(&data_mutex);
+    error_ptr.reset();
 }
 
 /** Actually run this simulation - this occurs in a background thread
@@ -92,9 +141,16 @@ void MPISim::run()
                 ncompleted = nmoves;
                 return;
             }
+            
+            sim_starting = false;
         
             nremaining_moves = nmoves - ncompleted;
-            sim_starting = false;
+            
+            if (nremaining_moves <= 0)
+            {
+                //there is nothing left to do
+                return;
+            }
 
             //tell the node to run the simulation
             sim_result = mpinode.runSim(sim_system, sim_moves, 
@@ -119,7 +175,7 @@ void MPISim::run()
     
         //clear the result as it is no longer needed
         data_mutex.lock();
-        sim_result = MPIPromise<System,Moves,qint32>();
+        sim_result = MPIPromise< tuple<System,Moves,qint32> >();
         data_mutex.unlock();
     }
     catch(const SireError::exception &e)
@@ -132,8 +188,8 @@ void MPISim::run()
     }
     catch(...)
     {
-        this->setError( SireError::unknown_error( QObject::tr(
-            "An unknown error occurred!"), CODELOC );
+        this->setError( SireError::unknown_exception( QObject::tr(
+            "An unknown error occurred!"), CODELOC ) );
     }
 }
     
@@ -144,8 +200,7 @@ System MPISim::system()
     
     if (not sim_result.isNull())
     {
-        sim_result.getCurrentValue();
-        return sim_result.value().get<0>();
+        return sim_result.interimResult().get<0>();
     }
     else
         return sim_system;
@@ -158,8 +213,7 @@ Moves MPISim::moves()
     
     if (not sim_result.isNull())
     {
-        sim_result.getCurrentValue();
-        return sim_result.value().get<1>();
+        return sim_result.interimResult().get<1>();
     }
     else
         return sim_moves;
@@ -177,17 +231,32 @@ int MPISim::nCompleted()
 {
     QMutexLocker lkr(&data_mutex);
     
-    sim_result.getCurrentValue();
-    return ncompleted + sim_result.value().get<2>();
+    int njust_completed = 0;
+    
+    if (not sim_result.isNull())
+    {
+        njust_completed = sim_result.interimResult().get<2>();
+    }
+        
+    return ncompleted + njust_completed;
 }
 
 /** Get the progress of the simulation */
 double MPISim::progress()
 {
     QMutexLocker lkr(&data_mutex);
+
+    if (nmoves == 0)
+        return 0;
+    
+    int njust_completed = 0;
     
     if (not sim_result.isNull())
-        return sim_result.progress();
+    {
+        njust_completed = sim_result.interimResult().get<2>();
+    }
+    
+    return (100.0 * (ncompleted + njust_completed)) / nmoves;
 }
 
 /** Are we recording statistics during this simulation run? */
@@ -224,13 +293,13 @@ void MPISim::start()
 /** Pause the running simulation */
 void MPISim::pause()
 {
-    mpinode.pause();
+    //does nothing as we can't pause and resume an MPI job
 }
 
 /** Resume the running simulation */
 void MPISim::resume()
 {
-    mpinode.resume();
+    //does nothing as we can't pause and resume an MPI job
 }
 
 /** Abort the currently running simulation - this resets
@@ -238,14 +307,16 @@ void MPISim::resume()
     started */
 void MPISim::abort()
 {
-    mpinode.abort();
+    if (not sim_result.isNull())
+        sim_result.abort();
 }
 
 /** Stop the running simulation - this stops the simulation
     but keeps the system at the point that it reached */
 void MPISim::stop()
 {
-    mpinode.stop();
+    if (not sim_result.isNull())
+        sim_result.stop();
 }
 
 /** Return whether or not the simulation is in the process of starting */
@@ -305,12 +376,7 @@ void MPISim::wait()
             //wait for 10 ms
             QThread::wait(10);
             
-            //has it started yet?
-            if (controller.hasStarted())
-                break;
-                
-            //was the simulation aborted?
-            else if (controller.aborted())
+            if (this->isRunning() or this->hasFinished())
                 break;
         }
     }
@@ -337,12 +403,7 @@ bool MPISim::wait(int time)
             if (time <= 0)
                 return false;
             
-            //have we started yet?
-            else if (controller.hasStarted())
-                break;
-                
-            //was the simulation aborted?
-            else if (controller.aborted())
+            if (this->hasStarted() or this->hasFinished())
                 break;
         }
     }

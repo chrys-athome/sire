@@ -62,6 +62,21 @@ exception::exception(const exception &other)
 exception::~exception() throw()
 {}
 
+/** Return a clone of this exception */
+exception* exception::clone() const
+{
+    //get the ID number of this type
+    int id = QMetaType::type( this->what() );
+
+    if ( id == 0 or not QMetaType::isRegistered(id) )
+        throw SireError::unknown_type(QObject::tr(
+            "The exception with type \"%1\" does not appear to have been "
+            "registered with QMetaType. It cannot be cloned! (%2, %3)")
+                .arg(this->what()).arg(id).arg(QMetaType::isRegistered(id)), CODELOC);
+
+    return static_cast<exception*>( QMetaType::construct(id,this) );
+}
+
 /** Pack this exception into a binary QByteArray - this packs the exception
     with its type information */
 QByteArray exception::pack() const

@@ -115,6 +115,14 @@ bool MPIPromiseBase::isAborted()
         return false;
 }
 
+/** Throw an error that represents an aborted job */
+void MPIPromiseBase::throwJobAbortedError()
+{
+    throw SireError::invalid_state( QObject::tr(
+        "You cannot read the result of an aborted job!"), CODELOC );
+}
+
+
 /** Wait until the job completes */
 void MPIPromiseBase::wait()
 {
