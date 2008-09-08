@@ -48,6 +48,8 @@
 
 #include "tostring.h"
 
+#include <QDebug>
+
 using namespace SireMol;
 using namespace SireBase;
 using namespace SireStream;
@@ -61,6 +63,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
     writeHeader(ds, r_partialmol, 1);
 
     SharedDataStream sds(ds);
+    
     sds << partialmol.selected_atoms
         << static_cast<const MoleculeView&>(partialmol);
 
@@ -76,6 +79,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     if (v == 1)
     {
         SharedDataStream sds(ds);
+
         sds >> partialmol.selected_atoms
             >> static_cast<MoleculeView&>(partialmol);
     }

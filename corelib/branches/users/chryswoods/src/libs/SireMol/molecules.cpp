@@ -51,6 +51,8 @@
 
 #include <boost/tuple/tuple.hpp>
 
+#include <QDebug>
+
 using namespace SireMol;
 using namespace SireStream;
 
@@ -78,6 +80,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Molecules &mols)
     if (v == 1)
     {
         SharedDataStream sds(ds);
+
         sds >> mols.mols;
     }
     else

@@ -28,7 +28,7 @@
 
 #include "mpipromise.h"
 
-#include "detail/mpidetail.h"   // CONDITIONAL INCLUDE
+#include "detail/mpidetail.h"   // CONDITIONAL_INCLUDE
 
 #include "SireError/errors.h"
 

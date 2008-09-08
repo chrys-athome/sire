@@ -37,7 +37,7 @@ using namespace SireMaths;
 using namespace SireMol;
 using namespace SireBase;
 
-RegisterMetaType< AtomProperty<Vector> > r_atomcoords;
+static const RegisterMetaType< AtomProperty<Vector> > r_atomcoords;
 
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
@@ -531,3 +531,6 @@ int AtomProperty<Vector>::nAtoms(CGIdx cgidx) const
 
 template class AtomProperty<SireUnits::Dimension::Mass>;
 template class AtomProperty<Element>;
+
+static const RegisterMetaType<AtomMasses> r_atommass;
+static const RegisterMetaType<AtomElements> r_atomelements;

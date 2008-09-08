@@ -53,6 +53,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
     writeHeader(ds, r_selection, 1);
     
     SharedDataStream sds(ds);
+
     sds << selection.d << selection.selected_atoms 
         << selection.nselected;
         
@@ -68,6 +69,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     if (v == 1)
     {
         SharedDataStream sds(ds);
+        
         sds >> selection.d >> selection.selected_atoms
             >> selection.nselected;
     }

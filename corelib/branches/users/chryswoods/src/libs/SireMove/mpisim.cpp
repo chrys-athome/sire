@@ -36,22 +36,6 @@
 using namespace SireMove;
 using namespace SireStream;
 
-static QDataStream& operator>>(QDataStream &ds,
-                               tuple<System,Moves,qint32> &t)
-{
-    SharedDataStream sds(ds);
-    
-    System system;
-    Moves moves;
-    qint32 nmoves = 0;
-    
-    sds >> system >> moves >> nmoves;
-    
-    t = tuple<System,Moves,qint32>(system, moves, nmoves);
-    
-    return ds;
-}
-
 /** Null constructor */
 MPISim::MPISim() : SimHandle(), QThread(),
                    nmoves(0), ncompleted(0), record_stats(false),

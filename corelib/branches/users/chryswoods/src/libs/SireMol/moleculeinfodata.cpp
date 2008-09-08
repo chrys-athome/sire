@@ -545,7 +545,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        
+
         sds >> molinfo.uid
             >> molinfo.atoms_by_index
             >> molinfo.res_by_index >> molinfo.chains_by_index

@@ -117,25 +117,31 @@ private:
     boost::shared_ptr<T> interim_result;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Null constructor */
 template<class T>
+SIRE_OUTOFLINE_TEMPLATE
 MPIPromise<T>::MPIPromise() : MPIPromiseBase()
 {}
 
 /** Copy constructor */
 template<class T>
+SIRE_OUTOFLINE_TEMPLATE
 MPIPromise<T>::MPIPromise(const MPIPromise<T> &other)
               : MPIPromiseBase(other)
 {}
 
 /** Private constructor used by MPINode */
 template<class T>
+SIRE_OUTOFLINE_TEMPLATE
 MPIPromise<T>::MPIPromise(const boost::shared_ptr<detail::MPIWorker> &worker)
               : MPIPromiseBase(worker)
 {}
 
 /** Destructor */
 template<class T>
+SIRE_OUTOFLINE_TEMPLATE
 MPIPromise<T>::~MPIPromise()
 {}
 
@@ -148,6 +154,7 @@ MPIPromise<T>::~MPIPromise()
     \throw SireMove::job_aborted
 */
 template<class T>
+SIRE_OUTOFLINE_TEMPLATE
 const T& MPIPromise<T>::result()
 {
     if (current_result.get() == 0)
@@ -187,6 +194,7 @@ const T& MPIPromise<T>::result()
     \throw SireMove::job_aborted
 */
 template<class T>
+SIRE_OUTOFLINE_TEMPLATE
 const T& MPIPromise<T>::interimResult()
 {
     if (current_result.get() == 0)
@@ -211,7 +219,11 @@ const T& MPIPromise<T>::interimResult()
     return *interim_result;
 }
 
+#endif // #ifdef SIRE_SKIP_INLINE_FUNCTIONS
+
 }
+
+SIRE_EXPOSE_CLASS( SireMove::MPIPromiseBase )
 
 SIRE_END_HEADER
 

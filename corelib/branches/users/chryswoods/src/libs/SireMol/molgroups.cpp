@@ -68,6 +68,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireMol;
 using namespace SireBase;
 using namespace SireStream;
@@ -84,7 +86,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
                                        const MolGroupsBase &molgroupsbase)
 {
     writeHeader(ds, r_molgroupsbase, 1);
-    
+
     SharedDataStream sds(ds);
     
     sds << molgroupsbase.mgidx_to_num
@@ -1888,6 +1890,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
     writeHeader(ds, r_molgroups, 1);
     
     SharedDataStream sds(ds);
+    
     sds << molgroups.mgroups 
         << static_cast<const MolGroupsBase&>(molgroups);
         
@@ -1902,6 +1905,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MolGroups &molgroups)
     if (v == 1)
     {
         SharedDataStream sds(ds);
+        
         sds >> molgroups.mgroups
             >> static_cast<MolGroupsBase&>(molgroups);
     }

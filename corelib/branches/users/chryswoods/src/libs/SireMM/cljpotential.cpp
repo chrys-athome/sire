@@ -228,11 +228,17 @@ static PackedArray2D<CLJParameter> getCLJParameters(const PartialMolecule &molec
 static const Space default_space = Cartesian();
 static const SwitchingFunction default_switchfunc = NoCutoff();
 
+static const RegisterMetaType<CLJPotential> r_cljpot( MAGIC_ONLY,
+                                                      "SireMM::CLJPotential" );
+
 /** Serialise to a binary datastream */
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
                                       const CLJPotential &cljpot)
 {
+    writeHeader(ds, r_cljpot, 1);
+    
     ds << cljpot.props;
+
     return ds;
 }
 
@@ -240,21 +246,28 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
                                       CLJPotential &cljpot)
 {
-    ds >> cljpot.props;
+    VersionID v = readHeader(ds, r_cljpot);
     
-    //extract all of the properties
-    cljpot.spce = cljpot.props.property("space")->asA<SpaceBase>();
-    cljpot.switchfunc = cljpot.props.property("switchingFunction")
-                                          ->asA<SwitchFunc>();
+    if (v == 1)
+    {
+        ds >> cljpot.props;
     
-    cljpot.combining_rules = LJParameterDB::interpret(
-                                cljpot.props.property("combiningRules")
-                                    ->asA<VariantProperty>().convertTo<QString>() );
+        //extract all of the properties
+        cljpot.spce = cljpot.props.property("space")->asA<SpaceBase>();
+        cljpot.switchfunc = cljpot.props.property("switchingFunction")
+                                            ->asA<SwitchFunc>();
+    
+        cljpot.combining_rules = LJParameterDB::interpret(
+                                    cljpot.props.property("combiningRules")
+                                        ->asA<VariantProperty>().convertTo<QString>() );
 
-    cljpot.use_electrostatic_shifting = cljpot.props.property("shiftElectrostatics")
-                                    ->asA<VariantProperty>().convertTo<bool>();
-                                    
-    cljpot.need_update_ljpairs = true;
+        cljpot.use_electrostatic_shifting = cljpot.props.property("shiftElectrostatics")
+                                        ->asA<VariantProperty>().convertTo<bool>();
+                                        
+        cljpot.need_update_ljpairs = true;
+    }
+    else 
+        throw version_error(v, "1", r_cljpot, CODELOC);
     
     return ds;
 }

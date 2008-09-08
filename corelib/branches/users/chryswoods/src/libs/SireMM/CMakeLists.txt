@@ -43,6 +43,7 @@ set ( SIREMM_DETAIL_HEADERS
 # Define the sources in SireMM
 set ( SIREMM_SOURCES
       atomfunctions.cpp
+      atomljs.cpp
       cljcomponent.cpp
       cljpotential.cpp
       cljnbpairs.cpp

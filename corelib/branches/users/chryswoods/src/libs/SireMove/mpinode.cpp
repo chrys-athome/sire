@@ -43,17 +43,37 @@
 
 #include "SireError/errors.h"
 
+#include <QDebug>
+
 using namespace SireMove;
 using namespace SireMove::detail;
 
 using namespace SireStream;
 
-static QDataStream& operator<<(QDataStream &ds, 
-                               const tuple<System,Moves,qint32> &t)
+/** Serialise the tuple result of a simulation to a binary datastream */
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, 
+                                        const tuple<System,Moves,qint32> &t)
 {
     SharedDataStream sds(ds);
     
     sds << t.get<0>() << t.get<1>() << t.get<2>();
+    
+    return ds;
+}
+
+/** Extract the tuple result of a simulation from a binary datastream */
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
+                                        tuple<System,Moves,qint32> &t)
+{
+    SharedDataStream sds(ds);
+    
+    System system;
+    Moves moves;
+    qint32 nmoves = 0;
+    
+    sds >> system >> moves >> nmoves;
+    
+    t = tuple<System,Moves,qint32>(system, moves, nmoves);
     
     return ds;
 }
@@ -69,9 +89,9 @@ MPINodeData::MPINodeData() : is_busy(false), is_master(false)
     #endif
 }
 
-MPINodeData::MPINodeData(const MPINodes &communicator, 
+MPINodeData::MPINodeData(const boost::shared_ptr<MPINodesData> &communicator, 
                          int processor_rank, bool ismaster)
-            : parent(communicator.d),
+            : parent(communicator),
               uid( QUuid::createUuid() ), 
               is_busy(false),
               is_master(ismaster)
@@ -140,6 +160,7 @@ void MPINodeData::lock()
 {
     run_mutex.lock();
     data_mutex.lock();
+    qDebug() << "Locking node" << uid.toString();
     is_busy = true;
     data_mutex.unlock();
 }
@@ -155,6 +176,8 @@ void MPINodeData::unlock()
     }
     
     is_busy = false;
+    qDebug() << "Unlocking node" << uid.toString();
+    
     data_mutex.unlock();
     run_mutex.unlock();
 }
@@ -183,7 +206,7 @@ MPINode::MPINode() : d( getSharedNull() )
     with the specified rank, and saying whether or not this is 
     the master node of this communicator */
 MPINode::MPINode(const MPINodes &communicator, int rank, bool is_master)
-        : d( new MPINodeData(communicator, rank, is_master) )
+        : d( new MPINodeData(communicator.d, rank, is_master) )
 {}
 
 /** Private copy constructor */
@@ -296,6 +319,8 @@ MPIPromise< tuple<System,Moves,qint32> > MPINode::runSim(const System &system,
                                                          const MovesBase &moves,
                                                          int nmoves, bool record_stats)
 {
+    qDebug() << CODELOC;
+
     return MPIPromise< tuple<System,Moves,qint32> >(
                 MPIWorker::runSim( d.get(), system, moves, nmoves, record_stats ) );
 }
@@ -562,6 +587,8 @@ boost::shared_ptr<MPIWorker> MPIWorker::runSim(MPINodeData *nodedata,
                                                const MovesBase &moves,
                                                int nmoves, bool record_stats)
 {
+    qDebug() << CODELOC;
+
     boost::shared_ptr<MPIWorker> worker( new MPIWorker() );
 
     if (nodedata == 0)
@@ -573,11 +600,15 @@ boost::shared_ptr<MPIWorker> MPIWorker::runSim(MPINodeData *nodedata,
     // write in brackets so that the datastream device is deleted
     // once the arguments have been written
     {
+        qDebug() << "Serialising the arguments!";
+    
         QDataStream ds(&args_data, QIODevice::WriteOnly);
      
         ds << QString("runSim_0") << system << Moves(moves)
            << qint32(nmoves) << record_stats;
     }
+        
+    qDebug() << "Creating the worker";
         
     //copy the data into the worker
     worker->nodedata = nodedata;
@@ -585,10 +616,13 @@ boost::shared_ptr<MPIWorker> MPIWorker::runSim(MPINodeData *nodedata,
     worker->current_status = MPIWORKER_IS_STARTING;
 
     //start the worker and wait until it has definitely started
+    qDebug() << "Starting the worker";
     worker->start_mutex.lock();
     worker->start();
     worker->start_waiter.wait( &(worker->start_mutex) );
     worker->start_mutex.unlock();
+
+    qDebug() << "Worker has started!";
 
     return worker;
 }

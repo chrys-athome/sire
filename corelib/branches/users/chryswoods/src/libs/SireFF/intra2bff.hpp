@@ -35,6 +35,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 SIRE_BEGIN_HEADER
 
 namespace SireFF

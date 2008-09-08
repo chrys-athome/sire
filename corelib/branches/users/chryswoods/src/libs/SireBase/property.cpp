@@ -123,6 +123,7 @@ static const RegisterMetaType<PropertyBase> r_propbase(MAGIC_ONLY,
 QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const PropertyBase&)
 {
     writeHeader(ds, r_propbase, 0);
+
     return ds;
 }
 
@@ -289,6 +290,7 @@ QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const Property &propert
     writeHeader(ds, r_prop, 1);
 
     SharedDataStream sds(ds);
+
     sds << property.ptr;
 
     return ds;
@@ -302,6 +304,7 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, Property &property)
     if (v == 1)
     {
         SharedDataStream sds(ds);
+
         sds >> property.ptr;
     }
     else
@@ -364,12 +367,14 @@ bool Property::operator!=(const Property &other) const
 /** Return a const reference to the object */
 const PropertyBase& Property::d() const
 {
+    BOOST_ASSERT( ptr.constData() != 0 );
     return *ptr;
 }
 
 /** Return a modifiable reference to the object */
 PropertyBase& Property::d()
 {
+    BOOST_ASSERT( ptr.constData() != 0 );
     return *ptr;
 }
 

@@ -46,6 +46,8 @@
 
 #include "SireError/errors.h"
 
+#include <QDebug>
+
 using namespace SireFF;
 using namespace SireFF::detail;
 
@@ -63,7 +65,7 @@ static const RegisterMetaType<FFMolGroupPvt> r_ffmolgrouppvt( MAGIC_ONLY,
 QDataStream& operator<<(QDataStream &ds, const FFMolGroupPvt &ffmolgrouppvt)
 {
     writeHeader(ds, r_ffmolgrouppvt, 1);
-    
+
     ds << ffmolgrouppvt.mgidx << static_cast<const MolGroup&>(ffmolgrouppvt);
     
     return ds;
@@ -169,6 +171,7 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFMolGroup &ffmolgroup)
     if (v == 1)
     {
         SharedDataStream sds(ds);
+
         sds >> ffmolgroup.mgidx >> ffmolgroup.ffield 
             >> static_cast<MolGroup&>(ffmolgroup);
     }

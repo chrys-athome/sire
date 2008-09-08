@@ -60,7 +60,7 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
     writeHeader(ds, r_g1ff, 1);
     
     SharedDataStream sds(ds);
-    
+
     sds << g1ff.molgroup << g1ff.allow_overlap_of_atoms
         << static_cast<const FF&>(g1ff);
     
@@ -76,6 +76,7 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
     if (v == 1)
     {
         SharedDataStream sds(ds);
+
         sds >> g1ff.molgroup >> g1ff.allow_overlap_of_atoms
             >> static_cast<FF&>(g1ff);
     }

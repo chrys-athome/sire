@@ -32,6 +32,8 @@
 #include "ff.h"
 #include "g1ff.h"
 
+#include <QDebug>
+
 SIRE_BEGIN_HEADER
 
 namespace SireFF

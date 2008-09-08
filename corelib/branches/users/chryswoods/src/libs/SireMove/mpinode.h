@@ -34,14 +34,18 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
 
+#include "moves.h"
 #include "mpipromise.h"
+
+#include "SireSystem/system.h"
 
 SIRE_BEGIN_HEADER
 
-namespace SireSystem
-{
-class System;
-}
+QDataStream& operator<<(QDataStream&, const boost::tuple<SireSystem::System,
+                                                         SireMove::Moves,qint32>&);
+
+QDataStream& operator>>(QDataStream&, boost::tuple<SireSystem::System,
+                                                   SireMove::Moves,qint32>&);
 
 namespace SireMove
 {
@@ -127,6 +131,15 @@ private:
 }
 
 SIRE_EXPOSE_CLASS( SireMove::MPINode )
+
+SIRE_EXPOSE_ALIAS( 
+(SireMove::MPIPromise<boost::tuples::tuple<SireSystem::System, SireMove::Moves, int, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> >),
+                   SireMove::MPIPromise_tuple_System_Moves_qint32_ )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class 
+SireMove::MPIPromise< boost::tuple<SireSystem::System,SireMove::Moves,qint32> >;
+#endif
 
 SIRE_END_HEADER
 

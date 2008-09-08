@@ -61,6 +61,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     if (v == 1)
     {
         SharedDataStream sds(ds);
+        
         sds >> static_cast<Property&>(molgroups);
     }
     else

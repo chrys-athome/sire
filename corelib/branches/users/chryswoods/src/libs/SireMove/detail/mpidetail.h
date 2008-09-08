@@ -69,7 +69,7 @@ class MPINodeData
 public:
     MPINodeData();
     
-    MPINodeData(const MPINodes &communicator, 
+    MPINodeData(const boost::shared_ptr<MPINodesData> &communicator, 
                 int rank, bool is_master);
     
     MPINodeData(const MPINodeData &other);
@@ -213,7 +213,7 @@ class MPINodesData
 friend class MPINodeData;   // so can see the MPI::Comm pointer
 
 public:
-    static MPINodes construct();
+    static boost::shared_ptr<MPINodesData> construct();
     
     ~MPINodesData();
     

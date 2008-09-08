@@ -1311,6 +1311,8 @@ QDataStream& operator<<(QDataStream &ds,
 {
     SireStream::SharedDataStream sds(ds);
 
+    qDebug() << CODELOC;
+
     sds << static_cast<const SireFF::detail::FFMoleculeBase&>(ffmol)
         << ffmol.params;
         
@@ -1323,6 +1325,8 @@ QDataStream& operator>>(QDataStream &ds,
                         SireFF::detail::FFMolecule<PTNL> &ffmol)
 {
     SireStream::SharedDataStream sds(ds);
+
+    qDebug() << CODELOC;
 
     sds >> static_cast<SireFF::detail::FFMoleculeBase&>(ffmol)
         >> ffmol.params;
@@ -1337,6 +1341,8 @@ QDataStream& operator<<(QDataStream &ds,
 {
     SireStream::SharedDataStream sds(ds);
 
+    qDebug() << CODELOC;
+
     sds << static_cast<const SireFF::detail::FFMoleculesBase&>(ffmols)
         << ffmols.mols_by_idx;
     
@@ -1350,8 +1356,10 @@ QDataStream& operator>>(QDataStream &ds,
 {
     SireStream::SharedDataStream sds(ds);
 
-    ds >> static_cast<SireFF::detail::FFMoleculesBase&>(ffmols)
-       >> ffmols.mols_by_idx;
+    qDebug() << CODELOC;
+
+    sds >> static_cast<SireFF::detail::FFMoleculesBase&>(ffmols)
+        >> ffmols.mols_by_idx;
     
     return ds;
 }
@@ -1362,6 +1370,8 @@ QDataStream& operator<<(QDataStream &ds,
                         const SireFF::detail::ChangedMolecule<FFMOL> &changedmol)
 {
     SireStream::SharedDataStream sds(ds);
+
+    qDebug() << CODELOC;
 
     sds << changedmol.old_molecule << changedmol.new_molecule
         << changedmol.old_parts << changedmol.new_parts;
@@ -1376,8 +1386,10 @@ QDataStream& operator>>(QDataStream &ds,
 {
     SireStream::SharedDataStream sds(ds);
 
-    ds >> changedmol.old_molecule >> changedmol.new_molecule
-       >> changedmol.old_parts >> changedmol.new_parts;
+    qDebug() << CODELOC;
+
+    sds >> changedmol.old_molecule >> changedmol.new_molecule
+        >> changedmol.old_parts >> changedmol.new_parts;
     
     return ds;
 }

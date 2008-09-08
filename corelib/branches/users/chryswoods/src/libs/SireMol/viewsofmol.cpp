@@ -46,6 +46,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireMol;
 using namespace SireStream;
 
@@ -74,6 +76,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     if (v == 1)
     {
         SharedDataStream sds(ds);
+
         sds >> molviews.selected_atoms >> molviews.views
             >> static_cast<MoleculeView&>(molviews);
     }

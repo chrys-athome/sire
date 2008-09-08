@@ -44,6 +44,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireFF;
 using namespace SireFF::detail;
 
@@ -88,6 +90,9 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
     writeHeader(ds, r_ffmolbase, 1);
     
     SharedDataStream sds(ds);
+
+    qDebug() << CODELOC;
+
     sds << ffmol.mol << ffmol.idx_to_cgidx;
     
     return ds;
@@ -102,6 +107,9 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
     if (v == 1)
     {
         SharedDataStream sds(ds);
+
+        qDebug() << CODELOC;
+
         sds >> ffmol.mol >> ffmol.idx_to_cgidx;
     }
     else

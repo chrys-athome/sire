@@ -72,64 +72,12 @@ mc = RigidBodyMC(cljff.group(MGIdx(0)))
 
 moves = SameMoves(mc)
 
-print "Running 1000 moves on the MPI master node..."
-nodes = MPINodes()
-node = nodes.getFreeNode()
-
-promise = node.runSim(system, moves, 1000, True)
-
-print "Job submitted. Waiting..."
-
-promise.wait()
-
-print "Job complete!"
-
-print "Running 1000 moves directly..."
-t.start()
-system = moves.move(system, 1000, True)
-ms = t.elapsed()
-print "Direct moves took %d ms" % ms
-
-print "Running 1000 moves..."
+#try streaming a molecule
+data = QByteArray()
+ds = QDataStream(data, QIODevice.WriteOnly)
 
 t.start()
-sim = Simulation.run(system, moves, 1000)
+ds << system
 ms = t.elapsed()
 
-print "Done! - took %d ms" % ms
-
-print sim.hasFinished()
-print sim.hasStarted()
-print sim.isRunning()
-
-print "Running 1000 background steps..."
-t.start()
-sim = Simulation.runBG(system, moves, 1000)
-ms = t.elapsed()
-
-print "Submitted in %d ms" % ms
-
-print sim.hasFinished()
-print sim.hasStarted()
-print sim.isRunning()
-
-print "Waiting..."
-sim.wait()
-ms = t.elapsed()
-print "Done - took %d ms" % ms 
-
-system = sim.system()
-
-print "Final energy = %s" % system.energy()
-
-system.mustNowRecalculateFromScratch();
-
-print "Are we sure? = %s" % system.energy()
-
-mc = sim.moves().moves()[0]
-
-print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
-                            mc.nRejected(), 100 * mc.acceptanceRatio())
-
-print "Took %d ms" % ms
-
+print "Streaming the system took %d ms" % ms

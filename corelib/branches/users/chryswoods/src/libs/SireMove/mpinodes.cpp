@@ -53,15 +53,13 @@ MPINodesData::MPINodesData() : sem(1), nnodes(1)
     #endif
 }
 
-/** By default we construct the an object that represents MPI
-    on just this node */
-MPINodes MPINodesData::construct()
+/** By default we construct the an object that represents
+    the global MPI_WORLD */
+boost::shared_ptr<MPINodesData> MPINodesData::construct()
 {
     boost::shared_ptr<MPINodesData> d( new MPINodesData() );
     
     d->this_ptr = d;
-    
-    MPINodes communicator(d);
     
     #ifdef __SIRE_USE_MPI__
     
@@ -87,16 +85,16 @@ MPINodes MPINodesData::construct()
         //now create MPINode objects to represent each node
         for (int i=0; i<d->nnodes; ++i)
         {
-            d->free_nodes.append( MPINode(communicator, i, i == d->my_mpirank) );
+            d->free_nodes.append( MPINode(d, i, i == d->my_mpirank) );
         }
     }
     
     #else
-    d->free_nodes.append( MPINode(communicator, 0, true) );
+    d->free_nodes.append( MPINode(d, 0, true) );
     
     #endif
 
-    return communicator;
+    return d;
 }
 
 /** Wait until all of the nodes are free */
@@ -214,7 +212,7 @@ MPINode MPINodesData::_pvt_getNode()
     MPINode free_node = free_nodes.takeLast();
     busy_nodes.append( free_node.d );
     
-    qDebug() << "Releasing node" << free_node.UID().toString();
+    qDebug() << "Here is the available node" << free_node.UID().toString();
     
     return free_node;
 }
@@ -298,12 +296,23 @@ QList<MPINode> MPINodesData::getNFreeNodes(int count, int time)
 ///////// Implementation of MPINodes
 /////////
 
+static boost::shared_ptr<detail::MPINodesData> mpi_comm_world;
+
+static QMutex world_mutex;
+
 /** Return the group of nodes that represent MPI_COMM_WORLD - i.e.
     all of the MPI nodes available to this instance
     (ignoring spawned or remote node groups) */
 MPINodes MPINodes::world()
 {
-    return MPINodesData::construct();
+    QMutexLocker lkr(&world_mutex);
+    
+    if (mpi_comm_world.get() == 0)
+    {
+        mpi_comm_world = MPINodesData::construct(); 
+    }
+    
+    return mpi_comm_world;
 }
 
 /** Null constructor - this the equivalent of MPI_COMM_WORLD */

@@ -30,6 +30,8 @@
 
 #include "SireError/errors.h"
 
+#include <QDebug>
+
 using namespace SireBase;
 
 /** Destructor */
@@ -59,7 +61,8 @@ void SharedPolyPointerBase::save(QDataStream &ds, const char *objname,
     //use the QMetaType streaming function to save this table
     if (not QMetaType::save(ds, id, data))
         throw SireError::program_bug(QObject::tr(
-            "There was an error saving the table of type \"%1\"")
+            "There was an error saving the object of type \"%1\". "
+            "Has the programmer remembered to add a RegisterMetaType for this class?")
                 .arg(objname), CODELOC);
 }
 

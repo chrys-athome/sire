@@ -36,6 +36,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireStream;
 using namespace SireBase;
 using namespace SireMol;
@@ -50,6 +52,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
     writeHeader(ds, r_molview, 1);
 
     SharedDataStream sds(ds);
+    
     sds << molview.d;
 
     return ds;
@@ -64,6 +67,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     if (v == 1)
     {
         SharedDataStream sds(ds);
+        
         sds >> molview.d;
     }
     else

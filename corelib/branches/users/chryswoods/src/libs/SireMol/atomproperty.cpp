@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007  Christopher Woods
+  *  Copyright (C) 2008  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,22 +26,11 @@
   *
 \*********************************************/
 
-#include "intercljff.h"
+#include "atomproperty.hpp"
 
-#include "SireMol/partialmolecule.h"
+using namespace SireMol;
 
-#include "SireMol/mover.hpp"
-
-using namespace SireMM;
-using namespace SireFF;
-
-template class CLJPotentialInterface<InterCLJPotential>;
-
-template class Inter2BFF< CLJPotentialInterface<InterCLJPotential> >;
-template class Inter2B3DFF< CLJPotentialInterface<InterCLJPotential> >;
-
-template class Inter2B2GFF< CLJPotentialInterface<InterCLJPotential> >;
-template class Inter2B2G3DFF< CLJPotentialInterface<InterCLJPotential> >;
-
-static const RegisterMetaType<InterCLJFF> r_intercljff;
-static const RegisterMetaType<InterGroupCLJFF> r_intergroupcljff;
+static const RegisterMetaType<AtomStringProperty> r_atomstring;
+static const RegisterMetaType<AtomIntProperty> r_atomint;
+static const RegisterMetaType<AtomFloatProperty> r_atomfloat;
+static const RegisterMetaType<AtomVariantProperty> r_atomvariant;

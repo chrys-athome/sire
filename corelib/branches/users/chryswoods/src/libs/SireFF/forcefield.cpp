@@ -32,6 +32,8 @@
 
 #include "SireStream/datastream.h"
 
+#include <QDebug>
+
 using namespace SireFF;
 using namespace SireBase;
 using namespace SireStream;
@@ -45,6 +47,8 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
     writeHeader(ds, r_ff, 1);
     
     SharedDataStream sds(ds);
+    
+    qDebug() << CODELOC;
     
     sds << static_cast<const Property&>(ff);
     
@@ -60,6 +64,9 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
     if (v == 1)
     {
         SharedDataStream sds(ds);
+
+        qDebug() << CODELOC;
+
         sds >> static_cast<Property&>(ff);
     }
     else

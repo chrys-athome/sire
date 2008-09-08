@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007  Christopher Woods
+  *  Copyright (C) 2008  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,22 +26,49 @@
   *
 \*********************************************/
 
-#include "intercljff.h"
+#ifndef SIRESTREAM_STREAMHELPER_HPP
+#define SIRESTREAM_STREAMHELPER_HPP
 
-#include "SireMol/partialmolecule.h"
+#include <QByteArray>
+#include <QDataStream>
 
-#include "SireMol/mover.hpp"
+#include "sireglobal.h"
 
-using namespace SireMM;
-using namespace SireFF;
+SIRE_BEGIN_HEADER
 
-template class CLJPotentialInterface<InterCLJPotential>;
+namespace SireStream
+{
 
-template class Inter2BFF< CLJPotentialInterface<InterCLJPotential> >;
-template class Inter2B3DFF< CLJPotentialInterface<InterCLJPotential> >;
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
-template class Inter2B2GFF< CLJPotentialInterface<InterCLJPotential> >;
-template class Inter2B2G3DFF< CLJPotentialInterface<InterCLJPotential> >;
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T load(const QByteArray &data)
+{
+    QDataStream ds(data);
 
-static const RegisterMetaType<InterCLJFF> r_intercljff;
-static const RegisterMetaType<InterGroupCLJFF> r_intergroupcljff;
+    T new_obj;
+    ds >> new_obj;
+
+    return new_obj;
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QByteArray save(const T &old_obj)
+{
+    QByteArray data;
+    QDataStream ds(&data, QIODevice::WriteOnly);
+
+    ds << old_obj;
+
+    return data;
+}
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
+
+}
+
+SIRE_END_HEADER
+
+#endif

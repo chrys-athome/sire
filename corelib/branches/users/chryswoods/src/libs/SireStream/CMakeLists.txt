@@ -10,6 +10,7 @@ set ( SIRESTREAM_HEADERS
       datastream.h
       magic_error.h
       shareddatastream.h
+      streamdata.hpp
       version_error.h
       versionid.h
     )

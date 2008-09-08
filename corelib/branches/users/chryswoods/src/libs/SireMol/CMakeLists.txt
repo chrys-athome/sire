@@ -125,12 +125,14 @@ set ( SIREMOL_SOURCES
       atom.cpp
       atomaliases.cpp
       atomatomid.cpp
+      atomcharges.cpp
       atomcoords.cpp
       atomeditor.cpp
       atomid.cpp
       atomidentifier.cpp
       atomcutting.cpp
       atommatcher.cpp
+      atomproperty.cpp
       atomselection.cpp
       bondhunter.cpp
       bondid.cpp
@@ -138,11 +140,13 @@ set ( SIREMOL_SOURCES
       cgcgid.cpp
       cgid.cpp
       cgidentifier.cpp
+      cgproperty.cpp
       chain.cpp
       chainchainid.cpp
       chaineditor.cpp
       chainid.cpp
       chainidentifier.cpp
+      chainproperty.cpp
       chainresid.cpp
       connectivity.cpp
       cutgroup.cpp
@@ -176,11 +180,13 @@ set ( SIREMOL_SOURCES
       residentifier.cpp
       residue.cpp
       residuecutting.cpp
+      resproperty.cpp
       resresid.cpp
       segeditor.cpp
       segid.cpp
       segidentifier.cpp
       segment.cpp
+      segproperty.cpp
       segsegid.cpp
       structureeditor.cpp
       trajectory.cpp

@@ -177,9 +177,18 @@ QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const Properties &props
     writeHeader(ds, r_props, 1);
     
     SharedDataStream sds(ds);
-    
-    sds << props.d
-        << static_cast<const PropertyBase&>(props);
+
+    if (props.isEmpty())
+    {
+        //just serialise the number 0 to indicate that this is an empty
+        //properties object - this is to prevent circular references
+        sds << qint32(0);
+    }
+    else
+    {
+        sds << qint32(1) << props.d
+            << static_cast<const PropertyBase&>(props);
+    }
     
     return ds;
 }
@@ -193,8 +202,20 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, Properties &props)
     {
         SharedDataStream sds(ds);
         
-        sds >> props.d
-            >> static_cast<PropertyBase&>(props);
+        qint32 not_empty;
+        
+        sds >> not_empty;
+        
+        if (not_empty)
+        {
+            sds >> props.d
+                >> static_cast<PropertyBase&>(props);
+        }
+        else
+        {
+            //this is an empty Properties object
+            props = Properties();
+        }
     }
     else
         throw version_error(v, "1", r_props, CODELOC);

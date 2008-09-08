@@ -31,6 +31,8 @@
 
 #include "simulation.h"
 #include "threadsim.h"
+#include "mpinode.h"
+#include "mpisim.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -421,6 +423,19 @@ Simulation Simulation::runBG(const System &system, const MovesBase &moves,
 {
     Simulation sim;
     sim.d.reset( new ThreadSim(system, moves, nmoves, record_stats) );
+    
+    sim.start();
+    
+    return sim;
+}
+
+/** Run a simulation consisting of nmoves moves on the system 'system' using
+    the 'moves' object to actually perform the moves, on the MPI node 'mpinode' */
+Simulation Simulation::run(const MPINode &node, const System &system,
+                           const MovesBase &moves, int nmoves, bool record_stats)
+{
+    Simulation sim;
+    sim.d.reset( new MPISim(node, system, moves, nmoves, record_stats) );
     
     sim.start();
     
