@@ -20,6 +20,7 @@ set ( SIRESTREAM_SOURCES
       getmagic.cpp
       magic_error.cpp
       shareddatastream.cpp
+      streamdata.cpp
       version_error.cpp
     
       ${SIRESTREAM_HEADERS}

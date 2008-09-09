@@ -30,7 +30,9 @@
 #define SIRESTREAM_STREAMHELPER_HPP
 
 #include <QByteArray>
-#include <QDataStream>
+
+#include <boost/tuple/tuple.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include "sireglobal.h"
 
@@ -39,30 +41,46 @@ SIRE_BEGIN_HEADER
 namespace SireStream
 {
 
+boost::tuple<boost::shared_ptr<void>,QString> load(const QByteArray &data);
+
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
+namespace detail
+{
+QByteArray streamDataSave( const void *object, const char *type_name );
+
+void throwStreamDataInvalidCast(const QString &load_type, 
+                                const QString &cast_type);
+}
+
+/** This loads an object of type T from the passed blob of binary
+    data. Note that this data *must* have been created by the "save"
+    function below, and T must match the type of the object saved 
+    in this data. Also note that this type must have been registered
+    with the metatype system (via RegisterMetaType)
+    
+    \throw SireError::invalid_cast
+*/
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T load(const QByteArray &data)
+T loadType(const QByteArray &data)
 {
-    QDataStream ds(data);
+    boost::tuple<boost::shared_ptr<void>,QString> new_obj
+            = SireStream::load(data);
 
-    T new_obj;
-    ds >> new_obj;
+    if ( QLatin1String(T::typeName()) != new_obj.get<1>() )
+    {
+        detail::throwStreamDataInvalidCast(new_obj.get<1>(), T::typeName());
+    }
 
-    return new_obj;
+    return T( *(static_cast<const T*>(new_obj.get<0>().get())) );
 }
 
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 QByteArray save(const T &old_obj)
 {
-    QByteArray data;
-    QDataStream ds(&data, QIODevice::WriteOnly);
-
-    ds << old_obj;
-
-    return data;
+    return detail::streamDataSave( &old_obj, old_obj.what() );
 }
 
 #endif // SIRE_SKIP_INLINE_FUNCTIONS
