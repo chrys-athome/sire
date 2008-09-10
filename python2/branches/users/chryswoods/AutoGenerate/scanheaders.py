@@ -93,12 +93,20 @@ class HeaderInfo:
         self._functions = []
         self._aliases = {}
         self._properties = []
+        self._metatypes = []
 
     def addClass(self, classname):
         self._classes.append(classname)
 
     def addFunction(self, func):
         self._functions.append(func)
+
+    def addMetaType(self, classname):
+        #don't register QVariant!
+        if classname == "QVariant":
+            return        
+
+        self._metatypes.append(classname)
 
     def addAlias(self, classname, alias):
         self._aliases[classname] = alias
@@ -114,6 +122,9 @@ class HeaderInfo:
 
     def functions(self):
         return self._functions
+
+    def metaTypes(self):
+        return self._metatypes
 
     def aliases(self):
         return self._aliases
@@ -133,6 +144,7 @@ match_res_property = r"SIRE_EXPOSE_RESIDUE_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)
 match_cg_property = r"SIRE_EXPOSE_CUTGROUP_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
 match_chain_property = r"SIRE_EXPOSE_CHAIN_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
 match_seg_property = r"SIRE_EXPOSE_SEGMENT_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
+match_metatype = r"Q_DECLARE_METATYPE\(\s*\n*\s*\(?([<>.\s\w\d:]+)\)?\s*\n*\s*\)"
 
 def scanFiles(dir, module_dir, atom_properties, cg_properties,
                                res_properties, chain_properties, seg_properties):
@@ -143,12 +155,16 @@ def scanFiles(dir, module_dir, atom_properties, cg_properties,
 
     h_files = getFiles(dir, "*.h") + getFiles(module_dir, "*.h")
     hpp_files = getFiles(dir, "*.hpp") + getFiles(module_dir, "*.hpp")
+    cpp_files = getFiles(dir, "*.cpp")
 
     #dictionary mapping files to exposed classes
     active_files = {}
 
     #the list of exposed classes
     exposed_classes = []
+
+    #the list of classes that have been registered with QMetaType
+    meta_classes = []
 
     #read each file, looking for SIRE_EXPOSE_FUNCTION or SIRE_EXPOSE_CLASS
     for file in h_files + hpp_files:
@@ -179,6 +195,12 @@ def scanFiles(dir, module_dir, atom_properties, cg_properties,
                 active_files[file] = HeaderInfo(file, dir, module_dir)
 
             active_files[file].addFunction(m.groups()[0].strip())
+
+        for m in re.finditer(match_metatype, text):
+            if file not in active_files:
+                active_files[file] = HeaderInfo(file, dir, module_dir)
+
+            active_files[file].addMetaType(m.groups()[0].strip())
 
         for m in re.finditer(match_property, text):
             if file not in active_files:

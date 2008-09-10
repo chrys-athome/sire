@@ -37,6 +37,7 @@ set (SIRESTREAM_LIBRARY "-L${SIRE_LIB_DIR} -lSireStream" )
 set (SIRESYSTEM_LIBRARY "-L${SIRE_LIB_DIR} -lSireSystem" )
 set (SIREUNITS_LIBRARY "-L${SIRE_LIB_DIR} -lSireUnits" )
 set (SIREVOL_LIBRARY "-L${SIRE_LIB_DIR} -lSireVol" )
+set (SIREPYTHON2_LIBRARY "-L{SIRE_LIB_DIR} -lSirePython2" )
 
 # project version
 set (SIRE_VERSION_MAJOR "0")
@@ -290,6 +291,9 @@ set( CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} ${SIRE_LINK_FLAGS}" )
 
 message( STATUS "Linker flags = ${CMAKE_SHARED_LINKER_FLAGS}" )
 
+# Add the helper library
+add_subdirectory (Helpers)
+
 # Recurse into the module subdirectories 
 add_subdirectory (Qt)
 add_subdirectory (Error)
@@ -302,6 +306,7 @@ add_subdirectory (Maths)
 add_subdirectory (MM)
 add_subdirectory (Mol)
 add_subdirectory (Move)
+add_subdirectory (Stream)
 add_subdirectory (System)
 add_subdirectory (Units)
 add_subdirectory (Vol)
