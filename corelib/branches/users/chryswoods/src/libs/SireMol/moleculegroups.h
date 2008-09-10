@@ -72,6 +72,16 @@ public:
     
     ~MoleculeGroups();
     
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<MoleculeGroups>() );
+    }
+    
+    const char* what() const
+    {
+        return MoleculeGroups::typeName();
+    }
+    
     virtual MoleculeGroups& operator=(const PropertyBase &property);
     virtual MoleculeGroups& operator=(const MolGroupsBase &other);
 

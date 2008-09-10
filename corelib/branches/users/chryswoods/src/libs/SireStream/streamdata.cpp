@@ -56,8 +56,6 @@ void throwStreamDataInvalidCast(const QString &load_type,
 
 QByteArray streamDataSave( const void *object, const char *type_name )
 {
-    qDebug() << "Saving the object of type";
-
     //get the ID number of this type
     int id = QMetaType::type( type_name );
 
@@ -69,18 +67,16 @@ QByteArray streamDataSave( const void *object, const char *type_name )
 
     QByteArray data;
     QDataStream ds(&data, QIODevice::WriteOnly);
-
+    
     //save the object type name
     ds << QString(type_name);
 
     //use the QMetaType streaming function to save this table
-    if (not QMetaType::save(ds, id, data))
+    if (not QMetaType::save(ds, id, object))
         throw SireError::program_bug(QObject::tr(
             "There was an error saving the object of type \"%1\". "
             "Has the programmer remembered to add a RegisterMetaType for this class?")
                 .arg(type_name), CODELOC);
-
-    qDebug() << "Returning data";
 
     return data;
 }

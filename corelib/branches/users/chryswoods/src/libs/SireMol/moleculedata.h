@@ -113,6 +113,16 @@ public:
 
     ~MoleculeData();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<MoleculeData>() );
+    }
+    
+    const char* what() const
+    {
+        return MoleculeData::typeName();
+    }
+
     MoleculeData& operator=(const MoleculeData &other);
     MoleculeData& operator=(const StructureEditor &editor);
 

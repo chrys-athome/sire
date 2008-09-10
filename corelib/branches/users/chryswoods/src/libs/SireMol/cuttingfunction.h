@@ -94,7 +94,12 @@ public:
     {
         return QMetaType::typeName( qMetaTypeId<CuttingFunction>() );
     }
-    
+   
+    const char* what() const
+    {
+        return CuttingFunction::typeName();
+    }
+      
     Molecule operator()(const Molecule &molecule) const;
     MolStructureEditor operator()(MolStructureEditor &moleditor) const;
     

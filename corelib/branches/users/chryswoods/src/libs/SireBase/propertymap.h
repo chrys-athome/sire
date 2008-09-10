@@ -106,6 +106,16 @@ public:
 
     ~PropertyName();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<PropertyName>() );
+    }
+    
+    const char* what() const
+    {
+        return PropertyName::typeName();
+    }
+
     PropertyName& operator=(const PropertyName &other);
 
     bool operator==(const PropertyName &other) const;
@@ -172,6 +182,16 @@ public:
     PropertyMap(const PropertyMap &other);
 
     ~PropertyMap();
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<PropertyMap>() );
+    }
+
+    const char* what() const
+    {
+        return PropertyMap::typeName();
+    }
 
     PropertyMap& operator=(const PropertyMap &other);
 

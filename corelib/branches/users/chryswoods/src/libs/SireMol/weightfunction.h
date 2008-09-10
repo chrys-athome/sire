@@ -157,6 +157,16 @@ public:
 
     ~WeightFunction();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<WeightFunction>() );
+    }
+    
+    const char* what() const
+    {
+        return WeightFunction::typeName();
+    }
+
     virtual WeightFunction& operator=(const SireBase::PropertyBase &property);
     virtual WeightFunction& operator=(const WeightFunc &other);
 

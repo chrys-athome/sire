@@ -13,7 +13,6 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIREMOL_HEADERS
       angleid.h
       atom.h
-      atomaliases.h
       atomatomid.h
       atomcharges.h
       atomcoords.h
@@ -114,7 +113,6 @@ set ( SIREMOL_HEADERS
       selector.hpp
       specify.hpp
       structureeditor.h
-      trajectory.h
       viewsofmol.h
       weightfunction.h
     )
@@ -123,7 +121,6 @@ set ( SIREMOL_HEADERS
 set ( SIREMOL_SOURCES
       angleid.cpp
       atom.cpp
-      atomaliases.cpp
       atomatomid.cpp
       atomcharges.cpp
       atomcoords.cpp
@@ -189,7 +186,6 @@ set ( SIREMOL_SOURCES
       segproperty.cpp
       segsegid.cpp
       structureeditor.cpp
-      trajectory.cpp
       viewsofmol.cpp
       weightfunction.cpp
     

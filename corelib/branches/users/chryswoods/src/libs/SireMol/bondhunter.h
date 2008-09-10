@@ -111,6 +111,16 @@ public:
     
     ~BondHunter();
     
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<BondHunter>() );
+    }
+    
+    const char* what() const
+    {
+        return BondHunter::typeName();
+    }
+    
     virtual BondHunter& operator=(const SireBase::PropertyBase &property);
     virtual BondHunter& operator=(const BondHunterBase &other);
     

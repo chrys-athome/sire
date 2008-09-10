@@ -357,6 +357,16 @@ public:
     
     virtual Property& operator=(const PropertyBase &property);
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Property>() );
+    }
+    
+    virtual const char* what() const
+    {
+        return Property::typeName();
+    }
+
     bool operator==(const Property &other) const;
     bool operator!=(const Property &other) const;
 

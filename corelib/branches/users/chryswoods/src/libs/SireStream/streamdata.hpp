@@ -36,6 +36,8 @@
 
 #include "sireglobal.h"
 
+#include <QDebug>
+
 SIRE_BEGIN_HEADER
 
 namespace SireStream
