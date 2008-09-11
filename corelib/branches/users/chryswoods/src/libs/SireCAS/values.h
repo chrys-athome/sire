@@ -93,6 +93,16 @@ public:
 
     ~Values();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Values>() );
+    }
+    
+    const char* what() const
+    {
+        return Values::typeName();
+    }
+
     void set(const Symbol &symbol, double value);
 
     void add(const SymbolValue &symval0);

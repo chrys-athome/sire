@@ -103,6 +103,16 @@ public:
 
     ~Identities();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Identities>() );
+    }
+    
+    const char* what() const
+    {
+        return Identities::typeName();
+    }
+
     void add(const SymbolExpression &symex0);
     void add(const SymbolExpression &symex0, const SymbolExpression &symex1);
     void add(const SymbolExpression &symex0, const SymbolExpression &symex1,

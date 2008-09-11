@@ -82,6 +82,16 @@ public:
 
     ~Expression();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Expression>() );
+    }
+    
+    const char* what() const
+    {
+        return Expression::typeName();
+    }
+
     bool operator==(const Expression &other) const;
     bool operator!=(const Expression &other) const;
 

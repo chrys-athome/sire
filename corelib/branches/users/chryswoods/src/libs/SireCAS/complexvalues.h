@@ -108,6 +108,16 @@ public:
 
     ~ComplexValues();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<ComplexValues>() );
+    }
+
+    const char* what() const
+    {
+        return ComplexValues::typeName();
+    }
+
     void set(const Symbol &symbol, const Complex &value);
 
     void add(const SymbolComplex &symval0);
