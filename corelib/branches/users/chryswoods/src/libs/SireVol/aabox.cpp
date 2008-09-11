@@ -125,6 +125,13 @@ AABox AABox::from(const CoordGroupBase &coordinates)
     return AABox(coordinates);
 }
 
+/** Return a string representation of this AABox */
+QString AABox::toString() const
+{
+    return QObject::tr( "AABox( min=%1, max=%2 )" )
+                .arg(this->minCoords().toString(), this->maxCoords().toString() );
+}
+
 /** Internal function used to recalculate the AABox from the coordinates in the
     array 'coords' (which has size 'sz') */
 void AABox::recalculate(const Vector *coords, int sz)

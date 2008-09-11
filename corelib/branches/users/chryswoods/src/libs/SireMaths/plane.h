@@ -67,6 +67,16 @@ public:
     Plane(const Plane &other);
     ~Plane();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Plane>() );
+    }
+    
+    const char* what() const
+    {
+        return Plane::typeName();
+    }
+
     const Vector& normal() const;
     const double& distanceFromOrigin() const;
     

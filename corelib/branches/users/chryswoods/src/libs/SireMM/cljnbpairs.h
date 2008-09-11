@@ -77,6 +77,11 @@ public:
         return QMetaType::typeName( qMetaTypeId<CLJScaleFactor>() );
     }
 
+    const char* what() const
+    {
+        return CLJScaleFactor::typeName();
+    }
+
     CLJScaleFactor& operator=(const CLJScaleFactor &other)
     {
         cscl = other.cscl;

@@ -43,6 +43,7 @@ set_target_properties (System
 		       )
 		       
 target_link_libraries (System
+                       SirePython2
                        ${SIRESYSTEM_LIBRARY}
                        ${SIREFF_LIBRARY}
                        ${SIREMOL_LIBRARY}

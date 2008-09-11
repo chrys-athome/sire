@@ -127,8 +127,6 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const System &system)
     
     SharedDataStream sds(ds);
     
-    qDebug() << CODELOC;
-    
     sds << system.uid << system.sysname
         << system.molgroups[0] << system.molgroups[1] 
         << system.sysmonitors
@@ -145,8 +143,6 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, System &system)
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        
-        qDebug() << CODELOC;
         
         sds >> system.uid >> system.sysname
             >> system.molgroups[0] >> system.molgroups[1] 

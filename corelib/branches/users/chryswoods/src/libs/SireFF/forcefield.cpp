@@ -48,8 +48,6 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
     
     SharedDataStream sds(ds);
     
-    qDebug() << CODELOC;
-    
     sds << static_cast<const Property&>(ff);
     
     return ds;
@@ -64,8 +62,6 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
     if (v == 1)
     {
         SharedDataStream sds(ds);
-
-        qDebug() << CODELOC;
 
         sds >> static_cast<Property&>(ff);
     }

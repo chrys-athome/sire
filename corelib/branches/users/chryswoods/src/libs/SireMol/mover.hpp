@@ -61,6 +61,16 @@ public:
     
     ~Mover();
     
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId< Mover<T> >() );
+    }
+    
+    const char* what() const
+    {
+        return Mover<T>::typeName();
+    }
+    
     Mover<T>& operator=(const Mover<T> &other);
     Mover<T>& operator=(const T &other);
     

@@ -47,6 +47,7 @@ set_target_properties (Units
 		       )
 		       
 target_link_libraries (Units
+                       SirePython2
                        ${SIREUNITS_LIBRARY}
                        ${SIRESTREAM_LIBRARY}
                        ${SIREBASE_LIBRARY}

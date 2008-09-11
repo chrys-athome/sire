@@ -45,6 +45,7 @@ set_target_properties (Vol
 		       )
 		       
 target_link_libraries (Vol
+                       SirePython2
                        ${SIREVOL_LIBRARY}
                        ${SIREMATHS_LIBRARY}
                        ${SIREBASE_LIBRARY}

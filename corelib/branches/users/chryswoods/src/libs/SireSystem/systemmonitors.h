@@ -66,6 +66,16 @@ public:
     
     ~SystemMonitors();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<SystemMonitors>() );
+    }
+    
+    const char* what() const
+    {
+        return SystemMonitors::typeName();
+    }
+
     SystemMonitors& operator=(const SystemMonitors &other);
     
     bool operator==(const SystemMonitors &other) const;

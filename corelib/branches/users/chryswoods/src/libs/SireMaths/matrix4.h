@@ -80,6 +80,16 @@ public:
 
     ~Matrix4();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Matrix4>() );
+    }
+    
+    const char* what() const
+    {
+        return Matrix4::typeName();
+    }
+
     Matrix4 transpose() const;
 
     QString toString() const;

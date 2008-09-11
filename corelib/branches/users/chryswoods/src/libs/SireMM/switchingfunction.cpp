@@ -67,7 +67,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, SwitchFunc &switchfunc)
 
     if (v == 1)
     {
-        ds >> static_cast<SwitchFunc&>(switchfunc)
+        ds >> static_cast<PropertyBase&>(switchfunc)
            >> switchfunc.cut_elec >> switchfunc.feather_elec
            >> switchfunc.cut_vdw >> switchfunc.feather_vdw;
            
@@ -207,7 +207,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, NoCutoff &nocutoff)
 
     if (v == 1)
     {
-        ds >> static_cast<NoCutoff&>(nocutoff);
+        ds >> static_cast<SwitchFunc&>(nocutoff);
     }
     else
         throw version_error(v, "1", r_nocutoff, CODELOC);

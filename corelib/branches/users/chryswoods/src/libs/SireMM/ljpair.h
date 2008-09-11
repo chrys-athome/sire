@@ -69,6 +69,16 @@ public:
 
     ~LJPair();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<LJPair>() );
+    }
+    
+    const char* what() const
+    {
+        return LJPair::typeName();
+    }
+
     bool isDummy() const;
     bool zeroLJ() const;
 

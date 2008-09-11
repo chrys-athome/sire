@@ -67,6 +67,16 @@ public:
     AxisSet(const AxisSet &other);
     ~AxisSet();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<AxisSet>() );
+    }
+    
+    const char* what() const
+    {
+        return AxisSet::typeName();
+    }
+
     QString toString() const;
     
     const Matrix& matrix() const;

@@ -148,6 +148,16 @@ public:
     
     ~SystemMonitor();
     
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<SystemMonitor>() );
+    }
+    
+    const char* what() const
+    {
+        return SystemMonitor::typeName();
+    }
+    
     virtual SystemMonitor& operator=(const SireBase::PropertyBase &property);
     virtual SystemMonitor& operator=(const SysMonBase &other);
 

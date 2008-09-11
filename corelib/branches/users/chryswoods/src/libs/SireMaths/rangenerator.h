@@ -77,6 +77,16 @@ public:
 
     ~RanGenerator();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<RanGenerator>() );
+    }
+    
+    const char* what() const
+    {
+        return RanGenerator::typeName();
+    }
+
     RanGenerator& operator=(const RanGenerator &other);
 
     bool operator==(const RanGenerator &other) const;

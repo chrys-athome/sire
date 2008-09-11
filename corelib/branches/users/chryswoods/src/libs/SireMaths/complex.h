@@ -118,6 +118,16 @@ public:
     ~Complex()
     {}
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Complex>() );
+    }
+    
+    const char* what() const
+    {
+        return Complex::typeName();
+    }
+
     /** Return the real part of this number */
     double real() const
     {

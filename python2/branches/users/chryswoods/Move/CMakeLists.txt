@@ -43,6 +43,7 @@ set_target_properties (Move
 		       )
 		       
 target_link_libraries (Move
+                       SirePython2
                        ${SIREMOVE_LIBRARY}
                        ${SIRESYSTEM_LIBRARY}
                        ${SIREFF_LIBRARY}

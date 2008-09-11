@@ -79,6 +79,16 @@ public:
 
     ~AABox();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<AABox>() );
+    }
+    
+    const char* what() const
+    {
+        return AABox::typeName();
+    }
+
     const AABox& operator=(const AABox &other);
 
     bool operator==(const AABox &other) const;
@@ -91,6 +101,8 @@ public:
     AABox operator+(const AABox &other) const;
     AABox operator+(const Vector &point) const;
     AABox operator+(const QVector<Vector> &points) const;
+
+    QString toString() const;
 
     void add(const AABox &other);
     void add(const Vector &point);

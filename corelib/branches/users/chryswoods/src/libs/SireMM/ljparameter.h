@@ -76,6 +76,11 @@ public:
         return QMetaType::typeName( qMetaTypeId<LJParameter>() );
     }
     
+    const char* what() const
+    {
+        return LJParameter::typeName();
+    }
+    
     bool isDummy() const;
     bool zeroLJ() const;
     

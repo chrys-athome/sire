@@ -80,6 +80,16 @@ public:
 
     ~Matrix();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Matrix>() );
+    }
+    
+    const char* what() const
+    {
+        return Matrix::typeName();
+    }
+
     Matrix transpose() const;
     Matrix inverse() const;
     Vector trace() const;

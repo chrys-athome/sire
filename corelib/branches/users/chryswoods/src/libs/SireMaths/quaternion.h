@@ -72,6 +72,16 @@ public:
     Quaternion(double x, double y, double z, double w);
     
     ~Quaternion();
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Quaternion>() );
+    }
+    
+    const char* what() const
+    {
+        return Quaternion::typeName();
+    }
 
     double x() const;
     double y() const;

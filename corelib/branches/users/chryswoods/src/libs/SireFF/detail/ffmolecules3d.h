@@ -707,8 +707,6 @@ template<class PTNL>
 QDataStream& operator<<(QDataStream &ds, 
                         const SireFF::detail::FFMolecule3D<PTNL> &ffmol)
 {
-    qDebug() << CODELOC;
-
     ds << static_cast<const SireFF::detail::FFMolecule<PTNL>&>(ffmol);
     
     return ds;
@@ -719,8 +717,6 @@ template<class PTNL>
 QDataStream& operator>>(QDataStream &ds,
                         SireFF::detail::FFMolecule3D<PTNL> &ffmol)
 {
-    qDebug() << CODELOC;
-
     ds >> static_cast<SireFF::detail::FFMolecule<PTNL>&>(ffmol);
     
     ffmol.aabox = ffmol.parameters().atomicCoordinates().aaBox();
@@ -733,8 +729,6 @@ template<class PTNL>
 QDataStream& operator<<(QDataStream &ds, 
                         const SireFF::detail::FFMolecules3D<PTNL> &ffmols)
 {
-    qDebug() << CODELOC;
-
     ds << static_cast<const SireFF::detail::FFMolecules<PTNL>&>(ffmols);
     return ds;
 }
@@ -744,8 +738,6 @@ template<class PTNL>
 QDataStream& operator>>(QDataStream &ds,
                         SireFF::detail::FFMolecules3D<PTNL> &ffmols)
 {
-    qDebug() << CODELOC;
-
     ds >> static_cast<SireFF::detail::FFMolecules<PTNL>&>(ffmols);
     
     ffmols.updateAABoxes();

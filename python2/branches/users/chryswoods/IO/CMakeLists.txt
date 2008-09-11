@@ -43,6 +43,7 @@ set_target_properties (IO
 		       )
 		       
 target_link_libraries (IO
+                       SirePython2
                        ${SIREIO_LIBRARY}
                        ${SIREMOL_LIBRARY}
                        ${SIREID_LIBRARY}

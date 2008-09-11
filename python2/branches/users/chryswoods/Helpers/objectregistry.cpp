@@ -24,7 +24,7 @@ void ObjectRegistry::throwExtractionError(const object &obj,
 {
     throw SireError::program_bug( QObject::tr(
        "There was an error trying to extract a Python object of type %1 using "
-       "a C++ type of %2.").arg( extract<const char*>(obj.attr("__class__").attr("name"))() )
+       "a C++ type of %2.").arg( extract<const char*>(obj.attr("__class__").attr("__name__"))() )
                            .arg(type_name), CODELOC );
 }
 

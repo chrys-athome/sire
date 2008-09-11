@@ -91,8 +91,6 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
     
     SharedDataStream sds(ds);
 
-    qDebug() << CODELOC;
-
     sds << ffmol.mol << ffmol.idx_to_cgidx;
     
     return ds;
@@ -107,8 +105,6 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
     if (v == 1)
     {
         SharedDataStream sds(ds);
-
-        qDebug() << CODELOC;
 
         sds >> ffmol.mol >> ffmol.idx_to_cgidx;
     }

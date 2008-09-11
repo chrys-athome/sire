@@ -700,8 +700,6 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const ForceFields &ffield
     
     SharedDataStream sds(ds);
     
-    qDebug() << CODELOC;
-    
     sds << ffields.ffields_by_idx;
     
     return ds;
@@ -715,8 +713,6 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, ForceFields &ffields)
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        
-        qDebug() << CODELOC;
         
         sds >> ffields.ffields_by_idx;
         

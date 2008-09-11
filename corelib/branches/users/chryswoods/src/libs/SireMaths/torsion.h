@@ -70,6 +70,16 @@ public:
     Torsion( const Vector &point0, const Vector &point1,
              const Vector &point2, const Vector &point3 );
     ~Torsion();
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Torsion>() );
+    }
+    
+    const char* what() const
+    {
+        return Torsion::typeName();
+    }
 
     QString toString() const;
 

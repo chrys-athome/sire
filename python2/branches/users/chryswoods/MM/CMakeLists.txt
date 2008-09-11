@@ -44,6 +44,7 @@ set_target_properties (MM
 		       )
 		       
 target_link_libraries (MM
+                       SirePython2
                        ${SIREMM_LIBRARY}
                        ${SIREFF_LIBRARY}
                        ${SIREMOL_LIBRARY}

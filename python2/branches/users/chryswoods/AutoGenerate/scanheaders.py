@@ -85,7 +85,9 @@ class Properties:
     def dependencies(self):
         return self._dependencies.keys()
 
-skip_metatypes = [ "QVariant", "SireCAS::ExpressionBase" ]
+skip_metatypes = [ "QVariant", 
+                   "SireCAS::ExpressionBase",
+                   "SireMaths::Rational" ]
 
 class HeaderInfo:
     def __init__(self, filename, dir, module_dir):

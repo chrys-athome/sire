@@ -11,6 +11,8 @@ from Sire.Units import *
 from Sire.System import *
 from Sire.Move import *
 
+import Sire.Stream
+
 t = QTime()
 
 cljff = InterCLJFF()
@@ -72,12 +74,24 @@ mc = RigidBodyMC(cljff.group(MGIdx(0)))
 
 moves = SameMoves(mc)
 
-#try streaming a molecule
-data = QByteArray()
-ds = QDataStream(data, QIODevice.WriteOnly)
-
+#try streaming the system
 t.start()
-ds << system
+
+data = Sire.Stream.save(system)
+
 ms = t.elapsed()
 
 print "Streaming the system took %d ms" % ms
+print "System takes up %d bytes" % data.size()
+
+t.start()
+
+s2 = Sire.Stream.load(data)
+
+ms = t.elapsed()
+
+print "Reading the system took %d ms" % ms
+print system
+print s2
+
+

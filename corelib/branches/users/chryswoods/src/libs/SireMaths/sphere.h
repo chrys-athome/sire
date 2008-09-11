@@ -66,6 +66,16 @@ public:
     
     ~Sphere();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Sphere>() );
+    }
+    
+    const char* what() const
+    {
+        return Sphere::typeName();
+    }
+
     bool operator==(const Sphere &other) const;
     bool operator!=(const Sphere &other) const;
 

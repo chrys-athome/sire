@@ -46,7 +46,8 @@ set_target_properties (Maths
                          SUFFIX ${PYTHON_MODULE_EXTENSION}
 		       )
 		       
-target_link_libraries (Maths
+target_link_libraries (Maths 
+                       SirePython2
                        ${SIREMATHS_LIBRARY}
                        ${SIRESTREAM_LIBRARY}
                        ${SIREERROR_LIBRARY}

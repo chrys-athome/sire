@@ -70,6 +70,16 @@ public:
     
     ~Triangle();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Triangle>() );
+    }
+    
+    const char* what() const
+    {
+        return Triangle::typeName();
+    }
+
     QString toString() const;
 
     Angle angle() const;

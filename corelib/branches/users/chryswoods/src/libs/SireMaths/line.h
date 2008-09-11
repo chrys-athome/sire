@@ -63,6 +63,16 @@ public:
     Line(const Vector &point0, const Vector &point1);
     ~Line();
 
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Line>() );
+    }
+    
+    const char* what() const
+    {
+        return Line::typeName();
+    }
+
     QString toString() const;
 
     double length() const;
