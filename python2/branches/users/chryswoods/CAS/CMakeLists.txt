@@ -43,6 +43,7 @@ set_target_properties (CAS
 		       )
 		       
 target_link_libraries (CAS
+                       SirePython2
                        ${SIRECAS_LIBRARY}
                        ${SIREMATHS_LIBRARY}
                        ${SIREBASE_LIBRARY}

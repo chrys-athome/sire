@@ -85,6 +85,8 @@ class Properties:
     def dependencies(self):
         return self._dependencies.keys()
 
+skip_metatypes = [ "QVariant", "SireCAS::ExpressionBase" ]
+
 class HeaderInfo:
     def __init__(self, filename, dir, module_dir):
         self._filename = filename
@@ -102,8 +104,8 @@ class HeaderInfo:
         self._functions.append(func)
 
     def addMetaType(self, classname):
-        #don't register QVariant!
-        if classname == "QVariant":
+        #don't register some types
+        if classname in skip_metatypes:
             return        
 
         self._metatypes.append(classname)
