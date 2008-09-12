@@ -945,7 +945,9 @@ quint32 CGArrayArrayData::nCoords() const
 /** Set the number of CoordGroups in the ith CoordGroupArray */
 void CGArrayArrayData::setNCGroupsInArray(quint32 i, quint32 ncgroups)
 {
-    BOOST_ASSERT( i < ncgarrays );    
+    BOOST_ASSERT( i < ncgarrays );
+    BOOST_ASSERT( this->cgArrayDataData() != 0 );
+    
     this->cgArrayDataData()[i].ncgroups = ncgroups;
 }
 
@@ -1702,6 +1704,8 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     
         CoordGroupArrayArray array;
         sds >> array;
+
+        BOOST_ASSERT( array.coordGroupData() != 0 );
     
         cgroup = array.coordGroupData()[0];
     }
@@ -2134,9 +2138,11 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        
+
         CoordGroupArrayArray array;
         sds >> array;
+
+        BOOST_ASSERT( array.data() != 0 );
         
         cgarray = array.data()[0];
     }
@@ -2688,18 +2694,20 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
     const CGArrayArrayData &array = *(cgarray.d);
 
     //serialise the prime metadata
-    ds << array.nCGArrays() << array.nCGroups() << array.nCoords();
+    ds << quint32( array.nCGArrays() ) 
+       << quint32( array.nCGroups() )
+       << quint32( array.nCoords() );
 
     //serialise the number of CoordGroups in each CoordGroupArray
     for (quint32 i=0; i<array.nCGArrays(); ++i)
     {
-        ds << array.cgArrayDataData()[i].nCGroups();
+        ds << quint32(array.cgArrayDataData()[i].nCGroups());
     }
     
     //serialise the number of coordinates in each CoordGroup
     for (quint32 i=0; i<array.nCGroups(); ++i)
     {
-        ds << array.cgDataData()[i].nCoords();
+        ds << quint32(array.cgDataData()[i].nCoords());
     }
     
     //now the AABoxes
@@ -2717,6 +2725,20 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
     return ds;
 }
 
+static CGSharedPtr<CGArrayArrayData> createCGArrayArray(quint32 narrays,
+                                        quint32 ngroups, quint32 ncoords)
+{
+    if (narrays == 0)
+        return ::getSharedNull();
+
+    //construct space for narrays arrays of ngroups CoordGroups of ncoords coordinates
+    char *storage = CGMemory::create(narrays, ngroups, ncoords);
+        
+    CGArrayArrayData *array = (CGArrayArrayData*)storage;
+    
+    return CGSharedPtr<CGArrayArrayData>(array);
+}
+
 /** Extract from a binary datastream */
 QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, 
                                        CoordGroupArrayArray &cgarray)
@@ -2729,10 +2751,10 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
         
         //read the prime metadata
         ds >> ncgarrays >> ncgroups >> ncoords;
-        
+    
         //create space for this data
-        CGSharedPtr<CGArrayArrayData> d( new CGArrayArrayData(ncgarrays, 
-                                                        ncgroups, ncoords) );
+        CGSharedPtr<CGArrayArrayData> d = createCGArrayArray(ncgarrays, ncgroups,
+                                                             ncoords);
             
         CGArrayArrayData &array = *d;
                                                                                                                                                 
@@ -2744,7 +2766,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
             
             array.setNCGroupsInArray(i, n);
         }
-        
+
         for (quint32 i=0; i<ncgroups; ++i)
         {
             quint32 n;
@@ -2766,10 +2788,12 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
         {
             ds >> array.coordsData()[i];
         }
+        
+        cgarray.d = d;
     }
     else
         throw version_error(v, "1", r_cgarrayarray, CODELOC);
-        
+
     return ds;
 }
 
@@ -2788,20 +2812,6 @@ CoordGroupArrayArray::CoordGroupArrayArray(const CoordGroup &cgroup)
 CoordGroupArrayArray::CoordGroupArrayArray(const CoordGroupArray &cgarray)
                      : d( cgarray.d->extract() )
 {}
-
-static CGSharedPtr<CGArrayArrayData> createCGArrayArray(quint32 narrays,
-                                        quint32 ngroups, quint32 ncoords)
-{
-    if (narrays == 0)
-        return ::getSharedNull();
-
-    //construct space for narrays arrays of ngroups CoordGroups of ncoords coordinates
-    char *storage = CGMemory::create(narrays, ngroups, ncoords);
-        
-    CGArrayArrayData *array = (CGArrayArrayData*)storage;
-    
-    return CGSharedPtr<CGArrayArrayData>(array);
-}
 
 /** Construct an array from a vector of arrays */
 CoordGroupArrayArray::CoordGroupArrayArray(const QVector<CoordGroupArray> &cgarrays)

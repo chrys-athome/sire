@@ -92,9 +92,6 @@ public:
     
     void operator()(void const *ptr) const
     {
-        qDebug() << "Deleting the pointer" << ptr << "with ID" << id
-                 << QMetaType::typeName(id);
-                 
         QMetaType::destroy(id, const_cast<void*>(ptr));
     }
 

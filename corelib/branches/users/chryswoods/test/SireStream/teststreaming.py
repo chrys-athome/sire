@@ -68,30 +68,45 @@ system = System()
 
 system.add(cljff)
 
-print "Initial energy = %s" % system.energy()
+lam = Symbol("lambda")
+
+system.setComponent( lam, 0.2 )
+system.setComponent( system.totalComponent(), lam * cljff.components().total() )
 
 mc = RigidBodyMC(cljff.group(MGIdx(0)))
 
 moves = SameMoves(mc)
 
-#try streaming the system
-t.start()
+def testStream(c):
+    t.start()
+
+    data = Sire.Stream.save(c)
+
+    ms = t.elapsed()
+
+    print "Streaming %s took %d ms" % (c.what(), ms)
+    print "%s takes up %d bytes" % (c.what(),data.size())
+
+    t.start()
+
+    c2 = Sire.Stream.load(data)
+
+    ms = t.elapsed()
+  
+    print "Reading the data took %d ms" % ms
+    print c
+    print c2
+
+testStream(system)
 
 data = Sire.Stream.save(system)
 
-ms = t.elapsed()
+print system.energy()
+print system.components()
+print system.energies()
 
-print "Streaming the system took %d ms" % ms
-print "System takes up %d bytes" % data.size()
+system = Sire.Stream.load(data)
 
-t.start()
-
-s2 = Sire.Stream.load(data)
-
-ms = t.elapsed()
-
-print "Reading the system took %d ms" % ms
-print system
-print s2
-
-
+print system.energy()
+print system.components()
+print system.energies()

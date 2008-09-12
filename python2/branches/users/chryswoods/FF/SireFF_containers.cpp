@@ -41,6 +41,8 @@
 #include "Base/convertpackedarray.hpp"
 
 #include "SireFF/ffname.h"
+#include "SireFF/forcefield.h"
+
 #include "SireBase/properties.h"
 
 using namespace SireFF;
@@ -50,6 +52,8 @@ using boost::python::register_tuple;
 
 void register_SireFF_containers()
 {
+    register_list< QVector<ForceField> >();
+
     #if QT_VERSION >= 0x402000
     register_dict< QHash<FFName,Properties>();
 

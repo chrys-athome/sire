@@ -85,6 +85,9 @@ public:
     
     virtual const char* what() const=0;
     
+    virtual void load(QDataStream &ds);
+    virtual void save(QDataStream &ds) const;
+    
     virtual Expression toExpression() const=0;
     
     virtual double value() const=0;
@@ -139,6 +142,9 @@ public:
         return "SireFF::FFSymbolValue";
     }
     
+    void load(QDataStream &ds);
+    void save(QDataStream &ds) const;
+    
     Expression toExpression() const;
     
     double value() const;
@@ -172,6 +178,9 @@ public:
     {
         return "SireFF::FFSymbolFF";
     }
+    
+    void load(QDataStream &ds);
+    void save(QDataStream &ds) const;
 
     Expression toExpression() const;
     
@@ -207,6 +216,9 @@ public:
     {
         return "SireFF::FFSymbolExpression";
     }
+    
+    void load(QDataStream &ds);
+    void save(QDataStream &ds) const;
 
     Expression toExpression() const;
     
@@ -278,6 +290,9 @@ public:
         return "SireFF::FFTotalExpression";
     }
     
+    void load(QDataStream &ds);
+    void save(QDataStream &ds) const;
+    
     Expression toExpression() const;
 
     double value() const;
@@ -296,6 +311,62 @@ public:
 } // end of namespace SireFF
 
 using namespace SireFF::detail;
+
+QDataStream& operator<<(QDataStream &ds, const FFSymbolPtr &ffsymbol)
+{
+    if (ffsymbol.get() == 0)
+    {
+        ds << QString::null;
+    }
+    else
+    {
+        ds << QString( ffsymbol->what() );
+        ffsymbol->save(ds);
+    }
+    
+    return ds;
+}
+
+QDataStream& operator>>(QDataStream &ds, FFSymbolPtr &ffsymbol)
+{
+    QString type_name;
+    
+    ds >> type_name;
+    
+    if (type_name.isEmpty())
+    {
+        ffsymbol.reset();
+    }
+    else 
+    {
+        if (type_name == QLatin1String("SireFF::FFSymbolFF"))
+        {
+            ffsymbol.reset( new FFSymbolFF() );
+        }
+        else if (type_name == QLatin1String("SireFF::FFSymbolValue"))
+        {
+            ffsymbol.reset( new FFSymbolValue() );
+        }
+        else if (type_name == QLatin1String("SireFF::FFSymbolExpression"))
+        {
+            ffsymbol.reset( new FFSymbolExpression() );
+        }
+        else if (type_name == QLatin1String("SireFF::FFTotalExpression"))
+        {
+            ffsymbol.reset( new FFTotalExpression() );
+        }
+        else
+        {
+            throw SireError::program_bug( QObject::tr(
+                "Internal error with ForceFields - it can't recognise the "
+                "FFSymbol type %1.").arg(type_name), CODELOC );
+        }
+        
+        ffsymbol->load(ds);
+    }
+    
+    return ds;
+}
 
 ///////////
 /////////// Implementation of FFSymbol
@@ -318,6 +389,16 @@ const Symbol& FFSymbol::symbol() const
     return s;
 }
 
+void FFSymbol::load(QDataStream &ds)
+{
+    ds >> s;
+}
+
+void FFSymbol::save(QDataStream &ds) const
+{
+    ds << s;
+}
+
 ///////////
 /////////// Implementation of FFSymbolValue
 ///////////
@@ -335,6 +416,18 @@ FFSymbolValue::FFSymbolValue(const FFSymbolValue &other)
 
 FFSymbolValue::~FFSymbolValue()
 {}
+
+void FFSymbolValue::load(QDataStream &ds)
+{
+    ds >> v;
+    FFSymbol::load(ds);
+}
+
+void FFSymbolValue::save(QDataStream &ds) const
+{
+    ds << v;
+    FFSymbol::save(ds);
+}
 
 Expression FFSymbolValue::toExpression() const
 {
@@ -378,6 +471,18 @@ FFSymbolFF::FFSymbolFF(const FFSymbolFF &other)
 
 FFSymbolFF::~FFSymbolFF()
 {}
+
+void FFSymbolFF::load(QDataStream &ds)
+{
+    ds >> ffidx;
+    FFSymbol::load(ds);
+}
+
+void FFSymbolFF::save(QDataStream &ds) const
+{
+    ds << ffidx;
+    FFSymbol::save(ds);
+}
 
 FFIdx FFSymbolFF::ffIdx() const
 {
@@ -497,6 +602,21 @@ FFSymbolExpression::FFSymbolExpression(const FFSymbolExpression &other)
 
 FFSymbolExpression::~FFSymbolExpression()
 {}
+
+void FFSymbolExpression::load(QDataStream &ds)
+{
+    ds >> ffexpression;
+    
+    components.clear();
+    
+    FFSymbol::load(ds);
+}
+
+void FFSymbolExpression::save(QDataStream &ds) const
+{
+    ds << ffexpression;
+    FFSymbol::save(ds);
+}
 
 const Expression& FFSymbolExpression::expression() const
 {
@@ -638,6 +758,16 @@ FFTotalExpression::FFTotalExpression(const FFTotalExpression &other)
 FFTotalExpression::~FFTotalExpression()
 {}
 
+void FFTotalExpression::load(QDataStream &ds)
+{
+    FFSymbol::load(ds);
+}
+
+void FFTotalExpression::save(QDataStream &ds) const
+{
+    FFSymbol::save(ds);
+}
+
 Expression FFTotalExpression::toExpression() const
 {
     return Expression(this->symbol());
@@ -700,7 +830,9 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const ForceFields &ffield
     
     SharedDataStream sds(ds);
     
-    sds << ffields.ffields_by_idx;
+    //write out all of the forcefields
+    sds << ffields.ffields_by_idx
+        << ffields.ffsymbols;
     
     return ds;
 }
@@ -713,11 +845,18 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, ForceFields &ffields)
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        
-        sds >> ffields.ffields_by_idx;
-        
+
+        //read into a new object, as a lot can go wrong!
+        ForceFields new_ffields;
+
+        //read in the forcefields
+        sds >> new_ffields.ffields_by_idx
+            >> new_ffields.ffsymbols;
+
         //rebuild the index
-        ffields.rebuildIndex();
+        new_ffields.rebuildIndex();
+        
+        ffields = new_ffields;
     }
     else
         throw version_error(v, "1", r_ffields, CODELOC);
@@ -1291,6 +1430,12 @@ void ForceFields::setComponent(const Symbol &symbol, const Expression &expressio
         this->operator=(old_state);
         throw;
     }
+}
+
+/** Return the symbols representing all of the energy components */
+Symbols ForceFields::components() const
+{
+    return ffsymbols.keys().toSet();
 }
 
 /** Return the forcefield component symbol, value or expression that matches

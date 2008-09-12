@@ -189,6 +189,8 @@ public:
     void setComponent(const Symbol &symbol, double value);
     void setComponent(const Symbol &symbol, const SireCAS::Expression &expression);
     
+    Symbols components() const;
+    
     SireCAS::Expression getComponent(const Symbol &symbol) const;
     
     QHash<FFName,Property> property(const QString &name) const;

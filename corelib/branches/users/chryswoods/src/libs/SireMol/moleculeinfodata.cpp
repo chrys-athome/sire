@@ -550,7 +550,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
             >> molinfo.atoms_by_index
             >> molinfo.res_by_index >> molinfo.chains_by_index
             >> molinfo.seg_by_index >> molinfo.cg_by_index;
-            
+
         //reconstruct the name and number indexes
         molinfo.rebuildNameAndNumberIndexes();
     }

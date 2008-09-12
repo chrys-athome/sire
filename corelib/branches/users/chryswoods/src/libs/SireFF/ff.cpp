@@ -206,13 +206,24 @@ const FFName& FF::name() const
 /** Set the name of this forcefield */
 void FF::setName(const QString &name)
 {
-    if (ffname != FFName(name))
+    FFName old_name = ffname;
+
+    try
     {
-        ffname = FFName(name);
+        if (ffname != FFName(name))
+        {
+            ffname = FFName(name);
+        }
+    
+        this->_pvt_updateName();
+
         this->incrementVersion();
     }
-    
-    this->_pvt_updateName();
+    catch(...)
+    {
+        ffname = old_name;
+        throw;
+    }
 }
 
 /** Set the name of the forcefield groups identified by 'mgid' 

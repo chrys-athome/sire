@@ -37,8 +37,12 @@ SIRE_BEGIN_HEADER
 
 namespace SireFF
 {
+class NullFF;
 class ForceField;
 }
+
+QDataStream& operator<<(QDataStream&, const SireFF::NullFF&);
+QDataStream& operator>>(QDataStream&, SireFF::NullFF&);
 
 QDataStream& operator<<(QDataStream&, const SireFF::ForceField&);
 QDataStream& operator>>(QDataStream&, SireFF::ForceField&);
@@ -47,6 +51,111 @@ namespace SireFF
 {
 
 using SireBase::PropertyBase;
+
+/** This is a completely null forcefield. It has zero energy!
+
+    @author Christopher Woods
+*/
+class SIREFF_EXPORT NullFF : public SireBase::ConcreteProperty<NullFF,FF>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const NullFF&);
+friend QDataStream& ::operator>>(QDataStream&, NullFF&);
+
+public:
+    NullFF();
+    NullFF(const NullFF &other);
+    
+    ~NullFF();
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<NullFF>() );
+    }
+    
+    NullFF& operator=(const NullFF &other);
+    
+    bool operator==(const NullFF &other) const;
+    bool operator!=(const NullFF &other) const;
+    
+    const MolGroup& at(MGNum mgnum) const;
+    
+    QString toString() const;
+
+    bool setProperty(const QString &name, const Property &value);
+    const Property& property(const QString &name) const;
+    bool containsProperty(const QString &name) const;
+    const Properties& properties() const;
+    void mustNowRecalculateFromScratch();
+
+protected:
+    const FFComponent& _pvt_components() const;
+    void recalculateEnergy();
+    void group_add(quint32 i, const MoleculeView &molview,
+                   const PropertyMap &map);
+    void group_add(quint32 i, const ViewsOfMol &molviews, 
+                   const PropertyMap &map);
+    void group_add(quint32 i, const Molecules &molecules, 
+                   const PropertyMap &map);
+    void group_add(quint32 i, const MolGroup &molgroup, 
+                   const PropertyMap &map);
+    bool group_addIfUnique(quint32 i, const MoleculeView &molview, 
+                           const PropertyMap &map);
+    ViewsOfMol group_addIfUnique(quint32 i, const ViewsOfMol &molviews, 
+                                 const PropertyMap &map);
+    QList<ViewsOfMol> group_addIfUnique(quint32 i, const Molecules &molecules, 
+                                        const PropertyMap &map);
+    QList<ViewsOfMol> group_addIfUnique(quint32 i, const MolGroup &molgroup, 
+                                        const PropertyMap &map);
+
+    bool group_remove(quint32 i, const MoleculeView &molview);
+    ViewsOfMol group_remove(quint32 i, const ViewsOfMol &molviews);
+    QList<ViewsOfMol> group_remove(quint32 i, const Molecules &molecules);
+    QList<ViewsOfMol> group_remove(quint32 i, const MolGroup &molgroup);
+    
+    bool group_removeAll(quint32 i, const MoleculeView &molview);
+    ViewsOfMol group_removeAll(quint32 i, const ViewsOfMol &molviews);
+    QList<ViewsOfMol> group_removeAll(quint32 i, const Molecules &molecules);
+    QList<ViewsOfMol> group_removeAll(quint32 i, const MolGroup &molgroup);
+
+    ViewsOfMol group_remove(quint32 i, MolNum molnum);
+    QList<ViewsOfMol> group_remove(quint32 i, const QSet<MolNum> &molnums);
+
+    void group_removeAll(quint32 i);
+
+    bool group_update(quint32 i, const MoleculeData &moldata);
+
+    QList<Molecule> group_update(quint32 i, const Molecules &molecules);
+    QList<Molecule> group_update(quint32 i, const MolGroup &molgroup);
+    
+    bool group_setContents(quint32 i, const MoleculeView &molview, 
+                           const PropertyMap &map);
+    bool group_setContents(quint32 i, const ViewsOfMol &molviews, 
+                           const PropertyMap &map);
+    bool group_setContents(quint32 i, const Molecules &molecules, 
+                           const PropertyMap &map);
+    bool group_setContents(quint32 i, const MolGroup &molgroup, 
+                           const PropertyMap &map);
+
+    void _pvt_updateName();
+    void _pvt_restore(const ForceField &ffield);
+
+    const MolGroup& getGroup(MGNum mgnum) const;
+    
+    void getGroups(const QList<MGNum> &mgnums,
+                   QVarLengthArray<const MolGroup*,10> &groups) const;
+
+    QHash<MGNum,const MolGroup*> getGroups() const;
+    
+    void group_setName(quint32 i, const QString &new_name);
+
+private:
+    NullFF(bool);
+    
+    static NullFF& getSharedNullFF();
+
+    Properties props;
+};
 
 /** This is the polymorphic pointer holder for the 
     ForceField (FF derived) classes.
@@ -95,7 +204,10 @@ public:
 
 }
 
+Q_DECLARE_METATYPE(SireFF::NullFF);
 Q_DECLARE_METATYPE(SireFF::ForceField);
+
+SIRE_EXPOSE_CLASS( SireFF::NullFF )
 
 SIRE_EXPOSE_PROPERTY( SireFF::ForceField, SireFF::FF )
 

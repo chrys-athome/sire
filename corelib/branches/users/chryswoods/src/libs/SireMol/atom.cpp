@@ -48,6 +48,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireMol;
 using namespace SireStream;
 
@@ -61,8 +63,10 @@ static const RegisterMetaType<AtomProp> r_atomprop(MAGIC_ONLY,
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomProp &atomprop)
 {
-    writeHeader(ds, r_atomprop, 1)
-         << static_cast<const MolViewProperty&>(atomprop);
+    return ds;
+
+    writeHeader(ds, r_atomprop, 1);
+        // << static_cast<const MolViewProperty&>(atomprop);
          
     return ds;
 }
@@ -70,14 +74,25 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomProp &atomprop
 /** Extract from a binary datastream */
 QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomProp &atomprop)
 {
+    return ds;
+
+    qDebug() << CODELOC;
+
     VersionID v = readHeader(ds, r_atomprop);
+
+    qDebug() << CODELOC;
     
     if (v == 1)
     {
-        ds >> static_cast<MolViewProperty&>(atomprop);
+    qDebug() << CODELOC;
+        //ds >> static_cast<MolViewProperty&>(atomprop);
+
+    qDebug() << CODELOC;
     }
     else
         throw version_error(v, "1", r_atomprop, CODELOC);
+
+    qDebug() << CODELOC;
         
     return ds;
 }

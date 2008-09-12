@@ -143,9 +143,14 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MoleculeData &moldata)
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        
-        sds >> moldata.molinfo >> moldata.props 
-            >> moldata.molname >> moldata.molnum;
+
+        sds >> moldata.molinfo;
+
+        sds >> moldata.props;
+
+        sds >> moldata.molname;
+
+        sds >> moldata.molnum;
 
         //get a versions object for this molecule
         moldata.vrsns = MoleculeData::registerMolecule(moldata.molnum);

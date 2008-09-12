@@ -91,6 +91,23 @@ Values::Values(const QHash<Symbol,double> &values)
 Values::Values(const Values &other) : vals(other.vals)
 {}
 
+/** Return a string representation of these values */
+QString Values::toString() const
+{
+    QStringList words;
+    
+    for (QHash<SymbolID,double>::const_iterator it = vals.constBegin();
+         it != vals.constEnd();
+         ++it)
+    {
+        words.append( QString("%1 == %2")
+                            .arg(Symbol(it.key()).toString())
+                            .arg(it.value()) );
+    }
+    
+    return QString("{ %1 }").arg( words.join(", ") );
+}
+
 /** Construct from the passed values */
 Values::Values(const SymbolValue &val0)
 {

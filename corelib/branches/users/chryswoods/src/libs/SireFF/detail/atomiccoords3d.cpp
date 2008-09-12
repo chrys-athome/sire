@@ -37,7 +37,11 @@
 
 #include "SireMol/mover.hpp"
 
+#include "SireStream/shareddatastream.h"
+
 #include "SireError/errors.h"
+
+#include <QDebug>
 
 using namespace SireFF;
 using namespace SireFF::detail;
@@ -45,11 +49,16 @@ using namespace SireFF::detail;
 using namespace SireVol;
 using namespace SireMol;
 
+using namespace SireStream;
+
 /** Serialise to a binary datastream */
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
                                       const AtomicCoords3D &coords)
 {
-    ds << coords.coords;
+    SharedDataStream sds(ds);
+
+    sds << coords.coords;
+    
     return ds;
 }
 
@@ -57,7 +66,10 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
 QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
                                       AtomicCoords3D &coords)
 {
-    ds >> coords.coords;
+    SharedDataStream sds(ds);
+
+    sds >> coords.coords;
+    
     return ds;
 }
 

@@ -140,6 +140,8 @@ public:
 
     Values& operator+=(const Values &other);
 
+    QString toString() const;
+
 private:
 
     /** Hash mapping Symbol IDs to actual numerical values */

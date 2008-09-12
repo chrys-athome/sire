@@ -252,40 +252,6 @@ private:
     int id;
 };
 
-template<class T>
-class MetaType
-{
-public:
-    MetaType()
-    {
-        magicid = getMagic(this->typeName());
-    }
-
-    ~MetaType()
-    {}
-
-    static MagicID magicID()
-    {
-        return magicid;
-    }
-
-    static int ID()
-    {
-        return qMetaTypeId<T>();
-    }
-
-    static const char* typeName()
-    {
-        return QMetaType::typeName( MetaType<T>::ID() );
-    }
-
-private:
-    static MagicID magicid;
-};
-
-template<class T>
-MagicID MetaType<T>::magicid(0);
-
 /** This is used to register the type 'T' - this
     needs to be called once for each public type.
 
@@ -298,9 +264,9 @@ public:
 
     /** Use this constructor to register a concrete class */
     RegisterMetaType()
-        : RegisterMetaTypeBase( MetaType<T>::magicID(),
-                                MetaType<T>::typeName(),
-                                MetaType<T>::ID() )
+        : RegisterMetaTypeBase( getMagic( QMetaType::typeName( qMetaTypeId<T>() ) ),
+                                QMetaType::typeName( qMetaTypeId<T>() ),
+                                qMetaTypeId<T>() )
     {
         qRegisterMetaType<T>(this->typeName());
         qRegisterMetaTypeStreamOperators<T>(this->typeName());
@@ -313,9 +279,9 @@ public:
 
     /** Use this constructor to register a class that cannot be streamed */
     RegisterMetaType(NoStreamEnum )
-        : RegisterMetaTypeBase( MetaType<T>::magicID(),
-                                MetaType<T>::typeName(),
-                                MetaType<T>::ID() )
+        : RegisterMetaTypeBase( getMagic( QMetaType::typeName( qMetaTypeId<T>() ) ),
+                                QMetaType::typeName( qMetaTypeId<T>() ),
+                                qMetaTypeId<T>() )
     {
         qRegisterMetaType<T>(this->typeName());
     }
@@ -333,7 +299,6 @@ class XMLStream; // This class is used to stream objects to and from XML files
 
 } // namespace SireStream
 
-using Sire::MetaType;
 using Sire::RegisterMetaTypeBase;
 using Sire::RegisterMetaType;
 using Sire::MAGIC_ONLY;

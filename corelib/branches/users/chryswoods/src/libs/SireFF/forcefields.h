@@ -55,6 +55,8 @@ using SireMol::Molecules;
 using SireMol::ViewsOfMol;
 using SireMol::MoleculeView;
 
+using SireCAS::Symbols;
+
 namespace detail
 {
 class FFSymbol;
@@ -126,6 +128,8 @@ public:
     
     SireUnits::Dimension::Energy energy();
     SireUnits::Dimension::Energy energy(const Symbol &component);
+    
+    Symbols components() const;
     
     Values energies(const QSet<Symbol> &components);
     Values energies();

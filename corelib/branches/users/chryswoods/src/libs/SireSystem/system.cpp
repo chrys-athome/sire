@@ -702,6 +702,13 @@ Expression System::getComponent(const Symbol &symbol) const
     return this->_pvt_forceFields().getComponent(symbol);
 }
 
+/** Return the symbols representing all of the energy components of
+    the system */
+Symbols System::components() const
+{
+    return this->_pvt_forceFields().components();
+}
+
 /** Return the values of the property called 'name' in all of the 
     forcefields that contain this property
     

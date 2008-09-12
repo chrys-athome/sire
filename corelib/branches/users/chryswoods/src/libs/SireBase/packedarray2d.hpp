@@ -33,6 +33,8 @@
 
 #include "packedarray2d.h"
 
+#include "SireStream/shareddatastream.h"
+
 #include <boost/assert.hpp>
 #include <boost/type_traits/is_class.hpp>
 
@@ -2022,20 +2024,25 @@ QDataStream& operator<<(QDataStream &ds,
 {
     SireBase::detail::writePackedArray2DHeader(ds, 1);
     
+    SireStream::SharedDataStream sds(ds);
+    
     //serialise the number of arrays in this array
-    ds << quint32(arrays.count());
+    sds << quint32(arrays.count());
+    
+    if (arrays.count() == 0)
+        return ds;
     
     //now go through each array and serialise the number of values
     //in each array
     for (int i=0; i<arrays.count(); ++i)
     {
-        ds << quint32( arrays.constData()[i].count() );
+        sds << quint32( arrays.constData()[i].count() );
     }
     
     //now serialise all of the data
     for (int i=0; i<arrays.nValues(); ++i)
     {
-        ds << arrays.constValueData()[i];
+        sds << arrays.constValueData()[i];
     }
     
     return ds;
@@ -2052,7 +2059,9 @@ QDataStream& operator>>(QDataStream &ds,
     //get the number of arrays in this array
     quint32 narrays;
     
-    ds >> narrays;
+    SireStream::SharedDataStream sds(ds);
+    
+    sds >> narrays;
     
     if (narrays == 0)
     {
@@ -2065,7 +2074,7 @@ QDataStream& operator>>(QDataStream &ds,
     for (quint32 i=0; i<narrays; ++i)
     {
         quint32 nvals;
-        ds >> nvals;
+        sds >> nvals;
         tmp_arrays[i] = QVector<T>(nvals);
     }
     
@@ -2074,9 +2083,9 @@ QDataStream& operator>>(QDataStream &ds,
     //now extract all of the objects...
     T *data = new_arrays.valueData();
     
-    for (int i=0; i<arrays.nValues(); ++i)
+    for (int i=0; i<new_arrays.nValues(); ++i)
     {
-        ds >> data[i];
+        sds >> data[i];
     }
     
     arrays = new_arrays;
