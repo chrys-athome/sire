@@ -33,6 +33,8 @@
 
 #include <QDataStream>
 #include <QSharedDataPointer>
+#include <QList>
+#include <QHash>
 
 #include <boost/shared_ptr.hpp>
 
@@ -46,6 +48,163 @@ namespace SireStream
 
 using SireBase::SharedDataPointer;
 using SireBase::SharedPolyPointer;
+
+namespace private_detail
+{
+
+/** This is a holder class for all types of shared data. A virtual class
+    is needed to ensure that the destructors of the shared copies in the 
+    registry are called properly */
+class SIRESTREAM_EXPORT SharedDataHolder
+{
+public:
+    SharedDataHolder();
+    virtual ~SharedDataHolder();
+    
+    template<class T>
+    const T& sharedData() const;
+    
+protected:
+    void throwCastingError() const;
+};
+
+/** This is the type-specialised version of SharedDataHolder */
+template<class T>
+class SIRESTREAM_EXPORT SharedDataHolderT : public SharedDataHolder
+{
+public:
+    SharedDataHolderT() : SharedDataHolder()
+    {}
+    
+    SharedDataHolderT(const T &shared_data) : SharedDataHolder(), data(shared_data)
+    {}
+    
+    ~SharedDataHolderT()
+    {}
+    
+    const T& sharedData() const
+    {
+        return data;
+    }
+
+private:
+    /** Copy of the shared data */
+    T data;
+};
+
+template<class T>
+const T& SharedDataHolder::sharedData() const
+{
+    const SharedDataHolderT<T> *this_ptr 
+                    = dynamic_cast<const SharedDataHolderT<T>*>(this);
+                    
+    if (not this_ptr)
+        this->throwCastingError();
+        
+    return this_ptr->sharedData();
+}
+
+/** This class is used by SharedDataStream to provide a registry of shared
+    objects that have either been read or written already (and so don't
+    need reading or writing again)
+    
+    @author Christopher Woods
+*/
+class SIRESTREAM_EXPORT SharedDataRegistry
+{
+public:
+    static boost::shared_ptr<SharedDataRegistry> construct(QDataStream &ds);
+
+    ~SharedDataRegistry();
+
+    int version() const;
+    
+    void versionError(const QString &supported_versions) const;
+
+    template<class T>
+    const T& getSharedObject(quint32 id) const;
+    
+    const QString& getString(quint32 id) const;
+    
+    template<class T>
+    quint32 getID(const T &shared_object, const void *ptr, bool *first_copy);
+
+    quint32 getStringID(const QString &str, bool *first_copy);
+    
+    template<class T>
+    void loadedObject(quint32 id, const T &shared_object, const void *ptr);
+    
+    void loadedString(quint32 id, const QString &str);
+    
+private:
+    SharedDataRegistry();
+
+    void assertValidID(quint32 id) const;
+    
+    void throwIDError(quint32 registered_id) const;
+
+    /** Actual pointers to the copies of shared data stored in 
+        this registry - indexed by registry ID */
+    QHash< quint32, boost::shared_ptr<SharedDataHolder> > objects_by_id;
+
+    /** The keys for each piece of shared data, mapped to the 
+        index of that data in the registry. The key is normally the 
+        pointer to the actual underlying piece of shared data */
+    QHash<const void*,quint32> objects_by_key;
+    
+    /** The locations of all of the shared strings */
+    QHash<QString,quint32> strings_by_key;
+    
+    /** Pointer to the QDataStream object associated with this registry */
+    QDataStream *ds;
+};
+
+template<class T>
+const T& SharedDataRegistry::getSharedObject(quint32 id) const
+{
+    this->assertValidID(id);
+    
+    return objects_by_id[id]->sharedData<T>();
+}
+
+template<class T>
+quint32 SharedDataRegistry::getID(const T &shared_object, const void *ptr, 
+                                  bool *first_copy)
+{
+    if (objects_by_key.contains(ptr))
+    {
+        *first_copy = false;
+    }
+    else
+    {
+        *first_copy = true;
+        objects_by_id.insert( quint32(objects_by_id.count()),
+                              boost::shared_ptr<SharedDataHolder>(
+                                     new SharedDataHolderT<T>(shared_object)) );
+                                     
+        objects_by_key.insert(ptr, objects_by_id.count() - 1);
+    }
+
+    return objects_by_key[ptr];
+}
+
+template<class T>
+void SharedDataRegistry::loadedObject(quint32 id, const T &shared_object, 
+                                      const void *ptr)
+{
+    if (not objects_by_key.contains(ptr))
+    {
+        if (objects_by_id.contains(id))
+            this->throwIDError(id);
+
+        objects_by_id.insert( id, boost::shared_ptr<SharedDataHolder>(
+                                     new SharedDataHolderT<T>(shared_object)) );
+                                     
+        objects_by_key.insert(ptr, id);
+    }
+}
+
+}
 
 /**
 This is a streaming class that is used to help stream implicitly shared data. 
@@ -93,10 +252,13 @@ public:
     SharedDataStream& operator>>(boost::shared_ptr<T> &obj);
 
 private:
+    /** Shared pointer to the registry of shared objects that 
+        have already been streamed */
+    boost::shared_ptr<private_detail::SharedDataRegistry> registry;
+
     /** Reference to the actual QDataStream that is used to
         stream the data */
     QDataStream &ds;
-
 };
 
 /** Default serialisation function used as a wrapper around the standard
@@ -127,7 +289,18 @@ SharedDataStream& SharedDataStream::operator>>(T &obj)
 template<class T>
 SharedDataStream& SharedDataStream::operator<<(const QSharedDataPointer<T> &objptr)
 {
-    ds << *objptr;
+    //get the ID of this string in the registry
+    bool first_copy;
+    quint32 id = registry->getID(objptr, objptr.constData(), &first_copy);
+
+    ds << id << first_copy;
+
+    if (first_copy)
+    {
+        //this is the first copy of this string and must be streamed
+        ds << *objptr;
+    }
+
     return *this;
 }
 
@@ -138,7 +311,27 @@ SharedDataStream& SharedDataStream::operator<<(const QSharedDataPointer<T> &objp
 template<class T>
 SharedDataStream& SharedDataStream::operator>>(QSharedDataPointer<T> &objptr)
 {
-    ds >> *objptr;
+    if (registry->version() == 1)
+    {
+        quint32 id;
+        bool first_copy;
+        
+        ds >> id >> first_copy;
+        
+        if (first_copy)
+        {
+            //this is the first copy of this object
+            ds >> *objptr;
+            
+            //register the copy
+            registry->loadedObject(id, objptr, objptr.constData());
+        }
+        else
+            objptr = registry->getSharedObject< QSharedDataPointer<T> >(id);
+    }
+    else
+        registry->versionError("1");
+
     return *this;
 }
 
@@ -150,7 +343,18 @@ SharedDataStream& SharedDataStream::operator>>(QSharedDataPointer<T> &objptr)
 template<class T>
 SharedDataStream& SharedDataStream::operator<<(const SharedDataPointer<T> &objptr)
 {
-    ds << *objptr;
+    //get the ID of this string in the registry
+    bool first_copy;
+    quint32 id = registry->getID(objptr, objptr.constData(), &first_copy);
+
+    ds << id << first_copy;
+
+    if (first_copy)
+    {
+        //this is the first copy of this string and must be streamed
+        ds << *(objptr.constData());
+    }
+
     return *this;
 }
 
@@ -161,7 +365,27 @@ SharedDataStream& SharedDataStream::operator<<(const SharedDataPointer<T> &objpt
 template<class T>
 SharedDataStream& SharedDataStream::operator>>(SharedDataPointer<T> &objptr)
 {
-    ds >> *objptr;
+    if (registry->version() == 1)
+    {
+        quint32 id;
+        bool first_copy;
+        
+        ds >> id >> first_copy;
+
+        if (first_copy)
+        {
+            //this is the first copy of this object
+            ds >> *(objptr.data());
+            
+            //register the copy
+            registry->loadedObject(id, objptr, objptr.constData());
+        }
+        else
+            objptr = registry->getSharedObject< SharedDataPointer<T> >(id);
+    }
+    else
+        registry->versionError("1");
+
     return *this;
 }
 
@@ -173,7 +397,18 @@ SharedDataStream& SharedDataStream::operator>>(SharedDataPointer<T> &objptr)
 template<class T>
 SharedDataStream& SharedDataStream::operator<<(const SharedPolyPointer<T> &objptr)
 {
-    ds << objptr;
+    //get the ID of this string in the registry
+    bool first_copy;
+    quint32 id = registry->getID(objptr, objptr.constData(), &first_copy);
+
+    ds << id << first_copy;
+
+    if (first_copy)
+    {
+        //this is the first copy of this string and must be streamed
+        ds << objptr;
+    }
+
     return *this;
 }
 
@@ -184,7 +419,27 @@ SharedDataStream& SharedDataStream::operator<<(const SharedPolyPointer<T> &objpt
 template<class T>
 SharedDataStream& SharedDataStream::operator>>(SharedPolyPointer<T> &objptr)
 {
-    ds >> objptr;
+    if (registry->version() == 1)
+    {
+        quint32 id;
+        bool first_copy;
+        
+        ds >> id >> first_copy;
+        
+        if (first_copy)
+        {
+            //this is the first copy of this object
+            ds >> objptr;
+            
+            //register the copy
+            registry->loadedObject(id, objptr, objptr.constData());
+        }
+        else
+            objptr = registry->getSharedObject< SharedPolyPointer<T> >(id);
+    }
+    else
+        registry->versionError("1");
+
     return *this;
 }
 
@@ -196,7 +451,18 @@ SharedDataStream& SharedDataStream::operator>>(SharedPolyPointer<T> &objptr)
 template<class T>
 SharedDataStream& SharedDataStream::operator<<(const boost::shared_ptr<T> &objptr)
 {
-    ds << *objptr;
+    //get the ID of this string in the registry
+    bool first_copy;
+    quint32 id = registry->getID(objptr, objptr.get(), &first_copy);
+
+    ds << id << first_copy;
+
+    if (first_copy)
+    {
+        //this is the first copy of this string and must be streamed
+        ds << *objptr;
+    }
+
     return *this;
 }
 
@@ -207,9 +473,35 @@ SharedDataStream& SharedDataStream::operator<<(const boost::shared_ptr<T> &objpt
 template<class T>
 SharedDataStream& SharedDataStream::operator>>(boost::shared_ptr<T> &objptr)
 {
-    ds >> *objptr;
+    if (registry->version() == 1)
+    {
+        quint32 id;
+        bool first_copy;
+        
+        ds >> id >> first_copy;
+        
+        if (first_copy)
+        {
+            //this is the first copy of this object
+            ds >> *objptr;
+            
+            //register the copy
+            registry->loadedObject(id, objptr, objptr.get());
+        }
+        else
+            objptr = registry->getSharedObject< boost::shared_ptr<T> >(id);
+    }
+    else
+        registry->versionError("1");
+
     return *this;
 }
+
+template<>
+SharedDataStream& SharedDataStream::operator<<(const QString &str);
+
+template<>
+SharedDataStream& SharedDataStream::operator>>(QString &str);
 
 }
 

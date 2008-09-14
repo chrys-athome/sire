@@ -65,18 +65,32 @@ QByteArray streamDataSave( const void *object, const char *type_name )
             "registered with QMetaType. It cannot be streamed! (%2, %3)")
                 .arg(type_name).arg(id).arg(QMetaType::isRegistered(id)), CODELOC);
 
-    QByteArray data;
-    QDataStream ds(&data, QIODevice::WriteOnly);
-    
-    //save the object type name
-    ds << QString(type_name);
+    //use the QMetaType streaming function to save this object
+    QByteArray object_data;
+    QDataStream ds2(&object_data, QIODevice::WriteOnly);
 
-    //use the QMetaType streaming function to save this table
-    if (not QMetaType::save(ds, id, object))
+    if (not QMetaType::save(ds2, id, object))
         throw SireError::program_bug(QObject::tr(
             "There was an error saving the object of type \"%1\". "
             "Has the programmer remembered to add a RegisterMetaType for this class?")
                 .arg(type_name), CODELOC);
+
+    //compress the object data (level 3 compression seems best, giving
+    //about a ten-fold reduction for only a 30% increase in serialisation time)
+    object_data = qCompress(object_data, 3);
+
+    //now write a header for the object
+    QByteArray data;
+    QDataStream ds(&data, QIODevice::WriteOnly);
+    
+    //write a magic number - versions and loaded libraries
+    ///  writing magic
+
+    //now write the object name
+    ds << QString(type_name);
+    
+    //now write the object data
+    ds << object_data;
 
     return data;
 }
@@ -111,6 +125,10 @@ tuple<shared_ptr<void>,QString> SIRESTREAM_EXPORT load(const QByteArray &data)
 {
     QDataStream ds(data);
     
+    //read the magic
+    //read the version and the libraries and versions
+    //(die if the required libraries aren't loaded!)
+    
     QString type_name;
     ds >> type_name;
     
@@ -128,6 +146,15 @@ tuple<shared_ptr<void>,QString> SIRESTREAM_EXPORT load(const QByteArray &data)
               "this type has been loaded and that it has been registered "
               "with QMetaType.").arg(type_name), CODELOC );
     
+    //now read the data
+    QByteArray object_data;
+    ds >> object_data;
+    
+    //uncompress the data
+    object_data = qUncompress(object_data);
+    
+    QDataStream ds2(object_data);
+    
     //create a default-constructed object of this type
     shared_ptr<void> ptr( QMetaType::construct(id,0), detail::void_deleter(id) );
 
@@ -138,7 +165,7 @@ tuple<shared_ptr<void>,QString> SIRESTREAM_EXPORT load(const QByteArray &data)
                 "a program bug!!!").arg(type_name), CODELOC );
     
     //load the object from the datastream
-    if ( not QMetaType::load(ds, id, ptr.get()) )
+    if ( not QMetaType::load(ds2, id, ptr.get()) )
         throw SireError::program_bug(QObject::tr(
             "There was an error loading the object of type \"%1\"")
                  .arg(type_name), CODELOC);

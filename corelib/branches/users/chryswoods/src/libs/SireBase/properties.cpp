@@ -109,8 +109,27 @@ QDataStream& operator<<(QDataStream &ds, const PropertiesData &props)
 {
     SharedDataStream sds(ds);
     
-    sds << props.metadata << props.properties << props.props_metadata;
+    sds << props.metadata;
     
+    sds << quint32( props.properties.count() );
+    
+    for (QHash<QString,Property>::const_iterator it = props.properties.constBegin();
+         it != props.properties.constEnd();
+         ++it)
+    {
+        sds << it.key() << it.value();
+    }
+     
+    sds << quint32( props.props_metadata.count() );
+    
+    for (QHash<QString,Properties>::const_iterator 
+                                        it = props.props_metadata.constBegin();
+         it != props.props_metadata.constEnd();
+         ++it)
+    {
+        sds << it.key() << it.value();
+    }
+     
     return ds;
 }
 
@@ -119,7 +138,47 @@ QDataStream& operator>>(QDataStream &ds, PropertiesData &props)
 {
     SharedDataStream sds(ds);
     
-    sds >> props.metadata >> props.properties >> props.props_metadata;
+    sds >> props.metadata;
+    
+    quint32 nprops;
+    
+    sds >> nprops;
+    
+    props.properties.clear();
+    
+    if (nprops > 0)
+    {
+        props.properties.reserve(nprops);
+    
+        for (quint32 i=0; i<nprops; ++i)
+        {
+            QString key;
+            Property value;
+        
+            sds >> key >> value;
+        
+            props.properties.insert(key, value);
+        }
+    }
+    
+    sds >> nprops;
+    
+    props.props_metadata.clear();
+    
+    if (nprops > 0)
+    {
+        props.props_metadata.reserve(nprops);
+    
+        for (quint32 i=0; i<nprops; ++i)
+        {
+            QString key;
+            Properties value;
+        
+            sds >> key >> value;
+        
+            props.props_metadata.insert(key, value);
+        }
+    }
     
     return ds;
 }
