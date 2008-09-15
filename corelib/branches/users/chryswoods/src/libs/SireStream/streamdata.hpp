@@ -85,7 +85,7 @@ class SIRESTREAM_EXPORT FileHeader
 friend QDataStream& ::operator<<(QDataStream&, const FileHeader&);
 friend QDataStream& ::operator>>(QDataStream&, FileHeader&);
 
-friend void detail::streamDataSave( const void*, const char*, const QString& );
+friend QByteArray detail::streamDataSave( const void*, const char* );
 
 public:
     FileHeader();
@@ -116,6 +116,9 @@ public:
 
     QString repository() const;
     QString buildVersion() const;
+
+    void assertCompatible() const;
+    void assertNotCorrupted(const QByteArray &compressed_data) const;
 
 private:
     FileHeader(const QString &type_name,
@@ -245,6 +248,8 @@ void save(const T &old_obj, const QString &filename)
 SIRE_EXPOSE_FUNCTION( SireStream::getDataHeader )
 SIRE_EXPOSE_FUNCTION( SireStream::getLibraryVersion )
 SIRE_EXPOSE_FUNCTION( SireStream::getMinimumSupportedVersion )
+
+SIRE_EXPOSE_CLASS( SireStream::FileHeader )
 
 SIRE_END_HEADER
 

@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREBASE_MD5SUM_H
-#define SIREBASE_MD5SUM_H
+#ifndef SIRESTREAM_MD5SUM_H
+#define SIRESTREAM_MD5SUM_H
 
 #include "sireglobal.h"
 
@@ -39,7 +39,15 @@ class QFile;
 class QString;
 class QByteArray;
 
-namespace SireBase
+namespace SireStream
+{
+class MD5Sum;
+}
+
+QDataStream& operator<<(QDataStream&, const SireStream::MD5Sum&);
+QDataStream& operator>>(QDataStream&, SireStream::MD5Sum&);
+
+namespace SireStream
 {
 
 /**
@@ -49,8 +57,12 @@ namespace SireBase
  * @author Christopher Woods
  */
 
-class SIREBASE_EXPORT MD5Sum
+class SIRESTREAM_EXPORT MD5Sum
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const MD5Sum&);
+friend QDataStream& ::operator>>(QDataStream&, MD5Sum&);
+
 public:
   /** Construct a null MD5Sum */
   MD5Sum();
@@ -90,11 +102,14 @@ private:
    * @param sz The size of the buffer
    */
   void generate(const char *buffer, unsigned int sz);
+  
   /** Pointer to the storage of the md5 digest */
-  md5_byte_t* dgst;
+  md5_byte_t dgst[16];
 };
 
 }
+
+SIRE_EXPOSE_CLASS( SireStream::MD5Sum )
 
 SIRE_END_HEADER
 

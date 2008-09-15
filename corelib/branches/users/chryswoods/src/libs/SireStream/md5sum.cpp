@@ -33,7 +33,30 @@
 #include <QFile>
 #include <QByteArray>
 
-using namespace SireBase;
+using namespace SireStream;
+
+QDataStream SIRESTREAM_EXPORT &operator<<(QDataStream &ds, const MD5Sum &md5sum)
+{
+    for (int i=0; i<16; ++i)
+    {
+        ds << quint8(md5sum.dgst[i]);
+    }
+    
+    return ds;
+}
+
+QDataStream SIRESTREAM_EXPORT &operator>>(QDataStream &ds, MD5Sum &md5sum)
+{
+    for (int i=0; i<16; ++i)
+    {
+        quint8 c;
+        ds >> c;
+        
+        md5sum.dgst[i] = c;
+    }
+    
+    return ds;
+}
 
 MD5Sum::MD5Sum()
 {
@@ -70,16 +93,12 @@ MD5Sum::MD5Sum(const char *buffer, unsigned int sz)
 
 MD5Sum::MD5Sum(const MD5Sum &other)
 {
-    dgst = new md5_byte_t[16];
-
     for (int i=0; i<16; i++)
         dgst[i] = other.dgst[i];
 }
 
 MD5Sum::~ MD5Sum()
-{
-    delete[] dgst;
-}
+{}
 
 void MD5Sum::generate(const char* buffer, unsigned int sz)
 {
@@ -90,8 +109,7 @@ void MD5Sum::generate(const char* buffer, unsigned int sz)
     md5_init(&state);
     //make it decode the bits of the image
     md5_append(&state,(unsigned char*)buffer,sz);
-    //this variable will hold the returned digest
-    dgst = new md5_byte_t[16];
+
     //actually calculate the digest
     md5_finish(&state,dgst);
 }

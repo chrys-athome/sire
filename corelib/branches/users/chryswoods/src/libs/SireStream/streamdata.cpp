@@ -38,10 +38,11 @@
 
 #include "tostring.h"
 
-#include "sire_version.h"
+#include "sire_version.h"        // CONDITIONAL_INCLUDE
 
 #include "SireStream/version_error.h"
 
+#include "SireStream/errors.h"
 #include "SireError/errors.h"
 
 #include <QDebug>
@@ -351,9 +352,75 @@ quint32 LibraryInfo::getMinimumSupportedVersion(const QString &library)
     return libraryInfo().library_info.value(library).get<1>();
 }
 
+} // end of namespace detail
+} // end of namespace SireStream
+
 /////////
 ///////// Implementation of FileHeader
 /////////
+
+/** Write the header to the data stream */
+QDataStream SIRESTREAM_EXPORT &operator<<(QDataStream &ds,
+                                          const FileHeader &header)
+{
+    ds << quint32(1);
+
+    QByteArray data;
+    QDataStream ds2(&data, QIODevice::WriteOnly);
+    
+    ds2 << header.created_by
+        << header.created_when
+        << header.created_where
+        << header.type_name
+        << header.build_repository
+        << header.build_version
+        << header.required_libraries
+        << header.system_locale
+        << header.data_digest
+        << header.compressed_size
+        << header.uncompressed_size;
+        
+    ds << qCompress(data, 9);
+    
+    return ds;
+}
+
+/** Read the header from the data stream */
+QDataStream SIRESTREAM_EXPORT &operator>>(QDataStream &ds,
+                                          FileHeader &header)
+{
+    quint32 version;
+    ds >> version;
+    
+    if (version == 1)
+    {
+        QByteArray data;
+        ds >> data;
+
+        data = qUncompress(data);
+    
+        QDataStream ds2(data);
+    
+        ds2 >> header.created_by
+            >> header.created_when
+            >> header.created_where
+            >> header.type_name
+            >> header.build_repository
+            >> header.build_version
+            >> header.required_libraries
+            >> header.system_locale
+            >> header.data_digest
+            >> header.compressed_size
+            >> header.uncompressed_size;
+    }
+    else
+        throw version_error( QObject::tr(
+            "The header version (%1) is not recognised. Only header version "
+            "1 is supported in this program.")
+                .arg(version), CODELOC );
+        
+    return ds;
+}
 
 /** Null constructor */
 FileHeader::FileHeader() : compressed_size(0), uncompressed_size(0)
@@ -368,14 +435,14 @@ FileHeader::FileHeader(const QString &typ_name,
     created_by = std::getenv("USER");
     created_where = std::getenv("HOSTNAME");
 
-    created_when = QDataTime::currentDateTime();
+    created_when = QDateTime::currentDateTime();
     
     type_name = typ_name;
     
     build_repository = svn_repository_url;
     build_version = svn_version_number;
     
-    required_libraries = LibraryInfo::getLibraryHeader();
+    required_libraries = detail::LibraryInfo::getLibraryHeader();
     
     data_digest = MD5Sum(compressed_data);
     
@@ -475,7 +542,7 @@ const QLocale& FileHeader::locale() const
 QStringList FileHeader::requiredLibraries() const
 {
     QList< tuple<QString,quint32> > libs = 
-                    LibraryInfo::readLibraryHeader(required_libraries);
+                    detail::LibraryInfo::readLibraryHeader(required_libraries);
                     
     QStringList libraries;
     
@@ -508,7 +575,7 @@ bool FileHeader::requireLibrary(const QString &library) const
 quint32 FileHeader::requiredVersion(const QString &library) const
 {
     QList< tuple<QString,quint32> > libs = 
-                    LibraryInfo::readLibraryHeader(required_libraries);
+                    detail::LibraryInfo::readLibraryHeader(required_libraries);
                     
     for (QList< tuple<QString,quint32> >::const_iterator it = libs.constBegin();
          it != libs.constEnd();
@@ -540,9 +607,42 @@ QString FileHeader::buildVersion() const
     return build_version;
 }
 
+/** Assert that the libraries required are compatible with what has
+    been loaded */
+void FileHeader::assertCompatible() const
+{
+    detail::LibraryInfo::checkLibraryHeader(required_libraries);
+}
+
+/** Assert that the data in 'compressed_data' is not corrupt */
+void FileHeader::assertNotCorrupted(const QByteArray &compressed_data) const
+{
+    if (quint32(compressed_data.size()) != compressed_size)
+        throw SireStream::corrupted_data( QObject::tr(
+            "The data for the object %1 appears to be corrupt as it "
+            "is the wrong size (%2 bytes vs. the expected %3 bytes)")
+                .arg(type_name).arg(compressed_data.size())
+                .arg(compressed_size), CODELOC );
+                
+    MD5Sum new_digest(compressed_data);
+    
+    if (data_digest != new_digest)
+        throw SireStream::corrupted_data( QObject::tr(
+            "The data for the object %1 appears to be corrupt as the "
+            "digests don't match (%2 vs. %3)")
+                .arg(type_name)
+                .arg(new_digest.toString(), data_digest.toString()),
+                    CODELOC );
+}
+
 /////////
 ///////// Implementation of free functions
 /////////
+
+namespace SireStream
+{
+namespace detail
+{
 
 void throwStreamDataInvalidCast(const QString &load_type,
                                 const QString &cast_type)
@@ -639,108 +739,6 @@ private:
 namespace SireStream
 {
 
-namespace detail
-{
-
-QString getTypeName(QDataStream &ds)
-{
-    //read the magic
-    quint32 magic;
-    ds >> magic;
-    
-    if (magic != SIRE_MAGIC_NUMBER)
-        throw version_error( QObject::tr(
-            "This data does not appear to have been written by the SireStream::save() "
-            "function."), CODELOC );
-    
-    //read the version and the libraries and versions
-    //(die if the required libraries aren't loaded!)
-    QByteArray headerdata;
-    ds >> headerdata;
-    headerdata.clear();
-    
-    QString type_name;
-    ds >> type_name;
-
-    return type_name;
-}
-
-QStringList getRequiredLibraries(QDataStream &ds)
-{
-    //read the magic
-    quint32 magic;
-    ds >> magic;
-    
-    if (magic != SIRE_MAGIC_NUMBER)
-        throw version_error( QObject::tr(
-            "This data does not appear to have been written by the SireStream::save() "
-            "function."), CODELOC );
-    
-    //read the version and the libraries and versions
-    //(die if the required libraries aren't loaded!)
-    QByteArray headerdata;
-    ds >> headerdata;
-
-    QList< tuple<QString,quint32> > libs = LibraryInfo::readLibraryHeader(headerdata);
-    
-    QStringList libraries;
-    
-    for (QList< tuple<QString,quint32> >::const_iterator it = libs.constBegin();
-         it != libs.constEnd();
-         ++it)
-    {
-        libraries.append( it->get<0>() );
-    }
-    
-    return libraries;
-}
-
-}
-
-/** This function returns the type name of the object saved in the 
-    blob of binary data 'data' */
-QString SIRESTREAM_EXPORT getTypeName(const QByteArray &data)
-{
-    QDataStream ds(data);
-    return detail::getTypeName(ds);
-}
-
-/** This function returns the type name of the object saved in the 
-    file 'filename' */
-QString SIRESTREAM_EXPORT getTypeName(const QString &filename)
-{
-    QFile f(filename);
-    
-    if (not f.open(QIODevice::ReadOnly))
-        throw SireError::file_error(f, CODELOC);
-        
-    QDataStream ds(&f);
-    
-    return detail::getTypeName(ds);
-}
-
-/** This function returns the list of libraries that are required to load
-    the object packed into the blob of binary data 'data' */
-QStringList SIRESTREAM_EXPORT getRequiredLibraries(const QByteArray &data)
-{
-    QDataStream ds(data);
-    return detail::getRequiredLibraries(ds);
-}
-
-/** This function returns the list of libraries that are required to load
-    the object saved in the file 'filename' */
-QStringList SIRESTREAM_EXPORT getRequiredLibraries(const QString &filename)
-{
-    QFile f(filename);
-    
-    if (not f.open(QIODevice::ReadOnly))
-        throw SireError::file_error(f);
-        
-    QDataStream ds(&f);
-    
-    return detail::getRequiredLibraries(ds);
-}
-
 /** This function is called by each Sire library when it is loaded
     to register the library with the streaming system. You should
     not call this function yourself! */
@@ -789,31 +787,31 @@ tuple<shared_ptr<void>,QString> SIRESTREAM_EXPORT load(const QByteArray &data)
     
     //read the version and the libraries and versions
     //(die if the required libraries aren't loaded!)
-    QByteArray headerdata;
-    ds >> headerdata;
-    LibraryInfo::checkLibraryHeader(headerdata);
-    headerdata.clear();
+    FileHeader header;
+    ds >> header;
     
-    QString type_name;
-    ds >> type_name;
+    header.assertCompatible();
     
-    if (type_name.isEmpty())
+    if (header.dataType().isEmpty())
         //this is a null pointer!
         return tuple<shared_ptr<void>,QString>( shared_ptr<void>(), QString::null );
         
     //get the type that represents this name
-    int id = QMetaType::type( type_name.toLatin1().constData() );
+    int id = QMetaType::type( header.dataType().toLatin1().constData() );
 
     if ( id == 0 or not QMetaType::isRegistered(id) )
         throw SireError::unknown_type( QObject::tr(
               "Cannot deserialise an object of type \"%1\". "
               "Ensure that the library or module containing "
               "this type has been loaded and that it has been registered "
-              "with QMetaType.").arg(type_name), CODELOC );
+              "with QMetaType.").arg(header.dataType()), CODELOC );
     
     //now read the data
     QByteArray object_data;
     ds >> object_data;
+    
+    //validate that the data is correct
+    header.assertNotCorrupted(object_data);
     
     //uncompress the data
     object_data = qUncompress(object_data);
@@ -827,15 +825,15 @@ tuple<shared_ptr<void>,QString> SIRESTREAM_EXPORT load(const QByteArray &data)
         throw SireError::program_bug( QObject::tr(
                 "Could not create an object of type \"%1\" despite "
                 "this type having been registered with QMetaType. This is "
-                "a program bug!!!").arg(type_name), CODELOC );
+                "a program bug!!!").arg(header.dataType()), CODELOC );
     
     //load the object from the datastream
     if ( not QMetaType::load(ds2, id, ptr.get()) )
         throw SireError::program_bug(QObject::tr(
             "There was an error loading the object of type \"%1\"")
-                 .arg(type_name), CODELOC);
+                 .arg(header.dataType()), CODELOC);
 
-    return tuple<shared_ptr<void>,QString>( ptr, type_name );
+    return tuple<shared_ptr<void>,QString>( ptr, header.dataType() );
 }
 
 /** This loads an object from the specified file. This binary
@@ -858,4 +856,53 @@ tuple<shared_ptr<void>,QString> SIRESTREAM_EXPORT load(const QString &filename)
     return load(data);
 }
 
+/** Return the header for the data */
+FileHeader SIRESTREAM_EXPORT getDataHeader(const QByteArray &data)
+{
+    QDataStream ds(data);
+    
+    //read the magic
+    quint32 magic;
+    ds >> magic;
+    
+    if (magic != SIRE_MAGIC_NUMBER)
+        throw version_error( QObject::tr(
+            "This data does not appear to have been written by the SireStream::save() "
+            "function."), CODELOC );
+    
+    //read the version and the libraries and versions
+    //(die if the required libraries aren't loaded!)
+    FileHeader header;
+    ds >> header;
+
+    return header;
 }
+
+/** Return the header of the file */
+FileHeader SIRESTREAM_EXPORT getDataHeader(const QString &filename)
+{
+    QFile f(filename);
+    
+    if (not f.open( QIODevice::ReadOnly) )
+        throw SireError::file_error(f, CODELOC);
+
+    QDataStream ds(&f);
+    
+    //read the magic
+    quint32 magic;
+    ds >> magic;
+    
+    if (magic != SIRE_MAGIC_NUMBER)
+        throw version_error( QObject::tr(
+            "This data does not appear to have been written by the SireStream::save() "
+            "function."), CODELOC );
+    
+    //read the version and the libraries and versions
+    //(die if the required libraries aren't loaded!)
+    FileHeader header;
+    ds >> header;
+
+    return header;
+}
+
+} //end of namespace SireStream

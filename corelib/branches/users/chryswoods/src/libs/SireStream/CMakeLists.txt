@@ -11,7 +11,9 @@ include_directories(${CMAKE_BINARY_DIR})
 
 set ( SIRESTREAM_HEADERS
       datastream.h
+      errors.h
       magic_error.h
+      md5sum.h
       shareddatastream.h
       streamdata.hpp
       version_error.h
@@ -21,8 +23,10 @@ set ( SIRESTREAM_HEADERS
 set ( SIRESTREAM_SOURCES
 
       datastream.cpp
+      errors.cpp
       getmagic.cpp
       magic_error.cpp
+      md5sum.cpp
       shareddatastream.cpp
       streamdata.cpp
       version_error.cpp
