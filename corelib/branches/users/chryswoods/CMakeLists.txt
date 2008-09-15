@@ -119,6 +119,9 @@ if (SIRE_BUILD_MOLPRO)
 
 endif()
 
+# Write the version header file
+include( GetSvnVersion )
+
 # Add option to turn off symbol hiding
 option ( SIRE_SYMBOL_HIDING "Turn on library symbol hiding" ON )
 

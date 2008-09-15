@@ -6,6 +6,9 @@
 
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+#also include the build directory so that we can get sire_version.h
+include_directories(${CMAKE_BINARY_DIR})
+
 set ( SIRESTREAM_HEADERS
       datastream.h
       magic_error.h

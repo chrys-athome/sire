@@ -32,9 +32,13 @@
 #include <QList>
 #include <QMutex>
 
+#include <cstdlib>
+
 #include "streamdata.hpp"
 
 #include "tostring.h"
+
+#include "sire_version.h"
 
 #include "SireStream/version_error.h"
 
@@ -348,6 +352,195 @@ quint32 LibraryInfo::getMinimumSupportedVersion(const QString &library)
 }
 
 /////////
+///////// Implementation of FileHeader
+/////////
+
+/** Null constructor */
+FileHeader::FileHeader() : compressed_size(0), uncompressed_size(0)
+{}
+
+/** Internal constructor used by streamDataSave */
+FileHeader::FileHeader(const QString &typ_name,
+                       const QByteArray &compressed_data,
+                       const QByteArray &raw_data)
+{
+    //these two may be UNIX only...
+    created_by = std::getenv("USER");
+    created_where = std::getenv("HOSTNAME");
+
+    created_when = QDataTime::currentDateTime();
+    
+    type_name = typ_name;
+    
+    build_repository = svn_repository_url;
+    build_version = svn_version_number;
+    
+    required_libraries = LibraryInfo::getLibraryHeader();
+    
+    data_digest = MD5Sum(compressed_data);
+    
+    compressed_size = compressed_data.count();
+    uncompressed_size = raw_data.count();
+}
+
+/** Copy constructor */
+FileHeader::FileHeader(const FileHeader &other)
+           : created_by(other.created_by), created_when(other.created_when),
+             created_where(other.created_where), type_name(other.type_name),
+             build_repository(other.build_repository),
+             build_version(other.build_version),
+             required_libraries(other.required_libraries),
+             system_locale(other.system_locale),
+             data_digest(other.data_digest),
+             compressed_size(other.compressed_size),
+             uncompressed_size(other.uncompressed_size)
+{}
+
+/** Destructor */
+FileHeader::~FileHeader()
+{}
+
+/** Copy assignment operator */
+FileHeader& FileHeader::operator=(const FileHeader &other)
+{
+    if (this != &other)
+    {
+        created_by = other.created_by;
+        created_when = other.created_when;
+        created_where = other.created_where;
+        type_name = other.type_name;
+        build_repository = other.build_repository;
+        build_version = other.build_version;
+        system_locale = other.system_locale;
+        required_libraries = other.required_libraries;
+        data_digest = other.data_digest;
+        compressed_size = other.compressed_size;
+        uncompressed_size = other.uncompressed_size;
+    }
+    
+    return *this;
+}
+
+/** Return the username of whoever created this data */
+const QString& FileHeader::createdBy() const
+{
+    return created_by;
+}
+
+/** Return the date and time when this was created */
+const QDateTime& FileHeader::createdWhen() const
+{
+    return created_when;
+}
+
+/** Where this file was created (the name of the machine) */
+const QString& FileHeader::createdWhere() const
+{
+    return created_where;
+}
+
+/** Return the minimum memory the will be necessary to read the file */
+quint32 FileHeader::requiredMemory() const
+{
+    return 2*uncompressed_size + compressed_size;
+}
+
+/** Return the compression ratio of the file */
+double FileHeader::compressionRatio() const
+{
+    if (uncompressed_size == 0)
+        return 1;
+    else
+    {
+        return double(compressed_size) / uncompressed_size;
+    }
+}
+
+/** Return the name of the top-level data type in this data */
+const QString& FileHeader::dataType() const
+{
+    return type_name;
+}
+
+/** Return the locale in which this data was written. This is useful
+    as it can help with the support of multiple languages
+    (as the person who saved the file may not necessarily be using
+     English ;-) */
+const QLocale& FileHeader::locale() const
+{
+    return system_locale;
+}
+
+/** Return the list of libraries required to load this data */
+QStringList FileHeader::requiredLibraries() const
+{
+    QList< tuple<QString,quint32> > libs = 
+                    LibraryInfo::readLibraryHeader(required_libraries);
+                    
+    QStringList libraries;
+    
+    for (QList< tuple<QString,quint32> >::const_iterator it = libs.constBegin();
+         it != libs.constEnd();
+         ++it)
+    {
+        libraries.append( it->get<0>() );
+    }
+    
+    return libraries;
+}
+
+/** Does this data require that the library 'library' be loaded? */
+bool FileHeader::requireLibrary(const QString &library) const
+{
+    QStringList libraries = this->requiredLibraries();
+    
+    foreach (const QString &lib, libraries)
+    {
+        if (lib == library)
+            return true;
+    }
+    
+    return false;
+}
+
+/** Return the version number required of the library 'library'. This
+    returns 0 if this library isn't required. */
+quint32 FileHeader::requiredVersion(const QString &library) const
+{
+    QList< tuple<QString,quint32> > libs = 
+                    LibraryInfo::readLibraryHeader(required_libraries);
+                    
+    for (QList< tuple<QString,quint32> >::const_iterator it = libs.constBegin();
+         it != libs.constEnd();
+         ++it)
+    {
+        if (it->get<0>() == library)
+            return it->get<1>();
+    }
+    
+    return 0;
+}
+
+/** Return the digest of the data - this is used to check 
+    for any data corruption */
+const MD5Sum& FileHeader::digest() const
+{
+    return data_digest;
+}
+
+/** Return the repository from which this source code was downloaded */
+QString FileHeader::repository() const
+{
+    return build_repository;
+}
+
+/** Return the version of the source code from the repository */
+QString FileHeader::buildVersion() const
+{
+    return build_version;
+}
+
+/////////
 ///////// Implementation of free functions
 /////////
 
@@ -385,22 +578,23 @@ QByteArray streamDataSave( const void *object, const char *type_name )
 
     //compress the object data (level 3 compression seems best, giving
     //about a ten-fold reduction for only a 30% increase in serialisation time)
-    object_data = qCompress(object_data, 3);
+    QByteArray compressed_object_data = qCompress(object_data, 3);
 
     //now write a header for the object
+    FileHeader header( type_name, compressed_object_data, object_data );
+    
+    //clear the uncompressed data to save space
+    object_data = QByteArray();
+    
     QByteArray data;
     QDataStream ds(&data, QIODevice::WriteOnly);
     
-    //write a magic number - versions and loaded libraries
-    ///  writing magic
+    //write a magic number - then the header
     ds << SIRE_MAGIC_NUMBER;
-    ds << LibraryInfo::getLibraryHeader();
+    ds << header;
 
-    //now write the object name
-    ds << QString(type_name);
-    
     //now write the object data
-    ds << object_data;
+    ds << compressed_object_data;
 
     return data;
 }

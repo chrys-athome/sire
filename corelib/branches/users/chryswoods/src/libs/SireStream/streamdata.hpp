@@ -30,9 +30,13 @@
 #define SIRESTREAM_STREAMHELPER_HPP
 
 #include <QByteArray>
+#include <QLocale>
+#include <QDateTime>
 
 #include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
+
+#include "md5sum.h"
 
 #include "sireglobal.h"
 
@@ -42,15 +46,121 @@ SIRE_BEGIN_HEADER
 
 namespace SireStream
 {
+class FileHeader;
+}
+
+QDataStream& operator<<(QDataStream&, const SireStream::FileHeader&);
+QDataStream& operator>>(QDataStream&, SireStream::FileHeader&);
+
+namespace SireStream
+{
+
+namespace detail
+{
+QByteArray streamDataSave( const void *object, const char *type_name );
+
+void streamDataSave( const void *object, const char *type_name, 
+                     const QString &filename );
+
+void throwStreamDataInvalidCast(const QString &load_type, 
+                                const QString &cast_type);
+}
 
 boost::tuple<boost::shared_ptr<void>,QString> load(const QByteArray &data);
 boost::tuple<boost::shared_ptr<void>,QString> load(const QString &filename);
 
-QString getTypeName(const QByteArray &data);
-QString getTypeName(const QString &filename);
+/** This class provides metadata about the binary representation
+    of an object. This is to allow the owner of the data to identify
+    it as belonging to themselves, to provide information about 
+    what data is contained, when it was created and on what,
+    and to provide some information about how much space the 
+    data may require to load. The aim is to allow the provenance
+    (well, at least the origin!) of a file to be determined.
+    
+    @author Christopher Woods
+*/
+class SIRESTREAM_EXPORT FileHeader
+{
 
-QStringList getRequiredLibraries(const QByteArray &data);
-QStringList getRequiredLibraries(const QString &filename);
+friend QDataStream& ::operator<<(QDataStream&, const FileHeader&);
+friend QDataStream& ::operator>>(QDataStream&, FileHeader&);
+
+friend void detail::streamDataSave( const void*, const char*, const QString& );
+
+public:
+    FileHeader();
+    FileHeader(const FileHeader &other);
+    
+    ~FileHeader();
+    
+    FileHeader& operator=(const FileHeader &other);
+    
+    const QString& createdBy() const;
+    const QDateTime& createdWhen() const;
+    const QString& createdWhere() const;
+    
+    quint32 requiredMemory() const;
+    
+    double compressionRatio() const;
+    
+    const QString& dataType() const;
+    
+    QStringList requiredLibraries() const;
+
+    bool requireLibrary(const QString &library) const;
+    quint32 requiredVersion(const QString &library) const;
+
+    const MD5Sum& digest() const;
+
+    const QLocale& locale() const;
+
+    QString repository() const;
+    QString buildVersion() const;
+
+private:
+    FileHeader(const QString &type_name,
+               const QByteArray &compressed_data,
+               const QByteArray &raw_data);
+
+    /** The username of the person who created this data */
+    QString created_by;
+    
+    /** When this data was created */
+    QDateTime created_when;
+    
+    /** The hostname of the machine on which this data was created */
+    QString created_where;
+
+    /** The typename of the top-level object stored in this data */
+    QString type_name;
+    
+    /** The source repository from which this code was downloaded */
+    QString build_repository;
+
+    /** Version string giving the build version of
+        the program used to create this file */
+    QString build_version; 
+
+    /** The names and versions of the libraries loaded when this
+        data was written */
+    QByteArray required_libraries;
+
+    /** The locale of the system used to create this file */
+    QLocale system_locale;
+
+    /** The digest of the data - this is used to verify that
+        the data is not corrupted */
+    MD5Sum data_digest;
+
+    /** The size of the compressed data */
+    quint32 compressed_size;
+    
+    /** The size of the uncompressed data */
+    quint32 uncompressed_size;
+};
+
+FileHeader getDataHeader(const QByteArray &data);
+FileHeader getDataHeader(const QString &filename);
 
 void registerLibrary(const QString &library,
                      quint32 version, quint32 min_supported_version);
@@ -75,17 +185,6 @@ public:
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
-namespace detail
-{
-QByteArray streamDataSave( const void *object, const char *type_name );
-
-void streamDataSave( const void *object, const char *type_name, 
-                     const QString &filename );
-
-void throwStreamDataInvalidCast(const QString &load_type, 
-                                const QString &cast_type);
-}
 
 /** This loads an object of type T from the passed blob of binary
     data. Note that this data *must* have been created by the "save"
@@ -143,8 +242,7 @@ void save(const T &old_obj, const QString &filename)
 
 }
 
-SIRE_EXPOSE_FUNCTION( SireStream::getTypeName )
-SIRE_EXPOSE_FUNCTION( SireStream::getRequiredLibraries )
+SIRE_EXPOSE_FUNCTION( SireStream::getDataHeader )
 SIRE_EXPOSE_FUNCTION( SireStream::getLibraryVersion )
 SIRE_EXPOSE_FUNCTION( SireStream::getMinimumSupportedVersion )
 
