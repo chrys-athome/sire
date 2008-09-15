@@ -34,6 +34,8 @@
 
 #include <cstdlib>
 
+#include <unistd.h>
+
 #include "streamdata.hpp"
 
 #include "tostring.h"
@@ -433,7 +435,10 @@ FileHeader::FileHeader(const QString &typ_name,
 {
     //these two may be UNIX only...
     created_by = std::getenv("USER");
-    created_where = std::getenv("HOSTNAME");
+
+    char buffer[128];
+    gethostname(buffer, 128);
+    created_where = buffer;
 
     created_when = QDateTime::currentDateTime();
     

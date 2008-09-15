@@ -33,9 +33,9 @@ def _pvt_loadLibrary(lib):
         __import__( _pvt_modules[lib] ) 
 
 def load(data):
-    libs = getRequiredLibraries(data)
+    header = getDataHeader(data)
 
-    for lib in libs:
+    for lib in header.requiredLibraries():
         _pvt_loadLibrary(lib)
 
     return _pvt_load(data)

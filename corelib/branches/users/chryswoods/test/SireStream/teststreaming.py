@@ -113,9 +113,6 @@ print system.energies()
 
 print "\nGetting data info..."
 
-print Sire.Stream.getTypeName(data)
-print Sire.Stream.getRequiredLibraries(data)
-
 t.start()
 Sire.Stream.save( system, "test/SireStream/tmp_testdata.sire" )
 ms = t.elapsed()
@@ -127,6 +124,20 @@ system = Sire.Stream.load( "test/SireStream/tmp_testdata.sire" )
 ms = t.elapsed()
 
 print "Reading a system from a file took %d ms" % ms
+
+header = Sire.Stream.getDataHeader( "test/SireStream/tmp_testdata.sire" )
+print header.dataType()
+print header.requiredLibraries()
+
+print header.createdBy()
+print header.createdWhen().toString()
+print header.createdWhere()
+
+print header.requiredMemory()
+print header.compressionRatio()
+print header.digest()
+print header.repository()
+print header.buildVersion()
 
 print system.energies()
 
