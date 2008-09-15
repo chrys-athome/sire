@@ -17,8 +17,10 @@ public:
     virtual ~ObjectRegistry();
 
     static boost::python::object load(const QByteArray &data);
+    static boost::python::object load(const QString &filename);
+
     static QByteArray save(const boost::python::object &object);
-    static QString getTypeName(const QByteArray &data);
+    static void save(const boost::python::object &object, const QString &filename);
 
     template<class T>
     static void registerConverterFor();
@@ -27,6 +29,9 @@ protected:
     virtual boost::python::object convertFromVoid(const void * const ptr) const=0;
 
     virtual QByteArray saveObject(const boost::python::object &object) const=0;
+
+    virtual void saveObject(const boost::python::object &object, 
+                            const QString &filename) const=0;
 
     static void registerConverter(const char *type_name,
                                   ObjectRegistry *converter);
@@ -73,6 +78,16 @@ protected:
         return SireStream::save<T>( t_object() );
     }
 
+    void saveObject(const boost::python::object &obj, const QString &filename) const
+    {
+        boost::python::extract<const T&> t_object(obj);
+
+        if (not t_object.check())
+            this->throwExtractionError(obj, T::typeName());
+
+        SireStream::save<T>( t_object(), filename );
+    }
+
 private:
     ObjectRegistryT() : ObjectRegistry()
     {}
@@ -90,3 +105,4 @@ void ObjectRegistry::registerConverterFor()
 SIRE_END_HEADER
 
 #endif
+

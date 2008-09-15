@@ -21,6 +21,9 @@ set ( SIREVOL_HEADERS
 
 # Define the sources in SireVol
 set ( SIREVOL_SOURCES
+
+      register_sirevol.cpp
+
       aabox.cpp
       cartesian.cpp
       coordgroup.cpp

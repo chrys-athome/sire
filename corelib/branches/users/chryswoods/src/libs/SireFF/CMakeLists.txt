@@ -45,6 +45,9 @@ set ( SIREFF_DETAIL_HEADERS
 
 # Define the sources in SireFF
 set ( SIREFF_SOURCES
+
+      register_sireff.cpp
+
       errors.cpp
       ff.cpp
       ff3d.cpp
@@ -79,6 +82,7 @@ target_link_libraries (SireFF
                        SireCAS
                        SireMaths
                        SireBase
+                       SireStream
                        )
 
 # installation

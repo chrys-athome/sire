@@ -303,6 +303,7 @@ if __name__ == "__main__":
                 "Move" : "SireMove",
                 "Sim" : "SireSim",
                 "Squire" : "Squire",
+                "Stream" : "SireStream",
                 "System" : "SireSystem",
                 "Units" : "SireUnits",
                 "Vol" : "SireVol" }

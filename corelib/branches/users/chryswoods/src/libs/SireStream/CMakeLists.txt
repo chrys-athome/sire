@@ -16,6 +16,7 @@ set ( SIRESTREAM_HEADERS
     )
 
 set ( SIRESTREAM_SOURCES
+
       datastream.cpp
       getmagic.cpp
       magic_error.cpp

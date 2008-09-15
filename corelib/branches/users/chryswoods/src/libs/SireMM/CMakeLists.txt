@@ -42,6 +42,9 @@ set ( SIREMM_DETAIL_HEADERS
 
 # Define the sources in SireMM
 set ( SIREMM_SOURCES
+
+      register_siremm.cpp
+
       atomfunctions.cpp
       atomljs.cpp
       cljcomponent.cpp
@@ -82,6 +85,7 @@ target_link_libraries (SireMM
                        SireBase
                        SireMaths
                        SireUnits
+                       SireStream
                        )
 
 # installation

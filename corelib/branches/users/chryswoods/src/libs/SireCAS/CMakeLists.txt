@@ -51,6 +51,9 @@ set ( SIRECAS_HEADERS
 
 # Define the sources in SireCAS
 set ( SIRECAS_SOURCES
+
+      register_sirecas.cpp
+
       complexvalues.cpp           
       constant.cpp                
       errors.cpp                  
@@ -94,6 +97,7 @@ set_target_properties (SireCAS PROPERTIES
 target_link_libraries (SireCAS
                        SireMaths
                        SireBase
+                       SireStream
                        ${GSL_LIBRARIES}
                        )
 

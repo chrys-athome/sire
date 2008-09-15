@@ -18,6 +18,8 @@ set ( SQUIRE_HEADERS
 
 set ( SQUIRE_SOURCES
 
+      register_squire.cpp
+
       eff.cpp
       effcomponents.cpp
 

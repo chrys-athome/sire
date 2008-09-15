@@ -44,12 +44,44 @@ namespace SireStream
 {
 
 boost::tuple<boost::shared_ptr<void>,QString> load(const QByteArray &data);
+boost::tuple<boost::shared_ptr<void>,QString> load(const QString &filename);
+
+QString getTypeName(const QByteArray &data);
+QString getTypeName(const QString &filename);
+
+QStringList getRequiredLibraries(const QByteArray &data);
+QStringList getRequiredLibraries(const QString &filename);
+
+void registerLibrary(const QString &library,
+                     quint32 version, quint32 min_supported_version);
+
+quint32 getLibraryVersion(const QString &library);
+quint32 getMinimumSupportedVersion(const QString &library);
+
+class SIRESTREAM_EXPORT RegisterLibrary
+{
+public:
+    RegisterLibrary()
+    {}
+
+    RegisterLibrary(const QString &library_name,
+                    quint32 version, quint32 min_supported_version)
+    {
+        registerLibrary(library_name, version, min_supported_version);
+    }
+    
+    ~RegisterLibrary()
+    {}
+};
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 namespace detail
 {
 QByteArray streamDataSave( const void *object, const char *type_name );
+
+void streamDataSave( const void *object, const char *type_name, 
+                     const QString &filename );
 
 void throwStreamDataInvalidCast(const QString &load_type, 
                                 const QString &cast_type);
@@ -80,14 +112,41 @@ T loadType(const QByteArray &data)
 
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
+T loadType(const QString &filename)
+{
+    boost::tuple<boost::shared_ptr<void>,QString> new_obj
+            = SireStream::load(filename);
+
+    if ( QLatin1String(T::typeName()) != new_obj.get<1>() )
+    {
+        detail::throwStreamDataInvalidCast(new_obj.get<1>(), T::typeName());
+    }
+
+    return T( *(static_cast<const T*>(new_obj.get<0>().get())) );
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
 QByteArray save(const T &old_obj)
 {
     return detail::streamDataSave( &old_obj, old_obj.what() );
 }
 
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void save(const T &old_obj, const QString &filename)
+{
+    detail::streamDataSave( &old_obj, old_obj.what(), filename );
+}
+
 #endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 }
+
+SIRE_EXPOSE_FUNCTION( SireStream::getTypeName )
+SIRE_EXPOSE_FUNCTION( SireStream::getRequiredLibraries )
+SIRE_EXPOSE_FUNCTION( SireStream::getLibraryVersion )
+SIRE_EXPOSE_FUNCTION( SireStream::getMinimumSupportedVersion )
 
 SIRE_END_HEADER
 

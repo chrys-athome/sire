@@ -41,6 +41,19 @@ object ObjectRegistry::load(const QByteArray &data)
     return getConverter(obj.get<1>()).convertFromVoid(obj.get<0>().get());
 }
 
+object ObjectRegistry::load(const QString &filename)
+{
+    tuple<shared_ptr<void>,QString> obj = SireStream::load(filename);
+
+    if (obj.get<0>().get() == 0 or obj.get<1>().isEmpty())
+    {
+        //nothing of interest here
+        return object();
+    }
+
+    return getConverter(obj.get<1>()).convertFromVoid(obj.get<0>().get());
+}
+
 QByteArray ObjectRegistry::save(const object &obj)
 {
     /*if (not obj.has_attr("what"))
@@ -69,18 +82,35 @@ QByteArray ObjectRegistry::save(const object &obj)
     return getConverter(type_name).saveObject(obj);
 }
 
-QString ObjectRegistry::getTypeName(const QByteArray &data)
+void ObjectRegistry::save(const object &obj, const QString &filename)
 {
-    QString type_name;
-    QDataStream ds(data);
+    /*if (not obj.has_attr("what"))
+    {
+        throw SireError::invalid_arg( QObject::tr(
+           "You cannot save this object to binary, as it does not have a \".what()\" "
+           "member function. Ask the programmer of this class to provide that "
+           "functionality."), CODELOC );
+    }*/
 
-    ds >> type_name;
+    object result = obj.attr("what")();
 
-    return type_name;
+    extract<QString> test_result(result);
+
+    if (not test_result.check())
+    {
+        throw SireError::invalid_arg( QObject::tr(
+           "You cannot save this object to binary, as while it has a \".what()\" "
+           "member function, it does not return a string, as expected. "
+           "Ask the programmer of this class to provide this functionality."),
+                CODELOC );
+    }
+
+    QString type_name = test_result();
+
+    getConverter(type_name).saveObject(obj, filename);
 }
 
-static QMutex registry_mutex;
-static QHash< QString, shared_ptr<ObjectRegistry> > *registry(0);
+static QMutex registry_mutex; static QHash< QString, shared_ptr<ObjectRegistry> > *registry(0);
 
 static QHash< QString,shared_ptr<ObjectRegistry> >& getRegistry()
 { 

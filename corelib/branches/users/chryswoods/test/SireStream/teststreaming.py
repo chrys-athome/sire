@@ -110,3 +110,23 @@ system = Sire.Stream.load(data)
 print system.energy()
 print system.components()
 print system.energies()
+
+print "\nGetting data info..."
+
+print Sire.Stream.getTypeName(data)
+print Sire.Stream.getRequiredLibraries(data)
+
+t.start()
+Sire.Stream.save( system, "test/SireStream/tmp_testdata.sire" )
+ms = t.elapsed()
+
+print "Saving a system to a file took %d ms" % ms
+
+t.start()
+system = Sire.Stream.load( "test/SireStream/tmp_testdata.sire" )
+ms = t.elapsed()
+
+print "Reading a system from a file took %d ms" % ms
+
+print system.energies()
+

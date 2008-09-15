@@ -19,6 +19,9 @@ set ( SIREID_HEADERS
 
 # Define the sources in SireID
 set ( SIREID_SOURCES
+
+      register_sireid.cpp
+
       index.cpp
 
       ${SIREID_HEADERS}
@@ -34,6 +37,7 @@ set_target_properties (SireID PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SireID
                        SireBase
+                       SireStream
                        )
 
 # installation

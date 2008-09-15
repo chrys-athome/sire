@@ -28,6 +28,9 @@ set ( SIRESYSTEM_HEADERS
 
 # Define the sources in SireSystem
 set ( SIRESYSTEM_SOURCES
+
+      register_siresystem.cpp
+
       checkpoint.cpp
       errors.cpp
       monitorid.cpp
@@ -54,6 +57,7 @@ target_link_libraries (SireSystem
                        SireMol
                        SireCAS
                        SireBase
+                       SireStream
                        )
 
 # installation

@@ -44,6 +44,8 @@ set ( SIREMOVE_HEADERS
 # Define the sources in SireMove
 set ( SIREMOVE_SOURCES
 
+      register_siremove.cpp
+
       montecarlo.cpp
       move.cpp
       moves.cpp
@@ -79,6 +81,7 @@ set_target_properties (SireMove PROPERTIES
 target_link_libraries (SireMove
                        SireSystem
                        SireMaths
+                       SireStream
 
                        ${SIREMOVE_EXTRA_LIBRARIES}
                        )

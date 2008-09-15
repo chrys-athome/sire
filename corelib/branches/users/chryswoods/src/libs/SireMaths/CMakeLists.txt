@@ -36,6 +36,9 @@ set ( SIREMATHS_HEADERS
 
 # Define the sources in SireMaths
 set ( SIREMATHS_SOURCES
+
+      register_siremaths.cpp
+
       axisset.cpp
       complex.cpp
       distvector.cpp
@@ -66,6 +69,7 @@ set_target_properties (SireMaths PROPERTIES
 target_link_libraries (SireMaths
                        SireStream
                        SireUnits
+                       SireStream
                        ${GSL_LIBRARIES}
                        ${QT_QTCORE_LIBRARY}
                        )

@@ -22,6 +22,7 @@ set ( SIREERROR_HEADERS
     )
 
 set ( SIREERROR_SOURCES
+
       errors.cpp
       exception.cpp
       getbacktrace.cpp

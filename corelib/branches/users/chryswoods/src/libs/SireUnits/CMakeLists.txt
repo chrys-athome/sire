@@ -18,6 +18,9 @@ set ( SIREUNITS_HEADERS
 
 # Define the sources in SireUnits
 set ( SIREUNITS_SOURCES
+
+      register_sireunits.cpp
+
       convert.cpp            
     
       ${SIREUNITS_HEADERS}
@@ -29,6 +32,11 @@ set_target_properties (SireUnits PROPERTIES
                        VERSION ${SIRE_VERSION}
                        SOVERSION ${SIRE_VERSION_MAJOR}
                       )
+
+# Link to other Sire libraries
+target_link_libraries (SireUnits
+                       SireStream
+                       )
 
 # installation
 install( TARGETS SireUnits

@@ -20,6 +20,9 @@ set ( SIREDB_HEADERS
 
 # Define the sources in SireDB
 set ( SIREDB_SOURCES
+
+      register_siredb.cpp
+
       diskcache.cpp
       errors.cpp
 
@@ -38,6 +41,7 @@ set_target_properties (SireDB PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SireDB
                        SireBase
+                       SireStream
                        )
 
 # installation

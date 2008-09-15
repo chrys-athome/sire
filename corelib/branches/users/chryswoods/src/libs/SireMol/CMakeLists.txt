@@ -119,6 +119,9 @@ set ( SIREMOL_HEADERS
 
 # Define the sources in SireMol
 set ( SIREMOL_SOURCES
+
+      register_siremol.cpp
+
       angleid.cpp
       atom.cpp
       atomatomid.cpp
@@ -205,6 +208,7 @@ target_link_libraries (SireMol
                        SireVol
                        SireID
                        SireDB
+                       SireStream
                        )
 
 # installation
