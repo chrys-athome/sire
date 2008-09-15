@@ -16,6 +16,7 @@ print header.compressionRatio()
 print header.digest()
 print header.repository()
 print header.buildVersion()
+print header.systemInfo()
 
 system = Sire.Stream.load(filename)
 

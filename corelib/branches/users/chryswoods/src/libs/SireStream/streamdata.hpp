@@ -99,6 +99,8 @@ public:
     const QDateTime& createdWhen() const;
     const QString& createdWhere() const;
     
+    const QString& systemInfo() const;
+    
     quint32 requiredMemory() const;
     
     double compressionRatio() const;
@@ -133,6 +135,9 @@ private:
     
     /** The hostname of the machine on which this data was created */
     QString created_where;
+
+    /** A string giving information about the system and libraries */
+    QString system_info;
 
     /** The typename of the top-level object stored in this data */
     QString type_name;

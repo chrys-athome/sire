@@ -138,6 +138,7 @@ print header.compressionRatio()
 print header.digest()
 print header.repository()
 print header.buildVersion()
+print header.systemInfo()
 
 print system.energies()
 

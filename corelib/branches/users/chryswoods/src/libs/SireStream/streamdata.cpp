@@ -31,6 +31,9 @@
 #include <QDataStream>
 #include <QList>
 #include <QMutex>
+#include <QSysInfo>
+#include <QtGlobal>
+#include <QProcess>
 
 #include <cstdlib>
 
@@ -373,6 +376,7 @@ QDataStream SIRESTREAM_EXPORT &operator<<(QDataStream &ds,
     ds2 << header.created_by
         << header.created_when
         << header.created_where
+        << header.system_info
         << header.type_name
         << header.build_repository
         << header.build_version
@@ -406,6 +410,7 @@ QDataStream SIRESTREAM_EXPORT &operator>>(QDataStream &ds,
         ds2 >> header.created_by
             >> header.created_when
             >> header.created_where
+            >> header.system_info
             >> header.type_name
             >> header.build_repository
             >> header.build_version
@@ -427,6 +432,323 @@ QDataStream SIRESTREAM_EXPORT &operator>>(QDataStream &ds,
 /** Null constructor */
 FileHeader::FileHeader() : compressed_size(0), uncompressed_size(0)
 {}
+
+static QString *system_info(0);
+
+static const QString& getSystemInfo()
+{
+    if (system_info)
+        return *system_info;
+
+    QStringList lines;
+    
+    
+    #ifdef Q_WS_MAC
+        lines.append( "Platform: Mac OS" );
+    
+        switch (QSysInfo::MacintoshVersion)
+        {
+            case QSysInfo::MV_9:
+                lines.append( "Mac Version: OS 9" );
+                break;
+            case QSysInfo::MV_10_0:
+                lines.append( "Mac Version: OS X 10.0 (Cheetah)" );
+                break;
+            case QSysInfo::MV_10_1:
+                lines.append( "Mac Version: OS X 10.1 (Puma)" );
+                break;
+            case QSysInfo::MV_10_2:
+                lines.append( "Mac Version: OS X 10.2 (Jaguar)" );
+                break;
+            case QSysInfo::MV_10_3:
+                lines.append( "Mac Version: OS X 10.3 (Panther)" );
+                break;
+            case QSysInfo::MV_10_4:
+                lines.append( "Mac Version: OS X 10.4 (Tiger)" );
+                break;
+            case QSysInfo::MV_10_5:
+                lines.append( "Mac Version: OS X 10.5 (Leopard)" );
+                break;
+            default:
+                lines.append( "Mac Version: Unknown" );
+                break;
+        }
+    #else
+    #ifdef Q_OS_LINUX
+        lines.append( "Platform: Linux" );
+    #else
+    #ifdef Q_OS_UNIX
+        lines.append( "Platform: UNIX" );
+
+        #ifdef Q_OS_AIX
+        lines.append( "UNIX flavour: AIX" );
+        #endif
+        
+        #ifdef Q_OS_BSD4
+        lines.append( "UNIX flavour: BSD 4.4" );
+        #endif
+
+        #ifdef Q_OS_BSDI
+        lines.append( "UNIX flavour: BSD/OS" );
+        #endif
+
+        #ifdef Q_OS_DARWIN
+        lines.append( "UNIX flavour: Darwin" );
+        #endif
+
+        #ifdef Q_OS_DGUX
+        lines.append( "UNIX flavour: DG/UX" );
+        #endif
+
+        #ifdef Q_OS_DYNIX
+        lines.append( "UNIX flavour: DYNIX/ptx" );
+        #endif
+        
+        #ifdef Q_OS_FREEBSD
+        lines.append( "UNIX flavour: FreeBSD" );
+        #endif
+
+        #ifdef Q_OS_HPUX
+        lines.append( "UNIX flavour: HP-UX" );
+        #endif
+
+        #ifdef Q_OS_HURD
+        lines.append( "UNIX flavour: GNU Hurd" );
+        #endif
+
+        #ifdef Q_OS_IRIX
+        lines.append( "UNIX flavour: SGI Irix" );
+        #endif
+
+        #ifdef Q_OS_LYNX
+        lines.append( "UNIX flavour: LynxOS" );
+        #endif
+
+        #ifdef Q_OS_NETBSD
+        lines.append( "UNIX flavour: NetBSD" );
+        #endif
+
+        #ifdef Q_OS_OPENBSD
+        lines.append( "UNIX flavour: OpenBSD" );
+        #endif
+
+        #ifdef Q_OS_OSF
+        lines.append( "UNIX flavour: HP Tru64 UNIX" );
+        #endif
+
+        #ifdef Q_OS_QNX6
+        lines.append( "UNIX flavour: QNX RTP 6.1" );
+        #endif
+
+        #ifdef Q_OS_QNX
+        lines.append( "UNIX flavour: QNX" );
+        #endif
+
+        #ifdef Q_OS_RELIANT
+        lines.append( "UNIX flavour: Reliant UNIX" );
+        #endif
+        
+        #ifdef Q_OS_SCO
+        lines.append( "UNIX flavour: SCO OpenServer 5" );
+        #endif
+
+        #ifdef Q_OS_SOLARIS
+        lines.append( "UNIX flavour: Sun Solaris" );
+        #endif
+
+        #ifdef Q_OS_ULTRIX
+        lines.append( "UNIX flavour: DEC Ultrix" );
+        #endif
+
+        #ifdef Q_OS_UNIXWARE
+        lines.append( "UNIX flavour: UnixWare 7, Open UNIX 8" );
+        #endif
+
+    #else
+    #ifdef Q_OS_WIN32
+        lines.append( "Platform: Windows" );
+        
+        switch (QSysInfo::windowsVersion())
+        {
+            case QSysInfo::WV_32s:
+                lines.append( "Windows Version: 3.1" );
+                break;
+            case QSysInfo::WV_95:
+                lines.append( "Windows Version: 95" );
+                break;
+            case QSysInfo::WV_98:
+                lines.append( "Windows Version: 98" );
+                break;
+            case QSysInfo::WV_Me:
+                lines.append( "Windows Version: Me" );
+                break;
+            case QSysInfo::WV_NT:
+                lines.append( "Windows Version: NT" );
+                break;
+            case QSysInfo::WV_2000:
+                lines.append( "Windows Version: 2000" );
+                break;
+            case QSysInfo::WV_XP:
+                lines.append( "Windows Version: XP" );
+                break;
+            case QSysInfo::WV_2003:
+                lines.append( "Windows Version: Server 2003" );
+                break;
+            case QSysInfo::WV_VISTA:
+                lines.append( "Windows Version: Vista" );
+                break;
+            case QSysInfo::WV_CE:
+                lines.append( "Windows Version: CE" );
+                break;
+            case QSysInfo::WV_CENET:
+                lines.append( "Windows Version: CE .NET" );
+                break;
+            case QSysInfo::WV_CE_5:
+                lines.append( "Windows Version: CE 5" );
+                break;
+            case QSysInfo::WV_CE_6:
+                lines.append( "Windows Version: CE 6" );
+                break;
+            default:
+                lines.append( "Windows Version: Unknown" );
+        }
+    #else
+    #ifdef Q_OS_OS2
+        lines.append( "System: OS/2" );
+    #endif  //OS/2
+    #endif  //windows
+    #endif  //unix
+    #endif  //linux
+    #endif  //mac
+
+    #ifdef Q_OS_UNIX
+        QProcess p;
+        p.start( "uname -a" );
+        p.waitForFinished();
+        QByteArray output = p.readAllStandardOutput();
+
+        lines.append( QString("UNIX uname: %1").arg( QString(output).trimmed() ) );
+    #endif
+        
+    #ifdef Q_OS_CYGWIN
+    lines.append( "UNIX flavour: Cygwin" );
+    #endif
+    
+    #ifdef Q_CC_BOR
+    lines.append( "Compiler: Borland/Turbo C++" );
+    #endif
+
+    #ifdef Q_CC_CDS
+    lines.append( "Compiler: Reliant C++" );
+    #endif
+
+    #ifdef Q_CC_COMEAU
+    lines.append( "Compiler: Comeau C++" );
+    #endif
+
+    #ifdef Q_CC_DEC
+    lines.append( "Compiler: DEC C++" );
+    #endif
+
+    #ifdef Q_CC_EDG
+    lines.append( "Compiler: Edison Design Group C++" );
+    #endif
+
+    #ifdef Q_CC_GHS
+    lines.append( "Compiler: Green Hills Optimizing C++ Compiler" );
+    #endif
+    
+    #ifdef Q_CC_GNU
+    lines.append( QString("Compiler: GNU C++ (%1.%2.%3)")
+                        .arg( __GNUC__)
+                        .arg( __GNUC_MINOR__)
+                        .arg( __GNUC_PATCHLEVEL__ ) );
+    #endif
+
+    #ifdef Q_CC_HIGHC
+    lines.append( "Compiler: MetaWare High C/C++" );
+    #endif
+
+    #ifdef Q_CC_HPACC
+    lines.append( "Compiler: HP aC++" );
+    #endif
+    
+    #ifdef Q_CC_INTEL
+    lines.append( "Compiler: Intel C++" );
+    #endif
+
+    #ifdef Q_CC_KAI
+    lines.append( "Compiler: KAI C++" );
+    #endif
+
+    #ifdef Q_CC_MIPS
+    lines.append( "Compiler: MIPSpro C++" );
+    #endif
+
+    #ifdef Q_CC_MSVC
+    lines.append( "Compiler: Microsoft Visual C/C++" );
+    #endif
+
+    #ifdef Q_CC_MWERKS
+    lines.append( "Compiler: Metrowerks CodeWarrior" );
+    #endif
+
+    #ifdef Q_CC_OC
+    lines.append( "Compiler: CenterLine C++" );
+    #endif
+
+    #ifdef Q_CC_PGI
+    lines.append( "Compiler: Portland Group C++" );
+    #endif
+
+    #ifdef Q_CC_SUN
+    lines.append( "Compiler: Forte Developer or Sun Studio C++" );
+    #endif
+
+    #ifdef Q_CC_SYM
+    lines.append( "Compiler: Digital Mars C/C++" );
+    #endif
+
+    #ifdef Q_CC_USLC
+    lines.append( "Compiler: SCO OUDK and UDK" );
+    #endif
+
+    #ifdef Q_CC_WAT
+    lines.append( "Compiler: Watcom C++" );
+    #endif
+
+    lines.append( QString("Wordsize: %1 bit").arg( QSysInfo::WordSize ) );
+    
+    switch (QSysInfo::ByteOrder)
+    {
+        case QSysInfo::BigEndian:
+            lines.append( "ByteOrder: Big endian" );
+            break;
+        case QSysInfo::LittleEndian:
+            lines.append( "ByteOrder: Little endian" );
+            break;
+        default:
+            lines.append( "ByteOrder: Unknown" );
+            break;
+    }
+
+    lines.append( QString("Qt runtime version: %1").arg( qVersion() ) );
+    lines.append( QString("Qt compile version: %1").arg( QT_VERSION_STR ) );
+
+    lines.append( QString("Sire compile version: %1.%2.%3")
+                        .arg(SIRE_VERSION_MAJOR)
+                        .arg(SIRE_VERSION_MINOR)
+                        .arg(SIRE_VERSION_PATCH) );
+                        
+    lines.append( QString("Compile flags: %1").arg(compile_flags.trimmed()) );
+    lines.append( QString("Link flags: %1").arg(link_flags.trimmed()) );
+
+    QString info = lines.join("\n");
+    
+    system_info = new QString(info);
+    
+    return *system_info;
+}
 
 /** Internal constructor used by streamDataSave */
 FileHeader::FileHeader(const QString &typ_name,
@@ -453,12 +775,16 @@ FileHeader::FileHeader(const QString &typ_name,
     
     compressed_size = compressed_data.count();
     uncompressed_size = raw_data.count();
+
+    system_info = getSystemInfo();
 }
 
 /** Copy constructor */
 FileHeader::FileHeader(const FileHeader &other)
            : created_by(other.created_by), created_when(other.created_when),
-             created_where(other.created_where), type_name(other.type_name),
+             created_where(other.created_where), 
+             system_info(other.system_info),
+             type_name(other.type_name),
              build_repository(other.build_repository),
              build_version(other.build_version),
              required_libraries(other.required_libraries),
@@ -480,6 +806,7 @@ FileHeader& FileHeader::operator=(const FileHeader &other)
         created_by = other.created_by;
         created_when = other.created_when;
         created_where = other.created_where;
+        system_info = other.system_info;
         type_name = other.type_name;
         build_repository = other.build_repository;
         build_version = other.build_version;
@@ -532,6 +859,12 @@ double FileHeader::compressionRatio() const
 const QString& FileHeader::dataType() const
 {
     return type_name;
+}
+
+/** Return information about the system on which this data was written */
+const QString& FileHeader::systemInfo() const
+{
+    return system_info;
 }
 
 /** Return the locale in which this data was written. This is useful

@@ -119,9 +119,6 @@ if (SIRE_BUILD_MOLPRO)
 
 endif()
 
-# Write the version header file
-include( GetSvnVersion )
-
 # Add option to turn off symbol hiding
 option ( SIRE_SYMBOL_HIDING "Turn on library symbol hiding" ON )
 
@@ -338,6 +335,9 @@ set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SIRE_LINK_FLAGS}"
 set( CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} ${SIRE_LINK_FLAGS}" )
 
 message( STATUS "Linker flags = ${CMAKE_SHARED_LINKER_FLAGS}" )
+
+# Write the version header file
+include( GetSvnVersion )
 
 # Add the compiler test directory - this allows us to run some compiler
 # tests to make sure that Sire will compile properly

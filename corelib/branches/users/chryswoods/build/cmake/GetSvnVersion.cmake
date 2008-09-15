@@ -17,8 +17,6 @@ IF (SVN_EXECUTABLE)
    #extract the repository URL  (line is "URL: http://repository.url/sire/branches...")
    string( REGEX REPLACE ".*URL: ([^ ]+).*" "\\1" SVN_REPOSITORY_URL "${SVN_XML_VERSION_DATA}" )
 
-   message( ${SVN_REPOSITORY_URL} )
-
 endif()
 
 # Find the svnversion program
