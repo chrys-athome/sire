@@ -982,8 +982,8 @@ namespace SireStream
 namespace detail
 {
 
-void throwStreamDataInvalidCast(const QString &load_type,
-                                const QString &cast_type)
+void SIRESTREAM_EXPORT throwStreamDataInvalidCast(const QString &load_type,
+                                                  const QString &cast_type)
 {
     throw SireError::invalid_cast( QObject::tr(
         "Cannot load the binary data for the object of type %1 into "

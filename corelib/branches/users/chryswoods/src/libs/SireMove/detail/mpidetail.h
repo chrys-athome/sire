@@ -37,7 +37,7 @@
 #include <QMutex>
 #include <QSemaphore>
 #include <QWaitCondition>
-#include <QUUid>
+#include <QUuid>
 
 #include "SireError/exception.h"
 
