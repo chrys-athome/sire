@@ -39,6 +39,8 @@
 
 #include "SireError/errors.h"
 
+#include <QDebug>
+
 using namespace SireMove;
 using namespace SireSystem;
 using namespace SireStream;
@@ -434,10 +436,17 @@ Simulation Simulation::runBG(const System &system, const MovesBase &moves,
 Simulation Simulation::run(const MPINode &node, const System &system,
                            const MovesBase &moves, int nmoves, bool record_stats)
 {
+    qDebug() << "Creating a new Simulation object...";
+
     Simulation sim;
+    
+    qDebug() << "Creating a new MPISim object...";
     sim.d.reset( new MPISim(node, system, moves, nmoves, record_stats) );
     
+    qDebug() << "Starting the MPI simulation...";
     sim.start();
+    
+    qDebug() << "Returning a handle to the simulation!";
     
     return sim;
 }

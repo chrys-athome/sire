@@ -33,6 +33,8 @@
 
 #include "SireError/errors.h"
 
+#include <QDebug>
+
 using namespace SireMove;
 using namespace SireStream;
 
@@ -103,22 +105,34 @@ void MPISim::clearError()
     MPINode doing the work */
 void MPISim::run()
 {
+    qDebug() << CODELOC;
+
     try
     {
         data_mutex.lock();
         sim_starting = true;
         data_mutex.unlock();
     
+        qDebug() << "Waking up the starting thread!";
+    
         starter.wakeAll();
+
+        qDebug() << CODELOC;
 
         //yes - the simulation is now running!
         QMutexLocker lkr(&run_mutex);
+
+        qDebug() << "Locked the run_mutex!";
 
         int nremaining_moves = 0;
 
         //critical section
         {
+            qDebug() << CODELOC;
+        
             QMutexLocker lkr(&data_mutex);
+    
+            qDebug() << CODELOC;
     
             if (ncompleted >= nmoves)
             {
@@ -137,12 +151,16 @@ void MPISim::run()
             }
 
             //tell the node to run the simulation
+            qDebug() << "Run mpinode.runSim()";
             sim_result = mpinode.runSim(sim_system, sim_moves, 
                                         nremaining_moves, record_stats);
         }
     
         //wait until the worker has finished
+        qDebug() << "Waiting for the result!";
         sim_result.wait();
+        
+        qDebug() << "SIMULATION HAS FINISHED!";
     
         if (not sim_result.isAborted())
         {
@@ -157,10 +175,14 @@ void MPISim::run()
             }
         }
     
+        qDebug() << CODELOC;
+    
         //clear the result as it is no longer needed
         data_mutex.lock();
+        qDebug() << CODELOC;
         sim_result = MPIPromise< tuple<System,Moves,qint32> >();
         data_mutex.unlock();
+        qDebug() << CODELOC;
     }
     catch(const SireError::exception &e)
     {
@@ -175,6 +197,8 @@ void MPISim::run()
         this->setError( SireError::unknown_exception( QObject::tr(
             "An unknown error occurred!"), CODELOC ) );
     }
+    
+    qDebug() << CODELOC;
 }
     
 /** Return the latest copy of the system */
@@ -253,8 +277,12 @@ bool MPISim::recordingStatistics()
 /** Start the MPI simulation */
 void MPISim::start()
 {
+    qDebug() << CODELOC;
+
     QMutexLocker run_lkr(&run_mutex);
     QMutexLocker data_lkr(&data_mutex);
+    
+    qDebug() << nmoves << sim_starting;
     
     if (nmoves == 0)
         //there is nothing worth starting
@@ -266,12 +294,20 @@ void MPISim::start()
 
     sim_starting = false;
 
+    qDebug() << "Starting the MPI thread...";
+
     QThread::start();
+    
+    qDebug() << "Waiting until the thread has started...";
     
     starter.wait(&data_mutex);
     
+    qDebug() << "Returning from MPISim::start()";
+    
     data_lkr.unlock();
     run_lkr.unlock();
+    
+    qDebug() << CODELOC;
 }
 
 /** Pause the running simulation */

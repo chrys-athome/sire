@@ -11,6 +11,8 @@ from Sire.Units import *
 from Sire.System import *
 from Sire.Move import *
 
+import sys
+
 t = QTime()
 
 cljff = InterCLJFF()
@@ -72,17 +74,19 @@ mc = RigidBodyMC(cljff.group(MGIdx(0)))
 
 moves = SameMoves(mc)
 
-print "Running 1000 moves on the MPI master node..."
+print "Running 10 moves on the MPI master node..."
 nodes = MPINodes()
 node = nodes.getFreeNode()
 
-promise = node.runSim(system, moves, 1000, True)
+promise = node.runSim(system, moves, 10, True)
 
 print "Job submitted. Waiting..."
 
 promise.wait()
 
 print "Job complete!"
+
+sys.exit(0)
 
 print "Running 1000 moves directly..."
 t.start()

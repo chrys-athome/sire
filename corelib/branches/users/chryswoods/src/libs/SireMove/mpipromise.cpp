@@ -32,6 +32,8 @@
 
 #include "SireError/errors.h"
 
+#include <QDebug>
+
 using namespace SireMove;
 using namespace SireMove::detail;
 
@@ -46,13 +48,17 @@ MPIPromiseBase::MPIPromiseBase()
 /** Copy constructor */
 MPIPromiseBase::MPIPromiseBase(const MPIPromiseBase &other)
                : worker_ptr(other.worker_ptr)
-{}
+{
+    qDebug() << CODELOC;
+}
 
 /** Private constructor used to pass the MPIWorker that is doing the 
     work to this promise */
 MPIPromiseBase::MPIPromiseBase(const boost::shared_ptr<detail::MPIWorker> &worker)
                : worker_ptr(worker)
-{}
+{
+    qDebug() << CODELOC;
+}
 
 /** Destructor */
 MPIPromiseBase::~MPIPromiseBase()

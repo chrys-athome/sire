@@ -53,6 +53,38 @@ MPINodesData::MPINodesData() : sem(1), nnodes(1)
     #endif
 }
 
+#ifdef __SIRE_USE_MPI__
+    class MPIBackend : public QThread
+    {
+    public:
+        ~MPIBackend()
+        {}
+    
+        static void runBackendLoop(MPI::Comm *mpicomm, int mpimaster);
+
+    protected:
+        MPIBackend(MPI::Comm *mpicomm, int mpimaster) 
+                    : QThread(), _mpicomm(mpicomm), _mpimaster(mpimaster)
+        {}
+    
+        void run()
+        {
+            MPIWorker::backendLoop(_mpicomm, _mpimaster);
+        }
+
+    private:
+        MPI::Comm *_mpicomm;
+        int _mpimaster;
+    };
+
+    void MPIBackend::runBackendLoop(MPI::Comm *mpicomm, int mpimaster)
+    {
+        MPIBackend *m = new MPIBackend(mpicomm, mpimaster);
+        m->start();
+    }
+
+#endif
+
 /** By default we construct the an object that represents
     the global MPI_WORLD */
 boost::shared_ptr<MPINodesData> MPINodesData::construct()
@@ -70,6 +102,8 @@ boost::shared_ptr<MPINodesData> MPINodesData::construct()
         if (not MPI::Is_initialized())
         {
             //we need to initialize MPI ourselves!
+            qDebug() << CODELOC;
+            qDebug() << "Calling MPI::Init() ourselves!";
             MPI::Init();
         }
         
@@ -86,6 +120,13 @@ boost::shared_ptr<MPINodesData> MPINodesData::construct()
         for (int i=0; i<d->nnodes; ++i)
         {
             d->free_nodes.append( MPINode(d, i, i == d->my_mpirank) );
+            
+            //run the backend loop on this node
+            if (i == d->my_mpirank)
+            {
+                //run the backend in a background thread on this node
+                MPIBackend::runBackendLoop(d->mpicomm, i);
+            }
         }
     }
     

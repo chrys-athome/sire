@@ -38,6 +38,7 @@
 
 #include "detail/mpidetail.h"     // CONDITIONAL_INCLUDE
 
+#include "SireStream/streamdata.hpp"
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -405,17 +406,24 @@ QByteArray MPIWorker::processResult()
     static void receiveMessage(MPINodeData *nodedata, void *message, int size,
                                const MPI::Datatype &datatype)
     {
+        qDebug() << CODELOC;
         BOOST_ASSERT( nodedata != 0 );
-        
+
+        qDebug() << CODELOC;
         boost::shared_ptr<MPINodesData> nodesdata = nodedata->parent.lock();
         BOOST_ASSERT( nodesdata.get() != 0 );
 
+        qDebug() << CODELOC;
         MPI::Comm *mpicomm = nodesdata->mpiCommunicator();
         BOOST_ASSERT( mpicomm != 0 );
 
+        qDebug() << CODELOC;
         int mpirank = nodedata->mpirank;
         
+        qDebug() << CODELOC;
+        qDebug() << mpicomm << mpirank << message << size;
         mpicomm->Recv( message, size, datatype, mpirank, 0 );
+        qDebug() << CODELOC;
     }
 #endif
 
@@ -440,6 +448,8 @@ void MPIWorker::sendMessage(const QByteArray &data, bool blocking)
 
 void MPIWorker::receiveMessage( int *message, int size )
 {
+    qDebug() << CODELOC;
+    
     #ifdef __SIRE_USE_MPI__
         ::receiveMessage(nodedata, message, size, MPI::INT);
     #else
@@ -449,6 +459,8 @@ void MPIWorker::receiveMessage( int *message, int size )
 
 void MPIWorker::receiveMessage( QByteArray &data, int size )
 {
+    qDebug() << CODELOC;
+
     //ensure there is sufficient space to receive the message
     if (data.count() < size )
     {
@@ -503,11 +515,17 @@ void MPIWorker::wait()
 {
     QMutexLocker lkr(&data_mutex);
     
-    if (not current_status & MPIWORKER_IS_FINISHED)
+    qDebug() << CODELOC;
+    
+    if (not (current_status & MPIWORKER_IS_FINISHED))
     {
+        qDebug() << CODELOC;
+        
         //wait for the result
         result_waiter.wait( &data_mutex );
     }
+
+    qDebug() << CODELOC;
 }
 
 /** Wait until the result is available, or 'ms' milliseconds has passed. This
@@ -518,7 +536,7 @@ bool MPIWorker::wait(int ms)
 {
     QMutexLocker lkr(&data_mutex);
     
-    if (not current_status & MPIWORKER_IS_FINISHED)
+    if (not (current_status & MPIWORKER_IS_FINISHED))
     {
         //wait for the result
         return result_waiter.wait( &data_mutex, ms );
@@ -533,7 +551,7 @@ void MPIWorker::abort()
 {
     QMutexLocker lkr(&data_mutex);
     
-    if (not current_status & MPIWORKER_IS_FINISHED)
+    if (not (current_status & MPIWORKER_IS_FINISHED))
     {
         int message = MPIWORKER_ABORTED;
         this->sendMessage( &message );
@@ -550,7 +568,7 @@ void MPIWorker::stop()
 {
     QMutexLocker lkr(&data_mutex);
     
-    if (not current_status & MPIWORKER_IS_FINISHED)
+    if (not (current_status & MPIWORKER_IS_FINISHED))
     {
         int message = MPIWORKER_STOPPED;
         this->sendMessage( &message );
@@ -604,7 +622,9 @@ boost::shared_ptr<MPIWorker> MPIWorker::runSim(MPINodeData *nodedata,
     
         QDataStream ds(&args_data, QIODevice::WriteOnly);
      
-        ds << QString("runSim_0") << system << Moves(moves)
+        ds << QString("runSim_0") 
+           << SireStream::save(system) 
+           << SireStream::save(Moves(moves))
            << qint32(nmoves) << record_stats;
     }
         
@@ -618,8 +638,11 @@ boost::shared_ptr<MPIWorker> MPIWorker::runSim(MPINodeData *nodedata,
     //start the worker and wait until it has definitely started
     qDebug() << "Starting the worker";
     worker->start_mutex.lock();
+    qDebug() << CODELOC;
     worker->start();
+    qDebug() << CODELOC;
     worker->start_waiter.wait( &(worker->start_mutex) );
+    qDebug() << CODELOC;
     worker->start_mutex.unlock();
 
     qDebug() << "Worker has started!";
@@ -630,6 +653,8 @@ boost::shared_ptr<MPIWorker> MPIWorker::runSim(MPINodeData *nodedata,
 void MPIWorker::setError(const QByteArray &error_data)
 {
     QMutexLocker lkr(&data_mutex);
+
+    qDebug() << CODELOC;
     
     current_status = MPIWORKER_IS_ERROR | MPIWORKER_IS_FINISHED;
     databuffer = error_data;
@@ -643,6 +668,8 @@ void MPIWorker::setError(const QByteArray &error_data)
 void MPIWorker::setInterim(const QByteArray &result_data)
 {
     QMutexLocker lkr(&data_mutex);
+
+    qDebug() << CODELOC;
     
     current_status = MPIWORKER_IS_BUSY;
     databuffer = result_data;
@@ -654,6 +681,8 @@ void MPIWorker::setInterim(const QByteArray &result_data)
 void MPIWorker::setResult(const QByteArray &result_data)
 {
     QMutexLocker lkr(&data_mutex);
+
+    qDebug() << CODELOC;
     
     current_status = MPIWORKER_IS_FINISHED;
     databuffer = result_data;
@@ -666,6 +695,8 @@ void MPIWorker::setResult(const QByteArray &result_data)
 void MPIWorker::setProgress(const QByteArray &progress_data)
 {
     QMutexLocker lkr(&data_mutex);
+
+    qDebug() << CODELOC;
     
     QDataStream ds(progress_data);
     ds >> current_progress;
@@ -676,6 +707,8 @@ void MPIWorker::setProgress(const QByteArray &progress_data)
 void MPIWorker::setAborted()
 {
     QMutexLocker lkr(&data_mutex);
+    
+    qDebug() << CODELOC;
     
     current_status = MPIWORKER_IS_ABORTED | MPIWORKER_IS_FINISHED;
     databuffer = QByteArray();
@@ -728,17 +761,35 @@ void MPIWorker::setAborted()
         qint32 nmoves;
         bool record_stats;
     
-        ds >> system >> moves >> nmoves >> record_stats;
+        qDebug() << CODELOC;
+
+        {
+            QByteArray system_data, moves_data;
+    
+            ds >> system_data >> moves_data >> nmoves >> record_stats;
+    
+            system = SireStream::loadType<System>(system_data);
+            moves = SireStream::loadType<Moves>(moves_data);
+    
+            qDebug() << CODELOC;
+        }
     
         //now construct a simulation to run these moves
-        Simulation simulation = Simulation::runBG(system, moves, nmoves, record_stats);
+        //Simulation simulation = Simulation::runBG(system, moves, nmoves, record_stats);
+        Simulation simulation = Simulation::runBG(system, moves, 0, record_stats);
+    
+        qDebug() << CODELOC;
     
         //enter a loop, checking for new instructions, and waiting until the 
         //simulation has finished
         while (true)
         {
+            qDebug() << "Is there a message from the master?";
+        
             if (mpicomm->Iprobe(mpimaster, 0))
             {
+                qDebug() << "YES!!!";
+            
                 //there is a message to be received
                 int message;
                 mpicomm->Recv(&message, 1, MPI::INT, mpimaster, 0);
@@ -816,10 +867,14 @@ void MPIWorker::setAborted()
             }
         
             //now check to see if the simulation has finished
+            qDebug() << "Waiting for the simulation to finish";
             simulation.wait(100);
         
             if (simulation.hasFinished())
             {
+                qDebug() << CODELOC;
+                qDebug() << "Simulation has finished!";
+            
                 if (simulation.isError())
                     simulation.throwError();
         
@@ -834,8 +889,12 @@ void MPIWorker::setAborted()
                                                       simulation.nCompleted() );
                 }
                 
+                qDebug() << "Sending back the result!";
+                
                 MPIWorker::sendReply(mpicomm, mpimaster, MPIWORKER_FINISHED,
                                      response);
+            
+                qDebug() << CODELOC;
             
                 return true;
             }
@@ -851,15 +910,21 @@ void MPIWorker::setAborted()
                                  const QByteArray &message)
     {
         if (message.isEmpty())
+        {
+            qDebug() << "The message was empty!";
             return true;
+        }
     
         QDataStream ds(message);
+    
+        qDebug() << "Reading the message";
     
         QString message_type;
         ds >> message_type;
         
         if (message_type == QLatin1String("runSim_0"))
         {
+            qDebug() << "Calling MPIWorker::runSim_0";
             return MPIWorker::runSim_0(mpicomm, mpimaster, ds);
         }
         else
@@ -883,21 +948,27 @@ void MPIWorker::setAborted()
             {
                 //wait for an instruction
                 int message_size = 0;
+                qDebug() << CODELOC;
                 mpicomm->Recv( &message_size, 1, MPI::INT, mpimaster, 0 );
+            
+                qDebug() << "Backend got message of size" << message_size;
             
                 if (message_size <= 0)
                 {
                     //the backend has been told to shut down
+                    qDebug() << "Backend shutting down";
                     break;
                 }
                 
                 //create enough space to received the message
                 QByteArray message_data( message_size + 1, ' ' );
                 
+                qDebug() << "Backend receiving the message...";
                 mpicomm->Recv( message_data.data(), message_size, 
                                MPI::BYTE, mpimaster, 0 );
             
                 //act on the message
+                qDebug() << "Backend acting on message...";
                 bool stay_in_mode = MPIWorker::actOnMessage(mpicomm, mpimaster, 
                                                             message_data);
                                                         
@@ -929,6 +1000,8 @@ void MPIWorker::setAborted()
     to listen to communication from the back-end and to respond appropriately */
 void MPIWorker::run()
 {
+    qDebug() << CODELOC;
+    
     BOOST_ASSERT( nodedata != 0 );
  
     BOOST_ASSERT( current_status == MPIWORKER_IS_STARTING );
@@ -939,14 +1012,22 @@ void MPIWorker::run()
         //access to this MPI node
         nodedata->lock();
 
+        qDebug() << CODELOC;
+
         //signal the parent that we have started running
         start_mutex.lock();
+        qDebug() << CODELOC;
+        current_status = MPIWORKER_IS_BUSY;
         start_waiter.wakeAll();
+        qDebug() << CODELOC;
+        start_mutex.unlock();
 
         //send instructions to the node to tell it what to run
         //(block as we need to clear the data in the databuffer)
         {
             QMutexLocker lkr(&data_mutex);
+
+            qDebug() << CODELOC;
 
             int message_size = databuffer.size();
             
@@ -957,11 +1038,17 @@ void MPIWorker::run()
                 return;
             }
 
+            qDebug() << CODELOC;
+
             this->sendMessage( &message_size, true );
+
+            qDebug() << CODELOC;
+
             this->sendMessage( databuffer, true );
 
+            qDebug() << CODELOC;
+    
             //the node should now be busy
-            current_status = MPIWORKER_IS_BUSY;
             databuffer = QByteArray();
         }
         
@@ -969,21 +1056,37 @@ void MPIWorker::run()
     
         do
         {
+            qDebug() << CODELOC;
+        
             //get the size of the incoming message
             int message_envelope[2];
+
+            qDebug() << CODELOC;
         
             this->receiveMessage( message_envelope, 2 );
+
+            qDebug() << CODELOC;
         
             int message_type = message_envelope[0];
+
+            qDebug() << CODELOC;
+
             int message_size = message_envelope[1];
+
+            qDebug() << CODELOC;
         
             QByteArray message_data;
+
+            qDebug() << CODELOC;
         
             if (message_size > 0)
             {
                 //receive the message
+                qDebug() << CODELOC;
                 this->receiveMessage( message_data, message_size );
             }
+
+            qDebug() << CODELOC;
         
             switch( message_type )
             {
@@ -1012,6 +1115,8 @@ void MPIWorker::run()
             }
     
         } while (keep_looping);
+
+        qDebug() << CODELOC;
         
         //we have finished using the node
         nodedata->unlock();
@@ -1021,4 +1126,6 @@ void MPIWorker::run()
         nodedata->unlock();
         throw;
     }
+    
+    qDebug() << CODELOC;
 }
