@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007  Christopher Woods
+  *  Copyright (C) 2008  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,12 +26,8 @@
   *
 \*********************************************/
 
-#include "SireCluster/errors.h"
+#include "SireStream/streamdata.hpp"
+using namespace SireStream;
 
-using namespace SireCluster;
+static const RegisterLibrary *registry = new RegisterLibrary( QString("SireMove"), 1, 1 );
 
-static const
-RegisterMetaType<sirecluster_error> r_error;
-
-static const
-RegisterMetaType<already_active> r_active;

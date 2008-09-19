@@ -26,7 +26,59 @@ set ( SQUIRE_SOURCES
       ${SQUIRE_HEADERS}
     )
 
-set (MOLPRO_FOUND off)
+# Add option to disable compilation of the molpro forcefield
+option ( SIRE_BUILD_MOLPRO
+         "Build the Molpro forcefield (requires MolproClient)" OFF )
+
+if (SIRE_BUILD_MOLPRO)
+
+  #try to find the directory containing the 
+  #molproclient.h header file
+  FIND_PATH( MOLPRO_CLIENT_INCLUDE_DIR
+                MolproClient/molproclient.h
+             PATHS
+                $ENV{MOLPROCLIENTDIR}/include
+                $ENV{MOLPRODIR}/include
+             DOC
+                Path to the molproclient.h and molproclient_cpp.h include files.
+           )
+  
+  if ( MOLPRO_CLIENT_INCLUDE_DIR )
+
+    #try to find the MolproClient library...
+    FIND_LIBRARY ( MOLPRO_CLIENT_C_LIBRARY
+                     MolproClient
+                   PATHS
+                     ENV LD_LIBRARY_PATH
+                 )
+  
+    if ( MOLPRO_CLIENT_C_LIBRARY )
+
+      get_filename_component( MOLPRO_CLIENT_LIBRARY_PATH
+                              ${MOLPRO_CLIENT_C_LIBRARY}
+                              PATH CACHE )
+    
+      set ( MOLPRO_CLIENT_LIBRARIES 
+            "-L${MOLPRO_CLIENT_LIBRARY_PATH} -lMolproClient -lMolproClient_cpp"
+          )
+                             
+      set ( MOLPRO_FOUND "ON" )
+
+      set ( MOLPRO_DEFINITIONS "-D_BUILD_MOLPRO_" )
+ 
+    endif()
+
+  endif()
+
+  if (NOT MOLPRO_FOUND)
+  
+    message( STATUS "The MolproClient library was not found! "
+                    "Compilation of the Molpro-based forcefields "
+                    "has been disabled." )
+
+  endif()
+
+endif()
 
 if (MOLPRO_FOUND)
 

@@ -6,8 +6,8 @@
 #
 ################################
 
-# require cmake >= 2.4.1
-cmake_minimum_required(VERSION 2.4.1 FATAL_ERROR)
+# require cmake >= 2.6.0
+cmake_minimum_required(VERSION 2.6.0 FATAL_ERROR)
 
 # use loose loop syntax in CMakeLists files
 set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
@@ -78,20 +78,11 @@ set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
 # Add option to turn off symbol hiding
 option ( SIRE_SYMBOL_HIDING "Turn on library symbol hiding" ON )
 
-# include the right Qt modules - what we need depends on 
-# whether any GUI apps are compiled
+# include the right Qt modules
 set (QT_USE_QTSQL TRUE)
 
-# Don't need GUI if aren't compiling Spier
-if ( SIRE_BUILD_SPIER )
-   set (QT_USE_QTGUI TRUE)
-   set (QT_USE_OPENGL TRUE)
-else()
-   set (QT_DONT_USE_QTGUI TRUE)
-endif()
-
-# Sire depends on >= Qt 4.1
-set (QT_MIN_VERSION "4.1.0")
+# Sire depends on >= Qt 4.2
+set (QT_MIN_VERSION "4.2.0")
 include( FindQt4 )
 
 # I only link to individual Qt libraries, as this way I can ensure
@@ -101,7 +92,7 @@ include( FindQt4 )
 # the various Qt components depend - I will do this by adding them
 # onto the end of the actual Qt libraries
 set( QT_QTCORE_LIBRARY ${QT_QTCORE_LIBRARY} ${QT_CORE_LIB_DEPENDENCIES} )
-set( QT_QTGUI_LIBRARY ${QT_QTGUI_LIBRARY} ${QT_GUI_LIB_DEPENDENCIES} )
+set( QT_QTSQL_LIBRARY ${QT_QTSQL_LIBRARY} ${QT_SQL_LIB_DEPENDENCIES} )
 
 # Sire depends on >= Python 2.2
 set( PYTHON_REQUIRE_MAJOR 2 )

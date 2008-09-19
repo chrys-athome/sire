@@ -9,26 +9,13 @@
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
-if (SIRE_USE_MPI)
-  include ( FindMPI )
-  find_package(MPI REQUIRED)
-
-  include_directories( ${MPI_INCLUDE_PATH} )
-
-  add_definitions( -D__SIRE_USE_MPI__ )
-
-  set ( SIREMOVE_EXTRA_LIBRARIES  ${MPI_LIBRARY} ${MPI_EXTRA_LIBRARY} )
-endif()
-
 # Define the headers in SireMove
 set ( SIREMOVE_HEADERS
       montecarlo.h
       move.h
       moves.h
-      mpinode.h
-      mpinodes.h
-      mpipromise.h
       mpisim.h
+      mpisimworker.h
       mtsmc.h
       prefsampler.h
       rigidbodymc.h
@@ -49,10 +36,8 @@ set ( SIREMOVE_SOURCES
       montecarlo.cpp
       move.cpp
       moves.cpp
-      mpinode.cpp
-      mpinodes.cpp
-      mpipromise.cpp
       mpisim.cpp
+      mpisimworker.cpp
       mtsmc.cpp
       prefsampler.cpp
       rigidbodymc.cpp
@@ -64,8 +49,6 @@ set ( SIREMOVE_SOURCES
       weightedmoves.cpp
       volumemove.cpp
    
-      detail/mpidetail.h
- 
       ${SIREMOVE_HEADERS}
     )
 
@@ -81,19 +64,9 @@ set_target_properties (SireMove PROPERTIES
 target_link_libraries (SireMove
                        SireSystem
                        SireMaths
+                       SireMPI
                        SireStream
-
-                       ${SIREMOVE_EXTRA_LIBRARIES}
                        )
-
-# Are we compiling with SireMPI?
-if (SIRE_USE_MPI)
-   add_definitions( -D__SIRE_USE_MPI__ )
-
-   message( STATUS "Compiling SireMove with support for SireMPI" )
-
-endif()
-
 
 # installation
 install( TARGETS SireMove

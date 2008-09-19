@@ -6,8 +6,8 @@
 #
 ################################
 
-# require cmake >= 2.4.1
-cmake_minimum_required(VERSION 2.4.1 FATAL_ERROR)
+# require cmake >= 2.6.0
+cmake_minimum_required(VERSION 2.6.0 FATAL_ERROR)
 
 # use loose loop syntax in CMakeLists files
 set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
@@ -30,10 +30,6 @@ set (SIRE_VERSION "${SIRE_VERSION_MAJOR}.${SIRE_VERSION_MINOR}.${SIRE_VERSION_PA
 # Whether or not to use manual SSE (will probably be removed
 # in favour of compile-time detection)
 set (SIRE_USE_SSE ON)
-
-# Whether or not to include MPI - only the SireMPI library is compiled
-# to use MPI
-set (SIRE_USE_MPI ON)
 
 # Ensure that the Sire's directories are searched for header files
 # before the system directories - this prevents problems in case
@@ -63,79 +59,14 @@ set (SIRE_INCLUDES "include/Sire")
 # Path to the project's extra cmake files
 set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
 
-# Add option to disable compilation of the molpro forcefield
-option ( SIRE_BUILD_MOLPRO
-         "Build the Molpro forcefield (requires MolproClient)" ON )
-
-set ( MOLPRO_FOUND "OFF" )
-
-if (SIRE_BUILD_MOLPRO)
-
-  #try to find the directory containing the 
-  #molproclient.h header file
-  FIND_PATH( MOLPRO_CLIENT_INCLUDE_DIR
-                MolproClient/molproclient.h
-             PATHS
-                $ENV{MOLPROCLIENTDIR}/include
-                $ENV{MOLPRODIR}/include
-             DOC
-                Path to the molproclient.h and molproclient_cpp.h include files.
-           )
-  
-  if ( MOLPRO_CLIENT_INCLUDE_DIR )
-
-    #try to find the MolproClient library...
-    FIND_LIBRARY ( MOLPRO_CLIENT_C_LIBRARY
-                     MolproClient
-                   PATHS
-                     ENV LD_LIBRARY_PATH
-                 )
-  
-    if ( MOLPRO_CLIENT_C_LIBRARY )
-
-      get_filename_component( MOLPRO_CLIENT_LIBRARY_PATH
-                              ${MOLPRO_CLIENT_C_LIBRARY}
-                              PATH CACHE )
-    
-      set ( MOLPRO_CLIENT_LIBRARIES 
-            "-L${MOLPRO_CLIENT_LIBRARY_PATH} -lMolproClient -lMolproClient_cpp"
-          )
-                             
-      set ( MOLPRO_FOUND "ON" )
-
-      set ( MOLPRO_DEFINITIONS "-D_BUILD_MOLPRO_" )
- 
-    endif()
-
-  endif()
-
-  if (NOT MOLPRO_FOUND)
-  
-    message( STATUS "The MolproClient library was not found! "
-                    "Compilation of the Molpro-based forcefields "
-                    "has been disabled." )
-
-  endif()
-
-endif()
-
 # Add option to turn off symbol hiding
 option ( SIRE_SYMBOL_HIDING "Turn on library symbol hiding" ON )
 
-# include the right Qt modules - what we need depends on 
-# whether any GUI apps are compiled
+# include the right Qt modules - need QtSql for SireDB
 set (QT_USE_QTSQL TRUE)
 
-# Don't need GUI if aren't compiling Spier
-if ( SIRE_BUILD_SPIER )
-   set (QT_USE_QTGUI TRUE)
-   set (QT_USE_OPENGL TRUE)
-else()
-   set (QT_DONT_USE_QTGUI TRUE)
-endif()
-
-# Sire depends on >= Qt 4.1
-set (QT_MIN_VERSION "4.1.0")
+# Sire depends on >= Qt 4.2
+set (QT_MIN_VERSION "4.2.0")
 include( FindQt4 )
 
 # I only link to individual Qt libraries, as this way I can ensure
@@ -145,7 +76,7 @@ include( FindQt4 )
 # the various Qt components depend - I will do this by adding them
 # onto the end of the actual Qt libraries
 set( QT_QTCORE_LIBRARY ${QT_QTCORE_LIBRARY} ${QT_CORE_LIB_DEPENDENCIES} )
-set( QT_QTGUI_LIBRARY ${QT_QTGUI_LIBRARY} ${QT_GUI_LIB_DEPENDENCIES} )
+set( QT_QTSQL_LIBRARY ${QT_QTSQL_LIBRARY} ${QT_SQL_LIB_DEPENDENCIES} )
 
 # Sire depends on >= Python 2.2
 set( PYTHON_REQUIRE_MAJOR 2 )
