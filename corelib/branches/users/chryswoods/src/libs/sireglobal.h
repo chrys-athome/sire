@@ -343,33 +343,29 @@ class QTextStream;
 #endif // #ifdef __cplusplus
 
 //I now define seperate SIRE_EXPORT macros for each of the different Sire libraries.
-//This allows me to use 'grep' to find all of the exported symbols for each library
-//(by doing 'grep -r SIREBASE_EXPORT *'
+//Eventually these will need to be changed to work properly on windows...
 #define SIREBASE_EXPORT SIRE_EXPORT
 #define SIRECAS_EXPORT SIRE_EXPORT
-#define SIRECLUSTER_EXPORT SIRE_EXPORT
 #define SIREDB_EXPORT SIRE_EXPORT
 #define SIREERROR_EXPORT SIRE_EXPORT
 #define SIREFF_EXPORT SIRE_EXPORT
 #define SIREID_EXPORT SIRE_EXPORT
 #define SIREIO_EXPORT SIRE_EXPORT
 #define SIREMM_EXPORT SIRE_EXPORT
+#define SIREMMDB_EXPORT SIRE_EXPORT
 #define SIREMATHS_EXPORT SIRE_EXPORT
 #define SIREMOL_EXPORT SIRE_EXPORT
 #define SIREMOVE_EXPORT SIRE_EXPORT
+#define SIREMPI_EXPORT SIRE_EXPORT
 #define SIREPY_EXPORT SIRE_EXPORT
 #define SIREQT_EXPORT SIRE_EXPORT
-#define SIRESIM_EXPORT SIRE_EXPORT
 #define SIRESTREAM_EXPORT SIRE_EXPORT
 #define SIRESYSTEM_EXPORT SIRE_EXPORT
 #define SIRETEST_EXPORT SIRE_EXPORT
 #define SIREUNITTEST_EXPORT SIRE_EXPORT
 #define SIREUNITS_EXPORT SIRE_EXPORT
 #define SIREVOL_EXPORT SIRE_EXPORT
-#define SPIER_EXPORT SIRE_EXPORT
 #define SQUIRE_EXPORT SIRE_EXPORT
 
-//whether or not to build shared python wrappers
-#define BUILD_SHARED_WRAPPERS 1
-
 #endif // SIREGLOBAL_H
+

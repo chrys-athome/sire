@@ -26,62 +26,28 @@
   *
 \*********************************************/
 
-#ifndef SIREMOVE_MPIPROMISE_H
-#define SIREMOVE_MPIPROMISE_H
+#ifndef SIREMPI_MPIPROMISE_H
+#define SIREMPI_MPIPROMISE_H
 
-#include "sireglobal.h"
+#include "mpinode.h"
+
+#include "SireStream/streamdata.hpp"
 
 #include <boost/shared_ptr.hpp>
 
 SIRE_BEGIN_HEADER
 
-namespace SireMove
+namespace SireMPI
 {
+
+class MPIWorker;
+class MPINode;
 
 namespace detail
 {
-class MPIWorker;
+class MPINodeData;
+class MPIPromiseData;
 }
-
-/** This class provides the template-independent parts of the 
-    the MPIPromise class
-    
-    @author Christopher Woods
-*/
-class SIREMOVE_EXPORT MPIPromiseBase
-{
-public:
-    ~MPIPromiseBase();
-    
-    bool isNull() const;
-
-    void abort();
-    void stop();
-    
-    double progress();
-    
-    bool hasFinished();
-    bool isError();
-    bool isAborted();
-
-    void wait();
-    
-    bool wait(int ms);
-    
-protected:
-    MPIPromiseBase();
-    MPIPromiseBase(const MPIPromiseBase &other);
-    
-    MPIPromiseBase(const boost::shared_ptr<detail::MPIWorker> &worker);
-
-    void throwJobAbortedError();
-
-    QByteArray resultData();
-    QByteArray interimResultData();
-
-private:
-    boost::shared_ptr<detail::MPIWorker> worker_ptr;
-};
 
 /** This class provides a handle to a result of a calculation
     that is being performed on another node that communicates
@@ -92,138 +58,109 @@ private:
     
     @author Christopher Woods
 */
-template<class T>
-class SIREMOVE_EXPORT MPIPromise : public MPIPromiseBase
+class SIREMPI_EXPORT MPIPromise
 {
 
-friend class MPINode;  // so can call MPIWorker constructor
+friend class detail::MPINodeData;
 
 public:
     MPIPromise();
-    MPIPromise(const MPIPromise<T> &other);
+    
+    MPIPromise(const MPIPromise &other);
     
     ~MPIPromise();
 
-    const T& result();
-    const T& interimResult();
+    MPIPromise& operator=(const MPIPromise &other);
+    
+    bool operator==(const MPIPromise &other) const;
+    bool operator!=(const MPIPromise &other) const;
+
+    MPINode node();
+
+    void abort();
+    void stop();
+    
+    void wait();
+    bool wait(int ms);
+    
+    bool isRunning();
+    
+    bool isError();
+    
+    bool isStopped();
+    bool isAborted();
+
+    double progress();
+
+    /** Return the initial state (the input work). This can be used
+        to restore the state if there was an error or if the job
+        was aborted 
+    */
+    template<class T>
+    T input()
+    {
+        return SireStream::loadType<T>( this->initialData() );
+    }
+
+    /** Return an interim result - this blocks until an interim result
+        is available (or until an error occurs! - in which case the exception
+        representing this error is thrown). If the job is aborted, then the
+        original input is returned, or if the job is stopped, then the 
+        last state of the job before being stopped is returned.
+    */
+    template<class T>
+    T interimResult()
+    {
+        return SireStream::loadType<T>( this->interimData() );
+    }
+    
+    /** Return the final result of the work - this blocks until the result
+        is available (or until an error occurs! - in which case the exception
+        representing this error is thrown). If the job is aborted, then the
+        original input is returned, or if the job is stopped, then the 
+        last state of the job before being stopped is returned.
+    */
+    template<class T>
+    T result()
+    {
+        return SireStream::loadType<T>( this->finalData() );
+    }
+
+    /** Return the final result of the work - this blocks until the result
+        is available (or until an error occurs! - in which case the exception
+        representing this error is thrown)
+    */
+    template<class T>
+    T operator()()
+    {
+        return this->result<T>();
+    }
+
+protected:
+    MPIPromise(const MPIWorker &worker, const MPINode &node);
+
+    void setProgress(double progress);
+
+    void setFinalData(const QByteArray &worker_data);
+    void setInterimData(const QByteArray &worker_data, double progress);
+    void setErrorData(const QByteArray &error_data);
+
+    void setStopped(const QByteArray &worker_data, double progress);
+
+    void setAborted();
+
+    QByteArray finalData();
+    QByteArray interimData();
+    QByteArray initialData();
 
 private:
-    MPIPromise(const boost::shared_ptr<detail::MPIWorker> &worker);
-
-    /** The current value of the result */
-    boost::shared_ptr<T> current_result;
-    
-    /** The interim result */
-    boost::shared_ptr<T> interim_result;
+    /** Explicitly shared pointer to the data of this promise */
+    boost::shared_ptr<detail::MPIPromiseData> d;
 };
 
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
-/** Null constructor */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-MPIPromise<T>::MPIPromise() : MPIPromiseBase()
-{}
-
-/** Copy constructor */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-MPIPromise<T>::MPIPromise(const MPIPromise<T> &other)
-              : MPIPromiseBase(other)
-{}
-
-/** Private constructor used by MPINode */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-MPIPromise<T>::MPIPromise(const boost::shared_ptr<detail::MPIWorker> &worker)
-              : MPIPromiseBase(worker)
-{}
-
-/** Destructor */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-MPIPromise<T>::~MPIPromise()
-{}
-
-/** Return the result of the calculation. This blocks until the result
-    is available, an error occured or the job was aborted. This only returns
-    a result if there is one - if an error occurred then the exception will be
-    thrown here, while if the job was aborted then a job_aborted exception
-    will be thrown.
-    
-    \throw SireMove::job_aborted
-*/
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-const T& MPIPromise<T>::result()
-{
-    if (current_result.get() == 0)
-    {
-        QByteArray result_data = MPIPromiseBase::resultData();
-        
-        if (result_data.isEmpty())
-        {
-            //the job was aborted!
-            current_result.reset();
-            interim_result.reset();
-            
-            MPIPromiseBase::throwJobAbortedError();
-        }
-        else
-        {
-            QDataStream ds(result_data);
-        
-            current_result.reset( new T() );
-        
-            ds >> *current_result;
-        
-            interim_result = current_result;
-        }
-    }
-    
-    return *current_result;
 }
 
-/** Return the interim result of the calculation - this will try to return
-    the result as it currently stands (not all computations provide an
-    intermediate result). This blocks until an intermediate result
-    is available, or the final result is available, or an error occured,
-    or the work was aborted. This has the same error behaviour as 
-    MPIPromise<T>::result()
-    
-    \throw SireMove::job_aborted
-*/
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-const T& MPIPromise<T>::interimResult()
-{
-    if (current_result.get() == 0)
-    {
-        QByteArray result_data = MPIPromiseBase::interimResultData();
-        
-        if (result_data.isEmpty())
-        {
-            //the job was aborted!
-            interim_result.reset();
-        }
-        else
-        {
-            QDataStream ds(result_data);
-            
-            interim_result.reset( new T() );
-            
-            ds >> *interim_result;
-        }
-    }
-    
-    return *interim_result;
-}
-
-#endif // #ifdef SIRE_SKIP_INLINE_FUNCTIONS
-
-}
-
-SIRE_EXPOSE_CLASS( SireMove::MPIPromiseBase )
+SIRE_EXPOSE_CLASS( SireMove::MPIPromise )
 
 SIRE_END_HEADER
 

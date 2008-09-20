@@ -26,3 +26,113 @@
   *
 \*********************************************/
 
+#include "mpiworker.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/streamdata.hpp"
+
+#include "SireError/errors.h"
+
+using namespace SireMPI;
+using namespace SireStream;
+
+////////////
+//////////// Implementation of MPIWorker
+////////////
+
+/** Constructor */
+MPIWorker::MPIWorker()
+{}
+
+/** Copy constructor */
+MPIWorker::MPIWorker(const MPIWorker&)
+{}
+
+/** Destructor */
+MPIWorker::~MPIWorker()
+{}
+
+/** Copy assignment operator */
+MPIWorker& MPIWorker::operator=(const MPIWorker&)
+{
+    return *this;
+}
+
+////////////
+//////////// Implementation of MPIError
+////////////
+
+static const RegisterMetaType<MPIError> r_mpierror;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMPI_EXPORT &operator<<(QDataStream &ds, const MPIError &mpierror)
+{
+    writeHeader(ds, r_mpierror, 1);
+    ds << mpierror.error_data;
+
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMPI_EXPORT &operator>>(QDataStream &ds, MPIError &mpierror)
+{
+    VersionID v = readHeader(ds, r_mpierror);
+    
+    if (v == 1)
+    {
+        ds >> mpierror.error_data;
+    }
+    else
+        throw version_error(v, "1", r_mpierror, CODELOC);
+        
+    return ds;
+}
+
+/** Null constructor */
+MPIError::MPIError() : MPIWorker()
+{}
+
+/** Construct from the passed standard exception */
+MPIError::MPIError(const std::exception &e) : MPIWorker()
+{
+    error_data = SireStream::save( SireError::std_exception(e) );
+}
+
+/** Construct for the passed Sire exception */
+MPIError::MPIError(const SireError::exception &e) : MPIWorker()
+{
+    error_data = SireStream::save(e);
+}
+
+/** Copy constructor */
+MPIError::MPIError(const MPIError &other) : MPIWorker(other),
+                                            error_data(other.error_data)
+{}
+
+/** Destructor */
+MPIError::~MPIError()
+{}
+
+/** Does nothing */
+void MPIError::run()
+{}
+
+/** Does nothing */
+void MPIError::stop()
+{}
+
+/** Does nothing */
+void MPIError::abort()
+{}
+
+/** No progress as we are in an error state */
+double MPIError::progress()
+{
+    return 0;
+}
+
+/** Return the data that represents this error */
+const QByteArray& MPIError::errorData() const
+{
+    return error_data;
+}

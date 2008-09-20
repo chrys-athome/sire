@@ -30,6 +30,9 @@
 
 #include "mpinodes.h"
 #include "mpinode.h"
+#include "mpipromise.h"
+
+#include "SireBase/incremint.h"
 
 #include "SireError/errors.h"
 
@@ -37,8 +40,10 @@
 
 #include <QDebug>
 
-using namespace SireMove;
-using namespace SireMove::detail;
+using namespace SireMPI;
+using namespace SireMPI::detail;
+
+using namespace SireBase;
 
 static QMutex mpi_mutex;
 
@@ -54,35 +59,14 @@ MPINodesData::MPINodesData() : sem(1), nnodes(1)
 }
 
 #ifdef __SIRE_USE_MPI__
-    class MPIBackend : public QThread
+    //increment used to get new tags - the global tag is 1, so
+    //this starts at 2
+    static Incremint last_mpitag(1);
+
+    static int getUniqueMPITag()
     {
-    public:
-        ~MPIBackend()
-        {}
-    
-        static void runBackendLoop(MPI::Comm *mpicomm, int mpimaster);
-
-    protected:
-        MPIBackend(MPI::Comm *mpicomm, int mpimaster) 
-                    : QThread(), _mpicomm(mpicomm), _mpimaster(mpimaster)
-        {}
-    
-        void run()
-        {
-            MPIWorker::backendLoop(_mpicomm, _mpimaster);
-        }
-
-    private:
-        MPI::Comm *_mpicomm;
-        int _mpimaster;
-    };
-
-    void MPIBackend::runBackendLoop(MPI::Comm *mpicomm, int mpimaster)
-    {
-        MPIBackend *m = new MPIBackend(mpicomm, mpimaster);
-        m->start();
+        return last_mpitag.increment();
     }
-
 #endif
 
 /** By default we construct the an object that represents
@@ -99,12 +83,12 @@ boost::shared_ptr<MPINodesData> MPINodesData::construct()
     {
         QMutexLocker lkr(&mpi_mutex);
     
-        if (not MPI::Is_initialized())
+        if (not SireMPI::exec_running())
         {
-            //we need to initialize MPI ourselves!
-            qDebug() << CODELOC;
-            qDebug() << "Calling MPI::Init() ourselves!";
-            MPI::Init();
+            //SireMPI::exec() has not been called in this process. This suggests
+            //that we are not part of an explicit MPI executable.
+            //We need to call it ourselves and set it running in a background thread
+            SireMPI::bg_exec(0, 0);
         }
         
         //this is the global communicator
@@ -116,17 +100,13 @@ boost::shared_ptr<MPINodesData> MPINodesData::construct()
         //what is our rank?
         d->my_mpirank = d->mpicomm->Get_rank();
         
+        //get a unique mpi tag for all communications between nodes
+        d->mpitag = getUniqueMPITag();
+        
         //now create MPINode objects to represent each node
         for (int i=0; i<d->nnodes; ++i)
         {
             d->free_nodes.append( MPINode(d, i, i == d->my_mpirank) );
-            
-            //run the backend loop on this node
-            if (i == d->my_mpirank)
-            {
-                //run the backend in a background thread on this node
-                MPIBackend::runBackendLoop(d->mpicomm, i);
-            }
         }
     }
     
@@ -158,12 +138,14 @@ MPINodesData::~MPINodesData()
 {
     this->waitUntilAllFree();
     
-    //now remove the parent from the nodes, or they will all go
+    //now tell all of the nodes to stop their backend loops
+    // - also remove the parent from the nodes, or they will all go
     //silly when they use their destructors!
     for (QList<MPINode>::iterator it = free_nodes.begin();
          it != free_nodes.end();
          ++it)
     {
+        it->d->stopBackend();
         it->d->parent.reset();
     }
     

@@ -29,5 +29,5 @@
 #include "SireStream/streamdata.hpp"
 using namespace SireStream;
 
-static const RegisterLibrary *registry = new RegisterLibrary( QString("SireMove"), 1, 1 );
+static const RegisterLibrary *registry = new RegisterLibrary( QString("SireMPI"), 1, 1 );
 

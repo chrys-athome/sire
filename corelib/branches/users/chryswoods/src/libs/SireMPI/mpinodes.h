@@ -26,14 +26,14 @@
   *
 \*********************************************/
 
-#ifndef SIREMOVE_MPINODES_H
-#define SIREMOVE_MPINODES_H
+#ifndef SIREMPI_MPINODES_H
+#define SIREMPI_MPINODES_H
 
 #include "mpinode.h"
 
 SIRE_BEGIN_HEADER
 
-namespace SireMove
+namespace SireMPI
 {
 
 namespace detail
@@ -46,7 +46,7 @@ class MPINodesData;
     
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT MPINodes
+class SIREMPI_EXPORT MPINodes
 {
 
 friend class MPINode;
@@ -90,7 +90,7 @@ private:
 
 }
 
-SIRE_EXPOSE_CLASS( SireMove::MPINodes )
+SIRE_EXPOSE_CLASS( SireMPI::MPINodes )
 
 SIRE_END_HEADER
 

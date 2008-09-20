@@ -26,45 +26,36 @@
   *
 \*********************************************/
 
-#ifndef SIREMOVE_MPINODE_H
-#define SIREMOVE_MPINODE_H
+#ifndef SIREMPI_MPINODE_H
+#define SIREMPI_MPINODE_H
 
 #include <QUuid>
 
 #include <boost/shared_ptr.hpp>
-#include <boost/tuple/tuple.hpp>
 
-#include "moves.h"
-#include "mpipromise.h"
-
-#include "SireSystem/system.h"
+#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
-QDataStream& operator<<(QDataStream&, const boost::tuple<SireSystem::System,
-                                                         SireMove::Moves,qint32>&);
-
-QDataStream& operator>>(QDataStream&, boost::tuple<SireSystem::System,
-                                                   SireMove::Moves,qint32>&);
-
-namespace SireMove
+namespace SireMPI
 {
 
-using boost::tuple;
-
-using SireSystem::System;
-
-class MovesBase;
-class Moves;
-
 class MPINodes;
+class MPIWorker;
+class MPIPromise;
 
 namespace detail
 {
 class MPINodeData;
 class MPINodesData;
-class MPIWorker;
 }
+
+bool exec_running();
+
+int exec(int argc, const char **argv);
+void bg_exec(int argc, const char **argv);
+
+void shutdown();
 
 /** This class provides a handle to represent a node that
     is made available via MPI. It provides information about
@@ -74,15 +65,13 @@ class MPIWorker;
     
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT MPINode
+class SIREMPI_EXPORT MPINode
 {
 
 friend class MPINodes;
 
 friend class detail::MPINodeData;
 friend class detail::MPINodesData;
-
-friend class detail::MPIWorker;
 
 public:
     MPINode();
@@ -104,6 +93,8 @@ public:
 
     bool isBusy() const;
         
+    bool wasAborted() const;
+        
     void wait();    
     bool wait(int time);
 
@@ -112,9 +103,14 @@ public:
     MPINodes communicator() const;
     int rank() const;
 
-    MPIPromise< tuple<System,Moves,qint32> > runSim(const System &system,
-                                                    const MovesBase &moves,
-                                                    int nmoves, bool record_stats);
+    MPIPromise start(const MPIWorker &worker);
+    void stop();
+    void abort();
+    
+    double getProgress();
+    
+    MPIPromise getInterimResult();
+    MPIPromise getResult();
 
 protected:
     MPINode(const MPINodes &communicator, int rank, bool is_master);
@@ -130,16 +126,7 @@ private:
 
 }
 
-SIRE_EXPOSE_CLASS( SireMove::MPINode )
-
-SIRE_EXPOSE_ALIAS( 
-(SireMove::MPIPromise<boost::tuples::tuple<SireSystem::System, SireMove::Moves, int, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type, boost::tuples::null_type> >),
-                   SireMove::MPIPromise_tuple_System_Moves_qint32_ )
-
-#ifdef SIRE_INSTANTIATE_TEMPLATES
-template class 
-SireMove::MPIPromise< boost::tuple<SireSystem::System,SireMove::Moves,qint32> >;
-#endif
+SIRE_EXPOSE_CLASS( SireMPI::MPINode )
 
 SIRE_END_HEADER
 
