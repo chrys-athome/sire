@@ -79,7 +79,7 @@ public:
     void setInterimData(const QByteArray &worker_data, double progress);
     void setFinalData(const QByteArray &worker_data);
 
-    void setErrorData(const QByteArray &error_data);
+    void setError(const MPIError &error);
 
     void setStopped(const QByteArray &worker_data, double progress);
 
@@ -304,10 +304,7 @@ QByteArray MPIPromiseData::result()
                 "There is no interim result as this work associated with this "
                 "promise is not running on any nodes!"), CODELOC );
                 
-        //tell the node to give us the final result
-        mpinode.getResult();
-        
-        //wait for the result
+        //wait for the result to arrive
         result_waiter.wait(&data_mutex);
     }
 
@@ -382,13 +379,13 @@ void MPIPromiseData::setFinalData(const QByteArray &worker_data)
 }
 
 /** Oh no - the work has ended in error! */
-void MPIPromiseData::setErrorData(const QByteArray &error)
+void MPIPromiseData::setError(const MPIError &error)
 {
     QMutexLocker lkr(&data_mutex);
     interim_worker_data = QByteArray();
     final_worker_data = QByteArray();
     
-    error_data = error;
+    error_data = error.errorData();
     current_progress = 0;
     
     //the job has finished - we don't need the node any more
@@ -449,18 +446,8 @@ void MPIPromiseData::setAborted()
 //////////// Implementation of MPIPromise
 ////////////
 
-static shared_ptr<MPIPromiseData> shared_null;
-
-static shared_ptr<MPIPromiseData>& getSharedNull()
-{
-    if (shared_null.get() == 0)
-        shared_null.reset( new MPIPromiseData() );
-        
-    return shared_null;
-}
-
 /** Create a null promise */
-MPIPromise::MPIPromise() : d( getSharedNull() )
+MPIPromise::MPIPromise()
 {}
 
 /** Private constructor used by MPINode */
@@ -495,30 +482,43 @@ bool MPIPromise::operator!=(const MPIPromise &other) const
     return d.get() != other.d.get();
 }
 
+/** Return whether or not this is the null promise */
+bool MPIPromise::isNull() const
+{
+    return d.get() == 0;
+}
+
 /** Return the node on which this job is running - this will be a null
     node if this job isn't running */
 MPINode MPIPromise::node()
 {
-    return d->node();
+    if (this->isNull())
+        return MPINode();
+    
+    else
+        return d->node();
 }
 
 /** Abort this job - this blocks until the job is aborted */
 void MPIPromise::abort()
 {
-    d->abort();
+    if (not this->isNull())
+        d->abort();
 }
 
 /** Stop this job - this blocks until the job has stopped */
 void MPIPromise::stop()
 {
-    d->stop();
+    if (not this->isNull())
+        d->stop();
 }
 
 /** Wait until the job has stopped running (either because it is done,
     an error has occured, it has been stopped or it has been aborted) */
 void MPIPromise::wait()
 {
-    d->wait();
+    if (not this->isNull())
+        d->wait();
 }
 
 /** Wait until the job has stopped running (either because it is done,
@@ -527,65 +527,105 @@ void MPIPromise::wait()
     whether or not the job has stopped */
 bool MPIPromise::wait(int ms)
 {
-    return d->wait(ms);
+    if (not this->isNull())
+        return d->wait(ms);
+    
+    else
+        return true;
 }
 
 /** Return whether or not the job is still running */
 bool MPIPromise::isRunning()
 {
-    return d->isRunning();
+    if (not this->isNull())
+        return d->isRunning();
+
+    else
+        return false;
 }
 
 /** Return whether or not we are in an error state */
 bool MPIPromise::isError()
 {
-    return d->isError();
+    if (not this->isNull())
+        return d->isError();
+
+    else
+        return false;
 }
 
 /** Return whether or not this work has been stopped */
 bool MPIPromise::isStopped()
 {
-    return d->isStopped();
+    if (not this->isNull())
+        return d->isStopped();
+
+    else
+        return false;
 }
 
 /** Return whether or not this work has been aborted
     (stopped and reset to input) */
 bool MPIPromise::isAborted()
 {
-    return d->isAborted();
+    if (not this->isNull())
+        return d->isAborted();
+
+    else
+        return false;
 }
 
 /** Return the progress of the calculation. This blocks until it 
     receives a progress report from the calculation */
 double MPIPromise::progress()
 {
-    return d->progress();
+    if (not this->isNull())
+        return d->progress();
+
+    else
+        return 0;
 }
 
 /** This private function is called by the node to set the progress
     of the calculation */
 void MPIPromise::setProgress(double progress)
 {
-    d->setProgress(progress);
+    if (not this->isNull())
+        d->setProgress(progress);
 }
 
 /** This private function is called by the node to set the final result */
 void MPIPromise::setFinalData(const QByteArray &worker_data)
 {
-    d->setFinalData(worker_data);
+    if (this->isNull())
+        return;
+
+    if (SireStream::getDataHeader(worker_data).dataType() 
+                                == QLatin1String(MPIError::typeName()))
+    {
+        d->setError( SireStream::loadType<MPIError>(worker_data) );
+    }
+    else
+    {
+        d->setFinalData(worker_data);
+    }
 }
 
 /** This private function is used to set the interim result */
 void MPIPromise::setInterimData(const QByteArray &worker_data, double progress)
 {
-    d->setInterimData(worker_data, progress);
-}
+    if (this->isNull())
+        return;
 
-/** This private function is called by the node to signal that
-    an error has occurred. */
-void MPIPromise::setErrorData(const QByteArray &error_data)
-{
-    d->setErrorData(error_data);
+    if (SireStream::getDataHeader(worker_data).dataType() 
+                                == QLatin1String(MPIError::typeName()))
+    {
+        d->setError( SireStream::loadType<MPIError>(worker_data) );
+    }
+    else
+    {
+        d->setInterimData(worker_data, progress);
+    }
 }
 
 /** Private function used by the node to tell the promise that the job has 
@@ -593,13 +633,27 @@ void MPIPromise::setErrorData(const QByteArray &error_data)
     percent progress of that result) */
 void MPIPromise::setStopped(const QByteArray &worker_data, double progress)
 {
-    d->setStopped(worker_data, progress);
+    if (this->isNull())
+        return;
+
+    if (SireStream::getDataHeader(worker_data).dataType() 
+                                == QLatin1String(MPIError::typeName()))
+    {
+        d->setError( SireStream::loadType<MPIError>(worker_data) );
+    }
+    else
+    {
+        d->setStopped(worker_data, progress);
+    }
 }
 
 /** Private function used by the node to tell the promise that the j
     ob has been aborted */
 void MPIPromise::setAborted()
 {
+    if (this->isNull())
+        return;
+
     d->setAborted();
 }
 
@@ -607,14 +661,22 @@ void MPIPromise::setAborted()
     is available (or until an error occurs!) */
 QByteArray MPIPromise::finalData()
 {
-    return d->result();
+    if (not this->isNull())
+        return d->result();
+
+    else 
+        return QByteArray();
 }
 
 /** Return an interim result - this blocks until an interim result
     is available */
 QByteArray MPIPromise::interimData()
 {
-    return d->interimResult();
+    if (not this->isNull())
+        return d->interimResult();
+
+    else 
+        return QByteArray();
 }
 
 /** Return the initial state (the input work). This can be used
@@ -622,5 +684,9 @@ QByteArray MPIPromise::interimData()
     was aborted */
 QByteArray MPIPromise::initialData()
 {
-    return d->input();
+    if (not this->isNull())
+        return d->input();
+
+    else 
+        return QByteArray();
 }

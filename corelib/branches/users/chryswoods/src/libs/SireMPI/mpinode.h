@@ -48,12 +48,13 @@ namespace detail
 {
 class MPINodeData;
 class MPINodesData;
+class MPIPromiseData;
 }
 
 bool exec_running();
 
-int exec(int argc, const char **argv);
-void bg_exec(int argc, const char **argv);
+int exec(int argc, char **argv);
+void bg_exec(int argc, char **argv);
 
 void shutdown();
 
@@ -72,6 +73,7 @@ friend class MPINodes;
 
 friend class detail::MPINodeData;
 friend class detail::MPINodesData;
+friend class detail::MPIPromiseData;
 
 public:
     MPINode();
@@ -106,15 +108,13 @@ public:
     MPIPromise start(const MPIWorker &worker);
     void stop();
     void abort();
-    
-    double getProgress();
-    
-    MPIPromise getInterimResult();
-    MPIPromise getResult();
 
 protected:
     MPINode(const MPINodes &communicator, int rank, bool is_master);
     MPINode(const boost::shared_ptr<detail::MPINodeData> &data);
+
+    void getProgress();      // called by MPIPromiseData
+    void getInterimResult(); // called by MPIPromiseData
 
 private:
     /** Shared pointer to the data for this node - this

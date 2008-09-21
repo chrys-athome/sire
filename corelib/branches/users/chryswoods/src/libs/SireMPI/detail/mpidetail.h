@@ -59,10 +59,12 @@ namespace detail
 class MPINodeData;
 class MPINodesData;
 
-enum { MPIWORKER_STOP         = 1,
-       MPIWORKER_ABORT        = 2,
-       MPIWORKER_GET_PROGRESS = 4,
-       MPIWORKER_GET_INTERIM  = 8 };
+enum { MPIWORKER_START        = 0x0001,
+       MPIWORKER_STOP         = 0x0002,
+       MPIWORKER_ABORT        = 0x0004,
+       MPIWORKER_PROGRESS     = 0x0008,
+       MPIWORKER_INTERIM      = 0x000f,
+       MPIWORKER_RESULT       = 0x0010 };
 
 /** Private class containing the data for the MPINode class */
 class MPINodeData : private QThread
@@ -96,10 +98,10 @@ public:
     void stop();
     void abort();
     
-    double getProgress();
-    
-    MPIPromise getInterimResult();
-    MPIPromise getResult();
+    void getProgress();
+    void getInterimResult();
+
+    void sendMessage(int message);
 
     boost::weak_ptr<MPINodesData> parent;
     boost::weak_ptr<MPINodeData> self_ptr;
@@ -119,9 +121,12 @@ public:
     #ifdef __SIRE_USE_MPI__
     int mpirank;
     #endif
-    
-    bool is_master;
+
     bool is_aborted;
+    bool is_master;
+
+protected:
+    void run();
 };
 
 /** Private class used by the MPINodes class */

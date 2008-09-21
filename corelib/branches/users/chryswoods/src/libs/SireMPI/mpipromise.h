@@ -83,6 +83,8 @@ public:
     void wait();
     bool wait(int ms);
     
+    bool isNull() const;
+    
     bool isRunning();
     
     bool isError();
@@ -139,15 +141,17 @@ public:
 protected:
     MPIPromise(const MPIWorker &worker, const MPINode &node);
 
-    void setProgress(double progress);
+    void setProgress(double progress); // called by MPINodeData
 
-    void setFinalData(const QByteArray &worker_data);
-    void setInterimData(const QByteArray &worker_data, double progress);
-    void setErrorData(const QByteArray &error_data);
+    void setFinalData(const QByteArray &worker_data); // called by MPINodeData
+    void setInterimData(const QByteArray &worker_data, 
+                        double progress); // called by MPINodeData
+                         
 
-    void setStopped(const QByteArray &worker_data, double progress);
+    void setStopped(const QByteArray &worker_data, 
+                    double progress); // called by MPINodeData
 
-    void setAborted();
+    void setAborted(); // called by MPINodeData
 
     QByteArray finalData();
     QByteArray interimData();

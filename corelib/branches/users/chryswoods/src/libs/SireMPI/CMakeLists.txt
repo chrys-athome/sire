@@ -64,6 +64,7 @@ set_target_properties (SireMPI PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SireMPI
                        SireStream
+                       ${SIREMPI_EXTRA_LIBRARIES}
                        )
 
 # installation

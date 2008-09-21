@@ -165,6 +165,12 @@ MPINodesData::~MPINodesData()
         QMutexLocker lkr(&data_mutex);
         return mpicomm;
     }
+
+    int MPINodesData::mpiTag()
+    {
+        QMutexLocker lkr(&data_mutex);
+        return mpitag;
+    }
 #endif
 
 /** Return the number of nodes in this communicator */

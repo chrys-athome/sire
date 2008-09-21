@@ -41,11 +41,12 @@ using namespace SireStream;
 ////////////
 
 /** Constructor */
-MPIWorker::MPIWorker()
+MPIWorker::MPIWorker() : current_progress(0)
 {}
 
 /** Copy constructor */
-MPIWorker::MPIWorker(const MPIWorker&)
+MPIWorker::MPIWorker(const MPIWorker &other)
+          : current_progress(other.current_progress)
 {}
 
 /** Destructor */
@@ -53,9 +54,20 @@ MPIWorker::~MPIWorker()
 {}
 
 /** Copy assignment operator */
-MPIWorker& MPIWorker::operator=(const MPIWorker&)
+MPIWorker& MPIWorker::operator=(const MPIWorker &other)
 {
+    if (this != &other)
+    {
+        current_progress = other.current_progress;
+    }
+    
     return *this;
+}
+
+/** Return the current progress of the job */
+double MPIWorker::progress() const
+{
+    return current_progress;
 }
 
 ////////////
@@ -114,21 +126,13 @@ MPIError::~MPIError()
 {}
 
 /** Does nothing */
-void MPIError::run()
+void MPIError::runChunk()
 {}
 
-/** Does nothing */
-void MPIError::stop()
-{}
-
-/** Does nothing */
-void MPIError::abort()
-{}
-
-/** No progress as we are in an error state */
-double MPIError::progress()
+/** Errors are complete! */
+bool MPIError::hasFinished() const
 {
-    return 0;
+    return true;
 }
 
 /** Return the data that represents this error */

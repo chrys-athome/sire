@@ -52,10 +52,12 @@ class exception;
 namespace SireMPI
 {
 
-/** This is the base class of all of the workers that are used
-    to actually perform work on backend MPI nodes. This
-    class is explicitly shared and thread-safe
-    
+/** This is the base class of all workers. A worker is class that
+    can perform a job in the current thread in chunks. All of the 
+    input and output for the job is stored in the worker. This
+    allows the worker to be moved between threads or across
+    nodes, and for the work to be checkpointed.
+        
     @author Christopher Woods
 */
 class SIREMPI_EXPORT MPIWorker
@@ -72,20 +74,13 @@ public:
     
     virtual MPIWorker* clone() const=0;
 
-    /** This function is called on the node to perform the work.
-        It blocks until the work is complete */
-    virtual void run()=0;
+    /** Perform a chunk of the work in the current thread */
+    virtual void runChunk()=0;
 
-    /** Call this function to abort the work. This blocks until 
-        the work has stopped */
-    virtual void abort()=0;
-    
-    /** Call this function to stop the work. This blocks until 
-        the work has stopped */
-    virtual void stop()=0;
+    /** Is the work finished? */
+    virtual bool hasFinished() const=0;
 
-    /** Return the progress as a percentage */
-    virtual double progress()=0;
+    double progress() const;
 
     template<class T>
     bool isA() const
@@ -111,6 +106,12 @@ protected:
     MPIWorker(const MPIWorker &other);
 
     MPIWorker& operator=(const MPIWorker &other);
+    
+    void setProgress(double progress);
+
+private:
+    /** The current progress of the work */
+    double current_progress;
 };
 
 /** This MPIWorker is sent back when an has occured. It just contains
@@ -148,10 +149,9 @@ public:
         return new MPIError(*this);
     }
     
-    void run();
-    void stop();
-    void abort();
-    double progress();
+    void runChunk();
+
+    bool hasFinished() const;
 
     const QByteArray& errorData() const;
 
