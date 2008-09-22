@@ -40,6 +40,34 @@ using namespace SireStream;
 //////////// Implementation of MPIWorker
 ////////////
 
+static const RegisterMetaType<MPIWorker> r_mpiworker( MAGIC_ONLY,
+                                                      "SireMPI::MPIWorker" );
+
+/** Serialise to a binary datastream */
+QDataStream SIREMPI_EXPORT &operator<<(QDataStream &ds, const MPIWorker &worker)
+{
+    writeHeader(ds, r_mpiworker, 1);
+    
+    ds << worker.current_progress;
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMPI_EXPORT &operator>>(QDataStream &ds, MPIWorker &worker)
+{
+    VersionID v = readHeader(ds, r_mpiworker);
+    
+    if (v == 1)
+    {
+        ds >> worker.current_progress;
+    }
+    else
+        throw version_error( v, "1", r_mpiworker, CODELOC );
+        
+    return ds;
+}
+
 /** Constructor */
 MPIWorker::MPIWorker() : current_progress(0)
 {}
@@ -80,7 +108,9 @@ static const RegisterMetaType<MPIError> r_mpierror;
 QDataStream SIREMPI_EXPORT &operator<<(QDataStream &ds, const MPIError &mpierror)
 {
     writeHeader(ds, r_mpierror, 1);
-    ds << mpierror.error_data;
+
+    ds << mpierror.error_data
+       << static_cast<const MPIWorker&>(mpierror);
 
     return ds;
 }
@@ -92,7 +122,8 @@ QDataStream SIREMPI_EXPORT &operator>>(QDataStream &ds, MPIError &mpierror)
     
     if (v == 1)
     {
-        ds >> mpierror.error_data;
+        ds >> mpierror.error_data
+           >> static_cast<MPIWorker&>(mpierror);
     }
     else
         throw version_error(v, "1", r_mpierror, CODELOC);

@@ -26,3 +26,109 @@
   *
 \*********************************************/
 
+#ifndef SIREMOVE_MPISIMWORKER_H
+#define SIREMOVE_MPISIMWORKER_H
+
+#include <QMutex>
+
+#include "moves.h"
+
+#include "SireMPI/mpiworker.h"
+
+#include "SireSystem/system.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMove
+{
+class MPISimWorker;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMove::MPISimWorker&);
+QDataStream& operator>>(QDataStream&, SireMove::MPISimWorker&);
+
+namespace SireMove
+{
+
+using SireSystem::System;
+
+/** This class performs a simulation as a collection of work chunks.
+
+    @author Christopher Woods
+*/
+class SIREMPI_EXPORT MPISimWorker : public SireMPI::MPIWorker
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const MPISimWorker&);
+friend QDataStream& ::operator>>(QDataStream&, MPISimWorker&);
+
+public:
+    MPISimWorker();
+    MPISimWorker(const System &system, const MovesBase &moves,
+                 int nmoves, bool record_stats);
+                 
+    MPISimWorker(const MPISimWorker &other);
+    
+    ~MPISimWorker();
+    
+    MPISimWorker& operator=(const MPISimWorker &other);
+    
+    bool operator==(const MPISimWorker &other) const;
+    bool operator!=(const MPISimWorker &other) const;
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<MPISimWorker>() );
+    }
+    
+    const char* what() const
+    {
+        return MPISimWorker::typeName();
+    }
+
+    MPISimWorker* clone() const
+    {
+        return new MPISimWorker(*this);
+    }
+
+    System system() const;
+    Moves moves() const;
+    
+    int nMoves() const;
+    int nCompletedMoves() const;
+    
+    bool recordStatistics() const;
+    
+    void runChunk();
+    
+    bool hasFinished() const;
+    
+private:
+    /** Mutex to protect access to this data */
+    QMutex data_mutex;
+
+    /** The system being simulated */
+    System sim_system;
+    
+    /** The moves being performed on the system */
+    Moves sim_moves;
+    
+    /** The number of moves to perform */
+    int nmoves;
+    
+    /** The number of moves already performed */
+    int ncompleted_moves;
+    
+    /** Whether or not to record stats */
+    bool record_stats;
+};
+
+}
+
+Q_DECLARE_METATYPE( SireMove::MPISimWorker )
+
+SIRE_EXPOSE_CLASS( SireMove::MPISimWorker )
+
+SIRE_END_HEADER
+
+#endif

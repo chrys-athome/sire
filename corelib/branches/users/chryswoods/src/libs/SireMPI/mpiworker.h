@@ -38,8 +38,12 @@ SIRE_BEGIN_HEADER
 
 namespace SireMPI
 {
+class MPIWorker;
 class MPIError;
 }
+
+QDataStream& operator<<(QDataStream&, const SireMPI::MPIWorker&);
+QDataStream& operator>>(QDataStream&, SireMPI::MPIWorker&);
 
 QDataStream& operator<<(QDataStream&, const SireMPI::MPIError&);
 QDataStream& operator>>(QDataStream&, SireMPI::MPIError&);
@@ -62,6 +66,10 @@ namespace SireMPI
 */
 class SIREMPI_EXPORT MPIWorker
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const MPIWorker&);
+friend QDataStream& ::operator>>(QDataStream&, MPIWorker&);
+
 public:
     virtual ~MPIWorker();
 
@@ -163,6 +171,9 @@ private:
 }
 
 Q_DECLARE_METATYPE( SireMPI::MPIError );
+
+SIRE_EXPOSE_CLASS( SireMPI::MPIWorker )
+SIRE_EXPOSE_CLASS( SireMPI::MPIError )
 
 SIRE_END_HEADER
 
