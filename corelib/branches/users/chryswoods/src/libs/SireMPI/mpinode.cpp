@@ -699,6 +699,7 @@ MPIPromise MPINodeData::start(const MPIWorker &worker)
     start_mutex.lock();
     QThread::start();
     start_waiter.wait( &start_mutex );
+    start_mutex.unlock();
     
     return mpipromise;
 }

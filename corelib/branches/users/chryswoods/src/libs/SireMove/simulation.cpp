@@ -29,11 +29,13 @@
 #include <QMutex>
 #include <QWaitCondition>
 
+#include "SireMPI/mpinode.h"
+
 #include "simulation.h"
 #include "threadsim.h"
-#include "mpinode.h"
 #include "mpisim.h"
 
+#include "SireStream/streamdata.hpp"
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -62,132 +64,87 @@ SimHandle::~SimHandle()
 /////////
 
 /** Constructor */
-LocalSim::LocalSim() : SimHandle(),
-                       nmoves(0), ncompleted(0), 
-                       record_stats(false)
+LocalSim::LocalSim() : SimHandle()
 {}
 
-/** Construct to run the specified simulation */
-LocalSim::LocalSim(const System &system, const MovesBase &moves,
-                   int nmvs, int ncomp, bool record_statistics)
-         : SimHandle(),
-           sim_system(system), sim_moves(moves), nmoves(nmvs),
-           ncompleted(ncomp), record_stats(record_statistics)
+/** Construct from the passed worker */
+LocalSim::LocalSim(const MPISimWorker &worker)
+         : SimHandle(), sim_worker(worker)
 {
-    if (nmoves < 0)
-        nmoves = 0;
-
-    if (ncompleted > nmoves)
-        ncompleted = nmoves;
+    //save the initial state
+    initial_state = SireStream::save(sim_worker);
 }
 
 /** Destructor */
 LocalSim::~LocalSim()
 {
-    this->abort();
+    this->stop();
     this->wait();
 }
 
 /** Return a copy of the system being simulated */
 System LocalSim::system()
 {
-    try
-    {
-        return controller.system();
-    }
-    catch(detail::sim_not_in_progress)
-    {
-        QMutexLocker lkr(&data_mutex);
-        
-        if (error_ptr.get() != 0)
-        {
-            boost::shared_ptr<SireError::exception> ptr = error_ptr;
-            error_ptr.reset();
-            
-            ptr->throwSelf();
-        }
-        
-        return sim_system;
-    }
+    if (this->isError())
+        this->throwError();
+
+    return sim_worker.system();
 }
 
 /** Return a copy of the moves being applied to the system */
 Moves LocalSim::moves()
 {
-    try
-    {
-        return controller.moves();
-    }
-    catch(detail::sim_not_in_progress)
-    {
-        QMutexLocker lkr(&data_mutex);
+    if (this->isError())
+        this->throwError();
 
-        if (error_ptr.get() != 0)
-        {
-            boost::shared_ptr<SireError::exception> ptr = error_ptr;
-            error_ptr.reset();
-            
-            ptr->throwSelf();
-        }
+    return sim_worker.moves();
+}
 
-        return sim_moves;
-    }
+/** Return a copy of the worker performing the simulation */
+MPISimWorker LocalSim::worker()
+{
+    return sim_worker;
+}
+
+/** Return a copy of the worker in its initial state before
+    the simulation started */
+MPISimWorker LocalSim::initialWorker()
+{
+    return SireStream::loadType<MPISimWorker>(initial_state);
 }
 
 /** Return the total number of moves to be applied to the system
     during this simulation */
 int LocalSim::nMoves()
 {
-    QMutexLocker lkr(&data_mutex);
-    return nmoves;
+    return sim_worker.nMoves();
 }
 
 /** Return the number of moves that have been completed */
 int LocalSim::nCompleted()
 {
-    int ncurrent_completed = controller.nCompleted();
-    
-    QMutexLocker lkr(&data_mutex);
-
-    return qMin(ncurrent_completed + ncompleted, nmoves);
+    return sim_worker.nCompleted();
 }
 
 /** Return the current progress of the simulation (percentage of 
     completed moves) */
 double LocalSim::progress()
 {
-    int ncurrent_completed = controller.nCompleted();
-    
-    QMutexLocker lkr(&data_mutex);
-    if (nmoves == 0)
-        return 0;
-    else
-    {
-        ncurrent_completed = qMin(ncurrent_completed + ncompleted, nmoves);
-        return (100.0 * ncurrent_completed) / nmoves;
-    }
+    return sim_worker.progress();
 }
 
 /** Return whether or not statistics are being recorded during
     this simulation */
-bool LocalSim::recordingStatistics()
+bool LocalSim::recordStatistics()
 {
-    QMutexLocker lkr(&data_mutex);
-    return record_stats;
-}
-
-/** Set an error condition */
-void LocalSim::setError(const SireError::exception &e)
-{
-    QMutexLocker lkr(&data_mutex);
-    error_ptr.reset( e.clone() );
+    return sim_worker.recordStatistics();
 }
 
 /** Return whether or not we are in an error condition */
 bool LocalSim::isError()
 {
     QMutexLocker lkr(&data_mutex);
-    return error_ptr.get() != 0;
+    return not error_data.isEmpty();
 }
 
 /** Throw the exception that represents the error condition */
@@ -195,138 +152,138 @@ void LocalSim::throwError()
 {
     QMutexLocker lkr(&data_mutex);
     
-    if (error_ptr.get() != 0)
-    {
-        boost::shared_ptr<SireError::exception> error = error_ptr;
-        error_ptr.reset();
-    
-        error->throwSelf();
-    }
+    if (not error_data.isEmpty())
+        SireError::exception::unpackAndThrow(error_data);
+}
+
+/** Internal function used to set the error */
+void LocalSim::setError(const SireError::exception &e)
+{
+    QMutexLocker lkr(&data_mutex);
+    error_data = SireStream::save(e);
 }
 
 /** Clear any error condition */
 void LocalSim::clearError()
 {
     QMutexLocker lkr(&data_mutex);
-    error_ptr.reset();
+    error_data.clear();
 }
 
-/** Start running the simulation */
-void LocalSim::start()
+/** Function used to run the job */
+void LocalSim::runJob()
 {
+    if (sim_worker.hasFinished())
+        return;
+
+    data_mutex.lock();
+    stop_running = false;
+    error_data = QByteArray();
+    data_mutex.unlock();
+    
     try
     {
-        QMutexLocker lkr(&run_mutex);
-
-        int nremaining_moves = 0;
-        MovesBase *moves = 0;
-
-        //critical section
+        while (not sim_worker.hasFinished())
         {
-            QMutexLocker lkr(&data_mutex);
-    
-            if (ncompleted >= nmoves)
-            {
-                ncompleted = nmoves;
-                data_mutex.unlock();
-                return;
-            }
+            sim_worker.runChunk();
         
-            nremaining_moves = nmoves - ncompleted;
-            moves = &(sim_moves.edit());
-        }
-
-        System new_system = moves->move(sim_system, nremaining_moves, record_stats,
-                                        controller);
-
-        if (not controller.aborted())
-        {
-            int njust_completed = controller.nCompleted();
-
-            //critical section
-            {
-                QMutexLocker lkr(&data_mutex);
-                ncompleted += njust_completed;
-                sim_system = new_system;
-            }
+            //now do we need to stop?
+            QMutexLocker lkr2(&data_mutex);
+            
+            if (stop_running)
+                break;
         }
     }
-    catch( const SireError::exception &e )
+    catch(const SireError::exception &e)
     {
         this->setError(e);
     }
-    catch( const std::exception &e )
+    catch(const std::exception &e)
     {
         this->setError( SireError::std_exception(e) );
     }
     catch(...)
     {
         this->setError( SireError::unknown_exception( QObject::tr(
-            "An unknown error occurred!"), CODELOC ) );
+                            "An unknown error occured."), CODELOC ) );
     }
 }
 
-/** Pause the simulation */
-void LocalSim::pause()
+/** Start running the simulation */
+void LocalSim::start()
 {
-    controller.pause();
-}
-
-/** Resume the simulation */
-void LocalSim::resume()
-{
-    controller.resume();
+    QMutexLocker run_lkr(&run_mutex);
+    this->runJob();
 }
 
 /** Stop the simulation */
 void LocalSim::stop()
 {
-    controller.stop();
+    //stop the job
+    data_mutex.lock();
+    stop_running = true;
+    data_mutex.unlock();
+    
+    //wait until the job stops
+    run_mutex.lock();
+    run_mutex.unlock();
 }
 
 /** Abort the simulation */
 void LocalSim::abort()
 {
-    controller.abort();
+    //stop the job
+    this->stop();
+    
+    //prevent the job from running
+    QMutexLocker lkr(&run_mutex);
+    
+    QMutexLocker lkr2(&data_mutex);
+    sim_worker = SireStream::loadType<MPISimWorker>(initial_state);
 }
 
 /** Is the simulation running? */
 bool LocalSim::isRunning()
 {
-    return controller.isRunning();
+    if (run_mutex.tryLock())
+    {
+        run_mutex.unlock();
+        return false;
+    }
+    else
+        return true;
 }
 
 /** Has the simulation started? */
 bool LocalSim::hasStarted()
 {
-    //critical section
-    {
-        QMutexLocker lkr(&data_mutex);
-        if (ncompleted > 0)
-            return true;
-    }
-    
-    return controller.hasStarted();
+    return this->isRunning() or this->progress() > 0;
 }
 
 /** Has the simulation finished? */
 bool LocalSim::hasFinished()
 {
-    QMutexLocker lkr(&data_mutex);
-    return ncompleted == nmoves and ncompleted > 0;
+    return sim_worker.hasFinished();
 }
 
 /** Wait until the simulation has finished, or 'time' milliseconds
     has passed */
 bool LocalSim::wait(int time)
 {
-    return controller.wait(time);
+    if (run_mutex.tryLock(time))
+    {
+        run_mutex.unlock();
+        return true;
+    }
+    else
+        return false;
 }
 
 /** Wait until the simulation has finished */
 void LocalSim::wait()
 {
-    controller.wait();
+    run_mutex.lock();
+    run_mutex.unlock();
 }
 
 /////////
@@ -340,17 +297,8 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Simulation &sim)
 {
     writeHeader(ds, r_sim, 1);
     
-    SharedDataStream sds(ds);
-    
-    SimHandle *d = ( const_cast<Simulation*>(&sim) )->d.get();
-    
-    d->pause();
-    
-    sds << d->system() << d->moves()
-        << quint64( d->nMoves() ) << quint64( d->nCompleted() )
-        << d->recordingStatistics();
-        
-    d->resume();
+    MPISimWorker worker = sim.d->worker();
+    ds << SireStream::save(worker);
         
     return ds;
 }
@@ -362,16 +310,12 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Simulation &sim)
     
     if (v == 1)
     {
-        SharedDataStream sds(ds);
+        QByteArray data;
+        ds >> data;
         
-        System system;
-        Moves moves;
-        quint64 nmoves, ncompleted;
-        bool record_stats;
+        MPISimWorker worker = SireStream::loadType<MPISimWorker>(data);
         
-        sds >> system >> moves >> nmoves >> ncompleted >> record_stats;
-        
-        sim = Simulation( system, moves, nmoves, ncompleted, record_stats );
+        sim.d.reset( new LocalSim(worker) );
     }
     else
         throw version_error( v, "1", r_sim, CODELOC );
@@ -383,21 +327,6 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Simulation &sim)
 Simulation::Simulation() : d( new LocalSim() )
 {}
 
-/** Construct a simulation of the system 'system' that involves nmoves
-    of the moves in 'moves', also specifying whether or not statistics
-    should be collected during this simulation */
-Simulation::Simulation(const System &system, const MovesBase &moves,
-                       int nmoves, bool record_stats)
-           : d( new LocalSim(system, moves, nmoves, 0, record_stats) )
-{}
-
-/** Private constructor used to restore a simulation that has been read
-    from a datastream */
-Simulation::Simulation(const System &system, const MovesBase &moves,
-                       int nmoves, int ncompleted, bool record_stats)
-           : d( new LocalSim(system, moves, nmoves, ncompleted, record_stats) )
-{}
-
 /** Copy constructor */
 Simulation::Simulation(const Simulation &other)
            : d( other.d )
@@ -407,48 +336,91 @@ Simulation::Simulation(const Simulation &other)
 Simulation::~Simulation()
 {}
 
-/** Run a simulation consisting of nmoves moves on the system 'system' using
-    the 'moves' object to actually perform the moves */
-Simulation Simulation::run(const System &system, const MovesBase &moves,
-                           int nmoves, bool record_stats)
+/** Run a simulation described by the worker 'worker' in the current thread,
+    returning a handle to the simulation once its done. */
+Simulation Simulation::run(const MPISimWorker &worker)
 {
-    Simulation sim(system, moves, nmoves, record_stats);
+    Simulation sim;
+    
+    sim.d.reset( new LocalSim(worker) );
+    
     sim.start();
     
     return sim;
+}
+
+/** Run a simulation described by the worker 'worker' in a background thread
+    and return a handle to the simulation (which may still be running) */
+Simulation Simulation::runBG(const MPISimWorker &worker)
+{
+    Simulation sim;
+    
+    sim.d.reset( new ThreadSim(worker) );
+    
+    sim.start();
+    
+    return sim;
+}
+
+/** Run a simulation described by the worker 'worker' on the MPI node 'node',
+    and return a handle to the simulation (which may still be running) */
+Simulation Simulation::run(const MPINode &node, const MPISimWorker &worker)
+{
+    Simulation sim;
+    
+    sim.d.reset( new MPISim(worker) );
+    
+    sim.start();
+    
+    return sim;
+}
+
+/** Run a simulation consisting of nmoves moves on the system 'system' using
+    the 'moves' object to actually perform the moves */
+Simulation Simulation::run(const System &system, const MovesBase &moves,
+                           int nmoves, bool record_stats, int chunk_size)
+{
+    return Simulation::run( MPISimWorker(system, moves, nmoves, 
+                                         record_stats, chunk_size) );
 }
 
 /** Run a simulation consisting of nmoves moves on the system 'system' using
     the 'moves' object to actually perform the moves, in a background thread */
 Simulation Simulation::runBG(const System &system, const MovesBase &moves,
-                             int nmoves, bool record_stats)
+                             int nmoves, bool record_stats, int chunk_size)
 {
-    Simulation sim;
-    sim.d.reset( new ThreadSim(system, moves, nmoves, record_stats) );
-    
-    sim.start();
-    
-    return sim;
+    return Simulation::runBG( MPISimWorker(system, moves, nmoves, 
+                                           record_stats, chunk_size) );
 }
 
 /** Run a simulation consisting of nmoves moves on the system 'system' using
     the 'moves' object to actually perform the moves, on the MPI node 'mpinode' */
 Simulation Simulation::run(const MPINode &node, const System &system,
-                           const MovesBase &moves, int nmoves, bool record_stats)
+                           const MovesBase &moves, int nmoves, bool record_stats,
+                           int chunk_size)
 {
-    qDebug() << "Creating a new Simulation object...";
+    return Simulation::run( node, MPISimWorker(system, moves, nmoves, 
+                                               record_stats, chunk_size) );
+}
 
-    Simulation sim;
-    
-    qDebug() << "Creating a new MPISim object...";
-    sim.d.reset( new MPISim(node, system, moves, nmoves, record_stats) );
-    
-    qDebug() << "Starting the MPI simulation...";
-    sim.start();
-    
-    qDebug() << "Returning a handle to the simulation!";
-    
-    return sim;
+/** Run the simulation 'other' in the current thread and return a handle to the 
+    simulation once it has completed */
+Simulation Simulation::run(const Simulation &other)
+{
+    return Simulation::run( const_cast<Simulation*>(&other)->worker() );
+}
+
+/** Run the simulation 'other' in a background thread and return a handle to the
+    simulation immediately */
+Simulation Simulation::runBG(const Simulation &other)
+{
+    return Simulation::runBG( const_cast<Simulation*>(&other)->worker() );
+}
+
+/** Run the simulation 'other' on an MPI node and return a handle to the simulation */
+Simulation Simulation::run(const MPINode &node, const Simulation &other)
+{
+    return Simulation::run( node, const_cast<Simulation*>(&other)->worker() );
 }
 
 /** Copy assignment operator */
@@ -484,6 +456,12 @@ Moves Simulation::moves()
     return d->moves();
 }
 
+/** Return the worker performing the work */
+MPISimWorker Simulation::worker()
+{
+    return d->worker();
+}
+
 /** Return the number of moves to be completed during this simulation */
 int Simulation::nMoves()
 {
@@ -504,9 +482,9 @@ double Simulation::progress()
 
 /** Return whether or not statistics will be recorded during
     this simulation */
-bool Simulation::recordingStatistics()
+bool Simulation::recordStatistics()
 {
-    return d->recordingStatistics();
+    return d->recordStatistics();
 }
 
 /** Start the simulation */
@@ -515,23 +493,9 @@ void Simulation::start()
     d->start();
 }
 
-/** Temporarily pause the simulation */
-void Simulation::pause()
-{
-    d->pause();
-}
-
-/** Resume a paused simulation - it is an error to try
-    to resume a simulation that has not been paused */
-void Simulation::resume()
-{
-    d->resume();
-}
-
 /** Stop the current simulation. This will stop the simulation
-    at the next sane point. This will not block, so the simulation
-    may take some time to stop. Use Simulation::wait() to block
-    until the simulation has finished */
+    at the next sane point. This blocks until the simulation has
+    stopped. */
 void Simulation::stop()
 {
     d->stop();
@@ -539,9 +503,7 @@ void Simulation::stop()
 
 /** Abort the current simulation. This will abort the simulation
     and return the system to where it was before the simulation
-    started. This will not block, so the simulation
-    may take some time to stop. Use Simulation::wait() to block
-    until the simulation has finished */
+    started. This blocks until the simulation has aborted. */
 void Simulation::abort()
 {
     d->abort();

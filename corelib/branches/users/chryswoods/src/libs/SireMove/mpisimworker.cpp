@@ -47,10 +47,11 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const MPISimWorker &wor
     
     SharedDataStream sds(ds);
     
-    QMutexLocker lkr( &(worker.data_mutex) );
+    QMutexLocker lkr( const_cast<QMutex*>(&(worker.data_mutex)) );
     
     sds << worker.sim_system << worker.sim_moves
         << worker.nmoves << worker.ncompleted_moves
+        << worker.chunk_size
         << worker.record_stats
         << static_cast<const MPIWorker&>(worker);
         
@@ -70,6 +71,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MPISimWorker &worker)
         
         sds >> new_worker.sim_system >> new_worker.sim_moves
             >> new_worker.nmoves >> new_worker.ncompleted_moves
+            >> new_worker.chunk_size
             >> new_worker.record_stats
             >> static_cast<MPIWorker&>(new_worker);
             
@@ -82,17 +84,21 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MPISimWorker &worker)
 }
 
 /** Null constructor */
-MPISimWorker::MPISimWorker() : MPIWorker()
+MPISimWorker::MPISimWorker() 
+             : MPIWorker(), nmoves(0), ncompleted_moves(0), 
+               chunk_size(0), record_stats(false)
 {}
 
 /** Construct a worker to perform 'nmoves' moves of the type contained
     in 'moves' on the system 'system', recording statistics if
     'record_stats' is true */
 MPISimWorker::MPISimWorker(const System &system, const MovesBase &moves,
-                           int num_moves, bool record_statistics)
+                           int num_moves, bool record_statistics,
+                           int chunksize)
              : MPIWorker(),
                sim_system(system), sim_moves(moves), 
-               nmoves(num_moves), ncompleted(0), record_stats(record_statistics)
+               nmoves(num_moves), ncompleted_moves(0), chunk_size(chunksize),
+               record_stats(record_statistics)
 {
     if (nmoves < 0)
         nmoves = 0;
@@ -104,12 +110,13 @@ MPISimWorker& MPISimWorker::operator=(const MPISimWorker &other)
     if (this != &other)
     {
         QMutexLocker my_lkr( &data_mutex );
-        QMutexLocker other_lkr( &other_mutex );
+        QMutexLocker other_lkr( const_cast<QMutex*>(&(other.data_mutex)) );
         
         sim_system = other.sim_system;
         sim_moves = other.sim_moves;
         nmoves = other.nmoves;
         ncompleted_moves = other.ncompleted_moves;
+        chunk_size = other.chunk_size;
         record_stats = other.record_stats;
         
         MPIWorker::operator=(other);
@@ -141,11 +148,12 @@ bool MPISimWorker::operator==(const MPISimWorker &other) const
     }
     else
     {
-        QMutexLocker my_lkr(&data_mutex);
-        QMutexLocker other_lkr(&other.data_mutex);
+        QMutexLocker my_lkr( const_cast<QMutex*>(&data_mutex) );
+        QMutexLocker other_lkr( const_cast<QMutex*>(&(other.data_mutex)) );
         
         return nmoves == other.nmoves and 
                ncompleted_moves == other.ncompleted_moves and
+               chunk_size == other.chunk_size and
                record_stats == other.record_stats and
                sim_system == other.sim_system and sim_moves == other.sim_moves;
     }
@@ -179,10 +187,17 @@ int MPISimWorker::nMoves() const
 }
 
 /** Return the number of completed moves */
-int MPISimWorker::nCompletedMoves() const
+int MPISimWorker::nCompleted() const
 {
     QMutexLocker lkr( const_cast<QMutex*>(&data_mutex) );
     return ncompleted_moves;
+}
+
+/** Return the number of moves to perform per chunk */
+int MPISimWorker::chunkSize() const
+{
+    QMutexLocker lkr( const_cast<QMutex*>(&data_mutex) );
+    return chunk_size;
 }
 
 /** Record whether or not we are recording statistics */
@@ -195,7 +210,23 @@ bool MPISimWorker::recordStatistics() const
 /** Perform a chunk of the simulation */
 void MPISimWorker::runChunk()
 {
-    #error Need to write this!!!
+    QMutexLocker lkr(&data_mutex);
+    
+    if (nmoves >= ncompleted_moves)
+        //the simulation has finished
+        return;
+
+    //run a maximum of chunk_size moves per chunk
+    int nmoves_to_run = qMin( chunk_size, nmoves - ncompleted_moves );
+    
+    //run those moves
+    sim_system = sim_moves.edit().move(sim_system, nmoves_to_run, record_stats);
+    
+    //increment the number of completed moves
+    ncompleted_moves += nmoves_to_run;
+    
+    //set the progress
+    MPIWorker::setProgress( (100.0 * ncompleted_moves) / nmoves );
 }
 
 /** Return whether or not the simulation has finished */

@@ -53,6 +53,7 @@ namespace SireMove
 using SireSystem::System;
 
 /** This class performs a simulation as a collection of work chunks.
+    This class is thread-safe.
 
     @author Christopher Woods
 */
@@ -65,7 +66,8 @@ friend QDataStream& ::operator>>(QDataStream&, MPISimWorker&);
 public:
     MPISimWorker();
     MPISimWorker(const System &system, const MovesBase &moves,
-                 int nmoves, bool record_stats);
+                 int nmoves, bool record_stats,
+                 int chunk_size=100);
                  
     MPISimWorker(const MPISimWorker &other);
     
@@ -95,7 +97,9 @@ public:
     Moves moves() const;
     
     int nMoves() const;
-    int nCompletedMoves() const;
+    int nCompleted() const;
+    
+    int chunkSize() const;
     
     bool recordStatistics() const;
     
@@ -118,6 +122,9 @@ private:
     
     /** The number of moves already performed */
     int ncompleted_moves;
+    
+    /** The number of moves to run per chunk */
+    int chunk_size;
     
     /** Whether or not to record stats */
     bool record_stats;

@@ -36,8 +36,6 @@
 #include "simulation.h"
 #include "moves.h"
 
-#include "mpinode.h"
-
 #include "SireSystem/system.h"
 
 SIRE_BEGIN_HEADER
@@ -45,8 +43,8 @@ SIRE_BEGIN_HEADER
 namespace SireMove
 {
 
-/** This is a simulation handle that can be used to run a simulation on
-    a remote node using MPI
+/** This class is used to run a simulation on a remote node connected
+    to this node via MPI
     
     @author Christopher Woods
 */
@@ -55,24 +53,24 @@ class SIREMOVE_EXPORT MPISim : public SimHandle, private QThread
 public:
     MPISim();
 
-    MPISim(const MPINode &node, const System &system, const MovesBase &moves,
-           int nmoves, bool record_stats);
-    
+    MPISim(const MPINode &node, const MPISimWorker &worker);
+
     ~MPISim();
     
     System system();
     Moves moves();
-    
+
+    MPISimWorker worker();
+    MPISimWorker initialWorker();
+
     int nMoves();
     int nCompleted();
+    
     double progress();
     
-    bool recordingStatistics();
+    bool recordStatistics();
     
     void start();
-    
-    void pause();
-    void resume();
     
     void abort();
     void stop();
@@ -80,7 +78,7 @@ public:
     bool isRunning();
     bool hasStarted();
     bool hasFinished();
-
+    
     bool isError();
     void throwError();
     void clearError();
@@ -88,52 +86,21 @@ public:
     void wait();
     bool wait(int time);
 
-private:
+protected:
     void run();
-
-    bool isStarting();
-    void setError(const SireError::exception &e);
-
-    /** The node that will be used to run this simulation */
+    
+private:
+    QMutex start_mutex;
+    QWaitCondition start_waiter;
+    
     MPINode mpinode;
-
-    /** Mutex locked while the simulation is running */
-    QMutex run_mutex;
-
-    /** Mutex protecting access to the data of this simulation */
-    QMutex data_mutex;
+    MPIPromise mpipromise;
     
-    /** Condition used while the simulation is starting */
-    QWaitCondition starter;
-
-    /** The system that will be simulated */
-    System sim_system;
-    
-    /** The moves that will be applied to the system */
-    Moves sim_moves;
-
-    /** The handle used to get the result of the running simulation */
-    MPIPromise< tuple<System,Moves,qint32> > sim_result;
-    
-    /** Pointer to a possible error condition */
-    boost::shared_ptr<SireError::exception> error_ptr;
-    
-    /** The number of moves to apply to the system */
-    int nmoves;
-
-    /** The number of moves that have been completed */
-    int ncompleted;
-
-    /** Whether or not statistics should be recorded during the simulation */
-    bool record_stats;
-    
-    /** Is the simulation in the process of being started */
-    bool sim_starting;
-    
-    /** Has the simulation started? */
-    bool has_started;
+    bool data_is_local;
 };
 
 }
+
+SIRE_END_HEADER
 
 #endif

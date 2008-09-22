@@ -35,7 +35,7 @@
 #include <QMutex>
 
 #include "moves.h"
-#include "simcontroller.h"
+#include "mpisimworker.h"
 
 #include "SireSystem/system.h"
 
@@ -47,10 +47,15 @@ class Simulation;
 QDataStream& operator<<(QDataStream&, const SireMove::Simulation&);
 QDataStream& operator>>(QDataStream&, SireMove::Simulation&);
 
+namespace SireMPI
+{
+class MPINode;
+}
+
 namespace SireMove
 {
 
-class MPINode;
+using SireMPI::MPINode;
 
 using namespace SireSystem;
 
@@ -69,17 +74,17 @@ public:
     virtual System system()=0;
     virtual Moves moves()=0;
 
+    virtual MPISimWorker worker()=0;
+    virtual MPISimWorker initialWorker()=0;
+
     virtual int nMoves()=0;
     virtual int nCompleted()=0;
     virtual double progress()=0;
     
-    virtual bool recordingStatistics()=0;
+    virtual bool recordStatistics()=0;
     
     virtual void start()=0;
     
-    virtual void pause()=0;
-    virtual void resume()=0;
-
     virtual void abort()=0;
     virtual void stop()=0;
     
@@ -102,24 +107,24 @@ class LocalSim : public SimHandle
 public:
     LocalSim();
 
-    LocalSim(const System &system, const MovesBase &moves,
-             int nmoves, int ncomp, bool record_stats);
+    LocalSim(const MPISimWorker &worker);
     
     ~LocalSim();
     
     System system();
     Moves moves();
 
+    MPISimWorker worker();
+    MPISimWorker initialWorker();
+
     int nMoves();
     int nCompleted();
+    
     double progress();
     
-    bool recordingStatistics();
+    bool recordStatistics();
     
     void start();
-    
-    void pause();
-    void resume();
     
     void abort();
     void stop();
@@ -137,35 +142,27 @@ public:
 
 protected:
     void setError(const SireError::exception &e);
-
-    /** The simulation controller */
-    SimController controller;
+    void runJob();
 
     /** Mutex to protect access to the data of this simulation */
     QMutex data_mutex;
 
-    /** Mutex to ensure that only one copy of this simulation is 
-        running at a time */
+    /** Mutex to ensure that only a single job is running at a time */
     QMutex run_mutex;
 
-    /** A copy of the system being simulated */
-    System sim_system;
+    /** The worker used to do the work */
+    MPISimWorker sim_worker;
     
-    /** A copy of the moves being applied to the system */
-    Moves sim_moves;
+    /** The initial data for the simulation, packed into a binary format.
+        This is used to restore the simulation if it is aborted */
+    QByteArray initial_state;
     
-    /** Pointer to any error that has occurred during the simulation */
-    boost::shared_ptr<SireError::exception> error_ptr;
-    
-    /** The number of moves to run */
-    int nmoves;
-    
-    /** The number of moves completed */
-    int ncompleted;
-    
-    /** Whether or not statistics are being collected during this
-        simulation */
-    bool record_stats;
+    /** A binary representation of any error that has occured during 
+        the simulation */
+    QByteArray error_data;
+
+    /** Whether or not to stop running */
+    bool stop_running;
 };
 
 /** This class provides a user controllable handle to a running
@@ -207,28 +204,38 @@ public:
     }
 
     static Simulation run(const System &system, const MovesBase &moves,
-                          int nmoves, bool record_stats=true);
+                          int nmoves, bool record_stats=true,
+                          int chunk_size=100);
     
     static Simulation runBG(const System &system, const MovesBase &moves,
-                            int nmoves, bool record_stats=true);
+                            int nmoves, bool record_stats=true,
+                            int chunk_size=100);
     
     static Simulation run(const MPINode &node, const System &system,
                           const MovesBase &moves, int nmoves,
-                          bool record_stats=true);
+                          bool record_stats=true,
+                          int chunk_size=100);
+
+    static Simulation run(const Simulation &other);
+    static Simulation runBG(const Simulation &other);
+    static Simulation run(const MPINode &node, const Simulation &other);
+    
+    static Simulation run(const MPISimWorker &worker);
+    static Simulation runBG(const MPISimWorker &worker);
+    static Simulation run(const MPINode &node, const MPISimWorker &worker);
     
     System system();
     Moves moves();
+
+    MPISimWorker worker();
 
     int nMoves();
     int nCompleted();
     double progress();
     
-    bool recordingStatistics();
+    bool recordStatistics();
     
     void start();
-    
-    void pause();
-    void resume();
     
     void abort();
     void stop();
@@ -245,12 +252,6 @@ public:
     bool wait(int time);
 
 private:
-    Simulation(const System &system, const MovesBase &moves,
-               int nmoves, bool record_stats = true);
-
-    Simulation(const System &system, const MovesBase &moves,
-               int nmoves, int ncompleted, bool record_stats);
-
     /** Explicitly shared pointer to the object that is actually
         running the simulation */
     boost::shared_ptr<SimHandle> d;

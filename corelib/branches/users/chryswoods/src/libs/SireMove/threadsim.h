@@ -35,6 +35,7 @@
 
 #include "simulation.h"
 #include "moves.h"
+#include "mpisimworker.h"
 
 #include "SireSystem/system.h"
 
@@ -51,27 +52,21 @@ class SIREMOVE_EXPORT ThreadSim : public LocalSim, private QThread
 {
 public:
     ThreadSim();
-    ThreadSim(const System &system, const MovesBase &moves,
-              int nmoves, bool record_stats);
+    ThreadSim(const MPISimWorker &worker);
               
     ~ThreadSim();
     
     void start();
 
-    bool isRunning();
-    bool hasStarted();
-    
-    bool wait(int time);
-    void wait();
-
 protected:
     void run();
 
 private:
-    bool isStarting();
-
-    QWaitCondition starter;
-    bool sim_starting;
+    /** Mutex used to control starting of the background thread */
+    QMutex start_mutex;
+    
+    /** Wait condition used to control starting of the background thread */
+    QWaitCondition start_waiter;
 };
 
 }

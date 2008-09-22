@@ -98,6 +98,12 @@ double MPIWorker::progress() const
     return current_progress;
 }
 
+/** Set the progress of the calculation */
+void MPIWorker::setProgress(double progress)
+{
+    current_progress = progress;
+}
+
 ////////////
 //////////// Implementation of MPIError
 ////////////

@@ -28,7 +28,6 @@
 
 #include "moves.h"
 #include "simulation.h"
-#include "simcontroller.h"
 
 #include "SireSystem/system.h"
 
@@ -192,47 +191,6 @@ System SameMoves::move(const System &system, int nmoves, bool record_stats)
     }
     
     return new_system;
-}
-
-/** Apply the move 'nmoves' times to the system 'system', returning
-    the result */
-System SameMoves::move(const System &system, int nmoves, bool record_stats,
-                       SimController &controller)
-{
-    if (nmoves == 0)
-        return system;
-
-    SameMoves old_state(*this);
-
-    System new_system(system);
-    
-    try
-    {
-        controller.initialise(new_system, *this, nmoves, record_stats);
-
-        MoveBase *move = &(mv.edit());
-
-        do
-        {
-            move->move(new_system, 1, record_stats);
-        }
-        while (controller.nextMove());
-    }
-    catch(...)
-    {
-        this->operator=(old_state);
-        throw;
-    }
-        
-    if (not controller.aborted())
-    {
-        return new_system;
-    }
-    else
-    {
-        this->operator=(old_state);
-        return system;
-    }
 }
 
 /** Return the moves used by this object */

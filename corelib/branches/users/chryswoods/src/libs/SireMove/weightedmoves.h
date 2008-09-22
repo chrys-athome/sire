@@ -90,9 +90,6 @@ public:
     
     System move(const System &system, int nmoves, bool record_stats);
     
-    System move(const System &system, int nmoves, 
-                bool record_stats, SimController &controller);
-    
     QList<Move> moves() const;
 
     void setGenerator(const RanGenerator &rangenerator);

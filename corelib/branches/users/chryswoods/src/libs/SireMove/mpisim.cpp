@@ -38,401 +38,117 @@
 using namespace SireMove;
 using namespace SireStream;
 
-/** Null constructor */
-MPISim::MPISim() : SimHandle(), QThread(),
-                   nmoves(0), ncompleted(0), record_stats(false),
-                   sim_starting(false), has_started(false)
-{}
+MPISim::MPISim();
 
-/** Construct the MPI simulation to perform the moves in 'moves' on the 
-    system 'system' - 'nmoves' will be performed, and statistics recorded
-    if 'record_stats' is true */
-MPISim::MPISim(const MPINode &node, const System &system, const MovesBase &moves,
-               int num_moves, bool record_statistics)
-       : SimHandle(), QThread(),
-         sim_system(system), sim_moves(moves), 
-         nmoves(num_moves), ncompleted(0), record_stats(record_statistics),
-         sim_starting(false), has_started(false)
-{}       
+MPISim::MPISim(const MPISimWorker &worker);
 
-/** Destructor */
-MPISim::~MPISim()
-{
-    if (QThread::isRunning())
-    {
-        this->abort();
-        this->wait();
-    }
-}
+MPISim::~MPISim();
 
-/** Set an error condition */
-void MPISim::setError(const SireError::exception &e)
-{
-    QMutexLocker lkr(&data_mutex);
-    error_ptr.reset( e.clone() );
-}
-
-/** Return whether or not we are in an error condition */
-bool MPISim::isError()
-{
-    QMutexLocker lkr(&data_mutex);
-    return error_ptr.get() != 0;
-}
-
-/** Throw the exception that represents the error condition */
-void MPISim::throwError()
+System MPISim::system()
 {
     QMutexLocker lkr(&data_mutex);
     
-    if (error_ptr.get() != 0)
-    {
-        boost::shared_ptr<SireError::exception> error = error_ptr;
-        error_ptr.reset();
-    
-        error->throwSelf();
-    }
+    if (data_is_local)
+        return sim_worker.system();
+        
+    else
+        return mpipromise.interimResult<MPISimWorker>().system();
 }
 
-/** Clear the error condition */
-void MPISim::clearError()
-{
-    QMutexLocker lkr(&data_mutex);
-    error_ptr.reset();
-}
+Moves MPISim::moves();
 
-/** Actually run this simulation - this occurs in a background thread
-    so that it can block waiting for status updates from the 
-    MPINode doing the work */
+MPISimWorker MPISim::worker();
+MPISimWorker MPISim::initialWorker();
+
+int MPISim::nMoves();
+int MPISim::nCompleted();
+
+double MPISim::progress();
+
+bool MPISim::recordStatistics();
+
 void MPISim::run()
 {
-    qDebug() << CODELOC;
+    start_mutex.lock();
 
+    //start the job
+    {
+        QMutexLocker lkr(&data_mutex);
+
+        //start the job on the remote node, and get a handle to
+        //the running job
+        mpipromise = mpinode.start(sim_worker);
+        sim_worker = MPISimWorker();
+
+        //the data for the simulation now resides on the remote host
+        data_is_local = false;
+    }
+
+    //tell the parent thread that the job has started
+    start_waiter.wakeAll();
+    start_mutex.unlock();
+    
+    //wait until the job has finished
+    mpipromise.wait();
+    
     try
     {
-        data_mutex.lock();
-        sim_starting = true;
-        data_mutex.unlock();
-    
-        qDebug() << "Waking up the starting thread!";
-    
-        starter.wakeAll();
+        QMutexLocker lkr(&data_mutex);
+        sim_worker = mpipromise.result<MPISimWorker>();
+        mpipromise = MPIPromise();
 
-        qDebug() << CODELOC;
-
-        //yes - the simulation is now running!
-        QMutexLocker lkr(&run_mutex);
-
-        qDebug() << "Locked the run_mutex!";
-
-        int nremaining_moves = 0;
-
-        //critical section
-        {
-            qDebug() << CODELOC;
-        
-            QMutexLocker lkr(&data_mutex);
-    
-            qDebug() << CODELOC;
-    
-            if (ncompleted >= nmoves)
-            {
-                ncompleted = nmoves;
-                return;
-            }
-            
-            sim_starting = false;
-        
-            nremaining_moves = nmoves - ncompleted;
-            
-            if (nremaining_moves <= 0)
-            {
-                //there is nothing left to do
-                return;
-            }
-
-            //tell the node to run the simulation
-            qDebug() << "Run mpinode.runSim()";
-            sim_result = mpinode.runSim(sim_system, sim_moves, 
-                                        nremaining_moves, record_stats);
-        }
-    
-        //wait until the worker has finished
-        qDebug() << "Waiting for the result!";
-        sim_result.wait();
-        
-        qDebug() << "SIMULATION HAS FINISHED!";
-    
-        if (not sim_result.isAborted())
-        {
-            int njust_completed = sim_result.result().get<2>();
-        
-            if (njust_completed > 0)
-            {
-                QMutexLocker lkr(&data_mutex);
-                ncompleted += njust_completed;
-                sim_system = sim_result.result().get<0>();
-                sim_moves = sim_result.result().get<1>();
-            }
-        }
-    
-        qDebug() << CODELOC;
-    
-        //clear the result as it is no longer needed
-        data_mutex.lock();
-        qDebug() << CODELOC;
-        sim_result = MPIPromise< tuple<System,Moves,qint32> >();
-        data_mutex.unlock();
-        qDebug() << CODELOC;
+        //the data for the simulation is now back on the this node
+        data_is_local = true;
     }
     catch(const SireError::exception &e)
     {
         this->setError(e);
     }
-    catch(const std::exception &e)
-    {
-        this->setError( SireError::std_exception(e) );
-    }
     catch(...)
     {
-        this->setError( SireError::unknown_exception( QObject::tr(
-            "An unknown error occurred!"), CODELOC ) );
+        this->setError( SireError::program_bug( QObject::tr(
+            "It should not be possible to have an unknown error here!"), CODELOC ) );
     }
-    
-    qDebug() << CODELOC;
-}
-    
-/** Return the latest copy of the system */
-System MPISim::system()
-{
-    QMutexLocker lkr(&data_mutex);
-    
-    if (not sim_result.isNull())
-    {
-        return sim_result.interimResult().get<0>();
-    }
-    else
-        return sim_system;
 }
 
-/** Return the latest copy of the moves */
-Moves MPISim::moves()
-{
-    QMutexLocker lkr(&data_mutex);
-    
-    if (not sim_result.isNull())
-    {
-        return sim_result.interimResult().get<1>();
-    }
-    else
-        return sim_moves;
-}
-
-/** Return the number of moves to be run in this simulation */
-int MPISim::nMoves()
-{
-    QMutexLocker lkr(&data_mutex);
-    return nmoves;
-}
-
-/** Return the total number of steps completed so far */
-int MPISim::nCompleted()
-{
-    QMutexLocker lkr(&data_mutex);
-    
-    int njust_completed = 0;
-    
-    if (not sim_result.isNull())
-    {
-        njust_completed = sim_result.interimResult().get<2>();
-    }
-        
-    return ncompleted + njust_completed;
-}
-
-/** Get the progress of the simulation */
-double MPISim::progress()
-{
-    QMutexLocker lkr(&data_mutex);
-
-    if (nmoves == 0)
-        return 0;
-    
-    int njust_completed = 0;
-    
-    if (not sim_result.isNull())
-    {
-        njust_completed = sim_result.interimResult().get<2>();
-    }
-    
-    return (100.0 * (ncompleted + njust_completed)) / nmoves;
-}
-
-/** Are we recording statistics during this simulation run? */
-bool MPISim::recordingStatistics()
-{
-    QMutexLocker lkr(&data_mutex);
-    return record_stats;
-}
-
-/** Start the MPI simulation */
 void MPISim::start()
 {
-    qDebug() << CODELOC;
-
-    QMutexLocker run_lkr(&run_mutex);
-    QMutexLocker data_lkr(&data_mutex);
+    QThread::wait();
     
-    qDebug() << nmoves << sim_starting;
-    
-    if (nmoves == 0)
-        //there is nothing worth starting
-        return;
-    
-    if (sim_starting)
-        //cannot start the simulation twice!
-        return;
-
-    sim_starting = false;
-
-    qDebug() << "Starting the MPI thread...";
-
+    start_mutex.lock();
     QThread::start();
-    
-    qDebug() << "Waiting until the thread has started...";
-    
-    starter.wait(&data_mutex);
-    
-    qDebug() << "Returning from MPISim::start()";
-    
-    data_lkr.unlock();
-    run_lkr.unlock();
-    
-    qDebug() << CODELOC;
+    start_waiter.wait(&start_mutex);
+    start_mutex.unlock();
 }
 
-/** Pause the running simulation */
-void MPISim::pause()
-{
-    //does nothing as we can't pause and resume an MPI job
-}
-
-/** Resume the running simulation */
-void MPISim::resume()
-{
-    //does nothing as we can't pause and resume an MPI job
-}
-
-/** Abort the currently running simulation - this resets
-    the system back to where it was before the simulation
-    started */
-void MPISim::abort()
-{
-    if (not sim_result.isNull())
-        sim_result.abort();
-}
-
-/** Stop the running simulation - this stops the simulation
-    but keeps the system at the point that it reached */
 void MPISim::stop()
 {
-    if (not sim_result.isNull())
-        sim_result.stop();
-}
-
-/** Return whether or not the simulation is in the process of starting */
-bool MPISim::isStarting()
-{
-    QMutexLocker lkr(&data_mutex);
-    return sim_starting;
-}
-
-/** Return whether or not the simulation is running */
-bool MPISim::isRunning()
-{
-    if (this->isStarting())
-        return true;
-    else
-    {
-        if (run_mutex.tryLock())
-        {
-            run_mutex.unlock();
-            return false;
-        }
-        else
-            return true;
-    }
-}
-
-/** Return whether or not the simulation has started */
-bool MPISim::hasStarted()
-{
-    //critical section
-    {
-        QMutexLocker lkr(&data_mutex);
-        if (sim_starting or ncompleted > 0)
-            return true;
-    }
+    data_mutex.lock();
     
-    return this->isRunning();
-}
-
-/** Return whether or not the simulation has finished */
-bool MPISim::hasFinished()
-{
-    QMutexLocker lkr(&data_mutex);
+    if (mpipromise.isRunning())
+        mpipromise.stop();
+        
+    data_mutex.unlock();
     
-    return ncompleted == nmoves and ncompleted > 0;
+    QThread::wait();
 }
 
-/** Wait until the simulation has finished, been stopped
-    or been aborted */
-void MPISim::wait()
+void MPISim::abort()
 {
-    if (this->isStarting())
-    {
-        //wait until the simulation has started
-        while (true)
-        {
-            //wait for 10 ms
-            QThread::wait(10);
-            
-            if (this->isRunning() or this->hasFinished())
-                break;
-        }
-    }
-
-    run_mutex.lock();
-    run_mutex.unlock();
+    this->stop();
+    
+    QMutexLocker lkr(&data_mutex);
+    sim_worker = SireStream::loadType<MPISimWorker>(initial_state);
 }
 
-/** Wait until the simulation has finished, or 'time' milliseconds
-    has passed */
-bool MPISim::wait(int time)
-{
-    if (this->isStarting())
-    {
-        //wait until the simulation has finished starting!
-        while (true)
-        {
-            //wait for 10 ms
-            QThread::wait(10);
-            
-            time -= 10;
-            
-            //have we ran out of time?
-            if (time <= 0)
-                return false;
-            
-            if (this->hasStarted() or this->hasFinished())
-                break;
-        }
-    }
 
-    if (run_mutex.tryLock(time))
-    {
-        run_mutex.unlock();
-        return true;
-    }
-    else
-        return false;
-}
+bool MPISim::isRunning();
+bool MPISim::hasStarted();
+bool MPISim::hasFinished();
+
+bool MPISim::isError();
+void MPISim::throwError();
+void MPISim::clearError();
+
+void MPISim::wait();
+bool MPISim::wait(int time);
