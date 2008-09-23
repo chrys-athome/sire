@@ -36,6 +36,9 @@
 #include "simulation.h"
 #include "moves.h"
 
+#include "SireMPI/mpinode.h"
+#include "SireMPI/mpipromise.h"
+
 #include "SireSystem/system.h"
 
 SIRE_BEGIN_HEADER
@@ -43,12 +46,15 @@ SIRE_BEGIN_HEADER
 namespace SireMove
 {
 
+using SireMPI::MPINode;
+using SireMPI::MPIPromise;
+
 /** This class is used to run a simulation on a remote node connected
     to this node via MPI
     
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT MPISim : public SimHandle, private QThread
+class SIREMOVE_EXPORT MPISim : public SimHandle
 {
 public:
     MPISim();
@@ -86,16 +92,25 @@ public:
     void wait();
     bool wait(int time);
 
-protected:
-    void run();
-    
 private:
+    void _pvt_setWorker(const MPISimWorker &worker);
+    void _pvt_setError(const SireError::exception &e);
+    void _pvt_makeDataLocal();
+    
     QMutex start_mutex;
-    QWaitCondition start_waiter;
+    QMutex data_mutex;
+    
+    MPISimWorker sim_worker;
     
     MPINode mpinode;
     MPIPromise mpipromise;
     
+    QByteArray initial_state;
+    QByteArray error_data;
+    
+    int nmoves;
+    
+    bool record_stats;
     bool data_is_local;
 };
 

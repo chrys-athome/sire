@@ -368,7 +368,7 @@ Simulation Simulation::run(const MPINode &node, const MPISimWorker &worker)
 {
     Simulation sim;
     
-    sim.d.reset( new MPISim(worker) );
+    sim.d.reset( new MPISim(node, worker) );
     
     sim.start();
     
