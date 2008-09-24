@@ -123,6 +123,7 @@ public:
 
 private:
     detail::RanGeneratorPvt& nonconst_d() const;
+    void detach();
 
     /** Shared pointer to the actual generator */
     boost::shared_ptr<detail::RanGeneratorPvt> d;

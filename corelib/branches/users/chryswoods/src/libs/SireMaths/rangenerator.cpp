@@ -58,9 +58,6 @@ class RanGeneratorPvt;
 }
 }
 
-QDataStream& operator<<(QDataStream&, const SireMaths::detail::RanGeneratorPvt&);
-QDataStream& operator>>(QDataStream&, SireMaths::detail::RanGeneratorPvt&);
-
 namespace SireMaths
 {
 
@@ -73,33 +70,33 @@ namespace detail
 
     @author Christopher Woods
 */
-class RanGeneratorPvt : public boost::noncopyable
+class RanGeneratorPvt
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const RanGeneratorPvt&);
-friend QDataStream& ::operator>>(QDataStream&, RanGeneratorPvt&);
 
 typedef MTRand::uint32 MTUInt32;
 
 public:
     /** Construct a generator with a random seed */
-    RanGeneratorPvt() : boost::noncopyable(),
-                        mutex(QMutex::NonRecursive),
-                        mersenne_generator()
+    RanGeneratorPvt() : mutex(QMutex::NonRecursive)
     {}
 
     /** Construct a generator with a specified seed */
-    RanGeneratorPvt(quint32 seed) : boost::noncopyable(),
-                                    mutex(QMutex::NonRecursive),
+    RanGeneratorPvt(quint32 seed) : mutex(QMutex::NonRecursive),
                                     mersenne_generator(seed)
     {}
 
     /** Construct a generator with a specified seed */
-    RanGeneratorPvt(const QVector<quint32> &s) : boost::noncopyable(),
-                                                 mutex(QMutex::NonRecursive),
-                                                 mersenne_generator()
+    RanGeneratorPvt(const QVector<quint32> &s) : mutex(QMutex::NonRecursive)
     {
         this->seed(s);
+    }
+
+    /** Copy constructor */
+    RanGeneratorPvt(const RanGeneratorPvt &other) : mutex(QMutex::NonRecursive)
+    {
+        QMutexLocker lkr( const_cast<QMutex*>( &(other.mutex) ) );
+        
+        mersenne_generator = other.mersenne_generator;
     }
 
     /** Destructor */
@@ -156,43 +153,46 @@ public:
         mutex.lock();
 
         //create an array to hold the state
-        boost::scoped_array<MTUInt32> array( new MTUInt32[MTRand::N] );
+        int state_size = MTRand::N + 1;
+        boost::scoped_array<MTUInt32> array( new MTUInt32[state_size] );
 
         mersenne_generator.save(array.get());
 
         mutex.unlock();
 
         //copy the array into a QVector<quint32>
-        QVector<quint32> ret(MTRand::N);
+        QVector<quint32> ret(state_size);
 
         quint32 *ret_array = ret.data();
 
-        for (int i=0; i<MTRand::N; ++i)
+        for (int i=0; i<state_size; ++i)
             ret_array[i] = array[i];
 
         return ret;
     }
 
     /** Load the state from an array - the array must have size
-        MTRand::N (624)
+        MTRand::N + 1 (625)
 
         \throw SireError::incompatible_error
     */
     void loadState(const QVector<quint32> &state)
     {
+        int state_size = MTRand::N + 1;
+    
         //check that the array is of the right size...
-        if (state.count() != MTRand::N)
+        if (state.count() != state_size)
             throw SireError::incompatible_error( QObject::tr(
                 "Can only restore the state from an array of size %1, "
                 "while you have provided an array of size %2.")
-                    .arg(MTRand::N).arg(state.count()), CODELOC );
+                    .arg(state_size).arg(state.count()), CODELOC );
 
         //convert the array to the right type...
-        boost::scoped_array<MTUInt32> array( new MTUInt32[MTRand::N] );
+        boost::scoped_array<MTUInt32> array( new MTUInt32[state_size] );
 
         const quint32 *state_array = state.constData();
 
-        for (int i=0; i<MTRand::N; ++i)
+        for (int i=0; i<state_size; ++i)
             array[i] = state_array[i];
 
         QMutexLocker lkr(&mutex);
@@ -209,71 +209,6 @@ public:
 //////////// Implementation of RanGeneratorPvt
 ////////////
 
-static const RegisterMetaType<RanGeneratorPvt> r_ranpvt(MAGIC_ONLY,
-                                  "SireMaths::detail::RanGeneratorPvt");
-
-/** Serialise to a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const RanGeneratorPvt &ranpvt)
-{
-    writeHeader(ds, r_ranpvt, 1);
-
-    //this is a large object - full state is 624 quint32 (~2.5kB)
-    typedef MTRand::uint32 MTUInt32;
-
-    boost::scoped_array<MTUInt32> array( new MTUInt32[MTRand::N] );
-
-    const_cast<QMutex&>(ranpvt.mutex).lock();
-    ranpvt.mersenne_generator.save(array.get());
-    const_cast<QMutex&>(ranpvt.mutex).unlock();
-
-    ds << quint32(MTRand::N);
-
-    for (int i=0; i<MTRand::N; ++i)
-        //convert to platform neutral quint32
-        ds << quint32( array[i] );
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, RanGeneratorPvt &ranpvt)
-{
-    VersionID v = readHeader(ds, r_ranpvt);
-
-    if (v == 1)
-    {
-        quint32 n;
-
-        ds >> n;
-
-        if (n != MTRand::N)
-            throw SireError::program_bug( QObject::tr(
-                "The size of the Mersenne Twister state array has changed without "
-                "the version number changing - this is a bug! (%1 vs. %2)")
-                    .arg(n).arg(MTRand::N), CODELOC );
-
-        //this is a large object - full state is 624 quint32 (~2.5kB)
-        typedef MTRand::uint32 MTUInt32;
-
-        boost::scoped_array<MTUInt32> array( new MTUInt32[MTRand::N] );
-
-        for (int i=0; i<MTRand::N; ++i)
-        {
-            quint32 val;
-            ds >> val;
-
-            array[i] = val;
-        }
-
-        QMutexLocker lkr( &(ranpvt.mutex) );
-        ranpvt.mersenne_generator.load(array.get());
-    }
-    else
-        throw version_error(v, "1", r_ranpvt, CODELOC);
-
-    return ds;
-}
-
 ////////////
 //////////// Implementation of RanGenerator
 ////////////
@@ -285,8 +220,7 @@ QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const RanGenerator &ra
 {
     writeHeader(ds, r_rangen, 1);
 
-    SharedDataStream sds(ds);
-    sds << *(rangen.d);
+    ds << rangen.getState();
 
     return ds;
 }
@@ -298,11 +232,12 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, RanGenerator &rangen)
 
     if (v == 1)
     {
-        if (not rangen.d.unique())
-            rangen.d.reset( new RanGeneratorPvt() );
-
-        SharedDataStream sds(ds);
-        sds >> *(rangen.d);
+        QVector<quint32> state;
+        ds >> state;
+        
+        rangen.detach();
+        
+        rangen.setState(state);
     }
     else
         throw version_error(v, "1", r_rangen, CODELOC);
@@ -337,6 +272,15 @@ RanGenerator::RanGenerator(const RanGenerator &other)
 /** Destructor */
 RanGenerator::~RanGenerator()
 {}
+
+/** Detach from shared storage */
+void RanGenerator::detach()
+{
+    if (not d.unique())
+    {
+        d.reset( new RanGeneratorPvt(*d) );
+    }
+}
 
 /** Copy assignment */
 RanGenerator& RanGenerator::operator=(const RanGenerator &other)
@@ -462,7 +406,9 @@ double RanGenerator::randNorm(double mean, double variance) const
 /** Return a random vector on the unit sphere */
 Vector RanGenerator::vectorOnSphere() const
 {
-    QMutexLocker lkr( &(nonconst_d().mutex) );
+    RanGeneratorPvt &ranpvt = nonconst_d();
+
+    QMutexLocker lkr( &(ranpvt.mutex) );
 
     while( true )
     {

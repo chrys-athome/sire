@@ -10,6 +10,7 @@ from Sire.Qt import *
 from Sire.Units import *
 from Sire.System import *
 from Sire.Move import *
+from Sire.MPI import *
 
 import sys
 
@@ -78,7 +79,7 @@ print "Running 10 moves on the MPI master node..."
 nodes = MPINodes()
 node = nodes.getFreeNode()
 
-promise = node.runSim(system, moves, 10, True)
+promise = node.start( MPISimWorker(system, moves, 1000, True) )
 
 print "Job submitted. Waiting..."
 
@@ -94,7 +95,7 @@ system = moves.move(system, 1000, True)
 ms = t.elapsed()
 print "Direct moves took %d ms" % ms
 
-print "Running 1000 moves..."
+print "Running 1000 simulation moves..."
 
 t.start()
 sim = Simulation.run(system, moves, 1000)

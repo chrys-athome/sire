@@ -101,7 +101,9 @@ public:
     template<class T>
     T input()
     {
+        #ifndef SIRE_SKIP_INLINE_FUNCTIONS
         return SireStream::loadType<T>( this->initialData() );
+        #endif
     }
 
     /** Return an interim result - this blocks until an interim result
@@ -113,7 +115,9 @@ public:
     template<class T>
     T interimResult()
     {
+        #ifndef SIRE_SKIP_INLINE_FUNCTIONS
         return SireStream::loadType<T>( this->interimData() );
+        #endif
     }
     
     /** Return the final result of the work - this blocks until the result
@@ -125,7 +129,9 @@ public:
     template<class T>
     T result()
     {
+        #ifndef SIRE_SKIP_INLINE_FUNCTIONS
         return SireStream::loadType<T>( this->finalData() );
+        #endif
     }
 
     /** Return the final result of the work - this blocks until the result
@@ -135,7 +141,9 @@ public:
     template<class T>
     T operator()()
     {
+        #ifndef SIRE_SKIP_INLINE_FUNCTIONS
         return this->result<T>();
+        #endif
     }
 
 protected:
@@ -164,7 +172,7 @@ private:
 
 }
 
-SIRE_EXPOSE_CLASS( SireMove::MPIPromise )
+SIRE_EXPOSE_CLASS( SireMPI::MPIPromise )
 
 SIRE_END_HEADER
 

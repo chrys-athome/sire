@@ -162,7 +162,6 @@ public:
         int masterRank();
     #endif
 
-private:
     MPINodesData();
 
     MPINode _pvt_getNode();

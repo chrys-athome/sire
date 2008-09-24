@@ -136,8 +136,12 @@ MPIPromiseData::MPIPromiseData(const MPIWorker &worker,
                                const MPINode &node)
                : mpinode(node), current_progress(0)
 {
+    qDebug() << CODELOC;
+
     //get a binary representation of the worker
     initial_worker_data = SireStream::save(worker);
+
+    qDebug() << CODELOC;
 }
 
 /** Destructor */
@@ -218,10 +222,15 @@ void MPIPromiseData::stop()
     an error has occured, it has been stopped or it has been aborted) */
 void MPIPromiseData::wait()
 {
+    qDebug() << CODELOC;
+
     QMutexLocker lkr(&data_mutex);
+
+    qDebug() << CODELOC;
     
     if (not mpinode.isNull())
     {
+        qDebug() << CODELOC;
         result_waiter.wait(&data_mutex);
     }
 }
@@ -517,8 +526,13 @@ void MPIPromise::stop()
     an error has occured, it has been stopped or it has been aborted) */
 void MPIPromise::wait()
 {
+    qDebug() << CODELOC;
+
     if (not this->isNull())
+    {
+        qDebug() << CODELOC;
         d->wait();
+    }
 }
 
 /** Wait until the job has stopped running (either because it is done,

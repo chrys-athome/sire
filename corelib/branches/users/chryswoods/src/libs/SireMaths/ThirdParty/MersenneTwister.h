@@ -66,6 +66,8 @@
 #include <time.h>
 #include <math.h>
 
+#include <QDebug>
+
 class MTRand {
 // Data
 public:
@@ -87,6 +89,8 @@ public:
 	MTRand( const uint32& oneSeed );  // initialize with a simple uint32
 	MTRand( uint32 *const bigSeed, uint32 const seedLength = N );  // or an array
 	MTRand();  // auto-initialize with /dev/urandom or time() and clock()
+
+    MTRand(const MTRand &other); // copy constructor
 	
 	// Do NOT use for CRYPTOGRAPHY without securely hashing several returned
 	// values together, otherwise the generator state can be learned after
@@ -136,6 +140,22 @@ protected:
 
 inline MTRand::MTRand( const uint32& oneSeed )
 	{ seed(oneSeed); }
+
+inline MTRand::MTRand(const MTRand &other)
+{
+	uint32 state[N];   // internal state
+	uint32 *pNext;     // next value to get from state
+	int left;          // number of values left before reload needed
+
+    //copy the state
+    for (uint32 i=0; i<N; ++i)
+    {
+        state[i] = other.state[i];
+    }
+    
+    left = other.left;
+    pNext = &state[N-left];    
+}
 
 inline MTRand::MTRand( uint32 *const bigSeed, const uint32 seedLength )
 	{ seed(bigSeed,seedLength); }

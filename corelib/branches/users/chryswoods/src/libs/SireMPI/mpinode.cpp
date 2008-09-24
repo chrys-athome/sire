@@ -174,13 +174,16 @@ static const int STOP_MPI_BACKEND = 2;
     {
         try
         {
+            qDebug() << CODELOC;
             while (not worker.hasFinished())
             {
+                qDebug() << CODELOC;
                 //do we have an instruction?
                 if (mpicom->Iprobe(master_rank, mpitag))
                 {
                     //yes there is - receive it
                     int envelope[3];
+                    qDebug() << CODELOC;
                     mpicom->Recv(envelope, 3, MPI::INT, master_rank, mpitag);
 
                     if (envelope[1] > 0)
@@ -212,7 +215,10 @@ static const int STOP_MPI_BACKEND = 2;
                 }
 
                 //now run a chunk of work
+                qDebug() << CODELOC;
                 worker.runChunk();
+                qDebug() << "Progress == " << worker.progress() << "%";
+                qDebug() << CODELOC;
             }
             
             this->sendResponse(MPIWORKER_RESULT, worker);
@@ -240,15 +246,19 @@ static const int STOP_MPI_BACKEND = 2;
         then repacks that worker and sends it back to the master */
     void MPIBackend::run()
     {
+        qDebug() << CODELOC;
         do
         {
+            qDebug() << CODELOC;
             //is there a message to receive?
             if (mpicom->Iprobe(master_rank, mpitag))
             {
                 //yes there is - receive it
+                qDebug() << CODELOC;
                 int envelope[3];
                 mpicom->Recv(envelope, 3, MPI::INT, master_rank, mpitag);
 
+                qDebug() << CODELOC;
                 QByteArray worker_data;
 
                 if (envelope[1] > 0)
@@ -272,14 +282,18 @@ static const int STOP_MPI_BACKEND = 2;
                 //assume that this is the right type
                 MPIWorker *worker = static_cast<MPIWorker*>( object.get<0>().get() );
 
+                qDebug() << CODELOC;
                 if (worker)
                     this->runJob(*worker);
+                
+                qDebug() << CODELOC;
             }
             else
             {
                 //wait a little before checking again
+                qDebug() << CODELOC;
                 if (keep_running)
-                    QThread::msleep(500);
+                    QThread::msleep(5000);
             }
 
         } while (keep_running);
@@ -288,6 +302,7 @@ static const int STOP_MPI_BACKEND = 2;
     /** Start a backend */
     void MPIBackend::start(MPI::Comm *mpicom, int master, int tag)
     {
+        qDebug() << CODELOC;
         //we shouldn't have this tag already...
         if (registry.contains(tag))
             throw SireError::program_bug( QObject::tr(
@@ -298,6 +313,7 @@ static const int STOP_MPI_BACKEND = 2;
         shared_ptr<MPIBackend> backend( new MPIBackend(mpicom, master, tag) );
         
         //start the thread
+        qDebug() << CODELOC;
         backend->start();
         
         //add it to the registry
@@ -307,6 +323,7 @@ static const int STOP_MPI_BACKEND = 2;
     /** Stop the backend with the specified tag */
     void MPIBackend::stop(MPI::Comm *mpicom, int master, int tag)
     {
+        qDebug() << CODELOC;
         shared_ptr<MPIBackend> backend = registry.take(tag);
         
         if (backend.get() != 0)
@@ -329,6 +346,7 @@ static const int STOP_MPI_BACKEND = 2;
     /** Stop all of the backend loops that are running on this node */
     void MPIBackend::stopAll()
     {
+        qDebug() << CODELOC;
         //stop all backends
         QList<int> tags = registry.keys();
         
@@ -367,6 +385,7 @@ static const int STOP_MPI_BACKEND = 2;
         - you cannot call it several times!!! */
     int SIREMPI_EXPORT exec(int argc, char **argv)
     {
+        qDebug() << CODELOC;
         exec_mutex.lock();
     
         if (exec_is_running)
@@ -382,6 +401,7 @@ static const int STOP_MPI_BACKEND = 2;
 
         if (not MPI::Is_initialized())
         {
+            qDebug() << CODELOC;
             MPI::Init(argc, argv);
         }
     
@@ -395,8 +415,13 @@ static const int STOP_MPI_BACKEND = 2;
                 int message[2];
         
                 //listen for any messages on channel 1
+                qDebug() << CODELOC;
                 MPI::Status status;
+                qDebug() << "RECEIVING" << 2 << 1;
                 MPI::COMM_WORLD.Recv( message, 2, MPI::INT, MPI_ANY_SOURCE, 1, status );
+                qDebug() << "RECEIVED" << message[0] << message[1] << status.Get_source();
+
+                qDebug() << CODELOC;
         
                 //what is the message?
                 switch( message[0] )
@@ -404,18 +429,21 @@ static const int STOP_MPI_BACKEND = 2;
                     case START_MPI_BACKEND:
                         //start a new MPI backend loop that listens to instructions
                         //on the specified channel from the specified master
+                        qDebug() << CODELOC;
                         MPIBackend::start( &(MPI::COMM_WORLD),
                                            status.Get_source(), message[1] );
                         break;
             
                     case STOP_MPI_BACKEND:
                         //stop the specified MPI backend loop
+                        qDebug() << CODELOC;
                         MPIBackend::stop( &(MPI::COMM_WORLD),
                                           status.Get_source(), message[1] );
                         break;
                     
                     case SHUTDOWN_MPI:
                         //completely shut down MPI on this node
+                        qDebug() << CODELOC;
                         MPIBackend::stopAll();
                         keep_looping = false;
                         break;
@@ -489,6 +517,7 @@ static const int STOP_MPI_BACKEND = 2;
         really only do this on the master node */
     void SIREMPI_EXPORT bg_exec(int argc, char **argv)
     {
+        qDebug() << CODELOC;
         //use an object to start and stop the loop
         //(as hopefully the object will be deleted when the library
         // exits, and thus an MPI shutdown will be called)
@@ -499,6 +528,7 @@ static const int STOP_MPI_BACKEND = 2;
         all of the MPI nodes */
     void SIREMPI_EXPORT shutdown()
     {
+        qDebug() << CODELOC;
         if (exec_running())
         {
             //shutdown each node (except ourselves!)
@@ -514,7 +544,7 @@ static const int STOP_MPI_BACKEND = 2;
                 if (i != my_rank)
                 {
                     //received in SireMPI::exec()
-                    // 'MPI::Comm_world.Recv( message, 2, MPI_ANY_SOURCE, 1, status );'
+                    // 'MPI::COMM_WORLD.Recv( message, 2, MPI_ANY_SOURCE, 1, status );'
                     MPI::COMM_WORLD.Send(message, 2, MPI::INT, i, 1);
                 }
             }
@@ -550,6 +580,7 @@ MPINodeData::MPINodeData() : QThread(), is_master(false)
     so that this processor can communicate with the backend */
 void MPINodeData::startBackend()
 {
+    qDebug() << CODELOC;
     #ifdef __SIRE_USE_MPI__
         //tell the node to start a new backend loop using the provided
         //tag for all communication
@@ -566,17 +597,26 @@ void MPINodeData::startBackend()
 
         //send the message - this is received in SireMPI::exec()
         // 'MPI::Comm_world.Recv( message, 2, MPI_ANY_SOURCE, 1, status );'
+        qDebug() << "SENDING" << message[0] << message[1]
+                 << 2 << mpirank << 1;
+        
+        qDebug() << "POINTER COMPARISON" << mpicomm << &(MPI::COMM_WORLD);
+        
+        
         mpicomm->Send(message, 2, MPI::INT, mpirank, 1); 
+        qDebug() << "SENT!!!";
 
     #else
         #error Need to write this
     #endif
+    qDebug() << CODELOC;
 }
 
 /** This function tells the backend node that we won't be communicating any more,
     so to stop the backend loop */
 void MPINodeData::stopBackend()
 {
+    qDebug() << CODELOC;
     #ifdef __SIRE_USE_MPI__
         //tell the node to stop the backend loop
 
@@ -598,6 +638,7 @@ void MPINodeData::stopBackend()
         #error Need to write this
     
     #endif
+    qDebug() << CODELOC;
 }
 
 /** This constructor is called only by the MPINodesData communicator, and is
@@ -638,8 +679,10 @@ MPINodeData::MPINodeData(const MPINodeData &other)
     back to the list of free nodes in the communicator */
 MPINodeData::~MPINodeData()
 {
+    qDebug() << CODELOC;
     //wait until this node is no longer busy...
     this->wait();
+    qDebug() << CODELOC;
 
     boost::shared_ptr<MPINodesData> communicator = parent.lock();
 
@@ -655,12 +698,14 @@ MPINodeData::~MPINodeData()
 /** Return whether or not the node is busy (processing an MPIWorker) */
 bool MPINodeData::isBusy() const
 {
+    qDebug() << CODELOC;
     return QThread::isRunning();
 }
 
 /** Block until the node is no longer busy */
 void MPINodeData::wait()
 {
+    qDebug() << CODELOC;
     QThread::wait();
 }
 
@@ -668,38 +713,57 @@ void MPINodeData::wait()
     Returns whether or not the node is busy */
 bool MPINodeData::wait(int time)
 {
+    qDebug() << CODELOC;
     return QThread::wait(time);
 }
 
 /** Start and run the job that is contained in the passed worker */
 MPIPromise MPINodeData::start(const MPIWorker &worker)
 {
+    qDebug() << CODELOC;
+
     if (parent.expired() or uid.isNull())
         throw SireError::invalid_state( QObject::tr(
             "You cannot run any work on the null MPI node."), CODELOC );
 
+    qDebug() << CODELOC;
+
     QMutexLocker lkr(&data_mutex);
+
+    qDebug() << CODELOC;
 
     //wait until the node is no longer busy
     while (this->isBusy())
     {
+        qDebug() << CODELOC;
+
         lkr.unlock();
         this->wait();
         lkr.relock();
     }
 
+    qDebug() << CODELOC;
+
     //save the worker to be processed
     mpipromise = MPIPromise(worker, MPINode(self_ptr.lock()));
+
+    qDebug() << CODELOC;
 
     //reset the aborted status
     is_aborted = false;
 
+    qDebug() << CODELOC;
+
     //now start the thread that is used to start the job and wait
     //for responses from the backend node
     start_mutex.lock();
+    qDebug() << CODELOC;
     QThread::start();
+    qDebug() << CODELOC;
     start_waiter.wait( &start_mutex );
+    qDebug() << CODELOC;
     start_mutex.unlock();
+    qDebug() << CODELOC;
     
     return mpipromise;
 }
@@ -778,6 +842,8 @@ QMutex NodeDeleter::data_mutex;
     node and to wait for a response */
 void MPINodeData::run()
 {
+    qDebug() << CODELOC;
+
     //tell the parent thread that we are now definitely running
     start_mutex.lock();
     start_waiter.wakeAll();
@@ -787,6 +853,7 @@ void MPINodeData::run()
     MPIPromise local_promise;
     
     {
+        qDebug() << CODELOC;
         QMutexLocker lkr(&data_mutex);
         is_aborted = false;
         
@@ -804,6 +871,8 @@ void MPINodeData::run()
 
     //the job is running the right node, isn't it...?
     BOOST_ASSERT( local_promise.node().UID() == this->uid );
+
+    qDebug() << CODELOC;
 
     //take a copy of this node to ensure that it is not deleted during
     //the job
@@ -828,6 +897,8 @@ void MPINodeData::run()
         message[0] = MPIWORKER_START;
         message[1] = worker_data.size();
         message[2] = 0;
+
+        qDebug() << CODELOC;
         
         mpicom->Send( message, 3, MPI::INT, mpirank, mpitag );
         mpicom->Send( worker_data.constData(), worker_data.size(), MPI::BYTE,
@@ -847,8 +918,12 @@ void MPINodeData::run()
         
         do
         {
+            qDebug() << CODELOC;
+            
             mpicom->Recv( message, 3, MPI::INT, mpirank, mpitag );
         
+            qDebug() << CODELOC;
+            
             QByteArray result_data;
         
             if (message[1] > 0)
@@ -903,6 +978,8 @@ void MPINodeData::run()
         #error Need to write this...
     #endif
 
+    qDebug() << CODELOC;
+
     //we've now finished - we currently hold a pointer to ourselves,
     //so this will need to be scheduled to be freed (otherwise
     //we will deadlock as the destructor is called, waiting for the
@@ -913,6 +990,8 @@ void MPINodeData::run()
 /** Send a message to the backend thread on the node running the job */
 void MPINodeData::sendMessage(int message)
 {
+    qDebug() << CODELOC;
+
     shared_ptr<MPINodesData> communicator = parent.lock();
     BOOST_ASSERT( communicator.get() != 0 );
         
@@ -927,13 +1006,17 @@ void MPINodeData::sendMessage(int message)
     envelope[1] = 0;
     envelope[2] = 0;
     
+    qDebug() << CODELOC;
     mpicom->Send( envelope, 3, MPI::INT, mpirank, mpitag );
+    qDebug() << CODELOC;
 }
 
 /** Stop any jobs running on this node */
 void MPINodeData::stop()
 {
+    qDebug() << CODELOC;
     QMutexLocker lkr(&data_mutex);
+    qDebug() << CODELOC;
     
     if (not QThread::isRunning())
         //nothing to stop
@@ -951,7 +1034,9 @@ void MPINodeData::stop()
 /** Abort any jobs running on this node */
 void MPINodeData::abort()
 {
+    qDebug() << CODELOC;
     QMutexLocker lkr(&data_mutex);
+    qDebug() << CODELOC;
     
     if (not QThread::isRunning())
         //nothing to abort
@@ -973,7 +1058,9 @@ void MPINodeData::abort()
 /** Internal function called by MPIPromise to trigger a progress request */
 void MPINodeData::getProgress()
 {
+    qDebug() << CODELOC;
     QMutexLocker lkr(&data_mutex);
+    qDebug() << CODELOC;
     
     if (not QThread::isRunning())
         //the job isn't running!
@@ -986,7 +1073,9 @@ void MPINodeData::getProgress()
 /** Internal function called by MPIPromise to ask for an interim result */
 void MPINodeData::getInterimResult()
 {
+    qDebug() << CODELOC;
     QMutexLocker lkr(&data_mutex);
+    qDebug() << CODELOC;
     
     if (not QThread::isRunning())
         //the job isn't running
@@ -1007,6 +1096,7 @@ static const boost::shared_ptr<MPINodeData>& getSharedNull()
     if (shared_null.get() == 0)
     {
         shared_null.reset( new MPINodeData() );
+        shared_null->self_ptr = shared_null;
     }
     
     return shared_null;
@@ -1021,7 +1111,9 @@ MPINode::MPINode() : d( getSharedNull() )
     the master node of this communicator */
 MPINode::MPINode(const MPINodes &communicator, int rank, bool is_master)
         : d( new MPINodeData(communicator.d, rank, is_master) )
-{}
+{
+    d->self_ptr = d;
+}
 
 /** Private copy constructor */
 MPINode::MPINode(const boost::shared_ptr<detail::MPINodeData> &data)
@@ -1065,6 +1157,9 @@ const QUuid& MPINode::UID() const
 /** Return whether or not this node is null */
 bool MPINode::isNull() const
 {
+    qDebug() << CODELOC;
+    qDebug() << (d.get() == 0);
+
     return d->parent.expired() or d->uid.isNull();
 }
 

@@ -37,8 +37,11 @@
 
 #include <cstdlib>
 
-#include <unistd.h>
-
+#ifdef Q_OS_UNIX
+    #include <unistd.h>
+    #include <sys/utsname.h>
+#endif
+    
 #include "streamdata.hpp"
 
 #include "tostring.h"
@@ -437,11 +440,14 @@ static QString *system_info(0);
 
 static const QString& getSystemInfo()
 {
+    qDebug() << CODELOC;
+
     if (system_info)
         return *system_info;
 
+    qDebug() << CODELOC;
+
     QStringList lines;
-    
     
     #ifdef Q_WS_MAC
         lines.append( "Platform: Mac OS" );
@@ -622,12 +628,15 @@ static const QString& getSystemInfo()
     #endif  //mac
 
     #ifdef Q_OS_UNIX
-        QProcess p;
-        p.start( "uname -a" );
-        p.waitForFinished();
-        QByteArray output = p.readAllStandardOutput();
-
-        lines.append( QString("UNIX uname: %1").arg( QString(output).trimmed() ) );
+        utsname sysname;
+        
+        if (uname(&sysname) != -1)
+        {
+            lines.append( QString("UNIX system: %1").arg( sysname.sysname ) );
+            lines.append( QString("UNIX release: %1").arg( sysname.release ) );
+            lines.append( QString("UNIX version: %1").arg( sysname.version ) );
+            lines.append( QString("UNIX machine: %1").arg( sysname.machine ) );
+        }
     #endif
         
     #ifdef Q_OS_CYGWIN
@@ -717,6 +726,8 @@ static const QString& getSystemInfo()
     lines.append( "Compiler: Watcom C++" );
     #endif
 
+    qDebug() << CODELOC;
+
     lines.append( QString("Wordsize: %1 bit").arg( QSysInfo::WordSize ) );
     
     switch (QSysInfo::ByteOrder)
@@ -732,6 +743,8 @@ static const QString& getSystemInfo()
             break;
     }
 
+    qDebug() << CODELOC;
+
     lines.append( QString("Qt runtime version: %1").arg( qVersion() ) );
     lines.append( QString("Qt compile version: %1").arg( QT_VERSION_STR ) );
 
@@ -744,8 +757,12 @@ static const QString& getSystemInfo()
     lines.append( QString("Link flags: %1").arg(link_flags.trimmed()) );
 
     QString info = lines.join("\n");
+
+    qDebug() << CODELOC;
     
     system_info = new QString(info);
+
+    qDebug() << CODELOC;
     
     return *system_info;
 }

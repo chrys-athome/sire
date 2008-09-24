@@ -92,7 +92,7 @@ boost::shared_ptr<MPINodesData> MPINodesData::construct()
         }
         
         //this is the global communicator
-        d->mpicomm = &(MPI::COMM_WORLD.Clone());
+        d->mpicomm = &(MPI::COMM_WORLD);
         
         //how many MPI nodes are there?
         d->nnodes = d->mpicomm->Get_size();
@@ -136,21 +136,8 @@ bool MPINodesData::waitUntilAllFree(int timeout)
     are free */
 MPINodesData::~MPINodesData()
 {
-    this->waitUntilAllFree();
-    
-    //now tell all of the nodes to stop their backend loops
-    // - also remove the parent from the nodes, or they will all go
-    //silly when they use their destructors!
-    for (QList<MPINode>::iterator it = free_nodes.begin();
-         it != free_nodes.end();
-         ++it)
-    {
-        it->d->stopBackend();
-        it->d->parent.reset();
-    }
-    
     #ifdef __SIRE_USE_MPI__
-    if (mpicomm)
+    if (mpicomm and mpicomm != &(MPI::COMM_WORLD))
     {
         mpicomm->Free();
         delete mpicomm;
@@ -362,7 +349,24 @@ MPINodes::MPINodes(const MPINodes &other)
 
 /** Destructor */
 MPINodes::~MPINodes()
-{}
+{
+    if (d.unique())
+    {
+        //we are about to completely delete this communicator. We need to
+        //let all of the nodes know this!
+        d->waitUntilAllFree();
+    
+        //remove the parent from the nodes, or they will all go
+        //silly when they use their destructors!
+        for (QList<MPINode>::iterator it = d->free_nodes.begin();
+             it != d->free_nodes.end();
+             ++it)
+        {
+            it->d->stopBackend();
+            it->d->parent.reset();
+        }
+    }
+}
 
 /** Copy assignment operator */
 MPINodes& MPINodes::operator=(const MPINodes &other)
