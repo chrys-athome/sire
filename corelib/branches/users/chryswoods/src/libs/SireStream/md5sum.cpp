@@ -33,6 +33,8 @@
 #include <QFile>
 #include <QByteArray>
 
+#include "ThirdParty/md5.h"
+
 using namespace SireStream;
 
 QDataStream SIRESTREAM_EXPORT &operator<<(QDataStream &ds, const MD5Sum &md5sum)

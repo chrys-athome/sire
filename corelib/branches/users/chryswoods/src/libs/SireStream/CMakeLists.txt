@@ -30,6 +30,8 @@ set ( SIRESTREAM_SOURCES
       shareddatastream.cpp
       streamdata.cpp
       version_error.cpp
+
+      ThirdParty/md5.c
     
       ${SIRESTREAM_HEADERS}
     )
@@ -38,7 +40,6 @@ set ( SIRESTREAM_SOURCES
 add_library ( SireStream ${SIRESTREAM_SOURCES} )
 
 target_link_libraries (SireStream
-                       ThirdParty
                        SireError
                        ${QT_QTCORE_LIBRARY}
                       )
@@ -52,3 +53,4 @@ install( TARGETS SireStream
 
 install( FILES ${SIRESTREAM_HEADERS}
          DESTINATION ${SIRE_INCLUDES}/SireStream )
+

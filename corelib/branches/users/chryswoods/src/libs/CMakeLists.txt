@@ -21,14 +21,8 @@ add_subdirectory (SireMove)
 add_subdirectory (SireMPI)
 add_subdirectory (SireStream)
 add_subdirectory (SireSystem)
-#add_subdirectory (SireTest)
 add_subdirectory (SireUnits)
-#add_subdirectory (SireUnitTest)
 add_subdirectory (SireVol)
-add_subdirectory (SqliteDriver)
-#add_subdirectory (Squire)
-add_subdirectory (ThirdParty)
-add_subdirectory (ThirdPartyGUI)
 
 set ( SIRE_HEADERS
       sireglobal.h

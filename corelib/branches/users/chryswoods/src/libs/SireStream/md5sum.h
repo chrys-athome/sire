@@ -31,8 +31,6 @@
 
 #include "sireglobal.h"
 
-#include "ThirdParty/md5.h"
-
 SIRE_BEGIN_HEADER
 
 class QFile;
@@ -49,6 +47,8 @@ QDataStream& operator>>(QDataStream&, SireStream::MD5Sum&);
 
 namespace SireStream
 {
+
+typedef unsigned char md5_byte_t;
 
 /**
  * These functions are used to simplify the generation of md5sums of 
