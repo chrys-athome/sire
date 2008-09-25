@@ -2624,7 +2624,7 @@ void ForceFields::update(const MoleculeData &moldata)
         return;
         
     const QList<MGNum> &mgnums = this->groupsContaining(moldata.number());
-    
+
     BOOST_ASSERT(not mgnums.isEmpty());
 
     if (mgnums.count() == 1)

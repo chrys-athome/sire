@@ -78,6 +78,7 @@ moves = SameMoves(mc)
 print "Running 10 moves on the MPI master node..."
 nodes = MPINodes()
 node = nodes.getFreeNode()
+print "node rank = %d of %d" % (node.rank(), nodes.nNodes())
 
 promise = node.start( MPISimWorker(system, moves, 1000, True) )
 

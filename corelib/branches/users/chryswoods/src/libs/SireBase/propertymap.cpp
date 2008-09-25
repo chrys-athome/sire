@@ -306,9 +306,13 @@ PropertyName PropertyMap::operator[](const QString &name) const
                                     it = propmap.constFind(name);
                                     
     if (it == propmap.constEnd())
+    {
         return PropertyName(name);
+    }
     else
+    {
         return it.value();
+    }
 }
 
 /** Map the property called 'name' to the source or value of 

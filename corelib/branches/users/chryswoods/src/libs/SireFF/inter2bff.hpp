@@ -334,7 +334,7 @@ void Inter2BFF<Potential>::recordChange(
     if (changed_mols.contains(molnum))
     {
         ChangedMolecule &old_change = changed_mols[molnum];
-        
+
         if (old_change.oldMolecule() == change.newMolecule())
         {
             //we have reverted the change!

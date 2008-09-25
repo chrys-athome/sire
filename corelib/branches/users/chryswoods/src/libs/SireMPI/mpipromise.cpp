@@ -136,12 +136,8 @@ MPIPromiseData::MPIPromiseData(const MPIWorker &worker,
                                const MPINode &node)
                : mpinode(node), current_progress(0)
 {
-    qDebug() << CODELOC;
-
     //get a binary representation of the worker
     initial_worker_data = SireStream::save(worker);
-
-    qDebug() << CODELOC;
 }
 
 /** Destructor */
@@ -222,15 +218,10 @@ void MPIPromiseData::stop()
     an error has occured, it has been stopped or it has been aborted) */
 void MPIPromiseData::wait()
 {
-    qDebug() << CODELOC;
-
     QMutexLocker lkr(&data_mutex);
-
-    qDebug() << CODELOC;
     
     if (not mpinode.isNull())
     {
-        qDebug() << CODELOC;
         result_waiter.wait(&data_mutex);
     }
 }
@@ -354,6 +345,8 @@ double MPIPromiseData::progress()
     of the calculation */
 void MPIPromiseData::setProgress(double progress)
 {
+    qDebug() << "PROMISE::setProgress" << progress;
+
     QMutexLocker lkr(&data_mutex);
     current_progress = progress;
     progress_waiter.wakeAll();
@@ -362,6 +355,8 @@ void MPIPromiseData::setProgress(double progress)
 /** Set the interim result */
 void MPIPromiseData::setInterimData(const QByteArray &worker_data, double progress)
 {
+    qDebug() << "PROMISE::setInterimData" << worker_data.count() << progress;
+
     QMutexLocker lkr(&data_mutex);
     interim_worker_data = worker_data;
     current_progress = progress;
@@ -384,6 +379,7 @@ void MPIPromiseData::setFinalData(const QByteArray &worker_data)
     
     interim_waiter.wakeAll();
     progress_waiter.wakeAll();
+
     result_waiter.wakeAll();
 }
 
@@ -402,6 +398,7 @@ void MPIPromiseData::setError(const MPIError &error)
     
     interim_waiter.wakeAll();
     progress_waiter.wakeAll();
+    
     result_waiter.wakeAll();
 }
 
@@ -429,6 +426,7 @@ void MPIPromiseData::setStopped(const QByteArray &worker_data, double progress)
     
     progress_waiter.wakeAll();
     interim_waiter.wakeAll();
+
     result_waiter.wakeAll();
 }
 
@@ -447,6 +445,7 @@ void MPIPromiseData::setAborted()
     
     progress_waiter.wakeAll();
     interim_waiter.wakeAll();
+    
     result_waiter.wakeAll();
 }
 
@@ -526,11 +525,8 @@ void MPIPromise::stop()
     an error has occured, it has been stopped or it has been aborted) */
 void MPIPromise::wait()
 {
-    qDebug() << CODELOC;
-
     if (not this->isNull())
     {
-        qDebug() << CODELOC;
         d->wait();
     }
 }

@@ -193,6 +193,7 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
 {
     //save our, and the system's, current state
     RigidBodyMC old_state(*this);
+
     System old_system_state(system);
     
     try
@@ -248,9 +249,11 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
                 smplr = old_sampler;
                 system = old_system;
             }
-            
+
             if (record_stats)
+            {
                 system.collectStats();
+            }
         }
     }
     catch(...)

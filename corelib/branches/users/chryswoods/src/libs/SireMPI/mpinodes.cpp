@@ -65,7 +65,10 @@ MPINodesData::MPINodesData() : sem(1), nnodes(1)
 
     static int getUniqueMPITag()
     {
-        return last_mpitag.increment();
+        int mpitag = last_mpitag.increment();
+        qDebug() << "New mpitag == " << mpitag;
+    
+        return mpitag;
     }
 #endif
 
@@ -88,7 +91,8 @@ boost::shared_ptr<MPINodesData> MPINodesData::construct()
             //SireMPI::exec() has not been called in this process. This suggests
             //that we are not part of an explicit MPI executable.
             //We need to call it ourselves and set it running in a background thread
-            SireMPI::bg_exec(0, 0);
+            int argc = 0;
+            SireMPI::bg_exec(argc, 0);
         }
         
         //this is the global communicator

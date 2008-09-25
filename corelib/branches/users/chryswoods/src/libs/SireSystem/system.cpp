@@ -1911,10 +1911,14 @@ void System::update(const MoleculeData &moldata)
             }
         }
         else
+        {
             this->_pvt_moleculeGroups().update(moldata);
+        }
     }
     else
+    {
         this->_pvt_forceFields().update(moldata);
+    }
 
     sysversion.incrementMinor();
 }

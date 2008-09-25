@@ -440,12 +440,8 @@ static QString *system_info(0);
 
 static const QString& getSystemInfo()
 {
-    qDebug() << CODELOC;
-
     if (system_info)
         return *system_info;
-
-    qDebug() << CODELOC;
 
     QStringList lines;
     
@@ -726,8 +722,6 @@ static const QString& getSystemInfo()
     lines.append( "Compiler: Watcom C++" );
     #endif
 
-    qDebug() << CODELOC;
-
     lines.append( QString("Wordsize: %1 bit").arg( QSysInfo::WordSize ) );
     
     switch (QSysInfo::ByteOrder)
@@ -743,8 +737,6 @@ static const QString& getSystemInfo()
             break;
     }
 
-    qDebug() << CODELOC;
-
     lines.append( QString("Qt runtime version: %1").arg( qVersion() ) );
     lines.append( QString("Qt compile version: %1").arg( QT_VERSION_STR ) );
 
@@ -757,12 +749,8 @@ static const QString& getSystemInfo()
     lines.append( QString("Link flags: %1").arg(link_flags.trimmed()) );
 
     QString info = lines.join("\n");
-
-    qDebug() << CODELOC;
     
     system_info = new QString(info);
-
-    qDebug() << CODELOC;
     
     return *system_info;
 }

@@ -37,6 +37,11 @@
 
 SIRE_BEGIN_HEADER
 
+namespace SireError
+{
+class exception;
+}
+
 namespace SireMPI
 {
 
@@ -51,10 +56,14 @@ class MPINodesData;
 class MPIPromiseData;
 }
 
+void ensureInitializedMPI(int &argc, char **argv);
+
 bool exec_running();
 
-int exec(int argc, char **argv);
-void bg_exec(int argc, char **argv);
+int exec(int &argc, char **argv);
+void bg_exec(int &argc, char **argv);
+
+void writeErrorString(const QString &location, const SireError::exception &e);
 
 void shutdown();
 

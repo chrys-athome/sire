@@ -317,7 +317,8 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
     writeHeader(ds, r_ffmolsbase, 1);
     
     SharedDataStream sds(ds);
-    sds << ffmols.molnums_by_idx;
+    sds << ffmols.molnums_by_idx
+        << ffmols.parameter_names;
     
     return ds;
 }
@@ -331,7 +332,9 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        sds >> ffmols.molnums_by_idx;
+        sds >> ffmols.molnums_by_idx
+            >> ffmols.parameter_names;
+        
         ffmols._pvt_reindex();
     }
     else

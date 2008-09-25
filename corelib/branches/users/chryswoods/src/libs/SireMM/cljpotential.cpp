@@ -597,12 +597,16 @@ InterCLJPotential::updateParameters(const InterCLJPotential::Parameters &old_par
                          new_molecule.version(lj_property) );
 
     if (new_coords)
+    {
         new_params.setAtomicCoordinates( AtomicCoords3D(new_molecule, 
                                                         coords_property) );
+    }
 
     if (new_clj)
+    {
         new_params.setAtomicParameters( getCLJParameters(new_molecule,
                                                          chg_property, lj_property) );
+    }
 
     return new_params;
 }

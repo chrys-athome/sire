@@ -31,9 +31,7 @@
 
 #include "sireglobal.h"
 
-#ifdef BUILD_SHARED_WRAPPERS
 #include "wrap_SireError.h"
-#endif
 
 namespace SireError
 {

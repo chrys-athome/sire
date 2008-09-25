@@ -37,6 +37,8 @@
 
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 SIRE_BEGIN_HEADER
 
 namespace SireFF
@@ -512,7 +514,7 @@ typename FFMolecule<PTNL>::Parameters& FFMolecule<PTNL>::_edit_parameters()
 /** Change this molecule so that it is equal to 'new_molecule'.
 
     Note that you can only change a molecule's molecule layout ID
-    is *all* of the molecule is contained in this forcefield.
+    if *all* of the molecule is contained in this forcefield.
     If only part of the molecule is contained, then you will
     need to remove it, and then add it again to be able to
     change its layout ID.

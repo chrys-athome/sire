@@ -29,6 +29,8 @@
 #include <boost/weak_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
 
+#include <QTextStream>
+
 #include "mpinode.h"
 #include "mpinodes.h"
 #include "mpipromise.h"
@@ -41,6 +43,8 @@
 #include "SireStream/shareddatastream.h"
 
 #include "SireError/errors.h"
+
+#include "tostring.h"
 
 #include <QDebug>
 
@@ -65,6 +69,16 @@ static const int STOP_MPI_BACKEND = 2;
     namespace SireMPI
     {
 
+    void writeErrorString(const QString &location, const SireError::exception &e)
+    {
+        QTextStream ts(stdout);
+        
+        ts << QObject::tr(" ** FATAL ERROR ON NODE %1 **\n"
+                          " ** LOCATION %2 **\n%3\n")
+                    .arg(MPI::COMM_WORLD.Get_rank())
+                    .arg(location, e.toString());
+    }
+
     class MPIBackend : private QThread
     {
     public:
@@ -85,8 +99,13 @@ static const int STOP_MPI_BACKEND = 2;
         void sendResponse(int tag, const MPIWorker &worker);
         void runJob(MPIWorker &worker);
     
-        static QHash< int, shared_ptr<MPIBackend> > registry;
-        static QList< shared_ptr<MPIBackend> > stopped_backends;
+        static QHash< int, shared_ptr<MPIBackend> >& registry();
+        static QList< shared_ptr<MPIBackend> >& stopped_backends();
+    
+        static QHash< int, shared_ptr<MPIBackend> > *registry_ptr;
+        static QList< shared_ptr<MPIBackend> > *stopped_backends_ptr;
+    
+        static QMutex registry_mutex;
     
         /** The communicator used to talk to the master */
         MPI::Comm *mpicom;
@@ -101,11 +120,34 @@ static const int STOP_MPI_BACKEND = 2;
         bool keep_running;
     };
 
+    /** Mutex to protect access to the registry */
+    QMutex MPIBackend::registry_mutex;
+
     /** The registry of all active backends on this node */
-    QHash< int, shared_ptr<MPIBackend> > MPIBackend::registry;
+    QHash< int, shared_ptr<MPIBackend> >* MPIBackend::registry_ptr(0);
+    
+    QHash< int, shared_ptr<MPIBackend> >& MPIBackend::registry()
+    {
+        QMutexLocker lkr(&registry_mutex);
+        
+        if (registry_ptr == 0)
+            registry_ptr = new QHash< int, shared_ptr<MPIBackend> >();
+            
+        return *registry_ptr;
+    }
     
     /** The list of backends that have been scheduled to be stopped */
-    QList< shared_ptr<MPIBackend> > MPIBackend::stopped_backends;
+    QList< shared_ptr<MPIBackend> >* MPIBackend::stopped_backends_ptr(0);
+    
+    QList< shared_ptr<MPIBackend> >& MPIBackend::stopped_backends()
+    {
+        QMutexLocker lkr(&registry_mutex);
+        
+        if (stopped_backends_ptr == 0)
+            stopped_backends_ptr = new QList< shared_ptr<MPIBackend> >();
+            
+        return *stopped_backends_ptr;
+    }
     
     /** Constructor, telling the background the rank of the master
         process, the communicator used to communicate with that
@@ -135,7 +177,7 @@ static const int STOP_MPI_BACKEND = 2;
         QByteArray worker_data;
         double current_progress = 0;
 
-        if (tag != MPIWORKER_RESULT and tag != MPIWORKER_ABORT )
+        if (tag == MPIWORKER_RESULT or tag == MPIWORKER_ABORT )
         {
             envelope[2] = 0;
         }
@@ -145,7 +187,7 @@ static const int STOP_MPI_BACKEND = 2;
             current_progress = worker.progress();
         }
 
-        if (tag != MPIWORKER_PROGRESS and tag != MPIWORKER_ABORT)
+        if (tag == MPIWORKER_PROGRESS or tag == MPIWORKER_ABORT)
         {
             envelope[1] = 0;
         }
@@ -156,17 +198,29 @@ static const int STOP_MPI_BACKEND = 2;
         }
         
         //send the envelope describing the response
+        qDebug() << MPI::COMM_WORLD.Get_rank() << master_rank << mpitag  
+                 << "backend: mpicom->Send(envelope, 3, MPI::INT, master_rank, mpitag);";
         mpicom->Send(envelope, 3, MPI::INT, master_rank, mpitag);
+        qDebug() << MPI::COMM_WORLD.Get_rank()  
+                 << "backend: SENT!";
         
         if (envelope[1] > 0)
         {
+            qDebug() << MPI::COMM_WORLD.Get_rank() << master_rank << mpitag
+                 << "backend: mpicom->Send(worker_data.constData(), worker_data.size(), MPI::BYTE, master_rank, mpitag);";
             mpicom->Send(worker_data.constData(), worker_data.size(), MPI::BYTE,
                          master_rank, mpitag);
+            qDebug() << MPI::COMM_WORLD.Get_rank()  
+                 << "backend: SENT!";
         }
         
         if (envelope[2] > 0)
         {
+            qDebug() << MPI::COMM_WORLD.Get_rank() << master_rank << mpitag
+                 << "backend: mpicom->Send(&current_progress, 1, MPI::DOUBLE, master_rank, mpitag);";
             mpicom->Send(&current_progress, 1, MPI::DOUBLE, master_rank, mpitag);
+            qDebug() << MPI::COMM_WORLD.Get_rank()  
+                 << "backend: SENT!";
         }
     }
     
@@ -174,24 +228,41 @@ static const int STOP_MPI_BACKEND = 2;
     {
         try
         {
-            qDebug() << CODELOC;
             while (not worker.hasFinished())
             {
-                qDebug() << CODELOC;
                 //do we have an instruction?
                 if (mpicom->Iprobe(master_rank, mpitag))
                 {
                     //yes there is - receive it
                     int envelope[3];
-                    qDebug() << CODELOC;
+                    qDebug() << MPI::COMM_WORLD.Get_rank() << master_rank << mpitag  
+                 << "backend: mpicom->Recv(envelope, 3, MPI::INT, master_rank, mpitag);";
                     mpicom->Recv(envelope, 3, MPI::INT, master_rank, mpitag);
+                    qDebug() << MPI::COMM_WORLD.Get_rank()  
+                 << "backend: RECEIVED!";
 
                     if (envelope[1] > 0)
                     {
                         //there is an accompanying bytearray package
                         QByteArray worker_data(envelope[1]+1, ' ');
+                        qDebug() << MPI::COMM_WORLD.Get_rank() << master_rank << mpitag
+                 << "backend: mpicom->Recv(worker_data.data(), envelope[1], MPI::BYTE, master_rank, mpitag);";
                         mpicom->Recv(worker_data.data(), envelope[1], MPI::BYTE,
                                      master_rank, mpitag);
+                        qDebug() << MPI::COMM_WORLD.Get_rank()  
+                 << "backend: RECEIVED!";
+                    }
+                    
+                    if (envelope[2] > 0)
+                    {
+                        //there is an accompanying double...
+                        double current_progress;
+                        qDebug() << MPI::COMM_WORLD.Get_rank() << master_rank << mpitag 
+                 << "backend: mpicom->Recv(&current_progress, 1, MPI::DOUBLE, master_rank, mpitag);";
+                        mpicom->Recv(&current_progress, 1, MPI::DOUBLE, master_rank, 
+                                     mpitag);
+                        qDebug() << MPI::COMM_WORLD.Get_rank()  
+                 << "backend: RECEIVED!";
                     }
                 
                     switch (envelope[0])
@@ -215,10 +286,8 @@ static const int STOP_MPI_BACKEND = 2;
                 }
 
                 //now run a chunk of work
-                qDebug() << CODELOC;
                 worker.runChunk();
                 qDebug() << "Progress == " << worker.progress() << "%";
-                qDebug() << CODELOC;
             }
             
             this->sendResponse(MPIWORKER_RESULT, worker);
@@ -246,65 +315,95 @@ static const int STOP_MPI_BACKEND = 2;
         then repacks that worker and sends it back to the master */
     void MPIBackend::run()
     {
-        qDebug() << CODELOC;
-        do
+        qDebug() << MPI::COMM_WORLD.Get_rank()  
+                 << " ** STARTING BACKGROUND WORKER THREAD ** ";
+    
+        try
         {
-            qDebug() << CODELOC;
-            //is there a message to receive?
-            if (mpicom->Iprobe(master_rank, mpitag))
+            do
             {
-                //yes there is - receive it
-                qDebug() << CODELOC;
-                int envelope[3];
-                mpicom->Recv(envelope, 3, MPI::INT, master_rank, mpitag);
-
-                qDebug() << CODELOC;
-                QByteArray worker_data;
-
-                if (envelope[1] > 0)
+                //is there a message to receive?
+                if (mpicom->Iprobe(master_rank, mpitag))
                 {
-                    //there is an accompanying bytearray package
-                    worker_data = QByteArray(envelope[1]+1, ' ');
-                    mpicom->Recv(worker_data.data(), envelope[1], MPI::BYTE,
-                                 master_rank, mpitag);
+                    //yes there is - receive it
+                    int envelope[3];
+                    qDebug() << MPI::COMM_WORLD.Get_rank() << master_rank << mpitag
+                     << "backend_run: mpicom->Recv(envelope, 3, MPI::INT, master_rank, mpitag);";
+                    mpicom->Recv(envelope, 3, MPI::INT, master_rank, mpitag);
+                    qDebug() << MPI::COMM_WORLD.Get_rank()  
+                     << "backend_run: RECEIVED!";
+
+                    QByteArray worker_data;
+
+                    if (envelope[1] > 0)
+                    {
+                        //there is an accompanying bytearray package
+                        worker_data = QByteArray(envelope[1]+1, ' ');
+                        qDebug() << MPI::COMM_WORLD.Get_rank() << master_rank << mpitag
+                     << "backend_run: mpicom->Recv(worker_data.data(), envelope[1], MPI::BYTE, master_rank, mpitag);";
+                        mpicom->Recv(worker_data.data(), envelope[1], MPI::BYTE,
+                                     master_rank, mpitag);
+                        qDebug() << MPI::COMM_WORLD.Get_rank()  
+                     << "backend_run: RECEIVED!";
+                    }
+
+                    if (envelope[2] > 0)
+                    {
+                        //there is an accompanying double...
+                        double current_progress;
+                        qDebug() << MPI::COMM_WORLD.Get_rank() << master_rank << mpitag
+                     << "backend_run: mpicom->Recv(&current_progress, 1, MPI::DOUBLE, master_rank, mpitag);";
+                        mpicom->Recv(&current_progress, 1, MPI::DOUBLE, master_rank, 
+                                     mpitag);
+                        qDebug() << MPI::COMM_WORLD.Get_rank()  
+                     << "backend_run: RECEIVED!";
+                    }
+
+                    if (envelope[0] != MPIWORKER_START)
+                    {
+                        //this is an old message from a previous job - ignore it
+                        continue;
+                    }
+                           
+                    //extract the worker
+                    tuple< shared_ptr<void>,QString > object 
+                                                = SireStream::load(worker_data);
+                                                
+                    //assume that this is the right type
+                    MPIWorker *worker = static_cast<MPIWorker*>( object.get<0>().get() );
+
+                    if (worker)
+                        this->runJob(*worker);
+                }
+                else
+                {
+                    //wait a little before checking again
+                    if (keep_running)
+                        QThread::msleep(5000);
                 }
 
-                if (envelope[0] != MPIWORKER_START)
-                {
-                    //this is an old message from a previous job - ignore it
-                    continue;
-                }
-                       
-                //extract the worker
-                tuple< shared_ptr<void>,QString > object 
-                                            = SireStream::load(worker_data);
-                                            
-                //assume that this is the right type
-                MPIWorker *worker = static_cast<MPIWorker*>( object.get<0>().get() );
-
-                qDebug() << CODELOC;
-                if (worker)
-                    this->runJob(*worker);
-                
-                qDebug() << CODELOC;
-            }
-            else
-            {
-                //wait a little before checking again
-                qDebug() << CODELOC;
-                if (keep_running)
-                    QThread::msleep(5000);
-            }
-
-        } while (keep_running);
+            } while (keep_running);
+        }
+        catch(const SireError::exception &e)
+        {
+            SireMPI::writeErrorString(CODELOC, e);
+        }
+        catch(const std::exception &e)
+        {
+            SireMPI::writeErrorString(CODELOC, SireError::std_exception(e));
+        }
+        catch(...)
+        {
+            SireMPI::writeErrorString(CODELOC, 
+                    SireError::unknown_exception("An unknown error occured!", CODELOC));
+        }
     }
 
     /** Start a backend */
     void MPIBackend::start(MPI::Comm *mpicom, int master, int tag)
     {
-        qDebug() << CODELOC;
         //we shouldn't have this tag already...
-        if (registry.contains(tag))
+        if (registry().contains(tag))
             throw SireError::program_bug( QObject::tr(
                 "It should not be possible to start two backends with the "
                 "same tag (%1)").arg(tag), CODELOC );
@@ -313,18 +412,16 @@ static const int STOP_MPI_BACKEND = 2;
         shared_ptr<MPIBackend> backend( new MPIBackend(mpicom, master, tag) );
         
         //start the thread
-        qDebug() << CODELOC;
         backend->start();
         
         //add it to the registry
-        registry.insert( tag, backend );
+        registry().insert( tag, backend );
     }
     
     /** Stop the backend with the specified tag */
     void MPIBackend::stop(MPI::Comm *mpicom, int master, int tag)
     {
-        qDebug() << CODELOC;
-        shared_ptr<MPIBackend> backend = registry.take(tag);
+        shared_ptr<MPIBackend> backend = registry().take(tag);
         
         if (backend.get() != 0)
         {
@@ -339,29 +436,28 @@ static const int STOP_MPI_BACKEND = 2;
             backend->keep_running = false;
             
             //add this backend to the list of ones that have been stopped
-            stopped_backends.append(backend);
+            stopped_backends().append(backend);
         }
     }
 
     /** Stop all of the backend loops that are running on this node */
     void MPIBackend::stopAll()
     {
-        qDebug() << CODELOC;
         //stop all backends
-        QList<int> tags = registry.keys();
+        QList<int> tags = registry().keys();
         
         foreach (int tag, tags)
         {
-            shared_ptr<MPIBackend> backend = registry.take(tag);
+            shared_ptr<MPIBackend> backend = registry().take(tag);
             backend->keep_running = false;
             
-            stopped_backends.append(backend);
+            stopped_backends().append(backend);
         }
         
         //now wait for them all to finish
-        while (not stopped_backends.isEmpty())
+        while (not stopped_backends().isEmpty())
         {
-            shared_ptr<MPIBackend> backend = stopped_backends.takeFirst();
+            shared_ptr<MPIBackend> backend = stopped_backends().takeFirst();
             backend->wait();
         }
     }
@@ -380,12 +476,59 @@ static const int STOP_MPI_BACKEND = 2;
         return exec_is_running;
     }
 
+    /** This function starts MPI::Init_thread if MPI is not yet initialized,
+        and checks that the required level of thread support is available. */
+    void ensureInitializedMPI(int &argc, char **argv)
+    {
+        QMutexLocker lkr(&exec_mutex);
+
+        if (not MPI::Is_initialized())
+        {
+            int thread_support = MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
+            
+            QString support_level;
+            
+            switch (thread_support)
+            {
+                case MPI_THREAD_MULTIPLE:
+                    break;
+            
+                case MPI_THREAD_SINGLE:
+                    support_level = QObject::tr(
+                        "MPI_THREAD_SINGLE - Only one thread will execute");
+                    break;
+                    
+                case MPI_THREAD_FUNNELED:
+                    support_level = QObject::tr(
+                        "MPI_THREAD_FUNNELED - Only the thread that called "
+                        "MPI_Init_thread will make MPI calls");
+                    break;
+                    
+                case MPI_THREAD_SERIALIZED:
+                    support_level = QObject::tr(
+                        "MPI_THREAD_SERIALIZED - Only one thread will make MPI "
+                        "library calls at one time.");
+                    break;
+                    
+                default:
+                    support_level = QObject::tr(
+                        "??? - Unknown MPI thread support level");
+                    break;
+            }
+            
+            if (thread_support != MPI_THREAD_MULTIPLE)
+            {
+                qWarning() << "Required level of MPI thread support is not available."
+                           << "The available level is just" << support_level;
+            }
+        }
+    }
+
     /** This is the main function that you must call to allow SireMPI
         to work in your process. You must only call this once in a process
         - you cannot call it several times!!! */
-    int SIREMPI_EXPORT exec(int argc, char **argv)
+    int SIREMPI_EXPORT exec(int &argc, char **argv)
     {
-        qDebug() << CODELOC;
         exec_mutex.lock();
     
         if (exec_is_running)
@@ -399,12 +542,8 @@ static const int STOP_MPI_BACKEND = 2;
             exec_mutex.unlock();
         }
 
-        if (not MPI::Is_initialized())
-        {
-            qDebug() << CODELOC;
-            MPI::Init(argc, argv);
-        }
-    
+        SireMPI::ensureInitializedMPI(argc, argv);
+                
         //now go into a loop waiting for instructions
         bool keep_looping = true;
     
@@ -412,65 +551,78 @@ static const int STOP_MPI_BACKEND = 2;
         {   
             try
             {
-                int message[2];
-        
                 //listen for any messages on channel 1
-                qDebug() << CODELOC;
                 MPI::Status status;
-                qDebug() << "RECEIVING" << 2 << 1;
-                MPI::COMM_WORLD.Recv( message, 2, MPI::INT, MPI_ANY_SOURCE, 1, status );
-                qDebug() << "RECEIVED" << message[0] << message[1] << status.Get_source();
-
-                qDebug() << CODELOC;
-        
-                //what is the message?
-                switch( message[0] )
+                
+                if (MPI::COMM_WORLD.Iprobe(MPI_ANY_SOURCE, 1, status))
                 {
-                    case START_MPI_BACKEND:
-                        //start a new MPI backend loop that listens to instructions
-                        //on the specified channel from the specified master
-                        qDebug() << CODELOC;
-                        MPIBackend::start( &(MPI::COMM_WORLD),
-                                           status.Get_source(), message[1] );
-                        break;
-            
-                    case STOP_MPI_BACKEND:
-                        //stop the specified MPI backend loop
-                        qDebug() << CODELOC;
-                        MPIBackend::stop( &(MPI::COMM_WORLD),
-                                          status.Get_source(), message[1] );
-                        break;
+                    if (status.Get_count(MPI::INT) != 2)
+                        continue;
                     
-                    case SHUTDOWN_MPI:
-                        //completely shut down MPI on this node
-                        qDebug() << CODELOC;
-                        MPIBackend::stopAll();
-                        keep_looping = false;
-                        break;
+                    int master_rank = status.Get_source();
+                
+                    qDebug() << MPI::COMM_WORLD.Get_rank() << master_rank << 1
+                        << "MPI::COMM_WORLD.Recv( message, 2, MPI::INT, MPI_ANY_SOURCE, 1, status );";
                     
-                    default:
-                        qWarning() << "Could not interpret MPI instruction" << message[0];
-                        break;
+                    int message[2];
+                    MPI::COMM_WORLD.Recv( message, 2, MPI::INT, master_rank, 1, status );
+                                          
+                    qDebug() << MPI::COMM_WORLD.Get_rank()  
+                             << "RECEIVED!";
+        
+                    //what is the message?
+                    switch( message[0] )
+                    {
+                        case START_MPI_BACKEND:
+                            //start a new MPI backend loop that listens to instructions
+                            //on the specified channel from the specified master
+                            MPIBackend::start( &(MPI::COMM_WORLD),
+                                               master_rank, message[1] );
+                            break;
+                
+                        case STOP_MPI_BACKEND:
+                            //stop the specified MPI backend loop
+                            MPIBackend::stop( &(MPI::COMM_WORLD),
+                                              master_rank, message[1] );
+                            break;
+                        
+                        case SHUTDOWN_MPI:
+                            //completely shut down MPI on this node
+                            MPIBackend::stopAll();
+                            keep_looping = false;
+                            break;
+                        
+                        default:
+                            qWarning() << "Could not interpret MPI instruction" << message[0];
+                            break;
+                    }
+                }
+                else
+                {
+                    //spend a couple of seconds sleeping
+                    sleep(2);
                 }
             }
             catch(const SireError::exception &e)
             {
-                qWarning() << "An error occured in SireMPI::exec()\n"
-                           << e.toString();
+                SireMPI::writeErrorString(CODELOC, e);
             }
             catch(const std::exception &e)
             {
-                qWarning() << "An error occured in SireMPI::exec()\n"
-                           << SireError::std_exception(e).toString();
+                SireMPI::writeErrorString(CODELOC, SireError::std_exception(e));
             }
             catch(...)
             {
-                qWarning() << "An unknown error occured in SireMPI::exec()\n";
+                SireMPI::writeErrorString(CODELOC, 
+                        SireError::unknown_exception("An unknown error occured!", 
+                                                      CODELOC));
             }
     
         } while (keep_looping);
     
         //ok, we have finished - call MPI::Finalize
+        qDebug() << MPI::COMM_WORLD.Get_rank()  
+                 << "MPI::Finalize()";
         MPI::Finalize();
     
         exec_mutex.lock();
@@ -486,15 +638,9 @@ static const int STOP_MPI_BACKEND = 2;
     class SireMPI_ExecRunner : private QThread
     {
     public:
-        SireMPI_ExecRunner(int argc, char **argv) : QThread()
+        SireMPI_ExecRunner(int &argc, char **argv) : QThread()
         {
-            exec_mutex.lock();
-        
-            if (not MPI::Is_initialized())
-                MPI::Init(argc, argv);
-            
-            exec_mutex.unlock();
-        
+            SireMPI::ensureInitializedMPI(argc, argv);
             this->start();
         }
     
@@ -502,12 +648,32 @@ static const int STOP_MPI_BACKEND = 2;
         {
             //now shut the MPI nodes down
             SireMPI::shutdown();
+            this->wait();
         }
     
     protected:
         void run()
         {
-            SireMPI::exec(0,0);
+            try
+            {
+                int argc = 0;
+                SireMPI::exec(argc,0);
+                return;
+            }
+            catch(const SireError::exception &e)
+            {
+                SireMPI::writeErrorString(CODELOC, e);
+            }
+            catch(const std::exception &e)
+            {
+                SireMPI::writeErrorString(CODELOC, SireError::std_exception(e));
+            }
+            catch(...)
+            {
+                SireMPI::writeErrorString(CODELOC, 
+                        SireError::unknown_exception("An unknown error occured!", 
+                                                        CODELOC));
+            }
         }
     };
 
@@ -515,9 +681,8 @@ static const int STOP_MPI_BACKEND = 2;
 
     /** Call SireMPI::exec, but set it running in a background thread. You should
         really only do this on the master node */
-    void SIREMPI_EXPORT bg_exec(int argc, char **argv)
+    void SIREMPI_EXPORT bg_exec(int &argc, char **argv)
     {
-        qDebug() << CODELOC;
         //use an object to start and stop the loop
         //(as hopefully the object will be deleted when the library
         // exits, and thus an MPI shutdown will be called)
@@ -528,7 +693,6 @@ static const int STOP_MPI_BACKEND = 2;
         all of the MPI nodes */
     void SIREMPI_EXPORT shutdown()
     {
-        qDebug() << CODELOC;
         if (exec_running())
         {
             //shutdown each node (except ourselves!)
@@ -545,14 +709,25 @@ static const int STOP_MPI_BACKEND = 2;
                 {
                     //received in SireMPI::exec()
                     // 'MPI::COMM_WORLD.Recv( message, 2, MPI_ANY_SOURCE, 1, status );'
+                    qDebug() << MPI::COMM_WORLD.Get_rank() << i << 1  
+                             << "(1) MPI::COMM_WORLD.Send(message, 2, MPI::INT, i, 1);";
                     MPI::COMM_WORLD.Send(message, 2, MPI::INT, i, 1);
+                    qDebug() << MPI::COMM_WORLD.Get_rank()  
+                             << "(1) SENT!";
                 }
             }
             
             //now shutdown this node
             //received in SireMPI::exec()
             // 'MPI::Comm_world.Recv( message, 2, MPI_ANY_SOURCE, 1, status );'
+            qDebug() << MPI::COMM_WORLD.Get_rank() << my_rank << 1  
+                     << "(2) MPI::COMM_WORLD.Send(message, 2, MPI::INT, my_rank, 1);";
             MPI::COMM_WORLD.Send(message, 2, MPI::INT, my_rank, 1);
+            qDebug() << MPI::COMM_WORLD.Get_rank()  
+                     << "(2) SENT!";
+            
+            QMutexLocker lkr(&exec_mutex);
+            exec_is_running = false;
         }
     }
 
@@ -580,7 +755,6 @@ MPINodeData::MPINodeData() : QThread(), is_master(false)
     so that this processor can communicate with the backend */
 void MPINodeData::startBackend()
 {
-    qDebug() << CODELOC;
     #ifdef __SIRE_USE_MPI__
         //tell the node to start a new backend loop using the provided
         //tag for all communication
@@ -597,26 +771,21 @@ void MPINodeData::startBackend()
 
         //send the message - this is received in SireMPI::exec()
         // 'MPI::Comm_world.Recv( message, 2, MPI_ANY_SOURCE, 1, status );'
-        qDebug() << "SENDING" << message[0] << message[1]
-                 << 2 << mpirank << 1;
-        
-        qDebug() << "POINTER COMPARISON" << mpicomm << &(MPI::COMM_WORLD);
-        
-        
+        qDebug() << MPI::COMM_WORLD.Get_rank() << mpirank << 1  
+                 << "mpicomm->Send(message, 2, MPI::INT, mpirank, 1);";
         mpicomm->Send(message, 2, MPI::INT, mpirank, 1); 
-        qDebug() << "SENT!!!";
+        qDebug() << MPI::COMM_WORLD.Get_rank()  
+                 << "SENT!!!";
 
     #else
         #error Need to write this
     #endif
-    qDebug() << CODELOC;
 }
 
 /** This function tells the backend node that we won't be communicating any more,
     so to stop the backend loop */
 void MPINodeData::stopBackend()
 {
-    qDebug() << CODELOC;
     #ifdef __SIRE_USE_MPI__
         //tell the node to stop the backend loop
 
@@ -632,13 +801,16 @@ void MPINodeData::stopBackend()
 
         //received in SireMPI::exec()
         // 'MPI::Comm_world.Recv( message, 2, MPI_ANY_SOURCE, 1, status );'
+        qDebug() << MPI::COMM_WORLD.Get_rank() << mpirank << 1  
+                 << "mpicomm->Send(message, 2, MPI::INT, mpirank, 1);";
         mpicomm->Send(message, 2, MPI::INT, mpirank, 1); 
+        qDebug() << MPI::COMM_WORLD.Get_rank()  
+                 << "SENT!";
     
     #else
         #error Need to write this
     
     #endif
-    qDebug() << CODELOC;
 }
 
 /** This constructor is called only by the MPINodesData communicator, and is
@@ -679,10 +851,8 @@ MPINodeData::MPINodeData(const MPINodeData &other)
     back to the list of free nodes in the communicator */
 MPINodeData::~MPINodeData()
 {
-    qDebug() << CODELOC;
     //wait until this node is no longer busy...
     this->wait();
-    qDebug() << CODELOC;
 
     boost::shared_ptr<MPINodesData> communicator = parent.lock();
 
@@ -698,14 +868,12 @@ MPINodeData::~MPINodeData()
 /** Return whether or not the node is busy (processing an MPIWorker) */
 bool MPINodeData::isBusy() const
 {
-    qDebug() << CODELOC;
     return QThread::isRunning();
 }
 
 /** Block until the node is no longer busy */
 void MPINodeData::wait()
 {
-    qDebug() << CODELOC;
     QThread::wait();
 }
 
@@ -713,57 +881,38 @@ void MPINodeData::wait()
     Returns whether or not the node is busy */
 bool MPINodeData::wait(int time)
 {
-    qDebug() << CODELOC;
     return QThread::wait(time);
 }
 
 /** Start and run the job that is contained in the passed worker */
 MPIPromise MPINodeData::start(const MPIWorker &worker)
 {
-    qDebug() << CODELOC;
-
     if (parent.expired() or uid.isNull())
         throw SireError::invalid_state( QObject::tr(
             "You cannot run any work on the null MPI node."), CODELOC );
 
-    qDebug() << CODELOC;
-
     QMutexLocker lkr(&data_mutex);
-
-    qDebug() << CODELOC;
 
     //wait until the node is no longer busy
     while (this->isBusy())
     {
-        qDebug() << CODELOC;
-
         lkr.unlock();
         this->wait();
         lkr.relock();
     }
 
-    qDebug() << CODELOC;
-
     //save the worker to be processed
     mpipromise = MPIPromise(worker, MPINode(self_ptr.lock()));
-
-    qDebug() << CODELOC;
 
     //reset the aborted status
     is_aborted = false;
 
-    qDebug() << CODELOC;
-
     //now start the thread that is used to start the job and wait
     //for responses from the backend node
     start_mutex.lock();
-    qDebug() << CODELOC;
     QThread::start();
-    qDebug() << CODELOC;
     start_waiter.wait( &start_mutex );
-    qDebug() << CODELOC;
     start_mutex.unlock();
-    qDebug() << CODELOC;
     
     return mpipromise;
 }
@@ -807,23 +956,39 @@ protected:
     
     void run()
     {
-        while (keep_running)
+        try
         {
-            QMutexLocker lkr(&data_mutex);
-            
-            //delete all of the nodes - this calls all 
-            //of their destructors
-            delete_nodes.clear();
+            while (keep_running)
+            {
+                QMutexLocker lkr(&data_mutex);
+                
+                //delete all of the nodes - this calls all 
+                //of their destructors
+                delete_nodes.clear();
 
-            data_mutex.unlock();
+                data_mutex.unlock();
+                
+                //only do this once every 5 seconds
+                QThread::sleep(5);
+            }
             
-            //only do this once every 5 seconds
-            QThread::sleep(5);
+            //ok, we are exiting - clear any final nodes
+            QMutexLocker lkr(&data_mutex);
+            delete_nodes.clear();
         }
-        
-        //ok, we are exiting - clear any final nodes
-        QMutexLocker lkr(&data_mutex);
-        delete_nodes.clear();
+        catch(const SireError::exception &e)
+        {
+            SireMPI::writeErrorString(CODELOC, e);
+        }
+        catch(const std::exception &e)
+        {
+            SireMPI::writeErrorString(CODELOC, SireError::std_exception(e));
+        }
+        catch(...)
+        {
+            SireMPI::writeErrorString(CODELOC, 
+                    SireError::unknown_exception("An unknown error occured!", CODELOC));
+        }
     }
     
 private:
@@ -842,8 +1007,6 @@ QMutex NodeDeleter::data_mutex;
     node and to wait for a response */
 void MPINodeData::run()
 {
-    qDebug() << CODELOC;
-
     //tell the parent thread that we are now definitely running
     start_mutex.lock();
     start_waiter.wakeAll();
@@ -853,7 +1016,6 @@ void MPINodeData::run()
     MPIPromise local_promise;
     
     {
-        qDebug() << CODELOC;
         QMutexLocker lkr(&data_mutex);
         is_aborted = false;
         
@@ -872,113 +1034,141 @@ void MPINodeData::run()
     //the job is running the right node, isn't it...?
     BOOST_ASSERT( local_promise.node().UID() == this->uid );
 
-    qDebug() << CODELOC;
-
     //take a copy of this node to ensure that it is not deleted during
     //the job
     MPINode this_node = local_promise.node();
 
-    //now send the data for the worker to the backend node
-    #ifdef __SIRE_USE_MPI__
-    
-        shared_ptr<MPINodesData> communicator = parent.lock();
-        BOOST_ASSERT( communicator.get() != 0 );
+    try
+    {
+        //now send the data for the worker to the backend node
+        #ifdef __SIRE_USE_MPI__
         
-        MPI::Comm *mpicom = communicator->mpiCommunicator();
-        int mpitag = communicator->mpiTag();
-        
-        BOOST_ASSERT( mpicom != 0 );
-        BOOST_ASSERT( mpitag > 1 );
-        
-        QByteArray worker_data = local_promise.initialData();
-        
-        //received by MPIBackend::run()
-        int message[3];
-        message[0] = MPIWORKER_START;
-        message[1] = worker_data.size();
-        message[2] = 0;
-
-        qDebug() << CODELOC;
-        
-        mpicom->Send( message, 3, MPI::INT, mpirank, mpitag );
-        mpicom->Send( worker_data.constData(), worker_data.size(), MPI::BYTE,
-                      mpirank, mpitag );
-    
-    #else
-        #error Need to write this!
-        
-    #endif
-    
-    //now wait for the work to be complete - wait for the result
-    //to be sent back
-    
-    #ifdef __SIRE_USE_MPI__
-    
-        bool keep_running = true;
-        
-        do
-        {
-            qDebug() << CODELOC;
+            shared_ptr<MPINodesData> communicator = parent.lock();
+            BOOST_ASSERT( communicator.get() != 0 );
             
-            mpicom->Recv( message, 3, MPI::INT, mpirank, mpitag );
-        
-            qDebug() << CODELOC;
+            MPI::Comm *mpicom = communicator->mpiCommunicator();
+            int mpitag = communicator->mpiTag();
             
-            QByteArray result_data;
-        
-            if (message[1] > 0)
-            {
-                //there is an accompanying QByteArray of the specfied size
-                result_data = QByteArray(message[1]+1, ' ');
-                mpicom->Recv( result_data.data(), message[1], MPI::BYTE, mpirank, mpitag );
-            }
-        
-            double current_progress = 0;
-        
-            if (message[2] > 0)
-            {
-                //the progress data is being sent as well
-                mpicom->Recv( &current_progress, 1, MPI::DOUBLE, mpirank, mpitag );
-            }
-        
-            switch( message[0] )
-            {
-                case MPIWORKER_STOP:
-                    //the result from a stopped job has been returned
-                    local_promise.setStopped(result_data, current_progress);
-                    keep_running = false;
-                    break;
+            BOOST_ASSERT( mpicom != 0 );
+            BOOST_ASSERT( mpitag > 1 );
             
-                case MPIWORKER_ABORT:
-                    //the job has been aborted
-                    local_promise.setAborted();
-                    keep_running = false;
-                    break;
-                    
-                case MPIWORKER_PROGRESS:
-                    //just a progress update
-                    local_promise.setProgress(current_progress);
-                    break;
-                    
-                case MPIWORKER_INTERIM:
-                    //an interim result
-                    local_promise.setInterimData(result_data, current_progress);
-                    break;
-                 
-                case MPIWORKER_RESULT:
-                    //the final result!
-                    local_promise.setFinalData(result_data);
-                    keep_running = false;
-                    break;
-            }
+            QByteArray worker_data = local_promise.initialData();
+            
+            //received by MPIBackend::run()
+            int message[3];
+            message[0] = MPIWORKER_START;
+            message[1] = worker_data.size();
+            message[2] = 0;
+
+            qDebug() << MPI::COMM_WORLD.Get_rank() << mpirank << mpitag  
+                     << "NodeData:: mpicom->Send( message, 3, MPI::INT, mpirank, mpitag );";
+            mpicom->Send( message, 3, MPI::INT, mpirank, mpitag );
+            qDebug() << MPI::COMM_WORLD.Get_rank()  
+                     << "NodeData:: SENT!";
+
+            qDebug() << MPI::COMM_WORLD.Get_rank() << mpirank << mpitag  
+                     << "NodeData:: mpicom->Send( worker_data.constData(), worker_data.size(), MPI::BYTE, mpirank, mpitag );";
+            mpicom->Send( worker_data.constData(), worker_data.size(), MPI::BYTE,
+                          mpirank, mpitag );
+            qDebug() << MPI::COMM_WORLD.Get_rank()  
+                     << "NodeData:: SENT!";
         
-        } while (keep_running);
+        #else
+            #error Need to write this!
+            
+        #endif
 
-    #else
-        #error Need to write this...
-    #endif
+        //now wait for the work to be complete - wait for the result
+        //to be sent back
+        
+        #ifdef __SIRE_USE_MPI__
+        
+            bool keep_running = true;
+            
+            do
+            {
+                qDebug() << MPI::COMM_WORLD.Get_rank() << mpirank << mpitag  
+                     << "NodeData:: mpicom->Recv( message, 3, MPI::INT, mpirank, mpitag )";
+                mpicom->Recv( message, 3, MPI::INT, mpirank, mpitag );
+                qDebug() << MPI::COMM_WORLD.Get_rank()  
+                     << "NodeData:: RECEIVED!";
+                
+                QByteArray result_data;
+            
+                if (message[1] > 0)
+                {
+                    //there is an accompanying QByteArray of the specfied size
+                    result_data = QByteArray(message[1]+1, ' ');
+                    qDebug() << MPI::COMM_WORLD.Get_rank() << mpirank << mpitag
+                     << "NodeData:: mpicom->Recv( result_data.data(), message[1], MPI::BYTE, mpirank, mpitag );";
+                    mpicom->Recv( result_data.data(), message[1], MPI::BYTE, 
+                                  mpirank, mpitag );
+                    qDebug() << MPI::COMM_WORLD.Get_rank()  
+                     << "NodeData:: RECEIVED!";
+                }
+            
+                double current_progress = 0;
+            
+                if (message[2] > 0)
+                {
+                    //the progress data is being sent as well
+                    qDebug() << MPI::COMM_WORLD.Get_rank() << mpirank << mpitag
+                     << "NodeData:: mpicom->Recv( &current_progress, 1, MPI::DOUBLE, mpirank, mpitag );";
+                    mpicom->Recv( &current_progress, 1, MPI::DOUBLE, mpirank, mpitag );
+                    qDebug() << MPI::COMM_WORLD.Get_rank()  
+                     << "NodeData:: RECEIVED!";
+                }
+            
+                switch( message[0] )
+                {
+                    case MPIWORKER_STOP:
+                        //the result from a stopped job has been returned
+                        local_promise.setStopped(result_data, current_progress);
+                        keep_running = false;
+                        break;
+                
+                    case MPIWORKER_ABORT:
+                        //the job has been aborted
+                        local_promise.setAborted();
+                        keep_running = false;
+                        break;
+                        
+                    case MPIWORKER_PROGRESS:
+                        //just a progress update
+                        local_promise.setProgress(current_progress);
+                        break;
+                        
+                    case MPIWORKER_INTERIM:
+                        //an interim result
+                        local_promise.setInterimData(result_data, current_progress);
+                        break;
+                     
+                    case MPIWORKER_RESULT:
+                        //the final result!
+                        local_promise.setFinalData(result_data);
+                        keep_running = false;
+                        break;
+                }
+            
+            } while (keep_running);
 
-    qDebug() << CODELOC;
+        #else
+            #error Need to write this...
+        #endif
+    }
+    catch(const SireError::exception &e)
+    {
+        SireMPI::writeErrorString(CODELOC, e);
+    }
+    catch(const std::exception &e)
+    {
+        SireMPI::writeErrorString(CODELOC, SireError::std_exception(e));
+    }
+    catch(...)
+    {
+        SireMPI::writeErrorString(CODELOC, 
+                SireError::unknown_exception("An unknown error occured!", CODELOC));
+    }
 
     //we've now finished - we currently hold a pointer to ourselves,
     //so this will need to be scheduled to be freed (otherwise
@@ -990,8 +1180,6 @@ void MPINodeData::run()
 /** Send a message to the backend thread on the node running the job */
 void MPINodeData::sendMessage(int message)
 {
-    qDebug() << CODELOC;
-
     shared_ptr<MPINodesData> communicator = parent.lock();
     BOOST_ASSERT( communicator.get() != 0 );
         
@@ -1006,17 +1194,17 @@ void MPINodeData::sendMessage(int message)
     envelope[1] = 0;
     envelope[2] = 0;
     
-    qDebug() << CODELOC;
+    qDebug() << MPI::COMM_WORLD.Get_rank() << mpirank << mpitag  
+                 << "mpicom->Send( envelope, 3, MPI::INT, mpirank, mpitag );";
     mpicom->Send( envelope, 3, MPI::INT, mpirank, mpitag );
-    qDebug() << CODELOC;
+    qDebug() << MPI::COMM_WORLD.Get_rank()  
+                 << "SENT!";
 }
 
 /** Stop any jobs running on this node */
 void MPINodeData::stop()
 {
-    qDebug() << CODELOC;
     QMutexLocker lkr(&data_mutex);
-    qDebug() << CODELOC;
     
     if (not QThread::isRunning())
         //nothing to stop
@@ -1034,9 +1222,7 @@ void MPINodeData::stop()
 /** Abort any jobs running on this node */
 void MPINodeData::abort()
 {
-    qDebug() << CODELOC;
     QMutexLocker lkr(&data_mutex);
-    qDebug() << CODELOC;
     
     if (not QThread::isRunning())
         //nothing to abort
@@ -1058,9 +1244,7 @@ void MPINodeData::abort()
 /** Internal function called by MPIPromise to trigger a progress request */
 void MPINodeData::getProgress()
 {
-    qDebug() << CODELOC;
     QMutexLocker lkr(&data_mutex);
-    qDebug() << CODELOC;
     
     if (not QThread::isRunning())
         //the job isn't running!
@@ -1073,9 +1257,7 @@ void MPINodeData::getProgress()
 /** Internal function called by MPIPromise to ask for an interim result */
 void MPINodeData::getInterimResult()
 {
-    qDebug() << CODELOC;
     QMutexLocker lkr(&data_mutex);
-    qDebug() << CODELOC;
     
     if (not QThread::isRunning())
         //the job isn't running
@@ -1157,9 +1339,6 @@ const QUuid& MPINode::UID() const
 /** Return whether or not this node is null */
 bool MPINode::isNull() const
 {
-    qDebug() << CODELOC;
-    qDebug() << (d.get() == 0);
-
     return d->parent.expired() or d->uid.isNull();
 }
 

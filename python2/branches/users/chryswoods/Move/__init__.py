@@ -8,5 +8,6 @@
 import Sire.Units
 import Sire.Mol
 import Sire.System
+import Sire.MPI
 
 from Sire.Move._Move import *

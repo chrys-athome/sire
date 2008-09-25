@@ -855,7 +855,7 @@ void G1FF::group_removeAll(quint32 i)
 bool G1FF::group_update(quint32 i, const MoleculeData &moldata)
 {
     assertValidGroup(i);
-    
+
     FFMolGroupPvt old_state = molgroup;
     
     try

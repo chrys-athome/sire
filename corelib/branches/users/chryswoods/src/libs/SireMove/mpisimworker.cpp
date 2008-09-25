@@ -45,34 +45,19 @@ static const RegisterMetaType<MPISimWorker> r_simworker;
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const MPISimWorker &worker)
 {
-    qDebug() << CODELOC;
-
     writeHeader(ds, r_simworker, 1);
-
-    qDebug() << CODELOC;
     
     SharedDataStream sds(ds);
-
-    qDebug() << CODELOC;
     
     QMutexLocker lkr( const_cast<QMutex*>(&(worker.data_mutex)) );
-
-    qDebug() << CODELOC;
     
     sds << worker.sim_system;
-    qDebug() << CODELOC;
     sds << worker.sim_moves;
-    qDebug() << CODELOC;
     sds << worker.nmoves;
-    qDebug() << CODELOC;
     sds << worker.ncompleted_moves;
-    qDebug() << CODELOC;
     sds << worker.chunk_size;
-    qDebug() << CODELOC;
     sds << worker.record_stats;
-    qDebug() << CODELOC;
     sds << static_cast<const MPIWorker&>(worker);
-    qDebug() << CODELOC;
         
     return ds;
 }
@@ -229,41 +214,29 @@ bool MPISimWorker::recordStatistics() const
 /** Perform a chunk of the simulation */
 void MPISimWorker::runChunk()
 {
-    qDebug() << CODELOC;
-
     QMutexLocker lkr(&data_mutex);
-
-    qDebug() << CODELOC;
     
     if (ncompleted_moves >= nmoves)
     {
-        qDebug() << CODELOC;
-        
         //the simulation has finished
         return;
     }
 
-    qDebug() << CODELOC;
-
     //run a maximum of chunk_size moves per chunk
     int nmoves_to_run = qMin( chunk_size, nmoves - ncompleted_moves );
-
-    qDebug() << CODELOC;
+    
+    qDebug() << "INITIAL ENERGY" << sim_system.energy();
     
     //run those moves
     sim_system = sim_moves.edit().move(sim_system, nmoves_to_run, record_stats);
-
-    qDebug() << CODELOC;
     
     //increment the number of completed moves
     ncompleted_moves += nmoves_to_run;
-
-    qDebug() << CODELOC;
+    
+    qDebug() << "CHUNK COMPLETE" << sim_system.energy() << ncompleted_moves;
     
     //set the progress
     MPIWorker::setProgress( (100.0 * ncompleted_moves) / nmoves );
-
-    qDebug() << CODELOC;
 }
 
 /** Return whether or not the simulation has finished */
