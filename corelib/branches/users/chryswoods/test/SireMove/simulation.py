@@ -75,7 +75,7 @@ mc = RigidBodyMC(cljff.group(MGIdx(0)))
 
 moves = SameMoves(mc)
 
-print "Running 10 moves on the MPI master node..."
+print "Running 1000 moves on the MPI master node..."
 nodes = MPINodes()
 node = nodes.getFreeNode()
 print "node rank = %d of %d" % (node.rank(), nodes.nNodes())

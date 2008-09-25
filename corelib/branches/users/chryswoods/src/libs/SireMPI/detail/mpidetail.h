@@ -53,6 +53,10 @@ namespace SireMPI
 class MPINode;
 class MPINodes;
 
+#ifdef __SIRE_USE_MPI__
+MPI::Comm& COMM_WORLD();
+#endif
+
 namespace detail
 {
 

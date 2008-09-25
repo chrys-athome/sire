@@ -96,7 +96,7 @@ boost::shared_ptr<MPINodesData> MPINodesData::construct()
         }
         
         //this is the global communicator
-        d->mpicomm = &(MPI::COMM_WORLD);
+        d->mpicomm = &(SireMPI::COMM_WORLD());
         
         //how many MPI nodes are there?
         d->nnodes = d->mpicomm->Get_size();
@@ -139,15 +139,7 @@ bool MPINodesData::waitUntilAllFree(int timeout)
 /** Destructor - wait until all of the nodes in this communicator
     are free */
 MPINodesData::~MPINodesData()
-{
-    #ifdef __SIRE_USE_MPI__
-    if (mpicomm and mpicomm != &(MPI::COMM_WORLD))
-    {
-        mpicomm->Free();
-        delete mpicomm;
-    }
-    #endif
-}
+{}
 
 /** Return the MPI communicator */
 #ifdef __SIRE_USE_MPI__
