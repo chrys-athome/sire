@@ -37,6 +37,7 @@ static const RegisterMetaType<missing_component> r_mcomp;
 static const RegisterMetaType<missing_function> r_mfunc;
 static const RegisterMetaType<missing_forcefield> r_mff;
 static const RegisterMetaType<missing_derivative> r_mderiv;
+static const RegisterMetaType<missing_parameter> r_mparam;
 static const RegisterMetaType<duplicate_component> r_dupcomp;
 static const RegisterMetaType<duplicate_function> r_dupfunc;
 static const RegisterMetaType<duplicate_forcefield> r_dupff;

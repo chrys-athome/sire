@@ -177,6 +177,43 @@ public:
 };
 
 /** This exception is thrown when a request is made of an unavailable
+    forcefield parameter
+
+    @author Christopher Woods
+*/
+class SIREFF_EXPORT missing_parameter : public sireff_error
+{
+public:
+    missing_parameter() : sireff_error()
+    {}
+
+    missing_parameter(QString err, QString place = QString::null)
+              : sireff_error(err,place)
+    {}
+
+    missing_parameter(const missing_parameter &other) : sireff_error(other)
+    {}
+
+    ~missing_parameter() throw()
+    {}
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_parameter>() );
+    }
+
+    const char* what() const throw()
+    {
+        return missing_parameter::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_parameter(*this);
+    }
+};
+
+/** This exception is thrown when a request is made of an unavailable
     derivative of a function (either because the derivative has
     not been programmed, or because it is not mathematically available)
 
@@ -368,6 +405,7 @@ Q_DECLARE_METATYPE(SireFF::missing_component)
 Q_DECLARE_METATYPE(SireFF::missing_function)
 Q_DECLARE_METATYPE(SireFF::missing_forcefield)
 Q_DECLARE_METATYPE(SireFF::missing_derivative)
+Q_DECLARE_METATYPE(SireFF::missing_parameter)
 Q_DECLARE_METATYPE(SireFF::duplicate_component)
 Q_DECLARE_METATYPE(SireFF::duplicate_function)
 Q_DECLARE_METATYPE(SireFF::duplicate_forcefield)

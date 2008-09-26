@@ -66,6 +66,7 @@ public:
 
     static LJPairMatrix getLJPairs(CombiningRules type);
     static quint32 addLJParameter(const LJParameter &ljparam);
+    static LJParameter getLJParameter(quint32 id);
 
     static CombiningRules interpret(const QString &rule);
     static const QString& toString(CombiningRules rule);
@@ -73,6 +74,7 @@ public:
     static void lock();
     
     static quint32 _locked_addLJParameter(const LJParameter &ljparam);
+    static LJParameter _locked_getLJParameter(quint32 id);
     
     static void unlock();
 
@@ -85,9 +87,11 @@ private:
     
         const LJPairMatrix& getLJPairs(CombiningRules type);
         quint32 addLJParameter(const LJParameter &ljparam);
+        LJParameter getLJParameter(quint32 id);
     
         void lock();
         quint32 _locked_addLJParameter(const LJParameter &ljparam);
+        LJParameter _locked_getLJParameter(quint32 id) const;
         void unlock();
                 
     private:
@@ -126,6 +130,15 @@ inline quint32 LJParameterDB::addLJParameter(const LJParameter &ljparam)
     return ljdb.addLJParameter(ljparam);
 }
 
+/** Get the ID number of a LJ parameter
+
+    \throw SireFF::missing_parameter
+*/
+inline LJParameter LJParameterDB::getLJParameter(quint32 id)
+{
+    return ljdb.getLJParameter(id);
+}
+
 /** Lock the database - use this if you are going to add lots of 
     parameters via the '_locked_addLJParameter' function */
 inline void LJParameterDB::lock()
@@ -141,6 +154,17 @@ inline void LJParameterDB::lock()
 inline quint32 LJParameterDB::_locked_addLJParameter(const LJParameter &ljparam)
 {
     return ljdb._locked_addLJParameter(ljparam);
+}
+
+/** Get the LJ parameter corresponding to the passed ID number
+    - you can only call this function
+    if you have manually locked the database via the lock() function
+
+    \throw SireFF::missing_parameter
+*/
+inline LJParameter LJParameterDB::_locked_getLJParameter(quint32 id)
+{
+    return ljdb._locked_getLJParameter(id);
 }
 
 /** Unlock the database - ensure that you do this after you have finished

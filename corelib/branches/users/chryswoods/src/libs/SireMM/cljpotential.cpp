@@ -107,6 +107,30 @@ class FFMolecules3D<IntraCLJPotential>;
 template
 class ChangedMolecule<IntraCLJPotential::Molecule>;
 
+/** Streaming functions for CLJParameter - these must convert the 
+    LJID number to and from an actual CLJ parameter (as the LJParameterDB
+    will have different ID numbers of different processors) */
+QDataStream& operator<<(QDataStream &ds, 
+                        const SireMM::detail::CLJParameter &cljparam)
+{
+    ds << cljparam.reduced_charge << LJParameterDB::getLJParameter(cljparam.ljid);
+    return ds;
+}
+
+QDataStream& operator>>(QDataStream &ds, 
+                        SireMM::detail::CLJParameter &cljparam)
+{
+    double reduced_charge;
+    LJParameter ljparam;
+
+    ds >> reduced_charge >> ljparam;
+    
+    cljparam.ljid = LJParameterDB::addLJParameter(ljparam);
+    cljparam.reduced_charge = reduced_charge;
+    
+    return ds;
+}
+
 /** Internal function used to get the charge and LJ parameters from a molecule
     and convert them into a PackedArray of reduced charges and LJ parameter IDs */
 static PackedArray2D<CLJParameter> getCLJParameters(const PartialMolecule &molecule,
@@ -780,7 +804,7 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
             
             //loop over all interatomic pairs and calculate the energies
             const quint32 nats1 = group1.count();
-            const Parameter *params1_array = params0_array; //params1.constData();
+            const Parameter *params1_array = params1.constData();
 
             #ifdef SIRE_USE_SSE
             {
@@ -960,6 +984,31 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     //add this molecule pair's energy onto the total
     //(also multiply LJ by 4 as it is 4 * epsilon ((sig/r)^12 - (sig/r)^6))
     energy += Energy(scale_energy * cnrg, 4 * scale_energy * ljnrg);
+    
+    if (energy < -1.e10)
+    {
+        qDebug() << energy << energy.coulomb() << energy.lj();
+        qDebug() << groups0_array[0].aaBox().toString();
+        qDebug() << groups1_array[0].aaBox().toString();
+        
+        for (int i=0; i<4; ++i)
+        {
+            qDebug() << groups0_array[0][i].toString()
+                     << groups1_array[1][i].toString();
+        }
+
+        for (int i=0; i<4; ++i)
+        {
+            qDebug() << molparams0_array[0][i].reduced_charge
+                     << molparams1_array[0][i].reduced_charge;
+        }
+        
+        for (int i=0; i<4; ++i)
+        {
+            qDebug() << LJParameterDB::getLJParameter(molparams0_array[0][i].ljid).toString()
+                     << LJParameterDB::getLJParameter(molparams0_array[0][i].ljid).toString();
+        }
+    }
     
     #ifdef SIRE_TIME_ROUTINES
     nflops += 5;

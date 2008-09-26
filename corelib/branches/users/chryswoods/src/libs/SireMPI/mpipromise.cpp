@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QTime>
+
 #include "mpipromise.h"
 #include "mpiworker.h"
 
@@ -137,7 +139,13 @@ MPIPromiseData::MPIPromiseData(const MPIWorker &worker,
                : mpinode(node), current_progress(0)
 {
     //get a binary representation of the worker
+    QTime t;
+    t.start();
     initial_worker_data = SireStream::save(worker);
+    
+    int ms = t.elapsed();
+    
+    qDebug() << "Saving the inital worker data took" << ms << "ms";
 }
 
 /** Destructor */

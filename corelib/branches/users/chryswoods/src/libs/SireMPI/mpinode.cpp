@@ -30,6 +30,7 @@
 #include <boost/tuple/tuple.hpp>
 
 #include <QTextStream>
+#include <QTime>
 
 #include "mpinode.h"
 #include "mpinodes.h"
@@ -232,7 +233,13 @@ static const int STOP_MPI_BACKEND = 2;
         }
         else
         {
+            QTime t;
+            t.start();
             worker_data = SireStream::save(worker);
+            int ms = t.elapsed();
+            
+            qDebug() << "Saving the data took" << ms << "ms";
+            
             envelope[1] = worker_data.size();
         }
         
@@ -407,9 +414,14 @@ static const int STOP_MPI_BACKEND = 2;
                     }
                            
                     //extract the worker
+                    QTime t;
+                    t.start();
                     tuple< shared_ptr<void>,QString > object 
                                                 = SireStream::load(worker_data);
-                                                
+                              
+                    int ms = t.elapsed();
+                    qDebug() << "Loading the data took" << ms << "ms";
+                                                                                    
                     //assume that this is the right type
                     MPIWorker *worker = static_cast<MPIWorker*>( object.get<0>().get() );
 

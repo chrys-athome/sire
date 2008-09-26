@@ -60,7 +60,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
     SharedDataStream sds(ds);
 
     sds << rbmc.smplr
-        << rbmc.adel << double(rbmc.rdel)
+        << rbmc.adel << rbmc.rdel
         << static_cast<const MonteCarlo&>(rbmc);
 
     return ds;
@@ -75,13 +75,9 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
     {
         SharedDataStream sds(ds);
 
-        double rdel;
-
         sds >> rbmc.smplr
-            >> rbmc.adel >> rdel
+            >> rbmc.adel >> rbmc.rdel
             >> static_cast<MonteCarlo&>(rbmc);
-            
-        rbmc.rdel = SireUnits::Dimension::Angle(rdel);
     }
     else
         throw version_error(v, "1", r_rbmc, CODELOC);

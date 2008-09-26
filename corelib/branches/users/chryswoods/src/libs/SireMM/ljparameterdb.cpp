@@ -30,6 +30,7 @@
 
 #include "ljparameterdb.h"
 
+#include "SireFF/errors.h"
 #include "SireError/errors.h"
 
 using namespace SireMM;
@@ -218,6 +219,31 @@ void LJParameterDB::LJParameterDBData::unlock()
     be slow if you are adding large numbers of parameters */
 quint32 LJParameterDB::LJParameterDBData::addLJParameter(const LJParameter &ljparam)
 {
-    QReadLocker lkr(&db_lock);
+    QWriteLocker lkr(&db_lock);
     return this->_locked_addLJParameter(ljparam);
+}
+
+/** Get the ID number of a LJ parameter
+
+    \throw SireFF::missing_parameter
+*/
+LJParameter LJParameterDB::LJParameterDBData::_locked_getLJParameter(quint32 id) const
+{
+    //does the parameter exist already in the database?
+    if (id > ljparams_by_idx.count())
+        throw SireFF::missing_parameter( QObject::tr(
+            "Could not find the LJ parameter with ID %1 in the global "
+            "LJ parameter database.").arg(id), CODELOC );
+            
+    return ljparams_by_idx.constData()[id];
+}
+
+/** Get the ID number of a LJ parameter
+
+    \throw SireFF::missing_parameter
+*/
+LJParameter LJParameterDB::LJParameterDBData::getLJParameter(quint32 id)
+{
+    QReadLocker lkr(&db_lock);
+    return this->_locked_getLJParameter(id);
 }
