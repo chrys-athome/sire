@@ -321,6 +321,82 @@ bool CoulombNBPairs::operator!=(const CoulombNBPairs &other) const
 }
 
 ////////
+//////// Implementation of LJNBPairs
+////////
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const LJNBPairs &ljnbpairs)
+{
+    writeHeader(ds, r_ljnbpairs, 1)
+        << static_cast<const AtomPairs<LJScaleFactor>&>(ljnbpairs);
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, LJNBPairs &ljnbpairs)
+{
+    VersionID v = readHeader(ds, r_ljnbpairs);
+
+    if (v == 1)
+    {
+        ds >> static_cast<AtomPairs<LJScaleFactor>&>(ljnbpairs);
+    }
+    else
+        throw version_error(v, "1", r_ljnbpairs, CODELOC);
+
+    return ds;
+}
+
+/** Null constructor */
+LJNBPairs::LJNBPairs() : ConcreteProperty<LJNBPairs,
+                              AtomPairs<LJScaleFactor> >( LJScaleFactor(1) )
+{}
+
+/** Construct, using 'default_scale' for all of the atom-atom
+    interactions in the molecule 'molinfo' */
+LJNBPairs::LJNBPairs(const MoleculeInfoData &molinfo, 
+                     const LJScaleFactor &default_scale)
+           : ConcreteProperty<LJNBPairs,
+                   AtomPairs<LJScaleFactor> >(molinfo, default_scale)
+{}
+
+/** Construct from the LJ scaling factors in 'cljpairs' */
+LJNBPairs::LJNBPairs(const CLJNBPairs &cljpairs)
+          : ConcreteProperty<LJNBPairs,
+                 AtomPairs<LJScaleFactor> >(
+                     static_cast<const AtomPairs<CLJScaleFactor>&>(cljpairs) )
+{}
+
+/** Copy constructor */
+LJNBPairs::LJNBPairs(const LJNBPairs &other)
+          : ConcreteProperty< LJNBPairs, AtomPairs<LJScaleFactor> >(other)
+{}
+
+/** Destructor */
+LJNBPairs::~LJNBPairs()
+{}
+
+/** Copy assignment operator */
+LJNBPairs& LJNBPairs::operator=(const LJNBPairs &other)
+{
+    AtomPairs<LJScaleFactor>::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool LJNBPairs::operator==(const LJNBPairs &other) const
+{
+    return AtomPairs<LJScaleFactor>::operator==(other);
+}
+
+/** Comparison operator */
+bool LJNBPairs::operator!=(const LJNBPairs &other) const
+{
+    return AtomPairs<LJScaleFactor>::operator!=(other);
+}
+
+////////
 //////// Implementation of CLJNBPairs
 ////////
 

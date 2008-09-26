@@ -201,7 +201,21 @@ template<class U>
 SIRE_OUTOFLINE_TEMPLATE
 SparseMatrix<T>::SparseMatrix(const SparseMatrix<U> &other)
 {
-    current_state = other.current_state;
+    switch (other.current_state)
+    {
+        case SparseMatrix<U>::NORMAL:
+            current_state = SparseMatrix<T>::NORMAL;
+            break;
+            
+        case SparseMatrix<U>::TRANSPOSE:
+            current_state = SparseMatrix<T>::TRANSPOSE;
+            break;
+            
+        case SparseMatrix<U>::SYMMETRIC:
+            current_state = SparseMatrix<T>::SYMMETRIC;
+            break;
+    }
+
     def = T(other.def);
 
     for (typename QHash<detail::Index,U>::const_iterator it = other.data.constBegin();

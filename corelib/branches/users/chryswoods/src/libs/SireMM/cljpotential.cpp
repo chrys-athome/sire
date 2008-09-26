@@ -67,12 +67,9 @@ using namespace SireBase;
 using namespace SireStream;
 
 ///////
-/////// Static data for ChargeParameterName, LJParameterName
-/////// and IntraScaleParameterName
+/////// Static data for IntraScaleParameterName
 ///////
 
-QString ChargeParameterName::chg_param( "charge" );
-QString LJParameterName::lj_param( "LJ" );
 QString IntraScaleParameterName::nbscl_param( "intrascale" );
 
 ///////
@@ -107,26 +104,21 @@ class FFMolecules3D<IntraCLJPotential>;
 template
 class ChangedMolecule<IntraCLJPotential::Molecule>;
 
-/** Streaming functions for CLJParameter - these must convert the 
-    LJID number to and from an actual CLJ parameter (as the LJParameterDB
-    will have different ID numbers of different processors) */
+/** Streaming functions for CLJParameter */
 QDataStream& operator<<(QDataStream &ds, 
                         const SireMM::detail::CLJParameter &cljparam)
 {
-    ds << cljparam.reduced_charge << LJParameterDB::getLJParameter(cljparam.ljid);
+    ds << static_cast<const SireMM::detail::ChargeParameter&>(cljparam)
+       << static_cast<const SireMM::detail::LJParamID&>(cljparam);
+    
     return ds;
 }
 
 QDataStream& operator>>(QDataStream &ds, 
                         SireMM::detail::CLJParameter &cljparam)
 {
-    double reduced_charge;
-    LJParameter ljparam;
-
-    ds >> reduced_charge >> ljparam;
-    
-    cljparam.ljid = LJParameterDB::addLJParameter(ljparam);
-    cljparam.reduced_charge = reduced_charge;
+    ds >> static_cast<SireMM::detail::ChargeParameter&>(cljparam)
+       >> static_cast<SireMM::detail::LJParamID&>(cljparam);
     
     return ds;
 }
@@ -984,31 +976,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     //add this molecule pair's energy onto the total
     //(also multiply LJ by 4 as it is 4 * epsilon ((sig/r)^12 - (sig/r)^6))
     energy += Energy(scale_energy * cnrg, 4 * scale_energy * ljnrg);
-    
-    if (energy < -1.e10)
-    {
-        qDebug() << energy << energy.coulomb() << energy.lj();
-        qDebug() << groups0_array[0].aaBox().toString();
-        qDebug() << groups1_array[0].aaBox().toString();
-        
-        for (int i=0; i<4; ++i)
-        {
-            qDebug() << groups0_array[0][i].toString()
-                     << groups1_array[1][i].toString();
-        }
-
-        for (int i=0; i<4; ++i)
-        {
-            qDebug() << molparams0_array[0][i].reduced_charge
-                     << molparams1_array[0][i].reduced_charge;
-        }
-        
-        for (int i=0; i<4; ++i)
-        {
-            qDebug() << LJParameterDB::getLJParameter(molparams0_array[0][i].ljid).toString()
-                     << LJParameterDB::getLJParameter(molparams0_array[0][i].ljid).toString();
-        }
-    }
     
     #ifdef SIRE_TIME_ROUTINES
     nflops += 5;
@@ -2288,7 +2255,7 @@ void IntraCLJPotential::calculateEnergy(const IntraCLJPotential::Molecule &mol,
     }
     
     //add this molecule pair's energy onto the total
-    energy += Energy(scale_energy * cnrg, scale_energy * ljnrg);
+    energy += Energy(scale_energy * cnrg, 4 * scale_energy * ljnrg);
 }
 
 /** Calculate the intramolecular CLJ energy of the passed molecule
@@ -2443,6 +2410,9 @@ void IntraCLJPotential::calculateEnergy(const IntraCLJPotential::Molecule &mol,
             }
         }
     }
+    
+    //add the molecule's energy onto the total
+    energy += Energy(scale_energy * cnrg, 4 * scale_energy * ljnrg);
 }
 
 void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,

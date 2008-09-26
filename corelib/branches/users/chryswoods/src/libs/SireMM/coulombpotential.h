@@ -153,7 +153,7 @@ class SIREMM_EXPORT ScaledChargeParameterNames3D : public ChargeParameterName3D,
                                                    public detail::IntraScaleParameterName
 {
 public:
-    ScaledChargeParameterNames3D() : ChargeParameterNames3D(),
+    ScaledChargeParameterNames3D() : ChargeParameterName3D(),
                                      detail::IntraScaleParameterName()
     {}
     
@@ -386,12 +386,6 @@ private:
                               InterCoulombPotential::EnergyWorkspace &workspace,
                               double scale_energy) const;
 
-    void _pvt_calculateForce(const InterCoulombPotential::Molecule &mol0, 
-                             const InterCoulombPotential::Molecule &mol1,
-                             MolForceTable &forces0, 
-                             InterCoulombPotential::ForceWorkspace &workspace,
-                             double scale_force) const;
-
     void _pvt_calculateCoulombForce(const InterCoulombPotential::Molecule &mol0, 
                                     const InterCoulombPotential::Molecule &mol1,
                                     MolForceTable &forces0, 
@@ -540,16 +534,16 @@ public:
                         IntraCoulombPotential::ForceWorkspace &workspace,
                         double scale_force=1) const;
 
-    void calculateLJForce(const IntraCoulombPotential::Molecule &mol,
-                          const IntraCoulombPotential::Molecule &rest_of_mol,
-                          MolForceTable &forces,
-                          IntraCoulombPotential::ForceWorkspace &workspace,
-                          double scale_force=1) const;
+    void calculateCoulombForce(const IntraCoulombPotential::Molecule &mol,
+                               const IntraCoulombPotential::Molecule &rest_of_mol,
+                               MolForceTable &forces,
+                               IntraCoulombPotential::ForceWorkspace &workspace,
+                               double scale_force=1) const;
                                
-    void calculateLJForce(const IntraCoulombPotential::Molecule &mol,
-                          MolForceTable &forces,
-                          IntraCoulombPotential::ForceWorkspace &workspace,
-                          double scale_force=1) const;
+    void calculateCoulombForce(const IntraCoulombPotential::Molecule &mol,
+                               MolForceTable &forces,
+                               IntraCoulombPotential::ForceWorkspace &workspace,
+                               double scale_force=1) const;
                                
 private:
     double totalCharge(const IntraCoulombPotential::Parameters::Array &params) const;
@@ -562,7 +556,7 @@ private:
                          const Parameter *params0_array,
                          const Parameter *params1_array,
                          const quint32 nats0, const quint32 nats1,
-                         double &icnrg, double &iljnrg) const;
+                         double &icnrg) const;
 
     void calculateEnergy(const CoulombNBPairs::CGPairs &group_pairs,
                          const QSet<SireID::Index> &atoms0, 
@@ -571,7 +565,7 @@ private:
                          const Parameter *params0_array,
                          const Parameter *params1_array,
                          const quint32 nats0, const quint32 nats1,
-                         double &icnrg, double &iljnrg) const;
+                         double &icnrg) const;
 
     void calculateForce(const CoulombNBPairs::CGPairs &group_pairs,
                         const CoordGroup &group0, const CoordGroup &group1,
@@ -618,27 +612,6 @@ private:
                                const double shift_coul,
                                Vector *group_forces0_array,
                                const double scale_force) const;
-
-    void calculateLJForce(const CoulombNBPairs::CGPairs &group_pairs,
-                          const CoordGroup &group0, const CoordGroup &group1,
-                          const double mindist,
-                          IntraCoulombPotential::ForceWorkspace &workspace,
-                          const IntraCoulombPotential::Parameter *params0_array,
-                          const IntraCoulombPotential::Parameter *params1_array,
-                          const quint32 nats0, const quint32 nats1,
-                          Vector *group_forces0_array,
-                          const double scale_force) const;
-
-    void calculateLJForce(const CoulombNBPairs::CGPairs &group_pairs,
-                          const QSet<SireID::Index> &atoms0,
-                          const QSet<SireID::Index> &atoms1,
-                          const CoordGroup &group0, const CoordGroup &group1,
-                          const double mindist,
-                          IntraCoulombPotential::ForceWorkspace &workspace,
-                          const IntraCoulombPotential::Parameter *params0_array,
-                          const IntraCoulombPotential::Parameter *params1_array,
-                          Vector *group_forces0_array,
-                          const double scale_force) const;
 
     void throwMissingForceComponent(const Symbol &symbol,
                                     const Components &components) const;
@@ -716,7 +689,7 @@ public:
 
     bool shiftElectrostatics() const
     {
-        return CLJPot::shiftElectrostatics();
+        return CoulPot::shiftElectrostatics();
     }
 };
 
@@ -748,27 +721,6 @@ InterCoulombPotential::calculateEnergy(const InterCoulombPotential::Molecule &mo
     the passed workspace to perform the calculation. The forces
     are scaled by the optional 'scaled_forces' */
 inline void 
-InterCoulombPotential::calculateForce(const InterCoulombPotential::Molecule &mol0, 
-                                      const InterCoulombPotential::Molecule &mol1,
-                                      MolForceTable &forces0, 
-                                      InterCoulombPotential::ForceWorkspace &workspace,
-                                      double scale_force) const
-{
-    if ( scale_force != 0 and 
-         not (mol0.isEmpty() or mol1.isEmpty()) and
-         not spce->beyond(switchfunc->cutoffDistance(),
-                          mol0.aaBox(), mol1.aaBox()) )
-    {
-        this->_pvt_calculateForce(mol0, mol1, forces0,
-                                  workspace, scale_force);
-    }
-}
-
-/** Calculate the coulomb forces on the atoms between the passed pair
-    of molecules and add the forces on 'mol0' onto 'forces'. This uses
-    the passed workspace to perform the calculation. The forces
-    are scaled by the optional 'scaled_forces' */
-inline void 
 InterCoulombPotential::calculateCoulombForce(const InterCoulombPotential::Molecule &mol0, 
                                              const InterCoulombPotential::Molecule &mol1,
                                              MolForceTable &forces0, 
@@ -783,6 +735,20 @@ InterCoulombPotential::calculateCoulombForce(const InterCoulombPotential::Molecu
         this->_pvt_calculateCoulombForce(mol0, mol1, forces0,
                                          workspace, scale_force);
     }
+}
+
+/** Calculate the coulomb forces on the atoms between the passed pair
+    of molecules and add the forces on 'mol0' onto 'forces'. This uses
+    the passed workspace to perform the calculation. The forces
+    are scaled by the optional 'scaled_forces' */
+inline void 
+InterCoulombPotential::calculateForce(const InterCoulombPotential::Molecule &mol0, 
+                                      const InterCoulombPotential::Molecule &mol1,
+                                      MolForceTable &forces0, 
+                                      InterCoulombPotential::ForceWorkspace &workspace,
+                                      double scale_force) const
+{
+    this->calculateCoulombForce(mol0, mol1, forces0, workspace, scale_force);
 }
 
 /** Calculate the component of the force represented by 'symbol' between the 
@@ -800,9 +766,6 @@ InterCoulombPotential::calculateForce(const InterCoulombPotential::Molecule &mol
 {
     if (symbol == components.total())
         this->calculateForce(mol0, mol1, forces0, workspace, scale_force);
-       
-    else if (symbol == components.coulomb())
-        this->calculateCoulombForce(mol0, mol1, forces0, workspace, scale_force);
         
     else
         throwMissingForceComponent(symbol, components);
@@ -826,9 +789,6 @@ IntraCoulombPotential::calculateForce(const IntraCoulombPotential::Molecule &mol
     if (symbol == components.total())
         this->calculateForce(mol, forces, workspace, scale_force);
         
-    else if (symbol == components.coulomb())
-        this->calculateCoulombForce(mol, forces, workspace, scale_force);
-        
     else
         throwMissingForceComponent(symbol, components);
 }
@@ -851,9 +811,6 @@ IntraCoulombPotential::calculateForce(const IntraCoulombPotential::Molecule &mol
 {
     if (symbol == components.total())
         this->calculateForce(mol, rest_of_mol, forces, workspace, scale_force);
-        
-    else if (symbol == components.coulomb())
-        this->calculateCoulombForce(mol, rest_of_mol, forces, workspace, scale_force);
         
     else
         throwMissingForceComponent(symbol, components);

@@ -42,3 +42,6 @@ template class Intra2B3DFF< CLJPotentialInterface<IntraCLJPotential> >;
 
 template class Intra2B2GFF< CLJPotentialInterface<IntraCLJPotential> >;
 template class Intra2B2G3DFF< CLJPotentialInterface<IntraCLJPotential> >;
+
+static const RegisterMetaType<IntraCLJFF> r_intracljff;
+static const RegisterMetaType<IntraGroupCLJFF> r_intragroupcljff;

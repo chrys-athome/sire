@@ -28,6 +28,8 @@ set ( SIREMM_HEADERS
       internalff.h
       internalparameters.h
       intracljff.h
+      intracoulombff.h
+      intraljff.h
       ljpair.h
       ljparameter.h
       ljparameterdb.h
@@ -62,6 +64,8 @@ set ( SIREMM_SOURCES
       internalff.cpp
       internalparameters.cpp
       intracljff.cpp
+      intracoulombff.cpp
+      intraljff.cpp
       ljpair.cpp
       ljparameter.cpp
       ljparameterdb.cpp

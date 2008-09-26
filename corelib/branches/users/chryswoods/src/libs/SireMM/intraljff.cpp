@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#include "interljff.h"
+#include "intraljff.h"
 
 #include "SireMol/partialmolecule.h"
 
@@ -35,13 +35,13 @@
 using namespace SireMM;
 using namespace SireFF;
 
-template class LJPotentialInterface<InterLJPotential>;
+template class LJPotentialInterface<IntraLJPotential>;
 
-template class Inter2BFF< LJPotentialInterface<InterLJPotential> >;
-template class Inter2B3DFF< LJPotentialInterface<InterLJPotential> >;
+template class Intra2BFF< LJPotentialInterface<IntraLJPotential> >;
+template class Intra2B3DFF< LJPotentialInterface<IntraLJPotential> >;
 
-template class Inter2B2GFF< LJPotentialInterface<InterLJPotential> >;
-template class Inter2B2G3DFF< LJPotentialInterface<InterLJPotential> >;
+template class Intra2B2GFF< LJPotentialInterface<IntraLJPotential> >;
+template class Intra2B2G3DFF< LJPotentialInterface<IntraLJPotential> >;
 
-static const RegisterMetaType<InterLJFF> r_interljff;
-static const RegisterMetaType<InterGroupLJFF> r_intergroupljff;
+static const RegisterMetaType<IntraLJFF> r_intraljff;
+static const RegisterMetaType<IntraGroupLJFF> r_intragroupljff;

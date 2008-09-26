@@ -29,31 +29,8 @@
 #ifndef SIREMM_CLJPOTENTIAL_H
 #define SIREMM_CLJPOTENTIAL_H
 
-#include "SireBase/properties.h"
-#include "SireBase/propertymap.h"
-#include "SireBase/pairmatrix.hpp"
-#include "SireBase/packedarray2d.hpp"
-
-#include "SireVol/space.h"
-
-#include "SireMol/atomproperty.hpp"
-#include "SireMol/atomcharges.h"
-
-#include "SireUnits/dimensions.h"
-
-#include "cljcomponent.h"
-#include "cljnbpairs.h"
-
-#include "ljparameter.h"
-#include "atomljs.h"
-
-#include "detail/intrascaledatomicparameters.hpp"
-
-#include "ljparameterdb.h"
-#include "switchingfunction.h"
-
-#include "SireFF/forcetable.h"
-#include "SireFF/detail/ffmolecules3d.h"
+#include "coulombpotential.h"
+#include "ljpotential.h"
 
 SIRE_BEGIN_HEADER
 
@@ -116,46 +93,6 @@ using SireFF::MolForceTable;
 
 using SireMol::AtomCharges;
 
-/** This class provides the default name of the 
-    property that contains the charge parameters */
-class SIREMM_EXPORT ChargeParameterName
-{
-public:
-    ChargeParameterName()
-    {}
-    
-    ~ChargeParameterName()
-    {}
-    
-    const QString& charge() const
-    {
-        return chg_param;
-    }
-    
-private:
-    static QString chg_param;
-};
-
-/** This class provides the default name of the 
-    property that contains the LJ parameters */
-class SIREMM_EXPORT LJParameterName
-{
-public:
-    LJParameterName()
-    {}
-    
-    ~LJParameterName()
-    {}
-    
-    const QString& lj() const
-    {
-        return lj_param;
-    }
-    
-private:
-    static QString lj_param;
-};
-
 /** This class provides the default name of the properties
     that contain the charge and LJ parameters */
 class SIREMM_EXPORT CLJParameterNames : public ChargeParameterName,
@@ -208,15 +145,16 @@ namespace detail
     
     @author Christopher Woods
 */
-class SIREMM_EXPORT CLJParameter
+class SIREMM_EXPORT CLJParameter : public ChargeParameter,
+                                   public LJParamID
 {
 public:
-    CLJParameter(double charge=0, quint32 lj_id=0)
-          : reduced_charge(charge), ljid(lj_id)
+    CLJParameter(double charge=0, quint32 ljid=0)
+          : ChargeParameter(charge), LJParamID(ljid)
     {}
     
     CLJParameter(const CLJParameter &other)
-          : reduced_charge(other.reduced_charge), ljid(other.ljid)
+          : ChargeParameter(other), LJParamID(other)
     {}
     
     ~CLJParameter()
@@ -224,18 +162,15 @@ public:
     
     bool operator==(const CLJParameter &other) const
     {
-        return reduced_charge == other.reduced_charge and
-               ljid == other.ljid;
+        return LJParamID::operator==(other) and
+               ChargeParameter::operator==(other);
     }
     
     bool operator!=(const CLJParameter &other) const
     {
-        return reduced_charge != other.reduced_charge or
-               ljid != other.ljid;
+        return LJParamID::operator!=(other) or
+               ChargeParameter::operator!=(other);
     }
-    
-    double reduced_charge;
-    quint32 ljid;
 };
 
 } // end of namespace detail
@@ -1010,8 +945,6 @@ QDataStream& operator>>(QDataStream &ds,
 
 Q_DECLARE_TYPEINFO( SireMM::detail::CLJParameter, Q_MOVABLE_TYPE );
 
-SIRE_EXPOSE_CLASS( SireMM::ChargeParameterName )
-SIRE_EXPOSE_CLASS( SireMM::LJParameterName )
 SIRE_EXPOSE_CLASS( SireMM::CLJParameterNames )
 SIRE_EXPOSE_CLASS( SireMM::CLJParameterNames3D )
 SIRE_EXPOSE_CLASS( SireMM::ScaledCLJParameterNames3D )

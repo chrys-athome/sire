@@ -58,32 +58,32 @@ SIRE_BEGIN_HEADER
 
 namespace SireMM
 {
-class InterCLJPotential;
-class IntraCLJPotential;
-class CLJPotential;
+class InterLJPotential;
+class IntraLJPotential;
+class LJPotential;
 
-template<class CLJPot>
-class CLJPotentialInterface;
+template<class LJPot>
+class LJPotentialInterface;
 
-namespace detail{ class CLJParameter; }
+namespace detail{ class LJParamID; }
 }
 
-QDataStream& operator<<(QDataStream&, const SireMM::InterCLJPotential&);
-QDataStream& operator>>(QDataStream&, SireMM::InterCLJPotential&);
+QDataStream& operator<<(QDataStream&, const SireMM::InterLJPotential&);
+QDataStream& operator>>(QDataStream&, SireMM::InterLJPotential&);
 
-QDataStream& operator<<(QDataStream&, const SireMM::IntraCLJPotential&);
-QDataStream& operator>>(QDataStream&, SireMM::IntraCLJPotential&);
+QDataStream& operator<<(QDataStream&, const SireMM::IntraLJPotential&);
+QDataStream& operator>>(QDataStream&, SireMM::IntraLJPotential&);
 
-QDataStream& operator<<(QDataStream&, const SireMM::CLJPotential&);
-QDataStream& operator>>(QDataStream&, SireMM::CLJPotential&);
+QDataStream& operator<<(QDataStream&, const SireMM::LJPotential&);
+QDataStream& operator>>(QDataStream&, SireMM::LJPotential&);
 
-QDataStream& operator<<(QDataStream&, const SireMM::detail::CLJParameter&);
-QDataStream& operator>>(QDataStream&, SireMM::detail::CLJParameter&);
+QDataStream& operator<<(QDataStream&, const SireMM::detail::LJParamID&);
+QDataStream& operator>>(QDataStream&, SireMM::detail::LJParamID&);
 
-template<class CLJPot>
-QDataStream& operator<<(QDataStream&, const SireMM::CLJPotentialInterface<CLJPot>&);
-template<class CLJPot>
-QDataStream& operator>>(QDataStream&, SireMM::CLJPotentialInterface<CLJPot>&);
+template<class LJPot>
+QDataStream& operator<<(QDataStream&, const SireMM::LJPotentialInterface<LJPot>&);
+template<class LJPot>
+QDataStream& operator>>(QDataStream&, SireMM::LJPotentialInterface<LJPot>&);
 
 namespace SireMol
 {
@@ -113,28 +113,6 @@ using SireMol::MolGroup;
 
 using SireFF::MolForceTable;
 
-using SireMol::AtomCharges;
-
-/** This class provides the default name of the 
-    property that contains the charge parameters */
-class SIREMM_EXPORT ChargeParameterName
-{
-public:
-    ChargeParameterName()
-    {}
-    
-    ~ChargeParameterName()
-    {}
-    
-    const QString& charge() const
-    {
-        return chg_param;
-    }
-    
-private:
-    static QString chg_param;
-};
-
 /** This class provides the default name of the 
     property that contains the LJ parameters */
 class SIREMM_EXPORT LJParameterName
@@ -156,101 +134,82 @@ private:
 };
 
 /** This class provides the default name of the properties
-    that contain the charge and LJ parameters */
-class SIREMM_EXPORT CLJParameterNames : public ChargeParameterName,
-                                        public LJParameterName
+    that contain the LJ and 3D coordinates properties */
+class SIREMM_EXPORT LJParameterName3D : public LJParameterName,
+                                        public SireFF::detail::Coords3DParameterName
 {
 public:
-    CLJParameterNames() : ChargeParameterName(), LJParameterName()
+    LJParameterName3D() : LJParameterName(),
+                          SireFF::detail::Coords3DParameterName()
     {}
     
-    ~CLJParameterNames()
-    {}
-};
-
-/** This class provides the default name of the properties
-    that contain the charge, LJ and 3D coordinates properties */
-class SIREMM_EXPORT CLJParameterNames3D : public CLJParameterNames,
-                                          public SireFF::detail::Coords3DParameterName
-{
-public:
-    CLJParameterNames3D() : CLJParameterNames(),
-                            SireFF::detail::Coords3DParameterName()
-    {}
-    
-    ~CLJParameterNames3D()
+    ~LJParameterName3D()
     {}
 };
 
 /** This class provides the default name of the properties 
-    that contain the charge, LJ, intramolecular NB scale parameters and
+    that contain the LJ, intramolecular NB scale parameters and
     3D coordinates properties */
-class SIREMM_EXPORT ScaledCLJParameterNames3D : public CLJParameterNames3D,
-                                                public detail::IntraScaleParameterName
+class SIREMM_EXPORT ScaledLJParameterNames3D : public LJParameterName3D,
+                                               public detail::IntraScaleParameterName
 {
 public:
-    ScaledCLJParameterNames3D() : CLJParameterNames3D(),
-                                  detail::IntraScaleParameterName()
+    ScaledLJParameterNames3D() : LJParameterName3D(),
+                                 detail::IntraScaleParameterName()
     {}
     
-    ~ScaledCLJParameterNames3D()
+    ~ScaledLJParameterNames3D()
     {}
 };
 
 namespace detail
 {
 
-/** This class holds the CLJ parameter used by both the Inter- and Intra-
-    CLJPotentials. It is just the charge of the atom in reduced units
-    (atomic charge divided by sqrt(4 pi eps_0)) and the ID of the LJ
+/** This class holds the LJ parameter used by both the Inter- and Intra-
+    CLJPotentials. It is just the ID of the LJ
     parameter in the singleton LJParameterDB database
     
     @author Christopher Woods
 */
-class SIREMM_EXPORT CLJParameter
+class SIREMM_EXPORT LJParamID
 {
 public:
-    CLJParameter(double charge=0, quint32 lj_id=0)
-          : reduced_charge(charge), ljid(lj_id)
+    LJParamID(quint32 lj_id=0) : ljid(lj_id)
     {}
     
-    CLJParameter(const CLJParameter &other)
-          : reduced_charge(other.reduced_charge), ljid(other.ljid)
+    LJParamID(const LJParamID &other) : ljid(other.ljid)
     {}
     
-    ~CLJParameter()
+    ~LJParamID()
     {}
     
-    bool operator==(const CLJParameter &other) const
+    bool operator==(const LJParamID &other) const
     {
-        return reduced_charge == other.reduced_charge and
-               ljid == other.ljid;
+        return ljid == other.ljid;
     }
     
-    bool operator!=(const CLJParameter &other) const
+    bool operator!=(const LJParamID &other) const
     {
-        return reduced_charge != other.reduced_charge or
-               ljid != other.ljid;
+        return ljid != other.ljid;
     }
     
-    double reduced_charge;
     quint32 ljid;
 };
 
 } // end of namespace detail
 
-/** This is the common base class of InterCLJPotential and IntraCLJPotential
+/** This is the common base class of InterLJPotential and IntraLJPotential
 
     @author Christopher Woods
 */
-class SIREMM_EXPORT CLJPotential
+class SIREMM_EXPORT LJPotential
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const CLJPotential&);
-friend QDataStream& ::operator>>(QDataStream&, CLJPotential&);
+friend QDataStream& ::operator<<(QDataStream&, const LJPotential&);
+friend QDataStream& ::operator>>(QDataStream&, LJPotential&);
 
 public:
-    virtual ~CLJPotential();
+    virtual ~LJPotential();
 
     const Properties& properties() const;
     const Property& property(const QString &name) const;
@@ -260,19 +219,17 @@ public:
 
     bool setSpace(const Space &new_space);
     bool setSwitchingFunction(const SwitchingFunction &new_switchfunc);
-    bool setShiftElectrostatics(bool switchelectro);
     bool setCombiningRules(const QString &combiningrules);
     
     const SpaceBase& space() const;
     const SwitchFunc& switchingFunction() const;
-    bool shiftElectrostatics() const;
     const QString& combiningRules() const;
 
 protected:
-    CLJPotential();
-    CLJPotential(const CLJPotential &other);
+    LJPotential();
+    LJPotential(const LJPotential &other);
     
-    CLJPotential& operator=(const CLJPotential &other);
+    LJPotential& operator=(const LJPotential &other);
 
     void startEvaluation();
     void finishedEvaluation();
@@ -297,17 +254,12 @@ protected:
     
     /** Whether or not the LJ pair matrix needs to be rebuilt */
     bool need_update_ljpairs;
-    
-    /** Whether or not electrostatic potential shifting is used
-        (this shifts the entire electrostatic potential so that it
-        is zero at the cutoff distance) */
-    bool use_electrostatic_shifting;
 };
 
 /** This class provides all of the functions and containers  
     necessary to provide an interface to calculate the
-    intermolecular interatomic potentials using the Coulomb 
-    and Lennard Jones functions.
+    intermolecular interatomic potentials using
+    Lennard Jones functions.
     
     This is a 3D potential class, namely it requires that
     the atoms possess 3D coordinates, thereby allowing this
@@ -318,10 +270,7 @@ protected:
     (1) space               : This is the 3D space in which the molecules exist
     (2) switchingFunction   : This is the switching function used to scale the 
                               energies / forces to zero at the cutoff
-    (3) shiftElectrostatics : This is a boolean - if it is true then the 
-                              group-group electrostatic interactions are scaled 
-                              so that they are zero at the cutoff
-    (4) combiningRules      : This is a string specifying the LJ combining rules
+    (3) combiningRules      : This is a string specifying the LJ combining rules
                               (currently "arithmetic" or "geometric")
                               
     The molecules used with this potential must contain the following 
@@ -329,53 +278,51 @@ protected:
     
     (1) .coordinates()      : These are the 3D coordinates of each atom, must be
                               a property of type AtomCoords
-    (2) .charge()           : These are the partial charges of each atom, must
-                              be a property of type AtomCharges
-    (3) .lj()               : These are the LJ parameters for each atom, must
+    (2) .lj()               : These are the LJ parameters for each atom, must
                               be a property of type AtomLJs
     
     @author Christopher Woods
 */
-class SIREMM_EXPORT InterCLJPotential : public CLJPotential
+class SIREMM_EXPORT InterLJPotential : public LJPotential
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const InterCLJPotential&);
-friend QDataStream& ::operator>>(QDataStream&, InterCLJPotential&);
+friend QDataStream& ::operator<<(QDataStream&, const InterLJPotential&);
+friend QDataStream& ::operator>>(QDataStream&, InterLJPotential&);
 
 public:
 
-    typedef CLJEnergy Energy;
+    typedef LJEnergy Energy;
     typedef Energy::Components Components;
 
-    typedef CLJParameterNames3D ParameterNames;
+    typedef LJParameterName3D ParameterNames;
 
-    typedef detail::CLJParameter Parameter;
+    typedef detail::LJParamID Parameter;
     typedef SireFF::detail::AtomicParameters3D<Parameter> Parameters;
     
     typedef SireBase::PairMatrix<double> EnergyWorkspace;
     typedef SireBase::PairMatrix<SireMaths::DistVector> ForceWorkspace;
 
-    typedef SireFF::detail::FFMolecule3D<InterCLJPotential> Molecule;
-    typedef SireFF::detail::FFMolecules3D<InterCLJPotential> Molecules;
+    typedef SireFF::detail::FFMolecule3D<InterLJPotential> Molecule;
+    typedef SireFF::detail::FFMolecules3D<InterLJPotential> Molecules;
 
     typedef SireFF::detail::ChangedMolecule<Molecule> ChangedMolecule;
 
-    InterCLJPotential();
+    InterLJPotential();
     
-    InterCLJPotential(const InterCLJPotential &other);
+    InterLJPotential(const InterLJPotential &other);
     
-    ~InterCLJPotential();
+    ~InterLJPotential();
     
-    InterCLJPotential& operator=(const InterCLJPotential &other);
+    InterLJPotential& operator=(const InterLJPotential &other);
 
     static const char* typeName()
     {
-        return "SireMM::InterCLJPotential";
+        return "SireMM::InterLJPotential";
     }
 
     const char* what() const
     {
-        return InterCLJPotential::typeName();
+        return InterLJPotential::typeName();
     }
     
     static ParameterNames parameters()
@@ -383,97 +330,77 @@ public:
         return ParameterNames();
     }
     
-    InterCLJPotential::Parameters 
+    InterLJPotential::Parameters 
     getParameters(const PartialMolecule &molecule,
                   const PropertyMap &map = PropertyMap());
     
-    InterCLJPotential::Parameters
-    updateParameters(const InterCLJPotential::Parameters &old_params,
+    InterLJPotential::Parameters
+    updateParameters(const InterLJPotential::Parameters &old_params,
                      const PartialMolecule &old_molecule,
                      const PartialMolecule &new_molecule,
                      const PropertyMap &map = PropertyMap());
                      
-    InterCLJPotential::Parameters
-    updateParameters(const InterCLJPotential::Parameters &old_params,
+    InterLJPotential::Parameters
+    updateParameters(const InterLJPotential::Parameters &old_params,
                      const PartialMolecule &old_molecule,
                      const PartialMolecule &new_molecule,
                      const PropertyMap &old_map, const PropertyMap &new_map);
     
-    InterCLJPotential::Molecule
+    InterLJPotential::Molecule
     parameterise(const PartialMolecule &molecule,
                  const PropertyMap &map = PropertyMap());
     
-    InterCLJPotential::Molecules 
+    InterLJPotential::Molecules 
     parameterise(const MolGroup &molecules,
                  const PropertyMap &map = PropertyMap());
 
-    void calculateEnergy(const InterCLJPotential::Molecule &mol0, 
-                         const InterCLJPotential::Molecule &mol1,
-                         InterCLJPotential::Energy &energy, 
-                         InterCLJPotential::EnergyWorkspace &workspace,
+    void calculateEnergy(const InterLJPotential::Molecule &mol0, 
+                         const InterLJPotential::Molecule &mol1,
+                         InterLJPotential::Energy &energy, 
+                         InterLJPotential::EnergyWorkspace &workspace,
                          double scale_energy=1) const;
 
-    void calculateForce(const InterCLJPotential::Molecule &mol0, 
-                        const InterCLJPotential::Molecule &mol1,
+    void calculateForce(const InterLJPotential::Molecule &mol0, 
+                        const InterLJPotential::Molecule &mol1,
                         MolForceTable &forces0,
-                        InterCLJPotential::ForceWorkspace &workspace,
+                        InterLJPotential::ForceWorkspace &workspace,
                         double scale_force=1) const;
 
-    void calculateForce(const InterCLJPotential::Molecule &mol0,
-                        const InterCLJPotential::Molecule &mol1,
+    void calculateForce(const InterLJPotential::Molecule &mol0,
+                        const InterLJPotential::Molecule &mol1,
                         MolForceTable &forces0,
                         const Symbol &symbol,
                         const Components &components,
-                        InterCLJPotential::ForceWorkspace &workspace,
+                        InterLJPotential::ForceWorkspace &workspace,
                         double scale_force=1) const;
 
-    void calculateCoulombForce(const InterCLJPotential::Molecule &mol0, 
-                               const InterCLJPotential::Molecule &mol1,
-                               MolForceTable &forces0,
-                               InterCLJPotential::ForceWorkspace &workspace,
-                               double scale_force=1) const;
-
-    void calculateLJForce(const InterCLJPotential::Molecule &mol0, 
-                          const InterCLJPotential::Molecule &mol1,
+    void calculateLJForce(const InterLJPotential::Molecule &mol0, 
+                          const InterLJPotential::Molecule &mol1,
                           MolForceTable &forces0,
-                          InterCLJPotential::ForceWorkspace &workspace,
+                          InterLJPotential::ForceWorkspace &workspace,
                           double scale_force=1) const;
 
 private:
-    double totalCharge(const InterCLJPotential::Parameters::Array &params) const;
-
     void throwMissingForceComponent(const Symbol &symbol,
                                     const Components &components) const;
 
-    void _pvt_calculateEnergy(const InterCLJPotential::Molecule &mol0, 
-                              const InterCLJPotential::Molecule &mol1,
-                              InterCLJPotential::Energy &energy, 
-                              InterCLJPotential::EnergyWorkspace &workspace,
+    void _pvt_calculateEnergy(const InterLJPotential::Molecule &mol0, 
+                              const InterLJPotential::Molecule &mol1,
+                              InterLJPotential::Energy &energy, 
+                              InterLJPotential::EnergyWorkspace &workspace,
                               double scale_energy) const;
 
-    void _pvt_calculateForce(const InterCLJPotential::Molecule &mol0, 
-                             const InterCLJPotential::Molecule &mol1,
-                             MolForceTable &forces0, 
-                             InterCLJPotential::ForceWorkspace &workspace,
-                             double scale_force) const;
-
-    void _pvt_calculateCoulombForce(const InterCLJPotential::Molecule &mol0, 
-                                    const InterCLJPotential::Molecule &mol1,
-                                    MolForceTable &forces0, 
-                                    InterCLJPotential::ForceWorkspace &workspace,
-                                    double scale_force) const;
-
-    void _pvt_calculateLJForce(const InterCLJPotential::Molecule &mol0, 
-                               const InterCLJPotential::Molecule &mol1,
+    void _pvt_calculateLJForce(const InterLJPotential::Molecule &mol0, 
+                               const InterLJPotential::Molecule &mol1,
                                MolForceTable &forces0, 
-                               InterCLJPotential::ForceWorkspace &workspace,
+                               InterLJPotential::ForceWorkspace &workspace,
                                double scale_force) const;
 };
 
 /** This class provides all of the functions and containers  
     necessary to provide an interface to calculate the
-    intramolecular interatomic potentials using the Coulomb 
-    and Lennard Jones functions.
+    intramolecular interatomic potentials using
+    Lennard Jones functions.
     
     This is a 3D potential class, namely it requires that
     the atoms possess 3D coordinates, thereby allowing this
@@ -484,10 +411,7 @@ private:
     (1) space               : This is the 3D space in which the molecules exist
     (2) switchingFunction   : This is the switching function used to scale the 
                               energies / forces to zero at the cutoff
-    (3) shiftElectrostatics : This is a boolean - if it is true then the 
-                              group-group electrostatic interactions are scaled 
-                              so that they are zero at the cutoff
-    (4) combiningRules      : This is a string specifying the LJ combining rules
+    (3) combiningRules      : This is a string specifying the LJ combining rules
                               (currently "arithmetic" or "geometric")
                               
     The molecules used with this potential must contain the following 
@@ -495,58 +419,57 @@ private:
     
     (1) .coordinates()       : These are the 3D coordinates of each atom, must be
                                a property of type AtomCoords
-    (2) .charge()            : These are the partial charges of each atom, must
-                               be a property of type AtomCharges
-    (3) .lj()                : These are the LJ parameters for each atom, must
+    (2) .lj()                : These are the LJ parameters for each atom, must
                                be a property of type AtomLJs
-    (4) .intraScaleFactors() : These are the intramolecular atomic scaling factors,
-                               used to scale the intramolecular coulomb and LJ
-                               energies, must be a property of type CLJNBPairs
+    (3) .intraScaleFactors() : These are the intramolecular atomic scaling factors,
+                               used to scale the intramolecular LJ
+                               energies, must be a property of type LJNBPairs or 
+                               CLJNBPairs
     
     @author Christopher Woods
 */
-class SIREMM_EXPORT IntraCLJPotential : public CLJPotential
+class SIREMM_EXPORT IntraLJPotential : public LJPotential
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const IntraCLJPotential&);
-friend QDataStream& ::operator>>(QDataStream&, IntraCLJPotential&);
+friend QDataStream& ::operator<<(QDataStream&, const IntraLJPotential&);
+friend QDataStream& ::operator>>(QDataStream&, IntraLJPotential&);
 
 public:
-    typedef CLJEnergy Energy;
+    typedef LJEnergy Energy;
     typedef Energy::Components Components;
     
-    typedef ScaledCLJParameterNames3D ParameterNames;
+    typedef ScaledLJParameterNames3D ParameterNames;
 
-    typedef detail::CLJParameter Parameter;
+    typedef detail::LJParamID Parameter;
     
     typedef detail::IntraScaledAtomicParameters<
                   SireFF::detail::AtomicParameters3D<Parameter>,
-                  detail::IntraScaledParameters<CLJNBPairs> > Parameters;
+                  detail::IntraScaledParameters<LJNBPairs> > Parameters;
         
     typedef SireBase::PairMatrix<double> EnergyWorkspace;
     typedef SireBase::PairMatrix<SireMaths::DistVector> ForceWorkspace;
 
-    typedef SireFF::detail::FFMolecule3D<IntraCLJPotential> Molecule;
-    typedef SireFF::detail::FFMolecules3D<IntraCLJPotential> Molecules;
+    typedef SireFF::detail::FFMolecule3D<IntraLJPotential> Molecule;
+    typedef SireFF::detail::FFMolecules3D<IntraLJPotential> Molecules;
 
     typedef SireFF::detail::ChangedMolecule<Molecule> ChangedMolecule;
 
-    IntraCLJPotential();
+    IntraLJPotential();
     
-    IntraCLJPotential(const IntraCLJPotential &other);
+    IntraLJPotential(const IntraLJPotential &other);
     
-    ~IntraCLJPotential();
+    ~IntraLJPotential();
     
-    IntraCLJPotential& operator=(const IntraCLJPotential &other);
+    IntraLJPotential& operator=(const IntraLJPotential &other);
     
     static const char* typeName()
     {
-        return "SireMM::IntraCLJPotential";
+        return "SireMM::IntraLJPotential";
     }
     
     const char* what() const
     {
-        return IntraCLJPotential::typeName();
+        return IntraLJPotential::typeName();
     }
     
     static ParameterNames parameters()
@@ -554,175 +477,137 @@ public:
         return ParameterNames();
     }
     
-    IntraCLJPotential::Parameters 
+    IntraLJPotential::Parameters 
     getParameters(const PartialMolecule &molecule,
                   const PropertyMap &map = PropertyMap());
     
-    IntraCLJPotential::Parameters
-    updateParameters(const IntraCLJPotential::Parameters &old_params,
+    IntraLJPotential::Parameters
+    updateParameters(const IntraLJPotential::Parameters &old_params,
                      const PartialMolecule &old_molecule,
                      const PartialMolecule &new_molecule,
                      const PropertyMap &map = PropertyMap());
                      
-    IntraCLJPotential::Parameters
-    updateParameters(const IntraCLJPotential::Parameters &old_params,
+    IntraLJPotential::Parameters
+    updateParameters(const IntraLJPotential::Parameters &old_params,
                      const PartialMolecule &old_molecule,
                      const PartialMolecule &new_molecule,
                      const PropertyMap &old_map, const PropertyMap &new_map);
     
-    IntraCLJPotential::Molecule
+    IntraLJPotential::Molecule
     parameterise(const PartialMolecule &molecule,
                  const PropertyMap &map = PropertyMap());
     
-    IntraCLJPotential::Molecules 
+    IntraLJPotential::Molecules 
     parameterise(const MolGroup &molecules,
                  const PropertyMap &map = PropertyMap());
 
-    void calculateEnergy(const IntraCLJPotential::Molecule &mol, 
-                         IntraCLJPotential::Energy &energy,
-                         IntraCLJPotential::EnergyWorkspace &workspace,
+    void calculateEnergy(const IntraLJPotential::Molecule &mol, 
+                         IntraLJPotential::Energy &energy,
+                         IntraLJPotential::EnergyWorkspace &workspace,
                          double scale_energy=1) const;
 
-    void calculateEnergy(const IntraCLJPotential::Molecule &mol,
-                         const IntraCLJPotential::Molecule &rest_of_mol,
-                         IntraCLJPotential::Energy &energy,
-                         IntraCLJPotential::EnergyWorkspace &workspace,
+    void calculateEnergy(const IntraLJPotential::Molecule &mol,
+                         const IntraLJPotential::Molecule &rest_of_mol,
+                         IntraLJPotential::Energy &energy,
+                         IntraLJPotential::EnergyWorkspace &workspace,
                          double scale_energy=1) const;
 
-    void calculateForce(const IntraCLJPotential::Molecule &mol, 
+    void calculateForce(const IntraLJPotential::Molecule &mol, 
                         MolForceTable &forces,
-                        IntraCLJPotential::ForceWorkspace &workspace,
+                        IntraLJPotential::ForceWorkspace &workspace,
                         double scale_force=1) const;
 
-    void calculateForce(const IntraCLJPotential::Molecule &mol,
-                        const IntraCLJPotential::Molecule &rest_of_mol,
+    void calculateForce(const IntraLJPotential::Molecule &mol,
+                        const IntraLJPotential::Molecule &rest_of_mol,
                         MolForceTable &forces,
-                        IntraCLJPotential::ForceWorkspace &workspace,
+                        IntraLJPotential::ForceWorkspace &workspace,
                         double scale_force=1) const;
 
-    void calculateForce(const IntraCLJPotential::Molecule &mol, 
+    void calculateForce(const IntraLJPotential::Molecule &mol, 
                         MolForceTable &forces,
                         const Symbol &symbol,
                         const Components &components,
-                        IntraCLJPotential::ForceWorkspace &workspace,
+                        IntraLJPotential::ForceWorkspace &workspace,
                         double scale_force=1) const;
 
-    void calculateForce(const IntraCLJPotential::Molecule &mol,
-                        const IntraCLJPotential::Molecule &rest_of_mol,
+    void calculateForce(const IntraLJPotential::Molecule &mol,
+                        const IntraLJPotential::Molecule &rest_of_mol,
                         MolForceTable &forces,
                         const Symbol &symbol,
                         const Components &components,
-                        IntraCLJPotential::ForceWorkspace &workspace,
+                        IntraLJPotential::ForceWorkspace &workspace,
                         double scale_force=1) const;
-
-    void calculateCoulombForce(const IntraCLJPotential::Molecule &mol,
-                               MolForceTable &forces,
-                               IntraCLJPotential::ForceWorkspace &workspace,
-                               double scale_force=1) const;
-
-    void calculateCoulombForce(const IntraCLJPotential::Molecule &mol,
-                               const IntraCLJPotential::Molecule &rest_of_mol,
-                               MolForceTable &forces,
-                               IntraCLJPotential::ForceWorkspace &workspace,
-                               double scale_force=1) const;
                                
-    void calculateLJForce(const IntraCLJPotential::Molecule &mol,
-                          const IntraCLJPotential::Molecule &rest_of_mol,
+    void calculateLJForce(const IntraLJPotential::Molecule &mol,
+                          const IntraLJPotential::Molecule &rest_of_mol,
                           MolForceTable &forces,
-                          IntraCLJPotential::ForceWorkspace &workspace,
+                          IntraLJPotential::ForceWorkspace &workspace,
                           double scale_force=1) const;
                                
-    void calculateLJForce(const IntraCLJPotential::Molecule &mol,
+    void calculateLJForce(const IntraLJPotential::Molecule &mol,
                           MolForceTable &forces,
-                          IntraCLJPotential::ForceWorkspace &workspace,
+                          IntraLJPotential::ForceWorkspace &workspace,
                           double scale_force=1) const;
                                
 private:
-    double totalCharge(const IntraCLJPotential::Parameters::Array &params) const;
+    void assertCompatible(const IntraLJPotential::Molecule &mol,
+                          const IntraLJPotential::Molecule &rest_of_mol) const;
 
-    void assertCompatible(const IntraCLJPotential::Molecule &mol,
-                          const IntraCLJPotential::Molecule &rest_of_mol) const;
-
-    void calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
-                         IntraCLJPotential::EnergyWorkspace &workspace,
+    void calculateEnergy(const LJNBPairs::CGPairs &group_pairs,
+                         IntraLJPotential::EnergyWorkspace &workspace,
                          const Parameter *params0_array,
                          const Parameter *params1_array,
                          const quint32 nats0, const quint32 nats1,
-                         double &icnrg, double &iljnrg) const;
+                         double &iljnrg) const;
 
-    void calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
+    void calculateEnergy(const LJNBPairs::CGPairs &group_pairs,
                          const QSet<SireID::Index> &atoms0, 
                          const QSet<SireID::Index> &atoms1,
-                         IntraCLJPotential::EnergyWorkspace &workspace,
+                         IntraLJPotential::EnergyWorkspace &workspace,
                          const Parameter *params0_array,
                          const Parameter *params1_array,
                          const quint32 nats0, const quint32 nats1,
-                         double &icnrg, double &iljnrg) const;
+                         double &iljnrg) const;
 
-    void calculateForce(const CLJNBPairs::CGPairs &group_pairs,
+    void calculateForce(const LJNBPairs::CGPairs &group_pairs,
                         const CoordGroup &group0, const CoordGroup &group1,
                         const double mindist,
-                        IntraCLJPotential::ForceWorkspace &workspace,
-                        const IntraCLJPotential::Parameter *params0_array,
-                        const IntraCLJPotential::Parameter *params1_array,
+                        IntraLJPotential::ForceWorkspace &workspace,
+                        const IntraLJPotential::Parameter *params0_array,
+                        const IntraLJPotential::Parameter *params1_array,
                         const quint32 nats0, const quint32 nats1,
-                        const double shift_coul,
                         Vector *group_forces0_array,
                         const double scale_force) const;
 
-    void calculateForce(const CLJNBPairs::CGPairs &group_pairs,
+    void calculateForce(const LJNBPairs::CGPairs &group_pairs,
                         const QSet<SireID::Index> &atoms0,
                         const QSet<SireID::Index> &atoms1,
                         const CoordGroup &group0, const CoordGroup &group1,
                         const double mindist,
-                        IntraCLJPotential::ForceWorkspace &workspace,
-                        const IntraCLJPotential::Parameter *params0_array,
-                        const IntraCLJPotential::Parameter *params1_array,
-                        const double shift_coul,
+                        IntraLJPotential::ForceWorkspace &workspace,
+                        const IntraLJPotential::Parameter *params0_array,
+                        const IntraLJPotential::Parameter *params1_array,
                         Vector *group_forces0_array,
                         const double scale_force) const;
 
-    void calculateCoulombForce(const CLJNBPairs::CGPairs &group_pairs,
-                               const CoordGroup &group0, const CoordGroup &group1,
-                               const double mindist,
-                               IntraCLJPotential::ForceWorkspace &workspace,
-                               const IntraCLJPotential::Parameter *params0_array,
-                               const IntraCLJPotential::Parameter *params1_array,
-                               const quint32 nats0, const quint32 nats1,
-                               const double shift_coul,
-                               Vector *group_forces0_array,
-                               const double scale_force) const;
-
-    void calculateCoulombForce(const CLJNBPairs::CGPairs &group_pairs,
-                               const QSet<SireID::Index> &atoms0,
-                               const QSet<SireID::Index> &atoms1,
-                               const CoordGroup &group0, const CoordGroup &group1,
-                               const double mindist,
-                               IntraCLJPotential::ForceWorkspace &workspace,
-                               const IntraCLJPotential::Parameter *params0_array,
-                               const IntraCLJPotential::Parameter *params1_array,
-                               const double shift_coul,
-                               Vector *group_forces0_array,
-                               const double scale_force) const;
-
-    void calculateLJForce(const CLJNBPairs::CGPairs &group_pairs,
+    void calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
                           const CoordGroup &group0, const CoordGroup &group1,
                           const double mindist,
-                          IntraCLJPotential::ForceWorkspace &workspace,
-                          const IntraCLJPotential::Parameter *params0_array,
-                          const IntraCLJPotential::Parameter *params1_array,
+                          IntraLJPotential::ForceWorkspace &workspace,
+                          const IntraLJPotential::Parameter *params0_array,
+                          const IntraLJPotential::Parameter *params1_array,
                           const quint32 nats0, const quint32 nats1,
                           Vector *group_forces0_array,
                           const double scale_force) const;
 
-    void calculateLJForce(const CLJNBPairs::CGPairs &group_pairs,
+    void calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
                           const QSet<SireID::Index> &atoms0,
                           const QSet<SireID::Index> &atoms1,
                           const CoordGroup &group0, const CoordGroup &group1,
                           const double mindist,
-                          IntraCLJPotential::ForceWorkspace &workspace,
-                          const IntraCLJPotential::Parameter *params0_array,
-                          const IntraCLJPotential::Parameter *params1_array,
+                          IntraLJPotential::ForceWorkspace &workspace,
+                          const IntraLJPotential::Parameter *params0_array,
+                          const IntraLJPotential::Parameter *params1_array,
                           Vector *group_forces0_array,
                           const double scale_force) const;
 
@@ -737,146 +622,94 @@ private:
     
     @author Christopher Woods
 */
-template<class CLJPot>
-class CLJPotentialInterface : protected CLJPot
+template<class LJPot>
+class LJPotentialInterface : protected LJPot
 {
 
-friend QDataStream& ::operator<<<>(QDataStream&, const CLJPotentialInterface<CLJPot>&);
-friend QDataStream& ::operator>><>(QDataStream&, CLJPotentialInterface<CLJPot>&);
+friend QDataStream& ::operator<<<>(QDataStream&, const LJPotentialInterface<LJPot>&);
+friend QDataStream& ::operator>><>(QDataStream&, LJPotentialInterface<LJPot>&);
 
 public:
-    CLJPotentialInterface() : CLJPot()
+    LJPotentialInterface() : LJPot()
     {}
     
-    CLJPotentialInterface(const CLJPotentialInterface &other) : CLJPot(other)
+    LJPotentialInterface(const LJPotentialInterface &other) : LJPot(other)
     {}
     
-    ~CLJPotentialInterface()
+    ~LJPotentialInterface()
     {}
     
     const Properties& properties() const
     {
-        return CLJPot::properties();
+        return LJPot::properties();
     }
     
     const Property& property(const QString &name) const
     {
-        return CLJPot::property(name);
+        return LJPot::property(name);
     }
     
     bool containsProperty(const QString &name) const
     {
-        return CLJPot::containsProperty(name);
+        return LJPot::containsProperty(name);
     }
     
     bool setProperty(const QString &name, const PropertyBase &value)
     {
-        return CLJPot::setProperty(name, value);
+        return LJPot::setProperty(name, value);
     }
 
     bool setSpace(const Space &new_space)
     {
-        return CLJPot::setSpace(new_space);
+        return LJPot::setSpace(new_space);
     }
     
     bool setSwitchingFunction(const SwitchingFunction &new_switchfunc)
     {
-        return CLJPot::setSwitchingFunction(new_switchfunc);
-    }
-    
-    bool setShiftElectrostatics(bool switchelectro)
-    {
-        return CLJPot::setShiftElectrostatics(switchelectro);
+        return LJPot::setSwitchingFunction(new_switchfunc);
     }
     
     bool setCombiningRules(const QString &combiningrules)
     {
-        return CLJPot::setCombiningRules(combiningrules);
+        return LJPot::setCombiningRules(combiningrules);
     }
     
     const SpaceBase& space() const
     {
-        return CLJPot::space();
+        return LJPot::space();
     }
     
     const SwitchFunc& switchingFunction() const
     {
-        return CLJPot::switchingFunction();
-    }
-
-    bool shiftElectrostatics() const
-    {
-        return CLJPot::shiftElectrostatics();
+        return LJPot::switchingFunction();
     }
     
     const QString& combiningRules() const
     {
-        return CLJPot::combiningRules();
+        return LJPot::combiningRules();
     }
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 //////
-////// Inline functions of InterCLJPotential
+////// Inline functions of InterLJPotential
 //////
 
-/** Calculate the coulomb and LJ energy between the passed pair
+/** Calculate the LJ energy between the passed pair
     of molecules and add these energies onto 'energy'. This uses
     the passed workspace to perform the calculation */
 inline void 
-InterCLJPotential::calculateEnergy(const InterCLJPotential::Molecule &mol0,
-                                   const InterCLJPotential::Molecule &mol1,
-                                   InterCLJPotential::Energy &energy,
-                                   InterCLJPotential::EnergyWorkspace &workspace,
-                                   double scale_energy) const
+InterLJPotential::calculateEnergy(const InterLJPotential::Molecule &mol0,
+                                  const InterLJPotential::Molecule &mol1,
+                                  InterLJPotential::Energy &energy,
+                                  InterLJPotential::EnergyWorkspace &workspace,
+                                  double scale_energy) const
 {
-    if (scale_energy != 0)// and 
-       // not (mol0.isEmpty() or mol1.isEmpty()))
+    if (scale_energy != 0 and 
+        not (mol0.isEmpty() or mol1.isEmpty()))
     {
         this->_pvt_calculateEnergy(mol0, mol1, energy, workspace, scale_energy);
-    }
-}
-
-/** Calculate the coulomb and LJ forces on the atoms between the passed pair
-    of molecules and add the forces on 'mol0' onto 'forces'. This uses
-    the passed workspace to perform the calculation. The forces
-    are scaled by the optional 'scaled_forces' */
-inline void 
-InterCLJPotential::calculateForce(const InterCLJPotential::Molecule &mol0, 
-                                  const InterCLJPotential::Molecule &mol1,
-                                  MolForceTable &forces0, 
-                                  InterCLJPotential::ForceWorkspace &workspace,
-                                  double scale_force) const
-{
-    if ( scale_force != 0 and 
-         not (mol0.isEmpty() or mol1.isEmpty()) and
-         not spce->beyond(switchfunc->cutoffDistance(),
-                          mol0.aaBox(), mol1.aaBox()) )
-    {
-        this->_pvt_calculateForce(mol0, mol1, forces0,
-                                  workspace, scale_force);
-    }
-}
-
-/** Calculate the coulomb forces on the atoms between the passed pair
-    of molecules and add the forces on 'mol0' onto 'forces'. This uses
-    the passed workspace to perform the calculation. The forces
-    are scaled by the optional 'scaled_forces' */
-inline void 
-InterCLJPotential::calculateCoulombForce(const InterCLJPotential::Molecule &mol0, 
-                                         const InterCLJPotential::Molecule &mol1,
-                                         MolForceTable &forces0, 
-                                         InterCLJPotential::ForceWorkspace &workspace,
-                                         double scale_force) const
-{
-    if ( scale_force != 0 and 
-         not (mol0.isEmpty() or mol1.isEmpty()) and
-         not spce->beyond(switchfunc->cutoffDistance(),
-                          mol0.aaBox(), mol1.aaBox()) )
-    {
-        this->_pvt_calculateCoulombForce(mol0, mol1, forces0,
-                                         workspace, scale_force);
     }
 }
 
@@ -885,11 +718,11 @@ InterCLJPotential::calculateCoulombForce(const InterCLJPotential::Molecule &mol0
     the passed workspace to perform the calculation. The forces
     are scaled by the optional 'scaled_forces' */
 inline void 
-InterCLJPotential::calculateLJForce(const InterCLJPotential::Molecule &mol0, 
-                                    const InterCLJPotential::Molecule &mol1,
-                                    MolForceTable &forces0, 
-                                    InterCLJPotential::ForceWorkspace &workspace,
-                                    double scale_force) const
+InterLJPotential::calculateLJForce(const InterLJPotential::Molecule &mol0, 
+                                   const InterLJPotential::Molecule &mol1,
+                                   MolForceTable &forces0, 
+                                   InterLJPotential::ForceWorkspace &workspace,
+                                   double scale_force) const
 {
     if ( scale_force != 0 and 
          not (mol0.isEmpty() or mol1.isEmpty()) and
@@ -901,27 +734,35 @@ InterCLJPotential::calculateLJForce(const InterCLJPotential::Molecule &mol0,
     }
 }
 
+/** Calculate the LJ forces on the atoms between the passed pair
+    of molecules and add the forces on 'mol0' onto 'forces'. This uses
+    the passed workspace to perform the calculation. The forces
+    are scaled by the optional 'scaled_forces' */
+inline void 
+InterLJPotential::calculateForce(const InterLJPotential::Molecule &mol0, 
+                                 const InterLJPotential::Molecule &mol1,
+                                 MolForceTable &forces0, 
+                                 InterLJPotential::ForceWorkspace &workspace,
+                                 double scale_force) const
+{
+    this->calculateLJForce(mol0, mol1, forces0, workspace, scale_force);
+}
+
 /** Calculate the component of the force represented by 'symbol' between the 
     passed pair of molecules, and add the forces on 'mol0' onto 'forces0'.
     This uses the passed workspace to perform the calculation. The forces
     are scaled by the optional 'scaled_forces' */
 inline void 
-InterCLJPotential::calculateForce(const InterCLJPotential::Molecule &mol0,
-                                  const InterCLJPotential::Molecule &mol1,
-                                  MolForceTable &forces0,
-                                  const Symbol &symbol,
-                                  const InterCLJPotential::Components &components,
-                                  InterCLJPotential::ForceWorkspace &workspace,
-                                  double scale_force) const
+InterLJPotential::calculateForce(const InterLJPotential::Molecule &mol0,
+                                 const InterLJPotential::Molecule &mol1,
+                                 MolForceTable &forces0,
+                                 const Symbol &symbol,
+                                 const InterLJPotential::Components &components,
+                                 InterLJPotential::ForceWorkspace &workspace,
+                                 double scale_force) const
 {
     if (symbol == components.total())
         this->calculateForce(mol0, mol1, forces0, workspace, scale_force);
-       
-    else if (symbol == components.coulomb())
-        this->calculateCoulombForce(mol0, mol1, forces0, workspace, scale_force);
-        
-    else if (symbol == components.lj())
-        this->calculateLJForce(mol0, mol1, forces0, workspace, scale_force);
         
     else
         throwMissingForceComponent(symbol, components);
@@ -935,21 +776,15 @@ InterCLJPotential::calculateForce(const InterCLJPotential::Molecule &mol0,
     atoms in the molecule 'mol' and add these forces onto 'forces'. This uses
     the passed workspace to perform the calculation */
 inline void 
-IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol, 
-                                  MolForceTable &forces,
-                                  const Symbol &symbol,
-                                  const IntraCLJPotential::Components &components,
-                                  IntraCLJPotential::ForceWorkspace &workspace,
-                                  double scale_force) const
+IntraLJPotential::calculateForce(const IntraLJPotential::Molecule &mol, 
+                                 MolForceTable &forces,
+                                 const Symbol &symbol,
+                                 const IntraLJPotential::Components &components,
+                                 IntraLJPotential::ForceWorkspace &workspace,
+                                 double scale_force) const
 {
     if (symbol == components.total())
         this->calculateForce(mol, forces, workspace, scale_force);
-        
-    else if (symbol == components.coulomb())
-        this->calculateCoulombForce(mol, forces, workspace, scale_force);
-        
-    else if (symbol == components.lj())
-        this->calculateLJForce(mol, forces, workspace, scale_force);
         
     else
         throwMissingForceComponent(symbol, components);
@@ -963,22 +798,16 @@ IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
     \throw SireError::incompatible_error
 */
 inline void
-IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
-                                  const IntraCLJPotential::Molecule &rest_of_mol,
-                                  MolForceTable &forces,
-                                  const Symbol &symbol,
-                                  const IntraCLJPotential::Components &components,
-                                  IntraCLJPotential::ForceWorkspace &workspace,
-                                  double scale_force) const
+IntraLJPotential::calculateForce(const IntraLJPotential::Molecule &mol,
+                                 const IntraLJPotential::Molecule &rest_of_mol,
+                                 MolForceTable &forces,
+                                 const Symbol &symbol,
+                                 const IntraLJPotential::Components &components,
+                                 IntraLJPotential::ForceWorkspace &workspace,
+                                 double scale_force) const
 {
     if (symbol == components.total())
         this->calculateForce(mol, rest_of_mol, forces, workspace, scale_force);
-        
-    else if (symbol == components.coulomb())
-        this->calculateCoulombForce(mol, rest_of_mol, forces, workspace, scale_force);
-        
-    else if (symbol == components.lj())
-        this->calculateLJForce(mol, rest_of_mol, forces, workspace, scale_force);
         
     else
         throwMissingForceComponent(symbol, components);
@@ -988,32 +817,30 @@ IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
 
 }
 
-QDataStream& operator<<(QDataStream&, const SireMM::detail::CLJParameter&);
-QDataStream& operator>>(QDataStream&, SireMM::detail::CLJParameter&);
+QDataStream& operator<<(QDataStream&, const SireMM::detail::LJParamID&);
+QDataStream& operator>>(QDataStream&, SireMM::detail::LJParamID&);
 
-template<class CLJPot>
+template<class LJPot>
 QDataStream& operator<<(QDataStream &ds,
-                        const SireMM::CLJPotentialInterface<CLJPot> &cljpot)
+                        const SireMM::LJPotentialInterface<LJPot> &ljpot)
 {
-    ds << static_cast<const CLJPot&>(cljpot);
+    ds << static_cast<const LJPot&>(ljpot);
     return ds;
 }
 
-template<class CLJPot>
+template<class LJPot>
 QDataStream& operator>>(QDataStream &ds,
-                        SireMM::CLJPotentialInterface<CLJPot> &cljpot)
+                        SireMM::LJPotentialInterface<LJPot> &ljpot)
 {
-    ds >> static_cast<CLJPot&>(cljpot);
+    ds >> static_cast<LJPot&>(ljpot);
     return ds;
 }
 
-Q_DECLARE_TYPEINFO( SireMM::detail::CLJParameter, Q_MOVABLE_TYPE );
+Q_DECLARE_TYPEINFO( SireMM::detail::LJParamID, Q_MOVABLE_TYPE );
 
-SIRE_EXPOSE_CLASS( SireMM::ChargeParameterName )
 SIRE_EXPOSE_CLASS( SireMM::LJParameterName )
-SIRE_EXPOSE_CLASS( SireMM::CLJParameterNames )
-SIRE_EXPOSE_CLASS( SireMM::CLJParameterNames3D )
-SIRE_EXPOSE_CLASS( SireMM::ScaledCLJParameterNames3D )
+SIRE_EXPOSE_CLASS( SireMM::LJParameterName3D )
+SIRE_EXPOSE_CLASS( SireMM::ScaledLJParameterNames3D )
 
 SIRE_END_HEADER
 
