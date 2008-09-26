@@ -23,6 +23,7 @@ add_subdirectory (SireStream)
 add_subdirectory (SireSystem)
 add_subdirectory (SireUnits)
 add_subdirectory (SireVol)
+add_subdirectory (Squire)
 
 set ( SIRE_HEADERS
       sireglobal.h

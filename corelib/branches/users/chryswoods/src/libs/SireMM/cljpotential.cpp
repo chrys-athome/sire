@@ -702,7 +702,7 @@ InterCLJPotential::parameterise(const PartialMolecule &molecule,
     return InterCLJPotential::Molecule(molecule, *this, map);
 }
 
-/** Concert the passed group of molecules into InterCLJPotential::Molecules,
+/** Convert the passed group of molecules into InterCLJPotential::Molecules,
     using the supplied PropertyMap to find the properties that contain
     the necessary forcefield parameters in each molecule
     

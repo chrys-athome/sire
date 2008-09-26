@@ -133,9 +133,14 @@ class SIREBASE_EXPORT SparseMatrix
 friend QDataStream& ::operator<<<>(QDataStream&, const SparseMatrix<T>&);
 friend QDataStream& ::operator>><>(QDataStream&, SparseMatrix<T>&);
 
+template<class U> friend class SparseMatrix;
+
 public:
     SparseMatrix(const T &default_value = T(), 
                  bool is_symmetric=false);
+
+    template<class U>
+    SparseMatrix(const SparseMatrix<U> &other);
 
     SparseMatrix(const SparseMatrix<T> &other);
 
@@ -188,6 +193,23 @@ SparseMatrix<T>::SparseMatrix(const T &default_value,
 {
     if (is_symmetric)
         current_state = SYMMETRIC;
+}
+
+/** Construct this SparseMatrix by casting the passed SparseMatrix<U> */
+template<class T>
+template<class U>
+SIRE_OUTOFLINE_TEMPLATE
+SparseMatrix<T>::SparseMatrix(const SparseMatrix<U> &other)
+{
+    current_state = other.current_state;
+    def = T(other.def);
+
+    for (typename QHash<detail::Index,U>::const_iterator it = other.data.constBegin();
+         it != other.data.constEnd();
+         ++it)
+    {
+        data.insert( it.key(), T(it.value()) );
+    }
 }
 
 /** Copy constructor */

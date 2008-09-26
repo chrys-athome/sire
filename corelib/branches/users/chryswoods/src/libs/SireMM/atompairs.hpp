@@ -85,8 +85,13 @@ class SIREMM_EXPORT CGAtomPairs
 friend QDataStream& ::operator<<<>(QDataStream&, const CGAtomPairs<T>&);
 friend QDataStream& ::operator>><>(QDataStream&, CGAtomPairs<T>&);
 
+template<class U> friend class CGAtomPairs;
+
 public:
     CGAtomPairs(const T &default_value = T());
+
+    template<class U>
+    CGAtomPairs(const CGAtomPairs<U> &other);
 
     CGAtomPairs(const CGAtomPairs<T> &other);
 
@@ -128,6 +133,8 @@ class SIREMM_EXPORT AtomPairs : public SireMol::MoleculeProperty
 friend QDataStream& ::operator<<<>(QDataStream&, const AtomPairs<T>&);
 friend QDataStream& ::operator>><>(QDataStream&, AtomPairs<T>&);
 
+template<class U> friend class AtomPairs;
+
 public:
     typedef CGAtomPairs<T> CGPairs;
 
@@ -135,11 +142,14 @@ public:
 
     AtomPairs(const MoleculeInfoData &molinfo, const T &default_value = T());
 
-    AtomPairs(const AtomPairs &other);
+    template<class U>
+    AtomPairs(const AtomPairs<U> &other);
+
+    AtomPairs(const AtomPairs<T> &other);
 
     ~AtomPairs();
 
-    AtomPairs<T>& operator=(const AtomPairs &other);
+    AtomPairs<T>& operator=(const AtomPairs<T> &other);
 
     bool operator==(const AtomPairs<T> &other) const;
     bool operator!=(const AtomPairs<T> &other) const;
@@ -211,6 +221,15 @@ SIRE_OUTOFLINE_TEMPLATE
 CGAtomPairs<T>::CGAtomPairs(const T &default_value)
                : data(default_value)
 {}
+
+/** Construct by casting from a CGAtomPairs<U> */
+template<class T>
+template<class U>
+SIRE_OUTOFLINE_TEMPLATE
+CGAtomPairs<T>::CGAtomPairs(const CGAtomPairs<U> &other)
+{
+    data = SireBase::SparseMatrix<T>(other.data);
+}
 
 /** Copy constructor */
 template<class T>
@@ -339,6 +358,16 @@ SIRE_OUTOFLINE_TEMPLATE
 AtomPairs<T>::AtomPairs(const MoleculeInfoData &info, const T &default_value)
              : molinfo(info), cgpairs( CGAtomPairs<T>(default_value) )
 {}
+
+/** Construct by casting from an AtomPairs<U> */
+template<class T>
+template<class U>
+SIRE_OUTOFLINE_TEMPLATE
+AtomPairs<T>::AtomPairs(const AtomPairs<U> &other)
+{
+    molinfo = other.molinfo;
+    cgpairs = SireBase::SparseMatrix< CGAtomPairs<T> >(other.cgpairs);
+}
 
 /** Copy constructor */
 template<class T>

@@ -18,6 +18,7 @@ set ( SIREMM_HEADERS
       cljcomponent.h
       cljpotential.h
       cljnbpairs.h
+      coulombpotential.h
       errors.h
       fouratomfunctions.h
       intercljff.h
@@ -30,6 +31,7 @@ set ( SIREMM_HEADERS
       ljpair.h
       ljparameter.h
       ljparameterdb.h
+      ljpotential.h
       qhash_siremm.h
       switchingfunction.h
       threeatomfunctions.h
@@ -50,6 +52,7 @@ set ( SIREMM_SOURCES
       cljcomponent.cpp
       cljpotential.cpp
       cljnbpairs.cpp
+      coulombpotential.cpp
       errors.cpp
       fouratomfunctions.cpp
       intercljff.cpp
@@ -62,6 +65,7 @@ set ( SIREMM_SOURCES
       ljpair.cpp
       ljparameter.cpp
       ljparameterdb.cpp
+      ljpotential.cpp
       switchingfunction.cpp
       threeatomfunctions.cpp
       twoatomfunctions.cpp    
