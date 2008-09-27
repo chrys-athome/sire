@@ -316,3 +316,17 @@ bool QMFF::_pvt_wouldChangeProperties(SireMol::MolNum molnum,
 {
     return qmmols.wouldChangeProperties(molnum, map);
 }
+
+/** Return the command file that would be used to calculate the energy
+    of the molecules in this forcefield */
+QString QMFF::energyCommandFile() const
+{
+    return QMPotential::energyCommandFile(qmmols);
+}
+
+/** Return the command file that would be used to calculate the forces
+    on the molecules in this forcefield */
+QString QMFF::forceCommandFile() const
+{
+    return QMPotential::forceCommandFile(qmmols);
+}

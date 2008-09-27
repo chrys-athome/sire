@@ -27,11 +27,13 @@
 \*********************************************/
 
 #include "qmpotential.h"
+#include "qmprogram.h"
 
 #include "SireMol/atomelements.h"
 
 #include "SireError/errors.h"
 #include "SireFF/errors.h"
+#include "SireBase/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -161,6 +163,9 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, QMPotential &qmpot)
         SharedDataStream sds(ds);
         
         sds >> qmpot.props;
+        
+        qmpot.spce = qmpot.props.property("space");
+        qmpot.qmprog = qmpot.props.property("quantum program");
     }
     else
         throw version_error(v, "1", r_qmpot, CODELOC);
@@ -170,11 +175,14 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, QMPotential &qmpot)
 
 /** Constructor */
 QMPotential::QMPotential()
-{}
+{
+    props.setProperty( "space", spce );
+    props.setProperty( "quantum program", qmprog );
+}
 
 /** Copy constructor */
 QMPotential::QMPotential(const QMPotential &other)
-            : props(other.props)
+            : props(other.props), spce(other.spce), qmprog(other.qmprog)
 {}
 
 /** Destructor */
@@ -184,7 +192,12 @@ QMPotential::~QMPotential()
 /** Copy assignment operator */
 QMPotential& QMPotential::operator=(const QMPotential &other)
 {
-    props = other.props;
+    if (this != &other)
+    {
+        props = other.props;
+        spce = other.spce;
+        qmprog = other.qmprog;
+    }
 
     return *this;
 }
@@ -415,8 +428,72 @@ QMPotential::Molecules QMPotential::parameterise(const MolGroup &molecules,
     return QMPotential::Molecules(molecules, *this, map);
 }
 
-bool QMPotential::setProperty(const QString &name, const Property &property)
+/** Return the space within which the molecules in this potential exist */
+const SpaceBase& QMPotential::space() const
 {
+    return spce.read();
+}
+
+/** Return the handle to the quantum chemical program that is used 
+    by this potential to calculate the QM energies and forces */
+const QMProg& QMPotential::quantumProgram() const
+{
+    return qmprog.read();
+}
+
+/** Set the space within which all of the molecules in this potential
+    will exist. This returns whether or not this changes the
+    potential. */
+bool QMPotential::setSpace(const SpaceBase &space)
+{
+    if (space != this->space())
+    {
+        spce = space;
+        this->changedPotential();
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Set the handle to the quantum chemical program that will be
+    used by this potential to calculate the QM energies and forces.
+    This returns whether or not this changes this potential */
+bool QMPotential::setQuantumProgram(const QMProg &program)
+{
+    if (program != this->quantumProgram())
+    {
+        qmprog = program;
+        this->changedPotential();
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Set the property 'name' to the value 'value'. This returns whether
+    or not this changes the potential
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+bool QMPotential::setProperty(const QString &name, const PropertyBase &value)
+{
+    if (name == QLatin1String("space"))
+    {
+        return this->setSpace( value.asA<SpaceBase>() );
+    }
+    else if (name == QLatin1String("quantum program"))
+    {
+        return this->setQuantumProgram( value.asA<QMProg>() );
+    }
+    else
+        throw SireBase::missing_property( QObject::tr(
+            "The QM potential does not have a property called \"%1\" that "
+            "can be changed. Available properties are [ %2 ].")
+                .arg(name, QStringList(props.propertyKeys()).join(", ")), CODELOC );
+                
     return false;
 }
 
@@ -439,6 +516,14 @@ bool QMPotential::containsProperty(const QString &name) const
 const Properties& QMPotential::properties() const
 {
     return props;
+}
+
+/** Map the molecules in 'molecules' into the space for this potential */
+QMPotential::Molecules 
+QMPotential::mapIntoSpace(const QMPotential::Molecules &mols) const
+{
+    #warning Need to write QMPotential::mapIntoSpace()
+    return mols;
 }
 
 /** Calculate the QM forces on the molecules in 'molecules' and add them 
@@ -481,10 +566,30 @@ void QMPotential::calculateEnergy(const QMPotential::Molecules &molecules,
         return;
 
     //map all of the molecules so that they are in this space
-    
+    Molecules mapped_mols = this->mapIntoSpace(molecules);
 
     //now tell the qm_program to calculate the energy that we need
-    double qmnrg = qm_program->calculateEnergy( molecules );
+    double qmnrg = qmprog->calculateEnergy(mapped_mols);
     
     nrg += Energy( scale_energy * qmnrg );
+}
+
+/** Return the command file that would be used to calculate the forces on
+    the molecules in 'molecules' */
+QString QMPotential::forceCommandFile(const QMPotential::Molecules &molecules) const
+{
+    //map all of the molecules so that they are in this space
+    Molecules mapped_mols = this->mapIntoSpace(molecules);
+
+    return qmprog->forceCommandFile(mapped_mols);
+}
+
+/** Return the command file that would be used to calculate the energy of
+    the molecules in 'molecules' */
+QString QMPotential::energyCommandFile(const QMPotential::Molecules &molecules) const
+{
+    //map all of the molecules so that they are in this space
+    Molecules mapped_mols = this->mapIntoSpace(molecules);
+
+    return qmprog->energyCommandFile(mapped_mols);
 }

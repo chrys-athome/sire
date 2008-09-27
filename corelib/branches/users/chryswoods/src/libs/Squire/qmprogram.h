@@ -29,7 +29,22 @@
 #ifndef SQUIRE_QMPROGRAM_H
 #define SQUIRE_QMPROGRAM_H
 
+#include "qmpotential.h"
+
 SIRE_BEGIN_HEADER
+
+namespace Squire
+{
+class QMProg;
+class QMProgram;
+class NullQM;
+}
+
+QDataStream& operator<<(QDataStream&, const Squire::QMProg&);
+QDataStream& operator>>(QDataStream&, Squire::QMProg&);
+
+QDataStream& operator<<(QDataStream&, const Squire::NullQM&);
+QDataStream& operator>>(QDataStream&, Squire::NullQM&);
 
 namespace Squire
 {
@@ -42,16 +57,75 @@ namespace Squire
 */
 class SQUIRE_EXPORT QMProg : public SireBase::PropertyBase
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const QMProg&);
+friend QDataStream& ::operator>>(QDataStream&, QMProg&);
+
+friend class QMPotential; //so it can call the force and energy functions
+
+public:
+    QMProg();
+
+    QMProg(const QMProg &other);
+    
+    virtual ~QMProg();
+    
+    static const char* typeName()
+    {
+        return "Squire::QMProg";
+    }
+    
+    virtual QMProg* clone() const=0;
+    
+protected:
+    /** Calculate and return the QM energy of all of the molecules
+        in 'molecules' */
+    virtual double calculateEnergy(const QMPotential::Molecules &molecules) const=0;
+    
+    /** Return the contents of the command file that would be used
+        to run the QM program to calculate energies */
+    virtual QString energyCommandFile(const QMPotential::Molecules &molecules) const=0;
+    
+    /** Return the contents of the command file that would be used
+        to run the QM program to calculate forces */
+    virtual QString forceCommandFile(const QMPotential::Molecules &molecules) const=0;
 };
 
 /** This is the null QM program that returns zero energy and force */
-class SQUIRE_EXPORT NullQM : public QMProg
+class SQUIRE_EXPORT NullQM 
+        : public SireBase::ConcreteProperty<NullQM,QMProg>
 {
-};
 
-/** Property holder for the QMProgram hierarchy of classes */
-class SQUIRE_EXPORT QMProgram : public SireBase::Property
-{
+friend QDataStream& ::operator<<(QDataStream&, const NullQM&);
+friend QDataStream& ::operator>>(QDataStream&, NullQM&);
+
+public:
+    NullQM();
+    
+    NullQM(const NullQM &other);
+    
+    ~NullQM();
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<NullQM>() );
+    }
+    
+    NullQM* clone() const
+    {
+        return new NullQM(*this);
+    }
+    
+    NullQM& operator=(const NullQM &other);
+    
+    bool operator==(const NullQM &other) const;
+    bool operator!=(const NullQM &other) const;
+    
+protected:
+    double calculateEnergy(const QMPotential::Molecules &molecules) const;
+    
+    QString energyCommandFile(const QMPotential::Molecules &molecules) const;
+    QString forceCommandFile(const QMPotential::Molecules &molecules) const;
 };
 
 }

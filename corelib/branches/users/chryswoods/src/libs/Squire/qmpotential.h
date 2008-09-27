@@ -31,7 +31,10 @@
 
 #include "SireMol/element.h"
 
+#include "SireBase/property.h"
 #include "SireBase/properties.h"
+
+#include "SireVol/space.h"
 
 #include "SireFF/ffcomponent.h"
 
@@ -43,10 +46,14 @@ SIRE_BEGIN_HEADER
 namespace Squire
 {
 class QMPotential;
+class QMProgram;
 }
 
 QDataStream& operator<<(QDataStream&, const Squire::QMPotential&);
 QDataStream& operator>>(QDataStream&, Squire::QMPotential&);
+
+QDataStream& operator<<(QDataStream&, const Squire::QMProgram&);
+QDataStream& operator>>(QDataStream&, Squire::QMProgram&);
 
 namespace SireFF
 {
@@ -63,6 +70,7 @@ namespace Squire
 
 using SireBase::PropertyMap;
 using SireBase::Property;
+using SireBase::PropertyBase;
 using SireBase::Properties;
 
 using SireMol::PartialMolecule;
@@ -70,9 +78,13 @@ using SireMol::MolGroup;
 
 using SireCAS::Symbol;
 
+using SireVol::SpaceBase;
+using SireVol::Space;
+
 using SireFF::ForceTable;
 
 class QMComponent;
+class QMProg;
 
 typedef SireFF::ComponentEnergy<QMComponent> QMEnergy;
 
@@ -150,6 +162,44 @@ public:
     {}
 };
 
+/** Property holder for the QMProgram hierarchy of classes
+
+    @author Christopher Woods
+*/
+class SQUIRE_EXPORT QMProgram : public SireBase::Property
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const QMProgram&);
+friend QDataStream& ::operator>>(QDataStream&, QMProgram&);
+
+public:
+    QMProgram();
+    QMProgram(const SireBase::PropertyBase &property);
+    QMProgram(const QMProg &qmprog);
+    
+    QMProgram(const QMProgram &other);
+    
+    ~QMProgram();
+    
+    virtual QMProgram& operator=(const SireBase::PropertyBase &property);
+    virtual QMProgram& operator=(const QMProg &qmprog);
+
+    const QMProg* operator->() const;
+    const QMProg& operator*() const;
+    
+    const QMProg& read() const;
+    QMProg& edit();
+    
+    const QMProg* data() const;
+    const QMProg* constData() const;
+    
+    QMProg* data();
+    
+    operator const QMProg&() const;
+
+    static const QMProgram& shared_null();
+};
+
 /** This is a QM potential. This provides the classes and code necessary
     to calculate QM energies and forces
     
@@ -197,14 +247,16 @@ public:
 
     QMPotential& operator=(const QMPotential &other);
 
-    bool setProperty(const QString &name, const Property &property);
+    bool setProperty(const QString &name, const PropertyBase &value);
     const Property& property(const QString &name) const;
     bool containsProperty(const QString &name) const;
     const Properties& properties() const;
 
-    void setQMProgram(const QMProgram &program);
+    bool setSpace(const SpaceBase &space);
+    bool setQuantumProgram(const QMProg &program);
     
-    const QMProgram& getQMProgram() const;
+    const SpaceBase& space() const;
+    const QMProg& quantumProgram() const;
 
     QMPotential::Parameters 
     getParameters(const PartialMolecule &mol,
@@ -243,12 +295,23 @@ public:
     void calculateEnergy(const Molecules &molecules, Energy &nrg,
                          double scale_energy=1) const;
 
+    QString forceCommandFile(const Molecules &molecules) const;
+    QString energyCommandFile(const Molecules &molecules) const;
+
 protected:
     virtual void changedPotential()=0;
     
 private:
+    Molecules mapIntoSpace(const Molecules &molecules) const;
+
     /** The properties that define this potential */
     Properties props;
+    
+    /** The space in which the molecules exist */
+    Space spce;
+    
+    /** The QM program that is used to calculate the energy */
+    QMProgram qmprog;
 };
 
 } // end of namespace Squire

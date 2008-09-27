@@ -29,9 +29,20 @@
 #ifndef SQUIRE_MOLPRO_H
 #define SQUIRE_MOLPRO_H
 
+#include <QHash>
+#include <QString>
+
 #include "qmprogram.h"
 
 SIRE_BEGIN_HEADER
+
+namespace Square 
+{
+class Molpro;
+}
+
+QDataStream& operator<<(QDataStream&, const Squire::Molpro&);
+QDataStream& operator>>(QDataStream&, Squire::Molpro&);
 
 namespace Squire
 {
@@ -41,8 +52,88 @@ namespace Squire
     
     @author Christopher Woods
 */
-class SQUIRE_EXPORT Molpro : public QMProg
+class SQUIRE_EXPORT Molpro : public SireBase::ConcreteProperty<Molpro,QMProg>
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const Molpro&);
+friend QDataStream& ::operator>>(QDataStream&, Molpro&);
+
+public:
+    Molpro();
+    
+    Molpro(const Molpro &other);
+    
+    ~Molpro();
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Molpro>() );
+    }
+    
+    Molpro* clone() const
+    {
+        return new Molpro(*this);
+    }
+    
+    Molpro& operator=(const Molpro &other);
+    
+    bool operator==(const Molpro &other) const;
+    bool operator!=(const Molpro &other) const;
+    
+    void setExecutable(const QString &molpro_exe);
+    void setEnvironment(const QString &variable, const QString &value);
+    
+    const QHash<QString,QString>& environment() const;
+    
+    QString environment(const QString &variable) const;
+    
+    void setBasisSet(const QString &basis_set);
+    
+    const QString& basisSet() const;
+    
+    void setMethod(const QString &method);
+    
+    const QString& method() const;
+    
+    void setEnergyTemplate(const QString &energy_template);
+    
+    const QString& energyTemplate() const;
+    
+    void setForceTemplate(const QString &force_template);
+    
+    const QString& forceTemplate() const;
+
+protected:
+    double calculateEnergy(const QMPotential::Molecules &molecules) const;
+    QString energyCommandFile(const QMPotential::Molecules &molecules) const;
+    QString forceCommandFile(const QMPotential::Molecules &molecules) const;
+
+private:
+    QString createCommandFile(QString cmd_template,
+                              const QMPotential::Molecules &molecules) const;
+
+    /** The environmental variables to hold when running Molpro */
+    QHash<QString,QString> env_variables;
+    
+    /** The full path to the molpro executable to run (including
+        any necessary command line arguments) */
+    QString molpro_exe;
+    
+    /** The basis set to use during this calculation */
+    QString basis_set;
+    
+    /** The QM method to use to calculate the energy */
+    QString qm_method;
+    
+    /** The template command file used for the energy calculations.
+        The basis set, QM method and atom coordinates are substituted
+        into this template */
+    QString energy_template;
+    
+    /** The template command file used for the force calculations.
+        The basis set, QM method and atom coordinates are substituted
+        into this template */
+    QString force_template;
 };
 
 }

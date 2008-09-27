@@ -112,6 +112,9 @@ public:
     void force(ForceTable &forcetable, const Symbol &symbol,
                double scale_force=1);
 
+    QString energyCommandFile() const;
+    QString forceCommandFile() const;
+
 protected:
 
     ////
