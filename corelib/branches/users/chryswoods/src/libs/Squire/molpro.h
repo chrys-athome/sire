@@ -26,4 +26,31 @@
   *
 \*********************************************/
 
-#include "qmmmff.h"
+#ifndef SQUIRE_MOLPRO_H
+#define SQUIRE_MOLPRO_H
+
+#include "qmprogram.h"
+
+SIRE_BEGIN_HEADER
+
+namespace Squire
+{
+
+/** This is a wrapper that allows Molpro to be used to calculate
+    QM and QM/MM energies
+    
+    @author Christopher Woods
+*/
+class SQUIRE_EXPORT Molpro : public QMProg
+{
+};
+
+}
+
+Q_DECLARE_METATYPE( Squire::Molpro )
+
+SIRE_EXPOSE_CLASS( Squire::Molpro )
+
+SIRE_END_HEADER
+
+#endif

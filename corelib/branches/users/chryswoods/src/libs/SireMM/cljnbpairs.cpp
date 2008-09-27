@@ -384,6 +384,12 @@ LJNBPairs& LJNBPairs::operator=(const LJNBPairs &other)
     return *this;
 }
 
+/** Copy from a LJNBPairs object */
+LJNBPairs& LJNBPairs::operator=(const CLJNBPairs &cljpairs)
+{
+    return this->operator=( LJNBPairs(cljpairs) );
+}
+
 /** Comparison operator */
 bool LJNBPairs::operator==(const LJNBPairs &other) const
 {

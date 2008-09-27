@@ -152,7 +152,7 @@ const Properties& NullFF::properties() const
 void NullFF::mustNowRecalculateFromScratch()
 {}
 
-const FFComponent& NullFF::_pvt_components() const
+const FFComponent& NullFF::components() const
 {
     throw SireError::invalid_state( QObject::tr(
         "The null forcefield has no components!"), CODELOC );
@@ -401,8 +401,6 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
     SharedDataStream sds(ds);
     
     sds << static_cast<const Property&>(ff);
-
-    #warning Need to save and load ff equations!
     
     return ds;
 }
@@ -418,8 +416,6 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
         SharedDataStream sds(ds);
 
         sds >> static_cast<Property&>(ff);
-
-        #warning Need to save and load ff equations!
     }
     else
         throw version_error(v, "1", r_ff, CODELOC);

@@ -16,6 +16,9 @@ set ( SQUIRE_HEADERS
       qmmmff.h
       qmmmpotential.h
       qmpotential.h
+      qmprogram.h
+
+      molpro.h
     )
 
 set ( SQUIRE_SOURCES
@@ -26,6 +29,9 @@ set ( SQUIRE_SOURCES
       qmmmff.cpp
       qmmmpotential.cpp
       qmpotential.cpp
+      qmprogram.cpp
+
+      molpro.cpp
 
       ${SQUIRE_HEADERS}
     )

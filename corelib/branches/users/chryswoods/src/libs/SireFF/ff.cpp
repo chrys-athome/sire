@@ -74,6 +74,8 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FF &ff)
     
     SharedDataStream sds(ds);
     
+    #warning FF needs to UID registry to stream version number
+    
     sds << ff.uid << ff.versn << ff.ffname << ff.nrg_components
         << ff.isdirty
         << static_cast<const MolGroupsBase&>(ff);
@@ -88,6 +90,8 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FF &ff)
     
     if (v == 1)
     {
+        #warning FF needs to UID registry to stream version number
+
         SharedDataStream sds(ds);
         sds >> ff.uid >> ff.versn >> ff.ffname >> ff.nrg_components
             >> ff.isdirty

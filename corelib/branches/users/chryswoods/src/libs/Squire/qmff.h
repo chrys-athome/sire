@@ -47,6 +47,13 @@ QDataStream& operator>>(QDataStream&, Squire::QMFF&);
 namespace Squire
 {
 
+using SireBase::Property;
+using SireBase::Properties;
+
+using SireFF::ForceTable;
+
+using SireCAS::Symbol;
+
 /** This is a forcefield that uses an external Quantum Chemical program
     to calculate the quantum mechanics energy and / or force on the
     contained molecules.
@@ -54,7 +61,7 @@ namespace Squire
     @author Christopher Woods
 */
 class SQUIRE_EXPORT QMFF : public SireBase::ConcreteProperty<QMFF,SireFF::G1FF>,
-                           public SireFF:FF3D,
+                           public SireFF::FF3D,
                            protected QMPotential
 {
 
@@ -62,6 +69,8 @@ friend QDataStream& ::operator<<(QDataStream&, const QMFF&);
 friend QDataStream& ::operator>>(QDataStream&, QMFF&);
 
 public:
+    typedef QMPotential::Parameters Parameters;
+
     QMFF();
     QMFF(const QString &name);
     
@@ -86,6 +95,11 @@ public:
     
     const Components& components() const;
 
+    Parameters parameters() const
+    {
+        return Parameters();
+    }
+
     bool setProperty(const QString &name, const Property &property);
     const Property& property(const QString &name) const;
     bool containsProperty(const QString &name) const;
@@ -97,13 +111,58 @@ public:
     
     void force(ForceTable &forcetable, const Symbol &symbol,
                double scale_force=1);
+
+protected:
+
+    ////
+    //// Virtual functions from SireFF::FF
+    ////
+
+    const Components& _pvt_components() const;
+    
+    void recalculateEnergy();
+    
+    void _pvt_restore(const SireFF::ForceField &ffield);
+    
+    void _pvt_updateName();
+    
+    ////
+    //// Virtual functions from SireFF::G1FF
+    ////
+
+    void _pvt_added(const SireMol::PartialMolecule &mol, 
+                    const SireBase::PropertyMap&);
+                    
+    void _pvt_removed(const SireMol::PartialMolecule &mol);
+    
+    void _pvt_changed(const SireMol::Molecule &mol);
+    
+    void _pvt_changed(const QList<SireMol::Molecule> &mols);
+    
+    void _pvt_removedAll();
+    
+    bool _pvt_wouldChangeProperties(SireMol::MolNum molnum, 
+                                    const SireBase::PropertyMap &map) const;
+
+    ////
+    //// Virtual functions of QMFF
+    ////
+    
+    void changedPotential();
+
+private:
+    /** The components of the energy */
+    Components ffcomponents;
+    
+    /** All of the molecules in this forcefield */
+    QMPotential::Molecules qmmols;
 };
 
-}
+} // end of namespace Squire
 
-Q_DECLARE_METATYPE( Squire::QMFF );
+Q_DECLARE_METATYPE( Squire::QMFF )
 
-SIRE_EXPORT_CLASS( Squire::QMFF )
+SIRE_EXPOSE_CLASS( Squire::QMFF )
 
 SIRE_END_HEADER
 

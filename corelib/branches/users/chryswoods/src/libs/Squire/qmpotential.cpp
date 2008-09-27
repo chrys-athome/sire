@@ -30,6 +30,9 @@
 
 #include "SireMol/atomelements.h"
 
+#include "SireError/errors.h"
+#include "SireFF/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -139,7 +142,12 @@ static const RegisterMetaType<QMPotential> r_qmpot( MAGIC_ONLY,
 /** Serialise to a binary datastream */
 QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const QMPotential &qmpot)
 {
-    writeHeader(ds, r_qmpot, 0);
+    writeHeader(ds, r_qmpot, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << qmpot.props;
+    
     return ds;
 }
 
@@ -148,8 +156,14 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, QMPotential &qmpot)
 {
     VersionID v = readHeader(ds, r_qmpot);
     
-    if (v != 0)
-        throw version_error(v, "0", r_qmpot, CODELOC);
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> qmpot.props;
+    }
+    else
+        throw version_error(v, "1", r_qmpot, CODELOC);
         
     return ds;
 }
@@ -159,7 +173,8 @@ QMPotential::QMPotential()
 {}
 
 /** Copy constructor */
-QMPotential::QMPotential(const QMPotential&)
+QMPotential::QMPotential(const QMPotential &other)
+            : props(other.props)
 {}
 
 /** Destructor */
@@ -167,8 +182,10 @@ QMPotential::~QMPotential()
 {}
 
 /** Copy assignment operator */
-QMPotential& QMPotential::operator=(const QMPotential&)
+QMPotential& QMPotential::operator=(const QMPotential &other)
 {
+    props = other.props;
+
     return *this;
 }
 
@@ -396,4 +413,78 @@ QMPotential::Molecules QMPotential::parameterise(const MolGroup &molecules,
                                                  const PropertyMap &map)
 {
     return QMPotential::Molecules(molecules, *this, map);
+}
+
+bool QMPotential::setProperty(const QString &name, const Property &property)
+{
+    return false;
+}
+
+/** Return the property of this potential called 'name'
+
+    \throw SireBase::missing_property
+*/
+const Property& QMPotential::property(const QString &name) const
+{
+    return props.property(name);
+}
+
+/** Return whether or not this potential contains a property called 'name' */
+bool QMPotential::containsProperty(const QString &name) const
+{
+    return props.hasProperty(name);
+}
+
+/** Return all of the properties of this potential */
+const Properties& QMPotential::properties() const
+{
+    return props;
+}
+
+/** Calculate the QM forces on the molecules in 'molecules' and add them 
+    onto the forces in the passed force table (scaled by the optional
+    scaling constant 'scale_force') */
+void QMPotential::calculateForce(const QMPotential::Molecules &molecules, 
+                                 ForceTable &forcetable, 
+                                 double scale_force) const
+{
+    throw SireError::incomplete_code( QObject::tr(
+        "Need to write the code to calculate QM forces!!!"), CODELOC );
+}
+                    
+/** Calculate the QM forces on the molecules in 'molecules' and add them 
+    onto the forces in the passed force table (scaled by the optional
+    scaling constant 'scale_force') */
+void QMPotential::calculateForce(const QMPotential::Molecules &molecules, 
+                                 ForceTable &forcetable,
+                                 const Symbol &symbol, 
+                                 const QMPotential::Components &components,
+                                 double scale_force)
+{
+    if (symbol == components.total())
+        this->calculateForce(molecules, forcetable, scale_force);
+        
+    else
+        throw SireFF::missing_component( QObject::tr(
+            "There is no force component in potential %1 - available "
+            "components are %2.")
+                .arg(this->what())
+                .arg(components.total().toString()), CODELOC );
+}
+
+/** Calculate the QM energy of the collection of molecules in 'molecules'
+    and add it onto 'nrg' (scaled by the optional scaling constant 'scale_energy') */
+void QMPotential::calculateEnergy(const QMPotential::Molecules &molecules, 
+                                  QMPotential::Energy &nrg, double scale_energy) const
+{
+    if (scale_energy == 0)
+        return;
+
+    //map all of the molecules so that they are in this space
+    
+
+    //now tell the qm_program to calculate the energy that we need
+    double qmnrg = qm_program->calculateEnergy( molecules );
+    
+    nrg += Energy( scale_energy * qmnrg );
 }

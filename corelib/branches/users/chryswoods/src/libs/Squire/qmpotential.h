@@ -29,6 +29,10 @@
 #ifndef SQUIRE_QMPOTENTIAL_H
 #define SQUIRE_QMPOTENTIAL_H
 
+#include "SireMol/element.h"
+
+#include "SireBase/properties.h"
+
 #include "SireFF/ffcomponent.h"
 
 #include "SireFF/detail/ffmolecules3d.h"
@@ -44,18 +48,29 @@ class QMPotential;
 QDataStream& operator<<(QDataStream&, const Squire::QMPotential&);
 QDataStream& operator>>(QDataStream&, Squire::QMPotential&);
 
-namespace SireMol
+namespace SireFF
 {
-class Element;
+class ForceTable;
+}
+
+namespace SireCAS
+{
+class Symbol;
 }
 
 namespace Squire
 {
 
 using SireBase::PropertyMap;
+using SireBase::Property;
+using SireBase::Properties;
 
 using SireMol::PartialMolecule;
 using SireMol::MolGroup;
+
+using SireCAS::Symbol;
+
+using SireFF::ForceTable;
 
 class QMComponent;
 
@@ -163,29 +178,33 @@ public:
     
     QMPotential(const QMPotential &other);
     
-    ~QMPotential();
-    
-    static const char* typeName()
-    {
-        return "Squire::QMPotential";
-    }
-    
-    const char* what() const
-    {
-        return QMPotential::typeName();
-    }
-
-    QMPotential* clone() const
-    {
-        return new QMPotential(*this);
-    }
+    virtual ~QMPotential();
 
     static ParameterNames parameters()
     {
         return ParameterNames();
     }
 
+    static const char* typeName()
+    {
+        return "Squire::QMPotential";
+    }
+    
+    virtual const char* what() const
+    {
+        return QMPotential::typeName();
+    }
+
     QMPotential& operator=(const QMPotential &other);
+
+    bool setProperty(const QString &name, const Property &property);
+    const Property& property(const QString &name) const;
+    bool containsProperty(const QString &name) const;
+    const Properties& properties() const;
+
+    void setQMProgram(const QMProgram &program);
+    
+    const QMProgram& getQMProgram() const;
 
     QMPotential::Parameters 
     getParameters(const PartialMolecule &mol,
@@ -210,6 +229,26 @@ public:
     QMPotential::Molecules 
     parameterise(const MolGroup &molecules,
                  const PropertyMap &map = PropertyMap());
+
+    void calculateForce(const Molecules &molecules, 
+                        ForceTable &forcetable, 
+                        double scale_force=1) const;
+                        
+    void calculateForce(const Molecules &molecules, 
+                        ForceTable &forcetable,
+                        const Symbol &symbol, 
+                        const Components &components,
+                        double scale_force=1);
+    
+    void calculateEnergy(const Molecules &molecules, Energy &nrg,
+                         double scale_energy=1) const;
+
+protected:
+    virtual void changedPotential()=0;
+    
+private:
+    /** The properties that define this potential */
+    Properties props;
 };
 
 } // end of namespace Squire

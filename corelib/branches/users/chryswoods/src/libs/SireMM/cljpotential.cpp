@@ -556,7 +556,7 @@ void InterCLJPotential::throwMissingForceComponent(const Symbol &symbol,
 {
     throw SireFF::missing_component( QObject::tr(
         "There is no force component in potential %1 - available "
-        "components are %1, %2 and %3.")
+        "components are %2, %3 and %4.")
             .arg(this->what())
             .arg(components.total().toString(), components.coulomb().toString(),
                  components.lj().toString()), CODELOC );

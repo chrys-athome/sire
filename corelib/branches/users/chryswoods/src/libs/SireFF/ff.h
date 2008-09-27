@@ -153,10 +153,7 @@ public:
     /** Return an object that describes all of the components
         of this forcefield (complete with SireCAS::Symbols to 
         uniquely ID each component) */
-    const FFComponent& components() const
-    {
-        return this->_pvt_components();
-    }
+    virtual const FFComponent& components() const=0;
 
     virtual QString toString() const;
 
@@ -284,9 +281,6 @@ protected:
     void setClean();
 
     const Values& currentEnergies() const;
-
-    /** Return the components of the potential of this forcefield */
-    virtual const FFComponent& _pvt_components() const=0;
 
     /** Virtual function used to trigger a recalculation of the total energy
         and of all of the component energies */

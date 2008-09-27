@@ -72,6 +72,8 @@ public:
     {
         return QMetaType::typeName( qMetaTypeId<NullFF>() );
     }
+
+    const FFComponent& components() const;
     
     NullFF& operator=(const NullFF &other);
     
@@ -89,7 +91,6 @@ public:
     void mustNowRecalculateFromScratch();
 
 protected:
-    const FFComponent& _pvt_components() const;
     void recalculateEnergy();
     void group_add(quint32 i, const MoleculeView &molview,
                    const PropertyMap &map);

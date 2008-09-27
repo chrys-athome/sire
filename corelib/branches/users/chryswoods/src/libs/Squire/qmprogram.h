@@ -26,36 +26,43 @@
   *
 \*********************************************/
 
-#ifndef SQUIRE_EFFCOMPONENTS_H
-#define SQUIRE_EFFCOMPONENTS_H
-
-#include "SireFF/ffcomponent.h"
+#ifndef SQUIRE_QMPROGRAM_H
+#define SQUIRE_QMPROGRAM_H
 
 SIRE_BEGIN_HEADER
 
 namespace Squire
 {
-class QMElecKEComponent;
-class QMNucNucComponent;
-class QMNucElecComponent;
-class QMElecElecComponent;
-class QMPauliComponent;
-class QMPauliParallelComponent;
-class QMPauliAntiparallelComponent;
-class EFFComponents;
-}
 
-namespace Squire
-{
-
-/** The Quantum Mechanical kinetic energy of the electrons */
-class SQUIRE_EXPORT QMElecKEComponent : public SireFF::FFComponent
+/** This is the base class of all QM programs. These are wrappers that
+    provide the functionality to calculate QM energies and forces
+    by calling separate QM programs
+    
+    @author Christopher Woods
+*/
+class SQUIRE_EXPORT QMProg : public SireBase::PropertyBase
 {
 };
 
-...
+/** This is the null QM program that returns zero energy and force */
+class SQUIRE_EXPORT NullQM : public QMProg
+{
+};
+
+/** Property holder for the QMProgram hierarchy of classes */
+class SQUIRE_EXPORT QMProgram : public SireBase::Property
+{
+};
 
 }
+
+Q_DECLARE_METATYPE( Squire::QMProgram )
+Q_DECLARE_METATYPE( Squire::NullQM )
+
+SIRE_EXPOSE_CLASS( Squire::QMProg )
+SIRE_EXPOSE_CLASS( Squire::NullQM )
+
+SIRE_EXPOSE_PROPERTY( Squire::QMProgram, Squire::QMProg )
 
 SIRE_END_HEADER
 

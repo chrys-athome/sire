@@ -26,3 +26,293 @@
   *
 \*********************************************/
 
+#include "qmff.h"
+
+#include "SireMol/partialmolecule.h"
+#include "SireMol/molgroup.h"
+
+#include "SireFF/forcetable.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
+using namespace Squire;
+using namespace SireFF;
+using namespace SireMol;
+using namespace SireBase;
+using namespace SireStream;
+
+static const RegisterMetaType<QMFF> r_qmff;
+
+/** Serialise to a binary datastream */
+QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const QMFF &qmff)
+{
+    writeHeader(ds, r_qmff, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << static_cast<const G1FF&>(qmff)
+        << static_cast<const QMPotential&>(qmff)
+        << qmff.qmmols;
+        
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, QMFF &qmff)
+{
+    VersionID v = readHeader(ds, r_qmff);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> static_cast<G1FF&>(qmff)
+            >> static_cast<QMPotential&>(qmff)
+            >> qmff.qmmols;
+
+        qmff._pvt_updateName();
+    }
+    else
+        throw version_error(v, "1", r_qmff, CODELOC);
+        
+    return ds;
+}
+
+/** Construct an empty, unnamed QM forcefield */
+QMFF::QMFF() : ConcreteProperty<QMFF,G1FF>(), FF3D(), QMPotential()
+{
+    this->_pvt_updateName();
+}
+
+/** Construct an empty QM forcefield called 'name' */
+QMFF::QMFF(const QString &name)
+     : ConcreteProperty<QMFF,G1FF>(), FF3D(), QMPotential()
+{
+    FF::setName(name);
+}
+
+/** Copy constructor */
+QMFF::QMFF(const QMFF &other)
+     : ConcreteProperty<QMFF,G1FF>(other), FF3D(other), QMPotential(other),
+       ffcomponents(other.ffcomponents),
+       qmmols(other.qmmols)
+{}
+
+/** Destructor */
+QMFF::~QMFF()
+{}
+
+/** Copy assignment operator */
+QMFF& QMFF::operator=(const QMFF &other)
+{
+    if (this != &other)
+    {
+        G1FF::operator=(other);
+        FF3D::operator=(other);
+        QMPotential::operator=(other);
+
+        ffcomponents = other.ffcomponents;
+        qmmols = other.qmmols;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool QMFF::operator==(const QMFF &other) const
+{
+    return FF::operator==(other);
+}
+
+/** Comparison operator */
+bool QMFF::operator!=(const QMFF &other) const
+{
+    return FF::operator!=(other);
+}
+
+/** Set the property 'name' to the value 'value'
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+bool QMFF::setProperty(const QString &name, const Property &value)
+{
+    return QMPotential::setProperty(name, value);
+}
+
+/** Return the value of the property with name 'name'
+
+    \throw SireBase::missing_property
+*/
+const Property& QMFF::property(const QString &name) const
+{
+    return QMPotential::property(name);
+}
+
+/** Return whether or not this forcefield contains a property
+    called 'name' */
+bool QMFF::containsProperty(const QString &name) const
+{
+    return QMPotential::containsProperty(name);
+}
+
+/** Return the properties available in this forcefield (and their values) */
+const Properties& QMFF::properties() const
+{
+    return QMPotential::properties();
+}
+
+/** Return the energy components available to this forcefield */
+const QMFF::Components& QMFF::components() const
+{
+    return ffcomponents;
+}
+
+/** Trigger a complete recalculation of the QM energy */
+void QMFF::mustNowRecalculateFromScratch()
+{
+    //QM energies are always recalculated from scratch
+    this->setDirty();
+}
+
+/** Function used to tell the forcefield that the underlying QM
+    potential has changed */
+void QMFF::changedPotential()
+{
+    G1FF::incrementVersion();
+    this->mustNowRecalculateFromScratch();
+}
+
+/** Calculate the QM forces on the molecules in this forcefield
+    and add the results to the forces for the molecules contained
+    in the table 'forcetable' - this scales the forces by
+    the optional 'scale_force' */
+void QMFF::force(ForceTable &forcetable, double scale_force)
+{
+    QMPotential::calculateForce(qmmols, forcetable, scale_force);
+}
+
+/** Calculate the QM forces on the molecules in this forcefield
+    and add the results to the forces for the molecules contained
+    in the table 'forcetable' - this scales the forces by
+    the optional 'scale_force' */
+void QMFF::force(ForceTable &forcetable, const Symbol &symbol,
+                 double scale_force)
+{
+    QMPotential::calculateForce(qmmols, forcetable,
+                                symbol, this->components(),
+                                scale_force);
+}
+
+////
+//// Virtual functions from SireFF::FF
+////
+
+/** Recalculate the QM energy */
+void QMFF::recalculateEnergy()
+{
+    //QM energies are always recalculated from scratch
+    QMEnergy nrg(0);
+    QMPotential::calculateEnergy(qmmols, nrg);
+    
+    this->components().setEnergy(*this, nrg);
+    
+    this->setClean();
+}
+
+/** Function used to restore from a QMFF held in a ForceField */
+void QMFF::_pvt_restore(const SireFF::ForceField &ffield)
+{
+    if (not ffield->isA<QMFF>())
+        SireFF::detail::throwForceFieldRestoreBug(this->what(), ffield->what());
+        
+    QMFF::operator=( ffield->asA<QMFF>() );
+}
+
+/** Function used to update the symbols representing the forcefield
+    components whenever the name of the forcefield changes */
+void QMFF::_pvt_updateName()
+{
+    ffcomponents = Components(this->name());
+    G1FF::_pvt_updateName();
+}
+
+////
+//// Virtual functions from SireFF::G1FF
+////
+
+/** Record the fact that the molecule 'mol' has been added to this forcefield 
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void QMFF::_pvt_added(const SireMol::PartialMolecule &molecule, 
+                      const SireBase::PropertyMap &map)
+{
+    //add the molecule (don't record changes as everything
+    //is recalculated from scratch)
+    qmmols.add(molecule, map, *this, false);
+}
+
+/** Record the fact that the molecule 'mol' has been removed from this forcefield */
+void QMFF::_pvt_removed(const SireMol::PartialMolecule &molecule)
+{
+    //remove the molecule, again without recording changes
+    qmmols.remove(molecule, *this, false);
+}
+
+/** Record that fact that the molecule 'molecule' has been changed
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void QMFF::_pvt_changed(const SireMol::Molecule &molecule)
+{
+    //change the molecule, again without recording the change
+    qmmols.change(molecule, *this, false);
+}
+
+/** Record that the provided list of molecules have changed 
+
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error
+*/
+void QMFF::_pvt_changed(const QList<SireMol::Molecule> &mols)
+{
+    QMPotential::Molecules old_mols;
+    
+    try
+    {
+        for (QList<SireMol::Molecule>::const_iterator it = mols.constBegin();
+             it != mols.constEnd();
+             ++it)
+        {
+            qmmols.change(*it, *this, false);
+        }
+    }
+    catch(...)
+    {
+        //restore the state
+        qmmols = old_mols;
+        throw;
+    }
+}
+
+/** Record that all of the molecules have been removed */
+void QMFF::_pvt_removedAll()
+{
+    qmmols.clear();
+}
+
+/** Return whether or not the supplied property map contains different
+    properties for the molecule with number 'molnum' */       
+bool QMFF::_pvt_wouldChangeProperties(SireMol::MolNum molnum, 
+                                      const SireBase::PropertyMap &map) const
+{
+    return qmmols.wouldChangeProperties(molnum, map);
+}

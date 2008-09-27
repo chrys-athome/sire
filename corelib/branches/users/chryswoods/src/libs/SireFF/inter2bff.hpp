@@ -119,8 +119,6 @@ protected:
 
     void recordChange(const ChangedMolecule &change);
 
-    const FFComponent& _pvt_components() const;
-
     void recalculateEnergy();
 
     void changedPotential();
@@ -366,15 +364,6 @@ void Inter2BFF<Potential>::recordChange(
         removed_mols.remove(molnum);
 
     G1FF::setDirty();
-}
-
-/** Virtual function used to return the components of the forcefield
-    (via the FF::components() base class function) */
-template<class Potential>
-SIRE_OUTOFLINE_TEMPLATE
-const FFComponent& Inter2BFF<Potential>::_pvt_components() const
-{
-    return this->components();
 }
 
 /** Virtual function called when the underlying potential energy surface
