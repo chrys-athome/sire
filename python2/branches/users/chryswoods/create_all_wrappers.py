@@ -1,13 +1,20 @@
 
 import os
 
-dirs = [ "CAS", \
+dirs = [ "Base", \
+         "CAS", \
+         "DB", \
          "FF", \
          "ID", \
          "IO", \
          "MM", \
+         "MPI", \
          "Maths", \
          "Mol", \
+         "Move", \
+         "Squire", \
+         "Stream", \
+         "System", \
          "Units", \
          "Vol" ]
 
