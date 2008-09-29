@@ -32,10 +32,29 @@
 
 #include "qmpotential.h"
 
+#include "SireMol/element.h"
+
+#include "SireBase/findexe.h"
+
+#include "SireUnits/units.h"
+
+#include "tostring.h"
+
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace Squire;
+using namespace SireFF;
+using namespace SireMol;
+using namespace SireVol;
+using namespace SireBase;
+using namespace SireUnits;
+using namespace SireStream;
+using namespace SireStream;
 
 static const RegisterMetaType<Molpro> r_molpro;
 
@@ -72,8 +91,28 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, Molpro &molpro)
     return ds;
 }
 
+static const QString default_energy_template =
+       "geomtyp=xyz\n"
+       "geometry={ NOSYM, NOORIENT,\n"
+       "@NUM_QM_ATOMS@  ! number of atoms\n"
+       "This is an auto-generated molpro command file generated using Sire\n"
+       "@QM_COORDS@\n"
+       "}\n\n"
+       "lattice, NUCONLY\n"
+       "BEGIN_DATA\n"
+       "@LATTICE_POINTS@\n"
+       "END\n\n"
+       "basis=@BASIS_SET@\n\n"
+       "@QM_METHOD@;SIRE_FINAL_ENERGY=energy\n";
+
+static const QString default_force_template = "! NEEDS TO BE WRITTEN";
+
 /** Constructor */
-Molpro::Molpro() : ConcreteProperty<Molpro,QMProg>()
+Molpro::Molpro() 
+       : ConcreteProperty<Molpro,QMProg>(),
+         basis_set("vdz"), qm_method("HF"),
+         energy_template(default_energy_template),
+         force_template(default_force_template)
 {}
 
 /** Copy constructor */
@@ -232,6 +271,47 @@ const QString& Molpro::forceTemplate() const
     return force_template;
 }
 
+/** Internal function used to fix the environmental variables of the child
+    Molpro process - this is used to allow the user to override default
+    variables (without requiring them to mess around with bashrc files or the like)
+*/
+void Molpro::fixEnvironment(QProcess &p) const
+{
+    //get the current environment
+    QStringList system_environment = QProcess::systemEnvironment();
+    
+    for (QHash<QString,QString>::const_iterator it = env_variables.constBegin();
+         it != env_variables.constEnd();
+         ++it)
+    {
+        QString envvar = QString("%1=%2").arg(it.key(), it.value());
+        QRegExp regexp( QString("^%1=(.*)").arg(it.key()),
+                        Qt::CaseInsensitive );
+
+        bool found_variable = false;
+        
+        for (QStringList::iterator it2 = system_environment.begin();
+             it2 != system_environment.end();
+             ++it2)
+        {
+            if (it2->contains(regexp))
+            {
+                it2->replace(regexp, envvar);
+                found_variable = true;
+                break;
+            }
+        }
+
+        if (not found_variable)
+            system_environment << QString("%1=%2").arg(it.key(), it.value());
+    }
+    
+    //system_environment is now correct - pass it to the process
+    p.setEnvironment(system_environment);
+}
+
+/** Function used to substitute in the atom and lattice coordinates
+    into the provided molpro command template */
 QString Molpro::createCommandFile(QString cmd_template,
                                   const QMPotential::Molecules &molecules) const
 {
@@ -260,9 +340,32 @@ QString Molpro::createCommandFile(QString cmd_template,
         const QMPotential::Molecule &molecule = molecules_array[i];
         
         //loop through the atoms...
+        const CoordGroupArray &coords = molecule.coordinates();
+        const PackedArray2D<Element> &elements = molecule.parameters().atomicParameters();
         
-        //if the element is not a dummy then add the element and
-        //coordinates to the atom_coords string list
+        int natoms = coords.nCoords();
+        
+        BOOST_ASSERT( natoms == elements.nValues() );
+        
+        const Vector *coords_array = coords.constCoordsData();
+        const Element *elements_array = elements.constValueData();
+        
+        for (int j=0; j<natoms; ++j)
+        {
+            const Element &element = elements_array[j];
+            
+            if (element.nProtons() > 0)
+            {
+                //this is not a dummy atom!
+                const Vector &c = coords_array[j];
+    
+                atom_coords.append( QString("%1,%2,%3,%4")
+                                        .arg(element.symbol(),
+                                             QString::number(c.x(), 'f', 6),
+                                             QString::number(c.y(), 'f', 6),
+                                             QString::number(c.z(), 'f', 6) ) );
+            }
+        }
     }
     
     cmd_template.replace( QLatin1String("@NUM_QM_ATOMS@"),
@@ -278,14 +381,41 @@ QString Molpro::createCommandFile(QString cmd_template,
     molecules in 'molecules' */
 QString Molpro::energyCommandFile(const QMPotential::Molecules &molecules) const
 {
-    return this->createCommandTemplate(energy_template, molecules);
+    return this->createCommandFile(energy_template, molecules);
 }
 
 /** Return the command files that will be used to calculate the forces on the  
     atoms of the molecules in 'molecules' */
 QString Molpro::forceCommandFile(const QMPotential::Molecules &molecules) const
 {
-    return this->createCommandTemplate(force_template, molecules);
+    return this->createCommandFile(force_template, molecules);
+}
+
+/** Extract the energy from the molpro output in 'molpro_output' */
+double Molpro::extractEnergy(const QByteArray &molpro_output) const
+{
+    QRegExp regexp("SIRE_FINAL_ENERGY\\s*=\\s*([-\\d\\.]+)");
+    
+    if (regexp.indexIn( QLatin1String(molpro_output.constData()) ) == -1)
+        throw SireError::process_error( QObject::tr(
+            "Could not find the total energy in the molpro output!\n"
+            "%1").arg( QLatin1String(molpro_output.constData()) ), CODELOC );
+    
+    QString num = regexp.cap(1);
+        
+    bool ok;
+        
+    double nrg = num.toDouble(&ok);
+        
+    if (not ok)
+        throw SireError::process_error( QObject::tr(
+            "The energy obtained from Molpro is garbled (%1) - %2.")
+                .arg(regexp.cap(1), regexp.cap(0)), CODELOC );
+
+    qDebug() << "QM result ==" << nrg << "hartrees";
+        
+    //the energy is in hartrees - convert it to kcal per mol
+    return nrg * hartree;
 }
 
 /** Run Molpro and use it to calculate the energy of the molecules in 
@@ -303,15 +433,28 @@ double Molpro::calculateEnergy(const QMPotential::Molecules &molecules) const
     p.setProcessChannelMode(QProcess::MergedChannels);
     
     //now run Molpro!
-    p.start(molpro_exe);
+    if (molpro_exe.isEmpty())
+    {
+        //the user hasn't specified a molpro executable - try to find one
+        QString found_molpro = SireBase::findExe("molpro").absoluteFilePath();
+        p.start(found_molpro, QIODevice::ReadWrite);
+    }
+    else
+        p.start(molpro_exe, QIODevice::ReadWrite);
     
     if (not p.waitForStarted())
         throw SireError::process_error(molpro_exe, p, CODELOC);
     
     //write in the command file
-    p.write(cmdfile);
+    p.write( cmdfile.toAscii() );
     p.closeWriteChannel();
 
-    //now wait for the job to finish
-    waitForReadyRead(5000);
+    //wait until Molpro has finished
+    if (not p.waitForFinished(-1))
+        throw SireError::process_error(molpro_exe, p, CODELOC);
+        
+    //parse the output to get the energy
+    QByteArray molpro_output = p.readAllStandardOutput();
+    
+    return this->extractEnergy(molpro_output);
 }

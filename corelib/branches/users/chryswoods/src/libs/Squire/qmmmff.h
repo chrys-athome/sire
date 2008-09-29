@@ -29,13 +29,10 @@
 #ifndef SQUIRE_QMMMFF_H
 #define SQUIRE_QMMMFF_H
 
-#include "qmmmpotential.h"
-#include "qmpotential.h"
-
 #include "SireFF/g2ff.h"
 #include "SireFF/ff3d.h"
 
-#include "SireMM/coulombpotential.h"
+#include "qmmmelecembedpotential.h"
 
 SIRE_BEGIN_HEADER
 
@@ -85,7 +82,7 @@ public:
 class SQUIRE_EXPORT QMMMFF
           : public SireBase::ConcreteProperty<QMMMFF,SireFF::G2FF>,
             public SireFF::FF3D,
-            protected QMMMPotential<QMPotential,SireMM::InterCoulombPotential>
+            protected QMMMElecEmbedPotential
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const QMMMFF&);
@@ -93,7 +90,7 @@ friend QDataStream& ::operator>>(QDataStream&, QMMMFF&);
 
 public:
     typedef ChargeElementParameterNames3D Parameters;
-    typedef QMPotential::Components Components;
+    typedef QMMMElecEmbedPotential::Components Components;
 
     QMMMFF();
     QMMMFF(const QString &name);
@@ -136,6 +133,9 @@ public:
     void force(ForceTable &forcetable, const Symbol &symbol,
                double scale_force=1);
 
+    QString energyCommandFile() const;
+    QString forceCommandFile() const;
+
 protected:
 
     ////
@@ -147,8 +147,6 @@ protected:
     ////
     //// Virtual functions from SireFF::FF
     ////
-    
-    const Components& _pvt_components() const;
     
     void recalculateEnergy();
     
@@ -174,6 +172,21 @@ protected:
     bool _pvt_wouldChangeProperties(quint32 group_id, 
                                     SireMol::MolNum molnum, 
                                     const SireBase::PropertyMap &map) const;
+
+private:
+    typedef QMMMElecEmbedPotential::QMMolecules QMMolecules;
+    typedef QMMMElecEmbedPotential::MMMolecules MMMolecules;
+
+    void throwInvalidGroup(int group_id) const;
+
+    /** The energy components of this forcefield */
+    Components ffcomponents;
+    
+    /** The QM molecules */
+    QMMolecules qmmols;
+    
+    /** The MM molecules */
+    MMMolecules mmmols;
 };
 
 } // end of namespace Squire

@@ -290,7 +290,7 @@ QString NullQM::energyCommandFile(const QMPotential::Molecules&) const
 
 /** Return the command file that would be used to calculate the forces on
     the molecules in 'molecules' */
-QString QMPotential::forceCommandFile(const QMPotential::Molecules&) const
+QString NullQM::forceCommandFile(const QMPotential::Molecules&) const
 {
     return QString::null;
 }

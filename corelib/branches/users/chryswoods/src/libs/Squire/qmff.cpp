@@ -36,6 +36,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace Squire;
 using namespace SireFF;
 using namespace SireMol;

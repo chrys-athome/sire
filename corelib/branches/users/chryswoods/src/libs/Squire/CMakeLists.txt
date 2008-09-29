@@ -13,6 +13,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SQUIRE_HEADERS
 
       qmff.h
+      qmmmelecembedpotential.h
       qmmmff.h
       qmmmpotential.h
       qmpotential.h
@@ -26,6 +27,7 @@ set ( SQUIRE_SOURCES
       register_squire.cpp
 
       qmff.cpp
+      qmmmelecembedpotential.cpp
       qmmmff.cpp
       qmmmpotential.cpp
       qmpotential.cpp

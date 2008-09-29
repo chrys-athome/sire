@@ -96,11 +96,6 @@ public:
     
     ~QMMMPotential();
 
-    QMMMPotential<QM,MM>* clone() const
-    {
-        return new QMMMPotential<QM,MM>(*this);
-    }
-
     QMMMPotential<QM,MM>& operator=(const QMMMPotential<QM,MM> &other);
 
     typename QMMMPotential<QM,MM>::QMParameters 
@@ -278,7 +273,7 @@ typename QMMMPotential<QM,MM>::QMMolecules
 QMMMPotential<QM,MM>::parameteriseQM(const MolGroup &molecules,
                                      const PropertyMap &map)
 {
-    return QM::parameteriseQM(molecules, map);
+    return QM::parameterise(molecules, map);
 }
 
 /** Parameterise the passed molecule for the MM part of this potential,

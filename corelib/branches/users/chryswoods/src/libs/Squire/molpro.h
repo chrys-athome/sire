@@ -31,12 +31,13 @@
 
 #include <QHash>
 #include <QString>
+#include <QProcess>
 
 #include "qmprogram.h"
 
 SIRE_BEGIN_HEADER
 
-namespace Square 
+namespace Squire 
 {
 class Molpro;
 }
@@ -105,12 +106,17 @@ public:
 
 protected:
     double calculateEnergy(const QMPotential::Molecules &molecules) const;
+
     QString energyCommandFile(const QMPotential::Molecules &molecules) const;
     QString forceCommandFile(const QMPotential::Molecules &molecules) const;
 
 private:
     QString createCommandFile(QString cmd_template,
                               const QMPotential::Molecules &molecules) const;
+
+    void fixEnvironment(QProcess &p) const;
+
+    double extractEnergy(const QByteArray &molpro_output) const;
 
     /** The environmental variables to hold when running Molpro */
     QHash<QString,QString> env_variables;

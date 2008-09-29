@@ -29,6 +29,8 @@
 #include "qmpotential.h"
 #include "qmprogram.h"
 
+#include "SireFF/ff.h"
+
 #include "SireMol/atomelements.h"
 
 #include "SireError/errors.h"
