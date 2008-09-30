@@ -27,6 +27,9 @@
 \*********************************************/
 
 #include "qmprogram.h"
+#include "latticecharges.h"
+
+#include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -78,6 +81,38 @@ QMProg::QMProg(const QMProg &other) : PropertyBase(other)
 /** Destructor */
 QMProg::~QMProg()
 {}
+
+/** Return the QM energy of the molecules 'molecules' surrounded by the 
+    field of point charges 'lattice_charges' */
+double QMProg::calculateEnergy(const QMPotential::Molecules &molecules,
+                               const LatticeCharges &lattice_charges) const
+{
+    throw SireError::unsupported( QObject::tr(
+        "This QM program (%1) does not support the use of point lattice charges.")
+            .arg(this->what()), CODELOC );
+}
+
+/** Return the command file that would be used to calculate the energy
+    of the molecules in 'molecules' in the field of point charges in
+    'lattice_charges' */
+QString QMProg::energyCommandFile(const QMPotential::Molecules &molecules,
+                                  const LatticeCharges &lattice_charges) const
+{
+    throw SireError::unsupported( QObject::tr(
+        "This QM program (%1) does not support the use of point lattice charges.")
+            .arg(this->what()), CODELOC );
+}
+
+/** Return the command file that would be used to calculate the forces
+    of the molecules in 'molecules' in the field of point charges in
+    'lattice_charges' (and the forces on the charges themselves) */
+QString QMProg::forceCommandFile(const QMPotential::Molecules &molecules,
+                                 const LatticeCharges &lattice_charges) const
+{
+    throw SireError::unsupported( QObject::tr(
+        "This QM program (%1) does not support the use of point lattice charges.")
+            .arg(this->what()), CODELOC );
+}
 
 ///////
 /////// Implementation of QMProgram

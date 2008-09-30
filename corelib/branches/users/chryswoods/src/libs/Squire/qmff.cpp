@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "qmff.h"
+#include "qmprogram.h"
 
 #include "SireMol/partialmolecule.h"
 #include "SireMol/molgroup.h"
@@ -131,6 +132,32 @@ bool QMFF::operator==(const QMFF &other) const
 bool QMFF::operator!=(const QMFF &other) const
 {
     return FF::operator!=(other);
+}
+
+/** Return the space within which the QM molecules exist */
+const SpaceBase& QMFF::space() const
+{
+    return QMPotential::space();
+}
+
+/** Return the QM program that will be used to calculate the 
+    energies and forces on the molecules */
+const QMProg& QMFF::quantumProgram() const
+{
+    return QMPotential::quantumProgram();
+}
+
+/** Set the space within which the QM molecules exist */
+bool QMFF::setSpace(const SpaceBase &space)
+{
+    return QMPotential::setSpace(space);
+}
+
+/** Set the QM program that will be used to calculate the 
+    energies and forces */
+bool QMFF::setQuantumProgram(const QMProg &qmprog)
+{
+    return QMPotential::setQuantumProgram(qmprog);
 }
 
 /** Set the property 'name' to the value 'value'

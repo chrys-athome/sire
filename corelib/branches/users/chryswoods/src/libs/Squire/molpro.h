@@ -34,6 +34,7 @@
 #include <QProcess>
 
 #include "qmprogram.h"
+#include "latticecharges.h"
 
 SIRE_BEGIN_HEADER
 
@@ -104,19 +105,34 @@ public:
     
     const QString& forceTemplate() const;
 
+    bool supportsLatticeCharges() const
+    {
+        return true;
+    }
+
 protected:
     double calculateEnergy(const QMPotential::Molecules &molecules) const;
+    double calculateEnergy(const QMPotential::Molecules &molecules,
+                           const LatticeCharges &lattice_charges) const;
 
     QString energyCommandFile(const QMPotential::Molecules &molecules) const;
+    QString energyCommandFile(const QMPotential::Molecules &molecules,
+                              const LatticeCharges &lattice_charges) const;
+    
     QString forceCommandFile(const QMPotential::Molecules &molecules) const;
+    QString forceCommandFile(const QMPotential::Molecules &molecules,
+                             const LatticeCharges &lattice_charges) const;
 
 private:
     QString createCommandFile(QString cmd_template,
-                              const QMPotential::Molecules &molecules) const;
+                        const QMPotential::Molecules &molecules,
+                        const LatticeCharges &lattice_charges = LatticeCharges()) const;
 
     void fixEnvironment(QProcess &p) const;
 
     double extractEnergy(const QByteArray &molpro_output) const;
+
+    double calculateEnergy(const QString &cmd_file) const;
 
     /** The environmental variables to hold when running Molpro */
     QHash<QString,QString> env_variables;

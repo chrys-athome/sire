@@ -100,6 +100,12 @@ public:
         return Parameters();
     }
 
+    const SpaceBase& space() const;
+    const QMProg& quantumProgram() const;
+    
+    bool setSpace(const SpaceBase &space);
+    bool setQuantumProgram(const QMProg &qmprog);
+
     bool setProperty(const QString &name, const Property &property);
     const Property& property(const QString &name) const;
     bool containsProperty(const QString &name) const;

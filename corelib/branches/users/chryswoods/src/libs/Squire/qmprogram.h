@@ -49,6 +49,10 @@ QDataStream& operator>>(QDataStream&, Squire::NullQM&);
 namespace Squire
 {
 
+class LatticeCharges;
+
+class QMMMElecEmbedPotential;
+
 /** This is the base class of all QM programs. These are wrappers that
     provide the functionality to calculate QM energies and forces
     by calling separate QM programs
@@ -61,7 +65,8 @@ class SQUIRE_EXPORT QMProg : public SireBase::PropertyBase
 friend QDataStream& ::operator<<(QDataStream&, const QMProg&);
 friend QDataStream& ::operator>>(QDataStream&, QMProg&);
 
-friend class QMPotential; //so it can call the force and energy functions
+friend class QMPotential;            //so it can call the force and energy functions
+friend class QMMMElecEmbedPotential; //so it can call the force and energy functions
 
 public:
     QMProg();
@@ -77,18 +82,41 @@ public:
     
     virtual QMProg* clone() const=0;
     
+    /** Return whether or not this QM program supports the use
+        of point lattice charges (which can polarise the QM wavefunction) */
+    virtual bool supportsLatticeCharges() const
+    {
+        return false;
+    }
+    
+    /** Return whether or not this QM program supports the use
+        of gaussian lattice charges (which can polarise the QM wavefunction) */
+    virtual bool supportsGaussianCharges() const
+    {
+        return false;
+    }
+    
 protected:
     /** Calculate and return the QM energy of all of the molecules
         in 'molecules' */
     virtual double calculateEnergy(const QMPotential::Molecules &molecules) const=0;
+
+    virtual double calculateEnergy(const QMPotential::Molecules &molecules,
+                                   const LatticeCharges &lattice_charges) const;
     
     /** Return the contents of the command file that would be used
         to run the QM program to calculate energies */
     virtual QString energyCommandFile(const QMPotential::Molecules &molecules) const=0;
+
+    virtual QString energyCommandFile(const QMPotential::Molecules &molecules,
+                                      const LatticeCharges &lattice_charges) const;
     
     /** Return the contents of the command file that would be used
         to run the QM program to calculate forces */
     virtual QString forceCommandFile(const QMPotential::Molecules &molecules) const=0;
+
+    virtual QString forceCommandFile(const QMPotential::Molecules &molecules,
+                                     const LatticeCharges &lattice_charges) const;
 };
 
 /** This is the null QM program that returns zero energy and force */

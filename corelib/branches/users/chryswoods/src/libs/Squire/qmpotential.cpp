@@ -451,6 +451,7 @@ bool QMPotential::setSpace(const SpaceBase &space)
     if (space != this->space())
     {
         spce = space;
+        props.setProperty("space", spce);
         this->changedPotential();
         return true;
     }
@@ -466,6 +467,7 @@ bool QMPotential::setQuantumProgram(const QMProg &program)
     if (program != this->quantumProgram())
     {
         qmprog = program;
+        props.setProperty("quantum program", qmprog);
         this->changedPotential();
         return true;
     }

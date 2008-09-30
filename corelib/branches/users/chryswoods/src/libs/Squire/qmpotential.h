@@ -85,6 +85,7 @@ using SireFF::ForceTable;
 
 class QMComponent;
 class QMProg;
+class LatticeCharges;
 
 typedef SireFF::ComponentEnergy<QMComponent> QMEnergy;
 
@@ -300,10 +301,10 @@ public:
 
 protected:
     virtual void changedPotential()=0;
+
+    Molecules mapIntoSpace(const Molecules &molecules) const;
     
 private:
-    Molecules mapIntoSpace(const Molecules &molecules) const;
-
     /** The properties that define this potential */
     Properties props;
     

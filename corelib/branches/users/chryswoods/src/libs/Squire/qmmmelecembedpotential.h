@@ -33,7 +33,7 @@
 
 #include "qmpotential.h"
 
-#include "SireMM/intercoulombff.h"
+#include "SireMM/coulombpotential.h"
 
 SIRE_BEGIN_HEADER
 
@@ -47,6 +47,9 @@ QDataStream& operator>>(QDataStream&, Squire::QMMMElecEmbedPotential&);
 
 namespace Squire
 {
+
+using SireMM::SwitchFunc;
+using SireVol::Space;
 
 /** This is a QM/MM potential that uses electrostatic embedding to 
     allow the MM point charges to polarise the QM wavefunction
@@ -86,11 +89,44 @@ public:
     bool containsProperty(const QString &name) const;
     const Properties& properties() const;
 
+    bool setSpace(const SpaceBase &space);
+    bool setSwitchingFunction(const SwitchFunc &switchfunc);
+    bool setQuantumProgram(const QMProg &program);
+    
+    const SpaceBase& space() const;
+    const SwitchFunc& switchingFunction() const;
+    const QMProg& quantumProgram() const;
+
+    void calculateForce(const QMMolecules &qmmols, 
+                        const MMMolecules &mmmols,
+                        ForceTable &forcetable, 
+                        double scale_force=1) const;
+                        
+    void calculateForce(const QMMolecules &qmmols,
+                        const MMMolecules &mmmols, 
+                        ForceTable &forcetable,
+                        const Symbol &symbol, 
+                        const Components &components,
+                        double scale_force=1) const;
+    
+    void calculateEnergy(const QMMolecules &qmmols, 
+                         const MMMolecules &mmmols,
+                         Energy &nrg, double scale_energy=1) const;
+
     QString energyCommandFile(const QMMolecules &qmmols,
                               const MMMolecules &mmmols) const;
                               
     QString forceCommandFile(const QMMolecules &qmmols,
                              const MMMolecules &mmmols) const;
+
+private:
+    LatticeCharges getLatticeCharges(const QMMolecules &qmmols,
+                                     const MMMolecules &mmmols) const;
+
+    void mergeProperties();
+
+    /** The properties that define this potential */
+    Properties props;
 };
 
 }

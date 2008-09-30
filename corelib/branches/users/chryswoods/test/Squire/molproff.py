@@ -16,9 +16,21 @@ import os
 timer = QTime()
 
 #read in all of the molecules
-print "Loading the molecules..."
+print "Loading and parameterising the molecules..."
 timer.start()
 mols = PDB().read("test/io/water.pdb")
+
+mol = mols.moleculeAt(0).molecule()
+
+mol = mol.edit().atom( AtomName("H01") ) \
+                    .setProperty("charge", 0.520 * mod_electron).molecule() \
+                .atom( AtomName("H02") ) \
+                    .setProperty("charge", 0.520 * mod_electron).molecule() \
+                .atom( AtomName("M03") ) \
+                    .setProperty("charge", -1.04 * mod_electron).molecule() \
+         .commit()
+
+charges = mol.property("charge")
 
 ms = timer.elapsed()
 print "... took %d ms" % ms
@@ -46,3 +58,20 @@ qmff.setProperty("quantum program", molpro)
 qmff.add(mols.moleculeAt(0))
 
 print qmff.energy()
+
+qmmmff = QMMMFF("qmmmff")
+
+qmmmff.setProperty("space", space)
+qmmmff.setProperty("quantum program", molpro)
+
+qmmmff.add(mols.moleculeAt(0), MGIdx(0))
+
+for i in range(1, mols.nMolecules()):
+    mol = mols.moleculeAt(i).molecule()
+
+    mol = mol.edit().setProperty("charge", charges) \
+             .commit()
+
+    qmmmff.add(mol, MGIdx(1))
+
+print qmmmff.energy()

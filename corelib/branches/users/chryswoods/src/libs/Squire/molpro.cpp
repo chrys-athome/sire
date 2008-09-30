@@ -29,8 +29,8 @@
 #include <QProcess>
 
 #include "molpro.h"
-
 #include "qmpotential.h"
+#include "latticecharges.h"
 
 #include "SireMol/element.h"
 
@@ -314,7 +314,8 @@ void Molpro::fixEnvironment(QProcess &p) const
 /** Function used to substitute in the atom and lattice coordinates
     into the provided molpro command template */
 QString Molpro::createCommandFile(QString cmd_template,
-                                  const QMPotential::Molecules &molecules) const
+                                  const QMPotential::Molecules &molecules,
+                                  const LatticeCharges &lattice_charges) const
 {
     //replace the easy things...
     cmd_template.replace( QLatin1String("@BASIS_SET@"), 
@@ -322,13 +323,17 @@ QString Molpro::createCommandFile(QString cmd_template,
     
     cmd_template.replace( QLatin1String("@QM_METHOD@"),
                           qm_method, Qt::CaseInsensitive );
+
+    if (lattice_charges.isEmpty())
+    {
+        //there are no lattice charges
+        cmd_template.replace( QLatin1String("@NUM_LATTICE_POINTS@"),
+                              QString::number(0), Qt::CaseInsensitive );
                           
-    cmd_template.replace( QLatin1String("@NUM_LATTICE_POINTS@"),
-                          QString::number(0), Qt::CaseInsensitive );
-                          
-    cmd_template.replace( QLatin1String("@LATTICE_POINTS@"),
-                          QLatin1String(" "), Qt::CaseInsensitive );
-                          
+        cmd_template.replace( QLatin1String("@LATTICE_POINTS@"),
+                              QLatin1String(" "), Qt::CaseInsensitive );
+    }
+                  
     //now build the list of all of the atoms
     QStringList atom_coords;
     
@@ -362,9 +367,9 @@ QString Molpro::createCommandFile(QString cmd_template,
     
                 atom_coords.append( QString("%1,%2,%3,%4")
                                         .arg(element.symbol(),
-                                             QString::number(c.x(), 'f', 6),
-                                             QString::number(c.y(), 'f', 6),
-                                             QString::number(c.z(), 'f', 6) ) );
+                                             QString::number(c.x(), 'f', 8),
+                                             QString::number(c.y(), 'f', 8),
+                                             QString::number(c.z(), 'f', 8) ) );
             }
         }
     }
@@ -374,7 +379,35 @@ QString Molpro::createCommandFile(QString cmd_template,
                           
     cmd_template.replace( QLatin1String("@QM_COORDS@"),
                           atom_coords.join("\n"), Qt::CaseInsensitive );
+    
+    //put the lattice charges in now (as they can make the command
+    //file *very* large)
+    if (not lattice_charges.isEmpty())
+    {
+        int ncharges = lattice_charges.nCharges();
+        const LatticeCharge *charges_array = lattice_charges.constData();
+        
+        QStringList charges;
+        
+        for (int i=0; i<ncharges; ++i)
+        {
+            const LatticeCharge &charge = charges_array[i];
+        
+            if (charge.charge() != 0)
+                charges.append( QString("%1,%2,%3,%4")
+                                    .arg(QString::number(charge.x(), 'f', 8),
+                                         QString::number(charge.y(), 'f', 8),
+                                         QString::number(charge.z(), 'f', 8),
+                                         QString::number(charge.charge(), 'f', 8) ) );
+        }
+        
+        cmd_template.replace( QLatin1String("@NUM_LATTICE_POINTS@"),
+                              QString::number(charges.count()), Qt::CaseInsensitive );
                           
+        cmd_template.replace( QLatin1String("@LATTICE_POINTS@"),
+                              charges.join("\n"), Qt::CaseInsensitive );
+    }
+                                                                      
     return cmd_template;
 }
 
@@ -385,11 +418,29 @@ QString Molpro::energyCommandFile(const QMPotential::Molecules &molecules) const
     return this->createCommandFile(energy_template, molecules);
 }
 
+/** Return the command file that will be used to calculate the energy of the 
+    molecules in 'molecules' in the field of point charges in 'lattice_charges' */
+QString Molpro::energyCommandFile(const QMPotential::Molecules &molecules,
+                                  const LatticeCharges &lattice_charges) const
+{
+    return this->createCommandFile(energy_template, molecules, lattice_charges);
+}
+
 /** Return the command files that will be used to calculate the forces on the  
     atoms of the molecules in 'molecules' */
 QString Molpro::forceCommandFile(const QMPotential::Molecules &molecules) const
 {
     return this->createCommandFile(force_template, molecules);
+}
+
+/** Return the command files that will be used to calculate the forces on the  
+    atoms of the molecules in 'molecules' in the field of point charges
+    in 'lattice_charges' - this also calculates the forces on those
+    point charges */
+QString Molpro::forceCommandFile(const QMPotential::Molecules &molecules,
+                                 const LatticeCharges &lattice_charges) const
+{
+    return this->createCommandFile(force_template, molecules, lattice_charges);
 }
 
 /** Extract the energy from the molpro output in 'molpro_output' */
@@ -417,13 +468,11 @@ double Molpro::extractEnergy(const QByteArray &molpro_output) const
     return nrg * hartree;
 }
 
-/** Run Molpro and use it to calculate the energy of the molecules in 
-    'molecules'. This blocks until Molpro has completed */
-double Molpro::calculateEnergy(const QMPotential::Molecules &molecules) const
+/** Return the energy calculate according to the Molpro command
+    file 'cmd_file' (this is the contents of the file, not
+    the path to the file) */
+double Molpro::calculateEnergy(const QString &cmdfile) const
 {
-    //create the command file to be used by Molpro
-    QString cmdfile = this->energyCommandFile(molecules);
-    
     //now set up the Molpro process
     QProcess p;
     this->fixEnvironment(p);
@@ -467,4 +516,25 @@ double Molpro::calculateEnergy(const QMPotential::Molecules &molecules) const
     QByteArray molpro_output = p.readAllStandardOutput();
     
     return this->extractEnergy(molpro_output);
+}
+
+/** Run Molpro and use it to calculate the energy of the molecules in 
+    'molecules'. This blocks until Molpro has completed */
+double Molpro::calculateEnergy(const QMPotential::Molecules &molecules) const
+{
+    //create the command file to be used by Molpro
+    QString cmdfile = this->energyCommandFile(molecules);
+    
+    return this->calculateEnergy(cmdfile);
+}
+
+/** Calculate the Molpro QM energy of the molecules in 'molecules'
+    in the field of point charges in 'lattice_charges' */
+double Molpro::calculateEnergy(const QMPotential::Molecules &molecules,
+                               const LatticeCharges &lattice_charges) const
+{
+    //create the command file to be used by Molpro
+    QString cmdfile = this->energyCommandFile(molecules, lattice_charges);
+    
+    return this->calculateEnergy(cmdfile);
 }

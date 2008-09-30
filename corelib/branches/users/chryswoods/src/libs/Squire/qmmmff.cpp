@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "qmmmff.h"
+#include "qmprogram.h"
 
 #include "SireError/errors.h"
 
@@ -144,6 +145,46 @@ const QMMMFF::Components& QMMMFF::components() const
     return ffcomponents;
 }
 
+/** Return the space within which the QM molecules exist */
+const SpaceBase& QMMMFF::space() const
+{
+    return QMMMElecEmbedPotential::space();
+}
+
+/** Return the switching function used to provide the nonbonded cutoff
+    between the QM and MM regions */
+const SwitchFunc& QMMMFF::switchingFunction() const
+{
+    return QMMMElecEmbedPotential::switchingFunction();
+}
+
+/** Return the QM program that will be used to calculate the 
+    energies and forces on the molecules */
+const QMProg& QMMMFF::quantumProgram() const
+{
+    return QMMMElecEmbedPotential::quantumProgram();
+}
+
+/** Set the space within which the QM molecules exist */
+bool QMMMFF::setSpace(const SpaceBase &space)
+{
+    return QMMMElecEmbedPotential::setSpace(space);
+}
+
+/** Set the switching function used to provide the 
+    cutoff between the QM and MM regions */
+bool QMMMFF::setSwitchingFunction(const SwitchFunc &switchfunc)
+{
+    return QMMMElecEmbedPotential::setSwitchingFunction(switchfunc);
+}
+
+/** Set the QM program that will be used to calculate the 
+    energies and forces */
+bool QMMMFF::setQuantumProgram(const QMProg &qmprog)
+{
+    return QMMMElecEmbedPotential::setQuantumProgram(qmprog);
+}
+
 /** Set the property 'name' to the value 'value'
 
     \throw SireBase::missing_property
@@ -189,10 +230,7 @@ void QMMMFF::mustNowRecalculateFromScratch()
     the optional 'scale_force' */
 void QMMMFF::force(ForceTable &forcetable, double scale_force)
 {
-    //QMMMElecEmbedPotential::calculateForce(qmmols, mmmols,
-    //                                       forcetable, scale_force);
-
-    throw SireError::incomplete_code( QObject::tr("Need QM/MM forces!"), CODELOC );
+    QMMMElecEmbedPotential::calculateForce(qmmols, mmmols, forcetable, scale_force);
 }
 
 /** Calculate the QM/MM forces on the molecules in this forcefield
@@ -202,12 +240,10 @@ void QMMMFF::force(ForceTable &forcetable, double scale_force)
 void QMMMFF::force(ForceTable &forcetable, const Symbol &symbol,
                    double scale_force)
 {
-    //QMMMElecEmbedPotential::calculateForce(qmmols, mmmols,
-    //                                       forcetable, symbol
-    //                                       this->components(),
-    //                                       scale_force);
-
-    throw SireError::incomplete_code( QObject::tr("Need QM/MM forces!"), CODELOC );
+    QMMMElecEmbedPotential::calculateForce(qmmols, mmmols,
+                                           forcetable, symbol,
+                                           this->components(),
+                                           scale_force);
 }
 
 /** This function is called whenever the underlying potential is changed */
@@ -227,7 +263,7 @@ void QMMMFF::recalculateEnergy()
     //QM/MM energies are always recalculated from scratch
     QMEnergy nrg(0);
 
-    //QMMMElecEmbedPotential::calculateEnergy(qmmols, mmmols, nrg);
+    QMMMElecEmbedPotential::calculateEnergy(qmmols, mmmols, nrg);
     
     this->components().setEnergy(*this, nrg);
     
