@@ -35,6 +35,7 @@ set ( SIREBASE_HEADERS
       sharedpolypointer_cast.hpp
       sparsematrix.hpp
       stringmangler.h
+      tempdir.h
     )
 
 # Define the sources in SireBase
@@ -53,7 +54,8 @@ set ( SIREBASE_SOURCES
       propertymap.cpp
       sharedpolypointer.cpp
       stringmangler.cpp     
- 
+      tempdir.cpp 
+
       ${SIREBASE_HEADERS}
     )
 

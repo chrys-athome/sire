@@ -411,8 +411,6 @@ double Molpro::extractEnergy(const QByteArray &molpro_output) const
         throw SireError::process_error( QObject::tr(
             "The energy obtained from Molpro is garbled (%1) - %2.")
                 .arg(regexp.cap(1), regexp.cap(0)), CODELOC );
-
-    qDebug() << "QM result ==" << nrg << "hartrees";
         
     //the energy is in hartrees - convert it to kcal per mol
     return nrg * hartree;
