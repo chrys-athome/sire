@@ -37,7 +37,11 @@ switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
 qmff = QMFF("QMFF")
 
 qmff.setProperty("space", space)
-qmff.setProperty("quantum program", Molpro())
+
+molpro = Molpro()
+molpro.setEnvironment("TMPDIR", "/Users/chris/tmp")
+
+qmff.setProperty("quantum program", molpro)
 
 qmff.add(mols.moleculeAt(0))
 

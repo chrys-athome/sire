@@ -432,7 +432,12 @@ double Molpro::calculateEnergy(const QMPotential::Molecules &molecules) const
     p.setProcessChannelMode(QProcess::MergedChannels);
 
     //create a temporary directory in which to run Molpro
-    TempDir tmpdir;
+    QString tmppath = env_variables.value("TMPDIR");
+    
+    if (tmppath.isEmpty())
+        tmppath = QDir::temp().absolutePath();
+
+    TempDir tmpdir(tmppath);
     p.setWorkingDirectory(tmpdir.path());
     
     //now run Molpro!
