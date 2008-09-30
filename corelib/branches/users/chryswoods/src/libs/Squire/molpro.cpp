@@ -34,6 +34,7 @@
 
 #include "SireMol/element.h"
 
+#include "SireBase/tempdir.h"
 #include "SireBase/findexe.h"
 
 #include "SireUnits/units.h"
@@ -429,16 +430,22 @@ double Molpro::calculateEnergy(const QMPotential::Molecules &molecules) const
     
     //merge the stdout and stderr channels
     p.setProcessChannelMode(QProcess::MergedChannels);
+
+    //create a temporary directory in which to run Molpro
+    TempDir tmpdir;
+    p.setWorkingDirectory(tmpdir.path());
     
     //now run Molpro!
     if (molpro_exe.isEmpty())
     {
         //the user hasn't specified a molpro executable - try to find one
         QString found_molpro = SireBase::findExe("molpro").absoluteFilePath();
-        p.start(found_molpro, QIODevice::ReadWrite);
+        p.start(QString("%1 -d %2").arg(found_molpro, tmpdir.path()), 
+                QIODevice::ReadWrite);
     }
     else
-        p.start(molpro_exe, QIODevice::ReadWrite);
+        p.start(QString("%1 -d %2").arg(molpro_exe, tmpdir.path()), 
+                QIODevice::ReadWrite);
     
     if (not p.waitForStarted())
         throw SireError::process_error(molpro_exe, p, CODELOC);

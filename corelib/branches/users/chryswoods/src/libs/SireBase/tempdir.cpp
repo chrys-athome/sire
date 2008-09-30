@@ -31,6 +31,8 @@
 
 #include "tempdir.h"
 
+#include "tostring.h"
+
 #include "SireError/errors.h"
 
 #include <QDebug>
@@ -64,8 +66,6 @@ void TempDir::createDirectory(const QString &temp_root)
         this->createDirectory(temp_root);
     }
     
-    qDebug() << "Creating" << dirname;
-    
     if (not tmpdir.mkdir(dirname))
         throw SireError::file_error( QObject::tr(
             "Could not create the temporary directory \"%1\". Please "
@@ -90,41 +90,34 @@ TempDir::TempDir(const QString &temp_root)
 
 static void removeDirectory(QDir &dir)
 {
-    QDir remove_dir(dir.absolutePath());
-
-    qDebug() << remove_dir.absolutePath() << remove_dir.isReadable() << remove_dir.isAbsolute();
-
     //get the list of all files in this directory
-    //(except . and ..)
-    QFileInfoList files = remove_dir.entryInfoList( QDir::NoDotAndDotDot );
+    // ( cannot use NoDotAndDotDot as this doesn't work on my mac)
+    QStringList files = dir.entryList();
     
-    qDebug() << files.count();
-    
-    foreach (const QFileInfo &file, files)
+    foreach (const QString &filename, files)
     {
-        qDebug() << file.absoluteFilePath();
+        if (filename == "." or filename == "..")
+            continue;
     
-        if (file.isDir())
+        if (not dir.exists(filename))
+            continue;
+       
+        QFileInfo fileinfo( dir.absoluteFilePath(filename) );
+    
+        if ( fileinfo.isDir() )
         {
             //remove this directory
-            QDir subdir( file.absoluteFilePath() );
-
-            qDebug() << "Recursively removing" << file.absoluteFilePath();
+            QDir subdir( fileinfo.absoluteFilePath() );
             ::removeDirectory(subdir);
         }
         else
         {
-            //remove this file
-            QFile f(file.absoluteFilePath());
-            
-            qDebug() << "Removing file" << file.absoluteFilePath();
-            f.remove();
+            dir.remove(filename);
         }
     }
     
     //now remove this directory
-    qDebug() << "Directory empty - removing" << dir.absolutePath();
-    remove_dir.rmdir(remove_dir.absolutePath());
+    dir.rmdir(dir.absolutePath());
 }
 
 /** The destructor deletes the temporary directory and
