@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include <QProcess>
+#include <QTime>
 
 #include "molpro.h"
 #include "qmpotential.h"
@@ -317,6 +318,9 @@ QString Molpro::createCommandFile(QString cmd_template,
                                   const QMPotential::Molecules &molecules,
                                   const LatticeCharges &lattice_charges) const
 {
+    QTime t;
+    t.start();
+
     //replace the easy things...
     cmd_template.replace( QLatin1String("@BASIS_SET@"), 
                           basis_set, Qt::CaseInsensitive );
@@ -407,7 +411,10 @@ QString Molpro::createCommandFile(QString cmd_template,
         cmd_template.replace( QLatin1String("@LATTICE_POINTS@"),
                               charges.join("\n"), Qt::CaseInsensitive );
     }
-                                                                      
+
+    int ms = t.elapsed();
+    qDebug() << "Writing the command file took" << ms << "ms";
+                                       
     return cmd_template;
 }
 
@@ -446,6 +453,9 @@ QString Molpro::forceCommandFile(const QMPotential::Molecules &molecules,
 /** Extract the energy from the molpro output in 'molpro_output' */
 double Molpro::extractEnergy(const QByteArray &molpro_output) const
 {
+    QTime t;
+    t.start();
+
     QRegExp regexp("SIRE_FINAL_ENERGY\\s*=\\s*([-\\d\\.]+)");
     
     if (regexp.indexIn( QLatin1String(molpro_output.constData()) ) == -1)
@@ -463,6 +473,9 @@ double Molpro::extractEnergy(const QByteArray &molpro_output) const
         throw SireError::process_error( QObject::tr(
             "The energy obtained from Molpro is garbled (%1) - %2.")
                 .arg(regexp.cap(1), regexp.cap(0)), CODELOC );
+
+    int ms = t.elapsed();
+    qDebug() << "Parsing output took" << ms << "ms";
         
     //the energy is in hartrees - convert it to kcal per mol
     return nrg * hartree;
@@ -473,6 +486,9 @@ double Molpro::extractEnergy(const QByteArray &molpro_output) const
     the path to the file) */
 double Molpro::calculateEnergy(const QString &cmdfile) const
 {
+    QTime t;
+    t.start();
+
     //now set up the Molpro process
     QProcess p;
     this->fixEnvironment(p);
@@ -505,15 +521,35 @@ double Molpro::calculateEnergy(const QString &cmdfile) const
         throw SireError::process_error(molpro_exe, p, CODELOC);
     
     //write in the command file
+    int ms = t.elapsed();
+    qDebug() << "To start process took" << ms << "ms";
+    t.start();
+    
     p.write( cmdfile.toAscii() );
+    
+    ms += t.elapsed();
+    qDebug() << "To finish writing command file took" << ms << "ms";
+    t.start();
+    
     p.closeWriteChannel();
+
+    ms += t.elapsed();
+    qDebug() << "To close write channel took" << ms << "ms";
+    t.start();
 
     //wait until Molpro has finished
     if (not p.waitForFinished(-1))
         throw SireError::process_error(molpro_exe, p, CODELOC);
         
+    ms += t.elapsed();
+    qDebug() << "To finish molpro took" << ms << "ms";
+    t.start();
+        
     //parse the output to get the energy
     QByteArray molpro_output = p.readAllStandardOutput();
+    
+    ms += t.elapsed();
+    qDebug() << "To read all output took" << ms << "ms";
     
     return this->extractEnergy(molpro_output);
 }

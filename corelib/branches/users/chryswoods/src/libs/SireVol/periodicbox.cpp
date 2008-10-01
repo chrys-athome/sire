@@ -83,9 +83,49 @@ QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, PeriodicBox &box)
     return ds;
 }
 
+/** This is the maximum dimension of the box (so that .volume() doesn't overflow) */
+const Vector max_boxlength( std::pow(0.4 * std::numeric_limits<double>::max(),
+                                     1.0/3.0) );
+
+/** Set the dimensions of this box so that it is the smallest possible that contains
+    the points 'min' and 'max'. The minimum coordinates of this box will be set to
+    the minimum of the coordinates of these two points, and the maximum coordinates
+    will be set to the maximum of the two points. */
+void PeriodicBox::setDimension(const Vector &min, const Vector &max)
+{
+    mincoords = min;
+    mincoords.setMin(max);
+
+    maxcoords = max;
+    maxcoords.setMax(min);
+
+    //don't allow boxes that would cause .volume() to overflow
+    mincoords.setMax(-max_boxlength);
+    maxcoords.setMin( max_boxlength);
+
+    boxlength = maxcoords - mincoords;
+
+    if (boxlength.x() == 0 or boxlength.y() == 0 or boxlength.z() == 0)
+    {
+        throw SireError::invalid_arg( QObject::tr(
+            "Cannot set the box size to %1 to %2 as this would create "
+            "a box with at least one side that is equal to zero.")
+                .arg(min.toString(), max.toString()), CODELOC );
+    }
+
+    for (int i=0; i<3; ++i)
+    {
+        invlength.set(i, 1.0/boxlength[i]);
+        halflength.set(i, 0.5 * boxlength[i]);
+    }
+}
+
 /** Construct a default PeriodicBox volume (zero volume) */
 PeriodicBox::PeriodicBox() : ConcreteProperty<PeriodicBox,Cartesian>()
-{}
+{
+    //set this to be a ridiculously large box
+    this->setDimension( -max_boxlength, max_boxlength );
+}
 
 /** Construct a PeriodicBox volume that goes from min to max */
 PeriodicBox::PeriodicBox(const Vector &min, const Vector &max)
@@ -195,27 +235,6 @@ Space PeriodicBox::setVolume(SireUnits::Dimension::Volume vol) const
     Vector new_halflength = scl * halflength;
 
     return PeriodicBox(cent - new_halflength, cent + new_halflength);
-}
-
-/** Set the dimensions of this box so that it is the smallest possible that contains
-    the points 'min' and 'max'. The minimum coordinates of this box will be set to
-    the minimum of the coordinates of these two points, and the maximum coordinates
-    will be set to the maximum of the two points. */
-void PeriodicBox::setDimension(const Vector &min, const Vector &max)
-{
-    mincoords = min;
-    mincoords.setMin(max);
-
-    maxcoords = max;
-    maxcoords.setMax(min);
-
-    boxlength = maxcoords - mincoords;
-
-    for (int i=0; i<3; ++i)
-    {
-        invlength.set(i, 1.0/boxlength[i]);
-        halflength.set(i, 0.5 * boxlength[i]);
-    }
 }
 
 /** Calculate the distance between two points */
@@ -820,6 +839,12 @@ QList< tuple<double,CoordGroup> >
 PeriodicBox::getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
                              double dist) const
 {
+    if (dist > max_boxlength.x())
+        throw SireError::invalid_arg( QObject::tr(
+            "You cannot use a distance (%1) that is greater than the "
+            "maximum box length (%2).")
+                .arg(dist).arg(max_boxlength.x()), CODELOC );
+
     //are there any copies within range?
     if (this->beyond(dist,group,center))
         //yep - there are no copies that are sufficiently close
@@ -883,8 +908,10 @@ PeriodicBox::getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
                     double mindist = Cartesian::minimumDistance(periodic_replica, center);
 
                     if (mindist <= dist)
+                    {
                         neargroups.append(
                                   tuple<double,CoordGroup>(mindist,periodic_replica) );
+                    }
                 }
             }
         }

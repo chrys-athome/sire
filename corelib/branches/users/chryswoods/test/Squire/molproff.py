@@ -57,12 +57,15 @@ qmff.setProperty("quantum program", molpro)
 
 qmff.add(mols.moleculeAt(0))
 
-print qmff.energy()
+qmnrg = qmff.energy()
+
+print qmnrg
 
 qmmmff = QMMMFF("qmmmff")
 
-qmmmff.setProperty("space", space)
-qmmmff.setProperty("quantum program", molpro)
+qmmmff.setSpace(space)
+qmmmff.setSwitchingFunction(switchfunc)
+qmmmff.setQuantumProgram(molpro)
 
 qmmmff.add(mols.moleculeAt(0), MGIdx(0))
 
@@ -74,4 +77,7 @@ for i in range(1, mols.nMolecules()):
 
     qmmmff.add(mol, MGIdx(1))
 
-print qmmmff.energy()
+qmmmnrg = qmmmff.energy()
+
+print qmmmnrg
+print qmmmnrg - qmnrg

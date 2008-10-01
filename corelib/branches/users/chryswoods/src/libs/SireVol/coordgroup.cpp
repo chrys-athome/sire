@@ -1480,13 +1480,57 @@ CoordGroupBase::CoordGroupBase(quint32 size, const Vector *values)
     if (size > 0)
     {
         Vector *coords = d->coordsData();
-    
-        for (quint32 i=0; i<size; ++i)
-        {
-            coords[i] = values[i];
-        }
+        void *output = qMemCopy(coords, values, size*sizeof(Vector));
+
+        BOOST_ASSERT( output == coords );
         
         *(d->aaBox()) = AABox(*this);
+    }
+}
+
+/** Construct a CoordGroup from all of the coordinates in the 
+    passed CoordGroupArray */
+CoordGroupBase::CoordGroupBase(const CoordGroupArray &cgarray)
+               : d( getSharedNullCoordGroup() )
+{
+    if (cgarray.nCoordGroups() == 1)
+    {
+        this->operator=(cgarray.constData()[0]);
+    }
+    else if (cgarray.nCoords() > 0)
+    {
+        d = createCoordGroup(cgarray.nCoords());
+    
+        Vector *coords = d->coordsData();
+        void *output = qMemCopy(coords, cgarray.constCoordsData(), 
+                                cgarray.nCoords() * sizeof(Vector));
+        
+        BOOST_ASSERT( output == coords );
+        
+        *(d->aaBox()) = AABox(cgarray);
+    }
+}
+
+/** Construct a CoordGroup from all of the coordinates in all
+    of the arrays in the passed set of CoordGroupArrays */
+CoordGroupBase::CoordGroupBase(const CoordGroupArrayArray &cgarrays)
+               : d( getSharedNullCoordGroup() )
+{
+    if (cgarrays.nCoordGroups() == 1)
+    {
+        this->operator=(cgarrays.constCoordGroupData()[0]);
+    }
+    else if (cgarrays.nCoords() > 0)
+    {
+        d = createCoordGroup(cgarrays.nCoords());
+    
+        Vector *coords = d->coordsData();
+        void *output = qMemCopy(coords, cgarrays.constCoordsData(),
+                                cgarrays.nCoords() * sizeof(Vector));
+
+        BOOST_ASSERT( output == coords );
+                 
+        *(d->aaBox()) = AABox(cgarrays);
     }
 }
 
@@ -1515,7 +1559,7 @@ CoordGroupBase::CoordGroupBase(const QVector<Vector> &coordinates)
 /** Copy constructor - this is fast as CoordGroupBase is implicitly
     shared */
 CoordGroupBase::CoordGroupBase(const CoordGroupBase &other)
-                : d(other.d)
+               : d(other.d)
 {}
 
 /** Destructor - this will only delete the data if this
@@ -1738,6 +1782,18 @@ CoordGroup::CoordGroup(quint32 size, const Vector &value)
     copied from the array 'values' */
 CoordGroup::CoordGroup(quint32 size, const Vector *values)
            : CoordGroupBase(size, values)
+{}
+
+/** Construct a CoordGroup from all of the coordinates contained
+    in the passed CoordGroup array */
+CoordGroup::CoordGroup(const CoordGroupArray &cgarray)
+           : CoordGroupBase(cgarray)
+{}
+
+/** Construct a CoordGroup from all of the coordinates in the
+    passed collection of CoordGroup arrays */
+CoordGroup::CoordGroup(const CoordGroupArrayArray &cgarrays)
+           : CoordGroupBase(cgarrays)
 {}
 
 /** Construct a CoordGroup from the array of passed coordinates */
@@ -2298,16 +2354,7 @@ bool CoordGroupArray::operator!=(const CoordGroupArray &other) const
 /** Merge this array of CoordGroups back into a single CoordGroup */
 CoordGroup CoordGroupArray::merge() const
 {
-    if (this->count() == 0)
-        return CoordGroup();
-
-    else if (this->count() == 1)
-        return this->constData()[0];
-        
-    else
-    {
-        
-    }
+    return CoordGroup(*this);
 }
 
 /** Assert that the index i points to a valid CoordGroup 
@@ -3052,8 +3099,7 @@ bool CoordGroupArrayArray::operator!=(const CoordGroupArrayArray &other) const
 /** Merge this array of array of CoordGroups back into a single CoordGroup */
 CoordGroup CoordGroupArrayArray::merge() const
 {
-    #warning Need to write CoordGroupArrayArray::merge();
-    return CoordGroup();
+    return CoordGroup(*this);
 }
 
 /** Assert that i is a valid index for a CoordGroupArray 

@@ -268,6 +268,9 @@ protected:
     CoordGroupBase(quint32 size, const Vector &value = Vector());
     CoordGroupBase(quint32 size, const Vector *values);
 
+    CoordGroupBase(const CoordGroupArray &cgarray);
+    CoordGroupBase(const CoordGroupArrayArray &cgarrays);
+
     CoordGroupBase(const QVector<Vector> &coordinates);
 
     CoordGroupBase(const CoordGroupBase &other);
@@ -304,6 +307,8 @@ public:
     CoordGroup(quint32 size);
     CoordGroup(quint32 size, const Vector &value);
     CoordGroup(quint32 size, const Vector *values);
+    CoordGroup(const CoordGroupArray &cgarray);
+    CoordGroup(const CoordGroupArrayArray &cgarrays);
     CoordGroup(const QVector<Vector> &points);
 
     CoordGroup(const CoordGroup &other);

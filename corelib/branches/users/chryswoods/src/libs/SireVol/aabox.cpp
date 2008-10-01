@@ -83,6 +83,20 @@ AABox::AABox(const CoordGroupBase &coordgroup)
     recalculate(coordgroup);
 }
 
+/** Construct an AABox that completely encases all of the points in all of the
+    CoordGroups in 'cgarray' */
+AABox::AABox(const CoordGroupArray &cgarray)
+{
+    recalculate(cgarray.constAABoxData(), cgarray.nCoordGroups());
+}
+
+/** Construct an AABox that completely encases all of the points in all of the
+    CoordGroups in all of the arrays in 'cgarrays' */
+AABox::AABox(const CoordGroupArrayArray &cgarrays)
+{
+    recalculate(cgarrays.constAABoxData(), cgarrays.nCoordGroups());
+}
+
 /** Construct an AABox that completely encases the points  in 'coordinates' */
 AABox::AABox(const QVector<Vector> &coordinates)
 {
@@ -125,11 +139,65 @@ AABox AABox::from(const CoordGroupBase &coordinates)
     return AABox(coordinates);
 }
 
+/** Return an AABox constructed to contain all of the CoordGroups in 'cgarray' */
+AABox AABox::from(const CoordGroupArray &cgarray)
+{
+    return AABox(cgarray);
+}
+
+/** Return an AABox constructed to contain all of the CoordGroups in the 
+    arrays in 'cgarrays' */
+AABox AABox::from(const CoordGroupArrayArray &cgarrays)
+{
+    return AABox(cgarrays);
+}
+
 /** Return a string representation of this AABox */
 QString AABox::toString() const
 {
     return QObject::tr( "AABox( min=%1, max=%2 )" )
                 .arg(this->minCoords().toString(), this->maxCoords().toString() );
+}
+
+/** Internal function used to recalculate the AABox from the passed 
+    array of AABoxes */
+void AABox::recalculate(const AABox *aaboxes, int sz)
+{
+    if (sz == 1)
+    {
+        this->operator=(aaboxes[0]);
+    }
+    else if (sz > 1)
+    {
+        //set the initial max and min coords from the first coordinate in the group
+        Vector maxcoords( aaboxes[0].maxCoords() );
+        Vector mincoords( aaboxes[0].minCoords() );
+
+        //loop through all of the remaining coordinates in the group
+        for (int i=1; i < sz; ++i)
+        {
+            //calculate the maximum and minimum coordinates
+            const AABox &aabox = aaboxes[i];
+            maxcoords.setMax( aabox.maxCoords() );
+            mincoords.setMin( aabox.minCoords() );
+        }
+
+        //now calculate the center as half the maximum and minimum coordinates
+        cent = 0.5 * (maxcoords + mincoords);
+
+        //the positive half-extent is the difference between the maximum
+        //coordinates and the center
+        halfextents = maxcoords - cent;
+
+        //the radius is the length of 'halfextents'
+        rad = halfextents.length();
+    }
+    else
+    {
+        cent = Vector(0);
+        halfextents = Vector(0);
+        sz = 0;
+    }
 }
 
 /** Internal function used to recalculate the AABox from the coordinates in the
@@ -173,6 +241,20 @@ void AABox::recalculate(const Vector *coords, int sz)
 void AABox::recalculate(const CoordGroupBase &coordgroup)
 {
     this->recalculate( coordgroup.constData(), coordgroup.size() );
+}
+
+/** Recalculate the AABox so that it completely encloses the CoordGroups
+    in the array 'cgarray' */
+void AABox::recalculate(const CoordGroupArray &cgarray)
+{
+    this->recalculate( cgarray.constAABoxData(), cgarray.nCoordGroups() );
+}
+
+/** Recalculate the AABox so that it completely encloses the CoordGroups
+    in the arrays 'cgarrays' */
+void AABox::recalculate(const CoordGroupArrayArray &cgarrays)
+{
+    this->recalculate( cgarrays.constAABoxData(), cgarrays.nCoordGroups() );
 }
 
 /** Recalculate the AABox so that it completely encloses the 'coordinates' */

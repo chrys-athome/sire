@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QTime>
+
 #include "qmmmelecembedpotential.h"
 #include "qmprogram.h"
 
@@ -37,11 +39,14 @@
 
 #include "SireStream/datastream.h"
 
+#include <QDebug>
+
 using boost::tuples::tuple;
 
 using namespace Squire;
 using namespace SireMM;
 using namespace SireVol;
+using namespace SireUnits;
 using namespace SireMM::detail;
 using namespace SireStream;
 
@@ -245,6 +250,9 @@ const Properties& QMMMElecEmbedPotential::properties() const
 LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmols,
                                                          const MMMolecules &mmmols) const
 {
+    QTime t;
+    t.start();
+
     if (qmmols.isEmpty() or mmmols.isEmpty())
     {
         return LatticeCharges();
@@ -324,6 +332,7 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
                  ++it)
             {
                 const double sqrt_4pieps0 = std::sqrt(SireUnits::four_pi_eps0);
+                const double bohr_factor = 1.0 / bohr_radii;
 
                 //get any scaling feather factor for this group (and to convert
                 //the charge from reduced units to mod_electrons)
@@ -345,12 +354,21 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
                     double chg = scl * group_charges_array[k].reduced_charge;
                     
                     if (chg != 0)
-                        lattice_charges.add( LatticeCharge(mapped_group_array[k], 
-                                                           chg) );
+                    {
+                        //lattice charges are electron charges, with coordinates
+                        //in bohr
+                        lattice_charges.add( 
+                                LatticeCharge(bohr_factor * mapped_group_array[k], 
+                                              chg) );
+                    }
                 }
             }
         }
     }
+    
+    int ms = t.elapsed();
+    
+    qDebug() << "Generating lattice charges took" << ms << "ms";
     
     return lattice_charges;
 }
