@@ -31,12 +31,18 @@
 
 #include "latticecharges.h"
 
+#include "SireUnits/units.h"
+
 #include "SireBase/errors.h"
 
 #include "SireStream/datastream.h"
 
+using boost::tuples::tuple;
+
 using namespace Squire;
 using namespace SireMM;
+using namespace SireVol;
+using namespace SireMM::detail;
 using namespace SireStream;
 
 template class QMMMPotential<QMPotential,InterCoulombPotential>;
@@ -239,7 +245,114 @@ const Properties& QMMMElecEmbedPotential::properties() const
 LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmols,
                                                          const MMMolecules &mmmols) const
 {
-    return LatticeCharges();
+    if (qmmols.isEmpty() or mmmols.isEmpty())
+    {
+        return LatticeCharges();
+    }
+
+    //the QM molecules are already in this space
+    
+    //merge all of the atoms from the QM molecules into a single CoordGroup
+    CoordGroup qmgroup;
+    
+    if (qmmols.count() == 1)
+    {
+        const QMMolecule &qmmol = qmmols.moleculesByIndex().constData()[0];
+        qmgroup = qmmol.coordinates().merge();
+    }
+    else
+    {
+        int nqmmols = qmmols.count();
+        QVector<CoordGroup> qmgroups(nqmmols);
+        
+        const QMMolecule *qmmols_array = qmmols.moleculesByIndex().constData();
+        CoordGroup *qmgroups_array = qmgroups.data();
+        
+        for (int i=0; i<nqmmols; ++i)
+        {
+            qmgroups_array[i] = qmmols_array[i].coordinates().merge();
+        }
+        
+        qmgroup = CoordGroupArray(qmgroups).merge();
+    }
+
+    //now map all of the MM molecules into the same space as the QM molecules
+    const SpaceBase &spce = this->space();
+    const SwitchFunc &switchfunc = this->switchingFunction();
+    
+    double cutoff = switchfunc.electrostaticCutoffDistance();
+    
+    int nmols = mmmols.count();
+    const MMMolecule *mmmols_array = mmmols.moleculesByIndex().constData();
+    
+    //try to reserve enough space
+    int nats = 0;
+    for (int i=0; i<nmols; ++i)
+    {
+        nats += mmmols_array[i].coordinates().nCoords();
+    }
+    
+    LatticeCharges lattice_charges;
+    lattice_charges.reserve(nats);
+
+    //now place the molecules' charges onto the lattice
+    for (int i=0; i<nmols; ++i)
+    {
+        const MMMolecule &mmmol = mmmols_array[i];
+        
+        int ngroups = mmmol.coordinates().nCoordGroups();
+        const CoordGroup *cgroup_array = mmmol.coordinates().constData();
+        const MMParameters::Array *charge_array = mmmol.parameters()
+                                                       .atomicParameters().constData();
+        
+        BOOST_ASSERT( ngroups == mmmol.parameters().atomicParameters().nArrays() );
+        
+        for (int j=0; j<ngroups; ++j)
+        {
+            //get all copies of this molecule within the cutoff distance
+            //of any QM atom
+            QList< tuple<double,CoordGroup> > mapped_groups = 
+                                   spce.getCopiesWithin(cgroup_array[j], qmgroup,
+                                                        cutoff);
+
+            const MMParameters::Array &group_charges = charge_array[j];
+            const ChargeParameter *group_charges_array = group_charges.constData();
+
+            for (QList< tuple<double,CoordGroup> >::const_iterator
+                                                        it = mapped_groups.constBegin();
+                 it != mapped_groups.constEnd();
+                 ++it)
+            {
+                const double sqrt_4pieps0 = std::sqrt(SireUnits::four_pi_eps0);
+
+                //get any scaling feather factor for this group (and to convert
+                //the charge from reduced units to mod_electrons)
+                double scl = switchfunc.electrostaticScaleFactor(it->get<0>())
+                                   * sqrt_4pieps0;
+                                   
+                if (scl == 0)
+                    continue;
+                
+                //add the coordinates and charges
+                const CoordGroup &mapped_group = it->get<1>();
+                
+                BOOST_ASSERT(mapped_group.count() == group_charges.count());
+                
+                const Vector *mapped_group_array = mapped_group.constData();
+                
+                for (int k=0; k<mapped_group.count(); ++k)
+                {
+                    double chg = scl * group_charges_array[k].reduced_charge;
+                    
+                    if (chg != 0)
+                        lattice_charges.add( LatticeCharge(mapped_group_array[k], 
+                                                           chg) );
+                }
+            }
+        }
+    }
+    
+    return lattice_charges;
 }
 
 /** Calculate the QM forces on the molecules in 'molecules' and add them 

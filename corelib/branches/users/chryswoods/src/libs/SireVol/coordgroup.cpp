@@ -2295,6 +2295,21 @@ bool CoordGroupArray::operator!=(const CoordGroupArray &other) const
     return not this->operator==(other);
 }
 
+/** Merge this array of CoordGroups back into a single CoordGroup */
+CoordGroup CoordGroupArray::merge() const
+{
+    if (this->count() == 0)
+        return CoordGroup();
+
+    else if (this->count() == 1)
+        return this->constData()[0];
+        
+    else
+    {
+        
+    }
+}
+
 /** Assert that the index i points to a valid CoordGroup 
 
     \throw SireError::invalid_index
@@ -3032,6 +3047,13 @@ bool CoordGroupArrayArray::operator==(const CoordGroupArrayArray &other) const
 bool CoordGroupArrayArray::operator!=(const CoordGroupArrayArray &other) const
 {
     return not this->operator==(other);
+}
+
+/** Merge this array of array of CoordGroups back into a single CoordGroup */
+CoordGroup CoordGroupArrayArray::merge() const
+{
+    #warning Need to write CoordGroupArrayArray::merge();
+    return CoordGroup();
 }
 
 /** Assert that i is a valid index for a CoordGroupArray 

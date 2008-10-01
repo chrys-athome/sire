@@ -31,12 +31,14 @@
 
 #include <QVector>
 
-#include "sireglobal.h"
+#include "SireMaths/vector.h"
 
 SIRE_BEGIN_HEADER
 
 namespace Squire
 {
+
+using SireMaths::Vector;
 
 /** This small internal class is used to hold information
     about a single point lattice charge */
@@ -44,6 +46,7 @@ class LatticeCharge
 {
 public:
     LatticeCharge();
+    LatticeCharge(const Vector &v, double charge);
     LatticeCharge(double x, double y, double z, double charge);
 
     LatticeCharge(const LatticeCharge &other);

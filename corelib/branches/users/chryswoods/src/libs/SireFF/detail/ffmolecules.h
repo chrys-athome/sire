@@ -237,6 +237,8 @@ public:
 
     int count() const;
 
+    bool isEmpty() const;
+
     const QVector<MolNum> molNumsByIndex() const;
     const QHash<MolNum,quint32>& indexesByMolNum() const;
 

@@ -56,6 +56,15 @@ LatticeCharge::LatticeCharge(double x, double y, double z, double charge)
     d[3] = charge;
 }
 
+/** Create a point charge at the specified location with the specified charge */
+LatticeCharge::LatticeCharge(const Vector &point, double charge)
+{
+    d[0] = point.x();
+    d[1] = point.y();
+    d[2] = point.z();
+    d[3] = charge;
+}
+
 /** Copy constructor */
 LatticeCharge::LatticeCharge(const LatticeCharge &other)
 {

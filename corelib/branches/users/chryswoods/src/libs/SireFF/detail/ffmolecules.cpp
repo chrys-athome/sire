@@ -408,6 +408,12 @@ int FFMoleculesBase::count() const
     return molnums_by_idx.count();
 }
 
+/** Return whether or not this collection of molecules is empty */
+bool FFMoleculesBase::isEmpty() const
+{
+    return molnums_by_idx.isEmpty();
+}
+
 /** Return the array that maps the index in the group to the 
     molecule number */
 const QVector<MolNum> FFMoleculesBase::molNumsByIndex() const

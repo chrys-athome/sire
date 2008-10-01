@@ -497,6 +497,8 @@ public:
 
     const AABox* aaBoxData() const;
     const AABox* constAABoxData() const;
+
+    CoordGroup merge() const;
     
     void update(quint32 i, const CoordGroup &cgroup);
 
@@ -582,6 +584,8 @@ public:
     int nCoordGroupArrays() const;
     int nCoordGroups() const;
     int nCoords() const;
+
+    CoordGroup merge() const;
 
     AABox aaBox() const;
 
