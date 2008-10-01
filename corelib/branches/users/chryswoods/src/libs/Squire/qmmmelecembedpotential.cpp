@@ -26,8 +26,6 @@
   *
 \*********************************************/
 
-#include <QTime>
-
 #include "qmmmelecembedpotential.h"
 #include "qmprogram.h"
 
@@ -250,9 +248,6 @@ const Properties& QMMMElecEmbedPotential::properties() const
 LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmols,
                                                          const MMMolecules &mmmols) const
 {
-    QTime t;
-    t.start();
-
     if (qmmols.isEmpty() or mmmols.isEmpty())
     {
         return LatticeCharges();
@@ -365,10 +360,6 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
             }
         }
     }
-    
-    int ms = t.elapsed();
-    
-    qDebug() << "Generating lattice charges took" << ms << "ms";
     
     return lattice_charges;
 }

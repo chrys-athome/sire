@@ -10,8 +10,12 @@ from Sire.Maths import *
 from Sire.Qt import *
 from Sire.Units import *
 from Sire.Squire import *
+from Sire.MPI import *
+from Sire.System import *
+from Sire.Move import *
 
 import os
+import sys
 
 timer = QTime()
 
@@ -57,7 +61,13 @@ qmff.setProperty("quantum program", molpro)
 
 qmff.add(mols.moleculeAt(0))
 
+print "QM energy in current thread"
+
 qmnrg = qmff.energy()
+
+print "Done!"
+
+sys.exit(0)
 
 print qmnrg
 
@@ -81,3 +91,28 @@ qmmmnrg = qmmmff.energy()
 
 print qmmmnrg
 print qmmmnrg - qmnrg
+
+system = System()
+
+system.add(qmmmff)
+
+print "Initial energy = %s" % system.energy()
+
+mc = RigidBodyMC(qmmmff.group(MGIdx(1)))
+
+moves = SameMoves(mc)
+
+print "Running 5 moves on the MPI master node..."
+nodes = MPINodes()
+node = nodes.getFreeNode()
+print "node rank = %d of %d" % (node.rank(), nodes.nNodes())
+
+promise = node.start( MPISimWorker(system, moves, 5, True) )
+
+print "Job submitted. Waiting..."
+
+promise.wait()
+
+print "Job complete!"
+
+sys.exit(0)
