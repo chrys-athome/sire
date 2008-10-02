@@ -9,7 +9,7 @@
 # require cmake >= 2.6.0
 cmake_minimum_required(VERSION 2.6.0 FATAL_ERROR)
 
-# use loose loop syntax in CMakeLists files
+#use loose loop syntax in CMakeLists files
 set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 
 # Absolutely can't run cmake in the source directory!
@@ -97,43 +97,21 @@ set( QT_QTCORE_LIBRARY ${QT_QTCORE_LIBRARY} ${QT_CORE_LIB_DEPENDENCIES} )
 set( QT_QTSQL_LIBRARY ${QT_QTSQL_LIBRARY} ${QT_SQL_LIB_DEPENDENCIES} )
 
 # Sire depends on >= Python 2.2
-set( PYTHON_REQUIRE_MAJOR 2 )
-set( PYTHON_REQUIRE_MINOR 2 )
+set (PYTHON_MIN_VERSION "2.2")
 include( FindPython )
 
-if( NOT APPLE )
-   # Use the python interpreter to get the link options, version and install
-   # directory - simplify by using the python script in the build directory
-   set (PYTHON_CONFIG ${CMAKE_SOURCE_DIR}/build/python-config)
-
-   # get the link flags for the shared library
-   exec_program ( ${PYTHON_EXECUTABLE}
-                  ARGS "${PYTHON_CONFIG} --ldflags"
-                  OUTPUT_VARIABLE PYTHON_LIBRARY
-                )
-
-   # get the include directories
-   exec_program ( ${PYTHON_EXECUTABLE}
-                  ARGS "${PYTHON_CONFIG} --includes"
-                  OUTPUT_VARIABLE PYTHON_INCLUDE_DIR
-                )
-
-   # get the path to the python site files (excluding the prefix)
-   set( PYTHON_SITE_DIR "lib/python${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}/site-packages" )
-
-else()
-
-   include(FindPythonLibs)
-   find_package(Python REQUIRED)
-
-   # get the path to the python site files (excluding the prefix)
-   set( PYTHON_SITE_DIR "lib/python${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}/site-packages" )
-   set( PYTHON_INCLUDE_DIR ${PYTHON_INCLUDE_PATH} )
-   set (SIRE_PYTHON "${PYTHON_SITE_DIR}")
-
+if (NOT PYTHON_LIBS_FOUND)
+    
+    if (PYTHON_INSTALLED_VERSION_TOO_OLD)
+        message( FATAL_ERROR "Installed version of Python (${PYTHON_VERSION}) is too old."
+                             "Sire requires at least Python ${PYTHON_MIN_VERSION}" )
+    else()
+        message( FATAL_ERROR "The python libraries were not found. These are necessary to build "
+                             "the python bindings." )
+    endif()
 endif()
 
-message( STATUS "Python paths ${PYTHON_LIBRARY} | ${PYTHON_INCLUDE_DIR} | ${PYTHON_SITE_DIR}" )
+message( STATUS "Python paths ${PYTHON_LIBRARIES} | ${PYTHON_INCLUDE_DIR} | ${PYTHON_SITE_DIR}" )
 
 # set the location to install the python modules
 set (SIRE_PYTHON "${PYTHON_SITE_DIR}")

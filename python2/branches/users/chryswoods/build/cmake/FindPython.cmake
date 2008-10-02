@@ -1,111 +1,118 @@
-# - Find python interpreter and libraries necessary to link against
-#   this interpreter
+
+# This module finds if Python is installed and determines where the
+# include files and libraries are. It also determines what the name of
+# the library is. This module also uses FindPythonInterp and thus defines the
+# variables defined there.
+# This code sets the following variables:
 #
-#  This code sets the following variables:
+#  PYTHON_LIBRARIES     = contains the python library and all libraries it
+#                         depends on
 #
-#  PYTHON_FOUND - Was the Python executable found
+#  PYTHON_INCLUDE_DIR   = path to where Python.h is found
 #
-#  PYTHON_EXECUTABLE  - path to the Python interpreter
-#  PYTHON_LIBRARY     - path and flags for linking against
-#                       the python libraries associated with
-#                       this interpreter
-#  PYTHON_INCLUDE_DIR - Path to the include files for this interpreter
-#  PYTHON_SITE_DIR    - Path to the python modules directory (where
-#                       to install new modules)
+#  PYTHON_LIBS_FOUND    = set to TRUE if the libs were found, FALSE otherwise
 #
 #  PYTHON_MAJOR_VERSION  - Major version number of the python interpreter
 #  PYTHON_MINOR_VERSION  - Minor version number of the python interpreter
+#
+#  PYTHON_SITE_DIR    - Path to the python modules directory (where
+#                       to install new modules)
 #
 #  PYTHON_MODULE_EXTENSION - Extension to use for compiled python modules
 #                            (e.g. ".pyd" or ".so")
 #
 #  You can require at least a particular version of python by setting
 #
-#  PYTHON_REQUIRE_MAJOR - Minimum major version required
-#  PYTHON_REQUIRE_MINOR - Minimum minor version required
+#  PYTHON_MIN_VERSION - Minimum version required (e.g. "2.3")
 #
 
-IF (WIN32)
+INCLUDE(CMakeFindFrameworks)
 
-  FIND_PROGRAM(PYTHON_EXECUTABLE
-    NAMES python2.5 python2.4 python2.3 python2.2 python2.1 python2.0  
-          python1.6 python1.5 python
-    PATHS
-    [HKEY_LOCAL_MACHINE\\SOFTWARE\\Python\\PythonCore\\2.4\\InstallPath]
-    [HKEY_LOCAL_MACHINE\\SOFTWARE\\Python\\PythonCore\\2.3\\InstallPath]
-    [HKEY_LOCAL_MACHINE\\SOFTWARE\\Python\\PythonCore\\2.2\\InstallPath]
-    [HKEY_LOCAL_MACHINE\\SOFTWARE\\Python\\PythonCore\\2.1\\InstallPath]
-    [HKEY_LOCAL_MACHINE\\SOFTWARE\\Python\\PythonCore\\2.0\\InstallPath]
-    [HKEY_LOCAL_MACHINE\\SOFTWARE\\Python\\PythonCore\\1.6\\InstallPath]
-    [HKEY_LOCAL_MACHINE\\SOFTWARE\\Python\\PythonCore\\1.5\\InstallPath]
+FIND_PACKAGE(PythonInterp)
+
+# internal macro
+MACRO(_GET_PYTHON_CONFIG_VARIABLE _name)
+    # see also http://docs.python.org/dist/module-distutils.sysconfig.html
+    # note: spaces are important in the python parameters! (even on
+    # newlines!)
+    EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE}
+                    -c "import sys
+from distutils.sysconfig import get_config_var
+sys.stdout.write(get_config_var(\"${_name}\")),"
+                    OUTPUT_VARIABLE _python_config_variable
     )
+ENDMACRO(_GET_PYTHON_CONFIG_VARIABLE)
 
-ENDIF (WIN32)
+IF (PYTHON_EXECUTABLE)
+    # Get the version number of this python interpreter
+    _GET_PYTHON_CONFIG_VARIABLE("VERSION")
+    set(PYTHON_VERSION "${_python_config_variable}")
 
-IF (UNIX)
+    # The version is of the form X.Y     (MAJOR.MINOR)
+    string(REGEX REPLACE "^([0-9]+)\\.[0-9]+" "\\1" PYTHON_MAJOR_VERSION "${PYTHON_VERSION}")
+    string(REGEX REPLACE "^[0-9]+\\.([0-9]+)" "\\1" PYTHON_MINOR_VERSION "${PYTHON_VERSION}")
 
-  FIND_PROGRAM(PYTHON_EXECUTABLE
-    NAMES python2.5 python2.4 python2.3 python2.2 python2.1 python2.0
-          python1.6 python1.5 python
-    PATHS
-          ENV PATH
-          /usr/bin
-	  /usr/local/bin
-   )
+    message( STATUS "Found Python-Version ${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}" )
 
-ENDIF (UNIX)
+    # now parse the parts of the user given version string into variables
+    if (NOT PYTHON_MIN_VERSION)
+        set (PYTHON_MIN_VERSION "1.0")
+    endif(NOT PYTHON_MIN_VERSION)
 
-SET(PYTHON_FOUND OFF)
+    string(REGEX REPLACE "^([0-9]+)\\.[0-9]+" "\\1" _req_python_major_vers "${PYTHON_MIN_VERSION}")
+    string(REGEX REPLACE "^[0-9]+\\.([0-9])+" "\\1" _req_python_minor_vers "${PYTHON_MIN_VERSION}")
 
-IF(PYTHON_EXECUTABLE)
+    # compute an overall version number which can be compared at once
+    math(EXPR req_vers "${_req_python_major_vers}*10000 + ${_req_python_minor_vers}*100")
+    math(EXPR found_vers "${PYTHON_MAJOR_VERSION}*10000 + ${PYTHON_MINOR_VERSION}*100")
+   
+    if (found_vers LESS req_vers)
+       set(PYTHON_FOUND FALSE)
+       set(PYTHON_LIBS_FOUND FALSE)
+       set(PYTHON_INSTALLED_VERSION_TOO_OLD TRUE)
+    else (found_vers LESS req_vers)
+       set(PYTHON_FOUND TRUE)
+    endif (found_vers LESS req_vers)
+
+    if (PYTHON_FOUND)
+        # Windows uses .pyd as compiled python library extension. Unix uses .so
+        if (WIN32)
+            set ( PYTHON_MODULE_EXTENSION ".pyd" )
+        else (WIN32)
+            set ( PYTHON_MODULE_EXTENSION ".so" )
+        endif (WIN32)
   
-  # Get the version number of this python interpreter
-  exec_program ( ${PYTHON_EXECUTABLE}
-                 ARGS "-c \"import sys; print sys.version[0:1]\""
-	         OUTPUT_VARIABLE PYTHON_MAJOR_VERSION
-	       )
+        _GET_PYTHON_CONFIG_VARIABLE("LIBS")
+        set(_python_libs "${_python_config_variable}")
+        _GET_PYTHON_CONFIG_VARIABLE("SYSLIBS")
+        set(_python_syslibs "${_python_config_variable}")
+        set(_python_dependency_libs "${PYTHON_LIBS} ${PYTHON_SYSLIBS}")
 
-  exec_program ( ${PYTHON_EXECUTABLE}
-                 ARGS "-c \"import sys; print sys.version[2:3]\""
-	         OUTPUT_VARIABLE PYTHON_MINOR_VERSION
-	       )
+        find_library(_python_library
+                     NAMES "python${PYTHON_VERSION}"
+                     PATH_SUFFIXES "python${PYTHON_VERSION}/config"
+                    )
 
-  # check the version is sufficient
-  set( PYTHON_VERSION_FOUND False )
+        _GET_PYTHON_CONFIG_VARIABLE("INCLUDEPY")
+        set(PYTHON_INCLUDE_DIR "${_python_config_variable}")
+    endif(PYTHON_FOUND)
+else (PYTHON_EXECUTABLE)
+    message(STATUS "No python executable found")
+endif (PYTHON_EXECUTABLE)
 
-  if ( PYTHON_MAJOR_VERSION EQUAL PYTHON_REQUIRE_MAJOR )
-     if (PYTHON_MINOR_VERSION EQUAL PYTHON_REQUIRE_MINOR )
-       set (PYTHON_VERSION_FOUND True)
-     endif (PYTHON_MINOR_VERSION EQUAL PYTHON_REQUIRE_MINOR)
+set(PYTHON_INCLUDE_PATH ${PYTHON_INCLUDE_DIR})
 
-     if (PYTHON_MINOR_VERSION GREATER PYTHON_REQUIRE_MINOR)
-       set (PYTHON_VERSION_FOUND True)
-     endif (PYTHON_MINOR_VERSION GREATER PYTHON_REQUIRE_MINOR)
-  endif (PYTHON_MAJOR_VERSION EQUAL PYTHON_REQUIRE_MAJOR)
+if (NOT _python_library)
+    set(PYTHON_LIBS_FOUND FALSE)
+else (NOT _python_library)
+    set(PYTHON_LIBS_FOUND TRUE)
 
-  if ( PYTHON_MAJOR_VERSION GREATER PYTHON_REQUIRE_MAJOR )
-    set (PYTHON_VERSION_FOUND True)
-  endif (PYTHON_MAJOR_VERSION GREATER PYTHON_REQUIRE_MAJOR )
+    # _python_library is used for the cache entry only
+    # PYTHON_LIBRARIES is meant to be public
+    set(PYTHON_LIBRARIES ${_python_library} ${_python_dependency_libs})
 
-  if ( PYTHON_REQUIRED )
-    if ( NOT PYTHON_VERSION_FOUND )
-      message( FATAL_ERROR  "Require Python version >= "
-               "${PYTHON_REQUIRE_MAJOR}.${PYTHON_REQUIRE_MINOR}, while have found "
-               "Python-Version ${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}" )
-      
-    endif ( NOT PYTHON_VERSION_FOUND )
-  endif ( PYTHON_REQUIRED )
+    # Set the directory in which to install python modules
+    # - This is install_prefix/lib/pythonX.Y/site-packages
+    set(PYTHON_SITE_DIR "lib/python${PYTHON_VERSION}/site-packages")
 
-  message( STATUS "Found Python-Version ${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}" )
-
-  # Windows uses .pyd as compiled python library extension. Unix uses .so
-  if (WIN32)
-    set ( PYTHON_MODULE_EXTENSION ".pyd" )
-  else (WIN32)
-    set ( PYTHON_MODULE_EXTENSION ".so" )
-  endif (WIN32)
-  
-  # use the executable to find the link libraries
-  # do this later...
-
-ENDIF(PYTHON_EXECUTABLE)
+endif (NOT _python_library)
