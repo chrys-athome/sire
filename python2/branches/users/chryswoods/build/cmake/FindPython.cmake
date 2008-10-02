@@ -82,17 +82,27 @@ IF (PYTHON_EXECUTABLE)
             set ( PYTHON_MODULE_EXTENSION ".so" )
         endif (WIN32)
   
+        #get the libraries on which this Python installation depends
         _GET_PYTHON_CONFIG_VARIABLE("LIBS")
         set(_python_libs "${_python_config_variable}")
         _GET_PYTHON_CONFIG_VARIABLE("SYSLIBS")
         set(_python_syslibs "${_python_config_variable}")
-        set(_python_dependency_libs "${PYTHON_LIBS} ${PYTHON_SYSLIBS}")
+        set(_python_dependency_libs ${_python_libs} ${_python_syslibs})
 
+        #now get the name and path the python dynamic library
+        _GET_PYTHON_CONFIG_VARIABLE("LIBDIR")
+        set(_python_libdir "${_python_config_variable}")
+        _GET_PYTHON_CONFIG_VARIABLE("LDLIBRARY")
+        set(_python_ldlib "${_python_config_variable}")
+
+        message(STATUS "${_python_libdir} / ${_python_ldlib}")
+
+        #now find this dynamic library - this ensures that the library actually exists!
         find_library(_python_library
-                     NAMES "python${PYTHON_VERSION}"
-                     PATH_SUFFIXES "python${PYTHON_VERSION}/config"
+                     NAMES "${_python_ldlib}"
+                     PATHS "${_python_libdir}"
                     )
-
+        
         _GET_PYTHON_CONFIG_VARIABLE("INCLUDEPY")
         set(PYTHON_INCLUDE_DIR "${_python_config_variable}")
     endif(PYTHON_FOUND)
@@ -116,3 +126,4 @@ else (NOT _python_library)
     set(PYTHON_SITE_DIR "lib/python${PYTHON_VERSION}/site-packages")
 
 endif (NOT _python_library)
+

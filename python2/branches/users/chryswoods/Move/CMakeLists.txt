@@ -55,7 +55,7 @@ target_link_libraries (Move
                        ${SIREMPI_LIBRARY}
                        ${SIRESTREAM_LIBRARY}
                        ${BOOST_PYTHON_LIBRARY}
-                       ${PYTHON_LIBRARY}
+                       ${PYTHON_LIBRARIES}
                        ${QT_QTCORE_LIBRARY}
                       )
 

@@ -51,7 +51,7 @@ target_link_libraries (Vol
                        ${SIREBASE_LIBRARY}
                        ${SIRESTREAM_LIBRARY}
                        ${BOOST_PYTHON_LIBRARY}
-                       ${PYTHON_LIBRARY}
+                       ${PYTHON_LIBRARIES}
                        ${QT_QTCORE_LIBRARY}
                       )
 

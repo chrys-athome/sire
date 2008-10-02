@@ -62,7 +62,7 @@ target_link_libraries (Qt
                        ${SIRESTREAM_LIBRARY}
                        ${QT_QTCORE_LIBRARY}
                        ${BOOST_PYTHON_LIBRARY}
-                       ${PYTHON_LIBRARY}
+                       ${PYTHON_LIBRARIES}
                       )
 
 

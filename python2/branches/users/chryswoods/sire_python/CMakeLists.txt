@@ -55,7 +55,7 @@ if (MPI_FOUND)
 		       
     target_link_libraries (sire_python
                            ${SIREMPI_LIBRARY}
-                           ${PYTHON_LIBRARY}
+                           ${PYTHON_LIBRARIES}
                            ${SIREERROR_LIBRARY}
                            ${SIREMPI_EXTRA_LIBRARIES}
                  

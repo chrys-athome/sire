@@ -11,7 +11,7 @@
 
 SIRE_BEGIN_HEADER
 
-class ObjectRegistry
+class SIRE_EXPORT ObjectRegistry
 {
 public:
     virtual ~ObjectRegistry();
@@ -48,7 +48,7 @@ namespace detail
 {
 
 template<class T>
-class ObjectRegistryT : public ObjectRegistry
+class SIRE_EXPORT ObjectRegistryT : public ObjectRegistry
 {
 
 friend class ObjectRegistry;

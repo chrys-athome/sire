@@ -47,7 +47,7 @@ set_target_properties (Stream
 target_link_libraries (Stream
                        SirePython2
                        ${BOOST_PYTHON_LIBRARY}
-                       ${PYTHON_LIBRARY}
+                       ${PYTHON_LIBRARIES}
                        ${QT_QTCORE_LIBRARY}
                       )
 

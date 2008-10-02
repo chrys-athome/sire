@@ -21,8 +21,8 @@ endif ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
 project (SirePython2)
 
 # need FindSire
-set (SIRE_INCLUDE_DIR "/Users/chris/local/include/Sire" )
-set (SIRE_LIB_DIR "/Users/chris/local/lib" )
+set (SIRE_INCLUDE_DIR "/home/chzcjw/local/include/Sire" )
+set (SIRE_LIB_DIR "/home/chzcjw/local/lib" )
 set (SIREERROR_LIBRARY "-L${SIRE_LIB_DIR} -lSireError" )
 set (SIREMATHS_LIBRARY "-L${SIRE_LIB_DIR} -lSireMaths" )
 set (SIREBASE_LIBRARY "-L${SIRE_LIB_DIR} -lSireBase" )
@@ -117,10 +117,23 @@ message( STATUS "Python paths ${PYTHON_LIBRARIES} | ${PYTHON_INCLUDE_DIR} | ${PY
 set (SIRE_PYTHON "${PYTHON_SITE_DIR}")
 
 # Sire depends on >= boost 1.31
-set (BOOST_FIND_REQUIRED TRUE)
-include ( FindBoost )
+FIND_PACKAGE ( Boost COMPONENTS python )
 
-message( STATUS "Boost paths ${BOOST_LIBRARY_DIRS} | ${BOOST_INCLUDE_DIRS}" )
+if (Boost_FOUND)
+  message(STATUS "Boost paths ${Boost_LIBRARY_DIRS} | ${Boost_INCLUDE_DIR}" )
+
+  set ( BOOST_INCLUDE_DIRS "${Boost_INCLUDE_DIR}" )
+  
+  if (Boost_PYTHON_FOUND)
+    message(STATUS "Using boost::python library ${Boost_PYTHON_LIBRARY}")
+    set ( BOOST_PYTHON_LIBRARY "${Boost_PYTHON_LIBRARY}" )
+  else()
+    message(FATAL_ERROR "Cannot find the boost::python library, even though "
+                        "boost has been found.")
+  endif()
+else()
+  message(FATAL_ERROR "Cannot find the boost libraries.")
+endif()  
 
 # Need to ensure that we are linking to boost_python shared library!
 if (UNIX)
@@ -133,9 +146,6 @@ if (UNIX)
 
   endif()
 endif()
-
-message( STATUS "Boost python library = ${BOOST_PYTHON_LIBRARY}" )
-message( STATUS "Boost unit test library = ${BOOST_UNIT_TEST_FRAMEWORK_LIBRARY}" )
 
 # Sire depends on >= GSL 1.6
 include ( FindGSL )

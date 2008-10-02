@@ -52,7 +52,7 @@ target_link_libraries (Units
                        ${SIRESTREAM_LIBRARY}
                        ${SIREBASE_LIBRARY}
                        ${BOOST_PYTHON_LIBRARY}
-                       ${PYTHON_LIBRARY}
+                       ${PYTHON_LIBRARIES}
                        ${QT_QTCORE_LIBRARY}
                       )
 

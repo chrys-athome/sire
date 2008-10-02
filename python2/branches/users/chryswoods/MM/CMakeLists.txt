@@ -56,7 +56,7 @@ target_link_libraries (MM
                        ${SIRESTREAM_LIBRARY}
                        ${SIREERROR_LIBRARY}
                        ${BOOST_PYTHON_LIBRARY}
-                       ${PYTHON_LIBRARY}
+                       ${PYTHON_LIBRARIES}
                        ${QT_QTCORE_LIBRARY}
                       )
 

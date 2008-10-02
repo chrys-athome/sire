@@ -46,9 +46,9 @@ target_link_libraries (Base
                        SirePython2
                        ${SIREBASE_LIBRARY}
                        ${SIRESTREAM_LIBRARY}
-                       ${BOOST_PYTHON_LIBRARY}
-                       ${PYTHON_LIBRARY}
                        ${QT_QTCORE_LIBRARY}
+                       ${PYTHON_LIBRARIES}
+                       ${BOOST_PYTHON_LIBRARY}
                       )
 
 # installation

@@ -52,7 +52,7 @@ target_link_libraries (Maths
                        ${SIRESTREAM_LIBRARY}
                        ${SIREERROR_LIBRARY}
                        ${BOOST_PYTHON_LIBRARY}
-                       ${PYTHON_LIBRARY}
+                       ${PYTHON_LIBRARIES}
                        ${GSL_LIBRARIES}
                        ${QT_QTCORE_LIBRARY}
                       )
