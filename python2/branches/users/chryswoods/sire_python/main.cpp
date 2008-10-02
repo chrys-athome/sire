@@ -1,7 +1,8 @@
 
-#include <Python.h>
-
+//mpich requires that mpi.h is included first
 #include <mpi.h>
+
+#include <Python.h>
 
 #include <cstdio>
 

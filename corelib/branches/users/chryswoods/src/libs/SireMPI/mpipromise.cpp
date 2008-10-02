@@ -26,6 +26,11 @@
   *
 \*********************************************/
 
+#ifdef __SIRE_USE_MPI__
+//mpich requires that mpi.h is included first
+#include <mpi.h>
+#endif
+
 #include <QTime>
 
 #include "mpipromise.h"

@@ -63,6 +63,7 @@ if (MPI_FOUND)
                            ${SIREMOVE_LIBRARY}
                            ${SIREMM_LIBRARY}
                            ${SIREIO_LIBRARY}
+                           ${SQUIRE_LIBRARY}
 
                            ${QT_QTCORE_LIBRARY}
                           )

@@ -34,6 +34,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace Squire;
 using namespace SireMM;
 using namespace SireFF;
@@ -266,6 +268,9 @@ void QMMMFF::recalculateEnergy()
     QMMMElecEmbedPotential::calculateEnergy(qmmols, mmmols, nrg);
     
     this->components().setEnergy(*this, nrg);
+    
+    qDebug() << CODELOC;
+    qDebug() << nrg;
     
     this->setClean();
 }

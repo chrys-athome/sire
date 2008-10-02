@@ -488,8 +488,6 @@ double Molpro::calculateEnergy(const QString &cmdfile) const
 
     TempDir tmpdir(tmppath);
     p.setWorkingDirectory(tmpdir.path());
-
-    qDebug() << "Starting molpro...";
     
     //now run Molpro!
     if (molpro_exe.isEmpty())
@@ -506,13 +504,9 @@ double Molpro::calculateEnergy(const QString &cmdfile) const
     if (not p.waitForStarted())
         throw SireError::process_error(molpro_exe, p, CODELOC);
     
-    qDebug() << CODELOC;
-    
     //write in the command file
     p.write( cmdfile.toAscii() );
     p.closeWriteChannel();
-
-    qDebug() << CODELOC;
 
     QByteArray molpro_output;
 
@@ -535,7 +529,6 @@ double Molpro::calculateEnergy(const QString &cmdfile) const
     }
 
     //get any remaining output
-    qDebug() << CODELOC;
     molpro_output.append( p.readAll() );
 
     if (p.exitCode() != 0)
@@ -545,7 +538,6 @@ double Molpro::calculateEnergy(const QString &cmdfile) const
     }
        
     //parse the output to get the energy
-    qDebug() << CODELOC;
     return this->extractEnergy(molpro_output);
 }
 

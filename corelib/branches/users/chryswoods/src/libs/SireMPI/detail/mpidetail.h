@@ -29,10 +29,6 @@
 #ifndef SIREMPI_DETAIL_MPIDETAIL_H
 #define SIREMPI_DETAIL_MPIDETAIL_H
 
-#ifdef __SIRE_USE_MPI__
-#include <mpi.h>
-#endif
-
 #include <QThread>
 #include <QMutex>
 #include <QSemaphore>

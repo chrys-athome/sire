@@ -1,10 +1,10 @@
 
+#include <mpi.h>
+
 #include <QProcess>
 #include <QThread>
 
 #include <QDebug>
-
-#include <mpi.h>
 
 class ProcessThread : public QThread
 {
@@ -58,6 +58,15 @@ int main(int argc, char **argv)
 
     //give the mpi thread time to start
     mpi.wait(1000);
+
+    QProcess p;
+    p.start("ls");
+
+    qDebug() << "local wait";
+
+    p.waitForFinished();
+
+    qDebug() << p.readAll();
 
     ProcessThread pt;
     pt.start();

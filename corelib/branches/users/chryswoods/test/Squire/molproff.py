@@ -65,10 +65,6 @@ print "QM energy in current thread"
 
 qmnrg = qmff.energy()
 
-print "Done!"
-
-sys.exit(0)
-
 print qmnrg
 
 qmmmff = QMMMFF("qmmmff")
@@ -97,6 +93,8 @@ system = System()
 system.add(qmmmff)
 
 print "Initial energy = %s" % system.energy()
+
+system.mustNowRecalculateFromScratch()
 
 mc = RigidBodyMC(qmmmff.group(MGIdx(1)))
 
