@@ -55,6 +55,7 @@ add_library (Qt ${WRAPQT_SOURCES})
 
 target_link_libraries (Qt
                        SirePython2
+                       SIRE_SireBase
                        SIRE_SireStream
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}
