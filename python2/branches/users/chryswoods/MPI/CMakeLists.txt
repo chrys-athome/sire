@@ -50,6 +50,7 @@ target_link_libraries (MPI
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}
                        ${QT_QTCORE_LIBRARY}
+                       ${SIREMPI_EXTRA_LIBRARIES}
                       )
 
 # installation
