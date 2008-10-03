@@ -43,6 +43,7 @@ set_target_properties (Mol
 target_link_libraries (Mol
                        SirePython2
                        SIRE_SireMol
+                       SIRE_SireMM
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}
                       )
