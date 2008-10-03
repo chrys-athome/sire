@@ -12,9 +12,6 @@ include_directories( ${BOOST_INCLUDE_DIR}
 include_directories( ${SIRE_INCLUDE_DIR}/SireMPI
                      ${SIRE_INCLUDE_DIR} )
 
-# Qt4
-include(${QT_USE_FILE})
-
 # Other python wrapping directories
 include_directories(${CMAKE_SOURCE_DIR})
 
@@ -44,13 +41,9 @@ set_target_properties (MPI
 		       
 target_link_libraries (MPI
                        SirePython2
-                       ${SIREMPI_LIBRARY}
-                       ${SIRESYSTEM_LIBRARY}
-                       ${SIRESTREAM_LIBRARY}
+                       SIRE_SireMPI
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}
-                       ${QT_QTCORE_LIBRARY}
-                       ${SIREMPI_EXTRA_LIBRARIES}
                       )
 
 # installation

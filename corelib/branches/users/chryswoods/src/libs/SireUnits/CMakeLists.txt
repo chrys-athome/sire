@@ -39,7 +39,7 @@ target_link_libraries (SireUnits
                        )
 
 # installation
-install( TARGETS SireUnits
+install( TARGETS SireUnits EXPORT SireLibraries
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}

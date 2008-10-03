@@ -86,7 +86,7 @@ target_link_libraries (SireFF
                        )
 
 # installation
-install( TARGETS SireFF
+install( TARGETS SireFF EXPORT SireLibraries
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}

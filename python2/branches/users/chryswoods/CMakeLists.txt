@@ -20,34 +20,31 @@ endif ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
 # name the project
 project (SirePython2)
 
-# need FindSire
-set (SIRE_INCLUDE_DIR "/home/chzcjw/local/include/Sire" )
-set (SIRE_LIB_DIR "/home/chzcjw/local/lib" )
-set (SIREERROR_LIBRARY "-L${SIRE_LIB_DIR} -lSireError" )
-set (SIREMATHS_LIBRARY "-L${SIRE_LIB_DIR} -lSireMaths" )
-set (SIREBASE_LIBRARY "-L${SIRE_LIB_DIR} -lSireBase" )
-set (SIRECAS_LIBRARY "-L${SIRE_LIB_DIR} -lSireCAS" )
-set (SIREDB_LIBRARY "-L${SIRE_LIB_DIR} -lSireDB" )
-set (SIREFF_LIBRARY "-L${SIRE_LIB_DIR} -lSireFF" )
-set (SIREID_LIBRARY "-L${SIRE_LIB_DIR} -lSireID" )
-set (SIREIO_LIBRARY "-L${SIRE_LIB_DIR} -lSireIO" )
-set (SIREMM_LIBRARY "-L${SIRE_LIB_DIR} -lSireMM" )
-set (SIREMOL_LIBRARY "-L${SIRE_LIB_DIR} -lSireMol" )
-set (SIREMOVE_LIBRARY "-L${SIRE_LIB_DIR} -lSireMove" )
-set (SIREMPI_LIBRARY "-L${SIRE_LIB_DIR} -lSireMPI" )
-set (SIRESTREAM_LIBRARY "-L${SIRE_LIB_DIR} -lSireStream" )
-set (SQUIRE_LIBRARY     "-L${SIRE_LIB_DIR} -lSquire" )
-set (SIRESYSTEM_LIBRARY "-L${SIRE_LIB_DIR} -lSireSystem" )
-set (SIREUNITS_LIBRARY "-L${SIRE_LIB_DIR} -lSireUnits" )
-set (SIREVOL_LIBRARY "-L${SIRE_LIB_DIR} -lSireVol" )
-set (SIREPYTHON2_LIBRARY "-L{SIRE_LIB_DIR} -lSirePython2" )
+# Path to the project's extra cmake files
+set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
 
-# project version
-set (SIRE_VERSION_MAJOR "0")
-set (SIRE_VERSION_MINOR "0")
-set (SIRE_VERSION_PATCH "1")
+# Find the Sire libraries
+find_package (Sire 0.0.1 REQUIRED)
 
-set (SIRE_VERSION "${SIRE_VERSION_MAJOR}.${SIRE_VERSION_MINOR}.${SIRE_VERSION_PATCH}")
+if (NOT SIRE_FOUND)
+   message (FATAL_ERROR "The required version of Sire was not found.")
+endif()
+
+# Now add the paths to the header files of the dependencies of Sire
+include_directories (BEFORE ${SIRE_EXTRA_INCLUDES})
+include_directories (BEFORE ${SIRE_INCLUDE_DIR})
+
+# Sire depends on >= Qt 4.2
+set( QT_DONT_USE_QTGUI "TRUE" )
+find_package( Qt4 4.2.0 REQUIRED QtCore QtSQL )
+
+if (QT4_FOUND)
+   include (${QT_USE_FILE})
+   message( STATUS "Using Qt version ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH} "
+                   "(${QT_LIBRARIES})")
+else()
+   message( FATAL_ERROR "Qt >= 4.2 is requires by Sire" )
+endif()
 
 # Ensure that the Sire's directories are searched for header files
 # before the system directories - this prevents problems in case
@@ -74,27 +71,8 @@ set (SIRE_INCLUDES "include/Sire")
 # (or run 'make VERBOSE=1')
 # set (CMAKE_VERBOSE_MAKEFILE ON)
 
-# Path to the project's extra cmake files
-set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
-
 # Add option to turn off symbol hiding
 option ( SIRE_SYMBOL_HIDING "Turn on library symbol hiding" ON )
-
-# include the right Qt modules
-set (QT_USE_QTSQL TRUE)
-
-# Sire depends on >= Qt 4.2
-set (QT_MIN_VERSION "4.2.0")
-include( FindQt4 )
-
-# I only link to individual Qt libraries, as this way I can ensure
-# that Spier links to QtGUI, while the Sire libraries don't (as there
-# is no need for Sire to be linked to any GUI libraries).
-# However, this means that I also need to pull in the libraries on which
-# the various Qt components depend - I will do this by adding them
-# onto the end of the actual Qt libraries
-set( QT_QTCORE_LIBRARY ${QT_QTCORE_LIBRARY} ${QT_CORE_LIB_DEPENDENCIES} )
-set( QT_QTSQL_LIBRARY ${QT_QTSQL_LIBRARY} ${QT_SQL_LIB_DEPENDENCIES} )
 
 # Sire depends on >= Python 2.2
 set (PYTHON_MIN_VERSION "2.2")
@@ -113,17 +91,22 @@ endif()
 
 message( STATUS "Python paths ${PYTHON_LIBRARIES} | ${PYTHON_INCLUDE_DIR} | ${PYTHON_SITE_DIR}" )
 
+include_directories( ${PYTHON_INCLUDE_DIR} )
+
 # set the location to install the python modules
 set (SIRE_PYTHON "${PYTHON_SITE_DIR}")
 
-# Sire depends on >= boost 1.31
-FIND_PACKAGE ( Boost COMPONENTS python )
+# Sire depends on >= boost 1.31 - all libraries must be dynamically linked
+set (BOOST_ALL_DYN_LINK "YES")
+FIND_PACKAGE ( Boost 1.31 COMPONENTS python )
 
 if (Boost_FOUND)
   message(STATUS "Boost paths ${Boost_LIBRARY_DIRS} | ${Boost_INCLUDE_DIR}" )
 
   set ( BOOST_INCLUDE_DIRS "${Boost_INCLUDE_DIR}" )
   
+  include_directories( ${Boost_INCLUDE_DIR} )
+
   if (Boost_PYTHON_FOUND)
     message(STATUS "Using boost::python library ${Boost_PYTHON_LIBRARY}")
     set ( BOOST_PYTHON_LIBRARY "${Boost_PYTHON_LIBRARY}" )
@@ -147,47 +130,9 @@ if (UNIX)
   endif()
 endif()
 
-# Sire depends on >= GSL 1.6
-include ( FindGSL )
-find_package(GSL REQUIRED)
-
-message( STATUS "GSL paths ${GSL_LINK_DIRECTORIES} ${GSL_LIBRARIES} | ${GSL_INCLUDE_DIR}" )
-
-# Add defaults for all parts of the program
-add_definitions( -I${QT_INCLUDE_DIR} 
-                 -I${QT_QTCORE_INCLUDE_DIR} 
-                 -I${BOOST_INCLUDE_DIRS}
-                 -I${GSL_INCLUDE_DIR}
-               )
-
-add_definitions( ${QT_DEFINITIONS} )
-
-find_package( MPI )
-
-if (MPI_FOUND)
-  message( STATUS "MPI headers: ${MPI_INCLUDE_PATH}" )
-  message( STATUS "MPI libraries: ${MPI_LIBRARY} ${MPI_EXTRA_LIBRARY}" )
-
-  include_directories( ${MPI_INCLUDE_PATH} )
-
-  add_definitions( -D__SIRE_USE_MPI__ )
-
-  set ( SIREMPI_EXTRA_LIBRARIES  ${MPI_LIBRARY} ${MPI_EXTRA_LIBRARY} )
-
-else()
-  message( STATUS "MPI wasn't found, so sire_python interpreter will not be built." )
-
-endif()
-
-
 # Set compile flags for debug and release
 
 set( SIRE_PLATFORM_OPTIONS "" )
-
-#if(APPLE)
-#   set( SIRE_PLATFORM_OPTIONS 
-#       "-arch i386 -Wno-long-double -no-cpp-precomp -mno-fused-madd -fno-common" )
-#endif()
 
 set( SIRE_C_FLAGS_RELEASE "-Wall -Os -fomit-frame-pointer ${SIRE_PLATFORM_OPTIONS}" )
 set( SIRE_CXX_FLAGS_RELEASE ${SIRE_C_FLAGS_RELEASE} )

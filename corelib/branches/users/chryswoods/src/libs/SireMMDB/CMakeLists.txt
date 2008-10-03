@@ -4,9 +4,6 @@
 #
 ########################################
 
-# Third Party dependencies of this module
-include_directories(${QT_QTSQL_INCLUDE_DIR})
-
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
@@ -123,13 +120,10 @@ set_target_properties (SireDB PROPERTIES
 target_link_libraries (SireDB
                        SireMol
                        SireCAS
-                       SqliteDriver
-                       ${QT_QTCORE_LIBRARY}
-                       ${QT_QTSQL_LIBRARY}
                        )
 
 # installation
-install( TARGETS SireDB
+install( TARGETS SireDB EXPORT SireLibraries
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}

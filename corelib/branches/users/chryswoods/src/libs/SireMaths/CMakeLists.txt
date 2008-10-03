@@ -4,10 +4,17 @@
 #
 ########################################
 
-# Third Party dependencies of this module
+# SireMaths depends on >= GSL 1.6
+find_package(GSL 1.6 REQUIRED)
 
-# GSL
+message( STATUS "GSL paths ${GSL_LINK_DIRECTORIES} "
+                "${GSL_LIBRARIES} | ${GSL_INCLUDE_DIR}" )
+
 include_directories(${GSL_INCLUDE_DIR})
+
+#add this include path to the list of extra include
+#paths required for Sire
+save_sire_extra_include(${GSL_INCLUDE_DIR})
 
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
@@ -71,11 +78,10 @@ target_link_libraries (SireMaths
                        SireUnits
                        SireStream
                        ${GSL_LIBRARIES}
-                       ${QT_QTCORE_LIBRARY}
                        )
 
 # installation
-install( TARGETS SireMaths
+install( TARGETS SireMaths EXPORT SireLibraries
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}

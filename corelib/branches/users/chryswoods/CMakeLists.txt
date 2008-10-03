@@ -27,6 +27,11 @@ set (SIRE_VERSION_PATCH "1")
 
 set (SIRE_VERSION "${SIRE_VERSION_MAJOR}.${SIRE_VERSION_MINOR}.${SIRE_VERSION_PATCH}")
 
+math (EXPR SIRE_VERSION_NUMBER 
+      "${SIRE_VERSION_MAJOR}*100000 + ${SIRE_VERSION_MINOR}*100 + ${SIRE_VERSION_PATCH}")
+
+set (SIRE_VERSION_STRING "${SIRE_VERSION_MAJOR}_${SIRE_VERSION_MINOR}_${SIRE_VERSION_PATCH}")
+
 # Whether or not to use manual SSE (will probably be removed
 # in favour of compile-time detection)
 set (SIRE_USE_SSE ON)
@@ -51,6 +56,8 @@ set (SIRE_LIBS "lib")
 set (SIRE_ARCHIVES "lib/static")
 # Include (header) files install dir
 set (SIRE_INCLUDES "include/Sire")
+# CMake install files install dir
+set (SIRE_CMAKEFILES "include/Sire/cmake")
 
 # Uncomment for more verbose compiling/linking
 # (or run 'make VERBOSE=1')
@@ -62,99 +69,46 @@ set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
 # Add option to turn off symbol hiding
 option ( SIRE_SYMBOL_HIDING "Turn on library symbol hiding" ON )
 
-# include the right Qt modules - need QtSql for SireDB
-set (QT_USE_QTSQL TRUE)
+#find_package(SIRE COMPONENTS SireBase SireCAS Squire REQUIRED)
+
+#now create a file that will hold a list of all of the 
+#extra include directories used by the Sire modules
+set (SIRE_EXTRA_INCLUDES_FILE "${CMAKE_BINARY_DIR}/SireExtraIncludes.cmake")
+file ( REMOVE ${SIRE_EXTRA_INCLUDES_FILE} )
+
+# This macro is used to record extra include files in SireExtraIncludes.cmake
+macro (SAVE_SIRE_EXTRA_INCLUDE _name)
+  file(APPEND ${SIRE_EXTRA_INCLUDES_FILE}
+        "list (APPEND SIRE_EXTRA_INCLUDES \"${_name}\")\n")
+endmacro (SAVE_SIRE_EXTRA_INCLUDE)
 
 # Sire depends on >= Qt 4.2
-set (QT_MIN_VERSION "4.2.0")
-include( FindQt4 )
+set( QT_DONT_USE_QTGUI "TRUE" )
+set( QT_USE_QTSQL "TRUE" )
+find_package( Qt4 4.2.0 REQUIRED QtCore QtSQL )
 
-# I only link to individual Qt libraries, as this way I can ensure
-# that Spier links to QtGUI, while the Sire libraries don't (as there
-# is no need for Sire to be linked to any GUI libraries).
-# However, this means that I also need to pull in the libraries on which
-# the various Qt components depend - I will do this by adding them
-# onto the end of the actual Qt libraries
-set( QT_QTCORE_LIBRARY ${QT_QTCORE_LIBRARY} ${QT_CORE_LIB_DEPENDENCIES} )
-set( QT_QTSQL_LIBRARY ${QT_QTSQL_LIBRARY} ${QT_SQL_LIB_DEPENDENCIES} )
-
-# Sire depends on >= Python 2.2
-set( PYTHON_REQUIRE_MAJOR 2 )
-set( PYTHON_REQUIRE_MINOR 2 )
-include( FindPython )
-
-if( NOT APPLE )
-   # Use the python interpreter to get the link options, version and install
-   # directory - simplify by using the python script in the build directory
-   set (PYTHON_CONFIG ${CMAKE_SOURCE_DIR}/build/python-config)
-
-   # get the link flags for the shared library
-   exec_program ( ${PYTHON_EXECUTABLE}
-                  ARGS "${PYTHON_CONFIG} --ldflags"
-                  OUTPUT_VARIABLE PYTHON_LIBRARY
-                )
-
-   # get the include directories
-   exec_program ( ${PYTHON_EXECUTABLE}
-                  ARGS "${PYTHON_CONFIG} --includes"
-                  OUTPUT_VARIABLE PYTHON_INCLUDE_DIR
-                )
-
-   # get the path to the python site files (excluding the prefix)
-   set( PYTHON_SITE_DIR "lib/python${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}/site-packages" )
-
+if (QT4_FOUND)
+   include (${QT_USE_FILE})
+   message( STATUS "Using Qt version ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH} "
+                   "(${QT_LIBRARIES})")
 else()
-
-   include(FindPythonLibs)
-   find_package(Python REQUIRED)
-
-   # get the path to the python site files (excluding the prefix)
-   set( PYTHON_SITE_DIR "lib/python${PYTHON_MAJOR_VERSION}.${PYTHON_MINOR_VERSION}/site-packages" )
-   set( PYTHON_INCLUDE_DIR ${PYTHON_INCLUDE_PATH} )
-   set (SIRE_PYTHON "${PYTHON_SITE_DIR}")
-
+   message( FATAL_ERROR "Qt >= 4.2 is requires by Sire" )
 endif()
 
-message( STATUS "Python paths ${PYTHON_LIBRARY} | ${PYTHON_INCLUDE_DIR} | ${PYTHON_SITE_DIR}" )
+# Need also to find the boost libraries
+FIND_PACKAGE ( Boost  )
 
-# set the location to install the python modules
-set (SIRE_PYTHON "${PYTHON_SITE_DIR}")
+if (Boost_FOUND)
+  message(STATUS "Boost paths ${Boost_LIBRARY_DIRS} | ${Boost_INCLUDE_DIR}" )
+  set ( BOOST_INCLUDE_DIRS "${Boost_INCLUDE_DIR}" )
+  include_directories( ${Boost_INCLUDE_DIR} )
 
-# Sire depends on >= boost 1.31
-set (BOOST_FIND_REQUIRED TRUE)
-include ( FindBoost )
-
-message( STATUS "Boost paths ${BOOST_LIBRARY_DIRS} | ${BOOST_INCLUDE_DIRS}" )
-
-# Need to ensure that we are linking to boost_python shared library!
-if (UNIX)
-  if ( BOOST_PYTHON_LIBRARY MATCHES "(\\.a$)" OR
-       BOOST_PYTHON_LIBRARY MATCHES "(\\.A$)" )
-
-    message( FATAL_ERROR "Need to link to shared boost::python library (should be "
-                         "boost_python.so or boost_python.dylib, "
-                         "not ${BOOST_PYTHON_LIBRARY})" )
-
-  endif()
-endif()
-
-message( STATUS "Boost python library = ${BOOST_PYTHON_LIBRARY}" )
-message( STATUS "Boost unit test library = ${BOOST_UNIT_TEST_FRAMEWORK_LIBRARY}" )
-
-# Sire depends on >= GSL 1.6
-include ( FindGSL )
-find_package(GSL REQUIRED)
-
-message( STATUS "GSL paths ${GSL_LINK_DIRECTORIES} ${GSL_LIBRARIES} | ${GSL_INCLUDE_DIR}" )
-
-# Add defaults for all parts of the program
-add_definitions( -I${QT_INCLUDE_DIR} 
-                 -I${QT_QTCORE_INCLUDE_DIR} 
-                 -I${BOOST_INCLUDE_DIRS}
-                 -I${GSL_INCLUDE_DIR}
-               )
-
-add_definitions( ${QT_DEFINITIONS} )
+  #add this include path to the list of extra include
+  #paths required for Sire
+  save_sire_extra_include(${Boost_INCLUDE_DIR})
+else()
+  message(FATAL_ERROR "Cannot find the boost libraries.")
+endif()  
 
 # Set compile flags for debug and release
 
@@ -267,9 +221,6 @@ set( CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} ${SIRE_LINK_FLAGS}" )
 
 message( STATUS "Linker flags = ${CMAKE_SHARED_LINKER_FLAGS}" )
 
-# Write the version header file
-include( GetSvnVersion )
-
 # Add the compiler test directory - this allows us to run some compiler
 # tests to make sure that Sire will compile properly
 add_subdirectory (build/test_compiler)
@@ -278,3 +229,10 @@ add_subdirectory (build/test_compiler)
 add_subdirectory (src/libs)
 add_subdirectory (src/apps)
 
+# Finally, write the version header file and finish off the component dependencies file
+include( GetSvnVersion )
+
+# install the extra includes file in the Sire/cmake directory
+install (FILES ${SIRE_EXTRA_INCLUDES_FILE} 
+         DESTINATION ${SIRE_CMAKEFILES}
+        )

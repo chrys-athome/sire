@@ -291,7 +291,6 @@ if __name__ == "__main__":
     
     modules = { "Base" : "SireBase",
                 "CAS" : "SireCAS",
-                "Cluster" : "SireCluster",
                 "DB" : "SireDB",
                 "FF" : "SireFF",
                 "ID" : "SireID",
@@ -302,7 +301,6 @@ if __name__ == "__main__":
                 "Mol" : "SireMol",
                 "Move" : "SireMove",
                 "MPI" : "SireMPI",
-                "Sim" : "SireSim",
                 "Squire" : "Squire",
                 "Stream" : "SireStream",
                 "System" : "SireSystem",

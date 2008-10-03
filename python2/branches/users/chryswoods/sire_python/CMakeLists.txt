@@ -12,9 +12,6 @@ include_directories( ${BOOST_INCLUDE_DIR}
 # Sire include paths
 include_directories( ${SIRE_INCLUDE_DIR} )
 
-# Qt4
-include(${QT_USE_FILE})
-
 # Other python wrapping directories
 include_directories(${CMAKE_SOURCE_DIR})
 
@@ -25,36 +22,22 @@ set ( SIREPYTHON_SOURCES
 
     )
 
-if (MPI_FOUND)
-    # Create the library that holds all of the class wrappers
-    add_executable (sire_python ${SIREPYTHON_SOURCES})
+# Create the library that holds all of the class wrappers
+add_executable (sire_python ${SIREPYTHON_SOURCES})
 
-    set_target_properties (sire_python
-                           PROPERTIES
-                           VERSION ${SIRE_VERSION}
-                          )
+set_target_properties (sire_python
+                       PROPERTIES
+                       VERSION ${SIRE_VERSION}
+                      )
 		       
-    target_link_libraries (sire_python
-                           ${SIREMPI_LIBRARY}
-                           ${PYTHON_LIBRARIES}
-                           ${SIREERROR_LIBRARY}
-                           ${SIREMPI_EXTRA_LIBRARIES}
-                 
-                           ${SIRESYSTEM_LIBRARY}
-                           ${SIREMOVE_LIBRARY}
-                           ${SIREMM_LIBRARY}
-                           ${SIREIO_LIBRARY}
-                           ${SQUIRE_LIBRARY}
+target_link_libraries (sire_python
+                       SIRE_SireMPI
+                       ${PYTHON_LIBRARIES}
+                      )
 
-                           ${QT_QTCORE_LIBRARY}
-                          )
-
-    # installation
-    install( TARGETS sire_python
-             RUNTIME DESTINATION ${SIRE_BIN}
-             LIBRARY DESTINATION ${SIRE_LIBS}
-             ARCHIVE DESTINATION ${SIRE_ARCHIVES}
-           )
-
-endif()
-
+# installation
+install( TARGETS sire_python
+         RUNTIME DESTINATION ${SIRE_BIN}
+         LIBRARY DESTINATION ${SIRE_LIBS}
+         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+       )

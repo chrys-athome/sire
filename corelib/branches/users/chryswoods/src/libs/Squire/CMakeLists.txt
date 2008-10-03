@@ -4,9 +4,6 @@
 #
 ########################################
 
-# Third Party dependencies of this module
-#include_directories(${QT_QTNETWORK_INCLUDE_DIR})
-
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
@@ -66,7 +63,7 @@ target_link_libraries (Squire
                       )
 
 # installation
-install( TARGETS Squire
+install( TARGETS Squire EXPORT SireLibraries
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}

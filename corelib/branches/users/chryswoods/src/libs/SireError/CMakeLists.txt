@@ -37,7 +37,7 @@ target_link_libraries (SireError
                       )
 
 # installation
-install( TARGETS SireError
+install( TARGETS SireError EXPORT SireLibraries
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
@@ -45,3 +45,4 @@ install( TARGETS SireError
 
 install( FILES ${SIREERROR_HEADERS} 
          DESTINATION ${SIRE_INCLUDES}/SireError )
+

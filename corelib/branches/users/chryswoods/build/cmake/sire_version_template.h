@@ -1,16 +1,17 @@
 #ifndef SIRE_VERSION_H
 #define SIRE_VERSION_H
 
-#include <QString>
+#define SIRE_REPOSITORY_URL       "@SVN_REPOSITORY_URL@"
+#define SIRE_REPOSITORY_VERSION   "@SVN_VERSION_NUMBER@"
 
-static const QString svn_repository_url = "@SVN_REPOSITORY_URL@";
-static const QString svn_version_number = "@SVN_VERSION_NUMBER@";
+#define SIRE_VERSION_MAJOR        @SIRE_VERSION_MAJOR@
+#define SIRE_VERSION_MINOR        @SIRE_VERSION_MINOR@
+#define SIRE_VERSION_PATCH        @SIRE_VERSION_PATCH@
 
-static const int SIRE_VERSION_MAJOR = @SIRE_VERSION_MAJOR@;
-static const int SIRE_VERSION_MINOR = @SIRE_VERSION_MINOR@;
-static const int SIRE_VERSION_PATCH = @SIRE_VERSION_PATCH@;
+#define SIRE_VERSION              @SIRE_VERSION_NUMBER@
+#define SIRE_LIB_VERSION          @SIRE_VERSION_STRING@
 
-static const QString compile_flags = "@CMAKE_CXX_FLAGS@";
-static const QString link_flags = "@CMAKE_SHARED_LINKER_FLAGS@";
+#define SIRE_COMPILE_FLAGS        "@CMAKE_CXX_FLAGS@"
+#define SIRE_LINK_FLAGS           "@CMAKE_SHARED_LINKER_FLAGS@"
 
 #endif

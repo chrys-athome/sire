@@ -12,9 +12,6 @@ include_directories( ${BOOST_INCLUDE_DIR}
 include_directories( ${SIRE_INCLUDE_DIR}/SireBase
                      ${SIRE_INCLUDE_DIR} )
 
-# Qt4
-include(${QT_USE_FILE})
-
 # Other python wrapping directories
 include_directories(${CMAKE_SOURCE_DIR})
 
@@ -44,9 +41,7 @@ set_target_properties (Base
 		       
 target_link_libraries (Base
                        SirePython2
-                       ${SIREBASE_LIBRARY}
-                       ${SIRESTREAM_LIBRARY}
-                       ${QT_QTCORE_LIBRARY}
+                       SIRE_SireBase
                        ${PYTHON_LIBRARIES}
                        ${BOOST_PYTHON_LIBRARY}
                       )

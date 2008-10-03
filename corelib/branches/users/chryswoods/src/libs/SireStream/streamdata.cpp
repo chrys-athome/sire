@@ -745,8 +745,8 @@ static const QString& getSystemInfo()
                         .arg(SIRE_VERSION_MINOR)
                         .arg(SIRE_VERSION_PATCH) );
                         
-    lines.append( QString("Compile flags: %1").arg(compile_flags.trimmed()) );
-    lines.append( QString("Link flags: %1").arg(link_flags.trimmed()) );
+    lines.append( QString("Compile flags: %1").arg(SIRE_COMPILE_FLAGS) );
+    lines.append( QString("Link flags: %1").arg(SIRE_LINK_FLAGS) );
 
     QString info = lines.join("\n");
     
@@ -771,8 +771,8 @@ FileHeader::FileHeader(const QString &typ_name,
     
     type_name = typ_name;
     
-    build_repository = svn_repository_url;
-    build_version = svn_version_number;
+    build_repository = SIRE_REPOSITORY_URL;
+    build_version = SIRE_REPOSITORY_VERSION;
     
     required_libraries = detail::LibraryInfo::getLibraryHeader();
     

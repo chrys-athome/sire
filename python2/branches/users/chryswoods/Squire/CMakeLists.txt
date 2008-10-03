@@ -12,9 +12,6 @@ include_directories( ${BOOST_INCLUDE_DIR}
 include_directories( ${SIRE_INCLUDE_DIR}/Squire
                      ${SIRE_INCLUDE_DIR} )
 
-# Qt4
-include(${QT_USE_FILE})
-
 # Other python wrapping directories
 include_directories(${CMAKE_SOURCE_DIR})
 
@@ -44,20 +41,9 @@ set_target_properties (Squire
 		       
 target_link_libraries (Squire
                        SirePython2
-                       ${SQUIRE_LIBRARY}
-                       ${SIREMM_LIBRARY}
-                       ${SIRESYSTEM_LIBRARY}
-                       ${SIREFF_LIBRARY}
-                       ${SIREMOL_LIBRARY}
-                       ${SIREVOL_LIBRARY}
-                       ${SIREID_LIBRARY}
-                       ${SIRECAS_LIBRARY}
-                       ${SIREMATHS_LIBRARY}
-                       ${SIREBASE_LIBRARY}
-                       ${SIRESTREAM_LIBRARY}
+                       SIRE_Squire
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}
-                       ${QT_QTCORE_LIBRARY}
                       )
 
 # installation

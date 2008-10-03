@@ -41,11 +41,10 @@ add_library ( SireStream ${SIRESTREAM_SOURCES} )
 
 target_link_libraries (SireStream
                        SireError
-                       ${QT_QTCORE_LIBRARY}
                       )
 
 # installation
-install( TARGETS SireStream
+install( TARGETS SireStream  EXPORT SireLibraries
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}

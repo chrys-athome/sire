@@ -13,9 +13,6 @@ include_directories( ${SIRE_INCLUDE_DIR}/SireMol
                      ${SIRE_INCLUDE_DIR}/SireMM
                      ${SIRE_INCLUDE_DIR} )
 
-# Qt4
-include(${QT_USE_FILE})
-
 # Other python wrapping directories
 include_directories(${CMAKE_SOURCE_DIR})
 
@@ -44,18 +41,10 @@ set_target_properties (Mol
 		       )
 		       
 target_link_libraries (Mol
-                       ${SIREMOL_LIBRARY}
                        SirePython2
-                       ${SIREMM_LIBRARY}
-                       ${SIREID_LIBRARY}
-                       ${SIREVOL_LIBRARY}
-                       ${SIREMATHS_LIBRARY}
-                       ${SIREBASE_LIBRARY}
-                       ${SIRESTREAM_LIBRARY}
-                       ${SIREERROR_LIBRARY}
+                       SIRE_SireMol
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}
-                       ${QT_QTCORE_LIBRARY}
                       )
 
 # installation

@@ -14,4 +14,3 @@ set_target_properties (test_stream PROPERTIES
                       )
 
 target_link_libraries( test_stream SireMol SireBase SireStream )
-

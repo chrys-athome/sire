@@ -42,10 +42,11 @@ set_target_properties (SireDB PROPERTIES
 target_link_libraries (SireDB
                        SireBase
                        SireStream
+                       ${QT_QTSQL_LIBRARY}
                        )
 
 # installation
-install( TARGETS SireDB
+install( TARGETS SireDB EXPORT SireLibraries
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}

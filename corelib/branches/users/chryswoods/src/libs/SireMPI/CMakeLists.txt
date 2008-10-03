@@ -9,8 +9,7 @@
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
-include ( FindMPI REQUIRED )
-find_package( MPI )
+find_package( MPI REQUIRED )
 
 if (MPI_FOUND)
   message( STATUS " ** Adding proper MPI support ** " )
@@ -22,6 +21,9 @@ if (MPI_FOUND)
   add_definitions( -D__SIRE_USE_MPI__ )
 
   set ( SIREMPI_EXTRA_LIBRARIES  ${MPI_LIBRARY} ${MPI_EXTRA_LIBRARY} )
+
+  #Save the path to the MPI headers
+  save_sire_extra_include(${MPI_INCLUDE_PATH})
 
 else()
   message( STATUS "SireMPI will be compiled without MPI support." )   
@@ -68,7 +70,7 @@ target_link_libraries (SireMPI
                        )
 
 # installation
-install( TARGETS SireMPI
+install( TARGETS SireMPI EXPORT SireLibraries
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
@@ -76,4 +78,3 @@ install( TARGETS SireMPI
 
 install( FILES ${SIREMPI_HEADERS}
          DESTINATION ${SIRE_INCLUDES}/SireMPI )
-

@@ -4,9 +4,6 @@
 #
 ########################################
 
-# Third Party dependencies of this module
-include_directories(${QT_QTSQL_INCLUDE_DIR})
-
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
@@ -97,7 +94,7 @@ target_link_libraries (SireMM
                        )
 
 # installation
-install( TARGETS SireMM
+install( TARGETS SireMM EXPORT SireLibraries
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}

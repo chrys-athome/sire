@@ -212,7 +212,7 @@ target_link_libraries (SireMol
                        )
 
 # installation
-install( TARGETS SireMol
+install( TARGETS SireMol EXPORT SireLibraries
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}

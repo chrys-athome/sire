@@ -26,8 +26,6 @@
 #  PYTHON_MIN_VERSION - Minimum version required (e.g. "2.3")
 #
 
-INCLUDE(CMakeFindFrameworks)
-
 FIND_PACKAGE(PythonInterp)
 
 # internal macro
@@ -89,20 +87,29 @@ IF (PYTHON_EXECUTABLE)
         set(_python_syslibs "${_python_config_variable}")
         set(_python_dependency_libs ${_python_libs} ${_python_syslibs})
 
-        #now get the name and path the python dynamic library
-        _GET_PYTHON_CONFIG_VARIABLE("LIBDIR")
-        set(_python_libdir "${_python_config_variable}")
-        _GET_PYTHON_CONFIG_VARIABLE("LDLIBRARY")
-        set(_python_ldlib "${_python_config_variable}")
+        if (APPLE)
+            #Python will be installed as a framework 
+            INCLUDE(CMakeFindFrameworks)
+            CMAKE_FIND_FRAMEWORKS(Python)
 
-        message(STATUS "${_python_libdir} / ${_python_ldlib}")
+            if (Python_FRAMEWORKS)                           
+                set (_python_library "-framework Python")
+            endif()
 
-        #now find this dynamic library - this ensures that the library actually exists!
-        find_library(_python_library
+        else()
+            #now get the name and path the python dynamic library
+            _GET_PYTHON_CONFIG_VARIABLE("LIBDIR")
+            set(_python_libdir "${_python_config_variable}")
+            _GET_PYTHON_CONFIG_VARIABLE("LDLIBRARY")
+            set(_python_ldlib "${_python_config_variable}")
+
+            #now find this dynamic library - this ensures that the library actually exists!
+            find_library(_python_library
                      NAMES "${_python_ldlib}"
                      PATHS "${_python_libdir}"
-                    )
-        
+                        )
+        endif()        
+
         _GET_PYTHON_CONFIG_VARIABLE("INCLUDEPY")
         set(PYTHON_INCLUDE_DIR "${_python_config_variable}")
     endif(PYTHON_FOUND)
@@ -126,4 +133,3 @@ else (NOT _python_library)
     set(PYTHON_SITE_DIR "lib/python${PYTHON_VERSION}/site-packages")
 
 endif (NOT _python_library)
-

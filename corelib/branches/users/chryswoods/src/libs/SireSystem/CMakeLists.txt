@@ -61,7 +61,7 @@ target_link_libraries (SireSystem
                        )
 
 # installation
-install( TARGETS SireSystem
+install( TARGETS SireSystem EXPORT SireLibraries
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}

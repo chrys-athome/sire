@@ -50,7 +50,7 @@ target_link_libraries (SireVol
                        )
 
 # installation
-install( TARGETS SireVol
+install( TARGETS SireVol EXPORT SireLibraries
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}

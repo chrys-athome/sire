@@ -37,3 +37,7 @@ endif()
 configure_file( ${CMAKE_SOURCE_DIR}/build/cmake/sire_version_template.h
                 ${CMAKE_BINARY_DIR}/sire_version.h
                 ESCAPE_QUOTES )
+
+# install this file into the Sire include directory
+install (FILES ${CMAKE_BINARY_DIR}/sire_version.h 
+         DESTINATION ${SIRE_INCLUDES})

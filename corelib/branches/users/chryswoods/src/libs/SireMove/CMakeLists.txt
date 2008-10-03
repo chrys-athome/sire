@@ -69,7 +69,7 @@ target_link_libraries (SireMove
                        )
 
 # installation
-install( TARGETS SireMove
+install( TARGETS SireMove EXPORT SireLibraries
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}

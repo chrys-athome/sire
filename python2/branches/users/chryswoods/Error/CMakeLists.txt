@@ -8,9 +8,6 @@
 include_directories( ${BOOST_INCLUDE_DIR}
                      ${PYTHON_INCLUDE_DIR} )
 
-# Qt4
-include(${QT_USE_FILE})
-
 # Other Sire libraries
 include_directories(${SIRE_INCLUDE_DIR}/SireError
                     ${SIRE_INCLUDE_DIR})
@@ -37,10 +34,10 @@ set_target_properties (Error
 		          )
 		       
 target_link_libraries (Error
-                       ${SIREERROR_LIBRARY}
+                       SirePython2
+                       SIRE_SireError
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}
-                       ${QT_QTCORE_LIBRARY}
                       )
 
 # installation

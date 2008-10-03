@@ -4,14 +4,6 @@
 #
 ########################################
 
-# Third Party dependencies of this module
-
-# Qt4
-include(${QT_USE_FILE})
-
-# GSL
-include_directories(${GSL_INCLUDE_DIR})
-
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
@@ -98,14 +90,11 @@ target_link_libraries (SireCAS
                        SireMaths
                        SireBase
                        SireStream
-                       ${GSL_LIBRARIES}
                        )
 
 # installation
-install( TARGETS SireCAS
+install( TARGETS SireCAS EXPORT SireLibraries
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
-
-install( FILES ${SIRECAS_HEADERS} DESTINATION ${SIRE_INCLUDES}/SireCAS )

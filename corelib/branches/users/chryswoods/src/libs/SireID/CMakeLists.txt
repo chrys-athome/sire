@@ -41,7 +41,7 @@ target_link_libraries (SireID
                        )
 
 # installation
-install( TARGETS SireID
+install( TARGETS SireID EXPORT SireLibraries
          RUNTIME DESTINATION ${SIRE_BIN}
          LIBRARY DESTINATION ${SIRE_LIBS}
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
@@ -49,3 +49,4 @@ install( TARGETS SireID
 
 install( FILES ${SIREID_HEADERS} 
          DESTINATION ${SIRE_INCLUDES}/SireID )
+
