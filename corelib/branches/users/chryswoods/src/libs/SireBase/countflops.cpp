@@ -184,6 +184,8 @@ double FlopsMark::operator-(const FlopsMark &other) const
     if (dms == 0)
         //are lowest resolution is 1 ms
         dms = 1;
+
+    qDebug() << dnflops << dms;
         
     return (1000.0 * dnflops) / dms;
 }

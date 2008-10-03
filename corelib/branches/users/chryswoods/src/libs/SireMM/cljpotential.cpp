@@ -105,8 +105,8 @@ template
 class ChangedMolecule<IntraCLJPotential::Molecule>;
 
 /** Streaming functions for CLJParameter */
-QDataStream& operator<<(QDataStream &ds, 
-                        const SireMM::detail::CLJParameter &cljparam)
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, 
+                                      const SireMM::detail::CLJParameter &cljparam)
 {
     ds << static_cast<const SireMM::detail::ChargeParameter&>(cljparam)
        << static_cast<const SireMM::detail::LJParamID&>(cljparam);
@@ -114,8 +114,8 @@ QDataStream& operator<<(QDataStream &ds,
     return ds;
 }
 
-QDataStream& operator>>(QDataStream &ds, 
-                        SireMM::detail::CLJParameter &cljparam)
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, 
+                                      SireMM::detail::CLJParameter &cljparam)
 {
     ds >> static_cast<SireMM::detail::ChargeParameter&>(cljparam)
        >> static_cast<SireMM::detail::LJParamID&>(cljparam);

@@ -55,7 +55,6 @@ qmff = QMFF("QMFF")
 qmff.setProperty("space", space)
 
 molpro = Molpro()
-molpro.setEnvironment("TMPDIR", "/Users/chris/tmp")
 
 qmff.setProperty("quantum program", molpro)
 

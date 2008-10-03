@@ -1,6 +1,6 @@
 ########################################
 #
-# CMake file for library:SireIO
+# CMake file for library:SireDB
 #
 ########################################
 
@@ -33,6 +33,17 @@ set ( SIREDB_SOURCES
 
 add_library (SireDB ${SIREDB_SOURCES})
 
+find_library (DL_LIBRARY dl DOC "System dynamic linking library (contains dlopen)")
+
+set (DL_FOUND "NO")
+
+if ( DL_LIBRARY )
+  set (DL_FOUND "YES")
+
+else()
+  message (FATAL_ERROR "The dl (dynamic linking) library is required" )
+endif()
+
 set_target_properties (SireDB PROPERTIES
                        VERSION ${SIRE_VERSION}
                        SOVERSION ${SIRE_VERSION_MAJOR}
@@ -42,8 +53,9 @@ set_target_properties (SireDB PROPERTIES
 target_link_libraries (SireDB
                        SireBase
                        SireStream
+                       ${DL_LIBRARY}
                        ${QT_QTSQL_LIBRARY}
-                       )
+                      )
 
 # installation
 install( TARGETS SireDB EXPORT SireLibraries

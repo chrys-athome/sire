@@ -116,10 +116,7 @@ public:
         return QMetaType::typeName( qMetaTypeId<Molecule>() );
     }
     
-    const char* what() const
-    {
-        return Molecule::typeName();
-    }
+    const char* what() const;
     
     Molecule* clone() const
     {
@@ -223,6 +220,11 @@ protected:
     void setMetadata(const QString &key, const QString &metakey,
                      const Property &value);
 };
+
+inline const char* Molecule::what() const
+{
+    return Molecule::typeName();
+}
 
 }
 

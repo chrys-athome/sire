@@ -114,6 +114,11 @@ QString std_exception::getWhatString(QString typstring, const std::exception &er
          .arg(typstring).arg(error.what());
 }
 
+const char* std_exception::what() const throw()
+{
+    return std_exception::typeName();
+}
+
 /** Return a string representation of the QFile::FileError */
 QString SIREERROR_EXPORT fileError(const QFile &f)
 {

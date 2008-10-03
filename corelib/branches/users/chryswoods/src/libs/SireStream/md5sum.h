@@ -45,10 +45,10 @@ class MD5Sum;
 QDataStream& operator<<(QDataStream&, const SireStream::MD5Sum&);
 QDataStream& operator>>(QDataStream&, SireStream::MD5Sum&);
 
+typedef unsigned char md5_byte_t;
+
 namespace SireStream
 {
-
-typedef unsigned char md5_byte_t;
 
 /**
  * These functions are used to simplify the generation of md5sums of 

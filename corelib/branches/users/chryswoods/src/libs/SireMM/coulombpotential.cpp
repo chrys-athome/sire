@@ -104,15 +104,17 @@ template
 class ChangedMolecule<IntraCoulombPotential::Molecule>;
 
 /** Streaming functions for ChargeParameter */
-QDataStream& operator<<(QDataStream &ds, 
-                        const SireMM::detail::ChargeParameter &chgparam)
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, 
+                                      const SireMM::detail::ChargeParameter &chgparam)
 {
     ds << chgparam.reduced_charge;
 
     return ds;
 }
 
-QDataStream& operator>>(QDataStream &ds, SireMM::detail::ChargeParameter &chgparam)
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, 
+                                      SireMM::detail::ChargeParameter 
+&chgparam)
 {
     ds >> chgparam.reduced_charge;
     

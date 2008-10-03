@@ -998,7 +998,7 @@ void SIRESTREAM_EXPORT throwStreamDataInvalidCast(const QString &load_type,
 
 static quint32 SIRE_MAGIC_NUMBER(251785387);
 
-QByteArray streamDataSave( const void *object, const char *type_name )
+QByteArray SIRESTREAM_EXPORT streamDataSave( const void *object, const char *type_name )
 {
     //get the ID number of this type
     int id = QMetaType::type( type_name );
@@ -1042,7 +1042,8 @@ QByteArray streamDataSave( const void *object, const char *type_name )
     return data;
 }
 
-void streamDataSave( const void *object, const char *type_name, const QString &filename )
+void SIRESTREAM_EXPORT streamDataSave( const void *object, const char *type_name, 
+                                       const QString &filename )
 {
     QFile f(filename);
     

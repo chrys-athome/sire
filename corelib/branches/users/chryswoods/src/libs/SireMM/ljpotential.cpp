@@ -107,15 +107,15 @@ class ChangedMolecule<IntraLJPotential::Molecule>;
 /** Streaming functions for LJParamID - these must convert the 
     LJID number to and from an actual LJParameter (as the LJParameterDB
     will have different ID numbers of different processors) */
-QDataStream& operator<<(QDataStream &ds, 
-                        const SireMM::detail::LJParamID &ljparam)
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, 
+                                      const SireMM::detail::LJParamID &ljparam)
 {
     ds << LJParameterDB::getLJParameter(ljparam.ljid);
     return ds;
 }
 
-QDataStream& operator>>(QDataStream &ds, 
-                        SireMM::detail::LJParamID &ljparam)
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, 
+                                      SireMM::detail::LJParamID &ljparam)
 {
     LJParameter lj;
 

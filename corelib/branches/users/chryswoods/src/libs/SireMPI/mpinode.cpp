@@ -522,7 +522,8 @@ static const int STOP_MPI_BACKEND = 2;
 
     /** Write an error string to standard output - this is used by background
         threads when they die horribly! */
-    void writeErrorString(const QString &location, const SireError::exception &e)
+    void SIREMPI_EXPORT writeErrorString(const QString &location, 
+                                         const SireError::exception &e)
     {
         QTextStream ts(stdout);
         
@@ -541,7 +542,7 @@ static const int STOP_MPI_BACKEND = 2;
 
     /** This function starts MPI::Init_thread if MPI is not yet initialized,
         and checks that the required level of thread support is available. */
-    void ensureInitializedMPI(int &argc, char **argv)
+    void SIREMPI_EXPORT  ensureInitializedMPI(int &argc, char **argv)
     {
         QMutexLocker lkr( &exec_mutex() );
 

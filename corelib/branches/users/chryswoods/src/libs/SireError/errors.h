@@ -754,10 +754,10 @@ public:
         return QMetaType::typeName( qMetaTypeId<std_exception>() );
     }
 
-    const char* what() const throw()
-    {
-        return std_exception::typeName();
-    }
+    const char* what() const throw();
+    //{
+    //    return std_exception::typeName();
+    //}
     
     void throwSelf() const
     {
