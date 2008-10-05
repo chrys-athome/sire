@@ -30,6 +30,8 @@
 
 #include "ThirdParty/md5.h"
 
+#include <QByteArray>
+
 using namespace Sire;
 
 /** This function is used to obtain a reasonably unique
@@ -42,7 +44,7 @@ MagicID SIRE_EXPORT Sire::getMagic(const char *name)
     //initialise the md5 engine
     md5_init(&state);
     //make it encode the name...
-    md5_append(&state, (unsigned char*)name, std::strlen(name));
+    md5_append(&state, (unsigned char*)name, qstrlen(name));
     //this variable will hold the returned digest
     md5_byte_t dgst[16];
     //actually calculate the digest

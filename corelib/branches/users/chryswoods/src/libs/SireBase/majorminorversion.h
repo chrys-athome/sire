@@ -84,8 +84,8 @@ public:
     
     QString toString() const;
     
-    quint64 major() const;
-    quint64 minor() const;
+    quint64 majorVersion() const;
+    quint64 minorVersion() const;
 
 private:
     quint64 maj, min;
@@ -194,14 +194,18 @@ inline bool Version::operator!=(const Version &other) const
     return maj != other.maj or min != other.min;
 }
 
-/** Return the major version number */
-inline quint64 Version::major() const
+/** Return the major version number. We cannot call this 
+    .major() as this name is reserved on linux in sys/sysmacros.h
+    (this is a glibc bug) */
+inline quint64 Version::majorVersion() const
 {
     return maj;
 }
 
-/** Return the minor version number */
-inline quint64 Version::minor() const
+/** Return the minor version number. We cannot call this
+    .minor() as this name is reserved on linux in sys/sysmacros.h
+    (this is a glibc bug) */
+inline quint64 Version::minorVersion() const
 {
     return min;
 }
@@ -239,13 +243,13 @@ inline const Version& MajorMinorVersion::version() const
 /** Return the major version number */
 inline quint64 MajorMinorVersion::majorVersion() const
 {
-    return v.major();
+    return v.majorVersion();
 }
 
 /** Return the minor version number */
 inline quint64 MajorMinorVersion::minorVersion() const
 {
-    return v.minor();
+    return v.minorVersion();
 }
 
 /** Constructor */

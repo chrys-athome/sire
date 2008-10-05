@@ -39,7 +39,7 @@
 #include "rangenerator.h"
 #include "vector.h"
 
-#include "ThirdParty/MersenneTwister.h"
+#include "ThirdParty/MersenneTwister.h"       // CONDITIONAL_INCLUDE
 
 #include "SireError/errors.h"
 #include "SireStream/datastream.h"

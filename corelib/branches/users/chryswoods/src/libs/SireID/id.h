@@ -31,6 +31,8 @@
 
 #include "sireglobal.h"
 
+#include <typeinfo>
+
 #include <QString>
 #include <QMetaType>
 

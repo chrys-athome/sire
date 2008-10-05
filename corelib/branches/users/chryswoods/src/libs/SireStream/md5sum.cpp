@@ -33,7 +33,7 @@
 #include <QFile>
 #include <QByteArray>
 
-#include "ThirdParty/md5.h"
+#include "ThirdParty/md5.h"      // CONDITIONAL_INCLUDE
 
 using namespace SireStream;
 

@@ -230,7 +230,7 @@ quint32 LJParameterDB::LJParameterDBData::addLJParameter(const LJParameter &ljpa
 LJParameter LJParameterDB::LJParameterDBData::_locked_getLJParameter(quint32 id) const
 {
     //does the parameter exist already in the database?
-    if (id > ljparams_by_idx.count())
+    if (id > quint32(ljparams_by_idx.count()))
         throw SireFF::missing_parameter( QObject::tr(
             "Could not find the LJ parameter with ID %1 in the global "
             "LJ parameter database.").arg(id), CODELOC );

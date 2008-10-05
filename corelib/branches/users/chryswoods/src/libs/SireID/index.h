@@ -31,6 +31,8 @@
 
 #include "id.h"
 
+#include <limits>
+
 SIRE_BEGIN_HEADER
 
 namespace SireID

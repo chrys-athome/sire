@@ -104,5 +104,5 @@ void MajorMinorVersion::incrementMinor()
     
     ++(d->last_minor_version);
     
-    v = Version(v.major(), d->last_minor_version);
+    v = Version(v.majorVersion(), d->last_minor_version);
 }

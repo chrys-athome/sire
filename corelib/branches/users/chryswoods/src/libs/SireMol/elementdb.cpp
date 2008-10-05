@@ -30,6 +30,8 @@
 #include <QDataStream>
 #include <cmath>
 
+#include <limits>
+
 #include "elementdb.h"
 
 #include "SireStream/datastream.h"

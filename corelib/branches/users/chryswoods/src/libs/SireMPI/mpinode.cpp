@@ -77,23 +77,8 @@ static const int STOP_MPI_BACKEND = 2;
 
     /** Global mutex to protect access to starting and stopping
         the global SireMPI event loop */
-    static QMutex *exec_mutex_ptr(0);
-
-    static QMutex exec_mutex_mutex;
-
-    static QMutex& exec_mutex()
-    {
-        if (exec_mutex_ptr == 0)
-        {
-            QMutexLocker lkr(&exec_mutex_mutex);
-            
-            if (exec_mutex_ptr == 0)
-                exec_mutex_ptr = new QMutex();
-        }
-        
-        return *exec_mutex_ptr;
-    }
-
+    Q_GLOBAL_STATIC( QMutex, execMutex );
+    
     /** This variable is used to see if an MPI loop (from SireMPI::exec) is 
         currently running */
     static bool exec_is_running(false);
@@ -106,6 +91,28 @@ static const int STOP_MPI_BACKEND = 2;
         BOOST_ASSERT( comm_world != 0 );
         return *comm_world;
     }
+
+    class MPIBackend;
+
+    class MPIBackendRegistry
+    {
+    public:
+        MPIBackendRegistry()
+        {}
+        
+        ~MPIBackendRegistry()
+        {
+            registry_mutex.lock();
+            registry_mutex.unlock();
+        }
+        
+        QHash< int, shared_ptr<MPIBackend> > registry;
+        QList< shared_ptr<MPIBackend> > stopped_backends;
+    
+        QMutex registry_mutex;
+    };
+
+    Q_GLOBAL_STATIC( MPIBackendRegistry, mpiBackendRegistry );
 
     class MPIBackend : private QThread
     {
@@ -127,16 +134,6 @@ static const int STOP_MPI_BACKEND = 2;
         void sendResponse(int tag, const MPIWorker &worker);
         void runJob(MPIWorker &worker);
     
-        static QHash< int, shared_ptr<MPIBackend> >& registry();
-        static QList< shared_ptr<MPIBackend> >& stopped_backends();
-    
-        static QHash< int, shared_ptr<MPIBackend> > *registry_ptr;
-        static QList< shared_ptr<MPIBackend> > *stopped_backends_ptr;
-    
-        static QMutex *registry_mutex_ptr;
-        
-        static QMutex& registry_mutex();
-    
         /** The communicator used to talk to the master */
         MPI::Comm *mpicom;
     
@@ -149,48 +146,6 @@ static const int STOP_MPI_BACKEND = 2;
         /** flag used to stop the backend */
         bool keep_running;
     };
-
-    /** Mutex to protect access to the registry */
-    QMutex* MPIBackend::registry_mutex_ptr(0);
-
-    QMutex& MPIBackend::registry_mutex()
-    {
-        if (registry_mutex_ptr == 0)
-        {
-            QMutexLocker lkr(&exec_mutex_mutex);
-            
-            if (registry_mutex_ptr == 0)
-                registry_mutex_ptr = new QMutex();
-        }
-        
-        return *registry_mutex_ptr;
-    }
-
-    /** The registry of all active backends on this node */
-    QHash< int, shared_ptr<MPIBackend> >* MPIBackend::registry_ptr(0);
-    
-    QHash< int, shared_ptr<MPIBackend> >& MPIBackend::registry()
-    {
-        QMutexLocker lkr(&registry_mutex());
-        
-        if (registry_ptr == 0)
-            registry_ptr = new QHash< int, shared_ptr<MPIBackend> >();
-            
-        return *registry_ptr;
-    }
-    
-    /** The list of backends that have been scheduled to be stopped */
-    QList< shared_ptr<MPIBackend> >* MPIBackend::stopped_backends_ptr(0);
-    
-    QList< shared_ptr<MPIBackend> >& MPIBackend::stopped_backends()
-    {
-        QMutexLocker lkr(&registry_mutex());
-        
-        if (stopped_backends_ptr == 0)
-            stopped_backends_ptr = new QList< shared_ptr<MPIBackend> >();
-            
-        return *stopped_backends_ptr;
-    }
     
     /** Constructor, telling the background the rank of the master
         process, the communicator used to communicate with that
@@ -460,8 +415,15 @@ static const int STOP_MPI_BACKEND = 2;
     /** Start a backend */
     void MPIBackend::start(MPI::Comm *mpicom, int master, int tag)
     {
+        MPIBackendRegistry *registry = mpiBackendRegistry();
+        
+        if (registry == 0)
+            return;
+    
+        QMutexLocker lkr( &(registry->registry_mutex) );
+    
         //we shouldn't have this tag already...
-        if (registry().contains(tag))
+        if (registry->registry.contains(tag))
             throw SireError::program_bug( QObject::tr(
                 "It should not be possible to start two backends with the "
                 "same tag (%1)").arg(tag), CODELOC );
@@ -473,13 +435,20 @@ static const int STOP_MPI_BACKEND = 2;
         backend->start();
         
         //add it to the registry
-        registry().insert( tag, backend );
+        registry->registry.insert( tag, backend );
     }
     
     /** Stop the backend with the specified tag */
     void MPIBackend::stop(MPI::Comm *mpicom, int master, int tag)
     {
-        shared_ptr<MPIBackend> backend = registry().take(tag);
+        MPIBackendRegistry *registry = mpiBackendRegistry();
+        
+        if (registry == 0)
+            return;
+    
+        QMutexLocker lkr( &(registry->registry_mutex) );
+    
+        shared_ptr<MPIBackend> backend = registry->registry.take(tag);
         
         if (backend.get() != 0)
         {
@@ -494,7 +463,7 @@ static const int STOP_MPI_BACKEND = 2;
             backend->keep_running = false;
             
             //add this backend to the list of ones that have been stopped
-            stopped_backends().append(backend);
+            registry->stopped_backends.append(backend);
         }
     }
 
@@ -502,20 +471,27 @@ static const int STOP_MPI_BACKEND = 2;
     void MPIBackend::stopAll()
     {
         //stop all backends
-        QList<int> tags = registry().keys();
+        MPIBackendRegistry *registry = mpiBackendRegistry();
+        
+        if (registry == 0)
+            return;
+        
+        QMutexLocker lkr( &(registry->registry_mutex) );
+        
+        QList<int> tags = registry->registry.keys();
         
         foreach (int tag, tags)
         {
-            shared_ptr<MPIBackend> backend = registry().take(tag);
+            shared_ptr<MPIBackend> backend = registry->registry.take(tag);
             backend->keep_running = false;
             
-            stopped_backends().append(backend);
+            registry->stopped_backends.append(backend);
         }
         
         //now wait for them all to finish
-        while (not stopped_backends().isEmpty())
+        while (not registry->stopped_backends.isEmpty())
         {
-            shared_ptr<MPIBackend> backend = stopped_backends().takeFirst();
+            shared_ptr<MPIBackend> backend = registry->stopped_backends.takeFirst();
             backend->wait();
         }
     }
@@ -536,15 +512,28 @@ static const int STOP_MPI_BACKEND = 2;
     /** Return whether SireMPI::exec is running */
     bool SIREMPI_EXPORT exec_running()
     {
-        QMutexLocker lkr( &exec_mutex() );
-        return exec_is_running;
+        QMutex *exec_mutex = execMutex();
+        
+        if (exec_mutex)
+        {
+            QMutexLocker lkr(exec_mutex);
+            return exec_is_running;
+        }
+        else
+            return false;
     }
 
     /** This function starts MPI::Init_thread if MPI is not yet initialized,
         and checks that the required level of thread support is available. */
-    void SIREMPI_EXPORT  ensureInitializedMPI(int &argc, char **argv)
+    void SIREMPI_EXPORT ensureInitializedMPI(int &argc, char **argv)
     {
-        QMutexLocker lkr( &exec_mutex() );
+        QMutex *exec_mutex = execMutex();
+        
+        if (exec_mutex == 0)
+            //we are being destroyed
+            return;
+    
+        QMutexLocker lkr( exec_mutex );
 
         if (not MPI::Is_initialized())
         {
@@ -593,27 +582,39 @@ static const int STOP_MPI_BACKEND = 2;
         - you cannot call it several times!!! */
     int SIREMPI_EXPORT exec(int &argc, char **argv)
     {
-        exec_mutex().lock();
+        QMutex *exec_mutex = execMutex();
+        
+        if (exec_mutex == 0)
+            //we are being destroyed
+            return -1;
+    
+        exec_mutex->lock();
     
         if (exec_is_running)
         {
-            exec_mutex().unlock();
+            exec_mutex->unlock();
             return 0;
         }
         else
         {
             exec_is_running = true;
-            exec_mutex().unlock();
+            exec_mutex->unlock();
         }
 
         SireMPI::ensureInitializedMPI(argc, argv);
                 
         //now create a new communicator, used to keep
         //communication within SireMPI private
-        exec_mutex().lock();
+        exec_mutex->lock();
         SireMPI::comm_world = &(MPI::COMM_WORLD.Clone());
         qDebug() << "CLONE COMM_WORLD" << SireMPI::comm_world;
-        exec_mutex().unlock();
+        exec_mutex->unlock();
+
+        if (comm_world == 0)
+        {
+            qDebug() << "Null MPI::COMM_WORLD!!!";
+            return -1;
+        }
                 
         //now go into a loop waiting for instructions
         bool keep_looping = true;
@@ -691,7 +692,13 @@ static const int STOP_MPI_BACKEND = 2;
     
         } while (keep_looping);
     
-        exec_mutex().lock();
+        exec_mutex = execMutex();
+        
+        if (exec_mutex == 0)
+            //we are already in the process of being destroyed
+            return 0;
+    
+        exec_mutex->lock();
 
         //ok, we have finished - destroy the communicator
         qDebug() << comm_world->Get_rank()  
@@ -701,7 +708,7 @@ static const int STOP_MPI_BACKEND = 2;
         comm_world = 0;
 
         exec_is_running = false;
-        exec_mutex().unlock();
+        exec_mutex->unlock();
     
         return 0;
     }
@@ -712,10 +719,18 @@ static const int STOP_MPI_BACKEND = 2;
     class SireMPI_ExecRunner : private QThread
     {
     public:
-        SireMPI_ExecRunner(int &argc, char **argv) : QThread()
+        SireMPI_ExecRunner() : QThread()
+        {}
+        
+        void start(int &argc, char **argv)
         {
             SireMPI::ensureInitializedMPI(argc, argv);
-            this->start();
+            QThread::start();
+        }
+    
+        bool isRunning() const
+        {
+            return QThread::isRunning();
         }
     
         ~SireMPI_ExecRunner()
@@ -751,7 +766,7 @@ static const int STOP_MPI_BACKEND = 2;
         }
     };
 
-    static shared_ptr<SireMPI_ExecRunner> exec_runner;
+    Q_GLOBAL_STATIC( SireMPI_ExecRunner, execRunner );
 
     /** Call SireMPI::exec, but set it running in a background thread. You should
         really only do this on the master node */
@@ -760,17 +775,32 @@ static const int STOP_MPI_BACKEND = 2;
         //use an object to start and stop the loop
         //(as hopefully the object will be deleted when the library
         // exits, and thus an MPI shutdown will be called)
-        exec_runner.reset( new SireMPI_ExecRunner(argc, argv) );
+        SireMPI_ExecRunner *runner = execRunner();
+        
+        if (runner == 0)
+            //we are in the process of being destroyed
+            return;
+            
+        if (runner->isRunning())
+            return;
+            
+        runner->start(argc, argv);
     }
 
     /** Call this at the end of the program (on the master node) to shutdown
         all of the MPI nodes */
     void SIREMPI_EXPORT shutdown()
     {
-        if (exec_running())
-        {
-            QMutexLocker lkr(&exec_mutex());
+        QMutex *exec_mutex = execMutex();
         
+        if (exec_mutex == 0)
+            //we are already being destroyed
+            return;
+ 
+        QMutexLocker lkr(exec_mutex);
+          
+        if (exec_is_running)
+        {
             //shutdown each node (except ourselves!)
             int nnodes = comm_world->Get_size();
             int my_rank = comm_world->Get_rank();

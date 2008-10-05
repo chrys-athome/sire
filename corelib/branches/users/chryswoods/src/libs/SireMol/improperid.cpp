@@ -125,7 +125,7 @@ bool ImproperID::operator==(const ImproperID &other) const
 /** Comparison operator - the order is important */
 bool ImproperID::operator!=(const ImproperID &other) const
 {
-    return atm0 != other.atm0 or atm1 != other.atm1 and
+    return atm0 != other.atm0 or atm1 != other.atm1 or
            atm2 != other.atm2 or atm3 != other.atm3;
 }
 

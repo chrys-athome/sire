@@ -122,7 +122,7 @@ bool AngleID::operator==(const AngleID &other) const
 /** Comparison operator - the order is important */
 bool AngleID::operator!=(const AngleID &other) const
 {
-    return atm0 != other.atm0 or atm1 != other.atm1 and
+    return atm0 != other.atm0 or atm1 != other.atm1 or
            atm2 != other.atm2;
 }
 

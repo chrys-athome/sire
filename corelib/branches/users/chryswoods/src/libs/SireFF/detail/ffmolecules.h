@@ -283,70 +283,6 @@ private:
     QHash<MolNum,quint32> idxs_by_molnum;
 };
 
-/** This class provides an array of FF specialised molecules, 
-    arranged in such a way as to speed up indexing over them.
-    
-    The template parameter is the potential type for which 
-    this group is used (e.g. SireMM::CLJPotential)
-    
-    This is necessary, as different
-    potentials use different parameterisation methods,
-    and can supply different specialised molecule types.
-    
-    @author Christopher Woods
-*/
-template<class PTNL>
-class FFMolecules : public FFMoleculesBase
-{
-
-friend QDataStream& ::operator<<<>(QDataStream&, const FFMolecules<PTNL>&);
-friend QDataStream& ::operator>><>(QDataStream&, FFMolecules<PTNL>&);
-
-public:
-    typedef typename PTNL::Molecule Molecule;
-    typedef ChangedMolecule<Molecule> ChangedMolecule;
-
-    typedef typename Molecule::Parameters Parameters;
-    typedef typename Molecule::ParameterNames ParameterNames;
-
-    FFMolecules();
-    
-    FFMolecules(const MolGroup &molgroup, PTNL &forcefield,
-                const PropertyMap &map = PropertyMap());
-    
-    FFMolecules(const FFMolecules<PTNL> &other);
-    
-    ~FFMolecules();
-
-    FFMolecules<PTNL>& operator=(const FFMolecules<PTNL> &other);
-    
-    bool operator==(const FFMolecules<PTNL> &other) const;
-    bool operator!=(const FFMolecules<PTNL> &other) const;
-
-    ChangedMolecule change(const SireMol::Molecule &molecule,
-                           PTNL &forcefield,
-                           bool record_changes = true);
-                           
-    ChangedMolecule add(const PartialMolecule &molecule,
-                        const PropertyMap &map,
-                        PTNL &forcefield,
-                        bool record_changes = true);
-                        
-    ChangedMolecule remove(const PartialMolecule &molecule,
-                           PTNL &forcefield,
-                           bool record_changes = true);
-    
-    bool wouldChangeProperties(MolNum molnum, const PropertyMap &map) const;
-    
-    const QVector<Molecule>& moleculesByIndex() const;
-    
-    void clear();
-    
-protected:
-    /** The array of forcefield-specialised molecules in this group */
-    QVector<Molecule> mols_by_idx;
-};
-
 /** This implementation class holds the information about 
     a change in a molecule. This can be used by a
     forcefield to simplify the calculation of the change in
@@ -414,6 +350,70 @@ private:
     
     /** The corresponding changed parts of the new molecule */
     FFMOL new_parts;
+};
+
+/** This class provides an array of FF specialised molecules, 
+    arranged in such a way as to speed up indexing over them.
+    
+    The template parameter is the potential type for which 
+    this group is used (e.g. SireMM::CLJPotential)
+    
+    This is necessary, as different
+    potentials use different parameterisation methods,
+    and can supply different specialised molecule types.
+    
+    @author Christopher Woods
+*/
+template<class PTNL>
+class FFMolecules : public FFMoleculesBase
+{
+
+friend QDataStream& ::operator<<<>(QDataStream&, const FFMolecules<PTNL>&);
+friend QDataStream& ::operator>><>(QDataStream&, FFMolecules<PTNL>&);
+
+public:
+    typedef typename PTNL::Molecule Molecule;
+    typedef SireFF::detail::ChangedMolecule<Molecule> ChangedMolecule;
+
+    typedef typename Molecule::Parameters Parameters;
+    typedef typename Molecule::ParameterNames ParameterNames;
+
+    FFMolecules();
+    
+    FFMolecules(const MolGroup &molgroup, PTNL &forcefield,
+                const PropertyMap &map = PropertyMap());
+    
+    FFMolecules(const FFMolecules<PTNL> &other);
+    
+    ~FFMolecules();
+
+    FFMolecules<PTNL>& operator=(const FFMolecules<PTNL> &other);
+    
+    bool operator==(const FFMolecules<PTNL> &other) const;
+    bool operator!=(const FFMolecules<PTNL> &other) const;
+
+    ChangedMolecule change(const SireMol::Molecule &molecule,
+                           PTNL &forcefield,
+                           bool record_changes = true);
+                           
+    ChangedMolecule add(const PartialMolecule &molecule,
+                        const PropertyMap &map,
+                        PTNL &forcefield,
+                        bool record_changes = true);
+                        
+    ChangedMolecule remove(const PartialMolecule &molecule,
+                           PTNL &forcefield,
+                           bool record_changes = true);
+    
+    bool wouldChangeProperties(MolNum molnum, const PropertyMap &map) const;
+    
+    const QVector<Molecule>& moleculesByIndex() const;
+    
+    void clear();
+    
+protected:
+    /** The array of forcefield-specialised molecules in this group */
+    QVector<Molecule> mols_by_idx;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
