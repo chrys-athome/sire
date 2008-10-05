@@ -346,12 +346,14 @@ double Quaternion::w() const
 
 bool Quaternion::operator==(const Quaternion &p1)
 {
-    return p1.sc[0] == sc[0] && p1.sc[1] == sc[1] && p1.sc[2] == sc[2] && p1.sc[3] == sc[3];
+    return p1.sc[0] == sc[0] and p1.sc[1] == sc[1] and p1.sc[2] == sc[2] 
+                  and p1.sc[3] == sc[3];
 }
 
 bool Quaternion::operator!=(const Quaternion &p1)
 {
-    return p1.sc[0] != sc[0] | p1.sc[1] != sc[1] | p1.sc[2] != sc[2] | p1.sc[3] != sc[3];
+    return p1.sc[0] != sc[0] or p1.sc[1] != sc[1] or p1.sc[2] != sc[2] 
+                  or p1.sc[3] != sc[3];
 }
 
 bool SIREMATHS_EXPORT SireMaths::operator==(const Quaternion &p1, const Quaternion &p2)

@@ -28,7 +28,7 @@
 
 #ifdef __SIRE_USE_MPI__
 //mpich requires that mpi.h is included first
-#include <mpi.h>
+#include <mpi.h>                  // CONDITIONAL_INCLUDE
 #endif
 
 #include <QTime>

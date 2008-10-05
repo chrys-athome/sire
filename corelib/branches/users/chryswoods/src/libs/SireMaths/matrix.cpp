@@ -219,16 +219,16 @@ bool Matrix::isIdentity() const
 
 bool Matrix::operator==(const Matrix& m)
 {
-    return xx==m.xx && xy==m.xy && xz==m.xz &&
-           yx==m.yx && yy==m.yy && yx==m.yz &&
-           zx==m.zx && zy==m.zy && zz==m.zz;
+    return xx==m.xx and xy==m.xy and xz==m.xz and
+           yx==m.yx and yy==m.yy and yx==m.yz and
+           zx==m.zx and zy==m.zy and zz==m.zz;
 }
 
 bool Matrix::operator!=(const Matrix& m)
 {
-    return xx!=m.xx | xy!=m.xy | xz!=m.xz |
-           yx!=m.yx | yy!=m.yy | yz!=m.yz |
-           zx!=m.zx | zy!=m.zy | zz!=m.zz;
+    return xx!=m.xx or xy!=m.xy or xz!=m.xz or
+           yx!=m.yx or yy!=m.yy or yz!=m.yz or
+           zx!=m.zx or zy!=m.zy or zz!=m.zz;
 }
 
 Matrix& Matrix::operator+=(const Matrix &m)

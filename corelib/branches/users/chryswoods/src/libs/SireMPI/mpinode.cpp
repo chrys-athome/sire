@@ -28,7 +28,7 @@
 
 #ifdef __SIRE_USE_MPI__
 //mpich requires that mpi.h is included first
-#include <mpi.h>
+#include <mpi.h>                  // CONDITIONAL_INCLUDE
 #endif
 
 #include <boost/weak_ptr.hpp>
@@ -51,6 +51,7 @@
 #include "SireError/errors.h"
 
 #include "tostring.h"
+#include "sire_config.h"
 
 #include <QDebug>
 
@@ -65,6 +66,26 @@ using boost::tuple;
 static const int SHUTDOWN_MPI = 0;
 static const int START_MPI_BACKEND = 1;
 static const int STOP_MPI_BACKEND = 2;
+
+#ifndef HAVE_LSEEK64
+    //////
+    ////// add an lseek64 function stub to fill a function
+    ////// that is missing - mpich needs lseek64 to be
+    ////// defined, even if it is not available! Otherwise
+    ////// dlopen errors as the symbol can't be found
+    //////
+    extern "C"
+    {
+        int lseek64(int fd, int offset, int whence)
+        {
+            throw SireError::program_bug( QObject::tr(
+                "MPI implementation is calling lseek64 which is not supported "
+                "on OS X (Leopard - 32bit)"), CODELOC );
+            
+            return 0;
+        }
+    }
+#endif
 
 //////////
 ////////// Implementation of MPIBackend
@@ -85,12 +106,6 @@ static const int STOP_MPI_BACKEND = 2;
 
     /** Pointer to the global communicator used by SireMPI */
     static MPI::Comm *comm_world(0);
-    
-    MPI::Comm& COMM_WORLD()
-    {
-        BOOST_ASSERT( comm_world != 0 );
-        return *comm_world;
-    }
 
     class MPIBackend;
 
@@ -575,6 +590,25 @@ static const int STOP_MPI_BACKEND = 2;
                            << "The available level is just" << support_level;
             }
         }
+                
+        //now create a new communicator, used to keep
+        //communication within SireMPI private
+        if (SireMPI::comm_world == 0)
+        {
+            SireMPI::comm_world = &(MPI::COMM_WORLD.Clone());
+            qDebug() << "CLONE COMM_WORLD" << SireMPI::comm_world;
+        }
+    }
+    
+    MPI::Comm& COMM_WORLD()
+    {
+        if (comm_world == 0)
+        {
+            int argc = 0;
+            SireMPI::ensureInitializedMPI(argc, 0);
+        }
+    
+        return *comm_world;
     }
 
     /** This is the main function that you must call to allow SireMPI
@@ -602,19 +636,6 @@ static const int STOP_MPI_BACKEND = 2;
         }
 
         SireMPI::ensureInitializedMPI(argc, argv);
-                
-        //now create a new communicator, used to keep
-        //communication within SireMPI private
-        exec_mutex->lock();
-        SireMPI::comm_world = &(MPI::COMM_WORLD.Clone());
-        qDebug() << "CLONE COMM_WORLD" << SireMPI::comm_world;
-        exec_mutex->unlock();
-
-        if (comm_world == 0)
-        {
-            qDebug() << "Null MPI::COMM_WORLD!!!";
-            return -1;
-        }
                 
         //now go into a loop waiting for instructions
         bool keep_looping = true;
@@ -1036,29 +1057,21 @@ bool MPINodeData::wasAborted() const
 class NodeDeleter : private QThread
 {
 public:
-    ~NodeDeleter()
-    {
-        keep_running = false;
-        this->wait();
-    }
-    
-    static void scheduleForDeletion(const MPINode &node)
-    {
-        QMutexLocker lkr(&data_mutex);
-
-        if (global_deleter.get() == 0)
-            global_deleter.reset( new NodeDeleter() );
-
-        global_deleter->delete_nodes.append(node);
-    }
-    
-protected:
     NodeDeleter() : QThread()
     {
         keep_running = true;
         this->start();
     }
     
+    ~NodeDeleter()
+    {
+        keep_running = false;
+        this->wait();
+    }
+    
+    static void scheduleForDeletion(const MPINode &node);
+     
+protected:
     void run()
     {
         try
@@ -1097,16 +1110,24 @@ protected:
     }
     
 private:
-    static shared_ptr<NodeDeleter> global_deleter;
-
-    static QMutex data_mutex;
-
+    QMutex data_mutex;
     QList<MPINode> delete_nodes;
     bool keep_running;
 };
 
-shared_ptr<NodeDeleter> NodeDeleter::global_deleter;
-QMutex NodeDeleter::data_mutex;
+Q_GLOBAL_STATIC( NodeDeleter, globalNodeDeleter );
+
+void NodeDeleter::scheduleForDeletion(const MPINode &node)
+{
+    NodeDeleter *global_deleter = globalNodeDeleter();
+        
+    if (global_deleter == 0)
+        //we are being destroyed!
+        return;
+   
+    QMutexLocker lkr( &(global_deleter->data_mutex) );
+    global_deleter->delete_nodes.append(node);
+}
 
 /** This is what is run in the background to send a job to the backend 
     node and to wait for a response */

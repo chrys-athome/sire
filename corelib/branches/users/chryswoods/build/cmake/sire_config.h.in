@@ -1,0 +1,12 @@
+
+// Auto-generated file - do not edit
+
+#ifndef SIRE_CONFIG_H
+#define SIRE_CONFIG_H
+
+#cmakedefine HAVE_UNISTD_H 1
+
+#cmakedefine HAVE_LSEEK64 1
+
+
+#endif

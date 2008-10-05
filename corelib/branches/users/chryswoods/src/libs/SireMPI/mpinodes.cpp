@@ -28,7 +28,7 @@
 
 #ifdef __SIRE_USE_MPI__
 //mpich requires that mpi.h is included first
-#include <mpi.h>
+#include <mpi.h>                  // CONDITIONAL_INCLUDE
 #endif
 
 #include <boost/weak_ptr.hpp>
@@ -50,7 +50,7 @@ using namespace SireMPI::detail;
 
 using namespace SireBase;
 
-static QMutex mpi_mutex;
+Q_GLOBAL_STATIC( QMutex, mpiMutex );
 
 ////////
 //////// Implementation of MPINodesData
@@ -89,7 +89,13 @@ boost::shared_ptr<MPINodesData> MPINodesData::construct()
     
     //protect access to MPI functions
     {
-        QMutexLocker lkr(&mpi_mutex);
+        QMutex *mpi_mutex = mpiMutex();
+        
+        if (mpi_mutex == 0)
+            //we are being destroyed
+            return boost::shared_ptr<MPINodesData>();
+    
+        QMutexLocker lkr(mpi_mutex);
     
         if (not SireMPI::exec_running())
         {
@@ -315,14 +321,20 @@ QList<MPINode> MPINodesData::getNFreeNodes(int count, int time)
 
 static boost::shared_ptr<detail::MPINodesData> mpi_comm_world;
 
-static QMutex world_mutex;
+Q_GLOBAL_STATIC( QMutex, worldMutex );
 
 /** Return the group of nodes that represent MPI_COMM_WORLD - i.e.
     all of the MPI nodes available to this instance
     (ignoring spawned or remote node groups) */
 MPINodes MPINodes::world()
 {
-    QMutexLocker lkr(&world_mutex);
+    QMutex *world_mutex = worldMutex();
+    
+    if (world_mutex == 0)
+        //we are being destroyed
+        return MPINodes( boost::shared_ptr<detail::MPINodesData>() );
+
+    QMutexLocker lkr(world_mutex);
     
     if (mpi_comm_world.get() == 0)
     {

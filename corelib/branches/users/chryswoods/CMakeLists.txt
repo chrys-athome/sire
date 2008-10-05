@@ -221,6 +221,21 @@ set( CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} ${SIRE_LINK_FLAGS}" )
 
 message( STATUS "Linker flags = ${CMAKE_SHARED_LINKER_FLAGS}" )
 
+# Now run some platform tests - the results will be placed in config.h
+include (CheckIncludeFiles)
+include (CheckSymbolExists)
+include (CheckFunctionExists)
+
+check_include_files( unistd.h HAVE_UNISTD_H )
+check_function_exists( lseek64 HAVE_LSEEK64 )
+
+#create config.h
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/sire_config.h.in 
+               ${CMAKE_CURRENT_BINARY_DIR}/sire_config.h)
+
+#include the build directory so that we can get sire_config.h and sire_version.h
+include_directories(${CMAKE_BINARY_DIR})
+
 # Add the compiler test directory - this allows us to run some compiler
 # tests to make sure that Sire will compile properly
 add_subdirectory (build/test_compiler)
@@ -236,3 +251,6 @@ include( GetSvnVersion )
 install (FILES ${SIRE_EXTRA_INCLUDES_FILE} 
          DESTINATION ${SIRE_CMAKEFILES}
         )
+
+install (FILES ${CMAKE_CURRENT_BINARY_DIR}/sire_config.h
+         DESTINATION ${SIRE_INCLUDES})
