@@ -375,9 +375,12 @@ if __name__ == "__main__":
         from special_code import *
         
     sire_include_dirs = [ rootdir, "%s/%s" % (rootdir,sourcedir) ]
-    qt_include_dirs = [ "/usr/local/include/Qt4/", "/usr/local/include/Qt4/QtCore" ]
-    boost_include_dirs = [ "/usr/local/include/boost-1_34_1" ]
-    gsl_include_dirs = [ "/usr/local/include" ]
+    qtdir = os.getenv("QTDIR")
+    boostdir = os.getenv("BOOSTDIR")
+    gsldir = os.getenv("GSLDIR")
+    qt_include_dirs = [ qtdir, "%s/QtCore" % qtdir ]
+    boost_include_dirs = [ boostdir ]
+    gsl_include_dirs = [ gsldir ]
 
     #construct a module builder that will build all of the wrappers for this module
     mb = module_builder_t( files = [ "active_headers.h" ],
