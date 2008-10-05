@@ -31,8 +31,6 @@
 #include <mpi.h>                  // CONDITIONAL_INCLUDE
 #endif
 
-#include <QTime>
-
 #include "mpipromise.h"
 #include "mpiworker.h"
 
@@ -144,13 +142,7 @@ MPIPromiseData::MPIPromiseData(const MPIWorker &worker,
                : mpinode(node), current_progress(0)
 {
     //get a binary representation of the worker
-    QTime t;
-    t.start();
     initial_worker_data = SireStream::save(worker);
-    
-    int ms = t.elapsed();
-    
-    qDebug() << "Saving the inital worker data took" << ms << "ms";
 }
 
 /** Destructor */
@@ -358,8 +350,6 @@ double MPIPromiseData::progress()
     of the calculation */
 void MPIPromiseData::setProgress(double progress)
 {
-    qDebug() << "PROMISE::setProgress" << progress;
-
     QMutexLocker lkr(&data_mutex);
     current_progress = progress;
     progress_waiter.wakeAll();
@@ -368,8 +358,6 @@ void MPIPromiseData::setProgress(double progress)
 /** Set the interim result */
 void MPIPromiseData::setInterimData(const QByteArray &worker_data, double progress)
 {
-    qDebug() << "PROMISE::setInterimData" << worker_data.count() << progress;
-
     QMutexLocker lkr(&data_mutex);
     interim_worker_data = worker_data;
     current_progress = progress;

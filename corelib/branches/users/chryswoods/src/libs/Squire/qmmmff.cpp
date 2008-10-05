@@ -268,10 +268,6 @@ void QMMMFF::recalculateEnergy()
     QMMMElecEmbedPotential::calculateEnergy(qmmols, mmmols, nrg);
     
     this->components().setEnergy(*this, nrg);
-    
-    qDebug() << CODELOC;
-    qDebug() << nrg;
-    
     this->setClean();
 }
 
@@ -301,11 +297,15 @@ void QMMMFF::_pvt_added(quint32 group_id,
     //add the molecule (don't record changes as everything
     //is recalculated from scratch)
     if (group_id == 0)
+    {
         qmmols.add(molecule, map, *this, false);
-        
+        G2FF::setDirty();
+    }
     else if (group_id == 1)
+    {
         mmmols.add(molecule, map, *this, false);
-        
+        G2FF::setDirty();
+    }
     else
         throwInvalidGroup(group_id);
 }
@@ -315,11 +315,15 @@ void QMMMFF::_pvt_removed(quint32 group_id,
                           const SireMol::PartialMolecule &molecule)
 {
     if (group_id == 0)
+    {
         qmmols.remove(molecule, *this, false);
-        
+        G2FF::setDirty();
+    }
     else if (group_id == 1)
+    {
         mmmols.remove(molecule, *this, false);
-        
+        G2FF::setDirty();
+    }
     else
         throwInvalidGroup(group_id);
 }
@@ -333,11 +337,15 @@ void QMMMFF::_pvt_removed(quint32 group_id,
 void QMMMFF::_pvt_changed(quint32 group_id, const SireMol::Molecule &molecule)
 {
     if (group_id == 0)
+    {
         qmmols.change(molecule, *this, false);
-        
+        G2FF::setDirty();
+    }   
     else if (group_id == 1)
+    {
         mmmols.change(molecule, *this, false);
-        
+        G2FF::setDirty();
+    }
     else
         throwInvalidGroup(group_id);
 }
@@ -362,6 +370,8 @@ void QMMMFF::_pvt_changed(quint32 group_id, const QList<SireMol::Molecule> &mole
             {
                 qmmols.change(*it, *this, false);
             }
+            
+            G2FF::setDirty();
         }
         catch(...)
         {
@@ -382,6 +392,8 @@ void QMMMFF::_pvt_changed(quint32 group_id, const QList<SireMol::Molecule> &mole
             {
                 mmmols.change(*it, *this, false);
             }
+            
+            G2FF::setDirty();
         }
         catch(...)
         {
@@ -398,11 +410,15 @@ void QMMMFF::_pvt_changed(quint32 group_id, const QList<SireMol::Molecule> &mole
 void QMMMFF::_pvt_removedAll(quint32 group_id)
 {
     if (group_id == 0)
+    {
         qmmols.clear();
-    
+        G2FF::setDirty();
+    }
     else if (group_id == 1)
+    {
         mmmols.clear();
-        
+        G2FF::setDirty();
+    }
     else
         throwInvalidGroup(group_id);
 }

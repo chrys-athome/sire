@@ -284,6 +284,7 @@ void QMFF::_pvt_added(const SireMol::PartialMolecule &molecule,
     //add the molecule (don't record changes as everything
     //is recalculated from scratch)
     qmmols.add(molecule, map, *this, false);
+    G1FF::setDirty();
 }
 
 /** Record the fact that the molecule 'mol' has been removed from this forcefield */
@@ -291,6 +292,7 @@ void QMFF::_pvt_removed(const SireMol::PartialMolecule &molecule)
 {
     //remove the molecule, again without recording changes
     qmmols.remove(molecule, *this, false);
+    G1FF::setDirty();
 }
 
 /** Record that fact that the molecule 'molecule' has been changed
@@ -303,6 +305,7 @@ void QMFF::_pvt_changed(const SireMol::Molecule &molecule)
 {
     //change the molecule, again without recording the change
     qmmols.change(molecule, *this, false);
+    G1FF::setDirty();
 }
 
 /** Record that the provided list of molecules have changed 
@@ -323,6 +326,8 @@ void QMFF::_pvt_changed(const QList<SireMol::Molecule> &mols)
         {
             qmmols.change(*it, *this, false);
         }
+        
+        G1FF::setDirty();
     }
     catch(...)
     {
@@ -336,6 +341,7 @@ void QMFF::_pvt_changed(const QList<SireMol::Molecule> &mols)
 void QMFF::_pvt_removedAll()
 {
     qmmols.clear();
+    G1FF::setDirty();
 }
 
 /** Return whether or not the supplied property map contains different

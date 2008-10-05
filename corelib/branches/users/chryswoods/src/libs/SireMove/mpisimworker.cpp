@@ -225,15 +225,11 @@ void MPISimWorker::runChunk()
     //run a maximum of chunk_size moves per chunk
     int nmoves_to_run = qMin( chunk_size, nmoves - ncompleted_moves );
     
-    qDebug() << "INITIAL ENERGY" << sim_system.energy();
-    
     //run those moves
     sim_system = sim_moves.edit().move(sim_system, nmoves_to_run, record_stats);
     
     //increment the number of completed moves
     ncompleted_moves += nmoves_to_run;
-    
-    qDebug() << "CHUNK COMPLETE" << sim_system.energy() << ncompleted_moves;
     
     //set the progress
     MPIWorker::setProgress( (100.0 * ncompleted_moves) / nmoves );

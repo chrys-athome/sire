@@ -49,7 +49,6 @@ void MPISim::_pvt_setWorker(const MPISimWorker &worker)
     sim_worker = worker;
     nmoves = worker.nMoves();
     record_stats = worker.recordStatistics();
-    
     data_is_local = true;
 }
 
@@ -65,6 +64,7 @@ MPISim::MPISim(const MPINode &node, const MPISimWorker &worker)
     initial_state = SireStream::save(worker);
     
     QMutexLocker lkr(&data_mutex);
+
     this->_pvt_setWorker(worker);
 }
 
@@ -93,8 +93,6 @@ void MPISim::_pvt_setError(const SireError::exception &e)
     You must hold the data_mutex while calling this function */
 void MPISim::_pvt_makeDataLocal()
 {
-    QMutexLocker lkr(&data_mutex);
-    
     if (data_is_local)
         return;
     

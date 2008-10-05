@@ -95,21 +95,34 @@ print "Initial energy = %s" % system.energy()
 
 system.mustNowRecalculateFromScratch()
 
-mc = RigidBodyMC(qmmmff.group(MGIdx(1)))
+mc = RigidBodyMC(qmmmff.group(MGIdx(0)))
 
 moves = SameMoves(mc)
 
-print "Running 5 moves on the MPI master node..."
+print "Running 5 moves using MPI"
 nodes = MPINodes()
 node = nodes.getFreeNode()
 print "node rank = %d of %d" % (node.rank(), nodes.nNodes())
 
-promise = node.start( MPISimWorker(system, moves, 5, True) )
+sim = Simulation.run(node, system, moves, 5)
 
 print "Job submitted. Waiting..."
 
-promise.wait()
+sim.wait()
 
 print "Job complete!"
 
-sys.exit(0)
+system = sim.system()
+
+print "Final energy = %s" % system.energy()
+
+system.mustNowRecalculateFromScratch();
+
+print "Are we sure? = %s" % system.energy()
+
+mc = sim.moves().moves()[0]
+
+print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
+                            mc.nRejected(), 100 * mc.acceptanceRatio())
+
+print "Took %d ms" % ms

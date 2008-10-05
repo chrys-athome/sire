@@ -75,21 +75,6 @@ mc = RigidBodyMC(cljff.group(MGIdx(0)))
 
 moves = SameMoves(mc)
 
-print "Running 1000 moves on the MPI master node..."
-nodes = MPINodes()
-node = nodes.getFreeNode()
-print "node rank = %d of %d" % (node.rank(), nodes.nNodes())
-
-promise = node.start( MPISimWorker(system, moves, 1000, True) )
-
-print "Job submitted. Waiting..."
-
-promise.wait()
-
-print "Job complete!"
-
-sys.exit(0)
-
 print "Running 1000 moves directly..."
 t.start()
 system = moves.move(system, 1000, True)
@@ -139,3 +124,36 @@ print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
 
 print "Took %d ms" % ms
 
+print "Running 1000 moves on the MPI master node..."
+nodes = MPINodes()
+node = nodes.getFreeNode()
+print "node rank = %d of %d" % (node.rank(), nodes.nNodes())
+
+t.start()
+sim = Simulation.run(node, system, moves, 1000)
+ms = t.elapsed()
+
+print "Submitted in %d ms" % ms
+
+print sim.hasFinished()
+print sim.hasStarted()
+print sim.isRunning()
+
+print "Waiting..."
+sim.wait()
+ms = t.elapsed()
+
+system = sim.system()
+
+print "Final energy = %s" % system.energy()
+
+system.mustNowRecalculateFromScratch();
+
+print "Are we sure? = %s" % system.energy()
+
+mc = sim.moves().moves()[0]
+
+print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
+                            mc.nRejected(), 100 * mc.acceptanceRatio())
+
+print "Took %d ms" % ms

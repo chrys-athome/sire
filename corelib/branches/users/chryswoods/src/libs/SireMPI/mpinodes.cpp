@@ -71,8 +71,6 @@ MPINodesData::MPINodesData() : sem(1), nnodes(1)
     static int getUniqueMPITag()
     {
         int mpitag = last_mpitag.increment();
-        qDebug() << "New mpitag == " << mpitag;
-    
         return mpitag;
     }
 #endif
@@ -204,8 +202,6 @@ void MPINodesData::returnNode(const MPINode &node)
         if (my_node.get() == 0)
         {
             it.remove();
-            
-            qDebug() << "Returning a weak node...";
             sem.release();
             
             continue;
@@ -218,8 +214,6 @@ void MPINodesData::returnNode(const MPINode &node)
             #endif
                 
             it.remove();
-            
-            qDebug() << "Returning node" << node.UID().toString();
             sem.release();
         }
     }
@@ -234,8 +228,6 @@ MPINode MPINodesData::_pvt_getNode()
 {
     MPINode free_node = free_nodes.takeLast();
     busy_nodes.append( free_node.d );
-    
-    qDebug() << "Here is the available node" << free_node.UID().toString();
     
     return free_node;
 }

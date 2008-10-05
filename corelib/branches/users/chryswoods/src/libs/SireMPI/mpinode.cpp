@@ -35,7 +35,6 @@
 #include <boost/tuple/tuple.hpp>
 
 #include <QTextStream>
-#include <QTime>
 
 #include "mpinode.h"
 #include "mpinodes.h"
@@ -167,9 +166,7 @@ static const int STOP_MPI_BACKEND = 2;
         process, and the  */
     MPIBackend::MPIBackend(MPI::Comm *communicator, int rank, int tag) 
                : QThread(), mpicom(communicator), master_rank(rank), mpitag(tag)
-    {
-        qDebug() << "Creating backend with communicator" << communicator;
-    }
+    {}
     
     /** Destructor */
     MPIBackend::~MPIBackend()
@@ -208,40 +205,22 @@ static const int STOP_MPI_BACKEND = 2;
         }
         else
         {
-            QTime t;
-            t.start();
             worker_data = SireStream::save(worker);
-            int ms = t.elapsed();
-            
-            qDebug() << "Saving the data took" << ms << "ms";
-            
             envelope[1] = worker_data.size();
         }
         
         //send the envelope describing the response
-        qDebug() << comm_world->Get_rank() << master_rank << mpitag  
-                 << "backend: mpicom->Send(envelope, 3, MPI::INT, master_rank, mpitag);";
         mpicom->Send(envelope, 3, MPI::INT, master_rank, mpitag);
-        qDebug() << comm_world->Get_rank()  
-                 << "backend: SENT!";
         
         if (envelope[1] > 0)
         {
-            qDebug() << comm_world->Get_rank() << master_rank << mpitag
-                 << "backend: mpicom->Send(worker_data.constData(), worker_data.size(), MPI::BYTE, master_rank, mpitag);";
             mpicom->Send(worker_data.constData(), worker_data.size(), MPI::BYTE,
                          master_rank, mpitag);
-            qDebug() << comm_world->Get_rank()  
-                 << "backend: SENT!";
         }
         
         if (envelope[2] > 0)
         {
-            qDebug() << comm_world->Get_rank() << master_rank << mpitag
-                 << "backend: mpicom->Send(&current_progress, 1, MPI::DOUBLE, master_rank, mpitag);";
             mpicom->Send(&current_progress, 1, MPI::DOUBLE, master_rank, mpitag);
-            qDebug() << comm_world->Get_rank()  
-                 << "backend: SENT!";
         }
     }
     
@@ -256,34 +235,22 @@ static const int STOP_MPI_BACKEND = 2;
                 {
                     //yes there is - receive it
                     int envelope[3];
-                    qDebug() << comm_world->Get_rank() << master_rank << mpitag  
-                 << "backend: mpicom->Recv(envelope, 3, MPI::INT, master_rank, mpitag);";
                     mpicom->Recv(envelope, 3, MPI::INT, master_rank, mpitag);
-                    qDebug() << comm_world->Get_rank()  
-                 << "backend: RECEIVED!";
 
                     if (envelope[1] > 0)
                     {
                         //there is an accompanying bytearray package
                         QByteArray worker_data(envelope[1]+1, ' ');
-                        qDebug() << comm_world->Get_rank() << master_rank << mpitag
-                 << "backend: mpicom->Recv(worker_data.data(), envelope[1], MPI::BYTE, master_rank, mpitag);";
                         mpicom->Recv(worker_data.data(), envelope[1], MPI::BYTE,
                                      master_rank, mpitag);
-                        qDebug() << comm_world->Get_rank()  
-                 << "backend: RECEIVED!";
                     }
                     
                     if (envelope[2] > 0)
                     {
                         //there is an accompanying double...
                         double current_progress;
-                        qDebug() << comm_world->Get_rank() << master_rank << mpitag 
-                 << "backend: mpicom->Recv(&current_progress, 1, MPI::DOUBLE, master_rank, mpitag);";
                         mpicom->Recv(&current_progress, 1, MPI::DOUBLE, master_rank, 
                                      mpitag);
-                        qDebug() << comm_world->Get_rank()  
-                 << "backend: RECEIVED!";
                     }
                 
                     switch (envelope[0])
@@ -308,7 +275,6 @@ static const int STOP_MPI_BACKEND = 2;
 
                 //now run a chunk of work
                 worker.runChunk();
-                qDebug() << "Progress == " << worker.progress() << "%";
             }
             
             this->sendResponse(MPIWORKER_RESULT, worker);
@@ -336,25 +302,16 @@ static const int STOP_MPI_BACKEND = 2;
         then repacks that worker and sends it back to the master */
     void MPIBackend::run()
     {
-        qDebug() << comm_world->Get_rank()  
-                 << " ** STARTING BACKGROUND WORKER THREAD ** ";
-    
         try
         {
             do
             {
                 //is there a message to receive?
-                qDebug() << mpicom << "->Iprobe(" << master_rank << mpitag << ")";
-                
                 if (mpicom->Iprobe(master_rank, mpitag))
                 {
                     //yes there is - receive it
                     int envelope[3];
-                    qDebug() << comm_world->Get_rank() << master_rank << mpitag
-                     << "backend_run: mpicom->Recv(envelope, 3, MPI::INT, master_rank, mpitag);";
                     mpicom->Recv(envelope, 3, MPI::INT, master_rank, mpitag);
-                    qDebug() << comm_world->Get_rank()  
-                     << "backend_run: RECEIVED!";
 
                     QByteArray worker_data;
 
@@ -362,24 +319,16 @@ static const int STOP_MPI_BACKEND = 2;
                     {
                         //there is an accompanying bytearray package
                         worker_data = QByteArray(envelope[1]+1, ' ');
-                        qDebug() << comm_world->Get_rank() << master_rank << mpitag
-                     << "backend_run: mpicom->Recv(worker_data.data(), envelope[1], MPI::BYTE, master_rank, mpitag);";
                         mpicom->Recv(worker_data.data(), envelope[1], MPI::BYTE,
                                      master_rank, mpitag);
-                        qDebug() << comm_world->Get_rank()  
-                     << "backend_run: RECEIVED!";
                     }
 
                     if (envelope[2] > 0)
                     {
                         //there is an accompanying double...
                         double current_progress;
-                        qDebug() << comm_world->Get_rank() << master_rank << mpitag
-                     << "backend_run: mpicom->Recv(&current_progress, 1, MPI::DOUBLE, master_rank, mpitag);";
                         mpicom->Recv(&current_progress, 1, MPI::DOUBLE, master_rank, 
                                      mpitag);
-                        qDebug() << comm_world->Get_rank()  
-                     << "backend_run: RECEIVED!";
                     }
 
                     if (envelope[0] != MPIWORKER_START)
@@ -389,13 +338,8 @@ static const int STOP_MPI_BACKEND = 2;
                     }
                            
                     //extract the worker
-                    QTime t;
-                    t.start();
                     tuple< shared_ptr<void>,QString > object 
                                                 = SireStream::load(worker_data);
-                              
-                    int ms = t.elapsed();
-                    qDebug() << "Loading the data took" << ms << "ms";
                                                                                     
                     //assume that this is the right type
                     MPIWorker *worker = static_cast<MPIWorker*>( object.get<0>().get() );
@@ -595,8 +539,10 @@ static const int STOP_MPI_BACKEND = 2;
         //communication within SireMPI private
         if (SireMPI::comm_world == 0)
         {
+            qDebug() << "Cloning from" << MPI::COMM_WORLD.Get_rank()
+                                       << MPI::COMM_WORLD.Get_size();
+        
             SireMPI::comm_world = &(MPI::COMM_WORLD.Clone());
-            qDebug() << "CLONE COMM_WORLD" << SireMPI::comm_world;
         }
     }
     
@@ -654,14 +600,8 @@ static const int STOP_MPI_BACKEND = 2;
                     
                     int master_rank = status.Get_source();
                 
-                    qDebug() << comm_world->Get_rank() << master_rank << 1
-                        << "comm_world->Recv( message, 2, MPI::INT, MPI_ANY_SOURCE, 1, status );";
-                    
                     int message[2];
                     comm_world->Recv( message, 2, MPI::INT, master_rank, 1, status );
-                                          
-                    qDebug() << comm_world->Get_rank()  
-                             << "RECEIVED!";
         
                     //what is the message?
                     switch( message[0] )
@@ -722,8 +662,6 @@ static const int STOP_MPI_BACKEND = 2;
         exec_mutex->lock();
 
         //ok, we have finished - destroy the communicator
-        qDebug() << comm_world->Get_rank()  
-                 << "MPI::Free()";
         comm_world->Free();
         delete comm_world;
         comm_world = 0;
@@ -834,24 +772,12 @@ static const int STOP_MPI_BACKEND = 2;
             {
                 if (i != my_rank)
                 {
-                    //received in SireMPI::exec()
-                    // 'comm_world->Recv( message, 2, MPI_ANY_SOURCE, 1, status );'
-                    qDebug() << comm_world->Get_rank() << i << 1  
-                             << "(1) comm_world->Send(message, 2, MPI::INT, i, 1);";
                     comm_world->Send(message, 2, MPI::INT, i, 1);
-                    qDebug() << comm_world->Get_rank()  
-                             << "(1) SENT!";
                 }
             }
             
             //now shutdown this node
-            //received in SireMPI::exec()
-            // comm_world->Recv( message, 2, MPI_ANY_SOURCE, 1, status );'
-            qDebug() << comm_world->Get_rank() << my_rank << 1  
-                     << "(2) comm_world->Send(message, 2, MPI::INT, my_rank, 1);";
             comm_world->Send(message, 2, MPI::INT, my_rank, 1);
-            qDebug() << comm_world->Get_rank()  
-                     << "(2) SENT!";
             
             exec_is_running = false;
         }
@@ -897,11 +823,7 @@ void MPINodeData::startBackend()
 
         //send the message - this is received in SireMPI::exec()
         // 'comm->world->Recv( message, 2, MPI_ANY_SOURCE, 1, status );'
-        qDebug() << comm_world->Get_rank() << mpirank << 1  
-                 << "mpicomm->Send(message, 2, MPI::INT, mpirank, 1);";
         mpicomm->Send(message, 2, MPI::INT, mpirank, 1); 
-        qDebug() << comm_world->Get_rank()  
-                 << "SENT!!!";
 
     #else
         #error Need to write this
@@ -927,11 +849,7 @@ void MPINodeData::stopBackend()
 
         //received in SireMPI::exec()
         // 'comm_world->Recv( message, 2, MPI_ANY_SOURCE, 1, status );'
-        qDebug() << comm_world->Get_rank() << mpirank << 1  
-                 << "mpicomm->Send(message, 2, MPI::INT, mpirank, 1);";
         mpicomm->Send(message, 2, MPI::INT, mpirank, 1); 
-        qDebug() << comm_world->Get_rank()  
-                 << "SENT!";
     
     #else
         #error Need to write this
@@ -1186,18 +1104,9 @@ void MPINodeData::run()
             message[1] = worker_data.size();
             message[2] = 0;
 
-            qDebug() << comm_world->Get_rank() << mpirank << mpitag  
-                     << "NodeData:: mpicom->Send( message, 3, MPI::INT, mpirank, mpitag );";
             mpicom->Send( message, 3, MPI::INT, mpirank, mpitag );
-            qDebug() << comm_world->Get_rank()  
-                     << "NodeData:: SENT!";
-
-            qDebug() << comm_world->Get_rank() << mpirank << mpitag  
-                     << "NodeData:: mpicom->Send( worker_data.constData(), worker_data.size(), MPI::BYTE, mpirank, mpitag );";
             mpicom->Send( worker_data.constData(), worker_data.size(), MPI::BYTE,
                           mpirank, mpitag );
-            qDebug() << comm_world->Get_rank()  
-                     << "NodeData:: SENT!";
         
         #else
             #error Need to write this!
@@ -1213,11 +1122,7 @@ void MPINodeData::run()
             
             do
             {
-                qDebug() << comm_world->Get_rank() << mpirank << mpitag  
-                     << "NodeData:: mpicom->Recv( message, 3, MPI::INT, mpirank, mpitag )";
                 mpicom->Recv( message, 3, MPI::INT, mpirank, mpitag );
-                qDebug() << comm_world->Get_rank()  
-                     << "NodeData:: RECEIVED!";
                 
                 QByteArray result_data;
             
@@ -1225,12 +1130,9 @@ void MPINodeData::run()
                 {
                     //there is an accompanying QByteArray of the specfied size
                     result_data = QByteArray(message[1]+1, ' ');
-                    qDebug() << comm_world->Get_rank() << mpirank << mpitag
-                     << "NodeData:: mpicom->Recv( result_data.data(), message[1], MPI::BYTE, mpirank, mpitag );";
+
                     mpicom->Recv( result_data.data(), message[1], MPI::BYTE, 
                                   mpirank, mpitag );
-                    qDebug() << comm_world->Get_rank()  
-                     << "NodeData:: RECEIVED!";
                 }
             
                 double current_progress = 0;
@@ -1238,11 +1140,7 @@ void MPINodeData::run()
                 if (message[2] > 0)
                 {
                     //the progress data is being sent as well
-                    qDebug() << comm_world->Get_rank() << mpirank << mpitag
-                     << "NodeData:: mpicom->Recv( &current_progress, 1, MPI::DOUBLE, mpirank, mpitag );";
                     mpicom->Recv( &current_progress, 1, MPI::DOUBLE, mpirank, mpitag );
-                    qDebug() << comm_world->Get_rank()  
-                     << "NodeData:: RECEIVED!";
                 }
             
                 switch( message[0] )
@@ -1320,11 +1218,7 @@ void MPINodeData::sendMessage(int message)
     envelope[1] = 0;
     envelope[2] = 0;
     
-    qDebug() << comm_world->Get_rank() << mpirank << mpitag  
-                 << "mpicom->Send( envelope, 3, MPI::INT, mpirank, mpitag );";
     mpicom->Send( envelope, 3, MPI::INT, mpirank, mpitag );
-    qDebug() << comm_world->Get_rank()  
-                 << "SENT!";
 }
 
 /** Stop any jobs running on this node */
