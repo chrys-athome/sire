@@ -54,6 +54,8 @@ QDataStream &operator>>(QDataStream&, SireMove::SameMoves&);
 namespace SireMove
 {
 
+using SireCAS::Symbol;
+
 /** This is the base class of all Moves objects. These are objects
     that contain a collection of moves that are applied to a system
     
@@ -122,6 +124,8 @@ public:
     bool operator!=(const SameMoves &other) const;
     
     using MovesBase::move;
+    
+    void setEnergyComponent(const Symbol &component);
     
     System move(const System &system, int nmoves, bool record_stats);
     

@@ -29,6 +29,8 @@
 #ifndef SIREMOVE_MOVE_H
 #define SIREMOVE_MOVE_H
 
+#include "SireCAS/symbol.h"
+
 #include "SireBase/property.h"
 
 SIRE_BEGIN_HEADER
@@ -57,6 +59,8 @@ class System;
 namespace SireMove
 {
 
+using SireCAS::Symbol;
+
 using SireSystem::System;
 
 /** This is the base class of all of the move classes
@@ -65,6 +69,10 @@ using SireSystem::System;
 */
 class SIREMOVE_EXPORT MoveBase : public SireBase::PropertyBase
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const MoveBase&);
+friend QDataStream& ::operator>>(QDataStream&, MoveBase&);
+
 public:
     MoveBase();
     
@@ -83,6 +91,21 @@ public:
 
     void move(System &system);
     void move(System &system, int nmoves);
+
+    const Symbol& energyComponent() const;
+
+    virtual void setEnergyComponent(const Symbol &component);
+
+protected:
+    MoveBase& operator=(const MoveBase &other);
+
+    bool operator==(const MoveBase &other) const;
+    bool operator!=(const MoveBase &other) const;
+
+private:
+    /** The component of the energy that describes the Hamiltonian
+        that this move samples */
+    Symbol nrgcomponent;
 };
 
 /** This is a null move - it doesn't change the system at all! */

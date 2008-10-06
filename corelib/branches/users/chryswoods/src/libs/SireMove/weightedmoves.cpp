@@ -255,6 +255,25 @@ System WeightedMoves::move(const System &system, int nmoves, bool record_stats)
     return run_system;
 }
 
+/** Set the energy component of all of the moves to 'component' */
+void WeightedMoves::setEnergyComponent(const Symbol &component)
+{
+    int nmoves = mvs.count();
+    
+    if (nmoves > 0)
+    {
+        tuple<Move,double> *mvs_array = mvs.data();
+        
+        for (int i=0; i<nmoves; ++i)
+        {
+            if (mvs_array[i].get<0>().read().energyComponent() != component)
+            {
+                mvs_array[i].get<0>().edit().setEnergyComponent(component);
+            }
+        }
+    }
+}
+
 /** Return the moves available in this set */
 QList<Move> WeightedMoves::moves() const
 {

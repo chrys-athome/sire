@@ -84,7 +84,6 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MonteCarlo &mc)
 /** Construct using the supplied random number generator */
 MonteCarlo::MonteCarlo()
            : MoveBase(), 
-             nrg_component( ForceFields::totalComponent() ),
              naccept(0), nreject(0)
 {
     setTemperature( 25 * celsius );
@@ -93,7 +92,6 @@ MonteCarlo::MonteCarlo()
 /** Copy constructor */
 MonteCarlo::MonteCarlo(const MonteCarlo &other)
            : MoveBase(other), rangenerator(other.rangenerator),
-             nrg_component(other.nrg_component),
              beta(other.beta),
              naccept(other.naccept), nreject(other.nreject)
 {}
@@ -106,7 +104,6 @@ MonteCarlo::~MonteCarlo()
 MonteCarlo& MonteCarlo::operator=(const MonteCarlo &other)
 {
     rangenerator = other.rangenerator;
-    nrg_component = other.nrg_component;
     beta = other.beta;
     naccept = other.naccept;
     nreject = other.nreject;
@@ -126,20 +123,6 @@ void MonteCarlo::setTemperature(Temperature temperature)
 Temperature MonteCarlo::temperature() const
 {
     return Temperature( 1.0 / (k_boltz * beta) );
-}
-
-/** Set the symbol representing the component of the energy
-    on which this Monte Carlo move samples */
-void MonteCarlo::setEnergyComponent(const Symbol &symbol)
-{
-    nrg_component = symbol;
-}
-
-/** Return the symbol of the energy component on which this Monte Carlo
-    move samples */
-const Symbol& MonteCarlo::energyComponent() const
-{
-    return nrg_component;
 }
 
 /** Set the random number generator to use for these moves */

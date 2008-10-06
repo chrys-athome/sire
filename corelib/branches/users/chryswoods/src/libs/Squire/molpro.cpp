@@ -449,9 +449,14 @@ double Molpro::extractEnergy(const QByteArray &molpro_output) const
     QRegExp regexp("SIRE_FINAL_ENERGY\\s*=\\s*([-\\d\\.]+)");
     
     if (regexp.indexIn( QLatin1String(molpro_output.constData()) ) == -1)
+    {
+        qDebug() << "PARSE ERROR";
+        qDebug() << molpro_output;
+
         throw SireError::process_error( QObject::tr(
             "Could not find the total energy in the molpro output!\n"
             "%1").arg( QLatin1String(molpro_output.constData()) ), CODELOC );
+    }
     
     QString num = regexp.cap(1);
         
@@ -515,27 +520,34 @@ double Molpro::calculateEnergy(const QString &cmdfile) const
     {
         //read all of the data we can
         molpro_output.append( p.readAll() );
-        
-        if (p.state() == QProcess::NotRunning)
-        {
-            if (p.exitCode() != 0)
-            {
-                qDebug() << molpro_output;
-                throw SireError::process_error(molpro_exe, p, CODELOC);
-            }
-                
-            break;
-        }
     }
 
     //get any remaining output
     molpro_output.append( p.readAll() );
 
-    if (p.exitCode() != 0)
+    //make sure it has really finished
+    qDebug() << "Waiting for molpro to really finish";
+    p.waitForFinished();
+    
+    qDebug() << "Finished! Closing read channel";
+    p.closeReadChannel(QProcess::StandardOutput);
+    p.closeReadChannel(QProcess::StandardError);
+
+    int exitcode = p.exitCode();
+
+    qDebug() << "Completely killing the job...";
+    p.kill();
+    qDebug() << "Molpro should be dead!!!";
+
+    //molpro should have finished now
+    if (exitcode != 0)
     {
+        qDebug() << "Molpro died at exit (" << exitcode << ")";
         qDebug() << molpro_output;
         throw SireError::process_error(molpro_exe, p, CODELOC);
     }
+
+    qDebug() << p.state();
        
     //parse the output to get the energy
     return this->extractEnergy(molpro_output);

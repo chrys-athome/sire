@@ -92,6 +92,8 @@ public:
     
     QList<Move> moves() const;
 
+    void setEnergyComponent(const Symbol &component);
+
     void setGenerator(const RanGenerator &rangenerator);
     
     const RanGenerator& generator() const;

@@ -99,6 +99,8 @@ mc = RigidBodyMC(qmmmff.group(MGIdx(0)))
 
 moves = SameMoves(mc)
 
+mtsmc = MTSMC()
+
 print "Running 5 moves using MPI"
 nodes = MPINodes()
 node = nodes.getFreeNode()

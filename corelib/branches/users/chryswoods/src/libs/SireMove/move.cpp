@@ -50,7 +50,8 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const MoveBase &movebas
 {
     writeHeader(ds, r_movebase, 1);
     
-    ds << static_cast<const PropertyBase&>(movebase);
+    ds << movebase.nrgcomponent
+       << static_cast<const PropertyBase&>(movebase);
     
     return ds;
 }
@@ -62,7 +63,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MoveBase &movebase)
     
     if (v == 1)
     {
-        ds >> static_cast<PropertyBase&>(movebase);
+        ds >> movebase.nrgcomponent
+           >> static_cast<PropertyBase&>(movebase);
     }
     else
         throw version_error(v, "1", r_movebase, CODELOC);
@@ -71,16 +73,39 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MoveBase &movebase)
 }
 
 /** Constructor */
-MoveBase::MoveBase() : PropertyBase()
+MoveBase::MoveBase() 
+         : PropertyBase(), nrgcomponent(ForceFields::totalComponent())
 {}
 
 /** Copy constructor */
-MoveBase::MoveBase(const MoveBase &other) : PropertyBase(other)
+MoveBase::MoveBase(const MoveBase &other) 
+         : PropertyBase(other), nrgcomponent(other.nrgcomponent)
 {}
 
 /** Destructor */
 MoveBase::~MoveBase()
 {}
+
+/** Copy assignment operator */
+MoveBase& MoveBase::operator=(const MoveBase &other)
+{
+    nrgcomponent = other.nrgcomponent;
+    PropertyBase::operator=(other);
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool MoveBase::operator==(const MoveBase &other) const
+{
+    return nrgcomponent == other.nrgcomponent;
+}
+
+/** Comparison operator */
+bool MoveBase::operator!=(const MoveBase &other) const
+{
+    return nrgcomponent != other.nrgcomponent;
+}
 
 /** Perform a single move on the system 'system' without 
     recording any statistics */
@@ -94,6 +119,20 @@ void MoveBase::move(System &system)
 void MoveBase::move(System &system, int nmoves)
 {
     this->move(system, nmoves, false);
+}
+
+/** Set the energy component that describes the Hamiltonian that this move
+    will sample */
+void MoveBase::setEnergyComponent(const Symbol &component)
+{
+    nrgcomponent = component;
+}
+
+/** Return the symbol that describes the Hamiltonian that this move 
+    will sample */
+const Symbol& MoveBase::energyComponent() const
+{
+    return nrgcomponent;
 }
 
 ///////

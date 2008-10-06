@@ -174,7 +174,7 @@ void MTSMC::setFastMoves(const MovesBase &fast_moves)
 /** Return the number of fast moves to perform per slow move */
 void MTSMC::setNFastMoves(int nfast)
 {
-    return nfastmoves;
+    nfastmoves = nfast;
 }
 
 /** Set the energy component to be used for the fast moves */

@@ -193,6 +193,15 @@ System SameMoves::move(const System &system, int nmoves, bool record_stats)
     return new_system;
 }
 
+/** Set the energy component of all of the moves to 'component' */
+void SameMoves::setEnergyComponent(const Symbol &component)
+{
+    if (mv.read().energyComponent() != component)
+    {
+        mv.edit().setEnergyComponent(component);
+    }
+}
+
 /** Return the moves used by this object */
 QList<Move> SameMoves::moves() const
 {

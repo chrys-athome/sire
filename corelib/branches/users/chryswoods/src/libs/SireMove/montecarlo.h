@@ -97,9 +97,6 @@ public:
     void setTemperature(Temperature temperature);
     Temperature temperature() const;
 
-    void setEnergyComponent(const Symbol &component);
-    const Symbol& energyComponent() const;
-
 protected:
     MonteCarlo& operator=(const MonteCarlo &other);
 
@@ -115,10 +112,6 @@ private:
     /** The random number generator used during the moves
         and in the test */
     RanGenerator rangenerator;
-
-    /** The symbol representing the energy component that
-        this Monte Carlo move is sampling */
-    Symbol nrg_component;
 
     /** beta (== 1 / kT) */
     double beta;
