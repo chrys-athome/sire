@@ -75,6 +75,8 @@ public:
         return "SireMove::MovesBase";
     }
     
+    virtual void setEnergyComponent(const Symbol &component)=0;
+    
     virtual System move(const System &system, int nmoves,
                         bool record_stats)=0;
     

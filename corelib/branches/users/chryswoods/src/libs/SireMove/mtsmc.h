@@ -29,4 +29,99 @@
 #ifndef SIREMOVE_MTSMC_H
 #define SIREMOVE_MTSMC_H
 
+#include "montecarlo.h"
+#include "moves.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMove
+{
+class MTSMC;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMove::MTSMC&);
+QDataStream& operator>>(QDataStream&, SireMove::MTSMC&);
+
+namespace SireMove
+{
+
+/** This is a multiple-time-step Monte Carlo moves. This uses
+    the Metropolis-Hamilton acceptance test to perform
+    'nfast' Monte Carlo moves on a fast Hamiltonian,
+    and then testing whether the resulting configuration
+    is suitable for inclusion in the ensemble generated
+    using a slow Hamiltonian.
+    
+    For an application of this method to enhance sampling
+    in QM/MM simulations, see Woods, Manby and Mulholland,
+    J. Chem. Phys. 2008.
+    
+    @author Christopher Woods
+*/
+class SIREMOVE_EXPORT MTSMC 
+            : public SireBase::ConcreteProperty<MTSMC,MonteCarlo>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const MTSMC&);
+friend QDataStream& ::operator>>(QDataStream&, MTSMC&);
+
+public:
+    MTSMC();
+
+    MTSMC(const MovesBase &fastmoves, int nfastmoves=1);
+    MTSMC(const MovesBase &fastmoves, const Symbol &fastcomponent, 
+          int nfastmoves=1);
+    
+    MTSMC(const MTSMC &other);
+    
+    ~MTSMC();
+    
+    MTSMC& operator=(const MTSMC &other);
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<MTSMC>() );
+    }
+    
+    MTSMC* clone() const
+    {
+        return new MTSMC(*this);
+    }
+
+    bool operator==(const MTSMC &other) const;
+    bool operator!=(const MTSMC &other) const;
+    
+    void setFastMoves(const MovesBase &fastmoves);
+    void setNFastMoves(int nfast);
+    
+    void setFastEnergyComponent(const Symbol &component);
+    void setSlowEnergyComponent(const Symbol &component);
+
+    const MovesBase& fastMoves() const;
+    int nFastMoves() const;
+    
+    const Symbol& fastEnergyComponent() const;
+    const Symbol& slowEnergyComponent() const;
+    
+    void move(System &system, int nmoves, bool record_stats);
+
+private:
+    /** The collection of fast moves that will be applied to the system */
+    Moves fastmoves;
+    
+    /** The energy component on which the fast moves will operate */
+    Symbol fastcomponent;
+    
+    /** The number of fast moves to apply per slow move */
+    quint32 nfastmoves;
+};
+
+}
+
+Q_DECLARE_METATYPE( SireMove::MTSMC )
+
+SIRE_EXPOSE_CLASS( SireMove::MTSMC )
+
+SIRE_END_HEADER
+
 #endif
