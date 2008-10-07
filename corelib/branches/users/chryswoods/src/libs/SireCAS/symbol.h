@@ -132,6 +132,8 @@ public:
 
     QString toString() const;
 
+    bool isNull() const;
+
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
 

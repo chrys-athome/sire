@@ -232,6 +232,12 @@ Symbol::Symbol(const Symbol &other)
 Symbol::~Symbol()
 {}
 
+/** Return whether or not the symbol is null */
+bool Symbol::isNull() const
+{
+    return id == 0;
+}
+
 /** Assignment operator */
 Symbol& Symbol::operator=(const Symbol &other)
 {
