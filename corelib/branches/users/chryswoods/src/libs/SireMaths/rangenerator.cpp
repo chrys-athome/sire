@@ -442,6 +442,12 @@ quint32 RanGenerator::randInt() const
     return nonconst_d().mersenne_generator.randInt();
 }
 
+/** Return a random true or false value */
+bool RanGenerator::randBool() const
+{
+    return this->randInt() & 0x0001;
+}
+
 /** Return a random 32bit unsigned integer in [0,maxval] */
 quint32 RanGenerator::randInt(quint32 maxval) const
 {

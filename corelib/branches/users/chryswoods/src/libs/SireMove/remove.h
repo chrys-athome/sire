@@ -31,6 +31,8 @@
 
 #include "reset.h"
 
+#include "SireMaths/rangenerator.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
@@ -41,8 +43,16 @@ class REMove;
 QDataStream& operator<<(QDataStream&, const SireMove::REMove&);
 QDataStream& operator>>(QDataStream&, SireMove::REMove&);
 
+namespace SireMPI
+{
+class MPINode;
+class MPINodes;
+}
+
 namespace SireMove
 {
+
+using SireMaths::RanGenerator;
 
 /** This is the base class of all of the (1D) replica exchange moves.
     These perform sampling on a set of replicas (held in a RESet)
@@ -69,14 +79,22 @@ public:
     
     virtual REMove* clone() const=0;
     
-    virtual void move(RESet &replicas, int nmoves, bool record_stats=true)=0;
-    
+    virtual RESet move(const RESet &replicas, int nmoves, bool record_stats=true);
+    virtual RESet move(const SireMPI::MPINode &node,
+                       const RESet &replicas, int nmoves, bool record_stats=true);
+    virtual RESet move(SireMPI::MPINodes &nodes,
+                       const RESet &replicas, int nmoves, bool record_stats=true);
+
+    int nAttempted() const;
     int nAccepted() const;
     int nRejected() const;
     
     double acceptanceRatio() const;
     
     void clearMoveStatistics();
+
+    void setGenerator(const RanGenerator &generator);
+    const RanGenerator& generator() const;
     
 protected:
     REMove(const REMove &other);
@@ -86,10 +104,21 @@ protected:
     bool operator==(const REMove &other) const;
     bool operator!=(const REMove &other) const;
 
+    void performSampling(RESet &replicas, bool record_stats) const;
+    void performSampling(const SireMPI::MPINode &node, RESet &replicas, 
+                         bool record_stats) const;
+    void performSampling(SireMPI::MPINodes &nodes, RESet &replicas,
+                         bool record_stats) const;
+
+    virtual void performRETest(RESet &replicas, bool record_stats)=0;
+
     void moveAccepted();
     void moveRejected();
     
 private:
+    /** The random number generator used during the acceptance test */
+    RanGenerator rangenerator;
+
     /** The number of accepted replica exchange moves */
     int naccepted;
     

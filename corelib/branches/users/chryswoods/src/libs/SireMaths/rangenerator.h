@@ -110,6 +110,8 @@ public:
     Vector vectorOnSphere() const;
     Vector vectorOnSphere(double radius) const;
 
+    bool randBool() const;
+
     quint32 randInt() const;
     quint32 randInt(quint32 maxval) const;
     qint32 randInt(qint32 minval, qint32 maxval) const;

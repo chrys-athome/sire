@@ -159,7 +159,12 @@ quint32 MonteCarlo::nRejected() const
     accepted moves to attempted moves) */
 double MonteCarlo::acceptanceRatio() const
 {
-    return double(nAccepted()) / double(nAttempted());
+    int ntotal = this->nAttempted();
+    
+    if (ntotal == 0)
+        return 0;
+    else
+        return double(this->nAccepted()) / double(ntotal);
 }
 
 /** Zero the move statistics */

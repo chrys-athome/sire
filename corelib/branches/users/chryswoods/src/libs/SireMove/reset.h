@@ -40,23 +40,115 @@
 #include "SireSystem/system.h"
 
 #include "moves.h"
+#include "simulation.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMove
 {
+class ReplicaData;
 class Replica;
+class ReplicaSim;
 class RESet;
 }
+
+QDataStream& operator<<(QDataStream&, const SireMove::ReplicaData&);
+QDataStream& operator>>(QDataStream&, SireMove::ReplicaData&);
 
 QDataStream& operator<<(QDataStream&, const SireMove::Replica&);
 QDataStream& operator>>(QDataStream&, SireMove::Replica&);
 
+QDataStream& operator<<(QDataStream&, const SireMove::ReplicaSim&);
+QDataStream& operator>>(QDataStream&, SireMove::ReplicaSim&);
+
 QDataStream& operator<<(QDataStream&, const SireMove::RESet&);
 QDataStream& operator>>(QDataStream&, SireMove::RESet&);
 
+namespace SireMPI
+{
+class MPINode;
+}
+
 namespace SireMove
 {
+
+class ReplicaSim;
+
+/** This class holds all of the data about a replica (i.e. everything
+    except for the system and moves within a replica)
+    
+    @author Christopher Woods
+*/
+class SIREMOVE_EXPORT ReplicaData
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const ReplicaData&);
+friend QDataStream& ::operator>>(QDataStream&, ReplicaData&);
+
+public:
+    ~ReplicaData();
+    
+    static const char* typeName()
+    {
+        return "SireMove::ReplicaData";
+    }
+    
+    const char* what() const
+    {
+        return ReplicaData::typeName();
+    }
+    
+    quint32 nMoves() const;
+    bool recordStatistics() const;
+    
+    const Symbol& symbol() const;
+    
+    double parameter() const;
+    double parameter(int delta) const;
+    
+    const QVector<double>& parameters() const;
+    
+    const QUuid& parentID() const;
+    int replicaID() const;
+
+    bool isCompatibleWith(const ReplicaData &other) const;
+    void assertCompatibleWith(const ReplicaData &other) const;
+
+protected:
+    ReplicaData();
+    ReplicaData(const QUuid &parentid, quint32 replicaid,
+                const QVector<double> &replica_parameters,
+                const Symbol &replica_symbol,
+                quint32 nmoves, bool record_stats);
+
+    ReplicaData(const ReplicaData &other);
+
+    ReplicaData& operator=(const ReplicaData &other);
+    
+    bool operator==(const ReplicaData &other) const;
+    bool operator!=(const ReplicaData &other) const;
+
+private:
+    /** The values of the replica exchange parameters for each level */
+    QVector<double> replica_parameters;
+    
+    /** The symbol that represents this parameter in the system. This may
+        be null of the RE parameter doesn't change the system (e.g. as in
+        a parallel tempering simulation) */
+    Symbol replica_symbol;
+    
+    /** The ID of the parent set that contains this replica */
+    QUuid parent_uid;
+    
+    /** The index of this replica exchange level within that set */
+    quint32 replica_id;
+    
+    /** The number of moves to run */
+    quint32 nmoves;
+    
+    /** Whether or not to record statistics for this replica */
+    bool record_stats;
+};
 
 /** This class holds all of the information about a replica
     in a replica exchange simulation. A replica is a particular
@@ -66,7 +158,7 @@ namespace SireMove
     
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT Replica
+class SIREMOVE_EXPORT Replica : public ReplicaData
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const SireMove::Replica&);
@@ -76,6 +168,8 @@ friend class RESet;  // so can call private constructor
 
 public:
     Replica();
+    
+    Replica(ReplicaSim replica);
     
     Replica(const Replica &other);
     
@@ -103,19 +197,13 @@ public:
     
     const System& system() const;
     const MovesBase& moves() const;
-    
-    quint32 nMoves() const;
-    bool recordingStatistics() const;
-    
-    const Symbol& symbol() const;
-    
-    double parameter() const;
-    double parameter(int delta) const;
-    
-    const QVector<double>& parameters() const;
-    
-    const QUuid& parentID() const;
-    int replicaID() const;
+
+    ReplicaSim run(bool record_stats=true);
+    ReplicaSim runBG(bool record_stats=true);
+    ReplicaSim run(const SireMPI::MPINode &node, bool record_stats=true);
+
+    void update(const Replica &replica);
+    void update(ReplicaSim replica);
     
 protected:
     Replica(const QUuid &parentid, quint32 replicaid,
@@ -130,26 +218,48 @@ private:
     
     /** Copy of the moves that have been applied to this replica level to data */
     Moves sim_moves;
+};
+
+/** This class holds a replica that is currently being simulated
+
+    @author Christopher Woods
+*/
+class SIREMOVE_EXPORT ReplicaSim : public Simulation, public ReplicaData
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const ReplicaSim&);
+friend QDataStream& ::operator>>(QDataStream&, ReplicaSim&);
+
+friend class Replica; //so can call protected constructor
+
+public:
+    ReplicaSim();
+    ReplicaSim(const ReplicaSim &other);
+
+    ~ReplicaSim();
     
-    /** The values of the replica exchange parameters for each level */
-    QVector<double> replica_parameters;
+    ReplicaSim& operator=(const ReplicaSim &other);
     
-    /** The symbol that represents this parameter in the system. This may
-        be null of the RE parameter doesn't change the system (e.g. as in
-        a parallel tempering simulation) */
-    Symbol replica_symbol;
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<ReplicaSim>() );
+    }
     
-    /** The ID of the parent set that contains this replica */
-    QUuid parent_uid;
+    const char* what() const
+    {
+        return ReplicaSim::typeName();
+    }
     
-    /** The index of this replica exchange level within that set */
-    quint32 replica_id;
+    ReplicaSim* clone() const
+    {
+        return new ReplicaSim(*this);
+    }
     
-    /** The number of moves to run */
-    quint32 nmoves;
-    
-    /** Whether or not to record statistics for this replica */
-    bool record_stats;
+    bool operator==(const ReplicaSim &other) const;
+    bool operator!=(const ReplicaSim &other) const;
+
+protected:
+    ReplicaSim(const Replica &replica, const Simulation &simulation);
 };
 
 /** This class holds the set of replicas (systems + moves) that
@@ -225,6 +335,7 @@ public:
     void setRecordStatistics(bool value);
 
     void update(const Replica &replica);
+    void update(const ReplicaSim &replica);
     
     void swap(int i, int j);
 
@@ -262,9 +373,12 @@ private:
 }
 
 Q_DECLARE_METATYPE( SireMove::Replica )
+Q_DECLARE_METATYPE( SireMove::ReplicaSim )
 Q_DECLARE_METATYPE( SireMove::RESet )
 
+SIRE_EXPOSE_CLASS( SireMove::ReplicaData )
 SIRE_EXPOSE_CLASS( SireMove::Replica )
+SIRE_EXPOSE_CLASS( SireMove::ReplicaSim )
 SIRE_EXPOSE_CLASS( SireMove::RESet )
 
 SIRE_END_HEADER

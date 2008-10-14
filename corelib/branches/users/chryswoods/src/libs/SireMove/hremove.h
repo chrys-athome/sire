@@ -80,7 +80,12 @@ public:
     bool operator==(const HREMove &other) const;
     bool operator!=(const HREMove &other) const;
 
-    void move(RESet &replicas, int nmoves, bool record_stats = true);
+protected:
+    void performRETest(RESet &replicas, bool record_stats);
+
+private:
+    /** kT for the temperature at which this replica exchange move takes place */
+    
 };
 
 }

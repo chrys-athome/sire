@@ -28,6 +28,8 @@
 
 #include "reset.h"
 
+#include "SireMPI/mpinode.h"
+
 #include "SireID/index.h"
 
 #include "SireError/errors.h"
@@ -36,11 +38,224 @@
 #include "SireStream/shareddatastream.h"
 
 using namespace SireMove;
+using namespace SireMPI;
 using namespace SireSystem;
 using namespace SireMol;
 using namespace SireCAS;
 using namespace SireID;
 using namespace SireStream;
+
+///////
+/////// Implementation of ReplicaData
+///////
+
+static const RegisterMetaType<ReplicaData> r_replicadata( MAGIC_ONLY,
+                                                          "SireMove::ReplicaData" );
+                                                          
+/** Serialise to a binary datastream */
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const ReplicaData &replica)
+{
+    writeHeader(ds, r_replicadata, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << replica.replica_parameters << replica.replica_symbol
+        << replica.parent_uid << replica.replica_id
+        << replica.nmoves << replica.record_stats;
+        
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, ReplicaData &replica)
+{
+    VersionID v = readHeader(ds, r_replicadata);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> replica.replica_parameters >> replica.replica_symbol
+            >> replica.parent_uid >> replica.replica_id
+            >> replica.nmoves >> replica.record_stats;
+    }
+    else
+        throw version_error(v, "1", r_replicadata, CODELOC);
+
+    return ds;
+}
+
+/** Null constructor */
+ReplicaData::ReplicaData() : replica_id(0), nmoves(0), record_stats(false)
+{}
+
+/** Protected constructor used to construct a replica with the supplied metadata */
+ReplicaData::ReplicaData(const QUuid &parentid, quint32 replicaid,
+                         const QVector<double> &replicaparams,
+                         const Symbol &replicasymbol,
+                         quint32 n_moves, bool recording_stats)
+            : replica_parameters(replicaparams), replica_symbol(replicasymbol),
+              parent_uid(parentid), replica_id(replicaid),
+              nmoves(n_moves), record_stats(recording_stats)
+{
+    BOOST_ASSERT( replica_id < quint32(replica_parameters.count()) );
+}
+
+/** Copy constructor */
+ReplicaData::ReplicaData(const ReplicaData &other)
+            : replica_parameters(other.replica_parameters),
+              replica_symbol(other.replica_symbol),
+              parent_uid(other.parent_uid), replica_id(other.replica_id),
+              nmoves(other.nmoves), record_stats(other.record_stats)
+{}
+
+/** Destructor */
+ReplicaData::~ReplicaData()
+{}
+
+/** Copy assignment operator */
+ReplicaData& ReplicaData::operator=(const ReplicaData &other)
+{
+    if (this != &other)
+    {
+        replica_parameters = other.replica_parameters;
+        replica_symbol = other.replica_symbol;
+        parent_uid = other.parent_uid;
+        replica_id = other.replica_id;
+        nmoves = other.nmoves;
+        record_stats = other.record_stats;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool ReplicaData::operator==(const ReplicaData &other) const
+{
+    return parent_uid == other.parent_uid and
+           replica_id == other.replica_id and
+           record_stats == other.record_stats and
+           replica_parameters == other.replica_parameters and
+           replica_symbol == other.replica_symbol and
+           nmoves == other.nmoves;
+}
+
+/** Comparison operator */
+bool ReplicaData::operator!=(const ReplicaData &other) const
+{
+    return not this->operator==(other);
+}
+
+/** Return the number of moves to apply at this replica level */
+quint32 ReplicaData::nMoves() const
+{
+    return nmoves;
+}
+
+/** Return whether to record statistics at this level. */
+bool ReplicaData::recordStatistics() const
+{
+    return record_stats;
+}
+
+/** Return the symbol used for the replica exchange parameter
+    for the set of replicas - this may be null if there is no
+    symbol associated with the parameter, e.g. if these are
+    replicas over temperature */
+const Symbol& ReplicaData::symbol() const
+{
+    return replica_symbol;
+}
+
+/** Return the value of the replica exchange parameter for 
+    this replica */
+double ReplicaData::parameter() const
+{
+    if (replica_parameters.isEmpty())
+        return 0;
+    else
+        return replica_parameters.constData()[replica_id];
+}
+
+/** Return the value of the replica exchange parameter for 
+    the replica 'delta' above this replica. If this is replica
+    3 of 5, then parameter(1) will return the parameter for
+    replica 4 of 5, while parameter(-1) will return the parameter
+    for replica 2 of 5.
+    
+    If 'delta' moves beyond a valid replica, then the parameter
+    for the last replica is returned if we move after the last
+    replica, or for the first replica if we move before the
+    first replica, e.g. parameter(10) will return the parameter
+    for replica 5 of 5, while parameter(-10) will return the
+    parameter for replica 1 of 5 */
+double ReplicaData::parameter(int delta) const
+{
+    if (replica_parameters.isEmpty())
+        return 0;
+        
+    int i = replica_id + delta;
+    
+    if (i >= replica_parameters.count())
+        return replica_parameters.constData()[replica_parameters.count()-1];
+        
+    else if (i < 0)
+        return replica_parameters.constData()[0];
+        
+    else
+        return replica_parameters.constData()[i];
+}
+
+/** Return the array of the value of all of the replica parameters
+    for each of the levels */
+const QVector<double>& ReplicaData::parameters() const
+{
+    return replica_parameters;
+}
+
+/** Return the ID of this replica in the set - this is the index of the
+    replica in the array of replicas. This returns -1 if this is a
+    null replica */
+int ReplicaData::replicaID() const
+{
+    if (replica_parameters.isEmpty())
+        return -1;
+        
+    else
+        return replica_id;
+}
+
+/** Return the unique ID of the parent RESet of this replica */
+const QUuid& ReplicaData::parentID() const
+{
+    return parent_uid;
+}
+
+/** Return whether or not this replica is compatible with 'other' 
+    (it has the same parent and replica ID) */
+bool ReplicaData::isCompatibleWith(const ReplicaData &other) const
+{
+    return replica_id == other.replica_id and
+           parent_uid == other.parent_uid;
+}
+
+/** Assert that this replica is compatible with 'other' (that
+    they have the same parent and replica ID)
+    
+    \throw SireError::incompatible_error
+*/
+void ReplicaData::assertCompatibleWith(const ReplicaData &other) const
+{
+    if (not this->isCompatibleWith(other))
+    {
+        throw SireError::incompatible_error( QObject::tr(
+            "The replica (parent UID=%1, ID=%2) "
+            "is incompatible with the replica (parent UID=%3, ID=%4) as they "
+            "have different IDs!")
+                .arg(parent_uid.toString()).arg(replica_id)
+                .arg(other.parent_uid.toString()).arg(other.replica_id), CODELOC );
+    }
+}
 
 ///////
 /////// Implementation of Replica
@@ -56,9 +271,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Replica &replica)
     SharedDataStream sds(ds);
     
     sds << replica.sim_system << replica.sim_moves
-        << replica.replica_parameters << replica.replica_symbol
-        << replica.parent_uid << replica.replica_id
-        << replica.nmoves << replica.record_stats;
+        << static_cast<const ReplicaData&>(replica);
         
     return ds;
 }
@@ -73,9 +286,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Replica &replica)
         SharedDataStream sds(ds);
         
         sds >> replica.sim_system >> replica.sim_moves
-            >> replica.replica_parameters >> replica.replica_symbol
-            >> replica.parent_uid >> replica.replica_id
-            >> replica.nmoves >> replica.record_stats;
+            >> static_cast<ReplicaData&>(replica);
     }
     else
         throw version_error( v, "1", r_replica, CODELOC );
@@ -84,7 +295,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Replica &replica)
 }
 
 /** Create a null replica */
-Replica::Replica() : replica_id(0), nmoves(0), record_stats(false)
+Replica::Replica() : ReplicaData()
 {}
 
 /** Private constructor used by RESet to create a replica with 
@@ -94,21 +305,27 @@ Replica::Replica(const QUuid &parentid, quint32 replicaid,
                  const Symbol &replicasymbol,
                  const System &system, const Moves &moves,
                  quint32 n_moves, bool recording_stats)
-        : sim_system(system), sim_moves(moves), 
-          replica_parameters(replicaparams), replica_symbol(replicasymbol),
-          parent_uid(parentid), replica_id(replicaid),
-          nmoves(n_moves), record_stats(recording_stats)
+        : ReplicaData(parentid, replicaid, replicaparams, replicasymbol,
+                      n_moves, recording_stats),
+          sim_system(system), sim_moves(moves)
+{}
+
+/** Construct a replica from one that is running in a simulation. This
+    blocks until the replica has finished being simulated */
+Replica::Replica(ReplicaSim replica) : ReplicaData(replica)
 {
-    BOOST_ASSERT( replica_id < quint32(replica_parameters.count()) );
+    //wait for the replica to finish
+    replica.wait();
+    
+    //now copy the system and moves
+    sim_system = replica.system();
+    sim_moves = replica.moves();
 }
 
 /** Copy constructor */
 Replica::Replica(const Replica &other)
-        : sim_system(other.sim_system), sim_moves(other.sim_moves),
-          replica_parameters(other.replica_parameters),
-          replica_symbol(other.replica_symbol),
-          parent_uid(other.parent_uid), replica_id(other.replica_id),
-          nmoves(other.nmoves), record_stats(other.record_stats)
+        : ReplicaData(other),
+          sim_system(other.sim_system), sim_moves(other.sim_moves)
 {}
 
 /** Destructor */
@@ -120,14 +337,10 @@ Replica& Replica::operator=(const Replica &other)
 {
     if (this != &other)
     {
+        ReplicaData::operator=(other);
+    
         sim_system = other.sim_system;
         sim_moves = other.sim_moves;
-        replica_parameters = other.replica_parameters;
-        replica_symbol = other.replica_symbol;
-        parent_uid = other.parent_uid;
-        replica_id = other.replica_id;
-        nmoves = other.nmoves;
-        record_stats = other.record_stats;
     }
     
     return *this;
@@ -136,12 +349,7 @@ Replica& Replica::operator=(const Replica &other)
 /** Comparison operator */
 bool Replica::operator==(const Replica &other) const
 {
-    return parent_uid == other.parent_uid and
-           replica_id == other.replica_id and
-           record_stats == other.record_stats and
-           replica_parameters == other.replica_parameters and
-           replica_symbol == other.replica_symbol and
-           nmoves == other.nmoves and
+    return ReplicaData::operator==(other) and
            sim_moves == other.sim_moves and
            sim_system == other.sim_system;
 }
@@ -164,89 +372,145 @@ const MovesBase& Replica::moves() const
     return sim_moves;
 }
 
-/** Return the number of moves to apply at this replica level */
-quint32 Replica::nMoves() const
+/** Perform a block of sampling on this replica, and return a handle
+    to that simulation */
+ReplicaSim Replica::run(bool record_stats)
 {
-    return nmoves;
+    return ReplicaSim( *this, Simulation::run(sim_system, sim_moves, this->nMoves(), 
+                                   record_stats and this->recordStatistics()) );
 }
 
-/** Return whether to record statistics at this level. */
-bool Replica::recordingStatistics() const
+/** Perform a block of sampling on this replica in a background thread,
+    and return a handle to that simulation */
+ReplicaSim Replica::runBG(bool record_stats)
 {
-    return record_stats;
+    return ReplicaSim( *this, Simulation::runBG(sim_system, sim_moves, this->nMoves(),
+                                   record_stats and this->recordStatistics()) );
+                                          
 }
 
-/** Return the symbol used for the replica exchange parameter
-    for the set of replicas - this may be null if there is no
-    symbol associated with the parameter, e.g. if these are
-    replicas over temperature */
-const Symbol& Replica::symbol() const
+/** Perform a block of sampling on this replica on the remote MPI node
+    'node', and return a handle to that simulation */
+ReplicaSim Replica::run(const SireMPI::MPINode &node, bool record_stats)
 {
-    return replica_symbol;
+    return ReplicaSim( *this, Simulation::run(node, sim_system, sim_moves, this->nMoves(),
+                                   record_stats and this->recordStatistics()) );
 }
 
-/** Return the value of the replica exchange parameter for 
-    this replica */
-double Replica::parameter() const
-{
-    if (replica_parameters.isEmpty())
-        return 0;
-    else
-        return replica_parameters.constData()[replica_id];
-}
-
-/** Return the value of the replica exchange parameter for 
-    the replica 'delta' above this replica. If this is replica
-    3 of 5, then parameter(1) will return the parameter for
-    replica 4 of 5, while parameter(-1) will return the parameter
-    for replica 2 of 5.
+/** Update this replica so that it has the same data as 'other' - note that it
+    is an error to update this replica with the data from a replica with
+    a different parent UID and ID. Note also that this only copies the 
+    system and moves from 'other' - it doesn't update any of the other 
+    parameters 
     
-    If 'delta' moves beyond a valid replica, then the parameter
-    for the last replica is returned if we move after the last
-    replica, or for the first replica if we move before the
-    first replica, e.g. parameter(10) will return the parameter
-    for replica 5 of 5, while parameter(-10) will return the
-    parameter for replica 1 of 5 */
-double Replica::parameter(int delta) const
+    \throw SireError::incompatible_error
+*/
+void Replica::update(const Replica &other)
 {
-    if (replica_parameters.isEmpty())
-        return 0;
-        
-    int i = replica_id + delta;
+    this->assertCompatibleWith(other);
+
+    sim_system = other.sim_system;
+    sim_moves = other.sim_moves;
+}
+
+/** Update this replica from the contents contained in the passed ReplicaSim
+    - note that it is an error to update this replica with the data from a replica 
+    with a different parent UID and ID. Note also that this only copies the 
+    system and moves from 'other' - it doesn't update any of the other 
+    parameters 
     
-    if (i >= replica_parameters.count())
-        return replica_parameters.constData()[replica_parameters.count()-1];
+    \throw SireError::incompatible_error
+*/
+void Replica::update(ReplicaSim replica)
+{
+    this->assertCompatibleWith(replica);
+
+    //wait for the simulation to finish
+    replica.wait();
+    
+    //now copy the system and moves
+    sim_system = replica.system();
+    sim_moves = replica.moves();
+}
+
+///////
+/////// Implementation of ReplicaSim
+///////
+
+static const RegisterMetaType<ReplicaSim> r_replicasim;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const ReplicaSim &replica)
+{
+    writeHeader(ds, r_replicasim, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << static_cast<const Simulation&>(replica)
+        << static_cast<const ReplicaData&>(replica);
         
-    else if (i < 0)
-        return replica_parameters.constData()[0];
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, ReplicaSim &replica)
+{
+    VersionID v = readHeader(ds, r_replicasim);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
         
+        sds >> static_cast<Simulation&>(replica)
+            >> static_cast<ReplicaData&>(replica);
+    }
     else
-        return replica_parameters.constData()[i];
-}
-
-/** Return the array of the value of all of the replica parameters
-    for each of the levels */
-const QVector<double>& Replica::parameters() const
-{
-    return replica_parameters;
-}
-
-/** Return the ID of this replica in the set - this is the index of the
-    replica in the array of replicas. This returns -1 if this is a
-    null replica */
-int Replica::replicaID() const
-{
-    if (replica_parameters.isEmpty())
-        return -1;
+        throw version_error( v, "1", r_replicasim, CODELOC );
         
-    else
-        return replica_id;
+    return ds;
 }
 
-/** Return the unique ID of the parent RESet of this replica */
-const QUuid& Replica::parentID() const
+/** Null constructor */
+ReplicaSim::ReplicaSim() : Simulation(), ReplicaData()
+{}
+
+/** Internal constructor used to build the simulation of the passed replica */
+ReplicaSim::ReplicaSim(const Replica &replica, const Simulation &simulation)
+           : Simulation(simulation), ReplicaData(replica)
+{}
+
+/** Copy constructor */
+ReplicaSim::ReplicaSim(const ReplicaSim &other)
+           : Simulation(other), ReplicaData(other)
+{}
+
+/** Destructor */
+ReplicaSim::~ReplicaSim()
+{}
+
+/** Copy assignment operator */
+ReplicaSim& ReplicaSim::operator=(const ReplicaSim &other)
 {
-    return parent_uid;
+    if (this != &other)
+    {
+        Simulation::operator=(other);
+        ReplicaData::operator=(other);
+    }
+
+    return *this;
+}
+
+/** Comparison operator */
+bool ReplicaSim::operator==(const ReplicaSim &other) const
+{
+    return ReplicaData::operator==(other) and
+           Simulation::operator==(other);
+}
+
+/** Comparison operator */
+bool ReplicaSim::operator!=(const ReplicaSim &other) const
+{
+    return not this->operator==(other);
 }
 
 ///////
@@ -321,7 +585,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RESet &reset)
             new_reset.replica_systems[i] = replica.system();
             new_reset.replica_moves[i] = replica.moves();
             new_reset.replica_nmoves[i] = replica.nMoves();
-            new_reset.replica_record_stats[i] = replica.recordingStatistics();
+            new_reset.replica_record_stats[i] = replica.recordStatistics();
         }
     }
     else
@@ -718,6 +982,17 @@ void RESet::update(const Replica &replica)
     
     replica_systems[replica.replicaID()] = replica.system();
     replica_moves[replica.replicaID()] = replica.moves();
+}
+
+/** Update the replica in this set with the system and moves
+    copied from the replica running in the simulation 'replica'.
+    This blocks until the simulation has finished
+    
+    \throw SireError::incompatible_error
+*/
+void RESet::update(const ReplicaSim &replica)
+{
+    this->update( Replica(replica) );
 }
 
 /** Swap the systems between replica levels i and j. These are
