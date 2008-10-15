@@ -11,7 +11,6 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the headers in SireMove
 set ( SIREMOVE_HEADERS
-      hremove.h
       montecarlo.h
       move.h
       moves.h
@@ -19,8 +18,10 @@ set ( SIREMOVE_HEADERS
       mpisimworker.h
       mtsmc.h
       prefsampler.h
-      remove.h
-      reset.h
+      repexmove.h
+      repexreplicas.h
+      replicarunner.h
+      replicas.h
       rigidbodymc.h
       sampler.h
       simcontroller.h
@@ -36,7 +37,6 @@ set ( SIREMOVE_SOURCES
 
       register_siremove.cpp
 
-      hremove.cpp
       montecarlo.cpp
       move.cpp
       moves.cpp
@@ -44,8 +44,10 @@ set ( SIREMOVE_SOURCES
       mpisimworker.cpp
       mtsmc.cpp
       prefsampler.cpp
-      remove.cpp
-      reset.cpp
+      repexmove.cpp
+      repexreplicas.cpp
+      replicarunner.cpp
+      replicas.cpp
       rigidbodymc.cpp
       sampler.cpp
       simcontroller.cpp
