@@ -63,6 +63,8 @@ using SireCAS::Symbol;
 
 using SireSystem::System;
 
+using SireBase::PropertyName;
+
 /** This is the base class of all of the move classes
 
     @author Christopher Woods
@@ -93,8 +95,18 @@ public:
     void move(System &system, int nmoves);
 
     const Symbol& energyComponent() const;
-
     virtual void setEnergyComponent(const Symbol &component);
+
+    const PropertyName& spaceProperty() const;
+    void setSpaceProperty(const PropertyName &spaceproperty);
+    
+    virtual bool isConstantPressure() const=0;
+    virtual bool isConstantVolume() const=0;
+    virtual bool isConstantTemperature() const=0;
+    virtual bool isConstantLambda(const Symbol &lam) const=0;
+
+    SireUnits::Dimension::Temperature
+    SireUnits::Dimension::Pressure pressure() const=0;
 
 protected:
     MoveBase& operator=(const MoveBase &other);
@@ -106,6 +118,11 @@ private:
     /** The component of the energy that describes the Hamiltonian
         that this move samples */
     Symbol nrgcomponent;
+    
+    /** The name of the property that contains the System space property.
+        This is necessary as we may have to map the molecules back into
+        the space at the end of the move */
+    PropertyName spaceproperty;
 };
 
 /** This is a null move - it doesn't change the system at all! */

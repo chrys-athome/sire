@@ -33,8 +33,6 @@
 
 #include "SireCAS/symbol.h"
 
-#include "SireBase/propertymap.h"
-
 #include "SireUnits/dimensions.h"
 
 SIRE_BEGIN_HEADER
@@ -78,6 +76,7 @@ public:
     ~RepExReplica();
     
     RepExReplica& operator=(const RepExReplica &other);
+    RepExReplica& operator=(const Replica &other);
     
     static const char* typeName()
     {
@@ -87,17 +86,29 @@ public:
     bool operator==(const RepExReplica &other) const;
     bool operator!=(const RepExReplica &other) const;
     
-    double energy();
+    SireUnits::Dimension::Energy energy();
 
     const Symbol& energyComponent() const;
     
     const Symbol& lambdaComponent() const;
     double lambdaValue() const;
     
-    const SireUnits::Dimension::Temperature& temperature() const;
-    const SireUnits::Dimension::Pressure& pressure() const;
+    SireUnits::Dimension::Temperature temperature() const;
+    SireUnits::Dimension::Pressure pressure() const;
+    SireUnits::Dimension::Volume volume() const;
 
-    const PropertyMap& propertyNames() const;
+    bool isConstantTemperature() const;
+    bool isConstantPressure() const;
+    bool isConstantLambda(const Symbol &lam) const;
+
+    static bool differentTemperatures(const RepExReplica &rep0,
+                                      const RepExReplica &rep1);
+                                      
+    static bool differentPressures(const RepExReplica &rep0,
+                                   const RepExReplica &rep1);
+                                   
+    static bool differentHamiltonians(const RepExReplica &rep0,
+                                      const RepExReplica &rep1);
 
     static void swapSystems(RepExReplica &rep0, RepExReplica &rep1);
 
@@ -105,11 +116,14 @@ protected:
     virtual void setEnergyComponent(const Symbol &symbol);
     virtual void setLambdaComponent(const Symbol &symbol);
     virtual void setLambdaValue(double value);
+    virtual void setEnergy(const SireUnits::Dimension::Energy &energy);
     virtual void setTemperature(const SireUnits::Dimension::Temperature &temperature);
+    virtual void setVolume(const SireUnits::Dimension::Volume &volume);
     virtual void setPressure(const SireUnits::Dimension::Pressure &pressure);
-    virtual void setPropertyNames(const PropertyMap &map);
 
 private:
+    void updateEnsembleParameters();
+
     /** The symbol that represents the component of the energy to
         be evaluated for this replica */
     Symbol nrg_component;
@@ -118,7 +132,7 @@ private:
         lambda-based Hamiltonian replica exchange - this is null
         if this type of replica exchange is not being performed */
     Symbol lambda_component;
-    
+
     /** The value of lambda for this replica. This is 0 if this is 
         not a lambda-based HRE replica */
     double lambda_value;
@@ -130,10 +144,17 @@ private:
         a constant volume replica */
     SireUnits::Dimension::Pressure replica_pressure;
     
-    /** The property map used to get the names of properties of this replica
-        (e.g. the simulation space, from which the volume can be calculated,
-         the molecular momenta property etc.) */
-    PropertyMap replica_properties;
+    /** Whether or not this is a constant potential energy replica */
+    bool is_constant_energy;
+    
+    /** Whether or not this is a constant temperature replica */
+    bool is_constant_temperature;
+    
+    /** Whether or not this is a constant volume replica */
+    bool is_constant_volume;
+    
+    /** Whether or not this is a constant pressure replica */
+    bool is_constant_pressure;
 };
 
 /** This class holds all of the replicas and associated data
@@ -159,8 +180,8 @@ public:
     
     ~RepExReplicas();
     
-    RepExReplicas& operator=(const Replicas &other);
     RepExReplicas& operator=(const RepExReplicas &other);
+    RepExReplicas& operator=(const Replicas &other);
     
     static const char* typeName()
     {
@@ -203,9 +224,6 @@ public:
     
     void setPressure(const SireUnits::Dimension::Pressure &pressure);
     void setPressure(int i, const SireUnits::Dimension::Pressure &pressure);
-    
-    void setPropertyNames(const PropertyMap &map);
-    void setPropertyNameS(int i, const PropertyMap &map);
 
 protected:
     RepExReplica& _pvt_replica(int i);

@@ -28,10 +28,15 @@
 
 #include "repexreplicas.h"
 
+#include "SireFF/forcefields.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireMove;
+using namespace SireFF;
+using namespace SireCAS;
+using namespace SireBase;
 using namespace SireUnits::Dimension;
 using namespace SireStream;
 
@@ -49,9 +54,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const RepExReplica &rep
     SharedDataStream sds(ds);
     
     sds << replica.nrg_component << replica.lambda_component
-        << replica.lambda_value << double(replica.replica_temperature)
-        << double(replica.replica_pressure)
-        << replica.replica_properties
+        << replica.lambda_value
         << static_cast<const Replica&>(replica);
         
     return ds;
@@ -66,21 +69,277 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExReplica &replica)
     {
         SharedDataStream sds(ds);
         
-        double temp, press;
+        RepExReplica new_replica;
         
-        sds >> replica_nrg_component >> replica.lambda_component
-            >> replica.lambda_value >> temp >> press
-            >> replica.replica.properties
-            >> static_cast<Replica&>(replica);
-            
-        replica.replica_temperature = Temperature(temp);
-        replica.replica_pressure = Pressure(press);
+        sds >> new_replica_nrg_component >> new_replica.lambda_component
+            >> new_replica.lambda_value
+            >> static_cast<Replica&>(new_replica);
+
+        new_replica.updateEnsembleParameters();
     }
     else
         throw version_error( v, "1", r_replica, CODELOC );
         
     return ds;
 }
+
+void RepExReplica::updateEnsembleParameters()
+{
+    //initialise
+    is_constant_energy = false;
+    is_constant_temperature = false;
+    is_constant_volume = false;
+    is_constant_pressure = false;
+    
+    replica_temperature = Temperature(0);
+    replica_pressure = Pressure(0);
+    
+    nrg_component = this->moves().energyComponent();
+
+    if (this->moves().isConstantEnergy())
+    {
+        is_constant_energy = true;
+    }
+    else if (this->moves().isConstantTemperature())
+    {
+        is_constant_temperature = true;
+        replica_temperature = this->moves().temperature();
+    }
+    else
+        throw SireError::incompatible_error( QObject::tr(
+            "Only replica exchange moves involving constant energy or "
+            "constant temperature ensembles are supported."), CODELOC );
+
+    if (this->moves().isConstantVolume())
+    {
+        is_constant_volume = true;
+    }
+    else if (this->moves().isConstantPressure())
+    {
+        is_constant_pressure = true;
+        replica_pressure = this->moves().pressure();
+    }
+    else
+        throw SireError::incompatible_error( QObject::tr(
+            "Only replica exchange moves involving constant volume or "
+            "constant pressure ensembles are supported."), CODELOC );
+}
+
+/** Null constructor */
+RepExReplica::RepExReplica()
+             : ConcreteProperty<RepExReplica,Replica>(),
+               nrg_component(ForceFields::totalComponent()),
+               lambda_value(0),
+{
+    this->updateEnsembleParameters();
+}
+
+/** Construct from the passed replica - the remaining parameters will
+    be set to default values */
+RepExReplica::RepExReplica(const Replica &replica)
+             : ConcreteProperty<RepExReplica,Replica>(replica),
+               nrg_component(ForceFields::totalComponent()),
+               lambda_value(0)
+
+{   
+    this->updateEnsembleParameters();
+}
+
+/** Copy constructor */
+RepExReplica::RepExReplica(const RepExReplica &other)
+             : ConcreteProperty<RepExReplica,Replica>(other),
+               nrg_component(other.nrg_component),
+               lambda_component(other.lambda_component),
+               lambda_value(other.lambda_value),
+               replica_temperature(other.replica_temperature),
+               replica_pressure(other.replica_pressure),
+               is_constant_energy(other.is_constant_energy),
+               is_constant_temperature(other.is_constant_temperature),
+               is_constant_volume(other.is_constant_volume),
+               is_constant_pressure(other.is_constant_pressure)
+{}
+               
+/** Destructor */
+RepExReplica::~RepExReplica()
+{}
+
+/** Copy assignment operator */
+RepExReplica& RepExReplica::operator=(const RepExReplica &other)
+{
+    if (this != &other)
+    {
+        Replica::operator=(other);
+        nrg_component = other.nrg_component;
+        lambda_component = other.lambda_component;
+        lambda_value = other.lambda_value;
+        is_constant_energy = other.is_constant_energy;
+        replica_temperature = other.replica_temperature;
+        is_constant_volume = other.is_constant_volume;
+        replica_pressure = other.replica_pressure;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool RepExReplica::operator==(const RepExReplica &other) const
+{
+    return this == &other or
+           (nrg_component == other.nrg_component and
+            lambda_component == other.lambda_component and
+            lambda_value == other.lambda_value and
+            Replica::operator==(other));
+}
+
+/** Comparison operator */
+bool RepExReplica::operator!=(const RepExReplica &other) const
+{
+    return not this->operator==(other);
+}
+
+/** Return the component of the energy of the system that this replica
+    uses as the total energy of the replica. This allows different
+    replicas to use completely different Hamiltonians */
+const Symbol& RepExReplica::energyComponent() const
+{
+    return nrg_component;
+}
+
+/** Return the symbol representing the lambda component if this replica
+    is part of a lambda-coordinate-based Hamiltonian replica exchange
+    simulation. This component is null if this is not the case */
+const Symbol& RepExReplica::lambdaComponent() const
+{
+    return lambda_component;
+}
+
+/** Return the value of lambda for this replica, assuming that it is
+    part of a lambda-coordinate-based replica exchange simulation. If
+    it isn't then 0 is returned */
+double RepExReplica::lambdaValue() const
+{
+    return lambda_value;
+}
+
+/** Return the temperature of this replica, if it is a constant
+    temperature replica. If not, then this returns 0 */
+Temperature RepExReplica::temperature() const
+{
+    return replica_temperature;
+}
+
+/** Return the current volume of this replica - this could be infinite! */
+Volume RepExReplica::volume() const
+{
+    const SpaceBase &space = this->system().property( this->moves().spaceProperty() );
+    return space.volume();
+}
+
+/** Return the pressure of this replica, if it is a constant
+    pressure replica. If not, then this returns 0 */
+Pressure RepExReplica::pressure() const
+{
+    return replica_pressure;
+}
+
+/** Return whether or not this is a constant energy replica
+    (all moves sample the same potential energy) */
+bool RepExReplica::isConstantEnergy() const
+{
+    return is_constant_energy;
+}
+
+/** Return whether or not this is a constant temperature replica
+    (all moves sample the same temperature) */
+bool RepExReplica::isConstantTemperature() const
+{
+    return is_constant_temperature;
+}
+
+/** Return whether or not this is a constant volume replica
+    (all moves sample the same volume) */
+bool RepExReplica::isConstantVolume() const
+{
+    return is_constant_volume;
+}
+
+/** Return whether or not this is a constant pressure replica
+    (all moves sample the same pressure) */
+bool RepExReplica::isConstantPressure() const
+{
+    return is_constant_pressure;
+}
+
+/** Return whether or not this is a constant lambda replica
+    (there is a lambda component, 'lam', and all moves sample the 
+     same value of this lambda coordinate) */
+bool RepExReplica::isConstantLambda(const Symbol &lam) const
+{
+    return this->moves().isConstantLambda();
+}
+
+/** Return whether 'rep0' and 'rep1' sample different temperatures */
+bool RepExReplica::differentTemperatures(const RepExReplica &rep0,
+                                         const RepExReplica &rep1)
+{
+    if (rep0.is_constant_temperature)
+    {
+        if (not rep1.is_constant_temperature)
+            return false;
+        else
+            return rep0.replica_temperature == rep1.replica_temperature;
+    }
+    else
+        return not rep1.is_constant_temperature;
+}
+                                  
+/** Return whether 'rep0' and 'rep1' sample different pressures */
+bool RepExReplica::differentPressures(const RepExReplica &rep0,
+                                      const RepExReplica &rep1)
+{
+    if (rep0.is_constant_pressure)
+    {
+        if (not rep1.is_constant_pressure)
+            return false;
+        else
+            return rep0.replica_pressure == rep1.replica_pressure;
+    }
+    else
+        return not rep1.is_constant_pressure;
+}
+                               
+/** Return whether or not this replicas 'rep0' and 'rep1' sample
+    different Hamiltonians */
+bool RepExpReplica::differentHamiltonians(const RepExReplica &rep0,
+                                          const RepExReplica &rep1)
+{
+    return rep0.nrg_component == rep1.nrg_component and
+           rep0.lambda_component == rep1.lambda_component and
+           rep0.lambda_value == rep1.lambda_value;
+}
+
+/** Return the total energy of this replica */
+double RepExReplica::energy()
+{
+    System sys = Replica::system();
+    
+    double nrg = sys.energy( this->energyComponent() );
+    
+    Replica::setSystem(sys);
+    
+    return nrg;
+}
+
+void RepExReplica::setEnergyComponent(const Symbol &symbol);
+void RepExReplica::setLambdaComponent(const Symbol &symbol);
+void RepExReplica::setLambdaValue(double value);
+void RepExReplica::setEnergy(const SireUnits::Dimension::Energy &energy);
+void RepExReplica::setTemperature(const SireUnits::Dimension::Temperature &temperature);
+void RepExReplica::setVolume(const SireUnits::Dimension::Volume &volume);
+void RepExReplica::setPressure(const SireUnits::Dimension::Pressure &pressure);
+
+void RepExReplica::swapSystems(RepExReplica &rep0, RepExReplica &rep1);
+
 
 ///////
 /////// Implementation of RepExReplicas
@@ -453,7 +712,5 @@ void RepExReplicas::setPressure(int i, const Pressure &pressure)
 ////         Exceptions thrown if move doesn't support that, e.g. NVT, NVE moves
 ////         Moves object works out ensemble from comprised moves - looks
 ////         at what changes, get ensemble. So it can then consistentise 
-////         all constituent moves.
-
-void RepExReplicas::setPropertyNames(const PropertyMap &map);
-void RepExReplicas::setPropertyNameS(int i, const PropertyMap &map);
+////         all constituent moves. Moves also have a volume if they 
+////         are NPT (as they need to change that volume)

@@ -78,7 +78,19 @@ public:
     }
     
     virtual void setEnergyComponent(const Symbol &component)=0;
+    virtual const Symbol& energyComponent() const=0;
+
+    virtual void setSpaceProperty(const PropertyName &spaceproperty)=0;
+    virtual const PropertyName& spaceProperty() const=0;
     
+    virtual bool isConstantPressure() const=0;
+    virtual bool isConstantVolume() const=0;
+    virtual bool isConstantTemperature() const=0;
+    virtual bool isConstantLambda(const Symbol &lam) const=0;
+    
+    virtual SireUnits::Dimension::Temperature temperature() const=0;
+    virtual SireUnits::Dimension::Pressure pressure() const=0;
+        
     virtual System move(const System &system, int nmoves,
                         bool record_stats)=0;
     
