@@ -32,6 +32,9 @@
 #include "SireCAS/symbol.h"
 
 #include "SireBase/property.h"
+#include "SireBase/propertymap.h"
+
+#include "SireUnits/dimensions.h"
 
 SIRE_BEGIN_HEADER
 
@@ -58,6 +61,8 @@ class System;
 
 namespace SireMove
 {
+
+class Ensemble;
 
 using SireCAS::Symbol;
 
@@ -99,20 +104,43 @@ public:
 
     const PropertyName& spaceProperty() const;
     void setSpaceProperty(const PropertyName &spaceproperty);
-    
-    virtual bool isConstantPressure() const=0;
-    virtual bool isConstantVolume() const=0;
-    virtual bool isConstantTemperature() const=0;
-    virtual bool isConstantLambda(const Symbol &lam) const=0;
 
-    SireUnits::Dimension::Temperature
-    SireUnits::Dimension::Pressure pressure() const=0;
+    virtual Ensemble ensemble() const=0;
+
+    bool isConstantEnergy() const;
+    bool isConstantTemperature() const;
+    bool isConstantVolume() const;
+    bool isConstantPressure() const;
+    bool isConstantChemicalPotential() const;
+    bool isConstantFugacity() const;
+    
+    virtual bool isConstantLambda(const Symbol &lam) const;
+
+    SireUnits::Dimension::Temperature temperature() const;
+    SireUnits::Dimension::Pressure pressure() const;
+    SireUnits::Dimension::Pressure fugacity() const;
+    SireUnits::Dimension::MolarEnergy chemicalPotential() const;
+
+    void setTemperature(const SireUnits::Dimension::Temperature &temperature);
+    void setPressure(const SireUnits::Dimension::Pressure &pressure);
+    void setChemicalPotential(
+                    const SireUnits::Dimension::MolarEnergy &chemical_potential);
+    void setFugacity(const SireUnits::Dimension::Pressure &fugacity);
 
 protected:
     MoveBase& operator=(const MoveBase &other);
 
     bool operator==(const MoveBase &other) const;
     bool operator!=(const MoveBase &other) const;
+
+    virtual void _pvt_setTemperature(
+                            const SireUnits::Dimension::Temperature &temperature);
+                            
+    virtual void _pvt_setPressure(
+                            const SireUnits::Dimension::Pressure &pressure);
+                            
+    virtual void _pvt_setFugacity(
+                            const SireUnits::Dimension::Pressure &fugacity);
 
 private:
     /** The component of the energy that describes the Hamiltonian
@@ -150,6 +178,8 @@ public:
     }
     
     void move(System &system, int nmoves, bool record_stats);
+    
+    Ensemble ensemble() const;
 };
 
 /** This is the polymorphic pointer holder for the 

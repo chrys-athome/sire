@@ -330,16 +330,177 @@ double RepExReplica::energy()
     return nrg;
 }
 
-void RepExReplica::setEnergyComponent(const Symbol &symbol);
-void RepExReplica::setLambdaComponent(const Symbol &symbol);
-void RepExReplica::setLambdaValue(double value);
-void RepExReplica::setEnergy(const SireUnits::Dimension::Energy &energy);
-void RepExReplica::setTemperature(const SireUnits::Dimension::Temperature &temperature);
-void RepExReplica::setVolume(const SireUnits::Dimension::Volume &volume);
-void RepExReplica::setPressure(const SireUnits::Dimension::Pressure &pressure);
+/** Set the system to be simulated at this replica 
 
-void RepExReplica::swapSystems(RepExReplica &rep0, RepExReplica &rep1);
+    \throw SireBase::missing_property
+    \throw SireFF::missing_component
+*/
+void RepExReplica::setSystem(const System &system)
+{
+    if (is_constant_pressure)
+    {
+        if (not system.hasProperty( this->moves().spaceProperty() ))
+        {
+            throw SireBase::missing_property( QObject::tr(
+                "Cannot set the system for this replica to %1, "
+                "as this is a constant pressure replica, and the system "
+                "is missing the required space property %2.")
+                    .arg(system.toString(), 
+                         this->moves().spaceProperty().toString()),
+                                CODELOC );
+        }
+    }
 
+    if (not system.hasComponent(nrg_component))
+    {
+        throw SireFF::missing_component( QObject::tr(
+            "Cannot set the system for this replica to %1, "
+            "as this system is missing the required energy "
+            "component for this replica (%2). Available energy "
+            "components are %3.")
+                .arg(system.toString(), nrg_component.toString(),
+                     Sire::toString(system.components())), CODELOC );
+    }
+
+    System new_system(system);
+    
+    if (not lambda_component.isNull())
+    {
+        new_system.setComponent( lambda_component, lambda_value );
+    }
+    
+    Replicas::setSystem(new_system);
+}
+
+/** Set the moves to be used to simulate the system at this replica 
+
+    \throw SireBase::missing_property
+*/
+void RepExReplica::setMoves(const MovesBase &moves)
+{
+    RepExReplica old_state(*this);
+    
+    try
+    {
+        Replica::setMoves(moves);
+        
+        //changing the moves will change the ensemble for this replica
+        this->updateEnsembleParameters();
+        
+        //ensure that the system has the necessary space
+        if (is_constant_pressure)
+        {
+            if (not system.hasProperty( this->moves().spaceProperty() ))
+            {
+                throw SireBase::missing_property( QObject::tr(
+                    "Cannot set the system for this replica to %1, "
+                    "as this is a constant pressure replica, and the system "
+                    "is missing the required space property %2.")
+                        .arg(system.toString(), 
+                             this->moves().spaceProperty().toString()),
+                                    CODELOC );
+            }
+        }
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
+}
+
+/** Set the energy component to be used to calculate the total energy
+    of this replica
+    
+    \throw SireFF::missing_component
+*/
+void RepExReplica::setEnergyComponent(const Symbol &symbol)
+{
+    if (nrg_component == symbol)
+        return;
+
+    if (not this->system().hasComponent(symbol))
+        throw SireFF::missing_component( QObject::tr(
+            "Cannot set the energy component for this replica to %1, "
+            "as this system (%2) doens't have such a component. Available energy "
+            "components are %3.")
+                .arg(symbol.toString(), system().toString(),
+                     Sire::toString(system().components())), CODELOC );
+
+    nrg_component = symbol;
+}
+
+/** Set the lambda component used for lambda-based Hamiltonian
+    replica exchange */
+void RepExReplica::setLambdaComponent(const Symbol &symbol)
+{
+    if (lambda_component == symbol)
+        return;
+        
+    if (symbol.isNull())
+    {
+        lambda_component = symbol;
+        lambda_value = 0;
+        return;
+    }
+    
+    System new_system( this->system() );
+    
+    //default always to lambda=0
+    new_system.setComponent(symbol, 0);
+    Replicas::setSystem(new_system);
+    
+    lambda_component = symbol;
+    lambda_value = 0;
+}
+
+/** Set the value of the lambda component to 'value' */
+void RepExReplica::setLambdaValue(double value)
+{
+    if (lambda_component.isNull() or value == lambda_value)
+        return;
+        
+    System new_system( this->system() );
+    
+    new_system.setComponent(lambda_component, value);
+    Replicas::setSystem(new_system);
+    
+    lambda_value = value;
+}
+
+/** Set the temperature of this replica to 'temperature'. This is only possible
+    if this is a constant temperature replica
+    
+    \throw SireError::incompatible_error
+*/
+void RepExReplica::setTemperature(const Temperature &temperature)
+{
+    if (not is_constant_temperature)
+        throw SireError::incompatible_error( QObject::tr(
+            "It is not possible to set the temperature of a replica that is "
+            "not running constant temperature moves! This replica is running "
+            "in this %1 ensemble.")
+                .arg( this->moves().ensemble().shortHand() ), CODELOC );
+}
+
+void RepExReplica::setPressure(const Pressure &pressure);
+
+/** Set the energy
+void RepExReplica::setEnergy(const Energy &energy);
+void RepExReplica::setVolume(const Volume &volume);
+
+/** Swap the systems between the two replicas, 'rep0' and 'rep1' */
+void RepExReplica::swapSystems(RepExReplica &rep0, RepExReplica &rep1)
+{
+    RepExReplica new_rep0(rep0);
+    RepExReplica new_rep1(rep1);
+    
+    new_rep0.setSystem(rep1.system());
+    new_rep1.setSystem(rep0.system());
+    
+    rep0 = new_rep0;
+    rep1 = new_rep1;
+}
 
 ///////
 /////// Implementation of RepExReplicas
@@ -707,10 +868,3 @@ void RepExReplicas::setPressure(int i, const Pressure &pressure)
 {
     this->_pvt_replicas(i).setPressure(pressure);
 }
-
-//// All moves have a temperature, pressure, chemical potential etc.
-////         Exceptions thrown if move doesn't support that, e.g. NVT, NVE moves
-////         Moves object works out ensemble from comprised moves - looks
-////         at what changes, get ensemble. So it can then consistentise 
-////         all constituent moves. Moves also have a volume if they 
-////         are NPT (as they need to change that volume)

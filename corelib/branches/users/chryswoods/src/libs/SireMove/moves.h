@@ -90,6 +90,10 @@ public:
     
     virtual SireUnits::Dimension::Temperature temperature() const=0;
     virtual SireUnits::Dimension::Pressure pressure() const=0;
+
+    virtual void setTemperature(const SireUnits::Dimension::Temperature 
+                                                                &temperature) const=0;
+    virtual void setPressure(const SireUnits::Dimension::Pressure &pressure) const=0;
         
     virtual System move(const System &system, int nmoves,
                         bool record_stats)=0;

@@ -97,6 +97,8 @@ public:
     SireUnits::Dimension::Pressure pressure() const;
     SireUnits::Dimension::Volume volume() const;
 
+    Ensemble ensemble() const;
+
     bool isConstantTemperature() const;
     bool isConstantPressure() const;
     bool isConstantLambda(const Symbol &lam) const;
@@ -120,6 +122,9 @@ protected:
     virtual void setTemperature(const SireUnits::Dimension::Temperature &temperature);
     virtual void setVolume(const SireUnits::Dimension::Volume &volume);
     virtual void setPressure(const SireUnits::Dimension::Pressure &pressure);
+
+    virtual void setSystem(const System &system);
+    virtual void setMoves(const MovesBase &moves);
 
 private:
     void updateEnsembleParameters();
