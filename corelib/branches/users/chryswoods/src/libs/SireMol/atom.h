@@ -195,7 +195,7 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& Atom::property(const PropertyName &key) const
 {
     const Property &property = d->property(key);
-    const AtomProperty<T> &atom_props = property->asA< AtomProperty<T> >();
+    const AtomProperty<T> &atom_props = property.asA< AtomProperty<T> >();
 
     return atom_props.at(this->cgAtomIdx());
 }
@@ -210,7 +210,7 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& Atom::metadata(const PropertyName &metakey) const
 {
     const Property &property = d->metadata(metakey);
-    const AtomProperty<T> &atom_props = property->asA< AtomProperty<T> >();
+    const AtomProperty<T> &atom_props = property.asA< AtomProperty<T> >();
 
     return atom_props.at(this->cgAtomIdx());
 }
@@ -226,7 +226,7 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& Atom::metadata(const PropertyName &key, const PropertyName &metakey) const
 {
     const Property &property = d->metadata(key, metakey);
-    const AtomProperty<T> &atom_props = property->asA< AtomProperty<T> >();
+    const AtomProperty<T> &atom_props = property.asA< AtomProperty<T> >();
                         
     return atom_props.at(this->cgAtomIdx());
 }
@@ -296,7 +296,7 @@ QList<V> get_property(Atom*, const MoleculeData &moldata,
         
     const Property &property = moldata.property(key);
         
-    const AtomProperty<V> &atom_prop = property->asA< AtomProperty<V> >();
+    const AtomProperty<V> &atom_prop = property.asA< AtomProperty<V> >();
 
     const MoleculeInfoData &molinfo = moldata.info();
 
@@ -318,7 +318,7 @@ QList<V> get_metadata(Atom*, const MoleculeData &moldata,
     
     const Property &property = moldata.metadata(metakey);
     
-    const AtomProperty<V> &atom_prop = property->asA< AtomProperty<V> >();
+    const AtomProperty<V> &atom_prop = property.asA< AtomProperty<V> >();
 
     const MoleculeInfoData &molinfo = moldata.info();
 
@@ -341,7 +341,7 @@ QList<V> get_metadata(Atom*, const MoleculeData &moldata,
     
     const Property &property = moldata.metadata(key, metakey);
     
-    const AtomProperty<V> &atom_prop = property->asA< AtomProperty<V> >();
+    const AtomProperty<V> &atom_prop = property.asA< AtomProperty<V> >();
                                               
     const MoleculeInfoData &molinfo = moldata.info();
     

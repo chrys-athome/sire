@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QMutex>
+
 #include <limits>
 #include <cmath>
 
@@ -156,7 +158,7 @@ PeriodicBox& PeriodicBox::operator=(const PeriodicBox &other)
         boxlength = other.boxlength;
         halflength = other.halflength;
         invlength = other.invlength;
-        PropertyBase::operator=(other);
+        Cartesian::operator=(other);
     }
     
     return *this;
@@ -216,7 +218,7 @@ SireUnits::Dimension::Volume PeriodicBox::volume() const
 /** Return a copy of this space with the volume of set to 'volume'
     - this will scale the space uniformly, keeping the center at
     the same location, to achieve this volume */
-Space PeriodicBox::setVolume(SireUnits::Dimension::Volume vol) const
+SpacePtr PeriodicBox::setVolume(SireUnits::Dimension::Volume vol) const
 {
     double old_volume = this->volume();
     double new_volume = vol;
@@ -740,7 +742,7 @@ CoordGroup PeriodicBox::mapFromSelf(const CoordGroup &group, const Space &other)
 {
     assertCompatible(other);
 
-    const PeriodicBox &other_box = other->asA<PeriodicBox>();
+    const PeriodicBox &other_box = other.asA<PeriodicBox>();
 
     if (other_box == *this)
         return group;
@@ -781,7 +783,7 @@ QVector<CoordGroup> PeriodicBox::mapFromSelf(const QVector<CoordGroup> &groups,
 {
     assertCompatible(other);
 
-    const PeriodicBox &other_box = other->asA<PeriodicBox>();
+    const PeriodicBox &other_box = other.asA<PeriodicBox>();
 
     if (other_box == *this)
     {

@@ -55,7 +55,7 @@ static const RegisterMetaType<Cartesian> r_cartesian;
 QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const Cartesian &cart)
 {
     writeHeader(ds, r_cartesian, 1)
-                 << static_cast<const SpaceBase&>(cart);
+                 << static_cast<const Space&>(cart);
 
     return ds;
 }
@@ -67,7 +67,7 @@ QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, Cartesian &cart)
 
     if (v == 1)
     {
-        ds >> static_cast<SpaceBase&>(cart);
+        ds >> static_cast<Space&>(cart);
     }
     else
         throw version_error(v, "1", r_cartesian, CODELOC);
@@ -76,12 +76,12 @@ QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, Cartesian &cart)
 }
 
 /** Construct a default Cartesian volume */
-Cartesian::Cartesian() : ConcreteProperty<Cartesian,SpaceBase>()
+Cartesian::Cartesian() : ConcreteProperty<Cartesian,Space>()
 {}
 
 /** Copy constructor */
 Cartesian::Cartesian(const Cartesian &other) 
-          : ConcreteProperty<Cartesian,SpaceBase>(other)
+          : ConcreteProperty<Cartesian,Space>(other)
 {}
 
 /** Destructor */
@@ -91,7 +91,7 @@ Cartesian::~Cartesian()
 /** Copy assignment operator */
 Cartesian& Cartesian::operator=(const Cartesian &other)
 {
-    PropertyBase::operator=(other);
+    Space::operator=(other);
     return *this;
 }
 
@@ -118,13 +118,13 @@ SireUnits::Dimension::Volume Cartesian::volume() const
 }
 
 /** Throw an exception as an infinite space doesn't have a volume! */
-Space Cartesian::setVolume(SireUnits::Dimension::Volume) const
+SpacePtr Cartesian::setVolume(SireUnits::Dimension::Volume) const
 {
     throw SireError::invalid_state( QObject::tr(
         "It is not possible to change the volume of an infinite space!"),
             CODELOC );
 
-    return Space();
+    return SpacePtr();
 }
 
 /** Calculate the distance between two points */

@@ -86,6 +86,7 @@ class StructureEditor;
 
 using SireBase::PropertyName;
 using SireBase::Property;
+using SireBase::PropertyPtr;
 using SireBase::Properties;
 
 /**
@@ -250,9 +251,9 @@ public:
     void removeMetadata(const QString &metakey);
     void removeMetadata(const QString &key, const QString &metakey);
 
-    Property takeProperty(const QString &key);
-    Property takeMetadata(const QString &metakey);
-    Property takeMetadata(const QString &key, const QString &metakey);
+    PropertyPtr takeProperty(const QString &key);
+    PropertyPtr takeMetadata(const QString &metakey);
+    PropertyPtr takeMetadata(const QString &key, const QString &metakey);
 
     void assertHasProperty(const PropertyName &key) const;
     void assertHasMetadata(const PropertyName &metakey) const;

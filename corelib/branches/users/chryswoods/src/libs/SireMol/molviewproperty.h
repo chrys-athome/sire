@@ -50,7 +50,7 @@ class AtomSelection;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT MolViewProperty : public SireBase::PropertyBase
+class SIREMOL_EXPORT MolViewProperty : public SireBase::Property
 {
 
 public:

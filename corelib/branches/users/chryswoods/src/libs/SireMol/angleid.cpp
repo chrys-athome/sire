@@ -203,7 +203,7 @@ Triangle AngleID::triangle(const MoleculeData &moldata,
                            const PropertyMap &map) const
 {
     const AtomCoords &coords = moldata.property(map["coordinates"])
-                                    ->asA<AtomCoords>();
+                                    .asA<AtomCoords>();
                                     
     return Triangle( coords.at( moldata.info().cgAtomIdx(atm0) ),
                      coords.at( moldata.info().cgAtomIdx(atm1) ),
@@ -231,11 +231,11 @@ Triangle AngleID::triangle(const MoleculeData &mol0data,
                            const PropertyMap &map2) const
 {
     const AtomCoords &coords0 = mol0data.property(map0["coordinates"])
-                                    ->asA<AtomCoords>();
+                                    .asA<AtomCoords>();
     const AtomCoords &coords1 = mol1data.property(map1["coordinates"])
-                                    ->asA<AtomCoords>();
+                                    .asA<AtomCoords>();
     const AtomCoords &coords2 = mol2data.property(map2["coordinates"])
-                                    ->asA<AtomCoords>();
+                                    .asA<AtomCoords>();
 
     return Triangle( coords0.at( mol0data.info().cgAtomIdx(atm0) ),
                      coords1.at( mol1data.info().cgAtomIdx(atm1) ),

@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QMutex>
+
 #include "stringmangler.h"
 
 #include "SireStream/datastream.h"
@@ -35,24 +37,52 @@ using namespace SireBase;
 using namespace SireStream;
 
 ////////
-//////// Implementation of StringManglerBase
+//////// Implementation of StringMangler
 ////////
 
+static const RegisterMetaType<StringMangler> r_stringmangler( MAGIC_ONLY,
+                                                  "SireBase::StringMangler" );
+                                                  
+/** Serialise to a binary datastream */
+QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, 
+                                        const StringMangler &stringmangler)
+{
+    writeHeader(ds, r_stringmangler, 1);
+    ds << static_cast<const Property&>(stringmangler);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, StringMangler &stringmangler)
+{
+    VersionID v = readHeader(ds, r_stringmangler);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<Property&>(stringmangler);
+    }
+    else
+        throw version_error( v, "1", r_stringmangler, CODELOC );
+    
+    return ds;
+}
+
 /** Constructor */
-StringManglerBase::StringManglerBase() : PropertyBase()
+StringMangler::StringMangler() : Property()
 {}
 
 /** Copy constructor */
-StringManglerBase::StringManglerBase(const StringManglerBase &other)
-              : PropertyBase(other)
+StringMangler::StringMangler(const StringMangler &other)
+              : Property(other)
 {}
 
 /** Destructor */
-StringManglerBase::~StringManglerBase()
+StringMangler::~StringMangler()
 {}
 
 /** Mangle the input string */
-QString StringManglerBase::operator()(const QString &input) const
+QString StringMangler::operator()(const QString &input) const
 {
     return this->mangle(input);
 }
@@ -69,7 +99,7 @@ QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_nomangle, 1);
     
-    ds << static_cast<const StringManglerBase&>(nomangle);
+    ds << static_cast<const StringMangler&>(nomangle);
     
     return ds;
 }
@@ -81,7 +111,7 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, NoMangling &nomangle)
     
     if (v == 1)
     {
-        ds >> static_cast<StringManglerBase&>(nomangle);
+        ds >> static_cast<StringMangler&>(nomangle);
     }
     else
         throw version_error(v, "1", r_nomangle, CODELOC);
@@ -90,19 +120,12 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, NoMangling &nomangle)
 }
 
 /** Constructor */
-NoMangling::NoMangling() : ConcreteProperty<NoMangling,StringManglerBase>()
+NoMangling::NoMangling() : ConcreteProperty<NoMangling,StringMangler>()
 {}
-
-static Property nomangle_property = NoMangling();
-
-const Property& NoMangling::toProperty()
-{
-    return nomangle_property;
-}
 
 /** Copy constructor */
 NoMangling::NoMangling(const NoMangling &other)
-           : ConcreteProperty<NoMangling,StringManglerBase>(other)
+           : ConcreteProperty<NoMangling,StringMangler>(other)
 {}
 
 /** Destructor */
@@ -133,6 +156,21 @@ QString NoMangling::mangle(const QString &input) const
     return input;
 }
 
+static SharedPolyPointer<NoMangling> shared_null;
+
+const NoMangling& StringMangler::null()
+{
+    if (shared_null.constData() == 0)
+    {
+        QMutexLocker lkr( globalLock() );
+        
+        if (shared_null.constData() == 0)
+            shared_null = new NoMangling();
+    }
+    
+    return *(shared_null.constData());
+}
+
 ////////
 //////// Implementation of TrimString
 ////////
@@ -145,7 +183,7 @@ QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_trimstring, 1);
     
-    ds << static_cast<const StringManglerBase&>(trimstring);
+    ds << static_cast<const StringMangler&>(trimstring);
     
     return ds;
 }
@@ -157,7 +195,7 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, TrimString &trimstring)
     
     if (v == 1)
     {
-        ds >> static_cast<StringManglerBase&>(trimstring);
+        ds >> static_cast<StringMangler&>(trimstring);
     }
     else
         throw version_error(v, "1", r_trimstring, CODELOC);
@@ -166,19 +204,12 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, TrimString &trimstring)
 }
 
 /** Constructor */
-TrimString::TrimString() : ConcreteProperty<TrimString,StringManglerBase>()
+TrimString::TrimString() : ConcreteProperty<TrimString,StringMangler>()
 {}
-
-static Property trimstring_property = TrimString();
-
-const Property& TrimString::toProperty()
-{
-    return trimstring_property;
-}
 
 /** Copy constructor */
 TrimString::TrimString(const TrimString &other)
-           : ConcreteProperty<TrimString,StringManglerBase>(other)
+           : ConcreteProperty<TrimString,StringMangler>(other)
 {}
 
 /** Destructor */
@@ -221,7 +252,7 @@ QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_upperstring, 1);
     
-    ds << static_cast<const StringManglerBase&>(upperstring);
+    ds << static_cast<const StringMangler&>(upperstring);
     
     return ds;
 }
@@ -233,7 +264,7 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, UpperCaseString &uppers
     
     if (v == 1)
     {
-        ds >> static_cast<StringManglerBase&>(upperstring);
+        ds >> static_cast<StringMangler&>(upperstring);
     }
     else
         throw version_error(v, "1", r_upperstring, CODELOC);
@@ -242,19 +273,12 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, UpperCaseString &uppers
 }
 
 /** Constructor */
-UpperCaseString::UpperCaseString() : ConcreteProperty<UpperCaseString,StringManglerBase>()
+UpperCaseString::UpperCaseString() : ConcreteProperty<UpperCaseString,StringMangler>()
 {}
-
-static Property upperstring_property = UpperCaseString();
-
-const Property& UpperCaseString::toProperty()
-{
-    return upperstring_property;
-}
 
 /** Copy constructor */
 UpperCaseString::UpperCaseString(const UpperCaseString &other)
-           : ConcreteProperty<UpperCaseString,StringManglerBase>(other)
+           : ConcreteProperty<UpperCaseString,StringMangler>(other)
 {}
 
 /** Destructor */
@@ -297,7 +321,7 @@ QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_lowerstring, 1);
     
-    ds << static_cast<const StringManglerBase&>(lowerstring);
+    ds << static_cast<const StringMangler&>(lowerstring);
     
     return ds;
 }
@@ -309,7 +333,7 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, LowerCaseString &lowers
     
     if (v == 1)
     {
-        ds >> static_cast<StringManglerBase&>(lowerstring);
+        ds >> static_cast<StringMangler&>(lowerstring);
     }
     else
         throw version_error(v, "1", r_lowerstring, CODELOC);
@@ -318,19 +342,12 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, LowerCaseString &lowers
 }
 
 /** Constructor */
-LowerCaseString::LowerCaseString() : ConcreteProperty<LowerCaseString,StringManglerBase>()
+LowerCaseString::LowerCaseString() : ConcreteProperty<LowerCaseString,StringMangler>()
 {}
-
-static Property lowerstring_property = LowerCaseString();
-
-const Property& LowerCaseString::toProperty()
-{
-    return lowerstring_property;
-}
 
 /** Copy constructor */
 LowerCaseString::LowerCaseString(const LowerCaseString &other)
-           : ConcreteProperty<LowerCaseString,StringManglerBase>(other)
+           : ConcreteProperty<LowerCaseString,StringMangler>(other)
 {}
 
 /** Destructor */
@@ -359,149 +376,4 @@ bool LowerCaseString::operator!=(const LowerCaseString&) const
 QString LowerCaseString::mangle(const QString &input) const
 {
     return input.trimmed().toLower();
-}
-
-//////////////
-////////////// Implementation of StringMangler
-//////////////
-
-RegisterMetaType<StringMangler> r_space;
-
-/** Serialise a StringMangler to a binary datastream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
-                                       const StringMangler &space)
-{
-    writeHeader(ds, r_space, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << static_cast<const Property&>(space);
-    
-    return ds;
-}
-
-/** Deserialise a StringMangler from a binary datastream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
-                                       StringMangler &space)
-{
-    VersionID v = readHeader(ds, r_space);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        sds >> static_cast<Property&>(space);
-    }
-    else
-        throw version_error(v, "1", r_space, CODELOC);
-        
-    return ds;
-}
-
-static StringMangler *_pvt_shared_null = 0;
-
-const StringMangler& StringMangler::shared_null()
-{
-    if (_pvt_shared_null == 0)
-        _pvt_shared_null = new StringMangler( NoMangling() );
-        
-    return *_pvt_shared_null;
-}
-
-/** Null constructor */
-StringMangler::StringMangler() : Property(StringMangler::shared_null())
-{}
-
-/** Construct from a passed property
-
-    \throw SireError::invalid_cast
-*/
-StringMangler::StringMangler(const PropertyBase &property)
-              : Property(property.asA<StringManglerBase>())
-{}
-
-/** Construct from passed StringManglerBase */
-StringMangler::StringMangler(const StringManglerBase &other)
-              : Property(other)
-{}
-
-/** Copy constructor */
-StringMangler::StringMangler(const StringMangler &other)
-              : Property(other)
-{}
-
-/** Destructor */
-StringMangler::~StringMangler()
-{}
-
-/** Copy assignment operator from a Property object
-
-    \throw SireError::invalid_cast
-*/
-StringMangler& StringMangler::operator=(const PropertyBase &property)
-{
-    Property::operator=(property.asA<StringManglerBase>());
-    return *this;
-}
-
-/** Copy assignment operator from another StringManglerBase */
-StringMangler& StringMangler::operator=(const StringManglerBase &other)
-{
-    Property::operator=(other);
-    return *this;
-}
-
-/** Dereference this pointer */
-const StringManglerBase* StringMangler::operator->() const
-{
-    return static_cast<const StringManglerBase*>(&(d()));
-}
-
-/** Dereference this pointer */
-const StringManglerBase& StringMangler::operator*() const
-{
-    return static_cast<const StringManglerBase&>(d());
-}
-
-/** Return a read-only reference to the contained object */
-const StringManglerBase& StringMangler::read() const
-{
-    return static_cast<const StringManglerBase&>(d());
-}
-
-/** Return the mangled string */
-QString StringMangler::operator()(const QString &input) const
-{
-    return this->read().mangle(input);
-}
-
-/** Return a modifiable reference to the contained object.
-    This will trigger a copy of the object if more than
-    one pointer is pointing to it. */
-StringManglerBase& StringMangler::edit()
-{
-    return static_cast<StringManglerBase&>(d());
-}
-    
-/** Return a raw pointer to the StringManglerBase object */
-const StringManglerBase* StringMangler::data() const
-{
-    return static_cast<const StringManglerBase*>(&(d()));
-}
-
-/** Return a raw pointer to the StringManglerBase object */
-const StringManglerBase* StringMangler::constData() const
-{
-    return static_cast<const StringManglerBase*>(&(d()));
-}
-    
-/** Return a raw pointer to the StringManglerBase object */
-StringManglerBase* StringMangler::data()
-{
-    return static_cast<StringManglerBase*>(&(d()));
-}
-
-/** Automatic casting operator */
-StringMangler::operator const StringManglerBase&() const
-{
-    return static_cast<const StringManglerBase&>(d());
 }

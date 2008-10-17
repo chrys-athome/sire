@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QMutex>
+
 #include "mappingfunction.h"
 #include "cartesian.h"
 
@@ -39,47 +41,49 @@ using namespace SireBase;
 using namespace SireStream;
 
 //////////////
-////////////// Implementation of MapFunc
+////////////// Implementation of MappingFunction
 //////////////
 
-static const RegisterMetaType<MapFunc> r_mapfunc(MAGIC_ONLY,
-                                                 "SireVol::MapFunc");
+static const RegisterMetaType<MappingFunction> r_mapfunc(MAGIC_ONLY,
+                                                 "SireVol::MappingFunction");
 
 /** Serialise to a binary datastream */
 QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds,
-                                       const MapFunc &mapfunc)
+                                       const MappingFunction &mapfunc)
 {
-    writeHeader(ds, r_mapfunc, 0);
+    writeHeader(ds, r_mapfunc, 1);
     
-    ds << static_cast<const PropertyBase&>(mapfunc);
+    ds << static_cast<const Property&>(mapfunc);
     
     return ds;
 }
 
 /** Deserialise from a binary datastream */
 QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds,
-                                       MapFunc &mapfunc)
+                                       MappingFunction &mapfunc)
 {
     VersionID v = readHeader(ds, r_mapfunc);
 
-    if (v != 0)
-        throw version_error(v, "0", r_mapfunc, CODELOC);
-
-    ds >> static_cast<PropertyBase&>(mapfunc);
+    if (v == 1)
+    {
+        ds >> static_cast<Property&>(mapfunc);
+    }
+    else
+        throw version_error( v, "1", r_mapfunc, CODELOC );
 
     return ds;
 }
 
 /** Constructor */
-MapFunc::MapFunc() : PropertyBase()
+MappingFunction::MappingFunction() : Property()
 {}
 
 /** Copy constructor */
-MapFunc::MapFunc(const MapFunc &other) : PropertyBase(other)
+MappingFunction::MappingFunction(const MappingFunction &other) : Property(other)
 {}
 
 /** Destructor */
-MapFunc::~MapFunc()
+MappingFunction::~MappingFunction()
 {}
 
 //////////////
@@ -93,7 +97,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
                                         const MapFromCartesianFunction &mapcart)
 {
     writeHeader(ds, r_mapcart, 1)
-        << static_cast<const MapFunc&>(mapcart);
+        << static_cast<const MappingFunction&>(mapcart);
 
     return ds;
 }
@@ -106,7 +110,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
 
     if (v == 1)
     {
-        ds >> static_cast<MapFunc&>(mapcart);
+        ds >> static_cast<MappingFunction&>(mapcart);
     }
     else
         throw version_error(v, "1", r_mapcart, CODELOC);
@@ -116,13 +120,13 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
 
 /** Constructor */
 MapFromCartesianFunction::MapFromCartesianFunction()
-                         : ConcreteProperty<MapFromCartesianFunction,MapFunc>()
+                         : ConcreteProperty<MapFromCartesianFunction,MappingFunction>()
 {}
 
 /** Copy constructor */
 MapFromCartesianFunction::MapFromCartesianFunction(
                                 const MapFromCartesianFunction &other)
-                         : ConcreteProperty<MapFromCartesianFunction,MapFunc>(other)
+                         : ConcreteProperty<MapFromCartesianFunction,MappingFunction>(other)
 {}
 
 /** Destructor */
@@ -131,12 +135,12 @@ MapFromCartesianFunction::~MapFromCartesianFunction()
 
 void MapFromCartesianFunction::assertCompatible(const Space &old_space) const
 {
-    if ( QLatin1String(old_space->what()) != QLatin1String(Cartesian::typeName()) )
+    if ( QLatin1String(old_space.what()) != QLatin1String(Cartesian::typeName()) )
     {
         throw SireError::incompatible_error( QObject::tr(
             "The MapFromCartesianFunction can be used only to map from "
             "the Cartesian space. You cannot map from \"%1\".")
-                .arg(old_space->what()), CODELOC );
+                .arg(old_space.what()), CODELOC );
     }
 }
 
@@ -150,7 +154,7 @@ CoordGroup MapFromCartesianFunction::map(const CoordGroup &coords,
                                          const Space &new_space) const
 {
     this->assertCompatible(old_space);
-    return new_space->mapFromCartesian(coords);
+    return new_space.mapFromCartesian(coords);
 }
 
 /** Map the coordinates from 'old_space', which *must* be a Cartesian
@@ -164,7 +168,22 @@ MapFromCartesianFunction::map(const QVector<CoordGroup> &coords,
                               const Space &new_space) const
 {
     this->assertCompatible(old_space);
-    return new_space->mapFromCartesian(coords);
+    return new_space.mapFromCartesian(coords);
+}
+
+static SharedPolyPointer<MapFromCartesianFunction> shared_null;
+
+const MapFromCartesianFunction& MappingFunction::null()
+{
+    if (shared_null.constData() == 0)
+    {
+        QMutexLocker lkr( SireBase::globalLock() );
+        
+        if (shared_null.constData() == 0)
+            shared_null = new MapFromCartesianFunction();
+    }
+    
+    return *(shared_null.constData());
 }
 
 //////////////
@@ -178,7 +197,7 @@ QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds,
                                        const MapFromSelfFunction &mapself)
 {
     writeHeader(ds, r_mapself, 1)
-          << static_cast<const MapFunc&>(mapself);
+          << static_cast<const MappingFunction&>(mapself);
 
     return ds;
 }
@@ -191,7 +210,7 @@ QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds,
 
     if (v == 1)
     {
-        ds >> static_cast<MapFunc&>(mapself);
+        ds >> static_cast<MappingFunction&>(mapself);
     }
     else
         throw version_error(v, "1", r_mapself, CODELOC);
@@ -201,12 +220,12 @@ QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds,
 
 /** Constructor */
 MapFromSelfFunction::MapFromSelfFunction()
-                    : ConcreteProperty<MapFromSelfFunction,MapFunc>()
+                    : ConcreteProperty<MapFromSelfFunction,MappingFunction>()
 {}
 
 /** Copy constructor */
 MapFromSelfFunction::MapFromSelfFunction(const MapFromSelfFunction &other)
-                    : ConcreteProperty<MapFromSelfFunction,MapFunc>(other)
+                    : ConcreteProperty<MapFromSelfFunction,MappingFunction>(other)
 {}
 
 /** Destructor */
@@ -222,7 +241,7 @@ CoordGroup MapFromSelfFunction::map(const CoordGroup &coords,
                                     const Space &old_space,
                                     const Space &new_space) const
 {
-    return new_space->mapFromSelf(coords, old_space);
+    return new_space.mapFromSelf(coords, old_space);
 }
 
 /** Map 'coords' from 'old_space' to 'new_space' - both spaces must
@@ -235,144 +254,5 @@ MapFromSelfFunction::map(const QVector<CoordGroup> &coords,
                          const Space &old_space,
                          const Space &new_space) const
 {
-    return new_space->mapFromSelf(coords, old_space);
-}
-
-//////////////
-////////////// Implementation of MappingFunction
-//////////////
-
-RegisterMetaType<MappingFunction> r_mappingfunction;
-
-/** Serialise a MappingFunction to a binary datastream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
-                                       const MappingFunction &mapfunc)
-{
-    writeHeader(ds, r_mappingfunction, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << static_cast<const Property&>(mapfunc);
-    
-    return ds;
-}
-
-/** Deserialise a MappingFunction from a binary datastream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
-                                       MappingFunction &mapfunc)
-{
-    VersionID v = readHeader(ds, r_mappingfunction);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        sds >> static_cast<Property&>(mapfunc);
-    }
-    else
-        throw version_error(v, "1", r_mappingfunction, CODELOC);
-        
-    return ds;
-}
-
-static MappingFunction *_pvt_shared_null = 0;
-
-const MappingFunction& MappingFunction::shared_null()
-{
-    if (_pvt_shared_null == 0)
-        _pvt_shared_null = new MappingFunction( MapFromSelfFunction() );
-        
-    return *_pvt_shared_null;
-}
-
-/** Null constructor - constructs a simple MapFromSelfFunction */
-MappingFunction::MappingFunction() : Property(MappingFunction::shared_null())
-{}
-
-/** Construct from a passed property
-
-    \throw SireError::invalid_cast
-*/
-MappingFunction::MappingFunction(const PropertyBase &property)
-      : Property(property.asA<MapFunc>())
-{}
-
-/** Construct from passed MapFunc */
-MappingFunction::MappingFunction(const MapFunc &mapfunc)
-      : Property(mapfunc)
-{}
-
-/** Copy constructor */
-MappingFunction::MappingFunction(const MappingFunction &other)
-      : Property(other)
-{}
-
-/** Destructor */
-MappingFunction::~MappingFunction()
-{}
-
-/** Copy assignment operator from a Property object
-
-    \throw SireError::invalid_cast
-*/
-MappingFunction& MappingFunction::operator=(const PropertyBase &property)
-{
-    Property::operator=(property.asA<MapFunc>());
-    return *this;
-}
-
-/** Copy assignment operator from another MapFunc */
-MappingFunction& MappingFunction::operator=(const MapFunc &other)
-{
-    Property::operator=(other);
-    return *this;
-}
-
-/** Dereference this pointer */
-const MapFunc* MappingFunction::operator->() const
-{
-    return static_cast<const MapFunc*>(&(d()));
-}
-
-/** Dereference this pointer */
-const MapFunc& MappingFunction::operator*() const
-{
-    return static_cast<const MapFunc&>(d());
-}
-
-/** Return a read-only reference to the contained object */
-const MapFunc& MappingFunction::read() const
-{
-    return static_cast<const MapFunc&>(d());
-}
-
-/** Return a modifiable reference to the contained object.
-    This will trigger a copy of the object if more than
-    one pointer is pointing to it. */
-MapFunc& MappingFunction::edit()
-{
-    return static_cast<MapFunc&>(d());
-}
-    
-/** Return a raw pointer to the MapFunc object */
-const MapFunc* MappingFunction::data() const
-{
-    return static_cast<const MapFunc*>(&(d()));
-}
-
-/** Return a raw pointer to the MapFunc object */
-const MapFunc* MappingFunction::constData() const
-{
-    return static_cast<const MapFunc*>(&(d()));
-}
-    
-/** Return a raw pointer to the MapFunc object */
-MapFunc* MappingFunction::data()
-{
-    return static_cast<MapFunc*>(&(d()));
-}
-
-/** Automatic casting operator */
-MappingFunction::operator const MapFunc&() const
-{
-    return static_cast<const MapFunc&>(d());
+    return new_space.mapFromSelf(coords, old_space);
 }

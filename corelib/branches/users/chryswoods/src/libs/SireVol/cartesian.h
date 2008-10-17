@@ -45,12 +45,14 @@ namespace SireVol
 {
 
 /**
-This class overloads SimVolume to provide an infinite Cartesian (3-dimensional, orthoganol dimensions) volume. This corresponds to a traditional gas-phase or no-boundary system.
+This class overloads SimVolume to provide an infinite Cartesian 
+(3-dimensional, orthoganol dimensions) volume. This corresponds to 
+a traditional gas-phase or no-boundary system.
 
 @author Christopher Woods
 */
 class SIREVOL_EXPORT Cartesian 
-          : public SireBase::ConcreteProperty<Cartesian,SpaceBase>
+          : public SireBase::ConcreteProperty<Cartesian,Space>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Cartesian&);
@@ -73,7 +75,7 @@ public:
     }
 
     SireUnits::Dimension::Volume volume() const;
-    Space setVolume(SireUnits::Dimension::Volume volume) const;
+    SpacePtr setVolume(SireUnits::Dimension::Volume volume) const;
 
     double calcDist(const Vector &point0, const Vector &point1) const;
     double calcDist2(const Vector &point0, const Vector &point1) const;

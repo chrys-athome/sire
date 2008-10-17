@@ -48,12 +48,9 @@ SIRE_BEGIN_HEADER
 
 namespace SireVol
 {
-class SpaceBase;
+class Space;
 class Space;
 }
-
-QDataStream& operator<<(QDataStream&, const SireVol::SpaceBase&);
-QDataStream& operator>>(QDataStream&, SireVol::SpaceBase&);
 
 QDataStream& operator<<(QDataStream&, const SireVol::Space&);
 QDataStream& operator>>(QDataStream&, SireVol::Space&);
@@ -63,6 +60,10 @@ namespace SireVol
 
 using SireMaths::Vector;
 using SireMaths::DistVector;
+
+class Cartesian;
+
+typedef SireBase::PropPtr<Space> SpacePtr;
 
 /** Define a distance matrix as being a PairMatrix of doubles */
 typedef SireBase::PairMatrix<double> DistMatrix;
@@ -76,7 +77,7 @@ This pure virtual base class represents the volume of space within which a SimSy
 resides. This class provides functions that calculate the distances between CoordGroups
 in this volume, and has most of the optimisation (since most of the hard-work
 double distance loops occur in this class!). Key overloaded classes that inherit
-SpaceBase are Cartesian, which represents infinite 3D cartesian space, and
+Space are Cartesian, which represents infinite 3D cartesian space, and
 PeriodicBox which represents a 3D periodic box.
 
 As this class is used right in the heart of the double loop it is very important
@@ -87,10 +88,10 @@ in a special matrix that can be queried via read-only, inline, non-virtual
 functions, with the items ordered in memory in the same order that you would get
 by iterating over all pairs (group1 in outer loop, group2 in inner loop). An advantage
 of this approach is that as the distances are calculated in one go, it is possible for
-the SpaceBase class to find out whether two CoordGroups are within the non-bonded cutoff
+the Space class to find out whether two CoordGroups are within the non-bonded cutoff
 distance before any further calculation is performed.
 
-To prevent continual reallocation, the SpaceBase class works on an already-allocated
+To prevent continual reallocation, the Space class works on an already-allocated
 matrix class. This is only reallocated if it is found that it is not sufficiently
 large to hold the pair of CoordGroups.
 
@@ -107,19 +108,19 @@ This is a virtual class that is designed to be used with SharedPolyPointer.
 
 @author Christopher Woods
 */
-class SIREVOL_EXPORT SpaceBase : public SireBase::PropertyBase
+class SIREVOL_EXPORT Space : public SireBase::Property
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const SpaceBase&);
-friend QDataStream& ::operator>>(QDataStream&, SpaceBase&);
+friend QDataStream& ::operator<<(QDataStream&, const Space&);
+friend QDataStream& ::operator>>(QDataStream&, Space&);
 
 public:
-    SpaceBase();
-    SpaceBase(const SpaceBase &other);
+    Space();
+    Space(const Space &other);
 
-    ~SpaceBase();
+    ~Space();
 
-    virtual SpaceBase* clone() const=0;
+    virtual Space* clone() const=0;
 
     /** Return the volume of the central box of this space. This
         throws an exception if it is not possible to calculate the
@@ -129,10 +130,10 @@ public:
     /** Return a copy of this space with the volume of set to 'volume'
         - this will scale the space uniformly, keeping the center at
         the same location, to achieve this volume */
-    virtual Space setVolume(SireUnits::Dimension::Volume volume) const=0;
+    virtual SpacePtr setVolume(SireUnits::Dimension::Volume volume) const=0;
 
     /** Change the volume of this space by 'delta' */
-    Space changeVolume(SireUnits::Dimension::Volume delta) const;
+    SpacePtr changeVolume(SireUnits::Dimension::Volume delta) const;
 
     /** Calculate the distance between two points */
     virtual double calcDist(const Vector &point0, const Vector &point1) const=0;
@@ -290,60 +291,17 @@ public:
                     getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
                                     double dist) const=0;
 
+    static const Cartesian& null();
+
 protected:
     void assertCompatible(const Space &other) const;
 };
 
-/** This is the user-handle class that is used to hold the dynanmic Space classes.
-
-    @author Christopher Woods
-*/
-class SIREVOL_EXPORT Space : public SireBase::Property
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const Space&);
-friend QDataStream& ::operator>>(QDataStream&, Space&);
-
-public:
-    Space();
-    Space(const SpaceBase &other);
-    Space(const SireBase::PropertyBase &property);
-
-    Space(const Space &other);
-
-    ~Space();
-
-    virtual Space& operator=(const SpaceBase &other);
-    virtual Space& operator=(const SireBase::PropertyBase &other);
-
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Space>() );
-    }
-
-    const SpaceBase* operator->() const;
-    const SpaceBase& operator*() const;
-    
-    const SpaceBase& read() const;
-    SpaceBase& edit();
-    
-    const SpaceBase* data() const;
-    const SpaceBase* constData() const;
-    
-    SpaceBase* data();
-    
-    operator const SpaceBase&() const;
-
-    static const Space& shared_null();
-};
-
 }
 
-Q_DECLARE_METATYPE(SireVol::Space)
+SIRE_EXPOSE_CLASS( SireVol::Space )
 
-SIRE_EXPOSE_CLASS( SireVol::SpaceBase )
-
-SIRE_EXPOSE_PROPERTY( SireVol::Space, SireVol::SpaceBase )
+SIRE_EXPOSE_PROPERTY( SireVol::SpacePtr, SireVol::Space )
 
 SIRE_END_HEADER
 

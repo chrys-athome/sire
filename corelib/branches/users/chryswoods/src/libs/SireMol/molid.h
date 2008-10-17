@@ -40,7 +40,7 @@ class MolIdx;
 class MolIdentifier;
 class MolNum;
 
-class MolGroup;
+class MoleculeGroup;
 class MolGroupsBase;
 
 /** This is the base class of all identifiers that are used 
@@ -67,7 +67,7 @@ public:
 
     virtual MolID* clone() const=0;
     
-    virtual QList<MolNum> map(const MolGroup &molgroup) const=0;
+    virtual QList<MolNum> map(const MoleculeGroup &molgroup) const=0;
     virtual QList<MolNum> map(const MolGroupsBase &molgroupsbase) const=0;
 };
 
@@ -112,7 +112,7 @@ public:
     bool operator==(const MolNumList &other) const;
     bool operator!=(const MolNumList &other) const;
     
-    QList<MolNum> map(const MolGroup &molgroup) const;
+    QList<MolNum> map(const MoleculeGroup &molgroup) const;
     QList<MolNum> map(const MolGroupsBase &molgroups) const;
 
 private:

@@ -89,7 +89,7 @@ PropertyName::PropertyName(const QString &source)
 
 /** Construct a PropertyName that uses the supplied
     value, rather than searching for the property */
-PropertyName::PropertyName(const PropertyBase &value)
+PropertyName::PropertyName(const Property &value)
              : val(value)
 {}
 
@@ -98,17 +98,11 @@ PropertyName::PropertyName(const PropertyBase &value)
     specifically provided - otherwise the supplied default
     value of the property is used instead */
 PropertyName::PropertyName(const QString &source, 
-                           const PropertyBase &default_value)
+                           const Property &default_value)
              : src(source), val(default_value), value_is_default(true)
 {
     BOOST_ASSERT(not source.isEmpty());
 }
-
-/** Construct a PropertyName that uses the supplied 
-    value, rather than searching for the property */
-PropertyName::PropertyName(const Property &value)
-             : val(value), value_is_default(false)
-{}
 
 /** Copy constructor */
 PropertyName::PropertyName(const PropertyName &other)

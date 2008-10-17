@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QMutex>
+
 #include "space.h"
 #include "cartesian.h"
 
@@ -39,51 +41,51 @@ using namespace SireBase;
 using namespace SireStream;
 
 ///////////////
-/////////////// Implementation of SpaceBase
+/////////////// Implementation of Space
 ///////////////
 
-static const RegisterMetaType<SpaceBase> r_spacebase(MAGIC_ONLY, "SireVol::SpaceBase");
+static const RegisterMetaType<Space> r_Space(MAGIC_ONLY, "SireVol::Space");
 
 /** Serialise to a binary datastream */
 QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds,
-                                       const SpaceBase &spacebase)
+                                       const Space &Space)
 {
-    writeHeader(ds, r_spacebase, 1)
-            << static_cast<const PropertyBase&>(spacebase);
+    writeHeader(ds, r_Space, 1)
+            << static_cast<const Property&>(Space);
 
     return ds;
 }
 
 /** Deserialise from a binary datastream */
 QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds,
-                                       SpaceBase &spacebase)
+                                       Space &Space)
 {
-    VersionID v = readHeader(ds, r_spacebase);
+    VersionID v = readHeader(ds, r_Space);
 
     if (v == 1)
     {
-        ds >> static_cast<PropertyBase&>(spacebase);
+        ds >> static_cast<Property&>(Space);
     }
     else
-        throw version_error(v, "1", r_spacebase, CODELOC);
+        throw version_error(v, "1", r_Space, CODELOC);
 
     return ds;
 }
 
-/** Construct a SpaceBase. */
-SpaceBase::SpaceBase() : PropertyBase()
+/** Construct a Space. */
+Space::Space() : Property()
 {}
 
 /** Copy constructor */
-SpaceBase::SpaceBase(const SpaceBase &other) : PropertyBase(other)
+Space::Space(const Space &other) : Property(other)
 {}
 
 /** Destructor */
-SpaceBase::~SpaceBase()
+Space::~Space()
 {}
 
 /** Change the volume of this space by 'delta' */
-Space SpaceBase::changeVolume(SireUnits::Dimension::Volume delta) const
+SpacePtr Space::changeVolume(SireUnits::Dimension::Volume delta) const
 {
     return this->setVolume( this->volume() + delta );
 }
@@ -92,150 +94,27 @@ Space SpaceBase::changeVolume(SireUnits::Dimension::Volume delta) const
 
     \throw SireError::incompatible_error
 */
-void SpaceBase::assertCompatible(const Space &other) const
+void Space::assertCompatible(const Space &other) const
 {
-    if ( QLatin1String(this->what()) != QLatin1String(other->what()) )
+    if ( QLatin1String(this->what()) != QLatin1String(other.what()) )
         throw SireError::incompatible_error( QObject::tr(
             "This space (of type \"%1\") is incompatible with "
             "a space of type \"%2\".")
-                .arg(this->what()).arg(other->what()), CODELOC );
+                .arg(this->what()).arg(other.what()), CODELOC );
 }
 
-//////////////
-////////////// Implementation of Space
-//////////////
+static SharedPolyPointer<Cartesian> shared_null;
 
-RegisterMetaType<Space> r_space;
-
-/** Serialise a Space to a binary datastream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
-                                       const Space &space)
+/** Return the default space (Cartesian infinite box) */
+const Cartesian& Space::null()
 {
-    writeHeader(ds, r_space, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << static_cast<const Property&>(space);
-    
-    return ds;
-}
-
-/** Deserialise a Space from a binary datastream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
-                                       Space &space)
-{
-    VersionID v = readHeader(ds, r_space);
-    
-    if (v == 1)
+    if (shared_null.constData() == 0)
     {
-        SharedDataStream sds(ds);
-        sds >> static_cast<Property&>(space);
+        QMutexLocker lkr( SireBase::globalLock() );
+        
+        if (shared_null.constData() == 0)
+            shared_null = new Cartesian();
     }
-    else
-        throw version_error(v, "1", r_space, CODELOC);
-        
-    return ds;
-}
-
-static Space *_pvt_shared_null = 0;
-
-const Space& Space::shared_null()
-{
-    if (_pvt_shared_null == 0)
-        _pvt_shared_null = new Space( Cartesian() );
-        
-    return *_pvt_shared_null;
-}
-
-/** Null constructor - constructs a simple, infinite cartesian volume */
-Space::Space() : Property(Space::shared_null())
-{}
-
-/** Construct from a passed property
-
-    \throw SireError::invalid_cast
-*/
-Space::Space(const PropertyBase &property)
-      : Property(property.asA<SpaceBase>())
-{}
-
-/** Construct from passed SpaceBase */
-Space::Space(const SpaceBase &space)
-      : Property(space)
-{}
-
-/** Copy constructor */
-Space::Space(const Space &other)
-      : Property(other)
-{}
-
-/** Destructor */
-Space::~Space()
-{}
-
-/** Copy assignment operator from a Property object
-
-    \throw SireError::invalid_cast
-*/
-Space& Space::operator=(const PropertyBase &property)
-{
-    Property::operator=(property.asA<SpaceBase>());
-    return *this;
-}
-
-/** Copy assignment operator from another SpaceBase */
-Space& Space::operator=(const SpaceBase &other)
-{
-    Property::operator=(other);
-    return *this;
-}
-
-/** Dereference this pointer */
-const SpaceBase* Space::operator->() const
-{
-    return static_cast<const SpaceBase*>(&(d()));
-}
-
-/** Dereference this pointer */
-const SpaceBase& Space::operator*() const
-{
-    return static_cast<const SpaceBase&>(d());
-}
-
-/** Return a read-only reference to the contained object */
-const SpaceBase& Space::read() const
-{
-    return static_cast<const SpaceBase&>(d());
-}
-
-/** Return a modifiable reference to the contained object.
-    This will trigger a copy of the object if more than
-    one pointer is pointing to it. */
-SpaceBase& Space::edit()
-{
-    return static_cast<SpaceBase&>(d());
-}
     
-/** Return a raw pointer to the SpaceBase object */
-const SpaceBase* Space::data() const
-{
-    return static_cast<const SpaceBase*>(&(d()));
-}
-
-/** Return a raw pointer to the SpaceBase object */
-const SpaceBase* Space::constData() const
-{
-    return static_cast<const SpaceBase*>(&(d()));
-}
-    
-/** Return a raw pointer to the SpaceBase object */
-SpaceBase* Space::data()
-{
-    return static_cast<SpaceBase*>(&(d()));
-}
-
-/** Automatic casting operator */
-Space::operator const SpaceBase&() const
-{
-    return static_cast<const SpaceBase&>(d());
+    return *(shared_null.constData());
 }

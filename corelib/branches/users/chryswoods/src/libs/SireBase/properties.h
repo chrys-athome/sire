@@ -65,7 +65,7 @@ class PropertiesData;
 
     @author Christopher Woods
 */
-class SIREBASE_EXPORT Properties : public ConcreteProperty<Properties,PropertyBase>
+class SIREBASE_EXPORT Properties : public ConcreteProperty<Properties,Property>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Properties&);
@@ -77,8 +77,8 @@ friend XMLStream& ::operator>>(XMLStream&, Properties&);
 friend class detail::PropertiesData; // so can call private constructor
 
 public:
-    typedef QHash<QString,Property>::const_iterator const_iterator;
-    typedef QHash<QString,Property>::const_iterator iterator;
+    typedef QHash<QString,PropertyPtr>::const_iterator const_iterator;
+    typedef QHash<QString,PropertyPtr>::const_iterator iterator;
 
     Properties();
 
@@ -140,8 +140,10 @@ public:
     const Properties& allMetadata() const;
     const Properties& allMetadata(const PropertyName &key) const;
 
+    void setProperty(const QString &key, const Property &value);
+
     void setProperty(const QString &key, const Property &value,
-                     bool clear_metadata=true);
+                     bool clear_metadata);
     
     void setMetadata(const QString &metakey, const Property &value);
     void setMetadata(const QString &key,
@@ -263,7 +265,7 @@ SIRE_OUTOFLINE_TEMPLATE
 bool Properties::hasPropertyOfType(const PropertyName &key) const
 {
     return this->hasProperty(key) and 
-           this->property(key)->isA<T>();
+           this->property(key).isA<T>();
 }
                  
 /** Return whether or not this molecule has some metadata at metakey
@@ -273,7 +275,7 @@ SIRE_OUTOFLINE_TEMPLATE
 bool Properties::hasMetadataOfType(const PropertyName &metakey) const
 {
     return this->hasMetadata(metakey) and
-           this->metadata(metakey)->isA<T>();
+           this->metadata(metakey).isA<T>();
 }
 
 /** Return whether or not the property at key 'key' has some metadata
@@ -287,7 +289,7 @@ bool Properties::hasMetadataOfType(const PropertyName &key,
                                    const PropertyName &metakey) const
 {
     return this->hasMetadata(key, metakey) and
-           this->metadata(key, metakey)->isA<T>();
+           this->metadata(key, metakey).isA<T>();
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS

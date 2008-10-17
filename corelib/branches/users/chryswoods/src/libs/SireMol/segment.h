@@ -202,7 +202,7 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& Segment::property(const PropertyName &key) const
 {
     const Property &property = d->property(key);
-    const SegProperty<T> &seg_props = property->asA< SegProperty<T> >();
+    const SegProperty<T> &seg_props = property.asA< SegProperty<T> >();
     return seg_props.at(this->index());
 }
 
@@ -216,7 +216,7 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& Segment::metadata(const PropertyName &metakey) const
 {
     const Property &property = d->metadata(metakey);
-    const SegProperty<T> &seg_props = property->asA< SegProperty<T> >();
+    const SegProperty<T> &seg_props = property.asA< SegProperty<T> >();
     return seg_props.at(this->index());
 }
 
@@ -232,7 +232,7 @@ const T& Segment::metadata(const PropertyName &key,
                            const PropertyName &metakey) const
 {
     const Property &property = d->metadata(key, metakey);
-    const SegProperty<T> &seg_props = property->asA< SegProperty<T> >();
+    const SegProperty<T> &seg_props = property.asA< SegProperty<T> >();
     return seg_props.at(this->index());
 }
 

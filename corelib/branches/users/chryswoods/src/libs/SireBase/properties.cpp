@@ -65,7 +65,7 @@ public:
     Properties metadata;
 
     /** The collection of properties, indexed by name */
-    QHash<QString, Property> properties;
+    QHash<QString, PropertyPtr> properties;
 
     /** The metadata for each property, indexed by name */
     QHash<QString, Properties> props_metadata;
@@ -113,7 +113,7 @@ QDataStream& operator<<(QDataStream &ds, const PropertiesData &props)
     
     sds << quint32( props.properties.count() );
     
-    for (QHash<QString,Property>::const_iterator it = props.properties.constBegin();
+    for (QHash<QString,PropertyPtr>::const_iterator it = props.properties.constBegin();
          it != props.properties.constEnd();
          ++it)
     {
@@ -153,7 +153,7 @@ QDataStream& operator>>(QDataStream &ds, PropertiesData &props)
         for (quint32 i=0; i<nprops; ++i)
         {
             QString key;
-            Property value;
+            PropertyPtr value;
         
             sds >> key >> value;
         
@@ -246,7 +246,7 @@ QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const Properties &props
     else
     {
         sds << qint32(1) << props.d
-            << static_cast<const PropertyBase&>(props);
+            << static_cast<const Property&>(props);
     }
     
     return ds;
@@ -268,7 +268,7 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, Properties &props)
         if (not_empty)
         {
             sds >> props.d
-                >> static_cast<PropertyBase&>(props);
+                >> static_cast<Property&>(props);
         }
         else
         {
@@ -283,15 +283,20 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, Properties &props)
 }
 
 /** Private constructor used to avoid the problem of the circular reference! */
-Properties::Properties(bool) : d(0)
+Properties::Properties(bool) 
+           : ConcreteProperty<Properties,Property>(), d(0)
 {}
 
 /** Null constructor - construct an empty set of properties */
-Properties::Properties() : d( PropertiesData::getNullData() )
+Properties::Properties() 
+           : ConcreteProperty<Properties,Property>(),
+             d( PropertiesData::getNullData() )
 {}
 
 /** Copy constructor */
-Properties::Properties(const Properties &other) : d(other.d)
+Properties::Properties(const Properties &other) 
+           : ConcreteProperty<Properties,Property>(other),
+             d(other.d)
 {}
 
 /** Destructor */
@@ -302,6 +307,8 @@ Properties::~Properties()
 Properties& Properties::operator=(const Properties &other)
 {
     d = other.d;
+    Property::operator=(other);
+    
     return *this;
 }
 
@@ -447,7 +454,7 @@ const Property& Properties::operator[](const PropertyName &key) const
         return key.value();
     else
     {
-        QHash<QString,Property>::const_iterator 
+        QHash<QString,PropertyPtr>::const_iterator 
                             it = d->properties.constFind(key.source());
 
         if (it == d->properties.constEnd())
@@ -610,6 +617,11 @@ void Properties::setProperty(const QString &key, const Property &value,
         d->props_metadata.insert(key, Properties());
 }
 
+void Properties::setProperty(const QString &key, const Property &value)
+{
+    this->setProperty(key, value, false);
+}
+
 /** Set the metadata at metakey 'metakey' to have the value 'value'.
     This replaces any existing metadata with this metakey */
 void Properties::setMetadata(const QString &metakey, const Property &value)
@@ -681,7 +693,7 @@ void Properties::clear()
 */
 const char* Properties::propertyType(const PropertyName &key) const
 {
-    return this->property(key)->what();
+    return this->property(key).what();
 }
 
 /** Return the type name of the metadata at metakey 'metakey'
@@ -690,7 +702,7 @@ const char* Properties::propertyType(const PropertyName &key) const
 */
 const char* Properties::metadataType(const PropertyName &metakey) const
 {
-    return this->metadata(metakey)->what();
+    return this->metadata(metakey).what();
 }
 
 /** Return the type name of the metadata at metakey 'metakey'
@@ -701,5 +713,5 @@ const char* Properties::metadataType(const PropertyName &metakey) const
 const char* Properties::metadataType(const PropertyName &key,
                                      const PropertyName &metakey) const
 {
-    return this->metadata(key, metakey)->what();
+    return this->metadata(key, metakey).what();
 }

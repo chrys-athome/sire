@@ -68,62 +68,26 @@ namespace SireBase
     
     @author Christopher Woods
 */
-class SIREBASE_EXPORT StringManglerBase : public PropertyBase
+class SIREBASE_EXPORT StringMangler : public Property
 {
 public:
-    StringManglerBase();
-    StringManglerBase(const StringManglerBase &other);
+    StringMangler();
+    StringMangler(const StringMangler &other);
     
-    virtual ~StringManglerBase();
+    virtual ~StringMangler();
     
-    virtual StringManglerBase* clone() const=0;
+    virtual StringMangler* clone() const=0;
     
     static const char* typeName()
     {
-        return "SireBase::StringManglerBase";
+        return "SireBase::StringMangler";
     }
     
     QString operator()(const QString &input) const;
     
     virtual QString mangle(const QString &input) const=0;
-};
-
-/** This is the holder for string mangling functions */
-class SIREBASE_EXPORT StringMangler : public Property
-{
-public:
-    StringMangler();
-    StringMangler(const StringManglerBase &other);
-    StringMangler(const PropertyBase &other);
     
-    StringMangler(const StringMangler &other);
-    
-    ~StringMangler();
-    
-    virtual StringMangler& operator=(const StringManglerBase &other);
-    virtual StringMangler& operator=(const SireBase::PropertyBase &other);
-
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<StringMangler>() );
-    }
-
-    QString operator()(const QString &input) const;
-
-    const StringManglerBase* operator->() const;
-    const StringManglerBase& operator*() const;
-    
-    const StringManglerBase& read() const;
-    StringManglerBase& edit();
-    
-    const StringManglerBase* data() const;
-    const StringManglerBase* constData() const;
-    
-    StringManglerBase* data();
-    
-    operator const StringManglerBase&() const;
-
-    static const StringMangler& shared_null();
+    static const NoMangling& null();
 };
 
 /** This mangler does absolutely nothing to the string!
@@ -131,7 +95,7 @@ public:
     @author Christopher Woods
 */
 class SIREBASE_EXPORT NoMangling 
-               : public ConcreteProperty<NoMangling,StringManglerBase>
+               : public ConcreteProperty<NoMangling,StringMangler>
 {
 public:
     NoMangling();
@@ -150,8 +114,6 @@ public:
     bool operator!=(const NoMangling &other) const;
 
     QString mangle(const QString &input) const;
-    
-    static const Property& toProperty();
 };
 
 /** This mangler just trims spaces away from the beginning
@@ -160,7 +122,7 @@ public:
     @author Christopher Woods
 */
 class SIREBASE_EXPORT TrimString 
-               : public ConcreteProperty<TrimString,StringManglerBase>
+               : public ConcreteProperty<TrimString,StringMangler>
 {
 public:
     TrimString();
@@ -179,8 +141,6 @@ public:
     bool operator!=(const TrimString &other) const;
 
     QString mangle(const QString &input) const;
-    
-    static const Property& toProperty();
 };
 
 /** This mangler just trims spaces away from the beginning
@@ -189,7 +149,7 @@ public:
     @author Christopher Woods
 */
 class SIREBASE_EXPORT UpperCaseString 
-            : public ConcreteProperty<UpperCaseString,StringManglerBase>
+            : public ConcreteProperty<UpperCaseString,StringMangler>
 {
 public:
     UpperCaseString();
@@ -208,8 +168,6 @@ public:
     bool operator!=(const UpperCaseString &other) const;
 
     QString mangle(const QString &input) const;
-    
-    static const Property& toProperty();
 };
 
 /** This mangler just trims spaces away from the beginning
@@ -218,7 +176,7 @@ public:
     @author Christopher Woods
 */
 class SIREBASE_EXPORT LowerCaseString 
-            : public ConcreteProperty<LowerCaseString,StringManglerBase>
+            : public ConcreteProperty<LowerCaseString,StringMangler>
 {
 public:
     LowerCaseString();
@@ -237,25 +195,24 @@ public:
     bool operator!=(const LowerCaseString &other) const;
 
     QString mangle(const QString &input) const;
-    
-    static const Property& toProperty();
 };
+
+typedef PropPtr<StringMangler> StringManglerPtr;
 
 }
 
-Q_DECLARE_METATYPE( SireBase::StringMangler );
 Q_DECLARE_METATYPE( SireBase::NoMangling );
 Q_DECLARE_METATYPE( SireBase::TrimString );
 Q_DECLARE_METATYPE( SireBase::UpperCaseString );
 Q_DECLARE_METATYPE( SireBase::LowerCaseString );
 
-SIRE_EXPOSE_CLASS( SireBase::StringManglerBase )
+SIRE_EXPOSE_CLASS( SireBase::StringMangler )
 SIRE_EXPOSE_CLASS( SireBase::NoMangling )
 SIRE_EXPOSE_CLASS( SireBase::TrimString )
 SIRE_EXPOSE_CLASS( SireBase::UpperCaseString )
 SIRE_EXPOSE_CLASS( SireBase::LowerCaseString )
 
-SIRE_EXPOSE_PROPERTY( SireBase::StringMangler, SireBase::StringManglerBase )
+SIRE_EXPOSE_PROPERTY( SireBase::StringManglerPtr, SireBase::StringMangler )
 
 SIRE_END_HEADER
 

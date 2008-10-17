@@ -41,12 +41,12 @@ using namespace SireBase;
 /////////
 
 /** Constructor */
-MolViewProperty::MolViewProperty() : PropertyBase()
+MolViewProperty::MolViewProperty() : Property()
 {}
 
 /** Copy constructor */
 MolViewProperty::MolViewProperty(const MolViewProperty &other)
-                : PropertyBase(other)
+                : Property(other)
 {}
 
 /** Destructor */

@@ -197,7 +197,7 @@ void MoleculeView::setProperty(MoleculeData &data,
     {
         //take the property to prevent unnecessary copying caused
         //by implicit sharing of the property
-        Property old_property = data.takeProperty(key);
+        PropertyPtr old_property = data.takeProperty(key);
         props = old_property->asA<PropType>();
     }
     else
@@ -220,7 +220,7 @@ void MoleculeView::setMetadata(MoleculeData &data,
     {
         //take the metadata to prevent unnecessary copying caused
         //by implicit sharing of the property
-        Property old_metadata = data.takeMetadata(metakey);
+        PropertyPtr old_metadata = data.takeMetadata(metakey);
         props = old_metadata->asA<PropType>();
     }
     else
@@ -243,7 +243,7 @@ void MoleculeView::setMetadata(MoleculeData &data,
     {
         //take the metadata to prevent unnecessary copying caused
         //by implicit sharing of the property
-        Property old_metadata = data.takeMetadata(key, metakey);
+        PropertyPtr old_metadata = data.takeMetadata(key, metakey);
         props = old_metadata->asA<PropType>();
     }
     else
@@ -266,7 +266,7 @@ QList<V> get_property(const MoleculeData &moldata,
         
     const Property &property = moldata.property(key);
     
-    const Prop &prop = property->asA<Prop>();
+    const Prop &prop = property.asA<Prop>();
         
     foreach (Idx idx, idxs)
     {
@@ -284,7 +284,7 @@ QList<V> get_metadata(const MoleculeData &moldata,
     QList<V> props;
     
     const Property &property = moldata.metadata(metakey);
-    const Prop &prop = property->asA<Prop>();
+    const Prop &prop = property.asA<Prop>();
     
     foreach (Idx idx, idxs)
     {
@@ -303,7 +303,7 @@ QList<V> get_metadata(const MoleculeData &moldata,
     QList<V> props;
     
     const Property &property = moldata.metadata(key,metakey);
-    const Prop &prop = property->asA<Prop>();
+    const Prop &prop = property.asA<Prop>();
     
     foreach (Idx idx, idxs)
     {

@@ -84,7 +84,7 @@ public:
     bool operator==(const MolID &other) const;
     bool operator!=(const MolID &other) const;
 
-    QList<MolNum> map(const MolGroup &molgroup) const;
+    QList<MolNum> map(const MoleculeGroup &molgroup) const;
     QList<MolNum> map(const MolGroupsBase &molgroups) const;
 
 private:

@@ -97,9 +97,8 @@ public:
     PropertyName(const char* source);
     
     PropertyName(const QString &source);
-    PropertyName(const QString &source, const PropertyBase &default_value);
+    PropertyName(const QString &source, const Property &default_value);
     
-    PropertyName(const PropertyBase &value);
     PropertyName(const Property &value);
 
     PropertyName(const PropertyName &other);
@@ -141,7 +140,7 @@ private:
     QString src;
     
     /** The supplied or default value of the property */
-    Property val;
+    PropertyPtr val;
     
     /** Is the supplied value a default value? */
     bool value_is_default;

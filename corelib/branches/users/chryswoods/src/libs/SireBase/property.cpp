@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QMutex>
+
 #include "property.h"
 
 #include <QDebug>
@@ -38,65 +40,60 @@ using namespace SireBase;
 using namespace SireBase;
 using namespace SireStream;
 
+Q_GLOBAL_STATIC( QMutex, getGlobalMutex );
+
+namespace SireBase
+{
+
+/** Return a pointer to a global mutex */
+QMutex SIREBASE_EXPORT *globalLock()
+{
+    return getGlobalMutex();
+}
+
+}
+
 ///////////////
-/////////////// Implementation of PropertyBase
+/////////////// Implementation of Property
 ///////////////
 
 /** Constructor */
-PropertyBase::PropertyBase() : QSharedData()
+Property::Property() : QSharedData()
 {}
 
 /** Copy constructor */
-PropertyBase::PropertyBase(const PropertyBase&) : QSharedData()
+Property::Property(const Property&) : QSharedData()
 {}
 
 /** Destructor */
-PropertyBase::~PropertyBase()
+Property::~Property()
 {}
 
 /** Assignment operator */
-PropertyBase& PropertyBase::operator=(const PropertyBase&)
+Property& Property::operator=(const Property&)
 {
     return *this;
 }
 
 /** Comparison operator */
-bool PropertyBase::operator==(const PropertyBase&) const
+bool Property::operator==(const Property&) const
 {
     qDebug() << CODELOC;
     return true;
 }
 
 /** Comparison operator */
-bool PropertyBase::operator!=(const PropertyBase&) const
+bool Property::operator!=(const Property&) const
 {
     qDebug() << CODELOC;
     return false;
-}
-
-/** Assignment operator */
-PropertyBase& PropertyBase::operator=(const Property &property)
-{
-    return this->operator=(*property);
-}
-
-/** Comparison operator */
-bool PropertyBase::operator==(const Property &property) const
-{
-    return this->operator==(*property);
-}
-
-/** Comparison operator */
-bool PropertyBase::operator!=(const Property &property) const
-{
-    return this->operator!=(*property);
 }
 
 /** Throw an invalid cast!
 
     \throw SireError::invalid_cast
 */
-void PropertyBase::throwInvalidCast(const PropertyBase &other) const
+void Property::throwInvalidCast(const Property &other) const
 {
     throw SireError::invalid_cast( QObject::tr(
             "Cannot cast from an object of class \"%1\" to an object "
@@ -108,7 +105,7 @@ void PropertyBase::throwInvalidCast(const PropertyBase &other) const
 
     \throw SireError::invalid_cast
 */
-void PropertyBase::throwInvalidCast(const char *typenam) const
+void Property::throwInvalidCast(const char *typenam) const
 {
     throw SireError::invalid_cast( QObject::tr(
             "Cannot cast from an object of class \"%1\" to an object "
@@ -116,11 +113,11 @@ void PropertyBase::throwInvalidCast(const char *typenam) const
                 .arg(this->what()).arg(typenam), CODELOC );
 }
 
-static const RegisterMetaType<PropertyBase> r_propbase(MAGIC_ONLY,
-                                                       "SireBase::PropertyBase");
+static const RegisterMetaType<Property> r_propbase(MAGIC_ONLY,
+                                                       "SireBase::Property");
 
 /** Serialise to a binary data stream */
-QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const PropertyBase&)
+QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const Property&)
 {
     writeHeader(ds, r_propbase, 0);
 
@@ -128,7 +125,7 @@ QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const PropertyBase&)
 }
 
 /** Deserialise from a binary data stream */
-QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, PropertyBase&)
+QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, Property&)
 {
     VersionID v = readHeader(ds, r_propbase);
 
@@ -148,7 +145,7 @@ static const RegisterMetaType<VariantProperty> r_varprop;
 QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const VariantProperty &varprop)
 {
     writeHeader(ds, r_varprop, 1)
-          << static_cast<const PropertyBase&>(varprop)
+          << static_cast<const Property&>(varprop)
           << static_cast<const QVariant&>(varprop);
 
     return ds;
@@ -161,7 +158,7 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, VariantProperty &varpro
 
     if (v == 1)
     {
-        ds >> static_cast<PropertyBase&>(varprop)
+        ds >> static_cast<Property&>(varprop)
            >> static_cast<QVariant&>(varprop);
     }
     else
@@ -172,12 +169,12 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, VariantProperty &varpro
 
 /** Null constructor */
 VariantProperty::VariantProperty()
-                : ConcreteProperty<VariantProperty,PropertyBase>(), QVariant()
+                : ConcreteProperty<VariantProperty,Property>(), QVariant()
 {}
 
 /** Construct a property equal to 'value' */
 VariantProperty::VariantProperty(const QVariant &value)
-                : ConcreteProperty<VariantProperty,PropertyBase>(), QVariant(value)
+                : ConcreteProperty<VariantProperty,Property>(), QVariant(value)
 {}
 
 /** Construct from a 'Property' - the property must be able to
@@ -186,14 +183,14 @@ VariantProperty::VariantProperty(const QVariant &value)
     \throw SireError::invalid_cast
 */
 VariantProperty::VariantProperty(const Property &property)
-                : ConcreteProperty<VariantProperty,PropertyBase>(), QVariant()
+                : ConcreteProperty<VariantProperty,Property>(), QVariant()
 {
     *this = property;
 }
 
 /** Copy constructor */
 VariantProperty::VariantProperty(const VariantProperty &other)
-                : ConcreteProperty<VariantProperty,PropertyBase>(other), QVariant(other)
+                : ConcreteProperty<VariantProperty,Property>(other), QVariant(other)
 {}
 
 /** Destructor */
@@ -219,7 +216,7 @@ VariantProperty& VariantProperty::operator=(const QVariant &other)
 VariantProperty& VariantProperty::operator=(const VariantProperty &other)
 {
     QVariant::operator=(other);
-    PropertyBase::operator=(other);
+    Property::operator=(other);
 
     return *this;
 }
@@ -247,7 +244,7 @@ QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const NullProperty &pro
 {
     writeHeader(ds, r_nullprop, 1);
 
-    ds << static_cast<const PropertyBase&>(property);
+    ds << static_cast<const Property&>(property);
 
     return ds;
 }
@@ -259,7 +256,7 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, NullProperty &property)
 
     if (v == 1)
     {
-        ds >> static_cast<PropertyBase&>(property);
+        ds >> static_cast<Property&>(property);
     }
     else
         throw version_error(v, "1", r_nullprop, CODELOC);
@@ -268,166 +265,226 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, NullProperty &property)
 }
 
 NullProperty::NullProperty()
-             : ConcreteProperty<NullProperty,PropertyBase>()
+             : ConcreteProperty<NullProperty,Property>()
 {}
 
 NullProperty::NullProperty(const NullProperty &other)
-             : ConcreteProperty<NullProperty,PropertyBase>(other)
+             : ConcreteProperty<NullProperty,Property>(other)
 {}
 
 NullProperty::~NullProperty()
 {}
 
+static SharedPolyPointer<NullProperty> global_null;
+
+/** Return the global null property */
+const NullProperty& Property::null()
+{
+    if (global_null.constData() == 0)
+    {
+        QMutexLocker lkr( globalLock() );
+        
+        if (global_null.constData() == 0)
+            global_null = new NullProperty();
+    }
+    
+    return *(global_null.constData());
+}
+
 ///////////////
-/////////////// Implementation of Property
+/////////////// Implementation of PropPtrBase
 ///////////////
 
-static const RegisterMetaType<Property> r_prop;
+static const RegisterMetaType<PropPtrBase> r_propptr( MAGIC_ONLY,
+                                                      "SireBase::PropPtrBase" );
 
 /** Serialise to a binary datastream */
-QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const Property &property)
+QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, 
+                                        const PropPtrBase &propptr)
 {
-    writeHeader(ds, r_prop, 1);
+    writeHeader(ds, r_propptr, 1);
 
     SharedDataStream sds(ds);
 
-    sds << property.ptr;
+    sds << propptr.ptr;
 
     return ds;
 }
 
 /** Deserialise from a binary datastream */
-QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, Property &property)
+QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, PropPtrBase &propptr)
 {
-    VersionID v = readHeader(ds, r_prop);
+    VersionID v = readHeader(ds, r_propptr);
 
     if (v == 1)
     {
         SharedDataStream sds(ds);
 
-        sds >> property.ptr;
+        sds >> propptr.ptr;
     }
     else
-        throw version_error(v, "1", r_prop, CODELOC);
+        throw version_error(v, "1", r_propptr, CODELOC);
 
     return ds;
 }
 
-static SharedPolyPointer<PropertyBase> shared_null( new NullProperty() );
-
-/** Null constructor - constructs a null property */
-Property::Property() : ptr(shared_null)
-{}
-
-/** Return a null property */
-Property Property::null()
-{
-    return Property();
-}
-
-/** Construct from the passed property */
-Property::Property(const PropertyBase &property)
-         : ptr(property)
+/** Construct to hold a pointer to 'property' */
+PropPtrBase::PropPtrBase(const Property &property)
+                : ptr(property)
 {}
 
 /** Copy constructor */
-Property::Property(const Property &other)
-         : ptr(other.ptr)
+PropPtrBase::PropPtrBase(const PropPtrBase &other)
+                : ptr(other.ptr)
 {}
 
 /** Destructor */
-Property::~Property()
+PropPtrBase::~PropPtrBase()
 {}
 
-/** Return whether this is a null property */
-bool Property::isNull() const
-{
-    return ptr->isA<NullProperty>();
-}
-
 /** Copy assignment operator */
-Property& Property::operator=(const PropertyBase &property)
+PropPtrBase& PropPtrBase::operator=(const PropPtrBase &other)
 {
-    ptr = property;
+    ptr = other.ptr;
     return *this;
 }
 
 /** Comparison operator */
-bool Property::operator==(const Property &other) const
+bool PropPtrBase::operator==(const PropPtrBase &other) const
 {
-    return ptr == other.ptr or *ptr == *(other.ptr);
+    return ptr.constData() == other.ptr.constData() or
+           ptr->compare(*(other.ptr));
 }
 
 /** Comparison operator */
-bool Property::operator!=(const Property &other) const
+bool PropPtrBase::operator!=(const PropPtrBase &other) const
 {
-    return ptr != other.ptr and *ptr != *(other.ptr);
+    return ptr.constData() != other.ptr.constData() and
+           not ptr->compare(*(other.ptr));
 }
 
-/** Return a const reference to the object */
-const PropertyBase& Property::d() const
-{
-    BOOST_ASSERT( ptr.constData() != 0 );
-    return *ptr;
-}
-
-/** Return a modifiable reference to the object */
-PropertyBase& Property::d()
-{
-    BOOST_ASSERT( ptr.constData() != 0 );
-    return *ptr;
-}
-
-/** Dereferencing operator */
-const PropertyBase* Property::operator->() const
-{
-    return &(d());
-}
-
-/** Dereferencing operator */
-const PropertyBase& Property::operator*() const
-{
-    return d();
-}
-
-/** Return a const reference to this property */
-const PropertyBase& Property::read() const
-{
-    return d();
-}
-
-/** Return an editable reference to the property */
-PropertyBase& Property::edit()
-{
-    return d();
-}
-
-/** Return a const pointer to the property */
-const PropertyBase* Property::data() const
-{
-    return &(d());
-}
-
-/** Return a const pointer to the property */
-const PropertyBase* Property::constData() const
-{
-    return &(d());
-}
-
-/** Return a modifiable pointer to the property */
-PropertyBase* Property::data()
-{
-    return &(d());
-}
-
-/** Detach this property from shared storage */
-void Property::detach()
+/** Detach this pointer from shared storage */
+void PropPtrBase::detach()
 {
     ptr.detach();
 }
 
-/** Allow implicit casting to a PropertyBase object */
-Property::operator const PropertyBase&() const
+/** Allow automatic casting to a Property */
+PropPtrBase::operator const Property&() const
 {
-    return d();
+    return *ptr;
+}
+
+/** Return a read-only reference to the object */
+const Property& PropPtrBase::read() const
+{
+    BOOST_ASSERT( ptr.constData() != 0 );
+    return *ptr;
+}
+
+/** Return a writable reference to the object. This performs
+    a copy-on-write test and action */
+Property& PropPtrBase::edit()
+{
+    BOOST_ASSERT( ptr.constData() != 0 );
+    return *ptr;
+}
+
+/** Throw an error as we can't cast 'got_type' into 'want_type'
+
+    \throw SireError::invalid_cast
+*/
+void PropPtrBase::throwCastingError(const char *got_type, const char *want_type)
+{
+    throw SireError::invalid_cast( QObject::tr(
+        "Cannot cast from a %1 into a %2.")
+            .arg(got_type).arg(want_type), CODELOC );
+}
+
+////////
+//////// Full instantiation of PropPtr<Property>
+////////
+
+PropPtr<Property>::PropPtr() : PropPtrBase( Property::null() )
+{}
+
+PropPtr<Property>::PropPtr(const Property &property)
+                  : PropPtrBase(property)
+{}
+
+PropPtr<Property>::PropPtr(const PropPtrBase &other)
+                  : PropPtrBase(other)
+{}
+
+PropPtr<Property>::PropPtr(const PropPtr<Property> &other)
+                  : PropPtrBase(other)
+{}
+
+PropPtr<Property>::~PropPtr()
+{}
+
+PropPtr<Property>& PropPtr<Property>::operator=(const PropPtr<Property> &other)
+{
+    PropPtrBase::operator=(other);
+    return *this;
+}
+
+PropPtr<Property>& PropPtr<Property>::operator=(const Property &property)
+{
+    return this->operator=( PropPtr<Property>(property) );
+}
+
+PropPtr<Property>& PropPtr<Property>::operator=(const PropPtrBase &property)
+{
+    return this->operator=( PropPtr<Property>(property) );
+}
+
+const Property* PropPtr<Property>::operator->() const
+{
+    return &(PropPtrBase::read());
+}
+
+const Property& PropPtr<Property>::operator*() const
+{
+    return PropPtrBase::read();
+}
+
+const Property& PropPtr<Property>::read() const
+{
+    return PropPtrBase::read();
+}
+
+Property& PropPtr<Property>::edit()
+{
+    return PropPtrBase::edit();
+}
+
+const Property* PropPtr<Property>::data() const
+{
+    return &(PropPtrBase::read());
+}
+
+const Property* PropPtr<Property>::constData() const
+{
+    return &(PropPtrBase::read());
+}
+
+Property* PropPtr<Property>::data()
+{
+    return &(PropPtrBase::edit());
+}
+
+PropPtr<Property>::operator const Property&() const
+{
+    return PropPtrBase::read();
+}
+
+bool PropPtr<Property>::isNull() const
+{
+    return this->operator==( PropPtr<Property>() );
+}
+
+PropPtr<Property> PropPtr<Property>::null()
+{
+    return PropPtr<Property>();
 }

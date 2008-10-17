@@ -119,7 +119,7 @@ public:
         return _num != other._num;
     }
 
-    QList<MolNum> map(const MolGroup&) const;
+    QList<MolNum> map(const MoleculeGroup&) const;
     QList<MolNum> map(const MolGroupsBase&) const;
 };
 
