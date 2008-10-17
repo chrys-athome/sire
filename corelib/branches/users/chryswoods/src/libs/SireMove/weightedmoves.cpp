@@ -29,6 +29,9 @@
 #include "weightedmoves.h"
 #include "move.h"
 
+#include "SireUnits/units.h"
+#include "SireUnits/temperature.h"
+
 #include "SireSystem/system.h"
 
 #include "SireStream/datastream.h"
@@ -37,6 +40,8 @@
 using namespace SireMove;
 using namespace SireSystem;
 using namespace SireBase;
+using namespace SireUnits;
+using namespace SireUnits::Dimension;
 using namespace SireStream;
 
 using boost::tuples::tuple;
@@ -269,6 +274,98 @@ void WeightedMoves::setEnergyComponent(const Symbol &component)
             if (mvs_array[i].get<0>().read().energyComponent() != component)
             {
                 mvs_array[i].get<0>().edit().setEnergyComponent(component);
+            }
+        }
+    }
+}
+
+/** Set the name of the property that all of the moves will use to 
+    find the simulation space (simulation box) to 'spaceproperty' */
+void WeightedMoves::setSpaceProperty(const PropertyName &spaceproperty)
+{
+    int nmoves = mvs.count();
+    
+    if (nmoves > 0)
+    {
+        tuple<Move,double> *mvs_array = mvs.data();
+        
+        for (int i=0; i<nmoves; ++i)
+        {
+            if (mvs_array[i].get<0>().read().spaceProperty() != spaceproperty)
+            {
+                mvs_array[i].get<0>().edit().setSpaceProperty(spaceproperty);
+            }
+        }
+    }
+}
+
+/** Set the temperature for all moves that have a constant temperature
+    to 'temperature'. It has already been checked that these moves
+    between them sample at constant temperature */
+void WeightedMoves::_pvt_setTemperature(const Temperature &temperature)
+{
+    int nmoves = mvs.count();
+    
+    if (nmoves > 0)
+    {
+        tuple<Move,double> *mvs_array = mvs.data();
+        
+        for (int i=0; i<nmoves; ++i)
+        {
+            if (mvs_array[i].get<0>().read().isConstantTemperature())
+            {
+                if (mvs_array[i].get<0>().read().temperature() != temperature)
+                {
+                    mvs_array[i].get<0>().edit().setTemperature(temperature);
+                }
+            }
+        }
+    }
+}
+
+/** Set the pressure for all moves that have a constant pressure
+    to 'pressure'. It has already been checked that these moves
+    between them sample at constant pressure */
+void WeightedMoves::_pvt_setPressure(const Pressure &pressure)
+{
+    int nmoves = mvs.count();
+    
+    if (nmoves > 0)
+    {
+        tuple<Move,double> *mvs_array = mvs.data();
+        
+        for (int i=0; i<nmoves; ++i)
+        {
+            if (mvs_array[i].get<0>().read().isConstantPressure())
+            {
+                if (mvs_array[i].get<0>().read().pressure() != pressure)
+                {
+                    mvs_array[i].get<0>().edit().setPressure(pressure);
+                }
+            }
+        }
+    }
+}
+
+/** Set the fugacity for all moves that have a constant fugacity
+    to 'fugacity'. It has already been checked that these moves
+    between them sample at constant fugacity */
+void WeightedMoves::_pvt_setFugacity(const Pressure &fugacity)
+{
+    int nmoves = mvs.count();
+    
+    if (nmoves > 0)
+    {
+        tuple<Move,double> *mvs_array = mvs.data();
+        
+        for (int i=0; i<nmoves; ++i)
+        {
+            if (mvs_array[i].get<0>().read().isConstantFugacity())
+            {
+                if (mvs_array[i].get<0>().read().fugacity() != fugacity)
+                {
+                    mvs_array[i].get<0>().edit().setFugacity(fugacity);
+                }
             }
         }
     }

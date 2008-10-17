@@ -159,10 +159,10 @@ public:
     
     const Replica& at(int i) const;
     
-    bool isEmpty();
+    bool isEmpty() const;
     
     int nReplicas() const;
-    int count() const
+    int count() const;
     int size();
     
     virtual void setReplicas(const Replicas &replicas);

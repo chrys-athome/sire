@@ -30,6 +30,13 @@
 
 #include "SireFF/forcefields.h"
 
+#include "SireUnits/units.h"
+#include "SireUnits/temperature.h"
+#include "SireUnits/dimensions.h"
+
+#include "SireError/errors.h"
+#include "SireFF/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -37,6 +44,7 @@ using namespace SireMove;
 using namespace SireFF;
 using namespace SireCAS;
 using namespace SireBase;
+using namespace SireUnits;
 using namespace SireUnits::Dimension;
 using namespace SireStream;
 
@@ -53,8 +61,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const RepExReplica &rep
     
     SharedDataStream sds(ds);
     
-    sds << replica.nrg_component << replica.lambda_component
-        << replica.lambda_value
+    sds << replica.lambda_component << replica.lambda_value
         << static_cast<const Replica&>(replica);
         
     return ds;
@@ -71,11 +78,10 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExReplica &replica)
         
         RepExReplica new_replica;
         
-        sds >> new_replica_nrg_component >> new_replica.lambda_component
-            >> new_replica.lambda_value
+        sds >> new_replica.lambda_component >> new_replica.lambda_value
             >> static_cast<Replica&>(new_replica);
 
-        new_replica.updateEnsembleParameters();
+        new_replica.updatedMoves();
     }
     else
         throw version_error( v, "1", r_replica, CODELOC );
@@ -83,80 +89,64 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExReplica &replica)
     return ds;
 }
 
-void RepExReplica::updateEnsembleParameters()
+void RepExReplica::updatedMoves()
 {
-    //initialise
-    is_constant_energy = false;
-    is_constant_temperature = false;
-    is_constant_volume = false;
-    is_constant_pressure = false;
-    
-    replica_temperature = Temperature(0);
-    replica_pressure = Pressure(0);
-    
     nrg_component = this->moves().energyComponent();
+    space_property = this->moves().spaceProperty();
 
-    if (this->moves().isConstantEnergy())
-    {
-        is_constant_energy = true;
-    }
-    else if (this->moves().isConstantTemperature())
-    {
-        is_constant_temperature = true;
-        replica_temperature = this->moves().temperature();
-    }
-    else
+    replica_ensemble = this->moves().ensemble();
+
+    if ( not (replica_ensemble.isConstantNParticles() or
+              replica_ensemble.isConstantChemicalPotential()) )
+        throw SireError::incompatible_error( QObject::tr(
+            "Only replica exchange moves involving a constant number of "
+            "particles or constant chemical potential are supported. "
+            "The %1 is not supported.").arg(replica_ensemble.toString()), 
+                CODELOC );
+
+    if ( not (replica_ensemble.isConstantEnergy() or
+              replica_ensemble.isConstantTemperature()) )
         throw SireError::incompatible_error( QObject::tr(
             "Only replica exchange moves involving constant energy or "
-            "constant temperature ensembles are supported."), CODELOC );
+            "constant temperature ensembles are supported. "
+            "The %1 is not supported.").arg(replica_ensemble.toString()), 
+                CODELOC );
 
-    if (this->moves().isConstantVolume())
-    {
-        is_constant_volume = true;
-    }
-    else if (this->moves().isConstantPressure())
-    {
-        is_constant_pressure = true;
-        replica_pressure = this->moves().pressure();
-    }
-    else
+    if ( not (replica_ensemble.isConstantVolume() or
+              replica_ensemble.isConstantPressure()) )
         throw SireError::incompatible_error( QObject::tr(
             "Only replica exchange moves involving constant volume or "
-            "constant pressure ensembles are supported."), CODELOC );
+            "constant pressure ensembles are supported. "
+            "The %1 is not supported.").arg(replica_ensemble.toString()), 
+                CODELOC );
 }
 
 /** Null constructor */
 RepExReplica::RepExReplica()
              : ConcreteProperty<RepExReplica,Replica>(),
-               nrg_component(ForceFields::totalComponent()),
-               lambda_value(0),
+               lambda_value(0)
 {
-    this->updateEnsembleParameters();
+    this->updatedMoves();
 }
 
 /** Construct from the passed replica - the remaining parameters will
     be set to default values */
 RepExReplica::RepExReplica(const Replica &replica)
              : ConcreteProperty<RepExReplica,Replica>(replica),
-               nrg_component(ForceFields::totalComponent()),
                lambda_value(0)
 
 {   
-    this->updateEnsembleParameters();
+    this->updatedMoves();
 }
 
 /** Copy constructor */
 RepExReplica::RepExReplica(const RepExReplica &other)
              : ConcreteProperty<RepExReplica,Replica>(other),
+               replica_ensemble(other.replica_ensemble),
+               space_property(other.space_property),
                nrg_component(other.nrg_component),
                lambda_component(other.lambda_component),
-               lambda_value(other.lambda_value),
-               replica_temperature(other.replica_temperature),
-               replica_pressure(other.replica_pressure),
-               is_constant_energy(other.is_constant_energy),
-               is_constant_temperature(other.is_constant_temperature),
-               is_constant_volume(other.is_constant_volume),
-               is_constant_pressure(other.is_constant_pressure)
+               lambda_value(other.lambda_value)
 {}
                
 /** Destructor */
@@ -169,13 +159,11 @@ RepExReplica& RepExReplica::operator=(const RepExReplica &other)
     if (this != &other)
     {
         Replica::operator=(other);
+        replica_ensemble = other.replica_ensemble;
+        space_property = other.space_property;
         nrg_component = other.nrg_component;
         lambda_component = other.lambda_component;
         lambda_value = other.lambda_value;
-        is_constant_energy = other.is_constant_energy;
-        replica_temperature = other.replica_temperature;
-        is_constant_volume = other.is_constant_volume;
-        replica_pressure = other.replica_pressure;
     }
     
     return *this;
@@ -185,7 +173,9 @@ RepExReplica& RepExReplica::operator=(const RepExReplica &other)
 bool RepExReplica::operator==(const RepExReplica &other) const
 {
     return this == &other or
-           (nrg_component == other.nrg_component and
+           (replica_ensemble == other.replica_ensemble and
+            space_property == other.space_property and
+            nrg_component == other.nrg_component and
             lambda_component == other.lambda_component and
             lambda_value == other.lambda_value and
             Replica::operator==(other));
@@ -197,12 +187,25 @@ bool RepExReplica::operator!=(const RepExReplica &other) const
     return not this->operator==(other);
 }
 
+/** Return the ensemble that this replica samples */
+const Ensemble& RepExReplica::ensemble() const
+{
+    return replica_ensemble;
+}
+
 /** Return the component of the energy of the system that this replica
     uses as the total energy of the replica. This allows different
     replicas to use completely different Hamiltonians */
 const Symbol& RepExReplica::energyComponent() const
 {
     return nrg_component;
+}
+
+/** Return the property that contains the space (simulation box)  
+    for this replica */
+const PropertyName& RepExReplica::spaceProperty() const
+{
+    return space_property;
 }
 
 /** Return the symbol representing the lambda component if this replica
@@ -221,53 +224,107 @@ double RepExReplica::lambdaValue() const
     return lambda_value;
 }
 
-/** Return the temperature of this replica, if it is a constant
-    temperature replica. If not, then this returns 0 */
+/** Return the temperature of this replica.
+
+    \throw SireError::incompatible_error
+*/
 Temperature RepExReplica::temperature() const
 {
-    return replica_temperature;
+    return ensemble().temperature();
+}
+
+/** Return the pressure of this replica
+
+    \throw SireError::incompatible_error
+*/
+Pressure RepExReplica::pressure() const
+{
+    return ensemble().pressure();
+}
+
+/** Return the fugacity of this replica
+
+    \throw SireError::incompatible_error
+*/
+Pressure RepExReplica::fugacity() const
+{
+    return ensemble().fugacity();
+}
+
+/** Return the chemical potential of this replica
+
+    \throw SireError::incompatible_error
+*/
+MolarEnergy RepExReplica::chemicalPotential() const
+{
+    return ensemble().chemicalPotential();
 }
 
 /** Return the current volume of this replica - this could be infinite! */
 Volume RepExReplica::volume() const
 {
-    const SpaceBase &space = this->system().property( this->moves().spaceProperty() );
-    return space.volume();
+    #warning Need to work out how to get the simulation space from a System
+    throw SireError::incomplete_code( QObject::tr(
+        "Need to work out how to get the simulation space!"), CODELOC );
+        
+    return Volume(0);
 }
 
-/** Return the pressure of this replica, if it is a constant
-    pressure replica. If not, then this returns 0 */
-Pressure RepExReplica::pressure() const
+/** Return the current energy of this replica */
+Energy RepExReplica::energy()
 {
-    return replica_pressure;
+    System new_system = this->system();
+    Energy nrg = new_system.energy( nrg_component );
+    Replica::setSystem(new_system);
+
+    return nrg;
 }
 
 /** Return whether or not this is a constant energy replica
-    (all moves sample the same potential energy) */
+    (all moves sample the same total energy) */
 bool RepExReplica::isConstantEnergy() const
 {
-    return is_constant_energy;
+    return ensemble().isConstantEnergy();
 }
 
 /** Return whether or not this is a constant temperature replica
     (all moves sample the same temperature) */
 bool RepExReplica::isConstantTemperature() const
 {
-    return is_constant_temperature;
+    return ensemble().isConstantTemperature();
 }
 
 /** Return whether or not this is a constant volume replica
     (all moves sample the same volume) */
 bool RepExReplica::isConstantVolume() const
 {
-    return is_constant_volume;
+    return ensemble().isConstantVolume();
 }
 
 /** Return whether or not this is a constant pressure replica
     (all moves sample the same pressure) */
 bool RepExReplica::isConstantPressure() const
 {
-    return is_constant_pressure;
+    return ensemble().isConstantPressure();
+}
+
+/** Return whether or not the number of particles is constant
+    (all moves keep the same number of particles) */
+bool RepExReplica::isConstantNParticles() const
+{
+    return ensemble().isConstantNParticles();
+}
+
+/** Return whether the moves keep the same fugacity */
+bool RepExReplica::isConstantFugacity() const
+{
+    return ensemble().isConstantFugacity();
+}
+
+/** Return whether the moves keep the same chemical potential */
+bool RepExReplica::isConstantChemicalPotential() const
+{
+    return ensemble().isConstantChemicalPotential();
 }
 
 /** Return whether or not this is a constant lambda replica
@@ -275,82 +332,15 @@ bool RepExReplica::isConstantPressure() const
      same value of this lambda coordinate) */
 bool RepExReplica::isConstantLambda(const Symbol &lam) const
 {
-    return this->moves().isConstantLambda();
-}
-
-/** Return whether 'rep0' and 'rep1' sample different temperatures */
-bool RepExReplica::differentTemperatures(const RepExReplica &rep0,
-                                         const RepExReplica &rep1)
-{
-    if (rep0.is_constant_temperature)
-    {
-        if (not rep1.is_constant_temperature)
-            return false;
-        else
-            return rep0.replica_temperature == rep1.replica_temperature;
-    }
-    else
-        return not rep1.is_constant_temperature;
-}
-                                  
-/** Return whether 'rep0' and 'rep1' sample different pressures */
-bool RepExReplica::differentPressures(const RepExReplica &rep0,
-                                      const RepExReplica &rep1)
-{
-    if (rep0.is_constant_pressure)
-    {
-        if (not rep1.is_constant_pressure)
-            return false;
-        else
-            return rep0.replica_pressure == rep1.replica_pressure;
-    }
-    else
-        return not rep1.is_constant_pressure;
-}
-                               
-/** Return whether or not this replicas 'rep0' and 'rep1' sample
-    different Hamiltonians */
-bool RepExpReplica::differentHamiltonians(const RepExReplica &rep0,
-                                          const RepExReplica &rep1)
-{
-    return rep0.nrg_component == rep1.nrg_component and
-           rep0.lambda_component == rep1.lambda_component and
-           rep0.lambda_value == rep1.lambda_value;
-}
-
-/** Return the total energy of this replica */
-double RepExReplica::energy()
-{
-    System sys = Replica::system();
-    
-    double nrg = sys.energy( this->energyComponent() );
-    
-    Replica::setSystem(sys);
-    
-    return nrg;
+    return this->moves().isConstantLambda(lam);
 }
 
 /** Set the system to be simulated at this replica 
 
-    \throw SireBase::missing_property
     \throw SireFF::missing_component
 */
 void RepExReplica::setSystem(const System &system)
 {
-    if (is_constant_pressure)
-    {
-        if (not system.hasProperty( this->moves().spaceProperty() ))
-        {
-            throw SireBase::missing_property( QObject::tr(
-                "Cannot set the system for this replica to %1, "
-                "as this is a constant pressure replica, and the system "
-                "is missing the required space property %2.")
-                    .arg(system.toString(), 
-                         this->moves().spaceProperty().toString()),
-                                CODELOC );
-        }
-    }
-
     if (not system.hasComponent(nrg_component))
     {
         throw SireFF::missing_component( QObject::tr(
@@ -369,7 +359,7 @@ void RepExReplica::setSystem(const System &system)
         new_system.setComponent( lambda_component, lambda_value );
     }
     
-    Replicas::setSystem(new_system);
+    Replica::setSystem(new_system);
 }
 
 /** Set the moves to be used to simulate the system at this replica 
@@ -385,22 +375,7 @@ void RepExReplica::setMoves(const MovesBase &moves)
         Replica::setMoves(moves);
         
         //changing the moves will change the ensemble for this replica
-        this->updateEnsembleParameters();
-        
-        //ensure that the system has the necessary space
-        if (is_constant_pressure)
-        {
-            if (not system.hasProperty( this->moves().spaceProperty() ))
-            {
-                throw SireBase::missing_property( QObject::tr(
-                    "Cannot set the system for this replica to %1, "
-                    "as this is a constant pressure replica, and the system "
-                    "is missing the required space property %2.")
-                        .arg(system.toString(), 
-                             this->moves().spaceProperty().toString()),
-                                    CODELOC );
-            }
-        }
+        this->updatedMoves();
     }
     catch(...)
     {
@@ -422,12 +397,33 @@ void RepExReplica::setEnergyComponent(const Symbol &symbol)
     if (not this->system().hasComponent(symbol))
         throw SireFF::missing_component( QObject::tr(
             "Cannot set the energy component for this replica to %1, "
-            "as this system (%2) doens't have such a component. Available energy "
+            "as this system (%2) doesn't have such a component. Available energy "
             "components are %3.")
                 .arg(symbol.toString(), system().toString(),
                      Sire::toString(system().components())), CODELOC );
 
+    Moves mvs = Replica::moves();
+    
+    mvs.edit().setEnergyComponent(symbol);
+    
+    Replica::setMoves(mvs);
+
     nrg_component = symbol;
+}
+
+/** Set the property used to find the space (simulation box) for the replica */
+void RepExReplica::setSpaceProperty(const PropertyName &spaceproperty)
+{
+    if (spaceproperty == space_property)
+        return;
+        
+    Moves mvs = Replica::moves();
+    
+    mvs.edit().setSpaceProperty(spaceproperty);
+    
+    Replica::setMoves(mvs);
+    
+    space_property = spaceproperty;
 }
 
 /** Set the lambda component used for lambda-based Hamiltonian
@@ -448,7 +444,7 @@ void RepExReplica::setLambdaComponent(const Symbol &symbol)
     
     //default always to lambda=0
     new_system.setComponent(symbol, 0);
-    Replicas::setSystem(new_system);
+    Replica::setSystem(new_system);
     
     lambda_component = symbol;
     lambda_value = 0;
@@ -463,31 +459,70 @@ void RepExReplica::setLambdaValue(double value)
     System new_system( this->system() );
     
     new_system.setComponent(lambda_component, value);
-    Replicas::setSystem(new_system);
+    Replica::setSystem(new_system);
     
     lambda_value = value;
 }
 
 /** Set the temperature of this replica to 'temperature'. This is only possible
-    if this is a constant temperature replica
+    if the moves sample a constant temperature ensemble
     
     \throw SireError::incompatible_error
 */
-void RepExReplica::setTemperature(const Temperature &temperature)
+void RepExReplica::setTemperature(const Temperature &t)
 {
-    if (not is_constant_temperature)
-        throw SireError::incompatible_error( QObject::tr(
-            "It is not possible to set the temperature of a replica that is "
-            "not running constant temperature moves! This replica is running "
-            "in this %1 ensemble.")
-                .arg( this->moves().ensemble().shortHand() ), CODELOC );
+    if (this->temperature() != t)
+    {
+        Moves mvs = Replica::moves();
+        mvs.edit().setTemperature(t);
+        this->setMoves(mvs);
+    }
 }
 
-void RepExReplica::setPressure(const Pressure &pressure);
+/** Set the pressure of this replica to 'pressure'. This is only possible if
+    the moves sample a constant pressure ensemble
+    
+    \throw SireError::incompatible_error
+*/
+void RepExReplica::setPressure(const Pressure &p)
+{
+    if (this->pressure() != p)
+    {
+        Moves mvs = Replica::moves();
+        mvs.edit().setPressure(p);
+        this->setMoves(mvs);
+    }
+}
 
-/** Set the energy
-void RepExReplica::setEnergy(const Energy &energy);
-void RepExReplica::setVolume(const Volume &volume);
+/** Set the fugacity of this replica to 'fugacity'. This is only possible
+    if the moves sample a constant fugacity
+    
+    \throw SireError::incompatible_error
+*/
+void RepExReplica::setFugacity(const Pressure &f)
+{
+    if (this->fugacity() != f)
+    {
+        Moves mvs = Replica::moves();
+        mvs.edit().setFugacity(f);
+        this->setMoves(mvs);
+    }
+}
+
+/** Set the chemical potential of this replica to 'chemical_potential'. 
+    This is only possible if the moves sample a constant chemical potential
+    
+    \throw SireError::incompatible_error
+*/
+void RepExReplica::setChemicalPotential(const MolarEnergy &c)
+{
+    if (this->chemicalPotential() != c)
+    {
+        Moves mvs = Replica::moves();
+        mvs.edit().setChemicalPotential(c);
+        this->setMoves(mvs);
+    }
+}
 
 /** Swap the systems between the two replicas, 'rep0' and 'rep1' */
 void RepExReplica::swapSystems(RepExReplica &rep0, RepExReplica &rep1)
@@ -539,8 +574,7 @@ RepExReplicas::RepExReplicas() : ConcreteProperty<RepExReplicas,Replicas>()
 
 /** Construct a set of 'n' replicas */
 RepExReplicas::RepExReplicas(int n) 
-              : ConcreteProperty<RepExReplica,Replicas>(n)
-              
+              : ConcreteProperty<RepExReplicas,Replicas>(n)
 {
     if (n > 0)
     {
@@ -551,7 +585,7 @@ RepExReplicas::RepExReplicas(int n)
 /** Construct a set of 'n' replicas that are all a copy 
     of the system 'system' */
 RepExReplicas::RepExReplicas(const System &system, int n)
-              : ConcreteProperty<RepExReplica,Replicas>(n)
+              : ConcreteProperty<RepExReplicas,Replicas>(n)
 {
     if (n > 0)
     {
@@ -564,7 +598,7 @@ RepExReplicas::RepExReplicas(const System &system, int n)
 
 /** Construct the replicas from the array of systems in 'systems' */
 RepExReplicas::RepExReplicas(const QVector<System> &systems)
-              : ConcreteProperty<RepExReplica,Replicas>(systems.count())
+              : ConcreteProperty<RepExReplicas,Replicas>(systems.count())
 {
     if (not systems.isEmpty())
     {
@@ -580,7 +614,7 @@ RepExReplicas::RepExReplicas(const QVector<System> &systems)
 
 /** Construct from a passed set of replicas */
 RepExReplicas::RepExReplicas(const Replicas &replicas)
-              : ConcreteProperty<RepExReplica,Replicas>(replicas.count())
+              : ConcreteProperty<RepExReplicas,Replicas>(replicas.count())
 {
     if (replicas.isEmpty())
         return;
@@ -600,7 +634,7 @@ RepExReplicas::RepExReplicas(const Replicas &replicas)
 
 /** Copy constructor */
 RepExReplicas::RepExReplicas(const RepExReplicas &other)
-              : ConcreteProperty<RepExReplica,Replicas>(other)
+              : ConcreteProperty<RepExReplicas,Replicas>(other)
 {}
 
 /** Destructor */
@@ -755,6 +789,36 @@ void RepExReplicas::setEnergyComponent(int i, const Symbol &symbol)
     this->_pvt_replica(i).setEnergyComponent(symbol);
 }
 
+/** Set the property to be used to find the simulation space (box)
+    for all replicas to 'spaceproperty' */
+void RepExReplicas::setSpaceProperty(const PropertyName &spaceproperty)
+{
+    RepExReplicas old_state(*this);
+    
+    try
+    {
+        for (int i=0; i < nReplicas(); ++i)
+        {
+            this->_pvt_replica(i).setSpaceProperty(spaceproperty);
+        }
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
+}
+
+/** Set the property used to find the simulation space (box) of 
+    the ith replica to 'spaceproperty'
+    
+    \throw SireError::invalid_index
+*/
+void RepExReplicas::setSpaceProperty(int i, const PropertyName &spaceproperty)
+{
+    this->_pvt_replica(i).setSpaceProperty(spaceproperty);
+}
+
 /** Set the component that represents lambda in lambda-based
     Hamiltonian replica exchange */
 void RepExReplicas::setLambdaComponent(const Symbol &symbol)
@@ -866,5 +930,61 @@ void RepExReplicas::setPressure(const Pressure &pressure)
 */
 void RepExReplicas::setPressure(int i, const Pressure &pressure)
 {
-    this->_pvt_replicas(i).setPressure(pressure);
+    this->_pvt_replica(i).setPressure(pressure);
+}
+
+/** Set the fugacity of all of the replicas to 'fugacity' */
+void RepExReplicas::setFugacity(const Pressure &fugacity)
+{
+    RepExReplicas old_state(*this);
+    
+    try
+    {
+        for (int i=0; i < nReplicas(); ++i)
+        {
+            this->_pvt_replica(i).setFugacity(fugacity);
+        }
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
+}
+
+/** Set the fugacity of the ith replica to 'fugacity'
+
+    \throw SireError::invalid_index
+*/
+void RepExReplicas::setFugacity(int i, const Pressure &fugacity)
+{
+    this->_pvt_replica(i).setFugacity(fugacity);
+}
+
+/** Set the chemical potential of all of the replicas to 'chemical_potential' */
+void RepExReplicas::setChemicalPotential(const MolarEnergy &chemical_potential)
+{
+    RepExReplicas old_state(*this);
+    
+    try
+    {
+        for (int i=0; i < nReplicas(); ++i)
+        {
+            this->_pvt_replica(i).setChemicalPotential(chemical_potential);
+        }
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
+}
+
+/** Set the chemical potential of the ith replica to 'chemical_potential'
+
+    \throw SireError::invalid_index
+*/
+void RepExReplicas::setChemicalPotential(int i, const MolarEnergy &chemical_potential)
+{
+    this->_pvt_replica(i).setChemicalPotential(chemical_potential);
 }

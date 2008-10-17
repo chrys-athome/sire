@@ -30,6 +30,8 @@
 
 #include "SireID/index.h"
 
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -173,13 +175,13 @@ void Replica::setRecordStatistics(bool recordstats)
 /** Swap the systems between the two replicas, rep0 and rep1 */
 void Replica::swapSystems(Replica &rep0, Replica &rep1)
 {
-    SharedPolyPointer<Replica> old_rep0( rep0.clone() );
-    SharedPolyPointer<Replica> old_rep1( rep1.clone() );
+    const SharedPolyPointer<Replica> old_rep0( rep0.clone() );
+    const SharedPolyPointer<Replica> old_rep1( rep1.clone() );
 
     try
     {
-        rep0.setSystem(rep1_system);
-        rep1.setSystem(rep0_system);
+        rep0.setSystem( old_rep1->system() );
+        rep1.setSystem( old_rep0->system() );
     }
     catch(...)
     {
@@ -262,12 +264,12 @@ Replicas::Replicas(const QVector<System> &systems)
 {
     if (not systems.isEmpty())
     {
-        replicas_array = QVector<Replica>(systems.count());
+        replicas_array = QVector< SharedPolyPointer<Replica> >(systems.count());
         
         for (int i=0; i<systems.count(); ++i)
         {
             replicas_array[i] = new Replica();
-            replicas_array[i].setSystem(systems[i]);
+            replicas_array[i]->setSystem(systems[i]);
         }
     }
 }
@@ -329,7 +331,7 @@ Replica& Replicas::_pvt_replica(int i)
 }
 
 /** Return whether or not this set is empty */
-bool Replicas::isEmpty()
+bool Replicas::isEmpty() const
 {
     return replicas_array.isEmpty();
 }

@@ -28,8 +28,15 @@
 
 #include "moves.h"
 #include "simulation.h"
+#include "ensemble.h"
+
+#include "SireUnits/units.h"
+#include "SireUnits/temperature.h"
+#include "SireUnits/dimensions.h"
 
 #include "SireSystem/system.h"
+
+#include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -38,6 +45,9 @@
 
 using namespace SireMove;
 using namespace SireSystem;
+using namespace SireCAS;
+using namespace SireUnits;
+using namespace SireUnits::Dimension;
 using namespace SireBase;
 using namespace SireStream;
 
@@ -85,6 +95,291 @@ MovesBase::MovesBase(const MovesBase &other)
 /** Destructor */
 MovesBase::~MovesBase()
 {}
+
+/** Return the energy component that these moves will sample. This
+    raises an error if not all moves are sampling the same energy
+    component 
+    
+    \throw SireError::incompatible_error
+*/
+const Symbol& MovesBase::energyComponent() const
+{
+    QList<Move> mvs = this->moves();
+    
+    const Symbol &component = mvs.takeFirst()->energyComponent();
+    
+    for (QList<Move>::const_iterator it = mvs.constBegin();
+         it != mvs.constEnd();
+         ++it)
+    {
+        if ((*it)->energyComponent() != component)
+        {
+            QSet<Symbol> symbols;
+            symbols.insert(component);
+        
+            for (QList<Move>::const_iterator it2 = mvs.constBegin();
+                 it2 != mvs.constEnd();
+                 ++it2)
+            {
+                symbols.insert( (*it2)->energyComponent() );
+            }
+        
+            throw SireError::incompatible_error( QObject::tr(
+                "Not all moves sample the same energy component. "
+                "The energy components sampled are %1.")
+                    .arg( Sire::toString(symbols.toList()) ), CODELOC );
+        }
+    }
+    
+    return component;
+}
+
+/** Return the name of the property of the system space that
+    these moves use when they manipulate the simulation box. This
+    raises an error if not all moves are using the same property
+    
+    \throw SireError::incompatible_error
+*/
+const PropertyName& MovesBase::spaceProperty() const
+{
+    QList<Move> mvs = this->moves();
+    
+    const PropertyName &property = mvs.takeFirst()->spaceProperty();
+    
+    for (QList<Move>::const_iterator it = mvs.constBegin();
+         it != mvs.constEnd();
+         ++it)
+    {
+        if ((*it)->spaceProperty() != property)
+        {
+            QSet<QString> properties;
+            properties.insert( property.toString() );
+        
+            for (QList<Move>::const_iterator it2 = mvs.constBegin();
+                 it2 != mvs.constEnd();
+                 ++it2)
+            {
+                properties.insert( (*it2)->spaceProperty().toString() );
+            }
+        
+            throw SireError::incompatible_error( QObject::tr(
+                "Not all moves use the same System space property. "
+                "The properties used are are %1.")
+                    .arg( Sire::toString(properties.toList()) ), CODELOC );
+        }
+    }
+    
+    return property;
+}
+
+/** Return the ensemble that will be sampled by these moves */
+Ensemble MovesBase::ensemble() const
+{
+    QList<Move> mvs = this->moves();
+    
+    Ensemble merged = mvs.takeFirst()->ensemble();
+    
+    for (QList<Move>::const_iterator it = mvs.constBegin();
+         it != mvs.constEnd();
+         ++it)
+    {
+        merged = Ensemble::merge(merged, (*it)->ensemble());
+    }
+    
+    return merged;
+}
+
+/** Return whether or not these moves keeps the total energy constant */
+bool MovesBase::isConstantEnergy() const
+{
+    return this->ensemble().isConstantEnergy();
+}
+
+/** Return whether or not these moves keep the temperature constant */
+bool MovesBase::isConstantTemperature() const
+{
+    return this->ensemble().isConstantTemperature();
+}
+
+/** Return whether or not these moves keep the volume constant */
+bool MovesBase::isConstantVolume() const
+{
+    return this->ensemble().isConstantVolume();
+}
+
+/** Return whether or not these moves keep the pressure constant */
+bool MovesBase::isConstantPressure() const
+{
+    return this->ensemble().isConstantPressure();
+}
+
+/** Return whether or not these moves keep the chemical potential constant */
+bool MovesBase::isConstantChemicalPotential() const
+{
+    return this->ensemble().isConstantChemicalPotential();
+}
+
+/** Return whether or not these moves keep the fugacity (related to the chemical
+    potential) constant */
+bool MovesBase::isConstantFugacity() const
+{
+    return this->ensemble().isConstantFugacity();
+}
+
+/** Return the constant temperature that these moves sample
+
+    \throw SireError::incompatible_error
+*/
+Temperature MovesBase::temperature() const
+{
+    if (not this->isConstantTemperature())
+        throw SireError::incompatible_error( QObject::tr(
+            "These moves do not have a constant temperature as they "
+            "sample from the %1")
+                .arg(this->ensemble().toString()),
+                    CODELOC );
+                    
+    return this->ensemble().temperature();
+}
+
+/** Return the constant pressure that these moves sample 
+
+    \throw SireError::incompatible_error
+*/
+Pressure MovesBase::pressure() const
+{
+    if (not this->isConstantPressure())
+        throw SireError::incompatible_error( QObject::tr(
+            "Theses moves do not have a constant pressure as they "
+            "sample from the %1")
+                .arg( this->ensemble().toString() ),
+                    CODELOC );
+                    
+    return this->ensemble().pressure();
+}
+
+/** Return the constant fugacity that these moves sample 
+
+    \throw SireError::incompatible_error
+*/
+Pressure MovesBase::fugacity() const
+{
+    if (not this->isConstantFugacity())
+        throw SireError::incompatible_error( QObject::tr(
+            "These moves do not have a constant fugacity as they "
+            "sample from the %1")
+                .arg( this->ensemble().toString() ),
+                    CODELOC );
+                    
+    return this->ensemble().fugacity();
+}
+
+/** Return the constant chemical potential that these moves sample 
+
+    \throw SireError::incompatible_error
+*/
+MolarEnergy MovesBase::chemicalPotential() const
+{
+    if (not this->isConstantChemicalPotential())
+        throw SireError::incompatible_error( QObject::tr(
+            "These moves do not have a constant chemical potential as they "
+            "samples from the %1")
+                .arg( this->ensemble().toString() ),
+                    CODELOC );
+                    
+    return this->ensemble().chemicalPotential();
+}
+
+/** Return whether or not these moves keep the symbol 'lam' constant */
+bool MovesBase::isConstantLambda(const Symbol &lam) const
+{
+    QList<Move> mvs = this->moves();
+    
+    for (QList<Move>::const_iterator it = mvs.constBegin();
+         it != mvs.constEnd();
+         ++it)
+    {
+        if (not (*it)->isConstantLambda(lam))
+            return false;
+    }
+    
+    return true;
+}
+
+/** Set the temperature that these constant temperature moves sample 
+    to 'temperature'
+    
+    \throw SireError::incompatible_error
+*/
+void MovesBase::setTemperature(const Temperature &temperature)
+{
+    if (not this->isConstantTemperature())
+        throw SireError::incompatible_error( QObject::tr(
+            "These moves cannot not have a constant temperature (%1 C) as they "
+            "sample from the %2")
+                .arg( temperature.to(celsius) )
+                .arg(this->ensemble().toString()),
+                    CODELOC );
+
+    this->_pvt_setTemperature(temperature);
+}
+
+/** Set the pressure that these constant pressure moves sample 
+    to 'pressure'
+    
+    \throw SireError::incompatible_error
+*/
+void MovesBase::setPressure(const SireUnits::Dimension::Pressure &pressure)
+{
+    if (not this->isConstantPressure())
+        throw SireError::incompatible_error( QObject::tr(
+            "These moves cannot not have a constant pressure (%1 atm) as they "
+            "sample from the %2")
+                .arg( pressure.to(atm) )
+                .arg(this->ensemble().toString()),
+                    CODELOC );
+
+    this->_pvt_setPressure(pressure);
+}
+
+/** Set the chemical potential that these constant chemical potential moves sample 
+    to 'chemical_potential'
+    
+    \throw SireError::incompatible_error
+*/
+void MovesBase::setChemicalPotential(const MolarEnergy &chemical_potential)
+{
+    if (not this->isConstantChemicalPotential())
+        throw SireError::incompatible_error( QObject::tr(
+            "These moves cannot not have a constant chemical potential "
+            "(%1 kcal mol-1) as they "
+            "sample from the %2")
+                .arg(chemical_potential.to(kcal_per_mol) )
+                .arg(this->ensemble().toString()),
+                    CODELOC );
+
+    this->_pvt_setFugacity( Ensemble::MuVT(this->temperature(), chemical_potential)
+                                        .fugacity() );
+}
+
+/** Set the fugacity that these constant fugacity moves sample 
+    to 'fugacity'
+    
+    \throw SireError::incompatible_error
+*/
+void MoveBase::setFugacity(const Pressure &fugacity)
+{
+    if (not this->isConstantFugacity())
+        throw SireError::incompatible_error( QObject::tr(
+            "These moves cannot not have a constant fugacity "
+            "(%1 bar) as they "
+            "samples from the %2")
+                .arg(fugacity.to(bar) )
+                .arg(this->ensemble().toString()),
+                    CODELOC );
+
+    this->_pvt_setFugacity( fugacity );
+}
 
 /** Apply 'nmoves' moves on the system 'system', returning the system
     after the moves. Move statistics are not recorded */
@@ -199,6 +494,49 @@ void SameMoves::setEnergyComponent(const Symbol &component)
     if (mv.read().energyComponent() != component)
     {
         mv.edit().setEnergyComponent(component);
+    }
+}
+
+/** Set the name of the property that all of the moves will use to 
+    find the simulation space (simulation box) to 'spaceproperty' */
+void SameMoves::setSpaceProperty(const PropertyName &spaceproperty)
+{
+    if (mv.read().spaceProperty() != spaceproperty)
+    {
+        mv.edit().setSpaceProperty(spaceproperty);
+    }
+}
+
+/** Set the temperature for all moves that have a constant temperature
+    to 'temperature'. It has already been checked that these moves
+    between them sample at constant temperature */
+void SameMoves::_pvt_setTemperature(const Temperature &temperature)
+{
+    if (mv.read().temperature() != temperature)
+    {
+        mv.edit().setTemperature(temperature);
+    }
+}
+
+/** Set the pressure for all moves that have a constant pressure
+    to 'pressure'. It has already been checked that these moves
+    between them sample at constant pressure */
+void SameMoves::_pvt_setPressure(const Pressure &pressure)
+{
+    if (mv.read().pressure() != pressure)
+    {
+        mv.edit().setPressure(pressure);
+    }
+}
+
+/** Set the fugacity for all moves that have a constant fugacity
+    to 'fugacity'. It has already been checked that these moves
+    between them sample at constant fugacity */
+void SameMoves::_pvt_setFugacity(const Pressure &fugacity)
+{
+    if (mv.read().fugacity() != fugacity)
+    {
+        mv.edit().setFugacity(fugacity);
     }
 }
 

@@ -702,6 +702,13 @@ Expression System::getComponent(const Symbol &symbol) const
     return this->_pvt_forceFields().getComponent(symbol);
 }
 
+/** Return whether or not this system has an energy component represented
+    by the symbol 'symbol' */
+bool System::hasComponent(const Symbol &symbol) const
+{
+    return this->_pvt_forceFields().hasComponent(symbol);
+}
+
 /** Return the symbols representing all of the energy components of
     the system */
 Symbols System::components() const

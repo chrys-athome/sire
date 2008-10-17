@@ -30,6 +30,7 @@
 #define SIREMOVE_REPEXREPLICAS_H
 
 #include "replicas.h"
+#include "ensemble.h"
 
 #include "SireCAS/symbol.h"
 
@@ -45,6 +46,9 @@ class RepExReplicas;
 
 QDataStream& operator<<(QDataStream&, const SireMove::RepExReplica&);
 QDataStream& operator>>(QDataStream&, SireMove::RepExReplica&);
+
+QDataStream& operator<<(QDataStream&, const SireMove::RepExReplicas&);
+QDataStream& operator>>(QDataStream&, SireMove::RepExReplicas&);
 
 namespace SireMove
 {
@@ -85,49 +89,60 @@ public:
     
     bool operator==(const RepExReplica &other) const;
     bool operator!=(const RepExReplica &other) const;
-    
-    SireUnits::Dimension::Energy energy();
+
+    const Ensemble& ensemble() const;
 
     const Symbol& energyComponent() const;
+    
+    const PropertyName& spaceProperty() const;
     
     const Symbol& lambdaComponent() const;
     double lambdaValue() const;
     
     SireUnits::Dimension::Temperature temperature() const;
     SireUnits::Dimension::Pressure pressure() const;
+    SireUnits::Dimension::Pressure fugacity() const;
+    SireUnits::Dimension::MolarEnergy chemicalPotential() const;
+
     SireUnits::Dimension::Volume volume() const;
+    SireUnits::Dimension::Energy energy();
 
-    Ensemble ensemble() const;
-
+    bool isConstantEnergy() const;
     bool isConstantTemperature() const;
     bool isConstantPressure() const;
+    bool isConstantVolume() const;
+    bool isConstantNParticles() const;
+    bool isConstantFugacity() const;
+    bool isConstantChemicalPotential() const;
     bool isConstantLambda(const Symbol &lam) const;
-
-    static bool differentTemperatures(const RepExReplica &rep0,
-                                      const RepExReplica &rep1);
-                                      
-    static bool differentPressures(const RepExReplica &rep0,
-                                   const RepExReplica &rep1);
-                                   
-    static bool differentHamiltonians(const RepExReplica &rep0,
-                                      const RepExReplica &rep1);
 
     static void swapSystems(RepExReplica &rep0, RepExReplica &rep1);
 
 protected:
     virtual void setEnergyComponent(const Symbol &symbol);
+    virtual void setSpaceProperty(const PropertyName &spaceproperty);
+
     virtual void setLambdaComponent(const Symbol &symbol);
     virtual void setLambdaValue(double value);
-    virtual void setEnergy(const SireUnits::Dimension::Energy &energy);
+
     virtual void setTemperature(const SireUnits::Dimension::Temperature &temperature);
-    virtual void setVolume(const SireUnits::Dimension::Volume &volume);
     virtual void setPressure(const SireUnits::Dimension::Pressure &pressure);
+    virtual void setFugacity(const SireUnits::Dimension::Pressure &fugacity);
+    virtual void setChemicalPotential(
+                    const SireUnits::Dimension::MolarEnergy &chemical_potential);
 
     virtual void setSystem(const System &system);
     virtual void setMoves(const MovesBase &moves);
 
 private:
-    void updateEnsembleParameters();
+    void updatedMoves();
+
+    /** The ensemble sampled by the moves of this replica */
+    Ensemble replica_ensemble;
+
+    /** The property used to get the simulation space (simulation box)
+        for this replica */
+    PropertyName space_property;
 
     /** The symbol that represents the component of the energy to
         be evaluated for this replica */
@@ -141,25 +156,6 @@ private:
     /** The value of lambda for this replica. This is 0 if this is 
         not a lambda-based HRE replica */
     double lambda_value;
-    
-    /** The temperature of this replica */
-    SireUnits::Dimension::Temperature replica_temperature;
-    
-    /** The pressure of this replica - this is zero if this is  
-        a constant volume replica */
-    SireUnits::Dimension::Pressure replica_pressure;
-    
-    /** Whether or not this is a constant potential energy replica */
-    bool is_constant_energy;
-    
-    /** Whether or not this is a constant temperature replica */
-    bool is_constant_temperature;
-    
-    /** Whether or not this is a constant volume replica */
-    bool is_constant_volume;
-    
-    /** Whether or not this is a constant pressure replica */
-    bool is_constant_pressure;
 };
 
 /** This class holds all of the replicas and associated data
@@ -171,8 +167,8 @@ class SIREMOVE_EXPORT RepExReplicas
             : public SireBase::ConcreteProperty<RepExReplicas,Replicas>
 {
 
-friend QDataStream& operator<<(QDataStream&, const RepExReplicas&);
-friend QDataStream& operator>>(QDataStream&, RepExReplicas&);
+friend QDataStream& ::operator<<(QDataStream&, const RepExReplicas&);
+friend QDataStream& ::operator>>(QDataStream&, RepExReplicas&);
 
 public:
     RepExReplicas();
@@ -218,6 +214,9 @@ public:
     void setEnergyComponent(const Symbol &symbol);
     void setEnergyComponent(int i, const Symbol &symbol);
     
+    void setSpaceProperty(const PropertyName &spaceproperty);
+    void setSpaceProperty(int i, const PropertyName &spaceproperty);
+    
     void setLambdaComponent(const Symbol &symbol);
     void setLambdaComponent(int i, const Symbol &symbol);
     
@@ -229,6 +228,15 @@ public:
     
     void setPressure(const SireUnits::Dimension::Pressure &pressure);
     void setPressure(int i, const SireUnits::Dimension::Pressure &pressure);
+    
+    void setFugacity(const SireUnits::Dimension::Pressure &fugacity);
+    void setFugacity(int i, const SireUnits::Dimension::Pressure &fugacity);
+    
+    void setChemicalPotential(
+                const SireUnits::Dimension::MolarEnergy &chemical_potential);
+
+    void setChemicalPotential(int i,
+                const SireUnits::Dimension::MolarEnergy &chemical_potential);
 
 protected:
     RepExReplica& _pvt_replica(int i);

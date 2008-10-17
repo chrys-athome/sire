@@ -131,6 +131,8 @@ public:
     
     Symbols components() const;
     
+    bool hasComponent(const Symbol &symbol) const;
+    
     Values energies(const QSet<Symbol> &components);
     Values energies();
     

@@ -193,6 +193,8 @@ public:
     
     SireCAS::Expression getComponent(const Symbol &symbol) const;
     
+    bool hasComponent(const Symbol &symbol) const;
+    
     QHash<FFName,Property> property(const QString &name) const;
 
     const Property& property(const FFID &ffid, const QString &name) const;

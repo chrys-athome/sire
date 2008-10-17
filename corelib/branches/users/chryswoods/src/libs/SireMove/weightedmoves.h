@@ -93,10 +93,16 @@ public:
     QList<Move> moves() const;
 
     void setEnergyComponent(const Symbol &component);
+    void setSpaceProperty(const PropertyName &spaceproperty); 
 
     void setGenerator(const RanGenerator &rangenerator);
     
     const RanGenerator& generator() const;
+
+protected:
+    void _pvt_setTemperature(const SireUnits::Dimension::Temperature &temperature);
+    void _pvt_setPressure(const SireUnits::Dimension::Pressure &pressure);
+    void _pvt_setFugacity(const SireUnits::Dimension::Pressure &fugacity);
 
 private:
     void recalculateWeights();

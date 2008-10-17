@@ -303,7 +303,7 @@ void MoveBase::setTemperature(const Temperature &temperature)
 }
 
 /** Set the pressure that this constant pressure move samples 
-    to 'temperature'
+    to 'pressure'
     
     \throw SireError::incompatible_error
 */
@@ -322,7 +322,7 @@ void MoveBase::setPressure(const SireUnits::Dimension::Pressure &pressure)
 }
 
 /** Set the chemical potential that this constant chemical potential move samples 
-    to 'temperature'
+    to 'chemical_potential'
     
     \throw SireError::incompatible_error
 */
@@ -343,7 +343,7 @@ void MoveBase::setChemicalPotential(const MolarEnergy &chemical_potential)
 }
 
 /** Set the fugacity that this constant fugacity move samples 
-    to 'temperature'
+    to 'fugacity'
     
     \throw SireError::incompatible_error
 */

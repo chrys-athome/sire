@@ -78,22 +78,32 @@ public:
     }
     
     virtual void setEnergyComponent(const Symbol &component)=0;
-    virtual const Symbol& energyComponent() const=0;
+    const Symbol& energyComponent() const;
 
     virtual void setSpaceProperty(const PropertyName &spaceproperty)=0;
-    virtual const PropertyName& spaceProperty() const=0;
+    const PropertyName& spaceProperty() const;
     
-    virtual bool isConstantPressure() const=0;
-    virtual bool isConstantVolume() const=0;
-    virtual bool isConstantTemperature() const=0;
-    virtual bool isConstantLambda(const Symbol &lam) const=0;
+    Ensemble ensemble() const;
     
-    virtual SireUnits::Dimension::Temperature temperature() const=0;
-    virtual SireUnits::Dimension::Pressure pressure() const=0;
+    bool isConstantEnergy() const;
+    bool isConstantTemperature() const;
+    bool isConstantVolume() const;
+    bool isConstantPressure() const;
+    bool isConstantChemicalPotential() const;
+    bool isConstantFugacity() const;
 
-    virtual void setTemperature(const SireUnits::Dimension::Temperature 
-                                                                &temperature) const=0;
-    virtual void setPressure(const SireUnits::Dimension::Pressure &pressure) const=0;
+    bool isConstantLambda(const Symbol &lam) const;
+    
+    SireUnits::Dimension::Temperature temperature() const;
+    SireUnits::Dimension::Pressure pressure() const;
+    SireUnits::Dimension::Pressure fugacity() const;
+    SireUnits::Dimension::MolarEnergy chemicalPotential() const;
+
+    void setTemperature(const SireUnits::Dimension::Temperature &temperature);
+    void setPressure(const SireUnits::Dimension::Pressure &pressure);
+    void setChemicalPotential(
+                    const SireUnits::Dimension::MolarEnergy &chemical_potential);
+    void setFugacity(const SireUnits::Dimension::Pressure &fugacity);
         
     virtual System move(const System &system, int nmoves,
                         bool record_stats)=0;
@@ -102,6 +112,25 @@ public:
     System move(const System &system);
     
     virtual QList<Move> moves() const=0;
+
+protected:
+    /** Set the temperature for all moves that have a constant temperature
+        to 'temperature'. It has already been checked that these moves
+        between them sample at constant temperature */
+    virtual void _pvt_setTemperature(
+                            const SireUnits::Dimension::Temperature &temperature)=0;
+                            
+    /** Set the pressure for all moves that have a constant pressure
+        to 'pressure'. It has already been checked that these moves
+        between them sample at constant pressure */
+    virtual void _pvt_setPressure(
+                            const SireUnits::Dimension::Pressure &pressure)=0;
+                            
+    /** Set the fugacity for all moves that have a constant fugacity
+        to 'fugacity'. It has already been checked that these moves
+        between them sample at constant fugacity */
+    virtual void _pvt_setFugacity(
+                            const SireUnits::Dimension::Pressure &fugacity)=0;
 };
 
 /** This is a Moves class that just applies the same move over and
@@ -142,12 +171,17 @@ public:
     using MovesBase::move;
     
     void setEnergyComponent(const Symbol &component);
+    void setSpaceProperty(const PropertyName &spaceproperty); 
     
     System move(const System &system, int nmoves, bool record_stats);
     
     QList<Move> moves() const;
 
 private:
+    void _pvt_setTemperature(const SireUnits::Dimension::Temperature &temperature);
+    void _pvt_setPressure(const SireUnits::Dimension::Pressure &pressure);
+    void _pvt_setFugacity(const SireUnits::Dimension::Pressure &fugacity);
+
     /** The move that will be repeatedly applied */
     Move mv;
 };

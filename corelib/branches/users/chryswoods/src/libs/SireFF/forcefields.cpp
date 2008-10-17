@@ -1438,6 +1438,12 @@ Symbols ForceFields::components() const
     return ffsymbols.keys().toSet();
 }
 
+/** Return whether or not there is a forcefield component with symbol 'symbol' */
+bool ForceFields::hasComponent(const Symbol &symbol) const
+{
+    return ffsymbols.contains(symbol);
+}
+
 /** Return the forcefield component symbol, value or expression that matches
     the component represented by the symbol 'symbol'
     
