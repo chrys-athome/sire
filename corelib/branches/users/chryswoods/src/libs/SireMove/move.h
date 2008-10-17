@@ -41,15 +41,11 @@ SIRE_BEGIN_HEADER
 namespace SireMove
 {
 class Move;
-class MoveBase;
 class NullMove;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMove::Move&);
 QDataStream& operator>>(QDataStream&, SireMove::Move&);
-
-QDataStream& operator<<(QDataStream&, const SireMove::MoveBase&);
-QDataStream& operator>>(QDataStream&, SireMove::MoveBase&);
 
 QDataStream& operator<<(QDataStream&, const SireMove::NullMove&);
 QDataStream& operator>>(QDataStream&, SireMove::NullMove&);
@@ -74,25 +70,25 @@ using SireBase::PropertyName;
 
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT MoveBase : public SireBase::PropertyBase
+class SIREMOVE_EXPORT Move : public SireBase::Property
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const MoveBase&);
-friend QDataStream& ::operator>>(QDataStream&, MoveBase&);
+friend QDataStream& ::operator<<(QDataStream&, const Move&);
+friend QDataStream& ::operator>>(QDataStream&, Move&);
 
 public:
-    MoveBase();
+    Move();
     
-    MoveBase(const MoveBase &other);
+    Move(const Move &other);
     
-    virtual ~MoveBase();
+    virtual ~Move();
     
     static const char* typeName()
     {
-        return "SireMove::MoveBase";
+        return "SireMove::Move";
     }
     
-    virtual MoveBase* clone() const=0;
+    virtual Move* clone() const=0;
     
     virtual void move(System &system, int nmoves, bool record_stats)=0;
 
@@ -127,11 +123,13 @@ public:
                     const SireUnits::Dimension::MolarEnergy &chemical_potential);
     void setFugacity(const SireUnits::Dimension::Pressure &fugacity);
 
-protected:
-    MoveBase& operator=(const MoveBase &other);
+    static const NullMove& null();
 
-    bool operator==(const MoveBase &other) const;
-    bool operator!=(const MoveBase &other) const;
+protected:
+    Move& operator=(const Move &other);
+
+    bool operator==(const Move &other) const;
+    bool operator!=(const Move &other) const;
 
     virtual void _pvt_setTemperature(
                             const SireUnits::Dimension::Temperature &temperature);
@@ -154,7 +152,7 @@ private:
 };
 
 /** This is a null move - it doesn't change the system at all! */
-class SIREMOVE_EXPORT NullMove : public SireBase::ConcreteProperty<NullMove,MoveBase>
+class SIREMOVE_EXPORT NullMove : public SireBase::ConcreteProperty<NullMove,Move>
 {
 public:
     NullMove();
@@ -182,73 +180,16 @@ public:
     Ensemble ensemble() const;
 };
 
-/** This is the polymorphic pointer holder for the 
-    Move hierarchy of classes (simulation moves).
-    
-    Like all Property polymorphic pointer holder classes,
-    this class holds the polymorphic Move object as 
-    an implicitly shared pointer. You can access the 
-    const functions of this object by dereferencing this
-    pointer, or by using the Move::read() function, e.g.;
-    
-    cout << move->what();
-    cout << move.read().what();
-    
-    You must use the Move::edit() function to
-    access the non-const member functions, e.g.;
-    
-    move.edit().move(system);
-    
-    Because an implicitly shared pointer is held, this
-    class can be copied and passed around quickly. A copy
-    is only made when the object being pointed to is
-    edited via the .edit() function.
-
-    @author Christopher Woods
-*/
-class SIREMOVE_EXPORT Move : public SireBase::Property
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const Move&);
-friend QDataStream& ::operator>>(QDataStream&, Move&);
-
-public:
-    Move();
-    Move(const SireBase::PropertyBase &property);
-    Move(const MoveBase &move);
-
-    Move(const Move &other);
-    
-    ~Move();
-    
-    virtual Move& operator=(const SireBase::PropertyBase &property);
-    virtual Move& operator=(const MoveBase &other);
-
-    const MoveBase* operator->() const;
-    const MoveBase& operator*() const;
-    
-    const MoveBase& read() const;
-    MoveBase& edit();
-    
-    const MoveBase* data() const;
-    const MoveBase* constData() const;
-    
-    MoveBase* data();
-    
-    operator const MoveBase&() const;
-
-    static const Move& shared_null();
-};
+typedef SireBase::PropPtr<Move> MovePtr;
 
 }
 
-Q_DECLARE_METATYPE( SireMove::Move )
 Q_DECLARE_METATYPE( SireMove::NullMove )
 
-SIRE_EXPOSE_CLASS( SireMove::MoveBase )
+SIRE_EXPOSE_CLASS( SireMove::Move )
 SIRE_EXPOSE_CLASS( SireMove::NullMove )
 
-SIRE_EXPOSE_PROPERTY( SireMove::Move, SireMove::MoveBase )
+SIRE_EXPOSE_PROPERTY( SireMove::MovePtr, SireMove::Move )
 
 SIRE_END_HEADER
 

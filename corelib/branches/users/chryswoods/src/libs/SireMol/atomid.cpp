@@ -46,8 +46,8 @@
 #include "atom.h"
 
 #include "molecules.h"
-#include "molgroup.h"
-#include "molgroups.h"
+#include "moleculegroup.h"
+#include "moleculegroups.h"
 
 #include "SireMol/errors.h"
 
@@ -186,7 +186,7 @@ Atom AtomID::selectFrom(const Molecules &molecules) const
     \throw SireMol::missing_atom
     \throw SireMol::duplicate_atom
 */
-Atom AtomID::selectFrom(const MolGroup &molgroup) const
+Atom AtomID::selectFrom(const MoleculeGroup &molgroup) const
 {
     return AtomID::selectFrom(molgroup.molecules());
 }
@@ -197,7 +197,7 @@ Atom AtomID::selectFrom(const MolGroup &molgroup) const
     \throw SireMol::missing_atom
 */
 QHash< MolNum,Selector<Atom> >
-AtomID::selectAllFrom(const MolGroup &molgroup) const
+AtomID::selectAllFrom(const MoleculeGroup &molgroup) const
 {
     return AtomID::selectAllFrom(molgroup.molecules());
 }

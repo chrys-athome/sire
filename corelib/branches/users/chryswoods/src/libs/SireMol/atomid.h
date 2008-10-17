@@ -57,7 +57,7 @@ class AtomIdx;
 class AtomIdentifier;
 
 class Molecules;
-class MolGroup;
+class MoleculeGroup;
 class MolGroupsBase;
 class MolNum;
 
@@ -102,9 +102,9 @@ public:
     virtual QHash< MolNum,Selector<Atom> >
                 selectAllFrom(const Molecules &molecules) const;
 
-    virtual Atom selectFrom(const MolGroup &molgroup) const;
+    virtual Atom selectFrom(const MoleculeGroup &molgroup) const;
     virtual QHash< MolNum,Selector<Atom> >
-                selectAllFrom(const MolGroup &molgroup) const;
+                selectAllFrom(const MoleculeGroup &molgroup) const;
     
     virtual Atom selectFrom(const MolGroupsBase &molgroups) const;
     virtual QHash< MolNum,Selector<Atom> > 

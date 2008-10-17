@@ -72,7 +72,7 @@ public:
     virtual ~SimHandle();
     
     virtual System system()=0;
-    virtual Moves moves()=0;
+    virtual MovesPtr moves()=0;
 
     virtual MPISimWorker worker()=0;
     virtual MPISimWorker initialWorker()=0;
@@ -112,7 +112,7 @@ public:
     ~LocalSim();
     
     System system();
-    Moves moves();
+    MovesPtr moves();
 
     MPISimWorker worker();
     MPISimWorker initialWorker();
@@ -203,16 +203,16 @@ public:
         return new Simulation(*this);
     }
 
-    static Simulation run(const System &system, const MovesBase &moves,
+    static Simulation run(const System &system, const Moves &moves,
                           int nmoves, bool record_stats=true,
                           int chunk_size=100);
     
-    static Simulation runBG(const System &system, const MovesBase &moves,
+    static Simulation runBG(const System &system, const Moves &moves,
                             int nmoves, bool record_stats=true,
                             int chunk_size=100);
     
     static Simulation run(const MPINode &node, const System &system,
-                          const MovesBase &moves, int nmoves,
+                          const Moves &moves, int nmoves,
                           bool record_stats=true,
                           int chunk_size=100);
 
@@ -225,7 +225,7 @@ public:
     static Simulation run(const MPINode &node, const MPISimWorker &worker);
     
     System system();
-    Moves moves();
+    MovesPtr moves();
 
     MPISimWorker worker();
 

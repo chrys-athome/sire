@@ -66,14 +66,14 @@ QDataStream& operator>>(QDataStream&, SireMM::CLJPotentialInterface<CLJPot>&);
 namespace SireMol
 {
 class PartialMolecule;
-class MolGroup;
+class MoleculeGroup;
 }
 
 namespace SireMM
 {
 
 using SireBase::Properties;
-using SireBase::PropertyBase;
+using SireBase::Property;
 using SireBase::PropertyMap;
 using SireBase::PropertyName;
 using SireBase::Property;
@@ -83,11 +83,11 @@ using SireCAS::Symbol;
 using SireMaths::Vector;
 
 using SireVol::Space;
-using SireVol::SpaceBase;
+using SireVol::Space;
 using SireVol::CoordGroup;
 
 using SireMol::PartialMolecule;
-using SireMol::MolGroup;
+using SireMol::MoleculeGroup;
 
 using SireFF::MolForceTable;
 
@@ -192,15 +192,15 @@ public:
     const Property& property(const QString &name) const;
     bool containsProperty(const QString &name) const;
     
-    bool setProperty(const QString &name, const PropertyBase &value);
+    bool setProperty(const QString &name, const Property &value);
 
     bool setSpace(const Space &new_space);
     bool setSwitchingFunction(const SwitchingFunction &new_switchfunc);
     bool setShiftElectrostatics(bool switchelectro);
     bool setCombiningRules(const QString &combiningrules);
     
-    const SpaceBase& space() const;
-    const SwitchFunc& switchingFunction() const;
+    const Space& space() const;
+    const SwitchingFunction& switchingFunction() const;
     bool shiftElectrostatics() const;
     const QString& combiningRules() const;
 
@@ -223,10 +223,10 @@ protected:
     Properties props;
     
     /** The space in which this functional operates */
-    Space spce;
+    SpacePtr spce;
     
     /** The nonbonded switching function */
-    SwitchingFunction switchfunc;
+    SwitchFuncPtr switchfunc;
 
     /** The combining rules to use to get mixed LJ parameters */
     LJParameterDB::CombiningRules combining_rules;
@@ -340,7 +340,7 @@ public:
                  const PropertyMap &map = PropertyMap());
     
     InterCLJPotential::Molecules 
-    parameterise(const MolGroup &molecules,
+    parameterise(const MoleculeGroup &molecules,
                  const PropertyMap &map = PropertyMap());
 
     void calculateEnergy(const InterCLJPotential::Molecule &mol0, 
@@ -511,7 +511,7 @@ public:
                  const PropertyMap &map = PropertyMap());
     
     IntraCLJPotential::Molecules 
-    parameterise(const MolGroup &molecules,
+    parameterise(const MoleculeGroup &molecules,
                  const PropertyMap &map = PropertyMap());
 
     void calculateEnergy(const IntraCLJPotential::Molecule &mol, 
@@ -705,7 +705,7 @@ public:
         return CLJPot::containsProperty(name);
     }
     
-    bool setProperty(const QString &name, const PropertyBase &value)
+    bool setProperty(const QString &name, const Property &value)
     {
         return CLJPot::setProperty(name, value);
     }
@@ -730,12 +730,12 @@ public:
         return CLJPot::setCombiningRules(combiningrules);
     }
     
-    const SpaceBase& space() const
+    const Space& space() const
     {
         return CLJPot::space();
     }
     
-    const SwitchFunc& switchingFunction() const
+    const SwitchingFunction& switchingFunction() const
     {
         return CLJPot::switchingFunction();
     }

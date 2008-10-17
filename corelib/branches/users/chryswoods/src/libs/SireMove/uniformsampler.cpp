@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QMutex>
+
 #include "uniformsampler.h"
 
 #include "SireMol/partialmolecule.h"
@@ -46,7 +48,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
                                         const UniformSampler &sampler)
 {
     writeHeader(ds, r_sampler, 1)
-          << static_cast<const SamplerBase&>(sampler);
+          << static_cast<const Sampler&>(sampler);
 
     return ds;
 }
@@ -58,7 +60,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, UniformSampler &sampler
 
     if (v == 1)
     {
-        ds >> static_cast<SamplerBase&>(sampler);
+        ds >> static_cast<Sampler&>(sampler);
     }
     else
         throw version_error(v, "1", r_sampler, CODELOC);
@@ -68,18 +70,33 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, UniformSampler &sampler
 
 /** Constructor */
 UniformSampler::UniformSampler() 
-               : ConcreteProperty<UniformSampler,SamplerBase>()
+               : ConcreteProperty<UniformSampler,Sampler>()
 {}
+
+static SharedPolyPointer<UniformSampler> shared_null;
+
+const UniformSampler& Sampler::null()
+{
+    if (shared_null.constData() == 0)
+    {
+        QMutexLocker lkr( SireBase::globalLock() );
+        
+        if (shared_null.constData() == 0)
+            shared_null = new UniformSampler();
+    }
+    
+    return *(shared_null.constData());
+}
 
 /** Constructor a sampler that chooses views at random from the 
     passed molecule group */
-UniformSampler::UniformSampler(const MolGroup &molgroup)
-               : ConcreteProperty<UniformSampler,SamplerBase>(molgroup)
+UniformSampler::UniformSampler(const MoleculeGroup &molgroup)
+               : ConcreteProperty<UniformSampler,Sampler>(molgroup)
 {}
 
 /** Copy constructor */
 UniformSampler::UniformSampler(const UniformSampler &other)
-               : ConcreteProperty<UniformSampler,SamplerBase>(other)
+               : ConcreteProperty<UniformSampler,Sampler>(other)
 {}
 
 /** Destructor */
@@ -89,7 +106,7 @@ UniformSampler::~UniformSampler()
 /** Copy assignment */
 UniformSampler& UniformSampler::operator=(const UniformSampler &other)
 {
-    SamplerBase::operator=(other);
+    Sampler::operator=(other);
 
     return *this;
 }

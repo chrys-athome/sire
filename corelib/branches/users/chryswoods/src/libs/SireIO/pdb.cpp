@@ -95,15 +95,15 @@ PropertyName PDBParameters::pdbchainnames_property("PDB-chain-name");
 PropertyName PDBParameters::pdbsegnames_property("PDB-segment-name");
 
 PropertyName PDBParameters::frame_selector( "animation-frame-selector",
-                                            Property() );
+                                            Property::null() );
 PropertyName PDBParameters::atomname_mangler( "atom-name-mangler",
-                                              TrimString::toProperty() );
+                                              TrimString() );
 PropertyName PDBParameters::resname_mangler( "residue-name-mangler",
-                                             TrimString::toProperty() );
+                                             TrimString() );
 PropertyName PDBParameters::chainname_mangler( "chain-name-mangler", 
-                                               TrimString::toProperty() );
+                                               TrimString() );
 PropertyName PDBParameters::segname_mangler( "segment-name-mangler",
-                                             TrimString::toProperty() );
+                                             TrimString() );
 
 ///////////
 /////////// Implementation of everything to get the PDB reader/writer working
@@ -763,7 +763,7 @@ static Molecule convert(const QList<PDBAtom> &pdbatoms,
         return Molecule();
 
     //get the manglers for the atom, residue, chain and segment names
-    StringMangler atommangler, resmangler, chainmangler, segmangler;
+    StringManglerPtr atommangler, resmangler, chainmangler, segmangler;
 
     PropertyName atommangler_property = map[PDB::parameters().atomNameMangler()];
     PropertyName resmangler_property = map[PDB::parameters().residueNameMangler()];
@@ -771,16 +771,16 @@ static Molecule convert(const QList<PDBAtom> &pdbatoms,
     PropertyName segmangler_property = map[PDB::parameters().segmentNameMangler()];
     
     if (atommangler_property.hasValue())
-        atommangler = atommangler_property.value()->asA<StringManglerBase>();
+        atommangler = atommangler_property.value().asA<StringMangler>();
     
     if (resmangler_property.hasValue())
-        resmangler = resmangler_property.value()->asA<StringManglerBase>();
+        resmangler = resmangler_property.value().asA<StringMangler>();
     
     if (chainmangler_property.hasValue())
-        chainmangler = chainmangler_property.value()->asA<StringManglerBase>();
+        chainmangler = chainmangler_property.value().asA<StringMangler>();
     
     if (segmangler_property.hasValue())
-        segmangler = segmangler_property.value()->asA<StringManglerBase>();
+        segmangler = segmangler_property.value().asA<StringMangler>();
 
     //editor for the molecule
     MolStructureEditor moleditor;
@@ -972,14 +972,14 @@ static Molecule convert(const QList<PDBAtom> &pdbatoms,
     
     //now we have the layout, use the supplied function to 
     //break this molecule down into CutGroups...
-    CuttingFunction cutfunc;
+    CutFuncPtr cutfunc;
     
     PropertyName cutfunc_property = map[PDB::parameters().cuttingFunction()];
     
     if (cutfunc_property.hasValue())
-        cutfunc = cutfunc_property.value()->asA<CuttingFunctionBase>();
+        cutfunc = cutfunc_property.value().asA<CuttingFunction>();
         
-    moleditor = cutfunc(moleditor);
+    moleditor = (*cutfunc)(moleditor);
 
     //ok, we've now built the structure of the molecule, so commit it!
     Molecule molecule = moleditor.commit();
@@ -1357,7 +1357,7 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
     }
     
     //we now need to convert each PDBMolecule into a real molecule
-    MolGroup molgroup;
+    MoleculeGroup molgroup;
     
     foreach (const PDBMolecule &pdbmol, pdbmols.molecules())
     {
@@ -1373,7 +1373,7 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
 }
 
 /** Write a group of molecules to a bytearray */
-QByteArray PDB::writeMols(const MolGroup &molgroup,
+QByteArray PDB::writeMols(const MoleculeGroup &molgroup,
                           const PropertyMap &map) const
 {
     QByteArray data;

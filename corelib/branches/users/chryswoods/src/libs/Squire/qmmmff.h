@@ -121,13 +121,13 @@ public:
         return Parameters();
     }
 
-    const SpaceBase& space() const;
-    const SwitchFunc& switchingFunction() const;
-    const QMProg& quantumProgram() const;
+    const Space& space() const;
+    const SwitchingFunction& switchingFunction() const;
+    const QMProgram& quantumProgram() const;
     
-    bool setSpace(const SpaceBase &space);
-    bool setSwitchingFunction(const SwitchFunc &switchfunc);
-    bool setQuantumProgram(const QMProg &qmprog);
+    bool setSpace(const Space &space);
+    bool setSwitchingFunction(const SwitchingFunction &switchfunc);
+    bool setQuantumProgram(const QMProgram &qmprog);
 
     bool setProperty(const QString &name, const Property &property);
     const Property& property(const QString &name) const;
@@ -157,8 +157,6 @@ protected:
     ////
     
     void recalculateEnergy();
-    
-    void _pvt_restore(const SireFF::ForceField &ffield);
     
     ////
     //// Virtual functions from SireFF::G2FF

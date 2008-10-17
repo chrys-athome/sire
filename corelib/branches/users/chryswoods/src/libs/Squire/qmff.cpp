@@ -30,7 +30,7 @@
 #include "qmprogram.h"
 
 #include "SireMol/partialmolecule.h"
-#include "SireMol/molgroup.h"
+#include "SireMol/moleculegroup.h"
 
 #include "SireFF/forcetable.h"
 
@@ -135,27 +135,27 @@ bool QMFF::operator!=(const QMFF &other) const
 }
 
 /** Return the space within which the QM molecules exist */
-const SpaceBase& QMFF::space() const
+const Space& QMFF::space() const
 {
     return QMPotential::space();
 }
 
 /** Return the QM program that will be used to calculate the 
     energies and forces on the molecules */
-const QMProg& QMFF::quantumProgram() const
+const QMProgram& QMFF::quantumProgram() const
 {
     return QMPotential::quantumProgram();
 }
 
 /** Set the space within which the QM molecules exist */
-bool QMFF::setSpace(const SpaceBase &space)
+bool QMFF::setSpace(const Space &space)
 {
     return QMPotential::setSpace(space);
 }
 
 /** Set the QM program that will be used to calculate the 
     energies and forces */
-bool QMFF::setQuantumProgram(const QMProg &qmprog)
+bool QMFF::setQuantumProgram(const QMProgram &qmprog)
 {
     return QMPotential::setQuantumProgram(qmprog);
 }
@@ -249,15 +249,6 @@ void QMFF::recalculateEnergy()
     this->components().setEnergy(*this, nrg);
     
     this->setClean();
-}
-
-/** Function used to restore from a QMFF held in a ForceField */
-void QMFF::_pvt_restore(const SireFF::ForceField &ffield)
-{
-    if (not ffield->isA<QMFF>())
-        SireFF::detail::throwForceFieldRestoreBug(this->what(), ffield->what());
-        
-    QMFF::operator=( ffield->asA<QMFF>() );
 }
 
 /** Function used to update the symbols representing the forcefield

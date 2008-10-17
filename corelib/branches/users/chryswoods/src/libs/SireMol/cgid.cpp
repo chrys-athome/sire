@@ -50,8 +50,8 @@
 #include "atom.h"
 
 #include "molecules.h"
-#include "molgroup.h"
-#include "molgroups.h"
+#include "moleculegroup.h"
+#include "moleculegroups.h"
 
 #include "SireMol/errors.h"
 
@@ -208,7 +208,7 @@ CutGroup CGID::selectFrom(const Molecules &molecules) const
     \throw SireMol::missing_cutgroup
     \throw SireMol::duplicate_cutgroup
 */
-CutGroup CGID::selectFrom(const MolGroup &molgroup) const
+CutGroup CGID::selectFrom(const MoleculeGroup &molgroup) const
 {
     return CGID::selectFrom(molgroup.molecules());
 }
@@ -219,7 +219,7 @@ CutGroup CGID::selectFrom(const MolGroup &molgroup) const
     \throw SireMol::missing_cutgroup
 */
 QHash< MolNum,Selector<CutGroup> >
-CGID::selectAllFrom(const MolGroup &molgroup) const
+CGID::selectAllFrom(const MoleculeGroup &molgroup) const
 {
     return CGID::selectAllFrom(molgroup.molecules());
 }

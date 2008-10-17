@@ -295,7 +295,7 @@ protected:
     MoleculeGroup readMols(const QByteArray &data,
                            const PropertyMap &map) const;
 
-    QByteArray writeMols(const MolGroup &molgroup,
+    QByteArray writeMols(const MoleculeGroup &molgroup,
                          const PropertyMap &map) const;
 
     QByteArray writeMols(const Molecules &molecules,

@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QMutex>
+
 #include "qmprogram.h"
 #include "latticecharges.h"
 
@@ -39,30 +41,30 @@ using namespace SireBase;
 using namespace SireStream;
 
 ///////
-/////// Implementation of QMProg
+/////// Implementation of QMProgram
 ///////
 
-static const RegisterMetaType<QMProg> r_qmprog( MAGIC_ONLY,
-                                                "Squire::QMProg" );
+static const RegisterMetaType<QMProgram> r_qmprog( MAGIC_ONLY,
+                                                   "Squire::QMProgram" );
 
 /** Serialise to a binary datastream */
-QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const QMProg &qmprog)
+QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const QMProgram &qmprog)
 {
     writeHeader(ds, r_qmprog, 1);
     
-    ds << static_cast<const PropertyBase&>(qmprog);
+    ds << static_cast<const Property&>(qmprog);
     
     return ds;
 }
 
 /** Extract from a binary datastream */
-QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, QMProg &qmprog)
+QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, QMProgram &qmprog)
 {
     VersionID v = readHeader(ds, r_qmprog);
     
     if (v == 1)
     {
-        ds >> static_cast<PropertyBase&>(qmprog);
+        ds >> static_cast<Property&>(qmprog);
     }
     else
         throw version_error(v, "1", r_qmprog, CODELOC);
@@ -71,106 +73,7 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, QMProg &qmprog)
 }
 
 /** Constructor */
-QMProg::QMProg() : PropertyBase()
-{}
-
-/** Copy constructor */
-QMProg::QMProg(const QMProg &other) : PropertyBase(other)
-{}
-
-/** Destructor */
-QMProg::~QMProg()
-{}
-
-/** Return the QM energy of the molecules 'molecules' surrounded by the 
-    field of point charges 'lattice_charges' */
-double QMProg::calculateEnergy(const QMPotential::Molecules &molecules,
-                               const LatticeCharges &lattice_charges) const
-{
-    throw SireError::unsupported( QObject::tr(
-        "This QM program (%1) does not support the use of point lattice charges.")
-            .arg(this->what()), CODELOC );
-}
-
-/** Return the command file that would be used to calculate the energy
-    of the molecules in 'molecules' in the field of point charges in
-    'lattice_charges' */
-QString QMProg::energyCommandFile(const QMPotential::Molecules &molecules,
-                                  const LatticeCharges &lattice_charges) const
-{
-    throw SireError::unsupported( QObject::tr(
-        "This QM program (%1) does not support the use of point lattice charges.")
-            .arg(this->what()), CODELOC );
-}
-
-/** Return the command file that would be used to calculate the forces
-    of the molecules in 'molecules' in the field of point charges in
-    'lattice_charges' (and the forces on the charges themselves) */
-QString QMProg::forceCommandFile(const QMPotential::Molecules &molecules,
-                                 const LatticeCharges &lattice_charges) const
-{
-    throw SireError::unsupported( QObject::tr(
-        "This QM program (%1) does not support the use of point lattice charges.")
-            .arg(this->what()), CODELOC );
-}
-
-///////
-/////// Implementation of QMProgram
-///////
-
-static const RegisterMetaType<QMProgram> r_qmprogram;
-
-/** Serialise a QMProgram to a binary datastream */
-QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const QMProgram &qmprogram)
-{
-    writeHeader(ds, r_qmprogram, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << static_cast<const Property&>(qmprogram);
-    
-    return ds;
-}
-
-/** Deserialise a QMProgram from a binary datastream */
-QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, QMProgram &qmprogram)
-{
-    VersionID v = readHeader(ds, r_qmprogram);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        sds >> static_cast<Property&>(qmprogram);
-    }
-    else
-        throw version_error(v, "1", r_qmprogram, CODELOC);
-        
-    return ds;
-}
-
-static QMProgram *_pvt_shared_null = 0;
-
-const QMProgram& QMProgram::shared_null()
-{
-    if (_pvt_shared_null == 0)
-        _pvt_shared_null = new QMProgram( NullQM() );
-        
-    return *_pvt_shared_null;
-}
-
-/** Null constructor - constructs a simple, empty QMProg */
-QMProgram::QMProgram() : Property(QMProgram::shared_null())
-{}
-
-/** Construct from a passed property
-
-    \throw SireError::invalid_cast
-*/
-QMProgram::QMProgram(const PropertyBase &property) : Property(property.asA<QMProg>())
-{}
-
-/** Construct from passed QMProg */
-QMProgram::QMProgram(const QMProg &QMProgram) : Property(QMProgram)
+QMProgram::QMProgram() : Property()
 {}
 
 /** Copy constructor */
@@ -181,71 +84,36 @@ QMProgram::QMProgram(const QMProgram &other) : Property(other)
 QMProgram::~QMProgram()
 {}
 
-/** Copy assignment operator from a Property object
-
-    \throw SireError::invalid_cast
-*/
-QMProgram& QMProgram::operator=(const PropertyBase &property)
+/** Return the QM energy of the molecules 'molecules' surrounded by the 
+    field of point charges 'lattice_charges' */
+double QMProgram::calculateEnergy(const QMPotential::Molecules &molecules,
+                                  const LatticeCharges &lattice_charges) const
 {
-    Property::operator=(property.asA<QMProg>());
-    return *this;
+    throw SireError::unsupported( QObject::tr(
+        "This QM program (%1) does not support the use of point lattice charges.")
+            .arg(this->what()), CODELOC );
 }
 
-/** Copy assignment operator from another QMProg */
-QMProgram& QMProgram::operator=(const QMProg &other)
+/** Return the command file that would be used to calculate the energy
+    of the molecules in 'molecules' in the field of point charges in
+    'lattice_charges' */
+QString QMProgram::energyCommandFile(const QMPotential::Molecules &molecules,
+                                  const LatticeCharges &lattice_charges) const
 {
-    Property::operator=(other);
-    return *this;
+    throw SireError::unsupported( QObject::tr(
+        "This QM program (%1) does not support the use of point lattice charges.")
+            .arg(this->what()), CODELOC );
 }
 
-/** Dereference this pointer */
-const QMProg* QMProgram::operator->() const
+/** Return the command file that would be used to calculate the forces
+    of the molecules in 'molecules' in the field of point charges in
+    'lattice_charges' (and the forces on the charges themselves) */
+QString QMProgram::forceCommandFile(const QMPotential::Molecules &molecules,
+                                 const LatticeCharges &lattice_charges) const
 {
-    return static_cast<const QMProg*>(&(d()));
-}
-
-/** Dereference this pointer */
-const QMProg& QMProgram::operator*() const
-{
-    return static_cast<const QMProg&>(d());
-}
-
-/** Return a read-only reference to the contained object */
-const QMProg& QMProgram::read() const
-{
-    return static_cast<const QMProg&>(d());
-}
-
-/** Return a modifiable reference to the contained object.
-    This will trigger a copy of the object if more than
-    one pointer is pointing to it. */
-QMProg& QMProgram::edit()
-{
-    return static_cast<QMProg&>(d());
-}
-    
-/** Return a raw pointer to the QMProg object */
-const QMProg* QMProgram::data() const
-{
-    return static_cast<const QMProg*>(&(d()));
-}
-
-/** Return a raw pointer to the QMProg object */
-const QMProg* QMProgram::constData() const
-{
-    return static_cast<const QMProg*>(&(d()));
-}
-    
-/** Return a raw pointer to the QMProg object */
-QMProg* QMProgram::data()
-{
-    return static_cast<QMProg*>(&(d()));
-}
-
-/** Automatic casting operator */
-QMProgram::operator const QMProg&() const
-{
-    return static_cast<const QMProg&>(d());
+    throw SireError::unsupported( QObject::tr(
+        "This QM program (%1) does not support the use of point lattice charges.")
+            .arg(this->what()), CODELOC );
 }
 
 ///////
@@ -258,7 +126,7 @@ static const RegisterMetaType<NullQM> r_nullqm;
 QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const NullQM &nullqm)
 {
     writeHeader(ds, r_nullqm, 1);
-    ds << static_cast<const QMProg&>(nullqm);
+    ds << static_cast<const QMProgram&>(nullqm);
     
     return ds;
 }
@@ -270,7 +138,7 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, NullQM &nullqm)
     
     if (v == 1)
     {
-        ds >> static_cast<QMProg&>(nullqm);
+        ds >> static_cast<QMProgram&>(nullqm);
     }
     else
         throw version_error(v, "1", r_nullqm, CODELOC);
@@ -279,12 +147,27 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, NullQM &nullqm)
 }
 
 /** Constructor */
-NullQM::NullQM() : ConcreteProperty<NullQM,QMProg>()
+NullQM::NullQM() : ConcreteProperty<NullQM,QMProgram>()
 {}
+
+static SharedPolyPointer<NullQM> shared_null;
+
+const NullQM& QMProgram::null()
+{
+    if (shared_null.constData() == 0)
+    {
+        QMutexLocker lkr( SireBase::globalLock() );
+        
+        if (shared_null.constData() == 0)
+            shared_null = new NullQM();
+    }
+    
+    return *(shared_null.constData());
+}
 
 /** Copy constructor */
 NullQM::NullQM(const NullQM &other)
-         : ConcreteProperty<NullQM,QMProg>(other)
+         : ConcreteProperty<NullQM,QMProgram>(other)
 {}
 
 /** Destructor */

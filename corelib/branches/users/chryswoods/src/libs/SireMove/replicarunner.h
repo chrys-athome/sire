@@ -37,18 +37,14 @@
 
 SIRE_BEGIN_HEADER
 
-nameReplicaRunner SireMove
+namespace SireMove
 {
 class ReplicaRunner;
-class ReplicaRunnerBase;
 
 class BasicRepRunner;
 class MPIRepRunner;
 
 }
-
-QDataStream& operator<<(QDataStream&, const SireMove::ReplicaRunnerBase&);
-QDataStream& operator>>(QDataStream&, SireMove::ReplicaRunnerBase&);
 
 QDataStream& operator<<(QDataStream&, const SireMove::ReplicaRunner&);
 QDataStream& operator>>(QDataStream&, SireMove::ReplicaRunner&);
@@ -59,7 +55,7 @@ QDataStream& operator>>(QDataStream&, SireMove::BasicRepRunner&);
 QDataStream& operator<<(QDataStream&, const SireMove::MPIRepRunner&);
 QDataStream& operator>>(QDataStream&, SireMove::MPIRepRunner&);
 
-nameReplicaRunner SireMove
+namespace SireMove
 {
 
 using SireMPI::MPINodes;
@@ -69,26 +65,28 @@ using SireMPI::MPINodes;
     
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT ReplicaRunnerBase : public SireBase::PropertyBase
+class SIREMOVE_EXPORT ReplicaRunner : public SireBase::Property
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const SireMove::ReplicaRunnerBase&);
-friend QDataStream& ::operator>>(QDataStream&, SireMove::ReplicaRunnerBase&);
+friend QDataStream& ::operator<<(QDataStream&, const SireMove::ReplicaRunner&);
+friend QDataStream& ::operator>>(QDataStream&, SireMove::ReplicaRunner&);
 
 public:
-    ReplicaRunnerBase();
-    ReplicaRunnerBase(const ReplicaRunnerBase &other);
+    ReplicaRunner();
+    ReplicaRunner(const ReplicaRunner &other);
     
-    virtual ~ReplicaRunnerBase();
+    virtual ~ReplicaRunner();
     
     static const char* typeName()
     {
-        return "SireMove::ReplicaRunnerBase";
+        return "SireMove::ReplicaRunner";
     }
     
-    virtual ReplicaRunnerBase* clone() const=0;
+    virtual ReplicaRunner* clone() const=0;
     
     virtual Replicas run(const Replicas &replicas, bool record_stats=true) const=0;
+
+    static const BasicRepRunner& null();
 };
 
 /** This is a basic Replica runner that just simulates the replicas
@@ -97,7 +95,7 @@ public:
     @author Christopher Woods
 */
 class SIREMOVE_EXPORT BasicRepRunner
-         : public SireBase::ConcreteProperty<BasicRepRunner,ReplicaRunnerBase>
+         : public SireBase::ConcreteProperty<BasicRepRunner,ReplicaRunner>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const BasicRepRunner&);
@@ -133,7 +131,7 @@ public:
     @author Christopher Woods
 */
 class SIREMOVE_EXPORT MPIRepRunner
-         : public SireBase::ConcreteProperty<MPIRepRunner,ReplicaRunnerBase>
+         : public SireBase::ConcreteProperty<MPIRepRunner,ReplicaRunner>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MPIRepRunner&);
@@ -169,60 +167,18 @@ private:
     MPINodes nodes;
 };
 
-/** This is the user-handle class that is used to hold the dynamic ReplicaRunner classes.
-
-    @author Christopher Woods
-*/
-class SIREVOL_EXPORT ReplicaRunner : public SireBase::Property
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const ReplicaRunner&);
-friend QDataStream& ::operator>>(QDataStream&, ReplicaRunner&);
-
-public:
-    ReplicaRunner();
-    ReplicaRunner(const ReplicaRunnerBase &other);
-    ReplicaRunner(const SireBase::PropertyBase &property);
-
-    ReplicaRunner(const ReplicaRunner &other);
-
-    ~ReplicaRunner();
-
-    virtual ReplicaRunner& operator=(const ReplicaRunnerBase &other);
-    virtual ReplicaRunner& operator=(const SireBase::PropertyBase &other);
-
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ReplicaRunner>() );
-    }
-
-    const ReplicaRunnerBase* operator->() const;
-    const ReplicaRunnerBase& operator*() const;
-    
-    const ReplicaRunnerBase& read() const;
-    ReplicaRunnerBase& edit();
-    
-    const ReplicaRunnerBase* data() const;
-    const ReplicaRunnerBase* constData() const;
-    
-    ReplicaRunnerBase* data();
-    
-    operator const ReplicaRunnerBase&() const;
-
-    static const ReplicaRunner& shared_null();
-};
+typedef SireBase::PropPtr<ReplicaRunner> RepRunnerPtr;
 
 }
 
-Q_DECLARE_METATYPE( SireBase::ReplicaRunnerBase )
-Q_DECLARE_METATYPE( SireBase::BasicRepRunner )
-Q_DECLARE_METATYPE( SireBase::MPIRepRunner )
+Q_DECLARE_METATYPE( SireMove::BasicRepRunner )
+Q_DECLARE_METATYPE( SireMove::MPIRepRunner )
 
-SIRE_EXPOSE_CLASS( SireMove::ReplicaRunnerBase )
+SIRE_EXPOSE_CLASS( SireMove::ReplicaRunner )
 SIRE_EXPOSE_CLASS( SireMove::BasicRepRunner )
 SIRE_EXPOSE_CLASS( SireMove::MPIRepRunner )
 
-SIRE_EXPOSE_PROPERTY( SireMove::ReplicaRunner, SireMove::ReplicaRunnerBase )
+SIRE_EXPOSE_PROPERTY( SireMove::RepRunnerPtr, SireMove::ReplicaRunner )
 
 SIRE_END_HEADER
 

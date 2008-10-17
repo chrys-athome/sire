@@ -181,7 +181,7 @@ public:
 
     FFMolecules3D();
     
-    FFMolecules3D(const MolGroup &molgroup, PTNL &forcefield,
+    FFMolecules3D(const MoleculeGroup &molgroup, PTNL &forcefield,
                   const PropertyMap &map = PropertyMap());
     
     FFMolecules3D(const FFMolecules3D<PTNL> &other);
@@ -423,10 +423,10 @@ SIRE_OUTOFLINE_TEMPLATE
 FFMolecules3D<PTNL>::FFMolecules3D() : FFMolecules<PTNL>()
 {}
 
-/** Construct by converting a MolGroup */
+/** Construct by converting a MoleculeGroup */
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
-FFMolecules3D<PTNL>::FFMolecules3D(const MolGroup &molgroup,
+FFMolecules3D<PTNL>::FFMolecules3D(const MoleculeGroup &molgroup,
                                    PTNL &forcefield, const PropertyMap &map)
                     : FFMolecules<PTNL>(molgroup, forcefield, map)
 {

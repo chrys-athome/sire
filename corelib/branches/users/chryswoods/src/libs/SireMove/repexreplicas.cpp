@@ -366,7 +366,7 @@ void RepExReplica::setSystem(const System &system)
 
     \throw SireBase::missing_property
 */
-void RepExReplica::setMoves(const MovesBase &moves)
+void RepExReplica::setMoves(const Moves &moves)
 {
     RepExReplica old_state(*this);
     
@@ -402,7 +402,7 @@ void RepExReplica::setEnergyComponent(const Symbol &symbol)
                 .arg(symbol.toString(), system().toString(),
                      Sire::toString(system().components())), CODELOC );
 
-    Moves mvs = Replica::moves();
+    MovesPtr mvs = Replica::moves();
     
     mvs.edit().setEnergyComponent(symbol);
     
@@ -417,7 +417,7 @@ void RepExReplica::setSpaceProperty(const PropertyName &spaceproperty)
     if (spaceproperty == space_property)
         return;
         
-    Moves mvs = Replica::moves();
+    MovesPtr mvs = Replica::moves();
     
     mvs.edit().setSpaceProperty(spaceproperty);
     
@@ -473,7 +473,7 @@ void RepExReplica::setTemperature(const Temperature &t)
 {
     if (this->temperature() != t)
     {
-        Moves mvs = Replica::moves();
+        MovesPtr mvs = Replica::moves();
         mvs.edit().setTemperature(t);
         this->setMoves(mvs);
     }
@@ -488,7 +488,7 @@ void RepExReplica::setPressure(const Pressure &p)
 {
     if (this->pressure() != p)
     {
-        Moves mvs = Replica::moves();
+        MovesPtr mvs = Replica::moves();
         mvs.edit().setPressure(p);
         this->setMoves(mvs);
     }
@@ -503,7 +503,7 @@ void RepExReplica::setFugacity(const Pressure &f)
 {
     if (this->fugacity() != f)
     {
-        Moves mvs = Replica::moves();
+        MovesPtr mvs = Replica::moves();
         mvs.edit().setFugacity(f);
         this->setMoves(mvs);
     }
@@ -518,7 +518,7 @@ void RepExReplica::setChemicalPotential(const MolarEnergy &c)
 {
     if (this->chemicalPotential() != c)
     {
-        Moves mvs = Replica::moves();
+        MovesPtr mvs = Replica::moves();
         mvs.edit().setChemicalPotential(c);
         this->setMoves(mvs);
     }

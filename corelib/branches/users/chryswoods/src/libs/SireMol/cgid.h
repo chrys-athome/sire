@@ -58,7 +58,7 @@ class CGIdentifier;
 class CutGroup;
 
 class Molecules;
-class MolGroup;
+class MoleculeGroup;
 class MolGroupsBase;
 class MolNum;
 
@@ -108,9 +108,9 @@ public:
     virtual QHash< MolNum,Selector<CutGroup> >
                 selectAllFrom(const Molecules &molecules) const;
 
-    virtual CutGroup selectFrom(const MolGroup &molgroup) const;
+    virtual CutGroup selectFrom(const MoleculeGroup &molgroup) const;
     virtual QHash< MolNum,Selector<CutGroup> >
-                selectAllFrom(const MolGroup &molgroup) const;
+                selectAllFrom(const MoleculeGroup &molgroup) const;
     
     virtual CutGroup selectFrom(const MolGroupsBase &molgroups) const;
     virtual QHash< MolNum,Selector<CutGroup> > 

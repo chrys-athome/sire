@@ -125,7 +125,7 @@ G1FF::~G1FF()
 
     \throw SireMol::missing_group
 */
-const MolGroup& G1FF::at(MGNum mgnum) const
+const MoleculeGroup& G1FF::at(MGNum mgnum) const
 {
     if (molgroup.number() != mgnum)
         throw SireMol::missing_group( QObject::tr(
@@ -163,7 +163,7 @@ void G1FF::assertContains(MGNum mgnum) const
 
     \throw SireMol::missing_group
 */
-const MolGroup& G1FF::getGroup(MGNum mgnum) const
+const MoleculeGroup& G1FF::getGroup(MGNum mgnum) const
 {
     G1FF::assertContains(mgnum);
     return molgroup;
@@ -174,7 +174,7 @@ const MolGroup& G1FF::getGroup(MGNum mgnum) const
     \throw SireMol::missing_group
 */
 void G1FF::getGroups(const QList<MGNum> &mgnums,
-                     QVarLengthArray<const MolGroup*,10> &groups) const
+                     QVarLengthArray<const MoleculeGroup*,10> &groups) const
 {
     groups.clear();
     
@@ -186,9 +186,9 @@ void G1FF::getGroups(const QList<MGNum> &mgnums,
 }
 
 /** Return pointers to all of the groups in this forcefield */
-QHash<MGNum,const MolGroup*> G1FF::getGroups() const
+QHash<MGNum,const MoleculeGroup*> G1FF::getGroups() const
 {
-    QHash<MGNum,const MolGroup*> groups;
+    QHash<MGNum,const MoleculeGroup*> groups;
     groups.reserve(1);
     groups.insert( molgroup.number(), &molgroup );
     
@@ -220,7 +220,7 @@ void G1FF::group_setName(quint32 i, const QString &new_name)
     
     \throw SireMol::duplicate_atom
 */
-void G1FF::assertNoOverlap(const MolGroup &group,
+void G1FF::assertNoOverlap(const MoleculeGroup &group,
                            const MoleculeView &molview) const
 {
     if (group.intersects(molview))
@@ -371,8 +371,7 @@ void G1FF::group_add(quint32 i, const Molecules &molecules,
     }
     
     //save the old state of this forcefield
-    ForceField old_state = *this;
-    old_state.detach();
+    boost::shared_ptr<FF> old_state( this->clone() );
     
     try
     {
@@ -405,7 +404,7 @@ void G1FF::group_add(quint32 i, const Molecules &molecules,
     }
     catch(...)
     {
-        this->_pvt_restore(old_state);
+        this->copy(*old_state);
         throw;
     }
 }
@@ -418,7 +417,7 @@ void G1FF::group_add(quint32 i, const Molecules &molecules,
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void G1FF::group_add(quint32 i, const MolGroup &new_group, 
+void G1FF::group_add(quint32 i, const MoleculeGroup &new_group, 
                      const PropertyMap &map)
 {
     G1FF::group_add(i, new_group.molecules(), map);
@@ -537,8 +536,7 @@ QList<ViewsOfMol> G1FF::group_addIfUnique(quint32 i, const Molecules &molecules,
         
     FFMolGroupPvt old_molgroup = molgroup;
         
-    ForceField old_state = *this;
-    old_state.detach();
+    boost::shared_ptr<FF> old_state( this->clone() );
     
     try
     {
@@ -570,7 +568,7 @@ QList<ViewsOfMol> G1FF::group_addIfUnique(quint32 i, const Molecules &molecules,
     }
     catch(...)
     {
-        this->_pvt_restore(old_state);
+        this->copy(*old_state);
         throw;
     }
     
@@ -585,7 +583,7 @@ QList<ViewsOfMol> G1FF::group_addIfUnique(quint32 i, const Molecules &molecules,
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-QList<ViewsOfMol> G1FF::group_addIfUnique(quint32 i, const MolGroup &new_group, 
+QList<ViewsOfMol> G1FF::group_addIfUnique(quint32 i, const MoleculeGroup &new_group, 
                                           const PropertyMap &map)
 {
     return G1FF::group_addIfUnique(i, new_group.molecules(), map);
@@ -652,8 +650,7 @@ QList<ViewsOfMol> G1FF::group_remove(quint32 i, const Molecules &molecules)
 {
     assertValidGroup(i);
     
-    ForceField old_state = *this;
-    old_state.detach();
+    boost::shared_ptr<FF> old_state( this->clone() );
     
     try
     {
@@ -673,7 +670,7 @@ QList<ViewsOfMol> G1FF::group_remove(quint32 i, const Molecules &molecules)
     }
     catch(...)
     {
-        this->_pvt_restore(old_state);
+        this->copy(*old_state);
         throw;
     }
     
@@ -682,7 +679,7 @@ QList<ViewsOfMol> G1FF::group_remove(quint32 i, const Molecules &molecules)
 
 /** Remove all of the molecules in the molecule group 'molgroup' from this
     forcefield */
-QList<ViewsOfMol> G1FF::group_remove(quint32 i, const MolGroup &new_group)
+QList<ViewsOfMol> G1FF::group_remove(quint32 i, const MoleculeGroup &new_group)
 {
     return G1FF::group_remove(i, new_group.molecules());
 }
@@ -748,8 +745,7 @@ QList<ViewsOfMol> G1FF::group_removeAll(quint32 i, const Molecules &molecules)
 {
     assertValidGroup(i);
     
-    ForceField old_state = *this;
-    old_state.detach();
+    boost::shared_ptr<FF> old_state( this->clone() );
     
     try
     {
@@ -766,7 +762,7 @@ QList<ViewsOfMol> G1FF::group_removeAll(quint32 i, const Molecules &molecules)
     }
     catch(...)
     {
-        this->_pvt_restore(old_state);
+        this->copy(*old_state);
         throw;
     }
     
@@ -775,7 +771,7 @@ QList<ViewsOfMol> G1FF::group_removeAll(quint32 i, const Molecules &molecules)
 
 /** Remove all of the molecules in the molecule group 'molgroup' from this
     forcefield */
-QList<ViewsOfMol> G1FF::group_removeAll(quint32 i, const MolGroup &new_group)
+QList<ViewsOfMol> G1FF::group_removeAll(quint32 i, const MoleculeGroup &new_group)
 {
     return G1FF::group_removeAll(i, new_group.molecules());
 }
@@ -815,8 +811,7 @@ QList<ViewsOfMol> G1FF::group_remove(quint32 i, const QSet<MolNum> &molnums)
 {
     assertValidGroup(i);
     
-    ForceField old_state = *this;
-    old_state.detach();
+    boost::shared_ptr<FF> old_state( this->clone() );
     
     try
     {
@@ -836,7 +831,7 @@ QList<ViewsOfMol> G1FF::group_remove(quint32 i, const QSet<MolNum> &molnums)
     }
     catch(...)
     {
-        this->_pvt_restore(old_state);
+        this->copy(*old_state);
         throw;
     }
     
@@ -910,7 +905,7 @@ QList<Molecule> G1FF::group_update(quint32 i, const Molecules &molecules)
 
 /** Update the molecule group in this forcefield so that it has
     the same molecule versions as in 'new_group' */
-QList<Molecule> G1FF::group_update(quint32 i, const MolGroup &new_group)
+QList<Molecule> G1FF::group_update(quint32 i, const MoleculeGroup &new_group)
 {
     return G1FF::group_update(i, new_group.molecules());
 }
@@ -924,8 +919,7 @@ bool G1FF::group_setContents(quint32 i, const MoleculeView &molview,
 {
     assertValidGroup(i);
     
-    ForceField old_state = *this;
-    old_state.detach();
+    boost::shared_ptr<FF> old_state( this->clone() );
     
     try
     {
@@ -943,7 +937,7 @@ bool G1FF::group_setContents(quint32 i, const MoleculeView &molview,
     }
     catch(...)
     {
-        this->_pvt_restore(old_state);
+        this->copy(*old_state);
         throw;
     }
     
@@ -960,8 +954,7 @@ bool G1FF::group_setContents(quint32 i, const ViewsOfMol &molviews,
     if (not allow_overlap_of_atoms)
         molviews.assertNoOverlap();
         
-    ForceField old_state = *this;
-    old_state.detach();
+    boost::shared_ptr<FF> old_state( this->clone() );
     
     try
     {
@@ -979,7 +972,7 @@ bool G1FF::group_setContents(quint32 i, const ViewsOfMol &molviews,
     }
     catch(...)
     {
-        this->_pvt_restore(old_state);
+        this->copy(*old_state);
         throw;
     }
     
@@ -1002,8 +995,7 @@ bool G1FF::group_setContents(quint32 i, const Molecules &molecules,
         }
     }
     
-    ForceField old_state = *this;
-    old_state.detach();
+    boost::shared_ptr<FF> old_state( this->clone() );
     
     try
     {
@@ -1041,7 +1033,7 @@ bool G1FF::group_setContents(quint32 i, const Molecules &molecules,
     }
     catch(...)
     {
-        this->_pvt_restore(old_state);
+        this->copy(*old_state);
         throw;
     }
     
@@ -1050,14 +1042,14 @@ bool G1FF::group_setContents(quint32 i, const Molecules &molecules,
 
 /** Set the contents of this forcefield so that it contains only
     the molecules in 'molgroup' */
-bool G1FF::group_setContents(quint32 i, const MolGroup &new_group, 
+bool G1FF::group_setContents(quint32 i, const MoleculeGroup &new_group, 
                              const PropertyMap &map)
 {
     assertValidGroup(i);
     
     if (not allow_overlap_of_atoms)
     {
-        for (MolGroup::const_iterator it = new_group.constBegin();
+        for (MoleculeGroup::const_iterator it = new_group.constBegin();
              it != new_group.constEnd();
              ++it)
         {
@@ -1065,8 +1057,7 @@ bool G1FF::group_setContents(quint32 i, const MolGroup &new_group,
         }
     }
     
-    ForceField old_state = *this;
-    old_state.detach();
+    boost::shared_ptr<FF> old_state( this->clone() );
     
     try
     {
@@ -1074,7 +1065,7 @@ bool G1FF::group_setContents(quint32 i, const MolGroup &new_group,
         
         if (not changed)
         {
-            for (MolGroup::const_iterator it = new_group.constBegin();
+            for (MoleculeGroup::const_iterator it = new_group.constBegin();
                  it != new_group.constEnd();
                  ++it)
             {
@@ -1090,7 +1081,7 @@ bool G1FF::group_setContents(quint32 i, const MolGroup &new_group,
         {
             this->_pvt_removedAll();
             
-            for (MolGroup::const_iterator it = new_group.constBegin();
+            for (MoleculeGroup::const_iterator it = new_group.constBegin();
                  it != new_group.constEnd();
                  ++it)
             {
@@ -1104,7 +1095,7 @@ bool G1FF::group_setContents(quint32 i, const MolGroup &new_group,
     }
     catch(...)
     {
-        this->_pvt_restore(old_state);
+        this->copy(*old_state);
         throw;
     }
     
@@ -1126,7 +1117,7 @@ void G1FF::add(const Molecules &molecules, const PropertyMap &map)
     FF::add(molecules, MGIdx(0), map);
 }
 
-void G1FF::add(const MolGroup &group, const PropertyMap &map)
+void G1FF::add(const MoleculeGroup &group, const PropertyMap &map)
 {
     FF::add(group, MGIdx(0), map);
 }
@@ -1146,7 +1137,7 @@ void G1FF::addIfUnique(const Molecules &molecules, const PropertyMap &map)
     FF::addIfUnique(molecules, MGIdx(0), map);
 }
 
-void G1FF::addIfUnique(const MolGroup &group, const PropertyMap &map)
+void G1FF::addIfUnique(const MoleculeGroup &group, const PropertyMap &map)
 {
     FF::addIfUnique(group, MGIdx(0), map);
 }
@@ -1166,7 +1157,7 @@ void G1FF::add(const Molecules &molecules)
     FF::add(molecules, MGIdx(0));
 }
 
-void G1FF::add(const MolGroup &group)
+void G1FF::add(const MoleculeGroup &group)
 {
     FF::add(group, MGIdx(0));
 }
@@ -1186,7 +1177,7 @@ void G1FF::addIfUnique(const Molecules &molecules)
     FF::addIfUnique(molecules, MGIdx(0));
 }
 
-void G1FF::addIfUnique(const MolGroup &group)
+void G1FF::addIfUnique(const MoleculeGroup &group)
 {
     FF::addIfUnique(group, MGIdx(0));
 }
@@ -1211,7 +1202,7 @@ void G1FF::remove(const Molecules &molecules)
     FF::remove(molecules, MGIdx(0));
 }
 
-void G1FF::remove(const MolGroup &group)
+void G1FF::remove(const MoleculeGroup &group)
 {
     FF::remove(group, MGIdx(0));
 }
@@ -1231,7 +1222,7 @@ void G1FF::removeAll(const Molecules &molecules)
     FF::removeAll(molecules, MGIdx(0));
 }
 
-void G1FF::removeAll(const MolGroup &group)
+void G1FF::removeAll(const MoleculeGroup &group)
 {
     FF::removeAll(group, MGIdx(0));
 }
@@ -1261,7 +1252,7 @@ void G1FF::setContents(const Molecules &molecules)
     FF::setContents(MGIdx(0), molecules);
 }
 
-void G1FF::setContents(const MolGroup &group)
+void G1FF::setContents(const MoleculeGroup &group)
 {
     FF::setContents(MGIdx(0), group);
 }
@@ -1281,7 +1272,7 @@ void G1FF::setContents(const Molecules &molecules, const PropertyMap &map)
     FF::setContents(MGIdx(0), molecules, map);
 }
 
-void G1FF::setContents(const MolGroup &group, const PropertyMap &map)
+void G1FF::setContents(const MoleculeGroup &group, const PropertyMap &map)
 {
     FF::setContents(MGIdx(0), group, map);
 }

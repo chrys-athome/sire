@@ -228,7 +228,7 @@ IntraScaledParameters<SCALE_FACTORS>::IntraScaledParameters(
                               const PropertyName &scale_property)
 {
     const SireBase::Property &property = molecule.property(scale_property);
-    sclfactors = property->asA<SCALE_FACTORS>();
+    sclfactors = property.asA<SCALE_FACTORS>();
 }
 
 /** Construct by combining some AtomicParameters3D with some scale factors */

@@ -65,7 +65,7 @@ friend QDataStream& ::operator>>(QDataStream&, MPISimWorker&);
 
 public:
     MPISimWorker();
-    MPISimWorker(const System &system, const MovesBase &moves,
+    MPISimWorker(const System &system, const Moves &moves,
                  int nmoves, bool record_stats,
                  int chunk_size=100);
                  
@@ -94,7 +94,7 @@ public:
     }
 
     System system() const;
-    Moves moves() const;
+    MovesPtr moves() const;
     
     int nMoves() const;
     int nCompleted() const;
@@ -115,7 +115,7 @@ private:
     System sim_system;
     
     /** The moves being performed on the system */
-    Moves sim_moves;
+    MovesPtr sim_moves;
     
     /** The number of moves to perform */
     int nmoves;

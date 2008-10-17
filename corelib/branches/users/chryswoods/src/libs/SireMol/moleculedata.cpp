@@ -783,9 +783,9 @@ void MoleculeData::removeProperty(const QString &key)
     
     \throw SireBase::missing_property
 */
-Property MoleculeData::takeProperty(const QString &key)
+PropertyPtr MoleculeData::takeProperty(const QString &key)
 {
-    Property value = this->property(key);
+    PropertyPtr value = this->property(key);
     this->removeProperty(key);
     
     return value;
@@ -796,9 +796,9 @@ Property MoleculeData::takeProperty(const QString &key)
     
     \throw SireBase::missing_property
 */
-Property MoleculeData::takeMetadata(const QString &metakey)
+PropertyPtr MoleculeData::takeMetadata(const QString &metakey)
 {
-    Property value = this->metadata(metakey);
+    PropertyPtr value = this->metadata(metakey);
     this->removeMetadata(metakey);
     
     return value;
@@ -809,9 +809,9 @@ Property MoleculeData::takeMetadata(const QString &metakey)
     
     \throw SireBase::missing_property
 */
-Property MoleculeData::takeMetadata(const QString &key, const QString &metakey)
+PropertyPtr MoleculeData::takeMetadata(const QString &key, const QString &metakey)
 {
-    Property value = this->metadata(key, metakey);
+    PropertyPtr value = this->metadata(key, metakey);
     this->removeMetadata(key,metakey);
     
     return value;

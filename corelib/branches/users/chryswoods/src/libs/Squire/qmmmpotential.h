@@ -48,7 +48,7 @@ QDataStream& operator>>(QDataStream&, Squire::QMMMPotential<QM,MM>&);
 namespace SireMol
 {
 class PartialMolecule;
-class MolGroup;
+class MoleculeGroup;
 }
 
 namespace Squire
@@ -57,7 +57,7 @@ namespace Squire
 using SireBase::PropertyMap;
 
 using SireMol::PartialMolecule;
-using SireMol::MolGroup;
+using SireMol::MoleculeGroup;
 
 /** This is a QM/MM forcefield that calculates the energy
     of QM molecules in a field of MM point charges
@@ -119,7 +119,7 @@ public:
                    const PropertyMap &map = PropertyMap());
     
     typename QMMMPotential<QM,MM>::QMMolecules 
-    parameteriseQM(const MolGroup &molecules,
+    parameteriseQM(const MoleculeGroup &molecules,
                    const PropertyMap &map = PropertyMap());
 
     typename QMMMPotential<QM,MM>::MMParameters 
@@ -143,7 +143,7 @@ public:
                    const PropertyMap &map = PropertyMap());
     
     typename QMMMPotential<QM,MM>::MMMolecules 
-    parameteriseMM(const MolGroup &molecules,
+    parameteriseMM(const MoleculeGroup &molecules,
                    const PropertyMap &map = PropertyMap());
 
 };
@@ -270,7 +270,7 @@ QMMMPotential<QM,MM>::parameteriseQM(const PartialMolecule &molecule,
 template<class QM, class MM>
 SIRE_OUTOFLINE_TEMPLATE
 typename QMMMPotential<QM,MM>::QMMolecules 
-QMMMPotential<QM,MM>::parameteriseQM(const MolGroup &molecules,
+QMMMPotential<QM,MM>::parameteriseQM(const MoleculeGroup &molecules,
                                      const PropertyMap &map)
 {
     return QM::parameterise(molecules, map);
@@ -363,7 +363,7 @@ QMMMPotential<QM,MM>::parameteriseMM(const PartialMolecule &molecule,
 template<class QM, class MM>
 SIRE_OUTOFLINE_TEMPLATE
 typename QMMMPotential<QM,MM>::MMMolecules 
-QMMMPotential<QM,MM>::parameteriseMM(const MolGroup &molecules,
+QMMMPotential<QM,MM>::parameteriseMM(const MoleculeGroup &molecules,
                                      const PropertyMap &map)
 {
     return MM::parameterise(molecules, map);

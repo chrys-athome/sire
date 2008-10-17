@@ -92,7 +92,7 @@ System LocalSim::system()
 }
 
 /** Return a copy of the moves being applied to the system */
-Moves LocalSim::moves()
+MovesPtr LocalSim::moves()
 {
     if (this->isError())
         this->throwError();
@@ -377,7 +377,7 @@ Simulation Simulation::run(const MPINode &node, const MPISimWorker &worker)
 
 /** Run a simulation consisting of nmoves moves on the system 'system' using
     the 'moves' object to actually perform the moves */
-Simulation Simulation::run(const System &system, const MovesBase &moves,
+Simulation Simulation::run(const System &system, const Moves &moves,
                            int nmoves, bool record_stats, int chunk_size)
 {
     return Simulation::run( MPISimWorker(system, moves, nmoves, 
@@ -386,7 +386,7 @@ Simulation Simulation::run(const System &system, const MovesBase &moves,
 
 /** Run a simulation consisting of nmoves moves on the system 'system' using
     the 'moves' object to actually perform the moves, in a background thread */
-Simulation Simulation::runBG(const System &system, const MovesBase &moves,
+Simulation Simulation::runBG(const System &system, const Moves &moves,
                              int nmoves, bool record_stats, int chunk_size)
 {
     return Simulation::runBG( MPISimWorker(system, moves, nmoves, 
@@ -396,7 +396,7 @@ Simulation Simulation::runBG(const System &system, const MovesBase &moves,
 /** Run a simulation consisting of nmoves moves on the system 'system' using
     the 'moves' object to actually perform the moves, on the MPI node 'mpinode' */
 Simulation Simulation::run(const MPINode &node, const System &system,
-                           const MovesBase &moves, int nmoves, bool record_stats,
+                           const Moves &moves, int nmoves, bool record_stats,
                            int chunk_size)
 {
     return Simulation::run( node, MPISimWorker(system, moves, nmoves, 
@@ -451,7 +451,7 @@ System Simulation::system()
 
 /** Return the current status of the moves used in this simulation.
     This may be the moves as they are at a point *during* a live simulation! */ 
-Moves Simulation::moves()
+MovesPtr Simulation::moves()
 {
     return d->moves();
 }

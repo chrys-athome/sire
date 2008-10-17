@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QMutex>
+
 #include "move.h"
 #include "ensemble.h"
 
@@ -47,135 +49,145 @@ using namespace SireSystem;
 using namespace SireStream;
 
 ///////
-/////// Implementation of MoveBase
+/////// Implementation of Move
 ///////
 
-static const RegisterMetaType<MoveBase> r_movebase( MAGIC_ONLY,
-                                                    "SireMove::MoveBase" );
+static const RegisterMetaType<Move> r_move( MAGIC_ONLY, "SireMove::Move" );
 
 /** Serialise to a binary datastream */
-QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const MoveBase &movebase)
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Move &move)
 {
-    writeHeader(ds, r_movebase, 1);
+    writeHeader(ds, r_move, 1);
     
-    ds << movebase.nrgcomponent
-       << static_cast<const PropertyBase&>(movebase);
+    ds << move.nrgcomponent
+       << static_cast<const Property&>(move);
     
     return ds;
 }
 
 /** Extract from a binary datastream */
-QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MoveBase &movebase)
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Move &move)
 {
-    VersionID v = readHeader(ds, r_movebase);
+    VersionID v = readHeader(ds, r_move);
     
     if (v == 1)
     {
-        ds >> movebase.nrgcomponent
-           >> static_cast<PropertyBase&>(movebase);
+        ds >> move.nrgcomponent
+           >> static_cast<Property&>(move);
     }
     else
-        throw version_error(v, "1", r_movebase, CODELOC);
+        throw version_error(v, "1", r_move, CODELOC);
         
     return ds;
 }
 
 /** Constructor */
-MoveBase::MoveBase() 
-         : PropertyBase(), nrgcomponent(ForceFields::totalComponent())
+Move::Move() : Property(), nrgcomponent(ForceFields::totalComponent())
 {}
 
 /** Copy constructor */
-MoveBase::MoveBase(const MoveBase &other) 
-         : PropertyBase(other), nrgcomponent(other.nrgcomponent)
+Move::Move(const Move &other) : Property(other), nrgcomponent(other.nrgcomponent)
 {}
 
 /** Destructor */
-MoveBase::~MoveBase()
+Move::~Move()
 {}
 
 /** Copy assignment operator */
-MoveBase& MoveBase::operator=(const MoveBase &other)
+Move& Move::operator=(const Move &other)
 {
     nrgcomponent = other.nrgcomponent;
-    PropertyBase::operator=(other);
+    Property::operator=(other);
     
     return *this;
 }
 
 /** Comparison operator */
-bool MoveBase::operator==(const MoveBase &other) const
+bool Move::operator==(const Move &other) const
 {
     return nrgcomponent == other.nrgcomponent;
 }
 
 /** Comparison operator */
-bool MoveBase::operator!=(const MoveBase &other) const
+bool Move::operator!=(const Move &other) const
 {
     return nrgcomponent != other.nrgcomponent;
 }
 
 /** Perform a single move on the system 'system' without 
     recording any statistics */
-void MoveBase::move(System &system)
+void Move::move(System &system)
 {
     this->move(system, 1, false);
 }
 
 /** Perform 'n' moves on the system without recording any 
     statistics */
-void MoveBase::move(System &system, int nmoves)
+void Move::move(System &system, int nmoves)
 {
     this->move(system, nmoves, false);
 }
 
 /** Set the energy component that describes the Hamiltonian that this move
     will sample */
-void MoveBase::setEnergyComponent(const Symbol &component)
+void Move::setEnergyComponent(const Symbol &component)
 {
     nrgcomponent = component;
 }
 
 /** Return the symbol that describes the Hamiltonian that this move 
     will sample */
-const Symbol& MoveBase::energyComponent() const
+const Symbol& Move::energyComponent() const
 {
     return nrgcomponent;
 }
 
+/** Set the property used to find the simulation box for this move */
+void Move::setSpaceProperty(const PropertyName &space_property)
+{
+    spaceproperty = space_property;
+}
+
+/** Return the property used to find the simulation space (box) 
+    for this move */
+const PropertyName& Move::spaceProperty() const
+{
+    return spaceproperty;
+}
+
 /** Return whether or not this move keeps the total energy constant */
-bool MoveBase::isConstantEnergy() const
+bool Move::isConstantEnergy() const
 {
     return this->ensemble().isConstantEnergy();
 }
 
 /** Return whether or not this move keeps the temperature constant */
-bool MoveBase::isConstantTemperature() const
+bool Move::isConstantTemperature() const
 {
     return this->ensemble().isConstantTemperature();
 }
 
 /** Return whether or not this move keeps the volume constant */
-bool MoveBase::isConstantVolume() const
+bool Move::isConstantVolume() const
 {
     return this->ensemble().isConstantVolume();
 }
 
 /** Return whether or not this move keeps the pressure constant */
-bool MoveBase::isConstantPressure() const
+bool Move::isConstantPressure() const
 {
     return this->ensemble().isConstantPressure();
 }
 
 /** Return whether or not this move keeps the chemical potential constant */
-bool MoveBase::isConstantChemicalPotential() const
+bool Move::isConstantChemicalPotential() const
 {
     return this->ensemble().isConstantChemicalPotential();
 }
 
 /** Return whether or not this move keeps the fugacity (related to the chemical
     potential) constant */
-bool MoveBase::isConstantFugacity() const
+bool Move::isConstantFugacity() const
 {
     return this->ensemble().isConstantFugacity();
 }
@@ -184,7 +196,7 @@ bool MoveBase::isConstantFugacity() const
 
     \throw SireError::incompatible_error
 */
-Temperature MoveBase::temperature() const
+Temperature Move::temperature() const
 {
     if (not this->isConstantTemperature())
         throw SireError::incompatible_error( QObject::tr(
@@ -200,7 +212,7 @@ Temperature MoveBase::temperature() const
 
     \throw SireError::incompatible_error
 */
-Pressure MoveBase::pressure() const
+Pressure Move::pressure() const
 {
     if (not this->isConstantPressure())
         throw SireError::incompatible_error( QObject::tr(
@@ -216,7 +228,7 @@ Pressure MoveBase::pressure() const
 
     \throw SireError::incompatible_error
 */
-Pressure MoveBase::fugacity() const
+Pressure Move::fugacity() const
 {
     if (not this->isConstantFugacity())
         throw SireError::incompatible_error( QObject::tr(
@@ -232,7 +244,7 @@ Pressure MoveBase::fugacity() const
 
     \throw SireError::incompatible_error
 */
-MolarEnergy MoveBase::chemicalPotential() const
+MolarEnergy Move::chemicalPotential() const
 {
     if (not this->isConstantChemicalPotential())
         throw SireError::incompatible_error( QObject::tr(
@@ -245,13 +257,13 @@ MolarEnergy MoveBase::chemicalPotential() const
 }
 
 /** Return whether or not this move keeps the symbol 'lam' constant */
-bool MoveBase::isConstantLambda(const Symbol&) const
+bool Move::isConstantLambda(const Symbol&) const
 {
     return true;
 }
 
 /** Set the temperature - this should never be called! */
-void MoveBase::_pvt_setTemperature(const Temperature &temperature)
+void Move::_pvt_setTemperature(const Temperature &temperature)
 {
     throw SireError::program_bug( QObject::tr(
         "Cannot set the temperature to %1 C in %2, as, despite the move promising "
@@ -262,7 +274,7 @@ void MoveBase::_pvt_setTemperature(const Temperature &temperature)
 }
                         
 /** Set the pressure - this should never be called! */
-void MoveBase::_pvt_setPressure(const Pressure &pressure)
+void Move::_pvt_setPressure(const Pressure &pressure)
 {
     throw SireError::program_bug( QObject::tr(
         "Cannot set the pressure to %1 atm in %2, as, despite the move promising "
@@ -273,7 +285,7 @@ void MoveBase::_pvt_setPressure(const Pressure &pressure)
 }
                        
 /** Set the pressure - this should never be called! */
-void MoveBase::_pvt_setFugacity(const Pressure &fugacity)
+void Move::_pvt_setFugacity(const Pressure &fugacity)
 {
     throw SireError::program_bug( QObject::tr(
         "Cannot set the fugacity to %1 bar in %2, as, despite the move promising "
@@ -288,7 +300,7 @@ void MoveBase::_pvt_setFugacity(const Pressure &fugacity)
     
     \throw SireError::incompatible_error
 */
-void MoveBase::setTemperature(const Temperature &temperature)
+void Move::setTemperature(const Temperature &temperature)
 {
     if (not this->isConstantTemperature())
         throw SireError::incompatible_error( QObject::tr(
@@ -307,7 +319,7 @@ void MoveBase::setTemperature(const Temperature &temperature)
     
     \throw SireError::incompatible_error
 */
-void MoveBase::setPressure(const SireUnits::Dimension::Pressure &pressure)
+void Move::setPressure(const SireUnits::Dimension::Pressure &pressure)
 {
     if (not this->isConstantPressure())
         throw SireError::incompatible_error( QObject::tr(
@@ -326,7 +338,7 @@ void MoveBase::setPressure(const SireUnits::Dimension::Pressure &pressure)
     
     \throw SireError::incompatible_error
 */
-void MoveBase::setChemicalPotential(const MolarEnergy &chemical_potential)
+void Move::setChemicalPotential(const MolarEnergy &chemical_potential)
 {
     if (not this->isConstantChemicalPotential())
         throw SireError::incompatible_error( QObject::tr(
@@ -347,7 +359,7 @@ void MoveBase::setChemicalPotential(const MolarEnergy &chemical_potential)
     
     \throw SireError::incompatible_error
 */
-void MoveBase::setFugacity(const Pressure &fugacity)
+void Move::setFugacity(const Pressure &fugacity)
 {
     if (not this->isConstantFugacity())
         throw SireError::incompatible_error( QObject::tr(
@@ -363,140 +375,6 @@ void MoveBase::setFugacity(const Pressure &fugacity)
 }
 
 ///////
-/////// Implementation of Move
-///////
-
-static const RegisterMetaType<Move> r_move;
-
-/** Serialise a Move to a binary datastream */
-QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Move &move)
-{
-    writeHeader(ds, r_move, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << static_cast<const Property&>(move);
-    
-    return ds;
-}
-
-/** Deserialise a Move from a binary datastream */
-QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Move &move)
-{
-    VersionID v = readHeader(ds, r_move);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        sds >> static_cast<Property&>(move);
-    }
-    else
-        throw version_error(v, "1", r_move, CODELOC);
-        
-    return ds;
-}
-
-static Move *_pvt_shared_null = 0;
-
-const Move& Move::shared_null()
-{
-    if (_pvt_shared_null == 0)
-        _pvt_shared_null = new Move( NullMove() );
-        
-    return *_pvt_shared_null;
-}
-
-/** Null constructor - constructs a simple, empty MoveBase */
-Move::Move() : Property(Move::shared_null())
-{}
-
-/** Construct from a passed property
-
-    \throw SireError::invalid_cast
-*/
-Move::Move(const PropertyBase &property) : Property(property.asA<MoveBase>())
-{}
-
-/** Construct from passed MoveBase */
-Move::Move(const MoveBase &move) : Property(move)
-{}
-
-/** Copy constructor */
-Move::Move(const Move &other) : Property(other)
-{}
-
-/** Destructor */
-Move::~Move()
-{}
-
-/** Copy assignment operator from a Property object
-
-    \throw SireError::invalid_cast
-*/
-Move& Move::operator=(const PropertyBase &property)
-{
-    Property::operator=(property.asA<MoveBase>());
-    return *this;
-}
-
-/** Copy assignment operator from another MoveBase */
-Move& Move::operator=(const MoveBase &other)
-{
-    Property::operator=(other);
-    return *this;
-}
-
-/** Dereference this pointer */
-const MoveBase* Move::operator->() const
-{
-    return static_cast<const MoveBase*>(&(d()));
-}
-
-/** Dereference this pointer */
-const MoveBase& Move::operator*() const
-{
-    return static_cast<const MoveBase&>(d());
-}
-
-/** Return a read-only reference to the contained object */
-const MoveBase& Move::read() const
-{
-    return static_cast<const MoveBase&>(d());
-}
-
-/** Return a modifiable reference to the contained object.
-    This will trigger a copy of the object if more than
-    one pointer is pointing to it. */
-MoveBase& Move::edit()
-{
-    return static_cast<MoveBase&>(d());
-}
-    
-/** Return a raw pointer to the MoveBase object */
-const MoveBase* Move::data() const
-{
-    return static_cast<const MoveBase*>(&(d()));
-}
-
-/** Return a raw pointer to the MoveBase object */
-const MoveBase* Move::constData() const
-{
-    return static_cast<const MoveBase*>(&(d()));
-}
-    
-/** Return a raw pointer to the MoveBase object */
-MoveBase* Move::data()
-{
-    return static_cast<MoveBase*>(&(d()));
-}
-
-/** Automatic casting operator */
-Move::operator const MoveBase&() const
-{
-    return static_cast<const MoveBase&>(d());
-}
-
-///////
 /////// Implementation of NullMove
 ///////
 
@@ -506,7 +384,7 @@ static const RegisterMetaType<NullMove> r_nullmove;
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const NullMove &nullmove)
 {
     writeHeader(ds, r_nullmove, 1);
-    ds << static_cast<const MoveBase&>(nullmove);
+    ds << static_cast<const Move&>(nullmove);
     
     return ds;
 }
@@ -518,7 +396,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, NullMove &nullmove)
     
     if (v == 1)
     {
-        ds >> static_cast<MoveBase&>(nullmove);
+        ds >> static_cast<Move&>(nullmove);
     }
     else
         throw version_error(v, "1", r_nullmove, CODELOC);
@@ -527,12 +405,27 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, NullMove &nullmove)
 }
 
 /** Constructor */
-NullMove::NullMove() : ConcreteProperty<NullMove,MoveBase>()
+NullMove::NullMove() : ConcreteProperty<NullMove,Move>()
 {}
+
+static SharedPolyPointer<NullMove> shared_null;
+
+const NullMove& Move::null()
+{
+    if (shared_null.constData() == 0)
+    {
+        QMutexLocker lkr( SireBase::globalLock() );
+        
+        if (shared_null.constData() == 0)
+            shared_null = new NullMove();
+    }
+    
+    return *(shared_null.constData());
+}
 
 /** Copy constructor */
 NullMove::NullMove(const NullMove &other)
-         : ConcreteProperty<NullMove,MoveBase>(other)
+         : ConcreteProperty<NullMove,Move>(other)
 {}
 
 /** Destructor */

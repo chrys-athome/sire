@@ -56,7 +56,7 @@ using SireMaths::RanGenerator;
     @author Christopher Woods
 */
 class SIREMOVE_EXPORT WeightedMoves 
-          : public SireBase::ConcreteProperty<WeightedMoves,MovesBase>
+          : public SireBase::ConcreteProperty<WeightedMoves,Moves>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const WeightedMoves&);
@@ -84,13 +84,13 @@ public:
         return new WeightedMoves(*this);
     }
     
-    void add(const MoveBase &move, double weight=1);
+    void add(const Move &move, double weight=1);
     
-    using MovesBase::move;
+    using Moves::move;
     
     System move(const System &system, int nmoves, bool record_stats);
     
-    QList<Move> moves() const;
+    QList<MovePtr> moves() const;
 
     void setEnergyComponent(const Symbol &component);
     void setSpaceProperty(const PropertyName &spaceproperty); 
@@ -108,7 +108,7 @@ private:
     void recalculateWeights();
     
     /** The list of moves, together with their associated weights */
-    QVector< boost::tuple<Move,double> > mvs;
+    QVector< boost::tuple<MovePtr,double> > mvs;
     
     /** The random number generator used to pick moves */
     RanGenerator rangenerator;

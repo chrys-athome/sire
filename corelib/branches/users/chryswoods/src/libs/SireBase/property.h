@@ -101,7 +101,7 @@ public:
 
     virtual Property* clone() const=0;
     virtual void copy(const Property &other)=0;
-    virtual bool compare(const Property &other) const=0;
+    virtual bool equals(const Property &other) const=0;
 
     virtual void save(QDataStream &ds) const=0;
     virtual void load(QDataStream &ds)=0;
@@ -233,7 +233,7 @@ public:
         ConcreteProperty<Derived,Base>::operator=(other);
     }
 
-    bool compare(const Property &other) const
+    bool equals(const Property &other) const
     {
         return ConcreteProperty<Derived,Base>::operator==(other);
     }

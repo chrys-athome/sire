@@ -65,7 +65,7 @@ using SireFF::FFComponent;
 
 using SireMol::MolNum;
 using SireMol::PartialMolecule;
-using SireMol::MolGroup;
+using SireMol::MoleculeGroup;
 
 using SireVol::CoordGroup;
 
@@ -341,7 +341,7 @@ public:
                  const PropertyMap &map) const;
                  
     InternalPotential::Molecules
-    parameterise(const MolGroup &molecules,
+    parameterise(const MoleculeGroup &molecules,
                  const PropertyMap &map) const;
     
 protected:
@@ -491,8 +491,6 @@ protected:
     const FFComponent& _pvt_components() const;
 
     void recalculateEnergy();
-
-    void _pvt_restore(const ForceField &ffield);
 
     void _pvt_added(const PartialMolecule &mol, const PropertyMap &map);
 

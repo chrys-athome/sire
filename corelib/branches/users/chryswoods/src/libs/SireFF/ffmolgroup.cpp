@@ -66,7 +66,7 @@ QDataStream& operator<<(QDataStream &ds, const FFMolGroupPvt &ffmolgrouppvt)
 {
     writeHeader(ds, r_ffmolgrouppvt, 1);
 
-    ds << ffmolgrouppvt.mgidx << static_cast<const MolGroup&>(ffmolgrouppvt);
+    ds << ffmolgrouppvt.mgidx << static_cast<const MoleculeGroup&>(ffmolgrouppvt);
     
     return ds;
 }
@@ -78,7 +78,7 @@ QDataStream& operator>>(QDataStream &ds, FFMolGroupPvt &ffmolgrouppvt)
     
     if (v == 1)
     {
-        ds >> ffmolgrouppvt.mgidx >> static_cast<MolGroup&>(ffmolgrouppvt);
+        ds >> ffmolgrouppvt.mgidx >> static_cast<MoleculeGroup&>(ffmolgrouppvt);
         
         //we have to rely on our parent to set the ff pointer...
         ffmolgrouppvt.ffield = 0;
@@ -90,17 +90,17 @@ QDataStream& operator>>(QDataStream &ds, FFMolGroupPvt &ffmolgrouppvt)
 }
 
 /** Null constructor */
-FFMolGroupPvt::FFMolGroupPvt() : MolGroup(), ffield(0)
+FFMolGroupPvt::FFMolGroupPvt() : MoleculeGroup(), ffield(0)
 {}
 
 /** Construct a named group that is a child of the forcefield 'ff' */
 FFMolGroupPvt::FFMolGroupPvt(const QString &name, quint32 i, FF *ff)
-              : MolGroup(name), mgidx(i), ffield(ff)
+              : MoleculeGroup(name), mgidx(i), ffield(ff)
 {}
 
 /** Copy constructor (our parent forcefield must update our pointer) */
 FFMolGroupPvt::FFMolGroupPvt(const FFMolGroupPvt &other)
-              : MolGroup(other), mgidx(other.mgidx), ffield(0)
+              : MoleculeGroup(other), mgidx(other.mgidx), ffield(0)
 {}
 
 /** Destructor */
@@ -110,7 +110,7 @@ FFMolGroupPvt::~FFMolGroupPvt()
 /** Copy assignment operator */
 FFMolGroupPvt& FFMolGroupPvt::operator=(const FFMolGroupPvt &other)
 {
-    MolGroup::operator=(other);
+    MoleculeGroup::operator=(other);
     
     //don't change the parent or index - this is because our parent
     //sets this pointer at construction
@@ -158,7 +158,7 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FFMolGroup &ffmolgr
     SharedDataStream sds(ds);
     
     sds << ffmolgroup.mgidx << ffmolgroup.ffield 
-        << static_cast<const MolGroup&>(ffmolgroup);
+        << static_cast<const MoleculeGroup&>(ffmolgroup);
     
     return ds;
 }
@@ -173,7 +173,7 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFMolGroup &ffmolgroup)
         SharedDataStream sds(ds);
 
         sds >> ffmolgroup.mgidx >> ffmolgroup.ffield 
-            >> static_cast<MolGroup&>(ffmolgroup);
+            >> static_cast<MoleculeGroup&>(ffmolgroup);
     }
     else
         throw version_error(v, "1", r_ffmolgroup, CODELOC);
@@ -184,30 +184,30 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFMolGroup &ffmolgroup)
 /** Null constructor - this creates a useless FFMolGroup. You can
     only construct a valid FFMolGroup by getting a reference to 
     a valid FFMolGroupPvt from a forcefield */
-FFMolGroup::FFMolGroup() : ConcreteProperty<FFMolGroup,MolGroup>()
+FFMolGroup::FFMolGroup() : ConcreteProperty<FFMolGroup,MoleculeGroup>()
 {}
 
 /** Construct from an FFMolGroupPvt - this grabs a copy of the
     forcefield that contains the FFMolGroupPvt */
 FFMolGroup::FFMolGroup(const detail::FFMolGroupPvt &ffmolgroup)
-           : ConcreteProperty<FFMolGroup,MolGroup>(ffmolgroup), 
+           : ConcreteProperty<FFMolGroup,MoleculeGroup>(ffmolgroup), 
              mgidx(ffmolgroup.index()), ffield( ffmolgroup.forceField() )
 {}
 
-/** Construct from a MolGroup - you can only construct from a FFMolGroup
+/** Construct from a MoleculeGroup - you can only construct from a FFMolGroup
     or from an FFMolGroupPvt 
     
     \throw SireError::invalid_arg
 */
-FFMolGroup::FFMolGroup(const MolGroup &other)
-           : ConcreteProperty<FFMolGroup,MolGroup>(other)
+FFMolGroup::FFMolGroup(const MoleculeGroup &other)
+           : ConcreteProperty<FFMolGroup,MoleculeGroup>(other)
 {
     this->operator=(other);
 }
 
 /** Copy constructor */
 FFMolGroup::FFMolGroup(const FFMolGroup &other)
-           : ConcreteProperty<FFMolGroup,MolGroup>(other), 
+           : ConcreteProperty<FFMolGroup,MoleculeGroup>(other), 
              mgidx(other.mgidx), ffield(other.ffield)
 {}
 
@@ -218,24 +218,24 @@ FFMolGroup::~FFMolGroup()
 /** Copy assignment operator */
 FFMolGroup& FFMolGroup::operator=(const FFMolGroup &other)
 {
-    MolGroup::operator=(other);
+    MoleculeGroup::operator=(other);
     ffield = other.ffield;
     mgidx = other.mgidx;
     
     return *this;
 }
 
-/** Copy assignment from another MolGroup - you can only assign from
+/** Copy assignment from another MoleculeGroup - you can only assign from
     another FFMolGroup, or from an SireFF::detail::FFMolGroupPvt 
     
     \throw SireError::invalid_arg
 */
-FFMolGroup& FFMolGroup::operator=(const MolGroup &other)
+FFMolGroup& FFMolGroup::operator=(const MoleculeGroup &other)
 {
     if (other.isA<FFMolGroupPvt>())
     {
         const FFMolGroupPvt &ff_other = other.asA<FFMolGroupPvt>();
-        MolGroup::operator=(other);
+        MoleculeGroup::operator=(other);
         ffield = ff_other.forceField();
         mgidx = ff_other.index();
     }
@@ -280,7 +280,7 @@ MGIdx FFMolGroup::index() const
 /** Update this group so that it is current */
 void FFMolGroup::updateGroup()
 {
-    MolGroup::operator=( ffield->group(this->number()) );
+    MoleculeGroup::operator=( ffield->group(this->number()) );
 }
 
 /** Set the name of this molecule group */
@@ -321,7 +321,7 @@ void FFMolGroup::add(const Molecules &molecules, const PropertyMap &map)
     updateGroup();
 }
 
-void FFMolGroup::add(const MolGroup &molgroup, const PropertyMap &map)
+void FFMolGroup::add(const MoleculeGroup &molgroup, const PropertyMap &map)
 {
     this->add(molgroup.molecules(), map);
 }
@@ -341,7 +341,7 @@ void FFMolGroup::add(const Molecules &molecules)
     this->add(molecules, PropertyMap());
 }
 
-void FFMolGroup::add(const MolGroup &molgroup)
+void FFMolGroup::add(const MoleculeGroup &molgroup)
 {
     this->add(molgroup, PropertyMap());
 }
@@ -406,7 +406,7 @@ QList<ViewsOfMol> FFMolGroup::addIfUnique(const Molecules &molecules,
     return ret;
 }
 
-QList<ViewsOfMol> FFMolGroup::addIfUnique(const MolGroup &molgroup,
+QList<ViewsOfMol> FFMolGroup::addIfUnique(const MoleculeGroup &molgroup,
                                           const PropertyMap &map)
 {
     return this->addIfUnique(molgroup.molecules(), map);
@@ -427,7 +427,7 @@ QList<ViewsOfMol> FFMolGroup::addIfUnique(const Molecules &molecules)
     return this->addIfUnique(molecules, PropertyMap());
 }
 
-QList<ViewsOfMol> FFMolGroup::addIfUnique(const MolGroup &molgroup)
+QList<ViewsOfMol> FFMolGroup::addIfUnique(const MoleculeGroup &molgroup)
 {
     return this->addIfUnique(molgroup, PropertyMap());
 }
@@ -481,7 +481,7 @@ QList<ViewsOfMol> FFMolGroup::remove(const Molecules &molecules)
     
     if (not ret.isEmpty())
     {
-        const MolGroup &group = ffield->group(this->number());
+        const MoleculeGroup &group = ffield->group(this->number());
         QSet<MolNum> removed_molnums;
         
         foreach (const ViewsOfMol &removed_mol, ret)
@@ -499,7 +499,7 @@ QList<ViewsOfMol> FFMolGroup::remove(const Molecules &molecules)
     return ret;
 }
 
-QList<ViewsOfMol> FFMolGroup::remove(const MolGroup &molgroup)
+QList<ViewsOfMol> FFMolGroup::remove(const MoleculeGroup &molgroup)
 {
     return this->remove(molgroup.molecules());
 }
@@ -553,7 +553,7 @@ QList<ViewsOfMol> FFMolGroup::removeAll(const Molecules &molecules)
     
     if (not ret.isEmpty())
     {
-        const MolGroup &group = ffield->group(this->number());
+        const MoleculeGroup &group = ffield->group(this->number());
         QSet<MolNum> removed_molnums;
         
         foreach (const ViewsOfMol &removed_mol, ret)
@@ -571,7 +571,7 @@ QList<ViewsOfMol> FFMolGroup::removeAll(const Molecules &molecules)
     return ret;
 }
 
-QList<ViewsOfMol> FFMolGroup::removeAll(const MolGroup &molgroup)
+QList<ViewsOfMol> FFMolGroup::removeAll(const MoleculeGroup &molgroup)
 {
     return this->removeAll(molgroup.molecules());
 }
@@ -657,7 +657,7 @@ QList<Molecule> FFMolGroup::update(const Molecules &molecules)
     return ret;
 }
 
-QList<Molecule> FFMolGroup::update(const MolGroup &molgroup)
+QList<Molecule> FFMolGroup::update(const MoleculeGroup &molgroup)
 {
     assertNotNull();
 
@@ -733,7 +733,7 @@ bool FFMolGroup::setContents(const Molecules &molecules, const PropertyMap &map)
            minver != this->minorVersion();
 }
 
-bool FFMolGroup::setContents(const MolGroup &molgroup, const PropertyMap &map)
+bool FFMolGroup::setContents(const MoleculeGroup &molgroup, const PropertyMap &map)
 {
     assertNotNull();
 
@@ -767,7 +767,7 @@ bool FFMolGroup::setContents(const Molecules &molecules)
     return this->setContents(molecules, PropertyMap());
 }
 
-bool FFMolGroup::setContents(const MolGroup &molgroup)
+bool FFMolGroup::setContents(const MoleculeGroup &molgroup)
 {
     return this->setContents(molgroup, PropertyMap());
 }

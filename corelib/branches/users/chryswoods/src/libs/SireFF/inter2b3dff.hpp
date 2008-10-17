@@ -100,8 +100,6 @@ protected:
     typedef typename Inter2BFF<Potential>::ChangedMolecule ChangedMolecule;
 
     void recalculateEnergy();
-
-    void _pvt_restore(const ForceField &ffield);
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -164,17 +162,6 @@ bool Inter2B3DFF<Potential>::operator!=(const Inter2B3DFF<Potential> &other) con
     return Inter2BFF<Potential>::operator!=(other);
 }
 
-/** Private function used to restore the state of this forcefield */
-template<class Potential>
-SIRE_OUTOFLINE_TEMPLATE
-void Inter2B3DFF<Potential>::_pvt_restore(const ForceField &ffield)
-{
-    if (not ffield->isA< Inter2B3DFF<Potential> >())
-        detail::throwForceFieldRestoreBug(this->what(), ffield->what());
-        
-    this->operator=( ffield->asA< Inter2B3DFF<Potential> >() );
-}
-
 /** Pack the coordinates of the molecules so that they all lie 
     contiguously in memory */
 template<class Potential>
@@ -221,7 +208,7 @@ void Inter2B3DFF<Potential>::recalculateEnergy()
             const SireVol::AABox *aaboxes_array = this->mols.aaBoxesByIndex().constData();
             const int my_nmols = nmols;
 
-            const SireVol::SpaceBase &spce = this->space();
+            const SireVol::Space &spce = this->space();
             const double cutoff = this->switchingFunction().cutoffDistance();
 
             //loop over all pairs of molecules
@@ -269,7 +256,7 @@ void Inter2B3DFF<Potential>::recalculateEnergy()
             const SireVol::AABox *aaboxes_array = this->mols.aaBoxesByIndex().constData();
             const int my_nmols = nmols;
 
-            const SireVol::SpaceBase &spce = this->space();
+            const SireVol::Space &spce = this->space();
             const double cutoff = this->switchingFunction().cutoffDistance();
         
             #pragma omp for schedule(static)

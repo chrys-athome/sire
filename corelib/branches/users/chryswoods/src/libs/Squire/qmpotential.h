@@ -70,21 +70,21 @@ namespace Squire
 
 using SireBase::PropertyMap;
 using SireBase::Property;
-using SireBase::PropertyBase;
+using SireBase::Property;
 using SireBase::Properties;
 
 using SireMol::PartialMolecule;
-using SireMol::MolGroup;
+using SireMol::MoleculeGroup;
 
 using SireCAS::Symbol;
 
-using SireVol::SpaceBase;
 using SireVol::Space;
+using SireVol::SpacePtr;
 
 using SireFF::ForceTable;
 
 class QMComponent;
-class QMProg;
+class QMProgram;
 class LatticeCharges;
 
 typedef SireFF::ComponentEnergy<QMComponent> QMEnergy;
@@ -163,43 +163,7 @@ public:
     {}
 };
 
-/** Property holder for the QMProgram hierarchy of classes
-
-    @author Christopher Woods
-*/
-class SQUIRE_EXPORT QMProgram : public SireBase::Property
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const QMProgram&);
-friend QDataStream& ::operator>>(QDataStream&, QMProgram&);
-
-public:
-    QMProgram();
-    QMProgram(const SireBase::PropertyBase &property);
-    QMProgram(const QMProg &qmprog);
-    
-    QMProgram(const QMProgram &other);
-    
-    ~QMProgram();
-    
-    virtual QMProgram& operator=(const SireBase::PropertyBase &property);
-    virtual QMProgram& operator=(const QMProg &qmprog);
-
-    const QMProg* operator->() const;
-    const QMProg& operator*() const;
-    
-    const QMProg& read() const;
-    QMProg& edit();
-    
-    const QMProg* data() const;
-    const QMProg* constData() const;
-    
-    QMProg* data();
-    
-    operator const QMProg&() const;
-
-    static const QMProgram& shared_null();
-};
+typedef SireBase::PropPtr<QMProgram> QMProgPtr;
 
 /** This is a QM potential. This provides the classes and code necessary
     to calculate QM energies and forces
@@ -248,16 +212,16 @@ public:
 
     QMPotential& operator=(const QMPotential &other);
 
-    bool setProperty(const QString &name, const PropertyBase &value);
+    bool setProperty(const QString &name, const Property &value);
     const Property& property(const QString &name) const;
     bool containsProperty(const QString &name) const;
     const Properties& properties() const;
 
-    bool setSpace(const SpaceBase &space);
-    bool setQuantumProgram(const QMProg &program);
+    bool setSpace(const Space &space);
+    bool setQuantumProgram(const QMProgram &program);
     
-    const SpaceBase& space() const;
-    const QMProg& quantumProgram() const;
+    const Space& space() const;
+    const QMProgram& quantumProgram() const;
 
     QMPotential::Parameters 
     getParameters(const PartialMolecule &mol,
@@ -280,7 +244,7 @@ public:
                  const PropertyMap &map = PropertyMap());
     
     QMPotential::Molecules 
-    parameterise(const MolGroup &molecules,
+    parameterise(const MoleculeGroup &molecules,
                  const PropertyMap &map = PropertyMap());
 
     void calculateForce(const Molecules &molecules, 
@@ -309,10 +273,10 @@ private:
     Properties props;
     
     /** The space in which the molecules exist */
-    Space spce;
+    SpacePtr spce;
     
     /** The QM program that is used to calculate the energy */
-    QMProgram qmprog;
+    QMProgPtr qmprog;
 };
 
 } // end of namespace Squire

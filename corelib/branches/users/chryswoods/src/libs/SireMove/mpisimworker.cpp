@@ -96,7 +96,7 @@ MPISimWorker::MPISimWorker()
 /** Construct a worker to perform 'nmoves' moves of the type contained
     in 'moves' on the system 'system', recording statistics if
     'record_stats' is true */
-MPISimWorker::MPISimWorker(const System &system, const MovesBase &moves,
+MPISimWorker::MPISimWorker(const System &system, const Moves &moves,
                            int num_moves, bool record_statistics,
                            int chunksize)
              : MPIWorker(),
@@ -177,7 +177,7 @@ System MPISimWorker::system() const
 }
 
 /** Return the moves being performed on the system */
-Moves MPISimWorker::moves() const
+MovesPtr MPISimWorker::moves() const
 {
     QMutexLocker lkr( const_cast<QMutex*>(&data_mutex) );
     return sim_moves;

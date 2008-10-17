@@ -110,7 +110,7 @@ static const QString default_force_template = "! NEEDS TO BE WRITTEN";
 
 /** Constructor */
 Molpro::Molpro() 
-       : ConcreteProperty<Molpro,QMProg>(),
+       : ConcreteProperty<Molpro,QMProgram>(),
          basis_set("vdz"), qm_method("HF"),
          energy_template(default_energy_template),
          force_template(default_force_template)
@@ -118,7 +118,7 @@ Molpro::Molpro()
 
 /** Copy constructor */
 Molpro::Molpro(const Molpro &other)
-       : ConcreteProperty<Molpro,QMProg>(other),
+       : ConcreteProperty<Molpro,QMProgram>(other),
          env_variables(other.env_variables), molpro_exe(other.molpro_exe),
          basis_set(other.basis_set), qm_method(other.qm_method),
          energy_template(other.energy_template),

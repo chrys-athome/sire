@@ -38,7 +38,7 @@ SIRE_BEGIN_HEADER
     functions *must* be declared before QHash is included. This file contains
     the declarations of all of the SireMol qHash functions. Ensure that you include
     this file before including any QHash, QSet or SireBase::Set includes... */
-
+/*
 namespace SireMol
 {
 class AtomIndex;
@@ -95,6 +95,7 @@ uint qHash(const SireMol::EditMol&);
 uint qHash(const SireMol::Molecule&);
 uint qHash(const SireMol::Residue&);
 uint qHash(const SireMol::NewAtom&);
+*/
 
 SIRE_END_HEADER
 

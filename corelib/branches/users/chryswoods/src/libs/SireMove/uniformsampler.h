@@ -51,7 +51,7 @@ namespace SireMove
     @author Christopher Woods
 */
 class SIREMOVE_EXPORT UniformSampler 
-        : public SireBase::ConcreteProperty<UniformSampler,SamplerBase>
+        : public SireBase::ConcreteProperty<UniformSampler,Sampler>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const UniformSampler&);
@@ -60,7 +60,7 @@ friend QDataStream& ::operator>>(QDataStream&, UniformSampler&);
 public:
     UniformSampler();
 
-    UniformSampler(const MolGroup &molgroup);
+    UniformSampler(const MoleculeGroup &molgroup);
 
     UniformSampler(const UniformSampler &other);
 

@@ -79,7 +79,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Ensemble &ensembl
        << double(ensemble.ensemble_pressure)
        << double(ensemble.ensemble_fugacity)
        << ensemble.ensemble_state
-       << static_cast<const PropertyBase&>(ensemble);
+       << static_cast<const Property&>(ensemble);
        
     return ds;
 }
@@ -95,7 +95,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Ensemble &ensemble)
         
         ds >> temp >> press >> fug
            >> ensemble.ensemble_state
-           >> static_cast<PropertyBase&>(ensemble);
+           >> static_cast<Property&>(ensemble);
         
         ensemble.ensemble_temperature = Temperature(temp);
         ensemble.ensemble_pressure = Pressure(press);

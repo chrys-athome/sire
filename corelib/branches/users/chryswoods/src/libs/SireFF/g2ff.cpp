@@ -180,7 +180,7 @@ void G2FF::assertContains(MGNum mgnum) const
 
     \throw SireMol::missing_group
 */
-const MolGroup& G2FF::getGroup(MGNum mgnum) const
+const MoleculeGroup& G2FF::getGroup(MGNum mgnum) const
 {
     G2FF::assertContains(mgnum);
     
@@ -194,7 +194,7 @@ const MolGroup& G2FF::getGroup(MGNum mgnum) const
 
     \throw SireMol::missing_group
 */
-const MolGroup& G2FF::at(MGNum mgnum) const
+const MoleculeGroup& G2FF::at(MGNum mgnum) const
 {
     return this->getGroup(mgnum);
 }
@@ -204,7 +204,7 @@ const MolGroup& G2FF::at(MGNum mgnum) const
     \throw SireMol::missing_group
 */
 void G2FF::getGroups(const QList<MGNum> &mgnums,
-                     QVarLengthArray<const MolGroup*,10> &groups) const
+                     QVarLengthArray<const MoleculeGroup*,10> &groups) const
 {
     groups.clear();
     
@@ -215,9 +215,9 @@ void G2FF::getGroups(const QList<MGNum> &mgnums,
 }
 
 /** Return pointers to all of the groups in this forcefield */
-QHash<MGNum,const MolGroup*> G2FF::getGroups() const
+QHash<MGNum,const MoleculeGroup*> G2FF::getGroups() const
 {
-    QHash<MGNum,const MolGroup*> groups;
+    QHash<MGNum,const MoleculeGroup*> groups;
     groups.reserve(2);
     groups.insert( molgroup[0].number(), &(molgroup[0]) );
     groups.insert( molgroup[1].number(), &(molgroup[1]) );
@@ -250,7 +250,7 @@ void G2FF::group_setName(quint32 i, const QString &new_name)
     
     \throw SireMol::duplicate_atom
 */
-void G2FF::assertNoOverlap(const MolGroup &group,
+void G2FF::assertNoOverlap(const MoleculeGroup &group,
                            const MoleculeView &molview) const
 {
     if (group.intersects(molview))
@@ -266,7 +266,7 @@ void G2FF::assertNoOverlap(const MolGroup &group,
     
     \throw SireMol::duplicate_atom
 */
-void G2FF::assertNoOverlap(const MolGroup &group,
+void G2FF::assertNoOverlap(const MoleculeGroup &group,
                            const Molecules &molecules) const
 {
     for (Molecules::const_iterator it = molecules.constBegin();
@@ -419,8 +419,7 @@ void G2FF::group_add(quint32 i, const Molecules &molecules,
     }
     
     //save the old state of this forcefield
-    ForceField old_state = *this;
-    old_state.detach();
+    boost::shared_ptr<FF> old_state( this->clone() );
     
     try
     {
@@ -453,7 +452,7 @@ void G2FF::group_add(quint32 i, const Molecules &molecules,
     }
     catch(...)
     {
-        this->_pvt_restore(old_state);
+        this->copy(*old_state);
         throw;
     }
 }
@@ -466,7 +465,7 @@ void G2FF::group_add(quint32 i, const Molecules &molecules,
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void G2FF::group_add(quint32 i, const MolGroup &new_group, 
+void G2FF::group_add(quint32 i, const MoleculeGroup &new_group, 
                      const PropertyMap &map)
 {
     G2FF::group_add(i, new_group.molecules(), map);
@@ -585,8 +584,7 @@ QList<ViewsOfMol> G2FF::group_addIfUnique(quint32 i, const Molecules &molecules,
         
     FFMolGroupPvt old_molgroup = molgroup[i];
         
-    ForceField old_state = *this;
-    old_state.detach();
+    boost::shared_ptr<FF> old_state( this->clone() );
     
     try
     {
@@ -618,7 +616,7 @@ QList<ViewsOfMol> G2FF::group_addIfUnique(quint32 i, const Molecules &molecules,
     }
     catch(...)
     {
-        this->_pvt_restore(old_state);
+        this->copy(*old_state);
         throw;
     }
     
@@ -633,7 +631,7 @@ QList<ViewsOfMol> G2FF::group_addIfUnique(quint32 i, const Molecules &molecules,
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-QList<ViewsOfMol> G2FF::group_addIfUnique(quint32 i, const MolGroup &new_group, 
+QList<ViewsOfMol> G2FF::group_addIfUnique(quint32 i, const MoleculeGroup &new_group, 
                                           const PropertyMap &map)
 {
     return G2FF::group_addIfUnique(i, new_group.molecules(), map);
@@ -700,8 +698,7 @@ QList<ViewsOfMol> G2FF::group_remove(quint32 i, const Molecules &molecules)
 {
     assertValidGroup(i);
     
-    ForceField old_state = *this;
-    old_state.detach();
+    boost::shared_ptr<FF> old_state( this->clone() );
     
     try
     {
@@ -721,7 +718,7 @@ QList<ViewsOfMol> G2FF::group_remove(quint32 i, const Molecules &molecules)
     }
     catch(...)
     {
-        this->_pvt_restore(old_state);
+        this->copy(*old_state);
         throw;
     }
     
@@ -730,7 +727,7 @@ QList<ViewsOfMol> G2FF::group_remove(quint32 i, const Molecules &molecules)
 
 /** Remove all of the molecules in the molecule group 'molgroup' from this
     forcefield */
-QList<ViewsOfMol> G2FF::group_remove(quint32 i, const MolGroup &new_group)
+QList<ViewsOfMol> G2FF::group_remove(quint32 i, const MoleculeGroup &new_group)
 {
     return G2FF::group_remove(i, new_group.molecules());
 }
@@ -796,8 +793,7 @@ QList<ViewsOfMol> G2FF::group_removeAll(quint32 i, const Molecules &molecules)
 {
     assertValidGroup(i);
     
-    ForceField old_state = *this;
-    old_state.detach();
+    boost::shared_ptr<FF> old_state( this->clone() );
     
     try
     {
@@ -814,7 +810,7 @@ QList<ViewsOfMol> G2FF::group_removeAll(quint32 i, const Molecules &molecules)
     }
     catch(...)
     {
-        this->_pvt_restore(old_state);
+        this->copy(*old_state);
         throw;
     }
     
@@ -823,7 +819,7 @@ QList<ViewsOfMol> G2FF::group_removeAll(quint32 i, const Molecules &molecules)
 
 /** Remove all of the molecules in the molecule group 'molgroup' from this
     forcefield */
-QList<ViewsOfMol> G2FF::group_removeAll(quint32 i, const MolGroup &new_group)
+QList<ViewsOfMol> G2FF::group_removeAll(quint32 i, const MoleculeGroup &new_group)
 {
     return G2FF::group_removeAll(i, new_group.molecules());
 }
@@ -863,8 +859,7 @@ QList<ViewsOfMol> G2FF::group_remove(quint32 i, const QSet<MolNum> &molnums)
 {
     assertValidGroup(i);
     
-    ForceField old_state = *this;
-    old_state.detach();
+    boost::shared_ptr<FF> old_state( this->clone() );
     
     try
     {
@@ -884,7 +879,7 @@ QList<ViewsOfMol> G2FF::group_remove(quint32 i, const QSet<MolNum> &molnums)
     }
     catch(...)
     {
-        this->_pvt_restore(old_state);
+        this->copy(*old_state);
         throw;
     }
     
@@ -960,7 +955,7 @@ QList<Molecule> G2FF::group_update(quint32 i, const Molecules &molecules)
 
 /** Update the molecule group in this forcefield so that it has
     the same molecule versions as in 'new_group' */
-QList<Molecule> G2FF::group_update(quint32 i, const MolGroup &new_group)
+QList<Molecule> G2FF::group_update(quint32 i, const MoleculeGroup &new_group)
 {
     return G2FF::group_update(i, new_group.molecules());
 }
@@ -977,8 +972,7 @@ bool G2FF::group_setContents(quint32 i, const MoleculeView &molview,
     if (not allow_overlap_of_atoms)
         this->assertNoOverlap(molgroup[i!=1], molview);
     
-    ForceField old_state = *this;
-    old_state.detach();
+    boost::shared_ptr<FF> old_state( this->clone() );
     
     try
     {
@@ -996,7 +990,7 @@ bool G2FF::group_setContents(quint32 i, const MoleculeView &molview,
     }
     catch(...)
     {
-        this->_pvt_restore(old_state);
+        this->copy(*old_state);
         throw;
     }
     
@@ -1016,8 +1010,7 @@ bool G2FF::group_setContents(quint32 i, const ViewsOfMol &molviews,
         this->assertNoOverlap(molgroup[i!=1], molviews);
     }
         
-    ForceField old_state = *this;
-    old_state.detach();
+    boost::shared_ptr<FF> old_state( this->clone() );
     
     try
     {
@@ -1035,7 +1028,7 @@ bool G2FF::group_setContents(quint32 i, const ViewsOfMol &molviews,
     }
     catch(...)
     {
-        this->_pvt_restore(old_state);
+        this->copy(*old_state);
         throw;
     }
     
@@ -1062,8 +1055,7 @@ bool G2FF::group_setContents(quint32 i, const Molecules &molecules,
         this->assertNoOverlap(molgroup[i!=1], molecules);
     }
     
-    ForceField old_state = *this;
-    old_state.detach();
+    boost::shared_ptr<FF> old_state( this->clone() );
     
     try
     {
@@ -1101,7 +1093,7 @@ bool G2FF::group_setContents(quint32 i, const Molecules &molecules,
     }
     catch(...)
     {
-        this->_pvt_restore(old_state);
+        this->copy(*old_state);
         throw;
     }
     
@@ -1110,14 +1102,14 @@ bool G2FF::group_setContents(quint32 i, const Molecules &molecules,
 
 /** Set the contents of this forcefield so that it contains only
     the molecules in 'molgroup' */
-bool G2FF::group_setContents(quint32 i, const MolGroup &new_group, 
+bool G2FF::group_setContents(quint32 i, const MoleculeGroup &new_group, 
                              const PropertyMap &map)
 {
     assertValidGroup(i);
     
     if (not allow_overlap_of_atoms)
     {
-        for (MolGroup::const_iterator it = new_group.constBegin();
+        for (MoleculeGroup::const_iterator it = new_group.constBegin();
              it != new_group.constEnd();
              ++it)
         {
@@ -1129,8 +1121,7 @@ bool G2FF::group_setContents(quint32 i, const MolGroup &new_group,
         this->assertNoOverlap(molgroup[i!=1], new_group.molecules());
     }
     
-    ForceField old_state = *this;
-    old_state.detach();
+    boost::shared_ptr<FF> old_state( this->clone() );
     
     try
     {
@@ -1138,7 +1129,7 @@ bool G2FF::group_setContents(quint32 i, const MolGroup &new_group,
         
         if (not changed)
         {
-            for (MolGroup::const_iterator it = new_group.constBegin();
+            for (MoleculeGroup::const_iterator it = new_group.constBegin();
                  it != new_group.constEnd();
                  ++it)
             {
@@ -1154,7 +1145,7 @@ bool G2FF::group_setContents(quint32 i, const MolGroup &new_group,
         {
             this->_pvt_removedAll(i);
             
-            for (MolGroup::const_iterator it = new_group.constBegin();
+            for (MoleculeGroup::const_iterator it = new_group.constBegin();
                  it != new_group.constEnd();
                  ++it)
             {
@@ -1168,7 +1159,7 @@ bool G2FF::group_setContents(quint32 i, const MolGroup &new_group,
     }
     catch(...)
     {
-        this->_pvt_restore(old_state);
+        this->copy(*old_state);
         throw;
     }
     

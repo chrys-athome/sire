@@ -29,7 +29,7 @@
 #ifndef SIREFF_FFMOLGROUP_H
 #define SIREFF_FFMOLGROUP_H
 
-#include "SireMol/molgroup.h"
+#include "SireMol/moleculegroup.h"
 #include "SireMol/mgidx.h"
 
 #include "SireFF/ff.h"
@@ -66,7 +66,7 @@ using SireMol::MolNum;
 using SireMol::MoleculeView;
 using SireMol::ViewsOfMol;
 using SireMol::Molecules;
-using SireMol::MolGroup;
+using SireMol::MoleculeGroup;
 using SireMol::MoleculeData;
 using SireMol::Molecule;
 
@@ -80,7 +80,7 @@ using SireMol::Molecule;
     @author Christopher Woods
 */
 class SIREFF_EXPORT FFMolGroup 
-                : public SireBase::ConcreteProperty<FFMolGroup,MolGroup>
+                : public SireBase::ConcreteProperty<FFMolGroup,MoleculeGroup>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const FFMolGroup&);
@@ -91,7 +91,7 @@ public:
     
     FFMolGroup(const detail::FFMolGroupPvt &ffmolgroup);
 
-    FFMolGroup(const MolGroup &other);
+    FFMolGroup(const MoleculeGroup &other);
     
     FFMolGroup(const FFMolGroup &other);
     
@@ -113,7 +113,7 @@ public:
     }
     
     FFMolGroup& operator=(const FFMolGroup &other);
-    FFMolGroup& operator=(const MolGroup &other);
+    FFMolGroup& operator=(const MoleculeGroup &other);
 
     const FF& forceField() const;
     
@@ -124,32 +124,32 @@ public:
     void add(const MoleculeView &molview);
     void add(const ViewsOfMol &molviews);
     void add(const Molecules &molecules);
-    void add(const MolGroup &molgroup);
+    void add(const MoleculeGroup &molgroup);
     
     void add(const MoleculeView &molview, const PropertyMap &map);
     void add(const ViewsOfMol &molviews, const PropertyMap &map);
     void add(const Molecules &molecules, const PropertyMap &map);
-    void add(const MolGroup &molgroup, const PropertyMap &map);
+    void add(const MoleculeGroup &molgroup, const PropertyMap &map);
     
     bool addIfUnique(const MoleculeView &molview);
     ViewsOfMol addIfUnique(const ViewsOfMol &molviews);
     QList<ViewsOfMol> addIfUnique(const Molecules &molecules);
-    QList<ViewsOfMol> addIfUnique(const MolGroup &molgroup);
+    QList<ViewsOfMol> addIfUnique(const MoleculeGroup &molgroup);
 
     bool addIfUnique(const MoleculeView &molview, const PropertyMap &map);
     ViewsOfMol addIfUnique(const ViewsOfMol &molviews, const PropertyMap &map);
     QList<ViewsOfMol> addIfUnique(const Molecules &molecules, const PropertyMap &map);
-    QList<ViewsOfMol> addIfUnique(const MolGroup &molgroup, const PropertyMap &map);
+    QList<ViewsOfMol> addIfUnique(const MoleculeGroup &molgroup, const PropertyMap &map);
 
     bool remove(const MoleculeView &molview);
     ViewsOfMol remove(const ViewsOfMol &molviews);
     QList<ViewsOfMol> remove(const Molecules &molecules);
-    QList<ViewsOfMol> remove(const MolGroup &molgroup);
+    QList<ViewsOfMol> remove(const MoleculeGroup &molgroup);
     
     bool removeAll(const MoleculeView &molview);
     ViewsOfMol removeAll(const ViewsOfMol &molviews);
     QList<ViewsOfMol> removeAll(const Molecules &molecules);
-    QList<ViewsOfMol> removeAll(const MolGroup &molgroup);
+    QList<ViewsOfMol> removeAll(const MoleculeGroup &molgroup);
 
     ViewsOfMol remove(MolNum molnum);
     QList<ViewsOfMol> remove(const QSet<MolNum> &molnums);
@@ -159,17 +159,17 @@ public:
     bool update(const MoleculeData &moldata);
 
     QList<Molecule> update(const Molecules &molecules);
-    QList<Molecule> update(const MolGroup &molgroup);
+    QList<Molecule> update(const MoleculeGroup &molgroup);
     
     bool setContents(const MoleculeView &molview);
     bool setContents(const ViewsOfMol &molviews);
     bool setContents(const Molecules &molecules);
-    bool setContents(const MolGroup &molgroup);
+    bool setContents(const MoleculeGroup &molgroup);
     
     bool setContents(const MoleculeView &molview, const PropertyMap &map);
     bool setContents(const ViewsOfMol &molviews, const PropertyMap &map);
     bool setContents(const Molecules &molecules, const PropertyMap &map);
-    bool setContents(const MolGroup &molgroup, const PropertyMap &map);
+    bool setContents(const MoleculeGroup &molgroup, const PropertyMap &map);
     
 private:
     void assertNotNull() const;
@@ -193,7 +193,7 @@ namespace detail
     
     @author Christopher Woods
 */
-class SIREFF_EXPORT FFMolGroupPvt : public MolGroup
+class SIREFF_EXPORT FFMolGroupPvt : public MoleculeGroup
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const FFMolGroupPvt&);
@@ -220,7 +220,7 @@ public:
 
     FFMolGroupPvt& operator=(const FFMolGroupPvt &other);
 
-    MolGroup* clone() const
+    MoleculeGroup* clone() const
     {
         //return a FFMolGroup, not an FFMolGroupPvt - this
         //allows the FFMolGroup to contain a *copy* of the

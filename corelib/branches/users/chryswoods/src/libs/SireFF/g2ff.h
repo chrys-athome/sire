@@ -69,7 +69,7 @@ friend QDataStream& ::operator>>(QDataStream&, G2FF&);
 public:
     ~G2FF();
     
-    const MolGroup& at(MGNum mgnum) const;
+    const MoleculeGroup& at(MGNum mgnum) const;
     
     void assertContains(MGNum mgnum) const;
     
@@ -102,9 +102,6 @@ protected:
                                             MolNum molnum, 
                                             const PropertyMap &map) const=0;
 
-    //must also implement void _pvt_restore(const ForceField &ffield)=0
-    //from FF
-
     ////
     //// Virtual functions that must be changed if this 
     //// forcefield allows overlapping atoms (most don't!)
@@ -126,12 +123,12 @@ protected:
     //// Implementation of FF virtual functions
     ////
 
-    const MolGroup& getGroup(MGNum mgnum) const;
+    const MoleculeGroup& getGroup(MGNum mgnum) const;
     
     void getGroups(const QList<MGNum> &mgnums,
-                   QVarLengthArray<const MolGroup*,10> &groups) const;
+                   QVarLengthArray<const MoleculeGroup*,10> &groups) const;
 
-    QHash<MGNum,const MolGroup*> getGroups() const;
+    QHash<MGNum,const MoleculeGroup*> getGroups() const;
     
     void group_setName(quint32 i, const QString &new_name);
         
@@ -141,7 +138,7 @@ protected:
                            const PropertyMap &map);
     void group_add(quint32 i, const Molecules &molecules, 
                            const PropertyMap &map);
-    void group_add(quint32 i, const MolGroup &molgroup, 
+    void group_add(quint32 i, const MoleculeGroup &molgroup, 
                            const PropertyMap &map);
     
     bool group_addIfUnique(quint32 i, const MoleculeView &molview, 
@@ -150,18 +147,18 @@ protected:
                                  const PropertyMap &map);
     QList<ViewsOfMol> group_addIfUnique(quint32 i, const Molecules &molecules, 
                                         const PropertyMap &map);
-    QList<ViewsOfMol> group_addIfUnique(quint32 i, const MolGroup &molgroup, 
+    QList<ViewsOfMol> group_addIfUnique(quint32 i, const MoleculeGroup &molgroup, 
                                         const PropertyMap &map);
 
     bool group_remove(quint32 i, const MoleculeView &molview);
     ViewsOfMol group_remove(quint32 i, const ViewsOfMol &molviews);
     QList<ViewsOfMol> group_remove(quint32 i, const Molecules &molecules);
-    QList<ViewsOfMol> group_remove(quint32 i, const MolGroup &molgroup);
+    QList<ViewsOfMol> group_remove(quint32 i, const MoleculeGroup &molgroup);
     
     bool group_removeAll(quint32 i, const MoleculeView &molview);
     ViewsOfMol group_removeAll(quint32 i, const ViewsOfMol &molviews);
     QList<ViewsOfMol> group_removeAll(quint32 i, const Molecules &molecules);
-    QList<ViewsOfMol> group_removeAll(quint32 i, const MolGroup &molgroup);
+    QList<ViewsOfMol> group_removeAll(quint32 i, const MoleculeGroup &molgroup);
 
     ViewsOfMol group_remove(quint32 i, MolNum molnum);
     QList<ViewsOfMol> group_remove(quint32 i, const QSet<MolNum> &molnums);
@@ -171,7 +168,7 @@ protected:
     bool group_update(quint32 i, const MoleculeData &moldata);
 
     QList<Molecule> group_update(quint32 i, const Molecules &molecules);
-    QList<Molecule> group_update(quint32 i, const MolGroup &molgroup);
+    QList<Molecule> group_update(quint32 i, const MoleculeGroup &molgroup);
     
     bool group_setContents(quint32 i, const MoleculeView &molview, 
                            const PropertyMap &map);
@@ -179,7 +176,7 @@ protected:
                            const PropertyMap &map);
     bool group_setContents(quint32 i, const Molecules &molecules, 
                            const PropertyMap &map);
-    bool group_setContents(quint32 i, const MolGroup &molgroup, 
+    bool group_setContents(quint32 i, const MoleculeGroup &molgroup, 
                            const PropertyMap &map);
 
     void _pvt_updateName();
@@ -188,10 +185,10 @@ private:
     void assertValidGroup(quint32 i) const;
 
     void assertNoOverlap(const MoleculeView &molview) const;
-    void assertNoOverlap(const MolGroup &molgroup,
+    void assertNoOverlap(const MoleculeGroup &molgroup,
                          const MoleculeView &molview) const;
 
-    void assertNoOverlap(const MolGroup &molgroup,
+    void assertNoOverlap(const MoleculeGroup &molgroup,
                          const Molecules &molecules) const;
 
     /** The two groups of molecules in this forcefield */

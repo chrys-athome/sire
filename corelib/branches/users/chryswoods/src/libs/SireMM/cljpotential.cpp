@@ -129,9 +129,9 @@ static PackedArray2D<CLJParameter> getCLJParameters(const PartialMolecule &molec
                                                     const PropertyName &charge_property,
                                                     const PropertyName &lj_property)
 {
-    const AtomCharges &chgs = molecule.property(charge_property)->asA<AtomCharges>();
+    const AtomCharges &chgs = molecule.property(charge_property).asA<AtomCharges>();
 
-    const AtomLJs &ljs = molecule.property(lj_property)->asA<AtomLJs>();
+    const AtomLJs &ljs = molecule.property(lj_property).asA<AtomLJs>();
     
     const AtomSelection &selected_atoms = molecule.selection();
     
@@ -241,9 +241,6 @@ static PackedArray2D<CLJParameter> getCLJParameters(const PartialMolecule &molec
 ///////////// Implementation of CLJPotential
 /////////////
 
-static const Space default_space = Cartesian();
-static const SwitchingFunction default_switchfunc = NoCutoff();
-
 static const RegisterMetaType<CLJPotential> r_cljpot( MAGIC_ONLY,
                                                       "SireMM::CLJPotential" );
 
@@ -269,16 +266,16 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
         ds >> cljpot.props;
     
         //extract all of the properties
-        cljpot.spce = cljpot.props.property("space")->asA<SpaceBase>();
+        cljpot.spce = cljpot.props.property("space").asA<Space>();
         cljpot.switchfunc = cljpot.props.property("switchingFunction")
-                                            ->asA<SwitchFunc>();
+                                        .asA<SwitchingFunction>();
     
         cljpot.combining_rules = LJParameterDB::interpret(
                                     cljpot.props.property("combiningRules")
-                                        ->asA<VariantProperty>().convertTo<QString>() );
+                                        .asA<VariantProperty>().convertTo<QString>() );
 
         cljpot.use_electrostatic_shifting = cljpot.props.property("shiftElectrostatics")
-                                        ->asA<VariantProperty>().convertTo<bool>();
+                                        .asA<VariantProperty>().convertTo<bool>();
                                         
         cljpot.need_update_ljpairs = true;
     }
@@ -290,7 +287,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 
 /** Constructor */
 CLJPotential::CLJPotential()
-             : spce(default_space), switchfunc(default_switchfunc),
+             : spce( Space::null() ), switchfunc( SwitchingFunction::null() ),
                combining_rules( LJParameterDB::interpret("arithmetic") ),
                need_update_ljpairs(true), use_electrostatic_shifting(false)
 {
@@ -375,7 +372,7 @@ const Property& CLJPotential::property(const QString &name) const
 /** Set the 3D space in which the molecules in this potential are evaluated */
 bool CLJPotential::setSpace(const Space &new_space)
 {
-    if (spce != new_space)
+    if ( not spce->equals(new_space) )
     {
         spce = new_space;
         props.setProperty( "space", new_space );
@@ -390,7 +387,7 @@ bool CLJPotential::setSpace(const Space &new_space)
     CutGroups to zero at the cutoff */
 bool CLJPotential::setSwitchingFunction(const SwitchingFunction &new_switchfunc)
 {
-    if (switchfunc != new_switchfunc)
+    if ( not switchfunc->equals(new_switchfunc) )
     {
         switchfunc = new_switchfunc;
         props.setProperty( "switchingFunction", new_switchfunc );
@@ -441,15 +438,15 @@ bool CLJPotential::setCombiningRules(const QString &combiningrules)
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-bool CLJPotential::setProperty(const QString &name, const PropertyBase &value)
+bool CLJPotential::setProperty(const QString &name, const Property &value)
 {
     if (name == QLatin1String("space"))
     {
-        return this->setSpace( value.asA<SpaceBase>() );
+        return this->setSpace( value.asA<Space>() );
     }
     else if (name == QLatin1String("switchingFunction"))
     {
-        return this->setSwitchingFunction( value.asA<SwitchFunc>() );
+        return this->setSwitchingFunction( value.asA<SwitchingFunction>() );
     }
     else if (name == QLatin1String("shiftElectrostatics"))
     {
@@ -471,14 +468,14 @@ bool CLJPotential::setProperty(const QString &name, const PropertyBase &value)
 }
 
 /** Return the 3D space in which this potential is evaluated */
-const SpaceBase& CLJPotential::space() const
+const Space& CLJPotential::space() const
 {
     return *spce;
 }
 
 /** Return the switching function used to scale the group-group
     interactions to zero at the cutoff */
-const SwitchFunc& CLJPotential::switchingFunction() const
+const SwitchingFunction& CLJPotential::switchingFunction() const
 {
     return *switchfunc;
 }
@@ -703,7 +700,7 @@ InterCLJPotential::parameterise(const PartialMolecule &molecule,
     \throw SireError::incompatible_error
 */
 InterCLJPotential::Molecules 
-InterCLJPotential::parameterise(const MolGroup &molecules,
+InterCLJPotential::parameterise(const MoleculeGroup &molecules,
                                 const PropertyMap &map)
 {
     return InterCLJPotential::Molecules(molecules, *this, map);
@@ -1901,7 +1898,7 @@ IntraCLJPotential::parameterise(const PartialMolecule &molecule,
     \throw SireError::incompatible_error
 */
 IntraCLJPotential::Molecules 
-IntraCLJPotential::parameterise(const MolGroup &molecules,
+IntraCLJPotential::parameterise(const MoleculeGroup &molecules,
                                 const PropertyMap &map)
 {
     return IntraCLJPotential::Molecules(molecules, *this, map);

@@ -148,41 +148,41 @@ const QMMMFF::Components& QMMMFF::components() const
 }
 
 /** Return the space within which the QM molecules exist */
-const SpaceBase& QMMMFF::space() const
+const Space& QMMMFF::space() const
 {
     return QMMMElecEmbedPotential::space();
 }
 
 /** Return the switching function used to provide the nonbonded cutoff
     between the QM and MM regions */
-const SwitchFunc& QMMMFF::switchingFunction() const
+const SwitchingFunction& QMMMFF::switchingFunction() const
 {
     return QMMMElecEmbedPotential::switchingFunction();
 }
 
 /** Return the QM program that will be used to calculate the 
     energies and forces on the molecules */
-const QMProg& QMMMFF::quantumProgram() const
+const QMProgram& QMMMFF::quantumProgram() const
 {
     return QMMMElecEmbedPotential::quantumProgram();
 }
 
 /** Set the space within which the QM molecules exist */
-bool QMMMFF::setSpace(const SpaceBase &space)
+bool QMMMFF::setSpace(const Space &space)
 {
     return QMMMElecEmbedPotential::setSpace(space);
 }
 
 /** Set the switching function used to provide the 
     cutoff between the QM and MM regions */
-bool QMMMFF::setSwitchingFunction(const SwitchFunc &switchfunc)
+bool QMMMFF::setSwitchingFunction(const SwitchingFunction &switchfunc)
 {
     return QMMMElecEmbedPotential::setSwitchingFunction(switchfunc);
 }
 
 /** Set the QM program that will be used to calculate the 
     energies and forces */
-bool QMMMFF::setQuantumProgram(const QMProg &qmprog)
+bool QMMMFF::setQuantumProgram(const QMProgram &qmprog)
 {
     return QMMMElecEmbedPotential::setQuantumProgram(qmprog);
 }
@@ -269,15 +269,6 @@ void QMMMFF::recalculateEnergy()
     
     this->components().setEnergy(*this, nrg);
     this->setClean();
-}
-
-/** Function used to restore from a QMMMFF held in a ForceField */
-void QMMMFF::_pvt_restore(const SireFF::ForceField &ffield)
-{
-    if (not ffield->isA<QMMMFF>())
-        SireFF::detail::throwForceFieldRestoreBug(this->what(), ffield->what());
-        
-    QMMMFF::operator=( ffield->asA<QMMMFF>() );
 }
 
 ////

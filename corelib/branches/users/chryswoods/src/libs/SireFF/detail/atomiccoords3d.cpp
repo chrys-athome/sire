@@ -117,7 +117,7 @@ AtomicCoords3D::AtomicCoords3D(const PartialMolecule &molecule,
                                const PropertyName &coords_property)
 {
     //get the coordinates of the atoms
-    coords = molecule.property(coords_property)->asA<AtomCoords>().array();
+    coords = molecule.property(coords_property).asA<AtomCoords>().array();
     
     //these are for all of the atoms - we now need to mask this
     //so that only the coordinates for atoms in CutGroups that

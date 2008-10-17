@@ -48,7 +48,7 @@ QDataStream& operator>>(QDataStream&, Squire::QMMMElecEmbedPotential&);
 namespace Squire
 {
 
-using SireMM::SwitchFunc;
+using SireMM::SwitchingFunction;
 using SireVol::Space;
 
 /** This is a QM/MM potential that uses electrostatic embedding to 
@@ -89,13 +89,13 @@ public:
     bool containsProperty(const QString &name) const;
     const Properties& properties() const;
 
-    bool setSpace(const SpaceBase &space);
-    bool setSwitchingFunction(const SwitchFunc &switchfunc);
-    bool setQuantumProgram(const QMProg &program);
+    bool setSpace(const Space &space);
+    bool setSwitchingFunction(const SwitchingFunction &switchfunc);
+    bool setQuantumProgram(const QMProgram &program);
     
-    const SpaceBase& space() const;
-    const SwitchFunc& switchingFunction() const;
-    const QMProg& quantumProgram() const;
+    const Space& space() const;
+    const SwitchingFunction& switchingFunction() const;
+    const QMProgram& quantumProgram() const;
 
     void calculateForce(const QMMolecules &qmmols, 
                         const MMMolecules &mmmols,

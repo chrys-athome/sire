@@ -35,13 +35,12 @@ SIRE_BEGIN_HEADER
 
 namespace Squire
 {
-class QMProg;
 class QMProgram;
 class NullQM;
 }
 
-QDataStream& operator<<(QDataStream&, const Squire::QMProg&);
-QDataStream& operator>>(QDataStream&, Squire::QMProg&);
+QDataStream& operator<<(QDataStream&, const Squire::QMProgram&);
+QDataStream& operator>>(QDataStream&, Squire::QMProgram&);
 
 QDataStream& operator<<(QDataStream&, const Squire::NullQM&);
 QDataStream& operator>>(QDataStream&, Squire::NullQM&);
@@ -59,28 +58,28 @@ class QMMMElecEmbedPotential;
     
     @author Christopher Woods
 */
-class SQUIRE_EXPORT QMProg : public SireBase::PropertyBase
+class SQUIRE_EXPORT QMProgram : public SireBase::Property
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const QMProg&);
-friend QDataStream& ::operator>>(QDataStream&, QMProg&);
+friend QDataStream& ::operator<<(QDataStream&, const QMProgram&);
+friend QDataStream& ::operator>>(QDataStream&, QMProgram&);
 
 friend class QMPotential;            //so it can call the force and energy functions
 friend class QMMMElecEmbedPotential; //so it can call the force and energy functions
 
 public:
-    QMProg();
+    QMProgram();
 
-    QMProg(const QMProg &other);
+    QMProgram(const QMProgram &other);
     
-    virtual ~QMProg();
+    virtual ~QMProgram();
     
     static const char* typeName()
     {
-        return "Squire::QMProg";
+        return "Squire::QMProgram";
     }
     
-    virtual QMProg* clone() const=0;
+    virtual QMProgram* clone() const=0;
     
     /** Return whether or not this QM program supports the use
         of point lattice charges (which can polarise the QM wavefunction) */
@@ -95,6 +94,8 @@ public:
     {
         return false;
     }
+    
+    static const NullQM& null();
     
 protected:
     /** Calculate and return the QM energy of all of the molecules
@@ -121,7 +122,7 @@ protected:
 
 /** This is the null QM program that returns zero energy and force */
 class SQUIRE_EXPORT NullQM 
-        : public SireBase::ConcreteProperty<NullQM,QMProg>
+        : public SireBase::ConcreteProperty<NullQM,QMProgram>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const NullQM&);
@@ -156,15 +157,16 @@ protected:
     QString forceCommandFile(const QMPotential::Molecules &molecules) const;
 };
 
+typedef SireBase::PropPtr<QMProgram> QMProgPtr;
+
 }
 
-Q_DECLARE_METATYPE( Squire::QMProgram )
 Q_DECLARE_METATYPE( Squire::NullQM )
 
-SIRE_EXPOSE_CLASS( Squire::QMProg )
+SIRE_EXPOSE_CLASS( Squire::QMProgram )
 SIRE_EXPOSE_CLASS( Squire::NullQM )
 
-SIRE_EXPOSE_PROPERTY( Squire::QMProgram, Squire::QMProg )
+SIRE_EXPOSE_PROPERTY( Squire::QMProgram, Squire::QMProgram )
 
 SIRE_END_HEADER
 

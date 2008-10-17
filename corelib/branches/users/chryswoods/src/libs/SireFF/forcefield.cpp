@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QMutex>
+
 #include "forcefield.h"
 
 #include "SireMol/molecule.h"
@@ -71,24 +73,27 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, NullFF &nullff)
     return ds;
 }
 
-static NullFF *shared_null_ff;
-
-NullFF& NullFF::getSharedNullFF()
-{
-    if (shared_null_ff == 0)
-    {
-        shared_null_ff = new NullFF(false);
-    }
-    
-    return *shared_null_ff;
-}
-
 /** Private constructor */
 NullFF::NullFF(bool) : ConcreteProperty<NullFF,FF>()
 {}
 
+static SharedPolyPointer<NullFF> shared_null;
+
+const NullFF& FF::null()
+{
+    if (shared_null.constData() == 0)
+    {
+        QMutexLocker lkr( SireBase::globalLock() );
+        
+        if (shared_null.constData() == 0)
+            shared_null = new NullFF(true);
+    }
+    
+    return *(shared_null.constData());
+}
+
 /** Constructor */
-NullFF::NullFF() : ConcreteProperty<NullFF,FF>( NullFF::getSharedNullFF() )
+NullFF::NullFF() : ConcreteProperty<NullFF,FF>( FF::null() )
 {}
 
 /** Copy constructor */
@@ -185,7 +190,7 @@ void NullFF::group_add(quint32 i, const Molecules &molecules,
     throwNoAdd();
 }
 
-void NullFF::group_add(quint32 i, const MolGroup &molgroup, 
+void NullFF::group_add(quint32 i, const MoleculeGroup &molgroup, 
                        const PropertyMap &map)
 {
     throwNoAdd();
@@ -212,7 +217,7 @@ QList<ViewsOfMol> NullFF::group_addIfUnique(quint32 i, const Molecules &molecule
     throw QList<ViewsOfMol>();
 }
 
-QList<ViewsOfMol> NullFF::group_addIfUnique(quint32 i, const MolGroup &molgroup, 
+QList<ViewsOfMol> NullFF::group_addIfUnique(quint32 i, const MoleculeGroup &molgroup, 
                                             const PropertyMap &map)
 {
     throwNoAdd();
@@ -243,7 +248,7 @@ QList<ViewsOfMol> NullFF::group_remove(quint32 i, const Molecules &molecules)
     return QList<ViewsOfMol>();
 }
 
-QList<ViewsOfMol> NullFF::group_remove(quint32 i, const MolGroup &molgroup)
+QList<ViewsOfMol> NullFF::group_remove(quint32 i, const MoleculeGroup &molgroup)
 {
     throwNoRemove();
     return QList<ViewsOfMol>();
@@ -267,7 +272,7 @@ QList<ViewsOfMol> NullFF::group_removeAll(quint32 i, const Molecules &molecules)
     return QList<ViewsOfMol>();
 }
 
-QList<ViewsOfMol> NullFF::group_removeAll(quint32 i, const MolGroup &molgroup)
+QList<ViewsOfMol> NullFF::group_removeAll(quint32 i, const MoleculeGroup &molgroup)
 {
     throwNoRemove();
     return QList<ViewsOfMol>();
@@ -300,7 +305,7 @@ QList<Molecule> NullFF::group_update(quint32 i, const Molecules &molecules)
     return QList<Molecule>();
 }
 
-QList<Molecule> NullFF::group_update(quint32 i, const MolGroup &molgroup)
+QList<Molecule> NullFF::group_update(quint32 i, const MoleculeGroup &molgroup)
 {
     return QList<Molecule>();
 }
@@ -332,7 +337,7 @@ bool NullFF::group_setContents(quint32 i, const Molecules &molecules,
     return false;
 }
 
-bool NullFF::group_setContents(quint32 i, const MolGroup &molgroup, 
+bool NullFF::group_setContents(quint32 i, const MoleculeGroup &molgroup, 
                                const PropertyMap &map)
 {
     throwNoSetContents();
@@ -345,182 +350,35 @@ void NullFF::_pvt_updateName()
         "You cannot change the name of a null forcefield."), CODELOC );
 }
 
-void NullFF::_pvt_restore(const ForceField &ffield)
-{
-    if (not ffield->isA<NullFF>())
-        throw SireError::invalid_cast( QObject::tr(
-            "You cannot restore a NullFF using a %1.")
-                .arg(ffield->what()), CODELOC );
-}
-
 static void throwNoGroups()
 {
     throw SireMol::missing_group( QObject::tr(
         "There are no molecule groups in the null forcefield!"), CODELOC );
 }
 
-const MolGroup& NullFF::at(MGNum mgnum) const
+const MoleculeGroup& NullFF::at(MGNum mgnum) const
 {
     throwNoGroups();
     return this->getGroup(mgnum);
 }
 
-const MolGroup& NullFF::getGroup(MGNum mgnum) const
+const MoleculeGroup& NullFF::getGroup(MGNum mgnum) const
 {
     return NullFF::at(mgnum);
 }
 
 void NullFF::getGroups(const QList<MGNum> &mgnums,
-                       QVarLengthArray<const MolGroup*,10> &groups) const
+                       QVarLengthArray<const MoleculeGroup*,10> &groups) const
 {
     throwNoGroups();
 }
 
-QHash<MGNum,const MolGroup*> NullFF::getGroups() const
+QHash<MGNum,const MoleculeGroup*> NullFF::getGroups() const
 {
-    return QHash<MGNum,const MolGroup*>();
+    return QHash<MGNum,const MoleculeGroup*>();
 }
 
 void NullFF::group_setName(quint32 i, const QString &new_name)
 {
     throwNoGroups();
-}
-
-///////////
-/////////// Implementation of ForceField
-///////////
-
-static const RegisterMetaType<ForceField> r_ff;
-
-/** Serialise a ForceField to a binary datastream */
-QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
-                                      const ForceField &ff)
-{
-    writeHeader(ds, r_ff, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << static_cast<const Property&>(ff);
-    
-    return ds;
-}
-
-/** Deserialise a ForceField from a binary datastream */
-QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
-                                      ForceField &ff)
-{
-    VersionID v = readHeader(ds, r_ff);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-
-        sds >> static_cast<Property&>(ff);
-    }
-    else
-        throw version_error(v, "1", r_ff, CODELOC);
-        
-    return ds;
-}
-
-static ForceField *_pvt_shared_null = 0;
-
-const ForceField& ForceField::shared_null()
-{
-    if (_pvt_shared_null == 0)
-        _pvt_shared_null = new ForceField( NullFF() );
-        
-    return *_pvt_shared_null;
-}
-
-/** Null constructor - constructs a simple, NullFF() object */
-ForceField::ForceField() : Property(ForceField::shared_null())
-{}
-
-/** Construct from a passed property
-
-    \throw SireError::invalid_cast
-*/
-ForceField::ForceField(const PropertyBase &property)
-           : Property(property.asA<FF>())
-{}
-
-/** Construct from passed FF */
-ForceField::ForceField(const FF &ff) : Property(ff)
-{} 
-
-/** Copy constructor */
-ForceField::ForceField(const ForceField &other)
-           : Property(other)
-{}
-
-/** Destructor */
-ForceField::~ForceField()
-{}
-
-/** Copy assignment operator from a Property object
-
-    \throw SireError::invalid_cast
-*/
-ForceField& ForceField::operator=(const PropertyBase &property)
-{
-    Property::operator=(property.asA<FF>());
-    return *this;
-}
-
-/** Copy assignment operator from another FF */
-ForceField& ForceField::operator=(const FF &other)
-{
-    Property::operator=(other);
-    return *this;
-}
-
-/** Dereference this pointer */
-const FF* ForceField::operator->() const
-{
-    return static_cast<const FF*>(&(d()));
-}
-
-/** Dereference this pointer */
-const FF& ForceField::operator*() const
-{
-    return static_cast<const FF&>(d());
-}
-
-/** Return a read-only reference to the contained object */
-const FF& ForceField::read() const
-{
-    return static_cast<const FF&>(d());
-}
-
-/** Return a modifiable reference to the contained object.
-    This will trigger a copy of the object if more than
-    one pointer is pointing to it. */
-FF& ForceField::edit()
-{
-    return static_cast<FF&>(d());
-}
-    
-/** Return a raw pointer to the FF object */
-const FF* ForceField::data() const
-{
-    return static_cast<const FF*>(&(d()));
-}
-
-/** Return a raw pointer to the FF object */
-const FF* ForceField::constData() const
-{
-    return static_cast<const FF*>(&(d()));
-}
-    
-/** Return a raw pointer to the FF object */
-FF* ForceField::data()
-{
-    return static_cast<FF*>(&(d()));
-}
-
-/** Automatic casting operator */
-ForceField::operator const FF&() const
-{
-    return static_cast<const FF&>(d());
 }

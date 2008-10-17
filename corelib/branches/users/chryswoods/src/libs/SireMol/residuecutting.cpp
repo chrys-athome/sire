@@ -57,7 +57,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_rescut, 1);
     
-    ds << static_cast<const CuttingFunctionBase&>(rescut);
+    ds << static_cast<const CuttingFunction&>(rescut);
     
     return ds;
 }
@@ -69,7 +69,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ResidueCutting &rescut)
     
     if (v == 1)
     {
-        ds >> static_cast<CuttingFunctionBase&>(rescut);
+        ds >> static_cast<CuttingFunction&>(rescut);
     }
     else
         throw version_error(v, "1", r_rescut, CODELOC);
@@ -79,12 +79,12 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ResidueCutting &rescut)
 
 /** Constructor */
 ResidueCutting::ResidueCutting()
-               : ConcreteProperty<ResidueCutting,CuttingFunctionBase>()
+               : ConcreteProperty<ResidueCutting,CuttingFunction>()
 {}
 
 /** Copy constructor */
 ResidueCutting::ResidueCutting(const ResidueCutting &other)
-               : ConcreteProperty<ResidueCutting,CuttingFunctionBase>(other)
+               : ConcreteProperty<ResidueCutting,CuttingFunction>(other)
 {}
 
 /** Destructor */

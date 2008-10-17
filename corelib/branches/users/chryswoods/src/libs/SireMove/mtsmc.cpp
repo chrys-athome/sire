@@ -30,7 +30,7 @@
 
 #include "SireSystem/system.h"
 
-#include "SireMol/molgroup.h"
+#include "SireMol/moleculegroup.h"
 
 #include "SireCAS/symbol.h"
 
@@ -81,7 +81,7 @@ MTSMC::MTSMC() : ConcreteProperty<MTSMC,MonteCarlo>(), nfastmoves(0)
 
 /** Construct a multiple time step Monte Carlo move that performs
     'nfastmoves' moves using 'fastmoves' for every slow move */
-MTSMC::MTSMC(const MovesBase &fast_moves, int nfast_moves)
+MTSMC::MTSMC(const Moves &fast_moves, int nfast_moves)
       : ConcreteProperty<MTSMC,MonteCarlo>(),
         fastmoves(fast_moves), nfastmoves(0)
 {
@@ -89,17 +89,21 @@ MTSMC::MTSMC(const MovesBase &fast_moves, int nfast_moves)
     {
         nfastmoves = quint32(nfast_moves);
     }
+    
+    MonteCarlo::setEnsemble( fast_moves.ensemble() );
 }
 
 /** Construct a multiple time step Monte Carlo move that performs
     'nfastmoves' moves using 'fastmoves' operating on 
     the energy component 'fastcomponent' for every slow move */
-MTSMC::MTSMC(const MovesBase &fast_moves, const Symbol &fast_component, 
+MTSMC::MTSMC(const Moves &fast_moves, const Symbol &fast_component, 
              int nfast_moves)
       : ConcreteProperty<MTSMC,MonteCarlo>(),
         fastmoves(fast_moves), fastcomponent(fast_component),
         nfastmoves(nfast_moves)
-{}
+{
+    MonteCarlo::setEnsemble( fast_moves.ensemble() );
+}
 
 /** Copy constructor */
 MTSMC::MTSMC(const MTSMC &other)
@@ -161,11 +165,11 @@ const Symbol& MTSMC::slowEnergyComponent() const
     Note that these moves will be performd using the current
     fast energy component, which will override any energy
     component currently set for these moves */
-void MTSMC::setFastMoves(const MovesBase &fast_moves)
+void MTSMC::setFastMoves(const Moves &fast_moves)
 {
     Symbol fastcomponent = this->fastEnergyComponent();
     
-    Moves new_fastmoves = fast_moves;
+    MovesPtr new_fastmoves = fast_moves;
     new_fastmoves.edit().setEnergyComponent(fastcomponent);
     
     fastmoves = new_fastmoves;
@@ -195,7 +199,7 @@ void MTSMC::setSlowEnergyComponent(const Symbol &component)
 
 /** Return the fast moves that will be performed for every
     slow move */
-const MovesBase& MTSMC::fastMoves() const
+const Moves& MTSMC::fastMoves() const
 {
     return fastmoves.read();
 }

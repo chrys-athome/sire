@@ -126,7 +126,7 @@ private:
     @author Christopher Woods
 */
 class SIREMOVE_EXPORT Ensemble 
-           : public SireBase::ConcreteProperty<Ensemble,SireBase::PropertyBase>
+           : public SireBase::ConcreteProperty<Ensemble,SireBase::Property>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Ensemble&);

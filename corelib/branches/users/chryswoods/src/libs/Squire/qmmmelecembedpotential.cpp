@@ -124,21 +124,21 @@ QMMMElecEmbedPotential::operator=(const QMMMElecEmbedPotential &other)
 }
 
 /** Return the space within which the molecules in this potential exist */
-const SpaceBase& QMMMElecEmbedPotential::space() const
+const Space& QMMMElecEmbedPotential::space() const
 {
     return QMPotential::space();
 }
 
 /** Return the switching function that is used to implement the non-bonded
     cutoff */
-const SwitchFunc& QMMMElecEmbedPotential::switchingFunction() const
+const SwitchingFunction& QMMMElecEmbedPotential::switchingFunction() const
 {
     return MMPotential::switchingFunction();
 }
 
 /** Return the handle to the quantum chemical program that is used 
     by this potential to calculate the QM energies and forces */
-const QMProg& QMMMElecEmbedPotential::quantumProgram() const
+const QMProgram& QMMMElecEmbedPotential::quantumProgram() const
 {
     return QMPotential::quantumProgram();
 }
@@ -146,7 +146,7 @@ const QMProg& QMMMElecEmbedPotential::quantumProgram() const
 /** Set the space within which all of the molecules in this potential
     will exist. This returns whether or not this changes the
     potential. */
-bool QMMMElecEmbedPotential::setSpace(const SpaceBase &space)
+bool QMMMElecEmbedPotential::setSpace(const Space &space)
 {
     if (QMPotential::setSpace(space))
     {
@@ -159,7 +159,7 @@ bool QMMMElecEmbedPotential::setSpace(const SpaceBase &space)
 
 /** Set the switching function that will be used to implement the 
     non-bonded cutoff in the QM/MM interface */
-bool QMMMElecEmbedPotential::setSwitchingFunction(const SwitchFunc &switchfunc)
+bool QMMMElecEmbedPotential::setSwitchingFunction(const SwitchingFunction &switchfunc)
 {
     if (MMPotential::setSwitchingFunction(switchfunc))
     {
@@ -173,7 +173,7 @@ bool QMMMElecEmbedPotential::setSwitchingFunction(const SwitchFunc &switchfunc)
 /** Set the handle to the quantum chemical program that will be
     used by this potential to calculate the QM energies and forces.
     This returns whether or not this changes this potential */
-bool QMMMElecEmbedPotential::setQuantumProgram(const QMProg &program)
+bool QMMMElecEmbedPotential::setQuantumProgram(const QMProgram &program)
 {
     if (QMPotential::setQuantumProgram(program))
     {
@@ -280,8 +280,8 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
     }
 
     //now map all of the MM molecules into the same space as the QM molecules
-    const SpaceBase &spce = this->space();
-    const SwitchFunc &switchfunc = this->switchingFunction();
+    const Space &spce = this->space();
+    const SwitchingFunction &switchfunc = this->switchingFunction();
     
     double cutoff = switchfunc.electrostaticCutoffDistance();
     

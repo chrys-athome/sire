@@ -1499,20 +1499,20 @@ void EditMolData::assertHasAtomProperty(const QString &key) const
 {
     const Property &property = properties.property(key);
     
-    if (not property->isA<AtomProp>())
+    if (not property.isA<AtomProp>())
         throw SireError::invalid_cast( QObject::tr(
             "The property at key %1 of type %2 is not an AtomProperty!")
-                .arg(key, property->what()), CODELOC );
+                .arg(key, property.what()), CODELOC );
 }
 
 void EditMolData::assertHasAtomMetadata(const QString &metakey) const
 {
     const Property &property = properties.metadata(metakey);
     
-    if (not property->isA<AtomProp>())
+    if (not property.isA<AtomProp>())
         throw SireError::invalid_cast( QObject::tr(
             "The metadata at metakey %1 of type %2 is not an AtomProperty!")
-                .arg(metakey, property->what()), CODELOC );
+                .arg(metakey, property.what()), CODELOC );
 }
 
 void EditMolData::assertHasAtomMetadata(const QString &key,
@@ -1520,30 +1520,30 @@ void EditMolData::assertHasAtomMetadata(const QString &key,
 {
     const Property &property = properties.metadata(key, metakey);
     
-    if (not property->isA<AtomProp>())
+    if (not property.isA<AtomProp>())
         throw SireError::invalid_cast( QObject::tr(
             "The metadata at key %1, metakey %2 of type %3 is not an AtomProperty!")
-                .arg(key, metakey, property->what()), CODELOC );
+                .arg(key, metakey, property.what()), CODELOC );
 }
 
 void EditMolData::assertHasCGProperty(const QString &key) const
 {
     const Property &property = properties.property(key);
     
-    if (not property->isA<CGProp>())
+    if (not property.isA<CGProp>())
         throw SireError::invalid_cast( QObject::tr(
             "The property at key %1 of type %2 is not a CGProperty!")
-                .arg(key, property->what()), CODELOC );
+                .arg(key, property.what()), CODELOC );
 }
 
 void EditMolData::assertHasCGMetadata(const QString &metakey) const
 {
     const Property &property = properties.metadata(metakey);
     
-    if (not property->isA<CGProp>())
+    if (not property.isA<CGProp>())
         throw SireError::invalid_cast( QObject::tr(
             "The metadata at metakey %1 of type %2 is not a CGProperty!")
-                .arg(metakey, property->what()), CODELOC );
+                .arg(metakey, property.what()), CODELOC );
 }
 
 void EditMolData::assertHasCGMetadata(const QString &key,
@@ -1551,30 +1551,30 @@ void EditMolData::assertHasCGMetadata(const QString &key,
 {
     const Property &property = properties.metadata(key, metakey);
     
-    if (not property->isA<CGProp>())
+    if (not property.isA<CGProp>())
         throw SireError::invalid_cast( QObject::tr(
             "The metadata at key %1, metakey %2 of type %3 is not a CGProperty!")
-                .arg(key, metakey, property->what()), CODELOC );
+                .arg(key, metakey, property.what()), CODELOC );
 }
 
 void EditMolData::assertHasResProperty(const QString &key) const
 {
     const Property &property = properties.property(key);
     
-    if (not property->isA<ResProp>())
+    if (not property.isA<ResProp>())
         throw SireError::invalid_cast( QObject::tr(
             "The property at key %1 of type %2 is not a ResProperty!")
-                .arg(key, property->what()), CODELOC );
+                .arg(key, property.what()), CODELOC );
 }
 
 void EditMolData::assertHasResMetadata(const QString &metakey) const
 {
     const Property &property = properties.metadata(metakey);
     
-    if (not property->isA<ResProp>())
+    if (not property.isA<ResProp>())
         throw SireError::invalid_cast( QObject::tr(
             "The metadata at metakey %1 of type %2 is not a ResProperty!")
-                .arg(metakey, property->what()), CODELOC );
+                .arg(metakey, property.what()), CODELOC );
 }
 
 void EditMolData::assertHasResMetadata(const QString &key,
@@ -1582,30 +1582,30 @@ void EditMolData::assertHasResMetadata(const QString &key,
 {
     const Property &property = properties.metadata(key, metakey);
     
-    if (not property->isA<ResProp>())
+    if (not property.isA<ResProp>())
         throw SireError::invalid_cast( QObject::tr(
             "The metadata at key %1, metakey %2 of type %3 is not a ResProperty!")
-                .arg(key, metakey, property->what()), CODELOC );
+                .arg(key, metakey, property.what()), CODELOC );
 }
 
 void EditMolData::assertHasChainProperty(const QString &key) const
 {
     const Property &property = properties.property(key);
     
-    if (not property->isA<ChainProp>())
+    if (not property.isA<ChainProp>())
         throw SireError::invalid_cast( QObject::tr(
             "The property at key %1 of type %2 is not a ChainProperty!")
-                .arg(key, property->what()), CODELOC );
+                .arg(key, property.what()), CODELOC );
 }
 
 void EditMolData::assertHasChainMetadata(const QString &metakey) const
 {
     const Property &property = properties.metadata(metakey);
     
-    if (not property->isA<ChainProp>())
+    if (not property.isA<ChainProp>())
         throw SireError::invalid_cast( QObject::tr(
             "The metadata at metakey %1 of type %2 is not a ChainProperty!")
-                .arg(metakey, property->what()), CODELOC );
+                .arg(metakey, property.what()), CODELOC );
 }
 
 void EditMolData::assertHasChainMetadata(const QString &key,
@@ -1613,30 +1613,30 @@ void EditMolData::assertHasChainMetadata(const QString &key,
 {
     const Property &property = properties.metadata(key, metakey);
     
-    if (not property->isA<ChainProp>())
+    if (not property.isA<ChainProp>())
         throw SireError::invalid_cast( QObject::tr(
             "The metadata at key %1, metakey %2 of type %3 is not an ChainProperty!")
-                .arg(key, metakey, property->what()), CODELOC );
+                .arg(key, metakey, property.what()), CODELOC );
 }
 
 void EditMolData::assertHasSegProperty(const QString &key) const
 {
     const Property &property = properties.property(key);
     
-    if (not property->isA<SegProp>())
+    if (not property.isA<SegProp>())
         throw SireError::invalid_cast( QObject::tr(
             "The property at key %1 of type %2 is not a SegProperty!")
-                .arg(key, property->what()), CODELOC );
+                .arg(key, property.what()), CODELOC );
 }
 
 void EditMolData::assertHasSegMetadata(const QString &metakey) const
 {
     const Property &property = properties.metadata(metakey);
     
-    if (not property->isA<SegProp>())
+    if (not property.isA<SegProp>())
         throw SireError::invalid_cast( QObject::tr(
             "The metadata at metakey %1 of type %2 is not a SegProperty!")
-                .arg(metakey, property->what()), CODELOC );
+                .arg(metakey, property.what()), CODELOC );
 }
 
 void EditMolData::assertHasSegMetadata(const QString &key,
@@ -1644,10 +1644,10 @@ void EditMolData::assertHasSegMetadata(const QString &key,
 {
     const Property &property = properties.metadata(key, metakey);
     
-    if (not property->isA<SegProp>())
+    if (not property.isA<SegProp>())
         throw SireError::invalid_cast( QObject::tr(
             "The metadata at key %1, metakey %2 of type %3 is not a SegProperty!")
-                .arg(key, metakey, property->what()), CODELOC );
+                .arg(key, metakey, property.what()), CODELOC );
 }
 
 /** Return the values of the atom property at key 'key' 
@@ -4551,7 +4551,7 @@ Properties StructureEditor::properties() const
          it != d->properties.constEnd();
          ++it)
     {
-        Property updated_property = it.value();
+        PropertyPtr updated_property = it.value();
         const QString &key = it.key();
     
         if (updated_property->isA<AtomProp>())
@@ -4651,7 +4651,7 @@ Properties StructureEditor::properties() const
          it != metadata.constEnd();
          ++it)
     {
-        Property updated_property = it.value();
+        PropertyPtr updated_property = it.value();
         const QString &metakey = it.key();
     
         if (updated_property->isA<AtomProp>())

@@ -59,7 +59,7 @@ class ResIdentifier;
 class Residue;
 
 class Molecules;
-class MolGroup;
+class MoleculeGroup;
 class MolGroupsBase;
 class MolNum;
 
@@ -110,9 +110,9 @@ public:
     virtual QHash< MolNum,Selector<Residue> >
                 selectAllFrom(const Molecules &molecules) const;
 
-    virtual Residue selectFrom(const MolGroup &molgroup) const;
+    virtual Residue selectFrom(const MoleculeGroup &molgroup) const;
     virtual QHash< MolNum,Selector<Residue> >
-                selectAllFrom(const MolGroup &molgroup) const;
+                selectAllFrom(const MoleculeGroup &molgroup) const;
     
     virtual Residue selectFrom(const MolGroupsBase &molgroups) const;
     virtual QHash< MolNum,Selector<Residue> > 

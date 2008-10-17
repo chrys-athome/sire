@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QMutex>
+
 #include "bondhunter.h"
 
 #include "connectivity.h"
@@ -55,64 +57,18 @@ using namespace SireBase;
 using namespace SireStream;
 
 /////////
-///////// Implementation of BondHunterBase
-/////////
-
-static const RegisterMetaType<BondHunterBase> r_hunterbase( MAGIC_ONLY,
-                                                            "SireMol::BondHunterBase" );
-
-/** Serialise to a binary datastream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const BondHunterBase &hunter)
-{
-    writeHeader(ds, r_hunterbase, 0);
-    
-    ds << static_cast<const PropertyBase&>(hunter);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, BondHunterBase &hunter)
-{
-    VersionID v = readHeader(ds, r_hunterbase);
-    
-    if (v == 0)
-    {
-        ds >> static_cast<PropertyBase&>(hunter);
-    }
-    else
-        throw version_error(v, "0", r_hunterbase, CODELOC);
-        
-    return ds;
-}
-
-/** Constructor */
-BondHunterBase::BondHunterBase() : PropertyBase()
-{}
-
-/** Copy constructor */
-BondHunterBase::BondHunterBase(const BondHunterBase &other)
-               : PropertyBase(other)
-{}
-
-/** Destructor */
-BondHunterBase::~BondHunterBase()
-{}
-
-/////////
 ///////// Implementation of BondHunter
 /////////
 
-static const RegisterMetaType<BondHunter> r_hunter;
+static const RegisterMetaType<BondHunter> r_hunter( MAGIC_ONLY,
+                                                        "SireMol::BondHunter" );
 
-/** Serialise a binary datastream */
+/** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const BondHunter &hunter)
 {
-    writeHeader(ds, r_hunter, 1);
+    writeHeader(ds, r_hunter, 0);
     
-    SharedDataStream sds(ds);
-    
-    sds << static_cast<const Property&>(hunter);
+    ds << static_cast<const Property&>(hunter);
     
     return ds;
 }
@@ -122,120 +78,28 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, BondHunter &hunter)
 {
     VersionID v = readHeader(ds, r_hunter);
     
-    if (v == 1)
+    if (v == 0)
     {
-        SharedDataStream sds(ds);
-        sds >> static_cast<Property&>(hunter);
+        ds >> static_cast<Property&>(hunter);
     }
     else
-        throw version_error(v, "1", r_hunter, CODELOC);
+        throw version_error(v, "0", r_hunter, CODELOC);
         
     return ds;
 }
 
-static BondHunter *_pvt_shared_null = 0;
-
-const BondHunter& BondHunter::shared_null()
-{
-    if (_pvt_shared_null == 0)
-        _pvt_shared_null = new BondHunter( CovalentBondHunter() );
-
-    return *_pvt_shared_null;
-}
-
-/** Default constructor - this is a CovalentBondHunter function */
-BondHunter::BondHunter() : Property( BondHunter::shared_null() )
-{}
-
-/** Create from the passed BondHunterBase */
-BondHunter::BondHunter(const BondHunterBase &hunter)
-           : Property(hunter)
-{}
-
-/** Create from the passed property
-
-    \throw SireError::invalid_cast
-*/
-BondHunter::BondHunter(const PropertyBase &property)
-           : Property( property.asA<BondHunterBase>() )
+/** Constructor */
+BondHunter::BondHunter() : Property()
 {}
 
 /** Copy constructor */
 BondHunter::BondHunter(const BondHunter &other)
-               : Property(other)
+           : Property(other)
 {}
 
 /** Destructor */
 BondHunter::~BondHunter()
 {}
-
-/** Copy assignment from a BondHunterBase */
-BondHunter& BondHunter::operator=(const BondHunterBase &hunter)
-{
-    Property::operator=(hunter);
-    return *this;
-}
-
-/** Copy assignment operator */
-BondHunter& BondHunter::operator=(const PropertyBase &property)
-{
-    Property::operator=(property.asA<BondHunterBase>());
-    return *this;
-}
-
-const BondHunterBase* BondHunter::operator->() const
-{
-    return static_cast<const BondHunterBase*>( &(d()) );
-}
-
-const BondHunterBase& BondHunter::operator*() const
-{
-    return static_cast<const BondHunterBase&>( d() );
-}
-
-const BondHunterBase& BondHunter::read() const
-{
-    return static_cast<const BondHunterBase&>( d() );
-}
-
-BondHunterBase& BondHunter::edit()
-{
-    return static_cast<BondHunterBase&>( d() );
-}
-
-const BondHunterBase* BondHunter::data() const
-{
-    return static_cast<const BondHunterBase*>( &(d()) );
-}
-
-const BondHunterBase* BondHunter::constData() const
-{
-    return static_cast<const BondHunterBase*>( &(d()) );
-}
-
-BondHunterBase* BondHunter::data()
-{
-    return static_cast<BondHunterBase*>( &(d()) );
-}
-
-BondHunter::operator const BondHunterBase&() const
-{
-    return static_cast<const BondHunterBase&>( d() );
-}
-
-/** Return the connectivity of the molecule viewed in 'molview'
-    using the passed (optional) property map to find the necessary
-    molecular properties 
-    
-    \throw SireBase::missing_property
-    \throw SireError::invalid_cast
-    \throw SireError::incompatible_error
-*/
-Connectivity BondHunter::operator()(const MoleculeView &molview, 
-                                    const PropertyMap &map) const
-{
-    return read()(molview, map);
-}
 
 /////////
 ///////// Implementation of CovalentBondHunter
@@ -253,7 +117,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const CovalentBondHunter
 {
     writeHeader(ds, r_covalenthunter, 1);
     
-    ds << hunter.tol << static_cast<const BondHunterBase&>(hunter);
+    ds << hunter.tol << static_cast<const BondHunter&>(hunter);
     
     return ds;
 }
@@ -265,7 +129,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, CovalentBondHunter &hunt
     
     if (v == 1)
     {
-        ds >> hunter.tol >> static_cast<BondHunterBase&>(hunter);
+        ds >> hunter.tol >> static_cast<BondHunter&>(hunter);
     }
     else
         throw version_error(v, "1", r_covalenthunter, CODELOC);
@@ -275,13 +139,13 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, CovalentBondHunter &hunt
 
 /** Construct a CovalentBondHunter with a specified tolerance */
 CovalentBondHunter::CovalentBondHunter(double tolerance)
-              : ConcreteProperty<CovalentBondHunter,BondHunterBase>(),
+              : ConcreteProperty<CovalentBondHunter,BondHunter>(),
                 tol(tolerance)
 {}
 
 /** Copy constructor */
 CovalentBondHunter::CovalentBondHunter(const CovalentBondHunter &other)
-              : ConcreteProperty<CovalentBondHunter,BondHunterBase>(other),
+              : ConcreteProperty<CovalentBondHunter,BondHunter>(other),
                 tol(other.tol)
 {}
 
@@ -293,7 +157,7 @@ CovalentBondHunter::~CovalentBondHunter()
 CovalentBondHunter& CovalentBondHunter::operator=(const CovalentBondHunter &other)
 {
     tol = other.tol;
-    BondHunterBase::operator=(other);
+    BondHunter::operator=(other);
     
     return *this;
 }
@@ -504,13 +368,13 @@ Connectivity CovalentBondHunter::operator()(const MoleculeView &molview,
     const Property &coords_property = molview.data()
                                              .property( parameters().coordinates() );
 
-    const AtomCoords &coords = coords_property->asA<AtomCoords>();
+    const AtomCoords &coords = coords_property.asA<AtomCoords>();
     const CoordGroup *coords_array = coords.constData();
     
     const Property &elements_property = molview.data()
                                                .property( parameters().element() );
                                                
-    const AtomElements &elements = elements_property->asA<AtomElements>();
+    const AtomElements &elements = elements_property.asA<AtomElements>();
     const AtomElements::Array *elements_array = elements.constData();
     
     ConnectivityEditor connectivity = Connectivity(molview.data()).edit();
@@ -655,6 +519,21 @@ Connectivity CovalentBondHunter::operator()(const MoleculeView &molview,
     return connectivity;
 }
 
+static SharedPolyPointer<CovalentBondHunter> shared_null;
+
+const CovalentBondHunter& BondHunter::null()
+{
+    if (shared_null.constData() == 0)
+    {
+        QMutexLocker lkr( SireBase::globalLock() );
+        
+        if (shared_null.constData() == 0)
+            shared_null = new CovalentBondHunter();
+    }
+    
+    return *(shared_null.constData());
+}
+
 /////////
 ///////// Implementation of ChemicalBondHunter
 /////////
@@ -722,7 +601,7 @@ Connectivity ChemicalBondHunter::operator()(const MoleculeView &molview,
     const Property &elements_property = molview.data()
                                                .property( parameters().element() );
                                                
-    const AtomElements &elements = elements_property->asA<AtomElements>();
+    const AtomElements &elements = elements_property.asA<AtomElements>();
     const AtomElements::Array *elements_array = elements.constData();
     
     const MoleculeInfoData &molinfo = molview.data().info();

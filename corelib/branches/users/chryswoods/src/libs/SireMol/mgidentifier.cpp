@@ -28,7 +28,7 @@
 
 #include "mgidentifier.h"
 #include "mgnum.h"
-#include "molgroups.h"
+#include "moleculegroups.h"
 
 using namespace SireMol;
 using namespace SireID;

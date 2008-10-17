@@ -100,11 +100,11 @@ public:
         return Parameters();
     }
 
-    const SpaceBase& space() const;
-    const QMProg& quantumProgram() const;
+    const Space& space() const;
+    const QMProgram& quantumProgram() const;
     
-    bool setSpace(const SpaceBase &space);
-    bool setQuantumProgram(const QMProg &qmprog);
+    bool setSpace(const Space &space);
+    bool setQuantumProgram(const QMProgram &qmprog);
 
     bool setProperty(const QString &name, const Property &property);
     const Property& property(const QString &name) const;
@@ -130,8 +130,6 @@ protected:
     const Components& _pvt_components() const;
     
     void recalculateEnergy();
-    
-    void _pvt_restore(const SireFF::ForceField &ffield);
     
     void _pvt_updateName();
     

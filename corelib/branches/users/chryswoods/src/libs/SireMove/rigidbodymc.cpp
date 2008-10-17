@@ -28,6 +28,7 @@
 
 #include "rigidbodymc.h"
 #include "uniformsampler.h"
+#include "ensemble.h"
 
 #include "SireSystem/system.h"
 
@@ -36,6 +37,7 @@
 #include "SireMaths/quaternion.h"
 
 #include "SireUnits/units.h"
+#include "SireUnits/temperature.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -86,9 +88,12 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
 }
 
 /** Null constructor */
-RigidBodyMC::RigidBodyMC() : ConcreteProperty<RigidBodyMC,MonteCarlo>(),
-                             adel( 0.15 * angstrom ), rdel( 15 * degrees )
-{}
+RigidBodyMC::RigidBodyMC() 
+            : ConcreteProperty<RigidBodyMC,MonteCarlo>(),
+              adel( 0.15 * angstrom ), rdel( 15 * degrees )
+{
+    MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
+}
 
 /** Construct a move that moves molecules returned by the sampler 'sampler' */
 RigidBodyMC::RigidBodyMC(const Sampler &sampler)
@@ -96,16 +101,20 @@ RigidBodyMC::RigidBodyMC(const Sampler &sampler)
               smplr(sampler),
               adel( 0.15 * angstrom ),
               rdel( 15 * degrees )
-{}
+{
+    MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
+}
 
 /** Construct a move that moves molecule views from the molecule group 'molgroup',
     selecting views randomly, with each view having an equal chance of
     being chosen */
-RigidBodyMC::RigidBodyMC(const MolGroup &molgroup)
+RigidBodyMC::RigidBodyMC(const MoleculeGroup &molgroup)
             : ConcreteProperty<RigidBodyMC,MonteCarlo>(), 
               smplr( UniformSampler(molgroup) ),
               adel( 0.15 * angstrom ), rdel( 15 * degrees )
-{}
+{
+    MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
+}
 
 /** Copy constructor */
 RigidBodyMC::RigidBodyMC(const RigidBodyMC &other)
@@ -117,6 +126,11 @@ RigidBodyMC::RigidBodyMC(const RigidBodyMC &other)
 /** Destructor */
 RigidBodyMC::~RigidBodyMC()
 {}
+
+void RigidBodyMC::_pvt_setTemperature(const Temperature &temperature)
+{
+    MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
+}
 
 /** Copy assignment operator */
 RigidBodyMC& RigidBodyMC::operator=(const RigidBodyMC &other)
@@ -166,20 +180,20 @@ void RigidBodyMC::setSampler(const Sampler &sampler)
 /** Set the sampler to be one that selects views at random 
     from the molecule group 'molgroup' (each view has an
     equal chance of being chosen) */
-void RigidBodyMC::setSampler(const MolGroup &molgroup)
+void RigidBodyMC::setSampler(const MoleculeGroup &molgroup)
 {
     smplr = UniformSampler(molgroup);
 }
 
 /** Return the sampler that is used to draw random molecules */
-const SamplerBase& RigidBodyMC::sampler() const
+const Sampler& RigidBodyMC::sampler() const
 {
     return smplr;
 }
 
 /** Return the molecule group from which random molecule views 
     are drawn */
-const MolGroup& RigidBodyMC::moleculeGroup() const
+const MoleculeGroup& RigidBodyMC::moleculeGroup() const
 {
     return smplr->group();
 }
@@ -201,7 +215,7 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
 
             //save the old system and sampler
             System old_system(system);
-            Sampler old_sampler(smplr);
+            SamplerPtr old_sampler(smplr);
     
             //update the sampler with the latest version of the molecule group
             MGNum mgnum = smplr.read().group().number();

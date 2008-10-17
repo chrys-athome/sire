@@ -309,7 +309,7 @@ InternalPotential::parameterise(const PartialMolecule &molecule,
     \throw SireError::incompatible_error
 */
 InternalPotential::Molecules 
-InternalPotential::parameterise(const MolGroup &molecules,
+InternalPotential::parameterise(const MoleculeGroup &molecules,
                                 const PropertyMap &map) const
 {
     //honestly, this is const, but the interface in FFMolecules
@@ -2250,8 +2250,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
             
         internalff._pvt_updateName();
         internalff.isstrict = internalff.props.property("strict")
-                                        ->asA<VariantProperty>()
-                                          .convertTo<bool>();
+                                        .asA<VariantProperty>()
+                                        .convertTo<bool>();
     }
     else
         throw version_error(v, "1", r_internalff, CODELOC);
@@ -2420,7 +2420,7 @@ bool InternalFF::setProperty(const QString &name, const Property &value)
 {
     if (name == QLatin1String("strict"))
     {
-        return this->setStrict( value->asA<VariantProperty>()
+        return this->setStrict( value.asA<VariantProperty>()
                                      .convertTo<bool>() );
     }
     else
@@ -2580,18 +2580,6 @@ void InternalFF::recalculateEnergy()
     }
     
     this->setClean();
-}
-
-/** Restore the contents of this forcefield from 'ffield' */
-void InternalFF::_pvt_restore(const ForceField &ffield)
-{
-    if (ffield->isA<InternalFF>())
-        throw SireError::program_bug( QObject::tr(
-            "Cannot restore a %1 from a %2. This is a program bug!!!")
-                .arg(this->what()).arg(ffield->what()),
-                    CODELOC );
-                    
-    this->operator=( ffield->asA<InternalFF>() );
 }
 
 /** Record that the molecule in 'mol' has been added, using the 

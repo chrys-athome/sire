@@ -51,8 +51,8 @@
 #include "atom.h"
 
 #include "molecules.h"
-#include "molgroup.h"
-#include "molgroups.h"
+#include "moleculegroup.h"
+#include "moleculegroups.h"
 
 #include "SireMol/errors.h"
 
@@ -227,7 +227,7 @@ Chain ChainID::selectFrom(const Molecules &molecules) const
     \throw SireMol::missing_chain
     \throw SireMol::duplicate_chain
 */
-Chain ChainID::selectFrom(const MolGroup &molgroup) const
+Chain ChainID::selectFrom(const MoleculeGroup &molgroup) const
 {
     return ChainID::selectFrom(molgroup.molecules());
 }
@@ -238,7 +238,7 @@ Chain ChainID::selectFrom(const MolGroup &molgroup) const
     \throw SireMol::missing_chain
 */
 QHash< MolNum,Selector<Chain> >
-ChainID::selectAllFrom(const MolGroup &molgroup) const
+ChainID::selectAllFrom(const MoleculeGroup &molgroup) const
 {
     return ChainID::selectAllFrom(molgroup.molecules());
 }

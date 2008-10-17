@@ -85,14 +85,14 @@ QDataStream& operator>>(QDataStream&, SireMM::CoulombPotentialInterface<CoulPot>
 namespace SireMol
 {
 class PartialMolecule;
-class MolGroup;
+class MoleculeGroup;
 }
 
 namespace SireMM
 {
 
 using SireBase::Properties;
-using SireBase::PropertyBase;
+using SireBase::Property;
 using SireBase::PropertyMap;
 using SireBase::PropertyName;
 using SireBase::Property;
@@ -102,11 +102,11 @@ using SireCAS::Symbol;
 using SireMaths::Vector;
 
 using SireVol::Space;
-using SireVol::SpaceBase;
+using SireVol::SpacePtr;
 using SireVol::CoordGroup;
 
 using SireMol::PartialMolecule;
-using SireMol::MolGroup;
+using SireMol::MoleculeGroup;
 
 using SireFF::MolForceTable;
 
@@ -214,14 +214,14 @@ public:
     const Property& property(const QString &name) const;
     bool containsProperty(const QString &name) const;
     
-    bool setProperty(const QString &name, const PropertyBase &value);
+    bool setProperty(const QString &name, const Property &value);
 
     bool setSpace(const Space &new_space);
     bool setSwitchingFunction(const SwitchingFunction &new_switchfunc);
     bool setShiftElectrostatics(bool switchelectro);
     
-    const SpaceBase& space() const;
-    const SwitchFunc& switchingFunction() const;
+    const Space& space() const;
+    const SwitchingFunction& switchingFunction() const;
     bool shiftElectrostatics() const;
 
 protected:
@@ -239,10 +239,10 @@ protected:
     Properties props;
     
     /** The space in which this functional operates */
-    Space spce;
+    SpacePtr spce;
     
     /** The nonbonded switching function */
-    SwitchingFunction switchfunc;
+    SwitchFuncPtr switchfunc;
     
     /** Whether or not electrostatic potential shifting is used
         (this shifts the entire electrostatic potential so that it
@@ -345,7 +345,7 @@ public:
                  const PropertyMap &map = PropertyMap());
     
     InterCoulombPotential::Molecules 
-    parameterise(const MolGroup &molecules,
+    parameterise(const MoleculeGroup &molecules,
                  const PropertyMap &map = PropertyMap());
 
     void calculateEnergy(const InterCoulombPotential::Molecule &mol0, 
@@ -494,7 +494,7 @@ public:
                  const PropertyMap &map = PropertyMap());
     
     IntraCoulombPotential::Molecules 
-    parameterise(const MolGroup &molecules,
+    parameterise(const MoleculeGroup &molecules,
                  const PropertyMap &map = PropertyMap());
 
     void calculateEnergy(const IntraCoulombPotential::Molecule &mol, 
@@ -657,7 +657,7 @@ public:
         return CoulPot::containsProperty(name);
     }
     
-    bool setProperty(const QString &name, const PropertyBase &value)
+    bool setProperty(const QString &name, const Property &value)
     {
         return CoulPot::setProperty(name, value);
     }
@@ -677,12 +677,12 @@ public:
         return CoulPot::setShiftElectrostatics(switchelectro);
     }
     
-    const SpaceBase& space() const
+    const Space& space() const
     {
         return CoulPot::space();
     }
     
-    const SwitchFunc& switchingFunction() const
+    const SwitchingFunction& switchingFunction() const
     {
         return CoulPot::switchingFunction();
     }

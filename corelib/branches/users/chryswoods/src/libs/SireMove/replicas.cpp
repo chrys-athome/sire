@@ -79,13 +79,13 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Replica &replica)
 
 /** Null constructor */
 Replica::Replica()
-        : ConcreteProperty<Replica,PropertyBase>(),
+        : ConcreteProperty<Replica,Property>(),
           sim_nmoves(0), sim_recordstats(true)
 {}
 
 /** Copy constructor */
 Replica::Replica(const Replica &other)
-        : ConcreteProperty<Replica,PropertyBase>(other),
+        : ConcreteProperty<Replica,Property>(other),
           sim_system(other.sim_system), sim_moves(other.sim_moves),
           sim_nmoves(other.sim_nmoves), sim_recordstats(other.sim_recordstats)
 {}
@@ -130,7 +130,7 @@ const System& Replica::system() const
 }
 
 /** Return the moves to be performed during the simulation on this replica */
-const MovesBase& Replica::moves() const
+const Moves& Replica::moves() const
 {
     return sim_moves;
 }
@@ -155,7 +155,7 @@ void Replica::setSystem(const System &system)
 }
 
 /** Set the moves to be applied to the system */
-void Replica::setMoves(const MovesBase &moves)
+void Replica::setMoves(const Moves &moves)
 {
     sim_moves = moves;
 }
@@ -229,12 +229,12 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Replicas &replicas)
 }
 
 /** Null constructor */
-Replicas::Replicas() : ConcreteProperty<Replicas,PropertyBase>()
+Replicas::Replicas() : ConcreteProperty<Replicas,Property>()
 {}
 
 /** Construct a set of 'n' null replicas */
 Replicas::Replicas(int n)
-         : ConcreteProperty<Replicas,PropertyBase>(),
+         : ConcreteProperty<Replicas,Property>(),
            replicas_array(n)
 {
     SharedPolyPointer<Replica> null_replica( new Replica() );
@@ -248,7 +248,7 @@ Replicas::Replicas(int n)
 /** Construct a set of replicas that are 'n' copies of the 
     system 'system' */
 Replicas::Replicas(const System &system, int n)
-         : ConcreteProperty<Replicas,PropertyBase>(),
+         : ConcreteProperty<Replicas,Property>(),
            replicas_array(n)
 {
     for (int i=0; i<n; ++i)
@@ -260,7 +260,7 @@ Replicas::Replicas(const System &system, int n)
 
 /** Construct a set of replicas from the passed array of systems */
 Replicas::Replicas(const QVector<System> &systems)
-         : ConcreteProperty<Replicas,PropertyBase>()
+         : ConcreteProperty<Replicas,Property>()
 {
     if (not systems.isEmpty())
     {
@@ -276,7 +276,7 @@ Replicas::Replicas(const QVector<System> &systems)
 
 /** Copy constructor */
 Replicas::Replicas(const Replicas &other)
-         : ConcreteProperty<Replicas,PropertyBase>(other),
+         : ConcreteProperty<Replicas,Property>(other),
            replicas_array(other.replicas_array)
 {}
 
@@ -421,7 +421,7 @@ void Replicas::setSystem(int i, const System &system)
 }
 
 /** Set the moves to be performed on all replicas to 'moves' */
-void Replicas::setMoves(const MovesBase &moves)
+void Replicas::setMoves(const Moves &moves)
 {
     Replicas old_state(*this);
     
@@ -443,7 +443,7 @@ void Replicas::setMoves(const MovesBase &moves)
 
     \throw SireError::invalid_index
 */
-void Replicas::setMoves(int i, const MovesBase &moves)
+void Replicas::setMoves(int i, const Moves &moves)
 {
     replicas_array[ Index(i).map(nReplicas()) ]->setMoves(moves);
 }

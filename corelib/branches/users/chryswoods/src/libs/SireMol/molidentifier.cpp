@@ -27,8 +27,8 @@
 \*********************************************/
 
 #include "molidentifier.h"
-#include "molgroup.h"
-#include "molgroups.h"
+#include "moleculegroup.h"
+#include "moleculegroups.h"
 #include "moleculeinfodata.h"
 
 #include "mover.hpp"
@@ -164,7 +164,7 @@ bool MolIdentifier::operator!=(const MolID &other) const
     \throw SireMol::missing_molecule
     \throw SireError::invalid_index
 */
-QList<MolNum> MolIdentifier::map(const MolGroup &molgroup) const
+QList<MolNum> MolIdentifier::map(const MoleculeGroup &molgroup) const
 {
     if (d.get() == 0)
         return molgroup.molNums();

@@ -59,13 +59,13 @@ int main(int argc, char **argv)
     
         MoleculeGroup mols = pdb.read("test/io/water.pdb");
         
-        qDebug() << "nmols =" << mols->nMolecules();
+        qDebug() << "nmols =" << mols.nMolecules();
         
         //BOOST_ASSERT(mols->nMolecules() == 1679);
         
         //parameterise each molecule...
         qDebug() << "Parameterising the molecules...";
-        MolGroup::const_iterator it = mols->constBegin();
+        MoleculeGroup::const_iterator it = mols.constBegin();
         
         //parameterise the first water molecule
         MolEditor moleditor = it->molecule().edit();
@@ -94,17 +94,17 @@ int main(int argc, char **argv)
 
         Molecule tip4p = moleditor.commit();
 
-        AtomCharges charges = tip4p.property("charge")->asA<AtomCharges>();
-        AtomLJs ljs = tip4p.property("LJ")->asA<AtomLJs>();
+        AtomCharges charges = tip4p.property("charge").asA<AtomCharges>();
+        AtomLJs ljs = tip4p.property("LJ").asA<AtomLJs>();
         
-        for (it = mols->constBegin(); it != mols->constEnd(); ++it)
+        for (it = mols.constBegin(); it != mols.constEnd(); ++it)
         {
             tip4p = it->molecule().edit()
                                   .setProperty("charge", charges)
                                   .setProperty("LJ", ljs)
                                   .commit();
                                   
-            mols.edit().update(tip4p);
+            mols.update(tip4p);
         }
         
         qDebug() << "Adding to the forcefield...";
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
         //cljff.setSpace( Cartesian() );
 
         
-        cljff.add( *mols );
+        cljff.add( mols );
         
         qDebug() << "Calculating the the energy...";
         

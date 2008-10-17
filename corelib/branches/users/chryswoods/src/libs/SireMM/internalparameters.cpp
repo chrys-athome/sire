@@ -2663,9 +2663,9 @@ InternalParameters::InternalParameters(const PartialMolecule &molecule,
     
     const Property &bond_property = molecule.property(bond_params);
     
-    if (not bond_property.isNull())
+    if (not bond_property.isA<NullProperty>())
     {
-        const TwoAtomFunctions &bondparams = bond_property->asA<TwoAtomFunctions>();
+        const TwoAtomFunctions &bondparams = bond_property.asA<TwoAtomFunctions>();
 
         if (molecule.selection().selectedAll())
             this->addBonds(bondparams, cached_groups);
@@ -2676,9 +2676,9 @@ InternalParameters::InternalParameters(const PartialMolecule &molecule,
     
     const Property &angle_property = molecule.property(angle_params);
     
-    if (not angle_property.isNull())
+    if (not angle_property.isA<NullProperty>())
     {
-        const ThreeAtomFunctions &angleparams = angle_property->asA<ThreeAtomFunctions>();
+        const ThreeAtomFunctions &angleparams = angle_property.asA<ThreeAtomFunctions>();
                                                         
         if (molecule.selection().selectedAll())
             this->addAngles(angleparams, cached_groups);
@@ -2689,10 +2689,10 @@ InternalParameters::InternalParameters(const PartialMolecule &molecule,
     
     const Property &dihedral_property = molecule.property(dihedral_params);
     
-    if (not dihedral_property.isNull())
+    if (not dihedral_property.isA<NullProperty>())
     {
         const FourAtomFunctions &dihedralparams 
-                                        = dihedral_property->asA<FourAtomFunctions>();
+                                        = dihedral_property.asA<FourAtomFunctions>();
                                                         
         if (molecule.selection().selectedAll())
             this->addDihedrals(dihedralparams, cached_groups);
@@ -2703,10 +2703,10 @@ InternalParameters::InternalParameters(const PartialMolecule &molecule,
     
     const Property &improper_property = molecule.property(improper_params);
     
-    if (not improper_property.isNull())
+    if (not improper_property.isA<NullProperty>())
     {
         const FourAtomFunctions &improperparams 
-                                        = improper_property->asA<FourAtomFunctions>();
+                                        = improper_property.asA<FourAtomFunctions>();
                                                         
         if (molecule.selection().selectedAll())
             this->addImpropers(improperparams, cached_groups);
@@ -2717,9 +2717,9 @@ InternalParameters::InternalParameters(const PartialMolecule &molecule,
     
     const Property &ub_property = molecule.property(ub_params);
     
-    if (not ub_property.isNull())
+    if (not ub_property.isA<NullProperty>())
     {
-        const TwoAtomFunctions &ubparams = ub_property->asA<TwoAtomFunctions>();
+        const TwoAtomFunctions &ubparams = ub_property.asA<TwoAtomFunctions>();
                                                         
         if (molecule.selection().selectedAll())
             this->addUBs(ubparams, cached_groups);
@@ -2730,9 +2730,9 @@ InternalParameters::InternalParameters(const PartialMolecule &molecule,
     
     const Property &ss_property = molecule.property(ss_params);
     
-    if (not ss_property.isNull())
+    if (not ss_property.isA<NullProperty>())
     {
-        const ThreeAtomFunctions &ssparams = ss_property->asA<ThreeAtomFunctions>();
+        const ThreeAtomFunctions &ssparams = ss_property.asA<ThreeAtomFunctions>();
                                                         
         if (molecule.selection().selectedAll())
             this->addSSs(ssparams, cached_groups);
@@ -2743,9 +2743,9 @@ InternalParameters::InternalParameters(const PartialMolecule &molecule,
     
     const Property &sb_property = molecule.property(sb_params);
     
-    if (not sb_property.isNull())
+    if (not sb_property.isA<NullProperty>())
     {
-        const ThreeAtomFunctions &sbparams = sb_property->asA<ThreeAtomFunctions>();
+        const ThreeAtomFunctions &sbparams = sb_property.asA<ThreeAtomFunctions>();
                                                         
         if (molecule.selection().selectedAll())
             this->addSBs(sbparams, cached_groups);
@@ -2756,9 +2756,9 @@ InternalParameters::InternalParameters(const PartialMolecule &molecule,
         
     const Property &bb_property = molecule.property(bb_params);
         
-    if (not bb_property.isNull())
+    if (not bb_property.isA<NullProperty>())
     {
-        const FourAtomFunctions &bbparams = bb_property->asA<FourAtomFunctions>();
+        const FourAtomFunctions &bbparams = bb_property.asA<FourAtomFunctions>();
                                                         
         if (molecule.selection().selectedAll())
             this->addBBs(bbparams, cached_groups);
@@ -2769,9 +2769,9 @@ InternalParameters::InternalParameters(const PartialMolecule &molecule,
         
     const Property &sbt_property = molecule.property(sbt_params);
         
-    if (not sbt_property.isNull())
+    if (not sbt_property.isA<NullProperty>())
     {
-        const FourAtomFunctions &sbtparams = sbt_property->asA<FourAtomFunctions>();
+        const FourAtomFunctions &sbtparams = sbt_property.asA<FourAtomFunctions>();
                                                         
         if (molecule.selection().selectedAll())
             this->addSBTs(sbtparams, cached_groups);

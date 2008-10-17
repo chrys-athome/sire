@@ -64,23 +64,20 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, CheckPoint &ckpt)
     return ds;
 }
 
-/** The global null system */
-static System null_system;
-
 /** Create a null (empty) checkpoint */
-CheckPoint::CheckPoint() : ConcreteProperty<CheckPoint,PropertyBase>(),
-                           old_system(null_system)
+CheckPoint::CheckPoint() : ConcreteProperty<CheckPoint,Property>(),
+                           old_system( System::null() )
 {}
 
 /** Construct a checkpoint to hold the current state of the system 'system' */
 CheckPoint::CheckPoint(const System &system)
-           : ConcreteProperty<CheckPoint,PropertyBase>(),
+           : ConcreteProperty<CheckPoint,Property>(),
              old_system(system)
 {}
 
 /** Copy constructor */
 CheckPoint::CheckPoint(const CheckPoint &other)
-           : ConcreteProperty<CheckPoint,PropertyBase>(other),
+           : ConcreteProperty<CheckPoint,Property>(other),
              old_system(other.old_system)
 {}
 
@@ -99,7 +96,7 @@ CheckPoint& CheckPoint::operator=(const System &system)
 CheckPoint& CheckPoint::operator=(const CheckPoint &other)
 {
     old_system = other.old_system;
-    PropertyBase::operator=(other);
+    Property::operator=(other);
     
     return *this;
 }

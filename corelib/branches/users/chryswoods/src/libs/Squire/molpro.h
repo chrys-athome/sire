@@ -54,7 +54,7 @@ namespace Squire
     
     @author Christopher Woods
 */
-class SQUIRE_EXPORT Molpro : public SireBase::ConcreteProperty<Molpro,QMProg>
+class SQUIRE_EXPORT Molpro : public SireBase::ConcreteProperty<Molpro,QMProgram>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Molpro&);

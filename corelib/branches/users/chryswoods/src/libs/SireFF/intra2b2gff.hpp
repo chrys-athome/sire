@@ -134,8 +134,6 @@ protected:
     void recalculateEnergy();
 
     void changedPotential();
-
-    void _pvt_restore(const ForceField &ffield);
     
     void _pvt_added(quint32 groupid, const PartialMolecule &mol, 
                     const PropertyMap &map);
@@ -423,18 +421,6 @@ void Intra2B2GFF<Potential>::changedPotential()
 {
     G2FF::incrementVersion();
     this->mustNowRecalculateFromScratch();
-}
-
-/** Restore the data in this forcefield from the version held in 'ffield'. 
-    It is a program bug to supply a forcefield of the wrong type! */
-template<class Potential>
-SIRE_OUTOFLINE_TEMPLATE
-void Intra2B2GFF<Potential>::_pvt_restore(const ForceField &ffield)
-{
-    if (not ffield->isA< Intra2B2GFF<Potential> >())
-        detail::throwForceFieldRestoreBug(this->what(), ffield->what());
-        
-    this->operator=( ffield->asA< Intra2B2GFF<Potential> >() );
 }
 
 /** Record the fact that the molecule 'mol' has been added to this forcefield 

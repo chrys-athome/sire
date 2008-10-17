@@ -77,7 +77,7 @@ class ConnectivityEditor;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT ConnectivityBase : public SireBase::PropertyBase
+class SIREMOL_EXPORT ConnectivityBase : public SireBase::Property
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const SireMol::ConnectivityBase&);
@@ -256,9 +256,9 @@ public:
         return QMetaType::typeName( qMetaTypeId<Connectivity>() );
     }
 
-    using SireBase::PropertyBase::operator=;
-    using SireBase::PropertyBase::operator==;
-    using SireBase::PropertyBase::operator!=;
+    using SireBase::Property::operator=;
+    using SireBase::Property::operator==;
+    using SireBase::Property::operator!=;
 
     Connectivity& operator=(const Connectivity &other);
     Connectivity& operator=(const ConnectivityEditor &editor);
@@ -294,9 +294,9 @@ public:
         return QMetaType::typeName( qMetaTypeId<ConnectivityEditor>() );
     }
 
-    using SireBase::PropertyBase::operator=;
-    using SireBase::PropertyBase::operator==;
-    using SireBase::PropertyBase::operator!=;
+    using SireBase::Property::operator=;
+    using SireBase::Property::operator==;
+    using SireBase::Property::operator!=;
 
     ConnectivityEditor& operator=(const ConnectivityBase &other);
 

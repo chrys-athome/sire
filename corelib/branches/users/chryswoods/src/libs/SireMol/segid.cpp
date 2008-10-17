@@ -50,8 +50,8 @@
 #include "atom.h"
 
 #include "molecules.h"
-#include "molgroup.h"
-#include "molgroups.h"
+#include "moleculegroup.h"
+#include "moleculegroups.h"
 
 #include "SireMol/errors.h"
 
@@ -208,7 +208,7 @@ Segment SegID::selectFrom(const Molecules &molecules) const
     \throw SireMol::missing_segment
     \throw SireMol::duplicate_segment
 */
-Segment SegID::selectFrom(const MolGroup &molgroup) const
+Segment SegID::selectFrom(const MoleculeGroup &molgroup) const
 {
     return SegID::selectFrom(molgroup.molecules());
 }
@@ -219,7 +219,7 @@ Segment SegID::selectFrom(const MolGroup &molgroup) const
     \throw SireMol::missing_segment
 */
 QHash< MolNum,Selector<Segment> >
-SegID::selectAllFrom(const MolGroup &molgroup) const
+SegID::selectAllFrom(const MoleculeGroup &molgroup) const
 {
     return SegID::selectAllFrom(molgroup.molecules());
 }

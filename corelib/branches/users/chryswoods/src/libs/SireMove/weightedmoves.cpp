@@ -57,7 +57,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
     SharedDataStream sds(ds);
     
     qint32 nmoves = weightedmoves.mvs.count();
-    const tuple<Move,double> *mvs_array = weightedmoves.mvs.constData();
+    const tuple<MovePtr,double> *mvs_array = weightedmoves.mvs.constData();
     
     sds << nmoves;
     
@@ -66,7 +66,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
         sds << mvs_array[i].get<0>() << mvs_array[i].get<1>();
     }
     
-    sds << weightedmoves.rangenerator << static_cast<const MovesBase&>(weightedmoves);
+    sds << weightedmoves.rangenerator << static_cast<const Moves&>(weightedmoves);
     
     return ds;
 }
@@ -84,20 +84,20 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, WeightedMoves &weighted
         
         sds >> nmoves;
         
-        QVector< tuple<Move,double> > mvs(nmoves);
-        tuple<Move,double> *mvs_array = mvs.data();
+        QVector< tuple<MovePtr,double> > mvs(nmoves);
+        tuple<MovePtr,double> *mvs_array = mvs.data();
         
         for (int i=0; i<nmoves; ++i)
         {
-            Move mv; double weight;
+            MovePtr mv; double weight;
             
             sds >> mv >> weight;
-            mvs_array[i] = tuple<Move,double>(mv, weight);
+            mvs_array[i] = tuple<MovePtr,double>(mv, weight);
         }
         
         weightedmoves.mvs = mvs;
         
-        sds >> weightedmoves.rangenerator >> static_cast<MovesBase&>(weightedmoves);
+        sds >> weightedmoves.rangenerator >> static_cast<Moves&>(weightedmoves);
         
         weightedmoves.recalculateWeights();
     }
@@ -109,12 +109,12 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, WeightedMoves &weighted
 
 /** Constructor */
 WeightedMoves::WeightedMoves()
-              : ConcreteProperty<WeightedMoves,MovesBase>(), maxweight(0)
+              : ConcreteProperty<WeightedMoves,Moves>(), maxweight(0)
 {}
 
 /** Copy constructor */
 WeightedMoves::WeightedMoves(const WeightedMoves &other)
-              : ConcreteProperty<WeightedMoves,MovesBase>(other),
+              : ConcreteProperty<WeightedMoves,Moves>(other),
                 mvs(other.mvs), rangenerator(other.rangenerator), 
                 maxweight(other.maxweight)
 {}
@@ -130,13 +130,13 @@ WeightedMoves& WeightedMoves::operator=(const WeightedMoves &other)
     rangenerator = other.rangenerator;
     maxweight = other.maxweight;
     
-    MovesBase::operator=(other);
+    Moves::operator=(other);
     
     return *this;
 }
 
-static bool operator==(const tuple<Move,double> &t0, 
-                       const tuple<Move,double> &t1)
+static bool operator==(const tuple<MovePtr,double> &t0, 
+                       const tuple<MovePtr,double> &t1)
 {
     return t0.get<0>() == t1.get<0>() and
            t0.get<1>() == t1.get<1>();
@@ -164,7 +164,7 @@ void WeightedMoves::recalculateWeights()
     if (nmoves == 0)
         return;
 
-    const tuple<Move,double> *mvs_array = mvs.constData();
+    const tuple<MovePtr,double> *mvs_array = mvs.constData();
     
     for (int i=0; i<nmoves; ++i)
     {
@@ -185,18 +185,18 @@ const RanGenerator& WeightedMoves::generator() const
 }
 
 /** Add the move 'move' to the list of moves, with the weight 'weight' */
-void WeightedMoves::add(const MoveBase &move, double weight)
+void WeightedMoves::add(const Move &move, double weight)
 {
     if (weight <= 0)
         return;
 
     int nmoves = mvs.count();
     
-    tuple<Move,double> *mvs_array = mvs.data();
+    tuple<MovePtr,double> *mvs_array = mvs.data();
     
     for (int i=0; i<nmoves; ++i)
     {
-        if (mvs_array[i].get<0>() == move)
+        if (mvs_array[i].get<0>()->equals(move))
         {
             mvs_array[i].get<1>() += weight;
             this->recalculateWeights();
@@ -204,7 +204,7 @@ void WeightedMoves::add(const MoveBase &move, double weight)
         }
     }
     
-    mvs.append( tuple<Move,double>(move, weight) );
+    mvs.append( tuple<MovePtr,double>(move, weight) );
     this->recalculateWeights();
 }
 
@@ -220,7 +220,7 @@ System WeightedMoves::move(const System &system, int nmoves, bool record_stats)
     try
     {
         int n = mvs.count();
-        tuple<Move,double> *mvs_array = mvs.data();
+        tuple<MovePtr,double> *mvs_array = mvs.data();
 
         if (n == 1)
         {
@@ -240,14 +240,14 @@ System WeightedMoves::move(const System &system, int nmoves, bool record_stats)
             {
                 quint32 i = generator().randInt(n-1);
     
-                tuple<Move,double> &move = mvs_array[i];
+                tuple<MovePtr,double> &move = mvs_array[i];
     
                 if ( generator().rand(maxweight) <= move.get<1>() )
                 {
                     //use this move
                     move.get<0>().edit().move(run_system, 1, record_stats);
                     break;
-                    }
+                }
             }
         }
     }
@@ -267,7 +267,7 @@ void WeightedMoves::setEnergyComponent(const Symbol &component)
     
     if (nmoves > 0)
     {
-        tuple<Move,double> *mvs_array = mvs.data();
+        tuple<MovePtr,double> *mvs_array = mvs.data();
         
         for (int i=0; i<nmoves; ++i)
         {
@@ -287,7 +287,7 @@ void WeightedMoves::setSpaceProperty(const PropertyName &spaceproperty)
     
     if (nmoves > 0)
     {
-        tuple<Move,double> *mvs_array = mvs.data();
+        tuple<MovePtr,double> *mvs_array = mvs.data();
         
         for (int i=0; i<nmoves; ++i)
         {
@@ -308,7 +308,7 @@ void WeightedMoves::_pvt_setTemperature(const Temperature &temperature)
     
     if (nmoves > 0)
     {
-        tuple<Move,double> *mvs_array = mvs.data();
+        tuple<MovePtr,double> *mvs_array = mvs.data();
         
         for (int i=0; i<nmoves; ++i)
         {
@@ -332,7 +332,7 @@ void WeightedMoves::_pvt_setPressure(const Pressure &pressure)
     
     if (nmoves > 0)
     {
-        tuple<Move,double> *mvs_array = mvs.data();
+        tuple<MovePtr,double> *mvs_array = mvs.data();
         
         for (int i=0; i<nmoves; ++i)
         {
@@ -356,7 +356,7 @@ void WeightedMoves::_pvt_setFugacity(const Pressure &fugacity)
     
     if (nmoves > 0)
     {
-        tuple<Move,double> *mvs_array = mvs.data();
+        tuple<MovePtr,double> *mvs_array = mvs.data();
         
         for (int i=0; i<nmoves; ++i)
         {
@@ -372,12 +372,12 @@ void WeightedMoves::_pvt_setFugacity(const Pressure &fugacity)
 }
 
 /** Return the moves available in this set */
-QList<Move> WeightedMoves::moves() const
+QList<MovePtr> WeightedMoves::moves() const
 {
     int nmoves = mvs.count();
-    const tuple<Move,double> *mvs_array = mvs.constData();
+    const tuple<MovePtr,double> *mvs_array = mvs.constData();
     
-    QList<Move> moves;
+    QList<MovePtr> moves;
     
     for (int i=0; i<nmoves; ++i)
     {

@@ -29,7 +29,7 @@
 #include "forcetable.h"
 
 #include "SireMol/moleculeview.h"
-#include "SireMol/molgroup.h"
+#include "SireMol/moleculegroup.h"
 #include "SireMol/atomselection.h"
 
 #include "SireMol/mover.hpp"
@@ -234,7 +234,7 @@ ForceTable::ForceTable()
 /** Construct a table that holds all of the forces on all of the atoms
     for all of the CutGroups viewed in all of the molecules in the passed
     molecule group */
-ForceTable::ForceTable(const MolGroup &molgroup)
+ForceTable::ForceTable(const MoleculeGroup &molgroup)
 {
     if (molgroup.isEmpty())
         return;
@@ -248,7 +248,7 @@ ForceTable::ForceTable(const MolGroup &molgroup)
     
     quint32 i = 0;
     
-    for (MolGroup::const_iterator it = molgroup.constBegin();
+    for (MoleculeGroup::const_iterator it = molgroup.constBegin();
          it != molgroup.constEnd();
          ++it)
     {

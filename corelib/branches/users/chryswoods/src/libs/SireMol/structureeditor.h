@@ -516,9 +516,9 @@ void StructureEditor::_pvt_createSpaceForMetadata(const QString &metakey)
     
         //a property of this name already exists - ensure that
         //it is of the correct type!
-        if (dynamic_cast<const T*>( &(metadata.constData()) ) == 0)
+        if (dynamic_cast<const T*>( &metadata ) == 0)
             StructureEditor::_pvt_invalidMetadataCast(
-                                              metakey, metadata->what(),
+                                              metakey, metadata.what(),
                                               T::typeName());
     }
     else
@@ -541,9 +541,9 @@ void StructureEditor::_pvt_createSpaceForMetadata(const QString &key,
     
         //a property of this name already exists - ensure that
         //it is of the correct type!
-        if (dynamic_cast<const T*>( &(metadata.constData()) ) == 0)
+        if (dynamic_cast<const T*>( &metadata ) == 0)
             StructureEditor::_pvt_invalidMetadataCast(
-                                        key, metakey, metadata->what(),
+                                        key, metakey, metadata.what(),
                                         T::typeName());
     }
     else

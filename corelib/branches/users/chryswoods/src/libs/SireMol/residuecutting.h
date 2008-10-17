@@ -51,7 +51,7 @@ namespace SireMol
     @author Christopher Woods
 */
 class SIREMOL_EXPORT ResidueCutting 
-        : public SireBase::ConcreteProperty<ResidueCutting,CuttingFunctionBase>
+        : public SireBase::ConcreteProperty<ResidueCutting,CuttingFunction>
 {
 public:
     ResidueCutting();

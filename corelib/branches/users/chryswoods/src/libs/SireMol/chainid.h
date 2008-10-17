@@ -60,7 +60,7 @@ class ChainIdentifier;
 class Chain;
 
 class Molecules;
-class MolGroup;
+class MoleculeGroup;
 class MolGroupsBase;
 class MolNum;
 
@@ -114,9 +114,9 @@ public:
     virtual QHash< MolNum,Selector<Chain> >
                     selectAllFrom(const Molecules &molecules) const;
 
-    virtual Chain selectFrom(const MolGroup &molgroup) const;
+    virtual Chain selectFrom(const MoleculeGroup &molgroup) const;
     virtual QHash< MolNum,Selector<Chain> >
-                    selectAllFrom(const MolGroup &molgroup) const;
+                    selectAllFrom(const MoleculeGroup &molgroup) const;
     
     virtual Chain selectFrom(const MolGroupsBase &molgroups) const;
     virtual QHash< MolNum,Selector<Chain> > 

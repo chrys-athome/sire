@@ -353,14 +353,14 @@ PropPtrBase& PropPtrBase::operator=(const PropPtrBase &other)
 bool PropPtrBase::operator==(const PropPtrBase &other) const
 {
     return ptr.constData() == other.ptr.constData() or
-           ptr->compare(*(other.ptr));
+           ptr->equals(*(other.ptr));
 }
 
 /** Comparison operator */
 bool PropPtrBase::operator!=(const PropPtrBase &other) const
 {
     return ptr.constData() != other.ptr.constData() and
-           not ptr->compare(*(other.ptr));
+           not ptr->equals(*(other.ptr));
 }
 
 /** Detach this pointer from shared storage */

@@ -68,8 +68,8 @@ friend QDataStream& ::operator>>(QDataStream&, MTSMC&);
 public:
     MTSMC();
 
-    MTSMC(const MovesBase &fastmoves, int nfastmoves=1);
-    MTSMC(const MovesBase &fastmoves, const Symbol &fastcomponent, 
+    MTSMC(const Moves &fastmoves, int nfastmoves=1);
+    MTSMC(const Moves &fastmoves, const Symbol &fastcomponent, 
           int nfastmoves=1);
     
     MTSMC(const MTSMC &other);
@@ -91,13 +91,13 @@ public:
     bool operator==(const MTSMC &other) const;
     bool operator!=(const MTSMC &other) const;
     
-    void setFastMoves(const MovesBase &fastmoves);
+    void setFastMoves(const Moves &fastmoves);
     void setNFastMoves(int nfast);
     
     void setFastEnergyComponent(const Symbol &component);
     void setSlowEnergyComponent(const Symbol &component);
 
-    const MovesBase& fastMoves() const;
+    const Moves& fastMoves() const;
     int nFastMoves() const;
     
     const Symbol& fastEnergyComponent() const;
@@ -107,7 +107,7 @@ public:
 
 private:
     /** The collection of fast moves that will be applied to the system */
-    Moves fastmoves;
+    MovesPtr fastmoves;
     
     /** The energy component on which the fast moves will operate */
     Symbol fastcomponent;

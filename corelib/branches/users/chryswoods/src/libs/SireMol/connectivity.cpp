@@ -67,7 +67,7 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
     SharedDataStream sds(ds);
 
     sds << conbase.connected_atoms << conbase.connected_res
-        << conbase.d << static_cast<const PropertyBase&>(conbase);
+        << conbase.d << static_cast<const Property&>(conbase);
 
     return ds;
 }
@@ -84,7 +84,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
         
         sds >> conbase.connected_atoms >> conbase.connected_res
             >> conbase.d
-            >> static_cast<PropertyBase&>(conbase);
+            >> static_cast<Property&>(conbase);
     }
     else
         throw version_error(v, "1", r_conbase, CODELOC);
@@ -104,7 +104,7 @@ static SharedDataPointer<MoleculeInfoData> getNull()
 
 /** Null constructor */
 ConnectivityBase::ConnectivityBase()
-                 : PropertyBase(), d( ::getNull() )
+                 : Property(), d( ::getNull() )
 {}
 
 const MoleculeInfoData& ConnectivityBase::info() const
@@ -115,7 +115,7 @@ const MoleculeInfoData& ConnectivityBase::info() const
 /** Construct the connectivity for molecule described by 
     the passed info object */
 ConnectivityBase::ConnectivityBase(const MoleculeData &moldata)
-                 : PropertyBase(), d(moldata.info())
+                 : Property(), d(moldata.info())
 {
     if (info().nAtoms() > 0)
     {
@@ -132,7 +132,7 @@ ConnectivityBase::ConnectivityBase(const MoleculeData &moldata)
     
 /** Copy constructor */
 ConnectivityBase::ConnectivityBase(const ConnectivityBase &other)
-                 : PropertyBase(other),
+                 : Property(other),
                    connected_atoms(other.connected_atoms),
                    connected_res(other.connected_res),
                    d(other.d)

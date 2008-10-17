@@ -132,7 +132,7 @@ protected:
                     const SireUnits::Dimension::MolarEnergy &chemical_potential);
 
     virtual void setSystem(const System &system);
-    virtual void setMoves(const MovesBase &moves);
+    virtual void setMoves(const Moves &moves);
 
 private:
     void updatedMoves();

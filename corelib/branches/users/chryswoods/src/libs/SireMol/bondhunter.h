@@ -38,15 +38,11 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-class BondHunterBase;
 class BondHunter;
 
 class CovalentBondHunter;
 class ChemicalBondHunter;
 }
-
-QDataStream& operator<<(QDataStream&, const SireMol::BondHunterBase&);
-QDataStream& operator>>(QDataStream&, SireMol::BondHunterBase&);
 
 QDataStream& operator<<(QDataStream&, const SireMol::BondHunter&);
 QDataStream& operator>>(QDataStream&, SireMol::BondHunter&);
@@ -69,20 +65,20 @@ using SireBase::PropertyMap;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT BondHunterBase : public SireBase::PropertyBase
+class SIREMOL_EXPORT BondHunter : public SireBase::Property
 {
 public:
-    BondHunterBase();
-    BondHunterBase(const BondHunterBase &other);
+    BondHunter();
+    BondHunter(const BondHunter &other);
     
-    virtual ~BondHunterBase();
+    virtual ~BondHunter();
     
     static const char* typeName()
     {
-        return "SireMol::BondHunterBase";
+        return "SireMol::BondHunter";
     }
 
-    virtual BondHunterBase* clone() const=0;
+    virtual BondHunter* clone() const=0;
     
     /** Return the connectivity of the molecule viewed in 'molview' 
         using this function to hunt for all of the bonded atoms.
@@ -90,57 +86,8 @@ public:
         part of this view */
     virtual Connectivity operator()(const MoleculeView &molview,
                                     const PropertyMap &map = PropertyMap()) const=0;
-};
 
-/** This is the wrapper class that holds the generic BondHunter function
-
-    @author Christopher Woods
-*/
-class SIREMOL_EXPORT BondHunter : public SireBase::Property
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const BondHunter&);
-friend QDataStream& ::operator>>(QDataStream&, BondHunter&);
-
-public:
-    BondHunter();
-    BondHunter(const SireBase::PropertyBase &property);
-    BondHunter(const BondHunterBase &bondhunter);
-    
-    BondHunter(const BondHunter &other);
-    
-    ~BondHunter();
-    
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<BondHunter>() );
-    }
-    
-    const char* what() const
-    {
-        return BondHunter::typeName();
-    }
-    
-    virtual BondHunter& operator=(const SireBase::PropertyBase &property);
-    virtual BondHunter& operator=(const BondHunterBase &other);
-    
-    virtual Connectivity operator()(const MoleculeView &molview,
-                                    const PropertyMap &map = PropertyMap()) const;
-
-    const BondHunterBase* operator->() const;
-    const BondHunterBase& operator*() const;
-
-    const BondHunterBase& read() const;
-    BondHunterBase& edit();
-
-    const BondHunterBase* data() const;
-    const BondHunterBase* constData() const;
-
-    BondHunterBase* data();
-
-    operator const BondHunterBase&() const;
-
-    static const BondHunter& shared_null();
+    static const CovalentBondHunter& null();
 };
 
 class SIREMOL_EXPORT CovalentBondHunterParameters
@@ -175,7 +122,7 @@ private:
     @author Christopher Woods
 */
 class SIREMOL_EXPORT CovalentBondHunter
-           : public SireBase::ConcreteProperty<CovalentBondHunter,BondHunterBase>
+           : public SireBase::ConcreteProperty<CovalentBondHunter,BondHunter>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const CovalentBondHunter&);
@@ -192,10 +139,6 @@ public:
         return QMetaType::typeName( qMetaTypeId<CovalentBondHunter>() );
     }
 
-    using SireBase::PropertyBase::operator=;
-    using SireBase::PropertyBase::operator==;
-    using SireBase::PropertyBase::operator!=;
-    
     CovalentBondHunter& operator=(const CovalentBondHunter &other);
     
     bool operator==(const CovalentBondHunter &other) const;
@@ -243,18 +186,19 @@ public:
                             const PropertyMap &map = PropertyMap()) const;
 };
 
+typedef SireBase::PropPtr<BondHunter> BondHunterPtr;
+
 }
 
-Q_DECLARE_METATYPE( SireMol::BondHunter )
 Q_DECLARE_METATYPE( SireMol::CovalentBondHunter )
 Q_DECLARE_METATYPE( SireMol::ChemicalBondHunter )
 
-SIRE_EXPOSE_CLASS( SireMol::BondHunterBase )
+SIRE_EXPOSE_CLASS( SireMol::BondHunter )
 SIRE_EXPOSE_CLASS( SireMol::CovalentBondHunter )
 SIRE_EXPOSE_CLASS( SireMol::ChemicalBondHunter )
 SIRE_EXPOSE_CLASS( SireMol::CovalentBondHunterParameters )
 
-SIRE_EXPOSE_PROPERTY( SireMol::BondHunter, SireMol::BondHunterBase )
+SIRE_EXPOSE_PROPERTY( SireMol::BondHunterPtr, SireMol::BondHunter )
 
 SIRE_END_HEADER
 

@@ -29,6 +29,8 @@
 #include <numeric>
 #include <cmath>
 
+#include <QMutex>
+
 #include "switchingfunction.h"
 
 #include "SireMaths/maths.h"
@@ -43,17 +45,17 @@ using namespace SireStream;
 using namespace SireBase;
 
 /////////////
-///////////// Implementation of SwitchFunc
+///////////// Implementation of SwitchingFunction
 /////////////
 
-static const RegisterMetaType<SwitchFunc> r_switchbase(MAGIC_ONLY,
-                                                           "SireMM::SwitchFunc");
+static const RegisterMetaType<SwitchingFunction> r_switchbase(MAGIC_ONLY,
+                                                           "SireMM::SwitchingFunction");
 
 /** Serialise to a binary data stream */
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const SwitchFunc &switchfunc)
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const SwitchingFunction &switchfunc)
 {
     writeHeader(ds, r_switchbase, 1)
-        << static_cast<const PropertyBase&>(switchfunc)
+        << static_cast<const Property&>(switchfunc)
         << switchfunc.cut_elec << switchfunc.feather_elec
         << switchfunc.cut_vdw << switchfunc.feather_vdw;
 
@@ -61,13 +63,13 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const SwitchFunc &switchf
 }
 
 /** Deserialise from a binary data stream */
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, SwitchFunc &switchfunc)
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, SwitchingFunction &switchfunc)
 {
     VersionID v = readHeader(ds, r_switchbase);
 
     if (v == 1)
     {
-        ds >> static_cast<PropertyBase&>(switchfunc)
+        ds >> static_cast<Property&>(switchfunc)
            >> switchfunc.cut_elec >> switchfunc.feather_elec
            >> switchfunc.cut_vdw >> switchfunc.feather_vdw;
            
@@ -83,45 +85,45 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, SwitchFunc &switchfunc)
 
 /** Null constructor - this places the cutoff distance at
     the maximum value of a double (e.g. on cutoff) */
-SwitchFunc::SwitchFunc()
-               : PropertyBase(),
-                 cutdist( std::numeric_limits<double>::max() ),
-                 featherdist( std::numeric_limits<double>::max() ),
-                 cut_elec( std::numeric_limits<double>::max() ),
-                 feather_elec( std::numeric_limits<double>::max() ),
-                 cut_vdw( std::numeric_limits<double>::max() ),
-                 feather_vdw( std::numeric_limits<double>::max() )
+SwitchingFunction::SwitchingFunction()
+                  : Property(),
+                    cutdist( std::numeric_limits<double>::max() ),
+                    featherdist( std::numeric_limits<double>::max() ),
+                    cut_elec( std::numeric_limits<double>::max() ),
+                    feather_elec( std::numeric_limits<double>::max() ),
+                    cut_vdw( std::numeric_limits<double>::max() ),
+                    feather_vdw( std::numeric_limits<double>::max() )
 {}
 
 /** Construct, placing the ultimate cutoff distance at 'cutdistance' */
-SwitchFunc::SwitchFunc(double cutdistance)
-               : PropertyBase(),
-                 cutdist( std::abs(cutdistance) ),
-                 featherdist(cutdist),
-                 cut_elec(cutdist),
-                 feather_elec(cutdist),
-                 cut_vdw(cutdist),
-                 feather_vdw(cutdist)
+SwitchingFunction::SwitchingFunction(double cutdistance)
+                  : Property(),
+                    cutdist( std::abs(cutdistance) ),
+                    featherdist(cutdist),
+                    cut_elec(cutdist),
+                    feather_elec(cutdist),
+                    cut_vdw(cutdist),
+                    feather_vdw(cutdist)
 {}
 
 /** Construct placing the cutoff distance at 'cutdistance' and 
     start feathering at 'featherdistance' */
-SwitchFunc::SwitchFunc(double cutdistance, double featherdistance)
-           : PropertyBase(),
-             cutdist( std::abs(cutdistance) ),
-             featherdist( qMin( cutdist, std::abs(featherdistance) ) ),
-             cut_elec(cutdist),
-             feather_elec(featherdist),
-             cut_vdw(cutdist),
-             feather_vdw(featherdist)
+SwitchingFunction::SwitchingFunction(double cutdistance, double featherdistance)
+                  : Property(),
+                    cutdist( std::abs(cutdistance) ),
+                    featherdist( qMin( cutdist, std::abs(featherdistance) ) ),
+                    cut_elec(cutdist),
+                    feather_elec(featherdist),
+                    cut_vdw(cutdist),
+                    feather_vdw(featherdist)
 {}
 
 /** Construct placing the electrostatic cutoff at 'eleccut' with 
     the feather at 'elecfeather', while the vdw cutoff is at
     'vdwcut' with the feather at 'vdwfeather' */
-SwitchFunc::SwitchFunc(double eleccut, double elecfeather,
-                       double vdwcut, double vdwfeather)
-           : PropertyBase()
+SwitchingFunction::SwitchingFunction(double eleccut, double elecfeather,
+                                     double vdwcut, double vdwfeather)
+                  : Property()
 {
     cut_elec = std::abs(eleccut);
     cut_vdw = std::abs(vdwcut);
@@ -135,26 +137,26 @@ SwitchFunc::SwitchFunc(double eleccut, double elecfeather,
 }
 
 /** Copy constructor */
-SwitchFunc::SwitchFunc(const SwitchFunc &other)
-               : PropertyBase(other), 
-                 cutdist(other.cutdist),
-                 featherdist(other.featherdist),
-                 cut_elec(other.cut_elec),
-                 feather_elec(other.feather_elec),
-                 cut_vdw(other.cut_vdw),
-                 feather_vdw(other.feather_vdw)
+SwitchingFunction::SwitchingFunction(const SwitchingFunction &other)
+                  : Property(other), 
+                    cutdist(other.cutdist),
+                    featherdist(other.featherdist),
+                    cut_elec(other.cut_elec),
+                    feather_elec(other.feather_elec),
+                    cut_vdw(other.cut_vdw),
+                    feather_vdw(other.feather_vdw)
 {}
 
 /** Destructor */
-SwitchFunc::~SwitchFunc()
+SwitchingFunction::~SwitchingFunction()
 {}
 
 /** Copy assignment operator */
-SwitchFunc& SwitchFunc::operator=(const SwitchFunc &other)
+SwitchingFunction& SwitchingFunction::operator=(const SwitchingFunction &other)
 {
     if (this != &other)
     {
-        PropertyBase::operator=(other);
+        Property::operator=(other);
     
         cutdist = other.cutdist;
         featherdist = other.featherdist;
@@ -170,7 +172,7 @@ SwitchFunc& SwitchFunc::operator=(const SwitchFunc &other)
 }
 
 /** Comparison operator */
-bool SwitchFunc::operator==(const SwitchFunc &other) const
+bool SwitchingFunction::operator==(const SwitchingFunction &other) const
 {
     return this == &other or
            (cut_elec == other.cut_elec and cut_vdw == other.cut_vdw and
@@ -178,7 +180,7 @@ bool SwitchFunc::operator==(const SwitchFunc &other) const
 }
 
 /** Comparison operator */
-bool SwitchFunc::operator!=(const SwitchFunc &other) const
+bool SwitchingFunction::operator!=(const SwitchingFunction &other) const
 {
     return this != &other and
            (cut_elec != other.cut_elec or cut_vdw != other.cut_vdw or
@@ -195,7 +197,7 @@ static const RegisterMetaType<NoCutoff> r_nocutoff;
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const NoCutoff &nocutoff)
 {
     writeHeader(ds, r_nocutoff, 1)
-            << static_cast<const SwitchFunc&>(nocutoff);
+            << static_cast<const SwitchingFunction&>(nocutoff);
 
     return ds;
 }
@@ -207,7 +209,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, NoCutoff &nocutoff)
 
     if (v == 1)
     {
-        ds >> static_cast<SwitchFunc&>(nocutoff);
+        ds >> static_cast<SwitchingFunction&>(nocutoff);
     }
     else
         throw version_error(v, "1", r_nocutoff, CODELOC);
@@ -217,12 +219,12 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, NoCutoff &nocutoff)
 
 /** Constructor */
 NoCutoff::NoCutoff() 
-         : ConcreteProperty<NoCutoff,SwitchFunc>(std::numeric_limits<double>::max())
+         : ConcreteProperty<NoCutoff,SwitchingFunction>(std::numeric_limits<double>::max())
 {}
 
 /** Copy constructor */
 NoCutoff::NoCutoff(const NoCutoff &other)
-         : ConcreteProperty<NoCutoff,SwitchFunc>(other)
+         : ConcreteProperty<NoCutoff,SwitchingFunction>(other)
 {}
 
 /** Destructor */
@@ -232,7 +234,7 @@ NoCutoff::~NoCutoff()
 /** Copy assignment operator */
 NoCutoff& NoCutoff::operator=(const NoCutoff &other)
 {
-    SwitchFunc::operator=(other);
+    SwitchingFunction::operator=(other);
     return *this;
 }
 
@@ -276,6 +278,21 @@ double NoCutoff::dVDWScaleFactor(double) const
     return 0;
 }
 
+static SharedPolyPointer<NoCutoff> shared_null;
+
+const NoCutoff& SwitchingFunction::null()
+{
+    if (shared_null.constData() == 0)
+    {
+        QMutexLocker lkr( SireBase::globalLock() );
+        
+        if (shared_null.constData() == 0)
+            shared_null = new NoCutoff();
+    }
+    
+    return *(shared_null.constData());
+}
+
 /////////////
 ///////////// Implementation of HarmonicSwitchingFunction
 /////////////
@@ -313,7 +330,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
                                       const HarmonicSwitchingFunction &harm)
 {
     writeHeader(ds, r_harm, 1)
-          << static_cast<const SwitchFunc&>(harm);
+          << static_cast<const SwitchingFunction&>(harm);
 
     return ds;
 }
@@ -326,7 +343,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 
     if (v == 1)
     {
-        ds >> static_cast<SwitchFunc&>(harm);
+        ds >> static_cast<SwitchingFunction&>(harm);
 
         harm.set( harm.cut_elec, harm.feather_elec,
                   harm.cut_vdw, harm.feather_vdw );
@@ -339,7 +356,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 
 /** Construct a null harmonic switching function (no cutoff) */
 HarmonicSwitchingFunction::HarmonicSwitchingFunction()
-    : ConcreteProperty<HarmonicSwitchingFunction,SwitchFunc>()
+    : ConcreteProperty<HarmonicSwitchingFunction,SwitchingFunction>()
 {
     cut_elec2 = cut_elec;
     cut_vdw2 = cut_vdw;
@@ -352,7 +369,7 @@ HarmonicSwitchingFunction::HarmonicSwitchingFunction()
     cutoff of both the electrostatic and vdw interactions at a distance
     of 'cutoffdist' */
 HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist)
-     : ConcreteProperty<HarmonicSwitchingFunction,SwitchFunc>()
+     : ConcreteProperty<HarmonicSwitchingFunction,SwitchingFunction>()
 {
     this->set(cutoffdist, cutoffdist, cutoffdist, cutoffdist);
 }
@@ -363,7 +380,7 @@ HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist)
     then this represents a hard cutoff */
 HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist,
                                                      double featherdist)
-    : ConcreteProperty<HarmonicSwitchingFunction,SwitchFunc>()
+    : ConcreteProperty<HarmonicSwitchingFunction,SwitchingFunction>()
 {
     this->set(cutoffdist, featherdist, cutoffdist, featherdist);
 }
@@ -378,7 +395,7 @@ HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist,
 HarmonicSwitchingFunction::HarmonicSwitchingFunction(double cutoffdist,
                                                      double elecfeather,
                                                      double vdwfeather)
-     : ConcreteProperty<HarmonicSwitchingFunction,SwitchFunc>()
+     : ConcreteProperty<HarmonicSwitchingFunction,SwitchingFunction>()
 {
     this->set(cutdist,elecfeather,cutdist,vdwfeather);
 }
@@ -394,7 +411,7 @@ HarmonicSwitchingFunction::HarmonicSwitchingFunction(double eleccutoff,
                                                      double elecfeather,
                                                      double vdwcutoff,
                                                      double vdwfeather)
-    : ConcreteProperty<HarmonicSwitchingFunction,SwitchFunc>()
+    : ConcreteProperty<HarmonicSwitchingFunction,SwitchingFunction>()
 {
     this->set(eleccutoff, elecfeather, vdwcutoff, vdwfeather);
 }
@@ -402,7 +419,7 @@ HarmonicSwitchingFunction::HarmonicSwitchingFunction(double eleccutoff,
 /** Copy constructor */
 HarmonicSwitchingFunction::HarmonicSwitchingFunction(
                                 const HarmonicSwitchingFunction &other)
-    : ConcreteProperty<HarmonicSwitchingFunction,SwitchFunc>(other),
+    : ConcreteProperty<HarmonicSwitchingFunction,SwitchingFunction>(other),
       cut_elec2(other.cut_elec2), norm_elec(other.norm_elec),
       cut_vdw2(other.cut_vdw2), norm_vdw(other.norm_vdw)
 {}
@@ -422,7 +439,7 @@ HarmonicSwitchingFunction& HarmonicSwitchingFunction::operator=(
         cut_vdw2 = other.cut_vdw2;
         norm_vdw = other.norm_vdw;
         
-        SwitchFunc::operator=(other);
+        SwitchingFunction::operator=(other);
     }
 
     return *this;
@@ -431,13 +448,13 @@ HarmonicSwitchingFunction& HarmonicSwitchingFunction::operator=(
 /** Comparison operator */
 bool HarmonicSwitchingFunction::operator==(const HarmonicSwitchingFunction &other) const
 {
-    return SwitchFunc::operator==(other);
+    return SwitchingFunction::operator==(other);
 }
 
 /** Comparison operator */
 bool HarmonicSwitchingFunction::operator!=(const HarmonicSwitchingFunction &other) const
 {
-    return SwitchFunc::operator!=(other);
+    return SwitchingFunction::operator!=(other);
 }                                      
 
 /** Return the scale factor for the electrostatic interaction for the
@@ -545,7 +562,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
                                       const CHARMMSwitchingFunction &charmm)
 {
     writeHeader(ds, r_charmm, 1)
-          << static_cast<const SwitchFunc&>(charmm);
+          << static_cast<const SwitchingFunction&>(charmm);
 
     return ds;
 }
@@ -558,7 +575,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 
     if (v == 1)
     {
-        ds >> static_cast<SwitchFunc&>(charmm);
+        ds >> static_cast<SwitchingFunction&>(charmm);
 
         charmm.set( charmm.cut_elec, charmm.feather_elec,
                     charmm.cut_vdw, charmm.feather_vdw );
@@ -571,7 +588,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 
 /** Construct a null harmonic switching function (no cutoff) */
 CHARMMSwitchingFunction::CHARMMSwitchingFunction()
-    : ConcreteProperty<CHARMMSwitchingFunction,SwitchFunc>()
+    : ConcreteProperty<CHARMMSwitchingFunction,SwitchingFunction>()
 {
     cut_elec2 = cut_elec;
     feather_elec2 = feather_elec;
@@ -587,7 +604,7 @@ CHARMMSwitchingFunction::CHARMMSwitchingFunction()
     cutoff of both the electrostatic and vdw interactions at a distance
     of 'cutoffdist' */
 CHARMMSwitchingFunction::CHARMMSwitchingFunction(double cutoffdist)
-     : ConcreteProperty<CHARMMSwitchingFunction,SwitchFunc>(cutoffdist)
+     : ConcreteProperty<CHARMMSwitchingFunction,SwitchingFunction>(cutoffdist)
 {
     this->set( cutoffdist, cutoffdist, cutoffdist, cutoffdist );
 }
@@ -598,7 +615,7 @@ CHARMMSwitchingFunction::CHARMMSwitchingFunction(double cutoffdist)
     then this represents a hard cutoff */
 CHARMMSwitchingFunction::CHARMMSwitchingFunction(double cutoffdist,
                                                  double featherdist)
-    : ConcreteProperty<CHARMMSwitchingFunction,SwitchFunc>(cutoffdist)
+    : ConcreteProperty<CHARMMSwitchingFunction,SwitchingFunction>(cutoffdist)
 {
     this->set(cutoffdist, featherdist, cutoffdist, featherdist);
 }
@@ -613,7 +630,7 @@ CHARMMSwitchingFunction::CHARMMSwitchingFunction(double cutoffdist,
 CHARMMSwitchingFunction::CHARMMSwitchingFunction(double cutoffdist,
                                                  double elecfeather,
                                                  double vdwfeather)
-     : ConcreteProperty<CHARMMSwitchingFunction,SwitchFunc>(cutoffdist)
+     : ConcreteProperty<CHARMMSwitchingFunction,SwitchingFunction>(cutoffdist)
 {
     this->set(cutdist,elecfeather,cutdist,vdwfeather);
 }
@@ -629,7 +646,7 @@ CHARMMSwitchingFunction::CHARMMSwitchingFunction(double eleccutoff,
                                                  double elecfeather,
                                                  double vdwcutoff,
                                                  double vdwfeather)
-    : ConcreteProperty<CHARMMSwitchingFunction,SwitchFunc>()
+    : ConcreteProperty<CHARMMSwitchingFunction,SwitchingFunction>()
 {
     this->set(eleccutoff, elecfeather, vdwcutoff, vdwfeather);
 }
@@ -637,7 +654,7 @@ CHARMMSwitchingFunction::CHARMMSwitchingFunction(double eleccutoff,
 /** Copy constructor */
 CHARMMSwitchingFunction::CHARMMSwitchingFunction(
                                 const CHARMMSwitchingFunction &other)
-    : ConcreteProperty<CHARMMSwitchingFunction,SwitchFunc>(other),
+    : ConcreteProperty<CHARMMSwitchingFunction,SwitchingFunction>(other),
       cut_elec2(other.cut_elec2), feather_elec2(other.feather_elec2), 
       norm_elec(other.norm_elec),
       cut_vdw2(other.cut_vdw2), feather_vdw2(other.feather_vdw2),
@@ -661,7 +678,7 @@ CHARMMSwitchingFunction& CHARMMSwitchingFunction::operator=(
         feather_vdw2 = other.feather_vdw2;
         norm_vdw = other.norm_vdw;
         
-        SwitchFunc::operator=(other);
+        SwitchingFunction::operator=(other);
     }
 
     return *this;
@@ -670,13 +687,13 @@ CHARMMSwitchingFunction& CHARMMSwitchingFunction::operator=(
 /** Comparison operator */
 bool CHARMMSwitchingFunction::operator==(const CHARMMSwitchingFunction &other) const
 {
-    return SwitchFunc::operator==(other);
+    return SwitchingFunction::operator==(other);
 }
 
 /** Comparison operator */
 bool CHARMMSwitchingFunction::operator!=(const CHARMMSwitchingFunction &other) const
 {
-    return SwitchFunc::operator!=(other);
+    return SwitchingFunction::operator!=(other);
 }                                      
 
 /** Return the scale factor for the electrostatic interaction for the
@@ -775,143 +792,4 @@ double CHARMMSwitchingFunction::dVDWScaleFactor(double dist) const
         
         return 12 * dist * (cut_vdw2 - dist2) * (feather_vdw2 - dist2) * norm_vdw;
     }
-}
-
-//////////////
-////////////// Implementation of SwitchingFunction
-//////////////
-
-RegisterMetaType<SwitchingFunction> r_switchfunc;
-
-/** Serialise a SwitchingFunction to a binary datastream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
-                                       const SwitchingFunction &switchfunc)
-{
-    writeHeader(ds, r_switchfunc, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << static_cast<const Property&>(switchfunc);
-    
-    return ds;
-}
-
-/** Deserialise a SwitchingFunction from a binary datastream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
-                                       SwitchingFunction &switchfunc)
-{
-    VersionID v = readHeader(ds, r_switchfunc);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        sds >> static_cast<Property&>(switchfunc);
-    }
-    else
-        throw version_error(v, "1", r_switchfunc, CODELOC);
-        
-    return ds;
-}
-
-static SwitchingFunction *_pvt_shared_null = 0;
-
-const SwitchingFunction& SwitchingFunction::shared_null()
-{
-    if (_pvt_shared_null == 0)
-        _pvt_shared_null = new SwitchingFunction( NoCutoff() );
-        
-    return *_pvt_shared_null;
-}
-
-/** Null constructor - constructs a simple, infinite cartesian volume */
-SwitchingFunction::SwitchingFunction() : Property(SwitchingFunction::shared_null())
-{}
-
-/** Construct from a passed property
-
-    \throw SireError::invalid_cast
-*/
-SwitchingFunction::SwitchingFunction(const PropertyBase &property)
-      : Property(property.asA<SwitchFunc>())
-{}
-
-/** Construct from passed SwitchFunc */
-SwitchingFunction::SwitchingFunction(const SwitchFunc &space)
-      : Property(space)
-{}
-
-/** Copy constructor */
-SwitchingFunction::SwitchingFunction(const SwitchingFunction &other)
-      : Property(other)
-{}
-
-/** Destructor */
-SwitchingFunction::~SwitchingFunction()
-{}
-
-/** Copy assignment operator from a Property object
-
-    \throw SireError::invalid_cast
-*/
-SwitchingFunction& SwitchingFunction::operator=(const PropertyBase &property)
-{
-    Property::operator=(property.asA<SwitchFunc>());
-    return *this;
-}
-
-/** Copy assignment operator from another SwitchFunc */
-SwitchingFunction& SwitchingFunction::operator=(const SwitchFunc &other)
-{
-    Property::operator=(other);
-    return *this;
-}
-
-/** Dereference this pointer */
-const SwitchFunc* SwitchingFunction::operator->() const
-{
-    return static_cast<const SwitchFunc*>(&(d()));
-}
-
-/** Dereference this pointer */
-const SwitchFunc& SwitchingFunction::operator*() const
-{
-    return static_cast<const SwitchFunc&>(d());
-}
-
-/** Return a read-only reference to the contained object */
-const SwitchFunc& SwitchingFunction::read() const
-{
-    return static_cast<const SwitchFunc&>(d());
-}
-
-/** Return a modifiable reference to the contained object.
-    This will trigger a copy of the object if more than
-    one pointer is pointing to it. */
-SwitchFunc& SwitchingFunction::edit()
-{
-    return static_cast<SwitchFunc&>(d());
-}
-    
-/** Return a raw pointer to the SwitchFunc object */
-const SwitchFunc* SwitchingFunction::data() const
-{
-    return static_cast<const SwitchFunc*>(&(d()));
-}
-
-/** Return a raw pointer to the SwitchFunc object */
-const SwitchFunc* SwitchingFunction::constData() const
-{
-    return static_cast<const SwitchFunc*>(&(d()));
-}
-    
-/** Return a raw pointer to the SwitchFunc object */
-SwitchFunc* SwitchingFunction::data()
-{
-    return static_cast<SwitchFunc*>(&(d()));
-}
-
-/** Automatic casting operator */
-SwitchingFunction::operator const SwitchFunc&() const
-{
-    return static_cast<const SwitchFunc&>(d());
 }

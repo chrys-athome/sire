@@ -153,7 +153,7 @@ const MonitorName& SystemMonitors::monitorName(const MonitorID &monid) const
     \throw SireSystem::duplicate_monitor
     \throw SireError::invalid_index
 */
-const SysMonBase& SystemMonitors::operator[](const MonitorID &monid) const
+const SystemMonitor& SystemMonitors::operator[](const MonitorID &monid) const
 {
     return mons_by_name.constFind( this->monitorName(monid) )->read();
 }
@@ -164,7 +164,7 @@ const SysMonBase& SystemMonitors::operator[](const MonitorID &monid) const
     \throw SireSystem::duplicate_monitor
     \throw SireError::invalid_index
 */
-const SysMonBase& SystemMonitors::at(const MonitorID &monid) const
+const SystemMonitor& SystemMonitors::at(const MonitorID &monid) const
 {
     return this->operator[](monid);
 }
@@ -221,7 +221,7 @@ QList<MonitorName> SystemMonitors::monitorNames() const
     
     \throw SireSystem::duplicate_monitor
 */
-void SystemMonitors::add(const QString &name, const SysMonBase &monitor,
+void SystemMonitors::add(const QString &name, const SystemMonitor &monitor,
                          int frequency)
 {
     MonitorName monname( name );
@@ -234,7 +234,7 @@ void SystemMonitors::add(const QString &name, const SysMonBase &monitor,
                 .arg(monitor.what()).arg(name).arg(mons_by_name.value(monname)->what()),
                     CODELOC );
                     
-    mons_by_name.insert(monname, SystemMonitor(monitor));
+    mons_by_name.insert(monname, monitor);
     mons_by_idx.append(monname);
 
     if (frequency < 0)
@@ -314,7 +314,7 @@ void SystemMonitors::setFrequency(const MonitorID &monid, int frequency)
     \throw SireSystem::duplicate_monitor
     \throw SireError::invalid_index
 */
-const SysMonBase& SystemMonitors::monitor(const MonitorID &monid) const
+const SystemMonitor& SystemMonitors::monitor(const MonitorID &monid) const
 {
     return this->operator[](monid);
 }
@@ -324,11 +324,11 @@ const SysMonBase& SystemMonitors::monitor(const MonitorID &monid) const
     \throw SireSystem::missing_monitor
     \throw SireError::invalid_index
 */
-QList<SystemMonitor> SystemMonitors::monitors(const MonitorID &monid) const
+QList<SysMonPtr> SystemMonitors::monitors(const MonitorID &monid) const
 {
     QList<MonitorName> names = monid.map(*this);
     
-    QList<SystemMonitor> mons;
+    QList<SysMonPtr> mons;
     
     foreach (const MonitorName &name, names)
     {
@@ -340,9 +340,9 @@ QList<SystemMonitor> SystemMonitors::monitors(const MonitorID &monid) const
 
 /** Return the list of all monitors in this set, in the order they
     appear in this set */
-QList<SystemMonitor> SystemMonitors::monitors() const
+QList<SysMonPtr> SystemMonitors::monitors() const
 {
-    QList<SystemMonitor> mons;
+    QList<SysMonPtr> mons;
     
     foreach (const MonitorName &name, mons_by_idx)
     {

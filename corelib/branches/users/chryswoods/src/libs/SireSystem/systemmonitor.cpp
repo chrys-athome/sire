@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QMutex>
+
 #include "systemmonitor.h"
 #include "system.h"
 
@@ -37,48 +39,49 @@ using namespace SireBase;
 using namespace SireStream;
 
 /////////
-///////// Implementation of SysMonBase
+///////// Implementation of SystemMonitor
 /////////
 
-static const RegisterMetaType<SysMonBase> r_sysmonbase( MAGIC_ONLY,
-                                                        "SireSystem::SysMonBase" );
+static const RegisterMetaType<SystemMonitor> r_sysmon( MAGIC_ONLY,
+                                                       "SireSystem::SystemMonitor" );
                                                         
 /** Serialise to a binary datastream */
-QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const SysMonBase &sysmonbase)
+QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, 
+                                          const SystemMonitor &sysmon)
 {
-    writeHeader(ds, r_sysmonbase, 1);
+    writeHeader(ds, r_sysmon, 1);
     
-    ds << static_cast<const PropertyBase&>(sysmonbase);
+    ds << static_cast<const Property&>(sysmon);
     
     return ds;
 }
 
 /** Extract from a binary datastream */
-QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, SysMonBase &sysmonbase)
+QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, SystemMonitor &sysmon)
 {
-    VersionID v = readHeader(ds, r_sysmonbase);
+    VersionID v = readHeader(ds, r_sysmon);
     
     if (v == 1)
     {
-        ds >> static_cast<PropertyBase&>(sysmonbase);
+        ds >> static_cast<Property&>(sysmon);
     }
     else
-        throw version_error(v, "1", r_sysmonbase, CODELOC);
+        throw version_error(v, "1", r_sysmon, CODELOC);
         
     return ds;
 }
 
 /** Constructor */
-SysMonBase::SysMonBase() : PropertyBase()
+SystemMonitor::SystemMonitor() : Property()
 {}
 
 /** Copy constructor */
-SysMonBase::SysMonBase(const SysMonBase &other)
-           : PropertyBase(other)
+SystemMonitor::SystemMonitor(const SystemMonitor &other)
+           : Property(other)
 {}
 
 /** Destructor */
-SysMonBase::~SysMonBase()
+SystemMonitor::~SystemMonitor()
 {}
 
 /////////
@@ -93,7 +96,7 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_nullmonitor, 1);
     
-    ds << static_cast<const SysMonBase&>(nullmonitor);
+    ds << static_cast<const SystemMonitor&>(nullmonitor);
     
     return ds;
 }
@@ -105,7 +108,7 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, NullMonitor &nullmoni
     
     if (v == 1)
     {
-        ds >> static_cast<SysMonBase&>(nullmonitor);
+        ds >> static_cast<SystemMonitor&>(nullmonitor);
     }
     else
         throw version_error(v, "1", r_nullmonitor, CODELOC);
@@ -114,12 +117,12 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, NullMonitor &nullmoni
 }
 
 /** Constructor */
-NullMonitor::NullMonitor() : ConcreteProperty<NullMonitor,SysMonBase>()
+NullMonitor::NullMonitor() : ConcreteProperty<NullMonitor,SystemMonitor>()
 {}
 
 /** Copy constructor */
 NullMonitor::NullMonitor(const NullMonitor &other)
-            : ConcreteProperty<NullMonitor,SysMonBase>(other)
+            : ConcreteProperty<NullMonitor,SystemMonitor>(other)
 {}
 
 /** Destructor */
@@ -129,7 +132,7 @@ NullMonitor::~NullMonitor()
 /** Copy assignment operator */
 NullMonitor& NullMonitor::operator=(const NullMonitor &other)
 {
-    SysMonBase::operator=(other);
+    SystemMonitor::operator=(other);
     return *this;
 }
 
@@ -151,137 +154,17 @@ void NullMonitor::monitor(System &system)
     return;
 }
 
-/////////
-///////// Implementation of SystemMonitor
-/////////
+static SharedPolyPointer<NullMonitor> shared_null;
 
-static const RegisterMetaType<SystemMonitor> r_monitor;
-
-/** Serialise a SystemMonitor to a binary datastream */
-QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const SystemMonitor &monitor)
+const NullMonitor& SystemMonitor::null()
 {
-    writeHeader(ds, r_monitor, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << static_cast<const Property&>(monitor);
-    
-    return ds;
-}
-
-/** Deserialise a SystemMonitor from a binary datastream */
-QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SystemMonitor &monitor)
-{
-    VersionID v = readHeader(ds, r_monitor);
-    
-    if (v == 1)
+    if (shared_null.constData() == 0)
     {
-        SharedDataStream sds(ds);
-        sds >> static_cast<Property&>(monitor);
+        QMutexLocker lkr( SireBase::globalLock() );
+        
+        if (shared_null.constData() == 0)
+            shared_null = new NullMonitor();
     }
-    else
-        throw version_error(v, "1", r_monitor, CODELOC);
-        
-    return ds;
-}
-
-static SystemMonitor *_pvt_shared_null = 0;
-
-const SystemMonitor& SystemMonitor::shared_null()
-{
-    if (_pvt_shared_null == 0)
-        _pvt_shared_null = new SystemMonitor( NullMonitor() );
-        
-    return *_pvt_shared_null;
-}
-
-/** Null constructor - constructs a simple, empty SysMonBase */
-SystemMonitor::SystemMonitor() : Property(SystemMonitor::shared_null())
-{}
-
-/** Construct from a passed property
-
-    \throw SireError::invalid_cast
-*/
-SystemMonitor::SystemMonitor(const PropertyBase &property) 
-              : Property(property.asA<SysMonBase>())
-{}
-
-/** Construct from passed SysMonBase */
-SystemMonitor::SystemMonitor(const SysMonBase &monitor) : Property(monitor)
-{}
-
-/** Copy constructor */
-SystemMonitor::SystemMonitor(const SystemMonitor &other) : Property(other)
-{}
-
-/** Destructor */
-SystemMonitor::~SystemMonitor()
-{}
-
-/** Copy assignment operator from a Property object
-
-    \throw SireError::invalid_cast
-*/
-SystemMonitor& SystemMonitor::operator=(const PropertyBase &property)
-{
-    Property::operator=(property.asA<SysMonBase>());
-    return *this;
-}
-
-/** Copy assignment operator from another SysMonBase */
-SystemMonitor& SystemMonitor::operator=(const SysMonBase &other)
-{
-    Property::operator=(other);
-    return *this;
-}
-
-/** Dereference this pointer */
-const SysMonBase* SystemMonitor::operator->() const
-{
-    return static_cast<const SysMonBase*>(&(d()));
-}
-
-/** Dereference this pointer */
-const SysMonBase& SystemMonitor::operator*() const
-{
-    return static_cast<const SysMonBase&>(d());
-}
-
-/** Return a read-only reference to the contained object */
-const SysMonBase& SystemMonitor::read() const
-{
-    return static_cast<const SysMonBase&>(d());
-}
-
-/** Return a modifiable reference to the contained object.
-    This will trigger a copy of the object if more than
-    one pointer is pointing to it. */
-SysMonBase& SystemMonitor::edit()
-{
-    return static_cast<SysMonBase&>(d());
-}
     
-/** Return a raw pointer to the SysMonBase object */
-const SysMonBase* SystemMonitor::data() const
-{
-    return static_cast<const SysMonBase*>(&(d()));
-}
-
-/** Return a raw pointer to the SysMonBase object */
-const SysMonBase* SystemMonitor::constData() const
-{
-    return static_cast<const SysMonBase*>(&(d()));
-}
-    
-/** Return a raw pointer to the SysMonBase object */
-SysMonBase* SystemMonitor::data()
-{
-    return static_cast<SysMonBase*>(&(d()));
-}
-
-/** Automatic casting operator */
-SystemMonitor::operator const SysMonBase&() const
-{
-    return static_cast<const SysMonBase&>(d());
+    return *(shared_null.constData());
 }

@@ -55,7 +55,7 @@ QDataStream& operator>>(QDataStream&, SireFF::ForceTable&);
 namespace SireMol
 {
 class MoleculeView;
-class MolGroup;
+class MoleculeGroup;
 }
 
 namespace SireFF
@@ -64,7 +64,7 @@ namespace SireFF
 using SireMol::MoleculeView;
 using SireMol::CGIdx;
 using SireMol::MolNum;
-using SireMol::MolGroup;
+using SireMol::MoleculeGroup;
 
 /** This class holds the forces acting on all of the atoms of 
     selected CutGroups in a molecule. The MolForceTable is used
@@ -163,7 +163,7 @@ friend QDataStream& ::operator>>(QDataStream&, ForceTable&);
 
 public:
     ForceTable();
-    ForceTable(const MolGroup &molgroup);
+    ForceTable(const MoleculeGroup &molgroup);
     
     ForceTable(const ForceTable &other);
     

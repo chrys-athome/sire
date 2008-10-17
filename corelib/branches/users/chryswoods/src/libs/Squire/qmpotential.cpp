@@ -216,7 +216,7 @@ static PackedArray2D<Element> getQMParameters(const PartialMolecule &molecule,
                                               const PropertyName &element_property)
 {
     const AtomElements &elements = molecule.property(element_property)
-                                            ->asA<AtomElements>();
+                                           .asA<AtomElements>();
     
     const AtomSelection &selected_atoms = molecule.selection();
     
@@ -424,21 +424,21 @@ QMPotential::Molecule QMPotential::parameterise(const PartialMolecule &molecule,
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-QMPotential::Molecules QMPotential::parameterise(const MolGroup &molecules,
+QMPotential::Molecules QMPotential::parameterise(const MoleculeGroup &molecules,
                                                  const PropertyMap &map)
 {
     return QMPotential::Molecules(molecules, *this, map);
 }
 
 /** Return the space within which the molecules in this potential exist */
-const SpaceBase& QMPotential::space() const
+const Space& QMPotential::space() const
 {
     return spce.read();
 }
 
 /** Return the handle to the quantum chemical program that is used 
     by this potential to calculate the QM energies and forces */
-const QMProg& QMPotential::quantumProgram() const
+const QMProgram& QMPotential::quantumProgram() const
 {
     return qmprog.read();
 }
@@ -446,9 +446,9 @@ const QMProg& QMPotential::quantumProgram() const
 /** Set the space within which all of the molecules in this potential
     will exist. This returns whether or not this changes the
     potential. */
-bool QMPotential::setSpace(const SpaceBase &space)
+bool QMPotential::setSpace(const Space &space)
 {
-    if (space != this->space())
+    if ( not spce->equals(space) )
     {
         spce = space;
         props.setProperty("space", spce);
@@ -462,9 +462,9 @@ bool QMPotential::setSpace(const SpaceBase &space)
 /** Set the handle to the quantum chemical program that will be
     used by this potential to calculate the QM energies and forces.
     This returns whether or not this changes this potential */
-bool QMPotential::setQuantumProgram(const QMProg &program)
+bool QMPotential::setQuantumProgram(const QMProgram &program)
 {
-    if (program != this->quantumProgram())
+    if ( not qmprog->equals(program) )
     {
         qmprog = program;
         props.setProperty("quantum program", qmprog);
@@ -482,15 +482,15 @@ bool QMPotential::setQuantumProgram(const QMProg &program)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-bool QMPotential::setProperty(const QString &name, const PropertyBase &value)
+bool QMPotential::setProperty(const QString &name, const Property &value)
 {
     if (name == QLatin1String("space"))
     {
-        return this->setSpace( value.asA<SpaceBase>() );
+        return this->setSpace( value.asA<Space>() );
     }
     else if (name == QLatin1String("quantum program"))
     {
-        return this->setQuantumProgram( value.asA<QMProg>() );
+        return this->setQuantumProgram( value.asA<QMProgram>() );
     }
     else
         throw SireBase::missing_property( QObject::tr(

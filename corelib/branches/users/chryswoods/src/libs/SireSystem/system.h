@@ -36,7 +36,7 @@
 
 #include "SireVol/space.h"
 
-#include "SireMol/molgroups.h"
+#include "SireMol/moleculegroup.h"
 #include "SireMol/moleculegroups.h"
 #include "SireMol/mgnum.h"
 
@@ -57,7 +57,7 @@ QDataStream& operator>>(QDataStream&, SireSystem::System&);
 namespace SireSystem
 {
 
-using SireFF::ForceField;
+using SireFF::FFPtr;
 using SireFF::ForceFields;
 using SireFF::FF;
 using SireFF::FFID;
@@ -66,8 +66,8 @@ using SireFF::FFName;
 using SireFF::ForceTable;
 
 using SireMol::MolGroupsBase;
-using SireMol::MolGroup;
-using SireMol::MolGroups;
+using SireMol::MoleculeGroup;
+using SireMol::MolGroupsPtr;
 using SireMol::MoleculeGroups;
 using SireMol::MGNum;
 using SireMol::MGIdx;
@@ -81,7 +81,7 @@ using SireMol::ViewsOfMol;
 using SireMol::Molecules;
 
 using SireVol::Space;
-using SireVol::SpaceBase;
+using SireVol::Space;
 
 using SireCAS::Symbol;
 using SireCAS::Symbols;
@@ -89,6 +89,7 @@ using SireCAS::Expression;
 using SireCAS::Values;
 
 using SireBase::Property;
+using SireBase::PropertyPtr;
 using SireBase::Properties;
 using SireBase::PropertyMap;
 using SireBase::MajorMinorVersion;
@@ -129,13 +130,13 @@ public:
 
     const FF& operator[](const FFID &ffid) const;
     
-    const SysMonBase& operator[](const MonitorID &monid) const;
+    const SystemMonitor& operator[](const MonitorID &monid) const;
     
     System& operator+=(const FF &forcefield);
-    System& operator+=(const MolGroup &molgroup);
+    System& operator+=(const MoleculeGroup &molgroup);
     
     System& operator-=(const FF &forcefield);
-    System& operator-=(const MolGroup &molgroup);
+    System& operator-=(const MoleculeGroup &molgroup);
     System& operator-=(const FFID &ffid);
     System& operator-=(const MGID &mgid);
     System& operator-=(const MolID &molid);
@@ -151,14 +152,14 @@ public:
     using SireMol::MolGroupsBase::at;
     
     const FF& at(const FFID &ffid) const;
-    const SysMonBase& at(const MonitorID &monid) const;
+    const SystemMonitor& at(const MonitorID &monid) const;
     
     const FF& forceField(const FFID &ffid) const;
     const FF& forceField(const MGID &mgid) const;
     
-    const SysMonBase& monitor(const MonitorID &monid) const;
+    const SystemMonitor& monitor(const MonitorID &monid) const;
 
-    QList<SystemMonitor> monitors(const MonitorID &monid) const;
+    QList<SysMonPtr> monitors(const MonitorID &monid) const;
 
     int nForceFields() const;
     int nMonitors() const;
@@ -195,7 +196,7 @@ public:
     
     bool hasComponent(const Symbol &symbol) const;
     
-    QHash<FFName,Property> property(const QString &name) const;
+    QHash<FFName,PropertyPtr> property(const QString &name) const;
 
     const Property& property(const FFID &ffid, const QString &name) const;
 
@@ -204,10 +205,10 @@ public:
     
     QHash<FFName,Properties> properties() const;
     
-    QList<SystemMonitor> monitors() const;
+    QList<SysMonPtr> monitors() const;
     QList<MonitorName> monitorNames() const;
     
-    const QVector<ForceField>& forceFields() const;
+    const QVector<FFPtr>& forceFields() const;
     QList<FFName> ffNames() const;
     
     void mustNowRecalculateFromScratch();
@@ -219,11 +220,11 @@ public:
     using SireMol::MolGroupsBase::remove;
     using SireMol::MolGroupsBase::update;
     
-    void add(const QString &name, const SysMonBase &monitor,
+    void add(const QString &name, const SystemMonitor &monitor,
              int frequency = 1);
     
     void add(const FF &forcefield);
-    void add(const MolGroup &molgroup);
+    void add(const MoleculeGroup &molgroup);
     
     void remove(const MonitorID &monid);
     
@@ -231,7 +232,7 @@ public:
     void remove(const FF &ff);
 
     void remove(const MGID &mgid);
-    void remove(const MolGroup &molgroup);
+    void remove(const MoleculeGroup &molgroup);
 
     void remove(const MolID &molid);
 
@@ -241,7 +242,7 @@ public:
     void removeAllMonitors();
 
     //overloading MolGroupsBase virtual functions
-    const MolGroup& at(MGNum mgnum) const;
+    const MoleculeGroup& at(MGNum mgnum) const;
 
     void add(const MoleculeView &molview, const MGID &mgid,
              const PropertyMap &map);
@@ -249,7 +250,7 @@ public:
              const PropertyMap &map);
     void add(const Molecules &molecules, const MGID &mgid,
              const PropertyMap &map);
-    void add(const MolGroup &molgroup, const MGID &mgid,
+    void add(const MoleculeGroup &molgroup, const MGID &mgid,
              const PropertyMap &map);
     
     void addIfUnique(const MoleculeView &molview, const MGID &mgid,
@@ -258,18 +259,18 @@ public:
                      const PropertyMap &map);
     void addIfUnique(const Molecules &molecules, const MGID &mgid,
                      const PropertyMap &map);
-    void addIfUnique(const MolGroup &molgroup, const MGID &mgid,
+    void addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid,
                      const PropertyMap &map);
     
     void add(const MoleculeView &molview, const MGID &mgid);
     void add(const ViewsOfMol &molviews, const MGID &mgid);
     void add(const Molecules &molecules, const MGID &mgid);
-    void add(const MolGroup &molgroup, const MGID &mgid);
+    void add(const MoleculeGroup &molgroup, const MGID &mgid);
     
     void addIfUnique(const MoleculeView &molview, const MGID &mgid);
     void addIfUnique(const ViewsOfMol &molviews, const MGID &mgid);
     void addIfUnique(const Molecules &molecules, const MGID &mgid);
-    void addIfUnique(const MolGroup &molgroup, const MGID &mgid);
+    void addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid);
 
     using MolGroupsBase::removeAll;
 
@@ -277,19 +278,19 @@ public:
     void remove(const MoleculeView &molview, const MGID &mgid);
     void remove(const ViewsOfMol &molviews, const MGID &mgid);
     void remove(const Molecules &molecules, const MGID &mgid);
-    void remove(const MolGroup &molgroup, const MGID &mgid);
+    void remove(const MoleculeGroup &molgroup, const MGID &mgid);
     
     void removeAll(const MoleculeView &molview, const MGID &mgid);
     void removeAll(const ViewsOfMol &molviews, const MGID &mgid);
     void removeAll(const Molecules &molecules, const MGID &mgid);
-    void removeAll(const MolGroup &molgroup, const MGID &mgid);
+    void removeAll(const MoleculeGroup &molgroup, const MGID &mgid);
 
     void remove(MolNum molnum, const MGID &mgid);
     void remove(const QSet<MolNum> &molnums, const MGID &mgid);
 
     void update(const MoleculeData &moldata);
     void update(const Molecules &molecules);
-    void update(const MolGroup &molgroup);
+    void update(const MoleculeGroup &molgroup);
     
     void setContents(const MGID &mgid, const MoleculeView &molview,
                      const PropertyMap &map);
@@ -297,21 +298,23 @@ public:
                      const PropertyMap &map);
     void setContents(const MGID &mgid, const Molecules &molecules,
                      const PropertyMap &map);
-    void setContents(const MGID &mgid, const MolGroup &molgroup,
+    void setContents(const MGID &mgid, const MoleculeGroup &molgroup,
                      const PropertyMap &map);
     
     void setContents(const MGID &mgid, const MoleculeView &molview);
     void setContents(const MGID &mgid, const ViewsOfMol &molviews);
     void setContents(const MGID &mgid, const Molecules &molecules);
-    void setContents(const MGID &mgid, const MolGroup &molgroup);    
+    void setContents(const MGID &mgid, const MoleculeGroup &molgroup);    
+
+    static const System& null();
 
 protected:
-    const MolGroup& getGroup(MGNum mgnum) const;
+    const MoleculeGroup& getGroup(MGNum mgnum) const;
     
     void getGroups(const QList<MGNum> &mgnums,
-                   QVarLengthArray<const MolGroup*,10> &groups) const;
+                   QVarLengthArray<const MoleculeGroup*,10> &groups) const;
 
-    QHash<MGNum,const MolGroup*> getGroups() const;
+    QHash<MGNum,const MoleculeGroup*> getGroups() const;
 
 private:
     void rebuildIndex();
@@ -321,17 +324,17 @@ private:
     const ForceFields& _pvt_constForceFields() const;
     const ForceFields& _pvt_forceFields() const;
 
-    MolGroups& _pvt_moleculeGroups();
+    MoleculeGroups& _pvt_moleculeGroups();
     
-    const MolGroups& _pvt_constMoleculeGroups() const;
-    const MolGroups& _pvt_moleculeGroups() const;
+    const MoleculeGroups& _pvt_constMoleculeGroups() const;
+    const MoleculeGroups& _pvt_moleculeGroups() const;
 
     MolGroupsBase& _pvt_moleculeGroups(MGNum mgnum);
     
     const MolGroupsBase& _pvt_moleculeGroups(MGNum mgnum) const;
     const MolGroupsBase& _pvt_constMoleculeGroups(MGNum mgnum) const;
     
-    const MolGroup& _pvt_moleculeGroup(MGNum mgnum) const;
+    const MoleculeGroup& _pvt_moleculeGroup(MGNum mgnum) const;
 
     void _pvt_throwMissingGroup(MGNum mgnum) const;
 
@@ -347,7 +350,7 @@ private:
     /** The molecule groups in this system. These are divided
         into two - the first set are actually the forcefields,
         while the second are the non-forcefield groups */
-    MoleculeGroups molgroups[2];
+    MolGroupsPtr molgroups[2];
 
     /** All of the monitors that monitor this system */
     SystemMonitors sysmonitors;

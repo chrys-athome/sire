@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_MOLGROUPS_H
-#define SIREMOL_MOLGROUPS_H
+#ifndef SIREMOL_MOLECULEGROUPS_H
+#define SIREMOL_MOLECULEGROUPS_H
 
 #include <QVarLengthArray>
 #include <QHash>

@@ -52,8 +52,8 @@
 #include "atom.h"
 
 #include "molecules.h"
-#include "molgroup.h"
-#include "molgroups.h"
+#include "moleculegroup.h"
+#include "moleculegroups.h"
 
 #include "SireMol/errors.h"
 
@@ -210,7 +210,7 @@ Residue ResID::selectFrom(const Molecules &molecules) const
     \throw SireMol::missing_residue
     \throw SireMol::duplicate_residue
 */
-Residue ResID::selectFrom(const MolGroup &molgroup) const
+Residue ResID::selectFrom(const MoleculeGroup &molgroup) const
 {
     return ResID::selectFrom(molgroup.molecules());
 }
@@ -221,7 +221,7 @@ Residue ResID::selectFrom(const MolGroup &molgroup) const
     \throw SireMol::missing_residue
 */
 QHash< MolNum,Selector<Residue> >
-ResID::selectAllFrom(const MolGroup &molgroup) const
+ResID::selectAllFrom(const MoleculeGroup &molgroup) const
 {
     return ResID::selectAllFrom(molgroup.molecules());
 }

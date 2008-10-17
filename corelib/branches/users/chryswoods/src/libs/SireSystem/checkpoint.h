@@ -53,7 +53,7 @@ namespace SireSystem
     @author Christopher Woods
 */
 class SIRESYSTEM_EXPORT CheckPoint
-          : public SireBase::ConcreteProperty<CheckPoint,SireBase::PropertyBase>
+          : public SireBase::ConcreteProperty<CheckPoint,SireBase::Property>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const CheckPoint&);

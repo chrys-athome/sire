@@ -81,9 +81,9 @@ public:
     bool operator==(const SystemMonitors &other) const;
     bool operator!=(const SystemMonitors &other) const;
     
-    const SysMonBase& operator[](const MonitorID &monid) const;
+    const SystemMonitor& operator[](const MonitorID &monid) const;
 
-    const SysMonBase& at(const MonitorID &monid) const;
+    const SystemMonitor& at(const MonitorID &monid) const;
     
     bool isEmpty() const;
 
@@ -95,7 +95,7 @@ public:
 
     QList<MonitorName> monitorNames() const;
 
-    void add(const QString &name, const SysMonBase &monitor,
+    void add(const QString &name, const SystemMonitor &monitor,
              int frequency = 1);
     
     void remove(const MonitorID &monid);
@@ -103,11 +103,11 @@ public:
     
     void setFrequency(const MonitorID &monid, int frequency);
     
-    const SysMonBase& monitor(const MonitorID &monid) const;
+    const SystemMonitor& monitor(const MonitorID &monid) const;
     
-    QList<SystemMonitor> monitors(const MonitorID &monid) const;
+    QList<SysMonPtr> monitors(const MonitorID &monid) const;
     
-    QList<SystemMonitor> monitors() const;
+    QList<SysMonPtr> monitors() const;
     
     int nMonitors() const;
     int count() const;
@@ -117,7 +117,7 @@ public:
     
 private:
     /** All of the monitors, indexed by name */
-    QHash<MonitorName,SystemMonitor> mons_by_name;
+    QHash<MonitorName,SysMonPtr> mons_by_name;
     
     /** The names of all of the monitors in the order they
         appear in this collection */

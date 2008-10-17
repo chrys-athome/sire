@@ -82,7 +82,7 @@ friend QDataStream& ::operator>>(QDataStream&, RigidBodyMC&);
 public:
     RigidBodyMC();
 
-    RigidBodyMC(const MolGroup &molgroup);
+    RigidBodyMC(const MoleculeGroup &molgroup);
     RigidBodyMC(const Sampler &sampler);
 
     RigidBodyMC(const RigidBodyMC &other);
@@ -102,10 +102,10 @@ public:
     }
 
     void setSampler(const Sampler &sampler);
-    void setSampler(const MolGroup &molgroup);
+    void setSampler(const MoleculeGroup &molgroup);
 
-    const SamplerBase& sampler() const;
-    const MolGroup& moleculeGroup() const;
+    const Sampler& sampler() const;
+    const MoleculeGroup& moleculeGroup() const;
 
     void setMaximumTranslation(SireUnits::Dimension::Length max_translation);
     void setMaximumRotation(SireUnits::Dimension::Angle max_rotation);
@@ -115,9 +115,12 @@ public:
 
     void move(System &system, int nmoves, bool record_stats);
 
+protected:
+    void _pvt_setTemperature(const SireUnits::Dimension::Temperature &temperature);
+
 private:
     /** The sampler used to select random molecules for the move */
-    Sampler smplr;
+    SamplerPtr smplr;
 
     /** The maximum translation */
     double adel;

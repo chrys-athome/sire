@@ -174,7 +174,7 @@ void MoleculeView::update(const MoleculeData &moldata)
 */
 const char* MoleculeView::propertyType(const PropertyName &key) const
 {
-    return d->property(key)->what();
+    return d->property(key).what();
 }
 
 /** Return the type of the metadata at metakey 'metakey' 
@@ -183,7 +183,7 @@ const char* MoleculeView::propertyType(const PropertyName &key) const
 */
 const char* MoleculeView::metadataType(const PropertyName &metakey) const
 {
-    return d->metadata(metakey)->what();
+    return d->metadata(metakey).what();
 }
 
 /** Return the type of the metadata at metakey 'metakey' 
@@ -194,7 +194,7 @@ const char* MoleculeView::metadataType(const PropertyName &metakey) const
 const char* MoleculeView::metadataType(const PropertyName &key,
                                        const PropertyName &metakey) const
 {
-    return d->metadata(key, metakey)->what();
+    return d->metadata(key, metakey).what();
 }
 
 /** Assert that this view contains the atom at index 'atomidx'

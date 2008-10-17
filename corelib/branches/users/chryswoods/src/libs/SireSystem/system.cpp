@@ -166,7 +166,22 @@ System::System()
          sysversion( systemRegistry().registerObject(uid) )
 {
     molgroups[0] = ForceFields();
-    molgroups[1] = MolGroups();
+    molgroups[1] = MoleculeGroups();
+}
+
+SharedPolyPointer<System> shared_null;
+
+const System& System::null()
+{
+    if (shared_null.constData() == 0)
+    {
+        QMutexLocker lkr( SireBase::globalLock() );
+        
+        if (shared_null.constData() == 0)
+            shared_null = new System();
+    }
+    
+    return *(shared_null.constData());
 }
 
 /** Construct a named System */
@@ -177,7 +192,7 @@ System::System(const SysName &name)
          sysversion( systemRegistry().registerObject(uid) )
 {
     molgroups[0] = ForceFields();
-    molgroups[1] = MolGroups();
+    molgroups[1] = MoleculeGroups();
 }
 
 /** Copy constructor */
@@ -251,23 +266,23 @@ const ForceFields& System::_pvt_constForceFields() const
 
 /** Return a modifiable reference to all of the non-forcefield
     molecule groups in this system */
-MolGroups& System::_pvt_moleculeGroups()
+MoleculeGroups& System::_pvt_moleculeGroups()
 {
-    BOOST_ASSERT( molgroups[1]->isA<MolGroups>() );
-    return molgroups[1].edit().asA<MolGroups>();
+    BOOST_ASSERT( molgroups[1]->isA<MoleculeGroups>() );
+    return molgroups[1].edit().asA<MoleculeGroups>();
 }
 
 /** Return a reference to all of the non-forcefield
     molecule groups in this system */
-const MolGroups& System::_pvt_moleculeGroups() const
+const MoleculeGroups& System::_pvt_moleculeGroups() const
 {
-    BOOST_ASSERT( molgroups[1]->isA<MolGroups>() );
-    return molgroups[1]->asA<MolGroups>();
+    BOOST_ASSERT( molgroups[1]->isA<MoleculeGroups>() );
+    return molgroups[1]->asA<MoleculeGroups>();
 }
 
 /** Return a reference to all of the non-forcefield
     molecule groups in this system */
-const MolGroups& System::_pvt_constMoleculeGroups() const
+const MoleculeGroups& System::_pvt_constMoleculeGroups() const
 {
     return this->_pvt_moleculeGroups();
 }
@@ -325,7 +340,7 @@ const MolGroupsBase& System::_pvt_constMoleculeGroups(MGNum mgnum) const
 
     \throw SireMol::missing_group
 */
-const MolGroup& System::_pvt_moleculeGroup(MGNum mgnum) const
+const MoleculeGroup& System::_pvt_moleculeGroup(MGNum mgnum) const
 {
     int idx = mgroups_by_num.value(mgnum, -1);
     
@@ -336,14 +351,14 @@ const MolGroup& System::_pvt_moleculeGroup(MGNum mgnum) const
 }
 
 /** Internal function used to get the group with number 'mgnum' */
-const MolGroup& System::getGroup(MGNum mgnum) const
+const MoleculeGroup& System::getGroup(MGNum mgnum) const
 {
     return this->_pvt_moleculeGroup(mgnum);
 }
 
 /** Internal function used to get lots of groups */
 void System::getGroups(const QList<MGNum> &mgnums,
-                       QVarLengthArray<const MolGroup*,10> &groups) const
+                       QVarLengthArray<const MoleculeGroup*,10> &groups) const
 {
     groups.clear();
     
@@ -354,9 +369,9 @@ void System::getGroups(const QList<MGNum> &mgnums,
 }
 
 /** Internal function used to get pointers to all of the groups in this system */
-QHash<MGNum,const MolGroup*> System::getGroups() const
+QHash<MGNum,const MoleculeGroup*> System::getGroups() const
 {
-    QHash<MGNum,const MolGroup*> groups;
+    QHash<MGNum,const MoleculeGroup*> groups;
     
     QList<MGNum> mgnums0 = molgroups[0]->mgNums();
     QList<MGNum> mgnums1 = molgroups[1]->mgNums();
@@ -393,7 +408,7 @@ const FF& System::operator[](const FFID &ffid) const
     \throw SireSystem::duplicate_monitor
     \throw SireError::invalid_index
 */
-const SysMonBase& System::operator[](const MonitorID &monid) const
+const SystemMonitor& System::operator[](const MonitorID &monid) const
 {
     return sysmonitors[monid];
 }
@@ -406,7 +421,7 @@ System& System::operator+=(const FF &forcefield)
 }
 
 /** Convienient syntax for System::add */
-System& System::operator+=(const MolGroup &molgroup)
+System& System::operator+=(const MoleculeGroup &molgroup)
 {
     this->add(molgroup);
     return *this;
@@ -420,7 +435,7 @@ System& System::operator-=(const FF &forcefield)
 }
 
 /** Convienient syntax for System::remove */
-System& System::operator-=(const MolGroup &molgroup)
+System& System::operator-=(const MoleculeGroup &molgroup)
 {
     this->remove(molgroup);
     return *this;
@@ -481,7 +496,7 @@ const FF& System::at(const FFID &ffid) const
     \throw SireSystem::duplicate_monitor
     \throw SireError::invalid_index
 */
-const SysMonBase& System::at(const MonitorID &monid) const
+const SystemMonitor& System::at(const MonitorID &monid) const
 {
     return sysmonitors.at(monid);
 }
@@ -492,7 +507,7 @@ const SysMonBase& System::at(const MonitorID &monid) const
     \throw SireSystem::duplicate_monitor
     \throw SireError::invalid_index
 */
-const SysMonBase& System::monitor(const MonitorID &monid) const
+const SystemMonitor& System::monitor(const MonitorID &monid) const
 {
     return sysmonitors.monitor(monid);
 }
@@ -502,7 +517,7 @@ const SysMonBase& System::monitor(const MonitorID &monid) const
     \throw SireSystem::missing_monitor
     \throw SireError::invalid_index
 */
-QList<SystemMonitor> System::monitors(const MonitorID &monid) const
+QList<SysMonPtr> System::monitors(const MonitorID &monid) const
 {
     return sysmonitors.monitors(monid);
 }
@@ -721,7 +736,7 @@ Symbols System::components() const
     
     \throw SireBase::missing_property
 */
-QHash<FFName,Property> System::property(const QString &name) const
+QHash<FFName,PropertyPtr> System::property(const QString &name) const
 {
     return this->_pvt_forceFields().property(name);
 }
@@ -760,7 +775,7 @@ QHash<FFName,Properties> System::properties() const
 }
 
 /** Return the list of all monitors of this system */
-QList<SystemMonitor> System::monitors() const
+QList<SysMonPtr> System::monitors() const
 {
     return sysmonitors.monitors();
 }
@@ -772,7 +787,7 @@ QList<MonitorName> System::monitorNames() const
 }
 
 /** Return an array of all of the forcefields in this system */
-const QVector<ForceField>& System::forceFields() const
+const QVector<FFPtr>& System::forceFields() const
 {
     return this->_pvt_forceFields().forceFields();
 }
@@ -809,7 +824,7 @@ bool System::isClean() const
     
     \throw SireSystem::duplicate_monitor
 */
-void System::add(const QString &name, const SysMonBase &monitor, int frequency)
+void System::add(const QString &name, const SystemMonitor &monitor, int frequency)
 {
     sysmonitors.add(name, monitor, frequency);
     sysversion.incrementMajor();
@@ -827,7 +842,7 @@ void System::add(const QString &name, const SysMonBase &monitor, int frequency)
 */
 void System::add(const FF &forcefield)
 {
-    ForceField ff( forcefield );
+    FFPtr ff( forcefield );
     ff.edit().update( this->matchToExistingVersion(forcefield.molecules()) );
 
     System old_system(*this);
@@ -856,7 +871,7 @@ void System::add(const FF &forcefield)
     \throw SireFF::duplicate_forcefield
     \throw SireMol::duplicate_group
 */
-void System::add(const MolGroup &molgroup)
+void System::add(const MoleculeGroup &molgroup)
 {
     if (molgroup.isA<FFMolGroup>())
     {
@@ -868,7 +883,7 @@ void System::add(const MolGroup &molgroup)
     }
     else
     {
-        MoleculeGroup mgroup(molgroup);
+        MolGroupPtr mgroup(molgroup);
         mgroup.edit().update( this->matchToExistingVersion(molgroup.molecules()) );
 
         System old_system(*this);
@@ -949,7 +964,7 @@ void System::remove(const MGID &mgid)
         {
             if (mgroups_by_num.value(mgnum) == 0)
             {
-                const MolGroup &molgroup = this->_pvt_moleculeGroup(mgnum);
+                const MoleculeGroup &molgroup = this->_pvt_moleculeGroup(mgnum);
                 BOOST_ASSERT( molgroup.isA<SireFF::detail::FFMolGroupPvt>() );
             
                 const FF &ff = molgroup.asA<SireFF::detail::FFMolGroupPvt>().forceField();
@@ -981,7 +996,7 @@ void System::remove(const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_arg
 */
-void System::remove(const MolGroup &molgroup)
+void System::remove(const MoleculeGroup &molgroup)
 {
     this->remove(molgroup.number());
 }
@@ -1076,7 +1091,7 @@ void System::removeAllForceFields()
 
     \throw SireMol::missing_group
 */
-const MolGroup& System::at(MGNum mgnum) const
+const MoleculeGroup& System::at(MGNum mgnum) const
 {
     return this->_pvt_moleculeGroup(mgnum);
 }
@@ -1221,12 +1236,12 @@ void System::add(const Molecules &molecules, const MGID &mgid,
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void System::add(const MolGroup &molgroup, const MGID &mgid,
+void System::add(const MoleculeGroup &molgroup, const MGID &mgid,
                  const PropertyMap &map)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
-    MoleculeGroup group(molgroup);
+    MolGroupPtr group(molgroup);
     group.edit().update( this->matchToExistingVersion(molgroup.molecules()) );
     
     System old_system(*this);
@@ -1400,12 +1415,12 @@ void System::addIfUnique(const Molecules &molecules, const MGID &mgid,
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void System::addIfUnique(const MolGroup &molgroup, const MGID &mgid,
+void System::addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid,
                          const PropertyMap &map)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
-    MoleculeGroup group(molgroup);
+    MolGroupPtr group(molgroup);
     group.edit().update( this->matchToExistingVersion(molgroup.molecules()) );
     
     System old_system(*this);
@@ -1482,7 +1497,7 @@ void System::add(const Molecules &molecules, const MGID &mgid)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void System::add(const MolGroup &molgroup, const MGID &mgid)
+void System::add(const MoleculeGroup &molgroup, const MGID &mgid)
 {
     this->add(molgroup, mgid, PropertyMap());
 }
@@ -1538,7 +1553,7 @@ void System::addIfUnique(const Molecules &molecules, const MGID &mgid)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void System::addIfUnique(const MolGroup &molgroup, const MGID &mgid)
+void System::addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid)
 {
     this->addIfUnique(molgroup, mgid, PropertyMap());
 }
@@ -1677,7 +1692,7 @@ void System::remove(const Molecules &molecules, const MGID &mgid)
             
             molgroups.remove(molecules, mgnum);
             
-            const MolGroup &molgroup = molgroups.at(mgnum);
+            const MoleculeGroup &molgroup = molgroups.at(mgnum);
             
             for (Molecules::const_iterator it = molecules.constBegin();
                  it != molecules.constEnd();
@@ -1706,7 +1721,7 @@ void System::remove(const Molecules &molecules, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void System::remove(const MolGroup &molgroup, const MGID &mgid)
+void System::remove(const MoleculeGroup &molgroup, const MGID &mgid)
 {
     this->remove(molgroup.molecules(), mgid);
 }
@@ -1800,7 +1815,7 @@ void System::removeAll(const Molecules &molecules, const MGID &mgid)
             
             molgroups.removeAll(molecules, mgnum);
             
-            const MolGroup &molgroup = molgroups.at(mgnum);
+            const MoleculeGroup &molgroup = molgroups.at(mgnum);
             
             for (Molecules::const_iterator it = molecules.constBegin();
                  it != molecules.constEnd();
@@ -1828,7 +1843,7 @@ void System::removeAll(const Molecules &molecules, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void System::removeAll(const MolGroup &molgroup, const MGID &mgid)
+void System::removeAll(const MoleculeGroup &molgroup, const MGID &mgid)
 {
     this->removeAll(molgroup.molecules(), mgid);
 }
@@ -1977,7 +1992,7 @@ void System::update(const Molecules &molecules)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void System::update(const MolGroup &molgroup)
+void System::update(const MoleculeGroup &molgroup)
 {
     this->update(molgroup.molecules());
 }
@@ -2129,12 +2144,12 @@ void System::setContents(const MGID &mgid, const Molecules &molecules,
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */    
-void System::setContents(const MGID &mgid, const MolGroup &molgroup,
+void System::setContents(const MGID &mgid, const MoleculeGroup &molgroup,
                          const PropertyMap &map)                         
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
-    MoleculeGroup group(molgroup);
+    MolGroupPtr group(molgroup);
     group.edit().update( this->matchToExistingVersion(molgroup.molecules()) );
     
     System old_system(*this);
@@ -2212,7 +2227,7 @@ void System::setContents(const MGID &mgid, const Molecules &molecules)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */    
-void System::setContents(const MGID &mgid, const MolGroup &molgroup)
+void System::setContents(const MGID &mgid, const MoleculeGroup &molgroup)
 {
     this->setContents(mgid, molgroup, PropertyMap());
 }

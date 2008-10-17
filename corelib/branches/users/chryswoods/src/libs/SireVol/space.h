@@ -305,4 +305,7 @@ SIRE_EXPOSE_PROPERTY( SireVol::SpacePtr, SireVol::Space )
 
 SIRE_END_HEADER
 
+///need to include "cartesian.h" as it is needed to instantiate the null() function
+#include "cartesian.h"
+
 #endif

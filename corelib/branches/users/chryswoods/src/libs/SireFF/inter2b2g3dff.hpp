@@ -84,9 +84,6 @@ public:
     
     void force(ForceTable &forcetable, const Symbol &symbol,
                double scale_force=1);
-
-protected:
-    void _pvt_restore(const ForceField &ffield);
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -147,17 +144,6 @@ SIRE_OUTOFLINE_TEMPLATE
 bool Inter2B2G3DFF<Potential>::operator!=(const Inter2B2G3DFF<Potential> &other) const
 {
     return Inter2B2GFF<Potential>::operator!=(other);
-}
-
-/** Private function used to restore the state of this forcefield */
-template<class Potential>
-SIRE_OUTOFLINE_TEMPLATE
-void Inter2B2G3DFF<Potential>::_pvt_restore(const ForceField &ffield)
-{
-    if (not ffield->isA< Inter2B2G3DFF<Potential> >())
-        detail::throwForceFieldRestoreBug(this->what(), ffield->what());
-        
-    this->operator=( ffield->asA< Inter2B2G3DFF<Potential> >() );
 }
 
 /** Calculate the forces acting on the molecules in the passed forcetable

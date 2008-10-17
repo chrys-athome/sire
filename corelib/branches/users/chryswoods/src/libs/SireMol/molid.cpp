@@ -31,8 +31,8 @@
 #include "molnum.h"
 #include "molname.h"
 
-#include "molgroup.h"
-#include "molgroups.h"
+#include "moleculegroup.h"
+#include "moleculegroups.h"
 
 #include "mgidx.h"
 
@@ -77,7 +77,7 @@ MolIdx::MolIdx(const MolIdx &other) : SireID::Index_T_<MolIdx>(other), MolID(oth
 MolIdx::~MolIdx()
 {}
 
-QList<MolNum> MolIdx::map(const MolGroup &molgroup) const
+QList<MolNum> MolIdx::map(const MoleculeGroup &molgroup) const
 {
     return molgroup.map(*this);
 }
@@ -110,7 +110,7 @@ MolNum MolNum::getUniqueNumber()
     return MolNum( last_num.increment() );
 }
 
-QList<MolNum> MolNum::map(const MolGroup &molgroup) const
+QList<MolNum> MolNum::map(const MoleculeGroup &molgroup) const
 {
     return molgroup.map(*this);
 }
@@ -136,7 +136,7 @@ MolName::MolName(const MolName &other) : SireID::Name(other), MolID(other)
 MolName::~MolName()
 {}
 
-QList<MolNum> MolName::map(const MolGroup &molgroup) const
+QList<MolNum> MolName::map(const MoleculeGroup &molgroup) const
 {
     return molgroup.map(*this);
 }
@@ -209,7 +209,7 @@ bool MolNumList::operator!=(const MolNumList &other) const
     \throw SireMol::missing_molecule
     \throw SireError::invalid_arg
 */
-QList<MolNum> MolNumList::map(const MolGroup &molgroup) const
+QList<MolNum> MolNumList::map(const MoleculeGroup &molgroup) const
 {
     if (molnums.isEmpty())
         throw SireError::invalid_arg( QObject::tr(

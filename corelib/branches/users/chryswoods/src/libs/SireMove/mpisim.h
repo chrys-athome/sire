@@ -64,7 +64,7 @@ public:
     ~MPISim();
     
     System system();
-    Moves moves();
+    MovesPtr moves();
 
     MPISimWorker worker();
     MPISimWorker initialWorker();

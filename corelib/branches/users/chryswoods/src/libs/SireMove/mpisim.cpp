@@ -143,7 +143,7 @@ System MPISim::system()
 
 /** Return the moves - this returns the latest version of the system that is 
     available, or throws an exception if an error has occured */
-Moves MPISim::moves()
+MovesPtr MPISim::moves()
 {
     return this->worker().moves();
 }

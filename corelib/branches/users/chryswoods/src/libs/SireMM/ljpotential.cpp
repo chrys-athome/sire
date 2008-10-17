@@ -131,7 +131,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 static PackedArray2D<LJParamID> getLJParamIDs(const PartialMolecule &molecule,
                                               const PropertyName &lj_property)
 {
-    const AtomLJs &ljs = molecule.property(lj_property)->asA<AtomLJs>();
+    const AtomLJs &ljs = molecule.property(lj_property).asA<AtomLJs>();
     
     const AtomSelection &selected_atoms = molecule.selection();
     
@@ -233,9 +233,6 @@ static PackedArray2D<LJParamID> getLJParamIDs(const PartialMolecule &molecule,
 ///////////// Implementation of LJPotential
 /////////////
 
-static const Space default_space = Cartesian();
-static const SwitchingFunction default_switchfunc = NoCutoff();
-
 static const RegisterMetaType<LJPotential> r_ljpot( MAGIC_ONLY,
                                                     "SireMM::LJPotential" );
 
@@ -261,13 +258,13 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
         ds >> ljpot.props;
     
         //extract all of the properties
-        ljpot.spce = ljpot.props.property("space")->asA<SpaceBase>();
+        ljpot.spce = ljpot.props.property("space").asA<Space>();
         ljpot.switchfunc = ljpot.props.property("switchingFunction")
-                                            ->asA<SwitchFunc>();
+                                      .asA<SwitchingFunction>();
     
         ljpot.combining_rules = LJParameterDB::interpret(
                                     ljpot.props.property("combiningRules")
-                                        ->asA<VariantProperty>().convertTo<QString>() );
+                                        .asA<VariantProperty>().convertTo<QString>() );
                                         
         ljpot.need_update_ljpairs = true;
     }
@@ -279,7 +276,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 
 /** Constructor */
 LJPotential::LJPotential()
-             : spce(default_space), switchfunc(default_switchfunc),
+             : spce( Space::null() ), switchfunc( SwitchingFunction::null() ),
                combining_rules( LJParameterDB::interpret("arithmetic") ),
                need_update_ljpairs(true)
 {
@@ -360,7 +357,7 @@ const Property& LJPotential::property(const QString &name) const
 /** Set the 3D space in which the molecules in this potential are evaluated */
 bool LJPotential::setSpace(const Space &new_space)
 {
-    if (spce != new_space)
+    if ( not spce->equals(new_space) )
     {
         spce = new_space;
         props.setProperty( "space", new_space );
@@ -375,7 +372,7 @@ bool LJPotential::setSpace(const Space &new_space)
     CutGroups to zero at the cutoff */
 bool LJPotential::setSwitchingFunction(const SwitchingFunction &new_switchfunc)
 {
-    if (switchfunc != new_switchfunc)
+    if ( not switchfunc->equals(new_switchfunc) )
     {
         switchfunc = new_switchfunc;
         props.setProperty( "switchingFunction", new_switchfunc );
@@ -410,15 +407,15 @@ bool LJPotential::setCombiningRules(const QString &combiningrules)
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-bool LJPotential::setProperty(const QString &name, const PropertyBase &value)
+bool LJPotential::setProperty(const QString &name, const Property &value)
 {
     if (name == QLatin1String("space"))
     {
-        return this->setSpace( value.asA<SpaceBase>() );
+        return this->setSpace( value.asA<Space>() );
     }
     else if (name == QLatin1String("switchingFunction"))
     {
-        return this->setSwitchingFunction( value.asA<SwitchFunc>() );
+        return this->setSwitchingFunction( value.asA<SwitchingFunction>() );
     }
     else if (name == QLatin1String("combiningRules"))
     {
@@ -435,14 +432,14 @@ bool LJPotential::setProperty(const QString &name, const PropertyBase &value)
 }
 
 /** Return the 3D space in which this potential is evaluated */
-const SpaceBase& LJPotential::space() const
+const Space& LJPotential::space() const
 {
     return *spce;
 }
 
 /** Return the switching function used to scale the group-group
     interactions to zero at the cutoff */
-const SwitchFunc& LJPotential::switchingFunction() const
+const SwitchingFunction& LJPotential::switchingFunction() const
 {
     return *switchfunc;
 }
@@ -649,7 +646,7 @@ InterLJPotential::parameterise(const PartialMolecule &molecule,
     \throw SireError::incompatible_error
 */
 InterLJPotential::Molecules 
-InterLJPotential::parameterise(const MolGroup &molecules,
+InterLJPotential::parameterise(const MoleculeGroup &molecules,
                                const PropertyMap &map)
 {
     return InterLJPotential::Molecules(molecules, *this, map);
@@ -1313,7 +1310,7 @@ IntraLJPotential::parameterise(const PartialMolecule &molecule,
     \throw SireError::incompatible_error
 */
 IntraLJPotential::Molecules 
-IntraLJPotential::parameterise(const MolGroup &molecules,
+IntraLJPotential::parameterise(const MoleculeGroup &molecules,
                                const PropertyMap &map)
 {
     return IntraLJPotential::Molecules(molecules, *this, map);

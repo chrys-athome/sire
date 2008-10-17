@@ -26,7 +26,10 @@
   *
 \*********************************************/
 
+#include <QMutex>
+
 #include "replicarunner.h"
+#include "simulation.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -37,50 +40,50 @@ using namespace SireBase;
 using namespace SireStream;
 
 ///////////
-/////////// Implementation of ReplicaRunnerBase
+/////////// Implementation of ReplicaRunner
 ///////////
 
-static const RegisterMetaType<ReplicaRunnerBase> r_runnerbase( MAGIC_ONLY,
-                                                     "SireMove::ReplicaRunnerBase" );
+static const RegisterMetaType<ReplicaRunner> r_runner( MAGIC_ONLY,
+                                                       "SireMove::ReplicaRunner" );
                                                      
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, 
-                                        const ReplicaRunnerBase &runnerbase)
+                                        const ReplicaRunner &runner)
 {
-    writeHeader(ds, r_runnerbase, 1);
+    writeHeader(ds, r_runner, 1);
     
-    ds << static_cast<const PropertyBase&>(runnerbase);
+    ds << static_cast<const Property&>(runner);
     
     return ds;
 }
 
 /** Extract from a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
-                                        ReplicaRunnerBase &runnerbase)
+                                        ReplicaRunner &runner)
 {
-    VersionID v = readHeader(ds, r_runnerbase);
+    VersionID v = readHeader(ds, r_runner);
     
     if (v == 1)
     {
-        ds >> static_cast<PropertyBase&>(runnerbase);
+        ds >> static_cast<Property&>(runner);
     }
     else
-        throw version_error( v, "1", r_runnerbase, CODELOC );
+        throw version_error( v, "1", r_runner, CODELOC );
         
     return ds;
 }
 
 /** Constructor */
-ReplicaRunnerBase::ReplicaRunnerBase() : PropertyBase()
+ReplicaRunner::ReplicaRunner() : Property()
 {}
 
 /** Copy constructor */
-ReplicaRunnerBase::ReplicaRunnerBase(const ReplicaRunnerBase &other)
-                  : PropertyBase(other)
+ReplicaRunner::ReplicaRunner(const ReplicaRunner &other)
+              : Property(other)
 {}
   
 /** Destructor */  
-ReplicaRunnerBase::~ReplicaRunnerBase()
+ReplicaRunner::~ReplicaRunner()
 {}
 
 ///////////
@@ -95,7 +98,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_basicrunner, 1);
     
-    ds << static_cast<const ReplicaRunnerBase&>(basicrunner);
+    ds << static_cast<const ReplicaRunner&>(basicrunner);
     
     return ds;
 }
@@ -108,7 +111,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
     
     if (v == 1)
     {
-        ds >> static_cast<ReplicaRunnerBase&>(basicrunner);
+        ds >> static_cast<ReplicaRunner&>(basicrunner);
     }
     else
         throw version_error( v, "1", r_basicrunner, CODELOC );
@@ -117,12 +120,27 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Constructor */
-BasicRepRunner::BasicRepRunner() : ConcreteProperty<BasicRepRunner,ReplicaRunnerBase>()
+BasicRepRunner::BasicRepRunner() : ConcreteProperty<BasicRepRunner,ReplicaRunner>()
 {}
+
+static SharedPolyPointer<BasicRepRunner> shared_null;
+
+const BasicRepRunner& ReplicaRunner::null()
+{
+    if (shared_null.constData() == 0)
+    {
+        QMutexLocker lkr( SireBase::globalLock() );
+        
+        if (shared_null.constData() == 0)
+            shared_null = new BasicRepRunner();
+    }
+    
+    return *(shared_null.constData());
+}
 
 /** Copy constructor */
 BasicRepRunner::BasicRepRunner(const BasicRepRunner &other)
-               : ConcreteProperty<BasicRepRunner,ReplicaRunnerBase>(other)
+               : ConcreteProperty<BasicRepRunner,ReplicaRunner>(other)
 {}
 
 /** Destructor */
@@ -132,7 +150,7 @@ BasicRepRunner::~BasicRepRunner()
 /** Copy assignment operator */
 BasicRepRunner& BasicRepRunner::operator=(const BasicRepRunner &other)
 {
-    ReplicaRunnerBase::operator=(other);
+    ReplicaRunner::operator=(other);
     return *this;
 }
 
@@ -154,7 +172,7 @@ bool BasicRepRunner::operator!=(const BasicRepRunner &other) const
     simulations sequentially in the current thread. */
 Replicas BasicRepRunner::run(const Replicas &replicas, bool record_stats) const
 {
-    int nreplicas = replicas->count();
+    int nreplicas = replicas.count();
     
     if (nreplicas == 0)
         return replicas;
@@ -168,9 +186,9 @@ Replicas BasicRepRunner::run(const Replicas &replicas, bool record_stats) const
         Replica replica = new_replicas[i];
         
         //run the simulation
-        Simulation sim = Simulation.run(replica.system(), replica.moves(),
-                                        replica.nMoves(),
-                                        record_stats and replica.recordStatistics());
+        Simulation sim = Simulation::run(replica.system(), replica.moves(),
+                                         replica.nMoves(),
+                                         record_stats and replica.recordStatistics());
                                         
         //wait for the simulation to finish
         sim.wait();
@@ -198,7 +216,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
     
     //can't save the actual nodes, as we don't know if they will be
     //available when (and where!) we are next loaded
-    ds << static_cast<const ReplicaRunnerBase&>(mpirunner);
+    ds << static_cast<const ReplicaRunner&>(mpirunner);
     
     return ds;
 }
@@ -211,7 +229,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
     
     if (v == 1)
     {
-        ds >> static_cast<ReplicaRunnerBase&>(mpirunner);
+        ds >> static_cast<ReplicaRunner&>(mpirunner);
         
         //just point the nodes to the global communicator
         mpirunner.nodes = MPINodes();
@@ -223,18 +241,18 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Construct to use all of the nodes available in the global communicator */
-MPIRepRunner::MPIRepRunner() : ConcreteProperty<MPIRepRunner,ReplicaRunnerBase>()
+MPIRepRunner::MPIRepRunner() : ConcreteProperty<MPIRepRunner,ReplicaRunner>()
 {}
 
 /** Construct to use all of the nodes in the passed MPI communicator */
 MPIRepRunner::MPIRepRunner(const MPINodes &communicator)
-             : ConcreteProperty<MPIRepRunner,ReplicaRunnerBase>(),
+             : ConcreteProperty<MPIRepRunner,ReplicaRunner>(),
                nodes(communicator)
 {}
 
 /** Copy constructor */
 MPIRepRunner::MPIRepRunner(const MPIRepRunner &other)
-             : ConcreteProperty<MPIRepRunner,ReplicaRunnerBase>(other),
+             : ConcreteProperty<MPIRepRunner,ReplicaRunner>(other),
                nodes(other.nodes)
 {}
 
@@ -245,7 +263,7 @@ MPIRepRunner::~MPIRepRunner()
 /** Copy assignment operator */
 MPIRepRunner& MPIRepRunner::operator=(const MPIRepRunner &other)
 {
-    ReplicaRunnerBase::operator=(other);
+    ReplicaRunner::operator=(other);
     nodes = other.nodes;
     return *this;
 }
@@ -271,7 +289,7 @@ Replicas MPIRepRunner::run(const Replicas &replicas, bool record_stats) const
     int nreplicas = replicas.count();
     
     if (nreplicas == 0)
-        return;
+        return replicas;
 
     //get a writable handle to the list of available MPI nodes
     MPINodes available_nodes = nodes;

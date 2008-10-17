@@ -38,7 +38,7 @@
 
 #include "SireBase/incremint.h"
 
-#include "SireMol/molgroups.h"
+#include "SireMol/moleculegroups.h"
 #include "SireBase/properties.h"
 #include "SireCAS/values.h"
 
@@ -61,7 +61,6 @@ namespace SireFF
 {
 
 class FFMolGroup;
-class ForceField;
 
 using SireBase::Properties;
 using SireBase::Property;
@@ -73,13 +72,15 @@ using SireCAS::Values;
 using SireMol::MoleculeView;
 using SireMol::ViewsOfMol;
 using SireMol::Molecules;
-using SireMol::MolGroup;
+using SireMol::MoleculeGroup;
 using SireMol::Molecule;
 using SireMol::MoleculeData;
 using SireMol::MGID;
 using SireMol::MGIdx;
 using SireMol::MGNum;
 using SireMol::MolNum;
+
+class NullFF;
 
 namespace detail
 {
@@ -96,11 +97,11 @@ void throwForceFieldRestoreBug(const char *this_what, const char *ffield_what);
     molecules can be queried individually.
 
     FF derived objects are derived from MolGroupsBase, and hold
-    molecule group objects that are derived from MolGroup, e.g.
+    molecule group objects that are derived from MoleculeGroup, e.g.
     
-    FFGroupPvt : public MolGroup  (used internally)
+    FFGroupPvt : public MoleculeGroup  (used internally)
     
-    FFGroup : public MolGroup (used externally - needed so can
+    FFGroup : public MoleculeGroup (used externally - needed so can
                                hold a copy of the FF) - FFGroupPvt
                                auto-converts to FFGroup when copied
 
@@ -204,7 +205,7 @@ public:
              const PropertyMap &map);
     void add(const Molecules &molecules, const MGID &mgid,
              const PropertyMap &map);
-    void add(const MolGroup &molgroup, const MGID &mgid,
+    void add(const MoleculeGroup &molgroup, const MGID &mgid,
              const PropertyMap &map);
     
     void addIfUnique(const MoleculeView &molview, const MGID &mgid,
@@ -213,30 +214,30 @@ public:
                      const PropertyMap &map);
     void addIfUnique(const Molecules &molecules, const MGID &mgid,
                      const PropertyMap &map);
-    void addIfUnique(const MolGroup &molgroup, const MGID &mgid,
+    void addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid,
                      const PropertyMap &map);
 
     void add(const MoleculeView &molview, const MGID &mgid);
     void add(const ViewsOfMol &molviews, const MGID &mgid);
     void add(const Molecules &molecules, const MGID &mgid);
-    void add(const MolGroup &molgroup, const MGID &mgid);
+    void add(const MoleculeGroup &molgroup, const MGID &mgid);
     
     void addIfUnique(const MoleculeView &molview, const MGID &mgid);
     void addIfUnique(const ViewsOfMol &molviews, const MGID &mgid);
     void addIfUnique(const Molecules &molecules, const MGID &mgid);
-    void addIfUnique(const MolGroup &molgroup, const MGID &mgid);
+    void addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid);
 
     void removeAll(const MGID &mgid);
     
     void remove(const MoleculeView &molview, const MGID &mgid);
     void remove(const ViewsOfMol &molviews, const MGID &mgid);
     void remove(const Molecules &molecules, const MGID &mgid);
-    void remove(const MolGroup &molgroup, const MGID &mgid);
+    void remove(const MoleculeGroup &molgroup, const MGID &mgid);
     
     void removeAll(const MoleculeView &molview, const MGID &mgid);
     void removeAll(const ViewsOfMol &molviews, const MGID &mgid);
     void removeAll(const Molecules &molecules, const MGID &mgid);
-    void removeAll(const MolGroup &molgroup, const MGID &mgid);
+    void removeAll(const MoleculeGroup &molgroup, const MGID &mgid);
 
     void remove(MolNum molnum, const MGID &mgid);
     void remove(const QSet<MolNum> &molnums, const MGID &mgid);
@@ -245,12 +246,12 @@ public:
     void update(const MoleculeView &molview);
     
     void update(const Molecules &molecules);
-    void update(const MolGroup &molgroup);
+    void update(const MoleculeGroup &molgroup);
 
     void setContents(const MGID &mgid, const MoleculeView &molview);
     void setContents(const MGID &mgid, const ViewsOfMol &molview);
     void setContents(const MGID &mgid, const Molecules &molecules);
-    void setContents(const MGID &mgid, const MolGroup &molgroup);
+    void setContents(const MGID &mgid, const MoleculeGroup &molgroup);
 
     void setContents(const MGID &mgid, const MoleculeView &molview, 
                      const PropertyMap &map);
@@ -258,11 +259,13 @@ public:
                      const PropertyMap &map);
     void setContents(const MGID &mgid, const Molecules &molecules, 
                      const PropertyMap &map);
-    void setContents(const MGID &mgid, const MolGroup &molgroup, 
+    void setContents(const MGID &mgid, const MoleculeGroup &molgroup, 
                      const PropertyMap &map);
 
     bool isDirty() const;
     bool isClean() const;
+
+    static const NullFF& null();
 
 protected:
     FF();
@@ -296,7 +299,7 @@ protected:
                            const PropertyMap &map)=0;
     virtual void group_add(quint32 i, const Molecules &molecules, 
                            const PropertyMap &map)=0;
-    virtual void group_add(quint32 i, const MolGroup &molgroup, 
+    virtual void group_add(quint32 i, const MoleculeGroup &molgroup, 
                            const PropertyMap &map)=0;
     
     virtual bool group_addIfUnique(quint32 i, const MoleculeView &molview, 
@@ -305,18 +308,18 @@ protected:
                                          const PropertyMap &map)=0;
     virtual QList<ViewsOfMol> group_addIfUnique(quint32 i, const Molecules &molecules, 
                                                 const PropertyMap &map)=0;
-    virtual QList<ViewsOfMol> group_addIfUnique(quint32 i, const MolGroup &molgroup, 
+    virtual QList<ViewsOfMol> group_addIfUnique(quint32 i, const MoleculeGroup &molgroup, 
                                                 const PropertyMap &map)=0;
 
     virtual bool group_remove(quint32 i, const MoleculeView &molview)=0;
     virtual ViewsOfMol group_remove(quint32 i, const ViewsOfMol &molviews)=0;
     virtual QList<ViewsOfMol> group_remove(quint32 i, const Molecules &molecules)=0;
-    virtual QList<ViewsOfMol> group_remove(quint32 i, const MolGroup &molgroup)=0;
+    virtual QList<ViewsOfMol> group_remove(quint32 i, const MoleculeGroup &molgroup)=0;
     
     virtual bool group_removeAll(quint32 i, const MoleculeView &molview)=0;
     virtual ViewsOfMol group_removeAll(quint32 i, const ViewsOfMol &molviews)=0;
     virtual QList<ViewsOfMol> group_removeAll(quint32 i, const Molecules &molecules)=0;
-    virtual QList<ViewsOfMol> group_removeAll(quint32 i, const MolGroup &molgroup)=0;
+    virtual QList<ViewsOfMol> group_removeAll(quint32 i, const MoleculeGroup &molgroup)=0;
 
     virtual ViewsOfMol group_remove(quint32 i, MolNum molnum)=0;
     virtual QList<ViewsOfMol> group_remove(quint32 i, const QSet<MolNum> &molnums)=0;
@@ -326,7 +329,7 @@ protected:
     virtual bool group_update(quint32 i, const MoleculeData &moldata)=0;
 
     virtual QList<Molecule> group_update(quint32 i, const Molecules &molecules)=0;
-    virtual QList<Molecule> group_update(quint32 i, const MolGroup &molgroup)=0;
+    virtual QList<Molecule> group_update(quint32 i, const MoleculeGroup &molgroup)=0;
     
     virtual bool group_setContents(quint32 i, const MoleculeView &molview, 
                                    const PropertyMap &map)=0;
@@ -334,11 +337,10 @@ protected:
                                    const PropertyMap &map)=0;
     virtual bool group_setContents(quint32 i, const Molecules &molecules, 
                                    const PropertyMap &map)=0;
-    virtual bool group_setContents(quint32 i, const MolGroup &molgroup, 
+    virtual bool group_setContents(quint32 i, const MoleculeGroup &molgroup, 
                                    const PropertyMap &map)=0;
 
     virtual void _pvt_updateName()=0;
-    virtual void _pvt_restore(const ForceField &ffield)=0;
 
 private:
 

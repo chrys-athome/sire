@@ -113,8 +113,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
 }
 
 QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, 
-                                      SireMM::detail::ChargeParameter 
-&chgparam)
+                                      SireMM::detail::ChargeParameter &chgparam)
 {
     ds >> chgparam.reduced_charge;
     
@@ -127,7 +126,7 @@ static PackedArray2D<ChargeParameter>
 getChargeParameters(const PartialMolecule &molecule,
                     const PropertyName &charge_property)
 {
-    const AtomCharges &chgs = molecule.property(charge_property)->asA<AtomCharges>();
+    const AtomCharges &chgs = molecule.property(charge_property).asA<AtomCharges>();
 
     const AtomSelection &selected_atoms = molecule.selection();
     
@@ -213,9 +212,6 @@ getChargeParameters(const PartialMolecule &molecule,
 ///////////// Implementation of CoulombPotential
 /////////////
 
-static const Space default_space = Cartesian();
-static const SwitchingFunction default_switchfunc = NoCutoff();
-
 static const RegisterMetaType<CoulombPotential> r_coulpot( MAGIC_ONLY,
                                                            "SireMM::CoulombPotential" );
 
@@ -241,12 +237,12 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
         ds >> coulpot.props;
     
         //extract all of the properties
-        coulpot.spce = coulpot.props.property("space")->asA<SpaceBase>();
+        coulpot.spce = coulpot.props.property("space").asA<Space>();
         coulpot.switchfunc = coulpot.props.property("switchingFunction")
-                                            ->asA<SwitchFunc>();
+                                          .asA<SwitchingFunction>();
     
         coulpot.use_electrostatic_shifting = coulpot.props.property("shiftElectrostatics")
-                                        ->asA<VariantProperty>().convertTo<bool>();
+                                        .asA<VariantProperty>().convertTo<bool>();
     }
     else 
         throw version_error(v, "1", r_coulpot, CODELOC);
@@ -256,7 +252,7 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 
 /** Constructor */
 CoulombPotential::CoulombPotential()
-                 : spce(default_space), switchfunc(default_switchfunc),
+                 : spce( Space::null() ), switchfunc( SwitchingFunction::null() ),
                    use_electrostatic_shifting(false)
 {
     //record the defaults
@@ -326,7 +322,7 @@ const Property& CoulombPotential::property(const QString &name) const
 /** Set the 3D space in which the molecules in this potential are evaluated */
 bool CoulombPotential::setSpace(const Space &new_space)
 {
-    if (spce != new_space)
+    if (not spce->equals(new_space))
     {
         spce = new_space;
         props.setProperty( "space", new_space );
@@ -341,7 +337,7 @@ bool CoulombPotential::setSpace(const Space &new_space)
     CutGroups to zero at the cutoff */
 bool CoulombPotential::setSwitchingFunction(const SwitchingFunction &new_switchfunc)
 {
-    if (switchfunc != new_switchfunc)
+    if (not switchfunc->equals(new_switchfunc))
     {
         switchfunc = new_switchfunc;
         props.setProperty( "switchingFunction", new_switchfunc );
@@ -375,15 +371,15 @@ bool CoulombPotential::setShiftElectrostatics(bool switchelectro)
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-bool CoulombPotential::setProperty(const QString &name, const PropertyBase &value)
+bool CoulombPotential::setProperty(const QString &name, const Property &value)
 {
     if (name == QLatin1String("space"))
     {
-        return this->setSpace( value.asA<SpaceBase>() );
+        return this->setSpace( value.asA<Space>() );
     }
     else if (name == QLatin1String("switchingFunction"))
     {
-        return this->setSwitchingFunction( value.asA<SwitchFunc>() );
+        return this->setSwitchingFunction( value.asA<SwitchingFunction>() );
     }
     else if (name == QLatin1String("shiftElectrostatics"))
     {
@@ -400,14 +396,14 @@ bool CoulombPotential::setProperty(const QString &name, const PropertyBase &valu
 }
 
 /** Return the 3D space in which this potential is evaluated */
-const SpaceBase& CoulombPotential::space() const
+const Space& CoulombPotential::space() const
 {
     return *spce;
 }
 
 /** Return the switching function used to scale the group-group
     interactions to zero at the cutoff */
-const SwitchFunc& CoulombPotential::switchingFunction() const
+const SwitchingFunction& CoulombPotential::switchingFunction() const
 {
     return *switchfunc;
 }
@@ -616,7 +612,7 @@ InterCoulombPotential::parameterise(const PartialMolecule &molecule,
     \throw SireError::incompatible_error
 */
 InterCoulombPotential::Molecules 
-InterCoulombPotential::parameterise(const MolGroup &molecules,
+InterCoulombPotential::parameterise(const MoleculeGroup &molecules,
                                     const PropertyMap &map)
 {
     return InterCoulombPotential::Molecules(molecules, *this, map);
@@ -1256,7 +1252,7 @@ IntraCoulombPotential::parameterise(const PartialMolecule &molecule,
     \throw SireError::incompatible_error
 */
 IntraCoulombPotential::Molecules 
-IntraCoulombPotential::parameterise(const MolGroup &molecules,
+IntraCoulombPotential::parameterise(const MoleculeGroup &molecules,
                                     const PropertyMap &map)
 {
     return IntraCoulombPotential::Molecules(molecules, *this, map);

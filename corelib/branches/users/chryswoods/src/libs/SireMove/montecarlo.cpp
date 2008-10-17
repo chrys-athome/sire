@@ -44,6 +44,7 @@ using namespace SireMove;
 using namespace SireUnits;
 using namespace SireSystem;
 using namespace SireFF;
+using namespace SireUnits::Dimension;
 using namespace SireStream;
 
 static const RegisterMetaType<MonteCarlo> r_mc(MAGIC_ONLY, "SireMove::MonteCarlo");
@@ -55,9 +56,9 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const MonteCarlo &mc)
 
     SharedDataStream sds(ds);
 
-    sds << mc.rangenerator << mc.beta
+    sds << mc.ensmble << mc.rangenerator
         << mc.naccept << mc.nreject
-        << static_cast<const MoveBase&>(mc);
+        << static_cast<const Move&>(mc);
 
     return ds;
 }
@@ -71,9 +72,10 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MonteCarlo &mc)
     {
         SharedDataStream sds(ds);
     
-        sds >> mc.rangenerator >> mc.beta
+        sds >> mc.ensmble
+            >> mc.rangenerator
             >> mc.naccept >> mc.nreject
-            >> static_cast<MoveBase&>(mc);
+            >> static_cast<Move&>(mc);
     }
     else
         throw version_error(v, "1", r_mc, CODELOC);
@@ -82,17 +84,13 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, MonteCarlo &mc)
 }
 
 /** Construct using the supplied random number generator */
-MonteCarlo::MonteCarlo()
-           : MoveBase(), 
-             naccept(0), nreject(0)
-{
-    setTemperature( 25 * celsius );
-}
+MonteCarlo::MonteCarlo() : Move(), naccept(0), nreject(0)
+{}
 
 /** Copy constructor */
 MonteCarlo::MonteCarlo(const MonteCarlo &other)
-           : MoveBase(other), rangenerator(other.rangenerator),
-             beta(other.beta),
+           : Move(other), ensmble(other.ensmble),
+             rangenerator(other.rangenerator),
              naccept(other.naccept), nreject(other.nreject)
 {}
 
@@ -100,29 +98,30 @@ MonteCarlo::MonteCarlo(const MonteCarlo &other)
 MonteCarlo::~MonteCarlo()
 {}
 
+/** Internal function called by derived classes to set the ensemble
+    for this move */
+void MonteCarlo::setEnsemble(const Ensemble &ensemble)
+{
+    ensmble = ensemble;
+}
+
+/** Return the ensemble for this move */
+Ensemble MonteCarlo::ensemble() const
+{
+    return ensmble;
+}
+
 /** Copy assignment */
 MonteCarlo& MonteCarlo::operator=(const MonteCarlo &other)
 {
+    ensmble = other.ensmble;
     rangenerator = other.rangenerator;
-    beta = other.beta;
     naccept = other.naccept;
     nreject = other.nreject;
 
-    MoveBase::operator=(other);
+    Move::operator=(other);
 
     return *this;
-}
-
-/** Set the temperature of the MC simulation */
-void MonteCarlo::setTemperature(Temperature temperature)
-{
-    beta = 1.0 / (k_boltz * temperature);
-}
-
-/** Return the temperature of the MC simulation */
-Temperature MonteCarlo::temperature() const
-{
-    return Temperature( 1.0 / (k_boltz * beta) );
 }
 
 /** Set the random number generator to use for these moves */
@@ -179,7 +178,9 @@ void MonteCarlo::clearMoveStatistics()
 bool MonteCarlo::test(double new_energy, double old_energy,
                       double new_bias, double old_bias)
 {
-    double x = (new_bias / old_bias) * std::exp( -beta*(new_energy - old_energy) );
+    double beta = -1.0 / (k_boltz * ensmble.temperature().value());
+
+    double x = (new_bias / old_bias) * std::exp( beta*(new_energy - old_energy) );
 
     if (x > 1 or x > rangenerator.rand())
     {
@@ -203,7 +204,9 @@ bool MonteCarlo::test(double new_energy, double old_energy)
         return true;
     }
 
-    double x = std::exp( -beta*(new_energy - old_energy) );
+    double beta = -1.0 / (k_boltz * ensmble.temperature().value());
+
+    double x = std::exp( beta*(new_energy - old_energy) );
 
     if (x > 1 or x > rangenerator.rand())
     {

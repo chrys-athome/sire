@@ -59,7 +59,7 @@ namespace SireMove
     @author Christopher Woods
 */
 class SIREMOVE_EXPORT Replica 
-            : public SireBase::ConcreteProperty<Replica,SireBase::PropertyBase>
+            : public SireBase::ConcreteProperty<Replica,SireBase::Property>
 {
 
 friend class Replicas;  //so can call editing functions
@@ -90,7 +90,7 @@ public:
     }
     
     const System& system() const;
-    const MovesBase& moves() const;
+    const Moves& moves() const;
     
     int nMoves() const;
     
@@ -100,7 +100,7 @@ public:
 
 protected:
     virtual void setSystem(const System &system);
-    virtual void setMoves(const MovesBase &moves);
+    virtual void setMoves(const Moves &moves);
     virtual void setNMoves(int nmoves);
     virtual void setRecordStatistics(bool recordstats);
     
@@ -109,7 +109,7 @@ private:
     System sim_system;
     
     /** The moves to be performed on the system */
-    Moves sim_moves;
+    MovesPtr sim_moves;
     
     /** The number of moves to perform on the system */
     quint32 sim_nmoves;
@@ -124,7 +124,7 @@ private:
     @author Christopher Woods
 */
 class SIREMOVE_EXPORT Replicas
-         : public SireBase::ConcreteProperty<Replicas,SireBase::PropertyBase>
+         : public SireBase::ConcreteProperty<Replicas,SireBase::Property>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Replicas&);
@@ -173,8 +173,8 @@ public:
     virtual void setSystem(const System &system);
     virtual void setSystem(int i, const System &system);
     
-    virtual void setMoves(const MovesBase &moves);
-    virtual void setMoves(int i, const MovesBase &moves);
+    virtual void setMoves(const Moves &moves);
+    virtual void setMoves(int i, const Moves &moves);
     
     virtual void setNMoves(int nmoves);
     virtual void setNMoves(int i, int nmoves);

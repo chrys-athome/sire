@@ -30,7 +30,7 @@
 #include "mgidx.h"
 #include "mgname.h"
 #include "mgnum.h"
-#include "molgroups.h"
+#include "moleculegroups.h"
 
 #include "SireBase/incremint.h"
 

@@ -39,7 +39,7 @@
 #include "SireMol/partialmolecule.h"
 #include "SireMol/viewsofmol.h"
 #include "SireMol/molecules.h"
-#include "SireMol/molgroup.h"
+#include "SireMol/moleculegroup.h"
 
 #include "SireMol/mover.hpp"
 
@@ -351,8 +351,7 @@ void FF::add(const MoleculeView &molview, const MGID &mgid,
     {
         //we need to save state as an exception could be thrown
         //when adding to the nth group
-        ForceField old_state = *this;
-        old_state.detach();
+        boost::shared_ptr<FF> old_state( this->clone() );
         
         try
         {
@@ -368,7 +367,7 @@ void FF::add(const MoleculeView &molview, const MGID &mgid,
         catch(...)
         {
             //restore the old state of the forcefield
-            this->_pvt_restore(old_state);
+            this->copy(*old_state);
             throw;
         }
     }
@@ -408,8 +407,7 @@ void FF::add(const ViewsOfMol &molviews, const MGID &mgid,
     }
     else
     {
-        ForceField old_state = *this;
-        old_state.detach();
+        boost::shared_ptr<FF> old_state( this->clone() );
         
         try
         {
@@ -422,7 +420,7 @@ void FF::add(const ViewsOfMol &molviews, const MGID &mgid,
         }
         catch(...)
         {
-            this->_pvt_restore(old_state);
+            this->copy(*old_state);
             throw;
         }
     }
@@ -462,8 +460,7 @@ void FF::add(const Molecules &molecules, const MGID &mgid,
     }
     else
     {
-        ForceField old_state = *this;
-        old_state.detach();
+        boost::shared_ptr<FF> old_state( this->clone() );
         
         try
         {
@@ -477,7 +474,7 @@ void FF::add(const Molecules &molecules, const MGID &mgid,
         }
         catch(...)
         {
-            this->_pvt_restore(old_state);
+            this->copy(*old_state);
             throw;
         }
     }
@@ -496,7 +493,7 @@ void FF::add(const Molecules &molecules, const MGID &mgid,
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void FF::add(const MolGroup &molgroup, const MGID &mgid,
+void FF::add(const MoleculeGroup &molgroup, const MGID &mgid,
              const PropertyMap &map)
 {
     this->add(molgroup.molecules(), mgid, map);
@@ -538,8 +535,7 @@ void FF::addIfUnique(const MoleculeView &molview, const MGID &mgid,
     }
     else
     {
-        ForceField old_state = *this;
-        old_state.detach();
+        boost::shared_ptr<FF> old_state( this->clone() );
         
         try
         {
@@ -553,7 +549,7 @@ void FF::addIfUnique(const MoleculeView &molview, const MGID &mgid,
         }
         catch(...)
         {
-            this->_pvt_restore(old_state);
+            this->copy(*old_state);
             throw;
         }
     }
@@ -595,8 +591,7 @@ void FF::addIfUnique(const ViewsOfMol &molviews, const MGID &mgid,
     }
     else
     {
-        ForceField old_state = *this;
-        old_state.detach();
+        boost::shared_ptr<FF> old_state( this->clone() );
         
         try
         {
@@ -610,7 +605,7 @@ void FF::addIfUnique(const ViewsOfMol &molviews, const MGID &mgid,
         }
         catch(...)
         {
-            this->_pvt_restore(old_state);
+            this->copy(*old_state);
             throw;
         }
     }
@@ -652,8 +647,7 @@ void FF::addIfUnique(const Molecules &molecules, const MGID &mgid,
     }
     else
     {
-        ForceField old_state = *this;
-        old_state.detach();
+        boost::shared_ptr<FF> old_state( this->clone() );
         
         try
         {
@@ -667,7 +661,7 @@ void FF::addIfUnique(const Molecules &molecules, const MGID &mgid,
         }
         catch(...)
         {
-            this->_pvt_restore(old_state);
+            this->copy(*old_state);
             throw;
         }
     }
@@ -688,7 +682,7 @@ void FF::addIfUnique(const Molecules &molecules, const MGID &mgid,
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void FF::addIfUnique(const MolGroup &molgroup, const MGID &mgid,
+void FF::addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid,
                      const PropertyMap &map)
 {
     this->addIfUnique(molgroup.molecules(), mgid, map);
@@ -738,8 +732,7 @@ void FF::remove(const MoleculeView &molview, const MGID &mgid)
     }
     else
     {
-        ForceField old_state = *this;
-        old_state.detach();
+        boost::shared_ptr<FF> old_state( this->clone() );
         
         try
         {
@@ -756,7 +749,7 @@ void FF::remove(const MoleculeView &molview, const MGID &mgid)
         }
         catch(...)
         {
-            this->_pvt_restore(old_state);
+            this->copy(*old_state);
             throw;
         }
     }
@@ -792,8 +785,7 @@ void FF::remove(const ViewsOfMol &molviews, const MGID &mgid)
     }
     else
     {
-        ForceField old_state = *this;
-        old_state.detach();
+        boost::shared_ptr<FF> old_state( this->clone() );
         
         try
         {
@@ -812,7 +804,7 @@ void FF::remove(const ViewsOfMol &molviews, const MGID &mgid)
         }
         catch(...)
         {
-            this->_pvt_restore(old_state);
+            this->copy(*old_state);
             throw;
         }
     }
@@ -841,7 +833,7 @@ void FF::remove(const Molecules &molecules, const MGID &mgid)
         QList<ViewsOfMol> removed_mols = this->group_remove(mgidx, molecules);
         QSet<MolNum> removed_molnums;
 
-        const MolGroup &molgroup = this->group(mgnum);
+        const MoleculeGroup &molgroup = this->group(mgnum);
 
         foreach (const ViewsOfMol &removed_mol, removed_mols)
         {
@@ -854,8 +846,7 @@ void FF::remove(const Molecules &molecules, const MGID &mgid)
     }
     else
     {
-        ForceField old_state = *this;
-        old_state.detach();
+        boost::shared_ptr<FF> old_state( this->clone() );
         
         try
         {
@@ -866,7 +857,7 @@ void FF::remove(const Molecules &molecules, const MGID &mgid)
                 QList<ViewsOfMol> removed_mols = this->group_remove(mgidx, molecules);
                 QSet<MolNum> removed_molnums;
                 
-                const MolGroup &molgroup = this->group(mgnum);
+                const MoleculeGroup &molgroup = this->group(mgnum);
                 
                 foreach (const ViewsOfMol &removed_mol, removed_mols)
                 {
@@ -880,7 +871,7 @@ void FF::remove(const Molecules &molecules, const MGID &mgid)
         }
         catch(...)
         {
-            this->_pvt_restore(old_state);
+            this->copy(*old_state);
             throw;
         }
     }
@@ -894,7 +885,7 @@ void FF::remove(const Molecules &molecules, const MGID &mgid)
     
     \throw SireMol::missing_group
 */
-void FF::remove(const MolGroup &molgroup, const MGID &mgid)
+void FF::remove(const MoleculeGroup &molgroup, const MGID &mgid)
 {
     this->remove(molgroup.molecules(), mgid);
 }
@@ -927,8 +918,7 @@ void FF::removeAll(const MoleculeView &molview, const MGID &mgid)
     }
     else
     {
-        ForceField old_state = *this;
-        old_state.detach();
+        boost::shared_ptr<FF> old_state( this->clone() );
         
         try
         {
@@ -945,7 +935,7 @@ void FF::removeAll(const MoleculeView &molview, const MGID &mgid)
         }
         catch(...)
         {
-            this->_pvt_restore(old_state);
+            this->copy(*old_state);
             throw;
         }
     }
@@ -981,8 +971,7 @@ void FF::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
     }
     else
     {
-        ForceField old_state = *this;
-        old_state.detach();
+        boost::shared_ptr<FF> old_state( this->clone() );
         
         try
         {
@@ -1001,7 +990,7 @@ void FF::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
         }
         catch(...)
         {
-            this->_pvt_restore(old_state);
+            this->copy(*old_state);
             throw;
         }
     }
@@ -1030,7 +1019,7 @@ void FF::removeAll(const Molecules &molecules, const MGID &mgid)
         QList<ViewsOfMol> removed_mols = this->group_removeAll(mgidx, molecules);
         QSet<MolNum> removed_molnums;
 
-        const MolGroup &molgroup = this->group(mgnum);
+        const MoleculeGroup &molgroup = this->group(mgnum);
 
         foreach (const ViewsOfMol &removed_mol, removed_mols)
         {
@@ -1043,8 +1032,7 @@ void FF::removeAll(const Molecules &molecules, const MGID &mgid)
     }
     else
     {
-        ForceField old_state = *this;
-        old_state.detach();
+        boost::shared_ptr<FF> old_state( this->clone() );
         
         try
         {
@@ -1055,7 +1043,7 @@ void FF::removeAll(const Molecules &molecules, const MGID &mgid)
                 QList<ViewsOfMol> removed_mols = this->group_removeAll(mgidx, molecules);
                 QSet<MolNum> removed_molnums;
                 
-                const MolGroup &molgroup = this->group(mgnum);
+                const MoleculeGroup &molgroup = this->group(mgnum);
                 
                 foreach (const ViewsOfMol &removed_mol, removed_mols)
                 {
@@ -1069,7 +1057,7 @@ void FF::removeAll(const Molecules &molecules, const MGID &mgid)
         }
         catch(...)
         {
-            this->_pvt_restore(old_state);
+            this->copy(*old_state);
             throw;
         }
     }
@@ -1083,7 +1071,7 @@ void FF::removeAll(const Molecules &molecules, const MGID &mgid)
     
     \throw SireMol::missing_group
 */
-void FF::removeAll(const MolGroup &molgroup, const MGID &mgid)
+void FF::removeAll(const MoleculeGroup &molgroup, const MGID &mgid)
 {
     this->removeAll(molgroup.molecules(), mgid);
 }
@@ -1112,8 +1100,7 @@ void FF::remove(MolNum molnum, const MGID &mgid)
     }
     else
     {
-        ForceField old_state = *this;
-        old_state.detach();
+        boost::shared_ptr<FF> old_state( this->clone() );
         
         try
         {
@@ -1129,7 +1116,7 @@ void FF::remove(MolNum molnum, const MGID &mgid)
         }
         catch(...)
         {
-            this->_pvt_restore(old_state);
+            this->copy(*old_state);
             throw;
         }
     }
@@ -1166,8 +1153,7 @@ void FF::remove(const QSet<MolNum> &molnums, const MGID &mgid)
     }
     else
     {
-        ForceField old_state = *this;
-        old_state.detach();
+        boost::shared_ptr<FF> old_state( this->clone() );
         
         try
         {
@@ -1190,7 +1176,7 @@ void FF::remove(const QSet<MolNum> &molnums, const MGID &mgid)
         }
         catch(...)
         {
-            this->_pvt_restore(old_state);
+            this->copy(*old_state);
             throw;
         }
     }
@@ -1225,8 +1211,7 @@ void FF::update(const MoleculeData &moldata)
     {
         //more than one group contains the molecule - we will need
         //to save state in case an exception is thrown
-        ForceField old_state = *this;
-        old_state.detach();
+        boost::shared_ptr<FF> old_state( this->clone() );
         
         try
         {
@@ -1237,7 +1222,7 @@ void FF::update(const MoleculeData &moldata)
         }
         catch(...)
         {
-            this->_pvt_restore(old_state);
+            this->copy(*old_state);
             throw;
         }
     }
@@ -1313,8 +1298,7 @@ void FF::update(const Molecules &molecules)
             //more than one group needs updating - this means that
             //we must save the state in case an exception is thrown
             //while we update the nth group
-            ForceField old_state = *this;
-            old_state.detach();
+            boost::shared_ptr<FF> old_state( this->clone() );
             
             try
             {
@@ -1326,7 +1310,7 @@ void FF::update(const Molecules &molecules)
             }
             catch(...)
             {
-                this->_pvt_restore(old_state);
+                this->copy(*old_state);
                 throw;
             }
         }
@@ -1340,7 +1324,7 @@ void FF::update(const Molecules &molecules)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void FF::update(const MolGroup &molgroup)
+void FF::update(const MoleculeGroup &molgroup)
 {
     this->update(molgroup.molecules());
 }
@@ -1379,8 +1363,7 @@ void FF::setContents(const MGID &mgid, const MoleculeView &molview,
     }
     else
     {
-        ForceField old_state = *this;
-        old_state.detach();
+        boost::shared_ptr<FF> old_state( this->clone() );
     
         try
         {
@@ -1405,7 +1388,7 @@ void FF::setContents(const MGID &mgid, const MoleculeView &molview,
         }
         catch(...)
         {
-            this->_pvt_restore(old_state);
+            this->copy(*old_state);
             throw;
         }
     }
@@ -1445,8 +1428,7 @@ void FF::setContents(const MGID &mgid, const ViewsOfMol &molviews,
     }
     else
     {
-        ForceField old_state = *this;
-        old_state.detach();
+        boost::shared_ptr<FF> old_state( this->clone() );
     
         try
         {
@@ -1471,7 +1453,7 @@ void FF::setContents(const MGID &mgid, const ViewsOfMol &molviews,
         }
         catch(...)
         {
-            this->_pvt_restore(old_state);
+            this->copy(*old_state);
             throw;
         }
     }
@@ -1511,8 +1493,7 @@ void FF::setContents(const MGID &mgid, const Molecules &molecules,
     }
     else
     {
-        ForceField old_state = *this;
-        old_state.detach();
+        boost::shared_ptr<FF> old_state( this->clone() );
     
         try
         {
@@ -1538,7 +1519,7 @@ void FF::setContents(const MGID &mgid, const Molecules &molecules,
         }
         catch(...)
         {
-            this->_pvt_restore(old_state);
+            this->copy(*old_state);
             throw;
         }
     }
@@ -1557,7 +1538,7 @@ void FF::setContents(const MGID &mgid, const Molecules &molecules,
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void FF::setContents(const MGID &mgid, const MolGroup &molgroup, 
+void FF::setContents(const MGID &mgid, const MoleculeGroup &molgroup, 
                      const PropertyMap &map)
 {
     this->setContents(mgid, molgroup.molecules(), map);
@@ -1602,7 +1583,7 @@ void FF::add(const Molecules &molecules, const MGID &mgid)
     this->add(molecules, mgid, PropertyMap());
 }
 
-/** Add the molecules in the passed MolGroup to the molecule groups 
+/** Add the molecules in the passed MoleculeGroup to the molecule groups 
     identified by 'mgid' using the default properties to
     find the parameters needed by this forcefield
     
@@ -1610,7 +1591,7 @@ void FF::add(const Molecules &molecules, const MGID &mgid)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void FF::add(const MolGroup &molgroup, const MGID &mgid)
+void FF::add(const MoleculeGroup &molgroup, const MGID &mgid)
 {
     this->add(molgroup, mgid, PropertyMap());
 }
@@ -1663,7 +1644,7 @@ void FF::addIfUnique(const Molecules &molecules, const MGID &mgid)
     this->addIfUnique(molecules, mgid, PropertyMap());
 }
 
-/** Add the molecules in the passed MolGroup to the molecule groups 
+/** Add the molecules in the passed MoleculeGroup to the molecule groups 
     identified by 'mgid' using the default properties to
     find the parameters needed by this forcefield
     
@@ -1674,7 +1655,7 @@ void FF::addIfUnique(const Molecules &molecules, const MGID &mgid)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void FF::addIfUnique(const MolGroup &molgroup, const MGID &mgid)
+void FF::addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid)
 {
     this->addIfUnique(molgroup, mgid, PropertyMap());
 }
@@ -1726,7 +1707,7 @@ void FF::setContents(const MGID &mgid, const Molecules &molecules)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void FF::setContents(const MGID &mgid, const MolGroup &molgroup)
+void FF::setContents(const MGID &mgid, const MoleculeGroup &molgroup)
 {
     this->setContents(mgid, molgroup, PropertyMap());
 }

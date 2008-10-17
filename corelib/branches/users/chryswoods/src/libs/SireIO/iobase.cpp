@@ -54,18 +54,18 @@ PropertyName IOParametersBase::coords_property("coordinates");
 PropertyName IOParametersBase::elements_property("element");
 
 PropertyName IOParametersBase::cutting_function( "cutting-function",
-                                                 CuttingFunction() );
+                                                 CuttingFunction::null() );
 
 ////////////
 //////////// Implementation of IOBase
 ////////////
 
 /** Constructor */
-IOBase::IOBase() : PropertyBase()
+IOBase::IOBase() : Property()
 {}
 
 /** Copy constructor */
-IOBase::IOBase(const IOBase &other) : PropertyBase(other)
+IOBase::IOBase(const IOBase &other) : Property(other)
 {}
 
 /** Destructor */
@@ -99,7 +99,7 @@ MoleculeGroup IOBase::read(const QString &filename, const PropertyMap &map) cons
 
     MoleculeGroup molecules = this->readMols(contents, map);
     
-    molecules.edit().setName(filename);
+    molecules.setName(filename);
 
     return molecules;
 }
@@ -133,7 +133,7 @@ MoleculeGroup IOBase::read(QIODevice &dev, const PropertyMap &map) const
 /** Write the molecules in the passed group to the file called 'filename'.
     This writes the molecules in the same order as they appear in the
     passed group. */
-void IOBase::write(const MolGroup &molgroup, const QString &filename,
+void IOBase::write(const MoleculeGroup &molgroup, const QString &filename,
                    const PropertyMap &map) const
 {
     //write the group to a binary blob
@@ -179,7 +179,7 @@ void IOBase::write(const Molecules &molecules, const QString &filename,
 /** Write the molecules in the passed group to the IO device 'dev'.
     This writes the molecules in the same order as they appear in the
     passed group. */
-void IOBase::write(const MolGroup &molgroup, QIODevice &dev,
+void IOBase::write(const MoleculeGroup &molgroup, QIODevice &dev,
                    const PropertyMap &map) const
 {
     //write the group to a binary blob

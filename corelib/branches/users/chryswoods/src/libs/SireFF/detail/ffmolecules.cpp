@@ -348,7 +348,7 @@ FFMoleculesBase::FFMoleculesBase()
 {}
 
 /** Construct space for all of the contained molecules */
-FFMoleculesBase::FFMoleculesBase(const MolGroup &molgroup, const PropertyMap &map)
+FFMoleculesBase::FFMoleculesBase(const MoleculeGroup &molgroup, const PropertyMap &map)
 {
     int nmols = molgroup.nMolecules();
 
@@ -360,7 +360,7 @@ FFMoleculesBase::FFMoleculesBase(const MolGroup &molgroup, const PropertyMap &ma
     quint32 i = 0;
     MolNum *molnums_by_idx_array = molnums_by_idx.data();
     
-    for (MolGroup::const_iterator it = molgroup.constBegin();
+    for (MoleculeGroup::const_iterator it = molgroup.constBegin();
          it != molgroup.constEnd();
          ++it)
     {

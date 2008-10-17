@@ -48,7 +48,7 @@ using SireBase::PropertyName;
 
 using SireMol::Molecules;
 using SireMol::MoleculeGroup;
-using SireMol::MolGroup;
+using SireMol::MoleculeGroup;
 
 /** This is the base class of the object that contains the 
     default sources of the properties into which this molecule
@@ -119,7 +119,7 @@ private:
 
     @author Christopher Woods
 */
-class SIREIO_EXPORT IOBase : public SireBase::PropertyBase
+class SIREIO_EXPORT IOBase : public SireBase::Property
 {
 public:
     IOBase();
@@ -140,13 +140,13 @@ public:
     MoleculeGroup read(QIODevice &dev,
                        const PropertyMap &map = PropertyMap()) const;
 
-    void write(const MolGroup &molecules, const QString &filename,
+    void write(const MoleculeGroup &molecules, const QString &filename,
                const PropertyMap &map = PropertyMap()) const;
 
     void write(const Molecules &molecules, const QString &filename,
                const PropertyMap &map = PropertyMap()) const;
 
-    void write(const MolGroup &molecules, QIODevice &dev,
+    void write(const MoleculeGroup &molecules, QIODevice &dev,
                const PropertyMap &map = PropertyMap()) const;
 
     void write(const Molecules &molecules, QIODevice &dev,
@@ -165,7 +165,7 @@ protected:
                                    const PropertyMap &map) const=0;
 
     /** Write the Molecules to a QByteArray and return it */
-    virtual QByteArray writeMols(const MolGroup &molecules,
+    virtual QByteArray writeMols(const MoleculeGroup &molecules,
                                  const PropertyMap &map) const=0;
 
     /** Write the Molecules to a QByteArray and return it */

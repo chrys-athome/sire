@@ -40,7 +40,6 @@
 #include "SireMol/molecule.h"
 #include "SireMol/viewsofmol.h"
 #include "SireMol/molecules.h"
-#include "SireMol/molgroup.h"
 #include "SireMol/moleculegroup.h"
 
 #include "tostring.h"
@@ -92,12 +91,12 @@ public:
     
     virtual double value() const=0;
     
-    virtual Energy energy(QVector<ForceField> &forcefields,
+    virtual Energy energy(QVector<FFPtr> &forcefields,
                           const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                           double scale_energy=1) const=0;
                           
     virtual void force(ForceTable &forcetable,
-                       QVector<ForceField> &forcefields,
+                       QVector<FFPtr> &forcefields,
                        const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                        double scale_force=1) const=0;
 
@@ -149,12 +148,12 @@ public:
     
     double value() const;
     
-    Energy energy(QVector<ForceField> &forcefields,
+    Energy energy(QVector<FFPtr> &forcefields,
                   const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                   double scale_energy=1) const;
     
     void force(ForceTable &forcetable,
-               QVector<ForceField> &forcefields,
+               QVector<FFPtr> &forcefields,
                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                double scale_force=1) const;
     
@@ -188,11 +187,11 @@ public:
     
     double value() const;
     
-    Energy energy(QVector<ForceField> &forcefields,
+    Energy energy(QVector<FFPtr> &forcefields,
                   const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                   double scale_energy=1) const;
                   
-    void force(ForceTable &forcetable, QVector<ForceField> &forcefields,
+    void force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                double scale_force=1) const;
 
@@ -228,11 +227,11 @@ public:
     
     double value() const;
     
-    Energy energy(QVector<ForceField> &forcefields,
+    Energy energy(QVector<FFPtr> &forcefields,
                   const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                   double scale_energy=1) const;
                   
-    void force(ForceTable &forcetable, QVector<ForceField> &forcefields,
+    void force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                double scale_force=1) const;
 
@@ -297,11 +296,11 @@ public:
 
     double value() const;
     
-    Energy energy(QVector<ForceField> &forcefields,
+    Energy energy(QVector<FFPtr> &forcefields,
                   const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                   double scale_energy=1) const;
                   
-    void force(ForceTable &forcetable, QVector<ForceField> &forcefields,
+    void force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                double scale_force=1) const;
 };
@@ -439,7 +438,7 @@ double FFSymbolValue::value() const
     return v;
 }
 
-Energy FFSymbolValue::energy(QVector<ForceField> &forcefields,
+Energy FFSymbolValue::energy(QVector<FFPtr> &forcefields,
                              const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                              double scale_energy) const
 {
@@ -447,7 +446,7 @@ Energy FFSymbolValue::energy(QVector<ForceField> &forcefields,
 }
 
 void FFSymbolValue::force(ForceTable &forcetable,
-                          QVector<ForceField> &forcefields,
+                          QVector<FFPtr> &forcefields,
                           const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                           double scale_force) const
 {
@@ -503,7 +502,7 @@ double FFSymbolFF::value() const
     return 0;
 }
 
-Energy FFSymbolFF::energy(QVector<ForceField> &forcefields,
+Energy FFSymbolFF::energy(QVector<FFPtr> &forcefields,
                           const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                           double scale_energy) const
 {
@@ -513,11 +512,11 @@ Energy FFSymbolFF::energy(QVector<ForceField> &forcefields,
         return Energy(0);
 }
 
-void FFSymbolFF::force(ForceTable &forcetable, QVector<ForceField> &forcefields,
+void FFSymbolFF::force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
                        const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                        double scale_force) const
 {
-    ForceField &ffield = forcefields[ffidx];
+    FFPtr &ffield = forcefields[ffidx];
     
     if (not ffield->isA<FF3D>())
         throw SireFF::missing_derivative( QObject::tr(
@@ -668,7 +667,7 @@ double FFSymbolExpression::value() const
     return 0;
 }
 
-Energy FFSymbolExpression::energy(QVector<ForceField> &forcefields,
+Energy FFSymbolExpression::energy(QVector<FFPtr> &forcefields,
                                   const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                                   double scale_energy) const
 {
@@ -707,7 +706,7 @@ Energy FFSymbolExpression::energy(QVector<ForceField> &forcefields,
 }
 
 void FFSymbolExpression::force(ForceTable &forcetable,
-                               QVector<ForceField> &forcefields,
+                               QVector<FFPtr> &forcefields,
                                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                                double scale_force) const
 {
@@ -782,7 +781,7 @@ double FFTotalExpression::value() const
     return 0;
 }
 
-Energy FFTotalExpression::energy(QVector<ForceField> &forcefields,
+Energy FFTotalExpression::energy(QVector<FFPtr> &forcefields,
                                  const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                                  double scale_energy) const
 {
@@ -790,7 +789,7 @@ Energy FFTotalExpression::energy(QVector<ForceField> &forcefields,
     
     int nffields = forcefields.count();
     
-    ForceField *ffields_array = forcefields.data();
+    FFPtr *ffields_array = forcefields.data();
     
     for (int i=0; i<nffields; ++i)
     {
@@ -801,16 +800,16 @@ Energy FFTotalExpression::energy(QVector<ForceField> &forcefields,
 }
 
 void FFTotalExpression::force(ForceTable &forcetable,
-                              QVector<ForceField> &forcefields,
+                              QVector<FFPtr> &forcefields,
                               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                               double scale_force) const
 {
     int nffields = forcefields.count();
-    ForceField *ffields_array = forcefields.data();
+    FFPtr *ffields_array = forcefields.data();
     
     for (int i=0; i<nffields; ++i)
     {
-        ForceField &ffield = ffields_array[i];
+        FFPtr &ffield = ffields_array[i];
         
         if (ffield->isA<FF3D>())
             ffield.edit().asA<FF3D>().force(forcetable, scale_force);
@@ -927,15 +926,15 @@ void ForceFields::rebuildIndex()
     mgroups_by_num.clear();
     
     int nffields = ffields_by_idx.count();
-    const ForceField *ffields_array = ffields_by_idx.constData();
+    const FFPtr *ffields_array = ffields_by_idx.constData();
     
     for (int i=0; i<nffields; ++i)
     {
-        const ForceField &ffield = ffields_array[i];
+        const FFPtr &ffield = ffields_array[i];
         
         if (ffields_by_name.contains(ffield->name()))
         {
-            const ForceField &old_ffield = this->_pvt_forceField(ffield->name());
+            const FFPtr &old_ffield = this->_pvt_forceField(ffield->name());
         
             throw SireFF::duplicate_forcefield( QObject::tr(
                 "Cannot have two forcefields in the same set that both "
@@ -952,7 +951,7 @@ void ForceFields::rebuildIndex()
         {
             if (mgroups_by_num.contains(mgnum))
             {
-                const ForceField &old_ffield = this->_pvt_forceField(mgnum);
+                const FFPtr &old_ffield = this->_pvt_forceField(mgnum);
                 
                 throw SireMol::duplicate_group( QObject::tr(
                     "Cannot have two different forcefields containing the same "
@@ -977,7 +976,7 @@ void ForceFields::rebuildIndex()
     
     for (int i=0; i<nffields; ++i)
     {
-        const ForceField &ffield = ffields_array[i];
+        const FFPtr &ffield = ffields_array[i];
         
         for (int j=0; j<ffield->nGroups(); ++j)
         {
@@ -1058,7 +1057,7 @@ ForceFields::ForceFields(const FF& forcefield)
 }
 
 /** Construct a group that holds lots of forcefields */
-ForceFields::ForceFields(const QList<ForceField> &forcefields)
+ForceFields::ForceFields(const QList<FFPtr> &forcefields)
             : ConcreteProperty<ForceFields,MolGroupsBase>()
 {
     ffields_by_idx = forcefields.toVector();
@@ -1069,7 +1068,7 @@ ForceFields::ForceFields(const QList<ForceField> &forcefields)
     {
         Molecules mols;
         
-        ForceField *ffields_array = ffields_by_idx.data();
+        FFPtr *ffields_array = ffields_by_idx.data();
         
         for (int i=1; i<nffields; ++i)
         {
@@ -1082,7 +1081,7 @@ ForceFields::ForceFields(const QList<ForceField> &forcefields)
 }
 
 /** Construct a group that holds lots of forcefields */
-ForceFields::ForceFields(const QVector<ForceField> &forcefields)
+ForceFields::ForceFields(const QVector<FFPtr> &forcefields)
             : ConcreteProperty<ForceFields,MolGroupsBase>(),
               ffields_by_idx(forcefields)
 {
@@ -1131,7 +1130,7 @@ bool ForceFields::operator!=(const ForceFields &other) const
 }
 
 /** Internal function used to return the group with number 'mgnum' */
-const MolGroup& ForceFields::getGroup(MGNum mgnum) const
+const MoleculeGroup& ForceFields::getGroup(MGNum mgnum) const
 {
     if (not mgroups_by_num.contains(mgnum))
         throw SireMol::missing_group( QObject::tr(
@@ -1145,7 +1144,7 @@ const MolGroup& ForceFields::getGroup(MGNum mgnum) const
 
 /** Internal function used to get the pointers to lots of groups */
 void ForceFields::getGroups(const QList<MGNum> &mgnums,
-                            QVarLengthArray<const MolGroup*,10> &groups) const
+                            QVarLengthArray<const MoleculeGroup*,10> &groups) const
 {
     groups.clear();
     
@@ -1157,9 +1156,9 @@ void ForceFields::getGroups(const QList<MGNum> &mgnums,
 
 /** Internal function used to get pointers to all of the groups
     in all of the forcefields of this set */
-QHash<MGNum,const MolGroup*> ForceFields::getGroups() const
+QHash<MGNum,const MoleculeGroup*> ForceFields::getGroups() const
 {
-    QHash<MGNum,const MolGroup*> groups;
+    QHash<MGNum,const MoleculeGroup*> groups;
     
     for (QHash<MGNum,FFName>::const_iterator it = mgroups_by_num.constBegin();
          it != mgroups_by_num.constEnd();
@@ -1381,7 +1380,7 @@ const FFName& ForceFields::ffName(const FFID &ffid) const
 /** Return a string representation of this set */
 QString ForceFields::toString() const
 {
-    return QObject::tr("ForceField( nForceFields() == %1 )").arg(this->nForceFields());
+    return QObject::tr("FFPtr( nForceFields() == %1 )").arg(this->nForceFields());
 }
 
 /** Set the component represented by the symbol 'symbol' equal to the 
@@ -1546,10 +1545,10 @@ void ForceFields::force(ForceTable &forcetable, double scale_force)
 */
 void ForceFields::setProperty(const QString &name, const Property &value)
 {
-    QVector<ForceField> new_ffields = ffields_by_idx;
+    QVector<FFPtr> new_ffields = ffields_by_idx;
     
     int nffields = new_ffields.count();
-    ForceField *new_ffields_array = new_ffields.data();
+    FFPtr *new_ffields_array = new_ffields.data();
     
     for (int i=0; i<nffields; ++i)
     {
@@ -1571,7 +1570,7 @@ void ForceFields::setProperty(const QString &name, const Property &value)
 void ForceFields::setProperty(const FFID &ffid, const QString &name, 
                               const Property &value)
 {
-    QVector<ForceField> old_state( ffields_by_idx );
+    QVector<FFPtr> old_state( ffields_by_idx );
 
     try
     {
@@ -1595,12 +1594,12 @@ void ForceFields::setProperty(const FFID &ffid, const QString &name,
     
     \throw SireBase::missing_property
 */
-QHash<FFName,Property> ForceFields::property(const QString &name) const
+QHash<FFName,PropertyPtr> ForceFields::property(const QString &name) const
 {
     int nffields = ffields_by_idx.count();
-    const ForceField *ffields_array = ffields_by_idx.constData();
+    const FFPtr *ffields_array = ffields_by_idx.constData();
     
-    QHash<FFName,Property> props;
+    QHash<FFName,PropertyPtr> props;
     
     for (int i=0; i<nffields; ++i)
     {
@@ -1645,7 +1644,7 @@ const Property& ForceFields::property(const FFID &ffid, const QString &name) con
 bool ForceFields::containsProperty(const QString &name) const
 {
     int nffields = ffields_by_idx.count();
-    const ForceField *ffields_array = ffields_by_idx.constData();
+    const FFPtr *ffields_array = ffields_by_idx.constData();
     
     for (int i=0; i<nffields; ++i)
     {
@@ -1682,7 +1681,7 @@ QHash<FFName,Properties> ForceFields::properties() const
     QHash<FFName,Properties> props;
     
     int nffields = ffields_by_idx.count();
-    const ForceField *ffields_array = ffields_by_idx.constData();
+    const FFPtr *ffields_array = ffields_by_idx.constData();
     
     props.reserve(nffields);
     
@@ -1696,7 +1695,7 @@ QHash<FFName,Properties> ForceFields::properties() const
 
 /** Return an array containing all of the forcefields in this set, ordered
     in the same order as they appear in this set */
-const QVector<ForceField>& ForceFields::forceFields() const
+const QVector<FFPtr>& ForceFields::forceFields() const
 {
     return ffields_by_idx;
 }
@@ -1715,7 +1714,7 @@ QList<FFName> ForceFields::ffNames() const
 void ForceFields::mustNowRecalculateFromScratch()
 {
     int nffields = ffields_by_idx.count();
-    ForceField *ffields_array = ffields_by_idx.data();
+    FFPtr *ffields_array = ffields_by_idx.data();
     
     for (int i=0; i<nffields; ++i)
     {
@@ -1728,7 +1727,7 @@ void ForceFields::mustNowRecalculateFromScratch()
 bool ForceFields::isDirty() const
 {
     int nffields = ffields_by_idx.count();
-    const ForceField *ffields_array = ffields_by_idx.constData();
+    const FFPtr *ffields_array = ffields_by_idx.constData();
     
     for (int i=0; i<nffields; ++i)
     {
@@ -1758,7 +1757,7 @@ bool ForceFields::isClean() const
 */
 void ForceFields::add(const FF &forcefield)
 {
-    ForceField ff( forcefield );
+    FFPtr ff( forcefield );
     ff.edit().update( this->matchToExistingVersion(forcefield.molecules()) );
 
     ForceFields old_state( *this );
@@ -1861,7 +1860,7 @@ void ForceFields::removeAllForceFields()
 
     \throw SireMol::missing_group
 */
-const MolGroup& ForceFields::at(MGNum mgnum) const
+const MoleculeGroup& ForceFields::at(MGNum mgnum) const
 {
     if (not mgroups_by_num.contains(mgnum))
         throw SireMol::missing_group( QObject::tr(
@@ -1984,14 +1983,14 @@ void ForceFields::add(const Molecules &molecules, const MGID &mgid,
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void ForceFields::add(const MolGroup &molgroup, const MGID &mgid,
+void ForceFields::add(const MoleculeGroup &molgroup, const MGID &mgid,
                       const PropertyMap &map)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     //update the group to match the molecule versions
     //already present in this group...
-    MoleculeGroup group(molgroup);
+    MolGroupPtr group(molgroup);
     group.edit().update( this->matchToExistingVersion(group.read().molecules()) );
 
     ForceFields old_state( *this );
@@ -2130,14 +2129,14 @@ void ForceFields::addIfUnique(const Molecules &molecules, const MGID &mgid,
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void ForceFields::addIfUnique(const MolGroup &molgroup, const MGID &mgid,
+void ForceFields::addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid,
                               const PropertyMap &map)
 {
     QList<MGNum> mgnums = mgid.map(*this);
 
     //update the group...
-    MolGroup group(molgroup);
-    group.update( this->matchToExistingVersion(group.molecules()) );
+    MolGroupPtr group(molgroup);
+    group.edit().update( this->matchToExistingVersion(molgroup.molecules()) );
     
     ForceFields old_state( *this );
     
@@ -2147,7 +2146,7 @@ void ForceFields::addIfUnique(const MolGroup &molgroup, const MGID &mgid,
         {
             this->_pvt_forceField(mgnum).addIfUnique(group, mgnum, map);
             
-            MolGroupsBase::addToIndex(mgnum, group.molNums().toSet());
+            MolGroupsBase::addToIndex(mgnum, group.read().molNums().toSet());
         }
     }
     catch(...)
@@ -2208,7 +2207,7 @@ void ForceFields::add(const Molecules &molecules, const MGID &mgid)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void ForceFields::add(const MolGroup &molgroup, const MGID &mgid)
+void ForceFields::add(const MoleculeGroup &molgroup, const MGID &mgid)
 {
     this->add(molgroup, mgid, PropertyMap());
 }
@@ -2268,7 +2267,7 @@ void ForceFields::addIfUnique(const Molecules &molecules, const MGID &mgid)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void ForceFields::addIfUnique(const MolGroup &molgroup, const MGID &mgid)
+void ForceFields::addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid)
 {
     this->addIfUnique(molgroup, mgid, PropertyMap());
 }
@@ -2396,7 +2395,7 @@ void ForceFields::remove(const Molecules &molecules, const MGID &mgid)
             
             ff.remove(molecules, mgnum);
             
-            const MolGroup &molgroup = ff.group(mgnum);
+            const MoleculeGroup &molgroup = ff.group(mgnum);
             
             for (Molecules::const_iterator it = molecules.constBegin();
                  it != molecules.constEnd();
@@ -2425,7 +2424,7 @@ void ForceFields::remove(const Molecules &molecules, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void ForceFields::remove(const MolGroup &molgroup, const MGID &mgid)
+void ForceFields::remove(const MoleculeGroup &molgroup, const MGID &mgid)
 {
     this->remove(molgroup.molecules(), mgid);
 }
@@ -2519,7 +2518,7 @@ void ForceFields::removeAll(const Molecules &molecules, const MGID &mgid)
             
             ff.removeAll(molecules, mgnum);
             
-            const MolGroup &group = ff.group(mgnum);
+            const MoleculeGroup &group = ff.group(mgnum);
             
             for (Molecules::const_iterator it = molecules.constBegin();
                  it != molecules.constEnd();
@@ -2547,7 +2546,7 @@ void ForceFields::removeAll(const Molecules &molecules, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void ForceFields::removeAll(const MolGroup &molgroup, const MGID &mgid)
+void ForceFields::removeAll(const MoleculeGroup &molgroup, const MGID &mgid)
 {
     this->removeAll(molgroup, mgid);
 }
@@ -2679,7 +2678,7 @@ void ForceFields::update(const Molecules &molecules)
         try
         {
             int nffields = ffields_by_idx.count();
-            ForceField *ffields_array = ffields_by_idx.data();
+            FFPtr *ffields_array = ffields_by_idx.data();
             
             for (int i=0; i<nffields; ++i)
             {
@@ -2702,7 +2701,7 @@ void ForceFields::update(const Molecules &molecules)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void ForceFields::update(const MolGroup &molgroup)
+void ForceFields::update(const MoleculeGroup &molgroup)
 {
     this->update( molgroup.molecules() );
 }
@@ -2824,12 +2823,12 @@ void ForceFields::setContents(const MGID &mgid, const Molecules &molecules,
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void ForceFields::setContents(const MGID &mgid, const MolGroup &molgroup,
+void ForceFields::setContents(const MGID &mgid, const MoleculeGroup &molgroup,
                               const PropertyMap &map)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
-    MolGroup group(molgroup);
+    MoleculeGroup group(molgroup);
     group.update( this->matchToExistingVersion(group.molecules()) );
 
     ForceFields old_state( *this );
@@ -2905,7 +2904,7 @@ void ForceFields::setContents(const MGID &mgid, const Molecules &molecules)
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void ForceFields::setContents(const MGID &mgid, const MolGroup &molgroup)
+void ForceFields::setContents(const MGID &mgid, const MoleculeGroup &molgroup)
 {
     this->setContents(mgid, molgroup, PropertyMap());
 }

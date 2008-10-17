@@ -31,7 +31,7 @@
 
 #include "SireMol/partialmolecule.h"
 #include "SireMol/molecule.h"
-#include "SireMol/molgroup.h"
+#include "SireMol/moleculegroup.h"
 
 #include "SireBase/propertymap.h"
 
@@ -93,7 +93,7 @@ namespace SireFF
 namespace detail
 {
 
-using SireMol::MolGroup;
+using SireMol::MoleculeGroup;
 using SireMol::PartialMolecule;
 using SireMol::AtomSelection;
 using SireMol::MolNum;
@@ -251,7 +251,7 @@ public:
 
 protected:
     FFMoleculesBase();
-    FFMoleculesBase(const MolGroup &molgroup, const PropertyMap &map);
+    FFMoleculesBase(const MoleculeGroup &molgroup, const PropertyMap &map);
     
     FFMoleculesBase(const FFMoleculesBase &other);
     
@@ -380,7 +380,7 @@ public:
 
     FFMolecules();
     
-    FFMolecules(const MolGroup &molgroup, PTNL &forcefield,
+    FFMolecules(const MoleculeGroup &molgroup, PTNL &forcefield,
                 const PropertyMap &map = PropertyMap());
     
     FFMolecules(const FFMolecules<PTNL> &other);
@@ -729,7 +729,7 @@ SIRE_OUTOFLINE_TEMPLATE
 FFMolecules<PTNL>::FFMolecules() : FFMoleculesBase()
 {}
 
-/** Construct by converting a MolGroup
+/** Construct by converting a MoleculeGroup
 
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
@@ -737,7 +737,7 @@ FFMolecules<PTNL>::FFMolecules() : FFMoleculesBase()
 */
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
-FFMolecules<PTNL>::FFMolecules(const MolGroup &molgroup, PTNL &forcefield,
+FFMolecules<PTNL>::FFMolecules(const MoleculeGroup &molgroup, PTNL &forcefield,
                                const PropertyMap &map)
                   : FFMoleculesBase(molgroup, map)
 {
@@ -746,7 +746,7 @@ FFMolecules<PTNL>::FFMolecules(const MolGroup &molgroup, PTNL &forcefield,
     int i = 0;
     Molecule *mols_by_idx_array = mols_by_idx.data();
 
-    for (MolGroup::const_iterator it = molgroup.constBegin();
+    for (MoleculeGroup::const_iterator it = molgroup.constBegin();
          it != molgroup.constEnd();
          ++it)
     {
