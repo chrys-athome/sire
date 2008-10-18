@@ -48,6 +48,6 @@ using boost::python::register_tuple;
 
 void register_SireMove_containers()
 {
-    register_list< QList<Move> >();
+    register_list< QList<MovePtr> >();
 }
 

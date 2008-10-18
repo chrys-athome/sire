@@ -48,6 +48,6 @@ using boost::python::register_tuple;
 
 void register_SireSystem_containers()
 {
-    register_list< QList<SystemMonitor> >();
+    register_list< QList<SysMonPtr> >();
 }
 

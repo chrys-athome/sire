@@ -54,10 +54,6 @@ INCLUDE_DIRECTORIES( BEFORE ${SIREPYTHON2_SOURCE_DIR} )
 # Build shared libraries by default
 set (BUILD_SHARED_LIBS ON)
 
-# Target an i686 by default
-set (SIRE_TARGET_OPTIONS "-march=i686" CACHE STRING
-            "Compiler option used to specify the target processor.")
-
 # Name of executable install dir
 set (SIRE_BIN "bin")
 # Shared library install dir
@@ -139,9 +135,6 @@ set( SIRE_CXX_FLAGS_RELEASE ${SIRE_C_FLAGS_RELEASE} )
 
 set( SIRE_C_FLAGS_DEBUG "-Wall -Os -g ${SIRE_PLATFORM_OPTIONS}" )
 set( SIRE_CXX_FLAGS_DEBUG ${SIRE_C_FLAGS_DEBUG} )
-
-# Add machine definition (supplied by user?)
-ADD_DEFINITIONS( ${SIRE_TARGET_OPTIONS} )
 
 # Add compiler specific flags
 if ( CMAKE_COMPILER_IS_GNUCC )

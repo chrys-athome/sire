@@ -169,6 +169,12 @@ RepExReplica& RepExReplica::operator=(const RepExReplica &other)
     return *this;
 }
 
+/** Copy from a basic replica */
+RepExReplica& RepExReplica::operator=(const Replica &other)
+{
+    return this->operator=( RepExReplica(other) );
+}
+
 /** Comparison operator */
 bool RepExReplica::operator==(const RepExReplica &other) const
 {

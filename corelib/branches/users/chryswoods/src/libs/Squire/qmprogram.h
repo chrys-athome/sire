@@ -166,7 +166,7 @@ Q_DECLARE_METATYPE( Squire::NullQM )
 SIRE_EXPOSE_CLASS( Squire::QMProgram )
 SIRE_EXPOSE_CLASS( Squire::NullQM )
 
-SIRE_EXPOSE_PROPERTY( Squire::QMProgram, Squire::QMProgram )
+SIRE_EXPOSE_PROPERTY( Squire::QMProgPtr, Squire::QMProgram )
 
 SIRE_END_HEADER
 

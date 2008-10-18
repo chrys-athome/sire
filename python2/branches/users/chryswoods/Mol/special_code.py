@@ -70,7 +70,7 @@ def fix_MolEditorBase(c):
    c.decls( "removeMetadata" ).call_policies = call_policies.return_self()   
 
    c.add_registration_code( """def( \"setProperty\",
-                               &SireMol::MolEditorBase::setProperty<SireBase::PropertyBase>, %s )""" \
+                               &SireMol::MolEditorBase::setProperty<SireBase::Property>, %s )""" \
                                % (return_self ) )
    
    c.add_registration_code( "def( \"setMetadata\", &set_Metadata_function1, %s)" \
@@ -81,14 +81,14 @@ def fix_MolEditorBase(c):
 
    c.add_declaration_code( """SireMol::MolEditorBase& set_Metadata_function1(
                               SireMol::MolEditorBase &molview,
-                              const QString &metakey, const SireBase::PropertyBase &p)
-                              { return molview.setMetadata<SireBase::PropertyBase>(metakey, p); }""" )
+                              const QString &metakey, const SireBase::Property &p)
+                              { return molview.setMetadata<SireBase::Property>(metakey, p); }""" )
 
    c.add_declaration_code( """SireMol::MolEditorBase& set_Metadata_function2(
                               SireMol::MolEditorBase &molview,
                               const QString &key, const QString &metakey, 
-                              const SireBase::PropertyBase &p)
-                              { return molview.setMetadata<SireBase::PropertyBase>(key, metakey, p); }""" )
+                              const SireBase::Property &p)
+                              { return molview.setMetadata<SireBase::Property>(key, metakey, p); }""" )
 
 def fix_MolViewEditorBase(c, molview, props):
    c.decls( "removeProperty" ).call_policies = call_policies.return_self()
@@ -217,7 +217,7 @@ def fix_MGNum(c):
     c.add_declaration_code( "#include \"mgidx.h\"" )
     c.add_declaration_code( "#include \"mgname.h\"" )
     c.add_declaration_code( "#include \"mgnum.h\"" )
-    c.add_declaration_code( "#include \"molgroups.h\"")
+    c.add_declaration_code( "#include \"moleculegroups.h\"")
 
 fix_MGIdx = fix_MGNum
 fix_MGName = fix_MGNum
@@ -227,8 +227,8 @@ def fix_MolNum(c):
     c.add_declaration_code( "#include \"molidx.h\"" )
     c.add_declaration_code( "#include \"molnum.h\"" )
     c.add_declaration_code( "#include \"molname.h\"" )
-    c.add_declaration_code( "#include \"molgroup.h\"" )
-    c.add_declaration_code( "#include \"molgroups.h\"" )
+    c.add_declaration_code( "#include \"moleculegroup.h\"" )
+    c.add_declaration_code( "#include \"moleculegroups.h\"" )
     c.add_declaration_code( "#include \"mover.hpp\"" )
 
 fix_MolName = fix_MolNum
