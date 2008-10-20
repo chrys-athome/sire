@@ -176,8 +176,8 @@ public:
     RepExReplicas(const System &system, int n);
     RepExReplicas(const QVector<System> &systems);
     
-    RepExReplicas(const Replicas &other);
     RepExReplicas(const RepExReplicas &other);
+    RepExReplicas(const Replicas &other);
     
     ~RepExReplicas();
     

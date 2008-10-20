@@ -84,7 +84,7 @@ public:
     
     virtual ReplicaRunner* clone() const=0;
     
-    virtual Replicas run(const Replicas &replicas, bool record_stats=true) const=0;
+    virtual void run(Replicas &replicas, bool record_stats=true) const=0;
 
     static const BasicRepRunner& null();
 };
@@ -122,7 +122,7 @@ public:
         return new BasicRepRunner(*this);
     }
 
-    Replicas run(const Replicas &replicas, bool record_stats=true) const;
+    void run(Replicas &replicas, bool record_stats=true) const;
 };
 
 /** This is a Replica runner that just simulates the replicas
@@ -160,7 +160,7 @@ public:
         return new MPIRepRunner(*this);
     }
 
-    Replicas run(const Replicas &replicas, bool record_stats=true) const;
+    void run(Replicas &replicas, bool record_stats=true) const;
 
 private:
     /** The nodes on which to run the simulations */

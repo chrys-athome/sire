@@ -170,36 +170,43 @@ bool BasicRepRunner::operator!=(const BasicRepRunner &other) const
     recording statistics if 'record_stats' is true. This returns a copy
     of the replicas after the sampling is complete. This runs each of the 
     simulations sequentially in the current thread. */
-Replicas BasicRepRunner::run(const Replicas &replicas, bool record_stats) const
+void BasicRepRunner::run(Replicas &replicas, bool record_stats) const
 {
     int nreplicas = replicas.count();
     
     if (nreplicas == 0)
-        return replicas;
+        return;
 
-    Replicas new_replicas( replicas );
-
-    //loop over all replicas in the set
-    for (int i=0; i<nreplicas; ++i)
+    boost::shared_ptr<Replicas> old_replicas( replicas.clone() );
+    
+    try
     {
-        //get a copy of this replica
-        Replica replica = new_replicas[i];
-        
-        //run the simulation
-        Simulation sim = Simulation::run(replica.system(), replica.moves(),
-                                         replica.nMoves(),
-                                         record_stats and replica.recordStatistics());
-                                        
-        //wait for the simulation to finish
-        sim.wait();
-        
-        //create a new replica, that is the copy of the old, but
-        //with the system and moves from the end of the simulation
-        new_replicas.setSystem( i, sim.system() );
-        new_replicas.setMoves( i, sim.moves() );
-    }
 
-    return new_replicas;
+        //loop over all replicas in the set
+        for (int i=0; i<nreplicas; ++i)
+        {
+            //get a copy of this replica
+            const Replica &replica = replicas[i];
+        
+            //run the simulation
+            Simulation sim = Simulation::run(replica.system(), replica.moves(),
+                                             replica.nMoves(),
+                                             record_stats and replica.recordStatistics());
+                                        
+            //wait for the simulation to finish
+            sim.wait();
+        
+            //create a new replica, that is the copy of the old, but
+            //with the system and moves from the end of the simulation
+            replicas.setSystem( i, sim.system() );
+            replicas.setMoves( i, sim.moves() );
+        }
+    }
+    catch(...)
+    {
+        replicas.copy( *old_replicas );
+        throw;
+    }
 }
 
 ///////////
@@ -284,45 +291,51 @@ bool MPIRepRunner::operator!=(const MPIRepRunner &other) const
     recording statistics if 'record_stats' is true. This returns a copy
     of the replicas after the sampling is complete. This runs each of the 
     simulations on the MPI nodes associated with this runner */
-Replicas MPIRepRunner::run(const Replicas &replicas, bool record_stats) const
+void MPIRepRunner::run(Replicas &replicas, bool record_stats) const
 {
     int nreplicas = replicas.count();
     
     if (nreplicas == 0)
-        return replicas;
+        return;
 
-    //get a writable handle to the list of available MPI nodes
-    MPINodes available_nodes = nodes;
+    boost::shared_ptr<Replicas> old_replicas( replicas.clone() );
 
-    QVector<Simulation> running_sims(nreplicas);
-    
-    //loop over all replicas in the set and set them all running
-    for (int i=0; i<nreplicas; ++i)
+    try
     {
-        //get a copy of this replica
-        Replica replica = replicas[i];
-        
-        //get a free node on which to run the simulation
-        MPINode node = available_nodes.getFreeNode();
-        
-        //run the simulation - save the handle
-        running_sims[i] = Simulation::run(node, replica.system(), replica.moves(),
-                                          replica.nMoves(),
-                                          record_stats and replica.recordStatistics());
-    }
+        //get a writable handle to the list of available MPI nodes
+        MPINodes available_nodes = nodes;
 
-    //now loop over the running simulations and wait for 
-    //them all to finish - then update the new replicas with
-    //the new results
-    Replicas new_replicas(nreplicas);
-
-    for (int i=0; i<nreplicas; ++i)
-    {
-        running_sims[i].wait();
-        
-        new_replicas.setSystem( i, running_sims[i].system() );
-        new_replicas.setMoves( i, running_sims[i].moves() );
-    }
+        QVector<Simulation> running_sims(nreplicas);
     
-    return new_replicas;
+        //loop over all replicas in the set and set them all running
+        for (int i=0; i<nreplicas; ++i)
+        {
+            //get a copy of this replica
+            const Replica &replica = replicas[i];
+        
+            //get a free node on which to run the simulation
+            MPINode node = available_nodes.getFreeNode();
+        
+            //run the simulation - save the handle
+            running_sims[i] = Simulation::run(node, replica.system(), replica.moves(),
+                                              replica.nMoves(),
+                                           record_stats and replica.recordStatistics());
+        }
+
+        //now loop over the running simulations and wait for 
+        //them all to finish - then update the new replicas with
+        //the new results
+        for (int i=0; i<nreplicas; ++i)
+        {
+            running_sims[i].wait();
+        
+            replicas.setSystem( i, running_sims[i].system() );
+            replicas.setMoves( i, running_sims[i].moves() );
+        }
+    }
+    catch(...)
+    {
+        replicas.copy( *old_replicas );
+        throw;
+    }
 }

@@ -32,11 +32,18 @@
 
 #include "SireMPI/mpinodes.h"
 
+#include "SireUnits/units.h"
+#include "SireUnits/dimensions.h"
+
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireMove;
 using namespace SireMaths;
+using namespace SireUnits;
+using namespace SireUnits::Dimension;
 using namespace SireStream;
 
 static const RegisterMetaType<RepExMove> r_repexmove;
@@ -205,31 +212,31 @@ bool RepExMove::testAndSwap(RepExReplica &replica_a, RepExReplica &replica_b)
         
         //now get the values of the system properties at their current replica level
         Energy H_a_i = replica_a.energy();
-        Energy H_b_i = replica_b.energy();
-        
-        Volume V_a_i(0);
-        Volume V_b_i(0);
-        
-        if (need_pv)
-        {
-           V_a_i = replica_a_i.volume();
-           V_b_i = replica_b_i.volume();
-        }
-        
-        //now swap the replicas
-        RepExReplica::swap(replica_a, replica_b);
-        
-        //get the values of the system properties at the new replica level
-        Energy H_a_j = replica_a.energy();
         Energy H_b_j = replica_b.energy();
         
-        Volume V_a_j(0);
+        Volume V_a_i(0);
         Volume V_b_j(0);
         
         if (need_pv)
         {
+           V_a_i = replica_a.volume();
+           V_b_j = replica_b.volume();
+        }
+        
+        //now swap the replicas
+        RepExReplica::swapSystems(replica_a, replica_b);
+        
+        //get the values of the system properties at the new replica level
+        Energy H_a_j = replica_a.energy();
+        Energy H_b_i = replica_b.energy();
+        
+        Volume V_a_j(0);
+        Volume V_b_i(0);
+        
+        if (need_pv)
+        {
             V_a_j = replica_a.volume();
-            V_b_j = replica_b.volume();
+            V_b_i = replica_b.volume();
         }
         
         //now calculate delta needed for the Monte Carlo test
@@ -239,8 +246,13 @@ bool RepExMove::testAndSwap(RepExReplica &replica_a, RepExReplica &replica_b)
         //  delta = beta_b * [ H_b_j - H_b_i + P_b (V_b_j - V_b_i) ] + 
         //          beta_a * [ H_a_i - H_a_j + P_a (V_a_i - V_a_j) ]
         
-        double delta = beta_b * ( H_b_j - H_b_i + P_b*(V_b_j - V_b_i) ) +
-                       beta_a * ( H_a_i - H_a_j + P_a*(V_a_i - V_a_j) );
+        qDebug() << replica_a.lambdaValue() << beta_a << H_a_i << H_a_j << p_a << V_a_i << V_a_j;
+        qDebug() << replica_b.lambdaValue() << beta_b << H_b_j << H_b_i << p_b << V_b_j << V_b_i;
+        
+        double delta = beta_b * ( H_b_j - H_b_i + p_b*(V_b_j - V_b_i) ) +
+                       beta_a * ( H_a_i - H_a_j + p_a*(V_a_i - V_a_j) );
+                       
+        qDebug() << delta;
                        
         return ( delta > 0 or (std::exp(delta) >= rangenerator.rand()) );
     }
@@ -249,7 +261,7 @@ bool RepExMove::testAndSwap(RepExReplica &replica_a, RepExReplica &replica_b)
         throw SireError::incompatible_error( QObject::tr(
             "There is no available replica exchange test that allows tests between "
             "replicas with ensembles %1 and %2.")
-                .arg(ensemble0.toString(), ensemble1.toString()), CODELOC );
+                .arg(ensemble_a.toString(), ensemble_b.toString()), CODELOC );
                 
     }
 
@@ -274,13 +286,17 @@ void RepExMove::testAndSwap(RepExReplicas &replicas)
     }
     
     //loop over all pairs
-    for (int i=start; i<nreplicas; ++i)
+    for (int i=start; i<nreplicas-1; i+=2)
     {
         RepExReplica replica0 = replicas[i];
         RepExReplica replica1 = replicas[i+1];
+
+        qDebug() << "Testing replicas" << i << "and" << i+1;
         
         if (this->testAndSwap(replica0, replica1))
         {
+            qDebug() << "Move passed!";
+        
             //save the new replicas
             replicas.setReplica(i, replica0);
             replicas.setReplica(i+1, replica1);
@@ -319,7 +335,7 @@ void RepExMove::move(RepExReplicas &replicas, int nmoves,
     {
         //restore the old state
         this->operator=(old_state);
-        replicas.assign( *old_replicas );
+        replicas.copy( *old_replicas );
         throw;
     }
 }
