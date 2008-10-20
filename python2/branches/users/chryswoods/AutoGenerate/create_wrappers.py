@@ -378,6 +378,28 @@ if __name__ == "__main__":
     qtdir = os.getenv("QTDIR")
     boostdir = os.getenv("BOOSTDIR")
     gsldir = os.getenv("GSLDIR")
+
+    need_input = False 
+
+    if (qtdir is None):
+        print "You must set the environmental variable QTDIR to the location " + \
+              "of the Qt4 header files"
+        need_input = True
+
+    if (boostdir is None):
+        print "You must set the environmental variable BOOSTDIR to the location " + \
+              "of the boost header files"
+        need_input = True
+
+    if (gsldir is None):
+        print "You must set the environmental variable GSLDIR to the location " + \
+              "of the GSL header files"
+        need_input = True
+
+    if (need_input):
+        print "Cannot continue as I don't know where the header files are"
+        sys.exit(-1)
+
     qt_include_dirs = [ qtdir, "%s/QtCore" % qtdir ]
     boost_include_dirs = [ boostdir ]
     gsl_include_dirs = [ gsldir ]
