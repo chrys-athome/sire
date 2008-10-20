@@ -40,7 +40,7 @@ using namespace SireBase;
 using namespace SireBase;
 using namespace SireStream;
 
-Q_GLOBAL_STATIC( QMutex, getGlobalMutex );
+Q_GLOBAL_STATIC_WITH_ARGS( QMutex, getGlobalMutex, ((QMutex::Recursive)) );
 
 namespace SireBase
 {

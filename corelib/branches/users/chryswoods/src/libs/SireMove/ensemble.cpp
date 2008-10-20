@@ -39,6 +39,8 @@
 
 #include "tostring.h"
 
+#include <QDebug>
+
 using namespace SireMove;
 using namespace SireBase;
 using namespace SireUnits;

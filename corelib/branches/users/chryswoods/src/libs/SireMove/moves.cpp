@@ -445,7 +445,7 @@ const SameMoves& Moves::null()
         if (shared_null.constData() == 0)
             shared_null = new SameMoves();
     }
-    
+
     return *(shared_null.constData());
 }
 

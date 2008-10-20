@@ -40,6 +40,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireMove;
 using namespace SireFF;
 using namespace SireCAS;
@@ -93,7 +95,6 @@ void RepExReplica::updatedMoves()
 {
     nrg_component = this->moves().energyComponent();
     space_property = this->moves().spaceProperty();
-
     replica_ensemble = this->moves().ensemble();
 
     if ( not (replica_ensemble.isConstantNParticles() or
