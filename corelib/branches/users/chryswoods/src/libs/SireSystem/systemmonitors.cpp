@@ -210,10 +210,38 @@ QList<MonitorName> SystemMonitors::map(const MonitorID &monid) const
     return monid.map(*this);
 }
 
+/** Return the frequency of the monitor with ID 'monid'
+
+    \throw SireSystem::duplicate_monitor
+    \throw SireSystem::missing_monitor
+    \throw SireError::invalid_index
+*/
+int SystemMonitors::getFrequency(const MonitorID &monid) const
+{
+    MonitorName name = this->monitorName(monid);
+    
+    for (QHash< quint32, QList<MonitorName> >::const_iterator
+                                        it = mons_by_frequency.constBegin();
+         it != mons_by_frequency.constEnd();
+         ++it)
+    {
+        if (it.value().contains(name))
+            return it.key();
+    }
+    
+    return 0;
+}
+
 /** Return the list of all monitor names */
 QList<MonitorName> SystemMonitors::monitorNames() const
 {
     return mons_by_name.keys();
+}
+
+/** Return the list of all monitor names */
+QList<MonitorName> SystemMonitors::names() const
+{
+    return this->monitorNames();
 }
 
 /** Add a system monitor 'monitor', identified by the name 'name', which
@@ -241,6 +269,71 @@ void SystemMonitors::add(const QString &name, const SystemMonitor &monitor,
         frequency = 0;
         
     mons_by_frequency[frequency].append(monname);
+}
+
+/** Add the monitors from 'other' to this set
+
+    \throw SireSystem::duplicate_monitor
+*/
+void SystemMonitors::add(const SystemMonitors &other)
+{
+    if (this->isEmpty())
+    {
+        this->operator=(other);
+        return;
+    }
+    else if (other.isEmpty())
+    {
+        return;
+    }
+
+    SystemMonitors old_state(*this);
+    
+    try
+    {
+        foreach (const MonitorName &name, other.names())
+        {
+            this->add( name, other[name], other.getFrequency(name) );
+        }
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
+}
+
+/** Add all of the monitors in 'other' to this set, adding them
+    with the frequency 'frequency' 
+    
+    \throw SireSystem::duplicate_monitor
+*/
+void SystemMonitors::add(const SystemMonitors &other, int frequency)
+{
+    SystemMonitors new_monitors(other);
+    new_monitors.setAllFrequency(frequency);
+    
+    this->add(new_monitors);
+}
+
+/** Set the frequency of all of the monitors to 'frequency' */
+void SystemMonitors::setAllFrequency(int frequency)
+{
+    //do we need to make any change?
+    if (this->isEmpty())
+        return;
+    
+    if (frequency < 0)
+        frequency = 0;
+                
+    if (mons_by_frequency.count() == 1 and 
+        mons_by_frequency.contains( quint32(frequency) ))
+    {
+        return;
+    }
+    
+    mons_by_frequency.clear();
+    mons_by_frequency.insert( quint32(frequency), mons_by_idx );
 }
 
 /** Remove all of the monitors that match the ID 'monid'
@@ -350,6 +443,13 @@ QList<SysMonPtr> SystemMonitors::monitors() const
     }
     
     return mons;
+}
+
+/** Return the list of all monitors in this set, in the order they
+    appear in this set */
+QList<SysMonPtr> SystemMonitors::list() const
+{
+    return this->monitors();
 }
 
 /** Return the number of monitors in this set */

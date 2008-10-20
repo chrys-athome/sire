@@ -534,17 +534,14 @@ void RepExReplica::setChemicalPotential(const MolarEnergy &c)
 /** Swap the systems between the two replicas, 'rep0' and 'rep1' */
 void RepExReplica::swapSystems(RepExReplica &rep0, RepExReplica &rep1)
 {
-    System rep0_system = rep0.system();
-    System rep1_system = rep1.system();
+    System new_rep0 = rep1.system();
+    System new_rep1 = rep0.system();
     
-    //now copy the molecules from rep1 into rep0
-    rep0_system.update( rep1.system().molecules() );
+    new_rep0.setMonitors( rep1.system().monitors() );
+    new_rep1.setMonitors( rep0.system().monitors() );
     
-    //and from rep0 into rep1
-    rep1_system.update( rep0.system().molecules() );
-    
-    rep0.setSystem(rep0_system);
-    rep1.setSystem(rep1_system);
+    rep0.setSystem( new_rep0 );
+    rep1.setSystem( new_rep1 );
 }
 
 ///////

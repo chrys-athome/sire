@@ -95,14 +95,23 @@ public:
 
     QList<MonitorName> monitorNames() const;
 
+    QList<MonitorName> names() const;
+    QList<SysMonPtr> list() const;
+
     void add(const QString &name, const SystemMonitor &monitor,
              int frequency = 1);
+    
+    void add(const SystemMonitors &other);
+    void add(const SystemMonitors &other, int frequency);
     
     void remove(const MonitorID &monid);
     void removeAll();
     
+    void setAllFrequency(int frequency);
     void setFrequency(const MonitorID &monid, int frequency);
-    
+   
+    int getFrequency(const MonitorID &monid) const;
+     
     const SystemMonitor& monitor(const MonitorID &monid) const;
     
     QList<SysMonPtr> monitors(const MonitorID &monid) const;

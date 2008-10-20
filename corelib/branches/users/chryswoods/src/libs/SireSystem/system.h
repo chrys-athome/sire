@@ -205,11 +205,9 @@ public:
     
     QHash<FFName,Properties> properties() const;
     
-    QList<SysMonPtr> monitors() const;
-    QList<MonitorName> monitorNames() const;
-    
-    const QVector<FFPtr>& forceFields() const;
-    QList<FFName> ffNames() const;
+    const SystemMonitors& monitors() const;
+    const ForceFields& forceFields() const;
+    const MoleculeGroups& extraGroups() const;
     
     void mustNowRecalculateFromScratch();
     
@@ -222,6 +220,12 @@ public:
     
     void add(const QString &name, const SystemMonitor &monitor,
              int frequency = 1);
+    
+    void add(const SystemMonitors &monitors);
+    void add(const SystemMonitors &monitors, int frequency);
+    
+    void setMonitors(const SystemMonitors &monitors);
+    void setMonitors(const SystemMonitors &monitors, int frequency);
     
     void add(const FF &forcefield);
     void add(const MoleculeGroup &molgroup);

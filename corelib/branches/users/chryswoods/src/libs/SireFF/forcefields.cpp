@@ -1700,11 +1700,25 @@ const QVector<FFPtr>& ForceFields::forceFields() const
     return ffields_by_idx;
 }
 
+/** Return an array containing all of the forcefields in this set, ordered
+    in the same order as they appear in this set */
+const QVector<FFPtr>& ForceFields::list() const
+{
+    return this->forceFields();
+}
+
 /** Return a list of all of the forcefield names, ordered in the same
     order as the forcefields appear in this set */
 QList<FFName> ForceFields::ffNames() const
 {
     return ffields_by_name.keys();
+}
+
+/** Return a list of all of the forcefield names, ordered in the same
+    order as the forcefields appear in this set */
+QList<FFName> ForceFields::names() const
+{
+    return this->ffNames();
 }
 
 /** Tell all of the forcefields that they must now recalculate their

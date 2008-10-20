@@ -775,27 +775,21 @@ QHash<FFName,Properties> System::properties() const
 }
 
 /** Return the list of all monitors of this system */
-QList<SysMonPtr> System::monitors() const
+const SystemMonitors& System::monitors() const
 {
-    return sysmonitors.monitors();
-}
-
-/** Return the names of all of the monitors of this system */
-QList<MonitorName> System::monitorNames() const
-{
-    return sysmonitors.monitorNames();
+    return sysmonitors;
 }
 
 /** Return an array of all of the forcefields in this system */
-const QVector<FFPtr>& System::forceFields() const
+const ForceFields& System::forceFields() const
 {
-    return this->_pvt_forceFields().forceFields();
+    return this->_pvt_forceFields();
 }
 
-/** Return the names of all of the forcefields in this system */
-QList<FFName> System::ffNames() const
+/** Return all of the extra non-forcefield molecule groups in this system */
+const MoleculeGroups& System::extraGroups() const
 {
-    return this->_pvt_forceFields().ffNames();
+    return this->_pvt_moleculeGroups();
 }
 
 /** Tell all of the forcefields that they will need to recalculate
@@ -828,6 +822,47 @@ void System::add(const QString &name, const SystemMonitor &monitor, int frequenc
 {
     sysmonitors.add(name, monitor, frequency);
     sysversion.incrementMajor();
+}
+
+/** Add the monitors in 'monitors' to this system 
+
+    \throw SireSystem::duplicate_monitor
+*/
+void System::add(const SystemMonitors &monitors)
+{
+    sysmonitors.add(monitors);
+    sysversion.incrementMajor();
+}
+
+/** Add the monitors in 'monitors', setting the frequency of the 
+    new monitors to 'frequency'
+    
+    \throw SireSystem::duplicate_monitor
+*/
+void System::add(const SystemMonitors &monitors, int frequency)
+{
+    sysmonitors.add(monitors, frequency);
+    sysversion.incrementMajor();
+}
+
+/** Set the monitors of this system to 'monitors' */
+void System::setMonitors(const SystemMonitors &monitors)
+{
+    if (sysmonitors != monitors)
+    {
+        sysmonitors = monitors;
+        sysversion.incrementMajor();
+    }
+}
+
+/** Set the monitors of the system to 'monitors', and reset the 
+    frequency of all of the monitors so that they are triggered
+    every 'frequency' steps */
+void System::setMonitors(const SystemMonitors &monitors, int frequency)
+{
+    SystemMonitors new_monitors(monitors);
+    new_monitors.setAllFrequency(frequency);
+    this->setMonitors(new_monitors);
 }
 
 /** Add the forcefield 'forcefield' to this system. This will raise

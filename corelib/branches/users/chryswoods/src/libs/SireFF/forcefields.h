@@ -162,6 +162,9 @@ public:
     const QVector<FFPtr>& forceFields() const;
     QList<FFName> ffNames() const;
     
+    const QVector<FFPtr>& list() const;
+    QList<FFName> names() const;
+    
     void mustNowRecalculateFromScratch();
     
     bool isDirty() const;
