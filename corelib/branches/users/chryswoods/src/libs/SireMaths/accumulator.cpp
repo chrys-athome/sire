@@ -38,6 +38,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireMaths;
 using namespace SireBase;
 using namespace SireStream;
@@ -473,7 +475,7 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, ExpAverage &expavg)
 */
 ExpAverage::ExpAverage(double scale_factor) 
            : ConcreteProperty<ExpAverage,Accumulator>(), 
-             avgval(0), sclfac(0)
+             avgval(0), sclfac(scale_factor)
 {
     if (scale_factor == 0)
         throw SireError::invalid_arg( QObject::tr(
@@ -548,6 +550,12 @@ double ExpAverage::average() const
 ExpAverage::operator double() const
 {
     return this->average();
+}
+
+/** Internal function used to return the scale factor */
+double ExpAverage::scaleFactor() const
+{
+    return 1.0 / sclfac;
 }
 
 /////////

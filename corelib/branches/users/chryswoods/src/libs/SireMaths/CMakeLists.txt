@@ -27,6 +27,7 @@ set ( SIREMATHS_HEADERS
       constants.h
       distvector.h
       errors.h
+      freeenergyaverage.h
       line.h
       maths.h
       matrix.h
@@ -52,6 +53,7 @@ set ( SIREMATHS_SOURCES
       complex.cpp
       distvector.cpp
       errors.cpp
+      freeenergyaverage.cpp
       line.cpp
       matrix4.cpp
       matrix.cpp

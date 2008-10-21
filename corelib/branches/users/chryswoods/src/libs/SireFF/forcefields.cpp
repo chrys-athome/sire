@@ -1588,28 +1588,42 @@ void ForceFields::setProperty(const FFID &ffid, const QString &name,
     }
 }
 
-/** Return the values of the property with name 'name' in the forcefields
-    in this set. Only the values for forcefields that contain this 
-    property are returned (indexed by the forcefield name). 
-    
+/** Return the value of the property with name 'name'. This returns
+    the property if it exists in at least one forcefield, and
+    if all occurances of the property have the same value
+
+    \throw SireBase::duplicate_property
     \throw SireBase::missing_property
 */
-QHash<FFName,PropertyPtr> ForceFields::property(const QString &name) const
+const Property& ForceFields::property(const QString &name) const
 {
     int nffields = ffields_by_idx.count();
     const FFPtr *ffields_array = ffields_by_idx.constData();
     
-    QHash<FFName,PropertyPtr> props;
+    const Property *p = &(Property::null());
     
     for (int i=0; i<nffields; ++i)
     {
         if (ffields_array[i]->containsProperty(name))
         {
-            props.insert( ffields_array[i]->name(), ffields_array[i]->property(name) );
+            if ( p->equals(Property::null()) )
+            {
+                p = &(ffields_array[i]->property(name));
+            }
+            else if ( not p->equals(ffields_array[i]->property(name)) )
+            {
+                throw SireBase::duplicate_property( QObject::tr(
+                    "More than one forcefield contains the property (%1), and "
+                    "it has a different value in these forcefields. "
+                    "You will have to search for this property "
+                    "individually in each forcefield (e.g. using the "
+                    "ForceFields::forceFieldsWithProperty(...) member function).")
+                        .arg(name), CODELOC );
+            }
         }
     }
     
-    if (props.isEmpty())
+    if ( p->equals(Property::null()) )
     {
         QStringList property_keys;
     
@@ -1624,19 +1638,55 @@ QHash<FFName,PropertyPtr> ForceFields::property(const QString &name) const
                 .arg(name, Sire::toString(property_keys) ), CODELOC );
     }
     
-    return props;
+    return *p;
 }
 
-/** Return the value of the property 'name' in the forcefield identified
+/** Return the value of the property 'name' in the forcefields identified
     by the ID 'ffid'
     
+    \throw SireBase::duplicate_property
     \throw SireFF::missing_forcefield
     \throw SireFF::duplicate_forcefield
     \throw SireBase::missing_property
 */
 const Property& ForceFields::property(const FFID &ffid, const QString &name) const
 {
-    return this->_pvt_forceField( this->ffIdx(ffid) ).property(name);
+    //get the list of forcefields that match this ID
+    QList<FFIdx> ffidxs = ffid.map(*this);
+
+    const Property *p = &(Property::null());
+
+    foreach (FFIdx ffidx, ffidxs)
+    {
+        const FF &ff = this->_pvt_forceField(ffidx);
+        
+        if (ff.containsProperty(name))
+        {
+            if ( p->equals(Property::null()) )
+            {
+                p = &(ff.property(name));
+            }
+            else if ( not p->equals(ff.property(name)) )
+            {
+                throw SireBase::duplicate_property( QObject::tr(
+                    "More than one of the forcefields that match the ID %1 "
+                    "contain the property %2, and it has a different value "
+                    "in at least two of these forcefields. You will need "
+                    "to search for this property one forcefield at a time "
+                    "(e.g. using the ForceFields::forceFieldsWithProperty(...) "
+                    "member function).")
+                        .arg(ffid.toString(), name), CODELOC );
+            }
+        }
+    }
+    
+    if ( p->equals(Property::null()) )
+        throw SireBase::missing_property( QObject::tr(
+            "None of the forcefields that match the ID '%1' contain "
+            "a property called %2.")
+                .arg(ffid.toString(), name), CODELOC );
+
+    return *p;
 }
 
 /** Return whether or not any of the forcefields contain the property
@@ -1674,11 +1724,12 @@ bool ForceFields::containsProperty(const FFID &ffid, const QString &name) const
     return false;
 }
 
-/** Return all of the properties in all of the forcefields, indexed by 
-    the name of the forcefield */
-QHash<FFName,Properties> ForceFields::properties() const
+/** Return all of the properties in all of the forcefields */
+Properties ForceFields::properties() const
 {
     QHash<FFName,Properties> props;
+    
+    MERGE THESE TOGETHER
     
     int nffields = ffields_by_idx.count();
     const FFPtr *ffields_array = ffields_by_idx.constData();

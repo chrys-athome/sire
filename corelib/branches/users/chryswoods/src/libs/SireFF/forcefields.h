@@ -150,17 +150,24 @@ public:
     
     SireCAS::Expression getComponent(const Symbol &symbol) const;
     
-    QHash<FFName,PropertyPtr> property(const QString &name) const;
+    const Property& property(const QString &name) const;
 
     const Property& property(const FFID &ffid, const QString &name) const;
 
     bool containsProperty(const QString &name) const;
     bool containsProperty(const FFID &ffid, const QString &name) const;
     
-    QHash<FFName,Properties> properties() const;
+    Properties properties() const;
+    Properties properties(const FFID &ffid) const;
+    
+    QVector<FFPtr> forceFieldsWithProperty(const QString &name) const;
+    QVector<FFPtr> forceFieldsWithProperty(const FFID &ffid, const QString &name) const;
     
     const QVector<FFPtr>& forceFields() const;
     QList<FFName> ffNames() const;
+    
+    QVector<FFPtr> forceFields(const FFID &ffid) const;
+    QList<FFName> ffNames(const FFID &ffid) const;
     
     const QVector<FFPtr>& list() const;
     QList<FFName> names() const;

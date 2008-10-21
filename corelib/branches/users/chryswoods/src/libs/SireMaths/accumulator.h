@@ -287,6 +287,9 @@ public:
 
     operator double() const;
 
+protected:
+    double scaleFactor() const;
+
 private:
     /** The intermediate in the average calculation */
     double avgval;
