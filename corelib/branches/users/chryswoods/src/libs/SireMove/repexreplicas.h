@@ -116,7 +116,10 @@ public:
     bool isConstantChemicalPotential() const;
     bool isConstantLambda(const Symbol &lam) const;
 
-    static void swapSystems(RepExReplica &rep0, RepExReplica &rep1);
+    static void swapSystems(RepExReplica &rep0, RepExReplica &rep1,
+                            bool swap_monitors=false);
+
+    static void swapMolecules(RepExReplica &rep0, RepExReplica &rep1);
 
 protected:
     virtual void setEnergyComponent(const Symbol &symbol);

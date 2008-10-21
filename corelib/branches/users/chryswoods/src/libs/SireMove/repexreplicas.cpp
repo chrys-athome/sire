@@ -531,14 +531,38 @@ void RepExReplica::setChemicalPotential(const MolarEnergy &c)
     }
 }
 
-/** Swap the systems between the two replicas, 'rep0' and 'rep1' */
-void RepExReplica::swapSystems(RepExReplica &rep0, RepExReplica &rep1)
+/** Swap the systems between the two replicas, 'rep0' and 'rep1'. This
+    swaps the systems, but leaves the system monitors behind
+    (thus the monitors remain with the replica, which is what is
+    normally required). However, if the optional 'swap_monitors'
+    is true then the monitors are swapped as well. */
+void RepExReplica::swapSystems(RepExReplica &rep0, RepExReplica &rep1,
+                               bool swap_monitors)
 {
     System new_rep0 = rep1.system();
     System new_rep1 = rep0.system();
     
-    new_rep0.setMonitors( rep1.system().monitors() );
-    new_rep1.setMonitors( rep0.system().monitors() );
+    if (not swap_monitors)
+    {
+        new_rep0.setMonitors( rep1.system().monitors() );
+        new_rep1.setMonitors( rep0.system().monitors() );
+    }
+    
+    rep0.setSystem( new_rep0 );
+    rep1.setSystem( new_rep1 );
+}
+
+/** Swap the molecules between the two replicas, 'rep0' and 'rep1'. This
+    updates all of the molecules in 'rep0' with the status of all of the
+    molecules in 'rep1', and vice-versa. Note that this won't have any
+    affect unless 'rep0' and 'rep1' contain the same molecules */
+void RepExReplica::swapMolecules(RepExReplica &rep0, RepExReplica &rep1)
+{
+    System new_rep0 = rep0.system();
+    System new_rep1 = rep1.system();
+    
+    new_rep0.update( rep1.system().molecules() );
+    new_rep1.update( rep0.system().molecules() );
     
     rep0.setSystem( new_rep0 );
     rep1.setSystem( new_rep1 );

@@ -21,6 +21,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the headers in SireMaths
 set ( SIREMATHS_HEADERS
+      accumulator.h
       axisset.h
       complex.h
       constants.h
@@ -46,6 +47,7 @@ set ( SIREMATHS_SOURCES
 
       register_siremaths.cpp
 
+      accumulator.cpp
       axisset.cpp
       complex.cpp
       distvector.cpp
@@ -74,6 +76,7 @@ set_target_properties (SireMaths PROPERTIES
 
 # Link to other Sire libraries, and GSL
 target_link_libraries (SireMaths
+                       SireBase
                        SireStream
                        SireUnits
                        SireStream

@@ -641,6 +641,33 @@ Values System::energies()
     return this->_pvt_forceFields().energies();
 }
 
+/** Return the value of the component in this system
+    that is identified by the symbol 'component'
+    
+    \throw SireFF::missing_component
+*/
+double System::componentValue(const Symbol &component)
+{
+    return this->energy(component);
+}
+
+/** Return the values of the components of this system whose
+    symbols are in 'components'
+    
+    \throw SireFF::missing_component
+*/
+Values System::componentValues(const QSet<Symbol> &components)
+{
+    return this->energies(components);
+}
+
+/** Return the values of all components, constants and 
+    expressions in this system */
+Values System::componentValues()
+{
+    return this->energies();
+}
+
 /** Add the forces acting on the molecules in the forcetable 'forcetable'
     from this system onto this forcetable, scaled by the optionally 
     supplied 'scale_force' */

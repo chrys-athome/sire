@@ -179,6 +179,10 @@ public:
     
     Values energies(const QSet<Symbol> &components);
     Values energies();
+
+    double componentValue(const Symbol &component);
+    Values componentValues(const QSet<Symbol> &components);
+    Values componentValues();
     
     void force(ForceTable &forcetable, double scale_force=1);
     void force(ForceTable &forcetable, const Symbol &component,
