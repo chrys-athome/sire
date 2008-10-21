@@ -50,7 +50,97 @@ QDataStream& operator>>(QDataStream&, SireMaths::Accumulator&);
 namespace SireMaths
 {
 
-class Accumulator...
+/** This is the base class of all Accumulators - these are objects
+    that can accumulate values and calculate properties of that
+    collection of values - e.g. they could accumulate the values
+    so that the mean average could be collected, or so that the
+    maximum and minimum values could be determined etc.
+    
+    @author Christopher Woods
+*/
+class SIREMATHS_EXPORT Accumulator : public SireBase::Property
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const Accumulator&);
+friend QDataStream& ::operator>>(QDataStream&, Accumulator&);
+
+public:
+    Accumulator();
+    
+    Accumulator(const Accumulator &other);
+    
+    virtual ~Accumulator();
+    
+    static const char* typeName()
+    {
+        return "SireMaths::Accumulator";
+    }
+    
+    virtual Accumulator* clone() const=0
+    
+    virtual int nSamples() const;
+    
+    virtual void accumulate(double value);
+    
+    virtual void clear();
+    
+    static const Average& null();
+    
+protected:
+    Accumulator& operator=(const Accumulator &other);
+    
+    bool operator==(const Accumulator &other) const;
+    bool operator!=(const Accumulator &other) const;
+
+private:
+    /** The number of values that have been accumulated */
+    quint32 nvalues;
+};
+
+/** This class is used to accumulate the mean average of a collection
+    of values
+
+    @author Christopher Woods
+*/
+class SIREMATHS_EXPORT Average
+            : public SireBase::ConcreteProperty<Average,Accumulator>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const Average&);
+friend QDataStream& ::operator>>(QDataStream&, Average&);
+
+public:
+    Average();
+    
+    Average(const Average &other);
+    
+    ~Average();
+    
+    Average& operator=(const Average &other);
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Average>() );
+    }
+    
+    Average* clone() const
+    {
+        return new Average(*this);
+    }
+    
+    bool operator==(const Average &other) const;
+    bool operator!=(const Average &other) const;
+    
+    void accumulate(double value);
+
+    double average() const;
+
+    operator double() const;
+
+private:
+    /** The current average value */
+    double avgval;
+};
 
 typedef SireBase::PropPtr<Accumulator> AccumulatorPtr;
 
