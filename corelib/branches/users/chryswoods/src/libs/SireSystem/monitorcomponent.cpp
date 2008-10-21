@@ -83,7 +83,7 @@ MonitorComponent::MonitorComponent()
     represented by the symbol 'component' */
 MonitorComponent::MonitorComponent(const Symbol &component)
                  : ConcreteProperty<MonitorComponent,SystemMonitor>(),
-                   monitor_component(component),
+                   monitored_component(component),
                    accume( Average() )
 {}
 
@@ -93,14 +93,14 @@ MonitorComponent::MonitorComponent(const Symbol &component)
 MonitorComponent::MonitorComponent(const Symbol &component, 
                                    const Accumulator &accumulator)
                  : ConcreteProperty<MonitorComponent,SystemMonitor>(),
-                   monitor_component(component),
+                   monitored_component(component),
                    accume(accumulator)
 {}
 
 /** Copy constructor */                 
 MonitorComponent::MonitorComponent(const MonitorComponent &other)
                  : ConcreteProperty<MonitorComponent,SystemMonitor>(other),
-                   monitor_component(other.monitor_component),
+                   monitored_component(other.monitored_component),
                    accume(other.accume)
 {}
 
@@ -113,7 +113,7 @@ MonitorComponent& MonitorComponent::operator=(const MonitorComponent &other)
 {
     if (this != &other)
     {
-        monitor_component = other.monitor_component;
+        monitored_component = other.monitored_component;
         accume = other.accume;
         SystemMonitor::operator=(other);
     }
@@ -124,7 +124,7 @@ MonitorComponent& MonitorComponent::operator=(const MonitorComponent &other)
 /** Comparison operator */
 bool MonitorComponent::operator==(const MonitorComponent &other) const
 {
-    return monitor_component == other.monitor_component and
+    return monitored_component == other.monitored_component and
            accume == other.accume;
 }
 
@@ -151,5 +151,5 @@ const Accumulator& MonitorComponent::accumulator() const
     component from the passed system to the accumulator */
 void MonitorComponent::monitor(System &system)
 {
-    accume.accumulate( system.componentValue(monitored_component) );
+    accume.edit().accumulate( system.componentValue(monitored_component) );
 }
