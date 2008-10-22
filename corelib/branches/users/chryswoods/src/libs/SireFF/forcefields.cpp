@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QSet>
+
 #include "forcefields.h"
 
 #include "ffidx.h"
@@ -1552,7 +1554,8 @@ void ForceFields::setProperty(const QString &name, const Property &value)
     
     for (int i=0; i<nffields; ++i)
     {
-        new_ffields_array[i].edit().setProperty(name, value);
+        if (new_ffields_array[i].read().containsProperty(name))
+            new_ffields_array[i].edit().setProperty(name, value);
     }
     
     //everything went ok!
@@ -1578,7 +1581,8 @@ void ForceFields::setProperty(const FFID &ffid, const QString &name,
         
         foreach (const FFIdx &ffidx, ffidxs)
         {
-            this->_pvt_forceField(ffidx).setProperty(name, value);
+            if (this->_pvt_forceField(ffidx).containsProperty(name))
+                this->_pvt_forceField(ffidx).setProperty(name, value);
         }
     }
     catch(...)
@@ -1724,24 +1728,199 @@ bool ForceFields::containsProperty(const FFID &ffid, const QString &name) const
     return false;
 }
 
-/** Return all of the properties in all of the forcefields */
-Properties ForceFields::properties() const
+/** Return the names of all of the properties in all of the forcefields */
+QStringList ForceFields::propertyKeys() const
 {
-    QHash<FFName,Properties> props;
+    int nffields = this->nForceFields();
+
+    if (nffields == 0)
+    {
+        return QStringList();
+    }
+    else if (nffields == 1)
+    {
+        return this->_pvt_forceField(0).propertyKeys();
+    }
     
-    MERGE THESE TOGETHER
-    
-    int nffields = ffields_by_idx.count();
-    const FFPtr *ffields_array = ffields_by_idx.constData();
-    
-    props.reserve(nffields);
+    QSet<QString> keys;
     
     for (int i=0; i<nffields; ++i)
     {
-        props.insert( ffields_array[i]->name(), ffields_array[i]->properties() );
+        keys.unite( this->_pvt_forceField(i).propertyKeys().toSet() );
+    }
+    
+    return QStringList( keys.toList() );
+}
+
+/** Return the names of all of the properties in the forcefields 
+    identified by the ID 'ffid'
+    
+    \throw SireFF::missing_forcefield
+    \throw SireError::invalid_index
+*/
+QStringList ForceFields::propertyKeys(const FFID &ffid) const
+{
+    QList<FFIdx> ffidxs = ffid.map(*this);
+    
+    if (ffidxs.count() == 1)
+    {
+        return this->_pvt_forceField(ffidxs.at(0)).propertyKeys();
+    }
+    
+    QSet<QString> keys;
+    
+    foreach (FFIdx idx, ffidxs)
+    {
+        keys.unite( this->_pvt_forceField(idx).propertyKeys().toSet() );
+    }
+    
+    return QStringList( keys.toList() );
+}
+
+/** Return all of the properties in all of the forcefields. This will raise
+    an error if there are properties with the same name in different 
+    forcefields that have different values.
+    
+    \throw SireBase::duplicate_property
+*/
+Properties ForceFields::properties() const
+{
+    if (this->nForceFields() == 1)
+    {
+        return this->_pvt_forceField(0).properties();
+    }
+
+    Properties props;
+    
+    QStringList keys = this->propertyKeys();
+    
+    foreach (QString key, keys)
+    {
+        props.setProperty(key, this->property(key));
     }
     
     return props;
+}
+
+/** Return all of the properties in all of the forcefields identified by
+    the ID 'ffid'. This will raise an error if there are properties with
+    the same name in different forcefields that have different values.
+    
+    \throw SireBase::duplicate_property
+*/
+Properties ForceFields::properties(const FFID &ffid) const
+{
+    QList<FFIdx> ffidxs = ffid.map(*this);
+    
+    if (ffidxs.count() == 1)
+    {
+        return this->_pvt_forceField(ffidxs.at(0)).properties();
+    }
+    
+    QStringList keys = this->propertyKeys(ffid);
+    
+    Properties props;
+    
+    foreach (QString key, keys)
+    {
+        props.setProperty(key, this->property(ffid, key));
+    }
+    
+    return props;
+}
+
+/** Return the list of all forcefields that contain a property with name 'name'
+
+    \throw SireBase::missing_property
+*/
+QVector<FFPtr> ForceFields::forceFieldsWithProperty(const QString &name) const
+{
+    QVector<FFPtr> ffs;
+    
+    int nffields = this->nForceFields();
+    
+    for (int i=0; i<nffields; ++i)
+    {
+        if (this->_pvt_forceField(i).containsProperty(name))
+            ffs.append( this->_pvt_forceField(i) );
+    }
+    
+    if (ffs.isEmpty())
+        throw SireBase::missing_property( QObject::tr(
+            "No forcefields contain the property %1. Available properties "
+            "are %2.")
+                .arg(name, Sire::toString(this->propertyKeys())), CODELOC );
+                
+    return ffs;
+}
+
+/** Return the list of forcefields that match the ID "ffid" and that
+    contain the property with name 'name'
+    
+    \throw SireFF::missing_forcefield
+    \throw SireBase::missing_property
+    \throw SireError::invalid_index
+*/
+QVector<FFPtr> ForceFields::forceFieldsWithProperty(const FFID &ffid, 
+                                                    const QString &name) const
+{
+    QList<FFIdx> ffidxs = ffid.map(*this);
+    
+    QVector<FFPtr> ffs;
+    
+    foreach (FFIdx ffidx, ffidxs)
+    {
+        if (this->_pvt_forceField(ffidx).containsProperty(name))
+            ffs.append( this->_pvt_forceField(ffidx) );
+    }
+    
+    if (ffs.isEmpty())
+        throw SireBase::missing_property( QObject::tr(
+            "None of the forcefields that match the ID %1 contain the "
+            "property called %2. Available properties are %3.")
+                .arg(ffid.toString(), name, 
+                     Sire::toString(this->propertyKeys(ffid))), CODELOC );
+                     
+    return ffs;
+}
+   
+/** Return the list of all forcefields that match the ID 'ffid'
+
+    \throw SireFF::missing_forcefield
+    \throw SireError::invalid_index
+*/
+QVector<FFPtr> ForceFields::forceFields(const FFID &ffid) const
+{
+    QList<FFIdx> ffidxs = ffid.map(*this);
+    
+    QVector<FFPtr> ffs;
+    ffs.reserve(ffidxs.count());
+    
+    foreach (FFIdx ffidx, ffidxs)
+    {
+        ffs.append( this->_pvt_forceField(ffidx) );
+    }
+    
+    return ffs;
+}
+
+/** Return the names of all of the forcefields that match the ID 'ffid'
+
+    \throw SireFF::missing_forcefield
+    \throw SireError::invalid_index
+*/
+QList<FFName> ForceFields::ffNames(const FFID &ffid) const
+{
+    QList<FFIdx> ffidxs = ffid.map(*this);
+
+    QList<FFName> names;
+    
+    foreach (FFIdx ffidx, ffidxs)
+    {
+        names.append( this->_pvt_forceField(ffidx).name() );
+    }
+    
+    return names;
 }
 
 /** Return an array containing all of the forcefields in this set, ordered

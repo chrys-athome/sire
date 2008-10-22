@@ -200,14 +200,18 @@ public:
     
     bool hasComponent(const Symbol &symbol) const;
     
-    QHash<FFName,PropertyPtr> property(const QString &name) const;
+    const Property& property(const QString &name) const;
 
     const Property& property(const FFID &ffid, const QString &name) const;
+
+    QStringList propertyKeys() const;
+    QStringList propertyKeys(const FFID &ffid) const;
 
     bool containsProperty(const QString &name) const;
     bool containsProperty(const FFID &ffid, const QString &name) const;
     
-    QHash<FFName,Properties> properties() const;
+    Properties properties() const;
+    Properties properties(const FFID &ffid) const;
     
     const SystemMonitors& monitors() const;
     const ForceFields& forceFields() const;

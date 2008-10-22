@@ -762,8 +762,9 @@ Symbols System::components() const
     forcefields that contain this property
     
     \throw SireBase::missing_property
+    \throw SireBase::duplicate_property
 */
-QHash<FFName,PropertyPtr> System::property(const QString &name) const
+const Property& System::property(const QString &name) const
 {
     return this->_pvt_forceFields().property(name);
 }
@@ -771,8 +772,8 @@ QHash<FFName,PropertyPtr> System::property(const QString &name) const
 /** Return the value of the property 'name' in the forcefield identified 
     by the ID 'ffid'
     
+    \throw SireBase::duplicate_property
     \throw SireFF::missing_forcefield
-    \throw SireFF::duplicate_forcefield
     \throw SireBase::missing_property
     \throw SireError::invalid_index
 */
@@ -780,6 +781,23 @@ const Property& System::property(const FFID &ffid, const QString &name) const
 {
     return this->_pvt_forceFields().property(ffid, name);
 }
+
+/** Return the names of all of the properties of this system */
+QStringList System::propertyKeys() const
+{
+    return this->_pvt_forceFields().propertyKeys();
+}
+
+/** Return the names of all of the properties of the forcefields in 
+    this system that match the ID 'ffid'
+
+    \throw SireFF::missing_forcefield
+    \throw SireError::invalid_index
+*/
+QStringList System::propertyKeys(const FFID &ffid) const
+{
+    return this->_pvt_forceFields().propertyKeys(ffid);
+}    
 
 /** Return whether or not any of the forcefields contain a property called 'name' */
 bool System::containsProperty(const QString &name) const
@@ -795,11 +813,26 @@ bool System::containsProperty(const FFID &ffid, const QString &name) const
 }
 
 /** Return the values of all of the properties of all of the forcefields,
-    indexed by the name of the forcefield */
-QHash<FFName,Properties> System::properties() const
+    indexed by the name of the forcefield 
+    
+    \throw SireBase::duplicate_property
+*/
+Properties System::properties() const
 {
     return this->_pvt_forceFields().properties();
 }
+
+/** Return the values of all of the properties of all of the forcefields
+    that match the ID 'ffid'
+    
+    \throw SireBase::duplicate_property
+    \throw SireFF::missing_forcefield
+    \throw SireError::invalid_index
+*/
+Properties System::properties(const FFID &ffid) const
+{
+    return this->_pvt_forceFields().properties(ffid);
+} 
 
 /** Return the list of all monitors of this system */
 const SystemMonitors& System::monitors() const
