@@ -92,6 +92,7 @@ using SireBase::Property;
 using SireBase::PropertyPtr;
 using SireBase::Properties;
 using SireBase::PropertyMap;
+using SireBase::PropertyName;
 using SireBase::MajorMinorVersion;
 using SireBase::Version;
 
@@ -200,9 +201,9 @@ public:
     
     bool hasComponent(const Symbol &symbol) const;
     
-    const Property& property(const QString &name) const;
+    const Property& property(const PropertyName &name) const;
 
-    const Property& property(const FFID &ffid, const QString &name) const;
+    const Property& property(const FFID &ffid, const PropertyName &name) const;
 
     QStringList propertyKeys() const;
     QStringList propertyKeys(const FFID &ffid) const;

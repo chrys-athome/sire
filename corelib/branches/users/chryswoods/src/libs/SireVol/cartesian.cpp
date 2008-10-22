@@ -696,39 +696,28 @@ CoordGroup Cartesian::mapFromCartesian(const CoordGroup &group) const
     return group;
 }
 
-/** Return a copy of an array of passed CoordGroups that have been mapped
-    from an infinite cartesian space into this space. */
-QVector<CoordGroup> Cartesian::mapFromCartesian(
-                                      const QVector<CoordGroup> &groups) const
+CoordGroup Cartesian::mapToCartesian(const CoordGroup &group) const
+{
+    return group;
+}
+
+CoordGroupArray Cartesian::mapFromCartesian(const CoordGroupArray &groups) const
 {
     return groups;
 }
 
-/** Return a copy of the passed CoordGroup that has been mapped from
-    another copy of this space into this space (e.g. map from a
-    small PeriodicBox to a large PeriodicBox) - note that the
-    other space must have the same type as this space!
-
-    \throw SireError::incompatible_error
-*/
-CoordGroup Cartesian::mapFromSelf(const CoordGroup &group,
-                                  const Space &other) const
+CoordGroupArray Cartesian::mapToCartesian(const CoordGroupArray &groups) const
 {
-    assertCompatible(other);
-    return group;
+    return groups;
 }
 
-/** Return a copy an array of passed CoordGroups that have been mapped
-    from another copy of this space into this space (e.g. map from a
-    small PeriodicBox to a large PeriodicBox) - note that the
-    other space must have the same type as this space!
-
-    \throw SireError::incompatible_error
-*/
-QVector<CoordGroup> Cartesian::mapFromSelf(const QVector<CoordGroup> &groups,
-                                           const Space &other) const
+CoordGroupArray Cartesian::mapAsOneFromCartesian(const CoordGroupArray &groups) const
 {
-    assertCompatible(other);
+    return groups;
+}
+
+CoordGroupArray Cartesian::mapAsOneToCartesian(const CoordGroupArray &groups) const
+{
     return groups;
 }
 
@@ -743,8 +732,8 @@ CoordGroup Cartesian::getMinimumImage(const CoordGroup &group, const Vector&) co
 /** Return the minimum image copy of 'groups' with respect to 'center'.
     In this case, as this is not a periodic space, this just returns
     'groups' */
-QVector<CoordGroup> Cartesian::getMinimumImage(const QVector<CoordGroup> &groups,
-                                               const Vector&) const
+CoordGroupArray Cartesian::getMinimumImage(const CoordGroupArray &groups,
+                                           const Vector&) const
 {
     return groups;
 }

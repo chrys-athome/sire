@@ -238,29 +238,24 @@ public:
     virtual CoordGroup mapFromCartesian(const CoordGroup &group) const=0;
 
     /** Return a copy of an array of passed CoordGroups that have been mapped
-        from an infinite cartesian space into this space. */
-    virtual QVector<CoordGroup> mapFromCartesian(
-                                    const QVector<CoordGroup> &groups) const=0;
+        individually from an infinite cartesian space into this space. */
+    virtual CoordGroupArray mapFromCartesian(const CoordGroupArray &groups) const=0;
 
-    /** Return a copy of the passed CoordGroup that has been mapped from
-        another copy of this space into this space (e.g. map from a
-        small PeriodicBox to a large PeriodicBox) - note that the
-        other space must have the same type as this space!
-
-        \throw SireError::incompatible_error
-    */
-    virtual CoordGroup mapFromSelf(const CoordGroup &group,
-                                   const Space &other) const=0;
-
-    /** Return a copy an array of passed CoordGroups that have been mapped
-        from another copy of this space into this space (e.g. map from a
-        small PeriodicBox to a large PeriodicBox) - note that the
-        other space must have the same type as this space!
-
-        \throw SireError::incompatible_error
-    */
-    virtual QVector<CoordGroup> mapFromSelf(const QVector<CoordGroup> &groups,
-                                            const Space &other) const=0;
+    /** Return a copy of the passed CoordGroup that has been mapped into
+        the infinite cartesian space from this space */
+    virtual CoordGroup mapToCartesian(const CoordGroup &group) const=0;
+    
+    /** Return a copy of an array of passed CoordGroups that have been mapped
+        individually from to an infinite cartesian space from this space */
+    virtual CoordGroupArray mapToCartesian(const CoordGroupArray &groups) const=0;
+    
+    /** Return a copy of the passed CoordGroups that have been mapped as
+        a single unit from an infinite cartesian space into this space */
+    virtual CoordGroupArray mapAsOneFromCartesian(const CoordGroupArray &groups) const=0;
+    
+    /** Return a copy of the passed CoordGroups that have been mapped as a single
+        unit to the infinite Cartesian space from this space */
+    virtual CoordGroupArray mapAsOneToCartesian(const CoordGroupArray &groups) const=0;
 
     /** Return the minimum image copy of 'group' with respect to 'center'.
         For periodic spaces, this translates 'group' into the box that
@@ -273,8 +268,8 @@ public:
         For periodic spaces, this translates 'groups' into the box that
         has its center at 'center' (i.e. returns the closest copy of
         each 'group' to 'center' according to the minimum image convention) */
-    virtual QVector<CoordGroup> getMinimumImage(const QVector<CoordGroup> &groups,
-                                                const Vector &center) const=0;
+    virtual CoordGroupArray getMinimumImage(const CoordGroupArray &groups,
+                                            const Vector &center) const=0;
 
     /** Return a list of copies of CoordGroup 'group' that are within
         'distance' of the CoordGroup 'center', translating 'group' so that

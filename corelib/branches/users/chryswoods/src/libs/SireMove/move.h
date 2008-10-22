@@ -55,6 +55,12 @@ namespace SireSystem
 class System;
 }
 
+namespace SireMol
+{
+class PartialMolecule;
+class Molecules;
+}
+
 namespace SireMove
 {
 
@@ -65,6 +71,9 @@ using SireCAS::Symbol;
 using SireSystem::System;
 
 using SireBase::PropertyName;
+
+using SireMol::PartialMolecule;
+using SireMol::Molecules;
 
 /** This is the base class of all of the move classes
 
@@ -101,6 +110,9 @@ public:
     const PropertyName& spaceProperty() const;
     void setSpaceProperty(const PropertyName &spaceproperty);
 
+    const PropertyName& coordinatesProperty() const;
+    void setCoordinatesProperty(const PropertyName &coordsproperty);
+
     virtual Ensemble ensemble() const=0;
 
     bool isConstantEnergy() const;
@@ -130,7 +142,7 @@ protected:
 
     bool operator==(const Move &other) const;
     bool operator!=(const Move &other) const;
-
+    
     virtual void _pvt_setTemperature(
                             const SireUnits::Dimension::Temperature &temperature);
                             
@@ -144,6 +156,11 @@ private:
     /** The component of the energy that describes the Hamiltonian
         that this move samples */
     Symbol nrgcomponent;
+    
+    /** The name of the property that contains the Molecule coordinates
+        property. This move will only affect the coordinates that are
+        contained in this property */
+    PropertyName coordsproperty;
     
     /** The name of the property that contains the System space property.
         This is necessary as we may have to map the molecules back into

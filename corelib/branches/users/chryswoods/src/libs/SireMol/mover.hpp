@@ -38,10 +38,17 @@
 
 SIRE_BEGIN_HEADER
 
+namespace SireVol
+{
+class Space;
+}
+
 namespace SireMol
 {
 
 class AtomMatcher;
+
+using SireVol::Space;
 
 /** This manipulator class is used to move the atoms in 
     a molecule view object. 
@@ -82,6 +89,11 @@ public:
     Mover<T>& changeFrame(const AxisSet &from_frame,
                           const AxisSet &to_frame,
                           const PropertyMap &map = PropertyMap());
+    
+    Mover<T>& toCartesian(const Space &from_space,
+                          const PropertyMap &map = PropertyMap());
+    Mover<T>& fromCartesian(const Space &to_space,
+                            const PropertyMap &map = PropertyMap());
     
     Mover<T>& translate(const Vector &delta,
                         const PropertyMap &map = PropertyMap());
@@ -219,6 +231,30 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::mapInto(const AxisSet &axes, const PropertyMap &map)
 {
     MoverBase::mapInto(*(this->d), axes, map);
+    return *this;
+}
+
+/** Map the coordinates of all atoms in the molecule from the space 'space'  
+    to the infinite cartesian space (3D, no boundary conditions).
+    Note that this moves *all* of the atoms in the molecule - including the
+    atoms which aren't selected as part of this molecule */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Mover<T>& Mover<T>::toCartesian(const Space &space, const PropertyMap &map)
+{
+    MoverBase::toCartesian(*(this->d), space, map);
+    return *this;
+}
+
+/** Map the coordinates of all atoms in the molecule from the infinite cartesian
+    space into the space 'space'. Note that this moves *all* of the atoms in 
+    the molecule - including the atoms which aren't selected as part of this
+    molecule */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Mover<T>& Mover<T>::fromCartesian(const Space &space, const PropertyMap &map)
+{
+    MoverBase::fromCartesian(*(this->d), space, map);
     return *this;
 }
 

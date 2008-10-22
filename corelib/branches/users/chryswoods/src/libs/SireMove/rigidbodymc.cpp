@@ -34,6 +34,8 @@
 
 #include "SireMol/partialmolecule.h"
 
+#include "SireVol/space.h"
+
 #include "SireMaths/quaternion.h"
 
 #include "SireUnits/units.h"
@@ -48,6 +50,7 @@ using namespace SireMove;
 using namespace SireSystem;
 using namespace SireMol;
 using namespace SireUnits;
+using namespace SireVol;
 using namespace SireStream;
 using namespace SireMaths;
 
@@ -208,6 +211,12 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
     
     try
     {
+        PropertyMap map;
+        map.set("coordinates", this->coordinatesProperty());
+        
+        const Space &space = system.property( this->spaceProperty() )
+                                   .asA<Space>();
+    
         for (int i=0; i<nmoves; ++i)
         {
             //get the old total energy of the system
@@ -224,6 +233,7 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
             //randomly select a molecule to move
             tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
 
+            const PartialMolecule &oldmol = mol_and_bias.get<0>();
             double old_bias = mol_and_bias.get<1>();
 
             //now translate and rotate the molecule
@@ -232,15 +242,17 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
             Quaternion rotdelta( rdel * generator().rand(),
                                  generator().vectorOnSphere() );
 
-            const PartialMolecule &oldmol = mol_and_bias.get<0>();
-
+            //perform the move - need to map to the infinite cartesian
+            //space, make the move, and then convert back again
             PartialMolecule newmol = oldmol.move()
+                                        .toCartesian(space)
                                         .rotate(rotdelta, 
                                                 oldmol.evaluate().centerOfGeometry())
                                         .translate(delta)
+                                        .fromCartesian(space)
                                         .commit();
 
-            //update the simulation with the new coordinates
+            //update the system with the new coordinates
             system.update(newmol);
 
             //calculate the energy of the system

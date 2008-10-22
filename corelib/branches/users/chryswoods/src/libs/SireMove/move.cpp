@@ -59,8 +59,11 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Move &move)
 {
     writeHeader(ds, r_move, 1);
     
-    ds << move.nrgcomponent
-       << static_cast<const Property&>(move);
+    SharedDataStream sds(ds);
+    
+    sds << move.nrgcomponent
+        << move.coordsproperty << move.spaceproperty
+        << static_cast<const Property&>(move);
     
     return ds;
 }
@@ -72,8 +75,11 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Move &move)
     
     if (v == 1)
     {
-        ds >> move.nrgcomponent
-           >> static_cast<Property&>(move);
+        SharedDataStream sds(ds);
+    
+        sds >> move.nrgcomponent
+            >> move.coordsproperty >> move.spaceproperty
+            >> static_cast<Property&>(move);
     }
     else
         throw version_error(v, "1", r_move, CODELOC);
@@ -82,7 +88,9 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Move &move)
 }
 
 /** Constructor */
-Move::Move() : Property(), nrgcomponent(ForceFields::totalComponent())
+Move::Move() : Property(), 
+               nrgcomponent(ForceFields::totalComponent()),
+               coordsproperty("coordinates"), spaceproperty("space")
 {}
 
 /** Copy constructor */
@@ -97,6 +105,9 @@ Move::~Move()
 Move& Move::operator=(const Move &other)
 {
     nrgcomponent = other.nrgcomponent;
+    coordsproperty = other.coordsproperty;
+    spaceproperty = other.spaceproperty;
+    
     Property::operator=(other);
     
     return *this;
@@ -105,13 +116,17 @@ Move& Move::operator=(const Move &other)
 /** Comparison operator */
 bool Move::operator==(const Move &other) const
 {
-    return nrgcomponent == other.nrgcomponent;
+    return nrgcomponent == other.nrgcomponent and
+           coordsproperty == other.coordsproperty and
+           spaceproperty == other.spaceproperty;
 }
 
 /** Comparison operator */
 bool Move::operator!=(const Move &other) const
 {
-    return nrgcomponent != other.nrgcomponent;
+    return nrgcomponent != other.nrgcomponent or
+           coordsproperty != other.coordsproperty or
+           spaceproperty != other.spaceproperty;
 }
 
 /** Perform a single move on the system 'system' without 
@@ -153,6 +168,18 @@ void Move::setSpaceProperty(const PropertyName &space_property)
 const PropertyName& Move::spaceProperty() const
 {
     return spaceproperty;
+}
+
+/** Set the property used to locate the molecule coordinates to be moved */
+void Move::setCoordinatesProperty(const PropertyName &coords_property)
+{
+    coordsproperty = coords_property;
+}
+
+/** Return the property used to find the molecule coordinates to be moves */
+const PropertyName& Move::coordinatesProperty() const
+{
+    return coordsproperty;
 }
 
 /** Return whether or not this move keeps the total energy constant */

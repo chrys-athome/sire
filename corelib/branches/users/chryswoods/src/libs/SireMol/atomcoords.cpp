@@ -28,6 +28,8 @@
 
 #include "atomcoords.h"
 
+#include "SireVol/space.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -368,6 +370,20 @@ AtomProperty<Vector>& AtomProperty<Vector>::set(CGIdx cgidx, const CoordGroup &c
     coords.update(i, cgroup);
 
     return *this;
+}
+
+/** Convert these coordinates so that they are correct for the infinite
+    cartesian space (assuming that they are currently in the space 'space') */
+void AtomProperty<Vector>::convertToCartesian(const Space &space)
+{
+    coords = space.mapAsOneToCartesian(coords);
+}
+
+/** Convert these coordinates so that they are correct for the space 'space'
+    (assuming that they are currently in the infinite cartesian space) */
+void AtomProperty<Vector>::convertFromCartesian(const Space &space)
+{
+    coords = space.mapAsOneFromCartesian(coords);
 }
 
 /** Translate all of the atoms in this container by 'delta' */

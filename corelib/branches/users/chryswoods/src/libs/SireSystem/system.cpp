@@ -764,9 +764,12 @@ Symbols System::components() const
     \throw SireBase::missing_property
     \throw SireBase::duplicate_property
 */
-const Property& System::property(const QString &name) const
+const Property& System::property(const PropertyName &name) const
 {
-    return this->_pvt_forceFields().property(name);
+    if (name.hasSource())
+        return this->_pvt_forceFields().property(name.source());
+    else
+        return name.value();
 }
 
 /** Return the value of the property 'name' in the forcefield identified 
@@ -777,9 +780,12 @@ const Property& System::property(const QString &name) const
     \throw SireBase::missing_property
     \throw SireError::invalid_index
 */
-const Property& System::property(const FFID &ffid, const QString &name) const
+const Property& System::property(const FFID &ffid, const PropertyName &name) const
 {
-    return this->_pvt_forceFields().property(ffid, name);
+    if (name.hasSource())
+        return this->_pvt_forceFields().property(ffid, name.source());
+    else
+        return name.value();
 }
 
 /** Return the names of all of the properties of this system */

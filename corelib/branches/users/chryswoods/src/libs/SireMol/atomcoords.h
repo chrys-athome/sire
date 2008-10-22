@@ -52,6 +52,11 @@ class AxisSet;
 class Matrix;
 }
 
+namespace SireVol
+{
+class Space;
+}
+
 namespace SireMol
 {
 
@@ -62,6 +67,7 @@ using SireMaths::Matrix;
 
 using SireVol::CoordGroup;
 using SireVol::CoordGroupArray;
+using SireVol::Space;
 
 /** This is an explicit specialisation of AtomProperty<T> for the Vector
     class, as the Vector implies coordinates, which are arranged into
@@ -143,6 +149,9 @@ public:
     void changeFrame(const AxisSet &from_frame, const AxisSet &to_frame);
     void changeFrame(CGIdx cgidx, const AxisSet &from_frame, 
                                   const AxisSet &to_frame);
+    
+    void convertToCartesian(const Space &space);
+    void convertFromCartesian(const Space &space);
     
     const CoordGroup* data() const;
     const CoordGroup* constData() const;

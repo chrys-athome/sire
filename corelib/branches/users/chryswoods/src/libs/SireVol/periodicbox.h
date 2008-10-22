@@ -119,17 +119,18 @@ public:
     double minimumDistance(const CoordGroup &group0, const CoordGroup &group1) const;
 
     CoordGroup mapFromCartesian(const CoordGroup &group) const;
-
-    QVector<CoordGroup> mapFromCartesian(const QVector<CoordGroup> &groups) const;
-
-    CoordGroup mapFromSelf(const CoordGroup &group, const Space &other) const;
-    QVector<CoordGroup> mapFromSelf(const QVector<CoordGroup> &groups,
-                                    const Space &other) const;
+    CoordGroup mapToCartesian(const CoordGroup &group) const;
+    
+    CoordGroupArray mapFromCartesian(const CoordGroupArray &groups) const;
+    CoordGroupArray mapToCartesian(const CoordGroupArray &groups) const;
+    
+    CoordGroupArray mapAsOneFromCartesian(const CoordGroupArray &groups) const;
+    CoordGroupArray mapAsOneToCartesian(const CoordGroupArray &groups) const;
 
     CoordGroup getMinimumImage(const CoordGroup &group, const Vector &center) const;
 
-    QVector<CoordGroup> getMinimumImage(const QVector<CoordGroup> &groups,
-                                        const Vector &center) const;
+    CoordGroupArray getMinimumImage(const CoordGroupArray &groups,
+                                    const Vector &center) const;
 
     QList< boost::tuple<double,CoordGroup> >
                getCopiesWithin(const CoordGroup &group,
@@ -141,8 +142,8 @@ protected:
 
     Vector wrapDelta(const Vector &v0, const Vector &v1) const;
 
-    QVector<CoordGroup> _pvt_getMinimumImage(
-                                const QVector<CoordGroup> &groups,
+    CoordGroupArray _pvt_getMinimumImage(
+                                const CoordGroupArray &groups,
                                 const Vector &point) const;
 
     static int getWrapVal(double delta, double invlgth, double halflgth);

@@ -41,6 +41,11 @@ namespace SireMaths
 class AxisSet;
 }
 
+namespace SireVol
+{
+class Space;
+}
+
 namespace SireMol
 {
 
@@ -60,6 +65,8 @@ using SireMaths::Matrix;
 using SireMaths::AxisSet;
 
 using SireBase::PropertyMap;
+
+using SireVol::Space;
 
 /** This class provides the template-independent part
     of Mover<T>. This class is not designed to be used
@@ -152,6 +159,12 @@ protected:
     static void changeFrame(MoleculeData &data, const AtomSelection &selected_atoms,
                             const AxisSet &from_axes, const AxisSet &to_axes,
                             const PropertyMap &map);
+
+    static void toCartesian(MoleculeData &data,
+                            const Space &space, const PropertyMap &map);
+                     
+    static void fromCartesian(MoleculeData &data,
+                              const Space &space, const PropertyMap &map);
 
     static void translate(MoleculeData &view,
                           const AtomSelection &selected_atoms,
