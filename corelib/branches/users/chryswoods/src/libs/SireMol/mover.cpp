@@ -44,6 +44,7 @@
 #include "SireMaths/axisset.h"
 
 #include "SireVol/coordgroup.h"
+#include "SireVol/space.h"
 
 #include "SireMol/errors.h"
 
@@ -520,6 +521,27 @@ void MoverBase::fromCartesian(MoleculeData &moldata, const Space &space,
 
     //map the coordinates
     coords.convertFromCartesian(space);
+
+    //save the new coordinates
+    if (coord_property.hasSource())
+        moldata.setProperty(coord_property.source(), coords);
+}
+
+/** Map all of the atoms in this molecule from the space 'from_space'
+    to the space 'to_space' assuming that they are already in the 
+    space 'from_space' */
+void MoverBase::changeSpace(MoleculeData &moldata, 
+                            const Space &from_space, const Space &to_space,
+                            const PropertyMap &map)
+{
+    //get the name of the property that holds the coordinates
+    PropertyName coord_property = map["coordinates"];
+
+    //get the coordinates to be mapped
+    AtomCoords coords = moldata.property(coord_property).asA<AtomCoords>();
+
+    //map the coordinates
+    coords.changeSpace(from_space, to_space);
 
     //save the new coordinates
     if (coord_property.hasSource())

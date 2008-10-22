@@ -171,6 +171,8 @@ void MTSMC::setFastMoves(const Moves &fast_moves)
     
     MovesPtr new_fastmoves = fast_moves;
     new_fastmoves.edit().setEnergyComponent(fastcomponent);
+
+    MonteCarlo::setEnsemble(new_fastmoves.read().ensemble());
     
     fastmoves = new_fastmoves;
 }

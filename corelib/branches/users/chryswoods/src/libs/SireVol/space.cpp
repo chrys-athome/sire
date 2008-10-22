@@ -118,3 +118,78 @@ const Cartesian& Space::null()
     
     return *(shared_null.constData());
 }
+
+/** Return a copy of the passed CoordGroup mapped from this space to 
+    the other space 'space' */
+CoordGroup Space::mapToSpace(const CoordGroup &group, const Space &space) const
+{
+    if (this->isA<Cartesian>())
+        return space.mapFromCartesian(group);
+
+    if (not space.isA<Cartesian>())
+        throw SireError::incompatible_error( QObject::tr(
+            "There is no algorithm available that can map a molecule "
+            "from the space %1 to the space %2.")
+                .arg(this->what()).arg(space.what()), CODELOC );
+        
+    
+    return this->mapToCartesian(group);
+}
+
+/** Return a copy of the passed CoordGroups mapped individually from this
+    space to the other space 'space' */
+CoordGroupArray Space::mapToSpace(const CoordGroupArray &groups,
+                                  const Space &space) const
+{
+    if (this->isA<Cartesian>())
+        return space.mapFromCartesian(groups);
+
+    if (not space.isA<Cartesian>())
+        throw SireError::incompatible_error( QObject::tr(
+            "There is no algorithm available that can map a molecule "
+            "from the space %1 to the space %2.")
+                .arg(this->what()).arg(space.what()), CODELOC );
+        
+    
+    return this->mapToCartesian(groups);
+}
+                                   
+/** Return a copy of the passed CoordGroups mapped as a single unit from this
+    space to the other space 'space' */
+CoordGroupArray Space::mapAsOneToSpace(const CoordGroupArray &groups,
+                                       const Space &space) const
+{
+    if (this->isA<Cartesian>())
+        return space.mapAsOneFromCartesian(groups);
+
+    if (not space.isA<Cartesian>())
+        throw SireError::incompatible_error( QObject::tr(
+            "There is no algorithm available that can map a molecule "
+            "from the space %1 to the space %2.")
+                .arg(this->what()).arg(space.what()), CODELOC );
+        
+    
+    return this->mapAsOneToCartesian(groups);
+}
+
+/** Return the CoordGroup mapped from the space 'space' to this space */
+CoordGroup Space::mapFromSpace(const CoordGroup &group, const Space &space) const
+{
+    return space.mapToSpace(group, *this);
+}
+
+/** Return the array of CoordGroups mapped individually from the space
+    'space' to this space */
+CoordGroupArray Space::mapFromSpace(const CoordGroupArray &groups, 
+                                    const Space &space) const
+{
+    return space.mapToSpace(groups, *this);
+}
+
+/** Return the array of CoordGroups mapped as a single unit from
+    the space 'space' to this space */
+CoordGroupArray Space::mapAsOneFromSpace(const CoordGroupArray &groups,
+                                         const Space &space) const
+{
+    return space.mapAsOneToSpace(groups, *this);
+}

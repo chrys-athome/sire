@@ -113,7 +113,7 @@ public:
     SireUnits::Dimension::Length maximumTranslation() const;
     SireUnits::Dimension::Angle maximumRotation() const;
 
-    void move(System &system, int nmoves, bool record_stats);
+    void move(System &system, int nmoves, bool record_stats=true);
 
 protected:
     void _pvt_setTemperature(const SireUnits::Dimension::Temperature &temperature);

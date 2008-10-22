@@ -95,6 +95,9 @@ public:
     Mover<T>& fromCartesian(const Space &to_space,
                             const PropertyMap &map = PropertyMap());
     
+    Mover<T>& changeSpace(const Space &from_space, const Space &to_space,
+                          const PropertyMap &map = PropertyMap());
+                      
     Mover<T>& translate(const Vector &delta,
                         const PropertyMap &map = PropertyMap());
     
@@ -255,6 +258,19 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::fromCartesian(const Space &space, const PropertyMap &map)
 {
     MoverBase::fromCartesian(*(this->d), space, map);
+    return *this;
+}
+
+/** Change the space of all atoms in the molecule from 'from_space' to
+    'to_space' - this assumes that the atoms are already in 'from_space'.
+    This moves *all* atoms in the molecule, even those which aren't selected
+    as part of this molecule */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Mover<T>& Mover<T>::changeSpace(const Space &from_space, const Space &to_space,
+                                const PropertyMap &map)
+{
+    MoverBase::changeSpace(*(this->d), from_space, to_space, map);
     return *this;
 }
 

@@ -761,6 +761,100 @@ CoordGroupArray PeriodicBox::mapAsOneToCartesian(const CoordGroupArray &groups) 
     return groups;
 }
 
+/** Return the vector by which the point 'point' would need to be translated
+    so that it is mapped from this PeriodicBox into 'other' */
+Vector PeriodicBox::getScaleDelta(const Vector &point, 
+                                  const PeriodicBox &other) const
+{
+    //now get the scale factor for the change in dimension
+    Vector scale( this->boxlength.x() * other.invlength.x(),
+                  this->boxlength.y() * other.invlength.y(),
+                  this->boxlength.z() * other.invlength.z() );
+
+    //get the vector needed to translate this group into the central box
+    Vector wrapdelta = other.wrapDelta(other.center(), point);
+
+    //get the vector from the center of the other box to the point
+    //it is in the central box
+    Vector delta = point - wrapdelta - other.center();
+
+    //multiply this by 'scale'
+    Vector new_delta = Vector( (scale.x() - 1) * delta.x(),
+                               (scale.y() - 1) * delta.y(),
+                               (scale.z() - 1) * delta.z() );
+
+    return this->center() - other.center() + new_delta - wrapdelta;
+}
+
+/** Return a copy of the passed CoordGroup mapped from this space to 
+    the other space 'space' */
+CoordGroup PeriodicBox::mapToSpace(const CoordGroup &group, const Space &space) const
+{
+    if (not space.isA<PeriodicBox>())
+        return Cartesian::mapToSpace(group, space);
+    
+    const PeriodicBox &other = space.asA<PeriodicBox>();
+    
+    if (this->operator==(other))
+        //there is nothing to do
+        return group;
+
+    return group.edit().translate( this->getScaleDelta(group.aaBox().center(),
+                                                       other) ).commit();
+}
+
+/** Return a copy of the passed CoordGroups mapped individually from this
+    space to the other space 'space' */
+CoordGroupArray PeriodicBox::mapToSpace(const CoordGroupArray &groups,
+                                        const Space &space) const
+{
+    if (not space.isA<PeriodicBox>())
+        return Cartesian::mapToSpace(groups, space);
+
+    const PeriodicBox &other = space.asA<PeriodicBox>();
+    
+    if (this->operator==(other))
+        //there is nothing to do
+        return groups;
+
+    int ncg = groups.count();
+    const CoordGroup *group_array = groups.constData();
+
+    //create a new array of the right size
+    QVector<CoordGroup> moved_groups(ncg);
+    CoordGroup *moved_array = moved_groups.data();
+
+    for (int i=0; i<ncg; ++i)
+    {
+        moved_array[i] = group_array[i].edit().translate(
+                                this->getScaleDelta( group_array[i].aaBox().center(),
+                                                     other ) ).commit();
+    }
+
+    return CoordGroupArray(moved_groups);    
+}
+                                   
+/** Return a copy of the passed CoordGroups mapped as a single unit from this
+    space to the other space 'space' */
+CoordGroupArray PeriodicBox::mapAsOneToSpace(const CoordGroupArray &groups,
+                                             const Space &space) const
+{
+    if (not space.isA<PeriodicBox>())
+        return Cartesian::mapAsOneToSpace(groups, space);
+
+    const PeriodicBox &other = space.asA<PeriodicBox>();
+    
+    if (this->operator==(other))
+        //there is nothing to do
+        return groups;
+
+    CoordGroupArray new_groups(groups);
+    
+    new_groups.translate( this->getScaleDelta(groups.aaBox().center(), other) );
+                          
+    return new_groups;
+}
+
 /** Return a list of copies of CoordGroup 'group' that are within
     'distance' of the CoordGroup 'center', translating 'group' so that
     it has the right coordinates to be around 'center'. Note that multiple

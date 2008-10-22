@@ -204,6 +204,9 @@ const MoleculeGroup& RigidBodyMC::moleculeGroup() const
 /** Attempt 'n' rigid body moves of the views of the system 'system' */
 void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
 {
+    if (nmoves <= 0)
+        return;
+
     //save our, and the system's, current state
     RigidBodyMC old_state(*this);
 

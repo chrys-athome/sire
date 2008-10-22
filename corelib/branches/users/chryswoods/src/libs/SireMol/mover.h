@@ -166,6 +166,10 @@ protected:
     static void fromCartesian(MoleculeData &data,
                               const Space &space, const PropertyMap &map);
 
+    static void changeSpace(MoleculeData &data,
+                            const Space &from_space, const Space &to_space,
+                            const PropertyMap &map);
+
     static void translate(MoleculeData &view,
                           const AtomSelection &selected_atoms,
                           const Vector &delta,

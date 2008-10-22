@@ -103,7 +103,7 @@ public:
     const Symbol& fastEnergyComponent() const;
     const Symbol& slowEnergyComponent() const;
     
-    void move(System &system, int nmoves, bool record_stats);
+    void move(System &system, int nmoves, bool record_stats=true);
 
 private:
     /** The collection of fast moves that will be applied to the system */

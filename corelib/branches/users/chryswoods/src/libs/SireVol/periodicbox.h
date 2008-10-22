@@ -127,6 +127,13 @@ public:
     CoordGroupArray mapAsOneFromCartesian(const CoordGroupArray &groups) const;
     CoordGroupArray mapAsOneToCartesian(const CoordGroupArray &groups) const;
 
+    CoordGroup mapToSpace(const CoordGroup &group, const Space &space) const;
+    CoordGroupArray mapToSpace(const CoordGroupArray &groups,
+                               const Space &space) const;
+                                       
+    CoordGroupArray mapAsOneToSpace(const CoordGroupArray &groups,
+                                    const Space &space) const;
+
     CoordGroup getMinimumImage(const CoordGroup &group, const Vector &center) const;
 
     CoordGroupArray getMinimumImage(const CoordGroupArray &groups,
@@ -147,6 +154,8 @@ protected:
                                 const Vector &point) const;
 
     static int getWrapVal(double delta, double invlgth, double halflgth);
+
+    Vector getScaleDelta(const Vector &point, const PeriodicBox &other) const;
 
     /** The origin of the box (minimum coordinates) */
     Vector mincoords;

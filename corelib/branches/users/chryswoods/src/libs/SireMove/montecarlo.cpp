@@ -173,7 +173,7 @@ void MonteCarlo::clearMoveStatistics()
     nreject = 0;
 }
 
-/** Perform the Monte Carlo test, using the supplied change in energy
+/** Perform the NVT Monte Carlo test, using the supplied change in energy
     and the supplied change in biasing probabilities */
 bool MonteCarlo::test(double new_energy, double old_energy,
                       double new_bias, double old_bias)
@@ -194,7 +194,7 @@ bool MonteCarlo::test(double new_energy, double old_energy,
     }
 }
 
-/** Perform the Monte Carlo test, using the supplied change in energy
+/** Perform the NVT Monte Carlo test, using the supplied change in energy
     (no change in biasing factor) */
 bool MonteCarlo::test(double new_energy, double old_energy)
 {
@@ -209,6 +209,60 @@ bool MonteCarlo::test(double new_energy, double old_energy)
     double x = std::exp( beta*(new_energy - old_energy) );
 
     if (x > 1 or x > rangenerator.rand())
+    {
+        ++naccept;
+        return true;
+    }
+    else
+    {
+        ++nreject;
+        return false;
+    }
+}
+
+/** Perform the NPT Monte Carlo test, using the supplied change in 
+    energy and supplied change in volume (no change in biasing factor) */
+bool MonteCarlo::test(double new_energy, double old_energy,
+                      int nmolecules,
+                      const Volume &new_volume, const Volume &old_volume)
+{
+    double p_deltav = this->pressure() * (new_volume - old_volume);
+
+    double vratio = nmolecules * std::log(new_volume / old_volume);
+
+    double beta = -1.0 / (k_boltz * ensmble.temperature().value());
+
+    double x = std::exp( -beta * (new_energy - old_energy + p_deltav) + vratio );
+
+    if ( x > 1 or x > rangenerator.rand() )
+    {
+        ++naccept;
+        return true;
+    }
+    else
+    {
+        ++nreject;
+        return false;
+    }
+}
+
+/** Perform the NPT Monte Carlo test, using the supplied change in 
+    energy and supplied change in volume (with a change in biasing factor) */
+bool MonteCarlo::test(double new_energy, double old_energy,
+                      int nmolecules,
+                      const Volume &new_volume, const Volume &old_volume,
+                      double new_bias, double old_bias)
+{
+    double p_deltav = this->pressure() * (new_volume - old_volume);
+
+    double vratio = nmolecules * std::log(new_volume / old_volume);
+
+    double beta = -1.0 / (k_boltz * ensmble.temperature().value());
+
+    double x =  (new_bias / old_bias) * 
+                    std::exp( -beta * (new_energy - old_energy + p_deltav) + vratio );
+
+    if ( x > 1 or x > rangenerator.rand() )
     {
         ++naccept;
         return true;

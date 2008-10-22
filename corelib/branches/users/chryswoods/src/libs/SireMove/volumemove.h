@@ -29,4 +29,80 @@
 #ifndef SIREMOVE_VOLUMEMOVE_H
 #define SIREMOVE_VOLUMEMOVE_H
 
+#include "montecarlo.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMove
+{
+class VolumeMove;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMove::VolumeMove&);
+QDataStream& operator>>(QDataStream&, SireMove::VolumeMove&);
+
+namespace SireMove
+{
+
+/** This is a Monte Carlo volume move. This is used to allow
+    the pressure to be kept constant
+    
+    @author Christopher Woods
+*/
+class SIREMOVE_EXPORT VolumeMove
+            : public SireBase::ConcreteProperty<VolumeMove,MonteCarlo>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const VolumeMove&);
+friend QDataStream& ::operator>>(QDataStream&, VolumeMove&);
+
+public:
+    VolumeMove();
+    
+    VolumeMove(const SireUnits::Dimension::Volume &maxchange);
+    
+    VolumeMove(const VolumeMove &other);
+    
+    ~VolumeMove();
+    
+    VolumeMove& operator=(const VolumeMove &other);
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<VolumeMove>() );
+    }
+    
+    VolumeMove* clone() const
+    {
+        return new VolumeMove(*this);
+    }
+    
+    bool operator==(const VolumeMove &other) const;
+    bool operator!=(const VolumeMove &other) const;
+    
+    void setMaximumVolumeChange(const SireUnits::Dimension::Volume &delta);
+    
+    const SireUnits::Dimension::Volume& maximumVolumeChange() const;
+    
+    void move(System &system, int nmoves, bool record_stats=true);
+
+protected:
+    void _pvt_setTemperature(const SireUnits::Dimension::Temperature &temperature);
+    void _pvt_setPressure(const SireUnits::Dimension::Pressure &pressure);
+    
+private:
+    #ifndef SKIP_BROKEN_GCCXML_PARTS
+    /** The maximum volume change */
+    SireUnits::Dimension::Volume maxchange;
+    #endif
+};
+
+}
+
+Q_DECLARE_METATYPE( SireMove::VolumeMove )
+
+SIRE_EXPOSE_CLASS( SireMove::VolumeMove )
+
+SIRE_END_HEADER
+
 #endif

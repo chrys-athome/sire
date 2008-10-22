@@ -257,6 +257,18 @@ public:
         unit to the infinite Cartesian space from this space */
     virtual CoordGroupArray mapAsOneToCartesian(const CoordGroupArray &groups) const=0;
 
+    virtual CoordGroup mapToSpace(const CoordGroup &group, const Space &space) const;
+    virtual CoordGroupArray mapToSpace(const CoordGroupArray &groups,
+                                       const Space &space) const;
+                                       
+    virtual CoordGroupArray mapAsOneToSpace(const CoordGroupArray &groups,
+                                            const Space &space) const;
+
+    CoordGroup mapFromSpace(const CoordGroup &group, const Space &space) const;
+    CoordGroupArray mapFromSpace(const CoordGroupArray &groups, const Space &space) const;
+    CoordGroupArray mapAsOneFromSpace(const CoordGroupArray &groups,
+                                      const Space &space) const;
+
     /** Return the minimum image copy of 'group' with respect to 'center'.
         For periodic spaces, this translates 'group' into the box that
         has its center at 'center' (i.e. returns the closest copy of
