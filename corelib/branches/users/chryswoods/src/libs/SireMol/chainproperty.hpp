@@ -135,6 +135,8 @@ public:
     const T* data() const;
     const T* constData() const;
 
+    bool isEmpty() const;
+
     int size() const;
     int count() const;
     
@@ -378,6 +380,14 @@ SIRE_OUTOFLINE_TEMPLATE
 const T* ChainProperty<T>::constData() const
 {
     return props.constData();
+}
+
+/** Return whether or not this property is empty */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool ChainProperty<T>::isEmpty() const
+{
+    return props.count() == 0;
 }
 
 /** Return the number of chains */

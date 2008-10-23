@@ -149,6 +149,10 @@ public:
     AtomEditor edit() const;
     Selector<Atom> selector() const;
     
+    bool isWithinResidue() const;
+    bool isWithinChain() const;
+    bool isWithinSegment() const;
+    
     Residue residue() const;
     Chain chain() const;
     Segment segment() const;

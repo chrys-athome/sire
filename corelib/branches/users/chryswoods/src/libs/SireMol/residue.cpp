@@ -312,6 +312,12 @@ Molecule Residue::molecule() const
     return Molecule(*d);
 }
 
+/** Return whether or not this residue is part of a chain */
+bool Residue::isWithinChain() const
+{
+    return d->info().isWithinChain(residx);
+}
+
 /** Return the chain that contain this residue - this throws
     an exception if this residue is not part of a chain
     
@@ -319,16 +325,7 @@ Molecule Residue::molecule() const
 */
 Chain Residue::chain() const
 {
-    ChainIdx chainidx = d->info().parentChain(residx);
-    
-    if (chainidx.isNull())
-        throw SireMol::missing_chain( QObject::tr(
-            "The residue %1:%2 (index %3) in the molecule \"%4\" "
-            "is not part of a chain!")
-                .arg(name()).arg(number()).arg(residx).arg(d->name()),
-                    CODELOC );
-
-    return Chain(this->data(), chainidx);
+    return Chain(this->data(), d->info().parentChain(residx));
 }
 
 /** Return the atom that is in this residue *and* also has the 

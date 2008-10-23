@@ -263,6 +263,24 @@ Selector<Atom> Atom::selector() const
     return Selector<Atom>(*this);
 }
 
+/** Return whether or not this atom is part of a residue */
+bool Atom::isWithinResidue() const
+{
+    return d->info().isWithinResidue(atomidx);
+}
+
+/** Return whether or not this atom is part of a chain */
+bool Atom::isWithinChain() const
+{
+    return d->info().isWithinChain(atomidx);
+}
+
+/** Return whether or not this atom is part of a segment */
+bool Atom::isWithinSegment() const
+{
+    return d->info().isWithinSegment(atomidx);
+}
+
 /** Return the residue that this atom is in 
 
     \throw SireMol::missing_residue

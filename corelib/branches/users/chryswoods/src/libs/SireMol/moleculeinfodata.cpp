@@ -1935,6 +1935,112 @@ QVector<CGAtomIdx> MoleculeInfoData::cgAtomIdxs(const SegID &segid) const
     return this->_pvt_cgAtomIdxs( this->getAtomsIn(segid) );
 }
 
+/** Return whether or not the atom with the specified index is
+    part of a residue
+    
+    \throw SireError::invalid_index
+*/
+bool MoleculeInfoData::isWithinResidue(AtomIdx atomidx) const
+{
+    ResIdx residx = atoms_by_index[atomidx.map(atoms_by_index.count())].residx;
+    return not residx.isNull();
+}
+
+/** Return whether or not the atom identified by the ID 'atomid' is
+    part of a residue
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+bool MoleculeInfoData::isWithinResidue(const AtomID &atomid) const
+{
+    ResIdx residx = atoms_by_index[ this->atomIdx(atomid) ].residx;
+    return not residx.isNull();
+}
+
+/** Return whether or not the residue at index 'residx' is 
+    part of a chain
+    
+    \throw SireError::invalid_index
+*/
+bool MoleculeInfoData::isWithinChain(ResIdx residx) const
+{
+    ChainIdx chainidx = res_by_index[residx.map(res_by_index.count())].chainidx;
+    return not chainidx.isNull();
+}
+
+/** Return whether or not the residue identified by the ID 'resid'
+    is part of a chain
+    
+    \throw SireMol::missing_residue
+    \throw SireError::duplicate_residue
+    \throw SireError::invalid_index
+*/
+bool MoleculeInfoData::isWithinChain(const ResID &resid) const
+{
+    ChainIdx chainidx = res_by_index[ this->resIdx(resid) ].chainidx;
+    return not chainidx.isNull();
+}
+
+/** Return whether or not the atom with the specified index is
+    part of a chain
+    
+    \throw SireError::invalid_index
+*/
+bool MoleculeInfoData::isWithinChain(AtomIdx atomidx) const
+{
+    ResIdx residx = atoms_by_index[atomidx.map(atoms_by_index.count())].residx;
+
+    if (not residx.isNull())
+        return this->isWithinChain(residx);
+        
+    else
+        return false;
+}
+
+/** Return whether or not the atom identified by the ID 'atomid' is
+    part of a chain
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+bool MoleculeInfoData::isWithinChain(const AtomID &atomid) const
+{
+    ResIdx residx = atoms_by_index[ this->atomIdx(atomid) ].residx;
+    
+    if (not residx.isNull())
+        return this->isWithinChain(residx);
+        
+    else    
+        return false;
+}
+
+/** Return whether or not the atom with the specified index is
+    part of a segment
+    
+    \throw SireError::invalid_index
+*/
+bool MoleculeInfoData::isWithinSegment(AtomIdx atomidx) const
+{
+    SegIdx segidx = atoms_by_index[atomidx.map(atoms_by_index.count())].segidx;
+    return not segidx.isNull();
+}
+
+/** Return whether or not the atom identified by the ID 'atomid' is
+    part of a segment
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+bool MoleculeInfoData::isWithinSegment(const AtomID &atomid) const
+{
+    SegIdx segidx = atoms_by_index[ this->atomIdx(atomid) ].segidx;
+    return not segidx.isNull();
+}
+
 /** Return the index of the chain that contains the residue with index 'residx'
 
     \throw SireMol::missing_chain

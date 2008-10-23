@@ -51,6 +51,9 @@
 #include "SireMol/reseditor.h"
 #include "SireMol/cgeditor.h"
 #include "SireMol/atomeditor.h"
+#include "SireMol/residue.h"
+#include "SireMol/chain.h"
+#include "SireMol/segment.h"
 
 #include "SireMol/cuttingfunction.h"
 
@@ -196,22 +199,22 @@ public:
     Element guessElement() const;
     Vector coordinates() const;
     
-    QString   record_name;
-    int       serial;
-    QString   name;
-    QString   altloc;
-    QString   resname;
-    QString   chainid;
-    int       resseq;
-    QString   icode;
-    double    x;
-    double    y;
-    double    z;
-    double    occupancy;
-    double    tempfactor;
-    QString   segid;
-    QString   element;
-    int       charge;
+    QString   record_name;   // ATOM or HETATM      - line[0:5]
+    int       serial;        // ATOM ID number      - line[6:11]
+    QString   name;          // atom name           - line[12:15]
+    QString   altloc;        // atom altloc         - line[16]
+    QString   resname;       // atom residue name   - line[17:19] 
+    QString   chainid;       // atom chain name     - line[21]
+    int       resseq;        // atom residue number - line[22:25]
+    QString   icode;         // atom icode          - line[26]
+    double    x;             // atom x coords       - line[30:37]
+    double    y;             // atom y coords       - line[38:45]
+    double    z;             // atom z coords       - line[46:53]
+    double    occupancy;     // atom occupancy      - line[54:59]
+    double    tempfactor;    // bfactor             - line[60:65]
+    QString   segid;         // atom segment name   - line[72:75]
+    QString   element;       // atom element        - line[76:77]
+    int       charge;        // atom formal charge  - line[78:79]
   
     /** This is an ID string that is used 
         to help index an atom */
@@ -1467,8 +1470,6 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
                         .asA<SegStringProperty>();
     }
 
-    PDBMolecule pdbmol;
-    
     int natoms = mol.nAtoms();
     
     for (AtomIdx i(0); i<natoms; ++i)
@@ -1480,12 +1481,19 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
             
         PDBAtom pdbatom;
         
+        ++atomnum;
+        
+        pdbatom.serial = atomnum;
+        
         if (pdbatomname.isEmpty())
         {
-            pdbatom.name = atommangler.mangle( atom.name() );
+            pdbatom.name = atommangler->mangle( atom.name() );
         }
         else
             pdbatom.name = pdbatomname[ atom.cgAtomIdx() ];
+
+        if (not elements.isEmpty())
+            pdbatom.element = elements[ atom.cgAtomIdx() ].symbol();
             
         const Vector &c = coords[ atom.cgAtomIdx() ];
         
@@ -1496,7 +1504,51 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
         if (not charges.isEmpty())
             pdbatom.charge = charges[ atom.cgAtomIdx() ];
             
+        if (not bfactor.isEmpty())
+            pdbatom.tempfactor = bfactor[ atom.cgAtomIdx() ];
+        else
+            pdbatom.tempfactor = 1;
+            
+        if (atom.isWithinResidue())
+        {
+            Residue residue = atom.residue();
+            
+            if (pdbresname.isEmpty())
+                pdbatom.resname = resmangler->mangle(residue.name());
+                
+            else
+                pdbatom.resname = pdbresname[ residue.index() ];
+                
+            pdbatom.resseq = residue.number();
+            
+            if (not icode.isEmpty())
+                pdbatom.icode = icode[ residue.index() ];
+                
+            if (residue.isWithinChain())
+            {
+                Chain chain = residue.chain();
+                
+                if (pdbchainname.isEmpty())
+                    pdbatom.chainid = chainmangler->mangle(chain.name());
+                    
+                else
+                    pdbatom.chainid = pdbchainname[ chain.index() ];
+            }
+        }
         
+        if (atom.isWithinSegment())
+        {
+            Segment segment = atom.segment();
+            
+            if (pdbsegname.isEmpty())
+                pdbatom.segid = segmangler->mangle(segment.name());
+                
+            else
+                pdbatom.segid = pdbsegname[ segment.index() ];
+        }
+        
+        //write the atom to the file
+        ts << pdbatom.writeToLine();
     }
     
     return atomnum;

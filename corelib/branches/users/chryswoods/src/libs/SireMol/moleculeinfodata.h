@@ -243,6 +243,18 @@ public:
     const QList<AtomIdx>& getAtomsIn(SegIdx segidx) const;
     QList<AtomIdx> getAtomsIn(const SegID &segid) const;
 
+    bool isWithinResidue(AtomIdx atomidx) const;
+    bool isWithinResidue(const AtomID &atomid) const;
+    
+    bool isWithinChain(AtomIdx atomidx) const;
+    bool isWithinChain(const AtomID &atomid) const;
+    
+    bool isWithinSegment(AtomIdx atomidx) const;
+    bool isWithinSegment(const AtomID &atomid) const;
+    
+    bool isWithinChain(ResIdx residx) const;
+    bool isWithinChain(const ResID &resid) const;
+
     ChainIdx parentChain(ResIdx residx) const;
     ChainIdx parentChain(const ResID &resid) const;
     

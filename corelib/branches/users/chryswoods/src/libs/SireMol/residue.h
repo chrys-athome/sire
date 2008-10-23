@@ -148,6 +148,8 @@ public:
     bool contains(const AtomID &atomid) const;
     bool intersects(const AtomID &atomid) const;
     
+    bool isWithinChain() const;
+    
     Molecule molecule() const;
     Chain chain() const;
     
