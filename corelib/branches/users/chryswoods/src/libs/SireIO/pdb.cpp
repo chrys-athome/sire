@@ -71,6 +71,7 @@
 using namespace SireMol;
 using namespace SireBase;
 using namespace SireIO;
+using namespace SireUnits;
 using namespace SireStream;
 
 ///////////
@@ -1370,6 +1371,135 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
     }
 
     return molgroup;
+}
+
+int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
+                       int atomnum, const PropertyMap &map)
+{
+    //get the manglers for the atom, residue, chain and segment names
+    StringManglerPtr atommangler, resmangler, chainmangler, segmangler;
+
+    PropertyName atommangler_property = map[PDB::parameters().atomNameMangler()];
+    PropertyName resmangler_property = map[PDB::parameters().residueNameMangler()];
+    PropertyName chainmangler_property = map[PDB::parameters().chainNameMangler()];
+    PropertyName segmangler_property = map[PDB::parameters().segmentNameMangler()];
+    
+    if (atommangler_property.hasValue())
+        atommangler = atommangler_property.value().asA<StringMangler>();
+    
+    if (resmangler_property.hasValue())
+        resmangler = resmangler_property.value().asA<StringMangler>();
+    
+    if (chainmangler_property.hasValue())
+        chainmangler = chainmangler_property.value().asA<StringMangler>();
+    
+    if (segmangler_property.hasValue())
+        segmangler = segmangler_property.value().asA<StringMangler>();
+    
+    AtomSelection selected_atoms = molview.selection();
+    
+    Molecule mol(molview);
+    
+    const AtomCoords &coords = mol.property(map[PDB::parameters().coordinates()])
+                                  .asA<AtomCoords>();
+        
+    AtomElements elements;
+    
+    if (mol.hasProperty(map[PDB::parameters().element()]))
+    {
+        elements = mol.property(map[PDB::parameters().element()])
+                      .asA<AtomElements>();
+    }
+    
+    AtomFloatProperty bfactor;    
+    
+    if (mol.hasProperty(map[PDB::parameters().bFactor()]))
+    {
+        bfactor = mol.property(map[PDB::parameters().bFactor()])
+                     .asA<AtomFloatProperty>();
+    }
+    
+    AtomCharges charges;
+    
+    if (mol.hasProperty(map[PDB::parameters().formalCharge()]))
+    {
+        charges = mol.property(map[PDB::parameters().formalCharge()])
+                     .asA<AtomCharges>();
+    }
+    
+    AtomStringProperty pdbatomname;
+    
+    if (mol.hasProperty(map[PDB::parameters().pdbAtomName()]))
+    {
+        pdbatomname = mol.property(map[PDB::parameters().pdbAtomName()])
+                         .asA<AtomStringProperty>();
+    }
+    
+    ResStringProperty icode;
+    
+    if (mol.hasProperty(map[PDB::parameters().iCode()]))
+    {
+        icode = mol.property(map[PDB::parameters().iCode()])
+                   .asA<ResStringProperty>();
+    }
+    
+    ResStringProperty pdbresname;
+    
+    if (mol.hasProperty(map[PDB::parameters().pdbResidueName()]))
+    {
+        pdbresname = mol.property(PDB::parameters().pdbResidueName())
+                        .asA<ResStringProperty>();
+    }
+    
+    ChainStringProperty pdbchainname;
+    
+    if (mol.hasProperty(map[PDB::parameters().pdbChainName()]))
+    {
+        pdbchainname = mol.property(map[PDB::parameters().pdbChainName()])
+                          .asA<ChainStringProperty>();
+    }
+    
+    SegStringProperty pdbsegname;
+    
+    if (mol.hasProperty(map[PDB::parameters().pdbSegmentName()]))
+    {
+        pdbsegname = mol.property(map[PDB::parameters().pdbSegmentName()])
+                        .asA<SegStringProperty>();
+    }
+
+    PDBMolecule pdbmol;
+    
+    int natoms = mol.nAtoms();
+    
+    for (AtomIdx i(0); i<natoms; ++i)
+    {
+        if (not selected_atoms.selected(i))
+            continue;
+            
+        Atom atom = mol.atom(i);
+            
+        PDBAtom pdbatom;
+        
+        if (pdbatomname.isEmpty())
+        {
+            pdbatom.name = atommangler.mangle( atom.name() );
+        }
+        else
+            pdbatom.name = pdbatomname[ atom.cgAtomIdx() ];
+            
+        const Vector &c = coords[ atom.cgAtomIdx() ];
+        
+        pdbatom.x = c.x();
+        pdbatom.y = c.y();
+        pdbatom.z = c.z();
+        
+        if (not charges.isEmpty())
+            pdbatom.charge = charges[ atom.cgAtomIdx() ];
+            
+        
+    }
+    
+    return atomnum;
 }
 
 /** Write a group of molecules to a bytearray */

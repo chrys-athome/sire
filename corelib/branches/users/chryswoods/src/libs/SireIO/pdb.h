@@ -41,8 +41,12 @@ class PDB;
 QDataStream& operator<<(QDataStream&, const SireIO::PDB&);
 QDataStream& operator>>(QDataStream&, SireIO::PDB&);
 
+class QTextStream;
+
 namespace SireIO
 {
+
+using SireMol::MoleculeView;
 
 /** This class holds all of the sources and default values of the
     properties and parameters used by the PDB reader/writer
@@ -300,6 +304,9 @@ protected:
 
     QByteArray writeMols(const Molecules &molecules,
                          const PropertyMap &map) const;
+
+    int writeMolecule(QTextStream &ts, const MoleculeView &molview,
+                      int atomnum, const PropertyMap &map);
 
 private:
     /** All of the default sources and parameters used to 

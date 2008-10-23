@@ -171,6 +171,8 @@ public:
     const T* data(CGIdx cgidx) const;
     const T* constData(CGIdx cgidx) const;
 
+    bool isEmpty() const;
+
     int size() const;
     int count() const;
     
@@ -523,6 +525,14 @@ SIRE_OUTOFLINE_TEMPLATE
 int AtomProperty<T>::nAtoms() const
 {
     return props.nValues();
+}
+
+/** Return whether or not this is empty */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool AtomProperty<T>::isEmpty() const
+{
+    return props.isEmpty();
 }
 
 /** Return the number of atoms in the CutGroup at index 'cgidx'
