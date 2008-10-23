@@ -306,7 +306,7 @@ protected:
                          const PropertyMap &map) const;
 
     int writeMolecule(QTextStream &ts, const MoleculeView &molview,
-                      int atomnum, const PropertyMap &map);
+                      int atomnum, const PropertyMap &map) const;
 
 private:
     /** All of the default sources and parameters used to 

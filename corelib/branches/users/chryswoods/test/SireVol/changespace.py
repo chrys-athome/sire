@@ -22,10 +22,16 @@ print "Read in %d molecules!" % mols.nMolecules()
 
 PDB().write(mols, "test00.pdb")
 
-new_vol = vol.setVolume( 0.9 * vol.volume() )
+for i in range(0,5):
+    new_vol = vol.setVolume( 0.6 * vol.volume() )
 
-for i in range(0, mols.nMolecules()):
-    mols.update( mols[MolIdx(i)].move().changeSpace(vol, new_vol) )
+    print "update..."
+    for j in range(0, mols.nMolecules()):
+        mols.update( mols[MolIdx(j)].move().changeSpace(vol, new_vol) )
 
-PDB().write(mols, "test01.pdb")
+    print "write..."
+    PDB().write(mols, "test0%d.pdb" % (i+1))
+    print "DONE"
+
+    vol = new_vol
 

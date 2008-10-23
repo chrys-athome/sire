@@ -45,6 +45,8 @@
 
 #include "SireMol/molecule.h"
 #include "SireMol/moleculegroup.h"
+#include "SireMol/molidx.h"
+#include "SireMol/molidentifier.h"
 #include "SireMol/moleditor.h"
 #include "SireMol/segeditor.h"
 #include "SireMol/chaineditor.h"
@@ -285,7 +287,11 @@ private:
 //////// Implementation of PDBAtom
 ////////
 
-PDBAtom::PDBAtom()
+PDBAtom::PDBAtom() : record_name("ATOM"), serial(0), name("UNK"),
+                     altloc(" "), resname("UNK"), chainid(" "),
+                     resseq(-1), icode(" "), x(0), y(0), z(0),
+                     occupancy(0), tempfactor(0), segid("  "),
+                     element("  "), charge(0)
 {}
 
 PDBAtom::~PDBAtom()
@@ -437,10 +443,10 @@ QString PDBAtom::writeToLine() const
     else if (charge < 0)
         chg = QString("%1-").arg(charge);
 
-    char line[82];
-    line[81] = '\0';
+    char line[83];
+    line[82] = '\0';
     
-    qsnprintf(line, 81,
+    qsnprintf(line, 82,
      "%6-s%5d %4s%1s%3s %1s%4d%1s   %8.3_f%8.3_f%8.3_f%6.2_f%6.2_f      %4s%2s%2s",
             qPrintable(record_name), serial, qPrintable(name),
             qPrintable(altloc), qPrintable(resname), qPrintable(chainid),
@@ -1377,7 +1383,7 @@ MoleculeGroup PDB::readMols(const QByteArray &data,
 }
 
 int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
-                       int atomnum, const PropertyMap &map)
+                       int atomnum, const PropertyMap &map) const
 {
     //get the manglers for the atom, residue, chain and segment names
     StringManglerPtr atommangler, resmangler, chainmangler, segmangler;
@@ -1548,7 +1554,7 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
         }
         
         //write the atom to the file
-        ts << pdbatom.writeToLine();
+        ts << pdbatom.writeToLine() << "\n";
     }
     
     return atomnum;
@@ -1561,6 +1567,18 @@ QByteArray PDB::writeMols(const MoleculeGroup &molgroup,
     QByteArray data;
     QTextStream ts(&data, QIODevice::WriteOnly | QIODevice::Text);
 
+    int nmols = molgroup.nMolecules();
+    
+    int atomid = 0;
+    
+    for (MolIdx i(0); i<nmols; ++i)
+    {
+        atomid = this->writeMolecule(ts, molgroup[i], atomid, map);
+        
+        if (i < nmols - 1)
+            ts << "TER\n";
+    }
+
     return data;
 }
 
@@ -1570,6 +1588,21 @@ QByteArray PDB::writeMols(const Molecules &molecules,
 {
     QByteArray data;
     QTextStream ts(&data, QIODevice::WriteOnly | QIODevice::Text);
+
+    int atomid = 0;
+    
+    for (Molecules::const_iterator it = molecules.constBegin();
+         it != molecules.constEnd();
+         ++it)
+    {
+        atomid = this->writeMolecule(ts, *it, atomid, map);
+        
+        Molecules::const_iterator it2 = it;
+        ++it2;
+        
+        if ( it2 != molecules.constEnd())
+            ts << "TER";
+    }
 
     return data;
 }
