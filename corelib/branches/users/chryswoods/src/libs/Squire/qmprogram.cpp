@@ -87,7 +87,8 @@ QMProgram::~QMProgram()
 /** Return the QM energy of the molecules 'molecules' surrounded by the 
     field of point charges 'lattice_charges' */
 double QMProgram::calculateEnergy(const QMPotential::Molecules &molecules,
-                                  const LatticeCharges &lattice_charges) const
+                                  const LatticeCharges &lattice_charges,
+                                  int) const
 {
     throw SireError::unsupported( QObject::tr(
         "This QM program (%1) does not support the use of point lattice charges.")
@@ -194,7 +195,7 @@ bool NullQM::operator!=(const NullQM &other) const
 
 /** Calculate and return the QM energy of all of the molecules
     in 'molecules' */
-double NullQM::calculateEnergy(const QMPotential::Molecules&) const
+double NullQM::calculateEnergy(const QMPotential::Molecules&, int) const
 {
     return 0;
 }

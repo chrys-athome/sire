@@ -100,10 +100,12 @@ public:
 protected:
     /** Calculate and return the QM energy of all of the molecules
         in 'molecules' */
-    virtual double calculateEnergy(const QMPotential::Molecules &molecules) const=0;
+    virtual double calculateEnergy(const QMPotential::Molecules &molecules,
+                                   int ntries=5) const=0;
 
     virtual double calculateEnergy(const QMPotential::Molecules &molecules,
-                                   const LatticeCharges &lattice_charges) const;
+                                   const LatticeCharges &lattice_charges,
+                                   int ntries=5) const;
     
     /** Return the contents of the command file that would be used
         to run the QM program to calculate energies */
@@ -151,7 +153,8 @@ public:
     bool operator!=(const NullQM &other) const;
     
 protected:
-    double calculateEnergy(const QMPotential::Molecules &molecules) const;
+    double calculateEnergy(const QMPotential::Molecules &molecules,
+                           int ntries=5) const;
     
     QString energyCommandFile(const QMPotential::Molecules &molecules) const;
     QString forceCommandFile(const QMPotential::Molecules &molecules) const;

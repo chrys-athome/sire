@@ -435,9 +435,39 @@ double Molpro::extractEnergy(QFile &molpro_output) const
         }
     }
 
+    //ok - something went wrong - we couldn't find the output
+    // Lets try reading the file again (in case it wasn't fully written
+    // to the disc)
+    QTextStream ts2(&molpro_output);
+
+    lines = QStringList();
+    
+    while (not ts2.atEnd())
+    {
+        QString line = ts2.readLine();
+        lines.append(line);
+
+        if (regexp.indexIn(line) != -1)
+        {
+            //we've found the SIRE_FINAL_ENERGY line
+            QString num = regexp.cap(1);
+        
+            bool ok;
+        
+            double nrg = num.toDouble(&ok);
+        
+            if (not ok)
+                throw SireError::process_error( QObject::tr(
+                    "The energy obtained from Molpro is garbled (%1) - %2.")
+                        .arg(regexp.cap(1), regexp.cap(0)), CODELOC );
+        
+            //the energy is in hartrees - convert it to kcal per mol
+            return nrg * hartree;
+        }
+    }
+
     //the SIRE_FINAL_ENERGY line was not found!
     qDebug() << "PARSE ERROR";
-    qDebug() << lines.join("\n");
 
     throw SireError::process_error( QObject::tr(
             "Could not find the total energy in the molpro output!\n"
@@ -499,7 +529,7 @@ static QByteArray readAll(const QString &file)
 /** Return the energy calculate according to the Molpro command
     file 'cmd_file' (this is the contents of the file, not
     the path to the file) */
-double Molpro::calculateEnergy(const QString &cmdfile) const
+double Molpro::calculateEnergy(const QString &cmdfile, int ntries) const
 {
     //create a temporary directory in which to run Molpro
     QString tmppath = env_variables.value("TMPDIR");
@@ -559,27 +589,43 @@ double Molpro::calculateEnergy(const QString &cmdfile) const
 
     qDebug() << "Molpro finished";
     
-    //parse the output to get the energy
-    return this->extractEnergy(f);
+    try
+    {
+        //parse the output to get the energy
+        return this->extractEnergy(f);
+    }
+    catch(...)
+    {
+        qDebug() << "Molpro process error. Number of remaining attempts = " << ntries;
+    
+        if (ntries <= 0)
+            //don't bother trying again - it's not going to work!
+            throw;
+            
+        //give it one more go - you never know, it may work
+        return this->calculateEnergy(cmdfile, ntries-1);
+    }
 }
 
 /** Run Molpro and use it to calculate the energy of the molecules in 
     'molecules'. This blocks until Molpro has completed */
-double Molpro::calculateEnergy(const QMPotential::Molecules &molecules) const
+double Molpro::calculateEnergy(const QMPotential::Molecules &molecules,
+                               int ntries) const
 {
     //create the command file to be used by Molpro
     QString cmdfile = this->energyCommandFile(molecules);
     
-    return this->calculateEnergy(cmdfile);
+    return this->calculateEnergy(cmdfile, ntries);
 }
 
 /** Calculate the Molpro QM energy of the molecules in 'molecules'
     in the field of point charges in 'lattice_charges' */
 double Molpro::calculateEnergy(const QMPotential::Molecules &molecules,
-                               const LatticeCharges &lattice_charges) const
+                               const LatticeCharges &lattice_charges,
+                               int ntries) const
 {
     //create the command file to be used by Molpro
     QString cmdfile = this->energyCommandFile(molecules, lattice_charges);
     
-    return this->calculateEnergy(cmdfile);
+    return this->calculateEnergy(cmdfile, ntries);
 }

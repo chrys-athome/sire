@@ -118,9 +118,11 @@ public:
     }
 
 protected:
-    double calculateEnergy(const QMPotential::Molecules &molecules) const;
     double calculateEnergy(const QMPotential::Molecules &molecules,
-                           const LatticeCharges &lattice_charges) const;
+                           int ntries = 5) const;
+    double calculateEnergy(const QMPotential::Molecules &molecules,
+                           const LatticeCharges &lattice_charges,
+                           int ntries = 5) const;
 
     QString energyCommandFile(const QMPotential::Molecules &molecules) const;
     QString energyCommandFile(const QMPotential::Molecules &molecules,
@@ -139,7 +141,7 @@ private:
 
     double extractEnergy(QFile &molpro_output) const;
 
-    double calculateEnergy(const QString &cmd_file) const;
+    double calculateEnergy(const QString &cmd_file, int ntries) const;
 
     /** The environmental variables to hold when running Molpro */
     QHash<QString,QString> env_variables;
