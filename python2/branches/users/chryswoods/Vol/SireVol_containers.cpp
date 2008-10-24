@@ -44,7 +44,6 @@
 #include "Base/convertproperty.hpp"
 
 #include "SireVol/space.h"
-#include "SireVol/mappingfunction.h"
 
 using boost::python::register_tuple;
 

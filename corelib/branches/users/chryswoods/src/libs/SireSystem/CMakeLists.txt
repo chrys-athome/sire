@@ -18,6 +18,7 @@ set ( SIRESYSTEM_HEADERS
       monitoridentifier.h
       monitoridx.h
       monitorname.h
+      rdfmonitor.h
       sysid.h
       sysidentifier.h
       sysidx.h
@@ -37,6 +38,7 @@ set ( SIRESYSTEM_SOURCES
       monitorcomponent.cpp
       monitorid.cpp
       monitoridentifier.cpp
+      rdfmonitor.cpp
       sysid.cpp
       sysidentifier.cpp
       system.cpp

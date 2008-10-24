@@ -28,6 +28,7 @@ set ( SIREMATHS_HEADERS
       distvector.h
       errors.h
       freeenergyaverage.h
+      histogram.h
       line.h
       maths.h
       matrix.h
@@ -54,6 +55,7 @@ set ( SIREMATHS_SOURCES
       distvector.cpp
       errors.cpp
       freeenergyaverage.cpp
+      histogram.cpp
       line.cpp
       matrix4.cpp
       matrix.cpp
@@ -78,6 +80,7 @@ set_target_properties (SireMaths PROPERTIES
 
 # Link to other Sire libraries, and GSL
 target_link_libraries (SireMaths
+                       SireID
                        SireBase
                        SireStream
                        SireUnits

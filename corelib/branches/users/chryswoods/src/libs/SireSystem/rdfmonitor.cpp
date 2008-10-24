@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2008  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,25 +26,3 @@
   *
 \*********************************************/
 
-#include <Python.h>
-#include <boost/python.hpp>
-
-#include "sireglobal.h"
-
-#include "getbacktrace.h"
-
-#include "wrap_SireError.h"
-
-namespace SireError
-{
-
-void export_exceptions();
-
-void SIREERROR_EXPORT export_SireError()
-{
-    export_exceptions();
-
-    boost::python::def( "getBackTrace", &SireError::getBackTrace );
-}
-
-}
