@@ -26,8 +26,6 @@
   *
 \*********************************************/
 
-#include <QProcess>
-
 #include "molpro.h"
 #include "qmpotential.h"
 #include "latticecharges.h"
@@ -272,45 +270,6 @@ const QString& Molpro::forceTemplate() const
     return force_template;
 }
 
-/** Internal function used to fix the environmental variables of the child
-    Molpro process - this is used to allow the user to override default
-    variables (without requiring them to mess around with bashrc files or the like)
-*/
-void Molpro::fixEnvironment(QProcess &p) const
-{
-    //get the current environment
-    QStringList system_environment = QProcess::systemEnvironment();
-    
-    for (QHash<QString,QString>::const_iterator it = env_variables.constBegin();
-         it != env_variables.constEnd();
-         ++it)
-    {
-        QString envvar = QString("%1=%2").arg(it.key(), it.value());
-        QRegExp regexp( QString("^%1=(.*)").arg(it.key()),
-                        Qt::CaseInsensitive );
-
-        bool found_variable = false;
-        
-        for (QStringList::iterator it2 = system_environment.begin();
-             it2 != system_environment.end();
-             ++it2)
-        {
-            if (it2->contains(regexp))
-            {
-                it2->replace(regexp, envvar);
-                found_variable = true;
-                break;
-            }
-        }
-
-        if (not found_variable)
-            system_environment << QString("%1=%2").arg(it.key(), it.value());
-    }
-    
-    //system_environment is now correct - pass it to the process
-    p.setEnvironment(system_environment);
-}
-
 /** Function used to substitute in the atom and lattice coordinates
     into the provided molpro command template */
 QString Molpro::createCommandFile(QString cmd_template,
@@ -473,18 +432,63 @@ double Molpro::extractEnergy(const QByteArray &molpro_output) const
     return nrg * hartree;
 }
 
+/** Internal function used to write the shell script that is used to
+    run the molpro job and collect the output
+*/
+QString Molpro::writeShellFile(const TempDir &tempdir) const
+{
+    QString cmdfile = QString("%1/run_molpro.cmd").arg(tempdir.path());
+    
+    QFile f(cmdfile);
+    f.open(QIODevice::WriteOnly);
+    
+    QTextStream ts(&f);
+
+    //set the environmental variables of the job
+    for (QHash<QString,QString>::const_iterator it = env_variables.constBegin();
+         it != env_variables.constEnd();
+         ++it)
+    {
+        ts << it.key() << "=\"" << it.value() << "\"\n";
+    }
+
+    //set the script to change into the run directory of the job
+    ts << QString("\ncd %1").arg(tempdir.path()) << "\n\n";
+
+    //write the line used to run molpro
+    if (molpro_exe.isEmpty())
+    {
+        //the user hasn't specified a molpro executable - try to find one
+        QString found_molpro = SireBase::findExe("molpro").absoluteFilePath();
+        ts << QString("%1 -d %2 < molpro_input > molpro_output\n")
+                    .arg(found_molpro, tempdir.path());
+    }
+    else
+        ts << QString("%1 -d %2 < molpro_input > molpro_output\n")
+                        .arg(molpro_exe, tempdir.path());
+    
+    f.close();
+    
+    return cmdfile;
+}
+
+static QByteArray readAll(const QString &file)
+{
+    QFile f(file);
+    
+    if (f.open(QIODevice::ReadOnly))
+    {
+        return f.readAll();
+    }
+    else
+        return QByteArray();
+}
+
 /** Return the energy calculate according to the Molpro command
     file 'cmd_file' (this is the contents of the file, not
     the path to the file) */
 double Molpro::calculateEnergy(const QString &cmdfile) const
 {
-    //now set up the Molpro process
-    QProcess p;
-    this->fixEnvironment(p);
-    
-    //merge the stdout and stderr channels
-    p.setProcessChannelMode(QProcess::MergedChannels);
-
     //create a temporary directory in which to run Molpro
     QString tmppath = env_variables.value("TMPDIR");
     
@@ -492,63 +496,60 @@ double Molpro::calculateEnergy(const QString &cmdfile) const
         tmppath = QDir::temp().absolutePath();
 
     TempDir tmpdir(tmppath);
-    p.setWorkingDirectory(tmpdir.path());
-    
-    //now run Molpro!
-    if (molpro_exe.isEmpty())
+
+    //write the file processed by the shell used to run the job
+    QString shellfile = this->writeShellFile(tmpdir);
+
     {
-        //the user hasn't specified a molpro executable - try to find one
-        QString found_molpro = SireBase::findExe("molpro").absoluteFilePath();
-        p.start(QString("%1 -d %2").arg(found_molpro, tmpdir.path()), 
-                QIODevice::ReadWrite);
+        QFile f( QString("%1/molpro_input").arg(tmpdir.path()) );
+        f.open( QIODevice::WriteOnly );
+   
+        //write the command file
+        f.write( cmdfile.toAscii() );
+        f.close();
+    }
+
+    qDebug() << "Running molpro";
+
+    //now run the command
+    if (std::system(0))
+    {
+        std::system( QString("source %1").arg(shellfile).toAscii().constData() );
     }
     else
-        p.start(QString("%1 -d %2").arg(molpro_exe, tmpdir.path()), 
-                QIODevice::ReadWrite);
-    
-    if (not p.waitForStarted())
-        throw SireError::process_error(molpro_exe, p, CODELOC);
-    
-    //write in the command file
-    p.write( cmdfile.toAscii() );
-    p.closeWriteChannel();
+        throw SireError::unsupported( QObject::tr(
+            "The operating system does not support the use of std::system(). "
+            "It is not possible to use Molpro to calculate QM energies."),
+                CODELOC );
 
-    QByteArray molpro_output;
-
-    //wait until Molpro has finished
-    while (not p.waitForFinished(2000))
+    //read all of the output
+    QFile f( QString("%1/molpro_output").arg(tmpdir.path()) );
+    
+    if ( not (f.exists() and f.open(QIODevice::ReadOnly)) )
     {
-        //read all of the data we can
-        molpro_output.append( p.readAll() );
-    }
-
-    //get any remaining output
-    molpro_output.append( p.readAll() );
-
-    //make sure it has really finished
-    qDebug() << "Waiting for molpro to really finish";
-    p.waitForFinished();
+        QByteArray shellcontents = ::readAll(shellfile);
+        QByteArray cmdcontents = ::readAll(QString("%1/molpro_input").arg(tmpdir.path()));
     
-    qDebug() << "Finished! Closing read channel";
-    p.closeReadChannel(QProcess::StandardOutput);
-    p.closeReadChannel(QProcess::StandardError);
-
-    int exitcode = p.exitCode();
-
-    qDebug() << "Completely killing the job...";
-    p.kill();
-    qDebug() << "Molpro should be dead!!!";
-
-    //molpro should have finished now
-    if (exitcode != 0)
-    {
-        qDebug() << "Molpro died at exit (" << exitcode << ")";
-        qDebug() << molpro_output;
-        throw SireError::process_error(molpro_exe, p, CODELOC);
+        throw SireError::process_error( QObject::tr(
+            "There was an error running the Molpro job - no output was created.\n"
+            "The shell script used to run the job was;\n"
+            "*****************************************\n"
+            "%1\n"
+            "*****************************************\n"
+            "The molpro input used to run the job was;\n"
+            "*****************************************\n"
+            "%2\n"
+            "*****************************************\n")
+                .arg( QLatin1String(shellcontents),
+                      QLatin1String(cmdcontents) ), CODELOC );
     }
+    
+    //read all of the output
+    QByteArray molpro_output = f.readAll();
+    f.close();
 
-    qDebug() << p.state();
-       
+    qDebug() << "Molpro finished";
+    
     //parse the output to get the energy
     return this->extractEnergy(molpro_output);
 }

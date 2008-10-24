@@ -46,6 +46,11 @@ class Molpro;
 QDataStream& operator<<(QDataStream&, const Squire::Molpro&);
 QDataStream& operator>>(QDataStream&, Squire::Molpro&);
 
+namespace SireBase
+{
+class TempDir;
+}
+
 namespace Squire
 {
 
@@ -128,7 +133,7 @@ private:
                         const QMPotential::Molecules &molecules,
                         const LatticeCharges &lattice_charges = LatticeCharges()) const;
 
-    void fixEnvironment(QProcess &p) const;
+    QString writeShellFile(const SireBase::TempDir &tempdir) const;
 
     double extractEnergy(const QByteArray &molpro_output) const;
 

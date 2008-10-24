@@ -4,6 +4,8 @@
 #include <QProcess>
 #include <QThread>
 
+#include <cstdlib>
+
 #include <QDebug>
 
 class ProcessThread : public QThread
@@ -18,15 +20,18 @@ public:
 protected:
     void run()
     {
-        QProcess p;
+        qDebug() << "Running 'ls'";
 
-        qDebug() << "ls";
-        p.start("ls");
+        if (std::system(0))
+        {
+            std::system("setenv TEXT=\"USER\"; cd /tmp; echo $TEXT | molpro > molpro.tmp.out");
 
-        qDebug() << "p.waitForFinished();";
-        p.waitForFinished();
+            std::system("setenv USER=\"me\"; cd /tmp; cat molpro.tmp.out");
+        }
+        else
+            qDebug() << "std::system() interpreter is not available";
 
-        qDebug() << p.readAll();
+        qDebug() << "ls process has finished";
     }
 };
 
@@ -58,15 +63,6 @@ int main(int argc, char **argv)
 
     //give the mpi thread time to start
     mpi.wait(1000);
-
-    QProcess p;
-    p.start("ls");
-
-    qDebug() << "local wait";
-
-    p.waitForFinished();
-
-    qDebug() << p.readAll();
 
     ProcessThread pt;
     pt.start();

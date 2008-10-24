@@ -55,6 +55,7 @@ qmff = QMFF("QMFF")
 qmff.setProperty("space", space)
 
 molpro = Molpro()
+molpro.setEnvironment("HELP", "THIS IS SOME HELP")
 
 qmff.setProperty("quantum program", molpro)
 
