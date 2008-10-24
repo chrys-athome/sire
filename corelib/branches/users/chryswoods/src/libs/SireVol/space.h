@@ -122,6 +122,11 @@ public:
 
     virtual Space* clone() const=0;
 
+    static const char* typeName()
+    {
+        return "SireVol::Space";
+    }
+
     /** Return the volume of the central box of this space. This
         throws an exception if it is not possible to calculate the
         volume of this space (e.g. it is an infinite space!) */

@@ -46,6 +46,8 @@ class Molpro;
 QDataStream& operator<<(QDataStream&, const Squire::Molpro&);
 QDataStream& operator>>(QDataStream&, Squire::Molpro&);
 
+class QFile;
+
 namespace SireBase
 {
 class TempDir;
@@ -135,7 +137,7 @@ private:
 
     QString writeShellFile(const SireBase::TempDir &tempdir) const;
 
-    double extractEnergy(const QByteArray &molpro_output) const;
+    double extractEnergy(QFile &molpro_output) const;
 
     double calculateEnergy(const QString &cmd_file) const;
 

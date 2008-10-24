@@ -358,6 +358,9 @@ friend QDataStream& ::operator>>(QDataStream&, PropPtrBase&);
 public:
     ~PropPtrBase();
 
+    bool operator==(const Property &property) const;
+    bool operator!=(const Property &property) const;
+
     bool operator==(const PropPtrBase &other) const;
     bool operator!=(const PropPtrBase &other) const;
 
@@ -460,7 +463,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 bool PropPtr<T>::isNull() const
 {
-    return PropPtr<T>::operator=( T::null() );
+    return PropPtrBase::operator==( T::null() );
 }
 
 /** Null constructor */

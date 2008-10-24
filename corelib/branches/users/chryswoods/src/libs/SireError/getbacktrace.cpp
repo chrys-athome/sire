@@ -72,11 +72,9 @@ QStringList SIREBASE_EXPORT getBackTrace()
     //(we can only do this if we have 'execinfo.h'
 #ifdef _HAVE_EXECINFO_H_
     
-    //create a void* array to hold the function addresses. We will only go at most 50 deep
-    const int maxdepth(50);
-    
-    void *func_addresses[maxdepth];
-    int nfuncs = backtrace(func_addresses, maxdepth);
+    //create a void* array to hold the function addresses. We will only go at most 128 deep
+    void *func_addresses[128];
+    int nfuncs = backtrace(func_addresses, 128);
 
     //now get the function names associated with these symbols. This should work for elf
     //binaries, though additional linker options may need to have been called 

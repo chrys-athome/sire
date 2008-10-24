@@ -767,9 +767,13 @@ Symbols System::components() const
 const Property& System::property(const PropertyName &name) const
 {
     if (name.hasSource())
+    {
         return this->_pvt_forceFields().property(name.source());
+    }
     else
+    {
         return name.value();
+    }
 }
 
 /** Return the value of the property 'name' in the forcefield identified 

@@ -42,6 +42,8 @@ QStringList getBackTrace();
 
 };
 
+SIRE_EXPOSE_FUNCTION( SireError::getBackTrace )
+
 SIRE_END_HEADER
 
 #endif

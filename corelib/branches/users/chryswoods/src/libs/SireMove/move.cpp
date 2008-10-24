@@ -94,7 +94,9 @@ Move::Move() : Property(),
 {}
 
 /** Copy constructor */
-Move::Move(const Move &other) : Property(other), nrgcomponent(other.nrgcomponent)
+Move::Move(const Move &other) 
+     : Property(other), nrgcomponent(other.nrgcomponent),
+       coordsproperty(other.coordsproperty), spaceproperty(other.spaceproperty)
 {}
 
 /** Destructor */

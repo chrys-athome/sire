@@ -32,6 +32,8 @@
 
 #include <QDebug>
 
+#include "SireError/getbacktrace.h"
+
 #include "SireError/errors.h"
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -78,14 +80,12 @@ Property& Property::operator=(const Property&)
 /** Comparison operator */
 bool Property::operator==(const Property&) const
 {
-    qDebug() << CODELOC;
     return true;
 }
 
 /** Comparison operator */
 bool Property::operator!=(const Property&) const
 {
-    qDebug() << CODELOC;
     return false;
 }
 
@@ -363,6 +363,20 @@ bool PropPtrBase::operator!=(const PropPtrBase &other) const
            not ptr->equals(*(other.ptr));
 }
 
+/** Comparison operator */
+bool PropPtrBase::operator==(const Property &other) const
+{
+    return ptr.constData() == &other or
+           ptr->equals(other);
+}
+
+/** Comparison operator */
+bool PropPtrBase::operator!=(const Property &other) const
+{
+    return ptr.constData() != &other and
+           not ptr->equals(other);
+}
+
 /** Detach this pointer from shared storage */
 void PropPtrBase::detach()
 {
@@ -481,7 +495,7 @@ PropPtr<Property>::operator const Property&() const
 
 bool PropPtr<Property>::isNull() const
 {
-    return this->operator==( PropPtr<Property>() );
+    return PropPtrBase::operator==( Property::null() );
 }
 
 PropPtr<Property> PropPtr<Property>::null()

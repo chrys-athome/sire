@@ -226,7 +226,15 @@ void MPISimWorker::runChunk()
     int nmoves_to_run = qMin( chunk_size, nmoves - ncompleted_moves );
     
     //run those moves
-    sim_system = sim_moves.edit().move(sim_system, nmoves_to_run, record_stats);
+    try
+    {
+        sim_system = sim_moves.edit().move(sim_system, nmoves_to_run, record_stats);
+    }
+    catch(const SireError::exception &e)
+    {
+        qDebug() << e.toString();
+        throw;
+    }
     
     //increment the number of completed moves
     ncompleted_moves += nmoves_to_run;

@@ -403,33 +403,45 @@ QString Molpro::forceCommandFile(const QMPotential::Molecules &molecules,
 }
 
 /** Extract the energy from the molpro output in 'molpro_output' */
-double Molpro::extractEnergy(const QByteArray &molpro_output) const
+double Molpro::extractEnergy(QFile &molpro_output) const
 {
-    QRegExp regexp("SIRE_FINAL_ENERGY\\s*=\\s*([-\\d\\.]+)");
-    
-    if (regexp.indexIn( QLatin1String(molpro_output.constData()) ) == -1)
-    {
-        qDebug() << "PARSE ERROR";
-        qDebug() << molpro_output;
+    QTextStream ts(&molpro_output);
 
-        throw SireError::process_error( QObject::tr(
-            "Could not find the total energy in the molpro output!\n"
-            "%1").arg( QLatin1String(molpro_output.constData()) ), CODELOC );
-    }
+    QRegExp regexp("SIRE_FINAL_ENERGY\\s*=\\s*([-\\d\\.]+)");
+
+    QStringList lines;
     
-    QString num = regexp.cap(1);
+    while (not ts.atEnd())
+    {
+        QString line = ts.readLine();
+        lines.append(line);
+
+        if (regexp.indexIn(line) != -1)
+        {
+            //we've found the SIRE_FINAL_ENERGY line
+            QString num = regexp.cap(1);
         
-    bool ok;
+            bool ok;
         
-    double nrg = num.toDouble(&ok);
+            double nrg = num.toDouble(&ok);
         
-    if (not ok)
-        throw SireError::process_error( QObject::tr(
-            "The energy obtained from Molpro is garbled (%1) - %2.")
-                .arg(regexp.cap(1), regexp.cap(0)), CODELOC );
+            if (not ok)
+                throw SireError::process_error( QObject::tr(
+                    "The energy obtained from Molpro is garbled (%1) - %2.")
+                        .arg(regexp.cap(1), regexp.cap(0)), CODELOC );
         
-    //the energy is in hartrees - convert it to kcal per mol
-    return nrg * hartree;
+            //the energy is in hartrees - convert it to kcal per mol
+            return nrg * hartree;
+        }
+    }
+
+    //the SIRE_FINAL_ENERGY line was not found!
+    qDebug() << "PARSE ERROR";
+    qDebug() << lines.join("\n");
+
+    throw SireError::process_error( QObject::tr(
+            "Could not find the total energy in the molpro output!\n"
+                "%1").arg(lines.join("\n")), CODELOC );
 }
 
 /** Internal function used to write the shell script that is used to
@@ -543,15 +555,12 @@ double Molpro::calculateEnergy(const QString &cmdfile) const
                 .arg( QLatin1String(shellcontents),
                       QLatin1String(cmdcontents) ), CODELOC );
     }
-    
-    //read all of the output
-    QByteArray molpro_output = f.readAll();
-    f.close();
+
 
     qDebug() << "Molpro finished";
     
     //parse the output to get the energy
-    return this->extractEnergy(molpro_output);
+    return this->extractEnergy(f);
 }
 
 /** Run Molpro and use it to calculate the energy of the molecules in 

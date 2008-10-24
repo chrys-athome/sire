@@ -88,6 +88,11 @@ qmmmnrg = qmmmff.energy()
 print qmmmnrg
 print qmmmnrg - qmnrg
 
+for i in range(0,100):
+     print "Step %d" % i
+     qmmmff.mustNowRecalculateFromScratch()
+     print qmmmff.energy()
+
 system = System()
 
 system.add(qmmmff)
