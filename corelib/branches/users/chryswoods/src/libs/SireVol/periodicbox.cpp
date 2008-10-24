@@ -767,23 +767,23 @@ Vector PeriodicBox::getScaleDelta(const Vector &point,
                                   const PeriodicBox &other) const
 {
     //now get the scale factor for the change in dimension
-    Vector scale( this->boxlength.x() * other.invlength.x(),
-                  this->boxlength.y() * other.invlength.y(),
-                  this->boxlength.z() * other.invlength.z() );
+    Vector scale( other.boxlength.x() * this->invlength.x(),
+                  other.boxlength.y() * this->invlength.y(),
+                  other.boxlength.z() * this->invlength.z() );
 
     //get the vector needed to translate this group into the central box
-    Vector wrapdelta = other.wrapDelta(other.center(), point);
+    Vector wrapdelta = this->wrapDelta(this->center(), point);
 
-    //get the vector from the center of the other box to the point
-    //it is in the central box
-    Vector delta = point - wrapdelta - other.center();
-
+    //get the vector from the center of this box to the point
+    //when it is in this central box
+    Vector delta = point - wrapdelta - this->center();
+    
     //multiply this by 'scale'
     Vector new_delta = Vector( (scale.x() - 1) * delta.x(),
                                (scale.y() - 1) * delta.y(),
                                (scale.z() - 1) * delta.z() );
 
-    return this->center() - other.center() + new_delta - wrapdelta;
+    return other.center() - this->center() + new_delta - wrapdelta;
 }
 
 /** Return a copy of the passed CoordGroup mapped from this space to 
