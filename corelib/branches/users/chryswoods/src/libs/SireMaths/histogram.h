@@ -80,6 +80,8 @@ public:
     double middle() const;
     double maximum() const;
 
+    QString toString() const;
+
 private:
     /** The minimum value of the bin */
     double minval;
@@ -109,6 +111,8 @@ public:
     bool operator!=(const HistogramValue &other) const;
     
     double value() const;
+
+    QString toString() const;
 
 private:
     /** The actual value in the bin */
@@ -153,6 +157,8 @@ public:
 
     int bin(double value) const;
 
+    QString toString() const;
+
 private:
     /** Minimum bin value - data must have a value greater
         than or equal to this value to be included in the histogram */
@@ -182,6 +188,9 @@ public:
     Histogram(double min, double max, double binwidth);
 
     Histogram(const HistogramRange &range);
+
+    Histogram(const HistogramRange &range,
+              const QVector<double> &values);
     
     Histogram(const Histogram &other);
     
@@ -207,6 +216,8 @@ public:
     bool operator==(const Histogram &other) const;
     bool operator!=(const Histogram &other) const;
     
+    QString toString() const;
+    
     HistogramValue operator[](int i) const;
     
     const double* data() const;
@@ -224,6 +235,9 @@ private:
 
 Q_DECLARE_METATYPE( SireMaths::Histogram )
 
+SIRE_EXPOSE_CLASS( SireMaths::HistogramBin )
+SIRE_EXPOSE_CLASS( SireMaths::HistogramValue )
+SIRE_EXPOSE_CLASS( SireMaths::HistogramRange )
 SIRE_EXPOSE_CLASS( SireMaths::Histogram )
 
 SIRE_END_HEADER

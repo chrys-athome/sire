@@ -30,6 +30,8 @@
 
 #include "SireID/index.h"
 
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -114,6 +116,13 @@ double HistogramBin::maximum() const
     return maxval;
 }
 
+/** Return a string representation */
+QString HistogramBin::toString() const
+{
+    return QObject::tr("Bin[ %1 <= x < %2 ]")
+                    .arg(minval).arg(maxval);
+}
+
 ///////////
 /////////// Implementation of HistogramValue
 ///////////
@@ -177,6 +186,13 @@ bool HistogramValue::operator!=(const HistogramValue &other) const
 double HistogramValue::value() const
 {
     return val;
+}
+
+/** Return a string representation */
+QString HistogramValue::toString() const
+{
+    return QObject::tr("Bin[ %1 <= x < %2 ] == %3")
+                    .arg( minimum() ).arg( maximum() ).arg(val);
 }
 
 ///////////
@@ -343,6 +359,13 @@ int HistogramRange::bin(double value) const
     return idx;
 }
 
+/** Return a string representation */
+QString HistogramRange::toString() const
+{
+    return QObject::tr("Range[ %1 <= x < %2 : nBins() == %3 ]")
+                    .arg( minimum() ).arg( maximum() ).arg(nBins());
+}
+
 ///////////
 /////////// Implementation of Histogram
 ///////////
@@ -415,6 +438,22 @@ Histogram::Histogram(const HistogramRange &range)
           : HistogramRange(range), binvals( ::create(range) )
 {}
 
+/** Construct a histogram using the passed range and values 
+
+    \throw SireError::incompatible_error
+*/
+Histogram::Histogram(const HistogramRange &range,
+                     const QVector<double> &values)
+          : HistogramRange(range), binvals(values)
+{
+    if (range.nBins() != values.count())
+        throw SireError::incompatible_error( QObject::tr(
+            "The histogram is incompatible with the array of passed values "
+            "because the number of values (%1) is not equal to the number "
+            "of histogram bins (%2).")
+                .arg(binvals.count()).arg(range.nBins()), CODELOC );
+}
+
 /** Copy constructor */
 Histogram::Histogram(const Histogram &other)
           : HistogramRange(other), binvals(other.binvals)
@@ -481,4 +520,11 @@ void Histogram::accumulate(double value, double weight)
 void Histogram::accumulate(double value)
 {
     this->accumulate(value, 1);
+}
+
+/** Return a string representation */
+QString Histogram::toString() const
+{
+    return QObject::tr("Histogram[ %1 <= x < %2 : nBins() == %3 ]")
+                    .arg( minimum() ).arg( maximum() ).arg( nBins() );
 }
