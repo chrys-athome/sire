@@ -29,6 +29,9 @@
 #include "rdfmonitor.h"
 #include "system.h"
 
+#include "SireMol/selector.hpp"
+#include "SireMol/atom.h"
+
 #include "SireMaths/constants.h"
 
 #include "SireStream/datastream.h"
@@ -38,6 +41,7 @@ using namespace SireSystem;
 using namespace SireMaths;
 using namespace SireMol;
 using namespace SireBase;
+using namespace SireMaths;
 using namespace SireStream;
 
 using boost::tuple;
@@ -225,7 +229,7 @@ void RDF::rebuildRDF() const
     
     for (int i=0; i<this->nBins(); ++i)
     {
-        HistogramBinT<Length> bin = this->operator[](i);
+        HistogramBinT<Length> bin = HistogramRangeT<Length>::operator[](i);
         
         max = bin.maximum();
         min = bin.minimum();
@@ -242,7 +246,10 @@ void RDF::rebuildRDF() const
     const_cast<RDF*>(this)->is_dirty = false;
 }
 
-/** Return the value of the RDF at the ith bin */
+/** Return the value of the RDF at the ith bin 
+
+    \throw SireError::invalid_index
+*/
 HistogramValueT<Length> RDF::operator[](int i) const
 {
     i = Index(i).map( this->nBins() );
@@ -363,7 +370,7 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const RDFMonitor &rdf
     
     SharedDataStream sds(ds);
     
-    sds << rdfmon.rdfdata;
+    sds << rdfmon.rdfdata << rdfmon.coords_property;
     
     sds << quint32( rdfmon.atomids.count() );
     
@@ -390,7 +397,7 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, RDFMonitor &rdfmon)
         SharedDataStream sds(ds);
         
         quint32 natomids = 0;
-        sds >> rdfmon.rdfdata >> natomids;
+        sds >> rdfmon.rdfdata >> rdfmon.coords_property >> natomids;
         
         rdfmon.atomids.clear();
         
@@ -415,33 +422,38 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, RDFMonitor &rdfmon)
     the first 10 A, using bins of width 0.2 A */
 RDFMonitor::RDFMonitor()
            : ConcreteProperty<RDFMonitor,SystemMonitor>(),
-             rdfdata(Length(0), Length(10), Length(0.2))
+             rdfdata(Length(0), Length(10), Length(0.2)),
+             coords_property("coordinates")
 {}
 
 /** Construct a monitor to monitor the RDF between 
      min <= val < max, using 'nbins' bins */ 
 RDFMonitor::RDFMonitor(const Length &min, const Length &max, int nbins)
            : ConcreteProperty<RDFMonitor,SystemMonitor>(),
-             rdfdata(min, max, nbins)
+             rdfdata(min, max, nbins),
+             coords_property("coordinates")
 {}
 
 /** Construct a monitor to monitor the RDF between
      min <= val < max, using a bin width of 'binwidth' */
 RDFMonitor::RDFMonitor(const Length &min, const Length &max, const Length &binwidth)
            : ConcreteProperty<RDFMonitor,SystemMonitor>(),
-             rdfdata(min, max, binwidth)
+             rdfdata(min, max, binwidth),
+             coords_property("coordinates")
 {}
 
 /** Construct a monitor to monitor the RDF using the passed range */
 RDFMonitor::RDFMonitor(const HistogramRangeT<Length> &range)
            : ConcreteProperty<RDFMonitor,SystemMonitor>(),
-             rdfdata(range)
+             rdfdata(range),
+             coords_property("coordinates")
 {}
 
 /** Copy constructor */
 RDFMonitor::RDFMonitor(const RDFMonitor &other)
            : ConcreteProperty<RDFMonitor,SystemMonitor>(other),
-             rdfdata(other.rdfdata), atomids(other.atomids)
+             rdfdata(other.rdfdata), atomids(other.atomids),
+             coords_property(other.coords_property)
 {}
 
 /** Destructor */
@@ -456,6 +468,7 @@ RDFMonitor& RDFMonitor::operator=(const RDFMonitor &other)
         SystemMonitor::operator=(other);
         rdfdata = other.rdfdata;
         atomids = other.atomids;
+        coords_property = other.coords_property;
     }
     
     return *this;
@@ -477,7 +490,8 @@ bool RDFMonitor::operator==(const RDFMonitor &other) const
 {
     return SystemMonitor::operator==(other) and
            rdfdata == other.rdfdata and
-           atomids == other.atomids;
+           atomids == other.atomids and
+           coords_property == other.coords_property;
 }
 
 /** Comparison operator */
@@ -519,6 +533,33 @@ void RDFMonitor::add(const AtomID &atom0, const AtomID &atom1)
     
     if (not atomids.contains(atompair))
         atomids.append( atompair );
+}
+
+/** Include the distances between all atom pairs that match
+    the IDs in 'atompair' */
+void RDFMonitor::add(const tuple<AtomIdentifier,AtomIdentifier> &atompair)
+{
+    if (not atomids.contains(atompair))
+        atomids.append( atompair );
+}
+
+/** Return the list of all atom pairs that whose interatomic distances
+    are used to construct this RDF */
+const QList< tuple<AtomIdentifier,AtomIdentifier> >& RDFMonitor::atomPairs() const
+{
+    return atomids;
+}
+
+/** Set the property that will be used to locate the atomic coordinates */
+void RDFMonitor::setCoordsProperty(const PropertyName &name)
+{
+    coords_property = name;
+}
+
+/** Return the property used to find the atomic coordinates */
+const PropertyName& RDFMonitor::coordsProperty() const
+{
+    return coords_property;
 }
 
 /** Set the range for the RDF to min <= x < max, using 'nbins' bins */
@@ -585,7 +626,61 @@ int RDFMonitor::nBins() const
     return rdfdata.nBins();
 }
 
+/** Internal function used to add all of the interatomic distances
+    between two atoms */
+void RDFMonitor::addDistances(const Selector<Atom> &atoms0,
+                              const Selector<Atom> &atoms1)
+{
+    QList<Vector> coords0 = atoms0.property<Vector>( coords_property );
+    QList<Vector> coords1 = atoms1.property<Vector>( coords_property );
+    
+    foreach (const Vector &c0, coords0)
+    {
+        foreach (const Vector &c1, coords1)
+        {
+            double dist = Vector::distance2(c0, c1);
+            
+            if (dist != 0)
+                rdfdata.add( Length( std::sqrt(dist) ) );
+        }
+    }
+}
+
 /** Add the matched distances from the system 'system' to this RDF */
 void RDFMonitor::monitor(System &system)
 {
+    RDF old_state(rdfdata);
+    
+    try
+    {
+        for (QList< tuple<AtomIdentifier,AtomIdentifier> >::const_iterator
+                                                it = atomids.constBegin();
+             it != atomids.constEnd();
+             ++it)
+        {
+            //find all of the atoms that match the atom IDs
+            QHash< MolNum, Selector<Atom> > atoms0 = system.atoms( it->get<0>() );
+            QHash< MolNum, Selector<Atom> > atoms1 = system.atoms( it->get<1>() );
+            
+            //now calculate all of the interatomic distances between all pairs
+            for (QHash< MolNum, Selector<Atom> >::const_iterator
+                                                        it0 = atoms0.constBegin();
+                 it0 != atoms0.constEnd();
+                 ++it0)
+            {
+                for (QHash< MolNum, Selector<Atom> >::const_iterator
+                                                        it1 = atoms1.constBegin();
+                     it1 != atoms1.constEnd();
+                     ++it1)
+                {
+                    this->addDistances( it0.value(), it1.value() );
+                }
+            }
+        }
+    }
+    catch(...)
+    {
+        rdfdata = old_state;
+        throw;
+    }
 }

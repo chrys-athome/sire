@@ -304,9 +304,11 @@ QList<V> get_property(Atom*, const MoleculeData &moldata,
 
     const MoleculeInfoData &molinfo = moldata.info();
 
-    foreach (Atom::Index idx, QList<Atom::Index>(idxs))
+    for (QList<Atom::Index>::const_iterator it = idxs.constBegin();
+         it != idxs.constEnd();
+         ++it)
     {
-        props.append( atom_prop.at( molinfo.cgAtomIdx(idx) ) );
+        props.append( atom_prop.at( molinfo.cgAtomIdx(*it) ) );
     }
         
     return props;
@@ -326,9 +328,11 @@ QList<V> get_metadata(Atom*, const MoleculeData &moldata,
 
     const MoleculeInfoData &molinfo = moldata.info();
 
-    foreach (Atom::Index idx, QList<Atom::Index>(idxs))
+    for (QList<Atom::Index>::const_iterator it = idxs.constBegin();
+         it != idxs.constEnd();
+         ++it)
     {
-        mdata.append( atom_prop.at( molinfo.cgAtomIdx(idx) ) );
+        mdata.append( atom_prop.at( molinfo.cgAtomIdx(*it) ) );
     }
     
     return mdata;
@@ -349,9 +353,11 @@ QList<V> get_metadata(Atom*, const MoleculeData &moldata,
                                               
     const MoleculeInfoData &molinfo = moldata.info();
     
-    foreach (Atom::Index idx, QList<Atom::Index>(idxs))
+    for (QList<Atom::Index>::const_iterator it = idxs.constBegin();
+         it != idxs.constEnd();
+         ++it)
     {
-        mdata.append( atom_prop.at( molinfo.cgAtomIdx(idx) ) );
+        mdata.append( atom_prop.at( molinfo.cgAtomIdx(*it) ) );
     }
     
     return mdata;
@@ -499,9 +505,11 @@ void set_metadata(Atom*, MoleculeData &moldata,
     else
         atom_prop = AtomProperty<V>(molinfo);
         
-    foreach (Atom::Index idx, QList<Atom::Index>(idxs))
+    for (QList<Atom::Index>::const_iterator it = idxs.constBegin();
+         it != idxs.constEnd();
+         ++it)
     {
-        atom_prop.set(molinfo.cgAtomIdx(idx), value);
+        atom_prop.set(molinfo.cgAtomIdx(*it), value);
     }
     
     moldata.setMetadata(key, metakey, atom_prop);

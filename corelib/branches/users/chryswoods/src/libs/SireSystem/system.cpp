@@ -574,7 +574,7 @@ FFIdx System::ffIdx(const FFID &ffid) const
     \throw SireSystem::duplicate_monitor
     \throw SireError::invalid_index
 */
-const MonitorName& System::monitorName(const MonitorID &monid) const
+MonitorName System::monitorName(const MonitorID &monid) const
 {
     return sysmonitors.monitorName(monid);
 }

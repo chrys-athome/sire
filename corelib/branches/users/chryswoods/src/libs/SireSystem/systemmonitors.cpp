@@ -133,7 +133,7 @@ bool SystemMonitors::isEmpty() const
     \throw SireSystem::duplicate_monitor
     \throw SireError::invalid_index
 */
-const MonitorName& SystemMonitors::monitorName(const MonitorID &monid) const
+MonitorName SystemMonitors::monitorName(const MonitorID &monid) const
 {
     QList<MonitorName> names = monid.map(*this);
     

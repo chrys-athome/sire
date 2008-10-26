@@ -34,6 +34,7 @@
 #include <boost/tuple/tuple.hpp>
 
 #include "systemmonitor.h"
+#include "system.h"
 
 #include "SireMaths/histogram.h"
 
@@ -64,6 +65,11 @@ using SireMaths::HistogramT;
 
 using SireMol::AtomID;
 using SireMol::AtomIdentifier;
+
+using SireMol::Selector;
+using SireMol::Atom;
+
+using SireBase::PropertyName;
 
 using SireUnits::Dimension::Length;
 
@@ -176,6 +182,9 @@ public:
     
     void add(const AtomID &atom);
     void add(const AtomID &atom0, const AtomID &atom1);
+    void add(const boost::tuple<AtomIdentifier,AtomIdentifier> &atompair);
+
+    const QList< boost::tuple<AtomIdentifier,AtomIdentifier> >& atomPairs() const;
 
     void setRange(const Length &min, const Length &max, int nbins);
                   
@@ -191,16 +200,26 @@ public:
     
     int count() const;
     int nBins() const;
+    
+    void setCoordsProperty(const PropertyName &coords_property);
+    
+    const PropertyName& coordsProperty() const;
 
     void monitor(System &system);
 
 private:
+    void addDistances(const Selector<Atom> &atoms0,
+                      const Selector<Atom> &atoms1);
+
     /** The actual RDF */
     RDF rdfdata;
 
     /** The collection of IDs used to identify the atoms whose
         distances will be evaluated */
     QList< boost::tuple<AtomIdentifier,AtomIdentifier> > atomids;
+    
+    /** The property used to find the atomic coordinates */
+    PropertyName coords_property;
 };
 
 }

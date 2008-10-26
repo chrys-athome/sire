@@ -91,7 +91,7 @@ public:
     QList<MonitorName> map(const MonitorIdx &monidx) const;
     QList<MonitorName> map(const MonitorID &monid) const;
 
-    const MonitorName& monitorName(const MonitorID &monid) const;
+    MonitorName monitorName(const MonitorID &monid) const;
 
     QList<MonitorName> monitorNames() const;
 

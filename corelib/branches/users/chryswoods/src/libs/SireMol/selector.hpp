@@ -149,6 +149,8 @@ public:
     T at(int i) const;
     Selector<T> at(int i, int j) const;
 
+    typename T::Index index(int i) const;
+
     int count() const;
     
     bool isEmpty() const;
@@ -572,6 +574,17 @@ SIRE_OUTOFLINE_TEMPLATE
 T Selector<T>::operator[](int i) const
 {
     return T( this->data(), idxs.at( SireID::Index(i).map(idxs.count()) ) );
+}
+
+/** Return the index of the ith view in this set (this supports negative indexing)
+
+    \throw SireError::invalid_index
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+typename T::Index Selector<T>::index(int i) const
+{
+    return idxs.at( SireID::Index(i).map(idxs.count()) );
 }
 
 /** Return the ith view in this set (this supports negative indexing!)

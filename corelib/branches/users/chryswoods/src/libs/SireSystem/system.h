@@ -169,7 +169,7 @@ public:
     
     const FFName& ffName(const FFID &ffid) const;
 
-    const MonitorName& monitorName(const MonitorID &monid) const;
+    MonitorName monitorName(const MonitorID &monid) const;
     
     QString toString() const;
     
