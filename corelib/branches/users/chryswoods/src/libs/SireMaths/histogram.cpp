@@ -37,6 +37,7 @@
 
 using namespace SireMaths;
 using namespace SireID;
+using namespace SireUnits::Dimension;
 using namespace SireStream;
 
 ///////////
@@ -528,3 +529,15 @@ QString Histogram::toString() const
     return QObject::tr("Histogram[ %1 <= x < %2 : nBins() == %3 ]")
                     .arg( minimum() ).arg( maximum() ).arg( nBins() );
 }
+
+//// Fully instantiate the Length and Energy histogram classes
+
+template class HistogramT<Length>;
+template class HistogramBinT<Length>;
+template class HistogramValueT<Length>;
+template class HistogramRangeT<Length>;
+
+template class HistogramT<Energy>;
+template class HistogramBinT<Energy>;
+template class HistogramValueT<Energy>;
+template class HistogramRangeT<Energy>;

@@ -268,3 +268,111 @@ void RDF::add(double distance)
 //////// Implementation of RDFMonitor
 ////////
 
+static const RegisterMetaType<RDFMonitor> r_rdfmon;
+
+/** Serialise to a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const RDFMonitor &rdfmon)
+{
+    writeHeader(ds, r_rdfmon, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << rdfmon.rdfdata;
+    
+    sds << quint32( rdfmon.atomids.count() );
+    
+    for (QList< tuple<AtomIdentifier,AtomIdentifier> >::const_iterator
+                                    it = rdfmon.atomids.constBegin();
+         it != rdfmon.atomids.constEnd();
+         ++it)
+    {
+        sds << it->get<0>() << it->get<1>();
+    }
+
+    sds << static_cast<const SystemMonitor&>(rdfmon);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, RDFMonitor &rdfmon)
+{
+    VersionID v = readHeader(ds, r_rdfmon);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        quint32 natomids = 0;
+        sds >> rdfmon.rdfdata >> natomids;
+        
+        rdfmon.atomids.clear();
+        
+        for (quint32 i=0; i<natomids; ++i)
+        {
+            AtomIdentifier atom0, atom1;
+            
+            sds >> atom0 >> atom1;
+            
+            rdfmon.atomids.append( tuple<AtomIdentifier,AtomIdentifier>(atom0, atom1) );
+        }
+        
+        sds >> static_cast<SystemMonitor&>(rdfmon);
+    }
+    else
+        throw version_error( v, "1", r_rdfmon, CODELOC );
+        
+    return ds;
+}
+
+/** Default constructor - by default this monitors only
+    the first 10 A, using bins of width 0.2 A */
+RDFMonitor::RDFMonitor()
+           : ConcreteProperty<RDFMonitor,SystemMonitor>(),
+             rdfdata(0.0, 10.0, 0.2)
+{}
+
+/** Construct a monitor to monitor the RDF between 
+     min <= val < max, using 'nbins' bins */ 
+RDFMonitor::RDFMonitor(double min, double max, int nbins)
+           : ConcreteProperty<RDFMonitor,SystemMonitor>(),
+             rdfdata(min, max, nbins)
+{}
+
+/** Construct a monitor to monitor the RDF between
+     min <= val < max, using a bin width of 'binwidth' */
+RDFMonitor::RDFMonitor(double min, double max, double binwidth)
+
+
+RDFMonitor::RDFMonitor(const HistogramRange &range);
+
+RDFMonitor::RDFMonitor(const RDFMonitor &other);
+
+RDFMonitor::~RDFMonitor();
+
+RDFMonitor& RDFMonitor::operator=(const RDFMonitor &other);
+
+bool RDFMonitor::operator==(const RDFMonitor &other) const;
+bool RDFMonitor::operator!=(const RDFMonitor &other) const;
+
+HistogramValue RDFMonitor::operator[](int i) const;
+
+const RDF& RDFMonitor::rdf() const;
+
+void RDFMonitor::add(const AtomID &atom);
+void RDFMonitor::add(const AtomID &atom0, const AtomID &atom1);
+
+void RDFMonitor::setRange(double min, double max, int nbins);
+void RDFMonitor::setRange(double min, double max, double binwidth);
+void RDFMonitor::setRange(const HistogramRange &range);
+
+double RDFMonitor::minimum() const;
+double RDFMonitor::middle() const;
+double RDFMonitor::maximum() const;
+
+double RDFMonitor::binWidth() const;
+
+int RDFMonitor::count() const;
+int RDFMonitor::nBins() const;
+
+void RDFMonitor::monitor(System &system);

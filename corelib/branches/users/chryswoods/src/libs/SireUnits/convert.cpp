@@ -26,4 +26,59 @@
   *
 \*********************************************/
 
+#include <QString>
+#include <QStringList>
+
 #include "convert.h"
+#include "dimensions.h"
+
+namespace SireUnits
+{
+
+namespace Dimension
+{
+
+static void appendString(int M, QString rep, QStringList &pos, QStringList &neg)
+{
+    if (M > 1)
+    {
+        pos.append( QString("%1^%2").arg(rep).arg(M) );
+    }
+    else if (M == 1)
+    {
+        pos.append(rep);
+    }
+    else if (M < 0)
+    {
+        neg.append( QString("%1%2").arg(rep).arg(M) );
+    }
+} 
+
+/** Return a string representing the unit with specified dimensions */
+QString SIREUNITS_EXPORT getUnitString(int M, int L, int T, int C, int t, int Q, int A)
+{
+    QStringList pos;
+    QStringList neg;
+    
+    appendString(M, "M", pos, neg);
+    appendString(L, "L", pos, neg);
+    appendString(T, "T", pos, neg);
+    appendString(C, "C", pos, neg);
+    appendString(t, "t", pos, neg);
+    appendString(Q, "Q", pos, neg);
+    appendString(A, "A", pos, neg);
+    
+    if (pos.isEmpty() and neg.isEmpty())
+        return "";
+    else if (neg.isEmpty())
+        return pos.join(" ");
+    else if (pos.isEmpty())
+        return neg.join(" ");
+    else
+        return QString("%1 %2").arg(pos.join(" "), neg.join(" "));
+}
+
+}
+
+}
+

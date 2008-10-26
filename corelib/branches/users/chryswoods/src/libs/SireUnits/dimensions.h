@@ -63,7 +63,7 @@ class TempBase;
 
     @author Christopher Woods
 */
-class Unit
+class SIREUNITS_EXPORT Unit
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Unit&);
@@ -113,6 +113,8 @@ private:
     double sclfac;
 };
 
+QString getUnitString(int M, int L, int T, int C, int t, int Q, int A);
+
 /** Construct a physical unit with the specified
     Mass, Length, Time, Charge, temperature,
     Quantity and Angle dimensions
@@ -121,7 +123,7 @@ private:
 */
 template<int M, int L, int T,
          int C, int t, int Q, int A>
-class PhysUnit : public Unit
+class SIREUNITS_EXPORT PhysUnit : public Unit
 {
 public:
     PhysUnit() : Unit(0)
@@ -256,6 +258,13 @@ public:
     double to(const PhysUnit<M,L,T,C,t,Q,A> &units) const
     {
         return this->in(units);
+    }
+
+    QString toString() const
+    {
+        return QString("%1 %2")
+                        .arg(this->value())
+                        .arg(SireUnits::Dimension::getUnitString(M,L,T,C,t,Q,A));
     }
 
     static int MASS()
