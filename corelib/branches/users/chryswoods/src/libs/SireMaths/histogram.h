@@ -227,6 +227,8 @@ public:
     
     void accumulate(double value);
     void accumulate(double value, double weight);
+    
+    void accumulate(const Histogram &other);
 
 private:
     /** The values in each of the bins */
@@ -361,6 +363,8 @@ public:
     
     void accumulate(T value);
     void accumulate(T value, double weight);
+    
+    void accumulate(const HistogramT<T> &other);
 };
 
 ////////
@@ -853,6 +857,13 @@ void HistogramT<T>::accumulate(T value, double weight)
     Histogram::accumulate(value, weight);
 }
 
+/** Add the contents of the other histogram onto this one */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void HistogramT<T>::accumulate(const HistogramT<T> &other)
+{
+    Histogram::accumulate(other);
+}
 
 typedef HistogramT<SireUnits::Dimension::Length> LengthHistogram;
 typedef HistogramBinT<SireUnits::Dimension::Length> LengthHistogramBin;

@@ -113,44 +113,13 @@ void GeneralUnit::assertCompatible(const GeneralUnit &other) const
     }
 }
     
-static void appendString(int M, QString rep, QStringList &pos, QStringList &neg)
-{
-    if (M > 1)
-    {
-        pos.append( QString("%1^%2").arg(rep).arg(M) );
-    }
-    else if (M == 1)
-    {
-        pos.append(rep);
-    }
-    else if (M < 0)
-    {
-        neg.append( QString("%1%2").arg(rep).arg(M) );
-    }
-} 
-    
 QString GeneralUnit::toString() const
 {
-    QStringList pos;
-    QStringList neg;
-    
-    appendString(Mass, "M", pos, neg);
-    appendString(Length, "L", pos, neg);
-    appendString(Time, "T", pos, neg);
-    appendString(Charge, "C", pos, neg);
-    appendString(temperature, "t", pos, neg);
-    appendString(Quantity, "Q", pos, neg);
-    appendString(Angle, "A", pos, neg);
-    
-    if (pos.isEmpty() and neg.isEmpty())
-        return QString::number(value());
-    else if (neg.isEmpty())
-        return QString("%1 %2").arg(value()).arg(pos.join(" "));
-    else if (pos.isEmpty())
-        return QString("%1 %2").arg(value()).arg(neg.join(" "));
-    else
-        return QString("%1 %2 %3").arg(value())
-                                  .arg(pos.join(" "), neg.join(" "));
+    return QString("%1 %2").arg(value())
+                           .arg( SireUnits::Dimension::getUnitString(Mass, Length,
+                                                                     Time, Charge,
+                                                                     temperature, Quantity,
+                                                                     Angle) );
 }
 
 double GeneralUnit::to(const GeneralUnit &units) const

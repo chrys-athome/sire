@@ -40,6 +40,8 @@ using namespace SireMol;
 using namespace SireBase;
 using namespace SireStream;
 
+using boost::tuple;
+
 ////////
 //////// Implementation of RDF
 ////////
@@ -53,7 +55,7 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const RDF &rdf)
     
     SharedDataStream sds(ds);
     
-    sds << rdf.distvals << static_cast<const HistogramRange&>(rdf);
+    sds << rdf.distvals << static_cast<const HistogramRangeT<Length>&>(rdf);
     
     return ds;
 }
@@ -67,7 +69,7 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, RDF &rdf)
     {
         SharedDataStream sds(ds);
         
-        sds >> rdf.distvals >> static_cast<HistogramRange&>(rdf);
+        sds >> rdf.distvals >> static_cast<HistogramRangeT<Length>&>(rdf);
         
         rdf.is_dirty = true;
     }
@@ -78,7 +80,7 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, RDF &rdf)
 }
 
 /** Null constructor */
-RDF::RDF() : HistogramRange(), is_dirty(false)
+RDF::RDF() : HistogramRangeT<Length>(), is_dirty(false)
 {}
 
 static QVector<double> create(const HistogramRange &range)
@@ -95,12 +97,12 @@ static QVector<double> create(const HistogramRange &range)
 
 /** Construct the RDF that spans from 'min' to 'max' using 'nbins' bins.
     Note that it is not possible to calculate negative distances */
-RDF::RDF(double min, double max, int nbins)
-    : HistogramRange(min, max, nbins), is_dirty(false)
+RDF::RDF(const Length &min, const Length &max, int nbins)
+    : HistogramRangeT<Length>(min, max, nbins), is_dirty(false)
 {
     if (this->minimum() < 0)
-        HistogramRange::operator=( HistogramRange( qMax(0.0, this->minimum()),
-                                                   qMax(0.0, this->maximum()),
+        HistogramRange::operator=( HistogramRange( qMax(Length(0), this->minimum()),
+                                                   qMax(Length(0), this->maximum()),
                                                    this->nBins()) );
 
     if (this->nBins() > 0)
@@ -112,12 +114,28 @@ RDF::RDF(double min, double max, int nbins)
 
 /** Construct the RDF that spans from 'min' to 'max' using a bin width
     of 'binwidth'. Note that it is not possible to calculate negative distances */
-RDF::RDF(double min, double max, double binwidth)
-    : HistogramRange(min, max, binwidth), is_dirty(false)
+RDF::RDF(const Length &min, const Length &max, const Length &binwidth)
+    : HistogramRangeT<Length>(min, max, binwidth), is_dirty(false)
 {
     if (this->minimum() < 0)
-        HistogramRange::operator=( HistogramRange( qMax(0.0, this->minimum()),
-                                                   qMax(0.0, this->maximum()),
+        HistogramRange::operator=( HistogramRange( qMax(Length(0), this->minimum()),
+                                                   qMax(Length(0), this->maximum()),
+                                                   this->binWidth()) );
+
+    if (this->nBins() > 0)
+    {
+        is_dirty = true;
+        distvals = ::create(*this);
+    }
+}
+
+/** Construct the RDF with the specified range */
+RDF::RDF(const HistogramRangeT<Length> &range)
+    : HistogramRangeT<Length>(range), is_dirty(false)
+{
+    if (this->minimum() < 0)
+        HistogramRange::operator=( HistogramRange( qMax(Length(0), this->minimum()),
+                                                   qMax(Length(0), this->maximum()),
                                                    this->binWidth()) );
 
     if (this->nBins() > 0)
@@ -129,7 +147,7 @@ RDF::RDF(double min, double max, double binwidth)
 
 /** Copy constructor */
 RDF::RDF(const RDF &other)
-    : HistogramRange(other), distvals(other.distvals),
+    : HistogramRangeT<Length>(other), distvals(other.distvals),
       rdfvals(other.rdfvals), is_dirty(other.is_dirty)
 {}
 
@@ -142,7 +160,7 @@ RDF& RDF::operator=(const RDF &other)
 {
     if (this != &other)
     {
-        HistogramRange::operator=(other);
+        HistogramRangeT<Length>::operator=(other);
         distvals = other.distvals;
         rdfvals = other.rdfvals;
         is_dirty = other.is_dirty;
@@ -154,20 +172,22 @@ RDF& RDF::operator=(const RDF &other)
 /** Comparison operator */
 bool RDF::operator==(const RDF &other) const
 {
-    return HistogramRange::operator==(other) and distvals == other.distvals;
+    return HistogramRangeT<Length>::operator==(other) and distvals == other.distvals;
 }
 
 /** Comparison operator */
 bool RDF::operator!=(const RDF &other) const
 {
-    return HistogramRange::operator!=(other) or distvals != other.distvals;
+    return HistogramRangeT<Length>::operator!=(other) or distvals != other.distvals;
 }
 
 /** Return a string representation of this RDF */
 QString RDF::toString() const
 {
     return QObject::tr("RDF[ %1 <= x < %2 : nBins() == %3 ]")
-                    .arg( minimum() ).arg( maximum() ).arg( nBins() );
+                    .arg( Sire::toString(minimum()),
+                          Sire::toString(maximum()) )
+                    .arg( nBins() );
 }
 
 /** Internal function used to reconstruct the RDF */
@@ -191,7 +211,10 @@ void RDF::rebuildRDF() const
     }
     
     //calculate the volume in which these distances were obtained
-    double total_vol = ( pow_3(this->maximum()) - pow_3(this->minimum()) );
+    double max = this->maximum();
+    double min = this->minimum();
+    
+    double total_vol = ( pow_3(max) - pow_3(min) );
     
     //get the average density
     double avg_density = ndist / total_vol;
@@ -202,9 +225,12 @@ void RDF::rebuildRDF() const
     
     for (int i=0; i<this->nBins(); ++i)
     {
-        HistogramBin bin = this->operator[](i);
+        HistogramBinT<Length> bin = this->operator[](i);
         
-        double bin_vol = ( pow_3(bin.maximum()) - pow_3(bin.minimum()) );
+        max = bin.maximum();
+        min = bin.minimum();
+        
+        double bin_vol = ( pow_3(max) - pow_3(min) );
         
         double bin_density = distvals.constData()[i] / bin_vol;
         
@@ -217,14 +243,14 @@ void RDF::rebuildRDF() const
 }
 
 /** Return the value of the RDF at the ith bin */
-HistogramValue RDF::operator[](int i) const
+HistogramValueT<Length> RDF::operator[](int i) const
 {
     i = Index(i).map( this->nBins() );
 
     this->rebuildRDF();
 
-    return HistogramValue( HistogramRange::operator[](i),
-                           rdfvals.constData()[i] );
+    return HistogramValueT<Length>( HistogramRange::operator[](i),
+                                    rdfvals.constData()[i] );
 }
 
 /** Return a raw pointer to the array of values representing this RDF */
@@ -242,13 +268,13 @@ const double* RDF::constData() const
 
 /** Return the underlying distance histogram that is used to 
     construct this RDF. This is raw histogram of distances */
-Histogram RDF::distanceHistogram()
+HistogramT<Length> RDF::distanceHistogram()
 {
-    return Histogram(*this, distvals);
+    return HistogramT<Length>(*this, distvals);
 }
 
 /** Add the distance 'distance' to this RDF */
-void RDF::add(double distance)
+void RDF::add(const Length &distance)
 {
     int idx = this->bin(distance);
     
@@ -256,6 +282,66 @@ void RDF::add(double distance)
     {
         distvals[idx] += 1;
 
+        if (not is_dirty)
+        {
+            is_dirty = true;
+            rdfvals = QVector<double>();
+        }
+    }
+}
+
+/** Add the other RDF 'other' onto this RDF */
+void RDF::add(const RDF &other)
+{
+    if ( static_cast<const HistogramRange&>(*this).operator==(other) )
+    {
+        //we have the same range - just add the values
+        for (int i=0; i<this->nBins(); ++i)
+        {
+            distvals[i] += other.distvals.at(i);
+        }
+        
+        if (not is_dirty)
+        {
+            is_dirty = true;
+            rdfvals = QVector<double>();
+        }
+        
+        return;
+    }
+
+    bool changed = false;
+
+    for (int i=0; i<other.nBins(); ++i)
+    {
+        int min_idx = this->bin( other.minimum() );
+        int max_idx = this->bin( other.maximum() );
+        
+        if (min_idx == -1)
+        {
+            if (max_idx == -1)
+                continue;
+                
+            //put all of the values into the max bin
+            min_idx = 0;
+        }
+        else if (max_idx == -1)
+        {
+            max_idx = this->nBins() - 1;
+        }
+        
+        double val = other.distvals.at(i) / double(max_idx - min_idx + 1);
+        
+        changed = true;
+        
+        for (int j=min_idx; j<=max_idx; ++j)
+        {
+            this->distvals[j] += val;
+        }
+    }
+    
+    if (changed)
+    {
         if (not is_dirty)
         {
             is_dirty = true;
@@ -329,50 +415,177 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, RDFMonitor &rdfmon)
     the first 10 A, using bins of width 0.2 A */
 RDFMonitor::RDFMonitor()
            : ConcreteProperty<RDFMonitor,SystemMonitor>(),
-             rdfdata(0.0, 10.0, 0.2)
+             rdfdata(Length(0), Length(10), Length(0.2))
 {}
 
 /** Construct a monitor to monitor the RDF between 
      min <= val < max, using 'nbins' bins */ 
-RDFMonitor::RDFMonitor(double min, double max, int nbins)
+RDFMonitor::RDFMonitor(const Length &min, const Length &max, int nbins)
            : ConcreteProperty<RDFMonitor,SystemMonitor>(),
              rdfdata(min, max, nbins)
 {}
 
 /** Construct a monitor to monitor the RDF between
      min <= val < max, using a bin width of 'binwidth' */
-RDFMonitor::RDFMonitor(double min, double max, double binwidth)
+RDFMonitor::RDFMonitor(const Length &min, const Length &max, const Length &binwidth)
+           : ConcreteProperty<RDFMonitor,SystemMonitor>(),
+             rdfdata(min, max, binwidth)
+{}
 
+/** Construct a monitor to monitor the RDF using the passed range */
+RDFMonitor::RDFMonitor(const HistogramRangeT<Length> &range)
+           : ConcreteProperty<RDFMonitor,SystemMonitor>(),
+             rdfdata(range)
+{}
 
-RDFMonitor::RDFMonitor(const HistogramRange &range);
+/** Copy constructor */
+RDFMonitor::RDFMonitor(const RDFMonitor &other)
+           : ConcreteProperty<RDFMonitor,SystemMonitor>(other),
+             rdfdata(other.rdfdata), atomids(other.atomids)
+{}
 
-RDFMonitor::RDFMonitor(const RDFMonitor &other);
+/** Destructor */
+RDFMonitor::~RDFMonitor()
+{}
 
-RDFMonitor::~RDFMonitor();
+/** Copy assignment operator */
+RDFMonitor& RDFMonitor::operator=(const RDFMonitor &other)
+{
+    if (this != &other)
+    {
+        SystemMonitor::operator=(other);
+        rdfdata = other.rdfdata;
+        atomids = other.atomids;
+    }
+    
+    return *this;
+}
 
-RDFMonitor& RDFMonitor::operator=(const RDFMonitor &other);
+static bool operator==(const tuple<AtomIdentifier,AtomIdentifier> &pair0,
+                       const tuple<AtomIdentifier,AtomIdentifier> &pair1)
+{
+    return (pair0.get<0>() == pair1.get<0>() and
+            pair0.get<1>() == pair1.get<1>()) or
+           
+           (pair0.get<0>() == pair1.get<1>() and
+            pair0.get<1>() == pair1.get<0>());
+    
+}
 
-bool RDFMonitor::operator==(const RDFMonitor &other) const;
-bool RDFMonitor::operator!=(const RDFMonitor &other) const;
+/** Comparison operator */
+bool RDFMonitor::operator==(const RDFMonitor &other) const
+{
+    return SystemMonitor::operator==(other) and
+           rdfdata == other.rdfdata and
+           atomids == other.atomids;
+}
 
-HistogramValue RDFMonitor::operator[](int i) const;
+/** Comparison operator */
+bool RDFMonitor::operator!=(const RDFMonitor &other) const
+{
+    return not this->operator==(other);
+}
 
-const RDF& RDFMonitor::rdf() const;
+/** Return the value of the RDF at the ith bin
 
-void RDFMonitor::add(const AtomID &atom);
-void RDFMonitor::add(const AtomID &atom0, const AtomID &atom1);
+    \throw SireError::invalid_index
+*/
+HistogramValueT<Length> RDFMonitor::operator[](int i) const
+{
+    return rdfdata[i];
+}
 
-void RDFMonitor::setRange(double min, double max, int nbins);
-void RDFMonitor::setRange(double min, double max, double binwidth);
-void RDFMonitor::setRange(const HistogramRange &range);
+/** Return the RDF */
+const RDF& RDFMonitor::rdf() const
+{
+    return rdfdata;
+}
 
-double RDFMonitor::minimum() const;
-double RDFMonitor::middle() const;
-double RDFMonitor::maximum() const;
+/** Include the distances between all pairs of atoms that match
+    the ID 'atom' to this RDF */
+void RDFMonitor::add(const AtomID &atom)
+{
+    tuple<AtomIdentifier,AtomIdentifier> atompair(atom,atom);
+    
+    if (not atomids.contains(atompair))
+        atomids.append( atompair );
+}
 
-double RDFMonitor::binWidth() const;
+/** Include the distances between all atoms that match the ID 'atom0'
+    with all atoms that match the ID 'atom1' to this RDF */
+void RDFMonitor::add(const AtomID &atom0, const AtomID &atom1)
+{
+    tuple<AtomIdentifier,AtomIdentifier> atompair(atom0,atom1);
+    
+    if (not atomids.contains(atompair))
+        atomids.append( atompair );
+}
 
-int RDFMonitor::count() const;
-int RDFMonitor::nBins() const;
+/** Set the range for the RDF to min <= x < max, using 'nbins' bins */
+void RDFMonitor::setRange(const Length &min, const Length &max, int nbins)
+{
+    RDF new_rdf(min, max, nbins);
+    new_rdf.add( rdfdata );
+    
+    rdfdata = new_rdf;
+}
 
-void RDFMonitor::monitor(System &system);
+/** Set the range for the RDF to min <= x < max, using a binwidth of 'binwidth' */
+void RDFMonitor::setRange(const Length &min, const Length &max, 
+                          const Length &binwidth)
+{
+    RDF new_rdf(min, max, binwidth);
+    new_rdf.add( rdfdata );
+    
+    rdfdata = new_rdf;
+}
+
+/** Set the range for the RDF to 'range' */
+void RDFMonitor::setRange(const HistogramRangeT<Length> &range)
+{
+    RDF new_rdf(range);
+    new_rdf.add( rdfdata );
+    
+    rdfdata = new_rdf;
+}
+
+/** Return the minimum distance for the RDF */
+Length RDFMonitor::minimum() const
+{
+    return rdfdata.minimum();
+}
+
+/** Return the middle distance for the RDF */
+Length RDFMonitor::middle() const
+{
+    return rdfdata.middle();
+}
+
+/** Return the maximum distance for the RDF */
+Length RDFMonitor::maximum() const
+{
+    return rdfdata.maximum();
+}
+
+/** Return the width of the bins */
+Length RDFMonitor::binWidth() const
+{
+    return rdfdata.binWidth();
+}
+
+/** Return the number of bins */
+int RDFMonitor::count() const
+{
+    return rdfdata.count();
+}
+
+/** Return the number of bins */
+int RDFMonitor::nBins() const
+{
+    return rdfdata.nBins();
+}
+
+/** Add the matched distances from the system 'system' to this RDF */
+void RDFMonitor::monitor(System &system)
+{
+}

@@ -58,9 +58,9 @@ QDataStream& operator>>(QDataStream&, SireSystem::RDFMonitor&);
 namespace SireSystem
 {
 
-using SireMaths::LengthHistogramValue;
-using SireMaths::LengthHistogramRange;
-using SireMaths::LengthHistogram;
+using SireMaths::HistogramValueT;
+using SireMaths::HistogramRangeT;
+using SireMaths::HistogramT;
 
 using SireMol::AtomID;
 using SireMol::AtomIdentifier;
@@ -68,7 +68,7 @@ using SireMol::AtomIdentifier;
 using SireUnits::Dimension::Length;
 
 /** This class holds a radial distribution function */
-class SIRESYSTEM_EXPORT RDF : public HistogramRange<Length>
+class SIRESYSTEM_EXPORT RDF : public HistogramRangeT<Length>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const RDF&);
@@ -77,8 +77,8 @@ friend QDataStream& ::operator>>(QDataStream&, RDF&);
 public:
     RDF();
     RDF(const Length &min, const Length &max, int nbins=100);
-    
     RDF(const Length &min, const Length &max, const Length &binwidth);
+    RDF(const HistogramRangeT<Length> &range);
     
     RDF(const RDF &other);
     
@@ -106,14 +106,16 @@ public:
 
     QString toString() const;
     
-    LengthHistogramValue operator[](int i) const;
+    HistogramValueT<Length> operator[](int i) const;
     
     const double* data() const;
     const double* constData() const;
     
-    Histogram<Length> distanceHistogram();
+    HistogramT<Length> distanceHistogram();
     
     void add(const Length &distance);
+    
+    void add(const RDF &other);
 
 private:
     void rebuildRDF() const;
@@ -147,7 +149,7 @@ public:
     
     RDFMonitor(const Length &min, const Length &max, const Length &binwidth);
     
-    RDFMonitor(const HistogramRange<Length> &range);
+    RDFMonitor(const HistogramRangeT<Length> &range);
     
     RDFMonitor(const RDFMonitor &other);
     
@@ -168,22 +170,18 @@ public:
     bool operator==(const RDFMonitor &other) const;
     bool operator!=(const RDFMonitor &other) const;
     
-    HistogramValue<Length> operator[](int i) const;
+    HistogramValueT<Length> operator[](int i) const;
     
     const RDF& rdf() const;
     
     void add(const AtomID &atom);
     void add(const AtomID &atom0, const AtomID &atom1);
 
-    void setRange(const SireUnits::Dimension::Length &min, 
-                  const SireUnits::Dimension::Length &max,
-                  int nbins);
+    void setRange(const Length &min, const Length &max, int nbins);
                   
-    void setRange(const SireUnits::Dimension::Length &min, 
-                  const SireUnits::Dimension::Length &max,
-                  const SireUnits::Dimension::Length &binwidth);
+    void setRange(const Length &min, const Length &max, const Length &binwidth);
                   
-    void setRange(const HistogramRange<Length> &range);
+    void setRange(const HistogramRangeT<Length> &range);
     
     Length minimum() const;
     Length middle() const;

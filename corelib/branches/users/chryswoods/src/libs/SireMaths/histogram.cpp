@@ -508,7 +508,7 @@ const double* Histogram::constData() const
     return binvals.constData();
 }
 
-/** Assumulate the value 'value' (with a weight of 'weight') */
+/** Accumulate the value 'value' (with a weight of 'weight') */
 void Histogram::accumulate(double value, double weight)
 {
     int idx = this->bin(value);
@@ -517,10 +517,51 @@ void Histogram::accumulate(double value, double weight)
         binvals[idx] += weight;
 }
 
-/** Assumulate the value 'value' (with a weight of 1.0) */
+/** Accumulate the value 'value' (with a weight of 1.0) */
 void Histogram::accumulate(double value)
 {
     this->accumulate(value, 1);
+}
+
+/** Accumulte the values in the passed histogram into this one */
+void Histogram::accumulate(const Histogram &other)
+{
+    if ( static_cast<const HistogramRange&>(*this).operator==(other) )
+    {
+        //we have the same range - just add the values
+        for (int i=0; i<this->nBins(); ++i)
+        {
+            binvals[i] += other.binvals.at(i);
+        }
+        
+        return;
+    }
+
+    for (int i=0; i<other.nBins(); ++i)
+    {
+        int min_idx = this->bin( other.minimum() );
+        int max_idx = this->bin( other.maximum() );
+        
+        if (min_idx == -1)
+        {
+            if (max_idx == -1)
+                continue;
+                
+            //put all of the values into the max bin
+            min_idx = 0;
+        }
+        else if (max_idx == -1)
+        {
+            max_idx = this->nBins() - 1;
+        }
+        
+        double val = other.binvals.at(i) / double(max_idx - min_idx + 1);
+        
+        for (int j=min_idx; j<=max_idx; ++j)
+        {
+            this->binvals[j] += val;
+        }
+    }
 }
 
 /** Return a string representation */

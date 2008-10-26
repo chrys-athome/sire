@@ -140,7 +140,7 @@ class HeaderInfo:
         return len(self._properties) > 0
 
 match_class = r"SIRE_EXPOSE_CLASS\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
-match_alias = r"SIRE_EXPOSE_ALIAS\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*,\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
+match_alias = r"SIRE_EXPOSE_ALIAS\(\s*\n*\s*\(?([<>,\-\s\w\d:]+)\)?\s*\n*,\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
 match_function = r"SIRE_EXPOSE_FUNCTION\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
 match_property = r"SIRE_EXPOSE_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
 match_atom_property = r"SIRE_EXPOSE_ATOM_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
