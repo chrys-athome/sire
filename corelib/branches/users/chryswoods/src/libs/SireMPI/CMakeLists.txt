@@ -16,7 +16,7 @@ if (MPI_FOUND)
   message( STATUS "MPI headers: ${MPI_INCLUDE_PATH}" )
   message( STATUS "MPI libraries: ${MPI_LIBRARY} ${MPI_EXTRA_LIBRARY}" )
 
-  include_directories( ${MPI_INCLUDE_PATH} )
+  include_directories( BEFORE SYSTEM ${MPI_INCLUDE_PATH} )
 
   add_definitions( -D__SIRE_USE_MPI__ )
 

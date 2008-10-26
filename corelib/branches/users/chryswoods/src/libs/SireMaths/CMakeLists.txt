@@ -10,7 +10,7 @@ find_package(GSL 1.6 REQUIRED)
 message( STATUS "GSL paths ${GSL_LINK_DIRECTORIES} "
                 "${GSL_LIBRARIES} | ${GSL_INCLUDE_DIR}" )
 
-include_directories(${GSL_INCLUDE_DIR})
+include_directories( BEFORE SYSTEM ${GSL_INCLUDE_DIR})
 
 #add this include path to the list of extra include
 #paths required for Sire

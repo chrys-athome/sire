@@ -32,6 +32,10 @@
 #include "SireMol/selector.hpp"
 #include "SireMol/atom.h"
 
+#include "SireVol/space.h"
+
+#include "SireBase/pairmatrix.hpp"
+
 #include "SireMaths/constants.h"
 
 #include "SireStream/datastream.h"
@@ -40,6 +44,7 @@
 using namespace SireSystem;
 using namespace SireMaths;
 using namespace SireMol;
+using namespace SireVol;
 using namespace SireBase;
 using namespace SireMaths;
 using namespace SireStream;
@@ -370,7 +375,9 @@ QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const RDFMonitor &rdf
     
     SharedDataStream sds(ds);
     
-    sds << rdfmon.rdfdata << rdfmon.coords_property;
+    sds << rdfmon.rdfdata << rdfmon.coords_property
+                          << rdfmon.space_property
+                          << rdfmon.skip_intramolecular_pairs;
     
     sds << quint32( rdfmon.atomids.count() );
     
@@ -397,7 +404,10 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, RDFMonitor &rdfmon)
         SharedDataStream sds(ds);
         
         quint32 natomids = 0;
-        sds >> rdfmon.rdfdata >> rdfmon.coords_property >> natomids;
+        sds >> rdfmon.rdfdata >> rdfmon.coords_property 
+            >> rdfmon.space_property 
+            >> rdfmon.skip_intramolecular_pairs
+            >> natomids;
         
         rdfmon.atomids.clear();
         
@@ -423,7 +433,9 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, RDFMonitor &rdfmon)
 RDFMonitor::RDFMonitor()
            : ConcreteProperty<RDFMonitor,SystemMonitor>(),
              rdfdata(Length(0), Length(10), Length(0.2)),
-             coords_property("coordinates")
+             coords_property("coordinates"),
+             space_property("space"),
+             skip_intramolecular_pairs(true)
 {}
 
 /** Construct a monitor to monitor the RDF between 
@@ -431,7 +443,9 @@ RDFMonitor::RDFMonitor()
 RDFMonitor::RDFMonitor(const Length &min, const Length &max, int nbins)
            : ConcreteProperty<RDFMonitor,SystemMonitor>(),
              rdfdata(min, max, nbins),
-             coords_property("coordinates")
+             coords_property("coordinates"),
+             space_property("space"),
+             skip_intramolecular_pairs(true)
 {}
 
 /** Construct a monitor to monitor the RDF between
@@ -439,21 +453,27 @@ RDFMonitor::RDFMonitor(const Length &min, const Length &max, int nbins)
 RDFMonitor::RDFMonitor(const Length &min, const Length &max, const Length &binwidth)
            : ConcreteProperty<RDFMonitor,SystemMonitor>(),
              rdfdata(min, max, binwidth),
-             coords_property("coordinates")
+             coords_property("coordinates"),
+             space_property("space"),
+             skip_intramolecular_pairs(true)
 {}
 
 /** Construct a monitor to monitor the RDF using the passed range */
 RDFMonitor::RDFMonitor(const HistogramRangeT<Length> &range)
            : ConcreteProperty<RDFMonitor,SystemMonitor>(),
              rdfdata(range),
-             coords_property("coordinates")
+             coords_property("coordinates"),
+             space_property("space"),
+             skip_intramolecular_pairs(true)
 {}
 
 /** Copy constructor */
 RDFMonitor::RDFMonitor(const RDFMonitor &other)
            : ConcreteProperty<RDFMonitor,SystemMonitor>(other),
              rdfdata(other.rdfdata), atomids(other.atomids),
-             coords_property(other.coords_property)
+             coords_property(other.coords_property),
+             space_property(other.space_property),
+             skip_intramolecular_pairs(other.skip_intramolecular_pairs)
 {}
 
 /** Destructor */
@@ -469,6 +489,8 @@ RDFMonitor& RDFMonitor::operator=(const RDFMonitor &other)
         rdfdata = other.rdfdata;
         atomids = other.atomids;
         coords_property = other.coords_property;
+        space_property = other.space_property;
+        skip_intramolecular_pairs = other.skip_intramolecular_pairs;
     }
     
     return *this;
@@ -491,7 +513,9 @@ bool RDFMonitor::operator==(const RDFMonitor &other) const
     return SystemMonitor::operator==(other) and
            rdfdata == other.rdfdata and
            atomids == other.atomids and
-           coords_property == other.coords_property;
+           coords_property == other.coords_property and
+           space_property == other.space_property and
+           skip_intramolecular_pairs == other.skip_intramolecular_pairs;
 }
 
 /** Comparison operator */
@@ -562,6 +586,32 @@ const PropertyName& RDFMonitor::coordsProperty() const
     return coords_property;
 }
 
+/** Set the property that will be used to locate the system space */
+void RDFMonitor::setSpaceProperty(const PropertyName &name)
+{
+    space_property = name;
+}
+
+/** Return the property used to find the system space */
+const PropertyName& RDFMonitor::spaceProperty() const
+{
+    return space_property;
+}
+
+/** Set whether or not to skip intramolecular atom pairs when
+    composing the RDF */
+void RDFMonitor::setSkipIntramolecularPairs(bool skip)
+{
+    skip_intramolecular_pairs = skip;
+}
+
+/** Return whether or not intramolecular atomic pairs are skipped
+    when composing the RDF */
+bool RDFMonitor::skipIntramolecularPairs() const
+{
+    return skip_intramolecular_pairs;
+}
+
 /** Set the range for the RDF to min <= x < max, using 'nbins' bins */
 void RDFMonitor::setRange(const Length &min, const Length &max, int nbins)
 {
@@ -626,26 +676,6 @@ int RDFMonitor::nBins() const
     return rdfdata.nBins();
 }
 
-/** Internal function used to add all of the interatomic distances
-    between two atoms */
-void RDFMonitor::addDistances(const Selector<Atom> &atoms0,
-                              const Selector<Atom> &atoms1)
-{
-    QList<Vector> coords0 = atoms0.property<Vector>( coords_property );
-    QList<Vector> coords1 = atoms1.property<Vector>( coords_property );
-    
-    foreach (const Vector &c0, coords0)
-    {
-        foreach (const Vector &c1, coords1)
-        {
-            double dist = Vector::distance2(c0, c1);
-            
-            if (dist != 0)
-                rdfdata.add( Length( std::sqrt(dist) ) );
-        }
-    }
-}
-
 /** Add the matched distances from the system 'system' to this RDF */
 void RDFMonitor::monitor(System &system)
 {
@@ -653,6 +683,11 @@ void RDFMonitor::monitor(System &system)
     
     try
     {
+        //get the system space
+        const Space &space = system.property(space_property).asA<Space>();
+    
+        DistMatrix distmat(10,10);
+    
         for (QList< tuple<AtomIdentifier,AtomIdentifier> >::const_iterator
                                                 it = atomids.constBegin();
              it != atomids.constEnd();
@@ -660,20 +695,82 @@ void RDFMonitor::monitor(System &system)
         {
             //find all of the atoms that match the atom IDs
             QHash< MolNum, Selector<Atom> > atoms0 = system.atoms( it->get<0>() );
-            QHash< MolNum, Selector<Atom> > atoms1 = system.atoms( it->get<1>() );
+
+            //get the coordinates of all of these atoms
+            QHash<MolNum,CoordGroup> coords0;
+            coords0.reserve(atoms0.count());
             
-            //now calculate all of the interatomic distances between all pairs
             for (QHash< MolNum, Selector<Atom> >::const_iterator
                                                         it0 = atoms0.constBegin();
                  it0 != atoms0.constEnd();
                  ++it0)
             {
-                for (QHash< MolNum, Selector<Atom> >::const_iterator
-                                                        it1 = atoms1.constBegin();
-                     it1 != atoms1.constEnd();
+                coords0.insert( it0.key(), 
+                                CoordGroup(it0->property<Vector>(coords_property)
+                                           .toVector() ) );
+            }
+
+            QHash<MolNum,CoordGroup> coords1 = coords0;
+
+            if (it->get<0>() != it->get<1>())
+            {
+                 QHash< MolNum, Selector<Atom> > atoms1 = system.atoms( it->get<1>() );
+                 
+                 coords1 = QHash<MolNum,CoordGroup>();
+                 coords1.reserve(atoms1.count());
+                 
+                 for (QHash< MolNum, Selector<Atom> >::const_iterator it1
+                                              = atoms1.constBegin();
+                      it1 != atoms1.constEnd();
+                      ++it1)
+                 {
+                     coords1.insert( it1.key(), 
+                                CoordGroup(it1->property<Vector>(coords_property)
+                                           .toVector() ) );
+                 }
+            }
+            
+            //now calculate all of the interatomic distances between all pairs
+            for (QHash<MolNum,CoordGroup>::const_iterator it0 = coords0.constBegin();
+                 it0 != coords0.constEnd();
+                 ++it0)
+            {
+                for (QHash<MolNum,CoordGroup>::const_iterator
+                                                        it1 = coords1.constBegin();
+                     it1 != coords1.constEnd();
                      ++it1)
                 {
-                    this->addDistances( it0.value(), it1.value() );
+                    if (skip_intramolecular_pairs and
+                        it0.key() == it1.key())
+                    {
+                        //intramolecular pairs!
+                        continue;
+                    }
+                    
+                    if (space.beyond(this->maximum(), it0.value().aaBox(),
+                                                      it1.value().aaBox()))
+                    {
+                        //the atoms are all beyond the end of the histogram
+                        // - so skip them
+                        continue;
+                    }
+                    
+                    //calculate all of the interatomic distances
+                    space.calcDist(it0.value(), it1.value(), distmat);
+                    
+                    //add the distances to the histogram
+                    for (unsigned int i=0; i<distmat.nOuter(); ++i)
+                    {
+                        distmat.setOuterIndex(i);
+                        
+                        for (unsigned int j=0; j<distmat.nInner(); ++j)
+                        {
+                            double dist = distmat[j];
+                            
+                            if (dist != 0) // skip same atom pairs
+                                rdfdata.add( Length(dist) );
+                        }
+                    }
                 }
             }
         }

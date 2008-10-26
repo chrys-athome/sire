@@ -67,10 +67,10 @@ print "Parameterised all of the water molecules (in %d ms)!" % ms
 
 system = System()
 
-rdf = RDFMonitor()
+rdf = RDFMonitor( 0*angstrom, 10*angstrom, 0.05*angstrom )
 rdf.add( AtomName("O00") )
 
-rdf2 = RDFMonitor()
+rdf2 = RDFMonitor( 0*angstrom, 10*angstrom, 0.05*angstrom )
 rdf2.add( AtomName("O00"), AtomName("H01") )
 rdf2.add( AtomName("O00"), AtomName("H02") )
 

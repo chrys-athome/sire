@@ -66,9 +66,6 @@ using SireMaths::HistogramT;
 using SireMol::AtomID;
 using SireMol::AtomIdentifier;
 
-using SireMol::Selector;
-using SireMol::Atom;
-
 using SireBase::PropertyName;
 
 using SireUnits::Dimension::Length;
@@ -202,15 +199,16 @@ public:
     int nBins() const;
     
     void setCoordsProperty(const PropertyName &coords_property);
+    void setSpaceProperty(const PropertyName &space_property);
+    void setSkipIntramolecularPairs(bool skip);
     
     const PropertyName& coordsProperty() const;
+    const PropertyName& spaceProperty() const;
+    bool skipIntramolecularPairs() const;
 
     void monitor(System &system);
 
 private:
-    void addDistances(const Selector<Atom> &atoms0,
-                      const Selector<Atom> &atoms1);
-
     /** The actual RDF */
     RDF rdfdata;
 
@@ -220,6 +218,12 @@ private:
     
     /** The property used to find the atomic coordinates */
     PropertyName coords_property;
+    
+    /** The property used to find the system space */
+    PropertyName space_property;
+    
+    /** Whether or not to skip intramolecular pairs */
+    bool skip_intramolecular_pairs;
 };
 
 }
