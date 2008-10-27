@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007  Christopher Woods
+  *  Copyright (C) 2008  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,75 +26,77 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_MOLIDENTIFIER_H
-#define SIREMOL_MOLIDENTIFIER_H
+#ifndef SIREMOL_MOLMOLID_H
+#define SIREMOL_MOLMOLID_H
 
-#include "molid.h"
+#include "molidentifier.h"
 
-#include <boost/shared_ptr.hpp>
+#include <boost/tuple/tuple.hpp>
+
+SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
 
-/** This is a generic holder for any MolID class! 
+/** This class represents a combination of Molecule IDs
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT MolIdentifier : public MolID
+class SIREMOL_EXPORT MolMolID : public MolID
 {
 public:
-    MolIdentifier();
-    MolIdentifier(const MolID &atomid);
-    MolIdentifier(const MolIdentifier &other);
+    MolMolID();
+    MolMolID(const MolID &mol0, const MolID &mol1);
+    MolMolID(const boost::tuple<MolIdentifier,MolIdentifier> &molids);
     
-    ~MolIdentifier();
+    MolMolID(const MolMolID &other);
+    
+    ~MolMolID();
     
     static const char* typeName()
     {
-        return QMetaType::typeName( qMetaTypeId<MolIdentifier>() );
+        return QMetaType::typeName( qMetaTypeId<MolMolID>() );
     }
     
     const char* what() const
     {
-        return MolIdentifier::typeName();
+        return MolMolID::typeName();
     }
     
-    MolIdentifier* clone() const
+    MolMolID* clone() const
     {
-        return new MolIdentifier(*this);
+        return new MolMolID(*this);
     }
     
-    bool isNull() const;
+    MolMolID& operator=(const MolMolID &other);
     
-    uint hash() const;
-                
-    QString toString() const;
-    
-    const MolID& base() const;
-    
-    MolIdentifier& operator=(const MolIdentifier &other);
-    MolIdentifier& operator=(const MolID &other);
+    bool operator==(const MolMolID &other) const;
+    bool operator!=(const MolMolID &other) const;
     
     bool operator==(const SireID::ID &other) const;
-    using SireID::ID::operator!=;
-   
-    bool operator==(const MolIdentifier &other) const;
-    bool operator!=(const MolIdentifier &other) const;
+    bool operator!=(const SireID::ID &other) const;
     
-    bool operator==(const MolID &other) const;
-    bool operator!=(const MolID &other) const;
+    uint hash() const;
+    
+    QString toString() const;
+    
+    bool isNull() const;
     
     QList<MolNum> map(const Molecules &molecules) const;
     QList<MolNum> map(const MoleculeGroup &molgroup) const;
     QList<MolNum> map(const MolGroupsBase &molgroups) const;
 
 private:
-    /** Pointer to the MolID */
-    boost::shared_ptr<MolID> d;
+    /** The two Molecule identifiers */
+    MolIdentifier molid0, molid1;
 };
 
 }
 
-Q_DECLARE_METATYPE(SireMol::MolIdentifier);
+Q_DECLARE_METATYPE( SireMol::MolMolID )
+
+SIRE_EXPOSE_CLASS( SireMol::MolMolID )
+
+SIRE_END_HEADER
 
 #endif

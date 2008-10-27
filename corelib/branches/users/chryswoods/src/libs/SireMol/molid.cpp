@@ -31,6 +31,14 @@
 #include "molnum.h"
 #include "molname.h"
 
+#include "molatomid.h"
+#include "molmolid.h"
+
+#include "atomidx.h"
+
+#include "specifymol.h"
+
+#include "molecules.h"
 #include "moleculegroup.h"
 #include "moleculegroups.h"
 
@@ -52,14 +60,47 @@ using namespace SireBase;
 /////// Implementation of MolID
 ///////
 
+/** Constructor */
 MolID::MolID() : SireID::ID()
 {}
 
+/** Copy constructor */
 MolID::MolID(const MolID &other) : SireID::ID(other)
 {}
 
+/** Destructor */
 MolID::~MolID()
 {}
+
+/** Specify the ith molecule that matches this ID */
+SpecifyMol MolID::operator[](int i) const
+{
+    return SpecifyMol(*this, i);
+}
+
+/** Specify the ith molecule that matches this ID */
+SpecifyMol MolID::operator()(int i) const
+{
+    return SpecifyMol(*this, i);
+}
+
+/** Specify the ith to jth molecules that match this ID */
+SpecifyMol MolID::operator()(int i, int j) const
+{
+    return SpecifyMol(*this, i, j);
+}
+
+/** Combine this ID with another molecule ID */
+MolMolID MolID::operator+(const MolID &other) const
+{
+    return MolMolID(*this, other);
+}
+
+/** Search for matching atoms in the matching molecules */
+MolAtomID MolID::operator+(const AtomID &other) const
+{
+    return MolAtomID(*this, other);
+}
 
 ///////
 /////// Implementation of MolIdx
@@ -76,6 +117,28 @@ MolIdx::MolIdx(const MolIdx &other) : SireID::Index_T_<MolIdx>(other), MolID(oth
 
 MolIdx::~MolIdx()
 {}
+
+QList<MolNum> MolIdx::map(const Molecules &molecules) const
+{
+    int i = SireID::Index(*this).map( molecules.count() );
+
+    QList<MolNum> molnums;
+    
+    for (Molecules::const_iterator it = molecules.constBegin();
+         it != molecules.constEnd();
+         ++it)
+    {
+        if (i == 0)
+        {
+            molnums.append(it.key());
+            break;
+        }
+    }
+    
+    BOOST_ASSERT( not molnums.isEmpty() );
+    
+    return molnums;
+}
 
 QList<MolNum> MolIdx::map(const MoleculeGroup &molgroup) const
 {
@@ -110,6 +173,19 @@ MolNum MolNum::getUniqueNumber()
     return MolNum( last_num.increment() );
 }
 
+QList<MolNum> MolNum::map(const Molecules &molecules) const
+{
+    if (not molecules.contains(*this))
+        throw SireMol::missing_molecule( QObject::tr(
+            "There is no molecule with number %1 in the set of molecules.")
+                .arg(this->toString()), CODELOC );
+                
+    QList<MolNum> molnums;
+    molnums.append(*this);
+    
+    return molnums;
+}
+
 QList<MolNum> MolNum::map(const MoleculeGroup &molgroup) const
 {
     return molgroup.map(*this);
@@ -135,6 +211,26 @@ MolName::MolName(const MolName &other) : SireID::Name(other), MolID(other)
 
 MolName::~MolName()
 {}
+
+QList<MolNum> MolName::map(const Molecules &molecules) const
+{
+    QList<MolNum> molnums;
+    
+    for (Molecules::const_iterator it = molecules.constBegin();
+         it != molecules.constEnd();
+         ++it)
+    {
+        if (it.value().name() == *this)
+            molnums.append( it.key() );
+    }
+    
+    if (molnums.isEmpty())
+        throw SireMol::missing_molecule( QObject::tr(
+            "There is no molecule with name \"%1\" in the set of molecules.")
+                .arg(_name), CODELOC );
+                
+    return molnums;
+}
 
 QList<MolNum> MolName::map(const MoleculeGroup &molgroup) const
 {
@@ -202,6 +298,29 @@ bool MolNumList::operator==(const MolNumList &other) const
 bool MolNumList::operator!=(const MolNumList &other) const
 {
     return molnums != other.molnums;
+}
+
+/** Ensure that all of the numbers exist in 'molecules'
+
+    \throw SireMol::missing_molecule
+    \throw SireError::invalid_arg
+*/
+QList<MolNum> MolNumList::map(const Molecules &molecules) const
+{
+    if (molnums.isEmpty())
+        throw SireError::invalid_arg( QObject::tr(
+            "You cannot pass an empty set of molecule numbers!"), 
+                CODELOC );
+
+    foreach (MolNum molnum, molnums)
+    {
+        if (not molecules.contains(molnum))
+            throw SireMol::missing_molecule( QObject::tr(
+                "There is no molecule with number %1 in the set of molecules.")
+                    .arg(molnum.toString()), CODELOC );
+    }
+    
+    return molnums;
 }
 
 /** Ensure that all of the numbers exist in 'molgroup'

@@ -40,6 +40,14 @@ class MolIdx;
 class MolIdentifier;
 class MolNum;
 
+class MolMolID;
+class MolAtomID;
+
+class SpecifyMol;
+
+class AtomID;
+
+class Molecules;
 class MoleculeGroup;
 class MolGroupsBase;
 
@@ -51,7 +59,7 @@ class MolGroupsBase;
 class SIREMOL_EXPORT MolID : public SireID::ID
 {
 public:
-    typedef MolIdx Index;
+    typedef MolNum Index;
     typedef MolIdentifier Identifier;
 
     MolID();
@@ -67,6 +75,14 @@ public:
 
     virtual MolID* clone() const=0;
     
+    SpecifyMol operator[](int i) const;
+    SpecifyMol operator()(int i) const;
+    SpecifyMol operator()(int i, int j) const;
+    
+    MolMolID operator+(const MolID &other) const;
+    MolAtomID operator+(const AtomID &other) const;
+    
+    virtual QList<MolNum> map(const Molecules &molecules) const=0;
     virtual QList<MolNum> map(const MoleculeGroup &molgroup) const=0;
     virtual QList<MolNum> map(const MolGroupsBase &molgroupsbase) const=0;
 };
@@ -112,6 +128,7 @@ public:
     bool operator==(const MolNumList &other) const;
     bool operator!=(const MolNumList &other) const;
     
+    QList<MolNum> map(const Molecules &molecules) const;
     QList<MolNum> map(const MoleculeGroup &molgroup) const;
     QList<MolNum> map(const MolGroupsBase &molgroups) const;
 

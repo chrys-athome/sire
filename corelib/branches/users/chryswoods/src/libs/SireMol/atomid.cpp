@@ -188,7 +188,26 @@ Atom AtomID::selectFrom(const Molecules &molecules) const
 */
 Atom AtomID::selectFrom(const MoleculeGroup &molgroup) const
 {
-    return AtomID::selectFrom(molgroup.molecules());
+    QHash< MolNum,Selector<Atom> > mols = this->selectAllFrom(molgroup);
+    
+    if (mols.count() > 1)
+        throw SireMol::duplicate_atom( QObject::tr(
+            "More than one molecule contains an atom that "
+            "matches this ID (%1). These molecules have numbers %2.")
+                .arg(this->toString()).arg(Sire::toString(mols.keys())),
+                    CODELOC );
+                    
+    const Selector<Atom> &atoms = *(mols.constBegin());
+    
+    if (atoms.count() > 1)
+        throw SireMol::duplicate_atom( QObject::tr(
+            "While only one molecule (MolNum == %1) "
+            "contains an atom that matches this ID (%2), it contains "
+            "more than one atom that matches.")
+                .arg(atoms.data().number()).arg(this->toString()),
+                    CODELOC );
+                    
+    return atoms[0];
 }
 
 /** Return the atoms from the molecule group 'molgroup' that match
@@ -210,7 +229,26 @@ AtomID::selectAllFrom(const MoleculeGroup &molgroup) const
 */
 Atom AtomID::selectFrom(const MolGroupsBase &molgroups) const
 {
-    return AtomID::selectFrom(molgroups.molecules());
+    QHash< MolNum,Selector<Atom> > mols = this->selectAllFrom(molgroups);
+    
+    if (mols.count() > 1)
+        throw SireMol::duplicate_atom( QObject::tr(
+            "More than one molecule contains an atom that "
+            "matches this ID (%1). These molecules have numbers %2.")
+                .arg(this->toString()).arg(Sire::toString(mols.keys())),
+                    CODELOC );
+                    
+    const Selector<Atom> &atoms = *(mols.constBegin());
+    
+    if (atoms.count() > 1)
+        throw SireMol::duplicate_atom( QObject::tr(
+            "While only one molecule (MolNum == %1) "
+            "contains an atom that matches this ID (%2), it contains "
+            "more than one atom that matches.")
+                .arg(atoms.data().number()).arg(this->toString()),
+                    CODELOC );
+                    
+    return atoms[0];
 }
 
 /** Return the set of atoms that match this ID in the molecule groups

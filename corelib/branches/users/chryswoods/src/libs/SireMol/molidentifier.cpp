@@ -36,6 +36,24 @@
 using namespace SireMol;
 using namespace SireID;
 
+static const RegisterMetaType<MolIdentifier> r_molid;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
+                                       const MolIdentifier &molid)
+{
+    throw SireError::incomplete_code( CODELOC );
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
+                                       MolIdentifier &molid)
+{
+    throw SireError::incomplete_code( CODELOC );
+    return ds;
+}
+
 /** Null constructor */
 MolIdentifier::MolIdentifier() : MolID()
 {}
@@ -156,6 +174,19 @@ bool MolIdentifier::operator!=(const MolID &other) const
         return this->operator!=(other.asA<MolIdentifier>());
     else
         return d->operator!=(other);
+}
+
+bool MolIdentifier::matches(const MolInfo &molinfo) const
+{
+    
+}
+
+QList<MolNum> MolIdentifier::map(const Molecules &molecules) const
+{
+    if (d.get() == 0)
+        return molecules.molNums().toList();
+    else
+        return d->map(molecules);
 }
 
 /** Map this ID back to the numbers of the matching molecules in the 

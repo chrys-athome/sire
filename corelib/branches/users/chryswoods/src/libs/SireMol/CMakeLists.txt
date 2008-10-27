@@ -68,6 +68,7 @@ set ( SIREMOL_HEADERS
       mgidx.h
       mgname.h
       mgnum.h
+      molatomid.h
       molecule.h
       moleculecutting.h
       moleculedata.h
@@ -81,6 +82,7 @@ set ( SIREMOL_HEADERS
       molidentifier.h
       molidx.h
       molinfo.h
+      molmolid.h
       molname.h
       molnum.h
       molviewproperty.h
@@ -110,6 +112,7 @@ set ( SIREMOL_HEADERS
       segsegid.h
       selector.hpp
       specify.hpp
+      specifymol.h
       structureeditor.h
       viewsofmol.h
       weightfunction.h
@@ -157,6 +160,7 @@ set ( SIREMOL_SOURCES
       groupatomids.cpp
       mgid.cpp
       mgidentifier.cpp
+      molatomid.cpp
       molecule.cpp
       moleculecutting.cpp
       moleculedata.cpp
@@ -168,6 +172,7 @@ set ( SIREMOL_SOURCES
       moleditor.cpp
       molid.cpp
       molidentifier.cpp
+      molmolid.cpp
       molviewproperty.cpp
       mover.cpp
       partialmolecule.cpp
@@ -184,6 +189,7 @@ set ( SIREMOL_SOURCES
       segment.cpp
       segproperty.cpp
       segsegid.cpp
+      specifymol.cpp
       structureeditor.cpp
       viewsofmol.cpp
       weightfunction.cpp

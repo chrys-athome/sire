@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007  Christopher Woods
+  *  Copyright (C) 2008  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,108 +26,81 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_MOLNAME_H
-#define SIREMOL_MOLNAME_H
-
-#include "SireID/name.h"
+#ifndef SIREMOL_SPECIFYMOL_H
+#define SIREMOL_SPECIFYMOL_H
 
 #include "molid.h"
+#include "molidentifier.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-class MolName;
-}
 
-XMLStream& operator<<(XMLStream&, const SireMol::MolName&);
-XMLStream& operator>>(XMLStream&, SireMol::MolName&);
-
-namespace SireMol
-{
-
-/** This class holds the name of a Molecule.
+/** This class allow for the specification of specific
+    matching molecules
     
     @author Christopher Woods
 */
-class SIREMOL_EXPORT MolName : public SireID::Name, public MolID
+class SIREMOL_EXPORT SpecifyMol : public MolID
 {
-
-friend XMLStream& ::operator<<(XMLStream&, const MolName&);
-friend XMLStream& ::operator>>(XMLStream&, MolName&);
-
 public:
-    MolName();
-    explicit MolName(const QString &name);
+    SpecifyMol();
+    SpecifyMol(const MolID &molid);
+    SpecifyMol(const MolID &molid, int i);
+    SpecifyMol(const MolID &molid, int i, int j);
     
-    MolName(const MolName &other);
+    SpecifyMol(const SpecifyMol &other);
     
-    ~MolName();
+    ~SpecifyMol();
     
     static const char* typeName()
     {
-        return QMetaType::typeName( qMetaTypeId<MolName>() );
+        return QMetaType::typeName( qMetaTypeId<SpecifyMol>() );
     }
     
     const char* what() const
     {
-        return MolName::typeName();
+        return SpecifyMol::typeName();
     }
     
-    MolName* clone() const
+    SpecifyMol* clone() const
     {
-        return new MolName(*this);
+        return new SpecifyMol(*this);
     }
     
-    bool isNull() const
-    {
-        return SireID::Name::isNull();
-    }
+    SpecifyMol& operator=(const SpecifyMol &other);
     
-    uint hash() const
-    {
-        return qHash(_name);
-    }
+    bool operator==(const SpecifyMol &other) const;
+    bool operator!=(const SpecifyMol &other) const;
     
-    QString toString() const
-    {
-        return QString("MolName('%1')").arg(_name);
-    }
+    bool operator==(const SireID::ID &other) const;
+    bool operator!=(const SireID::ID &other) const;
     
-    MolName& operator=(const MolName &other)
-    {
-        SireID::Name::operator=(other);
-        MolID::operator=(other);
-        return *this;
-    }
+    uint hash() const;
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<MolName>(*this, other);
-    }
+    QString toString() const;
     
-    bool operator==(const MolName &other) const
-    {
-        return _name == other._name;
-    }
-    
-    bool operator!=(const MolName &other) const
-    {
-        return _name != other._name;
-    }
+    bool isNull() const;
     
     QList<MolNum> map(const Molecules &molecules) const;
     QList<MolNum> map(const MoleculeGroup &molgroup) const;
     QList<MolNum> map(const MolGroupsBase &molgroups) const;
+
+private:
+    /** The underlying molecule ID */
+    MolIdentifier molid;
+    
+    /** The range of molecules to match */
+    SireID::Index strt, end;
 };
 
 }
 
-Q_DECLARE_METATYPE(SireMol::MolName);
+Q_DECLARE_METATYPE( SireMol::SpecifyMol )
 
-SIRE_EXPOSE_CLASS( SireMol::MolName )
+SIRE_EXPOSE_CLASS( SireMol::SpecifyMol )
 
 SIRE_END_HEADER
 
 #endif
-

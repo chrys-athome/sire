@@ -124,6 +124,7 @@ public:
     
     using SireID::Index_T_<MolIdx>::map;
     
+    QList<MolNum> map(const Molecules &molecules) const;
     QList<MolNum> map(const MoleculeGroup &molgroup) const;
     QList<MolNum> map(const MolGroupsBase &molgroups) const;
 };
