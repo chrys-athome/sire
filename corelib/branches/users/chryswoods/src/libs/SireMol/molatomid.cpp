@@ -120,7 +120,7 @@ uint MolAtomID::hash() const
 QString MolAtomID::toString() const
 {
     if (atomid.isNull())
-        return molid.atoms().toString();
+        return QObject::tr("Atoms in %1").arg(molid.toString());
     
     else if (molid.isNull())
         return atomid.toString();

@@ -33,6 +33,8 @@
 
 #include "mover.hpp"
 
+#include "SireError/errors.h"
+
 using namespace SireMol;
 using namespace SireID;
 
@@ -174,11 +176,6 @@ bool MolIdentifier::operator!=(const MolID &other) const
         return this->operator!=(other.asA<MolIdentifier>());
     else
         return d->operator!=(other);
-}
-
-bool MolIdentifier::matches(const MolInfo &molinfo) const
-{
-    
 }
 
 QList<MolNum> MolIdentifier::map(const Molecules &molecules) const

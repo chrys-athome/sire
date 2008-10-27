@@ -32,6 +32,8 @@
 #include "molid.h"
 #include "molidentifier.h"
 
+#include "SireID/index.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol

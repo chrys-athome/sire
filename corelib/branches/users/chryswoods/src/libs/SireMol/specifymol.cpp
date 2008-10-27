@@ -80,23 +80,97 @@ SpecifyMol& SpecifyMol::operator=(const SpecifyMol &other)
 }
 
 /** Comparison operator */
-bool SpecifyMol::operator==(const SpecifyMol &other) const;
+bool SpecifyMol::operator==(const SpecifyMol &other) const
+{
+    return molid == other.molid and strt == other.strt
+                  and end == other.end;
+}
 
 /** Comparison operator */
-bool SpecifyMol::operator!=(const SpecifyMol &other) const;
+bool SpecifyMol::operator!=(const SpecifyMol &other) const
+{
+    return molid != other.molid or strt != other.strt
+                       or end != other.end;
+}
 
 /** Comparison operator */
-bool SpecifyMol::operator==(const SireID::ID &other) const;
+bool SpecifyMol::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<SpecifyMol>(*this, other);
+}
 
 /** Comparison operator */
-bool SpecifyMol::operator!=(const SireID::ID &other) const;
+bool SpecifyMol::operator!=(const SireID::ID &other) const
+{
+    return not this->operator==(other);
+}
 
-uint SpecifyMol::hash() const;
+/** Hash this ID */
+uint SpecifyMol::hash() const
+{
+    return molid.hash() + strt + end;
+}
 
-QString SpecifyMol::toString() const;
+/** Return a string representation of this ID */
+QString SpecifyMol::toString() const
+{
+    if (strt == end)
+        return QString("(%1)[%2]").arg(molid.toString()).arg(strt);
+    else
+        return QString("(%1)[%2:%3]").arg(molid.toString())
+                                     .arg(strt).arg(end);
+}
 
-bool SpecifyMol::isNull() const;
+/** Return whether or not this ID is null */
+bool SpecifyMol::isNull() const
+{
+    return molid.isNull() and strt == 0 and end == -1;
+}
 
-QList<MolNum> SpecifyMol::map(const Molecules &molecules) const;
-QList<MolNum> SpecifyMol::map(const MoleculeGroup &molgroup) const;
-QList<MolNum> SpecifyMol::map(const MolGroupsBase &molgroups) const;
+static QList<MolNum> get(const QList<MolNum> &molnums,
+                         const Index &strt, const Index &end)
+{
+    //now get the specified matches
+    int nmatches = molnums.count();
+
+    int sane_strt = strt.map(nmatches);
+    int sane_end = end.map(nmatches);
+    
+    if (sane_strt > sane_end)
+        qSwap(sane_strt,sane_end);
+    
+    if (sane_end - sane_strt == nmatches)
+        return molnums;
+    else
+    {
+        QList<MolNum> specified_molnums;
+    
+        for (int i=strt; i<=end; ++i)
+        {
+            specified_molnums.append(molnums[i]);
+        }
+        
+        return specified_molnums;
+    }
+}
+
+/** Map this ID to the list of molecule numbers that match */
+QList<MolNum> SpecifyMol::map(const Molecules &molecules) const
+{
+    QList<MolNum> molnums = molid.map(molecules);
+    return ::get(molnums, strt, end);
+}
+
+/** Map this ID to the list of molecule numbers that match */
+QList<MolNum> SpecifyMol::map(const MoleculeGroup &molgroup) const
+{
+    QList<MolNum> molnums = molid.map(molgroup);
+    return ::get(molnums, strt, end);
+}
+
+/** Map this ID to the list of molecule numbers that match */
+QList<MolNum> SpecifyMol::map(const MolGroupsBase &molgroups) const
+{
+    QList<MolNum> molnums = molid.map(molgroups);
+    return ::get(molnums, strt, end);
+}
