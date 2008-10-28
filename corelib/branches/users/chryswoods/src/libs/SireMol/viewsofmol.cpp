@@ -975,13 +975,6 @@ Atom ViewsOfMol::select(const AtomID &atomid) const
     return Atom(*d, atomid);
 }
 
-/** Return the atom from any of the views that are identified by 'AtomIdx' */
-Atom ViewsOfMol::select(AtomIdx atomidx) const
-{
-    selected_atoms.assertSelected(atomidx);
-    return Atom(*d, atomidx);
-}
-
 /** Return all of the atoms from the views in this set
     that match the ID 'atomid'
     

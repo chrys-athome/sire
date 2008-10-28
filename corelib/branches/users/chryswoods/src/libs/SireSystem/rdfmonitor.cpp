@@ -693,9 +693,15 @@ void RDFMonitor::monitor(System &system)
              it != atomids.constEnd();
              ++it)
         {
+            qDebug() << it->get<0>().toString() << it->get<1>().toString();
+        
             //find all of the atoms that match the atom IDs
             QHash< MolNum, Selector<Atom> > atoms0 = system.atoms( it->get<0>() );
 
+            qDebug() << atoms0.count();
+            
+            int nats0 = 0;
+            
             //get the coordinates of all of these atoms
             QHash<MolNum,CoordGroup> coords0;
             coords0.reserve(atoms0.count());
@@ -705,10 +711,14 @@ void RDFMonitor::monitor(System &system)
                  it0 != atoms0.constEnd();
                  ++it0)
             {
+                nats0 += it0.value().count();
+                
                 coords0.insert( it0.key(), 
                                 CoordGroup(it0->property<Vector>(coords_property)
                                            .toVector() ) );
             }
+
+            qDebug() << "Total nats ==" << nats0;
 
             QHash<MolNum,CoordGroup> coords1 = coords0;
 
@@ -716,18 +726,27 @@ void RDFMonitor::monitor(System &system)
             {
                  QHash< MolNum, Selector<Atom> > atoms1 = system.atoms( it->get<1>() );
                  
+                 qDebug() << atoms1.count();
+                 
                  coords1 = QHash<MolNum,CoordGroup>();
                  coords1.reserve(atoms1.count());
+                 
+                 int nats1 = 0;
+                 
                  
                  for (QHash< MolNum, Selector<Atom> >::const_iterator it1
                                               = atoms1.constBegin();
                       it1 != atoms1.constEnd();
                       ++it1)
                  {
+                     nats1 += it1.value().count();
+                 
                      coords1.insert( it1.key(), 
                                 CoordGroup(it1->property<Vector>(coords_property)
                                            .toVector() ) );
                  }
+                 
+                 qDebug() << "Total nats ==" << nats1;
             }
             
             //now calculate all of the interatomic distances between all pairs

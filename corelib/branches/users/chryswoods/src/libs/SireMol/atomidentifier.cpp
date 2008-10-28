@@ -31,6 +31,12 @@
 
 #include "molinfo.h"
 
+#include "atom.h"
+#include "selector.hpp"
+#include "molecules.h"
+#include "moleculegroup.h"
+#include "moleculegroups.h"
+
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
@@ -46,25 +52,6 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
                                        const AtomIdentifier &atomid)
 {
     throw SireError::incomplete_code( CODELOC );
-
-    writeHeader(ds, r_atomid, 1);
-    
-    if (atomid.isNull())
-        ds << QString::null;
-    else
-    {
-        ds << QLatin1String( atomid.base().what() );
-    
-        int typid = QMetaType::type(atomid.base().what());
-    
-        if ( not QMetaType::save(ds, typid, &(atomid.base())) )
-        {
-            throw SireError::io_error( QObject::tr(
-                "Unable to serialise an AtomID of type %1.")
-                    .arg(atomid.base().what()), CODELOC );
-        }
-    }
-    
     return ds;
 }
 
@@ -209,4 +196,94 @@ QList<AtomIdx> AtomIdentifier::map(const MolInfo &molinfo) const
         return molinfo.getAtoms();
     else
         return d->map(molinfo);
+}
+
+/** Return the atom from the molecules 'molecules' that matches
+    this ID
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+*/
+Atom AtomIdentifier::selectFrom(const Molecules &molecules) const
+{
+    if (d.get() == 0)
+        return AtomID::selectFrom(molecules);
+    
+    else
+        return d->selectFrom(molecules);
+}
+
+/** Return all of the atoms from the 'molecules' that match
+    this ID
+    
+    \throw SireMol::missing_atom
+*/
+QHash< MolNum,Selector<Atom> > 
+AtomIdentifier::selectAllFrom(const Molecules &molecules) const
+{
+    if (d.get() == 0)
+        return AtomID::selectAllFrom(molecules);
+        
+    else
+        return d->selectAllFrom(molecules);
+}
+
+/** Return the atom from the molecule group 'molgroup' that matches
+    this ID
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+*/
+Atom AtomIdentifier::selectFrom(const MoleculeGroup &molgroup) const
+{
+    if (d.get() == 0)
+        return AtomID::selectFrom(molgroup);
+        
+    else
+        return d->selectFrom(molgroup);
+}
+
+/** Return the atoms from the molecule group 'molgroup' that match
+    this ID
+    
+    \throw SireMol::missing_atom
+*/
+QHash< MolNum,Selector<Atom> > 
+AtomIdentifier::selectAllFrom(const MoleculeGroup &molgroup) const
+{
+    if (d.get() == 0)
+        return AtomID::selectAllFrom(molgroup);
+        
+    else
+        return d->selectAllFrom(molgroup);
+}
+
+/** Return the atom from the molecule groups 'molgroups' that matches 
+    this ID
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+*/
+Atom AtomIdentifier::selectFrom(const MolGroupsBase &molgroups) const
+{
+    if (d.get() == 0)
+        return AtomID::selectFrom(molgroups);
+        
+    else
+        return d->selectFrom(molgroups);
+}
+
+/** Return the set of atoms that match this ID in the molecule groups
+    set 'molgroups' 
+    
+    \throw SireMol::missing_atom
+*/
+QHash< MolNum,Selector<Atom> > 
+AtomIdentifier::selectAllFrom(const MolGroupsBase &molgroups) const
+{
+    if (d.get() == 0)
+        return AtomID::selectAllFrom(molgroups);
+        
+    else
+        return d->selectAllFrom(molgroups);
 }

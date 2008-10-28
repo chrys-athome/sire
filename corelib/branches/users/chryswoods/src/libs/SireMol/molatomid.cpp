@@ -47,6 +47,8 @@ using namespace SireStream;
 
 using boost::tuples::tuple;
 
+#include <QDebug>
+
 /** Collapse any nested IDs together */
 void MolAtomID::collapse()
 {
@@ -246,6 +248,9 @@ MolAtomID::selectAllFrom(const MolGroupsBase &molgroups) const
     QHash< MolNum,Selector<Atom> > selected_atoms;
     
     QList<MolNum> molnums = molid.map(molgroups);
+    
+    qDebug() << CODELOC;
+    qDebug() << molnums;
     
     foreach (MolNum molnum, molnums)
     {

@@ -100,6 +100,15 @@ public:
     
     QList<AtomIdx> map(const MolInfo &molinfo) const;
 
+    Atom selectFrom(const Molecules &molecules) const;
+    QHash< MolNum,Selector<Atom> > selectAllFrom(const Molecules &molecules) const;
+
+    Atom selectFrom(const MoleculeGroup &molgroup) const;
+    QHash< MolNum,Selector<Atom> > selectAllFrom(const MoleculeGroup &molgroup) const;
+    
+    Atom selectFrom(const MolGroupsBase &molgroups) const;
+    QHash< MolNum,Selector<Atom> > selectAllFrom(const MolGroupsBase &molgroups) const;
+
 private:
     /** Pointer to the AtomID */
     boost::shared_ptr<AtomID> d;

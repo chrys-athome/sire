@@ -32,6 +32,7 @@
 
 #include "atomatomid.h"
 #include "groupatomids.h"
+#include "molatomid.h"
 
 #include "atom.h"
 #include "selector.hpp"
@@ -52,6 +53,8 @@
 #include "SireMol/errors.h"
 
 #include "tostring.h"
+
+#include <QDebug>
 
 using namespace SireMol;
 using namespace SireID;
@@ -114,6 +117,12 @@ ChainAtomID AtomID::operator+(const ChainID &other) const
 SegAtomID AtomID::operator+(const SegID &other) const
 {
     return SegAtomID(other, *this);
+}
+
+/** Combine with other ID types */
+MolAtomID AtomID::operator+(const MolID &other) const
+{
+    return MolAtomID(other, *this);
 }
 
 /** Return all of the atoms from the 'molecules' that match
@@ -259,6 +268,8 @@ Atom AtomID::selectFrom(const MolGroupsBase &molgroups) const
 QHash< MolNum,Selector<Atom> >
 AtomID::selectAllFrom(const MolGroupsBase &molgroups) const
 {
+    qDebug() << this->what();
+    qDebug() << CODELOC;
     return AtomID::selectAllFrom(molgroups.molecules());
 }
 

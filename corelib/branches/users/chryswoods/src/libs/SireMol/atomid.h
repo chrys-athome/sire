@@ -61,6 +61,9 @@ class MoleculeGroup;
 class MolGroupsBase;
 class MolNum;
 
+class MolID;
+class MolAtomID;
+
 /** This is the base class of all identifiers that are used 
     to identify an atom
 
@@ -86,6 +89,7 @@ public:
     GroupAtomID<ResID,AtomID> operator+(const ResID &other) const;
     GroupAtomID<ChainID,AtomID> operator+(const ChainID &other) const;
     GroupAtomID<SegID,AtomID> operator+(const SegID &other) const;
+    MolAtomID operator+(const MolID &other) const;
 
     static const char* typeName()
     {

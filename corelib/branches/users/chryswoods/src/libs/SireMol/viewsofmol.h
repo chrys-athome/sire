@@ -206,8 +206,6 @@ public:
     
     Selector<Segment> segments(const SegID &segid) const;
     Selector<Segment> segments() const;
-
-    Atom select(AtomIdx atomidx) const;
     
     CutGroup select(const CGID &cgid) const;
     Residue select(const ResID &resid) const;
