@@ -228,13 +228,13 @@ SegEditor MolEditor::segment(const SegID &segid) const
 }
 
 /** Rename this molecule to 'newname' */
-MolEditor& MolEditor::rename(const MolName &newname)
+MolEditor& MolEditor::rename(const QString &newname)
 {
-    if (newname == this->name())
+    if (MolName(newname) == this->name())
         //nothing needs doing
         return *this;
         
-    d->rename(newname);
+    d->rename( MolName(newname) );
     
     return *this;
 }

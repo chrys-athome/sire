@@ -76,6 +76,8 @@ public:
     bool operator==(const PeriodicBox &other) const;
     bool operator!=(const PeriodicBox &other) const;
 
+    QString toString() const;
+
     SireUnits::Dimension::Volume volume() const;
     SpacePtr setVolume(SireUnits::Dimension::Volume volume) const;
 

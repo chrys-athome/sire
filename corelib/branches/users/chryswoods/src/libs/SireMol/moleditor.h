@@ -125,7 +125,7 @@ public:
     ChainEditor chain(const ChainID &chainid) const;
     SegEditor segment(const SegID &segid) const;
     
-    MolEditor& rename(const MolName &name);
+    MolEditor& rename(const QString &name);
 
     MolEditor& renumber();
     MolEditor& renumber(MolNum newnum);

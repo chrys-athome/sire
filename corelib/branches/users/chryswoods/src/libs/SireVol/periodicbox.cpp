@@ -178,6 +178,14 @@ bool PeriodicBox::operator!=(const PeriodicBox &other) const
            (mincoords != other.mincoords or boxlength != other.boxlength);
 }
 
+/** Return a string representation of this space */
+QString PeriodicBox::toString() const
+{
+    return QObject::tr("PeriodicBox( %1 to %2 )")
+                .arg( this->minCoords().toString(), 
+                      this->maxCoords().toString() );
+}
+
 /** Return the number of boxes that are covered by the distance 'del', where
     'invlgth' is the inverse of the length of the box along the dimension of 'del',
     and 'halflgth' is half the length of the box along the dimension of 'del'. */

@@ -31,7 +31,7 @@
 
 #include <QString>
 
-#include "sireglobal.h"
+#include "SireUnits/dimensions.h"
 
 SIRE_BEGIN_HEADER
 
@@ -64,7 +64,9 @@ friend QDataStream& ::operator>>(QDataStream&, LJParameter&);
 
 public:
     LJParameter();
-    LJParameter(double sigma, double epsilon);
+    LJParameter(SireUnits::Dimension::Length sigma, 
+                SireUnits::Dimension::MolarEnergy epsilon);
+                
     LJParameter(const LJPair &ljpair);
     
     LJParameter(const LJParameter &param);
@@ -84,8 +86,8 @@ public:
     bool isDummy() const;
     bool zeroLJ() const;
     
-    double sigma() const;
-    double epsilon() const;
+    SireUnits::Dimension::Length sigma() const;
+    SireUnits::Dimension::MolarEnergy epsilon() const;
     double sqrtEpsilon() const;
     double sqrtSigma() const;
 
@@ -100,9 +102,12 @@ public:
     bool operator!=(const LJParameter &other) const;
 
     static LJParameter dummy();
-    static LJParameter fromSigmaAndEpsilon(double sigma, double epsilon);
+    static LJParameter fromSigmaAndEpsilon(SireUnits::Dimension::Length sigma, 
+                                           SireUnits::Dimension::MolarEnergy epsilon);
+                                           
     static LJParameter fromAAndB(double a, double b);
-    static LJParameter fromRMinAndEpsilon(double rmin, double epsilon);
+    static LJParameter fromRMinAndEpsilon(SireUnits::Dimension::Length rmin, 
+                                          SireUnits::Dimension::MolarEnergy epsilon);
 
 private:
     /** Square-root of the sigma parameter, in sqrt(Angstroms) */
@@ -145,9 +150,9 @@ inline bool LJParameter::zeroLJ() const
 }
 
 /** Return the sigma value of this parameter (in Angstroms) */
-inline double LJParameter::sigma() const
+inline SireUnits::Dimension::Length LJParameter::sigma() const
 {
-    return sqrtsig*sqrtsig;
+    return SireUnits::Dimension::Length(sqrtsig*sqrtsig);
 }
 
 /** Return sqrt(sigma) */
@@ -157,9 +162,9 @@ inline double LJParameter::sqrtSigma() const
 }
 
 /** Return the epsilon value of this parameter (in kcal mol-1) */
-inline double LJParameter::epsilon() const
+inline SireUnits::Dimension::MolarEnergy LJParameter::epsilon() const
 {
-    return sqrteps*sqrteps;
+    return SireUnits::Dimension::MolarEnergy(sqrteps*sqrteps);
 }
 
 /** Return sqrt(epsilon) */

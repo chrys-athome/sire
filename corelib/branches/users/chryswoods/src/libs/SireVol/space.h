@@ -127,6 +127,9 @@ public:
         return "SireVol::Space";
     }
 
+    /** Return a string representation of this space */
+    virtual QString toString() const=0;
+
     /** Return the volume of the central box of this space. This
         throws an exception if it is not possible to calculate the
         volume of this space (e.g. it is an infinite space!) */

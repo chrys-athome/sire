@@ -47,14 +47,20 @@ namespace SireUnits
     We use the AKMA units (same as charmm)
         Angstroms, Kilocalories per Mole, Atomic mass units
 
-    energy = kcal mol-1 (thermal)
+    energy = kcal mol-1 (thermal)     (really MolarEnergy)
     length = angstrom
-    mass = g mol-1
+    mass = g mol-1                    (really MolarMass)
     time = AKMA time == 48.88821 fs == 0.04888821 ps
     charge = unit electrons
+
+    Where necessary, physical constants were downloaded from
+    the NIST website (web pages referenced where appropriate).
+    
+    Physical constants were last checked on 28/10/2008
 */
 
 /** Avogadro's number */
+//http://physics.nist.gov/cgi-bin/cuu/Value?na|search_for=physchem_in!
 const Dimension::Quantity mole( 6.02214179e23 );
 
 const Dimension::Quantity dozen( 12 );
@@ -109,7 +115,8 @@ const Dimension::Length centimeter( 10 * millimeter );
 const Dimension::Length meter( 100 * centimeter );
 const Dimension::Length kilometer( 1000 * meter );
 
-const Dimension::Length bohr_radii( 0.529177249 * angstrom );
+//http://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0|search_for=bohr
+const Dimension::Length bohr_radii( 0.52917720859 * angstrom );
 
 const Dimension::Length inch( 2.54 * centimeter );
 const Dimension::Length foot( 12 * inch );
@@ -167,7 +174,8 @@ const Dimension::MolarMass fg_per_mol( 0.001 * pg_per_mol );
 const Dimension::Charge mod_electron(1);
 const Dimension::MolarCharge faraday(1);
 
-const Dimension::Charge coulomb = mod_electron / 1.60217646263e-19;
+//http://physics.nist.gov/cgi-bin/cuu/Value?e|search_for=elecmag_in!
+const Dimension::Charge coulomb = mod_electron / 1.602176487e-19;
 const Dimension::MolarCharge coulomb_per_mol = coulomb / mole;
 
 const Dimension::Charge e_charge = -mod_electron;
@@ -198,7 +206,8 @@ const Dimension::MolarEnergy int_cal_per_mol( 0.001 * int_kcal_per_mol );
 const Dimension::Energy int_kcal( mole * int_kcal_per_mol );
 const Dimension::Energy int_cal( 0.001 * int_kcal );
 
-const Dimension::Energy hartree(4.3597438134e-18 * joule);
+//http://physics.nist.gov/cgi-bin/cuu/Value?hr|search_for=hartree
+const Dimension::Energy hartree(4.35974394e-18 * joule);
 
 ////////////////////////////////////////////////////////////
 // Units of time. Internal unit = akma_time == 48.8882 fs //
@@ -276,9 +285,11 @@ const Dimension::MolarPower watt_per_mol = J_per_mol / second;
 ///////////////////////////////////////////////////////////
 
 /** Speed of light in a vacuum */
+//http://physics.nist.gov/cgi-bin/cuu/Value?c|search_for=c
 const Dimension::Velocity c = 299792458 * (meter / second);
 
 /** Epsilon_0 (electrostatic constant) 8.854187817e-12 F m-1 */
+//http://physics.nist.gov/cgi-bin/cuu/Value?ep0|search_for=permittivity
 const double epsilon0 = 8.854187817e-12 * (farad / meter);
 
 /** 4 * pi * epsilon_0 */
@@ -287,41 +298,49 @@ const double four_pi_eps0 = 4.0 * SireMaths::pi * epsilon0;
 /** 1 / (4 * pi * epsilon0) */
 const double one_over_four_pi_eps0 = 1.0 / four_pi_eps0;
 
-/** Gas constant (8.31447215 J mol-1 K-1) */
-const double gasr = 8.31447215 * (J_per_mol / kelvin);
+/** Gas constant (8.314472 J mol-1 K-1) */
+//http://physics.nist.gov/cgi-bin/cuu/Value?r|search_for=gas
+const double gasr = 8.314472 * (J_per_mol / kelvin);
 
 /** Boltzmann constant J K-1 (is equal to gasr in internal units of kcal mol-1 K-1) */
 const double k_boltz = gasr;
 
 /** Magnetic constant, mu0, 4pi * 10-7 N A-2 */
-const double mu0 = 4.0 * pi * (newton / (amp*amp));
+const double mu0 = 4.0e-7 * pi * (newton / (amp*amp));
 
-/** Newton's gravitational constant, 6.673(10) m^3 kg-1 s-2 */
-const double G_newton = 6.67310 * ((meter*meter*meter) / (kilogram * second * second));
+/** Newton's gravitational constant */
+//http://physics.nist.gov/cgi-bin/cuu/Value?bg|search_for=gravitational
+const double G_newton = 6.67428e-11 * ((meter*meter*meter) / (kilogram * second * second));
 
 /** Acceleration due to gravity on Earth */
 const Dimension::Acceleration g_accel = 9.8 * meter / (second*second);
 
-/** Planck's constant, 6.62606876(52) J s */
-const double h_planck = 6.6260687652 * (joule * second);
+/** Planck's constant */
+//http://physics.nist.gov/cgi-bin/cuu/Value?h|search_for=planck
+const double h_planck = 6.62606896e-34 * (joule * second);
 
 /** Plank / 2pi */
 const double h_slash = h_planck / (2.0*pi);
 
 /** Mass of an electron */
-const Dimension::Mass electron_mass = 9.1093818872e-31 * kilogram;
+//http://physics.nist.gov/cgi-bin/cuu/Value?me|search_for=mass
+const Dimension::Mass electron_mass = 9.10938215e-31 * kilogram;
 
 /** Mass of a proton */
-const Dimension::Mass proton_mass = 1.6726215813e-27 * kilogram;
+//http://physics.nist.gov/cgi-bin/cuu/Value?mp|search_for=mass
+const Dimension::Mass proton_mass = 1.672621637e-27 * kilogram;
 
 /** Mass of a neutron */
-const Dimension::Mass neutron_mass = 1.6749271613e-27 * kilogram;
+//http://physics.nist.gov/cgi-bin/cuu/Value?mn|search_for=mass
+const Dimension::Mass neutron_mass = 1.674927211e-27 * kilogram;
 
 /** Atomic mass constant */
-const Dimension::Mass atomic_mass_constant = 1.6605387313e-27 * kilogram;
+//http://physics.nist.gov/cgi-bin/cuu/Value?u|search_for=mass
+const Dimension::Mass atomic_mass_constant = 1.660538782e-27 * kilogram;
 
-/** Molar volume of an ideal gas */
-const Dimension::MolarVolume molar_volume = 22.41399639e-3 * (meter*meter*meter) / mole;
+/** Molar volume of an ideal gas  (273.15 K, 101.325 kPa) */
+//http://physics.nist.gov/cgi-bin/cuu/Value?mvolstd|search_for=molar+volume
+const Dimension::MolarVolume molar_volume = 22.413996e-3 * (meter*meter*meter) / mole;
 
 }
 

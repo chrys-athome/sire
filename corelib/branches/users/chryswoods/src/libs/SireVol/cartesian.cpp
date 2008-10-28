@@ -107,6 +107,12 @@ bool Cartesian::operator!=(const Cartesian &other) const
     return other.what() != Cartesian::typeName();
 }
 
+/** Return a string representation of this space */
+QString Cartesian::toString() const
+{
+    return QObject::tr("Infinite cartesian space");
+}
+
 /** Throw an exception as an infinite space doesn't have a volume! */
 SireUnits::Dimension::Volume Cartesian::volume() const
 {

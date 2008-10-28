@@ -74,6 +74,8 @@ public:
         return QMetaType::typeName( qMetaTypeId<Cartesian>() );
     }
 
+    QString toString() const;
+
     SireUnits::Dimension::Volume volume() const;
     SpacePtr setVolume(SireUnits::Dimension::Volume volume) const;
 

@@ -593,7 +593,7 @@ void Molecules::assertContains(MolNum molnum) const
 {
     if (not mols.contains(molnum))
         throw SireMol::missing_molecule( QObject::tr(
-            "The molecule with number %d is not present in this set "
+            "The molecule with number %1 is not present in this set "
             "(that contains the molecules with numbers %2).")
                 .arg(molnum)
                 .arg( Sire::toString(this->molNums()) ), CODELOC );
@@ -609,7 +609,7 @@ const ViewsOfMol& Molecules::operator[](MolNum molnum) const
     
     if (it == mols.end())
         throw SireMol::missing_molecule( QObject::tr(
-            "The molecule with number %d is not present in this set "
+            "The molecule with number %1 is not present in this set "
             "(that contains the molecules with numbers %2).")
                 .arg(molnum)
                 .arg( Sire::toString(this->molNums()) ), CODELOC );

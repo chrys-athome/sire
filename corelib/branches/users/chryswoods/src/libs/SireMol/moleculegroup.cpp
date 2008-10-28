@@ -1508,7 +1508,7 @@ bool MoleculeGroup::_pvt_remove(const MoleculeView &molview)
     {
         //this molecule has been completely removed...
         //remove it completely from the index
-        dref.molidx_to_num.remove(molnum);
+        dref.molidx_to_num.remove( dref.molidx_to_num.indexOf(molnum) );
         
         QMutableVectorIterator< MolNumUInt > it(dref.molviewidx_to_num);
         
@@ -1714,7 +1714,7 @@ ViewsOfMol MoleculeGroup::_pvt_remove(MolNum molnum)
     ViewsOfMol removed_views = dref.molecules.remove(molnum);
     
     //now remove it from the index
-    dref.molidx_to_num.remove(molnum);
+    dref.molidx_to_num.remove( dref.molidx_to_num.indexOf(molnum) );
     
     QMutableVectorIterator< MolNumUInt > it(dref.molviewidx_to_num);
     

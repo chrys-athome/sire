@@ -34,6 +34,7 @@
 #include "SireStream/datastream.h"
 
 using namespace SireStream;
+using namespace SireUnits::Dimension;
 using namespace SireMM;
 
 static const RegisterMetaType<LJParameter> r_ljparam;
@@ -84,7 +85,7 @@ LJParameter::LJParameter(const LJParameter &other)
 {}
 
 /** Construct a LJParameter that has the specified sigma and epsilon */
-LJParameter::LJParameter(double s, double e)
+LJParameter::LJParameter(Length s, MolarEnergy e)
             : sqrtsig( std::sqrt(std::abs(s)) ), sqrteps( std::sqrt(std::abs(e)) )
 {
     if ( SireMaths::isZero(sqrtsig) or SireMaths::isZero(sqrteps) )
@@ -101,19 +102,21 @@ LJParameter::~LJParameter()
 /** Return a dummy CLJParameter */
 LJParameter LJParameter::dummy()
 {
-    return LJParameter(0.0,0.0);
+    return LJParameter( Length(0), MolarEnergy(0) );
 }
 
 /** Return the LJ 'A' parameter */
 double LJParameter::A() const
 {
-    return double(4.0) * epsilon() * SireMaths::pow_12( sigma() );
+    return double(4.0) * double(epsilon()) 
+                       * SireMaths::pow_12( double(sigma()) );
 }
 
 /** Return the LJ 'B' parameter */
 double LJParameter::B() const
 {
-    return double(4.0) * epsilon() * SireMaths::pow_6( sigma() );
+    return double(4.0) * double(epsilon()) 
+                       * SireMaths::pow_6( double(sigma()) );
 }
 
 /** Return the LJ 'rmin' parameter - this is the location of the minimum.
@@ -136,7 +139,7 @@ QString LJParameter::toString() const
 
     E(r) = 4 epsilon [ (sigma/r)^12 - (sigma/r)^6 ]
 */
-LJParameter LJParameter::fromSigmaAndEpsilon(double sigma, double epsilon)
+LJParameter LJParameter::fromSigmaAndEpsilon(Length sigma, MolarEnergy epsilon)
 {
     return LJParameter(sigma,epsilon);
 }
@@ -156,8 +159,8 @@ LJParameter LJParameter::fromAAndB(double a, double b)
     //           epsilon = B / (4 (A/B) )
     //                   = B^2 / 4A
 
-    return LJParameter( std::pow( (a/b), (1.0/6.0) ),
-                        (b*b) / (4.0*a) );
+    return LJParameter( Length(std::pow( (a/b), (1.0/6.0)) ),
+                        MolarEnergy((b*b) / (4.0*a)) );
 }
 
 /** Return a LJ parameter that corresponds to the curve that has a minimum at
@@ -167,7 +170,7 @@ LJParameter LJParameter::fromAAndB(double a, double b)
 
     rmin = 2^(1/6) sigma
 */
-LJParameter LJParameter::fromRMinAndEpsilon(double rmin, double epsilon)
+LJParameter LJParameter::fromRMinAndEpsilon(Length rmin, MolarEnergy epsilon)
 {
     //sigma = rmin / 2^(1/6) - 2^(1/6) = 1.122462048309372981439932526193103967671
 
