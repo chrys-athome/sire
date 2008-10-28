@@ -639,6 +639,11 @@ public:
     ~LJPotentialInterface()
     {}
     
+    static typename LJPot::ParameterNames parameters()
+    {
+        return LJPot::parameters();
+    }
+    
     const Properties& properties() const
     {
         return LJPot::properties();

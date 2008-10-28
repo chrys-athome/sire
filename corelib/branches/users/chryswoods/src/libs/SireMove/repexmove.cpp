@@ -211,8 +211,8 @@ bool RepExMove::testAndSwap(RepExReplica &replica_a, RepExReplica &replica_b)
         }
         
         //now get the values of the system properties at their current replica level
-        Energy H_a_i = replica_a.energy();
-        Energy H_b_j = replica_b.energy();
+        MolarEnergy H_a_i = replica_a.energy();
+        MolarEnergy H_b_j = replica_b.energy();
         
         Volume V_a_i(0);
         Volume V_b_j(0);
@@ -227,8 +227,8 @@ bool RepExMove::testAndSwap(RepExReplica &replica_a, RepExReplica &replica_b)
         RepExReplica::swapSystems(replica_a, replica_b);
         
         //get the values of the system properties at the new replica level
-        Energy H_a_j = replica_a.energy();
-        Energy H_b_i = replica_b.energy();
+        MolarEnergy H_a_j = replica_a.energy();
+        MolarEnergy H_b_i = replica_b.energy();
         
         Volume V_a_j(0);
         Volume V_b_i(0);

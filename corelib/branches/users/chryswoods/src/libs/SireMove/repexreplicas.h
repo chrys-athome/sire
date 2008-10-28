@@ -105,7 +105,7 @@ public:
     SireUnits::Dimension::MolarEnergy chemicalPotential() const;
 
     SireUnits::Dimension::Volume volume() const;
-    SireUnits::Dimension::Energy energy();
+    SireUnits::Dimension::MolarEnergy energy();
 
     bool isConstantEnergy() const;
     bool isConstantTemperature() const;

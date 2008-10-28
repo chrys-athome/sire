@@ -259,3 +259,59 @@ Done!
 ( 14.8395, -16.012, -11.5855 )
 -16213.7 M L^2 T-2  (-16213.730068)
 -16364.5 M L^2 T-2  (-16364.544496)
+
+Here's the timing for the current version of Sire (743, 28/10/08)
+(no openMP as this clashes with QThread)
+
+Read in 1679 molecules!
+Parameterised all of the water molecules (in 914 ms)!
+Packing the coordinates took 3 ms
+299700000 1120 
+199800000 214 
+199800000 722 
+199800000 214 
+
+This machine can run at; 933.6 MFLOPS for sum, 933.6 MFLOPS for sum+product,
+276.7 MFLOPS for sum+quotient and 267.6 MFLOPS for sum+product+sqrt.
+
+-16364.5 M L^2 T-2
+-16364.5450836
+196903896 475 
+Took 475 ms.  Speed is at least 414.5 MFLOPS
+196903896 475 
+414.5 MFLOPS for thread 0  
+(This is 154.91 % of the benchmark  (149.80 %, 44.40 %, 44.40 %))
+-16364.5 M L^2 T-2
+-16364.5450836
+196903896 473 
+Took 473 ms.  Speed is at least 416.3 MFLOPS
+196903896 473 
+416.3 MFLOPS for thread 0  
+(This is 155.57 % of the benchmark  (150.43 %, 44.59 %, 44.59 %))
+-16364.5 M L^2 T-2
+-16364.5450836
+196903896 474 
+Took 474 ms.  Speed is at least 415.4 MFLOPS
+196903896 474 
+415.4 MFLOPS for thread 0  
+(This is 155.24 % of the benchmark  (150.11 %, 44.49 %, 44.49 %))
+-16364.5 M L^2 T-2
+-16364.5450836
+196903896 474 
+Took 474 ms.  Speed is at least 415.4 MFLOPS
+196903896 474 
+415.4 MFLOPS for thread 0  
+(This is 155.24 % of the benchmark  (150.11 %, 44.49 %, 44.49 %))
+-16364.5 M L^2 T-2
+-16364.5450836
+196903896 474 
+Took 474 ms.  Speed is at least 415.4 MFLOPS
+196903896 474 
+415.4 MFLOPS for thread 0  
+(This is 155.24 % of the benchmark  (150.11 %, 44.49 %, 44.49 %))
+Done!
+( 14.8395, -16.012, -11.5855 )
+( 14.8395, -16.012, -11.5855 )
+-16213.7 M L^2 T-2  (-16213.730655)
+-16364.5 M L^2 T-2  (-16364.545084)
+

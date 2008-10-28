@@ -31,7 +31,7 @@ if (NOT SIRE_FOUND)
 endif()
 
 # Now add the paths to the header files of the dependencies of Sire
-include_directories (BEFORE ${SIRE_EXTRA_INCLUDES})
+include_directories (BEFORE SYSTEM ${SIRE_EXTRA_INCLUDES})
 include_directories (BEFORE ${SIRE_INCLUDE_DIR})
 
 # Sire depends on >= Qt 4.2

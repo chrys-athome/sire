@@ -43,6 +43,7 @@ using namespace Squire;
 using namespace SireFF;
 using namespace SireMol;
 using namespace SireBase;
+using namespace SireUnits::Dimension;
 using namespace SireStream;
 
 static const RegisterMetaType<QMFF> r_qmff;
@@ -147,6 +148,15 @@ const QMProgram& QMFF::quantumProgram() const
     return QMPotential::quantumProgram();
 }
 
+/** Return the absolute value of the energy which is considered
+    as zero (on the relative energy scale used by this potential).
+    A relative scale is used so that the QM energy can be shifted
+    so that it is comparable to an MM energy */
+MolarEnergy QMFF::zeroEnergy() const
+{
+    return QMPotential::zeroEnergy();
+}
+
 /** Set the space within which the QM molecules exist */
 bool QMFF::setSpace(const Space &space)
 {
@@ -158,6 +168,15 @@ bool QMFF::setSpace(const Space &space)
 bool QMFF::setQuantumProgram(const QMProgram &qmprog)
 {
     return QMPotential::setQuantumProgram(qmprog);
+}
+
+/** Set the absolute value of the energy which is considered
+    as zero (on the relative energy scale used by this potential).
+    A relative scale is used so that the QM energy can be shifted
+    so that it is comparable to an MM energy */
+bool QMFF::setZeroEnergy(MolarEnergy zero_energy)
+{
+    return QMPotential::setZeroEnergy(zero_energy);
 }
 
 /** Set the property 'name' to the value 'value'

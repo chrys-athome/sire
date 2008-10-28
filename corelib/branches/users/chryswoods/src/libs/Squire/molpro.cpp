@@ -66,7 +66,8 @@ QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const Molpro &molpro)
     
     sds << molpro.env_variables
         << molpro.molpro_exe << molpro.basis_set << molpro.qm_method
-        << molpro.energy_template << molpro.force_template;
+        << molpro.energy_template << molpro.force_template
+        << molpro.total_charge;
         
     return ds;
 }
@@ -82,7 +83,8 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, Molpro &molpro)
         
         sds >> molpro.env_variables
             >> molpro.molpro_exe >> molpro.basis_set >> molpro.qm_method
-            >> molpro.energy_template >> molpro.force_template;
+            >> molpro.energy_template >> molpro.force_template
+            >> molpro.total_charge;
     }
     else
         throw version_error(v, "1", r_molpro, CODELOC);
@@ -97,6 +99,7 @@ static const QString default_energy_template =
        "This is an auto-generated molpro command file generated using Sire\n"
        "@QM_COORDS@\n"
        "}\n\n"
+       "set,CHARGE=@QM_CHARGE@\n"
        "lattice, NUCONLY\n"
        "BEGIN_DATA\n"
        "@LATTICE_POINTS@\n"
@@ -111,7 +114,8 @@ Molpro::Molpro()
        : ConcreteProperty<Molpro,QMProgram>(),
          basis_set("vdz"), qm_method("HF"),
          energy_template(default_energy_template),
-         force_template(default_force_template)
+         force_template(default_force_template),
+         total_charge(0)
 {}
 
 /** Copy constructor */
@@ -120,7 +124,8 @@ Molpro::Molpro(const Molpro &other)
          env_variables(other.env_variables), molpro_exe(other.molpro_exe),
          basis_set(other.basis_set), qm_method(other.qm_method),
          energy_template(other.energy_template),
-         force_template(other.force_template)
+         force_template(other.force_template),
+         total_charge(other.total_charge)
 {}
 
 /** Destructor */
@@ -138,6 +143,7 @@ Molpro& Molpro::operator=(const Molpro &other)
         qm_method = other.qm_method;
         energy_template = other.energy_template;
         force_template = other.force_template;
+        total_charge = other.total_charge;
     }
     
     return *this;
@@ -152,7 +158,8 @@ bool Molpro::operator==(const Molpro &other) const
             basis_set == other.basis_set and
             qm_method == other.qm_method and
             energy_template == other.energy_template and
-            force_template == other.force_template);
+            force_template == other.force_template and
+            total_charge == other.total_charge);
 }
 
 /** Comparison operator */
@@ -224,6 +231,18 @@ const QString& Molpro::method() const
     return qm_method;
 }
 
+/** Set the total charge of the system (in unit charges) */
+void Molpro::setTotalCharge(int charge)
+{
+    total_charge = charge;
+}
+
+/** Return the total charge of the system */
+int Molpro::totalCharge() const
+{
+    return total_charge;
+}
+
 /** Set the template for the command file to be used to get
     Molpro to calculate an energy. The following tags will
     be substituted in the template;
@@ -231,6 +250,7 @@ const QString& Molpro::method() const
     @BASIS_SET@          - the desired basis set
     @QM_METHOD@          - the desired QM method (e.g. HF)
     @QM_COORDS@          - the list of elements and coordinates of QM atoms
+    @QM_CHARGE@          - the total charge of the system
     @NUM_QM_ATOMS@       - the number of QM atoms
     @LATTICE_POINTS@     - the coordinates and charges of the lattice points (MM atoms)
     @NUM_LATTICE_POINTS@ - the number of lattice points (MM atoms)
@@ -254,6 +274,7 @@ const QString& Molpro::energyTemplate() const
     @BASIS_SET@          - the desired basis set
     @QM_METHOD@          - the desired QM method (e.g. HF)
     @QM_COORDS@          - the list of elements and coordinates of QM atoms
+    @QM_CHARGE@          - the total charge of the system
     @NUM_QM_ATOMS@       - the number of QM atoms
     @LATTICE_POINTS@     - the coordinates and charges of the lattice points (MM atoms)
     @NUM_LATTICE_POINTS@ - the number of lattice points (MM atoms)
@@ -282,6 +303,9 @@ QString Molpro::createCommandFile(QString cmd_template,
     
     cmd_template.replace( QLatin1String("@QM_METHOD@"),
                           qm_method, Qt::CaseInsensitive );
+
+    cmd_template.replace( QLatin1String("@QM_CHARGE@"),
+                          QString::number(total_charge), Qt::CaseInsensitive );
 
     if (lattice_charges.isEmpty())
     {

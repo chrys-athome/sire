@@ -45,6 +45,7 @@ using namespace Squire;
 using namespace SireMM;
 using namespace SireVol;
 using namespace SireUnits;
+using namespace SireUnits::Dimension;
 using namespace SireMM::detail;
 using namespace SireStream;
 
@@ -94,6 +95,7 @@ void QMMMElecEmbedPotential::mergeProperties()
     props.setProperty("space", this->space());
     props.setProperty("switchingFunction", this->switchingFunction());
     props.setProperty("quantum program", this->quantumProgram());
+    props.setProperty("zero energy", QMPotential::properties().property("zero energy"));
 }
 
 /** Constructor */
@@ -143,6 +145,15 @@ const QMProgram& QMMMElecEmbedPotential::quantumProgram() const
     return QMPotential::quantumProgram();
 }
 
+/** Return the absolute value of the energy which is considered
+    as zero (on the relative energy scale used by this potential).
+    A relative scale is used so that the QM energy can be shifted
+    so that it is comparable to an MM energy */
+MolarEnergy QMMMElecEmbedPotential::zeroEnergy() const
+{
+    return QMPotential::zeroEnergy();
+}
+
 /** Set the space within which all of the molecules in this potential
     will exist. This returns whether or not this changes the
     potential. */
@@ -176,6 +187,21 @@ bool QMMMElecEmbedPotential::setSwitchingFunction(const SwitchingFunction &switc
 bool QMMMElecEmbedPotential::setQuantumProgram(const QMProgram &program)
 {
     if (QMPotential::setQuantumProgram(program))
+    {
+        this->mergeProperties();
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Set the absolute value of the energy which is considered
+    as zero (on the relative energy scale used by this potential).
+    A relative scale is used so that the QM energy can be shifted
+    so that it is comparable to an MM energy */
+bool QMMMElecEmbedPotential::setZeroEnergy(MolarEnergy zero_energy)
+{
+    if (QMPotential::setZeroEnergy(zero_energy))
     {
         this->mergeProperties();
         return true;
@@ -331,7 +357,7 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
 
                 //get any scaling feather factor for this group (and to convert
                 //the charge from reduced units to mod_electrons)
-                double scl = switchfunc.electrostaticScaleFactor(it->get<0>())
+                double scl = switchfunc.electrostaticScaleFactor( Length(it->get<0>()) )
                                    * sqrt_4pieps0;
                                    
                 if (scl == 0)
@@ -407,7 +433,7 @@ void QMMMElecEmbedPotential::calculateEnergy(const QMMolecules &qmmols,
 
     double qmnrg = this->quantumProgram().calculateEnergy(mapped_qmmols, charges);
     
-    nrg += Energy(scale_energy * qmnrg);
+    nrg += Energy(scale_energy * (qmnrg - QMPotential::zeroEnergy()));
 }
 
 /** Return the contents of the QM program command file that will be used

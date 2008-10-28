@@ -41,6 +41,7 @@
 #include "Base/convertpackedarray.hpp"
 
 #include "SireMol/atom.h"
+#include "SireMol/atomidentifier.h"
 #include "SireMol/cutgroup.h"
 #include "SireMol/residue.h"
 #include "SireMol/chain.h"
@@ -74,9 +75,13 @@ void register_SireMol_containers()
     register_list< QList<Molecule> >();
     register_list< QList<MoleculeGroup> >();
 
+    register_list< QList< boost::tuple<AtomIdentifier,AtomIdentifier> > >();
+
     register_tuple< boost::tuple<AtomIdx,AtomIdx> >();
     register_tuple< boost::tuple<AtomIdx,AtomIdx,AtomIdx> >();
     register_tuple< boost::tuple<AtomIdx,AtomIdx,AtomIdx,AtomIdx> >();
+
+    register_tuple< boost::tuple<AtomIdentifier,AtomIdentifier> >();
 
     register_tuple< boost::tuple<AtomSelection,AtomSelection> >();    
 

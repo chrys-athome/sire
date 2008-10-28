@@ -690,6 +690,11 @@ public:
     ~CLJPotentialInterface()
     {}
     
+    static typename CLJPot::ParameterNames parameters()
+    {
+        return CLJPot::parameters();
+    }
+    
     const Properties& properties() const
     {
         return CLJPot::properties();

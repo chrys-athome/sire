@@ -12,6 +12,5 @@
 ## (C) Christopher Woods
 ##
 
-import Sire.Maths
-
 from Sire.Base._Base import *
+

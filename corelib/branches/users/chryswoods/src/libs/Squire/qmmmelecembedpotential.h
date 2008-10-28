@@ -92,10 +92,12 @@ public:
     bool setSpace(const Space &space);
     bool setSwitchingFunction(const SwitchingFunction &switchfunc);
     bool setQuantumProgram(const QMProgram &program);
+    bool setZeroEnergy(SireUnits::Dimension::MolarEnergy zero_energy);
     
     const Space& space() const;
     const SwitchingFunction& switchingFunction() const;
     const QMProgram& quantumProgram() const;
+    SireUnits::Dimension::MolarEnergy zeroEnergy() const;
 
     void calculateForce(const QMMolecules &qmmols, 
                         const MMMolecules &mmmols,

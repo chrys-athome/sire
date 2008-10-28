@@ -102,9 +102,11 @@ public:
 
     const Space& space() const;
     const QMProgram& quantumProgram() const;
+    SireUnits::Dimension::MolarEnergy zeroEnergy() const;
     
     bool setSpace(const Space &space);
     bool setQuantumProgram(const QMProgram &qmprog);
+    bool setZeroEnergy(SireUnits::Dimension::MolarEnergy zero_energy);
 
     bool setProperty(const QString &name, const Property &property);
     const Property& property(const QString &name) const;

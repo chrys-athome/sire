@@ -111,7 +111,7 @@ friend QDataStream& ::operator>>(QDataStream&, System&);
 
 public:
     System();
-    System(const SysName &name);
+    System(const QString &name);
     
     System(const System &other);
 
@@ -146,7 +146,7 @@ public:
     const SysName& name() const;
     const Version& version() const;
 
-    void setName(const SysName &newname);
+    void setName(const QString &newname);
 
     void collectStats();
 
@@ -175,8 +175,8 @@ public:
     
     const Symbol& totalComponent() const;
     
-    SireUnits::Dimension::Energy energy();
-    SireUnits::Dimension::Energy energy(const Symbol &component);
+    SireUnits::Dimension::MolarEnergy energy();
+    SireUnits::Dimension::MolarEnergy energy(const Symbol &component);
     
     Values energies(const QSet<Symbol> &components);
     Values energies();

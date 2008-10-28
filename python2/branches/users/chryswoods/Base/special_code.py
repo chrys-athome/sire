@@ -1,6 +1,7 @@
 
 
-implicitly_convertible = [ ("QString", "SireBase::PropertyName") ] 
+implicitly_convertible = [ ("QString", "SireBase::PropertyName"),
+                           ("QHash<QString,SireBase::PropertyName>", "SireBase::PropertyMap") ] 
 
 def fixMB(mb):
     mb.add_declaration_code( "#include \"SireBase/propertymap.h\"" )

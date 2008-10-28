@@ -166,8 +166,8 @@ public:
 
     void setName(const MGID &mgid, const QString &name);
 
-    SireUnits::Dimension::Energy energy();
-    SireUnits::Dimension::Energy energy(const Symbol &component);
+    SireUnits::Dimension::MolarEnergy energy();
+    SireUnits::Dimension::MolarEnergy energy(const Symbol &component);
 
     Values energies(const QSet<Symbol> &components);
     Values energies();

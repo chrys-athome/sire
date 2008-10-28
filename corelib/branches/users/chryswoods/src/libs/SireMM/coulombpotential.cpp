@@ -799,7 +799,7 @@ void InterCoulombPotential::_pvt_calculateEnergy(
             //scaled by any non-bonded feather factor
             if (mindist > switchfunc->featherDistance())
             {
-                cnrg += switchfunc->electrostaticScaleFactor(mindist) * icnrg;
+                cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
                 
                 #ifdef SIRE_TIME_ROUTINES
                 nflops += 2;
@@ -919,12 +919,14 @@ void InterCoulombPotential::_pvt_calculateCoulombForce(
                 
                 //calculate the switching scale factors and their 
                 //derivatives
-                const double scl_coul = switchfunc->electrostaticScaleFactor(mindist);
+                const double scl_coul = switchfunc->electrostaticScaleFactor(
+                                                                    Length(mindist) );
                 
                 Vector group_sep = (group1.aaBox().center() - aabox0.center())
                                         .normalise();
                 
-                Vector dscl_coul = switchfunc->dElectrostaticScaleFactor(mindist) 
+                Vector dscl_coul = switchfunc->dElectrostaticScaleFactor( 
+                                                                    Length(mindist) ) 
                                      * group_sep;
                 
                 double shift_coul = 0;
@@ -1459,7 +1461,7 @@ void IntraCoulombPotential::calculateEnergy(const IntraCoulombPotential::Molecul
             //scaled by any non-bonded feather factor
             if (mindist > switchfunc->featherDistance())
             {
-                cnrg += switchfunc->electrostaticScaleFactor(mindist) * icnrg;
+                cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
             }
             else
             {
@@ -1612,7 +1614,7 @@ void IntraCoulombPotential::calculateEnergy(const IntraCoulombPotential::Molecul
             //scaled by any non-bonded feather factor
             if (mindist > switchfunc->featherDistance())
             {
-                cnrg += switchfunc->electrostaticScaleFactor(mindist) * icnrg;
+                cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
             }
             else
             {
@@ -1644,12 +1646,12 @@ void IntraCoulombPotential::calculateCoulombForce(
                 
         //calculate the switching scale factors and their 
         //derivatives
-        const double scl_coul = switchfunc->electrostaticScaleFactor(mindist);
+        const double scl_coul = switchfunc->electrostaticScaleFactor( Length(mindist) );
                 
         Vector group_sep = (group1.aaBox().center() -
                             group0.aaBox().center()).normalise(); 
                 
-        Vector dscl_coul = switchfunc->dElectrostaticScaleFactor(mindist) 
+        Vector dscl_coul = switchfunc->dElectrostaticScaleFactor( Length(mindist) ) 
                               * group_sep;
 
         if (group_pairs.isEmpty())
@@ -1841,12 +1843,12 @@ void IntraCoulombPotential::calculateCoulombForce(
                 
         //calculate the switching scale factors and their 
         //derivatives
-        const double scl_coul = switchfunc->electrostaticScaleFactor(mindist);
+        const double scl_coul = switchfunc->electrostaticScaleFactor( Length(mindist) );
                 
         Vector group_sep = (group1.aaBox().center() -
                             group0.aaBox().center()).normalise(); 
                 
-        Vector dscl_coul = switchfunc->dElectrostaticScaleFactor(mindist) 
+        Vector dscl_coul = switchfunc->dElectrostaticScaleFactor( Length(mindist) ) 
                               * group_sep;
 
         if (group_pairs.isEmpty())

@@ -64,7 +64,7 @@ using namespace SireBase;
 using namespace SireCAS;
 using namespace SireStream;
 
-using SireUnits::Dimension::Energy;
+using SireUnits::Dimension::MolarEnergy;
 
 namespace SireFF
 {
@@ -93,7 +93,7 @@ public:
     
     virtual double value() const=0;
     
-    virtual Energy energy(QVector<FFPtr> &forcefields,
+    virtual MolarEnergy energy(QVector<FFPtr> &forcefields,
                           const QHash<Symbol,FFSymbolPtr> &ffsymbols,
                           double scale_energy=1) const=0;
                           
@@ -150,9 +150,9 @@ public:
     
     double value() const;
     
-    Energy energy(QVector<FFPtr> &forcefields,
-                  const QHash<Symbol,FFSymbolPtr> &ffsymbols,
-                  double scale_energy=1) const;
+    MolarEnergy energy(QVector<FFPtr> &forcefields,
+                       const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                       double scale_energy=1) const;
     
     void force(ForceTable &forcetable,
                QVector<FFPtr> &forcefields,
@@ -189,9 +189,9 @@ public:
     
     double value() const;
     
-    Energy energy(QVector<FFPtr> &forcefields,
-                  const QHash<Symbol,FFSymbolPtr> &ffsymbols,
-                  double scale_energy=1) const;
+    MolarEnergy energy(QVector<FFPtr> &forcefields,
+                       const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                       double scale_energy=1) const;
                   
     void force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
@@ -229,9 +229,9 @@ public:
     
     double value() const;
     
-    Energy energy(QVector<FFPtr> &forcefields,
-                  const QHash<Symbol,FFSymbolPtr> &ffsymbols,
-                  double scale_energy=1) const;
+    MolarEnergy energy(QVector<FFPtr> &forcefields,
+                       const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                       double scale_energy=1) const;
                   
     void force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
@@ -298,9 +298,9 @@ public:
 
     double value() const;
     
-    Energy energy(QVector<FFPtr> &forcefields,
-                  const QHash<Symbol,FFSymbolPtr> &ffsymbols,
-                  double scale_energy=1) const;
+    MolarEnergy energy(QVector<FFPtr> &forcefields,
+                       const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                       double scale_energy=1) const;
                   
     void force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
                const QHash<Symbol,FFSymbolPtr> &ffsymbols,
@@ -440,11 +440,11 @@ double FFSymbolValue::value() const
     return v;
 }
 
-Energy FFSymbolValue::energy(QVector<FFPtr> &forcefields,
-                             const QHash<Symbol,FFSymbolPtr> &ffsymbols,
-                             double scale_energy) const
+MolarEnergy FFSymbolValue::energy(QVector<FFPtr> &forcefields,
+                                  const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                                  double scale_energy) const
 {
-    return Energy(scale_energy * v);
+    return MolarEnergy(scale_energy * v);
 }
 
 void FFSymbolValue::force(ForceTable &forcetable,
@@ -504,14 +504,14 @@ double FFSymbolFF::value() const
     return 0;
 }
 
-Energy FFSymbolFF::energy(QVector<FFPtr> &forcefields,
-                          const QHash<Symbol,FFSymbolPtr> &ffsymbols,
-                          double scale_energy) const
+MolarEnergy FFSymbolFF::energy(QVector<FFPtr> &forcefields,
+                               const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                               double scale_energy) const
 {
     if (scale_energy != 0)
         return scale_energy * forcefields[ffidx].edit().energy(this->symbol());
     else
-        return Energy(0);
+        return MolarEnergy(0);
 }
 
 void FFSymbolFF::force(ForceTable &forcetable, QVector<FFPtr> &forcefields,
@@ -669,12 +669,12 @@ double FFSymbolExpression::value() const
     return 0;
 }
 
-Energy FFSymbolExpression::energy(QVector<FFPtr> &forcefields,
-                                  const QHash<Symbol,FFSymbolPtr> &ffsymbols,
-                                  double scale_energy) const
+MolarEnergy FFSymbolExpression::energy(QVector<FFPtr> &forcefields,
+                                       const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                                       double scale_energy) const
 {
     //loop over each component of the expression
-    Energy nrg(0);
+    MolarEnergy nrg(0);
 
     if (scale_energy == 0)
         return nrg;
@@ -783,11 +783,11 @@ double FFTotalExpression::value() const
     return 0;
 }
 
-Energy FFTotalExpression::energy(QVector<FFPtr> &forcefields,
-                                 const QHash<Symbol,FFSymbolPtr> &ffsymbols,
-                                 double scale_energy) const
+MolarEnergy FFTotalExpression::energy(QVector<FFPtr> &forcefields,
+                                      const QHash<Symbol,FFSymbolPtr> &ffsymbols,
+                                      double scale_energy) const
 {
-    Energy nrg(0);
+    MolarEnergy nrg(0);
     
     int nffields = forcefields.count();
     
@@ -1468,7 +1468,7 @@ Expression ForceFields::getComponent(const Symbol &symbol) const
     
     \throw SireFF::missing_component
 */
-SireUnits::Dimension::Energy ForceFields::energy(const Symbol &component)
+SireUnits::Dimension::MolarEnergy ForceFields::energy(const Symbol &component)
 {
     if (not ffsymbols.contains(component))
         throw SireFF::missing_component( QObject::tr(   
@@ -1484,7 +1484,7 @@ SireUnits::Dimension::Energy ForceFields::energy(const Symbol &component)
     total energy function to calculate the energy, if one exists,
     or it just calculates the sum of the total energies of all of the
     contained forcefields */
-SireUnits::Dimension::Energy ForceFields::energy()
+SireUnits::Dimension::MolarEnergy ForceFields::energy()
 {
     return this->energy( this->totalComponent() );
 }

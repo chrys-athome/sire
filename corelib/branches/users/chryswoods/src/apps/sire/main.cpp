@@ -110,7 +110,8 @@ int main(int argc, char **argv)
         qDebug() << "Adding to the forcefield...";
         InterCLJFF cljff;
         
-        cljff.setSwitchingFunction( HarmonicSwitchingFunction(15.0, 14.5) );
+        cljff.setSwitchingFunction( HarmonicSwitchingFunction(15.0*angstrom, 
+                                                              14.5*angstrom) );
         
         cljff.setSpace( PeriodicBox(Vector(-18.3854,-18.66855,-18.4445),
                                     Vector( 18.3854, 18.66855, 18.4445)) );

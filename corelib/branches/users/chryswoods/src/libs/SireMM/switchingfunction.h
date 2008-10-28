@@ -32,6 +32,8 @@
 #include "SireBase/sharedpolypointer.hpp"
 #include "SireBase/property.h"
 
+#include "SireUnits/dimensions.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMM
@@ -58,6 +60,8 @@ QDataStream& operator>>(QDataStream&, SireMM::CHARMMSwitchingFunction&);
 namespace SireMM
 {
 
+using SireUnits::Dimension::Length;
+
 /** This is the virtual base class of all switching functions. These 
     return scale factors based on the supplied distance
 
@@ -80,36 +84,36 @@ public:
     virtual SwitchingFunction* clone() const=0;
 
     /** Return the electrostatic scale factor for the distance 'dist' */
-    virtual double electrostaticScaleFactor(double dist) const=0;
+    virtual double electrostaticScaleFactor(Length dist) const=0;
 
     /** Return the VDW scale factor for the distance 'dist' */
-    virtual double vdwScaleFactor(double dist) const=0;
+    virtual double vdwScaleFactor(Length dist) const=0;
 
     /** Return the derivative (gradient) of the electrostatic
         scale factor at the distance 'dist' */
-    virtual double dElectrostaticScaleFactor(double dist) const=0;
+    virtual double dElectrostaticScaleFactor(Length dist) const=0;
 
     /** Return the derivative (gradient) of the VDW
         scale factor at the distance 'dist' */
-    virtual double dVDWScaleFactor(double dist) const=0;
+    virtual double dVDWScaleFactor(Length dist) const=0;
 
-    double cutoffDistance() const;
-    double featherDistance() const;
+    Length cutoffDistance() const;
+    Length featherDistance() const;
 
-    double electrostaticCutoffDistance() const;
-    double electrostaticFeatherDistance() const;
+    Length electrostaticCutoffDistance() const;
+    Length electrostaticFeatherDistance() const;
     
-    double vdwCutoffDistance() const;
-    double vdwFeatherDistance() const;
+    Length vdwCutoffDistance() const;
+    Length vdwFeatherDistance() const;
 
     static const NoCutoff& null();
 
 protected:
     SwitchingFunction();
-    SwitchingFunction(double cutdistance);
-    SwitchingFunction(double cutdistance, double featherdistance);
-    SwitchingFunction(double eleccut, double elecfeather,
-               double vdwcut, double vdwfeather);
+    SwitchingFunction(Length cutdistance);
+    SwitchingFunction(Length cutdistance, Length featherdistance);
+    SwitchingFunction(Length eleccut, Length elecfeather,
+                      Length vdwcut, Length vdwfeather);
 
     SwitchingFunction(const SwitchingFunction &other);
 
@@ -141,43 +145,43 @@ protected:
 
 /** Return the cutoff distance beyond which both the electrostatic
     and vdw energies are scaled to zero */
-inline double SwitchingFunction::cutoffDistance() const
+inline Length SwitchingFunction::cutoffDistance() const
 {
-    return cutdist;
+    return Length(cutdist);
 }
 
 /** Return the feather distance, below which feathering of the 
     electrostatic and vdw interactions is *not* performed */
-inline double SwitchingFunction::featherDistance() const
+inline Length SwitchingFunction::featherDistance() const
 {
-    return featherdist;
+    return Length(featherdist);
 }
 
 /** Return the distance beyond which the electrostatic interaction
     is not evaluated */
-inline double SwitchingFunction::electrostaticCutoffDistance() const
+inline Length SwitchingFunction::electrostaticCutoffDistance() const
 {
-    return cut_elec;
+    return Length(cut_elec);
 }
 
 /** Return the distance below which the electrostatic interaction
     is *not* feathered */
-inline double SwitchingFunction::electrostaticFeatherDistance() const
+inline Length SwitchingFunction::electrostaticFeatherDistance() const
 {
-    return feather_elec;
+    return Length(feather_elec);
 }
 
 /** Return the distance beyond which the VDW interaction is not evaluated */
-inline double SwitchingFunction::vdwCutoffDistance() const
+inline Length SwitchingFunction::vdwCutoffDistance() const
 {
-    return cut_vdw;
+    return Length(cut_vdw);
 }
 
 /** Return the distance below which the VDW interaction is 
     *not* feathered */
-inline double SwitchingFunction::vdwFeatherDistance() const
+inline Length SwitchingFunction::vdwFeatherDistance() const
 {
-    return feather_vdw;
+    return Length(feather_vdw);
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
@@ -211,11 +215,11 @@ public:
     bool operator==(const NoCutoff &other) const;
     bool operator!=(const NoCutoff &other) const;
     
-    double electrostaticScaleFactor(double dist) const;
-    double vdwScaleFactor(double dist) const;
+    double electrostaticScaleFactor(Length dist) const;
+    double vdwScaleFactor(Length dist) const;
     
-    double dElectrostaticScaleFactor(double dist) const;
-    double dVDWScaleFactor(double dist) const;
+    double dElectrostaticScaleFactor(Length dist) const;
+    double dVDWScaleFactor(Length dist) const;
 };
 
 /** This class implements harmonic switching functions - these scale the energy
@@ -234,12 +238,12 @@ friend QDataStream& ::operator>>(QDataStream&, HarmonicSwitchingFunction&);
 public:
     HarmonicSwitchingFunction();
 
-    HarmonicSwitchingFunction(double cutoffdist);
-    HarmonicSwitchingFunction(double cutoffdist, double featherdist);
-    HarmonicSwitchingFunction(double cutoffdist,
-                              double elecfeather, double vdwfeather);
-    HarmonicSwitchingFunction(double eleccutoff, double elecfeather,
-                              double vdwcutoff, double vdwfeather);
+    HarmonicSwitchingFunction(Length cutoffdist);
+    HarmonicSwitchingFunction(Length cutoffdist, Length featherdist);
+    HarmonicSwitchingFunction(Length cutoffdist,
+                              Length elecfeather, Length vdwfeather);
+    HarmonicSwitchingFunction(Length eleccutoff, Length elecfeather,
+                              Length vdwcutoff, Length vdwfeather);
 
     HarmonicSwitchingFunction(const HarmonicSwitchingFunction &other);
 
@@ -255,11 +259,11 @@ public:
     bool operator==(const HarmonicSwitchingFunction &other) const;
     bool operator!=(const HarmonicSwitchingFunction &other) const;
     
-    double electrostaticScaleFactor(double dist) const;
-    double vdwScaleFactor(double dist) const;
+    double electrostaticScaleFactor(Length dist) const;
+    double vdwScaleFactor(Length dist) const;
 
-    double dElectrostaticScaleFactor(double dist) const;
-    double dVDWScaleFactor(double dist) const;
+    double dElectrostaticScaleFactor(Length dist) const;
+    double dVDWScaleFactor(Length dist) const;
     
 protected:
     void set(double cutelec, double featherelec,
@@ -301,12 +305,12 @@ friend QDataStream& ::operator>>(QDataStream&, CHARMMSwitchingFunction&);
 public:
     CHARMMSwitchingFunction();
 
-    CHARMMSwitchingFunction(double cutoffdist);
-    CHARMMSwitchingFunction(double cutoffdist, double featherdist);
-    CHARMMSwitchingFunction(double cutoffdist,
-                            double elecfeather, double vdwfeather);
-    CHARMMSwitchingFunction(double eleccutoff, double elecfeather,
-                            double vdwcutoff, double vdwfeather);
+    CHARMMSwitchingFunction(Length cutoffdist);
+    CHARMMSwitchingFunction(Length cutoffdist, Length featherdist);
+    CHARMMSwitchingFunction(Length cutoffdist,
+                            Length elecfeather, Length vdwfeather);
+    CHARMMSwitchingFunction(Length eleccutoff, Length elecfeather,
+                            Length vdwcutoff, Length vdwfeather);
 
     CHARMMSwitchingFunction(const CHARMMSwitchingFunction &other);
 
@@ -322,11 +326,11 @@ public:
     bool operator==(const CHARMMSwitchingFunction &other) const;
     bool operator!=(const CHARMMSwitchingFunction &other) const;
     
-    double electrostaticScaleFactor(double dist) const;
-    double vdwScaleFactor(double dist) const;
+    double electrostaticScaleFactor(Length dist) const;
+    double vdwScaleFactor(Length dist) const;
 
-    double dElectrostaticScaleFactor(double dist) const;
-    double dVDWScaleFactor(double dist) const;
+    double dElectrostaticScaleFactor(Length dist) const;
+    double dVDWScaleFactor(Length dist) const;
     
 protected:
     void set(double cutelec, double featherelec,

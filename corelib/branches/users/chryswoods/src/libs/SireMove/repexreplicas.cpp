@@ -278,10 +278,10 @@ Volume RepExReplica::volume() const
 }
 
 /** Return the current energy of this replica */
-Energy RepExReplica::energy()
+MolarEnergy RepExReplica::energy()
 {
     System new_system = this->system();
-    Energy nrg = new_system.energy( nrg_component );
+    MolarEnergy nrg = new_system.energy( nrg_component );
     Replica::setSystem(new_system);
 
     return nrg;

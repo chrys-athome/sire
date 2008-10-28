@@ -104,6 +104,9 @@ public:
     
     const QString& method() const;
     
+    void setTotalCharge(int charge);
+    int totalCharge() const;
+    
     void setEnergyTemplate(const QString &energy_template);
     
     const QString& energyTemplate() const;
@@ -165,6 +168,9 @@ private:
         The basis set, QM method and atom coordinates are substituted
         into this template */
     QString force_template;
+    
+    /** The total charge of the system */
+    qint32 total_charge;
 };
 
 }

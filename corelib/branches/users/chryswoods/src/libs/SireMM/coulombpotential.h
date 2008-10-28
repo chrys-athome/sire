@@ -642,6 +642,11 @@ public:
     ~CoulombPotentialInterface()
     {}
     
+    static typename CoulPot::ParameterNames parameters()
+    {
+        return CoulPot::parameters();
+    }
+    
     const Properties& properties() const
     {
         return CoulPot::properties();

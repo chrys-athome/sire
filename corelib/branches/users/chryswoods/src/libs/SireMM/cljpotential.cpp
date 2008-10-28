@@ -951,8 +951,8 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
             //scaled by any non-bonded feather factor
             if (mindist > switchfunc->featherDistance())
             {
-                cnrg += switchfunc->electrostaticScaleFactor(mindist) * icnrg;
-                ljnrg += switchfunc->vdwScaleFactor(mindist) * iljnrg;
+                cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
+                ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
                 
                 #ifdef SIRE_TIME_ROUTINES
                 nflops += 4;
@@ -1073,16 +1073,18 @@ void InterCLJPotential::_pvt_calculateForce(const InterCLJPotential::Molecule &m
                 
                 //calculate the switching scale factors and their 
                 //derivatives
-                const double scl_coul = switchfunc->electrostaticScaleFactor(mindist);
-                const double scl_lj = switchfunc->vdwScaleFactor(mindist);
+                const double scl_coul = switchfunc->electrostaticScaleFactor( 
+                                                                        Length(mindist) );
+                const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
                 
                 Vector group_sep = (group1.aaBox().center() - aabox0.center())
                                         .normalise();
                 
-                Vector dscl_coul = switchfunc->dElectrostaticScaleFactor(mindist) 
+                Vector dscl_coul = switchfunc->dElectrostaticScaleFactor( 
+                                                                    Length(mindist) ) 
                                      * group_sep;
                                      
-                Vector dscl_lj = switchfunc->dVDWScaleFactor(mindist)
+                Vector dscl_lj = switchfunc->dVDWScaleFactor( Length(mindist) )
                                      * group_sep;
                 
                 double shift_coul = 0;
@@ -1353,12 +1355,14 @@ void InterCLJPotential::_pvt_calculateCoulombForce(
                 
                 //calculate the switching scale factors and their 
                 //derivatives
-                const double scl_coul = switchfunc->electrostaticScaleFactor(mindist);
+                const double scl_coul = switchfunc->electrostaticScaleFactor(
+                                                                    Length(mindist) );
                 
                 Vector group_sep = (group1.aaBox().center() - aabox0.center())
                                         .normalise();
                 
-                Vector dscl_coul = switchfunc->dElectrostaticScaleFactor(mindist) 
+                Vector dscl_coul = switchfunc->dElectrostaticScaleFactor(
+                                                                    Length(mindist) ) 
                                      * group_sep;
                 
                 double shift_coul = 0;
@@ -1532,12 +1536,12 @@ void InterCLJPotential::_pvt_calculateLJForce(
                 
                 //calculate the switching scale factors and their 
                 //derivatives
-                const double scl_lj = switchfunc->vdwScaleFactor(mindist);
+                const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
                 
                 Vector group_sep = (group1.aaBox().center() - aabox0.center())
                                         .normalise();
                 
-                Vector dscl_lj = switchfunc->dVDWScaleFactor(mindist)
+                Vector dscl_lj = switchfunc->dVDWScaleFactor( Length(mindist) )
                                      * group_sep;
                 
                 for (quint32 i=0; i<nats0; ++i)
@@ -2240,8 +2244,8 @@ void IntraCLJPotential::calculateEnergy(const IntraCLJPotential::Molecule &mol,
             //scaled by any non-bonded feather factor
             if (mindist > switchfunc->featherDistance())
             {
-                cnrg += switchfunc->electrostaticScaleFactor(mindist) * icnrg;
-                ljnrg += switchfunc->vdwScaleFactor(mindist) * iljnrg;
+                cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
+                ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
             }
             else
             {
@@ -2397,8 +2401,8 @@ void IntraCLJPotential::calculateEnergy(const IntraCLJPotential::Molecule &mol,
             //scaled by any non-bonded feather factor
             if (mindist > switchfunc->featherDistance())
             {
-                cnrg += switchfunc->electrostaticScaleFactor(mindist) * icnrg;
-                ljnrg += switchfunc->vdwScaleFactor(mindist) * iljnrg;
+                cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
+                ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
             }
             else
             {
@@ -2430,16 +2434,16 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                 
         //calculate the switching scale factors and their 
         //derivatives
-        const double scl_coul = switchfunc->electrostaticScaleFactor(mindist);
-        const double scl_lj = switchfunc->vdwScaleFactor(mindist);
+        const double scl_coul = switchfunc->electrostaticScaleFactor( Length(mindist) );
+        const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
                 
         Vector group_sep = (group1.aaBox().center() -
                             group0.aaBox().center()).normalise(); 
                 
-        Vector dscl_coul = switchfunc->dElectrostaticScaleFactor(mindist) 
+        Vector dscl_coul = switchfunc->dElectrostaticScaleFactor( Length(mindist) ) 
                                      * group_sep;
                                      
-        Vector dscl_lj = switchfunc->dVDWScaleFactor(mindist)
+        Vector dscl_lj = switchfunc->dVDWScaleFactor( Length(mindist) )
                                      * group_sep;
 
         if (group_pairs.isEmpty())
@@ -2824,16 +2828,16 @@ void IntraCLJPotential::calculateForce(const CLJNBPairs::CGPairs &group_pairs,
                 
         //calculate the switching scale factors and their 
         //derivatives
-        const double scl_coul = switchfunc->electrostaticScaleFactor(mindist);
-        const double scl_lj = switchfunc->vdwScaleFactor(mindist);
+        const double scl_coul = switchfunc->electrostaticScaleFactor( Length(mindist) );
+        const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
                 
         Vector group_sep = (group1.aaBox().center() -
                             group0.aaBox().center()).normalise(); 
                 
-        Vector dscl_coul = switchfunc->dElectrostaticScaleFactor(mindist) 
+        Vector dscl_coul = switchfunc->dElectrostaticScaleFactor( Length(mindist) ) 
                                      * group_sep;
                                      
-        Vector dscl_lj = switchfunc->dVDWScaleFactor(mindist)
+        Vector dscl_lj = switchfunc->dVDWScaleFactor( Length(mindist) )
                                      * group_sep;
 
         if (group_pairs.isEmpty())
@@ -3472,12 +3476,12 @@ void IntraCLJPotential::calculateCoulombForce(const CLJNBPairs::CGPairs &group_p
                 
         //calculate the switching scale factors and their 
         //derivatives
-        const double scl_coul = switchfunc->electrostaticScaleFactor(mindist);
+        const double scl_coul = switchfunc->electrostaticScaleFactor( Length(mindist) );
                 
         Vector group_sep = (group1.aaBox().center() -
                             group0.aaBox().center()).normalise(); 
                 
-        Vector dscl_coul = switchfunc->dElectrostaticScaleFactor(mindist) 
+        Vector dscl_coul = switchfunc->dElectrostaticScaleFactor( Length(mindist) ) 
                               * group_sep;
 
         if (group_pairs.isEmpty())
@@ -3668,12 +3672,12 @@ void IntraCLJPotential::calculateCoulombForce(const CLJNBPairs::CGPairs &group_p
                 
         //calculate the switching scale factors and their 
         //derivatives
-        const double scl_coul = switchfunc->electrostaticScaleFactor(mindist);
+        const double scl_coul = switchfunc->electrostaticScaleFactor( Length(mindist) );
                 
         Vector group_sep = (group1.aaBox().center() -
                             group0.aaBox().center()).normalise(); 
                 
-        Vector dscl_coul = switchfunc->dElectrostaticScaleFactor(mindist) 
+        Vector dscl_coul = switchfunc->dElectrostaticScaleFactor( Length(mindist) ) 
                               * group_sep;
 
         if (group_pairs.isEmpty())
@@ -4118,12 +4122,12 @@ void IntraCLJPotential::calculateLJForce(const CLJNBPairs::CGPairs &group_pairs,
         
         //calculate the switching scale factors and their 
         //derivatives
-        const double scl_lj = switchfunc->vdwScaleFactor(mindist);
+        const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
         
         Vector group_sep = (group1.aaBox().center() -
                             group0.aaBox().center()).normalise(); 
                              
-        Vector dscl_lj = switchfunc->dVDWScaleFactor(mindist)
+        Vector dscl_lj = switchfunc->dVDWScaleFactor( Length(mindist) )
                              * group_sep;
 
         if (group_pairs.isEmpty())
@@ -4355,12 +4359,12 @@ void IntraCLJPotential::calculateLJForce(const CLJNBPairs::CGPairs &group_pairs,
         
         //calculate the switching scale factors and their 
         //derivatives
-        const double scl_lj = switchfunc->vdwScaleFactor(mindist);
+        const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
         
         Vector group_sep = (group1.aaBox().center() -
                             group0.aaBox().center()).normalise(); 
                              
-        Vector dscl_lj = switchfunc->dVDWScaleFactor(mindist)
+        Vector dscl_lj = switchfunc->dVDWScaleFactor( Length(mindist) )
                              * group_sep;
 
         if (group_pairs.isEmpty())

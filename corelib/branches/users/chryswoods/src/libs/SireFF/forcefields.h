@@ -128,8 +128,8 @@ public:
     
     static const Symbol& totalComponent();
     
-    SireUnits::Dimension::Energy energy();
-    SireUnits::Dimension::Energy energy(const Symbol &component);
+    SireUnits::Dimension::MolarEnergy energy();
+    SireUnits::Dimension::MolarEnergy energy(const Symbol &component);
     
     Symbols components() const;
     

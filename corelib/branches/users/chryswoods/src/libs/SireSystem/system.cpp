@@ -185,7 +185,7 @@ const System& System::null()
 }
 
 /** Construct a named System */
-System::System(const SysName &name)
+System::System(const QString &name)
        : ConcreteProperty<System,MolGroupsBase>(),
          uid( QUuid::createUuid() ),
          sysname(name),
@@ -463,11 +463,11 @@ System& System::operator-=(const MolID &molid)
 }
 
 /** Set the name of this system */
-void System::setName(const SysName &newname)
+void System::setName(const QString &newname)
 {
-    if (sysname != newname)
+    if (sysname != SysName(newname))
     {
-        sysname = newname;
+        sysname = SysName(newname);
         sysversion.incrementMajor();
     }
 }
@@ -609,7 +609,7 @@ const Symbol& System::totalComponent() const
 }
 
 /** Return the total energy of this system. */
-Energy System::energy()
+MolarEnergy System::energy()
 {
     return this->_pvt_forceFields().energy();
 }
@@ -619,7 +619,7 @@ Energy System::energy()
     
     \throw SireFF::missing_component
 */
-Energy System::energy(const Symbol &component)
+MolarEnergy System::energy(const Symbol &component)
 {
     return this->_pvt_forceFields().energy(component);
 }

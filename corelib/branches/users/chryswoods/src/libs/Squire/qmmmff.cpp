@@ -40,6 +40,7 @@ using namespace Squire;
 using namespace SireMM;
 using namespace SireFF;
 using namespace SireBase;
+using namespace SireUnits::Dimension;
 using namespace SireStream;
 
 static const RegisterMetaType<QMMMFF> r_qmmmff;
@@ -167,6 +168,15 @@ const QMProgram& QMMMFF::quantumProgram() const
     return QMMMElecEmbedPotential::quantumProgram();
 }
 
+/** Return the absolute value of the energy which is considered
+    as zero (on the relative energy scale used by this potential).
+    A relative scale is used so that the QM energy can be shifted
+    so that it is comparable to an MM energy */
+MolarEnergy QMMMFF::zeroEnergy() const
+{
+    return QMMMElecEmbedPotential::zeroEnergy();
+}
+
 /** Set the space within which the QM molecules exist */
 bool QMMMFF::setSpace(const Space &space)
 {
@@ -185,6 +195,15 @@ bool QMMMFF::setSwitchingFunction(const SwitchingFunction &switchfunc)
 bool QMMMFF::setQuantumProgram(const QMProgram &qmprog)
 {
     return QMMMElecEmbedPotential::setQuantumProgram(qmprog);
+}
+
+/** Set the absolute value of the energy which is considered
+    as zero (on the relative energy scale used by this potential).
+    A relative scale is used so that the QM energy can be shifted
+    so that it is comparable to an MM energy */
+bool QMMMFF::setZeroEnergy(MolarEnergy zero_energy)
+{
+    return QMMMElecEmbedPotential::setZeroEnergy(zero_energy);
 }
 
 /** Set the property 'name' to the value 'value'
@@ -269,6 +288,15 @@ void QMMMFF::recalculateEnergy()
     
     this->components().setEnergy(*this, nrg);
     this->setClean();
+}
+
+
+/** Function used to update the symbols representing the forcefield
+    components whenever the name of the forcefield changes */
+void QMMMFF::_pvt_updateName()
+{
+    ffcomponents = Components(this->name());
+    G2FF::_pvt_updateName();
 }
 
 ////

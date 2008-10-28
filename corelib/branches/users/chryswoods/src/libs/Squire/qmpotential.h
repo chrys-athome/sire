@@ -41,6 +41,8 @@
 #include "SireFF/detail/ffmolecules3d.h"
 #include "SireFF/detail/atomicparameters3d.hpp"
 
+#include "SireUnits/dimensions.h"
+
 SIRE_BEGIN_HEADER
 
 namespace Squire
@@ -219,9 +221,11 @@ public:
 
     bool setSpace(const Space &space);
     bool setQuantumProgram(const QMProgram &program);
+    bool setZeroEnergy(SireUnits::Dimension::MolarEnergy zero_energy);
     
     const Space& space() const;
     const QMProgram& quantumProgram() const;
+    SireUnits::Dimension::MolarEnergy zeroEnergy() const;
 
     QMPotential::Parameters 
     getParameters(const PartialMolecule &mol,
@@ -277,6 +281,12 @@ private:
     
     /** The QM program that is used to calculate the energy */
     QMProgPtr qmprog;
+    
+    /** The absolute value of the energy that corresponds
+        to 'zero' - this is necessary to shift the QM energy
+        into the same range as the MM energy. This is a constant
+        that is added on to every QM energy evaluated */
+    double zero_energy;
 };
 
 } // end of namespace Squire
@@ -284,6 +294,9 @@ private:
 Q_DECLARE_METATYPE( Squire::QMComponent )
 
 SIRE_EXPOSE_CLASS( Squire::QMComponent )
+
+SIRE_EXPOSE_CLASS( Squire::ElementParameterName )
+SIRE_EXPOSE_CLASS( Squire::ElementParameterName3D )
 
 SIRE_END_HEADER
 

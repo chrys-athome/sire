@@ -124,10 +124,12 @@ public:
     const Space& space() const;
     const SwitchingFunction& switchingFunction() const;
     const QMProgram& quantumProgram() const;
+    SireUnits::Dimension::MolarEnergy zeroEnergy() const;
     
     bool setSpace(const Space &space);
     bool setSwitchingFunction(const SwitchingFunction &switchfunc);
     bool setQuantumProgram(const QMProgram &qmprog);
+    bool setZeroEnergy(SireUnits::Dimension::MolarEnergy zero_energy);
 
     bool setProperty(const QString &name, const Property &property);
     const Property& property(const QString &name) const;
@@ -157,6 +159,8 @@ protected:
     ////
     
     void recalculateEnergy();
+
+    void _pvt_updateName();
     
     ////
     //// Virtual functions from SireFF::G2FF
@@ -200,6 +204,8 @@ private:
 Q_DECLARE_METATYPE( Squire::QMMMFF )
 
 SIRE_EXPOSE_CLASS( Squire::QMMMFF )
+
+SIRE_EXPOSE_CLASS( Squire::ChargeElementParameterNames3D )
 
 SIRE_END_HEADER
 

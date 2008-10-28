@@ -256,7 +256,7 @@ void FF::setName(const MGID &mgid, const QString &name)
     
     \throw SireFF::missing_component
 */
-SireUnits::Dimension::Energy FF::energy(const Symbol &component)
+SireUnits::Dimension::MolarEnergy FF::energy(const Symbol &component)
 {
     if (this->isDirty())
     {
@@ -270,11 +270,11 @@ SireUnits::Dimension::Energy FF::energy(const Symbol &component)
                 .arg(component.toString())
                 .arg( Sire::toString( nrg_components.values().keys() ) ), CODELOC );
 
-    return SireUnits::Dimension::Energy( nrg_components.value(component) );
+    return SireUnits::Dimension::MolarEnergy( nrg_components.value(component) );
 }
 
 /** Return the energy of this forcefield in its current state */
-SireUnits::Dimension::Energy FF::energy()
+SireUnits::Dimension::MolarEnergy FF::energy()
 {
     return this->energy( this->components().total() );
 }

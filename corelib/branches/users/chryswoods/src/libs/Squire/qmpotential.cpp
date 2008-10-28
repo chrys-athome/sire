@@ -44,6 +44,8 @@ using namespace Squire;
 using namespace SireFF;
 using namespace SireFF::detail;
 using namespace SireMol;
+using namespace SireBase;
+using namespace SireUnits::Dimension;
 using namespace SireStream;
 
 ///////
@@ -168,6 +170,9 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, QMPotential &qmpot)
         
         qmpot.spce = qmpot.props.property("space");
         qmpot.qmprog = qmpot.props.property("quantum program");
+        qmpot.zero_energy = qmpot.props.property("zero energy")
+                                       .asA<VariantProperty>()
+                                       .toDouble();
     }
     else
         throw version_error(v, "1", r_qmpot, CODELOC);
@@ -176,15 +181,17 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, QMPotential &qmpot)
 }
 
 /** Constructor */
-QMPotential::QMPotential()
+QMPotential::QMPotential() : zero_energy(0)
 {
     props.setProperty( "space", spce );
     props.setProperty( "quantum program", qmprog );
+    props.setProperty( "zero energy", VariantProperty(zero_energy) );
 }
 
 /** Copy constructor */
 QMPotential::QMPotential(const QMPotential &other)
-            : props(other.props), spce(other.spce), qmprog(other.qmprog)
+            : props(other.props), spce(other.spce), 
+              qmprog(other.qmprog), zero_energy(other.zero_energy)
 {}
 
 /** Destructor */
@@ -199,6 +206,7 @@ QMPotential& QMPotential::operator=(const QMPotential &other)
         props = other.props;
         spce = other.spce;
         qmprog = other.qmprog;
+        zero_energy = other.zero_energy;
     }
 
     return *this;
@@ -443,6 +451,15 @@ const QMProgram& QMPotential::quantumProgram() const
     return qmprog.read();
 }
 
+/** Return the absolute value of the energy which is considered
+    as zero (on the relative energy scale used by this potential).
+    A relative scale is used so that the QM energy can be shifted
+    so that it is comparable to an MM energy */
+MolarEnergy QMPotential::zeroEnergy() const
+{
+    return MolarEnergy(zero_energy);
+}
+
 /** Set the space within which all of the molecules in this potential
     will exist. This returns whether or not this changes the
     potential. */
@@ -475,6 +492,23 @@ bool QMPotential::setQuantumProgram(const QMProgram &program)
         return false;
 }
 
+/** Set the absolute value of the energy which is considered
+    as zero (on the relative energy scale used by this potential).
+    A relative scale is used so that the QM energy can be shifted
+    so that it is comparable to an MM energy */
+bool QMPotential::setZeroEnergy(MolarEnergy zeroenergy)
+{
+    if ( zero_energy != zeroenergy )
+    {
+        zero_energy = zeroenergy;
+        props.setProperty("zero energy", VariantProperty(zero_energy));
+        this->changedPotential();
+        return true;
+    }
+    else
+        return false;
+}
+
 /** Set the property 'name' to the value 'value'. This returns whether
     or not this changes the potential
 
@@ -491,6 +525,11 @@ bool QMPotential::setProperty(const QString &name, const Property &value)
     else if (name == QLatin1String("quantum program"))
     {
         return this->setQuantumProgram( value.asA<QMProgram>() );
+    }
+    else if (name == QLatin1String("zero energy"))
+    {
+        return this->setZeroEnergy( MolarEnergy(value.asA<VariantProperty>()
+                                                     .convertTo<double>()) );
     }
     else
         throw SireBase::missing_property( QObject::tr(
@@ -575,7 +614,7 @@ void QMPotential::calculateEnergy(const QMPotential::Molecules &molecules,
     //now tell the qm_program to calculate the energy that we need
     double qmnrg = qmprog->calculateEnergy(mapped_mols);
     
-    nrg += Energy( scale_energy * qmnrg );
+    nrg += Energy( scale_energy * (qmnrg - zero_energy) );
 }
 
 /** Return the command file that would be used to calculate the forces on

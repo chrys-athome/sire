@@ -835,7 +835,7 @@ void InterLJPotential::_pvt_calculateEnergy(const InterLJPotential::Molecule &mo
             //scaled by any non-bonded feather factor
             if (mindist > switchfunc->featherDistance())
             {
-                ljnrg += switchfunc->vdwScaleFactor(mindist) * iljnrg;
+                ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
                 
                 #ifdef SIRE_TIME_ROUTINES
                 nflops += 2;
@@ -956,12 +956,12 @@ void InterLJPotential::_pvt_calculateLJForce(
                 
                 //calculate the switching scale factors and their 
                 //derivatives
-                const double scl_lj = switchfunc->vdwScaleFactor(mindist);
+                const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
                 
                 Vector group_sep = (group1.aaBox().center() - aabox0.center())
                                         .normalise();
                 
-                Vector dscl_lj = switchfunc->dVDWScaleFactor(mindist)
+                Vector dscl_lj = switchfunc->dVDWScaleFactor( Length(mindist) )
                                      * group_sep;
                 
                 for (quint32 i=0; i<nats0; ++i)
@@ -1549,7 +1549,7 @@ void IntraLJPotential::calculateEnergy(const IntraLJPotential::Molecule &mol,
             //scaled by any non-bonded feather factor
             if (mindist > switchfunc->featherDistance())
             {
-                ljnrg += switchfunc->vdwScaleFactor(mindist) * iljnrg;
+                ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
             }
             else
             {
@@ -1697,7 +1697,7 @@ void IntraLJPotential::calculateEnergy(const IntraLJPotential::Molecule &mol,
             //scaled by any non-bonded feather factor
             if (mindist > switchfunc->featherDistance())
             {
-                ljnrg += switchfunc->vdwScaleFactor(mindist) * iljnrg;
+                ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
             }
             else
             {
@@ -1727,12 +1727,12 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
         
         //calculate the switching scale factors and their 
         //derivatives
-        const double scl_lj = switchfunc->vdwScaleFactor(mindist);
+        const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
         
         Vector group_sep = (group1.aaBox().center() -
                             group0.aaBox().center()).normalise(); 
                              
-        Vector dscl_lj = switchfunc->dVDWScaleFactor(mindist)
+        Vector dscl_lj = switchfunc->dVDWScaleFactor( Length(mindist) )
                              * group_sep;
 
         if (group_pairs.isEmpty())
@@ -1964,12 +1964,12 @@ void IntraLJPotential::calculateLJForce(const LJNBPairs::CGPairs &group_pairs,
         
         //calculate the switching scale factors and their 
         //derivatives
-        const double scl_lj = switchfunc->vdwScaleFactor(mindist);
+        const double scl_lj = switchfunc->vdwScaleFactor( Length(mindist) );
         
         Vector group_sep = (group1.aaBox().center() -
                             group0.aaBox().center()).normalise(); 
                              
-        Vector dscl_lj = switchfunc->dVDWScaleFactor(mindist)
+        Vector dscl_lj = switchfunc->dVDWScaleFactor( Length(mindist) )
                              * group_sep;
 
         if (group_pairs.isEmpty())
