@@ -262,13 +262,13 @@ SireUnits::Dimension::MolarEnergy FF::energy(const Symbol &component)
     {
         this->recalculateEnergy();
     }
-              
+                  
     if (not nrg_components.values().contains(component.ID()))
         throw SireFF::missing_component( QObject::tr(
             "There is no component in this forcefield represented by "
             "the symbol %1. Available components are %2.")
                 .arg(component.toString())
-                .arg( Sire::toString( nrg_components.values().keys() ) ), CODELOC );
+                .arg( Sire::toString(this->components().symbols()) ), CODELOC );
 
     return SireUnits::Dimension::MolarEnergy( nrg_components.value(component) );
 }

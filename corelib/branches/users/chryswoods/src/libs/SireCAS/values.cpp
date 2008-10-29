@@ -32,6 +32,7 @@
 #include "symbol.h"
 
 #include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 using namespace SireStream;
 using namespace SireCAS;
@@ -41,7 +42,18 @@ static const RegisterMetaType<Values> r_values;
 /** Serialise to a binary data stream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Values &values)
 {
-    writeHeader(ds, r_values, 1) << values.vals;
+    writeHeader(ds, r_values, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << quint32( values.vals.count() );
+    
+    for (QHash<SymbolID,double>::const_iterator it = values.vals.constBegin();
+         it != values.vals.constEnd();
+         ++it)
+    {
+        sds << Symbol(it.key()) << it.value();
+    }
 
     return ds;
 }
@@ -53,7 +65,25 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Values &values)
 
     if (v == 1)
     {
-        ds >> values.vals;
+        SharedDataStream sds(ds);
+        
+        quint32 nvals;
+        sds >> nvals;
+        
+        QHash<SymbolID,double> vals;
+        vals.reserve(nvals);
+        
+        for (quint32 i=0; i<nvals; ++i)
+        {
+            Symbol symbol; 
+            double value;
+            
+            sds >> symbol >> value;
+            
+            vals.insert( symbol.ID(), value );
+        }
+    
+        values.vals = vals;
     }
     else
         throw version_error(v, "1", r_values, CODELOC);
