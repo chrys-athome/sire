@@ -41,8 +41,6 @@
 #include "SireBase/shareddatapointer.hpp"
 #include "SireBase/sharedpolypointer.hpp"
 
-#include <QDebug>
-
 SIRE_BEGIN_HEADER
 
 namespace SireStream
@@ -164,8 +162,6 @@ private:
 template<class T>
 const T& SharedDataRegistry::getSharedObject(quint32 id) const
 {
-    qDebug() << "getSharedObject" << typeid(T).name() << id;
-
     this->assertValidID(id);
     
     return objects_by_id[id]->sharedData<T>();

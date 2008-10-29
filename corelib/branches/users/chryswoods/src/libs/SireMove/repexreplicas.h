@@ -87,6 +87,11 @@ public:
         return QMetaType::typeName( qMetaTypeId<RepExReplica>() );
     }
     
+    RepExReplica* clone() const
+    {
+        return new RepExReplica(*this);
+    }
+    
     bool operator==(const RepExReplica &other) const;
     bool operator!=(const RepExReplica &other) const;
 

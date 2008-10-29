@@ -84,6 +84,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExReplica &replica)
             >> static_cast<Replica&>(new_replica);
 
         new_replica.updatedMoves();
+        
+        replica = new_replica;
     }
     else
         throw version_error( v, "1", r_replica, CODELOC );

@@ -219,9 +219,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Replicas &replicas)
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        
         sds >> replicas.replicas_array;
-        
         return ds;
     }
     else
