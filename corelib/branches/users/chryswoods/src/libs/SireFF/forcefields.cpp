@@ -313,6 +313,7 @@ public:
 
 using namespace SireFF::detail;
 
+/** Serialise an FFSymbol to a binary datastream */
 QDataStream& operator<<(QDataStream &ds, const FFSymbolPtr &ffsymbol)
 {
     if (ffsymbol.get() == 0)
@@ -328,6 +329,7 @@ QDataStream& operator<<(QDataStream &ds, const FFSymbolPtr &ffsymbol)
     return ds;
 }
 
+/** Extract an FFSymbol from a binary datastream */
 QDataStream& operator>>(QDataStream &ds, FFSymbolPtr &ffsymbol)
 {
     QString type_name;

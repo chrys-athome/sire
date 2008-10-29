@@ -110,7 +110,7 @@ shared_ptr<SharedDataRegistry> SharedDataRegistry::construct(QDataStream &ds)
             return reg;
     }
     
-    //qDebug() << "Creating a SharedDataRegistry for the QDataStream" << &ds;
+    qDebug() << "Creating a SharedDataRegistry for the QDataStream" << &ds;
     
     shared_ptr<SharedDataRegistry> reg( new SharedDataRegistry() );
     
@@ -127,9 +127,9 @@ SharedDataRegistry::~SharedDataRegistry()
     //remove this registry from the global_registry
     QMutexLocker lkr( &registry_mutex );
     
-    //qDebug() << "Destroying the registry for the QDataStream" << ds;
-    //qDebug() << "   (" << objects_by_key.count() << "shared object(s) and"
-    //         << strings_by_key.count() << "shared string(s))";
+    qDebug() << "Destroying the registry for the QDataStream" << ds;
+    qDebug() << "   (" << objects_by_key.count() << "shared object(s) and"
+             << strings_by_key.count() << "shared string(s))";
     
     if (ds)
     {

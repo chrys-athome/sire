@@ -825,6 +825,34 @@ FileHeader& FileHeader::operator=(const FileHeader &other)
     return *this;
 }
 
+/** Return a string representation of this header */
+QString FileHeader::toString() const
+{
+    QStringList sysinfo = system_info.split("\n");
+
+    return QObject::tr("*************************************\n"
+                       "* Object type  : %1\n"
+                       "* Created by   : %2\n"
+                       "* Creation date: %3\n"
+                       "* Created on   : %4\n"
+                       "* System       : %5\n"
+                       "* Sire Version : %6\n"
+                       "* Repository   : %7\n"
+                       "* Packed size  : %8 kB\n"
+                       "* Unpacked size: %9 kB\n"
+                       "* Country      : %10\n"
+                       "* Language     : %11\n"
+                       "*************************************\n")
+               .arg( type_name, created_by, created_when.toString(),
+                     created_where )
+               .arg( sysinfo.join("\n*              : "), 
+                     build_version, build_repository )
+               .arg(double(compressed_size)/1024.0)
+               .arg(double(uncompressed_size)/1024.0)
+               .arg( QLocale::countryToString(system_locale.country()),
+                     QLocale::languageToString(system_locale.language()) );
+}
+
 /** Return the username of whoever created this data */
 const QString& FileHeader::createdBy() const
 {

@@ -95,6 +95,8 @@ public:
     
     FileHeader& operator=(const FileHeader &other);
     
+    QString toString() const;
+    
     const QString& createdBy() const;
     const QDateTime& createdWhen() const;
     const QString& createdWhere() const;
