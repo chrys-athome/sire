@@ -148,6 +148,13 @@ bool MTSMC::operator!=(const MTSMC &other) const
            fastmoves != other.fastmoves;
 }
 
+/** Completely clear all of the move statistics */
+void MTSMC::clearStatistics()
+{
+    fastmoves.edit().clearStatistics();    
+    MonteCarlo::clearStatistics();
+}
+
 /** Return a string representation of this move */
 QString MTSMC::toString() const
 {

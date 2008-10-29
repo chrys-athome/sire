@@ -73,6 +73,8 @@ public:
     
     virtual SystemMonitor* clone() const=0;
     
+    virtual void clearStatistics()=0;
+    
     virtual void monitor(System &system)=0;
     
     static const NullMonitor& null();
@@ -103,6 +105,8 @@ public:
     {
         return new NullMonitor(*this);
     }
+    
+    void clearStatistics();
     
     void monitor(System &system);
 };

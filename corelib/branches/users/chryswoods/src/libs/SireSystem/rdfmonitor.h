@@ -116,6 +116,8 @@ public:
     
     HistogramT<Length> distanceHistogram();
     
+    void clear();
+    
     void add(const Length &distance);
     
     void add(const RDF &other);
@@ -205,6 +207,8 @@ public:
     const PropertyName& coordsProperty() const;
     const PropertyName& spaceProperty() const;
     bool skipIntramolecularPairs() const;
+
+    void clearStatistics();
 
     void monitor(System &system);
 

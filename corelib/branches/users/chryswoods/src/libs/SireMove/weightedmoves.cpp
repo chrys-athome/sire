@@ -208,6 +208,18 @@ void WeightedMoves::add(const Move &move, double weight)
     this->recalculateWeights();
 }
 
+/** Completely clear all of the move statistics */
+void WeightedMoves::clearStatistics()
+{
+    tuple<MovePtr,double> *mvs_array = mvs.data();
+    int nmoves = mvs.count();
+    
+    for (int i=0; i<nmoves; ++i)
+    {
+        mvs_array[i].get<0>().edit().clearStatistics();
+    }
+}
+
 /** Perform 'nmoves' moves on the system 'system' and return the result */
 System WeightedMoves::move(const System &system, int nmoves, bool record_stats)
 {

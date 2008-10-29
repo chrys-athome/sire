@@ -147,6 +147,12 @@ const Accumulator& MonitorComponent::accumulator() const
     return accume;
 }
 
+/** Clear the statistics in this monitor */
+void MonitorComponent::clearStatistics()
+{
+    accume.edit().clear();
+}
+
 /** Call this function to add the statistics of the monitored
     component from the passed system to the accumulator */
 void MonitorComponent::monitor(System &system)

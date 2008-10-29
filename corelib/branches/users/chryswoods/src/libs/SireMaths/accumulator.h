@@ -184,6 +184,8 @@ public:
     bool operator==(const Average &other) const;
     bool operator!=(const Average &other) const;
     
+    void clear();
+    
     void accumulate(double value);
 
     double average() const;
@@ -228,6 +230,8 @@ public:
     
     bool operator==(const AverageAndStddev &other) const;
     bool operator!=(const AverageAndStddev &other) const;
+    
+    void clear();
     
     void accumulate(double value);
 
@@ -281,6 +285,8 @@ public:
     bool operator==(const ExpAverage &other) const;
     bool operator!=(const ExpAverage &other) const;
     
+    void clear();
+    
     void accumulate(double value);
 
     double average() const;
@@ -331,6 +337,8 @@ public:
     
     bool operator==(const Median &other) const;
     bool operator!=(const Median &other) const;
+    
+    void clear();
     
     void accumulate(double value);
 

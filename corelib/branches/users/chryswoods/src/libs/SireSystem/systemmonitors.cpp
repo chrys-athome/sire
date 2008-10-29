@@ -371,6 +371,17 @@ void SystemMonitors::removeAll()
     mons_by_frequency.clear();
 }
 
+/** Completely clear any statistics held in these monitors */
+void SystemMonitors::clearStatistics()
+{
+    for (QHash<MonitorName,SysMonPtr>::iterator it = mons_by_name.begin();
+         it != mons_by_name.end();
+         ++it)
+    {
+        it.value().edit().clearStatistics();
+    }
+}
+
 /** Set the frequency of all monitors that match the ID 'monid' so that
     they are updated every 'frequency' steps
     

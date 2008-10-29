@@ -302,6 +302,18 @@ void RDF::add(const Length &distance)
     }
 }
 
+/** Clear this RDF */
+void RDF::clear()
+{
+    double *distvals_array = distvals.data();
+    int nbins = distvals.count();
+    
+    for (int i=0; i<nbins; ++i)
+    {
+        distvals_array[i] = 0;
+    }
+}
+
 /** Add the other RDF 'other' onto this RDF */
 void RDF::add(const RDF &other)
 {
@@ -674,6 +686,12 @@ int RDFMonitor::count() const
 int RDFMonitor::nBins() const
 {
     return rdfdata.nBins();
+}
+
+/** Clear this RDF */
+void RDFMonitor::clearStatistics()
+{
+    rdfdata.clear();
 }
 
 /** Add the matched distances from the system 'system' to this RDF */

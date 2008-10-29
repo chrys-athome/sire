@@ -93,6 +93,8 @@ public:
     const Symbol& component() const;
     const Accumulator& accumulator() const;
 
+    void clearStatistics();
+
     void monitor(System &system);
 
 private:

@@ -297,6 +297,13 @@ bool Average::operator!=(const Average &other) const
     return not this->operator==(other);
 }
 
+/** Completely clear the statistics in this accumulator */
+void Average::clear()
+{
+    avgval = 0;
+    Accumulator::clear();
+}
+
 /** Accumulate the passed value onto the average */
 void Average::accumulate(double value)
 {
@@ -396,6 +403,13 @@ bool AverageAndStddev::operator==(const AverageAndStddev &other) const
 bool AverageAndStddev::operator!=(const AverageAndStddev &other) const
 {
     return not this->operator==(other);
+}
+
+/** Completely clear the statistics in this accumulator */
+void AverageAndStddev::clear()
+{
+    avgval2 = 0;
+    Average::clear();
 }
 
 /** Accumulate the average and standard deviation */
@@ -523,6 +537,13 @@ bool ExpAverage::operator!=(const ExpAverage &other) const
     return not this->operator==(other);
 }
 
+/** Completely clear the statistics in this accumulator */
+void ExpAverage::clear()
+{
+    avgval = 0;
+    Accumulator::clear();
+}
+
 /** Accumulate the passed value onto the average */
 void ExpAverage::accumulate(double value)
 {
@@ -633,6 +654,14 @@ bool Median::operator==(const Median &other) const
 bool Median::operator!=(const Median &other) const
 {
     return not this->operator==(other);
+}
+
+/** Completely clear the statistics in this accumulator */
+void Median::clear()
+{
+    minval = 0;
+    maxval = 0;
+    Accumulator::clear();
 }
 
 /** Accumulate the passed value onto the average */

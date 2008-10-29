@@ -154,6 +154,10 @@ void NullMonitor::monitor(System &system)
     return;
 }
 
+/** There are no statistics to clear */
+void NullMonitor::clearStatistics()
+{}
+
 static SharedPolyPointer<NullMonitor> shared_null;
 
 const NullMonitor& SystemMonitor::null()

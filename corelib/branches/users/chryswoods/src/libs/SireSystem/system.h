@@ -218,6 +218,7 @@ public:
     const ForceFields& forceFields() const;
     const MoleculeGroups& extraGroups() const;
     
+    void clearStatistics();
     void mustNowRecalculateFromScratch();
     
     bool isDirty() const;

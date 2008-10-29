@@ -873,6 +873,12 @@ const MoleculeGroups& System::extraGroups() const
     return this->_pvt_moleculeGroups();
 }
 
+/** Completely clear all statistics held in the monitors */
+void System::clearStatistics()
+{
+    sysmonitors.clearStatistics();
+}
+
 /** Tell all of the forcefields that they will need to recalculate
     their energies from scratch. This can speed up calculations where
     you know that the majority (or all) of the molecules will be

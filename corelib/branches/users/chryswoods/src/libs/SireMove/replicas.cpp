@@ -131,6 +131,20 @@ const System& Replica::system() const
     return sim_system;
 }
 
+/** Tell this replica to clear all of its statistics */
+void Replica::clearStatistics()
+{
+    sim_system.clearStatistics();
+    sim_moves.edit().clearStatistics();
+}
+
+/** Tell this replica that the system energy must be recalculated
+    from scratch */
+void Replica::mustNowRecalculateFromScratch()
+{
+    sim_system.mustNowRecalculateFromScratch();
+}
+
 /** Return the moves to be performed during the simulation on this replica */
 const Moves& Replica::moves() const
 {
@@ -328,6 +342,25 @@ const Replica& Replicas::at(int i) const
 Replica& Replicas::_pvt_replica(int i)
 {
     return *(replicas_array[ Index(i).map(nReplicas()) ]);
+}
+
+/** Clear the statistics of all of the replicas */
+void Replicas::clearStatistics()
+{
+    for (int i=0; i<this->nReplicas(); ++i)
+    {
+        this->_pvt_replica(i).clearStatistics();
+    }
+}
+
+/** Tell all of the replicas that they must reevaluate
+    their energies from scratch */
+void Replicas::mustNowRecalculateFromScratch()
+{
+    for (int i=0; i<this->nReplicas(); ++i)
+    {
+        this->_pvt_replica(i).mustNowRecalculateFromScratch();
+    }
 }
 
 /** Return whether or not this set is empty */

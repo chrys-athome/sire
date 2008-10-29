@@ -90,7 +90,7 @@ public:
 
     double acceptanceRatio() const;
 
-    virtual void clearMoveStatistics();
+    void clearStatistics();
 
     void setGenerator(const RanGenerator &generator);
     const RanGenerator& generator() const;

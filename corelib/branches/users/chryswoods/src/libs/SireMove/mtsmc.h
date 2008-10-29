@@ -105,6 +105,8 @@ public:
     const Symbol& fastEnergyComponent() const;
     const Symbol& slowEnergyComponent() const;
     
+    void clearStatistics();
+    
     void move(System &system, int nmoves, bool record_stats=true);
 
 private:

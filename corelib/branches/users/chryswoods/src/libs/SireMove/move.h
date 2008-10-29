@@ -99,6 +99,8 @@ public:
     
     virtual Move* clone() const=0;
     
+    virtual void clearStatistics()=0;
+    
     virtual void move(System &system, int nmoves, bool record_stats)=0;
 
     void move(System &system);
@@ -191,6 +193,8 @@ public:
     {
         return new NullMove(*this);
     }
+    
+    void clearStatistics();
     
     void move(System &system, int nmoves, bool record_stats);
     

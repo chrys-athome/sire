@@ -73,6 +73,12 @@ public:
         return "SireMove::Moves";
     }
     
+    MovePtr operator[](int i) const;
+    
+    int count() const;
+    int size() const;
+    int nMoveTypes() const;
+    
     virtual void setEnergyComponent(const Symbol &component)=0;
     const Symbol& energyComponent() const;
 
@@ -106,6 +112,8 @@ public:
     
     System move(const System &system, int nmoves);
     System move(const System &system);
+    
+    virtual void clearStatistics()=0;
     
     virtual QList<MovePtr> moves() const=0;
 
@@ -172,6 +180,8 @@ public:
     void setSpaceProperty(const PropertyName &spaceproperty); 
     
     System move(const System &system, int nmoves, bool record_stats);
+    
+    void clearStatistics();
     
     QList<MovePtr> moves() const;
 

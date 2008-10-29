@@ -479,6 +479,10 @@ bool NullMove::operator!=(const NullMove &other) const
     return false;
 }
 
+/** There are no statistics to clear */
+void NullMove::clearStatistics()
+{}
+
 /** NullMove doesn't perform any moves - no matter how hard you try! */
 void NullMove::move(System &system, int nmoves, bool record_stats)
 {

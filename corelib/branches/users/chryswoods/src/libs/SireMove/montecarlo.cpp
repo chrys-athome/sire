@@ -167,7 +167,7 @@ double MonteCarlo::acceptanceRatio() const
 }
 
 /** Zero the move statistics */
-void MonteCarlo::clearMoveStatistics()
+void MonteCarlo::clearStatistics()
 {
     naccept = 0;
     nreject = 0;

@@ -88,6 +88,8 @@ public:
     
     using Moves::move;
     
+    void clearStatistics();
+    
     System move(const System &system, int nmoves, bool record_stats);
     
     QList<MovePtr> moves() const;

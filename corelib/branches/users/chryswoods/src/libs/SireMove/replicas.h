@@ -96,6 +96,9 @@ public:
     
     bool recordStatistics() const;
 
+    void clearStatistics();
+    void mustNowRecalculateFromScratch();
+
     static void swapSystems(Replica &rep0, Replica &rep1);
 
 protected:
@@ -164,6 +167,9 @@ public:
     int nReplicas() const;
     int count() const;
     int size();
+    
+    void clearStatistics();
+    void mustNowRecalculateFromScratch();
     
     virtual void setReplicas(const Replicas &replicas);
     

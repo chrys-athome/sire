@@ -51,6 +51,7 @@ using namespace SireCAS;
 using namespace SireUnits;
 using namespace SireUnits::Dimension;
 using namespace SireBase;
+using namespace SireID;
 using namespace SireStream;
 
 ///////
@@ -95,6 +96,38 @@ Moves::Moves(const Moves &other) : Property(other)
 /** Destructor */
 Moves::~Moves()
 {}
+
+/** Return the ith Move object in this set of Moves
+
+    \throw SireError::invalid_index
+*/
+MovePtr Moves::operator[](int i) const
+{
+    QList<MovePtr> mvs = this->moves();
+    
+    return mvs.at( Index(i).map(mvs.count()) );
+}
+
+/** Return the number of different move types in this set of Moves 
+    (this is the maximum number of Move objects that can be iterated over) */
+int Moves::nMoveTypes() const
+{
+    return this->moves().count();
+}
+
+/** Return the number of different move types in this set of Moves 
+    (this is the maximum number of Move objects that can be iterated over) */
+int Moves::count() const
+{
+    return this->nMoveTypes();
+}
+
+/** Return the number of different move types in this set of Moves 
+    (this is the maximum number of Move objects that can be iterated over) */
+int Moves::size() const
+{
+    return this->nMoveTypes();
+}
 
 /** Return the energy component that these moves will sample. This
     raises an error if not all moves are sampling the same energy
@@ -553,6 +586,12 @@ void SameMoves::_pvt_setFugacity(const Pressure &fugacity)
     {
         mv.edit().setFugacity(fugacity);
     }
+}
+
+/** Clear the move statistics */
+void SameMoves::clearStatistics()
+{
+    mv.edit().clearStatistics();
 }
 
 /** Return the moves used by this object */
