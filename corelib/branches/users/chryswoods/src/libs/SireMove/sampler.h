@@ -100,6 +100,8 @@ public:
     
     virtual void setGroup(const MoleculeGroup &molgroup);
 
+    virtual void updateFrom(const System &system);
+
     virtual tuple<PartialMolecule,double> sample() const=0;
 
     virtual double probabilityOf(const PartialMolecule &molecule) const=0;

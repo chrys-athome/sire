@@ -241,9 +241,8 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
             System old_system(system);
             SamplerPtr old_sampler(smplr);
     
-            //update the sampler with the latest version of the molecule group
-            MGNum mgnum = smplr.read().group().number();
-            smplr.edit().setGroup( system.at(mgnum) );
+            //update the sampler with the latest version of the molecules
+            smplr.edit().updateFrom(system);
     
             //randomly select a molecule to move
             tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
@@ -273,7 +272,7 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
             double new_nrg = system.energy( this->energyComponent() );
 
             //get the new bias on this molecule
-            smplr.edit().setGroup( system.at(mgnum) );
+            smplr.edit().updateFrom(system);
         
             double new_bias = smplr.read().probabilityOf(newmol);
 

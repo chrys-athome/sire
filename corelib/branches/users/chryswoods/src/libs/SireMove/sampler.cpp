@@ -130,3 +130,17 @@ void Sampler::setGroup(const MoleculeGroup &moleculegroup)
 {
     molgroup = moleculegroup;
 }
+
+/** Update this sampler so that it matches the state of the molecules 
+    in the System 'system' */
+void Sampler::updateFrom(const System &system)
+{
+    if (system.contains( molgroup.number() ))
+    {
+        const MoleculeGroup &new_group = system[molgroup.number()];
+        
+        if (new_group.version() != molgroup.version())
+            //the molecule group has changed - update it
+            this->setGroup( system[molgroup.number()] );
+    }
+}
