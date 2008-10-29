@@ -149,6 +149,18 @@ RigidBodyMC& RigidBodyMC::operator=(const RigidBodyMC &other)
     return *this;
 }
 
+/** Return a string representation of this move */
+QString RigidBodyMC::toString() const
+{
+    return QObject::tr("RigidBodyMC( maximumTranslation() = %1 A, "
+                       "maximumRotation() = %2 degrees "
+                       "nAccepted() = %3 nRejected() = %4 )")
+                  .arg(this->maximumTranslation().to(angstrom))
+                  .arg(this->maximumRotation().to(degrees))
+                  .arg(this->nAccepted())
+                  .arg(this->nRejected());
+}
+
 /** Set the maximum delta for any translation */
 void RigidBodyMC::setMaximumTranslation(Dimension::Length max_translation)
 {

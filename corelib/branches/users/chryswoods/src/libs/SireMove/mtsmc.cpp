@@ -148,6 +148,18 @@ bool MTSMC::operator!=(const MTSMC &other) const
            fastmoves != other.fastmoves;
 }
 
+/** Return a string representation of this move */
+QString MTSMC::toString() const
+{
+    return QObject::tr("MTSMC( slow = %1, fast = %2, nFast() = %3 "
+                       "nAccepted() = %4 nRejected() = %5 )")
+               .arg(this->slowEnergyComponent().toString(),
+                    this->fastEnergyComponent().toString())
+               .arg(this->nFastMoves())
+               .arg(this->nAccepted())
+               .arg(this->nRejected());
+}
+
 /** Return the energy component on which the fast moves will operate */
 const Symbol& MTSMC::fastEnergyComponent() const
 {

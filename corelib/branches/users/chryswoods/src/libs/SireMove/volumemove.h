@@ -80,6 +80,8 @@ public:
     bool operator==(const VolumeMove &other) const;
     bool operator!=(const VolumeMove &other) const;
     
+    QString toString() const;
+    
     void setMaximumVolumeChange(const SireUnits::Dimension::Volume &delta);
     
     const SireUnits::Dimension::Volume& maximumVolumeChange() const;

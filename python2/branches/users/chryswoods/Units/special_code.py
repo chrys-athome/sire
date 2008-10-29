@@ -29,6 +29,7 @@ def findGlobals():
     print >>FILE, "\n#include \"_Units_global_variables.pyman.hpp\""
     print >>FILE, "#include <boost/python.hpp>"
     print >>FILE, "#include \"SireUnits/units.h\""
+    print >>FILE, "#include \"SireUnits/temperature.h\""
     print >>FILE, "\nusing namespace boost::python;"
     print >>FILE, "using namespace SireUnits;"
     print >>FILE, "using namespace SireUnits::Dimension;\n"
@@ -50,6 +51,11 @@ def findGlobals():
                 name = match.group(1)
                 print >>FILE, "    scope().attr(\"%s\") = %s;\n" % (name,name)
 
+
+
+    #add Celsius and Fahrenheit manually
+    print >>FILE, "    scope().attr(\"celsius\") = celsius;\n"
+    print >>FILE, "    scope().attr(\"fahrenheit\") = fahrenheit;\n"
 
     print >>FILE, "}\n"
 

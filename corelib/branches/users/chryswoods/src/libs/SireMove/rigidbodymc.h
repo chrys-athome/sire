@@ -101,6 +101,8 @@ public:
         return new RigidBodyMC(*this);
     }
 
+    QString toString() const;
+
     void setSampler(const Sampler &sampler);
     void setSampler(const MoleculeGroup &molgroup);
 

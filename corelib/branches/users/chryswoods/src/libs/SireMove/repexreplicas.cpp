@@ -34,6 +34,8 @@
 #include "SireUnits/temperature.h"
 #include "SireUnits/dimensions.h"
 
+#include "SireVol/space.h"
+
 #include "SireError/errors.h"
 #include "SireFF/errors.h"
 
@@ -46,6 +48,7 @@ using namespace SireMove;
 using namespace SireFF;
 using namespace SireCAS;
 using namespace SireBase;
+using namespace SireVol;
 using namespace SireUnits;
 using namespace SireUnits::Dimension;
 using namespace SireStream;
@@ -272,11 +275,11 @@ MolarEnergy RepExReplica::chemicalPotential() const
 /** Return the current volume of this replica - this could be infinite! */
 Volume RepExReplica::volume() const
 {
-    #warning Need to work out how to get the simulation space from a System
-    throw SireError::incomplete_code( QObject::tr(
-        "Need to work out how to get the simulation space!"), CODELOC );
-        
-    return Volume(0);
+    //get the simulation space
+    const Space &space = this->system().property(space_property)
+                                       .asA<Space>();
+
+    return space.volume();
 }
 
 /** Return the current energy of this replica */

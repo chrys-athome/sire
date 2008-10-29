@@ -91,6 +91,8 @@ public:
     bool operator==(const MTSMC &other) const;
     bool operator!=(const MTSMC &other) const;
     
+    QString toString() const;
+    
     void setFastMoves(const Moves &fastmoves);
     void setNFastMoves(int nfast);
     

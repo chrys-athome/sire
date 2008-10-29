@@ -134,6 +134,16 @@ bool VolumeMove::operator!=(const VolumeMove &other) const
            MonteCarlo::operator!=(other);
 }
 
+/** Return a string representation of this move */
+QString VolumeMove::toString() const
+{
+    return QObject::tr("VolumeMove( maximumVolumeChange() = %f A^3 "
+                       "nAccepted() = %1 nRejected() = %2 )")
+                  .arg(this->maximumVolumeChange().to(angstrom3))
+                  .arg(this->nAccepted())
+                  .arg(this->nRejected());
+}
+
 /** Internal function called to set the temperature */
 void VolumeMove::_pvt_setTemperature(const Temperature &temperature)
 {

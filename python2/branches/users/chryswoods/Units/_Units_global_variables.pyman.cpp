@@ -2,6 +2,7 @@
 #include "_Units_global_variables.pyman.hpp"
 #include <boost/python.hpp>
 #include "SireUnits/units.h"
+#include "SireUnits/temperature.h"
 
 using namespace boost::python;
 using namespace SireUnits;
@@ -258,6 +259,10 @@ void register_man_global_variables()
     scope().attr("atomic_mass_constant") = atomic_mass_constant;
 
     scope().attr("molar_volume") = molar_volume;
+
+    scope().attr("celsius") = celsius;
+
+    scope().attr("fahrenheit") = fahrenheit;
 
 }
 
