@@ -199,7 +199,9 @@ void VolumeMove::move(System &system, int nmoves, bool record_stats)
             //create the new space
             SpacePtr new_space = old_space.setVolume(new_vol);
             
-            BOOST_ASSERT( new_space.read().volume() == new_vol );
+            //read the new volume - it may be slightly different
+            //due to round off error
+            new_vol = new_space.read().volume();
             
             //set the new space
             if (this->spaceProperty().hasSource())
