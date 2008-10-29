@@ -367,6 +367,14 @@ MoleculeGroup::MoleculeGroup(const QString &name)
                 d( new MolGroupPvt(name) )
 {}
 
+/** Construct a named group that contains the passed molecule */
+MoleculeGroup::MoleculeGroup(const QString &name, const MoleculeView &molecule)
+              : ConcreteProperty<MoleculeGroup,Property>(),
+                d( new MolGroupPvt(name) )
+{
+    this->add(molecule);
+}
+
 /** Construct a named group that contains the passed molecules */
 MoleculeGroup::MoleculeGroup(const QString &name, const Molecules &molecules)
               : ConcreteProperty<MoleculeGroup,Property>(),
@@ -1462,7 +1470,7 @@ bool MoleculeGroup::_pvt_remove(const MoleculeView &molview)
     MolNum molnum = molview.data().number();
 
     Molecules::const_iterator it = d.constData()->molecules.find(molnum);
-    
+
     if (it == d.constData()->molecules.end())
         return false;
         

@@ -498,7 +498,7 @@ AtomSelection ViewsOfMol::removeAt(int i)
 
     AtomSelection removed_view;
 
-    if (views.isEmpty() == 0)
+    if (views.isEmpty())
     {
         //there is only one view in this set - and it is
         //the total selection

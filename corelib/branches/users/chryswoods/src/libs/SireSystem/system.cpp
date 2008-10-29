@@ -413,6 +413,17 @@ const SystemMonitor& System::operator[](const MonitorID &monid) const
     return sysmonitors[monid];
 }
 
+/** Return the molecule group at ID 'mgid'
+
+    \throw SireMol::missing_group
+    \throw SireMol::duplicate_group
+    \throw SireError::invalid_index
+*/
+const MoleculeGroup& System::operator[](const MGID &mgid) const
+{
+    return MolGroupsBase::operator[](mgid);
+}
+
 /** Convienient syntax for System::add */
 System& System::operator+=(const FF &forcefield)
 {

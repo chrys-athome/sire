@@ -130,8 +130,8 @@ public:
     using SireMol::MolGroupsBase::operator[];
 
     const FF& operator[](const FFID &ffid) const;
-    
     const SystemMonitor& operator[](const MonitorID &monid) const;
+    const MoleculeGroup& operator[](const MGID &mgid) const;
     
     System& operator+=(const FF &forcefield);
     System& operator+=(const MoleculeGroup &molgroup);

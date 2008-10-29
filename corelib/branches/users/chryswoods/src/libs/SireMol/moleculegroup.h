@@ -116,6 +116,7 @@ public:
 
     MoleculeGroup(const QString &name);
 
+    MoleculeGroup(const QString &name, const MoleculeView &molview);
     MoleculeGroup(const QString &name, const Molecules &molecules);
     MoleculeGroup(const QString &name, const MoleculeGroup &other);
 
