@@ -41,10 +41,27 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+template<class G0, class G1>
+class GroupGroupID;
+}
 
+template<class G0, class G1>
+QDataStream& operator<<(QDataStream&, const SireMol::GroupGroupID<G0,G1>&);
+template<class G0, class G1>
+QDataStream& operator>>(QDataStream&, SireMol::GroupGroupID<G0,G1>&);
+
+namespace SireMol
+{
+
+/** This class holds the combination of two different ID types
+    for two different groups */
 template<class G0, class G1>
 class SIREMOL_EXPORT GroupGroupID : public GroupAtomIDBase
 {
+
+friend QDataStream& ::operator<<<>(QDataStream&, const GroupGroupID<G0,G1>&);
+friend QDataStream& ::operator>><>(QDataStream&, GroupGroupID<G0,G1>&);
+
 public:
     GroupGroupID();
     
@@ -109,17 +126,20 @@ private:
 
 /** Constructor */
 template<class G0, class G1>
+SIRE_OUTOFLINE_TEMPLATE
 GroupGroupID<G0,G1>::GroupGroupID() : GroupAtomIDBase()
 {}
 
 /** Construct the combination of the two groups */
 template<class G0, class G1>
+SIRE_OUTOFLINE_TEMPLATE
 GroupGroupID<G0,G1>::GroupGroupID(const G0 &group0, const G1 &group1)
                     : GroupAtomIDBase(), g0(group0), g1(group1)
 {}
 
 /** Copy constructor */
 template<class G0, class G1>
+SIRE_OUTOFLINE_TEMPLATE
 GroupGroupID<G0,G1>::GroupGroupID(const GroupGroupID<G0,G1> &other)
                     : GroupAtomIDBase(),
                       g0(other.g0), g1(other.g1)
@@ -127,11 +147,13 @@ GroupGroupID<G0,G1>::GroupGroupID(const GroupGroupID<G0,G1> &other)
 
 /** Destructor */
 template<class G0, class G1>
+SIRE_OUTOFLINE_TEMPLATE
 GroupGroupID<G0,G1>::~GroupGroupID()
 {}
 
 /** Return a string representation of this match */
 template<class G0, class G1>
+SIRE_OUTOFLINE_TEMPLATE
 QString GroupGroupID<G0,G1>::toString() const
 {
     if (this->isNull())
@@ -153,6 +175,7 @@ QString GroupGroupID<G0,G1>::toString() const
     \throw SireError::invalid_index
 */
 template<class G0, class G1>
+SIRE_OUTOFLINE_TEMPLATE
 QList<AtomIdx> GroupGroupID<G0,G1>::map(const MolInfo &molinfo) const
 {
     if (this->isNull())
@@ -183,6 +206,26 @@ typedef GroupGroupID<CGID,ResID> CGResID;
 typedef GroupGroupID<CGID,ChainID> CGChainID;
 
 }
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+/** Serialise to a binary datastream */
+template<class G0, class G1>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds, const SireMol::GroupGroupID<G0,G1> &groupid)
+{
+    ds << groupid.g0 << groupid.g1;
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class G0, class G1>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds, SireMol::GroupGroupID<G0,G1> &groupid)
+{
+    ds >> groupid.g0 >> groupid.g1;
+    return ds;
+}
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 Q_DECLARE_METATYPE(SireMol::SegResID);
 Q_DECLARE_METATYPE(SireMol::SegChainID);

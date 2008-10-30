@@ -30,8 +30,43 @@
 #include "segidx.h"
 #include "molinfo.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/streampolypointer.hpp"
+
 using namespace SireMol;
 using namespace SireID;
+using namespace SireStream;
+
+////////
+//////// Implementation of SegIdentifier
+////////
+
+static const RegisterMetaType<SegIdentifier> r_segid;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const SegIdentifier &segid)
+{
+    writeHeader(ds, r_segid, 1);
+    
+    SireStream::savePolyPointer(ds, segid.d);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, SegIdentifier &segid)
+{
+    VersionID v = readHeader(ds, r_segid);
+    
+    if (v == 1)
+    {
+        SireStream::loadPolyPointer(ds, segid.d);
+    }
+    else
+        throw version_error( v, "1", r_segid, CODELOC );
+        
+    return ds;
+}
 
 /** Null constructor */
 SegIdentifier::SegIdentifier() : SegID()

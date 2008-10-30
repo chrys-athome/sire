@@ -32,7 +32,6 @@
 #include "SireID/index.h"
 
 #include "cgid.h"
-#include "molinfo.h"
 
 SIRE_BEGIN_HEADER
 
@@ -41,8 +40,8 @@ namespace SireMol
 class CGIdx;
 }
 
-XMLStream& operator<<(XMLStream&, const SireMol::CGIdx&);
-XMLStream& operator>>(XMLStream&, SireMol::CGIdx&);
+QDataStream& operator<<(QDataStream&, const SireMol::CGIdx&);
+QDataStream& operator>>(QDataStream&, SireMol::CGIdx&);
 
 namespace SireMol
 {
@@ -57,8 +56,8 @@ class SIREMOL_EXPORT CGIdx
        : public SireID::Index_T_<CGIdx>, public CGID
 {
 
-friend XMLStream& ::operator<<(XMLStream&, const CGIdx&);
-friend XMLStream& ::operator>>(XMLStream&, CGIdx&);
+friend QDataStream& ::operator<<(QDataStream&, const CGIdx&);
+friend QDataStream& ::operator>>(QDataStream&, CGIdx&);
 
 public:
     CGIdx() : SireID::Index_T_<CGIdx>(), CGID()
@@ -138,10 +137,7 @@ public:
     
     using SireID::Index_T_<CGIdx>::map;
     
-    QList<CGIdx> map(const MolInfo &molinfo) const
-    {
-        return molinfo.map(*this);
-    }
+    QList<CGIdx> map(const MolInfo &molinfo) const;
 };
     
 }

@@ -32,7 +32,6 @@
 #include "SireID/name.h"
 
 #include "chainid.h"
-#include "molinfo.h"
 
 SIRE_BEGIN_HEADER
 
@@ -41,8 +40,8 @@ namespace SireMol
 class ChainName;
 }
 
-XMLStream& operator<<(XMLStream&, const SireMol::ChainName&);
-XMLStream& operator>>(XMLStream&, SireMol::ChainName&);
+QDataStream& operator<<(QDataStream&, const SireMol::ChainName&);
+QDataStream& operator>>(QDataStream&, SireMol::ChainName&);
 
 namespace SireMol
 {
@@ -55,8 +54,8 @@ namespace SireMol
 class SIREMOL_EXPORT ChainName : public SireID::Name, public ChainID
 {
 
-friend XMLStream& ::operator<<(XMLStream&, const ChainName&);
-friend XMLStream& ::operator>>(XMLStream&, ChainName&);
+friend QDataStream& ::operator<<(QDataStream&, const ChainName&);
+friend QDataStream& ::operator>>(QDataStream&, ChainName&);
 
 public:
     ChainName() : SireID::Name(), ChainID()
@@ -73,7 +72,7 @@ public:
     
     static const char* typeName()
     {
-        return "SireMol::ChainName";
+        return QMetaType::typeName( qMetaTypeId<ChainName>() );
     }
     
     const char* what() const
@@ -123,10 +122,7 @@ public:
         return _name != other._name;
     }
 
-    QList<ChainIdx> map(const MolInfo &molinfo) const
-    {
-        return molinfo.map(*this);
-    }
+    QList<ChainIdx> map(const MolInfo &molinfo) const;
 };
 
 }

@@ -35,6 +35,8 @@
 
 #include "SireMol/errors.h"
 
+#include "SireStream/datastream.h"
+
 using namespace SireMol;
 
 //////
@@ -66,3 +68,8 @@ template class GroupAtomID<ResID,AtomID>;
 template class GroupAtomID<ChainID,AtomID>;
 template class GroupAtomID<SegID,AtomID>;
 template class GroupAtomID<CGID,AtomID>;
+
+static const RegisterMetaType< GroupAtomID<ResID,AtomID> > r_resatomid;
+static const RegisterMetaType< GroupAtomID<ChainID,AtomID> > r_chainatomid;
+static const RegisterMetaType< GroupAtomID<SegID,AtomID> > r_segatomid;
+static const RegisterMetaType< GroupAtomID<CGID,AtomID> > r_cgatomid;

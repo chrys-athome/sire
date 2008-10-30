@@ -35,9 +35,22 @@
 
 namespace SireMol
 {
+class ResIdentifier;
+}
 
+QDataStream& operator<<(QDataStream&, const SireMol::ResIdentifier&);
+QDataStream& operator>>(QDataStream&, SireMol::ResIdentifier&);
+
+namespace SireMol
+{
+
+/** This is the polymorphic holder of all residue IDs */
 class SIREMOL_EXPORT ResIdentifier : public ResID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const ResIdentifier&);
+friend QDataStream& ::operator>>(QDataStream&, ResIdentifier&);
+
 public:
     ResIdentifier();
     ResIdentifier(const ResID &resid);

@@ -35,11 +35,23 @@
 
 namespace SireMol
 {
+class CGIdentifier;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::CGIdentifier&);
+QDataStream& operator>>(QDataStream&, SireMol::CGIdentifier&);
+
+namespace SireMol
+{
 
 class CGIdx;
 
 class SIREMOL_EXPORT CGIdentifier : public CGID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const CGIdentifier&);
+friend QDataStream& ::operator>>(QDataStream&, CGIdentifier&);
+
 public:
     CGIdentifier();
     CGIdentifier(const CGID &cgid);

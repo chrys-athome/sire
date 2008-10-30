@@ -137,6 +137,7 @@ set ( SIREMOL_SOURCES
       atomselection.cpp
       bondhunter.cpp
       bondid.cpp
+      cgatomidx.cpp
       cgeditor.cpp
       cgcgid.cpp
       cgid.cpp
@@ -158,6 +159,7 @@ set ( SIREMOL_SOURCES
       evaluator.cpp
       improperid.cpp
       groupatomids.cpp
+      groupgroupids.cpp
       mgid.cpp
       mgidentifier.cpp
       molatomid.cpp

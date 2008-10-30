@@ -35,6 +35,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+class CGCGID;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::CGCGID&);
+QDataStream& operator>>(QDataStream&, SireMol::CGCGID&);
+
+namespace SireMol
+{
 
 /** This class holds a pair of CGIDs, which are used together
     to identify CutGroup(s)
@@ -43,6 +51,10 @@ namespace SireMol
 */
 class SIREMOL_EXPORT CGCGID : public CGID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const CGCGID&);
+friend QDataStream& ::operator>>(QDataStream&, CGCGID&);
+
 public:
     CGCGID();
     

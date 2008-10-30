@@ -30,9 +30,44 @@
 
 #include <QSet>
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 #include "SireMol/errors.h"
 
 using namespace SireMol;
+using namespace SireStream;
+
+static const RegisterMetaType<ChainResID> r_chainresid;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const ChainResID &chainresid)
+{
+    writeHeader(ds, r_chainresid, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << chainresid.chainid << chainresid.resid;
+    
+    return ds; 
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ChainResID &chainresid)
+{
+    VersionID v = readHeader(ds, r_chainresid);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> chainresid.chainid >> chainresid.resid;
+    }
+    else
+        throw version_error( v, "1", r_chainresid, CODELOC );
+        
+    return ds;
+}
 
 ChainResID::ChainResID() : ResID()
 {}

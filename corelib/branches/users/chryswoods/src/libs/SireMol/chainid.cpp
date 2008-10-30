@@ -270,4 +270,6 @@ template class Specify<ChainID>;
 template class AtomsIn<ChainID>;
 template class ResIn<ChainID>;
 
-
+static const RegisterMetaType< Specify<ChainID> > r_specify_chainid;
+static const RegisterMetaType< AtomsIn<ChainID> > r_atomsin_chainid;
+static const RegisterMetaType< ResIn<ChainID> > r_resin_chainid;

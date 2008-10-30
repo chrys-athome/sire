@@ -31,7 +31,6 @@
 
 #include "cgidx.h"
 #include "atomidx.h"
-#include "molinfo.h"
 
 #include "SireID/index.h"
 
@@ -135,12 +134,7 @@ public:
         return _cgidx != other._cgidx or _atmidx != other._atmidx;
     }
     
-    QList<AtomIdx> map(const MolInfo &molinfo) const
-    {
-        QList<AtomIdx> atomidxs;
-        atomidxs.append( molinfo.getAtom(_cgidx, _atmidx) );
-        return atomidxs;
-    }
+    QList<AtomIdx> map(const MolInfo &molinfo) const;
     
     CGIdx cutGroup() const
     {
@@ -175,20 +169,6 @@ inline CGAtomIdx operator+(const SireID::Index &idx, const CGIdx &cgidx)
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
 
-}
-
-inline QDataStream& operator<<(QDataStream &ds, 
-                               const SireMol::CGAtomIdx &cgatomidx)
-{
-    ds << cgatomidx._cgidx << cgatomidx._atmidx;
-    return ds;
-}
-
-inline QDataStream& operator>>(QDataStream &ds,
-                               SireMol::CGAtomIdx &cgatomidx)
-{
-    ds >> cgatomidx._cgidx >> cgatomidx._atmidx;
-    return ds;
 }
 
 Q_DECLARE_TYPEINFO(SireMol::CGAtomIdx, Q_MOVABLE_TYPE);

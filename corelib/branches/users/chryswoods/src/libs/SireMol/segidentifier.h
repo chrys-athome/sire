@@ -35,11 +35,24 @@
 
 namespace SireMol
 {
+class SegIdentifier;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::SegIdentifier&);
+QDataStream& operator>>(QDataStream&, SireMol::SegIdentifier&);
+
+namespace SireMol
+{
 
 class SegIdx;
 
+/** This is the polymorphic holder of all Segment IDs */
 class SIREMOL_EXPORT SegIdentifier : public SegID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const SegIdentifier&);
+friend QDataStream& ::operator>>(QDataStream&, SegIdentifier&);
+
 public:
     SegIdentifier();
     SegIdentifier(const SegID &segid);

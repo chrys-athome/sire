@@ -27,10 +27,47 @@
 \*********************************************/
 
 #include "cgidentifier.h"
+#include "cgidx.h"
+#include "cgname.h"
 #include "molinfo.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/streampolypointer.hpp"
 
 using namespace SireMol;
 using namespace SireID;
+using namespace SireStream;
+
+/////////
+///////// Implementation of CGIdentifier
+/////////
+
+static const RegisterMetaType<CGIdentifier> r_cgid;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const CGIdentifier &cgid)
+{
+    writeHeader(ds, r_cgid, 1);
+    
+    SireStream::savePolyPointer(ds, cgid.d);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, CGIdentifier &cgid)
+{
+    VersionID v = readHeader(ds, r_cgid);
+    
+    if (v == 1)
+    {
+        SireStream::loadPolyPointer(ds, cgid.d);
+    }
+    else
+        throw version_error( v, "1", r_cgid, CODELOC );
+        
+    return ds;
+}
 
 /** Null constructor */
 CGIdentifier::CGIdentifier() : CGID()
@@ -167,3 +204,74 @@ QList<CGIdx> CGIdentifier::map(const MolInfo &molinfo) const
         return d->map(molinfo);
 }
 
+/////////
+///////// Implementation of CGIdx
+/////////
+
+static const RegisterMetaType<CGIdx> r_cgidx;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const CGIdx &cgidx)
+{
+    writeHeader(ds, r_cgidx, 1);
+    
+    ds << static_cast<const SireID::Index_T_<CGIdx>&>(cgidx);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, CGIdx &cgidx)
+{
+    VersionID v = readHeader(ds, r_cgidx);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Index_T_<CGIdx>&>(cgidx);
+    }
+    else
+        throw version_error( v, "1", r_cgidx, CODELOC );
+        
+    return ds;
+}
+
+QList<CGIdx> CGIdx::map(const MolInfo &molinfo) const
+{
+    return molinfo.map(*this);
+}
+
+/////////
+///////// Implementation of CGName
+/////////
+
+static const RegisterMetaType<CGName> r_cgname;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const CGName &cgname)
+{
+    writeHeader(ds, r_cgname, 1);
+    
+    ds << static_cast<const SireID::Name&>(cgname);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, CGName &cgname)
+{
+    VersionID v = readHeader(ds, r_cgname);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Name&>(cgname);
+    }
+    else
+        throw version_error( v, "1", r_cgname, CODELOC );
+        
+    return ds;
+}
+
+QList<CGIdx> CGName::map(const MolInfo &molinfo) const
+{
+    return molinfo.map(*this);
+}

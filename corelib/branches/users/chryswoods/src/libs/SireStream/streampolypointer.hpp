@@ -35,6 +35,8 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 

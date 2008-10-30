@@ -27,10 +27,47 @@
 \*********************************************/
 
 #include "chainidentifier.h"
+#include "chainidx.h"
+#include "chainname.h"
 #include "molinfo.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/streampolypointer.hpp"
 
 using namespace SireMol;
 using namespace SireID;
+using namespace SireStream;
+
+////////
+//////// Implementation of ChainIdentifier
+////////
+
+static const RegisterMetaType<ChainIdentifier> r_chainid;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const ChainIdentifier &chainid)
+{
+    writeHeader(ds, r_chainid, 1);
+    
+    SireStream::savePolyPointer(ds, chainid.d);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ChainIdentifier &chainid)
+{
+    VersionID v = readHeader(ds, r_chainid);
+    
+    if (v == 1)
+    {
+        SireStream::loadPolyPointer(ds, chainid.d);
+    }
+    else
+        throw version_error( v, "1", r_chainid, CODELOC );
+        
+    return ds;
+}
 
 /** Null constructor */
 ChainIdentifier::ChainIdentifier() : ChainID()
@@ -165,4 +202,76 @@ QList<ChainIdx> ChainIdentifier::map(const MolInfo &molinfo) const
         return molinfo.getChains();
     else
         return d->map(molinfo);
+}
+
+////////
+//////// Implementation of ChainIdx
+////////
+
+static const RegisterMetaType<ChainIdx> r_chainidx;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const ChainIdx &chainidx)
+{
+    writeHeader(ds, r_chainidx, 1);
+    
+    ds << static_cast<const SireID::Index_T_<ChainIdx>&>(chainidx);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ChainIdx &chainidx)
+{
+    VersionID v = readHeader(ds, r_chainidx);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Index_T_<ChainIdx>&>(chainidx);
+    }
+    else
+        throw version_error( v, "1", r_chainidx, CODELOC );
+        
+    return ds;
+}
+
+QList<ChainIdx> ChainIdx::map(const MolInfo &molinfo) const
+{
+    return molinfo.map(*this);
+}
+
+////////
+//////// Implementation of ChainName
+////////
+
+static const RegisterMetaType<ChainName> r_chainname;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const ChainName &chainname)
+{
+    writeHeader(ds, r_chainname, 1);
+    
+    ds << static_cast<const SireID::Name&>(chainname);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ChainName &chainname)
+{
+    VersionID v = readHeader(ds, r_chainname);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Name&>(chainname);
+    }
+    else
+        throw version_error( v, "1", r_chainname, CODELOC );
+        
+    return ds;
+}
+
+QList<ChainIdx> ChainName::map(const MolInfo &molinfo) const
+{
+    return molinfo.map(*this);
 }

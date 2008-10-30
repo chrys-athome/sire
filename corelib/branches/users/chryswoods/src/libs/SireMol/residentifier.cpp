@@ -29,8 +29,43 @@
 #include "residentifier.h"
 #include "molinfo.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/streampolypointer.hpp"
+
 using namespace SireMol;
 using namespace SireID;
+using namespace SireStream;
+
+////////
+//////// Implementation of ResIdentifier
+////////
+
+static const RegisterMetaType<ResIdentifier> r_resid;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const ResIdentifier &resid)
+{
+    writeHeader(ds, r_resid, 1);
+    
+    SireStream::savePolyPointer(ds, resid.d);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ResIdentifier &resid)
+{
+    VersionID v = readHeader(ds, r_resid);
+    
+    if (v == 1)
+    {
+        SireStream::loadPolyPointer(ds, resid.d);
+    }
+    else
+        throw version_error( v, "1", r_resid, CODELOC );
+        
+    return ds;
+}
 
 /** Null constructor */
 ResIdentifier::ResIdentifier() : ResID()

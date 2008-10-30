@@ -44,6 +44,17 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+template<class GROUP,class ATOM>
+class GroupAtomID;
+}
+
+template<class GROUP,class ATOM>
+QDataStream& operator<<(QDataStream&, const SireMol::GroupAtomID<GROUP,ATOM>&);
+template<class GROUP,class ATOM>
+QDataStream& operator>>(QDataStream&, SireMol::GroupAtomID<GROUP,ATOM>&);
+
+namespace SireMol
+{
 
 class ResID;
 class ChainID;
@@ -77,6 +88,9 @@ protected:
 template<class GROUP, class ATOM>
 class SIREMOL_EXPORT GroupAtomID : public GroupAtomIDBase
 {
+
+friend QDataStream& ::operator<<<>(QDataStream&, const GroupAtomID<GROUP,ATOM>&);
+friend QDataStream& ::operator>><>(QDataStream&, GroupAtomID<GROUP,ATOM>&);
 
 public:
     GroupAtomID();
@@ -139,12 +153,14 @@ private:
 
 /** Null constructor */
 template<class GROUP, class ATOM>
+SIRE_OUTOFLINE_TEMPLATE
 GroupAtomID<GROUP,ATOM>::GroupAtomID()
                         : GroupAtomIDBase()
 {}
 
 /** Construct using the passed group and atom IDs */
 template<class GROUP, class ATOM>
+SIRE_OUTOFLINE_TEMPLATE
 GroupAtomID<GROUP,ATOM>::GroupAtomID(const GROUP &group,
                                      const ATOM &atom)
                         : GroupAtomIDBase(),
@@ -153,6 +169,7 @@ GroupAtomID<GROUP,ATOM>::GroupAtomID(const GROUP &group,
 
 /** Copy constructor */
 template<class GROUP, class ATOM>
+SIRE_OUTOFLINE_TEMPLATE
 GroupAtomID<GROUP,ATOM>::GroupAtomID(const GroupAtomID<GROUP,ATOM> &other)
                         : GroupAtomIDBase(other),
                           groupid(other.groupid), atomid(other.atomid)
@@ -160,11 +177,13 @@ GroupAtomID<GROUP,ATOM>::GroupAtomID(const GroupAtomID<GROUP,ATOM> &other)
 
 /** Destructor */
 template<class GROUP, class ATOM>
+SIRE_OUTOFLINE_TEMPLATE
 GroupAtomID<GROUP,ATOM>::~GroupAtomID()
 {}
 
 /** Return a string representation of this ID */
 template<class GROUP, class ATOM>
+SIRE_OUTOFLINE_TEMPLATE
 QString GroupAtomID<GROUP,ATOM>::toString() const
 {
     return QString("%1 and %2").arg(groupid.toString(), atomid.toString());
@@ -177,6 +196,7 @@ QString GroupAtomID<GROUP,ATOM>::toString() const
     \throw SireError::invalid_index
 */
 template<class GROUP, class ATOM>
+SIRE_OUTOFLINE_TEMPLATE
 QList<AtomIdx> GroupAtomID<GROUP,ATOM>::map(const MolInfo &molinfo) const
 {
     if (this->isNull())
@@ -202,6 +222,28 @@ typedef GroupAtomID<SegID,AtomID> SegAtomID;
 typedef GroupAtomID<CGID,AtomID> CGAtomID;
 
 }
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+/** Serialise to a binary datastream */
+template<class GROUP, class ATOM>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds, 
+                        const SireMol::GroupAtomID<GROUP,ATOM> &groupatomid)
+{
+    ds << groupatomid.groupid << groupatomid.atomid;
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class GROUP, class ATOM>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds, 
+                        SireMol::GroupAtomID<GROUP,ATOM> &groupatomid)
+{
+    ds >> groupatomid.groupid >> groupatomid.atomid;
+    return ds;
+}
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 Q_DECLARE_METATYPE(SireMol::ResAtomID);
 Q_DECLARE_METATYPE(SireMol::ChainAtomID);

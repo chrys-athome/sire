@@ -34,7 +34,42 @@
 
 #include "SireMol/errors.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 using namespace SireMol;
+using namespace SireStream;
+
+static const RegisterMetaType<CGCGID> r_cgcgid;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const CGCGID &cgcgid)
+{
+    writeHeader(ds, r_cgcgid, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << cgcgid.cgid0 << cgcgid.cgid1;
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, CGCGID &cgcgid)
+{
+    VersionID v = readHeader(ds, r_cgcgid);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> cgcgid.cgid0 >> cgcgid.cgid1;
+    }
+    else
+        throw version_error( v, "1", r_cgcgid, CODELOC );
+        
+    return ds;
+}
 
 /** Constructor */
 CGCGID::CGCGID() : CGID()

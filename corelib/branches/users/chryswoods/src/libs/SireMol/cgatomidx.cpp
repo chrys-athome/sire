@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007  Christopher Woods
+  *  Copyright (C) 2008  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,25 +26,29 @@
   *
 \*********************************************/
 
-#include "groupgroupids.h"
-
-#include "SireStream/datastream.h"
+#include "cgatomidx.h"
+#include "molinfo.h"
 
 using namespace SireMol;
 
-/////
-///// explicitly instantiate the group group ID classes
-/////
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, 
+                                       const CGAtomIdx &cgatomidx)
+{
+    ds << cgatomidx._cgidx << cgatomidx._atmidx;
+    return ds;
+}
 
-template class GroupGroupID<SegID,ResID>;
-template class GroupGroupID<SegID,ChainID>;
-template class GroupGroupID<SegID,CGID>;
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
+                                       CGAtomIdx &cgatomidx)
+{
+    ds >> cgatomidx._cgidx >> cgatomidx._atmidx;
+    return ds;
+}
 
-template class GroupGroupID<CGID,ResID>;
-template class GroupGroupID<CGID,ChainID>;
 
-static const RegisterMetaType< GroupGroupID<SegID,ResID> > r_segresid;
-static const RegisterMetaType< GroupGroupID<SegID,ChainID> > r_segchainid;
-static const RegisterMetaType< GroupGroupID<SegID,CGID> > r_segcgid;
-static const RegisterMetaType< GroupGroupID<CGID,ResID> > r_cgresid;
-static const RegisterMetaType< GroupGroupID<CGID,ChainID> > r_cgchainid;
+QList<AtomIdx> CGAtomIdx::map(const MolInfo &molinfo) const
+{
+    QList<AtomIdx> atomidxs;
+    atomidxs.append( molinfo.getAtom(_cgidx, _atmidx) );
+    return atomidxs;
+}

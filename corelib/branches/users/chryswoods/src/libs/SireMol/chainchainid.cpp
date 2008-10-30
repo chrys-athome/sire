@@ -34,7 +34,42 @@
 
 #include "SireMol/errors.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 using namespace SireMol;
+using namespace SireStream;
+
+static const RegisterMetaType<ChainChainID> r_chainchainid;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const ChainChainID &chainchainid)
+{
+    writeHeader(ds, r_chainchainid, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << chainchainid.chainid0 << chainchainid.chainid1;
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ChainChainID &chainchainid)
+{
+    VersionID v = readHeader(ds, r_chainchainid);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> chainchainid.chainid0 >> chainchainid.chainid1;
+    }
+    else
+        throw version_error( v, "1", r_chainchainid, CODELOC );
+        
+    return ds;
+}
 
 /** Constructor */
 ChainChainID::ChainChainID() : ChainID()

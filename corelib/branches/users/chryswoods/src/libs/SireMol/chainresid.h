@@ -36,6 +36,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+class ChainResID;
+}
+
+QDataStream& operator<<(QDataStream&, const ChainResID&);
+QDataStream& operator>>(QDataStream&, ChainResID&);
+
+namespace SireMol
+{
 
 /** This class holds a combination of a ChainID with a ResID
     
@@ -43,6 +51,10 @@ namespace SireMol
 */
 class SIREMOL_EXPORT ChainResID : public ResID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const ChainResID&);
+friend QDataStream& ::operator>>(QDataStream&, ChainResID&);
+
 public:
     ChainResID();
     

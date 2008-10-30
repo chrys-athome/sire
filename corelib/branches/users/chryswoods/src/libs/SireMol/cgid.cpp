@@ -55,10 +55,13 @@
 
 #include "SireMol/errors.h"
 
+#include "SireStream/datastream.h"
+
 #include "tostring.h"
 
 using namespace SireMol;
 using namespace SireID;
+using namespace SireStream;
 
 /** Constructor */
 CGID::CGID() : ID()
@@ -249,3 +252,6 @@ CGID::selectAllFrom(const MolGroupsBase &molgroups) const
 //fully instantiate Specify<CGID> and AtomsIn<CGID>
 template class Specify<CGID>;
 template class AtomsIn<CGID>;
+
+static const RegisterMetaType< Specify<CGID> > r_specify_cgid;
+static const RegisterMetaType< AtomsIn<CGID> > r_atomsin_cgid;

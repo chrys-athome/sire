@@ -35,11 +35,24 @@
 
 namespace SireMol
 {
+class ChainIdentifier;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::ChainIdentifier&);
+QDataStream& operator>>(QDataStream&, SireMol::ChainIdentifier&);
+
+namespace SireMol
+{
 
 class ChainIdx;
 
+/** This is the polymorphic holder of all Chain IDs */
 class SIREMOL_EXPORT ChainIdentifier : public ChainID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const ChainIdentifier&);
+friend QDataStream& ::operator>>(QDataStream&, ChainIdentifier&);
+
 public:
     ChainIdentifier();
     ChainIdentifier(const ChainID &chainid);
