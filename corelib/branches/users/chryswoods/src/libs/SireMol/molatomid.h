@@ -38,6 +38,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+class MolAtomID;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::MolAtomID&);
+QDataStream& operator>>(QDataStream&, SireMol::MolAtomID&);
+
+namespace SireMol
+{
 
 /** This class represents an ID that is used to identify
     a specific atom (or atoms) in a specific molecule
@@ -47,6 +55,10 @@ namespace SireMol
 */
 class SIREMOL_EXPORT MolAtomID : public AtomID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const MolAtomID&);
+friend QDataStream& ::operator>>(QDataStream&, MolAtomID&);
+
 public:
     MolAtomID();
     MolAtomID(const MolID &molid, const AtomID &atomid);

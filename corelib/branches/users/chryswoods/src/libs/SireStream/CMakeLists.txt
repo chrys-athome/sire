@@ -13,6 +13,7 @@ set ( SIRESTREAM_HEADERS
       md5sum.h
       shareddatastream.h
       streamdata.hpp
+      streampolypointer.hpp
       version_error.h
       versionid.h
     )

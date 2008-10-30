@@ -34,7 +34,42 @@
 
 #include "SireMol/errors.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 using namespace SireMol;
+using namespace SireStream;
+
+static const RegisterMetaType<AtomAtomID> r_atomatomid;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomAtomID &atomatomid)
+{
+    writeHeader(ds, r_atomatomid, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << atomatomid.atomid0 << atomatomid.atomid1;
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomAtomID &atomatomid)
+{
+    VersionID v = readHeader(ds, r_atomatomid);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> atomatomid.atomid0 >> atomatomid.atomid1;
+    }
+    else
+        throw version_error( v, "1", r_atomatomid, CODELOC );
+        
+    return ds;
+}
 
 /** Constructor */
 AtomAtomID::AtomAtomID() : AtomID()

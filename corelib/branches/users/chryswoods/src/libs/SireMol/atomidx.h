@@ -32,7 +32,6 @@
 #include "SireID/index.h"
 
 #include "atomid.h"
-#include "molinfo.h"
 #include "specify.hpp"
 
 SIRE_BEGIN_HEADER
@@ -42,11 +41,13 @@ namespace SireMol
 class AtomIdx;
 }
 
-XMLStream& operator<<(XMLStream&, const SireMol::AtomIdx&);
-XMLStream& operator>>(XMLStream&, SireMol::AtomIdx&);
+QDataStream& operator<<(QDataStream&, const SireMol::AtomIdx&);
+QDataStream& operator>>(QDataStream&, SireMol::AtomIdx&);
 
 namespace SireMol
 {
+
+class MoleculeInfo;
 
 /** This is an ID object that is used to index atoms (e.g. index
     in a list or array, or in a molecule).
@@ -56,8 +57,8 @@ namespace SireMol
 class SIREMOL_EXPORT AtomIdx : public SireID::Index_T_<AtomIdx>, public AtomID
 {
 
-friend XMLStream& ::operator<<(XMLStream&, const AtomIdx&);
-friend XMLStream& ::operator>>(XMLStream&, AtomIdx&);
+friend QDataStream& ::operator<<(QDataStream&, const AtomIdx&);
+friend QDataStream& ::operator>>(QDataStream&, AtomIdx&);
 
 public:
     AtomIdx() : SireID::Index_T_<AtomIdx>(), AtomID()
@@ -131,10 +132,7 @@ public:
     
     using SireID::Index_T_<AtomIdx>::map;
     
-    QList<AtomIdx> map(const MolInfo &molinfo) const
-    {
-        return molinfo.map(*this);
-    }
+    QList<AtomIdx> map(const MolInfo &molinfo) const;
 };
     
 }

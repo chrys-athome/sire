@@ -37,6 +37,17 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+template<class ID>
+class Specify;
+}
+
+template<class ID>
+QDataStream& operator<<(QDataStream&, const SireMol::Specify<ID>&);
+template<class ID>
+QDataStream& operator>>(QDataStream&, SireMol::Specify<ID>&);
+
+namespace SireMol
+{
 
 /** This class is used to help form specified ID matches, 
     e.g. the third residue called alanine ( ResName("ALA")[2] )
@@ -47,6 +58,9 @@ namespace SireMol
 template<class ID>
 class SIREMOL_EXPORT Specify : public ID
 {
+
+friend QDataStream& ::operator<<<>(QDataStream&, const Specify<ID>&);
+friend QDataStream& ::operator>><>(QDataStream&, Specify<ID>&);
 
 public:
     Specify();
@@ -278,6 +292,24 @@ bool Specify<ID>::isNull() const
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
 
+}
+
+/** Serialise to a binary datastream */
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds, const SireMol::Specify<ID> &id)
+{
+    ds << id.id << id.strt << id.end;
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds, SireMol::Specify<ID> &id)
+{
+    ds >> id.id >> id.strt >> id.end;
+    return ds;
 }
 
 SIRE_END_HEADER

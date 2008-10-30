@@ -39,6 +39,17 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+template<class GROUP>
+class AtomsIn;
+}
+
+template<class GROUP>
+QDataStream& operator<<(QDataStream&, const SireMol::AtomsIn<GROUP>&);
+template<class GROUP>
+QDataStream& operator>>(QDataStream&, SireMol::AtomsIn<GROUP>&);
+
+namespace SireMol
+{
 
 class MoleculeInfoData;
 
@@ -255,6 +266,24 @@ QList<AtomIdx> AtomsIn<GROUP>::map(const MolInfo &molinfo) const
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
 
+}
+
+/** Serialise to a binary datastream */
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds, const SireMol::AtomsIn<GROUP> &atoms)
+{
+    ds << atoms.groupid << atoms.strt << atoms.end;
+    return ds;
+}
+
+/** Extract from a binary datastream */
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds, SireMol::AtomsIn<GROUP> &atoms)
+{
+    ds >> atoms.groupid >> atoms.strt >> atoms.end;
+    return ds;
 }
 
 SIRE_END_HEADER

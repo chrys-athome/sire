@@ -29,8 +29,38 @@
 #include "index.h"
 
 #include "SireError/errors.h"
-    
+
+#include "SireStream/datastream.h"
+
 using namespace SireID;
+using namespace SireStream;
+
+static const RegisterMetaType<Index> r_index;
+
+/** Serialise to a binary datastream */
+QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const Index &index)
+{
+    writeHeader(ds, r_index, 1);
+    
+    ds << static_cast<const Index_T_<Index>&>(index);
+    
+    return ds;
+}
+    
+/** Extract from a binary datastream */
+QDataStream SIREID_EXPORT &operator>>(QDataStream &ds, Index &index)
+{
+    VersionID v = readHeader(ds, r_index);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<Index_T_<Index>&>(index);
+    }
+    else
+        throw version_error( v, "1", r_index, CODELOC );
+    
+    return ds;
+}
     
 void IndexBase::throwInvalidIndex(qint32 n) const
 {

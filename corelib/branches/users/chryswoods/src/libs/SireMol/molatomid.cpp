@@ -49,6 +49,36 @@ using boost::tuples::tuple;
 
 #include <QDebug>
 
+static const RegisterMetaType<MolAtomID> r_molatomid;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MolAtomID &molatomid)
+{
+    writeHeader(ds, r_molatomid, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << molatomid.molid << molatomid.atomid;
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MolAtomID &molatomid)
+{
+    VersionID v = readHeader(ds, r_molatomid);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        sds >> molatomid.molid >> molatomid.atomid;
+    }
+    else
+        throw version_error( v, "1", r_molatomid, CODELOC );
+        
+    return ds;
+}
+
 /** Collapse any nested IDs together */
 void MolAtomID::collapse()
 {

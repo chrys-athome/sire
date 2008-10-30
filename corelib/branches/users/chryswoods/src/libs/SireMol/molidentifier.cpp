@@ -35,8 +35,12 @@
 
 #include "SireError/errors.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/streampolypointer.hpp"
+
 using namespace SireMol;
 using namespace SireID;
+using namespace SireStream;
 
 static const RegisterMetaType<MolIdentifier> r_molid;
 
@@ -44,7 +48,10 @@ static const RegisterMetaType<MolIdentifier> r_molid;
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
                                        const MolIdentifier &molid)
 {
-    throw SireError::incomplete_code( CODELOC );
+    writeHeader(ds, r_molid, 1);
+    
+    SireStream::savePolyPointer(ds, molid.d);
+    
     return ds;
 }
 
@@ -52,7 +59,15 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
 QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
                                        MolIdentifier &molid)
 {
-    throw SireError::incomplete_code( CODELOC );
+    VersionID v = readHeader(ds, r_molid);
+    
+    if (v == 1)
+    {
+        SireStream::loadPolyPointer(ds, molid.d);
+    }
+    else
+        throw version_error( v, "1", r_molid, CODELOC );
+    
     return ds;
 }
 

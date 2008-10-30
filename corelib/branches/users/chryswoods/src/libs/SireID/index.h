@@ -38,10 +38,14 @@ SIRE_BEGIN_HEADER
 namespace SireID
 {
 class IndexBase;
+class Index;
 }
 
 QDataStream& operator<<(QDataStream&, const SireID::IndexBase&);
 QDataStream& operator>>(QDataStream&, SireID::IndexBase&);
+
+QDataStream& operator<<(QDataStream&, const SireID::Index&);
+QDataStream& operator>>(QDataStream&, SireID::Index&);
 
 uint qHash(const SireID::IndexBase &index);
 
@@ -257,7 +261,7 @@ public:
     
     static const char* typeName()
     {
-        return "SireID::Index";
+        return QMetaType::typeName( qMetaTypeId<Index>() );
     }
     
     static Index null()
@@ -292,6 +296,8 @@ inline QDataStream& operator>>(QDataStream &ds, SireID::IndexBase &idx)
     ds >> idx._idx;
     return ds;
 }
+
+Q_DECLARE_METATYPE( SireID::Index )
 
 SIRE_EXPOSE_CLASS( SireID::IndexBase )
 SIRE_EXPOSE_CLASS( SireID::Index )

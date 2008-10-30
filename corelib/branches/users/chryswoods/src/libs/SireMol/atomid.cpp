@@ -52,12 +52,20 @@
 
 #include "SireMol/errors.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 #include "tostring.h"
 
 #include <QDebug>
 
 using namespace SireMol;
 using namespace SireID;
+using namespace SireStream;
+
+/////////
+///////// Implementation of AtomID
+/////////
 
 /** Constructor */
 AtomID::AtomID() : ID()
@@ -271,5 +279,116 @@ AtomID::selectAllFrom(const MolGroupsBase &molgroups) const
     return AtomID::selectAllFrom(molgroups.molecules());
 }
 
+/////////
+///////// Implementation of AtomIdx
+/////////
+
+static const RegisterMetaType<AtomIdx> r_atomidx;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomIdx &atomidx)
+{
+    writeHeader(ds, r_atomidx, 1);
+    
+    ds << static_cast<const SireID::Index_T_<AtomIdx>&>(atomidx);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomIdx &atomidx)
+{
+    VersionID v = readHeader(ds, r_atomidx);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Index_T_<AtomIdx>&>(atomidx);
+    }
+    else
+        throw version_error( v, "1", r_atomidx, CODELOC );
+        
+    return ds;
+}
+
+QList<AtomIdx> AtomIdx::map(const MolInfo &molinfo) const
+{
+    return molinfo.map(*this);
+}
+
+/////////
+///////// Implementation of AtomNum
+/////////
+
+static const RegisterMetaType<AtomNum> r_atomnum;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomNum &atomnum)
+{
+    writeHeader(ds, r_atomnum, 1);
+    
+    ds << static_cast<const SireID::Number&>(atomnum);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomNum &atomnum)
+{
+    VersionID v = readHeader(ds, r_atomnum);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Number&>(atomnum);
+    }
+    else
+        throw version_error( v, "1", r_atomnum, CODELOC );
+        
+    return ds;
+}
+
+QList<AtomIdx> AtomNum::map(const MolInfo &molinfo) const
+{
+    return molinfo.map(*this);
+}
+
+/////////
+///////// Implementation of AtomName
+/////////
+
+static const RegisterMetaType<AtomName> r_atomname;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomName &atomname)
+{
+    writeHeader(ds, r_atomname, 1);
+    
+    ds << static_cast<const SireID::Name&>(atomname);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomName &atomname)
+{
+    VersionID v = readHeader(ds, r_atomname);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Name&>(atomname);
+    }
+    else
+        throw version_error( v, "1", r_atomname, CODELOC );
+        
+    return ds;
+}
+
+QList<AtomIdx> AtomName::map(const MolInfo &molinfo) const
+{
+    return molinfo.map(*this);
+}
+
 //fully instantiate Specify<AtomID>
 template class Specify<AtomID>;
+
+static const RegisterMetaType< Specify<AtomID> > r_specify_atomid;
+

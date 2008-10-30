@@ -33,7 +33,6 @@
 
 #include "atomid.h"
 #include "atomidx.h"
-#include "molinfo.h"
 
 SIRE_BEGIN_HEADER
 
@@ -42,8 +41,8 @@ namespace SireMol
 class AtomName;
 }
 
-XMLStream& operator<<(XMLStream&, const SireMol::AtomName&);
-XMLStream& operator>>(XMLStream&, SireMol::AtomName&);
+QDataStream& operator<<(QDataStream&, const SireMol::AtomName&);
+QDataStream& operator>>(QDataStream&, SireMol::AtomName&);
 
 namespace SireMol
 {
@@ -56,8 +55,8 @@ namespace SireMol
 class SIREMOL_EXPORT AtomName : public SireID::Name, public AtomID
 {
 
-friend XMLStream& ::operator<<(XMLStream&, const AtomName&);
-friend XMLStream& ::operator>>(XMLStream&, AtomName&);
+friend QDataStream& ::operator<<(QDataStream&, const AtomName&);
+friend QDataStream& ::operator>>(QDataStream&, AtomName&);
 
 public:
     AtomName() : SireID::Name(), AtomID()
@@ -124,10 +123,7 @@ public:
         return _name != other._name;
     }
 
-    QList<AtomIdx> map(const MolInfo &molinfo) const
-    {
-        return molinfo.map(*this);
-    }
+    QList<AtomIdx> map(const MolInfo &molinfo) const;
 };
 
 }
