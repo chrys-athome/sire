@@ -249,9 +249,6 @@ MolAtomID::selectAllFrom(const MolGroupsBase &molgroups) const
     
     QList<MolNum> molnums = molid.map(molgroups);
     
-    qDebug() << CODELOC;
-    qDebug() << molnums;
-    
     foreach (MolNum molnum, molnums)
     {
         ViewsOfMol mol = molgroups[molnum];

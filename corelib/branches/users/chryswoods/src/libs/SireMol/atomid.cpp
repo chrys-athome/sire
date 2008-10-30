@@ -268,8 +268,6 @@ Atom AtomID::selectFrom(const MolGroupsBase &molgroups) const
 QHash< MolNum,Selector<Atom> >
 AtomID::selectAllFrom(const MolGroupsBase &molgroups) const
 {
-    qDebug() << this->what();
-    qDebug() << CODELOC;
     return AtomID::selectAllFrom(molgroups.molecules());
 }
 

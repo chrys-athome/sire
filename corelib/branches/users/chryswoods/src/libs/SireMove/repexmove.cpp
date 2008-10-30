@@ -246,13 +246,8 @@ bool RepExMove::testAndSwap(RepExReplica &replica_a, RepExReplica &replica_b)
         //  delta = beta_b * [ H_b_j - H_b_i + P_b (V_b_j - V_b_i) ] + 
         //          beta_a * [ H_a_i - H_a_j + P_a (V_a_i - V_a_j) ]
         
-        qDebug() << replica_a.lambdaValue() << beta_a << H_a_i << H_a_j << p_a << V_a_i << V_a_j;
-        qDebug() << replica_b.lambdaValue() << beta_b << H_b_j << H_b_i << p_b << V_b_j << V_b_i;
-        
         double delta = beta_b * ( H_b_j - H_b_i + p_b*(V_b_j - V_b_i) ) +
                        beta_a * ( H_a_i - H_a_j + p_a*(V_a_i - V_a_j) );
-                       
-        qDebug() << delta;
                        
         return ( delta > 0 or (std::exp(delta) >= rangenerator.rand()) );
     }
@@ -291,12 +286,8 @@ void RepExMove::testAndSwap(RepExReplicas &replicas)
         RepExReplica replica0 = replicas[i];
         RepExReplica replica1 = replicas[i+1];
 
-        qDebug() << "Testing replicas" << i << "and" << i+1;
-        
         if (this->testAndSwap(replica0, replica1))
         {
-            qDebug() << "Move passed!";
-        
             //save the new replicas
             replicas.setReplica(i, replica0);
             replicas.setReplica(i+1, replica1);

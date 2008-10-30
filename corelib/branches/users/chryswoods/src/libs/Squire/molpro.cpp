@@ -491,8 +491,6 @@ double Molpro::extractEnergy(QFile &molpro_output) const
     }
 
     //the SIRE_FINAL_ENERGY line was not found!
-    qDebug() << "PARSE ERROR";
-
     throw SireError::process_error( QObject::tr(
             "Could not find the total energy in the molpro output!\n"
                 "%1").arg(lines.join("\n")), CODELOC );
@@ -575,8 +573,6 @@ double Molpro::calculateEnergy(const QString &cmdfile, int ntries) const
         f.close();
     }
 
-    qDebug() << "Running molpro";
-
     //now run the command
     if (std::system(0))
     {
@@ -611,8 +607,6 @@ double Molpro::calculateEnergy(const QString &cmdfile, int ntries) const
     }
 
 
-    qDebug() << "Molpro finished";
-    
     try
     {
         //parse the output to get the energy

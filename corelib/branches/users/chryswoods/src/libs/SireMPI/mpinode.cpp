@@ -496,52 +496,13 @@ static const int STOP_MPI_BACKEND = 2;
 
         if (not MPI::Is_initialized())
         {
-            int thread_support = MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
-            
-            QString support_level;
-            
-            switch (thread_support)
-            {
-                case MPI_THREAD_MULTIPLE:
-                    break;
-            
-                case MPI_THREAD_SINGLE:
-                    support_level = QObject::tr(
-                        "MPI_THREAD_SINGLE - Only one thread will execute");
-                    break;
-                    
-                case MPI_THREAD_FUNNELED:
-                    support_level = QObject::tr(
-                        "MPI_THREAD_FUNNELED - Only the thread that called "
-                        "MPI_Init_thread will make MPI calls");
-                    break;
-                    
-                case MPI_THREAD_SERIALIZED:
-                    support_level = QObject::tr(
-                        "MPI_THREAD_SERIALIZED - Only one thread will make MPI "
-                        "library calls at one time.");
-                    break;
-                    
-                default:
-                    support_level = QObject::tr(
-                        "??? - Unknown MPI thread support level");
-                    break;
-            }
-            
-            if (thread_support != MPI_THREAD_MULTIPLE)
-            {
-                qWarning() << "Required level of MPI thread support is not available."
-                           << "The available level is just" << support_level;
-            }
+            MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
         }
                 
         //now create a new communicator, used to keep
         //communication within SireMPI private
         if (SireMPI::comm_world == 0)
         {
-            qDebug() << "Cloning from" << MPI::COMM_WORLD.Get_rank()
-                                       << MPI::COMM_WORLD.Get_size();
-        
             SireMPI::comm_world = &(MPI::COMM_WORLD.Clone());
         }
     }

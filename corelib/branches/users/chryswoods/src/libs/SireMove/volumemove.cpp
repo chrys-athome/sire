@@ -215,8 +215,9 @@ void VolumeMove::move(System &system, int nmoves, bool record_stats)
                  it != all_mols.constEnd();
                  ++it)
             {
-                Molecules mol = it->molecule()
+                Molecule mol = it->molecule()
                                         .move().changeSpace(old_space, new_space, map);
+
                 all_mols.update(mol);
             }
             

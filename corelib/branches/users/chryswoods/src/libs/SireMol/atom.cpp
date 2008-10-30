@@ -64,36 +64,11 @@ static const RegisterMetaType<AtomProp> r_atomprop(MAGIC_ONLY,
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomProp &atomprop)
 {
     return ds;
-
-    writeHeader(ds, r_atomprop, 1);
-        // << static_cast<const MolViewProperty&>(atomprop);
-         
-    return ds;
 }
 
 /** Extract from a binary datastream */
 QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomProp &atomprop)
 {
-    return ds;
-
-    qDebug() << CODELOC;
-
-    VersionID v = readHeader(ds, r_atomprop);
-
-    qDebug() << CODELOC;
-    
-    if (v == 1)
-    {
-    qDebug() << CODELOC;
-        //ds >> static_cast<MolViewProperty&>(atomprop);
-
-    qDebug() << CODELOC;
-    }
-    else
-        throw version_error(v, "1", r_atomprop, CODELOC);
-
-    qDebug() << CODELOC;
-        
     return ds;
 }
 
