@@ -1755,7 +1755,7 @@ void MolGroupsBase::addToIndex(const MoleculeGroup &molgroup)
     mgname_to_mgnum[molgroup.name()].append(molgroup.number());
     
     //now add the contents of this group to the index
-    this->addToIndex(molgroup.number(), molgroup.molNums().toSet());
+    this->addToIndex(molgroup.number(), molgroup.molNums().toList().toSet());
 }
 
 /** Add the molecule with number 'molnum' to the index of the group
@@ -2066,10 +2066,10 @@ void MoleculeGroups::update(const MoleculeGroup &molgroup)
         //in the index...
         
         //get the list of current molecules in this group
-        QSet<MolNum> old_molnums = it->read().molNums().toSet();
+        QSet<MolNum> old_molnums = it->read().molNums().toList().toSet();
         
         //now the new set of numbers...
-        QSet<MolNum> new_molnums = molgroup.molNums().toSet();
+        QSet<MolNum> new_molnums = molgroup.molNums().toList().toSet();
         
         this->addToIndex(molgroup.number(), new_molnums - old_molnums);
         this->removeFromIndex(molgroup.number(), old_molnums - new_molnums);
@@ -2256,7 +2256,7 @@ void MoleculeGroups::add(const MoleculeGroup &molgroup, const MGID &mgid)
     MolGroupPtr group(molgroup);
     group.edit().update( this->matchToExistingVersion(group.read().molecules()) );
     
-    QSet<MolNum> molnums = group.read().molNums().toSet();
+    QSet<MolNum> molnums = group.read().molNums().toList().toSet();
     
     foreach (MGNum mgnum, mgnums)
     {

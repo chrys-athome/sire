@@ -195,7 +195,7 @@ QList<MolNum> MolIdentifier::map(const Molecules &molecules) const
 QList<MolNum> MolIdentifier::map(const MoleculeGroup &molgroup) const
 {
     if (d.get() == 0)
-        return molgroup.molNums();
+        return molgroup.molNums().toList();
     else
         return d->map(molgroup);
 }

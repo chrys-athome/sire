@@ -2247,7 +2247,7 @@ void ForceFields::add(const MoleculeGroup &molgroup, const MGID &mgid,
         {
             this->_pvt_forceField(mgnum).add(group, mgnum, map);
             
-            MolGroupsBase::addToIndex(mgnum, group->molNums().toSet());
+            MolGroupsBase::addToIndex(mgnum, group->molNums().toList().toSet());
         }
     }
     catch(...)
@@ -2392,7 +2392,7 @@ void ForceFields::addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid,
         {
             this->_pvt_forceField(mgnum).addIfUnique(group, mgnum, map);
             
-            MolGroupsBase::addToIndex(mgnum, group.read().molNums().toSet());
+            MolGroupsBase::addToIndex(mgnum, group.read().molNums().toList().toSet());
         }
     }
     catch(...)

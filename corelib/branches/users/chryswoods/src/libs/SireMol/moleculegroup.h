@@ -169,7 +169,14 @@ public:
     const ViewsOfMol& moleculeAt(int idx) const;
     PartialMolecule viewAt(int idx) const;
 
-    boost::tuple<MolNum,Index> molViewIndexAt(int idx) const;
+    MolNum molNumAt(int idx) const;
+    const boost::tuple<MolNum,SireID::Index>& molViewIndexAt(int idx) const;
+
+    int indexOf(const MoleculeView &molview) const;
+    int indexOf(MolNum molnum) const;
+
+    const QVector<MolNum>& molNums() const;
+    const QVector< boost::tuple<MolNum,SireID::Index> >& molViewIndicies() const;
 
     const ViewsOfMol& molecule(MolNum molnum) const;
     const ViewsOfMol& molecule(MolIdx molidx) const;
@@ -233,7 +240,6 @@ public:
     const_iterator find(const MolID &molid) const;
     const_iterator constFind(const MolID &molid) const;
 
-    QList<MolNum> molNums() const;
     QSet<MolName> molNames() const;
 
     void assertContains(MolNum molnum) const;

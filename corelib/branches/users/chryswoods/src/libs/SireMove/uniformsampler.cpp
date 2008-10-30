@@ -30,6 +30,8 @@
 
 #include "uniformsampler.h"
 
+#include "SireSystem/system.h"
+
 #include "SireMol/partialmolecule.h"
 
 #include "SireMol/errors.h"

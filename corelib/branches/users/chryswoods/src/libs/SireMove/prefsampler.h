@@ -35,7 +35,11 @@
 
 #include "SireBase/propertymap.h"
 
+#include "SireVol/space.h"
+
 #include "SireMaths/vector.h"
+
+#include "SireUnits/dimensions.h"
 
 SIRE_BEGIN_HEADER
 
@@ -49,6 +53,11 @@ QDataStream& operator>>(QDataStream&, SireMove::PrefSampler&);
 
 namespace SireMove
 {
+
+using SireMol::MoleculeView;
+using SireMol::PartialMolecule;
+
+using SireVol::SpacePtr;
 
 using SireMaths::Vector;
 
@@ -65,22 +74,29 @@ using SireBase::PropertyName;
     @author Christopher Woods
 */
 class SIREMOVE_EXPORT PrefSampler
-          : public ConcreteProperty<PrefSampler,Sampler>
+          : public SireBase::ConcreteProperty<PrefSampler,Sampler>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const PrefSampler&);
 friend QDataStream& ::operator>>(QDataStream&, PrefSampler&);
 
 public:
-    PrefSampler(double k=0);
+    PrefSampler();
+    PrefSampler(SireUnits::Dimension::Area k);
     
-    PrefSampler(const Vector &point, double k=0);
+    PrefSampler(const Vector &point);
+    PrefSampler(const Vector &point, SireUnits::Dimension::Area k);
+
+    PrefSampler(const Vector &point, const MoleculeGroup &molgroup);
     PrefSampler(const Vector &point, const MoleculeGroup &molgroup,
-                double k=0);
+                SireUnits::Dimension::Area k);
     
-    PrefSampler(const MoleculeView &molview, double k=0);
+    PrefSampler(const MoleculeView &molview);
+    PrefSampler(const MoleculeView &molview, SireUnits::Dimension::Area k);
+    
+    PrefSampler(const MoleculeView &molview, const MoleculeGroup &molgroup);
     PrefSampler(const MoleculeView &molview, const MoleculeGroup &molgroup,
-                double k=0);
+                SireUnits::Dimension::Area k);
     
     PrefSampler(const PrefSampler &other);
     
@@ -115,7 +131,7 @@ public:
     void setCoordinatesProperty(const PropertyName &coords_property);
     void setSpaceProperty(const PropertyName &space_property);
     
-    void setSamplingConstant(double k);
+    void setSamplingConstant(SireUnits::Dimension::Area k);
     
     bool usingFocalMolecule() const;
     bool usingFocalPoint() const;
@@ -123,7 +139,7 @@ public:
     const Vector& focalPoint() const;
     const PartialMolecule& focalMolecule() const;
 
-    double samplingConstant() const;
+    SireUnits::Dimension::Area samplingConstant() const;
     
     const PropertyName& coordinatesProperty() const;
     const PropertyName& spaceProperty() const;
@@ -152,12 +168,15 @@ private:
     /** The sum of all of the weights */
     double sum_of_weights;
 
+    /** The maximum weight */
+    double max_weight;
+
     /** The current weights for all of the molecules - the
         index matches the viewAt() index of MoleculeGroup */
     QVector<double> molweights;
 
     /** The current space that is used to calculate distances */
-    Space current_space;
+    SpacePtr current_space;
     
     /** Whether or not this is dirty (requires a complete recalculation
         of the weights) */

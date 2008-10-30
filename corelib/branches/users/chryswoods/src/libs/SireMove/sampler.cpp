@@ -31,6 +31,8 @@
 
 #include "SireMol/partialmolecule.h"
 
+#include "SireSystem/system.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -135,12 +137,12 @@ void Sampler::setGroup(const MoleculeGroup &moleculegroup)
     in the System 'system' */
 void Sampler::updateFrom(const System &system)
 {
-    if (system.contains( molgroup.number() ))
+    if (system.contains( molgroup.read().number() ))
     {
-        const MoleculeGroup &new_group = system[molgroup.number()];
+        const MoleculeGroup &new_group = system[molgroup.read().number()];
         
-        if (new_group.version() != molgroup.version())
+        if (new_group.version() != molgroup.read().version())
             //the molecule group has changed - update it
-            this->setGroup( system[molgroup.number()] );
+            this->setGroup( system[molgroup.read().number()] );
     }
 }

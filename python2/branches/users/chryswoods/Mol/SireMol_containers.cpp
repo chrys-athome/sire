@@ -77,6 +77,8 @@ void register_SireMol_containers()
 
     register_list< QList< boost::tuple<AtomIdentifier,AtomIdentifier> > >();
 
+    register_list< QVector< boost::tuple<MolNum,SireID::Index> > >(); 
+
     register_tuple< boost::tuple<AtomIdx,AtomIdx> >();
     register_tuple< boost::tuple<AtomIdx,AtomIdx,AtomIdx> >();
     register_tuple< boost::tuple<AtomIdx,AtomIdx,AtomIdx,AtomIdx> >();
@@ -86,6 +88,8 @@ void register_SireMol_containers()
     register_tuple< boost::tuple<AtomSelection,AtomSelection> >();    
 
     register_tuple< boost::tuple<PartialMolecule,double> >();
+
+    register_tuple< boost::tuple<MolNum,SireID::Index> >();
 
     #if QT_VERSION >= 0x402000
     register_dict< QHash<MolNum,Selector<Atom> >();

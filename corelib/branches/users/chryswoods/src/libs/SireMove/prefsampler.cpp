@@ -26,9 +26,16 @@
   *
 \*********************************************/
 
+#include <QMutex>
+
 #include "prefsampler.h"
 
-#include "atomselection.h"
+#include "SireMol/atomselection.h"
+#include "SireMol/molidentifier.h"
+
+#include "SireBase/majorminorversion.h"
+
+#include "SireSystem/system.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -37,6 +44,7 @@ using namespace SireMove;
 using namespace SireMol;
 using namespace SireBase;
 using namespace SireMaths;
+using namespace SireUnits::Dimension;
 using namespace SireStream;
 
 static const RegisterMetaType<PrefSampler> r_prefsampler;
@@ -50,7 +58,9 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const PrefSampler &pref
     
     sds << prefsampler.focal_molecule << prefsampler.focal_point 
         << prefsampler.coords_property
+        << prefsampler.space_property
         << prefsampler.sampling_constant
+        << prefsampler.current_space
         << static_cast<const Sampler&>(prefsampler);
         
     return ds;
@@ -67,7 +77,9 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, PrefSampler &prefsample
         
         sds >> prefsampler.focal_molecule >> prefsampler.focal_point
             >> prefsampler.coords_property
+            >> prefsampler.space_property
             >> prefsampler.sampling_constant
+            >> prefsampler.current_space
             >> static_cast<Sampler&>(prefsampler);
             
         prefsampler.is_dirty = true;
@@ -78,54 +90,161 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, PrefSampler &prefsample
     return ds;
 }
 
+Q_GLOBAL_STATIC( QMutex, getMutex );
+
 /** Completely recalculate the weights from scratch */
 void PrefSampler::recalculateWeights()
 {
     if (not is_dirty)
         return;
+    
+    //we need to protect access to this function as we break copy-on-write
+    //by calling this function from a const-member function
+    QMutexLocker lkr( getMutex() );
+    
+    if (not is_dirty)
+        //someone beat us to the recalculation!
+        return;
+    
+    PropertyMap map;
+    map.set("coordinates", coords_property);
+
+    //calculate the new center
+    if (this->usingFocalMolecule())
+    {
+        focal_point = focal_molecule.evaluate().centerOfGeometry(map);
+    }
         
     //recalculate the weights...
+    const MoleculeGroup &molgroup = this->group();
+    const QVector< tuple<MolNum,Index> > &viewindicies = molgroup.molViewIndicies();
+    int nviews = viewindicies.count();
     
+    molweights = QVector<double>( nviews );
+    molweights.squeeze();
+    
+    const tuple<MolNum,Index> *viewindicies_array = viewindicies.constData();
+    double *molweights_array = molweights.data();
+    
+    sum_of_weights = 0;
+    max_weight = 0;
+    
+    for (int i=0; i<nviews; ++i)
+    {
+        const tuple<MolNum,Index> &viewidx = viewindicies_array[i];
+        
+        const ViewsOfMol &mol = molgroup[viewidx.get<0>()];
+            
+        //calculate the distance from the focal point
+        Vector new_center = mol.at(viewidx.get<1>()).evaluate()
+                               .centerOfGeometry(map);
+                               
+        double dist2 = current_space->calcDist2(new_center, focal_point);
+        
+        //weight = 1 / (dist^2 + k)
+        double invweight = dist2 + sampling_constant;
+        
+        if (invweight == 0)
+            //default to '1' for zero invweight
+            molweights_array[i] = 1;
+        else
+            molweights_array[i] = 1.0 / invweight;
+            
+        sum_of_weights += molweights_array[i];
+        max_weight = qMax(max_weight, molweights_array[i]);
+    }
     
     is_dirty = false;
 }
 
-/** Construct a sampler that prefers the molecules near the origin 
-    (using the optionally supplied preferential sampling constant, 'k') */
-PrefSampler::PrefSampler(double k)
+/** Construct a sampler that prefers the molecules near the origin */
+PrefSampler::PrefSampler()
             : ConcreteProperty<PrefSampler,Sampler>(),
               coords_property("coordinates"),
-              sampling_constant(k), is_dirty(true)
+              space_property("space"),
+              sampling_constant(0), 
+              sum_of_weights(0), max_weight(0),
+              is_dirty(true)
+{}
+
+/** Construct a sampler that prefers the molecules near the origin 
+    using the supplied preferential sampling constant 'k' */
+PrefSampler::PrefSampler(Area k)
+            : ConcreteProperty<PrefSampler,Sampler>(),
+              coords_property("coordinates"),
+              space_property("space"),
+              sampling_constant(k), 
+              sum_of_weights(0), max_weight(0),
+              is_dirty(true)
 {}
 
 /** Construct a sampler that prefers the molecules that are closest
-    to the point 'point' (using the optionally supplied preferential
-    sampling constant 'k') */
-PrefSampler::PrefSampler(const Vector &point, double k)
+    to the point 'point' */
+PrefSampler::PrefSampler(const Vector &point)
             : ConcreteProperty<PrefSampler,Sampler>(),
               focal_point(point),
               coords_property("coordinates"),
+              space_property("space"),
+              sampling_constant(0),
+              sum_of_weights(0), max_weight(0),
+              is_dirty(true)
+{}
+
+/** Construct a sampler that prefers the molecules that are closest
+    to the point 'point' using the supplied preferential
+    sampling constant 'k' */
+PrefSampler::PrefSampler(const Vector &point, Area k)
+            : ConcreteProperty<PrefSampler,Sampler>(),
+              focal_point(point),
+              coords_property("coordinates"),
+              space_property("space"),
               sampling_constant(k),
+              sum_of_weights(0), max_weight(0),
+              is_dirty(true)
+{}
+
+/** Construct a sampler that samples molecule views from the group 'molgroup',
+    with a preference to sample molecules that are closest to the 
+    point 'point' */
+PrefSampler::PrefSampler(const Vector &point, const MoleculeGroup &molgroup)
+            : ConcreteProperty<PrefSampler,Sampler>(molgroup),
+              focal_point(point), 
+              coords_property("coordinates"),
+              space_property("space"),
+              sampling_constant(0),
+              sum_of_weights(0), max_weight(0),
               is_dirty(true)
 {}
             
 /** Construct a sampler that samples molecule views from the group 'molgroup',
     with a preference to sample molecules that are closest to the 
-    point 'point' (using the optionally supplied preferential
-    sampling constant 'k') */
+    point 'point' using the supplied preferential
+    sampling constant 'k' */
 PrefSampler::PrefSampler(const Vector &point, const MoleculeGroup &molgroup,
-                         double k)
+                         Area k)
             : ConcreteProperty<PrefSampler,Sampler>(molgroup),
               focal_point(point), 
               coords_property("coordinates"),
+              space_property("space"),
               sampling_constant(k),
+              sum_of_weights(0), max_weight(0),
               is_dirty(true)
 {}
 
 /** Construct a sampler that prefers the molecules that are closest to 
-    the view 'molview' (using the optionally supplied preferential
-    sampling constant 'k') */
-PrefSampler::PrefSampler(const MoleculeView &molview, double k)
+    the view 'molview' */
+PrefSampler::PrefSampler(const MoleculeView &molview)
+            : ConcreteProperty<PrefSampler,Sampler>(),
+              focal_molecule(molview), 
+              coords_property("coordinates"),
+              sampling_constant(0),
+              is_dirty(true)
+{}
+
+/** Construct a sampler that prefers the molecules that are closest to 
+    the view 'molview' using the supplied preferential
+    sampling constant 'k' */
+PrefSampler::PrefSampler(const MoleculeView &molview, Area k)
             : ConcreteProperty<PrefSampler,Sampler>(),
               focal_molecule(molview), 
               coords_property("coordinates"),
@@ -134,14 +253,28 @@ PrefSampler::PrefSampler(const MoleculeView &molview, double k)
 {}
 
 /** Construct a sampler that samples the molecules in 'molgroup', and
-    that prefers molecules that are closest to the view 'molview' 
-    (using the optionally supplied preferential sampling constant 'k') */
-PrefSampler::PrefSampler(const MoleculeView &molview, const MoleculeGroup &molgroup,
-                         double k)
+    that prefers molecules that are closest to the view 'molview' */
+PrefSampler::PrefSampler(const MoleculeView &molview, const MoleculeGroup &molgroup)
             : ConcreteProperty<PrefSampler,Sampler>(molgroup),
               focal_molecule(molview),
               coords_property("coordinates"),
+              space_property("space"),
+              sampling_constant(0),
+              sum_of_weights(0), max_weight(0),
+              is_dirty(true)
+{}
+
+/** Construct a sampler that samples the molecules in 'molgroup', and
+    that prefers molecules that are closest to the view 'molview' 
+    using the optionally supplied preferential sampling constant 'k' */
+PrefSampler::PrefSampler(const MoleculeView &molview, const MoleculeGroup &molgroup,
+                         Area k)
+            : ConcreteProperty<PrefSampler,Sampler>(molgroup),
+              focal_molecule(molview),
+              coords_property("coordinates"),
+              space_property("space"),
               sampling_constant(k),
+              sum_of_weights(0), max_weight(0),
               is_dirty(true)
 {}
 
@@ -151,7 +284,12 @@ PrefSampler::PrefSampler(const PrefSampler &other)
               focal_molecule(other.focal_molecule),
               focal_point(other.focal_point),
               coords_property(other.coords_property),
+              space_property("space"),
               sampling_constant(other.sampling_constant),
+              sum_of_weights(other.sum_of_weights), 
+              max_weight(other.max_weight),
+              molweights(other.molweights),
+              current_space(other.current_space),
               is_dirty(other.is_dirty)
 {}
 
@@ -167,7 +305,12 @@ PrefSampler& PrefSampler::operator=(const PrefSampler &other)
         focal_molecule = other.focal_molecule;
         focal_point = other.focal_point;
         coords_property = other.coords_property;
+        space_property = other.space_property;
         sampling_constant = other.sampling_constant;
+        sum_of_weights = other.sum_of_weights;
+        max_weight = other.max_weight;
+        molweights = other.molweights;
+        current_space = other.current_space;
         is_dirty = other.is_dirty;
         
         Sampler::operator=(other);
@@ -182,6 +325,8 @@ bool PrefSampler::operator==(const PrefSampler &other) const
     return focal_molecule == other.focal_molecule and
            focal_point == other.focal_point and
            coords_property == other.coords_property and
+           space_property == other.space_property and
+           current_space == other.current_space and
            sampling_constant == other.sampling_constant and
            Sampler::operator==(other);
 }
@@ -195,7 +340,7 @@ bool PrefSampler::operator!=(const PrefSampler &other) const
 /** Set the molecule group from which molecule view will be sampled */
 void PrefSampler::setGroup(const MoleculeGroup &molgroup)
 {
-    if (molgroup == this->moleculeGroup())
+    if (molgroup == this->group())
         //nothing to do
         return;
 
@@ -226,7 +371,7 @@ void PrefSampler::setGroup(const MoleculeGroup &molgroup)
     }
 
     //has the major version number of the molecule group changed?
-    if (molgroup.version().major() != this->moleculeGroup().version().major())
+    if (molgroup.version().majorVersion() != this->group().version().majorVersion())
     {
         //the actual identity of the views may have changed - it is safest
         //to just recalculate the weights from scratch
@@ -237,21 +382,24 @@ void PrefSampler::setGroup(const MoleculeGroup &molgroup)
 
     //ok - only the state of some of the views has changed
     //and the central molecule has not changed
-    int nviews = molgroup.nViews();
+    const QVector< tuple<MolNum,Index> > &viewindicies = molgroup.molViewIndicies();
+    int nviews = viewindicies.count();
     
     BOOST_ASSERT( nviews == molweights.count() );
     
-    molweights_array = molweights.data();
-    const MoleculeGroup &current_group = this->moleculeGroup();
+    const tuple<MolNum,Index> *viewindicies_array = viewindicies.constData();
+    double *molweights_array = molweights.data();
+    const MoleculeGroup &current_group = this->group();
     
     PropertyMap map;
-    map.set("coordinates", coord_property);
+    map.set("coordinates", coords_property);
     
     sum_of_weights = 0;
+    max_weight = 0;
     
     for (int i=0; i<nviews; ++i)
     {
-        tuple<MolNum,Index> viewidx = molgroup.molViewIndexAt(i);
+        const tuple<MolNum,Index> &viewidx = viewindicies_array[i];
         
         const ViewsOfMol &mol = molgroup[viewidx.get<0>()];
         
@@ -259,6 +407,7 @@ void PrefSampler::setGroup(const MoleculeGroup &molgroup)
         {
             //the molecule hasn't changed
             sum_of_weights += molweights_array[i];
+            max_weight = qMax(max_weight, molweights_array[i]);
             continue;
         }
             
@@ -267,7 +416,7 @@ void PrefSampler::setGroup(const MoleculeGroup &molgroup)
         Vector new_center = mol.at(viewidx.get<1>()).evaluate()
                                .centerOfGeometry(map);
                                
-        double dist2 = current_space.dist2(new_center, focal_point);
+        double dist2 = current_space->calcDist2(new_center, focal_point);
         
         //weight = 1 / (dist^2 + k)
         double invweight = dist2 + sampling_constant;
@@ -279,9 +428,10 @@ void PrefSampler::setGroup(const MoleculeGroup &molgroup)
             molweights_array[i] = 1.0 / invweight;
             
         sum_of_weights += molweights_array[i];
+        max_weight = qMax(max_weight, molweights_array[i]);
     }
         
-    Sampler::setGroup(new_group);
+    Sampler::setGroup(molgroup);
 }
 
 /** Update this sampler so that the molecules match the versions
@@ -305,7 +455,7 @@ void PrefSampler::updateFrom(const System &system)
     }
 
     //get the new space
-    const Space &system_space = system.property(space_property).asA<Space();
+    const Space &system_space = system.property(space_property).asA<Space>();
 
     if (current_space != system_space)
     {
@@ -321,7 +471,7 @@ void PrefSampler::updateFrom(const System &system)
     with the probability with which it was chosen */
 tuple<PartialMolecule,double> PrefSampler::sample() const
 {
-    this->recalculateWeights();
+    const_cast<PrefSampler*>(this)->recalculateWeights();
     
     //sample the molecule
 
@@ -332,36 +482,52 @@ tuple<PartialMolecule,double> PrefSampler::sample() const
     //  probability of the molecule <= the random number, then accept
     //  this molecule, else go back to the beginning and try again...
 
-    BOOST_ASSERT(max_prob > 0);
+    BOOST_ASSERT(max_weight > 0);
 
     //pick a random molecule...
     while (true)
     {
         //choose a random molecule ID...
-        quint32 i = _pvt_generator().randInt(molprobs.count()-1);
+        int i = this->generator().randInt(molweights.count()-1);
 
         //get the desired probability of choosing this molecule...
-        const MolProb &molprob = molprobs.constData()[i];
+        double molweight = molweights.constData()[i];
 
         //compare the normalised probability against a random number from 0 to max_prob
-        if (_pvt_generator().rand(max_prob) <= molprob.probability)
+        if (this->generator().rand(max_weight) <= molweight)
         {
             //test passed - return the molecule and the normalised probability
             //of picking the molecule
-            return tuple<PartialMolecule,double>(group.molecule(molprob.ID),
-                                                 molprob.probability / sum_of_probs);
+            return tuple<PartialMolecule,double>(this->group().viewAt(i),
+                                                 molweight / sum_of_weights);
         }
     }
 
 }
 
 /** Return the probability with which the molecule 'molecule' was 
-    sampled from this sampler */
+    sampled from this sampler 
+    
+    \throw SireMol::missing_molecule
+    \throw SireError::invalid_index
+*/
 double PrefSampler::probabilityOf(const PartialMolecule &molecule) const
 {
-    this->recalculateWeights();
+    const_cast<PrefSampler*>(this)->recalculateWeights();
     
-    //sample the molecule
+    //get the index of this specific group
+    int idx = this->group().indexOf(molecule);
+    
+    if (idx == -1)
+    {
+        //the molecule was not in the group, so had no chance of being picked
+        return 0;
+    }
+    else
+    {
+        //return the normalised probability
+        return molweights.constData()[idx] / sum_of_weights;
+    }
 }
 
 /** Set the focal molecule of this sampler */
@@ -381,15 +547,15 @@ void PrefSampler::setFocalPoint(const Vector &point)
 
 /** Set the preferential sampling constant - this is the value
     of 'k' in the biasing algorithm */
-void PrefSampler::setSamplingConstant(double k)
+void PrefSampler::setSamplingConstant(Area k)
 {
     sampling_constant = k;
 }
 
 /** Return the preferential sampling constant (k) */
-double PrefSampler::samplingConstant() const
+Area PrefSampler::samplingConstant() const
 {
-    return sampling_constant;
+    return Area(sampling_constant);
 }
 
 /** Return whether we are using a focal molecule (rather
@@ -418,4 +584,30 @@ const Vector& PrefSampler::focalPoint() const
 const PartialMolecule& PrefSampler::focalMolecule() const
 {
     return focal_molecule;
+}
+    
+/** Set the property name used to find the coordinates property of
+    the molecules */
+void PrefSampler::setCoordinatesProperty(const PropertyName &coordsproperty)
+{
+    coords_property = coordsproperty;
+}
+
+/** Set the property used to find the space property of the system */
+void PrefSampler::setSpaceProperty(const PropertyName &spaceproperty)
+{
+    space_property = spaceproperty;
+}
+
+/** Return the name of the property used to find the coordinates
+    of the molecules */
+const PropertyName& PrefSampler::coordinatesProperty() const
+{
+    return coords_property;
+}
+
+/** Return the name of the property used to find the system space */
+const PropertyName& PrefSampler::spaceProperty() const
+{
+    return space_property;
 }

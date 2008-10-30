@@ -1377,7 +1377,7 @@ void System::add(const MoleculeGroup &molgroup, const MGID &mgid,
             else
                 this->_pvt_moleculeGroups().add(group, mgnum);
                 
-            this->addToIndex(mgnum, molgroup.molNums());
+            this->addToIndex(mgnum, molgroup.molNums().toList());
         }
         
         sysversion.incrementMinor();
@@ -1556,7 +1556,7 @@ void System::addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid,
             else
                 this->_pvt_moleculeGroups().addIfUnique(group, mgnum);
                 
-            this->addToIndex(mgnum, molgroup.molNums());
+            this->addToIndex(mgnum, molgroup.molNums().toList());
         }
         
         sysversion.incrementMinor();
@@ -2286,7 +2286,7 @@ void System::setContents(const MGID &mgid, const MoleculeGroup &molgroup,
                 this->_pvt_moleculeGroups(mgnum).setContents(mgnum, group);
 
             this->clearIndex(mgnum);
-            this->addToIndex(mgnum, group->molNums());
+            this->addToIndex(mgnum, group->molNums().toList());
         }
         
         sysversion.incrementMinor();

@@ -57,7 +57,10 @@
 
 #include <QDebug>
 
+using boost::tuple;
+
 using namespace SireMol;
+using namespace SireID;
 using namespace SireStream;
 using namespace SireBase;
 
@@ -84,33 +87,31 @@ MGNum MGNum::getUniqueNumber()
 }
 
 ////////
-//////// Functions relating to the MolNumUInt tuple
+//////// Functions relating to the tuple<MolNum,Index>
 ////////
 
-typedef boost::tuple<MolNum,quint32> MolNumUInt;
-
-bool operator==(const MolNumUInt &i0, const MolNumUInt &i1)
+static bool operator==(const tuple<MolNum,Index> &i0, const tuple<MolNum,Index> &i1)
 {
     return i0.get<0>() == i1.get<0>() and 
            i0.get<1>() == i1.get<1>();
 }
 
 static QDataStream& operator<<(QDataStream &ds, 
-                               const MolNumUInt &molviewidx)
+                               const tuple<MolNum,Index> &molviewidx)
 {
     ds << molviewidx.get<0>() << molviewidx.get<1>();
     return ds;
 }
 
 static QDataStream& operator>>(QDataStream &ds, 
-                               MolNumUInt &molviewidx)
+                               tuple<MolNum,Index> &molviewidx)
 {
     MolNum molnum;
-    quint32 viewidx;
+    Index viewidx;
     
     ds >> molnum >> viewidx;
 
-    molviewidx = MolNumUInt(molnum,viewidx);
+    molviewidx = tuple<MolNum,Index>(molnum,viewidx);
     
     return ds;
 }
@@ -147,7 +148,7 @@ public:
     Molecules molecules;
     
     QVector<MolNum> molidx_to_num;
-    QVector<MolNumUInt> molviewidx_to_num;
+    QVector< tuple<MolNum,Index> > molviewidx_to_num;
     QHash< MolName,QList<MolNum> > molname_to_num;
     
     MGName name;
@@ -612,7 +613,7 @@ PartialMolecule MoleculeGroup::viewAt(int idx) const
 {
     idx = Index(idx).map(d->molviewidx_to_num.count());
     
-    const MolNumUInt &molviewidx = d->molviewidx_to_num.constData()[idx];
+    const tuple<MolNum,Index> &molviewidx = d->molviewidx_to_num.constData()[idx];
     
     return d->molecules.at( molviewidx.get<0>(), molviewidx.get<1>() );
 }
@@ -621,13 +622,56 @@ PartialMolecule MoleculeGroup::viewAt(int idx) const
 
     \throw SireError::invalid_index
 */
-tuple<MolNum,Index> MoleculeGroup::molViewIndexAt(int idx) const
+const tuple<MolNum,Index>& MoleculeGroup::molViewIndexAt(int idx) const
 {
     idx = Index(idx).map(d->molviewidx_to_num.count());
     
-    const MolNumUInt &molviewidx = d->molviewidx_to_num.constData()[idx];
+    return d->molviewidx_to_num.constData()[idx];
+}
+
+/** Return the number of the 'ith' molecule in this group
+
+    \throw SireError::invalid_index
+*/
+MolNum MoleculeGroup::molNumAt(int idx) const
+{
+    return d->molidx_to_num.constData()[ Index(idx).map(d->molidx_to_num.count()) ];
+}
+
+/** Return the index of the view of the molecule viewed in 'molview'. This 
+    is the index of this specific view, so you use this index with the
+    MoleculeGroup::viewAt(int i) function. This returns -1 if this
+    view is not in this group */
+int MoleculeGroup::indexOf(const MoleculeView &molview) const
+{
+    //get this molecule
+    const ViewsOfMol &mol = this->operator[](molview.data().number());
     
-    return tuple<MolNum,Index>( molviewidx.get<0>(), Index(molviewidx.get<1>()) );
+    //get the index of this view in the molecule
+    int idx = mol.indexOf( molview.selection() );
+    
+    if (idx == -1)
+        return idx;
+
+    try
+    {
+        return d->molviewidx_to_num.indexOf( tuple<MolNum,Index>(mol.data().number(),
+                                                                 Index(idx)) );
+    }
+    catch(...)
+    {
+        //the molecule layout has changed - it is definitely not in the group
+        return -1;
+    }
+}
+
+/** Return the index of the molecule with number 'molnum'. This is the index
+    of the molecule itself, so you use this index with the MoleculeGroup::at(int i)
+    function. This returns -1 if this molecule isn't in this group.
+*/
+int MoleculeGroup::indexOf(MolNum molnum) const
+{
+    return d->molidx_to_num.indexOf(molnum);
 }
 
 /** Return the views of the molecule with number 'molnum' from
@@ -1070,10 +1114,18 @@ MoleculeGroup::const_iterator MoleculeGroup::constFind(const MolID &molid) const
     return this->constFind( this->getMoleculeNumber(molid) );
 }
 
-/** Return the numbers of all molecules present in this group */
-QList<MolNum> MoleculeGroup::molNums() const
+/** Return the numbers of all molecules present in this group,
+    in the order that the molecules appear in this group */
+const QVector<MolNum>& MoleculeGroup::molNums() const
 {
-    return d->molidx_to_num.toList();
+    return d->molidx_to_num;
+}
+
+/** Return the numbers and view indicies of all views in this group,
+    in the order that the views appear in this group */
+const QVector< tuple<MolNum,Index> >& MoleculeGroup::molViewIndicies() const
+{
+    return d->molviewidx_to_num;
 }
 
 /** Return the set of all names of the molecules in this group */
@@ -1180,8 +1232,8 @@ void MoleculeGroup::add(const MoleculeView &molview)
     
     dref.molecules.add(molview);
    
-    dref.molviewidx_to_num.append( MolNumUInt(molnum,
-                                         dref.molecules.nViews(molnum) - 1) );
+    dref.molviewidx_to_num.append( tuple<MolNum,Index>(molnum,
+                                         Index(dref.molecules.nViews(molnum) - 1)) );
 
     dref.incrementMajor();
 }
@@ -1212,7 +1264,7 @@ void MoleculeGroup::add(const ViewsOfMol &molviews)
     
     for (quint32 i = nviews - molviews.count() - 1; i < nviews; ++i)
     {
-        dref.molviewidx_to_num.append( MolNumUInt(molnum,i) );
+        dref.molviewidx_to_num.append( tuple<MolNum,Index>(molnum,Index(i)) );
     }
     
     dref.incrementMajor();
@@ -1248,7 +1300,7 @@ void MoleculeGroup::add(const Molecules &molecules)
         
         for (quint32 i=nviews; i<nviews + n_newviews; ++i)
         {
-            dref.molviewidx_to_num.append( MolNumUInt(molnum,i) );
+            dref.molviewidx_to_num.append( tuple<MolNum,Index>(molnum,Index(i)) );
         }
     }
 
@@ -1287,13 +1339,15 @@ void MoleculeGroup::add(const MoleculeGroup &MoleculeGroup)
             dref.molidx_to_num.append(molnum);
     }
     
-    foreach (const MolNumUInt &molviewidx,
-             MoleculeGroup.d->molviewidx_to_num)
+    for (QVector< tuple<MolNum,Index> >::const_iterator 
+                            it = dref.molviewidx_to_num.constBegin();
+         it != dref.molviewidx_to_num.constEnd();
+         ++it)
     {
-        MolNum molnum = molviewidx.get<0>();
+        MolNum molnum = it->get<0>();
     
-        dref.molviewidx_to_num.append( MolNumUInt( molnum,
-                          molviewidx.get<1>() + dref.molecules.nViews(molnum) ) );
+        dref.molviewidx_to_num.append( tuple<MolNum,Index>( molnum,
+                          Index(it->get<1>() + dref.molecules.nViews(molnum)) ) );
     }
     
     //now add the molecules themselves to this set
@@ -1322,8 +1376,8 @@ bool MoleculeGroup::addIfUnique(const MoleculeView &molview)
         if (not hasmol)
             dref.molidx_to_num.append(molnum);
             
-        dref.molviewidx_to_num.append( MolNumUInt(molnum,
-                                        dref.molecules.nViews(molnum) - 1) );
+        dref.molviewidx_to_num.append( tuple<MolNum,Index>(molnum,
+                                         Index(dref.molecules.nViews(molnum) - 1)) );
     
         dref.incrementMajor();
         return true;
@@ -1359,7 +1413,7 @@ ViewsOfMol MoleculeGroup::addIfUnique(const ViewsOfMol &molviews)
         
         for (quint32 i=nviews-nadded-1; i<nviews; ++i)
         {
-            dref.molviewidx_to_num.append( MolNumUInt(molnum,i) );
+            dref.molviewidx_to_num.append( tuple<MolNum,Index>(molnum,Index(i)) );
         }
         
         dref.incrementMajor();
@@ -1399,7 +1453,7 @@ QList<ViewsOfMol> MoleculeGroup::addIfUnique(const Molecules &molecules)
             
             for (quint32 i=nviews-nadded-1; i<nviews; ++i)
             {
-                dref.molviewidx_to_num.append( MolNumUInt(molnum,i) );
+                dref.molviewidx_to_num.append( tuple<MolNum,Index>(molnum,Index(i)) );
             }
         }
         
@@ -1428,13 +1482,15 @@ QList<ViewsOfMol> MoleculeGroup::addIfUnique(const MoleculeGroup &MoleculeGroup)
         
     MolGroupPvt &dref = *d;
     
-    foreach (const MolNumUInt &molviewidx,
-             MoleculeGroup.d->molviewidx_to_num)
+    for (QVector< tuple<MolNum,Index> >::const_iterator 
+                            it = dref.molviewidx_to_num.constBegin();
+         it != dref.molviewidx_to_num.constEnd();
+         ++it)
     {
-        MolNum molnum = molviewidx.get<0>();
-        quint32 i = molviewidx.get<1>();
+        MolNum molnum = it->get<0>();
+        Index i = it->get<1>();
     
-        PartialMolecule molview = MoleculeGroup[molnum][Index(i)];
+        PartialMolecule molview = MoleculeGroup[molnum][i];
         
         if (dref.molecules.addIfUnique(molview))
             added_views.append(molview);
@@ -1510,18 +1566,19 @@ bool MoleculeGroup::_pvt_remove(const MoleculeView &molview)
         
         //the molecule has only been partially removed,
         //so remove this view from the molview index
-        QMutableVectorIterator< MolNumUInt > it(dref.molviewidx_to_num);
+        QMutableVectorIterator< tuple<MolNum,Index> > it(dref.molviewidx_to_num);
         
         while (it.hasNext())
         {
-            MolNumUInt &molviewidx = it.next();
+            tuple<MolNum,Index> &molviewidx = it.next();
             
             if (molviewidx.get<0>() == molnum)
             {
-                if (molviewidx.get<1>() == (uint)viewidx)
+                if (molviewidx.get<1>() == viewidx)
                     it.remove();
-                else if (molviewidx.get<1>() > (uint)viewidx)
-                    molviewidx = MolNumUInt(molnum,molviewidx.get<1>()-1);
+                else if (molviewidx.get<1>() > viewidx)
+                    molviewidx = tuple<MolNum,Index>(molnum,
+                                                     Index(molviewidx.get<1>()-1));
             }
         }
     }
@@ -1531,11 +1588,11 @@ bool MoleculeGroup::_pvt_remove(const MoleculeView &molview)
         //remove it completely from the index
         dref.molidx_to_num.remove( dref.molidx_to_num.indexOf(molnum) );
         
-        QMutableVectorIterator< MolNumUInt > it(dref.molviewidx_to_num);
+        QMutableVectorIterator< tuple<MolNum,Index> > it(dref.molviewidx_to_num);
         
         while (it.hasNext())
         {
-            const MolNumUInt &molviewidx = it.next();
+            const tuple<MolNum,Index> &molviewidx = it.next();
         
             if (molviewidx.get<0>() == molnum)
                 it.remove();
@@ -1737,11 +1794,11 @@ ViewsOfMol MoleculeGroup::_pvt_remove(MolNum molnum)
     //now remove it from the index
     dref.molidx_to_num.remove( dref.molidx_to_num.indexOf(molnum) );
     
-    QMutableVectorIterator< MolNumUInt > it(dref.molviewidx_to_num);
+    QMutableVectorIterator< tuple<MolNum,Index> > it(dref.molviewidx_to_num);
     
     while (it.hasNext())
     {
-        const MolNumUInt &molviewidx = it.next();
+        const tuple<MolNum,Index> &molviewidx = it.next();
         
         if (molviewidx.get<0>() == molnum)
             it.remove();
@@ -1873,7 +1930,7 @@ void MoleculeGroup::_pvt_setContents(const Molecules &molecules)
     dref.molviewidx_to_num.resize(molecules.nViews());
 
     MolNum *molidx_to_num_array = dref.molidx_to_num.data();
-    MolNumUInt *molviewidx_to_num_array = dref.molviewidx_to_num.data();
+    tuple<MolNum,Index> *molviewidx_to_num_array = dref.molviewidx_to_num.data();
     
     int imol = 0;
     int iview = 0;
@@ -1894,7 +1951,7 @@ void MoleculeGroup::_pvt_setContents(const Molecules &molecules)
         
         for (int i=0; i < nviews; ++i)
         {
-            molviewidx_to_num_array[iview+i] = MolNumUInt(it.key(),i);
+            molviewidx_to_num_array[iview+i] = tuple<MolNum,Index>(it.key(), Index(i));
         }
         
         iview += nviews;

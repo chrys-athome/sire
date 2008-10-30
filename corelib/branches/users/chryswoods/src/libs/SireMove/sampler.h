@@ -52,6 +52,11 @@ namespace SireMol
 class PartialMolecule;
 }
 
+namespace SireSystem
+{
+class System;
+}
+
 namespace SireMove
 {
 
@@ -64,6 +69,8 @@ using SireMaths::RanGenerator;
 using SireMol::PartialMolecule;
 using SireMol::MolGroupPtr;
 using SireMol::MoleculeGroup;
+
+using SireSystem::System;
 
 class UniformSampler;
 
