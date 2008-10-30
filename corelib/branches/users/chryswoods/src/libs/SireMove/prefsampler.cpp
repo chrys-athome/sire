@@ -78,17 +78,6 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, PrefSampler &prefsample
     return ds;
 }
 
-/** Update weights from the passed new molecule group. This new group
-    will replace the existing group */
-void PrefSampler::updateWeights(const MoleculeGroup &new_group)
-{
-    if (new_group == this->moleculeGroup())
-        //nothing to do
-        return;
-        
-    Sampler::setGroup(new_group);
-}
-
 /** Completely recalculate the weights from scratch */
 void PrefSampler::recalculateWeights()
 {
@@ -206,7 +195,93 @@ bool PrefSampler::operator!=(const PrefSampler &other) const
 /** Set the molecule group from which molecule view will be sampled */
 void PrefSampler::setGroup(const MoleculeGroup &molgroup)
 {
-    this->updateWeights(molgroup);
+    if (molgroup == this->moleculeGroup())
+        //nothing to do
+        return;
+
+    if (this->usingFocalMolecule())
+    {
+        //does this group contain the focal molecule?
+        MolNum molnum = focal_molecule.data().number();
+        
+        if (molgroup.contains(molnum))
+        {
+            if (molgroup[molnum].data().version() != focal_molecule.data().version())
+            {
+                focal_molecule.update( molgroup[molnum].data() );
+                is_dirty = true;
+                
+                Sampler::setGroup(molgroup);
+                return;
+            }
+        }
+    }
+
+    //if this is dirty, then there's nothing we should do now
+    //(it all needs recalculating)
+    if (is_dirty)
+    {
+        Sampler::setGroup(molgroup);
+        return;
+    }
+
+    //has the major version number of the molecule group changed?
+    if (molgroup.version().major() != this->moleculeGroup().version().major())
+    {
+        //the actual identity of the views may have changed - it is safest
+        //to just recalculate the weights from scratch
+        is_dirty = true;
+        Sampler::setGroup(molgroup);
+        return;
+    }
+
+    //ok - only the state of some of the views has changed
+    //and the central molecule has not changed
+    int nviews = molgroup.nViews();
+    
+    BOOST_ASSERT( nviews == molweights.count() );
+    
+    molweights_array = molweights.data();
+    const MoleculeGroup &current_group = this->moleculeGroup();
+    
+    PropertyMap map;
+    map.set("coordinates", coord_property);
+    
+    sum_of_weights = 0;
+    
+    for (int i=0; i<nviews; ++i)
+    {
+        tuple<MolNum,Index> viewidx = molgroup.molViewIndexAt(i);
+        
+        const ViewsOfMol &mol = molgroup[viewidx.get<0>()];
+        
+        if (mol.data().version() == current_group[mol.data().number()].version())
+        {
+            //the molecule hasn't changed
+            sum_of_weights += molweights_array[i];
+            continue;
+        }
+            
+        //the molecule has changed - calculate the new distance from
+        //the focal point
+        Vector new_center = mol.at(viewidx.get<1>()).evaluate()
+                               .centerOfGeometry(map);
+                               
+        double dist2 = current_space.dist2(new_center, focal_point);
+        
+        //weight = 1 / (dist^2 + k)
+        double invweight = dist2 + sampling_constant;
+        
+        if (invweight == 0)
+            //default to '1' for zero invweight
+            molweights_array[i] = 1;
+        else
+            molweights_array[i] = 1.0 / invweight;
+            
+        sum_of_weights += molweights_array[i];
+    }
+        
+    Sampler::setGroup(new_group);
 }
 
 /** Update this sampler so that the molecules match the versions
@@ -220,13 +295,22 @@ void PrefSampler::updateFrom(const System &system)
         
         if (system.contains(molnum))
         {
-            if (system[molnum].data().version() != focal_molecule.data().number())
+            if (system[molnum].data().version() != focal_molecule.data().version())
             {
                 //yes - the system contains the molecule with a different version
                 focal_molecule.update( system[molnum].data() );
                 is_dirty = true;
             }
         }
+    }
+
+    //get the new space
+    const Space &system_space = system.property(space_property).asA<Space();
+
+    if (current_space != system_space)
+    {
+        current_space = system_space;
+        is_dirty = true;
     }
     
     //now update the MoleculeGroup

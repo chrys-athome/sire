@@ -113,6 +113,7 @@ public:
     void setFocalPoint(const Vector &point);
     
     void setCoordinatesProperty(const PropertyName &coords_property);
+    void setSpaceProperty(const PropertyName &space_property);
     
     void setSamplingConstant(double k);
     
@@ -125,6 +126,7 @@ public:
     double samplingConstant() const;
     
     const PropertyName& coordinatesProperty() const;
+    const PropertyName& spaceProperty() const;
 
 private:
     void updateWeights(const MoleculeGroup &new_group);
@@ -141,8 +143,21 @@ private:
         of the molecules */
     PropertyName coords_property;
     
+    /** The property used to find the system space */
+    PropertyName space_property;
+    
     /** The preferential sampling constant */
     double sampling_constant;
+
+    /** The sum of all of the weights */
+    double sum_of_weights;
+
+    /** The current weights for all of the molecules - the
+        index matches the viewAt() index of MoleculeGroup */
+    QVector<double> molweights;
+
+    /** The current space that is used to calculate distances */
+    Space current_space;
     
     /** Whether or not this is dirty (requires a complete recalculation
         of the weights) */

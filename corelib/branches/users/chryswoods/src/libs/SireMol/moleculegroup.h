@@ -169,6 +169,8 @@ public:
     const ViewsOfMol& moleculeAt(int idx) const;
     PartialMolecule viewAt(int idx) const;
 
+    boost::tuple<MolNum,Index> molViewIndexAt(int idx) const;
+
     const ViewsOfMol& molecule(MolNum molnum) const;
     const ViewsOfMol& molecule(MolIdx molidx) const;
     const ViewsOfMol& molecule(const MolName &molname) const;

@@ -617,6 +617,19 @@ PartialMolecule MoleculeGroup::viewAt(int idx) const
     return d->molecules.at( molviewidx.get<0>(), molviewidx.get<1>() );
 }
 
+/** Return the MolNum/Index index of the 'ith' view in this group
+
+    \throw SireError::invalid_index
+*/
+tuple<MolNum,Index> MoleculeGroup::molViewIndexAt(int idx) const
+{
+    idx = Index(idx).map(d->molviewidx_to_num.count());
+    
+    const MolNumUInt &molviewidx = d->molviewidx_to_num.constData()[idx];
+    
+    return tuple<MolNum,Index>( molviewidx.get<0>(), Index(molviewidx.get<1>()) );
+}
+
 /** Return the views of the molecule with number 'molnum' from
     this group
     
