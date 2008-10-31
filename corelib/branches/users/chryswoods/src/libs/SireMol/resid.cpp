@@ -100,10 +100,22 @@ ResResID ResID::operator+(const ResID &other) const
     return ResResID(*this, other);
 }
 
+/** Syntactic sugar for operator+ */
+ResResID ResID::operator&&(const ResID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with another ID type */
 ChainResID ResID::operator+(const ChainID &other) const
 {
     return ChainResID(other, *this);
+}
+
+/** Syntactic sugar for operator+ */
+ChainResID ResID::operator&&(const ChainID &other) const
+{
+    return this->operator+(other);
 }
 
 /** Combine with another ID type */
@@ -112,16 +124,46 @@ GroupAtomID<ResID,AtomID> ResID::operator+(const AtomID &other) const
     return GroupAtomID<ResID,AtomID>(*this, other);
 }
 
+/** Syntactic sugar for operator+ */
+GroupAtomID<ResID,AtomID> ResID::operator&&(const AtomID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with another ID type */
 GroupGroupID<SegID,ResID> ResID::operator+(const SegID &other) const
 {
     return GroupGroupID<SegID,ResID>(other, *this);
 }
 
+/** Syntactic sugar for operator+ */
+GroupGroupID<SegID,ResID> ResID::operator&&(const SegID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with another ID type */
 GroupGroupID<CGID,ResID> ResID::operator+(const CGID &other) const
 {
     return GroupGroupID<CGID,ResID>(other, *this);
+}
+
+/** Syntactic sugar for operator+ */
+GroupGroupID<CGID,ResID> ResID::operator&&(const CGID &other) const
+{
+    return this->operator+(other);
+}
+
+/** Return the match for this ID or 'other' */
+IDSet<ResID> ResID::operator*(const ResID &other) const
+{
+    return IDSet<ResID>(*this, other);
+}
+
+/** Syntactic sugar for operator* */
+IDSet<ResID> ResID::operator||(const ResID &other) const
+{
+    return this->operator*(other);
 }
 
 /** Return the atoms in the matching residues */
@@ -140,6 +182,16 @@ AtomsIn<ResID> ResID::atom(int i) const
 AtomsIn<ResID> ResID::atoms(int i, int j) const
 {
     return AtomsIn<ResID>(*this, i, j);
+}
+
+void ResID::processMatches(QList<ResIdx> &matches, const MolInfo&) const
+{
+    if (matches.isEmpty())
+        throw SireMol::missing_residue( QObject::tr(
+            "There are no residues that match the ID \"%1\"")
+                .arg(this->toString()), CODELOC );
+                
+    qSort(matches);
 }
 
 /** Return all of the residues from the 'molecules' that match
@@ -253,6 +305,8 @@ ResID::selectAllFrom(const MolGroupsBase &molgroups) const
 //fully instantiate Specify<ResID> and AtomsIn<ResID>
 template class Specify<ResID>;
 template class AtomsIn<ResID>;
+template class IDSet<ResID>;
 
 static const RegisterMetaType< Specify<ResID> > r_specify_resid;
 static const RegisterMetaType< AtomsIn<ResID> > r_atomsin_resid;
+static const RegisterMetaType< IDSet<ResID> > r_idset_resid;

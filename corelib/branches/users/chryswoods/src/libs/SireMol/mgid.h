@@ -31,15 +31,9 @@
 
 #include "SireID/id.h"
 
+#include "idset.hpp"
+
 SIRE_BEGIN_HEADER
-
-namespace SireMol
-{
-class MGNumList;
-}
-
-QDataStream& operator<<(QDataStream&, const SireMol::MGNumList&);
-QDataStream& operator>>(QDataStream&, SireMol::MGNumList&);
 
 namespace SireMol
 {
@@ -47,6 +41,7 @@ namespace SireMol
 class MGIdx;
 class MGIdentifier;
 class MGNum;
+class MGMGID;
 
 class MolGroupsBase;
 
@@ -58,8 +53,9 @@ class MolGroupsBase;
 class SIREMOL_EXPORT MGID : public SireID::ID
 {
 public:
-    typedef MGIdx Index;
+    typedef MGNum Index;
     typedef MGIdentifier Identifier;
+    typedef MolGroupsBase SearchObject;
 
     MGID();
     
@@ -71,70 +67,34 @@ public:
     {
         return "SireMol::MGID";
     }
+    
+    MGMGID operator+(const MGID &other) const;
+    IDSet<MGID> operator*(const MGID &other) const;
+
+    MGMGID operator&&(const MGID &other) const;
+    IDSet<MGID> operator||(const MGID &other) const;
 
     virtual MGID* clone() const=0;
 
     virtual QList<MGNum> map(const MolGroupsBase &molgroups) const=0;
-};
 
-class SIREMOL_EXPORT MGNumList : public MGID
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const MGNumList&);
-friend QDataStream& ::operator>>(QDataStream&, MGNumList&);
-
-public:
-    MGNumList();
-    MGNumList(const QList<MGNum> &mgnums);
-    
-    MGNumList(const MGNumList &other);
-    
-    ~MGNumList();
-    
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MGNumList>() );
-    }
-    
-    const char* what() const
-    {
-        return MGNumList::typeName();
-    }
-    
-    MGNumList* clone() const
-    {
-        return new MGNumList(*this);
-    }
-    
-    bool isNull() const;
-    
-    uint hash() const;
-    
-    QString toString() const;
-    
-    MGNumList& operator=(const MGNumList &other);
-    
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<MGNumList>(*this, other);
-    }
-
-    bool operator==(const MGNumList &other) const;
-    bool operator!=(const MGNumList &other) const;
-    
-    QList<MGNum> map(const MolGroupsBase &molgroups) const;
-
-private:
-    /** List of molecule group numbers */
-    QList<MGNum> mgnums;
+protected:
+    void processMatches(QList<MGNum> &matches, const MolGroupsBase &molgroups) const;
 };
 
 }
 
-Q_DECLARE_METATYPE( SireMol::MGNumList )
+#include "mgidentifier.h"
+#include "mgnum.h"
+
+Q_DECLARE_METATYPE( SireMol::IDSet<SireMol::MGID> )
 
 SIRE_EXPOSE_CLASS( SireMol::MGID )
-SIRE_EXPOSE_CLASS( SireMol::MGNumList )
+SIRE_EXPOSE_ALIAS( SireMol::IDSet<SireMol::MGID>, SireMol::IDSet_MGID_ )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class SireMol::IDSet<SireMol::MGID>;
+#endif
 
 SIRE_END_HEADER
 

@@ -103,10 +103,22 @@ AtomAtomID AtomID::operator+(const AtomID &other) const
     return AtomAtomID(*this, other);
 }
 
+/** Syntactic sugar for *this + other */
+AtomAtomID AtomID::operator&&(const AtomID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with other ID types */
 CGAtomID AtomID::operator+(const CGID &other) const
 {
     return CGAtomID(other, *this);
+}
+
+/** Syntactic sugar for *this + other */
+CGAtomID AtomID::operator&&(const CGID &other) const
+{
+    return this->operator+(other);
 }
 
 /** Combine with other ID types */
@@ -115,10 +127,22 @@ ResAtomID AtomID::operator+(const ResID &other) const
     return ResAtomID(other, *this);
 }
 
+/** Syntactic sugar for *this + other */
+ResAtomID AtomID::operator&&(const ResID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with other ID types */
 ChainAtomID AtomID::operator+(const ChainID &other) const
 {
     return ChainAtomID(other, *this);
+}
+
+/** Syntactic sugar for *this + other */
+ChainAtomID AtomID::operator&&(const ChainID &other) const
+{
+    return this->operator+(other);
 }
 
 /** Combine with other ID types */
@@ -127,10 +151,44 @@ SegAtomID AtomID::operator+(const SegID &other) const
     return SegAtomID(other, *this);
 }
 
+/** Syntactic sugar for *this + other */
+SegAtomID AtomID::operator&&(const SegID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with other ID types */
 MolAtomID AtomID::operator+(const MolID &other) const
 {
     return MolAtomID(other, *this);
+}
+
+/** Syntactic sugar for *this + other */
+MolAtomID AtomID::operator&&(const MolID &other) const
+{
+    return this->operator+(other);
+}
+
+/** Return the selection that matches this atom or 'other' */
+IDSet<AtomID> AtomID::operator*(const AtomID &other) const
+{
+    return IDSet<AtomID>(*this, other);
+}
+
+/** Syntactic sugar for *this * other */
+IDSet<AtomID> AtomID::operator||(const AtomID &other) const
+{
+    return this->operator*(other);
+}
+
+void AtomID::processMatches(QList<AtomIdx> &matches, const MolInfo&) const
+{
+    if (matches.isEmpty())
+        throw SireMol::missing_atom( QObject::tr(
+            "There are no atoms that match the ID \"%1\" in the passed molecule.")
+                .arg(this->toString()), CODELOC );
+
+    qSort(matches);
 }
 
 /** Return all of the atoms from the 'molecules' that match
@@ -389,6 +447,7 @@ QList<AtomIdx> AtomName::map(const MolInfo &molinfo) const
 
 //fully instantiate Specify<AtomID>
 template class Specify<AtomID>;
+template class IDSet<AtomID>;
 
 static const RegisterMetaType< Specify<AtomID> > r_specify_atomid;
-
+static const RegisterMetaType< IDSet<AtomID> > r_idset_atomid;

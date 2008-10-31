@@ -99,10 +99,22 @@ CGCGID CGID::operator+(const CGID &other) const
     return CGCGID(*this, other);
 }
 
+/** Syntactic sugar for operator+ */
+CGCGID CGID::operator&&(const CGID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with another ID */
 GroupAtomID<CGID,AtomID> CGID::operator+(const AtomID &other) const
 {
     return GroupAtomID<CGID,AtomID>(*this, other);
+}
+
+/** Syntactic sugar for operator+ */
+GroupAtomID<CGID,AtomID> CGID::operator&&(const AtomID &other) const
+{
+    return this->operator+(other);
 }
 
 /** Combine with another ID */
@@ -111,16 +123,46 @@ GroupGroupID<SegID,CGID> CGID::operator+(const SegID &other) const
     return GroupGroupID<SegID,CGID>(other, *this);
 }
 
+/** Syntactic sugar for operator+ */
+GroupGroupID<SegID,CGID> CGID::operator&&(const SegID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with another ID */
 GroupGroupID<CGID,ChainID> CGID::operator+(const ChainID &other) const
 {
     return GroupGroupID<CGID,ChainID>(*this, other);
 }
 
+/** Syntactic sugar for operator+ */
+GroupGroupID<CGID,ChainID> CGID::operator&&(const ChainID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with another ID */
 GroupGroupID<CGID,ResID> CGID::operator+(const ResID &other) const
 {
     return GroupGroupID<CGID,ResID>(*this, other);
+}
+
+/** Syntactic sugar for operator+ */
+GroupGroupID<CGID,ResID> CGID::operator&&(const ResID &other) const
+{
+    return this->operator+(other);
+}
+
+/** Return the combination of this ID or 'other' */
+IDSet<CGID> CGID::operator*(const CGID &other) const
+{
+    return IDSet<CGID>(*this, other);
+}
+
+/** Syntactic sugar for operator* */
+IDSet<CGID> CGID::operator||(const CGID &other) const
+{
+    return this->operator*(other);
 }
 
 /** Return the atoms in the matching residues */
@@ -139,6 +181,16 @@ AtomsIn<CGID> CGID::atom(int i) const
 AtomsIn<CGID> CGID::atoms(int i, int j) const
 {
     return AtomsIn<CGID>(*this, i, j);
+}
+
+void CGID::processMatches(QList<CGIdx> &matches, const MolInfo&) const
+{
+    if (matches.isEmpty())
+        throw SireMol::missing_cutgroup( QObject::tr(
+            "There are no CutGroups that match the ID \"%1\" in the passed molecule.")
+                .arg(this->toString()), CODELOC );
+
+    qSort(matches);
 }
 
 /** Return all of the CutGroups from the 'molecules' that match
@@ -252,6 +304,8 @@ CGID::selectAllFrom(const MolGroupsBase &molgroups) const
 //fully instantiate Specify<CGID> and AtomsIn<CGID>
 template class Specify<CGID>;
 template class AtomsIn<CGID>;
+template class IDSet<CGID>;
 
 static const RegisterMetaType< Specify<CGID> > r_specify_cgid;
 static const RegisterMetaType< AtomsIn<CGID> > r_atomsin_cgid;
+static const RegisterMetaType< IDSet<CGID> > r_idset_cgid;

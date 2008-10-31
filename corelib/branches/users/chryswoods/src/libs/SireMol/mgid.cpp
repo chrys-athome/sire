@@ -30,6 +30,7 @@
 #include "mgidx.h"
 #include "mgname.h"
 #include "mgnum.h"
+#include "mgidentifier.h"
 #include "moleculegroups.h"
 
 #include "SireBase/incremint.h"
@@ -58,6 +59,35 @@ MGID::MGID(const MGID &other) : SireID::ID(other)
 
 MGID::~MGID()
 {}
+
+MGMGID MGID::operator+(const MGID &other) const
+{
+    return MGMGID(*this, other);
+}
+
+MGMGID MGID::operator&&(const MGID &other) const
+{
+    return this->operator+(other);
+}
+
+IDSet<MGID> MGID::operator*(const MGID &other) const
+{
+    return IDSet<MGID>(*this, other);
+}
+
+IDSet<MGID> MGID::operator||(const MGID &other) const
+{
+    return this->operator*(other);
+}
+
+void MGID::processMatches(QList<MGNum> &matches, const MolGroupsBase&) const
+{
+    if (matches.isEmpty())
+        throw SireMol::missing_group( QObject::tr(
+                "There is no group in the passed groups that matches "
+                "the ID \"%1\".")
+                    .arg(this->toString()), CODELOC );
+}
 
 ////////
 //////// Implementation of MGIdx
@@ -123,108 +153,134 @@ QList<MGNum> MGNum::map(const MolGroupsBase &molgroups) const
 }
 
 ////////
-//////// Implementation of MGNumList
+//////// Implementation of MGMGID
 ////////
 
-static const RegisterMetaType<MGNumList> r_mgnumlist;
+static const RegisterMetaType<MGMGID> r_mgmgid;
 
 /** Serialise to a binary datastream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MGNumList &mgnumlist)
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MGMGID &mgmgid)
 {
-    writeHeader(ds, r_mgnumlist, 1);
+    writeHeader(ds, r_mgmgid, 1);
     
     SharedDataStream sds(ds);
-    sds << mgnumlist.mgnums;
+    sds << mgmgid.mgid0 << mgmgid.mgid1;
     
     return ds;
 }
 
 /** Extract from a binary datastream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MGNumList &mgnumlist)
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MGMGID &mgmgid)
 {
-    VersionID v = readHeader(ds, r_mgnumlist);
+    VersionID v = readHeader(ds, r_mgmgid);
     
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        sds >> mgnumlist.mgnums;
+        sds >> mgmgid.mgid0 >> mgmgid.mgid1;
     }
     else
-        throw version_error( v, "1", r_mgnumlist, CODELOC );
+        throw version_error( v, "1", r_mgmgid, CODELOC );
         
     return ds;
 }
 
 /** Null constructor */
-MGNumList::MGNumList() : MGID()
+MGMGID::MGMGID() : MGID()
 {}
 
-/** Construct from a passed list of numbers */
-MGNumList::MGNumList(const QList<MGNum> &mgnumbers)
-          : MGID(), mgnums(mgnumbers)
+/** Construct something that will match only groups that
+    match mgid0 and mgid1 */
+MGMGID::MGMGID(const MGID &id0, const MGID &id1)
+       : MGID(), mgid0(id0), mgid1(id1)
 {}
-  
-/** Copy constructor */  
-MGNumList::MGNumList(const MGNumList &other)
-          : MGID(other), mgnums(other.mgnums)
+
+/** Copy constructor */
+MGMGID::MGMGID(const MGMGID &other)
+       : MGID(), mgid0(other.mgid0), mgid1(other.mgid1)
 {}
-  
+
 /** Destructor */
-MGNumList::~MGNumList()
+MGMGID::~MGMGID()
 {}
-    
-bool MGNumList::isNull() const
-{
-    return mgnums.isEmpty();
-}
 
-uint MGNumList::hash() const
+/** Copy assignment operator */
+MGMGID& MGMGID::operator=(const MGMGID &other)
 {
-    if (mgnums.isEmpty())
-        return 0;
-    else
-        return mgnums.first().hash() * mgnums.count();
-}
-
-QString MGNumList::toString() const
-{
-    return QString("MGNumList( %1 )").arg( Sire::toString(mgnums) );
-}
-
-MGNumList& MGNumList::operator=(const MGNumList &other)
-{
-    mgnums = other.mgnums;
-    MGID::operator=(other);
-    
+    mgid0 = other.mgid0;
+    mgid1 = other.mgid1;
     return *this;
 }
 
-bool MGNumList::operator==(const MGNumList &other) const
+/** Comparison operator */
+bool MGMGID::operator==(const MGMGID &other) const
 {
-    return mgnums == other.mgnums;
+    return (mgid0 == other.mgid0 and mgid1 == other.mgid1) or
+           (mgid0 == other.mgid1 and mgid1 == other.mgid0);
 }
 
-bool MGNumList::operator!=(const MGNumList &other) const
+/** Comparison operator */
+bool MGMGID::operator!=(const MGMGID &other) const
 {
-    return mgnums != other.mgnums;
+    return not this->operator==(other);
 }
 
-/** Ensure that all of the numbers exist in 'molgroups'
-
-    \throw SireMol::missing_group
-    \throw SireError::invalid_args
-*/
-QList<MGNum> MGNumList::map(const MolGroupsBase &molgroups) const
+/** Return whether or not this is null */
+bool MGMGID::isNull() const
 {
-    if (mgnums.isEmpty())
-        throw SireError::invalid_arg( QObject::tr(
-            "You cannot pass an empty set of molecule group numbers!"), 
-                CODELOC );
+    return mgid0.isNull() and mgid1.isNull();
+}
 
-    foreach (MGNum mgnum, mgnums)
+/** Hash this MGMGID */
+uint MGMGID::hash() const
+{
+    return mgid0.hash() + mgid1.hash();
+}
+
+/** Return a string representation of this ID */
+QString MGMGID::toString() const
+{
+    if (mgid0.isNull())
     {
-        molgroups.assertContains(mgnum);
+        if (mgid1.isNull())
+        {
+            return QObject::tr("null");
+        }
+        else
+            return mgid1.toString();
     }
+    else
+    {
+        if (mgid1.isNull())
+            return mgid0.toString();
+        else
+            return QObject::tr("%1 and %2")
+                        .arg(mgid0.toString(), mgid1.toString());
+    }
+}
+
+/** Map the two IDs to the list of matching molecule group numbers */
+QList<MGNum> MGMGID::map(const MolGroupsBase &molgroups) const
+{
+    if (mgid0.isNull())
+        return mgid1.map(molgroups);
+    else if (mgid1.isNull())
+        return mgid0.map(molgroups);
+        
+    QList<MGNum> mgnums = MolInfo::intersection( mgid0.map(molgroups),
+                                                 mgid1.map(molgroups) );
+                
+    if (mgnums.isEmpty())
+        throw SireMol::missing_group( QObject::tr(
+            "There is no group matching the ID %1.")
+                .arg(this->toString()), CODELOC );
     
     return mgnums;
 }
+
+///////
+
+template class IDSet<MGID>;
+
+static const RegisterMetaType< IDSet<MGID> > r_idset_mgid;
+

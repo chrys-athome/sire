@@ -36,10 +36,14 @@
 namespace SireMol
 {
 class CGIdentifier;
+class CGIDSet;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMol::CGIdentifier&);
 QDataStream& operator>>(QDataStream&, SireMol::CGIdentifier&);
+
+QDataStream& operator<<(QDataStream&, const SireMol::CGIDSet&);
+QDataStream& operator>>(QDataStream&, SireMol::CGIDSet&);
 
 namespace SireMol
 {

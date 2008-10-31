@@ -89,7 +89,7 @@ public:
     
     uint hash() const
     {
-        return qHash( static_cast<const SireID::Number&>(*this) );
+        return ::qHash( static_cast<const SireID::Number&>(*this) );
     }
     
     QString toString() const

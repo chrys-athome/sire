@@ -98,10 +98,22 @@ SegSegID SegID::operator+(const SegID &other) const
     return SegSegID(*this, other);
 }
 
+/** Syntactic sugar for operator+ */
+SegSegID SegID::operator&&(const SegID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine two ID types */
 GroupAtomID<SegID,AtomID> SegID::operator+(const AtomID &other) const
 {
     return GroupAtomID<SegID,AtomID>(*this, other);
+}
+
+/** Syntactic sugar for operator+ */
+GroupAtomID<SegID,AtomID> SegID::operator&&(const AtomID &other) const
+{
+    return this->operator+(other);
 }
 
 /** Combine two ID types */
@@ -110,16 +122,46 @@ GroupGroupID<SegID,CGID> SegID::operator+(const CGID &other) const
     return GroupGroupID<SegID,CGID>(*this, other);
 }
 
+/** Syntactic sugar for operator+ */
+GroupGroupID<SegID,CGID> SegID::operator&&(const CGID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine two ID types */
 GroupGroupID<SegID,ResID> SegID::operator+(const ResID &other) const
 {
     return GroupGroupID<SegID,ResID>(*this, other);
 }
 
+/** Syntactic sugar for operator+ */
+GroupGroupID<SegID,ResID> SegID::operator&&(const ResID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine two ID types */
 GroupGroupID<SegID,ChainID> SegID::operator+(const ChainID &other) const
 {
     return GroupGroupID<SegID,ChainID>(*this, other);
+}
+
+/** Syntactic sugar for operator+ */
+GroupGroupID<SegID,ChainID> SegID::operator&&(const ChainID &other) const
+{
+    return this->operator+(other);
+}
+
+/** Return the object to search for the match of this or 'other' */
+IDSet<SegID> SegID::operator*(const SegID &other) const
+{
+    return IDSet<SegID>(*this, other);
+}
+
+/** Syntactic sugar for operator* */
+IDSet<SegID> SegID::operator||(const SegID &other) const
+{
+    return this->operator*(other);
 }
 
 /** Return the atoms in the matching residues */
@@ -138,6 +180,16 @@ AtomsIn<SegID> SegID::atom(int i) const
 AtomsIn<SegID> SegID::atoms(int i, int j) const
 {
     return AtomsIn<SegID>(*this, i, j);
+}
+
+void SegID::processMatches(QList<SegIdx> &matches, const MolInfo &molinfo) const
+{
+    if (matches.isEmpty())
+        throw SireMol::missing_segment( QObject::tr(
+            "There are no segments that match the ID \"%1\".")
+                .arg(this->toString()), CODELOC );
+                
+    qSort(matches);
 }
 
 /** Return all of the segments from the 'molecules' that match
@@ -251,7 +303,8 @@ SegID::selectAllFrom(const MolGroupsBase &molgroups) const
 //fully instantiate template classes
 template class Specify<SegID>;
 template class AtomsIn<SegID>;
+template class IDSet<SegID>;
 
 static const RegisterMetaType< Specify<SegID> > r_specify_segid;
 static const RegisterMetaType< AtomsIn<SegID> > r_atomsin_segid;
-
+static const RegisterMetaType< IDSet<SegID> > r_idset_segid;

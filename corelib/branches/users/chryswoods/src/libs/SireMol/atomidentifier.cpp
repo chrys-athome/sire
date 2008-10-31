@@ -46,6 +46,10 @@ using namespace SireMol;
 using namespace SireID;
 using namespace SireStream;
 
+///////////
+/////////// Implementation of AtomIdentifier
+///////////
+
 static const RegisterMetaType<AtomIdentifier> r_atomid;
 
 /** Serialise to a binary datastream */

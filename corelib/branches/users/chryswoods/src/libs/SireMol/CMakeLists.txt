@@ -60,6 +60,7 @@ set ( SIREMOL_HEADERS
       elementdb.h
       errors.h
       evaluator.h
+      idset.hpp
       improperid.h
       groupatomids.h
       groupgroupids.h

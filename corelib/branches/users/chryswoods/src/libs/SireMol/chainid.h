@@ -34,6 +34,7 @@
 #include "specify.hpp"
 #include "atomsin.hpp"
 #include "resin.hpp"
+#include "idset.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -75,6 +76,7 @@ class SIREMOL_EXPORT ChainID : public SireID::ID
 public:
     typedef ChainIdx Index;
     typedef ChainIdentifier Identifier;
+    typedef MolInfo SearchObject;
 
     ChainID();
     ChainID(const ChainID &other);
@@ -90,6 +92,15 @@ public:
     GroupAtomID<ChainID,AtomID> operator+(const AtomID &other) const;
     GroupGroupID<SegID,ChainID> operator+(const SegID &other) const;
     GroupGroupID<CGID,ChainID> operator+(const CGID &other) const;
+
+    ChainChainID operator&&(const ChainID &other) const;
+    ChainResID operator&&(const ResID &other) const;
+    GroupAtomID<ChainID,AtomID> operator&&(const AtomID &other) const;
+    GroupGroupID<SegID,ChainID> operator&&(const SegID &other) const;
+    GroupGroupID<CGID,ChainID> operator&&(const CGID &other) const;
+    
+    IDSet<ChainID> operator*(const ChainID &other) const;
+    IDSet<ChainID> operator||(const ChainID &other) const;
     
     AtomsIn<ChainID> atoms() const;
     AtomsIn<ChainID> atom(int i) const;
@@ -121,6 +132,10 @@ public:
     virtual Chain selectFrom(const MolGroupsBase &molgroups) const;
     virtual QHash< MolNum,Selector<Chain> > 
                     selectAllFrom(const MolGroupsBase &molgroups) const;
+
+protected:
+    void processMatches(QList<ChainIdx> &matches, const MolInfo &molinfo) const;
+
 };
 
 }
@@ -133,16 +148,19 @@ public:
 Q_DECLARE_METATYPE( SireMol::Specify<SireMol::ChainID> );
 Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::ChainID> );
 Q_DECLARE_METATYPE( SireMol::ResIn<SireMol::ChainID> );
+Q_DECLARE_METATYPE( SireMol::IDSet<SireMol::ChainID> );
 
 SIRE_EXPOSE_CLASS( SireMol::ChainID )
 SIRE_EXPOSE_ALIAS( SireMol::Specify<SireMol::ChainID>, SireMol::Specify_ChainID_ )
 SIRE_EXPOSE_ALIAS( SireMol::AtomsIn<SireMol::ChainID>, SireMol::AtomsIn_ChainID_ )
 SIRE_EXPOSE_ALIAS( SireMol::ResIn<SireMol::ChainID>, SireMol::ResIn_ChainID_ )
+SIRE_EXPOSE_ALIAS( SireMol::IDSet<SireMol::ChainID>, SireMol::IDSet_ChainID_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
 template class SireMol::Specify<SireMol::ChainID>;
 template class SireMol::AtomsIn<SireMol::ChainID>;
 template class SireMol::ResIn<SireMol::ChainID>;
+template class SireMol::IDSet<SireMol::ChainID>;
 #endif
 
 SIRE_END_HEADER

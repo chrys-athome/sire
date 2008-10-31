@@ -33,6 +33,7 @@
 
 #include "specify.hpp"
 #include "atomsin.hpp"
+#include "idset.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -74,7 +75,8 @@ class SIREMOL_EXPORT ResID : public SireID::ID
 public:
     typedef ResIdx Index;
     typedef ResIdentifier Identifier;
-
+    typedef MolInfo SearchObject;
+    
     ResID();
 
     ResID(const ResID &other);
@@ -90,6 +92,15 @@ public:
     GroupAtomID<ResID,AtomID> operator+(const AtomID &other) const;
     GroupGroupID<SegID,ResID> operator+(const SegID &other) const;
     GroupGroupID<CGID,ResID> operator+(const CGID &other) const;
+
+    ResResID operator&&(const ResID &other) const;
+    ChainResID operator&&(const ChainID &other) const;
+    GroupAtomID<ResID,AtomID> operator&&(const AtomID &other) const;
+    GroupGroupID<SegID,ResID> operator&&(const SegID &other) const;
+    GroupGroupID<CGID,ResID> operator&&(const CGID &other) const;
+
+    IDSet<ResID> operator*(const ResID &other) const;
+    IDSet<ResID> operator||(const ResID &other) const;
 
     AtomsIn<ResID> atoms() const;
     AtomsIn<ResID> atom(int i) const;
@@ -118,6 +129,8 @@ public:
     virtual QHash< MolNum,Selector<Residue> > 
                 selectAllFrom(const MolGroupsBase &molgroups) const;
 
+protected:
+    void processMatches(QList<ResIdx> &matches, const MolInfo &molinfo) const;
 };
 
 }
@@ -128,17 +141,19 @@ public:
 
 Q_DECLARE_METATYPE( SireMol::Specify<SireMol::ResID> );
 Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::ResID> );
+Q_DECLARE_METATYPE( SireMol::IDSet<SireMol::ResID> );
 
 SIRE_EXPOSE_CLASS( SireMol::ResID )
 SIRE_EXPOSE_ALIAS( SireMol::Specify<SireMol::ResID>, SireMol::Specify_ResID_ )
 SIRE_EXPOSE_ALIAS( SireMol::AtomsIn<SireMol::ResID>, SireMol::AtomsIn_ResID_ )
+SIRE_EXPOSE_ALIAS( SireMol::IDSet<SireMol::ResID>, SireMol::IDSet_ResID_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
 template class SireMol::Specify<SireMol::ResID>;
 template class SireMol::AtomsIn<SireMol::ResID>;
+template class SireMol::IDSet<SireMol::ResID>;
 #endif
 
 SIRE_END_HEADER
 
 #endif
-

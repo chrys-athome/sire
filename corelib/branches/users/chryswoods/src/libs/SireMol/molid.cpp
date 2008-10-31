@@ -100,10 +100,42 @@ MolMolID MolID::operator+(const MolID &other) const
     return MolMolID(*this, other);
 }
 
+/** Syntactic sugar for operator+ */
+MolMolID MolID::operator&&(const MolID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Search for matching atoms in the matching molecules */
 MolAtomID MolID::operator+(const AtomID &other) const
 {
     return MolAtomID(*this, other);
+}
+
+/** Syntactic sugar for operator+ */
+MolAtomID MolID::operator&&(const AtomID &other) const
+{
+    return this->operator+(other);
+}
+
+/** Search for matching molecules using this ID, or other */
+IDSet<MolID> MolID::operator*(const MolID &other) const
+{
+    return IDSet<MolID>(*this, other);
+}
+
+/** Syntactic sugar for operator* */
+IDSet<MolID> MolID::operator||(const MolID &other) const
+{
+    return this->operator*(other);
+}
+
+void MolID::processMatches(QList<MolNum> &matches, const Molecules &mols) const
+{
+    if (matches.isEmpty())
+        throw SireMol::missing_molecule( QObject::tr(
+            "There were no molecules that matched the ID \"%1\".")
+                .arg(this->toString()), CODELOC );
 }
 
 ///////
@@ -327,153 +359,264 @@ QList<MolNum> MolName::map(const MolGroupsBase &molgroups) const
     return molgroups.map(*this);
 }
 
-///////
-/////// Implementation of MolNumList
-///////
-
-static const RegisterMetaType<MolNumList> r_molnums;
-
-/** Serialise to a binary datastream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MolNumList &molnums)
-{
-    writeHeader(ds, r_molnums, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << molnums.molnums;
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MolNumList &molnums)
-{
-    VersionID v = readHeader(ds, r_molnums);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        sds >> molnums.molnums;
-    }
-    else
-        throw version_error( v, "1", r_molnums, CODELOC );
-        
-    return ds;
-}
+//////
+////// Implementation of IDSet<MolID>
+//////
 
 /** Null constructor */
-MolNumList::MolNumList() : MolID()
+IDSet<MolID>::IDSet() : MolID()
 {}
 
-/** Construct from a passed list of numbers */
-MolNumList::MolNumList(const QList<MolNum> &molnumbers)
-          : MolID(), molnums(molnumbers)
-{}
-  
-/** Copy constructor */  
-MolNumList::MolNumList(const MolNumList &other)
-          : MolID(other), molnums(other.molnums)
-{}
-  
-/** Destructor */
-MolNumList::~MolNumList()
-{}
-    
-bool MolNumList::isNull() const
+/** Add the passed ID to the list */
+void IDSet<MolID>::add(const MolID &id)
 {
-    return molnums.isEmpty();
-}
+    if (id.isNull())
+        return;
 
-uint MolNumList::hash() const
-{
-    if (molnums.isEmpty())
-        return 0;
+    else if (id.isA<MolIdentifier>())
+    {
+        this->add(id.asA<MolIdentifier>().base());
+    }
+    else if (id.isA< IDSet<MolID> >())
+        ids += id.asA< IDSet<MolID> >().ids;
     else
-        return molnums.first().hash() * molnums.count();
+        ids.insert( MolIdentifier(id) );
 }
 
-QString MolNumList::toString() const
+/** Construct from the passed ID */
+IDSet<MolID>::IDSet(const MolID &id) : MolID()
 {
-    return QString("MolNumList( %1 )").arg( Sire::toString(molnums) );
+    this->add(id);
 }
 
-MolNumList& MolNumList::operator=(const MolNumList &other)
+/** Construct from the passed IDs */
+IDSet<MolID>::IDSet(const MolID &id0, const MolID &id1) : MolID()
 {
-    molnums = other.molnums;
-    MolID::operator=(other);
+    this->add(id0);
+    this->add(id1);
+}
+
+/** Construct from the passed list of IDs */
+IDSet<MolID>::IDSet(const QList<MolIdentifier> &new_ids) : MolID()
+{
+    for (QList<MolIdentifier>::const_iterator it = new_ids.constBegin();
+         it != new_ids.constEnd();
+         ++it)
+    {
+        this->add(it->base());
+    }
+}
+
+/** Copy constructor */
+IDSet<MolID>::IDSet(const IDSet &other) : MolID(other), ids(other.ids)
+{}
+
+/** Destructor */
+IDSet<MolID>::~IDSet()
+{}
+
+/** Is this selection null? */
+bool IDSet<MolID>::isNull() const
+{
+    return ids.isEmpty();
+}
+
+/** Return a hash of this identifier */
+uint IDSet<MolID>::hash() const
+{
+    uint h = 0;
+    
+    for (QSet<MolIdentifier>::const_iterator it = ids.constBegin();
+         it != ids.constEnd();
+         ++it)
+    {
+        h += it->hash();
+    }
+    
+    return h;
+}
+            
+/** Return a string representatio of this ID */
+QString IDSet<MolID>::toString() const
+{
+    if (ids.isEmpty())
+        return QObject::tr("null");
+    else
+    {
+        QStringList idstrings;
+        
+        for (QSet<MolIdentifier>::const_iterator it = ids.constBegin();
+             it != ids.constEnd();
+             ++it)
+        {
+            idstrings.append( it->toString() );
+        }
+    
+        return idstrings.join( QObject::tr(" and ") );
+    }
+}
+
+/** Return all of the IDs in this set */
+const QSet<MolIdentifier>& IDSet<MolID>::IDs() const
+{
+    return ids;
+}
+
+/** Copy assignment operator */
+IDSet<MolID>& IDSet<MolID>::operator=(const IDSet<MolID> &other)
+{
+    ids = other.ids;
+    return *this;
+}
+
+/** Copy assignment operator */
+IDSet<MolID>& IDSet<MolID>::operator=(const MolID &other)
+{
+    ids.clear();
+    this->add(other);
     
     return *this;
 }
 
-bool MolNumList::operator==(const MolNumList &other) const
+/** Comparison operator */
+bool IDSet<MolID>::operator==(const SireID::ID &other) const
 {
-    return molnums == other.molnums;
+    return SireID::ID::compare< IDSet<MolID> >(*this, other);
 }
 
-bool MolNumList::operator!=(const MolNumList &other) const
+/** Comparison operator */
+bool IDSet<MolID>::operator==(const IDSet<MolID> &other) const
 {
-    return molnums != other.molnums;
+    return ids == other.ids;
 }
 
-/** Ensure that all of the numbers exist in 'molecules'
+/** Comparison operator */
+bool IDSet<MolID>::operator!=(const IDSet<MolID> &other) const
+{
+    return ids != other.ids;
+}
+
+/** Comparison operator */
+bool IDSet<MolID>::operator==(const MolID &other) const
+{
+    return this->operator==( IDSet<MolID>(other) );
+}
+
+/** Comparison operator */
+bool IDSet<MolID>::operator!=(const MolID &other) const
+{
+    return this->operator!=( IDSet<MolID>(other) );
+}
+
+QList<MolNum> IDSet<MolID>::process(QList<MolNum> molnums) const
+{
+    
+    QSet<MolNum> set;
+    set.reserve(molnums.count());
+    
+    QMutableListIterator<MolNum> it(molnums);
+    
+    while (it.hasNext())
+    {
+        it.next();
+    
+        if (set.contains(it.value()))
+            it.remove();
+        else
+            set.insert(it.value());
+    }
+
+    if (molnums.isEmpty())
+        throw SireMol::missing_molecule( QObject::tr(
+            "There are no molecules that match the ID \"%1\".")
+                .arg(this->toString()), CODELOC );
+
+    return molnums;
+}
+
+/** Map this ID to the list of indicies that match this ID
 
     \throw SireMol::missing_molecule
-    \throw SireError::invalid_arg
+    \throw SireError::invalid_index
 */
-QList<MolNum> MolNumList::map(const Molecules &molecules) const
+QList<MolNum> IDSet<MolID>::map(const Molecules &mols) const
 {
-    if (molnums.isEmpty())
-        throw SireError::invalid_arg( QObject::tr(
-            "You cannot pass an empty set of molecule numbers!"), 
-                CODELOC );
-
-    foreach (MolNum molnum, molnums)
+    if (ids.isEmpty())
+        return MolIdentifier().map(mols);
+        
+    QList<MolNum> molnums;
+        
+    for (QSet<MolIdentifier>::const_iterator it = ids.constBegin();
+         it != ids.constEnd();
+         ++it)
     {
-        if (not molecules.contains(molnum))
-            throw SireMol::missing_molecule( QObject::tr(
-                "There is no molecule with number %1 in the set of molecules.")
-                    .arg(molnum.toString()), CODELOC );
+        try
+        {
+            molnums += it->map(mols);
+        }
+        catch(...)
+        {
+            //no match
+        }
     }
-    
-    return molnums;
+
+    return this->process(molnums);
 }
 
-/** Ensure that all of the numbers exist in 'molgroup'
+/** Map this ID to the list of indicies that match this ID
 
     \throw SireMol::missing_molecule
-    \throw SireError::invalid_arg
+    \throw SireError::invalid_index
 */
-QList<MolNum> MolNumList::map(const MoleculeGroup &molgroup) const
+QList<MolNum> IDSet<MolID>::map(const MoleculeGroup &molgroup) const
 {
-    if (molnums.isEmpty())
-        throw SireError::invalid_arg( QObject::tr(
-            "You cannot pass an empty set of molecule numbers!"), 
-                CODELOC );
-
-    foreach (MolNum molnum, molnums)
+    if (ids.isEmpty())
+        return MolIdentifier().map(molgroup);
+        
+    QList<MolNum> molnums;
+        
+    for (QSet<MolIdentifier>::const_iterator it = ids.constBegin();
+         it != ids.constEnd();
+         ++it)
     {
-        molgroup.assertContains(molnum);
+        try
+        {
+            molnums += it->map(molgroup);
+        }
+        catch(...)
+        {
+            //no match
+        }
     }
-    
-    return molnums;
+
+    return this->process(molnums);
 }
 
-/** Ensure that all of the numbers exist in 'molgroups'
+/** Map this ID to the list of indicies that match this ID
 
-    \throw SireMol::missing_group
-    \throw SireError::invalid_arg
+    \throw SireMol::missing_molecule
+    \throw SireError::invalid_index
 */
-QList<MolNum> MolNumList::map(const MolGroupsBase &molgroups) const
+QList<MolNum> IDSet<MolID>::map(const MolGroupsBase &molgroups) const
 {
-    if (molnums.isEmpty())
-        throw SireError::invalid_arg( QObject::tr(
-            "You cannot pass an empty set of molecule numbers!"), 
-                CODELOC );
-
-    foreach (MolNum molnum, molnums)
+    if (ids.isEmpty())
+        return MolIdentifier().map(molgroups);
+        
+    QList<MolNum> molnums;
+        
+    for (QSet<MolIdentifier>::const_iterator it = ids.constBegin();
+         it != ids.constEnd();
+         ++it)
     {
-        molgroups.assertContains(molnum);
+        try
+        {
+            molnums += it->map(molgroups);
+        }
+        catch(...)
+        {
+            //no match
+        }
     }
-    
-    return molnums;
+
+    return this->process(molnums);
 }

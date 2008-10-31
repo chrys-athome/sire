@@ -32,14 +32,12 @@
 #include "SireID/id.h"
 
 #include "specify.hpp"
+#include "idset.hpp"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
-
-template<class ID>
-class Specify;
 
 template<class T>
 class Selector;
@@ -74,6 +72,7 @@ class SIREMOL_EXPORT AtomID : public SireID::ID
 public:
     typedef AtomIdx Index;
     typedef AtomIdentifier Identifier;
+    typedef MolInfo SearchObject;
 
     AtomID();
     AtomID(const AtomID &other);
@@ -90,6 +89,17 @@ public:
     GroupAtomID<ChainID,AtomID> operator+(const ChainID &other) const;
     GroupAtomID<SegID,AtomID> operator+(const SegID &other) const;
     MolAtomID operator+(const MolID &other) const;
+
+    IDSet<AtomID> operator*(const AtomID &other) const;
+    
+    AtomAtomID operator&&(const AtomID &other) const;
+    GroupAtomID<CGID,AtomID> operator&&(const CGID &other) const;
+    GroupAtomID<ResID,AtomID> operator&&(const ResID &other) const;
+    GroupAtomID<ChainID,AtomID> operator&&(const ChainID &other) const;
+    GroupAtomID<SegID,AtomID> operator&&(const SegID &other) const;
+    MolAtomID operator&&(const MolID &other) const;
+
+    IDSet<AtomID> operator||(const AtomID &other) const;
 
     static const char* typeName()
     {
@@ -113,6 +123,9 @@ public:
     virtual Atom selectFrom(const MolGroupsBase &molgroups) const;
     virtual QHash< MolNum,Selector<Atom> > 
                 selectAllFrom(const MolGroupsBase &molgroups) const;
+
+protected:
+    void processMatches(QList<AtomIdx> &matches, const MolInfo &molinfo) const;
 };
 
 }
@@ -120,12 +133,15 @@ public:
 #include "atomidentifier.h"
 
 Q_DECLARE_METATYPE( SireMol::Specify<SireMol::AtomID> );
+Q_DECLARE_METATYPE( SireMol::IDSet<SireMol::AtomID> );
 
 SIRE_EXPOSE_CLASS( SireMol::AtomID )
 SIRE_EXPOSE_ALIAS( SireMol::Specify<SireMol::AtomID>, SireMol::Specify_AtomID_ )
+SIRE_EXPOSE_ALIAS( SireMol::IDSet<SireMol::AtomID>, SireMol::IDSet_AtomID_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
 template class SireMol::Specify<SireMol::AtomID>;
+template class SireMol::IDSet<SireMol::AtomID>;
 #endif
 
 SIRE_END_HEADER

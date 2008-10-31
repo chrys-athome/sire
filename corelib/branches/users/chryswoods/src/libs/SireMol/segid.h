@@ -33,6 +33,7 @@
 
 #include "atomsin.hpp"
 #include "specify.hpp"
+#include "idset.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -73,6 +74,7 @@ class SIREMOL_EXPORT SegID : public SireID::ID
 public:
     typedef SegIdx Index;
     typedef SegIdentifier Identifier;
+    typedef MolInfo SearchObject;
 
     SegID();
 
@@ -89,6 +91,15 @@ public:
     GroupGroupID<SegID,CGID> operator+(const CGID &other) const;
     GroupGroupID<SegID,ResID> operator+(const ResID &other) const;
     GroupGroupID<SegID,ChainID> operator+(const ChainID &other) const;
+
+    SegSegID operator&&(const SegID &other) const;
+    GroupAtomID<SegID,AtomID> operator&&(const AtomID &other) const;
+    GroupGroupID<SegID,CGID> operator&&(const CGID &other) const;
+    GroupGroupID<SegID,ResID> operator&&(const ResID &other) const;
+    GroupGroupID<SegID,ChainID> operator&&(const ChainID &other) const;
+
+    IDSet<SegID> operator*(const SegID &other) const;
+    IDSet<SegID> operator||(const SegID &other) const;
 
     AtomsIn<SegID> atoms() const;
     AtomsIn<SegID> atom(int i) const;
@@ -117,6 +128,8 @@ public:
     virtual QHash< MolNum,Selector<Segment> > 
                 selectAllFrom(const MolGroupsBase &molgroups) const;
 
+protected:
+    void processMatches(QList<SegIdx> &matches, const MolInfo &molinfo) const;
 };
 
 }
@@ -127,14 +140,17 @@ public:
 
 Q_DECLARE_METATYPE( SireMol::Specify<SireMol::SegID> );
 Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::SegID> );
+Q_DECLARE_METATYPE( SireMol::IDSet<SireMol::SegID> );
 
 SIRE_EXPOSE_CLASS( SireMol::SegID )
 SIRE_EXPOSE_ALIAS( SireMol::Specify<SireMol::SegID>, SireMol::Specify_SegID_ )
 SIRE_EXPOSE_ALIAS( SireMol::AtomsIn<SireMol::SegID>, SireMol::AtomsIn_SegID_ )
+SIRE_EXPOSE_ALIAS( SireMol::IDSet<SireMol::SegID>, SireMol::IDSet_SegID_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
 template class SireMol::Specify<SireMol::SegID>;
 template class SireMol::AtomsIn<SireMol::SegID>;
+template class SireMol::IDSet<SireMol::SegID>;
 #endif
 
 SIRE_END_HEADER

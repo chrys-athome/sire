@@ -79,10 +79,22 @@ ChainChainID ChainID::operator+(const ChainID &other) const
     return ChainChainID(*this, other);
 }
 
+/** Syntactic sugar for operator+ */
+ChainChainID ChainID::operator&&(const ChainID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with another ID object */
 ChainResID ChainID::operator+(const ResID &other) const
 {
     return ChainResID(*this, other);
+}
+
+/** Syntactic sugar for operator+ */
+ChainResID ChainID::operator&&(const ResID &other) const
+{
+    return this->operator+(other);
 }
 
 /** Combine with another ID object */
@@ -91,16 +103,46 @@ GroupAtomID<ChainID,AtomID> ChainID::operator+(const AtomID &other) const
     return GroupAtomID<ChainID,AtomID>(*this, other);
 }
 
+/** Syntactic sugar for operator+ */
+GroupAtomID<ChainID,AtomID> ChainID::operator&&(const AtomID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with another ID object */
 GroupGroupID<SegID,ChainID> ChainID::operator+(const SegID &other) const
 {
     return GroupGroupID<SegID,ChainID>(other, *this);
 }
 
+/** Syntactic sugar for operator+ */
+GroupGroupID<SegID,ChainID> ChainID::operator&&(const SegID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with another ID object */
 GroupGroupID<CGID,ChainID> ChainID::operator+(const CGID &other) const
 {
     return GroupGroupID<CGID,ChainID>(other, *this);
+}
+
+/** Syntactic sugar for operator+ */
+GroupGroupID<CGID,ChainID> ChainID::operator&&(const CGID &other) const
+{
+    return this->operator+(other);
+}
+
+/** Return the combination of this ID or other */
+IDSet<ChainID> ChainID::operator*(const ChainID &other) const
+{
+    return IDSet<ChainID>(*this, other);
+}
+
+/** Syntactic sugar for operator* */
+IDSet<ChainID> ChainID::operator||(const ChainID &other) const
+{
+    return this->operator*(other);
 }
 
 /** Return the atoms in the matching residues */
@@ -155,6 +197,16 @@ Specify<ChainID> ChainID::operator()(int i) const
 Specify<ChainID> ChainID::operator()(int i, int j) const
 {
     return Specify<ChainID>(*this, i, j);
+}
+
+void ChainID::processMatches(QList<ChainIdx> &matches, const MolInfo&) const
+{
+    if (matches.isEmpty())
+        throw SireMol::missing_chain( QObject::tr(
+            "There are no chains that match the ID \"%1\" in the passed molecule.")
+                .arg(this->toString()), CODELOC );
+
+    qSort(matches);
 }
 
 /** Return all of the chains from the 'molecules' that match
@@ -269,7 +321,9 @@ ChainID::selectAllFrom(const MolGroupsBase &molgroups) const
 template class Specify<ChainID>;
 template class AtomsIn<ChainID>;
 template class ResIn<ChainID>;
+template class IDSet<ChainID>;
 
 static const RegisterMetaType< Specify<ChainID> > r_specify_chainid;
 static const RegisterMetaType< AtomsIn<ChainID> > r_atomsin_chainid;
 static const RegisterMetaType< ResIn<ChainID> > r_resin_chainid;
+static const RegisterMetaType< IDSet<ChainID> > r_idset_chainid;
