@@ -32,7 +32,6 @@
 #include "SireID/number.h"
 
 #include "resid.h"
-#include "molinfo.h"
 
 SIRE_BEGIN_HEADER
 
@@ -41,8 +40,8 @@ namespace SireMol
 class ResNum;
 }
 
-XMLStream& operator<<(XMLStream&, const SireMol::ResNum&);
-XMLStream& operator>>(XMLStream&, SireMol::ResNum&);
+QDataStream& operator<<(QDataStream&, const SireMol::ResNum&);
+QDataStream& operator>>(QDataStream&, SireMol::ResNum&);
 
 namespace SireMol
 {
@@ -55,8 +54,8 @@ namespace SireMol
 class SIREMOL_EXPORT ResNum : public SireID::Number, public ResID
 {
 
-friend XMLStream& ::operator<<(XMLStream&, const ResNum&);
-friend XMLStream& ::operator>>(XMLStream&, ResNum&);
+friend QDataStream& ::operator<<(QDataStream&, const ResNum&);
+friend QDataStream& ::operator>>(QDataStream&, ResNum&);
 
 public:
     ResNum() : SireID::Number(), ResID()
@@ -123,10 +122,7 @@ public:
         return _num != other._num;
     }
 
-    QList<ResIdx> map(const MolInfo &molinfo) const
-    {
-        return molinfo.map(*this);
-    }
+    QList<ResIdx> map(const MolInfo &molinfo) const;
 };
 
 }

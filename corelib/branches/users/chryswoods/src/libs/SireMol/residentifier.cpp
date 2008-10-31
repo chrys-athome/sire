@@ -27,6 +27,9 @@
 \*********************************************/
 
 #include "residentifier.h"
+#include "residx.h"
+#include "resnum.h"
+#include "resname.h"
 #include "molinfo.h"
 
 #include "SireStream/datastream.h"
@@ -200,4 +203,112 @@ QList<ResIdx> ResIdentifier::map(const MolInfo &molinfo) const
         return molinfo.getResidues();
     else
         return d->map(molinfo);
+}
+
+///////
+/////// Implementation of ResIdx
+///////
+
+static const RegisterMetaType<ResIdx> r_residx;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const ResIdx &residx)
+{
+    writeHeader(ds, r_residx, 1);
+    
+    ds << static_cast<const SireID::Index_T_<ResIdx>&>(residx);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ResIdx &residx)
+{
+    VersionID v = readHeader(ds, r_residx);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Index_T_<ResIdx>&>(residx);
+    }
+    else
+        throw version_error( v, "1", r_residx, CODELOC );
+        
+    return ds;
+}
+
+QList<ResIdx> ResIdx::map(const MolInfo &molinfo) const
+{
+    return molinfo.map(*this);
+}
+
+///////
+/////// Implementation of ResName
+///////
+
+static const RegisterMetaType<ResName> r_resname;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const ResName &resname)
+{
+    writeHeader(ds, r_resname, 1);
+    
+    ds << static_cast<const SireID::Name&>(resname);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ResName &resname)
+{
+    VersionID v = readHeader(ds, r_resname);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Name&>(resname);
+    }
+    else
+        throw version_error( v, "1", r_resname, CODELOC );
+        
+    return ds;
+}
+
+QList<ResIdx> ResName::map(const MolInfo &molinfo) const
+{
+    return molinfo.map(*this);
+}
+
+///////
+/////// Implementation of ResNum
+///////
+
+static const RegisterMetaType<ResNum> r_resnum;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const ResNum &resnum)
+{
+    writeHeader(ds, r_resnum, 1);
+    
+    ds << static_cast<const SireID::Number&>(resnum);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ResNum &resnum)
+{
+    VersionID v = readHeader(ds, r_resnum);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Number&>(resnum);
+    }
+    else
+        throw version_error( v, "1", r_resnum, CODELOC );
+        
+    return ds;
+}
+
+QList<ResIdx> ResNum::map(const MolInfo &molinfo) const
+{
+    return molinfo.map(*this);
 }

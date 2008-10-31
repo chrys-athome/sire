@@ -55,6 +55,8 @@
 
 #include "SireMol/errors.h"
 
+#include "SireStream/datastream.h"
+
 #include "tostring.h"
 
 using namespace SireMol;
@@ -249,3 +251,7 @@ SegID::selectAllFrom(const MolGroupsBase &molgroups) const
 //fully instantiate template classes
 template class Specify<SegID>;
 template class AtomsIn<SegID>;
+
+static const RegisterMetaType< Specify<SegID> > r_specify_segid;
+static const RegisterMetaType< AtomsIn<SegID> > r_atomsin_segid;
+

@@ -28,10 +28,47 @@
 
 #include "mgidentifier.h"
 #include "mgnum.h"
+#include "mgidx.h"
+#include "mgname.h"
 #include "moleculegroups.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/streampolypointer.hpp"
 
 using namespace SireMol;
 using namespace SireID;
+using namespace SireStream;
+
+//////////
+////////// Implementation of MGIdentifier
+//////////
+
+static const RegisterMetaType<MGIdentifier> r_mgid;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MGIdentifier &mgid)
+{
+    writeHeader(ds, r_mgid, 1);
+    
+    SireStream::savePolyPointer(ds, mgid.d);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MGIdentifier &mgid)
+{
+    VersionID v = readHeader(ds, r_mgid);
+    
+    if (v == 1)
+    {
+        SireStream::loadPolyPointer(ds, mgid.d);
+    }
+    else
+        throw version_error( v, "1", r_mgid, CODELOC );
+        
+    return ds;
+}
 
 /** Null constructor */
 MGIdentifier::MGIdentifier() : MGID()
@@ -161,4 +198,97 @@ bool MGIdentifier::operator!=(const MGID &other) const
         return this->operator!=(other.asA<MGIdentifier>());
     else
         return d->operator!=(other);
+}
+
+//////////
+////////// Implementation of MGIdx
+//////////
+
+static const RegisterMetaType<MGIdx> r_mgidx;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MGIdx &mgidx)
+{
+    writeHeader(ds, r_mgidx, 1);
+    
+    ds << static_cast<const SireID::Index_T_<MGIdx>&>(mgidx);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MGIdx &mgidx)
+{
+    VersionID v = readHeader(ds, r_mgidx);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Index_T_<MGIdx>&>(mgidx);
+    }
+    else
+        throw version_error( v, "1", r_mgidx, CODELOC );
+        
+    return ds;
+}
+
+//////////
+////////// Implementation of MGNum
+//////////
+
+static const RegisterMetaType<MGNum> r_mgnum;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MGNum &mgnum)
+{
+    writeHeader(ds, r_mgnum, 1);
+    
+    ds << static_cast<const SireID::Number&>(mgnum);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MGNum &mgnum)
+{
+    VersionID v = readHeader(ds, r_mgnum);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Number&>(mgnum);
+    }
+    else
+        throw version_error( v, "1", r_mgnum, CODELOC );
+        
+    return ds;
+}
+
+//////////
+////////// Implementation of MGName
+//////////
+
+static const RegisterMetaType<MGName> r_mgname;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MGName &mgname)
+{
+    writeHeader(ds, r_mgname, 1);
+    
+    ds << static_cast<const SireID::Name&>(mgname);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MGName &mgname)
+{
+    VersionID v = readHeader(ds, r_mgname);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Name&>(mgname);
+    }
+    else
+        throw version_error( v, "1", r_mgname, CODELOC );
+        
+    return ds;
 }

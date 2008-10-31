@@ -35,6 +35,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+class ResResID;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::ResResID&);
+QDataStream& operator>>(QDataStream&, SireMol::ResResID&);
+
+namespace SireMol
+{
 
 /** This class holds a pair of ResIDs, which are used together
     to identify atom(s)
@@ -43,6 +51,10 @@ namespace SireMol
 */
 class SIREMOL_EXPORT ResResID : public ResID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const ResResID&);
+friend QDataStream& ::operator>>(QDataStream&, ResResID&);
+
 public:
     ResResID();
     

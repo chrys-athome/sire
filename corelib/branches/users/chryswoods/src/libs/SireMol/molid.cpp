@@ -51,10 +51,14 @@
 #include "SireMol/errors.h"
 #include "SireError/errors.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 #include "tostring.h"
 
 using namespace SireMol;
 using namespace SireBase;
+using namespace SireStream;
 
 ///////
 /////// Implementation of MolID
@@ -106,6 +110,33 @@ MolAtomID MolID::operator+(const AtomID &other) const
 /////// Implementation of MolIdx
 ///////
 
+static const RegisterMetaType<MolIdx> r_molidx;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MolIdx &molidx)
+{
+    writeHeader(ds, r_molidx, 1);
+    
+    ds << static_cast<const SireID::Index_T_<MolIdx>&>(molidx);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MolIdx &molidx)
+{
+    VersionID v = readHeader(ds, r_molidx);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Index_T_<MolIdx>&>(molidx);
+    }
+    else
+        throw version_error( v, "1", r_molidx, CODELOC );
+        
+    return ds;
+}
+
 MolIdx::MolIdx() : SireID::Index_T_<MolIdx>(), MolID()
 {}
 
@@ -154,6 +185,33 @@ QList<MolNum> MolIdx::map(const MolGroupsBase &molgroups) const
 /////// Implementation of MolNum
 ///////
 
+static const RegisterMetaType<MolNum> r_molnum;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MolNum &molnum)
+{
+    writeHeader(ds, r_molnum, 1);
+    
+    ds << static_cast<const SireID::Number&>(molnum);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MolNum &molnum)
+{
+    VersionID v = readHeader(ds, r_molnum);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Number&>(molnum);
+    }
+    else
+        throw version_error( v, "1", r_molnum, CODELOC );
+        
+    return ds;
+}
+
 MolNum::MolNum() : SireID::Number(), MolID()
 {}
 
@@ -200,6 +258,33 @@ QList<MolNum> MolNum::map(const MolGroupsBase &molgroups) const
 /////// Implementation of MolName
 ///////
 
+static const RegisterMetaType<MolName> r_molname;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MolName &molname)
+{
+    writeHeader(ds, r_molname, 1);
+    
+    ds << static_cast<const SireID::Name&>(molname);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MolName &molname)
+{
+    VersionID v = readHeader(ds, r_molname);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Name&>(molname);
+    }
+    else
+        throw version_error( v, "1", r_molname, CODELOC );
+        
+    return ds;
+}
+
 MolName::MolName() : SireID::Name(), MolID()
 {}
 
@@ -245,6 +330,36 @@ QList<MolNum> MolName::map(const MolGroupsBase &molgroups) const
 ///////
 /////// Implementation of MolNumList
 ///////
+
+static const RegisterMetaType<MolNumList> r_molnums;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MolNumList &molnums)
+{
+    writeHeader(ds, r_molnums, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << molnums.molnums;
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MolNumList &molnums)
+{
+    VersionID v = readHeader(ds, r_molnums);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        sds >> molnums.molnums;
+    }
+    else
+        throw version_error( v, "1", r_molnums, CODELOC );
+        
+    return ds;
+}
 
 /** Null constructor */
 MolNumList::MolNumList() : MolID()

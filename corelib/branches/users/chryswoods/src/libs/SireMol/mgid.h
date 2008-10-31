@@ -35,6 +35,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+class MGNumList;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::MGNumList&);
+QDataStream& operator>>(QDataStream&, SireMol::MGNumList&);
+
+namespace SireMol
+{
 
 class MGIdx;
 class MGIdentifier;
@@ -71,6 +79,10 @@ public:
 
 class SIREMOL_EXPORT MGNumList : public MGID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const MGNumList&);
+friend QDataStream& ::operator>>(QDataStream&, MGNumList&);
+
 public:
     MGNumList();
     MGNumList(const QList<MGNum> &mgnums);
@@ -81,7 +93,7 @@ public:
     
     static const char* typeName()
     {
-        return "SireMol::MGNumList";
+        return QMetaType::typeName( qMetaTypeId<MGNumList>() );
     }
     
     const char* what() const
@@ -119,7 +131,10 @@ private:
 
 }
 
+Q_DECLARE_METATYPE( SireMol::MGNumList )
+
 SIRE_EXPOSE_CLASS( SireMol::MGID )
+SIRE_EXPOSE_CLASS( SireMol::MGNumList )
 
 SIRE_END_HEADER
 

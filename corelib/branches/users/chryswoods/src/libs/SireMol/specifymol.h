@@ -38,6 +38,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+class SpecifyMol;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::SpecifyMol&);
+QDataStream& operator>>(QDataStream&, SireMol::SpecifyMol&);
+
+namespace SireMol
+{
 
 /** This class allow for the specification of specific
     matching molecules
@@ -46,6 +54,10 @@ namespace SireMol
 */
 class SIREMOL_EXPORT SpecifyMol : public MolID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const SpecifyMol&);
+friend QDataStream& ::operator>>(QDataStream&, SpecifyMol&);
+
 public:
     SpecifyMol();
     SpecifyMol(const MolID &molid);

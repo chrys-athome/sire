@@ -37,10 +37,14 @@
 #include "SireMol/errors.h"
 #include "SireError/errors.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 #include "tostring.h"
 
 using namespace SireMol;
 using namespace SireBase;
+using namespace SireStream;
 
 ////////
 //////// Implementation of MGID
@@ -121,6 +125,35 @@ QList<MGNum> MGNum::map(const MolGroupsBase &molgroups) const
 ////////
 //////// Implementation of MGNumList
 ////////
+
+static const RegisterMetaType<MGNumList> r_mgnumlist;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MGNumList &mgnumlist)
+{
+    writeHeader(ds, r_mgnumlist, 1);
+    
+    SharedDataStream sds(ds);
+    sds << mgnumlist.mgnums;
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MGNumList &mgnumlist)
+{
+    VersionID v = readHeader(ds, r_mgnumlist);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        sds >> mgnumlist.mgnums;
+    }
+    else
+        throw version_error( v, "1", r_mgnumlist, CODELOC );
+        
+    return ds;
+}
 
 /** Null constructor */
 MGNumList::MGNumList() : MGID()

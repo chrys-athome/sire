@@ -35,6 +35,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+class MolNumList;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::MolNumList&);
+QDataStream& operator>>(QDataStream&, SireMol::MolNumList&);
+
+namespace SireMol
+{
 
 class MolIdx;
 class MolIdentifier;
@@ -89,6 +97,10 @@ public:
 
 class SIREMOL_EXPORT MolNumList : public MolID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const MolNumList&);
+friend QDataStream& ::operator>>(QDataStream&, MolNumList&);
+
 public:
     MolNumList();
     MolNumList(const QList<MolNum> &molnums);
@@ -99,7 +111,7 @@ public:
     
     static const char* typeName()
     {
-        return "SireMol::MolNumList";
+        return QMetaType::typeName( qMetaTypeId<MolNumList>() );
     }
     
     const char* what() const
@@ -139,7 +151,10 @@ private:
 
 }
 
+Q_DECLARE_METATYPE( SireMol::MolNumList )
+
 SIRE_EXPOSE_CLASS( SireMol::MolID )
+SIRE_EXPOSE_CLASS( SireMol::MolNumList )
 
 SIRE_END_HEADER
 

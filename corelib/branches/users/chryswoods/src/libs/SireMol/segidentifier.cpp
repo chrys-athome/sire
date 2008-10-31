@@ -28,6 +28,7 @@
 
 #include "segidentifier.h"
 #include "segidx.h"
+#include "segname.h"
 #include "molinfo.h"
 
 #include "SireStream/datastream.h"
@@ -201,4 +202,76 @@ QList<SegIdx> SegIdentifier::map(const MolInfo &molinfo) const
         return molinfo.getSegments();
     else
         return d->map(molinfo);
+}
+
+///////
+/////// Implementation of SegIdx
+///////
+
+static const RegisterMetaType<SegIdx> r_segidx;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const SegIdx &segidx)
+{
+    writeHeader(ds, r_segidx, 1);
+    
+    ds << static_cast<const SireID::Index_T_<SegIdx>&>(segidx);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, SegIdx &segidx)
+{
+    VersionID v = readHeader(ds, r_segidx);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Index_T_<SegIdx>&>(segidx);
+    }
+    else
+        throw version_error( v, "1", r_segidx, CODELOC );
+        
+    return ds;
+}
+
+QList<SegIdx> SegIdx::map(const MolInfo &molinfo) const
+{
+    return molinfo.map(*this);
+}
+
+///////
+/////// Implementation of SegName
+///////
+
+static const RegisterMetaType<SegName> r_segname;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const SegName &segname)
+{
+    writeHeader(ds, r_segname, 1);
+    
+    ds << static_cast<const SireID::Name&>(segname);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, SegName &segname)
+{
+    VersionID v = readHeader(ds, r_segname);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Name&>(segname);
+    }
+    else
+        throw version_error( v, "1", r_segname, CODELOC );
+        
+    return ds;
+}
+
+QList<SegIdx> SegName::map(const MolInfo &molinfo) const
+{
+    return molinfo.map(*this);
 }

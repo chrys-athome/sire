@@ -40,8 +40,8 @@ namespace SireMol
 class MGIdx;
 }
 
-XMLStream& operator<<(XMLStream&, const SireMol::MGIdx&);
-XMLStream& operator>>(XMLStream&, SireMol::MGIdx&);
+QDataStream& operator<<(QDataStream&, const SireMol::MGIdx&);
+QDataStream& operator>>(QDataStream&, SireMol::MGIdx&);
 
 namespace SireMol
 {
@@ -54,8 +54,8 @@ namespace SireMol
 class SIREMOL_EXPORT MGIdx : public SireID::Index_T_<MGIdx>, public MGID
 {
 
-friend XMLStream& ::operator<<(XMLStream&, const MGIdx&);
-friend XMLStream& ::operator>>(XMLStream&, MGIdx&);
+friend QDataStream& ::operator<<(QDataStream&, const MGIdx&);
+friend QDataStream& ::operator>>(QDataStream&, MGIdx&);
 
 public:
     MGIdx();

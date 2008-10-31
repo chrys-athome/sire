@@ -37,6 +37,17 @@ SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+template<class GROUP>
+class ResIn;
+}
+
+template<class GROUP>
+QDataStream& operator<<(QDataStream&, const SireMol::ResIn<GROUP>&);
+template<class GROUP>
+QDataStream& operator>>(QDataStream&, SireMol::ResIn<GROUP>&);
+
+namespace SireMol
+{
 
 class MolInfo;
 
@@ -49,6 +60,9 @@ class MolInfo;
 template<class GROUP>
 class SIREMOL_EXPORT ResIn : public ResID
 {
+
+friend QDataStream& ::operator<<<>(QDataStream&, const ResIn<GROUP>&);
+friend QDataStream& ::operator>><>(QDataStream&, ResIn<GROUP>&);
 
 public:
     ResIn();
@@ -254,6 +268,24 @@ QList<ResIdx> ResIn<GROUP>::map(const MolInfo &molinfo) const
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds, const SireMol::ResIn<GROUP> &res)
+{
+    ds << res.groupid << res.strt << res.end;
+    return ds;
+}
+
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds, SireMol::ResIn<GROUP> &res)
+{
+    ds >> res.groupid >> res.strt >> res.end;
+    return ds;
+}
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 SIRE_END_HEADER
 

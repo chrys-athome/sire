@@ -95,7 +95,6 @@ set ( SIREMOL_HEADERS
       residentifier.h
       residue.h
       residuecutting.h
-      residuesin.hpp
       residx.h
       resin.hpp
       resname.h

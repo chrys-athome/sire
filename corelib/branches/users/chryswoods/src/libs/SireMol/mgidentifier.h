@@ -35,6 +35,14 @@
 
 namespace SireMol
 {
+class MGIdentifier;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMol::MGIdentifier&);
+QDataStream& operator>>(QDataStream&, SireMol::MGIdentifier&);
+
+namespace SireMol
+{
 
 /** This is a generic holder for any MGID class! 
 
@@ -42,6 +50,10 @@ namespace SireMol
 */
 class SIREMOL_EXPORT MGIdentifier : public MGID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const MGIdentifier&);
+friend QDataStream& ::operator>>(QDataStream&, MGIdentifier&);
+
 public:
     MGIdentifier();
     MGIdentifier(const MGID &atomid);

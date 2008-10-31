@@ -35,7 +35,40 @@
 #include "SireMol/errors.h"
 #include "SireError/errors.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 using namespace SireMol;
+using namespace SireStream;
+
+static const RegisterMetaType<SpecifyMol> r_specifymol;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const SpecifyMol &specifymol)
+{
+    writeHeader(ds, r_specifymol, 1);
+    
+    SharedDataStream sds(ds);
+    sds << specifymol.molid << specifymol.strt << specifymol.end;
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, SpecifyMol &specifymol)
+{
+    VersionID v = readHeader(ds, r_specifymol);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        sds >> specifymol.molid >> specifymol.strt >> specifymol.end;
+    }
+    else
+        throw version_error( v, "1", r_specifymol, CODELOC );
+        
+    return ds;
+}
 
 /** Constructor */
 SpecifyMol::SpecifyMol() : MolID(), strt(0), end(-1)
