@@ -29,19 +29,13 @@
 #ifndef SIREMOL_ATOMIDCOMBOS_H
 #define SIREMOL_ATOMIDCOMBOS_H
 
-#include "atomatomid.h"
 #include "groupatomids.h"
 
 #include "cgatomidx.h"
 
 #include "groupgroupids.h"
 
-#include "chainchainid.h"
 #include "chainresid.h"
-#include "resresid.h"
-
-#include "cgcgid.h"
-#include "segsegid.h"
 
 #endif
 

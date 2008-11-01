@@ -30,6 +30,8 @@
 #include "sysidx.h"
 #include "sysname.h"
 
+#include "SireSystem/errors.h"
+
 using namespace SireSystem;
 
 ///////
@@ -44,6 +46,68 @@ SysID::SysID(const SysID &other) : SireID::ID(other)
 
 SysID::~SysID()
 {}
+
+Specify<SysID> SysID::operator[](int i) const
+{
+    return Specify<SysID>(*this, i);
+}
+
+Specify<SysID> SysID::operator()(int i) const
+{
+    return this->operator[](i);
+}
+
+Specify<SysID> SysID::operator()(int i, int j) const
+{
+    return Specify<SysID>(*this, i, j);
+}
+
+IDAndSet<SysID> SysID::operator+(const SysID &other) const
+{
+    return IDAndSet<SysID>(*this, other);
+}
+
+IDAndSet<SysID> SysID::operator&&(const SysID &other) const
+{
+    return this->operator+(other);
+}
+
+IDOrSet<SysID> SysID::operator*(const SysID &other) const
+{
+    return IDOrSet<SysID>(*this, other);
+}
+
+IDOrSet<SysID> SysID::operator||(const SysID &other) const
+{
+    return this->operator*(other);
+}
+
+QList<SysIdx> SysID::processMatches(QList<SysIdx> &matches,
+                                    const Systems &systems) const
+{
+    if (matches.isEmpty())
+        throw SireSystem::missing_system( QObject::tr(
+            "There are no systems that match the ID \"%1\".")
+                .arg(this->toString()), CODELOC );
+                
+    qSort(matches);
+    
+    return matches;
+}
+
+///////
+/////// Implementation of the Systems stub class
+///////
+
+QList<SysIdx> Systems::getSystems() const
+{
+    return QList<SysIdx>();
+}
+
+QList<SysIdx> Systems::map(const SysID&) const
+{
+    return QList<SysIdx>();
+}
 
 ///////
 /////// Implementation of SysIdx
@@ -60,6 +124,43 @@ SysIdx::SysIdx(const SysIdx &other) : SireID::Index_T_<SysIdx>(other), SysID(oth
 
 SysIdx::~SysIdx()
 {}
+  
+SysIdx SysIdx::null()
+{
+    return SysIdx();
+}
+
+bool SysIdx::isNull() const
+{
+    return SireID::Index_T_<SysIdx>::isNull();
+}
+
+uint SysIdx::hash() const
+{
+    return SireID::Index_T_<SysIdx>::hash();
+}
+
+QString SysIdx::toString() const
+{
+    return QString("SysIdx(%1)").arg(_idx);
+}
+
+SysIdx& SysIdx::operator=(const SysIdx &other)
+{
+    SireID::IndexBase::operator=(other);
+    SysID::operator=(other);
+    return *this;
+}
+
+bool SysIdx::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<SysIdx>(*this, other);
+}
+
+QList<SysIdx> SysIdx::map(const Systems &systems) const
+{
+    return systems.map(*this);
+}
 
 ///////
 /////// Implementation of SysName
@@ -76,3 +177,56 @@ SysName::SysName(const SysName &other) : SireID::Name(other), SysID(other)
 
 SysName::~SysName()
 {}
+    
+bool SysName::isNull() const
+{
+    return SireID::Name::isNull();
+}
+
+uint SysName::hash() const
+{
+    return qHash(_name);
+}
+
+QString SysName::toString() const
+{
+    return QString("SysName('%1')").arg(_name);
+}
+
+SysName& SysName::operator=(const SysName &other)
+{
+    SireID::Name::operator=(other);
+    SysID::operator=(other);
+    return *this;
+}
+
+bool SysName::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<SysName>(*this, other);
+}
+
+bool SysName::operator==(const SysName &other) const
+{
+    return _name == other._name;
+}
+
+bool SysName::operator!=(const SysName &other) const
+{
+    return _name != other._name;
+}
+
+QList<SysIdx> SysName::map(const Systems &systems) const
+{
+    return systems.map(*this);
+}
+
+///////
+///////
+
+template class Specify<SysID>;
+template class IDAndSet<SysID>;
+template class IDOrSet<SysID>;
+
+static const RegisterMetaType< Specify<SysID> > r_specify_sysid;
+static const RegisterMetaType< IDAndSet<SysID> > r_idandset_sysid;
+static const RegisterMetaType< IDOrSet<SysID> > r_idorset_sysid;

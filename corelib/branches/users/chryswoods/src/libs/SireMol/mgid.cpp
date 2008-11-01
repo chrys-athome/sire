@@ -75,22 +75,22 @@ Specify<MGID> MGID::operator()(int i, int j) const
     return Specify<MGID>(*this, i, j);
 }
 
-MGMGID MGID::operator+(const MGID &other) const
+IDAndSet<MGID> MGID::operator+(const MGID &other) const
 {
-    return MGMGID(*this, other);
+    return IDAndSet<MGID>(*this, other);
 }
 
-MGMGID MGID::operator&&(const MGID &other) const
+IDAndSet<MGID> MGID::operator&&(const MGID &other) const
 {
     return this->operator+(other);
 }
 
-IDSet<MGID> MGID::operator*(const MGID &other) const
+IDOrSet<MGID> MGID::operator*(const MGID &other) const
 {
-    return IDSet<MGID>(*this, other);
+    return IDOrSet<MGID>(*this, other);
 }
 
-IDSet<MGID> MGID::operator||(const MGID &other) const
+IDOrSet<MGID> MGID::operator||(const MGID &other) const
 {
     return this->operator*(other);
 }
@@ -273,137 +273,13 @@ QList<MGNum> MGNum::map(const MolGroupsBase &molgroups) const
     return molgroups.map(*this);
 }
 
-////////
-//////// Implementation of MGMGID
-////////
-
-static const RegisterMetaType<MGMGID> r_mgmgid;
-
-/** Serialise to a binary datastream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const MGMGID &mgmgid)
-{
-    writeHeader(ds, r_mgmgid, 1);
-    
-    SharedDataStream sds(ds);
-    sds << mgmgid.mgid0 << mgmgid.mgid1;
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MGMGID &mgmgid)
-{
-    VersionID v = readHeader(ds, r_mgmgid);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        sds >> mgmgid.mgid0 >> mgmgid.mgid1;
-    }
-    else
-        throw version_error( v, "1", r_mgmgid, CODELOC );
-        
-    return ds;
-}
-
-/** Null constructor */
-MGMGID::MGMGID() : MGID()
-{}
-
-/** Construct something that will match only groups that
-    match mgid0 and mgid1 */
-MGMGID::MGMGID(const MGID &id0, const MGID &id1)
-       : MGID(), mgid0(id0), mgid1(id1)
-{}
-
-/** Copy constructor */
-MGMGID::MGMGID(const MGMGID &other)
-       : MGID(), mgid0(other.mgid0), mgid1(other.mgid1)
-{}
-
-/** Destructor */
-MGMGID::~MGMGID()
-{}
-
-/** Copy assignment operator */
-MGMGID& MGMGID::operator=(const MGMGID &other)
-{
-    mgid0 = other.mgid0;
-    mgid1 = other.mgid1;
-    return *this;
-}
-
-/** Comparison operator */
-bool MGMGID::operator==(const MGMGID &other) const
-{
-    return (mgid0 == other.mgid0 and mgid1 == other.mgid1) or
-           (mgid0 == other.mgid1 and mgid1 == other.mgid0);
-}
-
-/** Comparison operator */
-bool MGMGID::operator!=(const MGMGID &other) const
-{
-    return not this->operator==(other);
-}
-
-/** Return whether or not this is null */
-bool MGMGID::isNull() const
-{
-    return mgid0.isNull() and mgid1.isNull();
-}
-
-/** Hash this MGMGID */
-uint MGMGID::hash() const
-{
-    return mgid0.hash() + mgid1.hash();
-}
-
-/** Return a string representation of this ID */
-QString MGMGID::toString() const
-{
-    if (mgid0.isNull())
-    {
-        if (mgid1.isNull())
-        {
-            return QObject::tr("null");
-        }
-        else
-            return mgid1.toString();
-    }
-    else
-    {
-        if (mgid1.isNull())
-            return mgid0.toString();
-        else
-            return QObject::tr("%1 and %2")
-                        .arg(mgid0.toString(), mgid1.toString());
-    }
-}
-
-/** Map the two IDs to the list of matching molecule group numbers */
-QList<MGNum> MGMGID::map(const MolGroupsBase &molgroups) const
-{
-    if (mgid0.isNull())
-        return mgid1.map(molgroups);
-    else if (mgid1.isNull())
-        return mgid0.map(molgroups);
-        
-    QList<MGNum> mgnums = MolInfo::intersection( mgid0.map(molgroups),
-                                                 mgid1.map(molgroups) );
-                
-    if (mgnums.isEmpty())
-        throw SireMol::missing_group( QObject::tr(
-            "There is no group matching the ID %1.")
-                .arg(this->toString()), CODELOC );
-    
-    return mgnums;
-}
-
 ///////
 
-template class IDSet<MGID>;
+template class IDAndSet<MGID>;
+template class IDOrSet<MGID>;
 template class Specify<MGID>;
 
-static const RegisterMetaType< IDSet<MGID> > r_idset_mgid;
+static const RegisterMetaType< IDAndSet<MGID> > r_idandset_mgid;
+static const RegisterMetaType< IDOrSet<MGID> > r_idorset_mgid;
 static const RegisterMetaType< Specify<MGID> > r_specify_mgid;
 

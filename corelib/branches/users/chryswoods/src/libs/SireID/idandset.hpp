@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREID_IDSET_HPP
-#define SIREID_IDSET_HPP
+#ifndef SIREID_IDANDSET_HPP
+#define SIREID_IDANDSET_HPP
 
 #include <QSet>
 #include <QString>
@@ -40,66 +40,63 @@ SIRE_BEGIN_HEADER
 namespace SireID
 {
 template<class ID>
-class IDSet;
+class IDAndSet;
 }
 
 template<class ID>
-QDataStream& operator<<(QDataStream&, const SireID::IDSet<ID>&);
+QDataStream& operator<<(QDataStream&, const SireID::IDAndSet<ID>&);
 template<class ID>
-QDataStream& operator>>(QDataStream&, SireID::IDSet<ID>&);
+QDataStream& operator>>(QDataStream&, SireID::IDAndSet<ID>&);
 
 namespace SireID
 {
 
 template<class T>
-uint qHash(const T &obj)
-{
-    return obj.hash();
-}
+uint qHash(const T &obj);
 
-/** This class holds a set of IDs of parts of a molecule, thereby allowing for
-    "or" matching of IDs 
+/** This class holds a set of IDs, thereby allowing for
+    "and" matching of IDs 
     
     @author Christopher Woods
 */
 template<class ID>
-class SIREID_EXPORT IDSet : public ID
+class SIREID_EXPORT IDAndSet : public ID
 {
 
-friend QDataStream& ::operator<<<>(QDataStream&, const IDSet<ID>&);
-friend QDataStream& ::operator>><>(QDataStream&, IDSet<ID>&);
+friend QDataStream& ::operator<<<>(QDataStream&, const IDAndSet<ID>&);
+friend QDataStream& ::operator>><>(QDataStream&, IDAndSet<ID>&);
 
 public:
     typedef typename ID::Identifier Identifier;
     typedef typename ID::Index Index;
     typedef typename ID::SearchObject SearchObject;
 
-    IDSet();
-    IDSet(const ID &id);
-    IDSet(const ID &id0, const ID &id1);
+    IDAndSet();
+    IDAndSet(const ID &id);
+    IDAndSet(const ID &id0, const ID &id1);
     
-    IDSet(const QList<typename ID::Identifier> &ids);
+    IDAndSet(const QList<typename ID::Identifier> &ids);
     
     template<class T>
-    IDSet(const T &ids);
+    IDAndSet(const T &ids);
     
-    IDSet(const IDSet<ID> &other);
+    IDAndSet(const IDAndSet<ID> &other);
     
-    ~IDSet();
+    ~IDAndSet();
     
     static const char* typeName()
     {
-        return QMetaType::typeName( qMetaTypeId< IDSet<ID> >() );
+        return QMetaType::typeName( qMetaTypeId< IDAndSet<ID> >() );
     }
     
     const char* what() const
     {
-        return IDSet<ID>::typeName();
+        return IDAndSet<ID>::typeName();
     }
     
-    IDSet<ID>* clone() const
+    IDAndSet<ID>* clone() const
     {
-        return new IDSet<ID>(*this);
+        return new IDAndSet<ID>(*this);
     }
     
     bool isNull() const;
@@ -110,14 +107,14 @@ public:
 
     const QSet<Identifier>& IDs() const;
     
-    IDSet<ID>& operator=(const IDSet<ID> &other);
-    IDSet<ID>& operator=(const ID &other);
+    IDAndSet<ID>& operator=(const IDAndSet<ID> &other);
+    IDAndSet<ID>& operator=(const ID &other);
     
     bool operator==(const SireID::ID &other) const;
     using SireID::ID::operator!=;
    
-    bool operator==(const IDSet<ID> &other) const;
-    bool operator!=(const IDSet<ID> &other) const;
+    bool operator==(const IDAndSet<ID> &other) const;
+    bool operator!=(const IDAndSet<ID> &other) const;
     
     bool operator==(const ID &other) const;
     bool operator!=(const ID &other) const;
@@ -133,13 +130,13 @@ private:
 /** Null constructor */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-IDSet<ID>::IDSet() : ID()
+IDAndSet<ID>::IDAndSet() : ID()
 {}
 
 /** Add the passed ID to the list */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-void IDSet<ID>::add(const ID &id)
+void IDAndSet<ID>::add(const ID &id)
 {
     if (id.isNull())
         return;
@@ -148,8 +145,8 @@ void IDSet<ID>::add(const ID &id)
     {
         this->add(id.template asA<Identifier>().base());
     }
-    else if (id.template isA< IDSet<ID> >())
-        ids += id.template asA< IDSet<ID> >().ids;
+    else if (id.template isA< IDAndSet<ID> >())
+        ids += id.template asA< IDAndSet<ID> >().ids;
     else
         ids.insert( Identifier(id) );
 }
@@ -157,7 +154,7 @@ void IDSet<ID>::add(const ID &id)
 /** Construct from the passed ID */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-IDSet<ID>::IDSet(const ID &id) : ID()
+IDAndSet<ID>::IDAndSet(const ID &id) : ID()
 {
     this->add(id);
 }
@@ -165,7 +162,7 @@ IDSet<ID>::IDSet(const ID &id) : ID()
 /** Construct from the passed IDs */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-IDSet<ID>::IDSet(const ID &id0, const ID &id1) : ID()
+IDAndSet<ID>::IDAndSet(const ID &id0, const ID &id1) : ID()
 {
     this->add(id0);
     this->add(id1);
@@ -174,7 +171,7 @@ IDSet<ID>::IDSet(const ID &id0, const ID &id1) : ID()
 /** Construct from the passed list of IDs */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-IDSet<ID>::IDSet(const QList<typename ID::Identifier> &new_ids) : ID()
+IDAndSet<ID>::IDAndSet(const QList<typename ID::Identifier> &new_ids) : ID()
 {
     for (typename QList<Identifier>::const_iterator it = new_ids.constBegin();
          it != new_ids.constEnd();
@@ -188,7 +185,7 @@ IDSet<ID>::IDSet(const QList<typename ID::Identifier> &new_ids) : ID()
 template<class ID>
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-IDSet<ID>::IDSet(const T &new_ids) : ID()
+IDAndSet<ID>::IDAndSet(const T &new_ids) : ID()
 {
     for (typename T::const_iterator it = new_ids.constBegin();
          it != new_ids.constEnd();
@@ -201,19 +198,19 @@ IDSet<ID>::IDSet(const T &new_ids) : ID()
 /** Copy constructor */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-IDSet<ID>::IDSet(const IDSet &other) : ID(other), ids(other.ids)
+IDAndSet<ID>::IDAndSet(const IDAndSet &other) : ID(other), ids(other.ids)
 {}
 
 /** Destructor */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-IDSet<ID>::~IDSet()
+IDAndSet<ID>::~IDAndSet()
 {}
 
 /** Is this selection null? */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-bool IDSet<ID>::isNull() const
+bool IDAndSet<ID>::isNull() const
 {
     return ids.isEmpty();
 }
@@ -221,7 +218,7 @@ bool IDSet<ID>::isNull() const
 /** Return a hash of this identifier */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-uint IDSet<ID>::hash() const
+uint IDAndSet<ID>::hash() const
 {
     uint h = 0;
     
@@ -238,7 +235,7 @@ uint IDSet<ID>::hash() const
 /** Return a string representatio of this ID */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-QString IDSet<ID>::toString() const
+QString IDAndSet<ID>::toString() const
 {
     if (ids.isEmpty())
         return QObject::tr("null");
@@ -260,7 +257,7 @@ QString IDSet<ID>::toString() const
 /** Return all of the IDs in this set */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-const QSet<typename ID::Identifier>& IDSet<ID>::IDs() const
+const QSet<typename ID::Identifier>& IDAndSet<ID>::IDs() const
 {
     return ids;
 }
@@ -268,7 +265,7 @@ const QSet<typename ID::Identifier>& IDSet<ID>::IDs() const
 /** Copy assignment operator */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-IDSet<ID>& IDSet<ID>::operator=(const IDSet<ID> &other)
+IDAndSet<ID>& IDAndSet<ID>::operator=(const IDAndSet<ID> &other)
 {
     ids = other.ids;
     return *this;
@@ -277,7 +274,7 @@ IDSet<ID>& IDSet<ID>::operator=(const IDSet<ID> &other)
 /** Copy assignment operator */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-IDSet<ID>& IDSet<ID>::operator=(const ID &other)
+IDAndSet<ID>& IDAndSet<ID>::operator=(const ID &other)
 {
     ids.clear();
     this->add(other);
@@ -288,15 +285,15 @@ IDSet<ID>& IDSet<ID>::operator=(const ID &other)
 /** Comparison operator */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-bool IDSet<ID>::operator==(const SireID::ID &other) const
+bool IDAndSet<ID>::operator==(const SireID::ID &other) const
 {
-    return SireID::ID::compare< IDSet<ID> >(*this, other);
+    return SireID::ID::compare< IDAndSet<ID> >(*this, other);
 }
 
 /** Comparison operator */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-bool IDSet<ID>::operator==(const IDSet<ID> &other) const
+bool IDAndSet<ID>::operator==(const IDAndSet<ID> &other) const
 {
     return ids == other.ids;
 }
@@ -304,7 +301,7 @@ bool IDSet<ID>::operator==(const IDSet<ID> &other) const
 /** Comparison operator */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-bool IDSet<ID>::operator!=(const IDSet<ID> &other) const
+bool IDAndSet<ID>::operator!=(const IDAndSet<ID> &other) const
 {
     return ids != other.ids;
 }
@@ -312,61 +309,60 @@ bool IDSet<ID>::operator!=(const IDSet<ID> &other) const
 /** Comparison operator */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-bool IDSet<ID>::operator==(const ID &other) const
+bool IDAndSet<ID>::operator==(const ID &other) const
 {
-    return this->operator==( IDSet<ID>(other) );
+    return this->operator==( IDAndSet<ID>(other) );
 }
 
 /** Comparison operator */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-bool IDSet<ID>::operator!=(const ID &other) const
+bool IDAndSet<ID>::operator!=(const ID &other) const
 {
-    return this->operator!=( IDSet<ID>(other) );
+    return this->operator!=( IDAndSet<ID>(other) );
 }
 
 /** Map this ID to the list of indicies that match this ID */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-QList<typename ID::Index> IDSet<ID>::map(const typename ID::SearchObject &obj) const
+QList<typename ID::Index> IDAndSet<ID>::map(const typename ID::SearchObject &obj) const
 {
     if (ids.isEmpty())
         return Identifier().map(obj);
-        
-    QList<Index> idxs;
-        
-    for (typename QSet<Identifier>::const_iterator it = ids.constBegin();
-         it != ids.constEnd();
-         ++it)
+
+    typename QSet<Identifier>::const_iterator it = ids.constBegin();
+
+    QSet<Index> idxs;
+    
+    try
     {
+        idxs = it->map(obj).toSet();
+    }
+    catch(...)
+    {
+        //no match
+    }
+        
+    for ( ++it; it != ids.constEnd(); ++it )
+    {
+        if (idxs.isEmpty())
+            break;
+    
         try
         {
-            idxs += it->map(obj);
+            idxs.intersect( it->map(obj).toSet() );
         }
         catch(...)
         {
             //no match
+            idxs.clear();
         }
     }
     
-    QSet<Index> set;
-    set.reserve(idxs.count());
-    
-    QMutableListIterator<Index> it(idxs);
-    
-    while (it.hasNext())
-    {
-        it.next();
-    
-        if (set.contains(it.value()))
-            it.remove();
-        else
-            set.insert(it.value());
-    }
+    QList<Index> matches = idxs.toList();
+    ID::processMatches(matches, obj);
 
-    ID::processMatches(idxs, obj);
-
-    return idxs;
+    return matches;
 }
 
 }
@@ -375,7 +371,7 @@ QList<typename ID::Index> IDSet<ID>::map(const typename ID::SearchObject &obj) c
 /** Serialise to a binary datastream */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds, const SireID::IDSet<ID> &idset)
+QDataStream& operator<<(QDataStream &ds, const SireID::IDAndSet<ID> &idset)
 {
     ds << idset.ids;
     return ds;
@@ -384,7 +380,7 @@ QDataStream& operator<<(QDataStream &ds, const SireID::IDSet<ID> &idset)
 /** Extract from a binary datastream */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds, SireID::IDSet<ID> &idset)
+QDataStream& operator>>(QDataStream &ds, SireID::IDAndSet<ID> &idset)
 {
     ds >> idset.ids;
     return ds;

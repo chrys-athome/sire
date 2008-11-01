@@ -69,37 +69,17 @@ public:
         return new SysIdx(*this);
     }
     
-    static SysIdx null()
-    {
-        return SysIdx();
-    }
+    static SysIdx null();
     
-    bool isNull() const
-    {
-        return SireID::Index_T_<SysIdx>::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return SireID::Index_T_<SysIdx>::hash();
-    }
+    uint hash() const;
 
-    QString toString() const
-    {
-        return QString("SysIdx(%1)").arg(_idx);
-    }
+    QString toString() const;
     
-    SysIdx& operator=(const SysIdx &other)
-    {
-        SireID::IndexBase::operator=(other);
-        SysID::operator=(other);
-        return *this;
-    }
+    SysIdx& operator=(const SysIdx &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<SysIdx>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
     using SireID::Index_T_<SysIdx>::operator=;
 
@@ -112,6 +92,8 @@ public:
     using SireID::Index_T_<SysIdx>::operator--;
     
     using SireID::Index_T_<SysIdx>::map;
+    
+    QList<SysIdx> map(const Systems &systems) const;
 };
     
 }

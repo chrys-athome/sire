@@ -13,7 +13,6 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIREMOL_HEADERS
       angleid.h
       atom.h
-      atomatomid.h
       atomcharges.h
       atomcoords.h
       atomcutting.h
@@ -34,7 +33,6 @@ set ( SIREMOL_HEADERS
       bondid.h
       calculateaxes.hpp
       cgatomidx.h
-      cgcgid.h
       cgeditor.h
       cgid.h
       cgidentifier.h
@@ -42,7 +40,6 @@ set ( SIREMOL_HEADERS
       cgname.h
       cgproperty.hpp
       chain.h
-      chainchainid.h
       chaineditor.h
       chainid.h
       chainidentifier.h
@@ -82,7 +79,6 @@ set ( SIREMOL_HEADERS
       molidentifier.h
       molidx.h
       molinfo.h
-      molmolid.h
       molname.h
       molnum.h
       molviewproperty.h
@@ -100,7 +96,6 @@ set ( SIREMOL_HEADERS
       resname.h
       resnum.h
       resproperty.hpp
-      resresid.h
       segeditor.h
       segid.h
       segidentifier.h
@@ -108,7 +103,6 @@ set ( SIREMOL_HEADERS
       segname.h
       segment.h
       segproperty.hpp
-      segsegid.h
       selector.hpp
       specifymol.h
       structureeditor.h
@@ -123,7 +117,6 @@ set ( SIREMOL_SOURCES
 
       angleid.cpp
       atom.cpp
-      atomatomid.cpp
       atomcharges.cpp
       atomcoords.cpp
       atomeditor.cpp
@@ -137,12 +130,10 @@ set ( SIREMOL_SOURCES
       bondid.cpp
       cgatomidx.cpp
       cgeditor.cpp
-      cgcgid.cpp
       cgid.cpp
       cgidentifier.cpp
       cgproperty.cpp
       chain.cpp
-      chainchainid.cpp
       chaineditor.cpp
       chainid.cpp
       chainidentifier.cpp
@@ -172,7 +163,6 @@ set ( SIREMOL_SOURCES
       moleditor.cpp
       molid.cpp
       molidentifier.cpp
-      molmolid.cpp
       molviewproperty.cpp
       mover.cpp
       partialmolecule.cpp
@@ -182,13 +172,11 @@ set ( SIREMOL_SOURCES
       residue.cpp
       residuecutting.cpp
       resproperty.cpp
-      resresid.cpp
       segeditor.cpp
       segid.cpp
       segidentifier.cpp
       segment.cpp
       segproperty.cpp
-      segsegid.cpp
       specifymol.cpp
       structureeditor.cpp
       viewsofmol.cpp

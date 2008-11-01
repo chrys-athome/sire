@@ -33,7 +33,8 @@
 
 #include "SireID/id.h"
 
-#include "SireID/idset.hpp"
+#include "SireID/idandset.hpp"
+#include "SireID/idorset.hpp"
 #include "SireID/specify.hpp"
 
 SIRE_BEGIN_HEADER
@@ -41,13 +42,13 @@ SIRE_BEGIN_HEADER
 namespace SireFF
 {
 
-using SireID::IDSet;
+using SireID::IDAndSet;
+using SireID::IDOrSet;
 using SireID::Specify;
 
 class FFIdx;
 class FFIdentifier;
 class FFName;
-class FFFFID;
 
 class ForceFields;
 
@@ -78,27 +79,37 @@ public:
     Specify<FFID> operator()(int i) const;
     Specify<FFID> operator()(int i, int j) const;
     
-    FFFFID operator+(const FFID &other) const;
-    FFFFID operator&&(const FFID &other) const;
+    IDAndSet<FFID> operator+(const FFID &other) const;
+    IDAndSet<FFID> operator&&(const FFID &other) const;
     
-    IDSet<FFID> operator*(const FFID &other) const;
-    IDSet<FFID> operator||(const FFID &other) const;
+    IDOrSet<FFID> operator*(const FFID &other) const;
+    IDOrSet<FFID> operator||(const FFID &other) const;
     
     virtual QList<FFIdx> map(const ForceFields &ffields) const=0;
+
+protected:
+    QList<FFIdx> processMatches(QList<FFIdx> &matches,
+                                const ForceFields &ffields) const;
 };
 
 }
 
+#include "ffidx.h"
+#include "ffidentifier.h"
+
 Q_DECLARE_METATYPE( SireID::Specify<SireFF::FFID> )
-Q_DECLARE_METATYPE( SireID::IDSet<SireFF::FFID> )
+Q_DECLARE_METATYPE( SireID::IDAndSet<SireFF::FFID> )
+Q_DECLARE_METATYPE( SireID::IDOrSet<SireFF::FFID> )
 
 SIRE_EXPOSE_CLASS( SireFF::FFID )
-SIRE_EXPOSE_ALIAS( SireID::IDSet<SireFF::FFID>, SireFF::IDSet_FFID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDAndSet<SireFF::FFID>, SireFF::IDAndSet_FFID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDOrSet<SireFF::FFID>, SireFF::IDOrSet_FFID_ )
 SIRE_EXPOSE_ALIAS( SireID::Specify<SireFF::FFID>, SireFF::Specify_FFID_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
 template class SireID::Specify<SireFF::FFID>;
-template class SireID::IDSet<SireFF::FFID>;
+template class SireID::IDAndSet<SireFF::FFID>;
+template class SireID::IDOrSet<SireFF::FFID>;
 #endif
 
 SIRE_END_HEADER

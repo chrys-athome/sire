@@ -29,7 +29,6 @@
 #include "segid.h"
 #include "segidentifier.h"
 
-#include "segsegid.h"
 #include "groupatomids.h"
 #include "groupgroupids.h"
 
@@ -92,13 +91,13 @@ Specify<SegID> SegID::operator()(int i, int j) const
 }
 
 /** Combine two ID types */
-SegSegID SegID::operator+(const SegID &other) const
+IDAndSet<SegID> SegID::operator+(const SegID &other) const
 {
-    return SegSegID(*this, other);
+    return IDAndSet<SegID>(*this, other);
 }
 
 /** Syntactic sugar for operator+ */
-SegSegID SegID::operator&&(const SegID &other) const
+IDAndSet<SegID> SegID::operator&&(const SegID &other) const
 {
     return this->operator+(other);
 }
@@ -152,13 +151,13 @@ GroupGroupID<SegID,ChainID> SegID::operator&&(const ChainID &other) const
 }
 
 /** Return the object to search for the match of this or 'other' */
-IDSet<SegID> SegID::operator*(const SegID &other) const
+IDOrSet<SegID> SegID::operator*(const SegID &other) const
 {
-    return IDSet<SegID>(*this, other);
+    return IDOrSet<SegID>(*this, other);
 }
 
 /** Syntactic sugar for operator* */
-IDSet<SegID> SegID::operator||(const SegID &other) const
+IDOrSet<SegID> SegID::operator||(const SegID &other) const
 {
     return this->operator*(other);
 }
@@ -302,8 +301,10 @@ SegID::selectAllFrom(const MolGroupsBase &molgroups) const
 //fully instantiate template classes
 template class Specify<SegID>;
 template class AtomsIn<SegID>;
-template class IDSet<SegID>;
+template class IDAndSet<SegID>;
+template class IDOrSet<SegID>;
 
 static const RegisterMetaType< Specify<SegID> > r_specify_segid;
 static const RegisterMetaType< AtomsIn<SegID> > r_atomsin_segid;
-static const RegisterMetaType< IDSet<SegID> > r_idset_segid;
+static const RegisterMetaType< IDAndSet<SegID> > r_idandset_segid;
+static const RegisterMetaType< IDOrSet<SegID> > r_idorset_segid;

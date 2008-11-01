@@ -33,14 +33,38 @@
 
 #include "SireID/id.h"
 
+#include "SireID/specify.hpp"
+#include "SireID/idandset.hpp"
+#include "SireID/idorset.hpp"
+
 SIRE_BEGIN_HEADER
 
 namespace SireSystem
 {
 
+class SysID;
 class SysIdx;
 class SysIdentifier;
 class SysName;
+
+using SireID::Specify;
+using SireID::IDAndSet;
+using SireID::IDOrSet;
+
+/** Dummy set */
+class SIRESYSTEM_EXPORT Systems
+{
+public:
+    Systems()
+    {}
+    
+    ~Systems()
+    {}
+    
+    QList<SysIdx> getSystems() const;
+    
+    QList<SysIdx> map(const SysID &sysid) const;
+};
 
 /** The base class of all system identifiers
 
@@ -51,6 +75,7 @@ class SIRESYSTEM_EXPORT SysID : public SireID::ID
 public:
     typedef SysIdx Index;
     typedef SysIdentifier Identifier;
+    typedef Systems SearchObject;
 
     SysID();
     SysID(const SysID &other);
@@ -63,11 +88,43 @@ public:
     }
     
     virtual SysID* clone() const=0;
+    
+    Specify<SysID> operator[](int i) const;
+    Specify<SysID> operator()(int i) const;
+    Specify<SysID> operator()(int i, int j) const;
+    
+    IDAndSet<SysID> operator+(const SysID &other) const;
+    IDAndSet<SysID> operator&&(const SysID &other) const;
+    
+    IDOrSet<SysID> operator*(const SysID &other) const;
+    IDOrSet<SysID> operator||(const SysID &other) const;
+    
+    virtual QList<SysIdx> map(const Systems &systems) const=0;
+
+protected:
+    QList<SysIdx> processMatches(QList<SysIdx> &matches, 
+                                 const Systems &systems) const;
 };
 
 }
 
+#include "sysidx.h"
+#include "sysidentifier.h"
+
+Q_DECLARE_METATYPE( SireID::Specify<SireSystem::SysID> )
+Q_DECLARE_METATYPE( SireID::IDAndSet<SireSystem::SysID> )
+Q_DECLARE_METATYPE( SireID::IDOrSet<SireSystem::SysID> )
+
 SIRE_EXPOSE_CLASS( SireSystem::SysID )
+SIRE_EXPOSE_ALIAS( SireID::Specify<SireSystem::SysID>, SireSystem::Specify<SysID> )
+SIRE_EXPOSE_ALIAS( SireID::IDAndSet<SireSystem::SysID>, SireSystem::IDAndSet<SysID> )
+SIRE_EXPOSE_ALIAS( SireID::IDOrSet<SireSystem::SysID>, SireSystem::IDOrSet<SysID> )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class SireID::Specify<SireSystem::SysID>;
+template class SireID::IDAndSet<SireSystem::SysID>;
+template class SireID::IDOrSet<SireSystem::SysID>;
+#endif
 
 SIRE_END_HEADER
 

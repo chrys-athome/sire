@@ -31,8 +31,39 @@
 #include "ffidx.h"
 #include "ffname.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/streampolypointer.hpp"
+
 using namespace SireFF;
 using namespace SireID;
+using namespace SireStream;
+
+static const RegisterMetaType<FFIdentifier> r_ffid;
+
+/** Serialise to a binary datastream */
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FFIdentifier &ffid)
+{
+    writeHeader(ds, r_ffid, 1);
+    
+    SireStream::savePolyPointer(ds, ffid.d);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFIdentifier &ffid)
+{
+    VersionID v = readHeader(ds, r_ffid);
+    
+    if (v == 1)
+    {
+        SireStream::loadPolyPointer(ds, ffid.d);
+    }
+    else
+        throw version_error( v, "1", r_ffid, CODELOC );
+        
+    return ds;
+}
 
 /** Null constructor */
 FFIdentifier::FFIdentifier() : FFID()

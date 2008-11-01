@@ -1545,7 +1545,7 @@ void MolGroupsBase::remove(const MoleculeView &molview)
     QList<MGNum> mgnums = molnum_to_mgnum.value( molview.data().number() );
 
     if (not mgnums.isEmpty())
-        this->remove( molview, IDSet<MGID>(mgnums) );
+        this->remove( molview, IDOrSet<MGID>(mgnums) );
 }
 
 /** Remove the views of the molecule in 'molviews' from all of
@@ -1558,7 +1558,7 @@ void MolGroupsBase::remove(const ViewsOfMol &molviews)
     QList<MGNum> mgnums = molnum_to_mgnum.value( molviews.number() );
     
     if (not mgnums.isEmpty())
-        this->remove( molviews, IDSet<MGID>(mgnums) );
+        this->remove( molviews, IDOrSet<MGID>(mgnums) );
 }
 
 /** Remove all of the views of all of the molecules in 'molecules'
@@ -1569,7 +1569,7 @@ void MolGroupsBase::remove(const Molecules &molecules)
     if (molecules.isEmpty() or this->isEmpty())
         return;
 
-    this->remove( molecules, IDSet<MGID>(mgidx_to_num) );
+    this->remove( molecules, IDOrSet<MGID>(mgidx_to_num) );
 }
 
 /** Remove all of the views of all of the molecules in 'molgroup'
@@ -1590,7 +1590,7 @@ void MolGroupsBase::removeAll(const MoleculeView &molview)
     QList<MGNum> mgnums = molnum_to_mgnum.value(molview.data().number());
     
     if (not mgnums.isEmpty())
-        this->removeAll( molview, IDSet<MGID>(mgnums) );
+        this->removeAll( molview, IDOrSet<MGID>(mgnums) );
 }
 
 /** Remove all copies of the views of the molecule in 'molviews'
@@ -1601,7 +1601,7 @@ void MolGroupsBase::removeAll(const ViewsOfMol &molviews)
     QList<MGNum> mgnums = molnum_to_mgnum.value(molviews.number());
     
     if (not mgnums.isEmpty())
-        this->removeAll( molviews, IDSet<MGID>(mgnums) );
+        this->removeAll( molviews, IDOrSet<MGID>(mgnums) );
 }
 
 /** Remove all copies of all views of all molecules in 'molecules'
@@ -1612,7 +1612,7 @@ void MolGroupsBase::removeAll(const Molecules &molecules)
     if (molecules.isEmpty() or this->isEmpty())
         return;
         
-    this->removeAll(molecules, IDSet<MGID>(mgidx_to_num));
+    this->removeAll(molecules, IDOrSet<MGID>(mgidx_to_num));
 }
 
 /** Remove all copies of all views of all molecules in the 
@@ -1633,7 +1633,7 @@ void MolGroupsBase::remove(MolNum molnum)
     QList<MGNum> mgnums = molnum_to_mgnum.value(molnum);
     
     if (not mgnums.isEmpty())
-        this->remove(molnum, IDSet<MGID>(mgnums));
+        this->remove(molnum, IDOrSet<MGID>(mgnums));
 }
 
 /** Completely remove all views of the molecules whose numbers
@@ -1661,7 +1661,7 @@ void MolGroupsBase::remove(const QSet<MolNum> &molnums)
     mgnums = mgnums.toSet().toList();
     
     if (not mgnums.isEmpty())
-        this->remove(molnums, IDSet<MGID>(mgnums));
+        this->remove(molnums, IDOrSet<MGID>(mgnums));
 }
 
 /** Completely clear all of the groups in this set */
@@ -1669,7 +1669,7 @@ void MolGroupsBase::removeAll()
 {
     if (this->nMolecules() > 1)
     {
-        this->removeAll( IDSet<MGID>(mgidx_to_num) );
+        this->removeAll( IDOrSet<MGID>(mgidx_to_num) );
     }
 }
 

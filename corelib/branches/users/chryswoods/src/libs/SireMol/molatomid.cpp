@@ -27,7 +27,6 @@
 \*********************************************/
 
 #include "molatomid.h"
-#include "molmolid.h"
 
 #include "selector.hpp"
 #include "atom.h"
@@ -92,7 +91,7 @@ void MolAtomID::collapse()
                 molid = molatomid->molID();
                 
             else
-                molid = MolMolID( molid, molatomid->molID() );
+                molid = IDAndSet<MolID>( molid, molatomid->molID() );
         }
         
         atomid = molatomid->atomID();

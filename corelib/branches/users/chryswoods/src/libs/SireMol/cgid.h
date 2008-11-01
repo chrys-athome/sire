@@ -33,7 +33,8 @@
 
 #include "atomsin.hpp"
 
-#include "SireID/idset.hpp"
+#include "SireID/idandset.hpp"
+#include "SireID/idorset.hpp"
 #include "SireID/specify.hpp"
 
 SIRE_BEGIN_HEADER
@@ -41,7 +42,8 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
-using SireID::IDSet;
+using SireID::IDAndSet;
+using SireID::IDOrSet;
 using SireID::Specify;
 
 template<class T>
@@ -52,8 +54,6 @@ class GroupAtomID;
 
 template<class GROUP0, class GROUP1>
 class GroupGroupID;
-
-class CGCGID;
 
 class MolInfo;
 
@@ -89,20 +89,20 @@ public:
     Specify<CGID> operator()(int i) const;
     Specify<CGID> operator()(int i, int j) const;
     
-    CGCGID operator+(const CGID &other) const;
+    IDAndSet<CGID> operator+(const CGID &other) const;
     GroupAtomID<CGID,AtomID> operator+(const AtomID &other) const;
     GroupGroupID<SegID,CGID> operator+(const SegID &other) const;
     GroupGroupID<CGID,ChainID> operator+(const ChainID &other) const;
     GroupGroupID<CGID,ResID> operator+(const ResID &other) const;
 
-    CGCGID operator&&(const CGID &other) const;
+    IDAndSet<CGID> operator&&(const CGID &other) const;
     GroupAtomID<CGID,AtomID> operator&&(const AtomID &other) const;
     GroupGroupID<SegID,CGID> operator&&(const SegID &other) const;
     GroupGroupID<CGID,ChainID> operator&&(const ChainID &other) const;
     GroupGroupID<CGID,ResID> operator&&(const ResID &other) const;
     
-    IDSet<CGID> operator*(const CGID &other) const;
-    IDSet<CGID> operator||(const CGID &other) const;
+    IDOrSet<CGID> operator*(const CGID &other) const;
+    IDOrSet<CGID> operator||(const CGID &other) const;
     
     AtomsIn<CGID> atoms() const;
     AtomsIn<CGID> atom(int i) const;
@@ -144,17 +144,20 @@ protected:
 
 Q_DECLARE_METATYPE( SireID::Specify<SireMol::CGID> );
 Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::CGID> );
-Q_DECLARE_METATYPE( SireID::IDSet<SireMol::CGID> );
+Q_DECLARE_METATYPE( SireID::IDAndSet<SireMol::CGID> );
+Q_DECLARE_METATYPE( SireID::IDOrSet<SireMol::CGID> );
 
 SIRE_EXPOSE_CLASS( SireMol::CGID )
 SIRE_EXPOSE_ALIAS( (SireID::Specify<SireMol::CGID>), SireMol::Specify_CGID_ )
 SIRE_EXPOSE_ALIAS( (SireMol::AtomsIn<SireMol::CGID>), SireMol::AtomsIn_CGID_ )
-SIRE_EXPOSE_ALIAS( SireID::IDSet<SireMol::CGID>, SireMol::IDSet_CGID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDAndSet<SireMol::CGID>, SireMol::IDAndSet_CGID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDOrSet<SireMol::CGID>, SireMol::IDOrSet_CGID_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
 template class SireID::Specify<SireMol::CGID>;
 template class SireMol::AtomsIn<SireMol::CGID>;
-template class SireID::IDSet<SireMol::CGID>;
+template class SireID::IDAndSet<SireMol::CGID>;
+template class SireID::IDOrSet<SireMol::CGID>;
 #endif
 
 SIRE_END_HEADER

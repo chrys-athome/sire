@@ -35,6 +35,14 @@
 
 namespace SireSystem
 {
+class SysIdentifier;
+}
+
+QDataStream& operator<<(QDataStream&, const SireSystem::SysIdentifier&);
+QDataStream& operator>>(QDataStream&, SireSystem::SysIdentifier&);
+
+namespace SireSystem
+{
 
 /** This is a generic holder for any SysID class! 
 
@@ -42,6 +50,10 @@ namespace SireSystem
 */
 class SIRESYSTEM_EXPORT SysIdentifier : public SysID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const SysIdentifier&);
+friend QDataStream& ::operator>>(QDataStream&, SysIdentifier&);
+
 public:
     SysIdentifier();
     SysIdentifier(const SysID &sysid);
@@ -83,6 +95,8 @@ public:
     
     bool operator==(const SysID &other) const;
     bool operator!=(const SysID &other) const;
+
+    QList<SysIdx> map(const Systems &systems) const;
 
 private:
     /** Pointer to the SysID */

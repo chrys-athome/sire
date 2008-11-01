@@ -29,7 +29,6 @@
 #include "resid.h"
 #include "residentifier.h"
 
-#include "resresid.h"
 #include "chainresid.h"
 #include "groupatomids.h"
 #include "groupgroupids.h"
@@ -93,13 +92,13 @@ Specify<ResID> ResID::operator()(int i, int j) const
 }
 
 /** Combine with another ID type */
-ResResID ResID::operator+(const ResID &other) const
+IDAndSet<ResID> ResID::operator+(const ResID &other) const
 {
-    return ResResID(*this, other);
+    return IDAndSet<ResID>(*this, other);
 }
 
 /** Syntactic sugar for operator+ */
-ResResID ResID::operator&&(const ResID &other) const
+IDAndSet<ResID> ResID::operator&&(const ResID &other) const
 {
     return this->operator+(other);
 }
@@ -153,13 +152,13 @@ GroupGroupID<CGID,ResID> ResID::operator&&(const CGID &other) const
 }
 
 /** Return the match for this ID or 'other' */
-IDSet<ResID> ResID::operator*(const ResID &other) const
+IDOrSet<ResID> ResID::operator*(const ResID &other) const
 {
-    return IDSet<ResID>(*this, other);
+    return IDOrSet<ResID>(*this, other);
 }
 
 /** Syntactic sugar for operator* */
-IDSet<ResID> ResID::operator||(const ResID &other) const
+IDOrSet<ResID> ResID::operator||(const ResID &other) const
 {
     return this->operator*(other);
 }
@@ -303,8 +302,10 @@ ResID::selectAllFrom(const MolGroupsBase &molgroups) const
 //fully instantiate Specify<ResID> and AtomsIn<ResID>
 template class Specify<ResID>;
 template class AtomsIn<ResID>;
-template class IDSet<ResID>;
+template class IDAndSet<ResID>;
+template class IDOrSet<ResID>;
 
 static const RegisterMetaType< Specify<ResID> > r_specify_resid;
 static const RegisterMetaType< AtomsIn<ResID> > r_atomsin_resid;
-static const RegisterMetaType< IDSet<ResID> > r_idset_resid;
+static const RegisterMetaType< IDAndSet<ResID> > r_idandset_resid;
+static const RegisterMetaType< IDOrSet<ResID> > r_idorset_resid;

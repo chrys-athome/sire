@@ -32,7 +32,6 @@
 #include "molname.h"
 
 #include "molatomid.h"
-#include "molmolid.h"
 
 #include "atomidx.h"
 
@@ -95,13 +94,13 @@ SpecifyMol MolID::operator()(int i, int j) const
 }
 
 /** Combine this ID with another molecule ID */
-MolMolID MolID::operator+(const MolID &other) const
+IDAndSet<MolID> MolID::operator+(const MolID &other) const
 {
-    return MolMolID(*this, other);
+    return IDAndSet<MolID>(*this, other);
 }
 
 /** Syntactic sugar for operator+ */
-MolMolID MolID::operator&&(const MolID &other) const
+IDAndSet<MolID> MolID::operator&&(const MolID &other) const
 {
     return this->operator+(other);
 }
@@ -119,13 +118,13 @@ MolAtomID MolID::operator&&(const AtomID &other) const
 }
 
 /** Search for matching molecules using this ID, or other */
-IDSet<MolID> MolID::operator*(const MolID &other) const
+IDOrSet<MolID> MolID::operator*(const MolID &other) const
 {
-    return IDSet<MolID>(*this, other);
+    return IDOrSet<MolID>(*this, other);
 }
 
 /** Syntactic sugar for operator* */
-IDSet<MolID> MolID::operator||(const MolID &other) const
+IDOrSet<MolID> MolID::operator||(const MolID &other) const
 {
     return this->operator*(other);
 }
@@ -466,15 +465,17 @@ QList<MolNum> MolName::map(const MolGroupsBase &molgroups) const
 }
 
 //////
-////// Implementation of IDSet<MolID>
+////// Implementation of IDAndSet<MolID>
 //////
 
+static const RegisterMetaType< IDAndSet<MolID> > r_idandset_molid;
+
 /** Null constructor */
-IDSet<MolID>::IDSet() : MolID()
+IDAndSet<MolID>::IDAndSet() : MolID()
 {}
 
 /** Add the passed ID to the list */
-void IDSet<MolID>::add(const MolID &id)
+void IDAndSet<MolID>::add(const MolID &id)
 {
     if (id.isNull())
         return;
@@ -483,27 +484,27 @@ void IDSet<MolID>::add(const MolID &id)
     {
         this->add(id.asA<MolIdentifier>().base());
     }
-    else if (id.isA< IDSet<MolID> >())
-        ids += id.asA< IDSet<MolID> >().ids;
+    else if (id.isA< IDAndSet<MolID> >())
+        ids += id.asA< IDAndSet<MolID> >().ids;
     else
         ids.insert( MolIdentifier(id) );
 }
 
 /** Construct from the passed ID */
-IDSet<MolID>::IDSet(const MolID &id) : MolID()
+IDAndSet<MolID>::IDAndSet(const MolID &id) : MolID()
 {
     this->add(id);
 }
 
 /** Construct from the passed IDs */
-IDSet<MolID>::IDSet(const MolID &id0, const MolID &id1) : MolID()
+IDAndSet<MolID>::IDAndSet(const MolID &id0, const MolID &id1) : MolID()
 {
     this->add(id0);
     this->add(id1);
 }
 
 /** Construct from the passed list of IDs */
-IDSet<MolID>::IDSet(const QList<MolIdentifier> &new_ids) : MolID()
+IDAndSet<MolID>::IDAndSet(const QList<MolIdentifier> &new_ids) : MolID()
 {
     for (QList<MolIdentifier>::const_iterator it = new_ids.constBegin();
          it != new_ids.constEnd();
@@ -514,21 +515,21 @@ IDSet<MolID>::IDSet(const QList<MolIdentifier> &new_ids) : MolID()
 }
 
 /** Copy constructor */
-IDSet<MolID>::IDSet(const IDSet &other) : MolID(other), ids(other.ids)
+IDAndSet<MolID>::IDAndSet(const IDAndSet &other) : MolID(other), ids(other.ids)
 {}
 
 /** Destructor */
-IDSet<MolID>::~IDSet()
+IDAndSet<MolID>::~IDAndSet()
 {}
 
 /** Is this selection null? */
-bool IDSet<MolID>::isNull() const
+bool IDAndSet<MolID>::isNull() const
 {
     return ids.isEmpty();
 }
 
 /** Return a hash of this identifier */
-uint IDSet<MolID>::hash() const
+uint IDAndSet<MolID>::hash() const
 {
     uint h = 0;
     
@@ -543,7 +544,7 @@ uint IDSet<MolID>::hash() const
 }
             
 /** Return a string representatio of this ID */
-QString IDSet<MolID>::toString() const
+QString IDAndSet<MolID>::toString() const
 {
     if (ids.isEmpty())
         return QObject::tr("null");
@@ -563,20 +564,20 @@ QString IDSet<MolID>::toString() const
 }
 
 /** Return all of the IDs in this set */
-const QSet<MolIdentifier>& IDSet<MolID>::IDs() const
+const QSet<MolIdentifier>& IDAndSet<MolID>::IDs() const
 {
     return ids;
 }
 
 /** Copy assignment operator */
-IDSet<MolID>& IDSet<MolID>::operator=(const IDSet<MolID> &other)
+IDAndSet<MolID>& IDAndSet<MolID>::operator=(const IDAndSet<MolID> &other)
 {
     ids = other.ids;
     return *this;
 }
 
 /** Copy assignment operator */
-IDSet<MolID>& IDSet<MolID>::operator=(const MolID &other)
+IDAndSet<MolID>& IDAndSet<MolID>::operator=(const MolID &other)
 {
     ids.clear();
     this->add(other);
@@ -585,36 +586,260 @@ IDSet<MolID>& IDSet<MolID>::operator=(const MolID &other)
 }
 
 /** Comparison operator */
-bool IDSet<MolID>::operator==(const SireID::ID &other) const
+bool IDAndSet<MolID>::operator==(const SireID::ID &other) const
 {
-    return SireID::ID::compare< IDSet<MolID> >(*this, other);
+    return SireID::ID::compare< IDAndSet<MolID> >(*this, other);
 }
 
 /** Comparison operator */
-bool IDSet<MolID>::operator==(const IDSet<MolID> &other) const
+bool IDAndSet<MolID>::operator==(const IDAndSet<MolID> &other) const
 {
     return ids == other.ids;
 }
 
 /** Comparison operator */
-bool IDSet<MolID>::operator!=(const IDSet<MolID> &other) const
+bool IDAndSet<MolID>::operator!=(const IDAndSet<MolID> &other) const
 {
     return ids != other.ids;
 }
 
 /** Comparison operator */
-bool IDSet<MolID>::operator==(const MolID &other) const
+bool IDAndSet<MolID>::operator==(const MolID &other) const
 {
-    return this->operator==( IDSet<MolID>(other) );
+    return this->operator==( IDAndSet<MolID>(other) );
 }
 
 /** Comparison operator */
-bool IDSet<MolID>::operator!=(const MolID &other) const
+bool IDAndSet<MolID>::operator!=(const MolID &other) const
 {
-    return this->operator!=( IDSet<MolID>(other) );
+    return this->operator!=( IDAndSet<MolID>(other) );
 }
 
-QList<MolNum> IDSet<MolID>::process(QList<MolNum> molnums) const
+template<class T>
+QList<MolNum> IDAndSet<MolID>::_pvt_map(const T &group) const
+{
+    if (ids.isEmpty())
+        return MolIdentifier().map(group);
+        
+    QSet<MolNum> molnums;
+        
+    QSet<MolIdentifier>::const_iterator it = ids.constBegin();
+    
+    try
+    {
+        molnums = it->map(group).toSet();
+    }
+    catch(...)
+    {
+        //no match
+    }
+        
+    for ( ++it; it != ids.constEnd(); ++it )
+    {
+        if (molnums.isEmpty())
+            break;
+    
+        try
+        {
+            molnums.intersect( it->map(group).toSet() );
+        }
+        catch(...)
+        {
+            //no match
+            molnums.clear();
+        }
+    }
+
+    if (molnums.isEmpty())
+        throw SireMol::missing_molecule( QObject::tr(
+            "No molecule matches the ID \"%1\".")
+                .arg(this->toString()), CODELOC );
+                
+    return molnums.toList();
+}
+
+/** Map this ID to the list of indicies that match this ID
+
+    \throw SireMol::missing_molecule
+    \throw SireError::invalid_index
+*/
+QList<MolNum> IDAndSet<MolID>::map(const Molecules &mols) const
+{
+    return this->_pvt_map(mols);
+}
+
+/** Map this ID to the list of indicies that match this ID
+
+    \throw SireMol::missing_molecule
+    \throw SireError::invalid_index
+*/
+QList<MolNum> IDAndSet<MolID>::map(const MoleculeGroup &molgroup) const
+{
+    return this->_pvt_map(molgroup);
+}
+
+/** Map this ID to the list of indicies that match this ID
+
+    \throw SireMol::missing_molecule
+    \throw SireError::invalid_index
+*/
+QList<MolNum> IDAndSet<MolID>::map(const MolGroupsBase &molgroups) const
+{
+    return this->_pvt_map(molgroups);
+}
+
+//////
+////// Implementation of IDOrSet<MolID>
+//////
+
+static const RegisterMetaType< IDOrSet<MolID> > r_idorset_molid;
+
+/** Null constructor */
+IDOrSet<MolID>::IDOrSet() : MolID()
+{}
+
+/** Add the passed ID to the list */
+void IDOrSet<MolID>::add(const MolID &id)
+{
+    if (id.isNull())
+        return;
+
+    else if (id.isA<MolIdentifier>())
+    {
+        this->add(id.asA<MolIdentifier>().base());
+    }
+    else if (id.isA< IDOrSet<MolID> >())
+        ids += id.asA< IDOrSet<MolID> >().ids;
+    else
+        ids.insert( MolIdentifier(id) );
+}
+
+/** Construct from the passed ID */
+IDOrSet<MolID>::IDOrSet(const MolID &id) : MolID()
+{
+    this->add(id);
+}
+
+/** Construct from the passed IDs */
+IDOrSet<MolID>::IDOrSet(const MolID &id0, const MolID &id1) : MolID()
+{
+    this->add(id0);
+    this->add(id1);
+}
+
+/** Construct from the passed list of IDs */
+IDOrSet<MolID>::IDOrSet(const QList<MolIdentifier> &new_ids) : MolID()
+{
+    for (QList<MolIdentifier>::const_iterator it = new_ids.constBegin();
+         it != new_ids.constEnd();
+         ++it)
+    {
+        this->add(it->base());
+    }
+}
+
+/** Copy constructor */
+IDOrSet<MolID>::IDOrSet(const IDOrSet &other) : MolID(other), ids(other.ids)
+{}
+
+/** Destructor */
+IDOrSet<MolID>::~IDOrSet()
+{}
+
+/** Is this selection null? */
+bool IDOrSet<MolID>::isNull() const
+{
+    return ids.isEmpty();
+}
+
+/** Return a hash of this identifier */
+uint IDOrSet<MolID>::hash() const
+{
+    uint h = 0;
+    
+    for (QSet<MolIdentifier>::const_iterator it = ids.constBegin();
+         it != ids.constEnd();
+         ++it)
+    {
+        h += it->hash();
+    }
+    
+    return h;
+}
+            
+/** Return a string representatio of this ID */
+QString IDOrSet<MolID>::toString() const
+{
+    if (ids.isEmpty())
+        return QObject::tr("null");
+    else
+    {
+        QStringList idstrings;
+        
+        for (QSet<MolIdentifier>::const_iterator it = ids.constBegin();
+             it != ids.constEnd();
+             ++it)
+        {
+            idstrings.append( it->toString() );
+        }
+    
+        return idstrings.join( QObject::tr(" and ") );
+    }
+}
+
+/** Return all of the IDs in this set */
+const QSet<MolIdentifier>& IDOrSet<MolID>::IDs() const
+{
+    return ids;
+}
+
+/** Copy assignment operator */
+IDOrSet<MolID>& IDOrSet<MolID>::operator=(const IDOrSet<MolID> &other)
+{
+    ids = other.ids;
+    return *this;
+}
+
+/** Copy assignment operator */
+IDOrSet<MolID>& IDOrSet<MolID>::operator=(const MolID &other)
+{
+    ids.clear();
+    this->add(other);
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool IDOrSet<MolID>::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare< IDOrSet<MolID> >(*this, other);
+}
+
+/** Comparison operator */
+bool IDOrSet<MolID>::operator==(const IDOrSet<MolID> &other) const
+{
+    return ids == other.ids;
+}
+
+/** Comparison operator */
+bool IDOrSet<MolID>::operator!=(const IDOrSet<MolID> &other) const
+{
+    return ids != other.ids;
+}
+
+/** Comparison operator */
+bool IDOrSet<MolID>::operator==(const MolID &other) const
+{
+    return this->operator==( IDOrSet<MolID>(other) );
+}
+
+/** Comparison operator */
+bool IDOrSet<MolID>::operator!=(const MolID &other) const
+{
+    return this->operator!=( IDOrSet<MolID>(other) );
+}
+
+QList<MolNum> IDOrSet<MolID>::process(QList<MolNum> molnums) const
 {
     
     QSet<MolNum> set;
@@ -645,7 +870,7 @@ QList<MolNum> IDSet<MolID>::process(QList<MolNum> molnums) const
     \throw SireMol::missing_molecule
     \throw SireError::invalid_index
 */
-QList<MolNum> IDSet<MolID>::map(const Molecules &mols) const
+QList<MolNum> IDOrSet<MolID>::map(const Molecules &mols) const
 {
     if (ids.isEmpty())
         return MolIdentifier().map(mols);
@@ -674,7 +899,7 @@ QList<MolNum> IDSet<MolID>::map(const Molecules &mols) const
     \throw SireMol::missing_molecule
     \throw SireError::invalid_index
 */
-QList<MolNum> IDSet<MolID>::map(const MoleculeGroup &molgroup) const
+QList<MolNum> IDOrSet<MolID>::map(const MoleculeGroup &molgroup) const
 {
     if (ids.isEmpty())
         return MolIdentifier().map(molgroup);
@@ -703,7 +928,7 @@ QList<MolNum> IDSet<MolID>::map(const MoleculeGroup &molgroup) const
     \throw SireMol::missing_molecule
     \throw SireError::invalid_index
 */
-QList<MolNum> IDSet<MolID>::map(const MolGroupsBase &molgroups) const
+QList<MolNum> IDOrSet<MolID>::map(const MolGroupsBase &molgroups) const
 {
     if (ids.isEmpty())
         return MolIdentifier().map(molgroups);

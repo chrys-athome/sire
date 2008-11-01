@@ -34,7 +34,8 @@
 #include "atomsin.hpp"
 #include "resin.hpp"
 
-#include "SireID/idset.hpp"
+#include "SireID/idandset.hpp"
+#include "SireID/idorset.hpp"
 #include "SireID/specify.hpp"
 
 SIRE_BEGIN_HEADER
@@ -42,7 +43,8 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
-using SireID::IDSet;
+using SireID::IDAndSet;
+using SireID::IDOrSet;
 using SireID::Specify;
 
 template<class T>
@@ -54,7 +56,6 @@ class GroupAtomID;
 template<class G0, class G1>
 class GroupGroupID;
 
-class ChainChainID;
 class ChainResID;
 
 class MolInfo;
@@ -91,20 +92,20 @@ public:
     Specify<ChainID> operator()(int i) const;
     Specify<ChainID> operator()(int i, int j) const;
     
-    ChainChainID operator+(const ChainID &other) const;
+    IDAndSet<ChainID> operator+(const ChainID &other) const;
     ChainResID operator+(const ResID &other) const;
     GroupAtomID<ChainID,AtomID> operator+(const AtomID &other) const;
     GroupGroupID<SegID,ChainID> operator+(const SegID &other) const;
     GroupGroupID<CGID,ChainID> operator+(const CGID &other) const;
 
-    ChainChainID operator&&(const ChainID &other) const;
+    IDAndSet<ChainID> operator&&(const ChainID &other) const;
     ChainResID operator&&(const ResID &other) const;
     GroupAtomID<ChainID,AtomID> operator&&(const AtomID &other) const;
     GroupGroupID<SegID,ChainID> operator&&(const SegID &other) const;
     GroupGroupID<CGID,ChainID> operator&&(const CGID &other) const;
     
-    IDSet<ChainID> operator*(const ChainID &other) const;
-    IDSet<ChainID> operator||(const ChainID &other) const;
+    IDOrSet<ChainID> operator*(const ChainID &other) const;
+    IDOrSet<ChainID> operator||(const ChainID &other) const;
     
     AtomsIn<ChainID> atoms() const;
     AtomsIn<ChainID> atom(int i) const;
@@ -152,19 +153,22 @@ protected:
 Q_DECLARE_METATYPE( SireID::Specify<SireMol::ChainID> );
 Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::ChainID> );
 Q_DECLARE_METATYPE( SireMol::ResIn<SireMol::ChainID> );
-Q_DECLARE_METATYPE( SireID::IDSet<SireMol::ChainID> );
+Q_DECLARE_METATYPE( SireID::IDAndSet<SireMol::ChainID> );
+Q_DECLARE_METATYPE( SireID::IDOrSet<SireMol::ChainID> );
 
 SIRE_EXPOSE_CLASS( SireMol::ChainID )
 SIRE_EXPOSE_ALIAS( SireID::Specify<SireMol::ChainID>, SireMol::Specify_ChainID_ )
 SIRE_EXPOSE_ALIAS( SireMol::AtomsIn<SireMol::ChainID>, SireMol::AtomsIn_ChainID_ )
 SIRE_EXPOSE_ALIAS( SireMol::ResIn<SireMol::ChainID>, SireMol::ResIn_ChainID_ )
-SIRE_EXPOSE_ALIAS( SireID::IDSet<SireMol::ChainID>, SireMol::IDSet_ChainID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDAndSet<SireMol::ChainID>, SireMol::IDAndSet_ChainID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDOrSet<SireMol::ChainID>, SireMol::IDOrSet_ChainID_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
 template class SireID::Specify<SireMol::ChainID>;
 template class SireMol::AtomsIn<SireMol::ChainID>;
 template class SireMol::ResIn<SireMol::ChainID>;
-template class SireID::IDSet<SireMol::ChainID>;
+template class SireID::IDAndSet<SireMol::ChainID>;
+template class SireID::IDOrSet<SireMol::ChainID>;
 #endif
 
 SIRE_END_HEADER

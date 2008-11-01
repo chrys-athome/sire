@@ -68,42 +68,21 @@ public:
         return new SysName(*this);
     }
     
-    bool isNull() const
-    {
-        return SireID::Name::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return qHash(_name);
-    }
+    uint hash() const;
     
-    QString toString() const
-    {
-        return QString("SysName('%1')").arg(_name);
-    }
+    QString toString() const;
     
-    SysName& operator=(const SysName &other)
-    {
-        SireID::Name::operator=(other);
-        SysID::operator=(other);
-        return *this;
-    }
+    SysName& operator=(const SysName &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<SysName>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
-    bool operator==(const SysName &other) const
-    {
-        return _name == other._name;
-    }
+    bool operator==(const SysName &other) const;
     
-    bool operator!=(const SysName &other) const
-    {
-        return _name != other._name;
-    }
+    bool operator!=(const SysName &other) const;
+    
+    QList<SysIdx> map(const Systems &systems) const;
 };
 
 }

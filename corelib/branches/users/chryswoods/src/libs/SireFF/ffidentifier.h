@@ -36,14 +36,10 @@
 namespace SireFF
 {
 class FFIdentifier;
-class FFFFID;
 }
 
 QDataStream& operator<<(QDataStream&, const SireFF::FFIdentifier&);
 QDataStream& operator>>(QDataStream&, SireFF::FFIdentifier&);
-
-QDataStream& operator<<(QDataStream&, const SireFF::FFFFID&);
-QDataStream& operator>>(QDataStream&, SireFF::FFFFID&);
 
 namespace SireFF
 {

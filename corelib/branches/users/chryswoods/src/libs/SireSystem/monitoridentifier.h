@@ -35,6 +35,14 @@
 
 namespace SireSystem
 {
+class MonitorIdentifier;
+}
+
+QDataStream& operator<<(QDataStream&, const SireSystem::MonitorIdentifier&);
+QDataStream& operator>>(QDataStream&, SireSystem::MonitorIdentifier&);
+
+namespace SireSystem
+{
 
 /** This is a generic holder for any MonitorID class! 
 
@@ -42,6 +50,10 @@ namespace SireSystem
 */
 class SIRESYSTEM_EXPORT MonitorIdentifier : public MonitorID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const MonitorIdentifier&);
+friend QDataStream& ::operator>>(QDataStream&, MonitorIdentifier&);
+
 public:
     MonitorIdentifier();
     MonitorIdentifier(const MonitorID &monid);

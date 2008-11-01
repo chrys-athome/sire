@@ -29,7 +29,6 @@
 #include "chainid.h"
 #include "chainidentifier.h"
 
-#include "chainchainid.h"
 #include "chainresid.h"
 #include "groupatomids.h"
 #include "groupgroupids.h"
@@ -73,13 +72,13 @@ ChainID::~ChainID()
 {}
 
 /** Combine with another ID object */
-ChainChainID ChainID::operator+(const ChainID &other) const
+IDAndSet<ChainID> ChainID::operator+(const ChainID &other) const
 {
-    return ChainChainID(*this, other);
+    return IDAndSet<ChainID>(*this, other);
 }
 
 /** Syntactic sugar for operator+ */
-ChainChainID ChainID::operator&&(const ChainID &other) const
+IDAndSet<ChainID> ChainID::operator&&(const ChainID &other) const
 {
     return this->operator+(other);
 }
@@ -133,13 +132,13 @@ GroupGroupID<CGID,ChainID> ChainID::operator&&(const CGID &other) const
 }
 
 /** Return the combination of this ID or other */
-IDSet<ChainID> ChainID::operator*(const ChainID &other) const
+IDOrSet<ChainID> ChainID::operator*(const ChainID &other) const
 {
-    return IDSet<ChainID>(*this, other);
+    return IDOrSet<ChainID>(*this, other);
 }
 
 /** Syntactic sugar for operator* */
-IDSet<ChainID> ChainID::operator||(const ChainID &other) const
+IDOrSet<ChainID> ChainID::operator||(const ChainID &other) const
 {
     return this->operator*(other);
 }
@@ -320,9 +319,11 @@ ChainID::selectAllFrom(const MolGroupsBase &molgroups) const
 template class Specify<ChainID>;
 template class AtomsIn<ChainID>;
 template class ResIn<ChainID>;
-template class IDSet<ChainID>;
+template class IDAndSet<ChainID>;
+template class IDOrSet<ChainID>;
 
 static const RegisterMetaType< Specify<ChainID> > r_specify_chainid;
 static const RegisterMetaType< AtomsIn<ChainID> > r_atomsin_chainid;
 static const RegisterMetaType< ResIn<ChainID> > r_resin_chainid;
-static const RegisterMetaType< IDSet<ChainID> > r_idset_chainid;
+static const RegisterMetaType< IDAndSet<ChainID> > r_idandset_chainid;
+static const RegisterMetaType< IDOrSet<ChainID> > r_idorset_chainid;

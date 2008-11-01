@@ -36,14 +36,10 @@
 namespace SireMol
 {
 class MGIdentifier;
-class MGMGID;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMol::MGIdentifier&);
 QDataStream& operator>>(QDataStream&, SireMol::MGIdentifier&);
-
-QDataStream& operator<<(QDataStream&, const SireMol::MGMGID&);
-QDataStream& operator>>(QDataStream&, SireMol::MGMGID&);
 
 namespace SireMol
 {
@@ -107,63 +103,8 @@ private:
     boost::shared_ptr<MGID> d;
 };
 
-/** This class holds the 'and' combination of two MGIDs */
-class SIREMOL_EXPORT MGMGID : public MGID
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const MGMGID&);
-friend QDataStream& ::operator>>(QDataStream&, MGMGID&);
-
-public:
-    MGMGID();
-    MGMGID(const MGID &mgid0, const MGID &mgid1);
-    
-    MGMGID(const MGMGID &other);
-    
-    ~MGMGID();
-    
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MGMGID>() );
-    }
-    
-    const char* what() const
-    {
-        return MGMGID::typeName();
-    }
-
-    MGMGID* clone() const
-    {
-        return new MGMGID(*this);
-    }
-    
-    MGMGID& operator=(const MGMGID &other);
-    
-    bool operator==(const MGMGID &other) const;
-    bool operator!=(const MGMGID &other) const;
-    
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<MGMGID>(*this, other);
-    }
-
-    bool isNull() const;
-    
-    uint hash() const;
-    
-    QString toString() const;
-    
-    QList<MGNum> map(const MolGroupsBase &molgroups) const;
-
-private:
-    MGIdentifier mgid0, mgid1;
-};
-
 }
 
 Q_DECLARE_METATYPE(SireMol::MGIdentifier);
-Q_DECLARE_METATYPE( SireMol::MGMGID )
-
-SIRE_EXPOSE_CLASS( SireMol::MGMGID )
 
 #endif

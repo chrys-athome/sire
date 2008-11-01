@@ -30,6 +30,8 @@
 #include "ffidx.h"
 #include "ffname.h"
 
+#include "SireFF/errors.h"
+
 #include "SireStream/datastream.h"
 
 using namespace SireFF;
@@ -63,24 +65,38 @@ Specify<FFID> FFID::operator()(int i, int j) const
     return Specify<FFID>(*this, i, j);
 }
 
-FFFFID FFID::operator+(const FFID &other) const
+IDAndSet<FFID> FFID::operator+(const FFID &other) const
 {
-    return FFFFID(*this, other);
+    return IDAndSet<FFID>(*this, other);
 }
 
-FFFFID FFID::operator&&(const FFID &other) const
+IDAndSet<FFID> FFID::operator&&(const FFID &other) const
 {
     return this->operator+(other);
 }
 
-IDSet<FFID> FFID::operator*(const FFID &other) const
+IDOrSet<FFID> FFID::operator*(const FFID &other) const
 {
-    return IDSet<FFID>(*this, other);
+    return IDOrSet<FFID>(*this, other);
 }
 
-IDSet<FFID> FFID::operator||(const FFID &other) const
+IDOrSet<FFID> FFID::operator||(const FFID &other) const
 {
     return this->operator*(other);
+}
+
+QList<FFIdx> FFID::processMatches(QList<FFIdx> &ffidxs, 
+                                  const ForceFields &ffields) const
+{
+    if (ffidxs.isEmpty())
+        throw SireFF::missing_forcefield( QObject::tr(
+            "No forcefield in the passed forcefields object matches the ID "
+            "\"%1\".")  
+                .arg(this->toString()), CODELOC );
+                
+    qSort(ffidxs);
+
+    return ffidxs;
 }
 
 ///////
@@ -188,7 +204,9 @@ bool FFName::operator!=(const FFName &other) const
 ///////
 
 template class Specify<FFID>;
-template class IDSet<FFID>;
+template class IDAndSet<FFID>;
+template class IDOrSet<FFID>;
 
 static const RegisterMetaType< Specify<FFID> > r_specify_ffid;
-static const RegisterMetaType< IDSet<FFID> > r_idset_ffid;
+static const RegisterMetaType< IDAndSet<FFID> > r_idandset_ffid;
+static const RegisterMetaType< IDOrSet<FFID> > r_idorset_ffid;

@@ -139,10 +139,86 @@ public:
     }
 };
 
+/** This exception is thrown when a request is made of
+    a non-existant system
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT missing_system : public siresystem_error
+{
+public:
+    missing_system() : siresystem_error()
+    {}
+
+    missing_system(QString err, QString place = QString::null)
+              : siresystem_error(err,place)
+    {}
+
+    missing_system(const missing_system &other) : siresystem_error(other)
+    {}
+
+    ~missing_system() throw()
+    {}
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_system>() );
+    }
+
+    const char* what() const throw()
+    {
+        return missing_system::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_system(*this);
+    }
+};
+
+/** This exception is thrown when multiple systems match an ID
+    but only one system was requested
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT duplicate_system : public siresystem_error
+{
+public:
+    duplicate_system() : siresystem_error()
+    {}
+
+    duplicate_system(QString err, QString place = QString::null)
+              : siresystem_error(err,place)
+    {}
+
+    duplicate_system(const duplicate_system &other) : siresystem_error(other)
+    {}
+
+    ~duplicate_system() throw()
+    {}
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<duplicate_system>() );
+    }
+
+    const char* what() const throw()
+    {
+        return duplicate_system::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw duplicate_system(*this);
+    }
+};
+
 }
 
 Q_DECLARE_METATYPE(SireSystem::missing_monitor)
 Q_DECLARE_METATYPE(SireSystem::duplicate_monitor)
+Q_DECLARE_METATYPE(SireSystem::missing_system)
+Q_DECLARE_METATYPE(SireSystem::duplicate_system)
 
 SIRE_END_HEADER
 

@@ -32,6 +32,8 @@
 
 #include "systemmonitors.h"
 
+#include "SireSystem/errors.h"
+
 using namespace SireSystem;
 
 ///////
@@ -46,6 +48,52 @@ MonitorID::MonitorID(const MonitorID &other) : SireID::ID(other)
 
 MonitorID::~MonitorID()
 {}
+
+Specify<MonitorID> MonitorID::operator[](int i) const
+{
+    return Specify<MonitorID>(*this, i);
+}
+
+Specify<MonitorID> MonitorID::operator()(int i) const
+{
+    return Specify<MonitorID>(*this, i);
+}
+
+Specify<MonitorID> MonitorID::operator()(int i, int j) const
+{
+    return Specify<MonitorID>(*this, i, j);
+}
+
+IDAndSet<MonitorID> MonitorID::operator+(const MonitorID &other) const
+{
+    return IDAndSet<MonitorID>(*this, other);
+}
+
+IDAndSet<MonitorID> MonitorID::operator&&(const MonitorID &other) const
+{
+    return this->operator+(other);
+}
+
+IDOrSet<MonitorID> MonitorID::operator*(const MonitorID &other) const
+{
+    return IDOrSet<MonitorID>(*this, other);
+}
+
+IDOrSet<MonitorID> MonitorID::operator||(const MonitorID &other) const
+{
+    return this->operator*(other);
+}
+
+QList<MonitorName> MonitorID::processMatches(QList<MonitorName> &matches,
+                                             const SystemMonitors &monitors) const
+{
+    if (matches.isEmpty())
+        throw SireSystem::missing_monitor( QObject::tr(
+            "There are no monitors available that match the ID \"%1\".")
+                .arg(this->toString()), CODELOC );
+                
+    return matches;
+}
 
 ///////
 /////// Implementation of MonitorIdx
@@ -89,3 +137,14 @@ QList<MonitorName> MonitorName::map(const SystemMonitors &monitors) const
 {
     return monitors.map(*this);
 }
+
+///////
+///////
+
+template class Specify<MonitorID>;
+template class IDAndSet<MonitorID>;
+template class IDOrSet<MonitorID>;
+
+static const RegisterMetaType< Specify<MonitorID> > r_specify_monid;
+static const RegisterMetaType< IDAndSet<MonitorID> > r_idandset_monid;
+static const RegisterMetaType< IDOrSet<MonitorID> > r_idorset_monid;

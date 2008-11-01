@@ -29,7 +29,6 @@
 #include "atomid.h"
 #include "atomidentifier.h"
 
-#include "atomatomid.h"
 #include "groupatomids.h"
 #include "molatomid.h"
 
@@ -97,13 +96,13 @@ Specify<AtomID> AtomID::operator()(int i, int j) const
 }
 
 /** Combine with other ID types */
-AtomAtomID AtomID::operator+(const AtomID &other) const
+IDAndSet<AtomID> AtomID::operator+(const AtomID &other) const
 {
-    return AtomAtomID(*this, other);
+    return IDAndSet<AtomID>(*this, other);
 }
 
 /** Syntactic sugar for *this + other */
-AtomAtomID AtomID::operator&&(const AtomID &other) const
+IDAndSet<AtomID> AtomID::operator&&(const AtomID &other) const
 {
     return this->operator+(other);
 }
@@ -169,13 +168,13 @@ MolAtomID AtomID::operator&&(const MolID &other) const
 }
 
 /** Return the selection that matches this atom or 'other' */
-IDSet<AtomID> AtomID::operator*(const AtomID &other) const
+IDOrSet<AtomID> AtomID::operator*(const AtomID &other) const
 {
-    return IDSet<AtomID>(*this, other);
+    return IDOrSet<AtomID>(*this, other);
 }
 
 /** Syntactic sugar for *this * other */
-IDSet<AtomID> AtomID::operator||(const AtomID &other) const
+IDOrSet<AtomID> AtomID::operator||(const AtomID &other) const
 {
     return this->operator*(other);
 }
@@ -588,7 +587,9 @@ QList<AtomIdx> AtomName::map(const MolInfo &molinfo) const
 
 //fully instantiate Specify<AtomID>
 template class Specify<AtomID>;
-template class IDSet<AtomID>;
+template class IDAndSet<AtomID>;
+template class IDOrSet<AtomID>;
 
 static const RegisterMetaType< Specify<AtomID> > r_specify_atomid;
-static const RegisterMetaType< IDSet<AtomID> > r_idset_atomid;
+static const RegisterMetaType< IDAndSet<AtomID> > r_idandset_atomid;
+static const RegisterMetaType< IDOrSet<AtomID> > r_idorset_atomid;

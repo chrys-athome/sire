@@ -31,20 +31,21 @@
 
 #include "SireID/id.h"
 
-#include "SireID/idset.hpp"
+#include "SireID/idandset.hpp"
+#include "SireID/idorset.hpp"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
 
-using SireID::IDSet;
+using SireID::IDAndSet;
+using SireID::IDOrSet;
 
 class MolIdx;
 class MolIdentifier;
 class MolNum;
 
-class MolMolID;
 class MolAtomID;
 
 class SpecifyMol;
@@ -84,15 +85,15 @@ public:
     SpecifyMol operator()(int i) const;
     SpecifyMol operator()(int i, int j) const;
     
-    MolMolID operator+(const MolID &other) const;
+    IDAndSet<MolID> operator+(const MolID &other) const;
     MolAtomID operator+(const AtomID &other) const;
 
-    IDSet<MolID> operator*(const MolID &other) const;
+    IDOrSet<MolID> operator*(const MolID &other) const;
 
-    MolMolID operator&&(const MolID &other) const;
+    IDAndSet<MolID> operator&&(const MolID &other) const;
     MolAtomID operator&&(const AtomID &other) const;
     
-    IDSet<MolID> operator||(const MolID &other) const;
+    IDOrSet<MolID> operator||(const MolID &other) const;
     
     virtual QList<MolNum> map(const Molecules &molecules) const=0;
     virtual QList<MolNum> map(const MoleculeGroup &molgroup) const=0;
@@ -115,39 +116,39 @@ using SireMol::MoleculeGroup;
 using SireMol::MolGroupsBase;
 
 template<>
-class IDSet<MolID> : public MolID
+class IDAndSet<MolID> : public MolID
 {
 
-friend QDataStream& ::operator<<<>(QDataStream&, const IDSet<MolID>&);
-friend QDataStream& ::operator>><>(QDataStream&, IDSet<MolID>&);
+friend QDataStream& ::operator<<<>(QDataStream&, const IDAndSet<MolID>&);
+friend QDataStream& ::operator>><>(QDataStream&, IDAndSet<MolID>&);
 
 public:
-    IDSet();
-    IDSet(const MolID &id);
-    IDSet(const MolID &id0, const MolID &id1);
+    IDAndSet();
+    IDAndSet(const MolID &id);
+    IDAndSet(const MolID &id0, const MolID &id1);
     
-    IDSet(const QList<MolIdentifier> &ids);
+    IDAndSet(const QList<MolIdentifier> &ids);
     
     template<class T>
-    IDSet(const T &ids);
+    IDAndSet(const T &ids);
     
-    IDSet(const IDSet<MolID> &other);
+    IDAndSet(const IDAndSet<MolID> &other);
     
-    ~IDSet();
+    ~IDAndSet();
     
     static const char* typeName()
     {
-        return QMetaType::typeName( qMetaTypeId< IDSet<MolID> >() );
+        return QMetaType::typeName( qMetaTypeId< IDAndSet<MolID> >() );
     }
     
     const char* what() const
     {
-        return IDSet<MolID>::typeName();
+        return IDAndSet<MolID>::typeName();
     }
     
-    IDSet<MolID>* clone() const
+    IDAndSet<MolID>* clone() const
     {
-        return new IDSet<MolID>(*this);
+        return new IDAndSet<MolID>(*this);
     }
     
     bool isNull() const;
@@ -158,14 +159,96 @@ public:
 
     const QSet<MolIdentifier>& IDs() const;
     
-    IDSet<MolID>& operator=(const IDSet<MolID> &other);
-    IDSet<MolID>& operator=(const MolID &other);
+    IDAndSet<MolID>& operator=(const IDAndSet<MolID> &other);
+    IDAndSet<MolID>& operator=(const MolID &other);
     
     bool operator==(const SireID::ID &other) const;
     using SireID::ID::operator!=;
    
-    bool operator==(const IDSet<MolID> &other) const;
-    bool operator!=(const IDSet<MolID> &other) const;
+    bool operator==(const IDAndSet<MolID> &other) const;
+    bool operator!=(const IDAndSet<MolID> &other) const;
+    
+    bool operator==(const MolID &other) const;
+    bool operator!=(const MolID &other) const;
+    
+    QList<MolNum> map(const Molecules &mols) const;
+    QList<MolNum> map(const MoleculeGroup &molgroup) const;
+    QList<MolNum> map(const MolGroupsBase &molgroups) const;
+
+private:
+    void add(const MolID &id);
+
+    template<class T>
+    QList<MolNum> _pvt_map(const T &group) const;
+    
+    QSet<MolIdentifier> ids;
+};
+
+/** Construct from the passed list of IDs */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+IDAndSet<MolID>::IDAndSet(const T &new_ids) : MolID()
+{
+    for (typename T::const_iterator it = new_ids.constBegin();
+         it != new_ids.constEnd();
+         ++it)
+    {
+        this->add(*it);
+    }
+}
+
+template<>
+class IDOrSet<MolID> : public MolID
+{
+
+friend QDataStream& ::operator<<<>(QDataStream&, const IDOrSet<MolID>&);
+friend QDataStream& ::operator>><>(QDataStream&, IDOrSet<MolID>&);
+
+public:
+    IDOrSet();
+    IDOrSet(const MolID &id);
+    IDOrSet(const MolID &id0, const MolID &id1);
+    
+    IDOrSet(const QList<MolIdentifier> &ids);
+    
+    template<class T>
+    IDOrSet(const T &ids);
+    
+    IDOrSet(const IDOrSet<MolID> &other);
+    
+    ~IDOrSet();
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId< IDOrSet<MolID> >() );
+    }
+    
+    const char* what() const
+    {
+        return IDOrSet<MolID>::typeName();
+    }
+    
+    IDOrSet<MolID>* clone() const
+    {
+        return new IDOrSet<MolID>(*this);
+    }
+    
+    bool isNull() const;
+    
+    uint hash() const;
+                
+    QString toString() const;
+
+    const QSet<MolIdentifier>& IDs() const;
+    
+    IDOrSet<MolID>& operator=(const IDOrSet<MolID> &other);
+    IDOrSet<MolID>& operator=(const MolID &other);
+    
+    bool operator==(const SireID::ID &other) const;
+    using SireID::ID::operator!=;
+   
+    bool operator==(const IDOrSet<MolID> &other) const;
+    bool operator!=(const IDOrSet<MolID> &other) const;
     
     bool operator==(const MolID &other) const;
     bool operator!=(const MolID &other) const;
@@ -184,7 +267,7 @@ private:
 /** Construct from the passed list of IDs */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-IDSet<MolID>::IDSet(const T &new_ids) : MolID()
+IDOrSet<MolID>::IDOrSet(const T &new_ids) : MolID()
 {
     for (typename T::const_iterator it = new_ids.constBegin();
          it != new_ids.constEnd();
@@ -196,10 +279,12 @@ IDSet<MolID>::IDSet(const T &new_ids) : MolID()
 
 }
 
-Q_DECLARE_METATYPE( SireID::IDSet<SireMol::MolID> )
+Q_DECLARE_METATYPE( SireID::IDAndSet<SireMol::MolID> )
+Q_DECLARE_METATYPE( SireID::IDOrSet<SireMol::MolID> )
 
 SIRE_EXPOSE_CLASS( SireMol::MolID )
-SIRE_EXPOSE_ALIAS( SireID::IDSet<SireMol::MolID>, SireMol::IDSet_MolID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDAndSet<SireMol::MolID>, SireMol::IDAndSet_MolID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDOrSet<SireMol::MolID>, SireMol::IDOrSet_MolID_ )
 
 SIRE_END_HEADER
 

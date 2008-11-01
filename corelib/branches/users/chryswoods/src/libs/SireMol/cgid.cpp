@@ -29,7 +29,6 @@
 #include "cgid.h"
 #include "cgidentifier.h"
 
-#include "cgcgid.h"
 #include "groupatomids.h"
 #include "groupgroupids.h"
 
@@ -93,13 +92,13 @@ Specify<CGID> CGID::operator()(int i, int j) const
 }
 
 /** Combine with another ID */
-CGCGID CGID::operator+(const CGID &other) const
+IDAndSet<CGID> CGID::operator+(const CGID &other) const
 {
-    return CGCGID(*this, other);
+    return IDAndSet<CGID>(*this, other);
 }
 
 /** Syntactic sugar for operator+ */
-CGCGID CGID::operator&&(const CGID &other) const
+IDAndSet<CGID> CGID::operator&&(const CGID &other) const
 {
     return this->operator+(other);
 }
@@ -153,13 +152,13 @@ GroupGroupID<CGID,ResID> CGID::operator&&(const ResID &other) const
 }
 
 /** Return the combination of this ID or 'other' */
-IDSet<CGID> CGID::operator*(const CGID &other) const
+IDOrSet<CGID> CGID::operator*(const CGID &other) const
 {
-    return IDSet<CGID>(*this, other);
+    return IDOrSet<CGID>(*this, other);
 }
 
 /** Syntactic sugar for operator* */
-IDSet<CGID> CGID::operator||(const CGID &other) const
+IDOrSet<CGID> CGID::operator||(const CGID &other) const
 {
     return this->operator*(other);
 }
@@ -303,8 +302,10 @@ CGID::selectAllFrom(const MolGroupsBase &molgroups) const
 //fully instantiate Specify<CGID> and AtomsIn<CGID>
 template class Specify<CGID>;
 template class AtomsIn<CGID>;
-template class IDSet<CGID>;
+template class IDAndSet<CGID>;
+template class IDOrSet<CGID>;
 
 static const RegisterMetaType< Specify<CGID> > r_specify_cgid;
 static const RegisterMetaType< AtomsIn<CGID> > r_atomsin_cgid;
-static const RegisterMetaType< IDSet<CGID> > r_idset_cgid;
+static const RegisterMetaType< IDAndSet<CGID> > r_idandset_cgid;
+static const RegisterMetaType< IDOrSet<CGID> > r_idorset_cgid;

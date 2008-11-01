@@ -30,8 +30,40 @@
 #include "sysidx.h"
 #include "sysname.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/streampolypointer.hpp"
+
 using namespace SireSystem;
 using namespace SireID;
+using namespace SireStream;
+
+static const RegisterMetaType<SysIdentifier> r_sysid;
+
+/** Serialise to a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, 
+                                          const SysIdentifier &sysid)
+{
+    writeHeader(ds, r_sysid, 1);
+    
+    SireStream::savePolyPointer(ds, sysid.d);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, SysIdentifier &sysid)
+{
+    VersionID v = readHeader(ds, r_sysid);
+    
+    if (v == 1)
+    {
+        SireStream::loadPolyPointer(ds, sysid.d);
+    }
+    else
+        throw version_error( v, "1", r_sysid, CODELOC );
+        
+    return ds;
+}
 
 /** Null constructor */
 SysIdentifier::SysIdentifier() : SysID()
@@ -153,4 +185,13 @@ bool SysIdentifier::operator!=(const SysID &other) const
         return this->operator!=(other.asA<SysIdentifier>());
     else
         return d->operator!=(other);
+}
+
+/** Map this ID */
+QList<SysIdx> SysIdentifier::map(const Systems &systems) const
+{
+    if (d.get() == 0)
+        return systems.getSystems();
+    else
+        return d->map(systems);
 }

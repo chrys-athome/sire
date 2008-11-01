@@ -33,10 +33,18 @@
 
 #include "SireID/id.h"
 
+#include "SireID/specify.hpp"
+#include "SireID/idandset.hpp"
+#include "SireID/idorset.hpp"
+
 SIRE_BEGIN_HEADER
 
 namespace SireSystem
 {
+
+using SireID::Specify;
+using SireID::IDAndSet;
+using SireID::IDOrSet;
 
 class MonitorIdx;
 class MonitorIdentifier;
@@ -51,8 +59,9 @@ class SystemMonitors;
 class SIRESYSTEM_EXPORT MonitorID : public SireID::ID
 {
 public:
-    typedef MonitorIdx Index;
+    typedef MonitorName Index;
     typedef MonitorIdentifier Identifier;
+    typedef SystemMonitors SearchObject;
 
     MonitorID();
     MonitorID(const MonitorID &other);
@@ -65,13 +74,46 @@ public:
     }
     
     virtual MonitorID* clone() const=0;
+
+    Specify<MonitorID> operator[](int i) const;
+    Specify<MonitorID> operator()(int i) const;
+    Specify<MonitorID> operator()(int i, int j) const;
+    
+    IDAndSet<MonitorID> operator+(const MonitorID &other) const;
+    IDAndSet<MonitorID> operator&&(const MonitorID &other) const;
+    
+    IDOrSet<MonitorID> operator*(const MonitorID &other) const;
+    IDOrSet<MonitorID> operator||(const MonitorID &other) const;
     
     virtual QList<MonitorName> map(const SystemMonitors &monitors) const=0;
+
+protected:
+    QList<MonitorName> processMatches(QList<MonitorName> &matches,
+                                      const SystemMonitors &monitors) const;
 };
 
 }
 
+#include "monitorname.h"
+#include "monitoridentifier.h"
+
+Q_DECLARE_METATYPE( SireID::Specify<SireSystem::MonitorID> )
+Q_DECLARE_METATYPE( SireID::IDAndSet<SireSystem::MonitorID> )
+Q_DECLARE_METATYPE( SireID::IDOrSet<SireSystem::MonitorID> )
+
 SIRE_EXPOSE_CLASS( SireSystem::MonitorID )
+SIRE_EXPOSE_ALIAS( SireID::Specify<SireSystem::MonitorID>, 
+                   SireSystem::Specify_MonitorID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDAndSet<SireSystem::MonitorID>, 
+                   SireSystem::IDAndSet_MonitorID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDOrSet<SireSystem::MonitorID>, 
+                   SireSystem::IDOrSet_MonitorID_ )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class SireID::Specify<SireSystem::MonitorID>;
+template class SireID::IDAndSet<SireSystem::MonitorID>;
+template class SireID::IDOrSet<SireSystem::MonitorID>;
+#endif
 
 SIRE_END_HEADER
 

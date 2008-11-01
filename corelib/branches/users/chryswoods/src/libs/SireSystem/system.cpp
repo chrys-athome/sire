@@ -1168,7 +1168,7 @@ void System::removeAllMoleculeGroups()
     
     if (not mgnums.isEmpty())
     {
-        this->_pvt_moleculeGroups().remove( IDSet<MGID>(mgnums) );
+        this->_pvt_moleculeGroups().remove( IDOrSet<MGID>(mgnums) );
         
         foreach (MGNum mgnum, mgnums)
         {

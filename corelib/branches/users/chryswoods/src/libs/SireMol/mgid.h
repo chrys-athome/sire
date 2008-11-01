@@ -31,7 +31,8 @@
 
 #include "SireID/id.h"
 
-#include "SireID/idset.hpp"
+#include "SireID/idandset.hpp"
+#include "SireID/idorset.hpp"
 #include "SireID/specify.hpp"
 
 SIRE_BEGIN_HEADER
@@ -39,13 +40,13 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
-using SireID::IDSet;
+using SireID::IDAndSet;
+using SireID::IDOrSet;
 using SireID::Specify;
 
 class MGIdx;
 class MGIdentifier;
 class MGNum;
-class MGMGID;
 
 class MolGroupsBase;
 
@@ -76,11 +77,11 @@ public:
     Specify<MGID> operator()(int i) const;
     Specify<MGID> operator()(int i, int j) const;
     
-    MGMGID operator+(const MGID &other) const;
-    IDSet<MGID> operator*(const MGID &other) const;
+    IDAndSet<MGID> operator+(const MGID &other) const;
+    IDOrSet<MGID> operator*(const MGID &other) const;
 
-    MGMGID operator&&(const MGID &other) const;
-    IDSet<MGID> operator||(const MGID &other) const;
+    IDAndSet<MGID> operator&&(const MGID &other) const;
+    IDOrSet<MGID> operator||(const MGID &other) const;
 
     virtual MGID* clone() const=0;
 
@@ -95,15 +96,18 @@ protected:
 #include "mgidentifier.h"
 #include "mgnum.h"
 
-Q_DECLARE_METATYPE( SireID::IDSet<SireMol::MGID> )
+Q_DECLARE_METATYPE( SireID::IDAndSet<SireMol::MGID> )
+Q_DECLARE_METATYPE( SireID::IDOrSet<SireMol::MGID> )
 Q_DECLARE_METATYPE( SireID::Specify<SireMol::MGID> )
 
 SIRE_EXPOSE_CLASS( SireMol::MGID )
 SIRE_EXPOSE_ALIAS( SireID::Specify<SireMol::MGID>, SireMol::Specify_MGID_ )
-SIRE_EXPOSE_ALIAS( SireID::IDSet<SireMol::MGID>, SireMol::IDSet_MGID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDAndSet<SireMol::MGID>, SireMol::IDAndSet_MGID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDOrSet<SireMol::MGID>, SireMol::IDOrSet_MGID_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
-template class SireID::IDSet<SireMol::MGID>;
+template class SireID::IDAndSet<SireMol::MGID>;
+template class SireID::IDOrSet<SireMol::MGID>;
 template class SireID::Specify<SireMol::MGID>;
 #endif
 
