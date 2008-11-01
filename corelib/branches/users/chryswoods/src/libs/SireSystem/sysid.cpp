@@ -75,12 +75,22 @@ IDAndSet<SysID> SysID::operator&&(const SysID &other) const
     return this->operator+(other);
 }
 
+IDAndSet<SysID> SysID::operator&(const SysID &other) const
+{
+    return this->operator+(other);
+}
+
 IDOrSet<SysID> SysID::operator*(const SysID &other) const
 {
     return IDOrSet<SysID>(*this, other);
 }
 
 IDOrSet<SysID> SysID::operator||(const SysID &other) const
+{
+    return this->operator*(other);
+}
+
+IDOrSet<SysID> SysID::operator|(const SysID &other) const
 {
     return this->operator*(other);
 }

@@ -29,6 +29,7 @@
 #include "ffid.h"
 #include "ffidx.h"
 #include "ffname.h"
+#include "forcefields.h"
 
 #include "SireFF/errors.h"
 
@@ -76,12 +77,22 @@ IDAndSet<FFID> FFID::operator&&(const FFID &other) const
     return this->operator+(other);
 }
 
+IDAndSet<FFID> FFID::operator&(const FFID &other) const
+{
+    return this->operator+(other);
+}
+
 IDOrSet<FFID> FFID::operator*(const FFID &other) const
 {
     return IDOrSet<FFID>(*this, other);
 }
 
 IDOrSet<FFID> FFID::operator||(const FFID &other) const
+{
+    return this->operator*(other);
+}
+
+IDOrSet<FFID> FFID::operator|(const FFID &other) const
 {
     return this->operator*(other);
 }

@@ -83,6 +83,12 @@ IDAndSet<ChainID> ChainID::operator&&(const ChainID &other) const
     return this->operator+(other);
 }
 
+/** Syntactic sugar for operator+ */
+IDAndSet<ChainID> ChainID::operator&(const ChainID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with another ID object */
 ChainResID ChainID::operator+(const ResID &other) const
 {
@@ -91,6 +97,12 @@ ChainResID ChainID::operator+(const ResID &other) const
 
 /** Syntactic sugar for operator+ */
 ChainResID ChainID::operator&&(const ResID &other) const
+{
+    return this->operator+(other);
+}
+
+/** Syntactic sugar for operator+ */
+ChainResID ChainID::operator&(const ResID &other) const
 {
     return this->operator+(other);
 }
@@ -107,6 +119,12 @@ GroupAtomID<ChainID,AtomID> ChainID::operator&&(const AtomID &other) const
     return this->operator+(other);
 }
 
+/** Syntactic sugar for operator+ */
+GroupAtomID<ChainID,AtomID> ChainID::operator&(const AtomID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with another ID object */
 GroupGroupID<SegID,ChainID> ChainID::operator+(const SegID &other) const
 {
@@ -115,6 +133,12 @@ GroupGroupID<SegID,ChainID> ChainID::operator+(const SegID &other) const
 
 /** Syntactic sugar for operator+ */
 GroupGroupID<SegID,ChainID> ChainID::operator&&(const SegID &other) const
+{
+    return this->operator+(other);
+}
+
+/** Syntactic sugar for operator+ */
+GroupGroupID<SegID,ChainID> ChainID::operator&(const SegID &other) const
 {
     return this->operator+(other);
 }
@@ -131,6 +155,12 @@ GroupGroupID<CGID,ChainID> ChainID::operator&&(const CGID &other) const
     return this->operator+(other);
 }
 
+/** Syntactic sugar for operator+ */
+GroupGroupID<CGID,ChainID> ChainID::operator&(const CGID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Return the combination of this ID or other */
 IDOrSet<ChainID> ChainID::operator*(const ChainID &other) const
 {
@@ -139,6 +169,12 @@ IDOrSet<ChainID> ChainID::operator*(const ChainID &other) const
 
 /** Syntactic sugar for operator* */
 IDOrSet<ChainID> ChainID::operator||(const ChainID &other) const
+{
+    return this->operator*(other);
+}
+
+/** Syntactic sugar for operator* */
+IDOrSet<ChainID> ChainID::operator|(const ChainID &other) const
 {
     return this->operator*(other);
 }

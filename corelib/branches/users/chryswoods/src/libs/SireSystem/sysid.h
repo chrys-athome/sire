@@ -95,9 +95,11 @@ public:
     
     IDAndSet<SysID> operator+(const SysID &other) const;
     IDAndSet<SysID> operator&&(const SysID &other) const;
+    IDAndSet<SysID> operator&(const SysID &other) const;
     
     IDOrSet<SysID> operator*(const SysID &other) const;
     IDOrSet<SysID> operator||(const SysID &other) const;
+    IDOrSet<SysID> operator|(const SysID &other) const;
     
     virtual QList<SysIdx> map(const Systems &systems) const=0;
 
@@ -116,9 +118,9 @@ Q_DECLARE_METATYPE( SireID::IDAndSet<SireSystem::SysID> )
 Q_DECLARE_METATYPE( SireID::IDOrSet<SireSystem::SysID> )
 
 SIRE_EXPOSE_CLASS( SireSystem::SysID )
-SIRE_EXPOSE_ALIAS( SireID::Specify<SireSystem::SysID>, SireSystem::Specify<SysID> )
-SIRE_EXPOSE_ALIAS( SireID::IDAndSet<SireSystem::SysID>, SireSystem::IDAndSet<SysID> )
-SIRE_EXPOSE_ALIAS( SireID::IDOrSet<SireSystem::SysID>, SireSystem::IDOrSet<SysID> )
+SIRE_EXPOSE_ALIAS( SireID::Specify<SireSystem::SysID>, SireSystem::Specify_SysID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDAndSet<SireSystem::SysID>, SireSystem::IDAndSet_SysID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDOrSet<SireSystem::SysID>, SireSystem::IDOrSet_SysID_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
 template class SireID::Specify<SireSystem::SysID>;

@@ -92,8 +92,12 @@ public:
 
     IDAndSet<MolID> operator&&(const MolID &other) const;
     MolAtomID operator&&(const AtomID &other) const;
+
+    IDAndSet<MolID> operator&(const MolID &other) const;
+    MolAtomID operator&(const AtomID &other) const;
     
     IDOrSet<MolID> operator||(const MolID &other) const;
+    IDOrSet<MolID> operator|(const MolID &other) const;
     
     virtual QList<MolNum> map(const Molecules &molecules) const=0;
     virtual QList<MolNum> map(const MoleculeGroup &molgroup) const=0;

@@ -81,9 +81,11 @@ public:
     
     IDAndSet<MonitorID> operator+(const MonitorID &other) const;
     IDAndSet<MonitorID> operator&&(const MonitorID &other) const;
+    IDAndSet<MonitorID> operator&(const MonitorID &other) const;
     
     IDOrSet<MonitorID> operator*(const MonitorID &other) const;
     IDOrSet<MonitorID> operator||(const MonitorID &other) const;
+    IDOrSet<MonitorID> operator|(const MonitorID &other) const;
     
     virtual QList<MonitorName> map(const SystemMonitors &monitors) const=0;
 

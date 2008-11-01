@@ -100,9 +100,16 @@ public:
     GroupGroupID<SegID,CGID> operator&&(const SegID &other) const;
     GroupGroupID<CGID,ChainID> operator&&(const ChainID &other) const;
     GroupGroupID<CGID,ResID> operator&&(const ResID &other) const;
+
+    IDAndSet<CGID> operator&(const CGID &other) const;
+    GroupAtomID<CGID,AtomID> operator&(const AtomID &other) const;
+    GroupGroupID<SegID,CGID> operator&(const SegID &other) const;
+    GroupGroupID<CGID,ChainID> operator&(const ChainID &other) const;
+    GroupGroupID<CGID,ResID> operator&(const ResID &other) const;
     
     IDOrSet<CGID> operator*(const CGID &other) const;
     IDOrSet<CGID> operator||(const CGID &other) const;
+    IDOrSet<CGID> operator|(const CGID &other) const;
     
     AtomsIn<CGID> atoms() const;
     AtomsIn<CGID> atom(int i) const;

@@ -103,6 +103,12 @@ IDAndSet<ResID> ResID::operator&&(const ResID &other) const
     return this->operator+(other);
 }
 
+/** Syntactic sugar for operator+ */
+IDAndSet<ResID> ResID::operator&(const ResID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with another ID type */
 ChainResID ResID::operator+(const ChainID &other) const
 {
@@ -111,6 +117,12 @@ ChainResID ResID::operator+(const ChainID &other) const
 
 /** Syntactic sugar for operator+ */
 ChainResID ResID::operator&&(const ChainID &other) const
+{
+    return this->operator+(other);
+}
+
+/** Syntactic sugar for operator+ */
+ChainResID ResID::operator&(const ChainID &other) const
 {
     return this->operator+(other);
 }
@@ -127,6 +139,12 @@ GroupAtomID<ResID,AtomID> ResID::operator&&(const AtomID &other) const
     return this->operator+(other);
 }
 
+/** Syntactic sugar for operator+ */
+GroupAtomID<ResID,AtomID> ResID::operator&(const AtomID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with another ID type */
 GroupGroupID<SegID,ResID> ResID::operator+(const SegID &other) const
 {
@@ -135,6 +153,12 @@ GroupGroupID<SegID,ResID> ResID::operator+(const SegID &other) const
 
 /** Syntactic sugar for operator+ */
 GroupGroupID<SegID,ResID> ResID::operator&&(const SegID &other) const
+{
+    return this->operator+(other);
+}
+
+/** Syntactic sugar for operator+ */
+GroupGroupID<SegID,ResID> ResID::operator&(const SegID &other) const
 {
     return this->operator+(other);
 }
@@ -151,6 +175,12 @@ GroupGroupID<CGID,ResID> ResID::operator&&(const CGID &other) const
     return this->operator+(other);
 }
 
+/** Syntactic sugar for operator+ */
+GroupGroupID<CGID,ResID> ResID::operator&(const CGID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Return the match for this ID or 'other' */
 IDOrSet<ResID> ResID::operator*(const ResID &other) const
 {
@@ -159,6 +189,12 @@ IDOrSet<ResID> ResID::operator*(const ResID &other) const
 
 /** Syntactic sugar for operator* */
 IDOrSet<ResID> ResID::operator||(const ResID &other) const
+{
+    return this->operator*(other);
+}
+
+/** Syntactic sugar for operator* */
+IDOrSet<ResID> ResID::operator|(const ResID &other) const
 {
     return this->operator*(other);
 }

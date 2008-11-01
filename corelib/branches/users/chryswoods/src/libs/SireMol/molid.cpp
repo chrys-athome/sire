@@ -105,6 +105,12 @@ IDAndSet<MolID> MolID::operator&&(const MolID &other) const
     return this->operator+(other);
 }
 
+/** Syntactic sugar for operator+ */
+IDAndSet<MolID> MolID::operator&(const MolID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Search for matching atoms in the matching molecules */
 MolAtomID MolID::operator+(const AtomID &other) const
 {
@@ -117,6 +123,12 @@ MolAtomID MolID::operator&&(const AtomID &other) const
     return this->operator+(other);
 }
 
+/** Syntactic sugar for operator+ */
+MolAtomID MolID::operator&(const AtomID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Search for matching molecules using this ID, or other */
 IDOrSet<MolID> MolID::operator*(const MolID &other) const
 {
@@ -125,6 +137,12 @@ IDOrSet<MolID> MolID::operator*(const MolID &other) const
 
 /** Syntactic sugar for operator* */
 IDOrSet<MolID> MolID::operator||(const MolID &other) const
+{
+    return this->operator*(other);
+}
+
+/** Syntactic sugar for operator* */
+IDOrSet<MolID> MolID::operator|(const MolID &other) const
 {
     return this->operator*(other);
 }

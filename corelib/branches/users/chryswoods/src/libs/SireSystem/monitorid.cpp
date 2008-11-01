@@ -77,12 +77,22 @@ IDAndSet<MonitorID> MonitorID::operator&&(const MonitorID &other) const
     return this->operator+(other);
 }
 
+IDAndSet<MonitorID> MonitorID::operator&(const MonitorID &other) const
+{
+    return this->operator+(other);
+}
+
 IDOrSet<MonitorID> MonitorID::operator*(const MonitorID &other) const
 {
     return IDOrSet<MonitorID>(*this, other);
 }
 
 IDOrSet<MonitorID> MonitorID::operator||(const MonitorID &other) const
+{
+    return this->operator*(other);
+}
+
+IDOrSet<MonitorID> MonitorID::operator|(const MonitorID &other) const
 {
     return this->operator*(other);
 }

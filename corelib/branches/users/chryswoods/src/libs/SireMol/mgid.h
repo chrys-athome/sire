@@ -81,7 +81,10 @@ public:
     IDOrSet<MGID> operator*(const MGID &other) const;
 
     IDAndSet<MGID> operator&&(const MGID &other) const;
+    IDAndSet<MGID> operator&(const MGID &other) const;
+
     IDOrSet<MGID> operator||(const MGID &other) const;
+    IDOrSet<MGID> operator|(const MGID &other) const;
 
     virtual MGID* clone() const=0;
 

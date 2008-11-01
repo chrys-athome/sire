@@ -108,6 +108,12 @@ IDAndSet<AtomID> AtomID::operator&&(const AtomID &other) const
     return this->operator+(other);
 }
 
+/** Syntactic sugar for *this + other */
+IDAndSet<AtomID> AtomID::operator&(const AtomID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with other ID types */
 CGAtomID AtomID::operator+(const CGID &other) const
 {
@@ -116,6 +122,12 @@ CGAtomID AtomID::operator+(const CGID &other) const
 
 /** Syntactic sugar for *this + other */
 CGAtomID AtomID::operator&&(const CGID &other) const
+{
+    return this->operator+(other);
+}
+
+/** Syntactic sugar for *this + other */
+CGAtomID AtomID::operator&(const CGID &other) const
 {
     return this->operator+(other);
 }
@@ -132,6 +144,12 @@ ResAtomID AtomID::operator&&(const ResID &other) const
     return this->operator+(other);
 }
 
+/** Syntactic sugar for *this + other */
+ResAtomID AtomID::operator&(const ResID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with other ID types */
 ChainAtomID AtomID::operator+(const ChainID &other) const
 {
@@ -140,6 +158,12 @@ ChainAtomID AtomID::operator+(const ChainID &other) const
 
 /** Syntactic sugar for *this + other */
 ChainAtomID AtomID::operator&&(const ChainID &other) const
+{
+    return this->operator+(other);
+}
+
+/** Syntactic sugar for *this + other */
+ChainAtomID AtomID::operator&(const ChainID &other) const
 {
     return this->operator+(other);
 }
@@ -156,6 +180,12 @@ SegAtomID AtomID::operator&&(const SegID &other) const
     return this->operator+(other);
 }
 
+/** Syntactic sugar for *this + other */
+SegAtomID AtomID::operator&(const SegID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine with other ID types */
 MolAtomID AtomID::operator+(const MolID &other) const
 {
@@ -168,6 +198,12 @@ MolAtomID AtomID::operator&&(const MolID &other) const
     return this->operator+(other);
 }
 
+/** Syntactic sugar for *this + other */
+MolAtomID AtomID::operator&(const MolID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Return the selection that matches this atom or 'other' */
 IDOrSet<AtomID> AtomID::operator*(const AtomID &other) const
 {
@@ -176,6 +212,12 @@ IDOrSet<AtomID> AtomID::operator*(const AtomID &other) const
 
 /** Syntactic sugar for *this * other */
 IDOrSet<AtomID> AtomID::operator||(const AtomID &other) const
+{
+    return this->operator*(other);
+}
+
+/** Syntactic sugar for *this * other */
+IDOrSet<AtomID> AtomID::operator|(const AtomID &other) const
 {
     return this->operator*(other);
 }

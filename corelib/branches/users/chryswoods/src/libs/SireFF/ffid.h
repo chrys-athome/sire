@@ -81,9 +81,11 @@ public:
     
     IDAndSet<FFID> operator+(const FFID &other) const;
     IDAndSet<FFID> operator&&(const FFID &other) const;
+    IDAndSet<FFID> operator&(const FFID &other) const;
     
     IDOrSet<FFID> operator*(const FFID &other) const;
     IDOrSet<FFID> operator||(const FFID &other) const;
+    IDOrSet<FFID> operator|(const FFID &other) const;
     
     virtual QList<FFIdx> map(const ForceFields &ffields) const=0;
 

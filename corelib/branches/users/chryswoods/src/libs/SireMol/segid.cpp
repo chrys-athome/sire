@@ -102,6 +102,12 @@ IDAndSet<SegID> SegID::operator&&(const SegID &other) const
     return this->operator+(other);
 }
 
+/** Syntactic sugar for operator+ */
+IDAndSet<SegID> SegID::operator&(const SegID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine two ID types */
 GroupAtomID<SegID,AtomID> SegID::operator+(const AtomID &other) const
 {
@@ -110,6 +116,12 @@ GroupAtomID<SegID,AtomID> SegID::operator+(const AtomID &other) const
 
 /** Syntactic sugar for operator+ */
 GroupAtomID<SegID,AtomID> SegID::operator&&(const AtomID &other) const
+{
+    return this->operator+(other);
+}
+
+/** Syntactic sugar for operator+ */
+GroupAtomID<SegID,AtomID> SegID::operator&(const AtomID &other) const
 {
     return this->operator+(other);
 }
@@ -126,6 +138,12 @@ GroupGroupID<SegID,CGID> SegID::operator&&(const CGID &other) const
     return this->operator+(other);
 }
 
+/** Syntactic sugar for operator+ */
+GroupGroupID<SegID,CGID> SegID::operator&(const CGID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Combine two ID types */
 GroupGroupID<SegID,ResID> SegID::operator+(const ResID &other) const
 {
@@ -134,6 +152,12 @@ GroupGroupID<SegID,ResID> SegID::operator+(const ResID &other) const
 
 /** Syntactic sugar for operator+ */
 GroupGroupID<SegID,ResID> SegID::operator&&(const ResID &other) const
+{
+    return this->operator+(other);
+}
+
+/** Syntactic sugar for operator+ */
+GroupGroupID<SegID,ResID> SegID::operator&(const ResID &other) const
 {
     return this->operator+(other);
 }
@@ -150,6 +174,12 @@ GroupGroupID<SegID,ChainID> SegID::operator&&(const ChainID &other) const
     return this->operator+(other);
 }
 
+/** Syntactic sugar for operator+ */
+GroupGroupID<SegID,ChainID> SegID::operator&(const ChainID &other) const
+{
+    return this->operator+(other);
+}
+
 /** Return the object to search for the match of this or 'other' */
 IDOrSet<SegID> SegID::operator*(const SegID &other) const
 {
@@ -158,6 +188,12 @@ IDOrSet<SegID> SegID::operator*(const SegID &other) const
 
 /** Syntactic sugar for operator* */
 IDOrSet<SegID> SegID::operator||(const SegID &other) const
+{
+    return this->operator*(other);
+}
+
+/** Syntactic sugar for operator* */
+IDOrSet<SegID> SegID::operator|(const SegID &other) const
 {
     return this->operator*(other);
 }

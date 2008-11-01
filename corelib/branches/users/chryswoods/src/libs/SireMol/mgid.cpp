@@ -85,12 +85,22 @@ IDAndSet<MGID> MGID::operator&&(const MGID &other) const
     return this->operator+(other);
 }
 
+IDAndSet<MGID> MGID::operator&(const MGID &other) const
+{
+    return this->operator+(other);
+}
+
 IDOrSet<MGID> MGID::operator*(const MGID &other) const
 {
     return IDOrSet<MGID>(*this, other);
 }
 
 IDOrSet<MGID> MGID::operator||(const MGID &other) const
+{
+    return this->operator*(other);
+}
+
+IDOrSet<MGID> MGID::operator|(const MGID &other) const
 {
     return this->operator*(other);
 }

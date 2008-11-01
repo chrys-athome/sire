@@ -102,8 +102,15 @@ public:
     GroupGroupID<SegID,ResID> operator&&(const ResID &other) const;
     GroupGroupID<SegID,ChainID> operator&&(const ChainID &other) const;
 
+    IDAndSet<SegID> operator&(const SegID &other) const;
+    GroupAtomID<SegID,AtomID> operator&(const AtomID &other) const;
+    GroupGroupID<SegID,CGID> operator&(const CGID &other) const;
+    GroupGroupID<SegID,ResID> operator&(const ResID &other) const;
+    GroupGroupID<SegID,ChainID> operator&(const ChainID &other) const;
+
     IDOrSet<SegID> operator*(const SegID &other) const;
     IDOrSet<SegID> operator||(const SegID &other) const;
+    IDOrSet<SegID> operator|(const SegID &other) const;
 
     AtomsIn<SegID> atoms() const;
     AtomsIn<SegID> atom(int i) const;
