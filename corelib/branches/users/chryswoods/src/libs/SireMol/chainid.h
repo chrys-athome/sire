@@ -31,15 +31,19 @@
 
 #include "SireID/id.h"
 
-#include "specify.hpp"
 #include "atomsin.hpp"
 #include "resin.hpp"
-#include "idset.hpp"
+
+#include "SireID/idset.hpp"
+#include "SireID/specify.hpp"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+
+using SireID::IDSet;
+using SireID::Specify;
 
 template<class T>
 class Selector;
@@ -145,22 +149,22 @@ protected:
 #include "residx.h"
 #include "atomidx.h"
 
-Q_DECLARE_METATYPE( SireMol::Specify<SireMol::ChainID> );
+Q_DECLARE_METATYPE( SireID::Specify<SireMol::ChainID> );
 Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::ChainID> );
 Q_DECLARE_METATYPE( SireMol::ResIn<SireMol::ChainID> );
-Q_DECLARE_METATYPE( SireMol::IDSet<SireMol::ChainID> );
+Q_DECLARE_METATYPE( SireID::IDSet<SireMol::ChainID> );
 
 SIRE_EXPOSE_CLASS( SireMol::ChainID )
-SIRE_EXPOSE_ALIAS( SireMol::Specify<SireMol::ChainID>, SireMol::Specify_ChainID_ )
+SIRE_EXPOSE_ALIAS( SireID::Specify<SireMol::ChainID>, SireMol::Specify_ChainID_ )
 SIRE_EXPOSE_ALIAS( SireMol::AtomsIn<SireMol::ChainID>, SireMol::AtomsIn_ChainID_ )
 SIRE_EXPOSE_ALIAS( SireMol::ResIn<SireMol::ChainID>, SireMol::ResIn_ChainID_ )
-SIRE_EXPOSE_ALIAS( SireMol::IDSet<SireMol::ChainID>, SireMol::IDSet_ChainID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDSet<SireMol::ChainID>, SireMol::IDSet_ChainID_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
-template class SireMol::Specify<SireMol::ChainID>;
+template class SireID::Specify<SireMol::ChainID>;
 template class SireMol::AtomsIn<SireMol::ChainID>;
 template class SireMol::ResIn<SireMol::ChainID>;
-template class SireMol::IDSet<SireMol::ChainID>;
+template class SireID::IDSet<SireMol::ChainID>;
 #endif
 
 SIRE_END_HEADER

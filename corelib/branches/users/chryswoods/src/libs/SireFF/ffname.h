@@ -68,42 +68,19 @@ public:
         return new FFName(*this);
     }
     
-    bool isNull() const
-    {
-        return SireID::Name::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return qHash(_name);
-    }
+    uint hash() const;
     
-    QString toString() const
-    {
-        return QString("FFName('%1')").arg(_name);
-    }
+    QString toString() const;
     
-    FFName& operator=(const FFName &other)
-    {
-        SireID::Name::operator=(other);
-        FFID::operator=(other);
-        return *this;
-    }
+    FFName& operator=(const FFName &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<FFName>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
-    bool operator==(const FFName &other) const
-    {
-        return _name == other._name;
-    }
+    bool operator==(const FFName &other) const;
     
-    bool operator!=(const FFName &other) const
-    {
-        return _name != other._name;
-    }
+    bool operator!=(const FFName &other) const;
     
     QList<FFIdx> map(const ForceFields &ffields) const;
 };

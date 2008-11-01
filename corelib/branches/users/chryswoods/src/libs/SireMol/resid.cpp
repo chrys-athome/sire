@@ -29,8 +29,6 @@
 #include "resid.h"
 #include "residentifier.h"
 
-#include "specify.hpp"
-
 #include "resresid.h"
 #include "chainresid.h"
 #include "groupatomids.h"

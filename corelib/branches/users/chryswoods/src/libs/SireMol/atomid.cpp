@@ -28,7 +28,6 @@
 
 #include "atomid.h"
 #include "atomidentifier.h"
-#include "specify.hpp"
 
 #include "atomatomid.h"
 #include "groupatomids.h"

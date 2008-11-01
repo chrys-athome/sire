@@ -60,23 +60,17 @@ friend QDataStream& ::operator<<(QDataStream&, const CGAtomIdx&);
 friend QDataStream& ::operator>>(QDataStream&, CGAtomIdx&);
 
 public:
-    CGAtomIdx() : AtomID()
-    {}
+    CGAtomIdx();
     
-    CGAtomIdx(CGIdx cgid, SireID::Index atomid)
-          : AtomID(), _cgidx(cgid), _atmidx(atomid)
-    {}
+    CGAtomIdx(CGIdx cgid, SireID::Index atomid);
     
-    CGAtomIdx(const CGAtomIdx &other)
-          : AtomID(other), _cgidx(other._cgidx), _atmidx(other._atmidx)
-    {}
+    CGAtomIdx(const CGAtomIdx &other);
     
-    ~CGAtomIdx()
-    {}
+    ~CGAtomIdx();
     
     static const char* typeName()
     {
-        return "SireMol::CGAtomIdx";
+        return QMetaType::typeName( qMetaTypeId<CGAtomIdx>() );
     }
     
     const char* what() const
@@ -89,62 +83,27 @@ public:
         return new CGAtomIdx(*this);
     }
     
-    static CGAtomIdx null()
-    {
-        return CGAtomIdx( CGIdx::null(), SireID::Index::null() );
-    } 
+    static CGAtomIdx null();
     
-    bool isNull() const
-    {
-        return _cgidx.isNull() and _atmidx.isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return (qHash(_cgidx) << 16) | (qHash(_atmidx) & 0x0000FFFF);
-    }
+    uint hash() const;
     
-    QString toString() const
-    {
-        return QString("{%1,%2}").arg(_cgidx.toString(), _atmidx.toString());
-    }
+    QString toString() const;
     
-    CGAtomIdx& operator=(const CGAtomIdx &other)
-    {
-        _cgidx = other._cgidx;
-        _atmidx = other._atmidx;
-        
-        AtomID::operator=(other);
-        
-        return *this;
-    }
+    CGAtomIdx& operator=(const CGAtomIdx &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<CGAtomIdx>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
-    bool operator==(const CGAtomIdx &other) const
-    {
-        return _cgidx == other._cgidx and _atmidx == other._atmidx;
-    }
+    bool operator==(const CGAtomIdx &other) const;
     
-    bool operator!=(const CGAtomIdx &other) const
-    {
-        return _cgidx != other._cgidx or _atmidx != other._atmidx;
-    }
+    bool operator!=(const CGAtomIdx &other) const;
     
     QList<AtomIdx> map(const MolInfo &molinfo) const;
     
-    CGIdx cutGroup() const
-    {
-        return _cgidx;
-    }
+    CGIdx cutGroup() const;
     
-    SireID::Index atom() const
-    {
-        return _atmidx;
-    }
+    SireID::Index atom() const;
     
 private:
     /** The index of the CutGroup that contains the atom */
@@ -153,21 +112,6 @@ private:
     /** The index of the atom within the CutGroup */
     SireID::Index _atmidx;
 };
-
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
-/** Combine a CGIdx with an Index */
-inline CGAtomIdx CGIdx::operator+(const SireID::Index &other) const
-{
-    return CGAtomIdx(*this, other);
-}
-
-inline CGAtomIdx operator+(const SireID::Index &idx, const CGIdx &cgidx)
-{
-    return CGAtomIdx(cgidx, idx);
-}
-
-#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

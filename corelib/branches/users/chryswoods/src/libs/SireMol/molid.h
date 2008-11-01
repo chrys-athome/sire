@@ -31,12 +31,14 @@
 
 #include "SireID/id.h"
 
-#include "idset.hpp"
+#include "SireID/idset.hpp"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+
+using SireID::IDSet;
 
 class MolIdx;
 class MolIdentifier;
@@ -99,6 +101,18 @@ public:
 protected:
     void processMatches(QList<MolNum> &matches, const Molecules &mols) const;
 };
+
+}
+
+namespace SireID
+{
+
+using SireMol::MolID;
+using SireMol::MolIdentifier;
+using SireMol::MolNum;
+using SireMol::Molecules;
+using SireMol::MoleculeGroup;
+using SireMol::MolGroupsBase;
 
 template<>
 class IDSet<MolID> : public MolID
@@ -182,10 +196,10 @@ IDSet<MolID>::IDSet(const T &new_ids) : MolID()
 
 }
 
-Q_DECLARE_METATYPE( SireMol::IDSet<SireMol::MolID> )
+Q_DECLARE_METATYPE( SireID::IDSet<SireMol::MolID> )
 
 SIRE_EXPOSE_CLASS( SireMol::MolID )
-SIRE_EXPOSE_ALIAS( SireMol::IDSet<SireMol::MolID>, SireMol::IDSet_MolID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDSet<SireMol::MolID>, SireMol::IDSet_MolID_ )
 
 SIRE_END_HEADER
 

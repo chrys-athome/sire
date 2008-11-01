@@ -69,37 +69,17 @@ public:
         return new FFIdx(*this);
     }
     
-    static FFIdx null()
-    {
-        return FFIdx();
-    }
+    static FFIdx null();
     
-    bool isNull() const
-    {
-        return SireID::Index_T_<FFIdx>::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return SireID::Index_T_<FFIdx>::hash();
-    }
+    uint hash() const;
 
-    QString toString() const
-    {
-        return QString("FFIdx(%1)").arg(_idx);
-    }
+    QString toString() const;
     
-    FFIdx& operator=(const FFIdx &other)
-    {
-        SireID::IndexBase::operator=(other);
-        FFID::operator=(other);
-        return *this;
-    }
+    FFIdx& operator=(const FFIdx &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<FFIdx>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
     using SireID::Index_T_<FFIdx>::operator=;
 

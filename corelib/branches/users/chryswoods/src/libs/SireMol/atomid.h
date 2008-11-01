@@ -31,13 +31,16 @@
 
 #include "SireID/id.h"
 
-#include "specify.hpp"
-#include "idset.hpp"
+#include "SireID/specify.hpp"
+#include "SireID/idset.hpp"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+
+using SireID::Specify;
+using SireID::IDSet;
 
 template<class T>
 class Selector;
@@ -61,6 +64,11 @@ class MolNum;
 
 class MolID;
 class MolAtomID;
+
+class CGID;
+class ResID;
+class ChainID;
+class SegID;
 
 /** This is the base class of all identifiers that are used 
     to identify an atom
@@ -132,16 +140,16 @@ protected:
 
 #include "atomidentifier.h"
 
-Q_DECLARE_METATYPE( SireMol::Specify<SireMol::AtomID> );
-Q_DECLARE_METATYPE( SireMol::IDSet<SireMol::AtomID> );
+Q_DECLARE_METATYPE( SireID::Specify<SireMol::AtomID> );
+Q_DECLARE_METATYPE( SireID::IDSet<SireMol::AtomID> );
 
 SIRE_EXPOSE_CLASS( SireMol::AtomID )
-SIRE_EXPOSE_ALIAS( SireMol::Specify<SireMol::AtomID>, SireMol::Specify_AtomID_ )
-SIRE_EXPOSE_ALIAS( SireMol::IDSet<SireMol::AtomID>, SireMol::IDSet_AtomID_ )
+SIRE_EXPOSE_ALIAS( SireID::Specify<SireMol::AtomID>, SireMol::Specify_AtomID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDSet<SireMol::AtomID>, SireMol::IDSet_AtomID_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
-template class SireMol::Specify<SireMol::AtomID>;
-template class SireMol::IDSet<SireMol::AtomID>;
+template class SireID::Specify<SireMol::AtomID>;
+template class SireID::IDSet<SireMol::AtomID>;
 #endif
 
 SIRE_END_HEADER

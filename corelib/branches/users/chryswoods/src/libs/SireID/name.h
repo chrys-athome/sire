@@ -66,30 +66,20 @@ friend QDataStream& ::operator<<(QDataStream&, const Name&);
 friend QDataStream& ::operator>>(QDataStream&, Name&);
 
 public:
-    ~Name()
-    {}
+    ~Name();
     
-    operator QString() const
-    {
-        return _name;
-    }
+    operator QString() const;
 
-    bool isNull() const
-    {
-        return _name.isNull();
-    }
+    bool isNull() const;
 
-    bool isEmpty() const
-    {
-        return _name.isEmpty();
-    }
+    bool isEmpty() const;
+
+    uint hash() const;
 
 protected:
-    explicit Name(const QString &name = QString::null) : _name(name)
-    {}
+    explicit Name(const QString &name = QString::null);
     
-    Name(const Name &other) : _name(other._name)
-    {}
+    Name(const Name &other);
     
     /** The actual name */
     QString _name;
@@ -100,25 +90,7 @@ protected:
 /** Return a hash of this Name */
 inline uint qHash(const SireID::Name &name)
 {
-    return qHash(QString(name));
-}
-
-/** Serialise a Name class */
-inline QDataStream& operator<<(QDataStream &ds, const SireID::Name &name)
-{
-    SireStream::SharedDataStream sds(ds);
-    sds << name._name;
-
-    return ds;
-}
-
-/** Deserialise a Name class */
-inline QDataStream& operator>>(QDataStream &ds, SireID::Name &name)
-{
-    SireStream::SharedDataStream sds(ds);
-    sds >> name._name;
-    
-    return ds;
+    return name.hash();
 }
 
 SIRE_END_HEADER

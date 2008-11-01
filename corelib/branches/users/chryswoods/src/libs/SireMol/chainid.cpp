@@ -28,7 +28,6 @@
 
 #include "chainid.h"
 #include "chainidentifier.h"
-#include "specify.hpp"
 
 #include "chainchainid.h"
 #include "chainresid.h"

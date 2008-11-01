@@ -28,7 +28,6 @@
 
 #include "cgid.h"
 #include "cgidentifier.h"
-#include "specify.hpp"
 
 #include "cgcgid.h"
 #include "groupatomids.h"

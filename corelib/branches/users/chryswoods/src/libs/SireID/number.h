@@ -67,30 +67,20 @@ friend QDataStream& ::operator<<(QDataStream&, const Number&);
 friend QDataStream& ::operator>>(QDataStream&, Number&);
 
 public:
-    ~Number()
-    {}
+    ~Number();
     
-    operator qint32() const
-    {
-        return _num;
-    }
+    operator qint32() const;
     
-    static qint32 null()
-    {
-        return std::numeric_limits<qint32>::min();
-    }
+    static qint32 null();
     
-    bool isNull() const
-    {
-        return _num == null();
-    }
+    bool isNull() const;
+
+    uint hash() const;
     
 protected:
-    Number(qint32 num=0) : _num(num)
-    {}
+    Number(qint32 num=0);
     
-    Number(const Number &other) : _num(other._num)
-    {}
+    Number(const Number &other);
     
     /** The actual number */
     qint32 _num;
@@ -101,21 +91,7 @@ protected:
 /** Return a hash of this Number */
 inline uint qHash(const SireID::Number &number)
 {
-    return quint32(number);
-}
-
-/** Serialise a Number class */
-inline QDataStream& operator<<(QDataStream &ds, const SireID::Number &number)
-{
-    ds << number._num;
-    return ds;
-}
-
-/** Deserialise a Number class */
-inline QDataStream& operator>>(QDataStream &ds, SireID::Number &number)
-{
-    ds >> number._num;
-    return ds;
+    return number.hash();
 }
 
 SIRE_EXPOSE_CLASS( SireID::Number )

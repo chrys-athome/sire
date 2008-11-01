@@ -49,14 +49,10 @@ namespace SireID
 class SIREID_EXPORT ID
 {
 public:
-    ID()
-    {}
+    ID();
+    ID(const ID&);
     
-    ID(const ID&)
-    {}
-    
-    virtual ~ID()
-    {}
+    virtual ~ID();
     
     static const char* typeName()
     {

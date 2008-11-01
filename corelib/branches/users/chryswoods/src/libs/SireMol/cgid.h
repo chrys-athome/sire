@@ -31,14 +31,18 @@
 
 #include "SireID/id.h"
 
-#include "specify.hpp"
 #include "atomsin.hpp"
-#include "idset.hpp"
+
+#include "SireID/idset.hpp"
+#include "SireID/specify.hpp"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+
+using SireID::IDSet;
+using SireID::Specify;
 
 template<class T>
 class Selector;
@@ -138,19 +142,19 @@ protected:
 #include "cgidentifier.h"
 #include "atomidx.h"
 
-Q_DECLARE_METATYPE( SireMol::Specify<SireMol::CGID> );
+Q_DECLARE_METATYPE( SireID::Specify<SireMol::CGID> );
 Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::CGID> );
-Q_DECLARE_METATYPE( SireMol::IDSet<SireMol::CGID> );
+Q_DECLARE_METATYPE( SireID::IDSet<SireMol::CGID> );
 
 SIRE_EXPOSE_CLASS( SireMol::CGID )
-SIRE_EXPOSE_ALIAS( (SireMol::Specify<SireMol::CGID>), SireMol::Specify_CGID_ )
+SIRE_EXPOSE_ALIAS( (SireID::Specify<SireMol::CGID>), SireMol::Specify_CGID_ )
 SIRE_EXPOSE_ALIAS( (SireMol::AtomsIn<SireMol::CGID>), SireMol::AtomsIn_CGID_ )
-SIRE_EXPOSE_ALIAS( SireMol::IDSet<SireMol::CGID>, SireMol::IDSet_CGID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDSet<SireMol::CGID>, SireMol::IDSet_CGID_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
-template class SireMol::Specify<SireMol::CGID>;
+template class SireID::Specify<SireMol::CGID>;
 template class SireMol::AtomsIn<SireMol::CGID>;
-template class SireMol::IDSet<SireMol::CGID>;
+template class SireID::IDSet<SireMol::CGID>;
 #endif
 
 SIRE_END_HEADER

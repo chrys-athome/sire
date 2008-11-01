@@ -69,61 +69,24 @@ friend QDataStream& ::operator<<(QDataStream&, const IndexBase&);
 friend QDataStream& ::operator>>(QDataStream&, IndexBase&);
 
 public:
-    ~IndexBase()
-    {}
+    ~IndexBase();
 
-    /** Return the null index */
-    static qint32 null()
-    {
-        return std::numeric_limits<qint32>::min();
-    }
+    static qint32 null();
 
-    /** Return whether this is a null index - a null
-        index is one that equals std::numeric_limits<qint32>::min(),
-        which should be -21474833648 for a 32bit integer */
-    bool isNull() const
-    {
-        return _idx == IndexBase::null();
-    }
+    bool isNull() const;
 
-    /** Allow implicit conversion back to an int */
-    operator qint32() const
-    {
-        return _idx;
-    }
+    operator qint32() const;
 
-    /** Map this index into the container of 'n' elements - this
-        maps the index (with negative indexing, e.g. -1 is the last
-        element), and throws an exception if the index is out 
-        of the bounds of the array
-        
-        \throw SireError::invalid_index
-    */
-    qint32 map(qint32 n) const
-    {
-        if (_idx >= 0 and _idx < n)
-            return _idx;
-        else if (_idx < 0 and _idx >= -n)
-            return n + _idx;
-        else
-        {
-            throwInvalidIndex(n);
-            return null();
-        }
-    }
+    qint32 map(qint32 n) const;
+
+    uint hash() const;
 
 protected:
-    explicit IndexBase(qint32 idx = IndexBase::null()) : _idx(idx)
-    {}
+    explicit IndexBase(qint32 idx = IndexBase::null());
     
-    IndexBase(const IndexBase &other) : _idx(other._idx)
-    {}
+    IndexBase(const IndexBase &other);
     
-    IndexBase& operator=(const IndexBase &other)
-    {
-        _idx = other._idx;
-        return *this;
-    }
+    IndexBase& operator=(const IndexBase &other);
     
     void throwInvalidIndex(qint32 n) const;
     
@@ -161,7 +124,7 @@ public:
     
     uint hash() const
     {
-        return qHash( static_cast<const IndexBase&>(*this) );
+        return IndexBase::hash();
     }
 
     /** Comparison operator */
@@ -250,29 +213,25 @@ public:
 class Index : public Index_T_<Index>
 {
 public:
-    explicit Index(qint32 idx = IndexBase::null()) : Index_T_<Index>(idx)
-    {}
+    explicit Index(qint32 idx = IndexBase::null());
     
-    Index(const Index &other) : Index_T_<Index>(other)
-    {}
+    Index(const Index &other);
     
-    ~Index()
-    {}
+    ~Index();
     
     static const char* typeName()
     {
         return QMetaType::typeName( qMetaTypeId<Index>() );
     }
     
-    static Index null()
+    Index* clone() const
     {
-        return Index();
+        return new Index(*this);
     }
     
-    QString toString() const
-    {
-        return QString("Index(%1)").arg(_idx);
-    }
+    static Index null();
+    
+    QString toString() const;
 };
 
 }
@@ -280,21 +239,7 @@ public:
 /** Return a hash of this index */
 inline uint qHash(const SireID::IndexBase &index)
 {
-    return qint32(index);
-}
-
-/** Serialise an Idx class */
-inline QDataStream& operator<<(QDataStream &ds, const SireID::IndexBase &idx)
-{
-    ds << idx._idx;
-    return ds;
-}
-
-/** Deserialise an Idx class */
-inline QDataStream& operator>>(QDataStream &ds, SireID::IndexBase &idx)
-{
-    ds >> idx._idx;
-    return ds;
+    return index.hash();
 }
 
 Q_DECLARE_METATYPE( SireID::Index )

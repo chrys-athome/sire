@@ -31,12 +31,16 @@
 
 #include "SireID/id.h"
 
-#include "idset.hpp"
+#include "SireID/idset.hpp"
+#include "SireID/specify.hpp"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+
+using SireID::IDSet;
+using SireID::Specify;
 
 class MGIdx;
 class MGIdentifier;
@@ -68,6 +72,10 @@ public:
         return "SireMol::MGID";
     }
     
+    Specify<MGID> operator[](int i) const;
+    Specify<MGID> operator()(int i) const;
+    Specify<MGID> operator()(int i, int j) const;
+    
     MGMGID operator+(const MGID &other) const;
     IDSet<MGID> operator*(const MGID &other) const;
 
@@ -87,13 +95,16 @@ protected:
 #include "mgidentifier.h"
 #include "mgnum.h"
 
-Q_DECLARE_METATYPE( SireMol::IDSet<SireMol::MGID> )
+Q_DECLARE_METATYPE( SireID::IDSet<SireMol::MGID> )
+Q_DECLARE_METATYPE( SireID::Specify<SireMol::MGID> )
 
 SIRE_EXPOSE_CLASS( SireMol::MGID )
-SIRE_EXPOSE_ALIAS( SireMol::IDSet<SireMol::MGID>, SireMol::IDSet_MGID_ )
+SIRE_EXPOSE_ALIAS( SireID::Specify<SireMol::MGID>, SireMol::Specify_MGID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDSet<SireMol::MGID>, SireMol::IDSet_MGID_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
-template class SireMol::IDSet<SireMol::MGID>;
+template class SireID::IDSet<SireMol::MGID>;
+template class SireID::Specify<SireMol::MGID>;
 #endif
 
 SIRE_END_HEADER

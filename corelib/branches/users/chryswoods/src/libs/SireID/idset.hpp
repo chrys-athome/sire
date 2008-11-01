@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_IDSET_HPP
-#define SIREMOL_IDSET_HPP
+#ifndef SIREID_IDSET_HPP
+#define SIREID_IDSET_HPP
 
 #include <QSet>
 #include <QString>
@@ -37,18 +37,18 @@
 
 SIRE_BEGIN_HEADER
 
-namespace SireMol
+namespace SireID
 {
 template<class ID>
 class IDSet;
 }
 
 template<class ID>
-QDataStream& operator<<(QDataStream&, const SireMol::IDSet<ID>&);
+QDataStream& operator<<(QDataStream&, const SireID::IDSet<ID>&);
 template<class ID>
-QDataStream& operator>>(QDataStream&, SireMol::IDSet<ID>&);
+QDataStream& operator>>(QDataStream&, SireID::IDSet<ID>&);
 
-namespace SireMol
+namespace SireID
 {
 
 template<class T>
@@ -63,7 +63,7 @@ uint qHash(const T &obj)
     @author Christopher Woods
 */
 template<class ID>
-class SIREMOL_EXPORT IDSet : public ID
+class SIREID_EXPORT IDSet : public ID
 {
 
 friend QDataStream& ::operator<<<>(QDataStream&, const IDSet<ID>&);
@@ -375,7 +375,7 @@ QList<typename ID::Index> IDSet<ID>::map(const typename ID::SearchObject &obj) c
 /** Serialise to a binary datastream */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds, const SireMol::IDSet<ID> &idset)
+QDataStream& operator<<(QDataStream &ds, const SireID::IDSet<ID> &idset)
 {
     ds << idset.ids;
     return ds;
@@ -384,7 +384,7 @@ QDataStream& operator<<(QDataStream &ds, const SireMol::IDSet<ID> &idset)
 /** Extract from a binary datastream */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds, SireMol::IDSet<ID> &idset)
+QDataStream& operator>>(QDataStream &ds, SireID::IDSet<ID> &idset)
 {
     ds >> idset.ids;
     return ds;

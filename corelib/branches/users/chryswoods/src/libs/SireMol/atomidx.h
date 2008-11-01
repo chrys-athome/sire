@@ -32,7 +32,6 @@
 #include "SireID/index.h"
 
 #include "atomid.h"
-#include "specify.hpp"
 
 SIRE_BEGIN_HEADER
 

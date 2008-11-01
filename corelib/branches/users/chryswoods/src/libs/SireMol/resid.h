@@ -31,14 +31,18 @@
 
 #include "SireID/id.h"
 
-#include "specify.hpp"
 #include "atomsin.hpp"
-#include "idset.hpp"
+
+#include "SireID/idset.hpp"
+#include "SireID/specify.hpp"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMol
 {
+
+using SireID::IDSet;
+using SireID::Specify;
 
 template<class T>
 class Selector;
@@ -139,19 +143,19 @@ protected:
 #include "residx.h"
 #include "atomidx.h"
 
-Q_DECLARE_METATYPE( SireMol::Specify<SireMol::ResID> );
+Q_DECLARE_METATYPE( SireID::Specify<SireMol::ResID> );
 Q_DECLARE_METATYPE( SireMol::AtomsIn<SireMol::ResID> );
-Q_DECLARE_METATYPE( SireMol::IDSet<SireMol::ResID> );
+Q_DECLARE_METATYPE( SireID::IDSet<SireMol::ResID> );
 
 SIRE_EXPOSE_CLASS( SireMol::ResID )
-SIRE_EXPOSE_ALIAS( SireMol::Specify<SireMol::ResID>, SireMol::Specify_ResID_ )
+SIRE_EXPOSE_ALIAS( SireID::Specify<SireMol::ResID>, SireMol::Specify_ResID_ )
 SIRE_EXPOSE_ALIAS( SireMol::AtomsIn<SireMol::ResID>, SireMol::AtomsIn_ResID_ )
-SIRE_EXPOSE_ALIAS( SireMol::IDSet<SireMol::ResID>, SireMol::IDSet_ResID_ )
+SIRE_EXPOSE_ALIAS( SireID::IDSet<SireMol::ResID>, SireMol::IDSet_ResID_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
-template class SireMol::Specify<SireMol::ResID>;
+template class SireID::Specify<SireMol::ResID>;
 template class SireMol::AtomsIn<SireMol::ResID>;
-template class SireMol::IDSet<SireMol::ResID>;
+template class SireID::IDSet<SireMol::ResID>;
 #endif
 
 SIRE_END_HEADER

@@ -63,7 +63,6 @@
 #include "atomidx.h"
 #include "atomidentifier.h"
 
-#include "specify.hpp"
 #include "atomsin.hpp"
 #include "resin.hpp"
 

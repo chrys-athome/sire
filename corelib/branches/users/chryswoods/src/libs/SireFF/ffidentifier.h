@@ -35,6 +35,18 @@
 
 namespace SireFF
 {
+class FFIdentifier;
+class FFFFID;
+}
+
+QDataStream& operator<<(QDataStream&, const SireFF::FFIdentifier&);
+QDataStream& operator>>(QDataStream&, SireFF::FFIdentifier&);
+
+QDataStream& operator<<(QDataStream&, const SireFF::FFFFID&);
+QDataStream& operator>>(QDataStream&, SireFF::FFFFID&);
+
+namespace SireFF
+{
 
 /** This is a generic holder for any FFID class! 
 
@@ -42,6 +54,10 @@ namespace SireFF
 */
 class SIREFF_EXPORT FFIdentifier : public FFID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const FFIdentifier&);
+friend QDataStream& ::operator>>(QDataStream&, FFIdentifier&);
+
 public:
     FFIdentifier();
     FFIdentifier(const FFID &ffid);

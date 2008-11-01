@@ -31,6 +31,8 @@
 
 using namespace SireMol;
 
+static const RegisterMetaType<CGAtomIdx> r_cgatomidx;
+
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, 
                                        const CGAtomIdx &cgatomidx)
 {
@@ -43,6 +45,87 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 {
     ds >> cgatomidx._cgidx >> cgatomidx._atmidx;
     return ds;
+}
+
+CGAtomIdx::CGAtomIdx() : AtomID()
+{}
+
+CGAtomIdx::CGAtomIdx(CGIdx cgid, SireID::Index atomid)
+      : AtomID(), _cgidx(cgid), _atmidx(atomid)
+{}
+
+CGAtomIdx::CGAtomIdx(const CGAtomIdx &other)
+      : AtomID(other), _cgidx(other._cgidx), _atmidx(other._atmidx)
+{}
+
+CGAtomIdx::~CGAtomIdx()
+{}
+
+CGAtomIdx CGAtomIdx::null()
+{
+    return CGAtomIdx( CGIdx::null(), SireID::Index::null() );
+} 
+
+bool CGAtomIdx::isNull() const
+{
+    return _cgidx.isNull() and _atmidx.isNull();
+}
+
+uint CGAtomIdx::hash() const
+{
+    return (::qHash(_cgidx) << 16) | (::qHash(_atmidx) & 0x0000FFFF);
+}
+
+QString CGAtomIdx::toString() const
+{
+    return QString("{%1,%2}").arg(_cgidx.toString(), _atmidx.toString());
+}
+
+CGAtomIdx& CGAtomIdx::operator=(const CGAtomIdx &other)
+{
+    _cgidx = other._cgidx;
+    _atmidx = other._atmidx;
+    
+    AtomID::operator=(other);
+    
+    return *this;
+}
+
+bool CGAtomIdx::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<CGAtomIdx>(*this, other);
+}
+
+bool CGAtomIdx::operator==(const CGAtomIdx &other) const
+{
+    return _cgidx == other._cgidx and _atmidx == other._atmidx;
+}
+
+bool CGAtomIdx::operator!=(const CGAtomIdx &other) const
+{
+    return _cgidx != other._cgidx or _atmidx != other._atmidx;
+}
+
+CGIdx CGAtomIdx::cutGroup() const
+{
+    return _cgidx;
+}
+
+SireID::Index CGAtomIdx::atom() const
+{
+    return _atmidx;
+}
+
+/** Combine a CGIdx with an Index */
+CGAtomIdx CGIdx::operator+(const SireID::Index &other) const
+{
+    return CGAtomIdx(*this, other);
+}
+
+/** Combine a CGIdx with an Index */
+CGAtomIdx operator+(const SireID::Index &idx, const CGIdx &cgidx)
+{
+    return CGAtomIdx(cgidx, idx);
 }
 
 

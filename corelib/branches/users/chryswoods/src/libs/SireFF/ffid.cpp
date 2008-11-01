@@ -30,7 +30,10 @@
 #include "ffidx.h"
 #include "ffname.h"
 
+#include "SireStream/datastream.h"
+
 using namespace SireFF;
+using namespace SireID;
 
 ///////
 /////// Implementation of FFID
@@ -44,6 +47,41 @@ FFID::FFID(const FFID &other) : SireID::ID(other)
 
 FFID::~FFID()
 {}
+
+Specify<FFID> FFID::operator[](int i) const
+{
+    return Specify<FFID>(*this, i);
+}
+
+Specify<FFID> FFID::operator()(int i) const
+{
+    return Specify<FFID>(*this, i);
+}
+
+Specify<FFID> FFID::operator()(int i, int j) const
+{
+    return Specify<FFID>(*this, i, j);
+}
+
+FFFFID FFID::operator+(const FFID &other) const
+{
+    return FFFFID(*this, other);
+}
+
+FFFFID FFID::operator&&(const FFID &other) const
+{
+    return this->operator+(other);
+}
+
+IDSet<FFID> FFID::operator*(const FFID &other) const
+{
+    return IDSet<FFID>(*this, other);
+}
+
+IDSet<FFID> FFID::operator||(const FFID &other) const
+{
+    return this->operator*(other);
+}
 
 ///////
 /////// Implementation of FFIdx
@@ -61,6 +99,38 @@ FFIdx::FFIdx(const FFIdx &other) : SireID::Index_T_<FFIdx>(other), FFID(other)
 FFIdx::~FFIdx()
 {}
 
+FFIdx FFIdx::null()
+{
+    return FFIdx();
+}
+
+bool FFIdx::isNull() const
+{
+    return SireID::Index_T_<FFIdx>::isNull();
+}
+
+uint FFIdx::hash() const
+{
+    return SireID::Index_T_<FFIdx>::hash();
+}
+
+QString FFIdx::toString() const
+{
+    return QString("FFIdx(%1)").arg(_idx);
+}
+
+FFIdx& FFIdx::operator=(const FFIdx &other)
+{
+    SireID::IndexBase::operator=(other);
+    FFID::operator=(other);
+    return *this;
+}
+
+bool FFIdx::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<FFIdx>(*this, other);
+}
+
 ///////
 /////// Implementation of FFName
 ///////
@@ -76,3 +146,49 @@ FFName::FFName(const FFName &other) : SireID::Name(other), FFID(other)
 
 FFName::~FFName()
 {}
+
+bool FFName::isNull() const
+{
+    return SireID::Name::isNull();
+}
+
+uint FFName::hash() const
+{
+    return qHash(_name);
+}
+
+QString FFName::toString() const
+{
+    return QString("FFName('%1')").arg(_name);
+}
+
+FFName& FFName::operator=(const FFName &other)
+{
+    SireID::Name::operator=(other);
+    FFID::operator=(other);
+    return *this;
+}
+
+bool FFName::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<FFName>(*this, other);
+}
+
+bool FFName::operator==(const FFName &other) const
+{
+    return _name == other._name;
+}
+
+bool FFName::operator!=(const FFName &other) const
+{
+    return _name != other._name;
+}
+
+///////
+///////
+
+template class Specify<FFID>;
+template class IDSet<FFID>;
+
+static const RegisterMetaType< Specify<FFID> > r_specify_ffid;
+static const RegisterMetaType< IDSet<FFID> > r_idset_ffid;

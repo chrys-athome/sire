@@ -60,6 +60,21 @@ MGID::MGID(const MGID &other) : SireID::ID(other)
 MGID::~MGID()
 {}
 
+Specify<MGID> MGID::operator[](int i) const
+{
+    return Specify<MGID>(*this, i);
+}
+
+Specify<MGID> MGID::operator()(int i) const
+{
+    return this->operator[](i);
+}
+
+Specify<MGID> MGID::operator()(int i, int j) const
+{
+    return Specify<MGID>(*this, i, j);
+}
+
 MGMGID MGID::operator+(const MGID &other) const
 {
     return MGMGID(*this, other);
@@ -387,6 +402,8 @@ QList<MGNum> MGMGID::map(const MolGroupsBase &molgroups) const
 ///////
 
 template class IDSet<MGID>;
+template class Specify<MGID>;
 
 static const RegisterMetaType< IDSet<MGID> > r_idset_mgid;
+static const RegisterMetaType< Specify<MGID> > r_specify_mgid;
 

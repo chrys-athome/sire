@@ -113,6 +113,8 @@ public:
     
     QList<CGIdx> map(const MolInfo &molinfo) const;
 };
+
+CGAtomIdx operator+(const SireID::Index &index, const CGID &cgid);
     
 }
 

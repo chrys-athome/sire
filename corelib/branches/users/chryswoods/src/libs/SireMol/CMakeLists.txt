@@ -60,7 +60,6 @@ set ( SIREMOL_HEADERS
       elementdb.h
       errors.h
       evaluator.h
-      idset.hpp
       improperid.h
       groupatomids.h
       groupgroupids.h
@@ -111,7 +110,6 @@ set ( SIREMOL_HEADERS
       segproperty.hpp
       segsegid.h
       selector.hpp
-      specify.hpp
       specifymol.h
       structureeditor.h
       viewsofmol.h

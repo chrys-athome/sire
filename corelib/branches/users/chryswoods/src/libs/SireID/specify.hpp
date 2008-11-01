@@ -26,27 +26,27 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_SPECIFY_HPP
-#define SIREMOL_SPECIFY_HPP
+#ifndef SIREID_SPECIFY_HPP
+#define SIREID_SPECIFY_HPP
 
-#include "molinfo.h"
+#include <QString>
 
 #include "SireID/index.h"
 
 SIRE_BEGIN_HEADER
 
-namespace SireMol
+namespace SireID
 {
 template<class ID>
 class Specify;
 }
 
 template<class ID>
-QDataStream& operator<<(QDataStream&, const SireMol::Specify<ID>&);
+QDataStream& operator<<(QDataStream&, const SireID::Specify<ID>&);
 template<class ID>
-QDataStream& operator>>(QDataStream&, SireMol::Specify<ID>&);
+QDataStream& operator>>(QDataStream&, SireID::Specify<ID>&);
 
-namespace SireMol
+namespace SireID
 {
 
 /** This class is used to help form specified ID matches, 
@@ -56,7 +56,7 @@ namespace SireMol
     @author Christopher Woods
 */
 template<class ID>
-class SIREMOL_EXPORT Specify : public ID
+class SIREID_EXPORT Specify : public ID
 {
 
 friend QDataStream& ::operator<<<>(QDataStream&, const Specify<ID>&);
@@ -98,7 +98,7 @@ public:
     
     QString toString() const;
     
-    QList<typename ID::Index> map(const MolInfo &molinfo) const;
+    QList<typename ID::Index> map(const typename ID::SearchObject &obj) const;
 
 private:
     #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -188,13 +188,13 @@ QString Specify<ID>::toString() const
                                      .arg(strt).arg(end);
 }
 
-/** Map this ID to the indicies of the matching parts of the molecule */
+/** Map this ID to the indicies of the matching objects in 'obj' */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-QList<typename ID::Index> Specify<ID>::map(const MolInfo &molinfo) const
+QList<typename ID::Index> Specify<ID>::map(const typename ID::SearchObject &obj) const
 {
     //first get all of the matches
-    QList<typename ID::Index> idxs = id.map(molinfo);
+    QList<typename ID::Index> idxs = id.map(obj);
     
     //now get the specified matches
     int nmatches = idxs.count();
@@ -297,7 +297,7 @@ bool Specify<ID>::isNull() const
 /** Serialise to a binary datastream */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds, const SireMol::Specify<ID> &id)
+QDataStream& operator<<(QDataStream &ds, const SireID::Specify<ID> &id)
 {
     ds << id.id << id.strt << id.end;
     return ds;
@@ -306,7 +306,7 @@ QDataStream& operator<<(QDataStream &ds, const SireMol::Specify<ID> &id)
 /** Extract from a binary datastream */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds, SireMol::Specify<ID> &id)
+QDataStream& operator>>(QDataStream &ds, SireID::Specify<ID> &id)
 {
     ds >> id.id >> id.strt >> id.end;
     return ds;
