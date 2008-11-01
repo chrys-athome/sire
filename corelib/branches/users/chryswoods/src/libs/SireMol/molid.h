@@ -184,6 +184,14 @@ private:
     QSet<MolIdentifier> ids;
 };
 
+}
+
+#include "molnum.h"
+#include "molidentifier.h"
+
+namespace SireMol
+{
+
 /** Construct from the passed list of IDs */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
