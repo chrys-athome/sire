@@ -275,6 +275,31 @@ def fix_CGIdx(c):
     c.add_declaration_code("#include \"cgatomidx.h\"")
     c.add_registration_code("def( other<SireID::Index>() + self )")
 
+def fix_AtomID(c):
+    #also include all of the header files included in atomid.cpp
+    for header in active_headers["atomid.h"].dependencies():
+        c.add_declaration_code( "#include %s" % header )
+    
+def fix_CGID(c):
+    #also include all of the header files included in cgid.cpp
+    for header in active_headers["cgid.h"].dependencies():
+        c.add_declaration_code( "#include %s" % header )
+
+def fix_ChainID(c):
+    #also include all of the header files included in chainid.cpp
+    for header in active_headers["chainid.h"].dependencies():
+        c.add_declaration_code( "#include %s" % header )
+
+def fix_ResID(c):
+    #also include all of the header files included in resid.cpp
+    for header in active_headers["resid.h"].dependencies():
+        c.add_declaration_code( "#include %s" % header )
+
+def fix_SegID(c):
+    #also include all of the header files included in segid.cpp
+    for header in active_headers["segid.h"].dependencies():
+        c.add_declaration_code( "#include %s" % header )
+
 special_code = { "SireMol::Atom" : fix_Atom,
                  "SireMol::Editor<SireMol::AtomEditor, SireMol::Atom>" : fix_AtomEditorBase,
                  "SireMol::AtomEditor" : fix_AtomEditor,
@@ -282,6 +307,19 @@ special_code = { "SireMol::Atom" : fix_Atom,
                  "SireMol::AtomStructureEditor" : fix_AtomStructureEditor,
                  "SireMol::Mover<SireMol::Atom>" : fix_Mover,
                  "SireMol::Mover<SireMol::Selector<SireMol::Atom> >" : fix_Mover,
+
+                 "SireMol::AtomIdx" : fix_AtomID,
+                 "SireMol::AtomName" : fix_AtomID,
+                 "SireMol::AtomNum" : fix_AtomID,
+                 "SireMol::CGIdx" : fix_CGID,
+                 "SireMol::CGName" : fix_CGID,
+                 "SireMol::ChainIdx" : fix_ChainID,
+                 "SireMol::ChainName" : fix_ChainID,
+                 "SireMol::ResIdx" : fix_ResID,
+                 "SireMol::ResName" : fix_ResID,
+                 "SireMol::ResNum" : fix_ResID,
+                 "SireMol::SegIdx" : fix_SegID,
+                 "SireMol::SegName" : fix_SegID,
 
                  "SireMol::CutGroup" : fix_CutGroup,
                  "SireMol::Editor<SireMol::CGEditor, SireMol::CutGroup>" : fix_CGEditorBase,

@@ -210,7 +210,7 @@ public:
     }
 };
 
-class Index : public Index_T_<Index>
+class SIREID_EXPORT Index : public Index_T_<Index>
 {
 public:
     explicit Index(qint32 idx = IndexBase::null());

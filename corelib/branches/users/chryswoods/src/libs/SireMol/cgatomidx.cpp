@@ -123,11 +123,15 @@ CGAtomIdx CGIdx::operator+(const SireID::Index &other) const
 }
 
 /** Combine a CGIdx with an Index */
-CGAtomIdx operator+(const SireID::Index &idx, const CGIdx &cgidx)
+namespace SireMol
+{
+
+CGAtomIdx SIREMOL_EXPORT operator+(const SireID::Index &idx, const CGIdx &cgidx)
 {
     return CGAtomIdx(cgidx, idx);
 }
 
+}
 
 QList<AtomIdx> CGAtomIdx::map(const MolInfo &molinfo) const
 {
