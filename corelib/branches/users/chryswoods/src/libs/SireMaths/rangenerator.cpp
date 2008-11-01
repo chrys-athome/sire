@@ -58,6 +58,9 @@ class RanGeneratorPvt;
 }
 }
 
+QDataStream& operator<<(QDataStream&, const SireMaths::detail::RanGeneratorPvt&);
+QDataStream& operator>>(QDataStream&, SireMaths::detail::RanGeneratorPvt&);
+
 namespace SireMaths
 {
 
@@ -72,6 +75,9 @@ namespace detail
 */
 class RanGeneratorPvt
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const RanGeneratorPvt&);
+friend QDataStream& ::operator>>(QDataStream&, RanGeneratorPvt&);
 
 typedef MTRand::uint32 MTUInt32;
 
@@ -209,6 +215,24 @@ public:
 //////////// Implementation of RanGeneratorPvt
 ////////////
 
+QDataStream& operator<<(QDataStream &ds, 
+                        const SireMaths::detail::RanGeneratorPvt &rangen)
+{
+    ds << const_cast<RanGeneratorPvt*>(&rangen)->getState();
+    return ds;
+}
+
+QDataStream& operator>>(QDataStream &ds,
+                        SireMaths::detail::RanGeneratorPvt &rangen)
+{
+    QVector<quint32> state;
+    ds >> state;
+     
+    rangen.loadState(state);
+    
+    return ds;
+}
+
 ////////////
 //////////// Implementation of RanGenerator
 ////////////
@@ -220,7 +244,8 @@ QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const RanGenerator &ra
 {
     writeHeader(ds, r_rangen, 1);
 
-    ds << rangen.getState();
+    SharedDataStream sds(ds);
+    sds << rangen.d;
 
     return ds;
 }
@@ -232,12 +257,8 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, RanGenerator &rangen)
 
     if (v == 1)
     {
-        QVector<quint32> state;
-        ds >> state;
-        
-        rangen.detach();
-        
-        rangen.setState(state);
+        SharedDataStream sds(ds);
+        sds >> rangen.d;
     }
     else
         throw version_error(v, "1", r_rangen, CODELOC);

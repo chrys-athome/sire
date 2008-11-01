@@ -2058,13 +2058,14 @@ void System::update(const MoleculeData &moldata)
         {
             this->_pvt_moleculeGroups().update(moldata);
         }
+        
+        sysversion.incrementMinor();
     }
-    else
+    else if (this->_pvt_forceFields().contains(moldata.number()))
     {
         this->_pvt_forceFields().update(moldata);
+        sysversion.incrementMinor();
     }
-
-    sysversion.incrementMinor();
 }
 
 /** Update this system so that it uses the same version of the molecules
