@@ -34,7 +34,10 @@
 
 #include "SireSystem/errors.h"
 
+#include "SireStream/datastream.h"
+
 using namespace SireSystem;
+using namespace SireStream;
 
 ///////
 /////// Implementation of MonitorID
@@ -99,6 +102,33 @@ QList<MonitorName> MonitorID::processMatches(QList<MonitorName> &matches,
 /////// Implementation of MonitorIdx
 ///////
 
+static const RegisterMetaType<MonitorIdx> r_monidx;
+
+/** Serialise to a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const MonitorIdx &monidx)
+{
+    writeHeader(ds, r_monidx, 1);
+    
+    ds << static_cast<const SireID::Index_T_<MonitorIdx>&>(monidx);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, MonitorIdx &monidx)
+{
+    VersionID v = readHeader(ds, r_monidx);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Index_T_<MonitorIdx>&>(monidx);
+    }
+    else
+        throw version_error( v, "1", r_monidx, CODELOC );
+        
+    return ds;
+}
+
 MonitorIdx::MonitorIdx() : SireID::Index_T_<MonitorIdx>(), MonitorID()
 {}
 
@@ -117,9 +147,68 @@ QList<MonitorName> MonitorIdx::map(const SystemMonitors &monitors) const
     return monitors.map(*this);
 }
 
+MonitorIdx MonitorIdx::null()
+{
+    return MonitorIdx();
+}
+
+bool MonitorIdx::isNull() const
+{
+    return SireID::Index_T_<MonitorIdx>::isNull();
+}
+
+uint MonitorIdx::hash() const
+{
+    return SireID::Index_T_<MonitorIdx>::hash();
+}
+
+QString MonitorIdx::toString() const
+{
+    return QString("MonitorIdx(%1)").arg(_idx);
+}
+
+MonitorIdx& MonitorIdx::operator=(const MonitorIdx &other)
+{
+    SireID::IndexBase::operator=(other);
+    MonitorID::operator=(other);
+    return *this;
+}
+
+bool MonitorIdx::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<MonitorIdx>(*this, other);
+}
+
 ///////
 /////// Implementation of MonitorName
 ///////
+
+static const RegisterMetaType<MonitorName> r_monname;
+
+/** Serialise to a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const MonitorName &monname)
+{
+    writeHeader(ds, r_monname, 1);
+    
+    ds << static_cast<const SireID::Name&>(monname);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, MonitorName &monname)
+{
+    VersionID v = readHeader(ds, r_monname);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Name&>(monname);
+    }
+    else
+        throw version_error( v, "1", r_monname, CODELOC );
+        
+    return ds;
+}
 
 MonitorName::MonitorName() : SireID::Name(), MonitorID()
 {}
@@ -132,6 +221,43 @@ MonitorName::MonitorName(const MonitorName &other) : SireID::Name(other), Monito
 
 MonitorName::~MonitorName()
 {}
+    
+bool MonitorName::isNull() const
+{
+    return SireID::Name::isNull();
+}
+
+uint MonitorName::hash() const
+{
+    return qHash(_name);
+}
+
+QString MonitorName::toString() const
+{
+    return QString("MonitorName('%1')").arg(_name);
+}
+
+MonitorName& MonitorName::operator=(const MonitorName &other)
+{
+    SireID::Name::operator=(other);
+    MonitorID::operator=(other);
+    return *this;
+}
+
+bool MonitorName::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<MonitorName>(*this, other);
+}
+
+bool MonitorName::operator==(const MonitorName &other) const
+{
+    return _name == other._name;
+}
+
+bool MonitorName::operator!=(const MonitorName &other) const
+{
+    return _name != other._name;
+}
 
 QList<MonitorName> MonitorName::map(const SystemMonitors &monitors) const
 {

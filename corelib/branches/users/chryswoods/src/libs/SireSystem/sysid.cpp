@@ -32,7 +32,10 @@
 
 #include "SireSystem/errors.h"
 
+#include "SireStream/datastream.h"
+
 using namespace SireSystem;
+using namespace SireStream;
 
 ///////
 /////// Implementation of SysID
@@ -113,6 +116,33 @@ QList<SysIdx> Systems::map(const SysID&) const
 /////// Implementation of SysIdx
 ///////
 
+static const RegisterMetaType<SysIdx> r_sysidx;
+
+/** Serialise to a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const SysIdx &sysidx)
+{
+    writeHeader(ds, r_sysidx, 1);
+    
+    ds << static_cast<const SireID::Index_T_<SysIdx>&>(sysidx);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, SysIdx &sysidx)
+{
+    VersionID v = readHeader(ds, r_sysidx);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Index_T_<SysIdx>&>(sysidx);
+    }
+    else
+        throw version_error( v, "1", r_sysidx, CODELOC );
+        
+    return ds;
+}
+
 SysIdx::SysIdx() : SireID::Index_T_<SysIdx>(), SysID()
 {}
 
@@ -165,6 +195,33 @@ QList<SysIdx> SysIdx::map(const Systems &systems) const
 ///////
 /////// Implementation of SysName
 ///////
+
+static const RegisterMetaType<SysName> r_sysname;
+
+/** Serialise to a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const SysName &sysname)
+{
+    writeHeader(ds, r_sysname, 1);
+    
+    ds << static_cast<const SireID::Name&>(sysname);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, SysName &sysname)
+{
+    VersionID v = readHeader(ds, r_sysname);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Name&>(sysname);
+    }
+    else
+        throw version_error( v, "1", r_sysname, CODELOC );
+        
+    return ds;
+}
 
 SysName::SysName() : SireID::Name(), SysID()
 {}

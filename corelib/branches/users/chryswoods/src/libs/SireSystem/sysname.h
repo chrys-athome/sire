@@ -37,6 +37,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireSystem
 {
+class SysName;
+}
+
+QDataStream& operator<<(QDataStream&, const SireSystem::SysName&);
+QDataStream& operator>>(QDataStream&, SireSystem::SysName&);
+
+namespace SireSystem
+{
 
 /** This class holds the name of a simulation system
     
@@ -44,6 +52,9 @@ namespace SireSystem
 */
 class SIRESYSTEM_EXPORT SysName : public SireID::Name, public SysID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const SysName&);
+friend QDataStream& ::operator>>(QDataStream&, SysName&);
 
 public:
     SysName();

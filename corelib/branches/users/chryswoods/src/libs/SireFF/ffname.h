@@ -37,6 +37,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireFF
 {
+class FFName;
+}
+
+QDataStream& operator<<(QDataStream&, const SireFF::FFName&);
+QDataStream& operator>>(QDataStream&, SireFF::FFName&);
+
+namespace SireFF
+{
 
 /** This class holds the name of a forcefield
     
@@ -44,6 +52,9 @@ namespace SireFF
 */
 class SIREFF_EXPORT FFName : public SireID::Name, public FFID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const FFName&);
+friend QDataStream& ::operator>>(QDataStream&, FFName&);
 
 public:
     FFName();

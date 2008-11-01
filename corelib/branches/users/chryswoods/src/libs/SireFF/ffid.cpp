@@ -36,6 +36,7 @@
 
 using namespace SireFF;
 using namespace SireID;
+using namespace SireStream;
 
 ///////
 /////// Implementation of FFID
@@ -103,6 +104,33 @@ QList<FFIdx> FFID::processMatches(QList<FFIdx> &ffidxs,
 /////// Implementation of FFIdx
 ///////
 
+static const RegisterMetaType<FFIdx> r_ffidx;
+
+/** Serialise to a binary datastream */
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FFIdx &ffidx)
+{
+    writeHeader(ds, r_ffidx, 1);
+    
+    ds << static_cast<const SireID::Index_T_<FFIdx>&>(ffidx);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFIdx &ffidx)
+{
+    VersionID v = readHeader(ds, r_ffidx);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Index_T_<FFIdx>&>(ffidx);
+    }
+    else
+        throw version_error( v, "1", r_ffidx, CODELOC );
+        
+    return ds;
+}
+
 FFIdx::FFIdx() : SireID::Index_T_<FFIdx>(), FFID()
 {}
 
@@ -150,6 +178,33 @@ bool FFIdx::operator==(const SireID::ID &other) const
 ///////
 /////// Implementation of FFName
 ///////
+
+static const RegisterMetaType<FFName> r_ffname;
+
+/** Serialise to a binary datastream */
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const FFName &ffname)
+{
+    writeHeader(ds, r_ffname, 1);
+    
+    ds << static_cast<const SireID::Name&>(ffname);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFName &ffname)
+{
+    VersionID v = readHeader(ds, r_ffname);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SireID::Name&>(ffname);
+    }
+    else
+        throw version_error( v, "1", r_ffname, CODELOC );
+        
+    return ds;
+}
 
 FFName::FFName() : SireID::Name(), FFID()
 {}

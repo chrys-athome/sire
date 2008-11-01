@@ -34,8 +34,40 @@
 
 #include "SireSystem/errors.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/streampolypointer.hpp"
+
 using namespace SireSystem;
 using namespace SireID;
+using namespace SireStream;
+
+static const RegisterMetaType<MonitorIdentifier> r_monid;
+
+/** Serialise to a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, 
+                                          const MonitorIdentifier &monid)
+{
+    writeHeader(ds, r_monid, 1);
+    
+    SireStream::savePolyPointer(ds, monid.d);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, MonitorIdentifier &monid)
+{
+    VersionID v = readHeader(ds, r_monid);
+    
+    if (v == 1)
+    {
+        SireStream::loadPolyPointer(ds, monid.d);
+    }
+    else
+        throw version_error( v, "1", r_monid, CODELOC );
+        
+    return ds;
+}
 
 /** Null constructor */
 MonitorIdentifier::MonitorIdentifier() : MonitorID()

@@ -37,6 +37,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireSystem
 {
+class MonitorName;
+}
+
+QDataStream& operator<<(QDataStream&, const SireSystem::MonitorName&);
+QDataStream& operator>>(QDataStream&, SireSystem::MonitorName&);
+
+namespace SireSystem
+{
 
 /** This class holds the name of a simulation system
     
@@ -44,6 +52,9 @@ namespace SireSystem
 */
 class SIRESYSTEM_EXPORT MonitorName : public SireID::Name, public MonitorID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const MonitorName&);
+friend QDataStream& ::operator>>(QDataStream&, MonitorName&);
 
 public:
     MonitorName();
@@ -68,42 +79,19 @@ public:
         return new MonitorName(*this);
     }
     
-    bool isNull() const
-    {
-        return SireID::Name::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return qHash(_name);
-    }
+    uint hash() const;
     
-    QString toString() const
-    {
-        return QString("MonitorName('%1')").arg(_name);
-    }
+    QString toString() const;
     
-    MonitorName& operator=(const MonitorName &other)
-    {
-        SireID::Name::operator=(other);
-        MonitorID::operator=(other);
-        return *this;
-    }
+    MonitorName& operator=(const MonitorName &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<MonitorName>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
-    bool operator==(const MonitorName &other) const
-    {
-        return _name == other._name;
-    }
+    bool operator==(const MonitorName &other) const;
     
-    bool operator!=(const MonitorName &other) const
-    {
-        return _name != other._name;
-    }
+    bool operator!=(const MonitorName &other) const;
     
     QList<MonitorName> map(const SystemMonitors &monitors) const;
 };

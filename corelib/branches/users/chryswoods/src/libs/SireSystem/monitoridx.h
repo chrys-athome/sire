@@ -37,6 +37,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireSystem
 {
+class MonitorIdx;
+}
+
+QDataStream& operator<<(QDataStream&, const SireSystem::MonitorIdx&);
+QDataStream& operator>>(QDataStream&, SireSystem::MonitorIdx&);
+
+namespace SireSystem
+{
 
 /** This is an ID object that is used to index system monitors (e.g. index
     in a list or array).
@@ -46,6 +54,9 @@ namespace SireSystem
 class SIRESYSTEM_EXPORT MonitorIdx 
                 : public SireID::Index_T_<MonitorIdx>, public MonitorID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const MonitorIdx&);
+friend QDataStream& ::operator>>(QDataStream&, MonitorIdx&);
 
 public:
     MonitorIdx();
@@ -70,37 +81,17 @@ public:
         return new MonitorIdx(*this);
     }
     
-    static MonitorIdx null()
-    {
-        return MonitorIdx();
-    }
+    static MonitorIdx null();
     
-    bool isNull() const
-    {
-        return SireID::Index_T_<MonitorIdx>::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return SireID::Index_T_<MonitorIdx>::hash();
-    }
+    uint hash() const;
 
-    QString toString() const
-    {
-        return QString("MonitorIdx(%1)").arg(_idx);
-    }
+    QString toString() const;
     
-    MonitorIdx& operator=(const MonitorIdx &other)
-    {
-        SireID::IndexBase::operator=(other);
-        MonitorID::operator=(other);
-        return *this;
-    }
+    MonitorIdx& operator=(const MonitorIdx &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<MonitorIdx>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
     using SireID::Index_T_<MonitorIdx>::operator=;
 

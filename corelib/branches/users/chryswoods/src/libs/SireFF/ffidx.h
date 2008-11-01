@@ -37,6 +37,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireFF
 {
+class FFIdx;
+}
+
+QDataStream& operator<<(QDataStream&, const SireFF::FFIdx&);
+QDataStream& operator>>(QDataStream&, SireFF::FFIdx&);
+
+namespace SireFF
+{
 
 /** This is an ID object that is used to index forcefields (e.g. index
     in a list or array).
@@ -45,6 +53,9 @@ namespace SireFF
 */
 class SIREFF_EXPORT FFIdx : public SireID::Index_T_<FFIdx>, public FFID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const FFIdx&);
+friend QDataStream& ::operator>>(QDataStream&, FFIdx&);
 
 public:
     FFIdx();

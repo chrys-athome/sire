@@ -37,6 +37,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireSystem
 {
+class SysIdx;
+}
+
+QDataStream& operator<<(QDataStream&, const SireSystem::SysIdx&);
+QDataStream& operator>>(QDataStream&, SireSystem::SysIdx&);
+
+namespace SireSystem
+{
 
 /** This is an ID object that is used to index simulation systems (e.g. index
     in a list or array).
@@ -45,6 +53,9 @@ namespace SireSystem
 */
 class SIRESYSTEM_EXPORT SysIdx : public SireID::Index_T_<SysIdx>, public SysID
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const SysIdx&);
+friend QDataStream& ::operator>>(QDataStream&, SysIdx&);
 
 public:
     SysIdx();

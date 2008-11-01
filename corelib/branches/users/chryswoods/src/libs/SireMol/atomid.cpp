@@ -44,6 +44,7 @@
 #include "cutgroup.h"
 #include "atom.h"
 
+#include "molinfo.h"
 #include "molecules.h"
 #include "moleculegroup.h"
 #include "moleculegroups.h"
