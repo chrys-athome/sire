@@ -60,19 +60,13 @@ friend QDataStream& ::operator<<(QDataStream&, const CGIdx&);
 friend QDataStream& ::operator>>(QDataStream&, CGIdx&);
 
 public:
-    CGIdx() : SireID::Index_T_<CGIdx>(), CGID()
-    {}
+    CGIdx();
     
-    explicit CGIdx(qint32 idx) 
-              : SireID::Index_T_<CGIdx>(idx), CGID()
-    {}
+    explicit CGIdx(qint32 idx);
     
-    CGIdx(const CGIdx &other) 
-              : SireID::Index_T_<CGIdx>(other), CGID(other)
-    {}
+    CGIdx(const CGIdx &other);
     
-    ~CGIdx()
-    {}
+    ~CGIdx();
     
     static const char* typeName()
     {
@@ -84,46 +78,26 @@ public:
         return SireID::Index_T_<CGIdx>::what();
     }
     
-    static CGIdx null()
+    CGIdx* clone() const
     {
-        return CGIdx();
+        return new CGIdx(*this);
     }
+    
+    static CGIdx null();
     
     using CGID::operator+;
     
     CGAtomIdx operator+(const SireID::Index &other) const;
     
-    bool isNull() const
-    {
-        return SireID::Index_T_<CGIdx>::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return SireID::Index_T_<CGIdx>::hash();
-    }
-    
-    CGIdx* clone() const
-    {
-        return new CGIdx(*this);
-    }
+    uint hash() const;
 
-    QString toString() const
-    {
-        return QString("CGIdx(%1)").arg(_idx);
-    }
+    QString toString() const;
     
-    CGIdx& operator=(const CGIdx &other)
-    {
-        SireID::IndexBase::operator=(other);
-        CGID::operator=(other);
-        return *this;
-    }
+    CGIdx& operator=(const CGIdx &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<CGIdx>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
     using SireID::Index_T_<CGIdx>::operator=;
 

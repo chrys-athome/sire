@@ -65,17 +65,13 @@ friend QDataStream& ::operator<<(QDataStream&, const AtomNum&);
 friend QDataStream& ::operator>>(QDataStream&, AtomNum&);
 
 public:
-    AtomNum() : SireID::Number(), AtomID()
-    {}
+    AtomNum();
 
-    explicit AtomNum(quint32 num) : SireID::Number(num), AtomID()
-    {}
+    explicit AtomNum(quint32 num);
 
-    AtomNum(const AtomNum &other) : SireID::Number(other), AtomID(other)
-    {}
+    AtomNum(const AtomNum &other);
 
-    ~AtomNum()
-    {}
+    ~AtomNum();
     
     static const char* typeName()
     {
@@ -92,42 +88,19 @@ public:
         return new AtomNum(*this);
     }
     
-    bool isNull() const
-    {
-        return SireID::Number::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return ::qHash( static_cast<const SireID::Number&>(*this) );
-    }
+    uint hash() const;
     
-    QString toString() const
-    {
-        return QString("AtomNum(%1)").arg(_num);
-    }
+    QString toString() const;
     
-    AtomNum& operator=(const AtomNum &other)
-    {
-        SireID::Number::operator=(other);
-        AtomID::operator=(other);
-        return *this;
-    }
+    AtomNum& operator=(const AtomNum &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<AtomNum>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
 
-    bool operator==(const AtomNum &other) const
-    {
-        return _num == other._num;
-    }
+    bool operator==(const AtomNum &other) const;
     
-    bool operator!=(const AtomNum &other) const
-    {
-        return _num != other._num;
-    }
+    bool operator!=(const AtomNum &other) const;
 
     QList<AtomIdx> map(const MolInfo &molinfo) const;
 };

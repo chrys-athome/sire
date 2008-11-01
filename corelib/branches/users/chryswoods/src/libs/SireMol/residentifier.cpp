@@ -236,6 +236,52 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ResIdx &residx)
     return ds;
 }
 
+ResIdx::ResIdx() : SireID::Index_T_<ResIdx>(), ResID()
+{}
+
+ResIdx::ResIdx(quint32 idx) 
+          : SireID::Index_T_<ResIdx>(idx), ResID()
+{}
+
+ResIdx::ResIdx(const ResIdx &other) 
+          : SireID::Index_T_<ResIdx>(other), ResID(other)
+{}
+
+ResIdx::~ResIdx()
+{}
+
+ResIdx ResIdx::null()
+{
+    return ResIdx();
+}
+
+bool ResIdx::isNull() const
+{
+    return SireID::Index_T_<ResIdx>::isNull();
+}
+
+uint ResIdx::hash() const
+{
+    return SireID::Index_T_<ResIdx>::hash();
+}
+
+QString ResIdx::toString() const
+{
+    return QString("ResIdx(%1)").arg(_idx);
+}
+
+ResIdx& ResIdx::operator=(const ResIdx &other)
+{
+    SireID::IndexBase::operator=(other);
+    ResID::operator=(other);
+    return *this;
+}
+
+bool ResIdx::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<ResIdx>(*this, other);
+}
+
 QList<ResIdx> ResIdx::map(const MolInfo &molinfo) const
 {
     return molinfo.map(*this);
@@ -272,6 +318,55 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ResName &resname)
     return ds;
 }
 
+ResName::ResName() : SireID::Name(), ResID()
+{}
+
+ResName::ResName(const QString &name) : SireID::Name(name), ResID()
+{}
+
+ResName::ResName(const ResName &other) : SireID::Name(other), ResID(other)
+{}
+
+ResName::~ResName()
+{}
+
+bool ResName::isNull() const
+{
+    return SireID::Name::isNull();
+}
+
+uint ResName::hash() const
+{
+    return qHash(_name);
+}
+
+QString ResName::toString() const
+{
+    return QString("ResName('%1')").arg(_name);
+}
+
+ResName& ResName::operator=(const ResName &other)
+{
+    SireID::Name::operator=(other);
+    ResID::operator=(other);
+    return *this;
+}
+
+bool ResName::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<ResName>(*this, other);
+}
+
+bool ResName::operator==(const ResName &other) const
+{
+    return _name == other._name;
+}
+
+bool ResName::operator!=(const ResName &other) const
+{
+    return _name != other._name;
+}
+
 QList<ResIdx> ResName::map(const MolInfo &molinfo) const
 {
     return molinfo.map(*this);
@@ -306,6 +401,55 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ResNum &resnum)
         throw version_error( v, "1", r_resnum, CODELOC );
         
     return ds;
+}
+
+ResNum::ResNum() : SireID::Number(), ResID()
+{}
+
+ResNum::ResNum(quint32 num) : SireID::Number(num), ResID()
+{}
+
+ResNum::ResNum(const ResNum &other) : SireID::Number(other), ResID(other)
+{}
+
+ResNum::~ResNum()
+{}
+
+bool ResNum::isNull() const
+{
+    return SireID::Number::isNull();
+}
+
+uint ResNum::hash() const
+{
+    return ::qHash( static_cast<const SireID::Number&>(*this) );
+}
+
+QString ResNum::toString() const
+{
+    return QString("ResNum(%1)").arg(_num);
+}
+
+ResNum& ResNum::operator=(const ResNum &other)
+{
+    SireID::Number::operator=(other);
+    ResID::operator=(other);
+    return *this;
+}
+
+bool ResNum::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<ResNum>(*this, other);
+}
+
+bool ResNum::operator==(const ResNum &other) const
+{
+    return _num == other._num;
+}
+
+bool ResNum::operator!=(const ResNum &other) const
+{
+    return _num != other._num;
 }
 
 QList<ResIdx> ResNum::map(const MolInfo &molinfo) const

@@ -82,42 +82,19 @@ public:
     
     static MGNum getUniqueNumber();
     
-    bool isNull() const
-    {
-        return SireID::Number::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return ::qHash( static_cast<const SireID::Number&>(*this) );
-    }
+    uint hash() const;
     
-    QString toString() const
-    {
-        return QString("MGNum(%1)").arg(_num);
-    }
+    QString toString() const;
     
-    MGNum& operator=(const MGNum &other)
-    {
-        SireID::Number::operator=(other);
-        MGID::operator=(other);
-        return *this;
-    }
+    MGNum& operator=(const MGNum &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<MGNum>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
 
-    bool operator==(const MGNum &other) const
-    {
-        return _num == other._num;
-    }
+    bool operator==(const MGNum &other) const;
     
-    bool operator!=(const MGNum &other) const
-    {
-        return _num != other._num;
-    }
+    bool operator!=(const MGNum &other) const;
     
     QList<MGNum> map(const MolGroupsBase&) const;
 };

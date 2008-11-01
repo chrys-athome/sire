@@ -58,17 +58,13 @@ friend QDataStream& ::operator<<(QDataStream&, const ResNum&);
 friend QDataStream& ::operator>>(QDataStream&, ResNum&);
 
 public:
-    ResNum() : SireID::Number(), ResID()
-    {}
+    ResNum();
 
-    explicit ResNum(quint32 num) : SireID::Number(num), ResID()
-    {}
+    explicit ResNum(quint32 num);
 
-    ResNum(const ResNum &other) : SireID::Number(other), ResID(other)
-    {}
+    ResNum(const ResNum &other);
 
-    ~ResNum()
-    {}
+    ~ResNum();
     
     static const char* typeName()
     {
@@ -85,42 +81,19 @@ public:
         return new ResNum(*this);
     }
     
-    bool isNull() const
-    {
-        return SireID::Number::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return ::qHash( static_cast<const SireID::Number&>(*this) );
-    }
+    uint hash() const;
     
-    QString toString() const
-    {
-        return QString("ResNum(%1)").arg(_num);
-    }
+    QString toString() const;
     
-    ResNum& operator=(const ResNum &other)
-    {
-        SireID::Number::operator=(other);
-        ResID::operator=(other);
-        return *this;
-    }
+    ResNum& operator=(const ResNum &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<ResNum>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
 
-    bool operator==(const ResNum &other) const
-    {
-        return _num == other._num;
-    }
+    bool operator==(const ResNum &other) const;
     
-    bool operator!=(const ResNum &other) const
-    {
-        return _num != other._num;
-    }
+    bool operator!=(const ResNum &other) const;
 
     QList<ResIdx> map(const MolInfo &molinfo) const;
 };

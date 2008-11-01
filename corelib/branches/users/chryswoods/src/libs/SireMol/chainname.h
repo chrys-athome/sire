@@ -58,17 +58,13 @@ friend QDataStream& ::operator<<(QDataStream&, const ChainName&);
 friend QDataStream& ::operator>>(QDataStream&, ChainName&);
 
 public:
-    ChainName() : SireID::Name(), ChainID()
-    {}
+    ChainName();
     
-    explicit ChainName(const QString &name) : SireID::Name(name), ChainID()
-    {}
+    explicit ChainName(const QString &name);
     
-    ChainName(const ChainName &other) : SireID::Name(other), ChainID(other)
-    {}
+    ChainName(const ChainName &other);
     
-    ~ChainName()
-    {}
+    ~ChainName();
     
     static const char* typeName()
     {
@@ -85,42 +81,19 @@ public:
         return new ChainName(*this);
     }
     
-    bool isNull() const
-    {
-        return SireID::Name::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return qHash(_name);
-    }
+    uint hash() const;
     
-    QString toString() const
-    {
-        return QString("ChainName('%1')").arg(_name);
-    }
+    QString toString() const;
     
-    ChainName& operator=(const ChainName &other)
-    {
-        SireID::Name::operator=(other);
-        ChainID::operator=(other);
-        return *this;
-    }
+    ChainName& operator=(const ChainName &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<ChainName>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
-    bool operator==(const ChainName &other) const
-    {
-        return _name == other._name;
-    }
+    bool operator==(const ChainName &other) const;
     
-    bool operator!=(const ChainName &other) const
-    {
-        return _name != other._name;
-    }
+    bool operator!=(const ChainName &other) const;
 
     QList<ChainIdx> map(const MolInfo &molinfo) const;
 };

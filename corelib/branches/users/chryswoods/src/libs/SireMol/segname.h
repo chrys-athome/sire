@@ -57,17 +57,13 @@ friend QDataStream& ::operator<<(QDataStream&, const SegName&);
 friend QDataStream& ::operator>>(QDataStream&, SegName&);
 
 public:
-    SegName() : SireID::Name(), SegID()
-    {}
+    SegName();
     
-    explicit SegName(const QString &name) : SireID::Name(name), SegID()
-    {}
+    explicit SegName(const QString &name);
     
-    SegName(const SegName &other) : SireID::Name(other), SegID(other)
-    {}
+    SegName(const SegName &other);
     
-    ~SegName()
-    {}
+    ~SegName();
     
     static const char* typeName()
     {
@@ -84,42 +80,19 @@ public:
         return new SegName(*this);
     }
     
-    bool isNull() const
-    {
-        return SireID::Name::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return qHash(_name);
-    }
+    uint hash() const;
     
-    QString toString() const
-    {
-        return QString("SegName('%1')").arg(_name);
-    }
+    QString toString() const;
     
-    SegName& operator=(const SegName &other)
-    {
-        SireID::Name::operator=(other);
-        SegID::operator=(other);
-        return *this;
-    }
+    SegName& operator=(const SegName &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<SegName>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
-    bool operator==(const SegName &other) const
-    {
-        return _name == other._name;
-    }
+    bool operator==(const SegName &other) const;
     
-    bool operator!=(const SegName &other) const
-    {
-        return _name != other._name;
-    }
+    bool operator!=(const SegName &other) const;
 
     QList<SegIdx> map(const MolInfo &molinfo) const;
 };

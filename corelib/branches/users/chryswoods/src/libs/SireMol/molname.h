@@ -79,42 +79,19 @@ public:
         return new MolName(*this);
     }
     
-    bool isNull() const
-    {
-        return SireID::Name::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return qHash(_name);
-    }
+    uint hash() const;
     
-    QString toString() const
-    {
-        return QString("MolName('%1')").arg(_name);
-    }
+    QString toString() const;
     
-    MolName& operator=(const MolName &other)
-    {
-        SireID::Name::operator=(other);
-        MolID::operator=(other);
-        return *this;
-    }
+    MolName& operator=(const MolName &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<MolName>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
-    bool operator==(const MolName &other) const
-    {
-        return _name == other._name;
-    }
+    bool operator==(const MolName &other) const;
     
-    bool operator!=(const MolName &other) const
-    {
-        return _name != other._name;
-    }
+    bool operator!=(const MolName &other) const;
     
     QList<MolNum> map(const Molecules &molecules) const;
     QList<MolNum> map(const MoleculeGroup &molgroup) const;

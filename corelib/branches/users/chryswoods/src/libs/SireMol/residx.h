@@ -58,19 +58,13 @@ friend QDataStream& ::operator<<(QDataStream&, const ResIdx&);
 friend QDataStream& ::operator>>(QDataStream&, ResIdx&);
 
 public:
-    ResIdx() : SireID::Index_T_<ResIdx>(), ResID()
-    {}
+    ResIdx();
     
-    explicit ResIdx(quint32 idx) 
-              : SireID::Index_T_<ResIdx>(idx), ResID()
-    {}
+    explicit ResIdx(quint32 idx);
     
-    ResIdx(const ResIdx &other) 
-              : SireID::Index_T_<ResIdx>(other), ResID(other)
-    {}
+    ResIdx(const ResIdx &other);
     
-    ~ResIdx()
-    {}
+    ~ResIdx();
     
     static const char* typeName()
     {
@@ -87,37 +81,17 @@ public:
         return new ResIdx(*this);
     }
     
-    static ResIdx null()
-    {
-        return ResIdx();
-    }
+    static ResIdx null();
     
-    bool isNull() const
-    {
-        return SireID::Index_T_<ResIdx>::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return SireID::Index_T_<ResIdx>::hash();
-    }
+    uint hash() const;
 
-    QString toString() const
-    {
-        return QString("ResIdx(%1)").arg(_idx);
-    }
+    QString toString() const;
     
-    ResIdx& operator=(const ResIdx &other)
-    {
-        SireID::IndexBase::operator=(other);
-        ResID::operator=(other);
-        return *this;
-    }
+    ResIdx& operator=(const ResIdx &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<ResIdx>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
     using SireID::Index_T_<ResIdx>::operator=;
 

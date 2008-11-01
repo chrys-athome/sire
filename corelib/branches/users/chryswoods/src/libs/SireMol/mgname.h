@@ -80,42 +80,19 @@ public:
         return new MGName(*this);
     }
     
-    bool isNull() const
-    {
-        return SireID::Name::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return qHash(_name);
-    }
+    uint hash() const;
     
-    QString toString() const
-    {
-        return QString("MGName('%1')").arg(_name);
-    }
+    QString toString() const;
     
-    MGName& operator=(const MGName &other)
-    {
-        SireID::Name::operator=(other);
-        MGID::operator=(other);
-        return *this;
-    }
+    MGName& operator=(const MGName &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<MGName>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
-    bool operator==(const MGName &other) const
-    {
-        return _name == other._name;
-    }
+    bool operator==(const MGName &other) const;
     
-    bool operator!=(const MGName &other) const
-    {
-        return _name != other._name;
-    }
+    bool operator!=(const MGName &other) const;
     
     QList<MGNum> map(const MolGroupsBase &molgroups) const;
 };

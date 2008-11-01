@@ -81,37 +81,17 @@ public:
         return new MGIdx(*this);
     }
     
-    static MGIdx null()
-    {
-        return MGIdx();
-    }
+    static MGIdx null();
     
-    bool isNull() const
-    {
-        return SireID::Index_T_<MGIdx>::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return SireID::Index_T_<MGIdx>::hash();
-    }
+    uint hash() const;
 
-    QString toString() const
-    {
-        return QString("MGIdx(%1)").arg(_idx);
-    }
+    QString toString() const;
     
-    MGIdx& operator=(const MGIdx &other)
-    {
-        SireID::IndexBase::operator=(other);
-        MGID::operator=(other);
-        return *this;
-    }
+    MGIdx& operator=(const MGIdx &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<MGIdx>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
     using SireID::Index_T_<MGIdx>::operator=;
 

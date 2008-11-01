@@ -57,17 +57,13 @@ friend QDataStream& ::operator<<(QDataStream&, const CGName&);
 friend QDataStream& ::operator>>(QDataStream&, CGName&);
 
 public:
-    CGName() : SireID::Name(), CGID()
-    {}
+    CGName();
     
-    explicit CGName(const QString &name) : SireID::Name(name), CGID()
-    {}
+    explicit CGName(const QString &name);
     
-    CGName(const CGName &other) : SireID::Name(other), CGID(other)
-    {}
+    CGName(const CGName &other);
     
-    ~CGName()
-    {}
+    ~CGName();
     
     static const char* typeName()
     {
@@ -84,42 +80,19 @@ public:
         return new CGName(*this);
     }
     
-    bool isNull() const
-    {
-        return SireID::Name::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return qHash(_name);
-    }
+    uint hash() const;
     
-    QString toString() const
-    {
-        return QString("CGName('%1')").arg(_name);
-    }
+    QString toString() const;
     
-    CGName& operator=(const CGName &other)
-    {
-        SireID::Name::operator=(other);
-        CGID::operator=(other);
-        return *this;
-    }
+    CGName& operator=(const CGName &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<CGName>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
-    bool operator==(const CGName &other) const
-    {
-        return _name == other._name;
-    }
+    bool operator==(const CGName &other) const;
     
-    bool operator!=(const CGName &other) const
-    {
-        return _name != other._name;
-    }
+    bool operator!=(const CGName &other) const;
 
     QList<CGIdx> map(const MolInfo &molinfo) const;
 };

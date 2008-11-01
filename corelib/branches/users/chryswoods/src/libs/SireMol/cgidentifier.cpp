@@ -235,6 +235,52 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, CGIdx &cgidx)
     return ds;
 }
 
+CGIdx::CGIdx() : SireID::Index_T_<CGIdx>(), CGID()
+{}
+
+CGIdx::CGIdx(qint32 idx) 
+          : SireID::Index_T_<CGIdx>(idx), CGID()
+{}
+
+CGIdx::CGIdx(const CGIdx &other) 
+          : SireID::Index_T_<CGIdx>(other), CGID(other)
+{}
+
+CGIdx::~CGIdx()
+{}
+
+CGIdx CGIdx::null()
+{
+    return CGIdx();
+}
+
+bool CGIdx::isNull() const
+{
+    return SireID::Index_T_<CGIdx>::isNull();
+}
+
+uint CGIdx::hash() const
+{
+    return SireID::Index_T_<CGIdx>::hash();
+}
+
+QString CGIdx::toString() const
+{
+    return QString("CGIdx(%1)").arg(_idx);
+}
+
+CGIdx& CGIdx::operator=(const CGIdx &other)
+{
+    SireID::IndexBase::operator=(other);
+    CGID::operator=(other);
+    return *this;
+}
+
+bool CGIdx::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<CGIdx>(*this, other);
+}
+
 QList<CGIdx> CGIdx::map(const MolInfo &molinfo) const
 {
     return molinfo.map(*this);
@@ -269,6 +315,55 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, CGName &cgname)
         throw version_error( v, "1", r_cgname, CODELOC );
         
     return ds;
+}
+
+CGName::CGName() : SireID::Name(), CGID()
+{}
+
+CGName::CGName(const QString &name) : SireID::Name(name), CGID()
+{}
+
+CGName::CGName(const CGName &other) : SireID::Name(other), CGID(other)
+{}
+
+CGName::~CGName()
+{}
+
+bool CGName::isNull() const
+{
+    return SireID::Name::isNull();
+}
+
+uint CGName::hash() const
+{
+    return ::qHash(_name);
+}
+
+QString CGName::toString() const
+{
+    return QString("CGName('%1')").arg(_name);
+}
+
+CGName& CGName::operator=(const CGName &other)
+{
+    SireID::Name::operator=(other);
+    CGID::operator=(other);
+    return *this;
+}
+
+bool CGName::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<CGName>(*this, other);
+}
+
+bool CGName::operator==(const CGName &other) const
+{
+    return _name == other._name;
+}
+
+bool CGName::operator!=(const CGName &other) const
+{
+    return _name != other._name;
 }
 
 QList<CGIdx> CGName::map(const MolInfo &molinfo) const

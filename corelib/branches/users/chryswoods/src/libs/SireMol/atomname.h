@@ -59,17 +59,13 @@ friend QDataStream& ::operator<<(QDataStream&, const AtomName&);
 friend QDataStream& ::operator>>(QDataStream&, AtomName&);
 
 public:
-    AtomName() : SireID::Name(), AtomID()
-    {}
+    AtomName();
     
-    explicit AtomName(const QString &name) : SireID::Name(name), AtomID()
-    {}
+    explicit AtomName(const QString &name);
     
-    AtomName(const AtomName &other) : SireID::Name(other), AtomID(other)
-    {}
+    AtomName(const AtomName &other);
     
-    ~AtomName()
-    {}
+    ~AtomName();
     
     static const char* typeName()
     {
@@ -86,42 +82,19 @@ public:
         return new AtomName(*this);
     }
     
-    bool isNull() const
-    {
-        return SireID::Name::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return qHash(_name);
-    }
+    uint hash() const;
     
-    QString toString() const
-    {
-        return QString("AtomName('%1')").arg(_name);
-    }
+    QString toString() const;
     
-    AtomName& operator=(const AtomName &other)
-    {
-        SireID::Name::operator=(other);
-        AtomID::operator=(other);
-        return *this;
-    }
+    AtomName& operator=(const AtomName &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<AtomName>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
-    bool operator==(const AtomName &other) const
-    {
-        return _name == other._name;
-    }
+    bool operator==(const AtomName &other) const;
     
-    bool operator!=(const AtomName &other) const
-    {
-        return _name != other._name;
-    }
+    bool operator!=(const AtomName &other) const;
 
     QList<AtomIdx> map(const MolInfo &molinfo) const;
 };

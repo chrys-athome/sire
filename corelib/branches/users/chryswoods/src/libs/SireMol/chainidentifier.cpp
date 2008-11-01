@@ -235,6 +235,50 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ChainIdx &chainidx)
     return ds;
 }
 
+ChainIdx::ChainIdx() : SireID::Index_T_<ChainIdx>(), ChainID()
+{}
+
+ChainIdx::ChainIdx(qint32 idx) : SireID::Index_T_<ChainIdx>(idx), ChainID()
+{}
+
+ChainIdx::ChainIdx(const ChainIdx &other) : SireID::Index_T_<ChainIdx>(other), ChainID(other)
+{}
+
+ChainIdx::~ChainIdx()
+{}
+
+ChainIdx ChainIdx::null()
+{
+    return ChainIdx();
+}
+
+bool ChainIdx::isNull() const
+{
+    return SireID::Index_T_<ChainIdx>::isNull();
+}
+
+uint ChainIdx::hash() const
+{
+    return SireID::Index_T_<ChainIdx>::hash();
+}
+
+QString ChainIdx::toString() const
+{
+    return QString("ChainIdx(%1)").arg(_idx);
+}
+
+ChainIdx& ChainIdx::operator=(const ChainIdx &other)
+{
+    SireID::IndexBase::operator=(other);
+    ChainID::operator=(other);
+    return *this;
+}
+
+bool ChainIdx::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<ChainIdx>(*this, other);
+}
+
 QList<ChainIdx> ChainIdx::map(const MolInfo &molinfo) const
 {
     return molinfo.map(*this);
@@ -269,6 +313,55 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ChainName &chainname)
         throw version_error( v, "1", r_chainname, CODELOC );
         
     return ds;
+}
+
+ChainName::ChainName() : SireID::Name(), ChainID()
+{}
+
+ChainName::ChainName(const QString &name) : SireID::Name(name), ChainID()
+{}
+
+ChainName::ChainName(const ChainName &other) : SireID::Name(other), ChainID(other)
+{}
+
+ChainName::~ChainName()
+{}
+
+bool ChainName::isNull() const
+{
+    return SireID::Name::isNull();
+}
+
+uint ChainName::hash() const
+{
+    return qHash(_name);
+}
+
+QString ChainName::toString() const
+{
+    return QString("ChainName('%1')").arg(_name);
+}
+
+ChainName& ChainName::operator=(const ChainName &other)
+{
+    SireID::Name::operator=(other);
+    ChainID::operator=(other);
+    return *this;
+}
+
+bool ChainName::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<ChainName>(*this, other);
+}
+
+bool ChainName::operator==(const ChainName &other) const
+{
+    return _name == other._name;
+}
+
+bool ChainName::operator!=(const ChainName &other) const
+{
+    return _name != other._name;
 }
 
 QList<ChainIdx> ChainName::map(const MolInfo &molinfo) const

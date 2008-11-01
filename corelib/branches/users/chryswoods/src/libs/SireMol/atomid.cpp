@@ -373,6 +373,50 @@ QList<AtomIdx> AtomIdx::map(const MolInfo &molinfo) const
     return molinfo.map(*this);
 }
 
+AtomIdx::AtomIdx() : SireID::Index_T_<AtomIdx>(), AtomID()
+{}
+
+AtomIdx::AtomIdx(qint32 idx) : SireID::Index_T_<AtomIdx>(idx), AtomID()
+{}
+
+AtomIdx::AtomIdx(const AtomIdx &other) : SireID::Index_T_<AtomIdx>(other), AtomID(other)
+{}
+
+AtomIdx::~AtomIdx()
+{}
+
+AtomIdx AtomIdx::null()
+{
+    return AtomIdx();
+}
+
+bool AtomIdx::isNull() const
+{
+    return SireID::Index_T_<AtomIdx>::isNull();
+}
+
+uint AtomIdx::hash() const
+{
+    return SireID::Index_T_<AtomIdx>::hash();
+}
+
+QString AtomIdx::toString() const
+{
+    return QString("AtomIdx(%1)").arg(_idx);
+}
+
+AtomIdx& AtomIdx::operator=(const AtomIdx &other)
+{
+    SireID::IndexBase::operator=(other);
+    AtomID::operator=(other);
+    return *this;
+}
+
+bool AtomIdx::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<AtomIdx>(*this, other);
+}
+
 /////////
 ///////// Implementation of AtomNum
 /////////
@@ -402,6 +446,55 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomNum &atomnum)
         throw version_error( v, "1", r_atomnum, CODELOC );
         
     return ds;
+}
+
+AtomNum::AtomNum() : SireID::Number(), AtomID()
+{}
+
+AtomNum::AtomNum(quint32 num) : SireID::Number(num), AtomID()
+{}
+
+AtomNum::AtomNum(const AtomNum &other) : SireID::Number(other), AtomID(other)
+{}
+
+AtomNum::~AtomNum()
+{}
+
+bool AtomNum::isNull() const
+{
+    return Number::isNull();
+}
+
+uint AtomNum::hash() const
+{
+    return ::qHash( static_cast<const Number&>(*this) );
+}
+
+QString AtomNum::toString() const
+{
+    return QString("AtomNum(%1)").arg(_num);
+}
+
+AtomNum& AtomNum::operator=(const AtomNum &other)
+{
+    SireID::Number::operator=(other);
+    AtomID::operator=(other);
+    return *this;
+}
+
+bool AtomNum::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<AtomNum>(*this, other);
+}
+
+bool AtomNum::operator==(const AtomNum &other) const
+{
+    return _num == other._num;
+}
+
+bool AtomNum::operator!=(const AtomNum &other) const
+{
+    return _num != other._num;
 }
 
 QList<AtomIdx> AtomNum::map(const MolInfo &molinfo) const
@@ -438,6 +531,55 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomName &atomname)
         throw version_error( v, "1", r_atomname, CODELOC );
         
     return ds;
+}
+
+AtomName::AtomName() : SireID::Name(), AtomID()
+{}
+
+AtomName::AtomName(const QString &name) : SireID::Name(name), AtomID()
+{}
+
+AtomName::AtomName(const AtomName &other) : SireID::Name(other), AtomID(other)
+{}
+
+AtomName::~AtomName()
+{}
+
+bool AtomName::isNull() const
+{
+    return SireID::Name::isNull();
+}
+
+uint AtomName::hash() const
+{
+    return ::qHash(_name);
+}
+
+QString AtomName::toString() const
+{
+    return QString("AtomName('%1')").arg(_name);
+}
+
+AtomName& AtomName::operator=(const AtomName &other)
+{
+    SireID::Name::operator=(other);
+    AtomID::operator=(other);
+    return *this;
+}
+
+bool AtomName::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<AtomName>(*this, other);
+}
+
+bool AtomName::operator==(const AtomName &other) const
+{
+    return _name == other._name;
+}
+
+bool AtomName::operator!=(const AtomName &other) const
+{
+    return _name != other._name;
 }
 
 QList<AtomIdx> AtomName::map(const MolInfo &molinfo) const

@@ -61,17 +61,12 @@ friend QDataStream& ::operator<<(QDataStream&, const AtomIdx&);
 friend QDataStream& ::operator>>(QDataStream&, AtomIdx&);
 
 public:
-    AtomIdx() : SireID::Index_T_<AtomIdx>(), AtomID()
-    {}
+    AtomIdx();
+    explicit AtomIdx(qint32 idx);
     
-    explicit AtomIdx(qint32 idx) : SireID::Index_T_<AtomIdx>(idx), AtomID()
-    {}
+    AtomIdx(const AtomIdx &other);
     
-    AtomIdx(const AtomIdx &other) : SireID::Index_T_<AtomIdx>(other), AtomID(other)
-    {}
-    
-    ~AtomIdx()
-    {}
+    ~AtomIdx();
     
     static const char* typeName()
     {
@@ -88,37 +83,17 @@ public:
         return new AtomIdx(*this);
     }
     
-    static AtomIdx null()
-    {
-        return AtomIdx();
-    }
+    static AtomIdx null();
     
-    bool isNull() const
-    {
-        return SireID::Index_T_<AtomIdx>::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return SireID::Index_T_<AtomIdx>::hash();
-    }
+    uint hash() const;
 
-    QString toString() const
-    {
-        return QString("AtomIdx(%1)").arg(_idx);
-    }
+    QString toString() const;
     
-    AtomIdx& operator=(const AtomIdx &other)
-    {
-        SireID::IndexBase::operator=(other);
-        AtomID::operator=(other);
-        return *this;
-    }
+    AtomIdx& operator=(const AtomIdx &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<AtomIdx>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
     using SireID::Index_T_<AtomIdx>::operator=;
 

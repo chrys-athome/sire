@@ -82,42 +82,19 @@ public:
     
     static MolNum getUniqueNumber();
     
-    bool isNull() const
-    {
-        return SireID::Number::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return ::qHash( static_cast<const SireID::Number&>(*this) );
-    }
+    uint hash() const;
     
-    QString toString() const
-    {
-        return QString("MolNum(%1)").arg(_num);
-    }
+    QString toString() const;
     
-    MolNum& operator=(const MolNum &other)
-    {
-        SireID::Number::operator=(other);
-        MolID::operator=(other);
-        return *this;
-    }
+    MolNum& operator=(const MolNum &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<MolNum>(*this, other);
-    }
-
-    bool operator==(const MolNum &other) const
-    {
-        return _num == other._num;
-    }
+    bool operator==(const SireID::ID &other) const;
     
-    bool operator!=(const MolNum &other) const
-    {
-        return _num != other._num;
-    }
+    bool operator==(const MolNum &other) const;
+    
+    bool operator!=(const MolNum &other) const;
     
     QList<MolNum> map(const Molecules &molecules) const;
     QList<MolNum> map(const MoleculeGroup&) const;

@@ -80,37 +80,17 @@ public:
         return new MolIdx(*this);
     }
     
-    static MolIdx null()
-    {
-        return MolIdx();
-    }
+    static MolIdx null();
     
-    bool isNull() const
-    {
-        return SireID::Index_T_<MolIdx>::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return SireID::Index_T_<MolIdx>::hash();
-    }
+    uint hash() const;
 
-    QString toString() const
-    {
-        return QString("MolIdx(%1)").arg(_idx);
-    }
+    QString toString() const;
     
-    MolIdx& operator=(const MolIdx &other)
-    {
-        SireID::IndexBase::operator=(other);
-        MolID::operator=(other);
-        return *this;
-    }
+    MolIdx& operator=(const MolIdx &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<MolIdx>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
     using SireID::Index_T_<MolIdx>::operator=;
 

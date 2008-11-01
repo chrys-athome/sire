@@ -105,6 +105,38 @@ MGIdx::MGIdx(const MGIdx &other) : SireID::Index_T_<MGIdx>(other), MGID(other)
 MGIdx::~MGIdx()
 {}
 
+MGIdx MGIdx::null()
+{
+    return MGIdx();
+}
+
+bool MGIdx::isNull() const
+{
+    return SireID::Index_T_<MGIdx>::isNull();
+}
+
+uint MGIdx::hash() const
+{
+    return SireID::Index_T_<MGIdx>::hash();
+}
+
+QString MGIdx::toString() const
+{
+    return QString("MGIdx(%1)").arg(_idx);
+}
+
+MGIdx& MGIdx::operator=(const MGIdx &other)
+{
+    SireID::IndexBase::operator=(other);
+    MGID::operator=(other);
+    return *this;
+}
+
+bool MGIdx::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<MGIdx>(*this, other);
+}
+
 QList<MGNum> MGIdx::map(const MolGroupsBase &molgroups) const
 {
     return molgroups.map(*this);
@@ -126,6 +158,43 @@ MGName::MGName(const MGName &other) : SireID::Name(other), MGID(other)
 MGName::~MGName()
 {}
 
+bool MGName::isNull() const
+{
+    return SireID::Name::isNull();
+}
+
+uint MGName::hash() const
+{
+    return qHash(_name);
+}
+
+QString MGName::toString() const
+{
+    return QString("MGName('%1')").arg(_name);
+}
+
+MGName& MGName::operator=(const MGName &other)
+{
+    SireID::Name::operator=(other);
+    MGID::operator=(other);
+    return *this;
+}
+
+bool MGName::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<MGName>(*this, other);
+}
+
+bool MGName::operator==(const MGName &other) const
+{
+    return _name == other._name;
+}
+
+bool MGName::operator!=(const MGName &other) const
+{
+    return _name != other._name;
+}
+
 QList<MGNum> MGName::map(const MolGroupsBase &molgroups) const
 {
     return molgroups.map(*this);
@@ -146,6 +215,43 @@ MGNum::MGNum(const MGNum &other) : SireID::Number(other), MGID(other)
 
 MGNum::~MGNum()
 {}
+    
+bool MGNum::isNull() const
+{
+    return SireID::Number::isNull();
+}
+
+uint MGNum::hash() const
+{
+    return ::qHash( static_cast<const SireID::Number&>(*this) );
+}
+
+QString MGNum::toString() const
+{
+    return QString("MGNum(%1)").arg(_num);
+}
+
+MGNum& MGNum::operator=(const MGNum &other)
+{
+    SireID::Number::operator=(other);
+    MGID::operator=(other);
+    return *this;
+}
+
+bool MGNum::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<MGNum>(*this, other);
+}
+
+bool MGNum::operator==(const MGNum &other) const
+{
+    return _num == other._num;
+}
+
+bool MGNum::operator!=(const MGNum &other) const
+{
+    return _num != other._num;
+}
 
 QList<MGNum> MGNum::map(const MolGroupsBase &molgroups) const
 {

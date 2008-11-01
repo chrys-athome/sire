@@ -235,6 +235,52 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, SegIdx &segidx)
     return ds;
 }
 
+SegIdx::SegIdx() : SireID::Index_T_<SegIdx>(), SegID()
+{}
+
+SegIdx::SegIdx(quint32 idx) 
+          : SireID::Index_T_<SegIdx>(idx), SegID()
+{}
+
+SegIdx::SegIdx(const SegIdx &other) 
+          : SireID::Index_T_<SegIdx>(other), SegID(other)
+{}
+
+SegIdx::~SegIdx()
+{}
+
+SegIdx SegIdx::null()
+{
+    return SegIdx();
+}
+
+bool SegIdx::isNull() const
+{
+    return SireID::Index_T_<SegIdx>::isNull();
+}
+
+uint SegIdx::hash() const
+{
+    return SireID::Index_T_<SegIdx>::hash();
+}
+
+QString SegIdx::toString() const
+{
+    return QString("SegIdx(%1)").arg(_idx);
+}
+
+SegIdx& SegIdx::operator=(const SegIdx &other)
+{
+    SireID::IndexBase::operator=(other);
+    SegID::operator=(other);
+    return *this;
+}
+
+bool SegIdx::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<SegIdx>(*this, other);
+}
+
 QList<SegIdx> SegIdx::map(const MolInfo &molinfo) const
 {
     return molinfo.map(*this);
@@ -269,6 +315,55 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, SegName &segname)
         throw version_error( v, "1", r_segname, CODELOC );
         
     return ds;
+}
+
+SegName::SegName() : SireID::Name(), SegID()
+{}
+
+SegName::SegName(const QString &name) : SireID::Name(name), SegID()
+{}
+
+SegName::SegName(const SegName &other) : SireID::Name(other), SegID(other)
+{}
+
+SegName::~SegName()
+{}
+
+bool SegName::isNull() const
+{
+    return SireID::Name::isNull();
+}
+
+uint SegName::hash() const
+{
+    return qHash(_name);
+}
+
+QString SegName::toString() const
+{
+    return QString("SegName('%1')").arg(_name);
+}
+
+SegName& SegName::operator=(const SegName &other)
+{
+    SireID::Name::operator=(other);
+    SegID::operator=(other);
+    return *this;
+}
+
+bool SegName::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<SegName>(*this, other);
+}
+
+bool SegName::operator==(const SegName &other) const
+{
+    return _name == other._name;
+}
+
+bool SegName::operator!=(const SegName &other) const
+{
+    return _name != other._name;
 }
 
 QList<SegIdx> SegName::map(const MolInfo &molinfo) const

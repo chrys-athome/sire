@@ -58,17 +58,13 @@ friend QDataStream& ::operator<<(QDataStream&, const ChainIdx&);
 friend QDataStream& ::operator>>(QDataStream&, ChainIdx&);
 
 public:
-    ChainIdx() : SireID::Index_T_<ChainIdx>(), ChainID()
-    {}
+    ChainIdx();
     
-    explicit ChainIdx(qint32 idx) : SireID::Index_T_<ChainIdx>(idx), ChainID()
-    {}
+    explicit ChainIdx(qint32 idx);
     
-    ChainIdx(const ChainIdx &other) : SireID::Index_T_<ChainIdx>(other), ChainID(other)
-    {}
+    ChainIdx(const ChainIdx &other);
     
-    ~ChainIdx()
-    {}
+    ~ChainIdx();
     
     static const char* typeName()
     {
@@ -85,37 +81,17 @@ public:
         return new ChainIdx(*this);
     }
     
-    static ChainIdx null()
-    {
-        return ChainIdx();
-    }
+    static ChainIdx null();
     
-    bool isNull() const
-    {
-        return SireID::Index_T_<ChainIdx>::isNull();
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return SireID::Index_T_<ChainIdx>::hash();
-    }
+    uint hash() const;
 
-    QString toString() const
-    {
-        return QString("ChainIdx(%1)").arg(_idx);
-    }
+    QString toString() const;
     
-    ChainIdx& operator=(const ChainIdx &other)
-    {
-        SireID::IndexBase::operator=(other);
-        ChainID::operator=(other);
-        return *this;
-    }
+    ChainIdx& operator=(const ChainIdx &other);
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare<ChainIdx>(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
     using SireID::Index_T_<ChainIdx>::operator=;
 

@@ -180,6 +180,38 @@ MolIdx::MolIdx(const MolIdx &other) : SireID::Index_T_<MolIdx>(other), MolID(oth
 
 MolIdx::~MolIdx()
 {}
+  
+MolIdx MolIdx::null()
+{
+    return MolIdx();
+}
+
+bool MolIdx::isNull() const
+{
+    return SireID::Index_T_<MolIdx>::isNull();
+}
+
+uint MolIdx::hash() const
+{
+    return SireID::Index_T_<MolIdx>::hash();
+}
+
+QString MolIdx::toString() const
+{
+    return QString("MolIdx(%1)").arg(_idx);
+}
+
+MolIdx& MolIdx::operator=(const MolIdx &other)
+{
+    SireID::IndexBase::operator=(other);
+    MolID::operator=(other);
+    return *this;
+}
+
+bool MolIdx::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<MolIdx>(*this, other);
+}
 
 QList<MolNum> MolIdx::map(const Molecules &molecules) const
 {
@@ -263,6 +295,43 @@ MolNum MolNum::getUniqueNumber()
     return MolNum( last_num.increment() );
 }
 
+bool MolNum::isNull() const
+{
+    return SireID::Number::isNull();
+}
+
+uint MolNum::hash() const
+{
+    return ::qHash( static_cast<const SireID::Number&>(*this) );
+}
+
+QString MolNum::toString() const
+{
+    return QString("MolNum(%1)").arg(_num);
+}
+
+MolNum& MolNum::operator=(const MolNum &other)
+{
+    SireID::Number::operator=(other);
+    MolID::operator=(other);
+    return *this;
+}
+
+bool MolNum::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<MolNum>(*this, other);
+}
+
+bool MolNum::operator==(const MolNum &other) const
+{
+    return _num == other._num;
+}
+
+bool MolNum::operator!=(const MolNum &other) const
+{
+    return _num != other._num;
+}
+
 QList<MolNum> MolNum::map(const Molecules &molecules) const
 {
     if (not molecules.contains(*this))
@@ -328,6 +397,43 @@ MolName::MolName(const MolName &other) : SireID::Name(other), MolID(other)
 
 MolName::~MolName()
 {}
+
+bool MolName::isNull() const
+{
+    return SireID::Name::isNull();
+}
+
+uint MolName::hash() const
+{
+    return qHash(_name);
+}
+
+QString MolName::toString() const
+{
+    return QString("MolName('%1')").arg(_name);
+}
+
+MolName& MolName::operator=(const MolName &other)
+{
+    SireID::Name::operator=(other);
+    MolID::operator=(other);
+    return *this;
+}
+
+bool MolName::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare<MolName>(*this, other);
+}
+
+bool MolName::operator==(const MolName &other) const
+{
+    return _name == other._name;
+}
+
+bool MolName::operator!=(const MolName &other) const
+{
+    return _name != other._name;
+}
 
 QList<MolNum> MolName::map(const Molecules &molecules) const
 {
