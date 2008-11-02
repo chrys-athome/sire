@@ -107,6 +107,8 @@ public:
     
     void clearStatistics();
     
+    void setGenerator(const RanGenerator &rangenerator);
+    
     void move(System &system, int nmoves, bool record_stats=true);
 
 private:

@@ -107,8 +107,12 @@ system2.add(cljff_a_b)
 
 print system.groupNumbers()
 print system.groupNames()
+print system.components()
 print system2.groupNumbers()
 print system2.groupNames()
+print system2.components()
+
+data = save(system2)
 
 t.start()
 print "Other initial energy = %s" % system2.energy()
@@ -167,4 +171,30 @@ mc = moves.moves()[0]
 print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
                             mc.nRejected(), 100 * mc.acceptanceRatio())
 
+system3 = load(data)
+print system3.components()
 
+moves = SameMoves(mc)
+moves.clearStatistics()
+
+t.start()
+moves.setGenerator( RanGenerator(42) ) 
+
+for i in range(0,10):
+    system3 = moves.move(system3, 1, False)
+    print "Energy = %s" % system3.energy()
+
+ms = t.elapsed()
+                            
+print "Done!"
+
+print "Final energy = %s" % system3.energy()
+
+system3.mustNowRecalculateFromScratch();
+
+print "Are we sure? = %s" % system3.energy()
+
+mc = moves.moves()[0]
+
+print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
+                            mc.nRejected(), 100 * mc.acceptanceRatio())

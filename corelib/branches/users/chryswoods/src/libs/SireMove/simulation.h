@@ -252,6 +252,8 @@ public:
     bool wait(int time);
 
 private:
+    Simulation(bool);
+
     /** Explicitly shared pointer to the object that is actually
         running the simulation */
     boost::shared_ptr<SimHandle> d;

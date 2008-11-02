@@ -151,6 +151,19 @@ RigidBodyMC& RigidBodyMC::operator=(const RigidBodyMC &other)
     return *this;
 }
 
+/** Comparison operator */
+bool RigidBodyMC::operator==(const RigidBodyMC &other) const
+{
+    return smplr == other.smplr and adel == other.adel and
+           rdel == other.rdel and MonteCarlo::operator==(other);
+}
+
+/** Comparison operator */
+bool RigidBodyMC::operator!=(const RigidBodyMC &other) const
+{
+    return not this->operator==(other);
+}
+
 /** Return a string representation of this move */
 QString RigidBodyMC::toString() const
 {

@@ -100,6 +100,9 @@ public:
 protected:
     MonteCarlo& operator=(const MonteCarlo &other);
 
+    bool operator==(const MonteCarlo &other) const;
+    bool operator!=(const MonteCarlo &other) const;
+
     void setEnsemble(const Ensemble &ensemble);
 
     bool test(double new_energy, double old_energy);

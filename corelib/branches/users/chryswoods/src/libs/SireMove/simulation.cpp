@@ -327,6 +327,10 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Simulation &sim)
 Simulation::Simulation() : d( new LocalSim() )
 {}
 
+/** Private null constructor */
+Simulation::Simulation(bool)
+{}
+
 /** Copy constructor */
 Simulation::Simulation(const Simulation &other)
            : d( other.d )
@@ -340,7 +344,7 @@ Simulation::~Simulation()
     returning a handle to the simulation once its done. */
 Simulation Simulation::run(const MPISimWorker &worker)
 {
-    Simulation sim;
+    Simulation sim(true);
     
     sim.d.reset( new LocalSim(worker) );
     
@@ -353,7 +357,7 @@ Simulation Simulation::run(const MPISimWorker &worker)
     and return a handle to the simulation (which may still be running) */
 Simulation Simulation::runBG(const MPISimWorker &worker)
 {
-    Simulation sim;
+    Simulation sim(true);
     
     sim.d.reset( new ThreadSim(worker) );
     
@@ -366,7 +370,7 @@ Simulation Simulation::runBG(const MPISimWorker &worker)
     and return a handle to the simulation (which may still be running) */
 Simulation Simulation::run(const MPINode &node, const MPISimWorker &worker)
 {
-    Simulation sim;
+    Simulation sim(true);
     
     sim.d.reset( new MPISim(node, worker) );
     

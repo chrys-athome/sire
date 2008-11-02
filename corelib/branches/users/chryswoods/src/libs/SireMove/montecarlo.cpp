@@ -124,6 +124,20 @@ MonteCarlo& MonteCarlo::operator=(const MonteCarlo &other)
     return *this;
 }
 
+/** Comparison operator */
+bool MonteCarlo::operator==(const MonteCarlo &other) const
+{
+    return rangenerator == other.rangenerator and
+           naccept == other.naccept and
+           nreject == other.nreject;
+}
+
+/** Comparison operator */
+bool MonteCarlo::operator!=(const MonteCarlo &other) const
+{
+    return not this->operator==(other);
+}
+
 /** Set the random number generator to use for these moves */
 void MonteCarlo::setGenerator(const RanGenerator &generator)
 {

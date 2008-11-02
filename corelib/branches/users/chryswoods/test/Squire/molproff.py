@@ -32,9 +32,13 @@ mol = mol.edit().atom( AtomName("H01") ) \
                     .setProperty("charge", 0.520 * mod_electron).molecule() \
                 .atom( AtomName("M03") ) \
                     .setProperty("charge", -1.04 * mod_electron).molecule() \
-         .commit()
+                .atom( AtomName("O00") ) \
+                    .setProperty("LJ", LJParameter( 3.15365 * angstrom, 
+                                                    0.1550 * kcal_per_mol ) ) \
+         .molecule().commit()
 
 charges = mol.property("charge")
+ljs = mol.property("LJ")
 
 ms = timer.elapsed()
 print "... took %d ms" % ms
@@ -46,8 +50,8 @@ space = PeriodicBox(Vector(-18.3854,-18.66855,-18.4445), \
                     Vector( 18.3854, 18.66855, 18.4445))
 
 #specify the type of switching function to use
-switchfunc = HarmonicSwitchingFunction(80.0)
-switchfunc = HarmonicSwitchingFunction(15.0, 14.5)
+switchfunc = HarmonicSwitchingFunction(80.0*angstrom)
+switchfunc = HarmonicSwitchingFunction(15.0*angstrom, 14.5*angstrom)
 
 #create a forcefield for the molecules
 qmff = QMFF("QMFF")
@@ -75,23 +79,39 @@ qmmmff.setQuantumProgram(molpro)
 
 qmmmff.add(mols.moleculeAt(0), MGIdx(0))
 
+mmff = InterGroupCLJFF("mmff")
+mmff.setSpace(space)
+mmff.setSwitchingFunction(switchfunc)
+
+mmff.add(mol, MGIdx(0))
+
 for i in range(1, mols.nMolecules()):
     mol = mols.moleculeAt(i).molecule()
 
     mol = mol.edit().setProperty("charge", charges) \
+                    .setProperty("LJ", ljs) \
              .commit()
 
     qmmmff.add(mol, MGIdx(1))
+    mmff.add(mol, MGIdx(1))
 
 qmmmnrg = qmmmff.energy()
+mmnrg = mmff.energy( mmff.components().coulomb() )
 
 print qmmmnrg
 print qmmmnrg - qmnrg
+print mmnrg
+print qmmmnrg - qmnrg - mmnrg
+print mmff.energy( mmff.components().lj() )
+
+sys.exit(0)
 
 for i in range(0,100):
      print "Step %d" % i
      qmmmff.mustNowRecalculateFromScratch()
      print qmmmff.energy()
+
+sys.exit(0)
 
 system = System()
 

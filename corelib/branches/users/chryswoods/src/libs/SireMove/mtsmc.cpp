@@ -90,6 +90,7 @@ MTSMC::MTSMC(const Moves &fast_moves, int nfast_moves)
         nfastmoves = quint32(nfast_moves);
     }
     
+    fastmoves.edit().setGenerator( MonteCarlo::generator() );
     MonteCarlo::setEnsemble( fast_moves.ensemble() );
 }
 
@@ -103,6 +104,7 @@ MTSMC::MTSMC(const Moves &fast_moves, const Symbol &fast_component,
         nfastmoves(nfast_moves)
 {
     MonteCarlo::setEnsemble( fast_moves.ensemble() );
+    fastmoves.edit().setGenerator( MonteCarlo::generator() );
 }
 
 /** Copy constructor */
@@ -190,6 +192,7 @@ void MTSMC::setFastMoves(const Moves &fast_moves)
     
     MovesPtr new_fastmoves = fast_moves;
     new_fastmoves.edit().setEnergyComponent(fastcomponent);
+    new_fastmoves.edit().setGenerator( MonteCarlo::generator() );
 
     MonteCarlo::setEnsemble(new_fastmoves.read().ensemble());
     
@@ -231,6 +234,14 @@ int MTSMC::nFastMoves() const
     return nfastmoves;
 }
 
+/** Set the random number generator used by this and all of the 
+    contained moves */
+void MTSMC::setGenerator(const RanGenerator &rangenerator)
+{
+    MonteCarlo::setGenerator( rangenerator );
+    fastmoves.edit().setGenerator( MonteCarlo::generator() );
+} 
+
 /** Perform the move - this will perform nfastmoves using fastmoves,
     and will then accept or reject the result based on the difference
     in the difference in energy between the fast and slow energies
@@ -256,7 +267,7 @@ void MTSMC::move(System &system, int nmoves, bool record_stats)
             System old_system = system;
             
             //now perform the moves (without recording statistics)
-            fastmoves.edit().move(system, nfastmoves, false);
+            system = fastmoves.edit().move(system, nfastmoves, false);
             
             //get the new energies
             double new_fast_nrg = system.energy(this->fastEnergyComponent());

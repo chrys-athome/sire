@@ -101,6 +101,9 @@ public:
         return new RigidBodyMC(*this);
     }
 
+    bool operator==(const RigidBodyMC &other) const;
+    bool operator!=(const RigidBodyMC &other) const;
+
     QString toString() const;
 
     void setSampler(const Sampler &sampler);
