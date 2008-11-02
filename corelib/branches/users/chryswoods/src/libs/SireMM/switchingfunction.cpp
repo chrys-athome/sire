@@ -35,6 +35,8 @@
 
 #include "SireMaths/maths.h"
 
+#include "SireUnits/units.h"
+
 #include "SireFF/errors.h"
 
 #include "SireStream/datastream.h"
@@ -43,6 +45,7 @@
 using namespace SireMM;
 using namespace SireStream;
 using namespace SireBase;
+using namespace SireUnits;
 
 /////////////
 ///////////// Implementation of SwitchingFunction
@@ -251,6 +254,12 @@ bool NoCutoff::operator!=(const NoCutoff&) const
     return false;
 }
 
+/** Return a string representation of this switching function */
+QString NoCutoff::toString() const
+{
+    return QObject::tr("no cutoff");
+}
+
 /** Return the scale factor for the electrostatic energies - this
     will always be 1.0, as there are no cutoffs */
 double NoCutoff::electrostaticScaleFactor(Length) const
@@ -457,6 +466,17 @@ bool HarmonicSwitchingFunction::operator!=(const HarmonicSwitchingFunction &othe
 {
     return SwitchingFunction::operator!=(other);
 }                                      
+
+/** Return a string representation of this switching function */
+QString HarmonicSwitchingFunction::toString() const
+{
+    return QObject::tr("HarmonicSwitchingFunction( elec = %1 A, vdw = %2 A, "
+                       "feather: elec = %3 A, vdw = %4 A )")
+                            .arg( electrostaticCutoffDistance().to(angstrom) )
+                            .arg( vdwCutoffDistance().to(angstrom) )
+                            .arg( electrostaticFeatherDistance().to(angstrom) )
+                            .arg( vdwFeatherDistance().to(angstrom) );
+}
 
 /** Return the scale factor for the electrostatic interaction for the
     distance 'dist'. This returns;
@@ -696,6 +716,17 @@ bool CHARMMSwitchingFunction::operator!=(const CHARMMSwitchingFunction &other) c
 {
     return SwitchingFunction::operator!=(other);
 }                                      
+
+/** Return a string representation of this switching function */
+QString CHARMMSwitchingFunction::toString() const
+{
+    return QObject::tr("CHARMMSwitchingFunction( elec = %1 A, vdw = %2 A, "
+                       "feather: elec = %3 A, vdw = %4 A )")
+                            .arg( electrostaticCutoffDistance().to(angstrom) )
+                            .arg( vdwCutoffDistance().to(angstrom) )
+                            .arg( electrostaticFeatherDistance().to(angstrom) )
+                            .arg( vdwFeatherDistance().to(angstrom) );
+}
 
 /** Return the scale factor for the electrostatic interaction for the
     distance 'dist'. This returns;

@@ -101,6 +101,8 @@ public:
     SireUnits::Dimension::Pressure fugacity() const;
     SireUnits::Dimension::MolarEnergy chemicalPotential() const;
 
+    virtual void setGenerator(const RanGenerator &rangenerator)=0;
+
     void setTemperature(const SireUnits::Dimension::Temperature &temperature);
     void setPressure(const SireUnits::Dimension::Pressure &pressure);
     void setChemicalPotential(
@@ -178,6 +180,8 @@ public:
     
     void setEnergyComponent(const Symbol &component);
     void setSpaceProperty(const PropertyName &spaceproperty); 
+    
+    void setGenerator(const RanGenerator &rangenerator);
     
     System move(const System &system, int nmoves, bool record_stats);
     

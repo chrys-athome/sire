@@ -106,6 +106,7 @@ RigidBodyMC::RigidBodyMC(const Sampler &sampler)
               rdel( 15 * degrees )
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
+    smplr.edit().setGenerator( this->generator() );
 }
 
 /** Construct a move that moves molecule views from the molecule group 'molgroup',
@@ -117,6 +118,7 @@ RigidBodyMC::RigidBodyMC(const MoleculeGroup &molgroup)
               adel( 0.15 * angstrom ), rdel( 15 * degrees )
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
+    smplr.edit().setGenerator( this->generator() );
 }
 
 /** Copy constructor */
@@ -186,10 +188,12 @@ Dimension::Angle RigidBodyMC::maximumRotation() const
 }
 
 /** Set the sampler (and contained molecule group) that provides
-    the random molecules to be moved */
+    the random molecules to be moved. This gives the sampler the
+    same random number generator that is used by this move */
 void RigidBodyMC::setSampler(const Sampler &sampler)
 {
     smplr = sampler;
+    smplr.edit().setGenerator( this->generator() );
 }
 
 /** Set the sampler to be one that selects views at random 
@@ -211,6 +215,13 @@ const Sampler& RigidBodyMC::sampler() const
 const MoleculeGroup& RigidBodyMC::moleculeGroup() const
 {
     return smplr->group();
+}
+
+/** Set the random number generator used by this move */
+void RigidBodyMC::setGenerator(const RanGenerator &rangenerator)
+{
+    MonteCarlo::setGenerator(rangenerator);
+    smplr.edit().setGenerator(this->generator());
 }
 
 /** Attempt 'n' rigid body moves of the views of the system 'system' */

@@ -12,9 +12,17 @@ from Sire.System import *
 from Sire.Move import *
 from Sire.Stream import *
 
+import sys
+
 t = QTime()
 
-cljff = InterCLJFF()
+cljff = InterCLJFF("cljff")
+
+cljff_a = InterCLJFF("cljff_a")
+cljff_b = InterCLJFF("cljff_b")
+cljff_a_b = InterGroupCLJFF("cljff_a_b")
+
+ffs = [ cljff, cljff_a, cljff_b, cljff_a_b ]
 
 mincoords = Vector(-18.3854, -18.66855, -18.4445)
 maxcoords = Vector( 18.3854,  18.66855,  18.4445)
@@ -22,8 +30,9 @@ maxcoords = Vector( 18.3854,  18.66855,  18.4445)
 vol = PeriodicBox(mincoords, maxcoords)
 switchfunc = HarmonicSwitchingFunction(15*angstrom, 14.5*angstrom)
 
-cljff.setSpace(vol)
-cljff.setSwitchingFunction(switchfunc)
+for ff in ffs:
+    ff.setSpace(vol)
+    ff.setSwitchingFunction(switchfunc)
 
 mols = PDB().read("test/io/water.pdb")
                                                 
@@ -49,6 +58,8 @@ charges = mol.property("charge")
 ljs = mol.property("LJ")
 
 cljff.add(mol)
+cljff_a.add(mol)
+cljff_a_b.add(mol, MGIdx(0))
 
 for i in range(1, mols.nMolecules()):
     mol = mols.moleculeAt(i).molecule()
@@ -60,6 +71,13 @@ for i in range(1, mols.nMolecules()):
 
     cljff.add(mol)
 
+    if (i % 2 == 0):
+        cljff_a.add(mol)
+        cljff_a_b.add( mol, MGIdx(0) )
+    else:
+        cljff_b.add(mol)
+        cljff_a_b.add( mol, MGIdx(1) )
+
 ms = t.elapsed()
 print "Parameterised all of the water molecules (in %d ms)!" % ms
 
@@ -67,19 +85,35 @@ system = System()
 
 system.add(cljff)
 
+t.start()
 print "Initial energy = %s" % system.energy()
+print "(took %d ms)" % t.elapsed()
+print system.property("space")
+print system.property("switchingFunction")
+
+system2 = System()
+
+system2.add(cljff_a)
+system2.add(cljff_b)
+system2.add(cljff_a_b)
+
+t.start()
+print "Other initial energy = %s" % system2.energy()
+print "(took %d ms)" % t.elapsed()
+print system2.property("space")
+print system2.property("switchingFunction")
 
 mc = RigidBodyMC(cljff.group(MGIdx(0)))
 
 moves = SameMoves(mc)
 
-print "Running 1000 moves..."
-
-data = save(system)
-system = load(data)
-
 t.start()
-system = moves.move(system, 1000, False)
+moves.setGenerator( RanGenerator(42) )
+
+for i in range(0,10):
+    system = moves.move(system, 1, False)
+    print "Energy = %s" % system.energy()
+
 ms = t.elapsed()
 
 print "Done!"
@@ -95,12 +129,29 @@ mc = moves.moves()[0]
 print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
                             mc.nRejected(), 100 * mc.acceptanceRatio())
 
-print "Took %d ms" % ms
+moves = SameMoves(mc)
+moves.clearStatistics()
 
-moves = WeightedMoves()
-moves.add( mc, 100 )
+t.start()
+moves.setGenerator( RanGenerator(42) )
 
-system = moves.move(system, 100, False)
+for i in range(0,10):
+    system2 = moves.move(system2, 1, False)
+    print "Energy = %s" % system2.energy()
 
-print "Final energy = %s" % system.energy()
+ms = t.elapsed()
+
+print "Done!"
+
+print "Final energy = %s" % system2.energy()
+
+system2.mustNowRecalculateFromScratch();
+
+print "Are we sure? = %s" % system2.energy()
+
+mc = moves.moves()[0]
+
+print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
+                            mc.nRejected(), 100 * mc.acceptanceRatio())
+
 

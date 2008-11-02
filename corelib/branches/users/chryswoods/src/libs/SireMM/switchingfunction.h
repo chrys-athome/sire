@@ -97,6 +97,9 @@ public:
         scale factor at the distance 'dist' */
     virtual double dVDWScaleFactor(Length dist) const=0;
 
+    /** Return a string representation of this switching function */
+    virtual QString toString() const=0;
+
     Length cutoffDistance() const;
     Length featherDistance() const;
 
@@ -215,6 +218,8 @@ public:
     bool operator==(const NoCutoff &other) const;
     bool operator!=(const NoCutoff &other) const;
     
+    QString toString() const;
+    
     double electrostaticScaleFactor(Length dist) const;
     double vdwScaleFactor(Length dist) const;
     
@@ -253,6 +258,8 @@ public:
     {
         return QMetaType::typeName( qMetaTypeId<HarmonicSwitchingFunction>() );
     }
+
+    QString toString() const;
 
     HarmonicSwitchingFunction& operator=(const HarmonicSwitchingFunction &other);
     
@@ -325,6 +332,8 @@ public:
     
     bool operator==(const CHARMMSwitchingFunction &other) const;
     bool operator!=(const CHARMMSwitchingFunction &other) const;
+    
+    QString toString() const;
     
     double electrostaticScaleFactor(Length dist) const;
     double vdwScaleFactor(Length dist) const;

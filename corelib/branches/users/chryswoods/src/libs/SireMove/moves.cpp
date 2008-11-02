@@ -32,6 +32,8 @@
 #include "simulation.h"
 #include "ensemble.h"
 
+#include "SireMaths/rangenerator.h"
+
 #include "SireUnits/units.h"
 #include "SireUnits/temperature.h"
 #include "SireUnits/dimensions.h"
@@ -514,6 +516,12 @@ bool SameMoves::operator==(const SameMoves &other) const
 bool SameMoves::operator!=(const SameMoves &other) const
 {
     return mv != other.mv;
+}
+
+/** Set the random number generator used at all points in all of the moves */
+void SameMoves::setGenerator(const RanGenerator &rangenerator)
+{
+    mv.edit().setGenerator(rangenerator);
 }
 
 /** Apply the move 'nmoves' times to the system 'system', returning

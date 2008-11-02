@@ -34,6 +34,8 @@
 #include "SireUnits/units.h"
 #include "SireUnits/temperature.h"
 
+#include "SireMaths/rangenerator.h"
+
 #include "SireSystem/system.h"
 
 #include "SireError/errors.h"
@@ -481,6 +483,10 @@ bool NullMove::operator!=(const NullMove &other) const
 
 /** There are no statistics to clear */
 void NullMove::clearStatistics()
+{}
+
+/* The NullMove does not use a random number generator */
+void NullMove::setGenerator(const RanGenerator&)
 {}
 
 /** NullMove doesn't perform any moves - no matter how hard you try! */

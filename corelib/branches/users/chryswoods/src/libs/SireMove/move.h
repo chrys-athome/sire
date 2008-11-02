@@ -61,12 +61,19 @@ class PartialMolecule;
 class Molecules;
 }
 
+namespace SireMaths
+{
+class RanGenerator;
+}
+
 namespace SireMove
 {
 
 class Ensemble;
 
 using SireCAS::Symbol;
+
+using SireMaths::RanGenerator;
 
 using SireSystem::System;
 
@@ -105,6 +112,8 @@ public:
 
     void move(System &system);
     void move(System &system, int nmoves);
+
+    virtual void setGenerator(const RanGenerator &rangenerator)=0;
 
     const Symbol& energyComponent() const;
     virtual void setEnergyComponent(const Symbol &component);
@@ -195,6 +204,8 @@ public:
     }
     
     void clearStatistics();
+    
+    void setGenerator(const RanGenerator &rangenerator);
     
     void move(System &system, int nmoves, bool record_stats);
     

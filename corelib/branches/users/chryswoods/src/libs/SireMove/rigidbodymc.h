@@ -109,6 +109,8 @@ public:
     const Sampler& sampler() const;
     const MoleculeGroup& moleculeGroup() const;
 
+    void setGenerator(const RanGenerator &rangenerator);
+
     void setMaximumTranslation(SireUnits::Dimension::Length max_translation);
     void setMaximumRotation(SireUnits::Dimension::Angle max_rotation);
 

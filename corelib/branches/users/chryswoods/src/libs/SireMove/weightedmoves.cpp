@@ -172,13 +172,24 @@ void WeightedMoves::recalculateWeights()
     }
 }
 
-/** Set the random number generator used to pick moves */
+/** Set the random number generator used to pick moves, and also
+    used by the moves themselves during the simulation */
 void WeightedMoves::setGenerator(const RanGenerator &rangen)
 {
     rangenerator = rangen;
+    
+    for (int i=0; i<mvs.count(); ++i)
+    {
+        mvs[i].get<0>().edit().setGenerator(rangen);
+    } 
 }
 
-/** Return the random number generator used to pick moves */
+/** Return the random number generator used to pick moves. This
+    may not be the same as the generator used by the moves themselves.
+    To ensure it is the same, run;
+    
+    weightedmoves.setGenerator( weightedmoves.generator() )
+*/
 const RanGenerator& WeightedMoves::generator() const
 {
     return rangenerator;
