@@ -105,12 +105,10 @@ system2.add(cljff_a)
 system2.add(cljff_b)
 system2.add(cljff_a_b)
 
-print system2.groupNums()
-
-groups = system2.groups()
-
-for group in groups:
-    print group.name(), group.number()
+print system.groupNumbers()
+print system.groupNames()
+print system2.groupNumbers()
+print system2.groupNames()
 
 t.start()
 print "Other initial energy = %s" % system2.energy()

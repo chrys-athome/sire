@@ -51,6 +51,7 @@
 #include "SireMol/moleculegroup.h"
 #include "SireMol/moleculegroups.h"
 #include "SireMol/mgnum.h"
+#include "SireMol/mgname.h"
 #include "SireMol/partialmolecule.h"
 
 using namespace SireMol;
@@ -69,6 +70,7 @@ void register_SireMol_containers()
 
     register_list< QList<MolNum> >();
     register_list< QList<MGNum> >();
+    register_list< QList<MGName> >();
 
     register_list< QList<AtomSelection> >();
     register_list< QList<ViewsOfMol> >();

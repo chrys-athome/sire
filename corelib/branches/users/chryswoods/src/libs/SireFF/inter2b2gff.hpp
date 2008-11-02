@@ -348,8 +348,10 @@ void Inter2B2GFF<Potential>::recordChange(quint32 groupid,
             changed_mols[groupid].remove(molnum);
             
             if (changed_mols[0].isEmpty() and changed_mols[1].isEmpty())
+            {
                 //there are now no changes
                 G2FF::setClean();
+            }
             
             return;
         }
@@ -406,6 +408,7 @@ void Inter2B2GFF<Potential>::_pvt_added(quint32 groupid,
     else
     {
         mols[groupid].add(molecule, map, *this, false);
+        G2FF::setDirty();
     }
 }
 
@@ -423,6 +426,7 @@ void Inter2B2GFF<Potential>::_pvt_removed(quint32 groupid,
     else
     {
         mols[groupid].remove(molecule, *this, false);
+        G2FF::setDirty();
     }
 }
 
@@ -439,12 +443,13 @@ void Inter2B2GFF<Potential>::_pvt_changed(quint32 groupid,
 {
     if (this->recordingChanges())
     {
-        ChangedMolecule mol = mols[groupid].change(molecule, *this, false);
+        ChangedMolecule mol = mols[groupid].change(molecule, *this, true);
         this->recordChange(groupid, mol);
     }
     else
     {
         mols[groupid].change(molecule, *this, false);
+        G2FF::setDirty();
     }
 }
 
@@ -482,6 +487,8 @@ void Inter2B2GFF<Potential>::_pvt_changed(quint32 groupid,
             {
                 mols[groupid].change(*it, *this, false);
             }
+            
+            G2FF::setDirty();
         }
     }
     catch(...)
