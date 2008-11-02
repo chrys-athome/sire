@@ -129,7 +129,7 @@ const MGID& MGIdentifier::base() const
 QList<MGNum> MGIdentifier::map(const MolGroupsBase &molgroups) const
 {
     if (d.get() == 0)
-        return molgroups.groupNums();
+        return molgroups.groupNumbers();
     else
         return molgroups.map(*d);
 }

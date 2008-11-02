@@ -110,13 +110,15 @@ void ObjectRegistry::save(const object &obj, const QString &filename)
     getConverter(type_name).saveObject(obj, filename);
 }
 
-static QMutex registry_mutex; static QHash< QString, shared_ptr<ObjectRegistry> > *registry(0);
+Q_GLOBAL_STATIC( QMutex, registryMutex );
+ 
+static QHash< QString, shared_ptr<ObjectRegistry> > *registry(0);
 
 static QHash< QString,shared_ptr<ObjectRegistry> >& getRegistry()
 { 
     if (not registry)
     {
-        registry = new QHash< QString,shared_ptr<ObjectRegistry> >();
+       registry = new QHash< QString,shared_ptr<ObjectRegistry> >();
     }
 
     return *registry;
@@ -125,14 +127,13 @@ static QHash< QString,shared_ptr<ObjectRegistry> >& getRegistry()
 void ObjectRegistry::registerConverter(const char *type_name,
                                        ObjectRegistry *converter)
 {
-    QMutexLocker lkr(&registry_mutex);
-
+    QMutexLocker lkr( registryMutex() );
     getRegistry().insert( type_name, shared_ptr<ObjectRegistry>(converter) );   
 }
 
 const ObjectRegistry& ObjectRegistry::getConverter(const QString &type_name)
 {
-    QMutexLocker lkr(&registry_mutex);
+    QMutexLocker lkr( registryMutex() );
 
     if (not getRegistry().contains(type_name))
     {

@@ -324,6 +324,8 @@ Q_DECLARE_METATYPE(SireMol::MoleculeGroup);
 
 SIRE_EXPOSE_CLASS( SireMol::MoleculeGroup )
 
+SIRE_EXPOSE_PROPERTY( SireMol::MolGroupPtr, SireMol::MoleculeGroup )
+
 SIRE_END_HEADER
 
 #endif

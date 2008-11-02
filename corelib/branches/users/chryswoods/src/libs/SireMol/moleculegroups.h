@@ -194,7 +194,8 @@ public:
     const MoleculeGroup& group(MGIdx mgidx) const;
     const MoleculeGroup& group(const MGID &mgid) const;
     
-    QList<MGNum> groupNums() const;
+    QList<MGNum> groupNumbers() const;
+    QList<MGName> groupNames() const;
     
     QList<MolGroupPtr> groups() const;
     
@@ -245,6 +246,7 @@ public:
     Molecules molecules() const;
     
     QList<MGNum> mgNums() const;
+    QList<MGName> mgNames() const;
     
     void assertContains(MolNum molnum) const;
     void assertContains(const MolID &molid) const;
@@ -494,6 +496,8 @@ Q_DECLARE_METATYPE(SireMol::MoleculeGroups);
 
 SIRE_EXPOSE_CLASS( SireMol::MolGroupsBase )
 SIRE_EXPOSE_CLASS( SireMol::MoleculeGroups )
+
+SIRE_EXPOSE_PROPERTY( SireMol::MolGroupsPtr, SireMol::MoleculeGroups )
 
 SIRE_END_HEADER
 

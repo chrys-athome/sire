@@ -791,9 +791,15 @@ QList<MolGroupPtr> MolGroupsBase::groups() const
 }
 
 /** Return a list of the numbers of all of the groups in this set */
-QList<MGNum> MolGroupsBase::groupNums() const
+QList<MGNum> MolGroupsBase::groupNumbers() const
 {
     return mgidx_to_num; 
+}
+
+/** Return a list of the names of all of the groups in this set */
+QList<MGName> MolGroupsBase::groupNames() const
+{
+    return this->mgNames();
 }
 
 /** Obvious shortcut for select(const MGID&) 
@@ -1443,6 +1449,19 @@ Molecules MolGroupsBase::molecules() const
 QList<MGNum> MolGroupsBase::mgNums() const
 {
     return mgidx_to_num;
+}
+
+/** Return the names of all molecule groups in this set */
+QList<MGName> MolGroupsBase::mgNames() const
+{
+    QList<MGName> names;
+    
+    foreach (MGNum mgnum, mgidx_to_num)
+    {
+        names.append( this->operator[](mgnum).name() );
+    }
+    
+    return names;
 }
 
 /** Assert that this set contains at least one atom of the 

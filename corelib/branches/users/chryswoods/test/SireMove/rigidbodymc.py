@@ -34,6 +34,8 @@ for ff in ffs:
     ff.setSpace(vol)
     ff.setSwitchingFunction(switchfunc)
 
+solvent = MoleculeGroup("solvent")
+
 mols = PDB().read("test/io/water.pdb")
                                                 
 print "Read in %d molecules!" % mols.nMolecules()
@@ -61,6 +63,8 @@ cljff.add(mol)
 cljff_a.add(mol)
 cljff_a_b.add(mol, MGIdx(0))
 
+solvent.add(mol)
+
 for i in range(1, mols.nMolecules()):
     mol = mols.moleculeAt(i).molecule()
 
@@ -68,6 +72,8 @@ for i in range(1, mols.nMolecules()):
                     .setProperty("charge", charges) \
                     .setProperty("LJ", ljs) \
              .commit()
+
+    solvent.add(mol)
 
     cljff.add(mol)
 
@@ -82,6 +88,7 @@ ms = t.elapsed()
 print "Parameterised all of the water molecules (in %d ms)!" % ms
 
 system = System()
+system.add(solvent)
 
 system.add(cljff)
 
@@ -92,10 +99,18 @@ print system.property("space")
 print system.property("switchingFunction")
 
 system2 = System()
+system2.add(solvent)
 
 system2.add(cljff_a)
 system2.add(cljff_b)
 system2.add(cljff_a_b)
+
+print system2.groupNums()
+
+groups = system2.groups()
+
+for group in groups:
+    print group.name(), group.number()
 
 t.start()
 print "Other initial energy = %s" % system2.energy()
@@ -103,7 +118,7 @@ print "(took %d ms)" % t.elapsed()
 print system2.property("space")
 print system2.property("switchingFunction")
 
-mc = RigidBodyMC(cljff.group(MGIdx(0)))
+mc = RigidBodyMC(solvent)
 
 moves = SameMoves(mc)
 
