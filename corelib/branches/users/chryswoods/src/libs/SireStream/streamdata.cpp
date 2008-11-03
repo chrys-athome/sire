@@ -1026,6 +1026,8 @@ void SIRESTREAM_EXPORT throwStreamDataInvalidCast(const QString &load_type,
 
 static quint32 SIRE_MAGIC_NUMBER(251785387);
 
+static int RESERVE_SIZE = 48 * 1024 * 1024;
+
 QByteArray SIRESTREAM_EXPORT streamDataSave( const void *object, const char *type_name )
 {
     //get the ID number of this type
@@ -1039,6 +1041,13 @@ QByteArray SIRESTREAM_EXPORT streamDataSave( const void *object, const char *typ
 
     //use the QMetaType streaming function to save this object
     QByteArray object_data;
+    
+    //reserve at least 48MB of space (most things shouldn't be this big)
+    object_data.reserve( RESERVE_SIZE );
+
+    if (object_data.capacity() != RESERVE_SIZE)
+        qWarning() << "Possible memory allocation error!";
+    
     QDataStream ds2(&object_data, QIODevice::WriteOnly);
 
     if (not QMetaType::save(ds2, id, object))
@@ -1056,6 +1065,10 @@ QByteArray SIRESTREAM_EXPORT streamDataSave( const void *object, const char *typ
     
     //clear the uncompressed data to save space
     object_data = QByteArray();
+    object_data.reserve( RESERVE_SIZE );
+
+    if (object_data.capacity() != RESERVE_SIZE)
+        qWarning() << "Possible memory allocation error!";
     
     QByteArray data;
     QDataStream ds(&data, QIODevice::WriteOnly);
@@ -1180,6 +1193,11 @@ tuple<shared_ptr<void>,QString> SIRESTREAM_EXPORT load(const QByteArray &data)
     
     //now read the data
     QByteArray object_data;
+    object_data.reserve( RESERVE_SIZE );
+    
+    if (object_data.capacity() != RESERVE_SIZE)
+        qWarning() << "Possible memory allocation error!";
+    
     ds >> object_data;
     
     //validate that the data is correct
