@@ -289,6 +289,7 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
                                         .translate(delta)
                                         .fromCartesian(space)
                                         .commit();
+
             //update the system with the new coordinates
             system.update(newmol);
 

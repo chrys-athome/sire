@@ -169,6 +169,17 @@ def export_class(mb, classname, aliases, includes, special_code):
                f.call_policies = call_policies.custom_call_policies( \
                      "bp::return_value_policy<bp::clone_const_reference>", \
                      "Helpers/clone_const_reference.hpp" )
+
+       #also add any operator[] or operator() functions
+       funs = c.operators( lambda f: declarations.is_reference( f.return_type ) )
+
+       for f in funs:
+           if (str(f).find("[]") != -1) or (str(f).find("()") != -1):
+               if has_clone_function(f.return_type):
+                   f.call_policies = call_policies.custom_call_policies( \
+                       "bp::return_value_policy<bp::clone_const_reference>", \
+                       "Helpers/clone_const_reference.hpp" )
+
    except:
        pass
 

@@ -103,11 +103,11 @@ Moves::~Moves()
 
     \throw SireError::invalid_index
 */
-MovePtr Moves::operator[](int i) const
+const Move& Moves::operator[](int i) const
 {
     QList<MovePtr> mvs = this->moves();
     
-    return mvs.at( Index(i).map(mvs.count()) );
+    return mvs.at( Index(i).map(mvs.count()) ).read();
 }
 
 /** Return the number of different move types in this set of Moves 

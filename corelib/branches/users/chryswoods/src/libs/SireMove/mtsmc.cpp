@@ -283,6 +283,11 @@ void MTSMC::move(System &system, int nmoves, bool record_stats)
                 //restore the old configuration
                 system = old_system;
             }
+
+            if (record_stats)
+            {
+                system.collectStats();
+            }
         }
     }
     catch(...)

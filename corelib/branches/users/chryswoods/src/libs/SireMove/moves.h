@@ -73,7 +73,7 @@ public:
         return "SireMove::Moves";
     }
     
-    MovePtr operator[](int i) const;
+    const Move& operator[](int i) const;
     
     int count() const;
     int size() const;
