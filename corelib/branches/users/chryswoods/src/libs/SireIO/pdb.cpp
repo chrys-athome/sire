@@ -1560,11 +1560,22 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
     return atomnum;
 }
 
+//reserve at least 48 MB of space
+static const int RESERVE_SIZE = 48 * 1024 * 1024;
+
 /** Write a group of molecules to a bytearray */
 QByteArray PDB::writeMols(const MoleculeGroup &molgroup,
                           const PropertyMap &map) const
 {
     QByteArray data;
+    data.reserve(RESERVE_SIZE);
+    
+    if (data.capacity() != RESERVE_SIZE)
+    {
+        qDebug() << CODELOC;
+        qWarning() << "Could not reserve enough space!" << data.capacity();
+    }
+    
     QTextStream ts(&data, QIODevice::WriteOnly | QIODevice::Text);
 
     int nmols = molgroup.nMolecules();
@@ -1587,6 +1598,14 @@ QByteArray PDB::writeMols(const Molecules &molecules,
                           const PropertyMap &map) const
 {
     QByteArray data;
+    data.reserve(RESERVE_SIZE);
+    
+    if (data.capacity() != RESERVE_SIZE)
+    {
+        qDebug() << CODELOC;
+        qWarning() << "Could not reserve enough space!" << data.capacity();
+    }
+
     QTextStream ts(&data, QIODevice::WriteOnly | QIODevice::Text);
 
     int atomid = 0;
