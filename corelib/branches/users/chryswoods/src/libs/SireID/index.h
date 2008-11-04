@@ -77,6 +77,8 @@ public:
 
     operator qint32() const;
 
+    qint32 value() const;
+
     qint32 map(qint32 n) const;
 
     uint hash() const;

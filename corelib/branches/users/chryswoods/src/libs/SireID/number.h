@@ -77,6 +77,8 @@ public:
 
     uint hash() const;
     
+    qint32 value() const;
+    
 protected:
     Number(qint32 num=0);
     

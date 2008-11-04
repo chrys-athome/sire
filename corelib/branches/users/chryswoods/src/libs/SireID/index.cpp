@@ -88,6 +88,12 @@ uint IndexBase::hash() const
     return quint32(_idx);
 }
 
+/** Return the raw value of this index */
+qint32 IndexBase::value() const
+{
+    return _idx;
+}
+
 /** Allow implicit conversion back to an int */
 IndexBase::operator qint32() const
 {

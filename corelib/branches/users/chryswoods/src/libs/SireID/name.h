@@ -75,6 +75,9 @@ public:
     bool isEmpty() const;
 
     uint hash() const;
+    
+    const QString& value() const;
+
 
 protected:
     explicit Name(const QString &name = QString::null);

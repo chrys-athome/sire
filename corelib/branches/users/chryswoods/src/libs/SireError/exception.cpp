@@ -82,6 +82,11 @@ exception* exception::clone() const
 QByteArray exception::pack() const
 {
     QByteArray data;
+    
+    //reserve 128K of space for the exception (should be way
+    //more than enough!)
+    data.reserve( 128 * 1024 );
+    
     QDataStream ds(&data, QIODevice::WriteOnly);
     
     //get the ID number of this type

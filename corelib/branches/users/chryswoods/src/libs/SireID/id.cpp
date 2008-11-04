@@ -96,6 +96,11 @@ bool Name::isEmpty() const
     return _name.isEmpty();
 }
 
+const QString& Name::value() const
+{
+    return _name;
+}
+
 ///////////
 /////////// Implementation of Number
 ///////////
@@ -142,4 +147,9 @@ uint Number::hash() const
 bool Number::isNull() const
 {
     return _num == null();
+}
+
+qint32 Number::value() const
+{
+    return _num;
 }
