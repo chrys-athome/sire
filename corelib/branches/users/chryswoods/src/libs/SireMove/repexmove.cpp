@@ -55,7 +55,9 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const RepExMove &repexm
     
     SharedDataStream sds(ds);
     
-    sds << repexmove.rangenerator << repexmove.naccept
+    sds << repexmove.rangenerator 
+        << repexmove.nmoves
+        << repexmove.naccept
         << repexmove.nreject;
         
     return ds;
@@ -69,7 +71,9 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExMove &repexmove)
     if (v == 1)
     {
         SharedDataStream sds(ds);
-        sds >> repexmove.rangenerator >> repexmove.naccept
+        sds >> repexmove.rangenerator 
+            >> repexmove.nmoves
+            >> repexmove.naccept
             >> repexmove.nreject;
     }
     else
@@ -79,12 +83,13 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExMove &repexmove)
 }
 
 /** Constructor */
-RepExMove::RepExMove() : naccept(0), nreject(0)
+RepExMove::RepExMove() : nmoves(0), naccept(0), nreject(0)
 {}
 
 /** Copy constructor */
 RepExMove::RepExMove(const RepExMove &other)
           : rangenerator(other.rangenerator),
+            nmoves(other.nmoves),
             naccept(other.naccept), nreject(other.nreject)
 {}
 
@@ -98,6 +103,7 @@ RepExMove& RepExMove::operator=(const RepExMove &other)
     if (this != &other)
     {
         rangenerator = other.rangenerator;
+        nmoves = other.nmoves;
         naccept = other.naccept;
         nreject = other.nreject;
     }
@@ -108,7 +114,8 @@ RepExMove& RepExMove::operator=(const RepExMove &other)
 /** Comparison operator */
 bool RepExMove::operator==(const RepExMove &other) const
 {
-    return naccept == other.naccept and
+    return nmoves == other.nmoves and
+           naccept == other.naccept and
            nreject == other.nreject and
            rangenerator == other.rangenerator;
 }
@@ -116,9 +123,18 @@ bool RepExMove::operator==(const RepExMove &other) const
 /** Comparison operator */
 bool RepExMove::operator!=(const RepExMove &other) const
 {
-    return naccept != other.naccept or
+    return nmoves != other.nmoves or
+           naccept != other.naccept or
            nreject != other.nreject or
            rangenerator != other.rangenerator;
+}
+
+/** Return the total number of attempted surpa- replica exchange
+    moves (each supra-move consists of perhaps many individual
+    pair swap and test moves) */
+quint32 RepExMove::nMoves() const
+{
+    return nmoves;
 }
 
 /** Return the number of attempted replica exchange moves */
@@ -154,6 +170,7 @@ double RepExMove::acceptanceRatio() const
 /** Completely clear the move statistics */
 void RepExMove::clearMoveStatistics()
 {
+    nmoves = 0;
     naccept = 0;
     nreject = 0;
 }
@@ -302,10 +319,10 @@ void RepExMove::testAndSwap(RepExReplicas &replicas)
 /** Perform 'nmoves' replica exchange moves on the replicas in 'replicas',
     running all jobs using the passed replica runner, and recording statistics if
     'record_stats' is true. */
-void RepExMove::move(RepExReplicas &replicas, int nmoves,
+void RepExMove::move(RepExReplicas &replicas, int nmoves_to_run,
                      const ReplicaRunner &reprunner, bool record_stats)
 {
-    if (nmoves <= 0 or replicas.isEmpty())
+    if (nmoves_to_run <= 0 or replicas.isEmpty())
         return;
 
     RepExMove old_state(*this);
@@ -313,13 +330,16 @@ void RepExMove::move(RepExReplicas &replicas, int nmoves,
     
     try
     {
-        for (int i=0; i<nmoves; ++i)
+        for (int i=0; i<nmoves_to_run; ++i)
         {
             //run a block of sampling on each replica
             reprunner.run(replicas, record_stats);
             
             //now perform the replica exchange test on the replicas
             this->testAndSwap(replicas);
+            
+            //increment the number of supra-ensemble moves run
+            ++nmoves;
         }
     }
     catch(...)

@@ -96,6 +96,8 @@ public:
     quint32 nAccepted() const;
     quint32 nRejected() const;
     
+    quint32 nMoves() const;
+    
     double acceptanceRatio() const;
     
     void clearMoveStatistics();
@@ -121,6 +123,9 @@ protected:
 private:
     /** The random number generator used to accept or reject the moves */
     RanGenerator rangenerator;
+    
+    /** The total number of replica exchange supra-moves attempted */
+    quint32 nmoves;
     
     /** The number of times a replica exchange move has been accepted */
     quint32 naccept;
