@@ -447,7 +447,7 @@ QString PDBAtom::writeToLine() const
     line[82] = '\0';
     
     qsnprintf(line, 82,
-     "%6-s%5d %4s%1s%3s %1s%4d%1s   %8.3_f%8.3_f%8.3_f%6.2_f%6.2_f      %4s%2s%2s",
+     "%-6s%5d %4s%1s%3s %1s%4d%1s   %8.3f%8.3f%8.3f%6.2f%6.2f      %4s%2s%2s",
             qPrintable(record_name), serial, qPrintable(name),
             qPrintable(altloc), qPrintable(resname), qPrintable(chainid),
             resseq, qPrintable(icode), x, y, z, occupancy, tempfactor,

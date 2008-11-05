@@ -274,7 +274,6 @@ void MTSMC::move(System &system, int nmoves, bool record_stats)
             double new_slow_nrg = system.energy(this->slowEnergyComponent());
             
             //work out the delta
-            #warning Need to check MTSMC acceptance test
             double new_nrg = new_slow_nrg - new_fast_nrg;
             double old_nrg = old_slow_nrg - old_fast_nrg;
             

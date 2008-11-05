@@ -353,9 +353,6 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
         CGArrayArrayData *cgarrayarray 
                     = new (storage) CGArrayArrayData(narrays, ncgroups, ncoords);
                     
-        //add a reference count for this object
-        cgarrayarray->ref.ref();
-
         //advance the index into the storage array so that we are now
         //pointing just after the CGArrayArrayData
         quint32 idx = sizeof(CGArrayArrayData);
