@@ -242,18 +242,11 @@ bool MonteCarlo::test(double new_energy, double old_energy,
 {
     double p_deltav = this->pressure() * (new_volume - old_volume);
 
-    qDebug() << this->pressure() << (new_volume - old_volume);
-
     double vratio = nmolecules * std::log(new_volume / old_volume);
 
     double beta = -1.0 / (k_boltz * ensmble.temperature().value());
 
-    qDebug() << "P dV =" << p_deltav << "vratio = " << vratio
-             << "beta =" << beta << "dE = " << new_energy - old_energy;
-
     double x = std::exp( beta * (new_energy - old_energy + p_deltav) + vratio );
-
-    qDebug() << "x =" << x << "delta =" << (-beta * (new_energy - old_energy + p_deltav) + vratio);
 
     if ( x > 1 or x > rangenerator.rand() )
     {

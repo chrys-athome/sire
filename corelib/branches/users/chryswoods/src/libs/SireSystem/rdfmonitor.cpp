@@ -293,7 +293,7 @@ void RDF::add(const Length &distance)
     if (idx != -1)
     {
         distvals[idx] += 1;
-
+        
         if (not is_dirty)
         {
             is_dirty = true;
@@ -732,20 +732,20 @@ void RDFMonitor::monitor(System &system)
 
             if (it->get<0>() != it->get<1>())
             {
-                 QHash< MolNum, Selector<Atom> > atoms1 = system.atoms( it->get<1>() );
+                QHash< MolNum, Selector<Atom> > atoms1 = system.atoms( it->get<1>() );
+
+                coords1 = QHash<MolNum,CoordGroup>();
+                coords1.reserve(atoms1.count());
                  
-                 coords1 = QHash<MolNum,CoordGroup>();
-                 coords1.reserve(atoms1.count());
-                 
-                 for (QHash< MolNum, Selector<Atom> >::const_iterator it1
-                                              = atoms1.constBegin();
-                      it1 != atoms1.constEnd();
-                      ++it1)
-                 {
-                     coords1.insert( it1.key(), 
-                                CoordGroup(it1->property<Vector>(coords_property)
-                                           .toVector() ) );
-                 }
+                for (QHash< MolNum, Selector<Atom> >::const_iterator it1
+                                             = atoms1.constBegin();
+                     it1 != atoms1.constEnd();
+                     ++it1)
+                {
+                    coords1.insert( it1.key(), 
+                              CoordGroup(it1->property<Vector>(coords_property)
+                                          .toVector() ) );
+                }
             }
             
             //now calculate all of the interatomic distances between all pairs
@@ -774,7 +774,10 @@ void RDFMonitor::monitor(System &system)
                     }
                     
                     //calculate all of the interatomic distances
-                    space.calcDist(it0.value(), it1.value(), distmat);
+                    double mindist = space.calcDist2(it0.value(), it1.value(), distmat);
+                    
+                    if (mindist > this->maximum())
+                        continue;
                     
                     //add the distances to the histogram
                     for (unsigned int i=0; i<distmat.nOuter(); ++i)
@@ -786,7 +789,7 @@ void RDFMonitor::monitor(System &system)
                             double dist = distmat[j];
                             
                             if (dist != 0) // skip same atom pairs
-                                rdfdata.add( Length(dist) );
+                                rdfdata.add( Length( std::sqrt(dist) ) );
                         }
                     }
                 }

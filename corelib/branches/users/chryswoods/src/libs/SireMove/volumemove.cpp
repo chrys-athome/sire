@@ -199,8 +199,6 @@ void VolumeMove::move(System &system, int nmoves, bool record_stats)
             //create the new space
             SpacePtr new_space = old_space.setVolume(new_vol);
             
-            qDebug() << old_vol << new_vol << new_space.read().volume();
-            
             //read the new volume - it may be slightly different
             //due to round off error
             new_vol = new_space.read().volume();
@@ -230,18 +228,12 @@ void VolumeMove::move(System &system, int nmoves, bool record_stats)
             //calculate the new energy
             double new_nrg = system.energy();
             
-            qDebug() << "Volume move" << new_nrg << old_nrg
-                                      << new_vol << old_vol;
-            
             if (not this->test(new_nrg, old_nrg, all_mols.nMolecules(),
                                new_vol, old_vol))
             {
                 //move failed - go back to the last step
                 system = old_system;
-                qDebug() << "FAILED";
             }
-            else
-                qDebug() << "PASSED!";
             
             if (record_stats)
             {

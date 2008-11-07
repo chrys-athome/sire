@@ -752,7 +752,7 @@ CoordGroupArray PeriodicBox::mapAsOneFromCartesian(const CoordGroupArray &groups
         return groups;
 
     //wrap all of the groups using the delta center of the groups
-    Vector wrapdelta = wrapDelta(this->center(), groups.aaBox().center());
+    Vector wrapdelta = wrapDelta(groups.aaBox().center(), this->center());
 
     if ( not wrapdelta.isZero() )
     {
