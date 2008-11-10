@@ -56,7 +56,7 @@ Q_GLOBAL_STATIC( QMutex, mpiMutex );
 //////// Implementation of MPINodesData
 ////////
 
-MPINodesData::MPINodesData() : sem(1), nnodes(1)
+MPINodesData::MPINodesData(int num_nodes) : sem(num_nodes), nnodes(num_nodes)
 {
     #ifndef __SIRE_USE_MPI__
     mpicomm = 0;
@@ -79,7 +79,7 @@ MPINodesData::MPINodesData() : sem(1), nnodes(1)
     the global MPI_WORLD */
 boost::shared_ptr<MPINodesData> MPINodesData::construct()
 {
-    boost::shared_ptr<MPINodesData> d( new MPINodesData() );
+    boost::shared_ptr<MPINodesData> d( new MPINodesData(1) );
     
     d->this_ptr = d;
     
@@ -103,6 +103,9 @@ boost::shared_ptr<MPINodesData> MPINodesData::construct()
             int argc = 0;
             SireMPI::bg_exec(argc, 0);
         }
+        
+        d.reset( new MPINodesData( SireMPI::COMM_WORLD().Get_size() ) );
+        d->this_ptr = d;
         
         //this is the global communicator
         d->mpicomm = &(SireMPI::COMM_WORLD());

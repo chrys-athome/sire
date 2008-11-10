@@ -305,6 +305,8 @@ void MPIRepRunner::run(Replicas &replicas, bool record_stats) const
         //get a writable handle to the list of available MPI nodes
         MPINodes available_nodes = nodes;
 
+        qDebug() << "Number of nodes ==" << available_nodes.count();
+
         QVector<Simulation> running_sims(nreplicas);
     
         //loop over all replicas in the set and set them all running
@@ -313,8 +315,12 @@ void MPIRepRunner::run(Replicas &replicas, bool record_stats) const
             //get a copy of this replica
             const Replica &replica = replicas[i];
         
+            qDebug() << "Waiting for a free node...";
+            
             //get a free node on which to run the simulation
             MPINode node = available_nodes.getFreeNode();
+        
+            qDebug() << "Running replica" << i << "on node" << node.rank();
         
             //run the simulation - save the handle
             running_sims[i] = Simulation::run(node, replica.system(), replica.moves(),
