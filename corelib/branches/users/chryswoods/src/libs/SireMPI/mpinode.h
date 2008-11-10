@@ -37,11 +37,6 @@
 
 SIRE_BEGIN_HEADER
 
-namespace SireError
-{
-class exception;
-}
-
 namespace SireMPI
 {
 
@@ -49,23 +44,13 @@ class MPINodes;
 class MPIWorker;
 class MPIPromise;
 
+class MPINodePtr;
+class MPINodesPtr;
+
 namespace detail
 {
-class MPINodeData;
-class MPINodesData;
-class MPIPromiseData;
+class MPINodePvt;
 }
-
-void ensureInitializedMPI(int &argc, char **argv);
-
-bool exec_running();
-
-int exec(int &argc, char **argv);
-void bg_exec(int &argc, char **argv);
-
-void writeErrorString(const QString &location, const SireError::exception &e);
-
-void shutdown();
 
 /** This class provides a handle to represent a node that
     is made available via MPI. It provides information about
@@ -79,10 +64,7 @@ class SIREMPI_EXPORT MPINode
 {
 
 friend class MPINodes;
-
-friend class detail::MPINodeData;
-friend class detail::MPINodesData;
-friend class detail::MPIPromiseData;
+friend class MPINodePtr;
 
 public:
     MPINode();
@@ -120,17 +102,35 @@ public:
 
 protected:
     MPINode(const MPINodes &communicator, int rank, bool is_master);
-    MPINode(const boost::shared_ptr<detail::MPINodeData> &data);
-
-    void getProgress();      // called by MPIPromiseData
-    void getInterimResult(); // called by MPIPromiseData
 
 private:
-    /** Shared pointer to the data for this node - this
-        is used to hide the implementation to ensure binary
-        compatibility between versions of Sire that have MPI
-        and those that don't */
-    boost::shared_ptr<detail::MPINodeData> d;
+    /** PIMPL pointer */
+    boost::shared_ptr<detail::MPINodePvt> d;
+};
+
+/** This is a weak pointer to the node - this is automatically 
+    set to null if the node is destroyed */
+class MPINodePtr
+{
+public:
+    MPINodePtr();
+    MPINodePtr(const MPINode &node);
+    MPINodePtr(const MPINodePtr &other);
+    
+    ~MPINodePtr();
+    
+    MPINodePtr& operator=(const MPINodePtr &other);
+    
+    bool operator==(const MPINodePtr &other) const;
+    bool operator!=(const MPINodePtr &other) const;
+    
+    MPINode operator*() const;
+    
+    bool isNull() const;
+
+private:
+    /** Weak pointer to the PIMPL data of MPINode */
+    boost::weak_ptr<detail::MPINodePvt> d;
 };
 
 }

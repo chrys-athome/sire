@@ -29,105 +29,9 @@
 #ifndef SIREMPI_DETAIL_MPIDETAIL_H
 #define SIREMPI_DETAIL_MPIDETAIL_H
 
-#include <QThread>
-#include <QMutex>
-#include <QSemaphore>
-#include <QWaitCondition>
-#include <QUuid>
-
-#include "SireError/exception.h"
-
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
-#include <boost/noncopyable.hpp>
-
-SIRE_BEGIN_HEADER
-
-namespace SireMPI
-{
-
-class MPINode;
-class MPINodes;
-
-#ifdef __SIRE_USE_MPI__
-MPI::Comm& COMM_WORLD();
-#endif
 
 namespace detail
 {
-
-class MPINodeData;
-class MPINodesData;
-
-enum { MPIWORKER_START        = 0x0001,
-       MPIWORKER_STOP         = 0x0002,
-       MPIWORKER_ABORT        = 0x0004,
-       MPIWORKER_PROGRESS     = 0x0008,
-       MPIWORKER_INTERIM      = 0x000f,
-       MPIWORKER_RESULT       = 0x0010 };
-
-/** Private class containing the data for the MPINode class */
-class MPINodeData : private QThread
-{
-public:
-    MPINodeData();
-    
-    MPINodeData(const boost::shared_ptr<MPINodesData> &communicator, 
-                int rank, bool is_master);
-    
-    MPINodeData(const MPINodeData &other);
-    
-    ~MPINodeData();
-
-    MPINodeData& operator=(const MPINodeData &other);
-
-    void startBackend();
-    void stopBackend();
-
-    bool isBusy() const;
-    
-    bool wasAborted() const;
-    
-    void wait();
-    bool wait(int time);
-    
-    void lock();
-    void unlock();
-    
-    MPIPromise start(const MPIWorker &worker);
-    void stop();
-    void abort();
-    
-    void getProgress();
-    void getInterimResult();
-
-    void sendMessage(int message);
-
-    boost::weak_ptr<MPINodesData> parent;
-    boost::weak_ptr<MPINodeData> self_ptr;
-    
-    QMutex data_mutex;
-
-    QMutex start_mutex;
-    QWaitCondition start_waiter;
-
-    /** Unique ID for this node */
-    QUuid uid;
-    
-    /** This promise holds the current calculation on this node, or
-        the result of the last calculation */
-    MPIPromise mpipromise;
-    
-    #ifdef __SIRE_USE_MPI__
-    int mpirank;
-    #endif
-
-    bool is_aborted;
-    bool is_master;
-
-protected:
-    void run();
-};
 
 /** Private class used by the MPINodes class */
 class MPINodesData
@@ -182,12 +86,13 @@ public:
     QList< boost::weak_ptr<MPINodeData> > busy_nodes;
 
     #ifdef __SIRE_USE_MPI__
-        /** The MPI communicator used to communicate with 
+        /** The MPI communicator used to send message to 
             the nodes of this group */
-        MPI::Comm *mpicomm;
+        MPI::Intracomm send_mpicomm;
 
-        /** This rank of this master node in the communicator */
-        int my_mpirank;
+        /** The MPI communicator used to receive messages from
+            the nodes of this group */
+        MPI::Intracomm recv_mpicomm;
 
         /** The tag number that is used for all communications
             by nodes using this communicator */

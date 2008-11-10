@@ -38,7 +38,7 @@ namespace SireMPI
 
 namespace detail
 {
-class MPINodesData;
+class MPINodesPvt;
 }
 
 /** This class represents the groups of MPI nodes that are available
@@ -48,12 +48,6 @@ class MPINodesData;
 */
 class SIREMPI_EXPORT MPINodes
 {
-
-friend class MPINode;
-
-friend class detail::MPINodeData;
-friend class detail::MPINodesData;
-
 public:
     MPINodes();
     
@@ -77,15 +71,15 @@ public:
     int nNodes() const;
     int count() const;
     
-    static MPINodes world();
+    bool isMaster() const;
+    
+    static MPINodes COMM_WORLD();
+
+    const void* communicator() const;
 
 private:
-    MPINodes(const boost::shared_ptr<detail::MPINodesData> &data);
-
-    /** Shared pointer to the private implementation of this
-        class - this is used to provide binary compatibility between
-        versions of Sire linked with and without MPI */
-    boost::shared_ptr<detail::MPINodesData> d;
+    /** PIMPL pointer */
+    boost::shared_ptr<detail::MPINodesPvt> d;
 };
 
 }

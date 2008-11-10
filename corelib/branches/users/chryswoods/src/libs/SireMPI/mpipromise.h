@@ -42,11 +42,11 @@ namespace SireMPI
 
 class MPIWorker;
 class MPINode;
+class MPIError;
 
 namespace detail
 {
-class MPINodeData;
-class MPIPromiseData;
+class MPINodePvt;
 }
 
 /** This class provides a handle to a result of a calculation
@@ -61,7 +61,8 @@ class MPIPromiseData;
 class SIREMPI_EXPORT MPIPromise
 {
 
-friend class detail::MPINodeData;
+friend class MPIFrontEnd;
+friend class MPINode;
 
 public:
     MPIPromise();
@@ -149,25 +150,30 @@ public:
 protected:
     MPIPromise(const MPIWorker &worker, const MPINode &node);
 
-    void setProgress(double progress); // called by MPINodeData
+    void setProgress(double progress); // called by MPIFrontEnd
 
-    void setFinalData(const QByteArray &worker_data); // called by MPINodeData
+    void setFinalData(const QByteArray &worker_data); // called by MPIFrontEnd
     void setInterimData(const QByteArray &worker_data, 
-                        double progress); // called by MPINodeData
+                        double progress); // called by MPIFrontEnd
                          
 
     void setStopped(const QByteArray &worker_data, 
-                    double progress); // called by MPINodeData
+                    double progress); // called by MPIFrontEnd
 
-    void setAborted(); // called by MPINodeData
+    void setAborted(); // called by MPIFrontEnd
 
     QByteArray finalData();
     QByteArray interimData();
     QByteArray initialData();
 
 private:
-    /** Explicitly shared pointer to the data of this promise */
-    boost::shared_ptr<detail::MPIPromiseData> d;
+    void _pvt_setFinalData(const QByteArray &worker_data);
+    void _pvt_setInterimData(const QByteArray &worker_data, double progress);
+    void _pvt_setStopped(const QByteArray &worker_data, double progress);
+    void _pvt_setError(const MPIError &error);
+
+    /** PIMPL pointer for this object */
+    boost::shared_ptr<detail::MPIPromisePvt> d;
 };
 
 }

@@ -33,6 +33,8 @@ endif()
 # Define the headers in SireMPI
 set ( SIREMPI_HEADERS
 
+      mpibackends.h
+      mpifrontends.h
       mpinode.h
       mpinodes.h
       mpipromise.h
@@ -47,6 +49,8 @@ set ( SIREMPI_SOURCES
 
       register_sirempi.cpp
 
+      mpibackends.cpp
+      mpifrontends.cpp
       mpinode.cpp
       mpinodes.cpp
       mpipromise.cpp
