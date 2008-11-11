@@ -40,9 +40,13 @@ namespace SireMPI
 
 class MPIWorker;
 class MPINodes;
+class MPIBackendNodes;
 class MPIBackends;
+class MPIFrontEnd;
+class MPIFrontEnds;
 
 MPIBackends getBackends(const MPINodes &nodes);
+MPIBackends getBackends(const MPIBackendNodes &nodes);
 
 namespace detail
 {
@@ -57,6 +61,9 @@ class MPIBackendPvt;
 */
 class SIREMPI_EXPORT MPIBackends
 {
+
+friend class MPIFrontEnds;
+
 public:
     MPIBackends();
     MPIBackends(const MPINodes &nodes);
@@ -70,15 +77,18 @@ public:
     bool operator==(const MPIBackends &other) const;
     bool operator!=(const MPIBackends &other) const;
     
-    static int exec(MPINodes &nodes);
-    static void execBG(MPINodes &nodes);
+    int exec();
+    void execBG();
 
-    MPIFrontEnd start(const MPINode &node);
-    void shutdown();
+protected:
+    MPIFrontEnd start(const MPINode &node); // called by MPIFrontEnds
+    
+    void broadcastMessage(int message, int data); // called by MPIFrontEnds
+    void broadcastMessage(int message, const QByteArray &data); // called by MPIFrontEnds
 
 private:
-    void start(int master, int tag);
-    void stop(int master, int tag);
+    void start(int master, const QByteArray &data);
+    void stop(int master);
     
     void stopAll();
     

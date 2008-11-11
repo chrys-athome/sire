@@ -31,49 +31,159 @@
 #include <mpi.h>                  // CONDITIONAL_INCLUDE
 #endif
 
-#include <boost/weak_ptr.hpp>
-
 #include "mpinodes.h"
 #include "mpinode.h"
 #include "mpipromise.h"
-
-#include "SireBase/incremint.h"
+#include "mpifrontends.h"
 
 #include "SireError/errors.h"
-
-#include "detail/mpidetail.h"   // CONDITIONAL_INCLUDE
 
 #include <QDebug>
 
 using namespace SireMPI;
-using namespace SireMPI::detail;
-
 using namespace SireBase;
 
-Q_GLOBAL_STATIC( QMutex, mpiMutex );
+#ifdef __SIRE_USE_MPI__
 
-////////
-//////// Implementation of MPINodesData
-////////
+//////////////
+//////////////
+// MPI enabled version of these classes
+//////////////
+//////////////
 
-MPINodesData::MPINodesData(int num_nodes) : sem(num_nodes), nnodes(num_nodes)
+namespace SireMPI
 {
-    #ifndef __SIRE_USE_MPI__
-    mpicomm = 0;
-    #endif
+namespace detail
+{
+
+/** Private implementation of MPINodes */
+class MPINodesPvt
+{
+public:
+    MPINodesPvt(int num_nodes=0) : sem(num_nodes), mpicomm(0)
+    {}
+    
+    ~MPINodesPvt()
+    {
+        if (mpicomm)
+        {
+            mpicomm->Free();
+            delete mpicomm;
+        }
+    }
+
+    /** Mutex to protect access to the data of this class */
+    QMutex data_mutex;
+    
+    /** Semaphore used to control access to the nodes */
+    QSemaphore sem;
+    
+    /** Pointer to this object */
+    MPINodesPtr this_ptr;
+
+    /** All of the available MPI nodes in this communicator */
+    QList<MPINode> free_nodes;
+    
+    /** All of the busy nodes in this communicator */
+    QList<MPINodePtr> busy_nodes;
+
+    /** The MPI communicator used to broadcast messages to
+        the nodes of this group */
+    MPI::Comm *mpicomm;
+
+    /** All of the front ends for the nodes */
+    MPIFrontEnds frontends;
+};
+
+} // end of namespace detail
+} // end of namespace SireMPI
+
+////////
+//////// Implementation of MPINodes
+////////
+
+using namespace SireMPI::detail;
+
+Q_GLOBAL_STATIC( QMutex, commWorldMutex );
+
+static shared_ptr<MPINodesPvt> comm_world;
+
+/** Return the nodes that corresponds to MPI::COMM_WORLD */
+MPINodes MPINodes::COMM_WORLD()
+{
+    QMutexLocker lkr( commWorldMutex() );
+    
+    if (comm_world.get() == 0)
+    {
+        //ensure that MPI is initialized
+        if (not MPI::Is_initialized())
+        {
+            int argc=0;
+            MPI::Init(argc, 0);
+        }
+        
+        //now create a clone of MPI::COMM_WORLD that is
+        //used to broadcast information to the nodes
+        MPI::Comm *mpicomm = &(MPI::COMM_WORLD.Clone());
+        
+        int nnodes = mpicomm->Get_count();
+        int my_rank = mpicomm->Get_rank();
+        
+        comm_world.reset( new MPINodesPvt(nnodes) );
+        comm_world->mpicomm = mpicomm;
+        
+        MPINodes nodes(comm_world);
+        
+        //now create all of the nodes
+        for (int i=0; i<nnodes; ++i)
+        {
+            comm_world->free_nodes.append( MPINode(nodes, i, i==my_rank) );
+        }
+        
+        //now get the frontends for these nodes
+        comm_world->frontends = getFrontEnds(nodes);
+    }
+    
+    return MPINodes(comm_world);
 }
 
-#ifdef __SIRE_USE_MPI__
-    //increment used to get new tags - the global tag is 1, so
-    //this starts at 2
-    static Incremint last_mpitag(1);
+////////
+//////// Implementation of MPIBackendNodes
+////////
 
-    static int getUniqueMPITag()
+static shared_ptr<MPIBackendNodesPvt> backend_comm_world;
+
+/** Call this on the backend nodes to get the backend to the MPINodes
+    object that represents the MPI::COMM_WORLD communicator */
+MPIBackendNodes MPIBackendNodes::COMM_WORLD()
+{
+    QMutexLocker lkr( commWorldMutex() );
+    
+    if (backend_comm_world.get() == 0)
     {
-        int mpitag = last_mpitag.increment();
-        return mpitag;
+        if (not MPI::Is_initialized())
+        {
+            int argc=0;
+            MPI::Init(argc,0);
+        }
+
+        //now create a clone of MPI::COMM_WORLD that is
+        //used to broadcast information to the nodes
+        MPI::Comm *mpicomm = &(MPI::COMM_WORLD.Clone());
+        
+        int nnodes = mpicomm->Get_count();
+        backend_comm_world.reset( new MPIBackendNodesPvt(nnodes) );
+        backend_comm_world->mpicomm = mpicomm;
+        
+        MPIBackendNodes nodes(backend_comm_world);
+        
+        //get the backend for this node
+        
     }
-#endif
+    
+    return MPIBackendNodes(backend_comm_world);
+}
+
 
 /** By default we construct the an object that represents
     the global MPI_WORLD */
@@ -465,3 +575,14 @@ int MPINodes::nBusyNodes() const
 {
     return d->nBusyNodes();
 }
+
+#else //ifdef __SIRE_USE_MPI__
+
+//////////////
+//////////////
+// MPI disabled version of these classes
+//////////////
+//////////////
+    #error There is no non-MPI version of MPINodes
+    
+#endif

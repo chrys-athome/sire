@@ -26,10 +26,10 @@
   *
 \*********************************************/
 
-#include <boost/weak_ptr.hpp>
 #include <boost/tuple/tuple.hpp>
 
 #include <QTextStream>
+#include <QUuid>
 
 #include "mpinode.h"
 #include "mpinodes.h"
@@ -49,6 +49,7 @@ using namespace SireMPI;
 using namespace SireStream;
 
 using boost::shared_ptr;
+using boost::weak_ptr;
 using boost::tuple;
 
 namespace SireMPI 

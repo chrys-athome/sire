@@ -55,6 +55,12 @@ static const int STOP_MPI_BACKEND = 2;
 
 #ifdef __SIRE_USE_MPI__
 
+//////////////
+//////////////
+// MPI enabled version of these classes
+//////////////
+//////////////
+
 #ifndef HAVE_LSEEK64
     //////
     ////// add an lseek64 function stub to fill a function
@@ -74,12 +80,6 @@ static const int STOP_MPI_BACKEND = 2;
         }
     }
 #endif // HAVE_LSEEK64å
-
-//////////////
-//////////////
-// MPI enabled version of these classes
-//////////////
-//////////////
 
 namespace SireMPI
 {
@@ -142,9 +142,6 @@ public:
     /** The communicator used to send data back to the master */
     MPI::Intracomm send_comm;
     
-    /** The tag of the channel to use for all communications */
-    int mpitag;
-    
     /** Whether or not to keep looping */
     bool keep_running;
 
@@ -163,6 +160,22 @@ Q_GLOBAL_STATIC( QMutex, registryMutex );
 
 /** Return the backends manager for the collection of nodes in 'nodes' */
 MPIBackends SIREMPI_EXPORT &getBackends(const MPINodes &nodes)
+{
+    QMutex *mutex = registryMutex();
+    
+    QMutexLocker lkr(mutex);
+    
+    if ( not backends_registry.contains(nodes.communicator()) )
+    {
+        backends_registry.insert( nodes.communicator(),
+                                  shared_ptr<MPIBackends>(new MPIBackends(nodes)) );
+    }
+    
+    return *( backends_registry.value(nodes.communicator()) );
+}
+
+/** Return the backends manager for the collection of nodes in 'nodes' */
+MPIBackends SIREMPI_EXPORT &getBackends(const MPIBackendNodes &nodes)
 {
     QMutex *mutex = registryMutex();
     
@@ -221,10 +234,50 @@ bool MPIBackends::operator!=(const MPIBackends &other) const
     return d.get() != other.d.get();
 }
 
+/** Broadcast a message to the nodes in this communicator */
+void MPIBackends::broadcastMessage(int message, int data)
+{
+    QMutexLocker lkr( &(d->message_mutex) );
+    
+    d->message.envelope[0] = message;
+    d->message.envelope[1] = data;
+    d->message.envelope[2] = 0;
+    d->message.data = QByteArray();
+    
+    d->message_waiter.wakeAll();
+}
+
+/** Broadcast a message to the nodes in this communicator */
+void MPIBackends::broadcastMessage(int message, const QByteArray &data)
+{
+    QMutexLocker lkr( &(d->message_mutex) );
+    
+    d->message.envelope[0] = message;
+    d->message.envelope[1] = 0;
+    d->message.envelope[2] = data.count();
+    d->message.data = data;
+    
+    d->message_waiter.wakeAll();
+}
+
+/** Start a front end for the node 'node' */
+MPIFrontEnd MPIBackends::start(const MPINode &node)
+{
+    //start the backend - give it the UID of the node
+    QByteArray data;
+    QDataStream ds(&data, QIODevice::WriteOnly);
+    
+    ds << node.UID();
+    
+    this->broadcastMessage(START_MPI_BACKEND, data);
+
+    return MPIFrontEnd(node, true);
+}
+
 /** Private function that contains an event loop that processes
     all of the events on this node that involves the collection
     of nodes 'nodes' */
-int MPIBackends::_pvt_exec(MPINodes &nodes)
+int MPIBackends::_pvt_exec()
 {
     QMutexLocker lkr( execmutex );
 
@@ -245,16 +298,32 @@ int MPIBackends::_pvt_exec(MPINodes &nodes)
         {
             MPI::Status status;
             int message[3];
+            QByteArray data;
+
+            //ensure that only one message can be broadcast at a time
+            QMutexLocker lkr( &(d->message_mutex) );
             
             if (my_mpirank == master_rank)
             {
                 //wait for the message to be broadcast
-                ... - (copy from thread - need QWaitCondition)
+                d->message_waiter.wait( &(d->message_mutex) );
+                
+                //ok - copy the message to be broadcast
+                for (int i=0; i<3; ++i)
+                    message[i] = d->message.envelope[i];
             }
             
             //wait for instructions that are broadcast to all nodes
             //from node 0
-            d->comm_world.Bcast( message, 3, MPI::INT, master_rank );
+            d->comm_world.Bcast( message, 3, MPI::INT, master_rank, 0 );
+
+            //now get the data that is broadcast to all nodes
+            if (message[2] > 0)
+            {
+                data = QByteArray(message[2] + 1, ' ');
+                d->comm_world.Bcast( data.data(), message[2], MPI::BYTE,
+                                     master_rank, 0 );
+            }
 
             //what is the message?
             switch( message[0] )
@@ -265,7 +334,7 @@ int MPIBackends::_pvt_exec(MPINodes &nodes)
                     if (message[1] == my_mpirank)
                     {
                         //this is a request to start the backend on this node
-                        this->start(master_rank, message[2]);
+                        this->start(master_rank, data);
                     }
                     else
                     {
@@ -280,7 +349,7 @@ int MPIBackends::_pvt_exec(MPINodes &nodes)
                     //stop the specified MPI backend loop
                     if (message[1] == my_mpirank)
                     {
-                        this->stop( master_rank, message[2] );
+                        this->stop(master_rank);
                     }
                     
                     break;
@@ -321,11 +390,9 @@ int MPIBackends::_pvt_exec(MPINodes &nodes)
 
 /** Enter the MPI event processing loop to process the events
     of the nodes in 'nodes' */
-int MPIBackends::exec(MPINodes &nodes)
+int MPIBackends::exec()
 {
-    //get the backends for this collection of nodes
-    MPIBackends &backends = getBackends(nodes);
-    return backends._pvt_exec(nodes);
+    return this->_pvt_exec();
 }
 
 /** This class private class is used to run SireMPI::exec in a background
@@ -337,9 +404,9 @@ public:
     SireMPI_ExecRunner() : QThread()
     {}
     
-    void start(MPINodes &mpinodes)
+    void start(MPIBackends mpibackends)
     {
-        nodes = mpinodes;
+        backends = mpibackends;
         QThread::start();
     }
 
@@ -358,7 +425,7 @@ protected:
     {
         try
         {
-            MPIBackends::exec(nodes);
+            backends.exec();
             return;
         }
         catch(const SireError::exception &e)
@@ -378,69 +445,55 @@ protected:
     }
     
 private:
-    MPINodes nodes;
+    MPIBackends backends;
 };
-
-Q_GLOBAL_STATIC( SireMPI_ExecRunner, execRunner );
 
 /** Enter the MPI event processing loop, but run the loop in 
     a background thread */
-void MPIBackends::execBG(MPINodes &nodes)
+void MPIBackends::execBG()
 {
     //use an object to start and stop the loop
     //(as hopefully the object will be deleted when the library
     // exits, and thus an MPI shutdown will be called)
-    SireMPI_ExecRunner *runner = execRunner();
-    
-    if (runner == 0)
-        //we are in the process of being destroyed
-        return;
-        
-    if (runner->isRunning())
-        return;
-        
-    runner->start(nodes);
-}
+    SireMPI_ExecRunner *runner = new SireMPI_ExecRunner();
+    runner->start(*this);
 
-/** Shutdown all of the backends associated with the nodes 'nodes' */
-void MPIBackends::shutdown(MPINodes &nodes)
-{
-    //get the backends for this collection of nodes
-    MPIBackends &backends = getBackends(nodes);
-    backends.broadcastMessage( SHUTDOWN_MPI );
+    //eventually need to delete runner or we'll have a memory leak...
 }
 
 /** Start a backend that receives instructions from the node with rank 'master'
-    in the MPI communicator, using the channel with tag 'tag' for communication */
-void MPIBackends::start(int master, int tag)
+    in the MPI communicator */
+void MPIBackends::start(int master, const QByteArray &data)
 {
     BOOST_ASSERT( d->comm_world.get() != 0 );
 
     QMutexLocker lkr( &(d->datamutex) );
 
+    //data contains the UID of the node...
+    getuid;
+
     //we shouldn't have this tag already...
-    if ( d->registry.contains( tuple<int,int>(master,tag) ) )
+    if ( d->registry.contains(master) )
         throw SireError::program_bug( QObject::tr(
             "It should not be possible to start two backends with the "
-            "same master (%1) and tag (%2)").arg(master).arg(tag), CODELOC );
+            "same master (%1)").arg(master), CODELOC );
 
     //create a backend (this creates the necessary communicators)
-    shared_ptr<MPIBackend> backend( new MPIBackend(d->comm_world, tag) );
+    shared_ptr<MPIBackend> backend( new MPIBackend(d->comm_world) );
     
     //start the thread
     backend->start();
     
-    registry.insert( tuple<int,int>(master,tag), backend );
+    registry.insert(master, backend);
 }
 
 /** Stop the backend that is performing the work directed by the 
-    node with rank 'master' in the MPI communicator, and which communicates
-    using the channel with tag 'tag' */
-void MPIBackends::stop(int master, int tag)
+    node with rank 'master' in the MPI communicator */
+void MPIBackends::stop(int master)
 {
     QMutexLocker lkr( &(d->datamutex) );
 
-    shared_ptr<MPIBackend> backend = d->registry.take(tuple<int,int>(master_rank,tag) );
+    shared_ptr<MPIBackend> backend = d->registry.take(master_rank);
     
     if (backend.get() != 0)
     {
@@ -458,11 +511,11 @@ void MPIBackends::stopAll()
 {
     QMutexLocker lkr( &(d->datamutex) );
     
-    QList< tuple<int,int> > tags = d->registry.keys();
+    QList<int> masters = d->registry.keys();
     
-    foreach (tuple<int,int> tag, tags)
+    foreach (int master, masters)
     {
-        shared_ptr<MPIBackend> backend = d->registry.take(tag);
+        shared_ptr<MPIBackend> backend = d->registry.take(master);
         backend->keep_running = false;
         
         d->stopped_backends.append(backend);
@@ -481,19 +534,16 @@ void MPIBackends::stopAll()
 ////////
 
 /** Construct a backend to perform the work given to it by a master
-    node (in the communicator 'communicator'), tagging all messages
-    using the tag 'mpitag' */
-MPIBackend::MPIBackend(void *communicator, int mpitag)
+    node (in the communicator 'communicator') */
+MPIBackend::MPIBackend(void *communicator)
            : d(new MPIBackendPvt())
 {
     BOOST_ASSERT( communicator != 0) ;
-
-    d->mpitag = mpitag;
     
     //split the communicator so it just contains this node and the
     //master node - this is rank 1, the master is rank 0
     MPI::Comm *comm_world = static_cast<MPI::Comm*>(communicator);
-    d->recv_mpicom = comm_world->Split(mpitag, 1);
+    d->recv_mpicom = comm_world->Split(1, 1);
     d->send_mpicom = recv_mpicom.Clone();
 }
 
@@ -537,17 +587,17 @@ void MPIBackend::sendResponse(int response, const MPIWorker &worker)
     }
     
     //send the envelope describing the response
-    d->send_mpicom.Send(envelope, 3, MPI::INT, 0, d->mpitag);
+    d->send_mpicom.Send(envelope, 3, MPI::INT, 0, 0);
     
     if (envelope[1] > 0)
     {
         d->send_mpicom.Send(worker_data.constData(), worker_data.size(), 
-                            MPI::BYTE, 0, mpitag);
+                            MPI::BYTE, 0, 0);
     }
     
     if (envelope[2] > 0)
     {
-        d->send_mpicom.Send(&current_progress, 1, MPI::DOUBLE, 0, mpitag);
+        d->send_mpicom.Send(&current_progress, 1, MPI::DOUBLE, 0, 0);
     }
 }
 
@@ -559,11 +609,11 @@ void MPIBackend::runJob(MPIWorker &worker)
         while (not worker.hasFinished())
         {
             //do we have an instruction?
-            if (d->recv_mpicom.Iprobe(0, d->mpitag))
+            if (d->recv_mpicom.Iprobe(0, 0))
             {
                 //yes there is - receive it
                 int instruction;
-                d->recv_mpicom.Recv(&instruction, 1, MPI::INT, 0, d->mpitag);
+                d->recv_mpicom.Recv(&instruction, 1, MPI::INT, 0, 0);
             
                 switch (instruction)
                 {
@@ -633,11 +683,11 @@ void MPIBackendPvt::run()
         do
         {
             //is there a message to receive?
-            if (d->recv_mpicom.Iprobe(0, d->mpitag))
+            if (d->recv_mpicom.Iprobe(0, 0))
             {
                 //yes there is - receive it
                 int envelope[2];
-                d->recv_mpicom.Recv(envelope, 2, MPI::INT, 0, d->mpitag);
+                d->recv_mpicom.Recv(envelope, 2, MPI::INT, 0, 0);
 
                 QByteArray worker_data;
 
@@ -646,7 +696,7 @@ void MPIBackendPvt::run()
                     //there is an accompanying bytearray package
                     worker_data = QByteArray(envelope[1]+1, ' ');
                     d->recv_mpicom.Recv(worker_data.data(), envelope[1], 
-                                        MPI::BYTE, 0, d->mpitag);
+                                        MPI::BYTE, 0, 0);
                 }
 
                 if (envelope[0] != MPIWORKER_START)

@@ -29,7 +29,10 @@
 #ifndef SIREMPI_MPINODES_H
 #define SIREMPI_MPINODES_H
 
-#include "mpinode.h"
+#include "sireglobal.h"
+
+#include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 SIRE_BEGIN_HEADER
 
@@ -41,6 +44,9 @@ namespace detail
 class MPINodesPvt;
 }
 
+class MPINode;
+class MPINodesPtr;
+
 /** This class represents the groups of MPI nodes that are available
     within a single communicator
     
@@ -48,6 +54,9 @@ class MPINodesPvt;
 */
 class SIREMPI_EXPORT MPINodes
 {
+
+friend class MPINodesPtr;
+
 public:
     MPINodes();
     
@@ -78,8 +87,38 @@ public:
     const void* communicator() const;
 
 private:
+    MPINodes(const boost::shared_ptr<detail::MPINodesPvt> &ptr);
+
     /** PIMPL pointer */
     boost::shared_ptr<detail::MPINodesPvt> d;
+};
+
+/** This is a weak pointer to an MPINodes object - this is automatically
+    set to null when the MPINodes object is destroyed
+    
+    @author Christopher Woods
+*/
+class SIREMPI_EXPORT MPINodesPtr
+{
+public:
+    MPINodesPtr();
+    MPINodesPtr(const MPINodes &node);
+    MPINodesPtr(const MPINodesPtr &other);
+    
+    ~MPINodesPtr();
+    
+    MPINodesPtr& operator=(const MPINodesPtr &other);
+    
+    bool operator==(const MPINodesPtr &other) const;
+    bool operator!=(const MPINodesPtr &other) const;
+    
+    MPINodes operator*() const;
+    
+    bool isNull() const;
+
+private:
+    /** Weak pointer to the PIMPL data of MPINode */
+    boost::weak_ptr<detail::MPINodesPvt> d;
 };
 
 }

@@ -29,13 +29,14 @@
 #ifndef SIREMPI_MPINODE_H
 #define SIREMPI_MPINODE_H
 
-#include <QUuid>
-
 #include <boost/shared_ptr.hpp>
+#include <boost/weak_ptr.hpp>
 
 #include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
+
+class QUuid;
 
 namespace SireMPI
 {
@@ -110,7 +111,7 @@ private:
 
 /** This is a weak pointer to the node - this is automatically 
     set to null if the node is destroyed */
-class MPINodePtr
+class SIREMPI_EXPORT MPINodePtr
 {
 public:
     MPINodePtr();

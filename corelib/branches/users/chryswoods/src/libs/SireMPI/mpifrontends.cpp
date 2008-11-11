@@ -220,6 +220,13 @@ MPIFrontEnd::MPIFrontEnd(const MPINode &node, bool)
             : d( new MPIFrontEndPvt() )
 {
     d->node_ptr = node;
+
+    //ok, we now need to create the communicators to talk
+    //to this node
+    MPI::Comm *comm_world = ...;
+
+    d->send_mpicom = comm_world->Split(1, 0);
+    d->recv_mpicom = send_mpicom.Clone();
 }
 
 /** Construct the front end for the passed node */
