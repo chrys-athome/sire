@@ -31,6 +31,8 @@
 #include "replicarunner.h"
 #include "simulation.h"
 
+#include "SireMPI/mpinode.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 

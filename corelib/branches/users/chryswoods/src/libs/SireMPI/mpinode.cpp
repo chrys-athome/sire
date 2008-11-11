@@ -29,12 +29,17 @@
 #include <boost/tuple/tuple.hpp>
 
 #include <QTextStream>
+#include <QThread>
+#include <QMutex>
+#include <QWaitCondition>
 #include <QUuid>
 
 #include "mpinode.h"
 #include "mpinodes.h"
 #include "mpipromise.h"
 #include "mpiworker.h"
+#include "mpifrontends.h"
+#include "mpibackends.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -120,7 +125,7 @@ MPINodePvt::~MPINodePvt()
 
     if (not parent_ptr.isNull())
     {
-        parent->returnNode(uid);
+        (*parent_ptr).returnedNode();
     }
 }
 
@@ -146,6 +151,17 @@ public:
     static void scheduleForDeletion(const MPINode &node);
      
 protected:
+    void writeErrorString(const QString &location,
+                          const SireError::exception &e) const
+    {
+        QTextStream ts(stdout);
+    
+        ts << QObject::tr(" ** FATAL ERROR ON NODE %1 in NodeDeleter **\n"
+                          " ** LOCATION %2 **\n%3\n")
+                    .arg(MPINode::globalRank())
+                    .arg(location, e.toString());
+    }
+
     void run()
     {
         try
@@ -165,26 +181,26 @@ protected:
             }
             
             //ok, we are exiting - clear any final nodes
-            QMutexLocker lkr(&data_mutex);
+            QMutexLocker lkr(&datamutex);
             delete_nodes.clear();
         }
         catch(const SireError::exception &e)
         {
-            SireMPI::writeErrorString(CODELOC, e);
+            writeErrorString(CODELOC, e);
         }
         catch(const std::exception &e)
         {
-            SireMPI::writeErrorString(CODELOC, SireError::std_exception(e));
+            writeErrorString(CODELOC, SireError::std_exception(e));
         }
         catch(...)
         {
-            SireMPI::writeErrorString(CODELOC, 
+            writeErrorString(CODELOC, 
                     SireError::unknown_exception("An unknown error occured!", CODELOC));
         }
     }
     
 private:
-    QMutex data_mutex;
+    QMutex datamutex;
     QList<MPINode> delete_nodes;
     bool keep_running;
 };
@@ -200,7 +216,7 @@ void NodeDeleter::scheduleForDeletion(const MPINode &node)
         //we are being destroyed!
         return;
    
-    QMutexLocker lkr( &(global_deleter->data_mutex) );
+    QMutexLocker lkr( &(global_deleter->datamutex) );
     global_deleter->delete_nodes.append(node);
 }
 
@@ -240,14 +256,14 @@ void MPINodePvt::run()
     MPINode this_node = local_promise.node();
     
     //get a front end for this node
-    MPIFrontEnd frontend = getFrontEnd(this_node);
+    MPIFrontend frontend = getFrontEnd(this_node);
 
     //tell the frontend to perform the work on the backend
     frontend.performWork(local_promise);
 
     {
         QMutexLocker lkr(&datamutex);
-        is_aborted = local_promise.wasAborted();
+        is_aborted = local_promise.isAborted();
     }
 
     //we've now finished - we currently hold a pointer to ourselves,
@@ -263,6 +279,10 @@ void MPINodePvt::run()
 
 /** Null constructor */
 MPINode::MPINode() : d( new MPINodePvt() )
+{}
+
+/** Construct from the passed pointer */
+MPINode::MPINode(const shared_ptr<MPINodePvt> &ptr) : d(ptr)
 {}
 
 /** Construct an MPINode which is part of the passed communicator,
@@ -340,7 +360,13 @@ MPINodes MPINode::communicator() const
 /** Return the rank of this node in its communicator */
 int MPINode::rank() const
 {
-    d->rank;
+    return d->rank;
+}
+
+/** Return the global rank of this node in MPI::COMM_WORLD */
+int MPINode::globalRank()
+{
+    return MPIBackends::globalRank();
 }
 
 /** Return whether this node is the master node for the communicator */
@@ -392,7 +418,7 @@ MPIPromise MPINode::start(const MPIWorker &worker)
     }
 
     //save the worker to be processed
-    mpipromise = MPIPromise(worker, *this);
+    d->mpipromise = MPIPromise(worker, *this);
 
     //reset the aborted status
     d->is_aborted = false;
@@ -404,7 +430,7 @@ MPIPromise MPINode::start(const MPIWorker &worker)
     d->start_waiter.wait( &(d->start_mutex) );
     d->start_mutex.unlock();
     
-    return mpipromise;
+    return d->mpipromise;
 }
 
 /** This tells the node to stop performing any work that it may 
@@ -422,7 +448,7 @@ void MPINode::stop()
     }
 
     //tell the node to stop
-    MPIFrontEnd frontend = getFrontEnd(*this);
+    MPIFrontend frontend = getFrontEnd(*this);
     frontend.stopWork();
 
     //wait for the node to finish
@@ -444,7 +470,7 @@ void MPINode::abort()
     }
 
     //tell the node to stop
-    MPIFrontEnd frontend = getFrontEnd(*this);
+    MPIFrontend frontend = getFrontEnd(*this);
     frontend.abortWork();
 
     //wait for the node to finish
@@ -457,4 +483,65 @@ bool MPINode::wasAborted() const
 {
     QMutexLocker lkr( &(d->datamutex) );
     return d->is_aborted;
+}
+
+//////////
+////////// Implementation of MPINodePtr
+//////////
+
+/** Null constructor */
+MPINodePtr::MPINodePtr()
+{}
+
+/** Construct a pointer to the nodes 'nodes' */
+MPINodePtr::MPINodePtr(const MPINode &nodes) : d(nodes.d)
+{}
+
+/** Copy constructor */
+MPINodePtr::MPINodePtr(const MPINodePtr &other) : d(other.d)
+{}
+
+/** Destructor */
+MPINodePtr::~MPINodePtr()
+{}
+
+/** Copy assignment operator */
+MPINodePtr& MPINodePtr::operator=(const MPINodePtr &other)
+{
+    d = other.d;
+    return *this;
+}
+
+/** Comparison operator */
+bool MPINodePtr::operator==(const MPINodePtr &other) const
+{
+    return d.lock().get() == other.d.lock().get();
+}
+
+/** Comparison operator */
+bool MPINodePtr::operator!=(const MPINodePtr &other) const
+{
+    return d.lock().get() != other.d.lock().get();
+}
+
+/** Dereference this pointer
+
+    \throw SireError::nullptr_error
+*/
+MPINode MPINodePtr::operator*() const
+{
+    boost::shared_ptr<MPINodePvt> ptr = d.lock();
+    
+    if (ptr.get() == 0)
+        throw SireError::nullptr_error( QObject::tr(
+            "Attempting to dereference a null MPINode pointer"),   
+                CODELOC );
+                
+    return MPINode(ptr);
+}
+
+/** Return whether or not the pointer is null */
+bool MPINodePtr::isNull() const
+{
+    return d.expired();
 }

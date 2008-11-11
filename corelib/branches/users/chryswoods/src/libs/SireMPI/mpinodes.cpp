@@ -35,13 +35,22 @@
 #include "mpinode.h"
 #include "mpipromise.h"
 #include "mpifrontends.h"
+#include "mpibackends.h"
 
 #include "SireError/errors.h"
+
+#include <QMutex>
+#include <QSemaphore>
+#include <QUuid>
+#include <QList>
+#include <QSet>
 
 #include <QDebug>
 
 using namespace SireMPI;
-using namespace SireBase;
+
+using boost::shared_ptr;
+using boost::weak_ptr;
 
 #ifdef __SIRE_USE_MPI__
 
@@ -65,10 +74,11 @@ public:
     
     ~MPINodesPvt()
     {
-        if (mpicomm)
+        if (sem.available() > 0)
         {
-            mpicomm->Free();
-            delete mpicomm;
+            sem.acquire( sem.available() );
+            sem.release( sem.available() );
+            mpicomm.Free();
         }
     }
 
@@ -85,14 +95,40 @@ public:
     QList<MPINode> free_nodes;
     
     /** All of the busy nodes in this communicator */
-    QList<MPINodePtr> busy_nodes;
+    QHash<QUuid,MPINodePtr> busy_nodes;
+
+    /** The list of the UIDs of all of the nodes in this communicator */
+    QList<QUuid> node_uids;
 
     /** The MPI communicator used to broadcast messages to
         the nodes of this group */
-    MPI::Comm *mpicomm;
+    MPI::Intracomm mpicomm;
 
-    /** All of the front ends for the nodes */
-    MPIFrontEnds frontends;
+    /** All of the frontends for the nodes */
+    MPIFrontends frontends;
+    
+    /** All of the backends for the nodes */
+    MPIBackends backends;
+};
+
+/** Private implementation of MPIBackendNodes */
+class MPIBackendNodesPvt
+{
+public:
+    MPIBackendNodesPvt()
+    {}
+    
+    ~MPIBackendNodesPvt()
+    {
+        mpicomm.Free();
+    }
+
+    /** The MPI communicator used to broadcast messages to
+        the nodes of this group */
+    MPI::Intracomm mpicomm;
+
+    /** All of the backends for the nodes */
+    MPIBackends backends;
 };
 
 } // end of namespace detail
@@ -119,15 +155,16 @@ MPINodes MPINodes::COMM_WORLD()
         if (not MPI::Is_initialized())
         {
             int argc=0;
-            MPI::Init(argc, 0);
+            char **argv=0;
+            MPI::Init(argc, argv);
         }
         
         //now create a clone of MPI::COMM_WORLD that is
         //used to broadcast information to the nodes
-        MPI::Comm *mpicomm = &(MPI::COMM_WORLD.Clone());
+        MPI::Intracomm mpicomm = MPI::COMM_WORLD.Clone();
         
-        int nnodes = mpicomm->Get_count();
-        int my_rank = mpicomm->Get_rank();
+        int nnodes = mpicomm.Get_size();
+        int my_rank = mpicomm.Get_rank();
         
         comm_world.reset( new MPINodesPvt(nnodes) );
         comm_world->mpicomm = mpicomm;
@@ -137,354 +174,40 @@ MPINodes MPINodes::COMM_WORLD()
         //now create all of the nodes
         for (int i=0; i<nnodes; ++i)
         {
-            comm_world->free_nodes.append( MPINode(nodes, i, i==my_rank) );
+            comm_world->node_uids.append( QUuid::createUuid() );
+
+            MPINode node(nodes, i, i==my_rank);
+        
+            comm_world->free_nodes.append(node);
         }
         
         //now get the frontends for these nodes
         comm_world->frontends = getFrontEnds(nodes);
+        
+        //and the backends
+        comm_world->backends = getBackends(nodes);
     }
     
     return MPINodes(comm_world);
 }
 
-////////
-//////// Implementation of MPIBackendNodes
-////////
-
-static shared_ptr<MPIBackendNodesPvt> backend_comm_world;
-
-/** Call this on the backend nodes to get the backend to the MPINodes
-    object that represents the MPI::COMM_WORLD communicator */
-MPIBackendNodes MPIBackendNodes::COMM_WORLD()
-{
-    QMutexLocker lkr( commWorldMutex() );
-    
-    if (backend_comm_world.get() == 0)
-    {
-        if (not MPI::Is_initialized())
-        {
-            int argc=0;
-            MPI::Init(argc,0);
-        }
-
-        //now create a clone of MPI::COMM_WORLD that is
-        //used to broadcast information to the nodes
-        MPI::Comm *mpicomm = &(MPI::COMM_WORLD.Clone());
-        
-        int nnodes = mpicomm->Get_count();
-        backend_comm_world.reset( new MPIBackendNodesPvt(nnodes) );
-        backend_comm_world->mpicomm = mpicomm;
-        
-        MPIBackendNodes nodes(backend_comm_world);
-        
-        //get the backend for this node
-        
-    }
-    
-    return MPIBackendNodes(backend_comm_world);
-}
-
-
-/** By default we construct the an object that represents
-    the global MPI_WORLD */
-boost::shared_ptr<MPINodesData> MPINodesData::construct()
-{
-    boost::shared_ptr<MPINodesData> d( new MPINodesData(1) );
-    
-    d->this_ptr = d;
-    
-    #ifdef __SIRE_USE_MPI__
-    
-    //protect access to MPI functions
-    {
-        QMutex *mpi_mutex = mpiMutex();
-        
-        if (mpi_mutex == 0)
-            //we are being destroyed
-            return boost::shared_ptr<MPINodesData>();
-    
-        QMutexLocker lkr(mpi_mutex);
-    
-        if (not SireMPI::exec_running())
-        {
-            //SireMPI::exec() has not been called in this process. This suggests
-            //that we are not part of an explicit MPI executable.
-            //We need to call it ourselves and set it running in a background thread
-            int argc = 0;
-            SireMPI::bg_exec(argc, 0);
-        }
-        
-        d.reset( new MPINodesData( SireMPI::COMM_WORLD().Get_size() ) );
-        d->this_ptr = d;
-        
-        //this is the global communicator
-        d->mpicomm = &(SireMPI::COMM_WORLD());
-        
-        //how many MPI nodes are there?
-        d->nnodes = d->mpicomm->Get_size();
-        
-        //what is our rank?
-        d->my_mpirank = d->mpicomm->Get_rank();
-        
-        //get a unique mpi tag for all communications between nodes
-        d->mpitag = getUniqueMPITag();
-        
-        //now create MPINode objects to represent each node
-        for (int i=0; i<d->nnodes; ++i)
-        {
-            d->free_nodes.append( MPINode(d, i, i == d->my_mpirank) );
-        }
-    }
-    
-    #else
-    d->free_nodes.append( MPINode(d, 0, true) );
-    
-    #endif
-
-    return d;
-}
-
-/** Wait until all of the nodes are free */
-void MPINodesData::waitUntilAllFree()
-{
-    sem.tryAcquire(nnodes);
-}
-
-/** Wait until all of the nodes are free, or until 'timeout'
-    milliseconds have passed - returns whether or not all
-    nodes are free */
-bool MPINodesData::waitUntilAllFree(int timeout)
-{
-    return sem.tryAcquire(nnodes, timeout);
-}
-
-/** Destructor - wait until all of the nodes in this communicator
-    are free */
-MPINodesData::~MPINodesData()
-{}
-
-/** Return the MPI communicator */
-#ifdef __SIRE_USE_MPI__
-    MPI::Comm* MPINodesData::mpiCommunicator()
-    {
-        QMutexLocker lkr(&data_mutex);
-        return mpicomm;
-    }
-
-    int MPINodesData::mpiTag()
-    {
-        QMutexLocker lkr(&data_mutex);
-        return mpitag;
-    }
-#endif
-
-/** Return the number of nodes in this communicator */
-int MPINodesData::count() const
-{
-    QMutexLocker lkr( &(const_cast<MPINodesData*>(this)->data_mutex) );
-    return nnodes;
-}
-
-/** Return the number of free nodes */
-int MPINodesData::nFreeNodes() const
-{
-    QMutexLocker lkr( &(const_cast<MPINodesData*>(this)->data_mutex) );
-    return free_nodes.count();
-}
-
-/** Return the number of busy nodes */
-int MPINodesData::nBusyNodes() const
-{
-    QMutexLocker lkr( &(const_cast<MPINodesData*>(this)->data_mutex) );
-    return busy_nodes.count();
-}
-
-/** This code is called by the MPINodeData constructor to show that
-    a node has been returned to the available nodes pool */
-void MPINodesData::returnNode(const MPINode &node)
-{
-    QMutexLocker lkr(&data_mutex);
-    
-    //loop over the busy nodes and remove the one that matches this node
-    QMutableListIterator< boost::weak_ptr<MPINodeData> > it(busy_nodes);
-    
-    while (it.hasNext())
-    {
-        boost::shared_ptr<MPINodeData> my_node = it.next().lock();
-        
-        if (my_node.get() == 0)
-        {
-            it.remove();
-            sem.release();
-            
-            continue;
-        }
-        
-        if (my_node->uid == node.UID())
-        {
-            #ifdef __SIRE_USE_MPI__
-                BOOST_ASSERT( my_node->mpirank == node.rank() );
-            #endif
-                
-            it.remove();
-            sem.release();
-        }
-    }
-    
-    //add this node to the list of free nodes
-    free_nodes.append(node);
-    
-    BOOST_ASSERT( free_nodes.count() + busy_nodes.count() == nnodes );
-}
-
-MPINode MPINodesData::_pvt_getNode()
-{
-    MPINode free_node = free_nodes.takeLast();
-    busy_nodes.append( free_node.d );
-    
-    return free_node;
-}
-
-/** Return one free node. This blocks until a node is available */
-MPINode MPINodesData::getFreeNode()
-{
-    if (nnodes <= 0)
-        throw SireError::program_bug( QObject::tr(
-            "It should not be possible to create an empty set of MPINodes!!!"),
-                CODELOC );
-
-    sem.acquire(1);
-    
-    QMutexLocker lkr(&data_mutex);
-    return this->_pvt_getNode();
-}
-
-/** Return one free node. This blocks until a node is available, or
-    until 'time' milliseconds have passed */
-MPINode MPINodesData::getFreeNode(int time)
-{
-    if (nnodes <= 0)
-        throw SireError::program_bug( QObject::tr(
-            "It should not be possible to create an empty set of MPINodes!!!"),
-                CODELOC );
-
-    if (sem.tryAcquire(1, time))
-    {
-        QMutexLocker lkr(&data_mutex);
-        return this->_pvt_getNode();
-    }
-    else
-        return MPINode();
-}
-
-/** Return 'count' free nodes */
-QList<MPINode> MPINodesData::getNFreeNodes(int count)
-{
-    if (nnodes < count)
-        throw SireError::unavailable_resource( QObject::tr(
-            "You've requested %d nodes, but there are only %d available...")
-                .arg(count).arg(nnodes), CODELOC );
-
-    sem.acquire(count);
-    
-    QList<MPINode> free_nodes;
-    QMutexLocker lkr(&data_mutex);
-    
-    for (int i=0; i<count; ++i)
-    {
-        free_nodes.append( this->_pvt_getNode() );
-    }
-    
-    return free_nodes;
-}
-
-QList<MPINode> MPINodesData::getNFreeNodes(int count, int time)
-{
-    if (nnodes < count)
-        throw SireError::unavailable_resource( QObject::tr(
-            "You've requested %d nodes, but there are only %d available...")
-                .arg(count).arg(nnodes), CODELOC );
-
-    QList<MPINode> free_nodes;
-
-    if (sem.tryAcquire(count, time))
-    {
-        QMutexLocker lkr(&data_mutex);
-
-        for (int i=0; i<count; ++i)
-        {
-            free_nodes.append( this->_pvt_getNode() );
-        }
-    }
-
-    return free_nodes;
-}
-
-/////////
-///////// Implementation of MPINodes
-/////////
-
-static boost::shared_ptr<detail::MPINodesData> mpi_comm_world;
-
-Q_GLOBAL_STATIC( QMutex, worldMutex );
-
-/** Return the group of nodes that represent MPI_COMM_WORLD - i.e.
-    all of the MPI nodes available to this instance
-    (ignoring spawned or remote node groups) */
-MPINodes MPINodes::world()
-{
-    QMutex *world_mutex = worldMutex();
-    
-    if (world_mutex == 0)
-        //we are being destroyed
-        return MPINodes( boost::shared_ptr<detail::MPINodesData>() );
-
-    QMutexLocker lkr(world_mutex);
-    
-    if (mpi_comm_world.get() == 0)
-    {
-        mpi_comm_world = MPINodesData::construct(); 
-    }
-    
-    return mpi_comm_world;
-}
-
-/** Null constructor - this the equivalent of MPI_COMM_WORLD */
+/** Constructor - this is equal to MPINodes::COMM_WORLD() */
 MPINodes::MPINodes()
 {
-    this->operator=( MPINodes::world() );
+    this->operator=( MPINodes::COMM_WORLD() );
 }
 
-/** Private constructor used by static construction functions */
-MPINodes::MPINodes(const boost::shared_ptr<MPINodesData> &data)
-         : d(data)
+/** Construct from the passed pointer */
+MPINodes::MPINodes(const shared_ptr<MPINodesPvt> &ptr) : d(ptr)
 {}
 
 /** Copy constructor */
-MPINodes::MPINodes(const MPINodes &other)
-         : d(other.d)
+MPINodes::MPINodes(const MPINodes &other) : d(other.d)
 {}
 
 /** Destructor */
 MPINodes::~MPINodes()
-{
-    if (d.unique())
-    {
-        //we are about to completely delete this communicator. We need to
-        //let all of the nodes know this!
-        d->waitUntilAllFree();
-    
-        //remove the parent from the nodes, or they will all go
-        //silly when they use their destructors!
-        for (QList<MPINode>::iterator it = d->free_nodes.begin();
-             it != d->free_nodes.end();
-             ++it)
-        {
-            it->d->stopBackend();
-            it->d->parent.reset();
-        }
-    }
-}
+{}
 
 /** Copy assignment operator */
 MPINodes& MPINodes::operator=(const MPINodes &other)
@@ -505,6 +228,111 @@ bool MPINodes::operator!=(const MPINodes &other) const
     return d.get() != other.d.get();
 }
 
+/** Wait until all of the nodes are free */
+void MPINodes::waitUntilAllFree()
+{
+    d->sem.acquire( d->sem.available() );
+    d->sem.release( d->sem.available() );
+}
+
+/** Wait until all of the nodes are free, or until 'timeout'
+    milliseconds have passed - returns whether or not all
+    nodes are free */
+bool MPINodes::waitUntilAllFree(int timeout)
+{
+    if (d->sem.tryAcquire(d->sem.available(), timeout))
+    {
+        d->sem.release( d->sem.available() );
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Return a pointer to the MPI communicator for these nodes.
+    This is a MPI::Intracomm object, but is returned as a void
+    so that the non-MPI version doesn't break binary compatibility.
+    The non-MPI version returns a null pointer. */
+const void* MPINodes::communicator() const
+{
+    QMutexLocker lkr( &(d->data_mutex) );
+    return &(d->mpicomm);
+}
+
+/** Return the number of nodes in this communicator */
+int MPINodes::count() const
+{
+    QMutexLocker lkr( &(const_cast<MPINodes*>(this)->d->data_mutex) );
+    return d->sem.available();
+}
+
+/** Return the number of free nodes */
+int MPINodes::nFreeNodes() const
+{
+    QMutexLocker lkr( &(const_cast<MPINodes*>(this)->d->data_mutex) );
+    return d->free_nodes.count();
+}
+
+/** Return the number of busy nodes */
+int MPINodes::nBusyNodes() const
+{
+    QMutexLocker lkr( &(const_cast<MPINodes*>(this)->d->data_mutex) );
+    return d->busy_nodes.count();
+}
+
+/** Return the UID of the ith node 
+
+    \throw SireError::invalid_index
+*/
+const QUuid& MPINodes::getUID(int rank) const
+{
+    QMutexLocker lkr( &(const_cast<MPINodes*>(this)->d->data_mutex) );
+    
+    if (rank < 0 or rank >= d->node_uids.count())
+        throw SireError::invalid_index( QObject::tr(
+            "There is no node with rank %1 in this communicator.")
+                .arg(rank), CODELOC );
+                
+    return d->node_uids.at(rank);
+}
+
+/** This indicates that a node has been returned to the pool of available nodes */
+void MPINodes::returnedNode()
+{
+    QMutexLocker lkr( &(d->data_mutex) );
+    
+    //loop over the busy nodes and remove the ones that have finished
+    QMutableHashIterator<QUuid,MPINodePtr> it(d->busy_nodes);
+
+    int my_rank = d->mpicomm.Get_rank();
+    
+    while (it.hasNext())
+    {
+        it.next();
+        
+        if (it.value().isNull())
+        {
+            //the job has finished
+            int rank = d->node_uids.indexOf(it.key());
+            d->free_nodes.append( MPINode(*this, rank, rank == my_rank) );
+            
+            it.remove();
+            d->sem.release();
+        }
+    }
+    
+    BOOST_ASSERT( d->free_nodes.count() + d->busy_nodes.count() 
+                                    == d->sem.available() );
+}
+
+MPINode MPINodes::_pvt_getNode()
+{
+    MPINode node = d->free_nodes.takeFirst();
+    d->busy_nodes.insert( node.UID(), node );
+    
+    return node;
+}
+
 /** Return a node that is not busy. The node will be marked as busy
     until you return it. This function will block until a free
     node is available 
@@ -513,18 +341,15 @@ bool MPINodes::operator!=(const MPINodes &other) const
 */
 MPINode MPINodes::getFreeNode()
 {
-    return d->getFreeNode();
-}
+    if (this->count() <= 0)
+        throw SireError::program_bug( QObject::tr(
+            "It should not be possible to create an empty set of MPINodes!!!"),
+                CODELOC );
 
-/** Return a list of N free nodes. This will block until all N nodes
-    are available, and will return all of the nodes at once, marking
-    each one as busy
+    d->sem.acquire(1);
     
-    \throw SireError::unavailable_resource
-*/
-QList<MPINode> MPINodes::getNFreeNodes(int count)
-{
-    return d->getNFreeNodes(count);
+    QMutexLocker lkr( &(d->data_mutex) );
+    return this->_pvt_getNode();
 }
 
 /** Return a node that is not busy. The node will be marked as busy
@@ -536,7 +361,44 @@ QList<MPINode> MPINodes::getNFreeNodes(int count)
 */
 MPINode MPINodes::getFreeNode(int time)
 {
-    return d->getFreeNode();
+    if (this->count() <= 0)
+        throw SireError::program_bug( QObject::tr(
+            "It should not be possible to create an empty set of MPINodes!!!"),
+                CODELOC );
+
+    if (d->sem.tryAcquire(1, time))
+    {
+        QMutexLocker lkr( &(d->data_mutex) );
+        return this->_pvt_getNode();
+    }
+    else
+        return MPINode();
+}
+
+/** Return a list of N free nodes. This will block until all N nodes
+    are available, and will return all of the nodes at once, marking
+    each one as busy
+    
+    \throw SireError::unavailable_resource
+*/
+QList<MPINode> MPINodes::getNFreeNodes(int count)
+{
+    if (this->count() < count)
+        throw SireError::unavailable_resource( QObject::tr(
+            "You've requested %d nodes, but there are only %d available...")
+                .arg(count).arg(this->count()), CODELOC );
+
+    d->sem.acquire(count);
+    
+    QList<MPINode> free_nodes;
+    QMutexLocker lkr( &(d->data_mutex) );
+    
+    for (int i=0; i<count; ++i)
+    {
+        free_nodes.append( this->_pvt_getNode() );
+    }
+    
+    return free_nodes;
 }
 
 /** Return a list of N free nodes. This will block until all N nodes
@@ -549,31 +411,127 @@ MPINode MPINodes::getFreeNode(int time)
 */
 QList<MPINode> MPINodes::getNFreeNodes(int count, int time)
 {
-    return d->getNFreeNodes(count);
+    if (this->count() < count)
+        throw SireError::unavailable_resource( QObject::tr(
+            "You've requested %d nodes, but there are only %d available...")
+                .arg(count).arg(this->count()), CODELOC );
+
+    QList<MPINode> free_nodes;
+
+    if (d->sem.tryAcquire(count, time))
+    {
+        QMutexLocker lkr( &(d->data_mutex) );
+
+        for (int i=0; i<count; ++i)
+        {
+            free_nodes.append( this->_pvt_getNode() );
+        }
+    }
+
+    return free_nodes;
 }
 
 /** Return the total number of nodes in this group */
 int MPINodes::nNodes() const
 {
-    return d->count();
+    return this->count();
 }
 
-/** Return the total number of nodes in this group */
-int MPINodes::count() const
+////////
+//////// Implementation of MPIBackendNodes
+////////
+
+static shared_ptr<MPIBackendNodesPvt> backend_comm_world;
+
+/** Call this on the backend nodes to get the backend to the MPINodes
+    object that represents the MPI::COMM_WORLD communicator */
+MPIBackendNodes MPIBackendNodes::COMM_WORLD()
 {
-    return d->count();
+    QMutexLocker lkr( commWorldMutex() );
+    
+    if (backend_comm_world.get() == 0)
+    {
+        if (not MPI::Is_initialized())
+        {
+            int argc=0;
+            char **argv=0;
+            MPI::Init(argc,argv);
+        }
+
+        //now create a clone of MPI::COMM_WORLD that is
+        //used to broadcast information to the nodes
+        MPI::Intracomm mpicomm = MPI::COMM_WORLD.Clone();
+        
+        backend_comm_world.reset( new MPIBackendNodesPvt() );
+        backend_comm_world->mpicomm = mpicomm;
+        
+        MPIBackendNodes nodes(backend_comm_world);
+        
+        //get the backend for this node
+        backend_comm_world->backends = getBackends(nodes);
+    }
+    
+    return MPIBackendNodes(backend_comm_world);
 }
 
-/** Return the current number of free nodes */
-int MPINodes::nFreeNodes() const
+/** Constructor - this constructs the backend nodes for MPI::COMM_WORLD */
+MPIBackendNodes::MPIBackendNodes()
 {
-    return d->nFreeNodes();
+    this->operator=( MPIBackendNodes::COMM_WORLD() );
 }
 
-/** Return the current number of busy nodes */
-int MPINodes::nBusyNodes() const
+/** Construct from the passed pointer */
+MPIBackendNodes::MPIBackendNodes(const shared_ptr<detail::MPIBackendNodesPvt> &ptr)
+                : d(ptr)
+{}
+
+/** Copy constructor */
+MPIBackendNodes::MPIBackendNodes(const MPIBackendNodes &other)
+                : d(other.d)
+{}
+
+/** Destructor */
+MPIBackendNodes::~MPIBackendNodes()
+{}
+
+/** Copy assignment operator */
+MPIBackendNodes& MPIBackendNodes::operator=(const MPIBackendNodes &other)
 {
-    return d->nBusyNodes();
+    d = other.d;
+    return *this;
+}
+
+/** Comparison operator */
+bool MPIBackendNodes::operator==(const MPIBackendNodes &other) const
+{
+    return d.get() == other.d.get();
+}
+
+/** Comparison operator */
+bool MPIBackendNodes::operator!=(const MPIBackendNodes &other) const
+{
+    return d.get() != other.d.get();
+}
+
+/** Return the number of nodes in the communicator */
+int MPIBackendNodes::nNodes() const
+{
+    return d->mpicomm.Get_size();
+}
+
+/** Return the number of nodes in the communicator */
+int MPIBackendNodes::count() const
+{
+    return this->nNodes();
+}
+
+/** Return a pointer to the MPI communicator for these nodes.
+    This is a MPI::Intracomm object, but is returned as a void
+    so that the non-MPI version doesn't break binary compatibility.
+    The non-MPI version returns a null pointer. */
+const void* MPIBackendNodes::communicator() const
+{
+    return &(d->mpicomm);
 }
 
 #else //ifdef __SIRE_USE_MPI__
@@ -585,4 +543,126 @@ int MPINodes::nBusyNodes() const
 //////////////
     #error There is no non-MPI version of MPINodes
     
-#endif
+#endif // ifdef __SIRE_USE_MPI__
+
+////////////
+//////////// Implementation of MPINodesPtr
+////////////
+
+/** Null constructor */
+MPINodesPtr::MPINodesPtr()
+{}
+
+/** Construct a pointer to the nodes 'nodes' */
+MPINodesPtr::MPINodesPtr(const MPINodes &nodes) : d(nodes.d)
+{}
+
+/** Copy constructor */
+MPINodesPtr::MPINodesPtr(const MPINodesPtr &other) : d(other.d)
+{}
+
+/** Destructor */
+MPINodesPtr::~MPINodesPtr()
+{}
+
+/** Copy assignment operator */
+MPINodesPtr& MPINodesPtr::operator=(const MPINodesPtr &other)
+{
+    d = other.d;
+    return *this;
+}
+
+/** Comparison operator */
+bool MPINodesPtr::operator==(const MPINodesPtr &other) const
+{
+    return d.lock().get() == other.d.lock().get();
+}
+
+/** Comparison operator */
+bool MPINodesPtr::operator!=(const MPINodesPtr &other) const
+{
+    return d.lock().get() != other.d.lock().get();
+}
+
+/** Dereference this pointer
+
+    \throw SireError::nullptr_error
+*/
+MPINodes MPINodesPtr::operator*() const
+{
+    boost::shared_ptr<MPINodesPvt> ptr = d.lock();
+    
+    if (ptr.get() == 0)
+        throw SireError::nullptr_error( QObject::tr(
+            "Attempting to dereference a null MPINodes pointer"),   
+                CODELOC );
+                
+    return MPINodes(ptr);
+}
+
+/** Return whether or not the pointer is null */
+bool MPINodesPtr::isNull() const
+{
+    return d.expired();
+}
+
+////////////
+//////////// Implementation of MPIBackendNodesPtr
+////////////
+
+/** Null constructor */
+MPIBackendNodesPtr::MPIBackendNodesPtr()
+{}
+
+/** Construct a pointer to the nodes 'nodes' */
+MPIBackendNodesPtr::MPIBackendNodesPtr(const MPIBackendNodes &nodes) : d(nodes.d)
+{}
+
+/** Copy constructor */
+MPIBackendNodesPtr::MPIBackendNodesPtr(const MPIBackendNodesPtr &other) : d(other.d)
+{}
+
+/** Destructor */
+MPIBackendNodesPtr::~MPIBackendNodesPtr()
+{}
+
+/** Copy assignment operator */
+MPIBackendNodesPtr& MPIBackendNodesPtr::operator=(const MPIBackendNodesPtr &other)
+{
+    d = other.d;
+    return *this;
+}
+
+/** Comparison operator */
+bool MPIBackendNodesPtr::operator==(const MPIBackendNodesPtr &other) const
+{
+    return d.lock().get() == other.d.lock().get();
+}
+
+/** Comparison operator */
+bool MPIBackendNodesPtr::operator!=(const MPIBackendNodesPtr &other) const
+{
+    return d.lock().get() != other.d.lock().get();
+}
+
+/** Dereference this pointer
+
+    \throw SireError::nullptr_error
+*/
+MPIBackendNodes MPIBackendNodesPtr::operator*() const
+{
+    boost::shared_ptr<MPIBackendNodesPvt> ptr = d.lock();
+    
+    if (ptr.get() == 0)
+        throw SireError::nullptr_error( QObject::tr(
+            "Attempting to dereference a null MPIBackendNodes pointer"),   
+                CODELOC );
+                
+    return MPIBackendNodes(ptr);
+}
+
+/** Return whether or not the pointer is null */
+bool MPIBackendNodesPtr::isNull() const
+{
+    return d.expired();
+}

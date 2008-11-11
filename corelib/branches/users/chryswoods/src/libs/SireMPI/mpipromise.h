@@ -29,8 +29,6 @@
 #ifndef SIREMPI_MPIPROMISE_H
 #define SIREMPI_MPIPROMISE_H
 
-#include "mpinode.h"
-
 #include "SireStream/streamdata.hpp"
 
 #include <boost/shared_ptr.hpp>
@@ -47,6 +45,7 @@ class MPIError;
 namespace detail
 {
 class MPINodePvt;
+class MPIPromisePvt;
 }
 
 /** This class provides a handle to a result of a calculation
@@ -61,8 +60,10 @@ class MPINodePvt;
 class SIREMPI_EXPORT MPIPromise
 {
 
-friend class MPIFrontEnd;
+friend class MPIFrontend;
+
 friend class MPINode;
+friend class detail::MPINodePvt;
 
 public:
     MPIPromise();
@@ -150,17 +151,17 @@ public:
 protected:
     MPIPromise(const MPIWorker &worker, const MPINode &node);
 
-    void setProgress(double progress); // called by MPIFrontEnd
+    void setProgress(double progress); // called by MPIFrontend
 
-    void setFinalData(const QByteArray &worker_data); // called by MPIFrontEnd
+    void setFinalData(const QByteArray &worker_data); // called by MPIFrontend
     void setInterimData(const QByteArray &worker_data, 
-                        double progress); // called by MPIFrontEnd
+                        double progress); // called by MPIFrontend
                          
 
     void setStopped(const QByteArray &worker_data, 
-                    double progress); // called by MPIFrontEnd
+                    double progress); // called by MPIFrontend
 
-    void setAborted(); // called by MPIFrontEnd
+    void setAborted(); // called by MPIFrontend
 
     QByteArray finalData();
     QByteArray interimData();

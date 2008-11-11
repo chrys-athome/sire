@@ -26,8 +26,12 @@
   *
 \*********************************************/
 
+#include <QWaitCondition>
+
 #include "mpipromise.h"
 #include "mpiworker.h"
+#include "mpinode.h"
+#include "mpifrontends.h"
 
 #include "SireError/errors.h"
 
@@ -164,11 +168,11 @@ QByteArray MPIPromise::initialData()
 
     QMutexLocker lkr( &(d->datamutex) );
     
-    if (initial_worker_data.isEmpty())
+    if (d->initial_worker_data.isEmpty())
         throw SireError::invalid_state( QObject::tr(
             "This is a null MPIPromise, with no associated work!"), CODELOC );
         
-    return initial_worker_data;
+    return d->initial_worker_data;
 }
 
 /** Return whether or not we are in an error state */
@@ -258,7 +262,7 @@ void MPIPromise::wait()
 bool MPIPromise::wait(int ms)
 {
     if (this->isNull())
-        return;
+        return true;
 
     QMutexLocker lkr( &(d->datamutex) );
     
@@ -302,9 +306,8 @@ QByteArray MPIPromise::interimData()
                 "promise is not running on any nodes!"), CODELOC );
            
         //tell the node to give us an interim result
-        MPINode node = *(d->node);
-        node.getInterimResult();
-        
+        getFrontEnd( *(d->node) ).requestInterimResult();
+                        
         //wait for the result
         d->interim_waiter.wait( &(d->datamutex) );
     }
@@ -373,13 +376,12 @@ double MPIPromise::progress()
     else
     {
         //tell the node to get the progress
-        MPINode node = *(d->node);
-        node.getProgress();
+        getFrontEnd( *(d->node) ).requestProgress();
         
         //wait until the progress has been obtained
-        progress_waiter.wait( &datamutex );
+        d->progress_waiter.wait( &(d->datamutex) );
         
-        return current_progress;
+        return d->current_progress;
     }
 }
 
@@ -461,7 +463,7 @@ void MPIPromise::_pvt_setStopped(const QByteArray &worker_data, double progress)
 
     QMutexLocker lkr( &(d->datamutex) );
 
-    node = MPINodePtr();
+    d->node = MPINodePtr();
     
     d->current_progress = progress;
     d->error_data = QByteArray();
@@ -503,65 +505,6 @@ void MPIPromise::setAborted()
     d->interim_waiter.wakeAll();
     
     d->result_waiter.wakeAll();
-}
-
-/** Return the node on which this job is running - this will be a null
-    node if this job isn't running */
-MPINode MPIPromise::node()
-{
-    if (this->isNull())
-        return MPINode();
-    
-    else
-        return *(d->node);
-}
-
-/** Return whether or not the job is still running */
-bool MPIPromise::isRunning()
-{
-    if (not this->isNull())
-        return not d->node.isNull();
-
-    else
-        return false;
-}
-
-/** Return whether or not we are in an error state */
-bool MPIPromise::isError()
-{
-    if (not this->isNull())
-        return not d->error_data.isEmpty();
-
-    else
-        return false;
-}
-
-/** Return whether or not this work has been stopped */
-bool MPIPromise::isStopped()
-{
-    return not this->isRunning();
-}
-
-/** Return whether or not this work has been aborted
-    (stopped and reset to input) */
-bool MPIPromise::isAborted()
-{
-    if (not this->isNull())
-        return d->current_progress == 0 and d->node.isNull();
-
-    else
-        return false;
-}
-
-/** Return the progress of the calculation. This blocks until it 
-    receives a progress report from the calculation */
-double MPIPromise::progress()
-{
-    if (not this->isNull())
-        return d->current_progress;
-
-    else
-        return 0;
 }
 
 /** This private function is called by the node to set the final result */

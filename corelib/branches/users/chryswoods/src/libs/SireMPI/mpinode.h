@@ -96,6 +96,8 @@ public:
 
     MPINodes communicator() const;
     int rank() const;
+    
+    static int globalRank();
 
     MPIPromise start(const MPIWorker &worker);
     void stop();
@@ -103,6 +105,7 @@ public:
 
 protected:
     MPINode(const MPINodes &communicator, int rank, bool is_master);
+    MPINode(const boost::shared_ptr<detail::MPINodePvt> &ptr);
 
 private:
     /** PIMPL pointer */

@@ -26,8 +26,20 @@
   *
 \*********************************************/
 
+#ifdef __SIRE_USE_MPI__
+//mpich requires that mpi.h is included first
+#include <mpi.h>                  // CONDITIONAL_INCLUDE
+#endif
+
+#include <QMutex>
+#include <QUuid>
+#include <QHash>
+
 #include "mpifrontends.h"
+#include "mpibackends.h"
 #include "mpinodes.h"
+#include "mpinode.h"
+#include "mpipromise.h"
 
 #include "SireError/errors.h"
 
@@ -37,24 +49,27 @@ using boost::shared_ptr;
 
 Q_GLOBAL_STATIC( QMutex, registryMutex );
 
-static QHash<void*, MPIFrontEnds*> frontends_registry;
+static QHash<const void*, MPIFrontends*> frontends_registry;
+
+namespace SireMPI
+{
 
 /** Return the frontends for the passed MPI nodes */
-MPIFrontEnds SIREMPI_EXPORT getFrontEnds(const MPINodes &nodes)
+MPIFrontends SIREMPI_EXPORT getFrontEnds(const MPINodes &nodes)
 {
     QMutexLocker lkr( registryMutex() );
     
     if (not frontends_registry.contains(nodes.communicator()))
     {
         frontends_registry.insert( nodes.communicator(),
-                                   new MPIFrontEnds(nodes,true) );
+                                   new MPIFrontends(nodes,true) );
     }
     
     return *( frontends_registry.value(nodes.communicator()) );
 }
 
 /** Return the MPI frontend for the node 'node' */
-MPIFrontEnd SIREMPI_EXPORT getFrontEnd(const MPINode &node)
+MPIFrontend SIREMPI_EXPORT getFrontEnd(const MPINode &node)
 {
     if (node.isNull())
         throw SireError::nullptr_error( QObject::tr(
@@ -64,19 +79,17 @@ MPIFrontEnd SIREMPI_EXPORT getFrontEnd(const MPINode &node)
     return getFrontEnds( node.communicator() ).getFrontEnd(node);
 }
 
-namespace SireMPI
-{
 namespace detail
 {
 
-/** Private implementation of MPIFrontEnds */
-class MPIFrontEndsPvt
+/** Private implementation of MPIFrontends */
+class MPIFrontendsPvt
 {
 public:
-    MPIFrontEndsPvt()
+    MPIFrontendsPvt()
     {}
     
-    ~MPIFrontEndsPvt()
+    ~MPIFrontendsPvt()
     {}
     
     /** Mutex to protect access to the data */
@@ -86,22 +99,25 @@ public:
     MPINodesPtr nodes_ptr;
     
     /** The registry of all front ends for the communicator */
-    QHash< QUuid,shared_ptr<MPIFrontEnd> > registry;
+    QHash<QUuid,MPIFrontend> registry;
 };
 
-/** Private implementation of MPIFrontEnd */
-class MPIFrontEndPvt
+/** Private implementation of MPIFrontend */
+class MPIFrontendPvt
 {
 public:
-    MPIFrontEndPvt() : datamutex(QMutex::Recursive)
+    MPIFrontendPvt()
     {}
     
-    ~MPIFrontEndPvt()
-    {}
+    ~MPIFrontendPvt()
+    {
+        send_comm.Free();
+        recv_comm.Free();
+    }
     
     /** Mutex used to ensure that only one job is running
         at a time */
-    QMutex workermutex;
+    QMutex worker_mutex;
     
     /** Mutex used to protect access to the receive communicator */
     QMutex recv_mutex;
@@ -109,8 +125,8 @@ public:
     /** Mutex used to protect access to the send communicator */
     QMutex send_mutex;
     
-    /** Weak pointer to the node attached to this front end */
-    MPINodePtr node_ptr;
+    /** UID of the node attached to this front end */
+    QUuid node_uid;
     
     /** Communicator used to send data to the backend */
     MPI::Intracomm send_comm;
@@ -122,17 +138,23 @@ public:
 } // end of namespace detail
 } // end of namespace SireMPI
 
+using namespace SireMPI::detail;
+
 //////////
-////////// Implementation of MPIFrontEnds
+////////// Implementation of MPIFrontends
 //////////
 
 /** Null constructor */
-MPIFrontEnds::MPIFrontEnds() : d( new MPIFrontEndsPvt() )
+MPIFrontends::MPIFrontends() : d( new MPIFrontendsPvt() )
+{}
+
+/** Copy constructor */
+MPIFrontends::MPIFrontends(const MPIFrontends &other) : d(other.d)
 {}
 
 /** Private constructor called by getFrontEnds */
-MPIFrontEnds::MPIFrontEnds(const MPINodes &nodes, bool)
-             d( new MPIFrontEndsPvt() )
+MPIFrontends::MPIFrontends(MPINodes nodes, bool)
+             : d( new MPIFrontendsPvt() )
 {
     d->nodes_ptr = nodes;
 
@@ -149,36 +171,36 @@ MPIFrontEnds::MPIFrontEnds(const MPINodes &nodes, bool)
 }
 
 /** Constructor - holds all of the front ends for the nodes in 'nodes' */
-MPIFrontEnds::MPIFrontEnds(const MPINodes &nodes)
+MPIFrontends::MPIFrontends(const MPINodes &nodes)
 {
     this->operator=( getFrontEnds(nodes) );
 }
 
 /* Destructor */
-MPIFrontEnds::~MPIFrontEnds()
+MPIFrontends::~MPIFrontends()
 {}
 
 /** Copy assignment operator */
-MPIFrontEnds& operator=(const MPIFrontEnds &other)
+MPIFrontends& MPIFrontends::operator=(const MPIFrontends &other)
 {
     d = other.d;
     return *this;
 }
 
 /** Comparison operator */
-bool MPIFrontEnds::operator==(const MPIFrontEnds &other) const
+bool MPIFrontends::operator==(const MPIFrontends &other) const
 {
     return d.get() == other.d.get();
 }
 
 /** Comparison operator */
-bool MPIFrontEnds::operator!=(const MPIFrontEnds &other) const
+bool MPIFrontends::operator!=(const MPIFrontends &other) const
 {
     return d.get() != other.d.get();
 }
 
 /** Return the front end for the node 'node' */
-MPIFrontEnd MPIFrontEnds::getFrontEnd(const MPINode &node)
+MPIFrontend MPIFrontends::getFrontEnd(const MPINode &node)
 {
     QMutexLocker lkr( &(d->datamutex) );
     
@@ -189,11 +211,11 @@ MPIFrontEnd MPIFrontEnds::getFrontEnd(const MPINode &node)
                 .arg(node.UID().toString()), CODELOC );
     }
 
-    return *( d->registry.value(node.UID()) );
+    return d->registry.value(node.UID());
 }
 
 /** Shutdown all of the backends */
-void MPIFrontEnds::shutdown()
+void MPIFrontends::shutdown()
 {
     QMutexLocker lkr( &(d->datamutex) );
     
@@ -208,78 +230,72 @@ void MPIFrontEnds::shutdown()
 }
 
 //////////
-////////// Implementation of MPIFrontEnd
+////////// Implementation of MPIFrontend
 //////////
 
 /** Null constructor */
-MPIFrontEnd::MPIFrontEnd() : d( new MPIFrontEndPvt() )
+MPIFrontend::MPIFrontend() : d( new MPIFrontendPvt() )
 {}
 
 /** Private constructor used by MPIBackends */
-MPIFrontEnd::MPIFrontEnd(const MPINode &node, bool)
-            : d( new MPIFrontEndPvt() )
+MPIFrontend::MPIFrontend(const MPINode &node, bool)
+            : d( new MPIFrontendPvt() )
 {
-    d->node_ptr = node;
+    d->node_uid = node.UID();
 
     //ok, we now need to create the communicators to talk
     //to this node
-    MPI::Comm *comm_world = ...;
+    const MPI::Intracomm *comm_world 
+            = static_cast<const MPI::Intracomm*>( node.communicator().communicator() );
 
-    d->send_mpicom = comm_world->Split(1, 0);
-    d->recv_mpicom = send_mpicom.Clone();
+    BOOST_ASSERT( comm_world != 0 );
+
+    //create the communicators - send then receive, as receive then 
+    //send in MPIBackend
+    d->send_comm = const_cast<MPI::Intracomm*>(comm_world)->Split(1, 0);
+    d->recv_comm = d->send_comm.Clone();
 }
 
 /** Construct the front end for the passed node */
-MPIFrontEnd::MPIFrontEnd(const MPINode &node)
+MPIFrontend::MPIFrontend(const MPINode &node)
 {
     this->operator=( getFrontEnd(node) );
 }
 
 /** Copy constructor */
-MPIFrontEnd::MPIFrontEnd(const MPIFrontEnd &other)
+MPIFrontend::MPIFrontend(const MPIFrontend &other)
             : d(other.d)
 {}
 
 /** Destructor */
-MPIFrontEnd::~MPIFrontEnd()
+MPIFrontend::~MPIFrontend()
 {}
 
 /** Copy assignment operator */
-MPIFrontEnd& MPIFrontEnd::operator=(const MPIFrontEnd &other)
+MPIFrontend& MPIFrontend::operator=(const MPIFrontend &other)
 {
     d = other.d;
     return *this;
 }
 
 /** Comparison operator */
-bool MPIFrontEnd::operator==(const MPIFrontEnd &other) const
+bool MPIFrontend::operator==(const MPIFrontend &other) const
 {
     return d.get() == other.d.get();
 }
 
 /** Comparison operator */
-bool MPIFrontEnd::operator!=(const MPIFrontEnd &other) const
+bool MPIFrontend::operator!=(const MPIFrontend &other) const
 {
     return d.get() != other.d.get();
 }
 
-/** Return the node connected to this front end */
-MPINode MPIFrontEnd::node()
-{
-    if (d->node_ptr.isNull())
-        throw SireError::program_bug( QObject::tr(
-            "We should not have a null MPINode attached to a MPIFrontEnd...!"),
-                CODELOC );
-                
-    return *( d->node_ptr );
-}
-
 /** Return whether or not the backend is busy */
-bool MPIFrontEnd::isBusy()
+bool MPIFrontend::isBusy()
 {
-    if (d->workermutex.tryLock())
+    if (d->worker_mutex.tryLock())
     {
-        d->workermutex.unlock();
+        d->worker_mutex.unlock();
         return false;
     }
     else
@@ -287,7 +303,7 @@ bool MPIFrontEnd::isBusy()
 }
 
 /** Tell the backend to stop work */
-void MPIFrontEnd::stopWork()
+void MPIFrontend::stopWork()
 {
     if (this->isBusy())
         return;
@@ -303,7 +319,7 @@ void MPIFrontEnd::stopWork()
 }
 
 /** Tell the backend to abort the current work */
-void MPIFrontEnd::abortWork()
+void MPIFrontend::abortWork()
 {
     if (this->isBusy())
         return;
@@ -319,12 +335,14 @@ void MPIFrontEnd::abortWork()
 }
 
 /** Perform work on the backend */
-void MPIFrontEnd::performWork(MPIPromise &promise)
+void MPIFrontend::performWork(MPIPromise &promise)
 {
+    BOOST_ASSERT( promise.node().UID() == d->node_uid );
+
+    QByteArray worker_data = promise.initialData();
+    
     if (worker_data.isEmpty())
         return;
-
-    BOOST_ASSERT( promise.node().UID() == this->node().UID() );
 
     QMutexLocker lkr( &(d->worker_mutex) );
     
@@ -368,39 +386,39 @@ void MPIFrontEnd::performWork(MPIPromise &promise)
             if (envelope[2] > 0)
             {
                 //there is a progress value available
-                d->recv_comm.Recv(&current_progress, MPI::DOUBLE, 1, 0);
+                d->recv_comm.Recv(&current_progress, 1, MPI::DOUBLE, 1, 0);
             }
         
             //now what type of message is it?
             switch (envelope[0])
             {
-                case MPIBackEnd::JOB_FINISHED:
+                case MPIBackend::JOB_FINISHED:
                     promise.setFinalData(worker_data);
                     break;
                 
-                case MPIBackEnd::JOB_STOPPED:
+                case MPIBackend::JOB_STOPPED:
                     promise.setStopped(worker_data, current_progress);
                     break;
                     
-                case MPIBackEnd::JOB_ABORTED:
+                case MPIBackend::JOB_ABORTED:
                     promise.setAborted();
                     break;
                     
-                case MPIBackEnd::JOB_PROGRESS_UPDATE:
+                case MPIBackend::JOB_PROGRESS_UPDATE:
                     promise.setProgress(current_progress);
                     break;
                     
-                case MPIBackEnd::JOB_RESULT_UPDATE:
+                case MPIBackend::JOB_RESULT_UPDATE:
                     promise.setInterimData(worker_data, current_progress);
                     break;
             }
         
-        } while (promise.isRunning())
+        } while (promise.isRunning());
     }
 }
 
 /** Tell the backend to send a progress update */
-void MPIFrontEnd::requestProgress()
+void MPIFrontend::requestProgress()
 {
     if (not this->isBusy())
         return;
@@ -416,7 +434,7 @@ void MPIFrontEnd::requestProgress()
 }
 
 /** Tell the backend to send an interim result */
-void MPIFrontEnd::requestInterimResult()
+void MPIFrontend::requestInterimResult()
 {
     if (not this->isBusy())
         return;

@@ -38,18 +38,23 @@ SIRE_BEGIN_HEADER
 namespace SireMPI
 {
 
+class MPIFrontend;
+class MPIFrontends;
+
 class MPIBackends;
 class MPINode;
 class MPINodes;
 
+class MPIPromise;
+
 namespace detail
 {
-class MPIFrontEndPvt;
-class MPIFrontEndsPvt;
+class MPIFrontendPvt;
+class MPIFrontendsPvt;
 }
 
-MPIFrontEnd getFrontEnd(const MPINode &node);
-MPIFrontEnds getFrontEnds(const MPINodes &nodes);
+MPIFrontend getFrontEnd(const MPINode &node);
+MPIFrontends getFrontEnds(const MPINodes &nodes);
 
 /** This class provides a registry for all of the front ends
     for a particular MPI communicator. The front ends are only
@@ -57,33 +62,33 @@ MPIFrontEnds getFrontEnds(const MPINodes &nodes);
     
     @author Christopher Woods
 */
-class SIREMPI_EXPORT MPIFrontEnds
+class SIREMPI_EXPORT MPIFrontends
 {
 
-friend MPIFrontEnds getFrontEnds(const MPINodes &nodes);
+friend MPIFrontends getFrontEnds(const MPINodes &nodes);
 
 public:
-    MPIFrontEnds();
-    MPIFrontEnds(const MPINodes &nodes);
+    MPIFrontends();
+    MPIFrontends(const MPINodes &nodes);
     
-    MPIFrontEnds(const MPIFrontEnds &other);
+    MPIFrontends(const MPIFrontends &other);
     
-    ~MPIFrontEnds();
+    ~MPIFrontends();
     
-    MPIFrontEnds& operator=(const MPIFrontEnds &other);
+    MPIFrontends& operator=(const MPIFrontends &other);
     
-    bool operator==(const MPIFrontEnds &other) const;
-    bool operator!=(const MPIFrontEnds &other) const;
+    bool operator==(const MPIFrontends &other) const;
+    bool operator!=(const MPIFrontends &other) const;
     
-    MPIFrontEnd getFrontEnd(const MPINode &node);
+    MPIFrontend getFrontEnd(const MPINode &node);
 
     void shutdown();
 
 private:
-    MPIFrontEnds(const MPINodes &nodes, bool);
+    MPIFrontends(MPINodes nodes, bool);
 
     /** PIMPL pointer for this object */
-    boost::shared_ptr<detail::MPIFrontEndsPvt> d;
+    boost::shared_ptr<detail::MPIFrontendsPvt> d;
 };
 
 /** This class provides a frontend that can be used to communicate
@@ -91,22 +96,22 @@ private:
     
     @author Christopher Woods
 */
-class SIREMPI_EXPORT MPIFrontEnd
+class SIREMPI_EXPORT MPIFrontend
 {
 
 friend class MPIBackends;
 
 public:
-    MPIFrontEnd();
-    MPIFrontEnd(const MPINode &node);
-    MPIFrontEnd(const MPIFrontEnd &other);
+    MPIFrontend();
+    MPIFrontend(const MPINode &node);
+    MPIFrontend(const MPIFrontend &other);
     
-    ~MPIFrontEnd();
+    ~MPIFrontend();
     
-    MPIFrontEnd& operator=(const MPIFrontEnd &other);
+    MPIFrontend& operator=(const MPIFrontend &other);
     
-    bool operator==(const MPIFrontEnd &other) const;
-    bool operator!=(const MPIFrontEnd &other) const;
+    bool operator==(const MPIFrontend &other) const;
+    bool operator!=(const MPIFrontend &other) const;
     
     bool isBusy();
     
@@ -119,11 +124,11 @@ public:
     void requestInterimResult();
     
 protected:
-    MPIFrontEnd(const MPINode &node, bool);
+    MPIFrontend(const MPINode &node, bool);
     
 private:
     /** PIMPL pointer for this object */
-    boost::shared_ptr<detail::MPIFrontEndPvt> d;
+    boost::shared_ptr<detail::MPIFrontendPvt> d;
 };
 
 }

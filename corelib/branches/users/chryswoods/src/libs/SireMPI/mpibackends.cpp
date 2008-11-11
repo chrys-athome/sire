@@ -32,11 +32,17 @@
 #endif
 
 #include "mpibackends.h"
+#include "mpifrontends.h"
 #include "mpiworker.h"
+#include "mpinode.h"
+#include "mpinodes.h"
+
+#include "SireError/errors.h"
 
 #include "SireStream/streamdata.hpp"
 
 #include <QMutex>
+#include <QWaitCondition>
 #include <QHash>
 #include <QThread>
 #include <QByteArray>
@@ -102,28 +108,45 @@ public:
     /** Mutex used to protect access to the event loop */
     QMutex execmutex;
 
+    /** Mutex and waiter used to ensure only one message is broadcast
+        to the nodes at a time */
+    QMutex message_mutex;
+
+    /** Mutex and waiter used to ensure only one message is broadcast
+        to the nodes at a time */
+    QWaitCondition message_waiter;
+
     /** The global communicator used to 
         communicate with all of the nodes in this 
         set of MPINodes */
-    MPI::Comm *comm_world;
+    MPI::Intracomm *comm_world;
     
     /** The registry of all active backends */
-    QHash< tuple<int,int>, shared_ptr<MPIBackend> > active_backends;
+    QHash<QUuid, MPIBackend> active_backends;
     
     /** The list of all backends that are in the process of shutting down */
-    QList< shared_ptr<MPIBackend> > stopped_backends;
+    QList<MPIBackend> stopped_backends;
+    
+    struct Message
+    {
+        QByteArray data;
+        int envelope[3];
+    };
+    
+    /** The message to be broadcast to nodes */
+    Message message;
 };
 
 /** Private implementation of MPIBackendPvt */
 class MPIBackendPvt : public QThread
 {
 public:
-    MPIBackendPvt() : mpitag(0), keep_running(true)
+    MPIBackendPvt() : keep_running(true)
     {}
     
     ~MPIBackendPvt()
     {
-        d->keep_running = false;
+        keep_running = false;
 
         //give the thread 10 seconds to exit
         if (not QThread::wait(10000))
@@ -131,9 +154,12 @@ public:
             QThread::terminate();
         }
         
-        recv_mpicom.Free();
-        send_mpicom.Free();
+        recv_comm.Free();
+        send_comm.Free();
     }
+    
+    /** The unique ID of the node */
+    QUuid uid;
     
     /** The communicator used to receive instructions 
         from the master */
@@ -146,6 +172,9 @@ public:
     bool keep_running;
 
 protected:
+    void sendResponse(int response, const MPIWorker &worker);
+    void runJob(MPIWorker &worker);
+
     void run();
 };
 
@@ -154,12 +183,15 @@ protected:
 
 using namespace SireMPI::detail;
 
-static QHash<void*, MPIBackends*> backends_registry;
+namespace SireMPI
+{
+
+static QHash<const void*, MPIBackends> backends_registry;
 
 Q_GLOBAL_STATIC( QMutex, registryMutex );
 
 /** Return the backends manager for the collection of nodes in 'nodes' */
-MPIBackends SIREMPI_EXPORT &getBackends(const MPINodes &nodes)
+MPIBackends SIREMPI_EXPORT getBackends(const MPINodes &nodes)
 {
     QMutex *mutex = registryMutex();
     
@@ -167,15 +199,14 @@ MPIBackends SIREMPI_EXPORT &getBackends(const MPINodes &nodes)
     
     if ( not backends_registry.contains(nodes.communicator()) )
     {
-        backends_registry.insert( nodes.communicator(),
-                                  shared_ptr<MPIBackends>(new MPIBackends(nodes)) );
+        backends_registry.insert( nodes.communicator(), MPIBackends(nodes) );
     }
     
-    return *( backends_registry.value(nodes.communicator()) );
+    return backends_registry.value(nodes.communicator());
 }
 
 /** Return the backends manager for the collection of nodes in 'nodes' */
-MPIBackends SIREMPI_EXPORT &getBackends(const MPIBackendNodes &nodes)
+MPIBackends SIREMPI_EXPORT getBackends(const MPIBackendNodes &nodes)
 {
     QMutex *mutex = registryMutex();
     
@@ -183,27 +214,38 @@ MPIBackends SIREMPI_EXPORT &getBackends(const MPIBackendNodes &nodes)
     
     if ( not backends_registry.contains(nodes.communicator()) )
     {
-        backends_registry.insert( nodes.communicator(),
-                                  shared_ptr<MPIBackends>(new MPIBackends(nodes)) );
+        backends_registry.insert( nodes.communicator(), MPIBackends(nodes) );
     }
     
-    return *( backends_registry.value(nodes.communicator()) );
+    return backends_registry.value(nodes.communicator());
 }
+
+} // end of namespace SireMPI
 
 ////////
 //////// Implementation of MPIBackends
 ////////
 
 /** Null constructor */
-MPIBackends::MPIBackends() : d( new MPINodesPvt() )
+MPIBackends::MPIBackends() : d( new MPIBackendsPvt() )
 {}
 
 /** Construct to manage the backends on this node for the group of nodes
     in 'nodes' */
 MPIBackends::MPIBackends(const MPINodes &nodes)
-            : d( new MPINodesPvt() )
+            : d( new MPIBackendsPvt() )
 {
-    d->comm_world = static_cast<MPI::Comm*>( nodes.communicator() );
+    d->comm_world = const_cast<MPI::Intracomm*>(
+                        static_cast<const MPI::Intracomm*>( nodes.communicator() ) );
+}
+
+/** Construct to manage the backends on this node for the group of nodes
+    in 'nodes' */
+MPIBackends::MPIBackends(const MPIBackendNodes &nodes)
+            : d( new MPIBackendsPvt() )
+{
+    d->comm_world = const_cast<MPI::Intracomm*>(
+                        static_cast<const MPI::Intracomm*>( nodes.communicator() ) );
 }
 
 /** Copy constructor */
@@ -234,6 +276,15 @@ bool MPIBackends::operator!=(const MPIBackends &other) const
     return d.get() != other.d.get();
 }
 
+/** Return the global rank of this node in MPI::COMM_WORLD */
+int MPIBackends::globalRank()
+{
+    if (MPI::Is_initialized())
+        return MPI::COMM_WORLD.Get_rank();
+    else
+        return 0;
+}
+
 /** Broadcast a message to the nodes in this communicator */
 void MPIBackends::broadcastMessage(int message, int data)
 {
@@ -261,7 +312,7 @@ void MPIBackends::broadcastMessage(int message, const QByteArray &data)
 }
 
 /** Start a front end for the node 'node' */
-MPIFrontEnd MPIBackends::start(const MPINode &node)
+MPIFrontend MPIBackends::start(const MPINode &node)
 {
     //start the backend - give it the UID of the node
     QByteArray data;
@@ -271,7 +322,37 @@ MPIFrontEnd MPIBackends::start(const MPINode &node)
     
     this->broadcastMessage(START_MPI_BACKEND, data);
 
-    return MPIFrontEnd(node, true);
+    return MPIFrontend(node, true);
+}
+
+/** Stop the backend for the node 'node' */
+void MPIBackends::stop(const QUuid &uid)
+{
+    QByteArray data;
+    QDataStream ds(&data, QIODevice::WriteOnly);
+    
+    ds << uid;
+    
+    this->broadcastMessage(STOP_MPI_BACKEND, data);
+}
+
+static void writeErrorString(const QString &location, 
+                             const SireError::exception &e)
+{
+    QTextStream ts(stdout);
+    
+    ts << QObject::tr(" ** FATAL ERROR ON NODE %1 **\n"
+                      " ** LOCATION %2 **\n%3\n")
+                .arg(MPI::COMM_WORLD.Get_rank())
+                .arg(location, e.toString());
+}
+
+static QUuid readUID(const QByteArray &data)
+{
+    QDataStream ds(data);
+    QUuid uid;
+    ds >> uid;
+    return uid;
 }
 
 /** Private function that contains an event loop that processes
@@ -279,7 +360,7 @@ MPIFrontEnd MPIBackends::start(const MPINode &node)
     of nodes 'nodes' */
 int MPIBackends::_pvt_exec()
 {
-    QMutexLocker lkr( execmutex );
+    QMutexLocker lkr( &(d->execmutex) );
 
     BOOST_ASSERT( MPI::Is_initialized() );
     BOOST_ASSERT( d->comm_world != 0 );
@@ -315,14 +396,14 @@ int MPIBackends::_pvt_exec()
             
             //wait for instructions that are broadcast to all nodes
             //from node 0
-            d->comm_world.Bcast( message, 3, MPI::INT, master_rank, 0 );
+            d->comm_world->Bcast( message, 3, MPI::INT, master_rank );
 
             //now get the data that is broadcast to all nodes
             if (message[2] > 0)
             {
                 data = QByteArray(message[2] + 1, ' ');
-                d->comm_world.Bcast( data.data(), message[2], MPI::BYTE,
-                                     master_rank, 0 );
+                d->comm_world->Bcast( data.data(), message[2], MPI::BYTE,
+                                      master_rank );
             }
 
             //what is the message?
@@ -334,12 +415,12 @@ int MPIBackends::_pvt_exec()
                     if (message[1] == my_mpirank)
                     {
                         //this is a request to start the backend on this node
-                        this->start(master_rank, data);
+                        this->startBackend( ::readUID(data) );
                     }
                     else
                     {
                         //this node will not be involved
-                        MPI::Intracomm null_comm = comm_world.split(0,0);
+                        MPI::Intracomm null_comm = d->comm_world->Split(0,0);
                         null_comm.Free();
                     }
                     
@@ -349,7 +430,7 @@ int MPIBackends::_pvt_exec()
                     //stop the specified MPI backend loop
                     if (message[1] == my_mpirank)
                     {
-                        this->stop(master_rank);
+                        this->stopBackend( ::readUID(data) );
                     }
                     
                     break;
@@ -358,7 +439,7 @@ int MPIBackends::_pvt_exec()
                     //completely shut down MPI on this node
                     if (message[1] == my_mpirank or message[1] == -1)
                     {
-                        this->stopAll();
+                        this->stopAllBackends();
                         keep_looping = false;
                     }
                     break;
@@ -370,15 +451,15 @@ int MPIBackends::_pvt_exec()
         }
         catch(const SireError::exception &e)
         {
-            SireMPI::writeErrorString(CODELOC, e);
+            ::writeErrorString(CODELOC, e);
         }
         catch(const std::exception &e)
         {
-            SireMPI::writeErrorString(CODELOC, SireError::std_exception(e));
+            ::writeErrorString(CODELOC, SireError::std_exception(e));
         }
         catch(...)
         {
-            SireMPI::writeErrorString(CODELOC, 
+            ::writeErrorString(CODELOC, 
                     SireError::unknown_exception("An unknown error occured!", 
                                                   CODELOC));
         }
@@ -430,15 +511,15 @@ protected:
         }
         catch(const SireError::exception &e)
         {
-            SireMPI::writeErrorString(CODELOC, e);
+            ::writeErrorString(CODELOC, e);
         }
         catch(const std::exception &e)
         {
-            SireMPI::writeErrorString(CODELOC, SireError::std_exception(e));
+            ::writeErrorString(CODELOC, SireError::std_exception(e));
         }
         catch(...)
         {
-            SireMPI::writeErrorString(CODELOC, 
+            ::writeErrorString(CODELOC, 
                     SireError::unknown_exception("An unknown error occured!", 
                                                     CODELOC));
         }
@@ -461,62 +542,56 @@ void MPIBackends::execBG()
     //eventually need to delete runner or we'll have a memory leak...
 }
 
-/** Start a backend that receives instructions from the node with rank 'master'
+/** Start a backend that receives instructions from the node with UID 'uid'
     in the MPI communicator */
-void MPIBackends::start(int master, const QByteArray &data)
+void MPIBackends::startBackend(const QUuid &uid)
 {
-    BOOST_ASSERT( d->comm_world.get() != 0 );
+    BOOST_ASSERT( d->comm_world != 0 );
 
     QMutexLocker lkr( &(d->datamutex) );
 
-    //data contains the UID of the node...
-    getuid;
-
     //we shouldn't have this tag already...
-    if ( d->registry.contains(master) )
+    if ( d->active_backends.contains(uid) )
         throw SireError::program_bug( QObject::tr(
             "It should not be possible to start two backends with the "
-            "same master (%1)").arg(master), CODELOC );
+            "same UID (%1)").arg(uid.toString()), CODELOC );
 
     //create a backend (this creates the necessary communicators)
-    shared_ptr<MPIBackend> backend( new MPIBackend(d->comm_world) );
+    MPIBackend backend(d->comm_world, uid);
     
     //start the thread
-    backend->start();
+    backend.start();
     
-    registry.insert(master, backend);
+    d->active_backends.insert(uid, backend);
 }
 
 /** Stop the backend that is performing the work directed by the 
-    node with rank 'master' in the MPI communicator */
-void MPIBackends::stop(int master)
+    node with UID 'uid' in the MPI communicator */
+void MPIBackends::stopBackend(const QUuid &uid)
 {
     QMutexLocker lkr( &(d->datamutex) );
 
-    shared_ptr<MPIBackend> backend = d->registry.take(master_rank);
+    MPIBackend backend = d->active_backends.take(uid);
     
-    if (backend.get() != 0)
-    {
-        //stop the backend
-        backend->keep_running = false;
+    //stop the backend
+    backend.stop();
         
-        //add this backend to the list of ones that have been stopped
-        d->stopped_backends.append(backend);
-    }
+    //add this backend to the list of ones that have been stopped
+    d->stopped_backends.append(backend);
 }
 
 /** Stop all of the backends that are running on this node using
     this MPI communicator */
-void MPIBackends::stopAll()
+void MPIBackends::stopAllBackends()
 {
     QMutexLocker lkr( &(d->datamutex) );
     
-    QList<int> masters = d->registry.keys();
+    QList<QUuid> uids = d->active_backends.keys();
     
-    foreach (int master, masters)
+    foreach (QUuid uid, uids)
     {
-        shared_ptr<MPIBackend> backend = d->registry.take(master);
-        backend->keep_running = false;
+        MPIBackend backend = d->active_backends.take(uid);
+        backend.stop();
         
         d->stopped_backends.append(backend);
     }
@@ -524,27 +599,40 @@ void MPIBackends::stopAll()
     //now wait for them all to finish
     while (not d->stopped_backends.isEmpty())
     {
-        shared_ptr<MPIBackend> backend = d->stopped_backends.takeFirst();
-        backend->wait();
+        MPIBackend backend = d->stopped_backends.takeFirst();
+        backend.wait();
     }
+}
+
+/** Shutdown this MPI communicator */
+void MPIBackends::shutdown()
+{
+    this->stopAllBackends();
 }
 
 ////////
 //////// Implementation of MPIBackend
 ////////
 
+/** Null constructor */
+MPIBackend::MPIBackend()
+{}
+
 /** Construct a backend to perform the work given to it by a master
     node (in the communicator 'communicator') */
-MPIBackend::MPIBackend(void *communicator)
+MPIBackend::MPIBackend(void *communicator, const QUuid &uid)
            : d(new MPIBackendPvt())
 {
     BOOST_ASSERT( communicator != 0) ;
     
     //split the communicator so it just contains this node and the
     //master node - this is rank 1, the master is rank 0
-    MPI::Comm *comm_world = static_cast<MPI::Comm*>(communicator);
-    d->recv_mpicom = comm_world->Split(1, 1);
-    d->send_mpicom = recv_mpicom.Clone();
+    MPI::Intracomm *comm_world = const_cast<MPI::Intracomm*>(
+                                    static_cast<const MPI::Intracomm*>(communicator) );
+                                    
+    d->uid = uid;
+    d->recv_comm = comm_world->Split(1, 1);
+    d->send_comm = d->recv_comm.Clone();
 }
 
 /** Destructor */
@@ -554,11 +642,37 @@ MPIBackend::~MPIBackend()
 /** Start this backend */
 void MPIBackend::start()
 {
-    d->start();
+    if (d.get() != 0)
+        d->start();
+}
+
+/** Stop this backend */
+void MPIBackend::stop()
+{
+    if (d.get() != 0)
+        d->keep_running = false;
+}
+
+/** Wait for this backend to finish */
+void MPIBackend::wait()
+{
+    if (d.get() != 0)
+        d->wait();
+}
+
+/** Return the rank of this node in MPI::COMM_WORLD */
+int MPIBackend::globalRank()
+{
+    if (MPI::Is_initialized())
+    {
+        return MPI::COMM_WORLD.Get_rank();
+    }
+    else
+        return 0;
 }
 
 /** Small function used to send the MPIWorker back to the master */
-void MPIBackend::sendResponse(int response, const MPIWorker &worker)
+void MPIBackendPvt::sendResponse(int response, const MPIWorker &worker)
 {
     int envelope[3];
     envelope[0] = response;
@@ -566,7 +680,8 @@ void MPIBackend::sendResponse(int response, const MPIWorker &worker)
     QByteArray worker_data;
     double current_progress = 0;
 
-    if (response == MPIWORKER_RESULT or response == MPIWORKER_ABORT )
+    if (response == MPIBackend::JOB_FINISHED or 
+        response == MPIBackend::JOB_ABORTED )
     {
         envelope[2] = 0;
     }
@@ -576,7 +691,8 @@ void MPIBackend::sendResponse(int response, const MPIWorker &worker)
         current_progress = worker.progress();
     }
 
-    if (response == MPIWORKER_PROGRESS or response == MPIWORKER_ABORT)
+    if (response == MPIBackend::JOB_PROGRESS_UPDATE or 
+        response == MPIBackend::JOB_ABORTED)
     {
         envelope[1] = 0;
     }
@@ -587,89 +703,78 @@ void MPIBackend::sendResponse(int response, const MPIWorker &worker)
     }
     
     //send the envelope describing the response
-    d->send_mpicom.Send(envelope, 3, MPI::INT, 0, 0);
+    send_comm.Send(envelope, 3, MPI::INT, 0, 0);
     
     if (envelope[1] > 0)
     {
-        d->send_mpicom.Send(worker_data.constData(), worker_data.size(), 
-                            MPI::BYTE, 0, 0);
+        send_comm.Send(worker_data.constData(), worker_data.size(), 
+                       MPI::BYTE, 0, 0);
     }
     
     if (envelope[2] > 0)
     {
-        d->send_mpicom.Send(&current_progress, 1, MPI::DOUBLE, 0, 0);
+        send_comm.Send(&current_progress, 1, MPI::DOUBLE, 0, 0);
     }
 }
 
 /** Run the job contained in the passed worker */
-void MPIBackend::runJob(MPIWorker &worker)
+void MPIBackendPvt::runJob(MPIWorker &worker)
 {
     try
     {
         while (not worker.hasFinished())
         {
             //do we have an instruction?
-            if (d->recv_mpicom.Iprobe(0, 0))
+            if (recv_comm.Iprobe(0, 0))
             {
                 //yes there is - receive it
                 int instruction;
-                d->recv_mpicom.Recv(&instruction, 1, MPI::INT, 0, 0);
+                recv_comm.Recv(&instruction, 1, MPI::INT, 0, 0);
             
                 switch (instruction)
                 {
-                    case MPIWorker::STOP:
-                        this->sendResponse(MPIWorker::STOP, worker);
+                    case MPIBackend::STOP_WORK:
+                        this->sendResponse(MPIBackend::JOB_STOPPED, worker);
                         return;
                     
-                    case MPIWorker::ABORT:
-                        this->sendResponse(MPIWorker::ABORT, worker);
+                    case MPIBackend::ABORT_WORK:
+                        this->sendResponse(MPIBackend::JOB_ABORTED, worker);
                         return;
                         
-                    case MPIWorker::PROGRESS:
-                        this->sendResponse(MPIWorker::PROGRESS, worker);
+                    case MPIBackend::SEND_PROGRESS:
+                        this->sendResponse(MPIBackend::JOB_PROGRESS_UPDATE, worker);
                         break; 
                         
-                    case MPIWorker::INTERIM:
-                        this->sendResponse(MPIWorker::INTERIM, worker);
+                    case MPIBackend::SEND_INTERIM_RESULT:
+                        this->sendResponse(MPIBackend::JOB_RESULT_UPDATE, worker);
                         break;
                 }
             }
 
-            if (not d->keep_running)
+            if (not keep_running)
                 return;
 
             //now run a chunk of work
             worker.runChunk();
         }
         
-        this->sendResponse(MPIWorker::RESULT, worker);
+        this->sendResponse(MPIBackend::JOB_FINISHED, worker);
         return;
     }
     catch(const SireError::exception &e)
     {
-        this->sendResponse( MPIWorker::STOP, MPIError(e) );
+        this->sendResponse( MPIBackend::JOB_STOPPED, MPIError(e) );
     }
     catch(const std::exception &e)
     {
-        this->sendResponse( MPIWorker::STOP, MPIError(e) );
+        this->sendResponse( MPIBackend::JOB_STOPPED, MPIError(e) );
     }
     catch(...)
     {
-        this->sendResponse( MPIWorker::STOP,
+        this->sendResponse( MPIBackend::JOB_STOPPED,
                                 MPIError(SireError::unknown_exception( QObject::tr(
                                     "An unknown error has occurred!"), CODELOC ) ) );
     }
-}
-
-static void writeErrorString(const QString &location, 
-                             const SireError::exception &e)
-{
-    QTextStream ts(stdout);
-    
-    ts << QObject::tr(" ** FATAL ERROR ON NODE %1 **\n"
-                      " ** LOCATION %2 **\n%3\n")
-                .arg(comm_world->Get_rank())
-                .arg(location, e.toString());
 }
 
 /** This is the function run by the MPI backend that actually processes
@@ -683,11 +788,11 @@ void MPIBackendPvt::run()
         do
         {
             //is there a message to receive?
-            if (d->recv_mpicom.Iprobe(0, 0))
+            if (recv_comm.Iprobe(0, 0))
             {
                 //yes there is - receive it
                 int envelope[2];
-                d->recv_mpicom.Recv(envelope, 2, MPI::INT, 0, 0);
+                recv_comm.Recv(envelope, 2, MPI::INT, 0, 0);
 
                 QByteArray worker_data;
 
@@ -695,11 +800,11 @@ void MPIBackendPvt::run()
                 {
                     //there is an accompanying bytearray package
                     worker_data = QByteArray(envelope[1]+1, ' ');
-                    d->recv_mpicom.Recv(worker_data.data(), envelope[1], 
-                                        MPI::BYTE, 0, 0);
+                    recv_comm.Recv(worker_data.data(), envelope[1], 
+                                   MPI::BYTE, 0, 0);
                 }
 
-                if (envelope[0] != MPIWORKER_START)
+                if (envelope[0] != MPIBackend::START_WORK)
                 {
                     //this is an old message from a previous job - ignore it
                     continue;
@@ -718,11 +823,11 @@ void MPIBackendPvt::run()
             else
             {
                 //wait a little before checking again
-                if (d->keep_running)
+                if (keep_running)
                     QThread::msleep(5000);
             }
 
-        } while (d->keep_running);
+        } while (keep_running);
     }
     catch(const SireError::exception &e)
     {
