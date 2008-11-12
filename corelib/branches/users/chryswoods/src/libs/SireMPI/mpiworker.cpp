@@ -144,13 +144,13 @@ MPIError::MPIError() : MPIWorker()
 /** Construct from the passed standard exception */
 MPIError::MPIError(const std::exception &e) : MPIWorker()
 {
-    error_data = SireStream::save( SireError::std_exception(e) );
+    error_data = SireError::std_exception(e).pack();
 }
 
 /** Construct for the passed Sire exception */
 MPIError::MPIError(const SireError::exception &e) : MPIWorker()
 {
-    error_data = SireStream::save(e);
+    error_data = e.pack();
 }
 
 /** Copy constructor */

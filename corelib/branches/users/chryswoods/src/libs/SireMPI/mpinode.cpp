@@ -121,11 +121,16 @@ MPINodePvt::MPINodePvt()
 MPINodePvt::~MPINodePvt()
 {
     //wait until this node is no longer busy...
+    qDebug() << MPINode::globalRank() << CODELOC;
     this->wait();
+
+    qDebug() << MPINode::globalRank() << CODELOC;
 
     if (not parent_ptr.isNull())
     {
+        qDebug() << MPINode::globalRank() << CODELOC;
         (*parent_ptr).returnedNode();
+        qDebug() << MPINode::globalRank() << CODELOC;
     }
 }
 
@@ -256,7 +261,7 @@ void MPINodePvt::run()
     MPINode this_node = local_promise.node();
     
     //get a front end for this node
-    MPIFrontend frontend = getFrontEnd(this_node);
+    MPIFrontend frontend = getFrontend(this_node);
 
     //tell the frontend to perform the work on the backend
     frontend.performWork(local_promise);
@@ -448,7 +453,7 @@ void MPINode::stop()
     }
 
     //tell the node to stop
-    MPIFrontend frontend = getFrontEnd(*this);
+    MPIFrontend frontend = getFrontend(*this);
     frontend.stopWork();
 
     //wait for the node to finish
@@ -470,7 +475,7 @@ void MPINode::abort()
     }
 
     //tell the node to stop
-    MPIFrontend frontend = getFrontEnd(*this);
+    MPIFrontend frontend = getFrontend(*this);
     frontend.abortWork();
 
     //wait for the node to finish

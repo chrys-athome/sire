@@ -306,7 +306,7 @@ QByteArray MPIPromise::interimData()
                 "promise is not running on any nodes!"), CODELOC );
            
         //tell the node to give us an interim result
-        getFrontEnd( *(d->node) ).requestInterimResult();
+        getFrontend( *(d->node) ).requestInterimResult();
                         
         //wait for the result
         d->interim_waiter.wait( &(d->datamutex) );
@@ -376,7 +376,7 @@ double MPIPromise::progress()
     else
     {
         //tell the node to get the progress
-        getFrontEnd( *(d->node) ).requestProgress();
+        getFrontend( *(d->node) ).requestProgress();
         
         //wait until the progress has been obtained
         d->progress_waiter.wait( &(d->datamutex) );

@@ -94,8 +94,7 @@ public:
 
     const QUuid& getUID(int rank) const;
 
-    int exec();
-    void execBG();
+    void exec();
     
     void shutdown();
 
@@ -137,8 +136,7 @@ public:
 
     const void* communicator() const;
 
-    int exec();
-    void execBG();
+    void exec();
 
 private:
     MPIBackendNodes(const boost::shared_ptr<detail::MPIBackendNodesPvt> &ptr);

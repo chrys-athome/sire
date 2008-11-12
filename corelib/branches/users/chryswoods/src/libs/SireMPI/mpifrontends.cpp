@@ -55,7 +55,7 @@ namespace SireMPI
 {
 
 /** Return the frontends for the passed MPI nodes */
-MPIFrontends SIREMPI_EXPORT getFrontEnds(const MPINodes &nodes)
+MPIFrontends SIREMPI_EXPORT getFrontends(const MPINodes &nodes)
 {
     QMutexLocker lkr( registryMutex() );
     
@@ -68,14 +68,14 @@ MPIFrontends SIREMPI_EXPORT getFrontEnds(const MPINodes &nodes)
 }
 
 /** Return the MPI frontend for the node 'node' */
-MPIFrontend SIREMPI_EXPORT getFrontEnd(const MPINode &node)
+MPIFrontend SIREMPI_EXPORT getFrontend(const MPINode &node)
 {
     if (node.isNull())
         throw SireError::nullptr_error( QObject::tr(
             "The null MPINode does not have a valid front end!"),
                 CODELOC );
 
-    return getFrontEnds( node.communicator() ).getFrontEnd(node);
+    return getFrontends( node.communicator() ).getFrontEnd(node);
 }
 
 namespace detail
@@ -184,7 +184,7 @@ MPIFrontends::MPIFrontends(MPINodes nodes, bool)
 /** Constructor - holds all of the front ends for the nodes in 'nodes' */
 MPIFrontends::MPIFrontends(const MPINodes &nodes)
 {
-    this->operator=( getFrontEnds(nodes) );
+    this->operator=( getFrontends(nodes) );
 }
 
 /* Destructor */
@@ -252,25 +252,36 @@ MPIFrontend::MPIFrontend() : d( new MPIFrontendPvt() )
 MPIFrontend::MPIFrontend(const MPINode &node, bool)
             : d( new MPIFrontendPvt() )
 {
+    qDebug() << MPINode::globalRank() << CODELOC;
+
     d->node_uid = node.UID();
+
+    qDebug() << MPINode::globalRank() << CODELOC;
 
     //ok, we now need to create the communicators to talk
     //to this node
     const MPI::Intracomm *comm_world 
             = static_cast<const MPI::Intracomm*>( node.communicator().communicator() );
 
+    qDebug() << MPINode::globalRank() << CODELOC;
+
     BOOST_ASSERT( comm_world != 0 );
+
+    qDebug() << MPINode::globalRank() << CODELOC;
 
     //create the communicators - send then receive, as receive then 
     //send in MPIBackend
+    qDebug() << MPINode::globalRank() << CODELOC;
     d->send_comm = const_cast<MPI::Intracomm*>(comm_world)->Split(1, 0);
+    qDebug() << MPINode::globalRank() << CODELOC;
     d->recv_comm = d->send_comm.Clone();
+    qDebug() << MPINode::globalRank() << CODELOC;
 }
 
 /** Construct the front end for the passed node */
 MPIFrontend::MPIFrontend(const MPINode &node)
 {
-    this->operator=( getFrontEnd(node) );
+    this->operator=( getFrontend(node) );
 }
 
 /** Copy constructor */

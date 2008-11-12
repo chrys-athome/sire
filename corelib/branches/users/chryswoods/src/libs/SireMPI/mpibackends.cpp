@@ -98,7 +98,11 @@ class MPIBackendsPvt
 {
 public:
     MPIBackendsPvt() : datamutex(QMutex::Recursive), comm_world(0)
-    {}
+    {
+        message.envelope[0] = MPIBackend::EMPTY_MESSAGE;
+        message.envelope[1] = 0;
+        message.envelope[2] = 0;
+    }
     
     ~MPIBackendsPvt()
     {}
@@ -289,39 +293,59 @@ int MPIBackends::globalRank()
 /** Broadcast a message to the nodes in this communicator */
 void MPIBackends::broadcastMessage(int message, int data)
 {
+    qDebug() << MPINode::globalRank() << CODELOC;
     QMutexLocker lkr( &(d->message_mutex) );
+
+    qDebug() << MPINode::globalRank() << CODELOC;
     
     d->message.envelope[0] = message;
     d->message.envelope[1] = data;
     d->message.envelope[2] = 0;
     d->message.data = QByteArray();
+
+    qDebug() << MPINode::globalRank() << CODELOC;
     
     d->message_waiter.wakeAll();
+
+    qDebug() << MPINode::globalRank() << CODELOC;
 }
 
 /** Broadcast a message to the nodes in this communicator */
 void MPIBackends::broadcastMessage(int message, const QByteArray &data)
 {
+    qDebug() << MPINode::globalRank() << CODELOC;
+
     QMutexLocker lkr( &(d->message_mutex) );
+
+    qDebug() << MPINode::globalRank() << CODELOC;
     
     d->message.envelope[0] = message;
     d->message.envelope[1] = 0;
     d->message.envelope[2] = data.count();
     d->message.data = data;
+
+    qDebug() << MPINode::globalRank() << CODELOC;
     
     d->message_waiter.wakeAll();
+
+    qDebug() << MPINode::globalRank() << CODELOC;
 }
 
 /** Start a front end for the node 'node' */
 MPIFrontend MPIBackends::start(const MPINode &node)
 {
+    qDebug() << MPINode::globalRank() << CODELOC;
     //start the backend - give it the UID of the node
     QByteArray data;
     QDataStream ds(&data, QIODevice::WriteOnly);
+
+    qDebug() << MPINode::globalRank() << CODELOC;
     
     ds << node.UID();
     
+    qDebug() << MPINode::globalRank() << CODELOC;
     this->broadcastMessage(START_MPI_BACKEND, data);
+    qDebug() << MPINode::globalRank() << CODELOC;
 
     return MPIFrontend(node, true);
 }
@@ -345,10 +369,9 @@ static QUuid readUID(const QByteArray &data)
     return uid;
 }
 
-/** Private function that contains an event loop that processes
-    all of the events on this node that involves the collection
-    of nodes 'nodes' */
-int MPIBackends::_pvt_exec()
+/** Enter the MPI event processing loop to process the events
+    of the nodes in 'nodes' */
+void MPIBackends::exec()
 {
     qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
 
@@ -393,13 +416,24 @@ int MPIBackends::_pvt_exec()
                 qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
 
                 //wait for the message to be broadcast
-                d->message_waiter.wait( &(d->message_mutex) );
+                while (d->message.envelope[0] == MPIBackend::EMPTY_MESSAGE)
+                {
+                    d->message_waiter.wait( &(d->message_mutex) );
+                }
 
                 qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
                 
                 //ok - copy the message to be broadcast
                 for (int i=0; i<3; ++i)
                     message[i] = d->message.envelope[i];
+                    
+                data = d->message.data;
+                
+                //now clear the message
+                d->message.envelope[0] = MPIBackend::EMPTY_MESSAGE;
+                d->message.envelope[1] = 0;
+                d->message.envelope[2] = 0;
+                d->message.data = QByteArray();
             }
 
             qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
@@ -426,18 +460,26 @@ int MPIBackends::_pvt_exec()
             switch( message[0] )
             {
                 case START_MPI_BACKEND:
-                    //start a new MPI backend loop that listens to instructions
-                    //on the specified channel from the specified master
+                    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
                     if (message[1] == my_mpirank)
                     {
-                        //this is a request to start the backend on this node
-                        this->startBackend( ::readUID(data) );
+                        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
+                        if (my_mpirank == master_rank)
+                            this->startLocalBackend( ::readUID(data) );
+                        else
+                            this->startBackend( ::readUID(data) );
+                        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
                     }
                     else
                     {
+                        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
                         //this node will not be involved
-                        MPI::Intracomm null_comm = d->comm_world->Split(0,0);
-                        null_comm.Free();
+                        if (my_mpirank != master_rank)
+                        {
+                            MPI::Intracomm null_comm = d->comm_world->Split(0,0);
+                            null_comm.Free();
+                        }
+                        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
                     }
                     
                     break;
@@ -446,7 +488,10 @@ int MPIBackends::_pvt_exec()
                     //stop the specified MPI backend loop
                     if (message[1] == my_mpirank)
                     {
-                        this->stopBackend( ::readUID(data) );
+                        if (my_mpirank == master_rank)
+                            this->stopLocalBackend( ::readUID(data) );
+                        else
+                            this->stopBackend( ::readUID(data) );
                     }
                     
                     break;
@@ -481,92 +526,13 @@ int MPIBackends::_pvt_exec()
         }
 
     } while (keep_looping);
-
-    return 0;
 }
 
-/** Enter the MPI event processing loop to process the events
-    of the nodes in 'nodes' */
-int MPIBackends::exec()
+/** Start a local backend that receives instructions from this node 
+    (which has UID 'uid' in the MPI communicator) */
+void MPIBackends::startLocalBackend(const QUuid &uid)
 {
-    return this->_pvt_exec();
-}
-
-/** This class private class is used to run SireMPI::exec in a background
-    thread - this is useful for running it as a background thread of
-    the master process */
-class SireMPI_ExecRunner : private QThread
-{
-public:
-    SireMPI_ExecRunner() : QThread()
-    {}
-    
-    void start(MPIBackends mpibackends)
-    {
-        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
-        backends = mpibackends;
-
-        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
-        QThread::start();
-        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
-    }
-
-    bool isRunning() const
-    {
-        return QThread::isRunning();
-    }
-
-    ~SireMPI_ExecRunner()
-    {
-        this->wait();
-    }
-
-protected:
-    void run()
-    {
-        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
-        try
-        {
-            qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
-            backends.exec();
-            qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
-            return;
-        }
-        catch(const SireError::exception &e)
-        {
-             SireError::printError(e);
-        }
-        catch(const std::exception &e)
-        {
-            SireError::printError(SireError::std_exception(e));
-        }
-        catch(...)
-        {
-            SireError::printError( 
-                    SireError::unknown_exception("An unknown error occured!", 
-                                                    CODELOC));
-        }
-    }
-    
-private:
-    MPIBackends backends;
-};
-
-/** Enter the MPI event processing loop, but run the loop in 
-    a background thread */
-void MPIBackends::execBG()
-{
-    //use an object to start and stop the loop
-    //(as hopefully the object will be deleted when the library
-    // exits, and thus an MPI shutdown will be called)
-    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
-    SireMPI_ExecRunner *runner = new SireMPI_ExecRunner();
-
-    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
-    runner->start(*this);
-    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
-
-    //eventually need to delete runner or we'll have a memory leak...
+    qDebug() << "NEED TO WRITE THIS" << CODELOC;
 }
 
 /** Start a backend that receives instructions from the node with UID 'uid'
@@ -590,6 +556,13 @@ void MPIBackends::startBackend(const QUuid &uid)
     backend.start();
     
     d->active_backends.insert(uid, backend);
+}
+
+/** Stop the local backend that is performing work for this node
+    (with UID 'uid') */
+void MPIBackends::stopLocalBackend(const QUuid &uid)
+{
+    qDebug() << "NEED TO WRITE THIS" << CODELOC;
 }
 
 /** Stop the backend that is performing the work directed by the 
@@ -645,6 +618,15 @@ void MPIBackends::shutdown()
 MPIBackend::MPIBackend()
 {}
 
+/** Construct a backend that performs the work given to it by this node */
+MPIBackend::MPIBackend(const QUuid &uid)
+           : d(new MPILocalBackendPvt())
+{
+    //there is no need to split, as this is a local backend
+    //(and we can't talk to ourselves using MPI)
+    d->uid = uid;
+}
+
 /** Construct a backend to perform the work given to it by a master
     node (in the communicator 'communicator') */
 MPIBackend::MPIBackend(void *communicator, const QUuid &uid)
@@ -657,9 +639,13 @@ MPIBackend::MPIBackend(void *communicator, const QUuid &uid)
     MPI::Intracomm *comm_world = const_cast<MPI::Intracomm*>(
                                     static_cast<const MPI::Intracomm*>(communicator) );
                                     
+    qDebug() << MPINode::globalRank() << CODELOC;
     d->uid = uid;
+    qDebug() << MPINode::globalRank() << CODELOC;
     d->recv_comm = comm_world->Split(1, 1);
+    qDebug() << MPINode::globalRank() << CODELOC;
     d->send_comm = d->recv_comm.Clone();
+    qDebug() << MPINode::globalRank() << CODELOC;
 }
 
 /** Destructor */

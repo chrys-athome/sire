@@ -87,8 +87,7 @@ public:
     
     static int globalRank();
     
-    int exec();
-    void execBG();
+    void exec();
 
 protected:
     MPIFrontend start(const MPINode &node); // called by MPIFrontends
@@ -107,12 +106,13 @@ private:
            SHUTDOWN_MPI        = 0x0400    // backend
          };
 
+    void startLocalBackend(const QUuid &uid);
+    void stopLocalBackend(const QUuid &uid);
+
     void startBackend(const QUuid &uid);
     void stopBackend(const QUuid &uid);
     
     void stopAllBackends();
-    
-    int _pvt_exec();
     
     /** PIMPL pointer */
     boost::shared_ptr<detail::MPIBackendsPvt> d;

@@ -43,6 +43,7 @@
 #include <QSemaphore>
 #include <QUuid>
 #include <QList>
+#include <QThread>
 #include <QSet>
 
 #include <QDebug>
@@ -66,14 +67,21 @@ namespace detail
 {
 
 /** Private implementation of MPINodes */
-class MPINodesPvt
+class MPINodesPvt : public QThread
 {
 public:
-    MPINodesPvt(int num_nodes=0) : sem(num_nodes), mpicomm(0)
+    MPINodesPvt(int num_nodes=0) 
+            : data_mutex( QMutex::Recursive ), sem(num_nodes), mpicomm(0)
     {}
     
     ~MPINodesPvt()
     {
+        if (this->isRunning())
+        {
+            frontends.shutdown();
+            this->wait();
+        }
+    
         if (sem.available() > 0)
         {
             sem.acquire( sem.available() );
@@ -103,12 +111,20 @@ public:
     /** The MPI communicator used to broadcast messages to
         the nodes of this group */
     MPI::Intracomm mpicomm;
-
-    /** All of the frontends for the nodes */
+    
+    /** The frontends for all of the nodes - this is null until
+        'exec' is called */
     MPIFrontends frontends;
     
-    /** All of the backends for the nodes */
+    /** The backends for all of the nodes - this is null until
+        'exec' is called */
     MPIBackends backends;
+    
+protected:
+    void run()
+    {
+        backends.exec();
+    }
 };
 
 /** Private implementation of MPIBackendNodes */
@@ -192,18 +208,6 @@ MPINodes MPINodes::COMM_WORLD()
         
             comm_world->free_nodes.append(node);
         }
-
-        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
-        
-        //now get the frontends for these nodes
-        comm_world->frontends = getFrontEnds(nodes);
-
-        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
-        
-        //and the backends
-        comm_world->backends = getBackends(nodes);
-
-        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
     }
 
     qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
@@ -280,22 +284,35 @@ const void* MPINodes::communicator() const
 }
 
 /** Enter the event loop for these nodes */
-int MPINodes::exec()
+void MPINodes::exec()
 {
-    return d->backends.exec();
-}
+    qDebug() << CODELOC;
 
-/** Enter the event loop for these node in a background thread.
-    This function returns immediately */
-void MPINodes::execBG()
-{
-    d->backends.execBG();
+    if (d->isRunning())
+        //the event loop is already running
+        return;
+
+    qDebug() << CODELOC;
+
+    //first start the backends for these nodes in a background thread
+    d->backends = getBackends(*this);
+    qDebug() << CODELOC;
+
+    d->start();
+
+    qDebug() << CODELOC;
+    
+    //now create the front ends - this actually starts all of the backends
+    d->frontends = getFrontends(*this);
+
+    qDebug() << CODELOC;
 }
 
 /** Shutdown the MPI event loops on all nodes involved in this communicator */
 void MPINodes::shutdown()
 {
-    d->frontends.shutdown();
+    if (d->isRunning())
+        d->frontends.shutdown();
 }
 
 /** Return the number of nodes in this communicator */
@@ -338,19 +355,30 @@ const QUuid& MPINodes::getUID(int rank) const
 /** This indicates that a node has been returned to the pool of available nodes */
 void MPINodes::returnedNode()
 {
+    qDebug() << MPINode::globalRank() << CODELOC;
     QMutexLocker lkr( &(d->data_mutex) );
+
+    qDebug() << MPINode::globalRank() << CODELOC;
     
     //loop over the busy nodes and remove the ones that have finished
     QMutableHashIterator<QUuid,MPINodePtr> it(d->busy_nodes);
 
+    qDebug() << MPINode::globalRank() << CODELOC;
+
     int my_rank = d->mpicomm.Get_rank();
+
+    qDebug() << MPINode::globalRank() << CODELOC;
     
     while (it.hasNext())
     {
         it.next();
+
+        qDebug() << MPINode::globalRank() << CODELOC;
         
         if (it.value().isNull())
         {
+            qDebug() << MPINode::globalRank() << CODELOC;
+
             //the job has finished
             int rank = d->node_uids.indexOf(it.key());
             d->free_nodes.append( MPINode(*this, rank, rank == my_rank) );
@@ -359,9 +387,13 @@ void MPINodes::returnedNode()
             d->sem.release();
         }
     }
+
+    qDebug() << MPINode::globalRank() << CODELOC;
     
     BOOST_ASSERT( d->free_nodes.count() + d->busy_nodes.count() 
                                     == d->sem.available() );
+
+    qDebug() << MPINode::globalRank() << CODELOC;
 }
 
 MPINode MPINodes::_pvt_getNode()
@@ -573,19 +605,12 @@ const void* MPIBackendNodes::communicator() const
     return &(d->mpicomm);
 }
 
-/** Enter the event loop for these nodes */
-int MPIBackendNodes::exec()
+/** Enter the event loop for these node - this function blocks until
+    the event loop has finished */
+void MPIBackendNodes::exec()
 {
     MPIBackends backends = getBackends(*this);
-    return backends.exec();
-}
-
-/** Enter the event loop for these node in a background thread.
-    This function returns immediately */
-void MPIBackendNodes::execBG()
-{
-    MPIBackends backends = getBackends(*this);
-    backends.execBG();
+    backends.exec();
 }
 
 #else //ifdef __SIRE_USE_MPI__

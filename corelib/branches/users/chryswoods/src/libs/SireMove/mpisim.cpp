@@ -85,7 +85,7 @@ MPISimWorker MPISim::initialWorker()
     data mutex while calling this function */
 void MPISim::_pvt_setError(const SireError::exception &e)
 {
-    error_data = SireStream::save(e);
+    error_data = e.pack();
 }
 
 /** This internal function is used to transfer the job from 

@@ -53,8 +53,8 @@ class MPIFrontendPvt;
 class MPIFrontendsPvt;
 }
 
-MPIFrontend getFrontEnd(const MPINode &node);
-MPIFrontends getFrontEnds(const MPINodes &nodes);
+MPIFrontend getFrontend(const MPINode &node);
+MPIFrontends getFrontends(const MPINodes &nodes);
 
 /** This class provides a registry for all of the front ends
     for a particular MPI communicator. The front ends are only
@@ -65,7 +65,7 @@ MPIFrontends getFrontEnds(const MPINodes &nodes);
 class SIREMPI_EXPORT MPIFrontends
 {
 
-friend MPIFrontends getFrontEnds(const MPINodes &nodes);
+friend MPIFrontends getFrontends(const MPINodes &nodes);
 
 public:
     MPIFrontends();

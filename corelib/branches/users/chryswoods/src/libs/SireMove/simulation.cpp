@@ -160,7 +160,7 @@ void LocalSim::throwError()
 void LocalSim::setError(const SireError::exception &e)
 {
     QMutexLocker lkr(&data_mutex);
-    error_data = SireStream::save(e);
+    error_data = e.pack();
 }
 
 /** Clear any error condition */
