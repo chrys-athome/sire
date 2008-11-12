@@ -3,6 +3,7 @@ import os
 
 dirs = [ "Base", \
          "CAS", \
+         "Cluster", \
          "DB", \
          "FF", \
          "ID", \

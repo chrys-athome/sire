@@ -291,6 +291,7 @@ if __name__ == "__main__":
     
     modules = { "Base" : "SireBase",
                 "CAS" : "SireCAS",
+                "Cluster" : "SireCluster",
                 "DB" : "SireDB",
                 "FF" : "SireFF",
                 "ID" : "SireID",

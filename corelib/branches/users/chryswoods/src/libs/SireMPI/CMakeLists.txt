@@ -39,9 +39,6 @@ set ( SIREMPI_HEADERS
       mpinodes.h
       mpipromise.h
       mpiworker.h
-    
-      detail/mpidetail.h
- 
     )
 
 # Define the sources in SireMPI

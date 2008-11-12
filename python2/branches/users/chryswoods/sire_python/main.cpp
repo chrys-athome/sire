@@ -32,8 +32,8 @@ int main(int argc, char **argv)
 
             MPINodes nodes;
 
-            //start the MPI event loop in the background
-            nodes.execBG();
+            //start the MPI event loop (this runs the loop in the background)
+            nodes.exec();
 
             //now run python
             Py_Initialize();
@@ -51,7 +51,9 @@ int main(int argc, char **argv)
             MPIBackendNodes nodes;
 
             //this blocks until the nodes are shutdown
-            status = nodes.exec();
+            nodes.exec();
+
+            status = 0;
         }
     }
     catch(const SireError::exception &e)
