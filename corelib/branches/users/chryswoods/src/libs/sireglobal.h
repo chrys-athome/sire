@@ -346,6 +346,7 @@ class QTextStream;
 //Eventually these will need to be changed to work properly on windows...
 #define SIREBASE_EXPORT SIRE_EXPORT
 #define SIRECAS_EXPORT SIRE_EXPORT
+#define SIRECLUSTER_EXPORT SIRE_EXPORT
 #define SIREDB_EXPORT SIRE_EXPORT
 #define SIREERROR_EXPORT SIRE_EXPORT
 #define SIREFF_EXPORT SIRE_EXPORT

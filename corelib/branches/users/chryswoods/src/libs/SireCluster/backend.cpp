@@ -26,3 +26,128 @@
   *
 \*********************************************/
 
+#include "backend.h"
+
+using namespace SireCluster;
+
+using boost::shared_ptr;
+
+/////////
+///////// Implementation of BackendBase
+/////////
+
+/** Constructor */
+BackendBase::BackendBase() 
+            : boost::noncopyable(),
+              datamutex(QMutex::Recursive)
+{}
+
+/** Protected constructor used to set the UID */
+BackendBase::BackendBase(const QUuid &node_uid) 
+            : boost::noncopyable(),
+              uid(node_uid), datamutex(QMutex::Recursive)
+{}
+
+/** Destructor */    
+BackendBase::~BackendBase()
+{}
+
+/** Return whether or not this is a null backend */
+bool BackendBase::isNull() const
+{
+    return uid.isNull();
+}
+
+/** Return the unique ID for the node connected to this backend */
+const QUuid& BackendBase::UID() const
+{
+    return uid;
+}
+
+/////////
+///////// Implementation of Backend
+/////////
+
+/** Construct a null backend */
+Backend::Backend()
+{}
+
+/** Construct a backend from the passed pointer */
+Backend::Backend( const boost::shared_ptr<BackendBase> &ptr )
+        : d(ptr)
+{}
+
+/** Copy constructor */
+Backend::Backend(const Backend &other)
+        : d(other.d)
+{}        
+
+/** Destructor */
+Backend::~Backend()
+{}
+
+/** Copy assignment operator */
+Backend& Backend::operator=(const Backend &other)
+{
+    d = other.d;
+    return *this;
+}
+
+/** Comparison operator */
+bool Backend::operator==(const Backend &other) const
+{
+    return d.get() == other.d.get();
+}
+
+/** Comparison operator */
+bool Backend::operator!=(const Backend &other) const
+{
+    return d.get() != other.d.get();
+}
+
+/** Return the UID of the node connected to the backend */
+QUuid Backend::UID() const
+{
+    if (d.get() == 0)
+        return QUuid();
+    else
+        return d->UID();
+}
+
+/** Return whether or not the backend's event loop is running */
+bool Backend::isRunning()
+{
+    QMutexLocker lkr( &(d->datamutex) );
+    return d->isRunning();
+}
+
+/** Start the event loop on the backend */
+void Backend::start()
+{
+    QMutexLocker lkr( &(d->datamutex) );
+    
+    if (d->isRunning())
+        return;
+        
+    d->start();
+}
+
+/** Stop the event loop on the backend */
+void Backend::stop()
+{
+    QMutexLocker lkr( &(d->datamutex) );
+
+    if (not d->isRunning())
+        return;
+        
+    d->stop();
+}
+
+/** Wait for the event loop to finish */
+void Backend::wait()
+{
+    QMutexLocker lkr( &(d->datamutex) );
+    
+    if (d->isRunning())
+        d->wait();
+}

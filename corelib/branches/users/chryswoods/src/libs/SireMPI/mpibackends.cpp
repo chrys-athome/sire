@@ -619,13 +619,13 @@ MPIBackend::MPIBackend()
 {}
 
 /** Construct a backend that performs the work given to it by this node */
-MPIBackend::MPIBackend(const QUuid &uid)
+/*MPIBackend::MPIBackend(const QUuid &uid)
            : d(new MPILocalBackendPvt())
 {
     //there is no need to split, as this is a local backend
     //(and we can't talk to ourselves using MPI)
     d->uid = uid;
-}
+}*/
 
 /** Construct a backend to perform the work given to it by a master
     node (in the communicator 'communicator') */
