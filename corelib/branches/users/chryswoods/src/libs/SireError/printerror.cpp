@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2008  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,28 +26,42 @@
   *
 \*********************************************/
 
-#include <Python.h>
-#include <boost/python.hpp>
+#include <QTextStream>
 
-#include "sireglobal.h"
-
-#include "SireError/getbacktrace.h"
-#include "SireError/printerror.h"
+#include "printerror.h"
 #include "SireError/exception.h"
-
-#include "wrap_SireError.h"
 
 namespace SireError
 {
 
-void export_exceptions();
-
-void SIREERROR_EXPORT export_SireError()
+void printAaargh(QTextStream &ts)
 {
-    export_exceptions();
+    ts << " ^   ^  \n"
+       << " O   O  \n"
+       << "   \"   \n"
+       << " /\"\"\"\\   AAAAAARRRRGGGHHHH!!!!!!!\n"
+       << " \\___/\n";
+}
 
-    boost::python::def( "getBackTrace", &SireError::getBackTrace );
-    boost::python::def( "printError", (void (*)(const QString&))&SireError::printError );
+/** Print the error 'text' to standard output */
+void SIREERROR_EXPORT printError(const QString &text)
+{
+    QTextStream ts(stdout);
+    
+    ts << "\n**********************************************************\n"
+       << "Something went wrong with the simulation. Here's the error\n"
+       << "**********************************************************\n\n"
+       << text
+       << "\n\nSorry - your simulation terminated with an error. Scroll back up\n"
+       << "to the top of the error to work out what has gone wrong.\n\n";
+    
+    printAaargh(ts);
+}
+
+/** Print the error 'e' to standard output */
+void SIREERROR_EXPORT printError(const SireError::exception &e)
+{
+    SireError::printError( e.toString() );
 }
 
 }

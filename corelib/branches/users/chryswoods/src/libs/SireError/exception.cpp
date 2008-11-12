@@ -35,6 +35,8 @@
 
 #include <QDataStream>
 
+#include <QDebug>
+
 using namespace SireError;
 using namespace SireStream;
 
@@ -89,6 +91,8 @@ QByteArray exception::pack() const
     
     QDataStream ds(&data, QIODevice::WriteOnly);
     
+    qDebug() << "Saving an exception of type" << this->what();
+    
     //get the ID number of this type
     int id = QMetaType::type( this->what() );
 
@@ -120,6 +124,8 @@ boost::shared_ptr<SireError::exception> exception::unpack(const QByteArray &data
     QString type_name;
     
     ds >> type_name;
+    
+    qDebug() << "Loading an exception of type" << type_name;
     
     //get the type that represents this name
     int id = QMetaType::type( type_name.toLatin1().constData() );

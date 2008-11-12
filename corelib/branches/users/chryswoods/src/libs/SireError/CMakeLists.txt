@@ -18,6 +18,7 @@ set ( SIREERROR_HEADERS
       errors.h
       exception.h
       getbacktrace.h
+      printerror.h
       version_error.h
     )
 
@@ -26,6 +27,7 @@ set ( SIREERROR_SOURCES
       errors.cpp
       exception.cpp
       getbacktrace.cpp
+      printerror.cpp
     
       ${SIREERROR_HEADERS}
     )

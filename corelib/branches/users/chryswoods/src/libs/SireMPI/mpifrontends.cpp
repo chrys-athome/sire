@@ -49,7 +49,7 @@ using boost::shared_ptr;
 
 Q_GLOBAL_STATIC( QMutex, registryMutex );
 
-static QHash<const void*, MPIFrontends*> frontends_registry;
+static QHash<const void*, MPIFrontends> frontends_registry;
 
 namespace SireMPI
 {
@@ -61,11 +61,10 @@ MPIFrontends SIREMPI_EXPORT getFrontEnds(const MPINodes &nodes)
     
     if (not frontends_registry.contains(nodes.communicator()))
     {
-        frontends_registry.insert( nodes.communicator(),
-                                   new MPIFrontends(nodes,true) );
+        frontends_registry.insert( nodes.communicator(), MPIFrontends(nodes,true) );
     }
     
-    return *( frontends_registry.value(nodes.communicator()) );
+    return frontends_registry.value(nodes.communicator());
 }
 
 /** Return the MPI frontend for the node 'node' */
@@ -156,18 +155,30 @@ MPIFrontends::MPIFrontends(const MPIFrontends &other) : d(other.d)
 MPIFrontends::MPIFrontends(MPINodes nodes, bool)
              : d( new MPIFrontendsPvt() )
 {
+    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
+
     d->nodes_ptr = nodes;
+
+    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
 
     //start a backend for each of the nodes
     QList<MPINode> mpinodes = nodes.getNFreeNodes(nodes.count());
+
+    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
     
     MPIBackends backends = getBackends(nodes);
+
+    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
     
     //start a backend on each node
     foreach (MPINode mpinode, mpinodes)
     {
+        qDebug() << MPI::COMM_WORLD.Get_rank() << mpinode.UID().toString() << CODELOC;
         d->registry.insert( mpinode.UID(), backends.start(mpinode) );
+        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
     }
+
+    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
 }
 
 /** Constructor - holds all of the front ends for the nodes in 'nodes' */

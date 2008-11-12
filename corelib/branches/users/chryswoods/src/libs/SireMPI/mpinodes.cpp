@@ -147,10 +147,16 @@ static shared_ptr<MPINodesPvt> comm_world;
 /** Return the nodes that corresponds to MPI::COMM_WORLD */
 MPINodes MPINodes::COMM_WORLD()
 {
+    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
+
     QMutexLocker lkr( commWorldMutex() );
+
+    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
     
     if (comm_world.get() == 0)
     {
+        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
+
         //ensure that MPI is initialized
         if (not MPI::Is_initialized())
         {
@@ -158,6 +164,8 @@ MPINodes MPINodes::COMM_WORLD()
             char **argv=0;
             MPI::Init(argc, argv);
         }
+
+        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
         
         //now create a clone of MPI::COMM_WORLD that is
         //used to broadcast information to the nodes
@@ -165,6 +173,8 @@ MPINodes MPINodes::COMM_WORLD()
         
         int nnodes = mpicomm.Get_size();
         int my_rank = mpicomm.Get_rank();
+
+        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
         
         comm_world.reset( new MPINodesPvt(nnodes) );
         comm_world->mpicomm = mpicomm;
@@ -174,19 +184,29 @@ MPINodes MPINodes::COMM_WORLD()
         //now create all of the nodes
         for (int i=0; i<nnodes; ++i)
         {
+            qDebug() << MPI::COMM_WORLD.Get_rank() << i << CODELOC;
+
             comm_world->node_uids.append( QUuid::createUuid() );
 
             MPINode node(nodes, i, i==my_rank);
         
             comm_world->free_nodes.append(node);
         }
+
+        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
         
         //now get the frontends for these nodes
         comm_world->frontends = getFrontEnds(nodes);
+
+        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
         
         //and the backends
         comm_world->backends = getBackends(nodes);
+
+        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
     }
+
+    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
     
     return MPINodes(comm_world);
 }
@@ -257,6 +277,25 @@ const void* MPINodes::communicator() const
 {
     QMutexLocker lkr( &(d->data_mutex) );
     return &(d->mpicomm);
+}
+
+/** Enter the event loop for these nodes */
+int MPINodes::exec()
+{
+    return d->backends.exec();
+}
+
+/** Enter the event loop for these node in a background thread.
+    This function returns immediately */
+void MPINodes::execBG()
+{
+    d->backends.execBG();
+}
+
+/** Shutdown the MPI event loops on all nodes involved in this communicator */
+void MPINodes::shutdown()
+{
+    d->frontends.shutdown();
 }
 
 /** Return the number of nodes in this communicator */
@@ -532,6 +571,21 @@ int MPIBackendNodes::count() const
 const void* MPIBackendNodes::communicator() const
 {
     return &(d->mpicomm);
+}
+
+/** Enter the event loop for these nodes */
+int MPIBackendNodes::exec()
+{
+    MPIBackends backends = getBackends(*this);
+    return backends.exec();
+}
+
+/** Enter the event loop for these node in a background thread.
+    This function returns immediately */
+void MPIBackendNodes::execBG()
+{
+    MPIBackends backends = getBackends(*this);
+    backends.execBG();
 }
 
 #else //ifdef __SIRE_USE_MPI__

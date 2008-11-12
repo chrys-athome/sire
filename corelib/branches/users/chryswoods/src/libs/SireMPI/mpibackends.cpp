@@ -38,6 +38,7 @@
 #include "mpinodes.h"
 
 #include "SireError/errors.h"
+#include "SireError/printerror.h"
 
 #include "SireStream/streamdata.hpp"
 
@@ -336,17 +337,6 @@ void MPIBackends::stop(const QUuid &uid)
     this->broadcastMessage(STOP_MPI_BACKEND, data);
 }
 
-static void writeErrorString(const QString &location, 
-                             const SireError::exception &e)
-{
-    QTextStream ts(stdout);
-    
-    ts << QObject::tr(" ** FATAL ERROR ON NODE %1 **\n"
-                      " ** LOCATION %2 **\n%3\n")
-                .arg(MPI::COMM_WORLD.Get_rank())
-                .arg(location, e.toString());
-}
-
 static QUuid readUID(const QByteArray &data)
 {
     QDataStream ds(data);
@@ -360,18 +350,28 @@ static QUuid readUID(const QByteArray &data)
     of nodes 'nodes' */
 int MPIBackends::_pvt_exec()
 {
+    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
+
     QMutexLocker lkr( &(d->execmutex) );
+
+    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
 
     BOOST_ASSERT( MPI::Is_initialized() );
     BOOST_ASSERT( d->comm_world != 0 );
+
+    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
    
     //get our rank in the MPINodes communicator
     int my_mpirank = d->comm_world->Get_rank();
+
+    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
     
     //now go into a loop waiting for instructions
     bool keep_looping = true;
 
     int master_rank = 0;
+
+    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
 
     do
     {   
@@ -381,29 +381,45 @@ int MPIBackends::_pvt_exec()
             int message[3];
             QByteArray data;
 
+            qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
+
             //ensure that only one message can be broadcast at a time
             QMutexLocker lkr( &(d->message_mutex) );
+
+            qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
             
             if (my_mpirank == master_rank)
             {
+                qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
+
                 //wait for the message to be broadcast
                 d->message_waiter.wait( &(d->message_mutex) );
+
+                qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
                 
                 //ok - copy the message to be broadcast
                 for (int i=0; i<3; ++i)
                     message[i] = d->message.envelope[i];
             }
+
+            qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
             
             //wait for instructions that are broadcast to all nodes
             //from node 0
             d->comm_world->Bcast( message, 3, MPI::INT, master_rank );
+        
+            qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
 
             //now get the data that is broadcast to all nodes
             if (message[2] > 0)
             {
+                qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
+
                 data = QByteArray(message[2] + 1, ' ');
                 d->comm_world->Bcast( data.data(), message[2], MPI::BYTE,
                                       master_rank );
+                
+                qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
             }
 
             //what is the message?
@@ -451,15 +467,15 @@ int MPIBackends::_pvt_exec()
         }
         catch(const SireError::exception &e)
         {
-            ::writeErrorString(CODELOC, e);
+            SireError::printError(e);
         }
         catch(const std::exception &e)
         {
-            ::writeErrorString(CODELOC, SireError::std_exception(e));
+            SireError::printError(SireError::std_exception(e));
         }
         catch(...)
         {
-            ::writeErrorString(CODELOC, 
+            SireError::printError( 
                     SireError::unknown_exception("An unknown error occured!", 
                                                   CODELOC));
         }
@@ -487,8 +503,12 @@ public:
     
     void start(MPIBackends mpibackends)
     {
+        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
         backends = mpibackends;
+
+        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
         QThread::start();
+        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
     }
 
     bool isRunning() const
@@ -504,22 +524,25 @@ public:
 protected:
     void run()
     {
+        qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
         try
         {
+            qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
             backends.exec();
+            qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
             return;
         }
         catch(const SireError::exception &e)
         {
-            ::writeErrorString(CODELOC, e);
+             SireError::printError(e);
         }
         catch(const std::exception &e)
         {
-            ::writeErrorString(CODELOC, SireError::std_exception(e));
+            SireError::printError(SireError::std_exception(e));
         }
         catch(...)
         {
-            ::writeErrorString(CODELOC, 
+            SireError::printError( 
                     SireError::unknown_exception("An unknown error occured!", 
                                                     CODELOC));
         }
@@ -536,8 +559,12 @@ void MPIBackends::execBG()
     //use an object to start and stop the loop
     //(as hopefully the object will be deleted when the library
     // exits, and thus an MPI shutdown will be called)
+    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
     SireMPI_ExecRunner *runner = new SireMPI_ExecRunner();
+
+    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
     runner->start(*this);
+    qDebug() << MPI::COMM_WORLD.Get_rank() << CODELOC;
 
     //eventually need to delete runner or we'll have a memory leak...
 }
@@ -831,15 +858,15 @@ void MPIBackendPvt::run()
     }
     catch(const SireError::exception &e)
     {
-        ::writeErrorString(CODELOC, e);
+        SireError::printError(e);
     }
     catch(const std::exception &e)
     {
-        ::writeErrorString(CODELOC, SireError::std_exception(e));
+        SireError::printError(SireError::std_exception(e));
     }
     catch(...)
     {
-        ::writeErrorString(CODELOC, 
+        SireError::printError( 
                  SireError::unknown_exception("An unknown error occured!", CODELOC));
     }
 }
