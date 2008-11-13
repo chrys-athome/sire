@@ -37,6 +37,8 @@
 
 #include "QTime.pypp.hpp"
 
+#include "QUuid.pypp.hpp"
+
 #include "QVariant.pypp.hpp"
 
 #include "SortFlags.pypp.hpp"
@@ -113,6 +115,8 @@ BOOST_PYTHON_MODULE(_Qt){
     bp::implicitly_convertible< QString, QFile >();
 
     bp::implicitly_convertible< QString, QDir >();
+
+    register_QUuid_class();
 
     register_QVariant_class();
 }

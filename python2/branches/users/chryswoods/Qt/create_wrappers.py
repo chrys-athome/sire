@@ -23,6 +23,7 @@ wrap_classes = [ "QDir",
                  "QDateTime",
                  "QDate",
                  "QTime",
+                 "QUuid",
                  "QVariant",
                  
                  "QFlags<QDir::SortFlag>",

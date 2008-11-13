@@ -44,6 +44,7 @@ set ( WRAPQT_SOURCES
       QtGlobal.py.cpp
       
       QTime.pypp.cpp
+      QUuid.pypp.cpp
       QVariant.pypp.cpp
       
       SortFlags.pypp.cpp

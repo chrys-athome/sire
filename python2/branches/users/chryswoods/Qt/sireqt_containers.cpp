@@ -32,6 +32,7 @@
 #include <QVector>
 #include <QSet>
 #include <QStringList>
+#include <QUuid>
 
 #include <boost/tuple/tuple.hpp>
 
@@ -74,6 +75,8 @@ void register_SireQt_containers()
 
     register_list< QVector<QByteArray> >();
     register_list< QList<QByteArray> >();
+
+    register_list< QList<QUuid> >();
 
     register_list< QVector<QVariant> >();
     register_list< QList<QVariant> >();
