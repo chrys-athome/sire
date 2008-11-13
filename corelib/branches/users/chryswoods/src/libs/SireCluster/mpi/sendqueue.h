@@ -26,75 +26,64 @@
   *
 \*********************************************/
 
-#ifndef SIRECLUSTER_MPI_MPICLUSTER_H
-#define SIRECLUSTER_MPI_MPICLUSTER_H
+#ifndef SIRECLUSTER_MPI_SENDQUEUE_H
+#define SIRECLUSTER_MPI_SENDQUEUE_H
 
 #ifdef __SIRE_USE_MPI__
 
-#include "sireglobal.h"
+#include <mpi.h>  // must be at the top, as that is what mpich needs
 
-#include <QUuid>
-#include <QList>
+#include <QQueue>
+#include <QThread>
+#include <QMutex>
+#include <QWaitCondition>
+
+#include <boost/noncopyable.hpp>
+
+#include "messages.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireCluster
 {
 
-class Frontend;
-class Backend;
-
 namespace MPI
 {
 
-class Message;
-
-namespace detail
-{
-class MPIClusterPvt;
-}
-
-/** This class provides the global interface to all of the
-    MPI nodes in the cluster (and, on the root node, the 
-    global registry of all nodes available via MPI)
+/** This is a simple queue that is used to send all of the MPI messages.
+    This ensures that each node only sends one message at a time using
+    the global Send communicator (other messages may be sent using
+    point-to-point communicators).
     
-    This is a private class which is only available internally
-    to SireCluster if MPI is available
-
     @author Christopher Woods
 */
-class MPICluster
+class SendQueue : private QThread, public boost::noncopyable
 {
 public:
-    ~MPICluster();
-
-    static void registerBackend(const Backend &backend);
-    static Frontend getFrontend(const QUuid &uid);
+    SendQueue(::MPI::Intracomm &send_comm);
+    ~SendQueue();
     
-    static QList<QUuid> UIDs();
-    
-    static void shutdown();
-
-    static int master();
-    static int getRank();
-    static bool isMaster();
-
-    static void send(const Message &message);
-    static void received(const Message &message);
-
-    //functions called by MPI messages
-    static void registerBackend(int rank, const QUuid &uid);
-    static void informedShutdown();
-
-private:
-    MPICluster();
-
-    static MPICluster& cluster();
-
     void start();
-
-    /** Private implementation of MPICluster */
-    boost::shared_ptr<detail::MPIClusterPvt> d;
+    
+    void send(const Message &message);
+    
+    void stop();
+    
+protected:
+    void run();
+    
+private:
+    /** Mutex to protect access to the queue of messages to send */
+    QMutex datamutex;
+    
+    /** Wait condition used to sleep until there is a message to send */
+    QWaitCondition waiter;
+    
+    /** The communicator to use to send messages */
+    ::MPI::Intracomm send_comm;
+    
+    /** The list of messages to send */
+    QQueue<Message> message_queue;
 };
 
 } // end of namespace MPI
@@ -104,5 +93,5 @@ private:
 SIRE_END_HEADER
 
 #endif // __SIRE_USE_MPI__
-
 #endif
+

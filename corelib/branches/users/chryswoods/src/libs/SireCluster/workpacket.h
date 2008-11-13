@@ -142,7 +142,6 @@ friend QDataStream& ::operator>>(QDataStream&, WorkPacket&);
 
 public:
     WorkPacket();
-    WorkPacket(const QByteArray &data);
     WorkPacket(const WorkPacketBase &work);
     WorkPacket(const WorkPacket &other);
     
@@ -159,9 +158,6 @@ public:
     {
         return WorkPacket::typeName();
     }
-
-    static WorkPacket load(const QByteArray &data);
-    QByteArray save() const;
 
     bool isNull() const;
 

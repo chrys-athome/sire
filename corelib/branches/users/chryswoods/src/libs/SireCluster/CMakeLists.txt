@@ -24,15 +24,21 @@ if (MPI_FOUND)
 
   set ( SIRECLUSTER_MPI_HEADERS
 
+        mpi/messages.h
         mpi/mpicluster.h
         mpi/mpifrontend.h
+        mpi/receivequeue.h
+        mpi/sendqueue.h
 
       )
 
   set ( SIRECLUSTER_MPI_SOURCES
 
+        mpi/messages.cpp
         mpi/mpicluster.cpp
         mpi/mpifrontend.cpp
+        mpi/receivequeue.cpp
+        mpi/sendqueue.cpp
 
       )
 

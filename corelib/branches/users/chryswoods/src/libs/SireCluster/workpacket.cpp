@@ -237,13 +237,6 @@ QDataStream SIRECLUSTER_EXPORT &operator>>(QDataStream &ds, WorkPacket &workpack
 WorkPacket::WorkPacket()
 {}
 
-/** Construct from the passed binary data */
-WorkPacket::WorkPacket(const QByteArray &data)
-{
-    QDataStream ds(data);
-    ds >> *this;
-}
-
 /** Construct from the passed work object */
 WorkPacket::WorkPacket(const WorkPacketBase &work) : d(work)
 {}
@@ -273,27 +266,6 @@ WorkPacket& WorkPacket::operator=(const WorkPacket &other)
 bool WorkPacket::isNull() const
 {
     return d.constData() == 0;
-}
-
-/** Create and load a work packet from the passed data */
-WorkPacket WorkPacket::load(const QByteArray &data)
-{
-    return WorkPacket(data);
-}
-
-/** Save this workpacket to a binary array */
-QByteArray WorkPacket::save() const
-{
-    QByteArray data;
-    
-    //reserve 8MB of space - this prevents too many reallocations
-    data.reserve( 8 * 1024 * 1024 );
-    
-    QDataStream ds(&data, QIODevice::WriteOnly);
-    
-    ds << *this;
-    
-    return data;
 }
 
 /** Reset the WorkPacket back to its initial state */
