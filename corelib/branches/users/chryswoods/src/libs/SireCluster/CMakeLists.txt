@@ -9,6 +9,38 @@
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+find_package( MPI )
+
+if (MPI_FOUND)
+  message( STATUS " ** Adding MPI support to SireCluster ** " )
+  message( STATUS "MPI headers: ${MPI_INCLUDE_PATH}" )
+  message( STATUS "MPI libraries: ${MPI_LIBRARY} ${MPI_EXTRA_LIBRARY}" )
+
+  include_directories( BEFORE SYSTEM ${MPI_INCLUDE_PATH} )
+
+  add_definitions( -D__SIRE_USE_MPI__ )
+
+  set ( SIRECLUSTER_EXTRA_LIBRARIES ${MPI_LIBRARY} ${MPI_EXTRA_LIBRARY} )
+
+  set ( SIRECLUSTER_MPI_HEADERS
+
+        mpi/mpicluster.h
+        mpi/mpifrontend.h
+
+      )
+
+  set ( SIRECLUSTER_MPI_SOURCES
+
+        mpi/mpicluster.cpp
+        mpi/mpifrontend.cpp
+
+      )
+
+else()
+  message( STATUS "SireCluster will be compiled without MPI support." )   
+
+endif()
+
 # Define the headers in SireCluster
 set ( SIRECLUSTER_HEADERS
 
@@ -40,6 +72,9 @@ set ( SIRECLUSTER_SOURCES
       promise.cpp
       workpacket.cpp
  
+      ${SIRECLUSTER_MPI_SOURCES}
+      ${SIRECLUSTER_MPI_HEADERS}
+
       ${SIRECLUSTER_HEADERS}
     )
 
@@ -56,6 +91,7 @@ target_link_libraries (SireCluster
                        SireBase
                        SireError
                        SireStream
+                       ${SIRECLUSTER_EXTRA_LIBRARIES}
                        )
 
 # installation
@@ -67,3 +103,4 @@ install( TARGETS SireCluster EXPORT SireLibraries
 
 install( FILES ${SIRECLUSTER_HEADERS}
          DESTINATION ${SIRE_INCLUDES}/SireCluster )
+

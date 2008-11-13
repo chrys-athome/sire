@@ -26,68 +26,66 @@
   *
 \*********************************************/
 
-#ifndef SIRECLUSTER_CLUSTER_H
-#define SIRECLUSTER_CLUSTER_H
+#ifndef SIRECLUSTER_MPI_MPICLUSTER_H
+#define SIRECLUSTER_MPI_MPICLUSTER_H
+
+#ifdef __SIRE_USE_MPI__
 
 #include "sireglobal.h"
 
 #include <QUuid>
 #include <QList>
 
-#include <boost/shared_ptr.hpp>
-
 SIRE_BEGIN_HEADER
 
 namespace SireCluster
 {
 
-class Backend;
 class Frontend;
+class Backend;
 
 namespace detail
 {
-class ClusterPvt;
+class MPIClusterPvt;
 }
 
-/** This class provides the global registry for all nodes in the cluster.
-    A node is defined as a resource that can run a WorkPacket. A node
-    consists of a Backend (the object in which the WorkPacket is 
-    run) and a Frontend (the object that allows the node to communicate
-    with the Backend)
+/** This class provides the global interface to all of the
+    MPI nodes in the cluster (and, on the root node, the 
+    global registry of all nodes available via MPI)
     
+    This is a private class which is only available internally
+    to SireCluster if MPI is available
+
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT Cluster
+class MPICluster
 {
 public:
-    ~Cluster();
-    
+    ~MPICluster();
+
     static void registerBackend(const Backend &backend);
     
     static Frontend getFrontend(const QUuid &uid);
-
-    static QList<QUuid> localUIDs();
     
     static QList<QUuid> UIDs();
-
+    
     static void shutdown();
 
-    static bool supportsMPI();
-
 private:
-    static Cluster& cluster();
+    MPICluster();
 
-    Cluster();
+    static MPICluster& cluster();
 
     void start();
 
-    boost::shared_ptr<detail::ClusterPvt> d;
+    /** Private implementation of MPICluster */
+    boost::shared_ptr<detail::MPIClusterPvt> d;
 };
 
 }
 
-SIRE_EXPOSE_CLASS( SireCluster::Cluster )
-
 SIRE_END_HEADER
+
+#endif // __SIRE_USE_MPI__
 
 #endif

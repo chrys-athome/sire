@@ -32,8 +32,11 @@
 #include "backend.h"
 #include "frontend.h"
 
+#ifdef __SIRE_USE_MPI__
+#include "mpi/mpicluster.h"
+#endif
+
 using namespace SireCluster;
-//using namespace SireMPI;
 
 using boost::shared_ptr;
 
@@ -52,9 +55,6 @@ public:
     ~ClusterPvt()
     {}
     
-    /** Mutex to protect access to this cluster */
-    QMutex datamutex;
-    
     /** The registry of all backends that are local to this 
         address space */
     QHash<QUuid,Backend> local_backends;
@@ -65,7 +65,20 @@ public:
 
 using namespace SireCluster::detail;
 
-Q_GLOBAL_STATIC( Cluster, globalCluster );
+Q_GLOBAL_STATIC_WITH_ARGS( QMutex, globalMutex, QMutex::Recursive );
+
+static Cluster *global_cluster(0);
+
+static Cluster& Cluster::globalCluster()
+{
+    if (global_cluster == 0)
+    {
+        global_cluster = new Cluster();
+        global_cluster->start();
+    }
+    
+    return *global_cluster;
+}
 
 /** Constructor */
 Cluster::Cluster() : d( new ClusterPvt() )
@@ -75,23 +88,32 @@ Cluster::Cluster() : d( new ClusterPvt() )
 Cluster::~Cluster()
 {}
 
+/** Start the cluster */
+void Cluster::start()
+{
+    QMutexLocker lkr( globalMutex() );
+    
+    //create a backend that is local to this node
+    Backend::create();
+}
+
 /** Register the backend 'backend' with the cluster */
 void Cluster::registerBackend(const Backend &backend)
 {
     if (backend.isNull())
         return;
+    
+    QMutexLocker lkr( globalMutex() );
         
-    Cluster *cluster = globalCluster();
-    
-    QMutexLocker lkr( &(cluster->d->datamutex) );
-    
-    if (not cluster->d->local_backends.contains(backend.UID()))
+    if (not cluster().d->local_backends.contains(backend.UID()))
     {
-        cluster->d->local_backends.insert( backend.UID(), backend );
+        cluster().d->local_backends.insert( backend.UID(), backend );
         
-        //now inform the MPI connected nodes that a backend with this
-        //UID is available on this node
-        //SireMPI::MPICluster::registerBackend(backend);
+        #ifdef __SIRE_USE_MPI__
+            //now inform the MPI connected nodes that a backend with this
+            //UID is available on this node
+            MPICluster::registerBackend(backend);
+        #endif
     }
 }
 
@@ -103,19 +125,23 @@ Frontend Cluster::getFrontend(const QUuid &uid)
     if (uid.isNull())
         return Frontend();
 
-    Cluster *cluster = globalCluster();
+    QMutexLocker lkr( globalMutex() );
     
-    QMutexLocker lkr( &(cluster->d->datamutex) );
-    
-    if (cluster->d->local_backends.contains(uid))
+    if (cluster().d->local_backends.contains(uid))
     {
         //return a local frontend for this local backend
-        return Frontend( cluster->d->local_backends.value(uid) );
+        return Frontend( cluster().d->local_backends.value(uid) );
     }
     else
     {
-        //see if this node exists on any of the MPI nodes...
-        return Frontend(); // SireMPI::MPICluster::getFrontend(uid);
+        lkr.unlock();
+        
+        #ifdef __SIRE_USE_MPI__
+            //see if this node exists on any of the MPI nodes...
+            return MPICluster::getFrontend(uid);
+        #else
+            return Frontend();
+        #endif
     }
 }
 
@@ -123,32 +149,50 @@ Frontend Cluster::getFrontend(const QUuid &uid)
     (the nodes that exist in this address space) */
 QList<QUuid> Cluster::localUIDs()
 {
-    Cluster *cluster = globalCluster();
+    QMutexLocker lkr( globalMutex() );
     
-    QMutexLocker lkr( &(cluster->d->datamutex) );
-    
-    return cluster->d->local_backends.keys();
+    return cluster().d->local_backends.keys();
 }
 
 /** Return the list of all of the UIDs of all of the nodes 
     in this entire cluster */
 QList<QUuid> Cluster::UIDs()
 {
-    return QList<QUuid>(); // SireMPI::MPICluster::UIDs();
+    #ifdef __SIRE_USE_MPI__
+        return MPICluster::UIDs();
+    #else
+        return Cluster::localUIDs();
+    #endif
 }
 
 /** Shutdown this cluster */
 void Cluster::shutdown()
 {
-    Cluster *cluster = globalCluster();
+    QMutexLocker lkr( globalMutex() );
+
+    if (global_cluster == 0)
+    {
+        //the cluster has already shutdown
+        return;
+    }
     
-    QMutexLocker lkr( &(cluster->d->datamutex) );
+    Cluster &c = cluster();
+
+    #ifdef __SIRE_USE_MPI__
+        //shutdown MPI - this stops the backends from 
+        //receiving any more work from remote nodes
+        MPICluster::shutdown();
+    #endif
     
     //shutdown all of the backends
-    for (QHash<QUuid,Backend>::iterator it = cluster->d->local_backends.begin();
-         it != cluster->d->local_backends.end();
+    for (QHash<QUuid,Backend>::iterator it = c.d->local_backends.begin();
+         it != c.d->local_backends.end();
          ++it)
     {
         it.value().shutdown();
     }
+    
+    //delete the cluster
+    delete global_cluster;
+    global_cluster = 0;
 }
