@@ -26,3 +26,61 @@
   *
 \*********************************************/
 
+#ifndef SIRECLUSTER_CLUSTER_H
+#define SIRECLUSTER_CLUSTER_H
+
+#include "sireglobal.h"
+
+#include <QUuid>
+#include <QList>
+
+#include <boost/shared_ptr.hpp>
+
+SIRE_BEGIN_HEADER
+
+namespace SireCluster
+{
+
+class Backend;
+class Frontend;
+
+namespace detail
+{
+class ClusterPvt;
+}
+
+/** This class provides the registry for all nodes in the cluster.
+    A node is defined as a resource that can run a WorkPacket. A node
+    consists of a Backend (the object in which the WorkPacket is 
+    run) and a Frontend (the object that allows the node to communicate
+    with the Backend)
+    
+    @author Christopher Woods
+*/
+class SIRECLUSTER_EXPORT Cluster
+{
+public:
+    Cluster();
+    ~Cluster();
+    
+    static void registerBackend(const Backend &backend);
+    
+    static Frontend getFrontend(const QUuid &uid);
+
+    static QList<QUuid> localUIDs();
+    
+    static QList<QUuid> UIDs();
+
+    static void shutdown();
+
+private:
+    boost::shared_ptr<detail::ClusterPvt> d;
+};
+
+}
+
+SIRE_EXPOSE_CLASS( SireCluster::Cluster )
+
+SIRE_END_HEADER
+
+#endif

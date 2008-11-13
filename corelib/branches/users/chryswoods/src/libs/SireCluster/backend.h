@@ -31,65 +31,21 @@
 
 #include "sireglobal.h"
 
-#include <QUuid>
-#include <QMutex>
-
 #include <boost/shared_ptr.hpp>
-#include <boost/noncopyable.hpp>
+
+#include <QUuid>
 
 SIRE_BEGIN_HEADER
 
 namespace SireCluster
 {
 
-class Backend;
-class Backends;
-class Frontend;
+class WorkPacket;
 
-/** This is the virtual base class of all backends - these are held
-    in a Backend object - and are responsible for actually receiving
-    the work packet from the Frontend, performing the result, and then
-    returning the completed work packet back to the frontend 
-    
-    @author Christopher Woods
-*/
-class SIRECLUSTER_EXPORT BackendBase : public boost::noncopyable
+namespace detail
 {
-
-friend class Backend;
-
-public:
-    BackendBase();
-    
-    virtual ~BackendBase();
-
-    bool isNull() const;
-    
-    const QUuid& UID() const;
-
-protected:    
-    /** Start the backend's event loop */
-    virtual void start()=0;
-    
-    /** Stop the backend's event loop */
-    virtual void stop()=0;
-    
-    /** Wait until the backend's event loop has stopped */
-    virtual void wait()=0;
-
-    /** Return whether or not the backend's event loop is running */
-    virtual bool isRunning()=0;
-
-protected:
-    BackendBase(const QUuid &uid);
-    
-private:
-    /** The unique ID for this backend */
-    QUuid uid;
-    
-    /** Mutex used to protect access to this backend */
-    QMutex datamutex;
-};
+class BackendPvt;
+}
 
 /** This is the public interface for a Backend. A Backend is an object
     that can receive a WorkPacket from a FrontEnd, can process that
@@ -102,10 +58,6 @@ private:
 */
 class SIRECLUSTER_EXPORT Backend
 {
-
-friend class Backends;
-friend class Frontend;
-
 public:
     Backend();
     Backend(const Backend &other);
@@ -117,22 +69,39 @@ public:
     bool operator==(const Backend &other) const;
     bool operator!=(const Backend &other) const;
     
+    bool isNull() const;
+    
     QUuid UID() const;
+
+    static Backend create();
     
-protected:
-    Backend( const boost::shared_ptr<BackendBase> &ptr );
+    void startJob(const WorkPacket &workpacket);
     
-    void start();
-    void stop();
+    void stopJob();
+    void abortJob();
+    
     void wait();
-    bool isRunning();
+    bool wait(int timeout);
+    
+    float progress();
+    WorkPacket interimResult();
+    
+    WorkPacket result();
+    
+    void connect();
+    bool tryConnect();
+    void disconnect();
+    
+    void shutdown();
     
 private:
     /** Private implementation */
-    boost::shared_ptr<BackendBase> d;
+    boost::shared_ptr<detail::BackendPvt> d;
 };
 
 }
+
+SIRE_EXPOSE_CLASS( SireCluster::Backend )
 
 SIRE_END_HEADER
 
