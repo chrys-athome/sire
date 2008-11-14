@@ -99,9 +99,6 @@ ClusterPvt* globalCluster()
     
     if (global_cluster == 0)
     {
-        qDebug() << "Creating the global cluster in thread" 
-                 << SireError::getPIDString();
-
         global_cluster = new ClusterPvt();
         
         lkr.unlock();

@@ -41,8 +41,6 @@ int main(int argc, char **argv)
             Cluster::start();
             MPI::COMM_WORLD.Barrier();
 
-            printf("Starting a Python shell...\n");
-
             //run python
             Py_Initialize();
             status = Py_Main(argc, argv);
@@ -63,8 +61,8 @@ int main(int argc, char **argv)
             Cluster::start();
             MPI::COMM_WORLD.Barrier();
 
-            //QList<QUuid> uids = Cluster::UIDs();
-            //qDebug() << Cluster::getRank() << uids;
+            QList<QUuid> uids = Cluster::UIDs();
+            qDebug() << Cluster::getRank() << uids;
 
             Cluster::exec();
             status = 0;
@@ -96,7 +94,6 @@ int main(int argc, char **argv)
     }
 
     //wait for all of the MPI jobs to finish
-    qDebug() << SireError::getPIDString() << "MPI::COMM_WORLD.Barrier()";
     MPI::COMM_WORLD.Barrier();
 
     if (MPI::COMM_WORLD.Get_rank() == 0)
@@ -104,9 +101,7 @@ int main(int argc, char **argv)
         printf("The entire cluster has now shutdown.\n");
     }
 
-    qDebug() << SireError::getPIDString() << "MPI::Finalize()";
     MPI::Finalize();
-    qDebug() << SireError::getPIDString() << "program exiting";
 
     return status;
 }

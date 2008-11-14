@@ -123,7 +123,6 @@ bool ReceiveQueue::isRunning()
 void ReceiveQueue::run()
 {
     SireError::setThreadString("ReceiveQueue_A");
-    qDebug() << SireError::getPIDString() << "Starting event loop!";
 
     QMutexLocker lkr(&datamutex);
     
@@ -175,8 +174,6 @@ void ReceiveQueue::run()
             waiter.wait( &datamutex );
         }
     }
-
-    qDebug() << SireError::getPIDString() << "thread exiting";
 }
 
 /** This function unpacks the message contained in 'message_data'
@@ -211,9 +208,7 @@ void ReceiveQueue::run2()
     SireError::setThreadString("ReceiveQueue_B");
 
     //wait until everyone has got here
-    qDebug() << SireError::getPIDString() << "recv_comm.Barrier()";
     recv_comm->Barrier();
-    qDebug() << SireError::getPIDString() << "Starting event loop!";
 
     QByteArray message_data;
 
@@ -311,16 +306,14 @@ void ReceiveQueue::run2()
         }
     }
 
-    qDebug() << SireError::getPIDString() << "recv_comm.Barrier()";
     recv_comm->Barrier();
     
     //release the resources held by this communicator
-    qDebug() << SireError::getPIDString() << "recv_comm.Free()";
     recv_comm->Free();
-    qDebug() << SireError::getPIDString() << "thread exiting";
     
     delete recv_comm;
     recv_comm = 0;
+
 }
 
 #endif // __SIRE_USE_MPI__

@@ -833,10 +833,7 @@ private:
         runwaiter.wakeAll();
         datamutex.unlock();
         
-        qDebug() << SireError::getPIDString() << "(*f)()";
         (*f)();
-
-        qDebug() << SireError::getPIDString() << "thread exiting";
     }
 
     void (*func)();
@@ -1168,9 +1165,7 @@ bool GetUIDs::hasReply() const
 /** Get the reply to this message */
 Message GetUIDs::reply() const
 {
-    qDebug() << "Getting the replies...";
     QList<QUuid> uids = MPICluster::UIDs();
-    qDebug() << "Here they are" << uids;
 
     return Result(*this, uids);
 }

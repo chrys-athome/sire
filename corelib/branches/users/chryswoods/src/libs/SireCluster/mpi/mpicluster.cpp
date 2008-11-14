@@ -518,8 +518,6 @@ void MPICluster::informedShutdown()
         globalCluster()->already_shutting_down;
     }
 
-    qDebug() << "Calling informedShutdown() in" << SireError::getPIDString();
-
     if (not MPICluster::isRunning())
         return;
 
