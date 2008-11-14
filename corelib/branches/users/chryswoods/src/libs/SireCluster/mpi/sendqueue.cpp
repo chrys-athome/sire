@@ -34,6 +34,7 @@
 #include "mpicluster.h"
 
 #include "SireError/errors.h"
+#include "SireError/printerror.h"
 
 #include <QDebug>
 
@@ -42,7 +43,7 @@ using namespace SireCluster::MPI::Messages;
 
 /** Construct, using the passed MPI communicator to send the 
     messages */
-SendQueue::SendQueue(::MPI::Intracomm &comm)
+SendQueue::SendQueue(::MPI::Intracomm *comm)
           : QThread(), boost::noncopyable(),
             send_comm(comm), been_stopped(false)
 {}
@@ -59,6 +60,8 @@ SendQueue::~SendQueue()
     {
         waiter.wakeAll();
     }
+    
+    delete send_comm;
 }
 
 /** Start the event loop in a background thread */
@@ -108,15 +111,16 @@ bool SendQueue::isRunning()
     return QThread::isRunning();
 }
 
-/** This is called to send an error */
-void SendQueue::sendError(const SireError::exception &e, const Message &message)
-{
-    MPICluster::send( SendError(e, message) );
-}
-
 /** This is the event loop */
 void SendQueue::run()
 {
+    SireError::setThreadString("SendQueue");
+    
+    //wait until everyone has got here
+    qDebug() << SireError::getPIDString() << "send_comm.Barrier()";
+    send_comm->Barrier();
+    qDebug() << SireError::getPIDString() << "Starting event loop!";
+
     QMutexLocker lkr(&datamutex);
     
     if (message_queue.isEmpty())
@@ -163,50 +167,63 @@ void SendQueue::run()
                 BOOST_ASSERT( size != 0 );
                 
                 //tell the nodes how large the message is
-                send_comm.Bcast( &size, 1, ::MPI::INT, MPICluster::master());
+                send_comm->Bcast( &size, 1, ::MPI::INT, MPICluster::master());
                 
                 //now send them the actual message
-                send_comm.Bcast( message_data.data(), message_data.count(),
-                                 ::MPI::BYTE, MPICluster::master() );
+                send_comm->Bcast( message_data.data(), message_data.count(),
+                                  ::MPI::BYTE, MPICluster::master() );
                 
                 //is the message intended for the master as well?
                 if (message.isA<Broadcast>())
                 {
                     if (message.asA<Broadcast>().isRecipient(MPICluster::master()))
                     {
-                        MPICluster::received(message);
+                        //if this is a shutdown, then process it here
+                        //(to prevent a deadlock if the receive queue is still working)
+                        if (message.isA<Shutdown>())
+                        {
+                            message.read();
+                            been_stopped = true;
+                        }
+                        else
+                            MPICluster::received(message);
                     }
                 }
             }
             else
             {
-                //we need to send the message to the master, for 
-                //retransmission to the destination process
-                Message broadcast( Broadcast(message, message.destination()) );
-                
-                QByteArray message_data = broadcast.pack();
+                QByteArray message_data;
+            
+                if (message.destination() == MPICluster::master())
+                {
+                    //send this message to the master directly
+                    message_data = message.pack();
+                }
+                else
+                {
+                    //we need to send the message to the master, for 
+                    //retransmission to the destination process
+                    Message broadcast( Broadcast(message, message.destination()) );
+                    message_data = broadcast.pack();
+                }
                 
                 //maybe change to Isend so that we can kill the send if
                 //'been_stopped' is true
-                send_comm.Send( message_data.constData(), message_data.count(), 
-                                ::MPI::BYTE, MPICluster::master(), 1 );
+                send_comm->Send( message_data.constData(), message_data.count(), 
+                                 ::MPI::BYTE, MPICluster::master(), 1 );
             }
         }
         catch(const SireError::exception &e)
         {
-            this->sendError(e, message);
+            MPICluster::send( Messages::Error(message, e) );
         }
         catch(const std::exception &e)
         {
-            this->sendError( SireError::std_exception(e), message );
+            MPICluster::send( Messages::Error(message, e) );
         }
         catch(...)
         {
-            this->sendError( SireError::unknown_exception( QObject::tr(
-            "There was an unknown error while sending the message "
-            "%1 to the destination %2.")
-                .arg(message.toString()).arg(message.destination()), CODELOC ), 
-                        message );
+            MPICluster::send( Messages::Error(message, CODELOC) );
         }
         
         lkr.relock();
@@ -223,13 +240,19 @@ void SendQueue::run()
     if ( MPICluster::isMaster() )
     {
         int quit = 0;
-        send_comm.Bcast( &quit, 1, ::MPI::INT, MPICluster::master());
+        qDebug() << "Master is broadcasting the QUIT message";
+        send_comm->Bcast( &quit, 1, ::MPI::INT, MPICluster::master());
     }
     
     //we're not sending any more messages, so release the resources
     //held by the communicator
-    send_comm.Barrier();
-    send_comm.Free();
+    qDebug() << SireError::getPIDString() << "send_comm.Barrier()";
+    send_comm->Barrier();
+    qDebug() << SireError::getPIDString() << "send_comm.Free()";
+    send_comm->Free();
+    qDebug() << SireError::getPIDString() << "thread exiting";
+    delete send_comm;
+    send_comm = 0;
 }
 
 #endif // __SIRE_USE_MPI__

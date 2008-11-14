@@ -15,23 +15,31 @@ using std::printf;
 
 using namespace SireCluster;
 
+#include <QDebug>
+
 int main(int argc, char **argv)
 {
     int status = 0;
 
     try
     {
-        //start MPI
-        MPI::Init(argc, argv);
+        //start MPI - ABSOLUTELY must use multi-threaded MPI
+        MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
 
         //are we the first node in the cluster?
-        if (MPI::COMM_WORLD.Get_rank() == 0)
+        if (Cluster::getRank() == 0)
         {
-            printf("Starting master node (%d of %d)\n", MPI::COMM_WORLD.Get_rank(),
-                                                        MPI::COMM_WORLD.Get_size());
+            printf("Starting master node (%d of %d)\n", Cluster::getRank(),
+                                                        Cluster::getCount());
+
+            //name this process and thread
+            SireError::setProcessString("master");
+            SireError::setThreadString("main");
 
             //start the cluster
+            MPI::COMM_WORLD.Barrier();
             Cluster::start();
+            MPI::COMM_WORLD.Barrier();
 
             printf("Starting a Python shell...\n");
 
@@ -42,11 +50,22 @@ int main(int argc, char **argv)
         else
         {
             //this is one of the compute nodes...
-            printf("Starting one of the compute nodes (%d of %d)\n", MPI::COMM_WORLD.Get_rank(),
-                                                                     MPI::COMM_WORLD.Get_size());
+            printf("Starting one of the compute nodes (%d of %d)\n", Cluster::getRank(),
+                                                                     Cluster::getCount());
+
+            //name this process
+            SireError::setProcessString( QString("compute%1").arg(Cluster::getRank()) );
+            SireError::setThreadString( "main" );
 
             //exec the Cluster - this starts the cluster and then
             //blocks while it is running
+            MPI::COMM_WORLD.Barrier();
+            Cluster::start();
+            MPI::COMM_WORLD.Barrier();
+
+            //QList<QUuid> uids = Cluster::UIDs();
+            //qDebug() << Cluster::getRank() << uids;
+
             Cluster::exec();
             status = 0;
         }
@@ -77,6 +96,7 @@ int main(int argc, char **argv)
     }
 
     //wait for all of the MPI jobs to finish
+    qDebug() << SireError::getPIDString() << "MPI::COMM_WORLD.Barrier()";
     MPI::COMM_WORLD.Barrier();
 
     if (MPI::COMM_WORLD.Get_rank() == 0)
@@ -84,8 +104,9 @@ int main(int argc, char **argv)
         printf("The entire cluster has now shutdown.\n");
     }
 
-    //make sure we have stopped MPI
+    qDebug() << SireError::getPIDString() << "MPI::Finalize()";
     MPI::Finalize();
+    qDebug() << SireError::getPIDString() << "program exiting";
 
     return status;
 }

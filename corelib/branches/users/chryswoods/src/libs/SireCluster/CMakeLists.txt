@@ -28,6 +28,7 @@ if (MPI_FOUND)
         mpi/mpicluster.h
         mpi/mpifrontend.h
         mpi/receivequeue.h
+        mpi/reply.h
         mpi/sendqueue.h
 
       )
@@ -38,6 +39,7 @@ if (MPI_FOUND)
         mpi/mpicluster.cpp
         mpi/mpifrontend.cpp
         mpi/receivequeue.cpp
+        mpi/reply.cpp
         mpi/sendqueue.cpp
 
       )

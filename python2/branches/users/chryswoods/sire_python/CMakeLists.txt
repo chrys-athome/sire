@@ -37,6 +37,7 @@ target_link_libraries (sire_python
                        SIRE_SireMove
                        SIRE_SireSystem
                        SIRE_SireIO
+                       SIRE_SireError
                        ${PYTHON_LIBRARIES}
                       )
 

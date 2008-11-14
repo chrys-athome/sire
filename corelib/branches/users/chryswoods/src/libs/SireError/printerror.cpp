@@ -40,7 +40,7 @@ void printAaargh(QTextStream &ts)
        << " O   O  \n"
        << "   \"   \n"
        << " /\"\"\"\\   AAAAAARRRRGGGHHHH!!!!!!!\n"
-       << " \\___/\n";
+       << " \\___/\n\n";
 }
 
 /** Print the error 'text' to standard output */

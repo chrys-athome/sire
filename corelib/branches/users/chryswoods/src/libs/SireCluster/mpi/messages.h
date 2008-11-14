@@ -37,6 +37,8 @@
 #include <QUuid>
 #include <QSet>
 
+#include <QDebug>
+
 SIRE_BEGIN_HEADER
 
 namespace SireCluster
@@ -52,8 +54,10 @@ namespace Messages
 class RegisterBackend;
 class Shutdown;
 class Broadcast;
-class ReceiveError;
-class SendError;
+class GetUIDs;
+
+class Error;
+class Result;
 }
 
 }
@@ -81,14 +85,19 @@ QDataStream& operator>>(QDataStream&,
                         SireCluster::MPI::Messages::Broadcast&);
 
 QDataStream& operator<<(QDataStream&, 
-                       const SireCluster::MPI::Messages::ReceiveError&);
+                       const SireCluster::MPI::Messages::GetUIDs&);
 QDataStream& operator>>(QDataStream&, 
-                        SireCluster::MPI::Messages::ReceiveError&);
+                        SireCluster::MPI::Messages::GetUIDs&);
 
 QDataStream& operator<<(QDataStream&, 
-                       const SireCluster::MPI::Messages::SendError&);
+                       const SireCluster::MPI::Messages::Error&);
 QDataStream& operator>>(QDataStream&, 
-                        SireCluster::MPI::Messages::SendError&);
+                        SireCluster::MPI::Messages::Error&);
+
+QDataStream& operator<<(QDataStream&, 
+                       const SireCluster::MPI::Messages::Result&);
+QDataStream& operator>>(QDataStream&, 
+                        SireCluster::MPI::Messages::Result&);
 
 namespace SireError
 {
@@ -139,20 +148,19 @@ public:
     int sender() const;
     int destination() const;
     
-    template<class T>
-    bool isA() const
-    {
-        return dynamic_cast<const T*>(this) != 0;
-    }
+    virtual bool isRecipient(int rank) const;
+    
+    virtual QSet<int> recipients() const;
     
     template<class T>
-    const T& asA() const
-    {
-        return dynamic_cast<const T&>(*this);
-    }
+    bool isA() const;
+    
+    template<class T>
+    T asA() const;
     
 protected:
     MessageBase(int destination);
+    MessageBase(int destination, const QUuid &subject_uid);
     MessageBase();
 
     MessageBase& operator=(const MessageBase &other);
@@ -201,7 +209,10 @@ public:
     
     const char* what() const
     {
-        return Message::typeName();
+        if (this->isNull())
+            return Message::typeName();
+        else
+            return d->what();
     }
     
     QString toString() const;
@@ -225,6 +236,8 @@ public:
     
     bool isRecipient(int rank) const;
     
+    QSet<int> recipients() const;
+    
     template<class T>
     bool isA() const
     {
@@ -235,7 +248,7 @@ public:
     }
     
     template<class T>
-    const T& asA() const
+    T asA() const
     {
         return base().asA<T>();
     }
@@ -300,10 +313,29 @@ public:
     
     bool isRecipient(int rank) const;
     
+    QSet<int> recipients() const;
+    
+    const QString& messageType() const;
+    
+    template<class T>
+    bool messageIsA() const
+    {
+        return message_type == T::typeName();
+    }
+    
+    template<class T>
+    T messageAsA() const
+    {
+        return Message::unpack(message_data).asA<T>();
+    }
+    
 private:
     /** The actual destination of this message - this is empty
         if it is meant to go to everybody */
     QSet<qint32> destinations;
+    
+    /** The type of the message being broadcast */
+    QString message_type;
     
     /** The data containing the message being broadcast */
     QByteArray message_data;
@@ -361,6 +393,160 @@ private:
     qint32 node_rank;
 };
 
+/** This message is sent by a node to the master to request the complete
+    list of UIDs of all of the backends. This message expects a response,
+    and will block waiting for that response
+    
+    @author Christopher Woods
+*/
+class GetUIDs : public MessageBase
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const GetUIDs&);
+friend QDataStream& ::operator>>(QDataStream&, GetUIDs&);
+
+public:
+    GetUIDs();
+    
+    GetUIDs(const GetUIDs &other);
+    
+    ~GetUIDs();
+    
+    GetUIDs& operator=(const GetUIDs &other);
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<GetUIDs>() );
+    }
+    
+    const char* what() const
+    {
+        return GetUIDs::typeName();
+    }
+    
+    GetUIDs* clone() const
+    {
+        return new GetUIDs(*this);
+    }
+    
+    void read();
+    
+    bool hasReply() const;
+    Message reply() const;
+};
+
+/** This message is sent to return a result
+    
+    @author Christopher Woods
+*/
+class Result : public MessageBase
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const Result&);
+friend QDataStream& ::operator>>(QDataStream&, Result&);
+
+public:
+    Result();
+    
+    template<class T>
+    Result(const Message &message, const T &value)
+          : MessageBase(message.sender(), message.subjectUID())
+    {
+        QDataStream ds(&result_data, QIODevice::WriteOnly);
+        ds << value;
+    }
+    
+    Result(const Result &other);
+    
+    ~Result();
+    
+    Result& operator=(const Result &other);
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Result>() );
+    }
+    
+    const char* what() const
+    {
+        return Result::typeName();
+    }
+    
+    Result* clone() const
+    {
+        return new Result(*this);
+    }
+    
+    void read();
+
+private:
+    /** A binary representation of the result */
+    QByteArray result_data;
+};
+
+/** This message is sent to return an error!
+    
+    @author Christopher Woods
+*/
+class Error : public MessageBase
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const Error&);
+friend QDataStream& ::operator>>(QDataStream&, Error&);
+
+public:
+    Error();
+    Error(const QString &code_loc);
+    Error(const SireError::exception &e);
+    Error(const std::exception &e);
+    
+    Error(const Message &message);
+    Error(const Message &message, const QString &code_loc);
+    Error(const Message &message, const SireError::exception &e);
+    Error(const Message &message, const std::exception &e);
+    
+    Error(int sender);
+    Error(int sender, const QString &code_loc);
+    Error(int sender, const SireError::exception &e);
+    Error(int sender, const std::exception &e);
+    
+    Error(const QByteArray &message_data, const QByteArray &error_data);
+    
+    Error(const Error &other);
+    
+    ~Error();
+    
+    Error& operator=(const Error &other);
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Error>() );
+    }
+    
+    const char* what() const
+    {
+        return Error::typeName();
+    }
+    
+    Error* clone() const
+    {
+        return new Error(*this);
+    }
+    
+    void read();
+
+private:
+    void setError(const SireError::exception &e);
+    void setError(const std::exception &e);
+    void setUnknownError(const QString &code_loc);
+
+    /** A binary representation of the message that caused the error */
+    QByteArray message_data;
+    
+    /** A binary representation of the error */
+    QByteArray error_data;
+};
+
 /** This is the message sent to a node to tell it to shutdown. This
     is used by the master node to tell all of the slaves
     to shutdown when the program is exiting 
@@ -399,110 +585,70 @@ public:
     void read();
 };
 
-/** This is the message sent back to the sender when there is a problem
-    when receiving a message
-    
-    @author Christopher Woods
-*/
-class ReceiveError : public MessageBase
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const ReceiveError&);
-friend QDataStream& ::operator>>(QDataStream&, ReceiveError&);
-
-public:
-    ReceiveError();
-    
-    ReceiveError(const SireError::exception &e, const Message &message);
-    ReceiveError(const SireError::exception &e, int sender);
-    
-    ReceiveError(const ReceiveError &other);
-    
-    ~ReceiveError();
-    
-    ReceiveError& operator=(const ReceiveError &other);
-    
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ReceiveError>() );
-    }
-    
-    const char* what() const
-    {
-        return ReceiveError::typeName();
-    }
-    
-    ReceiveError* clone() const
-    {
-        return new ReceiveError(*this);
-    }
-
-    void read();
-
-private:
-    /** The error data */
-    QByteArray error_data;
-    
-    /** The message data (null if there was a problem 
-        even extracting the message) */
-    QByteArray message_data;
-};
-
-/** This is the message sent back to the sender when there is a problem
-    sending a message
-    
-    @author Christopher Woods
-*/
-class SendError : public MessageBase
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const SendError&);
-friend QDataStream& ::operator>>(QDataStream&, SendError&);
-
-public:
-    SendError();
-    SendError(const SireError::exception &e, const Message &message);
-    
-    SendError(const SendError &other);
-    
-    ~SendError();
-    
-    SendError& operator=(const SendError &other);
-    
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<SendError>() );
-    }
-    
-    const char* what() const
-    {
-        return SendError::typeName();
-    }
-    
-    SendError* clone() const
-    {
-        return new SendError(*this);
-    }
-
-    void read();
-
-private:
-    /** The error data */
-    QByteArray error_data;
-    
-    /** The message data */
-    QByteArray message_data;
-};
-
 }  // end of namespace Messages
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+template<>
+inline bool MessageBase::isA<Messages::Broadcast>() const
+{
+    return dynamic_cast<const Messages::Broadcast*>(this) != 0;
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool MessageBase::isA() const
+{
+    if (dynamic_cast<const T*>(this) == 0)
+    {
+        if (this->isA<Messages::Broadcast>())
+        {
+            return this->asA<Messages::Broadcast>().messageIsA<T>();
+        }
+        else
+            return false;
+    }
+    else
+        return true;
+}
+
+template<>
+inline Messages::Broadcast MessageBase::asA<Messages::Broadcast>() const
+{
+    return *(dynamic_cast<const Messages::Broadcast*>(this));
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T MessageBase::asA() const
+{
+    const T *ptr = dynamic_cast<const T*>(this);
+    
+    if (ptr == 0)
+    {
+        if (this->isA<Messages::Broadcast>())
+        {
+            return this->asA<Messages::Broadcast>().messageAsA<T>();
+        }
+        else
+            return *ptr;
+    }
+    else
+        return *ptr;
+}
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
+
 }  // end of namespace MPI
 }  // end of namespace SireCluster
 
 Q_DECLARE_METATYPE( SireCluster::MPI::Messages::Broadcast )
+Q_DECLARE_METATYPE( SireCluster::MPI::Messages::Result )
+Q_DECLARE_METATYPE( SireCluster::MPI::Messages::Error )
+
 Q_DECLARE_METATYPE( SireCluster::MPI::Messages::RegisterBackend )
 Q_DECLARE_METATYPE( SireCluster::MPI::Messages::Shutdown )
-Q_DECLARE_METATYPE( SireCluster::MPI::Messages::ReceiveError )
-Q_DECLARE_METATYPE( SireCluster::MPI::Messages::SendError )
+Q_DECLARE_METATYPE( SireCluster::MPI::Messages::GetUIDs )
 
 Q_DECLARE_METATYPE( SireCluster::MPI::Message )
 

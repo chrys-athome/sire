@@ -64,6 +64,7 @@ public:
     static QList<QUuid> UIDs();
 
     static int getRank();
+    static int getCount();
     
     static void start();
 

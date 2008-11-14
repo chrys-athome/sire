@@ -34,15 +34,84 @@
 #include "getbacktrace.h"
 
 #include <QDataStream>
+#include <QThreadStorage>
 
 #include <QDebug>
 
 using namespace SireError;
 using namespace SireStream;
 
+Q_GLOBAL_STATIC( QThreadStorage<QString*>, pidStrings );
+Q_GLOBAL_STATIC( QString, processString );
+
+namespace SireError
+{
+
+/** Set the string that SireError will use to identify this process */
+void SIREERROR_EXPORT setProcessString(const QString &s)
+{
+    *(processString()) = s;
+}
+
+/** Set the string that SireError will used to identify this thread
+    within the process */
+void SIREERROR_EXPORT setThreadString(const QString &s)
+{
+    pidStrings()->setLocalData( new QString(s) );
+}
+
+/** Return the string used by SireError to identify the process */
+QString SIREERROR_EXPORT getProcessString()
+{
+    QString *s = processString();
+    
+    if (s->isEmpty())
+    {
+        return *s = QObject::tr("master");
+    }
+    
+    return *s;
+}
+
+/** Return the string used to identify a particular thread */
+QString SIREERROR_EXPORT getThreadString()
+{
+    QThreadStorage<QString*> *store = pidStrings();
+    
+    if (store->hasLocalData())
+    {
+        return *(store->localData());
+    }
+    else
+    {
+        return QString::null;
+    }
+}
+
+/** Return the string used by SireError to identify a particular
+    thread within a process */
+QString SIREERROR_EXPORT getPIDString()
+{
+    QThreadStorage<QString*> *store = pidStrings();
+    
+    if (store->hasLocalData())
+    {
+        return QString("%1:%2").arg( getProcessString(),
+                                     *(store->localData()) );
+    }
+    else
+    {
+        return getProcessString();
+    }
+}
+
+} // end of namespace SireError
+
 /** Construct a null exception */
 exception::exception()
-{}
+{
+    pidstr = getPIDString();
+}
 
 /** Constructor.
     \param error The error message associated with this exception.
@@ -51,13 +120,14 @@ exception::exception()
 */
 exception::exception(QString error, QString place) : err(error), plce(place)
 {
-    pidstr = QObject::tr("unidentified thread");
     bt = getBackTrace();
+    pidstr = getPIDString();
 }
 
 /** Copy constructor */
 exception::exception(const exception &other)
-          : std::exception(other), err(other.err), plce(other.plce), bt(other.bt)
+          : std::exception(other), err(other.err), plce(other.plce), 
+                                   bt(other.bt), pidstr(other.pidstr)
 {}
 
 /** Destructor */
@@ -162,7 +232,7 @@ void exception::unpackAndThrow(const QByteArray &data)
     in the exception, suitable for printing to the screen or to a log file. */
 QString exception::toString() const throw()
 {
-    return QObject::tr("Exception '%1' thrown by process '%2'.\n"
+    return QObject::tr("Exception '%1' thrown by the thread '%2'.\n"
                        "%3\n"
                        "Thrown from %4\n"
                        "__Backtrace__\n"

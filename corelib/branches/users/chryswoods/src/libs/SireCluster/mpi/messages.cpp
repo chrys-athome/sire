@@ -40,6 +40,8 @@
 #include "SireError/exception.h"
 #include "SireError/printerror.h"
 
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -89,6 +91,18 @@ MessageBase::MessageBase()
             : QSharedData(), sent_by(-1), dest(-1)
 {}
 
+static void assertValidDestination(int rank)
+{
+    if (rank != -1)
+    {
+        if (rank < 0 or rank >= MPICluster::getCount())
+            throw SireError::unavailable_resource( QObject::tr(
+                "There is no MPI process with rank %1. Available ranks are "
+                "from 0 to %2.")
+                    .arg(rank).arg(MPICluster::getCount()-1), CODELOC );
+    }
+}
+
 /** Construct a message that is intended to go to the MPI process
     with rank 'destination' */
 MessageBase::MessageBase(int destination) 
@@ -97,7 +111,22 @@ MessageBase::MessageBase(int destination)
               subject_uid( QUuid::createUuid() ),
               sent_by( MPICluster::getRank() ),
               dest(destination)
-{}
+{
+    assertValidDestination(dest);
+}
+
+/** Construct a message that is intended to go to the MPI process
+    with rank 'destination', and that is a response to the subject
+    with UID 'uid' */
+MessageBase::MessageBase(int destination, const QUuid &subuid)
+            : QSharedData(),
+              uid( QUuid::createUuid() ),
+              subject_uid(subuid),
+              sent_by( MPICluster::getRank() ),
+              dest(destination)
+{
+    assertValidDestination(dest);
+}
 
 /** Copy constructor */
 MessageBase::MessageBase(const MessageBase &other)
@@ -167,6 +196,38 @@ int MessageBase::sender() const
 int MessageBase::destination() const
 {
     return dest;
+}
+
+/** Return whether this is one of the recipients of this message
+    (and is thus expected to read the message!) */
+bool MessageBase::isRecipient(int rank) const
+{
+    return (dest == -1) or (rank == dest);
+}
+
+/** Return the set of recipients for this message. This is not the same
+    as the destination - the destination is where the message should be
+    sent (which can either be a specific process, or broadcast to all processes),
+    while the recipients are the actual processes that are expected to read
+    the message, rather than just receive it. */
+QSet<int> MessageBase::recipients() const
+{
+    QSet<int> ranks;
+    
+    if (dest == -1)
+    {
+        int nprocs = MPICluster::getCount();
+        ranks.reserve(nprocs);
+        
+        for (int i=0; i<nprocs; ++i)
+        {
+            ranks.insert(i);
+        }
+    }
+    else
+        ranks.insert(dest);
+        
+    return ranks;
 }
 
 /////////
@@ -261,12 +322,19 @@ QByteArray Message::pack() const
 /** Load and return a message from the passed data */
 Message Message::unpack(const QByteArray &data)
 {
-    QDataStream ds(data);
+    if (data.isEmpty())
+    {
+        return Message();
+    }
+    else
+    {
+        QDataStream ds(data);
     
-    Message message;
-    ds >> message;
+        Message message;
+        ds >> message;
     
-    return message;
+        return message;
+    }
 }
 
 /** Read the message - this performs any actions contained therein */
@@ -349,12 +417,31 @@ int Message::destination() const
         return -1;
 }
 
-/** Return whether this is one of the recipients of this message */
+/** Return whether this is one of the recipients of this message
+    (and is thus expected to read the message!) */
 bool Message::isRecipient(int rank) const
 {
-    int dest = this->destination();
+    if (not this->isNull())
+    {
+        return d->isRecipient(rank);
+    }
+    else
+        return false;
+}
 
-    return dest == -1 or dest == rank;
+/** Return the set of recipients for this message. This is not the same
+    as the destination - the destination is where the message should be
+    sent (which can either be a specific process, or broadcast to all processes),
+    while the recipients are the actual processes that will really read
+    the message, rather than just receive it. */
+QSet<int> Message::recipients() const
+{
+    if (not this->isNull())
+    {
+        return d->recipients();
+    }
+    else
+        return QSet<int>();
 }
 
 /////////
@@ -370,6 +457,7 @@ QDataStream& operator<<(QDataStream &ds, const Broadcast &broadcast)
     
     SharedDataStream sds(ds);
     sds << broadcast.destinations
+        << broadcast.message_type
         << broadcast.message_data
         << broadcast.replymsg
         << static_cast<const MessageBase&>(broadcast);
@@ -386,6 +474,7 @@ QDataStream& operator>>(QDataStream &ds, Broadcast &broadcast)
     {
         SharedDataStream sds(ds);
         sds >> broadcast.destinations
+            >> broadcast.message_type
             >> broadcast.message_data
             >> broadcast.replymsg
             >> static_cast<MessageBase&>(broadcast);
@@ -411,6 +500,7 @@ Broadcast::Broadcast(const Message &message)
     }
     else
     {
+        message_type = message.what();
         message_data = message.pack();
     }
 }       
@@ -421,6 +511,8 @@ Broadcast::Broadcast(const Message &message, int rank)
           : MessageBase(rank),
             message_data( message.pack() )
 {
+    assertValidDestination(rank);
+
     if (rank != -1) // -1 means broadcast to everyone
     {
         destinations.insert(rank);
@@ -432,6 +524,7 @@ Broadcast::Broadcast(const Message &message, int rank)
     }
     else
     {
+        message_type = message.what();
         message_data = message.pack();
     }
 }
@@ -443,6 +536,11 @@ Broadcast::Broadcast(const Message &message, const QSet<qint32> &ranks)
             destinations(ranks),
             message_data( message.pack() )
 {
+    foreach (qint32 rank, ranks)
+    {
+        assertValidDestination(rank);
+    }
+
     if (destinations.contains(-1))
     {
         //this should be sent to everyone
@@ -455,6 +553,7 @@ Broadcast::Broadcast(const Message &message, const QSet<qint32> &ranks)
     }
     else
     {
+        message_type = message.what();
         message_data = message.pack();
     }
 }
@@ -463,6 +562,7 @@ Broadcast::Broadcast(const Message &message, const QSet<qint32> &ranks)
 Broadcast::Broadcast(const Broadcast &other)
           : MessageBase(other),
             destinations(other.destinations),
+            message_type(other.message_type),
             message_data(other.message_data), 
             replymsg(other.replymsg)
 {}
@@ -477,6 +577,7 @@ Broadcast& Broadcast::operator=(const Broadcast &other)
     if (this != &other)
     {
         destinations = other.destinations;
+        message_type = other.message_type;
         message_data = other.message_data;
         replymsg = other.replymsg;
         MessageBase::operator=(other);
@@ -489,7 +590,33 @@ Broadcast& Broadcast::operator=(const Broadcast &other)
     is an intended recipient of this broadcast */
 bool Broadcast::isRecipient(int rank) const
 {
-    return destinations.isEmpty() or destinations.contains(rank);
+    if (destinations.isEmpty())
+    {
+        return MessageBase::isRecipient(rank);
+    }
+    else
+        return destinations.contains(rank);
+}
+
+/** Return the intended recipients of this broadcast */
+QSet<int> Broadcast::recipients() const
+{
+    if (destinations.isEmpty())
+    {
+        return MessageBase::recipients();
+    }
+    else
+    {
+        QSet<int> procs;
+        procs.reserve(destinations.count());
+        
+        foreach (qint32 dest, destinations)
+        {
+            procs.insert(dest);
+        }
+        
+        return procs;
+    }
 }
 
 /** Return a string representation of this message */
@@ -497,6 +624,12 @@ QString Broadcast::toString() const
 {
     return QString( "Broadcast( %1 )" )
                 .arg( Message::unpack(message_data).toString() );
+}
+
+/** Return the type of the message being broadcast */
+const QString& Broadcast::messageType() const
+{
+    return message_type;
 }
 
 /** Read this message - this will only read this message if
@@ -693,12 +826,17 @@ private:
 
     void run()
     {
+        SireError::setThreadString("BG");
+    
         datamutex.lock();
         void (*f)() = func;
         runwaiter.wakeAll();
         datamutex.unlock();
         
+        qDebug() << SireError::getPIDString() << "(*f)()";
         (*f)();
+
+        qDebug() << SireError::getPIDString() << "thread exiting";
     }
 
     void (*func)();
@@ -721,77 +859,175 @@ void Shutdown::read()
 }
 
 /////////
-///////// Implementation of ReceiveError
+///////// Implementation Error
 /////////
 
-static const RegisterMetaType<ReceiveError> r_recverror;
+static const RegisterMetaType<Error> r_error;
 
 /** Serialise to a binary datastream */
-QDataStream& operator<<(QDataStream &ds, const ReceiveError &recverror)
+QDataStream& operator<<(QDataStream &ds, const Error &error)
 {
-    writeHeader(ds, r_recverror, 1);
+    writeHeader(ds, r_error, 1);
     
-    ds << recverror.error_data << recverror.message_data
-       << static_cast<const MessageBase&>(recverror);
+    ds << error.message_data << error.error_data
+       << static_cast<const MessageBase&>(error);
        
     return ds;
 }
 
 /** Extract from a binary datastream */
-QDataStream& operator>>(QDataStream &ds, ReceiveError &recverror)
+QDataStream& operator>>(QDataStream &ds, Error &error)
 {
-    VersionID v = readHeader(ds, r_recverror);
+    VersionID v = readHeader(ds, r_error);
     
     if (v == 1)
     {
-        ds >> recverror.error_data >> recverror.message_data
-           >> static_cast<MessageBase&>(recverror);
+        ds >> error.message_data >> error.error_data
+           >> static_cast<MessageBase&>(error);
     }
     else
-        throw version_error(v, "1", r_recverror, CODELOC);
+        throw version_error(v, "1", r_error, CODELOC);
         
     return ds;
 }
 
-/** Construct a null error message */
-ReceiveError::ReceiveError() : MessageBase( MPICluster::master() )
+void Error::setError(const SireError::exception &e)
+{
+    error_data = e.pack();
+}
+
+void Error::setUnknownError(const QString &code_loc)
+{
+    this->setError( SireError::unknown_exception( QObject::tr(
+                            "An unknown error occured!"), code_loc ) );
+}
+
+void Error::setError(const std::exception &e)
+{
+    this->setError( SireError::std_exception(e) );
+}
+
+/** Construct a message containing an unknown error 
+    in response to an unknown sender */
+Error::Error() : MessageBase( MPICluster::master() )
+{
+    this->setUnknownError(CODELOC);
+}
+
+/** Construct a message containing an unknown error that occured 
+    at the point 'code_loc' in response to an unknown sender */
+Error::Error(const QString &code_loc) : MessageBase( MPICluster::master() )
+{
+    this->setUnknownError(code_loc);
+}
+
+/** Construct a message containing the error 'e'
+    in response to an unknown sender */
+Error::Error(const SireError::exception &e) : MessageBase( MPICluster::master() )
+{
+    this->setError(e);
+}
+
+/** Construct a message containing the error 'e'
+    in response to an unknown sender */
+Error::Error(const std::exception &e) : MessageBase( MPICluster::master() )
+{
+    this->setError(e);
+}
+
+/** Construct a message containing an unknown error
+    in response to the sender that has rank 'sender' */
+Error::Error(int sender) 
+      : MessageBase( sender )
+{
+    this->setUnknownError(CODELOC);
+}
+
+/** Construct a message containing an unknown error that occured
+    at the point 'code_loc' in response to the sender that has rank 'sender' */
+Error::Error(int sender, const QString &code_loc) 
+      : MessageBase( sender )
+{
+    this->setUnknownError(code_loc);
+}
+
+/** Construct a message containing the error 'e'
+    in response to the sender that has rank 'sender' */
+Error::Error(int sender, const SireError::exception &e) 
+      : MessageBase( sender )
+{
+    this->setError(e);
+}
+
+/** Construct a message containing the error 'e'
+    in response to the sender that has rank 'sender' */
+Error::Error(int sender, const std::exception &e) 
+      : MessageBase( sender )
+{
+    this->setError(e);
+}
+
+/** Construct a message containing an unknown error
+    in response to the message 'message' */
+Error::Error(const Message &message) 
+      : MessageBase( message.sender(), message.subjectUID() )
+{
+    message_data = message.pack();
+    this->setUnknownError(CODELOC);
+}
+
+/** Construct a message containing an unknown error that occured at
+    the point 'code_loc' in response to the message 'message' */
+Error::Error(const Message &message, const QString &code_loc) 
+      : MessageBase( message.sender(), message.subjectUID() )
+{
+    message_data = message.pack();
+    this->setUnknownError(code_loc);
+}
+
+/** Construct a message containing the error 'e'
+    in response to the message 'message' */
+Error::Error(const Message &message, const SireError::exception &e) 
+      : MessageBase( message.sender(), message.subjectUID() )
+{
+    message_data = message.pack();
+    this->setError(e);
+}
+
+/** Construct a message containing the error 'e'
+    in response to the message 'message' */
+Error::Error(const Message &message, const std::exception &e) 
+      : MessageBase( message.sender(), message.subjectUID() )
+{
+    message_data = message.pack();
+    this->setError(e);
+}
+
+/** Construct an error that will just pass the message and error
+    data on to the master - this is used when an error that can't 
+    be handled is received */
+Error::Error(const QByteArray &message, const QByteArray &error)
+      : MessageBase( MPICluster::master() ),
+        message_data(message), error_data(error)
 {}
 
-/** Construct a message saying that there was an error while
-    reading the passed message */
-ReceiveError::ReceiveError(const SireError::exception &e, const Message &message)
-             : MessageBase( message.sender() ),
-               error_data( e.pack() ), message_data(message.pack())
-{
-    SireError::printError(e);
-}
-
-/** Construct a message saying that it wasn't even possible to extract
-    the message sent from 'sender' */
-ReceiveError::ReceiveError(const SireError::exception &e, int sender)
-             : MessageBase(sender),
-               error_data( e.pack() )
-{
-    SireError::printError(e);
-}
-
 /** Copy constructor */
-ReceiveError::ReceiveError(const ReceiveError &other) 
+Error::Error(const Error &other) 
              : MessageBase(other),
-               error_data(other.error_data), message_data(other.message_data)
+               message_data(other.message_data), error_data(other.error_data)
 {}
 
 /** Destructor */
-ReceiveError::~ReceiveError()
+Error::~Error()
 {}
 
 /** Copy assignment operator */
-ReceiveError& ReceiveError::operator=(const ReceiveError &other)
+Error& Error::operator=(const Error &other)
 {
     if (this != &other)
     {
-        error_data = other.error_data;
         message_data = other.message_data;
+        error_data = other.error_data;
         MessageBase::operator=(other);
     }
     
@@ -799,75 +1035,66 @@ ReceiveError& ReceiveError::operator=(const ReceiveError &other)
 }
 
 /** Read this message */
-void ReceiveError::read()
+void Error::read()
 {
-    SireError::printError( *(SireError::exception::unpack(error_data)) );
-    
-    BG::call( &Cluster::shutdown );
+    MPICluster::postError( this->subjectUID(), this->sender(),
+                           message_data, error_data );
 }
 
 /////////
-///////// Implementation of SendError
+///////// Implementation Result
 /////////
 
-static const RegisterMetaType<SendError> r_senderror;
+static const RegisterMetaType<Result> r_result;
 
 /** Serialise to a binary datastream */
-QDataStream& operator<<(QDataStream &ds, const SendError &senderror)
+QDataStream& operator<<(QDataStream &ds, const Result &result)
 {
-    writeHeader(ds, r_senderror, 1);
+    writeHeader(ds, r_result, 1);
     
-    ds << static_cast<const MessageBase&>(senderror);
+    ds << result.result_data
+       << static_cast<const MessageBase&>(result);
        
     return ds;
 }
 
 /** Extract from a binary datastream */
-QDataStream& operator>>(QDataStream &ds, SendError &senderror)
+QDataStream& operator>>(QDataStream &ds, Result &result)
 {
-    VersionID v = readHeader(ds, r_senderror);
+    VersionID v = readHeader(ds, r_result);
     
     if (v == 1)
     {
-        ds >> static_cast<MessageBase&>(senderror);
+        ds >> result.result_data
+           >> static_cast<MessageBase&>(result);
     }
     else
-        throw version_error(v, "1", r_senderror, CODELOC);
+        throw version_error(v, "1", r_result, CODELOC);
         
     return ds;
 }
 
-/** Construct a null error message */
-SendError::SendError() 
-          : MessageBase( MPICluster::master() )  // goes to the master
+/** Construct a message containing an unknown result 
+    in response to an unknown sender */
+Result::Result() : MessageBase( MPICluster::master() )
 {}
 
-/** Construct a message saying that there was an error while
-    reading the passed message */
-SendError::SendError(const SireError::exception &e, const Message &message)
-             : MessageBase( MPICluster::master() ),
-               error_data( e.pack() ), message_data(message.pack())
-{
-    SireError::printError(e);
-}
-
 /** Copy constructor */
-SendError::SendError(const SendError &other) 
-          : MessageBase(other),
-            error_data(other.error_data), message_data(other.message_data)
+Result::Result(const Result &other) 
+             : MessageBase(other),
+               result_data(other.result_data)
 {}
 
 /** Destructor */
-SendError::~SendError()
+Result::~Result()
 {}
 
 /** Copy assignment operator */
-SendError& SendError::operator=(const SendError &other)
+Result& Result::operator=(const Result &other)
 {
     if (this != &other)
     {
-        error_data = other.error_data;
-        message_data = other.message_data;
+        result_data = other.result_data;
         MessageBase::operator=(other);
     }
     
@@ -875,10 +1102,89 @@ SendError& SendError::operator=(const SendError &other)
 }
 
 /** Read this message */
-void SendError::read()
+void Result::read()
 {
-    SireError::printError( *(SireError::exception::unpack(error_data)) );
-    BG::call( &Cluster::shutdown );
+    MPICluster::postResult( this->subjectUID(), this->sender(),
+                            result_data );
+}
+
+/////////
+///////// Implementation GetUIDs
+/////////
+
+static const RegisterMetaType<GetUIDs> r_getuids;
+
+/** Serialise to a binary datastream */
+QDataStream& operator<<(QDataStream &ds, const GetUIDs &getuids)
+{
+    writeHeader(ds, r_getuids, 1);
+    
+    ds << static_cast<const MessageBase&>(getuids);
+       
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream& operator>>(QDataStream &ds, GetUIDs &getuids)
+{
+    VersionID v = readHeader(ds, r_getuids);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<MessageBase&>(getuids);
+    }
+    else
+        throw version_error(v, "1", r_getuids, CODELOC);
+        
+    return ds;
+}
+
+/** Construct a message that asks the master to return the UIDs
+    of all of the backends */
+GetUIDs::GetUIDs() : MessageBase( MPICluster::master() )
+{}
+
+/** Copy constructor */
+GetUIDs::GetUIDs(const GetUIDs &other) : MessageBase(other)
+{}
+
+/** Destructor */
+GetUIDs::~GetUIDs()
+{}
+
+/** Copy assignment operator */
+GetUIDs& GetUIDs::operator=(const GetUIDs &other)
+{
+    MessageBase::operator=(other);
+    return *this;
+}
+
+/** This message does have a reply */
+bool GetUIDs::hasReply() const
+{
+    return true;
+}
+
+/** Get the reply to this message */
+Message GetUIDs::reply() const
+{
+    qDebug() << "Getting the replies...";
+    QList<QUuid> uids = MPICluster::UIDs();
+    qDebug() << "Here they are" << uids;
+
+    return Result(*this, uids);
+}
+
+/** Read this message */
+void GetUIDs::read()
+{
+    //ensure that this is the master process
+    if (not MPICluster::isMaster())
+    {
+        throw SireError::program_bug( QObject::tr(
+            "A GetUIDs message can only be read by the master process!"),
+                CODELOC );
+    }
 }
 
 #endif // __SIRE_USE_MPI__

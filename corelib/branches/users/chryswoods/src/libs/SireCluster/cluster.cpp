@@ -39,6 +39,8 @@
 #include "backend.h"
 #include "frontend.h"
 
+#include "SireError/printerror.h"
+
 #include <QDebug>
 
 using namespace SireCluster;
@@ -97,6 +99,9 @@ ClusterPvt* globalCluster()
     
     if (global_cluster == 0)
     {
+        qDebug() << "Creating the global cluster in thread" 
+                 << SireError::getPIDString();
+
         global_cluster = new ClusterPvt();
         
         lkr.unlock();
@@ -176,6 +181,20 @@ int Cluster::getRank()
             return 0;
     #else
         return 0;
+    #endif
+}
+
+/** Return the number of processes - this is either the 
+    size of the MPI group, or it is 1 */
+int Cluster::getCount()
+{
+    #ifdef __SIRE_USE_MPI__
+        if (::usingMPI())
+            return SireCluster::MPI::MPICluster::getCount();
+        else
+            return 1;
+    #else
+        return 1;
     #endif
 }
 

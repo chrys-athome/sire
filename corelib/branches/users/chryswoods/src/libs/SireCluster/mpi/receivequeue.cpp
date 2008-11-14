@@ -32,13 +32,14 @@
 #include "mpicluster.h"
 
 #include "SireError/errors.h"
+#include "SireError/printerror.h"
 
 #include <QDebug>
 
 using namespace SireCluster::MPI;
 
 /** Construct a queue that listens for messages using 'recv_comm' */
-ReceiveQueue::ReceiveQueue(::MPI::Intracomm &comm)
+ReceiveQueue::ReceiveQueue(::MPI::Intracomm *comm)
              : QThread(), boost::noncopyable(),
                recv_comm(comm), been_stopped(false)
 {
@@ -62,6 +63,8 @@ ReceiveQueue::~ReceiveQueue()
     secondthread->wait();
     
     delete secondthread;
+    
+    delete recv_comm;
 }
 
 /** Start the two background event loops */
@@ -116,25 +119,12 @@ bool ReceiveQueue::isRunning()
     return secondthread->isRunning() or QThread::isRunning();
 }
 
-/** Function used to send the error 'e' back to the sender
-    of a received message */
-void ReceiveQueue::sendError(const SireError::exception &e,
-                             const Message &message) const
-{
-    MPICluster::send( Messages::ReceiveError(e, message) );
-}
-
-/** Function used to send the error 'e' back to the sender
-    of a received message */
-void ReceiveQueue::sendError(const SireError::exception &e,
-                             int sender) const
-{
-    MPICluster::send( Messages::ReceiveError(e, sender) );
-}
-
 /** This function contains the event loop that reads and processes messages */
 void ReceiveQueue::run()
 {
+    SireError::setThreadString("ReceiveQueue_A");
+    qDebug() << SireError::getPIDString() << "Starting event loop!";
+
     QMutexLocker lkr(&datamutex);
     
     if (message_queue.isEmpty())
@@ -160,17 +150,15 @@ void ReceiveQueue::run()
         }
         catch (const SireError::exception &e)
         {
-            this->sendError(e, message);
+            MPICluster::send( Messages::Error(message, e) );
         }
         catch (const std::exception &e)
         {
-            this->sendError( SireError::std_exception(e), message );
+            MPICluster::send( Messages::Error(message, e) );
         }
         catch (...)
         {
-            this->sendError( SireError::unknown_exception( QObject::tr(
-                    "Unknown error while reading the message %1.")
-                        .arg(message.toString()), CODELOC ), message );
+            MPICluster::send( Messages::Error(message, CODELOC) );
         }
         
         if (message.hasReply())
@@ -187,6 +175,8 @@ void ReceiveQueue::run()
             waiter.wait( &datamutex );
         }
     }
+
+    qDebug() << SireError::getPIDString() << "thread exiting";
 }
 
 /** This function unpacks the message contained in 'message_data'
@@ -200,17 +190,15 @@ Message ReceiveQueue::unpackMessage(const QByteArray &message_data, int sender) 
     }
     catch (const SireError::exception &e)
     {
-        this->sendError(e, sender);
+        MPICluster::send( Messages::Error(sender, e) );
     }
     catch (const std::exception &e)
     {
-        this->sendError(SireError::std_exception(e), sender);
+        MPICluster::send( Messages::Error(sender, e) );
     }
     catch (...)
     {
-        this->sendError(SireError::unknown_exception( QObject::tr(
-            "There was an unknown error while unpacking the message sent "
-            "by the MPI process with rank %1.").arg(sender), CODELOC ), sender );
+        MPICluster::send( Messages::Error(sender, CODELOC) );
     }
     
     return Message();
@@ -220,6 +208,13 @@ Message ReceiveQueue::unpackMessage(const QByteArray &message_data, int sender) 
     messages using MPI */
 void ReceiveQueue::run2()
 {
+    SireError::setThreadString("ReceiveQueue_B");
+
+    //wait until everyone has got here
+    qDebug() << SireError::getPIDString() << "recv_comm.Barrier()";
+    recv_comm->Barrier();
+    qDebug() << SireError::getPIDString() << "Starting event loop!";
+
     QByteArray message_data;
 
     if (MPICluster::isMaster())
@@ -229,7 +224,7 @@ void ReceiveQueue::run2()
         while (keep_listening)
         {        
             //the master listens for messages from anyone
-            if (recv_comm.Iprobe(MPI_ANY_SOURCE, 1, status))
+            if (recv_comm->Iprobe(MPI_ANY_SOURCE, 1, status))
             {
                 //there is a message from one of the slaves
                 int slave_rank = status.Get_source();
@@ -240,8 +235,8 @@ void ReceiveQueue::run2()
                 
                 //perhaps change this to use Irecv so that we can kill
                 //the communication if 'keep_listening' is set to false
-                recv_comm.Recv(message_data.data(), count, ::MPI::BYTE,
-                               slave_rank, 1);
+                recv_comm->Recv(message_data.data(), count, ::MPI::BYTE,
+                                slave_rank, 1);
 
                 //unpack the message
                 Message message = this->unpackMessage(message_data, slave_rank);
@@ -273,7 +268,7 @@ void ReceiveQueue::run2()
         while (true)
         {
             int count;
-            recv_comm.Bcast( &count, 1, ::MPI::INT, MPICluster::master() );
+            recv_comm->Bcast( &count, 1, ::MPI::INT, MPICluster::master() );
         
             if (count == 0)
             {
@@ -284,21 +279,48 @@ void ReceiveQueue::run2()
             //receive the message
             message_data.resize(count + 1);
         
-            recv_comm.Bcast( message_data.data(), count, 
-                             ::MPI::BYTE, MPICluster::master() );
+            recv_comm->Bcast( message_data.data(), count, 
+                              ::MPI::BYTE, MPICluster::master() );
         
             Message message = this->unpackMessage( message_data,
                                                    MPICluster::master() );
         
             if (not message.isNull())
-                this->received(message);
+            {
+                if (message.isA<Messages::Shutdown>())
+                {
+                    if (message.isRecipient(MPICluster::getRank()))
+                    {
+                        qDebug() << MPICluster::getRank() 
+                                 << "received a shutdown message.";
+                    
+                        //shutdown here and now - don't queue this message
+                        //as we could deadlock at shutdown if we do!
+                        message.read();
+                        
+                        //stop listening for any further messages
+                        break;
+                    }
+                }
+                else
+                {
+                    if (message.isRecipient(MPICluster::getRank()))
+                        this->received(message);
+                }
+            }
         }
     }
 
-    recv_comm.Barrier();
+    qDebug() << SireError::getPIDString() << "recv_comm.Barrier()";
+    recv_comm->Barrier();
     
     //release the resources held by this communicator
-    recv_comm.Free();
+    qDebug() << SireError::getPIDString() << "recv_comm.Free()";
+    recv_comm->Free();
+    qDebug() << SireError::getPIDString() << "thread exiting";
+    
+    delete recv_comm;
+    recv_comm = 0;
 }
 
 #endif // __SIRE_USE_MPI__

@@ -70,7 +70,7 @@ class SecondThread;
 friend class ReceiveQueue::SecondThread;
 
 public:
-    ReceiveQueue(::MPI::Intracomm &recv_comm);
+    ReceiveQueue(::MPI::Intracomm *recv_comm);
     ~ReceiveQueue();
     
     void start();
@@ -111,8 +111,6 @@ protected:
     };
 
 private:
-    void sendError(const SireError::exception&, const Message &message) const;
-    void sendError(const SireError::exception&, int sender) const;
     Message unpackMessage(const QByteArray &message_data, int sender) const;
 
     SecondThread *secondthread;
@@ -124,7 +122,7 @@ private:
     QWaitCondition waiter;
     
     /** The communicator to use to receive messages */
-    ::MPI::Intracomm recv_comm;
+    ::MPI::Intracomm *recv_comm;
     
     /** The list of received messages */
     QQueue<Message> message_queue;

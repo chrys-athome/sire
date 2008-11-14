@@ -38,6 +38,13 @@ namespace SireError
 
 class exception;
 
+void setProcessString(const QString &s);
+void setThreadString(const QString &s);
+
+QString getProcessString();
+QString getThreadString();
+QString getPIDString();
+
 void printError(const SireError::exception &e);
 void printError(const QString &s);
 

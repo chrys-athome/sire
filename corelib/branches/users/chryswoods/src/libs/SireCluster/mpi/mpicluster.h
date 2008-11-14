@@ -48,6 +48,7 @@ namespace MPI
 {
 
 class Message;
+class Reply;
 
 /** This class provides the global interface to all of the
     MPI nodes in the cluster (and, on the root node, the 
@@ -73,15 +74,24 @@ public:
 
     static int master();
     static int getRank();
+    static int getCount();
     static bool isMaster();
 
     static void send(const Message &message);
-    
     static void received(const Message &message);
 
     //functions called by MPI messages
     static void registerBackend(int rank, const QUuid &uid);
     static void informedShutdown();
+
+    static Reply getReply(const Message &message);
+    
+    static void postResult(const QUuid &subject_uid, int sender,
+                           const QByteArray &result_data);
+                           
+    static void postError(const QUuid &subject_uid, int sender,
+                          const QByteArray &message_data,
+                          const QByteArray &error_data);
 };
 
 } // end of namespace MPI
