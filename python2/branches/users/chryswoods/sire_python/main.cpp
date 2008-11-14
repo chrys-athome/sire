@@ -6,14 +6,14 @@
 
 #include <cstdio>
 
-#include "SireMPI/mpinodes.h"
-
 #include "SireError/errors.h"
 #include "SireError/printerror.h"
 
+#include "SireCluster/cluster.h"
+
 using std::printf;
 
-using namespace SireMPI;
+using namespace SireCluster;
 
 int main(int argc, char **argv)
 {
@@ -30,17 +30,14 @@ int main(int argc, char **argv)
             printf("Starting master node (%d of %d)\n", MPI::COMM_WORLD.Get_rank(),
                                                         MPI::COMM_WORLD.Get_size());
 
-            MPINodes nodes;
+            //start the cluster
+            Cluster::start();
 
-            //start the MPI event loop (this runs the loop in the background)
-            nodes.exec();
+            printf("Starting a Python shell...\n");
 
-            //now run python
+            //run python
             Py_Initialize();
             status = Py_Main(argc, argv);
-
-            //the script has finished - shutdown the cluster
-            nodes.shutdown();
         }
         else
         {
@@ -48,11 +45,9 @@ int main(int argc, char **argv)
             printf("Starting one of the compute nodes (%d of %d)\n", MPI::COMM_WORLD.Get_rank(),
                                                                      MPI::COMM_WORLD.Get_size());
 
-            MPIBackendNodes nodes;
-
-            //this blocks until the nodes are shutdown
-            nodes.exec();
-
+            //exec the Cluster - this starts the cluster and then
+            //blocks while it is running
+            Cluster::exec();
             status = 0;
         }
     }
@@ -74,17 +69,19 @@ int main(int argc, char **argv)
         status = -1;
     }
 
-    //put up a barrier to wait for every MPI node to finish
+    //shutdown the cluster
     if (MPI::COMM_WORLD.Get_rank() == 0)
     {
-        printf("Shutting down MPI...\n");
+        printf("Shutting down the cluster...\n");
+        Cluster::shutdown();
     }
 
+    //wait for all of the MPI jobs to finish
     MPI::COMM_WORLD.Barrier();
 
     if (MPI::COMM_WORLD.Get_rank() == 0)
     {
-        printf("MPI has shutdown on all nodes.\n");
+        printf("The entire cluster has now shutdown.\n");
     }
 
     //make sure we have stopped MPI

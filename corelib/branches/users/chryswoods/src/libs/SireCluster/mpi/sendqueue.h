@@ -69,10 +69,16 @@ public:
     
     void stop();
     
+    void wait();
+    
+    bool isRunning();
+    
 protected:
     void run();
     
 private:
+    void sendError(const SireError::exception &e, const Message &message);
+
     /** Mutex to protect access to the queue of messages to send */
     QMutex datamutex;
     
@@ -84,6 +90,9 @@ private:
     
     /** The list of messages to send */
     QQueue<Message> message_queue;
+    
+    /** Whether or not the queue has been stopped */
+    bool been_stopped;
 };
 
 } // end of namespace MPI

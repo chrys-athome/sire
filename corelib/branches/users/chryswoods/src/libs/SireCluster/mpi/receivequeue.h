@@ -79,6 +79,10 @@ public:
     
     void stop();
 
+    void wait();
+    
+    bool isRunning();
+
 protected:
     void run();
     void run2();
@@ -107,6 +111,10 @@ protected:
     };
 
 private:
+    void sendError(const SireError::exception&, const Message &message) const;
+    void sendError(const SireError::exception&, int sender) const;
+    Message unpackMessage(const QByteArray &message_data, int sender) const;
+
     SecondThread *secondthread;
 
     /** Mutex to protect access to the queue of received messages */
@@ -123,6 +131,9 @@ private:
 
     /** Whether or not to keep listening for messages */
     bool keep_listening;
+    
+    /** Whether or not this has been stopped */
+    bool been_stopped;
 };
 
 } // end of namespace MPI

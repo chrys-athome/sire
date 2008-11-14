@@ -28,8 +28,17 @@
 
 #ifdef __SIRE_USE_MPI__
 
+#include <QThread>
+#include <QMutex>
+#include <QWaitCondition>
+
 #include "messages.h"
 #include "mpicluster.h"
+
+#include "SireCluster/cluster.h"
+
+#include "SireError/exception.h"
+#include "SireError/printerror.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -114,6 +123,12 @@ MessageBase& MessageBase::operator=(const MessageBase &other)
     }
     
     return *this;
+}
+
+/** Return a string representation of this message */
+QString MessageBase::toString() const
+{
+    return this->what();
 }
 
 /** Return whether or not this message has a reply */
@@ -218,6 +233,15 @@ bool Message::isNull() const
     return d.constData() == 0;
 }
 
+/** Return a string representation of this message */
+QString Message::toString() const
+{
+    if (this->isNull())
+        return "Message::null";
+    else
+        return d->toString();
+}
+
 /** Internal function used to return the base object of the message */
 const MessageBase& Message::base() const
 {
@@ -228,7 +252,7 @@ const MessageBase& Message::base() const
 QByteArray Message::pack() const
 {
     QByteArray data;
-    QDataStream ds(data);
+    QDataStream ds(&data, QIODevice::WriteOnly);
     ds << *this;
     
     return data;
@@ -326,7 +350,7 @@ int Message::destination() const
 }
 
 /** Return whether this is one of the recipients of this message */
-int Message::isRecipient(int rank) const
+bool Message::isRecipient(int rank) const
 {
     int dest = this->destination();
 
@@ -356,7 +380,7 @@ QDataStream& operator<<(QDataStream &ds, const Broadcast &broadcast)
 /** Extract from a binary datastream */
 QDataStream& operator>>(QDataStream &ds, Broadcast &broadcast)
 {
-    VersionID v = readHeader(ds, r_message);
+    VersionID v = readHeader(ds, r_broadcast);
     
     if (v == 1)
     {
@@ -394,7 +418,7 @@ Broadcast::Broadcast(const Message &message)
 /** Construct to broadcast this message to just the MPI 
     process with rank 'rank' */
 Broadcast::Broadcast(const Message &message, int rank)
-          : MessageBase(-1),
+          : MessageBase(rank),
             message_data( message.pack() )
 {
     if (rank != -1) // -1 means broadcast to everyone
@@ -466,6 +490,13 @@ Broadcast& Broadcast::operator=(const Broadcast &other)
 bool Broadcast::isRecipient(int rank) const
 {
     return destinations.isEmpty() or destinations.contains(rank);
+}
+
+/** Return a string representation of this message */
+QString Broadcast::toString() const
+{
+    return QString( "Broadcast( %1 )" )
+                .arg( Message::unpack(message_data).toString() );
 }
 
 /** Read this message - this will only read this message if
@@ -569,6 +600,14 @@ RegisterBackend& RegisterBackend::operator=(const RegisterBackend &other)
     return *this;
 }
 
+/** Return a string representation of this message */
+QString RegisterBackend::toString() const
+{
+    return QString("RegisterBackend( uid=%1, process=%2 )")
+                .arg(node_uid.toString())
+                .arg(node_rank);
+}
+
 /** Read this message - this must only occur on the master process! */
 void RegisterBackend::read()
 {
@@ -626,10 +665,220 @@ Shutdown& Shutdown::operator=(const Shutdown &other)
     return *this;
 }
 
+/** This is a simple class that provide one-shot
+    running of functions in a background thread - this
+    is necessary when shutting down the cluster, as otherwise
+    we'll block waiting for the call to shut down the cluster
+    to finish... */
+class BG : private QThread
+{
+public:
+    static void call( void (*func)() )
+    {
+        QMutexLocker lkr(&runmutex);
+        QMutexLocker lkr1(&datamutex);
+        runner.func = func;
+        runner.start();
+        runwaiter.wait(&datamutex);
+        lkr1.unlock();
+        lkr.unlock();
+    }
+    
+private:
+    BG()
+    {}
+    
+    ~BG()
+    {}
+
+    void run()
+    {
+        datamutex.lock();
+        void (*f)() = func;
+        runwaiter.wakeAll();
+        datamutex.unlock();
+        
+        (*f)();
+    }
+
+    void (*func)();
+    
+    static QMutex runmutex;
+    static QMutex datamutex;
+    static QWaitCondition runwaiter;
+    static BG runner;
+};
+
+QMutex BG::runmutex;
+QMutex BG::datamutex;
+QWaitCondition BG::runwaiter;
+BG BG::runner;
+
 /** Read this message */
 void Shutdown::read()
 {
-    MPICluster::informedShutdown();
+    BG::call( &MPICluster::informedShutdown );
+}
+
+/////////
+///////// Implementation of ReceiveError
+/////////
+
+static const RegisterMetaType<ReceiveError> r_recverror;
+
+/** Serialise to a binary datastream */
+QDataStream& operator<<(QDataStream &ds, const ReceiveError &recverror)
+{
+    writeHeader(ds, r_recverror, 1);
+    
+    ds << recverror.error_data << recverror.message_data
+       << static_cast<const MessageBase&>(recverror);
+       
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream& operator>>(QDataStream &ds, ReceiveError &recverror)
+{
+    VersionID v = readHeader(ds, r_recverror);
+    
+    if (v == 1)
+    {
+        ds >> recverror.error_data >> recverror.message_data
+           >> static_cast<MessageBase&>(recverror);
+    }
+    else
+        throw version_error(v, "1", r_recverror, CODELOC);
+        
+    return ds;
+}
+
+/** Construct a null error message */
+ReceiveError::ReceiveError() : MessageBase( MPICluster::master() )
+{}
+
+/** Construct a message saying that there was an error while
+    reading the passed message */
+ReceiveError::ReceiveError(const SireError::exception &e, const Message &message)
+             : MessageBase( message.sender() ),
+               error_data( e.pack() ), message_data(message.pack())
+{
+    SireError::printError(e);
+}
+
+/** Construct a message saying that it wasn't even possible to extract
+    the message sent from 'sender' */
+ReceiveError::ReceiveError(const SireError::exception &e, int sender)
+             : MessageBase(sender),
+               error_data( e.pack() )
+{
+    SireError::printError(e);
+}
+
+/** Copy constructor */
+ReceiveError::ReceiveError(const ReceiveError &other) 
+             : MessageBase(other),
+               error_data(other.error_data), message_data(other.message_data)
+{}
+
+/** Destructor */
+ReceiveError::~ReceiveError()
+{}
+
+/** Copy assignment operator */
+ReceiveError& ReceiveError::operator=(const ReceiveError &other)
+{
+    if (this != &other)
+    {
+        error_data = other.error_data;
+        message_data = other.message_data;
+        MessageBase::operator=(other);
+    }
+    
+    return *this;
+}
+
+/** Read this message */
+void ReceiveError::read()
+{
+    SireError::printError( *(SireError::exception::unpack(error_data)) );
+    
+    BG::call( &Cluster::shutdown );
+}
+
+/////////
+///////// Implementation of SendError
+/////////
+
+static const RegisterMetaType<SendError> r_senderror;
+
+/** Serialise to a binary datastream */
+QDataStream& operator<<(QDataStream &ds, const SendError &senderror)
+{
+    writeHeader(ds, r_senderror, 1);
+    
+    ds << static_cast<const MessageBase&>(senderror);
+       
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream& operator>>(QDataStream &ds, SendError &senderror)
+{
+    VersionID v = readHeader(ds, r_senderror);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<MessageBase&>(senderror);
+    }
+    else
+        throw version_error(v, "1", r_senderror, CODELOC);
+        
+    return ds;
+}
+
+/** Construct a null error message */
+SendError::SendError() 
+          : MessageBase( MPICluster::master() )  // goes to the master
+{}
+
+/** Construct a message saying that there was an error while
+    reading the passed message */
+SendError::SendError(const SireError::exception &e, const Message &message)
+             : MessageBase( MPICluster::master() ),
+               error_data( e.pack() ), message_data(message.pack())
+{
+    SireError::printError(e);
+}
+
+/** Copy constructor */
+SendError::SendError(const SendError &other) 
+          : MessageBase(other),
+            error_data(other.error_data), message_data(other.message_data)
+{}
+
+/** Destructor */
+SendError::~SendError()
+{}
+
+/** Copy assignment operator */
+SendError& SendError::operator=(const SendError &other)
+{
+    if (this != &other)
+    {
+        error_data = other.error_data;
+        message_data = other.message_data;
+        MessageBase::operator=(other);
+    }
+    
+    return *this;
+}
+
+/** Read this message */
+void SendError::read()
+{
+    SireError::printError( *(SireError::exception::unpack(error_data)) );
+    BG::call( &Cluster::shutdown );
 }
 
 #endif // __SIRE_USE_MPI__

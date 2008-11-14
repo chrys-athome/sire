@@ -52,6 +52,8 @@ namespace Messages
 class RegisterBackend;
 class Shutdown;
 class Broadcast;
+class ReceiveError;
+class SendError;
 }
 
 }
@@ -77,6 +79,21 @@ QDataStream& operator<<(QDataStream&,
                        const SireCluster::MPI::Messages::Broadcast&);
 QDataStream& operator>>(QDataStream&, 
                         SireCluster::MPI::Messages::Broadcast&);
+
+QDataStream& operator<<(QDataStream&, 
+                       const SireCluster::MPI::Messages::ReceiveError&);
+QDataStream& operator>>(QDataStream&, 
+                        SireCluster::MPI::Messages::ReceiveError&);
+
+QDataStream& operator<<(QDataStream&, 
+                       const SireCluster::MPI::Messages::SendError&);
+QDataStream& operator>>(QDataStream&, 
+                        SireCluster::MPI::Messages::SendError&);
+
+namespace SireError
+{
+class exception;
+}
 
 namespace SireCluster
 {
@@ -109,6 +126,8 @@ public:
     virtual MessageBase* clone() const=0;
     
     virtual void read()=0;
+    
+    virtual QString toString() const;
     
     virtual bool hasReply() const;
     
@@ -184,6 +203,8 @@ public:
     {
         return Message::typeName();
     }
+    
+    QString toString() const;
     
     bool isNull() const;
 
@@ -269,6 +290,8 @@ public:
         return new Broadcast(*this);
     }
     
+    QString toString() const;
+    
     void read();
     
     bool hasReply() const;
@@ -326,6 +349,8 @@ public:
         return new RegisterBackend(*this);
     }
     
+    QString toString() const;
+    
     void read();
 
 private:
@@ -374,6 +399,101 @@ public:
     void read();
 };
 
+/** This is the message sent back to the sender when there is a problem
+    when receiving a message
+    
+    @author Christopher Woods
+*/
+class ReceiveError : public MessageBase
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const ReceiveError&);
+friend QDataStream& ::operator>>(QDataStream&, ReceiveError&);
+
+public:
+    ReceiveError();
+    
+    ReceiveError(const SireError::exception &e, const Message &message);
+    ReceiveError(const SireError::exception &e, int sender);
+    
+    ReceiveError(const ReceiveError &other);
+    
+    ~ReceiveError();
+    
+    ReceiveError& operator=(const ReceiveError &other);
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<ReceiveError>() );
+    }
+    
+    const char* what() const
+    {
+        return ReceiveError::typeName();
+    }
+    
+    ReceiveError* clone() const
+    {
+        return new ReceiveError(*this);
+    }
+
+    void read();
+
+private:
+    /** The error data */
+    QByteArray error_data;
+    
+    /** The message data (null if there was a problem 
+        even extracting the message) */
+    QByteArray message_data;
+};
+
+/** This is the message sent back to the sender when there is a problem
+    sending a message
+    
+    @author Christopher Woods
+*/
+class SendError : public MessageBase
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const SendError&);
+friend QDataStream& ::operator>>(QDataStream&, SendError&);
+
+public:
+    SendError();
+    SendError(const SireError::exception &e, const Message &message);
+    
+    SendError(const SendError &other);
+    
+    ~SendError();
+    
+    SendError& operator=(const SendError &other);
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<SendError>() );
+    }
+    
+    const char* what() const
+    {
+        return SendError::typeName();
+    }
+    
+    SendError* clone() const
+    {
+        return new SendError(*this);
+    }
+
+    void read();
+
+private:
+    /** The error data */
+    QByteArray error_data;
+    
+    /** The message data */
+    QByteArray message_data;
+};
+
 }  // end of namespace Messages
 }  // end of namespace MPI
 }  // end of namespace SireCluster
@@ -381,6 +501,8 @@ public:
 Q_DECLARE_METATYPE( SireCluster::MPI::Messages::Broadcast )
 Q_DECLARE_METATYPE( SireCluster::MPI::Messages::RegisterBackend )
 Q_DECLARE_METATYPE( SireCluster::MPI::Messages::Shutdown )
+Q_DECLARE_METATYPE( SireCluster::MPI::Messages::ReceiveError )
+Q_DECLARE_METATYPE( SireCluster::MPI::Messages::SendError )
 
 Q_DECLARE_METATYPE( SireCluster::MPI::Message )
 

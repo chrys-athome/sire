@@ -49,11 +49,6 @@ namespace MPI
 
 class Message;
 
-namespace detail
-{
-class MPIClusterPvt;
-}
-
 /** This class provides the global interface to all of the
     MPI nodes in the cluster (and, on the root node, the 
     global registry of all nodes available via MPI)
@@ -66,35 +61,27 @@ class MPIClusterPvt;
 class MPICluster
 {
 public:
-    ~MPICluster();
+    static void start();
+    static void shutdown();
+
+    static bool isRunning();
 
     static void registerBackend(const Backend &backend);
     static Frontend getFrontend(const QUuid &uid);
     
     static QList<QUuid> UIDs();
-    
-    static void shutdown();
 
     static int master();
     static int getRank();
     static bool isMaster();
 
     static void send(const Message &message);
+    
     static void received(const Message &message);
 
     //functions called by MPI messages
     static void registerBackend(int rank, const QUuid &uid);
     static void informedShutdown();
-
-private:
-    MPICluster();
-
-    static MPICluster& cluster();
-
-    void start();
-
-    /** Private implementation of MPICluster */
-    boost::shared_ptr<detail::MPIClusterPvt> d;
 };
 
 } // end of namespace MPI

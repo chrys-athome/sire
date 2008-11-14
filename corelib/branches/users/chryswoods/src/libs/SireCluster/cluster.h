@@ -44,11 +44,6 @@ namespace SireCluster
 class Backend;
 class Frontend;
 
-namespace detail
-{
-class ClusterPvt;
-}
-
 /** This class provides the global registry for all nodes in the cluster.
     A node is defined as a resource that can run a WorkPacket. A node
     consists of a Backend (the object in which the WorkPacket is 
@@ -60,8 +55,6 @@ class ClusterPvt;
 class SIRECLUSTER_EXPORT Cluster
 {
 public:
-    ~Cluster();
-    
     static void registerBackend(const Backend &backend);
     
     static Frontend getFrontend(const QUuid &uid);
@@ -70,18 +63,19 @@ public:
     
     static QList<QUuid> UIDs();
 
+    static int getRank();
+    
+    static void start();
+
     static void shutdown();
+
+    static void wait();
+    
+    static bool isRunning();
 
     static bool supportsMPI();
 
-private:
-    static Cluster& cluster();
-
-    Cluster();
-
-    void start();
-
-    boost::shared_ptr<detail::ClusterPvt> d;
+    static void exec();
 };
 
 }

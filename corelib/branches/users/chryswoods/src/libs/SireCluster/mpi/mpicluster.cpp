@@ -34,6 +34,7 @@
 #include <QMutex>
 #include <QUuid>
 
+#include "SireCluster/cluster.h"
 #include "SireCluster/frontend.h"
 #include "SireCluster/backend.h"
 
@@ -44,29 +45,38 @@
 
 #include "SireError/errors.h"
 
+#include <QDebug>
+
 using namespace SireCluster;
 using namespace SireCluster::MPI;
 
-namespace SireCluster
-{
-namespace MPI
-{
-namespace detail
-{
+#ifndef HAVE_LSEEK64
+    //////
+    ////// add an lseek64 function stub to fill a function
+    ////// that is missing - mpich needs lseek64 to be
+    ////// defined, even if it is not available! Otherwise
+    ////// dlopen errors as the symbol can't be found
+    //////
+    extern "C"
+    {
+        int lseek64(int fd, int offset, int whence)
+        {
+            throw SireError::program_bug( QObject::tr(
+                "MPI implementation is calling lseek64 which is not supported "
+                "on OS X (Leopard - 32bit)"), CODELOC );
+            
+            return 0;
+        }
+    }
+#endif // HAVE_LSEEK64
 
 /** Private implementation of MPICluster */
 class MPIClusterPvt
 {
 public:
-    MPIClusterPvt() : datamutex(QMutex::Recursive),
-                      send_queue(0), receive_queue(0)
-    {}
+    MPIClusterPvt();
     
-    ~MPIClusterPvt()
-    {
-        delete send_queue;
-        delete receive_queue;
-    }
+    ~MPIClusterPvt();
     
     /** Mutex to protect access to the data of this cluster */
     QMutex datamutex;
@@ -82,71 +92,77 @@ public:
     ReceiveQueue *receive_queue;
 };
 
-} // end of namespace detail
-} // end of namespace MPI
-} // end of namespace SireCluster
+Q_GLOBAL_STATIC( MPIClusterPvt, globalCluster );
 
-using namespace SireCluster::MPI::detail;
-
-Q_GLOBAL_STATIC_WITH_ARGS( QMutex, globalMutex, (QMutex::Recursive) );
-
-static MPICluster *global_cluster;
-
-/** Return the global MPICluster */
-MPICluster& MPICluster::cluster()
+static void ensureMPIStarted()
 {
-    QMutexLocker lkr( globalMutex() );
-
-    if (global_cluster == 0)
+    if (not ::MPI::Is_initialized())
     {
-        global_cluster = new MPICluster();
-
-        //create the private send and receive communicators
-        if (not ::MPI::Is_initialized())
-        {
-            int argc = 0;
-            char **argv = 0;
-            ::MPI::Init(argc, argv);
-        }
-        
-        ::MPI::Intracomm send_comm, recv_comm;
-        
-        if ( MPICluster::isMaster() )
-        {
-            //create the send, then receive communicators
-            send_comm = ::MPI::COMM_WORLD.Clone();
-            recv_comm = ::MPI::COMM_WORLD.Clone();
-        }
-        else
-        {
-            //must be the other way around (as all other nodes
-            //listen to the master)
-            recv_comm = ::MPI::COMM_WORLD.Clone();
-            send_comm = ::MPI::COMM_WORLD.Clone();
-        }
-        
-        //create and start the event loops
-        global_cluster->d->send_queue = new SendQueue(send_comm);
-        global_cluster->d->receive_queue = new ReceiveQueue(recv_comm);
-        
-        global_cluster->d->send_queue->start();
-        global_cluster->d->receive_queue->start();
+        int argc = 0;
+        char **argv = 0;
+        ::MPI::Init(argc, argv);
     }
-    
-    return *global_cluster;
 }
 
-/** Constructor */
-MPICluster::MPICluster() : d( new MPIClusterPvt() )
-{}
+/** Construct the global cluster */
+MPIClusterPvt::MPIClusterPvt() : send_queue(0), receive_queue(0)
+{
+    //create the private send and receive communicators
+    ::ensureMPIStarted();
+        
+    ::MPI::Intracomm send_comm, recv_comm;
+        
+    if ( MPICluster::isMaster() )
+    {
+        //create the send, then receive communicators
+        send_comm = ::MPI::COMM_WORLD.Clone();
+        recv_comm = ::MPI::COMM_WORLD.Clone();
+    }
+    else
+    {
+        //must be the other way around (as all other nodes
+        //listen to the master)
+        recv_comm = ::MPI::COMM_WORLD.Clone();
+        send_comm = ::MPI::COMM_WORLD.Clone();
+    }
+        
+    //create and start the event loops
+    send_queue = new SendQueue(send_comm);
+    receive_queue = new ReceiveQueue(recv_comm);
+        
+    send_queue->start();
+    receive_queue->start();
+}
 
 /** Destructor */
-MPICluster::~MPICluster()
-{}
+MPIClusterPvt::~MPIClusterPvt()
+{
+    if (send_queue)
+    {
+        send_queue->stop();
+        send_queue->wait();
+        delete send_queue;
+    }
+    
+    if (receive_queue)
+    {
+        receive_queue->stop();
+        receive_queue->wait();
+        delete receive_queue;
+    }
+}
+
+/** Start the MPI backend */
+void MPICluster::start()
+{
+    ::ensureMPIStarted();
+    globalCluster();
+}
 
 /** Return the rank of this process in the MPI cluster */
 int MPICluster::getRank()
 {
+    ::ensureMPIStarted();
     return ::MPI::COMM_WORLD.Get_rank();
 }
 
@@ -160,6 +176,25 @@ int MPICluster::master()
 bool MPICluster::isMaster()
 {
     return MPICluster::getRank() == MPICluster::master();
+}
+
+/** Send the message 'message' (the destination is available
+    in message.destination()) */
+void MPICluster::send(const Message &message)
+{
+    if (message.isNull())
+        return;
+        
+    globalCluster()->send_queue->send(message);
+}
+
+/** Receive the message 'message' */
+void MPICluster::received(const Message &message)
+{
+    if (message.isNull())
+        return;
+        
+    globalCluster()->receive_queue->received(message);
 }
 
 /** Call this function on the master MPI process to register
@@ -181,13 +216,11 @@ void MPICluster::registerBackend(int rank, const QUuid &uid)
                     CODELOC );
     }
 
-    MPICluster &c = cluster();
+    QMutexLocker lkr( &(globalCluster()->datamutex) );
     
-    QMutexLocker lkr( &(c.d->datamutex) );
-    
-    if (not c.d->backend_registry.contains(uid))
+    if (not globalCluster()->backend_registry.contains(uid))
     {
-        c.d->backend_registry.insert(uid, rank);
+        globalCluster()->backend_registry.insert(uid, rank);
     }
 }    
 
@@ -233,14 +266,50 @@ QList<QUuid> MPICluster::UIDs()
     return QList<QUuid>();
 }
 
+/** Return whether or not the MPICluster is running */
+bool MPICluster::isRunning()
+{
+    if (not ::MPI::Is_initialized())
+        return false;
+        
+    else
+    {
+        return globalCluster()->send_queue->isRunning() or
+               globalCluster()->receive_queue->isRunning();
+    }
+}
+
+/** This just shuts down this node */
+void MPICluster::informedShutdown()
+{
+    if (not MPICluster::isRunning())
+        return;
+
+    globalCluster()->send_queue->stop();
+    globalCluster()->receive_queue->stop();
+    
+    globalCluster()->send_queue->wait();
+    globalCluster()->receive_queue->wait();
+
+    //////////
+    {
+        QMutexLocker lkr( &(globalCluster()->datamutex) );
+        globalCluster()->backend_registry.clear();
+    }
+    
+    //shut down the cluster - this will call MPICluster::shutdown,
+    //but this won't recurse, as MPICluster::isRunning() will be false
+    Cluster::shutdown();
+}
+
 /** Shutdown the MPI cluster */
 void MPICluster::shutdown()
 {
-    if ( MPICluster::isMaster() )
-    {
-        //this will shutdown the entire cluster!
-        
-    }
+    if (not MPICluster::isRunning())
+        return;
+
+    //this will shutdown the entire cluster!
+    MPICluster::send( Messages::Shutdown() );
 }
 
 #endif // __SIRE_USE_MPI__

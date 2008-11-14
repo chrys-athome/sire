@@ -28,6 +28,7 @@
 
 #include <QMutex>
 #include <QVector>
+#include <QUuid>
 
 #include <QDebug>
 
@@ -266,7 +267,28 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, RanGenerator &rangen)
     return ds;
 }
 
-static boost::shared_ptr<RanGeneratorPvt> shared_null( new RanGeneratorPvt() );
+static RanGeneratorPvt* createSharedNull()
+{
+    RanGeneratorPvt *gen = new RanGeneratorPvt();
+    
+    int seed = gen->mersenne_generator.randInt();
+    
+    //QUuid *very annoyingly* calls qsrand using the current time.
+    // THIS IS REALLY ANNOYING WHEN USING QUuid IN AN MPI PROGRAM!!!!
+    
+    // However, it only calls qsrand on the first QUuid - I'll thus
+    // call qsrand after the first...
+    QUuid::createUuid();
+             
+    qsrand(seed);
+
+    //lets dispose of another QUuid while we're at it
+    QUuid::createUuid();
+    
+    return gen;
+}
+
+static boost::shared_ptr<RanGeneratorPvt> shared_null( ::createSharedNull() );
 
 /** Create a randomly seeded generator
     (actually a copy of the global, random generator) */

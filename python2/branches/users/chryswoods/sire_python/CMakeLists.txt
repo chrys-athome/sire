@@ -31,7 +31,7 @@ set_target_properties (sire_python
                       )
 		       
 target_link_libraries (sire_python
-                       SIRE_SireMPI
+                       SIRE_SireCluster
                        SIRE_Squire
                        SIRE_SireMol
                        SIRE_SireMove

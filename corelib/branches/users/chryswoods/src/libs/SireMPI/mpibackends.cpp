@@ -68,26 +68,6 @@ static const int STOP_MPI_BACKEND = 2;
 //////////////
 //////////////
 
-#ifndef HAVE_LSEEK64
-    //////
-    ////// add an lseek64 function stub to fill a function
-    ////// that is missing - mpich needs lseek64 to be
-    ////// defined, even if it is not available! Otherwise
-    ////// dlopen errors as the symbol can't be found
-    //////
-    extern "C"
-    {
-        int lseek64(int fd, int offset, int whence)
-        {
-            throw SireError::program_bug( QObject::tr(
-                "MPI implementation is calling lseek64 which is not supported "
-                "on OS X (Leopard - 32bit)"), CODELOC );
-            
-            return 0;
-        }
-    }
-#endif // HAVE_LSEEK64å
-
 namespace SireMPI
 {
 namespace detail
