@@ -142,8 +142,6 @@ private:
 
 }
 
-Q_DECLARE_METATYPE( SireCluster::Nodes )
-
 SIRE_EXPOSE_CLASS( SireCluster::Nodes )
 
 SIRE_END_HEADER

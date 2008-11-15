@@ -43,10 +43,12 @@ namespace SireCluster
 class Nodes;
 class Frontend;
 class WorkPacket;
+class Promise;
 
 namespace detail
 {
 class NodePvt;
+class PromisePvt;
 }
 
 /** This is a Node in a cluster. A Node is a resource that can
@@ -67,6 +69,9 @@ class SIRECLUSTER_EXPORT Node
 
 friend class Nodes;
 
+friend class Promise;
+friend class PromisePvt;
+
 public:
     Node();
     
@@ -78,11 +83,6 @@ public:
     
     bool operator==(const Node &other) const;
     bool operator!=(const Node &other) const;
-    
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Node>() );
-    }
     
     QString toString() const;
     
@@ -99,7 +99,8 @@ public:
     
     QUuid UID();
     
-    void startJob(const WorkPacket &workpacket);
+    //need to change to Promise startJob(const WorkPacket &workpacket);
+    Promise startJob(const WorkPacket &workpacket);
     
     void stopJob();
     void abortJob();
@@ -108,9 +109,6 @@ public:
     bool wait(int timeout);
     
     float progress();
-    WorkPacket interimResult();
-    
-    WorkPacket result();
 
 protected:
     static Node create(const Nodes &nodes, 
@@ -121,14 +119,15 @@ protected:
 
     Frontend frontend(); // called by Nodes
 
+    WorkPacket interimResult(); // called by Promise
+    WorkPacket result();        // called by PromisePvt
+
 private:
     /** Private implementation of Node */
     boost::shared_ptr<detail::NodePvt> d;
 };
 
 }
-
-Q_DECLARE_METATYPE( SireCluster::Node )
 
 SIRE_EXPOSE_CLASS( SireCluster::Node )
 

@@ -55,8 +55,7 @@ QDataStream SIRECLUSTER_EXPORT &operator<<(QDataStream &ds,
     
     SharedDataStream sds(ds);
     
-    sds << workbase.current_progress << workbase.error_data
-        << workbase.was_aborted;
+    sds << workbase.current_progress << workbase.was_aborted;
     
     return ds;
 }
@@ -70,8 +69,7 @@ QDataStream SIRECLUSTER_EXPORT &operator>>(QDataStream &ds, WorkPacketBase &work
     {
         SharedDataStream sds(ds);
         
-        sds >> workbase.current_progress >> workbase.error_data
-            >> workbase.was_aborted;
+        sds >> workbase.current_progress >> workbase.was_aborted;
     }
     else
         throw version_error(v, "1", r_workbase, CODELOC);
@@ -88,7 +86,6 @@ WorkPacketBase::WorkPacketBase()
 WorkPacketBase::WorkPacketBase(const WorkPacketBase &other)
                : QSharedData(),
                  current_progress(other.current_progress),
-                 error_data(other.error_data),
                  was_aborted(other.was_aborted)
 {}
 
@@ -102,11 +99,33 @@ WorkPacketBase& WorkPacketBase::operator=(const WorkPacketBase &other)
     if (this != &other)
     {
         current_progress = other.current_progress;
-        error_data = other.error_data;
         was_aborted = other.was_aborted;
     }
     
     return *this;
+}
+
+/** Return whether or not this work packet should be stored 
+    as a binary array - this is used by Promise to work out
+    how to store the initial WorkPacket state. Only large
+    packets should be binary packed (as they are then 
+    compressed) */
+bool WorkPacketBase::shouldPack() const
+{
+    return false;
+}
+
+/** Return the approximate maximum size (in bytes) of the WorkPacket. This
+    doesn't have to exact (or indeed accurate) - it is used
+    to help the WorkPacket::pack() function reserve enough
+    space when serialising this packet to a binary array. 
+    The only penalty of getting this wrong is that you'll
+    either allocate too much space, or be reallocating while
+    the packet is being written */
+int WorkPacketBase::approximatePacketSize() const
+{
+    // adds 8 to give a little lee-way
+    return sizeof(float) + sizeof(bool) + 8;
 }
 
 /** Return the current progress of the work (percentage) */
@@ -115,11 +134,15 @@ float WorkPacketBase::progress() const
     return current_progress;
 }
 
-/** Return whether or not the work is in an error state */
+/** Return whether or not this is an Error WorkPacket */
 bool WorkPacketBase::isError() const
 {
-    return not error_data.isEmpty();
+    return false;
 }
+
+/** Throw the error, if this is in an error state */
+void WorkPacketBase::throwError() const
+{}
 
 /** Whether or not the job has been aborted */
 bool WorkPacketBase::wasAborted() const
@@ -128,74 +151,134 @@ bool WorkPacketBase::wasAborted() const
 }
 
 /** Abort this job */
-void WorkPacketBase::abort() throw()
+void WorkPacketBase::abort()
 {
     was_aborted = true;
-    error_data = QByteArray();
     current_progress = 0;
 }
 
-/** Reset the WorkPacket back to its original state */
-void WorkPacketBase::reset()
+/** Perform one chunk of the calculation - Any exceptions are
+    caught in WorkPacket::runChunk, where that are converted
+    into an ErrorPacket */
+void WorkPacketBase::runChunk()
 {
-    current_progress = 0;
-    error_data = QByteArray();
-    was_aborted = false;
-}
-
-/** Perform one chunk of the calculation - this DOES NOT throw
-    an exception */
-void WorkPacketBase::runChunk() throw()
-{
-    if (this->isError() or this->wasAborted() or this->hasFinished())
+    if (this->wasAborted() or this->hasFinished())
     {
         return;
     }
 
-    try
-    {
-        float new_progress = this->chunk();
-        current_progress = qMin( float(0), qMax(new_progress,float(100)) );
-    }
-    catch(const SireError::exception &e)
-    {
-        this->setError(e);
-    }
-    catch(const std::exception &e)
-    {
-        this->setError( SireError::std_exception(e) );
-    }
-    catch(...)
-    {
-        this->setError( SireError::unknown_exception( QObject::tr(
-                "There was an unknown exception thrown while running a chunk "
-                "of the WorkPacket %1 (progress = %2 %%)")
-                    .arg(this->what()).arg(current_progress), CODELOC ) );
-    }
+    float new_progress = this->chunk();
+    current_progress = qMin( float(0), qMax(new_progress,float(100)) );
 }
 
-/** Internal function used to set the error state to 'e' */
-void WorkPacketBase::setError(const SireError::exception &e) throw()
+///////////
+/////////// Implementation of ErrorPacket
+///////////
+
+static const RegisterMetaType<ErrorPacket> r_errorpacket;
+
+/** Serialise to a binary datastream */
+QDataStream SIRECLUSTER_EXPORT &operator<<(QDataStream &ds, 
+                                           const ErrorPacket &errorpacket)
 {
-    try
-    {
-        error_data = e.pack();
-    }
-    catch(...)
-    {
-        qDebug() << CODELOC;
-        qDebug() << "Error saving a binary representation of an error!!!";
+    writeHeader(ds, r_errorpacket, 1);
+    
+    SharedDataStream sds(ds);
 
-        error_data = QByteArray(10, ' ');
-    }
+    sds << errorpacket.error_data
+        << static_cast<const WorkPacketBase&>(errorpacket);
+        
+    return ds;
 }
 
-/** Internal function that will throw the exception representing
-    the error state, if we are in an error state */
-void WorkPacketBase::raiseAnyErrors()
+/** Extract from a binary datastream */
+QDataStream SIRECLUSTER_EXPORT &operator>>(QDataStream &ds, ErrorPacket &errorpacket)
+{
+    VersionID v = readHeader(ds, r_errorpacket);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> errorpacket.error_data
+            >> static_cast<WorkPacketBase&>(errorpacket);
+    }
+    else
+        throw version_error(v, "1", r_errorpacket, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+ErrorPacket::ErrorPacket() : WorkPacketBase()
+{}
+
+/** Construct an ErrorPacket for the error 'e' */
+ErrorPacket::ErrorPacket(const SireError::exception &e)
+            : WorkPacketBase()
+{
+    error_data = e.pack();
+}
+
+/** Copy constructor */
+ErrorPacket::ErrorPacket(const ErrorPacket &other)
+            : WorkPacketBase(other), error_data(other.error_data)
+{}
+
+/** Destructor */
+ErrorPacket::~ErrorPacket()
+{}
+
+/** Copy assignment operator */
+ErrorPacket& ErrorPacket::operator=(const ErrorPacket &other)
+{
+    if (this != &other)
+    {
+        error_data = other.error_data;
+        WorkPacketBase::operator=(other);
+    }
+    
+    return *this;
+}
+
+/** Return the approximate maximum size (in bytes) of the WorkPacket. This
+    doesn't have to exact (or indeed accurate) - it is used
+    to help the WorkPacket::pack() function reserve enough
+    space when serialising this packet to a binary array. 
+    The only penalty of getting this wrong is that you'll
+    either allocate too much space, or be reallocating while
+    the packet is being written */
+int ErrorPacket::approximatePacketSize() const
+{
+    return error_data.count() + WorkPacketBase::approximatePacketSize();
+}
+
+/** Return whether or not the work has finished */
+bool ErrorPacket::hasFinished() const
+{
+    return true;
+}
+
+/** Return whether or not this is an error */
+bool ErrorPacket::isError() const
+{
+    return not error_data.isEmpty();
+}
+
+/** Throw the error associated with this packet */
+void ErrorPacket::throwError() const
 {
     if (not error_data.isEmpty())
+    {
         SireError::exception::unpackAndThrow(error_data);
+    }
+}
+
+/** Perform one chunk of the work, returning the progress
+    after the chunk */
+float ErrorPacket::chunk()
+{
+    return 1;
 }
 
 ///////////
@@ -268,13 +351,51 @@ bool WorkPacket::isNull() const
     return d.constData() == 0;
 }
 
-/** Reset the WorkPacket back to its initial state */
-void WorkPacket::reset()
+/** Return whether or not we should pack this WorkPacket when
+    we are storing it. */
+bool WorkPacket::shouldPack() const
 {
-    if (not this->isNull())
-    {
-        d->reset();
-    }
+    if (this->isNull())
+        return false;
+        
+    else
+        return d->shouldPack();
+}
+
+/** Pack this WorkPacket into a binary array */
+QByteArray WorkPacket::pack() const
+{
+    if (this->isNull())
+        return QByteArray();
+
+    QByteArray data;
+    data.reserve( d->approximatePacketSize() );
+    
+    QDataStream ds(&data, QIODevice::WriteOnly);
+    
+    ds << *this;
+    
+    data = qCompress(data);
+    
+    return data;
+}
+
+/** Unpack a WorkPacket from the passed binary data. This binary
+    data *MUST* have been created by WorkPacket::pack() */
+WorkPacket WorkPacket::unpack(const QByteArray &data)
+{
+    if (data.isEmpty())
+        return WorkPacket();
+        
+    WorkPacket workpacket;
+    
+    QByteArray uncompressed_data = qUncompress(data);
+    
+    QDataStream ds(uncompressed_data);
+    
+    ds >> workpacket;
+    
+    return workpacket;
 }
 
 /** Return whether or not this work is in an error state */
@@ -300,12 +421,13 @@ bool WorkPacket::wasAborted() const
 }
 
 /** Return whether or not the work has finished (or is in an 
-    error state) */
-bool WorkPacket::hasFinished() const throw()
+    error state, or was aborted) - essentially, is there any
+    more of this work packet to run? */
+bool WorkPacket::hasFinished() const
 {
     if (not this->isNull())
     {
-        return d->isError() or d->wasAborted() or d->hasFinished();
+        return d->wasAborted() or d->hasFinished();
     }
     else
         return true;
@@ -320,12 +442,54 @@ void WorkPacket::abort()
     }
 }
 
+/** This sets the error state - this is done by replacing the 
+    existing WorkPacket with an ErrorPacket that describes
+    the error */
+void WorkPacket::setError(const SireError::exception &e) throw()
+{
+    try
+    {
+        d = ErrorPacket(e);
+    }
+    catch(const SireError::exception &e2)
+    {
+        d = ErrorPacket(e2);
+    }
+    catch(...)
+    {
+        d = ErrorPacket( SireError::unknown_exception( QObject::tr(
+                "An unknown error occured while creating an ErrorPacket."),
+                    CODELOC ) );
+    }
+}
+
 /** Run a chunk of work */
 void WorkPacket::runChunk() throw()
 {
-    if (not this->hasFinished())
+    if (this->isNull())
+        return;
+
+    try
     {
+        if (d->hasFinished() or d->wasAborted())
+            return;
+    
         d->runChunk();
+    }
+    catch(const SireError::exception &e)
+    {
+        this->setError(e);
+    }
+    catch(const std::exception &e)
+    {
+        this->setError( SireError::std_exception(e) );
+    }
+    catch(...)
+    {
+        this->setError( SireError::unknown_exception( QObject::tr(
+                "There was an unknown exception thrown while running a chunk "
+                "of the WorkPacket %1 (progress = %2 %%)")
+                    .arg(d->what()).arg(d->progress()), CODELOC ) );
     }
 }
 
@@ -363,7 +527,8 @@ QDataStream SIRECLUSTER_EXPORT &operator<<(QDataStream &ds, const WorkTest &work
     
     SharedDataStream sds(ds);
 
-    sds << worktest.current << worktest.start << worktest.end << worktest.step
+    sds << worktest.current << worktest.start 
+        << worktest.end << worktest.step
         << static_cast<const WorkPacketBase&>(worktest);
         
     return ds;
@@ -423,17 +588,22 @@ WorkTest& WorkTest::operator=(const WorkTest &other)
     return *this;
 }
 
-/** Return whether or not the work has finished */
-bool WorkTest::hasFinished() const throw()
+/** Return the approximate maximum size (in bytes) of the WorkPacket. This
+    doesn't have to exact (or indeed accurate) - it is used
+    to help the WorkPacket::pack() function reserve enough
+    space when serialising this packet to a binary array. 
+    The only penalty of getting this wrong is that you'll
+    either allocate too much space, or be reallocating while
+    the packet is being written */
+int WorkTest::approximatePacketSize() const
 {
-    return current == end;
+    return 4 * sizeof(qint32) + WorkPacketBase::approximatePacketSize();
 }
 
-/** Reset this WorkPacket back to its original state */
-void WorkTest::reset()
+/** Return whether or not the work has finished */
+bool WorkTest::hasFinished() const
 {
-    current = start;
-    WorkPacketBase::reset();
+    return current == end;
 }
 
 /** Perform one chunk of the work, returning the progress

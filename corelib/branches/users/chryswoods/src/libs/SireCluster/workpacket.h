@@ -41,11 +41,15 @@ namespace SireCluster
 {
 class WorkPacket;
 class WorkPacketBase;
+class ErrorPacket;
 class WorkTest;
 }
 
 QDataStream& operator<<(QDataStream&, const SireCluster::WorkPacketBase&);
 QDataStream& operator>>(QDataStream&, SireCluster::WorkPacketBase&);
+
+QDataStream& operator<<(QDataStream&, const SireCluster::ErrorPacket&);
+QDataStream& operator>>(QDataStream&, SireCluster::ErrorPacket&);
 
 QDataStream& operator<<(QDataStream&, const SireCluster::WorkPacket&);
 QDataStream& operator>>(QDataStream&, SireCluster::WorkPacket&);
@@ -75,17 +79,19 @@ public:
     
     virtual ~WorkPacketBase();
     
-    void abort() throw();
+    virtual bool shouldPack() const;
+    virtual int approximatePacketSize() const;
     
-    virtual void reset();
+    void abort();
     
-    void runChunk() throw();
+    void runChunk();
     
     float progress() const;
     
-    virtual bool hasFinished() const throw()=0;
+    virtual bool hasFinished() const=0;
     
-    bool isError() const;
+    virtual bool isError() const;
+    virtual void throwError() const;
     
     bool wasAborted() const;
     
@@ -112,19 +118,12 @@ public:
 
 protected:
     virtual float chunk()=0;
-    
-    void raiseAnyErrors();
 
     WorkPacketBase& operator=(const WorkPacketBase&);
     
 private:
-    void setError(const SireError::exception &e) throw();
-
     /** The current progress of the work */
     float current_progress;
-    
-    /** A binary representation of any errors */
-    QByteArray error_data;
     
     /** Whether or not the work was aborted */
     bool was_aborted;
@@ -159,39 +158,91 @@ public:
         return WorkPacket::typeName();
     }
 
+    QByteArray pack() const;
+    
+    static WorkPacket unpack(const QByteArray &data);
+
+    bool shouldPack() const;
+
     bool isNull() const;
 
     void abort();
 
     void runChunk() throw();
     
-    void reset();
-    
     float progress() const;
     
     bool wasAborted() const;
     
-    bool hasFinished() const throw();
+    bool hasFinished() const;
 
     bool isError() const;
+    void throwError() const;
 
     const WorkPacketBase& base() const;
 
     template<class T>
-    bool isA() const
-    {
-        return d->isA<T>();
-    }
+    bool isA() const;
     
     template<class T>
-    const T& asA() const
-    {
-        return d->asA<T>();
-    }
+    const T& asA() const;
 
 private:
+    void setError(const SireError::exception &e) throw();
+
     /** Implicitly shared pointer to the work */
     SireBase::SharedPolyPointer<WorkPacketBase> d;
+};
+
+/** This is a packet that contains an error. This is returned
+    if something went wrong while running a WorkPacket
+    
+    @author Christopher Woods
+*/
+class SIRECLUSTER_EXPORT ErrorPacket : public WorkPacketBase
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const ErrorPacket&);
+friend QDataStream& ::operator>>(QDataStream&, ErrorPacket&);
+
+public:
+    ErrorPacket();
+    ErrorPacket(const SireError::exception &e);
+
+    ErrorPacket(const ErrorPacket &other);
+    
+    ~ErrorPacket();
+    
+    ErrorPacket& operator=(const ErrorPacket &other);
+    
+    ErrorPacket* clone() const
+    {
+        return new ErrorPacket(*this);
+    }
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<ErrorPacket>() );
+    }
+    
+    const char* what() const
+    {
+        return ErrorPacket::typeName();
+    }
+    
+    int approximatePacketSize() const;
+    
+    bool isError() const;
+    void throwError() const;
+    
+    bool hasFinished() const;
+
+protected:
+    float chunk();
+    
+private:
+    /** A binary representation of the error */
+    QByteArray error_data;
 };
 
 /** This is a small test packet that can be used to test
@@ -226,9 +277,9 @@ public:
         return WorkTest::typeName();
     }
     
-    void reset();
+    int approximatePacketSize() const;
     
-    bool hasFinished() const throw();
+    bool hasFinished() const;
 
 protected:
     float chunk();
@@ -241,10 +292,12 @@ private:
 }
 
 Q_DECLARE_METATYPE( SireCluster::WorkPacket )
+Q_DECLARE_METATYPE( SireCluster::ErrorPacket )
 Q_DECLARE_METATYPE( SireCluster::WorkTest )
 
 SIRE_EXPOSE_CLASS( SireCluster::WorkPacketBase )
 SIRE_EXPOSE_CLASS( SireCluster::WorkPacket )
+SIRE_EXPORT_CLASS( SireCluster::ErrorPacket )
 SIRE_EXPOSE_CLASS( SireCluster::WorkTest )
 
 SIRE_END_HEADER

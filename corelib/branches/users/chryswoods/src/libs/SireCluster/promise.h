@@ -26,3 +26,79 @@
   *
 \*********************************************/
 
+#ifndef SIRECLUSTER_PROMISE_H
+#define SIRECLUSTER_PROMISE_H
+
+#include <QByteArray>
+
+#include "SireStream/streamdata.hpp"
+
+SIRE_BEGIN_HEADER
+
+namespace SireCluster
+{
+
+class Node;
+class WorkPacket;
+
+namespace detail
+{
+class PromisePvt;
+}
+
+/** This class provides a handle to the (future) result of
+    a piece of work that is being conducted on a node
+    in the cluster
+    
+    @author Christopher Woods
+*/
+class SIRECLUSTER_EXPORT Promise
+{
+public:
+    Promise();
+    
+    Promise(const Promise &other);
+    
+    ~Promise();
+    
+    Promise& operator=(const Promise &other);
+    
+    bool operator==(const Promise &other) const;
+    bool operator!=(const Promise &other) const;
+    
+    void abort();
+    void stop();
+    
+    void wait();
+    bool wait(int timeout);
+    
+    bool isNull();
+    
+    bool isRunning();
+    
+    bool isError();
+    
+    bool wasStopped();
+    
+    bool wasAborted();
+    
+    float progress();
+
+    WorkPacket input();
+    WorkPacket interimResult();
+    WorkPacket result();
+    
+protected:
+    Promise(const Node &node, const WorkPacket &initial_workpacket);
+    
+    /** Pointer to the private implementation */
+    boost::shared_ptr<detail::PromisePvt> d;
+};
+
+}
+
+SIRE_EXPOSE_CLASS( SireCluster::Promise )
+
+SIRE_END_HEADER
+
+#endif
