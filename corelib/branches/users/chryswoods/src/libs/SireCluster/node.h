@@ -26,3 +26,81 @@
   *
 \*********************************************/
 
+#ifndef SIRECLUSTER_NODE_H
+#define SIRECLUSTER_NODE_H
+
+#include "sireglobal.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireCluster
+{
+
+namespace detail
+{
+class NodePvt;
+}
+
+/** This is a Node in a cluster. A Node is a resource that can
+    be used to run WorkPackets. A Node is always part of a
+    'Nodes' scheduler object, that coordinates the WorkPackets
+    that are assigned to the nodes. Alternatively, you can
+    grab a node manually from the Nodes object and you can
+    assign WorkPackets to it yourself
+    
+    @author Christopher Woods
+*/
+class SIRECLUSTER_EXPORT Node
+{
+public:
+    Node();
+    
+    Node(const Node &other);
+    
+    ~Node();
+    
+    Node& operator=(const Node &other);
+    
+    bool operator==(const Node &other) const;
+    bool operator!=(const Node &other) const;
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Node>() );
+    }
+    
+    Nodes nodes() const;
+    
+    bool isLocal() const;
+    
+    bool isNull() const;
+    
+    QUuid UID();
+    
+    void startJob(const WorkPacket &workpacket);
+    
+    void stopJob();
+    void abortJob();
+    
+    void wait();
+    bool wait(int timeout);
+    
+    float progress();
+    WorkPacket interimResult();
+    
+    WorkPacket result();
+
+private:
+    /** Private implementation of Node */
+    boost::shared_ptr<detail::NodePvt> d;
+};
+
+}
+
+Q_DECLARE_METATYPE( SireCluster::Node )
+
+SIRE_EXPOSE_CLASS( SireCluster::Node )
+
+SIRE_END_HEADER
+
+#endif

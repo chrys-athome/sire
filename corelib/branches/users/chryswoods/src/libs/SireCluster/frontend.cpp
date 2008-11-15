@@ -58,8 +58,9 @@ FrontendBase::~FrontendBase()
 */
 class LocalFrontend : public FrontendBase
 {
+
 public:
-    LocalFrontend(const Backend &backend);
+    LocalFrontend(const ActiveBackend &backend);
     ~LocalFrontend();
     
     bool isLocal() const;
@@ -80,22 +81,18 @@ public:
     WorkPacket result();
 
 private:
-    /** The local backend */
-    Backend backend;
+    /** The active backend */
+    ActiveBackend backend;
 };
 
 /** Construct a Frontend for the local Backend 'backend' */
-LocalFrontend::LocalFrontend(const Backend &_backend)
+LocalFrontend::LocalFrontend(const ActiveBackend &_backend)
               : FrontendBase(), backend(_backend)
-{
-    backend.connect();
-}
+{}
 
 /** Destructor */
 LocalFrontend::~LocalFrontend()
-{
-    backend.disconnect();
-}
+{}
 
 bool LocalFrontend::isLocal() const
 {
@@ -160,13 +157,31 @@ Frontend::Frontend(const boost::shared_ptr<FrontendBase> &ptr)
          : d(ptr)
 {}
 
-/** Construct a local Frontend that talks to the local Backend 'backend' */
+/** Construct a local Frontend that talks to the local Backend 'backend'.
+    This will block while the backend is busy talking to another frontend */
 Frontend::Frontend(const Backend &backend)
 {
     if (not backend.isNull())
     {
-        d.reset( new LocalFrontend(backend) );
+        d.reset( new LocalFrontend(backend.connect()) );
     }
+}
+
+/** Construct a local Frontend that talks to the local Backend. This only
+    tries to make a connection - if the backend is busy then this gives
+    up and a null Frontend is returned */
+Frontend Frontend::tryAcquire(const Backend &backend)
+{
+    ActiveBackend active_backend = backend.tryConnect();
+    
+    Frontend frontend;
+    
+    if (not active_backend.isNull())
+    {
+        frontend.d.reset( new LocalFrontend(active_backend) );
+    }
+    
+    return frontend;
 }
 
 /** Copy constructor */

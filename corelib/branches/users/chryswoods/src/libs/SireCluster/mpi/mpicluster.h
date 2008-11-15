@@ -68,6 +68,8 @@ public:
     static bool isRunning();
 
     static void registerBackend(const Backend &backend);
+    
+    static Frontend getFrontend();
     static Frontend getFrontend(const QUuid &uid);
     
     static QList<QUuid> UIDs();

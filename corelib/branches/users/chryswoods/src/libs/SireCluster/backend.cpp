@@ -30,6 +30,8 @@
 #include <QMutex>
 #include <QWaitCondition>
 
+#include <boost/weak_ptr.hpp>
+
 #include "backend.h"
 #include "cluster.h"
 #include "workpacket.h"
@@ -39,11 +41,29 @@
 using namespace SireCluster;
 
 using boost::shared_ptr;
+using boost::weak_ptr;
 
 namespace SireCluster
 {
 namespace detail
 {
+
+/** A small object used as a token to say who's got hold
+    of a Backend */
+class BackendLock
+{
+public:
+    BackendLock(const shared_ptr<QWaitCondition> &w) : waiter(w)
+    {}
+    
+    ~BackendLock()
+    {
+        if (waiter.get() != 0)
+            waiter->wakeOne();
+    }
+
+    shared_ptr<QWaitCondition> waiter;
+};
 
 /** Private implementation of Backend */
 class BackendPvt : public QThread
@@ -57,17 +77,30 @@ public:
     ~BackendPvt()
     {}
     
+    shared_ptr<BackendLock> lock();
+    shared_ptr<BackendLock> tryLock();
+    shared_ptr<BackendLock> tryLock(int timeout);
+    
     /** Mutex used to protect access to the data of 
         this backend */
     QMutex datamutex;
-    
-    /** This mutex is used to ensure that only one 
-        thread can try to start a job at a time */
-    QMutex startmutex;
+
     
     /** This mutex is used to ensure that only one Frontend
         at a time is connecting to this Backend */
     QMutex connectionmutex;
+
+    /** This WaitCondition is used to signal when a Frontend
+        has disconnected from this Backend */
+    shared_ptr<QWaitCondition> connectionwaiter;
+
+    /** Weak pointer to the BackendLock that has locked this Backend */
+    weak_ptr<BackendLock> backend_lock;
+    
+    
+    /** This mutex is used to ensure that only one 
+        thread can try to start a job at a time */
+    QMutex startmutex;
     
     /** WaitCondition used to signal that the backend thread 
         has started */
@@ -201,9 +234,278 @@ void BackendPvt::run()
     resultspacket = workpacket;
 }
 
+/** This function is called by a Frontend which it connects to 
+    this backend - this blocks until there are no other frontends
+    connecting to this backend. This returns an ActiveBackend - which
+    provides the active interface that a Frontend uses to talk with
+    a Backend */
+ActiveBackend Backend::connect() const
+{
+    return ActiveBackend(*this);
+}
+
+/** This function is called by a Frontend to attempt a connection to this 
+    Backend - this returns a non-null ActiveBackend if it was successful.
+    Use this function to test if a Backend is active (as it avoids
+    the possibility of race conditions) */
+ActiveBackend Backend::tryConnect() const
+{
+    return ActiveBackend::tryConnect(*this);
+}
+
+/** This function is called by a Frontend to attempt a connection to this 
+    Backend and to keep trying for up to 'timeout' milliseconds if necessary.
+    This returns a non-null ActiveBackend if it was successful */
+ActiveBackend Backend::tryConnect(int timeout) const
+{
+    return ActiveBackend::tryConnect(*this, timeout);
+}
+
+/** Try to lock this Backend - this returns a null pointer if
+    this Backend is already locked */
+shared_ptr<BackendLock> BackendPvt::tryLock()
+{
+    QMutexLocker lkr( &connectionmutex );
+    
+    shared_ptr<BackendLock> my_lock;
+    
+    if (backend_lock.expired() and connectionwaiter.get() != 0)
+    {
+        //we can connect!
+        my_lock.reset( new BackendLock(connectionwaiter) );
+        backend_lock = my_lock;
+    }
+    
+    return my_lock;
+}
+
+/** Try to lock this backend, and keep trying for up to 'timeout' 
+    milliseconds - returns a null pointer if it fails */
+shared_ptr<BackendLock> BackendPvt::tryLock(int timeout)
+{
+    if (timeout < 0)
+        return this->lock();
+        
+    shared_ptr<BackendLock> my_lock = this->tryLock();
+    
+    if (my_lock.get() == 0)
+    {
+        //we weren't successful - we may have to sleep on it
+        QMutexLocker lkr( &connectionmutex );
+        
+        if (connectionwaiter.get() == 0)
+            //this backend is shutting down - noone may connect to it
+            return my_lock;
+        
+        shared_ptr<QWaitCondition> w = connectionwaiter;
+        w->wait( &connectionmutex, timeout );
+        
+        if (connectionwaiter.get() != 0)
+        {
+            //we are still allowed to connect
+            my_lock.reset( new BackendLock(connectionwaiter) );
+            backend_lock = my_lock;
+        }
+    }
+        
+    return my_lock;
+}
+
+/** Lock this Backend - this blocks until a lock is obtained
+    (or this backend is being shutdown). This returns the lock */
+shared_ptr<BackendLock> BackendPvt::lock()
+{
+    shared_ptr<BackendLock> my_lock = this->tryLock();
+    
+    if (my_lock.get() == 0)
+    {
+        //we weren't successful - we may have to sleep on it
+        QMutexLocker lkr( &connectionmutex );
+        
+        if (connectionwaiter.get() == 0)
+            //this backend is shutting down - no-one may connect to it
+            return my_lock;
+        
+        shared_ptr<QWaitCondition> w = connectionwaiter;
+        w->wait( &connectionmutex );
+        
+        if (connectionwaiter.get() != 0)
+        {
+            //we are still allowed to connect
+            my_lock.reset( new BackendLock(connectionwaiter) );
+            backend_lock = my_lock;
+        }
+    }
+
+    return my_lock;
+}
+
+/** This function shuts down the backend, stopping any running
+    jobs and preventing any from being started */
+void Backend::shutdown()
+{
+    if (this->isNull())
+        return;
+        
+    /////// Abort any running jobs
+    {
+        QMutexLocker lkr( &(d->datamutex) );
+    
+        if (not d->workpacket.isNull())
+            //there is nothing running to be aborted
+            d->workpacket.abort();
+    }
+
+    //now make sure that no other frontends can 
+    //connect to this backend - we do this by wiping
+    //out the connectionwaiter (after waking anyone
+    //waiting on it)
+    {
+        QMutexLocker lkr( &(d->connectionmutex) );
+    
+        if (d->connectionwaiter.get() != 0)
+        {
+            d->connectionwaiter->wakeAll();
+            d->connectionwaiter.reset();
+        }
+    }
+}
+
+//////////
+////////// Implementation of ActiveBackend
+//////////
+
+/** Null constructor */
+ActiveBackend::ActiveBackend()
+{}
+
+/** Construct to activate the backend 'backend'. This blocks
+    until the backend is available */
+ActiveBackend::ActiveBackend(const Backend &backend)
+{
+    this->operator=( ActiveBackend::connect(backend) );
+}
+    
+/** Copy constructor */
+ActiveBackend::ActiveBackend(const ActiveBackend &other)
+              : d(other.d), d_lock(other.d_lock)
+{}
+  
+/** Destructor */ 
+ActiveBackend::~ActiveBackend()
+{
+    d_lock.reset();
+    d.reset();
+}
+
+/** Copy assignment operator */
+ActiveBackend& ActiveBackend::operator=(const ActiveBackend &other)
+{
+    d_lock = other.d_lock;
+    d = other.d;
+
+    return *this;
+}
+
+/** Comparison operator */
+bool ActiveBackend::operator==(const ActiveBackend &other) const
+{
+    return d.get() == other.d.get();
+}
+
+/** Comparison operator */
+bool ActiveBackend::operator!=(const ActiveBackend &other) const
+{
+    return d.get() != other.d.get();
+}
+
+/** Try to connect to the passed backend - if this fails it returns
+    a null ActiveBackend */
+ActiveBackend ActiveBackend::tryConnect(const Backend &backend)
+{
+    ActiveBackend active_backend;
+    
+    if (not backend.isNull())
+    {
+        shared_ptr<BackendLock> d_lock = backend.d->tryLock();
+    
+        if (d_lock.get() != 0)
+        {
+            //we got a lock
+            ActiveBackend active_backend;
+            active_backend.d = backend.d;
+            active_backend.d_lock = d_lock;
+        }
+    }
+    
+    return active_backend;
+}
+
+/** Try to connect to the passed backend - and keep trying
+    for up to 'timeout' milliseconds if necessary
+    - if this fails it returns a null ActiveBackend */
+ActiveBackend ActiveBackend::tryConnect(const Backend &backend, int timeout)
+{
+    ActiveBackend active_backend;
+    
+    if (not backend.isNull())
+    {
+        shared_ptr<BackendLock> d_lock = backend.d->tryLock(timeout);
+    
+        if (d_lock.get() != 0)
+        {
+            //we got a lock
+            ActiveBackend active_backend;
+            active_backend.d = backend.d;
+            active_backend.d_lock = d_lock;
+        }
+    }
+    
+    return active_backend;
+}
+
+/** Connect to the passed backend - this will block until we
+    get a hold of the backend. In some extreme circumstances
+    this may fail, e.g. if the backend is shutdown while
+    we are trying to connect. So always remember to check
+    if the returned ActiveBackend is non-null */
+ActiveBackend ActiveBackend::connect(const Backend &backend)
+{
+    ActiveBackend active_backend;
+    
+    if (not backend.isNull())
+    {
+        shared_ptr<BackendLock> d_lock = backend.d->lock();
+        
+        if (d_lock.get() != 0)
+        {
+            active_backend.d = backend.d;
+            active_backend.d_lock = d_lock;
+        }
+    }
+    
+    return active_backend;
+}
+
+/** Return whether or not this is a null backend */
+bool ActiveBackend::isNull() const
+{
+    return d.get() == 0;
+}
+
+/** Return the unique ID of this backend */
+QUuid ActiveBackend::UID() const
+{
+    if (not this->isNull())
+        return d->uid;
+     
+    else
+        return QUuid();
+}
+
 /** Start a job on this backend - this blocks until any
     previous job has finished */
-void Backend::startJob(const WorkPacket &workpacket)
+void ActiveBackend::startJob(const WorkPacket &workpacket)
 {
     if (this->isNull() or workpacket.hasFinished())
         return;
@@ -238,7 +540,7 @@ void Backend::startJob(const WorkPacket &workpacket)
 
 /** Stop the job - this blocks until the job has stopped, and it
     returns the current state of the WorkPacket */
-void Backend::stopJob()
+void ActiveBackend::stopJob()
 {
     QMutexLocker lkr( &(d->datamutex) );
     d->keep_running = false;
@@ -246,7 +548,7 @@ void Backend::stopJob()
 
 /** Abort the job - this blocks until the job has aborted,
     and then returns the aborted WorkPacket */
-void Backend::abortJob()
+void ActiveBackend::abortJob()
 {
     QMutexLocker lkr( &(d->datamutex) );
     
@@ -256,7 +558,7 @@ void Backend::abortJob()
 }
 
 /** Wait for the backend thread to finish the work */
-void Backend::wait()
+void ActiveBackend::wait()
 {
     if (not this->isNull())
         d->wait();
@@ -265,7 +567,7 @@ void Backend::wait()
 /** Wait for the backend thread to finish the work, or for timeout
     milliseconds to pass - this returns whether or not the work has 
     finished */
-bool Backend::wait(int timeout)
+bool ActiveBackend::wait(int timeout)
 {
     if (not this->isNull())
         return d->wait(timeout);
@@ -274,7 +576,7 @@ bool Backend::wait(int timeout)
 }
 
 /** Return the current progress of the work */
-float Backend::progress()
+float ActiveBackend::progress()
 {
     if (this->isNull())
         return 0;
@@ -285,7 +587,7 @@ float Backend::progress()
 
 /** Return the current interim result - this will be a null
     workpacket if there is no work being run */
-WorkPacket Backend::interimResult()
+WorkPacket ActiveBackend::interimResult()
 {
     if (this->isNull())
         return WorkPacket();
@@ -297,7 +599,7 @@ WorkPacket Backend::interimResult()
 /** Return the result of the work. You must call this to collect
     the result of the work, so that the backend can be released
     to perform more work */
-WorkPacket Backend::result()
+WorkPacket ActiveBackend::result()
 {
     if (this->isNull())
         return WorkPacket();
@@ -326,50 +628,4 @@ WorkPacket Backend::result()
     d->keep_running = true;
     
     return finished_packet;
-}
-
-/** This function is called by a Frontend which it connects to 
-    this backend - this blocks until there are no other frontends
-    connecting to this backend */
-void Backend::connect()
-{
-    if (not this->isNull())
-    {
-        d->connectionmutex.lock();
-    }
-}
-
-/** This function is called by a Frontend when it disconnects
-    from this Backend - this must only be called by the same thread
-    used by the Frontend when it called Backend::connect() */
-void Backend::disconnect()
-{
-    if (not this->isNull())
-    {
-        //ensure that this node has finished work
-        this->stopJob();
-        d->connectionmutex.unlock();
-    }
-}
-
-/** This function is called by a Frontend to attempt a connection to this 
-    Backend - this returns true if the connection was successful */
-bool Backend::tryConnect()
-{
-    if (not this->isNull())
-    {
-        return d->connectionmutex.tryLock();
-    }
-    else
-        return false;
-}
-
-/** This function shuts down the backend, stopping any running
-    jobs and preventing any from being started */
-void Backend::shutdown()
-{
-    if (this->isNull())
-        return;
-        
-    this->abortJob();
 }

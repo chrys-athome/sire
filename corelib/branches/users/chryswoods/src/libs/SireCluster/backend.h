@@ -40,11 +40,15 @@ SIRE_BEGIN_HEADER
 namespace SireCluster
 {
 
+class ActiveBackend;
+class Backend;
+
 class WorkPacket;
 
 namespace detail
 {
 class BackendPvt;
+class BackendLock;
 }
 
 /** This is the public interface for a Backend. A Backend is an object
@@ -56,8 +60,11 @@ class BackendPvt;
     
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT Backend
+class Backend
 {
+
+friend class ActiveBackend;
+
 public:
     Backend();
     Backend(const Backend &other);
@@ -75,6 +82,46 @@ public:
 
     static Backend create();
     
+    ActiveBackend connect() const;
+    ActiveBackend tryConnect() const;
+    ActiveBackend tryConnect(int timeout) const;
+    
+    void shutdown();
+    
+private:
+    /** Private implementation */
+    boost::shared_ptr<detail::BackendPvt> d;
+};
+
+/** This is an active backend - this is what is held and 
+    used by the Frontend (thus ensuring that only one
+    Frontend is connected to a backend at any one time)
+    
+    @author Christopher Woods
+*/
+class ActiveBackend
+{
+public:
+    ActiveBackend();
+    ActiveBackend(const Backend &backend);
+    
+    ActiveBackend(const ActiveBackend &other);
+    
+    ~ActiveBackend();
+    
+    ActiveBackend& operator=(const ActiveBackend &other);
+    
+    bool operator==(const ActiveBackend &other) const;
+    bool operator!=(const ActiveBackend &other) const;
+    
+    static ActiveBackend connect(const Backend &backend);
+    static ActiveBackend tryConnect(const Backend &backend);
+    static ActiveBackend tryConnect(const Backend &backend, int timeout);
+    
+    bool isNull() const;
+    
+    QUuid UID() const;
+    
     void startJob(const WorkPacket &workpacket);
     
     void stopJob();
@@ -87,21 +134,17 @@ public:
     WorkPacket interimResult();
     
     WorkPacket result();
-    
-    void connect();
-    bool tryConnect();
-    void disconnect();
-    
-    void shutdown();
-    
+
 private:
     /** Private implementation */
     boost::shared_ptr<detail::BackendPvt> d;
+
+    /** Holder that is used to keep the connection 
+        to the backend */
+    boost::shared_ptr<detail::BackendLock> d_lock;
 };
 
 }
-
-SIRE_EXPOSE_CLASS( SireCluster::Backend )
 
 SIRE_END_HEADER
 

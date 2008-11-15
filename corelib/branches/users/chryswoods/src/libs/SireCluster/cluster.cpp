@@ -39,6 +39,7 @@
 #include "backend.h"
 #include "frontend.h"
 
+#include "SireError/errors.h"
 #include "SireError/printerror.h"
 
 #include <QDebug>
@@ -218,20 +219,62 @@ void Cluster::registerBackend(const Backend &backend)
     }
 }
 
+/** Return a Frontend that will allow us to communicate with
+    an available backend (this gets the first available backend,
+    though does prefer to find a local backend if possible) 
+    
+    A null frontend is returned no resources could be found.
+*/
+Frontend Cluster::getFrontend()
+{
+    QMutexLocker lkr( &(globalCluster()->datamutex ) );
+    
+    //first loop through the local backends to see if any
+    //of them are available
+    for (QHash<QUuid,Backend>::const_iterator 
+                    it = globalCluster()->local_backends.constBegin();
+         it != globalCluster()->local_backends.constEnd();
+         ++it)
+    {
+        Frontend frontend = Frontend::tryAcquire( it.value() );
+        
+        if (not frontend.isNull())
+            //we successfully grabbed this backend
+            return frontend;
+    }
+    
+    //ok, there were no locally available frontends
+    lkr.unlock();
+
+    #ifdef __SIRE_USE_MPI__
+         if (::usingMPI())
+            //see if there are any available remote backends
+            return SireCluster::MPI::MPICluster::getFrontend();
+    #endif
+
+    //nothing could be found - return a null frontend
+    return Frontend();
+}
+
 /** Return a Frontend that will allow us to communicate with the 
-    Backend with UID 'uid'. A null Frontend is returned if
-    no Backend with this UID exists */
+    Backend with UID 'uid'. A null frontend will be returned
+    if this backend is busy. An error will be raised if there
+    is no backend associated with this UID
+    
+    \throw SireError::unavailable_resource
+*/
 Frontend Cluster::getFrontend(const QUuid &uid)
 {
     if (uid.isNull())
-        return Frontend();
+        throw SireError::unavailable_resource( QObject::tr(
+            "There is no front end for the null backend!"), CODELOC );
 
     QMutexLocker lkr( &(globalCluster()->datamutex) );
     
     if (globalCluster()->local_backends.contains(uid))
     {
         //return a local frontend for this local backend
-        return Frontend( globalCluster()->local_backends.value(uid) );
+        return Frontend::tryAcquire( globalCluster()->local_backends.value(uid) );
     }
     else
     {
@@ -256,6 +299,15 @@ QList<QUuid> Cluster::localUIDs()
     QMutexLocker lkr( &(globalCluster()->datamutex) );
 
     return globalCluster()->local_backends.keys();
+}
+
+/** Return whether or not the backend with unique ID 'uid' 
+    is local to this process */
+bool Cluster::isLocal(const QUuid &uid)
+{
+    QMutexLocker lkr( &(globalCluster()->datamutex) );
+    
+    return globalCluster()->local_backends.contains(uid);
 }
 
 /** Return the list of all of the UIDs of all of the nodes 

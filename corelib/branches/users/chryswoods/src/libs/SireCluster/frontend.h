@@ -53,7 +53,7 @@ class WorkPacket;
     
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT FrontendBase : public boost::noncopyable
+class FrontendBase : public boost::noncopyable
 {
 
 friend class Frontend;
@@ -90,7 +90,7 @@ private:
     
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT Frontend
+class Frontend
 {
 public:
     Frontend();
@@ -106,6 +106,8 @@ public:
     
     bool operator==(const Frontend &other) const;
     bool operator!=(const Frontend &other) const;
+    
+    static Frontend tryAcquire(const Backend &backend);
     
     bool isLocal() const;
     
@@ -132,8 +134,6 @@ private:
 };
 
 }
-
-SIRE_EXPOSE_CLASS( SireCluster::Frontend )
 
 SIRE_END_HEADER
 

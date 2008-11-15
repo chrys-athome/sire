@@ -57,9 +57,8 @@ set ( SIRECLUSTER_HEADERS
       cluster.h
       frontend.h
       frontends.h
-      localbackend.h
-      localfrontend.h
       node.h
+      nodes.h
       promise.h      
       workpacket.h
     )
@@ -74,9 +73,8 @@ set ( SIRECLUSTER_SOURCES
       cluster.cpp
       frontend.cpp
       frontends.cpp
-      localbackend.cpp
-      localfrontend.cpp
       node.cpp
+      nodes.cpp
       promise.cpp
       workpacket.cpp
  

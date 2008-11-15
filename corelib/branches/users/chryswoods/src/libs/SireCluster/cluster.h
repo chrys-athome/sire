@@ -41,6 +41,8 @@ SIRE_BEGIN_HEADER
 namespace SireCluster
 {
 
+class Nodes;
+
 class Backend;
 class Frontend;
 
@@ -54,14 +56,16 @@ class Frontend;
 */
 class SIRECLUSTER_EXPORT Cluster
 {
-public:
-    static void registerBackend(const Backend &backend);
-    
-    static Frontend getFrontend(const QUuid &uid);
 
+friend class Backend;
+friend class Nodes;
+
+public:
     static QList<QUuid> localUIDs();
     
     static QList<QUuid> UIDs();
+
+    static bool isLocal(const QUuid &uid);
 
     static int getRank();
     static int getCount();
@@ -77,6 +81,13 @@ public:
     static bool supportsMPI();
 
     static void exec();
+
+protected:    
+    static Frontend getFrontend();                        // called by Nodes
+    static Frontend getFrontend(const QUuid &uid);        // called by Nodes
+
+    static void registerBackend(const Backend &backend);  // called by Backend
+
 };
 
 }

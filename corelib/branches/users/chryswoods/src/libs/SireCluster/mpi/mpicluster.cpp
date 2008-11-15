@@ -447,19 +447,83 @@ void MPICluster::registerBackend(const Backend &backend)
     }
 }
 
-/** Return the frontend for backend with UID 'uid', or return
-    a null Frontend if there is no such backend. This blocks
-    until the Frontend is available */
+/** Return the first available front end. This returns a null
+    frontend if there are no backends available
+*/
+Frontend MPICluster::getFrontend()
+{
+    //the Cluster should already have looked for local nodes...
+    /*
+    //ask the master to reserve any backend for us
+    //(the master will only reserve remote backends)
+    Messages::ReserveFrontend message;
+    
+    //create space to hold the reply (which contains the reservation)
+    Reply reply(message);
+    
+    MPICluster::send(message);
+    
+    //wait for the reply
+    reply.wait();
+    
+    //lets take a look at our reservation
+    Reservation reservation = reply.from( MPICluster::master() )
+                                   .asA<Reservation>();
+
+    if (reservations.isEmpty())
+        //we are too late - there is nothing available
+        return Frontend();
+    else
+        //this reservation is only valid for five minutes, so lets
+        //confirm it pretty quickly
+        return reservation.confirm();
+        
+    */
+    return Frontend();
+}
+
+/** Return the frontend for backend with UID 'uid'.
+    This returns a null frontend if this backend isn't
+    currently available, and it raises an error if there
+    is no backend associated with this UID
+    
+    \throw SireError::unavailable_resource
+*/
 Frontend MPICluster::getFrontend(const QUuid &uid)
 {
     if (uid.isNull())
-        return Frontend();
+        throw SireError::unavailable_resource( QObject::tr(
+            "There is no front end for the null backend!"), CODELOC );
+
+    //this interface is only to get *REMOTE* backends
+    BOOST_ASSERT( not Cluster::isLocal(uid) );
+
+    /*
         
-    //Message_GetFrontend message(uid);
-    //MPICluster::send( message );
+    //ask the master to arrange the connection to this backend
+    Messages::ReserveFrontend message(uid);
     
-    //return message.frontend();
+    //create space to hold the reply to this message
+    Reply reply(message);
     
+    MPICluster::send(message);
+        
+    //wait for the reply
+    reply.wait();
+    
+    //lets take a look at our reservation
+    Reservation reservation = reply.from( MPICluster::master() )
+                                   .asA<Reservation>();
+                                           
+    if (reservations.isEmpty())
+        //we are too late - this backend is already taken
+        return Frontend();
+    else
+        //this reservation is only valid for five minutes, so lets
+        //confirm it pretty quickly
+        return reservation.confirm();
+
+    */
     return Frontend();
 }
 
