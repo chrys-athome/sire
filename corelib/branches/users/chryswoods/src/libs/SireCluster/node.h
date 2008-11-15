@@ -31,10 +31,16 @@
 
 #include "sireglobal.h"
 
+#include <boost/shared_ptr.hpp>
+
 SIRE_BEGIN_HEADER
 
 namespace SireCluster
 {
+
+class Nodes;
+class Frontend;
+class WorkPacket;
 
 namespace detail
 {
@@ -48,10 +54,17 @@ class NodePvt;
     grab a node manually from the Nodes object and you can
     assign WorkPackets to it yourself
     
+    Essentially, a Node is a means of directing WorkPackets
+    to Frontends, so that they can be communicated on to
+    Backends that perform the actual work.
+    
     @author Christopher Woods
 */
 class SIRECLUSTER_EXPORT Node
 {
+
+friend class Nodes;
+
 public:
     Node();
     
@@ -69,11 +82,15 @@ public:
         return QMetaType::typeName( qMetaTypeId<Node>() );
     }
     
-    Nodes nodes() const;
+    QString toString() const;
     
-    bool isLocal() const;
+    Nodes nodes();
     
-    bool isNull() const;
+    bool isHomeless();
+    
+    bool isLocal();
+    
+    bool isNull();
     
     QUuid UID();
     
@@ -89,6 +106,15 @@ public:
     WorkPacket interimResult();
     
     WorkPacket result();
+
+protected:
+    static Node create(const Nodes &nodes, 
+                       const Frontend &frontend); // called by Nodes
+    
+    void evict(); // called by Nodes
+    void rehome(const Nodes &nodes); // called by Nodes
+
+    Frontend frontend(); // called by Nodes
 
 private:
     /** Private implementation of Node */

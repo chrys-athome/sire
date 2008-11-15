@@ -53,10 +53,8 @@ endif()
 set ( SIRECLUSTER_HEADERS
 
       backend.h
-      backends.h
       cluster.h
       frontend.h
-      frontends.h
       node.h
       nodes.h
       promise.h      
@@ -69,10 +67,8 @@ set ( SIRECLUSTER_SOURCES
       register_sirecluster.cpp
 
       backend.cpp
-      backends.cpp
       cluster.cpp
       frontend.cpp
-      frontends.cpp
       node.cpp
       nodes.cpp
       promise.cpp

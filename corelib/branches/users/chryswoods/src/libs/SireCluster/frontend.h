@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREMPI_FRONTEND_H
-#define SIREMPI_FRONTEND_H
+#ifndef SIRECLUSTER_FRONTEND_H
+#define SIRECLUSTER_FRONTEND_H
 
 #include "sireglobal.h"
 

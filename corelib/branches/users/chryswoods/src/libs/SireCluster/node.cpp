@@ -27,8 +27,16 @@
 \*********************************************/
 
 #include <QWaitCondition>
+#include <QMutex>
+
+#include <QUuid>
 
 #include "node.h"
+#include "frontend.h"
+#include "nodes.h"
+#include "workpacket.h"
+
+#include "SireError/errors.h"
 
 using namespace SireCluster;
 
@@ -51,10 +59,15 @@ public:
     {
         nodes.returnFrontend(frontend);
     }
+    
+    Frontend frontend;
+    NodesPtr nodes;
 };
 
 } //end of namespace detail 
 } //end of namespace SireCluster
+
+using namespace SireCluster::detail;
 
 /** Null constructor */
 Node::Node()
@@ -67,6 +80,57 @@ Node::Node(const Node &other) : d(other.d)
 /** Destructor */
 Node::~Node()
 {}
+
+/** Internal function called by 'Nodes' that is used to create a Node
+    that is part of 'Nodes' and uses the Frontend 'frontend' */
+Node Node::create(const Nodes &nodes, const Frontend &frontend)
+{
+    Node node;
+    node.d.reset( new NodePvt(frontend, nodes) );
+    
+    return node;
+}
+    
+/** Internal function called by 'Nodes' that tells this node that
+    it is no longer part of its parent. This is called only after
+    the Nodes object itself has removed the Node from it's registry */
+void Node::evict()
+{
+    if (not this->isNull())
+    {
+        d->nodes.reset();
+    }
+}
+
+/** Internal function called by 'Nodes' that tells this node that
+    it is being moved to be part of 'nodes'. This is called only
+    after the nodes object has updated it's registry */
+void Node::rehome(const Nodes &nodes)
+{
+    if (not this->isNull())
+    {
+        Nodes old_nodes = d->nodes.lock();
+        
+        if (not old_nodes.isEmpty())
+        {
+            old_nodes.remove(*this);
+        }
+        
+        d->nodes = nodes;
+    }
+}
+
+/** Return the frontend of this node - this will be null if 
+    this is a null node */
+Frontend Node::frontend()
+{
+    if (not this->isNull())
+    {
+        return d->frontend;
+    }
+    else
+        return Frontend();
+}
 
 /** Copy assignment operator */
 Node& Node::operator=(const Node &other)
@@ -87,17 +151,46 @@ bool Node::operator!=(const Node &other) const
     return not this->operator==(other);
 }
 
+/** Return a string representation of this node */
+QString Node::toString() const
+{
+    Node *nonconst_this = const_cast<Node*>(this);
+
+    QUuid uid = nonconst_this->UID();
+    
+    if (uid.isNull())
+        return QObject::tr( "Node::null" );
+        
+    else if (nonconst_this->isHomeless())
+        return QObject::tr( "Node( %1  **HOMELESS** )" ).arg(uid.toString());
+
+    else
+        return QObject::tr( "Node( %1 )" ).arg(uid.toString());
+}
+
 /** Return whether or not this node is null */
-bool Node::isNull() const
+bool Node::isNull()
 {
     return d.get() == 0;
 }
 
 /** Return whether or not this node is local to this process */
-bool Node::isLocal() const
+bool Node::isLocal()
 {
     if (not this->isNull())
         return d->frontend.isLocal();
+    else
+        return true;
+}
+
+/** Return whether or not this Node object is homeless
+    (is not part of any Nodes set). A homeless node can
+    finish any job that has started, but it is not allowed
+    to start any more jobs */
+bool Node::isHomeless()
+{
+    if (not this->isNull())
+        return d->nodes.expired();
     else
         return true;
 }
@@ -111,11 +204,35 @@ QUuid Node::UID()
         return QUuid();
 }
 
-/** Start the job in the WorkPacket 'workpacket' on this node */
-void Node::startJob(const WorkPacket &workpacket)
+/** Return the nodes object that this node belongs to. In some rare
+    circumstances this node may be homeless, in which case 
+    an empty set of nodes will be returned */
+Nodes Node::nodes()
 {
     if (not this->isNull())
-        d->frontend.startJob(workpacket);
+        return d->nodes.lock();
+    else
+        return Nodes();
+}
+
+/** Start the job in the WorkPacket 'workpacket' on this node 
+
+    \throw SireError::unavailable_resource
+*/
+void Node::startJob(const WorkPacket &workpacket)
+{
+    if (this->isNull())
+        throw SireError::unavailable_resource( QObject::tr(
+            "You cannot start a job on a null Node."), CODELOC );
+
+    if (this->isHomeless())
+        throw SireError::unavailable_resource( QObject::tr(
+            "You cannot start a new job on a homeless Node (%1). "
+            "Add this node to a Nodes scheduler object before you "
+            "try to run this job again.")
+                .arg(this->UID()), CODELOC );
+        
+    d->frontend.startJob(workpacket);
 }
 
 /** Stop any running job on this node - this does not block */
@@ -145,7 +262,7 @@ void Node::wait()
 bool Node::wait(int timeout)
 {
     if (not this->isNull())
-        return frontend.wait(timeout);
+        return d->frontend.wait(timeout);
     else
         return true;
 }
@@ -154,7 +271,7 @@ bool Node::wait(int timeout)
 float Node::progress()
 {
     if (not this->isNull())
-        return frontend.progress();
+        return d->frontend.progress();
     else
         return Frontend().progress();
 }
@@ -163,7 +280,7 @@ float Node::progress()
 WorkPacket Node::interimResult()
 {
     if (not this->isNull())
-        return frontend.interimResult();
+        return d->frontend.interimResult();
     else
         return Frontend().interimResult();
 }
@@ -173,7 +290,7 @@ WorkPacket Node::interimResult()
 WorkPacket Node::result()
 {
     if (not this->isNull())
-        return frontend.result();
+        return d->frontend.result();
     else
         return Frontend().result();
 }

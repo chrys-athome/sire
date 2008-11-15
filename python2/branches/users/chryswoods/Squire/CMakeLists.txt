@@ -9,8 +9,8 @@ include_directories( ${BOOST_INCLUDE_DIR}
                      ${PYTHON_INCLUDE_DIR} )
 
 # Sire include paths
-include_directories( ${SIRE_INCLUDE_DIR}/Squire
-                     ${SIRE_INCLUDE_DIR} )
+include_directories( BEFORE ${SIRE_INCLUDE_DIR}/Squire
+                            ${SIRE_INCLUDE_DIR} )
 
 # Other python wrapping directories
 include_directories(${CMAKE_SOURCE_DIR})

@@ -11,7 +11,7 @@ include_directories( ${BOOST_INCLUDE_DIR}
 # Other Sire libraries
 include_directories( ${CMAKE_SOURCE_DIR} ) 
 
-include_directories( ${SIRE_INCLUDE_DIR} )
+include_directories( BEFORE ${SIRE_INCLUDE_DIR} )
 
 # Define the sources in SireQt
 set ( WRAPQT_SOURCES

@@ -39,11 +39,13 @@ SIRE_BEGIN_HEADER
 namespace SireCluster
 {
 
+class Frontend;
 class Node;
 class NodesPtr;
 
 namespace detail
 {
+class NodePvt;
 class NodesPvt;
 }
 
@@ -68,23 +70,37 @@ public:
     bool operator==(const Nodes &other) const;
     bool operator!=(const Nodes &other) const;
     
-    Node getFreeNode();
-    QList<Node> getNFreeNodes(int n);
+    bool isEmpty();
     
-    Node getFreeNode(int timeout);
-    QList<Node> getNFreeNodes(int n, int timeout);
+    QString toString() const;
+    
+    Node getNode();
+    QList<Node> getNodes(int n);
+    QList<Node> getAllNodes();
+    
+    Node getNode(int timeout);
+    QList<Node> getNodes(int n, int timeout);
+    QList<Node> getAllNodes(int timeout);
     
     void waitUntilAllFree();
     bool waitUntilAllFree(int timeout);
     
-    int nFreeNodes() const;
-    int nBusyNodes() const;
-    int nNodes() const;
-    int count() const;
+    int nFree();
+    int nBusy();
+    int nNodes();
+    int count();
+
+    void add(Node node);
+    void remove(Node node);
 
     void removeAll();
 
+protected:
+    Nodes(const boost::shared_ptr<detail::NodesPvt> &ptr); // called by NodesPvt
+
 private:
+    Node _pvt_getNode();
+
     /** Private implementation of the Nodes */
     boost::shared_ptr<detail::NodesPvt> d;
 };
@@ -92,6 +108,9 @@ private:
 /** This class holds a weak pointer to the Nodes */
 class NodesPtr
 {
+
+friend class detail::NodePvt;
+
 public:
     NodesPtr();
     NodesPtr(const Nodes &nodes);
@@ -102,9 +121,15 @@ public:
     
     NodesPtr& operator=(const NodesPtr &other);
     
+    Nodes lock() const;
     Nodes operator*() const;
 
-    void returnFrontend(const Frontend &frontend);
+    bool expired() const;
+
+    void reset();
+    
+protected:
+    void returnFrontend(Frontend frontend);  // called by NodePvt
 
 private:
     /** Weak pointer to the nodes */
