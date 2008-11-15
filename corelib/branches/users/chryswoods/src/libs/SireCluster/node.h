@@ -90,6 +90,9 @@ public:
     
     bool isHomeless();
     
+    bool release();
+    void forceRelease();
+    
     bool isLocal();
     
     bool isNull();

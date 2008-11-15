@@ -57,7 +57,44 @@ public:
     
     ~NodePvt()
     {
+        //abort any running jobs
+        frontend.abortJob();
+        frontend.wait();
+        
+        //grab any results - this clears the frontend
+        try
+        {
+            frontend.result();
+        }
+        catch(...)
+        {}
+    
+        //now return the frontend back home
         nodes.returnFrontend(frontend);
+    }
+    
+    void forceRelease()
+    {
+        Frontend old_frontend = frontend;
+        NodesPtr old_nodes = nodes;
+        
+        frontend = Frontend();
+        nodes = NodesPtr();
+    
+        //abort any running jobs
+        old_frontend.abortJob();
+        old_frontend.wait();
+
+        //grab any results - this clears the frontend
+        try
+        {
+            old_frontend.result();
+        }
+        catch(...)
+        {}
+    
+        //return the frontend home
+        old_nodes.returnFrontend(old_frontend);
     }
     
     Frontend frontend;
@@ -172,6 +209,45 @@ QString Node::toString() const
 bool Node::isNull()
 {
     return d.get() == 0;
+}
+
+/** Release this node - this returns the node to its parent
+    Nodes object, or back to the Cluster pool if this node
+    is homeless. Note that this will only return the node if this
+    is the only reference to this node. This returns whether
+    or not this node was returned */
+bool Node::release()
+{
+    shared_ptr<NodePvt> my_d = d;
+    
+    d.reset();
+    
+    return my_d.unique();
+}
+
+/** Force the release of this node. This aborts any running
+    jobs on this node and returns it to the Nodes home, or
+    back to the Cluster pool if this is homeless. This will
+    release the node even if there are other references to it,
+    who may be querying or waiting for it. This is not thread-safe,
+    but may be necessary if you have lost a reference and
+    you need to send this node back */
+void Node::forceRelease()
+{
+    shared_ptr<NodePvt> my_d = d;
+    
+    d.reset();
+    
+    if (my_d.unique())
+    {
+        //just reset this pointer, and we are ok
+        my_d.reset();
+    }
+    else
+    {
+        //we need to go in and release the node manually
+        
+    }
 }
 
 /** Return whether or not this node is local to this process */

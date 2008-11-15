@@ -72,6 +72,7 @@ public:
     BackendPvt() : QThread(), keep_running(true)
     {
         uid = QUuid::createUuid();
+        connectionwaiter.reset( new QWaitCondition() );
     }
     
     ~BackendPvt()
@@ -269,13 +270,13 @@ shared_ptr<BackendLock> BackendPvt::tryLock()
     
     shared_ptr<BackendLock> my_lock;
     
-    if (backend_lock.expired() and connectionwaiter.get() != 0)
+    if (backend_lock.expired() and (connectionwaiter.get() != 0))
     {
         //we can connect!
         my_lock.reset( new BackendLock(connectionwaiter) );
         backend_lock = my_lock;
     }
-    
+
     return my_lock;
 }
 
@@ -432,7 +433,6 @@ ActiveBackend ActiveBackend::tryConnect(const Backend &backend)
         if (d_lock.get() != 0)
         {
             //we got a lock
-            ActiveBackend active_backend;
             active_backend.d = backend.d;
             active_backend.d_lock = d_lock;
         }

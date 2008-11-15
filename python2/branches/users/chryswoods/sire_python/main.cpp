@@ -10,6 +10,8 @@
 #include "SireError/printerror.h"
 
 #include "SireCluster/cluster.h"
+#include "SireCluster/nodes.h"
+#include "SireCluster/node.h"
 
 using std::printf;
 
@@ -60,9 +62,6 @@ int main(int argc, char **argv)
             MPI::COMM_WORLD.Barrier();
             Cluster::start();
             MPI::COMM_WORLD.Barrier();
-
-            QList<QUuid> uids = Cluster::UIDs();
-            qDebug() << Cluster::getRank() << uids;
 
             Cluster::exec();
             status = 0;

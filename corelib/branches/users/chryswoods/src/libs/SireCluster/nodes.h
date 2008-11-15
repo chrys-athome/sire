@@ -57,6 +57,7 @@ class SIRECLUSTER_EXPORT Nodes
 {
 
 friend class NodesPtr;
+friend class Cluster;
 
 public:
     Nodes();
@@ -97,6 +98,9 @@ public:
 
 protected:
     Nodes(const boost::shared_ptr<detail::NodesPvt> &ptr); // called by NodesPvt
+
+    Nodes(Frontend frontend);                // called by Cluster
+    Nodes(const QList<Frontend> &frontends); // called by Cluster
 
 private:
     Node _pvt_getNode();

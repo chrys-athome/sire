@@ -30,6 +30,8 @@
 #include "backend.h"
 #include "workpacket.h"
 
+#include <QDebug>
+
 using namespace SireCluster;
 
 using boost::shared_ptr;

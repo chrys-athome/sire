@@ -100,6 +100,65 @@ using namespace SireCluster::detail;
 Nodes::Nodes()
 {}
 
+/** Construct to hold the node that connects to the backend
+    using 'frontend' */
+Nodes::Nodes(Frontend frontend)
+{
+    QUuid uid = frontend.UID();
+    
+    if (uid.isNull())
+        return;
+        
+    d.reset( new NodesPvt() );
+    
+    QMutexLocker lkr( &(d->datamutex) );
+    
+    d->frontends.insert( uid, frontend );
+    d->free_frontends.append(uid);
+    
+    d->nodesem.reset( new QSemaphore(d->frontends.count()) );
+}
+
+/** Construct to hold the nodes that connect to the backends
+    using the frontends in 'frontends' */
+Nodes::Nodes(const QList<Frontend> &frontends) : d( new NodesPvt() )
+{
+    ///// Add all of the frontends
+    {
+        QMutexLocker lkr( &(d->datamutex) );
+
+        foreach (Frontend frontend, frontends)
+        {
+            QUuid uid = frontend.UID();
+            
+            if (uid.isNull())
+                continue;
+                
+            d->frontends.insert( uid, frontend );
+            
+            if (frontend.isLocal())
+            {
+                d->free_frontends.prepend(uid);
+            }
+            else
+            {
+                d->free_frontends.append(uid);
+            }
+        }
+        
+        if (not d->frontends.isEmpty())
+        {
+            d->nodesem.reset( new QSemaphore(d->frontends.count()) );
+        }
+    }
+    
+    if (d->frontends.isEmpty())
+    {
+        //this is an empty set of Nodes
+        d.reset();
+    }
+}
+
 /** Construct from the passed pointer */
 Nodes::Nodes(const shared_ptr<NodesPvt> &ptr) : d(ptr)
 {}
@@ -642,8 +701,15 @@ int Nodes::nBusy()
 /** Return the total number of nodes available */
 int Nodes::nNodes()
 {
-    QMutexLocker lkr( &(d->datamutex) );
-    return d->frontends.count();
+    if (d.get() == 0)
+    {
+        return 0;
+    }
+    else
+    {
+        QMutexLocker lkr( &(d->datamutex) );
+        return d->frontends.count();
+    }
 }
 
 /** Return the total number of nodes available */

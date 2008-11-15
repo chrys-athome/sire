@@ -58,7 +58,6 @@ class SIRECLUSTER_EXPORT Cluster
 {
 
 friend class Backend;
-friend class Nodes;
 
 public:
     static QList<QUuid> localUIDs();
@@ -82,12 +81,23 @@ public:
 
     static void exec();
 
-protected:    
-    static Frontend getFrontend();                        // called by Nodes
-    static Frontend getFrontend(const QUuid &uid);        // called by Nodes
+    static Nodes getNode(int timeout=10000);
+    static Nodes getNode(const QUuid &uid, int timeout=10000);
+    
+    static Nodes getNodes(int nnodes, int timeout=10000);
+    static Nodes getNodes(const QList<QUuid> &uids, int timeout=10000);
+    
+    static Nodes getAllNodes(int timeout=10000);
 
+protected:    
     static void registerBackend(const Backend &backend);  // called by Backend
 
+private:
+    static Frontend getFrontend(int timeout);
+    static Frontend getFrontend(const QUuid &uid, int timeout);
+
+    static Frontend getFrontend();
+    static Frontend getFrontend(const QUuid &uid);
 };
 
 }
