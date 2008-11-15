@@ -9,7 +9,6 @@ dirs = [ "Base", \
          "ID", \
          "IO", \
          "MM", \
-         "MPI", \
          "Maths", \
          "Mol", \
          "Move", \

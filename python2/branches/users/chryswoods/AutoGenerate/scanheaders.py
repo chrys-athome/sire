@@ -203,6 +203,10 @@ def scanFiles(dir, module_dir, atom_properties, cg_properties,
             active_files[file].addFunction(m.groups()[0].strip())
 
         for m in re.finditer(match_metatype, text):
+            #don't match the 'errors.h' files, as these are wrapped separately
+            if file == "errors.h":
+                continue
+
             if file not in active_files:
                 active_files[file] = HeaderInfo(file, dir, module_dir)
 
