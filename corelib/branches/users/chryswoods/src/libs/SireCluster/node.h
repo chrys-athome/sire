@@ -35,6 +35,8 @@
 
 SIRE_BEGIN_HEADER
 
+class QUuid;
+
 namespace SireCluster
 {
 
