@@ -70,7 +70,7 @@ class SIRECLUSTER_EXPORT Node
 friend class Nodes;
 
 friend class Promise;
-friend class PromisePvt;
+friend class detail::PromisePvt;
 
 public:
     Node();
@@ -95,11 +95,10 @@ public:
     
     bool isLocal();
     
-    bool isNull();
+    bool isNull() const;
     
     QUuid UID();
     
-    //need to change to Promise startJob(const WorkPacket &workpacket);
     Promise startJob(const WorkPacket &workpacket);
     
     void stopJob();

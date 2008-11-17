@@ -35,6 +35,7 @@
 #include "frontend.h"
 #include "nodes.h"
 #include "workpacket.h"
+#include "promise.h"
 
 #include "SireError/errors.h"
 
@@ -206,7 +207,7 @@ QString Node::toString() const
 }
 
 /** Return whether or not this node is null */
-bool Node::isNull()
+bool Node::isNull() const
 {
     return d.get() == 0;
 }
@@ -292,10 +293,12 @@ Nodes Node::nodes()
 }
 
 /** Start the job in the WorkPacket 'workpacket' on this node 
+    and return a Promise that will contain the calculated
+    result.
 
     \throw SireError::unavailable_resource
 */
-void Node::startJob(const WorkPacket &workpacket)
+Promise Node::startJob(const WorkPacket &workpacket)
 {
     if (this->isNull())
         throw SireError::unavailable_resource( QObject::tr(
@@ -308,7 +311,11 @@ void Node::startJob(const WorkPacket &workpacket)
             "try to run this job again.")
                 .arg(this->UID()), CODELOC );
         
+    //start the job
     d->frontend.startJob(workpacket);
+    
+    //now return the promise
+    return Promise(*this, workpacket);
 }
 
 /** Stop any running job on this node - this does not block */

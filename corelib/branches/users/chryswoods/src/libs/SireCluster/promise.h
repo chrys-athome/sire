@@ -54,6 +54,9 @@ class PromisePvt;
 */
 class SIRECLUSTER_EXPORT Promise
 {
+
+friend class Node;
+
 public:
     Promise();
     
@@ -72,7 +75,7 @@ public:
     void wait();
     bool wait(int timeout);
     
-    bool isNull();
+    bool isNull() const;
     
     bool isRunning();
     

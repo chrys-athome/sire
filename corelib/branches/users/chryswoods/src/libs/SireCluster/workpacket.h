@@ -42,6 +42,7 @@ namespace SireCluster
 class WorkPacket;
 class WorkPacketBase;
 class ErrorPacket;
+class AbortPacket;
 class WorkTest;
 }
 
@@ -50,6 +51,9 @@ QDataStream& operator>>(QDataStream&, SireCluster::WorkPacketBase&);
 
 QDataStream& operator<<(QDataStream&, const SireCluster::ErrorPacket&);
 QDataStream& operator>>(QDataStream&, SireCluster::ErrorPacket&);
+
+QDataStream& operator<<(QDataStream&, const SireCluster::AbortPacket&);
+QDataStream& operator>>(QDataStream&, SireCluster::AbortPacket&);
 
 QDataStream& operator<<(QDataStream&, const SireCluster::WorkPacket&);
 QDataStream& operator>>(QDataStream&, SireCluster::WorkPacket&);
@@ -82,8 +86,6 @@ public:
     virtual bool shouldPack() const;
     virtual int approximatePacketSize() const;
     
-    void abort();
-    
     void runChunk();
     
     float progress() const;
@@ -93,7 +95,7 @@ public:
     virtual bool isError() const;
     virtual void throwError() const;
     
-    bool wasAborted() const;
+    virtual bool wasAborted() const;
     
     virtual WorkPacketBase* clone() const=0;
     
@@ -124,9 +126,6 @@ protected:
 private:
     /** The current progress of the work */
     float current_progress;
-    
-    /** Whether or not the work was aborted */
-    bool was_aborted;
 };
 
 /** This class is the generic holder for all work packets.
@@ -192,6 +191,48 @@ private:
 
     /** Implicitly shared pointer to the work */
     SireBase::SharedPolyPointer<WorkPacketBase> d;
+};
+
+/** This is a packet that is sent if the job was aborted.
+
+    @author Christopher Woods
+*/
+class SIRECLUSTER_EXPORT AbortPacket : public WorkPacketBase
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const AbortPacket&);
+friend QDataStream& ::operator>>(QDataStream&, AbortPacket&);
+
+public:
+    AbortPacket();
+
+    AbortPacket(const AbortPacket &other);
+    
+    ~AbortPacket();
+    
+    AbortPacket& operator=(const AbortPacket &other);
+    
+    AbortPacket* clone() const
+    {
+        return new AbortPacket(*this);
+    }
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<AbortPacket>() );
+    }
+    
+    const char* what() const
+    {
+        return AbortPacket::typeName();
+    }
+    
+    bool hasFinished() const;
+    
+    virtual bool wasAborted() const;
+
+protected:
+    float chunk();
 };
 
 /** This is a packet that contains an error. This is returned
@@ -293,11 +334,13 @@ private:
 
 Q_DECLARE_METATYPE( SireCluster::WorkPacket )
 Q_DECLARE_METATYPE( SireCluster::ErrorPacket )
+Q_DECLARE_METATYPE( SireCluster::AbortPacket )
 Q_DECLARE_METATYPE( SireCluster::WorkTest )
 
 SIRE_EXPOSE_CLASS( SireCluster::WorkPacketBase )
 SIRE_EXPOSE_CLASS( SireCluster::WorkPacket )
-SIRE_EXPORT_CLASS( SireCluster::ErrorPacket )
+SIRE_EXPOSE_CLASS( SireCluster::ErrorPacket )
+SIRE_EXPOSE_CLASS( SireCluster::AbortPacket )
 SIRE_EXPOSE_CLASS( SireCluster::WorkTest )
 
 SIRE_END_HEADER

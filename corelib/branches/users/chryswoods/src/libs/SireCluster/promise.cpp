@@ -28,10 +28,14 @@
 
 #include <QThread>
 #include <QMutex>
+#include <QWaitCondition>
 
 #include "promise.h"
 #include "workpacket.h"
 #include "node.h"
+
+#include "SireError/errors.h"
+#include "SireError/printerror.h"
 
 using namespace SireCluster;
 
@@ -169,6 +173,12 @@ bool Promise::operator!=(const Promise &other) const
     return d.get() != other.d.get();
 }
 
+/** Return whether or not this promise is null */
+bool Promise::isNull() const
+{
+    return d.get() == 0;
+}
+
 /** Abort this job */
 void Promise::abort()
 {
@@ -179,7 +189,7 @@ void Promise::abort()
     Node my_node = d->node;
     d->datamutex.unlock();
     
-    my_node.abort();
+    my_node.abortJob();
 }
 
 /** Stop this job */
@@ -192,7 +202,7 @@ void Promise::stop()
     Node my_node = d->node;
     d->datamutex.unlock();
     
-    my_node.abort();
+    my_node.stopJob();
 }
 
 /** Wait for the job to have completed */
@@ -256,7 +266,7 @@ bool Promise::isError()
 
 /** Return whether or not the job was stopped.
     This blocks until a result is available */
-bool Promise::isStopped()
+bool Promise::wasStopped()
 {
     if (d.get() == 0)
         return false;
@@ -288,13 +298,13 @@ bool Promise::wasAborted()
 float Promise::progress()
 {
     if (d.get() == 0)
-        return 
+        return 1;
 
     QMutexLocker lkr( &(d->datamutex) );
     
     if (d->result_packet.isNull())
     {
-        Node my_node = node;
+        Node my_node = d->node;
         lkr.unlock();
         
         float current_progress = my_node.progress();
@@ -354,7 +364,7 @@ WorkPacket Promise::interimResult()
         
         lkr.relock();
         
-        if (not d->result_packet.isEmpty())
+        if (not d->result_packet.isNull())
             //we got the final result while waiting for the interim result
             return d->result_packet;
         else

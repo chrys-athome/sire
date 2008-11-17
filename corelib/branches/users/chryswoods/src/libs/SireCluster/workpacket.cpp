@@ -55,7 +55,7 @@ QDataStream SIRECLUSTER_EXPORT &operator<<(QDataStream &ds,
     
     SharedDataStream sds(ds);
     
-    sds << workbase.current_progress << workbase.was_aborted;
+    sds << workbase.current_progress;
     
     return ds;
 }
@@ -69,7 +69,7 @@ QDataStream SIRECLUSTER_EXPORT &operator>>(QDataStream &ds, WorkPacketBase &work
     {
         SharedDataStream sds(ds);
         
-        sds >> workbase.current_progress >> workbase.was_aborted;
+        sds >> workbase.current_progress;
     }
     else
         throw version_error(v, "1", r_workbase, CODELOC);
@@ -79,14 +79,13 @@ QDataStream SIRECLUSTER_EXPORT &operator>>(QDataStream &ds, WorkPacketBase &work
 
 /** Constructor */
 WorkPacketBase::WorkPacketBase() 
-               : QSharedData(), current_progress(0), was_aborted(false)
+               : QSharedData(), current_progress(0)
 {}
 
 /** Copy constructor */
 WorkPacketBase::WorkPacketBase(const WorkPacketBase &other)
                : QSharedData(),
-                 current_progress(other.current_progress),
-                 was_aborted(other.was_aborted)
+                 current_progress(other.current_progress)
 {}
 
 /** Destructor */
@@ -99,7 +98,6 @@ WorkPacketBase& WorkPacketBase::operator=(const WorkPacketBase &other)
     if (this != &other)
     {
         current_progress = other.current_progress;
-        was_aborted = other.was_aborted;
     }
     
     return *this;
@@ -147,14 +145,7 @@ void WorkPacketBase::throwError() const
 /** Whether or not the job has been aborted */
 bool WorkPacketBase::wasAborted() const
 {
-    return was_aborted;
-}
-
-/** Abort this job */
-void WorkPacketBase::abort()
-{
-    was_aborted = true;
-    current_progress = 0;
+    return false;
 }
 
 /** Perform one chunk of the calculation - Any exceptions are
@@ -277,6 +268,80 @@ void ErrorPacket::throwError() const
 /** Perform one chunk of the work, returning the progress
     after the chunk */
 float ErrorPacket::chunk()
+{
+    return 1;
+}
+
+///////////
+/////////// Implementation of AbortPacket
+///////////
+
+static const RegisterMetaType<AbortPacket> r_abortpacket;
+
+/** Serialise to a binary datastream */
+QDataStream SIRECLUSTER_EXPORT &operator<<(QDataStream &ds, 
+                                           const AbortPacket &abortpacket)
+{
+    writeHeader(ds, r_abortpacket, 1);
+    
+    SharedDataStream sds(ds);
+
+    sds << static_cast<const WorkPacketBase&>(abortpacket);
+        
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIRECLUSTER_EXPORT &operator>>(QDataStream &ds, AbortPacket &abortpacket)
+{
+    VersionID v = readHeader(ds, r_abortpacket);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> static_cast<WorkPacketBase&>(abortpacket);
+    }
+    else
+        throw version_error(v, "1", r_abortpacket, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+AbortPacket::AbortPacket() : WorkPacketBase()
+{}
+
+/** Copy constructor */
+AbortPacket::AbortPacket(const AbortPacket &other) : WorkPacketBase(other)
+{}
+
+/** Destructor */
+AbortPacket::~AbortPacket()
+{}
+
+/** Copy assignment operator */
+AbortPacket& AbortPacket::operator=(const AbortPacket &other)
+{
+    WorkPacketBase::operator=(other);
+    return *this;
+}
+
+/** Return whether or not the work has finished */
+bool AbortPacket::hasFinished() const
+{
+    return true;
+}
+
+/** Return whether or not this was aborted (it obviously was!) */
+bool AbortPacket::wasAborted() const
+{
+    return true;
+}
+
+/** Perform one chunk of the work, returning the progress
+    after the chunk */
+float AbortPacket::chunk()
 {
     return 1;
 }
@@ -409,6 +474,16 @@ bool WorkPacket::isError() const
         return false;
 }
 
+/** Throw any error associated with this WorkPacket
+    (this does nothing if there is no error) */
+void WorkPacket::throwError() const
+{
+    if (not this->isNull())
+    {
+        d->throwError();
+    }
+}
+
 /** Return whether or not the work was aborted */
 bool WorkPacket::wasAborted() const
 {
@@ -438,7 +513,7 @@ void WorkPacket::abort()
 {
     if (not this->isNull())
     {
-        d->abort();
+        d = AbortPacket();
     }
 }
 

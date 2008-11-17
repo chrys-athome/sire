@@ -40,6 +40,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireMove;
 using namespace SireMol;
 using namespace SireBase;
@@ -140,7 +142,7 @@ void PrefSampler::recalculateWeights()
                                .centerOfGeometry(map);
                                
         double dist2 = current_space->calcDist2(new_center, focal_point);
-        
+
         //weight = 1 / (dist^2 + k)
         double invweight = dist2 + sampling_constant;
         
@@ -284,7 +286,7 @@ PrefSampler::PrefSampler(const PrefSampler &other)
               focal_molecule(other.focal_molecule),
               focal_point(other.focal_point),
               coords_property(other.coords_property),
-              space_property("space"),
+              space_property(other.space_property),
               sampling_constant(other.sampling_constant),
               sum_of_weights(other.sum_of_weights), 
               max_weight(other.max_weight),
@@ -386,7 +388,7 @@ void PrefSampler::setGroup(const MoleculeGroup &molgroup)
     int nviews = viewindicies.count();
     
     BOOST_ASSERT( nviews == molweights.count() );
-    
+
     const tuple<MolNum,Index> *viewindicies_array = viewindicies.constData();
     double *molweights_array = molweights.data();
     const MoleculeGroup &current_group = this->group();
@@ -415,7 +417,7 @@ void PrefSampler::setGroup(const MoleculeGroup &molgroup)
         //the focal point
         Vector new_center = mol.at(viewidx.get<1>()).evaluate()
                                .centerOfGeometry(map);
-                               
+
         double dist2 = current_space->calcDist2(new_center, focal_point);
         
         //weight = 1 / (dist^2 + k)
