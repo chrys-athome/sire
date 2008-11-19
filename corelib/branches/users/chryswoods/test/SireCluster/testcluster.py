@@ -15,8 +15,8 @@ nodes = Cluster.getNode()
 print nodes
 
 if nodes.isEmpty():
-    print "Strange - there are no nodes available!"
-    assert( not nodes.isEmpty() )
+    print "Strange - there are no nodes available - adding this thread!"
+    this_thread = nodes.borrowThisThread()
 
 node = nodes.getNode()
 
@@ -24,11 +24,8 @@ if (node.isNull()):
     print "Strange - I couldn't get a node!"
     assert( not node.isNull() )
 
-node.startJob( WorkTest(1, 10) )
+promise = node.startJob( WorkTest(1, 10) )
 
-node.wait()
+promise.wait()
 
-result = node.result()
-
-node.release()
-
+result = promise.result()

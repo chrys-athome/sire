@@ -264,6 +264,20 @@ bool Promise::isError()
     return d->result_packet.isError();
 }
 
+/** Throw any errors associated with this promise - does
+    nothing if there is no error */
+void Promise::throwError()
+{
+    if (d.get() != 0)
+    {
+        this->wait();
+        
+        QMutexLocker lkr( &(d->datamutex) );
+        
+        d->result_packet.throwError();
+    }
+}
+
 /** Return whether or not the job was stopped.
     This blocks until a result is available */
 bool Promise::wasStopped()

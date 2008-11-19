@@ -12,6 +12,7 @@
 #include "SireCluster/cluster.h"
 #include "SireCluster/nodes.h"
 #include "SireCluster/node.h"
+#include "SireCluster/promise.h"
 
 #include "Helpers/pythonpacket.h"
 
@@ -39,7 +40,7 @@ int main(int argc, char **argv)
     {
         //read the command line options to get the number of
         //thread per node
-        int ppn = 2;
+        int ppn = 1;
 
         //now read the number of OpenMP threads per process
         int nomp = 1;
@@ -60,14 +61,21 @@ int main(int argc, char **argv)
             //start the cluster - on the master we need one extra
             //thread for the Python interpreter
             MPI::COMM_WORLD.Barrier();
-            Cluster::start(ppn+1);
+            Cluster::start(ppn);
             MPI::COMM_WORLD.Barrier();
 
             //run python
             if (argc >= 2)
             {
-                PythonPacket packet( argv[1] );
-                packet.runChunk();
+                Nodes nodes = Cluster::getNode();
+                Node node = nodes.getNode();
+                Promise promise = node.startJob( PythonPacket(argv[1]) );
+                promise.wait();
+                
+                if (promise.isError())
+                {
+                    promise.throwError();
+                }
             }
         }
         else
@@ -125,8 +133,9 @@ int main(int argc, char **argv)
 
     MPI::Finalize();
 
-    //now shutdown Python
-    //PyEval_AcquireLock();
+    //now shutdown Python - currently commented out
+    //as calling these functions causes a bus error...
+    PyEval_AcquireLock();
     //Py_Finalize();
 
     return status;

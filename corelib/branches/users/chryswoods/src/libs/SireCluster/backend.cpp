@@ -147,6 +147,18 @@ Backend Backend::create()
     return backend;
 }
 
+/** Create a new, usable Backend, but don't register this
+    backend with the Cluster. This is used when you want to
+    create quick temporary Backends that you don't want to be
+    made available to any other threads or remote processes */
+Backend Backend::createLocalOnly()
+{
+    Backend backend;
+    backend.d.reset( new BackendPvt() );
+    
+    return backend;
+}
+
 /** Copy constructor */
 Backend::Backend(const Backend &other) : d(other.d)
 {}

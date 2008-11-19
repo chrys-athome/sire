@@ -43,10 +43,13 @@ class Frontend;
 class Node;
 class NodesPtr;
 
+class ThisThread;
+
 namespace detail
 {
 class NodePvt;
 class NodesPvt;
+class ThisThreadPvt;
 }
 
 /** This class holds, and schedules, a collection of Node objects.
@@ -58,6 +61,8 @@ class SIRECLUSTER_EXPORT Nodes
 
 friend class NodesPtr;
 friend class Cluster;
+
+friend class detail::ThisThreadPvt;
 
 public:
     Nodes();
@@ -96,11 +101,16 @@ public:
 
     void removeAll();
 
+    ThisThread borrowThisThread();
+
 protected:
     Nodes(const boost::shared_ptr<detail::NodesPvt> &ptr); // called by NodesPvt
 
     Nodes(Frontend frontend);                // called by Cluster
     Nodes(const QList<Frontend> &frontends); // called by Cluster
+
+    QUuid createThisThread();                  // called by ThisThreadPvt
+    void reclaimThisThread(const QUuid &uid);  // called by ThisThreadPvt
 
 private:
     Node _pvt_getNode();
@@ -140,9 +150,34 @@ private:
     boost::weak_ptr<detail::NodesPvt> d;
 };
 
+/** This simple class is used to allow the current thread
+    to be made available to a Nodes object
+    
+    @author Christopher Woods
+*/
+class SIRECLUSTER_EXPORT ThisThread
+{
+public:
+    ThisThread();
+    ThisThread(const ThisThread &other);
+    
+    ThisThread(const Nodes &nodes);
+    
+    ThisThread& operator=(const ThisThread &other);
+    
+    ~ThisThread();
+    
+    void reclaim();
+
+private:
+    /** Pointer to the implementation */
+    boost::shared_ptr<detail::ThisThreadPvt> d;
+};
+
 }
 
 SIRE_EXPOSE_CLASS( SireCluster::Nodes )
+SIRE_EXPOSE_CLASS( SireCluster::ThisThread )
 
 SIRE_END_HEADER
 

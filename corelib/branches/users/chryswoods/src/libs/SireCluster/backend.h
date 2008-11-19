@@ -81,6 +81,7 @@ public:
     QUuid UID() const;
 
     static Backend create();
+    static Backend createLocalOnly();
     
     ActiveBackend connect() const;
     ActiveBackend tryConnect() const;

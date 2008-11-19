@@ -80,6 +80,7 @@ public:
     bool isRunning();
     
     bool isError();
+    void throwError();
     
     bool wasStopped();
     

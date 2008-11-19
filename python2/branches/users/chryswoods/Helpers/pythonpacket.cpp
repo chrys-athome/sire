@@ -93,11 +93,8 @@ public:
         
         is_locked = true;
  
-        //get a reference to the PyInterpreter state
-        PyInterpreterState *main_state = PyThreadState_Get()->interp;
- 
         //create a thread state object for this thread
-        my_state = PyThreadState_New(main_state);
+        my_state = Py_NewInterpreter();
 
         // swap in my thread state
         PyThreadState_Swap(my_state);
@@ -112,13 +109,10 @@ public:
                 PyEval_AcquireLock();
             
             // make sure the thread state is swapped out of the interpreter
-            PyThreadState_Swap(0);
+            PyThreadState_Swap(my_state);
         
-            // clear out any cruft from thread state object
-            PyThreadState_Clear(my_state);
-            
             // delete my thread state object
-            PyThreadState_Delete(my_state);
+            Py_EndInterpreter(my_state);
             
             // release the lock
             PyEval_ReleaseLock();
@@ -128,7 +122,6 @@ public:
             PyEval_ReleaseLock();
             is_locked = false;
         }
-    
     }
 
 private:
@@ -202,9 +195,9 @@ float PythonPacket::chunk()
     PyThreadStateHolder pythread;
     
     //we are now free to run our code
-    qDebug() << "Starting python script";
+    qDebug() << "Running the script...";
     PyRun_SimpleString( script_contents.toAscii().constData() );
-    qDebug() << "Python script is exiting";    
+    qDebug() << "Script has finished";
 
     return 1;
 }

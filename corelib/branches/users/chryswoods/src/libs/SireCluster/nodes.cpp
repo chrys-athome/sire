@@ -30,6 +30,7 @@
 #include <QSemaphore>
 #include <QWaitCondition>
 #include <QUuid>
+#include <QThreadStorage>
 
 #include <QHash>
 #include <QSet>
@@ -40,6 +41,7 @@
 #include "nodes.h"
 #include "node.h"
 #include "frontend.h"
+#include "backend.h"
 
 #include "SireError/errors.h"
 
@@ -850,6 +852,8 @@ void Nodes::removeAll()
     }
 }
 
+
+
 //////////////
 ////////////// Implementation of NodesPtr
 //////////////
@@ -940,4 +944,167 @@ void NodesPtr::returnFrontend(Frontend frontend)
         if (nodes->nodesem.get() != 0)
             nodes->nodesem->release();
     }
+}
+
+static QThreadStorage<QUuid*> this_thread_uids;
+
+/** Let this Nodes scheduler borrow this thread to run WorkPackets.
+    Technically, this doesn't use the current thread, but instead 
+    creates a duplicate, so you are still able to use your thread.
+    However, you should avoid doing anything compute intensive in
+    your thread while the Node has borrowed it, as otherwise you 
+    risk using more CPU than is available.
+    
+    This returns a ThisThread holder that is used to ask the Nodes
+    object to return this thread when the ThisThread object is
+    deleted, or when ThisThread::reclaim() is called.
+*/
+ThisThread Nodes::borrowThisThread()
+{
+    if (this_thread_uids.hasLocalData())
+        //this thread is already being borrowed
+        return ThisThread();
+        
+    else
+    {
+        if (d.get() == 0)
+            d.reset( new NodesPvt() );
+
+        return ThisThread(*this);
+    }
+}
+
+/** Create a temporary backend for this thread, and return
+    the UID of that backend */
+QUuid Nodes::createThisThread()
+{
+    BOOST_ASSERT( d.get() != 0 );
+
+    Frontend frontend( Backend::createLocalOnly() );
+
+    QMutexLocker lkr( &(d->datamutex) );
+    
+    //unlock anyone waiting for a node
+    if (d->nodesem.get() != 0)
+        d->nodesem->release( d->nodesem->available() );
+    
+    //add the new frontend to the set of available frontends
+    QUuid uid = frontend.UID();
+    
+    d->frontends.insert( uid, frontend );
+    d->free_frontends.prepend(uid);
+    
+    d->nodesem.reset( new QSemaphore(d->frontends.count()) );
+    
+    return uid;
+}
+
+/** Delete the temporary backend for this thread, which
+    was created with the UID 'uid' */
+void Nodes::reclaimThisThread(const QUuid &uid)
+{
+    BOOST_ASSERT( d.get() != 0);
+
+    //ensure that the local thread has UID 'uid'
+    if (this_thread_uids.hasLocalData())
+    {
+        if (uid != *(this_thread_uids.localData()))
+        {
+            throw SireError::program_bug( QObject::tr(
+                "We cannot reclaim the local thread (UID == %1) as "
+                "the UID of the local thread should be %2.") 
+                    .arg(uid.toString(), this_thread_uids.localData()->toString()),
+                        CODELOC );
+        }
+        
+        //yes - it is safe to remove this thread
+        QMutexLocker lkr( &(d->datamutex) );
+        
+        if (d->nodesem.get() != 0)
+            d->nodesem->release( d->nodesem->available() );
+        
+        d->frontends.remove(uid);
+        d->free_frontends.removeAll(uid);
+        d->busy_frontends.remove(uid);
+
+        if (d->frontends.isEmpty())
+            d->nodesem.reset();
+            
+        else
+            d->nodesem.reset( new QSemaphore(d->frontends.count()) );
+    }
+}
+
+//////////////
+////////////// Implementation of ThisThread
+//////////////
+
+namespace SireCluster
+{
+namespace detail
+{
+
+class ThisThreadPvt
+{
+public:
+    ThisThreadPvt(Nodes nodes)
+    {
+        if (not this_thread_uids.hasLocalData())
+        { 
+            QUuid uid = nodes.createThisThread();
+            this_thread_uids.setLocalData( new QUuid(uid) );
+            nodesptr = nodes;
+        }
+    }
+    
+    ~ThisThreadPvt()
+    {
+        Nodes nodes = nodesptr.lock();
+
+        if (not nodes.isEmpty())
+        {
+            QUuid *uid = this_thread_uids.localData();
+    
+            //we need to remove this thread from the nodes object
+            if (uid)
+                nodes.reclaimThisThread(*uid);
+        
+            this_thread_uids.setLocalData(0);
+        }
+    }
+    
+    NodesPtr nodesptr;
+};
+
+} // end of namespace detail
+} // end of namespace SireCluster
+
+/** Construct a null locker */
+ThisThread::ThisThread()
+{}
+
+/** Construct a lock for this thread being added to 
+    the nodes object 'nodes' */
+ThisThread::ThisThread(const Nodes &nodes) : d( new ThisThreadPvt(nodes) )
+{}
+
+/** Copy constructor */
+ThisThread::ThisThread(const ThisThread &other) : d(other.d)
+{}
+
+/** Destructor */
+ThisThread::~ThisThread()
+{}
+
+/** Copy assignment operator */
+ThisThread& ThisThread::operator=(const ThisThread &other)
+{
+    d = other.d;
+    return *this;
+}
+
+/** Reclaim this thread */
+void ThisThread::reclaim()
+{
+    d.reset();
 }
