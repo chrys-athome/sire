@@ -135,9 +135,19 @@ ClusterPvt::~ClusterPvt()
 
 /** Start the cluster - this is like exec, but it doesn't
     block until the cluster has been shutdown */
-void Cluster::start()
+void Cluster::start(int ppn)
 {
     globalCluster();
+    
+    if (ppn > 1)
+    {
+        //add extra threads to this process
+        for (int i=1; i<ppn; ++i)
+        {
+            qDebug() << "Backend::create()";
+            Backend::create();
+        }
+    }
 }
 
 /** Return whether or not the cluster is running */
@@ -154,13 +164,6 @@ void Cluster::wait()
     
     if (global_cluster_is_running)
         globalCluster()->execwaiter.wait( execMutex() );
-}
-
-/** Start the cluster, and block until the cluster is shutdown */
-void Cluster::exec()
-{
-    Cluster::start();
-    Cluster::wait();
 }
 
 /** Return whether or not this cluster supports MPI

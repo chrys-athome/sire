@@ -18,7 +18,11 @@ include_directories(${CMAKE_SOURCE_DIR})
 # Define the sources in Helpers
 set ( WRAPHELPERS_SOURCES
 
+      objectregistry.hpp
+      pythonpacket.h
+
       objectregistry.cpp
+      pythonpacket.cpp
 
     )
 
@@ -32,6 +36,7 @@ set_target_properties (SirePython2
 		       )
 		       
 target_link_libraries (SirePython2
+                       SIRE_SireCluster
                        SIRE_SireStream
                        SIRE_SireError
                        ${BOOST_PYTHON_LIBRARY}

@@ -13,6 +13,8 @@
 #include "SireCluster/nodes.h"
 #include "SireCluster/node.h"
 
+#include "Helpers/pythonpacket.h"
+
 using std::printf;
 
 using namespace SireCluster;
@@ -23,35 +25,56 @@ int main(int argc, char **argv)
 {
     int status = 0;
 
+    //start Python - ABSOLUTELY must use multi-threaded python
+    Py_Initialize();
+    
+    //this function starts threaded python and grabs
+    //the global python lock
+    PyEval_InitThreads();
+ 
+    //release the global python lock
+    PyEval_ReleaseLock();
+ 
     try
     {
+        //read the command line options to get the number of
+        //thread per node
+        int ppn = 2;
+
+        //now read the number of OpenMP threads per process
+        int nomp = 1;
+
         //start MPI - ABSOLUTELY must use multi-threaded MPI
         MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
 
         //are we the first node in the cluster?
         if (Cluster::getRank() == 0)
         {
-            printf("Starting master node (%d of %d)\n", Cluster::getRank(),
-                                                        Cluster::getCount());
+            printf("Starting master node (%d of %d): nThreads()=%d\n", 
+                       Cluster::getRank(), Cluster::getCount(), ppn);
 
             //name this process and thread
             SireError::setProcessString("master");
             SireError::setThreadString("main");
 
-            //start the cluster
+            //start the cluster - on the master we need one extra
+            //thread for the Python interpreter
             MPI::COMM_WORLD.Barrier();
-            Cluster::start();
+            Cluster::start(ppn+1);
             MPI::COMM_WORLD.Barrier();
 
             //run python
-            Py_Initialize();
-            status = Py_Main(argc, argv);
+            if (argc >= 2)
+            {
+                PythonPacket packet( argv[1] );
+                packet.runChunk();
+            }
         }
         else
         {
             //this is one of the compute nodes...
-            printf("Starting one of the compute nodes (%d of %d)\n", Cluster::getRank(),
-                                                                     Cluster::getCount());
+            printf("Starting one of the compute nodes (%d of %d): nThreads()=%d\n", 
+                        Cluster::getRank(), Cluster::getCount(), ppn);
 
             //name this process
             SireError::setProcessString( QString("compute%1").arg(Cluster::getRank()) );
@@ -60,10 +83,10 @@ int main(int argc, char **argv)
             //exec the Cluster - this starts the cluster and then
             //blocks while it is running
             MPI::COMM_WORLD.Barrier();
-            Cluster::start();
+            Cluster::start(ppn);
             MPI::COMM_WORLD.Barrier();
 
-            Cluster::exec();
+            Cluster::wait();
             status = 0;
         }
     }
@@ -101,6 +124,10 @@ int main(int argc, char **argv)
     }
 
     MPI::Finalize();
+
+    //now shutdown Python
+    //PyEval_AcquireLock();
+    //Py_Finalize();
 
     return status;
 }

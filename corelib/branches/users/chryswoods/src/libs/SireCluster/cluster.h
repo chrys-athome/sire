@@ -69,7 +69,7 @@ public:
     static int getRank();
     static int getCount();
     
-    static void start();
+    static void start(int ppn=1);
 
     static void shutdown();
 
@@ -78,8 +78,6 @@ public:
     static bool isRunning();
 
     static bool supportsMPI();
-
-    static void exec();
 
     static Nodes getNode(int timeout=10000);
     static Nodes getNode(const QUuid &uid, int timeout=10000);

@@ -22,7 +22,7 @@ include(CMakeAutogenFile.txt)
 set ( WRAPCLUSTER_SOURCES
 
       _Cluster.main.cpp
-     
+
       ${PYPP_SOURCES}
 
     )
