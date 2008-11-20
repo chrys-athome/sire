@@ -29,6 +29,7 @@ if (MPI_FOUND)
         mpi/mpifrontend.h
         mpi/receivequeue.h
         mpi/reply.h
+        mpi/reservationmanager.h
         mpi/sendqueue.h
 
       )
@@ -40,6 +41,7 @@ if (MPI_FOUND)
         mpi/mpifrontend.cpp
         mpi/receivequeue.cpp
         mpi/reply.cpp
+        mpi/reservationmanager.cpp
         mpi/sendqueue.cpp
 
       )

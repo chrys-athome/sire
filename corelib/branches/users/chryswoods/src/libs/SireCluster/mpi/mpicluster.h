@@ -76,6 +76,8 @@ public:
     
     static QList<QUuid> UIDs();
 
+    static bool hasBackend(const QUuid &uid);
+
     static int master();
     static int getRank();
     static int getCount();

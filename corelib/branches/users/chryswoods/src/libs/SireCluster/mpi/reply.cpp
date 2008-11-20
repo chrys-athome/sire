@@ -473,6 +473,21 @@ ReplyValue Reply::from(int rank)
     return d->responses.value(rank);
 }
 
+/** Return the list of all replies indexed by the rank of the 
+    process that supplied the reply - this blocks until they are
+    all available */
+QHash<int,ReplyValue> Reply::replies()
+{
+    if (this->isNull())
+        return QHash<int,ReplyValue>();
+    
+    this->wait();
+    
+    QMutexLocker lkr( &(d->datamutex) );
+
+    return d->responses;
+}
+
 ///////////
 /////////// Implementation of ReplyPtr
 ///////////

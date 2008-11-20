@@ -44,6 +44,7 @@
 #include "sendqueue.h"
 #include "receivequeue.h"
 #include "reply.h"
+#include "reservationmanager.h"
 
 #include "SireError/errors.h"
 #include "SireError/printerror.h"
@@ -174,6 +175,9 @@ MPIClusterPvt::MPIClusterPvt() : send_queue(0), receive_queue(0),
         send_comm = &(::MPI::COMM_WORLD.Clone());
     }
         
+    //create and start the reservation manager
+    ReservationManager::start();
+        
     //create and start the event loops
     send_queue = new SendQueue(send_comm);
     receive_queue = new ReceiveQueue(recv_comm);
@@ -187,6 +191,9 @@ MPIClusterPvt::MPIClusterPvt() : send_queue(0), receive_queue(0),
 /** Destructor */
 MPIClusterPvt::~MPIClusterPvt()
 {
+    //stop the reservation manager
+    ReservationManager::shutdown();
+
     if (send_queue)
     {
         send_queue->stop();
@@ -452,37 +459,40 @@ void MPICluster::registerBackend(const Backend &backend)
 */
 Frontend MPICluster::getFrontend()
 {
+    qDebug() << CODELOC;
     //the Cluster should already have looked for local nodes...
 
     //ask the master to reserve any backend for us
     //(the master will only reserve remote backends)
     Messages::ReserveBackend message(1);
+    qDebug() << CODELOC;
     
     //create space to hold the reply (which contains the reservation)
     Reply reply(message);
+    qDebug() << CODELOC;
     
     MPICluster::send(message);
+    qDebug() << CODELOC;
     
     //wait for the reply
     reply.wait();
+    qDebug() << CODELOC;
     
-    //lets take a look at our reservation
-    Reservation reservation = reply.from( MPICluster::master() )
-                                   .asA<Reservation>();
+    //now get the UIDs of the nodes that have established a direct
+    //connection to us
+    QList<QUuid> uids = reply.from( MPICluster::master() )
+                             .asA< QList<QUuid> >();
+    qDebug() << CODELOC;
 
-    if (reservations.isEmpty())
-        //we are too late - there is nothing available
+    if (uids.isEmpty())
+    {
+        qDebug() << CODELOC;
         return Frontend();
+    }
     else
     {
-        //this reservation is only valid for five minutes, so lets
-        //confirm it pretty quickly
-        QList<Frontend> frontends = reservation.confirm();
-        
-        if (not frontends.isEmpty())
-            return frontends.first();
-        else
-            return Frontend();
+        qDebug() << CODELOC;
+        return ReservationManager::collectReservation(message, uids.first());
     }
 }
 
@@ -508,19 +518,12 @@ QList<Frontend> MPICluster::getFrontends(int n)
     //wait for the reply
     reply.wait();
     
-    //lets take a look at our reservation
-    Reservation reservation = reply.from( MPICluster::master() )
-                                   .asA<Reservation>();
+    //now get the UIDs of the nodes that have established a direct
+    //connection to us
+    QList<QUuid> uids = reply.from( MPICluster::master() )
+                             .asA< QList<QUuid> >();
 
-    if (reservations.isEmpty())
-        //we are too late - there is nothing available
-        return QList<Frontend>();
-    else
-    {
-        //this reservation is only valid for five minutes, so lets
-        //confirm it pretty quickly
-        return reservation.confirm();
-    }
+    return ReservationManager::collectReservation(message, uids);
 }
 
 /** Return the frontend for backend with UID 'uid'.
@@ -550,24 +553,15 @@ Frontend MPICluster::getFrontend(const QUuid &uid)
     //wait for the reply
     reply.wait();
     
-    //lets take a look at our reservation
-    Reservation reservation = reply.from( MPICluster::master() )
-                                   .asA<Reservation>();
-                                           
-    if (reservations.isEmpty())
-        //we are too late - this backend is already taken
+    //now get the UIDs of the nodes that have established a direct
+    //connection to us
+    QList<QUuid> uids = reply.from( MPICluster::master() )
+                             .asA< QList<QUuid> >();
+
+    if (uids.isEmpty())
         return Frontend();
     else
-    {
-        //this reservation is only valid for five minutes, so lets
-        //confirm it pretty quickly
-        QList<Frontend> frontends = reservation.confirm();
-        
-        if (not frontends.isEmpty())
-            return frontends.first();
-        else
-            return Frontend();
-    }
+        return ReservationManager::collectReservation(message, uids.first());
 }
 
 /** Return the list of all of the UIDs of all of the backends
@@ -594,6 +588,21 @@ QList<QUuid> MPICluster::UIDs()
     
         //return the result
         return reply.from( MPICluster::master() ).asA< QList<QUuid> >();
+    }
+}
+
+/** Return whether or not this MPI cluster contains a backend
+    with UID 'uid' */
+bool MPICluster::hasBackend(const QUuid &uid)
+{
+    if (MPICluster::isMaster())
+    {
+        QMutexLocker lkr( &(globalCluster()->datamutex) );
+        return globalCluster()->backend_registry.contains(uid);
+    }
+    else
+    {
+        return MPICluster::UIDs().contains(uid);
     }
 }
 

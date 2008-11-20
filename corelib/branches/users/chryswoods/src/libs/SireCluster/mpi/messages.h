@@ -36,13 +36,17 @@
 #include <QSharedData>
 #include <QUuid>
 #include <QSet>
+#include <QList>
 
-#include <QDebug>
+#include <boost/tuple/tuple.hpp>
 
 SIRE_BEGIN_HEADER
 
 namespace SireCluster
 {
+
+class Frontend;
+
 namespace MPI
 {
 
@@ -56,6 +60,7 @@ class Shutdown;
 class Broadcast;
 class GetUIDs;
 class ReserveBackend;
+class RequestAvailability;
 class Reservation;
 
 class Error;
@@ -90,6 +95,11 @@ QDataStream& operator<<(QDataStream&,
                        const SireCluster::MPI::Messages::ReserveBackend&);
 QDataStream& operator>>(QDataStream&, 
                         SireCluster::MPI::Messages::ReserveBackend&);
+
+QDataStream& operator<<(QDataStream&, 
+                       const SireCluster::MPI::Messages::RequestAvailability&);
+QDataStream& operator>>(QDataStream&, 
+                        SireCluster::MPI::Messages::RequestAvailability&);
 
 QDataStream& operator<<(QDataStream&, 
                        const SireCluster::MPI::Messages::Reservation&);
@@ -484,12 +494,13 @@ public:
         return new ReserveBackend(*this);
     }
     
+    const QUuid& requestedUID() const;
+    
+    int nBackends() const;
+    
     QString toString() const;
     
     void read();
-
-    bool hasReply() const;
-    Message reply() const;
 
 private:
     /** The UID of the backend to be reserved - null if we
@@ -498,13 +509,64 @@ private:
     
     /** The number of backends to reserve */
     qint32 nbackends;
+};
+
+/** This message is broadcast by the master to all processes to
+    request that they return their availability to meet the 
     
-    /** The reservation details that are composed when this message is read */
-    Reservation reservation;
+    
+    @author Christopher Woods
+*/
+class RequestAvailability : public MessageBase
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const RequestAvailability&);
+friend QDataStream& ::operator>>(QDataStream&, RequestAvailability&);
+
+public:
+    RequestAvailability();
+    RequestAvailability(const ReserveBackend &reservation_request);
+
+    RequestAvailability(const RequestAvailability &other);
+    
+    ~RequestAvailability();
+    
+    RequestAvailability& operator=(const RequestAvailability &other);
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<RequestAvailability>() );
+    }
+    
+    const char* what() const
+    {
+        return RequestAvailability::typeName();
+    }
+    
+    RequestAvailability* clone() const
+    {
+        return new RequestAvailability(*this);
+    }
+    
+    QString toString() const;
+    
+    void read();
+
+    bool hasReply() const;
+    
+    Message reply() const;
+
+private:
+    /** The reservation request */
+    ReserveBackend request;
+    
+    /** The available backends on this process */
+    QList<QUuid> available_backends;
 };
 
 /** This message is sent back from the master, containing the
-    reservation details the any acquired backends
+    reservation details saying which backends are available
+    for the connection (and, indeed, must be connected to)
             
     @author Christopher Woods
 */
@@ -516,6 +578,9 @@ friend QDataStream& ::operator>>(QDataStream&, Reservation&);
 
 public:
     Reservation();
+    
+    Reservation(const QList< boost::tuple<int,QUuid> > &reserved_backends,
+                const ReserveBackend &request);
 
     Reservation(const Reservation &other);
     
@@ -542,11 +607,16 @@ public:
     
     void read();
 
-    QList<Frontend> confirm();
+    bool hasReply() const;
+    
+    Message reply() const;
 
 private:
+    /** The initial request that generated this reservation */
+    ReserveBackend request;
+
     /** The reservation details for each acquired backend */
-    QList< boost::tuple<int,QUuid,QUuid> > reservation_details;
+    QList< boost::tuple<int,QUuid> > details;
 };
 
 /** This message is sent to return a result
@@ -762,6 +832,7 @@ Q_DECLARE_METATYPE( SireCluster::MPI::Messages::Error )
 
 Q_DECLARE_METATYPE( SireCluster::MPI::Messages::RegisterBackend )
 Q_DECLARE_METATYPE( SireCluster::MPI::Messages::ReserveBackend )
+Q_DECLARE_METATYPE( SireCluster::MPI::Messages::RequestAvailability )
 Q_DECLARE_METATYPE( SireCluster::MPI::Messages::Reservation )
 Q_DECLARE_METATYPE( SireCluster::MPI::Messages::Shutdown )
 Q_DECLARE_METATYPE( SireCluster::MPI::Messages::GetUIDs )

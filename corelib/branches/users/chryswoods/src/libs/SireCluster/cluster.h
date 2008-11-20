@@ -101,14 +101,14 @@ private:
     static Frontend _pvt_getFrontend();
     static Frontend _pvt_getFrontend(const QUuid &uid);
 
-    static Frontend _pvt_getFrontends(int n);
-    static Frontend _pvt_getFrontends(int n, const QUuid &uid);
+    static QList<Frontend> _pvt_getFrontends(int n);
+    static QList<Frontend> _pvt_getFrontends(int n, const QUuid &uid);
 
     static Frontend getFrontend();
     static Frontend getFrontend(int timeout);
 
-    static Frontend getFrontends(int n);
-    static Frontend getFrontends(int n, int timeout);
+    static QList<Frontend> getFrontends(int n);
+    static QList<Frontend> getFrontends(int n, int timeout);
     
     static Frontend getFrontend(const QUuid &uid);
     static Frontend getFrontend(const QUuid &uid, int timeout);

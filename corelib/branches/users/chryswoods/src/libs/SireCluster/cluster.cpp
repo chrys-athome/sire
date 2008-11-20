@@ -243,7 +243,7 @@ Frontend Cluster::_pvt_getFrontend()
          ++it)
     {
         Frontend frontend = Frontend::tryAcquire( it.value() );
-        
+
         if (not frontend.isNull())
             //we successfully grabbed this backend
             return frontend;
@@ -707,7 +707,7 @@ Nodes Cluster::getNodes(int nnodes, int timeout)
         {
             int nremaining = nnodes - frontends.count();
         
-            QList<Frontend> active_frontends = Cluster::getFrontends(nnodes, timeout);
+            QList<Frontend> active_frontends = Cluster::getFrontends(nremaining, timeout);
 
             if (not active_frontends.isEmpty())
                 frontends += active_frontends;
@@ -724,10 +724,11 @@ Nodes Cluster::getNodes(int nnodes, int timeout)
         {
             int nremaining = nnodes - frontends.count();
         
-            Frontend frontend = Cluster::getFrontends(nnodes, remaining_time);
+            QList<Frontend> active_frontends = Cluster::getFrontends(nremaining, 
+                                                                     remaining_time);
             
-            if (not frontend.isNull())
-                frontends.append(frontend);
+            if (not active_frontends.isEmpty())
+                frontends += active_frontends;
             
             remaining_time = timeout - t.elapsed();
         }

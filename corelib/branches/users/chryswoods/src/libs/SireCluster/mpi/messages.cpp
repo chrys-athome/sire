@@ -34,6 +34,8 @@
 
 #include "messages.h"
 #include "mpicluster.h"
+#include "reply.h"
+#include "reservationmanager.h"
 
 #include "SireCluster/cluster.h"
 
@@ -51,6 +53,8 @@ using namespace SireCluster::MPI::Messages;
 
 using namespace SireBase;
 using namespace SireStream;
+
+using boost::tuple;
 
 /////////
 ///////// Implementation of MessageBase
@@ -744,6 +748,11 @@ QString RegisterBackend::toString() const
 /** Read this message - this must only occur on the master process! */
 void RegisterBackend::read()
 {
+    if (not MPICluster::isMaster())
+        throw SireError::program_bug( QObject::tr(
+            "Only the master MPI process is allowed to read a RegisterBackend message."),
+                CODELOC );
+
     //register the node
     MPICluster::registerBackend(node_rank, node_uid);
 }
@@ -781,25 +790,35 @@ QDataStream& operator>>(QDataStream &ds, ReserveBackend &reservebackend)
     return ds;
 }
 
-******** HERE ***********
-
 /** Constructor */
-ReserveBackend::ReserveBackend() : node_rank(-1)
+ReserveBackend::ReserveBackend() 
+               : MessageBase( MPICluster::master() ), // must be sent to the master
+                 nbackends(0)
 {}
 
-/** Construct the message to register the node with unique
-    ID 'node_uid' that resides on this MPI process */
-ReserveBackend::ReserveBackend(const QUuid &uid)
-                : MessageBase( MPICluster::master() ),  // must be sent to the master
-                  node_uid(uid),
-                  node_rank( MPICluster::getRank() )
+/** Construct the message to request that 'n' backends are reserved
+    for use by this process */
+ReserveBackend::ReserveBackend(int n) 
+               : MessageBase( MPICluster::master() ),  // must be sent to the master
+                 nbackends(n)
 {}
+
+/** Construct the message to request that the backend with ID 'uid'
+    is reserved for use by this process */
+ReserveBackend::ReserveBackend(const QUuid &uid)
+               : MessageBase( MPICluster::master() ), // must be sent to the master
+                 backend_uid(uid),
+                 nbackends(1)
+{
+    if (uid.isNull())
+        nbackends = 0;
+}
 
 /** Copy constructor */
 ReserveBackend::ReserveBackend(const ReserveBackend &other)
-                : MessageBase(other),
-                  node_uid(other.node_uid),
-                  node_rank(other.node_rank)
+               : MessageBase(other),
+                 backend_uid(other.backend_uid),
+                 nbackends(other.nbackends)
 {}
 
 /** Destructor */
@@ -811,8 +830,8 @@ ReserveBackend& ReserveBackend::operator=(const ReserveBackend &other)
 {
     if (this != &other)
     {
-        node_uid = other.node_uid;
-        node_rank = other.node_rank;
+        backend_uid = other.backend_uid;
+        nbackends = other.nbackends;
         MessageBase::operator=(other);
     }
     
@@ -822,16 +841,276 @@ ReserveBackend& ReserveBackend::operator=(const ReserveBackend &other)
 /** Return a string representation of this message */
 QString ReserveBackend::toString() const
 {
-    return QString("ReserveBackend( uid=%1, process=%2 )")
-                .arg(node_uid.toString())
-                .arg(node_rank);
+    if (backend_uid.isNull())
+        return QObject::tr("ReserveBackend( nBackends()=%1 )").arg(nbackends);
+    else
+        return QObject::tr("ReserveBackend( UID()=%1 )").arg( backend_uid.toString() );
+}
+
+/** Return the requested UID - this will be null if we don't
+    care which backend we get */
+const QUuid& ReserveBackend::requestedUID() const
+{
+    return backend_uid;
+}
+
+/** Return the requested number of nodes */
+int ReserveBackend::nBackends() const
+{
+    return nbackends;
 }
 
 /** Read this message - this must only occur on the master process! */
 void ReserveBackend::read()
 {
-    //register the node
-    MPICluster::registerBackend(node_rank, node_uid);
+    if (not MPICluster::isMaster())
+        throw SireError::program_bug( QObject::tr(
+                "Only the master MPI process can read a ReserveBackend message."),
+                    CODELOC );
+
+    //is there a backend with the requested UID?
+    if (not backend_uid.isNull())
+    {
+        if (not MPICluster::hasBackend(backend_uid))
+            throw SireError::unavailable_resource( QObject::tr(
+                "There is no backend available with UID %1.")
+                    .arg(backend_uid.toString()), CODELOC );
+    }
+                    
+    //now ask all of the processes to tell us what they have
+    //available that matches this request
+    Message message( RequestAvailability(*this) );
+    
+    //create space for a reply to this broadcast
+    Reply reply(message);
+    
+    //now broadcast this message to all nodes
+    MPICluster::send(message);
+    
+    //now wait for responses in a separate thread
+    ReservationManager::awaitResponse(*this, reply);
+}
+
+/////////
+///////// Implementation of RequestAvailability
+/////////
+
+static const RegisterMetaType<RequestAvailability> r_requestavail;
+                                                      
+/** Serialise to a binary datastream */
+QDataStream& operator<<(QDataStream &ds, const RequestAvailability &requestavail)
+{
+    writeHeader(ds, r_requestavail, 1);
+    
+    ds << requestavail.request
+       << static_cast<const MessageBase&>(requestavail);
+       
+    //no need to save available_backends
+       
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream& operator>>(QDataStream &ds, RequestAvailability &requestavail)
+{
+    VersionID v = readHeader(ds, r_requestavail);
+    
+    if (v == 1)
+    {
+        ds >> requestavail.request
+           >> static_cast<MessageBase&>(requestavail);
+    }
+    else
+        throw version_error( v, "1", r_requestavail, CODELOC );
+        
+    return ds;
+}
+
+/** Constructor */
+RequestAvailability::RequestAvailability() 
+                    : MessageBase(-1) // will be broadcast to everyone
+{}
+
+/** Construct a request to find out what is available that matches the
+    request 'request' */
+RequestAvailability::RequestAvailability(const ReserveBackend &reservation_request) 
+                    : MessageBase(-1),  // will be broadcast to everyone
+                      request(reservation_request)
+{}
+
+/** Copy constructor */
+RequestAvailability::RequestAvailability(const RequestAvailability &other)
+                    : MessageBase(other),
+                      request(other.request),
+                      available_backends(other.available_backends)
+{}
+
+/** Destructor */
+RequestAvailability::~RequestAvailability()
+{}
+
+/** Copy assignment operator */
+RequestAvailability& RequestAvailability::operator=(const RequestAvailability &other)
+{
+    if (this != &other)
+    {
+        request = other.request;
+        available_backends = other.available_backends;
+        MessageBase::operator=(other);
+    }
+    
+    return *this;
+}
+
+/** Return a string representation of this message */
+QString RequestAvailability::toString() const
+{
+    return QString( "RequestAvailability( %1 )" )
+                    .arg(request.toString());
+}
+
+/** This message always has a reply */
+bool RequestAvailability::hasReply() const
+{
+    return true;
+}
+
+/** Return the message containing the reply to this message */
+Message RequestAvailability::reply() const
+{
+    return Result( *this, available_backends );
+}
+
+/** Read this message - finds all matching backends on this process
+    and reserves them in case they are selected */
+void RequestAvailability::read()
+{
+    available_backends = ReservationManager::findAvailable(request);
+}
+
+/////////
+///////// Implementation of Reservation
+/////////
+
+static const RegisterMetaType<Reservation> r_reservation;
+                                                      
+/** Serialise to a binary datastream */
+QDataStream& operator<<(QDataStream &ds, const Reservation &reservation)
+{
+    writeHeader(ds, r_reservation, 1);
+    
+    ds << reservation.request;
+    
+    quint32 nbackends = reservation.details.count();
+    
+    ds << nbackends;
+    
+    for (quint32 i=0; i<nbackends; ++i)
+    {
+        ds << qint32(reservation.details[i].get<0>())
+           << reservation.details[i].get<1>();
+    }
+    
+    ds << static_cast<const MessageBase&>(reservation);
+       
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream& operator>>(QDataStream &ds, Reservation &reservation)
+{
+    VersionID v = readHeader(ds, r_reservation);
+    
+    if (v == 1)
+    {
+        ds >> reservation.request;
+
+        quint32 nbackends;
+        
+        ds >> nbackends;
+        
+        reservation.details.clear();
+        
+        for (quint32 i=0; i<nbackends; ++i)
+        {
+            qint32 rank;
+            QUuid uid;
+            
+            ds >> rank >> uid;
+            
+            reservation.details.append( tuple<int,QUuid>(rank,uid) );
+        }
+
+        ds >> static_cast<MessageBase&>(reservation);
+    }
+    else
+        throw version_error( v, "1", r_reservation, CODELOC );
+        
+    return ds;
+}
+
+/** Constructor */
+Reservation::Reservation() 
+            : MessageBase(-1) // will be broadcast to everyone
+{}
+
+/** Construct the message to be broadcast that instructs that the passed
+    backends must now make the connections as requested in 'request' */
+Reservation::Reservation(const QList< tuple<int,QUuid> > &reserved_backends,
+                         const ReserveBackend &reservation_request)
+            : MessageBase(-1),  // will be broadcast to everyone
+              request(reservation_request),
+              details(reserved_backends)
+{}
+
+/** Copy constructor */
+Reservation::Reservation(const Reservation &other)
+                    : MessageBase(other),
+                      request(other.request),
+                      details(other.details)
+{}
+
+/** Destructor */
+Reservation::~Reservation()
+{}
+
+/** Copy assignment operator */
+Reservation& Reservation::operator=(const Reservation &other)
+{
+    if (this != &other)
+    {
+        request = other.request;
+        details = other.details;
+        MessageBase::operator=(other);
+    }
+    
+    return *this;
+}
+
+/** Return a string representation of this message */
+QString Reservation::toString() const
+{
+    return QString( "Reservation( %1 : nMatches()=%2 )" )
+                    .arg(request.toString()).arg(details.count());
+}
+
+/** This message always has a reply */
+bool Reservation::hasReply() const
+{
+    return true;
+}
+
+/** Return the message containing the reply to this message */
+Message Reservation::reply() const
+{
+    return Result( *this, ReservationManager::establishedConnections(request) );
+}
+
+/** Read this message - finds all matching backends on this process
+    and reserves them in case they are selected */
+void Reservation::read()
+{
+    ReservationManager::establishConnections( details, request );
 }
 
 /////////

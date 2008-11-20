@@ -156,6 +156,8 @@ public:
 
     ReplyValue from(int rank);
 
+    QHash<int,ReplyValue> replies();
+
 protected:
     static Reply create(const Message &message);
 
