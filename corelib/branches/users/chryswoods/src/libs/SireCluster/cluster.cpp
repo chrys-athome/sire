@@ -231,7 +231,7 @@ void Cluster::registerBackend(const Backend &backend)
     
     A null frontend is returned no resources are currently available.
 */
-Frontend Cluster::getFrontend()
+Frontend Cluster::_pvt_getFrontend()
 {
     QMutexLocker lkr( &(globalCluster()->datamutex ) );
     
@@ -262,6 +262,55 @@ Frontend Cluster::getFrontend()
     return Frontend();
 }
 
+/** Return up to 'n' Frontends that will allow us to communicate with
+    up to 'n' available backends (this gets the first available backends,
+    though does prefer to find a local backend if possible) 
+    
+    An empty list is returned no resources are currently available.
+*/
+QList<Frontend> Cluster::_pvt_getFrontends(int n)
+{
+    QMutexLocker lkr( &(globalCluster()->datamutex ) );
+    
+    QList<Frontend> frontends;
+    
+    //first loop through the local backends to see if any
+    //of them are available
+    for (QHash<QUuid,Backend>::const_iterator 
+                    it = globalCluster()->local_backends.constBegin();
+         it != globalCluster()->local_backends.constEnd();
+         ++it)
+    {
+        Frontend frontend = Frontend::tryAcquire( it.value() );
+        
+        if (not frontend.isNull())
+        {
+            //we successfully grabbed this backend
+            frontends.append(frontend);
+            --n;
+            if (n == 0)
+                return frontends;
+        }
+    }
+    
+    //ok, there were no locally available frontends
+    lkr.unlock();
+
+    #ifdef __SIRE_USE_MPI__
+         if (::usingMPI())
+         {
+            //see if there are any available remote backends
+            QList<Frontend> mpifrontends = SireCluster::MPI::MPICluster::getFrontends(n);
+            
+            if (not mpifrontends.isEmpty())
+                frontends += mpifrontends;
+         }
+    #endif
+
+    //return all the frontends that have been found
+    return frontends;
+}
+
 /** Return a Frontend that will allow us to communicate with the 
     Backend with UID 'uid'. A null frontend will be returned
     if this backend is busy. An error will be raised if there
@@ -269,7 +318,7 @@ Frontend Cluster::getFrontend()
     
     \throw SireError::unavailable_resource
 */
-Frontend Cluster::getFrontend(const QUuid &uid)
+Frontend Cluster::_pvt_getFrontend(const QUuid &uid)
 {
     if (uid.isNull())
         throw SireError::unavailable_resource( QObject::tr(
@@ -315,6 +364,10 @@ Frontend Cluster::getFrontend(int timeout)
     //ensure that the global cluster has been created
     globalCluster();
 
+    if (Cluster::UIDs().isEmpty())
+        //there are no frontends in the cluster!
+        return Frontend();
+
     if (timeout < 0)
     {
         while (true)
@@ -323,7 +376,7 @@ Frontend Cluster::getFrontend(int timeout)
                 //oh dear - the cluster has stopped
                 return Frontend();
         
-            Frontend frontend = Cluster::getFrontend();
+            Frontend frontend = Cluster::_pvt_getFrontend();
             
             if (not frontend.isNull())
                 //we've found a frontend
@@ -344,7 +397,7 @@ Frontend Cluster::getFrontend(int timeout)
                 //oh dear - the cluster has stopped
                 return Frontend();
 
-            Frontend frontend = Cluster::getFrontend();
+            Frontend frontend = Cluster::_pvt_getFrontend();
             
             if (not frontend.isNull())
                 //we've found a frontend
@@ -359,6 +412,79 @@ Frontend Cluster::getFrontend(int timeout)
     }
     
     return Frontend();
+}
+
+/** Return up to 'n' Frontends that will allow us to communicate with
+    up to 'n' available backends (this gets the first available backend,
+    though does prefer to find a local backend if possible) 
+    
+    This will keep trying to get the frontends for up to 'timeout'
+    milliseconds. Use a negative timeout to wait forever
+    (well, for-ages - which is until it is available or until
+    the cluster is shut down) 
+    
+    An empty list is returned if no resources are currently available
+    within the specified timeout
+*/
+QList<Frontend> Cluster::getFrontends(int n, int timeout)
+{
+    //ensure that the global cluster has been created
+    globalCluster();
+
+    QList<Frontend> frontends;
+
+    n = qMax( n, Cluster::UIDs().count() );
+
+    if (timeout < 0)
+    {
+        while (frontends.count() < n)
+        {
+            if (not Cluster::isRunning())
+                //oh dear - the cluster has stopped
+                return frontends;
+        
+            int nremaining = n - frontends.count();
+        
+            QList<Frontend> active_frontends = Cluster::_pvt_getFrontends(nremaining);
+            
+            if (not active_frontends.isEmpty())
+                //we've found a frontend
+                frontends += active_frontends;
+
+            if (frontends.count() < n)
+                //wait a second
+                sleep(1);
+        }
+    }
+    else
+    {
+        QTime t;
+        t.start();
+        
+        while (frontends.count() < n and t.elapsed() < timeout)
+        {
+            if (not Cluster::isRunning())
+                //oh dear - the cluster has stopped
+                return frontends;
+
+            int nremaining = n - frontends.count();
+
+            QList<Frontend> active_frontends = Cluster::_pvt_getFrontends(nremaining);
+            
+            if (not active_frontends.isEmpty())
+                //we've found a frontend
+                return frontends += active_frontends;
+        
+            //only try once a second
+            if (t.elapsed() + 1000 > timeout)
+                return frontends;
+                
+            if (frontends.count() < n)
+                sleep(1);
+        }
+    }
+    
+    return frontends;
 }
 
 /** Return a Frontend that will allow us to communicate with the 
@@ -386,7 +512,7 @@ Frontend Cluster::getFrontend(const QUuid &uid, int timeout)
                 //oh dear - the cluster has stopped
                 return Frontend();
         
-            Frontend frontend = Cluster::getFrontend(uid);
+            Frontend frontend = Cluster::_pvt_getFrontend(uid);
             
             if (not frontend.isNull())
                 //we've found a frontend
@@ -407,7 +533,7 @@ Frontend Cluster::getFrontend(const QUuid &uid, int timeout)
                 //oh dear - the cluster has stopped
                 return Frontend();
 
-            Frontend frontend = Cluster::getFrontend(uid);
+            Frontend frontend = Cluster::_pvt_getFrontend(uid);
             
             if (not frontend.isNull())
                 //we've found a frontend
@@ -424,6 +550,77 @@ Frontend Cluster::getFrontend(const QUuid &uid, int timeout)
     return Frontend();
 }
 
+/** Return a Frontend that will allow us to communicate with
+    an available backend (this gets the first available backend,
+    though does prefer to find a local backend if possible) 
+    
+    A null frontend is returned no resources are currently available
+*/
+Frontend Cluster::getFrontend()
+{
+    //ensure that the global cluster has been created
+    globalCluster();
+
+    if (not Cluster::isRunning())
+        //oh dear - the cluster has stopped
+        return Frontend();
+        
+    return Cluster::_pvt_getFrontend();
+}
+
+/** Return up to 'n' Frontends that will allow us to communicate with
+    up to 'n' available backends (this gets the first available backend,
+    though does prefer to find a local backend if possible) 
+    
+    An empty list is returned no resources are currently available
+*/
+QList<Frontend> Cluster::getFrontends(int n)
+{
+    //ensure that the global cluster has been created
+    globalCluster();
+
+    if (not Cluster::isRunning())
+        //oh dear - the cluster has stopped
+        return QList<Frontend>();
+        
+    return Cluster::_pvt_getFrontends(n);
+}
+
+/** Return a Frontend that will allow us to communicate with the 
+    Backend with UID 'uid'. A null frontend will be returned
+    if this backend is busy. An error will be raised if there
+    is no backend associated with this UID
+    
+    \throw SireError::unavailable_resource
+*/
+Frontend Cluster::getFrontend(const QUuid &uid)
+{
+    //ensure that the global cluster has been created
+    globalCluster();
+
+    if (not Cluster::isRunning())
+        //oh dear - the cluster has stopped
+        return Frontend();
+        
+    return Cluster::_pvt_getFrontend(uid);
+}
+
+/** Return a Nodes object that contains just a single node.
+    This doesn't block - it just grabs the first available 
+    node, and if there are none available then it returns
+    immediately, returning an empty Nodes object */
+Nodes Cluster::getNode()
+{
+    //get the first available frontend
+    Frontend frontend = Cluster::getFrontend();
+    
+    if (frontend.isNull())
+        return Nodes();
+        
+    else
+        return Nodes(frontend);
+}
+
 /** Return a Nodes object that contains just a single node. 
     This blocks until a Node is available, or until 'timeout'
     milliseconds has passed (use negative timeout to wait forever).
@@ -435,6 +632,24 @@ Nodes Cluster::getNode(int timeout)
 {
     //get the first available frontend
     Frontend frontend = Cluster::getFrontend(timeout);
+    
+    if (frontend.isNull())
+        return Nodes();
+        
+    else
+        return Nodes(frontend);
+}
+
+/** Return a Nodes object that contains the node with UID 'uid'.
+    
+    There are some cases where a Node is just not available, in which
+    case an empty Nodes object will be returned.
+    
+    \throw SireError::unavailable_resource
+*/
+Nodes Cluster::getNode(const QUuid &uid)
+{
+    Frontend frontend = Cluster::getFrontend(uid);
     
     if (frontend.isNull())
         return Nodes();
@@ -465,6 +680,20 @@ Nodes Cluster::getNode(const QUuid &uid, int timeout)
 
 /** Return a Nodes object containing up to 'nnodes' nodes. This function
     will do its best, but you may end with less than you asked for
+    (or even none at all!). */
+Nodes Cluster::getNodes(int nnodes)
+{
+    QList<Frontend> frontends = Cluster::getFrontends(nnodes);
+    
+    if (frontends.isEmpty())
+        return Nodes();
+        
+    else
+        return Nodes(frontends);
+}
+
+/** Return a Nodes object containing up to 'nnodes' nodes. This function
+    will do its best, but you may end with less than you asked for
     (or even none at all!). It is a bad idea to ask for more nodes
     than there are backends using an infinite timeout... */
 Nodes Cluster::getNodes(int nnodes, int timeout)
@@ -476,10 +705,12 @@ Nodes Cluster::getNodes(int nnodes, int timeout)
         //keep going for-ages
         while (frontends.count() < nnodes)
         {
-            Frontend frontend = Cluster::getFrontend(timeout);
+            int nremaining = nnodes - frontends.count();
+        
+            QList<Frontend> active_frontends = Cluster::getFrontends(nnodes, timeout);
 
-            if (not frontend.isNull())
-                frontends.append(frontend);
+            if (not active_frontends.isEmpty())
+                frontends += active_frontends;
         }
     }
     else
@@ -491,7 +722,9 @@ Nodes Cluster::getNodes(int nnodes, int timeout)
         
         while (frontends.count() < nnodes and remaining_time > 0)
         {
-            Frontend frontend = Cluster::getFrontend(remaining_time);
+            int nremaining = nnodes - frontends.count();
+        
+            Frontend frontend = Cluster::getFrontends(nnodes, remaining_time);
             
             if (not frontend.isNull())
                 frontends.append(frontend);
@@ -565,6 +798,41 @@ Nodes Cluster::getNodes(const QList<QUuid> &uids, int timeout)
         
     else
         return Nodes( frontends.values() );
+}
+
+/** Return a Nodes object that contains as many of the nodes with 
+    UIDs from 'uids' as possible, within the time allowed. Note that
+    this may not give you all of the nodes (it may give you none!).
+        
+    \throw SireError::unavailable_resource
+*/
+Nodes Cluster::getNodes(const QList<QUuid> &uids)
+{
+    QList<Frontend> frontends;
+
+    foreach (QUuid uid, uids)
+    {
+        Frontend frontend = Cluster::getFrontend(uid);
+        
+        if (not frontend.isNull())
+            frontends.append(frontend);
+    }
+    
+    if (frontends.isEmpty())
+        return Nodes();
+        
+    else
+        return Nodes( frontends );
+}
+
+/** Try to get hold of all of the nodes that are available on this
+    cluster */
+Nodes Cluster::getAllNodes()
+{
+    //how many nodes are available?
+    int nnodes = Cluster::UIDs().count();
+    
+    return Cluster::getNodes(nnodes);
 }
 
 /** Try to get hold of all of the nodes that are available on this

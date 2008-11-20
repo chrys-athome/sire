@@ -79,23 +79,39 @@ public:
 
     static bool supportsMPI();
 
-    static Nodes getNode(int timeout=10000);
-    static Nodes getNode(const QUuid &uid, int timeout=10000);
+    static Nodes getNode();
+    static Nodes getNode(int timeout);
+
+    static Nodes getNode(const QUuid &uid);
+    static Nodes getNode(const QUuid &uid, int timeout);
     
-    static Nodes getNodes(int nnodes, int timeout=10000);
-    static Nodes getNodes(const QList<QUuid> &uids, int timeout=10000);
+    static Nodes getNodes(int nnodes);
+    static Nodes getNodes(int nnodes, int timeout);
     
-    static Nodes getAllNodes(int timeout=10000);
+    static Nodes getNodes(const QList<QUuid> &uids);
+    static Nodes getNodes(const QList<QUuid> &uids, int timeout);
+    
+    static Nodes getAllNodes();
+    static Nodes getAllNodes(int timeout);
 
 protected:    
     static void registerBackend(const Backend &backend);  // called by Backend
 
 private:
-    static Frontend getFrontend(int timeout);
-    static Frontend getFrontend(const QUuid &uid, int timeout);
+    static Frontend _pvt_getFrontend();
+    static Frontend _pvt_getFrontend(const QUuid &uid);
+
+    static Frontend _pvt_getFrontends(int n);
+    static Frontend _pvt_getFrontends(int n, const QUuid &uid);
 
     static Frontend getFrontend();
+    static Frontend getFrontend(int timeout);
+
+    static Frontend getFrontends(int n);
+    static Frontend getFrontends(int n, int timeout);
+    
     static Frontend getFrontend(const QUuid &uid);
+    static Frontend getFrontend(const QUuid &uid, int timeout);
 };
 
 }

@@ -55,6 +55,8 @@ class RegisterBackend;
 class Shutdown;
 class Broadcast;
 class GetUIDs;
+class ReserveBackend;
+class Reservation;
 
 class Error;
 class Result;
@@ -83,6 +85,16 @@ QDataStream& operator<<(QDataStream&,
                        const SireCluster::MPI::Messages::Broadcast&);
 QDataStream& operator>>(QDataStream&, 
                         SireCluster::MPI::Messages::Broadcast&);
+
+QDataStream& operator<<(QDataStream&, 
+                       const SireCluster::MPI::Messages::ReserveBackend&);
+QDataStream& operator>>(QDataStream&, 
+                        SireCluster::MPI::Messages::ReserveBackend&);
+
+QDataStream& operator<<(QDataStream&, 
+                       const SireCluster::MPI::Messages::Reservation&);
+QDataStream& operator>>(QDataStream&, 
+                        SireCluster::MPI::Messages::Reservation&);
 
 QDataStream& operator<<(QDataStream&, 
                        const SireCluster::MPI::Messages::GetUIDs&);
@@ -435,6 +447,108 @@ public:
     Message reply() const;
 };
 
+/** This message is sent to the master to request the reservation of
+    backends from remote nodes 
+    
+    @author Christopher Woods
+*/
+class ReserveBackend : public MessageBase
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const ReserveBackend&);
+friend QDataStream& ::operator>>(QDataStream&, ReserveBackend&);
+
+public:
+    ReserveBackend();
+    ReserveBackend(int nbackends);
+    ReserveBackend(const QUuid &backend_uid);
+
+    ReserveBackend(const ReserveBackend &other);
+    
+    ~ReserveBackend();
+    
+    ReserveBackend& operator=(const ReserveBackend &other);
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<ReserveBackend>() );
+    }
+    
+    const char* what() const
+    {
+        return ReserveBackend::typeName();
+    }
+    
+    ReserveBackend* clone() const
+    {
+        return new ReserveBackend(*this);
+    }
+    
+    QString toString() const;
+    
+    void read();
+
+    bool hasReply() const;
+    Message reply() const;
+
+private:
+    /** The UID of the backend to be reserved - null if we
+        don't care which backend we get */
+    QUuid backend_uid;
+    
+    /** The number of backends to reserve */
+    qint32 nbackends;
+    
+    /** The reservation details that are composed when this message is read */
+    Reservation reservation;
+};
+
+/** This message is sent back from the master, containing the
+    reservation details the any acquired backends
+            
+    @author Christopher Woods
+*/
+class Reservation : public MessageBase
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const Reservation&);
+friend QDataStream& ::operator>>(QDataStream&, Reservation&);
+
+public:
+    Reservation();
+
+    Reservation(const Reservation &other);
+    
+    ~Reservation();
+    
+    Reservation& operator=(const Reservation &other);
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Reservation>() );
+    }
+    
+    const char* what() const
+    {
+        return Reservation::typeName();
+    }
+    
+    Reservation* clone() const
+    {
+        return new Reservation(*this);
+    }
+    
+    QString toString() const;
+    
+    void read();
+
+    QList<Frontend> confirm();
+
+private:
+    /** The reservation details for each acquired backend */
+    QList< boost::tuple<int,QUuid,QUuid> > reservation_details;
+};
+
 /** This message is sent to return a result
     
     @author Christopher Woods
@@ -647,6 +761,8 @@ Q_DECLARE_METATYPE( SireCluster::MPI::Messages::Result )
 Q_DECLARE_METATYPE( SireCluster::MPI::Messages::Error )
 
 Q_DECLARE_METATYPE( SireCluster::MPI::Messages::RegisterBackend )
+Q_DECLARE_METATYPE( SireCluster::MPI::Messages::ReserveBackend )
+Q_DECLARE_METATYPE( SireCluster::MPI::Messages::Reservation )
 Q_DECLARE_METATYPE( SireCluster::MPI::Messages::Shutdown )
 Q_DECLARE_METATYPE( SireCluster::MPI::Messages::GetUIDs )
 

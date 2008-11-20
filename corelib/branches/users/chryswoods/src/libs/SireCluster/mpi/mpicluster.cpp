@@ -453,10 +453,10 @@ void MPICluster::registerBackend(const Backend &backend)
 Frontend MPICluster::getFrontend()
 {
     //the Cluster should already have looked for local nodes...
-    /*
+
     //ask the master to reserve any backend for us
     //(the master will only reserve remote backends)
-    Messages::ReserveFrontend message;
+    Messages::ReserveBackend message(1);
     
     //create space to hold the reply (which contains the reservation)
     Reply reply(message);
@@ -474,12 +474,53 @@ Frontend MPICluster::getFrontend()
         //we are too late - there is nothing available
         return Frontend();
     else
+    {
+        //this reservation is only valid for five minutes, so lets
+        //confirm it pretty quickly
+        QList<Frontend> frontends = reservation.confirm();
+        
+        if (not frontends.isEmpty())
+            return frontends.first();
+        else
+            return Frontend();
+    }
+}
+
+/** Return the first 'n' available frontends. This returns an empty
+    list if there are no backends available
+*/
+QList<Frontend> MPICluster::getFrontends(int n)
+{
+    if (n <= 0)
+        return QList<Frontend>();
+
+    //the Cluster should already have looked for local nodes...
+
+    //ask the master to reserve any backend for us
+    //(the master will only reserve remote backends)
+    Messages::ReserveBackend message(n);
+    
+    //create space to hold the reply (which contains the reservation)
+    Reply reply(message);
+    
+    MPICluster::send(message);
+    
+    //wait for the reply
+    reply.wait();
+    
+    //lets take a look at our reservation
+    Reservation reservation = reply.from( MPICluster::master() )
+                                   .asA<Reservation>();
+
+    if (reservations.isEmpty())
+        //we are too late - there is nothing available
+        return QList<Frontend>();
+    else
+    {
         //this reservation is only valid for five minutes, so lets
         //confirm it pretty quickly
         return reservation.confirm();
-        
-    */
-    return Frontend();
+    }
 }
 
 /** Return the frontend for backend with UID 'uid'.
@@ -498,10 +539,8 @@ Frontend MPICluster::getFrontend(const QUuid &uid)
     //this interface is only to get *REMOTE* backends
     BOOST_ASSERT( not Cluster::isLocal(uid) );
 
-    /*
-        
     //ask the master to arrange the connection to this backend
-    Messages::ReserveFrontend message(uid);
+    Messages::ReserveBackend message(uid);
     
     //create space to hold the reply to this message
     Reply reply(message);
@@ -519,12 +558,16 @@ Frontend MPICluster::getFrontend(const QUuid &uid)
         //we are too late - this backend is already taken
         return Frontend();
     else
+    {
         //this reservation is only valid for five minutes, so lets
         //confirm it pretty quickly
-        return reservation.confirm();
-
-    */
-    return Frontend();
+        QList<Frontend> frontends = reservation.confirm();
+        
+        if (not frontends.isEmpty())
+            return frontends.first();
+        else
+            return Frontend();
+    }
 }
 
 /** Return the list of all of the UIDs of all of the backends

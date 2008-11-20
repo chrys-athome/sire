@@ -72,6 +72,8 @@ public:
     static Frontend getFrontend();
     static Frontend getFrontend(const QUuid &uid);
     
+    static QList<Frontend> getFrontends(int n);
+    
     static QList<QUuid> UIDs();
 
     static int master();

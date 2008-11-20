@@ -749,6 +749,92 @@ void RegisterBackend::read()
 }
 
 /////////
+///////// Implementation of ReserveBackend
+/////////
+
+static const RegisterMetaType<ReserveBackend> r_reservebackend;
+                                                      
+/** Serialise to a binary datastream */
+QDataStream& operator<<(QDataStream &ds, const ReserveBackend &reservebackend)
+{
+    writeHeader(ds, r_reservebackend, 1);
+    
+    ds << reservebackend.backend_uid << reservebackend.nbackends
+       << static_cast<const MessageBase&>(reservebackend);
+       
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream& operator>>(QDataStream &ds, ReserveBackend &reservebackend)
+{
+    VersionID v = readHeader(ds, r_reservebackend);
+    
+    if (v == 1)
+    {
+        ds >> reservebackend.backend_uid >> reservebackend.nbackends
+           >> static_cast<MessageBase&>(reservebackend);
+    }
+    else
+        throw version_error( v, "1", r_reservebackend, CODELOC );
+        
+    return ds;
+}
+
+******** HERE ***********
+
+/** Constructor */
+ReserveBackend::ReserveBackend() : node_rank(-1)
+{}
+
+/** Construct the message to register the node with unique
+    ID 'node_uid' that resides on this MPI process */
+ReserveBackend::ReserveBackend(const QUuid &uid)
+                : MessageBase( MPICluster::master() ),  // must be sent to the master
+                  node_uid(uid),
+                  node_rank( MPICluster::getRank() )
+{}
+
+/** Copy constructor */
+ReserveBackend::ReserveBackend(const ReserveBackend &other)
+                : MessageBase(other),
+                  node_uid(other.node_uid),
+                  node_rank(other.node_rank)
+{}
+
+/** Destructor */
+ReserveBackend::~ReserveBackend()
+{}
+
+/** Copy assignment operator */
+ReserveBackend& ReserveBackend::operator=(const ReserveBackend &other)
+{
+    if (this != &other)
+    {
+        node_uid = other.node_uid;
+        node_rank = other.node_rank;
+        MessageBase::operator=(other);
+    }
+    
+    return *this;
+}
+
+/** Return a string representation of this message */
+QString ReserveBackend::toString() const
+{
+    return QString("ReserveBackend( uid=%1, process=%2 )")
+                .arg(node_uid.toString())
+                .arg(node_rank);
+}
+
+/** Read this message - this must only occur on the master process! */
+void ReserveBackend::read()
+{
+    //register the node
+    MPICluster::registerBackend(node_rank, node_uid);
+}
+
+/////////
 ///////// Implementation of Shutdown
 /////////
 
