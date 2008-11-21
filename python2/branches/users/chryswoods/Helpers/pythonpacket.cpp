@@ -195,13 +195,10 @@ float PythonPacket::chunk()
     PyThreadStateHolder pythread;
     
     //we are now free to run our code
-    qDebug() << "Running the script...";
     PyRun_SimpleString( script_contents.toAscii().constData() );
     
     //the script has finished, so clear the contents
     script_contents.clear();
-    
-    qDebug() << "Script has finished";
 
     return 1;
 }

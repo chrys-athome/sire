@@ -92,6 +92,7 @@ set_target_properties (SireCluster PROPERTIES
 
 # Link to other Sire libraries
 target_link_libraries (SireCluster
+                       SireMaths
                        SireBase
                        SireError
                        SireStream

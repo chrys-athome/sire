@@ -32,6 +32,12 @@
 
 #include "SireCluster/frontend.h"
 
+#include "SireMaths/rangenerator.h"
+
+#include "SireError/printerror.h"
+
+#include <QDebug>
+
 using namespace SireCluster;
 using namespace SireCluster::MPI;
 using namespace SireCluster::MPI::Messages;
@@ -80,13 +86,15 @@ void ReservationManager::shutdown()
 {
     ReservationManager *d = reservationManager();
 
-    if (MPICluster::isMaster())
+    if ( d->isRunning() )
     {
         QMutexLocker lkr( &(d->datamutex) );
-    
+
         d->keep_going = false;
     
         d->waiter.wakeAll();
+
+        lkr.unlock();
 
         d->wait();
     }
@@ -180,6 +188,9 @@ void ReservationManager::processRequest(ReserveBackend request, Reply reply)
     manages the reservations */
 void ReservationManager::run()
 {
+    SireError::setThreadString( "ReservationManager" );
+    SireMaths::seed_qrand();
+
     QMutexLocker lkr(&datamutex);
     
     while (keep_going)

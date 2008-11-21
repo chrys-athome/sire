@@ -33,6 +33,8 @@
 #include "sendqueue.h"
 #include "mpicluster.h"
 
+#include "SireMaths/rangenerator.h"
+
 #include "SireError/errors.h"
 #include "SireError/printerror.h"
 
@@ -115,6 +117,7 @@ bool SendQueue::isRunning()
 void SendQueue::run()
 {
     SireError::setThreadString("SendQueue");
+    SireMaths::seed_qrand();
     
     //wait until everyone has got here
     send_comm->Barrier();
@@ -135,8 +138,8 @@ void SendQueue::run()
         Message message = message_queue.dequeue();
         lkr.unlock();
 
-        qDebug() << MPICluster::getRank() << "sending" << message.toString()
-                 << "to" << message.destination();
+        //qDebug() << MPICluster::getRank() << "sending" << message.toString()
+        //         << "to" << message.destination();
 
         try
         {
@@ -238,7 +241,6 @@ void SendQueue::run()
     if ( MPICluster::isMaster() )
     {
         int quit = 0;
-        qDebug() << "Master is broadcasting the QUIT message";
         send_comm->Bcast( &quit, 1, ::MPI::INT, MPICluster::master());
     }
     

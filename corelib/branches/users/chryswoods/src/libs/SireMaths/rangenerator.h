@@ -55,6 +55,8 @@ namespace detail
 class RanGeneratorPvt;
 }
 
+void seed_qrand();
+
 /** This class provides a thread-safe, copyable and streamable
     random number generator. Copies are guaranteed to produce
     different random number sequences (thus the possibility

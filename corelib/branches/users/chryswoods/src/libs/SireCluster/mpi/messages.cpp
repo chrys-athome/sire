@@ -37,6 +37,8 @@
 #include "reply.h"
 #include "reservationmanager.h"
 
+#include "SireMaths/rangenerator.h"
+
 #include "SireCluster/cluster.h"
 
 #include "SireError/exception.h"
@@ -46,6 +48,8 @@
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
+
+#include <QDebug>
 
 using namespace SireCluster;
 using namespace SireCluster::MPI;
@@ -879,13 +883,13 @@ void ReserveBackend::read()
                     
     //now ask all of the processes to tell us what they have
     //available that matches this request
-    Message message( RequestAvailability(*this) );
+    RequestAvailability request_available(*this);
     
     //create space for a reply to this broadcast
-    Reply reply(message);
+    Reply reply(request_available);
     
     //now broadcast this message to all nodes
-    MPICluster::send(message);
+    MPICluster::send(request_available);
     
     //now wait for responses in a separate thread
     ReservationManager::awaitResponse(*this, reply);
@@ -1192,6 +1196,7 @@ private:
     void run()
     {
         SireError::setThreadString("BG");
+        SireMaths::seed_qrand();
     
         datamutex.lock();
         void (*f)() = func;

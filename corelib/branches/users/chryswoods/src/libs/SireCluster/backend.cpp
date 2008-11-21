@@ -36,6 +36,10 @@
 #include "cluster.h"
 #include "workpacket.h"
 
+#include "SireMaths/rangenerator.h"
+
+#include "SireError/printerror.h"
+
 #include <QDebug>
 
 using namespace SireCluster;
@@ -205,6 +209,9 @@ QUuid Backend::UID() const
 /** Function used to actually run the job */
 void BackendPvt::run()
 {
+    SireError::setThreadString("Backend");
+    SireMaths::seed_qrand();
+
     //wake the thread that told us to run the job
     startwaiter.wakeAll();
     

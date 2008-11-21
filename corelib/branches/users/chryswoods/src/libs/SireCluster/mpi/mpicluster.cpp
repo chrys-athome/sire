@@ -220,14 +220,24 @@ void MPICluster::start()
 int MPICluster::getRank()
 {
     ::ensureMPIStarted();
-    return ::MPI::COMM_WORLD.Get_rank();
+
+    if (not ::MPI::Is_finalized())
+        return ::MPI::COMM_WORLD.Get_rank();
+    else
+        //MPI has finalized
+        return -1;
 }
 
 /** Return the number of processes in the MPI cluster */
 int MPICluster::getCount()
 {
     ::ensureMPIStarted();
-    return ::MPI::COMM_WORLD.Get_size();
+    
+    if (not ::MPI::Is_finalized())
+        return ::MPI::COMM_WORLD.Get_size();
+    else
+        //MPI has shut down
+        return 0;
 }
 
 /** Return the rank of the master process */
@@ -459,39 +469,31 @@ void MPICluster::registerBackend(const Backend &backend)
 */
 Frontend MPICluster::getFrontend()
 {
-    qDebug() << CODELOC;
     //the Cluster should already have looked for local nodes...
 
     //ask the master to reserve any backend for us
     //(the master will only reserve remote backends)
     Messages::ReserveBackend message(1);
-    qDebug() << CODELOC;
     
     //create space to hold the reply (which contains the reservation)
     Reply reply(message);
-    qDebug() << CODELOC;
     
     MPICluster::send(message);
-    qDebug() << CODELOC;
     
     //wait for the reply
     reply.wait();
-    qDebug() << CODELOC;
     
     //now get the UIDs of the nodes that have established a direct
     //connection to us
     QList<QUuid> uids = reply.from( MPICluster::master() )
                              .asA< QList<QUuid> >();
-    qDebug() << CODELOC;
 
     if (uids.isEmpty())
     {
-        qDebug() << CODELOC;
         return Frontend();
     }
     else
     {
-        qDebug() << CODELOC;
         return ReservationManager::collectReservation(message, uids.first());
     }
 }
@@ -642,6 +644,8 @@ void MPICluster::informedShutdown()
     
     globalCluster()->send_queue->wait();
     globalCluster()->receive_queue->wait();
+
+    ReservationManager::shutdown();
 
     ////////// make sure that no-one is still waiting for a reply
     {

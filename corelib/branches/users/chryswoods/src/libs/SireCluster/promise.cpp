@@ -34,6 +34,8 @@
 #include "workpacket.h"
 #include "node.h"
 
+#include "SireMaths/rangenerator.h"
+
 #include "SireError/errors.h"
 #include "SireError/printerror.h"
 
@@ -78,6 +80,7 @@ protected:
     void run()
     {
         SireError::setThreadString("Promise");
+        SireMaths::seed_qrand();
         
         QMutexLocker lkr(&datamutex);
         

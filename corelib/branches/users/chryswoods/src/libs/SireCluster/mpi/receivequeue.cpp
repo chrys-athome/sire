@@ -31,6 +31,8 @@
 #include "receivequeue.h"
 #include "mpicluster.h"
 
+#include "SireMaths/rangenerator.h"
+
 #include "SireError/errors.h"
 #include "SireError/printerror.h"
 
@@ -123,6 +125,7 @@ bool ReceiveQueue::isRunning()
 void ReceiveQueue::run()
 {
     SireError::setThreadString("ReceiveQueue_A");
+    SireMaths::seed_qrand();
 
     QMutexLocker lkr(&datamutex);
     
@@ -140,8 +143,8 @@ void ReceiveQueue::run()
         Message message = message_queue.dequeue();
         lkr.unlock();
 
-        qDebug() << MPICluster::getRank() << "received" << message.toString()
-                 << "from" << message.sender();
+        //qDebug() << MPICluster::getRank() << "received" << message.toString()
+        //         << "from" << message.sender();
 
         try
         {
@@ -206,6 +209,7 @@ Message ReceiveQueue::unpackMessage(const QByteArray &message_data, int sender) 
 void ReceiveQueue::run2()
 {
     SireError::setThreadString("ReceiveQueue_B");
+    SireMaths::seed_qrand();
 
     //wait until everyone has got here
     recv_comm->Barrier();
@@ -246,9 +250,6 @@ void ReceiveQueue::run2()
                 }
                 else
                 {
-                    qDebug() << "Master is forwarding" << message.toString()
-                             << "on to the destination" << message.destination();
-                
                     //we need to forward this on to where it has to go
                     MPICluster::send(message);
                 }
@@ -286,9 +287,6 @@ void ReceiveQueue::run2()
                 {
                     if (message.isRecipient(MPICluster::getRank()))
                     {
-                        qDebug() << MPICluster::getRank() 
-                                 << "received a shutdown message.";
-                    
                         //shutdown here and now - don't queue this message
                         //as we could deadlock at shutdown if we do!
                         message.read();

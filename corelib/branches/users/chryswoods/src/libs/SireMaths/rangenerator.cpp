@@ -285,6 +285,12 @@ static RanGeneratorPvt* createSharedNull()
     //lets dispose of another QUuid while we're at it
     QUuid::createUuid();
     
+    //what is even more annoying, is that qsrand is a *per-thread*
+    //seed, so this has only fixed this thread. Other threads
+    //will use a seed of 1, so will all create the same sequence
+    //of QUuids - the only way to fix this is for all new threads
+    //to seed qsrand
+    
     return gen;
 }
 
@@ -387,6 +393,16 @@ void RanGenerator::seed(const QVector<quint32> &s)
 void RanGenerator::seed(const RanGenerator &other)
 {
     d = other.d;
+}
+
+/** Call this function to seed the qrand generator for this thread */
+namespace SireMaths
+{
+    void SIREMATHS_EXPORT seed_qrand()
+    {
+        RanGenerator rand;
+        qsrand( rand.randInt() );
+    }
 }
 
 /** Return a random real number on [0,1) */

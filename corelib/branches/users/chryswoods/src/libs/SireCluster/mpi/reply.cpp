@@ -42,6 +42,8 @@
 
 #include "tostring.h"
 
+#include <QDebug>
+
 using namespace SireCluster::MPI;
 
 using boost::shared_ptr;
