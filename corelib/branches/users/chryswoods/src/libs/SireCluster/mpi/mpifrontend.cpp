@@ -30,9 +30,13 @@
 
 #include <mpi.h>
 
+#include <QTime>
+
 #include "mpifrontend.h"
 
 #include "SireCluster/workpacket.h"
+
+#include <QDebug>
 
 using namespace SireCluster;
 using namespace SireCluster::MPI;
@@ -61,53 +65,170 @@ bool MPIFrontend::isLocal() const
 /** Return the UID of the backend */
 QUuid MPIFrontend::UID()
 {
-    return QUuid();
+    if (p2p.isNull())
+        return QUuid();
+    
+    else
+    {
+        QMutexLocker lkr(&datamutex);
+    
+        p2p.sendMessage( P2PComm::GETUID );
+        return p2p.awaitResponse<QUuid>();
+    }
 }
 
 /** Start a job on the backend */
 void MPIFrontend::startJob(const WorkPacket &workpacket)
 {
+    if (not p2p.isNull())
+    {
+        QMutexLocker lkr(&datamutex);
+
+        p2p.sendMessage( P2PComm::START, workpacket );
+        
+        int result = p2p.awaitIntegerResponse();
+        
+        if (result != 0)
+            qDebug() << "Starting a remote job got a weird response" << result;
+    }
 }
 
 /** Stop the job on the backend */
 void MPIFrontend::stopJob()
 {
+    if (not p2p.isNull())
+    {
+        QMutexLocker lkr(&datamutex);
+        
+        p2p.sendMessage( P2PComm::STOP );
+
+        int result = p2p.awaitIntegerResponse();
+        
+        if (result != 0)
+            qDebug() << "Stopping a remote job got a weird response" << result;
+    }
 }
 
 /** Abort the job on the backend */
 void MPIFrontend::abortJob()
 {
+    if (not p2p.isNull())
+    {
+        QMutexLocker lkr(&datamutex);
+        
+        p2p.sendMessage( P2PComm::ABORT );
+
+        int result = p2p.awaitIntegerResponse();
+        
+        if (result != 0)
+            qDebug() << "Aborting a remote job got a weird response" << result;
+    }
 }
 
 /** Wait for the job to finish */
 void MPIFrontend::wait()
 {
+    if (p2p.isNull())
+    {
+        return;
+    }
+    
+    QMutexLocker lkr( &datamutex );
+    
+    while (true)
+    {
+        p2p.sendMessage( P2PComm::IS_RUNNING );
+        
+        if (not p2p.awaitIntegerResponse())
+            break;
+            
+        else
+            //wait a second
+            ::sleep(1);
+    }
 }
 
 /** Wait for the job to finish, or until 'timeout'
     milliseconds have passed */
 bool MPIFrontend::wait(int timeout)
 {
-    return true;
+    QTime t;
+    t.start();
+
+    if (timeout < 0)
+    {
+        this->wait();
+        return true;
+    }
+
+    if (p2p.isNull())
+    {
+        return true;
+    }
+    
+    QMutexLocker lkr( &datamutex );
+    
+    while (t.elapsed() < timeout)
+    {
+        p2p.sendMessage( P2PComm::IS_RUNNING );
+        
+        if (not p2p.awaitIntegerResponse())
+            return true;
+            
+        //wait a second
+        if (t.elapsed() + 1000 > timeout)
+            break;
+        
+        ::sleep(1);
+    }
+    
+    return false;
 }
 
 /** Return the progress of the work */
 float MPIFrontend::progress()
 {
-    return 0;
+    if (not p2p.isNull())
+    {
+        QMutexLocker lkr(&datamutex);
+        
+        p2p.sendMessage( P2PComm::PROGRESS );
+
+        return p2p.awaitFloatResponse();
+    }
+    else
+        return 0;
 }
 
 /** Return an interim result */
 WorkPacket MPIFrontend::interimResult()
 {
-    return WorkPacket();
+    if (not p2p.isNull())
+    {
+        QMutexLocker lkr(&datamutex);
+        
+        p2p.sendMessage( P2PComm::INTERIM );
+
+        return p2p.awaitResponse<WorkPacket>();
+    }
+    else
+        return WorkPacket();
 }
 
 /** Return the final result - this blocks until
     it is available */
 WorkPacket MPIFrontend::result()
 {
-    return WorkPacket();
+    if (not p2p.isNull())
+    {
+        QMutexLocker lkr(&datamutex);
+        
+        p2p.sendMessage( P2PComm::RESULT );
+
+        return p2p.awaitResponse<WorkPacket>();
+    }
+    else
+        return WorkPacket();
 }
 
 #endif

@@ -118,6 +118,12 @@ ClusterPvt* globalCluster()
         
         //create a new backend
         Backend::create();
+        
+        #ifdef __SIRE_USE_MPI__
+            //now wait until we have all got here
+            if (::usingMPI())
+                SireCluster::MPI::MPICluster::sync();
+        #endif
     }
     
     return global_cluster;

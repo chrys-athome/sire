@@ -45,6 +45,8 @@
 
 #include "SireError/errors.h"
 
+#include <QDebug>
+
 using namespace SireCluster;
 
 using boost::shared_ptr;

@@ -233,6 +233,22 @@ void MPICluster::start()
     globalCluster();
 }
 
+/** Synchronise the MPI processes - this can be used
+    as a Barrier to ensure that all processes have reached
+    the same point */
+void MPICluster::sync()
+{
+    ::ensureMPIStarted();
+    
+    if (not ::MPI::Is_finalized())
+    {
+        if (globalCluster()->global_comm)
+        {
+            globalCluster()->global_comm->Barrier();
+        }
+    }
+}
+
 /** Create a new P2P communicator that allow for direct and
     private communicator between the processes with ranks
     'master_rank' and 'slave_rank' */
@@ -270,8 +286,8 @@ P2PComm MPICluster::createP2P(int master_rank, int slave_rank)
             rank = 1;
         
         ::MPI::Intracomm private_comm = 
-                    globalCluster()->global_comm->Split(is_slave, 
-                                                        (is_master or is_slave));
+                    globalCluster()->global_comm->Split( (is_master or is_slave),
+                                                         is_slave );
         
         return P2PComm::create(private_comm, master_rank, slave_rank);
     }

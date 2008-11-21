@@ -279,8 +279,6 @@ QList<QUuid> ReservationManager::findAvailable( const ReserveBackend &request )
                      
         d->reserved_backends[ request.subjectUID() ] = reserved;
         
-        qDebug() << "FOUND" << reserved.keys();
-        
         return reserved.keys();
     }
 }
@@ -292,17 +290,51 @@ Frontend ReservationManager::collectReservation(const ReserveBackend &request,
                                                 const QUuid &uid,
                                                 bool dispose_of_rest)
 {
-    return Frontend();
+    ReservationManager *d = reservationManager();
+    
+    QMutexLocker lkr( &(d->datamutex) );
+    
+    QHash<QUuid,Frontend> frontends = d->mpifrontends.take(request.subjectUID());
+    
+    Frontend frontend = frontends.take(uid);
+    
+    if (not dispose_of_rest)
+    {
+        d->mpifrontends.insert( request.subjectUID(), frontends );
+    }
+
+    return frontend;
 }
 
 /** Collect on the request made with the message 'request', collecting all
     the frontends to the backend whose UIDs are in 'uids', and optionally 
     cancelling the reservation of the remaining backends */
 QList<Frontend> ReservationManager::collectReservation(const ReserveBackend &request,
-                                                       const QList<QUuid> &uid,
+                                                       const QList<QUuid> &uids,
                                                        bool dispose_of_rest)
 {
-    return QList<Frontend>();
+    ReservationManager *d = reservationManager();
+    
+    QMutexLocker lkr( &(d->datamutex) );
+    
+    QHash<QUuid,Frontend> frontends = d->mpifrontends.take(request.subjectUID());
+    
+    QList<Frontend> my_frontends;
+    
+    foreach (QUuid uid, uids)
+    {
+        Frontend frontend = frontends.take(uid);
+    
+        if (not frontend.isNull())
+            my_frontends.append(frontend);
+    }
+    
+    if (not dispose_of_rest)
+    {
+        d->mpifrontends.insert( request.subjectUID(), frontends );
+    }
+
+    return my_frontends;
 }
 
 /** Establish the point-to-point connections between the MPI processes
@@ -329,15 +361,10 @@ void ReservationManager::establishConnections(const QList< tuple<int,QUuid> > &d
         //create a point-to-point communicator between the requested processes
         P2PComm comm = P2PComm( request.sender(), rank );
      
-        qDebug() << SireError::getPIDString() << CODELOC;
-     
         if (comm.involves(my_rank))
         {
-            qDebug() << SireError::getPIDString() << CODELOC;
-            
             if (comm.isMaster())
             {
-                qDebug() << SireError::getPIDString() << CODELOC;
                 shared_ptr<FrontendBase> ptr( new MPIFrontend(comm) );
             
                 d->mpifrontends[request.subjectUID()].insert(uid, Frontend(ptr));
@@ -345,27 +372,43 @@ void ReservationManager::establishConnections(const QList< tuple<int,QUuid> > &d
 
             if (comm.isSlave())
             {
-                qDebug() << SireError::getPIDString() << CODELOC;
                 //give it the backend (handled via a local frontend)
                 comm.setBackend( d->reserved_backends[request.subjectUID()]
                                                             .take(detail.get<1>()) );
                                                             
                 d->mpibackends[request.subjectUID()].insert(uid, comm);
             }
-            
-            qDebug() << SireError::getPIDString() << CODELOC;
         }
     }
-
-    qDebug() << SireError::getPIDString() << CODELOC;
     
     //ok, we've processed all of the requests - free up the remaining backends
     d->reserved_backends[ request.subjectUID() ].clear();
     d->reserved_backends.remove( request.subjectUID() );
-
-    qDebug() << SireError::getPIDString() << CODELOC;
+    
+    //also take the opportunity to remove any stale mpibackends
+    QMutableHashIterator< QUuid, QHash<QUuid,P2PComm> > it( d->mpibackends );
+    
+    while (it.hasNext())
+    {
+        it.next();
+        
+        QMutableHashIterator<QUuid,P2PComm> it2( it.value() );
+        
+        while (it2.hasNext())
+        {
+            it2.next();
+            
+            if (it2.value().hasFinished())
+                it2.remove();
+        }
+        
+        if (it.value().isEmpty())
+        {
+            it.remove();
+        }
+    }
 }
- 
+
 /** Return the UIDs of all of the backends that have connections
     established in response to the request 'request' */
 QList<QUuid> ReservationManager::establishedConnections(const ReserveBackend &request)

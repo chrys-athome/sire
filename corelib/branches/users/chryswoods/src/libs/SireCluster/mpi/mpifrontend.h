@@ -31,6 +31,8 @@
 
 #ifdef __SIRE_USE_MPI__
 
+#include <QMutex>
+
 #include "p2pcomm.h"
 
 #include "SireCluster/frontend.h"
@@ -73,6 +75,9 @@ public:
     WorkPacket result();
 
 private:
+    /** A mutex used to protect access to the communicator */
+    QMutex datamutex;
+
     /** The point-to-point communicator used to communicate
         with the remote backend */
     P2PComm p2p;

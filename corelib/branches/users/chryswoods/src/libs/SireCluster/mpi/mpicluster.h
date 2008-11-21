@@ -66,6 +66,8 @@ public:
     static void start();
     static void shutdown();
 
+    static void sync();
+
     static bool isRunning();
 
     static void registerBackend(const Backend &backend);
