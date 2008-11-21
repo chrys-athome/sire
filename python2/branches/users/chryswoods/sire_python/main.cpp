@@ -46,7 +46,7 @@ int main(int argc, char **argv)
         int nomp = 1;
 
         //start MPI - ABSOLUTELY must use multi-threaded MPI
-        MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
+        ::MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
 
         //are we the first node in the cluster?
         if (Cluster::getRank() == 0)
@@ -60,9 +60,9 @@ int main(int argc, char **argv)
 
             //start the cluster - on the master we need one extra
             //thread for the Python interpreter
-            MPI::COMM_WORLD.Barrier();
+            ::MPI::COMM_WORLD.Barrier();
             Cluster::start(ppn);
-            MPI::COMM_WORLD.Barrier();
+            ::MPI::COMM_WORLD.Barrier();
 
             //run python
             if (argc >= 2)
@@ -90,9 +90,9 @@ int main(int argc, char **argv)
 
             //exec the Cluster - this starts the cluster and then
             //blocks while it is running
-            MPI::COMM_WORLD.Barrier();
+            ::MPI::COMM_WORLD.Barrier();
             Cluster::start(ppn);
-            MPI::COMM_WORLD.Barrier();
+            ::MPI::COMM_WORLD.Barrier();
 
             Cluster::wait();
             status = 0;
@@ -117,21 +117,21 @@ int main(int argc, char **argv)
     }
 
     //shutdown the cluster
-    if (MPI::COMM_WORLD.Get_rank() == 0)
+    if (::MPI::COMM_WORLD.Get_rank() == 0)
     {
         printf("Shutting down the cluster...\n");
         Cluster::shutdown();
     }
 
     //wait for all of the MPI jobs to finish
-    MPI::COMM_WORLD.Barrier();
+    ::MPI::COMM_WORLD.Barrier();
 
-    if (MPI::COMM_WORLD.Get_rank() == 0)
+    if (::MPI::COMM_WORLD.Get_rank() == 0)
     {
         printf("The entire cluster has now shutdown.\n");
     }
 
-    MPI::Finalize();
+    ::MPI::Finalize();
 
     //now shutdown Python - currently commented out
     //as calling these functions causes a bus error...
