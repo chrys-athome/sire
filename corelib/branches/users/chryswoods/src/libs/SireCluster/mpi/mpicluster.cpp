@@ -45,6 +45,7 @@
 #include "receivequeue.h"
 #include "reply.h"
 #include "reservationmanager.h"
+#include "p2pcomm.h"
 
 #include "SireError/errors.h"
 #include "SireError/printerror.h"
@@ -101,6 +102,9 @@ public:
         This is indexed by subject UID */
     QHash<QUuid,ReplyPtr> reply_registry;
 
+    /** The global (private) MPI communicator */
+    ::MPI::Intracomm *global_comm;
+
     /** The send message event loop */
     SendQueue *send_queue;
     
@@ -126,7 +130,8 @@ static void ensureMPIStarted()
 }
 
 /** Construct the global cluster */
-MPIClusterPvt::MPIClusterPvt() : send_queue(0), receive_queue(0),
+MPIClusterPvt::MPIClusterPvt() : global_comm(0),
+                                 send_queue(0), receive_queue(0),
                                  already_shutting_down(true)
 {
     //create the private send and receive communicators
@@ -159,20 +164,23 @@ MPIClusterPvt::MPIClusterPvt() : send_queue(0), receive_queue(0),
         std::exit(-1);
     }
         
+    //get the global MPI communicator
+    global_comm = &(::MPI::COMM_WORLD.Clone());
+        
     ::MPI::Intracomm *send_comm, *recv_comm;
         
     if ( MPICluster::isMaster() )
     {
         //create the send, then receive communicators
-        send_comm = &(::MPI::COMM_WORLD.Clone());
-        recv_comm = &(::MPI::COMM_WORLD.Clone());
+        send_comm = &(global_comm->Clone());
+        recv_comm = &(global_comm->Clone());
     }
     else
     {
         //must be the other way around (as all other nodes
         //listen to the master)
-        recv_comm = &(::MPI::COMM_WORLD.Clone());
-        send_comm = &(::MPI::COMM_WORLD.Clone());
+        recv_comm = &(global_comm->Clone());
+        send_comm = &(global_comm->Clone());
     }
         
     //create and start the reservation manager
@@ -194,11 +202,19 @@ MPIClusterPvt::~MPIClusterPvt()
     //stop the reservation manager
     ReservationManager::shutdown();
 
+    if (global_comm)
+    {
+        global_comm->Free();
+        delete global_comm;
+        global_comm = 0;
+    }
+
     if (send_queue)
     {
         send_queue->stop();
         send_queue->wait();
         delete send_queue;
+        send_queue = 0;
     }
     
     if (receive_queue)
@@ -206,6 +222,7 @@ MPIClusterPvt::~MPIClusterPvt()
         receive_queue->stop();
         receive_queue->wait();
         delete receive_queue;
+        receive_queue = 0;
     }
 }
 
@@ -214,6 +231,50 @@ void MPICluster::start()
 {
     ::ensureMPIStarted();
     globalCluster();
+}
+
+/** Create a new P2P communicator that allow for direct and
+    private communicator between the processes with ranks
+    'master_rank' and 'slave_rank' */
+P2PComm MPICluster::createP2P(int master_rank, int slave_rank)
+{
+    int my_rank = MPICluster::getRank();
+        
+    bool is_master = (my_rank == master_rank);
+    bool is_slave = (my_rank == slave_rank);
+        
+    if (master_rank == slave_rank)
+    {   
+        //this is an intra-process communicator - no 
+        //need to do anything, unless it is us!
+        if (is_master)
+        {
+            qDebug() << "Found an intra-process P2PComm on process" << my_rank;
+            return P2PComm::createLocal();
+        }
+        else
+            return P2PComm();
+    }
+    else
+    {
+        //we need to create a new communicator for this process
+        // - this requires a collective operation
+        QMutexLocker lkr( &(globalCluster()->datamutex) );
+        
+        if (globalCluster()->global_comm == 0 or ::MPI::Is_finalized())
+            return P2PComm();
+        
+        int rank = 0;
+        
+        if (is_slave)
+            rank = 1;
+        
+        ::MPI::Intracomm private_comm = 
+                    globalCluster()->global_comm->Split(is_slave, 
+                                                        (is_master or is_slave));
+        
+        return P2PComm::create(private_comm, master_rank, slave_rank);
+    }
 }
 
 /** Return the rank of this process in the MPI cluster */
@@ -664,6 +725,15 @@ void MPICluster::informedShutdown()
     {
         QMutexLocker lkr( &(globalCluster()->datamutex) );
         globalCluster()->backend_registry.clear();
+
+        //finally, get rid of the global communicator
+        if (globalCluster()->global_comm)
+        {
+            globalCluster()->global_comm->Barrier();
+            globalCluster()->global_comm->Free();
+            delete globalCluster()->global_comm;
+            globalCluster()->global_comm = 0;
+        }
     }
     
     //shut down the cluster - this will call MPICluster::shutdown,

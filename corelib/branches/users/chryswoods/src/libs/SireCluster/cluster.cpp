@@ -225,6 +225,26 @@ void Cluster::registerBackend(const Backend &backend)
     }
 }
 
+/** Return all of the available local backends, connected
+    to local frontends - this is used by ReservationManager to
+    reserve local frontends */
+QList<Frontend> Cluster::localBackends()
+{
+    QList<QUuid> local_uids = Cluster::localUIDs();
+    
+    QList<Frontend> frontends;
+    
+    foreach (QUuid uid, local_uids)
+    {
+        Frontend frontend = Cluster::_pvt_getFrontend(uid);
+        
+        if (not frontend.isNull())
+            frontends.append(frontend);
+    }
+    
+    return frontends;
+}
+
 /** Return a Frontend that will allow us to communicate with
     an available backend (this gets the first available backend,
     though does prefer to find a local backend if possible) 

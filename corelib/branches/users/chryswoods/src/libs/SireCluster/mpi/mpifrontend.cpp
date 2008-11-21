@@ -26,3 +26,88 @@
   *
 \*********************************************/
 
+#ifdef __SIRE_USE_MPI__
+
+#include <mpi.h>
+
+#include "mpifrontend.h"
+
+#include "SireCluster/workpacket.h"
+
+using namespace SireCluster;
+using namespace SireCluster::MPI;
+
+/** Null constructor */
+MPIFrontend::MPIFrontend() : FrontendBase()
+{}
+
+/** Construct a frontend that uses the passed  
+    point-to-point communicator to communicate with 
+    the backend */
+MPIFrontend::MPIFrontend(const P2PComm &p2pcomm)
+            : FrontendBase(), p2p(p2pcomm)
+{}
+
+/** Destructor */
+MPIFrontend::~MPIFrontend()
+{}
+
+/** This is only local if the p2p communicator is local */
+bool MPIFrontend::isLocal() const
+{
+    return const_cast<P2PComm*>(&p2p)->isLocal();
+}
+
+/** Return the UID of the backend */
+QUuid MPIFrontend::UID()
+{
+    return QUuid();
+}
+
+/** Start a job on the backend */
+void MPIFrontend::startJob(const WorkPacket &workpacket)
+{
+}
+
+/** Stop the job on the backend */
+void MPIFrontend::stopJob()
+{
+}
+
+/** Abort the job on the backend */
+void MPIFrontend::abortJob()
+{
+}
+
+/** Wait for the job to finish */
+void MPIFrontend::wait()
+{
+}
+
+/** Wait for the job to finish, or until 'timeout'
+    milliseconds have passed */
+bool MPIFrontend::wait(int timeout)
+{
+    return true;
+}
+
+/** Return the progress of the work */
+float MPIFrontend::progress()
+{
+    return 0;
+}
+
+/** Return an interim result */
+WorkPacket MPIFrontend::interimResult()
+{
+    return WorkPacket();
+}
+
+/** Return the final result - this blocks until
+    it is available */
+WorkPacket MPIFrontend::result()
+{
+    return WorkPacket();
+}
+
+#endif

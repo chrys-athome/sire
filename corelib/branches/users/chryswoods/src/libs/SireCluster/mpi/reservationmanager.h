@@ -36,6 +36,7 @@
 #include <QMutex>
 #include <QWaitCondition>
 #include <QQueue>
+#include <QHash>
 
 #include <boost/tuple/tuple.hpp>
 
@@ -47,6 +48,7 @@ namespace MPI
 {
 
 class Reply;
+class P2PComm;
 
 /** This class is used to handle the reservation of backends. This is
     used as the MPI code used to grab nodes is a three step process;
@@ -113,6 +115,14 @@ private:
         by the subject UID of the message used to request the 
         reservation (and then the UID of the backend) */
     QHash< QUuid, QHash<QUuid,Frontend> > reserved_backends;
+
+    /** The set of MPI backends running on this process, indexed by
+        the subject UID of the request */
+    QHash< QUuid, QHash<QUuid,P2PComm> > mpibackends;
+    
+    /** The set of MPI frontends running on this process, indexed
+        by the subject UID of the request */
+    QHash< QUuid, QHash<QUuid,Frontend> > mpifrontends;
 
     /** Whether or not to keep going */
     bool keep_going;

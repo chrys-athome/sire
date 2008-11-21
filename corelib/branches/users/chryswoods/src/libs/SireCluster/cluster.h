@@ -46,6 +46,11 @@ class Nodes;
 class Backend;
 class Frontend;
 
+namespace MPI
+{
+class ReservationManager;
+}
+
 /** This class provides the global registry for all nodes in the cluster.
     A node is defined as a resource that can run a WorkPacket. A node
     consists of a Backend (the object in which the WorkPacket is 
@@ -58,6 +63,7 @@ class SIRECLUSTER_EXPORT Cluster
 {
 
 friend class Backend;
+friend class SireCluster::MPI::ReservationManager;
 
 public:
     static QList<QUuid> localUIDs();
@@ -96,6 +102,8 @@ public:
 
 protected:    
     static void registerBackend(const Backend &backend);  // called by Backend
+    
+    static QList<Frontend> localBackends(); // call by ReservationManager
 
 private:
     static Frontend _pvt_getFrontend();

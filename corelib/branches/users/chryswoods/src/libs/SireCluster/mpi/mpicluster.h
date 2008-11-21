@@ -49,6 +49,7 @@ namespace MPI
 
 class Message;
 class Reply;
+class P2PComm;
 
 /** This class provides the global interface to all of the
     MPI nodes in the cluster (and, on the root node, the 
@@ -68,6 +69,8 @@ public:
     static bool isRunning();
 
     static void registerBackend(const Backend &backend);
+
+    static P2PComm createP2P(int master_rank, int slave_rank);
     
     static Frontend getFrontend();
     static Frontend getFrontend(const QUuid &uid);

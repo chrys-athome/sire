@@ -26,9 +26,16 @@
   *
 \*********************************************/
 
+#ifdef __SIRE_USE_MPI__
+
+#include <mpi.h> // needed first by mpich
+
+#include "SireCluster/cluster.h"
 #include "reservationmanager.h"
 #include "mpicluster.h"
 #include "reply.h"
+#include "p2pcomm.h"
+#include "mpifrontend.h"
 
 #include "SireCluster/frontend.h"
 
@@ -43,6 +50,7 @@ using namespace SireCluster::MPI;
 using namespace SireCluster::MPI::Messages;
 
 using boost::tuple;
+using boost::shared_ptr;
 
 Q_GLOBAL_STATIC( ReservationManager, reservationManager );
 
@@ -235,7 +243,46 @@ void ReservationManager::awaitResponse( const ReserveBackend &request,
     and return the UIDs of all matching reserved backends */                           
 QList<QUuid> ReservationManager::findAvailable( const ReserveBackend &request )
 {
-    return QList<QUuid>();
+    QList<Frontend> available_frontends = Cluster::localBackends();
+    
+    if (not request.requestedUID().isNull())
+    {
+        QMutableListIterator<Frontend> it(available_frontends);
+        
+        while (it.hasNext())
+        {
+            if (it.value().UID() != request.requestedUID())
+                it.remove();
+        }
+    }
+
+    if (available_frontends.isEmpty())
+        return QList<QUuid>();
+    else
+    {
+        ReservationManager *d = reservationManager();
+    
+        //we've found some frontends to connect to - save the 
+        //reservation and return their UIDs
+        QMutexLocker lkr( &(d->datamutex) );
+        
+        if ( d->reserved_backends.contains(request.subjectUID()) )
+            qDebug() << "We are already holding a reservation for the UID"
+                     << request.subjectUID().toString();
+
+        QHash<QUuid,Frontend> reserved;
+        
+        foreach (Frontend frontend, available_frontends)
+        {
+            reserved.insert( frontend.UID(), frontend );
+        }
+                     
+        d->reserved_backends[ request.subjectUID() ] = reserved;
+        
+        qDebug() << "FOUND" << reserved.keys();
+        
+        return reserved.keys();
+    }
 }
 
 /** Collect on the request made with the message 'request', collecting
@@ -263,11 +310,72 @@ QList<Frontend> ReservationManager::collectReservation(const ReserveBackend &req
 void ReservationManager::establishConnections(const QList< tuple<int,QUuid> > &details,
                                               const ReserveBackend &request )
 {
+    int my_rank = MPICluster::getRank();
+
+    ReservationManager *d = reservationManager();
+    
+    QMutexLocker lkr( &(d->datamutex) );
+
+    for (int i=0; i<details.count(); ++i)
+    {
+        tuple<int,QUuid> detail = details[i];
+        
+        int rank = detail.get<0>();
+        QUuid uid = detail.get<1>();
+    
+        if (uid.isNull())
+            continue;
+    
+        //create a point-to-point communicator between the requested processes
+        P2PComm comm = P2PComm( request.sender(), rank );
+     
+        qDebug() << SireError::getPIDString() << CODELOC;
+     
+        if (comm.involves(my_rank))
+        {
+            qDebug() << SireError::getPIDString() << CODELOC;
+            
+            if (comm.isMaster())
+            {
+                qDebug() << SireError::getPIDString() << CODELOC;
+                shared_ptr<FrontendBase> ptr( new MPIFrontend(comm) );
+            
+                d->mpifrontends[request.subjectUID()].insert(uid, Frontend(ptr));
+            }
+
+            if (comm.isSlave())
+            {
+                qDebug() << SireError::getPIDString() << CODELOC;
+                //give it the backend (handled via a local frontend)
+                comm.setBackend( d->reserved_backends[request.subjectUID()]
+                                                            .take(detail.get<1>()) );
+                                                            
+                d->mpibackends[request.subjectUID()].insert(uid, comm);
+            }
+            
+            qDebug() << SireError::getPIDString() << CODELOC;
+        }
+    }
+
+    qDebug() << SireError::getPIDString() << CODELOC;
+    
+    //ok, we've processed all of the requests - free up the remaining backends
+    d->reserved_backends[ request.subjectUID() ].clear();
+    d->reserved_backends.remove( request.subjectUID() );
+
+    qDebug() << SireError::getPIDString() << CODELOC;
 }
  
 /** Return the UIDs of all of the backends that have connections
     established in response to the request 'request' */
 QList<QUuid> ReservationManager::establishedConnections(const ReserveBackend &request)
 {
-    return QList<QUuid>();
+    ReservationManager *d = reservationManager();
+    
+    QMutexLocker lkr( &(d->datamutex) );
+    
+    return d->mpifrontends.value(request.subjectUID()).keys() +
+           d->mpibackends.value(request.subjectUID()).keys();
 }
+
+#endif

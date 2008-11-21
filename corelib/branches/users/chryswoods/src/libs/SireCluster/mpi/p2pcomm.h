@@ -26,59 +26,80 @@
   *
 \*********************************************/
 
-#ifndef SIRECLUSTER_MPI_MPIFRONTEND_H
-#define SIRECLUSTER_MPI_MPIFRONTEND_H
+#ifndef SIRECLUSTER_MPI_P2PCOMM_H
+#define SIRECLUSTER_MPI_P2PCOMM_H
 
 #ifdef __SIRE_USE_MPI__
 
-#include "p2pcomm.h"
+#include <mpi.h> // must be first to satisfy mpich
 
-#include "SireCluster/frontend.h"
+#include <QUuid>
+
+#include "sireglobal.h"
+
+#include <boost/shared_ptr.hpp>
 
 SIRE_BEGIN_HEADER
 
 namespace SireCluster
 {
+
+class Frontend;
+
 namespace MPI
 {
 
-/** This is a Frontend that is specialised to communicate with 
-    a backend over an MPI connection
+class MPICluster;
+
+namespace detail
+{
+class P2PCommPvt;
+}
+
+/** This class holds a point-to-point communicator, which is
+    used to allow direct, private communication between two
+    processes in the MPI cluster
     
     @author Christopher Woods
 */
-class MPIFrontend : public FrontendBase
+class P2PComm
 {
-public:
-    MPIFrontend();
-    MPIFrontend(const P2PComm &p2pcomm);
-    
-    ~MPIFrontend();
-    
-    bool isLocal() const;
-    
-    QUuid UID();
-    
-    void startJob(const WorkPacket &workpacket);
-    
-    void stopJob();
-    void abortJob();
-    
-    void wait();
-    bool wait(int timeout);
-    
-    float progress();
-    WorkPacket interimResult();
-    
-    WorkPacket result();
 
+friend class MPICluster;
+
+public:
+    P2PComm();
+    P2PComm(int master_rank, int slave_rank);
+    
+    P2PComm(const P2PComm &other);
+    
+    ~P2PComm();
+    
+    P2PComm& operator=(const P2PComm &other);
+    
+    bool involves(int rank);
+    
+    bool isMaster();
+    bool isSlave();
+    
+    bool isLocal();
+    
+    bool isNull() const;
+    
+    void setBackend(const Frontend &backend);
+    
+protected:
+    static P2PComm createLocal();
+    static P2PComm create(::MPI::Intracomm private_comm, 
+                          int master_rank, int slave_rank);
+    
 private:
-    /** The point-to-point communicator used to communicate
-        with the remote backend */
-    P2PComm p2p;
+    /** Shared pointer to the implementation */
+    boost::shared_ptr<detail::P2PCommPvt> d;
 };
 
 } // end of namespace MPI
+
 } // end of namespace SireCluster
 
 SIRE_END_HEADER

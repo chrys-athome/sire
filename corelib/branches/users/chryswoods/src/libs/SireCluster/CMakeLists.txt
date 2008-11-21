@@ -27,6 +27,7 @@ if (MPI_FOUND)
         mpi/messages.h
         mpi/mpicluster.h
         mpi/mpifrontend.h
+        mpi/p2pcomm.h
         mpi/receivequeue.h
         mpi/reply.h
         mpi/reservationmanager.h
@@ -39,6 +40,7 @@ if (MPI_FOUND)
         mpi/messages.cpp
         mpi/mpicluster.cpp
         mpi/mpifrontend.cpp
+        mpi/p2pcomm.cpp
         mpi/receivequeue.cpp
         mpi/reply.cpp
         mpi/reservationmanager.cpp
