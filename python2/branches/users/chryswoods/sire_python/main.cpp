@@ -22,8 +22,49 @@ using namespace SireCluster;
 
 #include <QDebug>
 
+#ifdef Q_OS_UNIX
+
+#include <signal.h>
+
+//handle CTRL-C signal - this should kill the calculation
+// - with thanks to 
+//  <http://www.gnu.org/software/libtool/manual/libc/Termination-in-Handler.html#Termination-in-Handler>
+
+volatile sig_atomic_t fatal_error_in_progress = 0;
+     
+void fatal_error_signal (int sig)
+{
+    // Since this handler is established for more than one kind of signal, 
+    // it might still get invoked recursively by delivery of some other kind
+    // of signal.  Use a static variable to keep track of that.
+    if (fatal_error_in_progress)
+        raise (sig);
+ 
+    fatal_error_in_progress = 1;
+
+    printf("You're killing me!!!\n");
+     
+    // Now do the clean up actions:
+    Cluster::shutdown();
+
+    // Now reraise the signal.  We reactivate the signal's
+    // default handling, which is to terminate the process.
+    // We could just call exit or abort,
+    // but reraising the signal sets the return status
+    // from the process correctly.
+    signal (sig, SIG_DFL);
+    raise (sig);
+}
+
+#endif // Q_OS_UNIX
+
 int main(int argc, char **argv)
 {
+    #ifdef Q_OS_UNIX
+        signal(SIGINT, fatal_error_signal);
+        signal(SIGTERM, fatal_error_signal);
+    #endif // Q_OS_UNIX
+
     int status = 0;
 
     //start Python - ABSOLUTELY must use multi-threaded python

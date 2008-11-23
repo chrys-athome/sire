@@ -38,6 +38,7 @@
 #include "SireUnits/dimensions.h"
 
 #include "SireError/errors.h"
+#include "SireError/printerror.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -350,7 +351,7 @@ void RepExMove::move(Nodes &nodes, RepExReplicas &replicas, int nmoves_to_run,
             
             for (int j=0; j<replicas.nReplicas(); ++j)
             {
-                RepExReplica replica = replicas[i];
+                RepExReplica replica = replicas[j];
             
                 Node node = nodes.getNode();
                 
@@ -361,6 +362,64 @@ void RepExMove::move(Nodes &nodes, RepExReplicas &replicas, int nmoves_to_run,
             }
 
             //wait for all of the simulations to finish
+            bool all_finished = false;
+            int ntries = 0;
+            
+            while (not all_finished)
+            {
+                ++ntries;
+
+                if (ntries > 4)
+                    break;
+
+                all_finished = true;
+            
+                for (int j=0; j<replicas.nReplicas(); ++j)
+                {
+                    running_sims[j].wait();
+                    
+                    if (running_sims[j].isError() or 
+                        running_sims[j].wasAborted())
+                    {
+                        qDebug() << "Replica" << j << "had an error or was aborted."
+                                 << "Resubmitting - attempt number" << ntries;
+                    
+                        //resubmit this calculation
+                        RepExReplica replica = replicas[j];
+                        
+                        Node node = nodes.getNode();
+                        
+                        running_sims[j] = Simulation::run( node, replica.system(),
+                                                 replica.moves(), replica.nMoves(),
+                                                 nmoves_per_chunk,
+                                        record_stats and replica.recordStatistics() );
+                    
+                        all_finished = false;
+                    }
+                    else if (not running_sims[j].hasFinished())
+                    {
+                        //continue the calculation from where it finished
+                        SimPacket sim = running_sims[j].result();
+                        
+                        Node node = nodes.getNode();
+                        
+                        running_sims[j] = Simulation::run( node, sim );
+                        
+                        all_finished = false;
+                    }
+                }
+                
+                if (not all_finished)
+                {
+                    //wait for the resubmitted calculations to finish
+                    for (int j=0; j<replicas.nReplicas(); ++j)
+                    {
+                        running_sims[j].wait();
+                    }
+                }
+            }
+
+            // all the simulations have now stopped - get the results
             for (int j=0; j<replicas.nReplicas(); ++j)
             {
                 SimPacket sim = running_sims[j].result();

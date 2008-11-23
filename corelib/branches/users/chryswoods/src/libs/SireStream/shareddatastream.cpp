@@ -29,6 +29,7 @@
 #include "shareddatastream.h"
 
 #include "SireError/errors.h"
+#include "SireError/printerror.h"
 
 #include "tostring.h"
 
@@ -73,10 +74,15 @@ SharedDataRegistry::SharedDataRegistry() : ds(0)
 void SharedDataRegistry::assertValidID(quint32 id) const
 {
     if (not objects_by_id.contains(id))
+    {
+        QList<quint32> keys = objects_by_id.keys();
+        qSort(keys);
+    
         throw SireError::program_bug( QObject::tr(
             "The SharedDataStream has encountered an invalid object ID (%1). "
-            "IDs available are %2.")
-                .arg(id).arg( Sire::toString(objects_by_id.keys()) ), CODELOC );
+            "The maximum ID available is %2.")
+                .arg(id).arg( keys.last() ), CODELOC );
+    }
 }
 
 /** Something went wrong with the ID system... */
@@ -88,35 +94,32 @@ void SharedDataRegistry::throwIDError(quint32 registered_id) const
             .arg(registered_id), CODELOC );
 }
 
-static QMutex registry_mutex;
+typedef QHash< QDataStream*, weak_ptr<SharedDataRegistry> > GlobalRegistry;
 
-static QHash<QDataStream*, weak_ptr<SharedDataRegistry> > *global_registry(0);
+Q_GLOBAL_STATIC( QMutex, registryMutex );
+Q_GLOBAL_STATIC( GlobalRegistry, globalRegistry );
 
 /** Construct and return the shared registry for the passed QDataStream */
 shared_ptr<SharedDataRegistry> SharedDataRegistry::construct(QDataStream &ds)
 {
-    QMutexLocker lkr( &registry_mutex );
-
-    if (global_registry == 0)
-    {
-        global_registry = new QHash< QDataStream*,weak_ptr<SharedDataRegistry> >();
-    }
+    QMutexLocker lkr( registryMutex() );
    
-    if (global_registry->contains(&ds))
+    if (globalRegistry()->contains(&ds))
     {
-        shared_ptr<SharedDataRegistry> reg = global_registry->value(&ds).lock();
+        shared_ptr<SharedDataRegistry> reg = globalRegistry()->value(&ds).lock();
         
         if (reg.get() != 0)
             return reg;
     }
     
-    //qDebug() << "Creating a SharedDataRegistry for the QDataStream" << &ds;
+//    qDebug() << SireError::getPIDString()
+//             << "Creating a SharedDataRegistry for the QDataStream" << &ds;
     
     shared_ptr<SharedDataRegistry> reg( new SharedDataRegistry() );
     
     reg->ds = &ds;
     
-    global_registry->insert( &ds, reg );
+    globalRegistry()->insert( &ds, reg );
     
     return reg;
 }
@@ -125,16 +128,17 @@ shared_ptr<SharedDataRegistry> SharedDataRegistry::construct(QDataStream &ds)
 SharedDataRegistry::~SharedDataRegistry()
 {
     //remove this registry from the global_registry
-    QMutexLocker lkr( &registry_mutex );
+    QMutexLocker lkr( registryMutex() );
     
-    //qDebug() << "Destroying the registry for the QDataStream" << ds;
-    //qDebug() << "   (" << objects_by_key.count() << "shared object(s) and"
-    //         << strings_by_key.count() << "shared string(s))";
+//    qDebug() << SireError::getPIDString() 
+//             << "Destroying the registry for the QDataStream" << ds
+//             << "\n   (" << objects_by_key.count() << "shared object(s) and"
+//             << strings_by_key.count() << "shared string(s))";
     
     if (ds)
     {
-        if (global_registry)
-            global_registry->remove(ds);
+        if (globalRegistry())
+            globalRegistry()->remove(ds);
     }
 }
 

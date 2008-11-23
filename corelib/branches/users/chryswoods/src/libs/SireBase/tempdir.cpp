@@ -50,8 +50,7 @@ QString getUserName()
 
 static QMutex tmpdir_mutex;
 
-/** Create a new temporary directory in QDir::tempPath() */
-void TempDir::createDirectory(const QString &temp_root)
+static QDir createDirectory(const QString &temp_root, int ntries)
 {
     QString dirname = QString("%1/SIRE_%2_%3")
                             .arg(temp_root, getUserName(),
@@ -59,21 +58,36 @@ void TempDir::createDirectory(const QString &temp_root)
                                  
     QMutexLocker lkr(&tmpdir_mutex);
     
+    QDir tmpdir;
+    
     if (tmpdir.exists(dirname))
     {
         //this directory already exists - try again
         lkr.unlock();
-        this->createDirectory(temp_root);
+        return ::createDirectory(temp_root, ntries);
+    }
+
+    if (not tmpdir.mkdir(dirname))
+    {
+        if (ntries > 0)
+        {
+            return ::createDirectory(temp_root, ntries-1);
+        }
+        else
+            throw SireError::file_error( QObject::tr(
+                "Could not create the temporary directory \"%1\". Please "
+                "ensure that there is enough disk space and that you have "
+                "permission to write to the directory \"%2\".")
+                    .arg(dirname, temp_root), CODELOC );
     }
     
-    if (not tmpdir.mkdir(dirname))
-        throw SireError::file_error( QObject::tr(
-            "Could not create the temporary directory \"%1\". Please "
-            "ensure that there is enough disk space and that you have "
-            "permission to write to the directory \"%2\".")
-                .arg(dirname, temp_root), CODELOC );
-                
-    tmpdir = QDir(dirname);
+    return QDir(dirname);
+}
+
+/** Create a new temporary directory in QDir::tempPath() */
+void TempDir::createDirectory(const QString &temp_root)
+{
+    tmpdir = ::createDirectory(temp_root, 5);
 }
 
 /** This creates a new temporary directory in QDir::tempPath() */
