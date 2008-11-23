@@ -15,18 +15,15 @@ set ( SIREMOVE_HEADERS
       montecarlo.h
       move.h
       moves.h
-      mpisim.h
-      mpisimworker.h
       mtsmc.h
       prefsampler.h
       repexmove.h
       repexreplicas.h
-      replicarunner.h
       replicas.h
       rigidbodymc.h
       sampler.h
+      simpacket.h
       simulation.h
-      threadsim.h
       uniformsampler.h
       volumemove.h
       weightedmoves.h
@@ -41,18 +38,15 @@ set ( SIREMOVE_SOURCES
       montecarlo.cpp
       move.cpp
       moves.cpp
-      mpisim.cpp
-      mpisimworker.cpp
       mtsmc.cpp
       prefsampler.cpp
       repexmove.cpp
       repexreplicas.cpp
-      replicarunner.cpp
       replicas.cpp
       rigidbodymc.cpp
       sampler.cpp
+      simpacket.cpp
       simulation.cpp
-      threadsim.cpp
       uniformsampler.cpp
       weightedmoves.cpp
       volumemove.cpp
@@ -72,7 +66,7 @@ set_target_properties (SireMove PROPERTIES
 target_link_libraries (SireMove
                        SireSystem
                        SireMaths
-                       SireMPI
+                       SireCluster
                        SireStream
                        )
 

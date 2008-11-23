@@ -28,9 +28,11 @@
 
 #include "repexmove.h"
 #include "repexreplicas.h"
-#include "replicarunner.h"
 
-#include "SireMPI/mpinodes.h"
+#include "simulation.h"
+
+#include "SireCluster/node.h"
+#include "SireCluster/nodes.h"
 
 #include "SireUnits/units.h"
 #include "SireUnits/dimensions.h"
@@ -40,8 +42,11 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireMove;
 using namespace SireMaths;
+using namespace SireCluster;
 using namespace SireUnits;
 using namespace SireUnits::Dimension;
 using namespace SireStream;
@@ -317,13 +322,22 @@ void RepExMove::testAndSwap(RepExReplicas &replicas)
 }
           
 /** Perform 'nmoves' replica exchange moves on the replicas in 'replicas',
-    running all jobs using the passed replica runner, and recording statistics if
+    running all jobs using the nodes 'nodes', and recording statistics if
     'record_stats' is true. */
-void RepExMove::move(RepExReplicas &replicas, int nmoves_to_run,
-                     const ReplicaRunner &reprunner, bool record_stats)
+void RepExMove::move(Nodes &nodes, RepExReplicas &replicas, int nmoves_to_run,
+                     int nmoves_per_chunk, bool record_stats)
 {
     if (nmoves_to_run <= 0 or replicas.isEmpty())
         return;
+
+    //always try and add this thread to the cluster
+    //(as we are sitting around waiting while the job is running)
+    ThisThread this_thread = nodes.borrowThisThread();
+    
+    if (nodes.isEmpty())
+        throw SireError::unavailable_resource( QObject::tr(
+                "There are no processor resources available to run a replica "
+                "exchange simulation!"), CODELOC );
 
     RepExMove old_state(*this);
     boost::shared_ptr<RepExReplicas> old_replicas( replicas.clone() );
@@ -332,8 +346,28 @@ void RepExMove::move(RepExReplicas &replicas, int nmoves_to_run,
     {
         for (int i=0; i<nmoves_to_run; ++i)
         {
-            //run a block of sampling on each replica
-            reprunner.run(replicas, record_stats);
+            QList<Simulation> running_sims;
+            
+            for (int j=0; j<replicas.nReplicas(); ++j)
+            {
+                RepExReplica replica = replicas[i];
+            
+                Node node = nodes.getNode();
+                
+                running_sims.append( Simulation::run(node, replica.system(),
+                                                     replica.moves(), replica.nMoves(),
+                                                     nmoves_per_chunk,
+                                     record_stats and replica.recordStatistics()) );
+            }
+
+            //wait for all of the simulations to finish
+            for (int j=0; j<replicas.nReplicas(); ++j)
+            {
+                SimPacket sim = running_sims[j].result();
+                
+                replicas.setSystem(j, sim.system());
+                replicas.setMoves(j, sim.moves());
+            }
             
             //now perform the replica exchange test on the replicas
             this->testAndSwap(replicas);
@@ -351,19 +385,21 @@ void RepExMove::move(RepExReplicas &replicas, int nmoves_to_run,
     }
 }
 
-/** Perform 'nmoves' replica exchange moves on the replicas in 'replicas',
-    running all jobs in the local thread, and recording statistics if
-    'record_stats' is true. */
-void RepExMove::move(RepExReplicas &replicas, int nmoves, bool record_stats)
+void RepExMove::move(Nodes &nodes, RepExReplicas &replicas, int nmoves,
+                     bool record_stats)
 {
-    this->move(replicas, nmoves, BasicRepRunner(), record_stats);
+    this->move(nodes, replicas, nmoves, 100, record_stats);
 }
 
-/** Perform 'nmoves' replica exchange moves on the replicas in 'replicas',
-    running all jobs on as many of the nodes in 'nodes' as possible, 
-    and recording statistics if 'record_stats' is true. */
 void RepExMove::move(RepExReplicas &replicas, int nmoves,
-                     const MPINodes &nodes, bool record_stats)
+                     int nmoves_per_chunk, bool record_stats)
 {
-    this->move(replicas, nmoves, MPIRepRunner(nodes), record_stats);
+    Nodes nodes;
+    this->move(nodes, replicas, nmoves, nmoves_per_chunk, record_stats);
+}
+
+void RepExMove::move(RepExReplicas &replicas, int nmoves, bool record_stats)
+{
+    Nodes nodes;
+    this->move(nodes, replicas, nmoves, record_stats);
 }

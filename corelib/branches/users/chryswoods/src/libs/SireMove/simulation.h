@@ -29,240 +29,100 @@
 #ifndef SIREMOVE_SIMULATION_H
 #define SIREMOVE_SIMULATION_H
 
-#include <boost/shared_ptr.hpp>
-#include <boost/utility.hpp>
+#include "simpacket.h"
 
-#include <QMutex>
+#include "SireCluster/node.h"
+#include "SireCluster/promise.h"
 
-#include "moves.h"
-#include "mpisimworker.h"
-
-#include "SireSystem/system.h"
-
-namespace SireMove
-{
-class Simulation;
-}
-
-QDataStream& operator<<(QDataStream&, const SireMove::Simulation&);
-QDataStream& operator>>(QDataStream&, SireMove::Simulation&);
-
-namespace SireMPI
-{
-class MPINode;
-}
+SIRE_BEGIN_HEADER
 
 namespace SireMove
 {
 
-using SireMPI::MPINode;
+using SireCluster::Node;
 
-using namespace SireSystem;
-
-/** This the virtual base class provides the interface to the handle
-    by which 'Simulation' actually controls a running simulation
-    
-    @author Christopher Woods
-*/
-class SIREMOVE_EXPORT SimHandle : public boost::noncopyable
-{
-public:
-    SimHandle();
-    
-    virtual ~SimHandle();
-    
-    virtual System system()=0;
-    virtual MovesPtr moves()=0;
-
-    virtual MPISimWorker worker()=0;
-    virtual MPISimWorker initialWorker()=0;
-
-    virtual int nMoves()=0;
-    virtual int nCompleted()=0;
-    virtual double progress()=0;
-    
-    virtual bool recordStatistics()=0;
-    
-    virtual void start()=0;
-    
-    virtual void abort()=0;
-    virtual void stop()=0;
-    
-    virtual bool isRunning()=0;
-    virtual bool hasStarted()=0;
-    virtual bool hasFinished()=0;
-    
-    virtual bool isError()=0;
-    virtual void throwError()=0;
-    virtual void clearError()=0;
-    
-    virtual void wait()=0;
-    virtual bool wait(int time)=0;
-};
-
-/** This is a simple class that provides a simulation that
-    runs within the current thread */
-class LocalSim : public SimHandle
-{
-public:
-    LocalSim();
-
-    LocalSim(const MPISimWorker &worker);
-    
-    ~LocalSim();
-    
-    System system();
-    MovesPtr moves();
-
-    MPISimWorker worker();
-    MPISimWorker initialWorker();
-
-    int nMoves();
-    int nCompleted();
-    
-    double progress();
-    
-    bool recordStatistics();
-    
-    void start();
-    
-    void abort();
-    void stop();
-    
-    bool isRunning();
-    bool hasStarted();
-    bool hasFinished();
-    
-    bool isError();
-    void throwError();
-    void clearError();
-    
-    void wait();
-    bool wait(int time);
-
-protected:
-    void setError(const SireError::exception &e);
-    void runJob();
-
-    /** Mutex to protect access to the data of this simulation */
-    QMutex data_mutex;
-
-    /** Mutex to ensure that only a single job is running at a time */
-    QMutex run_mutex;
-
-    /** The worker used to do the work */
-    MPISimWorker sim_worker;
-    
-    /** The initial data for the simulation, packed into a binary format.
-        This is used to restore the simulation if it is aborted */
-    QByteArray initial_state;
-    
-    /** A binary representation of any error that has occured during 
-        the simulation */
-    QByteArray error_data;
-
-    /** Whether or not to stop running */
-    bool stop_running;
-};
-
-/** This class provides a user controllable handle to a running
-    simulation. 
+/** This class is used start and manage an active
+    simulation. A simulation consists of a collection
+    of moves that are being applied to a System
     
     @author Christopher Woods
 */
 class SIREMOVE_EXPORT Simulation
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Simulation&);
-friend QDataStream& ::operator>>(QDataStream&, Simulation&);
-
 public:
     Simulation();
-    
     Simulation(const Simulation &other);
-    
+
     ~Simulation();
-    
+
     Simulation& operator=(const Simulation &other);
     
     bool operator==(const Simulation &other) const;
     bool operator!=(const Simulation &other) const;
-    
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Simulation>() );
-    }
-    
-    const char* what() const
-    {
-        return Simulation::typeName();
-    }
-    
-    Simulation* clone() const
-    {
-        return new Simulation(*this);
-    }
 
-    static Simulation run(const System &system, const Moves &moves,
-                          int nmoves, bool record_stats=true,
-                          int chunk_size=100);
-    
-    static Simulation runBG(const System &system, const Moves &moves,
-                            int nmoves, bool record_stats=true,
-                            int chunk_size=100);
-    
-    static Simulation run(const MPINode &node, const System &system,
-                          const Moves &moves, int nmoves,
-                          bool record_stats=true,
-                          int chunk_size=100);
+    static Simulation run( const System &system, const Moves &moves,
+                           int nmoves, bool record_stats=true );
+                           
+    static Simulation run( const System &system, const Moves &moves,
+                           int nmoves, int nmoves_per_chunk, 
+                           bool record_stats=true );
+                           
+    static Simulation run( const SimPacket &simpacket );
+                           
+    static Simulation run( Node &node,
+                           const System &system, const Moves &moves,
+                           int nmoves, bool record_stats=true );
 
-    static Simulation run(const Simulation &other);
-    static Simulation runBG(const Simulation &other);
-    static Simulation run(const MPINode &node, const Simulation &other);
-    
-    static Simulation run(const MPISimWorker &worker);
-    static Simulation runBG(const MPISimWorker &worker);
-    static Simulation run(const MPINode &node, const MPISimWorker &worker);
-    
-    System system();
-    MovesPtr moves();
-
-    MPISimWorker worker();
-
-    int nMoves();
-    int nCompleted();
-    double progress();
-    
-    bool recordStatistics();
-    
-    void start();
+    static Simulation run( Node &node,
+                           const System &system, const Moves &moves,
+                           int nmoves, int nmoves_per_chunk,
+                           bool record_stats=true );
+                           
+    static Simulation run( Node &node, const SimPacket &simpacket );
     
     void abort();
     void stop();
     
+    void wait();
+    bool wait(int timeout);
+    
     bool isRunning();
-    bool hasStarted();
-    bool hasFinished();
     
     bool isError();
     void throwError();
-    void clearError();
     
-    void wait();
-    bool wait(int time);
+    bool wasStopped();
+    
+    bool wasAborted();
+    
+    bool hasFinished();
+    
+    float progress();
+
+    SimPacket input();
+    SimPacket interimResult();
+    SimPacket result();
+
+    System initialSystem();
+    MovesPtr initialMoves();
+    
+    System interimSystem();
+    MovesPtr interimMoves();
+    
+    System system();
+    MovesPtr moves();
 
 private:
-    Simulation(bool);
+    Simulation(const SireCluster::Promise &promise);
 
-    /** Explicitly shared pointer to the object that is actually
-        running the simulation */
-    boost::shared_ptr<SimHandle> d;
+    /** The promise holding the running simulation */
+    SireCluster::Promise sim_promise;
 };
 
 }
 
-Q_DECLARE_METATYPE( SireMove::Simulation )
-
 SIRE_EXPOSE_CLASS( SireMove::Simulation )
+
+SIRE_END_HEADER
 
 #endif

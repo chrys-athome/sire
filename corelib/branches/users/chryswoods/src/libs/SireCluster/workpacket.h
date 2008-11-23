@@ -330,6 +330,27 @@ private:
     qint32 current, start, end, step;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool WorkPacket::isA() const
+{
+    if (this->isNull())
+        return false;
+    else
+        return this->base().isA<T>();
+}
+    
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const T& WorkPacket::asA() const
+{
+    return base().asA<T>();
+}
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
+
 }
 
 Q_DECLARE_METATYPE( SireCluster::WorkPacket )

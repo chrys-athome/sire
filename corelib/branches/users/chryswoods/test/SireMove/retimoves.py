@@ -9,7 +9,7 @@ from Sire.Qt import *
 from Sire.Units import *
 from Sire.System import *
 from Sire.Move import *
-from Sire.MPI import *
+from Sire.Cluster import *
 from Sire.Stream import *
 
 import sys
@@ -96,7 +96,7 @@ print system.energies()
 #create 5 replicas that map from lambda=0 to lambda=1
 replicas = RepExReplicas(system, 5)
 replicas.setMoves(moves)
-replicas.setNMoves(10)
+replicas.setNMoves(1000)
 
 replicas.setLambdaComponent(lam)
 
@@ -123,13 +123,14 @@ print repmove.nAccepted(), repmove.nRejected()
 for i in range(0,5):
     print i, replicas[i].lambdaValue(), replicas[i].energy()
 
-nodes = MPINodes()
+nodes = Cluster.getNodes(5)
 
-print "Running the replicas exchange moves on MPI nodes"
-repmove.move(replicas, 1, nodes)
+print nodes
+
+print "Running the replicas exchange moves on the cluster"
+repmove.move(nodes, replicas, 1)
 
 print repmove.nAccepted(), repmove.nRejected()
 
 for i in range(0,5):
     print i, replicas[i].lambdaValue(), replicas[i].energy()
-

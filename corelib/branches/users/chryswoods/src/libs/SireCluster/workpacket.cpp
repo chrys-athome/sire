@@ -269,7 +269,7 @@ void ErrorPacket::throwError() const
     after the chunk */
 float ErrorPacket::chunk()
 {
-    return 1;
+    return 100;
 }
 
 ///////////
@@ -343,7 +343,7 @@ bool AbortPacket::wasAborted() const
     after the chunk */
 float AbortPacket::chunk()
 {
-    return 1;
+    return 100;
 }
 
 ///////////

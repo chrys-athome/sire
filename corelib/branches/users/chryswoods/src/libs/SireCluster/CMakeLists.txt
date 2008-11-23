@@ -22,6 +22,8 @@ if (MPI_FOUND)
 
   set ( SIRECLUSTER_EXTRA_LIBRARIES ${MPI_LIBRARY} ${MPI_EXTRA_LIBRARY} )
 
+  save_sire_extra_include(${MPI_INCLUDE_PATH})
+
   set ( SIRECLUSTER_MPI_HEADERS
 
         mpi/messages.h

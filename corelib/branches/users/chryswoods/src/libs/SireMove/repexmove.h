@@ -41,9 +41,9 @@ class RepExMove;
 QDataStream& operator<<(QDataStream&, const SireMove::RepExMove&);
 QDataStream& operator>>(QDataStream&, SireMove::RepExMove&);
 
-namespace SireMPI
+namespace SireCluster
 {
-class MPINodes;
+class Nodes;
 }
 
 namespace SireMove
@@ -52,10 +52,9 @@ namespace SireMove
 class RepExReplicas;
 class RepExReplica;
 
-class ReplicaRunner;
-
 using SireMaths::RanGenerator;
-using SireMPI::MPINodes;
+
+using SireCluster::Nodes;
 
 /** This class is used to perform replica exchange moves on a collection
     of RepExReplicas. Each move involves running a block of sampling
@@ -105,13 +104,17 @@ public:
     void setGenerator(const RanGenerator &generator);
     const RanGenerator& generator() const;
 
+    void move(RepExReplicas &replicas, int nmoves,
+              int nmoves_per_chunk, bool record_stats=true);
+
     void move(RepExReplicas &replicas, int nmoves, bool record_stats=true);
     
-    void move(RepExReplicas &replicas, int nmoves,
-              const MPINodes &nodes, bool record_stats=true);
-              
-    void move(RepExReplicas &replicas, int nmoves,
-              const ReplicaRunner &reprunner, bool record_stats=true);
+    void move(Nodes &nodes,
+              RepExReplicas &replicas, int nmoves,
+              int nmoves_per_chunk, bool record_stats=true);
+
+    void move(Nodes &nodes,
+              RepExReplicas &replicas, int nmoves, bool record_stats=true);
 
 protected:
     void testAndSwap(RepExReplicas &replicas);

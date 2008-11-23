@@ -31,6 +31,8 @@
 
 #include "sireglobal.h"
 
+#include <QUuid>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 
