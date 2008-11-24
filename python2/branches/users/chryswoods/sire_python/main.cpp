@@ -105,17 +105,47 @@ int main(int argc, char **argv)
             Cluster::start(ppn);
             ::MPI::COMM_WORLD.Barrier();
 
-            //run python
+            //run python - each argument is a python script
             if (argc >= 2)
             {
-                Nodes nodes = Cluster::getNode();
-                Node node = nodes.getNode();
-                Promise promise = node.startJob( PythonPacket(argv[1]) );
-                promise.wait();
-                
-                if (promise.isError())
+                int nscripts = argc - 1;
+
+                printf("Running %d python script(s)...\n", nscripts);
+
+                Nodes nodes = Cluster::getNodes(nscripts);
+
+                QList<Promise> promises;
+ 
+                //submit all of the scripts
+                for (int i=0; i<nscripts; ++i)
                 {
-                    promise.throwError();
+                    Node node = nodes.getNode();
+                    printf("\nRunning script %d of %d: %s\n", i+1, nscripts, argv[i+1]);
+                    promises.append( node.startJob( PythonPacket(argv[i+1]) ) );
+                }
+                
+                //wait for them all to finish
+                for (int i=0; i<nscripts; ++i)
+                {
+                    promises[i].wait();
+                }
+
+                //did any script finish in error?
+                for (int i=0; i<nscripts; ++i)
+                {
+                    if (promises[i].isError())
+                    {
+                        printf("\nThere was a problem when running %s.\n", argv[i+1]);
+                        
+                        try
+                        {
+                            promises[i].throwError();
+                        }
+                        catch(const SireError::exception &e)
+                        {
+                            SireError::printError(e);
+                        }
+                    }
                 }
             }
         }
