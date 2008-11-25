@@ -219,7 +219,12 @@ void Promise::wait()
     if (d->result_packet.isNull())
     {
         //we still don't have the result
-        d->waiter.wait( &(d->datamutex) );
+        while (not d->waiter.wait( &(d->datamutex), 2500 ))
+        {
+            if (not d->result_packet.isNull())
+                //we've got the result!
+                return;
+        }
     }
 }
 
@@ -235,7 +240,9 @@ bool Promise::wait(int timeout)
     if (d->result_packet.isNull())
     {
         //we still don't have the result
-        return d->waiter.wait( &(d->datamutex), timeout );
+        d->waiter.wait( &(d->datamutex), timeout );
+        
+        return not d->result_packet.isNull();
     }
     else
         return true;

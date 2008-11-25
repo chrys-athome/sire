@@ -227,7 +227,7 @@ void ReservationManager::run()
             lkr.relock();
         }
         else if (keep_going)
-            waiter.wait( &datamutex );
+            waiter.wait( &datamutex, 2000 );
     }
     
     //send a response back to any remaining requests saying that
@@ -293,7 +293,8 @@ QList<QUuid> ReservationManager::findAvailable( const ReserveBackend &request )
         QMutexLocker lkr( &(d->datamutex) );
         
         if ( d->reserved_backends.contains(request.subjectUID()) )
-            qDebug() << "We are already holding a reservation for the UID"
+            qDebug() << SireError::getPIDString()
+                     << "We are already holding a reservation for the UID"
                      << request.subjectUID().toString();
 
         QHash<QUuid,Frontend> reserved;

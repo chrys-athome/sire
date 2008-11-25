@@ -37,8 +37,8 @@ promise = node.startJob( WorkTest(0,3) )
 
 result = promise.result()
 
-#add up to 5 more nodes
-nodes.addNodes(5)
+#add up to 150 more nodes
+nodes.addNodes(150)
 
 print nodes
 

@@ -36,6 +36,8 @@
 
 #include "SireCluster/workpacket.h"
 
+#include "SireError/printerror.h"
+
 #include <QDebug>
 
 using namespace SireCluster;
@@ -89,7 +91,8 @@ void MPIFrontend::startJob(const WorkPacket &workpacket)
         int result = p2p.awaitIntegerResponse();
         
         if (result != 0)
-            qDebug() << "Starting a remote job got a weird response" << result;
+            qDebug() << SireError::getPIDString()
+                     << "Starting a remote job got a weird response" << result;
     }
 }
 
@@ -105,7 +108,8 @@ void MPIFrontend::stopJob()
         int result = p2p.awaitIntegerResponse();
         
         if (result != 0)
-            qDebug() << "Stopping a remote job got a weird response" << result;
+            qDebug() << SireError::getPIDString()
+                     << "Stopping a remote job got a weird response" << result;
     }
 }
 
@@ -121,7 +125,8 @@ void MPIFrontend::abortJob()
         int result = p2p.awaitIntegerResponse();
         
         if (result != 0)
-            qDebug() << "Aborting a remote job got a weird response" << result;
+            qDebug() << SireError::getPIDString() 
+                     << "Aborting a remote job got a weird response" << result;
     }
 }
 

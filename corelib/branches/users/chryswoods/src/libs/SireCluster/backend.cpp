@@ -73,7 +73,7 @@ public:
 class BackendPvt : public QThread
 {
 public:
-    BackendPvt() : QThread(), keep_running(true)
+    BackendPvt() : QThread(), keep_running(true), job_is_starting(false)
     {
         uid = QUuid::createUuid();
         connectionwaiter.reset( new QWaitCondition() );
@@ -123,6 +123,9 @@ public:
     /** Whether or not to keep running */
     bool keep_running;
     
+    /** A flag used to indicate whether or not a job is starting */
+    bool job_is_starting;
+
 protected:
     void run();
 };
@@ -209,11 +212,27 @@ QUuid Backend::UID() const
 /** Function used to actually run the job */
 void BackendPvt::run()
 {
-    SireError::setThreadString("Backend");
+    SireError::setThreadString( QString("Backend-%1")
+                                    .arg( int(QThread::currentThread()) ));
     SireMaths::seed_qrand();
 
     //wake the thread that told us to run the job
+    startmutex.lock();
+    
+    if (not job_is_starting)
+    {
+        qDebug() << SireError::getPIDString() << "How have we been started???"
+                 << "job_is_started is false in BackendPvt::run()";
+                 
+        startwaiter.wakeAll();
+        startmutex.unlock();
+        return;
+    }
+    
+    job_is_starting = false;
+    
     startwaiter.wakeAll();
+    startmutex.unlock();
     
     while (true)
     {
@@ -532,6 +551,16 @@ void ActiveBackend::startJob(const WorkPacket &workpacket)
     //block to ensure that only one job can be started at a time
     QMutexLocker lkr( &(d->startmutex) );
 
+    while ( d->job_is_starting )
+    {
+        //another process is already starting a job - we have
+        //to wait...
+        d->startwaiter.wait( &(d->startmutex) );
+    }
+
+    //set the flag to say that *we* are now starting a job
+    d->job_is_starting = true;
+
     //wait until the last job has finished
     d->wait();
     
@@ -580,7 +609,16 @@ void ActiveBackend::abortJob()
 void ActiveBackend::wait()
 {
     if (not this->isNull())
-        d->wait();
+    {
+        while (not d->wait(2000))
+        {
+            if (not d->isRunning())
+            {
+                //the job really has stopped
+                return;
+            }
+        }
+    }
 }
 
 /** Wait for the backend thread to finish the work, or for timeout

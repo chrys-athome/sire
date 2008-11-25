@@ -45,6 +45,7 @@
 #include "cluster.h"
 
 #include "SireError/errors.h"
+#include "SireError/printerror.h"
 
 #include <QDebug>
 
@@ -302,7 +303,16 @@ Node Nodes::getNode()
             return Node();
 
         //reserve a node
-        nodesem->acquire();
+        while (not nodesem->tryAcquire(1, 1000))
+        {
+            lkr.relock();
+            nodesem = d->nodesem;
+            lkr.unlock();
+            
+            if (nodesem.get() == 0)
+                //all of the nodes have been removed
+                return Node();
+        }
 
         lkr.relock();
         
@@ -355,7 +365,16 @@ QList<Node> Nodes::getNodes(int n)
                 return nodes;
                 
             //reserve n nodes
-            nodesem->acquire(n);
+            while (not nodesem->tryAcquire(n, 2000))
+            {
+                lkr.relock();
+                nodesem = d->nodesem;
+                lkr.unlock();
+                
+                if (nodesem.get() == 0)
+                    //all of the nodes have been removed!
+                    return nodes;
+            }
             
             lkr.relock();
             
@@ -405,7 +424,16 @@ QList<Node> Nodes::getAllNodes()
             return QList<Node>();
             
         //reserve all nodes
-        nodesem->acquire( nodesem->available() );
+        while (not nodesem->tryAcquire( nodesem->available(), 2000 ))
+        {
+            lkr.relock();
+            nodesem = d->nodesem;
+            lkr.unlock();
+            
+            if (nodesem.get() == 0)
+                //all of the nodes have been rmeoved
+                return QList<Node>();
+        }
         
         lkr.relock();
         

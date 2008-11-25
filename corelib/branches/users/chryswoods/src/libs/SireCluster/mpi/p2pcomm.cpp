@@ -226,7 +226,7 @@ void P2PCommPvt::run()
 
         //wait for a message from the master
         private_comm.Recv(envelope, 2, ::MPI::INT, P2PComm::MASTER, 0);
-        
+
         if (envelope[1] > 0)
         {
             message_data.resize(envelope[1]+1);
@@ -285,7 +285,8 @@ void P2PCommPvt::run()
         }
         else
         {
-            qDebug() << "Unrecognised message!" << message;
+            qDebug() << SireError::getPIDString() 
+                     << "Unrecognised message!" << message;
         }
     }
 
