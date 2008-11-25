@@ -83,6 +83,8 @@ public:
                                         const QUuid &uid,
                                         bool dispose_of_rest=true );
 
+    static void reserveBackends(const Messages::ReserveBackend &request);
+
     static void awaitResponse( const Messages::ReserveBackend &request, 
                                const Reply &reply );
                                
@@ -97,19 +99,23 @@ protected:
     void run();
 
 private:
-    void processRequest(Messages::ReserveBackend request, Reply reply);
+    void processRequest( Messages::ReserveBackend request );
 
     void freeReservedBackends();
 
     /** Mutex to protect access to the data of this manager */
     QMutex datamutex;
 
+    /** Mutex used to ensure that only one process makes a request
+        at a time */
+    QMutex reservation_mutex;
+
     /** Waiter used to wake up this manager when a new request
         is made */
     QWaitCondition waiter;
 
     /** The queue of requests to process */
-    QQueue< boost::tuple<Messages::ReserveBackend,Reply> > request_queue;
+    QQueue<Messages::ReserveBackend> request_queue;
 
     /** The collection of backends that have been reserved, indexed
         by the subject UID of the message used to request the 

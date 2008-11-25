@@ -294,11 +294,15 @@ Nodes Node::nodes()
 
 /** Start the job in the WorkPacket 'workpacket' on this node 
     and return a Promise that will contain the calculated
-    result.
+    result. This will autodelete the node if 'autodelete'
+    is true. This is useful if this is the only workpacket
+    that you want to run on the node, as this will allow
+    the node to automatically be returned to the free-queue
+    once if has finished.
 
     \throw SireError::unavailable_resource
 */
-Promise Node::startJob(const WorkPacket &workpacket)
+Promise Node::startJob(const WorkPacket &workpacket, bool autodelete)
 {
     if (this->isNull())
         throw SireError::unavailable_resource( QObject::tr(
@@ -315,7 +319,28 @@ Promise Node::startJob(const WorkPacket &workpacket)
     d->frontend.startJob(workpacket);
     
     //now return the promise
-    return Promise(*this, workpacket);
+    Promise promise(*this, workpacket);
+    
+    //autodelete the node?
+    if (autodelete)
+        d.reset();
+        
+    return promise;
+}
+
+/** Start the job in the WorkPacket 'workpacket' on this node 
+    and return a Promise that will contain the calculated
+    result. This will autodelete the node.
+    This is useful if this is the only workpacket
+    that you want to run on the node, as this will allow
+    the node to automatically be returned to the free-queue
+    once if has finished.
+
+    \throw SireError::unavailable_resource
+*/
+Promise Node::startJob(const WorkPacket &workpacket)
+{
+    return this->startJob(workpacket, true);
 }
 
 /** Stop any running job on this node - this does not block */

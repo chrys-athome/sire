@@ -101,6 +101,14 @@ public:
     void add(Node node);
     void remove(Node node);
 
+    void add(Nodes &nodes);
+
+    void addNode();
+    void addNode(int timeout);
+    
+    void addNodes(int n);
+    void addNodes(int n, int timeout);
+
     void removeAll();
 
     ThisThread borrowThisThread();

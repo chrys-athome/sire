@@ -10,15 +10,11 @@ print "The UIDs are;"
 for uid in uids:
     print uid
 
-print "Reserving a node from the cluster...",
-nodes = Cluster.getNode()
-print " ...done!"
+#get a Nodes object that contains just the current thread
+nodes = Nodes()
+this_thread = nodes.borrowThisThread()
 
 print nodes
-
-if nodes.isEmpty():
-    print "Strange - there are no nodes available - adding this thread!"
-    this_thread = nodes.borrowThisThread()
 
 node = nodes.getNode()
 
@@ -29,30 +25,28 @@ if (node.isNull()):
 if not node.isLocal():
     print "I'm running on a non-local node!"
 
-promise = node.startJob( WorkTest(0, 10) )
+#start the job, but don't autodelete the node
+promise = node.startJob( WorkTest(0, 10), False )
 
 promise.wait()
 
 result = promise.result()
 
+#start the job, and autodelete the node
 promise = node.startJob( WorkTest(0,3) )
 
 result = promise.result()
 
-#get up to 10 nodes
-nodes2 = Cluster.getNodes(10)
+#add up to 5 more nodes
+nodes.addNodes(5)
 
-print nodes2
-
-if nodes2.isEmpty():
-    this_thread = 0
-    this_thread = nodes2.borrowThisThread()
+print nodes
 
 promises = []
 
 print "Starting lots of jobs..."
-for i in range(0, nodes2.count()):
-    node = nodes2.getNode()
+for i in range(0, nodes.count()):
+    node = nodes.getNode()
     promises.append( node.startJob(WorkTest(0,10)) )
 
 print "Waiting for them to finish..."

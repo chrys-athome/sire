@@ -41,6 +41,7 @@
 
 #include "SireMaths/rangenerator.h"
 
+#include "SireError/errors.h"
 #include "SireError/printerror.h"
 
 #include <QDebug>
@@ -113,8 +114,20 @@ void ReservationManager::shutdown()
 
 /** Process the request 'request' - this sends out the request
     for availability and then processes the results */
-void ReservationManager::processRequest(ReserveBackend request, Reply reply)
+void ReservationManager::processRequest(ReserveBackend request)
 {
+    QMutexLocker lkr( &reservation_mutex );
+
+    //ask all of the processes to tell us what they have
+    //available that matches this request
+    RequestAvailability request_available(request);
+    
+    //create space for a reply to this broadcast
+    Reply reply(request_available);
+    
+    //now broadcast this message to all nodes
+    MPICluster::send(request_available);
+    
     //this contains the list of available backends
     QList< tuple<int,QUuid> > backend_uids;
 
@@ -206,10 +219,10 @@ void ReservationManager::run()
         if (not request_queue.isEmpty())
         {
             //we have a request to process
-            tuple<ReserveBackend,Reply> request = request_queue.dequeue();
+            ReserveBackend request = request_queue.dequeue();
             lkr.unlock();
             
-            this->processRequest(request.get<0>(), request.get<1>());
+            this->processRequest(request);
             
             lkr.relock();
         }
@@ -221,20 +234,33 @@ void ReservationManager::run()
     //no backends are available
     while (not request_queue.isEmpty())
     {
-        tuple<ReserveBackend,Reply> request = request_queue.dequeue();
-        MPICluster::send( Result(request.get<0>(), QList<QUuid>()) );
+        ReserveBackend request = request_queue.dequeue();
+        MPICluster::send( Result(request, QList<QUuid>()) );
     }
 }
 
-/** Tell the manager to wait for the response to the request 'request'
-    that will be posted using the reply 'reply' */
-void ReservationManager::awaitResponse( const ReserveBackend &request, 
-                                        const Reply &reply )
+/** Process the request in 'request' */
+void ReservationManager::reserveBackends( const ReserveBackend &request )
 {
+    if (not MPICluster::isMaster())
+        throw SireError::program_bug( QObject::tr(
+                "Only the master MPI process can read a ReserveBackend message."),
+                    CODELOC );
+
+    //is there a backend with the requested UID?
+    if (not request.requestedUID().isNull())
+    {
+        if (not MPICluster::hasBackend(request.requestedUID()))
+            throw SireError::unavailable_resource( QObject::tr(
+                "There is no backend available with UID %1.")
+                    .arg(request.requestedUID().toString()), CODELOC );
+    }
+      
+    //queue this request
     ReservationManager *d = reservationManager();
     
     QMutexLocker lkr( &(d->datamutex) );
-    d->request_queue.enqueue( tuple<ReserveBackend,Reply>(request,reply) );
+    d->request_queue.enqueue(request);
 
     d->waiter.wakeAll();
 }
@@ -301,6 +327,10 @@ Frontend ReservationManager::collectReservation(const ReserveBackend &request,
     if (not dispose_of_rest)
     {
         d->mpifrontends.insert( request.subjectUID(), frontends );
+    }
+    else
+    {
+        frontends.clear();
     }
 
     return frontend;

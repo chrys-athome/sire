@@ -867,32 +867,8 @@ int ReserveBackend::nBackends() const
 /** Read this message - this must only occur on the master process! */
 void ReserveBackend::read()
 {
-    if (not MPICluster::isMaster())
-        throw SireError::program_bug( QObject::tr(
-                "Only the master MPI process can read a ReserveBackend message."),
-                    CODELOC );
-
-    //is there a backend with the requested UID?
-    if (not backend_uid.isNull())
-    {
-        if (not MPICluster::hasBackend(backend_uid))
-            throw SireError::unavailable_resource( QObject::tr(
-                "There is no backend available with UID %1.")
-                    .arg(backend_uid.toString()), CODELOC );
-    }
-                    
-    //now ask all of the processes to tell us what they have
-    //available that matches this request
-    RequestAvailability request_available(*this);
-    
-    //create space for a reply to this broadcast
-    Reply reply(request_available);
-    
-    //now broadcast this message to all nodes
-    MPICluster::send(request_available);
-    
-    //now wait for responses in a separate thread
-    ReservationManager::awaitResponse(*this, reply);
+    //tell the reservation manager to process this request
+    ReservationManager::reserveBackends(*this);
 }
 
 /////////

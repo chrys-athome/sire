@@ -42,6 +42,7 @@
 #include "node.h"
 #include "frontend.h"
 #include "backend.h"
+#include "cluster.h"
 
 #include "SireError/errors.h"
 
@@ -778,6 +779,55 @@ void Nodes::add(Node node)
     
     //tell the node that it is now living here
     node.rehome(*this);
+}
+
+/** Add all of the nodes in 'nodes' to this set */
+void Nodes::add(Nodes &nodes)
+{
+    while (nodes.nNodes() > 0)
+    {
+        Node node = nodes.getNode(250);
+        
+        if (not node.isNull())
+            this->add(node);
+    }
+}
+
+/** Try to add one more node to this set by taking a node from the 
+    pool - this only looks for immediately available nodes, and may
+    not work! */
+void Nodes::addNode()
+{
+    Nodes newnode = Cluster::getNode();
+    this->add(newnode);
+}
+
+/** Try to add one more node to this set by taking a node from the
+    pool - this only tries to find an available node for 
+    'timeout' milliseconds, and so it may fail */
+void Nodes::addNode(int timeout)
+{
+    Nodes newnode = Cluster::getNode(timeout);
+    this->add(newnode);
+}
+
+/** Try to add up to 'n' nodes to this set, by taking the nodes
+    from the pool - this only looks for immediately available
+    nodes, so you may get less than 'n' (you may even get zero!) */
+void Nodes::addNodes(int n)
+{
+    Nodes newnodes = Cluster::getNodes(n);
+    this->add(newnodes);
+}
+
+/** Try to add up to 'n' nodes to this set, by taking the nodes
+    from the pool - this only looks for available
+    nodes for 'timeout' milliseconds, so you may get less 
+    than 'n' (you may even get zero!) */
+void Nodes::addNodes(int n, int timeout)
+{
+    Nodes newnodes = Cluster::getNodes(n, timeout);
+    this->add(newnodes);
 }
 
 /** Remove the node 'node' from this set. This doesn't abort

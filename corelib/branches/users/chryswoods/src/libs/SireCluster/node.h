@@ -103,6 +103,9 @@ public:
     
     Promise startJob(const WorkPacket &workpacket);
     
+    Promise startJob(const WorkPacket &workpacket,
+                     bool autodelete);
+    
     void stopJob();
     void abortJob();
     
