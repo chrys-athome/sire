@@ -12,9 +12,7 @@ set ( SIREIO_HEADERS
       errors.h
       iobase.h
       pdb.h
-#      protoms.h
-#      protomsws.h
-#      psf.h
+      protoms.h
     )
 
 # Define the sources in SireIO
@@ -25,9 +23,7 @@ set ( SIREIO_SOURCES
       errors.cpp
       iobase.cpp
       pdb.cpp
-#      protoms.cpp
-#      protomsws.cpp
-#      psf.cpp
+      protoms.cpp
     
       ${SIREIO_HEADERS}
     )

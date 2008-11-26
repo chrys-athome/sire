@@ -36,59 +36,88 @@
 
 SIRE_BEGIN_HEADER
 
-namespace SireDB
+namespace SireIO
 {
-class ParameterDB;
-class MatchMol;
-class MatchRes;
+class ProtoMS;
+}
+
+QDataStream& operator<<(QDataStream&, const SireIO::ProtoMS&);
+QDataStream& operator>>(QDataStream&, SireIO::ProtoMS&);
+
+namespace SireMol
+{
+class Molecule;
+class Molecules;
 }
 
 namespace SireIO
 {
 
-using SireDB::ParameterDB;
+using SireMol::Molecule;
+using SireMol::Molecules;
 
-class ProtoMSWS;
-
-/**
-This class is used to read in ProtoMS parameter files.
+/** This class is used to read in ProtoMS parameter files and
+    parameterise passed molecules.
  
-@author Christopher Woods
+    @author Christopher Woods
 */
 class SIREIO_EXPORT ProtoMS
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const SireIO::ProtoMS&);
+friend QDataStream& ::operator>>(QDataStream&, SireIO::ProtoMS&);
+
 public:
+    enum { PROTEIN = 1,     // a ProtoMS protein molecule
+           SOLUTE  = 2,     // a ProtoMS solute molecule
+           SOLVENT = 3  };  // a ProtoMS solvent molecule
+
     ProtoMS();
     ~ProtoMS();
 
-    void read(const QString &filename, ParameterDB &ffdb);
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<ProtoMS>() );
+    }
 
-protected:
-
-    void readCLJLine(ProtoMSWS &workspace);
-    void readBondLine(ProtoMSWS &workspace);
-    void readAngleLine(ProtoMSWS &workspace);
-    void readUreyBradleyLine(ProtoMSWS &workspace);
-    void readDihedralLine(ProtoMSWS &workspace);
+    const char* what() const
+    {
+        return ProtoMS::typeName();
+    }
     
-    void readTemplateLine(ProtoMSWS &workspace);
-    void readChainTemplate(ProtoMSWS &workspace);
-    void readResidueTemplate(ProtoMSWS &workspace);
-    void readSoluteTemplate(ProtoMSWS &workspace);
-    void readSolventTemplate(ProtoMSWS &workspace);
+    ProtoMS* clone() const
+    {
+        return new ProtoMS(*this);
+    }
 
-    void processBondLine( ProtoMSWS &workspace, const SireDB::MatchMol &matchmol );
-    void processAngleLine( ProtoMSWS &workspace, const SireDB::MatchMol &matchmol );
-    void processDihedralLine( ProtoMSWS &workspace, const SireDB::MatchMol &matchmol );
-    void processUreyBradleyLine( ProtoMSWS &workspace, const SireDB::MatchMol &matchmol );
+    void addParameterFile(const QString &paramfile);
     
-    void processBondLine( ProtoMSWS &workspace, const SireDB::MatchRes &matchres );
-    void processAngleLine( ProtoMSWS &workspace, const SireDB::MatchRes &matchres );
-    void processDihedralLine( ProtoMSWS &workspace, const SireDB::MatchRes &matchres );
-    void processUreyBradleyLine( ProtoMSWS &workspace, const SireDB::MatchRes &matchres );
+    QStringList parameterFiles() const;
+    
+    Molecule parameterise(const Molecule &molecule, int type);
+
+    Molecules parameterise(const Molecules &molecules, int type);
+
+private:
+    void writeShellFile(const TempDir &tempdir) const;
+    void writeCommandFile(const TempDir &tempdir, int type) const;
+    
+    Molecule runProtoMS(const Molecule &molecule, int type) const;
+
+    /** The list of parameter files that will be used to 
+        parameterise the molecules */
+    QStringList paramfiles;
+    
+    /** The full path to the ProtoMS executable that will
+        be used to perform the parameterisation */
+    QString protoms_exe;
 };
 
 }
+
+Q_DECLARE_METATYPE( SireIO::ProtoMS )
+
+SIRE_EXPOSE_CLASS( SireIO::ProtoMS )
 
 SIRE_END_HEADER
 
