@@ -28,6 +28,8 @@
 
 #include "iobase.h"
 
+#include "SireMol/molecule.h"
+#include "SireMol/molidx.h"
 #include "SireMol/mover.hpp"
 #include "SireMol/cuttingfunction.h"
 
@@ -130,6 +132,22 @@ MoleculeGroup IOBase::read(QIODevice &dev, const PropertyMap &map) const
     return molecules;
 }
 
+/** Read a single molecule from the passed file - this returns only
+    the first molecule from the file */
+Molecule IOBase::readMolecule(const QString &filename, const PropertyMap &map) const
+{
+    MoleculeGroup molecules = this->read(filename, map);
+    return molecules.at(MolIdx(0)).molecule();
+}
+
+/** Read a single molecule from the passed IO device - this returns
+    only the first molecule from the device */
+Molecule IOBase::readMolecule(QIODevice &dev, const PropertyMap &map) const
+{
+    MoleculeGroup molecules = this->read(dev, map);
+    return molecules.at(MolIdx(0)).molecule();
+}
+
 /** Write the molecules in the passed group to the file called 'filename'.
     This writes the molecules in the same order as they appear in the
     passed group. */
@@ -176,6 +194,13 @@ void IOBase::write(const Molecules &molecules, const QString &filename,
     }
 }
 
+/** Write the passed molecule to the file called 'filename' */
+void IOBase::write(const MoleculeView &molecule, const QString &filename,
+                   const PropertyMap &map) const
+{
+    this->write( Molecules(molecule), filename, map );
+}
+
 /** Write the molecules in the passed group to the IO device 'dev'.
     This writes the molecules in the same order as they appear in the
     passed group. */
@@ -204,4 +229,11 @@ void IOBase::write(const Molecules &molecules, QIODevice &dev,
     {
         throw SireError::file_error(dev.errorString(), CODELOC);
     }
+}
+
+/** Write the passed molecule to the IO device 'dev' */
+void IOBase::write(const MoleculeView &molecule, QIODevice &dev,
+                   const PropertyMap &map) const
+{
+    this->write( Molecules(molecule), dev, map );
 }

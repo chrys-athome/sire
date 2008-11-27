@@ -46,6 +46,8 @@ namespace SireIO
 using SireBase::PropertyMap;
 using SireBase::PropertyName;
 
+using SireMol::Molecule;
+using SireMol::MoleculeView;
 using SireMol::Molecules;
 using SireMol::MoleculeGroup;
 using SireMol::MoleculeGroup;
@@ -134,6 +136,12 @@ public:
 
     virtual IOBase* clone() const=0;
 
+    Molecule readMolecule(const QString &filename,
+                          const PropertyMap &map = PropertyMap()) const;
+                          
+    Molecule readMolecule(QIODevice &dev,
+                          const PropertyMap &map = PropertyMap()) const;
+
     MoleculeGroup read(const QString &filename,
                        const PropertyMap &map = PropertyMap()) const;
 
@@ -146,10 +154,16 @@ public:
     void write(const Molecules &molecules, const QString &filename,
                const PropertyMap &map = PropertyMap()) const;
 
+    void write(const MoleculeView &molecule, const QString &filename,
+               const PropertyMap &map = PropertyMap()) const;
+
     void write(const MoleculeGroup &molecules, QIODevice &dev,
                const PropertyMap &map = PropertyMap()) const;
 
     void write(const Molecules &molecules, QIODevice &dev,
+               const PropertyMap &map = PropertyMap()) const;
+
+    void write(const MoleculeView &molecule, QIODevice &dev,
                const PropertyMap &map = PropertyMap()) const;
 
 protected:

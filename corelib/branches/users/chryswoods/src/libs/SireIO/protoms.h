@@ -50,6 +50,11 @@ class Molecule;
 class Molecules;
 }
 
+namespace SireBase
+{
+class TempDir;
+}
+
 namespace SireIO
 {
 
@@ -73,6 +78,8 @@ public:
            SOLVENT = 3  };  // a ProtoMS solvent molecule
 
     ProtoMS();
+    ProtoMS(const QString &protoms);
+    
     ~ProtoMS();
 
     static const char* typeName()
@@ -90,6 +97,8 @@ public:
         return new ProtoMS(*this);
     }
 
+    void setExecutable(const QString &protoms);
+
     void addParameterFile(const QString &paramfile);
     
     QStringList parameterFiles() const;
@@ -99,8 +108,10 @@ public:
     Molecules parameterise(const Molecules &molecules, int type);
 
 private:
-    void writeShellFile(const TempDir &tempdir) const;
-    void writeCommandFile(const TempDir &tempdir, int type) const;
+    QString writeShellFile(const SireBase::TempDir &tempdir,
+                           const QString &cmdfile) const;
+    QString writeCommandFile(const SireBase::TempDir &tempdir, 
+                             const Molecule &molecule, int type) const;
     
     Molecule runProtoMS(const Molecule &molecule, int type) const;
 

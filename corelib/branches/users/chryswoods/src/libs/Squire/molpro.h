@@ -69,6 +69,7 @@ friend QDataStream& ::operator>>(QDataStream&, Molpro&);
 
 public:
     Molpro();
+    Molpro(const QString &molpro);
     
     Molpro(const Molpro &other);
     
@@ -91,6 +92,8 @@ public:
     
     void setExecutable(const QString &molpro_exe);
     void setEnvironment(const QString &variable, const QString &value);
+    
+    QString executable() const;
     
     const QHash<QString,QString>& environment() const;
     

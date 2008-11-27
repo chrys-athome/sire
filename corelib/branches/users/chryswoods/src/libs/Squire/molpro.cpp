@@ -118,6 +118,17 @@ Molpro::Molpro()
          total_charge(0)
 {}
 
+/** Construct, passing in the location of the Molpro executable */
+Molpro::Molpro(const QString &molpro)
+       : ConcreteProperty<Molpro,QMProgram>(),
+         basis_set("vdz"), qm_method("HF"),
+         energy_template(default_energy_template),
+         force_template(default_force_template),
+         total_charge(0)
+{
+    this->setExecutable(molpro);
+}
+
 /** Copy constructor */
 Molpro::Molpro(const Molpro &other)
        : ConcreteProperty<Molpro,QMProgram>(other),

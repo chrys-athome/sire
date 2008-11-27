@@ -26,9 +26,21 @@
   *
 \*********************************************/
 
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QTextStream>
+#include <QByteArray>
+
 #include "protoms.h"
 
 #include "pdb.h"
+
+#include "SireMol/molecule.h"
+#include "SireMol/molecules.h"
+
+#include "SireBase/tempdir.h"
+#include "SireBase/findexe.h"
 
 #include "SireError/errors.h"
 
@@ -37,6 +49,7 @@
 
 using namespace SireIO;
 using namespace SireMol;
+using namespace SireBase;
 using namespace SireStream;
 
 static const RegisterMetaType<ProtoMS> r_protoms;
@@ -74,6 +87,12 @@ QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, ProtoMS &protoms)
 ProtoMS::ProtoMS()
 {}
 
+/** Constructor, specifying the location of ProtoMS */
+ProtoMS::ProtoMS(const QString &protoms)
+{
+    this->setExecutable(protoms);
+}
+
 /** Destructor */
 ProtoMS::~ProtoMS()
 {}
@@ -82,8 +101,20 @@ ProtoMS::~ProtoMS()
     to parameterise the molecules */
 void ProtoMS::addParameterFile(const QString &paramfile)
 {
-    if (not paramfiles.contains(paramfile))
-        paramfiles.append(paramfile);
+    //get the absolute path to this file
+    QFile f(paramfile);
+    
+    if (not f.open( QIODevice::ReadOnly)) 
+    {
+        throw SireError::file_error(f, CODELOC);
+    }
+
+    QString absfilepath = QFileInfo(f).absoluteFilePath();
+
+    f.close();
+
+    if (not paramfiles.contains(absfilepath))
+        paramfiles.append(absfilepath);
 }
 
 /** Return the list of parameter files which will be used to 
@@ -94,9 +125,36 @@ QStringList ProtoMS::parameterFiles() const
     return paramfiles;
 }
 
-/** Internal function used to write the ProtoMS command file */
-void ProtoMS::writeCommandFile(const TempDir &tmpdir, int type) const
+/** Set the path to the ProtoMS executable that will be used
+    to parameterise the molecules */
+void ProtoMS::setExecutable(const QString &protoms)
 {
+    protoms_exe = protoms;
+}
+
+/** Internal function used to write the ProtoMS command file */
+QString ProtoMS::writeCommandFile(const TempDir &tmpdir, 
+                                  const Molecule &molecule, int type) const
+{
+    //write a PDB of the molecule to the TMPDIR for ProtoMS to read
+    // ProtoMS solutes can be named by setting the name of the
+    // PDB file
+    QString name = molecule.name();
+    
+    if (name.isEmpty())
+        name = "molecule";
+    
+    {
+        QFile f( QString("%1/%2").arg(tmpdir.path(),name) );
+        f.open(QIODevice::WriteOnly);
+
+        f.write( QString("header %1\n").arg(name).toAscii().constData() );
+        
+        PDB().write( molecule, f );
+        
+        f.close();
+    }
+
     QString cmdfile = QString("%1/protoms_input").arg(tmpdir.path());
     
     QFile f(cmdfile);
@@ -112,13 +170,13 @@ void ProtoMS::writeCommandFile(const TempDir &tmpdir, int type) const
     switch (type)
     {
     case PROTEIN:
-        ts << "protein1 molecule.pdb\n";
+        ts << "protein1 " << name << "\n";
         break;
     case SOLUTE:
-        ts << "solute1 molecule.pdb\n";
+        ts << "solute1 " << name << "\n";
         break;
     case SOLVENT:
-        ts << "solvent1 molecule.pdb\n";
+        ts << "solvent1 " << name << "\n";
         break;
     
     default:
@@ -126,29 +184,28 @@ void ProtoMS::writeCommandFile(const TempDir &tmpdir, int type) const
                 "Unrecognised ProtoMS molecule type (%1)").arg(type), CODELOC );
     }
     
-    ts << "streaminfo stdout\n" 
-          "streamdetail stdout\n";
+    ts << "streamheader off\n"
+          "streaminfo stdout\n" 
+          "streamwarning stdout\n"
+          "streamfatal stdout\n"
+          "streamparameters stdout\n\n"
+          "chunk1 printparameters\n";
           
     f.close();
+    
+    return cmdfile;
 }
 
 /** Internal function used to write a shell file used to run ProtoMS */
-void ProtoMS::writeShellFile(const TempDir &tmpdir) const
+QString ProtoMS::writeShellFile(const TempDir &tempdir, 
+                                const QString &cmdfile) const
 {
-    QString cmdfile = QString("%1/run_protoms.cmd").arg(tempdir.path());
+    QString shellfile = QString("%1/run_protoms.cmd").arg(tempdir.path());
     
-    QFile f(cmdfile);
+    QFile f(shellfile);
     f.open(QIODevice::WriteOnly);
     
     QTextStream ts(&f);
-
-    //set the environmental variables of the job
-    for (QHash<QString,QString>::const_iterator it = env_variables.constBegin();
-         it != env_variables.constEnd();
-         ++it)
-    {
-        ts << it.key() << "=\"" << it.value() << "\"\n";
-    }
 
     //set the script to change into the run directory of the job
     ts << QString("\ncd %1").arg(tempdir.path()) << "\n\n";
@@ -158,14 +215,28 @@ void ProtoMS::writeShellFile(const TempDir &tmpdir) const
     {
         //the user hasn't specified a molpro executable - try to find one
         QString found_protoms = SireBase::findExe("protoms2").absoluteFilePath();
-        ts << QString("%1 -d %2 < protoms_input > protoms_output\n")
-                    .arg(found_protoms, tempdir.path());
+        ts << QString("%1 %2 > protoms_output\n")
+                    .arg(found_protoms, cmdfile);
     }
     else
-        ts << QString("%1 -d %2 < protoms_input > protoms_output\n")
-                        .arg(protoms_exe, tempdir.path());
+        ts << QString("%1 %3 > protoms_output\n")
+                        .arg(protoms_exe, cmdfile);
     
     f.close();
+    
+    return shellfile;
+}
+
+static QByteArray readAll(const QString &file)
+{
+    QFile f(file);
+    
+    if (f.open(QIODevice::ReadOnly))
+    {
+        return f.readAll();
+    }
+    else
+        return QByteArray();
 }
 
 /** Internal function used to run ProtoMS to get it to 
@@ -173,21 +244,18 @@ void ProtoMS::writeShellFile(const TempDir &tmpdir) const
 Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type) const
 {
     //create a temporary directory in which to run ProtoMS
-    QString tmppath = env_variables.value("TMPDIR");
+    QString tmppath = QDir::temp().absolutePath();
     
     if (tmppath.isEmpty())
         tmppath = QDir::temp().absolutePath();
 
     TempDir tmpdir(tmppath);
 
-    //write a PDB of the molecule to the TMPDIR for ProtoMS to read
-    PDB().write( molecule, QString("%1/molecule.pdb").arg(tmpdir.path()) );
-
     //write the ProtoMS command file
-    this->writeCommandFile(tmpdir, int type);
+    QString cmdfile = this->writeCommandFile(tmpdir, molecule, type);
 
     //write the file processed by the shell used to run the job
-    this->writeShellFile(tmpdir);
+    QString shellfile = this->writeShellFile(tmpdir, cmdfile);
 
     //now run the command
     if (std::system(0))
