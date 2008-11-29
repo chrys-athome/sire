@@ -213,7 +213,7 @@ QUuid Backend::UID() const
 void BackendPvt::run()
 {
     SireError::setThreadString( QString("Backend-%1")
-                                    .arg( int(QThread::currentThread()) ));
+                                    .arg( toInt(QThread::currentThread()) ));
     SireMaths::seed_qrand();
 
     //wake the thread that told us to run the job
