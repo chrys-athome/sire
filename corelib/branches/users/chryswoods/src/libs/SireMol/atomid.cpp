@@ -580,6 +580,10 @@ AtomName::AtomName() : SireID::Name(), AtomID()
 AtomName::AtomName(const QString &name) : SireID::Name(name), AtomID()
 {}
 
+AtomName::AtomName(const QString &name, SireID::CaseSensitivity case_sensitivity)
+         : SireID::Name(name, case_sensitivity), AtomID()
+{}
+
 AtomName::AtomName(const AtomName &other) : SireID::Name(other), AtomID(other)
 {}
 
@@ -615,12 +619,12 @@ bool AtomName::operator==(const SireID::ID &other) const
 
 bool AtomName::operator==(const AtomName &other) const
 {
-    return _name == other._name;
+    return SireID::Name::operator==(other);
 }
 
 bool AtomName::operator!=(const AtomName &other) const
 {
-    return _name != other._name;
+    return SireID::Name::operator!=(other);
 }
 
 QList<AtomIdx> AtomName::map(const MolInfo &molinfo) const

@@ -324,6 +324,10 @@ ResName::ResName() : SireID::Name(), ResID()
 ResName::ResName(const QString &name) : SireID::Name(name), ResID()
 {}
 
+ResName::ResName(const QString &name, SireID::CaseSensitivity case_sensitivity)
+        : SireID::Name(name, case_sensitivity), ResID()
+{}
+
 ResName::ResName(const ResName &other) : SireID::Name(other), ResID(other)
 {}
 
@@ -359,12 +363,12 @@ bool ResName::operator==(const SireID::ID &other) const
 
 bool ResName::operator==(const ResName &other) const
 {
-    return _name == other._name;
+    return SireID::Name::operator==(other);
 }
 
 bool ResName::operator!=(const ResName &other) const
 {
-    return _name != other._name;
+    return SireID::Name::operator!=(other);
 }
 
 QList<ResIdx> ResName::map(const MolInfo &molinfo) const

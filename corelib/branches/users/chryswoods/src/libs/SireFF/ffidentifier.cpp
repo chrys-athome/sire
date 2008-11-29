@@ -194,11 +194,7 @@ bool FFIdentifier::operator!=(const FFID &other) const
 */
 QList<FFIdx> FFName::map(const ForceFields &ffields) const
 {
-    QList<FFIdx> ffidxs;
-    
-    ffidxs.append( ffields.ffIdx(*this) );
-    
-    return ffidxs;
+    return ffields.map(*this);
 }
 
 /** Short cut function to map this index to the index of the
@@ -208,11 +204,7 @@ QList<FFIdx> FFName::map(const ForceFields &ffields) const
 */
 QList<FFIdx> FFIdx::map(const ForceFields &ffields) const
 {
-    QList<FFIdx> ffidxs;
-    
-    ffidxs.append( ffields.ffIdx(*this) );
-    
-    return ffidxs;
+    return ffields.map(*this);
 }
 
 /** Map this identifier to the indicies of the matching

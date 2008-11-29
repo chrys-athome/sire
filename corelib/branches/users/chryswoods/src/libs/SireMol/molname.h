@@ -60,6 +60,8 @@ public:
     MolName();
     explicit MolName(const QString &name);
     
+    MolName(const QString &name, SireID::CaseSensitivity case_sensitivity);
+    
     MolName(const MolName &other);
     
     ~MolName();

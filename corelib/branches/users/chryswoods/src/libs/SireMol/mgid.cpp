@@ -177,6 +177,10 @@ MGName::MGName() : SireID::Name(), MGID()
 MGName::MGName(const QString &name) : SireID::Name(name), MGID()
 {}
 
+MGName::MGName(const QString &name, SireID::CaseSensitivity case_sensitivity)
+       : SireID::Name(name, case_sensitivity), MGID()
+{}
+
 MGName::MGName(const MGName &other) : SireID::Name(other), MGID(other)
 {}
 
@@ -212,12 +216,12 @@ bool MGName::operator==(const SireID::ID &other) const
 
 bool MGName::operator==(const MGName &other) const
 {
-    return _name == other._name;
+    return SireID::Name::operator==(other);
 }
 
 bool MGName::operator!=(const MGName &other) const
 {
-    return _name != other._name;
+    return SireID::Name::operator!=(other);
 }
 
 QList<MGNum> MGName::map(const MolGroupsBase &molgroups) const

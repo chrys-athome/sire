@@ -61,6 +61,8 @@ public:
 
     explicit MGName(const QString &name);
     
+    MGName(const QString &name, SireID::CaseSensitivity case_sensitivity);
+    
     MGName(const MGName &other);
     
     ~MGName();

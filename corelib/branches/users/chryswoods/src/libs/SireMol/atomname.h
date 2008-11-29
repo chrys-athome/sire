@@ -63,6 +63,8 @@ public:
     
     explicit AtomName(const QString &name);
     
+    AtomName(const QString &name, SireID::CaseSensitivity case_sensitivity);
+    
     AtomName(const AtomName &other);
     
     ~AtomName();

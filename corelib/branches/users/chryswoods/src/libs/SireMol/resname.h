@@ -61,6 +61,8 @@ public:
     
     explicit ResName(const QString &name);
     
+    ResName(const QString &name, SireID::CaseSensitivity case_sensitivity);
+    
     ResName(const ResName &other);
     
     ~ResName();

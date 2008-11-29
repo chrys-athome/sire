@@ -370,7 +370,7 @@ private:
     QVector<detail::AtomInfo> atoms_by_index;
     
     /** Hash mapping atom names to atom indicies */
-    QMultiHash<AtomName,AtomIdx> atoms_by_name;
+    QMultiHash<QString,AtomIdx> atoms_by_name;
     
     /** Hash mapping atom numbers to atom indicies */
     QMultiHash<AtomNum,AtomIdx> atoms_by_num;
@@ -380,7 +380,7 @@ private:
     QVector<detail::ResInfo> res_by_index;
     
     /** Hash mapping residue names to residue indicies */
-    QMultiHash<ResName,ResIdx> res_by_name;
+    QMultiHash<QString,ResIdx> res_by_name;
     
     /** Hash mapping residue numbers to residue indicies */
     QMultiHash<ResNum,ResIdx> res_by_num;
@@ -390,21 +390,21 @@ private:
     QVector<detail::ChainInfo> chains_by_index;
     
     /** Hash mapping chain names to chain indicies */
-    QMultiHash<ChainName,ChainIdx> chains_by_name;
+    QMultiHash<QString,ChainIdx> chains_by_name;
     
     /** All of the segments in this molecule, arranged in the
         order that they appear in this molecule */
     QVector<detail::SegInfo> seg_by_index;
     
     /** Hash mapping segment names to segment indicies */
-    QMultiHash<SegName,SegIdx> seg_by_name;
+    QMultiHash<QString,SegIdx> seg_by_name;
     
     /** All of the CutGroups in this molecule, arranged in the
         order that they appear in this molecule */
     QVector<detail::CGInfo> cg_by_index;
 
     /** Hash mapping CutGroup name to CutGroup indicies */
-    QMultiHash<CGName,CGIdx> cg_by_name;
+    QMultiHash<QString,CGIdx> cg_by_name;
 };
 
 } //end of namespace SireMol 

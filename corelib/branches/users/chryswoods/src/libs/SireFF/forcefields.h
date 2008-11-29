@@ -124,6 +124,10 @@ public:
     const FFName& ffName(const FFIdx &ffidx) const;
     const FFName& ffName(const FFID &ffid) const;
     
+    QList<FFIdx> map(const FFID &ffid) const;
+    QList<FFIdx> map(const FFIdx &ffidx) const;
+    QList<FFIdx> map(const FFName &ffname) const;
+    
     QString toString() const;
     
     static const Symbol& totalComponent();
@@ -285,7 +289,7 @@ private:
     QVector<FFPtr> ffields_by_idx;
     
     /** Map from forcefield name to its index */
-    QHash<FFName,int> ffields_by_name;
+    QHash<QString,int> ffields_by_name;
     
     /** Map from molecule group number to the name of the 
         forcefield that contains that group */

@@ -48,6 +48,7 @@ namespace SireMol
 {
 class Molecule;
 class Molecules;
+class MolEditor;
 }
 
 namespace SireBase
@@ -60,6 +61,7 @@ namespace SireIO
 
 using SireMol::Molecule;
 using SireMol::Molecules;
+using SireMol::MolEditor;
 
 /** This class is used to read in ProtoMS parameter files and
     parameterise passed molecules.
@@ -112,6 +114,11 @@ private:
                            const QString &cmdfile) const;
     QString writeCommandFile(const SireBase::TempDir &tempdir, 
                              const Molecule &molecule, int type) const;
+    
+    void processZMatrixLine(const QStringList &words, 
+                            MolEditor &editmol, int type) const;
+    void processAtomLine(const QStringList &words,
+                         MolEditor &editmol, int type) const;
     
     Molecule runProtoMS(const Molecule &molecule, int type) const;
 

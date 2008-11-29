@@ -61,6 +61,8 @@ public:
     
     explicit SegName(const QString &name);
     
+    SegName(const QString &name, SireID::CaseSensitivity case_sensitivity);
+    
     SegName(const SegName &other);
     
     ~SegName();

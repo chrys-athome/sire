@@ -62,6 +62,8 @@ public:
     
     explicit ChainName(const QString &name);
     
+    ChainName(const QString &name, SireID::CaseSensitivity case_sensitivity);
+    
     ChainName(const ChainName &other);
     
     ~ChainName();

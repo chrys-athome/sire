@@ -53,7 +53,7 @@ ID::~ID()
 QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const SireID::Name &name)
 {
     SireStream::SharedDataStream sds(ds);
-    sds << name._name;
+    sds << name._name << name.case_sensitive;
 
     return ds;
 }
@@ -62,19 +62,49 @@ QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const SireID::Name &name)
 QDataStream SIREID_EXPORT &operator>>(QDataStream &ds, SireID::Name &name)
 {
     SireStream::SharedDataStream sds(ds);
-    sds >> name._name;
+    sds >> name._name >> name.case_sensitive;
     
     return ds;
 }
 
-Name::Name(const QString &name) : _name(name)
-{}
+Name::Name(const QString &name, CaseSensitivity case_sensitivity) 
+     : _name(name)
+{
+    switch (case_sensitivity)
+    {
+        case CaseSensitive:
+            case_sensitive = true;
+            break;
+        case CaseInsensitive:
+            case_sensitive = false;
+            break;
+    }
+}
 
-Name::Name(const Name &other) : _name(other._name)
+Name::Name(const Name &other) 
+     : _name(other._name), case_sensitive(other.case_sensitive)
 {}
 
 Name::~Name()
 {}
+
+Name& Name::operator=(const Name &other)
+{
+    _name = other._name;
+    case_sensitive = other.case_sensitive;
+    
+    return *this;
+}
+
+bool Name::operator==(const Name &other) const
+{
+    return _name == other._name and case_sensitive == other.case_sensitive;
+}
+
+bool Name::operator!=(const Name &other) const
+{
+    return _name != other._name or case_sensitive != other.case_sensitive;
+}
 
 Name::operator QString() const
 {
@@ -84,6 +114,11 @@ Name::operator QString() const
 bool Name::isNull() const
 {
     return _name.isNull();
+}
+
+bool Name::isCaseSensitive() const
+{
+    return case_sensitive;
 }
 
 uint Name::hash() const

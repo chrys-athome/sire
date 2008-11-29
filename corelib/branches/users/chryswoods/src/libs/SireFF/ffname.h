@@ -60,6 +60,8 @@ public:
     FFName();
     explicit FFName(const QString &name);
     
+    FFName(const QString &name, SireID::CaseSensitivity case_sensitivity);
+    
     FFName(const FFName &other);
     
     ~FFName();

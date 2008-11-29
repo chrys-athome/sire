@@ -828,17 +828,24 @@ QList<MolNum> MoleculeGroup::map(MolIdx molidx) const
 */
 QList<MolNum> MoleculeGroup::map(const MolName &molname) const
 {
-    QHash< MolName,QList<MolNum> >::const_iterator 
-                                        it = d->molname_to_num.find(molname);
+    if (molname.isCaseSensitive())
+    {
+        QHash< MolName,QList<MolNum> >::const_iterator 
+                                            it = d->molname_to_num.find(molname);
                                         
-    if (it == d->molname_to_num.end())
-        throw SireMol::missing_molecule( QObject::tr(
-            "There are no molecules called \"%1\" in this group. "
-            "Use the MoleculeGroup::molNames() function to get the set "
-            "of the names of molecules in this group.")
-                .arg(molname), CODELOC );
-                
-    return *it;
+        if (it == d->molname_to_num.end())
+            throw SireMol::missing_molecule( QObject::tr(
+                "There are no molecules called \"%1\" in this group. "
+                "Use the MoleculeGroup::molNames() function to get the set "
+                "of the names of molecules in this group.")
+                    .arg(molname), CODELOC );
+    
+        return *it;
+    }
+    else
+    {
+        return molname.map( this->molecules() );
+    }
 }
 
 /** Return the numbers of the molecules that match the ID 'molid'

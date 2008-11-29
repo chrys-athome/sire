@@ -321,6 +321,10 @@ ChainName::ChainName() : SireID::Name(), ChainID()
 ChainName::ChainName(const QString &name) : SireID::Name(name), ChainID()
 {}
 
+ChainName::ChainName(const QString &name, SireID::CaseSensitivity case_sensitivity)
+          : SireID::Name(name, case_sensitivity), ChainID()
+{}
+
 ChainName::ChainName(const ChainName &other) : SireID::Name(other), ChainID(other)
 {}
 
@@ -356,12 +360,12 @@ bool ChainName::operator==(const SireID::ID &other) const
 
 bool ChainName::operator==(const ChainName &other) const
 {
-    return _name == other._name;
+    return SireID::Name::operator==(other);
 }
 
 bool ChainName::operator!=(const ChainName &other) const
 {
-    return _name != other._name;
+    return SireID::Name::operator!=(other);
 }
 
 QList<ChainIdx> ChainName::map(const MolInfo &molinfo) const

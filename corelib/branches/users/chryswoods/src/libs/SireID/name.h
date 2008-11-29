@@ -47,6 +47,9 @@ QDataStream& operator>>(QDataStream&, SireID::Name&);
 namespace SireID
 {
 
+enum CaseSensitivity{  CaseInsensitive = 0,
+                       CaseSensitive   = 1 };
+
 /** This is the base class of all Name ID objects. A Name is used
     to provide an object with a human-readable name that can be
     used to identify the object, e.g. identifying atoms by their
@@ -78,14 +81,24 @@ public:
     
     const QString& value() const;
 
+    bool isCaseSensitive() const;
 
 protected:
-    explicit Name(const QString &name = QString::null);
+    explicit Name(const QString &name = QString::null,
+                  CaseSensitivity = CaseSensitive);
     
     Name(const Name &other);
+
+    Name& operator=(const Name &other);
+    
+    bool operator==(const Name &other) const;
+    bool operator!=(const Name &other) const;
     
     /** The actual name */
     QString _name;
+    
+    /** Should this name be case sensitive or not? */
+    bool case_sensitive;
 };
 
 }

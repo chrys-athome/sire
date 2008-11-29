@@ -409,6 +409,10 @@ MolName::MolName() : SireID::Name(), MolID()
 MolName::MolName(const QString &name) : SireID::Name(name), MolID()
 {}
 
+MolName::MolName(const QString &name, SireID::CaseSensitivity case_sensitivity)
+        : SireID::Name(name, case_sensitivity), MolID()
+{}
+
 MolName::MolName(const MolName &other) : SireID::Name(other), MolID(other)
 {}
 
@@ -444,24 +448,39 @@ bool MolName::operator==(const SireID::ID &other) const
 
 bool MolName::operator==(const MolName &other) const
 {
-    return _name == other._name;
+    return SireID::Name::operator==(other);
 }
 
 bool MolName::operator!=(const MolName &other) const
 {
-    return _name != other._name;
+    return SireID::Name::operator!=(other);
 }
 
 QList<MolNum> MolName::map(const Molecules &molecules) const
 {
     QList<MolNum> molnums;
     
-    for (Molecules::const_iterator it = molecules.constBegin();
-         it != molecules.constEnd();
-         ++it)
+    if (this->isCaseSensitive())
     {
-        if (it.value().name() == *this)
-            molnums.append( it.key() );
+        for (Molecules::const_iterator it = molecules.constBegin();
+             it != molecules.constEnd();
+             ++it)
+        {
+            if (it.value().name() == *this)
+                molnums.append( it.key() );
+        }
+    }
+    else
+    {
+        QString lower_name = QString(*this).toLower();
+        
+        for (Molecules::const_iterator it = molecules.constBegin();
+             it != molecules.constEnd();
+             ++it)
+        {
+            if (QString(it.value().name()).toLower() == lower_name)
+                molnums.append( it.key() );
+        }
     }
     
     if (molnums.isEmpty())

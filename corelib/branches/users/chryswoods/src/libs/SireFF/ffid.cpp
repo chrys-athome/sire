@@ -223,6 +223,10 @@ FFName::FFName() : SireID::Name(), FFID()
 FFName::FFName(const QString &name) : SireID::Name(name), FFID()
 {}
 
+FFName::FFName(const QString &name, SireID::CaseSensitivity case_sensitivity)
+       : SireID::Name(name, case_sensitivity), FFID()
+{}
+
 FFName::FFName(const FFName &other) : SireID::Name(other), FFID(other)
 {}
 
@@ -258,12 +262,12 @@ bool FFName::operator==(const SireID::ID &other) const
 
 bool FFName::operator==(const FFName &other) const
 {
-    return _name == other._name;
+    return SireID::Name::operator==(other);
 }
 
 bool FFName::operator!=(const FFName &other) const
 {
-    return _name != other._name;
+    return SireID::Name::operator!=(other);
 }
 
 ///////

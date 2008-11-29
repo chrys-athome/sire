@@ -1294,17 +1294,18 @@ int ForceFields::nForceFields() const
 /** Return the index of the forcefield with name 'ffname'
 
     \throw SireFF::missing_forcefield 
+    \throw SireFF::duplicate_forcefield
 */
 FFIdx ForceFields::ffIdx(const FFName &ffname) const
 {
-    if (not ffields_by_name.contains(ffname))
-        throw SireFF::missing_forcefield( QObject::tr(
-            "There are no forcefields in this set called %1. "
-            "Available forcefields are called %2.")
-                .arg(ffname).arg( Sire::toString(ffields_by_name.keys()) ),
-                    CODELOC );
-                    
-    return FFIdx( ffields_by_name.value(ffname) );
+    QList<FFIdx> ffidxs = ffname.map(*this);
+    
+    if (ffidxs.count() > 1)
+        throw SireFF::duplicate_forcefield( QObject::tr(
+            "There is more than one forcefield that matches the name "
+            "\"%1\".").arg(ffname), CODELOC );
+
+    return ffidxs.first();
 }
 
 /** Simple function that allows a shortcut for ffIdx(FFIdx)
@@ -1335,6 +1336,54 @@ FFIdx ForceFields::ffIdx(const FFID &ffid) const
                     
     return ffidxs.at(0);
 }
+    
+QList<FFIdx> ForceFields::map(const FFID &ffid) const
+{
+    return ffid.map(*this);
+}
+
+QList<FFIdx> ForceFields::map(const FFIdx &ffidx) const
+{
+    QList<FFIdx> ffidxs;
+    
+    ffidxs.append( this->ffIdx(ffidx) );
+    
+    return ffidxs;
+}
+
+QList<FFIdx> ForceFields::map(const FFName &ffname) const
+{
+    QList<FFIdx> ffidxs;
+
+    if (ffname.isCaseSensitive())
+    {
+        QHash<QString,int>::const_iterator it = ffields_by_name.constFind(ffname);
+        
+        if (it != ffields_by_name.constEnd())
+            ffidxs.append( FFIdx(it.value()) );
+    }
+    else
+    {
+        QString lower_name = QString(ffname).toLower();
+        
+        for (QHash<QString,int>::const_iterator it = ffields_by_name.constBegin();
+             it != ffields_by_name.constEnd();
+             ++it)
+        {
+            if (it.key().toLower() == lower_name)
+                ffidxs.append( FFIdx(it.value()) );
+        }
+    }
+
+    if (not ffidxs.isEmpty())
+        throw SireFF::missing_forcefield( QObject::tr(
+            "There are no forcefields in this set called %1. "
+            "Available forcefields are called %2.")
+                .arg(ffname).arg( Sire::toString(ffields_by_name.keys()) ),
+                    CODELOC );
+
+    return ffidxs;
+}
 
 /** Simple function that short cuts ffName(FFName) 
 
@@ -1342,11 +1391,13 @@ FFIdx ForceFields::ffIdx(const FFID &ffid) const
 */
 const FFName& ForceFields::ffName(const FFName &ffname) const
 {
-    if (not ffields_by_name.contains(ffname))
-        throw SireFF::missing_forcefield( QObject::tr(
-            "There are no forcefields in this set called %1. "
-            "Available forcefields are called %2.")
-                .arg(ffname).arg( Sire::toString(ffields_by_name.keys()) ),
+    QList<FFIdx> ffidxs = this->map(ffname);
+
+    if (ffidxs.count() > 1)
+        throw SireFF::duplicate_forcefield( QObject::tr(
+            "More than one forcefield in this set has the name %1. "
+            "Matching forcefield have indicies %2.")
+                .arg(ffname.toString(), Sire::toString(ffidxs)),
                     CODELOC );
 
     return ffname;
@@ -1943,7 +1994,16 @@ const QVector<FFPtr>& ForceFields::list() const
     order as the forcefields appear in this set */
 QList<FFName> ForceFields::ffNames() const
 {
-    return ffields_by_name.keys();
+    QList<FFName> ffnames;
+    
+    for (QHash<QString,int>::const_iterator it = ffields_by_name.constBegin();
+         it != ffields_by_name.constEnd();
+         ++it)
+    {
+        ffnames.append( FFName(it.key()) );
+    }
+
+    return ffnames;
 }
 
 /** Return a list of all of the forcefield names, ordered in the same

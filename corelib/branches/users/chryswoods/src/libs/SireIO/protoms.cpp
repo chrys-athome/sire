@@ -38,6 +38,7 @@
 
 #include "SireMol/molecule.h"
 #include "SireMol/molecules.h"
+#include "SireMol/moleditor.h"
 
 #include "SireBase/tempdir.h"
 #include "SireBase/findexe.h"
@@ -239,6 +240,18 @@ static QByteArray readAll(const QString &file)
         return QByteArray();
 }
 
+void ProtoMS::processZMatrixLine(const QStringList &words, MolEditor &editmol,
+                                 int type) const
+{
+    qDebug() << words;
+}
+
+void ProtoMS::processAtomLine(const QStringList &words, MolEditor &editmol,
+                              int type) const
+{
+    qDebug() << words;
+}
+
 /** Internal function used to run ProtoMS to get it to 
     parameterise a molecule */
 Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type) const
@@ -295,14 +308,25 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type) const
     
     QString line = ts.readLine();
     
+    MolEditor editmol = molecule.edit();
+    
     while (not line.isNull())
     {
-        qDebug() << line;
-        
+        if (line.startsWith("PARAMS "))
+        {
+            QStringList words = line.split(" ", QString::SkipEmptyParts);
+            
+            if (words[1] == "ZMATRIX")
+                this->processZMatrixLine(words, editmol, type);
+
+            else if (words[1] == "Atom")
+                this->processAtomLine(words, editmol, type);
+        }
+
         line = ts.readLine();
     }
     
-    return molecule;
+    return editmol.commit();
 }
 
 /** Parameterise the molecule 'molecule' as a 'type' type of

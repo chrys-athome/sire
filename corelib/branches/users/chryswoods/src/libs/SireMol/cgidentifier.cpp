@@ -323,6 +323,10 @@ CGName::CGName() : SireID::Name(), CGID()
 CGName::CGName(const QString &name) : SireID::Name(name), CGID()
 {}
 
+CGName::CGName(const QString &name, SireID::CaseSensitivity case_sensitivity)
+       : SireID::Name(name, case_sensitivity), CGID()
+{}
+
 CGName::CGName(const CGName &other) : SireID::Name(other), CGID(other)
 {}
 
@@ -358,12 +362,12 @@ bool CGName::operator==(const SireID::ID &other) const
 
 bool CGName::operator==(const CGName &other) const
 {
-    return _name == other._name;
+    return SireID::Name::operator==(other);
 }
 
 bool CGName::operator!=(const CGName &other) const
 {
-    return _name != other._name;
+    return SireID::Name::operator!=(other);
 }
 
 QList<CGIdx> CGName::map(const MolInfo &molinfo) const

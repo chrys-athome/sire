@@ -317,16 +317,37 @@ MGIdx MolGroupsBase::mgIdx(MGNum mgnum) const
 */
 QList<MGNum> MolGroupsBase::map(const MGName &mgname) const
 {
-    QHash< MGName,QList<MGNum> >::const_iterator it = mgname_to_mgnum.find(mgname);
+    QList<MGNum> mgnums;
+
+    if (mgname.isCaseSensitive())
+    {
+        QHash< MGName,QList<MGNum> >::const_iterator it = mgname_to_mgnum.find(mgname);
     
-    if (it == mgname_to_mgnum.end())
+        if (it != mgname_to_mgnum.end())
+            mgnums = it.value();
+    }
+    else
+    {    
+        QString lower_name = QString(mgname).toLower();
+        
+        for (QHash< MGName,QList<MGNum> >::const_iterator 
+                                                it = mgname_to_mgnum.constBegin();
+             it != mgname_to_mgnum.constEnd();
+             ++it)
+        {
+            if (QString(it.key()).toLower() == lower_name)
+                mgnums += it.value();
+        }
+    }
+    
+    if (mgnums.isEmpty())
         throw SireMol::missing_group( QObject::tr(
             "There are no molecule groups called \"%1\" in this set. "
             "Available groups are %2.")
                 .arg(mgname).arg(Sire::toString(mgname_to_mgnum.keys())), 
                     CODELOC );
-                    
-    return *it;
+    
+    return mgnums;
 }
 
 /** Return the list of numbers of groups that have the number 'mgnum'.

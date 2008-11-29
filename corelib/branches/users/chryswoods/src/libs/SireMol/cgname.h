@@ -61,6 +61,8 @@ public:
     
     explicit CGName(const QString &name);
     
+    CGName(const QString &name, SireID::CaseSensitivity case_sensitivity);
+    
     CGName(const CGName &other);
     
     ~CGName();

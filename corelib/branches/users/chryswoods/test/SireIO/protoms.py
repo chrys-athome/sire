@@ -9,7 +9,11 @@ print "Parameterising water"
 water = PDB().readMolecule("test/io/water.pdb")
 
 protoms = ProtoMS("%s/protoms2" % protodir)
+
 protoms.addParameterFile( "%s/parameter/solvents.ff" % protodir )
+protoms.addParameterFile( "%s/parameter/amber99.ff" % protodir )
+protoms.addParameterFile( "%s/parameter/amber99-residues.ff" % protodir )
+protoms.addParameterFile( "%s/parameter/gaff.ff" % protodir )
 
 water = protoms.parameterise(water, ProtoMS.SOLVENT)
 

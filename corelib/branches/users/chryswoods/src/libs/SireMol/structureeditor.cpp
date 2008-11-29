@@ -2132,10 +2132,23 @@ QList<AtomIdx> EditMolInfo::map(const AtomName &name) const
     
     QList<AtomIdx> atomidxs;
     
-    for (AtomIdx i(0); i<nats; ++i)
+    if (name.isCaseSensitive())
     {
-        if (d->atom(d->atoms_by_index.at(i)).name == name)
-            atomidxs.append(i);
+        for (AtomIdx i(0); i<nats; ++i)
+        {
+            if (d->atom(d->atoms_by_index.at(i)).name == name)
+                atomidxs.append(i);
+        }
+    }
+    else
+    {
+        QString lower_name = QString(name).toLower();
+    
+        for (AtomIdx i(0); i<nats; ++i)
+        {
+            if ( QString(d->atom(d->atoms_by_index.at(i)).name).toLower() == lower_name )
+                atomidxs.append(i);
+        }
     }
     
     if (atomidxs.isEmpty())
@@ -2204,10 +2217,24 @@ QList<ResIdx> EditMolInfo::map(const ResName &name) const
     
     QList<ResIdx> residxs;
     
-    for (ResIdx i(0); i<nres; ++i)
+    if (name.isCaseSensitive())
     {
-        if (d->residue(d->res_by_index.at(i)).name == name)
-            residxs.append(i);
+        for (ResIdx i(0); i<nres; ++i)
+        {
+            if (d->residue(d->res_by_index.at(i)).name == name)
+                residxs.append(i);
+        }
+    }
+    else
+    {
+        QString lower_name = QString(name).toLower();
+    
+        for (ResIdx i(0); i<nres; ++i)
+        {
+            if ( QString(d->residue(d->res_by_index.at(i)).name).toLower() 
+                                                                      == lower_name )
+                residxs.append(i);
+        }
     }
     
     if (residxs.isEmpty())
@@ -2274,12 +2301,26 @@ QList<CGIdx> EditMolInfo::map(const CGName &name) const
     
     QList<CGIdx> cgidxs;
     
-    for (CGIdx i(0); i<ncg; ++i)
+    if (name.isCaseSensitive())
     {
-        if (d->cutGroup(d->cg_by_index.at(i)).name == name)
-            cgidxs.append(i);
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            if (d->cutGroup(d->cg_by_index.at(i)).name == name)
+                cgidxs.append(i);
+        }
     }
+    else
+    {
+        QString lower_name = QString(name).toLower();
     
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            if ( QString(d->cutGroup(d->cg_by_index.at(i)).name).toLower() 
+                                                                      == lower_name )
+                cgidxs.append(i);
+        }
+    }
+
     if (cgidxs.isEmpty())
         throw SireMol::missing_cutgroup( QObject::tr(
             "There are no CutGroups called \"%1\" in the molecule called \"%2\".")
@@ -2317,16 +2358,30 @@ QList<CGIdx> EditMolInfo::map(const CGID &cgid) const
 */
 QList<ChainIdx> EditMolInfo::map(const ChainName &name) const
 {
-    int ncg = d->chains_by_index.count();
+    int nchains = d->chains_by_index.count();
     
     QList<ChainIdx> chainidxs;
     
-    for (ChainIdx i(0); i<ncg; ++i)
+    if (name.isCaseSensitive())
     {
-        if (d->chain(d->chains_by_index.at(i)).name == name)
-            chainidxs.append(i);
+        for (ChainIdx i(0); i<nchains; ++i)
+        {
+            if (d->chain(d->chains_by_index.at(i)).name == name)
+                chainidxs.append(i);
+        }
     }
+    else
+    {
+        QString lower_name = QString(name).toLower();
     
+        for (ChainIdx i(0); i<nchains; ++i)
+        {
+            if ( QString(d->residue(d->chains_by_index.at(i)).name).toLower() 
+                                                                      == lower_name )
+                chainidxs.append(i);
+        }
+    }
+
     if (chainidxs.isEmpty())
         throw SireMol::missing_chain( QObject::tr(
             "There are no chains called \"%1\" in the molecule called \"%2\".")
@@ -2364,16 +2419,30 @@ QList<ChainIdx> EditMolInfo::map(const ChainID &chainid) const
 */
 QList<SegIdx> EditMolInfo::map(const SegName &name) const
 {
-    int ncg = d->seg_by_index.count();
+    int nsegs = d->seg_by_index.count();
     
     QList<SegIdx> segidxs;
     
-    for (SegIdx i(0); i<ncg; ++i)
+    if (name.isCaseSensitive())
     {
-        if (d->segment(d->seg_by_index.at(i)).name == name)
-            segidxs.append(i);
+        for (SegIdx i(0); i<nsegs; ++i)
+        {
+            if (d->segment(d->seg_by_index.at(i)).name == name)
+                segidxs.append(i);
+        }
     }
+    else
+    {
+        QString lower_name = QString(name).toLower();
     
+        for (SegIdx i(0); i<nsegs; ++i)
+        {
+            if ( QString(d->segment(d->seg_by_index.at(i)).name).toLower() 
+                                                                      == lower_name )
+                segidxs.append(i);
+        }
+    }
+
     if (segidxs.isEmpty())
         throw SireMol::missing_segment( QObject::tr(
             "There are no segments called \"%1\" in the molecule called \"%2\".")

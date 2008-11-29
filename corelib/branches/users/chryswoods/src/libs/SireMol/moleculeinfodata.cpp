@@ -2696,7 +2696,25 @@ QList<ResIdx> MoleculeInfoData::map(const ResName &name) const
     if (name.isNull())
         return this->getResidues();
     
-    QList<ResIdx> residxs = res_by_name.values(name);
+    QList<ResIdx> residxs;
+    
+    if (name.isCaseSensitive())
+    {
+        residxs = res_by_name.values(name);
+    }
+    else
+    {
+        //search manually
+        QString lower_name = QString(name).toLower();
+        
+        for (QMultiHash<QString,ResIdx>::const_iterator it = res_by_name.constBegin();
+             it != res_by_name.constEnd();
+             ++it)
+        {
+            if (it.key().toLower() == lower_name)
+                residxs.append(it.value());
+        }
+    }
     
     if (residxs.isEmpty())
         throw SireMol::missing_residue( QObject::tr(
@@ -2776,7 +2794,26 @@ QList<ChainIdx> MoleculeInfoData::map(const ChainName &name) const
     if (name.isNull())
         return this->getChains();
 
-    QList<ChainIdx> chainidxs = chains_by_name.values(name);
+    QList<ChainIdx> chainidxs;
+
+    if (name.isCaseSensitive())
+    {
+        chainidxs = chains_by_name.values(name);
+    }
+    else
+    {
+        //search manually
+        QString lower_name = QString(name).toLower();
+        
+        for (QMultiHash<QString,ChainIdx>::const_iterator 
+                                                it = chains_by_name.constBegin();
+             it != chains_by_name.constEnd();
+             ++it)
+        {
+            if (it.key().toLower() == lower_name)
+                chainidxs.append(it.value());
+        }
+    }
     
     if (chainidxs.isEmpty())
         throw SireMol::missing_chain( QObject::tr(
@@ -2825,7 +2862,25 @@ QList<SegIdx> MoleculeInfoData::map(const SegName &name) const
     if (name.isNull())
         return this->getSegments();
 
-    QList<SegIdx> segidxs = seg_by_name.values(name);
+    QList<SegIdx> segidxs;
+    
+    if (name.isCaseSensitive())
+    {
+        segidxs = seg_by_name.values(name);
+    }
+    else
+    {
+        //search manually
+        QString lower_name = QString(name).toLower();
+        
+        for (QMultiHash<QString,SegIdx>::const_iterator it = seg_by_name.constBegin();
+             it != seg_by_name.constEnd();
+             ++it)
+        {
+            if (it.key().toLower() == lower_name)
+                segidxs.append(it.value());
+        }
+    }
     
     if (segidxs.isEmpty())
         throw SireMol::missing_segment( QObject::tr(
@@ -2874,7 +2929,25 @@ QList<CGIdx> MoleculeInfoData::map(const CGName &name) const
     if (name.isNull())
         return this->getCutGroups();
     
-    QList<CGIdx> cgidxs = cg_by_name.values(name);
+    QList<CGIdx> cgidxs;
+    
+    if (name.isCaseSensitive())
+    {
+        cgidxs = cg_by_name.values(name);
+    }
+    else
+    {
+        //search manually
+        QString lower_name = QString(name).toLower();
+        
+        for (QMultiHash<QString,CGIdx>::const_iterator it = cg_by_name.constBegin();
+             it != cg_by_name.constEnd();
+             ++it)
+        {
+            if (it.key().toLower() == lower_name)
+                cgidxs.append(it.value());
+        }
+    }
     
     if (cgidxs.isEmpty())
         throw SireMol::missing_cutgroup( QObject::tr(
@@ -2923,7 +2996,25 @@ QList<AtomIdx> MoleculeInfoData::map(const AtomName &name) const
     if (name.isNull())
         return this->getAtoms();
 
-    QList<AtomIdx> atomidxs = atoms_by_name.values(name);
+    QList<AtomIdx> atomidxs;
+
+    if (name.isCaseSensitive())
+    {
+        atomidxs = atoms_by_name.values(name);
+    }
+    else
+    {
+        //search manually...
+        QString lower_name = QString(name).toLower();
+                
+        for (QMultiHash<QString,AtomIdx>::const_iterator it = atoms_by_name.constBegin();
+             it != atoms_by_name.constEnd();
+             ++it)
+        {
+            if (it.key().toLower() == lower_name)
+                atomidxs.append( it.value() );
+        }
+    }
     
     if (atomidxs.isEmpty())
         throw SireMol::missing_atom( QObject::tr(

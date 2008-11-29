@@ -323,6 +323,10 @@ SegName::SegName() : SireID::Name(), SegID()
 SegName::SegName(const QString &name) : SireID::Name(name), SegID()
 {}
 
+SegName::SegName(const QString &name, SireID::CaseSensitivity case_sensitivity)
+        : SireID::Name(name, case_sensitivity), SegID()
+{}
+
 SegName::SegName(const SegName &other) : SireID::Name(other), SegID(other)
 {}
 
@@ -358,12 +362,12 @@ bool SegName::operator==(const SireID::ID &other) const
 
 bool SegName::operator==(const SegName &other) const
 {
-    return _name == other._name;
+    return SireID::Name::operator==(other);
 }
 
 bool SegName::operator!=(const SegName &other) const
 {
-    return _name != other._name;
+    return SireID::Name::operator!=(other);
 }
 
 QList<SegIdx> SegName::map(const MolInfo &molinfo) const
