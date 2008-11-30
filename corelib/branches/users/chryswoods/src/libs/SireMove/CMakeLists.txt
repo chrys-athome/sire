@@ -12,6 +12,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 # Define the headers in SireMove
 set ( SIREMOVE_HEADERS
       ensemble.h
+      errors.h
       montecarlo.h
       move.h
       moves.h
@@ -27,6 +28,7 @@ set ( SIREMOVE_HEADERS
       uniformsampler.h
       volumemove.h
       weightedmoves.h
+      zmatrix.h
     )
 
 # Define the sources in SireMove
@@ -35,6 +37,7 @@ set ( SIREMOVE_SOURCES
       register_siremove.cpp
 
       ensemble.cpp
+      errors.cpp
       montecarlo.cpp
       move.cpp
       moves.cpp
@@ -50,7 +53,8 @@ set ( SIREMOVE_SOURCES
       uniformsampler.cpp
       weightedmoves.cpp
       volumemove.cpp
-   
+      zmatrix.cpp   
+
       ${SIREMOVE_HEADERS}
     )
 

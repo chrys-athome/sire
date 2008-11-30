@@ -39,6 +39,25 @@
 #include "SireMol/molecule.h"
 #include "SireMol/molecules.h"
 #include "SireMol/moleditor.h"
+#include "SireMol/reseditor.h"
+#include "SireMol/atomeditor.h"
+#include "SireMol/atomname.h"
+#include "SireMol/resname.h"
+#include "SireMol/resnum.h"
+#include "SireMol/groupatomids.h"
+
+#include "SireMol/mover.hpp"
+#include "SireMol/selector.hpp"
+
+#include "SireMol/atomcharges.h"
+
+#include "SireCAS/trigfuncs.h"
+
+#include "SireMM/ljparameter.h"
+#include "SireMM/atomljs.h"
+#include "SireMM/internalff.h"
+
+#include "SireUnits/units.h"
 
 #include "SireBase/tempdir.h"
 #include "SireBase/findexe.h"
@@ -50,8 +69,36 @@
 
 using namespace SireIO;
 using namespace SireMol;
+using namespace SireMM;
+using namespace SireID;
+using namespace SireCAS;
+using namespace SireUnits;
 using namespace SireBase;
 using namespace SireStream;
+
+///////////
+/////////// Implementation of ProtoMSParameters
+///////////
+
+ProtoMSParameters::ProtoMSParameters()
+{}
+
+ProtoMSParameters::~ProtoMSParameters()
+{}
+
+PropertyName ProtoMSParameters::charge_property( "charge" );
+PropertyName ProtoMSParameters::lj_property( "LJ" );
+
+PropertyName ProtoMSParameters::bond_property( "bond" );
+PropertyName ProtoMSParameters::angle_property( "angle" );
+PropertyName ProtoMSParameters::dihedral_property( "dihedral" );
+PropertyName ProtoMSParameters::ub_property( "Urey-Bradley" );
+
+PropertyName ProtoMSParameters::zmatrix_property( "zmatrix" );
+
+///////////
+/////////// Implementation of ProtoMS
+///////////
 
 static const RegisterMetaType<ProtoMS> r_protoms;
 
@@ -83,6 +130,8 @@ QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, ProtoMS &protoms)
         
     return ds;
 }
+
+ProtoMSParameters ProtoMS::protoms_parameters;
 
 /** Constructor */
 ProtoMS::ProtoMS()
@@ -241,21 +290,244 @@ static QByteArray readAll(const QString &file)
 }
 
 void ProtoMS::processZMatrixLine(const QStringList &words, MolEditor &editmol,
-                                 int type) const
+                                 int type, const QString &zmatrix_property) const
 {
-    qDebug() << words;
+    
 }
 
-void ProtoMS::processAtomLine(const QStringList &words, MolEditor &editmol,
-                              int type) const
+static Atom getSoluteAtom(const Molecule &molecule,
+                          const QString &atomname, const QString &resname)
 {
-    qDebug() << words;
+    return molecule.atom( AtomName(atomname, CaseInsensitive) +
+                          ResName(resname, CaseInsensitive) );
+}
+
+static Atom getProteinAtom(const Molecule &molecule,
+                           const QString &atomname, const QString &resnum)
+{
+    bool ok;
+    
+    ResNum rnum( resnum.toInt(&ok) );
+    
+    if (not ok)
+        throw SireError::program_bug( QObject::tr(
+            "The string '%1' should contain a residue number!").arg(resnum),
+                CODELOC );
+                
+    return molecule.atom( AtomName(atomname, CaseInsensitive) + rnum);
+}
+
+static AtomEditor getSolventAtom(const MolEditor &molecule, const QString &atomname)
+{
+    return molecule.atom( AtomName(atomname, CaseInsensitive) );
+}
+
+static AtomEditor getSoluteAtom(const MolEditor &molecule,
+                                const QString &atomname, const QString &resname)
+{
+    return molecule.atom( AtomName(atomname, CaseInsensitive) +
+                          ResName(resname, CaseInsensitive) );
+}
+
+static AtomEditor getProteinAtom(const MolEditor &molecule,
+                                 const QString &atomname, const QString &resnum)
+{
+    bool ok;
+    
+    ResNum rnum( resnum.toInt(&ok) );
+    
+    if (not ok)
+        throw SireError::program_bug( QObject::tr(
+            "The string '%1' should contain a residue number!").arg(resnum),
+                CODELOC );
+                
+    return molecule.atom( AtomName(atomname, CaseInsensitive) + rnum);
+}
+
+/** This processes the output line that contains the atom parameters */
+void ProtoMS::processAtomLine(const QStringList &words, MolEditor &editmol,
+                              int type, const QString &charge_property,
+                              const QString &lj_property) const
+{
+    AtomEditor atom;
+    
+    if (type == SOLUTE)
+        atom = getSoluteAtom(editmol, words[2], words[4]);
+                             
+    else if (type == SOLVENT)
+        atom = getSolventAtom(editmol, words[2]);
+        
+    else if (type == PROTEIN)
+        atom = getProteinAtom(editmol, words[2], words[4]);
+
+    atom.setProperty( charge_property, words[7].toDouble() * mod_electron );
+    atom.setProperty( lj_property, LJParameter( words[9].toDouble() * angstrom,
+                                                words[11].toDouble() * kcal_per_mol ) );
+
+    editmol = atom.molecule();
+}
+
+/** This processes the output line that contains the bond parameters */
+void ProtoMS::processBondLine(const QStringList &words, const Molecule &mol,
+                              int type, TwoAtomFunctions &bondfuncs) const
+{
+    if (type == SOLVENT)
+        return;
+
+    Symbol r = InternalPotential::symbols().bond().r();
+    
+    Expression bondfunc = words[12].toDouble() 
+                                * SireMaths::pow_2( r - words[14].toDouble() );
+
+    Atom atom0, atom1;
+
+    if (type == SOLUTE)
+    {
+        atom0 = getSoluteAtom(mol, words[2], words[4]);
+        atom1 = getSoluteAtom(mol, words[7], words[9]);
+    }
+    else if (type == PROTEIN)
+    {
+        atom0 = getProteinAtom(mol, words[2], words[4]);
+        atom1 = getProteinAtom(mol, words[7], words[9]);
+    }
+    
+    bondfuncs.set( atom0.index(), atom1.index(), bondfunc );
+}
+
+/** This processes the output line that contains the angle parameters */
+void ProtoMS::processAngleLine(const QStringList &words, const Molecule &mol,
+                               int type, ThreeAtomFunctions &anglefuncs) const
+{
+    if (type == SOLVENT)
+        return;
+
+    Symbol theta = InternalPotential::symbols().angle().theta();
+    
+    Expression anglefunc = words[12].toDouble() 
+                    * SireMaths::pow_2( theta - (words[14].toDouble()*degrees).value() );
+
+    Atom atom0, atom1, atom2;
+
+    if (type == SOLUTE)
+    {
+        atom0 = getSoluteAtom(mol, words[2], words[4]);
+        atom1 = getSoluteAtom(mol, words[7], words[9]);
+        atom2 = getSoluteAtom(mol, words[12], words[14]);
+    }
+    else if (type == PROTEIN)
+    {
+        atom0 = getProteinAtom(mol, words[2], words[4]);
+        atom1 = getProteinAtom(mol, words[7], words[9]);
+        atom2 = getProteinAtom(mol, words[12], words[14]);
+    }
+    
+    anglefuncs.set( atom0.index(), atom1.index(), atom2.index(), anglefunc );
+}
+
+/** This processes the output line that contains the bond parameters */
+void ProtoMS::processUBLine(const QStringList &words, const Molecule &mol,
+                            int type, TwoAtomFunctions &ubfuncs) const
+{
+    if (type == SOLVENT)
+        return;
+
+    Symbol r = InternalPotential::symbols().ureyBradley().r();
+    
+    Expression ubfunc = words[12].toDouble() 
+                                * SireMaths::pow_2( r - words[14].toDouble() );
+
+    Atom atom0, atom1;
+
+    if (type == SOLUTE)
+    {
+        atom0 = getSoluteAtom(mol, words[2], words[4]);
+        atom1 = getSoluteAtom(mol, words[7], words[9]);
+    }
+    else if (type == PROTEIN)
+    {
+        atom0 = getProteinAtom(mol, words[2], words[4]);
+        atom1 = getProteinAtom(mol, words[7], words[9]);
+    }
+    
+    ubfuncs.set( atom0.index(), atom1.index(), ubfunc );
+}
+
+/** This processes the lines that contain the dihedral parameters */
+QString ProtoMS::processDihedralLine(QTextStream &ts, const QStringList &words,
+                                     const Molecule &mol, int type,
+                                     FourAtomFunctions &dihedralfuncs) const
+{
+    //read in the parameter - each cosine term is on a separate line
+    QString line = ts.readLine();
+    
+    Expression dihedralfunc;
+    
+    Symbol phi = InternalPotential::symbols().dihedral().phi();
+    
+    while (not line.isNull())
+    {
+        QStringList words = line.split(" ", QString::SkipEmptyParts);
+    
+        if (words[1] != "DihedralParameter")
+            break;
+        
+        //there are four parameters, k0, k1, k2, k3
+        // The cosine function is;
+        //  k0 { 1 + k1 [ cos(k2*phi + k3) ] }
+        
+        double k0 = words[2].toDouble();
+        double k1 = words[4].toDouble();
+        double k2 = (words[6].toDouble() * degrees).value();
+        double k3 = words[8].toDouble();
+        
+        dihedralfunc += k0 * ( 1 + k1*( Cos(k2*phi + k3) ) );
+        
+        line = ts.readLine();
+    }
+
+    Atom atom0, atom1, atom2, atom3;
+    
+    if (type == SOLVENT)
+        return line;
+        
+    else if (type == SOLUTE)
+    {
+        atom0 = getSoluteAtom(mol, words[2], words[4]);
+        atom1 = getSoluteAtom(mol, words[7], words[9]);
+        atom2 = getSoluteAtom(mol, words[12], words[14]);
+        atom3 = getSoluteAtom(mol, words[17], words[19]);
+    }
+    else if (type == PROTEIN)
+    {
+        atom0 = getProteinAtom(mol, words[2], words[4]);
+        atom1 = getProteinAtom(mol, words[7], words[9]);
+        atom2 = getProteinAtom(mol, words[12], words[14]);
+        atom3 = getProteinAtom(mol, words[17], words[19]);
+    }
+    
+    dihedralfuncs.set( atom0.index(), atom1.index(), atom2.index(),
+                       atom3.index(), dihedralfunc );
+
+    return line;
 }
 
 /** Internal function used to run ProtoMS to get it to 
     parameterise a molecule */
-Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type) const
+Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
+                             const PropertyMap &map) const
 {
+    //get the names of the properties that we need
+    QString charge_property = map[ parameters().charge() ].source();
+    QString lj_property = map[ parameters().lj() ].source();
+    
+    QString bond_property = map[ parameters().bond() ].source();
+    QString angle_property = map[ parameters().angle() ].source();
+    QString dihedral_property = map[ parameters().dihedral() ].source();
+    QString ub_property = map[ parameters().ureyBradley() ].source();
+    
+    QString zmatrix_property = map[ parameters().zmatrix() ].source();
+
     //create a temporary directory in which to run ProtoMS
     QString tmppath = QDir::temp().absolutePath();
     
@@ -310,6 +582,11 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type) const
     
     MolEditor editmol = molecule.edit();
     
+    TwoAtomFunctions bondfuncs(molecule);
+    ThreeAtomFunctions anglefuncs(molecule);
+    FourAtomFunctions dihedralfuncs(molecule);
+    TwoAtomFunctions ubfuncs(molecule);
+    
     while (not line.isNull())
     {
         if (line.startsWith("PARAMS "))
@@ -317,21 +594,46 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type) const
             QStringList words = line.split(" ", QString::SkipEmptyParts);
             
             if (words[1] == "ZMATRIX")
-                this->processZMatrixLine(words, editmol, type);
+                this->processZMatrixLine(words, editmol, type, zmatrix_property);
 
             else if (words[1] == "Atom")
-                this->processAtomLine(words, editmol, type);
+                this->processAtomLine(words, editmol, type,
+                                      charge_property, lj_property);
+            
+            else if (words[1] == "Bond")
+                this->processBondLine(words, molecule, type, bondfuncs);
+            
+            else if (words[1] == "Angle")
+                this->processAngleLine(words, molecule, type, anglefuncs);
+                
+            else if (words[1] == "UreyBradley")
+                this->processUBLine(words, molecule, type, ubfuncs);
+            
+            else if (words[1] == "Dihedral")
+            {
+                line = this->processDihedralLine(ts, words, molecule, 
+                                                 type, dihedralfuncs);
+                continue;
+            }
+            else
+                qDebug() << words[1];
         }
 
         line = ts.readLine();
     }
+    
+    editmol.setProperty( bond_property, bondfuncs );
+    editmol.setProperty( angle_property, anglefuncs );
+    editmol.setProperty( dihedral_property, dihedralfuncs );
+    editmol.setProperty( ub_property, ubfuncs );
     
     return editmol.commit();
 }
 
 /** Parameterise the molecule 'molecule' as a 'type' type of
     molecule (PROTEIN, SOLUTE or SOLVENT) */
-Molecule ProtoMS::parameterise(const Molecule &molecule, int type)
+Molecule ProtoMS::parameterise(const Molecule &molecule, int type,
+                               const PropertyMap &map)
 {
     if (type != PROTEIN and type != SOLUTE and type != SOLVENT)
         throw SireError::invalid_arg( QObject::tr(
@@ -339,12 +641,13 @@ Molecule ProtoMS::parameterise(const Molecule &molecule, int type)
             "ProtoMS::PROTEIN, ProtoMS::SOLUTE and ProtoMS::SOLVENT "
             "are supported.").arg(type), CODELOC );
 
-    return this->runProtoMS(molecule, type);
+    return this->runProtoMS(molecule, type, map);
 }
 
 /** Parameterise the molecules 'molecules' as 'type' type of
     molecules (PROTEIN, SOLUTE or SOLVENT) */
-Molecules ProtoMS::parameterise(const Molecules &molecules, int type)
+Molecules ProtoMS::parameterise(const Molecules &molecules, int type,
+                                const PropertyMap &map)
 {
     Molecules new_molecules = molecules;
     
@@ -352,7 +655,7 @@ Molecules ProtoMS::parameterise(const Molecules &molecules, int type)
          it != molecules.constEnd();
          ++it)
     {
-        new_molecules.update( this->parameterise(it->molecule(), type) );
+        new_molecules.update( this->parameterise(it->molecule(), type, map) );
     }
 
     return new_molecules;

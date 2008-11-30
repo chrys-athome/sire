@@ -32,7 +32,8 @@
 #include <QString>
 #include <QStringList>
 
-#include "sireglobal.h"
+#include "SireBase/properties.h"
+#include "SireBase/propertymap.h"
 
 SIRE_BEGIN_HEADER
 
@@ -43,6 +44,15 @@ class ProtoMS;
 
 QDataStream& operator<<(QDataStream&, const SireIO::ProtoMS&);
 QDataStream& operator>>(QDataStream&, SireIO::ProtoMS&);
+
+class QTextStream;
+
+namespace SireMM
+{
+class TwoAtomFunctions;
+class ThreeAtomFunctions;
+class FourAtomFunctions;
+}
 
 namespace SireMol
 {
@@ -59,9 +69,122 @@ class TempDir;
 namespace SireIO
 {
 
+using SireBase::PropertyName;
+using SireBase::PropertyMap;
+
 using SireMol::Molecule;
 using SireMol::Molecules;
 using SireMol::MolEditor;
+
+/** This class holds all of the source and default values of the 
+    properties used by the ProtoMS parameter reader
+    
+    @author Christopher Woods
+*/
+class SIREIO_EXPORT ProtoMSParameters
+{
+public:
+    ProtoMSParameters();
+    ~ProtoMSParameters();
+    
+    //// Locations of the properties into which to place data
+
+    /** Return the name of the property that will contain the 
+        partial atomic charges
+        
+        default == "charge"
+    */
+    const PropertyName& charge() const
+    {
+        return charge_property;
+    }
+
+    /** Return the name of the property that will contain the 
+        atomic Lennard Jones parameters
+        
+        default == "LJ"
+    */
+    const PropertyName& lj() const
+    {
+        return lj_property;
+    }
+
+    /** Return the name of the property that will contain the 
+        bond parameters
+        
+        default == "bond"
+    */
+    const PropertyName& bond() const
+    {
+        return bond_property;
+    }
+
+    /** Return the name of the property that will contain the 
+        angle parameters
+        
+        default == "angle"
+    */
+    const PropertyName& angle() const
+    {
+        return angle_property;
+    }
+
+    /** Return the name of the property that will contain the 
+        dihedral parameters
+        
+        default == "dihedral"
+    */
+    const PropertyName& dihedral() const
+    {
+        return dihedral_property;
+    }
+
+    /** Return the name of the property that will contain the 
+        Urey-Bradley parameters
+        
+        default == "Urey-Bradley"
+    */
+    const PropertyName& ureyBradley() const
+    {
+        return ub_property;
+    }
+
+    /** Return the name of the property that will contain the 
+        z-matrix
+        
+        default == "zmatrix"
+    */
+    const PropertyName& zmatrix() const
+    {
+        return zmatrix_property;
+    }
+
+private:
+    ///////
+    /////// Properties that hold the data of the molecule
+    ///////
+    
+    /** The default name of the partial charge property */
+    static PropertyName charge_property;
+
+    /** The default name of the LJ property */
+    static PropertyName lj_property;
+
+    /** The default name of the bond property */
+    static PropertyName bond_property;
+
+    /** The default name of the angle property */
+    static PropertyName angle_property;
+
+    /** The default name of the dihedral property */
+    static PropertyName dihedral_property;
+
+    /** The default name of the Urey-Bradley property */
+    static PropertyName ub_property;
+
+    /** The default name of the zmatrix property */
+    static PropertyName zmatrix_property;
+};
 
 /** This class is used to read in ProtoMS parameter files and
     parameterise passed molecules.
@@ -99,15 +222,22 @@ public:
         return new ProtoMS(*this);
     }
 
+    static const ProtoMSParameters& parameters()
+    {
+        return protoms_parameters;
+    }
+
     void setExecutable(const QString &protoms);
 
     void addParameterFile(const QString &paramfile);
     
     QStringList parameterFiles() const;
     
-    Molecule parameterise(const Molecule &molecule, int type);
+    Molecule parameterise(const Molecule &molecule, int type,
+                          const PropertyMap &map = PropertyMap());
 
-    Molecules parameterise(const Molecules &molecules, int type);
+    Molecules parameterise(const Molecules &molecules, int type,
+                           const PropertyMap &map = PropertyMap());
 
 private:
     QString writeShellFile(const SireBase::TempDir &tempdir,
@@ -116,11 +246,36 @@ private:
                              const Molecule &molecule, int type) const;
     
     void processZMatrixLine(const QStringList &words, 
-                            MolEditor &editmol, int type) const;
+                            MolEditor &editmol, int type,
+                            const QString &zmatrix_property) const;
+                            
     void processAtomLine(const QStringList &words,
-                         MolEditor &editmol, int type) const;
+                         MolEditor &editmol, int type,
+                         const QString &charge_property,
+                         const QString &lj_property) const;
     
-    Molecule runProtoMS(const Molecule &molecule, int type) const;
+    void processBondLine(const QStringList &words,
+                         const Molecule &molecule, int type,
+                         SireMM::TwoAtomFunctions &bondfuncs) const;
+    
+    void processAngleLine(const QStringList &words,
+                          const Molecule &molecule, int type,
+                          SireMM::ThreeAtomFunctions &anglefuncs) const;
+    
+    QString processDihedralLine(QTextStream &ts,
+                                const QStringList &words,
+                                const Molecule &molecule, int type,
+                                SireMM::FourAtomFunctions &dihedralfuncs) const;
+    
+    void processUBLine(const QStringList &words,
+                       const Molecule &molecule, int type,
+                       SireMM::TwoAtomFunctions &ubfuncs) const;
+    
+    Molecule runProtoMS(const Molecule &molecule, int type,
+                        const PropertyMap &map) const;
+
+    /** The default properties used to store the parameters */
+    static ProtoMSParameters protoms_parameters;
 
     /** The list of parameter files that will be used to 
         parameterise the molecules */
