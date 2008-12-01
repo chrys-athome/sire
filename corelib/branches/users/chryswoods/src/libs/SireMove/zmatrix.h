@@ -238,7 +238,11 @@ public:
     
     const QVector<ZMatrixLine>& lines() const;
     
+    const QHash<AtomIdx,int>& index() const;
+    
     QString toString() const;
+    
+    const SireMol::MoleculeInfoData& info() const;
     
     bool contains(const AtomID &atom) const;
     
@@ -288,7 +292,7 @@ public:
     ZMatrixCoords(const ZMatrix &zmatrix, const Molecule &molecule,
                   const PropertyMap &map = PropertyMap());
                   
-    ZMatrixCoords(const ZMatrix &zmatrx, const AtomCoords &coords);
+    ZMatrixCoords(const ZMatrix &zmatrix, const AtomCoords &coords);
     
     ZMatrixCoords(const ZMatrixCoords &other);
     
@@ -309,15 +313,19 @@ public:
         return new ZMatrixCoords(*this);
     }
 
-    const ZMatrixCoordsLine operator[](AtomIdx atom) const;
-    const ZMatrixCoordsLine operator[](const AtomID &atom) const;
+    ZMatrixCoordsLine operator[](const AtomID &atom) const;
     
-    const ZMatrixCoordsLine at(AtomIdx atom) const;
-    const ZMatrixCoordsLine at(const AtomID &atom) const;
+    ZMatrixCoordsLine at(const AtomID &atom) const;
     
     QVector<ZMatrixCoordsLine> lines() const;
     
+    const QHash<AtomIdx,int>& index() const;
+    
     QString toString() const;
+
+    const SireMol::MoleculeInfoData& info() const;
+
+    const ZMatrix& zmatrix() const;
     
     bool contains(AtomIdx atom) const;
     bool contains(const AtomID &atom) const;
@@ -375,7 +383,8 @@ public:
                      const Angle &size);
     
 private:
-    void rebuild() const;
+    void rebuildInternals();
+    void rebuildCartesian() const;
 
     /** The underlying z-matrix */
     ZMatrix zmat;

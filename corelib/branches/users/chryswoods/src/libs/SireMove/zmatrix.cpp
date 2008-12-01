@@ -458,6 +458,16 @@ void ZMatrix::reindex()
     }
 }
 
+/** Return the layout of the molecule whose z-matrix is contained
+    in this object */
+const MoleculeInfoData& ZMatrix::info() const
+{
+    if (molinfo.constData() == 0)
+        return MoleculeInfoData::null();
+    else
+        return *molinfo;
+}
+
 /** Return a string representation of this z-matrix */
 QString ZMatrix::toString() const
 {
@@ -518,6 +528,13 @@ const ZMatrixLine& ZMatrix::at(const AtomID &atom) const
 const QVector<ZMatrixLine>& ZMatrix::lines() const
 {
     return zmat;
+}
+
+/** Return the index of AtomIdx to z-matrix line number. This
+    is used to index the output of ZMatrix::lines() */
+const QHash<AtomIdx,int>& ZMatrix::index() const
+{
+    return atomidx_to_zmat;
 }
 
 /** Return whether or not this z-matrix contains a line for the 
@@ -593,14 +610,14 @@ void ZMatrix::add(const AtomID &atom, const AtomID &bond,
                 .arg( atom.toString(), bond.toString(),
                       angle.toString(), dihedral.toString() ), CODELOC );
                       
-    if (earliest >= nlines)
+    if (latest + 1 >= nlines)
     {
         zmat.append( ZMatrixLine(atm,bnd,ang,dih) );
         atomidx_to_zmat.insert(atm, nlines);
     }
     else
     {
-        zmat.insert( earliest, ZMatrixLine(atm,bnd,ang,dih) );
+        zmat.insert( latest+1, ZMatrixLine(atm,bnd,ang,dih) );
         this->reindex();
     }
 }
@@ -733,3 +750,273 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, ZMatrixCoords &zmatcoor
         
     return ds;
 }
+
+/** Null constructor */
+ZMatrixCoords::ZMatrixCoords()
+              : ConcreteProperty<ZMatrixCoords,MoleculeProperty>(),
+                need_rebuild(false)
+{}
+
+/** Construct the z-matrix for the molecule 'molecule' using
+    the passed property map to find the coordinates property */
+ZMatrixCoords::ZMatrixCoords(const Molecule &molecule, const PropertyMap &map)
+              : ConcreteProperty<ZMatrixCoords,MoleculeProperty>(),
+                need_rebuild(false)
+{
+    cartesian_coords = molecule.property( map["coordinates"] )
+                               .asA<AtomCoords>();
+}
+
+/** Internal function used to rebuild the internal coordinates
+    from the cartesian coordinates */
+void ZMatrixCoords::rebuildInternals()
+{
+    #warning Need to write ZMatrixCoords::rebuildInternals
+}
+
+/** Construct the z-matrix for the passed coordinates and z-matrix */              
+ZMatrixCoords::ZMatrixCoords(const ZMatrix &zmatrix, const AtomCoords &coords)
+              : ConcreteProperty<ZMatrixCoords,MoleculeProperty>(),
+                zmat(zmatrix), cartesian_coords(coords), need_rebuild(false)
+{
+    coords.assertCompatibleWith( zmat.info() );
+
+    //calculate the internal coordinates
+    this->rebuildInternals();
+}
+              
+/** Construct the z-matrix for the molecule 'molecule' using the 
+    z-matrix in 'zmatrix' and using the passed property map to
+    find the coordinates */
+ZMatrixCoords::ZMatrixCoords(const ZMatrix &zmatrix, const Molecule &molecule,
+                             const PropertyMap &map)
+              : ConcreteProperty<ZMatrixCoords,MoleculeProperty>()
+{
+    this->operator=( ZMatrixCoords(zmatrix, molecule.property( map["coordinates"] )
+                                                    .asA<AtomCoords>()) );
+}
+              
+/** Copy constructor */
+ZMatrixCoords::ZMatrixCoords(const ZMatrixCoords &other)
+              : ConcreteProperty<ZMatrixCoords,MoleculeProperty>(other),
+                zmat(other.zmat), internal_coords(other.internal_coords),
+                cartesian_coords(other.cartesian_coords), 
+                need_rebuild(other.need_rebuild)
+{}
+
+/** Destructor */
+ZMatrixCoords::~ZMatrixCoords()
+{}
+
+/** Copy assignment operator */
+ZMatrixCoords& ZMatrixCoords::operator=(const ZMatrixCoords &other)
+{
+    if (this != &other)
+    {
+        MoleculeProperty::operator=(other);
+        zmat = other.zmat;
+        internal_coords = other.internal_coords;
+        cartesian_coords = other.cartesian_coords;
+        need_rebuild = other.need_rebuild;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool ZMatrixCoords::operator==(const ZMatrixCoords &other) const
+{
+    return this == &other or
+           zmat == other.zmat and internal_coords == other.internal_coords and
+           cartesian_coords == other.cartesian_coords and
+           need_rebuild == other.need_rebuild;
+}
+
+/** Comparison operator */
+bool ZMatrixCoords::operator!=(const ZMatrixCoords &other) const
+{
+    return not this->operator==(other);
+}
+
+Q_GLOBAL_STATIC( QMutex, zmatrixMutex );
+
+/** Internal function called to rebuild the cartesian coordinates
+    from the internal coordinates */
+void ZMatrixCoords::rebuildCartesian() const
+{
+    //need a mutex as we have declared this as a const function
+    //and this breaks implicit sharing
+    QMutexLocker lkr( zmatrixMutex() );
+    
+    #warning Need to write ZMatrixCoords::rebuildCartesian
+}
+
+/** Return the z-matrix line for the atom identified by 'atom'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+ZMatrixCoordsLine ZMatrixCoords::operator[](const AtomID &atom) const
+{
+    AtomIdx idx = zmat.info().atomIdx(atom);
+    
+    if (not zmat.index().contains(idx))
+        throw SireMove::zmatrix_error( QObject::tr(
+            "The atom %1 does not appear in the z-matrix.")
+                .arg(atom.toString()), CODELOC );
+    
+    const Vector &coords = internal_coords.at( zmat.index().value(idx) );
+    
+    return ZMatrixCoordsLine( zmat[idx], Length(coords[0]), 
+                              Angle(coords[1]), Angle(coords[2]) );
+}
+
+/** Return the z-matrix line for the atom identified by 'atom'
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+ZMatrixCoordsLine ZMatrixCoords::at(const AtomID &atom) const
+{
+    return this->operator[](atom);
+}
+
+/** Return all of the lines of the z-matrix */
+QVector<ZMatrixCoordsLine> ZMatrixCoords::lines() const
+{
+    if (zmat.lines().isEmpty())
+        return QVector<ZMatrixCoordsLine>();
+        
+    QVector<ZMatrixCoordsLine> coords( zmat.lines().count() );
+    
+    const ZMatrixLine *zmat_array = zmat.lines().constData();
+    const Vector *internal_coords_array = internal_coords.constData();
+    ZMatrixCoordsLine *coords_array = coords.data();
+    
+    for (int i=0; i<zmat.lines().count(); ++i)
+    {
+        const Vector &c = internal_coords_array[i];
+        
+        coords_array[i] = ZMatrixCoordsLine( zmat_array[i], Length(c[0]), 
+                                             Angle(c[1]), Angle(c[2]) );
+    }
+    
+    return coords;
+}
+
+/** Return the index of AtomIdx to z-matrix line number. This
+    is used to index the output of ZMatrixCoords::lines() */
+const QHash<AtomIdx,int>& ZMatrixCoords::index() const
+{
+    return zmat.index();
+}
+
+/** Return the layout of the molecule whose z-matrix is contained
+    in this object */
+const MoleculeInfoData& ZMatrixCoords::info() const
+{
+    return zmat.info();
+}
+
+/** Return the raw z-matrix, which does not contain any
+    coordinate information */
+const ZMatrix& ZMatrixCoords::zmatrix() const
+{
+    return zmat;
+}
+
+/** Return a string representation of this z-matrix */
+QString ZMatrixCoords::toString() const
+{
+    QStringList output;
+    
+    int nats = info().nAtoms();
+    
+    output.append( QObject::tr("ZMatrix nAtoms() == %1").arg(nats) );
+
+    QVector<ZMatrixCoordsLine> zmatrix = this->lines();
+    
+    for (AtomIdx i(0); i<nats; ++i)
+    {
+        if (zmat.index().contains(i))
+        {
+            const ZMatrixCoordsLine &line = zmatrix.at(zmat.index().value(i));
+
+            output.append( QObject::tr("%1-%2-%3-%4 - %5 A : %6° : %7°")
+                            .arg(line.atom().value())
+                            .arg(line.bond().value())
+                            .arg(line.angle().value())
+                            .arg(line.dihedral().value())
+                            .arg(line.bondLength())
+                            .arg( SireUnits::convertTo(line.angleSize(),degrees) )
+                            .arg( SireUnits::convertTo(line.dihedralSize(),degrees) ) );
+        }
+        else
+        {
+            output.append( QObject::tr("%1 - %2")
+                                .arg(i)
+                                .arg(cartesian_coords[info().cgAtomIdx(i)].toString()) );
+        }
+    }
+    
+    return output.join("\n");
+}
+
+bool ZMatrixCoords::contains(AtomIdx atom) const;
+bool ZMatrixCoords::contains(const AtomID &atom) const;
+
+void ZMatrixCoords::add(AtomIdx atom, AtomIdx bond, AtomIdx angle, AtomIdx dihedral);
+
+void ZMatrixCoords::add(AtomIdx atom,
+         const Length &bondlength, AtomIdx bond,
+         const Angle &anglesize, AtomIdx angle,
+         const Angle &dihedralsize, AtomIdx dihedral);
+
+void ZMatrixCoords::remove(AtomIdx atom);
+void ZMatrixCoords::remove(AtomIdx atom, AtomIdx bond, AtomIdx angle, AtomIdx dihedral);
+
+void ZMatrixCoords::add(const AtomID &atom, const AtomID &bond, 
+         const AtomID &angle, const AtomID &dihedral);
+
+void ZMatrixCoords::add(const AtomID &atom,
+         const Length &bondlength, const AtomID &bond,
+         const Angle &anglesize, const AtomID &angle,
+         const Angle &dihedralsize, const AtomID &dihedral);
+
+void ZMatrixCoords::remove(const AtomID &atom);
+void ZMatrixCoords::remove(const AtomID &atom, const AtomID &bond,
+            const AtomID &angle, const AtomID &dihedral);
+
+void ZMatrixCoords::add(const ZMatrixLine &zmatline);
+void ZMatrixCoords::remove(const ZMatrixLine &zmatline);
+
+void ZMatrixCoords::add(const ZMatrixCoordsLine &zmatline);
+
+bool ZMatrixCoords::isCompatibleWith(const SireMol::MoleculeInfoData &molinfo) const;
+
+const AtomCoords& ZMatrixCoords::toCartesian() const;
+
+void ZMatrixCoords::moveBond(const AtomID &atom0, const AtomID &atom1, 
+              const SireUnits::Dimension::Length &delta);
+              
+void ZMatrixCoords::moveAngle(const AtomID &atom0, const AtomID &atom1,
+               const AtomID &atom2,
+               const SireUnits::Dimension::Angle &delta);
+
+void ZMatrixCoords::moveDihedral(const AtomID &atom0, const AtomID &atom1,
+                  const AtomID &atom2, const AtomID &atom3,
+                  const Angle &delta);
+                  
+void ZMatrixCoords::setBond(const AtomID &atom0, const AtomID &atom1, 
+             const Length &length);
+              
+void ZMatrixCoords::setAngle(const AtomID &atom0, const AtomID &atom1,
+              const AtomID &atom2, const Angle &size);
+
+void ZMatrixCoords::setDihedral(const AtomID &atom0, const AtomID &atom1,
+                 const AtomID &atom2, const AtomID &atom3,
+                 const Angle &size);
