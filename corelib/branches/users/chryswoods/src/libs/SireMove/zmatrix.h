@@ -255,6 +255,20 @@ public:
 
     void add(const ZMatrixLine &zmatline);
     void remove(const ZMatrixLine &zmatline);
+    
+    void setBondDelta(const AtomID &atom, const Length &delta);
+    void setAngleDelta(const AtomID &atom, const Angle &delta);
+    void setDihedralDelta(const AtomID &atom, const Angle &delta);
+    
+    void setBondDelta(const AtomID &atom, const AtomID &bond
+                      const Length &delta);
+                      
+    void setAngleDelta(const AtomID &atom, const AtomID &bond,
+                       const AtomID &angle, const Angle &delta);
+
+    void setDihedralDelta(const AtomID &atom, const AtomID &bond,
+                          const AtomID &angle, const AtomID &dihedral,
+                          const Angle &delta);
 
     bool isCompatibleWith(const SireMol::MoleculeInfoData &molinfo) const;
 
@@ -327,19 +341,8 @@ public:
 
     const ZMatrix& zmatrix() const;
     
-    bool contains(AtomIdx atom) const;
     bool contains(const AtomID &atom) const;
 
-    void add(AtomIdx atom, AtomIdx bond, AtomIdx angle, AtomIdx dihedral);
-
-    void add(AtomIdx atom,
-             const Length &bondlength, AtomIdx bond,
-             const Angle &anglesize, AtomIdx angle,
-             const Angle &dihedralsize, AtomIdx dihedral);
-    
-    void remove(AtomIdx atom);
-    void remove(AtomIdx atom, AtomIdx bond, AtomIdx angle, AtomIdx dihedral);
-    
     void add(const AtomID &atom, const AtomID &bond, 
              const AtomID &angle, const AtomID &dihedral);
 
@@ -361,16 +364,23 @@ public:
     
     const AtomCoords& toCartesian() const;
     
+    void moveBond(const AtomID &atom, const Length &delta);
+    void moveAngle(const AtomID &atom, const Angle &delta);
+    void moveDihedral(const AtomID &atom, const Angle &delta);
+    
     void moveBond(const AtomID &atom0, const AtomID &atom1, 
-                  const SireUnits::Dimension::Length &delta);
+                  Length &delta);
                   
     void moveAngle(const AtomID &atom0, const AtomID &atom1,
-                   const AtomID &atom2,
-                   const SireUnits::Dimension::Angle &delta);
+                   const AtomID &atom2, const Angle &delta);
    
     void moveDihedral(const AtomID &atom0, const AtomID &atom1,
                       const AtomID &atom2, const AtomID &atom3,
                       const Angle &delta);
+
+    void setBond(const AtomID &atom, const Length &length);
+    void setAngle(const AtomID &atom, const Angle &size);
+    void setDihedral(const AtomID &atom, const Angle &size);
                       
     void setBond(const AtomID &atom0, const AtomID &atom1, 
                  const Length &length);
@@ -382,9 +392,29 @@ public:
                      const AtomID &atom2, const AtomID &atom3,
                      const Angle &size);
     
+    void setBondDelta(const AtomID &atom, const Length &delta);
+    void setAngleDelta(const AtomID &atom, const Angle &delta);
+    void setDihedralDelta(const AtomID &atom, const Angle &delta);
+    
+    void setBondDelta(const AtomID &atom, const AtomID &bond
+                      const Length &delta);
+                      
+    void setAngleDelta(const AtomID &atom, const AtomID &bond,
+                       const AtomID &angle, const Angle &delta);
+
+    void setDihedralDelta(const AtomID &atom, const AtomID &bond,
+                          const AtomID &angle, const AtomID &dihedral,
+                          const Angle &delta);
+    
 private:
     void rebuildInternals();
     void rebuildCartesian() const;
+
+    void _pvt_rebuildCartesian();
+
+    void addInternal(const AtomIdx &atom);
+    
+    Vector getInternalCoords(const ZMatrixLine &line) const;
 
     /** The underlying z-matrix */
     ZMatrix zmat;

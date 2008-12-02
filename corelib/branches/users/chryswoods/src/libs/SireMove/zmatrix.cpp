@@ -704,6 +704,20 @@ void ZMatrix::remove(const ZMatrixLine &zmatline)
     this->remove( zmatline.atom(), zmatline.bond(),
                   zmatline.angle(), zmatline.dihedral() );
 }
+    
+    void setBondDelta(const AtomID &atom, const Length &delta);
+    void setAngleDelta(const AtomID &atom, const Angle &delta);
+    void setDihedralDelta(const AtomID &atom, const Angle &delta);
+    
+    void setBondDelta(const AtomID &atom, const AtomID &bond
+                      const Length &delta);
+                      
+    void setAngleDelta(const AtomID &atom, const AtomID &bond,
+                       const AtomID &angle, const Angle &delta);
+
+    void setDihedralDelta(const AtomID &atom, const AtomID &bond,
+                          const AtomID &angle, const AtomID &dihedral,
+                          const Angle &delta);
 
 /** Return whether or not this z-matrix is compatible with the 
     the molecule whose info is in 'molinfo' */
@@ -767,11 +781,45 @@ ZMatrixCoords::ZMatrixCoords(const Molecule &molecule, const PropertyMap &map)
                                .asA<AtomCoords>();
 }
 
+/** Internal function used to calculate the internal coordinates
+    of the passed z-matrix line */
+Vector ZMatrixCoords::getInternalCoords(const ZMatrixLine &line) const
+{
+    Vector atom = cartesian_coords[info().cgAtomIdx(line.atom())];
+    Vector bond = cartesian_coords[info().cgAtomIdx(line.bond())];
+    Vector angle = cartesian_coords[info().cgAtomIdx(line.angle())];
+    Vector dihedral = cartesian_coords[info().cgAtomIdx(line.dihedral())];
+    
+    return Vector( Vector::distance(atom,bond),
+                   Vector::angle(atom,bond,angle).value(),
+                   Vector::dihedral(atom,bond,angle,dihedral).value() );
+}
+
 /** Internal function used to rebuild the internal coordinates
     from the cartesian coordinates */
 void ZMatrixCoords::rebuildInternals()
 {
-    #warning Need to write ZMatrixCoords::rebuildInternals
+    if (zmat.lines().isEmpty())
+    {
+        internal_coords.clear();
+        return;
+    }
+    
+    this->rebuildCartesian();
+    
+    int nlines = zmat.lines().count();
+    
+    const ZMatrixLine *lines_array = zmat.lines().constData();
+    
+    internal_coords = QVector<Vector>(nlines);
+    internal_coords.squeeze();
+    
+    Vector *internal_coords_array = internal_coords.data();
+    
+    for (int i=0; i<nlines; ++i)
+    {
+        internal_coords_array[i] = this->getInternalCoords(lines_array[i]);
+    }
 }
 
 /** Construct the z-matrix for the passed coordinates and z-matrix */              
@@ -840,6 +888,34 @@ bool ZMatrixCoords::operator!=(const ZMatrixCoords &other) const
 
 Q_GLOBAL_STATIC( QMutex, zmatrixMutex );
 
+/** Internal function called to rebuild the cartesian coordinates */
+void ZMatrixCoords::_pvt_rebuildCartesian()
+{
+    int nlines = zmat.lines().count();
+    
+    const ZMatrixLine *lines_array = zmat.lines().constData();
+    const Vector *internal_coords_array = internal_coords.constData();
+
+    AtomCoords new_coords = cartesian_coords;
+
+    for (int i=0; i<nlines; ++i)
+    {
+        const ZMatrixLine &line = lines_array[i];
+        const Vector &internal = internal_coords_array[i];
+    
+        //get the coordinates of the bond, angle and dihedral atoms
+        Vector bond = new_coords[ info().cgAtomIdx(line.bond()) ];
+        Vector angle = new_coords[ info().cgAtomIdx(line.angle()) ];
+        Vector dihedral = new_coords[ info().cgAtomIdx(line.dihedral()) ];
+        
+        //now use these to build the coordinates of the atom
+        new_coords.set( info().cgAtomIdx(line.atom()),
+                        Vector::generate(internal[0], bond,
+                                         Angle(internal[1]), angle,
+                                         Angle(internal[2]), dihedral) );
+    }
+}
+
 /** Internal function called to rebuild the cartesian coordinates
     from the internal coordinates */
 void ZMatrixCoords::rebuildCartesian() const
@@ -848,7 +924,10 @@ void ZMatrixCoords::rebuildCartesian() const
     //and this breaks implicit sharing
     QMutexLocker lkr( zmatrixMutex() );
     
-    #warning Need to write ZMatrixCoords::rebuildCartesian
+    if (not need_rebuild)
+        return;
+        
+    const_cast<ZMatrixCoords*>(this)->_pvt_rebuildCartesian();
 }
 
 /** Return the z-matrix line for the atom identified by 'atom'
@@ -966,57 +1045,222 @@ QString ZMatrixCoords::toString() const
     return output.join("\n");
 }
 
-bool ZMatrixCoords::contains(AtomIdx atom) const;
-bool ZMatrixCoords::contains(const AtomID &atom) const;
+/** Return whether or not the z-matrix contains an atom 
+    identified by 'atom'
+    
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+*/
+bool ZMatrixCoords::contains(const AtomID &atom) const
+{
+    return zmat.contains(atom);
+}
 
-void ZMatrixCoords::add(AtomIdx atom, AtomIdx bond, AtomIdx angle, AtomIdx dihedral);
+/** Internal function used to add a single set of internal
+    coordinates to the z-matrix */
+void ZMatrixCoords::addInternal(const AtomIdx &atom)
+{
+    if (internal_coords.count() != zmat.index().count())
+    {
+        //this has added the coordinates
+        if (internal_coords.count() != zmat.index().count() - 1)
+            //more than one line has been added???
+            throw SireError::program_bug( QObject::tr(
+                "How can we have %1 lines of zmatrix and %2 lines of coordinates?")
+                    .arg(zmat.index().count()).arg(internal_coords.count()),
+                        CODELOC );
+    
+        //add space for the coordinates
+        if (not zmat.index().contains(atom))
+            throw SireError::program_bug( QObject::tr(
+                "What's happened now? The index doesn't contain the atom %1.")
+                    .arg(atom.toString()), CODELOC );
+                    
+        internal_coords.insert( zmat.index().value(atom), 1, Vector() );
+    }
 
-void ZMatrixCoords::add(AtomIdx atom,
-         const Length &bondlength, AtomIdx bond,
-         const Angle &anglesize, AtomIdx angle,
-         const Angle &dihedralsize, AtomIdx dihedral);
+    if (not zmat.index().contains(atom))
+        throw SireError::program_bug( QObject::tr(
+             "What's happened here? The index doesn't contain the atom %1.")
+                 .arg(atom.toString()), CODELOC );
+    
+    //now calculate the coordinates
+    int idx = zmat.index().value(atom);
+    
+    const ZMatrixLine &line = zmat.lines().at(idx);
+    
+    this->rebuildCartesian();
+    
+    internal_coords[idx] = this->getInternalCoords(line);
+}
 
-void ZMatrixCoords::remove(AtomIdx atom);
-void ZMatrixCoords::remove(AtomIdx atom, AtomIdx bond, AtomIdx angle, AtomIdx dihedral);
+/** Add the z-matrix line containing the passed atoms. The internal
+    coordinates of this line are set from the current cartesian coordinates
 
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+
+    \throw SireMove::zmatrix_error
+*/
 void ZMatrixCoords::add(const AtomID &atom, const AtomID &bond, 
-         const AtomID &angle, const AtomID &dihedral);
+                        const AtomID &angle, const AtomID &dihedral)
+{
+    ZMatrix old_zmat = zmat;
+    
+    try
+    {
+        zmat.add(atom, bond, angle, dihedral);
+        this->addInternal( info().atomIdx(atom) );
+    }
+    catch(...)
+    {
+        zmat = old_zmat;
+        throw;
+    }
+}
 
+/** Add the z-matrix line using the supplied atoms and internal coordinates
+
+    \throw SireMol::missing_atom
+    \throw SireMol::duplicate_atom
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
 void ZMatrixCoords::add(const AtomID &atom,
-         const Length &bondlength, const AtomID &bond,
-         const Angle &anglesize, const AtomID &angle,
-         const Angle &dihedralsize, const AtomID &dihedral);
+                        const Length &bondlength, const AtomID &bond,
+                        const Angle &anglesize, const AtomID &angle,
+                        const Angle &dihedralsize, const AtomID &dihedral)
+{
+    ZMatrix old_zmat = zmat;
+    
+    try
+    {
+        zmat.add(atom, bond, angle, dihedral);
+        
+        AtomIdx atomidx = info().atomIdx(atom);
+        
+        this->addInternal(atomidx);
+        
+        BOOST_ASSERT( zmat.index().contains(atomidx) );
+        
+        int idx = zmat.index().value(atomidx);
+        
+        internal_coords[idx] = Vector( bondlength.value(), anglesize.value(),
+                                       dihedralsize.value() );
+                                       
+        need_rebuild = true;
+    }
+    catch(...)
+    {
+        zmat = old_zmat;
+        throw;
+    }
+}
 
 void ZMatrixCoords::remove(const AtomID &atom);
 void ZMatrixCoords::remove(const AtomID &atom, const AtomID &bond,
             const AtomID &angle, const AtomID &dihedral);
 
-void ZMatrixCoords::add(const ZMatrixLine &zmatline);
+/** Add the z-matrix line 'zmatline'
+
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+void ZMatrixCoords::add(const ZMatrixLine &zmatline)
+{
+    ZMatrix old_zmat = zmat;
+
+    try
+    {
+        zmat.add(zmatline);
+        this->addInternal(zmatline.atom());
+    }
+    catch(...)
+    {
+        zmat = old_zmat;
+        throw;
+    }
+}
+
 void ZMatrixCoords::remove(const ZMatrixLine &zmatline);
 
-void ZMatrixCoords::add(const ZMatrixCoordsLine &zmatline);
+/** Add the z-matrix line 'zmatline' to this z-matrix, adding both
+    the atoms and also setting the values of the internal coordinates
+    
+    \throw SireError::invalid_index
+    \throw SireMove::zmatrix_error
+*/
+void ZMatrixCoords::add(const ZMatrixCoordsLine &zmatline)
+{
+    ZMatrix old_zmat = zmat;
+    
+    try
+    {
+        zmat.add(zmatline);
+        
+        this->addInternal(zmatline.atom());
+        
+        BOOST_ASSERT( zmat.index().contains(zmatline.atom()) );
+        
+        int idx = zmat.index().value(zmatline.atom());
+        
+        internal_coords[idx] = Vector( zmatline.bondLength().value(), 
+                                       zmatline.angleSize().value(),
+                                       zmatline.dihedralSize().value() );
+                                       
+        need_rebuild = true;
+    }
+    catch(...)
+    {
+        zmat = old_zmat;
+        throw;
+    }
+}
 
 bool ZMatrixCoords::isCompatibleWith(const SireMol::MoleculeInfoData &molinfo) const;
 
 const AtomCoords& ZMatrixCoords::toCartesian() const;
-
-void ZMatrixCoords::moveBond(const AtomID &atom0, const AtomID &atom1, 
-              const SireUnits::Dimension::Length &delta);
-              
-void ZMatrixCoords::moveAngle(const AtomID &atom0, const AtomID &atom1,
-               const AtomID &atom2,
-               const SireUnits::Dimension::Angle &delta);
-
-void ZMatrixCoords::moveDihedral(const AtomID &atom0, const AtomID &atom1,
-                  const AtomID &atom2, const AtomID &atom3,
-                  const Angle &delta);
+    
+    void moveBond(const AtomID &atom, const Length &delta);
+    void moveAngle(const AtomID &atom, const Angle &delta);
+    void moveDihedral(const AtomID &atom, const Angle &delta);
+    
+    void moveBond(const AtomID &atom0, const AtomID &atom1, 
+                  Length &delta);
                   
-void ZMatrixCoords::setBond(const AtomID &atom0, const AtomID &atom1, 
-             const Length &length);
-              
-void ZMatrixCoords::setAngle(const AtomID &atom0, const AtomID &atom1,
-              const AtomID &atom2, const Angle &size);
+    void moveAngle(const AtomID &atom0, const AtomID &atom1,
+                   const AtomID &atom2, const Angle &delta);
+   
+    void moveDihedral(const AtomID &atom0, const AtomID &atom1,
+                      const AtomID &atom2, const AtomID &atom3,
+                      const Angle &delta);
 
-void ZMatrixCoords::setDihedral(const AtomID &atom0, const AtomID &atom1,
-                 const AtomID &atom2, const AtomID &atom3,
-                 const Angle &size);
+    void setBond(const AtomID &atom, const Length &length);
+    void setAngle(const AtomID &atom, const Angle &size);
+    void setDihedral(const AtomID &atom, const Angle &size);
+                      
+    void setBond(const AtomID &atom0, const AtomID &atom1, 
+                 const Length &length);
+                  
+    void setAngle(const AtomID &atom0, const AtomID &atom1,
+                  const AtomID &atom2, const Angle &size);
+   
+    void setDihedral(const AtomID &atom0, const AtomID &atom1,
+                     const AtomID &atom2, const AtomID &atom3,
+                     const Angle &size);
+    
+    void setBondDelta(const AtomID &atom, const Length &delta);
+    void setAngleDelta(const AtomID &atom, const Angle &delta);
+    void setDihedralDelta(const AtomID &atom, const Angle &delta);
+    
+    void setBondDelta(const AtomID &atom, const AtomID &bond
+                      const Length &delta);
+                      
+    void setAngleDelta(const AtomID &atom, const AtomID &bond,
+                       const AtomID &angle, const Angle &delta);
+
+    void setDihedralDelta(const AtomID &atom, const AtomID &bond,
+                          const AtomID &angle, const AtomID &dihedral,
+                          const Angle &delta);
