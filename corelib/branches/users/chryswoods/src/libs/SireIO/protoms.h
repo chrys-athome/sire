@@ -61,6 +61,11 @@ class Molecules;
 class MolEditor;
 }
 
+namespace SireMove
+{
+class ZMatrix;
+}
+
 namespace SireBase
 {
 class TempDir;
@@ -75,6 +80,8 @@ using SireBase::PropertyMap;
 using SireMol::Molecule;
 using SireMol::Molecules;
 using SireMol::MolEditor;
+
+using SireMove::ZMatrix;
 
 /** This class holds all of the source and default values of the 
     properties used by the ProtoMS parameter reader
@@ -246,8 +253,8 @@ private:
                              const Molecule &molecule, int type) const;
     
     void processZMatrixLine(const QStringList &words, 
-                            MolEditor &editmol, int type,
-                            const QString &zmatrix_property) const;
+                            const Molecule &mol, int type,
+                            ZMatrix &zmatrix) const;
                             
     void processAtomLine(const QStringList &words,
                          MolEditor &editmol, int type,
@@ -266,6 +273,18 @@ private:
                                 const QStringList &words,
                                 const Molecule &molecule, int type,
                                 SireMM::FourAtomFunctions &dihedralfuncs) const;
+
+    void processBondDeltaLine(const QStringList &words,
+                              const Molecule &molecule, int type,
+                              ZMatrix &zmatrix) const;
+
+    void processAngleDeltaLine(const QStringList &words,
+                               const Molecule &molecule, int type,
+                               ZMatrix &zmatrix) const;
+
+    void processDihedralDeltaLine(const QStringList &words,
+                                  const Molecule &molecule, int type,
+                                  ZMatrix &zmatrix) const;
     
     void processUBLine(const QStringList &words,
                        const Molecule &molecule, int type,

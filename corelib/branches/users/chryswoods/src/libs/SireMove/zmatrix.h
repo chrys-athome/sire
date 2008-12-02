@@ -240,6 +240,13 @@ public:
     
     const QHash<AtomIdx,int>& index() const;
     
+    int getIndex(const AtomID &atom) const;
+    int getIndex(const AtomID &atom, const AtomID &bond) const;
+    int getIndex(const AtomID &atom, const AtomID &bond,
+                 const AtomID &angle) const;
+    int getIndex(const AtomID &atom, const AtomID &bond,
+                 const AtomID &angle, const AtomID &dihedral) const;
+    
     QString toString() const;
     
     const SireMol::MoleculeInfoData& info() const;
@@ -260,7 +267,7 @@ public:
     void setAngleDelta(const AtomID &atom, const Angle &delta);
     void setDihedralDelta(const AtomID &atom, const Angle &delta);
     
-    void setBondDelta(const AtomID &atom, const AtomID &bond
+    void setBondDelta(const AtomID &atom, const AtomID &bond,
                       const Length &delta);
                       
     void setAngleDelta(const AtomID &atom, const AtomID &bond,
@@ -335,6 +342,13 @@ public:
     
     const QHash<AtomIdx,int>& index() const;
     
+    int getIndex(const AtomID &atom) const;
+    int getIndex(const AtomID &atom, const AtomID &bond) const;
+    int getIndex(const AtomID &atom, const AtomID &bond,
+                 const AtomID &angle) const;
+    int getIndex(const AtomID &atom, const AtomID &bond,
+                 const AtomID &angle, const AtomID &dihedral) const;
+    
     QString toString() const;
 
     const SireMol::MoleculeInfoData& info() const;
@@ -396,7 +410,7 @@ public:
     void setAngleDelta(const AtomID &atom, const Angle &delta);
     void setDihedralDelta(const AtomID &atom, const Angle &delta);
     
-    void setBondDelta(const AtomID &atom, const AtomID &bond
+    void setBondDelta(const AtomID &atom, const AtomID &bond,
                       const Length &delta);
                       
     void setAngleDelta(const AtomID &atom, const AtomID &bond,

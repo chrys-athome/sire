@@ -2,6 +2,7 @@
 from Sire.IO import *
 from Sire.MM import *
 from Sire.Mol import *
+from Sire.Move import *
 
 protodir = "/Users/chris/Work/ProtoMS"
 
@@ -33,4 +34,6 @@ ethane = protoms.parameterise(ethane, ProtoMS.SOLUTE)
 
 print ethane.property("charge").array()
 print ethane.property("LJ").array()
+
+print ethane.property("zmatrix")
 
