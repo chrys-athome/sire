@@ -444,7 +444,7 @@ void ProtoMS::processAngleDeltaLine(const QStringList &words, const Molecule &mo
     try
     {
         zmatrix.setAngleDelta( atom.index(), bond.index(), angle.index(),
-                               words[17].toDouble() * degrees );
+                               words[17].toDouble() * radians );
     }
     catch(const SireMove::zmatrix_error&)
     {
@@ -487,7 +487,7 @@ void ProtoMS::processDihedralDeltaLine(const QStringList &words, const Molecule 
     {
         zmatrix.setDihedralDelta( atom.index(), bond.index(), 
                                   angle.index(), dihedral.index(),
-                                  words[22].toDouble() * degrees );
+                                  words[22].toDouble() * radians );
     }
     catch(const SireMove::zmatrix_error&)
     {

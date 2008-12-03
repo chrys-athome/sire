@@ -318,8 +318,8 @@ QString ZMatrixCoordsLine::toString() const
     return QObject::tr("%1 - %2 A : %3' : %4'")
                  .arg(ZMatrixLine::toString())
                  .arg(coords[0])
-                 .arg( SireUnits::convertTo(coords[1],degrees) )
-                 .arg( SireUnits::convertTo(coords[2],degrees) );
+                 .arg( Angle(coords[1]).to(degrees) )
+                 .arg( Angle(coords[2]).to(degrees) );
 }
 
 /** Return the length of the bond */
@@ -1317,8 +1317,8 @@ QString ZMatrixCoords::toString() const
                             .arg(line.angle().value())
                             .arg(line.dihedral().value())
                             .arg(line.bondLength())
-                            .arg( SireUnits::convertTo(line.angleSize(),degrees) )
-                            .arg( SireUnits::convertTo(line.dihedralSize(),degrees) ) );
+                            .arg( line.angleSize().to(degrees) )
+                            .arg( line.dihedralSize().to(degrees) ) );
         }
         else
         {
