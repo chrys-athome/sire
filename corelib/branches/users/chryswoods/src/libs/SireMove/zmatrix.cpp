@@ -1146,6 +1146,8 @@ void ZMatrixCoords::_pvt_rebuildCartesian()
                                          Angle(internal[1]), angle,
                                          Angle(internal[2]), dihedral) );
     }
+    
+    cartesian_coords = new_coords;
 }
 
 /** Internal function called to rebuild the cartesian coordinates

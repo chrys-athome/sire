@@ -47,10 +47,19 @@ zmat = ZMatrixCoords(zmat, ethane)
 for line in zmat.lines():
     print line
 
-for i in range (0,180,10):
+for i in range (0,181,10):
     zmat.setDihedral( AtomName("H02"), AtomName("C01"), AtomName("C05"), \
                       AtomName("H06"), i * degrees )
 
     ethane = ethane.edit().setProperty("coordinates", zmat.toCartesian() ).commit()
 
     PDB().write( ethane, "test%003d.pdb" % i )
+
+for i in range (0,91,10):
+    zmat.setAngle( AtomName("H02"), AtomName("C01"), AtomName("C05"), \
+                   i * degrees )
+
+    ethane = ethane.edit().setProperty("coordinates", zmat.toCartesian() ).commit()
+
+    PDB().write( ethane, "test%003d.pdb" % (i+200) )
+
