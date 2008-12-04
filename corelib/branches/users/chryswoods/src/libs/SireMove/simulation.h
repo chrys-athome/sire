@@ -66,6 +66,13 @@ public:
     static Simulation run( const System &system, const Moves &moves,
                            int nmoves, int nmoves_per_chunk, 
                            bool record_stats=true );
+
+    static Simulation run( const System &system, const Move &move,
+                           int nmoves, bool record_stats=true );
+                           
+    static Simulation run( const System &system, const Move &move,
+                           int nmoves, int nmoves_per_chunk,
+                           bool record_stats=true );
                            
     static Simulation run( const SimPacket &simpacket );
                            
@@ -76,8 +83,17 @@ public:
     static Simulation run( Node &node,
                            const System &system, const Moves &moves,
                            int nmoves, int nmoves_per_chunk,
-                           bool record_stats=true );
+                           bool record_stats=true );                           
+
+    static Simulation run( Node &node,
+                           const System &system, const Move &move,
+                           int nmoves, bool record_stats=true );
                            
+    static Simulation run( Node &node,
+                           const System &system, const Move &move,
+                           int nmoves, int nmoves_per_chunk,
+                           bool record_stats=true );
+
     static Simulation run( Node &node, const SimPacket &simpacket );
     
     void abort();

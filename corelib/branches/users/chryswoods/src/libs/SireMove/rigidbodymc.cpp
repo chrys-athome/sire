@@ -253,8 +253,17 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
         PropertyMap map;
         map.set("coordinates", this->coordinatesProperty());
         
-        const Space &space = system.property( this->spaceProperty() )
-                                   .asA<Space>();
+        const Space *space = &(Space::null());
+        
+        if ( this->spaceProperty().hasSource() )
+        {
+            if ( system.containsProperty(this->spaceProperty().source()) )
+                space = &( system.property( this->spaceProperty() ).asA<Space>() );
+        }
+        else
+        {
+            space = &(this->spaceProperty().value().asA<Space>());
+        }
     
         for (int i=0; i<nmoves; ++i)
         {
@@ -283,11 +292,12 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
             //perform the move - need to map to the infinite cartesian
             //space, make the move, and then convert back again
             PartialMolecule newmol = oldmol.move()
-                                        .toCartesian(space)
+                                        .toCartesian(*space, map)
                                         .rotate(rotdelta, 
-                                                oldmol.evaluate().centerOfGeometry())
-                                        .translate(delta)
-                                        .fromCartesian(space)
+                                                oldmol.evaluate().centerOfGeometry(),
+                                                map)
+                                        .translate(delta, map)
+                                        .fromCartesian(*space,map)
                                         .commit();
 
             //update the system with the new coordinates

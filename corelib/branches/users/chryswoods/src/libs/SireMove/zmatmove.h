@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2008  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREMOVE_RIGIDBODYMC_H
-#define SIREMOVE_RIGIDBODYMC_H
+#ifndef SIREMOVE_ZMATMOVE_H
+#define SIREMOVE_ZMATMOVE_H
 
 #include "montecarlo.h"
 #include "sampler.h"
@@ -36,62 +36,65 @@ SIRE_BEGIN_HEADER
 
 namespace SireMove
 {
-class RigidBodyMC;
+class ZMatMove;
 }
 
-QDataStream& operator<<(QDataStream&, const SireMove::RigidBodyMC&);
-QDataStream& operator>>(QDataStream&, SireMove::RigidBodyMC&);
+QDataStream& operator<<(QDataStream&, const SireMove::ZMatMove&);
+QDataStream& operator>>(QDataStream&, SireMove::ZMatMove&);
 
 namespace SireMol
 {
 class MoleculeGroup;
 class PartialMolecule;
+class AtomIdx;
 }
 
 namespace SireMove
 {
 
 class Sampler;
+class ZMatrixCoords;
 
 using SireMol::MoleculeGroup;
 using SireMol::PartialMolecule;
 
-/** This class implements a rigid body Monte Carlo move that
-    may be applied to a random molecule within a MoleculeGroup
-
+/** This class implements a z-matrix based intramolecular Monte Carlo
+    move that may be applied to a random molecule (or part of a molecule)
+    within a MoleculeGroup
+    
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT RigidBodyMC 
-        : public SireBase::ConcreteProperty<RigidBodyMC,MonteCarlo>
+class SIREMOVE_EXPORT ZMatMove 
+            : public SireBase::ConcreteProperty<ZMatMove,MonteCarlo>
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const RigidBodyMC&);
-friend QDataStream& ::operator>>(QDataStream&, RigidBodyMC&);
+friend QDataStream& ::operator<<(QDataStream&, const ZMatMove&);
+friend QDataStream& ::operator>>(QDataStream&, ZMatMove&);
 
 public:
-    RigidBodyMC();
-
-    RigidBodyMC(const MoleculeGroup &molgroup);
-    RigidBodyMC(const Sampler &sampler);
-
-    RigidBodyMC(const RigidBodyMC &other);
-
-    ~RigidBodyMC();
-
-    RigidBodyMC& operator=(const RigidBodyMC &other);
-
+    ZMatMove();
+    
+    ZMatMove(const MoleculeGroup &molgroup);
+    ZMatMove(const Sampler &sampler);
+    
+    ZMatMove(const ZMatMove &other);
+    
+    ~ZMatMove();
+    
+    ZMatMove& operator=(const ZMatMove &other);
+    
     static const char* typeName()
     {
-        return QMetaType::typeName( qMetaTypeId<RigidBodyMC>() );
+        return QMetaType::typeName( qMetaTypeId<ZMatMove>() );
     }
 
-    RigidBodyMC* clone() const
+    ZMatMove* clone() const
     {
-        return new RigidBodyMC(*this);
+        return new ZMatMove(*this);
     }
 
-    bool operator==(const RigidBodyMC &other) const;
-    bool operator!=(const RigidBodyMC &other) const;
+    bool operator==(const ZMatMove &other) const;
+    bool operator!=(const ZMatMove &other) const;
 
     QString toString() const;
 
@@ -101,13 +104,11 @@ public:
     const Sampler& sampler() const;
     const MoleculeGroup& moleculeGroup() const;
 
+    const PropertyName& zmatrixProperty() const;
+    
+    void setZMatrixProperty(const PropertyName &property);
+
     void setGenerator(const RanGenerator &rangenerator);
-
-    void setMaximumTranslation(SireUnits::Dimension::Length max_translation);
-    void setMaximumRotation(SireUnits::Dimension::Angle max_rotation);
-
-    SireUnits::Dimension::Length maximumTranslation() const;
-    SireUnits::Dimension::Angle maximumRotation() const;
 
     void move(System &system, int nmoves, bool record_stats=true);
 
@@ -115,23 +116,20 @@ protected:
     void _pvt_setTemperature(const SireUnits::Dimension::Temperature &temperature);
 
 private:
+    void move(SireMol::AtomIdx atom, ZMatrixCoords &zmatrix);
+
     /** The sampler used to select random molecules for the move */
     SamplerPtr smplr;
-
-    /** The maximum translation */
-    double adel;
-
-    #ifndef SKIP_BROKEN_GCCXML_PARTS
-    /** The maximum rotation */
-    SireUnits::Dimension::Angle rdel;
-    #endif
+    
+    /** The name of the property that contains the z-matrix */
+    PropertyName zmatrix_property;
 };
 
 }
 
-Q_DECLARE_METATYPE(SireMove::RigidBodyMC);
+Q_DECLARE_METATYPE( SireMove::ZMatMove )
 
-SIRE_EXPOSE_CLASS( SireMove::RigidBodyMC )
+SIRE_EXPOSE_CLASS( SireMove::ZMatMove )
 
 SIRE_END_HEADER
 

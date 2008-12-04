@@ -92,6 +92,19 @@ Simulation Simulation::run( Node &node,
     return Simulation::run( node, SimPacket(system, moves, nmoves, record_stats) );
 }
 
+/** Run a simulation consisting of 'nmoves' moves (in 'move')
+    of the System 'system', optionally recording simulation
+    statistics if 'record_stats' is true. This runs the 
+    simulation on the node 'node'. This runs 'nmoves_per_chunk'
+    moves in every chunk of the simulation. */
+Simulation Simulation::run( Node &node,
+                            const System &system, const Move &move,
+                            int nmoves, bool record_stats )
+{
+    return Simulation::run( node, SimPacket(system, SameMoves(move), 
+                                            nmoves, record_stats) );
+}
+
 /** Run a simulation consisting of 'nmoves' moves (in 'moves')
     of the System 'system', optionally recording simulation
     statistics if 'record_stats' is true. This runs the 
@@ -103,6 +116,20 @@ Simulation Simulation::run( Node &node,
                             bool record_stats )
 {
     return Simulation::run( node, SimPacket(system, moves, nmoves,
+                                            nmoves_per_chunk, record_stats) );
+}
+
+/** Run a simulation consisting of 'nmoves' moves (in 'move')
+    of the System 'system', optionally recording simulation
+    statistics if 'record_stats' is true. This runs the 
+    simulation on the node 'node'. This runs 'nmoves_per_chunk'
+    moves in every chunk of the simulation. */
+Simulation Simulation::run( Node &node,
+                            const System &system, const Move &move,
+                            int nmoves, int nmoves_per_chunk,
+                            bool record_stats )
+{
+    return Simulation::run( node, SimPacket(system, SameMoves(move), nmoves,
                                             nmoves_per_chunk, record_stats) );
 }
 
@@ -138,6 +165,17 @@ Simulation Simulation::run( const System &system, const Moves &moves,
     return Simulation::run( SimPacket(system, moves, nmoves, record_stats) );
 }
                        
+/** Run a simulation consisting of 'nmoves' moves (in 'move')
+    of the System 'system', optionally recording simulation
+    statistics if 'record_stats' is true. This runs the 
+    simulation in the current thread */
+Simulation Simulation::run( const System &system, const Move &move,
+                            int nmoves, bool record_stats )
+{
+    return Simulation::run( SimPacket(system, SameMoves(move), 
+                                      nmoves, record_stats) );
+}
+                       
 /** Run a simulation consisting of 'nmoves' moves (in 'moves')
     of the System 'system', optionally recording simulation
     statistics if 'record_stats' is true. This runs the 
@@ -148,6 +186,19 @@ Simulation Simulation::run( const System &system, const Moves &moves,
                             bool record_stats )
 {
     return Simulation::run( SimPacket(system, moves, nmoves, 
+                                      nmoves_per_chunk, record_stats) );
+}
+                       
+/** Run a simulation consisting of 'nmoves' moves (in 'move')
+    of the System 'system', optionally recording simulation
+    statistics if 'record_stats' is true. This runs the 
+    simulation in the current thread. This runs 'nmoves_per_chunk'
+    moves in every chunk of the simulation. */
+Simulation Simulation::run( const System &system, const Move &move,
+                            int nmoves, int nmoves_per_chunk, 
+                            bool record_stats )
+{
+    return Simulation::run( SimPacket(system, SameMoves(move), nmoves, 
                                       nmoves_per_chunk, record_stats) );
 }
 

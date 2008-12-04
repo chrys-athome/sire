@@ -277,6 +277,16 @@ public:
                           const AtomID &angle, const AtomID &dihedral,
                           const Angle &delta);
 
+    Length bondDelta(const AtomID &atom) const;
+    Angle angleDelta(const AtomID &atom) const;
+    Angle dihedralDelta(const AtomID &atom) const;
+    
+    Length bondDelta(const AtomID &atom, const AtomID &bond) const;
+    Angle angleDelta(const AtomID &atom, const AtomID &bond,
+                     const AtomID &angle) const;
+    Angle dihedralDelta(const AtomID &atom, const AtomID &bond, 
+                        const AtomID &angle, const AtomID &dihedral) const;
+
     bool isCompatibleWith(const SireMol::MoleculeInfoData &molinfo) const;
 
 private:
@@ -406,6 +416,16 @@ public:
                      const AtomID &atom2, const AtomID &atom3,
                      const Angle &size);
     
+    Length bondLength(const AtomID &atom) const;
+    Angle angleSize(const AtomID &atom) const;
+    Angle dihedralSize(const AtomID &atom) const;
+    
+    Length bondLength(const AtomID &atom, const AtomID &bond) const;
+    Angle angleSize(const AtomID &atom, const AtomID &bond,  
+                    const AtomID &angle) const;
+    Angle dihedralSize(const AtomID &atom, const AtomID &bond,
+                       const AtomID &angle, const AtomID &dihedral) const;
+    
     void setBondDelta(const AtomID &atom, const Length &delta);
     void setAngleDelta(const AtomID &atom, const Angle &delta);
     void setDihedralDelta(const AtomID &atom, const Angle &delta);
@@ -419,6 +439,16 @@ public:
     void setDihedralDelta(const AtomID &atom, const AtomID &bond,
                           const AtomID &angle, const AtomID &dihedral,
                           const Angle &delta);
+
+    Length bondDelta(const AtomID &atom) const;
+    Angle angleDelta(const AtomID &atom) const;
+    Angle dihedralDelta(const AtomID &atom) const;
+    
+    Length bondDelta(const AtomID &atom, const AtomID &bond) const;
+    Angle angleDelta(const AtomID &atom, const AtomID &bond,
+                     const AtomID &angle) const;
+    Angle dihedralDelta(const AtomID &atom, const AtomID &bond, 
+                        const AtomID &angle, const AtomID &dihedral) const;
     
 private:
     void rebuildInternals();

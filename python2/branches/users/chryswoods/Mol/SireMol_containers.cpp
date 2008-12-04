@@ -75,7 +75,7 @@ void register_SireMol_containers()
     register_list< QList<AtomSelection> >();
     register_list< QList<ViewsOfMol> >();
     register_list< QList<Molecule> >();
-    register_list< QList<MoleculeGroup> >();
+    register_list< QList<MolGroupPtr> >();
 
     register_list< QList< boost::tuple<AtomIdentifier,AtomIdentifier> > >();
 

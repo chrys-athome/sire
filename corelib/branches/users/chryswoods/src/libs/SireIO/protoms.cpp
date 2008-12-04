@@ -98,7 +98,7 @@ PropertyName ProtoMSParameters::angle_property( "angle" );
 PropertyName ProtoMSParameters::dihedral_property( "dihedral" );
 PropertyName ProtoMSParameters::ub_property( "Urey-Bradley" );
 
-PropertyName ProtoMSParameters::zmatrix_property( "zmatrix" );
+PropertyName ProtoMSParameters::zmatrix_property( "z-matrix" );
 
 ///////////
 /////////// Implementation of ProtoMS
@@ -556,8 +556,8 @@ void ProtoMS::processAngleLine(const QStringList &words, const Molecule &mol,
 
     Symbol theta = InternalPotential::symbols().angle().theta();
     
-    Expression anglefunc = words[12].toDouble() 
-                    * SireMaths::pow_2( theta - (words[14].toDouble()*degrees).value() );
+    Expression anglefunc = words[17].toDouble() 
+                    * SireMaths::pow_2( theta - (words[19].toDouble()*radians).value() );
 
     Atom atom0, atom1, atom2;
 
@@ -627,11 +627,10 @@ QString ProtoMS::processDihedralLine(QTextStream &ts, const QStringList &words,
         //there are four parameters, k0, k1, k2, k3
         // The cosine function is;
         //  k0 { 1 + k1 [ cos(k2*phi + k3) ] }
-        
-        double k0 = words[2].toDouble();
-        double k1 = words[4].toDouble();
-        double k2 = (words[6].toDouble() * degrees).value();
-        double k3 = words[8].toDouble();
+        double k0 = words[3].toDouble();
+        double k1 = words[5].toDouble();
+        double k2 = (words[7].toDouble() * radians).value();
+        double k3 = words[9].toDouble();
         
         dihedralfunc += k0 * ( 1 + k1*( Cos(k2*phi + k3) ) );
         

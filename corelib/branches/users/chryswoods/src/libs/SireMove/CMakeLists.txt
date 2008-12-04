@@ -28,6 +28,7 @@ set ( SIREMOVE_HEADERS
       uniformsampler.h
       volumemove.h
       weightedmoves.h
+      zmatmove.h
       zmatrix.h
     )
 
@@ -53,6 +54,7 @@ set ( SIREMOVE_SOURCES
       uniformsampler.cpp
       weightedmoves.cpp
       volumemove.cpp
+      zmatmove.cpp
       zmatrix.cpp   
 
       ${SIREMOVE_HEADERS}
