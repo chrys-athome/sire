@@ -86,6 +86,8 @@ public:
     
     bool operator==(const TwoAtomFunction &other) const;
     bool operator!=(const TwoAtomFunction &other) const;
+
+    QString toString() const;
     
     const CGAtomIdx& atom0() const;
     const CGAtomIdx& atom1() const;
@@ -147,6 +149,8 @@ public:
     
     bool operator==(const TwoAtomFunctions &other) const;
     bool operator!=(const TwoAtomFunctions &other) const;
+
+    QString toString() const;
 
     void set(AtomIdx atom0, AtomIdx atom1,
              const Expression &expression);

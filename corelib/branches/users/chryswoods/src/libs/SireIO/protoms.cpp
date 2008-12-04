@@ -757,7 +757,7 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
                 this->processBondLine(words, molecule, type, bondfuncs);
                 
             else if (words[1] == "BondDelta")
-                this->processAngleDeltaLine(words, molecule, type, zmatrix);
+                this->processBondDeltaLine(words, molecule, type, zmatrix);
             
             else if (words[1] == "Angle")
                 this->processAngleLine(words, molecule, type, anglefuncs);

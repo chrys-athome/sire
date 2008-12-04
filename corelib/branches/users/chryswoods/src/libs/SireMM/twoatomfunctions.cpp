@@ -119,6 +119,14 @@ bool TwoAtomFunction::operator!=(const TwoAtomFunction &other) const
            AtomFunction::operator!=(other);
 }
 
+/** Return a string representation */
+QString TwoAtomFunction::toString() const
+{
+    return QObject::tr("TwoAtomFunction( %1 <-> %2 : %3 )")
+                .arg(atm0.toString(), atm1.toString(), 
+                     this->function().toString());
+}
+
 //////
 ////// Implementation of detail::IDPair
 //////
@@ -249,6 +257,13 @@ bool TwoAtomFunctions::operator!=(const TwoAtomFunctions &other) const
 {
     return AtomFunctions::operator!=(other) or
            potentials_by_atoms != other.potentials_by_atoms;
+}
+
+/** Return a string representation */
+QString TwoAtomFunctions::toString() const
+{
+    return QObject::tr("TwoAtomFunctions( nFunctions() == %1 )")
+                .arg(potentials_by_atoms.count());
 }
 
 /** Set the potential energy function used by atoms 'atom0' and 'atom1'

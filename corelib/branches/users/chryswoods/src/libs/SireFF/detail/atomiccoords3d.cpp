@@ -187,7 +187,7 @@ bool AtomicCoords3D::changedAllGroups(const AtomicCoords3D &other) const
         if (this_array[i] == other_array[i])
             return false;
     }
-    
+          
     return true;
 }
 

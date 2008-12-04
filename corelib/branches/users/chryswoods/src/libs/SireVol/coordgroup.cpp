@@ -1112,7 +1112,7 @@ CGArrayArrayData* CGArrayData::extract() const
                 
     CGArrayArrayData *new_array = (CGArrayArrayData*)(new_storage);
 
-    new_array->setNCGroupsInArray(1, this->nCGroups());
+    new_array->setNCGroupsInArray(0, this->nCGroups());
     
     for (quint32 i=0; i<this->nCGroups(); ++i)
     {
@@ -1304,8 +1304,8 @@ CGArrayArrayData* CGData::extract() const
     //ok, we need to extract!
     CGArrayArrayData *new_array = (CGArrayArrayData*)(new_storage);
 
-    new_array->setNCGroupsInArray(1, 1);
-    new_array->setNPointsInCGroup(1, this->nCoords());
+    new_array->setNCGroupsInArray(0, 1);
+    new_array->setNPointsInCGroup(0, this->nCoords());
     new_array->close();
     
     //copy the AABox

@@ -90,6 +90,8 @@ public:
     bool operator==(const FourAtomFunction &other) const;
     bool operator!=(const FourAtomFunction &other) const;
     
+    QString toString() const;
+    
     const CGAtomIdx& atom0() const;
     const CGAtomIdx& atom1() const;
     const CGAtomIdx& atom2() const;
@@ -156,6 +158,8 @@ public:
     
     bool operator==(const FourAtomFunctions &other) const;
     bool operator!=(const FourAtomFunctions &other) const;
+
+    QString toString() const;
 
     void set(AtomIdx atom0, AtomIdx atom1, 
              AtomIdx atom2, AtomIdx atom3,

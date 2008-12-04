@@ -126,6 +126,14 @@ bool ThreeAtomFunction::operator!=(const ThreeAtomFunction &other) const
            AtomFunction::operator!=(other);
 }
 
+/** Return a string representation */
+QString ThreeAtomFunction::toString() const
+{
+    return QObject::tr("ThreeAtomFunction( %1 <- %2 -> %3 : %4 )")
+                .arg(atm0.toString(), atm1.toString(), atm2.toString(),
+                     this->function().toString());
+}
+
 //////
 ////// Implementation of detail::IDTriple
 //////
@@ -265,6 +273,13 @@ bool ThreeAtomFunctions::operator!=(const ThreeAtomFunctions &other) const
 {
     return AtomFunctions::operator!=(other) or
            potentials_by_atoms != other.potentials_by_atoms;
+}
+
+/** Return a string representation */
+QString ThreeAtomFunctions::toString() const
+{
+    return QObject::tr("ThreeAtomFunctions( nFunctions() == %1 )")
+                .arg(potentials_by_atoms.count());
 }
 
 /** Set the potential energy function used by atoms 'atom0', 'atom1' and 'atom2'

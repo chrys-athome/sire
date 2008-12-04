@@ -1219,7 +1219,7 @@ void ZMatrixCoords::_pvt_rebuildCartesian()
         Vector bond = new_coords[ info().cgAtomIdx(line.bond()) ];
         Vector angle = new_coords[ info().cgAtomIdx(line.angle()) ];
         Vector dihedral = new_coords[ info().cgAtomIdx(line.dihedral()) ];
-        
+
         //now use these to build the coordinates of the atom
         new_coords.set( info().cgAtomIdx(line.atom()),
                         Vector::generate(internal[0], bond,

@@ -127,6 +127,15 @@ bool FourAtomFunction::operator!=(const FourAtomFunction &other) const
            AtomFunction::operator!=(other);
 }
 
+/** Return a string representation */
+QString FourAtomFunction::toString() const
+{
+    return QObject::tr("FourAtomFunction( %1 <- %2 - %3 -> %4 : %5 )")
+                .arg(atm0.toString(), atm1.toString(),
+                     atm2.toString(), atm3.toString(),
+                     this->function().toString());
+}
+
 //////
 ////// Implementation of detail::IDQuad
 //////
@@ -270,6 +279,13 @@ bool FourAtomFunctions::operator!=(const FourAtomFunctions &other) const
 {
     return AtomFunctions::operator!=(other) or
            potentials_by_atoms != other.potentials_by_atoms;
+}
+
+/** Return a string representation */
+QString FourAtomFunctions::toString() const
+{
+    return QObject::tr("FourAtomFunctions( nFunctions() == %1 )")
+                .arg(potentials_by_atoms.count());
 }
 
 /** Set the potential energy function used by atoms 'atom0' to 'atom3'

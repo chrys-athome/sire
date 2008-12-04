@@ -665,8 +665,6 @@ FFMolecule<PTNL> FFMolecule<PTNL>::getDifferences(const FFMolecule<PTNL> &newmol
     //if there is only one group, then it has either changed or not
     if (this->params.changedAllGroups(newmol.params))
         return *this;
-    else
-        return FFMolecule<PTNL>();
     
     //there is more than one CutGroup in this 
     //selection - get the groups that have changed
