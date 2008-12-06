@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include "SireMM/cljnbpairs.h"
+
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -99,6 +101,7 @@ PropertyName ProtoMSParameters::dihedral_property( "dihedral" );
 PropertyName ProtoMSParameters::ub_property( "Urey-Bradley" );
 
 PropertyName ProtoMSParameters::zmatrix_property( "z-matrix" );
+PropertyName ProtoMSParameters::nb_property( "intrascale" );
 
 ///////////
 /////////// Implementation of ProtoMS
@@ -663,6 +666,38 @@ QString ProtoMS::processDihedralLine(QTextStream &ts, const QStringList &words,
     return line;
 }
 
+/** Process the line that contains information about the 
+    intramolecular non-bonded pairs */
+void ProtoMS::processNBLine(const QStringList &words, const Molecule &mol, int type,
+                            CLJNBPairs &cljpairs) const
+{
+    Atom atom0, atom1;
+    
+    if (type == SOLVENT)
+        return;
+        
+    else if (type == SOLUTE)
+    {
+        atom0 = getSoluteAtom(mol, words[2], words[4]);
+        atom1 = getSoluteAtom(mol, words[7], words[9]);
+    }
+    else if (type == PROTEIN)
+    {
+        atom0 = getProteinAtom(mol, words[2], words[4]);
+        atom1 = getProteinAtom(mol, words[7], words[9]);
+    }
+
+    double cscl = words[12].toDouble();
+    double ljscl = words[14].toDouble();
+
+    if (type == SOLUTE)
+    {
+        //we list only the non-bonded pairs - everything else is zero
+        cljpairs.set( atom0.cgAtomIdx(), atom1.cgAtomIdx(),
+                      CLJScaleFactor(cscl, ljscl) );
+    }
+}
+
 /** Internal function used to run ProtoMS to get it to 
     parameterise a molecule */
 Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
@@ -676,6 +711,7 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
     QString angle_property = map[ parameters().angle() ].source();
     QString dihedral_property = map[ parameters().dihedral() ].source();
     QString ub_property = map[ parameters().ureyBradley() ].source();
+    QString nb_property = map[ parameters().nonBonded() ].source();
     
     QString zmatrix_property = map[ parameters().zmatrix() ].source();
 
@@ -740,6 +776,8 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
     FourAtomFunctions dihedralfuncs(molecule);
     TwoAtomFunctions ubfuncs(molecule);
     
+    CLJNBPairs nbpairs( molecule.data().info(), CLJScaleFactor(0,0) );
+    
     while (not line.isNull())
     {
         if (line.startsWith("PARAMS "))
@@ -777,6 +815,9 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
 
             else if (words[1] == "DihedralDelta")
                 this->processDihedralDeltaLine(words, molecule, type, zmatrix);
+
+            else if (words[1] == "NB")
+                this->processNBLine(words, molecule, type, nbpairs);
         }
 
         line = ts.readLine();
@@ -787,6 +828,7 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
     editmol.setProperty( angle_property, anglefuncs );
     editmol.setProperty( dihedral_property, dihedralfuncs );
     editmol.setProperty( ub_property, ubfuncs );
+    editmol.setProperty( nb_property, nbpairs );
     
     return editmol.commit();
 }

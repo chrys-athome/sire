@@ -1620,7 +1620,7 @@ QByteArray PDB::writeMols(const Molecules &molecules,
         ++it2;
         
         if ( it2 != molecules.constEnd())
-            ts << "TER";
+            ts << "TER\n";
     }
 
     return data;

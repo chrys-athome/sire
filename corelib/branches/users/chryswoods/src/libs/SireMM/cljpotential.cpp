@@ -1934,7 +1934,12 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
 {
     if (group_pairs.isEmpty())
     {
-        //there are no scale factors between groups...
+        //there is a constant scale factor between groups
+        CLJScaleFactor cljscl = group_pairs.defaultValue();
+
+        if (cljscl.coulomb() == 0 and cljscl.lj() == 0)
+            return;
+
         for (quint32 i=0; i<nats0; ++i)
         {
             distmat.setOuterIndex(i);
@@ -1945,7 +1950,8 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                 //null LJ parameter - only add on the coulomb energy
                 for (quint32 j=0; j<nats1; ++j)
                 {
-                    icnrg += param0.reduced_charge * 
+                    icnrg += cljscl.coulomb() *
+                             param0.reduced_charge * 
                              params1_array[j].reduced_charge / distmat[j];
                 }
             }
@@ -1958,7 +1964,8 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         
                     const double invdist = double(1) / distmat[j];
                         
-                    icnrg += param0.reduced_charge * param1.reduced_charge
+                    icnrg += cljscl.coulomb() *
+                             param0.reduced_charge * param1.reduced_charge
                                                    * invdist;
                               
                     if (param1.ljid != 0)
@@ -1970,7 +1977,8 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
                         double sig_over_dist12 = pow_2(sig_over_dist6);
 
-                        iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
+                        iljnrg += cljscl.lj() *
+                                  ljpair.epsilon() * (sig_over_dist12 - 
                                                       sig_over_dist6);
                     }
                 }
@@ -1995,9 +2003,11 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                     const CLJScaleFactor &cljscl = group_pairs(i,j);
                             
                     if (cljscl.coulomb() != 0)
-                           icnrg += cljscl.coulomb() * 
+                    {
+                        icnrg += cljscl.coulomb() * 
                                     param0.reduced_charge * 
                                     params1_array[j].reduced_charge / distmat[j];
+                    }
                 }
             }
             else
@@ -2016,7 +2026,7 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         icnrg += cljscl.coulomb() *  
                                  param0.reduced_charge * 
                                  param1.reduced_charge * invdist;
-                              
+
                         if (cljscl.lj() != 0 and param1.ljid != 0)
                         {
                             const LJPair &ljpair = ljpairs.constData()[
@@ -2049,7 +2059,12 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
 
     if (group_pairs.isEmpty())
     {
-        //there are no scale factors between groups...
+        //there is a constant scale factor between groups
+        CLJScaleFactor cljscl = group_pairs.defaultValue();
+
+        if (cljscl.coulomb() == 0 and cljscl.lj() == 0)
+            return;
+        
         foreach (Index i, atoms0)
         {
             distmat.setOuterIndex(i);
@@ -2060,7 +2075,8 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                 //null LJ parameter - only add on the coulomb energy
                 foreach (Index j, atoms1)
                 {
-                    icnrg += param0.reduced_charge * 
+                    icnrg += cljscl.coulomb() * 
+                             param0.reduced_charge * 
                              params1_array[j].reduced_charge / distmat[j];
                 }
             }
@@ -2073,7 +2089,8 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         
                     const double invdist = double(1) / distmat[j];
                         
-                    icnrg += param0.reduced_charge * param1.reduced_charge
+                    icnrg += cljscl.coulomb() *
+                             param0.reduced_charge * param1.reduced_charge
                                                    * invdist;
                               
                     if (param1.ljid != 0)
@@ -2085,7 +2102,8 @@ void IntraCLJPotential::calculateEnergy(const CLJNBPairs::CGPairs &group_pairs,
                         double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
                         double sig_over_dist12 = pow_2(sig_over_dist6);
 
-                        iljnrg += ljpair.epsilon() * (sig_over_dist12 - 
+                        iljnrg += cljscl.lj() *
+                                  ljpair.epsilon() * (sig_over_dist12 - 
                                                       sig_over_dist6);
                     }
                 }

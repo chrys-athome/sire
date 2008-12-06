@@ -52,6 +52,7 @@ namespace SireMM
 class TwoAtomFunctions;
 class ThreeAtomFunctions;
 class FourAtomFunctions;
+class CLJNBPairs;
 }
 
 namespace SireMol
@@ -166,6 +167,16 @@ public:
         return zmatrix_property;
     }
 
+    /** Return the name of the property that will contain the
+        non-bonded pairs
+        
+        default == "intrascale"
+    */
+    const PropertyName& nonBonded() const
+    {
+        return nb_property;
+    }
+
 private:
     ///////
     /////// Properties that hold the data of the molecule
@@ -191,6 +202,9 @@ private:
 
     /** The default name of the zmatrix property */
     static PropertyName zmatrix_property;
+    
+    /** The default name of the non-bonded property */
+    static PropertyName nb_property;
 };
 
 /** This class is used to read in ProtoMS parameter files and
@@ -290,6 +304,10 @@ private:
                        const Molecule &molecule, int type,
                        SireMM::TwoAtomFunctions &ubfuncs) const;
     
+    void processNBLine(const QStringList &words,
+                       const Molecule &molecule, int type,
+                       SireMM::CLJNBPairs &nbpairs) const;
+    
     Molecule runProtoMS(const Molecule &molecule, int type,
                         const PropertyMap &map) const;
 
@@ -310,6 +328,7 @@ private:
 Q_DECLARE_METATYPE( SireIO::ProtoMS )
 
 SIRE_EXPOSE_CLASS( SireIO::ProtoMS )
+SIRE_EXPOSE_CLASS( SireIO::ProtoMSParameters )
 
 SIRE_END_HEADER
 

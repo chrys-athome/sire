@@ -41,6 +41,7 @@
 #include "Base/convertpackedarray.hpp"
 
 #include "SireMol/atom.h"
+#include "SireMol/element.h"
 #include "SireMol/atomidentifier.h"
 #include "SireMol/cutgroup.h"
 #include "SireMol/residue.h"
@@ -53,6 +54,9 @@
 #include "SireMol/mgnum.h"
 #include "SireMol/mgname.h"
 #include "SireMol/partialmolecule.h"
+
+#include "Base/convertpackedarray.hpp"
+#include "SireBase/packedarray2d.hpp"
 
 using namespace SireMol;
 
@@ -92,6 +96,8 @@ void register_SireMol_containers()
     register_tuple< boost::tuple<PartialMolecule,double> >();
 
     register_tuple< boost::tuple<MolNum,SireID::Index> >();
+
+    register_PackedArray< SireBase::PackedArray2D<Element> >();
 
     #if QT_VERSION >= 0x402000
     register_dict< QHash<MolNum,Selector<Atom> >();
