@@ -52,7 +52,7 @@ static QMutex tmpdir_mutex;
 
 static QDir createDirectory(const QString &temp_root, int ntries)
 {
-    QString dirname = QString("%1/SIRE_%2_%3")
+    QString dirname = QString("%1/%2_sire_%3")
                             .arg(temp_root, getUserName(),
                                  QUuid::createUuid().toString());
                                  
