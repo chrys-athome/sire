@@ -297,8 +297,12 @@ SharedDataStream& SharedDataStream::operator<<(const QSharedDataPointer<T> &objp
 
     if (first_copy)
     {
-        //this is the first copy of this string and must be streamed
-        ds << *objptr;
+        if (objptr.constData() == 0)
+            //this is a null pointer
+            ds << false;
+        else
+            //this is the first copy of this object and must be streamed
+            ds << true << *objptr;
     }
 
     return *this;
@@ -321,7 +325,19 @@ SharedDataStream& SharedDataStream::operator>>(QSharedDataPointer<T> &objptr)
         if (first_copy)
         {
             //this is the first copy of this object
-            ds >> *objptr;
+            bool non_null;
+            
+            ds >> non_null;
+            
+            if (non_null)
+            {
+                if (objptr.constData() == 0)
+                    objptr = new T();
+                    
+                ds >> *objptr;
+            }
+            else
+                objptr = 0;
             
             //register the copy
             registry->loadedObject(id, objptr, objptr.constData());
@@ -352,7 +368,10 @@ SharedDataStream& SharedDataStream::operator<<(const SharedDataPointer<T> &objpt
     if (first_copy)
     {
         //this is the first copy of this string and must be streamed
-        ds << *(objptr.constData());
+        if (objptr.constData() == 0)
+            ds << false;
+        else
+            ds << true << *(objptr.constData());
     }
 
     return *this;
@@ -375,7 +394,18 @@ SharedDataStream& SharedDataStream::operator>>(SharedDataPointer<T> &objptr)
         if (first_copy)
         {
             //this is the first copy of this object
-            ds >> *(objptr.data());
+            bool non_null;
+            ds >> non_null;
+            
+            if (non_null)
+            {
+                if (objptr.constData() == 0)
+                    objptr = new T();
+                    
+                ds >> *(objptr.data());
+            }
+            else
+                objptr = 0;
             
             //register the copy
             registry->loadedObject(id, objptr, objptr.constData());
