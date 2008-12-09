@@ -270,13 +270,13 @@ QString ProtoMS::writeShellFile(const TempDir &tempdir,
     //write the line used to run ProtoMS
     if (protoms_exe.isEmpty())
     {
-        //the user hasn't specified a molpro executable - try to find one
+        //the user hasn't specified a ProtoMS executable - try to find one
         QString found_protoms = SireBase::findExe("protoms2").absoluteFilePath();
         ts << QString("%1 %2 > protoms_output\n")
                     .arg(found_protoms, cmdfile);
     }
     else
-        ts << QString("%1 %3 > protoms_output\n")
+        ts << QString("%1 %2 > protoms_output\n")
                         .arg(protoms_exe, cmdfile);
     
     f.close();
@@ -492,8 +492,10 @@ void ProtoMS::processDihedralDeltaLine(const QStringList &words, const Molecule 
                                   angle.index(), dihedral.index(),
                                   words[22].toDouble() * radians );
     }
-    catch(const SireMove::zmatrix_error&)
+    catch(const SireMove::zmatrix_error &e)
     {
+        qDebug() << e.toString();
+    
         //ignore zmatrix errors
         return;
     }

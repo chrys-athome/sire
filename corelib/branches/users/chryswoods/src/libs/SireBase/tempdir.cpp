@@ -91,13 +91,13 @@ void TempDir::createDirectory(const QString &temp_root)
 }
 
 /** This creates a new temporary directory in QDir::tempPath() */
-TempDir::TempDir()
+TempDir::TempDir() : do_not_delete(false)
 {
     this->createDirectory( QDir::tempPath() );
 }
 
 /** This creates a new temporary directory in 'temp_root' */
-TempDir::TempDir(const QString &temp_root)
+TempDir::TempDir(const QString &temp_root) : do_not_delete(false)
 {
     this->createDirectory(temp_root);
 }
@@ -138,7 +138,8 @@ static void removeDirectory(QDir &dir)
     anything that it contains */
 TempDir::~TempDir()
 {
-    ::removeDirectory(tmpdir);
+    if (not do_not_delete)
+        ::removeDirectory(tmpdir);
 }
 
 /** This returns the complete path to the temporary directory */
@@ -151,4 +152,12 @@ QString TempDir::path() const
 QString TempDir::toString() const
 {
     return QString("TempDir(\"%1\")").arg(this->path());
+}
+
+/** Tell the TempDir not to delete the directory when this object
+    is deleted - this can be used when you are debugging to prevent
+    the directory from disappearing! */
+void TempDir::doNotDelete()
+{
+    do_not_delete = true;
 }

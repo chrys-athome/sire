@@ -65,6 +65,8 @@ public:
     
     QString path() const;
     
+    void doNotDelete();
+    
 private:
     TempDir(const TempDir&)
     {}
@@ -78,6 +80,9 @@ private:
 
     /** The temporary directory */
     QDir tmpdir;
+    
+    /** Whether or not to delete the directory at exit */
+    bool do_not_delete;
 };
 
 }
