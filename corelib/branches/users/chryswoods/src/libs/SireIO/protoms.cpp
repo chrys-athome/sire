@@ -780,6 +780,8 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
     
     CLJNBPairs nbpairs( molecule.data().info(), CLJScaleFactor(0,0) );
     
+    QStringList fatal_errors;
+    
     while (not line.isNull())
     {
         if (line.startsWith("PARAMS "))
@@ -821,8 +823,21 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
             else if (words[1] == "NB")
                 this->processNBLine(words, molecule, type, nbpairs);
         }
+        else if (line.startsWith("FATAL"))
+        {
+            fatal_errors.append(line);
+        }
 
         line = ts.readLine();
+    }
+    
+    if (not fatal_errors.isEmpty())
+    {
+        //something went wrong in ProtoMS
+        throw SireError::process_error( QObject::tr(
+            "Something went wrong in ProtoMS when parameterising the molecule. "
+            "Here is the error output from ProtoMS.\n%1")
+                .arg(fatal_errors.join("\n")), CODELOC );
     }
     
     editmol.setProperty( zmatrix_property, zmatrix );
