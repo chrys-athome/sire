@@ -839,6 +839,29 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
             "Here is the error output from ProtoMS.\n%1")
                 .arg(fatal_errors.join("\n")), CODELOC );
     }
+
+    if ( not (editmol.hasProperty(charge_property) and
+             editmol.hasProperty(lj_property)) )
+    {
+        QStringList errors;
+        errors.append( QObject::tr("The molecule is missing either the %1 (charge) "
+                 "or the %2 (LJ) properties. The available properties are %3.\n"
+                 "Here's the output from ProtoMS. Can you see what's gone wrong?\n")
+                    .arg(charge_property, lj_property)
+                    .arg(Sire::toString(editmol.propertyKeys())) );
+                    
+        QTextStream ts2(&f);
+        
+        QString line2 = ts2.readLine();
+        
+        while (not line2.isNull())
+        {
+            errors.append(line2);
+            line2 = ts2.readLine();
+        }
+        
+        throw SireError::process_error( errors.join("\n"), CODELOC );
+    }
     
     editmol.setProperty( zmatrix_property, zmatrix );
     editmol.setProperty( bond_property, bondfuncs );
