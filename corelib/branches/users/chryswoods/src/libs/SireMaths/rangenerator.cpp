@@ -258,6 +258,9 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, RanGenerator &rangen)
 
     if (v == 1)
     {
+        //I need to detach from shared storage
+        rangen.d.reset(new RanGeneratorPvt());
+    
         SharedDataStream sds(ds);
         sds >> rangen.d;
     }
