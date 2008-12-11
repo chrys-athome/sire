@@ -93,6 +93,10 @@ public:
     void setExecutable(const QString &molpro_exe);
     void setEnvironment(const QString &variable, const QString &value);
     
+    void setMemoryRequirement(int nbytes);
+    
+    int memoryRequirement() const;
+    
     QString executable() const;
     
     const QHash<QString,QString>& environment() const;
@@ -174,6 +178,10 @@ private:
     
     /** The total charge of the system */
     qint32 total_charge;
+    
+    /** The amount of memory (in bytes) to reserve for the 
+        QM calculation */
+    quint32 memory_requirement;
 };
 
 }

@@ -80,7 +80,9 @@ void SharedDataRegistry::assertValidID(quint32 id) const
     
         throw SireError::program_bug( QObject::tr(
             "The SharedDataStream has encountered an invalid object ID (%1). "
-            "The maximum ID available is %2.")
+            "The maximum ID available is %2. This is sometimes caused "
+            "by the programmer forgetting to detach a shared_ptr<T> before "
+            "streaming into it.")
                 .arg(id).arg( keys.last() ), CODELOC );
     }
 }

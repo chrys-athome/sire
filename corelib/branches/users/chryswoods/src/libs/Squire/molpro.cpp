@@ -67,7 +67,7 @@ QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const Molpro &molpro)
     sds << molpro.env_variables
         << molpro.molpro_exe << molpro.basis_set << molpro.qm_method
         << molpro.energy_template << molpro.force_template
-        << molpro.total_charge;
+        << molpro.total_charge << molpro.memory_requirement;
         
     return ds;
 }
@@ -84,7 +84,7 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, Molpro &molpro)
         sds >> molpro.env_variables
             >> molpro.molpro_exe >> molpro.basis_set >> molpro.qm_method
             >> molpro.energy_template >> molpro.force_template
-            >> molpro.total_charge;
+            >> molpro.total_charge >> molpro.memory_requirement;
     }
     else
         throw version_error(v, "1", r_molpro, CODELOC);
@@ -93,6 +93,7 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, Molpro &molpro)
 }
 
 static const QString default_energy_template =
+       "memory,@MEMORY_REQUIREMENT@\n"
        "geomtyp=xyz\n"
        "geometry={ NOSYM, NOORIENT,\n"
        "@NUM_QM_ATOMS@  ! number of atoms\n"
@@ -115,7 +116,7 @@ Molpro::Molpro()
          basis_set("vdz"), qm_method("HF"),
          energy_template(default_energy_template),
          force_template(default_force_template),
-         total_charge(0)
+         total_charge(0), memory_requirement( 8 * 1024 * 1024 * 4 )
 {}
 
 /** Construct, passing in the location of the Molpro executable */
@@ -124,7 +125,7 @@ Molpro::Molpro(const QString &molpro)
          basis_set("vdz"), qm_method("HF"),
          energy_template(default_energy_template),
          force_template(default_force_template),
-         total_charge(0)
+         total_charge(0), memory_requirement( 8 * 1024 * 1024 * 4 )
 {
     this->setExecutable(molpro);
 }
@@ -136,7 +137,8 @@ Molpro::Molpro(const Molpro &other)
          basis_set(other.basis_set), qm_method(other.qm_method),
          energy_template(other.energy_template),
          force_template(other.force_template),
-         total_charge(other.total_charge)
+         total_charge(other.total_charge),
+         memory_requirement(other.memory_requirement)
 {}
 
 /** Destructor */
@@ -155,6 +157,7 @@ Molpro& Molpro::operator=(const Molpro &other)
         energy_template = other.energy_template;
         force_template = other.force_template;
         total_charge = other.total_charge;
+        memory_requirement = other.memory_requirement;
     }
     
     return *this;
@@ -170,7 +173,8 @@ bool Molpro::operator==(const Molpro &other) const
             qm_method == other.qm_method and
             energy_template == other.energy_template and
             force_template == other.force_template and
-            total_charge == other.total_charge);
+            total_charge == other.total_charge and
+            memory_requirement == other.memory_requirement);
 }
 
 /** Comparison operator */
@@ -183,6 +187,13 @@ bool Molpro::operator!=(const Molpro &other) const
 void Molpro::setExecutable(const QString &molpro_executable)
 {
     molpro_exe = molpro_executable;
+}
+
+/** Return the executable (full path and also arguments) to be used. This
+    is null if the executable is searched for in the path */
+QString Molpro::executable() const
+{
+    return molpro_exe;
 }
 
 /** Set the environmental variable 'variable' to have the value 'value'
@@ -254,6 +265,22 @@ int Molpro::totalCharge() const
     return total_charge;
 }
 
+/** Set the memory requirement (in bytes) that will be reserved for use
+    by molpro. You will need to set this if the default amount
+    (8000000 floating point words ~ 32MB) is not enough. Be careful
+    not to allocate too much though or you will be swapping all of the time */
+void Molpro::setMemoryRequirement(int nbytes)
+{
+    if (nbytes > 4)
+        memory_requirement = nbytes;
+}
+
+/** Return the memory requirement that has been set for this job (in bytes) */
+int Molpro::memoryRequirement() const
+{
+    return memory_requirement;
+}
+
 /** Set the template for the command file to be used to get
     Molpro to calculate an energy. The following tags will
     be substituted in the template;
@@ -311,6 +338,24 @@ QString Molpro::createCommandFile(QString cmd_template,
     //replace the easy things...
     cmd_template.replace( QLatin1String("@BASIS_SET@"), 
                           basis_set, Qt::CaseInsensitive );
+    
+    int required_memory_in_words = memory_requirement / 4;
+    
+    if (required_memory_in_words > 1000000)
+    {
+        cmd_template.replace( QLatin1String("@MEMORY_REQUIREMENT@"),
+                              QString("%1,M").arg(required_memory_in_words / 1000000) );
+    }
+    else if (required_memory_in_words > 1000)
+    {
+        cmd_template.replace( QLatin1String("@MEMORY_REQUIREMENT@"),
+                              QString("%1,K").arg(required_memory_in_words / 1000 ) );
+    }
+    else
+    {
+        cmd_template.replace( QLatin1String("@MEMORY_REQUIREMENT@"),
+                              QString("%1").arg(required_memory_in_words) );
+    }
     
     cmd_template.replace( QLatin1String("@QM_METHOD@"),
                           qm_method, Qt::CaseInsensitive );
