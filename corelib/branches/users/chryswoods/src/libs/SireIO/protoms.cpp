@@ -692,12 +692,8 @@ void ProtoMS::processNBLine(const QStringList &words, const Molecule &mol, int t
     double cscl = words[12].toDouble();
     double ljscl = words[14].toDouble();
 
-    if (type == SOLUTE)
-    {
-        //we list only the non-bonded pairs - everything else is zero
-        cljpairs.set( atom0.cgAtomIdx(), atom1.cgAtomIdx(),
-                      CLJScaleFactor(cscl, ljscl) );
-    }
+    cljpairs.set( atom0.cgAtomIdx(), atom1.cgAtomIdx(),
+                  CLJScaleFactor(cscl, ljscl) );
 }
 
 /** Internal function used to run ProtoMS to get it to 
@@ -778,7 +774,46 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
     FourAtomFunctions dihedralfuncs(molecule);
     TwoAtomFunctions ubfuncs(molecule);
     
-    CLJNBPairs nbpairs( molecule.data().info(), CLJScaleFactor(0,0) );
+    CLJNBPairs nbpairs;
+    
+    if (type == SOLUTE)
+    {
+        //by default, say that all atom pairs are bonded
+        nbpairs = CLJNBPairs( molecule.data().info(), CLJScaleFactor(0,0) );
+    }
+    else if (type == PROTEIN)
+    {
+        //by default, say that all atom pairs are non-bonded...
+        nbpairs = CLJNBPairs( molecule.data().info(), CLJScaleFactor(1,1) );
+        
+        //...except for intra-residue pairs
+        int nres = molecule.nResidues();
+        
+        for (ResIdx i(0); i<nres; ++i)
+        {
+            Residue residue = molecule.residue(i);
+        
+            int nats = residue.nAtoms();
+            
+            for (Index j(0); j<nats-1; ++j)
+            {
+                Atom atom0 = residue.atom(j);
+                
+                nbpairs.set( atom0.cgAtomIdx(), atom0.cgAtomIdx(), 
+                             CLJScaleFactor(0,0) );
+                
+                for (Index k(j+1); k<nats; ++k)
+                {
+                    Atom atom1 = residue.atom(k);
+                
+                    nbpairs.set( atom0.cgAtomIdx(), atom1.cgAtomIdx(), 
+                                 CLJScaleFactor(0,0) );
+                    nbpairs.set( atom1.cgAtomIdx(), atom1.cgAtomIdx(), 
+                                 CLJScaleFactor(0,0) );
+                }
+            }
+        }
+    }
     
     QStringList fatal_errors;
     

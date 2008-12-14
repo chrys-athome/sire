@@ -10,7 +10,7 @@ from Sire.Maths import *
 from Sire.Qt import *
 from Sire.Units import *
 from Sire.Squire import *
-from Sire.MPI import *
+from Sire.Cluster import *
 from Sire.System import *
 from Sire.Move import *
 
@@ -85,7 +85,7 @@ mmff.setSwitchingFunction(switchfunc)
 
 mmff.add(mol, MGIdx(0))
 
-for i in range(1, mols.nMolecules()):
+for i in range(1, 5): #mols.nMolecules()):
     mol = mols.moleculeAt(i).molecule()
 
     mol = mol.edit().setProperty("charge", charges) \
@@ -98,13 +98,20 @@ for i in range(1, mols.nMolecules()):
 qmmmnrg = qmmmff.energy()
 mmnrg = mmff.energy( mmff.components().coulomb() )
 
+FILE = open("molpro.cmd", "w")
+
+print >>FILE,qmmmff.energyCommandFile()
+
+FILE.close()
+
+sys.exit(0)
+
 print qmmmnrg
 print qmmmnrg - qmnrg
 print mmnrg
 print qmmmnrg - qmnrg - mmnrg
 print mmff.energy( mmff.components().lj() )
 
-sys.exit(0)
 
 for i in range(0,100):
      print "Step %d" % i

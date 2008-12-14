@@ -7,6 +7,7 @@ from Sire.MM import *
 from Sire.System import *
 from Sire.Vol import *
 from Sire.Units import *
+from Sire.ID import *
 
 import sys
 
@@ -42,6 +43,7 @@ print "Angle = %f" % internalff.energy( internalff.components().angle() ).to(kca
 print "Dihedral = %f" % internalff.energy( internalff.components().dihedral() ).to(kcal_per_mol)
 
 intraclj = IntraCLJFF("IntraCLJFF")
+intraclj.setCombiningRules("arithmetic")
 
 intraclj.add( cox2 )
 
