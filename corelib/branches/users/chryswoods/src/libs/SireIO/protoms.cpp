@@ -898,6 +898,10 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
         throw SireError::process_error( errors.join("\n"), CODELOC );
     }
     
+    qDebug() << bondfuncs.potentials().count();
+    qDebug() << anglefuncs.potentials().count();
+    qDebug() << dihedralfuncs.potentials().count();
+    
     editmol.setProperty( zmatrix_property, zmatrix );
     editmol.setProperty( bond_property, bondfuncs );
     editmol.setProperty( angle_property, anglefuncs );

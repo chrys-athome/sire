@@ -22,6 +22,7 @@ protoms.addParameterFile( "%s/parameter/amber99-residues.ff" % protodir )
 protoms.addParameterFile( "%s/parameter/gaff.ff" % protodir )
 
 cox2 = PDB().readMolecule("test/io/cox2.pdb")
+#cox2 = PDB().readMolecule("test/io/protein_test.pdb")
 
 cox2 = cox2.edit().rename("COX2").commit()
 
@@ -57,7 +58,7 @@ system.add( internalff )
 system.add( intraclj )
 
 system.setProperty( "space", Cartesian() )
-system.setProperty( "switchingFunction", NoCutoff() )
+system.setProperty( "switchingFunction", HarmonicSwitchingFunction(1000*angstrom, 999.5*angstrom) )
 
 residues = MoleculeGroup("residues")
 

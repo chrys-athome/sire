@@ -125,7 +125,7 @@ CGIDQuad::CGIDQuad(CGIdx cg0, CGIdx cg1, CGIdx cg2)
     cgidxs[1] = cg1;
     cgidxs[2] = cg2;
     
-    std::sort(cgidxs, cgidxs+2);
+    qSort(cgidxs, cgidxs+3);
     
     cgidxs[3] = cgidxs[2];
     
@@ -141,14 +141,20 @@ CGIDQuad::CGIDQuad(CGIdx cg0, CGIdx cg1, CGIdx cg2, CGIdx cg3)
     cgidxs[2] = cg2;
     cgidxs[3] = cg3;
     
-    std::sort(cgidxs, cgidxs+3);
+    qSort(cgidxs, cgidxs+4);
     
     if (cgidxs[0] == cgidxs[1])
     {
         cgidxs[1] = cgidxs[2];
         cgidxs[2] = cgidxs[3];
     }
-    
+
+    if (cgidxs[0] == cgidxs[1])
+    {
+        cgidxs[1] = cgidxs[2];
+        cgidxs[2] = cgidxs[3];
+    }
+
     if (cgidxs[1] == cgidxs[2])
         cgidxs[2] = cgidxs[3];
 }
