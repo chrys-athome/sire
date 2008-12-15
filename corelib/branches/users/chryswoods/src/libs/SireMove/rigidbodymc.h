@@ -106,6 +106,12 @@ public:
     void setMaximumTranslation(SireUnits::Dimension::Length max_translation);
     void setMaximumRotation(SireUnits::Dimension::Angle max_rotation);
 
+    void setSynchronisedTranslation(bool on);
+    void setSynchronisedRotation(bool on);
+    
+    bool synchronisedTranslation() const;
+    bool synchronisedRotation() const;
+
     SireUnits::Dimension::Length maximumTranslation() const;
     SireUnits::Dimension::Angle maximumRotation() const;
 
@@ -125,6 +131,12 @@ private:
     /** The maximum rotation */
     SireUnits::Dimension::Angle rdel;
     #endif
+    
+    /** Whether or not to synchronise the translation of all views */
+    bool sync_trans;
+    
+    /** Whether or not to synchronise the rotation of all views */
+    bool sync_rot;
 };
 
 }

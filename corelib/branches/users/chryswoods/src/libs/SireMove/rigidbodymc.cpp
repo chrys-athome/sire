@@ -60,12 +60,13 @@ static const RegisterMetaType<RigidBodyMC> r_rbmc;
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
                                         const RigidBodyMC &rbmc)
 {
-    writeHeader(ds, r_rbmc, 1);
+    writeHeader(ds, r_rbmc, 2);
 
     SharedDataStream sds(ds);
 
     sds << rbmc.smplr
         << rbmc.adel << rbmc.rdel
+        << rbmc.sync_trans << rbmc.sync_rot
         << static_cast<const MonteCarlo&>(rbmc);
 
     return ds;
@@ -76,16 +77,28 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
 {
     VersionID v = readHeader(ds, r_rbmc);
 
-    if (v == 1)
+    if (v == 2)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> rbmc.smplr
+            >> rbmc.adel >> rbmc.rdel
+            >> rbmc.sync_trans >> rbmc.sync_rot
+            >> static_cast<MonteCarlo&>(rbmc);
+    }
+    else if (v == 1)
     {
         SharedDataStream sds(ds);
 
         sds >> rbmc.smplr
             >> rbmc.adel >> rbmc.rdel
             >> static_cast<MonteCarlo&>(rbmc);
+            
+        rbmc.sync_trans = false;
+        rbmc.sync_rot = false;
     }
     else
-        throw version_error(v, "1", r_rbmc, CODELOC);
+        throw version_error(v, "1,2", r_rbmc, CODELOC);
 
     return ds;
 }
@@ -93,7 +106,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
 /** Null constructor */
 RigidBodyMC::RigidBodyMC() 
             : ConcreteProperty<RigidBodyMC,MonteCarlo>(),
-              adel( 0.15 * angstrom ), rdel( 15 * degrees )
+              adel( 0.15 * angstrom ), rdel( 15 * degrees ),
+              sync_trans(false), sync_rot(false)
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
 }
@@ -103,7 +117,8 @@ RigidBodyMC::RigidBodyMC(const Sampler &sampler)
             : ConcreteProperty<RigidBodyMC,MonteCarlo>(), 
               smplr(sampler),
               adel( 0.15 * angstrom ),
-              rdel( 15 * degrees )
+              rdel( 15 * degrees ),
+              sync_trans(false), sync_rot(false)
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
     smplr.edit().setGenerator( this->generator() );
@@ -115,7 +130,8 @@ RigidBodyMC::RigidBodyMC(const Sampler &sampler)
 RigidBodyMC::RigidBodyMC(const MoleculeGroup &molgroup)
             : ConcreteProperty<RigidBodyMC,MonteCarlo>(), 
               smplr( UniformSampler(molgroup) ),
-              adel( 0.15 * angstrom ), rdel( 15 * degrees )
+              adel( 0.15 * angstrom ), rdel( 15 * degrees ),
+              sync_trans(false), sync_rot(false)
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
     smplr.edit().setGenerator( this->generator() );
@@ -125,7 +141,8 @@ RigidBodyMC::RigidBodyMC(const MoleculeGroup &molgroup)
 RigidBodyMC::RigidBodyMC(const RigidBodyMC &other)
             : ConcreteProperty<RigidBodyMC,MonteCarlo>(other), 
               smplr(other.smplr),
-              adel(other.adel), rdel(other.rdel)
+              adel(other.adel), rdel(other.rdel),
+              sync_trans(other.sync_trans), sync_rot(other.sync_rot)
 {}
 
 /** Destructor */
@@ -145,6 +162,8 @@ RigidBodyMC& RigidBodyMC::operator=(const RigidBodyMC &other)
         smplr = other.smplr;
         adel = other.adel;
         rdel = other.rdel;
+        sync_trans = other.sync_trans;
+        sync_rot = other.sync_rot;
         MonteCarlo::operator=(other);
     }
     
@@ -155,7 +174,9 @@ RigidBodyMC& RigidBodyMC::operator=(const RigidBodyMC &other)
 bool RigidBodyMC::operator==(const RigidBodyMC &other) const
 {
     return smplr == other.smplr and adel == other.adel and
-           rdel == other.rdel and MonteCarlo::operator==(other);
+           rdel == other.rdel and 
+           sync_trans == other.sync_trans and sync_rot == other.sync_rot and
+           MonteCarlo::operator==(other);
 }
 
 /** Comparison operator */
@@ -235,6 +256,30 @@ void RigidBodyMC::setGenerator(const RanGenerator &rangenerator)
 {
     MonteCarlo::setGenerator(rangenerator);
     smplr.edit().setGenerator(this->generator());
+}
+
+/** Set whether or not to synchronise translation of all of the views */
+void RigidBodyMC::setSynchronisedTranslation(bool on)
+{
+    sync_trans = on;
+}
+
+/** Set whether or not to synchronise rotation of all of the views */
+void RigidBodyMC::setSynchronisedRotation(bool on)
+{
+    sync_rot = on;
+}
+
+/** Return whether or not translation of all molecules is synchronised */
+bool RigidBodyMC::synchronisedTranslation() const
+{
+    return sync_trans;
+}
+
+/** Return whether or not rotation of all molecules is synchronised */
+bool RigidBodyMC::synchronisedRotation() const
+{
+    return sync_rot;
 }
 
 /** Attempt 'n' rigid body moves of the views of the system 'system' */
