@@ -121,6 +121,10 @@ protected:
     void _pvt_setTemperature(const SireUnits::Dimension::Temperature &temperature);
 
 private:
+    void performMove(System &system, const SireVol::Space &space,
+                     double &old_bias, double &new_bias,
+                     const SireBase::PropertyMap &map);
+
     /** The sampler used to select random molecules for the move */
     SamplerPtr smplr;
 

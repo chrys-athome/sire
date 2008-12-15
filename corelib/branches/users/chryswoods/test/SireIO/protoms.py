@@ -9,7 +9,7 @@ from Sire.Vol import *
 from Sire.Maths import *
 from Sire.Units import *
 
-protodir = "/Users/chris/Work/ProtoMS"
+protodir = "/exports/gpfs/chzcjw/ProtoMS"
 
 switchfunc = HarmonicSwitchingFunction( 10 * angstrom, 9.5 * angstrom )
 box = PeriodicBox( Vector(-12.5,-12.5,-12.5), Vector(12.5,12.5,12.5) )

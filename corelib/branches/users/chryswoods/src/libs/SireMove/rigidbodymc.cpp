@@ -282,6 +282,171 @@ bool RigidBodyMC::synchronisedRotation() const
     return sync_rot;
 }
 
+/** This internal function is used to actually move the molecule(s) */
+void RigidBodyMC::performMove(System &system, const Space &space,
+                              double &old_bias, double &new_bias,
+                              const PropertyMap &map)
+{
+    //update the sampler with the latest version of the molecules
+    smplr.edit().updateFrom(system);
+
+    //get the random amounts by which to translate and
+    //rotate the molecule(s)
+    Vector delta = generator().vectorOnSphere(adel);
+
+    Quaternion rotdelta( rdel * generator().rand(),
+                         generator().vectorOnSphere() );
+
+    if (sync_trans)
+    {
+        if (sync_rot)
+        {
+            //translate and rotate all molecules
+            old_bias = 1;
+            new_bias = 1;
+
+            const Molecules &molecules = smplr.read().group().molecules();
+
+            for (Molecules::const_iterator it = molecules.constBegin();
+                 it != molecules.constEnd();
+                 ++it)
+            {
+                //perform the move - need to map to the infinite cartesian
+                //space, make the move, and then convert back again
+                PartialMolecule newmol = it->move()
+                                            .toCartesian(space, map)
+                                            .rotate(rotdelta,
+                                                    it->evaluate().centerOfGeometry(),
+                                                    map)
+                                            .translate(delta, map)
+                                            .fromCartesian(space,map)
+                                            .commit();
+                
+                system.update(newmol);
+            }                        
+        }
+        else
+        {
+            //translate all molecules
+            const Molecules &molecules = smplr.read().group().molecules();
+
+            for (Molecules::const_iterator it = molecules.constBegin();
+                 it != molecules.constEnd();
+                 ++it)
+            {
+                //perform the move - need to map to the infinite cartesian
+                //space, make the move, and then convert back again
+                PartialMolecule newmol = it->move()
+                                            .toCartesian(space, map)
+                                            .translate(delta, map)
+                                            .fromCartesian(space,map)
+                                            .commit();
+
+                system.update(newmol);
+            }
+
+            //then rotate a single random molecule
+            smplr.edit().updateFrom(system);
+
+            tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
+
+            const PartialMolecule &oldmol = mol_and_bias.get<0>();
+            old_bias = mol_and_bias.get<1>();
+
+            //perform the move - need to map to the infinite cartesian
+            //space, make the move, and then convert back again
+            PartialMolecule newmol = oldmol.move()
+                                           .toCartesian(space, map)
+                                           .rotate(rotdelta,
+                                                   oldmol.evaluate().centerOfGeometry(),
+                                                   map)
+                                           .fromCartesian(space,map)
+                                           .commit();
+
+            //update the system with the new coordinates
+            system.update(newmol);
+
+            //get the new bias on this molecule
+            smplr.edit().updateFrom(system);
+
+            new_bias = smplr.read().probabilityOf(newmol);
+        }
+    }
+    else if (sync_rot)
+    {
+        //rotate all of the molecules
+        const Molecules &molecules = smplr.read().group().molecules();
+
+        for (Molecules::const_iterator it = molecules.constBegin();
+             it != molecules.constEnd();
+             ++it)
+        {
+            //perform the move - need to map to the infinite cartesian
+            //space, make the move, and then convert back again
+            PartialMolecule newmol = it->move()
+                                        .toCartesian(space, map)
+                                        .rotate(rotdelta,
+                                                it->evaluate().centerOfGeometry(),
+                                                map)
+                                        .fromCartesian(space,map)
+                                        .commit();
+
+            system.update(newmol);
+        }
+
+        //then translate a single random molecule
+        smplr.edit().updateFrom(system);
+
+        tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
+
+        const PartialMolecule &oldmol = mol_and_bias.get<0>();
+        old_bias = mol_and_bias.get<1>();
+
+        //perform the move - need to map to the infinite cartesian
+        //space, make the move, and then convert back again
+        PartialMolecule newmol = oldmol.move()
+                                       .toCartesian(space, map)
+                                       .translate(delta, map)
+                                       .fromCartesian(space,map)
+                                       .commit();
+
+        //update the system with the new coordinates
+        system.update(newmol);
+
+        //get the new bias on this molecule
+        smplr.edit().updateFrom(system);
+
+        new_bias = smplr.read().probabilityOf(newmol);
+    }
+    else
+    {
+        //randomly select a molecule to move
+        tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
+
+        const PartialMolecule &oldmol = mol_and_bias.get<0>();
+        old_bias = mol_and_bias.get<1>();
+
+        //perform the move - need to map to the infinite cartesian
+        //space, make the move, and then convert back again
+        PartialMolecule newmol = oldmol.move()
+                                       .toCartesian(space, map)
+                                       .rotate(rotdelta,
+                                               oldmol.evaluate().centerOfGeometry(),
+                                               map)
+                                       .translate(delta, map)
+                                       .fromCartesian(space,map)
+                                       .commit();
+
+        //update the system with the new coordinates
+        system.update(newmol);
+
+        //get the new bias on this molecule
+        smplr.edit().updateFrom(system);
+
+        new_bias = smplr.read().probabilityOf(newmol);
+    }
+}
+
 /** Attempt 'n' rigid body moves of the views of the system 'system' */
 void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
 {
@@ -318,43 +483,14 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
             //save the old system and sampler
             System old_system(system);
             SamplerPtr old_sampler(smplr);
+
+            double old_bias = 1;
+            double new_bias = 1;
+
+            this->performMove(system, *space, old_bias, new_bias, map);
     
-            //update the sampler with the latest version of the molecules
-            smplr.edit().updateFrom(system);
-    
-            //randomly select a molecule to move
-            tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
-
-            const PartialMolecule &oldmol = mol_and_bias.get<0>();
-            double old_bias = mol_and_bias.get<1>();
-
-            //now translate and rotate the molecule
-            Vector delta = generator().vectorOnSphere(adel);
-
-            Quaternion rotdelta( rdel * generator().rand(),
-                                 generator().vectorOnSphere() );
-
-            //perform the move - need to map to the infinite cartesian
-            //space, make the move, and then convert back again
-            PartialMolecule newmol = oldmol.move()
-                                        .toCartesian(*space, map)
-                                        .rotate(rotdelta, 
-                                                oldmol.evaluate().centerOfGeometry(),
-                                                map)
-                                        .translate(delta, map)
-                                        .fromCartesian(*space,map)
-                                        .commit();
-
-            //update the system with the new coordinates
-            system.update(newmol);
-
             //calculate the energy of the system
             double new_nrg = system.energy( this->energyComponent() );
-
-            //get the new bias on this molecule
-            smplr.edit().updateFrom(system);
-        
-            double new_bias = smplr.read().probabilityOf(newmol);
 
             //accept or reject the move based on the change of energy
             //and the biasing factors
