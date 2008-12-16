@@ -292,12 +292,39 @@ void RigidBodyMC::performMove(System &system, const Space &space,
 
     //get the random amounts by which to translate and
     //rotate the molecule(s)
-    Vector delta = generator().vectorOnSphere(adel);
+    const Vector delta = generator().vectorOnSphere(adel);
 
-    Quaternion rotdelta( rdel * generator().rand(),
-                         generator().vectorOnSphere() );
+    const Quaternion rotdelta( rdel * generator().rand(),
+                               generator().vectorOnSphere() );
 
-    if (sync_trans)
+    if ( (not sync_trans) and (not sync_rot) )
+    {
+        //randomly select a molecule to move
+        tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
+
+        const PartialMolecule &oldmol = mol_and_bias.get<0>();
+        old_bias = mol_and_bias.get<1>();
+
+        //perform the move - need to map to the infinite cartesian
+        //space, make the move, and then convert back again
+        PartialMolecule newmol = oldmol.move()
+                                       .toCartesian(space, map)
+                                       .rotate(rotdelta,
+                                               oldmol.evaluate().centerOfGeometry(),
+                                               map)
+                                       .translate(delta, map)
+                                       .fromCartesian(space,map)
+                                       .commit();
+
+        //update the system with the new coordinates
+        system.update(newmol);
+
+        //get the new bias on this molecule
+        smplr.edit().updateFrom(system);
+
+        new_bias = smplr.read().probabilityOf(newmol);
+    }
+    else if (sync_trans)
     {
         if (sync_rot)
         {
@@ -306,6 +333,8 @@ void RigidBodyMC::performMove(System &system, const Space &space,
             new_bias = 1;
 
             const Molecules &molecules = smplr.read().group().molecules();
+
+            Molecules new_molecules = molecules;
 
             for (Molecules::const_iterator it = molecules.constBegin();
                  it != molecules.constEnd();
@@ -322,13 +351,17 @@ void RigidBodyMC::performMove(System &system, const Space &space,
                                             .fromCartesian(space,map)
                                             .commit();
                 
-                system.update(newmol);
-            }                        
+                new_molecules.update(newmol);
+            }            
+            
+            system.update(new_molecules);            
         }
         else
         {
             //translate all molecules
             const Molecules &molecules = smplr.read().group().molecules();
+
+            Molecules new_molecules = molecules;
 
             for (Molecules::const_iterator it = molecules.constBegin();
                  it != molecules.constEnd();
@@ -342,8 +375,10 @@ void RigidBodyMC::performMove(System &system, const Space &space,
                                             .fromCartesian(space,map)
                                             .commit();
 
-                system.update(newmol);
+                new_molecules.update(newmol);
             }
+
+            system.update(new_molecules);
 
             //then rotate a single random molecule
             smplr.edit().updateFrom(system);
@@ -377,6 +412,8 @@ void RigidBodyMC::performMove(System &system, const Space &space,
         //rotate all of the molecules
         const Molecules &molecules = smplr.read().group().molecules();
 
+        Molecules new_molecules = molecules;
+
         for (Molecules::const_iterator it = molecules.constBegin();
              it != molecules.constEnd();
              ++it)
@@ -391,8 +428,10 @@ void RigidBodyMC::performMove(System &system, const Space &space,
                                         .fromCartesian(space,map)
                                         .commit();
 
-            system.update(newmol);
+            new_molecules.update(newmol);
         }
+
+        system.update(new_molecules);
 
         //then translate a single random molecule
         smplr.edit().updateFrom(system);
@@ -406,33 +445,6 @@ void RigidBodyMC::performMove(System &system, const Space &space,
         //space, make the move, and then convert back again
         PartialMolecule newmol = oldmol.move()
                                        .toCartesian(space, map)
-                                       .translate(delta, map)
-                                       .fromCartesian(space,map)
-                                       .commit();
-
-        //update the system with the new coordinates
-        system.update(newmol);
-
-        //get the new bias on this molecule
-        smplr.edit().updateFrom(system);
-
-        new_bias = smplr.read().probabilityOf(newmol);
-    }
-    else
-    {
-        //randomly select a molecule to move
-        tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
-
-        const PartialMolecule &oldmol = mol_and_bias.get<0>();
-        old_bias = mol_and_bias.get<1>();
-
-        //perform the move - need to map to the infinite cartesian
-        //space, make the move, and then convert back again
-        PartialMolecule newmol = oldmol.move()
-                                       .toCartesian(space, map)
-                                       .rotate(rotdelta,
-                                               oldmol.evaluate().centerOfGeometry(),
-                                               map)
                                        .translate(delta, map)
                                        .fromCartesian(space,map)
                                        .commit();
