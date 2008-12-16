@@ -348,7 +348,8 @@ const T& CGAtomPairs<T>::defaultValue() const
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 AtomPairs<T>::AtomPairs(const T &default_value)
-             : cgpairs( CGAtomPairs<T>(default_value) )
+             : molinfo( MoleculeInfoData::null() ),
+               cgpairs( CGAtomPairs<T>(default_value) )
 {}
 
 /** Construct a set of AtomPairs for the passed molecule, using the provided
