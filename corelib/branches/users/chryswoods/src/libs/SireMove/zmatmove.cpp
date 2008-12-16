@@ -64,7 +64,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const ZMatMove &zmatmov
     SharedDataStream sds(ds);
     
     sds << zmatmove.smplr << zmatmove.zmatrix_property
-        << static_cast<const Move&>(zmatmove);
+        << static_cast<const MonteCarlo&>(zmatmove);
     
     return ds;
 }
@@ -79,7 +79,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, ZMatMove &zmatmove)
         SharedDataStream sds(ds);
         
         sds >> zmatmove.smplr >> zmatmove.zmatrix_property
-            >> static_cast<Move&>(zmatmove);
+            >> static_cast<MonteCarlo&>(zmatmove);
     }
     else
         throw version_error(v, "1", r_zmatmove, CODELOC);
