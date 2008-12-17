@@ -212,6 +212,11 @@ protected:
 
     void startEvaluation();
     void finishedEvaluation();
+
+    static SireBase::PackedArray2D<detail::CLJParameter> 
+           getCLJParameters(const PartialMolecule &molecule,
+                            const PropertyName &charge_property,
+                            const PropertyName &lj_property);
     
     virtual void changedPotential()=0;
     

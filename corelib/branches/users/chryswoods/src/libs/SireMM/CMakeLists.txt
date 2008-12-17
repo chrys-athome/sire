@@ -24,6 +24,7 @@ set ( SIREMM_HEADERS
       internalcomponent.h
       internalff.h
       internalparameters.h
+      intersoftcljff.h
       intracljff.h
       intracoulombff.h
       intraljff.h
@@ -32,6 +33,7 @@ set ( SIREMM_HEADERS
       ljparameterdb.h
       ljpotential.h
       qhash_siremm.h
+      softcljpotential.h
       switchingfunction.h
       threeatomfunctions.h
       twoatomfunctions.h
@@ -60,6 +62,7 @@ set ( SIREMM_SOURCES
       internalcomponent.cpp
       internalff.cpp
       internalparameters.cpp
+      intersoftcljff.cpp
       intracljff.cpp
       intracoulombff.cpp
       intraljff.cpp
@@ -67,6 +70,7 @@ set ( SIREMM_SOURCES
       ljparameter.cpp
       ljparameterdb.cpp
       ljpotential.cpp
+      softcljpotential.cpp
       switchingfunction.cpp
       threeatomfunctions.cpp
       twoatomfunctions.cpp    

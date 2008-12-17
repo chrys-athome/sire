@@ -125,9 +125,10 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 
 /** Internal function used to get the charge and LJ parameters from a molecule
     and convert them into a PackedArray of reduced charges and LJ parameter IDs */
-static PackedArray2D<CLJParameter> getCLJParameters(const PartialMolecule &molecule,
-                                                    const PropertyName &charge_property,
-                                                    const PropertyName &lj_property)
+PackedArray2D<CLJParameter> 
+CLJPotential::getCLJParameters(const PartialMolecule &molecule,
+                               const PropertyName &charge_property,
+                               const PropertyName &lj_property)
 {
     const AtomCharges &chgs = molecule.property(charge_property).asA<AtomCharges>();
 
@@ -549,7 +550,7 @@ InterCLJPotential& InterCLJPotential::operator=(const InterCLJPotential &other)
 }
 
 void InterCLJPotential::throwMissingForceComponent(const Symbol &symbol,
-                              const IntraCLJPotential::Components &components) const
+                              const InterCLJPotential::Components &components) const
 {
     throw SireFF::missing_component( QObject::tr(
         "There is no force component in potential %1 - available "
