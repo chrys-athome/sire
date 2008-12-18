@@ -123,13 +123,14 @@ static const RegisterMetaType<System> r_system;
 /** Serialise to a binary datastream */
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, const System &system)
 {
-    writeHeader(ds, r_system, 1);
+    writeHeader(ds, r_system, 2);
     
     SharedDataStream sds(ds);
     
     sds << system.uid << system.sysname
         << system.molgroups[0] << system.molgroups[1] 
         << system.sysmonitors
+        << system.cons
         << static_cast<const MolGroupsBase&>(system);
         
     return ds;
@@ -140,7 +141,21 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, System &system)
 {
     VersionID v = readHeader(ds, r_system);
     
-    if (v == 1)
+    if (v == 2)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> system.uid >> system.sysname
+            >> system.molgroups[0] >> system.molgroups[1] 
+            >> system.sysmonitors
+            >> system.cons
+            >> static_cast<MolGroupsBase&>(system);
+
+        system.rebuildIndex();
+            
+        system.sysversion = systemRegistry().registerObject(system.uid);
+    }
+    else if (v == 1)
     {
         SharedDataStream sds(ds);
         
@@ -200,6 +215,7 @@ System::System(const System &other)
        : ConcreteProperty<System,MolGroupsBase>(other),
          uid(other.uid), sysname(other.sysname), sysversion(other.sysversion),
          sysmonitors(other.sysmonitors),
+         cons(other.cons),
          mgroups_by_num(other.mgroups_by_num)
 {
     molgroups[0] = other.molgroups[0];
@@ -221,6 +237,7 @@ System& System::operator=(const System &other)
         molgroups[0] = other.molgroups[0];
         molgroups[1] = other.molgroups[1];
         sysmonitors = other.sysmonitors;
+        cons = other.cons;
         mgroups_by_num = other.mgroups_by_num;
         
         MolGroupsBase::operator=(other);
@@ -438,6 +455,20 @@ System& System::operator+=(const MoleculeGroup &molgroup)
     return *this;
 }
 
+/** Convienient syntax for System::add */
+System& System::operator+=(const Constraint &constraint)
+{
+    this->add(constraint);
+    return *this;
+}
+
+/** Convienient syntax for System::add */
+System& System::operator+=(const Constraints &constraints)
+{
+    this->add(constraints);
+    return *this;
+}
+
 /** Convienient syntax for System::remove */
 System& System::operator-=(const FF &forcefield)
 {
@@ -470,6 +501,20 @@ System& System::operator-=(const MGID &mgid)
 System& System::operator-=(const MolID &molid)
 {
     this->remove(molid);
+    return *this;
+}
+
+/** Convienient syntax for System::remove */
+System& System::operator-=(const Constraint &constraint)
+{
+    this->remove(constraint);
+    return *this;
+}
+
+/** Convienient syntax for System::remove */
+System& System::operator-=(const Constraints &constraints)
+{
+    this->remove(constraints);
     return *this;
 }
 
@@ -566,6 +611,12 @@ int System::nMonitors() const
 int System::nForceFields() const
 {
     return this->_pvt_forceFields().nForceFields();
+}
+
+/** Return the number of constraints on the system */
+int System::nConstraints() const
+{
+    return cons.count();
 }
 
 /** Return the index of the forcefield with ID 'ffid'
@@ -722,6 +773,59 @@ void System::setProperty(const FFID &ffid, const QString &name, const Property &
     sysversion.incrementMajor();
 }
 
+Q_GLOBAL_STATIC( QMutex, constraintMutex );
+Q_GLOBAL_STATIC( QSet<const System*>, constraintSet );
+
+/** This static function is used to apply the constraints to a system
+    to ensure that circular dependencies don't lead to infinite recursion. */
+static void applyConstraints(System &system)
+{
+    QMutexLocker lkr( constraintMutex() );
+    
+    QSet<const System*> *set = constraintSet();
+    
+    if (set->contains(&system))
+        //we are already processing the constraints
+        //of this system
+        return;
+
+    set->insert(&system);
+    lkr.unlock();
+    
+    //get all of the constraints and process them one at a time
+    Constraints constraints = system.constraints();
+    
+    for (Constraints::const_iterator it = constraints.constBegin();
+         it != constraints.constEnd();
+         ++it)
+    {
+        it->read().apply(system);
+    }
+    
+    lkr.relock();
+    set->remove(&system);
+}
+
+/** Apply the system constraints */
+void System::applyConstraints()
+{
+    System new_system(*this);
+    ::applyConstraints(new_system);
+
+    this->operator=(new_system);
+}
+
+/** Return whether or not the constraints are satisfied */
+bool System::constraintsSatisfied()
+{
+    if (this->nConstraints() > 0)
+    {
+        return cons.areSatisfied(*this);
+    }
+    else
+        return true;
+}
+
 /** Set the energy component equal to the constant value 'value'. This will
     replace any existing component with this value, although it is an error
     to try to replace an energy component of one of the constituent forcefields
@@ -730,8 +834,13 @@ void System::setProperty(const FFID &ffid, const QString &name, const Property &
 */
 void System::setComponent(const Symbol &symbol, double value)
 {
-    this->_pvt_forceFields().setComponent(symbol, value);
-    sysversion.incrementMajor();
+    System new_system(*this);
+    
+    new_system._pvt_forceFields().setComponent(symbol, value);
+    ::applyConstraints(new_system);
+    new_system.sysversion.incrementMajor();
+
+    this->operator=(new_system);
 }
 
 /** Set the energy component equal to the expression 'expression'. This will
@@ -742,8 +851,13 @@ void System::setComponent(const Symbol &symbol, double value)
 */
 void System::setComponent(const Symbol &symbol, const SireCAS::Expression &expression)
 {
-    this->_pvt_forceFields().setComponent(symbol, expression);
-    sysversion.incrementMajor();
+    System new_system(*this);
+
+    new_system._pvt_forceFields().setComponent(symbol, expression);
+    ::applyConstraints(new_system);
+    new_system.sysversion.incrementMajor();
+
+    this->operator=(new_system);
 }
 
 /** Return the energy component represented by the symbol 'symbol'
@@ -871,6 +985,12 @@ const ForceFields& System::forceFields() const
 const MoleculeGroups& System::extraGroups() const
 {
     return this->_pvt_moleculeGroups();
+}
+
+/** Return all of the contraints that are applied to the system */
+const Constraints& System::constraints() const
+{
+    return cons;
 }
 
 /** Completely clear all statistics held in the monitors */
@@ -1024,6 +1144,45 @@ void System::add(const MoleculeGroup &molgroup)
     }
 }
 
+/** Add the passed constraint to the system */
+void System::add(const Constraints &constraints)
+{
+    System new_system(*this);
+    
+    int nconstraints = new_system.cons.count();
+    
+    new_system.cons.add(constraints);
+    
+    if (new_system.cons.count() != nconstraints)
+    {
+        new_system.sysversion.incrementMajor();
+        new_system.applyConstraints();
+        this->operator=(new_system);
+    }
+}
+
+/** Add the passed constraint to the system */
+void System::add(const Constraint &constraint)
+{
+    this->add( Constraints(constraint) );
+}
+
+/** Set the constraints for the system equal to 'constraints' */
+void System::setConstraints(const Constraints &constraints)
+{
+    if (cons == constraints)
+        return;
+
+    System new_system(*this);
+    
+    new_system.cons = constraints;
+    new_system.sysversion.incrementMajor();
+    
+    new_system.applyConstraints();
+    
+    this->operator=(new_system);
+}
+
 /** Remove all monitors that match the ID 'monid'
 
     \throw SireSystem::missing_monitor
@@ -1154,6 +1313,23 @@ void System::remove(const MolID &molid)
     }
 }
 
+/** Remove the constraints in 'constraints' from the list of constraints
+    that are applied to this system */
+void System::remove(const Constraints &constraints)
+{
+    int nconstraints = cons.count();
+    cons.remove(constraints);
+    
+    if (cons.count() != nconstraints)
+        sysversion.incrementMajor();
+}
+
+/** Remove the passed constraint from this system */
+void System::remove(const Constraint &constraint)
+{
+    this->remove( Constraints(constraint) );
+}
+
 /** Completely remove all molecules from this system */
 void System::removeAllMolecules()
 {
@@ -1205,6 +1381,17 @@ void System::removeAllForceFields()
         this->removeFromIndex(mgnum);
         mgroups_by_num.remove(mgnum);
     }
+    
+    sysversion.incrementMajor();
+}
+
+/** Remove all constraints from this system */
+void System::removeAllConstraints()
+{
+    if (cons.count() == 0)
+        return;
+
+    cons = Constraints();
     
     sysversion.incrementMajor();
 }

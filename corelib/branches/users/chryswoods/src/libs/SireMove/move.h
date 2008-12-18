@@ -108,6 +108,8 @@ public:
     
     virtual void clearStatistics()=0;
     
+    virtual QString toString() const=0;
+    
     virtual void move(System &system, int nmoves, bool record_stats)=0;
 
     void move(System &system);
@@ -202,6 +204,8 @@ public:
     {
         return new NullMove(*this);
     }
+    
+    QString toString() const;
     
     void clearStatistics();
     

@@ -154,6 +154,21 @@ bool WeightedMoves::operator!=(const WeightedMoves &other) const
     return mvs != other.mvs;
 }
 
+/** Return a string representation */
+QString WeightedMoves::toString() const
+{
+    QStringList moves;
+    
+    for (int i=0; i<mvs.count(); ++i)
+    {
+        moves.append( QObject::tr("   %1 : %2").arg(i+1)
+                                            .arg(mvs.at(i).get<0>()->toString()) );
+    }
+    
+    return QObject::tr("WeightedMoves(\n%1\n             )")
+                .arg(moves.join("\n"));
+}
+
 /** Recalculate all of the weights */
 void WeightedMoves::recalculateWeights()
 {
@@ -242,12 +257,17 @@ System WeightedMoves::move(const System &system, int nmoves, bool record_stats)
 
     try
     {
+        Moves::preCheck(run_system);
+    
         int n = mvs.count();
         tuple<MovePtr,double> *mvs_array = mvs.data();
 
         if (n == 1)
         {
             mvs_array[0].get<0>().edit().move(run_system, nmoves, record_stats);
+            
+            Moves::postCheck(run_system);
+            
             return run_system;
         }
 
@@ -273,6 +293,8 @@ System WeightedMoves::move(const System &system, int nmoves, bool record_stats)
                 }
             }
         }
+        
+        Moves::postCheck(run_system);
     }
     catch(...)
     {

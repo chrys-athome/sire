@@ -33,6 +33,7 @@
 
 #include "sysname.h"
 #include "systemmonitors.h"
+#include "constraints.h"
 
 #include "SireVol/space.h"
 
@@ -135,12 +136,16 @@ public:
     
     System& operator+=(const FF &forcefield);
     System& operator+=(const MoleculeGroup &molgroup);
+    System& operator+=(const Constraint &constraint);
+    System& operator+=(const Constraints &constraints);
     
     System& operator-=(const FF &forcefield);
     System& operator-=(const MoleculeGroup &molgroup);
     System& operator-=(const FFID &ffid);
     System& operator-=(const MGID &mgid);
     System& operator-=(const MolID &molid);
+    System& operator-=(const Constraint &constraint);
+    System& operator-=(const Constraints &constraints);
     
     const QUuid& UID() const;
     const SysName& name() const;
@@ -149,6 +154,10 @@ public:
     void setName(const QString &newname);
 
     void collectStats();
+
+    void applyConstraints();
+
+    bool constraintsSatisfied();
 
     using SireMol::MolGroupsBase::at;
     
@@ -164,6 +173,7 @@ public:
 
     int nForceFields() const;
     int nMonitors() const;
+    int nConstraints() const;
     
     FFIdx ffIdx(const FFID &ffid) const;
     
@@ -217,6 +227,7 @@ public:
     const SystemMonitors& monitors() const;
     const ForceFields& forceFields() const;
     const MoleculeGroups& extraGroups() const;
+    const Constraints& constraints() const;
     
     void clearStatistics();
     void mustNowRecalculateFromScratch();
@@ -240,6 +251,11 @@ public:
     void add(const FF &forcefield);
     void add(const MoleculeGroup &molgroup);
     
+    void add(const Constraint &constraint);
+    void add(const Constraints &constraints);
+
+    void setConstraints(const Constraints &constraints);
+    
     void remove(const MonitorID &monid);
     
     void remove(const FFID &ffid);
@@ -250,10 +266,14 @@ public:
 
     void remove(const MolID &molid);
 
+    void remove(const Constraint &constraint);
+    void remove(const Constraints &constraints);
+
     void removeAllMolecules();
     void removeAllMoleculeGroups();
     void removeAllForceFields();
     void removeAllMonitors();
+    void removeAllConstraints();
 
     //overloading MolGroupsBase virtual functions
     const MoleculeGroup& at(MGNum mgnum) const;
@@ -368,6 +388,9 @@ private:
 
     /** All of the monitors that monitor this system */
     SystemMonitors sysmonitors;
+
+    /** All of the constraints that are applied to this system */
+    Constraints cons;
     
     /** The index of which of the two set of MoleculeGroups each
         individual molecule group in this set is in */

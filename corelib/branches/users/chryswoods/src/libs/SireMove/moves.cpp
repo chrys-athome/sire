@@ -39,7 +39,9 @@
 #include "SireUnits/dimensions.h"
 
 #include "SireSystem/system.h"
+#include "SireSystem/constraints.h"
 
+#include "SireSystem/errors.h"
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
@@ -416,6 +418,72 @@ void Moves::setFugacity(const Pressure &fugacity)
     this->_pvt_setFugacity( fugacity );
 }
 
+/** Perform a pre-check to ensure that the system is in a sane state
+    before the moves are run */
+void Moves::preCheck(System &system) const
+{
+    if (not system.constraintsSatisfied())
+    {
+        QStringList unsatisfied_constraints;
+    
+        //a constraint is violated - get all unsatisfied constraints
+        Constraints constraints = system.constraints();
+        
+        for (Constraints::const_iterator it = constraints.constBegin();
+             it != constraints.constEnd();
+             ++it)
+        {
+            if (not it->read().isSatisfied(system))
+            {
+                unsatisfied_constraints.append( QObject::tr("%1 : %2")
+                        .arg(unsatisfied_constraints.count()+1)
+                        .arg(it->read().toString()) );
+            }
+        }
+        
+        throw SireSystem::constraint_error( QObject::tr(
+                "Cannot start running the moves as the system contains "
+                "unsatisfied constraints. The number of unsatisfied constraints "
+                "equals %1.\nHere are the unsatisfied constraints:\n%2")
+                    .arg(unsatisfied_constraints.count())
+                    .arg(unsatisfied_constraints.join("\n")), CODELOC );
+    }
+}
+
+/** Perform a post-check to ensure that the system is in a sane state
+    after the moves have run */
+void Moves::postCheck(System &system) const
+{
+    if (not system.constraintsSatisfied())
+    {
+        QStringList unsatisfied_constraints;
+    
+        //a constraint is violated - get all unsatisfied constraints
+        Constraints constraints = system.constraints();
+        
+        for (Constraints::const_iterator it = constraints.constBegin();
+             it != constraints.constEnd();
+             ++it)
+        {
+            if (not it->read().isSatisfied(system))
+            {
+                unsatisfied_constraints.append( QObject::tr("%1 : %2")
+                        .arg(unsatisfied_constraints.count()+1)
+                        .arg(it->read().toString()) );
+            }
+        }
+        
+        throw SireSystem::constraint_error( QObject::tr(
+                "Performing the moves has resulted in the system containing "
+                "unsatisfied constraints. The number of unsatisfied constraints "
+                "equals %1.\nHere are the unsatisfied constraints:\n%2\n"
+                "Here are the moves that were performed:\n%3")
+                    .arg(unsatisfied_constraints.count())
+                    .arg(unsatisfied_constraints.join("\n"))
+                    .arg(this->toString()), CODELOC );
+    }
+}
+
 /** Apply 'nmoves' moves on the system 'system', returning the system
     after the moves. Move statistics are not recorded */
 System Moves::move(const System &system, int nblocks)
@@ -518,6 +586,12 @@ bool SameMoves::operator!=(const SameMoves &other) const
     return mv != other.mv;
 }
 
+/** Return a string representation of these moves */
+QString SameMoves::toString() const
+{
+    return QObject::tr("SameMoves( %1 )").arg( mv.read().toString() );
+}
+
 /** Set the random number generator used at all points in all of the moves */
 void SameMoves::setGenerator(const RanGenerator &rangenerator)
 {
@@ -533,7 +607,15 @@ System SameMoves::move(const System &system, int nmoves, bool record_stats)
     
     try
     {
+        //ensure that the system is in a sane state before the moves
+        this->preCheck(new_system);
+
+        //perform the moves
         mv.edit().move(new_system, nmoves, record_stats);
+        
+        //ensure that the system has been placed into a sane state
+        //after the moves
+        this->postCheck(new_system);
     }
     catch(...)
     {

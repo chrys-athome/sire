@@ -481,6 +481,12 @@ bool NullMove::operator!=(const NullMove &other) const
     return false;
 }
 
+/** Return a string representation */
+QString NullMove::toString() const
+{
+    return QObject::tr("NullMove");
+}
+
 /** There are no statistics to clear */
 void NullMove::clearStatistics()
 {}

@@ -79,6 +79,8 @@ public:
     int size() const;
     int nMoveTypes() const;
     
+    virtual QString toString() const=0;
+    
     virtual void setEnergyComponent(const Symbol &component)=0;
     const Symbol& energyComponent() const;
 
@@ -122,6 +124,9 @@ public:
     static const SameMoves& null();
 
 protected:
+    void preCheck(System &system) const;
+    void postCheck(System &system) const;
+
     /** Set the temperature for all moves that have a constant temperature
         to 'temperature'. It has already been checked that these moves
         between them sample at constant temperature */
@@ -175,6 +180,8 @@ public:
     
     bool operator==(const SameMoves &other) const;
     bool operator!=(const SameMoves &other) const;
+    
+    QString toString() const;
     
     using Moves::move;
     

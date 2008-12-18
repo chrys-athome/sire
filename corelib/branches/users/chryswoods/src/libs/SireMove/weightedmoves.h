@@ -84,6 +84,8 @@ public:
         return new WeightedMoves(*this);
     }
     
+    QString toString() const;
+    
     void add(const Move &move, double weight=1);
     
     using Moves::move;

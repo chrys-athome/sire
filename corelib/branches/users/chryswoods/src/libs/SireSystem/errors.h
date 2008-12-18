@@ -213,12 +213,50 @@ public:
     }
 };
 
+/** This exception is thrown when a violation of a constraint
+    is detected
+
+    @author Christopher Woods
+*/
+class SIREMOL_EXPORT constraint_error : public siresystem_error
+{
+public:
+    constraint_error() : siresystem_error()
+    {}
+
+    constraint_error(QString err, QString place = QString::null)
+              : siresystem_error(err,place)
+    {}
+
+    constraint_error(const constraint_error &other) : siresystem_error(other)
+    {}
+
+    ~constraint_error() throw()
+    {}
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<constraint_error>() );
+    }
+
+    const char* what() const throw()
+    {
+        return constraint_error::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw constraint_error(*this);
+    }
+};
+
 }
 
 Q_DECLARE_METATYPE(SireSystem::missing_monitor)
 Q_DECLARE_METATYPE(SireSystem::duplicate_monitor)
 Q_DECLARE_METATYPE(SireSystem::missing_system)
 Q_DECLARE_METATYPE(SireSystem::duplicate_system)
+Q_DECLARE_METATYPE(SireSystem::constraint_error)
 
 SIRE_END_HEADER
 

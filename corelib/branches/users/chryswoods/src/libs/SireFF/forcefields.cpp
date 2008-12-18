@@ -1375,7 +1375,7 @@ QList<FFIdx> ForceFields::map(const FFName &ffname) const
         }
     }
 
-    if (not ffidxs.isEmpty())
+    if (ffidxs.isEmpty())
         throw SireFF::missing_forcefield( QObject::tr(
             "There are no forcefields in this set called %1. "
             "Available forcefields are called %2.")
