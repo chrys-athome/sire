@@ -783,7 +783,7 @@ static void applyConstraints(System &system)
     QMutexLocker lkr( constraintMutex() );
     
     QSet<const System*> *set = constraintSet();
-    
+
     if (set->contains(&system))
         //we are already processing the constraints
         //of this system

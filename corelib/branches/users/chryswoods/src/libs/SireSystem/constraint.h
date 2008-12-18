@@ -39,11 +39,15 @@ SIRE_BEGIN_HEADER
 namespace SireSystem
 {
 class Constraint;
+class NullConstraint;
 class PropertyConstraint;
 }
 
 QDataStream& operator<<(QDataStream&, const SireSystem::Constraint&);
 QDataStream& operator>>(QDataStream&, SireSystem::Constraint&);
+
+QDataStream& operator<<(QDataStream&, const SireSystem::NullConstraint&);
+QDataStream& operator>>(QDataStream&, SireSystem::NullConstraint&);
 
 QDataStream& operator<<(QDataStream&, const SireSystem::PropertyConstraint&);
 QDataStream& operator>>(QDataStream&, SireSystem::PropertyConstraint&);
@@ -86,14 +90,53 @@ public:
     
     virtual QString toString() const=0;
     
-    virtual void apply(System &system) const=0;
+    virtual bool apply(System &system) const=0;
 
     virtual bool isSatisfied(System &system) const=0;
     
     void assertSatisfied(System &system) const;
     
+    static const NullConstraint& null();
+    
 protected:
     Constraint& operator=(const Constraint &other);
+};
+
+/** The null constraint */
+class SIRESYSTEM_EXPORT NullConstraint
+         : public SireBase::ConcreteProperty<NullConstraint,Constraint>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const NullConstraint&);
+friend QDataStream& ::operator>>(QDataStream&, NullConstraint&);
+
+public:
+    NullConstraint();
+    
+    NullConstraint(const NullConstraint &other);
+    
+    ~NullConstraint();
+    
+    NullConstraint& operator=(const NullConstraint &other);
+    
+    bool operator==(const NullConstraint &other) const;
+    bool operator!=(const NullConstraint &other) const;
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<NullConstraint>() );
+    }
+    
+    NullConstraint* clone() const
+    {
+        return new NullConstraint(*this);
+    }
+    
+    QString toString() const;
+    
+    bool isSatisfied(System &system) const;
+    
+    bool apply(System &system) const;
 };
 
 /** This constraint is used to constrain the value of a
@@ -142,7 +185,7 @@ public:
     
     bool isSatisfied(System &system) const;
     
-    void apply(System &system) const;
+    bool apply(System &system) const;
 
 private:
     /** The ID of the forcefields whose properties are being constrained */
@@ -159,9 +202,11 @@ typedef SireBase::PropPtr<Constraint> ConstraintPtr;
 
 }
 
+Q_DECLARE_METATYPE( SireSystem::NullConstraint )
 Q_DECLARE_METATYPE( SireSystem::PropertyConstraint )
 
 SIRE_EXPOSE_CLASS( SireSystem::Constraint )
+SIRE_EXPOSE_CLASS( SireSystem::NullConstraint )
 SIRE_EXPOSE_CLASS( SireSystem::PropertyConstraint )
 
 SIRE_EXPOSE_PROPERTY( SireSystem::ConstraintPtr, SireSystem::Constraint )

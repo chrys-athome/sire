@@ -103,6 +103,105 @@ void Constraint::assertSatisfied(System &system) const
 }
 
 //////////
+////////// Implementation of NullConstraint
+//////////
+
+static const RegisterMetaType<NullConstraint> r_nullconstraint;
+
+/** Serialise to a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, 
+                                          const NullConstraint &nullconstraint)
+{
+    writeHeader(ds, r_nullconstraint, 1);
+    
+    ds << static_cast<const Constraint&>(nullconstraint);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, 
+                                          NullConstraint &nullconstraint)
+{
+    VersionID v = readHeader(ds, r_nullconstraint);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<Constraint&>(nullconstraint);
+    }
+    else
+        throw version_error(v, "1", r_nullconstraint, CODELOC);
+        
+    return ds;
+}
+
+/** Null constructor */
+NullConstraint::NullConstraint() : ConcreteProperty<NullConstraint,Constraint>()
+{}
+
+/** Copy constructor */
+NullConstraint::NullConstraint(const NullConstraint &other)
+               : ConcreteProperty<NullConstraint,Constraint>(other)
+{}
+
+/** Destructor */
+NullConstraint::~NullConstraint()
+{}
+
+/** Copy assignment operator */
+NullConstraint& NullConstraint::operator=(const NullConstraint &other)
+{
+    Constraint::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool NullConstraint::operator==(const NullConstraint&) const
+{
+    return true;
+}
+
+/** Comparison operator */
+bool NullConstraint::operator!=(const NullConstraint&) const
+{
+    return false;
+}
+
+/** Return a string representation */
+QString NullConstraint::toString() const
+{
+    return QObject::tr("NullConstraint");
+}
+
+/** Return whether this constraint is satisfied */
+bool NullConstraint::isSatisfied(System&) const
+{
+    return true;
+}
+
+/** Apply this constraint - return whether or not this
+    changes the system */
+bool NullConstraint::apply(System&) const
+{
+    return false;
+}
+
+static SharedPolyPointer<NullConstraint> shared_null;
+
+const NullConstraint& Constraint::null()
+{
+    if (shared_null.constData() == 0)
+    {
+        QMutexLocker lkr( SireBase::globalLock() );
+        
+        if (shared_null.constData() == 0)
+            shared_null = new NullConstraint();
+    }
+    
+    return *(shared_null.constData());
+}
+
+//////////
 ////////// Implementation of PropertyConstraint
 //////////
 
@@ -224,11 +323,15 @@ bool PropertyConstraint::isSatisfied(System &system) const
 }
 
 /** Apply this constraint to the system */
-void PropertyConstraint::apply(System &system) const
+bool PropertyConstraint::apply(System &system) const
 {
     //evaluate the equation
     Values vals = system.componentValues( eqn.symbols() );
     double val = eqn.evaluate(vals);
     
+    Version old_version = system.version();
+    
     system.setProperty(ffid, propname, VariantProperty(val));
+
+    return old_version != system.version();
 }
