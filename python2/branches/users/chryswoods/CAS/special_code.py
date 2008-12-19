@@ -63,7 +63,8 @@ implicitly_convertible = [ ("SireCAS::SymbolComplex",
                            ("QHash<SireCAS::Symbol,double>",
                             "SireCAS::Values"),
                            ("SireCAS::SymbolValue",
-                            "SireCAS::Values")
+                            "SireCAS::Values"),
+                           ("double", "SireCAS::Expression")
                          ]
 
 def fixMB(mb):
