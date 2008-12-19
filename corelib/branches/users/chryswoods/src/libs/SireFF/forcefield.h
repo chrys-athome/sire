@@ -145,6 +145,8 @@ protected:
     
     void group_setName(quint32 i, const QString &new_name);
 
+    void reindex();
+
 private:
     NullFF(bool);
     

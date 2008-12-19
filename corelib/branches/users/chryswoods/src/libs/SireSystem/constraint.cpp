@@ -335,3 +335,127 @@ bool PropertyConstraint::apply(System &system) const
 
     return old_version != system.version();
 }
+
+//////////
+////////// Implementation of ComponentConstraint
+//////////
+
+static const RegisterMetaType<ComponentConstraint> r_compconstraint;
+
+/** Serialise to a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, 
+                                          const ComponentConstraint &constraint)
+{
+    writeHeader(ds, r_compconstraint, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << constraint.constrained_component
+        << constraint.eqn
+        << static_cast<const Constraint&>(constraint);
+        
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
+                                          ComponentConstraint &constraint)
+{
+    VersionID v = readHeader(ds, r_compconstraint);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> constraint.constrained_component
+            >> constraint.eqn
+            >> static_cast<Constraint&>(constraint);
+    }
+    else
+        throw version_error(v, "1", r_compconstraint, CODELOC);
+        
+    return ds;
+}
+
+/** Null constructor */
+ComponentConstraint::ComponentConstraint()
+                    : ConcreteProperty<ComponentConstraint,Constraint>()
+{}
+
+/** Construct to constrain the component with symbol 'component'
+    to have the value resulting from the expression 'expression' */
+ComponentConstraint::ComponentConstraint(const Symbol &component,
+                                         const SireCAS::Expression &expression)
+                   : ConcreteProperty<ComponentConstraint,Constraint>(),
+                     constrained_component(component), eqn(expression)
+{}
+
+/** Copy constructor */
+ComponentConstraint::ComponentConstraint(const ComponentConstraint &other)
+                   : ConcreteProperty<ComponentConstraint,Constraint>(other),
+                     constrained_component(other.constrained_component), eqn(other.eqn)
+{}
+
+/** Destructor */
+ComponentConstraint::~ComponentConstraint()
+{}
+
+/** Copy assignment operator */
+ComponentConstraint& ComponentConstraint::operator=(const ComponentConstraint &other)
+{
+    if (this != &other)
+    {
+        Constraint::operator=(other);
+        constrained_component = other.constrained_component;
+        eqn = other.eqn;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool ComponentConstraint::operator==(const ComponentConstraint &other) const
+{
+    return constrained_component == other.constrained_component and 
+           eqn == other.eqn;
+}
+
+/** Comparison operator */
+bool ComponentConstraint::operator!=(const ComponentConstraint &other) const
+{
+    return not this->operator==(other);
+}
+
+/** Return a string representation of the constraint */
+QString ComponentConstraint::toString() const
+{
+    return QObject::tr("ComponentConstraint( component=%1 expression=%2 )")
+                .arg(constrained_component.toString(), eqn.toString());
+}
+
+/** Return whether or not this constraint is satisfied in the passed system */
+bool ComponentConstraint::isSatisfied(System &system) const
+{
+    //evaluate the equation
+    Values vals = system.componentValues( eqn.symbols() );
+    double val = eqn.evaluate(vals);
+
+    //does the system have a component with the right value?
+    double sysval = system.componentValue(constrained_component);
+                                                   
+    return val == sysval;
+}
+
+/** Apply this constraint to the system */
+bool ComponentConstraint::apply(System &system) const
+{
+    //evaluate the equation
+    Values vals = system.componentValues( eqn.symbols() );
+    double val = eqn.evaluate(vals);
+    
+    Version old_version = system.version();
+    
+    system.setComponent(constrained_component, val);
+
+    return old_version != system.version();
+}

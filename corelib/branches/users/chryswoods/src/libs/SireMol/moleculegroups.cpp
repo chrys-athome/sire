@@ -84,14 +84,11 @@ static const RegisterMetaType<MolGroupsBase> r_molgroupsbase(MAGIC_ONLY,
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
                                        const MolGroupsBase &molgroupsbase)
 {
-    writeHeader(ds, r_molgroupsbase, 1);
+    writeHeader(ds, r_molgroupsbase, 2);
 
     SharedDataStream sds(ds);
     
-    sds << molgroupsbase.mgidx_to_num
-        << molgroupsbase.mgname_to_mgnum
-        << molgroupsbase.molnum_to_mgnum
-        << static_cast<const Property&>(molgroupsbase);
+    sds << molgroupsbase.mgidx_to_num << static_cast<const Property&>(molgroupsbase);
         
     return ds;
 }
@@ -102,7 +99,15 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 {
     VersionID v = readHeader(ds, r_molgroupsbase);
     
-    if (v == 1)
+    if (v == 2)
+    {
+        SharedDataStream sds(ds);
+    
+        sds >> molgroupsbase.mgidx_to_num >> static_cast<Property&>(molgroupsbase);
+        
+        molgroupsbase.reindex();
+    }
+    else if (v == 1)
     {
         SharedDataStream sds(ds);
         
@@ -2044,6 +2049,34 @@ const MoleculeGroup& MoleculeGroups::at(MGNum mgnum) const
                 .arg( Sire::toString(this->mgNums()) ), CODELOC );
                 
     return it->read();
+}
+
+/** Completely reindex all of the groups */
+void MoleculeGroups::reindex()
+{
+    //get the current order of groups
+    QList<MGNum> mgnums = this->mgNums();
+
+    //completely clear the index
+    MolGroupsBase::clearIndex();
+    
+    QSet<MGNum> remaining_groups = mgroups.keys().toSet();
+    
+    //reindex the groups, in order
+    foreach (MGNum mgnum, mgnums)
+    {
+        if (remaining_groups.contains(mgnum))
+        {
+            this->addToIndex( mgroups.value(mgnum) );
+            remaining_groups.remove(mgnum);
+        }
+    }
+    
+    //add any remaining groups
+    foreach (MGNum mgnum, remaining_groups)
+    {
+        this->addToIndex( mgroups.value(mgnum) );
+    }
 }
 
 /** Add the molecule group 'molgroup' to this set. This does

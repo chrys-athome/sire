@@ -382,3 +382,8 @@ void NullFF::group_setName(quint32 i, const QString &new_name)
 {
     throwNoGroups();
 }
+
+void NullFF::reindex()
+{
+    MolGroupsBase::clearIndex();
+}

@@ -181,6 +181,9 @@ protected:
 
     void _pvt_updateName();
 
+    /// implementation of virtual MolGroupsBase functions
+    void reindex();
+
 private:
     void assertValidGroup(quint32 i) const;
 

@@ -11,6 +11,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIRECAS_HEADERS
       complexvalues.h
       constant.h
+      doublefunc.h
       errors.h
       exbase.h
       exp.h
@@ -26,6 +27,7 @@ set ( SIRECAS_HEADERS
       integrationconstant.h
       invhyperbolicfuncs.h
       invtrigfuncs.h
+      minmax.h
       powerconstant.h
       power.h
       product.h
@@ -47,7 +49,8 @@ set ( SIRECAS_SOURCES
       register_sirecas.cpp
 
       complexvalues.cpp           
-      constant.cpp                
+      constant.cpp
+      doublefunc.cpp                
       errors.cpp                  
       exbase.cpp                  
       exp.cpp                     
@@ -62,7 +65,8 @@ set ( SIRECAS_SOURCES
       identities.cpp              
       integrationconstant.cpp     
       invhyperbolicfuncs.cpp      
-      invtrigfuncs.cpp            
+      invtrigfuncs.cpp 
+      minmax.cpp           
       powerconstant.cpp           
       power.cpp                   
       product.cpp                 

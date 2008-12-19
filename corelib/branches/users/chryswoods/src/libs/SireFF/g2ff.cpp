@@ -117,12 +117,25 @@ G2FF::G2FF(bool allow_overlap) : FF(), allow_overlap_of_atoms(allow_overlap)
     MolGroupsBase::addToIndex(molgroup[1]);
 }
 
+/** Reindex the two groups */
+void G2FF::reindex()
+{
+    MolGroupsBase::clearIndex();
+    MolGroupsBase::addToIndex( molgroup[0] );
+    MolGroupsBase::addToIndex( molgroup[1] );
+}
+
 /** Update the name of the molecule group in this forcefield so that
     it matches the name of the forcefield */
 void G2FF::_pvt_updateName()
 {
     molgroup[0].setName( QString("%1_A").arg(this->name()) );
     molgroup[1].setName( QString("%1_B").arg(this->name()) );
+    
+    molgroup[0].setNewNumber();
+    molgroup[1].setNewNumber();
+    
+    this->reindex();
 }
 
 /** Copy constructor */

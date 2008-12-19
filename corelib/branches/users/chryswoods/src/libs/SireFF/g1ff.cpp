@@ -138,11 +138,20 @@ const MoleculeGroup& G1FF::at(MGNum mgnum) const
     return molgroup;
 }
 
+/** Reindex the collection of molecule groups */
+void G1FF::reindex()
+{
+    MolGroupsBase::clearIndex();
+    MolGroupsBase::addToIndex( molgroup );
+}
+
 /** Update the name of the molecule group in this forcefield so that
     it matches the name of the forcefield */
 void G1FF::_pvt_updateName()
 {
     molgroup.setName( this->name() );
+    molgroup.setNewNumber();
+    this->reindex();
 }
 
 /** Assert that this forcefield contains the group with number 'mgnum'

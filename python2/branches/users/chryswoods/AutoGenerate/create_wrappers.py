@@ -221,6 +221,9 @@ def export_class(mb, classname, aliases, includes, special_code):
                        
                   c.add_registration_code( "def( \"__copy__\", &__copy__)" )
                   
+                  c.add_registration_code( "def( \"__deepcopy__\", &__copy__)" )
+                  c.add_registration_code( "def( \"clone\", &__copy__)" )
+
                   #only do this once for the class
                   break
                   

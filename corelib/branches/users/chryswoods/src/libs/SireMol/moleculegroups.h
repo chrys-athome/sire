@@ -335,6 +335,8 @@ protected:
 
     Molecules matchToExistingVersion(const Molecules &molecules) const;
 
+    virtual void reindex()=0;
+
     void addToIndex(const MoleculeGroup &molgroup);
     void addToIndex(MGNum mgnum, MolNum molnum);
     void addToIndex(MGNum mgnum, const QSet<MolNum> &molnums);
@@ -481,6 +483,8 @@ protected:
                    QVarLengthArray<const MoleculeGroup*,10> &groups) const;
 
     QHash<MGNum,const MoleculeGroup*> getGroups() const;
+
+    void reindex();
 
 private:
     /** All of the MoleculeGroup objects in this collection, 

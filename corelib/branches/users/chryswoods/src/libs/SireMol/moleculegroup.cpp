@@ -1205,6 +1205,13 @@ void MoleculeGroup::setNumber(quint32 new_number)
     }
 }
 
+/** Give this group a new, unique number */
+void MoleculeGroup::setNewNumber()
+{
+    MGNum new_num = MGNum::getUniqueNumber();
+    this->setNumber(new_num);
+}
+
 /** Return the major version number of this group. This number
     changes whenever views are added or removed from this group,
     or when the name of this group changes */

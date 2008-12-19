@@ -350,6 +350,8 @@ protected:
 
     QHash<MGNum,const MoleculeGroup*> getGroups() const;
 
+    void reindex();
+
 private:
     void rebuildIndex();
 

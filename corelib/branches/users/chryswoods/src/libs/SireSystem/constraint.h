@@ -32,7 +32,9 @@
 #include "SireBase/property.h"
 
 #include "SireFF/ffidentifier.h"
+
 #include "SireCAS/expression.h"
+#include "SireCAS/symbol.h"
 
 SIRE_BEGIN_HEADER
 
@@ -41,6 +43,7 @@ namespace SireSystem
 class Constraint;
 class NullConstraint;
 class PropertyConstraint;
+class ComponentConstraint;
 }
 
 QDataStream& operator<<(QDataStream&, const SireSystem::Constraint&);
@@ -51,6 +54,9 @@ QDataStream& operator>>(QDataStream&, SireSystem::NullConstraint&);
 
 QDataStream& operator<<(QDataStream&, const SireSystem::PropertyConstraint&);
 QDataStream& operator>>(QDataStream&, SireSystem::PropertyConstraint&);
+
+QDataStream& operator<<(QDataStream&, const SireSystem::ComponentConstraint&);
+QDataStream& operator>>(QDataStream&, SireSystem::ComponentConstraint&);
 
 namespace SireSystem
 {
@@ -198,16 +204,72 @@ private:
     SireCAS::Expression eqn;
 };
 
+/** This constraint is used to constrain the value of a
+    component of the system to a specific value, or the result
+    of an expression based on other components in the system.
+    
+    You can use this constraint, for example, to constrain
+    the value of lambda_forwards to equal Min( 1, lambda+delta_lambda )
+    
+    @author Christopher Woods
+*/
+class SIRESYSTEM_EXPORT ComponentConstraint
+         : public SireBase::ConcreteProperty<ComponentConstraint,Constraint>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const ComponentConstraint&);
+friend QDataStream& ::operator>>(QDataStream&, ComponentConstraint&);
+
+public:
+    ComponentConstraint();
+    ComponentConstraint(const SireCAS::Symbol &component, 
+                        const SireCAS::Expression &expression);
+    
+    ComponentConstraint(const ComponentConstraint &other);
+    
+    ~ComponentConstraint();
+    
+    ComponentConstraint& operator=(const ComponentConstraint &other);
+    
+    bool operator==(const ComponentConstraint &other) const;
+    bool operator!=(const ComponentConstraint &other) const;
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<ComponentConstraint>() );
+    }
+    
+    ComponentConstraint* clone() const
+    {
+        return new ComponentConstraint(*this);
+    }
+    
+    QString toString() const;
+    
+    bool isSatisfied(System &system) const;
+    
+    bool apply(System &system) const;
+
+private:
+    /** The component whose value is constrained */
+    SireCAS::Symbol constrained_component;
+    
+    /** The expression used to calculate the value of the constraint */
+    SireCAS::Expression eqn;
+};
+
 typedef SireBase::PropPtr<Constraint> ConstraintPtr;
 
 }
 
 Q_DECLARE_METATYPE( SireSystem::NullConstraint )
 Q_DECLARE_METATYPE( SireSystem::PropertyConstraint )
+Q_DECLARE_METATYPE( SireSystem::ComponentConstraint )
 
 SIRE_EXPOSE_CLASS( SireSystem::Constraint )
 SIRE_EXPOSE_CLASS( SireSystem::NullConstraint )
 SIRE_EXPOSE_CLASS( SireSystem::PropertyConstraint )
+SIRE_EXPOSE_CLASS( SireSystem::ComponentConstraint )
 
 SIRE_EXPOSE_PROPERTY( SireSystem::ConstraintPtr, SireSystem::Constraint )
 

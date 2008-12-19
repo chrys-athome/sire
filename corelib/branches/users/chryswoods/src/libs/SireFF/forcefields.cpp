@@ -923,6 +923,25 @@ FF& ForceFields::_pvt_forceField(const MGNum &mgnum)
     return this->_pvt_forceField( *(mgroups_by_num.constFind(mgnum)) );
 }
 
+/** Reindex the moleculegroups and molecules */
+void ForceFields::reindex()
+{
+    MolGroupsBase::clearIndex();
+
+    int nffields = ffields_by_idx.count();
+    const FFPtr *ffields_array = ffields_by_idx.constData();
+    
+    for (int i=0; i<nffields; ++i)
+    {
+        const FFPtr &ffield = ffields_array[i];
+        
+        for (int j=0; j<ffield->nGroups(); ++j)
+        {
+            MolGroupsBase::addToIndex( ffield->at(MGIdx(j)) );
+        }
+    }
+}
+
 /** Rebuild the index of forcefields and groups */
 void ForceFields::rebuildIndex()
 {

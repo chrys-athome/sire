@@ -253,6 +253,7 @@ public:
     
     virtual void setName(const QString &new_name);
     virtual void setNumber(quint32 new_number);
+    void setNewNumber();
     
     quint64 majorVersion() const;
     quint64 minorVersion() const;

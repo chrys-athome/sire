@@ -217,11 +217,14 @@ void FF::setName(const QString &name)
         if (ffname != FFName(name))
         {
             ffname = FFName(name);
-        }
-    
-        this->_pvt_updateName();
+            
+            uid = QUuid::createUuid();
+            version_ptr.reset( new Incremint() );
+            
+            this->_pvt_updateName();
 
-        this->incrementVersion();
+            this->incrementVersion();
+        }
     }
     catch(...)
     {

@@ -77,6 +77,25 @@ static VersionRegistry<QUuid>& systemRegistry()
 //////// Implementation of SystemData
 ////////
 
+/** Rebuild the index of molecule groups and molecules in the system */
+void System::reindex()
+{
+    MolGroupsBase::clearIndex();
+    
+    QList<MGNum> mgnums0 = molgroups[0]->mgNums();
+    QList<MGNum> mgnums1 = molgroups[1]->mgNums();
+    
+    foreach (MGNum mgnum, mgnums0)
+    {
+        MolGroupsBase::addToIndex(molgroups[0]->at(mgnum));
+    }
+
+    foreach (MGNum mgnum, mgnums1)
+    {
+        MolGroupsBase::addToIndex(molgroups[1]->at(mgnum));
+    }
+}
+
 /** Rebuild the index of molecule groups in this System */
 void System::rebuildIndex()
 {
