@@ -664,9 +664,9 @@ Expression FFSymbolExpression::toExpression() const
 double FFSymbolExpression::value() const
 {
     throw SireError::incompatible_error( QObject::tr(
-        "You cannot multiply one forcefield component by another in "
-        "the forcefield expression %1.")
-            .arg(ffexpression.toString()), CODELOC );
+        "You cannot multiply one forcefield component (%1) by another in "
+        "the forcefield expression %2.")
+            .arg(symbol().toString(), ffexpression.toString()), CODELOC );
             
     return 0;
 }
@@ -1490,6 +1490,12 @@ void ForceFields::setComponent(const Symbol &symbol, double value)
 */
 void ForceFields::setComponent(const Symbol &symbol, const Expression &expression)
 {
+    if (expression.isConstant())
+    {
+        this->setComponent(symbol, expression.evaluate(Values()));
+        return;
+    }
+
     ForceFields old_state( *this );
     
     try

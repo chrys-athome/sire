@@ -149,8 +149,12 @@ void G1FF::reindex()
     it matches the name of the forcefield */
 void G1FF::_pvt_updateName()
 {
+    if (molgroup.name().value() == this->name().value())
+        return;
+
     molgroup.setName( this->name() );
     molgroup.setNewNumber();
+    
     this->reindex();
 }
 
@@ -222,6 +226,7 @@ void G1FF::group_setName(quint32 i, const QString &new_name)
 {
     assertValidGroup(i);
     molgroup.setName(new_name);
+    this->reindex();
 }
 
 /** Assert that there is no overlap between the atoms in 

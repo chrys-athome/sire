@@ -35,6 +35,8 @@
 
 #include "SireStream/datastream.h"
 
+#include <QDebug>
+
 using namespace SireStream;
 using namespace SireCAS;
 
@@ -194,4 +196,11 @@ QList<Factor> DoubleFunc::expand(const Symbol &symbol) const
     ret.append( Factor(symbol, *this, 0) );
     
     return ret;
+}
+
+/** Return a has for the function */
+uint DoubleFunc::hash() const
+{
+    qDebug() << CODELOC;
+    return (magic() << 16) | (ex0.hash() & 0x0000FF00) | (ex1.hash() & 0x000000FF);
 }

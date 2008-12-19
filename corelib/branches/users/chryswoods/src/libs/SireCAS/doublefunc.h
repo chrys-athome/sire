@@ -120,12 +120,6 @@ inline const Expression& DoubleFunc::y() const
     return ex1;
 }
 
-/** Return a has for the function */
-inline uint DoubleFunc::hash() const
-{
-    return (magic() << 16) | (ex0.hash() & 0x0000FF00) | (ex1.hash() & 0x000000FF);
-}
-
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 /** To declare a new function copy Min or Max (in minmax.h) */

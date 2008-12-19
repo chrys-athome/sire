@@ -130,7 +130,13 @@ public:
 
     double value(const Symbol &sym) const;
 
+    double operator[](const Symbol &sym) const;
+    double operator()(const Symbol &sym) const;
+
     const QHash<SymbolID, double>& values() const;
+
+    QList<Symbol> keys() const;
+    QList<Symbol> symbols() const;
 
     int count() const;
 

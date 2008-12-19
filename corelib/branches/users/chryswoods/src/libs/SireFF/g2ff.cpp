@@ -43,6 +43,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireFF;
 using namespace SireFF::detail;
 
@@ -129,13 +131,27 @@ void G2FF::reindex()
     it matches the name of the forcefield */
 void G2FF::_pvt_updateName()
 {
-    molgroup[0].setName( QString("%1_A").arg(this->name()) );
-    molgroup[1].setName( QString("%1_B").arg(this->name()) );
+    QString name_a = QString("%1_A").arg(this->name());
+    QString name_b = QString("%1_B").arg(this->name());
+
+    bool need_reindex = false;
+
+    if (molgroup[0].name().value() != name_a)
+    {
+        molgroup[0].setName(name_a);
+        molgroup[0].setNewNumber();
+        need_reindex = true;
+    }
     
-    molgroup[0].setNewNumber();
-    molgroup[1].setNewNumber();
+    if (molgroup[1].name().value() != name_b)
+    {
+        molgroup[1].setName(name_b);
+        molgroup[1].setNewNumber();
+        need_reindex = true;
+    }
     
-    this->reindex();
+    if (need_reindex)
+        this->reindex();
 }
 
 /** Copy constructor */
@@ -256,6 +272,7 @@ void G2FF::group_setName(quint32 i, const QString &new_name)
 {
     assertValidGroup(i);
     molgroup[i].setName(new_name);
+    this->reindex();
 }
 
 /** Assert that there is no overlap between the atoms in 

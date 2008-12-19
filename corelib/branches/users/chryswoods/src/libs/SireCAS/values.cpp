@@ -138,6 +138,27 @@ QString Values::toString() const
     return QString("{ %1 }").arg( words.join(", ") );
 }
 
+/** Return a list of the symbols that are present in this set */
+QList<Symbol> Values::symbols() const
+{
+    QList<Symbol> s;
+    
+    for (QHash<SymbolID,double>::const_iterator it = vals.constBegin();
+         it != vals.constEnd();
+         ++it)
+    {
+        s.append( Symbol(it.key()) );
+    }
+
+    return s;
+}
+
+/** Return a list of the symbols that are present in this set */
+QList<Symbol> Values::keys() const
+{
+    return this->symbols();
+}
+
 /** Construct from the passed values */
 Values::Values(const SymbolValue &val0)
 {
@@ -329,6 +350,18 @@ Values::~Values()
 double Values::value(const Symbol &sym) const
 {
     return vals.value(sym.ID(),0.0);
+}
+
+/** Return the value of the Symbol with ID 'id', or 0.0 if there is no such symbol */
+double Values::operator[](const Symbol &sym) const
+{
+    return this->value(sym);
+}
+
+/** Return the value of the Symbol with ID 'id', or 0.0 if there is no such symbol */
+double Values::operator()(const Symbol &sym) const
+{
+    return this->value(sym);
 }
 
 /** Add the contents of 'other' to this set - this overwrites any

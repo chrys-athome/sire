@@ -853,13 +853,19 @@ bool System::constraintsSatisfied()
 */
 void System::setComponent(const Symbol &symbol, double value)
 {
-    System new_system(*this);
+    System old_state(*this);
     
-    new_system._pvt_forceFields().setComponent(symbol, value);
-    ::applyConstraints(new_system);
-    new_system.sysversion.incrementMajor();
-
-    this->operator=(new_system);
+    try
+    {
+        _pvt_forceFields().setComponent(symbol, value);
+        ::applyConstraints(*this);
+        sysversion.incrementMajor();
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
 }
 
 /** Set the energy component equal to the expression 'expression'. This will
@@ -870,13 +876,19 @@ void System::setComponent(const Symbol &symbol, double value)
 */
 void System::setComponent(const Symbol &symbol, const SireCAS::Expression &expression)
 {
-    System new_system(*this);
+    System old_state(*this);
 
-    new_system._pvt_forceFields().setComponent(symbol, expression);
-    ::applyConstraints(new_system);
-    new_system.sysversion.incrementMajor();
-
-    this->operator=(new_system);
+    try
+    {
+        _pvt_forceFields().setComponent(symbol, expression);
+        ::applyConstraints(*this);
+        sysversion.incrementMajor();
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+        throw;
+    }
 }
 
 /** Return the energy component represented by the symbol 'symbol'
