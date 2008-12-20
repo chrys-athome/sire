@@ -447,7 +447,7 @@ void ProtoMS::processAngleDeltaLine(const QStringList &words, const Molecule &mo
     try
     {
         zmatrix.setAngleDelta( atom.index(), bond.index(), angle.index(),
-                               words[17].toDouble() * radians );
+                               words[17].toDouble() * degrees );
     }
     catch(const SireMove::zmatrix_error&)
     {
@@ -490,7 +490,7 @@ void ProtoMS::processDihedralDeltaLine(const QStringList &words, const Molecule 
     {
         zmatrix.setDihedralDelta( atom.index(), bond.index(), 
                                   angle.index(), dihedral.index(),
-                                  words[22].toDouble() * radians );
+                                  words[22].toDouble() * degrees );
     }
     catch(const SireMove::zmatrix_error &e)
     {
@@ -562,7 +562,7 @@ void ProtoMS::processAngleLine(const QStringList &words, const Molecule &mol,
     Symbol theta = InternalPotential::symbols().angle().theta();
     
     Expression anglefunc = words[17].toDouble() 
-                    * SireMaths::pow_2( theta - (words[19].toDouble()*radians).value() );
+                * SireMaths::pow_2( theta - (words[19].toDouble()*degrees).to(radians) );
 
     Atom atom0, atom1, atom2;
 
@@ -634,7 +634,7 @@ QString ProtoMS::processDihedralLine(QTextStream &ts, const QStringList &words,
         //  k0 { 1 + k1 [ cos(k2*phi + k3) ] }
         double k0 = words[3].toDouble();
         double k1 = words[5].toDouble();
-        double k2 = (words[7].toDouble() * radians).value();
+        double k2 = (words[7].toDouble() * radians).to(radians);
         double k3 = words[9].toDouble();
         
         dihedralfunc += k0 * ( 1 + k1*( Cos(k2*phi + k3) ) );

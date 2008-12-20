@@ -38,6 +38,8 @@
 
 #include "SireStream/datastream.h"
 
+#include <QDebug>
+
 using namespace SireStream;
 using namespace SireCAS;
 

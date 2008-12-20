@@ -11,7 +11,7 @@ from Sire.ID import *
 
 import sys
 
-protodir = "/exports/gpfs/chzcjw/ProtoMS"
+protodir = "/Users/chris/Work/ProtoMS"
 
 print "Parameterising COX2"
 

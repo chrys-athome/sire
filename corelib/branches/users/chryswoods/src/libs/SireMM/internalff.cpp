@@ -43,6 +43,7 @@
 #include "SireError/errors.h"
 
 #include "SireUnits/dimensions.h"
+#include "SireUnits/units.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -51,6 +52,8 @@
 
 #include <QDebug>
 
+#include <cstdio>
+
 using namespace SireMM;
 using namespace SireMM::detail;
 using namespace SireFF;
@@ -58,6 +61,7 @@ using namespace SireFF::detail;
 using namespace SireMaths;
 using namespace SireBase;
 using namespace SireUnits::Dimension;
+using namespace SireUnits;
 using namespace SireStream;
 
 ////////
@@ -385,7 +389,7 @@ void InternalPotential::calculatePhysicalEnergy(
                                        getCoords(angle.atom1(), cgroup_array),
                                        getCoords(angle.atom2(), cgroup_array) );
                            
-            vals.set(theta, ang);
+            vals.set(theta, ang.to(radians));
             
             angnrg += angle.function().evaluate(vals);
         }
@@ -414,7 +418,7 @@ void InternalPotential::calculatePhysicalEnergy(
                                           getCoords(dihedral.atom2(), cgroup_array),
                                           getCoords(dihedral.atom3(), cgroup_array) );
                            
-            vals.set(phi, ang);
+            vals.set(phi, ang.to(radians));
             
             dihnrg += dihedral.function().evaluate(vals);
         }

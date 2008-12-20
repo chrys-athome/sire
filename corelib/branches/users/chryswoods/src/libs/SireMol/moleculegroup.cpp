@@ -1329,45 +1329,61 @@ void MoleculeGroup::add(const Molecules &molecules)
     'MoleculeGroup', adding them as duplicates if they already
     exist in this set. Note that the version of the molecule
     will be taken from this set. */
-void MoleculeGroup::add(const MoleculeGroup &MoleculeGroup)
+void MoleculeGroup::add(const MoleculeGroup &molgroup)
 {
-    if (MoleculeGroup.isEmpty())
+    if (molgroup.isEmpty())
         return;
-    
-    MolGroupPvt &dref = *d;
     
     if (this->isEmpty())
     {
-        dref.molecules = MoleculeGroup.d->molecules;
-        dref.molidx_to_num = MoleculeGroup.d->molidx_to_num;
-        dref.molviewidx_to_num = MoleculeGroup.d->molviewidx_to_num;
+        MolGroupPvt &dref = *d;
+        dref.molecules = molgroup.d->molecules;
+        dref.molidx_to_num = molgroup.d->molidx_to_num;
+        dref.molviewidx_to_num = molgroup.d->molviewidx_to_num;
         
         dref.incrementMajor();
         return;
     }
     
-    //append the other group's index onto this group
-    foreach (MolNum molnum, MoleculeGroup.d->molidx_to_num)
+    QSharedDataPointer<MolGroupPvt> old_state = d;
+    
+    try
     {
-        if (not dref.molecules.contains(molnum))
-            dref.molidx_to_num.append(molnum);
-    }
+        MolGroupPvt &dref = *d;
     
-    for (QVector< tuple<MolNum,Index> >::const_iterator 
-                            it = dref.molviewidx_to_num.constBegin();
-         it != dref.molviewidx_to_num.constEnd();
-         ++it)
+        //append the other group's index onto this group
+        foreach (MolNum molnum, molgroup.d->molidx_to_num)
+        {
+            if (not dref.molecules.contains(molnum))
+                dref.molidx_to_num.append(molnum);
+        }
+    
+        for (QVector< tuple<MolNum,Index> >::const_iterator 
+                                it = molgroup.d->molviewidx_to_num.constBegin();
+             it != molgroup.d->molviewidx_to_num.constEnd();
+             ++it)
+        {
+            MolNum molnum = it->get<0>();
+
+            int nviews = 0;
+            
+            if (dref.molecules.contains(molnum))
+                nviews = dref.molecules.nViews(molnum);
+    
+            dref.molviewidx_to_num.append( tuple<MolNum,Index>( molnum,
+                            Index(it->get<1>() + nviews) ) );
+        }
+    
+        //now add the molecules themselves to this set
+        dref.molecules.add(molgroup.d->molecules);
+    
+        dref.incrementMajor();
+    }
+    catch(...)
     {
-        MolNum molnum = it->get<0>();
-    
-        dref.molviewidx_to_num.append( tuple<MolNum,Index>( molnum,
-                          Index(it->get<1>() + dref.molecules.nViews(molnum)) ) );
+        d = old_state;
+        throw;
     }
-    
-    //now add the molecules themselves to this set
-    dref.molecules.add(MoleculeGroup.d->molecules);
-    
-    dref.incrementMajor();
 }
 
 /** Add the view of the molecule in 'molview' to this group. 
@@ -1487,14 +1503,17 @@ QList<ViewsOfMol> MoleculeGroup::addIfUnique(const Molecules &molecules)
     
     This returns the added views.
 */
-QList<ViewsOfMol> MoleculeGroup::addIfUnique(const MoleculeGroup &MoleculeGroup)
+QList<ViewsOfMol> MoleculeGroup::addIfUnique(const MoleculeGroup &molgroup)
 {
-    QList<ViewsOfMol> added_views;
+    QList<ViewsOfMol> added_mols;
 
-    if (MoleculeGroup.isEmpty())
-        return added_views;
+    if (molgroup.isEmpty())
+        return added_mols;
         
     MolGroupPvt &dref = *d;
+
+    //which molecules already exist in this group?
+    QSet<MolNum> groupmols = dref.molecules.molNums();
     
     for (QVector< tuple<MolNum,Index> >::const_iterator 
                             it = dref.molviewidx_to_num.constBegin();
@@ -1504,16 +1523,35 @@ QList<ViewsOfMol> MoleculeGroup::addIfUnique(const MoleculeGroup &MoleculeGroup)
         MolNum molnum = it->get<0>();
         Index i = it->get<1>();
     
-        PartialMolecule molview = MoleculeGroup[molnum][i];
+        PartialMolecule molview = molgroup[molnum][i];
         
         if (dref.molecules.addIfUnique(molview))
-            added_views.append(molview);
+            added_mols.append(molview);
     }
-    
-    if (not added_views.isEmpty())
-        dref.incrementMajor();
+
+    //now update the index
+    if (not added_mols.isEmpty())
+    {
+        foreach (const ViewsOfMol &added_mol, added_mols)
+        {
+            MolNum molnum = added_mol.number();
+            
+            if (not groupmols.contains(molnum))
+                dref.molidx_to_num.append(molnum);
+                
+            quint32 nviews = dref.molecules.nViews(molnum);
+            quint32 nadded = added_mol.nViews();
+            
+            for (quint32 i=nviews-nadded-1; i<nviews; ++i)
+            {
+                dref.molviewidx_to_num.append( tuple<MolNum,Index>(molnum,Index(i)) );
+            }
+        }
         
-    return added_views;
+        dref.incrementMajor();
+    }
+        
+    return added_mols;
 }
 
 /** Synonym for MoleculeGroup::addIfUnique(molview) */
