@@ -876,7 +876,7 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
     }
 
     if ( not (editmol.hasProperty(charge_property) and
-             editmol.hasProperty(lj_property)) )
+              editmol.hasProperty(lj_property)) )
     {
         QStringList errors;
         errors.append( QObject::tr("The molecule is missing either the %1 (charge) "

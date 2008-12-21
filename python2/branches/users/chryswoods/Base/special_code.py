@@ -1,6 +1,8 @@
 
 
 implicitly_convertible = [ ("QString", "SireBase::PropertyName"),
+                           ("QString", "SireBase::VariantProperty"),
+                           ("double", "SireBase::VariantProperty"),
                            ("QHash<QString,SireBase::PropertyName>", "SireBase::PropertyMap") ] 
 
 def fixMB(mb):
