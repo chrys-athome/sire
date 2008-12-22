@@ -28,8 +28,6 @@
 
 #include "countflops.h"
 
-#ifdef SIRE_TIME_ROUTINES
-
 #include <QDebug>
 #include <cmath>
 
@@ -40,6 +38,8 @@
 #endif
 
 using namespace SireBase;
+
+#ifdef SIRE_TIME_ROUTINES
 
 ///////
 /////// Implementation of CountFlops
@@ -94,6 +94,8 @@ FlopsMark CountFlops::mark()
                      global_counter.flop_timer.elapsed());
 }
 
+#endif // SIRE_TIME_ROUTINES
+
 ///////
 /////// Implementation of FlopsMark
 ///////
@@ -110,7 +112,9 @@ FlopsMark& FlopsMark::operator=(const FlopsMark &other)
 /** Constructor - this creates a mark for NOW */
 FlopsMark::FlopsMark()
 {
-    this->operator=( CountFlops::mark() );
+    #ifdef SIRE_TIME_ROUTINES
+        this->operator=( CountFlops::mark() );
+    #endif
 }
 
 /** Constructor used by CountFlops */
@@ -198,6 +202,8 @@ QMutex FlopsMark::benchmark_mutex;
     if only additions are used */
 double FlopsMark::benchmarkSum()
 {
+    #ifdef SIRE_TIME_ROUTINES
+
     QMutexLocker lkr( &benchmark_mutex );
 
     const int nvals = 1000;
@@ -266,6 +272,12 @@ double FlopsMark::benchmarkSum()
     benchmark_sum = sum;
     
     return after_sum - before_sum;
+    
+    #else
+    
+    return 0;
+    
+    #endif
 }
 
 /** Perform a simple benchmark to work out what the realistic maximum
@@ -273,6 +285,8 @@ double FlopsMark::benchmarkSum()
     if a mixture of additions and products are used */
 double FlopsMark::benchmarkProduct()
 {
+    #ifdef SIRE_TIME_ROUTINES
+
     QMutexLocker lkr( &benchmark_mutex );
 
     const int nvals = 1000;
@@ -341,6 +355,12 @@ double FlopsMark::benchmarkProduct()
     benchmark_sum = sum;
     
     return after_sum - before_sum;
+    
+    #else
+    
+    return 0;
+    
+    #endif
 }
 
 /** Perform a simple benchmark to work out what the realistic maximum
@@ -348,6 +368,8 @@ double FlopsMark::benchmarkProduct()
     if a mixture of additions and divides are used */
 double FlopsMark::benchmarkQuotient()
 {
+    #ifdef SIRE_TIME_ROUTINES
+
     QMutexLocker lkr( &benchmark_mutex );
 
     const int nvals = 1000;
@@ -416,6 +438,12 @@ double FlopsMark::benchmarkQuotient()
     benchmark_sum = sum;
     
     return after_sum - before_sum;
+    
+    #else
+    
+    return 0;
+    
+    #endif
 }
 
 /** Perform a simple benchmark to work out what the realistic maximum
@@ -423,6 +451,8 @@ double FlopsMark::benchmarkQuotient()
     if a mixture of additions, products and sqrts are used */
 double FlopsMark::benchmark()
 {
+    #ifdef SIRE_TIME_ROUTINES
+
     QMutexLocker lkr( &benchmark_mutex );
 
     const int nvals = 1000;
@@ -490,6 +520,10 @@ double FlopsMark::benchmark()
     benchmark_sum = sum;
     
     return after_sum - before_sum;
+    
+    #else
+    
+    return 0;
+    
+    #endif
 }
-
-#endif // #ifdef SIRE_TIME_ROUTINES

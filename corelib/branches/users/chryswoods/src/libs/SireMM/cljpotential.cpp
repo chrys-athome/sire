@@ -736,6 +736,13 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     const quint32 ngroups0 = mol0.coordinates().count();
     const quint32 ngroups1 = mol1.coordinates().count();
     
+    if (ngroups0 < ngroups1)
+    {
+        //this is faster if the larger molecule is on the outer loop
+        this->_pvt_calculateEnergy(mol1, mol0, energy, distmat, scale_energy);
+        return;
+    }
+    
     const CoordGroup *groups0_array = mol0.coordinates().constData();
     const CoordGroup *groups1_array = mol1.coordinates().constData();
     
@@ -814,7 +821,7 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                                          param0.reduced_charge };
                                          
                     //process atoms in pairs (so can then use SSE)
-                    for (quint32 j=0; j<nats1; j += 2)
+                    for (quint32 j=0; j<nats1-1; j += 2)
                     {
                         const Parameter &param10 = params1_array[j];
                         const Parameter &param11 = params1_array[j+1];

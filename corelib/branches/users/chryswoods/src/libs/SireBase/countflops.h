@@ -31,11 +31,6 @@
 
 #include "sireglobal.h"
 
-#define SIRE_TIME_ROUTINES
-//#undef SIRE_TIME_ROUTINES
-
-#ifdef SIRE_TIME_ROUTINES
-
 #include <QTime>
 #include <QVector>
 #include <QMutex>
@@ -100,6 +95,8 @@ private:
     int ms;
 };
 
+#ifdef SIRE_TIME_ROUTINES
+
 /** This is the singleton class that can be used
     to count floating point operations in the program
     
@@ -152,9 +149,9 @@ inline void CountFlops::addFlops(int nflops)
     ptr->nflops += nflops;
 }
 
-} // end of namespace SireBase
+#endif //SIRE_TIME_ROUTINES
 
-#endif // #ifdef SIRE_TIME_ROUTINES
+} // end of namespace SireBase
 
 #ifdef ADD_FLOPS
 #undef ADD_FLOPS
@@ -163,29 +160,7 @@ inline void CountFlops::addFlops(int nflops)
 #ifdef SIRE_TIME_ROUTINES
 #define ADD_FLOPS(n)  SireBase::CountFlops::addFlops(n);
 #else
-
 #define ADD_FLOPS(n) /* Not adding n flops */
-
-class SIREBASE_EXPORT FlopsMark
-{
-public:
-    FlopsMark()
-    {}
-    
-    ~FlopsMark()
-    {}
-    
-    double operator-(const FlopsMark&) const
-    {
-        return 0;
-    }
-    
-    static double benchmark()
-    {
-        return 0;
-    }
-};
-
 #endif
 
 SIRE_EXPOSE_CLASS( SireBase::FlopsMark )

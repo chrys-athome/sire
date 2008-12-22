@@ -41,6 +41,9 @@ set (SIRE_USE_SSE ON)
 # an older version of Sire is already installed on the system
 INCLUDE_DIRECTORIES( BEFORE ${SIRE_SOURCE_DIR} )
 
+# Turn off FLOP counting (timing) by default - this adds a small runtime penalty
+option (SIRE_TIME_FLOPS "Turn on floating point timing" OFF)
+
 # Build shared libraries by default
 set (BUILD_SHARED_LIBS ON)
 
@@ -115,6 +118,10 @@ endif()
 if (SIRE_USE_SSE)
   set (SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -msse2 -mfpmath=sse -ffast-math")
   ADD_DEFINITIONS( -DSIRE_USE_SSE )
+endif()
+
+if (SIRE_TIME_FLOPS)
+  ADD_DEFINITIONS( -DSIRE_TIME_ROUTINES )
 endif()
 
 # Add compiler specific flags
