@@ -84,6 +84,11 @@ using SireMol::MolEditor;
 
 using SireMove::ZMatrix;
 
+namespace detail
+{
+class ProtoMSWorkspace;
+}
+
 /** This class holds all of the source and default values of the 
     properties used by the ProtoMS parameter reader
     
@@ -268,45 +273,55 @@ private:
     
     void processZMatrixLine(const QStringList &words, 
                             const Molecule &mol, int type,
-                            ZMatrix &zmatrix) const;
+                            ZMatrix &zmatrix,
+                            detail::ProtoMSWorkspace &workspace) const;
                             
     void processAtomLine(const QStringList &words,
                          MolEditor &editmol, int type,
                          const QString &charge_property,
-                         const QString &lj_property) const;
+                         const QString &lj_property,
+                         detail::ProtoMSWorkspace &workspace) const;
     
     void processBondLine(const QStringList &words,
                          const Molecule &molecule, int type,
-                         SireMM::TwoAtomFunctions &bondfuncs) const;
+                         SireMM::TwoAtomFunctions &bondfuncs,
+                         detail::ProtoMSWorkspace &workspace) const;
     
     void processAngleLine(const QStringList &words,
                           const Molecule &molecule, int type,
-                          SireMM::ThreeAtomFunctions &anglefuncs) const;
+                          SireMM::ThreeAtomFunctions &anglefuncs,
+                          detail::ProtoMSWorkspace &workspace) const;
     
     QString processDihedralLine(QTextStream &ts,
                                 const QStringList &words,
                                 const Molecule &molecule, int type,
-                                SireMM::FourAtomFunctions &dihedralfuncs) const;
+                                SireMM::FourAtomFunctions &dihedralfuncs,
+                                detail::ProtoMSWorkspace &workspace) const;
 
     void processBondDeltaLine(const QStringList &words,
                               const Molecule &molecule, int type,
-                              ZMatrix &zmatrix) const;
+                              ZMatrix &zmatrix,
+                              detail::ProtoMSWorkspace &workspace) const;
 
     void processAngleDeltaLine(const QStringList &words,
                                const Molecule &molecule, int type,
-                               ZMatrix &zmatrix) const;
+                               ZMatrix &zmatrix,
+                               detail::ProtoMSWorkspace &workspace) const;
 
     void processDihedralDeltaLine(const QStringList &words,
                                   const Molecule &molecule, int type,
-                                  ZMatrix &zmatrix) const;
+                                  ZMatrix &zmatrix,
+                                  detail::ProtoMSWorkspace &workspace) const;
     
     void processUBLine(const QStringList &words,
                        const Molecule &molecule, int type,
-                       SireMM::TwoAtomFunctions &ubfuncs) const;
+                       SireMM::TwoAtomFunctions &ubfuncs,
+                       detail::ProtoMSWorkspace &workspace) const;
     
     void processNBLine(const QStringList &words,
                        const Molecule &molecule, int type,
-                       SireMM::CLJNBPairs &nbpairs) const;
+                       SireMM::CLJNBPairs &nbpairs,
+                       detail::ProtoMSWorkspace &workspace) const;
     
     Molecule runProtoMS(const Molecule &molecule, int type,
                         const PropertyMap &map) const;

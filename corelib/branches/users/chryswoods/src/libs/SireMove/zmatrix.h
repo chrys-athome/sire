@@ -61,6 +61,11 @@ QDataStream& operator>>(QDataStream &ds, SireMove::ZMatrixCoords&);
 QDataStream& operator<<(QDataStream &ds, const SireMove::ZMatrixCoordsLine&);
 QDataStream& operator>>(QDataStream &ds, SireMove::ZMatrixCoordsLine&);
 
+namespace SireMol
+{
+class PartialMolecule;
+}
+
 namespace SireMove
 {
 
@@ -72,7 +77,9 @@ using SireUnits::Dimension::Angle;
 using SireMol::AtomCoords;
 using SireMol::AtomIdx;
 using SireMol::AtomID;
+using SireMol::PartialMolecule;
 using SireMol::Molecule;
+using SireMol::AtomSelection;
 
 using SireMaths::Vector;
 
@@ -287,6 +294,8 @@ public:
     Angle dihedralDelta(const AtomID &atom, const AtomID &bond, 
                         const AtomID &angle, const AtomID &dihedral) const;
 
+    ZMatrix matchToSelection(const AtomSelection &selection) const;
+
     bool isCompatibleWith(const SireMol::MoleculeInfoData &molinfo) const;
 
 private:
@@ -317,10 +326,10 @@ friend QDataStream& ::operator>>(QDataStream&, ZMatrixCoords&);
 
 public:
     ZMatrixCoords();
-    ZMatrixCoords(const Molecule &molecule,
+    ZMatrixCoords(const PartialMolecule &molecule,
                   const PropertyMap &map = PropertyMap());
                   
-    ZMatrixCoords(const ZMatrix &zmatrix, const Molecule &molecule,
+    ZMatrixCoords(const ZMatrix &zmatrix, const PartialMolecule &molecule,
                   const PropertyMap &map = PropertyMap());
                   
     ZMatrixCoords(const ZMatrix &zmatrix, const AtomCoords &coords);
@@ -449,6 +458,8 @@ public:
                      const AtomID &angle) const;
     Angle dihedralDelta(const AtomID &atom, const AtomID &bond, 
                         const AtomID &angle, const AtomID &dihedral) const;
+    
+    ZMatrixCoords matchToSelection(const AtomSelection &selection) const;
     
 private:
     void rebuildInternals();

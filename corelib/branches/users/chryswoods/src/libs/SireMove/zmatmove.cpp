@@ -291,15 +291,15 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
 
             //move the molecule - first get the cartesian coordinates
             //of the molecule
-            Molecule newmol = oldmol.molecule().move()
-                                               .toCartesian(*space, map)
-                                               .commit();
+            PartialMolecule newmol = oldmol.move()
+                                           .toCartesian(*space, map)
+                                           .commit();
                                     
             ZMatrixCoords zmatrix( newmol, map );
 
             //move the internal coordinates of selected atoms in the 
             //z-matrix
-            AtomSelection selected_atoms = oldmol.selection();
+            AtomSelection selected_atoms = newmol.selection();
             
             if (selected_atoms.selectedAll())
             {
@@ -327,8 +327,8 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
         
             //copy the coordinates back - mapping them back into 
             //the simulation space
-            newmol = newmol.edit().setProperty( map["coordinates"].source(), 
-                                                zmatrix.toCartesian() )
+            newmol = newmol.molecule().edit().setProperty( map["coordinates"].source(), 
+                                                           zmatrix.toCartesian() )
                            .commit();
             
             newmol = newmol.move()

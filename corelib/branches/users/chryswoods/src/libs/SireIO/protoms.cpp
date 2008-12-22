@@ -67,6 +67,7 @@
 #include "SireBase/findexe.h"
 
 #include "SireMove/errors.h"
+#include "SireMol/errors.h"
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
@@ -296,15 +297,63 @@ static QByteArray readAll(const QString &file)
         return QByteArray();
 }
 
-static Atom getSoluteAtom(const Molecule &molecule,
-                          const QString &atomname, const QString &resname)
+namespace SireIO
 {
-    return molecule.atom( AtomName(atomname, CaseInsensitive) +
-                          ResName(resname, CaseInsensitive) );
+namespace detail
+{
+
+class ProtoMSWorkspace
+{
+public:
+    ProtoMSWorkspace()
+    {}
+    
+    ~ProtoMSWorkspace()
+    {}
+    
+    QHash< QString, QHash<QString,AtomIdx> > solute_atom_cache;
+    QHash< ResNum, QHash<QString,AtomIdx> > protein_atom_cache;
+};
+
+} // end of namespace detail
+} // end of namespace SireIO
+
+using namespace SireIO::detail;
+
+static AtomIdx getSoluteAtom(const Molecule &molecule,
+                             const QString &atomname, const QString &resname,
+                             ProtoMSWorkspace &workspace)
+{
+    if (workspace.solute_atom_cache[resname].contains(atomname))
+    {
+        return workspace.solute_atom_cache[resname][atomname];
+    }
+
+    const MoleculeInfoData &molinfo = molecule.data().info();
+
+    QList<AtomIdx> atomidxs = molinfo.getAtomsIn( ResName(resname,CaseInsensitive) );
+
+    QString lower_atomname = atomname.toLower();
+    
+    foreach (AtomIdx atomidx, atomidxs)
+    {
+        if (molinfo.name(atomidx).value().toLower() == lower_atomname)
+        {
+            workspace.solute_atom_cache[resname].insert(atomname,atomidx);
+            return atomidx;
+        }
+    }
+    
+    throw SireMol::missing_atom( QObject::tr(
+            "There is no atom in residue %1 with name %2.")
+                .arg(resname).arg(atomname), CODELOC );
+
+    return AtomIdx();
 }
 
-static Atom getProteinAtom(const Molecule &molecule,
-                           const QString &atomname, const QString &resnum)
+static AtomIdx getProteinAtom(const Molecule &molecule,
+                              const QString &atomname, const QString &resnum,
+                              ProtoMSWorkspace &workspace)
 {
     bool ok;
     
@@ -314,24 +363,53 @@ static Atom getProteinAtom(const Molecule &molecule,
         throw SireError::program_bug( QObject::tr(
             "The string '%1' should contain a residue number!").arg(resnum),
                 CODELOC );
-                
-    return molecule.atom( AtomName(atomname, CaseInsensitive) + rnum);
+            
+    if (workspace.protein_atom_cache[rnum].contains(atomname))
+    {
+        return workspace.protein_atom_cache[rnum][atomname];
+    }
+            
+    const MoleculeInfoData &molinfo = molecule.data().info();
+                        
+    QList<AtomIdx> atomidxs = molinfo.getAtomsIn(rnum);
+    
+    QString lower_atomname = atomname.toLower();
+    
+    foreach (AtomIdx atomidx, atomidxs)
+    {
+        if (molinfo.name(atomidx).value().toLower() == lower_atomname)
+        {
+            workspace.protein_atom_cache[rnum].insert(atomname,atomidx);
+            return atomidx;
+        }
+    }
+    
+    throw SireMol::missing_atom( QObject::tr(
+            "There is no atom in residue %1 with name %2.")
+                .arg(resnum).arg(atomname), CODELOC );
+
+    return AtomIdx();
 }
 
-static AtomEditor getSolventAtom(const MolEditor &molecule, const QString &atomname)
+static AtomEditor getSolventAtom(const MolEditor &molecule, const QString &atomname,
+                                 ProtoMSWorkspace &workspace)
 {
     return molecule.atom( AtomName(atomname, CaseInsensitive) );
 }
 
 static AtomEditor getSoluteAtom(const MolEditor &molecule,
-                                const QString &atomname, const QString &resname)
+                                const QString &atomname, const QString &resname,
+                                 ProtoMSWorkspace &workspace)
 {
-    return molecule.atom( AtomName(atomname, CaseInsensitive) +
-                          ResName(resname, CaseInsensitive) );
+    AtomIdx atomidx = ::getSoluteAtom( static_cast<const Molecule&>(molecule),
+                                       atomname, resname, workspace );
+
+    return molecule.atom(atomidx);
 }
 
 static AtomEditor getProteinAtom(const MolEditor &molecule,
-                                 const QString &atomname, const QString &resnum)
+                                 const QString &atomname, const QString &resnum,
+                                 ProtoMSWorkspace &workspace)
 {
     bool ok;
     
@@ -342,14 +420,18 @@ static AtomEditor getProteinAtom(const MolEditor &molecule,
             "The string '%1' should contain a residue number!").arg(resnum),
                 CODELOC );
                 
-    return molecule.atom( AtomName(atomname, CaseInsensitive) + rnum);
+    AtomIdx atomidx = ::getProteinAtom( static_cast<const Molecule&>(molecule),
+                                        atomname, resnum, workspace );
+                
+    return molecule.atom(atomidx);
 }
 
 /** This processes the output line that contains the z-matrix */
 void ProtoMS::processZMatrixLine(const QStringList &words, const Molecule &mol,
-                                 int type, ZMatrix &zmatrix) const
+                                 int type, ZMatrix &zmatrix,
+                                 ProtoMSWorkspace &workspace) const
 {
-    Atom atom, bond, angle, dihedral;
+    AtomIdx atom, bond, angle, dihedral;
     
     //skip lines involving dummy atoms
     if ( words[4] == "DUM" or words[9] == "DUM" or
@@ -363,25 +445,25 @@ void ProtoMS::processZMatrixLine(const QStringList &words, const Molecule &mol,
         
     else if (type == SOLUTE)
     {
-        atom = getSoluteAtom(mol, words[2], words[4]);
-        bond = getSoluteAtom(mol, words[7], words[9]);
-        angle = getSoluteAtom(mol, words[12], words[14]);
-        dihedral = getSoluteAtom(mol, words[17], words[19]);
+        atom = getSoluteAtom(mol, words[2], words[4], workspace);
+        bond = getSoluteAtom(mol, words[7], words[9], workspace);
+        angle = getSoluteAtom(mol, words[12], words[14], workspace);
+        dihedral = getSoluteAtom(mol, words[17], words[19], workspace);
     }
     else if (type == PROTEIN)
     {
-        atom = getProteinAtom(mol, words[2], words[4]);
-        bond = getProteinAtom(mol, words[7], words[9]);
-        angle = getProteinAtom(mol, words[12], words[14]); 
-        dihedral = getProteinAtom(mol, words[17], words[19]);
+        atom = getProteinAtom(mol, words[2], words[4], workspace);
+        bond = getProteinAtom(mol, words[7], words[9], workspace);
+        angle = getProteinAtom(mol, words[12], words[14], workspace); 
+        dihedral = getProteinAtom(mol, words[17], words[19], workspace);
     }
     
-    zmatrix.add( atom.index(), bond.index(), 
-                 angle.index(), dihedral.index() );
+    zmatrix.add( atom, bond, angle, dihedral );
 }
 
 void ProtoMS::processBondDeltaLine(const QStringList &words, const Molecule &mol,
-                                   int type, ZMatrix &zmatrix) const
+                                   int type, ZMatrix &zmatrix,
+                                   ProtoMSWorkspace &workspace) const
 {
     //skip lines involving dummy atoms
     if ( words[4] == "DUM" or words[9] == "DUM" )
@@ -389,25 +471,25 @@ void ProtoMS::processBondDeltaLine(const QStringList &words, const Molecule &mol
         return;
     }
 
-    Atom atom, bond;
+    AtomIdx atom, bond;
     
     if (type == SOLVENT)
         return;
         
     else if (type == SOLUTE)
     {
-        atom = getSoluteAtom(mol, words[2], words[4]);
-        bond = getSoluteAtom(mol, words[7], words[9]);
+        atom = getSoluteAtom(mol, words[2], words[4], workspace);
+        bond = getSoluteAtom(mol, words[7], words[9], workspace);
     }
     else if (type == PROTEIN)
     {
-        atom = getProteinAtom(mol, words[2], words[4]);
-        bond = getProteinAtom(mol, words[7], words[9]);
+        atom = getProteinAtom(mol, words[2], words[4], workspace);
+        bond = getProteinAtom(mol, words[7], words[9], workspace);
     }
 
     try
     {
-        zmatrix.setBondDelta( atom.index(), bond.index(),
+        zmatrix.setBondDelta( atom, bond,
                               words[12].toDouble() * angstrom );
     }
     catch(const SireMove::zmatrix_error&)
@@ -418,7 +500,8 @@ void ProtoMS::processBondDeltaLine(const QStringList &words, const Molecule &mol
 }
 
 void ProtoMS::processAngleDeltaLine(const QStringList &words, const Molecule &mol,
-                                    int type, ZMatrix &zmatrix) const
+                                    int type, ZMatrix &zmatrix,
+                                    ProtoMSWorkspace &workspace) const
 {
     //skip lines involving dummy atoms
     if ( words[4] == "DUM" or words[9] == "DUM" or words[14] == "DUM" )
@@ -426,27 +509,27 @@ void ProtoMS::processAngleDeltaLine(const QStringList &words, const Molecule &mo
         return;
     }
 
-    Atom atom, bond, angle;
+    AtomIdx atom, bond, angle;
     
     if (type == SOLVENT)
         return;
         
     else if (type == SOLUTE)
     {
-        atom = getSoluteAtom(mol, words[2], words[4]);
-        bond = getSoluteAtom(mol, words[7], words[9]);
-        angle = getSoluteAtom(mol, words[12], words[14]);
+        atom = getSoluteAtom(mol, words[2], words[4], workspace);
+        bond = getSoluteAtom(mol, words[7], words[9], workspace);
+        angle = getSoluteAtom(mol, words[12], words[14], workspace);
     }
     else if (type == PROTEIN)
     {
-        atom = getProteinAtom(mol, words[2], words[4]);
-        bond = getProteinAtom(mol, words[7], words[9]);
-        angle = getProteinAtom(mol, words[12], words[14]);
+        atom = getProteinAtom(mol, words[2], words[4], workspace);
+        bond = getProteinAtom(mol, words[7], words[9], workspace);
+        angle = getProteinAtom(mol, words[12], words[14], workspace);
     }
 
     try
     {
-        zmatrix.setAngleDelta( atom.index(), bond.index(), angle.index(),
+        zmatrix.setAngleDelta( atom, bond, angle,
                                words[17].toDouble() * degrees );
     }
     catch(const SireMove::zmatrix_error&)
@@ -457,7 +540,8 @@ void ProtoMS::processAngleDeltaLine(const QStringList &words, const Molecule &mo
 }
 
 void ProtoMS::processDihedralDeltaLine(const QStringList &words, const Molecule &mol,
-                                       int type, ZMatrix &zmatrix) const
+                                       int type, ZMatrix &zmatrix,
+                                       ProtoMSWorkspace &workspace) const
 {
     //skip lines involving dummy atoms
     if ( words[4] == "DUM" or words[9] == "DUM" or
@@ -466,30 +550,30 @@ void ProtoMS::processDihedralDeltaLine(const QStringList &words, const Molecule 
         return;
     }
 
-    Atom atom, bond, angle, dihedral;
+    AtomIdx atom, bond, angle, dihedral;
     
     if (type == SOLVENT)
         return;
         
     else if (type == SOLUTE)
     {
-        atom = getSoluteAtom(mol, words[2], words[4]);
-        bond = getSoluteAtom(mol, words[7], words[9]);
-        angle = getSoluteAtom(mol, words[12], words[14]);
-        dihedral = getSoluteAtom(mol, words[17], words[19]);
+        atom = getSoluteAtom(mol, words[2], words[4], workspace);
+        bond = getSoluteAtom(mol, words[7], words[9], workspace);
+        angle = getSoluteAtom(mol, words[12], words[14], workspace);
+        dihedral = getSoluteAtom(mol, words[17], words[19], workspace);
     }
     else if (type == PROTEIN)
     {
-        atom = getProteinAtom(mol, words[2], words[4]);
-        bond = getProteinAtom(mol, words[7], words[9]);
-        angle = getProteinAtom(mol, words[12], words[14]);
-        dihedral = getProteinAtom(mol, words[17], words[19]);
+        atom = getProteinAtom(mol, words[2], words[4], workspace);
+        bond = getProteinAtom(mol, words[7], words[9], workspace);
+        angle = getProteinAtom(mol, words[12], words[14], workspace);
+        dihedral = getProteinAtom(mol, words[17], words[19], workspace);
     }
 
     try
     {
-        zmatrix.setDihedralDelta( atom.index(), bond.index(), 
-                                  angle.index(), dihedral.index(),
+        zmatrix.setDihedralDelta( atom, bond, 
+                                  angle, dihedral,
                                   words[22].toDouble() * degrees );
     }
     catch(const SireMove::zmatrix_error &e)
@@ -504,18 +588,19 @@ void ProtoMS::processDihedralDeltaLine(const QStringList &words, const Molecule 
 /** This processes the output line that contains the atom parameters */
 void ProtoMS::processAtomLine(const QStringList &words, MolEditor &editmol,
                               int type, const QString &charge_property,
-                              const QString &lj_property) const
+                              const QString &lj_property,
+                              ProtoMSWorkspace &workspace) const
 {
     AtomEditor atom;
     
     if (type == SOLUTE)
-        atom = getSoluteAtom(editmol, words[2], words[4]);
+        atom = getSoluteAtom(editmol, words[2], words[4], workspace);
                              
     else if (type == SOLVENT)
-        atom = getSolventAtom(editmol, words[2]);
+        atom = getSolventAtom(editmol, words[2], workspace);
         
     else if (type == PROTEIN)
-        atom = getProteinAtom(editmol, words[2], words[4]);
+        atom = getProteinAtom(editmol, words[2], words[4], workspace);
 
     atom.setProperty( charge_property, words[7].toDouble() * mod_electron );
     atom.setProperty( lj_property, LJParameter( words[9].toDouble() * angstrom,
@@ -526,7 +611,8 @@ void ProtoMS::processAtomLine(const QStringList &words, MolEditor &editmol,
 
 /** This processes the output line that contains the bond parameters */
 void ProtoMS::processBondLine(const QStringList &words, const Molecule &mol,
-                              int type, TwoAtomFunctions &bondfuncs) const
+                              int type, TwoAtomFunctions &bondfuncs,
+                              ProtoMSWorkspace &workspace) const
 {
     if (type == SOLVENT)
         return;
@@ -536,25 +622,26 @@ void ProtoMS::processBondLine(const QStringList &words, const Molecule &mol,
     Expression bondfunc = words[12].toDouble() 
                                 * SireMaths::pow_2( r - words[14].toDouble() );
 
-    Atom atom0, atom1;
+    AtomIdx atom0, atom1;
 
     if (type == SOLUTE)
     {
-        atom0 = getSoluteAtom(mol, words[2], words[4]);
-        atom1 = getSoluteAtom(mol, words[7], words[9]);
+        atom0 = getSoluteAtom(mol, words[2], words[4], workspace);
+        atom1 = getSoluteAtom(mol, words[7], words[9], workspace);
     }
     else if (type == PROTEIN)
     {
-        atom0 = getProteinAtom(mol, words[2], words[4]);
-        atom1 = getProteinAtom(mol, words[7], words[9]);
+        atom0 = getProteinAtom(mol, words[2], words[4], workspace);
+        atom1 = getProteinAtom(mol, words[7], words[9], workspace);
     }
     
-    bondfuncs.set( atom0.index(), atom1.index(), bondfunc );
+    bondfuncs.set( atom0, atom1, bondfunc );
 }
 
 /** This processes the output line that contains the angle parameters */
 void ProtoMS::processAngleLine(const QStringList &words, const Molecule &mol,
-                               int type, ThreeAtomFunctions &anglefuncs) const
+                               int type, ThreeAtomFunctions &anglefuncs,
+                               ProtoMSWorkspace &workspace) const
 {
     if (type == SOLVENT)
         return;
@@ -564,27 +651,28 @@ void ProtoMS::processAngleLine(const QStringList &words, const Molecule &mol,
     Expression anglefunc = words[17].toDouble() 
                 * SireMaths::pow_2( theta - (words[19].toDouble()*degrees).to(radians) );
 
-    Atom atom0, atom1, atom2;
+    AtomIdx atom0, atom1, atom2;
 
     if (type == SOLUTE)
     {
-        atom0 = getSoluteAtom(mol, words[2], words[4]);
-        atom1 = getSoluteAtom(mol, words[7], words[9]);
-        atom2 = getSoluteAtom(mol, words[12], words[14]);
+        atom0 = getSoluteAtom(mol, words[2], words[4], workspace);
+        atom1 = getSoluteAtom(mol, words[7], words[9], workspace);
+        atom2 = getSoluteAtom(mol, words[12], words[14], workspace);
     }
     else if (type == PROTEIN)
     {
-        atom0 = getProteinAtom(mol, words[2], words[4]);
-        atom1 = getProteinAtom(mol, words[7], words[9]);
-        atom2 = getProteinAtom(mol, words[12], words[14]);
+        atom0 = getProteinAtom(mol, words[2], words[4], workspace);
+        atom1 = getProteinAtom(mol, words[7], words[9], workspace);
+        atom2 = getProteinAtom(mol, words[12], words[14],workspace);
     }
     
-    anglefuncs.set( atom0.index(), atom1.index(), atom2.index(), anglefunc );
+    anglefuncs.set( atom0, atom1, atom2, anglefunc );
 }
 
 /** This processes the output line that contains the bond parameters */
 void ProtoMS::processUBLine(const QStringList &words, const Molecule &mol,
-                            int type, TwoAtomFunctions &ubfuncs) const
+                            int type, TwoAtomFunctions &ubfuncs,
+                            ProtoMSWorkspace &workspace) const
 {
     if (type == SOLVENT)
         return;
@@ -594,26 +682,27 @@ void ProtoMS::processUBLine(const QStringList &words, const Molecule &mol,
     Expression ubfunc = words[12].toDouble() 
                                 * SireMaths::pow_2( r - words[14].toDouble() );
 
-    Atom atom0, atom1;
+    AtomIdx atom0, atom1;
 
     if (type == SOLUTE)
     {
-        atom0 = getSoluteAtom(mol, words[2], words[4]);
-        atom1 = getSoluteAtom(mol, words[7], words[9]);
+        atom0 = getSoluteAtom(mol, words[2], words[4], workspace);
+        atom1 = getSoluteAtom(mol, words[7], words[9], workspace);
     }
     else if (type == PROTEIN)
     {
-        atom0 = getProteinAtom(mol, words[2], words[4]);
-        atom1 = getProteinAtom(mol, words[7], words[9]);
+        atom0 = getProteinAtom(mol, words[2], words[4], workspace);
+        atom1 = getProteinAtom(mol, words[7], words[9], workspace);
     }
     
-    ubfuncs.set( atom0.index(), atom1.index(), ubfunc );
+    ubfuncs.set( atom0, atom1, ubfunc );
 }
 
 /** This processes the lines that contain the dihedral parameters */
 QString ProtoMS::processDihedralLine(QTextStream &ts, const QStringList &words,
                                      const Molecule &mol, int type,
-                                     FourAtomFunctions &dihedralfuncs) const
+                                     FourAtomFunctions &dihedralfuncs,
+                                     ProtoMSWorkspace &workspace) const
 {
     //read in the parameter - each cosine term is on a separate line
     QString line = ts.readLine();
@@ -642,28 +731,27 @@ QString ProtoMS::processDihedralLine(QTextStream &ts, const QStringList &words,
         line = ts.readLine();
     }
 
-    Atom atom0, atom1, atom2, atom3;
+    AtomIdx atom0, atom1, atom2, atom3;
     
     if (type == SOLVENT)
         return line;
         
     else if (type == SOLUTE)
     {
-        atom0 = getSoluteAtom(mol, words[2], words[4]);
-        atom1 = getSoluteAtom(mol, words[7], words[9]);
-        atom2 = getSoluteAtom(mol, words[12], words[14]);
-        atom3 = getSoluteAtom(mol, words[17], words[19]);
+        atom0 = getSoluteAtom(mol, words[2], words[4], workspace);
+        atom1 = getSoluteAtom(mol, words[7], words[9], workspace);
+        atom2 = getSoluteAtom(mol, words[12], words[14], workspace);
+        atom3 = getSoluteAtom(mol, words[17], words[19], workspace);
     }
     else if (type == PROTEIN)
     {
-        atom0 = getProteinAtom(mol, words[2], words[4]);
-        atom1 = getProteinAtom(mol, words[7], words[9]);
-        atom2 = getProteinAtom(mol, words[12], words[14]);
-        atom3 = getProteinAtom(mol, words[17], words[19]);
+        atom0 = getProteinAtom(mol, words[2], words[4], workspace);
+        atom1 = getProteinAtom(mol, words[7], words[9], workspace);
+        atom2 = getProteinAtom(mol, words[12], words[14], workspace);
+        atom3 = getProteinAtom(mol, words[17], words[19], workspace);
     }
     
-    dihedralfuncs.set( atom0.index(), atom1.index(), atom2.index(),
-                       atom3.index(), dihedralfunc );
+    dihedralfuncs.set( atom0, atom1, atom2, atom3, dihedralfunc );
 
     return line;
 }
@@ -671,28 +759,30 @@ QString ProtoMS::processDihedralLine(QTextStream &ts, const QStringList &words,
 /** Process the line that contains information about the 
     intramolecular non-bonded pairs */
 void ProtoMS::processNBLine(const QStringList &words, const Molecule &mol, int type,
-                            CLJNBPairs &cljpairs) const
+                            CLJNBPairs &cljpairs,
+                            ProtoMSWorkspace &workspace) const
 {
-    Atom atom0, atom1;
+    AtomIdx atom0, atom1;
     
     if (type == SOLVENT)
         return;
         
     else if (type == SOLUTE)
     {
-        atom0 = getSoluteAtom(mol, words[2], words[4]);
-        atom1 = getSoluteAtom(mol, words[7], words[9]);
+        atom0 = getSoluteAtom(mol, words[2], words[4], workspace);
+        atom1 = getSoluteAtom(mol, words[7], words[9], workspace);
     }
     else if (type == PROTEIN)
     {
-        atom0 = getProteinAtom(mol, words[2], words[4]);
-        atom1 = getProteinAtom(mol, words[7], words[9]);
+        atom0 = getProteinAtom(mol, words[2], words[4], workspace);
+        atom1 = getProteinAtom(mol, words[7], words[9], workspace);
     }
 
     double cscl = words[12].toDouble();
     double ljscl = words[14].toDouble();
 
-    cljpairs.set( atom0.cgAtomIdx(), atom1.cgAtomIdx(),
+    cljpairs.set( mol.data().info().cgAtomIdx(atom0), 
+                  mol.data().info().cgAtomIdx(atom1),
                   CLJScaleFactor(cscl, ljscl) );
 }
 
@@ -814,6 +904,9 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
             }
         }
     }
+
+    
+    ProtoMSWorkspace workspace;
     
     QStringList fatal_errors;
     
@@ -824,39 +917,40 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
             QStringList words = line.split(" ", QString::SkipEmptyParts);
             
             if (words[1] == "ZMATRIX")
-                this->processZMatrixLine(words, editmol, type, zmatrix);
+                this->processZMatrixLine(words, editmol, type, zmatrix, workspace);
 
             else if (words[1] == "Atom")
                 this->processAtomLine(words, editmol, type,
-                                      charge_property, lj_property);
+                                      charge_property, lj_property, workspace);
             
             else if (words[1] == "Bond")
-                this->processBondLine(words, molecule, type, bondfuncs);
+                this->processBondLine(words, molecule, type, bondfuncs, workspace);
                 
             else if (words[1] == "BondDelta")
-                this->processBondDeltaLine(words, molecule, type, zmatrix);
+                this->processBondDeltaLine(words, molecule, type, zmatrix, workspace);
             
             else if (words[1] == "Angle")
-                this->processAngleLine(words, molecule, type, anglefuncs);
+                this->processAngleLine(words, molecule, type, anglefuncs, workspace);
                 
             else if (words[1] == "AngleDelta")
-                this->processAngleDeltaLine(words, molecule, type, zmatrix);
+                this->processAngleDeltaLine(words, molecule, type, zmatrix, workspace);
                 
             else if (words[1] == "UreyBradley")
-                this->processUBLine(words, molecule, type, ubfuncs);
+                this->processUBLine(words, molecule, type, ubfuncs, workspace);
             
             else if (words[1] == "Dihedral")
             {
                 line = this->processDihedralLine(ts, words, molecule, 
-                                                 type, dihedralfuncs);
+                                                 type, dihedralfuncs, workspace);
                 continue;
             }
 
             else if (words[1] == "DihedralDelta")
-                this->processDihedralDeltaLine(words, molecule, type, zmatrix);
+                this->processDihedralDeltaLine(words, molecule, type, 
+                                               zmatrix, workspace);
 
             else if (words[1] == "NB")
-                this->processNBLine(words, molecule, type, nbpairs);
+                this->processNBLine(words, molecule, type, nbpairs, workspace);
         }
         else if (line.startsWith("FATAL"))
         {

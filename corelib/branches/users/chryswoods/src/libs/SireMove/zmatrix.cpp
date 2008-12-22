@@ -31,6 +31,7 @@
 #include "SireID/index.h"
 
 #include "SireMol/molecule.h"
+#include "SireMol/partialmolecule.h"
 #include "SireMol/mover.hpp"
 
 #include "SireUnits/convert.h"
@@ -398,7 +399,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, ZMatrix &zmat)
 }
 
 /** Null constructor */
-ZMatrix::ZMatrix() : ConcreteProperty<ZMatrix,MoleculeProperty>()
+ZMatrix::ZMatrix() : ConcreteProperty<ZMatrix,MoleculeProperty>(),
+                     molinfo( MoleculeInfoData::null() )
 {}
 
 /** Construct to hold the z-matrix for the passed molecule */
@@ -1024,6 +1026,54 @@ bool ZMatrix::isCompatibleWith(const SireMol::MoleculeInfoData &molinfo) const
     return info().UID() == molinfo.UID();
 }
 
+/** Return a z-matrix that only contains lines that involve the atoms
+    that are in 'selection' */
+ZMatrix ZMatrix::matchToSelection(const AtomSelection &selection) const
+{
+    selection.assertCompatibleWith(*molinfo);
+
+    if (selection.selectedAll())
+        return *this;
+    
+    else if (selection.selectedNone())
+    {
+        ZMatrix zmatrix;
+        zmatrix.molinfo = molinfo;
+        return zmatrix;
+    }
+        
+    QVector<ZMatrixLine> new_lines = zmat;
+    
+    int i = 0;
+    
+    while (i < new_lines.count())
+    {
+        if (not selection.selected( new_lines.at(i).atom() ))
+        {
+            new_lines.remove(i);
+        }
+        else
+        {
+            ++i;
+        }
+    }
+    
+    //reindex the lines
+    QHash<AtomIdx,int> new_index;
+    new_index.reserve( new_lines.count() );
+    
+    for (i=0; i<new_lines.count(); ++i)
+    {
+        new_index.insert( new_lines.at(i).atom(), i );
+    }
+    
+    ZMatrix zmatrix(*this);
+    zmatrix.zmat = new_lines;
+    zmatrix.atomidx_to_zmat = new_index;
+    
+    return zmatrix;
+}
+
 //////////
 ////////// Implementation of ZMatrixCoords
 //////////
@@ -1113,19 +1163,22 @@ void ZMatrixCoords::rebuildInternals()
 /** Construct the z-matrix for the molecule 'molecule' using
     the passed property map to find the coordinates property, and
     also picking up the molecule's existing z-matrix */
-ZMatrixCoords::ZMatrixCoords(const Molecule &molecule, const PropertyMap &map)
+ZMatrixCoords::ZMatrixCoords(const PartialMolecule &molecule, const PropertyMap &map)
               : ConcreteProperty<ZMatrixCoords,MoleculeProperty>(),
-                zmat(molecule),
+                zmat(molecule.molecule()),
                 need_rebuild(false)
 {
-    cartesian_coords = molecule.property( map["coordinates"] )
-                               .asA<AtomCoords>();
+    cartesian_coords = molecule.molecule().property( map["coordinates"] )
+                                          .asA<AtomCoords>();
 
     const PropertyName &zmatrix_property = map["z-matrix"];
     
     if (molecule.hasProperty(zmatrix_property))
     {
-        zmat = molecule.property(zmatrix_property).asA<ZMatrix>();
+        zmat = molecule.molecule().property(zmatrix_property).asA<ZMatrix>();
+
+        if (not molecule.selection().selectedAll())
+            zmat = zmat.matchToSelection( molecule.selection() );
 
         //calculate the internal coordinates
         this->rebuildInternals();
@@ -1146,14 +1199,20 @@ ZMatrixCoords::ZMatrixCoords(const ZMatrix &zmatrix, const AtomCoords &coords)
 /** Construct the z-matrix for the molecule 'molecule' using the 
     z-matrix in 'zmatrix' and using the passed property map to
     find the coordinates */
-ZMatrixCoords::ZMatrixCoords(const ZMatrix &zmatrix, const Molecule &molecule,
+ZMatrixCoords::ZMatrixCoords(const ZMatrix &zmatrix, const PartialMolecule &molecule,
                              const PropertyMap &map)
               : ConcreteProperty<ZMatrixCoords,MoleculeProperty>()
 {
     zmatrix.assertCompatibleWith( molecule.data().info() );
 
-    this->operator=( ZMatrixCoords(zmatrix, molecule.property( map["coordinates"] )
-                                                    .asA<AtomCoords>()) );
+    cartesian_coords = molecule.molecule().property( map["coordinates"] )
+                                          .asA<AtomCoords>();
+
+    if (not molecule.selection().selectedAll())
+        zmat = zmatrix.matchToSelection( molecule.selection() );
+
+    //calculate the internal coordinates
+    this->rebuildInternals();
 }
               
 /** Copy constructor */
@@ -2052,4 +2111,17 @@ Angle ZMatrixCoords::dihedralDelta(const AtomID &atom, const AtomID &bond,
                                    const AtomID &angle, const AtomID &dihedral) const
 {
     return zmat.dihedralDelta(atom, bond, angle, dihedral);
+}
+
+/** Return a z-matrix that only contains lines that involve the atoms
+    that are in 'selection' */
+ZMatrixCoords ZMatrixCoords::matchToSelection(const AtomSelection &selection) const
+{
+    this->rebuildCartesian();
+
+    ZMatrixCoords new_zmat(*this);
+    new_zmat.zmat = zmat.matchToSelection(selection);
+    new_zmat.rebuildInternals();
+
+    return new_zmat;
 }
