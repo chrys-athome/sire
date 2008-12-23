@@ -28,12 +28,6 @@ cox2 = cox2.edit().rename("COX2").commit()
 
 cox2 = protoms.parameterise(cox2, ProtoMS.PROTEIN)
 
-zmat = cox2.property("z-matrix")
-
-for line in zmat.lines():
-    print line, line.bondDelta(), line.angleDelta().to(degrees), \
-                                  line.dihedralDelta().to(degrees)
-
 internalff = InternalFF("InternalFF")
 
 internalff.add( cox2 )
@@ -77,14 +71,14 @@ print "Running a simulation - initial energy = %f kcal mol-1" % system.energy().
 
 for i in range(0,100):
 
-    sim = Simulation.run( system, zmatmove, 100 )
+    sim = Simulation.run( system, zmatmove, 1000 )
     
     system = sim.system()
     zmatmove = sim.moves()[0]
 
     PDB().write( system.molecules(), "test%003d.pdb" % (i+1) )
 
-    print "%d : Energy = %f kcal mol-1" % ( (i+1)*100, \
+    print "%d : Energy = %f kcal mol-1" % ( (i+1)*1000, \
                                             system.energy().to(kcal_per_mol) )
 
     print system.energies()

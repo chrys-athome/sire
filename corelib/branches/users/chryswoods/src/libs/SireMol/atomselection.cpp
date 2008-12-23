@@ -806,7 +806,7 @@ QList<CGIdx> AtomSelection::selectedCutGroups() const
     {
         QList<CGIdx> selected_cgroups;
         int ncg = info().nCutGroups();
-        
+
         for (CGIdx i(0); i<ncg; ++i)
         {
             if (selectedAll(i) or selected_atoms.value(i).count() > 0)
@@ -3560,7 +3560,7 @@ QVector<AtomIdx> AtomSelection::selectedAtoms() const
         {
             if (this->selectedAll(i))
             {
-                for (Index j(0); j<info().nAtoms(i); ++i)
+                for (Index j(0); j<info().nAtoms(i); ++j)
                 {
                     ret_array[count] = info().atomIdx(CGAtomIdx(i,j));
                     ++count;
@@ -3576,7 +3576,7 @@ QVector<AtomIdx> AtomSelection::selectedAtoms() const
             }
         }
     }
-    
+
     qSort(ret);
     
     return ret;

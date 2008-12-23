@@ -46,6 +46,7 @@
 #include "SireStream/shareddatastream.h"
 
 #include <QDebug>
+#include <QTime>
 
 using namespace SireMove;
 using namespace SireMol;
@@ -282,7 +283,7 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
     
             //update the sampler with the latest version of the molecules
             smplr.edit().updateFrom(system);
-    
+
             //randomly select a molecule to move
             tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
 
@@ -294,7 +295,7 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
             PartialMolecule newmol = oldmol.move()
                                            .toCartesian(*space, map)
                                            .commit();
-                                    
+
             ZMatrixCoords zmatrix( newmol, map );
 
             //move the internal coordinates of selected atoms in the 
@@ -324,7 +325,7 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
                         this->move(it.key(), zmatrix);
                 }
             }
-        
+
             //copy the coordinates back - mapping them back into 
             //the simulation space
             newmol = PartialMolecule(newmol.molecule().edit()
@@ -335,8 +336,6 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
             newmol = newmol.move()
                            .fromCartesian(*space, map)
                            .commit();
-
-            
 
             //update the system with the new coordinates
             system.update(newmol);

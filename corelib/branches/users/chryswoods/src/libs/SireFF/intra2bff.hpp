@@ -511,10 +511,6 @@ void Intra2BFF<Potential>::recalculateEnergy()
     const typename Potential::Molecule *mols_array 
                             = mols.moleculesByIndex().constData();
 
-    if (changed_mols.count() == nmols)
-        //all of the molecules have changed!
-        changed_mols.clear();
-
     //tell the potential that we are starting an evaluation
     Potential::startEvaluation();
 
@@ -557,7 +553,7 @@ void Intra2BFF<Potential>::recalculateEnergy()
                 //calculate the change in energy of this whole molecule
                 Potential::calculateEnergy(it->oldMolecule(),
                                            old_nrg, old_workspace);
-                    
+                        
                 Potential::calculateEnergy(it->newMolecule(),
                                            new_nrg, new_workspace);
             }
@@ -565,8 +561,12 @@ void Intra2BFF<Potential>::recalculateEnergy()
             {
                 //calculate the change in energy of the changed part
                 //of the molecule
+                Potential::calculateEnergy(it->oldParts(), old_nrg, old_workspace);
+
                 Potential::calculateEnergy(it->oldParts(), it->oldMolecule(),
                                            old_nrg, old_workspace);
+                                           
+                Potential::calculateEnergy(it->newParts(), new_nrg, new_workspace);
                                            
                 Potential::calculateEnergy(it->newParts(), it->newMolecule(),
                                            new_nrg, new_workspace);

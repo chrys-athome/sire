@@ -44,6 +44,7 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QTime>
 #include <QDebug>
 
 using namespace SireMove;
@@ -1042,35 +1043,46 @@ ZMatrix ZMatrix::matchToSelection(const AtomSelection &selection) const
         return zmatrix;
     }
         
-    QVector<ZMatrixLine> new_lines = zmat;
+    QVector<AtomIdx> selected_atoms = selection.selectedAtoms();
     
-    int i = 0;
+    int nselected = selected_atoms.count();
     
-    while (i < new_lines.count())
+    QVector<int> selected_atom_lines;
+    selected_atom_lines.reserve(nselected);
+
+    const AtomIdx *selected_atoms_array = selected_atoms.constData();
+    
+    for (int i=0; i<nselected; ++i)
     {
-        if (not selection.selected( new_lines.at(i).atom() ))
+        if (atomidx_to_zmat.contains(selected_atoms_array[i]))
         {
-            new_lines.remove(i);
-        }
-        else
-        {
-            ++i;
+            selected_atom_lines.append(
+                              atomidx_to_zmat.value(selected_atoms_array[i]) );
         }
     }
-    
-    //reindex the lines
+
+    qSort(selected_atom_lines.begin(), selected_atom_lines.end());
+
+    int nzmat = selected_atom_lines.count();
+    const int *selected_atom_lines_array = selected_atom_lines.constData();
+
+    QVector<ZMatrixLine> new_zmat(nzmat);
+    ZMatrixLine *new_zmat_array = new_zmat.data();
+    const ZMatrixLine *old_zmat_array = zmat.constData();
+
     QHash<AtomIdx,int> new_index;
-    new_index.reserve( new_lines.count() );
-    
-    for (i=0; i<new_lines.count(); ++i)
+    new_index.reserve(nzmat);
+
+    for (int i=0; i<nzmat; ++i)
     {
-        new_index.insert( new_lines.at(i).atom(), i );
+        new_zmat_array[i] = old_zmat_array[ selected_atom_lines_array[i] ];
+        new_index.insert( new_zmat_array[i].atom(), i );
     }
-    
+
     ZMatrix zmatrix(*this);
-    zmatrix.zmat = new_lines;
+    zmatrix.zmat = new_zmat;
     zmatrix.atomidx_to_zmat = new_index;
-    
+
     return zmatrix;
 }
 
@@ -1168,6 +1180,9 @@ ZMatrixCoords::ZMatrixCoords(const PartialMolecule &molecule, const PropertyMap 
                 zmat(molecule.molecule()),
                 need_rebuild(false)
 {
+    QTime t;
+    t.start();
+
     cartesian_coords = molecule.molecule().property( map["coordinates"] )
                                           .asA<AtomCoords>();
 
