@@ -986,7 +986,7 @@ PackedArray2DData<T>* PackedArray2D_ArrayData<T>::extract() const
     //ok, we need to extract!
     PackedArray2DData<T> *new_array = (PackedArray2DData<T>*)(new_storage);
 
-    new_array->setNValuesInArray(1, this->nValues());
+    new_array->setNValuesInArray(0, this->nValues());
     new_array->close();
     
     //copy the objects

@@ -448,6 +448,7 @@ void Intra2B2GFF<Potential>::_pvt_added(quint32 groupid,
         else
         {
             mols[groupid].add(molecule, map, *this, false);
+            G2FF::setDirty();
             this->assertSameIntraScaleFactors(molecule.number());
         }
     }
@@ -472,6 +473,7 @@ void Intra2B2GFF<Potential>::_pvt_removed(quint32 groupid,
     else
     {
         mols[groupid].remove(molecule, *this, false);
+        G2FF::setDirty();
     }
 }
 
@@ -500,6 +502,7 @@ void Intra2B2GFF<Potential>::_pvt_changed(quint32 groupid,
         else
         {
             mols[groupid].change(molecule, *this, false);
+            G2FF::setDirty();
             this->assertSameIntraScaleFactors(molecule.number());
         }
     }
@@ -550,6 +553,8 @@ void Intra2B2GFF<Potential>::_pvt_changed(quint32 groupid,
                 mols[groupid].change(*it, *this, false);
                 this->assertSameIntraScaleFactors(it->number());
             }
+            
+            G2FF::setDirty();
         }
     }
     catch(...)

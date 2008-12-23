@@ -393,6 +393,7 @@ void Inter2BFF<Potential>::_pvt_added(const PartialMolecule &molecule,
     else
     {
         mols.add(molecule, map, *this, false);
+        G1FF::setDirty();
     }
 }
 
@@ -409,6 +410,7 @@ void Inter2BFF<Potential>::_pvt_removed(const PartialMolecule &molecule)
     else
     {
         mols.remove(molecule, *this, false);
+        G1FF::setDirty();
     }
 }
 
@@ -430,6 +432,7 @@ void Inter2BFF<Potential>::_pvt_changed(const SireMol::Molecule &molecule)
     else
     {
         mols.change(molecule, *this, false);
+        G1FF::setDirty();
     }
 }
 
@@ -467,6 +470,8 @@ void Inter2BFF<Potential>::_pvt_changed(const QList<SireMol::Molecule> &molecule
             {
                 mols.change(*it, *this, false);
             }
+
+            G1FF::setDirty();
         }
     }
     catch(...)

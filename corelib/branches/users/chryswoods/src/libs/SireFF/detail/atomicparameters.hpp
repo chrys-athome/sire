@@ -272,7 +272,7 @@ AtomicParameters<PARAM> AtomicParameters<PARAM>::applyMask(
         //definitely nothing has been selected
         return AtomicParameters<PARAM>();
         
-    //otherwise, some are maked - apply the mask
+    //otherwise, some are marked - apply the mask
     //mask by the indicies
     quint32 ngroups = params.count();
     
@@ -287,7 +287,9 @@ AtomicParameters<PARAM> AtomicParameters<PARAM>::applyMask(
             group_params.append( this_array[i] );
     }
     
-    return AtomicParameters<PARAM>( Parameters(group_params) );
+    Parameters new_params(group_params);
+    
+    return AtomicParameters<PARAM>(new_params);
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS

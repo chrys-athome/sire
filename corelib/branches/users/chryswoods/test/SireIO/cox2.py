@@ -77,15 +77,23 @@ print "Running a simulation - initial energy = %f kcal mol-1" % system.energy().
 
 for i in range(0,100):
 
-    sim = Simulation.run( system, zmatmove, 1000 )
+    sim = Simulation.run( system, zmatmove, 100 )
     
     system = sim.system()
     zmatmove = sim.moves()[0]
 
     PDB().write( system.molecules(), "test%003d.pdb" % (i+1) )
 
-    print "%d : Energy = %f kcal mol-1" % ( (i+1)*1000, \
+    print "%d : Energy = %f kcal mol-1" % ( (i+1)*100, \
                                             system.energy().to(kcal_per_mol) )
+
+    print system.energies()
+
+    system.mustNowRecalculateFromScratch()
+
+    print "Are we sure? : Energy = %f kcal mol-1" % (system.energy().to(kcal_per_mol))
+
+    print system.energies()
 
 print "Finished - final energy = %f kcal mol-1" % system.energy().to(kcal_per_mol)
 print zmatmove

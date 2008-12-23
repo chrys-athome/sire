@@ -327,13 +327,16 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
         
             //copy the coordinates back - mapping them back into 
             //the simulation space
-            newmol = newmol.molecule().edit().setProperty( map["coordinates"].source(), 
-                                                           zmatrix.toCartesian() )
-                           .commit();
+            newmol = PartialMolecule(newmol.molecule().edit()
+                                           .setProperty( map["coordinates"].source(), 
+                                                         zmatrix.toCartesian() )
+                                            .commit(), oldmol.selection());
             
             newmol = newmol.move()
                            .fromCartesian(*space, map)
                            .commit();
+
+            
 
             //update the system with the new coordinates
             system.update(newmol);

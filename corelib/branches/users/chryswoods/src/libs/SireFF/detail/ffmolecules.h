@@ -655,7 +655,7 @@ FFMolecule<PTNL> FFMolecule<PTNL>::getDifferences(const FFMolecule<PTNL> &newmol
     
     else if (this->isEmpty() or newmol.isEmpty())
         return *this;
-        
+
     //ensure that they are compatible
     SireFF::detail::assertCompatible(*this, newmol);
     
@@ -665,11 +665,11 @@ FFMolecule<PTNL> FFMolecule<PTNL>::getDifferences(const FFMolecule<PTNL> &newmol
     //if there is only one group, then it has either changed or not
     if (this->params.changedAllGroups(newmol.params))
         return *this;
-    
+
     //there is more than one CutGroup in this 
     //selection - get the groups that have changed
     QSet<quint32> changed_groups = this->params.getChangedGroups(newmol.params);
-    
+
     if (changed_groups.count() == ncgroups)
         //all of the CutGroups have changed
         return *this;
@@ -828,7 +828,7 @@ FFMolecules<PTNL>::change(const SireMol::Molecule &new_molecule,
 {
     QHash<MolNum,quint32>::const_iterator it = FFMoleculesBase::indexesByMolNum()
                                                     .constFind(new_molecule.number());
-                                                    
+
     if (it == FFMoleculesBase::indexesByMolNum().constEnd())
         //this molecule is not in this group
         return ChangedMolecule();
@@ -847,14 +847,16 @@ FFMolecules<PTNL>::change(const SireMol::Molecule &new_molecule,
             return ChangedMolecule(old_molecule, mols_array[*it]);
         }
         else
+        {
             //there was no change
             return ChangedMolecule();
+        }
     }
     else
     {
         mols_by_idx.data()[*it].change(new_molecule, forcefield,
                                        parameter_names.constData()[*it]);
-                                       
+
         return ChangedMolecule();
     }
 }
