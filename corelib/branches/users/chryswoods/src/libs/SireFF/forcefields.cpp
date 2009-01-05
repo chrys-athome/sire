@@ -685,7 +685,7 @@ MolarEnergy FFSymbolExpression::energy(QVector<FFPtr> &forcefields,
     const Component *components_array = components.constData();
     
     Values values;
-    
+
     for (int i=0; i<ncomponents; ++i)
     {
         const Component &component = components_array[i];
@@ -699,7 +699,9 @@ MolarEnergy FFSymbolExpression::energy(QVector<FFPtr> &forcefields,
             const Symbol &symbol = deps_array[j];
 
             if (not values.contains(symbol))
+            {
                 values.set( symbol, ffsymbols[symbol]->value() );
+            }
         }
         
         nrg += ffsymbols[component.symbol()]->energy(forcefields, ffsymbols,

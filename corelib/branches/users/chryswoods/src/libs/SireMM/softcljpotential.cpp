@@ -64,6 +64,8 @@ using namespace SireMaths;
 
 using namespace SireBase;
 
+using namespace SireUnits;
+
 using namespace SireStream;
 
 ///////
@@ -110,7 +112,10 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
         //extract all of the properties
         cljpot.alfa = cljpot.props.property("alpha")
                                   .asA<VariantProperty>().convertTo<double>();
-        
+    
+        cljpot.shift_delta = cljpot.props.property("shiftDelta")
+                                  .asA<VariantProperty>().convertTo<double>();
+                
         cljpot.coul_power = cljpot.props.property("coulombPower")
                                   .asA<VariantProperty>().convertTo<quint32>();
 
@@ -125,10 +130,12 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 
 /** Constructor */
 SoftCLJPotential::SoftCLJPotential()
-                 : CLJPotential(), alfa(0), coul_power(1), lj_power(1)
+                 : CLJPotential(), alfa(0), shift_delta(1.0 * angstrom),
+                                   coul_power(1), lj_power(1)
 {
     //record the defaults
     props.setProperty( "alpha", VariantProperty(alfa) );
+    props.setProperty( "shiftDelta", VariantProperty(shift_delta) );
     props.setProperty( "coulombPower", VariantProperty(coul_power) );
     props.setProperty( "ljPower", VariantProperty(lj_power) );
 }
@@ -136,8 +143,8 @@ SoftCLJPotential::SoftCLJPotential()
 /** Copy constructor */
 SoftCLJPotential::SoftCLJPotential(const SoftCLJPotential &other)
                  : CLJPotential(other),
-                   alfa(other.alfa), coul_power(other.coul_power),
-                   lj_power(other.lj_power)
+                   alfa(other.alfa), shift_delta(other.shift_delta),
+                   coul_power(other.coul_power), lj_power(other.lj_power)
 {}
 
 /** Destructor */
@@ -151,6 +158,7 @@ SoftCLJPotential& SoftCLJPotential::operator=(const SoftCLJPotential &other)
     {
         CLJPotential::operator=(other);
         alfa = other.alfa;
+        shift_delta = other.shift_delta;
         coul_power = other.coul_power;
         lj_power = other.lj_power;
     }
@@ -165,6 +173,20 @@ bool SoftCLJPotential::setAlpha(double new_alpha)
     {
         alfa = new_alpha;
         props.setProperty("alpha", VariantProperty(alfa));
+        this->changedPotential();
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Set the value of the delta value used in the LJ shift function */
+bool SoftCLJPotential::setShiftDelta(double new_delta)
+{
+    if (shift_delta != new_delta)
+    {
+        shift_delta = new_delta;
+        props.setProperty("shiftDelta", VariantProperty(shift_delta));
         this->changedPotential();
         return true;
     }
@@ -228,6 +250,10 @@ bool SoftCLJPotential::setProperty(const QString &name, const Property &value)
     {
         return this->setAlpha( value.asA<VariantProperty>().convertTo<double>() );
     }
+    else if (name == QLatin1String("shiftDelta"))
+    {
+        return this->setShiftDelta( value.asA<VariantProperty>().convertTo<double>() );
+    }
     else if (name == QLatin1String("coulombPower"))
     {
         return this->setCoulombPower( value.asA<VariantProperty>().convertTo<int>() );
@@ -244,6 +270,12 @@ bool SoftCLJPotential::setProperty(const QString &name, const Property &value)
 double SoftCLJPotential::alpha() const
 {
     return alfa;
+}
+
+/** Return the delta value used in the LJ shifting function */
+double SoftCLJPotential::shiftDelta() const
+{
+    return shift_delta;
 }
 
 /** Return the coulomb power */
@@ -524,15 +556,23 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
     double cnrg = 0;
     double ljnrg = 0;
     
-    //this uses the following potentials (equations 4 and 5 from Taylor et. al.)
+    //this uses the following potentials
+    //           Zacharias and McCammon, J. Chem. Phys., 1994, and also,
+    //           Michel et al., JCTC, 2007
+    //
+    //  V_{LJ}(r) = 4 epsilon [ ( sigma^12 / (delta*sigma + r^2)^6 ) - 
+    //                          ( sigma^6  / (delta*sigma + r^2)^3 ) ]
+    //
+    //  V_{coul}(r) = (1-alpha)^n q_i q_j / 4 pi eps_0 (alpha+r^2)^(1/2)
+    //
+    // This contrasts to Rich T's LJ softcore function, which was;
     //
     //  V_{LJ}(r) = 4 epsilon [ (sigma^12 / (alpha^m sigma^6 + r^6)^2) - 
     //                          (sigma^6  / (alpha^m sigma^6 + r^6) ) ]
-    //
-    //  V_{coul}(r) = (1-alpha)^n q_i q_j / 4 pi eps_0 (alpha+r^2)^(1/2)
+
     
     const double one_minus_alfa_to_n = SireMaths::pow(1 - alfa, int(coul_power));
-    const double alfa_to_m = SireMaths::pow(alfa, int(lj_power));
+    const double delta = shift_delta * alfa;
     
     #ifdef SIRE_TIME_ROUTINES
     int nflops = 0;
@@ -588,7 +628,7 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                 __m128d sse_ljnrg = { 0, 0 };
 
                 const __m128d sse_alpha = { alfa, alfa };
-                const __m128d sse_alpha_to_m = { alfa_to_m, alfa_to_m };
+                const __m128d sse_delta = { delta, delta };
                 
                 for (quint32 i=0; i<nats0; ++i)
                 {
@@ -597,7 +637,7 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                     
                     __m128d sse_chg0 = { param0.reduced_charge, 
                                          param0.reduced_charge };
-                                         
+
                     //process atoms in pairs (so can then use SSE)
                     for (quint32 j=0; j<nats1-1; j += 2)
                     {
@@ -623,17 +663,19 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                         __m128d coul_denom = _mm_sqrt_pd( sse_dist2 + sse_alpha );
                         
                         sse_cnrg += sse_chg0 * sse_chg1 / coul_denom;
-                        
+                       
                         #ifdef SIRE_TIME_ROUTINES
                         nflops += 10;
                         #endif
                         
-                        //calculate alpha_m sig^6 + r^6
+                        //calculate shift = alpha * sigma * shift_delta
+                        const __m128d sse_shift = sse_sig * sse_delta;
+                        
                         const __m128d sse_sig3 = sse_sig * sse_sig * sse_sig;
                         const __m128d sse_sig6 = sse_sig3 * sse_sig3;
 
-                        const __m128d lj_denom = (sse_alpha_to_m * sse_sig6) + 
-                                                 (sse_dist2 * sse_dist2 * sse_dist2);
+                        __m128d lj_denom = sse_dist2 + sse_shift;
+                        lj_denom = lj_denom * lj_denom * lj_denom;
                         
                         const __m128d sig6_over_denom = sse_sig6 / lj_denom;
                         const __m128d sig12_over_denom2 = sig6_over_denom * 
@@ -667,8 +709,10 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                         const double sig2 = ljpair.sigma() * ljpair.sigma();
                         const double sig6 = sig2 * sig2 * sig2;
                         
-                        const double lj_denom = (alfa_to_m * sig6) + 
-                                                (dist2 * dist2 * dist2);
+                        const double shift = ljpair.sigma() * delta;
+                        
+                        double lj_denom = dist2 + shift; 
+                        lj_denom = lj_denom * lj_denom * lj_denom;
                         
                         const double sig6_over_denom = sig6 / lj_denom;
                         const double sig12_over_denom2 = sig6_over_denom * 
@@ -716,8 +760,10 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                         const double sig2 = ljpair.sigma() * ljpair.sigma();
                         const double sig6 = sig2 * sig2 * sig2;
                         
-                        const double lj_denom = (alfa_to_m * sig6) + 
-                                                (dist2 * dist2 * dist2);
+                        const double shift = ljpair.sigma() * delta;
+                        
+                        double lj_denom = dist2 + shift;
+                        lj_denom = lj_denom * lj_denom * lj_denom;
                         
                         const double sig6_over_denom = sig6 / lj_denom;
                         const double sig12_over_denom2 = sig6_over_denom *

@@ -64,12 +64,14 @@ public:
     ~SoftCLJPotential();
     
     bool setAlpha(double alpha);
+    bool setShiftDelta(double delta);
     bool setCoulombPower(int power);
     bool setLJPower(int power);
     
     bool setProperty(const QString &name, const Property &value);
     
     double alpha() const;
+    double shiftDelta() const;
     int coulombPower() const;
     int ljPower() const;
     
@@ -82,6 +84,9 @@ protected:
     /** The value of alpha - alpha=0 gives the true Coulomb
         and LJ potential, while alpha > 0 softens the potential */
     double alfa;
+    
+    /** The value of delta for the LJ shift function */
+    double shift_delta;
     
     /** The coulomb power */
     quint32 coul_power;
@@ -285,6 +290,11 @@ public:
         return SoftCLJPot::setAlpha(alpha);
     }
     
+    bool setShiftDelta(double delta)
+    {
+        return SoftCLJPot::setShiftDelta(delta);
+    }
+    
     bool setCoulombPower(int power)
     {
         return SoftCLJPot::setCoulombPower(power);
@@ -298,6 +308,11 @@ public:
     double alpha() const
     {
         return SoftCLJPot::alpha();
+    }
+    
+    double shiftDelta() const
+    {
+        return SoftCLJPot::shiftDelta();
     }
     
     int coulombPower() const
