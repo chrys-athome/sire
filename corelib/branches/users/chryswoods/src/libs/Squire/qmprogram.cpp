@@ -99,7 +99,7 @@ double QMProgram::calculateEnergy(const QMPotential::Molecules &molecules,
     of the molecules in 'molecules' in the field of point charges in
     'lattice_charges' */
 QString QMProgram::energyCommandFile(const QMPotential::Molecules &molecules,
-                                  const LatticeCharges &lattice_charges) const
+                                    const LatticeCharges &lattice_charges) const
 {
     throw SireError::unsupported( QObject::tr(
         "This QM program (%1) does not support the use of point lattice charges.")
@@ -200,6 +200,15 @@ double NullQM::calculateEnergy(const QMPotential::Molecules&, int) const
     return 0;
 }
 
+/** Return the QM energy of the molecules 'molecules' surrounded by the 
+    field of point charges 'lattice_charges' */
+double NullQM::calculateEnergy(const QMPotential::Molecules&,
+                               const LatticeCharges&,
+                               int) const
+{
+    return 0;
+}
+
 /** Return the command file that would be used to calculate the energy of
     the molecules in 'molecules' */
 QString NullQM::energyCommandFile(const QMPotential::Molecules&) const
@@ -210,6 +219,25 @@ QString NullQM::energyCommandFile(const QMPotential::Molecules&) const
 /** Return the command file that would be used to calculate the forces on
     the molecules in 'molecules' */
 QString NullQM::forceCommandFile(const QMPotential::Molecules&) const
+{
+    return QString::null;
+}
+
+
+/** Return the command file that would be used to calculate the energy
+    of the molecules in 'molecules' in the field of point charges in
+    'lattice_charges' */
+QString NullQM::energyCommandFile(const QMPotential::Molecules&,
+                                  const LatticeCharges &lattice_charges) const
+{
+    return QString::null;
+}
+
+/** Return the command file that would be used to calculate the forces
+    of the molecules in 'molecules' in the field of point charges in
+    'lattice_charges' (and the forces on the charges themselves) */
+QString NullQM::forceCommandFile(const QMPotential::Molecules&,
+                                 const LatticeCharges&) const
 {
     return QString::null;
 }

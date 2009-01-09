@@ -151,13 +151,28 @@ public:
     
     bool operator==(const NullQM &other) const;
     bool operator!=(const NullQM &other) const;
+
+    bool supportsLatticeCharges() const
+    {
+        return true;
+    }
     
 protected:
     double calculateEnergy(const QMPotential::Molecules &molecules,
                            int ntries=5) const;
+
+    double calculateEnergy(const QMPotential::Molecules &molecules,
+                           const LatticeCharges &lattice_charges,
+                           int ntries=5) const;
     
     QString energyCommandFile(const QMPotential::Molecules &molecules) const;
     QString forceCommandFile(const QMPotential::Molecules &molecules) const;
+
+    QString energyCommandFile(const QMPotential::Molecules &molecules,
+                              const LatticeCharges &lattice_charges) const;
+
+    QString forceCommandFile(const QMPotential::Molecules &molecules,
+                             const LatticeCharges &lattice_charges) const;
 };
 
 typedef SireBase::PropPtr<QMProgram> QMProgPtr;
