@@ -81,15 +81,15 @@ public:
     virtual SireCAS::Symbols symbols() const=0;
 
 protected:
-    FFComponent(const FFName &ffname, const QLatin1String &name);
-    FFComponent(const SireCAS::Symbol &symbol, const QLatin1String &name);
+    FFComponent(const FFName &ffname, const QString &name);
+    FFComponent(const SireCAS::Symbol &symbol, const QString &name);
     
     FFComponent(const FFComponent &other);
     
     void setEnergy(FF &ff, const Symbol &symbol, double value) const;
     void changeEnergy(FF &ff, const Symbol &symbol, double delta) const;
     
-    static QString symbolName(const FFName &ffname, const QLatin1String &name)
+    static QString symbolName(const FFName &ffname, const QString &name)
     {
         return QString("E_{%1}^{%2}").arg(ffname).arg(name);
     }

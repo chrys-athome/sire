@@ -69,7 +69,7 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFComponent &ffcomp)
 static QRegExp name_regexp( "E\\^\\{(.+)\\}\\_\\{(.+)\\}" );
 
 /** Constructor */
-FFComponent::FFComponent(const FFName &ffname, const QLatin1String &name)
+FFComponent::FFComponent(const FFName &ffname, const QString &name)
             : Symbol( FFComponent::symbolName(ffname, name) )
 {}
 
@@ -77,7 +77,7 @@ FFComponent::FFComponent(const FFName &ffname, const QLatin1String &name)
 
     \throw SireError::incompatible_error
 */
-FFComponent::FFComponent(const Symbol &symbol, const QLatin1String &name)
+FFComponent::FFComponent(const Symbol &symbol, const QString &name)
             : Symbol(symbol)
 {
     QRegExp local_copy = name_regexp;

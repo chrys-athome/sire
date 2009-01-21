@@ -78,6 +78,8 @@ class SIREMM_EXPORT CoulombComponent : public SireFF::FFComponent
 {
 public:
     CoulombComponent(const FFName &ffname = FFName());
+    CoulombComponent(const FFName &ffname, const QString &suffix);
+    
     CoulombComponent(const SireCAS::Symbol &symbol);
     
     CoulombComponent(const CoulombComponent &other);
@@ -118,6 +120,8 @@ class SIREMM_EXPORT LJComponent : public SireFF::FFComponent
 {
 public:
     LJComponent(const FFName &ffname = FFName());
+    LJComponent(const FFName &ffname, const QString &suffix);
+    
     LJComponent(const SireCAS::Symbol &symbol);
     
     LJComponent(const LJComponent &other);
@@ -163,6 +167,8 @@ friend QDataStream& ::operator>>(QDataStream&, CLJComponent&);
 
 public:
     CLJComponent(const FFName &name = FFName());
+    CLJComponent(const FFName &name, const QString &suffix);
+    
     CLJComponent(const SireCAS::Symbol &symbol);
     
     CLJComponent(const CLJComponent &other);

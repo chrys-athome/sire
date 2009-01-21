@@ -552,9 +552,21 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                                 = mol0.parameters().atomicParameters().constData();
     const Parameters::Array *molparams1_array 
                                 = mol1.parameters().atomicParameters().constData();
+
+    //now get an array containing all of the unique alpha values
+    #warning NEED TO GET ARRAY OF UNIQUE ALPHA VALUES
+    double alfa[MAX_ALPHA_VALUES];
+    int alpha_index[MAX_ALPHA_VALUES];
+    int nalpha;
     
-    double cnrg = 0;
-    double ljnrg = 0;
+    double cnrg[nalpha];
+    double ljnrg[nalpha];
+    
+    for (int i=0; i<nalpha; ++i)
+    {
+        cnrg[i] = 0;
+        ljnrg[i] = 0;
+    }
     
     //this uses the following potentials
     //           Zacharias and McCammon, J. Chem. Phys., 1994, and also,
@@ -570,9 +582,16 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
     //  V_{LJ}(r) = 4 epsilon [ (sigma^12 / (alpha^m sigma^6 + r^6)^2) - 
     //                          (sigma^6  / (alpha^m sigma^6 + r^6) ) ]
 
+    double one_minus_alfa_to_n[nalpha];
+    double delta[nalpha];
     
-    const double one_minus_alfa_to_n = SireMaths::pow(1 - alfa, int(coul_power));
-    const double delta = shift_delta * alfa;
+    const double *alfa = alpha_values.constData();
+    
+    for (int i=0; i<nalpha; ++i)
+    {
+        one_minus_alfa_to_n[i] = SireMaths::pow(1 - alfa[i], int(coul_power));
+        delta[i] = shift_delta * alfa[i];
+    }
     
     #ifdef SIRE_TIME_ROUTINES
     int nflops = 0;
@@ -613,8 +632,14 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                 continue;
             }
                
-            double icnrg = 0;
-            double iljnrg = 0;
+            double icnrg[nalpha];
+            double iljnrg[nalpha];
+            
+            for (int i=0; i<nalpha; ++i)
+            {
+                icnrg[i] = 0;
+                iljnrg[i] = 0;
+            }
             
             //loop over all interatomic pairs and calculate the energies
             const quint32 nats1 = group1.count();
@@ -746,11 +771,15 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
 
                         const double dist2 = distmat[j];
                         
-                        icnrg += param0.reduced_charge * param1.reduced_charge 
-                                    / std::sqrt(alfa + dist2);
+                        const double q2 = param0.reduced_charge * param1.reduced_charge;
+                        
+                        for (int k=0; k<nalpha; ++k)
+                        {
+                            icnrg[k] += q2 / std::sqrt(alfa[k] + dist2);
+                        }
                     
                         #ifdef SIRE_TIME_ROUTINES
-                        nflops += 4;
+                        nflops += 1 + 3*nalpha;
                         #endif
 
                         const LJPair &ljpair = ljpairs.constData()[
@@ -760,20 +789,23 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                         const double sig2 = ljpair.sigma() * ljpair.sigma();
                         const double sig6 = sig2 * sig2 * sig2;
                         
-                        const double shift = ljpair.sigma() * delta;
+                        for (int k=0; k<nalpha; ++k)
+                        {
+                            const double shift = ljpair.sigma() * delta;
                         
-                        double lj_denom = dist2 + shift;
-                        lj_denom = lj_denom * lj_denom * lj_denom;
+                            double lj_denom = dist2 + shift;
+                            lj_denom = lj_denom * lj_denom * lj_denom;
                         
-                        const double sig6_over_denom = sig6 / lj_denom;
-                        const double sig12_over_denom2 = sig6_over_denom *
-                                                         sig6_over_denom;
+                            const double sig6_over_denom = sig6 / lj_denom;
+                            const double sig12_over_denom2 = sig6_over_denom *
+                                                             sig6_over_denom;
     
-                        iljnrg += ljpair.epsilon() * (sig12_over_denom2 - 
-                                                      sig6_over_denom);
-                                                          
+                            iljnrg[k] += ljpair.epsilon() * (sig12_over_denom2 - 
+                                                             sig6_over_denom);
+                        }
+                        
                         #ifdef SIRE_TIME_ROUTINES
-                        nflops += 12;
+                        nflops += 3 + 9*nalpha;
                         #endif
                     }
                 }
@@ -783,11 +815,17 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
             //are we shifting the electrostatic potential?
             if (use_electrostatic_shifting)
             {
-                icnrg -= this->totalCharge(params0) * this->totalCharge(params1)
-                              / switchfunc->electrostaticCutoffDistance();
+                const double coul_shift = this->totalCharge(params0) * 
+                                          this->totalCharge(params1)
+                                        / switchfunc->electrostaticCutoffDistance();
+                
+                for (int i=0; i<nalpha; ++i)
+                {
+                    icnrg[i] -= coul_shift;
+                }
                         
                 #ifdef SIRE_TIME_ROUTINES      
-                nflops += 3;
+                nflops += 2 + nalpha;
                 #endif
             }
             
@@ -795,20 +833,31 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
             //scaled by any non-bonded feather factor
             if (mindist > switchfunc->featherDistance())
             {
-                cnrg += switchfunc->electrostaticScaleFactor( Length(mindist) ) * icnrg;
-                ljnrg += switchfunc->vdwScaleFactor( Length(mindist) ) * iljnrg;
+                const double cscl = switchfunc->electrostaticScaleFactor( 
+                                                                    Length(mindist) );
+                                                                    
+                const double ljscl = switchfunc->vdwScaleFactor( Length(mindist) );
+            
+                for (int i=0; i<nalpha; ++i)
+                {
+                    cnrg[i] += cscl * icnrg[i];
+                    ljnrg[i] += ljscl * iljnrg[i];
+                }
                 
                 #ifdef SIRE_TIME_ROUTINES
-                nflops += 4;
+                nflops += 4*nalpha;
                 #endif
             }
             else
             {
-                cnrg += icnrg;
-                ljnrg += iljnrg;
+                for (int i=0; i<nalpha; ++i)
+                {
+                    cnrg[i] += icnrg[i];
+                    ljnrg[i] += iljnrg[i];
+                }
                 
                 #ifdef SIRE_TIME_ROUTINES
-                nflops += 2;
+                nflops += 2*nalpha;
                 #endif
             }
         }
@@ -817,11 +866,28 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
     //add this molecule pair's energy onto the total
     //(also multiply LJ by 4 as it is 4 * epsilon ((sig/r)^12 - (sig/r)^6))
     //(also multiply COUL by (1-alpha)^n)
-    energy += Energy(scale_energy * one_minus_alfa_to_n * cnrg, 
-                     4 * scale_energy * ljnrg);
+    for (int i=0; i<nalpha; ++i)
+    {
+        cnrg[i] *= scale_energy * one_minus_alfa_to_n[i];
+        ljnrg[i] *= 4 * scale_energy;
+    }
     
     #ifdef SIRE_TIME_ROUTINES
-    nflops += 6;
+    nflops += 4*nalpha;
+    #endif
+
+    //now copy the calculated energies back to the Energy object
+    Energy soft_energy;
+    
+    for (int i=0; i<MAX_ALPHA_VALUES; ++i)
+    {
+        soft_energy.setEnergy(i, cnrg[alpha_index[i]], ljnrg[alpha_index[i]]);
+    }
+    
+    energy += soft_energy;
+    
+    #ifdef SIRE_TIME_ROUTINES
+    nflops += 2 * MAX_ALPHA_VALUES;
     ADD_FLOPS(nflops);
     #endif
 }

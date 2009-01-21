@@ -69,6 +69,11 @@ CoulombComponent::CoulombComponent(const FFName &ffname)
                  : FFComponent(ffname, QLatin1String("coulomb"))
 {}
 
+/** Construct using the passed forcefield name and suffix */
+CoulombComponent::CoulombComponent(const FFName &ffname, const QString &suffix)
+                 : FFComponent(ffname, QString("coulomb_{%1}").arg(suffix))
+{}
+
 /** Construct from a symbol
 
     \throw SireError::incompatible_error
@@ -132,6 +137,11 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, LJComponent &lj)
 /** Constructor */
 LJComponent::LJComponent(const FFName &ffname)
             : FFComponent(ffname, QLatin1String("LJ"))
+{}
+
+/** Construct using the name of the forcefield, and the passed suffix */
+LJComponent::LJComponent(const FFName &ffname, const QString &suffix)
+            : FFComponent(ffname, QString("LJ_{%1}").arg(suffix))
 {}
 
 /** Construct from a symbol
@@ -201,6 +211,12 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CLJComponent &clj)
 CLJComponent::CLJComponent(const FFName &ffname)
             : FFComponent(ffname, QLatin1String("CLJ")),
                coul_component(ffname), lj_component(ffname)
+{}
+
+/** Construct from the passed forcefield name and suffix */
+CLJComponent::CLJComponent(const FFName &ffname, const QString &suffix)
+             : FFComponent(ffname, QString("CLJ_{%1}").arg(suffix)),
+               coul_component(ffname,suffix), lj_component(ffname,suffix)
 {}
 
 /** Construct from a symbol

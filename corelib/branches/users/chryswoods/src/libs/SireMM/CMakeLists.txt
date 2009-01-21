@@ -33,6 +33,7 @@ set ( SIREMM_HEADERS
       ljparameterdb.h
       ljpotential.h
       qhash_siremm.h
+      softcljcomponent.h
       softcljpotential.h
       switchingfunction.h
       threeatomfunctions.h
@@ -70,6 +71,7 @@ set ( SIREMM_SOURCES
       ljparameter.cpp
       ljparameterdb.cpp
       ljpotential.cpp
+      softcljcomponent.cpp
       softcljpotential.cpp
       switchingfunction.cpp
       threeatomfunctions.cpp

@@ -30,6 +30,7 @@
 #define SIREMM_SOFTCLJPOTENTIAL_H
 
 #include "cljpotential.h"
+#include "softcljcomponent.h"
 
 SIRE_BEGIN_HEADER
 
@@ -50,7 +51,8 @@ namespace SireMM
 
 /** This class provides a Coulomb and Lennard Jones potential that 
     can be softened (using the soft-core function as described in
-    Taylor, Jewsbury and Essex, J. Comp. Chem., 24:13, 1637, 2003
+    Zacharias and McCammon, J. Chem. Phys., 1994, and also,
+    Michel et al., JCTC, 2007)
     
     @author Christopher Woods
 */
@@ -70,7 +72,15 @@ public:
     
     bool setProperty(const QString &name, const Property &value);
     
-    double alpha() const;
+    double alpha(int i) const;
+    
+    void appendAlpha(double alpha);
+    void setAlpha(int i, double alpha);
+    
+    void removeAlpha(int i);
+    
+    void clearAlphas();
+    
     double shiftDelta() const;
     int coulombPower() const;
     int ljPower() const;
@@ -81,9 +91,9 @@ protected:
     
     SoftCLJPotential& operator=(const SoftCLJPotential &other);
     
-    /** The value of alpha - alpha=0 gives the true Coulomb
+    /** The values of alpha - alpha=0 gives the true Coulomb
         and LJ potential, while alpha > 0 softens the potential */
-    double alfa;
+    QVector<double> alpha_values;
     
     /** The value of delta for the LJ shift function */
     double shift_delta;
@@ -137,7 +147,7 @@ friend QDataStream& ::operator<<(QDataStream&, const InterSoftCLJPotential&);
 friend QDataStream& ::operator>>(QDataStream&, InterSoftCLJPotential&);
 
 public:
-    typedef CLJEnergy Energy;
+    typedef SoftCLJEnergy Energy;
     typedef Energy::Components Components;
 
     typedef CLJParameterNames3D ParameterNames;
