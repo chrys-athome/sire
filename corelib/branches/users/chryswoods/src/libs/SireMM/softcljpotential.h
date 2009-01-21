@@ -65,7 +65,6 @@ friend QDataStream& ::operator>>(QDataStream&, SoftCLJPotential&);
 public:
     ~SoftCLJPotential();
     
-    bool setAlpha(double alpha);
     bool setShiftDelta(double delta);
     bool setCoulombPower(int power);
     bool setLJPower(int power);
@@ -73,11 +72,11 @@ public:
     bool setProperty(const QString &name, const Property &value);
     
     double alpha(int i) const;
+
+    bool setAlpha(double alpha);
+    bool setAlpha(int i, double alpha);
     
-    void appendAlpha(double alpha);
-    void setAlpha(int i, double alpha);
-    
-    void removeAlpha(int i);
+    bool removeAlpha(int i);
     
     void clearAlphas();
     
@@ -91,9 +90,15 @@ protected:
     
     SoftCLJPotential& operator=(const SoftCLJPotential &other);
     
-    /** The values of alpha - alpha=0 gives the true Coulomb
-        and LJ potential, while alpha > 0 softens the potential */
+    /** The array of unique alpha values - alpha = 0 gives the 
+        true Coulomb and LJ potential, while alpha > 0 gives
+        the (increasingly) softened potential  */
     QVector<double> alpha_values;
+    
+    /** The index mapping from the index of the alpha component
+        to the actual unique alpha value - this is used to make
+        sure that we only internally store unique alpha values */
+    QVector<int> alpha_index;
     
     /** The value of delta for the LJ shift function */
     double shift_delta;

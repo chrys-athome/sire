@@ -553,11 +553,12 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
     const Parameters::Array *molparams1_array 
                                 = mol1.parameters().atomicParameters().constData();
 
-    //now get an array containing all of the unique alpha values
-    #warning NEED TO GET ARRAY OF UNIQUE ALPHA VALUES
-    double alfa[MAX_ALPHA_VALUES];
-    int alpha_index[MAX_ALPHA_VALUES];
-    int nalpha;
+    //the alpha_values array contains all of the unique alpha values
+    const double *alfa = alpha_values.constData();
+    const int nalpha = alpha_values.count();
+    
+    if (nalpha <= 0)
+        return;
     
     double cnrg[nalpha];
     double ljnrg[nalpha];
@@ -584,8 +585,6 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
 
     double one_minus_alfa_to_n[nalpha];
     double delta[nalpha];
-    
-    const double *alfa = alpha_values.constData();
     
     for (int i=0; i<nalpha; ++i)
     {
@@ -649,19 +648,27 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
             {
                 const int remainder = nats1 % 2;
                 
-                __m128d sse_cnrg = { 0, 0 };
-                __m128d sse_ljnrg = { 0, 0 };
-
-                const __m128d sse_alpha = { alfa, alfa };
-                const __m128d sse_delta = { delta, delta };
+                __m128d sse_cnrg[nalpha];
+                __m128d sse_ljnrg[nalpha];
+                __m128d sse_alpha[nalpha];
+                __m128d sse_delta[nalpha];
+                                
+                for (int i=0; i<nalpha; ++i)
+                {
+                    sse_cnrg[i] = _mm_set_pd(0, 0);
+                    sse_ljnrg[i] = _mm_set_pd(0, 0);
+                    
+                    sse_alpha[i] = _mm_set_pd(alfa[i], alfa[i]);
+                    sse_delta[i] = _mm_set_pd(delta[i], delta[i]);
+                }
                 
                 for (quint32 i=0; i<nats0; ++i)
                 {
                     distmat.setOuterIndex(i);
                     const Parameter &param0 = params0_array[i];
                     
-                    __m128d sse_chg0 = { param0.reduced_charge, 
-                                         param0.reduced_charge };
+                    __m128d sse_chg0 = _mm_set_pd(param0.reduced_charge, 
+                                                  param0.reduced_charge);
 
                     //process atoms in pairs (so can then use SSE)
                     for (quint32 j=0; j<nats1-1; j += 2)
@@ -669,9 +676,9 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                         const Parameter &param10 = params1_array[j];
                         const Parameter &param11 = params1_array[j+1];
                         
-                        __m128d sse_dist2 = { distmat[j], distmat[j+1] };
-                        __m128d sse_chg1 = { param10.reduced_charge,
-                                             param11.reduced_charge };
+                        __m128d sse_dist2 = _mm_set_pd(distmat[j], distmat[j+1]);
+                        __m128d sse_chg1 = _mm_set_pd(param10.reduced_charge,
+                                                      param11.reduced_charge);
                                            
                         const LJPair &ljpair0 = ljpairs.constData()[
                                                 ljpairs.map(param0.ljid,
@@ -681,36 +688,47 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                                                 ljpairs.map(param0.ljid,
                                                             param11.ljid)];
                     
-                        __m128d sse_sig = { ljpair0.sigma(), ljpair1.sigma() };
-                        __m128d sse_eps = { ljpair0.epsilon(), ljpair1.epsilon() };
+                        __m128d sse_sig = _mm_set_pd(ljpair0.sigma(), 
+                                                     ljpair1.sigma());
+                        __m128d sse_eps = _mm_set_pd(ljpair0.epsilon(), 
+                                                     ljpair1.epsilon());
                         
                         //calculate the coulomb energy
-                        __m128d coul_denom = _mm_sqrt_pd( sse_dist2 + sse_alpha );
+                        __m128d sse_q2 = sse_chg0 * sse_chg1;
                         
-                        sse_cnrg += sse_chg0 * sse_chg1 / coul_denom;
+                        for (int k=0; k<nalpha; ++k)
+                        {
+                            __m128d coul_denom = _mm_sqrt_pd( sse_dist2 + sse_alpha[k] );
+                        
+                            sse_cnrg[k] += sse_q2 / coul_denom;
+                        }
                        
                         #ifdef SIRE_TIME_ROUTINES
-                        nflops += 10;
+                        nflops += 2 + 8*nalpha;
                         #endif
-                        
-                        //calculate shift = alpha * sigma * shift_delta
-                        const __m128d sse_shift = sse_sig * sse_delta;
-                        
+
                         const __m128d sse_sig3 = sse_sig * sse_sig * sse_sig;
                         const __m128d sse_sig6 = sse_sig3 * sse_sig3;
-
-                        __m128d lj_denom = sse_dist2 + sse_shift;
-                        lj_denom = lj_denom * lj_denom * lj_denom;
                         
-                        const __m128d sig6_over_denom = sse_sig6 / lj_denom;
-                        const __m128d sig12_over_denom2 = sig6_over_denom * 
-                                                          sig6_over_denom;
+                        for (int k=0; k<nalpha; ++k)
+                        {
+                            //calculate shift = alpha * sigma * shift_delta
+                            const __m128d sse_shift = sse_sig * sse_delta[k];
+
+                            __m128d lj_denom = sse_dist2 + sse_shift;
+                            lj_denom = lj_denom * lj_denom * lj_denom;
+                        
+                            const __m128d sig6_over_denom = sse_sig6 / lj_denom;
+                            const __m128d sig12_over_denom2 = sig6_over_denom * 
+                                                              sig6_over_denom;
                                               
-                        //calculate LJ energy (the factor of 4 is added later)
-                        sse_ljnrg += sse_eps * (sig12_over_denom2 - sig6_over_denom);
-                                                
+                            //calculate LJ energy (the factor of 4 is added later)
+                            sse_ljnrg[k] += sse_eps * 
+                                                (sig12_over_denom2 - sig6_over_denom);
+                        }
+                        
                         #ifdef SIRE_TIME_ROUTINES
-                        nflops += 24;
+                        nflops += 6 + nalpha*18;
                         #endif
                     }
                           
@@ -720,11 +738,15 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
 
                         const double dist2 = distmat[nats1-1];
                         
-                        icnrg += param0.reduced_charge * param1.reduced_charge 
-                                    / std::sqrt( alfa + dist2 );
+                        const double q2 = param0.reduced_charge * param1.reduced_charge;
+                        
+                        for (int k=0; k<nalpha; ++k)
+                        {
+                            icnrg[k] += q2 / std::sqrt( alfa[k] + dist2 );
+                        }
                     
                         #ifdef SIRE_TIME_ROUTINES
-                        nflops += 5;
+                        nflops += 1 + 3*nalpha;
                         #endif
 
                         const LJPair &ljpair = ljpairs.constData()[
@@ -733,30 +755,36 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                         
                         const double sig2 = ljpair.sigma() * ljpair.sigma();
                         const double sig6 = sig2 * sig2 * sig2;
+
+                        for (int k=0; k<nalpha; ++k)
+                        {
+                            const double shift = ljpair.sigma() * delta[k];
                         
-                        const double shift = ljpair.sigma() * delta;
+                            double lj_denom = dist2 + shift; 
+                            lj_denom = lj_denom * lj_denom * lj_denom;
                         
-                        double lj_denom = dist2 + shift; 
-                        lj_denom = lj_denom * lj_denom * lj_denom;
+                            const double sig6_over_denom = sig6 / lj_denom;
+                            const double sig12_over_denom2 = sig6_over_denom * 
+                                                             sig6_over_denom;
                         
-                        const double sig6_over_denom = sig6 / lj_denom;
-                        const double sig12_over_denom2 = sig6_over_denom * 
-                                                         sig6_over_denom;
+                            iljnrg[k] += ljpair.epsilon() * (sig12_over_denom2 - 
+                                                             sig6_over_denom);
+                        }
                         
-                        iljnrg += ljpair.epsilon() * (sig12_over_denom2 - 
-                                                      sig6_over_denom);
-                                                          
                         #ifdef SIRE_TIME_ROUTINES
-                        nflops += 12;
+                        nflops += 3 + 9*nalpha;
                         #endif
                     }
                 }
                 
-                icnrg += *((const double*)&sse_cnrg) +
-                         *( ((const double*)&sse_cnrg) + 1 );
+                for (int k=0; k<nalpha; ++k)
+                {
+                    icnrg[k] += *((const double*)&(sse_cnrg[k])) +
+                                *( ((const double*)&(sse_cnrg[k])) + 1 );
                          
-                iljnrg += *((const double*)&sse_ljnrg) +
-                          *( ((const double*)&sse_ljnrg) + 1 );
+                    iljnrg[k] += *((const double*)&(sse_ljnrg[k])) +
+                                 *( ((const double*)&(sse_ljnrg[k])) + 1 );
+                }
             }
             #else
             {
@@ -879,15 +907,15 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
     //now copy the calculated energies back to the Energy object
     Energy soft_energy;
     
-    for (int i=0; i<MAX_ALPHA_VALUES; ++i)
+    for (int i=0; i<alpha_index.count(); ++i)
     {
-        soft_energy.setEnergy(i, cnrg[alpha_index[i]], ljnrg[alpha_index[i]]);
+        soft_energy.setEnergy(i, cnrg[alpha_index.at(i)], ljnrg[alpha_index.at(i)]);
     }
     
     energy += soft_energy;
     
     #ifdef SIRE_TIME_ROUTINES
-    nflops += 2 * MAX_ALPHA_VALUES;
+    nflops += 2 * alpha_index.count();
     ADD_FLOPS(nflops);
     #endif
 }
