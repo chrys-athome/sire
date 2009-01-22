@@ -87,6 +87,11 @@ public:
         return QMetaType::typeName( qMetaTypeId<RepExReplica>() );
     }
     
+    const char* what() const
+    {
+        return RepExReplica::typeName();
+    }
+    
     RepExReplica* clone() const
     {
         return new RepExReplica(*this);

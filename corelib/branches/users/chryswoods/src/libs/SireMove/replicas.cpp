@@ -164,6 +164,17 @@ void Replica::revertTo(const Replica &old_state)
     Replica::operator=(old_state);
 }
 
+/** Internal function used to throw an invalid_cast exception 
+
+    \throw SireError::invalid_cast
+*/
+void Replica::throwCastingError(const char *typenam) const
+{
+    throw SireError::invalid_cast( QObject::tr(
+        "You cannot cast a replica of type %1 to a replica of type %2.")    
+            .arg(this->what()).arg(typenam), CODELOC );
+}
+
 /** Return whether or not the system and moves are packed together
     into a compressed binary representation - this is used to save
     memory if we have lots of replicas */

@@ -233,46 +233,74 @@ bool RepExMove::testAndSwap(RepExReplica &replica_a, RepExReplica &replica_b)
             p_b = ensemble_b.pressure();
         }
         
-        //now get the values of the system properties at their current replica level
-        MolarEnergy H_a_i = replica_a.energy();
-        MolarEnergy H_b_j = replica_b.energy();
+        bool rep_a_is_packed = replica_a.isPacked();
+        bool rep_b_is_packed = replica_b.isPacked();
         
-        Volume V_a_i(0);
-        Volume V_b_j(0);
-        
-        if (need_pv)
+        try
         {
-           V_a_i = replica_a.volume();
-           V_b_j = replica_b.volume();
-        }
+            if (rep_a_is_packed)
+                replica_a.unpack();
+                
+            if (rep_b_is_packed)
+                replica_b.unpack();
         
-        //now swap the replicas
-        RepExReplica::swapSystems(replica_a, replica_b);
+            //now get the values of the system properties at their current replica level
+            MolarEnergy H_a_i = replica_a.energy();
+            MolarEnergy H_b_j = replica_b.energy();
         
-        //get the values of the system properties at the new replica level
-        MolarEnergy H_a_j = replica_a.energy();
-        MolarEnergy H_b_i = replica_b.energy();
+            Volume V_a_i(0);
+            Volume V_b_j(0);
         
-        Volume V_a_j(0);
-        Volume V_b_i(0);
+            if (need_pv)
+            {
+                V_a_i = replica_a.volume();
+                V_b_j = replica_b.volume();
+            }
         
-        if (need_pv)
-        {
-            V_a_j = replica_a.volume();
-            V_b_i = replica_b.volume();
-        }
+            //now swap the replicas
+            RepExReplica::swapSystems(replica_a, replica_b);
         
-        //now calculate delta needed for the Monte Carlo test
-        //
-        //   For derivation see Appendix C of Christopher Woods' thesis
-        //
-        //  delta = beta_b * [ H_b_j - H_b_i + P_b (V_b_j - V_b_i) ] + 
-        //          beta_a * [ H_a_i - H_a_j + P_a (V_a_i - V_a_j) ]
+            //get the values of the system properties at the new replica level
+            MolarEnergy H_a_j = replica_a.energy();
+            MolarEnergy H_b_i = replica_b.energy();
         
-        double delta = beta_b * ( H_b_j - H_b_i + p_b*(V_b_j - V_b_i) ) +
-                       beta_a * ( H_a_i - H_a_j + p_a*(V_a_i - V_a_j) );
+            Volume V_a_j(0);
+            Volume V_b_i(0);
+        
+            if (need_pv)
+            {
+                V_a_j = replica_a.volume();
+                V_b_i = replica_b.volume();
+            }
+
+            if (rep_a_is_packed)
+                replica_a.pack();
+                
+            if (rep_b_is_packed)
+                replica_b.pack();
+        
+            //now calculate delta needed for the Monte Carlo test
+            //
+            //  For derivation see Appendix C of Christopher Woods' thesis
+            //
+            //  delta = beta_b * [ H_b_j - H_b_i + P_b (V_b_j - V_b_i) ] + 
+            //          beta_a * [ H_a_i - H_a_j + P_a (V_a_i - V_a_j) ]
+        
+            double delta = beta_b * ( H_b_j - H_b_i + p_b*(V_b_j - V_b_i) ) +
+                           beta_a * ( H_a_i - H_a_j + p_a*(V_a_i - V_a_j) );
                        
-        return ( delta > 0 or (std::exp(delta) >= rangenerator.rand()) );
+            return ( delta > 0 or (std::exp(delta) >= rangenerator.rand()) );
+        }
+        catch(...)
+        {
+            if (rep_a_is_packed)
+                replica_a.pack();
+                
+            if (rep_b_is_packed)
+                replica_b.pack();
+                
+            throw;
+        }
     }
     else
     {
@@ -355,10 +383,9 @@ void RepExMove::move(Nodes &nodes, RepExReplicas &replicas, int nmoves_to_run,
             
                 Node node = nodes.getNode();
                 
-                running_sims.append( Simulation::run(node, replica.system(),
-                                                     replica.moves(), replica.nMoves(),
+                running_sims.append( Simulation::run(node, replica, 
                                                      nmoves_per_chunk,
-                                     record_stats and replica.recordStatistics()) );
+                                                     record_stats) );
             }
 
             //wait for all of the simulations to finish
@@ -389,10 +416,9 @@ void RepExMove::move(Nodes &nodes, RepExReplicas &replicas, int nmoves_to_run,
                         
                         Node node = nodes.getNode();
                         
-                        running_sims[j] = Simulation::run( node, replica.system(),
-                                                 replica.moves(), replica.nMoves(),
-                                                 nmoves_per_chunk,
-                                        record_stats and replica.recordStatistics() );
+                        running_sims[j] = Simulation::run( node, replica
+                                                           nmoves_per_chunk,
+                                                           record_stats );
                     
                         all_finished = false;
                     }
@@ -425,6 +451,8 @@ void RepExMove::move(Nodes &nodes, RepExReplicas &replicas, int nmoves_to_run,
                 SimPacket sim = running_sims[j].result();
                 
                 replicas.setSystemAndMoves(j, sim.system(), sim.moves());
+                
+                HOW DO I STOP UNNECESSARY PACKING AND UNPACKING???
             }
             
             //now perform the replica exchange test on the replicas

@@ -86,6 +86,11 @@ public:
         return QMetaType::typeName( qMetaTypeId<Replica>() );
     }
 
+    virtual const char* what() const
+    {
+        return Replica::typeName();
+    }
+
     virtual Replica* clone() const
     {
         return new Replica(*this);
@@ -148,7 +153,7 @@ protected:
     virtual void revertTo(const Replica &old_state);
     
 private:
-    void throwCastingError(const char *typenam);
+    void throwCastingError(const char *typenam) const;
 
     /** The system being simulated */
     System sim_system;

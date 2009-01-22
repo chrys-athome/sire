@@ -29,6 +29,9 @@
 #ifndef SIREMOVE_SIMPACKET_H
 #define SIREMOVE_SIMPACKET_H
 
+#include <QMutex>
+#include <QByteArray>
+
 #include "SireCluster/workpacket.h"
 
 #include "SireSystem/system.h"
@@ -97,8 +100,8 @@ public:
     bool shouldPack() const;
     int approximatePacketSize() const;
     
-    const System& system() const;
-    const Moves& moves() const;
+    System system() const;
+    MovesPtr moves() const;
     
     int nMoves() const;
     int nCompleted() const;
@@ -113,11 +116,22 @@ protected:
     float chunk();
 
 private:
+    void pack() const;
+    void unpack() const;
+    
+    bool isPacked() const;
+
     /** The system being simulated */
     System sim_system;
     
     /** The moves to be applied to the system */
     MovesPtr sim_moves;
+    
+    /** A packed, binary representation of the system and moves */
+    QByteArray compressed_system_and_moves;
+    
+    /** Mutex used to protect the compressed data */
+    QMutex packing_mutex;
     
     /** The number of moves to run on the system */
     quint32 nmoves;
