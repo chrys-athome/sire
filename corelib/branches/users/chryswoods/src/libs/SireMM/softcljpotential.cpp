@@ -92,7 +92,7 @@ static const RegisterMetaType<SoftCLJPotential> r_cljpot( MAGIC_ONLY,
 QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
                                       const SoftCLJPotential &cljpot)
 {
-    writeHeader(ds, r_cljpot, 1);
+    writeHeader(ds, r_cljpot, 2);
     
     ds << static_cast<const CLJPotential&>(cljpot);
 
@@ -105,13 +105,68 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
 {
     VersionID v = readHeader(ds, r_cljpot);
     
-    if (v == 1)
+    if (v == 1 or v == 2)
     {
         ds >> static_cast<CLJPotential&>(cljpot);
     
         //extract all of the properties
-        cljpot.alfa = cljpot.props.property("alpha")
-                                  .asA<VariantProperty>().convertTo<double>();
+        QVector<double> alpha_values;
+        QVector<qint32> alpha_index(MAX_ALPHA_VALUES, -1);
+        
+        for (int i=0; i<MAX_ALPHA_VALUES; ++i)
+        {
+            QString propname = QString( "alpha%1" ).arg(i);
+            
+            if (cljpot.props.hasProperty(propname))
+            {
+                double alpha = cljpot.props.property(propname)
+                                     .asA<VariantProperty>().convertTo<double>();
+                                     
+                int idx = alpha_values.indexOf(alpha);
+                
+                if (idx == -1)
+                {
+                    idx = alpha_values.count();
+                    alpha_values.append(alpha);
+                }
+                
+                alpha_index[i] = idx;
+            }
+        }
+        
+        if (cljpot.props.hasProperty("alpha"))
+        {
+            double alpha = cljpot.props.property("alpha")
+                                 .asA<VariantProperty>().convertTo<double>();
+                                 
+            if (alpha_values.count() == 0)
+            {
+                alpha_values.append(alpha);
+                alpha_index[0] = 0;
+            }
+            else if (alpha_values.count() > 1)
+            {
+                throw SireError::program_bug( QObject::tr(
+                    "How can we have a single value of alpha (%1) "
+                    "when multiple values (%2) have been read??")
+                        .arg(alpha)
+                        .arg( Sire::toString(alpha_values) ),
+                            CODELOC );
+            }
+            else if (alpha_values.at(0) != alpha)
+            {
+                throw SireError::program_bug( QObject::tr(
+                    "How can the value of alpha (%1) be different to "
+                    "the only alpha component value that has been read? (%2)")
+                        .arg(alpha).arg(alpha_values.at(0)), CODELOC );
+            }
+        }
+    
+        cljpot.alpha_values = alpha_values;
+        cljpot.alpha_index = alpha_index;
+        
+        cljpot.clearOrphanedAlpha();
+        cljpot.rebuildAlphaProperties();
     
         cljpot.shift_delta = cljpot.props.property("shiftDelta")
                                   .asA<VariantProperty>().convertTo<double>();
@@ -123,18 +178,24 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
                                   .asA<VariantProperty>().convertTo<quint32>();
     }
     else 
-        throw version_error(v, "1", r_cljpot, CODELOC);
+        throw version_error(v, "1,2", r_cljpot, CODELOC);
     
     return ds;
 }
 
 /** Constructor */
 SoftCLJPotential::SoftCLJPotential()
-                 : CLJPotential(), alfa(0), shift_delta(1.0 * angstrom),
+                 : CLJPotential(), shift_delta(1.0 * angstrom),
                                    coul_power(1), lj_power(1)
 {
+    //construct the default alpha values
+    alpha_values = QVector<double>(1, 0.0);
+    alpha_index = QVector<qint32>(MAX_ALPHA_VALUES, -1);
+    alpha_index[0] = 0;
+    
+    this->rebuildAlphaProperties();
+
     //record the defaults
-    props.setProperty( "alpha", VariantProperty(alfa) );
     props.setProperty( "shiftDelta", VariantProperty(shift_delta) );
     props.setProperty( "coulombPower", VariantProperty(coul_power) );
     props.setProperty( "ljPower", VariantProperty(lj_power) );
@@ -143,7 +204,9 @@ SoftCLJPotential::SoftCLJPotential()
 /** Copy constructor */
 SoftCLJPotential::SoftCLJPotential(const SoftCLJPotential &other)
                  : CLJPotential(other),
-                   alfa(other.alfa), shift_delta(other.shift_delta),
+                   alpha_values(other.alpha_values), 
+                   alpha_index(other.alpha_index),
+                   shift_delta(other.shift_delta),
                    coul_power(other.coul_power), lj_power(other.lj_power)
 {}
 
@@ -157,7 +220,8 @@ SoftCLJPotential& SoftCLJPotential::operator=(const SoftCLJPotential &other)
     if (this != &other)
     {
         CLJPotential::operator=(other);
-        alfa = other.alfa;
+        alpha_values = other.alpha_values;
+        alpha_index = other.alpha_index;
         shift_delta = other.shift_delta;
         coul_power = other.coul_power;
         lj_power = other.lj_power;
@@ -166,18 +230,201 @@ SoftCLJPotential& SoftCLJPotential::operator=(const SoftCLJPotential &other)
     return *this;
 }
 
-/** Set the value of alpha which is used to soften the interactions */
-bool SoftCLJPotential::setAlpha(double new_alpha)
+/** Return the value of alpha - this will raise an exception if this
+    potential calculates multiple alpha values at the same time
+    
+    \throw SireError::invalid_state
+*/
+double SoftCLJPotential::alpha() const
 {
-    if (alfa != new_alpha)
+    if (alpha_values.count() != 1)
+        throw SireError::invalid_state( QObject::tr(
+                "This potential has multiple alpha values (%1), so it "
+                "is not possible to return just one.")
+                    .arg(Sire::toString(alpha_values)), CODELOC );
+                    
+    return alpha_values.at(0);
+}
+
+/** Return whether or not the ith alpha component has 
+    an alpha value
+    
+    \throw SireError::invalid_index
+*/
+bool SoftCLJPotential::hasAlphaValue(int i) const
+{
+    return alpha_index.at( Index(i).map(alpha_index.count()) ) != -1;
+}
+
+/** Return the value of alpha for the ith alpha component
+
+    \throw SireError::invalid_index
+    \throw SireError::invalid_state
+*/
+double SoftCLJPotential::alpha(int i) const
+{
+    if (not this->hasAlphaValue(i))
+        throw SireError::invalid_state( QObject::tr(
+            "There is no alpha value associated with the alpha component "
+            "at index %1.").arg(i), CODELOC );
+            
+    return alpha_values.at( alpha_index.at(Index(i).map(alpha_index.count())) );
+}
+
+/** Return the number of active alpha components (the number of 
+    alpha components that have a value of alpha - those that don't
+    will not contribute to this potential) */
+int SoftCLJPotential::nActiveAlphaComponents() const
+{
+    int n = 0;
+    
+    for (int i=0; i<alpha_index.count(); ++i)
     {
-        alfa = new_alpha;
-        props.setProperty("alpha", VariantProperty(alfa));
+        if (alpha_index.at(i) != -1)
+            ++n;
+    }
+    
+    return n;
+}
+
+/** Internal function used to remove orphaned alpha values */
+void SoftCLJPotential::clearOrphanedAlpha()
+{
+    for (qint32 i=0; i<alpha_values.count(); ++i)
+    {
+        if (not alpha_index.contains(i))
+        {
+            //this is an orphaned alpha value - remove it
+            alpha_values.remove(i);
+            
+            //update the alpha index
+            for (int j=0; j<alpha_index.count(); ++j)
+            {
+                if (alpha_index.at(j) > i)
+                    alpha_index[j] -= 1;
+            }
+            
+            //use recursion to find other missing alpha values
+            this->clearOrphanedAlpha();
+            return;
+        } 
+    }
+}
+
+/** Internal function used to rebuild the properties representing the 
+    alpha components */
+void SoftCLJPotential::rebuildAlphaProperties()
+{
+    if (alpha_values.count() == 1)
+    {
+        props.setProperty("alpha", VariantProperty(alpha_values.at(0)));
+    }
+    
+    for (int i=0; i<alpha_index.count(); ++i)
+    {
+        if (alpha_index.at(i) != -1)
+        {
+            int idx = alpha_index.at(i);
+            
+            props.setProperty( QString("alpha%1").arg(i), 
+                               VariantProperty(alpha_values.at(idx)) );
+        }
+    }
+}
+
+/** Set the value of alpha to 'alpha' - this clears all of the alpha
+    values of all of the components, and sets only the first component
+    to use this value of alpha. This returns whether or not this
+    changes the forcefield */
+bool SoftCLJPotential::setAlpha(double alpha)
+{
+    if (alpha_values.count() == 1)
+    {
+        if (alpha_values.at(0) == alpha)
+            return false;
+    }
+    
+    alpha_values = QVector<double>(1, alpha);
+    
+    alpha_index = QVector<qint32>(MAX_ALPHA_VALUES, -1);
+    alpha_index[0] = 0;
+    
+    this->rebuildAlphaProperties();
+    this->changedPotential();
+    
+    return true;
+}
+
+/** Set the value of alpha for the ith alpha component to 'alpha'
+
+    \throw SireError::invalid_index
+*/
+bool SoftCLJPotential::setAlpha(int i, double alpha)
+{
+    i = Index(i).map( MAX_ALPHA_VALUES );
+    
+    int idx = alpha_values.indexOf(alpha);
+    
+    if (idx == -1)
+    {
+        idx = alpha_values.count();
+        alpha_values.append(alpha);
+    }
+    
+    if (alpha_index[i] != idx)
+    {
+        alpha_index[i] = idx;
+        this->clearOrphanedAlpha();
+        this->rebuildAlphaProperties();
         this->changedPotential();
+        
         return true;
     }
     else
         return false;
+}
+
+/** Remove the value of alpha for the ith alpha component
+
+    \throw SireError::invalid_index
+*/
+bool SoftCLJPotential::removeAlpha(int i)
+{
+    i = Index(i).map(MAX_ALPHA_VALUES);
+    
+    if (alpha_index.at(i) != -1)
+    {
+        alpha_index[i] = -1;
+        this->clearOrphanedAlpha();
+        this->rebuildAlphaProperties();
+        this->changedPotential();
+        
+        return true;
+    }
+    else
+        return false;
+}
+
+/** Clear all of the alpha values - this removes the values of alpha
+    for all of the alpha components, and then sets the alpha value
+    of the first component to 0 (as we need to have at least one 
+    alpha value) */
+void SoftCLJPotential::clearAlphas()
+{
+    QVector<double> new_alpha_values(1, 0.0);
+    QVector<qint32> new_alpha_index(MAX_ALPHA_VALUES, -1);
+    
+    new_alpha_index[0] = 0;
+        
+    if (alpha_values != new_alpha_values or 
+        alpha_index != new_alpha_index)
+    {
+        alpha_values = new_alpha_values;
+        alpha_index = new_alpha_index;
+        
+        this->rebuildAlphaProperties();
+        this->changedPotential();
+    }
 }
 
 /** Set the value of the delta value used in the LJ shift function */
@@ -263,13 +510,20 @@ bool SoftCLJPotential::setProperty(const QString &name, const Property &value)
         return this->setLJPower( value.asA<VariantProperty>().convertTo<int>() );
     }
     else
+    {
+        //is this one of the alpha properties?
+        for (int i=0; i<alpha_index.count(); ++i)
+        {
+            QString propname = QString("alpha%1").arg(i);
+            
+            if (name == propname)
+                return this->setAlpha(i, value.asA<VariantProperty>()
+                                              .convertTo<double>() );
+        }
+    
+        //no it's not - see if the CLJPotential recognises this property
         return CLJPotential::setProperty(name, value);
-}
-
-/** Return the value of alpha */
-double SoftCLJPotential::alpha() const
-{
-    return alfa;
+    }
 }
 
 /** Return the delta value used in the LJ shifting function */

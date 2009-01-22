@@ -98,9 +98,11 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExReplica &replica)
 
 void RepExReplica::updatedMoves()
 {
-    nrg_component = this->moves().energyComponent();
-    space_property = this->moves().spaceProperty();
-    replica_ensemble = this->moves().ensemble();
+    const MovesPtr mvs = this->moves();
+
+    nrg_component = mvs->energyComponent();
+    space_property = mvs->spaceProperty();
+    replica_ensemble = mvs->ensemble();
 
     if ( not (replica_ensemble.isConstantNParticles() or
               replica_ensemble.isConstantChemicalPotential()) )
@@ -199,6 +201,12 @@ bool RepExReplica::operator!=(const RepExReplica &other) const
     return not this->operator==(other);
 }
 
+/** Revert back to a previous state */
+void RepExReplica::revertTo(const Replica &old_state)
+{
+    RepExReplica::operator=( old_state.asA<RepExReplica>() );
+}
+
 /** Return the ensemble that this replica samples */
 const Ensemble& RepExReplica::ensemble() const
 {
@@ -285,11 +293,29 @@ Volume RepExReplica::volume() const
 /** Return the current energy of this replica */
 MolarEnergy RepExReplica::energy()
 {
-    System new_system = this->system();
-    MolarEnergy nrg = new_system.energy( nrg_component );
-    Replica::setSystem(new_system);
+    bool this_is_packed = this->isPacked();
+    
+    try
+    {
+        if (this_is_packed)
+            this->unpack();
 
-    return nrg;
+        System new_system = this->system();
+        MolarEnergy nrg = new_system.energy( nrg_component );
+        Replica::setSystem(new_system);
+
+        if (this_is_packed)
+            this->pack();
+
+        return nrg;
+    }
+    catch(...)
+    {
+        if (this_is_packed)
+            this->pack();
+            
+        return MolarEnergy(0);
+    }
 }
 
 /** Return whether or not this is a constant energy replica
@@ -344,7 +370,7 @@ bool RepExReplica::isConstantChemicalPotential() const
      same value of this lambda coordinate) */
 bool RepExReplica::isConstantLambda(const Symbol &lam) const
 {
-    return this->moves().isConstantLambda(lam);
+    return this->moves()->isConstantLambda(lam);
 }
 
 /** Set the system to be simulated at this replica 
@@ -382,12 +408,20 @@ void RepExReplica::setMoves(const Moves &moves)
 {
     RepExReplica old_state(*this);
     
+    bool this_is_packed = this->isPacked();
+    
+    if (this_is_packed)
+        this->unpack();
+    
     try
     {
         Replica::setMoves(moves);
         
         //changing the moves will change the ensemble for this replica
         this->updatedMoves();
+        
+        if (this_is_packed)
+            this->pack();
     }
     catch(...)
     {
@@ -406,21 +440,39 @@ void RepExReplica::setEnergyComponent(const Symbol &symbol)
     if (nrg_component == symbol)
         return;
 
-    if (not this->system().hasComponent(symbol))
-        throw SireFF::missing_component( QObject::tr(
-            "Cannot set the energy component for this replica to %1, "
-            "as this system (%2) doesn't have such a component. Available energy "
-            "components are %3.")
-                .arg(symbol.toString(), system().toString(),
-                     Sire::toString(system().components())), CODELOC );
-
-    MovesPtr mvs = Replica::moves();
+    bool this_is_packed = this->isPacked();
     
-    mvs.edit().setEnergyComponent(symbol);
+    try
+    {
+        if (this_is_packed)
+            this->unpack();
     
-    Replica::setMoves(mvs);
+        if (not this->system().hasComponent(symbol))
+            throw SireFF::missing_component( QObject::tr(
+                "Cannot set the energy component for this replica to %1, "
+                "as this system (%2) doesn't have such a component. Available energy "
+                "components are %3.")
+                    .arg(symbol.toString(), system().toString(),
+                         Sire::toString(system().components())), CODELOC );
 
-    nrg_component = symbol;
+        MovesPtr mvs = Replica::moves();
+    
+        mvs.edit().setEnergyComponent(symbol);
+    
+        Replica::setMoves(mvs);
+
+        nrg_component = symbol;
+        
+        if (this_is_packed)
+            this->pack();
+    }
+    catch(...)
+    {
+        if (this_is_packed)
+            this->pack();
+            
+        throw;
+    }
 }
 
 /** Set the property used to find the space (simulation box) for the replica */
@@ -428,14 +480,32 @@ void RepExReplica::setSpaceProperty(const PropertyName &spaceproperty)
 {
     if (spaceproperty == space_property)
         return;
+
+    bool this_is_packed = this->isPacked();
+    
+    try
+    {
+        if (this_is_packed)
+            this->unpack();
         
-    MovesPtr mvs = Replica::moves();
+        MovesPtr mvs = Replica::moves();
     
-    mvs.edit().setSpaceProperty(spaceproperty);
+        mvs.edit().setSpaceProperty(spaceproperty);
     
-    Replica::setMoves(mvs);
+        Replica::setMoves(mvs);
     
-    space_property = spaceproperty;
+        if (this_is_packed)
+            this->pack();
+    
+        space_property = spaceproperty;
+    }
+    catch(...)
+    {
+        if (this_is_packed)
+            this->pack();
+            
+        throw;
+    }
 }
 
 /** Set the lambda component used for lambda-based Hamiltonian
@@ -452,14 +522,32 @@ void RepExReplica::setLambdaComponent(const Symbol &symbol)
         return;
     }
     
-    System new_system( this->system() );
+    bool this_is_packed = this->isPacked();
     
-    //default always to lambda=0
-    new_system.setComponent(symbol, 0);
-    Replica::setSystem(new_system);
+    try
+    {
+        if (this_is_packed)
+            this->unpack();
     
-    lambda_component = symbol;
-    lambda_value = 0;
+        System new_system( this->system() );
+    
+        //default always to lambda=0
+        new_system.setComponent(symbol, 0);
+        Replica::setSystem(new_system);
+    
+        if (this_is_packed)
+            this->pack();
+    
+        lambda_component = symbol;
+        lambda_value = 0;
+    }
+    catch(...)
+    {
+        if (this_is_packed)
+            this->pack();
+            
+        throw;
+    }
 }
 
 /** Set the value of the lambda component to 'value' */
@@ -468,12 +556,30 @@ void RepExReplica::setLambdaValue(double value)
     if (lambda_component.isNull() or value == lambda_value)
         return;
         
-    System new_system( this->system() );
+    bool this_is_packed = this->isPacked();
     
-    new_system.setComponent(lambda_component, value);
-    Replica::setSystem(new_system);
+    try
+    {
+        if (this_is_packed)
+            this->unpack();
+        
+        System new_system( this->system() );
     
-    lambda_value = value;
+        new_system.setComponent(lambda_component, value);
+        Replica::setSystem(new_system);
+    
+        if (this_is_packed)
+            this->pack();
+    
+        lambda_value = value;
+    }
+    catch(...)
+    {
+        if (this_is_packed)
+            this->pack();
+            
+        throw;
+    }
 }
 
 /** Set the temperature of this replica to 'temperature'. This is only possible
@@ -485,9 +591,27 @@ void RepExReplica::setTemperature(const Temperature &t)
 {
     if (this->temperature() != t)
     {
-        MovesPtr mvs = Replica::moves();
-        mvs.edit().setTemperature(t);
-        this->setMoves(mvs);
+        bool this_is_packed = this->isPacked();
+        
+        try
+        {
+            if (this_is_packed)
+                this->unpack();
+    
+            MovesPtr mvs = Replica::moves();
+            mvs.edit().setTemperature(t);
+            this->setMoves(mvs);
+        
+            if (this_is_packed)
+                this->pack();
+        }
+        catch(...)
+        {
+            if (this_is_packed)
+                this->pack();
+                
+            throw;
+        }
     }
 }
 
@@ -500,9 +624,27 @@ void RepExReplica::setPressure(const Pressure &p)
 {
     if (this->pressure() != p)
     {
-        MovesPtr mvs = Replica::moves();
-        mvs.edit().setPressure(p);
-        this->setMoves(mvs);
+        bool this_is_packed = this->isPacked();
+        
+        try
+        {
+            if (this_is_packed)
+                this->unpack();
+    
+            MovesPtr mvs = Replica::moves();
+            mvs.edit().setPressure(p);
+            this->setMoves(mvs);
+        
+            if (this_is_packed)
+                this->pack();
+        }
+        catch(...)
+        {
+            if (this_is_packed)
+                this->pack();
+                
+            throw;
+        }
     }
 }
 
@@ -515,9 +657,27 @@ void RepExReplica::setFugacity(const Pressure &f)
 {
     if (this->fugacity() != f)
     {
-        MovesPtr mvs = Replica::moves();
-        mvs.edit().setFugacity(f);
-        this->setMoves(mvs);
+        bool this_is_packed = this->isPacked();
+        
+        try
+        {
+            if (this_is_packed)
+                this->unpack();
+    
+            MovesPtr mvs = Replica::moves();
+            mvs.edit().setFugacity(f);
+            this->setMoves(mvs);
+        
+            if (this_is_packed)
+                this->pack();
+        }
+        catch(...)
+        {
+            if (this_is_packed)
+                this->pack();
+                
+            throw;
+        }
     }
 }
 
@@ -530,9 +690,27 @@ void RepExReplica::setChemicalPotential(const MolarEnergy &c)
 {
     if (this->chemicalPotential() != c)
     {
-        MovesPtr mvs = Replica::moves();
-        mvs.edit().setChemicalPotential(c);
-        this->setMoves(mvs);
+        bool this_is_packed = this->isPacked();
+        
+        try
+        {
+            if (this_is_packed)
+                this->unpack();
+    
+            MovesPtr mvs = Replica::moves();
+            mvs.edit().setChemicalPotential(c);
+            this->setMoves(mvs);
+        
+            if (this_is_packed)
+                this->pack();
+        }
+        catch(...)
+        {
+            if (this_is_packed)
+                this->pack();
+            
+            throw;
+        }
     }
 }
 
@@ -544,17 +722,48 @@ void RepExReplica::setChemicalPotential(const MolarEnergy &c)
 void RepExReplica::swapSystems(RepExReplica &rep0, RepExReplica &rep1,
                                bool swap_monitors)
 {
-    System new_rep0 = rep1.system();
-    System new_rep1 = rep0.system();
+    if ( &rep0 == &rep1 )
+        return;
+
+    bool rep0_is_packed = rep0.isPacked();
+    bool rep1_is_packed = rep1.isPacked();
     
-    if (not swap_monitors)
+    try
     {
-        new_rep0.setMonitors( rep1.system().monitors() );
-        new_rep1.setMonitors( rep0.system().monitors() );
-    }
+        if (rep0_is_packed)
+            rep0.unpack();
+            
+        if (rep1_is_packed)
+            rep1.unpack();
+
+        System new_rep0 = rep1.system();
+        System new_rep1 = rep0.system();
     
-    rep0.setSystem( new_rep0 );
-    rep1.setSystem( new_rep1 );
+        if (not swap_monitors)
+        {
+            new_rep0.setMonitors( rep1.system().monitors() );
+            new_rep1.setMonitors( rep0.system().monitors() );
+        }
+    
+        rep0.setSystem( new_rep0 );
+        rep1.setSystem( new_rep1 );
+        
+        if (rep0_is_packed)
+            rep0.pack();
+            
+        if (rep1_is_packed)
+            rep1.pack();
+    }
+    catch(...)
+    {
+        if (rep0_is_packed)
+            rep0.pack();
+            
+        if (rep1_is_packed)
+            rep1.pack();
+            
+        throw;
+    }
 }
 
 /** Swap the molecules between the two replicas, 'rep0' and 'rep1'. This
@@ -563,14 +772,40 @@ void RepExReplica::swapSystems(RepExReplica &rep0, RepExReplica &rep1,
     affect unless 'rep0' and 'rep1' contain the same molecules */
 void RepExReplica::swapMolecules(RepExReplica &rep0, RepExReplica &rep1)
 {
-    System new_rep0 = rep0.system();
-    System new_rep1 = rep1.system();
+    bool rep0_is_packed = rep0.isPacked();
+    bool rep1_is_packed = rep1.isPacked();
     
-    new_rep0.update( rep1.system().molecules() );
-    new_rep1.update( rep0.system().molecules() );
+    try
+    {
+        if (rep0_is_packed)
+            rep0.unpack();
+            
+        if (rep1_is_packed)
+            rep1.unpack();
+
+        System new_rep0 = rep0.system();
+        System new_rep1 = rep1.system();
     
-    rep0.setSystem( new_rep0 );
-    rep1.setSystem( new_rep1 );
+        new_rep0.update( rep1.system().molecules() );
+        new_rep1.update( rep0.system().molecules() );
+    
+        rep0.setSystem( new_rep0 );
+        rep1.setSystem( new_rep1 );
+        
+        if (rep0_is_packed)
+            rep0.pack();
+            
+        if (rep1_is_packed)
+            rep1.pack();
+    }
+    catch(...)
+    {
+        if (rep0_is_packed)
+            rep0.pack();
+            
+        if (rep1_is_packed)
+            rep1.pack();
+    }
 }
 
 ///////

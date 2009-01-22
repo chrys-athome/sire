@@ -37,6 +37,7 @@
 using namespace SireMM;
 using namespace SireMM::detail;
 using namespace SireCAS;
+using namespace SireID;
 
 using namespace SireStream;
 
@@ -50,8 +51,7 @@ SoftCLJEnergy::SoftCLJEnergy()
     #ifdef SIRE_USE_SSE
     for (int i=0; i<MAX_ALPHA_VALUES; ++i)
     {
-        *((double*)&(nrgs[i])) = 0;
-        *( ((double*)&(nrgs[i])) + 1 ) = 0;
+        nrgs[i] = _mm_set_pd(0,0);
     }
     #else
     for (int i=0; i<MAX_ALPHA_VALUES; ++i)
@@ -135,6 +135,23 @@ SoftCLJEnergy SoftCLJEnergy::operator-(const SoftCLJEnergy &other) const
     SoftCLJEnergy ret(*this);
     ret -= other;
     return ret;
+}
+
+/** Set the energy of the ith component - set the coulomb component
+    to 'cnrg' and the LJ component to 'ljnrg'
+    
+    \throw SireError::invalid_index
+*/
+void SoftCLJEnergy::setEnergy(int i, double cnrg, double ljnrg)
+{
+    i = Index(i).map( MAX_ALPHA_VALUES );
+    
+    #ifdef SIRE_USE_SSE
+    nrgs[i] = _mm_set_pd(cnrg, ljnrg);
+    #else
+    nrgs[i][0] = cnrg;
+    nrgs[i][1] = ljnrg;
+    #endif;
 }
 
 /** Return the sum of all of the coulomb components */

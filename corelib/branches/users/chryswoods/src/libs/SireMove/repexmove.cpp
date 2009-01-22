@@ -424,8 +424,7 @@ void RepExMove::move(Nodes &nodes, RepExReplicas &replicas, int nmoves_to_run,
             {
                 SimPacket sim = running_sims[j].result();
                 
-                replicas.setSystem(j, sim.system());
-                replicas.setMoves(j, sim.moves());
+                replicas.setSystemAndMoves(j, sim.system(), sim.moves());
             }
             
             //now perform the replica exchange test on the replicas

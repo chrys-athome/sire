@@ -142,6 +142,8 @@ protected:
     virtual void setSystem(const System &system);
     virtual void setMoves(const Moves &moves);
 
+    virtual void revertTo(const Replica &replica);
+
 private:
     void updatedMoves();
 

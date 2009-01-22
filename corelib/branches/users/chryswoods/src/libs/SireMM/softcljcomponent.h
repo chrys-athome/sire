@@ -165,6 +165,8 @@ public:
         return this->count();
     }
     
+    void setEnergy(int i, double cnrg, double ljnrg);
+    
     double coulomb() const;
     double lj() const;
     
@@ -210,7 +212,7 @@ private:
 
 }
 
-SIRE_EXPOSE_CLASS( SireMM::SoftCLJComponet )
+SIRE_EXPOSE_CLASS( SireMM::SoftCLJComponent )
 
 Q_DECLARE_METATYPE( SireMM::SoftCLJComponent )
 

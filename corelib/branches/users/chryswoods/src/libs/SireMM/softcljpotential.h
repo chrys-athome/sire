@@ -70,8 +70,13 @@ public:
     bool setLJPower(int power);
     
     bool setProperty(const QString &name, const Property &value);
-    
+
+    double alpha() const;
     double alpha(int i) const;
+
+    int nActiveAlphaComponents() const;
+
+    bool hasAlphaValue(int i) const;
 
     bool setAlpha(double alpha);
     bool setAlpha(int i, double alpha);
@@ -83,6 +88,10 @@ public:
     double shiftDelta() const;
     int coulombPower() const;
     int ljPower() const;
+   
+private:
+    void clearOrphanedAlpha();
+    void rebuildAlphaProperties();
     
 protected:
     SoftCLJPotential();
@@ -98,7 +107,7 @@ protected:
     /** The index mapping from the index of the alpha component
         to the actual unique alpha value - this is used to make
         sure that we only internally store unique alpha values */
-    QVector<int> alpha_index;
+    QVector<qint32> alpha_index;
     
     /** The value of delta for the LJ shift function */
     double shift_delta;
@@ -300,9 +309,44 @@ public:
     ~SoftCLJPotentialInterface()
     {}
     
+    double alpha() const
+    {
+        return SoftCLJPot::alpha();
+    }
+    
+    double alpha(int i) const
+    {
+        return SoftCLJPot::alpha(i);
+    }
+
+    int nActiveAlphaComponents() const
+    {
+        return SoftCLJPot::nActiveAlphaComponents();
+    }
+
+    bool hasAlphaValue(int i) const
+    {
+        return SoftCLJPot::hasAlphaValue(i);
+    }
+
     bool setAlpha(double alpha)
     {
         return SoftCLJPot::setAlpha(alpha);
+    }
+    
+    bool setAlpha(int i, double alpha)
+    {
+        return SoftCLJPot::setAlpha(i, alpha);
+    }
+    
+    bool removeAlpha(int i)
+    {
+        return SoftCLJPot::removeAlpha(i);
+    }
+    
+    void clearAlphas()
+    {
+        SoftCLJPot::clearAlphas();
     }
     
     bool setShiftDelta(double delta)
@@ -318,11 +362,6 @@ public:
     bool setLJPower(int power)
     {
         return SoftCLJPot::setLJPower(power);
-    }
-    
-    double alpha() const
-    {
-        return SoftCLJPot::alpha();
     }
     
     double shiftDelta() const

@@ -29,6 +29,8 @@
 #ifndef SIREMOVE_REPLICAS_H
 #define SIREMOVE_REPLICAS_H
 
+#include <QMutex>
+
 #include "SireBase/property.h"
 #include "SireBase/sharedpolypointer.hpp"
 
@@ -89,8 +91,8 @@ public:
         return new Replica(*this);
     }
     
-    const System& system() const;
-    const Moves& moves() const;
+    System system() const;
+    MovesPtr moves() const;
     
     int nMoves() const;
     
@@ -99,20 +101,70 @@ public:
     void clearStatistics();
     void mustNowRecalculateFromScratch();
 
+    bool isPacked() const;
+
+    void pack() const;
+    void unpack() const;
+
     static void swapSystems(Replica &rep0, Replica &rep1);
+
+    template<class T>
+    bool isA() const
+    {
+        return dynamic_cast<const T*>(this) != 0;
+    }
+    
+    template<class T>
+    const T& asA() const
+    {
+        const T *ptr = dynamic_cast<const T*>(this);
+        
+        if (ptr == 0)
+            this->throwCastingError( T::typeName() );
+            
+        return *ptr;
+    }
+
+    template<class T>
+    T& asA()
+    {
+        T *ptr = dynamic_cast<T*>(this);
+        
+        if (ptr == 0)
+            this->throwCastingError( T::typeName() );
+            
+        return *ptr;
+    }
 
 protected:
     virtual void setSystem(const System &system);
     virtual void setMoves(const Moves &moves);
+    
+    virtual void setSystemAndMoves(const System &system, const Moves &moves);
+    
     virtual void setNMoves(int nmoves);
     virtual void setRecordStatistics(bool recordstats);
     
+    virtual void revertTo(const Replica &old_state);
+    
 private:
+    void throwCastingError(const char *typenam);
+
     /** The system being simulated */
     System sim_system;
     
     /** The moves to be performed on the system */
     MovesPtr sim_moves;
+
+    /** A binary representation of the above system and moves - this
+        allows the replica to be compressed into a binary representation
+        that saves memory (as a master node may have 20-50 replicas that
+        are being managed, and holding them all in memory may not be possible) */
+    QByteArray compressed_moves_and_system;
+    
+    /** Mutex used to protect access to this object while it is being
+        packed and unpacked */
+    QMutex packing_mutex;
     
     /** The number of moves to perform on the system */
     quint32 sim_nmoves;
@@ -170,6 +222,11 @@ public:
     
     void clearStatistics();
     void mustNowRecalculateFromScratch();
+
+    bool isPacked() const;
+    
+    virtual void pack();
+    virtual void unpack();
     
     virtual void setReplicas(const Replicas &replicas);
     
@@ -181,6 +238,9 @@ public:
     
     virtual void setMoves(const Moves &moves);
     virtual void setMoves(int i, const Moves &moves);
+    
+    virtual void setSystemAndMoves(const System &system, const Moves &moves);
+    virtual void setSystemAndMoves(int i, const System &system, const Moves &moves);
     
     virtual void setNMoves(int nmoves);
     virtual void setNMoves(int i, int nmoves);
