@@ -24,6 +24,7 @@ set ( SIREMOVE_HEADERS
       rigidbodymc.h
       sampler.h
       simpacket.h
+      simstore.h
       simulation.h
       uniformsampler.h
       volumemove.h
@@ -50,6 +51,7 @@ set ( SIREMOVE_SOURCES
       rigidbodymc.cpp
       sampler.cpp
       simpacket.cpp
+      simstore.cpp
       simulation.cpp
       uniformsampler.cpp
       weightedmoves.cpp

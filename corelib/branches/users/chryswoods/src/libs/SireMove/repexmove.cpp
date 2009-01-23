@@ -450,9 +450,11 @@ void RepExMove::move(Nodes &nodes, RepExReplicas &replicas, int nmoves_to_run,
             {
                 SimPacket sim = running_sims[j].result();
                 
-                replicas.setSystemAndMoves(j, sim.system(), sim.moves());
+                //release the memory associated with the Simulation for this
+                //replica
+                running_sims[j] = Simulation();
                 
-                HOW DO I STOP UNNECESSARY PACKING AND UNPACKING???
+                replicas.setSystemAndMoves(j, sim.system(), sim.moves());
             }
             
             //now perform the replica exchange test on the replicas

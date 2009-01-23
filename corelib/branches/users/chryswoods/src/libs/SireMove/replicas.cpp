@@ -322,6 +322,8 @@ bool Replica::recordStatistics() const
 /** Set the system to be simulated at this replica */
 void Replica::setSystem(const System &system)
 {
+    QMutexLocker lkr( &packing_mutex );
+
     bool this_is_packed = this->isPacked();
 
     if (this_is_packed)
@@ -336,6 +338,8 @@ void Replica::setSystem(const System &system)
 /** Set the moves to be applied to the system */
 void Replica::setMoves(const Moves &moves)
 {
+    QMutexLocker lkr( &packing_mutex );
+
     bool this_is_packed = this->isPacked();
     
     if (this_is_packed)
@@ -350,6 +354,8 @@ void Replica::setMoves(const Moves &moves)
 /** Simultaneously set the System to 'system' and the moves to 'moves' */
 void Replica::setSystemAndMoves(const System &system, const Moves &moves)
 {
+    QMutexLocker lkr( &packing_mutex );
+
     const SharedPolyPointer<Replica> old_state( this->clone() );
     
     try
@@ -357,7 +363,12 @@ void Replica::setSystemAndMoves(const System &system, const Moves &moves)
         bool this_is_packed = this->isPacked();
     
         if (this_is_packed)
-            this->unpack();
+        {
+            //no need to unpack, as we aren't using the old system or moves
+            compressed_moves_and_system = QByteArray();
+            sim_system = System();
+            sim_moves = MovesPtr();
+        }
 
         this->setSystem(system);
         this->setMoves(moves);
