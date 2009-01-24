@@ -430,6 +430,33 @@ void RepExReplica::setMoves(const Moves &moves)
     }
 }
 
+/** Set both the system and moves to be applied within this replica */
+void RepExReplica::setSystemAndMoves(const SimStore &simstore)
+{
+    SimStore unpacked_store(simstore);
+    unpacked_store.unpack();
+    
+    RepExReplica old_state(*this);
+    
+    bool this_is_packed = this->isPacked();
+    
+    try
+    {
+        if (this_is_packed)
+            this->unpack();
+    
+        this->setSystem( unpacked_store.system() );
+        this->setMoves( unpacked_store.moves() );
+
+        if (this_is_packed)
+            this->pack();
+    }
+    catch(...)
+    {
+        this->operator=(old_state);
+    }
+}
+
 /** Set the energy component to be used to calculate the total energy
     of this replica
     
@@ -805,6 +832,8 @@ void RepExReplica::swapMolecules(RepExReplica &rep0, RepExReplica &rep1)
             
         if (rep1_is_packed)
             rep1.pack();
+            
+        throw;
     }
 }
 

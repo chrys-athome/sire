@@ -55,19 +55,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Replica &replica)
     
     SharedDataStream sds(ds);
 
-    QMutexLocker lkr( const_cast<QMutex*>(&(replica.packing_mutex)) );
-    
-    bool replica_is_packed = replica.isPacked();
-    
-    if (not replica_is_packed)
-        replica.pack();
-    
-    sds << replica.compressed_moves_and_system
-        << replica.sim_nmoves << replica.sim_recordstats
-        << replica_is_packed;
-        
-    if (not replica_is_packed)
-        replica.unpack();
+    sds << replica.sim_store << replica.sim_nmoves << replica.sim_recordstats;
         
     return ds;
 }
@@ -80,27 +68,19 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Replica &replica)
     if (v == 2)
     {
         SharedDataStream sds(ds);
-        
-        bool replica_is_packed;
-        
-        sds >> replica.compressed_moves_and_system
-            >> replica.sim_nmoves >> replica.sim_recordstats
-            >> replica_is_packed;
-            
-        replica.sim_system = System();
-        replica.sim_moves = MovesPtr();
-        
-        if (not replica_is_packed)
-            replica.unpack();
+        sds >> replica.sim_store >> replica.sim_nmoves >> replica.sim_recordstats;
     }
     else if (v == 1)
     {
         SharedDataStream sds(ds);
+
+        System sim_system;
+        MovesPtr sim_moves;
         
-        sds >> replica.sim_system >> replica.sim_moves
+        sds >> sim_system >> sim_moves
             >> replica.sim_nmoves >> replica.sim_recordstats;
             
-        replica.compressed_moves_and_system = QByteArray();
+        replica.sim_store = SimStore(sim_system, sim_moves);
     }
     else
         throw version_error( v, "1,2", r_replica, CODELOC );
@@ -111,15 +91,13 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Replica &replica)
 /** Null constructor */
 Replica::Replica()
         : ConcreteProperty<Replica,Property>(),
-          packing_mutex( QMutex::Recursive ),
           sim_nmoves(0), sim_recordstats(true)
 {}
 
 /** Copy constructor */
 Replica::Replica(const Replica &other)
         : ConcreteProperty<Replica,Property>(other),
-          sim_system(other.sim_system), sim_moves(other.sim_moves),
-          compressed_moves_and_system(other.compressed_moves_and_system),
+          sim_store(other.sim_store),
           sim_nmoves(other.sim_nmoves), sim_recordstats(other.sim_recordstats)
 {}
 
@@ -132,9 +110,7 @@ Replica& Replica::operator=(const Replica &other)
 {
     if (this != &other)
     {
-        sim_system = other.sim_system;
-        sim_moves = other.sim_moves;
-        compressed_moves_and_system = other.compressed_moves_and_system;
+        sim_store = other.sim_store;
         sim_nmoves = other.sim_nmoves;
         sim_recordstats = other.sim_recordstats;
     }
@@ -148,8 +124,7 @@ bool Replica::operator==(const Replica &other) const
     return this == &other or
            (sim_nmoves == other.sim_nmoves and 
             sim_recordstats == other.sim_recordstats and
-            compressed_moves_and_system == other.compressed_moves_and_system and
-            sim_system == other.sim_system and sim_moves == other.sim_moves);
+            sim_store == other.sim_store);
 }
 
 /** Comparison operator */
@@ -180,35 +155,14 @@ void Replica::throwCastingError(const char *typenam) const
     memory if we have lots of replicas */
 bool Replica::isPacked() const
 {
-    QMutexLocker lkr( const_cast<QMutex*>(&packing_mutex) );
-
-    return not compressed_moves_and_system.isEmpty();
+    return sim_store.isPacked();
 }
 
 /** Pack the system and moves into a compressed binary representation. 
     This is useful to save memory if there are lots of replicas */
 void Replica::pack() const
 {
-    Replica *nonconst_this = const_cast<Replica*>(this);
-    
-    QMutexLocker lkr( &(nonconst_this->packing_mutex) );
-    
-    if (not nonconst_this->compressed_moves_and_system.isEmpty())
-        //we are already packed
-        return;
-   
-    QByteArray data;
-                  
-    QDataStream ds( &data, QIODevice::WriteOnly );
-    
-    SharedDataStream sds(ds);
-    
-    sds << sim_system << sim_moves;
-
-    nonconst_this->sim_system = System();
-    nonconst_this->sim_moves = MovesPtr();
-    
-    nonconst_this->compressed_moves_and_system = qCompress(data);
+    sim_store.pack();
 }
 
 /** Unpack the system and moves - this takes up more memory, but gives
@@ -216,61 +170,43 @@ void Replica::pack() const
     and uncompressed) */
 void Replica::unpack() const
 {
-    Replica *nonconst_this = const_cast<Replica*>(this);
-    
-    QMutexLocker lkr( &(nonconst_this->packing_mutex) );
-    
-    if (compressed_moves_and_system.isEmpty())
-        //this is already unpacked
-        return;
-    
-    QByteArray uncompressed_data = qUncompress(compressed_moves_and_system);
-                
-    QDataStream ds(uncompressed_data);
-    
-    SharedDataStream sds(ds);
-    
-    System unpacked_system;
-    MovesPtr unpacked_moves;
-    
-    sds >> unpacked_system >> unpacked_moves;
-    
-    nonconst_this->sim_system = unpacked_system;
-    nonconst_this->sim_moves = unpacked_moves;
-    nonconst_this->compressed_moves_and_system = QByteArray();
+    sim_store.unpack();
 }
 
 /** Return the system being simulated in this replica */
 System Replica::system() const
 {
-    QMutexLocker lkr( const_cast<QMutex*>(&packing_mutex) );
-
-    bool this_is_packed = this->isPacked();
-    
-    if (this_is_packed)
-        this->unpack();
-
-    System ret = sim_system;
-
-    if (this_is_packed)
-        this->pack();
-        
-    return ret;
+    return sim_store.system();
 }
 
 /** Tell this replica to clear all of its statistics */
 void Replica::clearStatistics()
 {
     bool this_is_packed = this->isPacked();
+
+    try
+    {
+        if (this_is_packed)
+            this->unpack();
+
+        System sim_system = sim_store.system();
+        MovesPtr sim_moves = sim_store.moves();
     
-    if (this_is_packed)
-        this->unpack();
+        sim_system.clearStatistics();
+        sim_moves.edit().clearStatistics();
+    
+        sim_store.setSystemAndMoves(sim_system, sim_moves);
 
-    sim_system.clearStatistics();
-    sim_moves.edit().clearStatistics();
-
-    if (this_is_packed)
-        this->pack();
+        if (this_is_packed)
+            this->pack();
+    }
+    catch(...)
+    {
+        if (this_is_packed)
+            this->pack();
+            
+        throw;
+    }
 }
 
 /** Tell this replica that the system energy must be recalculated
@@ -279,31 +215,39 @@ void Replica::mustNowRecalculateFromScratch()
 {
     bool this_is_packed = this->isPacked();
 
-    if (this_is_packed)
-        this->unpack();
+    try
+    {
+        if (this_is_packed)
+            this->unpack();
 
-    sim_system.mustNowRecalculateFromScratch();
+        System sim_system = sim_store.system();
 
-    if (this_is_packed)
-        this->pack();
+        sim_system.mustNowRecalculateFromScratch();
+
+        sim_store.setSystem(sim_system);
+
+        if (this_is_packed)
+            this->pack();
+    }
+    catch(...)
+    {
+        if (this_is_packed)
+            this->pack();
+
+        throw;
+    }
 }
 
 /** Return the moves to be performed during the simulation on this replica */
 MovesPtr Replica::moves() const
 {
-    QMutexLocker lkr( const_cast<QMutex*>(&packing_mutex) );
+    return sim_store.moves();
+}
 
-    bool this_is_packed = this->isPacked();
-    
-    if (this_is_packed)
-        this->unpack();
-
-    MovesPtr ret = sim_moves;
-    
-    if (this_is_packed)
-        this->pack();
-        
-    return ret;
+/** Return both the system and moves together */
+SimStore Replica::systemAndMoves() const
+{
+    return sim_store;
 }
 
 /** Return the number of moves to be applied to this replica */
@@ -322,64 +266,25 @@ bool Replica::recordStatistics() const
 /** Set the system to be simulated at this replica */
 void Replica::setSystem(const System &system)
 {
-    QMutexLocker lkr( &packing_mutex );
-
-    bool this_is_packed = this->isPacked();
-
-    if (this_is_packed)
-        this->unpack();
-
-    sim_system = system;
-
-    if (this_is_packed)
-        this->pack();
+    sim_store.setSystem(system);
 }
 
 /** Set the moves to be applied to the system */
 void Replica::setMoves(const Moves &moves)
 {
-    QMutexLocker lkr( &packing_mutex );
-
-    bool this_is_packed = this->isPacked();
-    
-    if (this_is_packed)
-        this->unpack();
-
-    sim_moves = moves;
-
-    if (this_is_packed)
-        this->pack();
+    sim_store.setMoves(moves);
 }
 
 /** Simultaneously set the System to 'system' and the moves to 'moves' */
 void Replica::setSystemAndMoves(const System &system, const Moves &moves)
 {
-    QMutexLocker lkr( &packing_mutex );
+    this->setSystemAndMoves( SimStore(system,moves) );
+}
 
-    const SharedPolyPointer<Replica> old_state( this->clone() );
-    
-    try
-    {
-        bool this_is_packed = this->isPacked();
-    
-        if (this_is_packed)
-        {
-            //no need to unpack, as we aren't using the old system or moves
-            compressed_moves_and_system = QByteArray();
-            sim_system = System();
-            sim_moves = MovesPtr();
-        }
-
-        this->setSystem(system);
-        this->setMoves(moves);
-        
-        if (this_is_packed)
-            this->pack();
-    }
-    catch(...)
-    {
-        this->revertTo( *old_state );
-    }
+/** Simultaneously set the System and Moves to those contained in 'simstore' */
+void Replica::setSystemAndMoves(const SimStore &simstore)
+{
+    sim_store = simstore;
 }
 
 /** Set the number of moves to run for this replica */
@@ -768,11 +673,27 @@ void Replicas::setMoves(int i, const Moves &moves)
 */
 void Replicas::setSystemAndMoves(int i, const System &system, const Moves &moves)
 {
-    replicas_array[ Index(i).map(nReplicas()) ]->setSystemAndMoves(system, moves);
+    this->setSystemAndMoves(i, SimStore(system,moves) );
+}
+
+/** Set the system and moves performed for the ith replica to 
+    those contained in 'simstore'
+    
+    \throw SireError::invalid_index
+*/
+void Replicas::setSystemAndMoves(int i, const SimStore &simstore)
+{
+    replicas_array[ Index(i).map(nReplicas()) ]->setSystemAndMoves(simstore);
 }
 
 /** Set the system and moves to be performed for all of the replicas */
 void Replicas::setSystemAndMoves(const System &system, const Moves &moves)
+{
+    this->setSystemAndMoves( SimStore(system,moves) );
+}
+
+/** Set the system and moves to be performed for all of the replicas */
+void Replicas::setSystemAndMoves(const SimStore &simstore)
 {
     Replicas old_state(*this);
     
@@ -780,7 +701,7 @@ void Replicas::setSystemAndMoves(const System &system, const Moves &moves)
     {
         for (int i=0; i < this->nReplicas(); ++i)
         {
-            replicas_array[i]->setSystemAndMoves(system, moves);
+            replicas_array[i]->setSystemAndMoves(simstore);
         }
     }
     catch(...)

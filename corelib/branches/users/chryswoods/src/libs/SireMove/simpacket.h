@@ -34,9 +34,7 @@
 
 #include "SireCluster/workpacket.h"
 
-#include "SireSystem/system.h"
-
-#include "moves.h"
+#include "simstore.h"
 
 SIRE_BEGIN_HEADER
 
@@ -72,6 +70,12 @@ public:
               
     SimPacket(const System &system, const Moves &moves,
               int nmoves, int nmoves_per_chunk, bool record_stats=true);
+
+    SimPacket(const SimStore &simstore, int nmoves,
+              bool record_stats=true);
+              
+    SimPacket(const SimStore &simstore, int nmoves,
+              int nmoves_per_chunk, bool record_stats=true);
               
     SimPacket(const SimPacket &other);
     
@@ -100,6 +104,8 @@ public:
     bool shouldPack() const;
     int approximatePacketSize() const;
     
+    SimStore systemAndMoves() const;
+    
     System system() const;
     MovesPtr moves() const;
     
@@ -116,22 +122,8 @@ protected:
     float chunk();
 
 private:
-    void pack() const;
-    void unpack() const;
-    
-    bool isPacked() const;
-
-    /** The system being simulated */
-    System sim_system;
-    
-    /** The moves to be applied to the system */
-    MovesPtr sim_moves;
-    
-    /** A packed, binary representation of the system and moves */
-    QByteArray compressed_system_and_moves;
-    
-    /** Mutex used to protect the compressed data */
-    QMutex packing_mutex;
+    /** The system being simulated and the moves being applied to the system */
+    SimStore sim_store;
     
     /** The number of moves to run on the system */
     quint32 nmoves;

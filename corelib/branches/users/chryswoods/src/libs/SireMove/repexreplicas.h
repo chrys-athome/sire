@@ -146,6 +146,7 @@ protected:
 
     virtual void setSystem(const System &system);
     virtual void setMoves(const Moves &moves);
+    virtual void setSystemAndMoves(const SimStore &simstore);
 
     virtual void revertTo(const Replica &replica);
 

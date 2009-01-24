@@ -73,6 +73,13 @@ public:
     static Simulation run( const System &system, const Move &move,
                            int nmoves, int nmoves_per_chunk,
                            bool record_stats=true );
+
+    static Simulation run( const SimStore &simstore,
+                           int nmoves, bool record_stats=true );
+                           
+    static Simulation run( const SimStore &simstore,
+                           int nmoves, int nmoves_per_chunk, 
+                           bool record_stats=true );
                            
     static Simulation run( const SimPacket &simpacket );
                            
@@ -93,6 +100,15 @@ public:
                            const System &system, const Move &move,
                            int nmoves, int nmoves_per_chunk,
                            bool record_stats=true );
+                           
+    static Simulation run( Node &node,
+                           const SimStore &simstore,
+                           int nmoves, bool record_stats=true );
+
+    static Simulation run( Node &node,
+                           const SimStore &simstore,
+                           int nmoves, int nmoves_per_chunk,
+                           bool record_stats=true );                           
 
     static Simulation run( Node &node, const SimPacket &simpacket );
     

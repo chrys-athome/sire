@@ -133,6 +133,32 @@ Simulation Simulation::run( Node &node,
                                             nmoves_per_chunk, record_stats) );
 }
 
+/** Run a simulation consisting of 'nmoves' moves of the system 
+    in 'simstore' (which also contains the moves) optionally recording simulation
+    statistics if 'record_stats' is true. This runs the 
+    simulation on the node 'node'. This runs 'nmoves_per_chunk'
+    moves in every chunk of the simulation. */
+Simulation Simulation::run( Node &node,
+                            const SimStore &simstore,
+                            int nmoves, bool record_stats )
+{
+    return Simulation::run( node, SimPacket(simstore, nmoves, record_stats) );
+}
+
+/** Run a simulation consisting of 'nmoves' moves  of the system 
+    in 'simstore' (which also contains the moves) optionally recording simulation
+    statistics if 'record_stats' is true. This runs the 
+    simulation on the node 'node'. This runs 'nmoves_per_chunk'
+    moves in every chunk of the simulation. */
+Simulation Simulation::run( Node &node,
+                            const SimStore &simstore,
+                            int nmoves, int nmoves_per_chunk,
+                            bool record_stats )
+{
+    return Simulation::run( node, SimPacket(simstore, nmoves,
+                                            nmoves_per_chunk, record_stats) );
+}
+
 /** Run the simulation contained in the simulation WorkPacket 'simpacket'
     in the current thread */
 Simulation Simulation::run( const SimPacket &simpacket )
@@ -199,6 +225,29 @@ Simulation Simulation::run( const System &system, const Move &move,
                             bool record_stats )
 {
     return Simulation::run( SimPacket(system, SameMoves(move), nmoves, 
+                                      nmoves_per_chunk, record_stats) );
+}
+                       
+/** Run a simulation consisting of 'nmoves' moves of the system 
+    in 'simstore' (which also contains the moves) optionally recording simulation
+    statistics if 'record_stats' is true. This runs the 
+    simulation in the current thread */
+Simulation Simulation::run( const SimStore &simstore,
+                            int nmoves, bool record_stats )
+{
+    return Simulation::run( SimPacket(simstore, nmoves, record_stats) );
+}
+                       
+/** Run a simulation consisting of 'nmoves' moves of the system 
+    in 'simstore' (which also contains the moves) optionally recording simulation
+    statistics if 'record_stats' is true. This runs the 
+    simulation in the current thread. This runs 'nmoves_per_chunk'
+    moves in every chunk of the simulation. */
+Simulation Simulation::run( const SimStore &simstore,
+                            int nmoves, int nmoves_per_chunk, 
+                            bool record_stats )
+{
+    return Simulation::run( SimPacket(simstore, nmoves, 
                                       nmoves_per_chunk, record_stats) );
 }
 

@@ -40,22 +40,26 @@ static const RegisterMetaType<SimStore> r_simstore;
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const SimStore &simstore)
 {
-    writeHeader(ds, r_simstore, 1);
-    
     QMutexLocker lkr( const_cast<QMutex*>(&(simstore.datamutex)) );
-    
-    bool is_packed = simstore.isPacked();
-    
-    if (is_packed)
-        simstore.unpack();
+
+    if (not simstore.isPacked())
+    {
+        //only stream the packed version of the SimStore
+        SimStore new_store(simstore);
+        lkr.unlock();
         
-    SharedDataStream sds(ds);
+        new_store.pack();
+        ds << new_store;
+    }
+    else
+    {
+        writeHeader(ds, r_simstore, 1);
     
-    sds << simstore.compressed_data;
+        SharedDataStream sds(ds);
     
-    if (is_packed)
-        simstore.pack();
-        
+        sds << simstore.compressed_data;
+    }
+    
     return ds;
 }
 
@@ -79,7 +83,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SimStore &simstore)
             
         else
         {
-            SimStore new_store(simstore);
+            SimStore new_store;
+            new_store.compressed_data = data;
             new_store.unpack();
             
             simstore = new_store;

@@ -45,11 +45,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const SimPacket &simpac
     
     SharedDataStream sds(ds);
     
-    QMutexLocker lkr( const_cast<QMutex*>(&(simpacket.packing_mutex)) );
-    
-    simpacket.pack();
-    
-    sds << simpacket.compressed_system_and_moves
+    sds << simpacket.sim_store
         << simpacket.nmoves << simpacket.ncompleted
         << simpacket.nmoves_per_chunk << simpacket.record_stats;
         
@@ -65,22 +61,22 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SimPacket &simpacket)
     {
         SharedDataStream sds(ds);
         
-        sds >> simpacket.compressed_system_and_moves
+        sds >> simpacket.sim_store
             >> simpacket.nmoves >> simpacket.ncompleted
             >> simpacket.nmoves_per_chunk >> simpacket.record_stats;
-            
-        simpacket.sim_system = System();
-        simpacket.sim_moves = MovesPtr();
     }
     else if (v == 1)
     {
         SharedDataStream sds(ds);
+
+        System sim_system;
+        MovesPtr sim_moves;
         
-        sds >> simpacket.sim_system >> simpacket.sim_moves
+        sds >> sim_system >> sim_moves
             >> simpacket.nmoves >> simpacket.ncompleted
             >> simpacket.nmoves_per_chunk >> simpacket.record_stats;
             
-        simpacket.compressed_system_and_moves = QByteArray();
+        simpacket.sim_store = SimStore(sim_system, sim_moves);
     }
     else
         throw version_error( v, "1", r_simpacket, CODELOC );
@@ -99,7 +95,7 @@ SimPacket::SimPacket()
     if 'record_stats' is true */
 SimPacket::SimPacket(const System &system, const Moves &moves,
                      int n_moves, bool recording_stats)
-          : WorkPacketBase(), sim_system(system), sim_moves(moves),
+          : WorkPacketBase(), sim_store(system,moves),
             ncompleted(0), nmoves_per_chunk(100), record_stats(recording_stats)
 {
     if (n_moves > 0)
@@ -114,7 +110,41 @@ SimPacket::SimPacket(const System &system, const Moves &moves,
     for each chunk */
 SimPacket::SimPacket(const System &system, const Moves &moves,
                      int n_moves, int n_moves_per_chunk, bool recording_stats)
-          : WorkPacketBase(), sim_system(system), sim_moves(moves),
+          : WorkPacketBase(), sim_store(system,moves),
+            ncompleted(0), record_stats(recording_stats)
+{
+    if (n_moves > 0)
+        nmoves = n_moves;
+    else
+        nmoves = 0;
+
+    if (n_moves_per_chunk > 0)
+        nmoves_per_chunk = n_moves_per_chunk;
+    else
+        nmoves_per_chunk = 1;
+}
+
+/** Construct a workpacket that runs 'nmoves' of the Moves on the 
+    System, both contained in 'simstore', optionally recording simulation statistics
+    if 'record_stats' is true */
+SimPacket::SimPacket(const SimStore &simstore,
+                     int n_moves, bool recording_stats)
+          : WorkPacketBase(), sim_store(simstore),
+            ncompleted(0), nmoves_per_chunk(100), record_stats(recording_stats)
+{
+    if (n_moves > 0)
+        nmoves = n_moves;
+    else
+        nmoves = 0;
+}
+          
+/** Construct a workpacket that runs 'nmoves' of the Moves  on the 
+    System, both contained in 'simstore', optionally recording simulation statistics
+    if 'record_stats' is true, and running 'nmoves_per_chunk' moves
+    for each chunk */
+SimPacket::SimPacket(const SimStore &simstore,
+                     int n_moves, int n_moves_per_chunk, bool recording_stats)
+          : WorkPacketBase(), sim_store(simstore),
             ncompleted(0), record_stats(recording_stats)
 {
     if (n_moves > 0)
@@ -130,9 +160,7 @@ SimPacket::SimPacket(const System &system, const Moves &moves,
 
 /** Copy constructor */
 SimPacket::SimPacket(const SimPacket &other)
-          : WorkPacketBase(other), sim_system(other.sim_system),
-            sim_moves(other.sim_moves), 
-            compressed_system_and_moves(other.compressed_system_and_moves),
+          : WorkPacketBase(other), sim_store(other.sim_store),
             nmoves(other.nmoves),
             ncompleted(other.ncompleted), nmoves_per_chunk(other.nmoves_per_chunk),
             record_stats(other.record_stats)
@@ -147,9 +175,7 @@ SimPacket& SimPacket::operator=(const SimPacket &other)
 {
     if (this != &other)
     {
-        sim_system = other.sim_system;
-        sim_moves = other.sim_moves;
-        compressed_system_and_moves = other.compressed_system_and_moves;
+        sim_store = other.sim_store;
         nmoves = other.nmoves;
         ncompleted = other.ncompleted;
         nmoves_per_chunk = other.nmoves_per_chunk;
@@ -165,8 +191,7 @@ SimPacket& SimPacket::operator=(const SimPacket &other)
 bool SimPacket::operator==(const SimPacket &other) const
 {
     return this == &other or
-           (sim_system == other.sim_system and sim_moves == other.sim_moves and
-            compressed_system_and_moves == other.compressed_system_and_moves and
+           (sim_store == other.sim_store and
             nmoves == other.nmoves and ncompleted == other.ncompleted and
             nmoves_per_chunk == other.nmoves_per_chunk and
             record_stats == other.record_stats);
@@ -193,80 +218,22 @@ int SimPacket::approximatePacketSize() const
     return 8 * 1024 * 1024;
 }
 
-/** Return whether or not the system and moves are packed away */
-bool SimPacket::isPacked() const
-{
-    QMutexLocker lkr( const_cast<QMutex*>(&packing_mutex) );
-    return not compressed_system_and_moves.isEmpty();
-}
-
-/** Pack the system and moves into a compressed binary array */
-void SimPacket::pack() const
-{
-    QMutexLocker lkr( const_cast<QMutex*>(&packing_mutex) );
-    
-    if (not compressed_system_and_moves.isEmpty())
-        //it is already packed
-        return;
-        
-    QByteArray data;
-    
-    QDataStream ds( &data, QIODevice::WriteOnly );
-    
-    SharedDataStream sds(ds);
-    
-    sds << sim_system << sim_moves;
-    
-    SimPacket *nonconst_this = const_cast<SimPacket*>(this);
-    
-    nonconst_this->sim_system = System();
-    nonconst_this->sim_moves = MovesPtr();
-    
-    nonconst_this->compressed_system_and_moves = qCompress(data);
-}
-
-/** Unpack the system and moves from the compressed binary array */
-void SimPacket::unpack() const
-{
-    QMutexLocker lkr( const_cast<QMutex*>(&packing_mutex) );
-    
-    if (compressed_system_and_moves.isEmpty())
-        //it is already unpacked
-        return;
-
-    System new_system;
-    MovesPtr new_moves;
-    
-    //read the data in a local scope so that memory is freed as soon as possible
-    {
-        QByteArray data = qUncompress(compressed_system_and_moves);
-    
-        QDataStream ds(data);
-        SharedDataStream sds(ds);
-    
-        sds >> new_system >> new_moves;
-    }
-    
-    SimPacket *nonconst_this = const_cast<SimPacket*>(this);
-    
-    nonconst_this->compressed_system_and_moves = QByteArray();
-    
-    nonconst_this->sim_system = new_system;
-    nonconst_this->sim_moves = new_moves;
-}
-
 /** Return the system being simulated */
 System SimPacket::system() const
 {
-    this->unpack();
-    return sim_system;
+    return sim_store.system();
 }
 
 /** Return the moves being applied to the system */
 MovesPtr SimPacket::moves() const
 {
-    this->unpack();
-    return sim_moves;
+    return sim_store.moves();
+}
+
+/** Return both the system and moves together */
+SimStore SimPacket::systemAndMoves() const
+{
+    return sim_store;
 }
 
 /** Return the number of moves being applied to the system */
@@ -310,13 +277,22 @@ float SimPacket::chunk()
 
     if (n_to_run > 0)
     {
-        this->unpack();
+        //extract the system and moves from the store
+        sim_store.unpack();
+        
+        System sim_system = sim_store.system();
+        MovesPtr sim_moves = sim_store.moves();
     
         //run a chunk of moves
         sim_system = sim_moves.edit().move(sim_system, n_to_run, record_stats);
         
+        sim_store.setSystemAndMoves(sim_system, sim_moves);
+        
         //it all completed successfully :-)
         ncompleted += n_to_run;
+
+        //we leave the store unpacked, as there is no point repacking
+        //it between chunks
     }
 
     return 100.0 * ( float(ncompleted) / float(nmoves) );

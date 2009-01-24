@@ -34,8 +34,7 @@
 #include "SireBase/property.h"
 #include "SireBase/sharedpolypointer.hpp"
 
-#include "SireSystem/system.h"
-#include "SireMove/moves.h"
+#include "simstore.h"
 
 SIRE_BEGIN_HEADER
 
@@ -99,6 +98,8 @@ public:
     System system() const;
     MovesPtr moves() const;
     
+    SimStore systemAndMoves() const;
+    
     int nMoves() const;
     
     bool recordStatistics() const;
@@ -145,6 +146,7 @@ protected:
     virtual void setSystem(const System &system);
     virtual void setMoves(const Moves &moves);
     
+    virtual void setSystemAndMoves(const SimStore &simstore);
     virtual void setSystemAndMoves(const System &system, const Moves &moves);
     
     virtual void setNMoves(int nmoves);
@@ -155,21 +157,9 @@ protected:
 private:
     void throwCastingError(const char *typenam) const;
 
-    /** The system being simulated */
-    System sim_system;
-    
-    /** The moves to be performed on the system */
-    MovesPtr sim_moves;
-
-    /** A binary representation of the above system and moves - this
-        allows the replica to be compressed into a binary representation
-        that saves memory (as a master node may have 20-50 replicas that
-        are being managed, and holding them all in memory may not be possible) */
-    QByteArray compressed_moves_and_system;
-    
-    /** Mutex used to protect access to this object while it is being
-        packed and unpacked */
-    QMutex packing_mutex;
+    /** The store containing the system to be simulated, and the 
+        moves to be applied to the system */
+    SimStore sim_store;
     
     /** The number of moves to perform on the system */
     quint32 sim_nmoves;
@@ -246,6 +236,9 @@ public:
     
     virtual void setSystemAndMoves(const System &system, const Moves &moves);
     virtual void setSystemAndMoves(int i, const System &system, const Moves &moves);
+    
+    virtual void setSystemAndMoves(const SimStore &simstore);
+    virtual void setSystemAndMoves(int i, const SimStore &simstore);
     
     virtual void setNMoves(int nmoves);
     virtual void setNMoves(int i, int nmoves);

@@ -383,9 +383,10 @@ void RepExMove::move(Nodes &nodes, RepExReplicas &replicas, int nmoves_to_run,
             
                 Node node = nodes.getNode();
                 
-                running_sims.append( Simulation::run(node, replica, 
+                running_sims.append( Simulation::run(node, replica.systemAndMoves(),
+                                                     replica.nMoves(), 
                                                      nmoves_per_chunk,
-                                                     record_stats) );
+                                       (replica.recordStatistics() and record_stats) ) );
             }
 
             //wait for all of the simulations to finish
@@ -416,9 +417,10 @@ void RepExMove::move(Nodes &nodes, RepExReplicas &replicas, int nmoves_to_run,
                         
                         Node node = nodes.getNode();
                         
-                        running_sims[j] = Simulation::run( node, replica
-                                                           nmoves_per_chunk,
-                                                           record_stats );
+                        running_sims[j] = Simulation::run(node, replica.systemAndMoves(),
+                                                          replica.nMoves(), 
+                                                          nmoves_per_chunk,
+                                         (replica.recordStatistics() and record_stats) );
                     
                         all_finished = false;
                     }
@@ -454,7 +456,7 @@ void RepExMove::move(Nodes &nodes, RepExReplicas &replicas, int nmoves_to_run,
                 //replica
                 running_sims[j] = Simulation();
                 
-                replicas.setSystemAndMoves(j, sim.system(), sim.moves());
+                replicas.setSystemAndMoves(j, sim.systemAndMoves());
             }
             
             //now perform the replica exchange test on the replicas
