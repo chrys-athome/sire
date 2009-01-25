@@ -66,7 +66,7 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, FFComponent &ffcomp)
     return ds;
 }
 
-static QRegExp name_regexp( "E\\^\\{(.+)\\}\\_\\{(.+)\\}" );
+static QRegExp name_regexp( "E\\_\\{(.+)\\}\\^\\{(.+)\\}" );
 
 /** Constructor */
 FFComponent::FFComponent(const FFName &ffname, const QString &name)

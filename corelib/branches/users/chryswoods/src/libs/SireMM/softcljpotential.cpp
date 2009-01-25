@@ -119,8 +119,12 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
             
             if (cljpot.props.hasProperty(propname))
             {
-                double alpha = cljpot.props.property(propname)
-                                     .asA<VariantProperty>().convertTo<double>();
+                const Property &prop = cljpot.props.property(propname);
+                
+                if (prop.isA<NullProperty>())
+                    continue;
+            
+                double alpha = prop.asA<VariantProperty>().convertTo<double>();
                                      
                 int idx = alpha_values.indexOf(alpha);
                 
@@ -319,13 +323,21 @@ void SoftCLJPotential::rebuildAlphaProperties()
     {
         props.setProperty("alpha", VariantProperty(alpha_values.at(0)));
     }
-    
-    for (int i=0; i<alpha_index.count(); ++i)
+    else
     {
-        if (alpha_index.at(i) != -1)
+        props.setProperty("alpha", NullProperty());
+    }
+    
+    for (int i=0; i<MAX_ALPHA_VALUES; ++i)
+    {
+        int idx = alpha_index.at(i);
+        
+        if (idx == -1)
         {
-            int idx = alpha_index.at(i);
-            
+            props.setProperty( QString("alpha%1").arg(i), NullProperty() );
+        }
+        else
+        {
             props.setProperty( QString("alpha%1").arg(i), 
                                VariantProperty(alpha_values.at(idx)) );
         }
@@ -517,8 +529,10 @@ bool SoftCLJPotential::setProperty(const QString &name, const Property &value)
             QString propname = QString("alpha%1").arg(i);
             
             if (name == propname)
+            {
                 return this->setAlpha(i, value.asA<VariantProperty>()
                                               .convertTo<double>() );
+            }
         }
     
         //no it's not - see if the CLJPotential recognises this property
@@ -1163,7 +1177,10 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
     
     for (int i=0; i<alpha_index.count(); ++i)
     {
-        soft_energy.setEnergy(i, cnrg[alpha_index.at(i)], ljnrg[alpha_index.at(i)]);
+        int idx = alpha_index.at(i);
+        
+        if (idx >= 0)
+            soft_energy.setEnergy(i, cnrg[idx], ljnrg[idx]);
     }
     
     energy += soft_energy;

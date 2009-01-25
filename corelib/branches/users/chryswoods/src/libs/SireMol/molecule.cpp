@@ -81,6 +81,12 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 Molecule::Molecule() : MoleculeView()
 {}
 
+/** Construct a new Molecule, called 'molname' */
+Molecule::Molecule(const QString &molname) : MoleculeView()
+{
+    this->operator=( this->edit().renumber().rename(molname).commit() );
+}
+
 /** Construct from the passed MoleculeData */
 Molecule::Molecule(const MoleculeData &moldata)
          : MoleculeView(moldata)

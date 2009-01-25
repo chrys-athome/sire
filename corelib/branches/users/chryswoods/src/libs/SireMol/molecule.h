@@ -103,6 +103,8 @@ friend QDataStream& ::operator>>(QDataStream&, Molecule&);
 
 public:
     Molecule();
+    Molecule(const QString &molname);
+    
     Molecule(const MoleculeData &moldata);
 
     Molecule(const Molecule &other);

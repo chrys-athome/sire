@@ -68,7 +68,8 @@ friend QDataStream& ::operator<<(QDataStream&, const SoftCLJComponent&);
 friend QDataStream& ::operator>>(QDataStream&, SoftCLJComponent&);
 
 public:
-    SoftCLJComponent(const FFName &name = FFName());
+    SoftCLJComponent();
+    SoftCLJComponent(const FFName &name);
     SoftCLJComponent(const SireCAS::Symbol &symbol);
     
     SoftCLJComponent(const SoftCLJComponent &other);
@@ -96,6 +97,14 @@ public:
     {
         return detail::MAX_ALPHA_VALUES;
     }
+
+    const CoulombComponent& coulomb() const;
+    const LJComponent& lj() const;
+    const CLJComponent& total() const;
+
+    const CoulombComponent& coulomb(int i) const;
+    const LJComponent& lj(int i) const;
+    const CLJComponent& total(int i) const;
 
     void setEnergy(FF &ff, const CLJEnergy &value) const;
     void changeEnergy(FF &ff, const CLJEnergy &delta) const;

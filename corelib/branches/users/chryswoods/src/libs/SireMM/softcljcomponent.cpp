@@ -147,7 +147,7 @@ void SoftCLJEnergy::setEnergy(int i, double cnrg, double ljnrg)
     i = Index(i).map( MAX_ALPHA_VALUES );
     
     #ifdef SIRE_USE_SSE
-    nrgs[i] = _mm_set_pd(cnrg, ljnrg);
+    nrgs[i] = _mm_set_pd(ljnrg, cnrg);  //intrinsics packed in right to left order
     #else
     nrgs[i][0] = cnrg;
     nrgs[i][1] = ljnrg;
@@ -356,6 +356,10 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, SoftCLJComponent &softclj
     return ds;
 }
 
+/** Construct a null set of SoftCLJComponents */
+SoftCLJComponent::SoftCLJComponent() : CLJComponent()
+{}
+
 /** Construct the SoftCLJComponents for the passed name */
 SoftCLJComponent::SoftCLJComponent(const FFName &name)
                  : CLJComponent(name)
@@ -386,6 +390,60 @@ SoftCLJComponent& SoftCLJComponent::operator=(const SoftCLJComponent &other)
     alpha_components = other.alpha_components;
     
     return *this;
+}
+
+/** Return the component representing the total coulomb energy
+    of all of the alpha values */
+const CoulombComponent& SoftCLJComponent::coulomb() const
+{
+    return CLJComponent::coulomb();
+}
+
+/** Return the component representing the total LJ energy
+    of all of the alpha values */
+const LJComponent& SoftCLJComponent::lj() const
+{
+    return CLJComponent::lj();
+}
+
+/** Return the component representing the total energy of 
+    all of the alpha values */
+const CLJComponent& SoftCLJComponent::total() const
+{
+    return CLJComponent::total();
+}
+
+/** Return the component representing the coulomb energy of 
+    the ith alpha component
+    
+    \throw SireError::invalid_index
+*/
+const CoulombComponent& SoftCLJComponent::coulomb(int i) const
+{
+    return alpha_components.at( Index(i).map(alpha_components.count()) )
+                           .coulomb();
+}
+
+/** Return the component representing the LJ energy of 
+    the ith alpha component
+    
+    \throw SireError::invalid_index
+*/
+const LJComponent& SoftCLJComponent::lj(int i) const
+{
+    return alpha_components.at( Index(i).map(alpha_components.count()) )
+                           .lj();
+}
+
+/** Return the component representing the total energy of 
+    the ith alpha component
+    
+    \throw SireError::invalid_index
+*/
+const CLJComponent& SoftCLJComponent::total(int i) const
+{
+    return alpha_components.at( Index(i).map(alpha_components.count()) )
+                           .total();
 }
 
 void SoftCLJComponent::setEnergy(FF&, const CLJEnergy&) const
