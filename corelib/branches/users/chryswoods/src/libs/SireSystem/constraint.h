@@ -44,6 +44,7 @@ class Constraint;
 class NullConstraint;
 class PropertyConstraint;
 class ComponentConstraint;
+class WindowedComponent;
 }
 
 QDataStream& operator<<(QDataStream&, const SireSystem::Constraint&);
@@ -57,6 +58,9 @@ QDataStream& operator>>(QDataStream&, SireSystem::PropertyConstraint&);
 
 QDataStream& operator<<(QDataStream&, const SireSystem::ComponentConstraint&);
 QDataStream& operator>>(QDataStream&, SireSystem::ComponentConstraint&);
+
+QDataStream& operator<<(QDataStream&, const SireSystem::WindowedComponent&);
+QDataStream& operator>>(QDataStream&, SireSystem::WindowedComponent&);
 
 namespace SireSystem
 {
@@ -246,6 +250,10 @@ public:
     
     QString toString() const;
     
+    const SireCAS::Symbol& component() const;
+    
+    const SireCAS::Expression& expression() const;
+    
     bool isSatisfied(System &system) const;
     
     bool apply(System &system) const;
@@ -258,6 +266,73 @@ private:
     SireCAS::Expression eqn;
 };
 
+/** This constraint is used to constrain a component to adopt one of the values
+    from a set - this is used to implement FEP windows, where lambda_forwards
+    can be constrained to be the next lambda value along
+    
+    @author Christopher Woods
+*/
+class SIRESYSTEM_EXPORT WindowedComponent
+         : public SireBase::ConcreteProperty<WindowedComponent,Constraint>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const WindowedComponent&);
+friend QDataStream& ::operator>>(QDataStream&, WindowedComponent&);
+
+public:
+    WindowedComponent();
+    WindowedComponent(const SireCAS::Symbol &component,
+                      const SireCAS::Symbol &reference,
+                      const QVector<double> &values,
+                      int step_size = 1);
+    
+    WindowedComponent(const WindowedComponent &other);
+    
+    ~WindowedComponent();
+    
+    WindowedComponent& operator=(const WindowedComponent &other);
+    
+    bool operator==(const WindowedComponent &other) const;
+    bool operator!=(const WindowedComponent &other) const;
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<WindowedComponent>() );
+    }
+    
+    WindowedComponent* clone() const
+    {
+        return new WindowedComponent(*this);
+    }
+    
+    QString toString() const;
+    
+    const SireCAS::Symbol& component() const;
+    const SireCAS::Symbol& referenceComponent() const;
+    
+    const QVector<double>& windowValues() const;
+    
+    int stepSize() const;
+    
+    bool isSatisfied(System &system) const;
+    
+    bool apply(System &system) const;
+
+private:
+    /** The component whose value is being constrained */
+    SireCAS::Symbol constrained_component; 
+    
+    /** The component whose value provides the value of the reference window */
+    SireCAS::Symbol reference_component;
+    
+    /** The list of values of all of the windows */
+    QVector<double> window_values;
+    
+    /** The step size - this allows us to be set to a window that
+        is 'step_size' windows away from the reference */
+    qint32 step_size;
+};
+
 typedef SireBase::PropPtr<Constraint> ConstraintPtr;
 
 }
@@ -265,11 +340,13 @@ typedef SireBase::PropPtr<Constraint> ConstraintPtr;
 Q_DECLARE_METATYPE( SireSystem::NullConstraint )
 Q_DECLARE_METATYPE( SireSystem::PropertyConstraint )
 Q_DECLARE_METATYPE( SireSystem::ComponentConstraint )
+Q_DECLARE_METATYPE( SireSystem::WindowedComponent )
 
 SIRE_EXPOSE_CLASS( SireSystem::Constraint )
 SIRE_EXPOSE_CLASS( SireSystem::NullConstraint )
 SIRE_EXPOSE_CLASS( SireSystem::PropertyConstraint )
 SIRE_EXPOSE_CLASS( SireSystem::ComponentConstraint )
+SIRE_EXPOSE_CLASS( SireSystem::WindowedComponent )
 
 SIRE_EXPOSE_PROPERTY( SireSystem::ConstraintPtr, SireSystem::Constraint )
 

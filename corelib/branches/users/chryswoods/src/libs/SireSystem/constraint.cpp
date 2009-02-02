@@ -29,7 +29,10 @@
 #include "constraint.h"
 #include "system.h"
 
+#include "SireMaths/maths.h"
+
 #include "SireSystem/errors.h"
+#include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -435,6 +438,18 @@ QString ComponentConstraint::toString() const
                 .arg(constrained_component.toString(), eqn.toString());
 }
 
+/** Return the symbol representing the component being constrained */
+const Symbol& ComponentConstraint::component() const
+{
+    return constrained_component;
+}
+
+/** Return the expression used to evaluate the constraint */
+const Expression& ComponentConstraint::expression() const
+{
+    return eqn;
+}
+
 /** Return whether or not this constraint is satisfied in the passed system */
 bool ComponentConstraint::isSatisfied(System &system) const
 {
@@ -459,5 +474,242 @@ bool ComponentConstraint::apply(System &system) const
     
     system.setComponent(constrained_component, val);
 
+    return old_version != system.version();
+}
+
+//////////
+////////// Implementation of WindowedComponent
+//////////
+
+static const RegisterMetaType<WindowedComponent> r_windowedcomp;
+
+/** Serialise to a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds, 
+                                          const WindowedComponent &windowedcomp)
+{
+    writeHeader(ds, r_windowedcomp, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << windowedcomp.constrained_component
+        << windowedcomp.reference_component
+        << windowedcomp.window_values
+        << windowedcomp.step_size
+        << static_cast<const Constraint&>(windowedcomp);
+        
+    return ds;
+}
+              
+/** Extract from a binary datastream */
+QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, 
+                                          WindowedComponent &windowedcomp)
+{
+    VersionID v = readHeader(ds, r_windowedcomp);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> windowedcomp.constrained_component
+            >> windowedcomp.reference_component
+            >> windowedcomp.window_values
+            >> windowedcomp.step_size
+            >> static_cast<Constraint&>(windowedcomp);
+    }
+    else
+        throw version_error(v, "1", r_windowedcomp, CODELOC);
+        
+    return ds;
+}
+
+/** Null constructor */
+WindowedComponent::WindowedComponent()
+                  : ConcreteProperty<WindowedComponent,Constraint>(),
+                    step_size(0)
+{}
+
+/** Construct a WindowedConstraint that constrains the component represented
+    by the symbol 'component' to lie 'step_size' windows above (or below if
+    'step_size' is negative) the window in which the component represented
+    by the symbol 'reference' resides - where 'values' contains all of
+    the values of the windows, in the order that you have arranged
+    them. Whilst this will not sort 'window_values', it will remove
+    all duplicate values */
+WindowedComponent::WindowedComponent(const SireCAS::Symbol &component,
+                                     const SireCAS::Symbol &reference,
+                                     const QVector<double> &values,
+                                     int step)
+                  : ConcreteProperty<WindowedComponent,Constraint>(),
+                    constrained_component(component),
+                    reference_component(reference),
+                    window_values(values),
+                    step_size(step)
+{
+    if (component == reference)
+        throw SireError::invalid_arg( QObject::tr(
+                "You cannot use the component %1 as both the constrained "
+                "and reference components in a WindowedComponent.")
+                    .arg(component.toString()), CODELOC );
+
+    int i = 0;
+
+    while(true)
+    {
+        if (i >= window_values.count())
+            break;
+    
+        while (window_values.count( window_values[i] ) > 1)
+        {
+            window_values.remove( window_values.lastIndexOf(window_values[i]) );
+        }
+        
+        ++i;
+    }
+} 
+
+/** Copy constructor */
+WindowedComponent::WindowedComponent(const WindowedComponent &other)
+                  : ConcreteProperty<WindowedComponent,Constraint>(other),
+                    constrained_component(other.constrained_component),
+                    reference_component(other.reference_component),
+                    window_values(other.window_values),
+                    step_size(other.step_size)
+{}
+
+/** Destructor */
+WindowedComponent::~WindowedComponent()
+{}
+
+/** Copy assignment operator */
+WindowedComponent& WindowedComponent::operator=(const WindowedComponent &other)
+{
+    if (this != &other)
+    {
+        constrained_component = other.constrained_component;
+        reference_component = other.reference_component;
+        window_values = other.window_values;
+        step_size = other.step_size;
+        Constraint::operator=(other);
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool WindowedComponent::operator==(const WindowedComponent &other) const
+{
+    return constrained_component == other.constrained_component and
+           reference_component == other.reference_component and
+           window_values == other.window_values and
+           step_size == other.step_size;
+}
+
+/** Comparison operator */
+bool WindowedComponent::operator!=(const WindowedComponent &other) const
+{
+    return not this->operator==(other);
+}
+
+/** Return a string representation of this constraint */
+QString WindowedComponent::toString() const
+{
+    return QObject::tr("WindowedComponent( component=%1 reference=%2 step_size=%3 )\n"
+                       "   windowed_values = %4")
+                .arg(constrained_component.toString(), reference_component.toString())
+                .arg(step_size).arg(Sire::toString(window_values));
+}
+
+/** Return the symbol representing the component being constrained */
+const SireCAS::Symbol& WindowedComponent::component() const
+{
+    return constrained_component;
+}
+
+/** Return the symbol representing the reference component */
+const SireCAS::Symbol& WindowedComponent::referenceComponent() const
+{
+    return reference_component;
+}
+
+/** Return the values of all of the windows */
+const QVector<double>& WindowedComponent::windowValues() const
+{
+    return window_values;
+}
+
+/** Return the step size for this windows - this is the number of 
+    windows above (or below if step_size is negative) for this 
+    window compared to the window containing the reference component */
+int WindowedComponent::stepSize() const
+{
+    return step_size;
+}
+
+static double getNextWindow(double reference_value,
+                            const QVector<double> &window_values,
+                            int step_size)
+{
+    int idx = window_values.indexOf(reference_value);
+    
+    if (idx == -1)
+    {
+        //find the closest value
+        double del2 = std::numeric_limits<double>::max();
+        
+        for (int i=0; i<window_values.count(); ++i)
+        {
+            double my_del2 = SireMaths::pow_2( reference_value - window_values.at(i) );
+            
+            if (my_del2 < del2)
+            {
+                del2 = my_del2;
+                idx = i;
+            }
+        }
+    }
+    
+    BOOST_ASSERT( idx != -1 );
+    
+    idx += step_size;
+    
+    if (idx < 0)
+        idx = 0;
+    else if (idx >= window_values.count())
+        idx = window_values.count() - 1;
+
+    return window_values.at(idx);
+}
+
+/** Return whether or not this constraint is satisfied */
+bool WindowedComponent::isSatisfied(System &system) const
+{
+    if (window_values.isEmpty())
+        return true;
+
+    double current_val = system.componentValue(constrained_component);
+    double ref_val = system.componentValue(reference_component);
+    
+    if (window_values.count() == 1)
+        return window_values.at(0) == current_val;
+    else
+        return getNextWindow(ref_val, window_values, step_size) == current_val;
+}
+
+/** Apply this constraint to the system */
+bool WindowedComponent::apply(System &system) const
+{
+    if (window_values.isEmpty())
+        return false;
+
+    Version old_version = system.version();
+    
+    double ref_val = system.componentValue(reference_component);
+
+    if (window_values.count() == 1)
+        system.setComponent(constrained_component, window_values.at(0));
+    else
+        system.setComponent(constrained_component, 
+                            getNextWindow(ref_val, window_values, step_size) );
+    
     return old_version != system.version();
 }
