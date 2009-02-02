@@ -110,7 +110,7 @@ SimStore::SimStore(const System &system, const Moves &moves, bool compress)
 }
 
 /** Copy constructor */
-SimStore::SimStore(const SimStore &other)
+SimStore::SimStore(const SimStore &other) : datamutex( QMutex::Recursive )
 {
     QMutexLocker lkr( const_cast<QMutex*>(&(other.datamutex)) );
     

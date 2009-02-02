@@ -80,7 +80,7 @@ QStringList SIREBASE_EXPORT getBackTrace()
     //binaries, though additional linker options may need to have been called 
     //(e.g. -rdynamic for GNU ld. See the glibc documentation for 'backtrace')
     char **symbols = backtrace_symbols(func_addresses, nfuncs);
-   
+    
     //save all of the function names onto the QStringList....
     //(note that none of this will work if we have run out of memory)
     QStringList ret;
