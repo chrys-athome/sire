@@ -140,29 +140,33 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
         
         if (cljpot.props.hasProperty("alpha"))
         {
-            double alpha = cljpot.props.property("alpha")
-                                 .asA<VariantProperty>().convertTo<double>();
+            const Property &prop = cljpot.props.property("alpha");
+            
+            if (not prop.isA<NullProperty>())
+            {
+                double alpha = prop.asA<VariantProperty>().convertTo<double>();
                                  
-            if (alpha_values.count() == 0)
-            {
-                alpha_values.append(alpha);
-                alpha_index[0] = 0;
-            }
-            else if (alpha_values.count() > 1)
-            {
-                throw SireError::program_bug( QObject::tr(
-                    "How can we have a single value of alpha (%1) "
-                    "when multiple values (%2) have been read??")
-                        .arg(alpha)
-                        .arg( Sire::toString(alpha_values) ),
-                            CODELOC );
-            }
-            else if (alpha_values.at(0) != alpha)
-            {
-                throw SireError::program_bug( QObject::tr(
-                    "How can the value of alpha (%1) be different to "
-                    "the only alpha component value that has been read? (%2)")
-                        .arg(alpha).arg(alpha_values.at(0)), CODELOC );
+                if (alpha_values.count() == 0)
+                {
+                    alpha_values.append(alpha);
+                    alpha_index[0] = 0;
+                }
+                else if (alpha_values.count() > 1)
+                {
+                    throw SireError::program_bug( QObject::tr(
+                        "How can we have a single value of alpha (%1) "
+                        "when multiple values (%2) have been read??")
+                            .arg(alpha)
+                            .arg( Sire::toString(alpha_values) ),
+                                CODELOC );
+                }
+                else if (alpha_values.at(0) != alpha)
+                {
+                    throw SireError::program_bug( QObject::tr(
+                        "How can the value of alpha (%1) be different to "
+                        "the only alpha component value that has been read? (%2)")
+                            .arg(alpha).arg(alpha_values.at(0)), CODELOC );
+                }
             }
         }
     

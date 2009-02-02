@@ -48,8 +48,8 @@ option (SIRE_TIME_FLOPS "Turn on floating point timing" OFF)
 set (BUILD_SHARED_LIBS ON)
 
 # This is where you set your own compiler flags
-set (SIRE_USER_CFLAGS "-mtune=native -O3 -fomit-frame-pointer")
-set (SIRE_USER_CPPFLAGS "-mtune=native -O3 -fomit-frame-pointer")
+set (SIRE_USER_CFLAGS "-mtune=native -O3")
+set (SIRE_USER_CPPFLAGS "-mtune=native -O3")
 
 # Name of executable install dir
 set (SIRE_BIN "bin")

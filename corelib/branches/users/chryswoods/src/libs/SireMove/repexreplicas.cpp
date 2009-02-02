@@ -62,47 +62,20 @@ static const RegisterMetaType<RepExReplica> r_replica;
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const RepExReplica &replica)
 {
-    writeHeader(ds, r_replica, 1);
+    writeHeader(ds, r_replica, 2);
     
     SharedDataStream sds(ds);
     
-    sds << replica.lambda_component << replica.lambda_value
+    sds << replica.replica_ensemble << replica.space_property
+        << replica.nrg_component
+        << replica.lambda_component << replica.lambda_value
         << static_cast<const Replica&>(replica);
         
     return ds;
 }
 
-/** Extract from a binary datastream */
-QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExReplica &replica)
+static void assertSupportedEnsemble(const Ensemble &replica_ensemble)
 {
-    VersionID v = readHeader(ds, r_replica);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        
-        RepExReplica new_replica;
-        
-        sds >> new_replica.lambda_component >> new_replica.lambda_value
-            >> static_cast<Replica&>(new_replica);
-
-        new_replica.updatedMoves();
-        
-        replica = new_replica;
-    }
-    else
-        throw version_error( v, "1", r_replica, CODELOC );
-        
-    return ds;
-}
-
-void RepExReplica::updatedMoves()
-{
-    const MovesPtr mvs = this->moves();
-
-    nrg_component = mvs->energyComponent();
-    space_property = mvs->spaceProperty();
-    replica_ensemble = mvs->ensemble();
 
     if ( not (replica_ensemble.isConstantNParticles() or
               replica_ensemble.isConstantChemicalPotential()) )
@@ -127,6 +100,56 @@ void RepExReplica::updatedMoves()
             "constant pressure ensembles are supported. "
             "The %1 is not supported.").arg(replica_ensemble.toString()), 
                 CODELOC );
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExReplica &replica)
+{
+    VersionID v = readHeader(ds, r_replica);
+    
+    if (v == 2)
+    {
+        SharedDataStream sds(ds);
+        
+        RepExReplica new_replica;
+        
+        sds >> new_replica.replica_ensemble >> new_replica.space_property
+            >> new_replica.nrg_component
+            >> new_replica.lambda_component >> new_replica.lambda_value
+            >> static_cast<Replica&>(new_replica);
+            
+        assertSupportedEnsemble( new_replica.replica_ensemble );
+        
+        replica = new_replica;
+    }
+    else if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        RepExReplica new_replica;
+        
+        sds >> new_replica.lambda_component >> new_replica.lambda_value
+            >> static_cast<Replica&>(new_replica);
+
+        new_replica.updatedMoves();
+        
+        replica = new_replica;
+    }
+    else
+        throw version_error( v, "1,2", r_replica, CODELOC );
+        
+    return ds;
+}
+
+void RepExReplica::updatedMoves()
+{
+    const MovesPtr mvs = this->moves();
+
+    nrg_component = mvs->energyComponent();
+    space_property = mvs->spaceProperty();
+    replica_ensemble = mvs->ensemble();
+    
+    assertSupportedEnsemble(replica_ensemble);
 }
 
 /** Null constructor */

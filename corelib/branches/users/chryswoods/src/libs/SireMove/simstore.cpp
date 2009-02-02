@@ -28,8 +28,12 @@
 
 #include "simstore.h"
 
+#include "SireError/getbacktrace.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
+
+#include <QDebug>
 
 using namespace SireMove;
 using namespace SireSystem;
@@ -78,17 +82,9 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SimStore &simstore)
         
         QMutexLocker lkr( &(simstore.datamutex) );
         
-        if (simstore.isPacked())
-            simstore.compressed_data = data;
-            
-        else
-        {
-            SimStore new_store;
-            new_store.compressed_data = data;
-            new_store.unpack();
-            
-            simstore = new_store;
-        }
+        simstore.compressed_data = data;
+        simstore.sim_system = System();
+        simstore.sim_moves = MovesPtr();
     }
     else
         throw version_error( v, "1", r_simstore, CODELOC );
@@ -183,7 +179,7 @@ void SimStore::pack() const
     if (not compressed_data.isEmpty())
         //the data is already compressed
         return;
-    
+
     QByteArray data;
     
     QDataStream ds( &data, QIODevice::WriteOnly );

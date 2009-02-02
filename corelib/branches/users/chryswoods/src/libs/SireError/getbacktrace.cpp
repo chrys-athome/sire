@@ -85,6 +85,15 @@ QStringList SIREBASE_EXPORT getBackTrace()
     //(note that none of this will work if we have run out of memory)
     QStringList ret;
 
+    if (nfuncs == 1)
+    {
+        //we have probably been compiled with -fomit-frame-pointer, so this
+        //has only been able to get the backtrace back to the current function
+        ret.append( QObject::tr("This is an incomplete backtrace as it looks "
+                    "like this code was compiled without a frame pointer\n"
+                    "(e.g. using -fomit-frame-pointer)") );
+    }
+
     for (int i=0; i<nfuncs; i++)
     {
         if (regexp.indexIn(symbols[i]) != -1)

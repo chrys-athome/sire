@@ -75,10 +75,10 @@ ms = t.elapsed()
 print "Packing the coordinates took %d ms" % ms
 
 #get the benchmark times
-benchmark = 0.000001 * FlopsMark.benchmark()
-benchmark_sum = 0.000001 * FlopsMark.benchmarkSum()
-benchmark_quot = 0.000001 * FlopsMark.benchmarkQuotient()
-benchmark_prod = 0.000001 * FlopsMark.benchmarkProduct()
+benchmark = 0.000001 * FlopsMark.benchmark() + 0.0001
+benchmark_sum = 0.000001 * FlopsMark.benchmarkSum() + 0.0001
+benchmark_quot = 0.000001 * FlopsMark.benchmarkQuotient() + 0.0001
+benchmark_prod = 0.000001 * FlopsMark.benchmarkProduct() + 0.0001
 
 print "\nThis machine can run at; %.1f MFLOPS for sum, %.1f MFLOPS for sum+product," % \
                 (benchmark_sum, benchmark_prod)
