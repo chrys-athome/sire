@@ -44,6 +44,7 @@ static const RegisterMetaType<SimStore> r_simstore;
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const SimStore &simstore)
 {
+    /* I will not pack the data, for the moment, as it is broken!
     QMutexLocker lkr( const_cast<QMutex*>(&(simstore.datamutex)) );
 
     if (not simstore.isPacked())
@@ -63,6 +64,12 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const SimStore &simstor
     
         sds << simstore.compressed_data;
     }
+    */
+
+    writeHeader(ds, r_simstore, 1);
+    SharedDataStream sds(ds);
+    
+    sds << simstore.sim_system << simstore.sim_moves;
     
     return ds;
 }
@@ -76,6 +83,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SimStore &simstore)
     {
         SharedDataStream sds(ds);
         
+        /*
         QByteArray data;
         
         sds >> data;
@@ -85,6 +93,9 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SimStore &simstore)
         simstore.compressed_data = data;
         simstore.sim_system = System();
         simstore.sim_moves = MovesPtr();
+        */
+        
+        sds >> simstore.sim_system >> simstore.sim_moves;
     }
     else
         throw version_error( v, "1", r_simstore, CODELOC );
@@ -172,6 +183,9 @@ bool SimStore::operator!=(const SimStore &other) const
 /** Pack the system and moves into a compressed binary array */
 void SimStore::pack() const
 {
+    //I have disabled packing as it doesn't work!
+    return;
+
     SimStore *nonconst_this = const_cast<SimStore*>(this);
     
     QMutexLocker lkr( &(nonconst_this->datamutex) );
@@ -196,6 +210,9 @@ void SimStore::pack() const
 /** Unpack the system and move from the compressed binary array */
 void SimStore::unpack() const
 {
+    //I have disabled packing as it doesn't work!
+    return;
+
     SimStore *nonconst_this = const_cast<SimStore*>(this);
     
     QMutexLocker lkr( &(nonconst_this->datamutex) );
