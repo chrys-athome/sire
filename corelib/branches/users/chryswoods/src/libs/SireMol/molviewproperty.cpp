@@ -28,6 +28,7 @@
 
 #include "molviewproperty.h"
 #include "moleculeinfodata.h"
+#include "atommatcher.h"
 
 #include "mover.hpp"
 
@@ -64,6 +65,39 @@ void MolViewProperty::assertCompatibleWith(const MoleculeInfoData &molinfo) cons
                 "The property of type %1 is incompatible with the layout "
                 "with UID %2")
                     .arg(this->what()).arg(molinfo.UID()), CODELOC );
+}
+
+/** Do everything possible to make this property compatible with the
+    MoleculeInfoData layout in 'info' - otherwise raise an error
+    
+    \throw SireError::incompatible_error
+*/
+PropertyPtr MolViewProperty::makeCompatibleWith(const MoleculeInfoData &molinfo,
+                                                const AtomMatcher&) const
+{
+    this->assertCompatibleWith(molinfo);
+    return *this;
+}
+
+PropertyPtr MolViewProperty::makeCompatibleWith(const MoleculeInfoData &molinfo) const
+{
+    return this->makeCompatibleWith(molinfo, AtomMatcher());
+}
+
+/** Do everything possible to make this property compatible with the molecule
+    viewed in 'mol' - otherwise raise an error
+    
+    \throw SireError::incompatible_error
+*/
+PropertyPtr MolViewProperty::makeCompatibleWith(const MoleculeView &molview) const
+{
+    return this->makeCompatibleWith(molview.data().info());
+}
+
+PropertyPtr MolViewProperty::makeCompatibleWith(const MoleculeView &molview,
+                                                const AtomMatcher &atommatcher) const
+{
+    return this->makeCompatibleWith(molview.data().info(), atommatcher);
 }
 
 /////////

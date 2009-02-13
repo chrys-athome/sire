@@ -38,8 +38,10 @@ uint qHash(const SireMM::detail::IDPair&);
 
 #include "SireMol/moleculeinfodata.h"
 #include "SireMol/atomselection.h"
+#include "SireMol/atommatcher.h"
 
 #include "SireMol/errors.h"
+#include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -636,6 +638,59 @@ TwoAtomFunctions TwoAtomFunctions::includeOnly(const AtomSelection &selected_ato
                 it.remove();
             }
         }
+    }
+    
+    return ret;
+}
+
+static void assertMatched(AtomIdx new_atomidx, int old_atomidx,
+                          const MoleculeInfoData &newinfo, 
+                          const MoleculeInfoData &oldinfo,
+                          const AtomMatcher &atommatcher)
+{
+    if (new_atomidx == -1)
+        throw SireMol::missing_atom( QObject::tr(
+            "There was no match in the molecule with layout ID %1 "
+            "for the atom with index %2 in the molecule with layout ID %3 "
+            "using the atom matcher %4.")
+                .arg(oldinfo.UID()).arg(old_atomidx)
+                .arg(newinfo.UID()).arg(atommatcher.toString()), CODELOC );
+}
+
+/** Return a copy of this property that has been made to be compatible
+    with the molecule layout in 'molinfo' - this uses the atom matching
+    functions in 'atommatcher' to match atoms from the current molecule
+    to the atoms in the molecule whose layout is in 'molinfo'
+    
+    \throw SireError::incompatible_error
+*/
+PropertyPtr TwoAtomFunctions::makeCompatibleWith(const MoleculeInfoData &molinfo,
+                                                 const AtomMatcher &atommatcher) const
+{
+    if (atommatcher.unchangedAtomOrder(this->info(), molinfo))
+    {
+        //the order of the atoms remains the same - this means that the 
+        //AtomIdx indicies are still valid
+        TwoAtomFunctions ret(this->info());
+        ret.potentials_by_atoms = this->potentials_by_atoms;
+        return ret;
+    }
+
+    QHash<AtomIdx,AtomIdx> matched_atoms = atommatcher.match(this->info(), molinfo);
+    
+    TwoAtomFunctions ret(this->info());
+    
+    for (QHash<IDPair,Expression>::const_iterator it = potentials_by_atoms.constBegin();
+         it != potentials_by_atoms.constEnd();
+         ++it)
+    {
+        AtomIdx new_atom0 = matched_atoms.value( AtomIdx(it.key().atom0), AtomIdx(-1) );
+        AtomIdx new_atom1 = matched_atoms.value( AtomIdx(it.key().atom1), AtomIdx(-1) );
+        
+        assertMatched(new_atom0, it.key().atom0, molinfo, this->info(), atommatcher);
+        assertMatched(new_atom1, it.key().atom1, molinfo, this->info(), atommatcher);
+        
+        ret.set( new_atom0, new_atom1, it.value() );
     }
     
     return ret;

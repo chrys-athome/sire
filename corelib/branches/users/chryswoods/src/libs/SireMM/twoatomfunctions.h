@@ -64,6 +64,7 @@ using SireMol::AtomIdx;
 using SireMol::AtomID;
 using SireMol::BondID;
 using SireMol::AtomSelection;
+using SireMol::AtomMatcher;
 
 /** This class holds a function that acts using the 
     coordinate information of just two atoms */
@@ -135,6 +136,7 @@ public:
     TwoAtomFunctions();
     
     TwoAtomFunctions(const MoleculeData &moldata);
+    TwoAtomFunctions(const MoleculeInfoData &molinfo);
     
     TwoAtomFunctions(const TwoAtomFunctions &other);
     
@@ -187,6 +189,9 @@ public:
     
     TwoAtomFunctions includeOnly(const AtomSelection &selection,
                                  bool isstrict=true) const;
+    
+    SireBase::PropertyPtr makeCompatibleWith(const MoleculeInfoData &molinfo,
+                                             const AtomMatcher &atommatcher) const;
     
 private:
     void removeSymbols(QSet<Symbol> symbols);

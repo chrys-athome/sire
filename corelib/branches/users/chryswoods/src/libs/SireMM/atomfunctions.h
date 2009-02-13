@@ -124,6 +124,7 @@ public:
 protected:
     AtomFunctions();
     AtomFunctions(const MoleculeData &moldata);
+    AtomFunctions(const MoleculeInfoData &molinfo);
     
     AtomFunctions(const AtomFunctions &other);
     

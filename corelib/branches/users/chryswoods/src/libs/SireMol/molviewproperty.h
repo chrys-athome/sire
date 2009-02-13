@@ -42,7 +42,9 @@ namespace SireMol
 {
 
 class MoleculeInfoData;
+class MoleculeView;
 class AtomSelection;
+class AtomMatcher;
 
 /** This is the base class of all properties that are specifically
     attached to views of a molecule (e.g. AtomProperty, ResProperty,
@@ -66,6 +68,16 @@ public:
     }
 
     virtual bool isCompatibleWith(const MoleculeInfoData &molinfo) const=0;
+
+    virtual SireBase::PropertyPtr 
+                makeCompatibleWith(const MoleculeInfoData &molinfo,
+                                   const AtomMatcher &atommatcher) const;
+
+    SireBase::PropertyPtr makeCompatibleWith(const MoleculeInfoData &molinfo) const;
+
+    SireBase::PropertyPtr makeCompatibleWith(const MoleculeView &mol) const;
+    SireBase::PropertyPtr makeCompatibleWith(const MoleculeView &mol,
+                                             const AtomMatcher &atommatcher) const;
 
     void assertCompatibleWith(const MoleculeInfoData &molinfo) const;
 };

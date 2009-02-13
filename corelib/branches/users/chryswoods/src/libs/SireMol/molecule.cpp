@@ -587,7 +587,9 @@ const Property& Molecule::metadata(const PropertyName &key,
 void Molecule::setProperty(const QString &key, const Property &value)
 {
     if (value.isA<MolViewProperty>())
-        value.asA<MolViewProperty>().assertCompatibleWith(d->info());
+    {
+        value.asA<MolViewProperty>().assertCompatibleWith(this->data().info());
+    }
         
     d->setProperty(key, value);
 }

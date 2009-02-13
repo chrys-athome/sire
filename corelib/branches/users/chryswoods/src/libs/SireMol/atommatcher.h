@@ -29,7 +29,7 @@
 #ifndef SIREMOL_ATOMMATCHER_H
 #define SIREMOL_ATOMMATCHER_H
 
-#include "sireglobal.h"
+#include "SireBase/property.h"
 
 namespace SireMol
 {
@@ -41,17 +41,41 @@ namespace SireMol
     @author Christopher Woods
 */
 class SIREMOL_EXPORT AtomMatcher
+        : public SireBase::ConcreteProperty<AtomMatcher,SireBase::Property>
 {
 public:
     AtomMatcher();
     AtomMatcher(const AtomMatcher &other);
     
-    ~AtomMatcher();
+    virtual ~AtomMatcher();
     
-    AtomMatcher& operator=(const AtomMatcher &other);
+    static const char* typeName()
+    {
+        return AtomMatcher::typeName();
+    }
+    
+    virtual const char* what() const
+    {
+        return AtomMatcher::typeName();
+    }
+    
+    virtual AtomMatcher* clone() const
+    {
+        return new AtomMatcher(*this);
+    }
+    
+    virtual bool unchangedAtomOrder(const MoleculeInfoData &old_info,
+                                    const MoleculeInfoData &new_info) const;
+    
+    virtual QHash<AtomIdx,AtomIdx> match(const MoleculeInfoData &old_info,
+                                         const MoleculeInfoData &new_info) const;
+    
+    virtual QString toString() const;
 };
 
 }
+
+Q_DECLARE_METATYPE( SireMol::AtomMatcher )
 
 SIRE_EXPOSE_CLASS( SireMol::AtomMatcher )
 

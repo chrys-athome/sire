@@ -144,6 +144,13 @@ AtomFunctions::AtomFunctions(const MoleculeData &moldata)
                 molinfo( moldata.info() )
 {}
 
+/** Construct to hold the atom functions for the molecule whose
+    layout information is in 'molinfo' */
+AtomFunctions::AtomFunctions(const MoleculeInfoData &info)
+              : MoleculeProperty(),
+                molinfo(info)
+{}
+
 /** Copy constructor */
 AtomFunctions::AtomFunctions(const AtomFunctions &other)
               : MoleculeProperty(other),
