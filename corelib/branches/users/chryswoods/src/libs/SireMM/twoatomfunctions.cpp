@@ -670,8 +670,9 @@ static void assertMatched(AtomIdx new_atomidx, int old_atomidx,
     
     \throw SireError::incompatible_error
 */
-PropertyPtr TwoAtomFunctions::makeCompatibleWith(const MoleculeInfoData &molinfo,
-                                                 const AtomMatcher &atommatcher) const
+PropertyPtr 
+TwoAtomFunctions::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
+                                          const AtomMatcher &atommatcher) const
 {
     if (atommatcher.unchangedAtomOrder(this->info(), molinfo))
     {

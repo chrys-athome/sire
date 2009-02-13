@@ -67,16 +67,22 @@ void MolViewProperty::assertCompatibleWith(const MoleculeInfoData &molinfo) cons
                     .arg(this->what()).arg(molinfo.UID()), CODELOC );
 }
 
+PropertyPtr MolViewProperty::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
+                                                     const AtomMatcher&) const
+{
+    this->assertCompatibleWith(molinfo);
+    return *this;
+}
+
 /** Do everything possible to make this property compatible with the
     MoleculeInfoData layout in 'info' - otherwise raise an error
     
     \throw SireError::incompatible_error
 */
 PropertyPtr MolViewProperty::makeCompatibleWith(const MoleculeInfoData &molinfo,
-                                                const AtomMatcher&) const
+                                                const AtomMatcher &atommatcher) const
 {
-    this->assertCompatibleWith(molinfo);
-    return *this;
+    return this->_pvt_makeCompatibleWith(molinfo, atommatcher);
 }
 
 PropertyPtr MolViewProperty::makeCompatibleWith(const MoleculeInfoData &molinfo) const

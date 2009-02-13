@@ -189,9 +189,10 @@ public:
     
     TwoAtomFunctions includeOnly(const AtomSelection &selection,
                                  bool isstrict=true) const;
-    
-    SireBase::PropertyPtr makeCompatibleWith(const MoleculeInfoData &molinfo,
-                                             const AtomMatcher &atommatcher) const;
+
+protected:
+    SireBase::PropertyPtr _pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
+                                                  const AtomMatcher &atommatcher) const;
     
 private:
     void removeSymbols(QSet<Symbol> symbols);
