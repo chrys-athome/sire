@@ -228,6 +228,12 @@ TwoAtomFunctions::TwoAtomFunctions(const MoleculeData &moldata)
                  : ConcreteProperty<TwoAtomFunctions,AtomFunctions>(moldata)
 {}
 
+/** Construct the container to hold the set of two-atom functions
+    for the molecule whose layout is in 'molinfo' */
+TwoAtomFunctions::TwoAtomFunctions(const MoleculeInfoData &molinfo)
+                 : ConcreteProperty<TwoAtomFunctions,AtomFunctions>(molinfo)
+{}
+
 /** Copy constructor */
 TwoAtomFunctions::TwoAtomFunctions(const TwoAtomFunctions &other)
                  : ConcreteProperty<TwoAtomFunctions,AtomFunctions>(other),

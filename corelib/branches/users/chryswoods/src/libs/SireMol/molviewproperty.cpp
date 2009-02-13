@@ -81,7 +81,7 @@ PropertyPtr MolViewProperty::makeCompatibleWith(const MoleculeInfoData &molinfo,
 
 PropertyPtr MolViewProperty::makeCompatibleWith(const MoleculeInfoData &molinfo) const
 {
-    return this->makeCompatibleWith(molinfo, AtomMatcher());
+    return this->makeCompatibleWith(molinfo, AtomIdxMatcher());
 }
 
 /** Do everything possible to make this property compatible with the molecule
