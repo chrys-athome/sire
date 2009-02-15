@@ -404,6 +404,13 @@ Property& PropPtrBase::edit()
     return *ptr;
 }
 
+/** Return a writable reference to the object. This performs
+    a copy-on-write test and action - this is a synonym for PropPtr::edit */
+Property& PropPtrBase::write()
+{
+    return PropPtrBase::edit();
+}
+
 /** Throw an error as we can't cast 'got_type' into 'want_type'
 
     \throw SireError::invalid_cast

@@ -79,7 +79,9 @@ using SireMol::AtomIdx;
 using SireMol::AtomID;
 using SireMol::PartialMolecule;
 using SireMol::Molecule;
+using SireMol::MoleculeInfoData;
 using SireMol::AtomSelection;
+using SireMol::AtomMatcher;
 
 using SireMaths::Vector;
 
@@ -218,7 +220,9 @@ friend QDataStream& ::operator>>(QDataStream&, ZMatrix&);
 
 public:
     ZMatrix();
+    
     ZMatrix(const Molecule &molecule);
+    ZMatrix(const MoleculeInfoData &molinfo);
     
     ZMatrix(const ZMatrix &other);
     
@@ -246,6 +250,8 @@ public:
     const QVector<ZMatrixLine>& lines() const;
     
     const QHash<AtomIdx,int>& index() const;
+    
+    int nLines() const;
     
     int getIndex(const AtomID &atom) const;
     int getIndex(const AtomID &atom, const AtomID &bond) const;
@@ -298,6 +304,9 @@ public:
 
     bool isCompatibleWith(const SireMol::MoleculeInfoData &molinfo) const;
 
+protected:
+    SireBase::PropertyPtr _pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
+                                                  const AtomMatcher &atommatcher) const;
 private:
     void reindex();
 

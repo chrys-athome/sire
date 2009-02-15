@@ -100,6 +100,8 @@ public:
     virtual ~Property();
 
     virtual Property* clone() const=0;
+    virtual Property* create() const=0;
+    
     virtual void copy(const Property &other)=0;
     virtual bool equals(const Property &other) const=0;
 
@@ -226,6 +228,11 @@ public:
     ConcreteProperty<Derived,Base>* clone() const
     {
         return new Derived( static_cast<const Derived&>(*this) );
+    }
+
+    ConcreteProperty<Derived,Base>* create() const
+    {
+        return new Derived();
     }
 
     void copy(const Property &other)
@@ -376,6 +383,8 @@ protected:
     PropPtrBase& operator=(const PropPtrBase &other);
 
     const Property& read() const;
+    
+    Property& write();
     Property& edit();
 
     static void throwCastingError(const char *got_type, const char *want_type);

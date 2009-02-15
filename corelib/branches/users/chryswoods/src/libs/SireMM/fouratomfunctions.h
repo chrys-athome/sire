@@ -66,6 +66,7 @@ using SireMol::AtomID;
 using SireMol::DihedralID;
 using SireMol::ImproperID;
 using SireMol::AtomSelection;
+using SireMol::AtomMatcher;
 
 /** This class holds a function that acts using the 
     coordinate information of just four atoms */
@@ -144,6 +145,7 @@ public:
     FourAtomFunctions();
     
     FourAtomFunctions(const MoleculeData &moldata);
+    FourAtomFunctions(const MoleculeInfoData &molinfo);
     
     FourAtomFunctions(const FourAtomFunctions &other);
     
@@ -160,6 +162,8 @@ public:
     bool operator!=(const FourAtomFunctions &other) const;
 
     QString toString() const;
+
+    int nFunctions() const;
 
     void set(AtomIdx atom0, AtomIdx atom1, 
              AtomIdx atom2, AtomIdx atom3,
@@ -212,6 +216,10 @@ public:
     
     FourAtomFunctions includeOnly(const AtomSelection &selected_atoms,
                                   bool isstrict=true) const;
+
+protected:
+    SireBase::PropertyPtr _pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
+                                                  const AtomMatcher &atommatcher) const;
     
 private:
     void removeSymbols(QSet<Symbol> symbols);

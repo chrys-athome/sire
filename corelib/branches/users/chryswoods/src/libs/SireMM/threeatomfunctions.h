@@ -64,6 +64,7 @@ using SireMol::AtomIdx;
 using SireMol::AtomID;
 using SireMol::AngleID;
 using SireMol::AtomSelection;
+using SireMol::AtomMatcher;
 
 /** This class holds a function that acts using the 
     coordinate information of just three atoms */
@@ -138,6 +139,7 @@ public:
     ThreeAtomFunctions();
     
     ThreeAtomFunctions(const MoleculeData &moldata);
+    ThreeAtomFunctions(const MoleculeInfoData &molinfo);
     
     ThreeAtomFunctions(const ThreeAtomFunctions &other);
     
@@ -176,6 +178,8 @@ public:
 
     void substitute(const Identities &identities);
 
+    int nFunctions() const;
+
     bool isEmpty() const;
 
     Expression potential(AtomIdx atom0, AtomIdx atom1,
@@ -195,6 +199,10 @@ public:
     
     ThreeAtomFunctions includeOnly(const AtomSelection &selected_atoms,
                                    bool isstrict=true) const;
+
+protected:
+    SireBase::PropertyPtr _pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
+                                                  const AtomMatcher &atommatcher) const;
     
 private:
     void removeSymbols(QSet<Symbol> symbols);

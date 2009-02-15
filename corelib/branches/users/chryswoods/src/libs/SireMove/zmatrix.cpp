@@ -33,6 +33,7 @@
 #include "SireMol/molecule.h"
 #include "SireMol/partialmolecule.h"
 #include "SireMol/mover.hpp"
+#include "SireMol/atommatcher.h"
 
 #include "SireUnits/convert.h"
 #include "SireUnits/units.h"
@@ -408,6 +409,13 @@ ZMatrix::ZMatrix() : ConcreteProperty<ZMatrix,MoleculeProperty>(),
 ZMatrix::ZMatrix(const Molecule &molecule)
         : ConcreteProperty<ZMatrix,MoleculeProperty>(),
           molinfo(molecule.data().info())
+{}
+
+/** Construct to hold the z-matrix for the molecule whose
+    layout information is held in 'molinfo' */
+ZMatrix::ZMatrix(const MoleculeInfoData &info)
+        : ConcreteProperty<ZMatrix,MoleculeProperty>(),
+          molinfo(info)
 {}
 
 /** Copy constructor */
@@ -1084,6 +1092,64 @@ ZMatrix ZMatrix::matchToSelection(const AtomSelection &selection) const
     zmatrix.atomidx_to_zmat = new_index;
 
     return zmatrix;
+}
+
+/** Return the number of lines in this z-matrix */
+int ZMatrix::nLines() const
+{
+    return zmat.count();
+}
+
+/** Return a copy of this property that has been made to be compatible
+    with the molecule layout in 'molinfo' - this uses the atom matching
+    functions in 'atommatcher' to match atoms from the current molecule
+    to the atoms in the molecule whose layout is in 'molinfo'
+
+    This only copies the z-matrix lines when all of the atoms in that
+    line have been matched. It does not copy lines where there is no 
+    match. Use the ZMatrix::nLines() function to check that the number
+    of lines doesn't change if you want to ensure that all of the 
+    lines have been copied.
+    
+    \throw SireError::incompatible_error
+*/
+PropertyPtr ZMatrix::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
+                                             const AtomMatcher &atommatcher) const
+{
+    if (atommatcher.unchangedAtomOrder(this->info(), molinfo))
+    {
+        //the order and number of atoms is the same - the z-matrix
+        //can just be copied
+        ZMatrix ret(molinfo);
+        
+        ret.zmat = zmat;
+        ret.atomidx_to_zmat = atomidx_to_zmat;
+        
+        return ret;
+    }
+    
+    QHash<AtomIdx,AtomIdx> matched_atoms = atommatcher.match(this->info(), molinfo);
+    
+    ZMatrix ret(molinfo);
+    
+    int nlines = zmat.count();
+    
+    for (int i=0; i<nlines; ++i)
+    {
+        const ZMatrixLine &line = zmat.at(i);
+        
+        AtomIdx atm = matched_atoms.value(line.atom(), AtomIdx(-1));
+        AtomIdx bnd = matched_atoms.value(line.bond(), AtomIdx(-1));
+        AtomIdx ang = matched_atoms.value(line.angle(), AtomIdx(-1));
+        AtomIdx dih = matched_atoms.value(line.dihedral(), AtomIdx(-1));
+        
+        if (atm == -1 or bnd == -1 or ang == -1 or dih == -1)
+            continue;
+            
+        ret.add( atm, bnd, ang, dih );
+    }
+    
+    return ret;
 }
 
 //////////

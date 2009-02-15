@@ -81,8 +81,9 @@ public:
     void assertCompatibleWith(const MoleculeInfoData &molinfo) const;
 
 protected:
-    SireBase::PropertyPtr _pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
-                                                  const AtomMatcher &atommatcher) const;
+    virtual SireBase::PropertyPtr 
+                    _pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
+                                            const AtomMatcher &atommatcher) const;
 };
 
 /** This specifically is a property that pertains to an entire

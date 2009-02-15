@@ -35,6 +35,7 @@
 #include "SireMol/cgatomidx.h"
 #include "SireMol/moleculeinfodata.h"
 #include "SireMol/molviewproperty.h"
+#include "SireMol/atommatcher.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -66,11 +67,13 @@ namespace SireMM
 {
 
 using SireMol::AtomID;
+using SireMol::AtomIdx;
 using SireMol::CGIdx;
 using SireMol::CGID;
 using SireMol::CGAtomIdx;
 
 using SireMol::MoleculeInfoData;
+using SireMol::AtomMatcher;
 
 /** This class is used to store objects of type 'T' associated
     with atom pairs within a CutGroup, or between a pair of
@@ -200,6 +203,10 @@ public:
     int nAtoms() const;
 
     bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
+
+protected:
+    SireBase::PropertyPtr _pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
+                                                  const AtomMatcher &atommatcher) const;
 
 private:
     /** Info about the molecule that contains these atom pairs */
@@ -726,6 +733,55 @@ SIRE_INLINE_TEMPLATE
 bool AtomPairs<T>::isCompatibleWith(const MoleculeInfoData &info) const
 {
     return *molinfo == info;
+}
+
+/** Return a copy of this property that has been made to be compatible
+    with the molecule layout in 'molinfo' - this uses the atom matching
+    functions in 'atommatcher' to match atoms from the current molecule
+    to the atoms in the molecule whose layout is in 'molinfo'
+    
+    This will only copy the values of pairs of atoms that are 
+    successfully matched - all other pairs will have the default
+    value of this AtomPairs object.
+    
+    \throw SireError::incompatible_error
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+SireBase::PropertyPtr 
+AtomPairs<T>::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
+                                      const AtomMatcher &atommatcher) const
+{
+    QHash<AtomIdx,AtomIdx> matched_atoms = atommatcher.match(this->info(), molinfo);
+    
+    SireBase::PropertyPtr retptr( *(this->create()) );
+    
+    AtomPairs<T> &ret = retptr.edit().asA< AtomPairs<T> >();
+    ret.molinfo = molinfo;
+
+    ret.cgpairs = SireBase::SparseMatrix< CGAtomPairs<T> >(cgpairs.defaultValue());
+
+    int nats = molinfo.nAtoms();
+    
+    for (AtomIdx i(0); i<nats-1; ++i)
+    {
+        AtomIdx new_i = matched_atoms.value(i, AtomIdx(-1));
+    
+        if (new_i == -1)
+            continue;
+    
+        for (AtomIdx j(i+1); j<nats; ++j)
+        {
+            AtomIdx new_j = matched_atoms.value(j, AtomIdx(-1));
+            
+            if (new_j == -1)
+                continue;
+        
+            ret.set(new_i, new_j, this->get(i,j));
+        }
+    }
+
+    return ret;
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS

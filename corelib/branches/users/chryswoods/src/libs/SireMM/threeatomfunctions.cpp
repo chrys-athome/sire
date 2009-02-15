@@ -38,6 +38,7 @@ uint qHash(const SireMM::detail::IDTriple&);
 
 #include "SireMol/moleculeinfodata.h"
 #include "SireMol/atomselection.h"
+#include "SireMol/atommatcher.h"
 
 #include "SireMol/errors.h"
 
@@ -240,6 +241,12 @@ ThreeAtomFunctions::ThreeAtomFunctions()
     for the molecule whose data is in 'moldata' */
 ThreeAtomFunctions::ThreeAtomFunctions(const MoleculeData &moldata)
                  : ConcreteProperty<ThreeAtomFunctions,AtomFunctions>(moldata)
+{}
+
+/** Construct the container to hold the set of three-atom functions
+    for the molecule whose layout information is in 'molinfo' */
+ThreeAtomFunctions::ThreeAtomFunctions(const MoleculeInfoData &molinfo)
+                 : ConcreteProperty<ThreeAtomFunctions,AtomFunctions>(molinfo)
 {}
 
 /** Copy constructor */
@@ -678,6 +685,60 @@ ThreeAtomFunctions ThreeAtomFunctions::includeOnly(const AtomSelection &selected
                 it.remove();
             }
         }
+    }
+    
+    return ret;
+}
+
+/** Return the number of functions in this set */
+int ThreeAtomFunctions::nFunctions() const
+{
+    return potentials_by_atoms.count();
+}
+
+/** Return a copy of this property that has been made to be compatible
+    with the molecule layout in 'molinfo' - this uses the atom matching
+    functions in 'atommatcher' to match atoms from the current molecule
+    to the atoms in the molecule whose layout is in 'molinfo'
+
+    This only copies the ThreeAtomFunction for pairs of atoms that
+    are successfully matched - it does not copy functions for atoms
+    that are not matched. Use ThreeAtomFunctions::nFunctions() to check
+    if the number of functions in the returned set is the same as
+    the number in this set, if you want to ensure that all of the 
+    functions have been copied.
+    
+    \throw SireError::incompatible_error
+*/
+PropertyPtr 
+ThreeAtomFunctions::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
+                                            const AtomMatcher &atommatcher) const
+{
+    if (atommatcher.unchangedAtomOrder(this->info(), molinfo))
+    {
+        //the order of the atoms remains the same - this means that the 
+        //AtomIdx indicies are still valid
+        ThreeAtomFunctions ret(molinfo);
+        ret.potentials_by_atoms = this->potentials_by_atoms;
+        return ret;
+    }
+
+    QHash<AtomIdx,AtomIdx> matched_atoms = atommatcher.match(this->info(), molinfo);
+    
+    ThreeAtomFunctions ret(molinfo);
+    
+    for (QHash<IDTriple,Expression>::const_iterator it = potentials_by_atoms.constBegin();
+         it != potentials_by_atoms.constEnd();
+         ++it)
+    {
+        AtomIdx new_atom0 = matched_atoms.value( AtomIdx(it.key().atom0), AtomIdx(-1) );
+        AtomIdx new_atom1 = matched_atoms.value( AtomIdx(it.key().atom1), AtomIdx(-1) );
+        AtomIdx new_atom2 = matched_atoms.value( AtomIdx(it.key().atom2), AtomIdx(-1) );
+
+        if (new_atom0 == -1 or new_atom1 == -1 or new_atom2 == -1)
+            continue;
+        
+        ret.set( new_atom0, new_atom1, new_atom2, it.value() );
     }
     
     return ret;
