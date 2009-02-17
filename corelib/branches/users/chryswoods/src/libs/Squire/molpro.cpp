@@ -569,7 +569,7 @@ QString Molpro::writeShellFile(const TempDir &tempdir) const
          it != env_variables.constEnd();
          ++it)
     {
-        ts << it.key() << "=\"" << it.value() << "\"\n";
+        ts << "export " << it.key() << "=\"" << it.value() << "\"\n";
     }
 
     //set the script to change into the run directory of the job
