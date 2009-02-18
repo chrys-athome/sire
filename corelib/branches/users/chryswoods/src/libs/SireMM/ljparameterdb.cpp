@@ -203,6 +203,9 @@ quint32 LJParameterDB::LJParameterDBData::_locked_addLJParameter(
     ljparams_by_idx.append(ljparam);
     ljparams_by_value.insert(ljparam, idx);
     
+    //clear the existing LJ pair matricies, as these are now invalid
+    ljpair_arrays.clear();
+    
     return idx;
 }
 
