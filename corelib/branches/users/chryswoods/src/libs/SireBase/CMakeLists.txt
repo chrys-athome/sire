@@ -23,6 +23,7 @@ set ( SIREBASE_HEADERS
       packedarray2d.h
       packedarray2d.hpp
       pairmatrix.hpp
+      process.h
       properties.h
       property.h
       propertymap.h
@@ -46,6 +47,7 @@ set ( SIREBASE_SOURCES
       findexe.cpp
       majorminorversion.cpp
       packedarray2d.cpp
+      process.cpp
       properties.cpp
       property.cpp
       propertymap.cpp

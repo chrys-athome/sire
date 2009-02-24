@@ -34,6 +34,7 @@
 
 #include "SireBase/tempdir.h"
 #include "SireBase/findexe.h"
+#include "SireBase/process.h"
 
 #include "SireUnits/units.h"
 
@@ -629,16 +630,44 @@ double Molpro::calculateEnergy(const QString &cmdfile, int ntries) const
         f.close();
     }
 
-    //now run the command
-    if (std::system(0))
+    //run the shell file...
+    Process p = Process::run( "sh", shellfile );
+
+    //wait until the job has finished
+    p.wait();
+    
+    if (p.wasKilled())
     {
-        std::system( QString("source %1").arg(shellfile).toAscii().constData() );
+        throw SireError::process_error( QObject::tr(
+            "The Molpro job was killed."), CODELOC );
     }
-    else
-        throw SireError::unsupported( QObject::tr(
-            "The operating system does not support the use of std::system(). "
-            "It is not possible to use Molpro to calculate QM energies."),
-                CODELOC );
+    
+    if (p.isError())
+    {
+        QByteArray shellcontents = ::readAll(shellfile);
+        QByteArray cmdcontents = ::readAll(QString("%1/molpro_input").arg(tmpdir.path()));
+        QByteArray outputcontents = ::readAll(QString("%1/molpro_output")
+                                                    .arg(tmpdir.path()));
+
+        throw SireError::process_error( QObject::tr(
+            "There was an error running the Molpro job.\n"
+            "The shell script used to run the job was;\n"
+            "*****************************************\n"
+            "%1\n"
+            "*****************************************\n"
+            "The molpro input used to run the job was;\n"
+            "*****************************************\n"
+            "%2\n"
+            "*****************************************\n"
+            "The molpro output was;\n"
+            "*****************************************\n"
+            "%3\n"
+            "*****************************************\n"
+            )
+                .arg( QLatin1String(shellcontents),
+                      QLatin1String(cmdcontents),
+                      QLatin1String(outputcontents) ), CODELOC );
+    }
 
     //read all of the output
     QFile f( QString("%1/molpro_output").arg(tmpdir.path()) );

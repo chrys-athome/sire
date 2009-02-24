@@ -146,7 +146,7 @@ void PrefSampler::recalculateWeights()
         //weight = 1 / (dist^2 + k)
         double invweight = dist2 + sampling_constant;
         
-        if (invweight == 0)
+        if (invweight < 1)
             //default to '1' for zero invweight
             molweights_array[i] = 1;
         else

@@ -14,6 +14,8 @@
 #include "SireCluster/node.h"
 #include "SireCluster/promise.h"
 
+#include "SireBase/process.h"
+
 #include "Helpers/pythonpacket.h"
 
 using std::printf;
@@ -44,8 +46,13 @@ void fatal_error_signal (int sig)
 
     printf("You're killing me!!!\n");
      
+    // Kill any child processes
+    SireBase::Process::killAll();
+
     // Now do the clean up actions:
     Cluster::shutdown();
+
+    printf("\nI, and all of my children are now dead. Adieu...\n");
 
     // Now reraise the signal.  We reactivate the signal's
     // default handling, which is to terminate the process.

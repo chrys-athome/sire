@@ -65,6 +65,7 @@
 
 #include "SireBase/tempdir.h"
 #include "SireBase/findexe.h"
+#include "SireBase/process.h"
 
 #include "SireMove/errors.h"
 #include "SireMol/errors.h"
@@ -817,17 +818,41 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
     //write the file processed by the shell used to run the job
     QString shellfile = this->writeShellFile(tmpdir, cmdfile);
 
-    //now run the command
-    if (std::system(0))
-    {
-        std::system( QString("source %1").arg(shellfile).toAscii().constData() );
-    }
-    else
-        throw SireError::unsupported( QObject::tr(
-            "The operating system does not support the use of std::system(). "
-            "It is not possible to use ProtoMS to parameterise molecules."),
-                CODELOC );
+    Process p = Process::run("sh", shellfile);
+    
+    p.wait();
+    
+    if (p.wasKilled())
+        throw SireError::process_error( QObject::tr(
+                "The ProtoMS job was killed!"), CODELOC );
 
+    if (p.isError())
+    {
+        QByteArray shellcontents = ::readAll(shellfile);
+        QByteArray cmdcontents = ::readAll(QString("%1/protoms_input")
+                                                .arg(tmpdir.path()));
+        QByteArray outputcontents = ::readAll(QString("%1/protoms_output")
+                                                    .arg(tmpdir.path()));
+    
+        throw SireError::process_error( QObject::tr(
+            "There was an error running the ProtoMS - no output was created.\n"
+            "The shell script used to run the job was;\n"
+            "*****************************************\n"
+            "%1\n"
+            "*****************************************\n"
+            "The ProtoMS input used to run the job was;\n"
+            "*****************************************\n"
+            "%2\n"
+            "*****************************************\n"
+            "The ProtoMS output was;\n"
+            "*****************************************\n"
+            "%3\n"
+            "*****************************************\n"
+            )
+                .arg( QLatin1String(shellcontents),
+                      QLatin1String(cmdcontents),
+                      QLatin1String(outputcontents) ), CODELOC );
+    }
 
     QFile f( QString("%1/protoms_output").arg(tmpdir.path()) );
     
