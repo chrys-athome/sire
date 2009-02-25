@@ -193,6 +193,39 @@ public:
     }
 };
 
+/** This class is thrown when an expression is missing a required symbol */
+class SIRECAS_EXPORT missing_symbol : public sirecas_error
+{
+public:
+    missing_symbol() : sirecas_error()
+    {}
+
+    missing_symbol(QString err, QString place = QString::null)
+              : sirecas_error(err,place)
+    {}
+
+    missing_symbol(const missing_symbol &other) : sirecas_error(other)
+    {}
+
+    ~missing_symbol() throw()
+    {}
+
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<missing_symbol>() );
+    }
+
+    const char* what() const throw()
+    {
+        return missing_symbol::typeName();
+    }
+    
+    void throwSelf() const
+    {
+        throw missing_symbol(*this);
+    }
+};
+
 /** This class is thrown when an attempt is made to rearrange
     an equation in a way that is not possible */
 class SIRECAS_EXPORT rearrangement_error : public sirecas_error
@@ -233,6 +266,7 @@ Q_DECLARE_METATYPE(SireCAS::unavailable_differential)
 Q_DECLARE_METATYPE(SireCAS::unavailable_integral)
 Q_DECLARE_METATYPE(SireCAS::unregistered_expression)
 Q_DECLARE_METATYPE(SireCAS::invalid_symbol)
+Q_DECLARE_METATYPE(SireCAS::missing_symbol)
 Q_DECLARE_METATYPE(SireCAS::rearrangement_error)
 
 SIRE_END_HEADER

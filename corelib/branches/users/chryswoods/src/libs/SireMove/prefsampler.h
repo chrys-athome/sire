@@ -37,6 +37,8 @@
 
 #include "SireVol/space.h"
 
+#include "SireCAS/expression.h"
+
 #include "SireMaths/vector.h"
 
 #include "SireUnits/dimensions.h"
@@ -50,6 +52,11 @@ class PrefSampler;
 
 QDataStream& operator<<(QDataStream&, const SireMove::PrefSampler&);
 QDataStream& operator>>(QDataStream&, SireMove::PrefSampler&);
+
+namespace SireCAS
+{
+class Symbol;
+}
 
 namespace SireMove
 {
@@ -83,20 +90,36 @@ friend QDataStream& ::operator>>(QDataStream&, PrefSampler&);
 public:
     PrefSampler();
     PrefSampler(SireUnits::Dimension::Area k);
+    PrefSampler(const SireCAS::Expression &f);
+    PrefSampler(const SireCAS::Expression &f, SireUnits::Dimension::Area k);
     
     PrefSampler(const Vector &point);
     PrefSampler(const Vector &point, SireUnits::Dimension::Area k);
+    PrefSampler(const Vector &point, const SireCAS::Expression &f);
+    PrefSampler(const Vector &point, const SireCAS::Expression &f,
+                SireUnits::Dimension::Area k);
 
     PrefSampler(const Vector &point, const MoleculeGroup &molgroup);
     PrefSampler(const Vector &point, const MoleculeGroup &molgroup,
                 SireUnits::Dimension::Area k);
+    PrefSampler(const Vector &point, const MoleculeGroup &molgroup,
+                const SireCAS::Expression &f);
+    PrefSampler(const Vector &point, const MoleculeGroup &molgroup,
+                const SireCAS::Expression &f, SireUnits::Dimension::Area k);
     
     PrefSampler(const MoleculeView &molview);
     PrefSampler(const MoleculeView &molview, SireUnits::Dimension::Area k);
+    PrefSampler(const MoleculeView &molview, const SireCAS::Expression &f);
+    PrefSampler(const MoleculeView &molview, const SireCAS::Expression &f,
+                SireUnits::Dimension::Area k);
     
     PrefSampler(const MoleculeView &molview, const MoleculeGroup &molgroup);
     PrefSampler(const MoleculeView &molview, const MoleculeGroup &molgroup,
                 SireUnits::Dimension::Area k);
+    PrefSampler(const MoleculeView &molview, const MoleculeGroup &molgroup,
+                const SireCAS::Expression &f);
+    PrefSampler(const MoleculeView &molview, const MoleculeGroup &molgroup,
+                const SireCAS::Expression &f, SireUnits::Dimension::Area k);
     
     PrefSampler(const PrefSampler &other);
     
@@ -117,6 +140,9 @@ public:
     bool operator==(const PrefSampler &other) const;
     bool operator!=(const PrefSampler &other) const;
     
+    static SireCAS::Symbol r();
+    static SireCAS::Symbol k();
+    
     void setGroup(const MoleculeGroup &molgroup);
 
     void updateFrom(const System &system);
@@ -132,6 +158,10 @@ public:
     void setSpaceProperty(const PropertyName &space_property);
     
     void setSamplingConstant(SireUnits::Dimension::Area k);
+    void setBiasingFunction(const SireCAS::Expression &f);
+
+    SireCAS::Expression biasingFunction() const;
+    SireUnits::Dimension::Area samplingConstant() const;
     
     bool usingFocalMolecule() const;
     bool usingFocalPoint() const;
@@ -139,8 +169,6 @@ public:
     const Vector& focalPoint() const;
     const PartialMolecule& focalMolecule() const;
 
-    SireUnits::Dimension::Area samplingConstant() const;
-    
     const PropertyName& coordinatesProperty() const;
     const PropertyName& spaceProperty() const;
 
@@ -161,6 +189,9 @@ private:
     
     /** The property used to find the system space */
     PropertyName space_property;
+    
+    /** The preferential sampling expression */
+    SireCAS::Expression sampling_expression;
     
     /** The preferential sampling constant */
     double sampling_constant;

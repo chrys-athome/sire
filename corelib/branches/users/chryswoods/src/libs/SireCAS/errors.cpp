@@ -41,3 +41,9 @@ RegisterMetaType<unavailable_integral> r_int;
 
 static const
 RegisterMetaType<rearrangement_error> r_rearrange;
+
+static const
+RegisterMetaType<invalid_symbol> r_invalid_symbol;
+
+static const
+RegisterMetaType<missing_symbol> r_missing_symbol;

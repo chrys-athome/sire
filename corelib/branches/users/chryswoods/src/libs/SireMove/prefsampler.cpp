@@ -35,7 +35,11 @@
 
 #include "SireBase/majorminorversion.h"
 
+#include "SireCAS/symbol.h"
+
 #include "SireSystem/system.h"
+
+#include "SireCAS/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -45,6 +49,7 @@
 using namespace SireMove;
 using namespace SireMol;
 using namespace SireBase;
+using namespace SireCAS;
 using namespace SireMaths;
 using namespace SireUnits::Dimension;
 using namespace SireStream;
@@ -54,7 +59,7 @@ static const RegisterMetaType<PrefSampler> r_prefsampler;
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const PrefSampler &prefsampler)
 {
-    writeHeader(ds, r_prefsampler, 1);
+    writeHeader(ds, r_prefsampler, 2);
     
     SharedDataStream sds(ds);
     
@@ -62,10 +67,19 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const PrefSampler &pref
         << prefsampler.coords_property
         << prefsampler.space_property
         << prefsampler.sampling_constant
+        << prefsampler.sampling_expression
         << prefsampler.current_space
         << static_cast<const Sampler&>(prefsampler);
         
     return ds;
+}
+
+static Expression defaultExpression()
+{
+    Symbol r = PrefSampler::r();
+    Symbol k = PrefSampler::k();
+    
+    return 1.0 / (r*r + k);
 }
 
 /** Extract from a binary datastream */
@@ -73,7 +87,19 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, PrefSampler &prefsample
 {
     VersionID v = readHeader(ds, r_prefsampler);
     
-    if (v == 1)
+    if (v == 2)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> prefsampler.focal_molecule >> prefsampler.focal_point
+            >> prefsampler.coords_property
+            >> prefsampler.space_property
+            >> prefsampler.sampling_constant
+            >> prefsampler.sampling_expression
+            >> prefsampler.current_space
+            >> static_cast<Sampler&>(prefsampler);
+    }
+    else if (v == 1)
     {
         SharedDataStream sds(ds);
         
@@ -83,6 +109,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, PrefSampler &prefsample
             >> prefsampler.sampling_constant
             >> prefsampler.current_space
             >> static_cast<Sampler&>(prefsampler);
+
+        prefsampler.sampling_expression = ::defaultExpression();
             
         prefsampler.is_dirty = true;
     }
@@ -131,6 +159,11 @@ void PrefSampler::recalculateWeights()
     sum_of_weights = 0;
     max_weight = 0;
     
+    Symbol _r = PrefSampler::r();
+
+    Values vals;
+    vals.set( PrefSampler::k(), sampling_constant );
+    
     for (int i=0; i<nviews; ++i)
     {
         const tuple<MolNum,Index> &viewidx = viewindicies_array[i];
@@ -141,52 +174,126 @@ void PrefSampler::recalculateWeights()
         Vector new_center = mol.at(viewidx.get<1>()).evaluate()
                                .centerOfGeometry(map);
                                
-        double dist2 = current_space->calcDist2(new_center, focal_point);
+        double dist = current_space->calcDist(new_center, focal_point);
 
-        //weight = 1 / (dist^2 + k)
-        double invweight = dist2 + sampling_constant;
+        vals.set(_r, dist);
         
-        if (invweight < 1)
-            //default to '1' for zero invweight
-            molweights_array[i] = 1;
-        else
-            molweights_array[i] = 1.0 / invweight;
+        molweights_array[i] = sampling_expression.evaluate(vals);
+
+        if (molweights_array[i] < 0)
+            molweights_array[i] = 0;
             
         sum_of_weights += molweights_array[i];
         max_weight = qMax(max_weight, molweights_array[i]);
     }
     
+    if (sum_of_weights <= 0)
+    {
+        //all of the weights are equal to zero (as none are negative)
+        // - set them all equal to 1
+        for (int i=0; i<nviews; ++i)
+        {
+            molweights_array[i] = 1;
+        }
+        
+        sum_of_weights = nviews;
+        max_weight = 1;
+    }
+    
     is_dirty = false;
 }
 
-/** Construct a sampler that prefers the molecules near the origin */
+static void validateExpression(const Expression &f)
+{
+    Symbols symbols = f.symbols();
+    
+    if (not symbols.contains(PrefSampler::r()))
+    {
+        throw SireCAS::missing_symbol( QObject::tr(
+            "A preferential sampling biasing function must contain the symbol "
+            "%1 (which represents the distance between molecules). The expression "
+            "%2 only contains the symbols %3.")
+                .arg( PrefSampler::r().toString(), f.toString() )
+                .arg( Sire::toString(symbols) ), CODELOC );
+    }
+    
+    symbols.remove( PrefSampler::r() );
+    symbols.remove( PrefSampler::k() );
+    
+    if (not symbols.isEmpty())
+    {
+        //there are symbols which are not used by PrefSampler
+        throw SireCAS::invalid_symbol( QObject::tr(
+            "A preferential sampling biasing function must contain only the "
+            "symbols %1 and %2. The function %3 contains the additional symbols "
+            "%4.")
+                .arg( PrefSampler::r().toString(), PrefSampler::k().toString() )
+                .arg( f.toString(), Sire::toString(symbols) ), CODELOC );
+    }
+}
+
+/** Construct a sampler that prefers the molecules near the origin,
+    using the biasing expression 1 / r^2 */
 PrefSampler::PrefSampler()
             : ConcreteProperty<PrefSampler,Sampler>(),
               coords_property("coordinates"),
               space_property("space"),
-              sampling_constant(0), 
+              sampling_expression( ::defaultExpression() ),
+              sampling_constant(0),
               sum_of_weights(0), max_weight(0),
               is_dirty(true)
 {}
 
 /** Construct a sampler that prefers the molecules near the origin 
-    using the supplied preferential sampling constant 'k' */
+    using the supplied preferential sampling constant 'k',
+    using the biasing expression 1 / (r^2 + k) */
 PrefSampler::PrefSampler(Area k)
             : ConcreteProperty<PrefSampler,Sampler>(),
               coords_property("coordinates"),
               space_property("space"),
-              sampling_constant(k), 
+              sampling_expression( ::defaultExpression() ),
+              sampling_constant(k),
               sum_of_weights(0), max_weight(0),
               is_dirty(true)
 {}
 
+/** Construct a sampler that prefers the molecules near the origin 
+    using the supplied preferential sampling biasing function 'f' */
+PrefSampler::PrefSampler(const Expression &f)
+            : ConcreteProperty<PrefSampler,Sampler>(),
+              coords_property("coordinates"),
+              space_property("space"),
+              sampling_expression(f),
+              sampling_constant(0),
+              sum_of_weights(0), max_weight(0),
+              is_dirty(true)
+{
+    ::validateExpression(f);
+}
+
+/** Construct a sampler that prefers the molecules near the origin 
+    using the supplied preferential sampling biasing function 'f'
+    and sampling constant 'k' */
+PrefSampler::PrefSampler(const Expression &f, Area k)
+            : ConcreteProperty<PrefSampler,Sampler>(),
+              coords_property("coordinates"),
+              space_property("space"),
+              sampling_expression(f),
+              sampling_constant(k),
+              sum_of_weights(0), max_weight(0),
+              is_dirty(true)
+{
+    ::validateExpression(f);
+}
+
 /** Construct a sampler that prefers the molecules that are closest
-    to the point 'point' */
+    to the point 'point', using the biasing expression 1 / r^2 */
 PrefSampler::PrefSampler(const Vector &point)
             : ConcreteProperty<PrefSampler,Sampler>(),
               focal_point(point),
               coords_property("coordinates"),
               space_property("space"),
+              sampling_expression( ::defaultExpression() ),
               sampling_constant(0),
               sum_of_weights(0), max_weight(0),
               is_dirty(true)
@@ -194,25 +301,59 @@ PrefSampler::PrefSampler(const Vector &point)
 
 /** Construct a sampler that prefers the molecules that are closest
     to the point 'point' using the supplied preferential
-    sampling constant 'k' */
+    sampling constant 'k', using the biasing expression 1 / (r^2 + k) */
 PrefSampler::PrefSampler(const Vector &point, Area k)
             : ConcreteProperty<PrefSampler,Sampler>(),
               focal_point(point),
               coords_property("coordinates"),
               space_property("space"),
+              sampling_expression( ::defaultExpression() ),
               sampling_constant(k),
               sum_of_weights(0), max_weight(0),
               is_dirty(true)
 {}
 
+/** Construct a sampler that prefers the molecules that are closest
+    to the point 'point' using the supplied preferential
+    sampling biasing function 'f' */
+PrefSampler::PrefSampler(const Vector &point, const Expression &f)
+            : ConcreteProperty<PrefSampler,Sampler>(),
+              focal_point(point),
+              coords_property("coordinates"),
+              space_property("space"),
+              sampling_expression(f),
+              sampling_constant(0),
+              sum_of_weights(0), max_weight(0),
+              is_dirty(true)
+{
+    ::validateExpression(f);
+}
+
+/** Construct a sampler that prefers the molecules that are closest
+    to the point 'point' using the supplied preferential
+    sampling biasing function 'f' and sampling constant 'k' */
+PrefSampler::PrefSampler(const Vector &point, const Expression &f, Area k)
+            : ConcreteProperty<PrefSampler,Sampler>(),
+              focal_point(point),
+              coords_property("coordinates"),
+              space_property("space"),
+              sampling_expression(f),
+              sampling_constant(k),
+              sum_of_weights(0), max_weight(0),
+              is_dirty(true)
+{
+    ::validateExpression(f);
+}
+
 /** Construct a sampler that samples molecule views from the group 'molgroup',
     with a preference to sample molecules that are closest to the 
-    point 'point' */
+    point 'point', using the sampling expression 1 / r^2 */
 PrefSampler::PrefSampler(const Vector &point, const MoleculeGroup &molgroup)
             : ConcreteProperty<PrefSampler,Sampler>(molgroup),
               focal_point(point), 
               coords_property("coordinates"),
               space_property("space"),
+              sampling_expression( ::defaultExpression() ),
               sampling_constant(0),
               sum_of_weights(0), max_weight(0),
               is_dirty(true)
@@ -221,46 +362,115 @@ PrefSampler::PrefSampler(const Vector &point, const MoleculeGroup &molgroup)
 /** Construct a sampler that samples molecule views from the group 'molgroup',
     with a preference to sample molecules that are closest to the 
     point 'point' using the supplied preferential
-    sampling constant 'k' */
+    sampling constant 'k' and the biasing expression 1 / (r^2 + k) */
 PrefSampler::PrefSampler(const Vector &point, const MoleculeGroup &molgroup,
                          Area k)
             : ConcreteProperty<PrefSampler,Sampler>(molgroup),
               focal_point(point), 
               coords_property("coordinates"),
               space_property("space"),
+              sampling_expression( ::defaultExpression() ),
               sampling_constant(k),
               sum_of_weights(0), max_weight(0),
               is_dirty(true)
 {}
+            
+/** Construct a sampler that samples molecule views from the group 'molgroup',
+    with a preference to sample molecules that are closest to the 
+    point 'point' using the supplied preferential
+    sampling biasing function 'f' */
+PrefSampler::PrefSampler(const Vector &point, const MoleculeGroup &molgroup,
+                         const Expression &f)
+            : ConcreteProperty<PrefSampler,Sampler>(molgroup),
+              focal_point(point), 
+              coords_property("coordinates"),
+              space_property("space"),
+              sampling_expression(f),
+              sampling_constant(0),
+              sum_of_weights(0), max_weight(0),
+              is_dirty(true)
+{
+    ::validateExpression(f);
+}
+            
+/** Construct a sampler that samples molecule views from the group 'molgroup',
+    with a preference to sample molecules that are closest to the 
+    point 'point' using the supplied preferential
+    sampling biasing function 'f' and area 'k' */
+PrefSampler::PrefSampler(const Vector &point, const MoleculeGroup &molgroup,
+                         const Expression &f, Area k)
+            : ConcreteProperty<PrefSampler,Sampler>(molgroup),
+              focal_point(point), 
+              coords_property("coordinates"),
+              space_property("space"),
+              sampling_expression(f),
+              sampling_constant(k),
+              sum_of_weights(0), max_weight(0),
+              is_dirty(true)
+{
+    ::validateExpression(f);
+}
 
 /** Construct a sampler that prefers the molecules that are closest to 
-    the view 'molview' */
+    the view 'molview', using the biasing expression 1 / r^2 */
 PrefSampler::PrefSampler(const MoleculeView &molview)
             : ConcreteProperty<PrefSampler,Sampler>(),
               focal_molecule(molview), 
               coords_property("coordinates"),
+              sampling_expression( ::defaultExpression() ),
               sampling_constant(0),
               is_dirty(true)
 {}
 
 /** Construct a sampler that prefers the molecules that are closest to 
     the view 'molview' using the supplied preferential
-    sampling constant 'k' */
+    sampling constant 'k' and the biasing expression 1 / (r^2 + k) */
 PrefSampler::PrefSampler(const MoleculeView &molview, Area k)
             : ConcreteProperty<PrefSampler,Sampler>(),
               focal_molecule(molview), 
               coords_property("coordinates"),
+              sampling_expression( ::defaultExpression() ),
               sampling_constant(k),
               is_dirty(true)
 {}
 
+/** Construct a sampler that prefers the molecules that are closest to 
+    the view 'molview' using the supplied preferential
+    sampling biasing function 'f' */
+PrefSampler::PrefSampler(const MoleculeView &molview, const Expression &f)
+            : ConcreteProperty<PrefSampler,Sampler>(),
+              focal_molecule(molview), 
+              coords_property("coordinates"),
+              sampling_expression(f),
+              sampling_constant(0),
+              is_dirty(true)
+{
+    ::validateExpression(f);
+}
+
+/** Construct a sampler that prefers the molecules that are closest to 
+    the view 'molview' using the supplied preferential
+    sampling biasing function 'f' and sampling constant 'k' */
+PrefSampler::PrefSampler(const MoleculeView &molview, const Expression &f, Area k)
+            : ConcreteProperty<PrefSampler,Sampler>(),
+              focal_molecule(molview), 
+              coords_property("coordinates"),
+              sampling_expression(f),
+              sampling_constant(k),
+              is_dirty(true)
+{
+    ::validateExpression(f);
+}
+
 /** Construct a sampler that samples the molecules in 'molgroup', and
-    that prefers molecules that are closest to the view 'molview' */
+    that prefers molecules that are closest to the view 'molview',
+    using the biasing expression 1 / r^2 */
 PrefSampler::PrefSampler(const MoleculeView &molview, const MoleculeGroup &molgroup)
             : ConcreteProperty<PrefSampler,Sampler>(molgroup),
               focal_molecule(molview),
               coords_property("coordinates"),
               space_property("space"),
+              sampling_expression( ::defaultExpression() ),
               sampling_constant(0),
               sum_of_weights(0), max_weight(0),
               is_dirty(true)
@@ -268,17 +478,55 @@ PrefSampler::PrefSampler(const MoleculeView &molview, const MoleculeGroup &molgr
 
 /** Construct a sampler that samples the molecules in 'molgroup', and
     that prefers molecules that are closest to the view 'molview' 
-    using the optionally supplied preferential sampling constant 'k' */
+    using the optionally supplied preferential sampling constant 'k'
+    and the biasing expression 1 / (r^2 + k) */
 PrefSampler::PrefSampler(const MoleculeView &molview, const MoleculeGroup &molgroup,
                          Area k)
             : ConcreteProperty<PrefSampler,Sampler>(molgroup),
               focal_molecule(molview),
               coords_property("coordinates"),
               space_property("space"),
+              sampling_expression( ::defaultExpression() ),
               sampling_constant(k),
               sum_of_weights(0), max_weight(0),
               is_dirty(true)
 {}
+
+/** Construct a sampler that samples the molecules in 'molgroup', and
+    that prefers molecules that are closest to the view 'molview' 
+    using the supplied preferential sampling biasing
+    function 'f' */
+PrefSampler::PrefSampler(const MoleculeView &molview, const MoleculeGroup &molgroup,
+                         const Expression &f)
+            : ConcreteProperty<PrefSampler,Sampler>(molgroup),
+              focal_molecule(molview),
+              coords_property("coordinates"),
+              space_property("space"),
+              sampling_expression(f),
+              sampling_constant(0),
+              sum_of_weights(0), max_weight(0),
+              is_dirty(true)
+{
+    ::validateExpression(f);
+}
+
+/** Construct a sampler that samples the molecules in 'molgroup', and
+    that prefers molecules that are closest to the view 'molview' 
+    using the supplied preferential sampling biasing
+    function 'f' and sampling constant 'k' */
+PrefSampler::PrefSampler(const MoleculeView &molview, const MoleculeGroup &molgroup,
+                         const Expression &f, Area k)
+            : ConcreteProperty<PrefSampler,Sampler>(molgroup),
+              focal_molecule(molview),
+              coords_property("coordinates"),
+              space_property("space"),
+              sampling_expression(f),
+              sampling_constant(k),
+              sum_of_weights(0), max_weight(0),
+              is_dirty(true)
+{
+    ::validateExpression(f);
+}
 
 /** Copy constructor */
 PrefSampler::PrefSampler(const PrefSampler &other)
@@ -287,6 +535,7 @@ PrefSampler::PrefSampler(const PrefSampler &other)
               focal_point(other.focal_point),
               coords_property(other.coords_property),
               space_property(other.space_property),
+              sampling_expression(other.sampling_expression),
               sampling_constant(other.sampling_constant),
               sum_of_weights(other.sum_of_weights), 
               max_weight(other.max_weight),
@@ -309,6 +558,7 @@ PrefSampler& PrefSampler::operator=(const PrefSampler &other)
         coords_property = other.coords_property;
         space_property = other.space_property;
         sampling_constant = other.sampling_constant;
+        sampling_expression = other.sampling_expression;
         sum_of_weights = other.sum_of_weights;
         max_weight = other.max_weight;
         molweights = other.molweights;
@@ -330,6 +580,7 @@ bool PrefSampler::operator==(const PrefSampler &other) const
            space_property == other.space_property and
            current_space == other.current_space and
            sampling_constant == other.sampling_constant and
+           sampling_expression == other.sampling_expression and
            Sampler::operator==(other);
 }
 
@@ -337,6 +588,18 @@ bool PrefSampler::operator==(const PrefSampler &other) const
 bool PrefSampler::operator!=(const PrefSampler &other) const
 {
     return not this->operator==(other);
+}
+
+/** Return the symbol used to represent the preferential sampling constant (k) */
+Symbol PrefSampler::k()
+{
+    return Symbol("k");
+}
+
+/** Return the symbol used to represent the distance between molecules (r) */
+Symbol PrefSampler::r()
+{
+    return Symbol("r");
 }
 
 /** Set the molecule group from which molecule view will be sampled */
@@ -399,6 +662,11 @@ void PrefSampler::setGroup(const MoleculeGroup &molgroup)
     sum_of_weights = 0;
     max_weight = 0;
     
+    Symbol _r = PrefSampler::r();
+    Values vals;
+    
+    vals.set( PrefSampler::k(), sampling_constant );
+    
     for (int i=0; i<nviews; ++i)
     {
         const tuple<MolNum,Index> &viewidx = viewindicies_array[i];
@@ -418,19 +686,29 @@ void PrefSampler::setGroup(const MoleculeGroup &molgroup)
         Vector new_center = mol.at(viewidx.get<1>()).evaluate()
                                .centerOfGeometry(map);
 
-        double dist2 = current_space->calcDist2(new_center, focal_point);
+        double dist = current_space->calcDist(new_center, focal_point);
         
-        //weight = 1 / (dist^2 + k)
-        double invweight = dist2 + sampling_constant;
+        vals.set(_r, dist);
         
-        if (invweight == 0)
-            //default to '1' for zero invweight
-            molweights_array[i] = 1;
-        else
-            molweights_array[i] = 1.0 / invweight;
+        molweights_array[i] = sampling_expression.evaluate(vals);
+        
+        if (molweights_array[i] < 0)
+            molweights_array[i] = 0;
             
         sum_of_weights += molweights_array[i];
         max_weight = qMax(max_weight, molweights_array[i]);
+    }
+        
+    if (sum_of_weights == 0)
+    {
+        //all of the weights are zero (as none are negative)
+        for (int i=0; i<nviews; ++i)
+        {
+            molweights_array[i] = 1;
+        }
+        
+        sum_of_weights = nviews;
+        max_weight = 1;
     }
         
     Sampler::setGroup(molgroup);
@@ -547,11 +825,39 @@ void PrefSampler::setFocalPoint(const Vector &point)
     is_dirty = true;
 }
 
+/** Set the preferential sampling biasing expression - this
+    should use the symbols 'k' and 'r', which are the biasing
+    constant and distance between molecules respectively.
+    
+    The default biasing expression is  1.0 / (r^2 + k)
+*/
+void PrefSampler::setBiasingFunction(const Expression &f)
+{
+    if (sampling_expression != f)
+    {
+        ::validateExpression(f);
+        sampling_expression = f;
+        is_dirty = true;
+    }
+}
+
 /** Set the preferential sampling constant - this is the value
     of 'k' in the biasing algorithm */
 void PrefSampler::setSamplingConstant(Area k)
 {
-    sampling_constant = k;
+    if (sampling_constant != k)
+    {
+        sampling_constant = k;
+        
+        if (sampling_expression.isFunction(PrefSampler::k()))
+            is_dirty = true;
+    }
+}
+
+/** Return the preferential sampling biasing expression */
+Expression PrefSampler::biasingFunction() const
+{
+    return sampling_expression;
 }
 
 /** Return the preferential sampling constant (k) */
