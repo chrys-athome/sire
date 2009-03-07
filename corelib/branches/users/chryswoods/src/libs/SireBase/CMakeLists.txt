@@ -14,6 +14,7 @@ set ( SIREBASE_HEADERS
 
       array2d.hpp
       array2d.h
+      chunkedvector.hpp
       countflops.h
       errors.h
       findexe.h

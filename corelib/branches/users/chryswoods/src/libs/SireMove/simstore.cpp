@@ -147,6 +147,8 @@ void SimStore::pack()
         //the data is already compressed
         return;
 
+    qDebug() << "SimStore::pack()";
+
     QByteArray data;
     
     QDataStream ds( &data, QIODevice::WriteOnly );
@@ -166,6 +168,8 @@ void SimStore::unpack()
     if (compressed_data.isEmpty())
         //the data is already uncompressed
         return;
+
+    qDebug() << "SimStore::unpack()";
 
     System new_system;
     MovesPtr new_moves;

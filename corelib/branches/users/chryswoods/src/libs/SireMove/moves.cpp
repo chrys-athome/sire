@@ -611,7 +611,9 @@ System SameMoves::move(const System &system, int nmoves, bool record_stats)
         this->preCheck(new_system);
 
         //perform the moves
+        qDebug() << "move" << mv->what() << "start";
         mv.edit().move(new_system, nmoves, record_stats);
+        qDebug() << "move" << mv->what() << "complete";
         
         //ensure that the system has been placed into a sane state
         //after the moves
