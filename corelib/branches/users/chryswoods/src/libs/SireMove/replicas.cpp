@@ -160,7 +160,7 @@ bool Replica::isPacked() const
 
 /** Pack the system and moves into a compressed binary representation. 
     This is useful to save memory if there are lots of replicas */
-void Replica::pack() const
+void Replica::pack()
 {
     sim_store.pack();
 }
@@ -168,7 +168,7 @@ void Replica::pack() const
 /** Unpack the system and moves - this takes up more memory, but gives
     faster access to the data (as it isn't being constantly compressed
     and uncompressed) */
-void Replica::unpack() const
+void Replica::unpack()
 {
     sim_store.unpack();
 }
@@ -182,60 +182,34 @@ System Replica::system() const
 /** Tell this replica to clear all of its statistics */
 void Replica::clearStatistics()
 {
-    bool this_is_packed = this->isPacked();
-
-    try
-    {
-        if (this_is_packed)
-            this->unpack();
-
-        System sim_system = sim_store.system();
-        MovesPtr sim_moves = sim_store.moves();
+    if (this->isPacked())
+        throw SireError::invalid_state( QObject::tr(
+            "You cannot clear the statistics of a Replica that is packed. "
+            "You must unpack it first."), CODELOC );
     
-        sim_system.clearStatistics();
-        sim_moves.edit().clearStatistics();
+    System sim_system = sim_store.system();
+    MovesPtr sim_moves = sim_store.moves();
     
-        sim_store.setSystemAndMoves(sim_system, sim_moves);
-
-        if (this_is_packed)
-            this->pack();
-    }
-    catch(...)
-    {
-        if (this_is_packed)
-            this->pack();
-            
-        throw;
-    }
+    sim_system.clearStatistics();
+    sim_moves.edit().clearStatistics();
+    
+    sim_store.setSystemAndMoves(sim_system, sim_moves);
 }
 
 /** Tell this replica that the system energy must be recalculated
     from scratch */
 void Replica::mustNowRecalculateFromScratch()
 {
-    bool this_is_packed = this->isPacked();
+    if (this->isPacked())
+        throw SireError::invalid_state( QObject::tr(
+            "You cannot ask a replica to recalculate from scratch when it is packed. "
+            "You must unpack it first."), CODELOC );
 
-    try
-    {
-        if (this_is_packed)
-            this->unpack();
+    System sim_system = sim_store.system();
 
-        System sim_system = sim_store.system();
+    sim_system.mustNowRecalculateFromScratch();
 
-        sim_system.mustNowRecalculateFromScratch();
-
-        sim_store.setSystem(sim_system);
-
-        if (this_is_packed)
-            this->pack();
-    }
-    catch(...)
-    {
-        if (this_is_packed)
-            this->pack();
-
-        throw;
-    }
+    sim_store.setSystem(sim_system);
 }
 
 /** Return the moves to be performed during the simulation on this replica */
@@ -305,14 +279,11 @@ void Replica::swapSystems(Replica &rep0, Replica &rep1)
     if ( &rep0 == &rep1 )
         return;
 
-    bool rep0_is_packed = rep0.isPacked();
-    bool rep1_is_packed = rep1.isPacked();
-
-    if (rep0_is_packed)
-        rep0.unpack();
-    
-    if (rep1_is_packed)
-        rep1.unpack();
+    if (rep0.isPacked() or rep1.isPacked())
+        throw SireError::invalid_state( QObject::tr(
+            "You cannot swap the systems as at least one of the replicas is "
+            "packed (%1 : %2) - you must unpack it first.")
+                .arg(rep0.isPacked()).arg(rep1.isPacked()), CODELOC );
 
     const SharedPolyPointer<Replica> old_rep0( rep0.clone() );
     const SharedPolyPointer<Replica> old_rep1( rep1.clone() );
@@ -321,24 +292,11 @@ void Replica::swapSystems(Replica &rep0, Replica &rep1)
     {
         rep0.setSystem( old_rep1->system() );
         rep1.setSystem( old_rep0->system() );
-        
-        if (rep0_is_packed)
-            rep0.pack();
-            
-        if (rep1_is_packed)
-            rep1.pack();
     }
     catch(...)
     {
         rep0.revertTo(*old_rep0);
         rep1.revertTo(*old_rep1);
-        
-        if (rep0_is_packed)
-            rep0.pack();
-            
-        if (rep1_is_packed)
-            rep1.pack();
-        
         throw;
     }
 }

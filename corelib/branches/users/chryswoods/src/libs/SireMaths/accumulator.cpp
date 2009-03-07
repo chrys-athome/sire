@@ -712,3 +712,246 @@ double Median::minimum() const
 {
     return this->min();
 }
+
+/////////
+///////// Implementation of RecordValues
+/////////
+
+static const RegisterMetaType<RecordValues> r_recval;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const RecordValues &recval)
+{
+    writeHeader(ds, r_recval, 1);
+    
+    ds << recval.vals
+       << static_cast<const Accumulator&>(recval);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, RecordValues &recval)
+{
+    VersionID v = readHeader(ds, r_recval);
+    
+    if (v == 1)
+    {
+        ds >> recval.vals
+           >> static_cast<Accumulator&>(recval);
+    }
+    else
+        throw version_error(v, "1", r_recval, CODELOC);
+        
+    return ds;
+}
+
+/** Construct an empty average */
+RecordValues::RecordValues() 
+             : ConcreteProperty<RecordValues,Accumulator>()
+{}
+
+/** Copy constructor */
+RecordValues::RecordValues(const RecordValues &other)
+             : ConcreteProperty<RecordValues,Accumulator>(other), 
+               vals(other.vals)
+{}
+
+/** Destructor */
+RecordValues::~RecordValues()
+{}
+
+/** Copy assignment operator */
+RecordValues& RecordValues::operator=(const RecordValues &other)
+{
+    if (this != &other)
+    {
+        vals = other.vals;
+        Accumulator::operator=(other);
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool RecordValues::operator==(const RecordValues &other) const
+{
+    return vals == other.vals and
+           Accumulator::operator==(other);
+}
+
+/** Comparison operator */
+bool RecordValues::operator!=(const RecordValues &other) const
+{
+    return not this->operator==(other);
+}
+
+/** Completely clear the statistics in this accumulator */
+void RecordValues::clear()
+{
+    vals.clear();
+    Accumulator::clear();
+}
+
+/** Accumulate the passed value onto the average */
+void RecordValues::accumulate(double value)
+{
+    vals.append(value);
+
+    Accumulator::accumulate(value);
+}
+
+/** Return the number of recorded values */
+int RecordValues::count() const
+{
+    return vals.count();
+}
+
+/** Return the number of recorded values */
+int RecordValues::size() const
+{
+    return this->count();
+}
+
+/** Return the number of recorded values */
+int RecordValues::nValues() const
+{
+    return this->count();
+}
+
+/** Return the maximum value */
+double RecordValues::max() const
+{
+    int nvals = this->count();
+
+    if (nvals == 0)
+        return 0;
+        
+    double maxval = -(std::numeric_limits<double>::max());
+    
+    const double *vals_array = vals.constData();
+    
+    for (int i=0; i<nvals; ++i)
+    {
+        if (vals_array[i] > maxval)
+            maxval = vals_array[i];
+    }
+    
+    return maxval;
+}
+
+/** Return the maximum value */
+double RecordValues::maximum() const
+{
+    return this->max();
+}
+
+/** Return the minimum value */
+double RecordValues::min() const
+{
+    int nvals = this->count();
+
+    if (nvals == 0)
+        return 0;
+        
+    double minval = std::numeric_limits<double>::max();
+    
+    const double *vals_array = vals.constData();
+    
+    for (int i=0; i<nvals; ++i)
+    {
+        if (vals_array[i] < minval)
+            minval = vals_array[i];
+    }
+    
+    return minval;
+}
+
+/** Return the minimum value */
+double RecordValues::minimum() const
+{
+    return this->min();
+}
+
+/** Return the sum of all of the values */
+double RecordValues::sum() const
+{
+    int nvals = vals.count();
+    const double *vals_array = vals.constData();
+    
+    double sum = 0;
+    
+    for (int i=0; i<nvals; ++i)
+    {
+        sum += vals_array[i];
+    }
+    
+    return sum;
+}
+
+/** Return the sum of the square of all of the values */
+double RecordValues::sum2() const
+{
+    int nvals = vals.count();
+    const double *vals_array = vals.constData();
+    
+    double sum2 = 0;
+    
+    for (int i=0; i<nvals; ++i)
+    {
+        sum2 += pow_2( vals_array[i] );
+    }
+    
+    return sum2;
+}
+
+/** Return the median value */
+double RecordValues::median() const
+{
+    return (0.5 * min()) + (0.5 * max());   // the sum of maxval and minval
+                                            // could overflow
+}
+
+/** Return the mean value */
+double RecordValues::mean() const
+{
+    if (this->count() == 0)
+        return 0;
+        
+    else
+        return this->sum() / this->count();
+}
+
+/** Return the mean of the square values */
+double RecordValues::meanOfSquares() const
+{
+    if (this->count() == 0)
+        return 0;
+        
+    else
+        return this->sum2() / this->count();
+}
+
+/** Return the standard deviation of the values */
+double RecordValues::standardDeviation() const
+{
+    return std::sqrt( this->meanOfSquares() - pow_2(this->mean()) );
+}
+
+/** Return the standard deviation of the values */
+double RecordValues::stddev() const
+{
+    return this->standardDeviation();
+}
+
+/** Allow automatic casting to a double to retrieve the mean average value */
+RecordValues::operator double() const
+{
+    return this->mean();
+}
+
+/** Return the array of all accumulated values */
+QVector<double> RecordValues::values() const
+{
+    return vals;
+}

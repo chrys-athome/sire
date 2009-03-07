@@ -28,7 +28,7 @@
 
 #include "simstore.h"
 
-#include "SireError/getbacktrace.h"
+#include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -44,32 +44,11 @@ static const RegisterMetaType<SimStore> r_simstore;
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const SimStore &simstore)
 {
-    /* I will not pack the data, for the moment, as it is broken!
-    QMutexLocker lkr( const_cast<QMutex*>(&(simstore.datamutex)) );
-
-    if (not simstore.isPacked())
-    {
-        //only stream the packed version of the SimStore
-        SimStore new_store(simstore);
-        lkr.unlock();
-        
-        new_store.pack();
-        ds << new_store;
-    }
-    else
-    {
-        writeHeader(ds, r_simstore, 1);
+    writeHeader(ds, r_simstore, 3);
     
-        SharedDataStream sds(ds);
-    
-        sds << simstore.compressed_data;
-    }
-    */
-
-    writeHeader(ds, r_simstore, 1);
     SharedDataStream sds(ds);
     
-    sds << simstore.sim_system << simstore.sim_moves;
+    sds << simstore.sim_system << simstore.sim_moves << simstore.compressed_data;
     
     return ds;
 }
@@ -78,49 +57,50 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const SimStore &simstor
 QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SimStore &simstore)
 {
     VersionID v = readHeader(ds, r_simstore);
-    
-    if (v == 1)
+
+    if (v == 3)
     {
         SharedDataStream sds(ds);
         
-        /*
-        QByteArray data;
+        sds >> simstore.sim_system >> simstore.sim_moves >> simstore.compressed_data;
+    }
+    else if (v == 2)
+    {
+        SharedDataStream sds(ds);
         
-        sds >> data;
+        SimStore new_store;
+        sds >> new_store.compressed_data;
         
-        QMutexLocker lkr( &(simstore.datamutex) );
-        
-        simstore.compressed_data = data;
-        simstore.sim_system = System();
-        simstore.sim_moves = MovesPtr();
-        */
+        simstore = new_store;
+    }
+    else if (v == 1)
+    {
+        SharedDataStream sds(ds);
         
         sds >> simstore.sim_system >> simstore.sim_moves;
     }
     else
-        throw version_error( v, "1", r_simstore, CODELOC );
+        throw version_error( v, "1,2,3", r_simstore, CODELOC );
 
     return ds;
 }
 
 /** Null constructor */
-SimStore::SimStore() : datamutex( QMutex::Recursive )
+SimStore::SimStore()
 {}
 
 /** Construct from the passed system and moves - optionally specify whether
     or not to compress the data now */
 SimStore::SimStore(const System &system, const Moves &moves, bool compress)
-         : sim_system(system), sim_moves(moves), datamutex( QMutex::Recursive )
+         : sim_system(system), sim_moves(moves)
 {
     if (compress)
         this->pack();
 }
 
 /** Copy constructor */
-SimStore::SimStore(const SimStore &other) : datamutex( QMutex::Recursive )
+SimStore::SimStore(const SimStore &other)
 {
-    //QMutexLocker lkr( const_cast<QMutex*>(&(other.datamutex)) );
-    
     sim_system = other.sim_system;
     sim_moves = other.sim_moves;
     compressed_data = other.compressed_data;
@@ -135,20 +115,10 @@ SimStore& SimStore::operator=(const SimStore &other)
 {
     if (this == &other)
         return *this;
-        
-    //QMutexLocker lkr1( const_cast<QMutex*>(&(other.datamutex)) );
     
-    System other_system = other.sim_system;
-    MovesPtr other_moves = other.sim_moves;
-    QByteArray other_data = other.compressed_data;
-    
-    //lkr1.unlock();
-    
-    //QMutexLocker lkr2( &datamutex );
-    
-    sim_system = other_system;
-    sim_moves = other_moves;
-    compressed_data = other_data;
+    sim_system = other.sim_system;
+    sim_moves = other.sim_moves;
+    compressed_data = other.compressed_data;
     
     return *this;
 }
@@ -159,19 +129,9 @@ bool SimStore::operator==(const SimStore &other) const
     if (this == &other)
         return true;
         
-    //QMutexLocker lkr1( const_cast<QMutex*>(&(other.datamutex)) );
-
-    System other_system = other.sim_system;
-    MovesPtr other_moves = other.sim_moves;
-    QByteArray other_data = other.compressed_data;
-    
-    //lkr1.unlock();
-
-    //QMutexLocker lkr2( const_cast<QMutex*>(&datamutex) );
-    
-    return sim_system == other_system and 
-           sim_moves == other_moves and
-           compressed_data == other_data;
+    return sim_system == other.sim_system and 
+           sim_moves == other.sim_moves and
+           compressed_data == other.compressed_data;
 }
 
 /** Comparison operator */
@@ -181,15 +141,8 @@ bool SimStore::operator!=(const SimStore &other) const
 }
 
 /** Pack the system and moves into a compressed binary array */
-void SimStore::pack() const
+void SimStore::pack()
 {
-    //I have disabled packing as it doesn't work!
-    return;
-
-    SimStore *nonconst_this = const_cast<SimStore*>(this);
-    
-    QMutexLocker lkr( &(nonconst_this->datamutex) );
-    
     if (not compressed_data.isEmpty())
         //the data is already compressed
         return;
@@ -202,21 +155,14 @@ void SimStore::pack() const
     
     sds << sim_system << sim_moves;
     
-    nonconst_this->sim_system = System();
-    nonconst_this->sim_moves = MovesPtr();
-    nonconst_this->compressed_data = qCompress(data);
+    sim_system = System();
+    sim_moves = MovesPtr();
+    compressed_data = qCompress(data);
 }
 
 /** Unpack the system and move from the compressed binary array */
-void SimStore::unpack() const
+void SimStore::unpack()
 {
-    //I have disabled packing as it doesn't work!
-    return;
-
-    SimStore *nonconst_this = const_cast<SimStore*>(this);
-    
-    QMutexLocker lkr( &(nonconst_this->datamutex) );
-    
     if (compressed_data.isEmpty())
         //the data is already uncompressed
         return;
@@ -234,96 +180,70 @@ void SimStore::unpack() const
         sds >> new_system >> new_moves;
     }
 
-    nonconst_this->compressed_data = QByteArray();
-    nonconst_this->sim_system = new_system;
-    nonconst_this->sim_moves = new_moves;
+    compressed_data = QByteArray();
+    sim_system = new_system;
+    sim_moves = new_moves;
 }
 
 /** Return whether or not the data is packed into a compressed
     binary array */
 bool SimStore::isPacked() const
 {
-    //QMutexLocker lkr( const_cast<QMutex*>(&datamutex) );
     return not compressed_data.isEmpty();
 }
 
 /** Set the system to be stored */
 void SimStore::setSystem(const System &system)
 {
-    //QMutexLocker lkr(&datamutex);
+    if (this->isPacked())
+        throw SireError::invalid_state( QObject::tr(
+            "Cannot set the system in a SimStore that is packed. You must "
+            "unpack it first."), CODELOC );
     
-    bool is_packed = (not compressed_data.isEmpty());
-    
-    if (is_packed)
-        this->unpack();
-        
     sim_system = system;
-    
-    if (is_packed)
-        this->pack();
 }
 
 /** Set the moves to be stored */
 void SimStore::setMoves(const Moves &moves)
 {
-    //QMutexLocker lkr(&datamutex);
-    
-    bool is_packed = (not compressed_data.isEmpty());
-    
-    if (is_packed)
-        this->unpack();
+    if (this->isPacked())
+        throw SireError::invalid_state( QObject::tr(
+            "Cannot set the moves in a SimStore that is packed. You must "
+            "unpack it first."), CODELOC );
         
     sim_moves = moves;
-    
-    if (is_packed)
-        this->pack();
 }
 
 /** Set both the system and moves to be stored */
 void SimStore::setSystemAndMoves(const System &system, const Moves &moves)
 {
-    //QMutexLocker lkr(&datamutex);
-    
-    bool is_packed = (not compressed_data.isEmpty());
+    if (this->isPacked())
+        throw SireError::invalid_state( QObject::tr(
+            "Cannot set the system and moves in a SimStore that is packed. You must "
+            "unpack it first."), CODELOC );
 
     sim_system = system;
     sim_moves = moves;
-    compressed_data = QByteArray();
-    
-    if (is_packed)
-        this->pack();
 }
 
 /** Return a copy of the system being stored */
 System SimStore::system() const
 {
-    //QMutexLocker lkr( const_cast<QMutex*>(&datamutex) );
-    
-    if (not compressed_data.isEmpty())
-    {
-        //the data is compressed
-        SimStore other(*this);
-        
-        other.unpack();
-        return other.system();
-    }
-    else
-        return sim_system;
+    if (this->isPacked())
+        throw SireError::invalid_state( QObject::tr(
+            "You cannot get the system from a SimStore that is packed. You must "
+            "unpack it first."), CODELOC );
+
+    return sim_system;
 }
 
 /** Return a copy of the moves being stored */
 MovesPtr SimStore::moves() const
 {
-    //QMutexLocker lkr( const_cast<QMutex*>(&datamutex) );
-    
-    if (not compressed_data.isEmpty())
-    {
-        //the data is compressed
-        SimStore other(*this);
-        
-        other.unpack();
-        return other.moves();
-    }
-    else
-        return sim_moves;
+    if (this->isPacked())
+        throw SireError::invalid_state( QObject::tr(
+            "You cannot get the moves from a SimStore that is packed. You must "
+            "unpack it first."), CODELOC );
+
+    return sim_moves;
 }

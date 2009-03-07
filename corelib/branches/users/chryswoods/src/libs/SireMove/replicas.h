@@ -109,8 +109,8 @@ public:
 
     bool isPacked() const;
 
-    void pack() const;
-    void unpack() const;
+    void pack();
+    void unpack();
 
     static void swapSystems(Replica &rep0, Replica &rep1);
 

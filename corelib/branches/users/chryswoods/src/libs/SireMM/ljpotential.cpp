@@ -823,7 +823,7 @@ void InterLJPotential::_pvt_calculateEnergy(const InterLJPotential::Molecule &mo
                                                 ljpairs.map(param0.ljid,
                                                             param1.ljid)];
                         
-                        double sig_over_dist6 = pow_3(ljpair.sigma()*invdist);
+                        double sig_over_dist6 = pow_3(ljpair.sigma()*invdist2);
                         double sig_over_dist12 = pow_2(sig_over_dist6);
     
                         iljnrg += ljpair.epsilon() * (sig_over_dist12 - 

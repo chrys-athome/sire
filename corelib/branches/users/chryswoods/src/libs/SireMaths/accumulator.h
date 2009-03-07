@@ -41,6 +41,7 @@ class Average;
 class AverageAndStddev;
 class ExpAverage;
 class Median;
+class RecordValues;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMaths::Accumulator&);
@@ -60,6 +61,9 @@ QDataStream& operator>>(QDataStream&, SireMaths::ExpAverage&);
 
 QDataStream& operator<<(QDataStream&, const SireMaths::Median&);
 QDataStream& operator>>(QDataStream&, SireMaths::Median&);
+
+QDataStream& operator<<(QDataStream&, const SireMaths::RecordValues&);
+QDataStream& operator>>(QDataStream&, SireMaths::RecordValues&);
 
 namespace SireMaths
 {
@@ -360,6 +364,75 @@ private:
     double maxval;
 };
 
+/** This class is used to collect a record of all of the values.
+    This allows you to extract the values and calculate whatever
+    statistical property you wish in post-production
+    
+    @author Christopher Woods
+*/
+class SIREMATHS_EXPORT RecordValues
+            : public SireBase::ConcreteProperty<RecordValues,Accumulator>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const RecordValues&);
+friend QDataStream& ::operator>>(QDataStream&, RecordValues&);
+
+public:
+    RecordValues();
+    
+    RecordValues(const RecordValues &other);
+    
+    ~RecordValues();
+    
+    RecordValues& operator=(const RecordValues &other);
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<RecordValues>() );
+    }
+    
+    RecordValues* clone() const
+    {
+        return new RecordValues(*this);
+    }
+    
+    bool operator==(const RecordValues &other) const;
+    bool operator!=(const RecordValues &other) const;
+    
+    void clear();
+    
+    void accumulate(double value);
+
+    double max() const;
+    double maximum() const;
+    
+    double median() const;
+    double mean() const;
+    
+    double min() const;
+    double minimum() const;
+
+    double sum() const;
+    double sum2() const;
+    
+    double meanOfSquares() const;
+    
+    double standardDeviation() const;
+    double stddev() const;
+
+    int count() const;
+    int size() const;
+    int nValues() const;
+
+    operator double() const;
+
+    QVector<double> values() const;
+
+private:
+    /** The record of all values */
+    QVector<double> vals;
+};
+
 typedef SireBase::PropPtr<Accumulator> AccumulatorPtr;
 
 }
@@ -369,6 +442,7 @@ Q_DECLARE_METATYPE( SireMaths::Average )
 Q_DECLARE_METATYPE( SireMaths::AverageAndStddev )
 Q_DECLARE_METATYPE( SireMaths::ExpAverage )
 Q_DECLARE_METATYPE( SireMaths::Median )
+Q_DECLARE_METATYPE( SireMaths::RecordValues )
 
 SIRE_EXPOSE_CLASS( SireMaths::Accumulator )
 SIRE_EXPOSE_CLASS( SireMaths::NullAccumulator )
@@ -376,6 +450,7 @@ SIRE_EXPOSE_CLASS( SireMaths::Average )
 SIRE_EXPOSE_CLASS( SireMaths::AverageAndStddev )
 SIRE_EXPOSE_CLASS( SireMaths::ExpAverage )
 SIRE_EXPOSE_CLASS( SireMaths::Median )
+SIRE_EXPOSE_CLASS( SireMaths::RecordValues )
 
 SIRE_EXPOSE_PROPERTY( SireMaths::AccumulatorPtr, SireMaths::Accumulator )
 

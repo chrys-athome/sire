@@ -64,6 +64,11 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SimPacket &simpacket)
         sds >> simpacket.sim_store
             >> simpacket.nmoves >> simpacket.ncompleted
             >> simpacket.nmoves_per_chunk >> simpacket.record_stats;
+
+        //unpack the SimStore as we definitely want to be using it - 
+        // if we can't unpack it now, then we won't be able to run 
+        // the simulation
+        simpacket.sim_store.unpack();
     }
     else if (v == 1)
     {

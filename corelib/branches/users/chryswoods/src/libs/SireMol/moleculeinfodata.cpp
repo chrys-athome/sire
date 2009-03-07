@@ -2718,8 +2718,10 @@ QList<ResIdx> MoleculeInfoData::map(const ResName &name) const
     
     if (residxs.isEmpty())
         throw SireMol::missing_residue( QObject::tr(
-            "There is no residue called \"%1\" in the layout \"%2\".")
-                .arg(name).arg(uid), CODELOC );
+            "There is no residue called \"%1\" in the layout \"%2\". "
+            "Available residues are %3.")
+                .arg(name).arg(uid)
+                .arg(Sire::toString(res_by_name.keys())), CODELOC );
                 
     qSort(residxs);
     return residxs;

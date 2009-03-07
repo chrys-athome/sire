@@ -97,8 +97,8 @@ public:
     
     void setSystemAndMoves(const System &system, const Moves &moves);
 
-    void pack() const;
-    void unpack() const;
+    void pack();
+    void unpack();
     
     bool isPacked() const;
     
@@ -114,9 +114,6 @@ private:
     
     /** A binary representation of the system and moves */
     QByteArray compressed_data;
-    
-    /** Mutex used to protect access to the data */
-    QMutex datamutex;  
 };
 
 }
