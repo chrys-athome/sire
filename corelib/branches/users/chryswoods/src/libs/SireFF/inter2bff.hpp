@@ -51,6 +51,8 @@ QDataStream& operator>>(QDataStream&, SireFF::Inter2BFF<Potential>&);
 namespace SireFF
 {
 
+using SireBase::ChunkedVector;
+
 /** This class provides an intermolecular non-bonded forcefield
     that can work with an two-body potential (provided via the 
     template type 'Potential'). 
@@ -511,8 +513,8 @@ SIRE_OUTOFLINE_TEMPLATE
 void Inter2BFF<Potential>::recalculateEnergy()
 {
     int nmols = mols.count();
-    const typename Potential::Molecule *mols_array 
-                            = mols.moleculesByIndex().constData();
+    const ChunkedVector<typename Potential::Molecule> &mols_array 
+                                                = mols.moleculesByIndex();
 
     if (changed_mols.count() == nmols)
         //all of the molecules have changed!
@@ -535,7 +537,7 @@ void Inter2BFF<Potential>::recalculateEnergy()
             EnergyWorkspace workspace;
             Energy my_total_nrg;
 
-            const typename Potential::Molecule *my_mols_array = mols_array;
+            const ChunkedVector<typename Potential::Molecule> &my_mols_array = mols_array;
             const int my_nmols = nmols;
 
             //loop over all pairs of molecules

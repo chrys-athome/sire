@@ -163,10 +163,10 @@ void Inter2B2G3DFF<Potential>::force(ForceTable &forcetable, double scale_force)
     typename Potential::ForceWorkspace workspace;
     
     MolForceTable *forcetable_array = forcetable.data();
-    const typename Potential::Molecule *mols0_array 
-                            = this->mols[0].moleculesByIndex().constData();
-    const typename Potential::Molecule *mols1_array
-                            = this->mols[1].moleculesByIndex().constData();
+    const ChunkedVector<typename Potential::Molecule> &mols0_array 
+                            = this->mols[0].moleculesByIndex();
+    const ChunkedVector<typename Potential::Molecule> &mols1_array
+                            = this->mols[1].moleculesByIndex();
     
     for (int i=0; i<nforcemols; ++i)
     {
@@ -225,10 +225,10 @@ void Inter2B2G3DFF<Potential>::force(ForceTable &forcetable, const Symbol &symbo
     typename Potential::ForceWorkspace workspace;
     
     MolForceTable *forcetable_array = forcetable.data();
-    const typename Potential::Molecule *mols0_array 
-                            = this->mols[0].moleculesByIndex().constData();
-    const typename Potential::Molecule *mols1_array
-                            = this->mols[1].moleculesByIndex().constData();
+    const ChunkedVector<typename Potential::Molecule> &mols0_array 
+                            = this->mols[0].moleculesByIndex();
+    const ChunkedVector<typename Potential::Molecule> &mols1_array
+                            = this->mols[1].moleculesByIndex();
     
     for (int i=0; i<nforcemols; ++i)
     {

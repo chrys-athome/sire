@@ -529,12 +529,12 @@ SIRE_OUTOFLINE_TEMPLATE
 void Inter2B2GFF<Potential>::recalculateEnergy()
 {
     int nmols0 = mols[0].count();
-    const typename Potential::Molecule *mols0_array 
-                            = mols[0].moleculesByIndex().constData();
+    const ChunkedVector<typename Potential::Molecule> &mols0_array 
+                            = mols[0].moleculesByIndex();
 
     int nmols1 = mols[1].count();
-    const typename Potential::Molecule *mols1_array
-                            = mols[1].moleculesByIndex().constData();
+    const ChunkedVector<typename Potential::Molecule> &mols1_array
+                            = mols[1].moleculesByIndex();
 
     if (changed_mols[0].count() == nmols0 or
         changed_mols[1].count() == nmols1)

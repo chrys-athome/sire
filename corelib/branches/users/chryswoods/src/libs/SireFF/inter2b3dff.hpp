@@ -180,8 +180,8 @@ SIRE_OUTOFLINE_TEMPLATE
 void Inter2B3DFF<Potential>::recalculateEnergy()
 {
     int nmols = this->mols.count();
-    const typename Potential::Molecule *mols_array 
-                            = this->mols.moleculesByIndex().constData();
+    const ChunkedVector<typename Potential::Molecule> mols_array 
+                            = this->mols.moleculesByIndex();
 
     if (this->changed_mols.count() == nmols)
         //all of the molecules have changed!
@@ -204,8 +204,9 @@ void Inter2B3DFF<Potential>::recalculateEnergy()
             EnergyWorkspace workspace;
             Energy my_total_nrg;
 
-            const typename Potential::Molecule *my_mols_array = mols_array;
-            const SireVol::AABox *aaboxes_array = this->mols.aaBoxesByIndex().constData();
+            const ChunkedVector<typename Potential::Molecule> &my_mols_array = mols_array;
+            const ChunkedVector<SireVol::AABox> &aaboxes_array 
+                                                = this->mols.aaBoxesByIndex();
             const int my_nmols = nmols;
 
             const SireVol::Space &spce = this->space();
@@ -252,8 +253,9 @@ void Inter2B3DFF<Potential>::recalculateEnergy()
             Energy my_new_nrg;
 
             const QHash<MolNum,ChangedMolecule> my_changed_mols = this->changed_mols;
-            const typename Potential::Molecule *my_mols_array = mols_array;
-            const SireVol::AABox *aaboxes_array = this->mols.aaBoxesByIndex().constData();
+            const ChunkedVector<typename Potential::Molecule> &my_mols_array = mols_array;
+            const ChunkedVector<SireVol::AABox> aaboxes_array 
+                                                    = this->mols.aaBoxesByIndex();
             const int my_nmols = nmols;
 
             const SireVol::Space &spce = this->space();
@@ -452,8 +454,8 @@ void Inter2B3DFF<Potential>::force(ForceTable &forcetable, double scale_force)
     typename Potential::ForceWorkspace workspace;
     
     MolForceTable *forcetable_array = forcetable.data();
-    const typename Potential::Molecule *mols_array 
-                            = this->mols.moleculesByIndex().constData();
+    const ChunkedVector<typename Potential::Molecule> &mols_array 
+                            = this->mols.moleculesByIndex();
     
     for (int i=0; i<nforcemols; ++i)
     {
@@ -502,8 +504,8 @@ void Inter2B3DFF<Potential>::force(ForceTable &forcetable, const Symbol &symbol,
     typename Potential::ForceWorkspace workspace;
     
     MolForceTable *forcetable_array = forcetable.data();
-    const typename Potential::Molecule *mols_array 
-                            = this->mols.moleculesByIndex().constData();
+    const ChunkedVector<typename Potential::Molecule> mols_array 
+                            = this->mols.moleculesByIndex();
     
     for (int i=0; i<nforcemols; ++i)
     {

@@ -261,10 +261,10 @@ void Intra2B2GFF<Potential>::assertSameIntraScaleFactors(MolNum molnum) const
     if (mols[0].contains(molnum) and mols[1].contains(molnum))
     {
         const typename Potential::Molecule &mol0
-                   = mols[0].moleculesByIndex().constData()[mols[0].indexOf(molnum)];
+                   = mols[0].moleculesByIndex()[mols[0].indexOf(molnum)];
                    
         const typename Potential::Molecule &mol1
-                   = mols[1].moleculesByIndex().constData()[mols[1].indexOf(molnum)];
+                   = mols[1].moleculesByIndex()[mols[1].indexOf(molnum)];
         
         if (mol0.parameters().intraScaleFactors() != 
             mol1.parameters().intraScaleFactors())
@@ -595,12 +595,12 @@ SIRE_OUTOFLINE_TEMPLATE
 void Intra2B2GFF<Potential>::recalculateEnergy()
 {
     int nmols0 = mols[0].count();
-    const typename Potential::Molecule *mols0_array 
-                            = mols[0].moleculesByIndex().constData();
+    const ChunkedVector<typename Potential::Molecule> &mols0_array 
+                            = mols[0].moleculesByIndex();
 
     int nmols1 = mols[1].count();
-    const typename Potential::Molecule *mols1_array
-                            = mols[1].moleculesByIndex().constData();
+    const ChunkedVector<typename Potential::Molecule> &mols1_array
+                            = mols[1].moleculesByIndex();
 
     if (changed_mols[0].count() == nmols0 or
         changed_mols[1].count() == nmols1)

@@ -87,6 +87,9 @@ public:
     T value(int i, const T &default_value) const;
     
     void append(const T &value);
+
+    void remove(int i);
+    void remove(int i, int count);
     
     int count() const;
     int count(const T &value) const;
@@ -96,6 +99,8 @@ public:
     int capacity() const;
     
     void resize(int count);
+
+    void clear();
 
     QList<T> toList() const;
     QVector<T> toVector() const;
@@ -320,6 +325,61 @@ void ChunkedVector<T,N>::append(const T &value)
     }
 }
 
+/** Remove the item at index 'i' from this vector - this can be
+    slow (O[n]) */
+template<class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+void ChunkedVector<T,N>::remove(int i)
+{
+    if (i > this->count() or i < 0)
+        //nothing to remove
+        return;
+
+    //get the chunk index of this object
+    int chunk_idx = i / N;
+    
+    int nfullchunks = this->nFullChunks();
+    
+    if (chunk_idx == nfullchunks)
+    {
+        //we are removing an item from the last chunk - this is easy
+        this->_chunks[chunk_idx].remove( i % N );
+    }
+    else
+    {
+        //we are removing from a middle chunk, so have to shift
+        //everything along by one...
+        int nchunks = this->nChunks();
+        
+        //remove the object
+        this->_chunks[chunk_idx].remove( i % N );
+        
+        //now go through each chunk moving the first object from the next
+        //chunk to the last object of this chunk
+        for (int i=chunk_idx; i<nchunks-1; ++i)
+        {
+            this->_chunks[i].append( this->_chunks[i+1][0] );
+            this->_chunks[i+1].remove(0);
+        }
+        
+        //clear out the last chunk if it is now empty
+        if (this->_chunks[nchunks-1].isEmpty())
+            this->_chunks.remove(nchunks-1);
+    }
+}
+
+/** Remove 'count' objects from this vector, starting at position 'i'.
+    This can be slow (O[n]) */
+template<class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+void ChunkedVector<T,N>::remove(int i, int count)
+{
+    for (int j=0; j<count; ++j)
+    {
+        this->remove(i);
+    }
+}
+
 /** Return the number of items in this vector */
 template<class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
@@ -375,6 +435,14 @@ int ChunkedVector<T,N>::capacity() const
     return c;
 }
 
+/** Completely clear this ChunkedVector */
+template<class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+void ChunkedVector<T,N>::clear()
+{
+    this->_chunks.clear();
+}
+
 /** Resize this vector so that it holds 'count' items */
 template<class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
@@ -397,7 +465,41 @@ void ChunkedVector<T,N>::resize(int new_count)
         return;
     }
 
-    #warning ChunkedVector resize is broken
+    //get the current dimensions of the chunked vector
+    int old_nchunks = this->nChunks();
+    int old_nremainder = this->nRemainder();
+
+    //get the dimensions of the new chunked vector
+    int new_nchunks = new_count / N;
+    int new_nremainder = new_count % N;
+
+    int new_nfullchunks = new_nchunks - 1;
+    
+    if (new_nremainder == 0)
+        new_nfullchunks += 1;
+        
+    if (new_nchunks < old_nchunks)
+    {
+        this->_chunks.resize(new_nchunks);
+    }
+    else if (new_nchunks > old_nchunks)
+    {
+        if (old_nremainder != 0)
+            this->_chunks[old_nchunks-1].resize(N);
+            
+        this->_chunks.resize(new_nchunks);
+        
+        for (int i=old_nchunks; i<new_nchunks; ++i)
+        {
+            this->_chunks[i].resize( N );
+            this->_chunks[i].squeeze();
+        }
+    }
+    
+    if (new_nremainder != 0)
+        //resize the last chunk to the right size
+        this->_chunks[new_nchunks-1].resize(new_nremainder);
+
     return;
 }
 

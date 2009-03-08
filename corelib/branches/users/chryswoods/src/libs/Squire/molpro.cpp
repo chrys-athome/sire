@@ -378,8 +378,8 @@ QString Molpro::createCommandFile(QString cmd_template,
     QStringList atom_coords;
     
     int nmols = molecules.count();
-    const QMPotential::Molecule *molecules_array = molecules.moleculesByIndex()
-                                                            .constData();
+    const ChunkedVector<QMPotential::Molecule> &molecules_array 
+                                                    = molecules.moleculesByIndex();
                                                             
     for (int i=0; i<nmols; ++i)
     {

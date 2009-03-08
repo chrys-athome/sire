@@ -34,6 +34,7 @@
 #include "SireMol/moleculegroup.h"
 
 #include "SireBase/propertymap.h"
+#include "SireBase/chunkedvector.hpp"
 
 #include "SireStream/shareddatastream.h"
 
@@ -100,6 +101,7 @@ using SireMol::MolNum;
 using SireMol::CGIdx;
 
 using SireBase::PropertyMap;
+using SireBase::ChunkedVector;
 
 void throwFFMoleculesIncompatibleParameterNames(const PropertyMap &old_map, 
                                                 const PropertyMap &new_map);
@@ -407,13 +409,13 @@ public:
     
     bool wouldChangeProperties(MolNum molnum, const PropertyMap &map) const;
     
-    const QVector<Molecule>& moleculesByIndex() const;
+    const ChunkedVector<Molecule>& moleculesByIndex() const;
     
     void clear();
     
 protected:
     /** The array of forcefield-specialised molecules in this group */
-    QVector<Molecule> mols_by_idx;
+    ChunkedVector<Molecule> mols_by_idx;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -739,16 +741,15 @@ FFMolecules<PTNL>::FFMolecules(const MoleculeGroup &molgroup, PTNL &forcefield,
                                const PropertyMap &map)
                   : FFMoleculesBase(molgroup, map)
 {
-    mols_by_idx = QVector<Molecule>(molgroup.nMolecules());
+    mols_by_idx = ChunkedVector<Molecule>(molgroup.nMolecules());
 
     int i = 0;
-    Molecule *mols_by_idx_array = mols_by_idx.data();
 
     for (MoleculeGroup::const_iterator it = molgroup.constBegin();
          it != molgroup.constEnd();
          ++it)
     {
-        mols_by_idx_array[i] = Molecule(*it, forcefield, map);
+        mols_by_idx[i] = Molecule(*it, forcefield, map);
         ++i;
     }
 }
@@ -835,16 +836,14 @@ FFMolecules<PTNL>::change(const SireMol::Molecule &new_molecule,
 
     if (record_changes)
     {
-        typename FFMolecules<PTNL>::Molecule *mols_array = mols_by_idx.data();
-    
         //get the current copy of the molecule
-        typename FFMolecules<PTNL>::Molecule old_molecule = mols_array[*it];
+        typename FFMolecules<PTNL>::Molecule old_molecule = mols_by_idx[*it];
         
         //now make the change
-        if (mols_array[*it].change(new_molecule, forcefield,
-                                   parameter_names.constData()[*it]))
+        if (mols_by_idx[*it].change(new_molecule, forcefield,
+                                    parameter_names.constData()[*it]))
         {
-            return ChangedMolecule(old_molecule, mols_array[*it]);
+            return ChangedMolecule(old_molecule, mols_by_idx[*it]);
         }
         else
         {
@@ -854,8 +853,8 @@ FFMolecules<PTNL>::change(const SireMol::Molecule &new_molecule,
     }
     else
     {
-        mols_by_idx.data()[*it].change(new_molecule, forcefield,
-                                       parameter_names.constData()[*it]);
+        mols_by_idx[*it].change(new_molecule, forcefield,
+                                parameter_names.constData()[*it]);
 
         return ChangedMolecule();
     }
@@ -906,16 +905,14 @@ FFMolecules<PTNL>::add(const PartialMolecule &molecule,
         
         if (record_changes)
         {
-            typename FFMolecules<PTNL>::Molecule *mols_array = mols_by_idx.data();
-        
             //get the existing copy of the molecule
-            typename FFMolecules<PTNL>::Molecule old_mol = mols_array[i];
+            typename FFMolecules<PTNL>::Molecule old_mol = mols_by_idx[i];
             
             //try to make the change
-            if (mols_array[i].add(molecule.selection(), forcefield, map))
+            if (mols_by_idx[i].add(molecule.selection(), forcefield, map))
             {
                 //there was a change!
-                return ChangedMolecule(old_mol, mols_array[i]);
+                return ChangedMolecule(old_mol, mols_by_idx[i]);
             }
             else
                 //there was no change
@@ -924,7 +921,7 @@ FFMolecules<PTNL>::add(const PartialMolecule &molecule,
         else
         {
             //add the molecule
-            mols_by_idx.data()[i].add(molecule.selection(), forcefield, map);
+            mols_by_idx[i].add(molecule.selection(), forcefield, map);
             
             return ChangedMolecule();
         }
@@ -976,18 +973,15 @@ FFMolecules<PTNL>::remove(const PartialMolecule &molecule,
 
     quint32 i = this->indexOf(molecule.number());
     
-    typename FFMolecules<PTNL>::Molecule *mols_array = mols_by_idx.data();
- 
     if (record_changes)
     {
-    
-        typename FFMolecules<PTNL>::Molecule old_mol = mols_array[i];
+        typename FFMolecules<PTNL>::Molecule old_mol = mols_by_idx[i];
         
-        if (mols_array[i].remove(molecule.selection(), forcefield,
-                                 parameter_names.constData()[i]))
+        if (mols_by_idx[i].remove(molecule.selection(), forcefield,
+                                  parameter_names.constData()[i]))
         {
             //some atoms were removed - were all of them?
-            if (mols_array[i].isEmpty())
+            if (mols_by_idx[i].isEmpty())
             {
                 //yes - the molecule has been completely removed
                 FFMoleculesBase::_pvt_remove(molecule.number());
@@ -999,7 +993,7 @@ FFMolecules<PTNL>::remove(const PartialMolecule &molecule,
                                        typename FFMolecules<PTNL>::Molecule());
             }
             
-            return ChangedMolecule(old_mol, mols_array[i]);
+            return ChangedMolecule(old_mol, mols_by_idx[i]);
         }
         else
             //nothing was removed
@@ -1007,11 +1001,11 @@ FFMolecules<PTNL>::remove(const PartialMolecule &molecule,
     }
     else
     {
-        if (mols_array[i].remove(molecule.selection(), forcefield,
-                                 parameter_names.constData()[i]))
+        if (mols_by_idx[i].remove(molecule.selection(), forcefield,
+                                  parameter_names.constData()[i]))
         {
             //has the whole molecule been removed?
-            if (mols_array[i].isEmpty())
+            if (mols_by_idx[i].isEmpty())
             {
                 //yes!
                 FFMolecules::_pvt_remove(molecule.number());
@@ -1042,7 +1036,7 @@ bool FFMolecules<PTNL>::wouldChangeProperties(MolNum molnum,
     in the order they appear in this group */
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
-const QVector<typename FFMolecules<PTNL>::Molecule>&
+const ChunkedVector<typename FFMolecules<PTNL>::Molecule>&
 FFMolecules<PTNL>::moleculesByIndex() const
 {
     return mols_by_idx;

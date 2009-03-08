@@ -44,6 +44,7 @@ using boost::tuples::tuple;
 using namespace Squire;
 using namespace SireMM;
 using namespace SireVol;
+using namespace SireBase;
 using namespace SireUnits;
 using namespace SireUnits::Dimension;
 using namespace SireMM::detail;
@@ -286,7 +287,7 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
     
     if (qmmols.count() == 1)
     {
-        const QMMolecule &qmmol = qmmols.moleculesByIndex().constData()[0];
+        const QMMolecule &qmmol = qmmols.moleculesByIndex()[0];
         qmgroup = qmmol.coordinates().merge();
     }
     else
@@ -294,7 +295,7 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
         int nqmmols = qmmols.count();
         QVector<CoordGroup> qmgroups(nqmmols);
         
-        const QMMolecule *qmmols_array = qmmols.moleculesByIndex().constData();
+        const ChunkedVector<QMMolecule> &qmmols_array = qmmols.moleculesByIndex();
         CoordGroup *qmgroups_array = qmgroups.data();
         
         for (int i=0; i<nqmmols; ++i)
@@ -312,7 +313,7 @@ LatticeCharges QMMMElecEmbedPotential::getLatticeCharges(const QMMolecules &qmmo
     double cutoff = switchfunc.electrostaticCutoffDistance();
     
     int nmols = mmmols.count();
-    const MMMolecule *mmmols_array = mmmols.moleculesByIndex().constData();
+    const ChunkedVector<MMMolecule> &mmmols_array = mmmols.moleculesByIndex();
     
     //try to reserve enough space
     int nats = 0;

@@ -193,7 +193,7 @@ public:
     bool operator==(const FFMolecules3D<PTNL> &other) const;
     bool operator!=(const FFMolecules3D<PTNL> &other) const;
     
-    const QVector<AABox>& aaBoxesByIndex() const;
+    const ChunkedVector<AABox>& aaBoxesByIndex() const;
     
     void packCoordinates();
 
@@ -216,7 +216,7 @@ private:
 
     /** The bounding boxes that completely encompasses all of  
         the atoms in each molecule */
-    QVector<AABox> aaboxes_by_idx;
+    ChunkedVector<AABox> aaboxes_by_idx;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -433,14 +433,11 @@ FFMolecules3D<PTNL>::FFMolecules3D(const MoleculeGroup &molgroup,
     //get all of the AABoxes
     int nmols = this->mols_by_idx.count();
     
-    aaboxes_by_idx = QVector<AABox>(nmols);
-    
-    const Molecule *mols_by_idx_array = this->mols_by_idx.constData();
-    AABox *aaboxes_by_idx_array = aaboxes_by_idx.data();
+    aaboxes_by_idx = ChunkedVector<AABox>(nmols);
     
     for (int i=0; i<nmols; ++i)
     {
-        aaboxes_by_idx_array[i] = mols_by_idx_array[i].aaBox();
+        aaboxes_by_idx[i] = this->mols_by_idx[i].aaBox();
     }
 }
 
@@ -488,7 +485,7 @@ bool FFMolecules3D<PTNL>::operator!=(const FFMolecules3D<PTNL> &other) const
     ordered in the same order as the molecules in this group */
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
-const QVector<AABox>& FFMolecules3D<PTNL>::aaBoxesByIndex() const
+const ChunkedVector<AABox>& FFMolecules3D<PTNL>::aaBoxesByIndex() const
 {
     return aaboxes_by_idx;
 }
@@ -509,13 +506,11 @@ void FFMolecules3D<PTNL>::packCoordinates()
     if (nmols == 0)
         return;
         
-    typename FFMolecules3D<PTNL>::Molecule *mols_array = this->mols_by_idx.data();
-    
     QVector<CoordGroupArray> coords_array(nmols);
     
     for (int i=0; i<nmols; ++i)
     {
-        coords_array[i] = mols_array[i].coordinates();
+        coords_array[i] = this->mols_by_idx[i].coordinates();
     }
     
     //now convert the array of CoordGroupArrays into a single
@@ -529,7 +524,7 @@ void FFMolecules3D<PTNL>::packCoordinates()
     //give each molecule its packed CoordGroupArray
     for (int i=0; i<nmols; ++i)
     {
-        mols_array[i].setCoordinates(all_coords_array[i]);
+        this->mols_by_idx[i].setCoordinates(all_coords_array[i]);
     }
 }
 
@@ -544,7 +539,7 @@ void FFMolecules3D<PTNL>::updateAABox(MolNum molnum)
                                                         
     if (it != FFMoleculesBase::indexesByMolNum().constEnd())
     {
-        aaboxes_by_idx.data()[*it] = this->mols_by_idx.constData()[*it].aaBox();
+        aaboxes_by_idx[*it] = this->mols_by_idx[*it].aaBox();
     }
 }
 
@@ -562,15 +557,12 @@ void FFMolecules3D<PTNL>::updateAABoxes()
     }
     
     if (nmols != aaboxes_by_idx.count())
-        aaboxes_by_idx = QVector<AABox>(nmols);
+        aaboxes_by_idx = ChunkedVector<AABox>(nmols);
         
-    const FFMolecule3D<PTNL> *mols_by_idx_array = this->mols_by_idx.constData();
-    AABox *aaboxes_by_idx_array = aaboxes_by_idx.data();
-    
     for (int i=0; i<nmols; ++i)
     {
-        aaboxes_by_idx_array[i] = mols_by_idx_array[i].parameters()
-                                                      .atomicCoordinates().aaBox();
+        aaboxes_by_idx[i] = this->mols_by_idx[i].parameters()
+                                                .atomicCoordinates().aaBox();
     }
 }
 

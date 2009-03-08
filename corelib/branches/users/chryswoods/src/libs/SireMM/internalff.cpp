@@ -2388,7 +2388,7 @@ bool InternalFF::setStrict(bool strict)
     {
         isstrict = strict;
     
-        const InternalFF::Molecule *mols_array = mols.moleculesByIndex().constData();
+        const ChunkedVector<InternalFF::Molecule> &mols_array = mols.moleculesByIndex();
         const PropertyMap *property_array = mols.parameterNamesByIndex().constData();
 
         int nmols = mols.count();
@@ -2466,7 +2466,7 @@ void InternalFF::force(ForceTable &forcetable, double scale_force)
     int nforcemols = forcetable.count();
     MolForceTable *forcetable_array = forcetable.data();
     
-    const InternalFF::Molecule *mols_array = mols.moleculesByIndex().constData();
+    const ChunkedVector<InternalFF::Molecule> &mols_array = mols.moleculesByIndex();
 
     for (int i=0; i<nforcemols; ++i)
     {
@@ -2495,7 +2495,7 @@ void InternalFF::force(ForceTable &forcetable, const Symbol &symbol,
     int nforcemols = forcetable.count();
     MolForceTable *forcetable_array = forcetable.data();
     
-    const InternalFF::Molecule *mols_array = mols.moleculesByIndex().constData();
+    const ChunkedVector<InternalFF::Molecule> &mols_array = mols.moleculesByIndex();
 
     for (int i=0; i<nforcemols; ++i)
     {
@@ -2539,8 +2539,8 @@ void InternalFF::recalculateEnergy()
         //nothing appears to have changed, so lets recalculate
         //everything from scratch
         int nmols = mols.count();
-        const InternalPotential::Molecule *mols_array 
-                                            = mols.moleculesByIndex().constData();
+        const ChunkedVector<InternalPotential::Molecule> &mols_array 
+                                            = mols.moleculesByIndex();
         
         Energy total_nrg;
         
