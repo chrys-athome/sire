@@ -152,13 +152,13 @@ moves.clearStatistics()
 t.start()
 moves.setGenerator( RanGenerator(42) )
 
-for i in range(0,10):
-    system2 = moves.move(system2, 1, False)
-    print "Energy = %s" % system2.energy()
+print "Running 1000 moves"
+system2 = moves.move(system2, 1000, False)
+print "Energy = %s" % system2.energy()
 
 ms = t.elapsed()
 
-print "Done!"
+print "Done! - took %d ms" % ms
 
 print "Final energy = %s" % system2.energy()
 

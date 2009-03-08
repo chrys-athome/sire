@@ -288,13 +288,8 @@ void RigidBodyMC::performMove(System &system, const Space &space,
                               double &old_bias, double &new_bias,
                               const PropertyMap &map)
 {
-    QTime t;
-
     //update the sampler with the latest version of the molecules
-    qDebug() << "SAMPLER UPDATE BIAS 1 START";
-    t.start();
     smplr.edit().updateFrom(system);
-    qDebug() << "SAMPLER UPDATE BIAS 1 END" << t.elapsed();
 
     //get the random amounts by which to translate and
     //rotate the molecule(s)
@@ -323,16 +318,10 @@ void RigidBodyMC::performMove(System &system, const Space &space,
                                        .commit();
 
         //update the system with the new coordinates
-        qDebug() << "UPDATE START";
-        t.start();
         system.update(newmol);
-        qDebug() << "UPDATE END" << t.elapsed();
 
         //get the new bias on this molecule
-        qDebug() << "UPDATE BIAS START";
-        t.start();
         smplr.edit().updateFrom(system);
-        qDebug() << "UPDATE BIAS END" << t.elapsed();
 
         new_bias = smplr.read().probabilityOf(newmol);
     }
@@ -477,10 +466,6 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
     if (nmoves <= 0)
         return;
 
-    QTime t;
-    QTime t2;
-    t2.start();
-
     //save our, and the system's, current state
     RigidBodyMC old_state(*this);
 
@@ -505,11 +490,8 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
     
         for (int i=0; i<nmoves; ++i)
         {
-            qDebug() << "OLD NRG START";
-            t.start();
             //get the old total energy of the system
             double old_nrg = system.energy( this->energyComponent() );
-            qDebug() << "OLD NRG END" << t.elapsed();
 
             //save the old system and sampler
             System old_system(system);
@@ -518,36 +500,24 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
             double old_bias = 1;
             double new_bias = 1;
 
-            qDebug() << "PERFORM MOVE START";
-            t.start();
             this->performMove(system, *space, old_bias, new_bias, map);
-            qDebug() << "PERFORM MOVE END" << t.elapsed();
     
             //calculate the energy of the system
-            qDebug() << "NEW NRG START";
-            t.start();
             double new_nrg = system.energy( this->energyComponent() );
-            qDebug() << "NEW NRG END" << t.elapsed();
 
             //accept or reject the move based on the change of energy
             //and the biasing factors
-            qDebug() << "TEST START";
-            t.start();
             if (not this->test(new_nrg, old_nrg, new_bias, old_bias))
             {
                 //the move has been rejected - reset the state
                 smplr = old_sampler;
                 system = old_system;
             }
-            qDebug() << "TEST END" << t.elapsed();
 
-            qDebug() << "COLLECT STATS START";
-            t.start();
             if (record_stats)
             {
                 system.collectStats();
             }
-            qDebug() << "COLLECT STATS END" << t.elapsed();
         }
     }
     catch(...)
@@ -557,6 +527,4 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
 
         throw;
     }
-    
-    qDebug() << "TOTAL = " << t2.elapsed();
 }

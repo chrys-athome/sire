@@ -42,9 +42,9 @@ class ChunkedVector;
 }
 
 template<class T, int N>
-QDataStream& operator<<(QDataStream&, const ChunkedVector<T,N>&);
+QDataStream& operator<<(QDataStream&, const SireBase::ChunkedVector<T,N>&);
 template<class T, int N>
-QDataStream& operator>>(QDataStream&, ChunkedVector<T,N>&);
+QDataStream& operator>>(QDataStream&, SireBase::ChunkedVector<T,N>&);
 
 namespace SireBase
 {
@@ -93,14 +93,8 @@ public:
     
     int size() const;
     
-    int nChunks() const;
-    static int chunkSize();
-
-    T* data(int i);
-    const T* data(int i) const;
-
-    const T* constData(int i) const;
-
+    int capacity() const;
+    
     void resize(int count);
 
     QList<T> toList() const;
@@ -115,10 +109,16 @@ public:
     static ChunkedVector<T,N> fromStdVector(const std::vector<T> &vector);
 
 private:
+    int nChunks() const;
+    int nFullChunks() const;
+    int nRemainder() const;
+
     /** The array of arrays - the large vector is broken
         up into vectors of length 'N' */
     QVector< QVector<T> > _chunks;
 };
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 /** Empty constructor */
 template<class T, int N>
@@ -137,14 +137,17 @@ ChunkedVector<T,N>::ChunkedVector(int size)
     int nchunks = size / N;
     int nremainder = size % N;
     
+    QVector<T> full_chunk(N);
+    full_chunk.squeeze();
+    
     if (remainder > 0)
     {
-        this->_chunks = QVector< QVector<T> >(nchunks+1, QVector<T>(N));
+        this->_chunks = QVector< QVector<T> >(nchunks+1, full_chunk);
         this->_chunks[nchunks].resize(nremainder);
     }
     else
     {
-        this->_chunks = QVector< QVector<T> >(nchunks, QVector<T>(N));
+        this->_chunks = QVector< QVector<T> >(nchunks, full_chunk);
     }
 }
 
@@ -158,16 +161,20 @@ ChunkedVector<T,N>::ChunkedVector(int size, const T &value)
         return;
         
     int nchunks = size / N;
-    int remainder = size % N;
+    int nremainder = size % N;
+
+    QVector<T> full_chunk(N, value);
     
-    if (remainder > 0)
+    if (nremainder > 0)
     {
-        this->_chunks = QVector< QVector<T> >(nchunks+1, QVector<T>(N,value));
+        full_chunk.squeeze();
+    
+        this->_chunks = QVector< QVector<T> >(nchunks+1, full_chunk);
         this->_chunks[nchunks].resize(nremainder);
     }
     else
     {
-        this->_chunks = QVector< QVector<T> >(nchunks, QVector<T>(N,value));
+        this->_chunks = QVector< QVector<T> >(nchunks, full_chunk);
     }
 }
 
@@ -251,30 +258,66 @@ T ChunkedVector<T,N>::value(int i, const T &default_value) const
     return this->_chunks.value( i / N ).value( i % N, default_value );
 }
 
+/** Internal class used to get the number of chunks */
+template<class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+int ChunkedVector<T,N>::nChunks() const
+{
+    return this->_chunks.count();
+}
+
+/** Internal class used to get the number of full chunks 
+    (chunks that contain 'N' elements) */
+template<class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+int ChunkedVector<T,N>::nFullChunks() const
+{
+    int nchunks = this->_chunks.count();
+    const QVector<T> *chunks_array = this->_chunks.constData();
+    
+    for (int i=nchunks-1; i>=0; --i)
+    {
+        if (chunks_array[i].count() == N)
+            return i+1;
+    }
+
+    return 0;
+}
+
+/** Internal class used to get the number of elements in the last chunk */
+template<class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+int ChunkedVector<T,N>::nRemainder() const
+{
+    int nchunks = this->nChunks();
+    int nfullchunks = this->nFullChunks();
+    
+    if (nfullchunks < nchunks)
+        return this->_chunks[nfullchunks].count();
+    else
+        return 0;
+}
+
 /** Append the value 'value' onto the end of this vector */
 template<class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 void ChunkedVector<T,N>::append(const T &value)
 {
-    int count = this->_chunks.count();
-    QVector<T> *chunks_array = this->_chunks.data();
+    int nchunks = this->nChunks();
+    int nfullchunks = this->nFullChunks();
     
-    for (int i=0; i<count; ++i)
+    if (nfullchunks < nchunks)
     {
-        if (chunks_array[i].count() < N)
-        {
-            //this chunk has some space left
-            chunks_array[i].append(value);
-            return;
-        }
+        //there is some space left in the last chunk
+        this->_chunks[nfullchunks].append(value);
     }
-    
-    //we ran out of chunks - add a new one
-    QVector<T> new_chunk;
-    new_chunk.reserve(N);
-    new_chunk.append(value);
-    
-    this->_chunks.append( new_chunk );
+    else
+    {
+        //there is no space
+        this->_chunks.append( QVector<T>() );
+        this->_chunks[nchunks].reserve(N);
+        this->_chunks[nchunks].append(value);
+    }
 }
 
 /** Return the number of items in this vector */
@@ -282,16 +325,10 @@ template<class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 int ChunkedVector<T,N>::count() const
 {
-    int size = 0;
-    int nchunks = this->_chunks.count();
-    const QVector<T> *chunks_array = this->_chunks.constData();
+    int nfullchunks = this->nFullChunks();
+    int nremainder = this->nRemainder();
     
-    for (int i=0; i<nchunks; ++i)
-    {
-        size += chunks_array[i].count();
-    }
-    
-    return size;
+    return (nfullchunks * N) + nremainder;
 }
 
 /** Return the number of items in this vector that are equal to 'value' */
@@ -319,44 +356,23 @@ int ChunkedVector<T,N>::size() const
     return this->count();
 }
 
-/** Return the number of chunks in this vector */
+/** Return the capacity of this vector (the number of items that can
+    be held without requiring more memory) */
 template<class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
-int ChunkedVector<T,N>::nChunks() const
+int ChunkedVector<T,N>::capacity() const
 {
-    return this->_chunks.count();
-}
-
-/** Return the size of a chunk */
-template<class T, int N>
-SIRE_OUTOFLINE_TEMPLATE
-int ChunkedVector<T,N>::chunkSize()
-{
-    return N;
-}
-
-/** Return the raw pointer to the array of the ith chunk */
-template<class T, int N>
-SIRE_OUTOFLINE_TEMPLATE
-T* ChunkedVector<T,N>::data(int i)
-{
-    return this->_chunks.data()[i].data();
-}
-
-/** Return the raw pointer to the array of the ith chunk */
-template<class T, int N>
-SIRE_OUTOFLINE_TEMPLATE
-const T* ChunkedVector<T,N>::data(int i) const
-{
-    return this->_chunks.data()[i].data();
-}
-
-/** Return the raw pointer to the array of the ith chunk */
-template<class T, int N>
-SIRE_OUTOFLINE_TEMPLATE
-const T* ChunkedVector<T,N>::constData(int i) const
-{
-    return this->_chunks.constData()[i].constData();
+    int nfullchunks = this->nFullChunks();
+    int nchunks = this->nChunks();
+    
+    int c = nfullchunks * N;
+    
+    for (int i=nfullchunks; i<nchunks; ++i)
+    {
+        c += this->_chunks.constData()[i].capacity();
+    }
+    
+    return c;
 }
 
 /** Resize this vector so that it holds 'count' items */
@@ -364,8 +380,6 @@ template<class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 void ChunkedVector<T,N>::resize(int new_count)
 {
-    #warning I am getting confused writing this!!!
-
     int old_count = this->count();
 
     if (new_count == old_count)
@@ -379,81 +393,58 @@ void ChunkedVector<T,N>::resize(int new_count)
     }
     else if (this->_chunks.isEmpty() or this->_chunks[0].isEmpty())
     {
-        this->operator=( ChunkedVector<T,N>(count) );
+        this->operator=( ChunkedVector<T,N>(new_count) );
         return;
     }
 
-    int new_size = new_count / N;
-    int new_remainder = new_count % N;
+    #warning ChunkedVector resize is broken
+    return;
+}
 
-    int new_nchunks = new_size + 1;
-    
-    if (new_remainder == 0)
-    {
-        new_nchunks = new_size;
-    }
+/** Squeeze this vector - this minimises the amount of memory used */
+template<class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+void ChunkedVector<T,N>::squeeze()
+{
+    int nchunks = this->nChunks();
+    int nfullchunks = this->nFullChunks();
 
-    int old_nchunks = this->_chunks.count();
-    int old_size = nchunks - 1;
-    int old_remainder = this->_chunks.last().count();
-    
-    if (old_remainder == N)
+    for (int i=nchunks-1; i>nfullchunks; --i)
     {
-        old_size = nchunks;
-        old_remainder = 0;
-    }
-    
-    if (new_remainder == 0)
-    {
-        this->_chunks.resize(new_size)
-        
-        if (new_size > old_size)
-        {
-            for (int i=old_size; i<new_size; ++i)
-            {
-                this->_chunks[i] = QVector<T>(N);
-            }
-        }
-        else if (new_size == old_size)
-        {
-            this->_chunks[ this->_chunks.count() - 1 ].resize(N);
-        }
-    }
-    else
-    {
-        int old_remainder = this->_chunks[old_size-1].count();
-        
-        if (new_size > old_size)
-        {
-            this->_chunks[old_size-1].resize(N);
-            
-            this->_chunks.resize(new_size+1);
-            
-            for (int i=old_chunks; i<new_size; ++i)
-            {
-                this->_chunks[i] = QVector<T>(N);
-            }
-            
-            this->_chunks[new_size] = QVector<T>(new_remainder);
-        }
-        else if (new_size == old_size)
-        {
-            this->_chunks[old_size-1].resize(new_remainder);
-        }
+        if (this->_chunks[i].isEmpty())
+            this->_chunks.remove(i);
         else
+            this->_chunks[i].squeeze();
+    }
+
+    this->_chunks.squeeze();
+}
+
+/** Reserve space for at least 'count' elements */
+template<class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+void ChunkedVector<T,N>::reserve(int count)
+{
+    if (count > this->capacity())
+    {
+        int current_nchunks = this->nChunks();
+        
+        int new_nchunks = count / N;
+        int new_nremainder = count % N;
+        
+        if (new_nremainder > 0)
         {
-            this->_chunks.resize(new_size+1)
+            new_nchunks += 1;
+        }
+        
+        this->_chunks.resize( new_nchunks );
+        
+        for (int i=current_nchunks; i<new_nchunks; ++i)
+        {
+            this->_chunks[i].reserve(N);
         }
     }
 }
-
-template<class T, int N>
-SIRE_OUTOFLINE_TEMPLATE
-void ChunkedVector<T,N>::squeeze();
-
-template<class T, int N>
-SIRE_OUTOFLINE_TEMPLATE
-void ChunkedVector<T,N>::reserve(int count);
 
 /* Return this chunked vector as a large vector */
 template<class T, int N>
@@ -467,7 +458,7 @@ QVector<T> ChunkedVector<T,N>::toVector() const
 
     QVector<T> vector(size);
     
-    const T *vector_array = vector.data();
+    T *vector_array = vector.data();
     
     int k = 0;
     
@@ -511,7 +502,20 @@ template<class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 ChunkedVector<T,N> ChunkedVector<T,N>::fromVector(const QVector<T> &vector)
 {
+    if (vector.isEmpty())
+        return ChunkedVector<T,N>();
+
+    int nvals = vector.count();
+    const T *vector_array = vector.constData();
+
+    ChunkedVector<T,N> ret(nvals);
     
+    for (int i=0; i<nvals; ++i)
+    {
+        ret[i] = vector_array[i];
+    }
+    
+    return ret;
 }
 
 /** Return a chunked vector that has been constructed from a QList */
@@ -530,7 +534,40 @@ ChunkedVector<T,N> ChunkedVector<T,N>::fromStdVector(const std::vector<T> &vecto
     return ChunkedVector<T,N>::fromVector( QVector<T>::fromStdVector(vector) );
 }
 
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
+
 }
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+/** Stream a ChunkedVector to a binary datastream */
+template<class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds,
+                                        const SireBase::ChunkedVector<T,N> &vec)
+{
+    ds << vec._chunks;
+    return ds;
+}
+
+/** Extract a ChunkedVector to a binary datastream */
+template<class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds,
+                                        SireBase::ChunkedVector<T,N> &vec)
+{
+    ds >> vec._chunks;
+    return ds;
+}
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class 
+SireBase::ChunkedVector<double,100>;
+#endif
+
+SIRE_EXPOSE_ALIAS( (SireBase::ChunkedVector<double, 100>), SireBase::ChunkedVector_double_ );
 
 SIRE_END_HEADER
 

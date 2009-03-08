@@ -2264,17 +2264,8 @@ void System::update(const MoleculeData &moldata)
             
             try
             {
-                QTime t;
-            
-                qDebug() << "UPDATING FORCEFIELDS START";
-                t.start();
                 this->_pvt_forceFields().update(moldata);
-                qDebug() << "UPDATING FORCEFIELDS COMPLETE" << t.elapsed();
-                
-                qDebug() << "UPDATING MOLECULE GROUP START";
-                t.start();
                 this->_pvt_moleculeGroups().update(moldata);
-                qDebug() << "UPDATING MOLECULE GROUP END" << t.elapsed();
             }
             catch(...)
             {
