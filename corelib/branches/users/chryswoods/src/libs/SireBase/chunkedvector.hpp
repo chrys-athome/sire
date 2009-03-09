@@ -33,6 +33,8 @@
 
 #include "sireglobal.h"
 
+#include <QDebug>
+
 SIRE_BEGIN_HEADER
 
 namespace SireBase
@@ -48,6 +50,11 @@ QDataStream& operator>>(QDataStream&, SireBase::ChunkedVector<T,N>&);
 
 namespace SireBase
 {
+
+namespace detail
+{
+void ChunkedVector_throwOutOfRangeError(int i, int n);
+}
 
 /** This class provides a vector that is expected to hold a large
     number of objects, and which is expected to have individual
@@ -114,6 +121,8 @@ public:
     static ChunkedVector<T,N> fromStdVector(const std::vector<T> &vector);
 
 private:
+    void assertValidIndex(int i) const;
+
     int nChunks() const;
     int nFullChunks() const;
     int nRemainder() const;
@@ -145,7 +154,7 @@ ChunkedVector<T,N>::ChunkedVector(int size)
     QVector<T> full_chunk(N);
     full_chunk.squeeze();
     
-    if (remainder > 0)
+    if (nremainder > 0)
     {
         this->_chunks = QVector< QVector<T> >(nchunks+1, full_chunk);
         this->_chunks[nchunks].resize(nremainder);
@@ -221,11 +230,24 @@ bool ChunkedVector<T,N>::operator!=(const ChunkedVector<T,N> &other) const
     return this->_chunks != other._chunks;
 }
 
+/** Internal function used to assert that an index is valid */
+template<class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+void ChunkedVector<T,N>::assertValidIndex(int i) const
+{
+    int c = this->count();
+
+    if (i < 0 or i >= c)
+        detail::ChunkedVector_throwOutOfRangeError(i, c);
+}
+
 /** Return a modifiable reference to the ith element */
 template<class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 T& ChunkedVector<T,N>::operator[](int i)
 {
+    this->assertValidIndex(i);
+
     return this->_chunks[ i / N ][ i % N ];
 }
 
@@ -234,6 +256,8 @@ template<class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 const T& ChunkedVector<T,N>::operator[](int i) const
 {
+    this->assertValidIndex(i);
+
     return this->_chunks[ i / N ][ i % N ];
 }
 
@@ -429,7 +453,7 @@ int ChunkedVector<T,N>::capacity() const
     
     for (int i=nfullchunks; i<nchunks; ++i)
     {
-        c += this->_chunks.constData()[i].capacity();
+        c += qMin( this->_chunks.constData()[i].capacity(), N );
     }
     
     return c;
@@ -470,13 +494,8 @@ void ChunkedVector<T,N>::resize(int new_count)
     int old_nremainder = this->nRemainder();
 
     //get the dimensions of the new chunked vector
-    int new_nchunks = new_count / N;
+    int new_nchunks = 1 + ((new_count-1) / N);
     int new_nremainder = new_count % N;
-
-    int new_nfullchunks = new_nchunks - 1;
-    
-    if (new_nremainder == 0)
-        new_nfullchunks += 1;
         
     if (new_nchunks < old_nchunks)
     {
@@ -496,8 +515,10 @@ void ChunkedVector<T,N>::resize(int new_count)
         }
     }
     
-    if (new_nremainder != 0)
-        //resize the last chunk to the right size
+    //resize the last chunk to the right size
+    if (new_nremainder == 0)
+        this->_chunks[new_nchunks-1].resize(N);
+    else
         this->_chunks[new_nchunks-1].resize(new_nremainder);
 
     return;

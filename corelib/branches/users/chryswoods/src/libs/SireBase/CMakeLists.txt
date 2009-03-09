@@ -43,6 +43,7 @@ set ( SIREBASE_SOURCES
       register_sirebase.cpp
 
       array2d.cpp
+      chunkedvector.cpp
       countflops.cpp
       errors.cpp
       findexe.cpp
