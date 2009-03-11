@@ -14,6 +14,7 @@ set ( SIREBASE_HEADERS
 
       array2d.hpp
       array2d.h
+      chunkedhash.hpp
       chunkedvector.hpp
       countflops.h
       errors.h
@@ -43,6 +44,7 @@ set ( SIREBASE_SOURCES
       register_sirebase.cpp
 
       array2d.cpp
+      chunkedhash.cpp
       chunkedvector.cpp
       countflops.cpp
       errors.cpp

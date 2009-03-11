@@ -29,12 +29,12 @@
 #ifndef SIREMOL_MOLECULES_H
 #define SIREMOL_MOLECULES_H
 
-#include <QHash>
-
 #include <boost/tuple/tuple.hpp>
 
 #include "viewsofmol.h"
 #include "molnum.h"
+
+#include "SireBase/chunkedhash.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -68,8 +68,8 @@ friend QDataStream& ::operator>>(QDataStream&, Molecules&);
 
 public:
 
-    typedef QHash<MolNum,ViewsOfMol>::const_iterator const_iterator;
-    typedef QHash<MolNum,ViewsOfMol>::iterator iterator;
+    typedef SireBase::ChunkedHash<MolNum,ViewsOfMol>::const_iterator const_iterator;
+    typedef SireBase::ChunkedHash<MolNum,ViewsOfMol>::iterator iterator;
 
     Molecules();
 
@@ -196,7 +196,7 @@ private:
     /** Hash that contains all of the views of
         all of the molecules, indexed by 
         their molecule number */
-    QHash<MolNum,ViewsOfMol> mols;
+    SireBase::ChunkedHash<MolNum,ViewsOfMol> mols;
 
 };
 
@@ -217,7 +217,8 @@ Molecules Molecules::from(const T &molecules)
          it != molecules.end();
          ++it)
     {
-        QHash<MolNum,ViewsOfMol>::iterator mol = mols.mols.find(it->number());
+        SireBase::ChunkedHash<MolNum,ViewsOfMol>::iterator mol 
+                                                    = mols.mols.find(it->number());
         
         if (mol != mols.mols.end())
         {

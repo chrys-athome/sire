@@ -23,6 +23,11 @@ int main(void)
     cout << test(it == hash.begin()) << endl;
     cout << test(it == hash.end()) << endl;
 
+    it = hash.end();
+    cout << test(it == hash.begin()) << endl;
+    cout << test(it == hash.end()) << endl;
+
+
     hash["hello"] = 42;
 
     it = hash.end();

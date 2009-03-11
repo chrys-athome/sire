@@ -669,7 +669,18 @@ SIRE_OUTOFLINE_TEMPLATE
 QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds,
                                         const SireBase::ChunkedVector<T,N> &vec)
 {
-    ds << vec._chunks;
+    //write out the data in a format that is compatible with QVector
+    quint32 count = vec.count();
+
+    //first the number of objects
+    ds << count;
+    
+    //then the objects themselves
+    for (quint32 i=0; i<count; ++i)
+    {
+        ds << vec[i];
+    }
+
     return ds;
 }
 
@@ -679,7 +690,18 @@ SIRE_OUTOFLINE_TEMPLATE
 QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds,
                                         SireBase::ChunkedVector<T,N> &vec)
 {
-    ds >> vec._chunks;
+    //read the data in a format that is compatible with QVector
+    quint32 count;
+    
+    ds >> count;
+    
+    vec.resize(count);
+    
+    for (quint32 i=0; i<count; ++i)
+    {
+        ds >> vec[i];
+    }
+
     return ds;
 }
 

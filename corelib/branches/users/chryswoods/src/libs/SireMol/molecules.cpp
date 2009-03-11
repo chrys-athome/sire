@@ -98,7 +98,7 @@ void Molecules::add(const MoleculeView &molview)
     if (mol.selection().isEmpty())
         return;
 
-    QHash<MolNum,ViewsOfMol>::iterator it = mols.find(mol.number());
+    Molecules::iterator it = mols.find(mol.number());
 
     if ( it != mols.end() )
     {
@@ -121,7 +121,7 @@ bool Molecules::addIfUnique(const MoleculeView &molview)
     if (mol.selection().isEmpty())
         return false;
         
-    QHash<MolNum,ViewsOfMol>::iterator it = mols.find(mol.number());
+    Molecules::iterator it = mols.find(mol.number());
     
     if ( it != mols.end() )
     {
@@ -145,7 +145,7 @@ void Molecules::add(const ViewsOfMol &molviews)
     if (molviews.selection().nSelectedAtoms() == 0)
         return;
 
-    QHash<MolNum,ViewsOfMol>::iterator it = mols.find(molviews.number());
+    Molecules::iterator it = mols.find(molviews.number());
     
     if ( it != mols.end() )
     {
@@ -165,7 +165,7 @@ ViewsOfMol Molecules::addIfUnique(const ViewsOfMol &molviews)
     if (molviews.selection().nSelectedAtoms() == 0)
         return ViewsOfMol();
         
-    QHash<MolNum,ViewsOfMol>::iterator it = mols.find(molviews.number());
+    Molecules::iterator it = mols.find(molviews.number());
     
     if ( it != mols.end() )
     {
@@ -188,7 +188,7 @@ ViewsOfMol Molecules::addIfUnique(const ViewsOfMol &molviews)
     exist in this set */
 void Molecules::add(const Molecules &molecules)
 {
-    for (QHash<MolNum,ViewsOfMol>::const_iterator it = molecules.mols.constBegin();
+    for (Molecules::const_iterator it = molecules.mols.constBegin();
          it != molecules.mols.constEnd();
          ++it)
     {
@@ -203,7 +203,7 @@ QList<ViewsOfMol> Molecules::addIfUnique(const Molecules &molecules)
 {
     QList<ViewsOfMol> added_mols;
     
-    for (QHash<MolNum,ViewsOfMol>::const_iterator it = molecules.mols.constBegin();
+    for (Molecules::const_iterator it = molecules.mols.constBegin();
          it != molecules.mols.constEnd();
          ++it)
     {
@@ -225,7 +225,7 @@ bool Molecules::remove(const MoleculeView &molview)
     if (not mols.contains(molview.data().number()))
         return false;
 
-    QHash<MolNum,ViewsOfMol>::iterator it = mols.find(molview.data().number());
+    Molecules::iterator it = mols.find(molview.data().number());
     
     if (it != mols.end())
     {
@@ -247,7 +247,7 @@ bool Molecules::removeAll(const MoleculeView &molview)
     if (not mols.contains(molview.data().number()))
         return false;
         
-    QHash<MolNum,ViewsOfMol>::iterator it = mols.find(molview.data().number());
+    Molecules::iterator it = mols.find(molview.data().number());
     
     if (it != mols.end())
     {
@@ -270,7 +270,7 @@ ViewsOfMol Molecules::remove(const ViewsOfMol &molviews)
     if (not mols.contains(molviews.number()))
         return ViewsOfMol();
 
-    QHash<MolNum,ViewsOfMol>::iterator it = mols.find(molviews.number());
+    Molecules::iterator it = mols.find(molviews.number());
     
     if (it != mols.end())
     {
@@ -296,7 +296,7 @@ ViewsOfMol Molecules::removeAll(const ViewsOfMol &molviews)
     if (not mols.contains(molviews.number()))
         return ViewsOfMol();
 
-    QHash<MolNum,ViewsOfMol>::iterator it = mols.find(molviews.number());
+    Molecules::iterator it = mols.find(molviews.number());
     
     if (it != mols.end())
     {
@@ -325,7 +325,7 @@ QList<ViewsOfMol> Molecules::remove(const Molecules &molecules)
 
     QList<ViewsOfMol> removed_mols;
 
-    for (QHash<MolNum,ViewsOfMol>::const_iterator it = molecules.mols.constBegin();
+    for (Molecules::const_iterator it = molecules.mols.constBegin();
          it != molecules.mols.constEnd();
          ++it)
     {
@@ -349,7 +349,7 @@ QList<ViewsOfMol> Molecules::removeAll(const Molecules &molecules)
 
     QList<ViewsOfMol> removed_mols;
 
-    for (QHash<MolNum,ViewsOfMol>::const_iterator it = molecules.mols.constBegin();
+    for (Molecules::const_iterator it = molecules.mols.constBegin();
          it != molecules.mols.constEnd();
          ++it)
     {
@@ -413,7 +413,7 @@ QList<ViewsOfMol> Molecules::unite(const Molecules &molecules)
     This returns whether or not the molecule was updated */
 bool Molecules::update(const MoleculeData &moldata)
 {
-    QHash<MolNum,ViewsOfMol>::const_iterator it = mols.constFind(moldata.number());
+    Molecules::const_iterator it = mols.constFind(moldata.number());
     
     if (it != mols.end() and *it != moldata)
     {
@@ -448,11 +448,11 @@ QList<Molecule> Molecules::update(const Molecules &molecules)
     
     if (this->count() <= molecules.count())
     {
-        for (QHash<MolNum,ViewsOfMol>::iterator it = mols.begin();
+        for (Molecules::iterator it = mols.begin();
              it != mols.end();
              ++it)
         {
-            QHash<MolNum,ViewsOfMol>::const_iterator 
+            Molecules::const_iterator 
                                         mol = molecules.mols.find(it.key());
                                         
             if (mol != molecules.mols.constEnd() and 
@@ -470,8 +470,7 @@ QList<Molecule> Molecules::update(const Molecules &molecules)
              it != molecules.constEnd();
              ++it)
         {
-            QHash<MolNum,ViewsOfMol>::const_iterator
-                                        mol = mols.constFind(it.key());
+            Molecules::const_iterator mol = mols.constFind(it.key());
                                         
             if (mol != mols.constEnd() and mol->data() != it->data())
             {
@@ -501,7 +500,7 @@ bool Molecules::removeDuplicates()
 {
     bool changed = false;
 
-    for (QHash<MolNum,ViewsOfMol>::iterator it = mols.begin();
+    for (Molecules::iterator it = mols.begin();
          it != mols.end();
          ++it)
     {
@@ -519,7 +518,7 @@ bool Molecules::uniteViews()
 {
     bool changed = false;
 
-    for (QHash<MolNum,ViewsOfMol>::iterator it = mols.begin();
+    for (Molecules::iterator it = mols.begin();
          it != mols.end();
          ++it)
     {
@@ -605,7 +604,7 @@ void Molecules::assertContains(MolNum molnum) const
 */
 const ViewsOfMol& Molecules::operator[](MolNum molnum) const
 {
-    QHash<MolNum,ViewsOfMol>::const_iterator it = mols.find(molnum);
+    Molecules::const_iterator it = mols.find(molnum);
     
     if (it == mols.end())
         throw SireMol::missing_molecule( QObject::tr(
@@ -724,7 +723,7 @@ bool Molecules::contains(MolNum molnum) const
          specific view! */
 bool Molecules::contains(const MoleculeView &molview) const
 {
-    QHash<MolNum,ViewsOfMol>::const_iterator it = mols.find(molview.data().number());
+    Molecules::const_iterator it = mols.find(molview.data().number());
     
     if (it != mols.end())
     {
@@ -747,7 +746,7 @@ bool Molecules::contains(const MoleculeView &molview) const
     contains each specific view! */
 bool Molecules::contains(const ViewsOfMol &molviews) const
 {
-    QHash<MolNum,ViewsOfMol>::const_iterator it = mols.find(molviews.number());
+    Molecules::const_iterator it = mols.find(molviews.number());
     
     if (it != mols.end())
     {
@@ -778,7 +777,7 @@ bool Molecules::contains(const ViewsOfMol &molviews) const
     of all of the molecules in 'molecules' */
 bool Molecules::contains(const Molecules &molecules) const
 {
-    for (QHash<MolNum,ViewsOfMol>::const_iterator it = molecules.mols.begin();
+    for (Molecules::const_iterator it = molecules.mols.begin();
          it != molecules.mols.end();
          ++it)
     {
@@ -794,7 +793,7 @@ bool Molecules::contains(const Molecules &molecules) const
        also present in any of the views of that molecule in this set */
 bool Molecules::intersects(const MoleculeView &molview) const
 {
-    QHash<MolNum,ViewsOfMol>::const_iterator it = mols.find(molview.data().number());
+    Molecules::const_iterator it = mols.find(molview.data().number());
     
     if (it != mols.end())
         return it->intersects(molview.selection());
@@ -808,7 +807,7 @@ bool Molecules::intersects(const MoleculeView &molview) const
     of the views of any of the molecules in this set */
 bool Molecules::intersects(const Molecules &molecules) const
 {
-    for (QHash<MolNum,ViewsOfMol>::const_iterator it = molecules.mols.begin();
+    for (Molecules::const_iterator it = molecules.mols.begin();
          it != molecules.mols.end();
          ++it)
     {
