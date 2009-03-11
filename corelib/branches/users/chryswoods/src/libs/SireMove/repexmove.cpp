@@ -412,6 +412,9 @@ void RepExMove::move(Nodes &nodes, RepExReplicas &replicas, int nmoves_to_run,
                         qDebug() << "Replica" << j << "had an error or was aborted."
                                  << "Resubmitting - attempt number" << ntries;
                     
+                        if (running_sims[j].isError())
+                            running_sims[j].throwError();
+                    
                         //resubmit this calculation
                         RepExReplica replica = replicas[j];
                         

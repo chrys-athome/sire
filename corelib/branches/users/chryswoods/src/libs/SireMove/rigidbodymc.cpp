@@ -466,6 +466,9 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
     if (nmoves <= 0)
         return;
 
+    QTime all_t;
+    all_t.start();
+
     //save our, and the system's, current state
     RigidBodyMC old_state(*this);
 
@@ -527,4 +530,6 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
 
         throw;
     }
+
+    qDebug() << "RigidBodyMC move took" << all_t.elapsed();
 }

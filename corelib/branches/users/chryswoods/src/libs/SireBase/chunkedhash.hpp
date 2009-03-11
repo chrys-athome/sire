@@ -533,6 +533,19 @@ ChunkedHash<Key,T,N>::const_iterator::operator=(
     return *this;
 }
 
+/** Copy assignment operator */
+template<class Key, class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+typename ChunkedHash<Key,T,N>::const_iterator& 
+ChunkedHash<Key,T,N>::const_iterator::operator=(
+                            const ChunkedHash<Key,T,N>::const_iterator &other)
+{
+    chunks = other.chunks;
+    current_chunk = other.current_chunk;
+    current_it = other.current_it;
+    return *this;
+}
+
 /** Comparison operator */
 template<class Key, class T, int N>
 SIRE_OUTOFLINE_TEMPLATE

@@ -142,3 +142,7 @@ print header.systemInfo()
 
 print system.energies()
 
+system.mustNowRecalculateFromScratch()
+
+print system.energies()
+

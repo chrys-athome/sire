@@ -1092,6 +1092,12 @@ ChangedMolecule<FFMOL>::ChangedMolecule(const FFMOL &oldmol, const FFMOL &newmol
         {
             old_parts = old_molecule.getDifferences(new_molecule);
             new_parts = new_molecule.getDifferences(old_molecule);
+            
+            qDebug() << "OLD" << old_parts.molecule().nAtoms()
+                              << old_parts.nCutGroups();
+                              
+            qDebug() << "NEW" << new_parts.molecule().nAtoms()
+                              << new_parts.nCutGroups();
         }
     }
 }
@@ -1291,6 +1297,12 @@ ChangedMolecule<FFMOL>& ChangedMolecule<FFMOL>::change(
             old_parts = FFMOL();
             new_parts = FFMOL();
         }
+
+        qDebug() << "OLD" << old_parts.molecule().nAtoms()
+                          << old_parts.nCutGroups();
+                              
+        qDebug() << "NEW" << new_parts.molecule().nAtoms()
+                          << new_parts.nCutGroups();
     }
     
     return *this;

@@ -57,6 +57,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <QDebug>
+#include <QTime>
 
 using namespace SireFF;
 using namespace SireMol;
@@ -704,8 +705,12 @@ MolarEnergy FFSymbolExpression::energy(QVector<FFPtr> &forcefields,
             }
         }
         
+        QTime t;
+        t.start();
         nrg += ffsymbols[component.symbol()]->energy(forcefields, ffsymbols,
                                  scale_energy * component.scalingFactor(values));
+    
+        qDebug() << component.symbol().toString() << "TOOK" << t.elapsed();
     }
 
     return nrg;
@@ -1557,7 +1562,14 @@ SireUnits::Dimension::MolarEnergy ForceFields::energy(const Symbol &component)
                 .arg(component.toString(), Sire::toString(ffsymbols.keys())),
                     CODELOC );
 
-    return ffsymbols.value(component)->energy(ffields_by_idx, ffsymbols);
+    QTime t;
+    t.start();
+    
+    SireUnits::Dimension::MolarEnergy nrg = ffsymbols.value(component)->energy(ffields_by_idx, ffsymbols);
+    
+    qDebug() << "ENERGY" << component.toString() << "TOOK" << t.elapsed();
+    
+    return nrg;
 }
 
 /** Return the energy of this set of forcefields. This uses the supplied
