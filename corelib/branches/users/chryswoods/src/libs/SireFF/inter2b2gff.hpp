@@ -536,14 +536,6 @@ void Inter2B2GFF<Potential>::recalculateEnergy()
     const ChunkedVector<typename Potential::Molecule> &mols1_array
                             = mols[1].moleculesByIndex();
 
-    if (changed_mols[0].count() == nmols0 or
-        changed_mols[1].count() == nmols1)
-    {
-        //all of the molecules in a group have changed!
-        changed_mols[0].clear();
-        changed_mols[1].clear();
-    }
-
     //tell the potential that we are starting an evaluation
     Potential::startEvaluation();
 

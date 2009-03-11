@@ -186,12 +186,9 @@ bool AtomicCoords3D::changedAllGroups(const AtomicCoords3D &other) const
     {
         if (this_array[i] == other_array[i])
         {
-            qDebug() << "NOT CHANGED ALL GROUPS" << i;
             return false;
         }
     }
-         
-    qDebug() << "CHANGED ALL GROUPS : NGROUPS ==" << ngroups;
             
     return true;
 }
@@ -218,8 +215,6 @@ void AtomicCoords3D::addChangedGroups(const AtomicCoords3D &params,
         {
             changed_groups.insert(i);
             
-            qDebug() << "CutGroup" << i << "has changed!!!";
-            
             if (selectedAll(changed_groups, ngroups))
                 return;
         }
@@ -241,8 +236,6 @@ QSet<quint32> AtomicCoords3D::getChangedGroups(const AtomicCoords3D &params) con
     'idxs' are present */
 AtomicCoords3D AtomicCoords3D::applyMask(const QSet<quint32> &idxs) const
 {
-    qDebug() << "AtomicCoords3D::applyMask" << idxs;
-
     if (selectedAll(idxs, coords.count()))
         return *this;
     
@@ -262,8 +255,6 @@ AtomicCoords3D AtomicCoords3D::applyMask(const QSet<quint32> &idxs) const
         if (idxs.contains(i))
             cgroups.append( cgroups_array[i] );
     }
-    
-    qDebug() << "DONE" << cgroups.count();
     
     return AtomicCoords3D( CoordGroupArray(cgroups) );
 }

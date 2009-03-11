@@ -249,9 +249,6 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
     if (nmoves <= 0)
         return;
       
-    QTime all_t;
-    all_t.start();
-            
     //save our, and the system's, current state
     ZMatMove old_state(*this);
     
@@ -277,21 +274,15 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
                                    
         for (int i=0; i<nmoves; ++i)
         {
-            QTime t;
-        
             //get the old energy of the system
-            t.start();
             double old_nrg = system.energy( this->energyComponent() );
-            qDebug() << "old_nrg" << t.elapsed();
             
             //save the old system and sampler
             System old_system(system);
             SamplerPtr old_sampler(smplr);
     
             //update the sampler with the latest version of the molecules
-            t.start();
             smplr.edit().updateFrom(system);
-            qDebug() << "smplr.update()" << t.elapsed();
 
             //randomly select a molecule to move
             tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
@@ -301,22 +292,16 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
 
             //move the molecule - first get the cartesian coordinates
             //of the molecule
-            t.start();
             PartialMolecule newmol = oldmol.move()
                                            .toCartesian(*space, map)
                                            .commit();
 
-            qDebug() << "oldmol.toCartesian()" << t.elapsed();
-
-            t.start();
             ZMatrixCoords zmatrix( newmol, map );
-            qDebug() << "build zmatrix" << t.elapsed();
 
             //move the internal coordinates of selected atoms in the 
             //z-matrix
             AtomSelection selected_atoms = newmol.selection();
             
-            t.start();
             if (selected_atoms.selectedAll())
             {
                 //move everything
@@ -340,11 +325,9 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
                         this->move(it.key(), zmatrix);
                 }
             }
-            qDebug() << "move" << t.elapsed();
 
             //copy the coordinates back - mapping them back into 
             //the simulation space
-            t.start();
             newmol = PartialMolecule(newmol.molecule().edit()
                                            .setProperty( map["coordinates"].source(), 
                                                          zmatrix.toCartesian() )
@@ -354,36 +337,25 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
                            .fromCartesian(*space, map)
                            .commit();
 
-            qDebug() << "newmol.commit()" << t.elapsed();
-
             //update the system with the new coordinates
-            t.start();
             system.update(newmol);
-            qDebug() << "system.update(newmol)" << t.elapsed();
 
             //calculate the energy of the system
-            t.start();
             double new_nrg = system.energy( this->energyComponent() );
-            qDebug() << "new_nrg" << t.elapsed();
 
             //get the new bias on this molecule
-            t.start();
             smplr.edit().updateFrom(system);
-            qDebug() << "smplr.update()" << t.elapsed();
         
             double new_bias = smplr.read().probabilityOf(newmol);
 
             //accept or reject the move based on the change of energy
             //and the biasing factors
-            t.start();
             if (not this->test(new_nrg, old_nrg, new_bias, old_bias))
             {
                 //the move has been rejected - reset the state
                 smplr = old_sampler;
                 system = old_system;
             }
-
-            qDebug() << "test and delete" << t.elapsed();
 
             if (record_stats)
             {
@@ -397,6 +369,4 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
         this->operator=(old_state);
         throw;
     }
-    
-    qDebug() << "ZMatMove took" << all_t.elapsed();
 }

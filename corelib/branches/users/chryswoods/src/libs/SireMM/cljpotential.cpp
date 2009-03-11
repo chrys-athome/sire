@@ -736,8 +736,6 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     const quint32 ngroups0 = mol0.coordinates().count();
     const quint32 ngroups1 = mol1.coordinates().count();
     
-    qDebug() << "RECALCULATE ENERGY" << ngroups0 << ngroups1;
-    
     if (ngroups0 < ngroups1)
     {
         //this is faster if the larger molecule is on the outer loop
