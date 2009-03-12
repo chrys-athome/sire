@@ -34,14 +34,23 @@ set ( SIREDB_SOURCES
 add_library (SireDB ${SIREDB_SOURCES})
 
 find_library (DL_LIBRARY dl DOC "System dynamic linking library (contains dlopen)")
+find_library (PTHREAD_LIBRARY pthread DOC "System pthread library")
 
 set (DL_FOUND "NO")
+set (PTHREAD_FOUND "NO")
 
 if ( DL_LIBRARY )
   set (DL_FOUND "YES")
-
+  message ( "Found DL library : ${DL_LIBRARY}" )
 else()
   message (FATAL_ERROR "The dl (dynamic linking) library is required" )
+endif()
+
+if ( PTHREAD_LIBRARY )
+  set (PTHREAD_FOUND "YES")
+  message ( "Found pthread library : ${PTHREAD_LIBRARY}" )
+else()
+  message (FATAL_ERROR "The pthread library is required" )
 endif()
 
 set_target_properties (SireDB PROPERTIES
@@ -54,6 +63,7 @@ target_link_libraries (SireDB
                        SireBase
                        SireStream
                        ${DL_LIBRARY}
+                       ${PTHREAD_LIBRARY}
                        ${QT_QTSQL_LIBRARY}
                       )
 
