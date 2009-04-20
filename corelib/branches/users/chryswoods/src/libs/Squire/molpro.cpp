@@ -107,7 +107,7 @@ static const QString default_energy_template =
        "@LATTICE_POINTS@\n"
        "END\n\n"
        "basis=@BASIS_SET@\n\n"
-       "@QM_METHOD@;SIRE_FINAL_ENERGY=energy\n";
+       "@QM_METHOD@;SIRE_FINAL_ENERGY=energy;show,SIRE_FINAL_ENERGY\n";
 
 static const QString default_force_template = "! NEEDS TO BE WRITTEN";
 
@@ -581,12 +581,14 @@ QString Molpro::writeShellFile(const TempDir &tempdir) const
     {
         //the user hasn't specified a molpro executable - try to find one
         QString found_molpro = SireBase::findExe("molpro").absoluteFilePath();
-        ts << QString("%1 -d %2 < molpro_input > molpro_output\n")
+        ts << QString("%1 -d %2 molpro_input -o molpro_output\n")
                     .arg(found_molpro, tempdir.path());
     }
     else
-        ts << QString("%1 -d %2 < molpro_input > molpro_output\n")
+        ts << QString("%1 -d %2 molpro_input -o molpro_output\n")
                         .arg(molpro_exe, tempdir.path());
+
+    ts << "sync\n";
     
     f.close();
     
@@ -617,6 +619,7 @@ double Molpro::calculateEnergy(const QString &cmdfile, int ntries) const
         tmppath = QDir::temp().absolutePath();
 
     TempDir tmpdir(tmppath);
+    //tmpdir.doNotDelete();
 
     //write the file processed by the shell used to run the job
     QString shellfile = this->writeShellFile(tmpdir);
@@ -700,7 +703,33 @@ double Molpro::calculateEnergy(const QString &cmdfile, int ntries) const
     catch(...)
     {
         qDebug() << "Molpro process error. Number of remaining attempts = " << ntries;
-    
+
+        //print out the last twenty lines of output
+        const int nlines_to_print = 20;
+
+        qDebug() << "Printing out the last" << nlines_to_print << "lines of output...";
+
+        QFile f( QString("%1/molpro_output").arg(tmpdir.path()) );
+
+        if ( not (f.exists() and f.open(QIODevice::ReadOnly)) )    
+            qDebug() << "Could not read the file" << tmpdir.path() << "/molpro_output";
+        else
+        {
+            QStringList lines;
+ 
+            QTextStream ts(&f);
+
+            while (not ts.atEnd())
+            {
+                lines.append( ts.readLine() );
+
+                if (lines.count() > nlines_to_print)
+                    lines.removeFirst();
+            }
+
+            foreach (QString line, lines){ qDebug() << qPrintable(line); }
+        }
+
         if (ntries <= 0)
             //don't bother trying again - it's not going to work!
             throw;

@@ -204,7 +204,7 @@ void SharedDataRegistry::loadedString(quint32 id, const QString &str)
 /** Construct a SharedDataStream that uses the QDataStream 'datastream'
     to serialise and unserialise the objects. */
 SharedDataStream::SharedDataStream(QDataStream &qdatastream)
-                 : ds(qdatastream)
+                 : ds(qdatastream), version_number(0)
 {
     registry = SharedDataRegistry::construct(qdatastream);
 }
@@ -213,6 +213,76 @@ SharedDataStream::SharedDataStream(QDataStream &qdatastream)
 SharedDataStream::~SharedDataStream()
 {}
 
+/** Return the version number of the shared data stream */
+quint32 SharedDataStream::version() const
+{
+    if (version_number == 0)
+        //the version number has not been set - use the latest version
+        return 1;
+    else
+        return version_number;
+}
+
+static quint32 SHARED_DATASTREAM_MAGIC = 3640980511;
+
+/** This internal function is used to read the version number from the data stream
+    (if it has not already been read) */
+void SharedDataStream::readVersion()
+{
+    if (version_number != 0)
+        return;
+        
+    //try to read the magic number (4 bytes) from the datastream
+    QByteArray magic = ds.device()->peek(4);
+    
+    if (magic.isEmpty())
+    {
+        //there is no magic - we must be at version 1
+        version_number = 1;
+        return;
+    }
+    
+    QDataStream ds2(magic);
+    
+    quint32 magic_number;
+    ds2 >> magic_number;
+    
+    if (magic_number != SHARED_DATASTREAM_MAGIC)
+    {
+        //this is not the magic number - it is missing, which implies
+        //that this is version 1 of the format
+        version_number = 1;
+        return;
+    }
+    
+    //read the magic number and version number
+    ds >> magic_number >> version_number;
+    
+    if (magic_number != SHARED_DATASTREAM_MAGIC)
+        throw SireError::program_bug( QObject::tr(
+            "Something went wrong when reading the SharedDataStream version! "
+            "The magic number changed (from %1 to %2)")
+                .arg(SHARED_DATASTREAM_MAGIC).arg(magic_number), CODELOC );
+                
+    if (version_number == 0)
+        throw SireError::program_bug( QObject::tr(
+            "There was no version number, even though there should have been one!"),
+                CODELOC );
+}
+
+/** This function writes the version number of the SharedDataStream into the 
+    stream - it only does this once, before any of the objects are written */
+void SharedDataStream::writeVersion()
+{
+    if (version_number == 0)
+        return;
+        
+    //we are at version 1
+    version_number = 1;
+    
+    ds << SHARED_DATASTREAM_MAGIC << version_number;
+}
+
 /** Specialisation of the serialisation function implicitly shared
     QString strings. This will stream the string in a way that ensures 
     that only a single copy of the string is passed to the stream, 
@@ -220,6 +290,8 @@ SharedDataStream::~SharedDataStream()
 template<>
 SharedDataStream& SharedDataStream::operator<<(const QString &str)
 {
+    this->writeVersion();
+
     //get the ID of this string in the registry
     bool first_copy;
     quint32 id = registry->getStringID(str, &first_copy);
@@ -241,6 +313,8 @@ SharedDataStream& SharedDataStream::operator<<(const QString &str)
 template<>
 SharedDataStream& SharedDataStream::operator>>(QString &str)
 {
+    this->readVersion();
+
     if (registry->version() == 1)
     {
         quint32 id;

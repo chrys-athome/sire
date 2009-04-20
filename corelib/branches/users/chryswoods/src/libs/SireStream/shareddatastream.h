@@ -237,6 +237,9 @@ public:
     SharedDataStream& operator<<(const boost::shared_ptr<T> &obj);
 
     template<class T>
+    SharedDataStream& operator<<(const QVector<T> &vec);
+
+    template<class T>
     SharedDataStream& operator>>(T &obj);
 
     template<class T>
@@ -250,8 +253,16 @@ public:
 
     template<class T>
     SharedDataStream& operator>>(boost::shared_ptr<T> &obj);
+    
+    template<class T>
+    SharedDataStream& operator>>(QVector<T> &vec);
+
+    quint32 version() const;
 
 private:
+    void readVersion();
+    void writeVersion();
+
     /** Shared pointer to the registry of shared objects that 
         have already been streamed */
     boost::shared_ptr<private_detail::SharedDataRegistry> registry;
@@ -259,6 +270,12 @@ private:
     /** Reference to the actual QDataStream that is used to
         stream the data */
     QDataStream &ds;
+    
+    /** The version number of this shared datastream - this is used
+        to indicate the range of shared objects that are shared-streamed
+        rather than normally streamed, and to control the format
+        of the shared stream */
+    quint32 version_number;
 };
 
 /** Default serialisation function used as a wrapper around the standard
@@ -267,6 +284,9 @@ private:
 template<class T>
 SharedDataStream& SharedDataStream::operator<<(const T &obj)
 {
+    if (this->version_number == 0)
+        this->writeVersion();
+
     ds << obj;
     return *this;
 }
@@ -277,6 +297,9 @@ SharedDataStream& SharedDataStream::operator<<(const T &obj)
 template<class T>
 SharedDataStream& SharedDataStream::operator>>(T &obj)
 {
+    if (this->version_number == 0)
+        this->readVersion();
+    
     ds >> obj;
     return *this;
 }
@@ -289,6 +312,9 @@ SharedDataStream& SharedDataStream::operator>>(T &obj)
 template<class T>
 SharedDataStream& SharedDataStream::operator<<(const QSharedDataPointer<T> &objptr)
 {
+    if (this->version_number == 0)
+        this->writeVersion();
+
     //get the ID of this string in the registry
     bool first_copy;
     quint32 id = registry->getID(objptr, objptr.constData(), &first_copy);
@@ -315,6 +341,9 @@ SharedDataStream& SharedDataStream::operator<<(const QSharedDataPointer<T> &objp
 template<class T>
 SharedDataStream& SharedDataStream::operator>>(QSharedDataPointer<T> &objptr)
 {
+    if (this->version_number == 0)
+        this->readVersion();
+
     if (registry->version() == 1)
     {
         quint32 id;
@@ -359,6 +388,9 @@ SharedDataStream& SharedDataStream::operator>>(QSharedDataPointer<T> &objptr)
 template<class T>
 SharedDataStream& SharedDataStream::operator<<(const SharedDataPointer<T> &objptr)
 {
+    if (this->version_number == 0)
+        this->writeVersion();
+
     //get the ID of this string in the registry
     bool first_copy;
     quint32 id = registry->getID(objptr, objptr.constData(), &first_copy);
@@ -384,6 +416,9 @@ SharedDataStream& SharedDataStream::operator<<(const SharedDataPointer<T> &objpt
 template<class T>
 SharedDataStream& SharedDataStream::operator>>(SharedDataPointer<T> &objptr)
 {
+    if (this->version_number == 0)
+        this->readVersion();
+
     if (registry->version() == 1)
     {
         quint32 id;
@@ -427,6 +462,9 @@ SharedDataStream& SharedDataStream::operator>>(SharedDataPointer<T> &objptr)
 template<class T>
 SharedDataStream& SharedDataStream::operator<<(const SharedPolyPointer<T> &objptr)
 {
+    if (this->version_number == 0)
+        this->writeVersion();
+
     //get the ID of this string in the registry
     bool first_copy;
     quint32 id = registry->getID(objptr, objptr.constData(), &first_copy);
@@ -449,6 +487,9 @@ SharedDataStream& SharedDataStream::operator<<(const SharedPolyPointer<T> &objpt
 template<class T>
 SharedDataStream& SharedDataStream::operator>>(SharedPolyPointer<T> &objptr)
 {
+    if (this->version_number == 0)
+        this->readVersion();
+
     if (registry->version() == 1)
     {
         quint32 id;
@@ -481,6 +522,9 @@ SharedDataStream& SharedDataStream::operator>>(SharedPolyPointer<T> &objptr)
 template<class T>
 SharedDataStream& SharedDataStream::operator<<(const boost::shared_ptr<T> &objptr)
 {
+    if (this->version_number == 0)
+        this->writeVersion();
+
     //get the ID of this string in the registry
     bool first_copy;
     quint32 id = registry->getID(objptr, objptr.get(), &first_copy);
@@ -503,6 +547,9 @@ SharedDataStream& SharedDataStream::operator<<(const boost::shared_ptr<T> &objpt
 template<class T>
 SharedDataStream& SharedDataStream::operator>>(boost::shared_ptr<T> &objptr)
 {
+    if (this->version_number == 0)
+        this->readVersion();
+
     if (registry->version() == 1)
     {
         quint32 id;

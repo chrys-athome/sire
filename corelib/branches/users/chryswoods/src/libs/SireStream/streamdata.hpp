@@ -121,6 +121,8 @@ public:
     QString repository() const;
     QString buildVersion() const;
 
+    quint32 version() const;
+
     void assertCompatible() const;
     void assertNotCorrupted(const QByteArray &compressed_data) const;
 
@@ -167,6 +169,9 @@ private:
     
     /** The size of the uncompressed data */
     quint32 uncompressed_size;
+    
+    /** The version number of the file */
+    quint32 version_number;
 };
 
 FileHeader getDataHeader(const QByteArray &data);
