@@ -144,59 +144,6 @@ SharedDataRegistry::~SharedDataRegistry()
     }
 }
 
-/** This is version 1 of the SharedDataStream format */
-int SharedDataRegistry::version() const
-{
-    return 1;
-}
-
-void SharedDataRegistry::versionError(const QString &supported_versions) const
-{
-    throw version_error( QObject::tr("This SharedDataStream (version %1) can only "
-            "read streams written by the following versions: %2.")
-                .arg(this->version()).arg(supported_versions), CODELOC );
-}
-
-const QString& SharedDataRegistry::getString(quint32 id) const
-{
-    this->assertValidID(id);
-
-    return objects_by_id[id]->sharedData<QString>();
-}
-
-quint32 SharedDataRegistry::getStringID(const QString &str, bool *first_copy)
-{
-    if (strings_by_key.contains(str))
-    {
-        *first_copy = false;
-    }
-    else
-    {
-        *first_copy = true;
-        objects_by_id.insert( quint32(objects_by_id.count()),
-                               boost::shared_ptr<SharedDataHolder>(
-                                     new SharedDataHolderT<QString>(str)) );
-                                     
-        strings_by_key.insert(str, objects_by_id.count() - 1);
-    }
-
-    return strings_by_key[str];
-}
-
-void SharedDataRegistry::loadedString(quint32 id, const QString &str)
-{
-    if (not strings_by_key.contains(str))
-    {
-        if (objects_by_id.contains(id))
-            this->throwIDError(id);
-    
-        objects_by_id.insert( id, boost::shared_ptr<SharedDataHolder>(
-                                     new SharedDataHolderT<QString>(str)) );
-                                     
-        strings_by_key.insert(str, id);
-    }
-}
-
 ////////
 //////// Implementation of SharedDataStream
 ////////
@@ -218,12 +165,61 @@ quint32 SharedDataStream::version() const
 {
     if (version_number == 0)
         //the version number has not been set - use the latest version
-        return 1;
+        return 2;
     else
         return version_number;
 }
 
-static quint32 SHARED_DATASTREAM_MAGIC = 3640980511;
+static quint64 SHARED_DATASTREAM_MAGIC = 9840821820734431312LLU;
+
+quint64 SharedDataStream::magic()
+{
+    return SHARED_DATASTREAM_MAGIC;
+}
+
+/** Try to find the magic number in the next 64bits of the datastream. This
+    only peeks ahead - it does not advance the datastream at all.
+    This returns true if the next 64bits contain the magic number */
+bool SharedDataStream::peekMagic()
+{
+    QByteArray magic = ds.device()->peek(8);
+    
+    if (magic.count() < 8)
+    {
+        //there is not enough remaining data to contain the magic number
+        return false;
+    }
+    
+    QDataStream ds2(magic);
+    quint64 magic_number;
+    
+    ds2 >> magic_number;
+    
+    return magic_number == SHARED_DATASTREAM_MAGIC;
+}
+
+/** Read the ID number of the next shared object from the stream */
+quint32 SharedDataStream::loadID()
+{
+    quint32 id;
+    
+    if (this->version() == 1)
+    {
+        bool already_streamed;
+        ds >> id >> already_streamed;
+    }
+    else if (this->version() == 2)
+    {
+        quint64 magic;
+        ds >> magic >> id;
+        
+        this->assertCorrectMagic(magic);
+    }
+    else
+        this->throwVersionError();
+
+    return id;
+}
 
 /** This internal function is used to read the version number from the data stream
     (if it has not already been read) */
@@ -232,30 +228,16 @@ void SharedDataStream::readVersion()
     if (version_number != 0)
         return;
         
-    //try to read the magic number (4 bytes) from the datastream
-    QByteArray magic = ds.device()->peek(4);
-    
-    if (magic.isEmpty())
+    if (not this->peekMagic())
     {
         //there is no magic - we must be at version 1
         version_number = 1;
         return;
     }
     
-    QDataStream ds2(magic);
-    
-    quint32 magic_number;
-    ds2 >> magic_number;
-    
-    if (magic_number != SHARED_DATASTREAM_MAGIC)
-    {
-        //this is not the magic number - it is missing, which implies
-        //that this is version 1 of the format
-        version_number = 1;
-        return;
-    }
-    
     //read the magic number and version number
+    quint64 magic_number;
+    
     ds >> magic_number >> version_number;
     
     if (magic_number != SHARED_DATASTREAM_MAGIC)
@@ -268,6 +250,13 @@ void SharedDataStream::readVersion()
         throw SireError::program_bug( QObject::tr(
             "There was no version number, even though there should have been one!"),
                 CODELOC );
+
+    if (version_number > 2)
+    {
+        qDebug() << "Reading a SharedDataStream written using a newer version ("
+                 << version_number << ") than this version (2) - this could lead "
+                 << "to problems...";
+    }
 }
 
 /** This function writes the version number of the SharedDataStream into the 
@@ -277,64 +266,53 @@ void SharedDataStream::writeVersion()
     if (version_number == 0)
         return;
         
-    //we are at version 1
-    version_number = 1;
+    //we are at version 2
+    version_number = 2;
     
     ds << SHARED_DATASTREAM_MAGIC << version_number;
 }
 
-/** Specialisation of the serialisation function implicitly shared
-    QString strings. This will stream the string in a way that ensures 
-    that only a single copy of the string is passed to the stream, 
-    with multiple copies being merely references to the first copy. */
-template<>
-SharedDataStream& SharedDataStream::operator<<(const QString &str)
+namespace SireStream
 {
-    this->writeVersion();
 
-    //get the ID of this string in the registry
-    bool first_copy;
-    quint32 id = registry->getStringID(str, &first_copy);
+namespace detail
+{
 
-    ds << id << first_copy;
-
-    if (first_copy)
+/** This is a helper class that helps the loading and saving of a shared
+    pointer */
+struct GetQStringPointer
+{
+    static bool isEmpty(const QString &string)
     {
-        //this is the first copy of this string and must be streamed
-        ds << str;
+        return string.isEmpty();
     }
 
-    return *this;
+    static const void* value(const QString &string)
+    {
+        return string.constData();
+    }
+    
+    static void load(QDataStream &ds, QString &string)
+    {
+        ds >> string;
+    }
+    
+    static void save(QDataStream &ds, QString &string)
+    {
+        ds << string;
+    }
+};
+
+} // end of namespace detail
+
+SharedDataStream& operator<<(SharedDataStream &sds, const QString &string)
+{
+    sds.saveShared<QString, GetQStringPointer>(string);
+    return sds;
 }
 
-/** Specialisation of the deserialisation function for implicitly shared
-    QString strings. This will destream the string in a way that ensures 
-    that the implicitly shared nature of the string is preserved. */
-template<>
-SharedDataStream& SharedDataStream::operator>>(QString &str)
+SharedDataStream& operator>>(SharedDataStream &sds, QString &string)
 {
-    this->readVersion();
-
-    if (registry->version() == 1)
-    {
-        quint32 id;
-        bool first_copy;
-        
-        ds >> id >> first_copy;
-        
-        if (first_copy)
-        {
-            //this is the first copy of this string
-            ds >> str;
-            
-            //register the copy
-            registry->loadedString(id, str);
-        }
-        else
-            str = registry->getString(id);
-    }
-    else
-        registry->versionError("1");
-
-    return *this;
+    sds.loadShared<QString, GetQStringPointer>(string);
+    return sds;
 }
