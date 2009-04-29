@@ -31,6 +31,8 @@
 
 #include "qvariant_metatype.h"
 
+#include <QVarLengthArray>
+
 #include "packedarray2d.h"
 
 #include "SireStream/shareddatastream.h"
@@ -2016,34 +2018,168 @@ QDataStream& operator>>(QDataStream &ds,
     return ds;
 }
 
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds,
+                        const SireBase::detail::SharedArray2DPtr< 
+                                    SireBase::detail::PackedArray2DData<T> > &d)
+{
+    SireStream::SharedDataStream sds(ds);
+
+    quint32 narrays = d->nArrays();
+
+    //serialise the number of arrays in this array
+    sds << narrays;
+    
+    if (narrays == 0)
+        return ds;
+    
+    //now go through each array and serialise the number of values
+    //in each array
+    for (quint32 i=0; i<narrays; ++i)
+    {
+        sds << quint32( d->arrayData()[i].count() );
+    }
+    
+    //now serialise all of the data
+    quint32 nvalues = d->nValues();
+    const T *array_data = d->valueData();
+    
+    for (quint32 i=0; i<nvalues; ++i)
+    {
+        sds << array_data[i];
+    }
+    
+    return ds;
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds,
+                        SireBase::detail::SharedArray2DPtr< 
+                                    SireBase::detail::PackedArray2DData<T> > &d)
+{
+    SireStream::SharedDataStream sds(ds);
+
+    //get the number of arrays in this array
+    quint32 narrays;
+    
+    sds >> narrays;
+    
+    if (narrays == 0)
+    {
+        d = SireBase::detail::getSharedNull<T>();
+        return ds;
+    }
+
+    QVarLengthArray<quint32> array_sizes(narrays);
+
+    quint32 nvals = 0;
+    
+    for (quint32 i=0; i<narrays; ++i)
+    {
+        sds >> array_sizes[i];
+        nvals += array_sizes[i];
+    }
+
+    if (nvals == 0)
+    {
+        d = SireBase::detail::getSharedNull<T>();
+        return ds;
+    }
+    
+    SireBase::detail::SharedArray2DPtr< SireBase::detail::PackedArray2DData<T> > d2 
+                                    = SireBase::detail::createArray<T>(narrays, nvals);
+    
+    SireBase::detail::PackedArray2DData<T> *dptr = d2.data();
+    
+    //dimension each packed array
+    for (quint32 i=0; i<narrays; ++i)
+    {
+        //dimension the array
+        dptr->setNValuesInArray(i, array_sizes[i]);
+    }
+    
+    dptr->close();
+    
+    //now extract all of the objects...
+    T *data = dptr->valueData();
+    
+    for (quint32 i=0; i<nvals; ++i)
+    {
+        sds >> data[i];
+    }
+    
+    d = d2;
+    
+    return ds;
+}
+
+namespace SireBase{ namespace detail {
+
+template<class T>
+struct GetPackedArrayPointer
+{
+    static bool isEmpty(const SharedArray2DPtr< PackedArray2DData<T> > &d)
+    {
+        return d.constData() == 0;
+    }
+
+    static const void* value(const SharedArray2DPtr< PackedArray2DData<T> > &d)
+    {
+        return d.constData();
+    }
+    
+    static void load(QDataStream &ds, SharedArray2DPtr< PackedArray2DData<T> > &d)
+    {
+        ds >> d;
+    }
+    
+    static void save(QDataStream &ds, const SharedArray2DPtr< PackedArray2DData<T> > &d)
+    {
+        ds << d;
+    }
+};
+
+}}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+SireStream::SharedDataStream& operator>>(SireStream::SharedDataStream &sds,
+                                         SireBase::detail::SharedArray2DPtr< 
+                                            SireBase::detail::PackedArray2DData<T> > &d)
+{
+    sds.sharedLoad< SireBase::detail::SharedArray2DPtr<
+                        SireBase::detail::PackedArray2DData<T> >,
+                            SireBase::detail::GetPackedArrayPointer<T> >(d);
+
+    return sds;
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+SireStream::SharedDataStream& operator<<(SireStream::SharedDataStream &sds,
+                                         const SireBase::detail::SharedArray2DPtr< 
+                                            SireBase::detail::PackedArray2DData<T> > &d)
+{
+    sds.sharedSave< SireBase::detail::SharedArray2DPtr<
+                        SireBase::detail::PackedArray2DData<T> >,
+                            SireBase::detail::GetPackedArrayPointer<T> >(d);
+
+    return sds;
+}
+
 /** Serialise a PackedArray2D<T> to a binary datastream */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 QDataStream& operator<<(QDataStream &ds, 
                         const SireBase::PackedArray2D<T> &arrays)
 {
-    SireBase::detail::writePackedArray2DHeader(ds, 1);
+    SireBase::detail::writePackedArray2DHeader(ds);
     
     SireStream::SharedDataStream sds(ds);
     
-    //serialise the number of arrays in this array
-    sds << quint32(arrays.count());
-    
-    if (arrays.count() == 0)
-        return ds;
-    
-    //now go through each array and serialise the number of values
-    //in each array
-    for (int i=0; i<arrays.count(); ++i)
-    {
-        sds << quint32( arrays.constData()[i].count() );
-    }
-    
-    //now serialise all of the data
-    for (int i=0; i<arrays.nValues(); ++i)
-    {
-        sds << arrays.constValueData()[i];
-    }
+    sds << arrays.d;
     
     return ds;
 }
@@ -2054,41 +2190,20 @@ SIRE_OUTOFLINE_TEMPLATE
 QDataStream& operator>>(QDataStream &ds, 
                         SireBase::PackedArray2D<T> &arrays)
 {
-    SireBase::detail::readPackedArray2DHeader(ds, 1);
-    
-    //get the number of arrays in this array
-    quint32 narrays;
+    SireStream::VersionID v = SireBase::detail::readPackedArray2DHeader(ds);
     
     SireStream::SharedDataStream sds(ds);
     
-    sds >> narrays;
-    
-    if (narrays == 0)
+    if (v == 2)
     {
-        arrays = SireBase::PackedArray2D<T>();
-        return ds;
+        sds >> arrays.d;
     }
-    
-    QVector< QVector<T> > tmp_arrays(narrays);
-    
-    for (quint32 i=0; i<narrays; ++i)
+    else if (v == 1)
     {
-        quint32 nvals;
-        sds >> nvals;
-        tmp_arrays[i] = QVector<T>(nvals);
+        ds >> arrays.d;
     }
-    
-    SireBase::PackedArray2D<T> new_arrays(tmp_arrays);
-    
-    //now extract all of the objects...
-    T *data = new_arrays.valueData();
-    
-    for (int i=0; i<new_arrays.nValues(); ++i)
-    {
-        sds >> data[i];
-    }
-    
-    arrays = new_arrays;
+    else
+        qFatal("SEVERE PROGRAM BUG IN %s", qPrintable(CODELOC));
     
     return ds;
 }

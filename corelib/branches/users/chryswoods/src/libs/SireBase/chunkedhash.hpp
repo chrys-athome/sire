@@ -49,6 +49,12 @@ QDataStream& operator>>(QDataStream&, SireBase::ChunkedHash<Key,T,N>&);
 namespace SireBase
 {
 
+namespace detail
+{
+template<class Key, class T, int N>
+const void* get_shared_container_pointer(const SireBase::ChunkedHash<Key,T,N>&);
+} // end of namespace detail
+
 /** This is a hash that stores the values and keys in separate
     chunks - this prevents large copies if only small parts
     of the hash are changed at a time
@@ -61,6 +67,9 @@ class SIREBASE_EXPORT ChunkedHash
 
 friend QDataStream& ::operator<<<>(QDataStream&, const ChunkedHash<Key,T,N>&);
 friend QDataStream& ::operator>><>(QDataStream&, ChunkedHash<Key,T,N>&);
+
+friend const void* 
+SireBase::detail::get_shared_container_pointer<>(const ChunkedHash<Key,T,N>&);
 
 public:
     class iterator;
@@ -1395,6 +1404,45 @@ QList<T> ChunkedHash<Key,T,N>::values(const Key &key) const
         return _chunks[idx].values(key);
 }
 
+namespace detail
+{
+
+template<class Key, class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+const void* get_shared_container_pointer(const SireBase::ChunkedHash<Key,T,N> &hash)
+{
+    if (hash.empty())
+        return 0;
+    else
+        return hash._chunks.constData();
+}
+
+template<class Key, class T, int N>
+struct GetChunkedHashPointer
+{
+    static bool isEmpty(const ChunkedHash<Key,T,N> &hash)
+    {
+        return hash.empty();
+    }
+
+    static const void* value(const ChunkedHash<Key,T,N> &hash)
+    {
+        return get_shared_container_pointer<Key,T,N>(hash);
+    }
+
+    static void load(QDataStream &ds, ChunkedHash<Key,T,N> &hash)
+    {
+        ds >> hash;
+    }
+    
+    static void save(QDataStream &ds, const ChunkedHash<Key,T,N> &hash)
+    {
+        ds << hash;
+    }
+};
+
+} // end of namespace detail
+
 #endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 }
@@ -1442,6 +1490,30 @@ QDataStream& operator>>(QDataStream &ds, SireBase::ChunkedHash<Key,T,N> &hash)
     }
 
     return ds;
+}
+
+/** Serialise to a binary datastream */
+template<class Key, class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+SireStream::SharedDataStream& 
+operator<<(SireStream::SharedDataStream &sds, const SireBase::ChunkedHash<Key,T,N> &hash)
+{
+    sds.sharedSaveContainer< SireBase::ChunkedHash<Key,T,N>, 
+                             SireBase::detail::GetChunkedHashPointer<Key,T,N> >(hash);
+                            
+    return sds;
+}
+
+/** Extract from a binary datastream */
+template<class Key, class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+SireStream::SharedDataStream& 
+operator>>(SireStream::SharedDataStream &sds, SireBase::ChunkedHash<Key,T,N> &hash)
+{
+    sds.sharedLoadContainer< SireBase::ChunkedHash<Key,T,N>, 
+                             SireBase::detail::GetChunkedHashPointer<Key,T,N> >(hash);
+                            
+    return sds;
 }
 
 #endif // SIRE_SKIP_INLINE_FUNCTIONS

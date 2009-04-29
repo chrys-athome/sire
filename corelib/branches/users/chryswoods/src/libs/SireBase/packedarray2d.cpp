@@ -78,18 +78,20 @@ static const RegisterMetaType<PackedArray2DDataBase> r_parray( MAGIC_ONLY,
                                                       "SireBase::PackedArray2D<T>" );
 
 void SIREBASE_EXPORT 
-SireBase::detail::writePackedArray2DHeader(QDataStream &ds, quint32 version)
+SireBase::detail::writePackedArray2DHeader(QDataStream &ds)
 {
-    writeHeader(ds, r_parray, version);
+    writeHeader(ds, r_parray, 2);
 }
 
-void SIREBASE_EXPORT 
-SireBase::detail::readPackedArray2DHeader(QDataStream &ds, quint32 version)
+quint32 SIREBASE_EXPORT 
+SireBase::detail::readPackedArray2DHeader(QDataStream &ds)
 {
     VersionID v = readHeader(ds, r_parray);
     
-    if (v != version)
-        throw version_error(v, QString::number(version), r_parray, CODELOC);
+    if (v != 1 and v != 2)
+        throw version_error(v, "1,2", r_parray, CODELOC);
+
+    return v;
 }
 
 static const RegisterMetaType<PackedArray2D_ArrayDataBase> r_parrayarray( MAGIC_ONLY,

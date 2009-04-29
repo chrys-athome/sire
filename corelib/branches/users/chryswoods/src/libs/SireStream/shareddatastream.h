@@ -50,6 +50,8 @@
 #include "SireBase/shareddatapointer.hpp"
 #include "SireBase/sharedpolypointer.hpp"
 
+#include <QDebug>
+
 SIRE_BEGIN_HEADER
 
 namespace SireStream
@@ -113,6 +115,33 @@ const T& SharedDataHolder::sharedData() const
     return this_ptr->sharedData();
 }
 
+/** Helper used to help stream the SharedPolyPointer class */
+template<class T>
+struct GetSharedPolyPointer
+{
+    static bool isEmpty(const T &shared_pointer)
+    {
+        return shared_pointer.constData() == 0;
+    }
+
+    static const void* value(const T &shared_pointer)
+    {
+        return shared_pointer.constData();
+    }
+    
+    static void load(QDataStream &ds, T &shared_pointer)
+    {
+        //null pointers will have been caught before here
+        ds >> shared_pointer;
+    }
+    
+    static void save(QDataStream &ds, const T &shared_pointer)
+    {
+        //null pointers will have been caught before here
+        ds << shared_pointer;
+    }
+};
+
 /** This is a helper class that helps the loading and saving of a shared
     pointer */
 template<class T, class S>
@@ -142,17 +171,17 @@ struct GetSharedDataPointer
     static void load_v1(QDataStream &ds, T &shared_pointer)
     {
         //load using the old format
-        bool null_pointer;
+        bool valid_pointer;
         
-        ds >> null_pointer;
+        ds >> valid_pointer;
         
-        if (null_pointer)
+        if (valid_pointer)
         {
-            shared_pointer = T();
+            GetSharedDataPointer<T,S>::load(ds, shared_pointer);
         }
         else
         {
-            GetSharedDataPointer<T,S>::load(ds, shared_pointer);
+            shared_pointer = T();
         }
     }
     
@@ -160,6 +189,56 @@ struct GetSharedDataPointer
     {
         //null pointers will have been caught before here
         ds << *(shared_pointer.constData());
+    }
+};
+
+/** This is a helper class that helps the loading and saving of a 
+    boost::shared_ptr */
+template<class T, class S>
+struct GetBoostSharedPointer
+{
+    static bool isEmpty(const T &shared_pointer)
+    {
+        return shared_pointer.get() == 0;
+    }
+
+    static const void* value(const T &shared_pointer)
+    {
+        return shared_pointer.get();
+    }
+    
+    static void load(QDataStream &ds, T &shared_pointer)
+    {
+        if (shared_pointer.get() == 0)
+        {
+            shared_pointer = T( new S() );
+        }
+        
+        //null pointers will have been caught before here
+        ds >> *(shared_pointer.get());
+    }
+
+    static void load_v1(QDataStream &ds, T &shared_pointer)
+    {
+        //load using the old format
+        bool valid_pointer;
+        
+        ds >> valid_pointer;
+        
+        if (valid_pointer)
+        {
+            GetSharedDataPointer<T,S>::load(ds, shared_pointer);
+        }
+        else
+        {
+            shared_pointer = T();
+        }
+    }
+    
+    static void save(QDataStream &ds, const T &shared_pointer)
+    {
+        //null pointers will have been caught before here
+        ds << *(shared_pointer.get());
     }
 };
 
@@ -217,7 +296,16 @@ public:
     bool contains(const T &shared_object) const;
     
     bool containsKey(quint32 id) const;
+
+    static quint64 magic();
+
+    quint32 version() const;
     
+    void readVersion();
+    void writeVersion();
+
+    bool peekMagic();
+
 private:
     SharedDataRegistry();
 
@@ -236,6 +324,12 @@ private:
     
     /** Pointer to the QDataStream object associated with this registry */
     QDataStream *ds;
+    
+    /** The version number of this shared datastream - this is used
+        to indicate the range of shared objects that are shared-streamed
+        rather than normally streamed, and to control the format
+        of the shared stream */
+    quint32 version_number;
 };
 
 /** Return a reference to the shared object with ID 'id'
@@ -259,15 +353,18 @@ template<class T, class GETPOINTER>
 SIRE_OUTOFLINE_TEMPLATE
 quint32 SharedDataRegistry::getID(const T &shared_object)
 {
+    if (GETPOINTER::isEmpty(shared_object))
+        return 0;
+
     const void *ptr = GETPOINTER::value(shared_object);
 
     if (not objects_by_key.contains(ptr))
     {
-        objects_by_id.insert( quint32(objects_by_id.count()),
+        objects_by_id.insert( quint32(objects_by_id.count()+1),
                               boost::shared_ptr<SharedDataHolder>(
                                      new SharedDataHolderT<T>(shared_object)) );
                                      
-        objects_by_key.insert(ptr, objects_by_id.count() - 1);
+        objects_by_key.insert(ptr, objects_by_id.count());
     }
 
     return objects_by_key.value(ptr);
@@ -319,17 +416,32 @@ public:
 
     ~SharedDataStream();
 
+    /** Simple overloads used to provide non-shared streaming for all classes
+        that QDataStream supports */
     template<class T>
-    SharedDataStream& operator<<(const T &value);
+    SharedDataStream& operator<<(const T &value)
+    {
+        ds << value;
+        return *this;
+    }
     
+    /** Simple overloads used to provide non-shared streaming for all classes
+        that QDataStream supports */
     template<class T>
-    SharedDataStream& operator>>(T &value);
+    SharedDataStream& operator>>(T &value)
+    {
+        ds >> value;
+        return *this;
+    }
 
     template<class T, class GETPOINTER>
     void sharedSave(const T &value);
 
     template<class T, class GETPOINTER>
     void sharedSavePointer(const T &pointer);
+    
+    template<class T, class GETPOINTER>
+    void sharedSaveContainer(const T &container);
     
     template<class T, class GETPOINTER>
     void sharedLoad(T &value);
@@ -339,6 +451,9 @@ public:
 
     template<class T, class GETPOINTER>
     void sharedLoadPointer(T &pointer);
+
+    template<class T, class GETPOINTER>
+    void sharedLoadContainer(T &container);
 
     quint32 version() const;
 
@@ -360,12 +475,6 @@ private:
     /** Reference to the actual QDataStream that is used to
         stream the data */
     QDataStream &ds;
-    
-    /** The version number of this shared datastream - this is used
-        to indicate the range of shared objects that are shared-streamed
-        rather than normally streamed, and to control the format
-        of the shared stream */
-    quint32 version_number;
 };
 
 /** This function is used to save a shared object. If multiple copies of 
@@ -375,8 +484,7 @@ template<class T, class GETPOINTER>
 void SharedDataStream::sharedSave(const T &value)
 {
     //ensure that the version number of the shared stream is written
-    if (this->version_number == 0)
-        this->writeVersion();
+    this->writeVersion();
 
     //is this a null object - if so, just write a zero
     if (GETPOINTER::isEmpty(value))
@@ -396,16 +504,13 @@ void SharedDataStream::sharedSave(const T &value)
         if (not already_streamed)
             GETPOINTER::save(ds, value);
     }
-    
-    return *this;
 }
 
 /** This function is used to load a shared object from the stream */
 template<class T, class GETPOINTER>
 void SharedDataStream::sharedLoad(T &value, const T &default_value)
 {
-    if (this->version_number == 0)
-        this->readVersion();
+    this->readVersion();
 
     if (this->version() > 1)
     {
@@ -415,19 +520,25 @@ void SharedDataStream::sharedLoad(T &value, const T &default_value)
         if (not this->peekMagic())
         {
             //this object is not shared-streamed - just load it up normally
-            ds >> value;
+            GETPOINTER::load(ds, value);
             return;
         }
     }
 
     quint32 id = this->loadID();
     
-    if (id == 0)
+    if (this->version() > 1)
     {
-        //this is a null object
-        value = default_value;
+        //versions > 1 use ID == 0 to refer to a null object
+        if (id == 0)
+        {
+            //this is a null object
+            value = default_value;
+            return;
+        }
     }
-    else if (this->registry->containsKey(id))
+    
+    if (this->registry->containsKey(id))
     {
         //this object has already been read - get it from the database
         value = this->registry->getSharedObject<T>(id);
@@ -438,7 +549,7 @@ void SharedDataStream::sharedLoad(T &value, const T &default_value)
         GETPOINTER::load(ds, value);
         
         //inform the database of the value of this object
-        this->registry->loadedSharedObject<T>(id, value);
+        this->registry->loadedSharedObject<T,GETPOINTER>(id, value);
     }
 }
 
@@ -453,21 +564,16 @@ void SharedDataStream::sharedLoad(T &value)
 template<class T, class GETPOINTER>
 void SharedDataStream::sharedLoadPointer(T &pointer)
 {
-    if (this->version_number == 0)
-        this->readVersion();
+    this->readVersion();
 
     if (this->version() == 1)
     {
         //version 1 used a different format for shared pointers
-        
         quint32 id = this->loadID();
         
-        if (id == 0)
-        {
-            //this is a null object
-            pointer = T();
-        }
-        else if (this->registry->containsKey(id))
+        //version 1 also used ID == 0 as a valid ID number
+        
+        if (this->registry->containsKey(id))
         {
             //this object has already been read - get it from the database
             pointer = this->registry->getSharedObject<T>(id);
@@ -478,13 +584,11 @@ void SharedDataStream::sharedLoadPointer(T &pointer)
             GETPOINTER::load_v1(ds, pointer);
             
             //inform the database of the value of this object
-            this->registry->loadedSharedObject<T>(id, pointer);
+            this->registry->loadedSharedObject<T,GETPOINTER>(id, pointer);
         }
     }
     else
         this->sharedLoad<T,GETPOINTER>(pointer);
-
-    return *this;
 }
 
 /** This function is used to save a shared pointer to the stream */
@@ -493,6 +597,32 @@ SIRE_OUTOFLINE_TEMPLATE
 void SharedDataStream::sharedSavePointer(const T &pointer)
 {
     this->sharedSave<T,GETPOINTER>(pointer);
+}
+
+/** This function is used to load a shared container from the stream */
+template<class T, class GETPOINTER>
+SIRE_OUTOFLINE_TEMPLATE
+void SharedDataStream::sharedLoadContainer(T &container)
+{
+    this->readVersion();
+
+    if (this->version() == 1)
+    {
+        //version 1 did not shared save shared containers
+        ds >> container;
+    }
+    else
+    {
+        this->sharedLoad<T,GETPOINTER>(container);
+    }
+}
+
+/** This function is used to save a shared container to the stream */
+template<class T, class GETPOINTER>
+SIRE_OUTOFLINE_TEMPLATE
+void SharedDataStream::sharedSaveContainer(const T &container)
+{
+    this->sharedSave<T,GETPOINTER>(container);
 }
 
 //////////
@@ -552,7 +682,7 @@ SharedDataStream& operator<<(SharedDataStream &sds,
                              const SharedPolyPointer<T> &objptr)
 {
     sds.sharedSave< SharedPolyPointer<T>,
-                    detail::GetSharedDataPointer<SharedPolyPointer<T>,T> >(objptr);
+                    detail::GetSharedPolyPointer< SharedPolyPointer<T> > >(objptr);
 
     return sds;
 }
@@ -563,7 +693,7 @@ SharedDataStream& operator>>(SharedDataStream &sds,
                              SharedPolyPointer<T> &objptr)
 {
     sds.sharedLoad< SharedPolyPointer<T>,
-                    detail::GetSharedDataPointer<SharedPolyPointer<T>,T> >(objptr);
+                    detail::GetSharedPolyPointer< SharedPolyPointer<T> > >(objptr);
 
     return sds;
 }
@@ -574,7 +704,7 @@ SharedDataStream& operator<<(SharedDataStream &sds,
                              const boost::shared_ptr<T> &objptr)
 {
     sds.sharedSave< boost::shared_ptr<T>,
-                    detail::GetSharedDataPointer<boost::shared_ptr<T>,T> >(objptr);
+                    detail::GetBoostSharedPointer<boost::shared_ptr<T>,T> >(objptr);
 
     return sds;
 }
@@ -585,7 +715,7 @@ SharedDataStream& operator>>(SharedDataStream &sds,
                              boost::shared_ptr<T> &objptr)
 {
     sds.sharedLoad< boost::shared_ptr<T>,
-                    detail::GetSharedDataPointer<boost::shared_ptr<T>,T> >(objptr);
+                    detail::GetBoostSharedPointer<boost::shared_ptr<T>,T> >(objptr);
 
     return sds;
 }
@@ -600,7 +730,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 SharedDataStream& sharedSaveContainer(SharedDataStream &sds, const T &container)
 {
-    sds.sharedSave< T, detail::GetSharedContainerPointer<T> >(container);
+    sds.sharedSaveContainer< T, detail::GetSharedContainerPointer<T> >(container);
     return sds;
 }
 
@@ -608,7 +738,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 SharedDataStream& sharedLoadContainer(SharedDataStream &sds, T &container)
 {
-    sds.sharedLoad< T, detail::GetSharedContainerPointer<T> >(container);
+    sds.sharedLoadContainer< T, detail::GetSharedContainerPointer<T> >(container);
     return sds;
 }
 

@@ -418,23 +418,31 @@ void Atom::assertContainsMetadata(const PropertyName &key,
                 .arg(metakey.toString(), key.toString()), CODELOC );
 }
 
-bool SIREMOL_EXPORT detail::has_property(const Atom*, const MoleculeData &moldata,
-                                         const PropertyName &key)
+namespace SireMol
+{
+namespace detail
+{
+
+bool SIREMOL_EXPORT has_property(const Atom*, const MoleculeData &moldata,
+                                 const PropertyName &key)
 {
     return moldata.hasPropertyOfType<AtomProp>(key);
 }
 
-bool SIREMOL_EXPORT detail::has_metadata(const Atom*, const MoleculeData &moldata,
-                                         const PropertyName &metakey)
+bool SIREMOL_EXPORT has_metadata(const Atom*, const MoleculeData &moldata,
+                                 const PropertyName &metakey)
 {
     return moldata.hasMetadataOfType<AtomProp>(metakey);
 }
 
-bool SIREMOL_EXPORT detail::has_metadata(const Atom*, const MoleculeData &moldata,
-                                         const PropertyName &key, const PropertyName &metakey)
+bool SIREMOL_EXPORT has_metadata(const Atom*, const MoleculeData &moldata,
+                                 const PropertyName &key, const PropertyName &metakey)
 {
     return moldata.hasMetadataOfType<AtomProp>(key, metakey);
 }
+
+} // end of namespace detail
+} // end of namespace SireMol
 
 ///////
 /////// Explicitly instantiate the Atom manipulator classes

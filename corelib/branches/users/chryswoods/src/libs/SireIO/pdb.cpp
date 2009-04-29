@@ -68,6 +68,7 @@
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
+#include "SireStream/sharestrings.h"
 
 #include "tostring.h"
 
@@ -319,7 +320,7 @@ PDBAtom PDBAtom::readFromLine(const QString &line, int linenum)
 
     bool ok = true;
 
-    atom.record_name = line.mid(0,6).trimmed();
+    atom.record_name = SireStream::shareString( line.mid(0,6).trimmed() );
     
     atom.serial = line.mid(6,5).toInt(&ok);
     
@@ -328,9 +329,9 @@ PDBAtom PDBAtom::readFromLine(const QString &line, int linenum)
             "Line %1 does not have a valid PDB atom number (%2).\n%3")
                 .arg(linenum).arg(line.mid(6,5).trimmed(), line), CODELOC );
 
-    atom.name = line.mid(12,4);
+    atom.name = SireStream::shareString( line.mid(12,4) );
     atom.altloc = line.mid(16,1).trimmed();
-    atom.resname = line.mid(17,3);
+    atom.resname = SireStream::shareString( line.mid(17,3) );
     atom.chainid = line.mid(21,1).trimmed();
     atom.resseq = line.mid(22,4).toInt(&ok);
     
@@ -388,14 +389,14 @@ PDBAtom PDBAtom::readFromLine(const QString &line, int linenum)
     
     if (line.length() >= 73)
     {
-        atom.segid = line.mid(72,4).trimmed();
+        atom.segid = SireStream::shareString( line.mid(72,4).trimmed() );
     }
     else
         atom.segid = QString::null;
     
     if (line.length() >= 77)
     {
-        atom.element = line.mid(76,2).trimmed();
+        atom.element = SireStream::shareString( line.mid(76,2).trimmed() );
     }
     else
         atom.element = QString::null;

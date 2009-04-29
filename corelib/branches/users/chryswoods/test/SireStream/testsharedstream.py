@@ -15,7 +15,9 @@ data = save(props)
 
 print "Properties takes up %d bytes" % data.size()
 
+print "Loading the properties..."
 p2 = load(data)
+print "...complete!"
 
 print props
 print p2

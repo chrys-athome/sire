@@ -2744,13 +2744,10 @@ void CoordGroupArray::changeFrame(quint32 i, const AxisSet &from_frame,
 
 static const RegisterMetaType<CoordGroupArrayArray> r_cgarrayarray;
 
-/** Serialise to a binary datastream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
-                                       const CoordGroupArrayArray &cgarray)
+QDataStream& operator<<(QDataStream &ds,
+                        const CGSharedPtr<CGArrayArrayData> &d)
 {
-    writeHeader(ds, r_cgarrayarray, 1);
-
-    const CGArrayArrayData &array = *(cgarray.d);
+    const CGArrayArrayData &array = *d;
 
     //serialise the prime metadata
     ds << quint32( array.nCGArrays() ) 
@@ -2798,61 +2795,131 @@ static CGSharedPtr<CGArrayArrayData> createCGArrayArray(quint32 narrays,
     return CGSharedPtr<CGArrayArrayData>(array);
 }
 
+QDataStream& operator>>(QDataStream &ds,
+                        CGSharedPtr<CGArrayArrayData> &d)
+{
+    quint32 ncgarrays, ncgroups, ncoords;
+    
+    //read the prime metadata
+    ds >> ncgarrays >> ncgroups >> ncoords;
+
+    //create space for this data
+    CGSharedPtr<CGArrayArrayData> d2 = createCGArrayArray(ncgarrays, ncgroups,
+                                                          ncoords);
+        
+    CGArrayArrayData &array = *d2;
+                                                                                                                                            
+    //dimension the arrays..
+    for (quint32 i=0; i<ncgarrays; ++i)
+    {
+        quint32 n;
+        ds >> n;
+        
+        array.setNCGroupsInArray(i, n);
+    }
+
+    for (quint32 i=0; i<ncgroups; ++i)
+    {
+        quint32 n;
+        ds >> n;
+        
+        array.setNPointsInCGroup(i, n);
+    }
+    
+    array.close();
+    
+    //copy in the AABoxes...
+    for (quint32 i=0; i<ncgroups; ++i)
+    {
+        ds >> array.aaBoxData()[i];
+    }
+    
+    //copy in the coordinates
+    for (quint32 i=0; i<ncoords; ++i)
+    {
+        ds >> array.coordsData()[i];
+    }
+    
+    d = d2;
+
+    return ds;
+}
+
+
+/** This is a helper class that helps the loading and saving of a
+    CGSharedPtr<CGArrayArrayData> */
+struct GetCGSharedDataPointer
+{
+    static bool isEmpty(const CGSharedPtr<CGArrayArrayData> &d)
+    {
+        return d.constData() == 0;
+    }
+
+    static const void* value(const CGSharedPtr<CGArrayArrayData> &d)
+    {
+        return d.constData();
+    }
+    
+    static void load(QDataStream &ds, CGSharedPtr<CGArrayArrayData> &d)
+    {
+        ds >> d;
+    }
+    
+    static void save(QDataStream &ds, const CGSharedPtr<CGArrayArrayData> &d)
+    {
+        //null pointers will have been caught before here
+        ds << d;
+    }
+};
+
+
+SharedDataStream& operator<<(SharedDataStream &sds,
+                             const CGSharedPtr<CGArrayArrayData> &d)
+{
+    sds.sharedSave< CGSharedPtr<CGArrayArrayData>, GetCGSharedDataPointer >(d);
+    
+    return sds;
+}
+
+SharedDataStream& operator>>(SharedDataStream &sds,
+                             CGSharedPtr<CGArrayArrayData> &d)
+{
+    sds.sharedLoad< CGSharedPtr<CGArrayArrayData>, GetCGSharedDataPointer >(d);
+
+    return sds;
+}
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
+                                       const CoordGroupArrayArray &cgarray)
+{
+    writeHeader(ds, r_cgarrayarray, 2);
+
+    SharedDataStream sds(ds);
+    
+    sds << cgarray.d;
+    
+    return ds;
+}
+
 /** Extract from a binary datastream */
 QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, 
                                        CoordGroupArrayArray &cgarray)
 {
     VersionID v = readHeader(ds, r_cgarrayarray);
     
-    if (v == 1)
+    if (v == 2)
     {
-        quint32 ncgarrays, ncgroups, ncoords;
-        
-        //read the prime metadata
-        ds >> ncgarrays >> ncgroups >> ncoords;
-    
-        //create space for this data
-        CGSharedPtr<CGArrayArrayData> d = createCGArrayArray(ncgarrays, ncgroups,
-                                                             ncoords);
-            
-        CGArrayArrayData &array = *d;
-                                                                                                                                                
-        //dimension the arrays..
-        for (quint32 i=0; i<ncgarrays; ++i)
-        {
-            quint32 n;
-            ds >> n;
-            
-            array.setNCGroupsInArray(i, n);
-        }
-
-        for (quint32 i=0; i<ncgroups; ++i)
-        {
-            quint32 n;
-            ds >> n;
-            
-            array.setNPointsInCGroup(i, n);
-        }
-        
-        array.close();
-        
-        //copy in the AABoxes...
-        for (quint32 i=0; i<ncgroups; ++i)
-        {
-            ds >> array.aaBoxData()[i];
-        }
-        
-        //copy in the coordinates
-        for (quint32 i=0; i<ncoords; ++i)
-        {
-            ds >> array.coordsData()[i];
-        }
-        
-        cgarray.d = d;
+        SharedDataStream sds(ds);
+        sds >> cgarray.d;
+    }
+    else if (v == 1)
+    {
+        ds >> cgarray.d;
     }
     else
-        throw version_error(v, "1", r_cgarrayarray, CODELOC);
-
+        throw version_error(v, "1,2", r_cgarrayarray, CODELOC);
+    
     return ds;
 }
 

@@ -89,6 +89,21 @@ def testStream(c):
 
     t.start()
 
+    header = Sire.Stream.getDataHeader(data)
+    print header.dataType()
+    print header.requiredLibraries()
+
+    print header.createdBy()
+    print header.createdWhen().toString()
+    print header.createdWhere()
+
+    print header.requiredMemory()
+    print header.compressionRatio()
+    print header.digest()
+    print header.repository()
+    print header.buildVersion()
+    print header.systemInfo()
+
     c2 = Sire.Stream.load(data)
 
     ms = t.elapsed()
@@ -101,6 +116,7 @@ testStream(system)
 
 data = Sire.Stream.save(system)
 
+print "Probing the system..."
 print system.energy()
 print system.components()
 print system.energies()

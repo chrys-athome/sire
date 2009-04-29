@@ -51,7 +51,8 @@ QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ExpressionBase &ex
 {
     writeHeader(ds, r_exbase, 1);
 
-    SharedDataStream(ds) << ex.d;
+    SharedDataStream sds(ds);
+    sds << ex.d;
 
     return ds;
 }
@@ -63,7 +64,8 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ExpressionBase &ex)
 
     if (v == 1)
     {
-        SharedDataStream(ds) >> ex.d;
+        SharedDataStream sds(ds);
+        sds >> ex.d;
     }
     else
         throw version_error(v, "1", r_exbase, CODELOC);

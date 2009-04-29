@@ -439,23 +439,31 @@ void CutGroup::assertContainsMetadata(const PropertyName &key,
                 .arg(metakey.toString(), key.toString()), CODELOC );
 }
 
-bool SIREMOL_EXPORT detail::has_property(const CutGroup*, const MoleculeData &moldata,
-                                         const PropertyName &key)
+namespace SireMol
+{
+namespace detail
+{
+
+bool SIREMOL_EXPORT has_property(const CutGroup*, const MoleculeData &moldata,
+                                 const PropertyName &key)
 {
     return moldata.hasPropertyOfType<CGProp>(key);
 }
 
-bool SIREMOL_EXPORT detail::has_metadata(const CutGroup*, const MoleculeData &moldata,
-                                         const PropertyName &metakey)
+bool SIREMOL_EXPORT has_metadata(const CutGroup*, const MoleculeData &moldata,
+                                 const PropertyName &metakey)
 {
     return moldata.hasMetadataOfType<CGProp>(metakey);
 }
 
-bool SIREMOL_EXPORT detail::has_metadata(const CutGroup*, const MoleculeData &moldata,
-                                         const PropertyName &key, const PropertyName &metakey)
+bool SIREMOL_EXPORT has_metadata(const CutGroup*, const MoleculeData &moldata,
+                                 const PropertyName &key, const PropertyName &metakey)
 {
     return moldata.hasMetadataOfType<CGProp>(key, metakey);
 }
+
+} // end of namespace detail
+} // end of namespace SireMol
 
 ////// explicitly instantiate the CutGroup templates
 template class Mover<CutGroup>;

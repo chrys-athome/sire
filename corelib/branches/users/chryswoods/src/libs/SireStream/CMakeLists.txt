@@ -12,6 +12,7 @@ set ( SIRESTREAM_HEADERS
       magic_error.h
       md5sum.h
       shareddatastream.h
+      sharestrings.h
       streamdata.hpp
       streampolypointer.hpp
       version_error.h
@@ -26,6 +27,7 @@ set ( SIRESTREAM_SOURCES
       magic_error.cpp
       md5sum.cpp
       shareddatastream.cpp
+      sharestrings.cpp
       streamdata.cpp
       version_error.cpp
 

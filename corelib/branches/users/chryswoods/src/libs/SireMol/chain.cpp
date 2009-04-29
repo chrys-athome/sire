@@ -531,23 +531,31 @@ void Chain::assertContainsMetadata(const PropertyName &key,
                 .arg(metakey.toString(), key.toString()), CODELOC );
 }
 
-bool SIREMOL_EXPORT detail::has_property(const Chain*, const MoleculeData &moldata,
-                                         const PropertyName &key)
+namespace SireMol
+{
+namespace detail
+{
+
+bool SIREMOL_EXPORT has_property(const Chain*, const MoleculeData &moldata,
+                                 const PropertyName &key)
 {
     return moldata.hasPropertyOfType<ChainProp>(key);
 }
 
-bool SIREMOL_EXPORT detail::has_metadata(const Chain*, const MoleculeData &moldata,
-                                         const PropertyName &metakey)
+bool SIREMOL_EXPORT has_metadata(const Chain*, const MoleculeData &moldata,
+                                 const PropertyName &metakey)
 {
     return moldata.hasMetadataOfType<ChainProp>(metakey);
 }
 
-bool SIREMOL_EXPORT detail::has_metadata(const Chain*, const MoleculeData &moldata,
-                                         const PropertyName &key, const PropertyName &metakey)
+bool SIREMOL_EXPORT has_metadata(const Chain*, const MoleculeData &moldata,
+                                 const PropertyName &key, const PropertyName &metakey)
 {
     return moldata.hasMetadataOfType<ChainProp>(key, metakey);
 }
+
+} // end of namespace detail
+} // end of namespace SireMol
 
 /////// explicitly instantiate chain templates
 template class Selector<Chain>;

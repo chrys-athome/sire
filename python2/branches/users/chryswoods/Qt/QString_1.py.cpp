@@ -104,7 +104,7 @@ void QString_from_python_str_or_unicode( PyObject* obj_ptr,
     QString tempString("");
     int i;
     for (i = 0; i < unichars; i++)
-        tempString.append(QChar(value[i]));
+        tempString.append(QChar(int(value[i])));
 #else
     // Python is using a 2-byte unsigned buffer of UCS-2 with
     // limited support for UTF-16

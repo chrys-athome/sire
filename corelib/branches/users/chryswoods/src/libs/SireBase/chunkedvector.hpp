@@ -31,7 +31,7 @@
 
 #include <QVector>
 
-#include "sireglobal.h"
+#include "SireStream/shareddatastream.h"
 
 #include <QDebug>
 
@@ -54,6 +54,10 @@ namespace SireBase
 namespace detail
 {
 void ChunkedVector_throwOutOfRangeError(int i, int n);
+
+template<class T, int N>
+const void* get_shared_container_pointer(const SireBase::ChunkedVector<T,N>&);
+
 }
 
 /** This class provides a vector that is expected to hold a large
@@ -70,6 +74,9 @@ class SIREBASE_EXPORT ChunkedVector
 
 friend QDataStream& ::operator<<<>(QDataStream&, const ChunkedVector<T,N>&);
 friend QDataStream& ::operator>><>(QDataStream&, ChunkedVector<T,N>&);
+
+friend const void* 
+SireBase::detail::get_shared_container_pointer<>(const ChunkedVector<T,N>&);
 
 public:
     ChunkedVector();
@@ -657,6 +664,45 @@ ChunkedVector<T,N> ChunkedVector<T,N>::fromStdVector(const std::vector<T> &vecto
     return ChunkedVector<T,N>::fromVector( QVector<T>::fromStdVector(vector) );
 }
 
+namespace detail
+{
+
+template<class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+const void* get_shared_container_pointer(const SireBase::ChunkedVector<T,N> &vector)
+{
+    if (vector.count() == 0)
+        return 0;
+    else
+        return vector._chunks.constData();
+}
+
+template<class T, int N>
+struct GetChunkedVectorPointer
+{
+    static bool isEmpty(const ChunkedVector<T,N> &vector)
+    {
+        return vector.count() == 0;
+    }
+
+    static const void* value(const ChunkedVector<T,N> &vector)
+    {
+        return get_shared_container_pointer<T,N>(vector);
+    }
+
+    static void load(QDataStream &ds, ChunkedVector<T,N> &vector)
+    {
+        ds >> vector;
+    }
+    
+    static void save(QDataStream &ds, const ChunkedVector<T,N> &vector)
+    {
+        ds << vector;
+    }
+};
+
+} // end of namespace detail
+
 #endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 }
@@ -703,6 +749,30 @@ QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds,
     }
 
     return ds;
+}
+
+/** Serialise to a binary datastream */
+template<class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+SireStream::SharedDataStream& 
+operator<<(SireStream::SharedDataStream &sds, const SireBase::ChunkedVector<T,N> &vector)
+{
+    sds.sharedSaveContainer< SireBase::ChunkedVector<T,N>, 
+                             SireBase::detail::GetChunkedVectorPointer<T,N> >(vector);
+                            
+    return sds;
+}
+
+/** Extract from a binary datastream */
+template<class T, int N>
+SIRE_OUTOFLINE_TEMPLATE
+SireStream::SharedDataStream& 
+operator>>(SireStream::SharedDataStream &sds, SireBase::ChunkedVector<T,N> &vector)
+{
+    sds.sharedLoadContainer< SireBase::ChunkedVector<T,N>, 
+                             SireBase::detail::GetChunkedVectorPointer<T,N> >(vector);
+                            
+    return sds;
 }
 
 #endif // SIRE_SKIP_INLINE_FUNCTIONS

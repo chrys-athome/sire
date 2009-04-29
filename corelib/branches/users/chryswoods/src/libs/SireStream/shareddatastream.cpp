@@ -27,11 +27,16 @@
 \*********************************************/
 
 #include "shareddatastream.h"
+#include "sharestrings.h"
 
 #include "SireError/errors.h"
 #include "SireError/printerror.h"
 
+#include "SireStream/errors.h"
+
 #include "tostring.h"
+
+#include <QtEndian>
 
 #include <QMutex>
 
@@ -40,7 +45,7 @@
 #include <QDebug>
 
 using namespace SireStream;
-using namespace SireStream::private_detail;
+using namespace SireStream::detail;
 
 using boost::shared_ptr;
 using boost::weak_ptr;
@@ -67,7 +72,7 @@ void SharedDataHolder::throwCastingError() const
 ////////
 
 /** Constructor */
-SharedDataRegistry::SharedDataRegistry() : ds(0)
+SharedDataRegistry::SharedDataRegistry() : ds(0), version_number(0)
 {}
 
 /** Assert that this is a valid ID */
@@ -114,9 +119,6 @@ shared_ptr<SharedDataRegistry> SharedDataRegistry::construct(QDataStream &ds)
             return reg;
     }
     
-//    qDebug() << SireError::getPIDString()
-//             << "Creating a SharedDataRegistry for the QDataStream" << &ds;
-    
     shared_ptr<SharedDataRegistry> reg( new SharedDataRegistry() );
     
     reg->ds = &ds;
@@ -132,16 +134,116 @@ SharedDataRegistry::~SharedDataRegistry()
     //remove this registry from the global_registry
     QMutexLocker lkr( registryMutex() );
     
-//    qDebug() << SireError::getPIDString() 
-//             << "Destroying the registry for the QDataStream" << ds
-//             << "\n   (" << objects_by_key.count() << "shared object(s) and"
-//             << strings_by_key.count() << "shared string(s))";
-    
     if (ds)
     {
         if (globalRegistry())
             globalRegistry()->remove(ds);
     }
+}
+
+/** Return whether or not the registry contains an object with key 'key' */
+bool SharedDataRegistry::containsKey(quint32 key) const
+{
+    return objects_by_id.contains(key);
+}
+
+/** Return the version number of the shared data stream */
+quint32 SharedDataRegistry::version() const
+{
+    if (version_number == 0)
+        //the version number has not been set - use the latest version
+        return 2;
+    else
+        return version_number;
+}
+
+static quint64 SHARED_DATASTREAM_MAGIC = 9840821820734431312LLU;
+
+quint64 SharedDataRegistry::magic()
+{
+    return SHARED_DATASTREAM_MAGIC;
+}
+
+/** Try to find the magic number in the next 64bits of the datastream. This
+    only peeks ahead - it does not advance the datastream at all.
+    This returns true if the next 64bits contain the magic number */
+bool SharedDataRegistry::peekMagic()
+{
+    if (ds == 0)
+        return false;
+
+    //peek to see if the 64bit magic number is next in the stream
+    char magic_number_data[8];
+
+    int nbytes_read = ds->device()->peek( magic_number_data, 8 );
+    
+    if (nbytes_read < 8)
+    {
+        //there is not enough data to contain the magic number
+        return false;
+    }
+
+    //now read the number
+    quint64 magic_number = qFromBigEndian<quint64>( *((quint64*)magic_number_data) );
+    
+    return (magic_number == SHARED_DATASTREAM_MAGIC);
+}
+
+/** This function is used to read the version number from the data stream
+    (if it has not already been read) */
+void SharedDataRegistry::readVersion()
+{
+    if (ds == 0)
+        return;
+
+    if (version_number != 0)
+        return;
+        
+    if (not this->peekMagic())
+    {
+        //there is no magic - we must be at version 1
+        version_number = 1;
+        return;
+    }
+    
+    //read the magic number and version number
+    quint64 magic_number;
+    
+    (*ds) >> magic_number >> version_number;
+    
+    if (magic_number != SHARED_DATASTREAM_MAGIC)
+        throw SireError::program_bug( QObject::tr(
+            "Something went wrong when reading the SharedDataStream version! "
+            "The magic number changed (from %1 to %2)")
+                .arg(SHARED_DATASTREAM_MAGIC).arg(magic_number), CODELOC );
+                
+    if (version_number == 0)
+        throw SireError::program_bug( QObject::tr(
+            "There was no version number, even though there should have been one!"),
+                CODELOC );
+
+    if (version_number > 2)
+    {
+        qWarning() << "Reading a SharedDataStream written using a newer version ("
+                   << version_number << ") than this version (2) - this could lead "
+                   << "to problems...";
+    }
+}
+
+/** This function writes the version number of the SharedDataStream into the 
+    stream - it only does this once, before any of the objects are written */
+void SharedDataRegistry::writeVersion()
+{
+    if (ds == 0)
+        return;
+
+    if (version_number != 0)
+        return;
+        
+    //we are at version 2
+    version_number = 2;
+    
+    (*ds) << SHARED_DATASTREAM_MAGIC << version_number;
 }
 
 ////////
@@ -151,7 +253,7 @@ SharedDataRegistry::~SharedDataRegistry()
 /** Construct a SharedDataStream that uses the QDataStream 'datastream'
     to serialise and unserialise the objects. */
 SharedDataStream::SharedDataStream(QDataStream &qdatastream)
-                 : ds(qdatastream), version_number(0)
+                 : ds(qdatastream)
 {
     registry = SharedDataRegistry::construct(qdatastream);
 }
@@ -163,18 +265,12 @@ SharedDataStream::~SharedDataStream()
 /** Return the version number of the shared data stream */
 quint32 SharedDataStream::version() const
 {
-    if (version_number == 0)
-        //the version number has not been set - use the latest version
-        return 2;
-    else
-        return version_number;
+    return registry->version();
 }
-
-static quint64 SHARED_DATASTREAM_MAGIC = 9840821820734431312LLU;
 
 quint64 SharedDataStream::magic()
 {
-    return SHARED_DATASTREAM_MAGIC;
+    return SharedDataRegistry::magic();
 }
 
 /** Try to find the magic number in the next 64bits of the datastream. This
@@ -182,20 +278,7 @@ quint64 SharedDataStream::magic()
     This returns true if the next 64bits contain the magic number */
 bool SharedDataStream::peekMagic()
 {
-    QByteArray magic = ds.device()->peek(8);
-    
-    if (magic.count() < 8)
-    {
-        //there is not enough remaining data to contain the magic number
-        return false;
-    }
-    
-    QDataStream ds2(magic);
-    quint64 magic_number;
-    
-    ds2 >> magic_number;
-    
-    return magic_number == SHARED_DATASTREAM_MAGIC;
+    return registry->peekMagic();
 }
 
 /** Read the ID number of the next shared object from the stream */
@@ -213,10 +296,17 @@ quint32 SharedDataStream::loadID()
         quint64 magic;
         ds >> magic >> id;
         
-        this->assertCorrectMagic(magic);
+        if (magic != SHARED_DATASTREAM_MAGIC)
+            throw SireStream::corrupted_data( QObject::tr(
+                "There was a problem reading the magic number of the "
+                "SharedDataStream - read %1, but expected %2.")
+                    .arg(magic).arg(SHARED_DATASTREAM_MAGIC), CODELOC );
     }
     else
-        this->throwVersionError();
+        throw SireError::version_error( QObject::tr(
+            "Reading version %1 of the SharedDataStream format, but this "
+            "program only supports versions 1 and 2.").arg(this->version()),
+                CODELOC );
 
     return id;
 }
@@ -225,51 +315,14 @@ quint32 SharedDataStream::loadID()
     (if it has not already been read) */
 void SharedDataStream::readVersion()
 {
-    if (version_number != 0)
-        return;
-        
-    if (not this->peekMagic())
-    {
-        //there is no magic - we must be at version 1
-        version_number = 1;
-        return;
-    }
-    
-    //read the magic number and version number
-    quint64 magic_number;
-    
-    ds >> magic_number >> version_number;
-    
-    if (magic_number != SHARED_DATASTREAM_MAGIC)
-        throw SireError::program_bug( QObject::tr(
-            "Something went wrong when reading the SharedDataStream version! "
-            "The magic number changed (from %1 to %2)")
-                .arg(SHARED_DATASTREAM_MAGIC).arg(magic_number), CODELOC );
-                
-    if (version_number == 0)
-        throw SireError::program_bug( QObject::tr(
-            "There was no version number, even though there should have been one!"),
-                CODELOC );
-
-    if (version_number > 2)
-    {
-        qDebug() << "Reading a SharedDataStream written using a newer version ("
-                 << version_number << ") than this version (2) - this could lead "
-                 << "to problems...";
-    }
+    registry->readVersion();
 }
 
 /** This function writes the version number of the SharedDataStream into the 
     stream - it only does this once, before any of the objects are written */
 void SharedDataStream::writeVersion()
 {
-    if (version_number == 0)
-        return;
-        
-    //we are at version 2
-    version_number = 2;
-    
-    ds << SHARED_DATASTREAM_MAGIC << version_number;
+    registry->writeVersion();
 }
 
 namespace SireStream
@@ -297,7 +350,7 @@ struct GetQStringPointer
         ds >> string;
     }
     
-    static void save(QDataStream &ds, QString &string)
+    static void save(QDataStream &ds, const QString &string)
     {
         ds << string;
     }
@@ -305,14 +358,20 @@ struct GetQStringPointer
 
 } // end of namespace detail
 
+
+
 SharedDataStream& operator<<(SharedDataStream &sds, const QString &string)
 {
-    sds.saveShared<QString, GetQStringPointer>(string);
+    sds.sharedSave<QString, GetQStringPointer>( shareString(string) );
     return sds;
 }
 
 SharedDataStream& operator>>(SharedDataStream &sds, QString &string)
 {
-    sds.loadShared<QString, GetQStringPointer>(string);
+    sds.sharedLoad<QString, GetQStringPointer>(string);
+    string = shareString(string);
+    
     return sds;
 }
+
+} // end of namespace SireStream
