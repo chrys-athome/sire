@@ -1,0 +1,31 @@
+<SireML
+   xmlns="http://siremol.org/xml/1" 
+   xmlns:Stream="http://siremol.org/xml/1/Stream"
+   xmlns:Base="http://siremol.org/xml/1/Base"
+   xmlns:Mol="http://siremol.org/xml/1/Mol"
+   xmlns:FF="http://siremol.org/xml/1/FF"
+   xmlns:System="http://siremol.org/xml/1/System"
+   version="1">
+
+  <System:System version="1"
+                 name="unknown">
+
+    <Mol:Molecule version="1">
+      <Stream:Object version="1" id="32">         
+        <Mol:MoleculeData version="1" name="T4P">
+          <Vol:CoordGroup version="1">
+            ....
+          </Vol:CoordGroup>
+        </Mol:MoleculeData>
+      </Stream:Object>
+    </Mol:Molecule>
+
+    <Mol:Molecule version="1">
+      <Stream:Reference version="1" id="32"/>
+    </Mol:Molecule>
+
+    <FF:ForceFields version="1">
+      ....
+    </FF:ForceFields>
+  </System:System>
+</SireML>

@@ -31,6 +31,9 @@
 
 #include <QMutex>
 #include <QByteArray>
+#include <QTemporaryFile>
+
+#include <boost/shared_ptr.hpp>
 
 #include "SireSystem/system.h"
 #include "moves.h"
@@ -102,6 +105,14 @@ public:
     
     bool isPacked() const;
     
+    void packToDisk();
+    void packToDisk(const QString &tempdir);
+    
+    bool isPackedToDisk() const;
+
+    void packToMemory();
+    bool isPackedToMemory() const;
+    
     System system() const;
     MovesPtr moves() const;
 
@@ -114,6 +125,10 @@ private:
     
     /** A binary representation of the system and moves */
     QByteArray compressed_data;
+    
+    /** The temporary file used to hold the SimStore when it
+        is packed to disk */
+    boost::shared_ptr<QTemporaryFile> packed_file;
 };
 
 }
