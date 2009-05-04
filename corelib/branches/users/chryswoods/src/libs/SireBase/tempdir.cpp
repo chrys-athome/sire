@@ -39,7 +39,7 @@
 
 using namespace SireBase;
 
-QString getUserName()
+static QString getUserName()
 {
     #ifdef Q_OS_UNIX
         return std::getenv("USER");

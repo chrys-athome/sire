@@ -112,6 +112,14 @@ public:
     void pack();
     void unpack();
 
+    void packToDisk();
+    void packToDisk(const QString &tempdir);
+    
+    bool isPackedToDisk() const;
+    
+    void packToMemory();
+    bool isPackedToMemory() const;
+
     static void swapSystems(Replica &rep0, Replica &rep1);
 
     template<class T>
@@ -222,6 +230,15 @@ public:
     
     virtual void pack();
     virtual void unpack();
+    
+    virtual void packToDisk();
+    virtual void packToDisk(const QString &tempdir);
+    
+    virtual bool isPackedToDisk() const;
+    
+    virtual void packToMemory();
+    
+    virtual bool isPackedToMemory() const;
     
     virtual void setReplicas(const Replicas &replicas);
     

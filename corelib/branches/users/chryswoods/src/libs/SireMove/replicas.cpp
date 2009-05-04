@@ -165,12 +165,41 @@ void Replica::pack()
     sim_store.pack();
 }
 
-/** Unpack the system and moves - this takes up more memory, but gives
-    faster access to the data (as it isn't being constantly compressed
-    and uncompressed) */
+/** Unpack the system and moves */
 void Replica::unpack()
 {
     sim_store.unpack();
+}
+
+/** Pack the system and moves to disk - this saves the most memory */
+void Replica::packToDisk()
+{
+    sim_store.packToDisk();
+}
+
+/** Pack the system and moves to disk - this places them in the
+    directory 'tempdir' */
+void Replica::packToDisk(const QString &tempdir)
+{
+    sim_store.packToDisk(tempdir);
+}
+
+/** Pack the system and moves to memory */
+void Replica::packToMemory()
+{
+    sim_store.packToMemory();
+}
+
+/** Return whether or not the system and moves are packed to disk */
+bool Replica::isPackedToDisk() const
+{
+    return sim_store.isPackedToDisk();
+}
+
+/** Return whether or not the system and moves are packed to memory */
+bool Replica::isPackedToMemory() const
+{
+    return sim_store.isPackedToMemory();
 }
 
 /** Return the system being simulated in this replica */
@@ -411,8 +440,7 @@ bool Replicas::operator!=(const Replicas &other) const
     return replicas_array != other.replicas_array;
 }
 
-/** Return whether or not all of the replicas are packed into compressed
-    binary arrays */
+/** Return whether or not all of the replicas are packed */
 bool Replicas::isPacked() const
 {
     int nreplicas = replicas_array.count();
@@ -420,6 +448,34 @@ bool Replicas::isPacked() const
     for (int i=0; i<nreplicas; ++i)
     {
         if (not replicas_array.at(i)->isPacked())
+            return false;
+    }
+    
+    return true;
+}
+
+/** Return whether or not all of the replicas are packed to memory */
+bool Replicas::isPackedToMemory() const
+{
+    int nreplicas = replicas_array.count();
+    
+    for (int i=0; i<nreplicas; ++i)
+    {
+        if (not replicas_array.at(i)->isPackedToMemory())
+            return false;
+    }
+    
+    return true;
+}
+
+/** Return whether or not all of the replicas are packed to memory */
+bool Replicas::isPackedToDisk() const
+{
+    int nreplicas = replicas_array.count();
+    
+    for (int i=0; i<nreplicas; ++i)
+    {
+        if (not replicas_array.at(i)->isPackedToDisk())
             return false;
     }
     
@@ -438,14 +494,15 @@ void Replicas::pack()
     
     for (int i=0; i<nreplicas; ++i)
     {
-        replicas_array[i].detach();
-        replicas_array[i]->pack();
+        if (not replicas_array[i].constData()->isPacked())
+        {
+            replicas_array[i].detach();
+            replicas_array[i]->pack();
+        }
     }
 }
 
-/** Unpack all of the replicas - this takes up more memory, but 
-    is faster, as the replicas aren't being continually packed
-    and unpacked */
+/** Unpack all of the replicas */
 void Replicas::unpack()
 {
     if (not this->isPacked())
@@ -455,8 +512,66 @@ void Replicas::unpack()
     
     for (int i=0; i<nreplicas; ++i)
     {
-        replicas_array[i].detach();
-        replicas_array[i]->unpack();
+        if (replicas_array[i].constData()->isPacked())
+        {
+            replicas_array[i].detach();
+            replicas_array[i]->unpack();
+        }
+    }
+}
+
+/** Pack all of the replicas to disk */
+void Replicas::packToDisk()
+{
+    if (this->isPackedToDisk())
+        return;
+
+    int nreplicas = replicas_array.count();
+    
+    for (int i=0; i<nreplicas; ++i)
+    {
+        if (not replicas_array[i].constData()->isPackedToDisk())
+        {
+            replicas_array[i].detach();
+            replicas_array[i]->packToDisk();
+        }
+    }
+}
+
+/** Pack all of the replicas to disk - they are placed in the 
+    directory 'tempdir' */
+void Replicas::packToDisk(const QString &tempdir)
+{
+    if (this->isPackedToDisk())
+        return;
+
+    int nreplicas = replicas_array.count();
+    
+    for (int i=0; i<nreplicas; ++i)
+    {
+        if (not replicas_array[i].constData()->isPackedToDisk())
+        {
+            replicas_array[i].detach();
+            replicas_array[i]->packToDisk(tempdir);
+        }
+    }
+}
+
+/** Pack all of the replicas to memory */
+void Replicas::packToMemory()
+{
+    if (this->isPackedToMemory())
+        return;
+        
+    int nreplicas = replicas_array.count();
+    
+    for (int i=0; i<nreplicas; ++i)
+    {
+        if (not replicas_array[i].constData()->isPackedToMemory())
+        {
+            replicas_array[i].detach();
+            replicas_array[i]->packToMemory();
+        }
     }
 }
 
