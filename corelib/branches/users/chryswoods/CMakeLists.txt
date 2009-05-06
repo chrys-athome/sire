@@ -236,6 +236,10 @@ include (CheckFunctionExists)
 check_include_files( unistd.h HAVE_UNISTD_H )
 check_function_exists( lseek64 HAVE_LSEEK64 )
 
+check_include_files( malloc/malloc.h HAVE_MALLOC_MALLOC_H )
+check_function_exists( mstats HAVE_MSTATS )
+check_function_exists( mallinfo HAVE_MALLINFO )
+
 #create config.h
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/sire_config.h.in 
                ${CMAKE_CURRENT_BINARY_DIR}/sire_config.h)

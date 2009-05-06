@@ -48,11 +48,6 @@ class MonteCarlo;
 QDataStream& operator<<(QDataStream&, const SireMove::MonteCarlo&);
 QDataStream& operator>>(QDataStream&, SireMove::MonteCarlo&);
 
-namespace SireSim
-{
-class SimSystem;
-}
-
 namespace SireMove
 {
 
