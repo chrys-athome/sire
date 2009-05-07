@@ -1193,7 +1193,7 @@ MoleculeInfoData MoleculeInfoData::renumber(AtomIdx atomidx,
     AtomInfo &atom = newinfo.atoms_by_index[atomidx];
     
     #if QT_VERSION >= 0x040300
-        newinfo.atoms_by_nun.remove(atom.number, atomidx);
+        newinfo.atoms_by_num.remove(atom.number, atomidx);
     #else
         ::remove_from_hash(newinfo.atoms_by_num, atom.number, atomidx);
     #endif

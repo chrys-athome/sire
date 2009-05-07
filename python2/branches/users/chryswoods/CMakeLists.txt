@@ -70,6 +70,9 @@ set (SIRE_INCLUDES "include/Sire")
 # Add option to turn off symbol hiding
 option ( SIRE_SYMBOL_HIDING "Turn on library symbol hiding" ON )
 
+# Add option to turn off OpenMP compilation 
+option ( SIRE_OPENMP "Turn on OpenMP support" ON )
+
 # Sire depends on >= Python 2.2
 set (PYTHON_MIN_VERSION "2.2")
 include( FindPython )
@@ -173,20 +176,17 @@ if ( CMAKE_COMPILER_IS_GNUCC )
       # when compiling with GCC 4, and they are annoying!)
       ADD_DEFINITIONS( -Wno-strict-aliasing )
 
-      # gcc-4.2 has -march=native, that autodetects best compiler
-      # for the current machine
-      #if ( GCC_MINOR_VERSION GREATER 1 )
-      #   message( "Adding -march=native to compiler options. This is a bad idea "
-      #            "if this is not the machine that you will be running on..." )
-      #
-      #   ADD_DEFINITIONS( -march=native )
-      #endif()
-
-      # gcc-4.2 and above has openMP - turn it on
-      if ( GCC_MINOR_VERSION GREATER 1 )
-          message( STATUS "Turning on openMP parallelisation!")
-          ADD_DEFINITIONS( -fopenmp )
-          set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -fopenmp" )
+      # gcc-4.2 and above has openMP - turn it on (except for Mac as libgomp is broken!)
+      if (GCC_MINOR_VERSION GREATER 1)
+          if (SIRE_OPENMP)
+              message( "Enabling OpenMP support" )
+              set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -fopenmp" )
+              set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -fopenmp" )
+          else()
+              message( "Explicitly disabling OpenMP support" )
+              set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -fno-openmp" )
+              set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -fno-openmp" )
+          endif()
       endif()
 
       # add symbol hiding if the compiler supports it and it is

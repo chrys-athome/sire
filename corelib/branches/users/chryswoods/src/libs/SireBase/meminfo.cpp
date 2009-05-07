@@ -111,7 +111,7 @@ using namespace SireBase;
     #ifdef HAVE_MALLOC_MALLOC_H
         #include <malloc/malloc.h>  // CONDITIONAL_INCLUDE
     #else
-        #include <malloc.h>
+        #include <malloc.h>  // CONDITIONAL_INCLUDE
     #endif
     
     namespace SireBase{ namespace detail
