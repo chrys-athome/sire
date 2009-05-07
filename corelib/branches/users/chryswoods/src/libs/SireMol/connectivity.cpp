@@ -1183,8 +1183,8 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
                     "Atoms %1-%2-%3-%4-%5 form part of ring and cannot be "
                     "unambiguously split.")
                         .arg(atom0.toString(), bonded_atom.toString(), 
-                             atom1.toString(), atom2.toString(),
-                             atom3.toString()), CODELOC );
+                             atom1.toString(), atom2.toString())
+                        .arg(atom3.toString()), CODELOC );
                     
             this->traceRoute(selected_atoms, bonded_atom,
                              atom3, group0, group1);

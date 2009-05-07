@@ -94,6 +94,7 @@ print sim.isRunning()
 
 print "Running 1000 moves on a Cluster node"
 nodes = Cluster.getNode()
+this_thread = nodes.borrowThisThread()
 
 if nodes.isEmpty():
    this_thread = nodes.borrowThisThread()
@@ -131,3 +132,17 @@ print "nAccepted() == %d, nRejected() == %d  (%f %%)" % (mc.nAccepted(), \
                             mc.nRejected(), 100 * mc.acceptanceRatio())
 
 print "Took %d ms" % ms
+
+mc.setSynchronisedTranslation(True)
+mc.setSynchronisedRotation(True)
+moves = SameMoves(mc)
+
+for i in range(0,10):
+    print i+1
+    node = nodes.getNode()
+    sim = Simulation.run(node, system, moves, 5)
+
+    system = sim.system()
+    moves = sim.moves()
+
+    PDB().write(system.molecules(), "test%003d.pdb" % (i+1))

@@ -133,8 +133,8 @@ QString FourAtomFunction::toString() const
 {
     return QObject::tr("FourAtomFunction( %1 <- %2 - %3 -> %4 : %5 )")
                 .arg(atm0.toString(), atm1.toString(),
-                     atm2.toString(), atm3.toString(),
-                     this->function().toString());
+                     atm2.toString(), atm3.toString())
+                .arg(this->function().toString());
 }
 
 //////

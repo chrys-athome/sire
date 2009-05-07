@@ -1105,7 +1105,27 @@ AtomNum MoleculeInfoData::number(AtomIdx atomidx) const
     atomidx = atomidx.map(atoms_by_index.count());
     return atoms_by_index[atomidx].number;
 }
-    
+
+#if QT_VERSION < 0x040300
+    /** This function provides the same functionality as the Qt 4.3 QMultiHash::remove(Key, Value) function */
+    template<class Key, class T>
+    void remove_from_hash(QMultiHash<Key,T> &hash, const Key &key, const T &value) 
+    {
+        //get all items with this key
+        QList<T> values = hash.values(key);
+
+        //remove all item with this value
+        if (values.removeAll(value) > 0)
+        {
+             //some items were removed
+             hash.remove(key);
+
+             //put them back into the hash in the right order
+             for (int i=values.count()-1; i>=0; ++i){ hash.insertMulti(key, values.at(i)); }
+        }
+    }
+#endif
+
 /** Rename the atom at index 'atomidx' to have the new name 'newname'. 
     
     \throw SireError::invalid_index
@@ -1123,12 +1143,22 @@ MoleculeInfoData MoleculeInfoData::rename(AtomIdx atomidx,
     MoleculeInfoData newinfo(*this);
     
     AtomInfo &atom = newinfo.atoms_by_index[atomidx];
-    newinfo.atoms_by_name.remove(atom.name, atomidx);
-    
+
+    #if QT_VERSION >= 0x040300
+        newinfo.atoms_by_name.remove(atom.name, atomidx);
+    #else
+        ::remove_from_hash(newinfo.atoms_by_name, QString(atom.name), atomidx);
+    #endif   
+ 
     if (not atom.residx.isNull())
     {
         ResInfo &residue = newinfo.res_by_index[atom.residx];
-        residue.atoms_by_name.remove(atom.name, atomidx);
+
+        #if QT_VERSION >= 0x040300
+            residue.atoms_by_name.remove(atom.name, atomidx);
+        #else
+            ::remove_from_hash(residue.atoms_by_name, QString(atom.name), atomidx);
+        #endif
 
         if (not newname.isNull())
             residue.atoms_by_name.insert(newname, atomidx);
@@ -1162,7 +1192,11 @@ MoleculeInfoData MoleculeInfoData::renumber(AtomIdx atomidx,
     
     AtomInfo &atom = newinfo.atoms_by_index[atomidx];
     
-    newinfo.atoms_by_num.remove(atom.number, atomidx);
+    #if QT_VERSION >= 0x040300
+        newinfo.atoms_by_nun.remove(atom.number, atomidx);
+    #else
+        ::remove_from_hash(newinfo.atoms_by_num, atom.number, atomidx);
+    #endif
     
     if (not newnum.isNull())
         newinfo.atoms_by_num.insert(newnum, atomidx);
@@ -1191,8 +1225,12 @@ MoleculeInfoData MoleculeInfoData::rename(ResIdx residx,
     
     ResInfo &residue = newinfo.res_by_index[residx];
     
-    newinfo.res_by_name.remove(residue.name, residx);
-    
+    #if QT_VERSION >= 0x040300
+        newinfo.res_by_name.remove(residue.name, residx);
+    #else
+        ::remove_from_hash(newinfo.res_by_name, QString(residue.name), residx);
+    #endif
+
     if (not newname.isNull())
         newinfo.res_by_name.insert(newname, residx);
         
@@ -1221,7 +1259,11 @@ MoleculeInfoData MoleculeInfoData::renumber(ResIdx residx,
     
     ResInfo &residue = newinfo.res_by_index[residx];
     
-    newinfo.res_by_num.remove(residue.number, residx);
+    #if QT_VERSION >= 0x040300
+        newinfo.res_by_num.remove(residue.number, residx);
+    #else
+        ::remove_from_hash(newinfo.res_by_num, residue.number, residx);
+    #endif
     
     if (not newnum.isNull())
         newinfo.res_by_num.insert(newnum, residx);
@@ -1250,7 +1292,11 @@ MoleculeInfoData MoleculeInfoData::rename(CGIdx cgidx,
     
     CGInfo &cgroup = newinfo.cg_by_index[cgidx];
     
-    newinfo.cg_by_name.remove(cgroup.name, cgidx);
+    #if QT_VERSION >= 0x040300
+        newinfo.cg_by_name.remove(cgroup.name, cgidx);
+    #else
+        ::remove_from_hash(newinfo.cg_by_name, QString(cgroup.name), cgidx);
+    #endif
     
     if (not newname.isNull())
         newinfo.cg_by_name.insert(newname, cgidx);
@@ -1279,7 +1325,11 @@ MoleculeInfoData MoleculeInfoData::rename(ChainIdx chainidx,
     
     ChainInfo &chain = newinfo.chains_by_index[chainidx];
     
-    newinfo.chains_by_name.remove(chain.name, chainidx);
+    #if QT_VERSION >= 0x040300
+        newinfo.chains_by_name.remove(chain.name, chainidx);
+    #else
+        ::remove_from_hash(newinfo.chains_by_name, QString(chain.name), chainidx);
+    #endif
     
     if (not newname.isNull())
         newinfo.chains_by_name.insert(newname, chainidx);
@@ -1308,7 +1358,11 @@ MoleculeInfoData MoleculeInfoData::rename(SegIdx segidx,
     
     SegInfo &segment = newinfo.seg_by_index[segidx];
     
-    newinfo.seg_by_name.remove(segment.name, segidx);
+    #if QT_VERSION >= 0x040300
+        newinfo.seg_by_name.remove(segment.name, segidx);
+    #else
+        ::remove_from_hash(newinfo.seg_by_name, QString(segment.name), segidx);
+    #endif
     
     if (not newname.isNull())
         newinfo.seg_by_name.insert(newname, segidx);
