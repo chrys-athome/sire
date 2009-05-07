@@ -67,14 +67,12 @@ void register_QVariant_class(){
             .value("TextLength", QVariant::TextLength)
             .value("TextFormat", QVariant::TextFormat)
             .value("Matrix", QVariant::Matrix)
-            .value("Transform", QVariant::Transform)
             .value("LastGuiType", QVariant::LastGuiType)
             .value("UserType", QVariant::UserType)
             .value("LastType", QVariant::LastType)
             .export_values()
             ;
         QVariant_exposer.def( bp::init< QVariant::Type >(( bp::arg("type") )) );
-        QVariant_exposer.def( bp::init< int, void const * >(( bp::arg("typeOrUserType"), bp::arg("copy") )) );
         QVariant_exposer.def( bp::init< QVariant const & >(( bp::arg("other") )) );
         QVariant_exposer.def( bp::init< QDataStream & >(( bp::arg("s") )) );
         QVariant_exposer.def( bp::init< int >(( bp::arg("i") )) );

@@ -388,46 +388,6 @@ void register_QByteArray_class(){
         QByteArray_exposer.def( bp::self == bp::other< QString >() );
         QByteArray_exposer.def( bp::self > bp::other< QString >() );
         QByteArray_exposer.def( bp::self >= bp::other< QString >() );
-        { //::QByteArray::operator[]
-        
-            typedef char ( ::QByteArray::*__getitem___function_type )( int ) const;
-            
-            QByteArray_exposer.def( 
-                "__getitem__"
-                , __getitem___function_type( &::QByteArray::operator[] )
-                , ( bp::arg("i") ) );
-        
-        }
-        { //::QByteArray::operator[]
-        
-            typedef char ( ::QByteArray::*__getitem___function_type )( ::uint ) const;
-            
-            QByteArray_exposer.def( 
-                "__getitem__"
-                , __getitem___function_type( &::QByteArray::operator[] )
-                , ( bp::arg("i") ) );
-        
-        }
-        { //::QByteArray::operator[]
-        
-            typedef ::QByteRef ( ::QByteArray::*__getitem___function_type )( int ) ;
-            
-            QByteArray_exposer.def( 
-                "__getitem__"
-                , __getitem___function_type( &::QByteArray::operator[] )
-                , ( bp::arg("i") ) );
-        
-        }
-        { //::QByteArray::operator[]
-        
-            typedef ::QByteRef ( ::QByteArray::*__getitem___function_type )( ::uint ) ;
-            
-            QByteArray_exposer.def( 
-                "__getitem__"
-                , __getitem___function_type( &::QByteArray::operator[] )
-                , ( bp::arg("i") ) );
-        
-        }
         { //::QByteArray::push_back
         
             typedef void ( ::QByteArray::*push_back_function_type )( char ) ;

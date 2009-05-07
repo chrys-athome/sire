@@ -37,8 +37,6 @@ void register_QDataStream_class(){
             .value("Qt_4_0", QDataStream::Qt_4_0)
             .value("Qt_4_1", QDataStream::Qt_4_1)
             .value("Qt_4_2", QDataStream::Qt_4_2)
-            .value("Qt_4_3", QDataStream::Qt_4_3)
-            .value("Qt_4_4", QDataStream::Qt_4_4)
             .export_values()
             ;
         { //::QDataStream::atEnd
