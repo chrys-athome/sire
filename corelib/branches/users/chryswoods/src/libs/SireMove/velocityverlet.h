@@ -31,6 +31,8 @@
 
 #include "integrator.h"
 
+#include "SireFF/forcetable.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
@@ -92,7 +94,7 @@ private:
     SireUnits::Dimension::Time timestep;
     
     /** The velocities... */
-    ForceTable v;
+    SireFF::ForceTable v;
 };
 
 }

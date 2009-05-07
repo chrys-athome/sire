@@ -252,7 +252,11 @@ bool Process::wait(int ms)
     QTime t;
     t.start();
     
+    #if QT_VERSION >= 0x040300
     if (d->datamutex.tryLock(ms))
+    #else
+    if (d->datamutex.tryLock())
+    #endif
     {
         if (not d->is_running)
         {

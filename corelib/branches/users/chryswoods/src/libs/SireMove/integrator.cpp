@@ -33,6 +33,7 @@
 using namespace SireMove;
 using namespace SireBase;
 using namespace SireStream;
+using namespace SireUnits::Dimension;
 
 ////////////
 //////////// Implementation of Integrator
@@ -148,3 +149,38 @@ bool NullIntegrator::operator!=(const NullIntegrator &other) const
 {
     return false;
 }
+
+/** Return a string representation of this integrator */
+QString NullIntegrator::toString() const
+{
+    return QObject::tr("NullIntegrator");
+}
+
+/** The null integrator does nothing */
+void NullIntegrator::integrate(MoleculeGroup&, const ForceTable&,
+                               const PropertyMap&)
+{}
+
+/** The null integrator will ignore any timestep */
+void NullIntegrator::setTimeStep(const Time &timestep)
+{}
+
+/** There is no timestep */
+Time NullIntegrator::timeStep() const
+{
+    return Time(0);
+}
+
+/** The kinetic energy is always zero */
+MolarEnergy NullIntegrator::kineticEnergy() const
+{
+    return MolarEnergy(0);
+}
+
+/** There is nothing to clear */
+void NullIntegrator::clearStatistics()
+{}
+
+/** There is no random number generator */
+void NullIntegrator::setGenerator(const RanGenerator&)
+{}

@@ -48,7 +48,7 @@ class MemInfoPvt;
     
     @author Christopher Woods
 */
-class MemInfo
+class SIREBASE_EXPORT MemInfo
 {
 public:
     MemInfo();

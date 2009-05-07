@@ -72,6 +72,9 @@ set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
 # Add option to turn off symbol hiding
 option ( SIRE_SYMBOL_HIDING "Turn on library symbol hiding" ON )
 
+# Add option to turn off OpenMP compilation
+option ( SIRE_OPENMP "Turn on OpenMP support" ON )
+
 #find_package(SIRE COMPONENTS SireBase SireCAS Squire REQUIRED)
 
 #now create a file that will hold a list of all of the 
@@ -161,17 +164,8 @@ if ( CMAKE_COMPILER_IS_GNUCC )
       # when compiling with GCC 4, and they are annoying!)
       set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -Wno-strict-aliasing" )
 
-      # gcc-4.2 has -march=native, that autodetects best compiler
-      # for the current machine
-      #if ( GCC_MINOR_VERSION GREATER 1 )
-      #   message( "Adding -march=native to compiler options. This is a bad idea "
-      #            "if this is not the machine that you will be running on..." )
-      #
-      #   ADD_DEFINITIONS( -march=native )
-      #endif()
-
       # gcc-4.2 and above has openMP - turn it on (except for Mac as libgomp is broken!)
-      if ( GCC_MINOR_VERSION GREATER 1 AND NOT APPLE )
+      if ( (SIRE_OPENMP) AND (GCC_MINOR_VERSION GREATER 1) )
           set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -fopenmp" )
           set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -fopenmp" )
       endif()

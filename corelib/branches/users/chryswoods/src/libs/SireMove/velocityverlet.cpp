@@ -31,9 +31,13 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include "SireUnits/units.h"
+
 using namespace SireMove;
 using namespace SireBase;
 using namespace SireStream;
+using namespace SireUnits;
+using namespace SireUnits::Dimension;
 
 static const RegisterMetaType<VelocityVerlet> r_velver;
 
@@ -106,7 +110,7 @@ bool VelocityVerlet::operator!=(const VelocityVerlet &other) const
 QString VelocityVerlet::toString() const
 {
     return QObject::tr("VelocityVerlet( timestep == %1 fs )")
-                .arg( this->timeStep().to(femtoseconds) );
+                .arg( this->timeStep().to(femtosecond) );
 }
 
 /** Integrate the coordinates of the atoms in the molecules in 'molgroup'
@@ -138,6 +142,7 @@ Time VelocityVerlet::timeStep() const
 /** Return the kinetic energy at the last timestep */
 MolarEnergy VelocityVerlet::kineticEnergy() const
 {
+    return 0*MolarEnergy();
 }
 
 /** Clear all statistics */
