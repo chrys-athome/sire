@@ -28,6 +28,12 @@
 
 #include "velocityverlet.h"
 
+#include "SireMol/moleculegroup.h"
+
+#include "SireFF/forcetable.h"
+
+#include "SireMaths/rangenerator.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 

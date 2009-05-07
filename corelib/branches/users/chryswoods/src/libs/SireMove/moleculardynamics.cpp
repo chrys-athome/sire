@@ -35,6 +35,8 @@
 
 #include "SireVol/space.h"
 
+#include "SireMaths/rangenerator.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -89,9 +91,34 @@ MolecularDynamics::MolecularDynamics()
 
 /** Construct to perform moves on the molecules in the group 'molgroup'. This
     defaults to an all-atom velocity-verlet integrator */
-MolecularDynamics::MolecularDynamics(const MoleculeGroup &molgroup)
+MolecularDynamics::MolecularDynamics(const MoleculeGroup &moleculegroup)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(),
+                    molgroup(moleculegroup),
                     intgrator( VelocityVerlet() )
+{}
+
+/** Construct using the supplied integrator */
+MolecularDynamics::MolecularDynamics(const Integrator &integrator)
+                  : ConcreteProperty<MolecularDynamics,Dynamics>(),
+                    intgrator(integrator)
+{}
+    
+/** Construct a move for the passed molecule group, integrated
+    using the supplied integrator */
+MolecularDynamics::MolecularDynamics(const MoleculeGroup &moleculegroup, 
+                                     const Integrator &integrator)
+                  : ConcreteProperty<MolecularDynamics,Dynamics>(),
+                    molgroup(moleculegroup),
+                    intgrator(integrator)
+{}
+
+/** Construct a move for the passed molecule group, integrated
+    using the supplied integrator */
+MolecularDynamics::MolecularDynamics(const Integrator &integrator, 
+                                     const MoleculeGroup &moleculegroup)
+                  : ConcreteProperty<MolecularDynamics,Dynamics>(),
+                    molgroup(moleculegroup),
+                    intgrator(integrator)
 {}
 
 /** Copy constructor */

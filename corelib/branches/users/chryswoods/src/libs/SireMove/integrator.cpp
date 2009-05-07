@@ -28,6 +28,12 @@
 
 #include "integrator.h"
 
+#include "SireFF/forcetable.h"
+
+#include "SireMaths/rangenerator.h"
+
+#include "SireMol/moleculegroup.h"
+
 #include "SireStream/datastream.h"
 
 using namespace SireMove;
