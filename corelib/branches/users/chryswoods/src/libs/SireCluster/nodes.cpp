@@ -303,7 +303,11 @@ Node Nodes::getNode()
             return Node();
 
         //reserve a node
+        #if QT_VERSION >= 0x040300
         while (not nodesem->tryAcquire(1, 1000))
+        #else
+        while (not nodesem->tryAcquire(1))
+        #endif
         {
             lkr.relock();
             nodesem = d->nodesem;
@@ -312,6 +316,10 @@ Node Nodes::getNode()
             if (nodesem.get() == 0)
                 //all of the nodes have been removed
                 return Node();
+
+            #if QT_VERSION < 0x40300
+            sleep(1);
+            #endif
         }
 
         lkr.relock();
@@ -365,7 +373,11 @@ QList<Node> Nodes::getNodes(int n)
                 return nodes;
                 
             //reserve n nodes
+            #if QT_VERSION >= 0x040300
             while (not nodesem->tryAcquire(n, 2000))
+            #else
+            while (not nodesem->tryAcquire(n))
+            #endif
             {
                 lkr.relock();
                 nodesem = d->nodesem;
@@ -374,6 +386,10 @@ QList<Node> Nodes::getNodes(int n)
                 if (nodesem.get() == 0)
                     //all of the nodes have been removed!
                     return nodes;
+                    
+                #if QT_VERSION < 0x40300
+                sleep(2);
+                #endif
             }
             
             lkr.relock();
@@ -424,7 +440,11 @@ QList<Node> Nodes::getAllNodes()
             return QList<Node>();
             
         //reserve all nodes
+        #if QT_VERSION >= 0x040300
         while (not nodesem->tryAcquire( nodesem->available(), 2000 ))
+        #else
+        while (not nodesem->tryAcquire( nodesem->available() ))
+        #endif
         {
             lkr.relock();
             nodesem = d->nodesem;
@@ -433,6 +453,10 @@ QList<Node> Nodes::getAllNodes()
             if (nodesem.get() == 0)
                 //all of the nodes have been rmeoved
                 return QList<Node>();
+                
+            #if QT_VERSION < 0x40300
+            sleep(2);
+            #endif
         }
         
         lkr.relock();
@@ -494,11 +518,34 @@ Node Nodes::getNode(int timeout)
         if (new_timeout <= 0)
             //we've run out of time
             return Node();
+        
+        #if QT_VERSION >= 0x040300
+            //try to reserve a node
+            if (not nodesem->tryAcquire(1, new_timeout))
+                //we ran out of time
+                return Node();
+        #else
+            if (not nodesem->tryAcquire(1))
+            {
+                bool acquired_node = false;
             
-        //try to reserve a node
-        if (not nodesem->tryAcquire(1, new_timeout))
-            //we ran out of time
-            return Node();
+                while (new_timeout > 0)
+                {
+                    if (nodesem->tryAcquire(1))
+                    {
+                        acquired_node = true;
+                        break;
+                    }
+                    
+                    --new_timeout;
+                    sleep(1);
+                }
+                
+                if (not acquired_node)
+                    //we ran out of time
+                    return Node();
+            }
+        #endif
             
         lkr.relock();
         
