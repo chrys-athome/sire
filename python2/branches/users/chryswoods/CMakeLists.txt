@@ -168,15 +168,14 @@ if ( CMAKE_COMPILER_IS_GNUCC )
     endif()
 
     # Add options common to all gcc version
-    ADD_DEFINITIONS( -pipe )
+    set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -pipe" )
         
     # Now gcc 4 specific options
     if ( GCC_MAJOR_VERSION GREATER 3 )
       # remove warnings about strict aliasing (lots from Qt4
       # when compiling with GCC 4, and they are annoying!)
-      ADD_DEFINITIONS( -Wno-strict-aliasing )
+      set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -Wno-strict-aliasing" )
 
-      # gcc-4.2 and above has openMP - turn it on (except for Mac as libgomp is broken!)
       if (GCC_MINOR_VERSION GREATER 1)
           if (SIRE_OPENMP)
               message( "Enabling OpenMP support" )
@@ -193,28 +192,28 @@ if ( CMAKE_COMPILER_IS_GNUCC )
       # requested
       if ( SIRE_SYMBOL_HIDING )
 
-        ADD_DEFINITIONS( -DSIRE_VISIBILITY_AVAILABLE )
-        ADD_DEFINITIONS( -fvisibility=hidden -fvisibility-inlines-hidden )
+        set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -DSIRE_VISIBILITY_AVAILABLE" )
+        set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -fvisibility=hidden -fvisibility-inlines-hidden" )
 
       else()
   
-        ADD_DEFINITIONS( -DSIRE_NO_VISIBILITY_AVAILABLE )
+        set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -DSIRE_NO_VISIBILITY_AVAILABLE" )
 
       endif()
     
     else()
     
-      ADD_DEFINITIONS( -DSIRE_NO_VISIBILITY_AVAILABLE )
+      set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -DSIRE_NO_VISIBILITY_AVAILABLE" )
 
     endif()
     
 endif()
 
 # Copy the Sire compile flags to CMake
-set( CMAKE_C_FLAGS ${SIRE_C_FLAGS_RELEASE} )
-set( CMAKE_CXX_FLAGS ${SIRE_CXX_FLAGS_RELEASE} )
+set( CMAKE_C_FLAGS "${SIRE_C_FLAGS_RELEASE} ${SIRE_PLATFORM_OPTIONS}"  )
+set( CMAKE_CXX_FLAGS "${SIRE_CXX_FLAGS_RELEASE} ${SIRE_PLATFORM_OPTIONS}" )
 
-message( STATUS "Compiler flags = ${SIRE_CXX_FLAGS_RELEASE}" )
+message( STATUS "Compiler flags = ${CMAKE_CXX_FLAGS}" )
 
 # Ensure that the libraries don't contain any undefined symbols
 if(APPLE)
@@ -227,7 +226,8 @@ endif()
 set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SIRE_LINK_FLAGS}" )
 set( CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} ${SIRE_LINK_FLAGS}" )
 
-message( STATUS "Linker flags = ${CMAKE_SHARED_LINKER_FLAGS}" )
+message( STATUS "Library linker flags = ${CMAKE_SHARED_LINKER_FLAGS}" )
+message( STATUS "Executable linker flags = ${CMAKE_EXE_LINKER_FLAGS}" )
 
 # Add the helper library
 add_subdirectory (Helpers)
