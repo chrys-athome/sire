@@ -73,6 +73,13 @@ option ( SIRE_SYMBOL_HIDING "Turn on library symbol hiding" ON )
 # Add option to turn off OpenMP compilation 
 option ( SIRE_OPENMP "Turn on OpenMP support" ON )
 
+# Whether or not to use manual SSE (will probably be removed
+# in favour of compile-time detection)
+option (SIRE_USE_SSE "Turn on manual SSE code" ON)
+
+# Turn off FLOP counting (timing) by default - this adds a small runtime penalty
+option (SIRE_TIME_FLOPS "Turn on floating point timing" OFF)
+
 # Sire depends on >= Python 2.2
 set (PYTHON_MIN_VERSION "2.2")
 include( FindPython )
@@ -131,13 +138,15 @@ endif()
 
 # Set compile flags for debug and release
 
-set( SIRE_PLATFORM_OPTIONS "" )
-
-set( SIRE_C_FLAGS_RELEASE "-Wall -Os ${SIRE_PLATFORM_OPTIONS}" )
+set( SIRE_C_FLAGS_RELEASE "-Wall -Os" )
 set( SIRE_CXX_FLAGS_RELEASE ${SIRE_C_FLAGS_RELEASE} )
 
-set( SIRE_C_FLAGS_DEBUG "-Wall -Os -g ${SIRE_PLATFORM_OPTIONS}" )
+set( SIRE_C_FLAGS_DEBUG "-Wall -Os -g" )
 set( SIRE_CXX_FLAGS_DEBUG ${SIRE_C_FLAGS_DEBUG} )
+
+if (SIRE_TIME_FLOPS)
+  set (SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -DSIRE_TIME_ROUTINES" )
+endif()
 
 # Add compiler specific flags
 if ( CMAKE_COMPILER_IS_GNUCC )
@@ -169,6 +178,11 @@ if ( CMAKE_COMPILER_IS_GNUCC )
 
     # Add options common to all gcc version
     set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -pipe" )
+
+    if (SIRE_USE_SSE)
+      set (SIRE_PLATFORM_OPTIONS 
+            "${SIRE_PLATFORM_OPTIONS} -msse2 -mfpmath=sse -ffast-math -DSIRE_USE_SSE")
+    endif()
         
     # Now gcc 4 specific options
     if ( GCC_MAJOR_VERSION GREATER 3 )
@@ -178,11 +192,18 @@ if ( CMAKE_COMPILER_IS_GNUCC )
 
       if (GCC_MINOR_VERSION GREATER 1)
           if (SIRE_OPENMP)
-              message( "Enabling OpenMP support" )
-              set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -fopenmp" )
-              set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -fopenmp" )
+              if (APPLE)
+                message( STATUS "OpenMP support is unavailable as OpenMP + pthreads "
+                                "is broken in Apple gcc4" )
+                set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -fno-openmp" )
+                set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -fno-openmp" )
+              else()
+                message( STATUS "Enabling OpenMP support" )
+                set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -fopenmp" )
+                set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -fopenmp" )
+              endif()
           else()
-              message( "Explicitly disabling OpenMP support" )
+              message( STATUS "Explicitly disabling OpenMP support" )
               set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -fno-openmp" )
               set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -fno-openmp" )
           endif()
