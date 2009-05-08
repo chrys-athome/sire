@@ -130,8 +130,17 @@ public:
         const T* as_t = dynamic_cast<const T*>(this);
         
         if (not as_t)
-            throwInvalidCast(T::typeName());
-    
+        {
+            if (QLatin1String(T::typeName()) == QLatin1String(this->what()))
+            {
+                //these are the same object - perhaps the typeinfo objects
+                //are in different shared libraries?
+                as_t = (const T*)(this);
+            }
+            else
+                throwInvalidCast(T::typeName());
+        }
+        
         return *as_t;
     }
     
@@ -141,8 +150,17 @@ public:
         T* as_t = dynamic_cast<T*>(this);
         
         if (not as_t)
-            throwInvalidCast(T::typeName());
-            
+        {
+            if (QLatin1String(T::typeName()) == QLatin1String(this->what()))
+            {
+                //these are the same object - perhaps the typeinfo objects
+                //are in different shared libraries?
+                as_t = (T*)(this);
+            }
+            else
+                throwInvalidCast(T::typeName());
+        }
+           
         return *as_t;
     }
 

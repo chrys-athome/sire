@@ -6,6 +6,14 @@
 
 #include <qglobal.h>
 
+namespace SireStream
+{
+namespace detail
+{
+class SharedDataHolder;
+}
+}
+
 class Q_DECL_EXPORT FooBase
 {
 public:
@@ -40,6 +48,9 @@ FooBase* makeFoo_Double();
 
 bool testFoo_Int(const FooBase &foo);
 bool testFoo_Double(const FooBase &foo);
+
+bool testFoo_Holder_Double(const SireStream::detail::SharedDataHolder &holder);
+bool testFoo_Holder_Int(const SireStream::detail::SharedDataHolder &holder);
 
 template<class T>
 class Q_DECL_EXPORT Foo : public FooBase

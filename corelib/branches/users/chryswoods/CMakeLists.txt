@@ -34,7 +34,7 @@ set (SIRE_VERSION_STRING "${SIRE_VERSION_MAJOR}_${SIRE_VERSION_MINOR}_${SIRE_VER
 
 # Whether or not to use manual SSE (will probably be removed
 # in favour of compile-time detection)
-set (SIRE_USE_SSE ON)
+option (SIRE_USE_SSE "Turn on manual SSE code" ON)
 
 # Ensure that the Sire's directories are searched for header files
 # before the system directories - this prevents problems in case
@@ -116,15 +116,8 @@ else()
   message(FATAL_ERROR "Cannot find the boost libraries.")
 endif()  
 
-# Set compile flags for debug and release
-
-if (SIRE_USE_SSE)
-  set (SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -msse2 -mfpmath=sse -ffast-math")
-  ADD_DEFINITIONS( -DSIRE_USE_SSE )
-endif()
-
 if (SIRE_TIME_FLOPS)
-  ADD_DEFINITIONS( -DSIRE_TIME_ROUTINES )
+  set (SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -DSIRE_TIME_ROUTINES" )
 endif()
 
 # Add compiler specific flags
@@ -157,6 +150,11 @@ if ( CMAKE_COMPILER_IS_GNUCC )
 
     # Add options common to all gcc version
     set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -pipe" )
+
+    if (SIRE_USE_SSE)
+      set (SIRE_PLATFORM_OPTIONS 
+             "${SIRE_PLATFORM_OPTIONS} -msse2 -mfpmath=sse -ffast-math -DSIRE_USE_SSE")
+    endif()
         
     # Now gcc 4 specific options
     if ( GCC_MAJOR_VERSION GREATER 3 )
@@ -167,11 +165,18 @@ if ( CMAKE_COMPILER_IS_GNUCC )
       # gcc-4.2 and above has openMP - turn it on (except for Mac as libgomp is broken!)
       if (GCC_MINOR_VERSION GREATER 1)
           if (SIRE_OPENMP)
-              message( "Enabling OpenMP support" )
-              set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -fopenmp" )
-              set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -fopenmp" )
+              if (APPLE)
+                message( STATUS "OpenMP support is unavailable as OpenMP + pthreads "
+                                "is broken in Apple gcc4" )
+                set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -fno-openmp" )
+                set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -fno-openmp" )
+              else()
+                message( STATUS "Enabling OpenMP support" )
+                set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -fopenmp" )
+                set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -fopenmp" )
+              endif()
           else()
-              message( "Explicitly disabling OpenMP support" )
+              message( STATUS "Explicitly disabling OpenMP support" )
               set( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -fno-openmp" )
               set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -fno-openmp" )
           endif()
@@ -240,6 +245,7 @@ check_function_exists( lseek64 HAVE_LSEEK64 )
 check_include_files( malloc/malloc.h HAVE_MALLOC_MALLOC_H )
 check_function_exists( mstats HAVE_MSTATS )
 check_function_exists( mallinfo HAVE_MALLINFO )
+check_function_exists( sysctl HAVE_SYSCTL )
 
 #create config.h
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/sire_config.h.in 

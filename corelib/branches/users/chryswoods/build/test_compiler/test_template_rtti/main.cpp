@@ -1,6 +1,9 @@
 
 #include "libfoo.h"
 
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
 #include <iostream>
 #include <memory>
 
@@ -78,6 +81,12 @@ int main(int argc, const char **argv)
              
         return -1;
     }
+
+    SireStream::detail::SharedDataHolderT< Foo<double> > holder_double = 
+            SireStream::detail::SharedDataHolderT< Foo<double> >(
+                    libfoo_double->asA< Foo<double> >() );
+    
+    testFoo_Holder_Double( holder_double );
     
     cout << "Everything is ok. RTTI across shared library boundaries "
             "is working. This is good, as the Sire property system "

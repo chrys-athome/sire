@@ -60,11 +60,13 @@ SharedDataHolder::SharedDataHolder()
 SharedDataHolder::~SharedDataHolder()
 {}
 
-void SharedDataHolder::throwCastingError() const
+void SharedDataHolder::throwCastingError(const char *trycast,
+                                         const char *iscast) const
 {
     throw SireError::program_bug( QObject::tr(
         "SharedDataStream has got confused over types and is attempting "
-        "an invalid cast!"), CODELOC );
+        "an invalid cast! (from %1 to %2)")
+            .arg(iscast).arg(trycast), CODELOC );
 }
 
 ////////

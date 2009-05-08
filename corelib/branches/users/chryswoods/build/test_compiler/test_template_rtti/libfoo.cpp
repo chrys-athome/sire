@@ -1,6 +1,10 @@
 
 #include "libfoo.h"
 
+#include "SireStream/shareddatastream.h"
+
+using namespace SireStream::detail;
+
 FooBase::FooBase()
 {}
 
@@ -28,4 +32,17 @@ bool Q_DECL_EXPORT testFoo_Int(const FooBase &foo)
 bool Q_DECL_EXPORT testFoo_Double(const FooBase &foo)
 {
     return foo.isA< Foo<double> >();
+}
+
+bool Q_DECL_EXPORT testFoo_Holder_Double(const SharedDataHolder &holder)
+{
+    try
+    {
+        return holder.sharedData< Foo<double> >().isA< Foo<double> >();
+    }
+    catch(const SireError::exception &e)
+    {
+        std::cout << qPrintable( e.toString() );
+        return false;
+    }
 }

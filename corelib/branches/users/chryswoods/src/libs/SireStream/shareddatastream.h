@@ -75,8 +75,10 @@ public:
     template<class T>
     const T& sharedData() const;
     
+    virtual const char* what() const=0;
+    
 protected:
-    void throwCastingError() const;
+    void throwCastingError(const char *trycast, const char *iscast) const;
 };
 
 /** This is the type-specialised version of SharedDataHolder */
@@ -98,6 +100,11 @@ public:
         return data;
     }
 
+    const char* what() const
+    {
+        return typeid(T).name();
+    }
+
 private:
     /** Copy of the shared data */
     T data;
@@ -110,7 +117,16 @@ const T& SharedDataHolder::sharedData() const
                     = dynamic_cast<const SharedDataHolderT<T>*>(this);
                     
     if (not this_ptr)
-        this->throwCastingError();
+    {
+        if (QLatin1String(typeid(T).name()) == QLatin1String(this->what()))
+        {
+            //these two types are actually the same - perhaps the typeinfo
+            //objects are in different shared libraries?
+            this_ptr = (const SharedDataHolderT<T>*)(this);
+        }
+        else
+            this->throwCastingError( typeid(T).name(), this->what() );
+    }
         
     return this_ptr->sharedData();
 }

@@ -980,7 +980,11 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
     
     //add this molecule pair's energy onto the total
     //(also multiply LJ by 4 as it is 4 * epsilon ((sig/r)^12 - (sig/r)^6))
-    energy += Energy(scale_energy * cnrg, 4 * scale_energy * ljnrg);
+    Energy cljnrg(scale_energy * cnrg, 4 * scale_energy * ljnrg);
+
+    //energy += Energy(scale_energy * cnrg, 4 * scale_energy * ljnrg);
+    energy = energy + cljnrg;
+    
     
     #ifdef SIRE_TIME_ROUTINES
     nflops += 5;

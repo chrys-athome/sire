@@ -32,8 +32,6 @@
 
 using namespace SireBase;
 
-#define __HAVE_MSTATS__ 1
-
 //////////////////////////////////////////////////
 ///
 ///  Implementation of SysInfoPvt
@@ -43,8 +41,50 @@ using namespace SireBase;
 ///
 //////////////////////////////////////////////////
 
-#ifdef __HAVE_SYSINFO__
+#ifdef HAVE_SYSCTL
 
+    ///////////
+    /////////// Implementation for systems that have sysctl support
+    /////////// for probing the status of the system
+    ///////////
+    namespace SireBase{ namespace detail {
+
+        class SysInfoPvt
+        {
+        public:
+            SysInfoPvt()
+            {}
+            
+            ~SysInfoPvt()
+            {}
+            
+            quint64 totalSystemMemory() const
+            {
+                return 0;
+            }
+            
+            quint64 totalVirtualMemory() const
+            {
+                return 0;
+            }
+            
+            quint64 usedSystemMemory() const
+            {
+                return 0;
+            }
+            
+            quint64 usedVirtualMemory() const
+            {
+                return 0;
+            }
+            
+            QString toString() const
+            {
+                return QObject::tr("System memory: Unknown");
+            }
+        };
+    
+    }}
 
 #else
 
