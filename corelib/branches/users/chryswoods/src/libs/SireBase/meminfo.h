@@ -74,6 +74,11 @@ public:
     
     static MemInfo takeMeasurement();
     
+    static void startMonitoring(int ms=1000);
+    static void startMonitoring(const QString &filename, int ms=1000);
+    
+    static void stopMonitoring();
+    
 private:  
     /** PIMPL pointer */
     boost::shared_ptr<detail::MemInfoPvt> d;

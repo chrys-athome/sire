@@ -26,9 +26,19 @@
   *
 \*********************************************/
 
+#include <QThread>
+#include <QMutex>
+
+#include <QFile>
+#include <QTextStream>
+
 #include "sire_config.h"
 
 #include "meminfo.h"
+
+#include <stdio.h>
+
+#include <QDebug>
 
 using namespace SireBase;
 
@@ -437,4 +447,123 @@ quint64 MemInfo::usedVirtualMemory() const
     
     else
         return d->usedVirtualMemory();
+}
+
+class MemoryMonitor : public QThread
+{
+public:
+    MemoryMonitor(int ms);
+    MemoryMonitor(const QString &filename, int ms);
+    
+    ~MemoryMonitor();
+    
+    void stop();
+    
+protected:
+    void run();
+
+private:
+    QString filename;
+    int ms;
+};
+
+MemoryMonitor::MemoryMonitor(int time_ms)
+              : QThread(), ms(time_ms)
+{}
+
+MemoryMonitor::MemoryMonitor(const QString &file, int time_ms)
+              : QThread(), filename(file), ms(time_ms)
+{}
+
+MemoryMonitor::~MemoryMonitor()
+{
+    this->stop();
+    this->wait();
+}
+
+void MemoryMonitor::stop()
+{
+    ms = -1;
+}
+
+static void openFile(const QString &filename, QFile &file)
+{
+    if (filename.isEmpty())
+    {
+        if (not file.open( stdout, QIODevice::WriteOnly | QIODevice::Unbuffered ))
+            qWarning() << "Could not open STDOUT???";
+    }
+    else
+    {
+        if (not file.open( QIODevice::WriteOnly|QIODevice::Unbuffered|QIODevice::Append ))
+        {
+            openFile(QString::null, file);
+        }
+    }
+}
+
+void MemoryMonitor::run()
+{
+    if (ms == -1)
+        return;
+        
+    QFile file(filename);
+
+    openFile(filename, file);
+    
+    QTextStream ts( &file );
+    
+    ts << MemInfo::takeMeasurement().toString() << "\n";
+    ts.flush();
+    
+    while (ms > 0)
+    {
+        int have_slept = 0;
+        
+        while (have_slept < ms)
+        {
+            QThread::msleep( qMin(100, ms - have_slept) );
+            have_slept += 100;
+        }
+        
+        if (ms > 0)
+        {
+            ts << MemInfo::takeMeasurement().toString() << "\n";
+            ts.flush();
+        }
+    }
+}
+
+Q_GLOBAL_STATIC( QMutex, memMonitorMutex );
+
+static boost::shared_ptr<MemoryMonitor> monitor;
+
+/** Start a monitor that prints the memory usage of the program
+    out to the screen every 'ms' milliseconds */
+void MemInfo::startMonitoring(int ms)
+{
+    QMutexLocker lkr( memMonitorMutex() );
+    
+    monitor.reset( new MemoryMonitor(ms) );
+    
+    monitor->start();
+}
+
+/** Start a monitor that prints the memory usage of the program
+    out to the file 'filename' every 'ms' milliseconds */
+void MemInfo::startMonitoring(const QString &filename, int ms)
+{
+    QMutexLocker lkr( memMonitorMutex() );
+    
+    monitor.reset( new MemoryMonitor(filename,ms) );
+    
+    monitor->start();
+}
+
+/** Stop monitoring the memory of this process */    
+void MemInfo::stopMonitoring()
+{
+    QMutexLocker lkr( memMonitorMutex() );
+    
+    monitor.reset();
 }
