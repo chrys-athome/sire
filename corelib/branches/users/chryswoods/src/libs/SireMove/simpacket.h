@@ -136,6 +136,10 @@ private:
     
     /** Whether or not to record move statistics */
     bool record_stats;
+    
+    /** Whether or not the SimStore was packed before we ran
+        this work packet */
+    bool sim_store_was_packed;
 };
 
 }

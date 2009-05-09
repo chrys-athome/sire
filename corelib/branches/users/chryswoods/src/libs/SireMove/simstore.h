@@ -117,6 +117,10 @@ public:
     MovesPtr moves() const;
 
 private:
+    void _pvt_moveFromDiskToMemory();
+
+    enum PackedState{ NOT_PACKED = 0, TO_MEMORY = 1, TO_DISK = 2 };
+
     /** The simulation system */
     System sim_system;
   
@@ -126,9 +130,17 @@ private:
     /** A binary representation of the system and moves */
     QByteArray compressed_data;
     
+    /** The path to the directory that will hold the store
+        if it is packed to disk */
+    QString packed_dir;
+    
     /** The temporary file used to hold the SimStore when it
         is packed to disk */
     boost::shared_ptr<QTemporaryFile> packed_file;
+    
+    /** The last packed state for this store (this will be restored
+        using the "pack" function) */
+    PackedState last_packing_state;
 };
 
 }

@@ -45,8 +45,17 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const SimPacket &simpac
     
     SharedDataStream sds(ds);
     
-    sds << simpacket.sim_store
-        << simpacket.nmoves << simpacket.ncompleted
+    if (simpacket.sim_store_was_packed)
+    {
+        SimStore packed_store = simpacket.sim_store;
+        packed_store.pack();
+        
+        sds << packed_store;
+    }
+    else
+        sds << simpacket.sim_store;
+    
+    sds << simpacket.nmoves << simpacket.ncompleted
         << simpacket.nmoves_per_chunk << simpacket.record_stats;
         
     return ds;
@@ -64,11 +73,6 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SimPacket &simpacket)
         sds >> simpacket.sim_store
             >> simpacket.nmoves >> simpacket.ncompleted
             >> simpacket.nmoves_per_chunk >> simpacket.record_stats;
-
-        //unpack the SimStore as we definitely want to be using it - 
-        // if we can't unpack it now, then we won't be able to run 
-        // the simulation
-        simpacket.sim_store.unpack();
     }
     else if (v == 1)
     {
@@ -92,7 +96,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SimPacket &simpacket)
 /** Null constructor */
 SimPacket::SimPacket() 
           : WorkPacketBase(), nmoves(0), ncompleted(0),
-            nmoves_per_chunk(0), record_stats(true)
+            nmoves_per_chunk(0), record_stats(true),
+            sim_store_was_packed(false)
 {}
 
 /** Construct a workpacket that runs 'nmoves' of the Moves 'moves' on the 
@@ -101,7 +106,8 @@ SimPacket::SimPacket()
 SimPacket::SimPacket(const System &system, const Moves &moves,
                      int n_moves, bool recording_stats)
           : WorkPacketBase(), sim_store(system,moves),
-            ncompleted(0), nmoves_per_chunk(100), record_stats(recording_stats)
+            ncompleted(0), nmoves_per_chunk(100), record_stats(recording_stats),
+            sim_store_was_packed(false)
 {
     if (n_moves > 0)
         nmoves = n_moves;
@@ -116,7 +122,8 @@ SimPacket::SimPacket(const System &system, const Moves &moves,
 SimPacket::SimPacket(const System &system, const Moves &moves,
                      int n_moves, int n_moves_per_chunk, bool recording_stats)
           : WorkPacketBase(), sim_store(system,moves),
-            ncompleted(0), record_stats(recording_stats)
+            ncompleted(0), record_stats(recording_stats),
+            sim_store_was_packed(false)
 {
     if (n_moves > 0)
         nmoves = n_moves;
@@ -135,7 +142,8 @@ SimPacket::SimPacket(const System &system, const Moves &moves,
 SimPacket::SimPacket(const SimStore &simstore,
                      int n_moves, bool recording_stats)
           : WorkPacketBase(), sim_store(simstore),
-            ncompleted(0), nmoves_per_chunk(100), record_stats(recording_stats)
+            ncompleted(0), nmoves_per_chunk(100), record_stats(recording_stats),
+            sim_store_was_packed(false)
 {
     if (n_moves > 0)
         nmoves = n_moves;
@@ -150,7 +158,8 @@ SimPacket::SimPacket(const SimStore &simstore,
 SimPacket::SimPacket(const SimStore &simstore,
                      int n_moves, int n_moves_per_chunk, bool recording_stats)
           : WorkPacketBase(), sim_store(simstore),
-            ncompleted(0), record_stats(recording_stats)
+            ncompleted(0), record_stats(recording_stats),
+            sim_store_was_packed(false)
 {
     if (n_moves > 0)
         nmoves = n_moves;
@@ -168,7 +177,8 @@ SimPacket::SimPacket(const SimPacket &other)
           : WorkPacketBase(other), sim_store(other.sim_store),
             nmoves(other.nmoves),
             ncompleted(other.ncompleted), nmoves_per_chunk(other.nmoves_per_chunk),
-            record_stats(other.record_stats)
+            record_stats(other.record_stats),
+            sim_store_was_packed(other.sim_store_was_packed)
 {}
 
 /** Destructor */
@@ -185,6 +195,7 @@ SimPacket& SimPacket::operator=(const SimPacket &other)
         ncompleted = other.ncompleted;
         nmoves_per_chunk = other.nmoves_per_chunk;
         record_stats = other.record_stats;
+        sim_store_was_packed = other.sim_store_was_packed;
         
         WorkPacketBase::operator=(other);
     }
@@ -199,7 +210,8 @@ bool SimPacket::operator==(const SimPacket &other) const
            (sim_store == other.sim_store and
             nmoves == other.nmoves and ncompleted == other.ncompleted and
             nmoves_per_chunk == other.nmoves_per_chunk and
-            record_stats == other.record_stats);
+            record_stats == other.record_stats and
+            sim_store_was_packed == other.sim_store_was_packed);
 }
 
 /** Comparison operator */
@@ -208,19 +220,18 @@ bool SimPacket::operator!=(const SimPacket &other) const
     return not this->operator==(other);
 }
 
-/** Yes, we should compress this workpacket as it takes
-    up quite a bit of space */
+/** Only compress this workpacket if the SimStore is not already packed */
 bool SimPacket::shouldPack() const
 {
-    return true;
+    return not (sim_store_was_packed or sim_store.isPacked());
 }
 
 /** Because it takes too long to calculate the size of this
-    packet, we say that it will be 8MB - this is enough for 
+    packet, we say that it will be 32 MB - this is enough for 
     most cases */
 int SimPacket::approximatePacketSize() const
 {
-    return 8 * 1024 * 1024;
+    return 32 * 1024 * 1024;
 }
 
 /** Return the system being simulated */
@@ -282,8 +293,13 @@ float SimPacket::chunk()
 
     if (n_to_run > 0)
     {
-        //extract the system and moves from the store
-        sim_store.unpack();
+        if (sim_store.isPacked())
+        {
+            sim_store_was_packed = true;
+        
+            //extract the system and moves from the store
+            sim_store.unpack();
+        }
         
         System sim_system = sim_store.system();
         MovesPtr sim_moves = sim_store.moves();
@@ -298,6 +314,17 @@ float SimPacket::chunk()
 
         //we leave the store unpacked, as there is no point repacking
         //it between chunks
+    }
+
+    if (ncompleted >= nmoves)
+    {
+        //we have finished all of the moves, so repack the simstore
+        //if necessary
+        if (sim_store_was_packed)
+        {
+            sim_store.pack();
+            sim_store_was_packed = false;
+        }
     }
 
     return 100.0 * ( float(ncompleted) / float(nmoves) );
