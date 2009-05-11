@@ -29,6 +29,16 @@ set ( SIREMOVE_HEADERS
       simpacket.h
       simstore.h
       simulation.h
+      supramove.h
+      supramoves.h
+      suprasim.h
+      suprasimpacket.h
+      suprasubmove.h
+      suprasubmoves.h
+      suprasubsim.h
+      suprasubsimpacket.h
+      suprasubsystem.h
+      suprasystem.h
       uniformsampler.h
       velocityverlet.h
       volumemove.h
@@ -60,6 +70,16 @@ set ( SIREMOVE_SOURCES
       simpacket.cpp
       simstore.cpp
       simulation.cpp
+      supramove.cpp
+      supramoves.cpp
+      suprasim.cpp
+      suprasimpacket.cpp
+      suprasubmove.cpp
+      suprasubmoves.cpp
+      suprasubsim.cpp
+      suprasubsimpacket.cpp
+      suprasubsystem.cpp
+      suprasystem.cpp
       uniformsampler.cpp
       weightedmoves.cpp
       velocityverlet.cpp

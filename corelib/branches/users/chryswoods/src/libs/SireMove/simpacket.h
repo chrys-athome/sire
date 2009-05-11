@@ -29,7 +29,6 @@
 #ifndef SIREMOVE_SIMPACKET_H
 #define SIREMOVE_SIMPACKET_H
 
-#include <QMutex>
 #include <QByteArray>
 
 #include "SireCluster/workpacket.h"

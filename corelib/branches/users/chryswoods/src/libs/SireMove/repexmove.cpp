@@ -52,6 +52,69 @@ using namespace SireUnits;
 using namespace SireUnits::Dimension;
 using namespace SireStream;
 
+////////////
+//////////// Implementation of RepExSubMove
+////////////
+
+static const RegisterMetaType<RepExSubMove> r_repexsubmove;
+
+/** Perform the sub-moves on the passed sub-system */
+void RepExSubMove::move(SupraSubSystem &system, int n_supra_moves,
+                        bool record_supra_stats)
+{
+    if (n_supra_moves <= 0)
+        return;
+
+    //replica exchange moves work only with Replica objects
+    Replica &replica = system.asA<Replica>();
+    
+    boost::shared_ptr<RepExReplica> old_state( replica.clone() );
+    
+    try
+    {
+        //unpack the system, if necessary
+        bool system_is_packed = system.isPacked();
+        system.unpack();
+
+        //do we need to swap the system (because of a previously passed
+        //replica exchange move)?
+        if (this->lastMovePassed())
+        {
+            system.setSubSystem(new_system);
+        }
+    
+        //do we need to clear statistics?
+        if (must_clear_substats)
+            system.clearSubStats();
+    
+        //perform the moves
+        for (int i=0; i<n_supra_moves; ++i)
+        {
+            system.subMove();
+            
+            if (record_supra_stats)
+                system.collectStats();
+        }
+        
+        //now collect the information necessary for the next
+        //replica exchange move
+        this->collectMoveData(system);
+        
+        //repack the system, if necessary
+        if (system_is_packed)
+            system.pack();
+    }
+    catch(...)
+    {
+        replica.assign(*old_state);
+        throw;
+    }
+}
+
+////////////
+//////////// Implementation of RepExMove
+////////////
+
 static const RegisterMetaType<RepExMove> r_repexmove;
 
 /** Serialise to a binary datastream */

@@ -31,6 +31,9 @@
 
 #include "SireMaths/rangenerator.h"
 
+#include "SireMove/supramove.h"
+#include "SireMove/suprasubmove.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
@@ -55,6 +58,38 @@ class RepExReplica;
 using SireMaths::RanGenerator;
 
 using SireCluster::Nodes;
+
+/** This is the sub-move that is applied to each replica in the supra-ensemble
+
+    @author Christopher Woods
+*/
+class SIREMOVE_EXPORT RepExSubMove
+           : public SireBase::ConcreteProperty<RepExSubMove,SupraSubMove>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const RepExSubMove&);
+friend QDataStream& ::operator>>(QDataStream&, RepExSubMove&);
+
+public:
+    RepExSubMove();
+    
+    RepExSubMove(const RepExSubMove &other);
+    
+    ~RepExSubMove();
+    
+    RepExSubMove& operator=(const RepExSubMove &other);
+    
+    bool operator==(const RepExSubMove &other) const;
+    bool operator!=(const RepExSubMove &other) const;
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<RepExSubMove>() );
+    }
+
+    void move(SupraSubSystem &system, int n_supra_moves, 
+              bool record_supra_stats);
+};
 
 /** This class is used to perform replica exchange moves on a collection
     of RepExReplicas. Each move involves running a block of sampling

@@ -108,7 +108,7 @@ private:
         from the system */
     IOPtr io_writer;
     
-    /** The molecule group that is being written */
+    /** The number of the molecule group that is being written */
     MoleculeGroup molgroup;
     
     /** Temporary files containing each frame of the animation */
