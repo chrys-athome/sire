@@ -26,3 +26,68 @@
   *
 \*********************************************/
 
+#ifndef SIREMOVE_SUPRAMOVE_H
+#define SIREMOVE_SUPRAMOVE_H
+
+#include "SireBase/property.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMove
+{
+class SupraMove;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMove::SupraMove&);
+QDataStream& operator>>(QDataStream&, SireMove::SupraMove&);
+
+namespace SireMove
+{
+
+/** This is the base class of all supra-system moves (supra-moves).
+    A supra-move is a move that is applied to a supra-system
+    
+    @author Christopher Woods
+*/
+class SIREMOVE_EXPORT SupraMove : public SireBase::Property
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const SupraMove&);
+friend QDataStream& ::operator>>(QDataStream&, SupraMove&);
+
+public:
+    SupraMove();
+    
+    SupraMove(const SupraMove &other);
+    
+    virtual ~SupraMove();
+    
+    virtual SupraMove* clone() const=0;
+    
+    static const char* typeName()
+    {
+        return "SireMove::SupraMove";
+    }
+
+    virtual void move(SupraSystem &system, int nmoves, 
+                      bool record_stats=true)=0;
+
+protected:
+    SupraMove& operator=(const SupraMove &other);
+    
+    bool operator==(const SupraMove &other) const;
+    bool operator!=(const SupraMove &other) const;
+};
+
+typedef SireBase::PropPtr<SupraMove> SupraMovePtr;
+
+}
+
+SIRE_EXPOSE_CLASS( SireMove::SupraMove )
+
+SIRE_EXPOSE_PROPERTY( SireMove::SupraMovePtr, SireMove::SupraMove )
+
+SIRE_END_HEADER
+
+#endif
+

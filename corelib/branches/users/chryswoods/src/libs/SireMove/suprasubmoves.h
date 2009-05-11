@@ -72,7 +72,7 @@ public:
         return "SireMove::SupraSubMoves";
     }
     
-    const SupraSubMove& operator[](int i) const;
+    virtual const SupraSubMove& operator[](int i) const=0;
     
     int count() const;
     int size() const;
@@ -115,6 +115,8 @@ public:
     bool operator==(const SameSupraSubMoves &other) const;
     bool operator!=(const SameSupraSubMoves &other) const;
     
+    SupraSubMove& operator[](int i) const;
+    
     static const char* typeName()
     {
         return QMetaType::typeName( qMetaTypeId<SameSupraSubMoves>() );
@@ -131,7 +133,7 @@ public:
 
 private:
     /** The move that will be repeatedly applied to the SupraSubSystem */
-    SupraSubMove submove;
+    SupraSubMovePtr submove;
 };
 
 typedef SireBase::PropPtr<SupraSubMoves> SupraSubMovesPtr;

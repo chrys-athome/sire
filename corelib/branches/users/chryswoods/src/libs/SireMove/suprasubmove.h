@@ -81,9 +81,13 @@ protected:
 
 };
 
+typedef SireBase::PropPtr<SupraSubMove> SupraSubMovePtr;
+
 }
 
 SIRE_EXPOSE_CLASS( SireMove::SupraSubMove )
+
+SIRE_EXPOSE_PROPERTY( SireMove::SupraSubMovePtr, SireMove::SupraSubMove )
 
 SIRE_END_HEADER
 
