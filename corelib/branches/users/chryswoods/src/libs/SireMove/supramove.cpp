@@ -26,3 +26,162 @@
   *
 \*********************************************/
 
+#include "supramove.h"
+
+#include "suprasystem.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
+using namespace SireMove;
+using namespace SireBase;
+using namespace SireStream;
+
+/////////////
+///////////// Implementation of SupraMove
+/////////////
+
+static const RegisterMetaType<SupraMove> r_supramove(MAGIC_ONLY,
+                                                "SireMove::SupraMove");
+                                                
+/** Serialise to a binary datastream */
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const SupraMove &supramove)
+{
+    writeHeader(ds, r_supramove, 1);
+    
+    ds << static_cast<const Property&>(supramove);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SupraMove &supramove)
+{
+    VersionID v = readHeader(ds, r_supramove);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<Property&>(supramove);
+    }
+    else
+        throw version_error(v, "1", r_supramove, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+SupraMove::SupraMove() : Property()
+{}
+
+/** Copy constructor */
+SupraMove::SupraMove(const SupraMove &other) : Property(other)
+{}
+
+/** Destructor */
+SupraMove::~SupraMove()
+{}
+
+/** Copy assignment operator */
+SupraMove& SupraMove::operator=(const SupraMove&)
+{
+    return *this;
+}
+
+/** Comparison operator */
+bool SupraMove::operator==(const SupraMove &other) const
+{
+    return true;
+}
+
+/** Comparison operator */
+bool SupraMove::operator!=(const SupraMove &other) const
+{
+    return false;
+}
+
+/** Clear all move statistics */
+void SupraMove::clearStatistics()
+{}
+
+Q_GLOBAL_STATIC( NullSupraMove, nullSupraMove )
+
+/** Return the global null move */
+const NullSupraMove& SupraMove::null()
+{
+    return *(nullSupraMove());
+}
+
+/////////////
+///////////// Implementation of NullSupraMove
+/////////////
+
+static const RegisterMetaType<NullSupraMove> r_nullsupramove;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
+                                        const NullSupraMove &nullsupramove)
+{
+    writeHeader(ds, r_nullsupramove, 1);
+    
+    ds << static_cast<const SupraMove&>(nullsupramove);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
+                                        NullSupraMove &nullsupramove)
+{
+    VersionID v = readHeader(ds, r_nullsupramove);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<SupraMove&>(nullsupramove);
+    }
+    else
+        throw version_error(v, "1", r_nullsupramove, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+NullSupraMove::NullSupraMove() : ConcreteProperty<NullSupraMove,SupraMove>()
+{}
+
+/** Copy constructor */
+NullSupraMove::NullSupraMove(const NullSupraMove &other)
+              : ConcreteProperty<NullSupraMove,SupraMove>(other)
+{}
+
+/** Destructor */
+NullSupraMove::~NullSupraMove()
+{}
+
+/** Copy assignment operator */
+NullSupraMove& NullSupraMove::operator=(const NullSupraMove &other)
+{
+    SupraMove::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool NullSupraMove::operator==(const NullSupraMove &other) const
+{
+    return true;
+}
+
+/** Comparison operator */
+bool NullSupraMove::operator!=(const NullSupraMove &other) const
+{
+    return false;
+}
+
+/** Return a string representation of this move */
+QString NullSupraMove::toString() const
+{
+    return QObject::tr("NullSupraMove()");
+}
+
+/** Perform the null move - this does nothing! */
+void NullSupraMove::move(SupraSystem&, int, bool)
+{}

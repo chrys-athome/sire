@@ -29,7 +29,7 @@
 #ifndef SIREMOVE_SUPRASYSTEM_H
 #define SIREMOVE_SUPRASYSTEM_H
 
-#include "SireMove/property.h"
+#include "SireBase/property.h"
 
 SIRE_BEGIN_HEADER
 
@@ -41,10 +41,20 @@ class SupraSystem;
 QDataStream& operator<<(QDataStream&, const SireMove::SupraSystem&);
 QDataStream& operator>>(QDataStream&, SireMove::SupraSystem&);
 
+namespace SireSystem
+{
+class System;
+}
+
 namespace SireMove
 {
 
 using SireSystem::System;
+
+class SimStore;
+class Moves;
+
+class SupraSubSystem;
 
 /** This is the base class of all supra-systems. A supra-system is a 
     collection of systems, used to perform a simulation that

@@ -26,3 +26,227 @@
   *
 \*********************************************/
 
+#include "supramoves.h"
+
+#include "suprasystem.h"
+
+#include "SireError/errors.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
+using namespace SireMove;
+using namespace SireBase;
+using namespace SireStream;
+
+/////////
+///////// Implementation of SupraMoves
+/////////
+
+static const RegisterMetaType<SupraMoves> r_supramoves( MAGIC_ONLY,
+                                                    "SireMove::SupraMoves" );
+                                                    
+/** Serialise to a binary datastream */
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const SupraMoves &supramoves)
+{
+    writeHeader(ds, r_supramoves, 1);
+    
+    ds << static_cast<const Property&>(supramoves);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SupraMoves &supramoves)
+{
+    VersionID v = readHeader(ds, r_supramoves);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<Property&>(supramoves);
+    }
+    else
+        throw version_error(v, "1", r_supramoves, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+SupraMoves::SupraMoves() : Property()
+{}
+
+/** Copy constructor */
+SupraMoves::SupraMoves(const SupraMoves &other) : Property(other)
+{}
+
+/** Destructor */
+SupraMoves::~SupraMoves()
+{}
+
+/** Copy assignment operator */
+SupraMoves& SupraMoves::operator=(const SupraMoves &other)
+{
+    return *this;
+}
+
+/** Comparison operator */
+bool SupraMoves::operator==(const SupraMoves &other) const
+{
+    return true;
+}
+
+/** Comparison operator */
+bool SupraMoves::operator!=(const SupraMoves &other) const
+{
+    return false;
+}
+
+/** Return the number of different types of move in this set */
+int SupraMoves::count() const
+{
+    return this->moves().count();
+}
+
+/** Return the number of different types of move in this set */
+int SupraMoves::size() const
+{
+    return this->count();
+}
+
+/** Return the number of different types of move in this set */
+int SupraMoves::nSubMoveTypes() const
+{
+    return this->count();
+}
+
+Q_GLOBAL_STATIC( SameSupraMoves, sameSupraMoves )
+
+/** Return the global null SupraMoves object */
+const SameSupraMoves& SupraMoves::null()
+{
+    return *(sameSupraMoves());
+}
+
+/////////
+///////// Implementation of SameSupraMoves
+/////////
+
+static RegisterMetaType<SameSupraMoves> r_samesupramoves;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
+                                        const SameSupraMoves &samesupramoves)
+{
+    writeHeader(ds, r_samesupramoves, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << samesupramoves.mv
+        << static_cast<const SupraMoves&>(samesupramoves);
+        
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SameSupraMoves &samesupramoves)
+{
+    VersionID v = readHeader(ds, r_samesupramoves);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> samesupramoves.mv
+            >> static_cast<SupraMoves&>(samesupramoves);
+    }
+    else
+        throw version_error(v, "1", r_samesupramoves, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+SameSupraMoves::SameSupraMoves() : ConcreteProperty<SameSupraMoves,SupraMoves>()
+{}
+
+/** Construct to run the move 'move' repeatedly */
+SameSupraMoves::SameSupraMoves(const SupraMove &move)
+               : ConcreteProperty<SameSupraMoves,SupraMoves>(), mv(move)
+{}
+
+/** Copy constructor */
+SameSupraMoves::SameSupraMoves(const SameSupraMoves &other)
+               : ConcreteProperty<SameSupraMoves,SupraMoves>(other),
+                 mv(other.mv)
+{}
+
+/** Destructor */
+SameSupraMoves::~SameSupraMoves()
+{}
+
+/** Copy assignment operator */
+SameSupraMoves& SameSupraMoves::operator=(const SameSupraMoves &other)
+{
+    SupraMoves::operator=(other);
+    
+    mv = other.mv;
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool SameSupraMoves::operator==(const SameSupraMoves &other) const
+{
+    return mv == other.mv and SupraMoves::operator==(other);
+}
+
+/** Comparison operator */
+bool SameSupraMoves::operator!=(const SameSupraMoves &other) const
+{
+    return mv != other.mv or SupraMoves::operator!=(other);
+}
+
+/** Return the ith move 
+
+    \throw SireError::invalid_index
+*/
+const SupraMove& SameSupraMoves::operator[](int i) const
+{
+    if (i != 0)
+        throw SireError::invalid_index( QObject::tr(
+            "There is only a single SupraMove in the SameSupraMoves, so "
+            "only index 0 is valid (index %1 is thus invalid)")
+                .arg(i), CODELOC );
+
+    return mv.read();
+}
+
+/** Return a string representation of this moves set */
+QString SameSupraMoves::toString() const
+{
+    return QObject::tr( "SameSupraMoves{ %1 }" ).arg(mv->toString());
+}
+
+/** Perform the moves 'nmoves' times */
+void SameSupraMoves::move(SupraSystem &system, int nmoves, bool record_stats)
+{
+    if (nmoves == 0)
+        return;
+        
+    mv.edit().move(system, nmoves, record_stats);
+}
+
+/** Clear all move statistics */
+void SameSupraMoves::clearStatistics()
+{
+    mv.edit().clearStatistics();
+}
+
+/** Return a list of all of the moves */
+QList<SupraMovePtr> SameSupraMoves::moves() const
+{
+    QList<SupraMovePtr> mvs;
+    mvs.append(mv);
+    
+    return mvs;
+}

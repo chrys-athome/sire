@@ -29,20 +29,26 @@
 #ifndef SIREMOVE_SUPRASUBMOVE_H
 #define SIREMOVE_SUPRASUBMOVE_H
 
-SIRE_BEGIN_HEADER
-
 #include "SireBase/property.h"
+
+SIRE_BEGIN_HEADER
 
 namespace SireMove
 {
 class SupraSubMove;
+class NullSupraSubMove;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMove::SupraSubMove&);
 QDataStream& operator>>(QDataStream&, SireMove::SupraSubMove&);
 
+QDataStream& operator<<(QDataStream&, const SireMove::NullSupraSubMove&);
+QDataStream& operator>>(QDataStream&, SireMove::NullSupraSubMove&);
+
 namespace SireMove
 {
+
+class SupraSubSystem;
 
 /** This is the base class of the controller for the sub-moves
     that are performed on the sub-systems of each SupraSystem
@@ -70,8 +76,14 @@ public:
         return "SireMove::SupraSubMove";
     }
     
+    virtual QString toString() const=0;
+    
+    virtual void clearStatistics();
+    
     virtual void move(SupraSubSystem &system, int n_supra_moves,
                       bool record_supra_stats=true)=0;
+
+    static const NullSupraSubMove& null();
     
 protected:
     SupraSubMove& operator=(const SupraSubMove &other);
@@ -81,11 +93,47 @@ protected:
 
 };
 
+/** This is a null move that doesn't move a SupraSubSystem...
+
+    @author Christopher Woods 
+*/
+class SIREMOVE_EXPORT NullSupraSubMove
+        : public SireBase::ConcreteProperty<NullSupraSubMove,SupraSubMove>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const NullSupraSubMove&);
+friend QDataStream& ::operator>>(QDataStream&, NullSupraSubMove&);
+
+public:
+    NullSupraSubMove();
+    
+    NullSupraSubMove(const NullSupraSubMove &other);
+    
+    ~NullSupraSubMove();
+    
+    NullSupraSubMove& operator=(const NullSupraSubMove &other);
+    
+    bool operator==(const NullSupraSubMove &other) const;
+    bool operator!=(const NullSupraSubMove &other) const;
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<NullSupraSubMove>() );
+    }
+    
+    QString toString() const;
+    
+    void move(SupraSubSystem &system, int n_supra_moves, bool record_supra_stats);
+};
+
 typedef SireBase::PropPtr<SupraSubMove> SupraSubMovePtr;
 
 }
 
+Q_DECLARE_METATYPE( SireMove::NullSupraSubMove )
+
 SIRE_EXPOSE_CLASS( SireMove::SupraSubMove )
+SIRE_EXPOSE_CLASS( SireMove::NullSupraSubMove )
 
 SIRE_EXPOSE_PROPERTY( SireMove::SupraSubMovePtr, SireMove::SupraSubMove )
 

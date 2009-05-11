@@ -31,6 +31,8 @@
 
 #include "SireBase/property.h"
 
+#include "simstore.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove

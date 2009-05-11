@@ -80,14 +80,19 @@ public:
     
     virtual QString toString() const=0;
     
-    virtual void move(SupraSubSystem &system, int nsubmoves,
-                      bool record_substats) const=0;
+    virtual void move(SupraSubSystem &system, int nsubmoves, bool record_substats)=0;
                       
     virtual void clearStatistics()=0;
     
     virtual QList<SupraSubMovePtr> subMoves() const=0;
     
     static const SameSupraSubMoves& null();
+
+protected:
+    SupraSubMoves& operator=(const SupraSubMoves &other);
+    
+    bool operator==(const SupraSubMoves &other) const;
+    bool operator!=(const SupraSubMoves &other) const;
 };
 
 /** This is a simple SupraSubMoves class that just repeats the 
@@ -99,8 +104,8 @@ class SIREMOVE_EXPORT SameSupraSubMoves
         : public SireBase::ConcreteProperty<SameSupraSubMoves,SupraSubMoves>
 {
 
-QDataStream& ::operator<<(QDataStream&, const SameSupraSubMoves&);
-QDataStream& ::operator>>(QDataStream&, SameSupraSubMoves&);
+friend QDataStream& ::operator<<(QDataStream&, const SameSupraSubMoves&);
+friend QDataStream& ::operator>>(QDataStream&, SameSupraSubMoves&);
 
 public:
     SameSupraSubMoves();
@@ -115,7 +120,7 @@ public:
     bool operator==(const SameSupraSubMoves &other) const;
     bool operator!=(const SameSupraSubMoves &other) const;
     
-    SupraSubMove& operator[](int i) const;
+    const SupraSubMove& operator[](int i) const;
     
     static const char* typeName()
     {
@@ -124,12 +129,11 @@ public:
     
     QString toString() const;
     
-    void move(SupraSubSystem &system, int nsubmoves,
-              bool record_substats) const
+    void move(SupraSubSystem &system, int nsubmoves, bool record_substats);
 
     void clearStatistics();
     
-    QList<SupraSubMove> subMoves() const;
+    QList<SupraSubMovePtr> subMoves() const;
 
 private:
     /** The move that will be repeatedly applied to the SupraSubSystem */

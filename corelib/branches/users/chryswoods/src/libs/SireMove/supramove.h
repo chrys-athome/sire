@@ -36,13 +36,19 @@ SIRE_BEGIN_HEADER
 namespace SireMove
 {
 class SupraMove;
+class NullSupraMove;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMove::SupraMove&);
 QDataStream& operator>>(QDataStream&, SireMove::SupraMove&);
 
+QDataStream& operator<<(QDataStream&, const SireMove::NullSupraMove&);
+QDataStream& operator>>(QDataStream&, SireMove::NullSupraMove&);
+
 namespace SireMove
 {
+
+class SupraSystem;
 
 /** This is the base class of all supra-system moves (supra-moves).
     A supra-move is a move that is applied to a supra-system
@@ -69,8 +75,14 @@ public:
         return "SireMove::SupraMove";
     }
 
+    virtual QString toString() const=0;
+
     virtual void move(SupraSystem &system, int nmoves, 
                       bool record_stats=true)=0;
+
+    virtual void clearStatistics();
+
+    static const NullSupraMove& null();
 
 protected:
     SupraMove& operator=(const SupraMove &other);
@@ -79,11 +91,47 @@ protected:
     bool operator!=(const SupraMove &other) const;
 };
 
+/** This is a null supra move, which does nothing
+
+    @author Christopher Woods
+*/
+class SIREMOVE_EXPORT NullSupraMove
+         : public SireBase::ConcreteProperty<NullSupraMove,SupraMove>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const NullSupraMove&);
+friend QDataStream& ::operator>>(QDataStream&, NullSupraMove&);
+
+public:
+    NullSupraMove();
+    
+    NullSupraMove(const NullSupraMove &other);
+    
+    ~NullSupraMove();
+    
+    NullSupraMove& operator=(const NullSupraMove &other);
+    
+    bool operator==(const NullSupraMove &other) const;
+    bool operator!=(const NullSupraMove &other) const;
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<NullSupraMove>() );
+    }
+
+    QString toString() const;
+
+    void move(SupraSystem &system, int nmoves, bool record_stats=true);
+};
+
 typedef SireBase::PropPtr<SupraMove> SupraMovePtr;
 
 }
 
+Q_DECLARE_METATYPE( SireMove::NullSupraMove )
+
 SIRE_EXPOSE_CLASS( SireMove::SupraMove )
+SIRE_EXPOSE_CLASS( SireMove::NullSupraMove )
 
 SIRE_EXPOSE_PROPERTY( SireMove::SupraMovePtr, SireMove::SupraMove )
 

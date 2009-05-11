@@ -81,14 +81,19 @@ public:
     
     virtual QString toString() const=0;
     
-    virtual void move(SupraSystem &system, int nmoves,
-                      bool record_stats=true) const=0;
+    virtual void move(SupraSystem &system, int nmoves, bool record_stats=true)=0;
                       
     virtual void clearStatistics()=0;
     
     virtual QList<SupraMovePtr> moves() const=0;
     
     static const SameSupraMoves& null();
+
+protected:
+    SupraMoves& operator=(const SupraMoves &other);
+    
+    bool operator==(const SupraMoves &other) const;
+    bool operator!=(const SupraMoves &other) const;
 };
 
 /** This SupraMoves object is used to apply the same SupraMove
@@ -125,12 +130,11 @@ public:
     
     QString toString() const;
     
-    void move(SupraSystem &system, int nmoves,
-              bool record_stats=true) const
+    void move(SupraSystem &system, int nmoves, bool record_stats=true);
 
     void clearStatistics();
     
-    QList<SupraMove> moves() const;
+    QList<SupraMovePtr> moves() const;
 
 private:
     /** The move that will be repeatedly applied to the SupraSystem */
