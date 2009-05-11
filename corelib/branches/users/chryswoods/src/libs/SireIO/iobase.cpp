@@ -74,6 +74,18 @@ IOBase::IOBase(const IOBase &other) : Property(other)
 IOBase::~IOBase()
 {}
 
+/** Read all of the molecules contained in the data 'data', using 
+    the (optional) passed properties in 'map', and returning a 
+    molecule group containing the molecules in the same order as 
+    they appear in the file */
+MoleculeGroup IOBase::read(const QByteArray &data, const PropertyMap &map) const
+{
+    if (data.isEmpty())
+        return MoleculeGroup();
+
+    return this->readMols(data, map);
+}
+
 /** Read all of the molecules contained in the file 'filename', using
     the (optional) passed properties in 'map', and returning a molecule
     group containing the molecules in the same order as they appear
@@ -106,6 +118,12 @@ MoleculeGroup IOBase::read(const QString &filename, const PropertyMap &map) cons
     return molecules;
 }
 
+/** Simple overload of IOBase::read(QString) */
+MoleculeGroup IOBase::read(const char *filename, const PropertyMap &map) const
+{
+    return this->read(QLatin1String(filename), map);
+}
+
 /** Read all of the molecules contained in the IO device 'dev', using
     the (optional) passed properties in 'map', and returning a molecule
     group containing the molecules in the same order as they appear
@@ -132,6 +150,14 @@ MoleculeGroup IOBase::read(QIODevice &dev, const PropertyMap &map) const
     return molecules;
 }
 
+/** Read a single molecule from the passed data - this returns only
+    the first molecule from the data */
+Molecule IOBase::readMolecule(const QByteArray &data, const PropertyMap &map) const
+{
+    MoleculeGroup molecules = this->read(data, map);
+    return molecules.at(MolIdx(0)).molecule();
+}
+
 /** Read a single molecule from the passed file - this returns only
     the first molecule from the file */
 Molecule IOBase::readMolecule(const QString &filename, const PropertyMap &map) const
@@ -140,12 +166,29 @@ Molecule IOBase::readMolecule(const QString &filename, const PropertyMap &map) c
     return molecules.at(MolIdx(0)).molecule();
 }
 
+/** Simple overload designed to prevent confusion with QByteArray function */
+Molecule IOBase::readMolecule(const char *filename, const PropertyMap &map) const
+{
+    return this->readMolecule( QLatin1String(filename), map );
+}
+
 /** Read a single molecule from the passed IO device - this returns
     only the first molecule from the device */
 Molecule IOBase::readMolecule(QIODevice &dev, const PropertyMap &map) const
 {
     MoleculeGroup molecules = this->read(dev, map);
     return molecules.at(MolIdx(0)).molecule();
+}
+
+/** Write the molecules in the passed group to memory and return
+    that data.
+    
+    This writes the molecules in the same order as they appear in the
+    passed group. 
+*/
+QByteArray IOBase::write(const MoleculeGroup &molgroup, const PropertyMap &map) const
+{
+    return this->writeMols(molgroup, map);
 }
 
 /** Write the molecules in the passed group to the file called 'filename'.
@@ -172,6 +215,12 @@ void IOBase::write(const MoleculeGroup &molgroup, const QString &filename,
     }
 }
 
+/** Write the molecules to memory, which is returned */
+QByteArray IOBase::write(const Molecules &molecules, const PropertyMap &map) const
+{
+    return this->writeMols(molecules, map);
+}
+
 /** Write the molecules in the passed group to the file called 'filename'. */
 void IOBase::write(const Molecules &molecules, const QString &filename,
                    const PropertyMap &map) const
@@ -192,6 +241,12 @@ void IOBase::write(const Molecules &molecules, const QString &filename,
     {
         throw SireError::file_error(fle);
     }
+}
+
+/** Write the passed molecule to memory, which is returned */
+QByteArray IOBase::write(const MoleculeView &molecule, const PropertyMap &map) const
+{
+    return this->write( Molecules(molecule), map );
 }
 
 /** Write the passed molecule to the file called 'filename' */

@@ -1561,8 +1561,8 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
     return atomnum;
 }
 
-//reserve at least 48 MB of space
-static const int RESERVE_SIZE = 48 * 1024 * 1024;
+//reserve at least 16 MB of space
+static const int RESERVE_SIZE = 16 * 1024 * 1024;
 
 /** Write a group of molecules to a bytearray */
 QByteArray PDB::writeMols(const MoleculeGroup &molgroup,

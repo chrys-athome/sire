@@ -138,14 +138,26 @@ public:
 
     Molecule readMolecule(const QString &filename,
                           const PropertyMap &map = PropertyMap()) const;
+
+    Molecule readMolecule(const char *filename,
+                          const PropertyMap &map = PropertyMap()) const;
                           
     Molecule readMolecule(QIODevice &dev,
+                          const PropertyMap &map = PropertyMap()) const;
+                          
+    Molecule readMolecule(const QByteArray &data,
                           const PropertyMap &map = PropertyMap()) const;
 
     MoleculeGroup read(const QString &filename,
                        const PropertyMap &map = PropertyMap()) const;
 
+    MoleculeGroup read(const char *filename,
+                       const PropertyMap &map = PropertyMap()) const;
+
     MoleculeGroup read(QIODevice &dev,
+                       const PropertyMap &map = PropertyMap()) const;
+
+    MoleculeGroup read(const QByteArray &data,
                        const PropertyMap &map = PropertyMap()) const;
 
     void write(const MoleculeGroup &molecules, const QString &filename,
@@ -165,6 +177,15 @@ public:
 
     void write(const MoleculeView &molecule, QIODevice &dev,
                const PropertyMap &map = PropertyMap()) const;
+
+    QByteArray write(const MoleculeGroup &molecules,
+                     const PropertyMap &map = PropertyMap()) const;
+
+    QByteArray write(const Molecules &molecules,
+                     const PropertyMap &map = PropertyMap()) const;
+
+    QByteArray write(const MoleculeView &molecule,
+                     const PropertyMap &map = PropertyMap()) const;
 
 protected:
 
@@ -187,10 +208,14 @@ protected:
                                  const PropertyMap &map) const=0;
 };
 
+typedef SireBase::PropPtr<IOBase> IOPtr;
+
 }
 
 SIRE_EXPOSE_CLASS( SireIO::IOParametersBase )
 SIRE_EXPOSE_CLASS( SireIO::IOBase )
+
+SIRE_EXPOSE_PROPERTY( SireIO::IOPtr, SireIO::IOBase )
 
 SIRE_END_HEADER
 
