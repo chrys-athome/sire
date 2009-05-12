@@ -56,10 +56,10 @@ using namespace SireStream;
 //////////// Implementation of RepExSubMove
 ////////////
 
-static const RegisterMetaType<RepExSubMove> r_repexsubmove;
+//static const RegisterMetaType<RepExSubMove> r_repexsubmove;
 
 /** Perform the sub-moves on the passed sub-system */
-void RepExSubMove::move(SupraSubSystem &system, int n_supra_moves,
+/*void RepExSubMove::move(SupraSubSystem &system, int n_supra_moves,
                         bool record_supra_stats)
 {
     if (n_supra_moves <= 0)
@@ -109,7 +109,7 @@ void RepExSubMove::move(SupraSubSystem &system, int n_supra_moves,
         replica.assign(*old_state);
         throw;
     }
-}
+}*/
 
 ////////////
 //////////// Implementation of RepExMove

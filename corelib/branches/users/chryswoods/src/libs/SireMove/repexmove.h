@@ -63,7 +63,7 @@ using SireCluster::Nodes;
 
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT RepExSubMove
+/*class SIREMOVE_EXPORT RepExSubMove
            : public SireBase::ConcreteProperty<RepExSubMove,SupraSubMove>
 {
 
@@ -89,7 +89,7 @@ public:
 
     void move(SupraSubSystem &system, int n_supra_moves, 
               bool record_supra_stats);
-};
+};*/
 
 /** This class is used to perform replica exchange moves on a collection
     of RepExReplicas. Each move involves running a block of sampling

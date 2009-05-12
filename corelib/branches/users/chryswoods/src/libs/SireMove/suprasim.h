@@ -32,7 +32,6 @@
 #include "suprasimpacket.h"
 
 #include "SireCluster/node.h"
-#include "SireCluster/nodes.h"
 #include "SireCluster/promise.h"
 
 SIRE_BEGIN_HEADER
@@ -41,7 +40,6 @@ namespace SireMove
 {
 
 using SireCluster::Node;
-using SireCluster::Nodes;
 
 /** This class is used to start and manage an active
     supra-simulation (a simulation of a SupraSystem).
@@ -72,25 +70,15 @@ public:
                         
     static SupraSim run(const SupraSimPacket &simpacket);
     
-    static SupraSim run(const Node &node,
+    static SupraSim run(Node &node,
                         const SupraSystem &system, const SupraMoves &moves,
                         int nmoves, bool record_stats=true);
                         
-    static SupraSim run(const Node &node,
+    static SupraSim run(Node &node,
                         const SupraSystem &system, const SupraMove &move,
                         int nmoves, bool record_stats=true);
 
-    static SupraSim run(const Node &node, const SupraSimPacket &simpacket);
-    
-    static SupraSim run(const Nodes &nodes,
-                        const SupraSystem &system, const SupraMoves &moves,
-                        int nmoves, bool record_stats=true);
-                        
-    static SupraSim run(const Nodes &nodes,
-                        const SupraSystem &system, const SupraMove &move,
-                        int nmoves, bool record_stats=true);
-
-    static SupraSim run(const Nodes &nodes, const SupraSimPacket &simpacket);
+    static SupraSim run(Node &node, const SupraSimPacket &simpacket);
     
     void abort();
     void stop();
@@ -118,7 +106,7 @@ public:
     SupraSystemPtr initialSystem();
     SupraMovesPtr initialMoves();
     
-    SupraSystemPrt interimSystem();
+    SupraSystemPtr interimSystem();
     SupraMovesPtr interimMoves();
     
     SupraSystemPtr system();

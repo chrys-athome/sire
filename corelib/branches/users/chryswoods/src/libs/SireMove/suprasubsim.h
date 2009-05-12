@@ -72,15 +72,15 @@ public:
                         
     static SupraSubSim run(const SupraSubSimPacket &simpacket);
     
-    static SupraSubSim run(const Node &node,
+    static SupraSubSim run(Node &node,
                            const SupraSubSystem &system, const SupraSubMoves &moves,
                            int nmoves, bool record_stats=true);
                         
-    static SupraSubSim run(const Node &node,
+    static SupraSubSim run(Node &node,
                            const SupraSubSystem &system, const SupraSubMove &move,
                            int nmoves, bool record_stats=true);
 
-    static SupraSubSim run(const Node &node, const SupraSubSimPacket &simpacket);
+    static SupraSubSim run(Node &node, const SupraSubSimPacket &simpacket);
     
     void abort();
     void stop();
@@ -108,7 +108,7 @@ public:
     SupraSubSystemPtr initialSystem();
     SupraSubMovesPtr initialMoves();
     
-    SupraSubSystemPrt interimSystem();
+    SupraSubSystemPtr interimSystem();
     SupraSubMovesPtr interimMoves();
     
     SupraSubSystemPtr system();
