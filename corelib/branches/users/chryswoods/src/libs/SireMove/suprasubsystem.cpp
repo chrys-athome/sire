@@ -48,6 +48,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
     sds << suprasubsystem.simstore 
         << suprasubsystem.sys_monitors
         << suprasubsystem.nsubmoves
+        << suprasubsystem.record_stats
         << suprasubsystem.record_sub_stats
         << suprasubsystem.recalc_next_from_scratch
         << suprasubsystem.clear_subsys_stats
@@ -69,6 +70,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
         sds >> suprasubsystem.simstore 
             >> suprasubsystem.sys_monitors
             >> suprasubsystem.nsubmoves
+            >> suprasubsystem.record_stats
             >> suprasubsystem.record_sub_stats
             >> suprasubsystem.recalc_next_from_scratch
             >> suprasubsystem.clear_subsys_stats
@@ -83,6 +85,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
 /** Constructor */
 SupraSubSystem::SupraSubSystem() 
                : ConcreteProperty<SupraSubSystem,Property>(),
+                 record_stats(true),
                  record_sub_stats(true),
                  recalc_next_from_scratch(false),
                  clear_subsys_stats(false)
@@ -92,7 +95,9 @@ SupraSubSystem::SupraSubSystem()
 SupraSubSystem::SupraSubSystem(const SupraSubSystem &other)
                : ConcreteProperty<SupraSubSystem,Property>(other),
                  simstore(other.simstore), sys_monitors(other.sys_monitors),
-                 nsubmoves(other.nsubmoves), record_sub_stats(other.record_sub_stats),
+                 nsubmoves(other.nsubmoves), 
+                 record_stats(other.record_stats),
+                 record_sub_stats(other.record_sub_stats),
                  recalc_next_from_scratch(other.recalc_next_from_scratch),
                  clear_subsys_stats(other.clear_subsys_stats)
 {}
@@ -109,6 +114,7 @@ SupraSubSystem& SupraSubSystem::operator=(const SupraSubSystem &other)
     simstore = other.simstore;
     sys_monitors = other.sys_monitors;
     nsubmoves = other.nsubmoves;
+    record_stats = other.record_stats;
     record_sub_stats = other.record_sub_stats;
     recalc_next_from_scratch = other.recalc_next_from_scratch;
     clear_subsys_stats = other.clear_subsys_stats;
@@ -121,6 +127,7 @@ bool SupraSubSystem::operator==(const SupraSubSystem &other) const
 {
     return (this == &other) or
            (nsubmoves == other.nsubmoves and 
+            record_stats == other.record_stats and
             record_sub_stats == other.record_sub_stats and
             recalc_next_from_scratch == other.recalc_next_from_scratch and
             clear_subsys_stats == other.clear_subsys_stats and
@@ -150,12 +157,14 @@ const SupraSubSystem& SupraSubSystem::null()
                         // These monitors stay with the SupraSubSystem, and
                         // are collected using "subsys.collectStats()" and
                         // are cleared using "subsys.clearStatistics()"
+                        // These are collected if record_stats is true
                         
     subsys.system().monitors()   // Monitors applied with each block of sub-moves.
                                  // These monitors stay with the System within each
                                  // SupraSubSystem, are collected within a block
                                  // of sub-system moves if record_sub_stats is true,
                                  // and are cleared using "subsys.clearSubStatistics()"
+                                 // These are collected if record_sub_stats is true
 */
 const SystemMonitors& SupraSubSystem::monitors() const
 {
@@ -190,6 +199,13 @@ const SimStore& SupraSubSystem::subSystemAndMoves() const
 int SupraSubSystem::nSubMoves() const
 {
     return nsubmoves;
+}
+
+/** Return whether or not we are recording statistics 
+    between blocks of sub-moves */
+bool SupraSubSystem::recordingStatistics() const
+{
+    return record_stats;
 }
 
 /** Return whether or not we are recording statistics within 
@@ -325,12 +341,32 @@ void SupraSubSystem::packToMemory()
         simstore.packToMemory();
 }
 
+/** Call this function to collect sub-system level statistics. This is
+    called between blocks of sub-moves. */
+void SupraSubSystem::collectStats()
+{
+    if (sys_monitors.isEmpty() or not record_stats)
+        return;
+        
+    System system = simstore.system();
+    
+    sys_monitors.monitor(system);
+    
+    //copy the system back - this is because some of 
+    //the monitors may change the system
+    simstore.setSystem(system);
+}
+
 /** Perform the sub-system moves on this sub-system. This performs
-    the moves in this->subMoves() on this->subSystem().
+    the moves in this->subMoves() on this->subSystem(), collecting
+    statistics both during the block of sub-moves, and then after
+    the block of sub-moves if 'recording_statistics' is true,
+    and if 'sysmon.recordingSubStatistics()' and 
+    'sysmon.recordingStatistics()' are true respectively.
     
     \throw SireError::invalid_state
 */
-void SupraSubSystem::subMove()
+void SupraSubSystem::subMove(bool recording_statistics)
 {
     if (nsubmoves <= 0)
         return;
@@ -338,9 +374,13 @@ void SupraSubSystem::subMove()
     MovesPtr moves = simstore.moves();
     System system = simstore.system();
     
-    system = moves.edit().move(system, nsubmoves, record_sub_stats);
+    system = moves.edit().move(system, nsubmoves, 
+                               recording_statistics and record_sub_stats);
     
     simstore.setSystemAndMoves(system, moves);
+    
+    if (recording_statistics)
+        this->collectStats();
 }
 
 /** Clear the SupraSubSystem level statistics (this clears the monitors
@@ -373,21 +413,6 @@ void SupraSubSystem::clearAllStatistics()
 {
     this->clearStatistics();
     this->clearSubStatistics();
-}
-
-/** Call this function to collect sub-system level statistics. This is
-    called between blocks of sub-moves. Note that this is called on 
-    a copy of the system, so any changes to the system caused by
-    these monitors will be lost (not that monitors should change 
-    the system!). */
-void SupraSubSystem::collectStats()
-{
-    if (sys_monitors.isEmpty())
-        return;
-        
-    System system = simstore.system();
-    
-    sys_monitors.monitor(system);
 }
 
 /** Tell the system that the next energy to be calculated
@@ -453,4 +478,11 @@ void SupraSubSystem::setNSubMoves(int n)
 void SupraSubSystem::setRecordSubStatistics(bool record_stats)
 {
     record_sub_stats = record_stats;
+}
+
+/** Set whether or not to record statistics between blocks of sub-moves.
+    This affects the subsys.monitors() */
+void SupraSubSystem::setRecordStatistics(bool recording)
+{
+    record_stats = recording;
 }

@@ -31,7 +31,7 @@
 
 #include "SireCluster/workpacket.h"
 
-#include "suprasim.h"
+#include "suprasystem.h"
 #include "supramoves.h"
 
 SIRE_BEGIN_HEADER
@@ -51,7 +51,7 @@ namespace SireMove
 
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT SupraSimPacket : public SireCluster::WorkPacket
+class SIREMOVE_EXPORT SupraSimPacket : public SireCluster::WorkPacketBase
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const SupraSimPacket&);
@@ -106,13 +106,13 @@ protected:
     
 private:
     /** The supra-system being simulated */
-    SupraSystemPtr subsystem;
+    SupraSystemPtr supra_system;
     
     /** The moves applied to the supra-system */
-    SupraMovesPtr submoves;
+    SupraMovesPtr supra_moves;
     
     /** The number of moves to be run on the supra-system */
-    quint32 nmoves;
+    quint32 n_supra_moves;
     
     /** The number of supra-moves already run on the supra-system */
     quint32 ncompleted;

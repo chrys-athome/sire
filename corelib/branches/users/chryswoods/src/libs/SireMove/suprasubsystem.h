@@ -104,6 +104,8 @@ public:
     const SimStore& subSystemAndMoves() const;
     
     int nSubMoves() const;
+    
+    bool recordingStatistics() const;
     bool recordingSubStatistics() const;
     
     bool isPacked() const;
@@ -118,7 +120,7 @@ public:
     
     void packToMemory();
 
-    virtual void subMove();
+    virtual void subMove(bool record_stats=true);
 
     virtual void clearStatistics();
     virtual void clearSubStatistics();
@@ -140,6 +142,7 @@ protected:
 
     virtual void setNSubMoves(int n);
     
+    virtual void setRecordStatistics(bool record_stats);
     virtual void setRecordSubStatistics(bool record_stats);
 
     virtual void _pre_pack();
@@ -159,6 +162,9 @@ private:
     /** The number of sub-moves to apply to the sub-system for each
         supra-move */
     quint32 nsubmoves;
+    
+    /** Whether or not to record statistic between blocks of sub-moves */
+    bool record_stats;
     
     /** Whether or not to record sub-system statistics during the sub-moves */
     bool record_sub_stats;

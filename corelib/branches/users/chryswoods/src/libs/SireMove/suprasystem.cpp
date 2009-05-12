@@ -28,11 +28,22 @@
 
 #include "suprasystem.h"
 
+#include "simstore.h"
+#include "moves.h"
+
+#include "SireSystem/system.h"
+#include "SireSystem/systemmonitor.h"
+
+#include "SireID/index.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include "SireError/errors.h"
+
 using namespace SireMove;
 using namespace SireSystem;
+using namespace SireID;
 using namespace SireBase;
 using namespace SireStream;
 
@@ -91,7 +102,7 @@ SupraSystem::SupraSystem(const System &system, int n)
     
     if (n > 0)
     {
-        SupraSubSystem &subsys = subsystems[0];
+        SupraSubSystem &subsys = subsystems[0].edit();
         
         subsys.setSubSystem(system);
         
@@ -114,7 +125,7 @@ SupraSystem::SupraSystem(const QVector<System> &systems)
     
     for (int i=0; i<nsystems; ++i)
     {
-        subsystems[i].setSystem( systems.at(i) );
+        subsystems[i].edit().setSubSystem( systems.at(i) );
     }
 }
 
@@ -184,7 +195,7 @@ const SupraSubSystem& SupraSystem::_pvt_subSystem(int i) const
             "Should not access system %1 as count == %2")
                 .arg(i).arg(subsystems.count()), CODELOC );
 
-    return subsystems.constData()[i];
+    return subsystems.constData()[i].read();
 }
 
 /** Internal function used to return the 'ith' sub-system. No bounds
@@ -196,7 +207,7 @@ SupraSubSystem& SupraSystem::_pvt_subSystem(int i)
             "Should not access system %1 as count == %2")
                 .arg(i).arg(subsystems.count()), CODELOC );
 
-    return subsystems.data()[i];
+    return subsystems.data()[i].edit();
 }
 
 /** Return the ith sub-system in this supra-system
@@ -330,6 +341,48 @@ bool SupraSystem::isPackedToDisk() const
     return true;
 }
 
+/** Return whether or not any of the sub-systems are packed */
+bool SupraSystem::anyPacked() const
+{
+    int n = subsystems.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        if (subsystems.at(i)->isPacked())
+            return true;
+    }
+    
+    return false;
+}
+
+/** Return whether or not any of the sub-systems are packed to memory */
+bool SupraSystem::anyPackedToMemory() const
+{
+    int n = subsystems.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        if (subsystems.at(i)->isPackedToMemory())
+            return true;
+    }
+    
+    return false;
+}
+
+/** Return whether or not any of the sub-systems are packed to disk */
+bool SupraSystem::anyPackedToDisk() const
+{
+    int n = subsystems.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        if (subsystems.at(i)->isPackedToDisk())
+            return true;
+    }
+    
+    return false;
+}
+
 /** Pack all sub-systems */
 void SupraSystem::pack()
 {
@@ -338,7 +391,7 @@ void SupraSystem::pack()
     if (n == 0)
         return;
 
-    bool being_packed = not this->unPacked();
+    bool being_packed = not this->isPacked();
 
     if (being_packed)
         this->_pre_pack();
@@ -443,6 +496,104 @@ void SupraSystem::packToMemory()
             subsystems[i].edit().packToMemory();
     }
     
+    if (being_packed)
+        this->_post_pack();
+}
+
+/** Pack the ith sub-system 
+
+    \throw SireError::invalid_index
+*/
+void SupraSystem::pack(int i)
+{
+    i = Index(i).map( subsystems.count() );
+
+    if (subsystems.at(i)->isPacked())
+        return;
+    
+    this->_pre_pack();
+    subsystems[i].edit().pack();
+    this->_post_pack();
+}
+
+/** Unpack the ith sub-system 
+
+    \throw SireError::invalid_index
+*/
+void SupraSystem::unpack(int i)
+{
+    i = Index(i).map( subsystems.count() );
+
+    if (not subsystems.at(i)->isPacked())
+        return;
+    
+    this->_pre_unpack();
+    subsystems[i].edit().unpack();
+    this->_post_unpack();
+}
+
+/** Pack the ith sub-system to disk
+
+    \throw SireError::invalid_index
+*/
+void SupraSystem::packToDisk(int i)
+{
+    i = Index(i).map( subsystems.count() );
+
+    if (subsystems.at(i)->isPackedToDisk())
+        return;
+    
+    bool being_packed = not subsystems.at(i)->isPacked();
+    
+    if (being_packed)
+        this->_pre_pack();
+    
+    subsystems[i].edit().packToDisk();
+    
+    if (being_packed)
+        this->_post_pack();
+}
+
+/** Pack the ith sub-system to disk in the directory 'tempdir'
+
+    \throw SireError::invalid_index
+*/
+void SupraSystem::packToDisk(int i, const QString &tempdir)
+{
+    i = Index(i).map( subsystems.count() );
+
+    if (subsystems.at(i)->isPackedToDisk())
+        return;
+    
+    bool being_packed = not subsystems.at(i)->isPacked();
+    
+    if (being_packed)
+        this->_pre_pack();
+        
+    subsystems[i].edit().packToDisk(tempdir);
+
+    if (being_packed)
+        this->_post_pack();
+}
+
+/** Pack the ith sub-system to memory
+
+    \throw SireError::invalid_index
+*/
+void SupraSystem::packToMemory(int i)
+{
+    i = Index(i).map( subsystems.count() );
+
+    if (subsystems.at(i)->isPackedToMemory())
+        return;
+    
+    bool being_packed = not subsystems.at(i)->isPacked();
+    
+    if (being_packed)
+        this->_pre_pack();
+        
+    subsystems[i].edit().packToMemory();
+
     if (being_packed)
         this->_post_pack();
 }
@@ -566,14 +717,14 @@ void SupraSystem::setSubSystemAndMoves(const SimStore &simstore)
 */
 void SupraSystem::setSubSystemAndMoves(int i, const System &system, const Moves &moves)
 {
-    this->setSystemAndMoves( i, SimStore(system,moves) );
+    this->setSubSystemAndMoves( i, SimStore(system,moves) );
 }
 
 /** Set the system and moves used by all sub-systems to 
     'system' and 'moves' */
 void SupraSystem::setSubSystemAndMoves(const System &system, const Moves &moves)
 {
-    this->setSystemAndMoves( SimStore(system,moves) );
+    this->setSubSystemAndMoves( SimStore(system,moves) );
 }
 
 /** Set the monitors used for all sub-systems to 'monitors', and set
@@ -587,25 +738,180 @@ void SupraSystem::setSubMonitors(const SystemMonitors &monitors, int frequency)
     
     for (int i=0; i<n; ++i)
     {
-        subsystems[i].edit().setMonitors(monitors, frequency);
+        subsystems[i].edit().setMonitors(monitors);
     }
 }
 
-void SupraSystem::setSubMonitors(int i, const SystemMonitors &monitors,
-                        int frequency=1);
+/** Set the monitors used for the ith sub-system to 'monitors', and set
+    them to update with a frequency of 'frequency' 
+    
+    \throw SireError::invalid_index
+*/
+void SupraSystem::setSubMonitors(int i, const SystemMonitors &monitors, int frequency)
+{
+    SystemMonitors new_monitors = monitors;
+    new_monitors.setAllFrequency(frequency);
+    
+    subsystems[ Index(i).map(subsystems.count()) ].edit().setMonitors(monitors);
+}
 
-void SupraSystem::add(const QString &name, const SystemMonitor &monitor,
-             int frequency=1);
-             
+/** Add the monitor 'monitor' to all of the sub-systems, with the name 'name', 
+    set to update with a frequency 'frequency' */
+void SupraSystem::add(const QString &name, const SystemMonitor &monitor, int frequency)
+{
+    int n = subsystems.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        SupraSubSystem &system = subsystems[i].edit();
+        
+        SystemMonitors monitors = system.monitors();
+        
+        monitors.add(name, monitor, frequency);
+        
+        system.setMonitors(monitors);
+    }
+}
+
+/** Add the monitor 'monitor' to the ith sub-system, with the name 'name',
+    set to update with a frequency of 'frequency' 
+    
+    \throw SireError::invalid_index
+*/
 void SupraSystem::add(int i, const QString &name, const SystemMonitor &monitor,
-             int frequency=1);
-             
-void SupraSystem::add(const SystemMonitors &monitors, int frequency=1);
-void SupraSystem::add(int i, const SystemMonitors &monitors,
-             int frequency=1);
+                      int frequency)
+{
+    SupraSubSystem &system = subsystems[ Index(i).map(subsystems.count()) ].edit();
+    
+    SystemMonitors monitors = system.monitors();
+    
+    monitors.add(name, monitor, frequency);
+    
+    system.setMonitors(monitors);
+}
 
-void SupraSystem::setNSubMoves(int nmoves);
-void SupraSystem::setNSubMoves(int i, int nmoves);
+/** Add the monitors 'monitors' to all of the sub-systems, set to update
+    with a frequency of 'frequency' */             
+void SupraSystem::add(const SystemMonitors &monitors, int frequency)
+{
+    int n = subsystems.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        SupraSubSystem &system = subsystems[i].edit();
+        
+        SystemMonitors sysmonitors = system.monitors();
+        
+        sysmonitors.add(monitors, frequency);
+        
+        system.setMonitors(sysmonitors);
+    }
+}
 
-void SupraSystem::setRecordSubStatistics(bool record_stats);
-void SupraSystem::setRecordSubStatistics(int i, bool record_stats);
+/** Add the monitors 'monitors' to the ith system, set to update with
+    a frequency of 'frequency'
+    
+    \throw SireError::invalid_index
+*/
+void SupraSystem::add(int i, const SystemMonitors &monitors, int frequency)
+{
+    SupraSubSystem &system = subsystems[ Index(i).map(subsystems.count()) ].edit();
+    
+    SystemMonitors sysmonitors = system.monitors();
+    
+    sysmonitors.add(monitors, frequency);
+    
+    system.setMonitors(sysmonitors);
+}
+
+/** Set the number of moves to perform per block of sub-moves for 
+    the ith sub-system
+    
+    \throw SireError::invalid_index
+*/
+void SupraSystem::setNSubMoves(int i, int nmoves)
+{
+    subsystems[ Index(i).map(subsystems.count()) ].edit().setNSubMoves(nmoves);
+}
+
+/** Set the number of moves to perform per block of sub-moves for
+    every sub-system in this supra-system */
+void SupraSystem::setNSubMoves(int nmoves)
+{
+    int n = subsystems.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        this->setNSubMoves(i, nmoves);
+    }
+}
+
+/** Set whether or not to record statistics between blocks of sub-moves
+    at the ith sub-system
+    
+    \throw SireError::invalid_index
+*/
+void SupraSystem::setRecordStatistics(int i, bool record_stats)
+{
+    subsystems[ Index(i).map(subsystems.count()) ]
+            .edit().setRecordStatistics(record_stats);
+}
+
+/** Set whether or not to record statistics between blocks of sub-moves
+    for all sub-systems */
+void SupraSystem::setRecordStatistics(bool record_stats)
+{
+    int n = subsystems.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        this->setRecordStatistics(i, record_stats);
+    }
+}
+
+/** Set whether or not to record statistics within blocks of sub-moves
+    for the ith sub-system
+    
+    \throw SireError::invalid_index
+*/
+void SupraSystem::setRecordSubStatistics(int i, bool record_stats)
+{
+    subsystems[ Index(i).map(subsystems.count()) ]
+            .edit().setRecordSubStatistics(record_stats);
+}
+
+/** Set whether or not to record statistics within blocks of sub-moves
+    for all sub-systems */
+void SupraSystem::setRecordSubStatistics(bool record_stats)
+{
+    int n = subsystems.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        this->setRecordSubStatistics(i, record_stats);
+    }
+}
+
+/** Set whether or not to record all statistics (both within and
+    between sub-moves) for the ith sub-system
+    
+    \throw SireError::invalid_index
+*/
+void SupraSystem::setRecordAllStatistics(int i, bool record_stats)
+{
+    this->setRecordStatistics(i, record_stats);
+    this->setRecordSubStatistics(i, record_stats);
+}
+
+/** Set whether or not to record all statistics (both within and
+    between sub-moves) for all sub-systems */
+void SupraSystem::setRecordAllStatistics(bool record_stats)
+{
+    int n = subsystems.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        this->setRecordStatistics(i, record_stats);
+        this->setRecordSubStatistics(i, record_stats);
+    }
+}

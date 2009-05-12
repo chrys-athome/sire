@@ -52,6 +52,8 @@ namespace SireMove
 {
 
 using SireSystem::System;
+using SireSystem::SystemMonitor;
+using SireSystem::SystemMonitors;
 
 class SimStore;
 class Moves;
@@ -119,6 +121,10 @@ public:
     bool isPackedToMemory() const;
     bool isPackedToDisk() const;
     
+    bool anyPacked() const;
+    bool anyPackedToMemory() const;
+    bool anyPackedToDisk() const;
+    
     void pack();
     void unpack();
     
@@ -126,6 +132,14 @@ public:
     void packToDisk(const QString &tempdir);
     
     void packToMemory();
+    
+    void pack(int i);
+    void unpack(int i);
+    
+    void packToDisk(int i);
+    void packToDisk(int i, const QString &tempdir);
+    
+    void packToMemory(int i);
     
     void setSubSystems(const SupraSystem &system);
     
@@ -157,8 +171,14 @@ public:
     virtual void setNSubMoves(int i, int nmoves);
     void setNSubMoves(int nmoves);
     
+    virtual void setRecordStatistics(int i, bool record_stats);
+    void setRecordStatistics(bool record_stats);
+    
     virtual void setRecordSubStatistics(int i, bool record_stats);
     void setRecordSubStatistics(bool record_stats);
+
+    void setRecordAllStatistics(int i, bool record_stats);
+    void setRecordAllStatistics(bool record_stats);
 
     static const SupraSystem& null();
 

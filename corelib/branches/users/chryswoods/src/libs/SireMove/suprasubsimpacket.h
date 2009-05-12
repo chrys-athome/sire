@@ -31,7 +31,7 @@
 
 #include "SireCluster/workpacket.h"
 
-#include "suprasubsim.h"
+#include "suprasubsystem.h"
 #include "suprasubmoves.h"
 
 SIRE_BEGIN_HEADER
@@ -60,8 +60,8 @@ friend QDataStream& ::operator>>(QDataStream&, SupraSubSimPacket&);
 public:
     SupraSubSimPacket();
     
-    SupraSubSimPacket(const SupraSubSystem &subsystem,
-                      const SupraSubMoves &submoves,
+    SupraSubSimPacket(const SupraSubSystem &system,
+                      const SupraSubMoves &moves,
                       int nmoves, bool record_stats=true);
                       
     SupraSubSimPacket(const SupraSubSimPacket &other);
@@ -106,13 +106,13 @@ protected:
     
 private:
     /** The subsystem being simulated */
-    SupraSubSystemPtr subsystem;
+    SupraSubSystemPtr sub_system;
     
     /** The moves applied to the subsystem */
-    SupraSubMovesPtr submoves;
+    SupraSubMovesPtr sub_moves;
     
     /** The number of submoves to be run on the system */
-    quint32 nmoves;
+    quint32 n_sub_moves;
     
     /** The number of submoves already run on the system */
     quint32 ncompleted;
