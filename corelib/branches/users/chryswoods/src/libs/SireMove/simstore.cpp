@@ -514,7 +514,7 @@ void SimStore::setSystemAndMoves(const System &system, const Moves &moves)
 }
 
 /** Return a copy of the system being stored */
-System SimStore::system() const
+const System& SimStore::system() const
 {
     if (this->isPacked())
         throw SireError::invalid_state( QObject::tr(
@@ -525,7 +525,7 @@ System SimStore::system() const
 }
 
 /** Return a copy of the moves being stored */
-MovesPtr SimStore::moves() const
+const Moves& SimStore::moves() const
 {
     if (this->isPacked())
         throw SireError::invalid_state( QObject::tr(

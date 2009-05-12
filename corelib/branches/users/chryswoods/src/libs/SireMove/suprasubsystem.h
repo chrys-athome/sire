@@ -31,6 +31,8 @@
 
 #include "SireBase/property.h"
 
+#include "SireSystem/systemmonitors.h"
+
 #include "simstore.h"
 
 SIRE_BEGIN_HEADER
@@ -45,6 +47,10 @@ QDataStream& operator>>(QDataStream&, SireMove::SupraSubSystem&);
 
 namespace SireMove
 {
+
+class SupraSystem;
+
+using SireSystem::SystemMonitors;
 
 /** This is the base class of all of the sub-systems that make up
     each SupraSystem. A SupraSystem is a collection of systems
@@ -65,6 +71,8 @@ class SIREMOVE_EXPORT SupraSubSystem
 
 friend QDataStream& ::operator<<(QDataStream&, const SireMove::SupraSubSystem&);
 friend QDataStream& ::operator>>(QDataStream&, SireMove::SupraSubSystem&);
+
+friend class SupraSystem;  // so can call "protected" editing functions
 
 public:
     SupraSubSystem();
@@ -88,6 +96,8 @@ public:
     bool operator==(const SupraSubSystem &other) const;
     bool operator!=(const SupraSubSystem &other) const;
     
+    const SystemMonitors& monitors() const;
+    
     const System& subSystem() const;
     const Moves& subMoves() const;
 
@@ -110,18 +120,23 @@ public:
 
     virtual void subMove();
 
-    virtual void clearStats();
-    virtual void clearSubStats();
+    virtual void clearStatistics();
+    virtual void clearSubStatistics();
+    virtual void clearAllStatistics();
     
     virtual void collectStats();
 
     void mustNowRecalculateFromScratch();
+
+    static const SupraSubSystem& null();
 
 protected:
     virtual void setSubSystem(const System &subsystem);
     virtual void setSubMoves(const Moves &submoves);
 
     virtual void setSubSystemAndMoves(const SimStore &simstore);
+
+    virtual void setMonitors(const SystemMonitors &monitors);
 
     virtual void setNSubMoves(int n);
     
@@ -137,6 +152,10 @@ private:
     /** The store containing both the sub-system and sub-moves */
     SimStore simstore;
     
+    /** The monitors that are used to monitor the system at the 
+        end of each block of sub-moves */
+    SystemMonitors sys_monitors;
+    
     /** The number of sub-moves to apply to the sub-system for each
         supra-move */
     quint32 nsubmoves;
@@ -146,6 +165,9 @@ private:
     
     /** Whether or not we need to recalculate the next energy from scratch */
     bool recalc_next_from_scratch;
+
+    /** Return whether or not we have to clear the sub-system statistics */
+    bool clear_subsys_stats;
 };
 
 typedef SireBase::PropPtr<SupraSubSystem> SupraSubSystemPtr;

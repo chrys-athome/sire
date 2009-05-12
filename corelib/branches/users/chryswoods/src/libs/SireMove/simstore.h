@@ -113,8 +113,8 @@ public:
     void packToMemory();
     bool isPackedToMemory() const;
     
-    System system() const;
-    MovesPtr moves() const;
+    const System& system() const;
+    const Moves& moves() const;
 
 private:
     void _pvt_moveFromDiskToMemory();

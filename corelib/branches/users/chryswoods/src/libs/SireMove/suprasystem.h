@@ -31,6 +31,8 @@
 
 #include "SireBase/property.h"
 
+#include "suprasubsystem.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
@@ -125,28 +127,40 @@ public:
     
     void packToMemory();
     
-    virtual void setSubSystems(const SupraSystem &system);
+    void setSubSystems(const SupraSystem &system);
     
-    virtual void setSubSystem(const SupraSubSystem &subsystem);
     virtual void setSubSystem(int i, const SupraSubSystem &subsystem);
+    void setSubSystem(const SupraSubSystem &subsystem);
     
-    virtual void setSubSystem(const System &system);
     virtual void setSubSystem(int i, const System &system);
+    void setSubSystem(const System &system);
     
-    virtual void setSubMoves(const Moves &moves);
     virtual void setSubMoves(int i, const Moves &moves);
+    void setSubMoves(const Moves &moves);
     
-    virtual void setSubSystemAndMoves(const System &system, const Moves &moves);
     virtual void setSubSystemAndMoves(int i, const System &system, const Moves &moves);
+    void setSubSystemAndMoves(const System &system, const Moves &moves);
     
-    virtual void setSubSystemAndMoves(const SimStore &simstore);
     virtual void setSubSystemAndMoves(int i, const SimStore &simstore);
+    void setSubSystemAndMoves(const SimStore &simstore);
     
-    virtual void setNSubMoves(int nmoves);
+    void setSubMonitors(const SystemMonitors &monitors, int frequency=1);
+    void setSubMonitors(int i, const SystemMonitors &monitors, int frequency=1);
+    
+    void add(const QString &name, const SystemMonitor &monitor, int frequency=1);
+                     
+    void add(int i, const QString &name, const SystemMonitor &monitor, int frequency=1);
+                     
+    void add(const SystemMonitors &monitors, int frequency=1);
+    void add(int i, const SystemMonitors &monitors, int frequency=1);
+    
     virtual void setNSubMoves(int i, int nmoves);
+    void setNSubMoves(int nmoves);
     
-    virtual void setRecordSubStatistics(bool record_stats);
     virtual void setRecordSubStatistics(int i, bool record_stats);
+    void setRecordSubStatistics(bool record_stats);
+
+    static const SupraSystem& null();
 
 protected:
     virtual void _pre_pack();
@@ -160,7 +174,7 @@ protected:
 
 private:
     /** The array of all sub systems */
-    QVector< SireBase::SharedPolyPointer<SupraSubSystem> > subsystems;
+    QVector<SupraSubSystemPtr> subsystems;
 };
 
 typedef SireBase::PropPtr<SupraSystem> SupraSystemPtr;
