@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#include "replicas.h"
+#include "SireMove/deprecated/replicas.h"
 
 #include "SireID/index.h"
 
@@ -38,6 +38,8 @@
 #include <QDebug>
 
 using namespace SireMove;
+using namespace SireMove::deprecated;
+
 using namespace SireBase;
 using namespace SireID;
 using namespace SireStream;

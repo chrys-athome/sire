@@ -26,31 +26,37 @@
   *
 \*********************************************/
 
-#ifndef SIREMOVE_REPLICAS_H
-#define SIREMOVE_REPLICAS_H
+#ifndef SIREMOVE_DEPRECATED_REPLICAS_H
+#define SIREMOVE_DEPRECATED_REPLICAS_H
 
 #include <QMutex>
 
 #include "SireBase/property.h"
 #include "SireBase/sharedpolypointer.hpp"
 
-#include "simstore.h"
+#include "SireMove/simstore.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireMove
 {
+namespace deprecated
+{
 class Replica;
 class Replicas;
 }
+}
 
-QDataStream& operator<<(QDataStream&, const SireMove::Replica&);
-QDataStream& operator>>(QDataStream&, SireMove::Replica&);
+QDataStream& operator<<(QDataStream&, const SireMove::deprecated::Replica&);
+QDataStream& operator>>(QDataStream&, SireMove::deprecated::Replica&);
 
-QDataStream& operator<<(QDataStream&, const SireMove::Replicas&);
-QDataStream& operator>>(QDataStream&, SireMove::Replicas&);
+QDataStream& operator<<(QDataStream&, const SireMove::deprecated::Replicas&);
+QDataStream& operator>>(QDataStream&, SireMove::deprecated::Replicas&);
 
 namespace SireMove
+{
+
+namespace deprecated
 {
 
 /** This class holds information about a single replica. A replica is
@@ -273,11 +279,13 @@ private:
 
 }
 
-Q_DECLARE_METATYPE( SireMove::Replica )
-Q_DECLARE_METATYPE( SireMove::Replicas )
+}
 
-SIRE_EXPOSE_CLASS( SireMove::Replica )
-SIRE_EXPOSE_CLASS( SireMove::Replicas )
+Q_DECLARE_METATYPE( SireMove::deprecated::Replica )
+Q_DECLARE_METATYPE( SireMove::deprecated::Replicas )
+
+SIRE_EXPOSE_CLASS( SireMove::deprecated::Replica )
+SIRE_EXPOSE_CLASS( SireMove::deprecated::Replicas )
 
 SIRE_END_HEADER
 

@@ -22,7 +22,7 @@ set ( SIREMOVE_HEADERS
       mtsmc.h
       prefsampler.h
       repexmove.h
-      repexreplicas.h
+      replica.h
       replicas.h
       rigidbodymc.h
       sampler.h
@@ -45,6 +45,9 @@ set ( SIREMOVE_HEADERS
       weightedmoves.h
       zmatmove.h
       zmatrix.h
+
+      deprecated/replicas.h
+      deprecated/repexreplicas.h
     )
 
 # Define the sources in SireMove
@@ -63,7 +66,7 @@ set ( SIREMOVE_SOURCES
       mtsmc.cpp
       prefsampler.cpp
       repexmove.cpp
-      repexreplicas.cpp
+      replica.cpp
       replicas.cpp
       rigidbodymc.cpp
       sampler.cpp
@@ -86,6 +89,9 @@ set ( SIREMOVE_SOURCES
       volumemove.cpp
       zmatmove.cpp
       zmatrix.cpp   
+
+      deprecated/replicas.cpp
+      deprecated/repexreplicas.cpp
 
       ${SIREMOVE_HEADERS}
     )

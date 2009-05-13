@@ -38,16 +38,15 @@ SIRE_BEGIN_HEADER
 
 namespace SireMove
 {
+class RepExSubMove;
 class RepExMove;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMove::RepExMove&);
 QDataStream& operator>>(QDataStream&, SireMove::RepExMove&);
 
-namespace SireCluster
-{
-class Nodes;
-}
+QDataStream& operator<<(QDataStream&, const SireMove::RepExSubMove&);
+QDataStream& operator>>(QDataStream&, SireMove::RepExSubMove&);
 
 namespace SireMove
 {
@@ -57,13 +56,11 @@ class RepExReplica;
 
 using SireMaths::RanGenerator;
 
-using SireCluster::Nodes;
-
 /** This is the sub-move that is applied to each replica in the supra-ensemble
 
     @author Christopher Woods
 */
-/*class SIREMOVE_EXPORT RepExSubMove
+class SIREMOVE_EXPORT RepExSubMove
            : public SireBase::ConcreteProperty<RepExSubMove,SupraSubMove>
 {
 
@@ -87,18 +84,30 @@ public:
         return QMetaType::typeName( qMetaTypeId<RepExSubMove>() );
     }
 
-    void move(SupraSubSystem &system, int n_supra_moves, 
-              bool record_supra_stats);
-};*/
+    int nAttempted() const;
+    int nAccepted() const;
+    int nRejected() const;
+    
+    int nMoves() const;
+    
+    double acceptanceRatio() const;
+
+    QString toString() const;
+    
+    void clearStatistics();
+
+    void move(SupraSubSystem &system, int n_supra_moves, bool record_supra_stats);
+};
 
 /** This class is used to perform replica exchange moves on a collection
-    of RepExReplicas. Each move involves running a block of sampling
+    of Replicas. Each move involves running a block of sampling
     on each of the replicas, and then performing replice exchange swaps
     and tests between pairs.
     
     @author Christopher Woods
 */
-class SIREMOVE_EXPORT RepExMove
+class SIREMOVE_EXPORT RepExMove 
+        : public SireBase::ConcreteProperty<RepExMove,SupraMove>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const RepExMove&);
@@ -113,50 +122,28 @@ public:
     
     RepExMove& operator=(const RepExMove &other);
 
+    bool operator==(const RepExMove &other) const;
+    bool operator!=(const RepExMove &other) const;
+
     static const char* typeName()
     {
         return QMetaType::typeName( qMetaTypeId<RepExMove>() );
     }
     
-    const char* what() const
-    {
-        return RepExMove::typeName();
-    }
-
-    bool operator==(const RepExMove &other) const;
-    bool operator!=(const RepExMove &other) const;
+    int nAttempted() const;
+    int nAccepted() const;
+    int nRejected() const;
     
-    quint32 nAttempted() const;
-    quint32 nAccepted() const;
-    quint32 nRejected() const;
-    
-    quint32 nMoves() const;
+    int nMoves() const;
     
     double acceptanceRatio() const;
     
-    void clearMoveStatistics();
+    void clearStatistics();
     
     void setGenerator(const RanGenerator &generator);
     const RanGenerator& generator() const;
 
-    void move(RepExReplicas &replicas, int nmoves,
-              int nmoves_per_chunk, bool record_stats=true);
-
-    void move(RepExReplicas &replicas, int nmoves, bool record_stats=true);
-    
-    void move(Nodes &nodes,
-              RepExReplicas &replicas, int nmoves,
-              int nmoves_per_chunk, bool record_stats=true);
-
-    void move(Nodes &nodes,
-              RepExReplicas &replicas, int nmoves, bool record_stats=true);
-
-protected:
-    void testAndSwap(RepExReplicas &replicas);
-    bool testAndSwap(RepExReplica &replica0, RepExReplica &replica1);
-
-    void acceptedMove();
-    void rejectedMove();
+    void move(SupraSystem &system, int nmoves, bool record_stats);
 
 private:
     /** The random number generator used to accept or reject the moves */
@@ -175,8 +162,10 @@ private:
 }
 
 Q_DECLARE_METATYPE( SireMove::RepExMove )
+Q_DECLARE_METATYPE( SireMove::RepExSubMove )
 
 SIRE_EXPOSE_CLASS( SireMove::RepExMove )
+SIRE_EXPOSE_CLASS( SireMove::RepExSubMove )
 
 SIRE_END_HEADER
 

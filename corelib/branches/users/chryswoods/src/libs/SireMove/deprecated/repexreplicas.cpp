@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#include "repexreplicas.h"
+#include "SireMove/deprecated/repexreplicas.h"
 
 #include "SireFF/forcefields.h"
 
@@ -45,6 +45,7 @@
 #include <QDebug>
 
 using namespace SireMove;
+using namespace SireMove::deprecated;
 using namespace SireFF;
 using namespace SireCAS;
 using namespace SireBase;
@@ -69,7 +70,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const RepExReplica &rep
     sds << replica.replica_ensemble << replica.space_property
         << replica.nrg_component
         << replica.lambda_component << replica.lambda_value
-        << static_cast<const Replica&>(replica);
+        << static_cast<const SireMove::deprecated::Replica&>(replica);
         
     return ds;
 }
@@ -116,7 +117,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExReplica &replica)
         sds >> new_replica.replica_ensemble >> new_replica.space_property
             >> new_replica.nrg_component
             >> new_replica.lambda_component >> new_replica.lambda_value
-            >> static_cast<Replica&>(new_replica);
+            >> static_cast<SireMove::deprecated::Replica&>(new_replica);
             
         assertSupportedEnsemble( new_replica.replica_ensemble );
         
@@ -129,7 +130,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExReplica &replica)
         RepExReplica new_replica;
         
         sds >> new_replica.lambda_component >> new_replica.lambda_value
-            >> static_cast<Replica&>(new_replica);
+            >> static_cast<SireMove::deprecated::Replica&>(new_replica);
 
         new_replica.updatedMoves();
         

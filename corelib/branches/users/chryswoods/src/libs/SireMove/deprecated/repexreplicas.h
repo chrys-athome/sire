@@ -26,11 +26,11 @@
   *
 \*********************************************/
 
-#ifndef SIREMOVE_REPEXREPLICAS_H
-#define SIREMOVE_REPEXREPLICAS_H
+#ifndef SIREMOVE_DEPRECATED_REPEXREPLICAS_H
+#define SIREMOVE_DEPRECATED_REPEXREPLICAS_H
 
-#include "replicas.h"
-#include "ensemble.h"
+#include "SireMove/deprecated/replicas.h"
+#include "SireMove/ensemble.h"
 
 #include "SireCAS/symbol.h"
 
@@ -40,17 +40,23 @@ SIRE_BEGIN_HEADER
 
 namespace SireMove
 {
+namespace deprecated
+{
 class RepExReplica;
 class RepExReplicas;
 }
+}
 
-QDataStream& operator<<(QDataStream&, const SireMove::RepExReplica&);
-QDataStream& operator>>(QDataStream&, SireMove::RepExReplica&);
+QDataStream& operator<<(QDataStream&, const SireMove::deprecated::RepExReplica&);
+QDataStream& operator>>(QDataStream&, SireMove::deprecated::RepExReplica&);
 
-QDataStream& operator<<(QDataStream&, const SireMove::RepExReplicas&);
-QDataStream& operator>>(QDataStream&, SireMove::RepExReplicas&);
+QDataStream& operator<<(QDataStream&, const SireMove::deprecated::RepExReplicas&);
+QDataStream& operator>>(QDataStream&, SireMove::deprecated::RepExReplicas&);
 
 namespace SireMove
+{
+
+namespace deprecated
 {
 
 using SireCAS::Symbol;
@@ -260,11 +266,13 @@ protected:
 
 }
 
-Q_DECLARE_METATYPE( SireMove::RepExReplica )
-Q_DECLARE_METATYPE( SireMove::RepExReplicas )
+}
 
-SIRE_EXPOSE_CLASS( SireMove::RepExReplica )
-SIRE_EXPOSE_CLASS( SireMove::RepExReplicas )
+Q_DECLARE_METATYPE( SireMove::deprecated::RepExReplica )
+Q_DECLARE_METATYPE( SireMove::deprecated::RepExReplicas )
+
+SIRE_EXPOSE_CLASS( SireMove::deprecated::RepExReplica )
+SIRE_EXPOSE_CLASS( SireMove::deprecated::RepExReplicas )
 
 SIRE_END_HEADER
 
