@@ -119,6 +119,9 @@ private:
     
     /** Whether or not to record sub statistics */
     bool record_stats;
+
+    /** Whether or not the sub-system is packed */
+    bool sub_system_was_packed;
 };
 
 }

@@ -51,6 +51,9 @@ QDataStream& operator>>(QDataStream&, SireMove::Replica&);
 namespace SireMove
 {
 
+class Replicas;
+class RepExSubMove;
+
 using SireBase::PropertyName;
 
 using SireCAS::Symbol;
@@ -65,6 +68,9 @@ class SIREMOVE_EXPORT Replica
 
 friend QDataStream& ::operator<<(QDataStream&, const Replica&);
 friend QDataStream& ::operator>>(QDataStream&, Replica&);
+
+friend class Replicas; //so can call protected editing functions
+friend class RepExSubMove; //so can call protected editing functions
 
 public:
     Replica();

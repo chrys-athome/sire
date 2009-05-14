@@ -81,7 +81,8 @@ public:
     virtual void clearStatistics();
     
     virtual void move(SupraSubSystem &system, int n_supra_moves,
-                      bool record_supra_stats=true)=0;
+                      int n_supra_moves_per_block,
+                      bool record_stats=true)=0;
 
     static const NullSupraSubMove& null();
     
@@ -123,7 +124,8 @@ public:
     
     QString toString() const;
     
-    void move(SupraSubSystem &system, int n_supra_moves, bool record_supra_stats);
+    void move(SupraSubSystem &system, int n_supra_moves, 
+              int n_supra_moves_per_block, bool record_stats);
 };
 
 typedef SireBase::PropPtr<SupraSubMove> SupraSubMovePtr;

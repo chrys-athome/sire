@@ -26,3 +26,119 @@
   *
 \*********************************************/
 
+#ifndef SIREMOVE_REPLICAS_H
+#define SIREMOVE_REPLICAS_H
+
+#include "suprasystem.h"
+
+#include "SireUnits/dimensions.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMove
+{
+class Replicas;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMove::Replicas&);
+QDataStream& operator>>(QDataStream&, SireMove::Replicas&);
+
+namespace SireMove
+{
+
+class Replica;
+
+/** This class is used to hold all of the replicas in 
+    a replica exchange simulation
+    
+    @author Christopher Woods
+*/
+class SIREMOVE_EXPORT Replicas 
+        : public SireBase::ConcreteProperty<Replicas,SupraSystem>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const Replicas&);
+friend QDataStream& ::operator>>(QDataStream&, Replicas&);
+
+public:
+    Replicas();
+    Replicas(int n);
+    Replicas(const System &system, int n=1);
+    Replicas(const QVector<System> &systems);
+    
+    Replicas(const SupraSubSystem &subsystem, int n=1);
+    Replicas(const SupraSystem &suprasystem);
+    
+    Replicas(const Replicas &other);
+    
+    ~Replicas();
+    
+    Replicas& operator=(const Replicas &other);
+    
+    bool operator==(const Replicas &other) const;
+    bool operator!=(const Replicas &other) const;
+    
+    const Replica& operator[](int i) const;
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<Replicas>() );
+    }
+
+    const Replica& at(int i) const;
+    
+    int nReplicas() const;
+    
+    void setReplicas(const Replicas &replicas);
+    
+    void setReplica(const Replica &replica);
+    void setReplica(int i, const Replica &replica);
+    
+    void setSubSystem(int i, const SupraSubSystem &subsystem);
+    
+    void setEnergyComponent(const Symbol &symbol);
+    void setEnergyComponent(int i, const Symbol &symbol);
+    
+    void setSpaceProperty(const PropertyName &spaceproperty);
+    void setSpaceProperty(int i, const PropertyName &spaceproperty);
+    
+    void setLambdaComponent(const Symbol &symbol);
+    void setLambdaComponent(int i, const Symbol &symbol);
+    
+    void setLambdaValue(double value);
+    void setLambdaValue(int i, double value);
+    
+    void setTemperature(const SireUnits::Dimension::Temperature &temperature);
+    void setTemperature(int i, const SireUnits::Dimension::Temperature &temperature);
+    
+    void setPressure(const SireUnits::Dimension::Pressure &pressure);
+    void setPressure(int i, const SireUnits::Dimension::Pressure &pressure);
+    
+    void setFugacity(const SireUnits::Dimension::Pressure &fugacity);
+    void setFugacity(int i, const SireUnits::Dimension::Pressure &fugacity);
+    
+    void setChemicalPotential(
+                const SireUnits::Dimension::MolarEnergy &chemical_potential);
+
+    void setChemicalPotential(int i,
+                const SireUnits::Dimension::MolarEnergy &chemical_potential);
+
+protected:
+    Replica& _pvt_replica(int i);
+    const Replica& _pvt_replica(int i) const;
+    
+    const Replica& _pvt_constReplica(int i) const;
+
+private:
+    void copySharedCopies(int i, const Replica *old_replica);
+};
+
+}
+
+Q_DECLARE_METATYPE( SireMove::Replicas )
+
+SIRE_EXPOSE_CLASS( SireMove::Replicas )
+
+SIRE_END_HEADER
+
+#endif

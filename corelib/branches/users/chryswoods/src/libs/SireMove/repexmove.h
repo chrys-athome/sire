@@ -34,6 +34,8 @@
 #include "SireMove/supramove.h"
 #include "SireMove/suprasubmove.h"
 
+#include "SireUnits/dimensions.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
@@ -51,8 +53,8 @@ QDataStream& operator>>(QDataStream&, SireMove::RepExSubMove&);
 namespace SireMove
 {
 
-class RepExReplicas;
-class RepExReplica;
+class Replicas;
+class Replica;
 
 using SireMaths::RanGenerator;
 
@@ -84,19 +86,46 @@ public:
         return QMetaType::typeName( qMetaTypeId<RepExSubMove>() );
     }
 
-    int nAttempted() const;
-    int nAccepted() const;
-    int nRejected() const;
-    
-    int nMoves() const;
-    
-    double acceptanceRatio() const;
-
     QString toString() const;
-    
-    void clearStatistics();
 
-    void move(SupraSubSystem &system, int n_supra_moves, bool record_supra_stats);
+    SireUnits::Dimension::MolarEnergy energy_i() const;
+    SireUnits::Dimension::Volume volume_i() const;
+    
+    SireUnits::Dimension::MolarEnergy energy_j() const;
+    SireUnits::Dimension::Volume volume_j() const;
+
+    void move(SupraSubSystem &system, int n_supra_moves, 
+              int n_supra_moves_per_block, bool record_stats);
+
+private:
+    void evaluateSwappedState(const Replica &replica);
+
+    /** The volume of the system at the end of the move */
+    SireUnits::Dimension::Volume new_volume_i;
+    
+    /** The energy of the system at the end of the move */
+    SireUnits::Dimension::MolarEnergy new_energy_i;
+    
+    /** The volume of the system at the end of the move in 
+        the partner state */
+    SireUnits::Dimension::Volume new_volume_j;
+    
+    /** The energy of the system at the end of the move in
+        the new partner state */
+    SireUnits::Dimension::MolarEnergy new_energy_j;
+    
+    enum NewState { LAMBDA_VALUE   = 1,   // the partner has a different lambda value
+                    NRG_COMPONENT  = 2,   // the partner samples a different hamiltonian
+                    SPACE_PROPERTY = 3    // the partner uses a different space property
+                   };
+                   
+    /** The list of properties of the partner replica that
+        this will be swapped with, together with their values */
+    QList< QPair<quint32,QVariant> > partner_properties;
+    
+    /** Whether or not volumes and energies for the new state have been 
+        calculated */
+     bool have_new_vals;
 };
 
 /** This class is used to perform replica exchange moves on a collection
@@ -140,12 +169,17 @@ public:
     
     void clearStatistics();
     
+    QString toString() const;
+    
     void setGenerator(const RanGenerator &generator);
     const RanGenerator& generator() const;
 
     void move(SupraSystem &system, int nmoves, bool record_stats);
 
 private:
+    void performMove(SireCluster::Nodes &nodes, Replicas &replicas,
+                     bool record_stats);
+
     /** The random number generator used to accept or reject the moves */
     RanGenerator rangenerator;
     
@@ -157,6 +191,9 @@ private:
     
     /** The number of times a replica exchange move has been rejected */
     quint32 nreject;
+    
+    /** The replica history */
+    ...
 };
 
 }

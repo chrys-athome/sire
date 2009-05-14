@@ -78,9 +78,10 @@ friend QDataStream& ::operator>>(QDataStream&, SupraSystem&);
 public:
     SupraSystem();
     SupraSystem(int n);
-    SupraSystem(const System &system, int n);
+    SupraSystem(const System &system, int n=1);
     SupraSystem(const QVector<System> &systems);
     
+    SupraSystem(const SupraSubSystem &subsystem, int n=1);
     SupraSystem(const SupraSystem &other);
     
     virtual ~SupraSystem();
@@ -152,7 +153,7 @@ public:
     virtual void setSubMoves(int i, const Moves &moves);
     void setSubMoves(const Moves &moves);
     
-    virtual void setSubSystemAndMoves(int i, const System &system, const Moves &moves);
+    void setSubSystemAndMoves(int i, const System &system, const Moves &moves);
     void setSubSystemAndMoves(const System &system, const Moves &moves);
     
     virtual void setSubSystemAndMoves(int i, const SimStore &simstore);

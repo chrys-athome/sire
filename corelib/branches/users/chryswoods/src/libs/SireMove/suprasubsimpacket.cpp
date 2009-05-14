@@ -46,7 +46,17 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
     
     SharedDataStream sds(ds);
     
-    sds << suprasubsimpacket.sub_system << suprasubsimpacket.sub_moves
+    if (suprasubsimpacket.sub_system_was_packed)
+    {
+        SupraSubSystemPtr packed_sub_system = suprasubsimpacket.sub_system;
+        packed_sub_system.edit().pack();
+
+        sds << packed_sub_system;
+    }
+    else
+        sds << suprasubsimpacket.sub_system;
+    
+    sds << suprasubsimpacket.sub_moves
         << suprasubsimpacket.n_sub_moves << suprasubsimpacket.ncompleted
         << suprasubsimpacket.record_stats
         << static_cast<const WorkPacketBase&>(suprasubsimpacket);
@@ -68,6 +78,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
             >> suprasubsimpacket.n_sub_moves >> suprasubsimpacket.ncompleted
             >> suprasubsimpacket.record_stats
             >> static_cast<WorkPacketBase&>(suprasubsimpacket);
+            
+        suprasubsimpacket.sub_system_was_packed = false;
     }
     else
         throw version_error(v, "1", r_suprasubsimpacket, CODELOC);
@@ -77,7 +89,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
 
 /** Constructor */
 SupraSubSimPacket::SupraSubSimPacket() 
-                  : WorkPacketBase(), n_sub_moves(0), ncompleted(0), record_stats(false)
+                  : WorkPacketBase(), n_sub_moves(0), ncompleted(0), 
+                    record_stats(false), sub_system_was_packed(false)
 {}
 
 /** Construct a work packet to perform 'nmoves' sub-moves (in 'moves') on 
@@ -87,7 +100,8 @@ SupraSubSimPacket::SupraSubSimPacket(const SupraSubSystem &system,
                                      int nmoves, bool record_statistics)
                   : WorkPacketBase(),
                     sub_system(system), sub_moves(moves),
-                    n_sub_moves(nmoves), ncompleted(0), record_stats(record_statistics)
+                    n_sub_moves(nmoves), ncompleted(0), 
+                    record_stats(record_statistics), sub_system_was_packed(false)
 {}
   
 /** Copy constructor */                
@@ -95,7 +109,8 @@ SupraSubSimPacket::SupraSubSimPacket(const SupraSubSimPacket &other)
                   : WorkPacketBase(other),
                     sub_system(other.sub_system), sub_moves(other.sub_moves),
                     n_sub_moves(other.n_sub_moves), ncompleted(other.ncompleted),
-                    record_stats(other.record_stats)
+                    record_stats(other.record_stats),
+                    sub_system_was_packed(other.sub_system_was_packed)
 {}
 
 /** Destructor */
@@ -112,6 +127,8 @@ SupraSubSimPacket& SupraSubSimPacket::operator=(const SupraSubSimPacket &other)
         n_sub_moves = other.n_sub_moves;
         ncompleted = other.ncompleted;
         record_stats = other.record_stats;
+        sub_system_was_packed = other.sub_system_was_packed;
+        
         WorkPacketBase::operator=(other);
     }
     
@@ -193,10 +210,27 @@ float SupraSubSimPacket::chunk()
 {
     if (ncompleted >= n_sub_moves)
         return 100.0;
+
+    //see if we need to unpack the system before running the moves
+    if (sub_system->isPacked())
+    {
+        sub_system_was_packed = true;
+        sub_system.edit().unpack();
+    }
         
-    sub_moves.edit().move( sub_system.edit(), 1, record_stats );
+    sub_moves.edit().move( sub_system.edit(), 1, n_sub_moves - ncompleted,
+                           record_stats );
     
     ++ncompleted;
+    
+    if (ncompleted >= n_sub_moves)
+    {
+        if (sub_system_was_packed)
+        {
+            sub_system.edit().pack();
+            sub_system_was_packed = false;
+        }
+    }
     
     return 100.0 * ( float(ncompleted) / float(n_sub_moves) );
 }

@@ -333,6 +333,12 @@ PropPtrBase::PropPtrBase(const Property &property)
                 : ptr(property)
 {}
 
+/** Construct to hold a pointer to 'property' - this takes over
+    ownership of the pointer */
+PropPtrBase::PropPtrBase(Property *property)
+            : ptr(property)
+{}
+
 /** Copy constructor */
 PropPtrBase::PropPtrBase(const PropPtrBase &other)
                 : ptr(other.ptr)
@@ -433,6 +439,10 @@ PropPtr<Property>::PropPtr(const Property &property)
                   : PropPtrBase(property)
 {}
 
+PropPtr<Property>::PropPtr(Property *property)
+                  : PropPtrBase(property)
+{}
+
 PropPtr<Property>::PropPtr(const PropPtrBase &other)
                   : PropPtrBase(other)
 {}
@@ -451,6 +461,11 @@ PropPtr<Property>& PropPtr<Property>::operator=(const PropPtr<Property> &other)
 }
 
 PropPtr<Property>& PropPtr<Property>::operator=(const Property &property)
+{
+    return this->operator=( PropPtr<Property>(property) );
+}
+
+PropPtr<Property>& PropPtr<Property>::operator=(Property *property)
 {
     return this->operator=( PropPtr<Property>(property) );
 }

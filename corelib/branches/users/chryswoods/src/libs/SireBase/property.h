@@ -395,6 +395,7 @@ public:
 
 protected:
     PropPtrBase(const Property &property);
+    PropPtrBase(Property *property);
     
     PropPtrBase(const PropPtrBase &other);
 
@@ -428,6 +429,8 @@ public:
     PropPtr();
 
     PropPtr(const T &obj);
+    PropPtr(T *obj);
+    
     PropPtr(const Property &property);
 
     PropPtr(const PropPtrBase &other);
@@ -437,6 +440,8 @@ public:
     ~PropPtr();
     
     PropPtr<T>& operator=(const T &obj);
+    PropPtr<T>& operator=(T *obj);
+    
     PropPtr<T>& operator=(const Property &property);
 
     PropPtr<T>& operator=(const PropPtr<T> &other);
@@ -505,6 +510,13 @@ SIRE_OUTOFLINE_TEMPLATE
 PropPtr<T>::PropPtr(const T &obj) : PropPtrBase(obj)
 {}
 
+/** Construct from a pointer to the passed object 'obj' - this
+    takes over ownership of the pointer and can delete it at any time */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+PropPtr<T>::PropPtr(T *obj) : PropPtrBase(obj)
+{}
+
 /** Construct from the passed property
 
     \throw SireError::invalid_cast
@@ -550,6 +562,15 @@ PropPtr<T>& PropPtr<T>::operator=(const PropPtr<T> &other)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 PropPtr<T>& PropPtr<T>::operator=(const T &obj)
+{
+    return this->operator=( PropPtr<T>(obj) );
+}
+
+/** Create a pointer that points to the object 'obj' - this takes
+    over ownership of 'obj' and can delete it at any time */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+PropPtr<T>& PropPtr<T>::operator=(T *obj)
 {
     return this->operator=( PropPtr<T>(obj) );
 }
@@ -653,6 +674,7 @@ public:
     PropPtr();
 
     PropPtr(const Property &property);
+    PropPtr(Property *property);
 
     PropPtr(const PropPtrBase &other);
 
@@ -661,6 +683,7 @@ public:
     ~PropPtr();
     
     PropPtr<Property>& operator=(const Property &property);
+    PropPtr<Property>& operator=(Property *property);
 
     PropPtr<Property>& operator=(const PropPtr<Property> &other);
     PropPtr<Property>& operator=(const PropPtrBase &property);

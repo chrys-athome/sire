@@ -28,6 +28,8 @@
 
 #include "replica.h"
 
+#include "SireSystem/system.h"
+
 #include "SireMol/molecules.h"
 
 #include "SireUnits/units.h"
@@ -160,7 +162,14 @@ Replica::Replica() : ConcreteProperty<Replica,SupraSubSystem>(), lambda_value(0)
 Replica::Replica(const SupraSubSystem &subsys)
         : ConcreteProperty<Replica,SupraSubSystem>(subsys), lambda_value(0)
 {
-    this->updatedMoves();
+    if (subsys.isA<Replica>())
+    {
+        this->operator=(subsys.asA<Replica>());
+    }
+    else
+    {
+        this->updatedMoves();
+    }
 }
 
 /** Copy constructor */
@@ -424,6 +433,12 @@ void Replica::setSubMoves(const Moves &submoves)
         {
             if (new_moves->energyComponent() != nrg_component)
                 new_moves.edit().setEnergyComponent(nrg_component);
+        }
+    
+        if (not space_property.isNull())
+        {
+            if (new_moves->spaceProperty() != space_property)
+                new_moves.edit().setSpaceProperty(space_property);
         }
     
         SupraSubSystem::setSubMoves(new_moves);
