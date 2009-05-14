@@ -116,10 +116,6 @@ public:
     bool isConstantFugacity() const;
     bool isConstantChemicalPotential() const;
     bool isConstantLambda(const Symbol &lam) const;
-
-    void swapInSystem(const Replica &other, bool swap_monitors=false);
-    
-    void swapInMolecules(const Replica &other);
     
 protected:
     void setEnergyComponent(const Symbol &symbol);
@@ -138,6 +134,9 @@ protected:
     void setSubMoves(const Moves &submoves);
 
     void setSubSystemAndMoves(const SimStore &simstore);
+
+    void swapInSystem(const Replica &other, bool swap_monitors=false);
+    void swapInMolecules(const Replica &other);
 
     void _post_unpack();
 

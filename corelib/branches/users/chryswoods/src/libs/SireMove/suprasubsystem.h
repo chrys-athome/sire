@@ -125,8 +125,6 @@ public:
     virtual void clearStatistics();
     virtual void clearSubStatistics();
     virtual void clearAllStatistics();
-    
-    virtual void collectStats();
 
     void mustNowRecalculateFromScratch();
 
@@ -139,6 +137,8 @@ protected:
     virtual void setSubSystemAndMoves(const SimStore &simstore);
 
     virtual void setMonitors(const SystemMonitors &monitors);
+    
+    virtual void collectStats();
 
     virtual void setNSubMoves(int n);
     

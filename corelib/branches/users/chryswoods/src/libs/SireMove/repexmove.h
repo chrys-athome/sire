@@ -50,6 +50,11 @@ QDataStream& operator>>(QDataStream&, SireMove::RepExMove&);
 QDataStream& operator<<(QDataStream&, const SireMove::RepExSubMove&);
 QDataStream& operator>>(QDataStream&, SireMove::RepExSubMove&);
 
+namespace SireCluster
+{
+class Nodes;
+}
+
 namespace SireMove
 {
 
@@ -71,6 +76,7 @@ friend QDataStream& ::operator>>(QDataStream&, RepExSubMove&);
 
 public:
     RepExSubMove();
+    RepExSubMove(const Replica &replica_a, const Replica &replica_b);
     
     RepExSubMove(const RepExSubMove &other);
     
@@ -100,6 +106,9 @@ public:
 private:
     void evaluateSwappedState(const Replica &replica);
 
+    template<class T>
+    void addPartnerProperty(quint32 property, const T &value);
+
     /** The volume of the system at the end of the move */
     SireUnits::Dimension::Volume new_volume_i;
     
@@ -117,7 +126,7 @@ private:
     enum NewState { LAMBDA_VALUE   = 1,   // the partner has a different lambda value
                     NRG_COMPONENT  = 2,   // the partner samples a different hamiltonian
                     SPACE_PROPERTY = 3    // the partner uses a different space property
-                   };
+                  };
                    
     /** The list of properties of the partner replica that
         this will be swapped with, together with their values */
@@ -163,11 +172,11 @@ public:
     int nAccepted() const;
     int nRejected() const;
     
-    int nMoves() const;
-    
     double acceptanceRatio() const;
     
     void clearStatistics();
+    
+    void setSwapMonitors(bool swap_monitors);
     
     QString toString() const;
     
@@ -180,20 +189,24 @@ private:
     void performMove(SireCluster::Nodes &nodes, Replicas &replicas,
                      bool record_stats);
 
+    bool testPair(const Replica &replica_a, const RepExSubMove &move_a,
+                  const Replica &replica_b, const RepExSubMove &move_b) const;
+
+    void testAndSwap(Replicas &replicas, const QVector<RepExSubMove> &submoves,
+                     bool even_pairs, bool record_stats);
+
     /** The random number generator used to accept or reject the moves */
     RanGenerator rangenerator;
-    
-    /** The total number of replica exchange supra-moves attempted */
-    quint32 nmoves;
     
     /** The number of times a replica exchange move has been accepted */
     quint32 naccept;
     
     /** The number of times a replica exchange move has been rejected */
     quint32 nreject;
-    
-    /** The replica history */
-    ...
+
+    /** Whether or not to swap the system monitors when we swap replicas
+         - by default we leave the monitors with the systems */
+    bool swap_monitors;
 };
 
 }

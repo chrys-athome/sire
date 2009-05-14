@@ -231,12 +231,14 @@ QString SameSupraSubMoves::toString() const
 }
 
 /** Perform the moves */
-void SameSupraSubMoves::move(SupraSubSystem &system, int nsubmoves, bool record_substats)
+void SameSupraSubMoves::move(SupraSubSystem &system, int nsubmoves, 
+                             int nsubmoves_per_block, bool record_substats)
 {
     if (nsubmoves <= 0)
         return;
         
-    submove.edit().move(system, nsubmoves, record_substats);
+    submove.edit().move(system, nsubmoves, 
+                        nsubmoves_per_block, record_substats);
 }
 
 /** Clear all of the move statistics */

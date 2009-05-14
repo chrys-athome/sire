@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QPair>
+
 #include "repexmove.h"
 
 #include "replica.h"
@@ -33,6 +35,7 @@
 
 #include "suprasubsim.h"
 
+#include "SireCluster/cluster.h"
 #include "SireCluster/node.h"
 #include "SireCluster/nodes.h"
 
@@ -147,6 +150,40 @@ RepExSubMove::RepExSubMove()
                new_volume_j(0), new_energy_j(0),
                have_new_vals(false)
 {}
+
+/** Internal function used to add a property of our partner replica
+    that differs from the value in this replica */
+template<class T>
+void RepExSubMove::addPartnerProperty(quint32 property, const T &value)
+{
+    partner_properties.append( QPair<quint32,QVariant>(property,
+                                                       QVariant::fromValue<T>(value)) );
+}
+
+/** Construct the sub-move that will perform a move on 'replica_a', after
+    which it will then calculate the values necessary to test the 
+    swap from 'replica_a' to 'replica_b' */
+RepExSubMove::RepExSubMove(const Replica &replica_a, const Replica &replica_b)
+             : ConcreteProperty<RepExSubMove,SupraSubMove>(),
+               new_volume_i(0), new_energy_i(0),
+               new_volume_j(0), new_energy_j(0),
+               have_new_vals(false)
+{
+    if (replica_b.lambdaValue() != replica_a.lambdaValue())
+    {
+        addPartnerProperty( LAMBDA_VALUE, replica_b.lambdaValue() );
+    }
+
+    if (replica_b.energyComponent() != replica_a.energyComponent())
+    {
+        addPartnerProperty( NRG_COMPONENT, replica_b.energyComponent() );
+    }
+    
+    if (replica_b.spaceProperty() != replica_a.spaceProperty())
+    {
+        addPartnerProperty( SPACE_PROPERTY, replica_b.spaceProperty() );
+    }
+}
 
 /** Copy constructor */
 RepExSubMove::RepExSubMove(const RepExSubMove &other)
@@ -405,9 +442,9 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const RepExMove &repexm
     SharedDataStream sds(ds);
     
     sds << repexmove.rangenerator
-        << repexmove.nmoves
         << repexmove.naccept
         << repexmove.nreject
+        << repexmove.swap_monitors
         << static_cast<const SupraMove&>(repexmove);
         
     return ds;
@@ -423,19 +460,23 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExMove &repexmove)
         SharedDataStream sds(ds);
         
         sds >> repexmove.rangenerator
-            >> repexmove.nmoves
             >> repexmove.naccept
             >> repexmove.nreject
+            >> repexmove.swap_monitors
             >> static_cast<SupraMove&>(repexmove);
     }
     else if (v == 1)
     {
         SharedDataStream sds(ds);
+
+        quint32 nmoves;
         
         sds >> repexmove.rangenerator
-            >> repexmove.nmoves
+            >> nmoves
             >> repexmove.naccept
             >> repexmove.nreject;
+            
+        repexmove.swap_monitors = false;
     }
     else
         throw version_error(v, "1-2", r_repexmove, CODELOC);
@@ -443,32 +484,158 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExMove &repexmove)
     return ds;
 }
 
-RepExMove::RepExMove();
+/** Constructor */
+RepExMove::RepExMove()
+          : ConcreteProperty<RepExMove,SupraMove>(),
+            naccept(0), nreject(0), swap_monitors(false)
+{}
 
-RepExMove::RepExMove(const RepExMove &other);
+/** Copy constructor */
+RepExMove::RepExMove(const RepExMove &other)
+          : ConcreteProperty<RepExMove,SupraMove>(other),
+            naccept(other.naccept), nreject(other.nreject),
+            swap_monitors(other.swap_monitors)
+{}
 
-RepExMove::~RepExMove();
+/** Destructor */
+RepExMove::~RepExMove()
+{}
 
-RepExMove& RepExMove::operator=(const RepExMove &other);
+/** Copy assignment operator */
+RepExMove& RepExMove::operator=(const RepExMove &other)
+{
+    if (this != &other)
+    {
+        SupraMove::operator=(other);
+        
+        naccept = other.naccept;
+        nreject = other.nreject;
+        swap_monitors = other.swap_monitors;
+    }
+    
+    return *this;
+}
 
-bool RepExMove::operator==(const RepExMove &other) const;
-bool RepExMove::operator!=(const RepExMove &other) const;
+/** Comparison operator */
+bool RepExMove::operator==(const RepExMove &other) const
+{
+    return (this == &other) or
+           (naccept == other.naccept and nreject == other.nreject and
+            swap_monitors == other.swap_monitors and SupraMove::operator==(other));
+}
 
-int RepExMove::nAttempted() const;
-int RepExMove::nAccepted() const;
-int RepExMove::nRejected() const;
+/** Comparison operator */
+bool RepExMove::operator!=(const RepExMove &other) const
+{
+    return not this->operator==(other);
+}
 
-int RepExMove::nMoves() const;
+/** Return the total number of accepted replica exchange tests */
+int RepExMove::nAttempted() const
+{
+    return naccept + nreject;
+}
 
-double RepExMove::acceptanceRatio() const;
+/** Return the total number of accepted replica exchange tests */
+int RepExMove::nAccepted() const
+{
+    return naccept;
+}
 
-void RepExMove::clearStatistics();
+/** Return the total number of rejected replica exchange tests */
+int RepExMove::nRejected() const
+{
+    return nreject;
+}
 
-void RepExMove::setGenerator(const RanGenerator &generator);
-const RanGenerator& RepExMove::generator() const;
+/** Return the average acceptance ratio of the replica exchange
+    tests over all replicas */
+double RepExMove::acceptanceRatio() const
+{
+    if (this->nAttempted() > 0)
+    {
+        return double(this->nAccepted()) / double(this->nAttempted());
+    }
+    else
+        return 0;
+}
 
-QVector<SupraSubSim> RepExMove::submitSimulations(Nodes &nodes, Replicas &replicas,
-                                                  bool even_pairs, bool record_stats)
+/** Return a string representation of this move */
+QString RepExMove::toString() const
+{
+    return QObject::tr("RepExMove( %1 accepted, %2 rejected : %3 %% )")
+                .arg(this->nAccepted())
+                .arg(this->nRejected())
+                .arg(100 * this->acceptanceRatio());
+}
+
+/** Clear the move statistics */
+void RepExMove::clearStatistics()
+{
+    naccept = 0;
+    nreject = 0;
+}
+
+/** Set the random number generator used for the replica exchange tests */
+void RepExMove::setGenerator(const RanGenerator &generator)
+{
+    rangenerator = generator;
+}
+
+/** Return the random number generator used for the replica exchange tests */
+const RanGenerator& RepExMove::generator() const
+{
+    return rangenerator;
+}
+
+/** Set whether or not to swap the system monitors when we swap the systems */
+void RepExMove::setSwapMonitors(bool swap)
+{
+    swap_monitors = swap;
+}
+
+/** Internal function used to submit the simulation in 'replica' */
+static SupraSubSim submitSimulation(Nodes &nodes, const Replica &replica,
+                                    bool record_stats)
+{
+    Node node = nodes.getNode();
+    return SupraSubSim::run( node, replica, RepExSubMove(), 1, record_stats );
+}
+
+/** Internal function used to submit the two simulations for the replicas
+    'replica_a' and 'replica_b', telling each simulation to follow the 
+    simulation by evaluating the values necessary to perform a swap test
+    between these two replicas */
+static QPair<SupraSubSim,SupraSubSim> submitSimulation(
+                                    Nodes &nodes, const Replica &replica_a,
+                                    const Replica &replica_b, bool record_stats)
+{
+    QPair<SupraSubSim,SupraSubSim> sims;
+
+    //submit each simulation in a separate scope so that
+    //the node is released once the simulation has finished
+    {
+        Node node_a = nodes.getNode();
+        sims.first = SupraSubSim::run( node_a, replica_a,
+                                       RepExSubMove(replica_a, replica_b),
+                                       1, record_stats );
+    }
+     
+    Node node_b = nodes.getNode();
+    sims.second = SupraSubSim::run( node_b, replica_b,
+                                    RepExSubMove(replica_b, replica_a),
+                                                 1, record_stats );
+
+    return sims;
+}
+
+/** Internal function used to submit all of the replica simulations in 'replicas'
+    to the nodes 'nodes', returning an array of running simulations. This
+    will set up the moves to swap even pairs if 'even_pairs' is true, or
+    odd pairs if 'even_pairs' is false. Statistics will be recorded during
+    the simulation only if 'record_stats' is true */
+static QVector<SupraSubSim> submitSimulations(Nodes &nodes, Replicas &replicas,
+                                              bool even_pairs, bool record_stats)
 {
     int nreplicas = replicas.nReplicas();
 
@@ -483,18 +650,19 @@ QVector<SupraSubSim> RepExMove::submitSimulations(Nodes &nodes, Replicas &replic
 
     if (start == 1)
         //the first replica hasn't got a partner - start it on its own
-        subsims[0] = this->submitSimulation(nodes, replicas[0], record_stats);
+        subsims[0] = ::submitSimulation(nodes, replicas[0], record_stats);
 
     if ( (nreplicas-start) % 2 == 1 )
         //the last replica hasn't got a partner - start it on its own too
-        subsims[nreplicas-1] = this->submitSimulation(nodes, replicas[nreplicas-1]),
-                                                      record_stats );
+        subsims[nreplicas-1] = ::submitSimulation(nodes, replicas[nreplicas-1],
+                                                  record_stats );
 
     for (int i=start; i<nreplicas-1; i+=2)
     {
         //submit the simulations for replica i and replica i+1
-        QPair<SupraSubSim,SupraSubSim> sims = this->submitSimulation(
-                                                        replicas[i], replicas[i+1] );
+        QPair<SupraSubSim,SupraSubSim> sims = ::submitSimulation( nodes, replicas[i], 
+                                                                  replicas[i+1],
+                                                                  record_stats );
         
         subsims[i] = sims.first;
         subsims[i+1] = sims.second;
@@ -503,8 +671,10 @@ QVector<SupraSubSim> RepExMove::submitSimulations(Nodes &nodes, Replicas &replic
     return subsims;
 }
 
-void RepExMove::waitUntilFinished(Nodes &nodes, QVector<SupraSubSim> &subsims, 
-                                  int max_tries)
+/** Internal function used to wait until all of the simulations
+    in 'subsims' have finished, and to optionally restart broken
+    simulations up to 'max_tries' times using the nodes in 'nodes' */
+static void waitUntilFinished(Nodes &nodes, QVector<SupraSubSim> &subsims, int max_tries)
 {
     bool all_finished = false;
     int ntries = 0;
@@ -522,26 +692,28 @@ void RepExMove::waitUntilFinished(Nodes &nodes, QVector<SupraSubSim> &subsims,
         
         for (int i=0; i<nreplicas; ++i)
         {
-            subsims[i].wait();
+            SupraSubSim &subsim = subsims[i];
+        
+            subsim.wait();
             
-            if (subsims.at(i).isError() or subsims.at(i).wasAborted())
+            if (subsim.isError() or subsim.wasAborted())
             {
                 qDebug() << "Replica" << i << "had an error or was aborted."
                          << "Resubmitting - attempt number" << ntries;
             
                 //resubmit this calculation
                 Node node = nodes.getNode();
-                subsims[i] = SupraSubSim::run(node, subsims[i].input());
+                subsim = SupraSubSim::run(node, subsim.input());
             
                 all_finished = false;
             }
-            else if (not subsims.at(i).hasFinished())
+            else if (not subsim.hasFinished())
             {
                 //continue the calculation from where it finished
-                SupraSubSimPacket subsim = subsims[i].result();
+                SupraSubSimPacket simpacket = subsim.result();
                 
                 Node node = nodes.getNode();
-                subsims[i] = SupraSubSim::run( node, subsim );
+                subsim = SupraSubSim::run( node, simpacket );
                 
                 all_finished = false;
             }
@@ -558,23 +730,135 @@ void RepExMove::waitUntilFinished(Nodes &nodes, QVector<SupraSubSim> &subsims,
     }
 }
 
+/** Internal function used to test the passed pair of replicas - 
+    this returns whether or not the test has passed */
+bool RepExMove::testPair(const Replica &replica_a, const RepExSubMove &move_a, 
+                         const Replica &replica_b, const RepExSubMove &move_b) const
+{
+    //get the ensembles of the two replicas
+    const Ensemble &ensemble_a = replica_a.ensemble();
+    const Ensemble &ensemble_b = replica_b.ensemble();
+    
+    if ( (ensemble_a.isNVT() and ensemble_a.isNVT()) or 
+         (ensemble_b.isNPT() and ensemble_b.isNPT()) )
+    {
+        bool need_pv = (ensemble_a.isNPT() and ensemble_b.isNPT());
+    
+        //get the values of the thermodynamic parameters
+        double beta_a = 1.0 / (k_boltz * ensemble_a.temperature()).value();
+        double beta_b = 1.0 / (k_boltz * ensemble_b.temperature()).value();
+        
+        Pressure p_a(0);
+        Pressure p_b(0);
+        
+        if (need_pv)
+        {
+            p_a = ensemble_a.pressure();
+            p_b = ensemble_b.pressure();
+        }
+        
+        //now get the values of the system properties at their current state,
+        //and at their swapped states
+        MolarEnergy H_a_i = move_a.energy_i();
+        MolarEnergy H_a_j = move_a.energy_j();
+        
+        MolarEnergy H_b_i = move_b.energy_i();
+        MolarEnergy H_b_j = move_b.energy_j();
+        
+        Volume V_a_i(0);
+        Volume V_a_j(0);
+
+        Volume V_b_i(0);
+        Volume V_b_j(0);
+        
+        if (need_pv)
+        {
+            V_a_i = move_a.volume_i();
+            V_a_j = move_a.volume_j();
+            
+            V_b_i = move_b.volume_i();
+            V_b_j = move_b.volume_j();
+        }
+        
+        //now calculate delta needed for the Monte Carlo test
+        //
+        //  For derivation see Appendix C of Christopher Woods' thesis
+        //   (or original replica exchange literature of course!)
+        //
+        //  delta = beta_b * [ H_b_i - H_b_j + P_b (V_b_i - V_b_j) ] + 
+        //          beta_a * [ H_a_i - H_a_j + P_a (V_a_i - V_a_j) ]
+        
+        double delta = beta_b * ( H_b_i - H_b_j + p_b*(V_b_i - V_b_j) ) +
+                       beta_a * ( H_a_i - H_a_j + p_a*(V_a_i - V_a_j) );
+                       
+        return ( delta > 0 or (std::exp(delta) >= rangenerator.rand()) );
+    }
+    else
+    {
+        throw SireError::incompatible_error( QObject::tr(
+            "There is no available replica exchange test that allows tests between "
+            "replicas with ensembles %1 and %2.")
+                .arg(ensemble_a.toString(), ensemble_b.toString()), CODELOC );
+                
+    }
+
+    return false;
+}
+
+/** Internal function used to test and swap all pairs of replicas */
+void RepExMove::testAndSwap(Replicas &replicas, const QVector<RepExSubMove> &submoves,
+                            bool even_pairs, bool record_stats)
+{
+    int nreplicas = replicas.nReplicas();
+
+    if (nreplicas > 1)
+    {
+        int start = 1;
+        
+        if (even_pairs)
+            start = 0;
+            
+        //loop over all pairs
+        for (int i=start; i<nreplicas-1; i+=2)
+        {
+            if (this->testPair(replicas[i], submoves.at(i),
+                               replicas[i+1], submoves.at(i+1) ))
+            {
+                //swap the replicas
+                replicas.swapSystems(i, i+1, swap_monitors);
+                ++naccept;
+            }
+            else
+                ++nreject;
+        }
+    }
+
+    //if (record_stats)
+    //      replicas.collectSupraStatistics();
+}
+
+/** Internal function that performs a single block of sampling on all
+    replicas (recording statistics if 'record_stats' is true), using the
+    nodes in 'nodes', and then performing replica exchange moves between
+    pairs */
 void RepExMove::performMove(Nodes &nodes, Replicas &replicas, bool record_stats)
 {
     //will we swap even pairs or odd pairs?
     bool even_pairs = rangenerator.randBool();
 
     //submit all of the simulations
-    QVector<SupraSubSim> subsims = this->submitSimulations(nodes, replicas,
-                                                           even_pairs, record_stats);
+    QVector<SupraSubSim> subsims = ::submitSimulations(nodes, replicas,
+                                                       even_pairs, record_stats);
         
     //wait for all of the simulations to finish (retrying broken simulations
     //just five times)
-    this->waitUntilFinished(nodes, subsims, 5);
+    ::waitUntilFinished(nodes, subsims, 5);
     
     //copy the results back into the replicas
     int nreplicas = replicas.count();
     
     QVector<RepExSubMove> submoves(nreplicas);
+    submoves.squeeze();
     
     for (int i=0; i<nreplicas; ++i)
     {

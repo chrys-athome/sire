@@ -89,6 +89,10 @@ public:
     
     int nReplicas() const;
     
+    void resetReplicaIDs();
+    
+    const QVector<quint32>& replicaIDs() const;
+    
     void setReplicas(const Replicas &replicas);
     
     void setReplica(const Replica &replica);
@@ -123,6 +127,10 @@ public:
     void setChemicalPotential(int i,
                 const SireUnits::Dimension::MolarEnergy &chemical_potential);
 
+    void swapSystems(int i, int j, bool swap_monitors=true);
+
+    void swapMolecules(int i, int j);
+
 protected:
     Replica& _pvt_replica(int i);
     const Replica& _pvt_replica(int i) const;
@@ -131,6 +139,10 @@ protected:
 
 private:
     void copySharedCopies(int i, const Replica *old_replica);
+    
+    /** The index of each of the replicas - this allows the 
+        replicas to be tracked as they are swapped around */
+    QVector<quint32> replica_ids;
 };
 
 }

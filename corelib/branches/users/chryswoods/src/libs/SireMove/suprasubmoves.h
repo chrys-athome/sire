@@ -80,7 +80,8 @@ public:
     
     virtual QString toString() const=0;
     
-    virtual void move(SupraSubSystem &system, int nsubmoves, bool record_substats)=0;
+    virtual void move(SupraSubSystem &system, int nsubmoves, 
+                      int nsubmoves_per_block, bool record_substats)=0;
                       
     virtual void clearStatistics()=0;
     
@@ -129,7 +130,8 @@ public:
     
     QString toString() const;
     
-    void move(SupraSubSystem &system, int nsubmoves, bool record_substats);
+    void move(SupraSubSystem &system, int nsubmoves, 
+              int nsubmoves_per_block, bool record_substats);
 
     void clearStatistics();
     

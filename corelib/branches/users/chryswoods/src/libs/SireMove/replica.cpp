@@ -704,16 +704,17 @@ void Replica::swapInSystem(const Replica &other, bool swap_monitors)
     {
         System new_system;
         
-        //use a local scope to delete the unpacked simstore 
-        //as quickly as possible
+        if (other.isPacked())
         {
-            SimStore simstore = other.subSystemAndMoves();
-        
-            if (simstore.isPacked())
-                simstore.unpack();
+            //need to unpack the whole system as it may itself
+            //need to unpack swapped systems etc.
+            SupraSubSystemPtr unpacked_other = other;
+            unpacked_other.edit().unpack();
                 
-            new_system = simstore.system();
+            new_system = unpacked_other->subSystem();
         }
+        else
+            new_system = other.subSystem();
     
         if (swap_monitors)
             new_system.setMonitors( this->subSystem().monitors() );

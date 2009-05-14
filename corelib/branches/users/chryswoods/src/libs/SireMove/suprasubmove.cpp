@@ -185,5 +185,5 @@ QString NullSupraSubMove::toString() const
 }
 
 /** Null move, so doesn't do anything */
-void NullSupraSubMove::move(SupraSubSystem&, int, bool)
+void NullSupraSubMove::move(SupraSubSystem&, int, int, bool)
 {}

@@ -52,7 +52,8 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Replicas &replica
     
     SharedDataStream sds(ds);
     
-    sds << static_cast<const SupraSystem&>(replicas);
+    sds << replicas.replica_ids
+        << static_cast<const SupraSystem&>(replicas);
     
     return ds;
 }
@@ -65,7 +66,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Replicas &replicas)
     if (v == 2)
     {
         SharedDataStream sds(ds);
-        sds >> static_cast<SupraSystem&>(replicas);
+        sds >> replicas.replica_ids
+            >> static_cast<SupraSystem&>(replicas);
     }
     else if (v < 2)
     {
@@ -85,16 +87,37 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Replicas &replicas)
 Replicas::Replicas() : ConcreteProperty<Replicas,SupraSystem>()
 {}
 
+/** Reset the replica IDs - this sets the ID of the ith replica to 'i' */
+void Replicas::resetReplicaIDs()
+{
+    quint32 n = this->nReplicas();
+    
+    quint32 *replica_ids_array = replica_ids.data();
+    
+    for (quint32 i=0; i<n; ++i)
+    {
+        replica_ids_array[i] = i;
+    }
+}
+
 /** Construct a set of 'n' replicas */
-Replicas::Replicas(int n) : ConcreteProperty<Replicas,SupraSystem>(n)
+Replicas::Replicas(int n) 
+         : ConcreteProperty<Replicas,SupraSystem>(n),
+           replica_ids(n)
 {
     if (n > 0)
+    {
         SupraSystem::setSubSystem( Replica() );
+        
+        replica_ids.squeeze();
+        this->resetReplicaIDs();
+    }
 }
 
 /** Construct a set of 'n' replicas that contain the sub-system 'system' */
 Replicas::Replicas(const System &system, int n)
-         : ConcreteProperty<Replicas,SupraSystem>(n)
+         : ConcreteProperty<Replicas,SupraSystem>(n),
+           replica_ids(n)
 {
     if (n > 0)
     {
@@ -102,12 +125,16 @@ Replicas::Replicas(const System &system, int n)
         replica.setSubSystem(system);
     
         SupraSystem::setSubSystem(replica);
+        
+        replica_ids.squeeze();
+        this->resetReplicaIDs();
     }
 }
 
 /** Construct a set of replicas from the passed array of systems */
 Replicas::Replicas(const QVector<System> &systems)
-         : ConcreteProperty<Replicas,SupraSystem>(systems.count())
+         : ConcreteProperty<Replicas,SupraSystem>(systems.count()),
+           replica_ids(systems.count())
 {
     for (int i=0; i<systems.count(); ++i)
     {
@@ -116,12 +143,16 @@ Replicas::Replicas(const QVector<System> &systems)
         
         SupraSystem::setSubSystem( i, replica );
     }
+    
+    replica_ids.squeeze();
+    this->resetReplicaIDs();
 }
 
 /** Construct a Replicas object that contains 'n' copies of the 
     passed subsystem */
 Replicas::Replicas(const SupraSubSystem &subsystem, int n)
-         : ConcreteProperty<Replicas,SupraSystem>(n)
+         : ConcreteProperty<Replicas,SupraSystem>(n),
+           replica_ids(n)
 {
     if (subsystem.isA<Replica>())
     {
@@ -133,6 +164,9 @@ Replicas::Replicas(const SupraSubSystem &subsystem, int n)
         for (int i=0; i<n; ++i)
             SupraSystem::setSubSystem(i, Replica(subsystem));
     }
+    
+    replica_ids.squeeze();
+    this->resetReplicaIDs();
 }
 
 /** Construct from the passed SupraSystem */
@@ -151,11 +185,17 @@ Replicas::Replicas(const SupraSystem &suprasystem)
             else
                 SupraSystem::setSubSystem( i, Replica(suprasystem[i]) );
         }
+        
+        replica_ids.resize(suprasystem.nSubSystems());
+        replica_ids.squeeze();
+        this->resetReplicaIDs();
     }
 }
 
 /** Copy constructor */
-Replicas::Replicas(const Replicas &other) : ConcreteProperty<Replicas,SupraSystem>(other)
+Replicas::Replicas(const Replicas &other) 
+         : ConcreteProperty<Replicas,SupraSystem>(other),
+           replica_ids(other.replica_ids)
 {}
 
 /** Destructor */
@@ -166,19 +206,24 @@ Replicas::~Replicas()
 Replicas& Replicas::operator=(const Replicas &other)
 {
     SupraSystem::operator=(other);
+    
+    replica_ids = other.replica_ids;
+    
     return *this;
 }
 
 /** Comparison operator */
 bool Replicas::operator==(const Replicas &other) const
 {
-    return SupraSystem::operator==(other);
+    return replica_ids == other.replica_ids and
+           SupraSystem::operator==(other);
 }
 
 /** Comparison operator */
 bool Replicas::operator!=(const Replicas &other) const
 {
-    return SupraSystem::operator!=(other);
+    return replica_ids != other.replica_ids or
+           SupraSystem::operator!=(other);
 }
 
 /** Internal function used to get the ith replica - there is no
@@ -639,4 +684,47 @@ void Replicas::setChemicalPotential(int i, const MolarEnergy &chemical_potential
     
     if (this->_pvt_constReplica(i).chemicalPotential() != chemical_potential)
         this->_pvt_replica(i).setChemicalPotential(chemical_potential);
+}
+
+/** Swap the systems between replicas i and j. If swap_monitors is
+    true then the monitors are swapped as well 
+    
+    \throw SireError::invalid_index
+*/
+void Replicas::swapSystems(int i, int j, bool swap_monitors)
+{
+    i = Index(i).map( this->nReplicas() );
+    j = Index(j).map( this->nReplicas() );
+    
+    if (i == j)
+        return;
+    
+    Replica old_i = this->_pvt_constReplica(i);
+    
+    this->_pvt_replica(i).swapInSystem( this->_pvt_constReplica(j), swap_monitors );
+    this->_pvt_replica(j).swapInSystem( old_i, swap_monitors );
+    
+    //swap the ID's of the replicas
+    qSwap( replica_ids[i], replica_ids[j] );
+}
+
+/** Swap the molecules between replicas i and j 
+
+    \throw SireError::invalid_index
+*/
+void Replicas::swapMolecules(int i, int j)
+{
+    i = Index(i).map( this->nReplicas() );
+    j = Index(j).map( this->nReplicas() );
+    
+    if (i == j)
+        return;
+        
+    Replica old_i = this->_pvt_constReplica(i);
+    
+    this->_pvt_replica(i).swapInMolecules( this->_pvt_constReplica(j) );
+    this->_pvt_replica(j).swapInMolecules( old_i );
+    
+    //swap the IDs of the replicas
+    qSwap( replica_ids[i], replica_ids[j] );
 }
