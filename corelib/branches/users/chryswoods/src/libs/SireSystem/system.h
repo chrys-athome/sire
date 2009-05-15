@@ -230,6 +230,8 @@ public:
     const Constraints& constraints() const;
     
     void clearStatistics();
+    void clearStatistics(const MonitorID &monid);
+    
     void mustNowRecalculateFromScratch();
     
     bool isDirty() const;

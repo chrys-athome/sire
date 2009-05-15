@@ -1031,6 +1031,13 @@ void System::clearStatistics()
     sysmonitors.clearStatistics();
 }
 
+/** Clear the statistics of the monitors that match the ID 'monid'.
+    This does nothing if there are no matching monitors */
+void System::clearStatistics(const MonitorID &monid)
+{
+    sysmonitors.clearStatistics(monid);
+}
+
 /** Tell all of the forcefields that they will need to recalculate
     their energies from scratch. This can speed up calculations where
     you know that the majority (or all) of the molecules will be
