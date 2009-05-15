@@ -382,6 +382,28 @@ void SystemMonitors::clearStatistics()
     }
 }
 
+/** Completely clear the statistics held by the monitors that
+    match the ID 'monid' - this does nothing if there are no
+    monitors that match this ID */
+void SystemMonitors::clearStatistics(const MonitorID &monid)
+{
+    QList<MonitorName> monitor_names;
+    
+    try
+    {
+        monitor_names = monid.map(*this);
+    }
+    catch(...)
+    {}
+    
+    foreach (MonitorName monitor_name, monitor_names)
+    {
+        BOOST_ASSERT( mons_by_name.contains(monitor_name) );
+        
+        mons_by_name[monitor_name].edit().clearStatistics();
+    }
+}
+
 /** Set the frequency of all monitors that match the ID 'monid' so that
     they are updated every 'frequency' steps
     

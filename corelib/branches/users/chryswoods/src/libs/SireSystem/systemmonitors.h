@@ -108,6 +108,7 @@ public:
     void removeAll();
     
     void clearStatistics();
+    void clearStatistics(const MonitorID &monid);
     
     void setAllFrequency(int frequency);
     void setFrequency(const MonitorID &monid, int frequency);
