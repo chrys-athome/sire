@@ -16,6 +16,7 @@ set ( SIRESYSTEM_HEADERS
       checkpoint.h
       errors.h
       monitorcomponent.h
+      monitorcomponents.h
       monitorid.h
       monitoridentifier.h
       monitoridx.h
@@ -41,6 +42,7 @@ set ( SIRESYSTEM_SOURCES
       checkpoint.cpp
       errors.cpp
       monitorcomponent.cpp
+      monitorcomponents.cpp
       monitorid.cpp
       monitoridentifier.cpp
       monitormonitor.cpp
