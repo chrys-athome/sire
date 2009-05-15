@@ -285,6 +285,12 @@ const Replica& Replicas::at(int i) const
     return Replicas::operator[](i);
 }
 
+/** Return the current IDs of the replicas (in order of replica index) */
+const QVector<quint32>& Replicas::replicaIDs() const
+{
+    return replica_ids;
+}
+
 /** Set the replicas from a copy of passed replicas */
 void Replicas::setReplicas(const Replicas &replicas)
 {

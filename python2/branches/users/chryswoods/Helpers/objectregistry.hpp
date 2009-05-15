@@ -28,16 +28,23 @@ public:
 protected:
     virtual boost::python::object convertFromVoid(const void * const ptr) const=0;
 
-    virtual QByteArray saveObject(const boost::python::object &object) const=0;
-
-    virtual void saveObject(const boost::python::object &object, 
-                            const QString &filename) const=0;
+    virtual boost::shared_ptr<void> getObject(
+                            const boost::python::object &object) const=0;
 
     static void registerConverter(const char *type_name,
                                   ObjectRegistry *converter);
 
     static const ObjectRegistry& getConverter(const QString &type_name);
 
+    static boost::python::object getObjects( 
+                const QList< boost::tuple<boost::shared_ptr<void>,QString> > &objects );
+
+    static boost::tuple<boost::shared_ptr<void>,QString> getObjectFromPython(
+                                        const boost::python::object &obj);
+
+    static QList< boost::tuple<boost::shared_ptr<void>,QString> > getObjectsFromPython(
+                                        const boost::python::object &obj);
+    
     void throwExtractionError(const boost::python::object &obj, 
                               const QString &type_name) const;
 
@@ -68,24 +75,15 @@ protected:
         return boost::python::object( *t_ptr );
     }
 
-    QByteArray saveObject(const boost::python::object &obj) const
+    boost::shared_ptr<void> getObject(const boost::python::object &obj) const
     {
         boost::python::extract<const T&> t_object(obj);
 
         if (not t_object.check())
             this->throwExtractionError(obj, T::typeName());
 
-        return SireStream::save<T>( t_object() );
-    }
-
-    void saveObject(const boost::python::object &obj, const QString &filename) const
-    {
-        boost::python::extract<const T&> t_object(obj);
-
-        if (not t_object.check())
-            this->throwExtractionError(obj, T::typeName());
-
-        SireStream::save<T>( t_object(), filename );
+        return boost::shared_ptr<T>( new T(t_object()), SireStream::detail::void_deleter(
+                                                                 qMetaTypeId<T>()) );
     }
 
 private:

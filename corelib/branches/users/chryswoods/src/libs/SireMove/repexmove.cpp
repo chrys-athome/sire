@@ -33,6 +33,8 @@
 #include "replica.h"
 #include "replicas.h"
 
+#include "suprasystem.h"
+
 #include "suprasubsim.h"
 
 #include "SireCluster/cluster.h"

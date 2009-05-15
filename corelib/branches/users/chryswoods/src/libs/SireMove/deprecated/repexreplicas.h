@@ -271,9 +271,6 @@ protected:
 Q_DECLARE_METATYPE( SireMove::deprecated::RepExReplica )
 Q_DECLARE_METATYPE( SireMove::deprecated::RepExReplicas )
 
-SIRE_EXPOSE_CLASS( SireMove::deprecated::RepExReplica )
-SIRE_EXPOSE_CLASS( SireMove::deprecated::RepExReplicas )
-
 SIRE_END_HEADER
 
 #endif

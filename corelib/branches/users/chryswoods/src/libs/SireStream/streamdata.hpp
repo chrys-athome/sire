@@ -32,6 +32,8 @@
 #include <QByteArray>
 #include <QLocale>
 #include <QDateTime>
+#include <QList>
+#include <QStringList>
 
 #include <boost/tuple/tuple.hpp>
 #include <boost/shared_ptr.hpp>
@@ -59,15 +61,48 @@ namespace detail
 {
 QByteArray streamDataSave( const void *object, const char *type_name );
 
+QByteArray streamDataSave( 
+                 const QList< boost::tuple<const void*,const char*> > &objects ); 
+
+QByteArray streamDataSave(
+                 const QList< boost::tuple<boost::shared_ptr<void>,QString> > &objects );
+
 void streamDataSave( const void *object, const char *type_name, 
                      const QString &filename );
 
+void streamDataSave(
+                const QList< boost::tuple<const void*,const char*> > &objects,
+                const QString &filename );
+
+void streamDataSave(
+                const QList< boost::tuple<boost::shared_ptr<void>,QString> > &objects,
+                const QString &filename );
+
 void throwStreamDataInvalidCast(const QString &load_type, 
                                 const QString &cast_type);
+
+struct void_deleter
+{
+public:
+    void_deleter(int type_id) : id(type_id)
+    {}
+    
+    ~void_deleter()
+    {}
+    
+    void operator()(void const *ptr) const
+    {
+        QMetaType::destroy(id, const_cast<void*>(ptr));
+    }
+
+private:
+    int id;
+};
+
 }
 
-boost::tuple<boost::shared_ptr<void>,QString> load(const QByteArray &data);
-boost::tuple<boost::shared_ptr<void>,QString> load(const QString &filename);
+QList< boost::tuple<boost::shared_ptr<void>,QString> > load(const QByteArray &data);
+QList< boost::tuple<boost::shared_ptr<void>,QString> > load(const QString &filename);
 
 /** This class provides metadata about the binary representation
     of an object. This is to allow the owner of the data to identify
@@ -85,7 +120,11 @@ class SIRESTREAM_EXPORT FileHeader
 friend QDataStream& ::operator<<(QDataStream&, const FileHeader&);
 friend QDataStream& ::operator>>(QDataStream&, FileHeader&);
 
-friend QByteArray detail::streamDataSave( const void*, const char* );
+friend QByteArray detail::streamDataSave( 
+                        const QList< boost::tuple<const void*,const char*> >& );
+
+friend QByteArray detail::streamDataSave( 
+                        const QList< boost::tuple<boost::shared_ptr<void>,QString> >& );
 
 public:
     FileHeader();
@@ -107,7 +146,8 @@ public:
     
     double compressionRatio() const;
     
-    const QString& dataType() const;
+    QString dataType() const;
+    const QStringList& dataTypes() const;
     
     QStringList requiredLibraries() const;
 
@@ -131,6 +171,10 @@ private:
                const QByteArray &compressed_data,
                const QByteArray &raw_data);
 
+    FileHeader(const QStringList &type_names,
+               const QByteArray &compressed_data,
+               const QByteArray &raw_data);
+
     /** The username of the person who created this data */
     QString created_by;
     
@@ -143,8 +187,8 @@ private:
     /** A string giving information about the system and libraries */
     QString system_info;
 
-    /** The typename of the top-level object stored in this data */
-    QString type_name;
+    /** The typename(s) of the top-level object(s) stored in this data */
+    QStringList type_names;
     
     /** The source repository from which this code was downloaded */
     QString build_repository;
@@ -213,30 +257,38 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 T loadType(const QByteArray &data)
 {
-    boost::tuple<boost::shared_ptr<void>,QString> new_obj
+    QList< boost::tuple<boost::shared_ptr<void>,QString> > new_objs
             = SireStream::load(data);
 
-    if ( QLatin1String(T::typeName()) != new_obj.get<1>() )
+    if ( new_objs.isEmpty() )
     {
-        detail::throwStreamDataInvalidCast(new_obj.get<1>(), T::typeName());
+        detail::throwStreamDataInvalidCast("NULL", T::typeName());
+    }
+    else if ( QLatin1String(T::typeName()) != new_objs.at(0).get<1>() )
+    {
+        detail::throwStreamDataInvalidCast(new_objs.at(0).get<1>(), T::typeName());
     }
 
-    return T( *(static_cast<const T*>(new_obj.get<0>().get())) );
+    return T( *(static_cast<const T*>(new_objs.at(0).get<0>().get())) );
 }
 
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 T loadType(const QString &filename)
 {
-    boost::tuple<boost::shared_ptr<void>,QString> new_obj
+    QList< boost::tuple<boost::shared_ptr<void>,QString> > new_objs
             = SireStream::load(filename);
 
-    if ( QLatin1String(T::typeName()) != new_obj.get<1>() )
+    if ( new_objs.isEmpty() )
     {
-        detail::throwStreamDataInvalidCast(new_obj.get<1>(), T::typeName());
+        detail::throwStreamDataInvalidCast("NULL", T::typeName());
+    }
+    else if ( QLatin1String(T::typeName()) != new_objs.at(0).get<1>() )
+    {
+        detail::throwStreamDataInvalidCast(new_objs.at(0).get<1>(), T::typeName());
     }
 
-    return T( *(static_cast<const T*>(new_obj.get<0>().get())) );
+    return T( *(static_cast<const T*>(new_objs.at(0).get<0>().get())) );
 }
 
 template<class T>

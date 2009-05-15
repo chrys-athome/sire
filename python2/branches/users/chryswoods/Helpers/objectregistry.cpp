@@ -28,86 +28,131 @@ void ObjectRegistry::throwExtractionError(const object &obj,
                            .arg(type_name), CODELOC );
 }
 
+object ObjectRegistry::getObjects( 
+                const QList< boost::tuple<shared_ptr<void>,QString> > &objects )
+{
+    if (objects.isEmpty())
+    {
+        //nothing of interest here!
+        return object();
+    }
+    else if (objects.count() == 1)
+    {
+        const boost::tuple<shared_ptr<void>,QString> &obj = objects[0];
+    
+        if (obj.get<0>().get() == 0 or obj.get<1>().isEmpty())
+            //again, nothing
+            return object();
+            
+        return getConverter(obj.get<1>()).convertFromVoid(obj.get<0>().get());
+    }
+    else
+    {
+        //place the objects into a list
+        boost::python::list l;
+        
+        for (int i=0; i<objects.count(); ++i)
+        {
+            const tuple<shared_ptr<void>,QString> &obj = objects[i];
+
+            if (obj.get<0>().get() == 0 or obj.get<1>().isEmpty())
+                //nothing
+                l.append( object() );
+            else
+                l.append( 
+                     getConverter(obj.get<1>()).convertFromVoid(obj.get<0>().get()) );
+        }
+        
+        //return the tuple version of this list
+        return boost::python::tuple( l );
+    }
+}
+
 object ObjectRegistry::load(const QByteArray &data)
 {
-    tuple<shared_ptr<void>,QString> obj = SireStream::load(data);
-
-    if (obj.get<0>().get() == 0 or obj.get<1>().isEmpty())
-    {
-       //nothing of interest here!
-       return object();
-    }
-
-    return getConverter(obj.get<1>()).convertFromVoid(obj.get<0>().get());
+    return ObjectRegistry::getObjects( SireStream::load(data) );
 }
 
 object ObjectRegistry::load(const QString &filename)
 {
-    tuple<shared_ptr<void>,QString> obj = SireStream::load(filename);
+    return ObjectRegistry::getObjects( SireStream::load(filename) );
+}
 
-    if (obj.get<0>().get() == 0 or obj.get<1>().isEmpty())
+namespace bp = boost::python;
+
+boost::tuple<shared_ptr<void>,QString> 
+ObjectRegistry::getObjectFromPython(const object &obj)
+{
+    object result = obj.attr("what")();
+
+    extract<QString> test_result(result);
+
+    if (not test_result.check())
     {
-        //nothing of interest here
-        return object();
+        throw SireError::invalid_arg( QObject::tr(
+           "You cannot save this object to binary, as while it has a \".what()\" "
+           "member function, it does not return a string, as expected. "
+           "Ask the programmer of this class to provide this functionality."),
+                CODELOC );
     }
 
-    return getConverter(obj.get<1>()).convertFromVoid(obj.get<0>().get());
+    QString type_name = test_result();
+
+    return boost::tuple<shared_ptr<void>,QString>( getConverter(type_name).getObject(obj),
+                                                   type_name );
+}
+
+QList< boost::tuple<shared_ptr<void>,QString> > 
+ObjectRegistry::getObjectsFromPython(const object &obj)
+{
+    PyObject *obj_ptr = obj.ptr();
+
+    QList< boost::tuple<shared_ptr<void>,QString> > objects_to_save;
+
+    if ( PyTuple_Check(obj_ptr) )
+    {
+        bp::tuple t( bp::handle<>(bp::borrowed(obj_ptr)) );
+        
+        int n = PyTuple_Size(obj_ptr);
+        
+        for (int i=0; i<n; ++i)
+        {
+            objects_to_save.append( getObjectFromPython(t[i]) );
+        }
+    }
+    else if ( PyList_Check(obj_ptr) )
+    {
+        bp::list l( bp::handle<>(bp::borrowed(obj_ptr)) );
+        
+        int n = PyList_Size(obj_ptr);
+        
+        for (int i=0; i<n; ++i)
+        {
+            objects_to_save.append( getObjectFromPython(l[i]) );
+        }
+    }
+    else
+    {
+        objects_to_save.append( getObjectFromPython(obj) );
+    }
+
+    return objects_to_save;
 }
 
 QByteArray ObjectRegistry::save(const object &obj)
 {
-    /*if (not obj.has_attr("what"))
-    {
-        throw SireError::invalid_arg( QObject::tr(
-           "You cannot save this object to binary, as it does not have a \".what()\" "
-           "member function. Ask the programmer of this class to provide that "
-           "functionality."), CODELOC );
-    }*/
-
-    object result = obj.attr("what")();
-
-    extract<QString> test_result(result);
-
-    if (not test_result.check())
-    {
-        throw SireError::invalid_arg( QObject::tr(
-           "You cannot save this object to binary, as while it has a \".what()\" "
-           "member function, it does not return a string, as expected. "
-           "Ask the programmer of this class to provide this functionality."),
-                CODELOC );
-    }
-
-    QString type_name = test_result();
-
-    return getConverter(type_name).saveObject(obj);
+    QList< boost::tuple<shared_ptr<void>,QString> > 
+                                    objects_t = getObjectsFromPython(obj);
+    
+    return SireStream::detail::streamDataSave(objects_t);
 }
 
 void ObjectRegistry::save(const object &obj, const QString &filename)
 {
-    /*if (not obj.has_attr("what"))
-    {
-        throw SireError::invalid_arg( QObject::tr(
-           "You cannot save this object to binary, as it does not have a \".what()\" "
-           "member function. Ask the programmer of this class to provide that "
-           "functionality."), CODELOC );
-    }*/
-
-    object result = obj.attr("what")();
-
-    extract<QString> test_result(result);
-
-    if (not test_result.check())
-    {
-        throw SireError::invalid_arg( QObject::tr(
-           "You cannot save this object to binary, as while it has a \".what()\" "
-           "member function, it does not return a string, as expected. "
-           "Ask the programmer of this class to provide this functionality."),
-                CODELOC );
-    }
-
-    QString type_name = test_result();
-
-    getConverter(type_name).saveObject(obj, filename);
+    QList< boost::tuple<shared_ptr<void>,QString> > 
+                                    objects_t = getObjectsFromPython(obj);
+    
+    SireStream::detail::streamDataSave(objects_t, filename);
 }
 
 Q_GLOBAL_STATIC( QMutex, registryMutex );

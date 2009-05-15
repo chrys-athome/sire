@@ -45,6 +45,9 @@ set ( SIREMOVE_HEADERS
       weightedmoves.h
       zmatmove.h
       zmatrix.h
+    )
+
+set ( SIREMOVE_DEPRECATED_HEADERS
 
       deprecated/replicas.h
       deprecated/repexreplicas.h
@@ -94,6 +97,7 @@ set ( SIREMOVE_SOURCES
       deprecated/repexreplicas.cpp
 
       ${SIREMOVE_HEADERS}
+      ${SIREMOVE_DEPRECATED_HEADERS}
     )
 
 add_library (SireMove ${SIREMOVE_SOURCES})
@@ -122,3 +126,5 @@ install( TARGETS SireMove EXPORT SireLibraries
 install( FILES ${SIREMOVE_HEADERS}
          DESTINATION ${SIRE_INCLUDES}/SireMove )
 
+install( FILES ${SIREMOVE_DEPRECATED_HEADERS}
+         DESTINATION ${SIRE_INCLUDES}/SireMove/deprecated )

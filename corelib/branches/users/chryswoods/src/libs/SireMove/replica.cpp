@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "replica.h"
+#include "replicas.h"
 
 #include "SireSystem/system.h"
 

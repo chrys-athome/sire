@@ -284,9 +284,6 @@ private:
 Q_DECLARE_METATYPE( SireMove::deprecated::Replica )
 Q_DECLARE_METATYPE( SireMove::deprecated::Replicas )
 
-SIRE_EXPOSE_CLASS( SireMove::deprecated::Replica )
-SIRE_EXPOSE_CLASS( SireMove::deprecated::Replicas )
-
 SIRE_END_HEADER
 
 #endif
