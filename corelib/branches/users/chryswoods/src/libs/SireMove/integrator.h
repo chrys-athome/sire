@@ -106,8 +106,11 @@ public:
     
     virtual QString toString() const=0;
     
-    virtual void integrate(MoleculeGroup &molgroup, const ForceTable &forcetable,
-                           const PropertyMap &map = PropertyMap())=0;
+    virtual void integrate(System &system, const Symbol &nrg_component,
+                           const PropertyMap &map)=0;
+
+    void integrate(System &system);
+    void integrate(System &system, const Symbol &nrg_component);
 
     virtual void setTimeStep(const SireUnits::Dimension::Time &timestep)=0;
 
@@ -116,6 +119,7 @@ public:
     virtual SireUnits::Dimension::MolarEnergy kineticEnergy() const=0;
     
     virtual void clearStatistics()=0;
+    virtual void clearVelocities()=0;
     
     virtual void setGenerator(const RanGenerator &generator)=0;
 };
@@ -150,8 +154,8 @@ public:
     
     QString toString() const;
     
-    void integrate(MoleculeGroup &molgroup, const ForceTable &forcetable,
-                   const PropertyMap &map = PropertyMap());
+    void integrate(System &system, const Symbol &nrg_component,
+                   const PropertyMap &map);
 
     void setTimeStep(const SireUnits::Dimension::Time &timestep);
 
@@ -160,6 +164,7 @@ public:
     SireUnits::Dimension::MolarEnergy kineticEnergy() const;
     
     void clearStatistics();
+    void clearVelocities();
     
     void setGenerator(const RanGenerator &generator);
 };

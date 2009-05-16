@@ -164,7 +164,7 @@ QString MolecularDynamics::toString() const
 /** Return the molecule group on which this move operates */
 const MoleculeGroup& MolecularDynamics::moleculeGroup() const
 {
-    return molgroup.read();
+    return intgrator.read().moleculeGroup();
 }
 
 /** Return the integrator used to advance the coordinates
@@ -177,7 +177,7 @@ const Integrator& MolecularDynamics::integrator() const
 /** Set the molecule group containing the molecules to be moved */
 void MolecularDynamics::setMoleculeGroup(const MoleculeGroup &new_molgroup)
 {
-    molgroup = new_molgroup;
+    intgrator.edit().setMoleculeGroup(new_molgroup);
 }
 
 /** Set the integrator to be used to advance the coordinates from 
@@ -222,26 +222,6 @@ void MolecularDynamics::setGenerator(const RanGenerator &generator)
     intgrator.edit().setGenerator(generator);
 }
 
-/** Internal function used to actually perform the move */
-void MolecularDynamics::performMove(System &system, const PropertyMap &map)
-{
-    //update the molecule group from the system
-    //molgroup = molgroup.update(system);
-    
-    //now update the forcetable to hold all of the forces on all of the atoms
-    //forcetable.update( molgroup, map );
-    
-    //calculate all of the forces on the atoms
-    //system.calculateForce(molgroup, forcetable);
-    
-    //now integrate all of the forces to get the next set of 
-    //coordinates of the atoms
-    intgrator.edit().integrate(molgroup.edit(), molforces, map);
-
-    //update the system
-    //system.update(molgroup);
-}
-
 /** Perform this move on the System 'system' - perform the move
     'nmoves' times, optionally recording simulation statistics
     if 'record_stats' is true */
@@ -258,11 +238,12 @@ void MolecularDynamics::move(System &system, int nmoves, bool record_stats)
     {
         PropertyMap map;
         map.set("coordinates", this->coordinatesProperty());
-        
+        map.set("space", this->spaceProperty());
+    
         for (int i=0; i<nmoves; ++i)
         {
             //perform the move
-            this->performMove(system, map);
+            intgrator.edit().integrate(system, this->energyComponent(), map);
 
             if (record_stats)
             {

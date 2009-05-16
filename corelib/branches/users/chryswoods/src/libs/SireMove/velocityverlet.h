@@ -76,8 +76,7 @@ public:
     
     QString toString() const;
     
-    void integrate(MoleculeGroup &molgroup, const ForceTable &forcetable,
-                   const PropertyMap &map = PropertyMap());
+    void integrate(System &system, const Symbol &nrg_component, const PropertyMap &map);
 
     void setTimeStep(const SireUnits::Dimension::Time &timestep);
 
@@ -86,6 +85,7 @@ public:
     SireUnits::Dimension::MolarEnergy kineticEnergy() const;
     
     void clearStatistics();
+    void clearVelocities();
     
     void setGenerator(const RanGenerator &generator);
 
@@ -93,8 +93,11 @@ private:
     /** The timestep of integration */
     SireUnits::Dimension::Time timestep;
     
-    /** The velocities... */
+    /** The velocity of the atoms */
     SireFF::ForceTable v;
+    
+    /** The forces on the atoms */
+    SireFF::ForceTable f;
 };
 
 }

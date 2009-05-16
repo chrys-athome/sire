@@ -127,14 +127,6 @@ public:
     void setGenerator(const RanGenerator &generator);
 
 private:
-    void performMove(System &system, const SireBase::PropertyMap &map);
-
-    /** The molecule group containing the molecules being moved */
-    MolGroupPtr molgroup;
-
-    /** The forces on all of the atoms of the molecules */
-    ForceTable molforces;
-
     /** The integrator used to solve Newton's laws */
     IntegratorPtr intgrator;
 };

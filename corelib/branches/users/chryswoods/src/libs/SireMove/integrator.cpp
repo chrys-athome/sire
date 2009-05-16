@@ -85,6 +85,21 @@ Integrator::Integrator(const Integrator &other) : Property(other)
 Integrator::~Integrator()
 {}
 
+/** Integrate the system 'system', using the default energy component,
+    coordinates and space property */
+void Integrator::integrate(System &system)
+{
+    this->integrate(system, ForceFields::totalComponent(), PropertyMap());
+}
+
+/** Integrate the system 'system', using the Hamiltonian represented
+    by the symbol 'nrg_component', and using the default coordinate
+    and space properties */
+void Integrator::integrate(System &system, const Symbol &nrg_component)
+{
+    this->integrate(system, nrg_component, PropertyMap());
+}
+
 Q_GLOBAL_STATIC( NullIntegrator, getNullIntegrator );
 
 /** Return a NullIntegrator */
@@ -163,8 +178,7 @@ QString NullIntegrator::toString() const
 }
 
 /** The null integrator does nothing */
-void NullIntegrator::integrate(MoleculeGroup&, const ForceTable&,
-                               const PropertyMap&)
+void NullIntegrator::integrate(System&, const Symbol&, const PropertyMap&)
 {}
 
 /** The null integrator will ignore any timestep */
