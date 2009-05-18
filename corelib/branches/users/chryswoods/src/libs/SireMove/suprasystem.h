@@ -193,6 +193,10 @@ protected:
     const SupraSubSystem& _pvt_subSystem(int i) const;
     SupraSubSystem& _pvt_subSystem(int i);
 
+    void updateSubSystems(const SupraSubSystem *old_system,
+                          const SupraSubSystem *new_system,
+                          QSet<int> &done_systems);
+
 private:
     /** The array of all sub systems */
     QVector<SupraSubSystemPtr> subsystems;

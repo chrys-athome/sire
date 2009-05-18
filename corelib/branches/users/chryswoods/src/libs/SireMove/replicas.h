@@ -98,6 +98,10 @@ public:
     void setReplica(const Replica &replica);
     void setReplica(int i, const Replica &replica);
     
+    void setSubSystem(const System &system);
+    void setSubSystem(const SupraSubSystem &subsystem);
+    
+    void setSubSystem(int i, const System &system);
     void setSubSystem(int i, const SupraSubSystem &subsystem);
     
     void setEnergyComponent(const Symbol &symbol);
@@ -138,8 +142,6 @@ protected:
     const Replica& _pvt_constReplica(int i) const;
 
 private:
-    void copySharedCopies(int i, const Replica *old_replica);
-    
     /** The index of each of the replicas - this allows the 
         replicas to be tracked as they are swapped around */
     QVector<quint32> replica_ids;

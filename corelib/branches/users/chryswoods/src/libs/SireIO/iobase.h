@@ -43,6 +43,8 @@ SIRE_BEGIN_HEADER
 namespace SireIO
 {
 
+class PDB;
+
 using SireBase::PropertyMap;
 using SireBase::PropertyName;
 
@@ -186,6 +188,8 @@ public:
 
     QByteArray write(const MoleculeView &molecule,
                      const PropertyMap &map = PropertyMap()) const;
+
+    static PDB null();
 
 protected:
 

@@ -75,6 +75,8 @@ public:
         return "SireMove::SupraMove";
     }
 
+    int nMoves() const;
+
     virtual QString toString() const=0;
 
     virtual void move(SupraSystem &system, int nmoves, 
@@ -89,6 +91,12 @@ protected:
     
     bool operator==(const SupraMove &other) const;
     bool operator!=(const SupraMove &other) const;
+
+    void incrementNMoves(int nmoves);
+
+private:
+    /** The total number of moves performed using this object */
+    quint32 nmoves;
 };
 
 /** This is a null supra move, which does nothing

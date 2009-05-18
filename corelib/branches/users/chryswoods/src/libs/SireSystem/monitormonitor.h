@@ -84,6 +84,16 @@ public:
         return QMetaType::typeName( qMetaTypeId<MonitorMonitor>() );
     }
 
+    const SystemMonitor& operator[](int i) const;
+    
+    const SystemMonitor& at(int i) const;
+
+    int size() const;
+    int count() const;
+    int nStates() const;
+
+    const QList<SysMonPtr>& states() const;
+
     void setClearOriginal(bool clear);
     void setRemoveOriginal(bool remove);
     

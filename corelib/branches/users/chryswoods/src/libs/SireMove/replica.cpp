@@ -59,7 +59,9 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Replica &replica)
     
     SharedDataStream sds(ds);
     
-    sds << replica.lambda_component << replica.lambda_value
+    sds << replica.replica_ensemble << replica.space_property
+        << replica.nrg_component
+        << replica.lambda_component << replica.lambda_value
         << replica.vars_to_be_set
         << static_cast<const SupraSubSystem&>(replica);
         
@@ -77,11 +79,11 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Replica &replica)
         
         Replica new_replica;
         
-        sds >> new_replica.lambda_component >> new_replica.lambda_value
+        sds >> new_replica.replica_ensemble >> new_replica.space_property
+            >> new_replica.nrg_component
+            >> new_replica.lambda_component >> new_replica.lambda_value
             >> new_replica.vars_to_be_set
             >> static_cast<SupraSubSystem&>(new_replica);
-            
-        new_replica.updatedMoves();
         
         replica = new_replica;
     }

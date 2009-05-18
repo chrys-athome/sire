@@ -30,12 +30,15 @@
 
 #include "suprasystem.h"
 
+#include "SireID/index.h"
+
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireMove;
+using namespace SireID;
 using namespace SireBase;
 using namespace SireStream;
 
@@ -99,6 +102,17 @@ bool SupraMoves::operator==(const SupraMoves &other) const
 bool SupraMoves::operator!=(const SupraMoves &other) const
 {
     return false;
+}
+
+/** Return the ith move 
+
+    \throw SireError::invalid_index
+*/
+const SupraMove& SupraMoves::operator[](int i) const
+{
+    QList<SupraMovePtr> mvs = this->moves();
+    
+    return mvs.at( Index(i).map(mvs.count()) ).read();
 }
 
 /** Return the number of different types of move in this set */
@@ -206,21 +220,6 @@ bool SameSupraMoves::operator!=(const SameSupraMoves &other) const
     return mv != other.mv or SupraMoves::operator!=(other);
 }
 
-/** Return the ith move 
-
-    \throw SireError::invalid_index
-*/
-const SupraMove& SameSupraMoves::operator[](int i) const
-{
-    if (i != 0)
-        throw SireError::invalid_index( QObject::tr(
-            "There is only a single SupraMove in the SameSupraMoves, so "
-            "only index 0 is valid (index %1 is thus invalid)")
-                .arg(i), CODELOC );
-
-    return mv.read();
-}
-
 /** Return a string representation of this moves set */
 QString SameSupraMoves::toString() const
 {
@@ -249,4 +248,10 @@ QList<SupraMovePtr> SameSupraMoves::moves() const
     mvs.append(mv);
     
     return mvs;
+}
+
+/** Return the total number of moves that have been performed */
+int SameSupraMoves::nMoves() const
+{
+    return mv.read().nMoves();
 }

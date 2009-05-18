@@ -124,7 +124,13 @@ def export_function(mb, function, includes):
                    f.add_declaration_code("#include %s" % include)
 
 def has_clone_function(t):
-    c = mb.class_( str(t.base).split(" ")[0].split("::")[-1] )
+    c = None
+
+    try:
+        c = mb.class_( string.join(str(t.base).split(" ")[0:-1], " ").split("::")[1] )
+    except:
+        print "WARNING!!! Couldn't find the class for %s" % t
+        return False
 
     try:
         c.mem_funs("clone")
@@ -160,28 +166,40 @@ def export_class(mb, classname, aliases, includes, special_code):
        pass
 
    #now replace copy_const_reference with clone_const_reference for suitable classes
+   funs = []
+
    try:
        #all copy_const_reference call policies with clone_const_reference
-       funs = c.mem_funs( lambda f: declarations.is_reference( f.return_type ) )
-
-       for f in funs:
-           if has_clone_function(f.return_type):
-               f.call_policies = call_policies.custom_call_policies( \
-                     "bp::return_value_policy<bp::clone_const_reference>", \
-                     "Helpers/clone_const_reference.hpp" )
-
-       #also add any operator[] or operator() functions
-       funs = c.operators( lambda f: declarations.is_reference( f.return_type ) )
-
-       for f in funs:
-           if (str(f).find("[]") != -1) or (str(f).find("()") != -1):
-               if has_clone_function(f.return_type):
-                   f.call_policies = call_policies.custom_call_policies( \
-                       "bp::return_value_policy<bp::clone_const_reference>", \
-                       "Helpers/clone_const_reference.hpp" )
-
+       #funs = c.mem_funs( lambda f: declarations.is_reference( f.return_type ) )
+       funs = c.mem_funs( lambda f: f.return_type.decl_string.endswith("&") )
    except:
        pass
+
+   for f in funs:
+       print f
+
+       if has_clone_function(f.return_type):
+           print "HAS CLONE FUNCTION"
+           f.call_policies = call_policies.custom_call_policies( \
+                 "bp::return_value_policy<bp::clone_const_reference>", \
+                 "Helpers/clone_const_reference.hpp" )
+
+   #also add any operator[] or operator() functions
+   try:
+       #funs = c.operators( lambda f: declarations.is_reference( f.return_type ) )
+       funs = c.operators( lambda f: f.return_type.decl_string.endswith("&") )
+   except:
+       pass
+
+   for f in funs:
+       print f
+
+       if (str(f).find("[]") != -1) or (str(f).find("()") != -1):
+           if has_clone_function(f.return_type):
+               print "HAS CLONE FUNCTION"
+               f.call_policies = call_policies.custom_call_policies( \
+                   "bp::return_value_policy<bp::clone_const_reference>", \
+                   "Helpers/clone_const_reference.hpp" )
 
    #remove any declarations that return a pointer to something
    #(special code is needed in these cases!)

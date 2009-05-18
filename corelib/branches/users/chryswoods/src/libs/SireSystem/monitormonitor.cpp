@@ -30,10 +30,13 @@
 
 #include "SireSystem/system.h"
 
+#include "SireID/index.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
 using namespace SireSystem;
+using namespace SireID;
 using namespace SireBase;
 using namespace SireStream;
 
@@ -132,6 +135,48 @@ bool MonitorMonitor::operator==(const MonitorMonitor &other) const
 bool MonitorMonitor::operator!=(const MonitorMonitor &other) const
 {
     return not this->operator==(other);
+}
+
+/** Return the number of states monitored so far */
+int MonitorMonitor::nStates() const
+{
+    return monitor_states.count();
+}
+
+/** Return the number of states monitored so far */
+int MonitorMonitor::count() const
+{
+    return this->nStates();
+}
+
+/** Return the number of states monitored so far */
+int MonitorMonitor::size() const
+{
+    return this->nStates();
+}
+
+/** Return the ith state monitored
+
+    \throw SireError::invalid_index
+*/
+const SystemMonitor& MonitorMonitor::operator[](int i) const
+{
+    return monitor_states.at( Index(i).map(monitor_states.count()) );
+}
+
+/** Return the ith state monitored
+
+    \throw SireError::invalid_index
+*/
+const SystemMonitor& MonitorMonitor::at(int i) const
+{
+    return this->operator[](i);
+}
+
+/** Return all of the states monitored */
+const QList<SysMonPtr>& MonitorMonitor::states() const
+{
+    return monitor_states;
 }
 
 /** Set whether or not to clear the statistics of the original

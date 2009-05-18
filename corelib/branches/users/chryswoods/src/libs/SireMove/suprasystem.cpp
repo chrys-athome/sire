@@ -419,6 +419,9 @@ void SupraSystem::pack()
         if (not subsystems.at(i)->isPacked())
         {
             SupraSubSystemPtr unpacked_system = subsystems.at(i);
+            
+            qDebug() << unpacked_system.constData();
+            
             subsystems[i].edit().pack();
             
             //see if there are any copies of this system (so that
@@ -489,6 +492,9 @@ void SupraSystem::packToDisk()
         if (not subsystems.at(i)->isPackedToDisk())
         {
             SupraSubSystemPtr old_system = subsystems.at(i);
+
+            qDebug() << old_system.constData();
+
             subsystems[i].edit().packToDisk();
             
             for (int j=i+1; j<n; ++j)
@@ -525,6 +531,9 @@ void SupraSystem::packToDisk(const QString &tempdir)
         if (not subsystems.at(i)->isPackedToDisk())
         {
             SupraSubSystemPtr old_system = subsystems.at(i);
+
+            qDebug() << old_system.constData();
+
             subsystems[i].edit().packToDisk(tempdir);
             
             for (int j=i+1; j<n; ++j)
@@ -673,6 +682,36 @@ void SupraSystem::packToMemory(int i)
         this->_post_pack();
 }
 
+/** Internal function used to update all copies of 'old_subsystem' 
+    so that they are equal to 'new_subsystem'. Use this function
+    when you are performing an operation on all sub-systems and
+    you want to ensure that any shared sub-systems are 
+    still shared */
+void SupraSystem::updateSubSystems(const SupraSubSystem *old_subsystem,
+                                   const SupraSubSystem *new_subsystem,
+                                   QSet<int> &done_systems)
+{
+    if (old_subsystem == 0 or new_subsystem == 0 or
+        old_subsystem == new_subsystem)
+    {
+        return;
+    }
+        
+    int n = subsystems.count();
+    
+    for (int i=0; i<n; ++i)
+    {
+        if (not done_systems.contains(i))
+        {
+            if ( &(subsystems.at(i).read()) == old_subsystem )
+            {   
+                subsystems[i] = *(new_subsystem);
+                done_systems.insert(i);
+            }
+        }
+    }
+}
+
 /** Set the ith sub-system equal to 'subsystem'
 
     \throw SireError::invalid_index
@@ -690,10 +729,31 @@ void SupraSystem::setSubSystem(const SupraSubSystem &subsystem)
     try
     {
         int n = subsystems.count();
+        
+        if (n == 0)
+            return;
+        
+        QSet<int> done_systems;
+        done_systems.reserve(n);
     
-        for (int i=0; i<n; ++i)
+        //do the first subsystem
+        this->setSubSystem(0, subsystem);
+        
+        //now set the rest from the copy of the first
+        const SupraSubSystem &subsystem0 = *(subsystems.at(0));
+    
+        done_systems.insert(0);
+    
+        for (int i=1; i<n; ++i)
         {
-            this->setSubSystem(i, subsystem);
+            if ( not done_systems.contains(i) )
+            {
+                const SupraSubSystem *old_subsystem = subsystems.at(i).constData();
+                this->setSubSystem(i, subsystem0);
+                
+                this->updateSubSystems(old_subsystem, subsystems.at(i).constData(), 
+                                       done_systems);
+            }
         }
     }
     catch(...)
@@ -755,10 +815,20 @@ void SupraSystem::setSubSystem(const System &system)
     try
     {
         int n = subsystems.count();
+        QSet<int> done_systems;
+        done_systems.reserve(n);
     
         for (int i=0; i<n; ++i)
         {
-            this->setSubSystem(i, system);
+            if (not done_systems.contains(i))
+            {
+                const SupraSubSystem *old_subsystem = subsystems.at(i).constData();
+            
+                this->setSubSystem(i, system);
+                
+                this->updateSubSystems(old_subsystem, subsystems.at(i).constData(),
+                                       done_systems);
+            }
         }
     }
     catch(...)
@@ -790,10 +860,20 @@ void SupraSystem::setSubMoves(const Moves &moves)
     try
     {
         int n = subsystems.count();
+        QSet<int> done_systems;
+        done_systems.reserve(n);
     
         for (int i=0; i<n; ++i)
         {
-            this->setSubMoves(i, moves);
+            if ( not done_systems.contains(i) )
+            {
+                const SupraSubSystem *old_subsystem = subsystems.at(i).constData();
+            
+                this->setSubMoves(i, moves);
+                
+                this->updateSubSystems(old_subsystem, subsystems.at(i).constData(),
+                                       done_systems);
+            }
         }
     }
     catch(...)
@@ -822,10 +902,20 @@ void SupraSystem::setSubSystemAndMoves(const SimStore &simstore)
     try
     {
         int n = subsystems.count();
+        QSet<int> done_systems;
+        done_systems.reserve(n);
     
         for (int i=0; i<n; ++i)
         {
-            this->setSubSystemAndMoves(i, simstore);
+            if (not done_systems.contains(i))
+            {
+                const SupraSubSystem *old_subsystem = subsystems.at(i).constData();
+            
+                this->setSubSystemAndMoves(i, simstore);
+                
+                this->updateSubSystems(old_subsystem, subsystems.at(i).constData(),
+                                       done_systems);
+            }
         }
     }
     catch(...)
@@ -865,9 +955,18 @@ void SupraSystem::setSubMonitors(const SystemMonitors &monitors, int frequency)
     
         int n = subsystems.count();
     
+        QSet<int> done_systems;
+        done_systems.reserve(n);
+    
         for (int i=0; i<n; ++i)
         {
-            subsystems[i].edit().setMonitors(monitors);
+            if (not done_systems.contains(i))
+            {
+                const SupraSubSystem *old_subsystem = subsystems.at(i).constData();
+                subsystems[i].edit().setMonitors(monitors);
+                this->updateSubSystems(old_subsystem, subsystems.at(i).constData(),
+                                       done_systems);
+            }
         }
     }
     catch(...)
@@ -900,15 +999,26 @@ void SupraSystem::add(const QString &name, const SystemMonitor &monitor, int fre
     {
         int n = subsystems.count();
         
+        QSet<int> done_systems;
+        done_systems.reserve(n);
+        
         for (int i=0; i<n; ++i)
         {
-            SupraSubSystem &system = subsystems[i].edit();
+            if (not done_systems.contains(i))
+            {
+                const SupraSubSystem *old_subsystem = subsystems.at(i).constData();
             
-            SystemMonitors monitors = system.monitors();
+                SupraSubSystem &system = subsystems[i].edit();
             
-            monitors.add(name, monitor, frequency);
+                SystemMonitors monitors = system.monitors();
             
-            system.setMonitors(monitors);
+                monitors.add(name, monitor, frequency);
+            
+                system.setMonitors(monitors);
+                
+                this->updateSubSystems(old_subsystem, subsystems.at(i).constData(),
+                                       done_systems);
+            }
         }
     }
     catch(...)
@@ -945,15 +1055,26 @@ void SupraSystem::add(const SystemMonitors &monitors, int frequency)
     {
         int n = subsystems.count();
         
+        QSet<int> done_systems;
+        done_systems.reserve(n);
+        
         for (int i=0; i<n; ++i)
         {
-            SupraSubSystem &system = subsystems[i].edit();
+            if (not done_systems.contains(i))
+            {
+                const SupraSubSystem *old_subsystem = subsystems.at(i).constData();
             
-            SystemMonitors sysmonitors = system.monitors();
+                SupraSubSystem &system = subsystems[i].edit();
             
-            sysmonitors.add(monitors, frequency);
+                SystemMonitors sysmonitors = system.monitors();
+
+                sysmonitors.add(monitors, frequency);
             
-            system.setMonitors(sysmonitors);
+                system.setMonitors(sysmonitors);
+                
+                this->updateSubSystems(old_subsystem, subsystems.at(i).constData(),
+                                       done_systems);
+            }
         }
     }
     catch(...)
@@ -995,9 +1116,18 @@ void SupraSystem::setNSubMoves(int nmoves)
 {
     int n = subsystems.count();
     
+    QSet<int> done_systems;
+    done_systems.reserve(n);
+    
     for (int i=0; i<n; ++i)
     {
-        this->setNSubMoves(i, nmoves);
+        if (not done_systems.contains(i))
+        {
+            const SupraSubSystem *old_subsystem = subsystems.at(i).constData();
+            this->setNSubMoves(i, nmoves);
+            this->updateSubSystems(old_subsystem, subsystems.at(i).constData(),
+                                   done_systems);
+        }
     }
 }
 
@@ -1018,9 +1148,18 @@ void SupraSystem::setRecordStatistics(bool record_stats)
 {
     int n = subsystems.count();
     
+    QSet<int> done_systems;
+    done_systems.reserve(n);
+    
     for (int i=0; i<n; ++i)
     {
-        this->setRecordStatistics(i, record_stats);
+        if (not done_systems.contains(i))
+        {
+            const SupraSubSystem *old_subsystem = subsystems.at(i).constData();
+            this->setRecordStatistics(i, record_stats);
+            this->updateSubSystems(old_subsystem, subsystems.at(i).constData(),
+                                   done_systems);
+        }
     }
 }
 
@@ -1041,9 +1180,20 @@ void SupraSystem::setRecordSubStatistics(bool record_stats)
 {
     int n = subsystems.count();
     
+    QSet<int> done_systems;
+    done_systems.reserve(n);
+    
     for (int i=0; i<n; ++i)
     {
-        this->setRecordSubStatistics(i, record_stats);
+        if (not done_systems.contains(i))
+        {
+            const SupraSubSystem *old_subsystem = subsystems.at(i).constData();
+            
+            this->setRecordSubStatistics(i, record_stats);
+            
+            this->updateSubSystems(old_subsystem, subsystems.at(i).constData(),
+                                   done_systems);
+        }
     }
 }
 
@@ -1064,9 +1214,18 @@ void SupraSystem::setRecordAllStatistics(bool record_stats)
 {
     int n = subsystems.count();
     
+    QSet<int> done_systems;
+    done_systems.reserve(n);
+    
     for (int i=0; i<n; ++i)
     {
-        this->setRecordStatistics(i, record_stats);
-        this->setRecordSubStatistics(i, record_stats);
+        if (not done_systems.contains(i))
+        {
+            const SupraSubSystem *old_subsystem = subsystems.at(i).constData();
+            this->setRecordStatistics(i, record_stats);
+            this->setRecordSubStatistics(i, record_stats);
+            this->updateSubSystems( old_subsystem, subsystems.at(i).constData(),
+                                    done_systems );
+        }
     }
 }

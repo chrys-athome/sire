@@ -31,6 +31,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QDebug>
+
 using namespace SireMove;
 using namespace SireCluster;
 using namespace SireBase;

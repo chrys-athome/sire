@@ -49,7 +49,8 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const SupraMove &supram
 {
     writeHeader(ds, r_supramove, 1);
     
-    ds << static_cast<const Property&>(supramove);
+    ds << supramove.nmoves
+       << static_cast<const Property&>(supramove);
     
     return ds;
 }
@@ -61,7 +62,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SupraMove &supramove)
     
     if (v == 1)
     {
-        ds >> static_cast<Property&>(supramove);
+        ds >> supramove.nmoves
+           >> static_cast<Property&>(supramove);
     }
     else
         throw version_error(v, "1", r_supramove, CODELOC);
@@ -70,11 +72,12 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, SupraMove &supramove)
 }
 
 /** Constructor */
-SupraMove::SupraMove() : Property()
+SupraMove::SupraMove() : Property(), nmoves(0)
 {}
 
 /** Copy constructor */
-SupraMove::SupraMove(const SupraMove &other) : Property(other)
+SupraMove::SupraMove(const SupraMove &other) 
+          : Property(other), nmoves(other.nmoves)
 {}
 
 /** Destructor */
@@ -82,8 +85,9 @@ SupraMove::~SupraMove()
 {}
 
 /** Copy assignment operator */
-SupraMove& SupraMove::operator=(const SupraMove&)
+SupraMove& SupraMove::operator=(const SupraMove &other)
 {
+    nmoves = other.nmoves;
     return *this;
 }
 
@@ -101,7 +105,22 @@ bool SupraMove::operator!=(const SupraMove &other) const
 
 /** Clear all move statistics */
 void SupraMove::clearStatistics()
-{}
+{
+    nmoves = 0;
+}
+
+/** Return the total number of supra-moves performed using this object */
+int SupraMove::nMoves() const
+{
+    return nmoves;
+}
+
+/** Internal function used to increment the total number of moves performed */
+void SupraMove::incrementNMoves(int nmore)
+{
+    if (nmore > 0)
+        nmoves += nmore;
+}
 
 Q_GLOBAL_STATIC( NullSupraMove, nullSupraMove )
 

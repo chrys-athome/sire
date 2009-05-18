@@ -378,6 +378,8 @@ void RepExSubMove::evaluateSwappedState(const Replica &replica)
         new_volume_j = state_j.volume();
         new_energy_j = state_j.energy();
     }
+
+    have_new_vals = true;
 }
 
 /** Perform the sub-moves on the passed sub-system */
@@ -793,7 +795,17 @@ bool RepExMove::testPair(const Replica &replica_a, const RepExSubMove &move_a,
         double delta = beta_b * ( H_b_i - H_b_j + p_b*(V_b_i - V_b_j) ) +
                        beta_a * ( H_a_i - H_a_j + p_a*(V_a_i - V_a_j) );
                        
-        return ( delta > 0 or (std::exp(delta) >= rangenerator.rand()) );
+        qDebug() << "TESTING:" << beta_b << H_b_i << H_b_j << p_b << V_b_i << V_b_j;
+        qDebug() << "TESTING:" << beta_a << H_a_i << H_a_j << p_a << V_a_i << V_a_j;
+
+        bool move_passed = ( delta > 0 or (std::exp(delta) >= rangenerator.rand()) );
+                       
+        if (move_passed)
+            qDebug() << "REPEX move PASSED!";
+        else
+            qDebug() << "REPEX move FAILED!";
+                       
+        return move_passed;
     }
     else
     {
@@ -823,6 +835,8 @@ void RepExMove::testAndSwap(Replicas &replicas, const QVector<RepExSubMove> &sub
         //loop over all pairs
         for (int i=start; i<nreplicas-1; i+=2)
         {
+            qDebug() << "TESTING PAIRS" << i << "and" << i+1;
+            
             if (this->testPair(replicas[i], submoves.at(i),
                                replicas[i+1], submoves.at(i+1) ))
             {
@@ -848,13 +862,19 @@ void RepExMove::performMove(Nodes &nodes, Replicas &replicas, bool record_stats)
     //will we swap even pairs or odd pairs?
     bool even_pairs = rangenerator.randBool();
 
+    qDebug() << "SUBMITTING REPLICAS" << even_pairs << nodes.count();
+
     //submit all of the simulations
     QVector<SupraSubSim> subsims = ::submitSimulations(nodes, replicas,
                                                        even_pairs, record_stats);
         
+    qDebug() << "DONE!";
+        
     //wait for all of the simulations to finish (retrying broken simulations
     //just five times)
     ::waitUntilFinished(nodes, subsims, 5);
+    
+    qDebug() << "ALL SIMULATIONS HAVE FINISHED";
     
     //copy the results back into the replicas
     int nreplicas = replicas.count();
@@ -864,7 +884,11 @@ void RepExMove::performMove(Nodes &nodes, Replicas &replicas, bool record_stats)
     
     for (int i=0; i<nreplicas; ++i)
     {
-        submoves[i] = subsims[i].result().subMoves().asA<RepExSubMove>();
+        qDebug() << "PROCESSING REPLICA" << i;
+        submoves[i] = subsims[i].result().subMoves().asA<SameSupraSubMoves>()[0]
+                                         .asA<RepExSubMove>();
+        
+        qDebug() << "SETTING THE REPLICA";
         replicas.setReplica( i, subsims[i].result().subSystem() );
     }
     
@@ -873,7 +897,9 @@ void RepExMove::performMove(Nodes &nodes, Replicas &replicas, bool record_stats)
     subsims = QVector<SupraSubSim>();
     
     //now perform all of the replica exchange tests
+    qDebug() << "this->testAndSwap()";
     this->testAndSwap(replicas, submoves, even_pairs, record_stats);
+    qDebug() << "DONE!!";
 }
 
 /** Perform 'nmoves' replica exchange moves (block of sampling for all
@@ -906,6 +932,8 @@ void RepExMove::move(SupraSystem &system, int nmoves, bool record_stats)
             {
                 this->performMove(nodes, replicas, record_stats);
             }
+
+            SupraMove::incrementNMoves(nmoves);
         }
     }
     catch(...)

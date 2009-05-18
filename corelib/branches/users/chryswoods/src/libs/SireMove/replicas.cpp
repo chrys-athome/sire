@@ -312,8 +312,26 @@ void Replicas::setReplica(int i, const Replica &replica)
     this->setSubSystem(i, replica);
 }
 
+/** Overloaded function used to set all of the replicas equal to 'subsystem' */
+void Replicas::setSubSystem(const SupraSubSystem &subsystem)
+{
+    SupraSystem::setSubSystem(subsystem);
+}
+
+/** Overloaded function used to set all of the replicas equal to 'subsystem' */
+void Replicas::setSubSystem(const System &subsystem)
+{
+    Replica replica;
+    replica.setSubSystem(subsystem);
+
+    SupraSystem::setSubSystem(replica);
+}
+
 /** Overloaded function used to ensure that this system only contains
-    Replica subsystems */
+    Replica subsystems 
+    
+    \throw SireError::invalid_index
+*/
 void Replicas::setSubSystem(int i, const SupraSubSystem &subsystem)
 {
     if (subsystem.isA<Replica>())
@@ -323,27 +341,13 @@ void Replicas::setSubSystem(int i, const SupraSubSystem &subsystem)
         SupraSystem::setSubSystem(i, Replica(subsystem));
 }
 
-/** This internal function checks for shared copies of replica 'i'
-    (which used to be 'old_replica') and copies whatever is now
-    at replica i to any previous replica that still points to 'old_replica'.
-    
-    Note that this only checks replicas i+1 <= j < this->nReplicas()
+/** Overloaded function used to set the ith subsystem equal to 'system' 
+
+    \throw SireError::invalid_index
 */
-void Replicas::copySharedCopies(int i, const Replica *old_replica)
+void Replicas::setSubSystem(int i, const System &system)
 {
-    const Replica *new_replica = &(this->_pvt_constReplica(i));
-    
-    if (new_replica != old_replica)
-    {
-        //there may be some shared copies
-        int n = this->nReplicas();
-        
-        for (int j=i+1; j<n; ++j)
-        {
-            if (old_replica == &(this->_pvt_constReplica(j)))
-                SupraSystem::setSubSystem(j, *new_replica);
-        }
-    }
+    SupraSystem::setSubSystem(i, system);
 }
 
 /** Set the energy component sampled by all replicas to 'symbol' */
@@ -355,14 +359,18 @@ void Replicas::setEnergyComponent(const Symbol &symbol)
     {
         int n = this->nReplicas();
     
+        QSet<int> done_systems;
+        done_systems.reserve(n);
+    
         for (int i=0; i<n; ++i)
         {
             const Replica *old_replica = &(this->_pvt_constReplica(i));
             
-            if (old_replica->energyComponent() != symbol)
+            if (not done_systems.contains(i))
             {
                 this->_pvt_replica(i).setEnergyComponent(symbol);
-                this->copySharedCopies(i, old_replica);
+                this->updateSubSystems(old_replica, &(this->_pvt_constReplica(i)),
+                                       done_systems);
             }
         }
     }
@@ -397,14 +405,18 @@ void Replicas::setSpaceProperty(const PropertyName &spaceproperty)
     {
         int n = this->nReplicas();
         
+        QSet<int> done_systems;
+        done_systems.reserve(n);
+        
         for (int i=0; i<n; ++i)
         {
             const Replica *old_replica = &(this->_pvt_constReplica(i));
             
-            if (old_replica->spaceProperty() != spaceproperty)
+            if (not done_systems.contains(i))
             {
                 this->_pvt_replica(i).setSpaceProperty(spaceproperty);
-                this->copySharedCopies(i, old_replica);
+                this->updateSubSystems(old_replica, &(this->_pvt_constReplica(i)),
+                                       done_systems);
             }
         }
     }
@@ -439,14 +451,18 @@ void Replicas::setLambdaComponent(const Symbol &symbol)
     {
         int n = this->nReplicas();
         
+        QSet<int> done_systems;
+        done_systems.reserve(n);
+        
         for (int i=0; i<n; ++i)
         {
             const Replica *old_replica = &(this->_pvt_constReplica(i));
             
-            if (old_replica->lambdaComponent() != symbol)
+            if (not done_systems.contains(i))
             {
                 this->_pvt_replica(i).setLambdaComponent(symbol);
-                this->copySharedCopies(i, old_replica);
+                this->updateSubSystems(old_replica, &(this->_pvt_constReplica(i)),
+                                       done_systems);
             }
         }
     }
@@ -480,14 +496,18 @@ void Replicas::setLambdaValue(double value)
     {
         int n = this->nReplicas();
         
+        QSet<int> done_systems;
+        done_systems.reserve(n);
+        
         for (int i=0; i<n; ++i)
         {
             const Replica *old_replica = &(this->_pvt_constReplica(i));
             
-            if (old_replica->lambdaValue() != value)
+            if (not done_systems.contains(i))
             {
                 this->_pvt_replica(i).setLambdaValue(value);
-                this->copySharedCopies(i, old_replica);
+                this->updateSubSystems(old_replica, &(this->_pvt_constReplica(i)),
+                                       done_systems);
             }
         }
     }
@@ -526,14 +546,18 @@ void Replicas::setTemperature(const Temperature &temperature)
     {
         int n = this->nReplicas();
         
+        QSet<int> done_systems;
+        done_systems.reserve(n);
+        
         for (int i=0; i<n; ++i)
         {
             const Replica *old_replica = &(this->_pvt_constReplica(i));
             
-            if (old_replica->temperature() != temperature)
+            if (not done_systems.contains(i))
             {
                 this->_pvt_replica(i).setTemperature(temperature);
-                this->copySharedCopies(i, old_replica);
+                this->updateSubSystems(old_replica, &(this->_pvt_constReplica(i)),
+                                       done_systems);
             }
         }
     }
@@ -570,14 +594,18 @@ void Replicas::setPressure(const Pressure &pressure)
     {
         int n = this->nReplicas();
         
+        QSet<int> done_systems;
+        done_systems.reserve(n);
+        
         for (int i=0; i<n; ++i)
         {
             const Replica *old_replica = &(this->_pvt_constReplica(i));
             
-            if (old_replica->pressure() != pressure)
+            if (not done_systems.contains(i))
             {
                 this->_pvt_replica(i).setPressure(pressure);
-                this->copySharedCopies(i, old_replica);
+                this->updateSubSystems(old_replica, &(this->_pvt_constReplica(i)),
+                                       done_systems);
             }
         }
     }
@@ -615,14 +643,18 @@ void Replicas::setFugacity(const Pressure &fugacity)
     {
         int n = this->nReplicas();
         
+        QSet<int> done_systems;
+        done_systems.reserve(n);
+        
         for (int i=0; i<n; ++i)
         {
             const Replica *old_replica = &(this->_pvt_constReplica(i));
             
-            if (old_replica->fugacity() != fugacity)
+            if (not done_systems.contains(i))
             {
                 this->_pvt_replica(i).setFugacity(fugacity);
-                this->copySharedCopies(i, old_replica);
+                this->updateSubSystems(old_replica, &(this->_pvt_constReplica(i)),
+                                       done_systems);
             }
         }
     }
@@ -660,14 +692,18 @@ void Replicas::setChemicalPotential(const MolarEnergy &chemical_potential)
     {
         int n = this->nReplicas();
         
+        QSet<int> done_systems;
+        done_systems.reserve(n);
+        
         for (int i=0; i<n; ++i)
         {
             const Replica *old_replica = &(this->_pvt_constReplica(i));
             
-            if (old_replica->chemicalPotential() != chemical_potential)
+            if (not done_systems.contains(i))
             {
                 this->_pvt_replica(i).setChemicalPotential(chemical_potential);
-                this->copySharedCopies(i, old_replica);
+                this->updateSubSystems(old_replica, &(this->_pvt_constReplica(i)),
+                                       done_systems);
             }
         }
     }

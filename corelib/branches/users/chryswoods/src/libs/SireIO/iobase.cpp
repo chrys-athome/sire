@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "iobase.h"
+#include "pdb.h"
 
 #include "SireMol/molecule.h"
 #include "SireMol/molidx.h"
@@ -292,3 +293,12 @@ void IOBase::write(const MoleculeView &molecule, QIODevice &dev,
 {
     this->write( Molecules(molecule), dev, map );
 }
+
+Q_GLOBAL_STATIC( PDB, globalNullIOBase );
+
+/** Return the global null IOBase object (a PDB writer) */
+PDB IOBase::null()
+{
+    return *(globalNullIOBase());
+}
+

@@ -73,11 +73,13 @@ public:
         return "SireMove::SupraMoves";
     }
     
-    virtual const SupraMove& operator[](int i) const=0;
+    const SupraMove& operator[](int i) const;
     
     int count() const;
     int size() const;
     int nSubMoveTypes() const;
+    
+    virtual int nMoves() const=0;
     
     virtual QString toString() const=0;
     
@@ -126,11 +128,11 @@ public:
         return QMetaType::typeName( qMetaTypeId<SameSupraMoves>() );
     }
     
-    const SupraMove& operator[](int i) const;
-    
     QString toString() const;
     
     void move(SupraSystem &system, int nmoves, bool record_stats=true);
+
+    int nMoves() const;
 
     void clearStatistics();
     
