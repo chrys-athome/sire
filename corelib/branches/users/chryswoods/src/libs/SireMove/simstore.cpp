@@ -310,8 +310,6 @@ void SimStore::packToMemory()
     }
     else
     {
-        qDebug() << "SimStore::pack()";
-
         QByteArray data;
         
         //start by reserving 32 MB
@@ -325,11 +323,8 @@ void SimStore::packToMemory()
         
         sim_system = System();
         sim_moves = MovesPtr();
-        
-        qDebug() << "SimStore::pack() - compressing data" << data.count()/(1024.0*1024.0);
+
         compressed_data = qCompress(data);
-        qDebug() << "SimStore::pack() - compression complete"
-                         << compressed_data.count()/(1024.0*1024.0);
         
         packed_file.reset();
     }
@@ -451,20 +446,13 @@ void SimStore::unpack()
 
     if (this->isPackedToMemory())
     {
-        qDebug() << "SimStore::unpack()";
-
         System new_system;
         MovesPtr new_moves;
 
         //use a local scope so that the uncompressed data is deleted
         //as soon as possible
         {
-            qDebug() << "SimStore::unpack() - uncompressing data"
-                        << compressed_data.count() / (1024.0*1024.0);
-            
             QByteArray data = qUncompress( compressed_data );
-            qDebug() << "SimStore::unpack() - uncompressing complete"
-                         << data.count() / (1024.0*1024.0);
             
             QDataStream ds(data);
             SharedDataStream sds(ds);

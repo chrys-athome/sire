@@ -48,6 +48,7 @@
 using namespace SireIO;
 using namespace SireSystem;
 using namespace SireMol;
+using namespace SireVol;
 using namespace SireBase;
 using namespace SireStream;
 
@@ -159,8 +160,9 @@ QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds,
         //pointer re-use may lead to fake shared streaming
         ds << data;
     }
-        
-    sds << static_cast<const SystemMonitor&>(trajmon);
+   
+    sds << trajmon.space_frames
+        << static_cast<const SystemMonitor&>(trajmon);
         
     return ds;
 }
@@ -193,7 +195,10 @@ QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, TrajectoryMonitor &trajmo
             new_monitor.traj_frames.append( ::writeToDisk(data, new_monitor.temp_dir) );
         }
             
-        sds >> static_cast<SystemMonitor&>(trajmon);
+        sds >> new_monitor.space_frames
+            >> static_cast<SystemMonitor&>(new_monitor);
+        
+        trajmon = new_monitor;
     }
     else
         throw version_error(v, "1", r_trajmon, CODELOC);
@@ -213,7 +218,8 @@ TrajectoryMonitor::TrajectoryMonitor()
 TrajectoryMonitor::TrajectoryMonitor(const MoleculeGroup &mol_group,
                                      const PropertyMap &map)
                   : ConcreteProperty<TrajectoryMonitor,SystemMonitor>(),
-                    io_writer( PDB() ), molgroup(mol_group), mol_properties(map)
+                    io_writer( PDB() ), molgroup(mol_group), 
+                    mol_properties(map)
 {}
 
 /** Construct a monitor that monitors the trajectory of the molecules in 
@@ -231,8 +237,8 @@ TrajectoryMonitor::TrajectoryMonitor(const MoleculeGroup &mol_group,
 TrajectoryMonitor::TrajectoryMonitor(const TrajectoryMonitor &other)
                   : ConcreteProperty<TrajectoryMonitor,SystemMonitor>(other),
                     io_writer(other.io_writer), molgroup(other.molgroup),
-                    traj_frames(other.traj_frames), mol_properties(other.mol_properties),
-                    temp_dir(other.temp_dir)
+                    traj_frames(other.traj_frames), space_frames(other.space_frames),
+                    mol_properties(other.mol_properties), temp_dir(other.temp_dir)
 {}
 
 /** Destructor */
@@ -248,6 +254,7 @@ TrajectoryMonitor& TrajectoryMonitor::operator=(const TrajectoryMonitor &other)
     molgroup = other.molgroup;
     traj_frames = other.traj_frames;
     mol_properties = other.mol_properties;
+    space_frames = other.space_frames;
     temp_dir = other.temp_dir;
     
     return *this;
@@ -262,6 +269,7 @@ bool TrajectoryMonitor::operator==(const TrajectoryMonitor &other) const
             mol_properties == other.mol_properties and
             temp_dir == other.temp_dir and
             traj_frames == other.traj_frames and
+            space_frames == other.space_frames and 
             SystemMonitor::operator==(other));
 }
 
@@ -319,7 +327,7 @@ void TrajectoryMonitor::writeToDisk(const QString &file_template) const
         
         if (filename.contains("XXXXXX"))
             filename.replace("XXXXXX", getFrameNumber(i, n));
-        else
+        else if (nframes > 1)
             filename += (getFrameNumber(i,n) + ".pdb");
             
         ++i;
@@ -349,6 +357,27 @@ void TrajectoryMonitor::writeToDisk(const QString &file_template) const
                     .arg(nbytes).arg(data.count())
                     .arg(filename), CODELOC );
         }
+        
+        f.close();
+        
+        //now write the system space to disk
+        if (filename.endsWith(".pdb", Qt::CaseInsensitive))
+        {
+            filename.replace(".pdb", ".xsc", Qt::CaseInsensitive);
+        }
+        else
+            filename += ".xsc";
+            
+        QFile g(filename);        
+
+        if (not g.open( QIODevice::WriteOnly ))
+            throw SireError::file_error(g);
+
+        QTextStream ts(&g);
+        
+        ts << space_frames.at(i-1).read().toString();
+        
+        g.close();
     }
 }
 
@@ -381,6 +410,9 @@ void TrajectoryMonitor::monitor(System &system)
             //now save this data to a temporary file
             traj_frames.append( ::writeToDisk(frame_data, temp_dir) );
             
+            //save the system space
+            space_frames.append( system.property(mol_properties["space"]) );
+            
             //save the new state of the molecule group
             molgroup = new_group;
         }
@@ -388,6 +420,7 @@ void TrajectoryMonitor::monitor(System &system)
         {
             //copy the last frame
             traj_frames.append( traj_frames.last() );
+            space_frames.append( system.property(mol_properties["space"]) );
         }
     }
 }

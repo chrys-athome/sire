@@ -35,6 +35,8 @@
 
 #include "SireSystem/systemmonitor.h"
 
+#include "SireVol/space.h"
+
 #include "SireBase/propertymap.h"
 
 #include "iobase.h"
@@ -113,6 +115,9 @@ private:
     
     /** Temporary files containing each frame of the animation */
     QList< boost::shared_ptr<QTemporaryFile> > traj_frames;
+    
+    /** The system space for each frame of the trajectory */
+    QList<SireVol::SpacePtr> space_frames;
     
     /** The property map used to find the properties that will
         be written to the trajectory frame */

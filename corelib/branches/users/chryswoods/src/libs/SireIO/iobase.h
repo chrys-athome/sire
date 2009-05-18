@@ -42,6 +42,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireIO
 {
+class NullIO;
+}
+
+QDataStream& operator<<(QDataStream&, const SireIO::NullIO&);
+QDataStream& operator>>(QDataStream&, SireIO::NullIO&);
+
+namespace SireIO
+{
 
 class PDB;
 
@@ -189,7 +197,7 @@ public:
     QByteArray write(const MoleculeView &molecule,
                      const PropertyMap &map = PropertyMap()) const;
 
-    static PDB null();
+    static NullIO null();
 
 protected:
 
@@ -212,12 +220,48 @@ protected:
                                  const PropertyMap &map) const=0;
 };
 
+/** This is the null writer - this writes nothing
+
+    @author Christopher Woods
+*/
+class SIREMOVE_EXPORT NullIO : public SireBase::ConcreteProperty<NullIO,IOBase>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const NullIO&);
+friend QDataStream& ::operator>>(QDataStream&, NullIO&);
+
+public:
+    NullIO();
+    
+    NullIO(const NullIO &other);
+    
+    ~NullIO();
+    
+    NullIO& operator=(const NullIO &other);
+    
+    bool operator==(const NullIO &other) const;
+    bool operator!=(const NullIO &other) const;
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<NullIO>() );
+    }
+    
+protected:
+    MoleculeGroup readMols(const QByteArray &data, const PropertyMap &map) const;
+    QByteArray writeMols(const MoleculeGroup &molecules, const PropertyMap &map) const;
+    QByteArray writeMols(const Molecules &molecules, const PropertyMap &map) const;
+};
+
 typedef SireBase::PropPtr<IOBase> IOPtr;
 
 }
 
+Q_DECLARE_METATYPE( SireIO::NullIO )
+
 SIRE_EXPOSE_CLASS( SireIO::IOParametersBase )
 SIRE_EXPOSE_CLASS( SireIO::IOBase )
+SIRE_EXPOSE_CLASS( SireIO::NullIO )
 
 SIRE_EXPOSE_PROPERTY( SireIO::IOPtr, SireIO::IOBase )
 

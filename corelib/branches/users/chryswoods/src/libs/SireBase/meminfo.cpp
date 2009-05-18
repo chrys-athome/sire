@@ -90,7 +90,7 @@ using namespace SireBase;
             
             QString toString() const
             {
-                return QObject::tr("System memory: Unknown");
+                return QString::null;
             }
         };
     
@@ -207,10 +207,17 @@ using namespace SireBase;
                 float alloc = this->allocatedBytes() / (1024.0*1024.0);
                 float used = this->usedBytes() / (1024.0*1024.0);
             
-                return QObject::tr("Memory usage: %1 MB allocated, of which "
-                                   "%2 MB are used (%3 \%)\n%4")
-                                    .arg(alloc).arg(used).arg(100.0*used/alloc)
-                                    .arg( SysInfoPvt::toString() );
+                QString this_string = QObject::tr("Memory usage: %1 MB allocated, "
+                                                  "of which %2 MB are used (%3 \%)")
+                                            .arg(alloc).arg(used)
+                                            .arg(100.0*used/alloc);
+                                            
+                QString sys_string = SysInfoPvt::toString();
+                
+                if (sys_string.isEmpty())
+                    return this_string;
+                else
+                    return QString("%1\n%2").arg(this_string, sys_string);
             }
         };
     
@@ -264,11 +271,18 @@ using namespace SireBase;
             {
                 float alloc = this->allocatedBytes() / (1024.0*1024.0);
                 float used = this->usedBytes() / (1024.0*1024.0);
-            
-                return QObject::tr("Memory usage: %1 MB allocated, of which "
-                                   "%2 MB are used (%3 \%)\n%4")
-                                    .arg(alloc).arg(used).arg(100.0*used/alloc)
-                                    .arg( SysInfoPvt::toString() );
+
+                QString this_string = QObject::tr("Memory usage: %1 MB allocated, "
+                                                  "of which %2 MB are used (%3 \%)")
+                                            .arg(alloc).arg(used)
+                                            .arg(100.0*used/alloc);
+                                            
+                QString sys_string = SysInfoPvt::toString();
+                
+                if (sys_string.isEmpty())
+                    return this_string;
+                else
+                    return QString("%1\n%2").arg(this_string, sys_string);
             }
         };
     
@@ -513,7 +527,7 @@ void MemoryMonitor::run()
     
     QTextStream ts( &file );
     
-    ts << MemInfo::takeMeasurement().toString() << "\n";
+    ts << " ** " << MemInfo::takeMeasurement().toString() << "\n";
     ts.flush();
     
     while (ms > 0)
@@ -528,7 +542,7 @@ void MemoryMonitor::run()
         
         if (ms > 0)
         {
-            ts << MemInfo::takeMeasurement().toString() << "\n";
+            ts << " ** " << MemInfo::takeMeasurement().toString() << "\n";
             ts.flush();
         }
     }

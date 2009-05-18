@@ -27,7 +27,6 @@
 \*********************************************/
 
 #include "iobase.h"
-#include "pdb.h"
 
 #include "SireMol/molecule.h"
 #include "SireMol/molidx.h"
@@ -36,12 +35,15 @@
 
 #include "SireError/errors.h"
 
+#include "SireStream/datastream.h"
+
 #include <QFile>
 #include <QDebug>
 
 using namespace SireIO;
 using namespace SireMol;
 using namespace SireBase;
+using namespace SireStream;
 
 ////////////
 //////////// Implementation of IOParameterBase
@@ -294,11 +296,90 @@ void IOBase::write(const MoleculeView &molecule, QIODevice &dev,
     this->write( Molecules(molecule), dev, map );
 }
 
-Q_GLOBAL_STATIC( PDB, globalNullIOBase );
+Q_GLOBAL_STATIC( NullIO, globalNullIOBase );
 
 /** Return the global null IOBase object (a PDB writer) */
-PDB IOBase::null()
+NullIO IOBase::null()
 {
     return *(globalNullIOBase());
 }
 
+////////////
+//////////// Implementation of NullIO
+////////////
+
+static const RegisterMetaType<NullIO> r_nullio;
+
+/** Serialise to a binary datastream */
+QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds, const NullIO &nullio)
+{
+    writeHeader(ds, r_nullio, 1);
+    
+    ds << static_cast<const IOBase&>(nullio);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, NullIO &nullio)
+{
+    VersionID v = readHeader(ds, r_nullio);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<IOBase&>(nullio);
+    }
+    else
+        throw version_error(v, "1", r_nullio, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+NullIO::NullIO() : ConcreteProperty<NullIO,IOBase>()
+{}
+
+/** Copy constructor */
+NullIO::NullIO(const NullIO &other) : ConcreteProperty<NullIO,IOBase>(other)
+{}
+
+/** Destructor */
+NullIO::~NullIO()
+{}
+
+/** Copy assignment operator */
+NullIO& NullIO::operator=(const NullIO &other)
+{
+    IOBase::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool NullIO::operator==(const NullIO&) const
+{
+    return true;
+}
+
+/** Comparison operator */
+bool NullIO::operator!=(const NullIO&) const
+{
+    return false;
+}
+
+/** Nothing will be read */
+MoleculeGroup NullIO::readMols(const QByteArray&, const PropertyMap&) const
+{
+    return MoleculeGroup();
+}
+
+/** Nothing will be written */
+QByteArray NullIO::writeMols(const MoleculeGroup&, const PropertyMap&) const
+{
+    return QByteArray();
+}
+
+/** Nothing will be written */
+QByteArray NullIO::writeMols(const Molecules&, const PropertyMap&) const
+{
+    return QByteArray();
+}
