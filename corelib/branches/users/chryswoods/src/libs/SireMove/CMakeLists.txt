@@ -40,6 +40,7 @@ set ( SIREMOVE_HEADERS
       suprasubsystem.h
       suprasystem.h
       uniformsampler.h
+      velocitygenerator.h
       velocityverlet.h
       volumemove.h
       weightedmoves.h
@@ -88,6 +89,7 @@ set ( SIREMOVE_SOURCES
       suprasystem.cpp
       uniformsampler.cpp
       weightedmoves.cpp
+      velocitygenerator.cpp
       velocityverlet.cpp
       volumemove.cpp
       zmatmove.cpp

@@ -34,6 +34,8 @@
 
 #include "SireUnits/dimensions.h"
 
+#include "SireMol/moleculegroup.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
@@ -56,11 +58,22 @@ class ForceTable;
 namespace SireMol
 {
 class MoleculeGroup;
+class MoleculeView;
 }
 
 namespace SireMaths
 {
 class RanGenerator;
+}
+
+namespace SireSystem
+{
+class System;
+}
+
+namespace SireCAS
+{
+class Symbol;
 }
 
 namespace SireMove
@@ -69,8 +82,13 @@ namespace SireMove
 class Ensemble;
 
 using SireMol::MoleculeGroup;
+using SireMol::MoleculeView;
+
+using SireSystem::System;
 
 using SireFF::ForceTable;
+
+using SireCAS::Symbol;
 
 using SireBase::PropertyMap;
 
@@ -117,11 +135,27 @@ public:
     virtual SireUnits::Dimension::Time timeStep() const=0;
 
     virtual SireUnits::Dimension::MolarEnergy kineticEnergy() const=0;
+    virtual SireUnits::Dimension::MolarEnergy kineticEnergy(
+                                                const MoleculeView &molview) const=0;
     
     virtual void clearStatistics()=0;
     virtual void clearVelocities()=0;
     
+    virtual void setMoleculeGroup(const MoleculeGroup &molgroup);
+    
+    const MoleculeGroup& moleculeGroup() const;
+    
     virtual void setGenerator(const RanGenerator &generator)=0;
+    
+protected:
+    Integrator& operator=(const Integrator &other);
+    
+    bool operator==(const Integrator &other) const;
+    bool operator!=(const Integrator &other) const;
+    
+private:
+    /** The molecule group which is sampled using this integrator */
+    SireMol::MolGroupPtr molgroup;
 };
 
 /** This class holds a null integrator, which doesn't advance anything anywhere
@@ -162,9 +196,12 @@ public:
     SireUnits::Dimension::Time timeStep() const;
 
     SireUnits::Dimension::MolarEnergy kineticEnergy() const;
+    SireUnits::Dimension::MolarEnergy kineticEnergy(const MoleculeView &molview) const;
     
     void clearStatistics();
     void clearVelocities();
+    
+    void setMoleculeGroup(const MoleculeGroup &molgroup);
     
     void setGenerator(const RanGenerator &generator);
 };

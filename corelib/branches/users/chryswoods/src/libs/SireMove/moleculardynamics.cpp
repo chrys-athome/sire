@@ -93,7 +93,6 @@ MolecularDynamics::MolecularDynamics()
     defaults to an all-atom velocity-verlet integrator */
 MolecularDynamics::MolecularDynamics(const MoleculeGroup &moleculegroup)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(),
-                    molgroup(moleculegroup),
                     intgrator( VelocityVerlet() )
 {}
 
@@ -108,7 +107,6 @@ MolecularDynamics::MolecularDynamics(const Integrator &integrator)
 MolecularDynamics::MolecularDynamics(const MoleculeGroup &moleculegroup, 
                                      const Integrator &integrator)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(),
-                    molgroup(moleculegroup),
                     intgrator(integrator)
 {}
 
@@ -117,7 +115,6 @@ MolecularDynamics::MolecularDynamics(const MoleculeGroup &moleculegroup,
 MolecularDynamics::MolecularDynamics(const Integrator &integrator, 
                                      const MoleculeGroup &moleculegroup)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(),
-                    molgroup(moleculegroup),
                     intgrator(integrator)
 {}
 

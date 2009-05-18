@@ -29,14 +29,23 @@
 #include "integrator.h"
 
 #include "SireFF/forcetable.h"
+#include "SireFF/forcefields.h"
+
+#include "SireSystem/system.h"
+
+#include "SireCAS/symbol.h"
 
 #include "SireMaths/rangenerator.h"
 
 #include "SireMol/moleculegroup.h"
+#include "SireMol/moleculeview.h"
 
 #include "SireStream/datastream.h"
 
 using namespace SireMove;
+using namespace SireFF;
+using namespace SireSystem;
+using namespace SireCAS;
 using namespace SireBase;
 using namespace SireStream;
 using namespace SireUnits::Dimension;
@@ -53,7 +62,8 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Integrator &integ
 {
     writeHeader(ds, r_integrator, 1);
     
-    ds << static_cast<const Property&>(integrator);
+    ds << integrator.molgroup
+       << static_cast<const Property&>(integrator);
     
     return ds;
 }
@@ -65,7 +75,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Integrator &integrator)
     
     if (v == 1)
     {
-        ds >> static_cast<Property&>(integrator);
+        ds >> integrator.molgroup
+           >> static_cast<Property&>(integrator);
     }
     else
         throw version_error(v, "1", r_integrator, CODELOC);
@@ -78,12 +89,32 @@ Integrator::Integrator() : Property()
 {}
 
 /** Copy constructor */
-Integrator::Integrator(const Integrator &other) : Property(other)
+Integrator::Integrator(const Integrator &other) 
+           : Property(other), molgroup(other.molgroup)
 {}
 
 /** Destructor */
 Integrator::~Integrator()
 {}
+
+/** Copy assignment operator */
+Integrator& Integrator::operator=(const Integrator &other)
+{
+    molgroup = other.molgroup;
+    return *this;
+}
+
+/** Comparison operator */
+bool Integrator::operator==(const Integrator &other) const
+{
+    return molgroup == other.molgroup;
+}
+
+/** Comparison operator */
+bool Integrator::operator!=(const Integrator &other) const
+{
+    return molgroup != other.molgroup;
+}
 
 /** Integrate the system 'system', using the default energy component,
     coordinates and space property */
@@ -98,6 +129,18 @@ void Integrator::integrate(System &system)
 void Integrator::integrate(System &system, const Symbol &nrg_component)
 {
     this->integrate(system, nrg_component, PropertyMap());
+}
+
+/** Set the molecule group which will be sampled using this integrator */
+void Integrator::setMoleculeGroup(const MoleculeGroup &new_molgroup)
+{
+    molgroup = new_molgroup;
+}
+
+/** Return the molecule group which is affected by this integrator */
+const MoleculeGroup& Integrator::moleculeGroup() const
+{
+    return molgroup.read();
 }
 
 Q_GLOBAL_STATIC( NullIntegrator, getNullIntegrator );
@@ -162,13 +205,13 @@ NullIntegrator& NullIntegrator::operator=(const NullIntegrator &other)
 /** Comparison operator - all NullIntegrators are the same */
 bool NullIntegrator::operator==(const NullIntegrator &other) const
 {
-    return true;
+    return Integrator::operator==(other);
 }
 
 /** Comparison operator - all NullIntegrators are the same */
 bool NullIntegrator::operator!=(const NullIntegrator &other) const
 {
-    return false;
+    return Integrator::operator!=(other);
 }
 
 /** Return a string representation of this integrator */
@@ -197,8 +240,22 @@ MolarEnergy NullIntegrator::kineticEnergy() const
     return MolarEnergy(0);
 }
 
+/** The kinetic energy is always zero */
+MolarEnergy NullIntegrator::kineticEnergy(const MoleculeView&) const
+{
+    return MolarEnergy(0);
+}
+
+/** There is nothing to clear */
+void NullIntegrator::clearVelocities()
+{}
+
 /** There is nothing to clear */
 void NullIntegrator::clearStatistics()
+{}
+
+/** Don't allow the molecule group to be set */
+void NullIntegrator::setMoleculeGroup(const MoleculeGroup&)
 {}
 
 /** There is no random number generator */

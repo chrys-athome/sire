@@ -33,6 +33,10 @@
 
 #include "SireFF/forcetable.h"
 
+#include "SireCAS/symbol.h"
+
+#include "SireBase/majorminorversion.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
@@ -83,6 +87,7 @@ public:
     SireUnits::Dimension::Time timeStep() const;
 
     SireUnits::Dimension::MolarEnergy kineticEnergy() const;
+    SireUnits::Dimension::MolarEnergy kineticEnergy(const MoleculeView &molview) const;
     
     void clearStatistics();
     void clearVelocities();
@@ -90,6 +95,10 @@ public:
     void setGenerator(const RanGenerator &generator);
 
 private:
+    void recalculateVelocities();
+    void updateTables(const MoleculeGroup &new_molgroup);
+    void updateFrom(System &system, const Symbol &nrg_component);
+
     /** The timestep of integration */
     SireUnits::Dimension::Time timestep;
     
@@ -98,6 +107,22 @@ private:
     
     /** The forces on the atoms */
     SireFF::ForceTable f;
+    
+    /** The unique ID number of the last system to be integrated */
+    QUuid last_sys_uid;
+    
+    /** The version of the System the last time it 
+        was integrated */
+    SireBase::Version last_sys_version;
+    
+    /** The energy component used for the last move */
+    Symbol last_nrg_component;
+    
+    /** The kinetic energy of the last timestep */
+    SireUnits::Dimension::MolarEnergy last_kinetic_nrg;
+    
+    /** Whether or not the velocities need to be recalculated from scratch */
+    bool recalc_velocities;
 };
 
 }
