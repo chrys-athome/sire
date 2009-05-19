@@ -116,7 +116,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExSubMove &repexsubm
             new_submove.new_energy_j = new_energy_j * kcal_per_mol;
         }
         
-        sds >> static_cast<SupraSubMove&>(repexsubmove);
+        sds >> static_cast<SupraSubMove&>(new_submove);
         
         //check that all of the partner properties are valid...
         for (QList< QPair<quint32,QVariant> >::const_iterator 
@@ -138,6 +138,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExSubMove &repexsubm
                             .arg(it->first), CODELOC );
             }
         }
+        
+        repexsubmove = new_submove;
     }
     else
         throw version_error(v, "1", r_repexsubmove, CODELOC);
