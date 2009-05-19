@@ -30,6 +30,10 @@
 #define SIREMOVE_VELOCITYGENERATOR_H
 
 #include "SireBase/property.h"
+#include "SireBase/propertymap.h"
+
+#include "SireCAS/expression.h"
+#include "SireCAS/symbol.h"
 
 SIRE_BEGIN_HEADER
 
@@ -38,7 +42,21 @@ namespace SireMove
 class VelocityGenerator;
 class VelocitiesFromProperty;
 class RandomVelocities;
+
+class NullVelocityGenerator;
 }
+
+QDataStream& operator<<(QDataStream&, const SireMove::VelocityGenerator&);
+QDataStream& operator>>(QDataStream&, SireMove::VelocityGenerator&);
+
+QDataStream& operator<<(QDataStream&, const SireMove::NullVelocityGenerator&);
+QDataStream& operator>>(QDataStream&, SireMove::NullVelocityGenerator&);
+
+QDataStream& operator<<(QDataStream&, const SireMove::VelocitesFromProperty&);
+QDataStream& operator>>(QDataStream&, SireMove::VelocitiesFromProperty&);
+
+QDataStream& operator<<(QDataStream&, const SireMove::RandomVelocities&);
+QDataStream& operator>>(QDataStream&, SireMove::RandomVelocities&);
 
 namespace SireMove
 {
@@ -68,6 +86,8 @@ public:
     
     virtual VelocityGenerator* clone() const=0;
     
+    static const NullVelocityGenerator& null();
+    
 protected:
     VelocityGenerator& operator=(const VelocityGenerator &other);
     
@@ -76,7 +96,123 @@ protected:
 
 };
 
+/** This is the null velocity generator
+
+    @author Christopher Woods
+*/
+class SIREMOVE_EXPORT NullVelocityGenerator
+           : public SireBase::ConcreteProperty<NullVelocityGenerator,VelocityGenerator>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const NullVelocityGenerator&);
+friend QDataStream& ::operator>>(QDataStream&, NullVelocityGenerator&);
+
+public:
+    NullVelocityGenerator();
+    
+    NullVelocityGenerator(const NullVelocityGenerator &other);
+    
+    ~NullVelocityGenerator();
+    
+    NullVelocityGenerator& operator=(const NullVelocityGenerator &other);
+    
+    bool operator==(const NullVelocityGenerator &other) const;
+    bool operator!=(const NullVelocityGenerator &other) const;
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<NullVelocityGenerator>() );
+    }
+};
+
+/** This is a velocity generator that extracts velocities from a 
+    specified molecular property
+    
+    @author Christopher Woods
+*/
+class SIREMOVE_EXPORT VelocitiesFromProperty
+        : public SireBase::ConcreteProperty<VelocitiesFromProperty,VelocityGenerator>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const VelocitiesFromProperty&);
+friend QDataStream& ::operator>>(QDataStream&, VelocitiesFromProperty&);
+
+public:
+    VelocitiesFromProperty();
+    
+    VelocitiesFromProperty(const SireBase::PropertyName &property);
+    
+    VelocitiesFromProperty(const VelocitiesFromProperty &other);
+    
+    ~VelocitiesFromProperty();
+
+    VelocitiesFromProperty& operator=(const VelocitiesFromProperty &other);
+    
+    bool operator==(const VelocitiesFromProperty &other) const;
+    bool operator!=(const VelocitiesFromProperty &other) const;
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<VelocitiesFromProperty>() );
+    }
+
+private:
+    /** The name of the property from which the velocities will be obtained */
+    SireBase::PropertyName vel_property;
+};
+
+/** This is a velocity generator that generates random velocities 
+    according to a specified equation (where the symbol 'x' represents
+    a random number on [0,1], 
+    
+    @author Christopher Woods
+*/
+class SIREMOVE_EXPORT RandomVelocities
+          : public SireBase::ConcreteProperty<RandomVelocities,VelocityGenerator>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const RandomVelocities&);
+friend QDataStream& ::operator>>(QDataStream&, RandomVelocities&);
+
+public:
+    RandomVelocities();
+    
+    RandomVelocities(const SireCAS::Expression &ranfunction);
+    
+    RandomVelocities(const RandomVelocities &other);
+    
+    ~RandomVelocities();
+    
+    RandomVelocities& operator=(const RandomVelocities &other);
+    
+    bool operator==(const RandomVelocities &other) const;
+    bool operator!=(const RandomVelocities &other) const;
+    
+    static const char* typeName()
+    {
+        return QMetaType::typeName( qMetaTypeId<RandomVelocities>() );
+    }
+
+private:
+    /** The expression used to generate the random velocity */
+    SireCAS::Expression rand_func;
+};
+
+
+typedef SireBase::PropPtr<VelocityGenerator> VelGenPtr;
+
 }
+
+Q_DECLARE_METATYPE( SireMove::NullVelocityGenerator )
+Q_DECLARE_METATYPE( SireMove::VelocitiesFromProperty )
+Q_DECLARE_METATYPE( SireMove::RandomVelocities )
+
+SIRE_EXPOSE_CLASS( SireMove::VelocityGenerator )
+SIRE_EXPOSE_CLASS( SireMove::NullVelocitiyGenerator )
+SIRE_EXPOSE_CLASS( SireMove::VelocitiesFromProperty )
+SIRE_EXPOSE_CLASS( SireMove::RandomVelocities )
+
+SIRE_EXPOSE_PROPERTY( SireMove::VelGenPtr, SireMove::VelocityGenerator )
 
 SIRE_END_HEADER
 

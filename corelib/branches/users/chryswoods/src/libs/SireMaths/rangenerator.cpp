@@ -408,20 +408,20 @@ namespace SireMaths
     }
 }
 
-/** Return a random real number on [0,1) */
+/** Return a random real number on [0,1] */
 double RanGenerator::rand() const
 {
     QMutexLocker lkr( &(nonconst_d().mutex) );
     return nonconst_d().mersenne_generator.rand();
 }
 
-/** Return a random real number on [0,maxval) */
+/** Return a random real number on [0,maxval] */
 double RanGenerator::rand(double maxval) const
 {
     return maxval * rand();
 }
 
-/** Return a random real number on [minval,maxval) */
+/** Return a random real number on [minval,maxval] */
 double RanGenerator::rand(double minval, double maxval) const
 {
     return minval + rand() * (maxval-minval);
@@ -452,17 +452,19 @@ double RanGenerator::randNorm(double mean, double variance) const
 {
     QMutexLocker lkr( &(nonconst_d().mutex) );
 
-    double rand0 = nonconst_d().mersenne_generator.rand53();
-    double rand1 = nonconst_d().mersenne_generator.rand53();
+    return nonconst_d().randNorm(mean, variance);
 
-    lkr.unlock();
+    //double rand0 = nonconst_d().mersenne_generator.rand53();
+    //double rand1 = nonconst_d().mersenne_generator.rand53();
+
+    //lkr.unlock();
 
     // Return a real number from a normal (Gaussian) distribution with given
     // mean and variance by Box-Muller method
-    double r = std::sqrt( -2.0 * log(1.0-rand0) ) * variance;
-    double phi = 2.0 * 3.14159265358979323846264338328 * rand1;
+    //double r = std::sqrt( -2.0 * log(1.0-rand0) ) * variance;
+    //double phi = 2.0 * 3.14159265358979323846264338328 * rand1;
 
-    return mean + r * std::cos(phi);
+    //return mean + r * std::cos(phi);
 }
 
 /** Return a random vector on the unit sphere */
