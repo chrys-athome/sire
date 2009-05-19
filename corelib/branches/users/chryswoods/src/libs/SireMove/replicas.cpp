@@ -769,8 +769,10 @@ void Replicas::swapSystems(int i, int j, bool swap_monitors)
     
     Replica old_i = this->_pvt_constReplica(i);
     
-    this->_pvt_replica(i).swapInSystem( this->_pvt_constReplica(j), swap_monitors );
-    this->_pvt_replica(j).swapInSystem( old_i, swap_monitors );
+    this->_pvt_replica(i).swapInSystem( this->_pvt_constReplica(j).subSystemAndMoves(), 
+                                        swap_monitors );
+                                        
+    this->_pvt_replica(j).swapInSystem( old_i.subSystemAndMoves(), swap_monitors );
     
     //swap the ID's of the replicas
     qSwap( replica_ids[i], replica_ids[j] );
@@ -790,8 +792,10 @@ void Replicas::swapMolecules(int i, int j)
         
     Replica old_i = this->_pvt_constReplica(i);
     
-    this->_pvt_replica(i).swapInMolecules( this->_pvt_constReplica(j) );
-    this->_pvt_replica(j).swapInMolecules( old_i );
+    this->_pvt_replica(i).swapInMolecules( 
+                                this->_pvt_constReplica(j).subSystemAndMoves() );
+                                
+    this->_pvt_replica(j).swapInMolecules( old_i.subSystemAndMoves() );
     
     //swap the IDs of the replicas
     qSwap( replica_ids[i], replica_ids[j] );

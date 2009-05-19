@@ -139,11 +139,11 @@ static boost::shared_ptr<QTemporaryFile> writeToDisk(const QByteArray &data,
 QDataStream SIREIO_EXPORT &operator<<(QDataStream &ds, 
                                       const TrajectoryMonitor &trajmon)
 {
-    writeHeader(ds, r_trajmon, 1);
+    writeHeader(ds, r_trajmon, 2);
     
     SharedDataStream sds(ds);
     
-    sds << trajmon.io_writer << trajmon.molgroup
+    sds << trajmon.io_writer << trajmon.mgid
         << trajmon.mol_properties << trajmon.temp_dir;
 
     //now write all of the frames
@@ -172,14 +172,26 @@ QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, TrajectoryMonitor &trajmo
 {
     VersionID v = readHeader(ds, r_trajmon);
     
-    if (v == 1)
+    if (v == 1 or v == 2)
     {
         SharedDataStream sds(ds);
         
         TrajectoryMonitor new_monitor;
         
-        sds >> new_monitor.io_writer >> new_monitor.molgroup
-            >> new_monitor.mol_properties >> new_monitor.temp_dir;
+        sds >> new_monitor.io_writer;
+        
+        if (v == 2)
+        {
+            sds >> new_monitor.mgid;
+        }
+        else if (v == 1)
+        {
+            MoleculeGroup molgroup;
+            sds >> molgroup;
+            new_monitor.mgid = molgroup.number();
+        }
+
+        sds >> new_monitor.mol_properties >> new_monitor.temp_dir;
 
         //how many frames need to be read?
         quint32 nframes;
@@ -201,7 +213,7 @@ QDataStream SIREIO_EXPORT &operator>>(QDataStream &ds, TrajectoryMonitor &trajmo
         trajmon = new_monitor;
     }
     else
-        throw version_error(v, "1", r_trajmon, CODELOC);
+        throw version_error(v, "1,2", r_trajmon, CODELOC);
         
     return ds;
 }
@@ -215,10 +227,10 @@ TrajectoryMonitor::TrajectoryMonitor()
     in the molecule group 'molgroup'. This writes the trajectory using
     the PDB writer, and uses the (optionally) supplied property map to
     control what is written */
-TrajectoryMonitor::TrajectoryMonitor(const MoleculeGroup &mol_group,
+TrajectoryMonitor::TrajectoryMonitor(const MoleculeGroup &molgroup,
                                      const PropertyMap &map)
                   : ConcreteProperty<TrajectoryMonitor,SystemMonitor>(),
-                    io_writer( PDB() ), molgroup(mol_group), 
+                    io_writer( PDB() ), mgid(molgroup.number()),
                     mol_properties(map)
 {}
 
@@ -226,17 +238,39 @@ TrajectoryMonitor::TrajectoryMonitor(const MoleculeGroup &mol_group,
     the molecule group 'molgroup', writing the trajectory using the 
     molecule write 'writer', and using the (optionally) supplied property
     map to control what is written */
-TrajectoryMonitor::TrajectoryMonitor(const MoleculeGroup &mol_group, 
+TrajectoryMonitor::TrajectoryMonitor(const MoleculeGroup &molgroup, 
                                      const IOBase &writer,
                                      const PropertyMap &map)
                   : ConcreteProperty<TrajectoryMonitor,SystemMonitor>(),
-                    io_writer(writer), molgroup(mol_group), mol_properties(map)
+                    io_writer(writer), mgid(molgroup.number()), mol_properties(map)
+{}
+
+/** Construct a monitor that monitors the trajectory of the molecules  
+    in the molecule group with ID 'mgid'. This writes the trajectory using
+    the PDB writer, and uses the (optionally) supplied property map to
+    control what is written */
+TrajectoryMonitor::TrajectoryMonitor(const MGID &mg_id,
+                                     const PropertyMap &map)
+                  : ConcreteProperty<TrajectoryMonitor,SystemMonitor>(),
+                    io_writer( PDB() ), mgid(mg_id),
+                    mol_properties(map)
+{}
+
+/** Construct a monitor that monitors the trajectory of the molecules in 
+    the molecule group with ID 'mgid', writing the trajectory using the 
+    molecule write 'writer', and using the (optionally) supplied property
+    map to control what is written */
+TrajectoryMonitor::TrajectoryMonitor(const MGID &mg_id, 
+                                     const IOBase &writer,
+                                     const PropertyMap &map)
+                  : ConcreteProperty<TrajectoryMonitor,SystemMonitor>(),
+                    io_writer(writer), mgid(mg_id), mol_properties(map)
 {}
 
 /** Copy constructor */
 TrajectoryMonitor::TrajectoryMonitor(const TrajectoryMonitor &other)
                   : ConcreteProperty<TrajectoryMonitor,SystemMonitor>(other),
-                    io_writer(other.io_writer), molgroup(other.molgroup),
+                    io_writer(other.io_writer), mgid(other.mgid),
                     traj_frames(other.traj_frames), space_frames(other.space_frames),
                     mol_properties(other.mol_properties), temp_dir(other.temp_dir)
 {}
@@ -251,7 +285,7 @@ TrajectoryMonitor& TrajectoryMonitor::operator=(const TrajectoryMonitor &other)
     SystemMonitor::operator=(other);
     
     io_writer = other.io_writer;
-    molgroup = other.molgroup;
+    mgid = other.mgid;
     traj_frames = other.traj_frames;
     mol_properties = other.mol_properties;
     space_frames = other.space_frames;
@@ -265,7 +299,7 @@ bool TrajectoryMonitor::operator==(const TrajectoryMonitor &other) const
 {
     return (this == &other) or
            (io_writer == other.io_writer and
-            molgroup == other.molgroup and
+            mgid == other.mgid and
             mol_properties == other.mol_properties and
             temp_dir == other.temp_dir and
             traj_frames == other.traj_frames and
@@ -395,32 +429,22 @@ void TrajectoryMonitor::monitor(System &system)
         //there is nothing to write
         return;
 
-    if (system.contains( molgroup.number() ))
+    try
     {
-        const MoleculeGroup &new_group = system[molgroup.number()];
+        const MoleculeGroup &new_group = system[mgid];
         
-        if (traj_frames.isEmpty() or new_group.version() != molgroup.version())
-        {
-            //we need to write a new frame
-            QByteArray frame_data = io_writer->write(new_group, mol_properties);
+        //write a new frame
+        QByteArray frame_data = io_writer->write(new_group, mol_properties);
             
-            //compress the data and save it to a temporary file
-            frame_data = qCompress(frame_data);
+        //compress the data and save it to a temporary file
+        frame_data = qCompress(frame_data);
             
-            //now save this data to a temporary file
-            traj_frames.append( ::writeToDisk(frame_data, temp_dir) );
+        //now save this data to a temporary file
+        traj_frames.append( ::writeToDisk(frame_data, temp_dir) );
             
-            //save the system space
-            space_frames.append( system.property(mol_properties["space"]) );
-            
-            //save the new state of the molecule group
-            molgroup = new_group;
-        }
-        else
-        {
-            //copy the last frame
-            traj_frames.append( traj_frames.last() );
-            space_frames.append( system.property(mol_properties["space"]) );
-        }
+        //save the system space
+        space_frames.append( system.property(mol_properties["space"]) );
     }
+    catch(...)
+    {}
 }

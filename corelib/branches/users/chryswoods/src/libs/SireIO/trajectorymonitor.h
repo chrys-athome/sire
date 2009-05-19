@@ -37,6 +37,8 @@
 
 #include "SireVol/space.h"
 
+#include "SireMol/mgidentifier.h"
+
 #include "SireBase/propertymap.h"
 
 #include "iobase.h"
@@ -59,6 +61,8 @@ namespace SireIO
 using SireSystem::System;
 
 using SireMol::MoleculeGroup;
+using SireMol::MGIdentifier;
+using SireMol::MGID;
 
 using SireBase::PropertyMap;
 
@@ -81,6 +85,11 @@ public:
                       const PropertyMap &map = PropertyMap());
     
     TrajectoryMonitor(const MoleculeGroup &molgroup, const IOBase &writer,
+                      const PropertyMap &map = PropertyMap());
+    
+    TrajectoryMonitor(const MGID &mgid, const PropertyMap &map = PropertyMap());
+    
+    TrajectoryMonitor(const MGID &mgid, const IOBase &writer,
                       const PropertyMap &map = PropertyMap());
     
     TrajectoryMonitor(const TrajectoryMonitor &other);
@@ -110,8 +119,8 @@ private:
         from the system */
     IOPtr io_writer;
     
-    /** The number of the molecule group that is being written */
-    MoleculeGroup molgroup;
+    /** The ID of the molecule group that is being written */
+    MGIdentifier mgid;
     
     /** Temporary files containing each frame of the animation */
     QList< boost::shared_ptr<QTemporaryFile> > traj_frames;

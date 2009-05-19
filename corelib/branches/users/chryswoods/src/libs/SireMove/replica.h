@@ -137,8 +137,8 @@ protected:
 
     void setGenerator(const RanGenerator &rangenerator);
 
-    void swapInSystem(const Replica &other, bool swap_monitors=false);
-    void swapInMolecules(const Replica &other);
+    void swapInSystem(const SimStore &simstore, bool swap_monitors=false);
+    void swapInMolecules(const SimStore &simstore);
 
     void _post_unpack();
 

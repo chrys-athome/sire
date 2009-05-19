@@ -704,36 +704,34 @@ void Replica::setGenerator(const RanGenerator &rangenerator)
     }
 }
 
-/** Swap in the sub-system in 'other' into this replica. This copies
-    the system in 'other' into this replica, setting the value
+/** Swap in the sub-system in 'simstore' into this replica. This copies
+    the system in 'simstore' into this replica, setting the value
     of lambda of that system to the value for this replica, if 
     necessary. If 'swap_monitors' is true, then the monitors from
     other's system are copied into this replica - otherwise the 
     monitors from the original system are copied into other's system */
-void Replica::swapInSystem(const Replica &other, bool swap_monitors)
+void Replica::swapInSystem(const SimStore &simstore, bool swap_monitors)
 {
     if (this->isPacked())
     {
         if (swap_monitors)
-            this->deferCommand(SWAP_REP_AND_MON, other);
+            this->deferCommand(SWAP_REP_AND_MON, simstore);
         else
-            this->deferCommand(SWAP_REP_ONLY, other);
+            this->deferCommand(SWAP_REP_ONLY, simstore);
     }
     else
     {
         System new_system;
-        
-        if (other.isPacked())
+
+        if (simstore.isPacked())
         {
-            //need to unpack the whole system as it may itself
-            //need to unpack swapped systems etc.
-            SupraSubSystemPtr unpacked_other = other;
-            unpacked_other.edit().unpack();
-                
-            new_system = unpacked_other->subSystem();
+            SimStore unpacked_simstore = simstore;
+            unpacked_simstore.unpack();
+        
+            new_system = unpacked_simstore.system();
         }
         else
-            new_system = other.subSystem();
+            new_system = simstore.system();
     
         if (swap_monitors)
             new_system.setMonitors( this->subSystem().monitors() );
@@ -742,25 +740,31 @@ void Replica::swapInSystem(const Replica &other, bool swap_monitors)
     }
 }
 
-/** Swap in the molecules in 'other' into the sub-system that is part
+/** Swap in the molecules in 'simstore' into the sub-system that is part
     of this replica. This updates all of the molecules in this system 
     with the status of all of the molecules in 'other'. Note that this 
     won't have any affect unless this replica contains some of the same
     molecules as 'other' */
-void Replica::swapInMolecules(const Replica &other)
+void Replica::swapInMolecules(const SimStore &simstore)
 {
     if (this->isPacked())
-        this->deferCommand(SWAP_MOLECULES, other);
+        this->deferCommand(SWAP_MOLECULES, simstore);
         
     else
     {
-        SimStore simstore = other.subSystemAndMoves();
-        
+        System old_system;
+
         if (simstore.isPacked())
-            simstore.unpack();
+        {
+            SimStore unpacked_simstore = simstore;
+            unpacked_simstore.unpack();
+            old_system = unpacked_simstore.system();
+        }
+        else
+            old_system = simstore.system();
         
         System new_system = SupraSubSystem::subSystem();
-        new_system.update( simstore.system().molecules() );
+        new_system.update( old_system.molecules() );
         SupraSubSystem::setSubSystem(new_system);
     }
 }
@@ -839,15 +843,15 @@ void Replica::_post_unpack()
                 break;
                 
             case SWAP_REP_AND_MON:
-                this->swapInSystem( ::convert<Replica>(it->second), true );
+                this->swapInSystem( ::convert<SimStore>(it->second), true );
                 break;
                 
             case SWAP_REP_ONLY:
-                this->swapInSystem( ::convert<Replica>(it->second), false );
+                this->swapInSystem( ::convert<SimStore>(it->second), false );
                 break;
                 
             case SWAP_MOLECULES:
-                this->swapInMolecules( ::convert<Replica>(it->second) );
+                this->swapInMolecules( ::convert<SimStore>(it->second) );
                 break;
                 
             case SET_RANGENERATOR:
