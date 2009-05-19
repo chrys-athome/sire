@@ -653,16 +653,26 @@ static QVector<SupraSubSim> submitSimulations(Nodes &nodes, Replicas &replicas,
         start = 0;
 
     if (start == 1)
+    {
+        qDebug() << "Submitting the simulation for replica 0";
+    
         //the first replica hasn't got a partner - start it on its own
         subsims[0] = ::submitSimulation(nodes, replicas[0], record_stats);
+    }
 
     if ( (nreplicas-start) % 2 == 1 )
+    {
+        qDebug() << "Submitting the simulation for replica" << nreplicas-1;
+        
         //the last replica hasn't got a partner - start it on its own too
         subsims[nreplicas-1] = ::submitSimulation(nodes, replicas[nreplicas-1],
                                                   record_stats );
+    }
 
     for (int i=start; i<nreplicas-1; i+=2)
     {
+        qDebug() << "Submitting the simulations for replicas" << i << "and" << i+1;
+    
         //submit the simulations for replica i and replica i+1
         QPair<SupraSubSim,SupraSubSim> sims = ::submitSimulation( nodes, replicas[i], 
                                                                   replicas[i+1],
@@ -699,10 +709,13 @@ static void waitUntilFinished(Nodes &nodes, QVector<SupraSubSim> &subsims, int m
             SupraSubSim &subsim = subsims[i];
         
             subsim.wait();
+            qDebug() << "Replica" << i << "has finished!";
             
             if (subsim.isError() or subsim.wasAborted())
             {
                 //resubmit this calculation
+                qDebug() << "Replica" << i << "finished in error - resubmitting...";
+                
                 Node node = nodes.getNode();
                 subsim = SupraSubSim::run(node, subsim.input());
             
@@ -710,6 +723,8 @@ static void waitUntilFinished(Nodes &nodes, QVector<SupraSubSim> &subsims, int m
             }
             else if (not subsim.hasFinished())
             {
+                qDebug() << "Replica" << i << "has not finished - resubmitting...";
+            
                 //continue the calculation from where it finished
                 SupraSubSimPacket simpacket = subsim.result();
                 
@@ -726,6 +741,7 @@ static void waitUntilFinished(Nodes &nodes, QVector<SupraSubSim> &subsims, int m
             for (int i=0; i<nreplicas; ++i)
             {
                 subsims[i].wait();
+                qDebug() << "Replica" << i << "has definitely finished.";
             }
         }
     }

@@ -109,6 +109,8 @@ public:
     virtual void clearStatistics()=0;
     
     virtual QString toString() const=0;
+
+    virtual int nMoves() const=0;
     
     virtual void move(System &system, int nmoves, bool record_stats)=0;
 
@@ -206,6 +208,8 @@ public:
     }
     
     QString toString() const;
+    
+    int nMoves() const;
     
     void clearStatistics();
     

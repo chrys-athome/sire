@@ -501,6 +501,12 @@ void NullMove::move(System &system, int nmoves, bool record_stats)
     return;
 }
 
+/** There have been and never will be any NullMove events */
+int NullMove::nMoves() const
+{
+    return 0;
+}
+
 /** NullMove doesn't change anything (so must be NVE) */
 Ensemble NullMove::ensemble() const
 {

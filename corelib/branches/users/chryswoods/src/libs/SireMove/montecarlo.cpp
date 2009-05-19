@@ -180,6 +180,12 @@ double MonteCarlo::acceptanceRatio() const
         return double(this->nAccepted()) / double(ntotal);
 }
 
+/** Return the total number of these moves that have been performed */
+int MonteCarlo::nMoves() const
+{
+    return naccept + nreject;
+}
+
 /** Zero the move statistics */
 void MonteCarlo::clearStatistics()
 {

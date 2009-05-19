@@ -135,6 +135,8 @@ protected:
 
     void setSubSystemAndMoves(const SimStore &simstore);
 
+    void setGenerator(const RanGenerator &rangenerator);
+
     void swapInSystem(const Replica &other, bool swap_monitors=false);
     void swapInMolecules(const Replica &other);
 
@@ -156,8 +158,9 @@ private:
            REP_CHEMPOT      = 7,  // calls this->setChemicalPotential
            REP_FUGACITY     = 8,  // calls this->setFugacity
            SWAP_REP_AND_MON = 9,  // calls this->swapInSystem(replica, true)
-           SWAP_REP_ONLY    = 10,  // calls this->swapInSystem(replica, false)
-           SWAP_MOLECULES   = 11  // calls this->swapInMolecules(replica)
+           SWAP_REP_ONLY    = 10, // calls this->swapInSystem(replica, false)
+           SWAP_MOLECULES   = 11, // calls this->swapInMolecules(replica)
+           SET_RANGENERATOR = 12  // calls this->setGenerator
          };
 
     template<class T>

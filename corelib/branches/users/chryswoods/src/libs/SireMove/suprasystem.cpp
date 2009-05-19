@@ -420,8 +420,6 @@ void SupraSystem::pack()
         {
             SupraSubSystemPtr unpacked_system = subsystems.at(i);
             
-            qDebug() << unpacked_system.constData();
-            
             subsystems[i].edit().pack();
             
             //see if there are any copies of this system (so that
@@ -493,8 +491,6 @@ void SupraSystem::packToDisk()
         {
             SupraSubSystemPtr old_system = subsystems.at(i);
 
-            qDebug() << old_system.constData();
-
             subsystems[i].edit().packToDisk();
             
             for (int j=i+1; j<n; ++j)
@@ -531,8 +527,6 @@ void SupraSystem::packToDisk(const QString &tempdir)
         if (not subsystems.at(i)->isPackedToDisk())
         {
             SupraSubSystemPtr old_system = subsystems.at(i);
-
-            qDebug() << old_system.constData();
 
             subsystems[i].edit().packToDisk(tempdir);
             

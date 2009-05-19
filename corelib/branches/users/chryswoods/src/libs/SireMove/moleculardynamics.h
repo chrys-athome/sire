@@ -107,6 +107,8 @@ public:
     
     QString toString() const;
     
+    int nMoves() const;
+    
     const MoleculeGroup& moleculeGroup() const;
     const Integrator& integrator() const;
     
@@ -129,6 +131,9 @@ public:
 private:
     /** The integrator used to solve Newton's laws */
     IntegratorPtr intgrator;
+    
+    /** The number of moves performed using this object */
+    quint32 num_moves;
 };
 
 }

@@ -133,6 +133,24 @@ int Moves::size() const
     return this->nMoveTypes();
 }
 
+/** Return the total number of moves performed using the moves
+    in this set */
+int Moves::nMoves() const
+{
+    const QList<MovePtr> mvs = this->moves();
+    
+    int nmoves = 0;
+    
+    for (QList<MovePtr>::const_iterator it = mvs.constBegin();
+         it != mvs.constEnd();
+         ++it)
+    {
+        nmoves += it->read().nMoves();
+    }
+    
+    return nmoves;
+}
+
 /** Return the energy component that these moves will sample. This
     raises an error if not all moves are sampling the same energy
     component 

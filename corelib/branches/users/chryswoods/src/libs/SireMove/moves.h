@@ -79,6 +79,8 @@ public:
     int size() const;
     int nMoveTypes() const;
     
+    virtual int nMoves() const;
+    
     virtual QString toString() const=0;
     
     virtual void setEnergyComponent(const Symbol &component)=0;

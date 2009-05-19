@@ -43,10 +43,17 @@ class Replicas;
 QDataStream& operator<<(QDataStream&, const SireMove::Replicas&);
 QDataStream& operator>>(QDataStream&, SireMove::Replicas&);
 
+namespace SireMaths
+{
+class RanGenerator;
+}
+
 namespace SireMove
 {
 
 class Replica;
+
+using SireMaths::RanGenerator;
 
 /** This class is used to hold all of the replicas in 
     a replica exchange simulation
@@ -130,6 +137,9 @@ public:
 
     void setChemicalPotential(int i,
                 const SireUnits::Dimension::MolarEnergy &chemical_potential);
+
+    void setGenerator(const RanGenerator &rangenerator);
+    void setGenerator(int i, const RanGenerator &rangenerator);
 
     void swapSystems(int i, int j, bool swap_monitors=true);
 

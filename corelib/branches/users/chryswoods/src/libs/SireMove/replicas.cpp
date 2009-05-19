@@ -29,6 +29,8 @@
 #include "replicas.h"
 #include "replica.h"
 
+#include "SireMaths/rangenerator.h"
+
 #include "SireID/index.h"
 
 #include "SireStream/datastream.h"
@@ -712,6 +714,30 @@ void Replicas::setChemicalPotential(const MolarEnergy &chemical_potential)
         this->operator=(old_state);
         throw;
     }
+}
+
+/** Set the random number generator used by all of the replicas  
+    to 'rangenerator' - this doesn't give all of the replicas
+    the same generator - rather it uses this generator to 
+    reproducibly generate new generators for each replica */
+void Replicas::setGenerator(const RanGenerator &generator)
+{
+    int n = this->nReplicas();
+    
+    for (int i=0; i<n; ++i)
+    {
+        this->_pvt_replica(i).setGenerator( RanGenerator(generator.randInt()) );
+    }
+}
+
+/** Set the random number generator used by the ith replica to 'generator'
+
+    \throw SireError::invalid_index
+*/
+void Replicas::setGenerator(int i, const RanGenerator &generator)
+{
+    i = Index(i).map( this->nReplicas() );
+    this->_pvt_replica(i).setGenerator(generator);
 }
 
 /** Set the chemical potential of the ensemble sampled by the ith

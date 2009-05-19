@@ -33,6 +33,8 @@
 
 #include "SireMol/molecules.h"
 
+#include "SireMaths/rangenerator.h"
+
 #include "SireUnits/units.h"
 
 #include "SireStream/datastream.h"
@@ -688,6 +690,20 @@ void Replica::setChemicalPotential(const MolarEnergy &c)
     }
 }
 
+/** Set the random number generator used by the replica moves */
+void Replica::setGenerator(const RanGenerator &rangenerator)
+{
+    if (this->isPacked())
+        this->deferCommand( SET_RANGENERATOR, rangenerator );
+        
+    else
+    {
+        MovesPtr mvs = SupraSubSystem::subMoves();
+        mvs.edit().setGenerator(rangenerator);
+        SupraSubSystem::setSubMoves(mvs);
+    }
+}
+
 /** Swap in the sub-system in 'other' into this replica. This copies
     the system in 'other' into this replica, setting the value
     of lambda of that system to the value for this replica, if 
@@ -832,6 +848,10 @@ void Replica::_post_unpack()
                 
             case SWAP_MOLECULES:
                 this->swapInMolecules( ::convert<Replica>(it->second) );
+                break;
+                
+            case SET_RANGENERATOR:
+                this->setGenerator( ::convert<RanGenerator>(it->second) );
                 break;
                 
             default:

@@ -79,6 +79,8 @@ public:
         return "SireMove::MonteCarlo";
     }
 
+    int nMoves() const;
+
     quint32 nAttempted() const;
     quint32 nAccepted() const;
     quint32 nRejected() const;

@@ -57,7 +57,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
     
     SharedDataStream sds(ds);
     
-    sds << moldyn.intgrator
+    sds << moldyn.intgrator << moldyn.num_moves
         << static_cast<const Dynamics&>(moldyn);
         
     return ds;
@@ -73,7 +73,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
     {
         SharedDataStream sds(ds);
     
-        sds >> moldyn.intgrator
+        sds >> moldyn.intgrator >> moldyn.num_moves
             >> static_cast<Dynamics&>(moldyn);
              
     }
@@ -86,20 +86,20 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
 /** Constructor */
 MolecularDynamics::MolecularDynamics()
                   : ConcreteProperty<MolecularDynamics,Dynamics>(),
-                    intgrator( Integrator::null() )
+                    intgrator( Integrator::null() ), num_moves(0)
 {}
 
 /** Construct to perform moves on the molecules in the group 'molgroup'. This
     defaults to an all-atom velocity-verlet integrator */
 MolecularDynamics::MolecularDynamics(const MoleculeGroup &moleculegroup)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(),
-                    intgrator( VelocityVerlet() )
+                    intgrator( VelocityVerlet() ), num_moves(0)
 {}
 
 /** Construct using the supplied integrator */
 MolecularDynamics::MolecularDynamics(const Integrator &integrator)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(),
-                    intgrator(integrator)
+                    intgrator(integrator), num_moves(0)
 {}
     
 /** Construct a move for the passed molecule group, integrated
@@ -107,7 +107,7 @@ MolecularDynamics::MolecularDynamics(const Integrator &integrator)
 MolecularDynamics::MolecularDynamics(const MoleculeGroup &moleculegroup, 
                                      const Integrator &integrator)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(),
-                    intgrator(integrator)
+                    intgrator(integrator), num_moves(0)
 {}
 
 /** Construct a move for the passed molecule group, integrated
@@ -115,13 +115,13 @@ MolecularDynamics::MolecularDynamics(const MoleculeGroup &moleculegroup,
 MolecularDynamics::MolecularDynamics(const Integrator &integrator, 
                                      const MoleculeGroup &moleculegroup)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(),
-                    intgrator(integrator)
+                    intgrator(integrator), num_moves(0)
 {}
 
 /** Copy constructor */
 MolecularDynamics::MolecularDynamics(const MolecularDynamics &other)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(other),
-                    intgrator(other.intgrator)
+                    intgrator(other.intgrator), num_moves(other.num_moves)
 {}
 
 /** Destructor */
@@ -132,6 +132,8 @@ MolecularDynamics::~MolecularDynamics()
 MolecularDynamics& MolecularDynamics::operator=(const MolecularDynamics &other)
 {
     intgrator = other.intgrator;
+    num_moves = other.num_moves;
+    
     Dynamics::operator=(other);
     
     return *this;
@@ -141,6 +143,7 @@ MolecularDynamics& MolecularDynamics::operator=(const MolecularDynamics &other)
 bool MolecularDynamics::operator==(const MolecularDynamics &other) const
 {
     return intgrator == other.intgrator and
+           num_moves == other.num_moves and 
            Dynamics::operator==(other);
 }
 
@@ -148,14 +151,21 @@ bool MolecularDynamics::operator==(const MolecularDynamics &other) const
 bool MolecularDynamics::operator!=(const MolecularDynamics &other) const
 {
     return intgrator != other.intgrator or
+           num_moves != other.num_moves or
            Dynamics::operator!=(other);
 }
 
 /** Return a string representation of this move */
 QString MolecularDynamics::toString() const
 {
-    return QObject::tr("MolecularDynamics( %1 )")
-                .arg(intgrator->toString());
+    return QObject::tr("MolecularDynamics( %1, nMoves() == %2 )")
+                .arg(intgrator->toString()).arg(num_moves);
+}
+    
+/** Return the number of moves completed using this object */
+int MolecularDynamics::nMoves() const
+{
+    return num_moves;
 }
     
 /** Return the molecule group on which this move operates */
@@ -209,6 +219,7 @@ MolarEnergy MolecularDynamics::kineticEnergy() const
 void MolecularDynamics::clearStatistics()
 {
     intgrator.edit().clearStatistics();
+    num_moves = 0;
 }
 
 /** Set the random number generator used by this move
@@ -247,6 +258,8 @@ void MolecularDynamics::move(System &system, int nmoves, bool record_stats)
                 system.collectStats();
             }
         }
+        
+        num_moves += nmoves;
     }
     catch(...)
     {

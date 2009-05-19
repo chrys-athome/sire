@@ -35,6 +35,8 @@
 #include "SireCAS/expression.h"
 #include "SireCAS/symbol.h"
 
+#include "SireMaths/rangenerator.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
@@ -52,14 +54,23 @@ QDataStream& operator>>(QDataStream&, SireMove::VelocityGenerator&);
 QDataStream& operator<<(QDataStream&, const SireMove::NullVelocityGenerator&);
 QDataStream& operator>>(QDataStream&, SireMove::NullVelocityGenerator&);
 
-QDataStream& operator<<(QDataStream&, const SireMove::VelocitesFromProperty&);
+QDataStream& operator<<(QDataStream&, const SireMove::VelocitiesFromProperty&);
 QDataStream& operator>>(QDataStream&, SireMove::VelocitiesFromProperty&);
 
 QDataStream& operator<<(QDataStream&, const SireMove::RandomVelocities&);
 QDataStream& operator>>(QDataStream&, SireMove::RandomVelocities&);
 
+namespace SireCAS
+{
+class Symbol;
+}
+
 namespace SireMove
 {
+
+using SireMaths::RanGenerator;
+
+using SireCAS::Symbol;
 
 /** This is the base class of generators that are used
     to get velocities for molecules
@@ -193,9 +204,18 @@ public:
         return QMetaType::typeName( qMetaTypeId<RandomVelocities>() );
     }
 
+    static Symbol x();
+
+    void setGenerator(const RanGenerator &rangenerator);
+    
+    const RanGenerator& generator() const;
+
 private:
     /** The expression used to generate the random velocity */
     SireCAS::Expression rand_func;
+    
+    /** The random number generator */
+    RanGenerator ran_generator;
 };
 
 
@@ -208,7 +228,7 @@ Q_DECLARE_METATYPE( SireMove::VelocitiesFromProperty )
 Q_DECLARE_METATYPE( SireMove::RandomVelocities )
 
 SIRE_EXPOSE_CLASS( SireMove::VelocityGenerator )
-SIRE_EXPOSE_CLASS( SireMove::NullVelocitiyGenerator )
+SIRE_EXPOSE_CLASS( SireMove::NullVelocityGenerator )
 SIRE_EXPOSE_CLASS( SireMove::VelocitiesFromProperty )
 SIRE_EXPOSE_CLASS( SireMove::RandomVelocities )
 

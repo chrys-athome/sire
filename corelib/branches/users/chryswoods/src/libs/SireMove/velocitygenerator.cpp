@@ -28,6 +28,8 @@
 
 #include "velocitygenerator.h"
 
+#include "SireCAS/symbol.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -262,3 +264,101 @@ bool VelocitiesFromProperty::operator!=(const VelocitiesFromProperty &other) con
 /////////
 ///////// Implementation of RandomVelocities
 /////////
+
+static const RegisterMetaType<RandomVelocities> r_randvel;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const RandomVelocities &randvel)
+{
+    writeHeader(ds, r_randvel, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << randvel.rand_func << randvel.ran_generator
+        << static_cast<const VelocityGenerator&>(randvel);
+        
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RandomVelocities &randvel)
+{
+    VersionID v = readHeader(ds, r_randvel);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> randvel.rand_func >> randvel.ran_generator
+            >> static_cast<VelocityGenerator&>(randvel);
+    }
+    else
+        throw version_error(v, "1", r_randvel);
+        
+    return ds;
+}
+
+/** Constructor */
+RandomVelocities::RandomVelocities()
+                 : ConcreteProperty<RandomVelocities,VelocityGenerator>()
+{}
+
+/** Construct from the passed expression */
+RandomVelocities::RandomVelocities(const SireCAS::Expression &ranfunction)
+                 : ConcreteProperty<RandomVelocities,VelocityGenerator>(),
+                   rand_func(ranfunction)
+{}
+
+/** Copy constructor */
+RandomVelocities::RandomVelocities(const RandomVelocities &other)
+                 : ConcreteProperty<RandomVelocities,VelocityGenerator>(other),
+                   rand_func(other.rand_func), ran_generator(other.ran_generator)
+{}
+
+/** Destructor */
+RandomVelocities::~RandomVelocities()
+{}
+
+/** Copy assignment operator */
+RandomVelocities& RandomVelocities::operator=(const RandomVelocities &other)
+{
+    VelocityGenerator::operator=(other);
+
+    rand_func = other.rand_func;
+    ran_generator = other.ran_generator;
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool RandomVelocities::operator==(const RandomVelocities &other) const
+{
+    return rand_func == other.rand_func and
+           ran_generator == other.ran_generator and
+           VelocityGenerator::operator==(other);
+}
+
+/** Comparison operator */
+bool RandomVelocities::operator!=(const RandomVelocities &other) const
+{
+    return not this->operator==(other);
+}
+
+/** Return the symbol that represents the random number in the 
+    random generator function ("x") */
+Symbol RandomVelocities::x()
+{
+    return Symbol("x");
+}
+
+/** Set the random number generator used to generate the random velocities */
+void RandomVelocities::setGenerator(const RanGenerator &rangenerator)
+{
+    ran_generator = rangenerator;
+}
+
+/** Return the random number generator used to generate random velocities */
+const RanGenerator& RandomVelocities::generator() const
+{
+    return ran_generator;
+}

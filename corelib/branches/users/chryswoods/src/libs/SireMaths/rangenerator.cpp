@@ -452,7 +452,7 @@ double RanGenerator::randNorm(double mean, double variance) const
 {
     QMutexLocker lkr( &(nonconst_d().mutex) );
 
-    return nonconst_d().randNorm(mean, variance);
+    return nonconst_d().mersenne_generator.randNorm(mean, variance);
 
     //double rand0 = nonconst_d().mersenne_generator.rand53();
     //double rand1 = nonconst_d().mersenne_generator.rand53();
