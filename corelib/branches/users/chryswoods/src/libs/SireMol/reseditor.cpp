@@ -88,16 +88,17 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-ResEditor::ResEditor() : Editor<ResEditor,Residue>()
+ResEditor::ResEditor() : ConcreteProperty< ResEditor,Editor<ResEditor,Residue> >()
 {}
 
 /** Construct an editor that edits a copy of the residue 'residue' */
-ResEditor::ResEditor(const Residue &residue) : Editor<ResEditor,Residue>(residue)
+ResEditor::ResEditor(const Residue &residue) 
+          : ConcreteProperty< ResEditor,Editor<ResEditor,Residue> >(residue)
 {}
 
 /** Copy constructor */
 ResEditor::ResEditor(const ResEditor &other) 
-          : Editor<ResEditor,Residue>(other)
+          : ConcreteProperty< ResEditor,Editor<ResEditor,Residue> >(other)
 {}
 
 /** Destructor */
@@ -116,6 +117,12 @@ ResEditor& ResEditor::operator=(const ResEditor &other)
 {
     Editor<ResEditor,Residue>::operator=(other);
     return *this;
+}
+
+/** Return a string representation of this editor */
+QString ResEditor::toString() const
+{
+    return QObject::tr( "Editor{ %1 }" ).arg(Residue::toString());
 }
 
 /** Return an editor for the chain that contains this residue */
@@ -400,6 +407,20 @@ ResStructureEditor& ResStructureEditor::operator=(const ResStructureEditor &othe
     uid = other.uid;
     
     return *this;
+}
+
+/** Return a string representation of this editor */
+QString ResStructureEditor::toString() const
+{
+    return QObject::tr( "StructureEditor{ Residue( %1 : %2 ) }" )
+                .arg( this->name() )
+                .arg( this->number() );
+}
+
+/** Is this editor editing the entire molecule? */
+bool ResStructureEditor::selectedAll() const
+{
+    return StructureEditor::nResiduesInMolecule() == 1;
 }
 
 /** Return the name of this residue */

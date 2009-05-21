@@ -796,7 +796,7 @@ InterCLJPotential::calculateForce(const InterCLJPotential::Molecule &mol0,
                                   double scale_force) const
 {
     if ( scale_force != 0 and 
-         not (mol0.isEmpty() or mol1.isEmpty()) and
+         //not (mol0.isEmpty() or mol1.isEmpty()) and
          not spce->beyond(switchfunc->cutoffDistance(),
                           mol0.aaBox(), mol1.aaBox()) )
     {
@@ -817,7 +817,7 @@ InterCLJPotential::calculateCoulombForce(const InterCLJPotential::Molecule &mol0
                                          double scale_force) const
 {
     if ( scale_force != 0 and 
-         not (mol0.isEmpty() or mol1.isEmpty()) and
+         //not (mol0.isEmpty() or mol1.isEmpty()) and
          not spce->beyond(switchfunc->cutoffDistance(),
                           mol0.aaBox(), mol1.aaBox()) )
     {
@@ -838,7 +838,7 @@ InterCLJPotential::calculateLJForce(const InterCLJPotential::Molecule &mol0,
                                     double scale_force) const
 {
     if ( scale_force != 0 and 
-         not (mol0.isEmpty() or mol1.isEmpty()) and
+         //not (mol0.isEmpty() or mol1.isEmpty()) and
          not spce->beyond(switchfunc->cutoffDistance(),
                           mol0.aaBox(), mol1.aaBox()) )
     {

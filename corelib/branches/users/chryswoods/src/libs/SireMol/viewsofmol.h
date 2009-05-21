@@ -69,7 +69,8 @@ class PartialMolecule;
     
     @author Christopher Woods
 */
-class SIREMOL_EXPORT ViewsOfMol : public MoleculeView
+class SIREMOL_EXPORT ViewsOfMol 
+        : public SireBase::ConcreteProperty<ViewsOfMol,MoleculeView>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const ViewsOfMol&);
@@ -103,11 +104,6 @@ public:
         return QMetaType::typeName( qMetaTypeId<ViewsOfMol>() );
     }
     
-    const char* what() const
-    {
-        return ViewsOfMol::typeName();
-    }
-    
     ViewsOfMol* clone() const
     {
         return new ViewsOfMol(*this);
@@ -133,6 +129,11 @@ public:
     bool operator!=(const ViewsOfMol &other) const;
 
     PartialMolecule operator[](int i) const;
+
+    QString toString() const;
+    
+    bool isEmpty() const;
+    bool selectedAll() const;
     
     PartialMolecule at(int i) const;
     const AtomSelection& viewAt(int i) const;
@@ -142,8 +143,6 @@ public:
     
     quint64 version() const;
     quint64 version(const PropertyName &key) const;
-    
-    bool isEmpty() const;
     
     int nViews() const;
     int count() const;

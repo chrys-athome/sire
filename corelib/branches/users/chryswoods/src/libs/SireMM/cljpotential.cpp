@@ -3282,7 +3282,7 @@ void IntraCLJPotential::calculateForce(const IntraCLJPotential::Molecule &mol,
         Vector *group_forces0_array = forces.data(force_idx);
     
         //get the forces acting on this group from all other groups
-        //(yes, we are doing a full n2 loop, and not taking advantages
+        //(yes, we are doing a full n2 loop, and not taking advantage
         // of equal and opposite forces)
         for (quint32 jgroup=0; jgroup<ngroups; ++jgroup)
         {

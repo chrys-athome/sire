@@ -76,7 +76,8 @@ typedef Editor<ChainEditor, Chain> ChainEditorBase;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT ChainEditor : public Editor<ChainEditor, Chain>
+class SIREMOL_EXPORT ChainEditor 
+            : public SireBase::ConcreteProperty< ChainEditor,Editor<ChainEditor,Chain> >
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const ChainEditor&);
@@ -99,15 +100,12 @@ public:
         return QMetaType::typeName( qMetaTypeId<ChainEditor>() );
     }
     
-    const char *what() const
-    {
-        return ChainEditor::typeName();
-    }
-    
     ChainEditor* clone() const
     {
         return new ChainEditor(*this);
     }
+
+    QString toString() const;
     
     MolEditor molecule() const;
     
@@ -175,6 +173,10 @@ public:
     {
         return new ChainStructureEditor(*this);
     }
+    
+    QString toString() const;
+    
+    bool selectedAll() const;
     
     const ChainName& name() const;
     ChainIdx index() const;

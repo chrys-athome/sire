@@ -675,7 +675,11 @@ CoordGroupArray PeriodicBox::_pvt_getMinimumImage(const CoordGroupArray &groups,
                                                   const Vector &point) const
 {
     int ncg = groups.count();
+
     const CoordGroup *group_array = groups.constData();
+
+    if (ncg == 1)
+        return CoordGroupArray( this->getMinimumImage(group_array[0], point) );
 
     //create a new array of the right size
     QVector<CoordGroup> moved_groups(ncg);

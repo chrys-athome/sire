@@ -56,7 +56,7 @@ using SireVol::Space;
     @author Christopher Woods
 */
 template<class T>
-class Mover : public T, public MoverBase
+class Mover : public SireBase::ConcreteProperty<Mover<T>,T>, public MoverBase
 {
 public:
     Mover();
@@ -72,16 +72,18 @@ public:
     {
         return QMetaType::typeName( qMetaTypeId< Mover<T> >() );
     }
-    
-    const char* what() const
+
+    Mover<T>* clone() const
     {
-        return Mover<T>::typeName();
+        return new Mover<T>(*this);
     }
     
     Mover<T>& operator=(const Mover<T> &other);
     Mover<T>& operator=(const T &other);
     
     T commit() const;
+    
+    QString toString() const;
     
     Mover<T>& mapInto(const AxisSet &axes,
                       const PropertyMap &map = PropertyMap());
@@ -163,14 +165,15 @@ public:
 /** Null constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Mover<T>::Mover() : T(), MoverBase()
+Mover<T>::Mover() : SireBase::ConcreteProperty<Mover<T>,T>(), MoverBase()
 {}
 
 /** Construct a mover that can move all of the atoms
     in the view 'view' */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Mover<T>::Mover(const T &view) : T(view), MoverBase(view.selection())
+Mover<T>::Mover(const T &view) 
+         : SireBase::ConcreteProperty<Mover<T>,T>(view), MoverBase(view.selection())
 {}
 
 /** Construct a mover that can move the 'movable_atoms' of the 
@@ -179,7 +182,7 @@ Mover<T>::Mover(const T &view) : T(view), MoverBase(view.selection())
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Mover<T>::Mover(const T &view, const AtomSelection &movable_atoms)
-         : T(view), MoverBase(movable_atoms)
+         : SireBase::ConcreteProperty<Mover<T>,T>(view), MoverBase(movable_atoms)
 {
     movable_atoms.assertCompatibleWith(view);
 }
@@ -188,7 +191,7 @@ Mover<T>::Mover(const T &view, const AtomSelection &movable_atoms)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Mover<T>::Mover(const Mover<T> &other)
-         : T(other), MoverBase(other)
+         : SireBase::ConcreteProperty<Mover<T>,T>(other), MoverBase(other)
 {}
 
 /** Destructor */
@@ -225,6 +228,14 @@ SIRE_OUTOFLINE_TEMPLATE
 T Mover<T>::commit() const
 {
     return *this;
+}
+
+/** Return a string representation of this mover */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QString Mover<T>::toString() const
+{
+    return QObject::tr( "Mover{ %1 }" ).arg( T::toString() );
 }
 
 /** Map the atoms in this view into the axis set described in 'axes',

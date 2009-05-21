@@ -122,7 +122,7 @@ void SireMol::detail::assertSameSize(Atom*, int nats, int nprops)
 }
 
 /** Null constructor */
-Atom::Atom() : MoleculeView(), atomidx( Index::null() )
+Atom::Atom() : ConcreteProperty<Atom,MoleculeView>(), atomidx( Index::null() )
 {}
 
 /** Construct the atom that that is identified by ID 'atomid'
@@ -133,7 +133,7 @@ Atom::Atom() : MoleculeView(), atomidx( Index::null() )
     \throw SireError::invalid_index
 */
 Atom::Atom(const MoleculeView &molview, const AtomID &atomid)
-     : MoleculeView(molview)
+     : ConcreteProperty<Atom,MoleculeView>(molview)
 {
     atomidx = d->info().atomIdx(atomid);
     molview.assertContains(atomidx);
@@ -147,12 +147,13 @@ Atom::Atom(const MoleculeView &molview, const AtomID &atomid)
     \throw SireError::invalid_index
 */
 Atom::Atom(const MoleculeData &moldata, const AtomID &atomid)
-     : MoleculeView(moldata), atomidx( moldata.info().atomIdx(atomid) )
+     : ConcreteProperty<Atom,MoleculeView>(moldata), 
+       atomidx( moldata.info().atomIdx(atomid) )
 {}
 
 /** Copy constructor */
 Atom::Atom(const Atom &other)
-     : MoleculeView(other), atomidx(other.atomidx)
+     : ConcreteProperty<Atom,MoleculeView>(other), atomidx(other.atomidx)
 {}
 
 /** Destructor */
@@ -178,6 +179,25 @@ bool Atom::operator==(const Atom &other) const
 bool Atom::operator!=(const Atom &other) const
 {
     return atomidx != other.atomidx or MoleculeView::operator!=(other);
+}
+
+/** Return a string representation of this atom */
+QString Atom::toString() const
+{
+    return QObject::tr( "Atom( %1 : %2 )" ).arg(this->name())
+                                           .arg(this->number());
+}
+
+/** Is this atom empty? */
+bool Atom::isEmpty() const
+{
+    return atomidx.isNull();
+}
+
+/** Is this atom a view of the whole (1 atom) molecule? */
+bool Atom::selectedAll() const
+{
+    return (not atomidx.isNull()) and d->info().nAtoms() == 1;
 }
 
 /** Return the selected atom! */

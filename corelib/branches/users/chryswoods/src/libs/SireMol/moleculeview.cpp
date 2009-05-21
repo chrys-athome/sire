@@ -49,11 +49,12 @@ RegisterMetaType<MoleculeView> r_molview( MAGIC_ONLY,
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, 
                                        const MoleculeView &molview)
 {
-    writeHeader(ds, r_molview, 1);
+    writeHeader(ds, r_molview, 2);
 
     SharedDataStream sds(ds);
     
-    sds << molview.d;
+    sds << molview.d
+        << static_cast<const Property&>(molview);
 
     return ds;
 }
@@ -64,7 +65,13 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 {
     VersionID v = readHeader(ds, r_molview);
 
-    if (v == 1)
+    if (v == 2)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> molview.d >> static_cast<Property&>(molview);
+    }
+    else if (v == 1)
     {
         SharedDataStream sds(ds);
         
@@ -77,17 +84,17 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-MoleculeView::MoleculeView() : d( MoleculeData::null() )
+MoleculeView::MoleculeView() : Property(), d( MoleculeData::null() )
 {}
 
 /** Construct a view of the molecule whose data is in 'moldata' */
 MoleculeView::MoleculeView(const MoleculeData &moldata)
-             : d(moldata)
+             : Property(), d(moldata)
 {}
 
 /** Copy constructor */
 MoleculeView::MoleculeView(const MoleculeView &other)
-             : d(other.d)
+             : Property(other), d(other.d)
 {}
 
 /** Destructor */
@@ -97,6 +104,7 @@ MoleculeView::~MoleculeView()
 /** Copy assignment operator */
 MoleculeView& MoleculeView::operator=(const MoleculeView &other)
 {
+    Property::operator=(other);
     d = other.d;
     return *this;
 }

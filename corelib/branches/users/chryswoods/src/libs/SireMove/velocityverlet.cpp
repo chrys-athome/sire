@@ -30,8 +30,10 @@
 
 #include "SireMol/moleculegroup.h"
 #include "SireMol/partialmolecule.h"
+#include "SireMol/molecule.h"
 #include "SireMol/atommasses.h"
 #include "SireMol/atomcoords.h"
+#include "SireMol/moleditor.h"
 
 #include "SireSystem/system.h"
 
@@ -49,6 +51,7 @@ using namespace SireSystem;
 using namespace SireMol;
 using namespace SireFF;
 using namespace SireCAS;
+using namespace SireVol;
 using namespace SireBase;
 using namespace SireStream;
 using namespace SireUnits;
@@ -128,6 +131,13 @@ QString VelocityVerlet::toString() const
                 .arg( this->timeStep().to(femtosecond) );
 }
 
+/** Set the random number generator used to generate new velocities */
+void VelocityVerlet::setGenerator(const RanGenerator &rangenerator)
+{
+    if (vel_generator->isA<RandomVelocities>())
+        vel_generator.edit().asA<RandomVelocities>().setGenerator(rangenerator);
+}
+
 /** Internal function used to regenerate all of the velocities */
 void VelocityVerlet::recalculateVelocities()
 {
@@ -180,47 +190,130 @@ void VelocityVerlet::updateFrom(System &system, const Symbol &nrg_component)
     last_nrg_component = nrg_component;
 }
 
-/** Half-integrate the velocities */
-static void integrateVelocities(const PartialMolecule &molecule,
-                                const PropertyName &masses_property,
-                                MolForceTable &mol_vels, 
-                                const MolForceTable &mol_forces,
-                                const Time &timestep)
+/** Half-integrate the velocities - this returns the new kinetic energy
+    of the atoms in the partial molecule */
+static double integrateVelocities(const PartialMolecule &molecule,
+                                  const PropertyName &masses_property,
+                                  MolForceTable &mol_vels, 
+                                  const MolForceTable &mol_forces,
+                                  const Time &timestep)
 {
-    const AtomMasses &masses = molecule.property( masses_property )
-                                       .asA<AtomMasses>();
+    const double dt = 0.5 * timestep;
 
-    // a(t + dt) = -(1/m) f( r(t+dt) )
+    if (molecule.selection().selectedAll())
+    {
+        const AtomMasses &masses = molecule.property( masses_property )
+                                        .asA<AtomMasses>();
+
+        int natoms = masses.nAtoms();
+        
+        BOOST_ASSERT( mol_vels.nValues() == natoms );
+        BOOST_ASSERT( mol_forces.nValues() == natoms );
+        
+        const Mass *masses_array = masses.array().constValueData();
+        const Vector *forces_array = mol_forces.constValueData();
+        
+        Vector *vels_array = mol_vels.valueData();
+        
+        double kinetic_nrg = 0;
+        
+        for (int i=0; i<natoms; ++i)
+        {
+            // a(t + dt) = -(1/m) f( r(t+dt) )
+            const double mass = masses_array[i];
+            
+            const Vector a_t = (dt / mass) * forces_array[i];
     
-    // v(t + dt) = v(t + dt/2) + (1/2) a(t + dt) dt
+            // v(t + dt) = v(t + dt/2) + (1/2) a(t + dt) dt
+            vels_array[i] -= a_t;
     
-    //also calculate the kinetic energy as we finish integrating
-    //the velocities - do it here as then we don't need to save
-    //the masses of the atoms
+            //also calculate the kinetic energy as we finish integrating
+            //the velocities - do it here as then we don't need to save
+            //the masses of the atoms
+            kinetic_nrg += mass * vels_array[i].length2();
+        }
+        
+        return 0.5 * kinetic_nrg;
+    }
+    else
+        throw SireError::incomplete_code( QObject::tr(
+            "The code to perform dynamics on parts of a molecule has yet "
+            "to be written."), CODELOC );
 }
 
 /** Integrate the coordinates of the molecule 'molecule' and half-integrate
     the velocities */
 static PartialMolecule integrateCoordinates(PartialMolecule molecule, 
-                                            const PropertyName &coords_property, 
-                                            const PropertyName &masses_property,
                                             const MolForceTable &mol_force, 
                                             MolForceTable &mol_vel,
-                                            const Time &timestep)
+                                            const Space &space,
+                                            const Time &timestep,
+                                            const PropertyMap &map)
 {
-    //get the coordinates and masses
-    AtomCoords coords = molecule.property( coords_property )
-                                .asA<AtomCoords>();
-    
-    const AtomMasses &masses = molecule.property( masses_property )
-                                       .asA<AtomMasses>();
+    const double dt = timestep;
+    const double half_dt = 0.5*dt;
 
-    // a(t) = -(1/m) f( r(t) )
+    const PropertyName coords_property = map["coordinates"];
+    const PropertyName masses_property = map["mass"];
 
-    // r(t + dt) = r(t) + v(t) dt + (1/2) a(t) dt^2
+    if (molecule.selection().selectedAll())
+    {
+        Molecule new_molecule = molecule.molecule().move().toCartesian(space, map);
+
+        //get the coordinates and masses
+        AtomCoords coords = molecule.property( coords_property )
+                                    .asA<AtomCoords>();
     
-    // v(t + dt/2) = v(t) + (1/2) a(t) dt
+        const AtomMasses &masses = molecule.property( masses_property )
+                                           .asA<AtomMasses>();
+
+        int ncg = coords.nCutGroups();
+        
+        QVector<CoordGroup> new_coords(ncg);
+        
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            int natoms = molecule.nAtoms();
+        
+            BOOST_ASSERT( coords.nAtoms(i) == natoms );
+            BOOST_ASSERT( masses.nAtoms(i) == natoms );
+            BOOST_ASSERT( mol_force.nValues(i) == natoms );
+            BOOST_ASSERT( mol_vel.nValues(i) == natoms );
+
+            const Mass *masses_array = masses.constData(i);
+            const Vector *forces_array = mol_force.constData(i);
+            Vector *vels_array = mol_vel.data(i);
+
+            CoordGroupEditor coord_editor = coords.at(i).edit();
+            Vector *coords_array = coord_editor.data();
+        
+            for (int j=0; j<natoms; ++j)
+            {
+                // a(t) = -(1/m) f( r(t) )
+                const Vector a_t = (-half_dt / masses_array[j]) * forces_array[j];
+
+                // r(t + dt) = r(t) + v(t) dt + (1/2) a(t) dt^2
+                coords_array[j] += vels_array[j]*dt + a_t*dt;
     
+                // v(t + dt/2) = v(t) + (1/2) a(t) dt
+                vels_array[j] += a_t;
+            }
+            
+            new_coords[i] = coord_editor.commit();
+        }
+
+        coords = AtomCoords(new_coords);
+
+        molecule = molecule.molecule().edit()
+                           .setProperty(coords_property.source(), coords)
+                           .move().fromCartesian(space, map)
+                           .commit();
+    }
+    else
+        throw SireError::incomplete_code( QObject::tr(
+            "The code to perform dynamics on parts of a molecule has yet "
+            "to be written."), CODELOC );
+        
     return molecule;
 }
                                                         
@@ -245,8 +338,7 @@ void VelocityVerlet::integrate(System &system, const Symbol &nrg_component,
     
     BOOST_ASSERT( nmols == v.count() );
 
-    PropertyName coords_property = map["coordinates"];
-    PropertyName masses_property = map["mass"];
+    const Space &space = system.property( map["space"] ).asA<Space>();
 
     //// confine temp variables to a local scope
     {
@@ -270,9 +362,8 @@ void VelocityVerlet::integrate(System &system, const Symbol &nrg_component,
         
             //get r(t+dt) from v(t) and f(t)
             // (this also gets v(t+0.5dt) from v(t) and f(t)
-            molecule = ::integrateCoordinates(molecule, coords_property, 
-                                              masses_property,
-                                              mol_force, mol_vel, timestep);
+            molecule = ::integrateCoordinates(molecule, mol_force, mol_vel, 
+                                              space, timestep, map);
     
             //add this molecule to the list of updated molecules
             new_molecules += molecule;
@@ -295,6 +386,10 @@ void VelocityVerlet::integrate(System &system, const Symbol &nrg_component,
     
         const MoleculeGroup &molgroup = Integrator::moleculeGroup();
     
+        const PropertyName masses_property = map["mass"];
+    
+        double kinetic_nrg = 0;
+    
         for (int i=0; i<nmols; ++i)
         {
             const MolForceTable &mol_force = mol_forces[i];
@@ -305,8 +400,8 @@ void VelocityVerlet::integrate(System &system, const Symbol &nrg_component,
             //get the molecule
             PartialMolecule molecule = molgroup.molecule(mol_force.molNum());
 
-            ::integrateVelocities(molecule, masses_property, 
-                                  mol_vel, mol_force, timestep);
+            kinetic_nrg += ::integrateVelocities(molecule, masses_property, 
+                                                 mol_vel, mol_force, timestep);
         }
     }
 }
@@ -344,14 +439,23 @@ MolarEnergy VelocityVerlet::kineticEnergy() const
 */
 MolarEnergy VelocityVerlet::kineticEnergy(const MoleculeView &molview) const
 {
-    #warning Need kineticEnergy(mol);
-    return MolarEnergy(0);
+    MolNum molnum = molview.data().number();
+
+    if (not v.containsTable(molnum))
+        return MolarEnergy(0);
+    
+    const MolForceTable &mol_vels = v.constGetTable(molnum);
+    
+    if (mol_vels.molUID() != molview.data().info().UID())
+        throw SireError::incompatible_error( QObject::tr(
+            "Cannot get the velocity of %1 as its structure has changed.")
+                .arg( molview.toString() ), CODELOC );
+    
+    double kinetic_nrg = 0;
+    
+    return MolarEnergy( 0.5 * kinetic_nrg );
 }
 
 /** Clear all statistics */
 void VelocityVerlet::clearStatistics()
-{}
-
-/** Set the random number generator */
-void VelocityVerlet::setGenerator(const RanGenerator&)
 {}

@@ -94,17 +94,17 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-AtomEditor::AtomEditor() : Editor<AtomEditor,Atom>()
+AtomEditor::AtomEditor() : ConcreteProperty< AtomEditor,Editor<AtomEditor,Atom> >()
 {}
 
 /** Construct an editor that edits a copy of 'atom' */
 AtomEditor::AtomEditor(const Atom &atom)
-           : Editor<AtomEditor,Atom>(atom)
+           : ConcreteProperty< AtomEditor,Editor<AtomEditor,Atom> >(atom)
 {}
 
 /** Copy constructor */
 AtomEditor::AtomEditor(const AtomEditor &other)
-           : Editor<AtomEditor,Atom>(other)
+           : ConcreteProperty< AtomEditor,Editor<AtomEditor,Atom> >(other)
 {}
 
 /** Destructor */
@@ -123,6 +123,12 @@ AtomEditor& AtomEditor::operator=(const AtomEditor &other)
 {
     Editor<AtomEditor,Atom>::operator=(other);
     return *this;
+}
+
+/** Return a string representation of this editor */
+QString AtomEditor::toString() const
+{
+    return QObject::tr( "Editor{ %1 }" ).arg( Atom::toString() );
 }
 
 /** Return the editor for the residue that contains this atom */
@@ -371,6 +377,20 @@ AtomStructureEditor& AtomStructureEditor::operator=(const AtomStructureEditor &o
     StructureEditor::operator=(other);
     uid = other.uid;
     return *this;
+}
+
+/** Return a string representation of this editor */
+QString AtomStructureEditor::toString() const
+{
+    return QObject::tr( "StructureEditor{ Atom( %1 : %2 ) }" )
+                    .arg( this->name() )
+                    .arg( this->number() );
+}
+
+/** Return whether or not this contains the whole molecule */
+bool AtomStructureEditor::selectedAll() const
+{
+    return StructureEditor::nAtomsInMolecule() == 1;
 }
 
 /** Return the name of this atom */

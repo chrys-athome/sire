@@ -81,7 +81,8 @@ typedef Editor<CGEditor, CutGroup> CGEditorBase;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT CGEditor : public Editor<CGEditor, CutGroup>
+class SIREMOL_EXPORT CGEditor 
+        : public SireBase::ConcreteProperty< CGEditor, Editor<CGEditor, CutGroup> >
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const CGEditor&);
@@ -104,15 +105,12 @@ public:
         return QMetaType::typeName( qMetaTypeId<CGEditor>() );
     }
     
-    const char *what() const
-    {
-        return CGEditor::typeName();
-    }
-    
     CGEditor* clone() const
     {
         return new CGEditor(*this);
     }
+
+    QString toString() const;
     
     MolEditor molecule() const;
     
@@ -178,6 +176,10 @@ public:
     
     CGStructureEditor& operator=(const CutGroup &cutgroup);
     CGStructureEditor& operator=(const CGStructureEditor &other);
+    
+    bool selectedAll() const;
+    
+    QString toString() const;
     
     const CGName& name() const;
     CGIdx index() const;

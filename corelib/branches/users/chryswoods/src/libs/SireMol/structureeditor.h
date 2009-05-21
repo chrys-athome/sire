@@ -117,6 +117,11 @@ QString cacheName(const QString &name);
     
     This class is explicitly shared and is *definitely not* thread safe!
     
+    Because it is not thread safe, it is not derived from 
+    SireBase::Property (unlike the MoleculeView classes). You
+    cannot therefore add a molecule whose structure is being
+    edited as a property.
+    
     @author Christopher Woods
 */
 class SIREMOL_EXPORT StructureEditor
@@ -130,7 +135,21 @@ friend class MoleculeData; //so can call query functions when converting
 friend class EditMolInfo; //so can see d pointer
 
 public:
-    ~StructureEditor();
+    virtual ~StructureEditor();
+
+    virtual StructureEditor* clone() const=0;
+    
+    static const char* typeName()
+    {
+        return "SireMol::StructureEditor";
+    }
+    
+    virtual const char* what() const=0;
+
+    virtual bool isEmpty() const;
+    virtual bool selectedAll() const=0;
+    
+    virtual QString toString() const=0;
 
 protected:
     StructureEditor();
@@ -571,6 +590,22 @@ public:
     
     EditMolInfo& operator=(const StructureEditor &editor);
     EditMolInfo& operator=(const EditMolInfo &other);
+    
+    static const char* typeName()
+    {
+        return "SireMol::EditMolInfo";
+    }
+    
+    const char* what() const
+    {
+        return EditMolInfo::typeName();
+    }
+    
+    EditMolInfo* clone() const;
+    
+    QString toString() const;
+    
+    bool selectedAll() const;
     
     QList<AtomIdx> map(const AtomName &name) const;
     QList<AtomIdx> map(AtomNum num) const;

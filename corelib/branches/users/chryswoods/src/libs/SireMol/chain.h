@@ -67,7 +67,7 @@ class Molecule;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT Chain : public MoleculeView
+class SIREMOL_EXPORT Chain : public ConcreteProperty<Chain,MoleculeView>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Chain&);
@@ -93,11 +93,6 @@ public:
         return QMetaType::typeName( qMetaTypeId<Chain>() );
     }
     
-    const char* what() const
-    {
-        return Chain::typeName();
-    }
-    
     Chain* clone() const
     {
         return new Chain(*this);
@@ -105,6 +100,11 @@ public:
     
     bool operator==(const Chain &other) const;
     bool operator!=(const Chain &other) const;
+
+    QString toString() const;
+    
+    bool isEmpty() const;
+    bool selectedAll() const;
     
     AtomSelection selection() const;
     

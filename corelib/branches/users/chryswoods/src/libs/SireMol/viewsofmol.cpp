@@ -89,19 +89,21 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-ViewsOfMol::ViewsOfMol() : MoleculeView()
+ViewsOfMol::ViewsOfMol() : ConcreteProperty<ViewsOfMol,MoleculeView>()
 {}
 
 /** Construct an empty view of the molecule whose data
     is in 'moldata' */
 ViewsOfMol::ViewsOfMol(const MoleculeData &moldata)
-           : MoleculeView(moldata), selected_atoms(moldata)
+           : ConcreteProperty<ViewsOfMol,MoleculeView>(moldata), 
+             selected_atoms(moldata)
 {}
 
 /** Construct the view of the passed molecule */
 ViewsOfMol::ViewsOfMol(const MoleculeData &moldata,
                        const AtomSelection &molview)
-           : MoleculeView(moldata), selected_atoms(molview)
+           : ConcreteProperty<ViewsOfMol,MoleculeView>(moldata), 
+             selected_atoms(molview)
 {
     selected_atoms.assertCompatibleWith(moldata);
 }
@@ -109,7 +111,7 @@ ViewsOfMol::ViewsOfMol(const MoleculeData &moldata,
 /** Construct the views of the passed molecule */
 ViewsOfMol::ViewsOfMol(const MoleculeData &moldata,
                        const QList<AtomSelection> &molviews)
-           : MoleculeView(moldata)
+           : ConcreteProperty<ViewsOfMol,MoleculeView>(moldata)
 {
     if (molviews.isEmpty())
     {
@@ -132,7 +134,8 @@ ViewsOfMol::ViewsOfMol(const MoleculeData &moldata,
 
 /** Construct just a single view of a molecule */
 ViewsOfMol::ViewsOfMol(const MoleculeView &view)
-           : MoleculeView(view), selected_atoms(view.selection())
+           : ConcreteProperty<ViewsOfMol,MoleculeView>(view), 
+             selected_atoms(view.selection())
 {}
 
 /** Set this equal to the multiple views held in 'selection' */
@@ -163,42 +166,43 @@ void ViewsOfMol::setEqualTo(const Selector<T> &selection)
 
 /** Construct from the set of atoms */
 ViewsOfMol::ViewsOfMol(const Selector<Atom> &atoms)
-           : MoleculeView()
+           : ConcreteProperty<ViewsOfMol,MoleculeView>()
 {
     this->setEqualTo(atoms);
 }
 
 /** Construct from the set of CutGroups */
 ViewsOfMol::ViewsOfMol(const Selector<CutGroup> &cgroups)
-           : MoleculeView()
+           : ConcreteProperty<ViewsOfMol,MoleculeView>()
 {
     this->setEqualTo(cgroups);
 }
 
 /** Construct from the set of residues */
 ViewsOfMol::ViewsOfMol(const Selector<Residue> &residues)
-           : MoleculeView()
+           : ConcreteProperty<ViewsOfMol,MoleculeView>()
 {
     this->setEqualTo(residues);
 }
 
 /** Construct from the set of chains */
 ViewsOfMol::ViewsOfMol(const Selector<Chain> &chains)
-           : MoleculeView()
+           : ConcreteProperty<ViewsOfMol,MoleculeView>()
 {
     this->setEqualTo(chains);
 }
 
 /** Construct from the set of segments */
 ViewsOfMol::ViewsOfMol(const Selector<Segment> &segments)
-           : MoleculeView()
+           : ConcreteProperty<ViewsOfMol,MoleculeView>()
 {
     this->setEqualTo(segments);
 }
 
 /** Copy constructor */
 ViewsOfMol::ViewsOfMol(const ViewsOfMol &other)
-           : MoleculeView(other), selected_atoms(other.selected_atoms),
+           : ConcreteProperty<ViewsOfMol,MoleculeView>(other), 
+             selected_atoms(other.selected_atoms),
              views(other.views)
 {}
 
@@ -277,6 +281,27 @@ bool ViewsOfMol::operator!=(const ViewsOfMol &other) const
            views != other.views;
 }
 
+/** Return a string representation of these views */
+QString ViewsOfMol::toString() const
+{
+    return QObject::tr( "ViewsOfMol( %1 : %2 : nViews() == %3 )" )
+                .arg( this->name() )
+                .arg( this->number() )
+                .arg( this->nViews() );
+}
+
+/** Return whether or not this is empty */
+bool ViewsOfMol::isEmpty() const
+{
+    return selected_atoms.selectedNone();
+}
+
+/** Return whether or not this contains all atoms in the molecule */
+bool ViewsOfMol::selectedAll() const
+{
+    return selected_atoms.selectedAll();
+}
+
 /** Return the number of views in this set */
 int ViewsOfMol::nViews() const
 {
@@ -295,12 +320,6 @@ int ViewsOfMol::nViews() const
 int ViewsOfMol::count() const
 {
     return this->nViews();
-}
-
-/** Return whether or not this is an empty set of views */
-bool ViewsOfMol::isEmpty() const
-{
-    return selected_atoms.isEmpty();
 }
 
 /** Return the ith view in this set

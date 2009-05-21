@@ -79,7 +79,8 @@ typedef Editor<AtomEditor, Atom> AtomEditorBase;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT AtomEditor : public AtomEditorBase
+class SIREMOL_EXPORT AtomEditor 
+            : public SireBase::ConcreteProperty<AtomEditor,AtomEditorBase>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const AtomEditor&);
@@ -111,6 +112,8 @@ public:
     {
         return new AtomEditor(*this);
     }
+
+    QString toString() const;
 
     ResEditor residue() const;
     CGEditor cutGroup() const;
@@ -173,6 +176,10 @@ public:
 
     AtomStructureEditor& operator=(const Atom &atom);
     AtomStructureEditor& operator=(const AtomStructureEditor &other);
+
+    bool selectedAll() const;
+
+    QString toString() const;
 
     ResStructureEditor residue();
     CGStructureEditor cutGroup();

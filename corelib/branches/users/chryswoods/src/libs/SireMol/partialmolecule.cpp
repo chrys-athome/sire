@@ -90,12 +90,12 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-PartialMolecule::PartialMolecule() : MoleculeView()
+PartialMolecule::PartialMolecule() : ConcreteProperty<PartialMolecule,MoleculeView>()
 {}
 
 /** Construct from the passed view */
 PartialMolecule::PartialMolecule(const MoleculeView &molview)
-                : MoleculeView(molview),
+                : ConcreteProperty<PartialMolecule,MoleculeView>(molview),
                   selected_atoms(molview.selection())
 {}
 
@@ -103,7 +103,7 @@ PartialMolecule::PartialMolecule(const MoleculeView &molview)
     data is in 'moldata' */
 PartialMolecule::PartialMolecule(const MoleculeData &moldata,
                                  const AtomSelection &atoms)
-                : MoleculeView(moldata),
+                : ConcreteProperty<PartialMolecule,MoleculeView>(moldata),
                   selected_atoms(atoms)
 {
     atoms.assertCompatibleWith(moldata);
@@ -111,7 +111,7 @@ PartialMolecule::PartialMolecule(const MoleculeData &moldata,
 
 /** Copy constructor */
 PartialMolecule::PartialMolecule(const PartialMolecule &other)
-                : MoleculeView(other),
+                : ConcreteProperty<PartialMolecule,MoleculeView>(other),
                   selected_atoms(other.selected_atoms)
 {}           
 
@@ -147,6 +147,27 @@ bool PartialMolecule::operator!=(const PartialMolecule &other) const
 {
     return MoleculeView::operator!=(other) or
            selected_atoms != other.selected_atoms;
+}
+
+/** Return a string representation of this molecule */
+QString PartialMolecule::toString() const
+{
+    return QObject::tr( "PartialMolecule( %1 : %2 : nAtoms() == %3 )" )
+                .arg(this->name())
+                .arg(this->number())
+                .arg(selected_atoms.nSelected());
+}
+
+/** Return whether or not this is empty */
+bool PartialMolecule::isEmpty() const
+{
+    return selected_atoms.selectedNone();
+}
+
+/** Return whether or not this contains the entire molecule */
+bool PartialMolecule::selectedAll() const
+{
+    return selected_atoms.selectedAll();
 }
 
 /** Return the name of this molecule */

@@ -89,15 +89,17 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-CGEditor::CGEditor() : Editor<CGEditor,CutGroup>()
+CGEditor::CGEditor() : ConcreteProperty< CGEditor, Editor<CGEditor,CutGroup> >()
 {}
 
 /** Construct to edit a copy of the CutGroup 'cutgroup' */
-CGEditor::CGEditor(const CutGroup &cutgroup) : Editor<CGEditor,CutGroup>(cutgroup)
+CGEditor::CGEditor(const CutGroup &cutgroup) 
+         : ConcreteProperty< CGEditor, Editor<CGEditor,CutGroup> >(cutgroup)
 {}
 
 /** Copy constructor */
-CGEditor::CGEditor(const CGEditor &other) : Editor<CGEditor,CutGroup>(other)
+CGEditor::CGEditor(const CGEditor &other) 
+         : ConcreteProperty< CGEditor, Editor<CGEditor,CutGroup> >(other)
 {}
 
 /** Destructor */
@@ -116,6 +118,12 @@ CGEditor& CGEditor::operator=(const CGEditor &other)
 {
     Editor<CGEditor,CutGroup>::operator=(other);
     return *this;
+}
+
+/** Return a string representation of this editor */
+QString CGEditor::toString() const
+{
+    return QObject::tr( "Editor{ %1 }" ).arg(CutGroup::toString());
 }
 
 /** Return an editor for the molecule that contains this CutGroup */
@@ -378,10 +386,23 @@ CGStructureEditor& CGStructureEditor::operator=(const CGStructureEditor &other)
     return *this;
 }
 
+/** Return a string representation of this editor */
+QString CGStructureEditor::toString() const
+{
+    return QObject::tr( "StructureEditor{ CutGroup( %1 ) }" )
+                .arg( this->name() );
+}
+
 /** Return the name of this CutGroup */
 const CGName& CGStructureEditor::name() const
 {
     return this->cgName(uid);
+}
+
+/** Does this hold the entire molecule */
+bool CGStructureEditor::selectedAll() const
+{
+    return StructureEditor::nCutGroupsInMolecule() == 1;
 }
 
 /** Return the index of this CutGroup in the molecule */

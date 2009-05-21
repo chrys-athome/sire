@@ -138,12 +138,12 @@ void SireMol::detail::assertSameSize(Residue*, int nats, int nprops)
 }
 
 /** Null constructor */
-Residue::Residue() : MoleculeView()
+Residue::Residue() : ConcreteProperty<Residue,MoleculeView>()
 {}
 
 /** Construct as a specified residue */
 Residue::Residue(const MoleculeData &moldata, const ResID &resid)
-        : MoleculeView(moldata)
+        : ConcreteProperty<Residue,MoleculeView>(moldata)
 {
     residx = moldata.info().resIdx(resid);
     selected_atoms = AtomSelection(moldata);
@@ -152,7 +152,7 @@ Residue::Residue(const MoleculeData &moldata, const ResID &resid)
         
 /** Copy constructor */
 Residue::Residue(const Residue &other)
-        : MoleculeView(other), residx(other.residx),
+        : ConcreteProperty<Residue,MoleculeView>(other), residx(other.residx),
           selected_atoms(other.selected_atoms)
 {}
 
@@ -185,6 +185,26 @@ bool Residue::operator!=(const Residue &other) const
 {
     return residx != other.residx or
            MoleculeView::operator!=(other);
+}
+
+/** Return a string representation of this residue */
+QString Residue::toString() const
+{
+    return QObject::tr( "Residue( %1 : %2 )" )
+                .arg( this->name() )
+                .arg( this->number() );
+}
+
+/** Is this residue empty? */
+bool Residue::isEmpty() const
+{
+    return residx.isNull();
+}
+
+/** Is this residue the entire molecule? */
+bool Residue::selectedAll() const
+{
+    return d->info().nResidues() == 1;
 }
 
 /** Return the ith atom in this residue

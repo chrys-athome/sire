@@ -31,6 +31,7 @@
 
 #include <QHash>
 #include <QVector>
+#include <QUuid>
 
 #include "SireBase/packedarray2d.hpp"
 #include "SireMaths/vector.h"
@@ -121,12 +122,18 @@ public:
     bool selected(CGIdx cgidx) const;
 
     MolNum molNum() const;
+
+    const QUuid& molUID() const;
     
     int map(CGIdx cgidx) const;
 
 private:
     /** The number of this molecule */
     MolNum molnum;
+    
+    /** The UID of the molecular layout that the molecule possessed
+        when this table was last constructed */
+    QUuid moluid;
     
     /** The total number of CutGroups in this molecule */
     qint32 ncgroups;
@@ -228,6 +235,13 @@ private:
 inline MolNum MolForceTable::molNum() const
 {
     return molnum;
+}
+
+/** Return the UID of the molecular layout of the molecule
+    whose forces are contained in this table */
+inline const QUuid& MolForceTable::molUID() const
+{
+    return moluid;
 }
 
 /** Return the total number of CutGroups in the molecule whose

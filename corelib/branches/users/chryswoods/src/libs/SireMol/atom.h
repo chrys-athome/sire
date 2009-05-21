@@ -75,7 +75,7 @@ class Molecule;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT Atom : public MoleculeView
+class SIREMOL_EXPORT Atom : public SireBase::ConcreteProperty<Atom,MoleculeView>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Atom&);
@@ -106,17 +106,17 @@ public:
         return QMetaType::typeName( qMetaTypeId<Atom>() );
     }
     
-    const char* what() const
-    {
-        return Atom::typeName();
-    }
-    
     Atom* clone() const
     {
         return new Atom(*this);
     }
     
     AtomSelection selection() const;
+
+    QString toString() const;
+    
+    bool isEmpty() const;
+    bool selectedAll() const;
     
     void update(const MoleculeData &other);
 

@@ -76,7 +76,8 @@ typedef Editor<SegEditor, Segment> SegEditorBase;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT SegEditor : public Editor<SegEditor, Segment>
+class SIREMOL_EXPORT SegEditor 
+        : public SireBase::ConcreteProperty< SegEditor,Editor<SegEditor,Segment> >
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const SegEditor&);
@@ -99,15 +100,12 @@ public:
         return QMetaType::typeName( qMetaTypeId<SegEditor>() );
     }
     
-    const char *what() const
-    {
-        return SegEditor::typeName();
-    }
-    
     SegEditor* clone() const
     {
         return new SegEditor(*this);
     }
+
+    QString toString() const;
     
     MolEditor molecule() const;
     
@@ -173,6 +171,10 @@ public:
     
     SegStructureEditor& operator=(const Segment &residue);
     SegStructureEditor& operator=(const SegStructureEditor &other);
+    
+    QString toString() const;
+    
+    bool selectedAll() const;
     
     const SegName &name() const;
     SegIdx index() const;

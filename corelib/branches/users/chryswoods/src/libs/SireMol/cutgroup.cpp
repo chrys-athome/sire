@@ -125,7 +125,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, CutGroup &cg)
 }
 
 /** Null constructor */
-CutGroup::CutGroup() : MoleculeView(), cgidx( CGIdx::null() )
+CutGroup::CutGroup() : ConcreteProperty<CutGroup,MoleculeView>(), cgidx( CGIdx::null() )
 {}
 
 /** Construct the CutGroup at ID 'cgid' in the molecule whose data
@@ -136,12 +136,13 @@ CutGroup::CutGroup() : MoleculeView(), cgidx( CGIdx::null() )
     \throw SireError::invalid_index
 */
 CutGroup::CutGroup(const MoleculeData &moldata, const CGID &cgid)
-         : MoleculeView(moldata), cgidx( moldata.info().cgIdx(cgid) )
+         : ConcreteProperty<CutGroup,MoleculeView>(moldata), 
+           cgidx( moldata.info().cgIdx(cgid) )
 {}
 
 /** Copy constructor */
 CutGroup::CutGroup(const CutGroup &other)
-         : MoleculeView(other), cgidx(other.cgidx)
+         : ConcreteProperty<CutGroup,MoleculeView>(other), cgidx(other.cgidx)
 {}
 
 /** Destructor */
@@ -168,6 +169,24 @@ bool CutGroup::operator!=(const CutGroup &other) const
 {
     return cgidx != other.cgidx or
            MoleculeView::operator!=(other);
+}
+
+/** Return a string representation of this CutGroup */
+QString CutGroup::toString() const
+{
+    return QObject::tr( "CutGroup( %1 )" ).arg(this->name());
+}
+
+/** Is this CutGroup empty? */
+bool CutGroup::isEmpty() const
+{
+    return cgidx.isNull();
+}
+
+/** Is this CutGroup the whole molecule? */
+bool CutGroup::selectedAll() const
+{
+    return MoleculeView::data().info().nCutGroups() == 1;
 }
 
 /** Return the atoms that are in this CutGroup */

@@ -90,15 +90,17 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-ChainEditor::ChainEditor() : Editor<ChainEditor,Chain>()
+ChainEditor::ChainEditor() : ConcreteProperty< ChainEditor,Editor<ChainEditor,Chain> >()
 {}
 
 /** Construct to edit a copy of the Chain 'chain' */
-ChainEditor::ChainEditor(const Chain &chain) : Editor<ChainEditor,Chain>(chain)
+ChainEditor::ChainEditor(const Chain &chain) 
+            : ConcreteProperty< ChainEditor,Editor<ChainEditor,Chain> >(chain)
 {}
 
 /** Copy constructor */
-ChainEditor::ChainEditor(const ChainEditor &other) : Editor<ChainEditor,Chain>(other)
+ChainEditor::ChainEditor(const ChainEditor &other) 
+            : ConcreteProperty< ChainEditor,Editor<ChainEditor,Chain> >(other)
 {}
 
 /** Destructor */
@@ -117,6 +119,12 @@ ChainEditor& ChainEditor::operator=(const ChainEditor &other)
 {
     Editor<ChainEditor,Chain>::operator=(other);
     return *this;
+}
+
+/** Return a string representation of this chain */
+QString ChainEditor::toString() const
+{
+    return QObject::tr( "Editor{ %1 }" ).arg( Chain::toString() );
 }
 
 /** Return an editor for the molecule that contains this chain */
@@ -414,6 +422,19 @@ ChainStructureEditor& ChainStructureEditor::operator=(const ChainStructureEditor
     uid = other.uid;
     
     return *this;
+}
+
+/** Return a string representation of this chain */
+QString ChainStructureEditor::toString() const
+{
+    return QObject::tr( "StructureEditor{ Chain( %1 ) }" )
+                .arg( this->name() );
+}
+
+/** Return whether or not this chain is the whole molecule */
+bool ChainStructureEditor::selectedAll() const
+{
+    return StructureEditor::nChainsInMolecule() == 1;
 }
 
 /** Return the name of this Chain */

@@ -56,11 +56,13 @@ static const RegisterMetaType<MolForceTable> r_molforcetable;
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds,
                                       const MolForceTable &molforcetable)
 {
-    writeHeader(ds, r_molforcetable, 1);
+    writeHeader(ds, r_molforcetable, 2);
     
     SharedDataStream sds(ds);
     
-    sds << molforcetable.molnum << molforcetable.ncgroups
+    sds << molforcetable.molnum 
+        << molforcetable.moluid
+        << molforcetable.ncgroups
         << molforcetable.cgidx_to_idx
         << static_cast<const PackedArray2D<Vector>&>(molforcetable);
         
@@ -73,16 +75,29 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds,
 {
     VersionID v = readHeader(ds, r_molforcetable);
     
-    if (v == 1)
+    if (v == 2)
     {
         SharedDataStream sds(ds);
         
-        sds >> molforcetable.molnum >> molforcetable.ncgroups
+        sds >> molforcetable.molnum
+            >> molforcetable.moluid
+            >> molforcetable.ncgroups
             >> molforcetable.cgidx_to_idx
             >> static_cast<PackedArray2D<Vector>&>(molforcetable);
     }
+    else if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> molforcetable.molnum
+            >> molforcetable.ncgroups
+            >> molforcetable.cgidx_to_idx
+            >> static_cast<PackedArray2D<Vector>&>(molforcetable);
+
+        molforcetable.moluid = QUuid();
+    }
     else
-        throw version_error(v, "1", r_molforcetable, CODELOC);
+        throw version_error(v, "1,2", r_molforcetable, CODELOC);
         
     return ds;
 }
@@ -97,6 +112,7 @@ MolForceTable::MolForceTable() : PackedArray2D<Vector>(),
 MolForceTable::MolForceTable(const MoleculeView &molview)
               : PackedArray2D<Vector>(),
                 molnum(molview.data().number()),
+                moluid(molview.data().info().UID()),
                 ncgroups(molview.data().info().nCutGroups())
 {
     //build arrays for each selected CutGroup
@@ -139,7 +155,9 @@ MolForceTable::MolForceTable(const MoleculeView &molview)
 /** Copy constructor */
 MolForceTable::MolForceTable(const MolForceTable &other)
               : PackedArray2D<Vector>(other),
-                molnum(other.molnum), ncgroups(other.ncgroups),
+                molnum(other.molnum), 
+                moluid(other.moluid),
+                ncgroups(other.ncgroups),
                 cgidx_to_idx(other.cgidx_to_idx)
 {}
 
@@ -154,6 +172,7 @@ MolForceTable& MolForceTable::operator=(const MolForceTable &other)
     {
         PackedArray2D<Vector>::operator=(other);
         molnum = other.molnum;
+        moluid = other.moluid;
         ncgroups = other.ncgroups;
         cgidx_to_idx = other.cgidx_to_idx;
     }
@@ -164,7 +183,8 @@ MolForceTable& MolForceTable::operator=(const MolForceTable &other)
 /** Comparison operator */
 bool MolForceTable::operator==(const MolForceTable &other) const
 {
-    return molnum == other.molnum and cgidx_to_idx == other.cgidx_to_idx
+    return molnum == other.molnum and moluid == other.moluid
+             and cgidx_to_idx == other.cgidx_to_idx
              and PackedArray2D<Vector>::operator==(other);
 }
 

@@ -69,7 +69,7 @@ class Molecule;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT CutGroup : public MoleculeView
+class SIREMOL_EXPORT CutGroup : public SireBase::ConcreteProperty<CutGroup,MoleculeView>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const CutGroup&);
@@ -98,15 +98,15 @@ public:
         return QMetaType::typeName( qMetaTypeId<CutGroup>() );
     }
     
-    const char* what() const
-    {
-        return CutGroup::typeName();
-    }
-    
     CutGroup* clone() const
     {
         return new CutGroup(*this);
     }
+
+    QString toString() const;
+    
+    bool isEmpty() const;
+    bool selectedAll() const;
     
     AtomSelection selection() const;
     

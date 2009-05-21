@@ -95,7 +95,7 @@ class Segment;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT Molecule : public MoleculeView
+class SIREMOL_EXPORT Molecule : public SireBase::ConcreteProperty<Molecule,MoleculeView>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Molecule&);
@@ -118,12 +118,15 @@ public:
         return QMetaType::typeName( qMetaTypeId<Molecule>() );
     }
     
-    const char* what() const;
-    
     Molecule* clone() const
     {
         return new Molecule(*this);
     }
+
+    QString toString() const;
+    
+    bool isEmpty() const;
+    bool selectedAll() const;
     
     AtomSelection selection() const;
     
@@ -222,11 +225,6 @@ protected:
     void setMetadata(const QString &key, const QString &metakey,
                      const Property &value);
 };
-
-inline const char* Molecule::what() const
-{
-    return Molecule::typeName();
-}
 
 }
 

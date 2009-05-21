@@ -64,7 +64,8 @@ class Atom;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT PartialMolecule : public MoleculeView
+class SIREMOL_EXPORT PartialMolecule 
+        : public SireBase::ConcreteProperty<PartialMolecule,MoleculeView>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const PartialMolecule&);
@@ -86,11 +87,6 @@ public:
         return QMetaType::typeName( qMetaTypeId<PartialMolecule>() );
     }
 
-    const char* what() const
-    {
-        return PartialMolecule::typeName();
-    }
-
     PartialMolecule* clone() const
     {
         return new PartialMolecule(*this);
@@ -101,6 +97,11 @@ public:
 
     bool operator==(const PartialMolecule &other) const;
     bool operator!=(const PartialMolecule &other) const;
+
+    QString toString() const;
+    
+    bool isEmpty() const;
+    bool selectedAll() const;
 
     const MolName& name() const;
     MolNum number() const;

@@ -68,7 +68,7 @@ class Molecule;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT Residue : public MoleculeView
+class SIREMOL_EXPORT Residue : public SireBase::ConcreteProperty<Residue,MoleculeView>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Residue&);
@@ -98,15 +98,15 @@ public:
         return QMetaType::typeName( qMetaTypeId<Residue>() );
     }
     
-    const char* what() const
-    {
-        return Residue::typeName();
-    }
-    
     Residue* clone() const
     {
         return new Residue(*this);
     }
+
+    QString toString() const;
+    
+    bool isEmpty() const;
+    bool selectedAll() const;
 
     AtomSelection selection() const;
 

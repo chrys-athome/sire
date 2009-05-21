@@ -78,23 +78,23 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-Molecule::Molecule() : MoleculeView()
+Molecule::Molecule() : ConcreteProperty<Molecule,MoleculeView>()
 {}
 
 /** Construct a new Molecule, called 'molname' */
-Molecule::Molecule(const QString &molname) : MoleculeView()
+Molecule::Molecule(const QString &molname) : ConcreteProperty<Molecule,MoleculeView>()
 {
     this->operator=( this->edit().renumber().rename(molname).commit() );
 }
 
 /** Construct from the passed MoleculeData */
 Molecule::Molecule(const MoleculeData &moldata)
-         : MoleculeView(moldata)
+         : ConcreteProperty<Molecule,MoleculeView>(moldata)
 {}
 
 /** Copy constructor */
 Molecule::Molecule(const Molecule &other)
-         : MoleculeView(other)
+         : ConcreteProperty<Molecule,MoleculeView>(other)
 {}
 
 /** Destructor */
@@ -106,6 +106,27 @@ Molecule& Molecule::operator=(const Molecule &other)
 {
     d = other.d;
     return *this;
+}
+
+/** Return a string representation of this molecule */
+QString Molecule::toString() const
+{
+    return QObject::tr( "Molecule( %1 : %2 : UID == %3 )" )
+                .arg(this->name())
+                .arg(this->number())
+                .arg(this->data().info().UID().toString());
+}
+
+/** Return whether or not this is empty */
+bool Molecule::isEmpty() const
+{
+    return d->info().nAtoms() == 0;
+}
+
+/** Return whether or not this is a complete molecule */
+bool Molecule::selectedAll() const
+{
+    return not Molecule::isEmpty();
 }
 
 /** Return which atoms are selected in this view */

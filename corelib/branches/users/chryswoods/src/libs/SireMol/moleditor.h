@@ -80,7 +80,8 @@ typedef Editor<MolEditor, Molecule> MolEditorBase;
     
     @author Christopher Woods
 */
-class SIREMOL_EXPORT MolEditor : public Editor<MolEditor,Molecule>
+class SIREMOL_EXPORT MolEditor 
+            : public SireBase::ConcreteProperty< MolEditor,Editor<MolEditor,Molecule> >
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MolEditor&);
@@ -100,15 +101,12 @@ public:
         return QMetaType::typeName( qMetaTypeId<MolEditor>() );
     }
     
-    const char* what() const
-    {
-        return MolEditor::typeName();
-    }
-    
     MolEditor* clone() const
     {
         return new MolEditor(*this);
     }
+
+    QString toString() const;
     
     MolEditor& operator=(const Molecule &molecule);
     MolEditor& operator=(const MolEditor &other);
@@ -193,6 +191,10 @@ public:
     MolStructureEditor& operator=(const MoleculeView &molview);
     MolStructureEditor& operator=(const StructureEditor &other);
     MolStructureEditor& operator=(const MolStructureEditor &other);
+
+    QString toString() const;
+    
+    bool selectedAll() const;
 
     const MolName& name() const;
     MolNum number() const;

@@ -30,6 +30,7 @@
 #define SIREMOVE_VELOCITYVERLET_H
 
 #include "integrator.h"
+#include "velocitygenerator.h"
 
 #include "SireFF/forcetable.h"
 
@@ -107,6 +108,9 @@ private:
     
     /** The forces on the atoms */
     SireFF::ForceTable f;
+    
+    /** The generator used to generate new velocities */
+    VelGenPtr vel_generator;
     
     /** The unique ID number of the last system to be integrated */
     QUuid last_sys_uid;

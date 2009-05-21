@@ -81,7 +81,8 @@ using SireVol::AABox;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT Evaluator : public MoleculeView
+class SIREMOL_EXPORT Evaluator 
+            : public SireBase::ConcreteProperty<Evaluator,MoleculeView>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Evaluator&);
@@ -106,15 +107,15 @@ public:
         return QMetaType::typeName( qMetaTypeId<Evaluator>() );
     }
 
-    const char* what() const
-    {
-        return Evaluator::typeName();
-    }
-
     Evaluator* clone() const
     {
         return new Evaluator(*this);
     }
+    
+    QString toString() const;
+    
+    bool isEmpty() const;
+    bool selectedAll() const;
 
     bool hasProperty(const PropertyName&) const
     {

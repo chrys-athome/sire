@@ -81,26 +81,28 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Evaluator &eval)
 }
 
 /** Null constructor */
-Evaluator::Evaluator() : MoleculeView()
+Evaluator::Evaluator() : ConcreteProperty<Evaluator,MoleculeView>()
 {}
 
 /** Construct from the passed molecule view */
 Evaluator::Evaluator(const MoleculeView &molecule)
-          : MoleculeView(molecule), selected_atoms(molecule.selection())
+          : ConcreteProperty<Evaluator,MoleculeView>(molecule), 
+            selected_atoms(molecule.selection())
 {}
 
 /** Construct to evaluate properties of the passed selected atoms
     of the molecule viewed in 'molecule' */
 Evaluator::Evaluator(const MoleculeView &molecule,
                      const AtomSelection &atoms)
-          : MoleculeView(molecule), selected_atoms(atoms)
+          : ConcreteProperty<Evaluator,MoleculeView>(molecule), selected_atoms(atoms)
 {
     selected_atoms.assertCompatibleWith(this->data());
 }
 
 /** Copy constructor */
 Evaluator::Evaluator(const Evaluator &other)
-          : MoleculeView(other), selected_atoms(other.selected_atoms)
+          : ConcreteProperty<Evaluator,MoleculeView>(other), 
+            selected_atoms(other.selected_atoms)
 {}
 
 /** Destructor */
@@ -126,6 +128,25 @@ Evaluator& Evaluator::operator=(const MoleculeView &other)
     selected_atoms = other.selection();
     
     return *this;
+}
+
+/** Return a string representation of this evaluator */
+QString Evaluator::toString() const
+{
+    return QObject::tr( "Evaluator( nAtoms() == %1 )" )
+            .arg( selected_atoms.nSelected() );
+}
+
+/** Return whether or not this is empty */
+bool Evaluator::isEmpty() const
+{
+    return selected_atoms.selectedNone();
+}
+
+/** Return whether or not this contains the whole molecule */
+bool Evaluator::selectedAll() const
+{
+    return selected_atoms.selectedAll();
 }
 
 /** Return the selected atoms over which the properties

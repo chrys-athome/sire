@@ -89,15 +89,17 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-SegEditor::SegEditor() : Editor<SegEditor,Segment>()
+SegEditor::SegEditor() : ConcreteProperty< SegEditor,Editor<SegEditor,Segment> >()
 {}
 
 /** Construct to edit a copy of the Segment 'segment' */
-SegEditor::SegEditor(const Segment &segment) : Editor<SegEditor,Segment>(segment)
+SegEditor::SegEditor(const Segment &segment) 
+          : ConcreteProperty< SegEditor,Editor<SegEditor,Segment> >(segment)
 {}
 
 /** Copy constructor */
-SegEditor::SegEditor(const SegEditor &other) : Editor<SegEditor,Segment>(other)
+SegEditor::SegEditor(const SegEditor &other) 
+          : ConcreteProperty< SegEditor,Editor<SegEditor,Segment> >(other)
 {}
 
 /** Destructor */
@@ -116,6 +118,13 @@ SegEditor& SegEditor::operator=(const SegEditor &other)
 {
     Editor<SegEditor,Segment>::operator=(other);
     return *this;
+}
+
+/** Return a string representation of this editor */
+QString SegEditor::toString() const
+{
+    return QObject::tr( "Editor{ %1 }" )
+                .arg( Segment::toString() );
 }
 
 /** Return an editor for the molecule that contains this Segment */
@@ -376,6 +385,19 @@ SegStructureEditor& SegStructureEditor::operator=(const SegStructureEditor &othe
     uid = other.uid;
     
     return *this;
+}
+
+/** Return a string representation of this editor */
+QString SegStructureEditor::toString() const
+{
+    return QObject::tr( "StructureEditor{ Segment( %1 ) }" )
+                .arg( this->name() );
+}
+
+/** Return whether or not this segment is the whole molecule */
+bool SegStructureEditor::selectedAll() const
+{
+    return StructureEditor::nSegmentsInMolecule() == 1;
 }
 
 /** Return the name of this Segment */

@@ -125,7 +125,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Segment &seg)
 }
 
 /** Null constructor */
-Segment::Segment() : MoleculeView(), segidx( SegIdx::null() )
+Segment::Segment() : ConcreteProperty<Segment,MoleculeView>(), segidx( SegIdx::null() )
 {}
 
 /** Construct the Segment at ID 'cgid' in the molecule whose data
@@ -136,7 +136,8 @@ Segment::Segment() : MoleculeView(), segidx( SegIdx::null() )
     \throw SireError::invalid_index
 */
 Segment::Segment(const MoleculeData &moldata, const SegID &segid)
-      : MoleculeView(moldata), segidx( moldata.info().segIdx(segid) )
+      : ConcreteProperty<Segment,MoleculeView>(moldata), 
+        segidx( moldata.info().segIdx(segid) )
 {
     selected_atoms = AtomSelection(moldata);
     selected_atoms.selectOnly(segidx);
@@ -144,7 +145,7 @@ Segment::Segment(const MoleculeData &moldata, const SegID &segid)
 
 /** Copy constructor */
 Segment::Segment(const Segment &other)
-        : MoleculeView(other), segidx(other.segidx),
+        : ConcreteProperty<Segment,MoleculeView>(other), segidx(other.segidx),
           selected_atoms(other.selected_atoms)
 {}
 
@@ -173,6 +174,25 @@ bool Segment::operator!=(const Segment &other) const
 {
     return segidx != other.segidx or
            MoleculeView::operator!=(other);
+}
+
+/** Return a string representation of this segment */
+QString Segment::toString() const
+{
+    return QObject::tr( "Segment( %1 )" )
+                .arg( this->name() );
+}
+
+/** Return whether or not this segment is empty */
+bool Segment::isEmpty() const
+{
+    return selected_atoms.selectedNone();
+}
+
+/** Return whether or not this segment contains the entire molecule */
+bool Segment::selectedAll() const
+{
+    return selected_atoms.selectedAll();
 }
 
 /** Return the atoms that are in this Segment */

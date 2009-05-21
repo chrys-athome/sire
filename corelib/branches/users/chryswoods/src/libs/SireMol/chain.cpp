@@ -127,7 +127,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Chain &chain)
 }
 
 /** Null constructor */
-Chain::Chain() : MoleculeView(), chainidx( ChainIdx::null() )
+Chain::Chain() : ConcreteProperty<Chain,MoleculeView>(), chainidx( ChainIdx::null() )
 {}
 
 /** Construct the chain at ID 'chainid' in the molecule whose data
@@ -138,7 +138,8 @@ Chain::Chain() : MoleculeView(), chainidx( ChainIdx::null() )
     \throw SireError::invalid_index
 */
 Chain::Chain(const MoleculeData &moldata, const ChainID &chainid)
-      : MoleculeView(moldata), chainidx( moldata.info().chainIdx(chainid) )
+      : ConcreteProperty<Chain,MoleculeView>(moldata), 
+        chainidx( moldata.info().chainIdx(chainid) )
 {
     selected_atoms = AtomSelection(moldata);
     selected_atoms.selectOnly(chainidx);
@@ -146,7 +147,7 @@ Chain::Chain(const MoleculeData &moldata, const ChainID &chainid)
 
 /** Copy constructor */
 Chain::Chain(const Chain &other)
-      : MoleculeView(other), chainidx(other.chainidx),
+      : ConcreteProperty<Chain,MoleculeView>(other), chainidx(other.chainidx),
         selected_atoms(other.selected_atoms)
 {}
 
@@ -175,6 +176,24 @@ bool Chain::operator!=(const Chain &other) const
 {
     return chainidx != other.chainidx or
            MoleculeView::operator!=(other);
+}
+
+/** Return a string representation of this chain */
+QString Chain::toString() const
+{
+    return QObject::tr( "Chain( %1 )" ).arg( this->name() );
+}
+
+/** Is this chain empty? */
+bool Chain::isEmpty() const
+{
+    return chainidx.isNull();
+}
+
+/** Is this chain the entire molecule? */
+bool Chain::selectedAll() const
+{
+    return d->info().nChains() == 1;
 }
 
 /** Return the atoms that are in this chain */

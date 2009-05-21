@@ -2122,6 +2122,26 @@ EditMolInfo& EditMolInfo::operator=(const EditMolInfo &other)
     return *this;
 }
 
+/** Return a string representation */
+QString EditMolInfo::toString() const
+{
+    return QObject::tr( "EditMolInfo( %1 : %2 )" )
+                .arg( this->molName() )
+                .arg( this->molNum() );
+}
+
+/** Clone this info */
+EditMolInfo* EditMolInfo::clone() const
+{
+    return new EditMolInfo(*this);
+}
+
+/** Is this the entire molecule */
+bool EditMolInfo::selectedAll() const
+{
+    return not StructureEditor::isEmpty();
+}
+
 /** Return the indicies of all of the atoms that have the name 'name'
 
     \throw SireMol::missing_atom
@@ -3126,6 +3146,12 @@ int StructureEditor::nAtomsInMolecule() const
     this->assertSane();
 
     return d->atoms.count();
+}
+
+/** Return whether or not this molecule is empty */
+bool StructureEditor::isEmpty() const
+{
+    return this->nAtomsInMolecule() == 0;
 }
 
 /** Return the number of residues in this molecule */

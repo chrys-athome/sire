@@ -69,7 +69,7 @@ class Molecule;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT Segment : public MoleculeView
+class SIREMOL_EXPORT Segment : public SireBase::ConcreteProperty<Segment,MoleculeView>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Segment&);
@@ -98,15 +98,15 @@ public:
         return QMetaType::typeName( qMetaTypeId<Segment>() );
     }
     
-    const char* what() const
-    {
-        return Segment::typeName();
-    }
-    
     Segment* clone() const
     {
         return new Segment(*this);
     }
+
+    QString toString() const;
+    
+    bool isEmpty() const;
+    bool selectedAll() const;
     
     AtomSelection selection() const;
     

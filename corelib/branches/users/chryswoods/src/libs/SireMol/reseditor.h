@@ -76,7 +76,8 @@ typedef Editor<ResEditor, Residue> ResEditorBase;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT ResEditor : public Editor<ResEditor, Residue>
+class SIREMOL_EXPORT ResEditor 
+        : public SireBase::ConcreteProperty< ResEditor,Editor<ResEditor,Residue> >
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const ResEditor&);
@@ -99,15 +100,12 @@ public:
         return QMetaType::typeName( qMetaTypeId<ResEditor>() );
     }
     
-    const char *what() const
-    {
-        return ResEditor::typeName();
-    }
-    
     ResEditor* clone() const
     {
         return new ResEditor(*this);
     }
+
+    QString toString() const;
     
     ChainEditor chain() const;
     MolEditor molecule() const;
@@ -178,6 +176,10 @@ public:
     
     ResStructureEditor& operator=(const Residue &residue);
     ResStructureEditor& operator=(const ResStructureEditor &other);
+    
+    QString toString() const;
+    
+    bool selectedAll() const;
     
     const ResName& name() const;
     ResNum number() const;

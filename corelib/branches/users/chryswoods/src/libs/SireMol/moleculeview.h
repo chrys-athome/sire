@@ -32,6 +32,7 @@
 #include <QSharedData>
 
 #include "SireBase/shareddatapointer.hpp"
+#include "SireBase/property.h"
 
 #include "moleculedata.h"
 #include "moleculeinfodata.h"
@@ -59,7 +60,7 @@ class AtomSelection;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT MoleculeView
+class SIREMOL_EXPORT MoleculeView : public SireBase::Property
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const MoleculeView&);
@@ -72,9 +73,6 @@ public:
     {
         return "SireMol::MoleculeView";
     }
-
-    /** Return the type name of this view */
-    virtual const char* what() const=0;
     
     /** Return a clone of this view */
     virtual MoleculeView* clone() const=0;
@@ -92,6 +90,16 @@ public:
     {
         return *d;
     }
+
+    /** Return a string representation of this molecule view */
+    virtual QString toString() const=0;
+
+    /** Return whether or not this molecule view is empty */
+    virtual bool isEmpty() const=0;
+    
+    /** Return whether or not this molecule view holds a complete
+        view of a molecule */
+    virtual bool selectedAll() const=0;
 
     /** Return the atoms that are selected as part of this view */
     virtual AtomSelection selection() const=0;

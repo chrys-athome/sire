@@ -86,17 +86,17 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 }
 
 /** Null constructor */
-MolEditor::MolEditor() : Editor<MolEditor, Molecule>()
+MolEditor::MolEditor() : ConcreteProperty< MolEditor,Editor<MolEditor,Molecule> >()
 {}
 
 /** Construct an editor to edit a copy of 'molecule' */
 MolEditor::MolEditor(const Molecule &molecule)
-          : Editor<MolEditor, Molecule>(molecule)
+          : ConcreteProperty< MolEditor,Editor<MolEditor,Molecule> >(molecule)
 {}
 
 /** Copy constructor */
 MolEditor::MolEditor(const MolEditor &other)
-          : Editor<MolEditor, Molecule>(other)
+          : ConcreteProperty< MolEditor,Editor<MolEditor,Molecule> >(other)
 {}
 
 /** Destructor */
@@ -115,6 +115,12 @@ MolEditor& MolEditor::operator=(const MolEditor &other)
 {
     Editor<MolEditor, Molecule>::operator=(other);
     return *this;
+}
+
+/** Return a string representation of this editor */
+QString MolEditor::toString() const
+{
+    return QObject::tr( "Editor{ %1 }" ).arg( Molecule::toString() );
 }
 
 /** Return an editor for the atom at ID 'atomid'
@@ -487,6 +493,20 @@ MolStructureEditor& MolStructureEditor::operator=(const MolStructureEditor &othe
 {
     StructureEditor::operator=(other);
     return *this;
+}
+
+/** Return a string representation of this editor */
+QString MolStructureEditor::toString() const
+{
+    return QObject::tr( "StructureEditor{ Molecule( %1 : %2 ) }" )
+                    .arg(this->name())
+                    .arg(this->number());
+}
+
+/** Return whether or not this is a complete molecule */
+bool MolStructureEditor::selectedAll() const
+{
+    return not StructureEditor::isEmpty();
 }
 
 /** Return an editor for the atom at ID 'atomid'
