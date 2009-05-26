@@ -32,9 +32,9 @@ def fix_MolView(c, molview, props):
    #add accessor functions for all of the view properties
    for property in props.properties():
        p = property[0]
-       prop = property[1].replace("::","_")
+       prop = property[1].replace("::","_").replace("<","_").replace(">","_")
 
-       c.add_registration_code( "def( \"_get_property_%s\", &%s::property<%s>, %s)" \
+       c.add_registration_code( "def( \"_get_property_%s\", &%s::property< %s >, %s)" \
                                       % (prop, molview, p, return_const) )
        c.add_registration_code( "def( \"_get_metadata_%s\", get_Metadata_%s_function1, %s)" \
                                       % (prop, prop, return_const) )
@@ -42,12 +42,12 @@ def fix_MolView(c, molview, props):
                                       % (prop, prop, return_const) )
 
        c.add_declaration_code( """ const %s& get_Metadata_%s_function1(const %s &atom,
-                                   const QString &metakey){ return atom.metadata<%s>(metakey); }""" \
+                                   const QString &metakey){ return atom.metadata< %s >(metakey); }""" \
                                       % (p, prop, molview, p) )
  
        c.add_declaration_code( """ const %s& get_Metadata_%s_function2(const %s &atom,
                                    const QString &key, const QString &metakey){
-                                        return atom.metadata<%s>(key, metakey); }""" \
+                                        return atom.metadata< %s >(key, metakey); }""" \
                                       % (p, prop, molview, p) )
 
 def fix_Atom(c):
@@ -101,28 +101,29 @@ def fix_MolViewEditorBase(c, molview, props):
    #add accessor functions for all of the atom properties
    for property in props.properties():
        p = property[0]
-       prop = property[1].replace("::","_")
+       p_rep = p.replace("::","_").replace("<","_").replace(">","_")
+       prop = property[1].replace("::","_").replace("<","_").replace(">","_")
 
        c.add_registration_code( """def( \"_set_property_%s\", 
-                                   &%s::setProperty<%s>, %s )""" \
-                                   % (p.replace("::","_"), molview, p, return_self ) )
+                                   &%s::setProperty< %s >, %s )""" \
+                                   % (p_rep, molview, p, return_self ) )
 
        c.add_registration_code( "def( \"_set_metadata_%s\", &set_Metadata_%s_function1, %s)" \
-                                   % (p.replace("::","_"), prop, return_self) )
+                                   % (p_rep, prop, return_self) )
 
        c.add_registration_code( "def( \"_set_metadata_%s\", &set_Metadata_%s_function2, %s)" \
-                                   % (p.replace("::","_"), prop, return_self) )
+                                   % (p_rep, prop, return_self) )
 
        c.add_declaration_code( """%s& set_Metadata_%s_function1(
                                   %s &molview,
                                    const QString &metakey, const %s &p)
-                                   { return molview.setMetadata<%s>(metakey, p); }""" \
+                                   { return molview.setMetadata< %s >(metakey, p); }""" \
                                       % (molview, prop, molview, p, p) )
 
        c.add_declaration_code( """%s& set_Metadata_%s_function2(
                                   %s &molview,
                                    const QString &key, const QString &metakey, const %s &p)
-                                   { return molview.setMetadata<%s>(key, metakey, p); }""" \
+                                   { return molview.setMetadata< %s >(key, metakey, p); }""" \
                                       % (molview, prop, molview, p, p) )
 
 def fix_AtomEditorBase(c):
@@ -379,7 +380,10 @@ special_code = { "SireMol::Atom" : fix_Atom,
 
                  "AtomCoords" : fix_AtomCoords,
                  "AtomCharges" : fix_MolViewProperty,
-                 "AtomElements" : fix_MolViewProperty,                
+                 "AtomElements" : fix_MolViewProperty,
+                 "AtomForces" : fix_MolViewProperty,                
+                 "AtomMasses"  : fix_MolViewProperty,
+                 "AtomVelocities" : fix_MolViewProperty,
 
                  "SireMol::ConnectivityEditor" : fix_ConnectivityEditor,
                  "SireMol::MGName" : fix_MGName,
