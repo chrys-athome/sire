@@ -94,7 +94,9 @@ MolecularDynamics::MolecularDynamics()
 MolecularDynamics::MolecularDynamics(const MoleculeGroup &moleculegroup)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(),
                     intgrator( VelocityVerlet() ), num_moves(0)
-{}
+{
+    intgrator.edit().setMoleculeGroup(moleculegroup);
+}
 
 /** Construct using the supplied integrator */
 MolecularDynamics::MolecularDynamics(const Integrator &integrator)
@@ -108,7 +110,9 @@ MolecularDynamics::MolecularDynamics(const MoleculeGroup &moleculegroup,
                                      const Integrator &integrator)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(),
                     intgrator(integrator), num_moves(0)
-{}
+{
+    intgrator.edit().setMoleculeGroup(moleculegroup);
+}
 
 /** Construct a move for the passed molecule group, integrated
     using the supplied integrator */
@@ -116,7 +120,9 @@ MolecularDynamics::MolecularDynamics(const Integrator &integrator,
                                      const MoleculeGroup &moleculegroup)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(),
                     intgrator(integrator), num_moves(0)
-{}
+{
+    intgrator.edit().setMoleculeGroup(moleculegroup);
+}
 
 /** Copy constructor */
 MolecularDynamics::MolecularDynamics(const MolecularDynamics &other)

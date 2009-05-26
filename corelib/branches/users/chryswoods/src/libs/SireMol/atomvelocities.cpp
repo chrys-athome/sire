@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007  Christopher Woods
+  *  Copyright (C) 2009  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,32 +26,3 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_ATOMMASSES_H
-#define SIREMOL_ATOMMASSES_H
-
-#include "atomproperty.hpp"
-
-#include "SireUnits/dimensions.h"
-
-SIRE_BEGIN_HEADER
-
-namespace SireMol
-{
-
-typedef AtomProperty<SireUnits::Dimension::MolarMass> AtomMasses;
-
-}
-
-Q_DECLARE_METATYPE( SireMol::AtomMasses );
-
-SIRE_EXPOSE_ATOM_PROPERTY( SireUnits::Dimension::MolarMass, 
-                           SireMol::AtomMasses )
-
-#ifdef SIRE_INSTANTIATE_TEMPLATES
-template class SireMol::AtomProperty<SireUnits::Dimension::MolarMass>;
-#endif
-
-
-SIRE_END_HEADER
-
-#endif

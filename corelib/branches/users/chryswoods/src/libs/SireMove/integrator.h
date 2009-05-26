@@ -212,6 +212,7 @@ typedef SireBase::PropPtr<Integrator> IntegratorPtr;
 
 Q_DECLARE_METATYPE( SireMove::NullIntegrator )
 
+SIRE_EXPOSE_CLASS( SireMove::Integrator )
 SIRE_EXPOSE_CLASS( SireMove::NullIntegrator )
 
 SIRE_EXPOSE_PROPERTY( SireMove::IntegratorPtr, SireMove::Integrator )

@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007  Christopher Woods
+  *  Copyright (C) 2009  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,10 +26,12 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_ATOMMASSES_H
-#define SIREMOL_ATOMMASSES_H
+#ifndef SIREMOL_ATOMVELOCITIES_H
+#define SIREMOL_ATOMVELOCITIES_H
 
 #include "atomproperty.hpp"
+
+#include "SireBase/vector3d.hpp"
 
 #include "SireUnits/dimensions.h"
 
@@ -38,19 +40,28 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
-typedef AtomProperty<SireUnits::Dimension::MolarMass> AtomMasses;
+using SireUnits::Dimension::Velocity;
+
+typedef SireBase::Vector3D<Velocity> Velocity3D;
+
+typedef AtomProperty<Velocity3D> AtomVelocities;
 
 }
 
-Q_DECLARE_METATYPE( SireMol::AtomMasses );
+SIRE_EXPOSE_ALIAS( 
+        (SireBase::Vector3D<SireUnits::Dimension::PhysUnit<0, 1, -1, 0, 0, 0, 0> >),
+        SireMol::Velocity3D )
+                   
+Q_DECLARE_METATYPE( SireMol::AtomVelocities );
+Q_DECLARE_METATYPE( SireMol::Velocity3D );
 
-SIRE_EXPOSE_ATOM_PROPERTY( SireUnits::Dimension::MolarMass, 
-                           SireMol::AtomMasses )
+SIRE_EXPOSE_ATOM_PROPERTY( SireBase::Vector3D<SireUnits::Dimension::Velocity>,
+                           SireMol::AtomVelocities )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
-template class SireMol::AtomProperty<SireUnits::Dimension::MolarMass>;
+template class SireBase::Vector3D<SireUnits::Dimension::Velocity>;
+template class SireMol::AtomProperty<SireMol::Velocity3D>;
 #endif
-
 
 SIRE_END_HEADER
 

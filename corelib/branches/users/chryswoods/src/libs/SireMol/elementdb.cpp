@@ -34,11 +34,15 @@
 
 #include "elementdb.h"
 
+#include "SireUnits/units.h"
+
 #include "SireStream/datastream.h"
 
 using namespace SireStream;
 using namespace SireStream;
 using namespace SireMol;
+using namespace SireUnits;
+using namespace SireUnits::Dimension;
 
 static const RegisterMetaType<Element> r_element;
 
@@ -79,13 +83,16 @@ namespace SireMol
 class ElementData
 {
 public:
-    ElementData(unsigned int protnum, QString name, QString symbol, int group,
+    ElementData(int protnum, QString name, QString symbol, int group,
                 int period, double covalent_radii, double bond_order_radii,
-                double vdw_radii, unsigned int maxbonds,
+                double vdw_radii, int maxbonds,
                 double mass, double elec_neg, float red, float green, float blue);
     ~ElementData();
 
-    double cov_rad, bond_rad, vdw_rad, mss, electro;
+    Length cov_rad, bond_rad, vdw_rad;
+    MolarMass mss;
+    double electro;
+
     float r, g, b;
     QString symb;
     QString name;
@@ -97,13 +104,17 @@ public:
 };
 }
 
-ElementData::ElementData(unsigned int pnum, QString nam, QString sym, int grp, int per,
-                         double crad, double brad, double vdw, unsigned int mxb,
+ElementData::ElementData(int pnum, QString nam, QString sym, int grp, int per,
+                         double crad, double brad, double vdw, int mxb,
                          double m, double elec, float rd, float grn, float blu)
-        : cov_rad(crad), bond_rad(brad), vdw_rad(vdw), mss(m), electro(elec),
-        r(rd), g(grn), b(blu), symb(sym), name(nam),
-        protnum(static_cast<uchar>(pnum)), maxbonds(static_cast<uchar>(mxb)),
-        group(static_cast<uchar>(grp)), period(static_cast<uchar>(per))
+        : cov_rad(crad * angstrom), 
+          bond_rad(brad * angstrom), 
+          vdw_rad(vdw * angstrom), 
+          mss(m * g_per_mol), 
+          electro(elec),
+          r(rd), g(grn), b(blu), symb(sym), name(nam),
+          protnum(static_cast<uchar>(pnum)), maxbonds(static_cast<uchar>(mxb)),
+          group(static_cast<uchar>(grp)), period(static_cast<uchar>(per))
 {}
 
 ElementData::~ElementData()
@@ -173,7 +184,7 @@ const Element& Element::operator=(const Element &element)
 }
 
 /** Return the number of protons in the element */    
-unsigned int Element::nProtons() const
+int Element::nProtons() const
 {
     return eldata->protnum;
 }
@@ -206,41 +217,41 @@ int Element::period() const
 }
 
 /** Return the element's covalent radius */
-double Element::covalentRadius() const
+Length Element::covalentRadius() const
 {
     return eldata->cov_rad;
 }
 
 /** Return the bond order radius */
-double Element::bondOrderRadius() const
+Length Element::bondOrderRadius() const
 {
     return eldata->bond_rad;
 }
 
 /** Return the van der waals radius */
-double Element::vdwRadius() const
+Length Element::vdwRadius() const
 {
     return eldata->vdw_rad;
 }
 
 /** Return the maximum number of simultaneous bonds that this
     element can form */
-unsigned int Element::maxBonds() const
+int Element::maxBonds() const
 {
     return eldata->maxbonds;
 }
 
 /** Return the average mass of this element */
-double Element::mass() const
+MolarMass Element::mass() const
 {
     return eldata->mss;
 }
 
 /** Return the element's electronegativity */
-double Element::electroNegativity() const
+/*double Element::electroNegativity() const
 {
     return eldata->electro;
-}
+}*/
 
 /** Return the red colour components (0.0->1.0) for
     the colour of this element */
@@ -323,7 +334,7 @@ void ElementDB::import(ElementData *element)
     nameindex.insert(element->name.toLower(),element);
 }
 
-ElementData* ElementDB::element(unsigned int z) const
+ElementData* ElementDB::element(int z) const
 {
     if (protonindex.contains(z))
         return protonindex.value(z);
@@ -484,8 +495,10 @@ QString Element::toString() const
 
 /** Return an element which has the closest mass to 'mass' (in atomic 
     mass units, g mol-1) */
-Element Element::elementWithMass(double mass)
+Element Element::elementWithMass(const MolarMass &molar_mass)
 {
+    double mass = molar_mass.to( g_per_mol );
+
     //round up the mass to the nearest integer to see if we can match to
     //a core, biological type
     int i_mass = int( mass + 0.5 );    //this rounds to the nearest int

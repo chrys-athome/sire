@@ -39,6 +39,8 @@
 
 #include "SireBase/errors.h"
 
+#include "SireUnits/dimensions.h"
+
 #include "SireStream/datastream.h"
 
 #include <QDebug>
@@ -46,6 +48,7 @@
 using namespace SireMol;
 using namespace SireMaths;
 using namespace SireVol;
+using namespace SireUnits::Dimension;
 using namespace SireStream;
 
 static const RegisterMetaType<Evaluator> r_eval;
@@ -264,9 +267,9 @@ Sphere Evaluator::boundingSphere(const PropertyMap &map) const
     return this->aaBox(map).boundingSphere();
 }
 
-double calc_mass(const PackedArray2D<SireUnits::Dimension::Mass>::Array &masses)
+double calc_mass(const PackedArray2D<SireUnits::Dimension::MolarMass>::Array &masses)
 {
-    const SireUnits::Dimension::Mass *masses_array = masses.constData();
+    const SireUnits::Dimension::MolarMass *masses_array = masses.constData();
     int nmasses = masses.count();
     
     double m = 0;
@@ -279,10 +282,11 @@ double calc_mass(const PackedArray2D<SireUnits::Dimension::Mass>::Array &masses)
     return m;
 }
 
-static double calc_mass(const PackedArray2D<SireUnits::Dimension::Mass>::Array &masses,
-                        const QSet<Index> &idxs)
+static double 
+calc_mass(const PackedArray2D<SireUnits::Dimension::MolarMass>::Array &masses,
+          const QSet<Index> &idxs)
 {
-    const SireUnits::Dimension::Mass *masses_array = masses.constData();
+    const SireUnits::Dimension::MolarMass *masses_array = masses.constData();
     
     double m = 0;
     
@@ -299,7 +303,7 @@ static double get_mass(const AtomMasses &masses,
 {
     double m = 0;
     
-    const PackedArray2D<SireUnits::Dimension::Mass>::Array *masses_array 
+    const PackedArray2D<SireUnits::Dimension::MolarMass>::Array *masses_array 
                                             = masses.constData();
     int ncg = masses.count();
 
@@ -424,20 +428,20 @@ static const Property& get_mass_property(const MoleculeData &moldata,
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
 */
-double Evaluator::mass(const PropertyMap &map) const
+MolarMass Evaluator::mass(const PropertyMap &map) const
 {
     if (selected_atoms.selectedNone())
-        return 0;
+        return MolarMass(0);
 
     const Property &p = get_mass_property(*d, map);
     
     if (p.isA<AtomMasses>())
     {
-        return get_mass(p.asA<AtomMasses>(), selected_atoms);
+        return MolarMass( get_mass(p.asA<AtomMasses>(), selected_atoms) );
     }
     else if (p.isA<AtomElements>())
     {
-        return get_mass(p.asA<AtomElements>(), selected_atoms);
+        return MolarMass( get_mass(p.asA<AtomElements>(), selected_atoms) );
     }
     else
         throw SireError::invalid_cast( QObject::tr(
@@ -445,7 +449,7 @@ double Evaluator::mass(const PropertyMap &map) const
             "AtomMasses or AtomElements property!")
                 .arg(p.what()), CODELOC );
 
-    return 0;
+    return MolarMass(0);
 }
 
 int addToAvg(const CoordGroup &coords, Vector &avg)
@@ -537,12 +541,13 @@ Vector Evaluator::centerOfGeometry(const PropertyMap &map) const
     return avg / navg;
 }
 
-static double addToAvg(const CoordGroup &coords, 
-                       const PackedArray2D<SireUnits::Dimension::Mass>::Array &masses, 
-                       Vector &avg)
+static double 
+addToAvg(const CoordGroup &coords, 
+         const PackedArray2D<SireUnits::Dimension::MolarMass>::Array &masses, 
+         Vector &avg)
 {
     const Vector *coords_array = coords.constData();
-    const SireUnits::Dimension::Mass *masses_array = masses.constData();
+    const SireUnits::Dimension::MolarMass *masses_array = masses.constData();
     
     int nats = coords.count();
     
@@ -558,11 +563,11 @@ static double addToAvg(const CoordGroup &coords,
 }
 
 double addToAvg(const CoordGroup &coords, 
-                const PackedArray2D<SireUnits::Dimension::Mass>::Array &masses,
+                const PackedArray2D<SireUnits::Dimension::MolarMass>::Array &masses,
                 const QSet<Index> &indicies, Vector &avg)
 {
     const Vector *coords_array = coords.constData();
-    const SireUnits::Dimension::Mass *masses_array = masses.constData();
+    const SireUnits::Dimension::MolarMass *masses_array = masses.constData();
 
     double mass = 0;
 
@@ -580,8 +585,8 @@ static Vector get_com(const AtomCoords &coords,
                       const AtomSelection &selected_atoms)
 {
     const CoordGroup *coords_array = coords.constData();
-    const PackedArray2D<SireUnits::Dimension::Mass>::Array *masses_array 
-                                                        = masses.constData();
+    const PackedArray2D<SireUnits::Dimension::MolarMass>::Array *masses_array 
+                                                            = masses.constData();
     
     int ncg = coords.count();
     

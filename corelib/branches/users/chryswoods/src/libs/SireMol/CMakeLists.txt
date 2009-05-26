@@ -18,6 +18,7 @@ set ( SIREMOL_HEADERS
       atomcutting.h
       atomeditor.h
       atomelements.h
+      atomforces.h
       atomid.h
       atomidcombos.h
       atomidentifier.h
@@ -29,6 +30,7 @@ set ( SIREMOL_HEADERS
       atomproperty.hpp
       atomselection.h
       atomsin.hpp
+      atomvelocities.h
       bondhunter.h
       bondid.h
       calculateaxes.hpp
@@ -120,12 +122,14 @@ set ( SIREMOL_SOURCES
       atomcharges.cpp
       atomcoords.cpp
       atomeditor.cpp
+      atomforces.cpp
       atomid.cpp
       atomidentifier.cpp
       atomcutting.cpp
       atommatcher.cpp
       atomproperty.cpp
       atomselection.cpp
+      atomvelocities.cpp
       bondhunter.cpp
       bondid.cpp
       cgatomidx.cpp

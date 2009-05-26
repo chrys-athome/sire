@@ -32,11 +32,15 @@
 #include "integrator.h"
 #include "velocitygenerator.h"
 
+#include "SireMol/atomvelocities.h"
+#include "SireMol/atomforces.h"
+
 #include "SireFF/forcetable.h"
 
 #include "SireCAS/symbol.h"
 
 #include "SireBase/majorminorversion.h"
+#include "SireBase/packedarray2d.h"
 
 SIRE_BEGIN_HEADER
 
@@ -51,6 +55,16 @@ QDataStream& operator>>(QDataStream&, SireMove::VelocityVerlet&);
 namespace SireMove
 {
 
+using SireBase::PackedArray2D;
+using SireBase::Properties;
+
+using SireMaths::Vector;
+
+using SireMol::AtomVelocities;
+using SireMol::AtomForces;
+using SireMol::MolID;
+using SireMol::MolNum;
+
 /** This class implements an atomistic velocity verlet dynamics integrator
  
     @author Christopher Woods
@@ -64,6 +78,7 @@ friend QDataStream& ::operator>>(QDataStream&, VelocityVerlet&);
 
 public:
     VelocityVerlet();
+    VelocityVerlet(const SireUnits::Dimension::Time &timestep);
     
     VelocityVerlet(const VelocityVerlet &other);
     
@@ -90,8 +105,18 @@ public:
     SireUnits::Dimension::MolarEnergy kineticEnergy() const;
     SireUnits::Dimension::MolarEnergy kineticEnergy(const MoleculeView &molview) const;
     
+    ForceTable forceTable() const;
+    
+    QHash<MolNum,AtomVelocities> velocities() const;
+    QHash<MolNum,AtomForces> forces() const;
+    
+    AtomVelocities velocities(const MolID &molid) const;
+    AtomForces forces(const MolID &molid) const;
+    
     void clearStatistics();
+    
     void clearVelocities();
+    void clearForces();
     
     void setGenerator(const RanGenerator &generator);
 
@@ -103,11 +128,17 @@ private:
     /** The timestep of integration */
     SireUnits::Dimension::Time timestep;
     
-    /** The velocity of the atoms */
-    SireFF::ForceTable v;
-    
     /** The forces on the atoms */
     SireFF::ForceTable f;
+    
+    /** All of the velocities of the atoms */
+    QVector< PackedArray2D<Vector> > v;
+
+    /** All of the coordinates of the atoms (in infinite cartesian space) */
+    QVector< PackedArray2D<Vector> > r;
+    
+    /** All of the inverse masses of the atoms */
+    QVector< PackedArray2D<double> > inv_m;
     
     /** The generator used to generate new velocities */
     VelGenPtr vel_generator;

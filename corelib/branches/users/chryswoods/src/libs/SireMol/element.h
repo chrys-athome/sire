@@ -29,7 +29,7 @@
 #ifndef SIREMOL_ELEMENT_H
 #define SIREMOL_ELEMENT_H
 
-#include "sireglobal.h"
+#include "SireUnits/dimensions.h"
 
 SIRE_BEGIN_HEADER
 
@@ -90,21 +90,20 @@ public:
     
     const Element& operator=(const Element &element);
 
-    unsigned int nProtons() const;
+    int nProtons() const;
     
     QString symbol() const;
     QString name() const;
     
     QString toString() const;
     
-    double covalentRadius() const;
-    double bondOrderRadius() const;
-    double vdwRadius() const;
+    SireUnits::Dimension::Length covalentRadius() const;
+    SireUnits::Dimension::Length bondOrderRadius() const;
+    SireUnits::Dimension::Length vdwRadius() const;
     
-    unsigned int maxBonds() const;
+    int maxBonds() const;
     
-    double mass() const;
-    double electroNegativity() const;
+    SireUnits::Dimension::MolarMass mass() const;
     
     float red() const;
     float green() const;
@@ -123,7 +122,7 @@ public:
     bool actinide() const;
     bool rareEarth() const;
     
-    static Element elementWithMass(double mass);
+    static Element elementWithMass(const SireUnits::Dimension::MolarMass &mass);
     
     static Element biologicalElement(const QString &name);
     

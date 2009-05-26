@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007  Christopher Woods
+  *  Copyright (C) 2009  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,10 +26,12 @@
   *
 \*********************************************/
 
-#ifndef SIREMOL_ATOMMASSES_H
-#define SIREMOL_ATOMMASSES_H
+#ifndef SIREMOL_ATOMFORCES_H
+#define SIREMOL_ATOMFORCES_H
 
 #include "atomproperty.hpp"
+
+#include "SireBase/vector3d.hpp"
 
 #include "SireUnits/dimensions.h"
 
@@ -38,19 +40,28 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 
-typedef AtomProperty<SireUnits::Dimension::MolarMass> AtomMasses;
+using SireUnits::Dimension::Force;
+
+typedef SireBase::Vector3D<Force> Force3D;
+
+typedef AtomProperty<Force3D> AtomForces;
 
 }
 
-Q_DECLARE_METATYPE( SireMol::AtomMasses );
+SIRE_EXPOSE_ALIAS( 
+        (SireBase::Vector3D<SireUnits::Dimension::PhysUnit<1, 1, -2, 0, 0, 0, 0> >),
+        SireMol::Force3D )
+                   
+Q_DECLARE_METATYPE( SireMol::AtomForces );
+Q_DECLARE_METATYPE( SireMol::Force3D );
 
-SIRE_EXPOSE_ATOM_PROPERTY( SireUnits::Dimension::MolarMass, 
-                           SireMol::AtomMasses )
+SIRE_EXPOSE_ATOM_PROPERTY( SireBase::Vector3D<SireUnits::Dimension::Force>,
+                           SireMol::AtomForces )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
-template class SireMol::AtomProperty<SireUnits::Dimension::MolarMass>;
+template class SireBase::Vector3D<SireUnits::Dimension::Force>;
+template class SireMol::AtomProperty<SireMol::Force3D>;
 #endif
-
 
 SIRE_END_HEADER
 

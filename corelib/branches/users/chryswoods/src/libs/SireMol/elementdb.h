@@ -70,13 +70,13 @@ protected:
     
     /** Return the element with proton number 'nprotons'. This will
         never return a null pointer. */
-    ElementData* element(unsigned int nprotons) const;
+    ElementData* element(int nprotons) const;
     
     /** Pointer to the single instance of this class */
     static ElementDB *db;
 
     /** A hash indexing the elements by proton number */
-    QHash<unsigned int, ElementData*> protonindex;
+    QHash<int, ElementData*> protonindex;
     
     /** A hash indexing the elements by symbol */
     QHash<QString, ElementData*> symbolindex;

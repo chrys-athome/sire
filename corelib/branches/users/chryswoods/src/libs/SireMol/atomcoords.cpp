@@ -553,7 +553,7 @@ int AtomProperty<Vector>::nAtoms(CGIdx cgidx) const
 #include "atommasses.h"
 #include "atomelements.h"
 
-template class AtomProperty<SireUnits::Dimension::Mass>;
+template class AtomProperty<SireUnits::Dimension::MolarMass>;
 template class AtomProperty<Element>;
 
 static const RegisterMetaType<AtomMasses> r_atommass;

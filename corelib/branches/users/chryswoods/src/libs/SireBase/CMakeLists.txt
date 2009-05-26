@@ -37,6 +37,7 @@ set ( SIREBASE_HEADERS
       sparsematrix.hpp
       stringmangler.h
       tempdir.h
+      vector3d.hpp
     )
 
 # Define the sources in SireBase

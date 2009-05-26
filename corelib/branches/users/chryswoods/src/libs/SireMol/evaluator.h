@@ -35,6 +35,8 @@
 #include "moleculeview.h"
 #include "atomselection.h"
 
+#include "SireUnits/dimensions.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -149,7 +151,7 @@ public:
 
     AtomSelection selection() const;
 
-    double mass(const PropertyMap &map = PropertyMap()) const;
+    SireUnits::Dimension::MolarMass mass(const PropertyMap &map = PropertyMap()) const;
 
     Vector center(const PropertyMap &map = PropertyMap()) const;
     AABox aaBox(const PropertyMap &map = PropertyMap()) const;
