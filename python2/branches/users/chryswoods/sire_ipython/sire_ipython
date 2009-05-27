@@ -1,0 +1,5 @@
+#!/bin/env sire_python
+# -*- coding: utf-8 -*-
+
+import IPython
+IPython.Shell.start().mainloop()

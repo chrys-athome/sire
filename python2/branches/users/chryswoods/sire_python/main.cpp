@@ -80,7 +80,10 @@ int main(int argc, char **argv)
     //this function starts threaded python and grabs
     //the global python lock
     PyEval_InitThreads();
- 
+
+    //no command line arguments are passed to python
+    PySys_SetArgv(1, argv);
+
     //release the global python lock
     PyEval_ReleaseLock();
  
@@ -213,7 +216,7 @@ int main(int argc, char **argv)
 
     //now shutdown Python - currently commented out
     //as calling these functions causes a bus error...
-    PyEval_AcquireLock();
+    //PyEval_AcquireLock();
     //Py_Finalize();
 
     return status;

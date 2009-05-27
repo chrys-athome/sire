@@ -276,6 +276,9 @@ add_subdirectory (Vol)
 #also compile the MPI-aware python executable
 add_subdirectory (sire_python)
 
+#and the MPI-aware ipython executable
+add_subdirectory (sire_ipython)
+
 install( FILES __init__.py
          DESTINATION ${SIRE_PYTHON}/Sire 
        )

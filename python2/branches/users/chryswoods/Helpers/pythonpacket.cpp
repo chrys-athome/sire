@@ -194,6 +194,10 @@ float PythonPacket::chunk()
     //create a Python thread to run this code
     PyThreadStateHolder pythread;
     
+    char *argv = "sire_python";
+
+    PySys_SetArgv(0, &argv);
+
     //we are now free to run our code
     PyRun_SimpleString( script_contents.toAscii().constData() );
     
