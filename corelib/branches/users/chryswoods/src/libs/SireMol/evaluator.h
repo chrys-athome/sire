@@ -153,6 +153,8 @@ public:
 
     SireUnits::Dimension::MolarMass mass(const PropertyMap &map = PropertyMap()) const;
 
+    SireUnits::Dimension::Charge charge(const PropertyMap &map = PropertyMap()) const;
+
     Vector center(const PropertyMap &map = PropertyMap()) const;
     AABox aaBox(const PropertyMap &map = PropertyMap()) const;
     Sphere boundingSphere(const PropertyMap &map = PropertyMap()) const;

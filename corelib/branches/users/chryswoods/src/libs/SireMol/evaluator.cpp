@@ -29,6 +29,7 @@
 #include "evaluator.h"
 #include "atomcoords.h"
 #include "atommasses.h"
+#include "atomcharges.h"
 #include "atomelements.h"
 #include "atommatcher.h"
 
@@ -450,6 +451,89 @@ MolarMass Evaluator::mass(const PropertyMap &map) const
                 .arg(p.what()), CODELOC );
 
     return MolarMass(0);
+}
+
+static double 
+calc_charge(const PackedArray2D<SireUnits::Dimension::Charge>::Array &charges)
+{
+    const SireUnits::Dimension::Charge *charges_array = charges.constData();
+    int ncharges = charges.count();
+    
+    double c = 0;
+    
+    for (int i=0; i<ncharges; ++i)
+    {
+        c += charges_array[i];
+    }
+    
+    return c;
+}
+
+static double 
+calc_charge(const PackedArray2D<SireUnits::Dimension::Charge>::Array &charges,
+            const QSet<Index> &idxs)
+{
+    const SireUnits::Dimension::Charge *charges_array = charges.constData();
+    
+    double c = 0;
+    
+    foreach (Index i, idxs)
+    {
+        c += charges_array[i];
+    }
+    
+    return c;
+}
+
+/** Return the total charge of the selected part of the molecule, using
+    the supplied map to find the "charge" property
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+Charge Evaluator::charge(const PropertyMap &map) const
+{
+    const AtomCharges &charges = d->property( map["charge"] )
+                                        .asA<AtomCharges>();
+                                        
+    if (selected_atoms.selectedNone())
+        return Charge(0);
+
+    double c = 0;
+    
+    const PackedArray2D<SireUnits::Dimension::Charge>::Array *charges_array 
+                                            = charges.constData();
+    int ncg = charges.count();
+
+    if (selected_atoms.selectedAll())
+    {
+        for (int i=0; i<ncg; ++i)
+        {
+            c += calc_charge( charges_array[i] );
+        }
+    }
+    else if (selected_atoms.selectedAllCutGroups())
+    {
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            if (selected_atoms.selectedAll(i))
+                c += calc_charge( charges_array[i] );
+            else
+                c += calc_charge( charges_array[i], selected_atoms.selectedAtoms(i) );
+        }
+    }
+    else
+    {
+        foreach (CGIdx i, selected_atoms.selectedCutGroups())
+        {
+            if (selected_atoms.selectedAll(i))
+                c += calc_charge( charges_array[i] );
+            else
+                c += calc_charge( charges_array[i], selected_atoms.selectedAtoms(i) );
+        }
+    }
+    
+    return Charge(c);
 }
 
 int addToAvg(const CoordGroup &coords, Vector &avg)
