@@ -25,10 +25,13 @@ mc.setTemperature( 100 * fahrenheit )
 
 print mc.temperature().to(celsius)
 
-assert( close(convertTo(mc.temperature(), celsius), temp) )
+assert( close(mc.temperature().to(fahrenheit), 100) )
 
-k = 1 / (4 * pi * 8.854187817e-12 * farad / meter)
+k = (4 * pi * 8.854187817e-12 * farad / meter)
 print k
 
-assert( close(k, 332.063710) )
+k = 1 / k
+print k
+
+assert( close(k.value(), 332.063710) )
 

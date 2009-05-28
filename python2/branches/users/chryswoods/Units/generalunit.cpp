@@ -115,11 +115,10 @@ void GeneralUnit::assertCompatible(const GeneralUnit &other) const
     
 QString GeneralUnit::toString() const
 {
-    return QString("%1 %2").arg(value())
-                           .arg( SireUnits::Dimension::getUnitString(Mass, Length,
-                                                                     Time, Charge,
-                                                                     temperature, Quantity,
-                                                                     Angle) );
+    return SireUnits::Dimension::getUnitString(value(), Mass, Length,
+                                               Time, Charge,
+                                               temperature, Quantity,
+                                               Angle);
 }
 
 double GeneralUnit::to(const GeneralUnit &units) const

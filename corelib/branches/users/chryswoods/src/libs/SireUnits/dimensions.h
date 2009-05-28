@@ -113,7 +113,7 @@ private:
     double sclfac;
 };
 
-QString getUnitString(int M, int L, int T, int C, int t, int Q, int A);
+QString getUnitString(double value, int M, int L, int T, int C, int t, int Q, int A);
 
 /** Construct a physical unit with the specified
     Mass, Length, Time, Charge, temperature,
@@ -262,9 +262,7 @@ public:
 
     QString toString() const
     {
-        return QString("%1 %2")
-                        .arg(this->value())
-                        .arg(SireUnits::Dimension::getUnitString(M,L,T,C,t,Q,A));
+        return SireUnits::Dimension::getUnitString(this->scaleFactor(), M,L,T,C,t,Q,A);
     }
 
     static int MASS()

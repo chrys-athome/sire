@@ -152,7 +152,7 @@ RigidBodyMC::~RigidBodyMC()
 
 void RigidBodyMC::_pvt_setTemperature(const Temperature &temperature)
 {
-    MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
+    MonteCarlo::setEnsemble( Ensemble::NVT(temperature) );
 }
 
 /** Copy assignment operator */
