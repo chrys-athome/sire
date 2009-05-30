@@ -32,6 +32,8 @@
 #include "SireUnits/units.h"
 #include "SireStream/datastream.h"
 
+#include "SireBase/quickcopy.hpp"
+
 #include "SireError/errors.h"
 
 #include <QString>
@@ -41,6 +43,7 @@
 
 using namespace SireMaths;
 using namespace SireUnits;
+using namespace SireBase;
 using namespace SireStream;
 
 static const RegisterMetaType<DistVector> r_distvector;
@@ -116,13 +119,13 @@ DistVector::~DistVector()
 /** Copy constructor */
 DistVector::DistVector(const DistVector& other)
 {
-    qMemCopy(sc, other.sc, 4*sizeof(double));
+    quickCopy<double>(sc, other.sc, 4);
 }
 
 /** Copy assignment operator */
 const DistVector& DistVector::operator=(const DistVector &other)
 {
-    qMemCopy(sc, other.sc, 4*sizeof(double));
+    quickCopy<double>(sc, other.sc, 4);
 
     return *this;
 }

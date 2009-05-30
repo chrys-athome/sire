@@ -145,6 +145,12 @@ public:
     int nSelectedChains() const;
     int nSelectedSegments() const;
 
+    int nAtoms() const;
+    int nCutGroups() const;
+    int nResidues() const;
+    int nChains() const;
+    int nSegments() const;
+
     bool selectedAllAtoms() const;
     bool selectedAllCutGroups() const;
     bool selectedAllResidues() const;

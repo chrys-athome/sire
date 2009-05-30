@@ -57,7 +57,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
     
     SharedDataStream sds(ds);
     
-    sds << moldyn.intgrator << moldyn.num_moves
+    sds << moldyn.intgrator << moldyn.wspace << moldyn.num_moves
         << static_cast<const Dynamics&>(moldyn);
         
     return ds;
@@ -73,7 +73,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
     {
         SharedDataStream sds(ds);
     
-        sds >> moldyn.intgrator >> moldyn.num_moves
+        sds >> moldyn.intgrator >> moldyn.wspace >> moldyn.num_moves
             >> static_cast<Dynamics&>(moldyn);
              
     }
@@ -86,7 +86,9 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds,
 /** Constructor */
 MolecularDynamics::MolecularDynamics()
                   : ConcreteProperty<MolecularDynamics,Dynamics>(),
-                    intgrator( Integrator::null() ), num_moves(0)
+                    intgrator( Integrator::null() ), 
+                    wspace( IntegratorWorkspace::null() ),
+                    num_moves(0)
 {}
 
 /** Construct to perform moves on the molecules in the group 'molgroup'. This
@@ -95,14 +97,16 @@ MolecularDynamics::MolecularDynamics(const MoleculeGroup &moleculegroup)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(),
                     intgrator( VelocityVerlet() ), num_moves(0)
 {
-    intgrator.edit().setMoleculeGroup(moleculegroup);
+    wspace = intgrator.read().createWorkspace(moleculegroup);
 }
 
 /** Construct using the supplied integrator */
 MolecularDynamics::MolecularDynamics(const Integrator &integrator)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(),
                     intgrator(integrator), num_moves(0)
-{}
+{
+    wspace = intgrator.read().createWorkspace();
+}
     
 /** Construct a move for the passed molecule group, integrated
     using the supplied integrator */
@@ -111,7 +115,7 @@ MolecularDynamics::MolecularDynamics(const MoleculeGroup &moleculegroup,
                   : ConcreteProperty<MolecularDynamics,Dynamics>(),
                     intgrator(integrator), num_moves(0)
 {
-    intgrator.edit().setMoleculeGroup(moleculegroup);
+    wspace = intgrator.read().createWorkspace(moleculegroup);
 }
 
 /** Construct a move for the passed molecule group, integrated
@@ -121,13 +125,14 @@ MolecularDynamics::MolecularDynamics(const Integrator &integrator,
                   : ConcreteProperty<MolecularDynamics,Dynamics>(),
                     intgrator(integrator), num_moves(0)
 {
-    intgrator.edit().setMoleculeGroup(moleculegroup);
+    wspace = intgrator.read().createWorkspace(moleculegroup);
 }
 
 /** Copy constructor */
 MolecularDynamics::MolecularDynamics(const MolecularDynamics &other)
                   : ConcreteProperty<MolecularDynamics,Dynamics>(other),
-                    intgrator(other.intgrator), num_moves(other.num_moves)
+                    intgrator(other.intgrator), wspace(other.wspace),
+                    num_moves(other.num_moves)
 {}
 
 /** Destructor */
@@ -138,6 +143,7 @@ MolecularDynamics::~MolecularDynamics()
 MolecularDynamics& MolecularDynamics::operator=(const MolecularDynamics &other)
 {
     intgrator = other.intgrator;
+    wspace = other.wspace;
     num_moves = other.num_moves;
     
     Dynamics::operator=(other);
@@ -149,6 +155,7 @@ MolecularDynamics& MolecularDynamics::operator=(const MolecularDynamics &other)
 bool MolecularDynamics::operator==(const MolecularDynamics &other) const
 {
     return intgrator == other.intgrator and
+           wspace == other.wspace and
            num_moves == other.num_moves and 
            Dynamics::operator==(other);
 }
@@ -157,6 +164,7 @@ bool MolecularDynamics::operator==(const MolecularDynamics &other) const
 bool MolecularDynamics::operator!=(const MolecularDynamics &other) const
 {
     return intgrator != other.intgrator or
+           wspace != other.wspace or
            num_moves != other.num_moves or
            Dynamics::operator!=(other);
 }
@@ -177,7 +185,7 @@ int MolecularDynamics::nMoves() const
 /** Return the molecule group on which this move operates */
 const MoleculeGroup& MolecularDynamics::moleculeGroup() const
 {
-    return intgrator.read().moleculeGroup();
+    return wspace.read().moleculeGroup();
 }
 
 /** Return the integrator used to advance the coordinates
@@ -187,17 +195,30 @@ const Integrator& MolecularDynamics::integrator() const
     return intgrator.read();
 }
 
+/** Return the workspace used while integrating the system */
+const IntegratorWorkspace& MolecularDynamics::workspace() const
+{
+    return wspace.read();
+}
+
 /** Set the molecule group containing the molecules to be moved */
 void MolecularDynamics::setMoleculeGroup(const MoleculeGroup &new_molgroup)
 {
-    intgrator.edit().setMoleculeGroup(new_molgroup);
+    if (new_molgroup.number() != this->moleculeGroup().number())
+    {
+        wspace = intgrator.read().createWorkspace(new_molgroup);
+    }
 }
 
 /** Set the integrator to be used to advance the coordinates from 
     one timestep to the next. */
 void MolecularDynamics::setIntegrator(const Integrator &integrator)
 {
-    intgrator = integrator;
+    if (intgrator != integrator)
+    {
+        intgrator = integrator;
+        wspace = intgrator.read().createWorkspace( this->moleculeGroup() );
+    }
 }
 
 /** Return the timestep for the integration */
@@ -218,13 +239,14 @@ void MolecularDynamics::setTimeStep(const Time &timestep)
 /** Return the kinetic energy of the system at the last move. */
 MolarEnergy MolecularDynamics::kineticEnergy() const
 {
-    return intgrator.read().kineticEnergy();
+    return wspace.read().kineticEnergy();
 }
 
-/** Completely clear any move statistics */
+/** Completely clear any move statistics - this clears all existing
+    velocities */
 void MolecularDynamics::clearStatistics()
 {
-    intgrator.edit().clearStatistics();
+    wspace = intgrator.read().createWorkspace(this->moleculeGroup());
     num_moves = 0;
 }
 
@@ -257,7 +279,8 @@ void MolecularDynamics::move(System &system, int nmoves, bool record_stats)
         for (int i=0; i<nmoves; ++i)
         {
             //perform the move
-            intgrator.edit().integrate(system, this->energyComponent(), map);
+            intgrator.edit().integrate(system, wspace.edit(),
+                                       this->energyComponent(), map);
 
             if (record_stats)
             {

@@ -28,9 +28,86 @@
 
 #include "atomproperty.hpp"
 
+#include "atomcharges.h"
+#include "atomelements.h"
+#include "atommasses.h"
+#include "atomforces.h"
+#include "atomvelocities.h"
+
+#include "SireError/errors.h"
+
 using namespace SireMol;
+
+
+///////
+/////// Implementation of AtomProp
+///////
+
+static const RegisterMetaType<AtomProp> r_atomprop(MAGIC_ONLY,
+                                                   "SireMol::AtomProp");
+                                                   
+/** Serialise to a binary datastream */
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomProp &atomprop)
+{
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomProp &atomprop)
+{
+    return ds;
+}
+
+AtomProp::AtomProp() : MolViewProperty()
+{}
+
+AtomProp::AtomProp(const AtomProp &other) : MolViewProperty(other)
+{}
+
+AtomProp::~AtomProp()
+{}
+
+void AtomProp::throwIncorrectNumberOfAtoms(int nats, int ntotal) const
+{
+    throw SireError::incompatible_error( QObject::tr(
+        "This is incompatible as the number of atoms is %1, but the "
+        "number of properties is %2.")
+            .arg(ntotal).arg(nats), CODELOC );
+}
+
+void AtomProp::throwIncorrectNumberOfSelectedAtoms(int nats, int nselected) const
+{
+    throw SireError::incompatible_error( QObject::tr(
+        "This is incompatible as the number of selected atoms is %1, but the "
+        "number of properties is %2.")
+            .arg(nselected).arg(nats), CODELOC );
+}
+
+////////
+//////// Lets explicitly instantiate other AtomProperty types...
+////////
+
+template class SireMol::AtomProperty<QString>;
+template class SireMol::AtomProperty<qint64>;
+template class SireMol::AtomProperty<double>;
+template class SireMol::AtomProperty<QVariant>;
+
+template class AtomProperty<SireUnits::Dimension::MolarMass>;
+template class AtomProperty<Element>;
+template class AtomProperty<SireUnits::Dimension::Charge>;
+
+template class SireBase::Vector3D<SireUnits::Dimension::Velocity>;
+template class SireMol::AtomProperty<SireMol::Velocity3D>;
+
+template class SireBase::Vector3D<SireUnits::Dimension::Force>;
+template class SireMol::AtomProperty<SireMol::Force3D>;
 
 static const RegisterMetaType<AtomStringProperty> r_atomstring;
 static const RegisterMetaType<AtomIntProperty> r_atomint;
 static const RegisterMetaType<AtomFloatProperty> r_atomfloat;
 static const RegisterMetaType<AtomVariantProperty> r_atomvariant;
+static const RegisterMetaType<AtomCharges> r_atomcharges;
+static const RegisterMetaType<AtomMasses> r_atommasses;
+static const RegisterMetaType<AtomForces> r_atomforces;
+static const RegisterMetaType<AtomVelocities> r_atomvelocities;
+static const RegisterMetaType<AtomElements> r_atomelements;

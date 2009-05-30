@@ -54,34 +54,6 @@ using namespace SireMol;
 using namespace SireStream;
 
 ///////
-/////// Implementation of AtomProp
-///////
-
-static const RegisterMetaType<AtomProp> r_atomprop(MAGIC_ONLY,
-                                                   "SireMol::AtomProp");
-                                                   
-/** Serialise to a binary datastream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const AtomProp &atomprop)
-{
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, AtomProp &atomprop)
-{
-    return ds;
-}
-
-AtomProp::AtomProp() : MolViewProperty()
-{}
-
-AtomProp::AtomProp(const AtomProp &other) : MolViewProperty(other)
-{}
-
-AtomProp::~AtomProp()
-{}
-
-///////
 /////// Implementation of Atom
 ///////
 
@@ -472,9 +444,3 @@ template class Selector<Atom>;
 template class Mover<Atom>;
 
 template class Mover< Selector<Atom> >;
-
-///////
-/////// Explicitly instantiate the AtomProperty classes...
-///////
-
-template class AtomProperty<SireUnits::Dimension::Charge>;

@@ -76,7 +76,10 @@ public:
     AABox();
     AABox(const Vector &point);
     AABox(const Vector &cent, const Vector &extents);
+
     AABox(const QVector<Vector> &coordinates);
+    AABox(const Vector *coords, int ncoords);
+
     AABox(const CoordGroupBase &coordgroup);
     AABox(const CoordGroupArray &cgarray);
     AABox(const CoordGroupArrayArray &cgarrays);

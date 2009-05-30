@@ -119,17 +119,14 @@ set ( SIREMOL_SOURCES
 
       angleid.cpp
       atom.cpp
-      atomcharges.cpp
       atomcoords.cpp
       atomeditor.cpp
-      atomforces.cpp
       atomid.cpp
       atomidentifier.cpp
       atomcutting.cpp
       atommatcher.cpp
       atomproperty.cpp
       atomselection.cpp
-      atomvelocities.cpp
       bondhunter.cpp
       bondid.cpp
       cgatomidx.cpp

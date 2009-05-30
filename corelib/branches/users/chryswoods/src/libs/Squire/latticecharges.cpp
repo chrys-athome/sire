@@ -30,8 +30,11 @@
 
 #include "SireID/index.h"
 
+#include "SireBase/quickcopy.hpp"
+
 using namespace Squire;
 using namespace SireID;
+using namespace SireBase;
 
 ////////
 //////// Implementation of LatticeCharge
@@ -68,7 +71,7 @@ LatticeCharge::LatticeCharge(const Vector &point, double charge)
 /** Copy constructor */
 LatticeCharge::LatticeCharge(const LatticeCharge &other)
 {
-    qMemCopy(d, other.d, 4*sizeof(double));
+    quickCopy<double>(d, other.d, 4);
 }
 
 /** Destructor */
@@ -80,7 +83,7 @@ LatticeCharge& LatticeCharge::operator=(const LatticeCharge &other)
 {
     if (this != &other)
     {
-        qMemCopy(d, other.d, 4*sizeof(double));
+        quickCopy<double>(d, other.d, 4);
     }
 
     return *this;

@@ -38,6 +38,7 @@
 #include "atomselection.h"
 
 #include "SireBase/packedarray2d.hpp"
+#include "SireBase/quickcopy.hpp"
 
 #include "SireError/errors.h"
 
@@ -94,6 +95,10 @@ public:
     virtual AtomVariantProperty toVariant() const=0;
     
     virtual void assertCanConvert(const QVariant &value) const=0;
+
+protected:
+    void throwIncorrectNumberOfAtoms(int nats, int ntotal) const;
+    void throwIncorrectNumberOfSelectedAtoms(int nats, int nselected) const;
 };
 
 /** This is a property that can hold one value for each
@@ -184,6 +189,12 @@ public:
     bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
 
     AtomProperty<T> matchToSelection(const AtomSelection &selection) const;
+
+    QVector<T> toVector() const;
+    QVector<T> toVector(const AtomSelection &selection) const;
+    
+    void copyFrom(const QVector<T> &values);
+    void copyFrom(const QVector<T> &values, const AtomSelection &selection);
 
     bool canConvert(const QVariant &value) const;
 
@@ -570,6 +581,207 @@ bool AtomProperty<T>::isCompatibleWith(const MoleculeInfoData &molinfo) const
     }
     
     return true;
+}
+
+/** Convert this atom property to an array of values. The values
+    are written in CGAtomIdx order */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QVector<T> AtomProperty<T>::toVector() const
+{
+    return props.toQVector();
+}
+
+/** Convert the properties of the atoms selected in 'selection' to an 
+    array of values. The values are written in CGAtomIdx order
+    
+    \throw SireError::incompatible_error
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QVector<T> AtomProperty<T>::toVector(const AtomSelection &selected_atoms) const
+{
+    selected_atoms.assertCompatibleWith(*this);
+    
+    if (selected_atoms.selectedAll())
+        return this->toVector();
+    
+    else if (selected_atoms.selectedNone())
+        return QVector<T>();
+        
+    else if (selected_atoms.selectedAllCutGroups())
+    {
+        QVector<T> vals( selected_atoms.nSelected() );
+        T *value = vals.data();
+        
+        const int ncg = selected_atoms.nCutGroups();
+        const typename PackedArray2D<T>::Array *props_array = props.constData();
+        
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            const T *group_props = props_array[i].constData();
+        
+            if (selected_atoms.selectedAll(i))
+            {
+                const int nats = props_array[i].nValues();
+            
+                SireBase::quickCopy<T>(value, group_props, nats);
+                
+                value += nats;
+            }
+            else
+            {
+                QList<SireID::Index> idxs = selected_atoms.selectedAtoms(i).toList();
+                qSort(idxs);
+                
+                foreach (SireID::Index idx, idxs)
+                {
+                    *value = group_props[idx];
+                    ++value;
+                }
+            }
+        }
+        
+        return vals;
+    }
+    else
+    {
+        QList<CGIdx> cgidxs = selected_atoms.selectedCutGroups();
+        qSort(cgidxs);
+        
+        QVector<T> vals( selected_atoms.nSelected() );
+        T *value = vals.data();
+
+        const typename PackedArray2D<T>::Array *props_array = props.constData();
+
+        foreach (CGIdx i, cgidxs)
+        {
+            const T *group_props = props_array[i].constData();
+        
+            if (selected_atoms.selectedAll(i))
+            {
+                const int nats = props_array[i].nValues();
+            
+                SireBase::quickCopy<T>(value, group_props, nats);
+                
+                value += nats;
+            }
+            else
+            {
+                QList<SireID::Index> idxs = selected_atoms.selectedAtoms(i).toList();
+                qSort(idxs);
+                
+                foreach (SireID::Index idx, idxs)
+                {
+                    *value = group_props[idx];
+                    ++value;
+                }
+            }
+        }
+        
+        return vals;
+    }
+}
+
+/** Copy into this atom property set the values from 'values'. The values
+    are copied in CGAtomIdx order, and there must be as many values
+    as there are atoms
+    
+    \throw SireError::incompatible_error
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomProperty<T>::copyFrom(const QVector<T> &values)
+{
+    if (values.count() != this->nAtoms())
+        this->throwIncorrectNumberOfAtoms(values.count(), this->nAtoms());
+
+    SireBase::quickCopy<T>(props.valueData(), values.constData(), values.count());
+}
+
+/** Copy into this atom property set the values from 'values', but only
+    for the atoms selected in 'selection'. This copies the properties
+    in in CGAtomIdx order, and there must be the same number of values
+    as there are selected atoms
+    
+    \throw SireError::incompatible_error
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void AtomProperty<T>::copyFrom(const QVector<T> &values, 
+                               const AtomSelection &selected_atoms)
+{
+    selected_atoms.assertCompatibleWith(*this);
+    
+    if (selected_atoms.selectedAll())
+    {
+        this->copyFrom(values);
+        return;
+    }
+
+    if (values.count() != selected_atoms.nSelected())
+        this->throwIncorrectNumberOfSelectedAtoms(values.count(),
+                                                  selected_atoms.nSelected());
+                                                  
+    const T *values_array = values.constData();
+    
+    if (selected_atoms.selectedAllCutGroups())
+    {
+        const int ncg = selected_atoms.nCutGroups();
+    
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            T *group_props = props.data(i);
+
+            if (selected_atoms.selectedAll(i))
+            {
+                const int nats = props.nValues(i);
+                SireBase::quickCopy<T>(group_props, values_array, nats);
+                
+                values_array += nats;
+            }
+            else
+            {
+                QList<SireID::Index> idxs = selected_atoms.selectedAtoms(i).toList();
+                qSort(idxs);
+                
+                foreach (SireID::Index idx, idxs)
+                {
+                    group_props[idx] = *values_array;
+                    ++values_array;
+                }
+            }
+        }
+    }
+    else
+    {
+        QList<CGIdx> cgidxs = selected_atoms.selectedCutGroups();
+        qSort(cgidxs);
+        
+        foreach (CGIdx i, cgidxs)
+        {
+            T *group_props = props.data(i);
+
+            if (selected_atoms.selectedAll(i))
+            {
+                const int nats = props.nValues(i);
+                SireBase::quickCopy<T>(group_props, values_array, nats);
+                
+                values_array += nats;
+            }
+            else
+            {
+                QList<SireID::Index> idxs = selected_atoms.selectedAtoms(i).toList();
+                qSort(idxs);
+                
+                foreach (SireID::Index idx, idxs)
+                {
+                    group_props[idx] = *values_array;
+                    ++values_array;
+                }
+            }
+        }
+    }
 }
 
 template<class T>

@@ -103,6 +103,12 @@ AABox::AABox(const QVector<Vector> &coordinates)
     recalculate(coordinates);
 }
 
+/** Construct an AABox that completely encases the points in 'coords' */
+AABox::AABox(const Vector *coords, int ncoords)
+{
+    recalculate(coords, ncoords);
+}
+
 /** Destructor */
 AABox::~AABox()
 {}

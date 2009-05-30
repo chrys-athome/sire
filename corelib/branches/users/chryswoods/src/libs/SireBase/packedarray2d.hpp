@@ -34,6 +34,7 @@
 #include <QVarLengthArray>
 
 #include "packedarray2d.h"
+#include "quickcopy.hpp"
 
 #include "SireStream/shareddatastream.h"
 
@@ -694,7 +695,7 @@ char* PackedArray2DMemory<T>::detach(char *this_ptr, quint32 this_idx)
         char *new_storage = new char[sz];
         
         //copy the data
-        void *output = qMemCopy( new_storage, storage, sz*sizeof(char) );
+        char *output = quickCopy<char>( new_storage, storage, sz );
         BOOST_ASSERT(output == new_storage);
 
         //the first part of the data is the PackedArray2DData object
@@ -992,9 +993,8 @@ PackedArray2DData<T>* PackedArray2D_ArrayData<T>::extract() const
     new_array->close();
     
     //copy the objects
-    void *output = qMemCopy( new_array->valueData(),
-                             this->valueData(),
-                             this->nValues() * sizeof(T) );
+    T *output = quickCopy<T>(new_array->valueData(), 
+                             this->valueData(), this->nValues());
                        
     BOOST_ASSERT( output == new_array->valueData() );
 
@@ -1305,7 +1305,7 @@ QVector<T> PackedArray2D_Array<T>::toQVector() const
         
     QVector<T> ret( this->count() );
     
-    void *output = qMemCopy( ret.data(), this->data(), this->count() * sizeof(T) );
+    T *output = quickCopy<T>(ret.data(), this->data(), this->count());
     
     BOOST_ASSERT(output == ret.data());
     
@@ -1325,9 +1325,8 @@ void PackedArray2D_Array<T>::update(const PackedArray2D_Array<T> &other)
         
     if (this->size() == 0)
         return;
-        
-    void *output = qMemCopy(this->data(), other.data(), 
-                            this->size() * sizeof(T));
+
+    T *output = quickCopy<T>(this->data(), other.data(), this->size());
                             
     BOOST_ASSERT( output == this->data() );
 }
@@ -1406,7 +1405,7 @@ PackedArray2D<T>::PackedArray2D(const QVector<T> &values)
     dptr->close();
     
     //now copy all of the data
-    void *output = qMemCopy(new_values, values.constData(), nvals*sizeof(T));
+    T *output = quickCopy(new_values, values.constData(), nvals);
 
     BOOST_ASSERT( output == new_values );
 }
@@ -1457,7 +1456,7 @@ PackedArray2D<T>::PackedArray2D(const QVector<PackedArray2D<T>::Array> &arrays)
         const Array &array = arrays_data[i];
         const T *array_values = array.constData();
         
-        void *output = qMemCopy(values, array_values, array.count()*sizeof(T));
+        T *output = quickCopy<T>(values, array_values, array.count());
         
         BOOST_ASSERT( output == values );
         
@@ -1513,7 +1512,7 @@ PackedArray2D<T>::PackedArray2D(const QVector< QVector<T> > &values)
 
         const T *array_values = array.constData();
         
-        void *output = qMemCopy(values_array, array_values, array.count()*sizeof(T));
+        T *output = quickCopy(values_array, array_values, array.count());
         
         BOOST_ASSERT( output == values_array );
         
@@ -1776,8 +1775,7 @@ QVector<T> PackedArray2D<T>::toQVector() const
         
     QVector<T> ret( this->nValues() );
     
-    void *output = qMemCopy( ret.data(), this->valueData(), 
-                             this->nValues() * sizeof(T) );
+    T *output = quickCopy<T>(ret.data(), this->valueData(), this->nValues());
     
     BOOST_ASSERT(output == ret.data());
     

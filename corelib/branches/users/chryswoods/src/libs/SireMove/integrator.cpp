@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "integrator.h"
+#include "integratorworkspace.h"
 
 #include "SireFF/forcetable.h"
 #include "SireFF/forcefields.h"
@@ -62,8 +63,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Integrator &integ
 {
     writeHeader(ds, r_integrator, 1);
     
-    ds << integrator.molgroup
-       << static_cast<const Property&>(integrator);
+    ds << static_cast<const Property&>(integrator);
     
     return ds;
 }
@@ -75,8 +75,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Integrator &integrator)
     
     if (v == 1)
     {
-        ds >> integrator.molgroup
-           >> static_cast<Property&>(integrator);
+        ds >> static_cast<Property&>(integrator);
     }
     else
         throw version_error(v, "1", r_integrator, CODELOC);
@@ -89,8 +88,7 @@ Integrator::Integrator() : Property()
 {}
 
 /** Copy constructor */
-Integrator::Integrator(const Integrator &other) 
-           : Property(other), molgroup(other.molgroup)
+Integrator::Integrator(const Integrator &other) : Property(other)
 {}
 
 /** Destructor */
@@ -100,47 +98,35 @@ Integrator::~Integrator()
 /** Copy assignment operator */
 Integrator& Integrator::operator=(const Integrator &other)
 {
-    molgroup = other.molgroup;
     return *this;
 }
 
 /** Comparison operator */
 bool Integrator::operator==(const Integrator &other) const
 {
-    return molgroup == other.molgroup;
+    return true;
 }
 
 /** Comparison operator */
 bool Integrator::operator!=(const Integrator &other) const
 {
-    return molgroup != other.molgroup;
+    return false;
 }
 
 /** Integrate the system 'system', using the default energy component,
     coordinates and space property */
-void Integrator::integrate(System &system)
+void Integrator::integrate(System &system, IntegratorWorkspace &workspace) const
 {
-    this->integrate(system, ForceFields::totalComponent(), PropertyMap());
+    this->integrate(system, workspace, ForceFields::totalComponent(), PropertyMap());
 }
 
 /** Integrate the system 'system', using the Hamiltonian represented
     by the symbol 'nrg_component', and using the default coordinate
     and space properties */
-void Integrator::integrate(System &system, const Symbol &nrg_component)
+void Integrator::integrate(System &system, IntegratorWorkspace &workspace,
+                           const Symbol &nrg_component) const
 {
-    this->integrate(system, nrg_component, PropertyMap());
-}
-
-/** Set the molecule group which will be sampled using this integrator */
-void Integrator::setMoleculeGroup(const MoleculeGroup &new_molgroup)
-{
-    molgroup = new_molgroup;
-}
-
-/** Return the molecule group which is affected by this integrator */
-const MoleculeGroup& Integrator::moleculeGroup() const
-{
-    return molgroup.read();
+    this->integrate(system, workspace, nrg_component, PropertyMap());
 }
 
 Q_GLOBAL_STATIC( NullIntegrator, getNullIntegrator );
@@ -221,7 +207,8 @@ QString NullIntegrator::toString() const
 }
 
 /** The null integrator does nothing */
-void NullIntegrator::integrate(System&, const Symbol&, const PropertyMap&)
+void NullIntegrator::integrate(System&, IntegratorWorkspace&, 
+                               const Symbol&, const PropertyMap&) const
 {}
 
 /** The null integrator will ignore any timestep */
@@ -234,30 +221,18 @@ Time NullIntegrator::timeStep() const
     return Time(0);
 }
 
-/** The kinetic energy is always zero */
-MolarEnergy NullIntegrator::kineticEnergy() const
-{
-    return MolarEnergy(0);
-}
-
-/** The kinetic energy is always zero */
-MolarEnergy NullIntegrator::kineticEnergy(const MoleculeView&) const
-{
-    return MolarEnergy(0);
-}
-
-/** There is nothing to clear */
-void NullIntegrator::clearVelocities()
-{}
-
-/** There is nothing to clear */
-void NullIntegrator::clearStatistics()
-{}
-
-/** Don't allow the molecule group to be set */
-void NullIntegrator::setMoleculeGroup(const MoleculeGroup&)
-{}
-
 /** There is no random number generator */
 void NullIntegrator::setGenerator(const RanGenerator&)
 {}
+
+/** This returns a null workspace */
+IntegratorWorkspacePtr NullIntegrator::createWorkspace() const
+{
+    return IntegratorWorkspacePtr();
+}
+
+/** This returns a null workspace */
+IntegratorWorkspacePtr NullIntegrator::createWorkspace(const MoleculeGroup&) const
+{
+    return IntegratorWorkspacePtr();
+}

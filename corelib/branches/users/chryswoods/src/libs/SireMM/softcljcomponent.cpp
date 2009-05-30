@@ -30,6 +30,8 @@
 
 #include "SireID/index.h"
 
+#include "SireBase/quickcopy.hpp"
+
 #include "SireStream/datastream.h"
 
 #include "SireError/errors.h"
@@ -38,6 +40,7 @@ using namespace SireMM;
 using namespace SireMM::detail;
 using namespace SireCAS;
 using namespace SireID;
+using namespace SireBase;
 
 using namespace SireStream;
 
@@ -65,7 +68,7 @@ SoftCLJEnergy::SoftCLJEnergy()
 /** Copy constructor */
 SoftCLJEnergy::SoftCLJEnergy(const SoftCLJEnergy &other)
 {
-    qMemCopy( nrgs, other.nrgs, MAX_ALPHA_VALUES*2*sizeof(double) );
+    quickCopy<double>( (double*)nrgs, (double*)(other.nrgs), MAX_ALPHA_VALUES*2 );
 }
 
 /** Destructor */
@@ -77,7 +80,7 @@ SoftCLJEnergy& SoftCLJEnergy::operator=(const SoftCLJEnergy &other)
 {
     if (this != &other)
     {
-        qMemCopy( nrgs, other.nrgs, MAX_ALPHA_VALUES*2*sizeof(double) );
+        quickCopy<double>( (double*)nrgs, (double*)(other.nrgs), MAX_ALPHA_VALUES*2 );
     }
     
     return *this;

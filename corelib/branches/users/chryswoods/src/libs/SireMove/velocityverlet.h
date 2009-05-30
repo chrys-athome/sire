@@ -96,68 +96,24 @@ public:
     
     QString toString() const;
     
-    void integrate(System &system, const Symbol &nrg_component, const PropertyMap &map);
+    void integrate(System &system, IntegratorWorkspace &workspace,
+                   const Symbol &nrg_component, const PropertyMap &map) const;
 
     void setTimeStep(const SireUnits::Dimension::Time &timestep);
 
     SireUnits::Dimension::Time timeStep() const;
-
-    SireUnits::Dimension::MolarEnergy kineticEnergy() const;
-    SireUnits::Dimension::MolarEnergy kineticEnergy(const MoleculeView &molview) const;
-    
-    ForceTable forceTable() const;
-    
-    QHash<MolNum,AtomVelocities> velocities() const;
-    QHash<MolNum,AtomForces> forces() const;
-    
-    AtomVelocities velocities(const MolID &molid) const;
-    AtomForces forces(const MolID &molid) const;
-    
-    void clearStatistics();
-    
-    void clearVelocities();
-    void clearForces();
     
     void setGenerator(const RanGenerator &generator);
 
-private:
-    void recalculateVelocities();
-    void updateTables(const MoleculeGroup &new_molgroup);
-    void updateFrom(System &system, const Symbol &nrg_component);
+    IntegratorWorkspacePtr createWorkspace() const;
+    IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup) const;
 
+private:
     /** The timestep of integration */
     SireUnits::Dimension::Time timestep;
-    
-    /** The forces on the atoms */
-    SireFF::ForceTable f;
-    
-    /** All of the velocities of the atoms */
-    QVector< PackedArray2D<Vector> > v;
 
-    /** All of the coordinates of the atoms (in infinite cartesian space) */
-    QVector< PackedArray2D<Vector> > r;
-    
-    /** All of the inverse masses of the atoms */
-    QVector< PackedArray2D<double> > inv_m;
-    
     /** The generator used to generate new velocities */
     VelGenPtr vel_generator;
-    
-    /** The unique ID number of the last system to be integrated */
-    QUuid last_sys_uid;
-    
-    /** The version of the System the last time it 
-        was integrated */
-    SireBase::Version last_sys_version;
-    
-    /** The energy component used for the last move */
-    Symbol last_nrg_component;
-    
-    /** The kinetic energy of the last timestep */
-    SireUnits::Dimension::MolarEnergy last_kinetic_nrg;
-    
-    /** Whether or not the velocities need to be recalculated from scratch */
-    bool recalc_velocities;
 };
 
 }

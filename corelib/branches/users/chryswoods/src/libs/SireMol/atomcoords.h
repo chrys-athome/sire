@@ -171,6 +171,12 @@ public:
 
     const CoordGroupArray& array() const;
 
+    QVector<Vector> toVector() const;
+    QVector<Vector> toVector(const AtomSelection &selection) const;
+    
+    void copyFrom(const QVector<Vector> &values);
+    void copyFrom(const QVector<Vector> &values, const AtomSelection &selection);
+
     void assertCanConvert(const QVariant &value) const;
 
 private:

@@ -66,6 +66,9 @@ using SireMol::MoleculeView;
 using SireMol::CGIdx;
 using SireMol::MolNum;
 using SireMol::MoleculeGroup;
+using SireMol::AtomSelection;
+
+using SireMaths::Vector;
 
 /** This class holds the forces acting on all of the atoms of 
     selected CutGroups in a molecule. The MolForceTable is used
@@ -127,7 +130,12 @@ public:
     
     int map(CGIdx cgidx) const;
 
+    QVector<Vector> toVector() const;
+    QVector<Vector> toVector(const AtomSelection &selection) const;
+
 private:
+    void assertCompatibleWith(const AtomSelection &selection) const;
+
     /** The number of this molecule */
     MolNum molnum;
     
@@ -206,6 +214,8 @@ public:
     int count() const;
 
     const QHash<MolNum,quint32>& index() const;
+    
+    int indexOf(MolNum molnum) const;
     
     QList<MolNum> molNums() const;
 

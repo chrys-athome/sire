@@ -30,6 +30,8 @@
 
 #include "SireVol/space.h"
 
+#include "SireBase/quickcopy.hpp"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -546,15 +548,220 @@ int AtomProperty<Vector>::nAtoms(CGIdx cgidx) const
     return this->operator[](cgidx).count();
 }
 
-////////
-//////// Lets explicitly instantiate other AtomProperty types...
-////////
+/** Convert this atom property to an array of values. The values
+    are written in CGAtomIdx order */
+QVector<Vector> AtomProperty<Vector>::toVector() const
+{
+    int nats = this->nAtoms();
+    
+    if (nats == 0)
+        return QVector<Vector>();
+        
+    QVector<Vector> vals(nats);
+    
+    quickCopy<Vector>( vals.data(), coords.constCoordsData(), nats );
+    
+    return vals;
+}
 
-#include "atommasses.h"
-#include "atomelements.h"
+/** Convert the properties of the atoms selected in 'selection' to an 
+    array of values. The values are written in CGAtomIdx order
+    
+    \throw SireError::incompatible_error
+*/
+QVector<Vector> AtomProperty<Vector>::toVector(const AtomSelection &selected_atoms) const
+{
+    selected_atoms.assertCompatibleWith(*this);
+    
+    if (selected_atoms.selectedAll())
+        return this->toVector();
+        
+    else if (selected_atoms.selectedAllCutGroups())
+    {
+        int nselected = selected_atoms.nSelected();
+        QVector<Vector> vals(nselected);
+        
+        Vector *value = vals.data();
+        
+        const int ncg = selected_atoms.nCutGroups();
+        
+        const CoordGroup *cgroup_array = coords.constData();
+        
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            const Vector *group_coords = cgroup_array[i].constData();
+            
+            if (selected_atoms.selectedAll(i))
+            {
+                const int nats = cgroup_array[i].count();
 
-template class AtomProperty<SireUnits::Dimension::MolarMass>;
-template class AtomProperty<Element>;
+                quickCopy(value, group_coords, nats);
+                value += nats;
+            }
+            else
+            {
+                QList<Index> idxs = selected_atoms.selectedAtoms(i).toList();
+                qSort(idxs);
+                
+                foreach (Index idx, idxs)
+                {
+                    *value = group_coords[idx];
+                    ++value;
+                }
+            }
+        }
+        
+        return vals;
+    }
+    else
+    {
+        int nselected = selected_atoms.nSelected();
+        QVector<Vector> vals(nselected);
+        
+        Vector *value = vals.data();
+        
+        const CoordGroup *cgroup_array = coords.constData();
 
-static const RegisterMetaType<AtomMasses> r_atommass;
-static const RegisterMetaType<AtomElements> r_atomelements;
+        QList<CGIdx> cgidxs = selected_atoms.selectedCutGroups();
+        qSort(cgidxs);
+        
+        foreach (CGIdx i, cgidxs)
+        {
+            const Vector *group_coords = cgroup_array[i].constData();
+            
+            if (selected_atoms.selectedAll(i))
+            {
+                const int nats = cgroup_array[i].count();
+
+                quickCopy(value, group_coords, nats);
+                value += nats;
+            }
+            else
+            {
+                QList<Index> idxs = selected_atoms.selectedAtoms(i).toList();
+                qSort(idxs);
+                
+                foreach (Index idx, idxs)
+                {
+                    *value = group_coords[idx];
+                    ++value;
+                }
+            }
+        }
+        
+        return vals;
+    }
+}
+
+/** Copy into this atom property set the values from 'values'. The values
+    are copied in CGAtomIdx order, and there must be as many values
+    as there are atoms
+    
+    \throw SireError::incompatible_error
+*/
+void AtomProperty<Vector>::copyFrom(const QVector<Vector> &values)
+{
+    if (values.count() != this->nAtoms())
+        this->throwIncorrectNumberOfAtoms(values.count(), this->nAtoms());
+        
+    const int ncg = coords.nCoordGroups();
+    
+    const Vector *value = values.constData();
+    
+    for (int i=0; i<ncg; ++i)
+    {
+        const int nats = coords.at(i).count();
+        
+        coords.update(i, value, nats);
+        value += nats;
+    }
+}
+
+/** Copy into this atom property set the values from 'values', but only
+    for the atoms selected in 'selection'. This copies the properties
+    in in CGAtomIdx order, and there must be the same number of values
+    as there are selected atoms
+    
+    \throw SireError::incompatible_error
+*/
+void AtomProperty<Vector>::copyFrom(const QVector<Vector> &values, 
+                                    const AtomSelection &selected_atoms)
+{
+    selected_atoms.assertCompatibleWith(*this);
+    
+    if (selected_atoms.selectedAll())
+    {
+        this->copyFrom(values);
+        return;
+    }
+
+    if (values.count() != selected_atoms.nSelected())
+        this->throwIncorrectNumberOfSelectedAtoms(values.count(),
+                                                  selected_atoms.nSelected());
+
+    if (selected_atoms.selectedAllCutGroups())
+    {
+        const Vector *value = values.constData();
+        
+        const int ncg = coords.nCoordGroups();
+        
+        for (CGIdx i(0); i<ncg; ++i)
+        {
+            if (selected_atoms.selectedAll(i))
+            {
+                const int nats = coords.at(i).count();
+        
+                coords.update(i, value, nats);
+                value += nats;
+            }
+            else
+            {
+                QVector<Vector> new_coords = coords.at(i).toVector();
+                
+                QList<Index> idxs = selected_atoms.selectedAtoms(i).toList();
+                qSort(idxs);
+                
+                foreach (Index idx, idxs)
+                {
+                    new_coords[idx] = *value;
+                    ++value;
+                }
+                
+                coords.update(i, new_coords);
+            }
+        }
+    }
+    else
+    {
+        QList<CGIdx> cgidxs = selected_atoms.selectedCutGroups();
+        qSort(cgidxs);
+        
+        const Vector *value = values.constData();
+        
+        foreach (CGIdx i, cgidxs)
+        {
+            if (selected_atoms.selectedAll(i))
+            {
+                const int nats = coords.at(i).count();
+        
+                coords.update(i, value, nats);
+                value += nats;
+            }
+            else
+            {
+                QVector<Vector> new_coords = coords.at(i).toVector();
+                
+                QList<Index> idxs = selected_atoms.selectedAtoms(i).toList();
+                qSort(idxs);
+                
+                foreach (Index idx, idxs)
+                {
+                    new_coords[idx] = *value;
+                    ++value;
+                }
+                
+                coords.update(i, new_coords);
+            }
+        }
+    }
+}

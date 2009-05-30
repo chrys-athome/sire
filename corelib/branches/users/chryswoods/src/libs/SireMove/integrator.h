@@ -36,6 +36,8 @@
 
 #include "SireMol/moleculegroup.h"
 
+#include "integratorworkspace.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMove
@@ -124,38 +126,28 @@ public:
     
     virtual QString toString() const=0;
     
-    virtual void integrate(System &system, const Symbol &nrg_component,
-                           const PropertyMap &map)=0;
+    virtual void integrate(System &system, IntegratorWorkspace &workspace,
+                           const Symbol &nrg_component, const PropertyMap &map) const=0;
 
-    void integrate(System &system);
-    void integrate(System &system, const Symbol &nrg_component);
+    void integrate(System &system, IntegratorWorkspace &workspace) const;
+    void integrate(System &system, IntegratorWorkspace &workspace, 
+                   const Symbol &nrg_component) const;
 
     virtual void setTimeStep(const SireUnits::Dimension::Time &timestep)=0;
 
     virtual SireUnits::Dimension::Time timeStep() const=0;
-
-    virtual SireUnits::Dimension::MolarEnergy kineticEnergy() const=0;
-    virtual SireUnits::Dimension::MolarEnergy kineticEnergy(
-                                                const MoleculeView &molview) const=0;
-    
-    virtual void clearStatistics()=0;
-    virtual void clearVelocities()=0;
-    
-    virtual void setMoleculeGroup(const MoleculeGroup &molgroup);
-    
-    const MoleculeGroup& moleculeGroup() const;
     
     virtual void setGenerator(const RanGenerator &generator)=0;
+    
+    virtual IntegratorWorkspacePtr createWorkspace() const=0;
+    virtual IntegratorWorkspacePtr 
+                        createWorkspace(const MoleculeGroup &molgroup) const=0;
     
 protected:
     Integrator& operator=(const Integrator &other);
     
     bool operator==(const Integrator &other) const;
     bool operator!=(const Integrator &other) const;
-    
-private:
-    /** The molecule group which is sampled using this integrator */
-    SireMol::MolGroupPtr molgroup;
 };
 
 /** This class holds a null integrator, which doesn't advance anything anywhere
@@ -188,22 +180,17 @@ public:
     
     QString toString() const;
     
-    void integrate(System &system, const Symbol &nrg_component,
-                   const PropertyMap &map);
+    void integrate(System &system, IntegratorWorkspace &workspace,
+                   const Symbol &nrg_component, const PropertyMap &map) const;
 
     void setTimeStep(const SireUnits::Dimension::Time &timestep);
 
     SireUnits::Dimension::Time timeStep() const;
 
-    SireUnits::Dimension::MolarEnergy kineticEnergy() const;
-    SireUnits::Dimension::MolarEnergy kineticEnergy(const MoleculeView &molview) const;
-    
-    void clearStatistics();
-    void clearVelocities();
-    
-    void setMoleculeGroup(const MoleculeGroup &molgroup);
-    
     void setGenerator(const RanGenerator &generator);
+    
+    IntegratorWorkspacePtr createWorkspace() const;
+    IntegratorWorkspacePtr createWorkspace(const MoleculeGroup &molgroup) const;
 };
 
 typedef SireBase::PropPtr<Integrator> IntegratorPtr;

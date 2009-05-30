@@ -33,6 +33,8 @@
 #include "SireMaths/axisset.h"
 #include "SireMaths/rotate.h"
 
+#include "SireBase/quickcopy.hpp"
+
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
@@ -42,6 +44,7 @@
 
 using namespace SireVol;
 using namespace SireMaths;
+using namespace SireBase;
 using namespace SireStream;
 
 namespace SireVol
@@ -632,7 +635,7 @@ char* CGMemory::detach(char *this_ptr, quint32 this_idx)
         char *new_storage = new char[sz];
         
         //copy the data
-        void *output = qMemCopy( new_storage, storage, sz*sizeof(char) );
+        char *output = quickCopy<char>( new_storage, storage, sz );
         BOOST_ASSERT(output == new_storage);
 
         //the first part of the data is the CGArrayArrayData object
@@ -1122,18 +1125,18 @@ CGArrayArrayData* CGArrayData::extract() const
     new_array->close();
     
     //copy the AABoxes
-    void *output = qMemCopy( new_array->aaBoxData(),
-                             this->aaBoxData(), 
-                             this->nCGroups() * sizeof(AABox) );
+    AABox *output = quickCopy<AABox>( new_array->aaBoxData(),
+                                      this->aaBoxData(), 
+                                      this->nCGroups() );
                              
     BOOST_ASSERT( output == new_array->aaBoxData() );
 
     //copy the coordinates
-    output = qMemCopy( new_array->coordsData(),
-                       this->coordsData(),
-                       this->nCoords() * sizeof(Vector) );
+    Vector *out2 = quickCopy<Vector>( new_array->coordsData(),
+                                      this->coordsData(),
+                                      this->nCoords() );
                        
-    BOOST_ASSERT( output == new_array->coordsData() );
+    BOOST_ASSERT( out2 == new_array->coordsData() );
 
     return new_array;
 
@@ -1312,9 +1315,9 @@ CGArrayArrayData* CGData::extract() const
     new_array->aaBoxData()[0] = *(this->aaBox());
 
     //copy the coordinates
-    void *output = qMemCopy( new_array->coordsData(),
-                             this->coordsData(),
-                             this->nCoords() * sizeof(Vector) );
+    Vector *output = quickCopy<Vector>( new_array->coordsData(),
+                                        this->coordsData(),
+                                        this->nCoords() );
                        
     BOOST_ASSERT( output == new_array->coordsData() );
 
@@ -1477,7 +1480,7 @@ CoordGroupBase::CoordGroupBase(quint32 size, const Vector *values)
     if (size > 0)
     {
         Vector *coords = d->coordsData();
-        void *output = qMemCopy(coords, values, size*sizeof(Vector));
+        Vector *output = quickCopy<Vector>(coords, values, size);
 
         BOOST_ASSERT( output == coords );
         
@@ -1499,8 +1502,8 @@ CoordGroupBase::CoordGroupBase(const CoordGroupArray &cgarray)
         d = createCoordGroup(cgarray.nCoords());
     
         Vector *coords = d->coordsData();
-        void *output = qMemCopy(coords, cgarray.constCoordsData(), 
-                                cgarray.nCoords() * sizeof(Vector));
+        Vector *output = quickCopy<Vector>(coords, cgarray.constCoordsData(), 
+                                           cgarray.nCoords());
         
         BOOST_ASSERT( output == coords );
         
@@ -1522,8 +1525,8 @@ CoordGroupBase::CoordGroupBase(const CoordGroupArrayArray &cgarrays)
         d = createCoordGroup(cgarrays.nCoords());
     
         Vector *coords = d->coordsData();
-        void *output = qMemCopy(coords, cgarrays.constCoordsData(),
-                                cgarrays.nCoords() * sizeof(Vector));
+        Vector *output = quickCopy<Vector>(coords, cgarrays.constCoordsData(),
+                                           cgarrays.nCoords());
 
         BOOST_ASSERT( output == coords );
                  
@@ -1543,8 +1546,8 @@ CoordGroupBase::CoordGroupBase(const QVector<Vector> &coordinates)
         Vector *coords = d->coordsData();
         
         //block copy the coordinates
-        void *output = qMemCopy( coords, coordinates.constData(),
-                                 ncoords*sizeof(Vector) );
+        Vector *output = quickCopy<Vector>( coords, coordinates.constData(),
+                                            ncoords );
 
         BOOST_ASSERT( output == coords );
         
@@ -1651,6 +1654,24 @@ int CoordGroupBase::count() const
 int CoordGroupBase::size() const
 {
     return d->nCoords();
+}
+
+/** Return an array containing just the coordinates in this group */
+QVector<Vector> CoordGroupBase::toVector() const
+{
+    const int ncoords = d->nCoords();
+    
+    if (ncoords == 0)
+        return QVector<Vector>();
+        
+    else
+    {
+        QVector<Vector> coords(ncoords);
+        
+        quickCopy<Vector>(coords.data(), this->constData(), ncoords);
+        
+        return coords;
+    }
 }
 
 static inline void assertSame(quint32 sz, quint32 other)
@@ -2014,7 +2035,7 @@ CoordGroupEditor& CoordGroupEditor::setCoordinates(const QVector<Vector> &newcoo
     Vector *coords = d->coordsData();
     const Vector *newcoords_array  = newcoords.constData();
 
-    void *output = qMemCopy(coords, newcoords_array, sz*sizeof(Vector));
+    Vector *output = quickCopy<Vector>(coords, newcoords_array, sz);
     needsupdate = true;
 
     BOOST_ASSERT(output == coords);
@@ -2058,7 +2079,7 @@ CoordGroupEditor& CoordGroupEditor::setCoordinates(const CoordGroupBase &newcoor
         Vector *coords = d->coordsData();
         const Vector *newcoords_array  = newcoords.constData();
 
-        void *output = qMemCopy(coords, newcoords_array, sz*sizeof(Vector));
+        Vector *output = quickCopy<Vector>(coords, newcoords_array, sz);
         needsupdate = true;
 
         BOOST_ASSERT(output == coords);
@@ -2283,8 +2304,8 @@ CoordGroupArray::CoordGroupArray(const QVector<CoordGroup> &cgroups)
         const CoordGroup &cgroup = cgroups_array[i];
         
         //copy the coordinates
-        void *output = qMemCopy(coords, cgroup.constData(),
-                                cgroup.count() * sizeof(Vector));
+        Vector *output = quickCopy<Vector>(coords, cgroup.constData(),
+                                           cgroup.count());
                                 
         BOOST_ASSERT(output == coords);
         
@@ -2500,6 +2521,55 @@ const AABox* CoordGroupArray::constAABoxData() const
     return d->aaBoxData();
 }
 
+/** Update the CoordGroup at index i so that it has coordinates 'coords'
+    (there are 'ncoords' coordinates in this array)
+    
+    There must contain the same number of coordinates as the existing
+    CoordGroup at this index
+    
+    \throw SireError::invalid_index
+    \throw SireError::incompatible_error
+*/
+void CoordGroupArray::update(quint32 i, const Vector *coords, int ncoords)
+{
+    this->assertValidCoordGroup(i);
+    
+    CoordGroup &this_cgroup = d->cGroupData()[i];
+    
+    CGData *cgdata = const_cast<CGData*>( this_cgroup.d.constData() );
+    
+    if (cgdata->nCoords() != quint32(ncoords))
+        throw SireError::incompatible_error( QObject::tr(
+            "Cannot update the CoordGroup at index %1 as this CoordGroup "
+            "has a different number of coordinates (%2) than are "
+            "provided (%3).")
+                .arg(i).arg(cgdata->nCoords()).arg(ncoords),
+                    CODELOC );
+                    
+    //copy the coordinates
+    Vector *old_coords = cgdata->coordsData();
+    
+    Vector *output = quickCopy<Vector>(old_coords, coords, ncoords);
+                            
+    BOOST_ASSERT(output == old_coords);
+    
+    //update the AABox
+    *(cgdata->aaBox()) = AABox(coords, ncoords);
+}
+
+/** Update the CoordGroup at index i so that it has coordinates 'coords'
+    
+    There must contain the same number of coordinates as the existing
+    CoordGroup at this index
+    
+    \throw SireError::invalid_index
+    \throw SireError::incompatible_error
+*/
+void CoordGroupArray::update(quint32 i, const QVector<Vector> &coords)
+{
+    this->update(i, coords.constData(), coords.count());
+}
+
 /** Update the CoordGroup at index i so that it is equal to 'cgroup'. Note
     that 'cgroup' must contain the same number of coordinates as the existing
     CoordGroup at this index
@@ -2526,8 +2596,8 @@ void CoordGroupArray::update(quint32 i, const CoordGroup &cgroup)
     //copy the coordinates
     Vector *coords = cgdata->coordsData();
     
-    void *output = qMemCopy(coords, cgroup.constData(),
-                            cgdata->nCoords() * sizeof(Vector));
+    Vector *output = quickCopy<Vector>(coords, cgroup.constData(),
+                                       cgdata->nCoords());
                             
     BOOST_ASSERT(output == coords);
     
@@ -3001,8 +3071,8 @@ CoordGroupArrayArray::CoordGroupArrayArray(const QVector<CoordGroupArray> &cgarr
         
         if (cgarray.nCoords() > 0)
         {
-            void *output = qMemCopy( coords, cgarray.coordsData(),
-                                     cgarray.nCoords() * sizeof(Vector) );
+            Vector *output = quickCopy<Vector>( coords, cgarray.coordsData(),
+                                                cgarray.nCoords() );
                                      
             BOOST_ASSERT(output == coords);
             
@@ -3012,8 +3082,8 @@ CoordGroupArrayArray::CoordGroupArrayArray(const QVector<CoordGroupArray> &cgarr
         //copy all of the AABoxes in one block
         if (cgarray.nCoordGroups() > 0)
         {
-            void *output = qMemCopy( aaboxes, cgarray.aaBoxData(),
-                                     cgarray.nCoordGroups() * sizeof(AABox) );
+            AABox *output = quickCopy<AABox>( aaboxes, cgarray.aaBoxData(),
+                                              cgarray.nCoordGroups() );
                                      
             BOOST_ASSERT(output == aaboxes);
             
@@ -3091,8 +3161,8 @@ CoordGroupArrayArray::CoordGroupArrayArray(
         
             if (cgroup.count() > 0)
             {
-                void *output = qMemCopy( coords, cgroup.constData(),
-                                         cgroup.count() * sizeof(Vector) );
+                Vector *output = quickCopy<Vector>( coords, cgroup.constData(),
+                                                    cgroup.count() );
                                      
                 BOOST_ASSERT(output == coords);
             
@@ -3385,17 +3455,17 @@ void CoordGroupArrayArray::update(quint32 i, const CoordGroupArray &array)
     
     //ok, we can now copy the AABoxes as a block, then the 
     //CoordGroups as a block
-    void *output = qMemCopy( cgarraydata->aaBoxData(),
-                             new_cgarray->aaBoxData(),
-                             cgarraydata->nCGroups() * sizeof(AABox) );
+    AABox *output = quickCopy<AABox>( cgarraydata->aaBoxData(),
+                                      new_cgarray->aaBoxData(),
+                                      cgarraydata->nCGroups() );
                              
     BOOST_ASSERT( output == cgarraydata->aaBoxData() );
     
-    output = qMemCopy( cgarraydata->coordsData(),
-                       new_cgarray->coordsData(),
-                       cgarraydata->nCoords() * sizeof(Vector) );
+    Vector *out2 = quickCopy<Vector>( cgarraydata->coordsData(),
+                                      new_cgarray->coordsData(),
+                                      cgarraydata->nCoords() );
                        
-    BOOST_ASSERT( output == cgarraydata->coordsData() );
+    BOOST_ASSERT( out2 == cgarraydata->coordsData() );
 }
 
 /** Update the jth CoordGroup of the ith CoordGroupArray so that its
@@ -3434,9 +3504,9 @@ void CoordGroupArrayArray::update(quint32 i, quint32 j, const CoordGroup &cgroup
     //copy the coordinates and AABox in one go
     *(cgdata->aaBox()) = cgroup.aaBox();
     
-    void *output = qMemCopy( cgdata->coordsData(),
-                             cgroup.constData(),
-                             cgdata->nCoords() * sizeof(Vector) );
+    Vector *output = quickCopy<Vector>( cgdata->coordsData(),
+                                        cgroup.constData(),
+                                        cgdata->nCoords() );
                              
     BOOST_ASSERT( output == cgdata->coordsData() );
 }

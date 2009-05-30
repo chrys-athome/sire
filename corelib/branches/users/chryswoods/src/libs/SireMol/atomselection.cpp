@@ -1367,6 +1367,36 @@ int AtomSelection::nSelectedSegments() const
     }
 }
 
+/** Return the total number of atoms in the molecule */
+int AtomSelection::nAtoms() const
+{
+    return info().nAtoms();
+}
+
+/** Return the total number of CutGroups in the molecule */
+int AtomSelection::nCutGroups() const
+{
+    return info().nCutGroups();
+}
+
+/** Return the total number of residues in the molecule */
+int AtomSelection::nResidues() const
+{
+    return info().nResidues();
+}
+
+/** Return the total number of chains in the molecule */
+int AtomSelection::nChains() const
+{
+    return info().nChains();
+}
+
+/** Return the total number of segments in this molecule */
+int AtomSelection::nSegments() const
+{
+    return info().nSegments();
+}
+
 /** Return a selection that has all of the atoms selected */
 AtomSelection& AtomSelection::selectAll()
 {

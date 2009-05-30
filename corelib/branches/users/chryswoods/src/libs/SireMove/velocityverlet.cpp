@@ -66,7 +66,7 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const VelocityVerlet &v
     
     SharedDataStream sds(ds);
     
-    sds 
+    sds << velver.timestep << velver.vel_generator
         << static_cast<const Integrator&>(velver);
         
     return ds;
@@ -81,7 +81,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, VelocityVerlet &velver)
     {
         SharedDataStream sds(ds);
         
-        sds 
+        sds >> velver.timestep >> velver.vel_generator
             >> static_cast<Integrator&>(velver);
     }
     else
@@ -92,7 +92,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, VelocityVerlet &velver)
 
 /** Constructor */
 VelocityVerlet::VelocityVerlet()
-               : ConcreteProperty<VelocityVerlet,Integrator>()
+               : ConcreteProperty<VelocityVerlet,Integrator>(), timestep(0)
 {}
 
 /** Construct, specifying the timestep */
@@ -106,7 +106,8 @@ VelocityVerlet::VelocityVerlet(const Time &dt)
 
 /** Copy constructor */
 VelocityVerlet::VelocityVerlet(const VelocityVerlet &other)
-               : ConcreteProperty<VelocityVerlet,Integrator>(other)
+               : ConcreteProperty<VelocityVerlet,Integrator>(other),
+                 timestep(other.timestep), vel_generator(other.vel_generator)
 {}
 
 /** Destructor */
@@ -120,6 +121,8 @@ VelocityVerlet& VelocityVerlet::operator=(const VelocityVerlet &other)
     {
         Integrator::operator=(other);
     
+        timestep = other.timestep;
+        vel_generator = other.vel_generator;
     }
     
     return *this;
@@ -128,7 +131,9 @@ VelocityVerlet& VelocityVerlet::operator=(const VelocityVerlet &other)
 /** Comparison operator */
 bool VelocityVerlet::operator==(const VelocityVerlet &other) const
 {
-    return Integrator::operator==(other);
+    return Integrator::operator==(other) and
+           timestep == other.timestep and
+           vel_generator == other.vel_generator;
 }
 
 /** Comparison operator */
@@ -150,55 +155,6 @@ void VelocityVerlet::setGenerator(const RanGenerator &rangenerator)
     if (vel_generator->isA<RandomVelocities>())
         vel_generator.edit().asA<RandomVelocities>().setGenerator(rangenerator);
 }
-
-/** Internal function used to regenerate all of the velocities */
-void VelocityVerlet::recalculateVelocities()
-{
-}
-
-/** Internal function used to redimension the force and velocity
-    tables to match the molecules in 'new_molgroup' */
-void VelocityVerlet::updateTables(const MoleculeGroup &new_molgroup)
-{}
-
-/** Internal function used to update this integrator from the 
-    passed system - this involves calculating the forces if
-    the molecule group or system has changed */
-void VelocityVerlet::updateFrom(System &system, const Symbol &nrg_component)
-{}
-
-/** Half-integrate the velocities - this returns the new kinetic energy
-    of the atoms in the partial molecule */
-static double integrateVelocities(const PartialMolecule &molecule,
-                                  const PropertyName &masses_property,
-                                  MolForceTable &mol_vels, 
-                                  const MolForceTable &mol_forces,
-                                  const Time &timestep)
-{
-            // a(t + dt) = -(1/m) f( r(t+dt) )
-
-            // v(t + dt) = v(t + dt/2) + (1/2) a(t + dt) dt
-
-    return 0;
-}
-
-/** Integrate the coordinates of the molecule 'molecule' and half-integrate
-    the velocities */
-static PartialMolecule integrateCoordinates(PartialMolecule molecule, 
-                                            const MolForceTable &mol_force, 
-                                            MolForceTable &mol_vel,
-                                            const Space &space,
-                                            const Time &timestep,
-                                            const PropertyMap &map)
-{
-                // a(t) = -(1/m) f( r(t) )
-
-                // r(t + dt) = r(t) + v(t) dt + (1/2) a(t) dt^2
-    
-                // v(t + dt/2) = v(t) + (1/2) a(t) dt
-        
-    return molecule;
-}
                                                         
 /** Integrate the coordinates of the atoms in the molecules in 'molgroup'
     using the forces in 'forcetable', using the optionally supplied 
@@ -209,9 +165,80 @@ static PartialMolecule integrateCoordinates(PartialMolecule molecule,
     \throw SireError:invalid_cast
     \throw SireError::incompatible_error
 */
-void VelocityVerlet::integrate(System &system, const Symbol &nrg_component,
-                               const PropertyMap &map)
+void VelocityVerlet::integrate(System &system, IntegratorWorkspace &workspace,
+                               const Symbol &nrg_component, const PropertyMap &map) const
 {
+    AtomicVelocityWorkspace &ws = workspace.asA<AtomicVelocityWorkspace>();
+    
+    //update the workspace with the current state of the system 
+    // - this calculates new forces if necessary
+    ws.updateFrom(system, nrg_component, vel_generator, map);
+    
+    const double dt = timestep;
+
+    const int nmols = ws.count();
+    
+    //first integrate the coordinates - loop over all molecules
+    for (int i=0; i<nmols; ++i)
+    {
+        QVector<Vector> coords = ws.coordinateArray(i);
+        const QVector<Vector> &forces = ws.forceArray(i);
+        QVector<Vector> vels = ws.velocityArray(i);
+        const QVector<double> &inv_masses = ws.reciprocalMassArray(i);
+        
+        const int nats = coords.count();
+
+        BOOST_ASSERT(vels.count() == nats);
+        BOOST_ASSERT(forces.count() == nats);
+        BOOST_ASSERT(inv_masses.count() == nats);
+
+        Vector *r = coords.data();
+        const Vector *f = forces.constData();
+        Vector *v = vels.data();
+        const double *inv_m = inv_masses.constData();
+        
+        for (int j=0; j<nats; ++j)
+        {
+            // (1/2) a(t) dt = (1/2) -(1/m) f( r(t) ) dt
+            const Vector half_a_t_dt = (-0.5*inv_m[j]*dt) * f[j];
+            
+            // v(t + dt/2) = v(t) + (1/2) a(t) dt
+            v[j] += half_a_t_dt;
+
+            // r(t + dt) = r(t) + v(t) dt + (1/2) a(t) dt^2
+            r[j] += dt * v[j];
+        }
+        
+        ws.setCoordinates(i, coords);
+        ws.setVelocities(i, vels);
+    }
+    
+    //now update the system with the new coordinates
+    ws.updateSystem(system, nrg_component);
+    
+    //now need to integrate the velocities
+    for (int i=0; i<nmols; ++i)
+    {
+        const QVector<Vector> &forces = ws.forceArray(i);
+        QVector<Vector> vels = ws.velocityArray(i);
+        const QVector<double> &inv_masses = ws.reciprocalMassArray(i);
+        
+        const int nats = forces.count();
+
+        const Vector *f = forces.constData();
+        Vector *v = vels.data();
+        const double *inv_m = inv_masses.constData();
+
+        for (int j=0; j<nats; ++j)
+        {
+            // a(t + dt) = -(1/m) f( r(t+dt) )
+
+            // v(t + dt) = v(t + dt/2) + (1/2) a(t + dt) dt
+            v[j] -= (0.5 * dt * inv_m[j]) * f[j];
+        }
+        
+        ws.setVelocities(i, vels);
+    }
 }
 
 /** Set the timestep for integration */
@@ -229,58 +256,15 @@ Time VelocityVerlet::timeStep() const
     return timestep;
 }
 
-/** Return the kinetic energy at the last timestep */
-MolarEnergy VelocityVerlet::kineticEnergy() const
+/** Create an empty workspace for this integrator */
+IntegratorWorkspacePtr VelocityVerlet::createWorkspace() const
 {
-    return last_kinetic_nrg;
+    return IntegratorWorkspacePtr( new AtomicVelocityWorkspace() );
 }
 
-/** Return the kinetic energy of the passed molecule
-
-    \throw SireMol::missing_molecule
-    \throw SireError::incompatible_error
-*/
-MolarEnergy VelocityVerlet::kineticEnergy(const MoleculeView &molview) const
+/** Create a workspace for this integrator for the molecule group 'molgroup' */
+IntegratorWorkspacePtr VelocityVerlet::createWorkspace(
+                                                const MoleculeGroup &molgroup) const
 {
-    return MolarEnergy(0);
-}
-
-/** Clear all statistics */
-void VelocityVerlet::clearStatistics()
-{}
-
-/** Clear all of the velocities (they will thus be regenerated
-    on the next timestep) */
-void VelocityVerlet::clearVelocities()
-{
-    recalc_velocities = true;
-    last_kinetic_nrg = MolarEnergy(0);
-}
-
-void VelocityVerlet::clearForces()
-{}
-
-QHash<MolNum,AtomVelocities> VelocityVerlet::velocities() const
-{
-    return QHash<MolNum,AtomVelocities>();
-}
-
-AtomVelocities VelocityVerlet::velocities(SireMol::MolID const&) const
-{
-    return AtomVelocities();
-}
-
-ForceTable VelocityVerlet::forceTable() const
-{
-    return f;
-}
-
-AtomForces VelocityVerlet::forces(SireMol::MolID const&) const
-{
-    return AtomForces();
-}
-
-QHash<MolNum,AtomForces> VelocityVerlet::forces() const
-{
-    return QHash<MolNum,AtomForces>();
+    return IntegratorWorkspacePtr( new AtomicVelocityWorkspace(molgroup) );
 }

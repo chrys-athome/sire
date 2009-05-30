@@ -210,6 +210,186 @@ void MolForceTable::initialise()
     }
 }
 
+/** Return an array of all of the forces on the atoms, in CGAtomIdx order */
+QVector<Vector> MolForceTable::toVector() const
+{
+    return PackedArray2D<Vector>::toQVector();
+}
+
+void MolForceTable::assertCompatibleWith(const AtomSelection &selection) const
+{
+    if (not selection.selectedAll())
+    {
+        AtomSelection new_selection(selection);
+        new_selection.selectAll();
+        this->assertCompatibleWith(new_selection);
+        return;
+    }
+
+    bool compatible = true;
+    
+    if (selection.nCutGroups() != ncgroups)
+    {
+        compatible = false;
+    }
+    else if (this->selectedAll())
+    {
+        for (CGIdx i(0); i<ncgroups; ++i)
+        {
+            if (selection.nSelected(i) != PackedArray2D<Vector>::nValues(i))
+            {
+                compatible = false;
+                break;
+            }
+        }
+    }
+    else
+    {
+        for (QHash<CGIdx,qint32>::const_iterator it = cgidx_to_idx.constBegin();
+             it != cgidx_to_idx.constEnd();
+             ++it)
+        {
+            if (selection.nSelected(it.key()) != PackedArray2D<Vector>::nValues(it.key()))
+            {
+                compatible = false;
+                break;
+            }
+        }
+    }
+    
+    if (not compatible)
+        throw SireError::incompatible_error( QObject::tr(
+            "This MolForceTable is incompatible with the passed atom selection."),
+                CODELOC );
+}
+
+/** Return an array of all of the forces on the atoms selected in 'selection'
+
+    \throw SireError::incompatible_error
+*/
+QVector<Vector> MolForceTable::toVector(const AtomSelection &selection) const
+{
+    this->assertCompatibleWith(selection);
+
+    if (selection.selectedAll())
+    {
+        if (not this->selectedAll())
+            throw SireMol::missing_atom( QObject::tr(
+                "Cannot return the forces on all atoms as not all of the atoms "
+                "are selected in this forcetable."), CODELOC );
+        
+        return this->toVector();
+    }
+
+    QVector<Vector> vals( selection.nSelected() );
+    Vector *value = vals.data();
+
+    if (this->selectedAll())
+    {   
+        if (selection.selectedAllCutGroups())
+        {
+            const int ncg = selection.nCutGroups();
+        
+            for (CGIdx i(0); i<ncg; ++i)
+            {
+                const Vector *groupforces = PackedArray2D<Vector>::constData(i);
+            
+                if (selection.selectedAll(i))
+                {
+                    const int nats = PackedArray2D<Vector>::nValues(i);
+                    
+                    quickCopy<Vector>(value, groupforces, nats);
+                    value += nats;
+                }
+                else
+                {
+                    QList<Index> idxs = selection.selectedAtoms(i).toList();
+                    qSort(idxs);
+                    
+                    foreach (Index idx, idxs)
+                    {
+                        *value = groupforces[idx];
+                        ++value;
+                    }
+                }
+            }
+        }
+        else
+        {
+            QList<CGIdx> cgidxs = selection.selectedCutGroups();
+            qSort(cgidxs);
+            
+            foreach (CGIdx i, cgidxs)
+            {
+                const Vector *groupforces = PackedArray2D<Vector>::constData(i);
+            
+                if (selection.selectedAll(i))
+                {
+                    const int nats = PackedArray2D<Vector>::nValues(i);
+                    
+                    quickCopy<Vector>(value, groupforces, nats);
+                    value += nats;
+                }
+                else
+                {
+                    QList<Index> idxs = selection.selectedAtoms(i).toList();
+                    qSort(idxs);
+                    
+                    foreach (Index idx, idxs)
+                    {
+                        *value = groupforces[idx];
+                        ++value;
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        if (selection.selectedAllCutGroups())
+            throw SireMol::missing_atom( QObject::tr(
+                "Cannot return the forces as while all CutGroups are selected, "
+                "not all CutGroups are present in the forcetable."), CODELOC );
+
+        QList<CGIdx> cgidxs = selection.selectedCutGroups();
+        qSort(cgidxs);
+        
+        foreach (CGIdx cgidx, cgidxs)
+        {
+            int i = cgidx_to_idx.value(cgidx, -1);
+            
+            if (i == -1)
+                throw SireMol::missing_atom( QObject::tr(
+                    "Cannot return the forces as while atoms in CutGroup %1 "
+                    "are selected, this CutGroup is not present in the forcetable.")
+                        .arg(cgidx), CODELOC );
+
+            const Vector *groupforces = PackedArray2D<Vector>::constData(i);
+        
+            if (selection.selectedAll(cgidx))
+            {
+                const int nats = PackedArray2D<Vector>::nValues(i);
+                
+                quickCopy<Vector>(value, groupforces, nats);
+                value += nats;
+            }
+            else
+            {
+                QList<Index> idxs = selection.selectedAtoms(cgidx).toList();
+                qSort(idxs);
+                
+                foreach (Index idx, idxs)
+                {
+                    *value = groupforces[idx];
+                    ++value;
+                }
+            }
+        }
+    }
+    
+    return vals;
+}
+
 ////////
 //////// Implementation of ForceTable
 ////////
@@ -334,6 +514,22 @@ void ForceTable::initialiseTables()
 void ForceTable::initialiseTable(MolNum molnum)
 {
     this->getTable(molnum).initialise();
+}
+
+/** Return the index of the molecule with number 'molnum' in this table 
+
+    \throw SireMol::missing_molecule
+*/
+int ForceTable::indexOf(MolNum molnum) const
+{
+    QHash<MolNum,quint32>::const_iterator it = molnum_to_idx.constFind(molnum);
+    
+    if (it == molnum_to_idx.constEnd())
+        throw SireMol::missing_molecule( QObject::tr(
+            "There is no molecule with number %1 in this forcetable.")
+                .arg(molnum), CODELOC );
+                
+    return it.value();
 }
 
 /** Assert that this forcetable contains a table for the 

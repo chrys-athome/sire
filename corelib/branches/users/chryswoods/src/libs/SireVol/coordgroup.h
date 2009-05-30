@@ -256,6 +256,8 @@ public:
     int count() const;
     int size() const;
 
+    QVector<Vector> toVector() const;
+
     void assertValidIndex(quint32 i) const;
 
     void assertSameSize(const QVector<Vector> &coordinates) const;
@@ -506,6 +508,8 @@ public:
     CoordGroup merge() const;
     
     void update(quint32 i, const CoordGroup &cgroup);
+    void update(quint32 i, const QVector<Vector> &coords);
+    void update(quint32 i, const Vector *coords, int ncoords);
 
     void translate(const Vector &delta);
     void translate(quint32 i, const Vector &delta);

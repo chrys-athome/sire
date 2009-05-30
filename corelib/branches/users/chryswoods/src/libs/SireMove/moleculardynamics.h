@@ -31,6 +31,7 @@
 
 #include "dynamics.h"
 #include "integrator.h"
+#include "integratorworkspace.h"
 
 #include "SireMol/moleculegroup.h"
 
@@ -111,6 +112,8 @@ public:
     
     const MoleculeGroup& moleculeGroup() const;
     const Integrator& integrator() const;
+
+    const IntegratorWorkspace& workspace() const;
     
     void setMoleculeGroup(const MoleculeGroup &molgroup);
 
@@ -131,6 +134,9 @@ public:
 private:
     /** The integrator used to solve Newton's laws */
     IntegratorPtr intgrator;
+    
+    /** The workspace used to store the intermediates of integration */
+    IntegratorWorkspacePtr wspace;
     
     /** The number of moves performed using this object */
     quint32 num_moves;

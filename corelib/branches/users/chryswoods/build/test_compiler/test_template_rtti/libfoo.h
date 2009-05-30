@@ -37,7 +37,7 @@ public:
     {
         const T *this_as_T = dynamic_cast<const T*>(this);
         
-        assert(this_as_T);
+        //assert(this_as_T);
         
         return *this_as_T;
     }
