@@ -41,8 +41,8 @@ using namespace SireUnits;
 using namespace SireUnits::Dimension;
 
 /** Construct the camera */
-Camera::Camera(QObject *parent) 
-       : QObject(parent), lookat(0.0,0.0,0.0),
+Camera::Camera() 
+       : lookat(0.0,0.0,0.0),
          viewvec(0.0,0.0,-1.0), upvec(0.0,1.0,0.0), sidevec(1.0,0.0,0.0), 
          viewang( 45*degrees ),
          rnge(500.0), offsetx(0.0), offsety(0.0), zoomdistance(10.0),

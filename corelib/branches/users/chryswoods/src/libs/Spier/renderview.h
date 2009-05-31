@@ -30,8 +30,9 @@
 #define SPIER_RENDERVIEW_H
 
 #include <QGLWidget>
+#include <QList>
 
-#include "sireglobal.h"
+#include "glcanvas.h"
 
 SIRE_BEGIN_HEADER
 
@@ -54,6 +55,10 @@ protected:
     void initializeGL();
     void resizeGL(int w, int h);
     void paintGL();
+
+private:
+    /** The set of GLCanvas objects that can be rendered on this widget */
+    QList<GLCanvas> glcanvases;
 };
 
 }

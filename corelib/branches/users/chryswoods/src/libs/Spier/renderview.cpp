@@ -33,7 +33,9 @@ using namespace Spier;
 /** Constructor */
 RenderView::RenderView(QWidget *parent, QGLWidget *share_widget)
            : QGLWidget(parent, share_widget)
-{}
+{
+    glcanvases.append( GLCanvas() );
+}
 
 /** Destructor */
 RenderView::~RenderView()
@@ -41,10 +43,7 @@ RenderView::~RenderView()
 
 /** Initialise the openGL view */
 void RenderView::initializeGL()
-{
-    glClearColor(0.0, 0.0, 0.0, 0.0);
-    glEnable(GL_DEPTH_TEST);
-}
+{}
 
 /** Resize the window */
 void RenderView::resizeGL(int w, int h)
@@ -55,40 +54,5 @@ void RenderView::resizeGL(int w, int h)
 /** Paint the scene */
 void RenderView::paintGL()
 {
-    glClear( GL_COLOR_BUFFER_BIT );
-
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
-    
-        glLoadIdentity();
-        gluOrtho2D(0.0, 1.0, 0.0, 1.0);
-    
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-        glLoadIdentity();
-    
-//        pushAttrib();
-        glDisable(GL_LIGHTING);
-        glDisable(GL_TEXTURE_2D);
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_FOG);
-        
-//        if (GLEW_ARB_multisample)
-//            glDisable(GL_MULTISAMPLE_ARB);
-
-        glBegin(GL_QUADS);
-        glColor3f(0.0,0.0,0.0);
-        glVertex2f(0.0,0.0);
-        glColor3f(0.0,0.0,0.5);
-        glVertex2f(1.0,0.0);
-        glColor3f(0.9,0.9,0.9);
-        glVertex2f(1.0,1.0);
-        glVertex2f(0.0,1.0);
-        glEnd();
-    
-//        popAttrib();
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
+    glcanvases[0].render( this->context(), this->width(), this->height() );
 }

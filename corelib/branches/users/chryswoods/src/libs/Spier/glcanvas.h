@@ -29,7 +29,13 @@
 #ifndef SPIER_GLCANVAS_H
 #define SPIER_GLCANVAS_H
 
-#include "renderview.h"
+#include <QSharedData>
+
+#include "SireBase/sharedpolypointer.hpp"
+
+#include "glbackground.h"
+#include "gldisplaylist.h"
+//#include "camera.h"
 
 SIRE_BEGIN_HEADER
 
@@ -43,117 +49,40 @@ namespace Spier
  
     @author Christopher Woods
 */
-class SPIER_EXPORT GLCanvas : public QObject
+class SPIER_EXPORT GLCanvas : public QSharedData
 {
-
-    Q_OBJECT
-
 public:
-    GLCanvas(RenderView *parent);
+    GLCanvas();
+    GLCanvas(const GLCanvas &other);
 
-    virtual ~GLCanvas();
+    ~GLCanvas();
 
-    void pushAttrib();
-    void popAttrib();
-
-    void encodeIndex(quint32 index);
-    qint32 decodeIndex(int x, int y) const;
-
-    void reset();
-
-    void clear();
-    void updateGL();
-
-    bool isRepainting() const;
-
-    const QGLContext& context() const;
-    QGLFormat format() const;
+    GLCanvas& operator=(const GLCanvas &other);
     
-    const Camera& camera() const;
-    Camera& camera();
+    bool operator==(const GLCanvas &other) const;
+    bool operator!=(const GLCanvas &other) const;
 
-    QPainter& painter();
-
-    void setMoveMode(bool on);
-    bool moveMode() const;
-    
-    RenderView* parent();
-    const RenderView* parent() const;
-
-public slots:
-    
-    void setTranslationMode();
-    void setRotationMode();
+    void render(const QGLContext *render_context, int w, int h);
 
 protected:
-
-    void initialize();
-    void paintGL();
-    void resizeGL(int w, int h);
-    void setCursor(Qt::CursorShape cursor);
-
-    void paintBackground();
-    void fillBackBuffer();
-
-    void mouseMoveEvent(QMouseEvent *e);
-    void mousePressEvent(QMouseEvent *e);
-    void mouseReleaseEvent(QMouseEvent *e);
-    void mouseClickEvent(QMouseEvent *e);
-    void mouseDoubleClickEvent(QMouseEvent *e);
-    void wheelEvent(QWheelEvent *e);
+    void resize(int w, int h);
     
-    void setSceneState();
-    
-    void saveRenderState();
-    void restoreRenderState();
+    void initialise(const QGLContext *render_context);
 
-    void checkError(QString codeloc);
     void clearError();
+    void checkError(const QString &codeloc);
 
-    void keyPressEvent(QKeyEvent *e);
-    void keyReleaseEvent(QKeyEvent *e);
-
-    void paintEvent(QPaintEvent *e);
-
-    qint32 decodeColorToIndex(uchar red, uchar green, uchar blue) const;
-
-    /** The parent viewer of this canvas - this cannot change
-        during the lifetime of this canvas */
-    RenderView *prnt;
-
-    /** The camera used to view the scene */
-    Camera *cam;
-
-    /** The current input interpreter */
-    SireBase::SharedPolyPointer<InputInterpreter> current_interpreter;
-
-    /** Whether or not the camera view has changed since the last render */
-    bool needrepaint;
-
-    /** Whether or not the back buffer contains the selection info */
-    bool back_buffer_ready;
-
-    /** Whether or not we are in camera moving mode */
-    bool movemode;
-
-    /** Timer used to slow the rendering down to a maximum of 20 fps */
-    QTime rendertimer;
+    /** The background of this canvas */
+    SireBase::SharedPolyPointer<GLBackground> bg;
     
-    /** openGL display list containing the state changes used to draw
-        the scene */
-    GLuint sceneidx;
+    /** The camera for this scene */
+    //SireBase::SharedPolyPointer<Camera> cam;
     
-    /** openGL display list containing the background */
-    GLuint bgidx;
+    /** The display list containing everything needed to initialise the state */
+    GLDisplayList init_state;
     
-    /** Whether or not the canvas is in the process of being repainted */
-    bool isrepainting;
-    
-    /** Mutex to ensure that rendering is serialised */
-    QMutex rendermutex;
-    
-    /** Wait condition to slow rendering down to 20 fps (50ms render) */
-    QWaitCondition renderwait;
+    /** The current height and width of this canvas */
+    int current_w, current_h;
 };
 
 }

@@ -38,8 +38,6 @@
 
 #include "SireUnits/dimensions.h"
 
-#include <QObject>
-
 SIRE_BEGIN_HEADER
 
 namespace Spier
@@ -54,14 +52,34 @@ using SireMaths::Sphere;
  
     @author Christopher Woods
 */
-class SPIER_EXPORT Camera : public QObject
+class SPIER_EXPORT Camera
 {
 
-    Q_OBJECT
-
 public:
-    Camera(QObject *parent=0);
+    Camera();
+    Camera(const Camera &other);
+    
     ~Camera();
+
+    Camera& operator=(const Camera &other);
+    
+    bool operator==(const Camera &other) const;
+    bool operator!=(const Camera &other) const;
+
+    static const char* typeName()
+    {
+        return "Spier::Camera";
+    }
+    
+    const char* what() const
+    {
+        return Camera::typeName();
+    }
+    
+    Camera* clone() const
+    {
+        return new Camera(*this);
+    }
 
     const Vector& position() const;
 
@@ -82,10 +100,9 @@ public:
     bool viewChanged() const;
     bool sizeChanged() const;
     bool needRepaint() const;
-
-public slots:
     
     void reset();
+
     void zoom(double delta);
     void spin(const SireUnits::Dimension::Angle &delta);
     void rotate(const SireUnits::Dimension::Angle &delta, const Vector &axis);    
