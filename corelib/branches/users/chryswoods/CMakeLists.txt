@@ -89,11 +89,11 @@ macro (SAVE_SIRE_EXTRA_INCLUDE _name)
 endmacro (SAVE_SIRE_EXTRA_INCLUDE)
 
 # Sire depends on >= Qt 4.2
-set( QT_DONT_USE_QTGUI "TRUE" )
-set( QT_USE_QTSQL "TRUE" )
-find_package( Qt4 4.2.0 REQUIRED QtCore QtSQL )
+# set( QT_DONT_USE_QTGUI "TRUE" )
+# set( QT_USE_QTSQL "TRUE" )
+find_package( Qt4 4.2.0 COMPONENTS QtCore QtSQL QtGui QtOpenGL QtWebKit )
 
-if (QT4_FOUND)
+if ( ${QT_QTCORE_FOUND} AND ${QT_QTSQL_FOUND} )
    include (${QT_USE_FILE})
    message( STATUS "Using Qt version ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH} "
                    "(${QT_LIBRARIES})")

@@ -8,3 +8,4 @@
 # Add each application
 add_subdirectory (sire)
 #add_subdirectory (siretest)
+add_subdirectory (sire_browser)
