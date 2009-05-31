@@ -16,6 +16,8 @@ if ( ${QT_QTGUI_FOUND} AND ${QT_QTOPENGL_FOUND} )
 
     # Define the files on which moc must be run
     set ( SPIER_MOC_HEADERS
+          camera.h
+          glcanvas.h
           renderview.h
           spierview.h
         )
@@ -29,6 +31,10 @@ if ( ${QT_QTGUI_FOUND} AND ${QT_QTOPENGL_FOUND} )
     # Define the header files for Spier
     set ( SPIER_HEADERS
 
+          color.h
+          glmatrix.h
+          inputinterpreter.h
+
           ${SPIER_MOC_HEADERS}
         )
 
@@ -37,6 +43,11 @@ if ( ${QT_QTGUI_FOUND} AND ${QT_QTOPENGL_FOUND} )
 
           register_spier.cpp
 
+          camera.cpp
+          color.cpp
+          glcanvas.cpp
+          glmatrix.cpp
+          inputinterpreter.cpp
           renderview.cpp
           spierview.cpp
 
