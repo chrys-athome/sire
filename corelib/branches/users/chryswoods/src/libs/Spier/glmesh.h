@@ -26,73 +26,41 @@
   *
 \*********************************************/
 
-#ifndef SPIER_GLBACKGROUND_H
-#define SPIER_GLBACKGROUND_H
+#ifndef SPIER_GLMESH_H
+#define SPIER_GLMESH_H
 
 #include <QSharedData>
 
-#include "gldisplaylist.h"
+#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
 namespace Spier
 {
 
-/** This is the base class of all objects used to render the background
-    of the RenderView
-    
+/** This is the base class of all meshes that can be rendered 
+
     @author Christopher Woods
 */
-class SPIER_EXPORT GLBackground : public QSharedData
+class SPIER_EXPORT GLMesh : public QSharedData
 {
 public:
-    GLBackground();
-    GLBackground(const GLBackground &other);
+    GLMesh();
+    GLMesh(const GLMesh &other);
     
-    virtual ~GLBackground();
+    virtual ~GLMesh();
     
     static const char* typeName()
     {
-        return "Spier::GLBackground";
+        return "Spier::GLMesh";
     }
     
     virtual const char* what() const=0;
     
-    virtual GLBackground* clone() const=0;
+    virtual GLMesh* clone() const=0;
     
-    virtual void render(const QGLContext *context)=0;
-};
+    virtual void render(const QGLContext *render_context) const=0;
 
-/** This is a simple gradient background */
-class SPIER_EXPORT GradientBackground : public GLBackground
-{
-public:
-    GradientBackground();
-    GradientBackground(const GradientBackground &other);
-    
-    ~GradientBackground();
-    
-    GradientBackground& operator=(const GradientBackground &other);
-    
-    bool operator==(const GradientBackground &other) const;
-    bool operator!=(const GradientBackground &other) const;
-    
-    static const char* typeName()
-    {
-        return "Spier::GradientBackground";
-    }
-    
-    const char* what() const
-    {
-        return GradientBackground::typeName();
-    }
-    
-    GradientBackground* clone() const
-    {
-        return new GradientBackground(*this);
-    }
-    
-    void render(const QGLContext *render_context);
 };
 
 }

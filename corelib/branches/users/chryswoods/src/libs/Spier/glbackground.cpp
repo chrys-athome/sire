@@ -58,9 +58,10 @@ GradientBackground::GradientBackground() : GLBackground()
 
 /** Copy constructor */
 GradientBackground::GradientBackground(const GradientBackground &other)
-                   : GLBackground(other),
-                     display_list(other.display_list)
-{}
+                   : GLBackground(other)
+{
+    GLDisplayListRegistry::copyDisplayList(&other, this);
+}
 
 /** Destructor */
 GradientBackground::~GradientBackground()
@@ -69,15 +70,14 @@ GradientBackground::~GradientBackground()
 /** Copy assignment operator */
 GradientBackground& GradientBackground::operator=(const GradientBackground &other)
 {
-    display_list = other.display_list;
-    
+    GLDisplayListRegistry::copyDisplayList(&other, this);
     return *this;
 }
 
 /** Comparison operator */
 bool GradientBackground::operator==(const GradientBackground &other) const
 {
-    return display_list == other.display_list;
+    return true;
 }
 
 /** Comparison operator */
@@ -90,7 +90,10 @@ bool GradientBackground::operator!=(const GradientBackground &other) const
     state as when it started */
 void GradientBackground::render(const QGLContext *render_context)
 {
-    if (not display_list.play(render_context))
+    GLDisplayList display_list = GLDisplayListRegistry::getDisplayList(render_context,
+                                                                       this);
+
+    if (display_list.isEmpty())
     {
         GLDisplayListRecorder recorder( display_list, render_context );
        
@@ -123,5 +126,9 @@ void GradientBackground::render(const QGLContext *render_context)
         glPopMatrix();
         glMatrixMode(GL_MODELVIEW);
         glPopMatrix();
+        
+        GLDisplayListRegistry::saveDisplayList(render_context, this, display_list);
     }
+    else
+        display_list.play(render_context);
 }

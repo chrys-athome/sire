@@ -220,3 +220,132 @@ bool GLDisplayList::isValidFor(const QGLContext *render_context) const
 {
     return (d->render_context == render_context);
 }
+
+/** Return the render context for this display list */
+const QGLContext* GLDisplayList::renderContext() const
+{
+    return d->render_context;
+}
+
+////////
+//////// Implementation of GLDisplayListRegistry
+////////
+
+GLDisplayListRegistry::GLDisplayListRegistry()
+{}
+
+GLDisplayListRegistry::~GLDisplayListRegistry()
+{
+    //delete each display list
+    display_lists.clear();
+    lists_to_delete.clear();
+}
+
+Q_GLOBAL_STATIC( QMutex, dlistRegistryMutex );
+
+boost::shared_ptr< QHash<const QGLContext*,GLDisplayListRegistry> > 
+        GLDisplayListRegistry::registries;
+
+/** Return the display list for the object with key 'key' in the 
+    render context 'render_context' */
+GLDisplayList GLDisplayListRegistry::getDisplayList(const QGLContext *render_context,
+                                                    const void *key)
+{
+    QMutexLocker lkr( dlistRegistryMutex() );
+    
+    if (registries.get() == 0)
+        registries.reset( new QHash<const QGLContext*,GLDisplayListRegistry>() );
+
+
+    GLDisplayListRegistry &registry = (*registries)[render_context];
+
+    registry.lists_to_delete.clear();
+    return registry.display_lists.value(key, GLDisplayList());
+}
+
+/** Save the display list 'display_list' for the QGLContext render context
+    'render_context' for the object with key 'key' */
+void GLDisplayListRegistry::saveDisplayList(const QGLContext *render_context,
+                                            const void *key,
+                                            const GLDisplayList &display_list)
+{
+    if (display_list.renderContext() != render_context)
+        return;
+
+    QMutexLocker lkr( dlistRegistryMutex() );
+    
+    if (registries.get() == 0)
+        registries.reset( new QHash<const QGLContext*,GLDisplayListRegistry>() );
+
+    GLDisplayListRegistry &registry = (*registries)[render_context];
+
+    registry.display_lists.insert(key, display_list);
+    registry.lists_to_delete.clear();
+}
+
+void GLDisplayListRegistry::clearLists(const void *key)
+{
+    if (display_lists.contains(key))
+    {
+        lists_to_delete.append( display_lists.take(key) );
+    }
+}
+
+/** Clear all display lists associated with the key 'key' */
+void GLDisplayListRegistry::clearDisplayLists(const void *key)
+{
+    QMutexLocker lkr( dlistRegistryMutex() );
+    
+    if (registries.get() == 0)
+        registries.reset( new QHash<const QGLContext*,GLDisplayListRegistry>() );
+
+    for (QHash<const QGLContext*,GLDisplayListRegistry>::iterator
+                                                it = registries->begin();
+         it != registries->end();
+         ++it)
+    {
+        it->clearLists(key);
+    }
+}
+
+/** Clear all display lists associated with the render context 'render_context' */
+void GLDisplayListRegistry::clearDisplayLists(const QGLContext *render_context)
+{
+    QMutexLocker lkr( dlistRegistryMutex() );
+    
+    if (registries.get() == 0)
+        registries.reset( new QHash<const QGLContext*,GLDisplayListRegistry>() );
+
+    registries->remove(render_context);
+}
+
+void GLDisplayListRegistry::copyList(const void *old_key, const void *new_key)
+{
+    if (display_lists.contains(old_key))
+    {
+        if (display_lists.contains(new_key))
+            lists_to_delete.append( display_lists.take(new_key) );
+    
+        display_lists.insert( new_key, display_lists.value(old_key) );
+    }
+}
+
+/** Copy the display lists of key 'old_key' to the display list 'new_key' */
+void GLDisplayListRegistry::copyDisplayList(const void *old_key, const void *new_key)
+{
+    if (old_key == new_key)
+        return;
+
+    QMutexLocker lkr( dlistRegistryMutex() );
+    
+    if (registries.get() == 0)
+        registries.reset( new QHash<const QGLContext*,GLDisplayListRegistry>() );
+
+    for (QHash<const QGLContext*,GLDisplayListRegistry>::iterator
+                                                it = registries->begin();
+         it != registries->end();
+         ++it)
+    {
+        it->copyList(old_key, new_key);
+    }
+}

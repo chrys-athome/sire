@@ -31,6 +31,8 @@
 
 #include <QGLWidget>
 #include <QGLContext>
+#include <QHash>
+#include <QList>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
@@ -76,6 +78,8 @@ public:
     bool isEmpty() const;
 
     bool isValidFor(const QGLContext *render_context) const;
+    
+    const QGLContext* renderContext() const;
 
 private:
     boost::shared_ptr<detail::GLDisplayListData> d;
@@ -97,6 +101,45 @@ public:
 private:
     /** The GLDisplayList being recorded */
     GLDisplayList recording_list;
+};
+
+/** This is the registry of all GLDisplayLists for a particular
+    QGLContext OpenGL rendering context
+    
+    @author Christopher Woods
+*/
+class SPIER_EXPORT GLDisplayListRegistry
+{
+public:
+    GLDisplayListRegistry();
+    ~GLDisplayListRegistry();
+    
+    static GLDisplayList getDisplayList(const QGLContext *render_context,
+                                        const void *key);
+    
+    static void saveDisplayList(const QGLContext *render_context,
+                                const void *key,
+                                const GLDisplayList &display_list);
+
+    static void copyDisplayList(const void *old_key, const void *new_key);
+
+    static void clearDisplayLists(const void *key);
+    static void clearDisplayLists(const QGLContext *render_context);
+
+private:
+    void clearLists(const void *key);
+    void copyList(const void *old_key, const void *new_key);
+    
+    /** The global set of registries for each render context */
+    static boost::shared_ptr< 
+                    QHash<const QGLContext*, GLDisplayListRegistry> > registries;
+    
+    /** All of the display lists for this context, indexed by 
+        the pointer of the object that uses the display list */
+    QHash<const void*, GLDisplayList> display_lists;
+    
+    /** The set of all display lists to delete */
+    QList<GLDisplayList> lists_to_delete;
 };
 
 }
