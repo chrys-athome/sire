@@ -4,7 +4,7 @@
 #
 ########################################
 
-if ( ${QT_QTGUI_FOUND} AND ${QT_QTOPENGL_FOUND} )
+if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
 
     # Third Party dependencies of this module
     find_package( OpenGL REQUIRED )
