@@ -68,6 +68,10 @@ QDataStream SIRESTREAM_EXPORT &operator>>(QDataStream &ds, exception &e)
     return ds;
 }
 
+const char* magic_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<magic_error>() );
+}
 
 static const RegisterMetaType<SireError::program_bug> r_program_bug;
 static const RegisterMetaType<SireError::unsupported> r_unsupported;

@@ -76,10 +76,7 @@ public:
     ~magic_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<magic_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {

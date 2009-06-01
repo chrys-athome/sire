@@ -56,10 +56,7 @@ public:
     ~corrupted_data() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<corrupted_data>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {

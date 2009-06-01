@@ -108,11 +108,6 @@ std_exception::std_exception(const std::exception &error)
 std_exception::~ std_exception() throw()
 {}
 
-const char* std_exception::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<std_exception>() );
-}
-
 QString std_exception::getWhatString(QString typstring, const std::exception &error)
 {
     return QObject::tr("Caught standard exception 'std::%1' (%2)")
@@ -223,6 +218,121 @@ QString SIREERROR_EXPORT processError(const QString &executable,
                                         .arg(exitStatusString(process.exitStatus()))
                                         .arg(process.exitCode());
     }
+}
+
+const char* program_bug::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<program_bug>() );
+}
+
+const char* unsupported::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<unsupported>() );
+}
+
+const char* id_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<id_error>() );
+}
+
+const char* invalid_key::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<invalid_key>() );
+}
+
+const char* invalid_index::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<invalid_index>() );
+}
+
+const char* invalid_cast::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<invalid_cast>() );
+}
+
+const char* noncopyable_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<noncopyable_error>() );
+}
+
+const char* nullptr_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<nullptr_error>() );
+}
+
+const char* lock_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<lock_error>() );
+}
+
+const char* assertation_failed::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<assertation_failed>() );
+}
+
+const char* incompatible_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<incompatible_error>() );
+}
+
+const char* file_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<file_error>() );
+}
+
+const char* io_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<io_error>() );
+}
+
+const char* process_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<process_error>() );
+}
+
+const char* invalid_arg::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<invalid_arg>() );
+}
+
+const char* invalid_state::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<invalid_state>() );
+}
+
+const char* invalid_operation::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<invalid_operation>() );
+}
+
+const char* unavailable_resource::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<unavailable_resource>() );
+}
+
+const char* incomplete_code::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<incomplete_code>() );
+}
+
+const char* std_exception::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<std_exception>() );
+}
+
+const char* unknown_exception::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<unknown_exception>() );
+}
+
+const char* unknown_type::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<unknown_type>() );
+}
+
+const char* dependency_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<dependency_error>() );
 }
 
 }

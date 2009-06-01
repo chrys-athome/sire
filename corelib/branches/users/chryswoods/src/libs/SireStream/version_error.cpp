@@ -26,8 +26,28 @@
   *
 \*********************************************/
 
-#include "version_error.h"
+#include "SireStream/version_error.h"
 
-using namespace SireStream;
+namespace SireError
+{
+
+const char* version_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<version_error>() );
+}
 
 static RegisterMetaType<version_error> r_version_error;
+
+}
+
+namespace SireStream
+{
+
+const char* version_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<version_error>() );
+}
+
+static RegisterMetaType<version_error> r_version_error;
+
+}

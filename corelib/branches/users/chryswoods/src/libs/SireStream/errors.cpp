@@ -30,4 +30,9 @@
 
 using namespace SireStream;
 
+const char* corrupted_data::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<corrupted_data>() );
+}
+
 static const RegisterMetaType<corrupted_data> r_corrupted;
