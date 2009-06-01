@@ -85,6 +85,11 @@ MajorMinorVersion::MajorMinorVersion(const MajorMinorVersion &other)
 MajorMinorVersion::~MajorMinorVersion()
 {}
 
+const char* MajorMinorVersion::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MajorMinorVersion>() );
+}
+
 /** Increment the major version number - this resets the 
     minor version number to 0 */
 void MajorMinorVersion::incrementMajor()

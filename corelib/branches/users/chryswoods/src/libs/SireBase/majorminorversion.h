@@ -114,10 +114,7 @@ public:
     bool operator==(const MajorMinorVersion &other) const;
     bool operator!=(const MajorMinorVersion &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MajorMinorVersion>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

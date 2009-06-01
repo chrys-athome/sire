@@ -17,7 +17,7 @@ int main(int argc, const char **argv)
 
     QByteArray data = u.pack();
 
-    qDebug() << data;   
+    qDebug() << "Data has been packed into " << data.count() << "bytes";   
 
     try
     {
@@ -25,7 +25,9 @@ int main(int argc, const char **argv)
     }
     catch(const SireError::unknown_exception &e)
     {
+        qDebug() << "THIS IS CORRECT AND EXPECTED BEHAVIOUR";
         qDebug() << "Caught unknown_error!!!" << e.toString();
+        qDebug() << "THIS IS CORRECT AND EXPECTED BEHAVIOUR";
         return 0;
     }
     catch(const SireError::exception &e)

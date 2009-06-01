@@ -1350,7 +1350,7 @@ PackedArray2D<T>::PackedArray2D() : d( SireBase::detail::getSharedNull<T>() )
 /** Construct from a passed Array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray2D<T>::PackedArray2D(const PackedArray2D<T>::Array &array)
+PackedArray2D<T>::PackedArray2D(const typename PackedArray2D<T>::Array &array)
                : d( array.d->extract() )
 {}
 
@@ -1413,7 +1413,7 @@ PackedArray2D<T>::PackedArray2D(const QVector<T> &values)
 /** Construct from an array of arrays */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-PackedArray2D<T>::PackedArray2D(const QVector<PackedArray2D<T>::Array> &arrays)
+PackedArray2D<T>::PackedArray2D(const QVector<typename PackedArray2D<T>::Array> &arrays)
                  : d( SireBase::detail::getSharedNull<T>() )
 {
     if (arrays.isEmpty())
@@ -1817,13 +1817,13 @@ T default_construct()
 }
 
 template<>
-inline double default_construct()
+inline double default_construct<double>()
 {
     return double(0);
 }
 
 template<>
-inline qint64 default_construct()
+inline qint64 default_construct<qint64>()
 {
     return qint64(0);
 }

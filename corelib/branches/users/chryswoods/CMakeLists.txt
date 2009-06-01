@@ -207,6 +207,13 @@ if ( CMAKE_COMPILER_IS_GNUCC )
 
     endif()
 
+    # Ensure that the libraries don't contain any undefined symbols
+    if(APPLE)
+        set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -rdynamic -Wl" )
+    else(UNIX)
+        set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -rdynamic -Wl,--no-undefined" )
+    endif()
+
 elseif ( ${CMAKE_CXX_COMPILER} MATCHES "xlC" )
    
     message( STATUS "Detected the xlc and xlC C and C++ compilers" ) 
@@ -230,6 +237,14 @@ elseif ( ${CMAKE_CXX_COMPILER} MATCHES "xlC" )
     message( STATUS "Ensuring that the resulting code is thread-safe..." )
     set ( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -qthreaded" )
 
+    message( STATUS "Enabling shared library support..." )
+    set ( SIRE_LINK_FLAGS "-qmkshrobj" )
+
+else()
+    message( STATUS "CMAKE_SYSTEM_NAME == ${CMAKE_SYSTEM_NAME}" )
+    message( STATUS "CMAKE_C_COMPILER == ${CMAKE_C_COMPILER}" )
+    message( STATUS "CMAKE_CXX_COMPILER == ${CMAKE_CXX_COMPILER}" )
+    message( FATAL "Could not detect compiler type - cannot set platform options." )
 endif()
 
 message( STATUS "CMAKE_SYSTEM_NAME == ${CMAKE_SYSTEM_NAME}" )
@@ -256,18 +271,12 @@ set( CMAKE_CXX_FLAGS ${SIRE_CXX_FLAGS_RELEASE} )
 
 message( STATUS "Compiler flags = ${SIRE_CXX_FLAGS_RELEASE}" )
 
-# Ensure that the libraries don't contain any undefined symbols
-if(APPLE)
-  set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -rdynamic -Wl" )
-else(UNIX)
-  set( SIRE_LINK_FLAGS "${SIRE_LINK_FLAGS} -rdynamic -Wl,--no-undefined" )
-endif()
-
 # Add this to all shared libraries
 set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SIRE_LINK_FLAGS}" )
-set( CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} ${SIRE_LINK_FLAGS}" )
+set( CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}" )
 
-message( STATUS "Linker flags = ${CMAKE_SHARED_LINKER_FLAGS}" )
+message( STATUS "Library Linker flags = ${CMAKE_SHARED_LINKER_FLAGS}" )
+message( STATUS "Executable Linker flags = ${CMAKE_EXE_LINKER_FLAGS}" )
 
 # Now run some platform tests - the results will be placed in config.h
 include (CheckIncludeFiles)
