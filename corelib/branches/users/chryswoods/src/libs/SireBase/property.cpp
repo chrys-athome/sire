@@ -275,6 +275,11 @@ NullProperty::NullProperty(const NullProperty &other)
 NullProperty::~NullProperty()
 {}
 
+const char* NullProperty::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NullProperty>() );
+}
+
 static SharedPolyPointer<NullProperty> global_null;
 
 /** Return the global null property */

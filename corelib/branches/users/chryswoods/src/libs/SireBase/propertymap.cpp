@@ -137,6 +137,11 @@ bool PropertyName::operator!=(const PropertyName &other) const
            value_is_default != other.value_is_default;
 }
 
+const char* PropertyName::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<PropertyName>() );
+}
+
 /** Return a PropertyName that says that this property is not set */
 PropertyName PropertyName::none()
 {
@@ -332,6 +337,11 @@ PropertyName PropertyMap::operator[](const PropertyName &propname) const
     }
     else
         return propname;
+}
+
+const char* PropertyMap::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<PropertyMap>() );
 }
 
 /** Return whether or not this map specifies the source or value

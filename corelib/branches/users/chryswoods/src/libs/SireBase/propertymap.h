@@ -105,10 +105,7 @@ public:
 
     ~PropertyName();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<PropertyName>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -182,10 +179,7 @@ public:
 
     ~PropertyMap();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<PropertyMap>() );
-    }
+    static const char* typeName();
 
     const char* what() const
     {

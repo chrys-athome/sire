@@ -78,10 +78,7 @@ public:
     ~missing_property() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_property>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -116,10 +113,7 @@ public:
     ~duplicate_property() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<duplicate_property>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {

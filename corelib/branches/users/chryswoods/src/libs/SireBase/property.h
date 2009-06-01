@@ -362,10 +362,7 @@ public:
 
     ~NullProperty();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<NullProperty>() );
-    }
+    static const char* typeName();
 };
 
 /** This is base class of the polymorphic pointer holder for the entire

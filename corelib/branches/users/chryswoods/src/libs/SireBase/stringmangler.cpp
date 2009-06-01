@@ -150,6 +150,11 @@ bool NoMangling::operator!=(const NoMangling&) const
     return false;
 }
 
+const char* NoMangling::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NoMangling>() );
+}
+
 /** Mangle the string - remove all initial and trailing spaces */
 QString NoMangling::mangle(const QString &input) const
 {
@@ -234,6 +239,11 @@ bool TrimString::operator!=(const TrimString&) const
     return false;
 }
 
+const char* TrimString::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<TrimString>() );
+}
+
 /** Mangle the string - remove all initial and trailing spaces */
 QString TrimString::mangle(const QString &input) const
 {
@@ -303,6 +313,11 @@ bool UpperCaseString::operator!=(const UpperCaseString&) const
     return false;
 }
 
+const char* UpperCaseString::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<UpperCaseString>() );
+}
+
 /** Mangle the string - remove all initial and trailing spaces */
 QString UpperCaseString::mangle(const QString &input) const
 {
@@ -370,6 +385,11 @@ bool LowerCaseString::operator==(const LowerCaseString&) const
 bool LowerCaseString::operator!=(const LowerCaseString&) const
 {
     return false;
+}
+
+const char* LowerCaseString::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<LowerCaseString>() );
 }
 
 /** Mangle the string - remove all initial and trailing spaces */

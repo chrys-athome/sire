@@ -30,5 +30,15 @@
 
 using namespace SireBase;
 
+const char* duplicate_property::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<duplicate_property>() );
+}
+
+const char* missing_property::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_property>() );
+}
+
 static const RegisterMetaType<duplicate_property> r_dprop;
 static const RegisterMetaType<missing_property> r_mprop;

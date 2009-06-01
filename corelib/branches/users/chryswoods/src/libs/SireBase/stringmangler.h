@@ -103,10 +103,7 @@ public:
     
     ~NoMangling();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<NoMangling>() );
-    }
+    static const char* typeName();
     
     NoMangling& operator=(const NoMangling &other);
     
@@ -130,10 +127,7 @@ public:
     
     ~TrimString();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<TrimString>() );
-    }
+    static const char* typeName();
     
     TrimString& operator=(const TrimString &other);
     
@@ -157,10 +151,7 @@ public:
     
     ~UpperCaseString();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<UpperCaseString>() );
-    }
+    static const char* typeName();
     
     UpperCaseString& operator=(const UpperCaseString &other);
     
@@ -184,10 +175,7 @@ public:
     
     ~LowerCaseString();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<LowerCaseString>() );
-    }
+    static const char* typeName();
     
     LowerCaseString& operator=(const LowerCaseString &other);
     
