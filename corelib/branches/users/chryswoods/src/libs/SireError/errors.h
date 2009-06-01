@@ -75,10 +75,7 @@ public:
     ~program_bug() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<program_bug>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -111,10 +108,7 @@ public:
     ~unsupported() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<unsupported>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -146,10 +140,7 @@ public:
     ~invalid_key() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<invalid_key>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -181,10 +172,7 @@ public:
     ~invalid_index() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<invalid_index>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -216,10 +204,7 @@ public:
     ~invalid_cast() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<invalid_cast>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -252,10 +237,7 @@ public:
     ~incompatible_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<incompatible_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -288,10 +270,7 @@ public:
     ~unknown_type() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<unknown_type>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -323,10 +302,7 @@ public:
     ~noncopyable_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<noncopyable_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -357,10 +333,7 @@ public:
     ~nullptr_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<nullptr_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -392,10 +365,7 @@ public:
     ~lock_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<lock_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -429,10 +399,7 @@ public:
     ~assertation_failed() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<assertation_failed>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -466,10 +433,7 @@ public:
     ~file_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<file_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -504,10 +468,7 @@ public:
     ~process_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<process_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -538,10 +499,7 @@ public:
     ~unavailable_resource() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<unavailable_resource>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -571,10 +529,7 @@ public:
     ~io_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<io_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -607,10 +562,7 @@ public:
     ~invalid_arg() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<invalid_arg>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -643,10 +595,7 @@ public:
     ~invalid_state() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<invalid_state>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -678,10 +627,7 @@ public:
     ~invalid_operation() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<invalid_operation>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -714,10 +660,7 @@ public:
     ~incomplete_code() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<incomplete_code>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -749,15 +692,12 @@ public:
 
     ~std_exception() throw();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<std_exception>() );
-    }
+    static const char* typeName();
 
-    const char* what() const throw();
-    //{
-    //    return std_exception::typeName();
-    //}
+    const char* what() const throw()
+    {
+        return std_exception::typeName();
+    }
     
     void throwSelf() const
     {
@@ -788,10 +728,7 @@ public:
     ~unknown_exception() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<unknown_exception>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -825,10 +762,7 @@ public:
     ~dependency_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<dependency_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -862,10 +796,7 @@ public:
     ~id_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<id_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {

@@ -108,15 +108,15 @@ std_exception::std_exception(const std::exception &error)
 std_exception::~ std_exception() throw()
 {}
 
+const char* std_exception::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<std_exception>() );
+}
+
 QString std_exception::getWhatString(QString typstring, const std::exception &error)
 {
     return QObject::tr("Caught standard exception 'std::%1' (%2)")
          .arg(typstring).arg(error.what());
-}
-
-const char* std_exception::what() const throw()
-{
-    return std_exception::typeName();
 }
 
 /** Return a string representation of the QFile::FileError */

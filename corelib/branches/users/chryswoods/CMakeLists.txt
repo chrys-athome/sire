@@ -48,8 +48,8 @@ option (SIRE_TIME_FLOPS "Turn on floating point timing" OFF)
 set (BUILD_SHARED_LIBS ON)
 
 # This is where you set your own compiler flags
-set (SIRE_USER_CFLAGS "-mtune=native -O3")
-set (SIRE_USER_CPPFLAGS "-mtune=native -O3")
+set (SIRE_USER_CFLAGS "-O3")
+set (SIRE_USER_CPPFLAGS "-O3")
 
 # Name of executable install dir
 set (SIRE_BIN "bin")
@@ -122,6 +122,12 @@ endif()
 
 # Add compiler specific flags
 if ( CMAKE_COMPILER_IS_GNUCC )
+
+    message( STATUS "Detected and using GCC C and C++ compilers" )
+
+    set ( SIRE_SMALL_FLAGS  "-Os" )
+    set ( SIRE_WARNALL_FLAGS  "-Wall" )
+    set ( SIRE_DEBUG_FLAGS   "-g" )
 
     # get the compiler version (via gcc -dumpversion)
     # (I'll assume that we are using the same version
@@ -200,20 +206,49 @@ if ( CMAKE_COMPILER_IS_GNUCC )
       ADD_DEFINITIONS( -DSIRE_NO_VISIBILITY_AVAILABLE )
 
     endif()
-    
+
+elseif ( ${CMAKE_CXX_COMPILER} MATCHES "xlC" )
+   
+    message( STATUS "Detected the xlc and xlC C and C++ compilers" ) 
+
+    set ( SIRE_SMALL_FLAGS  "-qcompact" )
+    set ( SIRE_WARNALL_FLAGS  "-qwarn64 -qflag=w:w" )
+    set ( SIRE_DEBUG_FLAGS   "-g" )
+
+    message( STATUS "Symbol visibility support is not available." )
+    ADD_DEFINITIONS( -DSIRE_NO_VISIBILITY_AVAILABLE )
+
+    message( STATUS "Disabling OpenMP support..." )
+    message( STATUS "Disabling manual SSE code..." )
+
+    message( STATUS "Disabling altivec support" )
+    set ( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -qnoaltivec" )
+
+    message( STATUS "Enabling full RTTI support" )
+    set ( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -qrtti=all" )
+
+    message( STATUS "Ensuring that the resulting code is thread-safe..." )
+    set ( SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -qthreaded" )
+
 endif()
 
-set( SIRE_C_FLAGS_RELEASE "-Wall ${SIRE_USER_CFLAGS} ${SIRE_PLATFORM_OPTIONS}" )
-set( SIRE_CXX_FLAGS_RELEASE "-Wall ${SIRE_USER_CPPFLAGS} ${SIRE_PLATFORM_OPTIONS}" )
+message( STATUS "CMAKE_SYSTEM_NAME == ${CMAKE_SYSTEM_NAME}" )
+message( STATUS "CMAKE_C_COMPILER == ${CMAKE_C_COMPILER}" )
+message( STATUS "CMAKE_CXX_COMPILER == ${CMAKE_CXX_COMPILER}" )
 
-set( SIRE_C_FLAGS_DEBUG "-Wall -g ${SIRE_USER_CFLAGS} -O0 ${SIRE_PLAFORM_OPTIONS}" )
-set( SIRE_CXX_FLAGS_DEBUG "-Wall -g ${SIRE_USER_CPPFLAGS} -O0 ${SIRE_PLATFORM_OPTIONS}" )
+message( STATUS "SIRE_PLATFORM_OPTIONS == ${SIRE_PLATFORM_OPTIONS}" )
+
+set( SIRE_C_FLAGS_RELEASE "${SIRE_WARNALL_FLAGS} ${SIRE_USER_CFLAGS} ${SIRE_PLATFORM_OPTIONS}" )
+set( SIRE_CXX_FLAGS_RELEASE "${SIRE_WARNALL_FLAGS} ${SIRE_USER_CPPFLAGS} ${SIRE_PLATFORM_OPTIONS}" )
+
+set( SIRE_C_FLAGS_DEBUG "${SIRE_C_FLAGS_RELEASE} ${SIRE_DEBUG_FLAGS}" )
+set( SIRE_CXX_FLAGS_DEBUG "${SIRE_CXX_FLAGS_RELEASE} ${SIRE_DEBUG_FLAGS}" )
 
 # Also set flags for size-optimised compile - this is used for
 # all of the python wrappers, which can grow to enormous sizes
 # otherwise! (and aren't performance critical)
-set( SIRE_C_FLAGS_SMALL "-Wall -Os ${SIRE_PLATFORM_OPTIONS}" )
-set( SIRE_CXX_FLAGS_SMALL ${SIRE_C_FLAGS_SMALL} )
+set( SIRE_C_FLAGS_SMALL "${SIRE_C_FLAGS_RELEASE} ${SIRE_SMALL_FLAGS}" )
+set( SIRE_CXX_FLAGS_SMALL "${SIRE_CXX_FLAGS_RELEASE} ${SIRE_SMALL_FLAGS}" )
 
 # Copy the Sire compile flags to CMake
 set( CMAKE_C_FLAGS ${SIRE_C_FLAGS_RELEASE} )

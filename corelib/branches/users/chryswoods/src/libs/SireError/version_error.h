@@ -57,10 +57,7 @@ public:
     ~version_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<version_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
