@@ -432,23 +432,11 @@ public:
 
     ~SharedDataStream();
 
-    /** Simple overloads used to provide non-shared streaming for all classes
-        that QDataStream supports */
     template<class T>
-    SharedDataStream& operator<<(const T &value)
-    {
-        ds << value;
-        return *this;
-    }
+    void standardSave(const T &value);
     
-    /** Simple overloads used to provide non-shared streaming for all classes
-        that QDataStream supports */
     template<class T>
-    SharedDataStream& operator>>(T &value)
-    {
-        ds >> value;
-        return *this;
-    }
+    void standardLoad(T &value);
 
     template<class T, class GETPOINTER>
     void sharedSave(const T &value);
@@ -493,10 +481,27 @@ private:
     QDataStream &ds;
 };
 
+/** This function just saves the object using the standard QDataStream operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void SharedDataStream::standardSave(const T &value)
+{
+    this->ds << value;
+}
+
+/** This function just loads the object using the standard QDataStream operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void SharedDataStream::standardLoad(T & value)
+{
+    this->ds >> value;
+}
+
 /** This function is used to save a shared object. If multiple copies of 
     the shared object are streamed, then only the first copy is sent to 
     the stream - with references to the first copy sent for any other copies. */
 template<class T, class GETPOINTER>
+SIRE_OUTOFLINE_TEMPLATE
 void SharedDataStream::sharedSave(const T &value)
 {
     //ensure that the version number of the shared stream is written
@@ -524,6 +529,7 @@ void SharedDataStream::sharedSave(const T &value)
 
 /** This function is used to load a shared object from the stream */
 template<class T, class GETPOINTER>
+SIRE_OUTOFLINE_TEMPLATE
 void SharedDataStream::sharedLoad(T &value, const T &default_value)
 {
     this->readVersion();
@@ -571,6 +577,7 @@ void SharedDataStream::sharedLoad(T &value, const T &default_value)
 
 /** This function is used to load a shared object from the stream */
 template<class T, class GETPOINTER>
+SIRE_OUTOFLINE_TEMPLATE
 void SharedDataStream::sharedLoad(T &value)
 {
     this->sharedLoad<T,GETPOINTER>(value, T());
@@ -578,6 +585,7 @@ void SharedDataStream::sharedLoad(T &value)
 
 /** This function is used to load a shared pointer from the stream */
 template<class T, class GETPOINTER>
+SIRE_OUTOFLINE_TEMPLATE
 void SharedDataStream::sharedLoadPointer(T &pointer)
 {
     this->readVersion();
@@ -814,6 +822,22 @@ SIRE_OUTOFLINE_TEMPLATE
 SharedDataStream& operator>>(SharedDataStream &sds, QMap<Key,T> &map)
 {
     return detail::sharedLoadContainer(sds, map);
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+SharedDataStream& operator<<(SharedDataStream &sds, const T &value)
+{
+    sds.standardSave<T>(value);
+    return sds;
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+SharedDataStream& operator>>(SharedDataStream &sds, T &value)
+{
+    sds.standardLoad<T>(value);
+    return sds;
 }
 
 }

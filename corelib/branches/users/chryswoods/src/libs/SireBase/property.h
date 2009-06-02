@@ -323,10 +323,6 @@ public:
 
     virtual ~VariantProperty();
 
-    using Property::operator=;
-    using Property::operator==;
-    using Property::operator!=;
-
     VariantProperty& operator=(const QVariant &value);
     VariantProperty& operator=(const VariantProperty &other);
 
