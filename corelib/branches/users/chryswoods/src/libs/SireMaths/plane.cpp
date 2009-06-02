@@ -127,3 +127,8 @@ Plane::Plane(const Plane &other) : norm(other.norm), dist(other.dist)
 /** Destructor */
 Plane::~Plane()
 {}
+
+const char* Plane::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Plane>() );
+}

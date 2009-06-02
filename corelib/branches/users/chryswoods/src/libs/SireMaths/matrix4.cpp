@@ -323,3 +323,8 @@ Quaternion Matrix4::column3() const
 {
     return Quaternion(wx,wy,wz,ww);
 }
+
+const char* Matrix4::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Matrix4>() );
+}

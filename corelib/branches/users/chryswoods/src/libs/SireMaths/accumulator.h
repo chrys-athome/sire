@@ -138,10 +138,7 @@ public:
     
     NullAccumulator& operator=(const NullAccumulator &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<NullAccumulator>() );
-    }
+    static const char* typeName();
     
     NullAccumulator* clone() const
     {
@@ -175,10 +172,7 @@ public:
     
     Average& operator=(const Average &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Average>() );
-    }
+    static const char* typeName();
     
     Average* clone() const
     {
@@ -222,10 +216,7 @@ public:
     
     AverageAndStddev& operator=(const AverageAndStddev &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<AverageAndStddev>() );
-    }
+    static const char* typeName();
 
     AverageAndStddev* clone() const
     {
@@ -276,10 +267,7 @@ public:
     
     ExpAverage& operator=(const ExpAverage &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ExpAverage>() );
-    }
+    static const char* typeName();
     
     ExpAverage* clone() const
     {
@@ -329,10 +317,7 @@ public:
     
     Median& operator=(const Median &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Median>() );
-    }
+    static const char* typeName();
     
     Median* clone() const
     {
@@ -386,10 +371,7 @@ public:
     
     RecordValues& operator=(const RecordValues &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<RecordValues>() );
-    }
+    static const char* typeName();
     
     RecordValues* clone() const
     {

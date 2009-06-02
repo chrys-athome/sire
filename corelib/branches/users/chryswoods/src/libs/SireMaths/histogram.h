@@ -200,10 +200,7 @@ public:
     
     Histogram& operator=(const Histogram &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Histogram>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

@@ -571,6 +571,11 @@ QString Histogram::toString() const
                     .arg( minimum() ).arg( maximum() ).arg( nBins() );
 }
 
+const char* Histogram::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Histogram>() );
+}
+
 //// Fully instantiate the Length and Energy histogram classes
 
 template class HistogramT<Length>;

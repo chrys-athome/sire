@@ -71,10 +71,7 @@ public:
              const Vector &point2, const Vector &point3 );
     ~Torsion();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Torsion>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

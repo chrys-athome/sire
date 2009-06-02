@@ -169,3 +169,8 @@ const Vector& Torsion::at( int i ) const
 {
     return this->point(i);
 }
+
+const char* Torsion::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Torsion>() );
+}

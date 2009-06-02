@@ -109,3 +109,8 @@ QString AxisSet::toString() const
 {
     return QObject::tr("AxisSet, %1, %2").arg(orgn.toString(),mat.toString());
 }
+
+const char* AxisSet::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AxisSet>() );
+}

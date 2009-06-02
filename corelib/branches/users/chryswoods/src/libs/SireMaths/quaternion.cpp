@@ -438,3 +438,8 @@ void Quaternion::renormalise()
     sc[2] *= l;
     sc[3] *= l;
 }
+
+const char* Quaternion::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Quaternion>() );
+}

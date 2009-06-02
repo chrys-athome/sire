@@ -456,3 +456,8 @@ Matrix Matrix::getPrincipalAxes() const
     //finally, return the matrix of principal components
     return ret;
 }
+
+const char* Matrix::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Matrix>() );
+}

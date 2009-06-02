@@ -213,6 +213,11 @@ bool NullAccumulator::operator!=(const NullAccumulator &other) const
 void NullAccumulator::accumulate(double)
 {}
 
+const char* NullAccumulator::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NullAccumulator>() );
+}
+
 static SharedPolyPointer<NullAccumulator> shared_null;
 
 const NullAccumulator& Accumulator::null()
@@ -329,6 +334,11 @@ double Average::average() const
 Average::operator double() const
 {
     return this->average();
+}
+
+const char* Average::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Average>() );
 }
 
 /////////
@@ -448,6 +458,11 @@ double AverageAndStddev::standardDeviation() const
 double AverageAndStddev::meanOfSquares() const
 {
     return avgval2;
+}
+
+const char* AverageAndStddev::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AverageAndStddev>() );
 }
 
 /////////
@@ -577,6 +592,11 @@ ExpAverage::operator double() const
 double ExpAverage::scaleFactor() const
 {
     return 1.0 / sclfac;
+}
+
+const char* ExpAverage::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ExpAverage>() );
 }
 
 /////////
@@ -711,6 +731,11 @@ double Median::min() const
 double Median::minimum() const
 {
     return this->min();
+}
+
+const char* Median::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Median>() );
 }
 
 /////////
@@ -954,4 +979,9 @@ RecordValues::operator double() const
 QVector<double> RecordValues::values() const
 {
     return vals;
+}
+
+const char* RecordValues::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<RecordValues>() );
 }

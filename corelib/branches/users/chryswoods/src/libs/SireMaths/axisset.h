@@ -67,10 +67,7 @@ public:
     AxisSet(const AxisSet &other);
     ~AxisSet();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<AxisSet>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

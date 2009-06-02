@@ -102,3 +102,8 @@ Temperature FreeEnergyAverage::temperature() const
 {
     return Temperature( -(ExpAverage::scaleFactor()) / k_boltz );
 }
+
+const char* FreeEnergyAverage::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<FreeEnergyAverage>() );
+}

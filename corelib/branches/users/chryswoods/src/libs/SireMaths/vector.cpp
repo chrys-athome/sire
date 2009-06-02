@@ -723,3 +723,8 @@ const Vector SIREMATHS_EXPORT SireMaths::operator*(const Matrix &m, const Vector
                   m.xy*p.sc[0] + m.yy*p.sc[1] + m.zy*p.sc[2],
                   m.xz*p.sc[0] + m.yz*p.sc[1] + m.zz*p.sc[2]);
 }
+
+const char* Vector::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Vector>() );
+}

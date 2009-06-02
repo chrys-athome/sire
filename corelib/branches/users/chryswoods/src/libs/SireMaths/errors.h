@@ -78,10 +78,7 @@ public:
     ~math_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<math_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -111,10 +108,7 @@ public:
     ~domain_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<domain_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {

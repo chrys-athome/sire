@@ -79,10 +79,7 @@ public:
 
     ~RanGenerator();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<RanGenerator>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

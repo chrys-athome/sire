@@ -436,3 +436,8 @@ DistVector DistVector::operator-() const
     ret.sc[3] = -sc[3];
     return ret;
 }
+
+const char* DistVector::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<DistVector>() );
+}

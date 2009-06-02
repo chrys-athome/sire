@@ -81,3 +81,8 @@ QString Line::toString() const
     return QObject::tr("Line from %1 to %2, length = %3")
             .arg(point(0).toString(),point(1).toString()).arg(length());
 }
+
+const char* Line::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Line>() );
+}

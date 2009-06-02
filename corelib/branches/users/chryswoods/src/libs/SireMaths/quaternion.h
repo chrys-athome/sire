@@ -73,10 +73,7 @@ public:
     
     ~Quaternion();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Quaternion>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

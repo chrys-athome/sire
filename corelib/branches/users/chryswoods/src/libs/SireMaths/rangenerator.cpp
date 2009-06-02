@@ -613,3 +613,8 @@ void RanGenerator::setState(const QVector<quint32> &state)
         d->loadState(state);
     }
 }
+
+const char* RanGenerator::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<RanGenerator>() );
+}

@@ -95,3 +95,8 @@ QString Triangle::toString() const
                 .arg(angle1().to(degrees))
                 .arg(angle2().to(degrees));
 }
+
+const char* Triangle::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Triangle>() );
+}

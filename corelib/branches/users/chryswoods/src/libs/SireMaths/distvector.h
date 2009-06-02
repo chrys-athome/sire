@@ -64,10 +64,7 @@ public:
     
     ~DistVector();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<DistVector>() );
-    }
+    static const char* typeName();
 
     const char* what() const
     {

@@ -68,10 +68,7 @@ public:
     
     FreeEnergyAverage& operator=(const FreeEnergyAverage &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<FreeEnergyAverage>() );
-    }
+    static const char* typeName();
     
     FreeEnergyAverage* clone() const 
     {

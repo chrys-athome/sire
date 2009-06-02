@@ -59,3 +59,8 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, SireMaths::Complex &z)
 
     return ds;
 }
+
+const char* Complex::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Complex>() );
+}

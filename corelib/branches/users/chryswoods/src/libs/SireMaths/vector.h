@@ -63,7 +63,14 @@ using boost::tuple;
 
 using SireUnits::Dimension::Angle;
 
-const Vector operator/(const Vector&,double);
+const Vector operator+(const Vector &p1, const Vector &p2);
+const Vector operator-(const Vector &p1, const Vector &p2);
+const Vector operator*(const Vector &p1, double c);
+const Vector operator*(double c, const Vector &p1);
+const Vector operator/(const Vector &p1, double c);
+const Quaternion operator*(const Vector &p1, const Quaternion &p2);
+const Quaternion operator*(const Quaternion &p1, const Vector &p2);
+const Vector operator*(const Matrix &m, const Vector &p);
 
 /**
 This is a simple 3D vector.
@@ -121,10 +128,7 @@ public:
     
     ~Vector();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Vector>() );
-    }
+    static const char* typeName();
 
     const char* what() const
     {
@@ -239,4 +243,3 @@ SIRE_EXPOSE_CLASS( SireMaths::Vector )
 SIRE_END_HEADER
 
 #endif
-

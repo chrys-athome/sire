@@ -118,3 +118,8 @@ void Sphere::setRadius(double radius)
     if (radius < 0.0)
         _radius = 0.0;
 }
+
+const char* Sphere::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Sphere>() );
+}
