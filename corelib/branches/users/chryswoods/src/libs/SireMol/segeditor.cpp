@@ -302,7 +302,7 @@ Segment SegEditor::commit() const
     return *this;
 }
 
-const char* Segment::typeName()
+const char* SegEditor::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Segment>() );
 }

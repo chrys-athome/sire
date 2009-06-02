@@ -136,9 +136,6 @@ public:
     
     IDAndSet(const QList<MolIdentifier> &ids);
     
-    template<class T>
-    IDAndSet(const T &ids);
-    
     IDAndSet(const IDAndSet<MolID> &other);
     
     ~IDAndSet();
@@ -167,7 +164,7 @@ public:
     IDAndSet<MolID>& operator=(const MolID &other);
     
     bool operator==(const SireID::ID &other) const;
-    using SireID::ID::operator!=;
+    bool operator!=(const SireID::ID &other) const;
    
     bool operator==(const IDAndSet<MolID> &other) const;
     bool operator!=(const IDAndSet<MolID> &other) const;
@@ -188,19 +185,6 @@ private:
     QSet<MolIdentifier> ids;
 };
 
-/** Construct from the passed list of IDs */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-IDAndSet<MolID>::IDAndSet(const T &new_ids) : MolID()
-{
-    for (typename T::const_iterator it = new_ids.constBegin();
-         it != new_ids.constEnd();
-         ++it)
-    {
-        this->add(*it);
-    }
-}
-
 template<>
 class IDOrSet<MolID> : public MolID
 {
@@ -214,9 +198,6 @@ public:
     IDOrSet(const MolID &id0, const MolID &id1);
     
     IDOrSet(const QList<MolIdentifier> &ids);
-    
-    template<class T>
-    IDOrSet(const T &ids);
     
     IDOrSet(const IDOrSet<MolID> &other);
     
@@ -246,7 +227,7 @@ public:
     IDOrSet<MolID>& operator=(const MolID &other);
     
     bool operator==(const SireID::ID &other) const;
-    using SireID::ID::operator!=;
+    bool operator!=(const SireID::ID &other) const;
    
     bool operator==(const IDOrSet<MolID> &other) const;
     bool operator!=(const IDOrSet<MolID> &other) const;
@@ -264,19 +245,6 @@ private:
 
     QSet<MolIdentifier> ids;
 };
-
-/** Construct from the passed list of IDs */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-IDOrSet<MolID>::IDOrSet(const T &new_ids) : MolID()
-{
-    for (typename T::const_iterator it = new_ids.constBegin();
-         it != new_ids.constEnd();
-         ++it)
-    {
-        this->add(*it);
-    }
-}
 
 }
 

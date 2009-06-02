@@ -644,6 +644,12 @@ bool IDAndSet<MolID>::operator==(const SireID::ID &other) const
 }
 
 /** Comparison operator */
+bool IDAndSet<MolID>::operator!=(const SireID::ID &other) const
+{
+    return not this->operator==(other);
+}
+
+/** Comparison operator */
 bool IDAndSet<MolID>::operator==(const IDAndSet<MolID> &other) const
 {
     return ids == other.ids;
@@ -870,6 +876,12 @@ IDOrSet<MolID>& IDOrSet<MolID>::operator=(const MolID &other)
 bool IDOrSet<MolID>::operator==(const SireID::ID &other) const
 {
     return SireID::ID::compare< IDOrSet<MolID> >(*this, other);
+}
+
+/** Comparison operator */
+bool IDOrSet<MolID>::operator!=(const SireID::ID &other) const
+{
+    return not this->operator==(other);
 }
 
 /** Comparison operator */
