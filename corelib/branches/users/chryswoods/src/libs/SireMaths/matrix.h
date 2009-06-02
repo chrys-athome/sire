@@ -50,6 +50,13 @@ namespace SireMaths
 class Vector;
 class Matrix4;
 
+const Matrix operator+(const Matrix &m1, const Matrix &m2);
+const Matrix operator-(const Matrix &m1, const Matrix &m2);
+const Matrix operator*(const Matrix &m1, const Matrix &m2);
+const Vector operator*(const Matrix &m, const Vector &p);
+const Matrix operator*(const Matrix &m, double c);
+const Matrix operator*(double c, const Matrix &m);
+
 /**
 This class represents a 3x3 square matrix, used to represent 3D transformations.
 
