@@ -344,28 +344,16 @@ double Quaternion::w() const
     return sc[3];
 }
 
-bool Quaternion::operator==(const Quaternion &p1)
+bool Quaternion::operator==(const Quaternion &p1) const
 {
     return p1.sc[0] == sc[0] and p1.sc[1] == sc[1] and p1.sc[2] == sc[2] 
                   and p1.sc[3] == sc[3];
 }
 
-bool Quaternion::operator!=(const Quaternion &p1)
+bool Quaternion::operator!=(const Quaternion &p1) const
 {
     return p1.sc[0] != sc[0] or p1.sc[1] != sc[1] or p1.sc[2] != sc[2] 
                   or p1.sc[3] != sc[3];
-}
-
-bool SIREMATHS_EXPORT SireMaths::operator==(const Quaternion &p1, const Quaternion &p2)
-{
-    return p1.sc[0] == p2.sc[0] and p1.sc[1] == p2.sc[1] and
-           p1.sc[2] == p2.sc[2] and p1.sc[3] == p2.sc[3];
-}
-
-bool SIREMATHS_EXPORT SireMaths::operator!=(const Quaternion &p1, const Quaternion &p2)
-{
-    return p1.sc[0] != p2.sc[0] or p1.sc[1] != p2.sc[1] or
-           p1.sc[2] != p2.sc[2] or p1.sc[3] != p2.sc[3];
 }
 
 const Quaternion SIREMATHS_EXPORT SireMaths::operator*(const Quaternion &p1,
@@ -442,4 +430,28 @@ void Quaternion::renormalise()
 const char* Quaternion::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Quaternion>() );
+}
+
+/** In-place addition operator */
+Quaternion& Quaternion::operator+=(const Quaternion &p)
+{
+    return this->operator=( *this + p );
+}
+
+/** In-place subtraction operator */
+Quaternion& Quaternion::operator-=(const Quaternion &p)
+{
+    return this->operator=( *this - p );
+}
+
+/** In-place multiplication operator */
+Quaternion& Quaternion::operator*=(const Quaternion &p)
+{
+    return this->operator=( *this * p );
+}
+
+/** In-place multiplication operator */
+Quaternion& Quaternion::operator*=(const Vector &p)
+{
+    return this->operator=( *this * p );
 }

@@ -113,13 +113,15 @@ public:
     
     void renormalise();
 
-    bool operator==(const Quaternion &p1);
-    bool operator!=(const Quaternion &p1);
-
-    friend bool operator==(const Quaternion &p1, const Quaternion &p2);
-    friend bool operator!=(const Quaternion &p1, const Quaternion &p2);
+    bool operator==(const Quaternion &p1) const;
+    bool operator!=(const Quaternion &p1) const;
 
     Quaternion& operator=(const Quaternion &p);
+
+    Quaternion& operator+=(const Quaternion &p);
+    Quaternion& operator-=(const Quaternion &p);
+    Quaternion& operator*=(const Quaternion &p);
+    Quaternion& operator*=(const Vector &p);
 
     friend const Quaternion operator+(const Quaternion &p1, const Quaternion &p2);
     friend const Quaternion operator-(const Quaternion &p1, const Quaternion &p2);
