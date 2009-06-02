@@ -221,10 +221,7 @@ public:
     
     ~Index();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Index>() );
-    }
+    static const char* typeName();
     
     Index* clone() const
     {

@@ -187,3 +187,8 @@ QString Index::toString() const
 {
     return QString("Index(%1)").arg(_idx);
 }
+
+const char* Index::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Index>() );
+}

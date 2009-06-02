@@ -578,6 +578,9 @@ const char* Histogram::typeName()
 
 //// Fully instantiate the Length and Energy histogram classes
 
+namespace SireMaths
+{
+
 template class HistogramT<Length>;
 template class HistogramBinT<Length>;
 template class HistogramValueT<Length>;
@@ -587,3 +590,5 @@ template class HistogramT<Energy>;
 template class HistogramBinT<Energy>;
 template class HistogramValueT<Energy>;
 template class HistogramRangeT<Energy>;
+
+}
