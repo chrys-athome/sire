@@ -587,3 +587,33 @@ Expression ArcCoth::integ() const
 {
     return x()*ArcCoth(x()) + 0.5*Ln( pow(x(),2) - 1 );
 }
+
+const char* ArcCosh::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ArcCosh>() );
+}
+
+const char* ArcSinh::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ArcSinh>() );
+}
+
+const char* ArcTanh::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ArcTanh>() );
+}
+
+const char* ArcCsch::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ArcCsch>() );
+}
+
+const char* ArcSech::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ArcSech>() );
+}
+
+const char* ArcCoth::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ArcCoth>() );
+}

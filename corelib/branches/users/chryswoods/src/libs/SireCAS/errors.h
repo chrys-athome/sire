@@ -78,10 +78,7 @@ public:
     ~unavailable_differential() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<unavailable_differential>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -111,10 +108,7 @@ public:
     ~unavailable_integral() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<unavailable_integral>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -144,10 +138,7 @@ public:
     ~unregistered_expression() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<unregistered_expression>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -177,10 +168,7 @@ public:
     ~invalid_symbol() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<invalid_symbol>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -210,10 +198,7 @@ public:
     ~missing_symbol() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_symbol>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -244,10 +229,7 @@ public:
     ~rearrangement_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<rearrangement_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {

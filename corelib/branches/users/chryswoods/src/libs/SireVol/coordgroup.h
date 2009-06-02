@@ -317,10 +317,7 @@ public:
 
     ~CoordGroup();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<CoordGroup>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -376,10 +373,7 @@ public:
 
     ~CoordGroupEditor();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<CoordGroupEditor>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -472,10 +466,7 @@ public:
     
     CoordGroupArray& operator=(const CoordGroupArray &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<CoordGroupArray>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -569,10 +560,7 @@ public:
     
     ~CoordGroupArrayArray();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<CoordGroupArrayArray>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

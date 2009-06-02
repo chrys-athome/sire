@@ -546,3 +546,33 @@ Expression Cot::integ() const
 {
     return Ln( Sin(x()) );
 }
+
+const char* Cos::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Cos>() );
+}
+
+const char* Sin::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Sin>() );
+}
+
+const char* Tan::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Tan>() );
+}
+
+const char* Csc::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Csc>() );
+}
+
+const char* Sec::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Sec>() );
+}
+
+const char* Cot::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Cot>() );
+}

@@ -547,3 +547,34 @@ Expression Coth::integ() const
 {
     return Ln( Sinh(x()) );
 }
+
+
+const char* Cosh::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Cosh>() );
+}
+
+const char* Sinh::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Sinh>() );
+}
+
+const char* Tanh::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Tanh>() );
+}
+
+const char* Csch::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Csch>() );
+}
+
+const char* Sech::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Sech>() );
+}
+
+const char* Coth::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Coth>() );
+}

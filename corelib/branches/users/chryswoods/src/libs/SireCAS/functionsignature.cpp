@@ -61,3 +61,8 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, FunctionSignature &sig)
 
     return ds;
 }
+
+const char* FunctionSignature::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<FunctionSignature>() );
+}

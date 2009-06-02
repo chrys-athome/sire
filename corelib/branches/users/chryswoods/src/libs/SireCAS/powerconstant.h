@@ -91,10 +91,7 @@ public:
 
     uint hash() const;
 
-    static const char* typeName()
-    {
-        return "SireCAS::PowerConstant";
-    }
+    static const char* typeName();
 
     const char* what() const
     {
@@ -187,10 +184,7 @@ public:
 
     uint hash() const;
 
-    static const char* typeName()
-    {
-        return "SireCAS::IntegerPower";
-    }
+    static const char* typeName();
 
     const char* what() const
     {
@@ -236,10 +230,7 @@ public:
 
     uint hash() const;
 
-    static const char* typeName()
-    {
-        return "SireCAS::RationalPower";
-    }
+    static const char* typeName();
 
     const char* what() const
     {
@@ -284,10 +275,7 @@ public:
 
     uint hash() const;
 
-    static const char* typeName()
-    {
-        return "SireCAS::RealPower";
-    }
+    static const char* typeName();
 
     const char* what() const
     {
@@ -332,10 +320,7 @@ public:
 
     uint hash() const;
 
-    static const char* typeName()
-    {
-        return "SireCAS::ComplexPower";
-    }
+    static const char* typeName();
 
     const char* what() const
     {

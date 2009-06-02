@@ -81,10 +81,7 @@ public:
 
     bool operator==(const ExBase &other) const;
 
-    static const char* typeName()
-    {
-        return "SireCAS::Cos";
-    }
+    static const char* typeName();
 
     const char* what() const
     {
@@ -137,10 +134,7 @@ public:
 
     bool operator==(const ExBase &other) const;
 
-    static const char* typeName()
-    {
-        return "SireCAS::Sin";
-    }
+    static const char* typeName();
 
     const char* what() const
     {
@@ -192,10 +186,7 @@ public:
 
     bool operator==(const ExBase &other) const;
 
-    static const char* typeName()
-    {
-        return "SireCAS::Tan";
-    }
+    static const char* typeName();
 
     const char* what() const
     {
@@ -247,10 +238,7 @@ public:
 
     bool operator==(const ExBase &other) const;
 
-    static const char* typeName()
-    {
-        return "SireCAS::Sec";
-    }
+    static const char* typeName();
 
     const char* what() const
     {
@@ -302,10 +290,7 @@ public:
 
     bool operator==(const ExBase &other) const;
 
-    static const char* typeName()
-    {
-        return "SireCAS::Csc";
-    }
+    static const char* typeName();
 
     const char* what() const
     {
@@ -357,10 +342,7 @@ public:
 
     bool operator==(const ExBase &other) const;
 
-    static const char* typeName()
-    {
-        return "SireCAS::Cot";
-    }
+    static const char* typeName();
 
     const char *what() const
     {

@@ -1864,6 +1864,11 @@ CoordGroupEditor CoordGroup::edit() const
     return CoordGroupEditor(*this);
 }
 
+const char* CoordGroup::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CoordGroup>() );
+}
+
 ////////
 //////// Implementation of CoordGroupEditor
 ////////
@@ -2182,6 +2187,11 @@ CoordGroup CoordGroupEditor::commit()
     }
     
     return CoordGroup(*this);
+}
+
+const char* CoordGroupEditor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CoordGroupEditor>() );
 }
 
 ////////
@@ -2806,6 +2816,11 @@ void CoordGroupArray::changeFrame(quint32 i, const AxisSet &from_frame,
     }
     
     *(cgdata->aaBox()) = AABox(this_cgroup);
+}
+
+const char* CoordGroupArray::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CoordGroupArray>() );
 }
 
 ////////
@@ -3874,4 +3889,9 @@ void CoordGroupArrayArray::changeFrame(quint32 i, quint32 j,
     }
     
     *(cgdata->aaBox()) = AABox(cgroup);
+}
+
+const char* CoordGroupArrayArray::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CoordGroupArrayArray>() );
 }

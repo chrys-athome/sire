@@ -65,10 +65,7 @@ public:
 
     bool operator==(const ExBase &other) const;
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Min>() );
-    }
+    static const char* typeName();
 
     const char* what() const
     {
@@ -111,10 +108,7 @@ public:
 
     bool operator==(const ExBase &other) const;
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Max>() );
-    }
+    static const char* typeName();
 
     const char* what() const
     {

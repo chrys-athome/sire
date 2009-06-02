@@ -30,6 +30,36 @@
 
 using namespace SireCAS;
 
+const char* unregistered_expression::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<unregistered_expression>() );
+}
+
+const char* unavailable_differential::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<unavailable_differential>() );
+}
+
+const char* unavailable_integral::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<unavailable_integral>() );
+}
+
+const char* rearrangement_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<rearrangement_error>() );
+}
+
+const char* invalid_symbol::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<invalid_symbol>() );
+}
+
+const char* missing_symbol::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_symbol>() );
+}
+
 static const
 RegisterMetaType<unregistered_expression> r_unreg;
 

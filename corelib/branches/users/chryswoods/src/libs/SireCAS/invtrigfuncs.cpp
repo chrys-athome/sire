@@ -574,3 +574,33 @@ Expression ArcCot::integ() const
 {
     return x()*ArcCot(x()) + 0.5 * Ln( 1 + pow(x(),2) );
 }
+
+const char* ArcCos::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ArcCos>() );
+}
+
+const char* ArcSin::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ArcSin>() );
+}
+
+const char* ArcTan::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ArcTan>() );
+}
+
+const char* ArcCsc::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ArcCsc>() );
+}
+
+const char* ArcSec::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ArcSec>() );
+}
+
+const char* ArcCot::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ArcCot>() );
+}

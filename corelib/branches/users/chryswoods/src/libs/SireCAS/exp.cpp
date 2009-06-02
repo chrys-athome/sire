@@ -143,6 +143,11 @@ Expression Exp::power() const
     return pwr;
 }
 
+const char* Exp::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Exp>() );
+}
+
 /////////////
 ///////////// Implementation of Ln
 /////////////
@@ -225,4 +230,9 @@ Expression Ln::diff() const
 Expression Ln::integ() const
 {
     return x()*Ln(x()) - x();
+}
+
+const char* Ln::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Ln>() );
 }

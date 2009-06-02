@@ -84,10 +84,7 @@ public:
     bool operator==(const ExBase &other) const;
     uint hash() const;
 
-    static const char* typeName()
-    {
-        return "SireCAS::Sum";
-    }
+    static const char* typeName();
 
     const char* what() const
     {

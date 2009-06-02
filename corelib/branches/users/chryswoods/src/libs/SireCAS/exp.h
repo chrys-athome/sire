@@ -74,10 +74,7 @@ public:
 
     uint hash() const;
 
-    static const char* typeName()
-    {
-        return "SireCAS::Exp";
-    }
+    static const char* typeName();
 
     const char* what() const
     {
@@ -125,10 +122,7 @@ public:
 
     bool operator==(const ExBase &other) const;
 
-    static const char* typeName()
-    {
-        return "SireCAS::Ln";
-    }
+    static const char* typeName();
 
     const char* what() const
     {

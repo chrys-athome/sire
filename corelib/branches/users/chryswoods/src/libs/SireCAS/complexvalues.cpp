@@ -310,3 +310,8 @@ Complex ComplexValues::value(const Symbol &sym) const
 {
     return vals.value(sym.ID(),Complex(0));
 }
+
+const char* ComplexValues::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ComplexValues>() );
+}

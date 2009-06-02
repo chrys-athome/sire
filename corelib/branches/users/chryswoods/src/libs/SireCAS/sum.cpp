@@ -699,3 +699,8 @@ QList<Factor> Sum::expand(const Symbol &symbol) const
     
     return ret;
 }
+
+const char* Sum::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Sum>() );
+}

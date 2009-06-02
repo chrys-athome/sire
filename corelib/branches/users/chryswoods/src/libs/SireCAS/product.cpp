@@ -1103,3 +1103,8 @@ QList<Factor> Product::expand(const Symbol &symbol) const
     
     return ::multiply(num_factors, denom_factors);
 }
+
+const char* Product::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Product>() );
+}

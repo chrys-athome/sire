@@ -698,3 +698,8 @@ Function Function::operator()(const Symbol &sym0, const Symbol &sym1, const Symb
 
     return Function(newdata);
 }
+
+const char* Function::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Function>() );
+}

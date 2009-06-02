@@ -137,6 +137,11 @@ uint Min::magic() const
     return r_min.magicID();
 }
 
+const char* Min::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Min>() );
+}
+
 ////////
 //////// Implementation of Max
 ////////
@@ -234,4 +239,9 @@ Expression Max::functionOf(const Expression &ex, const Expression &ey) const
 uint Max::magic() const
 {
     return r_max.magicID();
+}
+
+const char* Max::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Max>() );
 }

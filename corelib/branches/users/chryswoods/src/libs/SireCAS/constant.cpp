@@ -152,3 +152,8 @@ QList<Factor> Constant::expand(const Symbol &symbol) const
     ret.append( Factor( symbol, 1, 0 ) );
     return ret;
 }
+
+const char* Constant::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Constant>() );
+}

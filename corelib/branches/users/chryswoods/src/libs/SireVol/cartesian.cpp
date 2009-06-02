@@ -769,3 +769,8 @@ Cartesian::getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
 
     return closegroups;
 }
+
+const char* Cartesian::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Cartesian>() );
+}

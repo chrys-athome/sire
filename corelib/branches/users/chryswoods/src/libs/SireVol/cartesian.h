@@ -69,10 +69,7 @@ public:
     bool operator==(const Cartesian &other) const;
     bool operator!=(const Cartesian &other) const;
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Cartesian>() );
-    }
+    static const char* typeName();
 
     QString toString() const;
 

@@ -352,3 +352,8 @@ QList<Factor> Symbol::expand(const Symbol &symbol) const
     
     return factors;
 }
+
+const char* Symbol::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Symbol>() );
+}

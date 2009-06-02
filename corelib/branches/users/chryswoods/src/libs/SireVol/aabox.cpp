@@ -452,3 +452,8 @@ Sphere AABox::boundingSphere() const
 {
     return Sphere( this->center(), this->radius() );
 }
+
+const char* AABox::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AABox>() );
+}

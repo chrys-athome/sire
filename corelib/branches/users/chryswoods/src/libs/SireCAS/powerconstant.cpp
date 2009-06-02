@@ -460,3 +460,28 @@ Complex ComplexPower::evaluate(const ComplexValues &values) const
 {
     return SireMaths::pow( ex.evaluate(values), pwr );
 }
+
+const char* PowerConstant::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<PowerConstant>() );
+}
+
+const char* IntegerPower::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<IntegerPower>() );
+}
+
+const char* RationalPower::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<RationalPower>() );
+}
+
+const char* RealPower::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<RealPower>() );
+}
+
+const char* ComplexPower::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ComplexPower>() );
+}

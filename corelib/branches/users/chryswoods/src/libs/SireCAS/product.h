@@ -85,10 +85,7 @@ public:
 
     uint hash() const;
 
-    static const char* typeName()
-    {
-        return "SireCAS::Product";
-    }
+    static const char* typeName();
 
     const char* what() const
     {

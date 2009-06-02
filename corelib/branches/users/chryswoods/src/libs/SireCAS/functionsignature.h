@@ -78,10 +78,7 @@ public:
     ~FunctionSignature()
     {}
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<FunctionSignature>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

@@ -118,3 +118,8 @@ bool I::isComplex() const
 {
     return true;
 }
+
+const char* I::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<I>() );
+}

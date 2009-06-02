@@ -961,3 +961,8 @@ PeriodicBox::getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
 
     return neargroups;
 }
+
+const char* PeriodicBox::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<PeriodicBox>() );
+}

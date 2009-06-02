@@ -103,10 +103,7 @@ public:
 
     ~Identities();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Identities>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

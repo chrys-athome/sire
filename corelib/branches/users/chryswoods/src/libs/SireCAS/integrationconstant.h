@@ -45,7 +45,9 @@ namespace SireCAS
 {
 
 /**
-This class represents a constant of integration. This is not a number or function in the normal sense, but rather a placeholder that is created during indefinite integration.
+This class represents a constant of integration. This is not a number or 
+function in the normal sense, but rather a placeholder that is created 
+during indefinite integration.
 
 @author Christopher Woods
 */
@@ -66,10 +68,7 @@ public:
 
     uint hash() const;
 
-    static const char* typeName()
-    {
-        return "SireCAS::IntegrationConstant";
-    }
+    static const char* typeName();
 
     const char* what() const
     {

@@ -88,10 +88,7 @@ public:
 
     Vector center() const;
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<PeriodicBox>() );
-    }
+    static const char* typeName();
 
     double calcDist(const Vector &point0, const Vector &point1) const;
     double calcDist2(const Vector &point0, const Vector &point1) const;

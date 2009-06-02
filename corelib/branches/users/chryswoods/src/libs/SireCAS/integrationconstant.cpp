@@ -100,3 +100,8 @@ Expression IntegrationConstant::integrate(const Symbol&) const
 
     return Expression();
 }
+
+const char* IntegrationConstant::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<IntegrationConstant>() );
+}

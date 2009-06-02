@@ -608,3 +608,8 @@ QList<Factor> Expression::expand(const Symbol &symbol) const
     
     return factors;
 }
+
+const char* Expression::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Expression>() );
+}

@@ -389,3 +389,8 @@ Values& Values::operator+=(const Values &other)
         return *this;
     }
 }
+
+const char* Values::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Values>() );
+}

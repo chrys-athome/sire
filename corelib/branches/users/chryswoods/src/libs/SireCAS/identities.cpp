@@ -347,3 +347,8 @@ Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &s
 {
     add(symex0,symex1,symex2,symex3,symex4,symex5,symex6,symex7,symex8,symex9);
 }
+
+const char* Identities::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Identities>() );
+}

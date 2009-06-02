@@ -551,3 +551,8 @@ Complex Power::evaluate(const ComplexValues &values) const
             return SireMaths::pow(val, pwrval);
     }
 }
+
+const char* Power::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Power>() );
+}
