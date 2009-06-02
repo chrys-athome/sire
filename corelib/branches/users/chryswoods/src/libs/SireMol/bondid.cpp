@@ -349,3 +349,8 @@ const AtomID& BondID::atom1() const
 {
     return atm1.base();
 }
+
+const char* BondID::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<BondID>() );
+}

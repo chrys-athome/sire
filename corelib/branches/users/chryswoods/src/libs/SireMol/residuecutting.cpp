@@ -132,3 +132,8 @@ MolStructureEditor ResidueCutting::operator()(MolStructureEditor &moleditor) con
     
     return moleditor;
 }
+
+const char* ResidueCutting::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ResidueCutting>() );
+}

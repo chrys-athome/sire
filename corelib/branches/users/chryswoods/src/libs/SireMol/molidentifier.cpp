@@ -222,3 +222,8 @@ QList<MolNum> MolIdentifier::map(const MolGroupsBase &molgroups) const
     else
         return d->map(molgroups);
 }
+
+const char* MolIdentifier::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MolIdentifier>() );
+}

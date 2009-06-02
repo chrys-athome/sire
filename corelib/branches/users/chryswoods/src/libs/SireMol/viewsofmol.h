@@ -99,10 +99,7 @@ public:
     
     ~ViewsOfMol();
    
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ViewsOfMol>() );
-    }
+    static const char* typeName();
     
     ViewsOfMol* clone() const
     {

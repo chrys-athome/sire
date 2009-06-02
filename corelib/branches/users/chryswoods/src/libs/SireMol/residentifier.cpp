@@ -205,6 +205,11 @@ QList<ResIdx> ResIdentifier::map(const MolInfo &molinfo) const
         return d->map(molinfo);
 }
 
+const char* ResIdentifier::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ResIdentifier>() );
+}
+
 ///////
 /////// Implementation of ResIdx
 ///////
@@ -285,6 +290,11 @@ bool ResIdx::operator==(const SireID::ID &other) const
 QList<ResIdx> ResIdx::map(const MolInfo &molinfo) const
 {
     return molinfo.map(*this);
+}
+
+const char* ResIdx::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ResIdx>() );
 }
 
 ///////
@@ -376,6 +386,11 @@ QList<ResIdx> ResName::map(const MolInfo &molinfo) const
     return molinfo.map(*this);
 }
 
+const char* ResName::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ResName>() );
+}
+
 ///////
 /////// Implementation of ResNum
 ///////
@@ -459,4 +474,9 @@ bool ResNum::operator!=(const ResNum &other) const
 QList<ResIdx> ResNum::map(const MolInfo &molinfo) const
 {
     return molinfo.map(*this);
+}
+
+const char* ResNum::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ResNum>() );
 }

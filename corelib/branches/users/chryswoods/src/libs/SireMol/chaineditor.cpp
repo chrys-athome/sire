@@ -339,6 +339,11 @@ Chain ChainEditor::commit() const
     return *this;
 }
 
+const char* ChainEditor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ChainEditor>() );
+}
+
 ////////
 //////// Implementation of ChainStructureEditor
 ////////
@@ -677,4 +682,9 @@ Chain ChainStructureEditor::commit() const
 ChainStructureEditor::operator Chain() const
 {
     return this->commit();
+}
+
+const char* ChainStructureEditor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ChainStructureEditor>() );
 }

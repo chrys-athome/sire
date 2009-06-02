@@ -462,6 +462,11 @@ void Segment::assertContainsMetadata(const PropertyName &key,
                 .arg(metakey.toString(), key.toString()), CODELOC );
 }
 
+const char* Segment::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Segment>() );
+}
+
 bool SIREMOL_EXPORT SireMol::detail::has_property(const Segment*, const MoleculeData &moldata,
                                                   const PropertyName &key)
 {

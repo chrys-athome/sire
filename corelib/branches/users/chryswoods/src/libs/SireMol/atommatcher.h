@@ -114,10 +114,7 @@ public:
     
     ~AtomIdxMatcher();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<AtomIdxMatcher>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -160,10 +157,7 @@ public:
     
     ~AtomNameMatcher();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<AtomNameMatcher>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

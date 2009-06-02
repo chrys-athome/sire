@@ -204,6 +204,11 @@ QList<CGIdx> CGIdentifier::map(const MolInfo &molinfo) const
         return d->map(molinfo);
 }
 
+const char* CGIdentifier::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CGIdentifier>() );
+}
+
 /////////
 ///////// Implementation of CGIdx
 /////////
@@ -284,6 +289,11 @@ bool CGIdx::operator==(const SireID::ID &other) const
 QList<CGIdx> CGIdx::map(const MolInfo &molinfo) const
 {
     return molinfo.map(*this);
+}
+
+const char* CGIdx::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CGIdx>() );
 }
 
 /////////
@@ -373,4 +383,9 @@ bool CGName::operator!=(const CGName &other) const
 QList<CGIdx> CGName::map(const MolInfo &molinfo) const
 {
     return molinfo.map(*this);
+}
+
+const char* CGName::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CGName>() );
 }

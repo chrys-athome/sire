@@ -458,6 +458,11 @@ void CutGroup::assertContainsMetadata(const PropertyName &key,
                 .arg(metakey.toString(), key.toString()), CODELOC );
 }
 
+const char* CutGroup::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CutGroup>() );
+}
+
 namespace SireMol
 {
 namespace detail

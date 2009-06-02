@@ -86,10 +86,7 @@ public:
     
     ~DihedralID();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<DihedralID>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

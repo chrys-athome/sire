@@ -1369,6 +1369,11 @@ ConnectivityEditor Connectivity::edit() const
     return ConnectivityEditor(*this);
 }
 
+const char* Connectivity::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Connectivity>() );
+}
+
 /////////
 ///////// Implementation of ConnectivityEditor
 /////////
@@ -1552,4 +1557,9 @@ ConnectivityEditor& ConnectivityEditor::disconnectAll(ResIdx residx)
 ConnectivityEditor& ConnectivityEditor::disconnectAll(const ResID &resid)
 {
     return this->disconnectAll( info().resIdx(resid) );
+}
+
+const char* ConnectivityEditor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ConnectivityEditor>() );
 }

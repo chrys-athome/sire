@@ -63,10 +63,7 @@ public:
     
     ~CGIdentifier();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<CGIdentifier>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

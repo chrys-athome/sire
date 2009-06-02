@@ -410,6 +410,11 @@ void Atom::assertContainsMetadata(const PropertyName &key,
                 .arg(metakey.toString(), key.toString()), CODELOC );
 }
 
+const char* Atom::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Atom>() );
+}
+
 namespace SireMol
 {
 namespace detail

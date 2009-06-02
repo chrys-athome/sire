@@ -295,6 +295,11 @@ AtomStructureEditor AtomEditor::reparent(const SegID &segid) const
     return editor;
 }
 
+const char* AtomEditor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AtomEditor>() );
+}
+
 /////////
 ///////// Implementation of AtomStructureEditor
 /////////
@@ -549,4 +554,9 @@ Atom AtomStructureEditor::commit() const
 AtomStructureEditor::operator Atom() const
 {
     return this->commit();
+}
+
+const char* AtomStructureEditor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AtomStructureEditor>() );
 }

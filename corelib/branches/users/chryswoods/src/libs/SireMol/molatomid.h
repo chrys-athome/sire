@@ -71,10 +71,7 @@ public:
     
     ~MolAtomID();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MolAtomID>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

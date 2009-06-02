@@ -167,6 +167,11 @@ QList<MGNum> MGIdx::map(const MolGroupsBase &molgroups) const
     return molgroups.map(*this);
 }
 
+const char* MGIdx::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MGIdx>() );
+}
+
 ////////
 //////// Implementation of MGName
 ////////
@@ -229,6 +234,11 @@ QList<MGNum> MGName::map(const MolGroupsBase &molgroups) const
     return molgroups.map(*this);
 }
 
+const char* MGName::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MGName>() );
+}
+
 ////////
 //////// Implementation of MGNum
 ////////
@@ -285,6 +295,11 @@ bool MGNum::operator!=(const MGNum &other) const
 QList<MGNum> MGNum::map(const MolGroupsBase &molgroups) const
 {
     return molgroups.map(*this);
+}
+
+const char* MGNum::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MGNum>() );
 }
 
 ///////

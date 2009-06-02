@@ -135,10 +135,7 @@ public:
     
     ~MoleculeInfoData();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MoleculeInfoData>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

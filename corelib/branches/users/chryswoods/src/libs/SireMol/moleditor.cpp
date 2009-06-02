@@ -417,6 +417,11 @@ Molecule MolEditor::commit() const
     return *this;
 }
 
+const char* MolEditor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MolEditor>() );
+}
+
 //////////
 ////////// Implementation of MolStructureEditor
 //////////
@@ -830,4 +835,9 @@ Molecule MolStructureEditor::commit() const
 MolStructureEditor::operator Molecule() const
 {
     return this->commit();
+}
+
+const char* MolStructureEditor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MolStructureEditor>() );
 }

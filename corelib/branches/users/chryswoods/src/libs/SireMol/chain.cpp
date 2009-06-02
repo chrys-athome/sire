@@ -550,6 +550,11 @@ void Chain::assertContainsMetadata(const PropertyName &key,
                 .arg(metakey.toString(), key.toString()), CODELOC );
 }
 
+const char* Chain::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Chain>() );
+}
+
 namespace SireMol
 {
 namespace detail

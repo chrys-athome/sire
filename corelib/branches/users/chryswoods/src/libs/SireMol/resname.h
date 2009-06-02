@@ -67,10 +67,7 @@ public:
     
     ~ResName();
     
-    static const char* typeName()
-    {
-        return "SireMol::ResName";
-    }
+    static const char* typeName();
     
     const char* what() const
     {

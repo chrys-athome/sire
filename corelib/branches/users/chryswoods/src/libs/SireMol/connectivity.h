@@ -251,10 +251,7 @@ public:
 
     ~Connectivity();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Connectivity>() );
-    }
+    static const char* typeName();
 
     using SireBase::Property::operator=;
     using SireBase::Property::operator==;
@@ -289,10 +286,7 @@ public:
 
     ~ConnectivityEditor();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ConnectivityEditor>() );
-    }
+    static const char* typeName();
 
     using SireBase::Property::operator=;
     using SireBase::Property::operator==;

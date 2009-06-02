@@ -207,3 +207,8 @@ QList<MolNum> SpecifyMol::map(const MolGroupsBase &molgroups) const
     QList<MolNum> molnums = molid.map(molgroups);
     return ::get(molnums, strt, end);
 }
+
+const char* SpecifyMol::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SpecifyMol>() );
+}

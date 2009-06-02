@@ -100,10 +100,7 @@ public:
     CGEditor& operator=(const CutGroup &cutgroup);
     CGEditor& operator=(const CGEditor &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<CGEditor>() );
-    }
+    static const char* typeName();
     
     CGEditor* clone() const
     {
@@ -159,10 +156,7 @@ public:
     
     ~CGStructureEditor();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<CGStructureEditor>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

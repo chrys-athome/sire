@@ -73,10 +73,7 @@ public:
 
     ~AtomNum();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<AtomNum>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

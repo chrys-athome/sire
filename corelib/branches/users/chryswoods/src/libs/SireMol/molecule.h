@@ -113,10 +113,7 @@ public:
 
     Molecule& operator=(const Molecule &other);
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Molecule>() );
-    }
+    static const char* typeName();
     
     Molecule* clone() const
     {

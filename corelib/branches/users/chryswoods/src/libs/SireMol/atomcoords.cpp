@@ -765,3 +765,8 @@ void AtomProperty<Vector>::copyFrom(const QVector<Vector> &values,
         }
     }
 }
+
+const char* AtomCoords::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AtomCoords>() );
+}

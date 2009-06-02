@@ -60,10 +60,7 @@ public:
     
     ~SegIdentifier();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<SegIdentifier>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

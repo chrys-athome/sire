@@ -153,10 +153,7 @@ public:
 
     ~AbsFromNumber();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<AbsFromNumber>() );
-    }
+    static const char* typeName();
 
     AbsFromNumber& operator=(const AbsFromNumber&)
     {
@@ -210,10 +207,7 @@ public:
 
     ~RelFromNumber();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<RelFromNumber>() );
-    }
+    static const char* typeName();
 
     RelFromNumber& operator=(const RelFromNumber&)
     {
@@ -267,10 +261,7 @@ public:
 
     ~AbsFromMass();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<AbsFromMass>() );
-    }
+    static const char* typeName();
 
     AbsFromMass& operator=(const AbsFromMass&)
     {
@@ -324,10 +315,7 @@ public:
 
     ~RelFromMass();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<RelFromMass>() );
-    }
+    static const char* typeName();
 
     RelFromMass& operator=(const RelFromMass&)
     {

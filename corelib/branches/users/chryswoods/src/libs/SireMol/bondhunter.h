@@ -134,10 +134,7 @@ public:
     
     ~CovalentBondHunter();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<CovalentBondHunter>() );
-    }
+    static const char* typeName();
 
     CovalentBondHunter& operator=(const CovalentBondHunter &other);
     
@@ -177,10 +174,7 @@ public:
     
     ~ChemicalBondHunter();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ChemicalBondHunter>() );
-    }
+    static const char* typeName();
     
     Connectivity operator()(const MoleculeView &molview,
                             const PropertyMap &map = PropertyMap()) const;

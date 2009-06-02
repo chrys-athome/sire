@@ -374,3 +374,8 @@ const AtomID& ImproperID::atom3() const
 {
     return atm3.base();
 }
+
+const char* ImproperID::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ImproperID>() );
+}

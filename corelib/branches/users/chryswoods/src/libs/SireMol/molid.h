@@ -143,10 +143,7 @@ public:
     
     ~IDAndSet();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< IDAndSet<MolID> >() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -225,10 +222,7 @@ public:
     
     ~IDOrSet();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< IDOrSet<MolID> >() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

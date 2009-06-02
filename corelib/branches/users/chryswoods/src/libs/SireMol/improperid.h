@@ -101,10 +101,7 @@ public:
     
     ~ImproperID();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ImproperID>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

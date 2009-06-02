@@ -180,6 +180,11 @@ const AbsFromNumber& WeightFunction::null()
     return *(shared_null.constData());
 }
 
+const char* AbsFromNumber::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AbsFromNumber>() );
+}
+
 //////////
 ////////// Implementation of RelFromNumber
 //////////
@@ -254,6 +259,11 @@ double RelFromNumber::operator()(const MoleculeView &view0,
                   view1.selection().nSelected());
 }
 
+const char* RelFromNumber::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<RelFromNumber>() );
+}
+
 //////////
 ////////// Implementation of AbsFromMass
 //////////
@@ -326,6 +336,11 @@ double AbsFromMass::operator()(const MoleculeView &view0,
                    PartialMolecule(view1).evaluate().mass(map1) );
 }
 
+const char* AbsFromMass::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AbsFromMass>() );
+}
+
 //////////
 ////////// Implementation of RelFromMass
 //////////
@@ -396,4 +411,9 @@ double RelFromMass::operator()(const MoleculeView &view0,
 {
     return weight( PartialMolecule(view0).evaluate().mass(map0),
                    PartialMolecule(view1).evaluate().mass(map1) );
+}
+
+const char* RelFromMass::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<RelFromMass>() );
 }

@@ -68,10 +68,7 @@ public:
     
     ~ChainName();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ChainName>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

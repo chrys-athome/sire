@@ -93,10 +93,7 @@ public:
     bool operator==(const Residue &other) const;
     bool operator!=(const Residue &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Residue>() );
-    }
+    static const char* typeName();
     
     Residue* clone() const
     {

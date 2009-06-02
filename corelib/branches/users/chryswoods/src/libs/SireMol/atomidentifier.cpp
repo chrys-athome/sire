@@ -303,3 +303,8 @@ AtomIdentifier::selectAllFrom(const MolGroupsBase &molgroups) const
     else
         return d->selectAllFrom(molgroups);
 }
+
+const char* AtomIdentifier::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AtomIdentifier>() );
+}

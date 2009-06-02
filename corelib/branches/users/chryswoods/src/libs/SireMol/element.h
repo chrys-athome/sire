@@ -70,10 +70,7 @@ public:
     
     ~Element();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Element>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

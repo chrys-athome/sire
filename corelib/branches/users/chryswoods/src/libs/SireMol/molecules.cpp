@@ -939,3 +939,8 @@ const ViewsOfMol& Molecules::back() const
 {
     return this->last();
 }
+
+const char* Molecules::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Molecules>() );
+}

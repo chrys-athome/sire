@@ -124,10 +124,7 @@ public:
 
     virtual ~MoleculeGroup();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MoleculeGroup>() );
-    }
+    static const char* typeName();
 
     virtual const char* what() const
     {

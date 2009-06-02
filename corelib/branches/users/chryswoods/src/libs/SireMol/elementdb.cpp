@@ -541,3 +541,8 @@ Element Element::elementWithMass(const MolarMass &molar_mass)
     else
         return Element(0);
 }
+
+const char* Element::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Element>() );
+}

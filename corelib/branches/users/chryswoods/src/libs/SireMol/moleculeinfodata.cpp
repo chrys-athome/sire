@@ -3230,3 +3230,8 @@ void MoleculeInfoData::assertCompatibleWith(
 {
     return selected_atoms.assertCompatibleWith(*this);
 }
+
+const char* MoleculeInfoData::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MoleculeInfoData>() );
+}

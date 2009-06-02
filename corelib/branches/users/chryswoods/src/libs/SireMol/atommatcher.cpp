@@ -188,6 +188,11 @@ QHash<AtomIdx,AtomIdx> AtomIdxMatcher::match(const MoleculeInfoData &molinfo0,
     return map;
 }
 
+const char* AtomIdxMatcher::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AtomIdxMatcher>() );
+}
+
 /////////
 ///////// Implmentation of AtomNameMatcher
 /////////
@@ -302,4 +307,9 @@ QHash<AtomIdx,AtomIdx> AtomNameMatcher::match(const MoleculeInfoData &molinfo0,
     }
 
     return map;
+}
+
+const char* AtomNameMatcher::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AtomNameMatcher>() );
 }

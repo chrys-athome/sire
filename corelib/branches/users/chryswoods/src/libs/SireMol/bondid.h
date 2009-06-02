@@ -82,10 +82,7 @@ public:
     
     ~BondID();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<BondID>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

@@ -262,6 +262,11 @@ QList<MolNum> MolIdx::map(const MolGroupsBase &molgroups) const
     return molgroups.map(*this);
 }
 
+const char* MolIdx::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MolIdx>() );
+}
+
 ///////
 /////// Implementation of MolNum
 ///////
@@ -370,6 +375,11 @@ QList<MolNum> MolNum::map(const MoleculeGroup &molgroup) const
 QList<MolNum> MolNum::map(const MolGroupsBase &molgroups) const
 {
     return molgroups.map(*this);
+}
+
+const char* MolNum::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MolNum>() );
 }
 
 ///////
@@ -499,6 +509,11 @@ QList<MolNum> MolName::map(const MoleculeGroup &molgroup) const
 QList<MolNum> MolName::map(const MolGroupsBase &molgroups) const
 {
     return molgroups.map(*this);
+}
+
+const char* MolName::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MolName>() );
 }
 
 //////
@@ -723,6 +738,11 @@ QList<MolNum> IDAndSet<MolID>::map(const MoleculeGroup &molgroup) const
 QList<MolNum> IDAndSet<MolID>::map(const MolGroupsBase &molgroups) const
 {
     return this->_pvt_map(molgroups);
+}
+
+const char* IDAndSet<MolID>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< IDAndSet<MolID> >() );
 }
 
 //////
@@ -987,4 +1007,9 @@ QList<MolNum> IDOrSet<MolID>::map(const MolGroupsBase &molgroups) const
     }
 
     return this->process(molnums);
+}
+
+const char* IDOrSet<MolID>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< IDOrSet<MolID> >() );
 }

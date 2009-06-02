@@ -86,10 +86,7 @@ public:
     
     ~AngleID();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<AngleID>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

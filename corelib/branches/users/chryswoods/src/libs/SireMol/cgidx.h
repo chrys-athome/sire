@@ -68,10 +68,7 @@ public:
     
     ~CGIdx();
     
-    static const char* typeName()
-    {
-        return "SireMol::CGIdx";
-    }
+    static const char* typeName();
 
     const char* what() const
     {

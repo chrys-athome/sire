@@ -781,6 +781,11 @@ const Property& PartialMolecule::metadata(const PropertyName &key,
     return d->metadata(key, metakey);
 }
 
+const char* PartialMolecule::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<PartialMolecule>() );
+}
+
 /////////
 ///////// Explicit instantiation of the template classes
 /////////

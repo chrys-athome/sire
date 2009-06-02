@@ -204,6 +204,11 @@ QList<SegIdx> SegIdentifier::map(const MolInfo &molinfo) const
         return d->map(molinfo);
 }
 
+const char* SegIdentifier::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SegIdentifier>() );
+}
+
 ///////
 /////// Implementation of SegIdx
 ///////
@@ -284,6 +289,11 @@ bool SegIdx::operator==(const SireID::ID &other) const
 QList<SegIdx> SegIdx::map(const MolInfo &molinfo) const
 {
     return molinfo.map(*this);
+}
+
+const char* SegIdx::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SegIdx>() );
 }
 
 ///////
@@ -373,4 +383,9 @@ bool SegName::operator!=(const SegName &other) const
 QList<SegIdx> SegName::map(const MolInfo &molinfo) const
 {
     return molinfo.map(*this);
+}
+
+const char* SegName::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SegName>() );
 }

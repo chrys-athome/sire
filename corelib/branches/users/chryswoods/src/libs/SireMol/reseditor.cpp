@@ -323,6 +323,11 @@ Residue ResEditor::commit() const
     return *this;
 }
 
+const char* ResEditor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ResEditor>() );
+}
+
 //////////
 ////////// Implementation of ResStructureEditor
 //////////
@@ -651,4 +656,9 @@ Residue ResStructureEditor::commit() const
 ResStructureEditor::operator Residue() const
 {
     return this->commit();
+}
+
+const char* ResStructureEditor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ResStructureEditor>() );
 }

@@ -93,10 +93,7 @@ public:
     bool operator==(const CutGroup &other) const;
     bool operator!=(const CutGroup &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<CutGroup>() );
-    }
+    static const char* typeName();
     
     CutGroup* clone() const
     {

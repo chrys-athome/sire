@@ -65,10 +65,7 @@ public:
 
     ~MGNum();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MGNum>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

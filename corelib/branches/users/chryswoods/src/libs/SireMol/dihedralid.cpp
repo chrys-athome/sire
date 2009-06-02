@@ -374,3 +374,8 @@ const AtomID& DihedralID::atom3() const
 {
     return atm3.base();
 }
+
+const char* DihedralID::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<DihedralID>() );
+}

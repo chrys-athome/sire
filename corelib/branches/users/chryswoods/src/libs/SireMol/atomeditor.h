@@ -98,10 +98,7 @@ public:
     AtomEditor& operator=(const Atom &other);
     AtomEditor& operator=(const AtomEditor &other);
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<AtomEditor>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -159,10 +156,7 @@ public:
     
     ~AtomStructureEditor();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<AtomStructureEditor>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

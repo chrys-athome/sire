@@ -30,6 +30,96 @@
 
 using namespace SireMol;
 
+const char* missing_atom::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_atom>() );
+}
+
+const char* duplicate_atom::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<duplicate_atom>() );
+}
+
+const char* missing_residue::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_residue>() );
+}
+
+const char* duplicate_residue::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<duplicate_residue>() );
+}
+
+const char* missing_cutgroup::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_cutgroup>() );
+}
+
+const char* duplicate_cutgroup::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<duplicate_cutgroup>() );
+}
+
+const char* missing_chain::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_chain>() );
+}
+
+const char* duplicate_chain::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<duplicate_chain>() );
+}
+
+const char* missing_segment::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_segment>() );
+}
+
+const char* duplicate_segment::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<duplicate_segment>() );
+}
+
+const char* missing_group::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_group>() );
+}
+
+const char* duplicate_group::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<duplicate_group>() );
+}
+
+const char* missing_molecule::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_molecule>() );
+}
+
+const char* duplicate_molecule::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<duplicate_molecule>() );
+}
+
+const char* template_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<template_error>() );
+}
+
+const char* anchor_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<anchor_error>() );
+}
+
+const char* ring_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ring_error>() );
+}
+
+const char* incompatible_molecule::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<incompatible_molecule>() );
+}
+
 static const RegisterMetaType<missing_atom> r_matom;
 static const RegisterMetaType<missing_group> r_mgrp;
 static const RegisterMetaType<duplicate_atom> r_datom;

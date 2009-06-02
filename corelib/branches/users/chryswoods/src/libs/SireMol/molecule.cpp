@@ -719,5 +719,10 @@ QStringList Molecule::metadataKeys(const PropertyName &key) const
     return d->metadataKeys(key);
 }
 
+const char* Molecule::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Molecule>() );
+}
+
 ///// explicitly instantiate manipulator classes
 template class Mover<Molecule>;

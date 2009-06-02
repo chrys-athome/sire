@@ -104,10 +104,7 @@ public:
     Evaluator& operator=(const Evaluator &other);
     Evaluator& operator=(const MoleculeView &other);
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Evaluator>() );
-    }
+    static const char* typeName();
 
     Evaluator* clone() const
     {

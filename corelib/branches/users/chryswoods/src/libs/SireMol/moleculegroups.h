@@ -410,10 +410,7 @@ public:
         return new MoleculeGroups(*this);
     }
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MoleculeGroups>() );
-    }
+    static const char* typeName();
     
     MoleculeGroups& operator=(const MoleculeGroups &other);
     

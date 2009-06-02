@@ -93,10 +93,7 @@ public:
     bool operator==(const Segment &other) const;
     bool operator!=(const Segment &other) const;
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Segment>() );
-    }
+    static const char* typeName();
     
     Segment* clone() const
     {

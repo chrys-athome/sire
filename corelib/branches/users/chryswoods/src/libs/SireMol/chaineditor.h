@@ -95,10 +95,7 @@ public:
     ChainEditor& operator=(const Chain &chain);
     ChainEditor& operator=(const ChainEditor &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ChainEditor>() );
-    }
+    static const char* typeName();
     
     ChainEditor* clone() const
     {
@@ -159,10 +156,7 @@ public:
     
     ~ChainStructureEditor();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ChainStructureEditor>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

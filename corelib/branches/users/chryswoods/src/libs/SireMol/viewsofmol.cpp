@@ -1430,6 +1430,11 @@ void ViewsOfMol::assertNoOverlap() const
     }
 }
 
+const char* ViewsOfMol::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ViewsOfMol>() );
+}
+
 ////////
 //////// Explicitly instantiate templates
 ////////

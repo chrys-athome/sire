@@ -101,10 +101,7 @@ public:
     bool operator==(const Atom &other) const;
     bool operator!=(const Atom &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Atom>() );
-    }
+    static const char* typeName();
     
     Atom* clone() const
     {

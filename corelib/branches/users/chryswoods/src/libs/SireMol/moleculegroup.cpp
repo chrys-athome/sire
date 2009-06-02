@@ -2150,3 +2150,8 @@ bool MoleculeGroup::setContents(const MoleculeGroup &MoleculeGroup)
     
     return true;
 }
+
+const char* MoleculeGroup::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MoleculeGroup>() );
+}

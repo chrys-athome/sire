@@ -58,10 +58,7 @@ public:
     
     ~ResIdentifier();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ResIdentifier>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

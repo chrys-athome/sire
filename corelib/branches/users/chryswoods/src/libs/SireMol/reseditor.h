@@ -95,10 +95,7 @@ public:
     ResEditor& operator=(const Residue &residue);
     ResEditor& operator=(const ResEditor &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ResEditor>() );
-    }
+    static const char* typeName();
     
     ResEditor* clone() const
     {
@@ -159,10 +156,7 @@ public:
     
     ~ResStructureEditor();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ResStructureEditor>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

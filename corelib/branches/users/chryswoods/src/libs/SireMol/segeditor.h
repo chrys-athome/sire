@@ -95,10 +95,7 @@ public:
     SegEditor& operator=(const Segment &residue);
     SegEditor& operator=(const SegEditor &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<SegEditor>() );
-    }
+    static const char* typeName();
     
     SegEditor* clone() const
     {
@@ -154,10 +151,7 @@ public:
     
     ~SegStructureEditor();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<SegStructureEditor>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

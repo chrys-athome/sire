@@ -458,6 +458,11 @@ bool AtomIdx::operator==(const SireID::ID &other) const
     return SireID::ID::compare<AtomIdx>(*this, other);
 }
 
+const char* AtomIdx::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AtomIdx>() );
+}
+
 /////////
 ///////// Implementation of AtomNum
 /////////
@@ -541,6 +546,11 @@ bool AtomNum::operator!=(const AtomNum &other) const
 QList<AtomIdx> AtomNum::map(const MolInfo &molinfo) const
 {
     return molinfo.map(*this);
+}
+
+const char* AtomNum::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AtomNum>() );
 }
 
 /////////
@@ -630,6 +640,11 @@ bool AtomName::operator!=(const AtomName &other) const
 QList<AtomIdx> AtomName::map(const MolInfo &molinfo) const
 {
     return molinfo.map(*this);
+}
+
+const char* AtomName::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AtomName>() );
 }
 
 //fully instantiate Specify<AtomID>

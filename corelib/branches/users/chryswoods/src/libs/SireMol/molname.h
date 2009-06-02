@@ -66,10 +66,7 @@ public:
     
     ~MolName();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MolName>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

@@ -97,10 +97,7 @@ public:
 
     AtomProperty<Vector>& operator=(const AtomProperty<Vector> &other);
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< AtomProperty<Vector> >() );
-    }
+    static const char* typeName();
 
     AtomProperty<Vector>* clone() const
     {

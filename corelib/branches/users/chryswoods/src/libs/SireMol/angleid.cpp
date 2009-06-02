@@ -403,3 +403,8 @@ const AtomID& AngleID::atom2() const
 {
     return atm2.base();
 }
+
+const char* AngleID::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AngleID>() );
+}

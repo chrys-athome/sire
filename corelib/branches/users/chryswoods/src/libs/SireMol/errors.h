@@ -85,10 +85,7 @@ public:
     ~missing_atom() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_atom>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -122,10 +119,7 @@ public:
     ~duplicate_atom() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<duplicate_atom>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -158,10 +152,7 @@ public:
     ~missing_residue() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_residue>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -195,10 +186,7 @@ public:
     ~duplicate_residue() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<duplicate_residue>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -231,10 +219,7 @@ public:
     ~missing_cutgroup() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_cutgroup>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -268,10 +253,7 @@ public:
     ~duplicate_cutgroup() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<duplicate_cutgroup>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -304,10 +286,7 @@ public:
     ~missing_chain() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_chain>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -341,10 +320,7 @@ public:
     ~duplicate_chain() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<duplicate_chain>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -377,10 +353,7 @@ public:
     ~missing_segment() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_segment>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -414,10 +387,7 @@ public:
     ~duplicate_segment() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<duplicate_segment>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -450,10 +420,7 @@ public:
     ~missing_group() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_group>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -489,10 +456,7 @@ public:
     ~duplicate_group() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<duplicate_group>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -525,10 +489,7 @@ public:
     ~missing_molecule() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_molecule>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -562,10 +523,7 @@ public:
     ~duplicate_molecule() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<duplicate_molecule>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -599,10 +557,7 @@ public:
     ~template_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<template_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -636,10 +591,7 @@ public:
     ~anchor_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<anchor_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -673,10 +625,7 @@ public:
     ~ring_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ring_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -710,10 +659,7 @@ public:
     ~incompatible_molecule() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<incompatible_molecule>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {

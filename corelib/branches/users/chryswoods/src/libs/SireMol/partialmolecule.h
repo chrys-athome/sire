@@ -82,10 +82,7 @@ public:
 
     ~PartialMolecule();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<PartialMolecule>() );
-    }
+    static const char* typeName();
 
     PartialMolecule* clone() const
     {

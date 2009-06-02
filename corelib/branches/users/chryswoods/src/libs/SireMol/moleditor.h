@@ -96,10 +96,7 @@ public:
     
     ~MolEditor();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MolEditor>() );
-    }
+    static const char* typeName();
     
     MolEditor* clone() const
     {
@@ -173,10 +170,7 @@ public:
     
     ~MolStructureEditor();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MolStructureEditor>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

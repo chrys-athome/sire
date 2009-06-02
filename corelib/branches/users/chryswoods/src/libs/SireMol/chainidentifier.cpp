@@ -204,6 +204,11 @@ QList<ChainIdx> ChainIdentifier::map(const MolInfo &molinfo) const
         return d->map(molinfo);
 }
 
+const char* ChainIdentifier::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ChainIdentifier>() );
+}
+
 ////////
 //////// Implementation of ChainIdx
 ////////
@@ -282,6 +287,11 @@ bool ChainIdx::operator==(const SireID::ID &other) const
 QList<ChainIdx> ChainIdx::map(const MolInfo &molinfo) const
 {
     return molinfo.map(*this);
+}
+
+const char* ChainIdx::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ChainIdx>() );
 }
 
 ////////
@@ -371,4 +381,9 @@ bool ChainName::operator!=(const ChainName &other) const
 QList<ChainIdx> ChainName::map(const MolInfo &molinfo) const
 {
     return molinfo.map(*this);
+}
+
+const char* ChainName::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ChainName>() );
 }

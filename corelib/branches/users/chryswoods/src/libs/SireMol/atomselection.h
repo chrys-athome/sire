@@ -111,10 +111,7 @@ public:
 
     ~AtomSelection();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<AtomSelection>() );
-    } 
+    static const char* typeName();
 
     AtomSelection& operator=(const AtomSelection &other);
 

@@ -292,3 +292,8 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, MGName &mgname)
         
     return ds;
 }
+
+const char* MGIdentifier::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MGIdentifier>() );
+}

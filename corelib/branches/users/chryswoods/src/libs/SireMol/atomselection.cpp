@@ -3858,3 +3858,8 @@ AtomSelection& AtomSelection::unite(const QSet<SireMol::AtomIdx> &ids)
 {
     return this->unite(ids.toList());
 }
+
+const char* AtomSelection::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AtomSelection>() );
+}

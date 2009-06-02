@@ -60,10 +60,7 @@ public:
     
     ~ResidueCutting();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ResidueCutting>() );
-    }
+    static const char* typeName();
     
     ResidueCutting& operator=(const ResidueCutting &other);
     

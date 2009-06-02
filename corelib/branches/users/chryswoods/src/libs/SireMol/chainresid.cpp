@@ -109,3 +109,8 @@ QList<ResIdx> ChainResID::map(const MolInfo &molinfo) const
             
     return residxs;
 }
+
+const char* ChainResID::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ChainResID>() );
+}

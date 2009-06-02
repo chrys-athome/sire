@@ -862,3 +862,8 @@ AxisSet Evaluator::alignmentAxes(const MoleculeView &other,
     return AxisSet();
 }
 
+const char* Evaluator::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Evaluator>() );
+}
+

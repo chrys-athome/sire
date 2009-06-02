@@ -301,6 +301,11 @@ CutGroup CGEditor::commit() const
     return *this;
 }
 
+const char* CGEditor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CGEditor>() );
+}
+
 ////////
 //////// Implementation of CGStructureEditor
 ////////
@@ -596,4 +601,9 @@ CutGroup CGStructureEditor::commit() const
 CGStructureEditor::operator CutGroup() const
 {
     return this->commit();
+}
+
+const char* CGStructureEditor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CGStructureEditor>() );
 }

@@ -2929,3 +2929,8 @@ QHash<MGNum,const MoleculeGroup*> MoleculeGroups::getGroups() const
     
     return groups;
 }
+
+const char* MoleculeGroups::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MoleculeGroups>() );
+}

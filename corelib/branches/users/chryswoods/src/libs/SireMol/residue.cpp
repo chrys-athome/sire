@@ -503,6 +503,11 @@ QStringList Residue::metadataKeys(const PropertyName &key) const
     return d->properties().metadataKeysOfType<ResProp>(key);
 }
 
+const char* Residue::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Residue>() );
+}
+
 bool SIREMOL_EXPORT SireMol::detail::has_property(const Residue*, 
                                                   const MoleculeData &moldata,
                                                   const PropertyName &key)

@@ -88,10 +88,7 @@ public:
 
     Chain& operator=(const Chain &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Chain>() );
-    }
+    static const char* typeName();
     
     Chain* clone() const
     {

@@ -300,3 +300,8 @@ MolAtomID::selectAllFrom(const MolGroupsBase &molgroups) const
 
     return selected_atoms;
 }
+
+const char* MolAtomID::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MolAtomID>() );
+}

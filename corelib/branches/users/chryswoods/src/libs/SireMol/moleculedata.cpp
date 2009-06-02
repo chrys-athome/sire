@@ -875,3 +875,8 @@ void MoleculeData::removeMetadata(const QString &key, const QString &metakey)
         vrsn = vrsns->increment();
     }
 }
+
+const char* MoleculeData::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MoleculeData>() );
+}

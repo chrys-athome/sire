@@ -534,6 +534,11 @@ const CovalentBondHunter& BondHunter::null()
     return *(shared_null.constData());
 }
 
+const char* CovalentBondHunter::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CovalentBondHunter>() );
+}
+
 /////////
 ///////// Implementation of ChemicalBondHunter
 /////////
@@ -743,4 +748,9 @@ Connectivity ChemicalBondHunter::operator()(const MoleculeView &molview,
     }
     
     return editor;
+}
+
+const char* ChemicalBondHunter::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ChemicalBondHunter>() );
 }

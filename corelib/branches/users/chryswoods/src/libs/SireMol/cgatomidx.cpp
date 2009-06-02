@@ -139,3 +139,8 @@ QList<AtomIdx> CGAtomIdx::map(const MolInfo &molinfo) const
     atomidxs.append( molinfo.getAtom(_cgidx, _atmidx) );
     return atomidxs;
 }
+
+const char* CGAtomIdx::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CGAtomIdx>() );
+}

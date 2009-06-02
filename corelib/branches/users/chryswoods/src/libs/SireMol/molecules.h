@@ -86,10 +86,7 @@ public:
 
     ~Molecules();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Molecules>() );
-    }
+    static const char* typeName();
 
     const char* what() const
     {

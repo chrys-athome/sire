@@ -66,10 +66,7 @@ public:
     
     ~SegIdx();
     
-    static const char* typeName()
-    {
-        return "SireMol::SegIdx";
-    }
+    static const char* typeName();
     
     const char* what() const
     {

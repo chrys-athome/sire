@@ -302,6 +302,11 @@ Segment SegEditor::commit() const
     return *this;
 }
 
+const char* Segment::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Segment>() );
+}
+
 ////////
 //////// Implementation of SegStructureEditor
 ////////
@@ -597,4 +602,9 @@ Segment SegStructureEditor::commit() const
 SegStructureEditor::operator Segment() const
 {
     return this->commit();
+}
+
+const char* SegStructureEditor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SegStructureEditor>() );
 }
