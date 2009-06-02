@@ -115,7 +115,7 @@ public:
     IDOrSet<ID>& operator=(const ID &other);
     
     bool operator==(const SireID::ID &other) const;
-    using SireID::ID::operator!=;
+    bool operator!=(const SireID::ID &other) const;
    
     bool operator==(const IDOrSet<ID> &other) const;
     bool operator!=(const IDOrSet<ID> &other) const;
@@ -292,6 +292,14 @@ SIRE_OUTOFLINE_TEMPLATE
 bool IDOrSet<ID>::operator==(const SireID::ID &other) const
 {
     return SireID::ID::compare< IDOrSet<ID> >(*this, other);
+}
+
+/** Comparison operator */
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+bool IDOrSet<ID>::operator!=(const SireID::ID &other) const
+{
+    return not this->operator==(other);
 }
 
 /** Comparison operator */
