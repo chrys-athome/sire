@@ -103,6 +103,11 @@ private:
     boost::shared_ptr<SysID> d;
 };
 
+inline uint qHash(const SysIdentifier &sysid)
+{
+    return sysid.hash();
+}
+
 }
 
 Q_DECLARE_METATYPE(SireSystem::SysIdentifier);

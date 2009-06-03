@@ -56,9 +56,12 @@
 using namespace SireMol;
 using namespace SireStream;
 
-//fully instantiate the Editor<Atom> and Editor< Selector<Atom> > classes
-template class Editor<AtomEditor, Atom>;
-//template class Editor< Selector<Atom> >;
+namespace SireMol
+{
+    //fully instantiate the Editor<Atom> and Editor< Selector<Atom> > classes
+    template class Editor<AtomEditor, Atom>;
+    //template class Editor< Selector<Atom> >;
+}
 
 /////////
 ///////// Implementation of AtomEditor

@@ -267,7 +267,8 @@ ChunkedHash<Key,T,N>::iterator::iterator()
 /** Copy constructor */
 template<class Key, class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
-ChunkedHash<Key,T,N>::iterator::iterator(const ChunkedHash<Key,T,N>::iterator &other)
+ChunkedHash<Key,T,N>::iterator::iterator(
+                            const typename ChunkedHash<Key,T,N>::iterator &other)
                      : chunks(other.chunks),
                        current_chunk(other.current_chunk),
                        current_it(other.current_it)
@@ -283,7 +284,7 @@ ChunkedHash<Key,T,N>::iterator::~iterator()
 template<class Key, class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 typename ChunkedHash<Key,T,N>::iterator& ChunkedHash<Key,T,N>::iterator::operator=(
-                            const ChunkedHash<Key,T,N>::const_iterator &other)
+                            const typename ChunkedHash<Key,T,N>::const_iterator &other)
 {
     chunks = other.chunks;
     current_chunk = other.current_chunk;
@@ -295,7 +296,7 @@ typename ChunkedHash<Key,T,N>::iterator& ChunkedHash<Key,T,N>::iterator::operato
 template<class Key, class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 bool ChunkedHash<Key,T,N>::iterator::operator==(
-                    const ChunkedHash<Key,T,N>::iterator &other) const
+                    const typename ChunkedHash<Key,T,N>::iterator &other) const
 {
     return chunks == other.chunks and
            current_it == other.current_it;
@@ -305,7 +306,7 @@ bool ChunkedHash<Key,T,N>::iterator::operator==(
 template<class Key, class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 bool ChunkedHash<Key,T,N>::iterator::operator!=(
-                    const ChunkedHash<Key,T,N>::iterator &other) const
+                    const typename ChunkedHash<Key,T,N>::iterator &other) const
 {
     return not this->operator==(other);
 }
@@ -314,7 +315,7 @@ bool ChunkedHash<Key,T,N>::iterator::operator!=(
 template<class Key, class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 bool ChunkedHash<Key,T,N>::iterator::operator==(
-                    const ChunkedHash<Key,T,N>::const_iterator &other) const
+                    const typename ChunkedHash<Key,T,N>::const_iterator &other) const
 {
     return chunks == other.chunks and
            current_it == other.current_it;
@@ -324,7 +325,7 @@ bool ChunkedHash<Key,T,N>::iterator::operator==(
 template<class Key, class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 bool ChunkedHash<Key,T,N>::iterator::operator!=(
-                    const ChunkedHash<Key,T,N>::const_iterator &other) const
+                    const typename ChunkedHash<Key,T,N>::const_iterator &other) const
 {
     return not this->operator==(other);
 }
@@ -517,7 +518,7 @@ ChunkedHash<Key,T,N>::const_iterator::const_iterator()
 template<class Key, class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 ChunkedHash<Key,T,N>::const_iterator::const_iterator(
-                                    const ChunkedHash<Key,T,N>::const_iterator &other)
+                             const typename ChunkedHash<Key,T,N>::const_iterator &other)
                      : chunks(other.chunks),
                        current_chunk(other.current_chunk),
                        current_it(other.current_it)
@@ -534,7 +535,7 @@ template<class Key, class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 typename ChunkedHash<Key,T,N>::const_iterator& 
 ChunkedHash<Key,T,N>::const_iterator::operator=(
-                            const ChunkedHash<Key,T,N>::iterator &other)
+                            const typename ChunkedHash<Key,T,N>::iterator &other)
 {
     chunks = other.chunks;
     current_chunk = other.current_chunk;
@@ -547,7 +548,7 @@ template<class Key, class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 typename ChunkedHash<Key,T,N>::const_iterator& 
 ChunkedHash<Key,T,N>::const_iterator::operator=(
-                            const ChunkedHash<Key,T,N>::const_iterator &other)
+                            const typename ChunkedHash<Key,T,N>::const_iterator &other)
 {
     chunks = other.chunks;
     current_chunk = other.current_chunk;
@@ -559,7 +560,7 @@ ChunkedHash<Key,T,N>::const_iterator::operator=(
 template<class Key, class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 bool ChunkedHash<Key,T,N>::const_iterator::operator==(
-                    const ChunkedHash<Key,T,N>::const_iterator &other) const
+                    const typename ChunkedHash<Key,T,N>::const_iterator &other) const
 {
     return chunks == other.chunks and
            current_it == other.current_it;
@@ -569,7 +570,7 @@ bool ChunkedHash<Key,T,N>::const_iterator::operator==(
 template<class Key, class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 bool ChunkedHash<Key,T,N>::const_iterator::operator!=(
-                    const ChunkedHash<Key,T,N>::const_iterator &other) const
+                    const typename ChunkedHash<Key,T,N>::const_iterator &other) const
 {
     return not this->operator==(other);
 }
@@ -578,7 +579,7 @@ bool ChunkedHash<Key,T,N>::const_iterator::operator!=(
 template<class Key, class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 bool ChunkedHash<Key,T,N>::const_iterator::operator==(
-                    const ChunkedHash<Key,T,N>::iterator &other) const
+                    const typename ChunkedHash<Key,T,N>::iterator &other) const
 {
     return chunks == other.chunks and 
            current_it == other.current_it;
@@ -588,7 +589,7 @@ bool ChunkedHash<Key,T,N>::const_iterator::operator==(
 template<class Key, class T, int N>
 SIRE_OUTOFLINE_TEMPLATE
 bool ChunkedHash<Key,T,N>::const_iterator::operator!=(
-                    const ChunkedHash<Key,T,N>::iterator &other) const
+                    const typename ChunkedHash<Key,T,N>::iterator &other) const
 {
     return not this->operator==(other);
 }

@@ -103,6 +103,11 @@ private:
     boost::shared_ptr<MonitorID> d;
 };
 
+inline uint qHash(const MonitorIdentifier &monid)
+{
+    return monid.hash();
+}
+
 }
 
 Q_DECLARE_METATYPE(SireSystem::MonitorIdentifier);

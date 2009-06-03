@@ -243,7 +243,7 @@ AtomProperty<Vector> AtomProperty<Vector>::fromVariant(
     
     for (int i=0; i<ngroups; ++i)
     {
-        coords[i] = makeCoordGroup( variant_array[i] );
+        coords[i] = ::makeCoordGroup( variant_array[i] );
     }
     
     return AtomProperty<Vector>( CoordGroupArray(coords) );
