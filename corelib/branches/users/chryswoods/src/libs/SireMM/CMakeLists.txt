@@ -32,7 +32,6 @@ set ( SIREMM_HEADERS
       ljparameter.h
       ljparameterdb.h
       ljpotential.h
-      qhash_siremm.h
       softcljcomponent.h
       softcljpotential.h
       switchingfunction.h

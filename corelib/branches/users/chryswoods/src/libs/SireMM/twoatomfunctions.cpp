@@ -28,10 +28,6 @@
 
 #include "sireglobal.h"
 
-namespace SireMM { namespace detail { class IDPair; } }
-
-uint qHash(const SireMM::detail::IDPair&);
-
 #include "twoatomfunctions.h"
 
 #include "SireCAS/symbols.h"
@@ -143,11 +139,6 @@ QDataStream& operator>>(QDataStream &ds, IDPair &idpair)
 {
     ds >> idpair.atom0 >> idpair.atom1;
     return ds;
-}
-
-uint qHash(const IDPair &idpair)
-{
-    return (idpair.atom0 << 16) | (idpair.atom1 & 0x0000FFFF);
 }
 
 IDPair::IDPair(quint32 atm0, quint32 atm1) 

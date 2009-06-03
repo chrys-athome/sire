@@ -63,12 +63,6 @@ class QDataStream;
 QDataStream& operator<<(QDataStream&, const SireMaths::Rational&);
 QDataStream& operator>>(QDataStream&, SireMaths::Rational&);
 
-/** Return a hash of the rational number */
-inline uint qHash(const SireMaths::Rational &val)
-{
-    return (val.numerator()<<16) | (val.denominator() & 0x0000FFFF);
-}
-
 namespace SireMaths
 {
 
@@ -174,6 +168,12 @@ inline Rational toRational(double val)
 inline double toDouble(const Rational &val)
 {
     return double(val.numerator()) / double(val.denominator());
+}
+
+/** Return a hash of the rational number */
+inline uint qHash(const Rational &val)
+{
+    return (val.numerator()<<16) | (val.denominator() & 0x0000FFFF);
 }
 
 }

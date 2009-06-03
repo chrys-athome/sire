@@ -208,6 +208,12 @@ public:
 
 };
 
+/** Return a hash of an ExBase object */
+inline uint qHash(const ExBase &ex)
+{
+    return ex.hash();
+}
+
 Expression operator+(const ExBase &base0, const ExBase &base1);
 Expression operator+(const ExBase &base, const Expression &ex);
 Expression operator+(const Expression &ex, const ExBase &base);
@@ -247,12 +253,6 @@ Expression pow(const ExBase &base, const Complex &n);
 Expression pow(const ExBase &base, const Expression &n);
 Expression pow(const ExBase &base, const ExBase &n);
 
-}
-
-/** Return a hash of an ExBase object */
-inline uint qHash(const SireCAS::ExBase &ex)
-{
-    return ex.hash();
 }
 
 SIRE_EXPOSE_CLASS( SireCAS::ExBase )

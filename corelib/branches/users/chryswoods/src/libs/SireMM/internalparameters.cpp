@@ -28,12 +28,6 @@
 
 #include "sireglobal.h"
 
-namespace SireMM { namespace detail { class CGIDQuad; } }
-namespace SireID { class IndexBase; }
-
-uint qHash(const SireMM::detail::CGIDQuad&);
-uint qHash(const SireID::IndexBase&);
-
 #include <algorithm>
 
 #include "internalparameters.h"
@@ -255,11 +249,6 @@ uint CGIDQuad::hash() const
            ( (quint32(cgidxs[1]) << 16) & 0x00FF0000 ) |
            ( (quint32(cgidxs[2]) <<  8) & 0x0000FF00 ) |
            ( quint32(cgidxs[3]) & 0x000000FF );
-}
-
-uint qHash(const CGIDQuad &idquad)
-{
-    return idquad.hash();
 }
 
 //////////

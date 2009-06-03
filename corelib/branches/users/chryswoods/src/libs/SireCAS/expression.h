@@ -213,6 +213,12 @@ Expression cbrt(const Expression &ex0);
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
+/** Return a hash for an expression */
+inline uint qHash(const Expression &ex)
+{
+    return ex.hash();
+}
+
 /** Return a list of all children of type 'T' in this expression */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -426,12 +432,6 @@ inline Expression cbrt(const Expression &ex0)
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
 
-}
-
-/** Return a hash for an expression */
-inline uint qHash(const SireCAS::Expression &ex)
-{
-    return ex.hash();
 }
 
 Q_DECLARE_METATYPE(SireCAS::Expression)

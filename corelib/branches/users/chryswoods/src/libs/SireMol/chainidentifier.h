@@ -41,8 +41,6 @@ class ChainIdentifier;
 QDataStream& operator<<(QDataStream&, const SireMol::ChainIdentifier&);
 QDataStream& operator>>(QDataStream&, SireMol::ChainIdentifier&);
 
-uint qHash(const SireMol::ChainIdentifier&);
-
 namespace SireMol
 {
 
@@ -100,6 +98,11 @@ private:
     /** Pointer to the ChainID */
     boost::shared_ptr<ChainID> d;
 };
+
+inline uint qHash(const ChainIdentifier &chainid)
+{
+    return chainid.hash();
+}
 
 }
 

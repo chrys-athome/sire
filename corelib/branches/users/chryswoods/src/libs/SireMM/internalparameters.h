@@ -121,6 +121,11 @@ private:
     CGIdx cgidxs[4];
 };
 
+inline uint qHash(const CGIDQuad &idquad)
+{
+    return idquad.hash();
+}
+
 /** Internal class used to hold the non-physical parameters
     (impropers and Urey-Bradley) */
 class GroupInternalNonPhysParameters : public QSharedData

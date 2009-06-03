@@ -62,13 +62,6 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, LJParameter &ljparam)
     return ds;
 }
 
-/** Hash a LJ parameter */
-quint32 qHash(const LJParameter &ljparam)
-{
-    return quint32( 1000000.0 * ljparam.sqrtEpsilon() + 
-                    10000.0 * ljparam.sqrtSigma() );
-}
-
 /** Construct a dummy LJ parameter */
 LJParameter::LJParameter() : sqrtsig(0.0), sqrteps(0.0)
 {}

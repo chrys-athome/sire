@@ -127,6 +127,14 @@ public:
     quint32 atom3;
 };
 
+inline uint qHash(const IDQuad &idquad)
+{
+    return (idquad.atom0 << 24) | 
+           ( (idquad.atom1 << 16) & 0x00FF0000) |
+           ( (idquad.atom2 << 8)  & 0x0000FF00) |
+           (idquad.atom3 & 0x000000FF);
+}
+
 }
 
 /** This class holds the set of FourAtomFunction potentials that

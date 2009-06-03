@@ -103,6 +103,11 @@ private:
     boost::shared_ptr<FFID> d;
 };
 
+inline uint qHash(const FFIdentifier &ffid)
+{
+    return ffid.hash();
+}
+
 }
 
 Q_DECLARE_METATYPE(SireFF::FFIdentifier);

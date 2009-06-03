@@ -26,8 +26,6 @@
   *
 \*********************************************/
 
-#include "qhash_sirecas.h"
-
 #include <QMap>
 
 #include "sum.h"

@@ -45,8 +45,6 @@ QDataStream& operator>>(QDataStream&, SireMol::AtomIdentifier&);
 QDataStream& operator<<(QDataStream&, const SireMol::AtomIDSet&);
 QDataStream& operator>>(QDataStream&, SireMol::AtomIDSet&);
 
-uint qHash(const SireMol::AtomIdentifier&);
-
 namespace SireMol
 {
 
@@ -116,6 +114,11 @@ private:
     /** Pointer to the AtomID */
     boost::shared_ptr<AtomID> d;
 };
+
+inline uint qHash(const AtomIdentifier &atomid)
+{
+    return atomid.hash();
+}
 
 }
 

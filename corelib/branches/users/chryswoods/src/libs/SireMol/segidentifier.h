@@ -41,8 +41,6 @@ class SegIdentifier;
 QDataStream& operator<<(QDataStream&, const SireMol::SegIdentifier&);
 QDataStream& operator>>(QDataStream&, SireMol::SegIdentifier&);
 
-uint qHash(const SireMol::SegIdentifier&);
-
 namespace SireMol
 {
 
@@ -101,9 +99,13 @@ private:
     boost::shared_ptr<SegID> d;
 };
 
+inline uint qHash(const SegIdentifier &segid)
+{
+    return segid.hash();
+}
+
 }
 
 Q_DECLARE_METATYPE(SireMol::SegIdentifier);
 
 #endif
-

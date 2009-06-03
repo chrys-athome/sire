@@ -121,6 +121,12 @@ public:
     quint32 atom2;
 };
 
+inline uint qHash(const IDTriple &idtriple)
+{
+    return (idtriple.atom0 << 24) | (idtriple.atom1 & 0x00FFFF00) |
+                                    (idtriple.atom2 & 0x000000FF);
+}
+
 }
 
 /** This class holds the set of ThreeAtomFunction potentials that

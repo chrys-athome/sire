@@ -87,7 +87,6 @@ set ( SIREMOL_HEADERS
       mover.h
       mover.hpp
       partialmolecule.h
-      qhash_siremol.h
       reseditor.h
       resid.h
       residentifier.h

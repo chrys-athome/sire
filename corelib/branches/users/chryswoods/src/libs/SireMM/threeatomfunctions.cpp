@@ -28,10 +28,6 @@
 
 #include "sireglobal.h"
 
-namespace SireMM { namespace detail { class IDTriple; } }
-
-uint qHash(const SireMM::detail::IDTriple&);
-
 #include "threeatomfunctions.h"
 
 #include "SireCAS/symbols.h"
@@ -153,12 +149,6 @@ QDataStream& operator>>(QDataStream &ds, IDTriple &idtriple)
        >> idtriple.atom2;
        
     return ds;
-}
-
-uint qHash(const IDTriple &idtriple)
-{
-    return (idtriple.atom0 << 24) | (idtriple.atom1 & 0x00FFFF00) |
-                                    (idtriple.atom2 & 0x000000FF);
 }
 
 IDTriple::IDTriple(quint32 atm0, quint32 atm1, quint32 atm2) 

@@ -405,11 +405,11 @@ private:
     FunctionPvt d;
 };
 
-}
-
-inline uint qHash(const SireCAS::Function &func)
+inline uint qHash(const Function &func)
 {
     return func.hash();
+}
+
 }
 
 Q_DECLARE_METATYPE(SireCAS::Function)

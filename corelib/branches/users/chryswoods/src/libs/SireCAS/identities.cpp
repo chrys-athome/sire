@@ -26,8 +26,6 @@
   *
 \*********************************************/
 
-#include "qhash_sirecas.h"
-
 #include "identities.h"
 #include "symbol.h"
 #include "function.h"

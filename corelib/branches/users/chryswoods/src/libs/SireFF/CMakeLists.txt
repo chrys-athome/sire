@@ -31,8 +31,6 @@ set ( SIREFF_HEADERS
       intra2b2gff.hpp
       intra2b3dff.hpp
       intra2b2g3dff.hpp
-
-      qhash_sireff.h
     )
 
 set ( SIREFF_DETAIL_HEADERS

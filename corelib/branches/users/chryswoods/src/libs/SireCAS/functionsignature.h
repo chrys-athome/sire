@@ -126,12 +126,12 @@ private:
     QSet<SymbolID> _args;
 };
 
-}
-
 /** Return a hash for this signature */
-inline uint qHash(const SireCAS::FunctionSignature &sig)
+inline uint qHash(const FunctionSignature &sig)
 {
     return qHash(sig.name());
+}
+
 }
 
 Q_DECLARE_METATYPE(SireCAS::FunctionSignature)

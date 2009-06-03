@@ -26,8 +26,6 @@
   *
 \*********************************************/
 
-#include "qhash_sirecas.h"
-
 #include "product.h"
 #include "expression.h"
 #include "expressions.h"

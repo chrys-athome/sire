@@ -31,7 +31,6 @@ set ( SIRECAS_HEADERS
       powerconstant.h
       power.h
       product.h
-      qhash_sirecas.h
       singlefunc.h
       sum.h
       symbol.h

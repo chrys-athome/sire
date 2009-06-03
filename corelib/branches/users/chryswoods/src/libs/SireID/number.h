@@ -88,12 +88,12 @@ protected:
     qint32 _num;
 };
 
-}
-
 /** Return a hash of this Number */
-inline uint qHash(const SireID::Number &number)
+inline uint qHash(const Number &number)
 {
     return number.hash();
+}
+
 }
 
 SIRE_EXPOSE_CLASS( SireID::Number )

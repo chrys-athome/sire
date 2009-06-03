@@ -41,8 +41,6 @@ class MolIdentifier;
 QDataStream& operator<<(QDataStream&, const SireMol::MolIdentifier&);
 QDataStream& operator>>(QDataStream&, SireMol::MolIdentifier&);
 
-uint qHash(const SireMol::MolIdentifier&);
-
 namespace SireMol
 {
 
@@ -103,6 +101,11 @@ private:
     /** Pointer to the MolID */
     boost::shared_ptr<MolID> d;
 };
+
+inline uint qHash(const MolIdentifier &molid)
+{
+    return molid.hash();
+}
 
 }
 

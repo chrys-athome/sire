@@ -118,6 +118,11 @@ public:
     quint32 atom1;
 };
 
+inline uint qHash(const IDPair &idpair)
+{
+    return (idpair.atom0 << 16) | (idpair.atom1 & 0x0000FFFF);
+}
+
 }
 
 /** This class holds the set of TwoAtomFunction potentials that

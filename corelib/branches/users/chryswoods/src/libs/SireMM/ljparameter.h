@@ -44,8 +44,6 @@ class QDataStream;
 QDataStream& operator<<(QDataStream&, const SireMM::LJParameter&);
 QDataStream& operator>>(QDataStream&, SireMM::LJParameter&);
 
-quint32 qHash(const SireMM::LJParameter&);
-
 namespace SireMM
 {
 
@@ -120,6 +118,13 @@ private:
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+/** Hash a LJ parameter */
+inline uint qHash(const LJParameter &ljparam)
+{
+    return uint( 1000000.0 * ljparam.sqrtEpsilon() + 
+                   10000.0 * ljparam.sqrtSigma() );
+}
 
 /** Return whether or not two LJParameters are equal */
 inline bool LJParameter::operator==(const LJParameter &other) const

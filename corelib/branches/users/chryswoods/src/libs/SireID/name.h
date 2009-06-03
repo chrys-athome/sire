@@ -101,12 +101,12 @@ protected:
     bool case_sensitive;
 };
 
-}
-
 /** Return a hash of this Name */
-inline uint qHash(const SireID::Name &name)
+inline uint qHash(const Name &name)
 {
     return name.hash();
+}
+
 }
 
 SIRE_END_HEADER

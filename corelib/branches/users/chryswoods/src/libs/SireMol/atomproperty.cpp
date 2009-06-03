@@ -37,7 +37,7 @@
 #include "SireError/errors.h"
 
 using namespace SireMol;
-
+using namespace SireBase;
 
 ///////
 /////// Implementation of AtomProp
@@ -98,10 +98,8 @@ namespace SireMol
     template class AtomProperty<Element>;
     template class AtomProperty<SireUnits::Dimension::Charge>;
 
-    template class SireBase::Vector3D<SireUnits::Dimension::Velocity>;
     template class AtomProperty<SireMol::Velocity3D>;
 
-    template class SireBase::Vector3D<SireUnits::Dimension::Force>;
     template class AtomProperty<SireMol::Force3D>;
 }
 

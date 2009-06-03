@@ -50,8 +50,6 @@ class AtomSelection;
 QDataStream& operator<<(QDataStream&, const SireMol::AtomSelection&);
 QDataStream& operator>>(QDataStream&, SireMol::AtomSelection&);
 
-uint qHash(const SireMol::AtomSelection &selection);
-
 namespace SireMol
 {
 

@@ -129,6 +129,11 @@ private:
 };
   
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+inline uint qHash(const Element &element)
+{
+    return element.nProtons();
+}
         
 /** Comparison operators. These are very quick */
 inline bool Element::operator==(const Element &other) const
@@ -144,11 +149,6 @@ inline bool Element::operator!=(const Element &other) const
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
 
-}
-
-inline uint qHash(const SireMol::Element &element)
-{
-    return element.nProtons();
 }
 
 Q_DECLARE_METATYPE(SireMol::Element);

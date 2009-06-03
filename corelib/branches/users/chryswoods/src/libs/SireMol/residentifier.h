@@ -41,8 +41,6 @@ class ResIdentifier;
 QDataStream& operator<<(QDataStream&, const SireMol::ResIdentifier&);
 QDataStream& operator>>(QDataStream&, SireMol::ResIdentifier&);
 
-uint qHash(const SireMol::ResIdentifier&);
-
 namespace SireMol
 {
 
@@ -98,6 +96,11 @@ private:
     /** Pointer to the ResID */
     boost::shared_ptr<ResID> d;
 };
+
+inline uint qHash(const ResIdentifier &resid)
+{
+    return resid.hash();
+}
 
 }
 

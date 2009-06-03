@@ -29,6 +29,8 @@
 #ifndef SIREBASE_SPARSEMATRIX_HPP
 #define SIREBASE_SPARSEMATRIX_HPP
 
+#include <QHash>
+
 #include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
@@ -41,10 +43,6 @@ class SparseMatrix;
 namespace detail { class Index; }
 
 }
-
-uint qHash(const SireBase::detail::Index&);
-
-#include <QHash>
 
 template<class T>
 QDataStream& operator<<(QDataStream&, const SireBase::SparseMatrix<T>&);
@@ -94,14 +92,14 @@ public:
     quint32 j;
 };
 
-} // end of namespace detail
-
-} // end of namespace SireBase
-
-inline uint qHash(const SireBase::detail::Index &idx)
+inline uint qHash(const Index &idx)
 {
     return (idx.i << 16) & (idx.j | 0x0000FFFF);
 }
+
+} // end of namespace detail
+
+} // end of namespace SireBase
 
 namespace SireBase
 {

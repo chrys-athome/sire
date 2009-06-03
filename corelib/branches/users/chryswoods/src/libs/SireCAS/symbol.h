@@ -201,11 +201,11 @@ private:
     Expression f, p;
 };
 
-}
-
-inline uint qHash(const SireCAS::Symbol &symbol)
+inline uint qHash(const Symbol &symbol)
 {
     return symbol.hash();
+}
+
 }
 
 Q_DECLARE_METATYPE(SireCAS::Symbol)

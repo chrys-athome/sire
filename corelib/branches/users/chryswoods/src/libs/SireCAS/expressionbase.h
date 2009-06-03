@@ -141,12 +141,12 @@ private:
     SharedPolyPointer<ExBase> d;
 };
 
-}
-
 /** Return a hash for an ExpressionBase */
-inline uint qHash(const SireCAS::ExpressionBase &ex)
+inline uint qHash(const ExpressionBase &ex)
 {
     return ex.hash();
+}
+
 }
 
 Q_DECLARE_METATYPE(SireCAS::ExpressionBase)

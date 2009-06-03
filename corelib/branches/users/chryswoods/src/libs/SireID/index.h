@@ -47,8 +47,6 @@ QDataStream& operator>>(QDataStream&, SireID::IndexBase&);
 QDataStream& operator<<(QDataStream&, const SireID::Index&);
 QDataStream& operator>>(QDataStream&, SireID::Index&);
 
-uint qHash(const SireID::IndexBase &index);
-
 namespace SireID
 {
 
@@ -233,12 +231,12 @@ public:
     QString toString() const;
 };
 
-}
-
 /** Return a hash of this index */
-inline uint qHash(const SireID::IndexBase &index)
+inline uint qHash(const IndexBase &index)
 {
     return index.hash();
+}
+
 }
 
 Q_DECLARE_METATYPE( SireID::Index )
