@@ -336,10 +336,17 @@ ResID::selectAllFrom(const MolGroupsBase &molgroups) const
 }
 
 //fully instantiate Specify<ResID> and AtomsIn<ResID>
-template class Specify<ResID>;
-template class AtomsIn<ResID>;
-template class IDAndSet<ResID>;
-template class IDOrSet<ResID>;
+namespace SireID
+{
+    template class Specify<ResID>;
+    template class IDAndSet<ResID>;
+    template class IDOrSet<ResID>;
+}
+
+namespace SireMol
+{
+    template class AtomsIn<ResID>;
+}
 
 static const RegisterMetaType< Specify<ResID> > r_specify_resid;
 static const RegisterMetaType< AtomsIn<ResID> > r_atomsin_resid;

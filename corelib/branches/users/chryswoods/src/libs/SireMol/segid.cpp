@@ -335,10 +335,17 @@ SegID::selectAllFrom(const MolGroupsBase &molgroups) const
 }
 
 //fully instantiate template classes
-template class Specify<SegID>;
-template class AtomsIn<SegID>;
-template class IDAndSet<SegID>;
-template class IDOrSet<SegID>;
+namespace SireID
+{
+    template class Specify<SegID>;
+    template class IDAndSet<SegID>;
+    template class IDOrSet<SegID>;
+}
+
+namespace SireMol
+{
+    template class AtomsIn<SegID>;
+}
 
 static const RegisterMetaType< Specify<SegID> > r_specify_segid;
 static const RegisterMetaType< AtomsIn<SegID> > r_atomsin_segid;

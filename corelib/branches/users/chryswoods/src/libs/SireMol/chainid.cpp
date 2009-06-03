@@ -352,11 +352,18 @@ ChainID::selectAllFrom(const MolGroupsBase &molgroups) const
 }
 
 //fully instantiate template classes
-template class Specify<ChainID>;
-template class AtomsIn<ChainID>;
-template class ResIn<ChainID>;
-template class IDAndSet<ChainID>;
-template class IDOrSet<ChainID>;
+namespace SireID
+{
+    template class Specify<ChainID>;
+    template class IDAndSet<ChainID>;
+    template class IDOrSet<ChainID>;
+}
+
+namespace SireMol
+{
+    template class AtomsIn<ChainID>;
+    template class ResIn<ChainID>;
+}
 
 static const RegisterMetaType< Specify<ChainID> > r_specify_chainid;
 static const RegisterMetaType< AtomsIn<ChainID> > r_atomsin_chainid;

@@ -648,9 +648,12 @@ const char* AtomName::typeName()
 }
 
 //fully instantiate Specify<AtomID>
-template class Specify<AtomID>;
-template class IDAndSet<AtomID>;
-template class IDOrSet<AtomID>;
+namespace SireID
+{
+    template class Specify<AtomID>;
+    template class IDAndSet<AtomID>;
+    template class IDOrSet<AtomID>;
+}
 
 static const RegisterMetaType< Specify<AtomID> > r_specify_atomid;
 static const RegisterMetaType< IDAndSet<AtomID> > r_idandset_atomid;

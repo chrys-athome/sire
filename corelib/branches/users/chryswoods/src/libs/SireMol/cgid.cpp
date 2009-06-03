@@ -336,10 +336,17 @@ CGID::selectAllFrom(const MolGroupsBase &molgroups) const
 }
 
 //fully instantiate Specify<CGID> and AtomsIn<CGID>
-template class Specify<CGID>;
-template class AtomsIn<CGID>;
-template class IDAndSet<CGID>;
-template class IDOrSet<CGID>;
+namespace SireID
+{
+    template class Specify<CGID>;
+    template class IDAndSet<CGID>;
+    template class IDOrSet<CGID>;
+}
+
+namespace SireMol
+{
+    template class AtomsIn<CGID>;
+}
 
 static const RegisterMetaType< Specify<CGID> > r_specify_cgid;
 static const RegisterMetaType< AtomsIn<CGID> > r_atomsin_cgid;

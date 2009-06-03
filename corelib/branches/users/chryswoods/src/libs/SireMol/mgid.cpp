@@ -304,9 +304,12 @@ const char* MGNum::typeName()
 
 ///////
 
-template class IDAndSet<MGID>;
-template class IDOrSet<MGID>;
-template class Specify<MGID>;
+namespace SireID
+{
+    template class IDAndSet<MGID>;
+    template class IDOrSet<MGID>;
+    template class Specify<MGID>;
+}
 
 static const RegisterMetaType< IDAndSet<MGID> > r_idandset_mgid;
 static const RegisterMetaType< IDOrSet<MGID> > r_idorset_mgid;

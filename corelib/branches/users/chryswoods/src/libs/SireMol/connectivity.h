@@ -253,10 +253,6 @@ public:
 
     static const char* typeName();
 
-    using SireBase::Property::operator=;
-    using SireBase::Property::operator==;
-    using SireBase::Property::operator!=;
-
     Connectivity& operator=(const Connectivity &other);
     Connectivity& operator=(const ConnectivityEditor &editor);
 
@@ -287,10 +283,6 @@ public:
     ~ConnectivityEditor();
 
     static const char* typeName();
-
-    using SireBase::Property::operator=;
-    using SireBase::Property::operator==;
-    using SireBase::Property::operator!=;
 
     ConnectivityEditor& operator=(const ConnectivityBase &other);
 
