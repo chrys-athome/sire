@@ -30,6 +30,14 @@
 
 using namespace SireMol;
 
+namespace SireMol
+{
+    template class ChainProperty<QString>;
+    template class ChainProperty<qint64>;
+    template class ChainProperty<double>;
+    template class ChainProperty<QVariant>;
+} 
+
 static const RegisterMetaType<ChainStringProperty> r_chainstring;
 static const RegisterMetaType<ChainIntProperty> r_chainint;
 static const RegisterMetaType<ChainFloatProperty> r_chainfloat;

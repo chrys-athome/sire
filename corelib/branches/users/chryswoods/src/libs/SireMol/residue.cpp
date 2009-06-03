@@ -530,11 +530,14 @@ bool SIREMOL_EXPORT SireMol::detail::has_metadata(const Residue*,
     return moldata.hasMetadataOfType<ResProp>(key, metakey);
 }
 
-/////
-///// explicitly instantiate the Residue manipulator classes
-/////
+namespace SireMol
+{
+    /////
+    ///// explicitly instantiate the Residue manipulator classes
+    /////
 
-template class Mover<Residue>;
-template class Selector<Residue>;
+    template class Mover<Residue>;
+    template class Selector<Residue>;
 
-template class Mover< Selector<Residue> >;
+    template class Mover< Selector<Residue> >;
+}

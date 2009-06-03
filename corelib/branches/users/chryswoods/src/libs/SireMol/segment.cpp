@@ -485,8 +485,11 @@ bool SIREMOL_EXPORT SireMol::detail::has_metadata(const Segment*, const Molecule
     return moldata.hasMetadataOfType<SegProp>(key, metakey);
 }
 
-/////// explicitly instantiate the templates
-template class Mover<Segment>;
-template class Selector<Segment>;
+namespace SireMol
+{
+    /////// explicitly instantiate the templates
+    template class Mover<Segment>;
+    template class Selector<Segment>;
 
-template class Mover< Selector<Segment> >;
+    template class Mover< Selector<Segment> >;
+}

@@ -786,9 +786,11 @@ const char* PartialMolecule::typeName()
     return QMetaType::typeName( qMetaTypeId<PartialMolecule>() );
 }
 
-/////////
-///////// Explicit instantiation of the template classes
-/////////
+namespace SireMol
+{
+    /////////
+    ///////// Explicit instantiation of the template classes
+    /////////
 
-template class Mover<PartialMolecule>;
-
+    template class Mover<PartialMolecule>;
+}

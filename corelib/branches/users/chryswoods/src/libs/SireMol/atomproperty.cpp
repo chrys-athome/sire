@@ -87,20 +87,23 @@ void AtomProp::throwIncorrectNumberOfSelectedAtoms(int nats, int nselected) cons
 //////// Lets explicitly instantiate other AtomProperty types...
 ////////
 
-template class SireMol::AtomProperty<QString>;
-template class SireMol::AtomProperty<qint64>;
-template class SireMol::AtomProperty<double>;
-template class SireMol::AtomProperty<QVariant>;
+namespace SireMol
+{
+    template class AtomProperty<QString>;
+    template class AtomProperty<qint64>;
+    template class AtomProperty<double>;
+    template class AtomProperty<QVariant>;
+    
+    template class AtomProperty<SireUnits::Dimension::MolarMass>;
+    template class AtomProperty<Element>;
+    template class AtomProperty<SireUnits::Dimension::Charge>;
 
-template class AtomProperty<SireUnits::Dimension::MolarMass>;
-template class AtomProperty<Element>;
-template class AtomProperty<SireUnits::Dimension::Charge>;
+    template class SireBase::Vector3D<SireUnits::Dimension::Velocity>;
+    template class AtomProperty<SireMol::Velocity3D>;
 
-template class SireBase::Vector3D<SireUnits::Dimension::Velocity>;
-template class SireMol::AtomProperty<SireMol::Velocity3D>;
-
-template class SireBase::Vector3D<SireUnits::Dimension::Force>;
-template class SireMol::AtomProperty<SireMol::Force3D>;
+    template class SireBase::Vector3D<SireUnits::Dimension::Force>;
+    template class AtomProperty<SireMol::Force3D>;
+}
 
 static const RegisterMetaType<AtomStringProperty> r_atomstring;
 static const RegisterMetaType<AtomIntProperty> r_atomint;

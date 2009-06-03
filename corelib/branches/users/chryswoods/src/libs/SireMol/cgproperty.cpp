@@ -30,6 +30,14 @@
 
 using namespace SireMol;
 
+namespace SireMol
+{
+    template class CGProperty<QString>;
+    template class CGProperty<qint64>;
+    template class CGProperty<double>;
+    template class CGProperty<QVariant>;
+}
+
 static const RegisterMetaType<CGStringProperty> r_cgstring;
 static const RegisterMetaType<CGIntProperty> r_cgint;
 static const RegisterMetaType<CGFloatProperty> r_cgfloat;

@@ -30,6 +30,14 @@
 
 using namespace SireMol;
 
+namespace SireMol
+{
+    template class ResProperty<QString>;
+    template class ResProperty<qint64>;
+    template class ResProperty<double>;
+    template class ResProperty<QVariant>;
+}
+
 static const RegisterMetaType<ResStringProperty> r_resstring;
 static const RegisterMetaType<ResIntProperty> r_resint;
 static const RegisterMetaType<ResFloatProperty> r_resfloat;

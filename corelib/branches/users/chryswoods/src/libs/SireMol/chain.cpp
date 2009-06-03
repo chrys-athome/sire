@@ -581,8 +581,11 @@ bool SIREMOL_EXPORT has_metadata(const Chain*, const MoleculeData &moldata,
 } // end of namespace detail
 } // end of namespace SireMol
 
-/////// explicitly instantiate chain templates
-template class Selector<Chain>;
-template class Mover<Chain>;
-
-template class Mover< Selector<Chain> >;
+namespace SireMol
+{
+    /////// explicitly instantiate chain templates
+    template class Selector<Chain>;
+    template class Mover<Chain>;
+    
+    template class Mover< Selector<Chain> >;
+}

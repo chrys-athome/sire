@@ -30,6 +30,14 @@
 
 using namespace SireMol;
 
+namespace SireMol
+{
+    template class SegProperty<QString>;
+    template class SegProperty<qint64>;
+    template class SegProperty<double>;
+    template class SegProperty<QVariant>;
+}
+
 static const RegisterMetaType<SegStringProperty> r_segstring;
 static const RegisterMetaType<SegIntProperty> r_segint;
 static const RegisterMetaType<SegFloatProperty> r_segfloat;

@@ -445,7 +445,10 @@ bool SIREMOL_EXPORT has_metadata(const Atom*, const MoleculeData &moldata,
 /////// Explicitly instantiate the Atom manipulator classes
 ///////
 
-template class Selector<Atom>;
-template class Mover<Atom>;
+namespace SireMol
+{
+    template class Selector<Atom>;
+    template class Mover<Atom>;
 
-template class Mover< Selector<Atom> >;
+    template class Mover< Selector<Atom> >;
+}

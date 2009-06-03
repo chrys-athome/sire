@@ -1435,8 +1435,11 @@ const char* ViewsOfMol::typeName()
     return QMetaType::typeName( qMetaTypeId<ViewsOfMol>() );
 }
 
-////////
-//////// Explicitly instantiate templates
-////////
+namespace SireMol
+{
+    ////////
+    //////// Explicitly instantiate templates
+    ////////
 
-template class Mover<ViewsOfMol>;
+    template class Mover<ViewsOfMol>;
+}

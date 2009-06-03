@@ -489,8 +489,11 @@ bool SIREMOL_EXPORT has_metadata(const CutGroup*, const MoleculeData &moldata,
 } // end of namespace detail
 } // end of namespace SireMol
 
-////// explicitly instantiate the CutGroup templates
-template class Mover<CutGroup>;
-template class Selector<CutGroup>;
+namespace SireMol
+{
+    ////// explicitly instantiate the CutGroup templates
+    template class Mover<CutGroup>;
+    template class Selector<CutGroup>;
 
-template class Mover< Selector<CutGroup> >;
+    template class Mover< Selector<CutGroup> >;
+}

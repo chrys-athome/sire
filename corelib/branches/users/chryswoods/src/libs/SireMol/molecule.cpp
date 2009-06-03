@@ -724,5 +724,8 @@ const char* Molecule::typeName()
     return QMetaType::typeName( qMetaTypeId<Molecule>() );
 }
 
-///// explicitly instantiate manipulator classes
-template class Mover<Molecule>;
+namespace SireMol
+{
+    ///// explicitly instantiate manipulator classes
+    template class Mover<Molecule>;
+}
