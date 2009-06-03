@@ -39,6 +39,11 @@ set ( SIRESTREAM_SOURCES
 
 add_library ( SireStream ${SIRESTREAM_SOURCES} )
 
+set_target_properties (SireStream PROPERTIES
+                       VERSION ${SIRE_VERSION}
+                       SOVERSION ${SIRE_VERSION_MAJOR}
+                      )
+
 target_link_libraries (SireStream
                        SireError
                       )

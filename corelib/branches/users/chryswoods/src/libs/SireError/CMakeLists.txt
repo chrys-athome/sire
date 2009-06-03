@@ -34,6 +34,11 @@ set ( SIREERROR_SOURCES
 
 add_library ( SireError ${SIREERROR_SOURCES} )
 
+set_target_properties (SireError PROPERTIES
+                       VERSION ${SIRE_VERSION}
+                       SOVERSION ${SIRE_VERSION_MAJOR}
+                      )
+
 target_link_libraries (SireError
                        ${QT_QTCORE_LIBRARY}
                       )

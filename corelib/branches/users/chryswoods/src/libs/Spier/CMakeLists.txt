@@ -69,7 +69,6 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
     set_target_properties (Spier PROPERTIES
                                  VERSION ${SIRE_VERSION}
                                  SOVERSION ${SIRE_VERSION_MAJOR}
-                                 LINK_FLAGS ${SIRE_LINK_FLAGS}
                           )
 
     # Link to other Sire libraries

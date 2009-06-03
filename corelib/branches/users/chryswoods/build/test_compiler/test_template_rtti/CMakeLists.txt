@@ -12,7 +12,6 @@ add_library (libFoo libfoo.h libfoo.cpp)
 set_target_properties (libFoo PROPERTIES
                        VERSION ${SIRE_VERSION}
                        SOVERSION ${SIRE_VERSION_MAJOR}
-                       LINK_FLAGS ${SIRE_LINK_FLAGS}
                       )
 
 target_link_libraries (libFoo
@@ -24,7 +23,6 @@ add_library (libBar libbar.h libbar.cpp)
 set_target_properties (libBar PROPERTIES
                        VERSION ${SIRE_VERSION}
                        SOVERSION ${SIRE_VERSION_MAJOR}
-                       LINK_FLAGS ${SIRE_LINK_FLAGS}
                       )
 
 target_link_libraries (libBar

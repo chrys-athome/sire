@@ -109,7 +109,6 @@ add_library (SireMove ${SIREMOVE_SOURCES})
 set_target_properties (SireMove PROPERTIES
                        VERSION ${SIRE_VERSION}
                        SOVERSION ${SIRE_VERSION_MAJOR}
-                       LINK_FLAGS ${SIRE_LINK_FLAGS}
                       )
 
 # Link to other Sire libraries
