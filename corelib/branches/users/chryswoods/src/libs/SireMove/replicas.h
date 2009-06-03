@@ -87,10 +87,7 @@ public:
     
     const Replica& operator[](int i) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Replicas>() );
-    }
+    static const char* typeName();
 
     const Replica& at(int i) const;
     

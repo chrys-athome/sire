@@ -710,3 +710,8 @@ QList<MovePtr> SameMoves::moves() const
     
     return mvs;
 }
+
+const char* SameMoves::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SameMoves>() );
+}

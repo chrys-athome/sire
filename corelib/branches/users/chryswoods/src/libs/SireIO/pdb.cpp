@@ -1626,3 +1626,8 @@ QByteArray PDB::writeMols(const Molecules &molecules,
 
     return data;
 }
+
+const char* PDB::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<PDB>() );
+}

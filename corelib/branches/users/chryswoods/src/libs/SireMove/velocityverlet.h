@@ -89,10 +89,7 @@ public:
     bool operator==(const VelocityVerlet &other) const;
     bool operator!=(const VelocityVerlet &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<VelocityVerlet>() );
-    }
+    static const char* typeName();
     
     QString toString() const;
     

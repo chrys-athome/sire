@@ -93,10 +93,7 @@ public:
     
     MolecularDynamics& operator=(const MolecularDynamics &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MolecularDynamics>() );
-    }
+    static const char* typeName();
     
     MolecularDynamics* clone() const
     {

@@ -387,3 +387,8 @@ void NullFF::reindex()
 {
     MolGroupsBase::clearIndex();
 }
+
+const char* NullFF::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NullFF>() );
+}

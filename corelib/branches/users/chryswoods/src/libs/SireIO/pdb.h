@@ -275,10 +275,7 @@ public:
     
     ~PDB();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<PDB>() );
-    }
+    static const char* typeName();
 
     const char* what() const
     {

@@ -146,3 +146,8 @@ double UniformSampler::probabilityOf(const PartialMolecule &molecule) const
     else
         return 0;
 }
+
+const char* UniformSampler::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<UniformSampler>() );
+}

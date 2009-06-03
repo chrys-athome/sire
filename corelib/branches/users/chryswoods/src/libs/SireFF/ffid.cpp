@@ -186,6 +186,11 @@ bool FFIdx::operator==(const SireID::ID &other) const
     return SireID::ID::compare<FFIdx>(*this, other);
 }
 
+const char* FFIdx::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<FFIdx>() );
+}
+
 ///////
 /////// Implementation of FFName
 ///////
@@ -270,12 +275,20 @@ bool FFName::operator!=(const FFName &other) const
     return SireID::Name::operator!=(other);
 }
 
+const char* FFName::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<FFName>() );
+}
+
 ///////
 ///////
 
-template class Specify<FFID>;
-template class IDAndSet<FFID>;
-template class IDOrSet<FFID>;
+namespace SireID
+{
+    template class Specify<FFID>;
+    template class IDAndSet<FFID>;
+    template class IDOrSet<FFID>;
+}
 
 static const RegisterMetaType< Specify<FFID> > r_specify_ffid;
 static const RegisterMetaType< IDAndSet<FFID> > r_idandset_ffid;

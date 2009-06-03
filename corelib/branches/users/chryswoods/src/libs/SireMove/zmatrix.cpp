@@ -230,6 +230,11 @@ void ZMatrixLine::setDihedralDelta(const Angle &delta)
     deltas.setZ( delta.value() );
 }
 
+const char* ZMatrixLine::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ZMatrixLine>() );
+}
+
 //////////
 ////////// Implementation of ZMatrixCoordsLine
 //////////
@@ -359,6 +364,11 @@ void ZMatrixCoordsLine::setAngle(const Angle &size)
 void ZMatrixCoordsLine::setDihedral(const Angle &size)
 {
     coords.setZ( size.value() );
+}
+
+const char* ZMatrixCoordsLine::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ZMatrixCoordsLine>() );
 }
 
 //////////
@@ -1150,6 +1160,11 @@ PropertyPtr ZMatrix::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
     }
     
     return ret;
+}
+
+const char* ZMatrix::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ZMatrix>() );
 }
 
 //////////
@@ -2205,4 +2220,9 @@ ZMatrixCoords ZMatrixCoords::matchToSelection(const AtomSelection &selection) co
     new_zmat.rebuildInternals();
 
     return new_zmat;
+}
+
+const char* ZMatrixCoords::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ZMatrixCoords>() );
 }

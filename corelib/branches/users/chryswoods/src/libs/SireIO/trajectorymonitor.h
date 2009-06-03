@@ -101,10 +101,7 @@ public:
     bool operator==(const TrajectoryMonitor &other) const;
     bool operator!=(const TrajectoryMonitor &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<TrajectoryMonitor>() );
-    }
+    static const char* typeName();
 
     void clearStatistics();
     

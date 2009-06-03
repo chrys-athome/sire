@@ -850,3 +850,8 @@ FourAtomFunctions::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
     
     return ret;
 }
+
+const char* FourAtomFunctions::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<FourAtomFunctions>() );
+}

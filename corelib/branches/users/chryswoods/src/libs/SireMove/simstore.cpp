@@ -522,3 +522,8 @@ const Moves& SimStore::moves() const
 
     return sim_moves;
 }
+
+const char* SimStore::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SimStore>() );
+}

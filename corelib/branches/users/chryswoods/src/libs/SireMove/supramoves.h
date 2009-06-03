@@ -123,10 +123,7 @@ public:
     bool operator==(const SameSupraMoves &other) const;
     bool operator!=(const SameSupraMoves &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<SameSupraMoves>() );
-    }
+    static const char* typeName();
     
     QString toString() const;
     

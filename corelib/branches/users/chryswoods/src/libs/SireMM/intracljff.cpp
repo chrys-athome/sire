@@ -35,13 +35,19 @@
 using namespace SireMM;
 using namespace SireFF;
 
-template class CLJPotentialInterface<IntraCLJPotential>;
+namespace SireMM
+{
+    template class CLJPotentialInterface<IntraCLJPotential>;
+}
 
-template class Intra2BFF< CLJPotentialInterface<IntraCLJPotential> >;
-template class Intra2B3DFF< CLJPotentialInterface<IntraCLJPotential> >;
+namespace SireFF
+{
+    template class Intra2BFF< CLJPotentialInterface<IntraCLJPotential> >;
+    template class Intra2B3DFF< CLJPotentialInterface<IntraCLJPotential> >;
 
-template class Intra2B2GFF< CLJPotentialInterface<IntraCLJPotential> >;
-template class Intra2B2G3DFF< CLJPotentialInterface<IntraCLJPotential> >;
+    template class Intra2B2GFF< CLJPotentialInterface<IntraCLJPotential> >;
+    template class Intra2B2G3DFF< CLJPotentialInterface<IntraCLJPotential> >;
+}
 
 static const RegisterMetaType<IntraCLJFF> r_intracljff;
 static const RegisterMetaType<IntraGroupCLJFF> r_intragroupcljff;

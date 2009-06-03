@@ -159,10 +159,7 @@ public:
     
     ~FourAtomFunctions();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<FourAtomFunctions>() );
-    }
+    static const char* typeName();
     
     FourAtomFunctions& operator=(const FourAtomFunctions &other);
     

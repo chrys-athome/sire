@@ -434,6 +434,11 @@ void RepExSubMove::move(SupraSubSystem &system, int n_supra_moves,
     }
 }
 
+const char* RepExSubMove::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<RepExSubMove>() );
+}
+
 ////////////
 //////////// Implementation of RepExMove
 ////////////
@@ -937,4 +942,9 @@ void RepExMove::move(SupraSystem &system, int nmoves, bool record_stats)
         this->copy(*old_state);
         throw;
     }
+}
+
+const char* RepExMove::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<RepExMove>() );
 }

@@ -30,4 +30,9 @@
 
 using namespace SireIO;
 
+const char* parse_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<parse_error>() );
+}
+
 static const RegisterMetaType<parse_error> r_parseerror;

@@ -168,10 +168,7 @@ public:
     
     ~SameMoves();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<SameMoves>() );
-    }
+    static const char* typeName();
     
     SameMoves* clone() const
     {

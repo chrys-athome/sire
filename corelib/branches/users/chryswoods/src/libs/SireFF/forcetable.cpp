@@ -390,6 +390,11 @@ QVector<Vector> MolForceTable::toVector(const AtomSelection &selection) const
     return vals;
 }
 
+const char* MolForceTable::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MolForceTable>() );
+}
+
 ////////
 //////// Implementation of ForceTable
 ////////
@@ -544,4 +549,9 @@ void ForceTable::assertContainsTableFor(MolNum molnum) const
             "This force table does not contain a table for the "
             "molecule with number %1.")
                 .arg(molnum), CODELOC );
+}
+
+const char* ForceTable::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ForceTable>() );
 }

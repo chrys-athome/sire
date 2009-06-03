@@ -30,7 +30,11 @@
 #include <cmath>
 
 #ifdef SIRE_USE_SSE
-#include <emmintrin.h>
+   #ifdef __SSE__
+       #include <emmintrin.h>
+   #else
+       #undef SIRE_USE_SSE
+   #endif
 #endif
 
 #include "cartesian.h"

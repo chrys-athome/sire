@@ -771,3 +771,8 @@ bool FFMolGroup::setContents(const MoleculeGroup &molgroup)
 {
     return this->setContents(molgroup, PropertyMap());
 }
+
+const char* FFMolGroup::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<FFMolGroup>() );
+}

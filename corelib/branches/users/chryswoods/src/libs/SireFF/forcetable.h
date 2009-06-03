@@ -105,10 +105,7 @@ public:
     bool operator==(const MolForceTable &other) const;
     bool operator!=(const MolForceTable &other) const;
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MolForceTable>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -184,10 +181,7 @@ public:
     
     ~ForceTable();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ForceTable>() );
-    }
+    static const char* typeName();
 
     const char* what() const
     {

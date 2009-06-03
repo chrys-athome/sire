@@ -197,10 +197,7 @@ public:
     bool operator==(const NullMove &other) const;
     bool operator!=(const NullMove &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<NullMove>() );
-    }
+    static const char* typeName();
     
     NullMove* clone() const
     {

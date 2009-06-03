@@ -64,10 +64,7 @@ public:
     
     ~NullFF();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<NullFF>() );
-    }
+    static const char* typeName();
 
     const FFComponent& components() const;
     

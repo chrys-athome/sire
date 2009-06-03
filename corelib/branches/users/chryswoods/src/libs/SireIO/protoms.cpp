@@ -1060,3 +1060,8 @@ Molecules ProtoMS::parameterise(const Molecules &molecules, int type,
 
     return new_molecules;
 }
+
+const char* ProtoMS::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ProtoMS>() );
+}

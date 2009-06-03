@@ -122,10 +122,7 @@ public:
     bool operator==(const NullSupraMove &other) const;
     bool operator!=(const NullSupraMove &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<NullSupraMove>() );
-    }
+    static const char* typeName();
 
     QString toString() const;
 

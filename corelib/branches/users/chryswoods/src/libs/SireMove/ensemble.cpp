@@ -607,3 +607,8 @@ Ensemble Ensemble::grandCanonical(const Temperature &temperature,
 {
     return Ensemble::MuVT(temperature, chemical_potential);
 }
+
+const char* Ensemble::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Ensemble>() );
+}

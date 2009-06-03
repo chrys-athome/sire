@@ -33,7 +33,11 @@
 #include "SireFF/ff.h"
 
 #ifdef SIRE_USE_SSE
-#include <emmintrin.h>
+    #ifdef __SSE__
+        #include <emmintrin.h>
+    #else
+        #undef SIRE_USE_SSE
+    #endif
 #endif
 
 SIRE_BEGIN_HEADER
@@ -229,8 +233,7 @@ public:
     CLJEnergy(double cnrg=0, double ljnrg=0)
     {
         #ifdef SIRE_USE_SSE
-        *((double*)&nrgs) = cnrg;
-        *( ((double*)&nrgs) + 1 ) = ljnrg;
+        nrgs = _mm_set_pd(cnrg, ljnrg);
         #else
         icnrg = cnrg;
         iljnrg = ljnrg;
@@ -261,7 +264,7 @@ public:
     CLJEnergy& operator+=(const CLJEnergy &other)
     {
         #ifdef SIRE_USE_SSE
-        nrgs += other.nrgs;
+        nrgs = _mm_add_pd( nrgs, other.nrgs );
         #else
         icnrg += other.icnrg;
         iljnrg += other.iljnrg;
@@ -273,7 +276,7 @@ public:
     CLJEnergy& operator-=(const CLJEnergy &other)
     {
         #ifdef SIRE_USE_SSE
-        nrgs -= other.nrgs;
+        nrgs = _mm_sub_pd(nrgs, other.nrgs);
         #else
         icnrg -= other.icnrg;
         iljnrg -= other.iljnrg;

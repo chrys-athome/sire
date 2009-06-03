@@ -800,3 +800,8 @@ void Replicas::swapMolecules(int i, int j)
     //swap the IDs of the replicas
     qSwap( replica_ids[i], replica_ids[j] );
 }
+
+const char* Replicas::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Replicas>() );
+}

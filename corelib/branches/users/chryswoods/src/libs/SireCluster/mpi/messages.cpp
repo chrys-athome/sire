@@ -1528,4 +1528,54 @@ void GetUIDs::read()
     }
 }
 
+const char* Broadcast::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Broadcast>() );
+}
+
+const char* Result::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Result>() );
+}
+
+const char* Error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Error>() );
+}
+
+const char* RegisterBackend::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<RegisterBackend>() );
+}
+
+const char* ReserveBackend::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ReserveBackend>() );
+}
+
+const char* RequestAvailability::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<RequestAvailability>() );
+}
+
+const char* Reservation::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Reservation>() );
+}
+
+const char* Shutdown::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Shutdown>() );
+}
+
+const char* GetUIDs::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<GetUIDs>() );
+}
+
+const char* Message::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Message>() );
+}
+
 #endif // __SIRE_USE_MPI__

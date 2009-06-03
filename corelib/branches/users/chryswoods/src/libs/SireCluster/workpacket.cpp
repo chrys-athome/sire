@@ -720,3 +720,23 @@ float WorkTest::chunk()
         return 100.0 - ( 100.0 * double(end - current) / double(end - start) );
     }
 }
+
+const char* WorkPacket::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<WorkPacket>() );
+}
+
+const char* ErrorPacket::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ErrorPacket>() );
+}
+
+const char* AbortPacket::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AbortPacket>() );
+}
+
+const char* WorkTest::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<WorkTest>() );
+}

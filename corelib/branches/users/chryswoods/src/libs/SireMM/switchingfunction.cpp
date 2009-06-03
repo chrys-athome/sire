@@ -303,6 +303,11 @@ const NoCutoff& SwitchingFunction::null()
     return *(shared_null.constData());
 }
 
+const char* NoCutoff::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NoCutoff>() );
+}
+
 /////////////
 ///////////// Implementation of HarmonicSwitchingFunction
 /////////////
@@ -542,6 +547,11 @@ double HarmonicSwitchingFunction::dVDWScaleFactor(Length) const
                 "first derivative so is not suitable for force evaluations. "
                 "Try a switching function with a continuous first derivative, "
                 "e.g. CharmmSwitchingFunction.") );
+}
+
+const char* HarmonicSwitchingFunction::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<HarmonicSwitchingFunction>() );
 }
 
 /////////////
@@ -824,4 +834,9 @@ double CHARMMSwitchingFunction::dVDWScaleFactor(Length dist) const
         
         return 12 * dist * (cut_vdw2 - dist2) * (feather_vdw2 - dist2) * norm_vdw;
     }
+}
+
+const char* CHARMMSwitchingFunction::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CHARMMSwitchingFunction>() );
 }

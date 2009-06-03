@@ -84,10 +84,7 @@ public:
     ~database_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<database_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {

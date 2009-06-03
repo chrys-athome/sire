@@ -3149,6 +3149,11 @@ QVector<GroupInternalParameters> InternalParameters::groupParameters(quint32 cgi
     return params;
 }
 
+const char* InternalParameters::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<InternalParameters>() );
+}
+
 //////////
 ////////// Implementation of InternalParameters3D
 //////////
@@ -3378,4 +3383,9 @@ QSet<quint32> InternalParameters3D::getChangedGroups(
 InternalParameters3D InternalParameters3D::applyMask(const QSet<quint32> &cgidxs) const
 {
     return InternalParameters3D( *this, InternalParameters::applyMask(cgidxs) );
+}
+
+const char* InternalParameters3D::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<InternalParameters3D>() );
 }

@@ -141,10 +141,7 @@ public:
     
     Ensemble& operator=(const Ensemble &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Ensemble>() );
-    }
+    static const char* typeName();
     
     Ensemble* clone() const
     {

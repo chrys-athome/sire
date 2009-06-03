@@ -147,10 +147,7 @@ public:
     
     WorkPacket& operator=(const WorkPacket &other);
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<WorkPacket>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -217,10 +214,7 @@ public:
         return new AbortPacket(*this);
     }
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<AbortPacket>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -261,10 +255,7 @@ public:
         return new ErrorPacket(*this);
     }
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ErrorPacket>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -308,10 +299,7 @@ public:
         return new WorkTest(*this);
     }
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<WorkTest>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

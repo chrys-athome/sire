@@ -127,10 +127,7 @@ public:
     
     PrefSampler& operator=(const PrefSampler &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<PrefSampler>() );
-    }
+    static const char* typeName();
     
     PrefSampler* clone() const
     {

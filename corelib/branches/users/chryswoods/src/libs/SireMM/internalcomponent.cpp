@@ -821,3 +821,53 @@ InternalEnergy::InternalEnergy(const InternalEnergy &other)
 /** Destructor */  
 InternalEnergy::~InternalEnergy()
 {}
+
+const char* BondComponent::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<BondComponent>() );
+}
+
+const char* AngleComponent::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AngleComponent>() );
+}
+
+const char* DihedralComponent::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<DihedralComponent>() );
+}
+
+const char* ImproperComponent::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ImproperComponent>() );
+}
+
+const char* UreyBradleyComponent::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<UreyBradleyComponent>() );
+}
+
+const char* StretchStretchComponent::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<StretchStretchComponent>() );
+}
+
+const char* StretchBendComponent::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<StretchBendComponent>() );
+}
+
+const char* BendBendComponent::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<BendBendComponent>() );
+}
+
+const char* StretchBendTorsionComponent::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<StretchBendTorsionComponent>() );
+}
+
+const char* InternalComponent::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<InternalComponent>() );
+}

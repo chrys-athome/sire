@@ -67,10 +67,7 @@ public:
     
     VolumeMove& operator=(const VolumeMove &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<VolumeMove>() );
-    }
+    static const char* typeName();
     
     VolumeMove* clone() const
     {

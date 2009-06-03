@@ -528,3 +528,8 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
         throw;
     }
 }
+
+const char* RigidBodyMC::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<RigidBodyMC>() );
+}

@@ -1223,3 +1223,8 @@ void SupraSystem::setRecordAllStatistics(bool record_stats)
         }
     }
 }
+
+const char* SupraSystem::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SupraSystem>() );
+}

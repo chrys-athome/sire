@@ -178,6 +178,11 @@ bool NullVelocityGenerator::operator!=(const NullVelocityGenerator &other) const
     return VelocityGenerator::operator!=(other);
 }
 
+const char* NullVelocityGenerator::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NullVelocityGenerator>() );
+}
+
 /////////
 ///////// Implementation of VelocitiesFromProperty
 /////////
@@ -259,6 +264,11 @@ bool VelocitiesFromProperty::operator!=(const VelocitiesFromProperty &other) con
 {
     return vel_property != other.vel_property or
            VelocityGenerator::operator!=(other);
+}
+
+const char* VelocitiesFromProperty::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<VelocitiesFromProperty>() );
 }
 
 /////////
@@ -361,4 +371,9 @@ void RandomVelocities::setGenerator(const RanGenerator &rangenerator)
 const RanGenerator& RandomVelocities::generator() const
 {
     return ran_generator;
+}
+
+const char* RandomVelocities::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<RandomVelocities>() );
 }

@@ -3242,3 +3242,8 @@ void ForceFields::setContents(const MGID &mgid, const MoleculeGroup &molgroup)
 {
     this->setContents(mgid, molgroup, PropertyMap());
 }
+
+const char* ForceFields::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ForceFields>() );
+}

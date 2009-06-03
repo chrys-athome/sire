@@ -448,3 +448,8 @@ void TrajectoryMonitor::monitor(System &system)
     catch(...)
     {}
 }
+
+const char* TrajectoryMonitor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<TrajectoryMonitor>() );
+}

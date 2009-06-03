@@ -130,10 +130,7 @@ public:
     bool operator==(const NullVelocityGenerator &other) const;
     bool operator!=(const NullVelocityGenerator &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<NullVelocityGenerator>() );
-    }
+    static const char* typeName();
 };
 
 /** This is a velocity generator that extracts velocities from a 
@@ -162,10 +159,7 @@ public:
     bool operator==(const VelocitiesFromProperty &other) const;
     bool operator!=(const VelocitiesFromProperty &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<VelocitiesFromProperty>() );
-    }
+    static const char* typeName();
 
 private:
     /** The name of the property from which the velocities will be obtained */
@@ -199,10 +193,7 @@ public:
     bool operator==(const RandomVelocities &other) const;
     bool operator!=(const RandomVelocities &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<RandomVelocities>() );
-    }
+    static const char* typeName();
 
     static Symbol x();
 

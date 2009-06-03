@@ -80,10 +80,7 @@ public:
     bool operator==(const SimStore &other) const;
     bool operator!=(const SimStore &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<SimStore>() );
-    }
+    static const char* typeName();
 
     const char* what() const
     {

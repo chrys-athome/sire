@@ -204,3 +204,8 @@ float SupraSimPacket::chunk()
     
     return 100.0 * ( float(ncompleted) / float(n_supra_moves) );
 }
+
+const char* SupraSimPacket::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SupraSimPacket>() );
+}

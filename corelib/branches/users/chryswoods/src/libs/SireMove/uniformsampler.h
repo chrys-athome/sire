@@ -68,10 +68,7 @@ public:
 
     UniformSampler& operator=(const UniformSampler &other);
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<UniformSampler>() );
-    }
+    static const char* typeName();
 
     UniformSampler* clone() const
     {

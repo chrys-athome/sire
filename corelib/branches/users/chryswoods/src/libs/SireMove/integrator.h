@@ -170,10 +170,7 @@ public:
     
     NullIntegrator& operator=(const NullIntegrator &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<NullIntegrator>() );
-    }
+    static const char* typeName();
     
     bool operator==(const NullIntegrator &other) const;
     bool operator!=(const NullIntegrator &other) const;

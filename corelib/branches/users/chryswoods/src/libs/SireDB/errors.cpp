@@ -30,4 +30,10 @@
 
 using namespace SireDB;
 
+const char* database_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<database_error>() );
+}
+
+
 static const RegisterMetaType<database_error> r_databaseerror;

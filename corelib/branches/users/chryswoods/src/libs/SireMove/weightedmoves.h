@@ -74,10 +74,7 @@ public:
     bool operator==(const WeightedMoves &other) const;
     bool operator!=(const WeightedMoves &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<WeightedMoves>() );
-    }
+    static const char* typeName();
     
     WeightedMoves* clone() const
     {

@@ -733,3 +733,8 @@ ThreeAtomFunctions::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
     
     return ret;
 }
+
+const char* ThreeAtomFunctions::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ThreeAtomFunctions>() );
+}

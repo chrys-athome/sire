@@ -861,6 +861,11 @@ void RepExReplica::swapMolecules(RepExReplica &rep0, RepExReplica &rep1)
     }
 }
 
+const char* RepExReplica::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<RepExReplica>() );
+}
+
 ///////
 /////// Implementation of RepExReplicas
 ///////
@@ -1311,4 +1316,9 @@ void RepExReplicas::setChemicalPotential(const MolarEnergy &chemical_potential)
 void RepExReplicas::setChemicalPotential(int i, const MolarEnergy &chemical_potential)
 {
     this->_pvt_replica(i).setChemicalPotential(chemical_potential);
+}
+
+const char* RepExReplicas::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<RepExReplicas>() );
 }

@@ -255,3 +255,8 @@ QList<SupraSubMovePtr> SameSupraSubMoves::subMoves() const
     
     return moves;
 }
+
+const char* SameSupraSubMoves::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SameSupraSubMoves>() );
+}

@@ -512,3 +512,8 @@ Ensemble NullMove::ensemble() const
 {
     return Ensemble::NVE();
 }
+
+const char* NullMove::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NullMove>() );
+}

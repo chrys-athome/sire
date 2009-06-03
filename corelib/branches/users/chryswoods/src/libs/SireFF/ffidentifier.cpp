@@ -230,3 +230,8 @@ QList<FFIdx> FFIdentifier::map(const ForceFields &ffields) const
     else
         return d->map(ffields);
 }
+
+const char* FFIdentifier::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<FFIdentifier>() );
+}

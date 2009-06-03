@@ -531,3 +531,8 @@ SireCAS::Symbols SoftCLJComponent::symbols() const
     
     return symbls;
 }
+
+const char* SoftCLJComponent::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SoftCLJComponent>() );
+}

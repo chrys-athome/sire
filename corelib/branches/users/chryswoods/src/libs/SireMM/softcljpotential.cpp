@@ -49,6 +49,14 @@
 
 #include "SireStream/datastream.h"
 
+#ifdef SIRE_USE_SSE
+    #ifdef __SSE__
+        #include <emmintrin.h>
+    #else
+        #undef SIRE_USE_SSE
+    #endif
+#endif
+
 #include <QDebug>
 
 using namespace SireMM;
@@ -966,13 +974,15 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                                                      ljpair1.epsilon());
                         
                         //calculate the coulomb energy
-                        __m128d sse_q2 = sse_chg0 * sse_chg1;
+                        __m128d sse_q2 = _mm_mul_pd(sse_chg0, sse_chg1);
                         
                         for (int k=0; k<nalpha; ++k)
                         {
                             __m128d coul_denom = _mm_sqrt_pd( sse_dist2 + sse_alpha[k] );
                         
-                            sse_cnrg[k] += sse_q2 / coul_denom;
+                            coul_denom = _mm_div_pd(sse_q2, coul_denom);
+                        
+                            sse_cnrg[k] = _mm_add_pd(sse_cnrg[k], coul_denom);
                         }
                        
                         #ifdef SIRE_TIME_ROUTINES
@@ -985,18 +995,24 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                         for (int k=0; k<nalpha; ++k)
                         {
                             //calculate shift = alpha * sigma * shift_delta
-                            const __m128d sse_shift = sse_sig * sse_delta[k];
+                            const __m128d sse_shift = _mm_mul_pd(sse_sig, sse_delta[k]);
 
-                            __m128d lj_denom = sse_dist2 + sse_shift;
-                            lj_denom = lj_denom * lj_denom * lj_denom;
+                            __m128d lj_denom = _mm_mul_pd(sse_dist2, sse_shift);
+                            __m128d lj_denom2 = _mm_mul_pd(lj_denom, lj_denom);
+                            lj_denom = _mm_mul_pd(lj_denom, lj_denom2);
                         
-                            const __m128d sig6_over_denom = sse_sig6 / lj_denom;
-                            const __m128d sig12_over_denom2 = sig6_over_denom * 
-                                                              sig6_over_denom;
+                            const __m128d sig6_over_denom = _mm_div_pd(sse_sig6, 
+                                                                       lj_denom);
+                                                                       
+                            const __m128d sig12_over_denom2 = _mm_mul_pd(sig6_over_denom, 
+                                                                         sig6_over_denom);
                                               
                             //calculate LJ energy (the factor of 4 is added later)
-                            sse_ljnrg[k] += sse_eps * 
-                                                (sig12_over_denom2 - sig6_over_denom);
+                            __m128d tmp = _mm_sub_pd(sig12_over_denom2,
+                                                     sig6_over_denom);
+                                                     
+                            tmp = _mm_mul_pd(sse_eps, tmp);
+                            sse_ljnrg[k] = _mm_add_pd(sse_ljnrg[k], tmp);
                         }
                         
                         #ifdef SIRE_TIME_ROUTINES

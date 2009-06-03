@@ -486,3 +486,8 @@ void SupraSubSystem::setRecordStatistics(bool recording)
 {
     record_stats = recording;
 }
+
+const char* SupraSubSystem::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SupraSubSystem>() );
+}

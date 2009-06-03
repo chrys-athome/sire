@@ -249,3 +249,8 @@ void VolumeMove::move(System &system, int nmoves, bool record_stats)
     }
     
 }
+
+const char* VolumeMove::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<VolumeMove>() );
+}

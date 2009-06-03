@@ -65,10 +65,7 @@ public:
     
     ~FFIdx();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<FFIdx>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

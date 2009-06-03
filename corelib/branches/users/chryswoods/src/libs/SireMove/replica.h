@@ -85,10 +85,7 @@ public:
     bool operator==(const Replica &other) const;
     bool operator!=(const Replica &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Replica>() );
-    }
+    static const char* typeName();
 
     const Ensemble& ensemble() const;
     

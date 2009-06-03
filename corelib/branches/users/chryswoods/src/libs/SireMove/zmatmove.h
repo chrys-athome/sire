@@ -83,10 +83,7 @@ public:
     
     ZMatMove& operator=(const ZMatMove &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ZMatMove>() );
-    }
+    static const char* typeName();
 
     ZMatMove* clone() const
     {

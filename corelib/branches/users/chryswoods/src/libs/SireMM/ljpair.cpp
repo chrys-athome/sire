@@ -209,3 +209,7 @@ LJPair LJPair::fromRMinAndEpsilon(double rmin, double epsilon)
                         epsilon );
 }
 
+const char* LJPair::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<LJPair>() );
+}

@@ -88,10 +88,7 @@ public:
     
     ~ForceFields();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ForceFields>() );
-    }
+    static const char* typeName();
 
     ForceFields& operator=(const ForceFields &other);
     

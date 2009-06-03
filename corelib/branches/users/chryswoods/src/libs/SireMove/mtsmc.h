@@ -78,10 +78,7 @@ public:
     
     MTSMC& operator=(const MTSMC &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MTSMC>() );
-    }
+    static const char* typeName();
     
     MTSMC* clone() const
     {

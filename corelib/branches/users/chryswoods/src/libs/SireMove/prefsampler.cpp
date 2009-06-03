@@ -919,3 +919,8 @@ const PropertyName& PrefSampler::spaceProperty() const
 {
     return space_property;
 }
+
+const char* PrefSampler::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<PrefSampler>() );
+}

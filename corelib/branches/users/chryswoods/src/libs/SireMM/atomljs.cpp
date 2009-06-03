@@ -30,4 +30,9 @@
 
 using namespace SireMM;
 
+namespace SireMol
+{
+    template class AtomProperty<SireMM::LJParameter>;
+}
+
 static const RegisterMetaType<AtomLJs> r_atomljs;

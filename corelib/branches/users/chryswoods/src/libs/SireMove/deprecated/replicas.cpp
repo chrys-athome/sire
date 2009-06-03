@@ -332,6 +332,11 @@ void Replica::swapSystems(Replica &rep0, Replica &rep1)
     }
 }
 
+const char* Replica::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Replica>() );
+}
+
 ///////
 /////// Implementation of Replicas
 ///////
@@ -842,4 +847,9 @@ void Replicas::setRecordStatistics(bool record_stats)
 void Replicas::setRecordStatistics(int i, bool record_stats)
 {
     replicas_array[ Index(i).map(nReplicas()) ]->setRecordStatistics(record_stats);
+}
+
+const char* Replicas::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Replicas>() );
 }

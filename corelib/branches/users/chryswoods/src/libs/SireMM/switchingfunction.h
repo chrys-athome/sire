@@ -208,10 +208,7 @@ public:
 
     ~NoCutoff();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<NoCutoff>() );
-    }
+    static const char* typeName();
     
     NoCutoff& operator=(const NoCutoff &other);
     
@@ -254,10 +251,7 @@ public:
 
     ~HarmonicSwitchingFunction();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<HarmonicSwitchingFunction>() );
-    }
+    static const char* typeName();
 
     QString toString() const;
 
@@ -323,10 +317,7 @@ public:
 
     ~CHARMMSwitchingFunction();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<CHARMMSwitchingFunction>() );
-    }
+    static const char* typeName();
 
     CHARMMSwitchingFunction& operator=(const CHARMMSwitchingFunction &other);
     

@@ -86,10 +86,7 @@ public:
     ~missing_component() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_component>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -123,10 +120,7 @@ public:
     ~missing_function() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_function>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -160,10 +154,7 @@ public:
     ~missing_forcefield() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_forcefield>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -197,10 +188,7 @@ public:
     ~missing_parameter() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_parameter>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -235,10 +223,7 @@ public:
     ~missing_derivative() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_derivative>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -272,10 +257,7 @@ public:
     ~duplicate_forcefield() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<duplicate_forcefield>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -309,10 +291,7 @@ public:
     ~duplicate_component() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<duplicate_component>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -346,10 +325,7 @@ public:
     ~duplicate_function() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<duplicate_function>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -383,10 +359,7 @@ public:
     ~invalid_group() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<invalid_group>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {

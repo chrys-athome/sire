@@ -299,3 +299,8 @@ void MTSMC::move(System &system, int nmoves, bool record_stats)
         throw;
     }
 }
+
+const char* MTSMC::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MTSMC>() );
+}

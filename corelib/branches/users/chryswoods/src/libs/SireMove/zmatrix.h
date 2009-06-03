@@ -109,10 +109,7 @@ public:
     bool operator==(const ZMatrixLine &other) const;
     bool operator!=(const ZMatrixLine &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ZMatrixLine>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -175,10 +172,7 @@ public:
     bool operator==(const ZMatrixCoordsLine &other) const;
     bool operator!=(const ZMatrixCoordsLine &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ZMatrixCoordsLine>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -233,10 +227,7 @@ public:
     bool operator==(const ZMatrix &other) const;
     bool operator!=(const ZMatrix &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ZMatrix>() );
-    }
+    static const char* typeName();
     
     ZMatrix* clone() const
     {
@@ -352,10 +343,7 @@ public:
     bool operator==(const ZMatrixCoords &other) const;
     bool operator!=(const ZMatrixCoords &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ZMatrixCoords>() );
-    }
+    static const char* typeName();
     
     ZMatrixCoords* clone() const
     {

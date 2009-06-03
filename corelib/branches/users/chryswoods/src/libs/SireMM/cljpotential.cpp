@@ -49,6 +49,14 @@
 
 #include "SireStream/datastream.h"
 
+#ifdef SIRE_USE_SSE
+    #ifdef __SSE__
+        #include <emmintrin.h>
+    #else
+        #undef SIRE_USE_SSE
+    #endif
+#endif
+
 #include <QDebug>
 
 using namespace SireMM;
@@ -817,8 +825,8 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                     distmat.setOuterIndex(i);
                     const Parameter &param0 = params0_array[i];
                     
-                    __m128d sse_chg0 = { param0.reduced_charge, 
-                                         param0.reduced_charge };
+                    __m128d sse_chg0 = _mm_set_pd( param0.reduced_charge, 
+                                                   param0.reduced_charge );
                                          
                     //process atoms in pairs (so can then use SSE)
                     for (quint32 j=0; j<nats1-1; j += 2)
@@ -826,9 +834,9 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                         const Parameter &param10 = params1_array[j];
                         const Parameter &param11 = params1_array[j+1];
                         
-                        __m128d sse_dist = { distmat[j], distmat[j+1] };
-                        __m128d sse_chg1 = { param10.reduced_charge,
-                                             param11.reduced_charge };
+                        __m128d sse_dist = _mm_set_pd( distmat[j], distmat[j+1] );
+                        __m128d sse_chg1 = _mm_set_pd( param10.reduced_charge,
+                                                       param11.reduced_charge );
                                            
                         const LJPair &ljpair0 = ljpairs.constData()[
                                                 ljpairs.map(param0.ljid,
@@ -838,10 +846,11 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                                                 ljpairs.map(param0.ljid,
                                                             param11.ljid)];
                     
-                        __m128d sse_sig = { ljpair0.sigma(), ljpair1.sigma() };
-                        __m128d sse_eps = { ljpair0.epsilon(), ljpair1.epsilon() };
+                        __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
+                        __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(), 
+                                                      ljpair1.epsilon() );
                         
-                        sse_dist = sse_one / sse_dist;
+                        sse_dist = _mm_div_pd(sse_one, sse_dist);
                         
                         //calculate the coulomb energy
                         sse_cnrg += sse_chg0 * sse_chg1 * sse_dist;
@@ -851,20 +860,25 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                         #endif
                         
                         //calculate (sigma/r)^6 and (sigma/r)^12
-                        __m128d sse_sig_over_dist12 = sse_sig * sse_dist;
-                        __m128d sse_sig_over_dist6 = sse_sig_over_dist12 * 
-                                                     sse_sig_over_dist12;
+                        __m128d sse_sig_over_dist2 = _mm_mul_pd(sse_sig, sse_dist);
+                        sse_sig_over_dist2 = _mm_mul_pd( sse_sig_over_dist2,  
+                                                         sse_sig_over_dist2 );
                                                      
-                        sse_sig_over_dist6 = sse_sig_over_dist6 *
-                                             sse_sig_over_dist6 *
-                                             sse_sig_over_dist6;
+                        __m128d sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist2,
+                                                                sse_sig_over_dist2);
+                                                        
+                        sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist6,
+                                                        sse_sig_over_dist2);
                                                      
-                        sse_sig_over_dist12 = sse_sig_over_dist6 * 
-                                              sse_sig_over_dist6;
+                        __m128d sse_sig_over_dist12 = _mm_mul_pd(sse_sig_over_dist6,
+                                                                 sse_sig_over_dist6);
                                               
                         //calculate LJ energy (the factor of 4 is added later)
-                        sse_ljnrg += sse_eps * (sse_sig_over_dist12 -
-                                                sse_sig_over_dist6);
+                        __m128d tmp = _mm_sub_pd(sse_sig_over_dist12, 
+                                                 sse_sig_over_dist6);
+                                                 
+                        tmp = _mm_mul_pd(tmp, sse_eps);
+                        sse_ljnrg = _mm_add_pd(sse_ljnrg, tmp);
                                                 
                         #ifdef SIRE_TIME_ROUTINES
                         nflops += 16;

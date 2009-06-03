@@ -80,10 +80,7 @@ public:
 
     RigidBodyMC& operator=(const RigidBodyMC &other);
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<RigidBodyMC>() );
-    }
+    static const char* typeName();
 
     RigidBodyMC* clone() const
     {

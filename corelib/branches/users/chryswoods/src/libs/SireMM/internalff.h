@@ -448,10 +448,7 @@ public:
     
     ~InternalFF();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<InternalFF>() );
-    }
+    static const char* typeName();
     
     const char *what() const
     {

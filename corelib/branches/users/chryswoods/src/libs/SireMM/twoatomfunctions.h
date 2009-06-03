@@ -147,10 +147,7 @@ public:
     
     ~TwoAtomFunctions();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<TwoAtomFunctions>() );
-    }
+    static const char* typeName();
     
     TwoAtomFunctions& operator=(const TwoAtomFunctions &other);
     

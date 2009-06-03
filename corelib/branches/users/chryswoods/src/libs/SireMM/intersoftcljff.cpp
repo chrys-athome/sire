@@ -35,13 +35,19 @@
 using namespace SireMM;
 using namespace SireFF;
 
-template class SoftCLJPotentialInterface<InterSoftCLJPotential>;
+namespace SireMM
+{
+    template class SoftCLJPotentialInterface<InterSoftCLJPotential>;
+}
 
-template class Inter2BFF< SoftCLJPotentialInterface<InterSoftCLJPotential> >;
-template class Inter2B3DFF< SoftCLJPotentialInterface<InterSoftCLJPotential> >;
+namespace SireFF
+{
+    template class Inter2BFF< SoftCLJPotentialInterface<InterSoftCLJPotential> >;
+    template class Inter2B3DFF< SoftCLJPotentialInterface<InterSoftCLJPotential> >;
 
-template class Inter2B2GFF< SoftCLJPotentialInterface<InterSoftCLJPotential> >;
-template class Inter2B2G3DFF< SoftCLJPotentialInterface<InterSoftCLJPotential> >;
+    template class Inter2B2GFF< SoftCLJPotentialInterface<InterSoftCLJPotential> >;
+    template class Inter2B2G3DFF< SoftCLJPotentialInterface<InterSoftCLJPotential> >;
+}
 
 static const RegisterMetaType<InterSoftCLJFF> r_intercljff;
 static const RegisterMetaType<InterGroupSoftCLJFF> r_intergroupcljff;

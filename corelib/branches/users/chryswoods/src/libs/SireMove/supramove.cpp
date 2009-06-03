@@ -204,3 +204,8 @@ QString NullSupraMove::toString() const
 /** Perform the null move - this does nothing! */
 void NullSupraMove::move(SupraSystem&, int, bool)
 {}
+
+const char* NullSupraMove::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NullSupraMove>() );
+}

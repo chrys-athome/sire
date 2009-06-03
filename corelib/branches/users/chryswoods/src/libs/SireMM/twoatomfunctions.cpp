@@ -692,3 +692,8 @@ TwoAtomFunctions::_pvt_makeCompatibleWith(const MoleculeInfoData &molinfo,
     
     return ret;
 }
+
+const char* TwoAtomFunctions::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<TwoAtomFunctions>() );
+}

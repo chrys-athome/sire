@@ -35,13 +35,19 @@
 using namespace SireMM;
 using namespace SireFF;
 
-template class CoulombPotentialInterface<InterCoulombPotential>;
+namespace SireMM
+{
+    template class CoulombPotentialInterface<InterCoulombPotential>;
+}
 
-template class Inter2BFF< CoulombPotentialInterface<InterCoulombPotential> >;
-template class Inter2B3DFF< CoulombPotentialInterface<InterCoulombPotential> >;
+namespace SireFF
+{
+    template class Inter2BFF< CoulombPotentialInterface<InterCoulombPotential> >;
+    template class Inter2B3DFF< CoulombPotentialInterface<InterCoulombPotential> >;
 
-template class Inter2B2GFF< CoulombPotentialInterface<InterCoulombPotential> >;
-template class Inter2B2G3DFF< CoulombPotentialInterface<InterCoulombPotential> >;
+    template class Inter2B2GFF< CoulombPotentialInterface<InterCoulombPotential> >;
+    template class Inter2B2G3DFF< CoulombPotentialInterface<InterCoulombPotential> >;
+}
 
 static const RegisterMetaType<InterCoulombFF> r_interCoulombff;
 static const RegisterMetaType<InterGroupCoulombFF> r_intergroupCoulombff;

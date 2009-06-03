@@ -97,10 +97,7 @@ public:
     
     virtual ~FFMolGroup();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<FFMolGroup>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

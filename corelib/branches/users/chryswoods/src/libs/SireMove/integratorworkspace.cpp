@@ -286,6 +286,10 @@ MolarEnergy NullIntegratorWorkspace::kineticEnergy(const MoleculeView &molview) 
     return MolarEnergy(0);
 }
 
+const char* NullIntegratorWorkspace::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NullIntegratorWorkspace>() );
+}
 
 //////////
 ////////// Implementation of AtomicVelocityWorkspace
@@ -583,3 +587,8 @@ void AtomicVelocityWorkspace::updateFrom(System &system, const Symbol &nrg_compo
 
 void AtomicVelocityWorkspace::updateSystem(System &system, const Symbol &nrg_component)
 {}
+
+const char* AtomicVelocityWorkspace::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<AtomicVelocityWorkspace>() );
+}

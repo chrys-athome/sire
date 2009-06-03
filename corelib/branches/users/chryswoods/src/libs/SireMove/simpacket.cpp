@@ -329,3 +329,8 @@ float SimPacket::chunk()
 
     return 100.0 * ( float(ncompleted) / float(nmoves) );
 }
+
+const char* SimPacket::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SimPacket>() );
+}

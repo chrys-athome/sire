@@ -705,10 +705,7 @@ public:
     
     ~InternalParameters();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<InternalParameters>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -869,10 +866,7 @@ public:
     
     ~InternalParameters3D();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<InternalParameters3D>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

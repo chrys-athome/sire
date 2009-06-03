@@ -33,6 +33,51 @@
 using namespace SireStream;
 using namespace SireFF;
 
+const char* missing_component::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_component>() );
+}
+
+const char* missing_function::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_function>() );
+}
+
+const char* missing_forcefield::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_forcefield>() );
+}
+
+const char* missing_derivative::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_derivative>() );
+}
+
+const char* missing_parameter::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_parameter>() );
+}
+
+const char* duplicate_component::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<duplicate_component>() );
+}
+
+const char* duplicate_function::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<duplicate_function>() );
+}
+
+const char* duplicate_forcefield::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<duplicate_forcefield>() );
+}
+
+const char* invalid_group::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<invalid_group>() );
+}
+
 static const RegisterMetaType<missing_component> r_mcomp;
 static const RegisterMetaType<missing_function> r_mfunc;
 static const RegisterMetaType<missing_forcefield> r_mff;

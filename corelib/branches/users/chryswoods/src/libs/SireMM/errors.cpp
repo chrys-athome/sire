@@ -30,6 +30,21 @@
 
 using namespace SireMM;
 
+const char* missing_bond::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_bond>() );
+}
+
+const char* missing_angle::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_angle>() );
+}
+
+const char* missing_dihedral::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_dihedral>() );
+}
+
 static const RegisterMetaType<missing_bond> r_mbond;
 static const RegisterMetaType<missing_angle> r_mang;
 static const RegisterMetaType<missing_dihedral> r_mdih;

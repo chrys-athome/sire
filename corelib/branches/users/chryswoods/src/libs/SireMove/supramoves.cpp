@@ -255,3 +255,8 @@ int SameSupraMoves::nMoves() const
 {
     return mv.read().nMoves();
 }
+
+const char* SameSupraMoves::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SameSupraMoves>() );
+}

@@ -49,6 +49,14 @@
 
 #include "SireStream/datastream.h"
 
+#ifdef SIRE_USE_SSE
+    #ifdef __SSE__
+        #include <emmintrin.h>
+    #else
+        #undef SIRE_USE_SSE
+    #endif
+#endif
+
 #include <QDebug>
 
 using namespace SireMM;
@@ -76,33 +84,30 @@ QString LJParameterName::lj_param( "LJ" );
 /////// Completely instantiate the LJPotential ancillary classes
 ///////
 
-template
-class AtomicParameters3D<LJParamID>;
+namespace SireFF
+{
+    template class AtomicParameters3D<LJParamID>;
 
-template
-class IntraScaledParameters<LJNBPairs>;
+    template class FFMolecule3D<InterLJPotential>;
 
-template
-class IntraScaledAtomicParameters< AtomicParameters3D<LJParamID>,
-                                   IntraScaledParameters<LJNBPairs> >;
+    template class FFMolecules3D<InterLJPotential>;
 
-template
-class FFMolecule3D<InterLJPotential>;
+    template class ChangedMolecule<InterLJPotential::Molecule>;
 
-template
-class FFMolecules3D<InterLJPotential>;
+    template class FFMolecule3D<IntraLJPotential>;
 
-template
-class ChangedMolecule<InterLJPotential::Molecule>;
+    template class FFMolecules3D<IntraLJPotential>;
 
-template
-class FFMolecule3D<IntraLJPotential>;
+    template class ChangedMolecule<IntraLJPotential::Molecule>;
+}
 
-template
-class FFMolecules3D<IntraLJPotential>;
+namespace SireMM
+{
+    template class IntraScaledParameters<LJNBPairs>;
 
-template
-class ChangedMolecule<IntraLJPotential::Molecule>;
+    template class IntraScaledAtomicParameters< AtomicParameters3D<LJParamID>,
+                                                IntraScaledParameters<LJNBPairs> >;
+}
 
 /** Streaming functions for LJParamID - these must convert the 
     LJID number to and from an actual LJParameter (as the LJParameterDB
@@ -747,7 +752,7 @@ void InterLJPotential::_pvt_calculateEnergy(const InterLJPotential::Molecule &mo
                         const Parameter &param10 = params1_array[j];
                         const Parameter &param11 = params1_array[j+1];
                         
-                        __m128d sse_dist2 = { distmat[j], distmat[j+1] };
+                        __m128d sse_dist2 = _mm_set_pd( distmat[j], distmat[j+1] );
                                            
                         const LJPair &ljpair0 = ljpairs.constData()[
                                                 ljpairs.map(param0.ljid,
@@ -757,24 +762,29 @@ void InterLJPotential::_pvt_calculateEnergy(const InterLJPotential::Molecule &mo
                                                 ljpairs.map(param0.ljid,
                                                             param11.ljid)];
                     
-                        __m128d sse_sig = { ljpair0.sigma(), ljpair1.sigma() };
-                        __m128d sse_eps = { ljpair0.epsilon(), ljpair1.epsilon() };
+                        __m128d sse_sig = _mm_set_pd( ljpair0.sigma(), ljpair1.sigma() );
+                        __m128d sse_eps = _mm_set_pd( ljpair0.epsilon(), 
+                                                      ljpair1.epsilon() );
                         
-                        sse_dist2 = sse_one / sse_dist2;
+                        sse_dist2 = _mm_div_pd(sse_one, sse_dist2);
                         
                         //calculate (sigma/r)^6 and (sigma/r)^12
-                        __m128d sse_sig_over_dist6 = sse_sig * sse_dist2;
+                        __m128d sse_sig_over_dist2 = _mm_mul_pd(sse_sig, sse_dist2);
                                                      
-                        sse_sig_over_dist6 = sse_sig_over_dist6 *
-                                             sse_sig_over_dist6 *
-                                             sse_sig_over_dist6;
+                        __m128d sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist2,
+                                                                sse_sig_over_dist2);
+                                                                
+                        sse_sig_over_dist6 = _mm_mul_pd(sse_sig_over_dist6,
+                                                        sse_sig_over_dist2);
                                                      
-                        __m128d sse_sig_over_dist12 = sse_sig_over_dist6 * 
-                                                      sse_sig_over_dist6;
+                        __m128d sse_sig_over_dist12 = _mm_mul_pd(sse_sig_over_dist6,
+                                                                 sse_sig_over_dist6);
                                               
                         //calculate LJ energy (the factor of 4 is added later)
-                        sse_ljnrg += sse_eps * (sse_sig_over_dist12 -
-                                                sse_sig_over_dist6);
+                        __m128d tmp = _mm_sub_pd(sse_sig_over_dist12, sse_sig_over_dist6);
+                        tmp = _mm_mul_pd(sse_eps, tmp);
+                        
+                        sse_ljnrg = _mm_add_pd( sse_ljnrg, tmp );
                                                 
                         #ifdef SIRE_TIME_ROUTINES
                         nflops += 14;

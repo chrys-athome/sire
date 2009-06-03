@@ -242,10 +242,7 @@ public:
     bool operator==(const NullIO &other) const;
     bool operator!=(const NullIO &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<NullIO>() );
-    }
+    static const char* typeName();
     
 protected:
     MoleculeGroup readMols(const QByteArray &data, const PropertyMap &map) const;

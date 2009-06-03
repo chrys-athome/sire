@@ -268,3 +268,8 @@ IntegratorWorkspacePtr VelocityVerlet::createWorkspace(
 {
     return IntegratorWorkspacePtr( new AtomicVelocityWorkspace(molgroup) );
 }
+
+const char* VelocityVerlet::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<VelocityVerlet>() );
+}

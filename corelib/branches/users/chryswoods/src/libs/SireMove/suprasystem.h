@@ -91,10 +91,7 @@ public:
     bool operator==(const SupraSystem &other) const;
     bool operator!=(const SupraSystem &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<SupraSystem>() );
-    }
+    static const char* typeName();
     
     virtual SupraSystem* clone() const
     {

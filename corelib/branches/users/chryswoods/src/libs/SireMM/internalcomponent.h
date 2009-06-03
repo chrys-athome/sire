@@ -121,10 +121,7 @@ public:
     
     ~BondComponent();
     
-    static const char* typeName()
-    {
-        return "SireMM::BondComponent";
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -161,10 +158,7 @@ public:
     
     ~AngleComponent();
     
-    static const char* typeName()
-    {
-        return "SireMM::AngleComponent";
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -201,10 +195,7 @@ public:
     
     ~DihedralComponent();
     
-    static const char* typeName()
-    {
-        return "SireMM::DihedralComponent";
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -241,10 +232,7 @@ public:
     
     ~ImproperComponent();
     
-    static const char* typeName()
-    {
-        return "SireMM::ImproperComponent";
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -281,10 +269,7 @@ public:
     
     ~UreyBradleyComponent();
     
-    static const char* typeName()
-    {
-        return "SireMM::UreyBradleyComponent";
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -321,10 +306,7 @@ public:
     
     ~StretchStretchComponent();
     
-    static const char* typeName()
-    {
-        return "SireMM::StretchStretchComponent";
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -361,10 +343,7 @@ public:
     
     ~StretchBendComponent();
     
-    static const char* typeName()
-    {
-        return "SireMM::StretchBendComponent";
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -401,10 +380,7 @@ public:
     
     ~BendBendComponent();
     
-    static const char* typeName()
-    {
-        return "SireMM::BendBendComponent";
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -441,10 +417,7 @@ public:
     
     ~StretchBendTorsionComponent();
     
-    static const char* typeName()
-    {
-        return "SireMM::StretchBendTorsionComponent";
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -536,10 +509,7 @@ public:
         return *this;
     }
     
-    static const char* typeName()
-    {
-        return "SireMM::InternalComponent";
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -595,10 +565,7 @@ public:
     
     ~InternalEnergy();
     
-    static const char* typeName()
-    {
-        return "SireMM::InternalEnergy";
-    }
+    static const char* typeName();
     
     const char* what() const
     {

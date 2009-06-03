@@ -236,3 +236,8 @@ IntegratorWorkspacePtr NullIntegrator::createWorkspace(const MoleculeGroup&) con
 {
     return IntegratorWorkspacePtr();
 }
+
+const char* NullIntegrator::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NullIntegrator>() );
+}

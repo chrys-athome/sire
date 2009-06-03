@@ -370,3 +370,8 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
         throw;
     }
 }
+
+const char* ZMatMove::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ZMatMove>() );
+}

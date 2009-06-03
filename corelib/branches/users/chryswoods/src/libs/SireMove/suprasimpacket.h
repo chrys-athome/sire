@@ -73,10 +73,7 @@ public:
     bool operator==(const SupraSimPacket &other) const;
     bool operator!=(const SupraSimPacket &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<SupraSimPacket>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

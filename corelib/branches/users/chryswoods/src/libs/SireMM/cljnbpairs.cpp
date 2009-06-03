@@ -470,3 +470,33 @@ bool CLJNBPairs::operator!=(const CLJNBPairs &other) const
 {
     return AtomPairs<CLJScaleFactor>::operator!=(other);
 }
+
+const char* CoulombScaleFactor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CoulombScaleFactor>() );
+}
+
+const char* LJScaleFactor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<LJScaleFactor>() );
+}
+
+const char* CLJScaleFactor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CLJScaleFactor>() );
+}
+
+const char* CLJNBPairs::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CLJNBPairs>() );
+}
+
+const char* CoulombNBPairs::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CoulombNBPairs>() );
+}
+
+const char* LJNBPairs::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<LJNBPairs>() );
+}

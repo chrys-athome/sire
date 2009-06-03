@@ -85,10 +85,7 @@ public:
     ~missing_bond() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_bond>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -121,10 +118,7 @@ public:
     ~missing_angle() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_angle>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -157,10 +151,7 @@ public:
     ~missing_dihedral() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_dihedral>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {

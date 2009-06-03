@@ -383,3 +383,8 @@ QByteArray NullIO::writeMols(const Molecules&, const PropertyMap&) const
 {
     return QByteArray();
 }
+
+const char* NullIO::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NullIO>() );
+}

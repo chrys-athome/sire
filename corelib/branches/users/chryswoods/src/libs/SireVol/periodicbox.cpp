@@ -32,7 +32,11 @@
 #include <cmath>
 
 #ifdef SIRE_USE_SSE
-#include <emmintrin.h>
+   #ifdef __SSE__
+       #include <emmintrin.h>
+   #else
+       #undef SIRE_USE_SSE
+   #endif
 #endif
 
 #include "periodicbox.h"
@@ -297,7 +301,7 @@ double PeriodicBox::calcDist(const CoordGroup &group0, const CoordGroup &group1,
         //version of the algorithm suitable for use with SSE2 or above
         const int remainder = n1 % 2;
     
-        __m128d sse_mindist = { mindist, mindist };
+        __m128d sse_mindist = _mm_set_pd(mindist, mindist);
 
         for (int i=0; i<n0; ++i)
         {
@@ -310,9 +314,9 @@ double PeriodicBox::calcDist(const CoordGroup &group0, const CoordGroup &group1,
             
             mat.setOuterIndex(i);
 
-            __m128d sse_x0 = { point0.x(), point0.x() };
-            __m128d sse_y0 = { point0.y(), point0.y() };
-            __m128d sse_z0 = { point0.z(), point0.z() };
+            __m128d sse_x0 = _mm_set_pd(point0.x(), point0.x());
+            __m128d sse_y0 = _mm_set_pd(point0.y(), point0.y());
+            __m128d sse_z0 = _mm_set_pd(point0.z(), point0.z());
 
             //process the other points, two at a time
             for (int j=0; j < n1-remainder; j+=2)
@@ -320,18 +324,20 @@ double PeriodicBox::calcDist(const CoordGroup &group0, const CoordGroup &group1,
                 const Vector &point1 = array1[j];
                 const Vector &point2 = array1[j+1];
         
-                __m128d sse_x1 = { point1.x(), point2.x() };
-                __m128d sse_y1 = { point1.y(), point2.y() };
-                __m128d sse_z1 = { point1.z(), point2.z() };
+                __m128d sse_x1 = _mm_set_pd(point1.x(), point2.x());
+                __m128d sse_y1 = _mm_set_pd(point1.y(), point2.y());
+                __m128d sse_z1 = _mm_set_pd(point1.z(), point2.z());
             
-                __m128d dx = sse_x0 - sse_x1;    // 2 flops
-                __m128d tmpdist = dx * dx;       // 2 flops
+                __m128d dx = _mm_sub_pd(sse_x0, sse_x1);    // 2 flops
+                __m128d tmpdist = _mm_mul_pd(dx, dx);       // 2 flops
             
-                dx = sse_y0 - sse_y1;            // 2 flops
-                tmpdist += dx * dx;              // 4 flops
+                dx = _mm_sub_pd(sse_y0, sse_y1);            // 2 flops
+                dx = _mm_mul_pd(dx, dx);                    // 2 flops
+                tmpdist = _mm_add_pd(tmpdist, dx);          // 2 flops
             
-                dx = sse_z0 - sse_z1;            // 2 flops
-                tmpdist += dx * dx;              // 4 flops
+                dx = _mm_sub_pd(sse_z0, sse_z1);            // 2 flops
+                dx = _mm_mul_pd(dx, dx);                    // 2 flops
+                tmpdist = _mm_add_pd(tmpdist, dx);          // 2 flops
 
                 tmpdist = _mm_sqrt_pd(tmpdist);  // 2 flops
 

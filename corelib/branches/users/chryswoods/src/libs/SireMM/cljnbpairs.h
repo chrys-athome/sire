@@ -81,10 +81,7 @@ public:
     
     ~CoulombScaleFactor();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<CoulombScaleFactor>() );
-    }
+    static const char* typeName();
 
     const char* what() const
     {
@@ -118,10 +115,7 @@ public:
     
     ~LJScaleFactor();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<LJScaleFactor>() );
-    }
+    static const char* typeName();
 
     const char* what() const
     {
@@ -158,10 +152,7 @@ public:
     
     ~CLJScaleFactor();
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<CLJScaleFactor>() );
-    }
+    static const char* typeName();
 
     const char* what() const
     {
@@ -209,10 +200,7 @@ public:
 
     CoulombNBPairs& operator=(const CLJNBPairs &cljpairs);
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<CoulombNBPairs>() );
-    }
+    static const char* typeName();
     
     bool operator==(const CoulombNBPairs &other) const;
     bool operator!=(const CoulombNBPairs &other) const;
@@ -252,10 +240,7 @@ public:
     LJNBPairs& operator=(const LJNBPairs &other);
     LJNBPairs& operator=(const CLJNBPairs &cljpairs);
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<LJNBPairs>() );
-    }
+    static const char* typeName();
     
     bool operator==(const LJNBPairs &other) const;
     bool operator!=(const LJNBPairs &other) const;
@@ -293,10 +278,7 @@ public:
 
     CLJNBPairs& operator=(const CLJNBPairs &other);
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<CLJNBPairs>() );
-    }
+    static const char* typeName();
     
     bool operator==(const CLJNBPairs &other) const;
     bool operator!=(const CLJNBPairs &other) const;

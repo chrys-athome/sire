@@ -123,10 +123,7 @@ public:
     
     const SupraSubMove& operator[](int i) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<SameSupraSubMoves>() );
-    }
+    static const char* typeName();
     
     QString toString() const;
     

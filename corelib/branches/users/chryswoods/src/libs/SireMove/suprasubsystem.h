@@ -81,10 +81,7 @@ public:
     
     virtual ~SupraSubSystem();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<SupraSubSystem>() );
-    }
+    static const char* typeName();
     
     virtual SupraSubSystem* clone() const
     {

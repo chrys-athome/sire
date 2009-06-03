@@ -431,3 +431,8 @@ QList<MovePtr> WeightedMoves::moves() const
     
     return moves;
 }
+
+const char* WeightedMoves::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<WeightedMoves>() );
+}

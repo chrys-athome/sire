@@ -170,3 +170,8 @@ LJParameter LJParameter::fromRMinAndEpsilon(Length rmin, MolarEnergy epsilon)
     return LJParameter( rmin / double(1.122462048309372981439932526193103967671),
                         epsilon );
 }
+
+const char* LJParameter::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<LJParameter>() );
+}

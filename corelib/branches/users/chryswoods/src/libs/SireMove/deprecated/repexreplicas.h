@@ -88,10 +88,7 @@ public:
     RepExReplica& operator=(const RepExReplica &other);
     RepExReplica& operator=(const Replica &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<RepExReplica>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -206,10 +203,7 @@ public:
     RepExReplicas& operator=(const RepExReplicas &other);
     RepExReplicas& operator=(const Replicas &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<RepExReplicas>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

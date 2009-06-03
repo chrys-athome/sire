@@ -2690,3 +2690,8 @@ bool InternalFF::_pvt_wouldChangeProperties(MolNum molnum,
 {
     return mols.wouldChangeProperties(molnum, map);
 }
+
+const char* InternalFF::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<InternalFF>() );
+}

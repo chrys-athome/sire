@@ -30,4 +30,9 @@
 
 using namespace SireMove;
 
+const char* zmatrix_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<zmatrix_error>() );
+}
+
 static const RegisterMetaType<zmatrix_error> r_zmatrix_error;

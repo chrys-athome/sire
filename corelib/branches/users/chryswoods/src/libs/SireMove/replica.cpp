@@ -867,3 +867,8 @@ void Replica::_post_unpack()
         }
     }
 }
+
+const char* Replica::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Replica>() );
+}

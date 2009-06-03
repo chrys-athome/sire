@@ -87,10 +87,7 @@ public:
     bool operator==(const RepExSubMove &other) const;
     bool operator!=(const RepExSubMove &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<RepExSubMove>() );
-    }
+    static const char* typeName();
 
     QString toString() const;
 
@@ -163,10 +160,7 @@ public:
     bool operator==(const RepExMove &other) const;
     bool operator!=(const RepExMove &other) const;
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<RepExMove>() );
-    }
+    static const char* typeName();
     
     int nAttempted() const;
     int nAccepted() const;

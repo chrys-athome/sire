@@ -224,10 +224,7 @@ public:
     
     Message& operator=(const Message &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Message>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -310,10 +307,7 @@ public:
     
     Broadcast& operator=(const Broadcast &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Broadcast>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -388,10 +382,7 @@ public:
     
     RegisterBackend& operator=(const RegisterBackend &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<RegisterBackend>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -436,10 +427,7 @@ public:
     
     GetUIDs& operator=(const GetUIDs &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<GetUIDs>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -479,10 +467,7 @@ public:
     
     ReserveBackend& operator=(const ReserveBackend &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ReserveBackend>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -533,10 +518,7 @@ public:
     
     RequestAvailability& operator=(const RequestAvailability &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<RequestAvailability>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -588,10 +570,7 @@ public:
     
     Reservation& operator=(const Reservation &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Reservation>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -646,10 +625,7 @@ public:
     
     Result& operator=(const Result &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Result>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -702,10 +678,7 @@ public:
     
     Error& operator=(const Error &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Error>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -751,10 +724,7 @@ public:
     
     Shutdown& operator=(const Shutdown &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Shutdown>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

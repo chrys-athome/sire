@@ -48,6 +48,14 @@
 
 #include "SireStream/datastream.h"
 
+#ifdef SIRE_USE_SSE
+    #ifdef __SSE__
+        #include <emmintrin.h>
+    #else
+        #undef SIRE_USE_SSE
+    #endif
+#endif
+
 #include <QDebug>
 
 using namespace SireMM;
@@ -725,8 +733,8 @@ void InterCoulombPotential::_pvt_calculateEnergy(
                     distmat.setOuterIndex(i);
                     const Parameter &param0 = params0_array[i];
                     
-                    __m128d sse_chg0 = { param0.reduced_charge, 
-                                         param0.reduced_charge };
+                    __m128d sse_chg0 = _mm_set_pd(param0.reduced_charge, 
+                                                  param0.reduced_charge);
                                          
                     //process atoms in pairs (so can then use SSE)
                     for (quint32 j=0; j<nats1-1; j += 2)
@@ -734,14 +742,16 @@ void InterCoulombPotential::_pvt_calculateEnergy(
                         const Parameter &param10 = params1_array[j];
                         const Parameter &param11 = params1_array[j+1];
                         
-                        __m128d sse_dist = { distmat[j], distmat[j+1] };
-                        __m128d sse_chg1 = { param10.reduced_charge,
-                                             param11.reduced_charge };
+                        __m128d sse_dist = _mm_set_pd( distmat[j], distmat[j+1] );
+                        __m128d sse_chg1 = _mm_set_pd( param10.reduced_charge,
+                                                       param11.reduced_charge );
                                            
-                        sse_dist = sse_one / sse_dist;
+                        sse_dist = _mm_div_pd(sse_one, sse_dist);
                         
                         //calculate the coulomb energy
-                        sse_cnrg += sse_chg0 * sse_chg1 * sse_dist;
+                        __m128d tmp = _mm_mul_pd(sse_chg0, sse_chg1);
+                        tmp = _mm_mul_pd(tmp, sse_dist);
+                        sse_cnrg = _mm_add_pd(sse_cnrg, tmp);
                         
                         #ifdef SIRE_TIME_ROUTINES
                         nflops += 8;

@@ -177,11 +177,8 @@ public:
     
     bool operator==(const NullIntegratorWorkspace &other) const;
     bool operator!=(const NullIntegratorWorkspace &other) const;
-    
-    const char* what() const
-    {
-        return QMetaType::typeName( qMetaTypeId<NullIntegratorWorkspace>() );
-    }
+
+    static const char* typeName();
 
     SireUnits::Dimension::MolarEnergy kineticEnergy() const;
     SireUnits::Dimension::MolarEnergy kineticEnergy(const MoleculeView &molview) const;
@@ -212,11 +209,8 @@ public:
     bool operator==(const AtomicVelocityWorkspace &other) const;
     bool operator!=(const AtomicVelocityWorkspace &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<AtomicVelocityWorkspace>() );
-    }
-
+    static const char* typeName();
+    
     SireUnits::Dimension::MolarEnergy kineticEnergy() const;
     SireUnits::Dimension::MolarEnergy kineticEnergy(const MoleculeView &molview) const;
     

@@ -78,10 +78,7 @@ public:
     
     SoftCLJComponent& operator=(const SoftCLJComponent &other);
     
-    static const char* typeName()
-    {
-        return "SireMM::SoftCLJComponent";
-    }
+    static const char* typeName();
     
     const char* what() const
     {

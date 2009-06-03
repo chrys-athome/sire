@@ -298,3 +298,8 @@ void MolecularDynamics::move(System &system, int nmoves, bool record_stats)
         throw;
     }
 }
+
+const char* MolecularDynamics::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MolecularDynamics>() );
+}
