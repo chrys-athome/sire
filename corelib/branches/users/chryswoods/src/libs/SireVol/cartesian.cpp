@@ -329,11 +329,11 @@ double Cartesian::calcDist(const CoordGroup &group0, const CoordGroup &group1,
             const Vector& point0 = array0[i];
             mat.setOuterIndex(i);
             
-            __m128d sse_x0 = { point0.x(), point0.x() };
-            __m128d sse_y0 = { point0.y(), point0.y() };
-            __m128d sse_z0 = { point0.z(), point0.z() };
+            __m128d sse_x0 = _mm_set_pd( point0.x(), point0.x() );
+            __m128d sse_y0 = _mm_set_pd( point0.y(), point0.y() );
+            __m128d sse_z0 = _mm_set_pd( point0.z(), point0.z() );
             
-            __m128d sse_mindist = { mindist, mindist };
+            __m128d sse_mindist = _mm_set_pd( mindist, mindist );
 
             // Process points in pairs
             for (int j=0; j < n1-remainder; j+=2)
@@ -341,18 +341,20 @@ double Cartesian::calcDist(const CoordGroup &group0, const CoordGroup &group1,
                 const Vector &point1 = array1[j];
                 const Vector &point2 = array1[j+1];
                 
-                __m128d sse_x1 = { point1.x(), point2.x() };
-                __m128d sse_y1 = { point1.y(), point2.y() };
-                __m128d sse_z1 = { point1.z(), point2.z() };
+                __m128d sse_x1 = _mm_set_pd( point1.x(), point2.x() );
+                __m128d sse_y1 = _mm_set_pd( point1.y(), point2.y() );
+                __m128d sse_z1 = _mm_set_pd( point1.z(), point2.z() );
                 
-                __m128d delta = sse_x0 - sse_x1;      // 2 flops
-                __m128d tmpdist = delta * delta;      // 2 flops
+                __m128d delta = _mm_sub_pd(sse_x0, sse_x1);      // 2 flops
+                __m128d tmpdist = _mm_mul_pd(delta, delta);      // 2 flops
 
-                delta = sse_y0 - sse_y1;              // 2 flops
-                tmpdist += delta*delta;               // 4 flops
+                delta = _mm_sub_pd(sse_y0, sse_y1);              // 2 flops
+                delta = _mm_mul_pd(delta, delta);                // 2 flops
+                tmpdist = _mm_add_pd(tmpdist, delta);            // 2 flops
                 
-                delta = sse_z0 - sse_z1;              // 2 flops
-                tmpdist += delta*delta;               // 4 flops
+                delta = _mm_sub_pd(sse_z0, sse_z1);              // 2 flops
+                delta = _mm_mul_pd(delta, delta);                // 2 flops
+                tmpdist = _mm_add_pd(tmpdist, delta);            // 2 flops
                 
                 tmpdist = _mm_sqrt_pd(tmpdist);       // 2 flops
 

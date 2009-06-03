@@ -219,14 +219,14 @@ public:
     static Vector generate(double dst, const Vector &v1, const Angle &ang,
                            const Vector &v2, const Angle &dih, const Vector &v3);
 
-    friend const Vector SireMaths::operator+(const Vector &p1, const Vector &p2);
-    friend const Vector SireMaths::operator-(const Vector &p1, const Vector &p2);
-    friend const Vector SireMaths::operator*(const Vector &p1, double c);
-    friend const Vector SireMaths::operator*(double c, const Vector &p1);
-    friend const Vector SireMaths::operator/(const Vector &p1, double c);
-    friend const Quaternion SireMaths::operator*(const Vector &p1, const Quaternion &p2);
-    friend const Quaternion SireMaths::operator*(const Quaternion &p1, const Vector &p2);
-    friend const Vector SireMaths::operator*(const Matrix &m, const Vector &p);
+    friend const Vector operator+(const Vector &p1, const Vector &p2);
+    friend const Vector operator-(const Vector &p1, const Vector &p2);
+    friend const Vector operator*(const Vector &p1, double c);
+    friend const Vector operator*(double c, const Vector &p1);
+    friend const Vector operator/(const Vector &p1, double c);
+    friend const Quaternion operator*(const Vector &p1, const Quaternion &p2);
+    friend const Quaternion operator*(const Quaternion &p1, const Vector &p2);
+    friend const Vector operator*(const Matrix &m, const Vector &p);
 
 protected:
     /** Use four values so that vector arrays can be nicely aligned */
