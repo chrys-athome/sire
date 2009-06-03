@@ -68,7 +68,10 @@ using namespace SireBase;
 //////// Objects relating to the global registry of MoleculeGroups
 ////////
 
-template class VersionRegistry<MGNum>;
+namespace SireBase
+{
+    template class VersionRegistry<MGNum>;
+}
 
 static VersionRegistry<MGNum> mgnum_registry;
 

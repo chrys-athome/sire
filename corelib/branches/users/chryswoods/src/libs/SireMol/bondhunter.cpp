@@ -738,12 +738,12 @@ Connectivity ChemicalBondHunter::operator()(const MoleculeView &molview,
         }
         
         //remove the n longest bonds
-        QMap<double,AtomIdx>::const_iterator it = distances2.constEnd();
+        QMap<double,AtomIdx>::const_iterator it2 = distances2.constEnd();
         
         for (int i=nbonds; i>maxbonds; --i)
         {
-            --it;
-            editor.disconnect( atom, it.value() );
+            --it2;
+            editor.disconnect( atom, it2.value() );
         }
     }
     

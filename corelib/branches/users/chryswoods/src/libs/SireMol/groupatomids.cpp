@@ -64,10 +64,13 @@ void GroupAtomIDBase::throwMissingAtom(const MolInfo&) const
 ////// Explicitly instantiate the GroupAtomID classes
 //////
 
-template class GroupAtomID<ResID,AtomID>;
-template class GroupAtomID<ChainID,AtomID>;
-template class GroupAtomID<SegID,AtomID>;
-template class GroupAtomID<CGID,AtomID>;
+namespace SireMol
+{
+    template class GroupAtomID<ResID,AtomID>;
+    template class GroupAtomID<ChainID,AtomID>;
+    template class GroupAtomID<SegID,AtomID>;
+    template class GroupAtomID<CGID,AtomID>;
+}
 
 static const RegisterMetaType< GroupAtomID<ResID,AtomID> > r_resatomid;
 static const RegisterMetaType< GroupAtomID<ChainID,AtomID> > r_chainatomid;

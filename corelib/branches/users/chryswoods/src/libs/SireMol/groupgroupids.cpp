@@ -36,12 +36,15 @@ using namespace SireMol;
 ///// explicitly instantiate the group group ID classes
 /////
 
-template class GroupGroupID<SegID,ResID>;
-template class GroupGroupID<SegID,ChainID>;
-template class GroupGroupID<SegID,CGID>;
+namespace SireMol
+{
+    template class GroupGroupID<SegID,ResID>;
+    template class GroupGroupID<SegID,ChainID>;
+    template class GroupGroupID<SegID,CGID>;
 
-template class GroupGroupID<CGID,ResID>;
-template class GroupGroupID<CGID,ChainID>;
+    template class GroupGroupID<CGID,ResID>;
+    template class GroupGroupID<CGID,ChainID>;
+}
 
 static const RegisterMetaType< GroupGroupID<SegID,ResID> > r_segresid;
 static const RegisterMetaType< GroupGroupID<SegID,ChainID> > r_segchainid;

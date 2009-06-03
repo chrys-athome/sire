@@ -52,9 +52,12 @@
 using namespace SireMol;
 using namespace SireStream;
 
-// fully instantiate Editor<Chain>
-template class Editor<ChainEditor,Chain>;
-//template class Selector< Editor<Chain> >;
+namespace SireMol
+{
+    // fully instantiate Editor<Chain>
+    template class Editor<ChainEditor,Chain>;
+    //template class Selector< Editor<Chain> >;
+}
 
 ////////
 //////// Implementation of ChainEditor

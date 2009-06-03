@@ -51,9 +51,12 @@
 using namespace SireMol;
 using namespace SireStream;
 
-// fully instantiate Editor<Segment>
-template class Editor<SegEditor,Segment>;
-//template class Selector< Editor<Segment> >;
+namespace SireMol
+{
+    // fully instantiate Editor<Segment>
+    template class Editor<SegEditor,Segment>;
+    //template class Selector< Editor<Segment> >;
+}
 
 ////////
 //////// Implementation of SegEditor

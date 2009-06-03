@@ -51,9 +51,12 @@
 using namespace SireMol;
 using namespace SireStream;
 
-// fully instantiate Editor<CutGroup>
-template class Editor<CGEditor,CutGroup>;
-//template class Selector< Editor<CutGroup> >;
+namespace SireMol
+{
+    // fully instantiate Editor<CutGroup>
+    template class Editor<CGEditor,CutGroup>;
+    //template class Selector< Editor<CutGroup> >;
+}
 
 ////////
 //////// Implementation of CGEditor

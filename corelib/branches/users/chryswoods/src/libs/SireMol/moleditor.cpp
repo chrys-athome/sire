@@ -49,8 +49,11 @@
 using namespace SireMol;
 using namespace SireStream;
 
-//instantiate the underlying Editor class
-template class Editor<MolEditor, Molecule>;
+namespace SireMol
+{
+    //instantiate the underlying Editor class
+    template class Editor<MolEditor, Molecule>;
+}
 
 //////////
 ////////// Implementation of MolEditor

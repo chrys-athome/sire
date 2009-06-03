@@ -50,9 +50,12 @@
 using namespace SireMol;
 using namespace SireStream;
 
-//instantiate Editor<Residue> fully
-template class Editor<ResEditor,Residue>;
-//template class Editor< Selector<Residue> >;
+namespace SireMol
+{
+    //instantiate Editor<Residue> fully
+    template class Editor<ResEditor,Residue>;
+    //template class Editor< Selector<Residue> >;
+}
 
 //////////
 ////////// Implementation of ResEditor
