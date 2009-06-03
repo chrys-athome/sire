@@ -41,6 +41,8 @@ class SegIdentifier;
 QDataStream& operator<<(QDataStream&, const SireMol::SegIdentifier&);
 QDataStream& operator>>(QDataStream&, SireMol::SegIdentifier&);
 
+uint qHash(const SireMol::SegIdentifier&);
+
 namespace SireMol
 {
 

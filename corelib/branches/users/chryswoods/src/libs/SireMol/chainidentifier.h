@@ -41,6 +41,8 @@ class ChainIdentifier;
 QDataStream& operator<<(QDataStream&, const SireMol::ChainIdentifier&);
 QDataStream& operator>>(QDataStream&, SireMol::ChainIdentifier&);
 
+uint qHash(const SireMol::ChainIdentifier&);
+
 namespace SireMol
 {
 

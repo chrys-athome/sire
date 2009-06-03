@@ -41,6 +41,8 @@ class ResIdentifier;
 QDataStream& operator<<(QDataStream&, const SireMol::ResIdentifier&);
 QDataStream& operator>>(QDataStream&, SireMol::ResIdentifier&);
 
+uint qHash(const SireMol::ResIdentifier&);
+
 namespace SireMol
 {
 

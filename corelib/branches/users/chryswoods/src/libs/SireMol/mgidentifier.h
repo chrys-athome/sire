@@ -41,6 +41,8 @@ class MGIdentifier;
 QDataStream& operator<<(QDataStream&, const SireMol::MGIdentifier&);
 QDataStream& operator>>(QDataStream&, SireMol::MGIdentifier&);
 
+uint qHash(const SireMol::MGIdentifier&);
+
 namespace SireMol
 {
 

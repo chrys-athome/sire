@@ -41,6 +41,8 @@ class MolIdentifier;
 QDataStream& operator<<(QDataStream&, const SireMol::MolIdentifier&);
 QDataStream& operator>>(QDataStream&, SireMol::MolIdentifier&);
 
+uint qHash(const SireMol::MolIdentifier&);
+
 namespace SireMol
 {
 

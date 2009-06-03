@@ -45,6 +45,8 @@ QDataStream& operator>>(QDataStream&, SireMol::CGIdentifier&);
 QDataStream& operator<<(QDataStream&, const SireMol::CGIDSet&);
 QDataStream& operator>>(QDataStream&, SireMol::CGIDSet&);
 
+uint qHash(const SireMol::CGIdentifier&);
+
 namespace SireMol
 {
 

@@ -45,6 +45,8 @@ QDataStream& operator>>(QDataStream&, SireMol::AtomIdentifier&);
 QDataStream& operator<<(QDataStream&, const SireMol::AtomIDSet&);
 QDataStream& operator>>(QDataStream&, SireMol::AtomIDSet&);
 
+uint qHash(const SireMol::AtomIdentifier&);
+
 namespace SireMol
 {
 

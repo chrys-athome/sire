@@ -51,13 +51,6 @@ QDataStream& operator>>(QDataStream&, SireID::IDOrSet<ID>&);
 namespace SireID
 {
 
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-uint qHash(const T &obj)
-{
-    return obj.hash();
-}
-
 /** This class holds a set of IDs, thereby allowing for
     "or" matching of IDs 
     
