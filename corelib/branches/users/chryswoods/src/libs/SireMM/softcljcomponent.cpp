@@ -92,7 +92,7 @@ SoftCLJEnergy& SoftCLJEnergy::operator+=(const SoftCLJEnergy &other)
     #ifdef SIRE_USE_SSE
     for (int i=0; i<MAX_ALPHA_VALUES; ++i)
     {
-        nrgs[i] += other.nrgs[i];
+        nrgs[i] = _mm_add_pd( nrgs[i], other.nrgs[i] );
     }
     #else
     for (int i=0; i<MAX_ALPHA_VALUES; ++i)
@@ -111,7 +111,7 @@ SoftCLJEnergy& SoftCLJEnergy::operator-=(const SoftCLJEnergy &other)
     #ifdef SIRE_USE_SSE
     for (int i=0; i<MAX_ALPHA_VALUES; ++i)
     {
-        nrgs[i] -= other.nrgs[i];
+        nrgs[i] = _mm_sub_pd( nrgs[i], other.nrgs[i] );
     }
     #else
     for (int i=0; i<MAX_ALPHA_VALUES; ++i)
@@ -150,7 +150,7 @@ void SoftCLJEnergy::setEnergy(int i, double cnrg, double ljnrg)
     i = Index(i).map( MAX_ALPHA_VALUES );
     
     #ifdef SIRE_USE_SSE
-    nrgs[i] = _mm_set_pd(ljnrg, cnrg);  //intrinsics packed in right to left order
+    nrgs[i] = _mm_setr_pd(cnrg, ljnrg);
     #else
     nrgs[i][0] = cnrg;
     nrgs[i][1] = ljnrg;
@@ -247,7 +247,7 @@ double SoftCLJEnergy::total() const
     
     for (int i=1; i<MAX_ALPHA_VALUES; ++i)
     {
-        sum += nrgs[i];
+        sum = _mm_add_pd(sum, nrgs[i]);
     }
     
     return *((const double*)&sum) + *( ((const double*)&sum) + 1 );

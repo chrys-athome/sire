@@ -233,7 +233,7 @@ public:
     CLJEnergy(double cnrg=0, double ljnrg=0)
     {
         #ifdef SIRE_USE_SSE
-        nrgs = _mm_set_pd(cnrg, ljnrg);
+        nrgs = _mm_setr_pd(cnrg, ljnrg);
         #else
         icnrg = cnrg;
         iljnrg = ljnrg;
