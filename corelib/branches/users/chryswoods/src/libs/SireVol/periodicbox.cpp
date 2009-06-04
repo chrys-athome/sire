@@ -297,7 +297,7 @@ double PeriodicBox::calcDist(const CoordGroup &group0, const CoordGroup &group1,
         //version of the algorithm suitable for use with SSE2 or above
         const int remainder = n1 % 2;
     
-        __m128d sse_mindist = { mindist, mindist };
+        __m128d sse_mindist = _mm_load1_pd(&mindist);
 
         for (int i=0; i<n0; ++i)
         {
