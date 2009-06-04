@@ -333,10 +333,23 @@ static QString getFrameNumber(int i, int n)
 
 static int nColumns(int n)
 {
-    if (n <= 0)
-        return 0;
-    else
-        return int( log10(n) ) + 1;
+    int ncol = 0;
+    
+    if (n < 0)
+    {
+        n = -n;
+        ++ncol;
+    }
+    else if (n == 0)
+        return 1;
+
+    while (n > 0)
+    {
+        n /= 10;
+        ++ncol;
+    }
+    
+    return ncol;
 }
 
 /** Write the trajectory to disk, using the file template 'file_template'. 
