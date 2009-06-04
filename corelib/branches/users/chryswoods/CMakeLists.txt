@@ -232,6 +232,7 @@ elseif ( ${CMAKE_CXX_COMPILER} MATCHES "xlC" )
 
     set ( SIRE_SMALL_FLAGS  "-qcompact" )
     set ( SIRE_WARNALL_FLAGS  "-qwarn64 -qflag=w:w" )
+    set ( SIRE_RELEASE_FLAGS "-O3 -qstring" )
     set ( SIRE_DEBUG_FLAGS   "-g" )
     set ( SIRE_VISIBILITY_FLAGS "-DSIRE_NO_VISIBILITY_AVAILABLE" )
     set ( SIRE_PLATFORM_FLAGS "-qrtti=all -qthreaded" )
