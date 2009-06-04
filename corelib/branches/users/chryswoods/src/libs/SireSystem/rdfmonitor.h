@@ -89,10 +89,7 @@ public:
     
     RDF& operator=(const RDF &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<RDF>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -162,10 +159,7 @@ public:
     
     RDFMonitor& operator=(const RDFMonitor &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<RDFMonitor>() );
-    }
+    static const char* typeName();
     
     RDFMonitor* clone() const
     {

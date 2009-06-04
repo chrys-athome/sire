@@ -78,10 +78,7 @@ public:
     
     ~QMFF();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<QMFF>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

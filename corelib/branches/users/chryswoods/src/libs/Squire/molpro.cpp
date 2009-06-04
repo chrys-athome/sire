@@ -761,3 +761,8 @@ double Molpro::calculateEnergy(const QMPotential::Molecules &molecules,
     
     return this->calculateEnergy(cmdfile, ntries);
 }
+
+const char* Molpro::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Molpro>() );
+}

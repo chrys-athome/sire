@@ -280,3 +280,8 @@ void MonitorComponents::monitor(System &system)
         accumes[component].edit().accumulate(it.value());
     }
 }
+
+const char* MonitorComponents::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MonitorComponents>() );
+}

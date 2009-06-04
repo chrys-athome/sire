@@ -195,3 +195,8 @@ QList<SysIdx> SysIdentifier::map(const Systems &systems) const
     else
         return d->map(systems);
 }
+
+const char* SysIdentifier::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SysIdentifier>() );
+}

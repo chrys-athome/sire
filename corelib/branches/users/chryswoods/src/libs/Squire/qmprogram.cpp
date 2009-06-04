@@ -241,3 +241,8 @@ QString NullQM::forceCommandFile(const QMPotential::Molecules&,
 {
     return QString::null;
 }
+
+const char* NullQM::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NullQM>() );
+}

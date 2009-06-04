@@ -312,3 +312,8 @@ void Constraints::apply(System &system) const
     
     system = new_system;
 }
+
+const char* Constraints::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Constraints>() );
+}

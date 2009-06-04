@@ -2580,3 +2580,8 @@ void System::setContents(const MGID &mgid, const MoleculeGroup &molgroup)
 {
     this->setContents(mgid, molgroup, PropertyMap());
 }
+
+const char* System::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<System>() );
+}

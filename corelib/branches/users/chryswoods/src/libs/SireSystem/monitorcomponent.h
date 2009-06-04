@@ -77,10 +77,7 @@ public:
     
     MonitorComponent& operator=(const MonitorComponent &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MonitorComponent>() );
-    }
+    static const char* typeName();
     
     MonitorComponent* clone() const
     {

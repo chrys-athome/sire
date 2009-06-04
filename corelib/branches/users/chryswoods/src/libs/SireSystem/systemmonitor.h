@@ -96,10 +96,7 @@ public:
     bool operator==(const NullMonitor &other) const;
     bool operator!=(const NullMonitor &other) const;
     
-    static const char *typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<NullMonitor>() );
-    }
+    static const char *typeName();
     
     NullMonitor* clone() const
     {

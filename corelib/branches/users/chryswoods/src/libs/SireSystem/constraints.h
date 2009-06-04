@@ -75,10 +75,7 @@ public:
     bool operator==(const Constraints &other) const;
     bool operator!=(const Constraints &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Constraints>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

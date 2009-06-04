@@ -535,3 +535,8 @@ void SystemMonitors::monitor(System &system)
         throw;
     }
 }
+
+const char* SystemMonitors::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SystemMonitors>() );
+}

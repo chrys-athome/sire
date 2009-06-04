@@ -159,3 +159,8 @@ void MonitorComponent::monitor(System &system)
 {
     accume.edit().accumulate( system.componentValue(monitored_component) );
 }
+
+const char* MonitorComponent::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MonitorComponent>() );
+}

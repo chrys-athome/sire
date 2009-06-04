@@ -67,10 +67,7 @@ public:
     
     ~CheckPoint();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<CheckPoint>() );
-    }
+    static const char* typeName();
     
     CheckPoint* clone() const
     {

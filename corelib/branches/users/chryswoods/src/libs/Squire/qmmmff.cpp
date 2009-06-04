@@ -474,3 +474,8 @@ QString QMMMFF::forceCommandFile() const
 {
     return QMMMElecEmbedPotential::forceCommandFile(qmmols, mmmols);
 }
+
+const char* QMMMFF::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<QMMMFF>() );
+}

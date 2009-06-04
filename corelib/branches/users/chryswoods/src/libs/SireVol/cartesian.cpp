@@ -333,9 +333,11 @@ double Cartesian::calcDist(const CoordGroup &group0, const CoordGroup &group1,
             const Vector& point0 = array0[i];
             mat.setOuterIndex(i);
             
-            __m128d sse_x0 = _mm_set_pd( point0.x(), point0.x() );
-            __m128d sse_y0 = _mm_set_pd( point0.y(), point0.y() );
-            __m128d sse_z0 = _mm_set_pd( point0.z(), point0.z() );
+            const double *p0 = point0.constData();
+            
+            __m128d sse_x0 = _mm_load1_pd( p0 );
+            __m128d sse_y0 = _mm_load1_pd( p0 + 1 );
+            __m128d sse_z0 = _mm_load1_pd( p0 + 2 );
             
             __m128d sse_mindist = _mm_set_pd( mindist, mindist );
 
@@ -345,9 +347,9 @@ double Cartesian::calcDist(const CoordGroup &group0, const CoordGroup &group1,
                 const Vector &point1 = array1[j];
                 const Vector &point2 = array1[j+1];
                 
-                __m128d sse_x1 = _mm_set_pd( point1.x(), point2.x() );
-                __m128d sse_y1 = _mm_set_pd( point1.y(), point2.y() );
-                __m128d sse_z1 = _mm_set_pd( point1.z(), point2.z() );
+                __m128d sse_x1 = _mm_setr_pd( point1.x(), point2.x() );
+                __m128d sse_y1 = _mm_setr_pd( point1.y(), point2.y() );
+                __m128d sse_z1 = _mm_setr_pd( point1.z(), point2.z() );
                 
                 __m128d delta = _mm_sub_pd(sse_x0, sse_x1);      // 2 flops
                 __m128d tmpdist = _mm_mul_pd(delta, delta);      // 2 flops

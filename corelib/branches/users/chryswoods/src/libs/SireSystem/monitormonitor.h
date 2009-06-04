@@ -79,10 +79,7 @@ public:
     bool operator==(const MonitorMonitor &other) const;
     bool operator!=(const MonitorMonitor &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MonitorMonitor>() );
-    }
+    static const char* typeName();
 
     const SystemMonitor& operator[](int i) const;
     

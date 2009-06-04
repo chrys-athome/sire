@@ -86,10 +86,7 @@ public:
     ~missing_monitor() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_monitor>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -123,10 +120,7 @@ public:
     ~duplicate_monitor() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<duplicate_monitor>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -160,10 +154,7 @@ public:
     ~missing_system() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<missing_system>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -197,10 +188,7 @@ public:
     ~duplicate_system() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<duplicate_system>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {
@@ -234,10 +222,7 @@ public:
     ~constraint_error() throw()
     {}
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<constraint_error>() );
-    }
+    static const char* typeName();
 
     const char* what() const throw()
     {

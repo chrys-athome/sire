@@ -118,10 +118,7 @@ public:
 
     ~System();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<System>() );
-    }
+    static const char* typeName();
     
     System& operator=(const System &other);
     

@@ -375,3 +375,8 @@ QString QMFF::forceCommandFile() const
 {
     return QMPotential::forceCommandFile(qmmols);
 }
+
+const char* QMFF::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<QMFF>() );
+}

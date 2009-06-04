@@ -115,10 +115,6 @@ else()
   message(FATAL_ERROR "Cannot find the boost libraries.")
 endif()  
 
-if (SIRE_TIME_FLOPS)
-  set (SIRE_PLATFORM_OPTIONS "${SIRE_PLATFORM_OPTIONS} -DSIRE_TIME_ROUTINES" )
-endif()
-
 # Now run some platform tests - the results will be placed in config.h
 include (CheckIncludeFiles)
 include (CheckSymbolExists)
@@ -183,7 +179,14 @@ if ( CMAKE_COMPILER_IS_GNUCC )
     set ( SIRE_SMALL_FLAGS  "-Os" )
     set ( SIRE_WARNALL_FLAGS  "-Wall" )
     set ( SIRE_DEBUG_FLAGS   "-g" )
-    set ( SIRE_RELEASE_FLAGS "-O3 -fomit-frame-pointer -ffast-math" )
+
+    set ( SIRE_RELEASE_FLAGS "-O3 -ffast-math" )
+
+    if ( NOT APPLE )
+      # -fomit-frame-pointer breaks backtrace on an apple
+      set ( SIRE_RELEASE_FLAGS "${SIRE_RELEASE_FLAGS} -fomit-frame-pointer" )
+    endif()
+
     set ( SIRE_OPENMP_FLAGS "-fopenmp" )
     set ( SIRE_PLATFORM_FLAGS "-pipe" )
     set ( SIRE_STATIC_LINK_FLAGS "-static" )
@@ -273,6 +276,10 @@ message ( STATUS "SIRE_STATIC_LINK_FLAGS == ${SIRE_STATIC_LINK_FLAGS}" )
 message ( STATUS "SIRE_EXE_LINK_FLAGS    == ${SIRE_EXE_LINK_FLAGS}" )
 
 set( SIRE_COMPILE_FLAGS "${SIRE_WARNALL_FLAGS} ${SIRE_PLATFORM_FLAGS}" )
+
+if ( SIRE_TIME_FLOPS )
+  set ( SIRE_COMPILE_FLAGS "${SIRE_COMPILE_FLAGS} -DSIRE_TIME_ROUTINES" )
+endif()
 
 if ( SIRE_OPENMP )
   set ( SIRE_COMPILE_FLAGS "${SIRE_COMPILE_FLAGS} ${SIRE_OPENMP_FLAGS}" )

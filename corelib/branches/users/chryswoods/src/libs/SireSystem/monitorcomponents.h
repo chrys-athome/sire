@@ -95,10 +95,7 @@ public:
     bool operator==(const MonitorComponents &other) const;
     bool operator!=(const MonitorComponents &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MonitorComponents>() );
-    }
+    static const char* typeName();
 
     void excludeComponent(const Symbol &component);
     void excludeComponent(const Symbols &components);

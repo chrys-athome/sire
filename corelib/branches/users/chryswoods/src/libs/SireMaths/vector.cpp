@@ -138,6 +138,18 @@ bool Vector::operator!=(const Vector &other) const
             sc[2] != other.sc[2]);
 }
 
+/** Return a raw pointer to the array of coordinates */
+const double* Vector::data() const
+{
+    return &(sc[0]);
+}
+
+/** Return a raw pointer to the array of coordinates */
+const double* Vector::constData() const
+{
+    return &(sc[0]);
+}
+
 /** Return the x component of the vector */
 double Vector::x() const
 {

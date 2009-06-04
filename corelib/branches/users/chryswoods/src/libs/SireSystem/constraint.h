@@ -132,10 +132,7 @@ public:
     bool operator==(const NullConstraint &other) const;
     bool operator!=(const NullConstraint &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<NullConstraint>() );
-    }
+    static const char* typeName();
     
     NullConstraint* clone() const
     {
@@ -181,10 +178,7 @@ public:
     bool operator==(const PropertyConstraint &other) const;
     bool operator!=(const PropertyConstraint &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<PropertyConstraint>() );
-    }
+    static const char* typeName();
     
     PropertyConstraint* clone() const
     {
@@ -238,10 +232,7 @@ public:
     bool operator==(const ComponentConstraint &other) const;
     bool operator!=(const ComponentConstraint &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<ComponentConstraint>() );
-    }
+    static const char* typeName();
     
     ComponentConstraint* clone() const
     {
@@ -295,10 +286,7 @@ public:
     bool operator==(const WindowedComponent &other) const;
     bool operator!=(const WindowedComponent &other) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<WindowedComponent>() );
-    }
+    static const char* typeName();
     
     WindowedComponent* clone() const
     {

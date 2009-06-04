@@ -75,10 +75,7 @@ public:
     
     ~Molpro();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<Molpro>() );
-    }
+    static const char* typeName();
     
     Molpro* clone() const
     {

@@ -189,6 +189,11 @@ bool MonitorIdx::operator==(const SireID::ID &other) const
     return SireID::ID::compare<MonitorIdx>(*this, other);
 }
 
+const char* MonitorIdx::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MonitorIdx>() );
+}
+
 ///////
 /////// Implementation of MonitorName
 ///////
@@ -274,12 +279,20 @@ QList<MonitorName> MonitorName::map(const SystemMonitors &monitors) const
     return monitors.map(*this);
 }
 
+const char* MonitorName::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MonitorName>() );
+}
+
 ///////
 ///////
 
-template class Specify<MonitorID>;
-template class IDAndSet<MonitorID>;
-template class IDOrSet<MonitorID>;
+namespace SireID
+{
+    template class Specify<MonitorID>;
+    template class IDAndSet<MonitorID>;
+    template class IDOrSet<MonitorID>;
+}
 
 static const RegisterMetaType< Specify<MonitorID> > r_specify_monid;
 static const RegisterMetaType< IDAndSet<MonitorID> > r_idandset_monid;

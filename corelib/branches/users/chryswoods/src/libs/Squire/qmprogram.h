@@ -137,10 +137,7 @@ public:
     
     ~NullQM();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<NullQM>() );
-    }
+    static const char* typeName();
     
     NullQM* clone() const
     {

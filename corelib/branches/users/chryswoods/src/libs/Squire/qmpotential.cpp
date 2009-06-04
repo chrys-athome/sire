@@ -52,17 +52,13 @@ using namespace SireStream;
 /////// Completely instantiate the QMPotential ancillary classes
 ///////
 
-template
-class AtomicParameters3D<Element>;
-
-template
-class FFMolecule3D<QMPotential>;
-
-template
-class FFMolecules3D<QMPotential>;
-
-template
-class ChangedMolecule<QMPotential::Molecule>;
+namespace SireFF
+{
+    template class AtomicParameters3D<Element>;
+    template class FFMolecule3D<QMPotential>;
+    template class FFMolecules3D<QMPotential>;
+    template class ChangedMolecule<QMPotential::Molecule>;
+}
 
 /////////
 ///////// Implementation of QMComponent

@@ -30,6 +30,31 @@
 
 using namespace SireSystem;
 
+const char* missing_monitor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_monitor>() );
+}
+
+const char* duplicate_monitor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<duplicate_monitor>() );
+}
+
+const char* missing_system::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<missing_system>() );
+}
+
+const char* duplicate_system::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<duplicate_system>() );
+}
+
+const char* constraint_error::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<constraint_error>() );
+}
+
 static const RegisterMetaType<missing_monitor> r_missmonitor;
 static const RegisterMetaType<duplicate_monitor> r_dupmonitor;
 static const RegisterMetaType<missing_system> r_misssystem;

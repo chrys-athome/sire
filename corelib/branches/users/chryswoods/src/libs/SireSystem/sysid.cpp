@@ -202,6 +202,11 @@ QList<SysIdx> SysIdx::map(const Systems &systems) const
     return systems.map(*this);
 }
 
+const char* SysIdx::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SysIdx>() );
+}
+
 ///////
 /////// Implementation of SysName
 ///////
@@ -287,12 +292,20 @@ QList<SysIdx> SysName::map(const Systems &systems) const
     return systems.map(*this);
 }
 
+const char* SysName::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<SysName>() );
+}
+
 ///////
 ///////
 
-template class Specify<SysID>;
-template class IDAndSet<SysID>;
-template class IDOrSet<SysID>;
+namespace SireID
+{
+    template class Specify<SysID>;
+    template class IDAndSet<SysID>;
+    template class IDOrSet<SysID>;
+}
 
 static const RegisterMetaType< Specify<SysID> > r_specify_sysid;
 static const RegisterMetaType< IDAndSet<SysID> > r_idandset_sysid;

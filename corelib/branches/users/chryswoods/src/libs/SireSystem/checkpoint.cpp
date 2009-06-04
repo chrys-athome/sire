@@ -118,3 +118,8 @@ CheckPoint::operator System() const
 {
     return old_system;
 }
+
+const char* CheckPoint::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CheckPoint>() );
+}

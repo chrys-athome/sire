@@ -226,3 +226,8 @@ void MonitorMonitor::monitor(System &system)
     else if (clear_original)
         system.clearStatistics(monitor_id);
 }
+
+const char* MonitorMonitor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MonitorMonitor>() );
+}

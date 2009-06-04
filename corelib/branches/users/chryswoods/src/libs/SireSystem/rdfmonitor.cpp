@@ -374,6 +374,11 @@ void RDF::add(const RDF &other)
     }
 }
 
+const char* RDF::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<RDF>() );
+}
+
 ////////
 //////// Implementation of RDFMonitor
 ////////
@@ -801,4 +806,9 @@ void RDFMonitor::monitor(System &system)
         rdfdata = old_state;
         throw;
     }
+}
+
+const char* RDFMonitor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<RDFMonitor>() );
 }

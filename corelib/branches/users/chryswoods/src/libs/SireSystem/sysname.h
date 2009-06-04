@@ -64,10 +64,7 @@ public:
     
     ~SysName();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<SysName>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

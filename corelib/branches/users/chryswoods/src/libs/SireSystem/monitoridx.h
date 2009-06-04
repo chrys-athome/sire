@@ -66,10 +66,7 @@ public:
     
     ~MonitorIdx();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<MonitorIdx>() );
-    }
+    static const char* typeName();
     
     const char* what() const
     {

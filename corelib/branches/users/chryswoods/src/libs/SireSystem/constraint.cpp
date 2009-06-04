@@ -206,6 +206,11 @@ const NullConstraint& Constraint::null()
     return *(shared_null.constData());
 }
 
+const char* NullConstraint::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NullConstraint>() );
+}
+
 //////////
 ////////// Implementation of PropertyConstraint
 //////////
@@ -339,6 +344,11 @@ bool PropertyConstraint::apply(System &system) const
     system.setProperty(ffid, propname, VariantProperty(val));
 
     return old_version != system.version();
+}
+
+const char* PropertyConstraint::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<PropertyConstraint>() );
 }
 
 //////////
@@ -475,6 +485,11 @@ bool ComponentConstraint::apply(System &system) const
     system.setComponent(constrained_component, val);
 
     return old_version != system.version();
+}
+
+const char* ComponentConstraint::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<ComponentConstraint>() );
 }
 
 //////////
@@ -712,4 +727,9 @@ bool WindowedComponent::apply(System &system) const
                             getNextWindow(ref_val, window_values, step_size) );
     
     return old_version != system.version();
+}
+
+const char* WindowedComponent::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<WindowedComponent>() );
 }

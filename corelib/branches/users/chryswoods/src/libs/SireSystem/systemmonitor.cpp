@@ -172,3 +172,8 @@ const NullMonitor& SystemMonitor::null()
     
     return *(shared_null.constData());
 }
+
+const char* NullMonitor::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NullMonitor>() );
+}

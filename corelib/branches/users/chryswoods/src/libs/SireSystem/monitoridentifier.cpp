@@ -207,3 +207,8 @@ QList<MonitorName> MonitorIdentifier::map(const SystemMonitors &monitors) const
     else
         return d->map(monitors);
 }
+
+const char* MonitorIdentifier::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<MonitorIdentifier>() );
+}

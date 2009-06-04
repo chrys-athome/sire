@@ -135,6 +135,9 @@ public:
         return Vector::typeName();
     }
 
+    const double* data() const;
+    const double* constData() const;
+
     double x() const;
     double y() const;
     double z() const;
