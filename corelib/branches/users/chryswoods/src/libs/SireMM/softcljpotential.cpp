@@ -978,7 +978,8 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                         
                         for (int k=0; k<nalpha; ++k)
                         {
-                            __m128d coul_denom = _mm_sqrt_pd( sse_dist2 + sse_alpha[k] );
+                            __m128d tmp = _mm_add_pd( sse_dist2, sse_alpha[k] );
+                            __m128d coul_denom = _mm_sqrt_pd( tmp );
                         
                             coul_denom = _mm_div_pd(sse_q2, coul_denom);
                         
@@ -989,8 +990,9 @@ void InterSoftCLJPotential::_pvt_calculateEnergy(
                         nflops += 2 + 8*nalpha;
                         #endif
 
-                        const __m128d sse_sig3 = sse_sig * sse_sig * sse_sig;
-                        const __m128d sse_sig6 = sse_sig3 * sse_sig3;
+                        const __m128d sse_sig2 = _mm_mul_pd(sse_sig, sse_sig);
+                        const __m128d sse_sig3 = _mm_mul_pd(sse_sig2, sse_sig);
+                        const __m128d sse_sig6 = _mm_mul_pd(sse_sig3, sse_sig3);
                         
                         for (int k=0; k<nalpha; ++k)
                         {

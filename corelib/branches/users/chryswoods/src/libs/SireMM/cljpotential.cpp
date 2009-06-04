@@ -853,7 +853,9 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                         sse_dist = _mm_div_pd(sse_one, sse_dist);
                         
                         //calculate the coulomb energy
-                        sse_cnrg += sse_chg0 * sse_chg1 * sse_dist;
+                        __m128d tmp = _mm_mul_pd(sse_chg0, sse_chg1);
+                        tmp = _mm_mul_pd(tmp, sse_dist);
+                        sse_cnrg = _mm_add_pd(sse_cnrg, tmp);
                         
                         #ifdef SIRE_TIME_ROUTINES
                         nflops += 8;
@@ -874,8 +876,8 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                                                                  sse_sig_over_dist6);
                                               
                         //calculate LJ energy (the factor of 4 is added later)
-                        __m128d tmp = _mm_sub_pd(sse_sig_over_dist12, 
-                                                 sse_sig_over_dist6);
+                        tmp = _mm_sub_pd(sse_sig_over_dist12, 
+                                         sse_sig_over_dist6);
                                                  
                         tmp = _mm_mul_pd(tmp, sse_eps);
                         sse_ljnrg = _mm_add_pd(sse_ljnrg, tmp);
