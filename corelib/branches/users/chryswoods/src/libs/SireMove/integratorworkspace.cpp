@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "integratorworkspace.h"
+#include "velocitygenerator.h"
 
 #include "SireSystem/system.h"
 

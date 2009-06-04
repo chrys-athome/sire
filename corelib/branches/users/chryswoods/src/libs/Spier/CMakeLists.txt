@@ -9,7 +9,9 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
     # Third Party dependencies of this module
     find_package( OpenGL REQUIRED )
 
-    include_directories( ${OPENGL_INCLUDE_DIR} )
+    include_directories( ${QT_QTOPENGL_INCLUDE_DIR}
+                         ${QT_QTGUI_INCLUDE_DIR}
+                         ${OPENGL_INCLUDE_DIR} )
 
     # Other Sire libraries
     include_directories(${CMAKE_SOURCE_DIR}/src/libs)

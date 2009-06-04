@@ -7,7 +7,9 @@
 if ( QT_QTGUI_FOUND AND QT_QTWEBKIT_FOUND )
 
     # Third Party dependencies of this module
-    include_directories(${BOOST_INCLUDE_DIR})
+    include_directories( ${BOOST_INCLUDE_DIR} 
+                         ${QT_QTGUI_INCLUDE_DIR}
+                         ${QT_QTWEBKIT_INCLUDE_DIR} )
 
     # Other Sire libraries
     include_directories(${CMAKE_SOURCE_DIR}/src/libs)
