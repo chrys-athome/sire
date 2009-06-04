@@ -4,7 +4,7 @@
 #
 ########################################
 
-if ( QT_QTGUI_FOUND AND QT_QTWEBKIT_FOUND )
+if ( QT_QTGUI_FOUND AND QT_QTWEBKIT_FOUND AND QT_QTOPENGL_FOUND )
 
     # Third Party dependencies of this module
     include_directories( ${BOOST_INCLUDE_DIR} 
