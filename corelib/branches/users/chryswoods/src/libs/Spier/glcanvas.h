@@ -29,14 +29,13 @@
 #ifndef SPIER_GLCANVAS_H
 #define SPIER_GLCANVAS_H
 
-#include <QSharedData>
+#include <QUuid>
 
 #include "gldisplaylist.h"
 #include "glrendercontext.h"
 
 #include "SireBase/property.h"
-
-//#include "camera.h"
+#include "SireBase/majorminorversion.h"
 
 SIRE_BEGIN_HEADER
 
@@ -83,17 +82,19 @@ public:
         return new GLCanvas(*this);
     }
 
-    void render(QGLContext *render_context, int w, int h);
-    void renderSelector(QGLContext *render_context, int w, int h);
+    const QUuid& UID() const;
+    quint64 version() const;
+
+    void render(GLRenderContext &render_context) const;
+    void renderSelector(GLRenderContext &render_context) const;
+
+    static const GLCanvas& null();
 
 protected:
-    void resize(int w, int h);
-
-    void clearError();
-    void checkError(const QString &codeloc);
-
-    /** The current openGL rendering context */
-    GLRenderContext render_context;
+    void clearError() const;
+    void checkError(const QString &codeloc) const;
+    
+    void incrementVersion();
     
     /** The display list containing the commands to set up 
         the scene for normal rendering */
@@ -105,12 +106,13 @@ protected:
 
     /** The background of this canvas */
     GLDisplayList bg;
+
+    /** The UID for this canvas */
+    QUuid uid;
     
-    /** The camera for this scene */
-    //SireBase::SharedPolyPointer<Camera> cam;
-    
-    /** The current height and width of this canvas */
-    qint32 current_w, current_h;
+    /** The current version number of this canvas - this is 
+        used to identify cached rendered images */
+    SireBase::MajorMinorVersion version_number;
 };
 
 typedef SireBase::PropPtr<GLCanvas> GLCanvasPtr;

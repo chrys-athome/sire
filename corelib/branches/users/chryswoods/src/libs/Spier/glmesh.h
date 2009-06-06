@@ -29,21 +29,44 @@
 #ifndef SPIER_GLMESH_H
 #define SPIER_GLMESH_H
 
-#include <QSharedData>
-
-#include "sireglobal.h"
+#include "SireBase/property.h"
 
 SIRE_BEGIN_HEADER
 
 namespace Spier
 {
+class GLMesh;
+class NullGLMesh;
+}
 
-/** This is the base class of all meshes that can be rendered 
+QDataStream& operator<<(QDataStream&, const Spier::GLMesh&);
+QDataStream& operator>>(QDataStream&, Spier::GLMesh&);
+
+QDataStream& operator<<(QDataStream&, const Spier::NullGLMesh&);
+QDataStream& operator>>(QDataStream&, Spier::NullGLMesh&);
+
+namespace Spier
+{
+
+/** This is the base class of all meshes that can be rendered. 
+
+    A mesh provides a single 3D shape that is rendered using
+    the same material and texture. The mesh may have multiple
+    resolutions for different distances
+
+    This mesh is rendered using the current model-view matrix.
+
+    The mesh is rendered with its center at the current
+    raster position.
 
     @author Christopher Woods
 */
-class SPIER_EXPORT GLMesh : public QSharedData
+class SPIER_EXPORT GLMesh : public SireBase::Property
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const GLMesh&);
+friend QDataStream& ::operator>>(QDataStream&, GLMesh&);
+
 public:
     GLMesh();
     GLMesh(const GLMesh &other);
@@ -55,15 +78,29 @@ public:
         return "Spier::GLMesh";
     }
     
-    virtual const char* what() const=0;
-    
     virtual GLMesh* clone() const=0;
     
-    virtual void render(const QGLContext *render_context) const=0;
+    virtual void render(GLRenderContext &render_context) const=0;
 
+    static const NullGLMesh& null();
+
+protected:
+    GLMesh& operator=(const GLMesh &other);
+    
+    bool operator==(const GLMesh &other) const;
+    bool operator!=(const GLMesh &other) const;
 };
 
+typedef SireBase::PropPtr<GLMesh> GLMeshPtr;
+
 }
+
+Q_DECLARE_METATYPE( Spier::NullGLMesh )
+
+SIRE_EXPOSE_CLASS( Spier::GLMesh )
+SIRE_EXPOSE_CLASS( Spier::NullGLMesh )
+
+SIRE_EXPOSE_PROPERTY( Spier::GLMeshPtr, Spier::GLMesh )
 
 SIRE_END_HEADER
 

@@ -34,6 +34,9 @@
 #include "glrendercontext.h"
 #include "gldisplaylist.h"
 #include "glrenderfunction.h"
+#include "glviewfrustrum.h"
+
+#include "SireError/errors.h"
 
 namespace Spier
 {
@@ -43,22 +46,28 @@ namespace detail
 class GLRenderContextData
 {
 public:
-    GLRenderContextData(QGLContext *r) : render_context(r)
+    GLRenderContextData(QGLWidget &widget) 
+            : render_widget( &widget )
     {}
     
     ~GLRenderContextData();
     
+    void deleteAll();
+    
     /** Mutex to lock access to GL rendering */
     QMutex render_mutex;
     
-    /** The render context */
-    QGLContext *render_context;
+    /** The render widget */
+    QGLWidget *render_widget;
     
     /** The list of functions associated with each display list */
     QHash<const GLRenderFunction*,GLuint> display_lists; 
     
     /** The list of display lists to delete */
     QList<GLuint> lists_to_delete;
+    
+    /** The view frustrum */
+    GLViewFrustrum view_frustrum;
 };
 
 } // end of namespace detail
@@ -120,18 +129,21 @@ GLRenderContext::GLRenderContext(const boost::shared_ptr<GLRenderContextData> &p
 GLRenderContext::GLRenderContext(const GLRenderContext &other) : d(other.d)
 {}
 
-GLRenderContextData::~GLRenderContextData()
+/** Function called to completely clear all information from this context */
+void GLRenderContextData::deleteAll()
 {
     QMutexLocker lkr( &render_mutex );
 
     //make this context current
-    render_context->makeCurrent();
+    render_widget->makeCurrent();
     
     //delete all of the display lists
     foreach (GLuint id, lists_to_delete)
     {
         glDeleteLists( id, 1 );
     }
+
+    lists_to_delete.clear();
 
     for (QHash<const GLRenderFunction*,GLuint>::const_iterator
                                 it = display_lists.constBegin();
@@ -141,12 +153,26 @@ GLRenderContextData::~GLRenderContextData()
         glDeleteLists( it.value(), 1 );
     }
     
-    render_context->doneCurrent();
+    display_lists.clear();
+    
+    render_widget->doneCurrent();
+}
+
+GLRenderContextData::~GLRenderContextData()
+{
+    this->deleteAll();
 }
 
 /** Destructor */
 GLRenderContext::~GLRenderContext()
 {}
+
+/** Delete everything from this context */
+void GLRenderContext::deleteAll()
+{
+    if (d.get())
+        d->deleteAll();
+}
 
 /** Copy assignment operator */
 GLRenderContext& GLRenderContext::operator=(const GLRenderContext &other)
@@ -169,22 +195,25 @@ bool GLRenderContext::operator!=(const GLRenderContext &other) const
 
 Q_GLOBAL_STATIC( QMutex, renderContextMutex );
 
-static QHash< const QGLContext*, boost::weak_ptr<GLRenderContextData> > *glreg(0);
+static QHash< const QGLWidget*, boost::weak_ptr<GLRenderContextData> > *glreg(0);
 
 /** Return the context for the passed render context */
-GLRenderContext GLRenderContext::getContext(QGLContext *render_context)
+GLRenderContext GLRenderContext::getContext(QGLWidget &render_widget)
 {
+    if (not render_widget.context()->isValid())
+        return GLRenderContext();
+
     QMutexLocker lkr( renderContextMutex() );
     
     if (not glreg)
-        glreg = new QHash< const QGLContext*,boost::weak_ptr<GLRenderContextData> >();
+        glreg = new QHash< const QGLWidget*,boost::weak_ptr<GLRenderContextData> >();
     
-    boost::shared_ptr<GLRenderContextData> r = glreg->value(render_context).lock();
+    boost::shared_ptr<GLRenderContextData> r = glreg->value(&render_widget).lock();
     
     if (r.get() == 0)
     {
-        r.reset( new GLRenderContextData(render_context) );
-        glreg->insert( render_context, r );
+        r.reset( new GLRenderContextData(render_widget) );
+        glreg->insert( &render_widget, r );
     }
     
     return GLRenderContext(r);
@@ -201,7 +230,7 @@ void GLRenderContext::deleteList(const GLDisplayList &display_list)
     if (glreg == 0)
         return;
     
-    for (QHash< const QGLContext*,boost::weak_ptr<GLRenderContextData> >::const_iterator
+    for (QHash< const QGLWidget*,boost::weak_ptr<GLRenderContextData> >::const_iterator
                                             it = glreg->constBegin();
          it != glreg->constEnd();
          ++it)
@@ -227,28 +256,59 @@ bool GLRenderContext::isNull() const
     return d.get() == 0;
 }
 
+/** Return the QGLWidget */
+QGLWidget& GLRenderContext::widget()
+{
+    if (d.get() == 0)
+        throw SireError::nullptr_error( QObject::tr(
+            "Cannot return the widget for a null GLRenderContext"),
+                CODELOC );
+                
+    return *(d->render_widget);
+}
+
 /** Return the underlying OpenGL render context */
 const QGLContext* GLRenderContext::context() const
 {
     if (d.get() != 0)
-        return d->render_context;
+        return d->render_widget->context();
         
     else
         return 0;
+}
+
+/** Return the size of the viewport */
+QSize GLRenderContext::size() const
+{
+    if (d.get())
+        return d->render_widget->size();
+    else
+        return QSize();
+}
+
+/** Return the view frustrum for this context */
+const GLViewFrustrum& GLRenderContext::frustrum() const
+{
+    if (d.get() == 0)
+        throw SireError::nullptr_error( QObject::tr(
+            "Cannot return the frustrum for a null GLRenderContext"),
+                CODELOC );
+                
+    return d->view_frustrum;
 }
 
 /** Make this context the current OpenGL render context */
 void GLRenderContext::makeCurrent()
 {
     if (d.get() != 0)
-        d->render_context->makeCurrent();
+        d->render_widget->makeCurrent();
 }
 
 /** Make no render context current */
 void GLRenderContext::doneCurrent()
 {
     if (d.get() != 0)
-        d->render_context->doneCurrent();
+        d->render_widget->doneCurrent();
 }
 
 /** Lock the OpenGL render context, and return a locker used to unlock it.
@@ -262,7 +322,7 @@ GLRenderLocker GLRenderContext::lock()
     {
         GLRenderLocker locker( &(d->render_mutex) );
         
-        d->render_context->makeCurrent();
+        d->render_widget->makeCurrent();
         
         foreach (GLuint list_id, d->lists_to_delete)
         {
@@ -273,6 +333,15 @@ GLRenderLocker GLRenderContext::lock()
     
         return locker;
     }
+}
+ 
+/** Change the view of this context so that it is equal to that from 'camera */   
+void GLRenderContext::changeView(const Camera &camera)
+{
+    if (d.get() == 0)
+        return;
+        
+    d->view_frustrum.changeView(camera, d->render_widget->size());
 }
 
 /** Render the passed display list in the current context - this
@@ -296,4 +365,30 @@ void GLRenderContext::render(const GLDisplayList &display_list)
     }
     
     glCallList(list_id);
+}
+
+/** Push the current OpenGL state */
+void GLRenderContext::pushState()
+{
+    glMatrixMode( GL_TEXTURE );
+    glPushMatrix();
+    glMatrixMode( GL_PROJECTION );
+    glPushMatrix();
+    glMatrixMode( GL_MODELVIEW );
+    glPushMatrix();
+    
+    glPushAttrib( GL_ALL_ATTRIB_BITS );
+}
+
+/** Pop the current OpenGL state */
+void GLRenderContext::popState()
+{
+    glMatrixMode( GL_TEXTURE );
+    glPopMatrix();
+    glMatrixMode( GL_PROJECTION );
+    glPopMatrix();
+    glMatrixMode( GL_MODELVIEW );
+    glPopMatrix();
+    
+    glPopAttrib();
 }

@@ -29,234 +29,168 @@
 #include <QGLWidget>
 
 #include "camera.h"
-#include "glmatrix.h"
-
-#include "SireMaths/plane.h"
 
 #include "SireUnits/units.h"
 
+#include "SireStream/datastream.h"
+
 using namespace Spier;
 using namespace SireMaths;
+using namespace SireBase;
 using namespace SireUnits;
 using namespace SireUnits::Dimension;
+using namespace SireStream;
+
+/////////
+///////// Implementation of Camera
+/////////
+
+static const RegisterMetaType<Camera> r_camera( MAGIC_ONLY, "Spier::Camera" );
+
+/** Serialise to a binary datastream */
+QDataStream SPIER_EXPORT &operator<<(QDataStream &ds, const Camera &camera)
+{
+    writeHeader(ds, r_camera, 1);
+    
+    double ang = camera.viewang.to(radians);
+    
+    ds << camera.loc << camera.viewvec << camera.upvec
+       << camera.sidevec << ang << camera.rnge;
+       
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SPIER_EXPORT &operator>>(QDataStream &ds, Camera &camera)
+{
+    VersionID v = readHeader(ds, r_camera);
+    
+    if (v == 1)
+    {
+        double ang;
+    
+        ds >> camera.loc >> camera.viewvec >> camera.upvec
+           >> camera.sidevec >> ang >> camera.rnge;
+           
+        camera.viewang = ang*radians;
+    }
+    else
+        throw version_error( v, "1", r_camera, CODELOC );
+        
+    return ds;
+}
 
 /** Construct the camera */
-Camera::Camera() 
-       : lookat(0.0,0.0,0.0),
-         viewvec(0.0,0.0,-1.0), upvec(0.0,1.0,0.0), sidevec(1.0,0.0,0.0), 
-         viewang( 45*degrees ),
-         rnge(500.0), offsetx(0.0), offsety(0.0), zoomdistance(10.0),
-         viewchanged(true), sizechanged(true)
-{
-    this->calculateViewVectors();
-}
+Camera::Camera() : Property(),
+                   loc(0.0,0.0,0.0), viewvec(0.0,0.0,-1.0), upvec(0.0,1.0,0.0), 
+                   sidevec(1.0,0.0,0.0), viewang( 45*degrees ), rnge(500.0)
+{}
+
+/** Copy constructor */
+Camera::Camera(const Camera &other)
+       : Property(other),
+         loc(other.loc), viewvec(other.viewvec),
+         upvec(other.upvec), sidevec(other.sidevec),
+         viewang(other.viewang), rnge(other.rnge)
+{}
 
 /** Destructor */
 Camera::~Camera()
 {}
 
-/** Reset the camera to be looking at the origin */
-void Camera::reset()
+/** Copy assignment operator */
+Camera& Camera::operator=(const Camera &other)
 {
-    lookat.set(0.0, 0.0, 0.0);
+    if (this != &other)
+    {
+        loc = other.loc;
+        viewvec = other.viewvec;
+        upvec = other.upvec;
+        sidevec = other.sidevec;
+        viewang = other.viewang;
+        rnge = other.rnge;
+    }
+
+    return *this;
+}
+
+/** Comparison operator */
+bool Camera::operator==(const Camera &other) const
+{
+    return this == &other or
+           ( loc == other.loc and viewvec == other.viewvec and 
+             upvec == other.upvec and  sidevec == other.sidevec and 
+             viewang == other.viewang and rnge == other.rnge );
+}
+
+/** Comparison operator */
+bool Camera::operator!=(const Camera &other) const
+{
+    return not Camera::operator==(other);
+}
+
+/** Set the viewing angle of the camera */
+void Camera::setViewAngle(const Angle &angle)
+{
+    viewang = angle;
+}
+
+/** Set the range of the camera */
+void Camera::setViewRange(float range)
+{
+    rnge = range;
+}
+
+/** Set the camera view location to 'point' */
+void Camera::setViewLocation(const Vector &point)
+{
+    loc = point;
+}
+
+/** Translate the view by 'delta' */
+void Camera::translateView(const Vector &delta)
+{
+    loc += delta;
+}
+
+/** Rotate the view using the quaternion 'q' */
+void Camera::rotateView(const Quaternion &q)
+{
+    viewvec = q.rotate(viewvec);
+    upvec = q.rotate(viewvec);
+    sidevec = q.rotate(viewvec);
+}
+
+/** Reset the camera */
+void Camera::resetView()
+{
     viewvec.set(0.0, 0.0, -1.0);
     upvec.set(0.0, 1.0, 0.0);
     sidevec.set(1.0, 0.0, 0.0);
     viewang = 45.0 * SireUnits::degrees;
     rnge = 500.0;
-    offsetx = 0.0;
-    offsety = 0.0;
-    zoomdistance = 10.0;
-    sizechanged = true;
-    
-    this->calculateViewVectors();
-}
-
-/** Calculate all of the vectors of the camera */
-void Camera::calculateViewVectors()
-{
-    //first, ensure that viewvec, upvec and sidevec form a 
-    //right-angled set of vectors - this should correct for any
-    //rounding error...
-
-    //viewing is based on the plane that is perpendicular to 'viewvec'
-    //but that also contains 'lookat'
-
-    //the camera position is zoomdistance*viewvec away from this point
-    loc = lookat - (zoomdistance * viewvec) - (offsetx*sidevec) - (offsety*upvec);
-
-    viewchanged = true;  
-}
-
-/** Set the size of the canvas */
-void Camera::setSize(const QSize &size)
-{
-    if (size != sz)
-    {
-        sz = size;
-        sizechanged = true;
-    }
-}
-
-/** Set the new look-at point for the camera */
-void Camera::lookAt(const Vector &point)
-{
-    lookat = point;
-    offsetx = 0.0;
-    offsety = 0.0;
-    calculateViewVectors();
-}
-
-/** Zoom in on the object */
-void Camera::zoom(double delta)
-{
-    //decrease 'zoomdistance' by delta
-    zoomdistance -= delta;
-    
-    if (zoomdistance < 1.0)
-        zoomdistance = 1.0;
-
-    calculateViewVectors();
-}
-
-/** Spin around, while still looking at the object */
-void Camera::spin(const Angle &delta)
-{
-    Quaternion q(delta, viewvec);
-    
-    upvec = q.rotate(upvec);
-    sidevec = q.rotate(sidevec);
-
-    calculateViewVectors();
-}
-
-/** Rotate around, while still looking at the object */
-void Camera::rotate(const Angle &delta, const Vector &axis)
-{
-    //rotate viewvec and upvec around this vector
-    Quaternion q(delta, axis);
-    
-    viewvec = q.rotate(viewvec);
-    upvec = q.rotate(upvec);
-    sidevec = q.rotate(sidevec);
-    
-    calculateViewVectors();
-}
-
-/** Translate the view by dx and dy, but don't change the center  */
-void Camera::translate(double dx, double dy)
-{
-    offsetx += dx;
-    offsety += dy;
-    
-    calculateViewVectors();
-}
-
-/** Perform the openGL transformation commands necessary to 
-    look through the camera - this also gets the frustrum planes 
-    of the resulting view volume (in world coordinates).
-
-    This returns whether or not it has actually changed anything.
-*/
-bool Camera::look(bool force)
-{
-    bool changed = false;
-
-    if (force)
-    {
-        viewchanged = true;
-        sizechanged = true;
-    }
-    
-    if (sizechanged)
-    {
-        GLfloat viewratio = (GLfloat)sz.width() / (GLfloat)sz.height();
-
-        glViewport(0,0,sz.width(),sz.height());
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        gluPerspective(viewAngle().to(degrees),viewratio,0.5,range());
-        glMatrixMode(GL_MODELVIEW);
-        glFogf(GL_FOG_END,range()*10.0);
-        changed = true;
-        sizechanged = false;
-    }
-    
-    if (viewchanged)
-    {
-        //look through the camera
-        glLoadIdentity();
-        gluLookAt(loc.x(),loc.y(),loc.z(),
-                  loc.x()+viewvec.x(), loc.y()+viewvec.y(), loc.z()+viewvec.z(),
-                  upvec.x(), upvec.y(), upvec.z());
-        viewchanged = false;
-        
-        changed = true;
-    }
-
-    if (changed)
-    {
-        //we need to recalculate the planes of the viewing frustrum...
-        GLMatrix mat = GLMatrix::getModelProj();
-
-        fplanes[_left] = mat.left();
-        fplanes[_right] = mat.right();
-        fplanes[_bottom] = mat.bottom();
-        fplanes[_top] = mat.top();
-        fplanes[_near] = mat.near();
-        fplanes[_far] = mat.far();
-        
-        return true;
-    }
-    else
-        return false;
-}
-
-/** Return whether the view frustrum of this camera contains the point 'point' */
-bool Camera::contains(const Vector &point) const
-{
-    return fplanes[_left].distance(point) >= 0.0 and 
-           fplanes[_right].distance(point) >= 0.0 and 
-           fplanes[_top].distance(point) >= 0.0 and 
-           fplanes[_bottom].distance(point) >= 0.0 and 
-           fplanes[_near].distance(point) >= 0.0 and 
-           fplanes[_far].distance(point) >= 0.0;
-}
-
-/** Return whether the view frustrum (even partially) contains the sphere 'sphere' */
-bool Camera::contains(const Sphere &sphere) const
-{
-    double rad = -sphere.radius();
-    const Vector &point = sphere.center();
-
-    return fplanes[_left].distance(point) >= rad and 
-           fplanes[_right].distance(point) >= rad and
-           fplanes[_top].distance(point) >= rad and
-           fplanes[_bottom].distance(point) >= rad and
-           fplanes[_near].distance(point) >= rad and
-           fplanes[_far].distance(point) >= rad;
 }
 
 /** Return the location of the camera */
-const Vector& Camera::position() const
+const Vector& Camera::location() const
 {
     return loc;
 }
 
 /** Return the vector along which the camera is looking */
-const Vector& Camera::viewVec() const
+const Vector& Camera::viewVector() const
 {
     return viewvec;
 }
  
 /** Return the vector pointing up from the camera */
-const Vector& Camera::upVec() const
+const Vector& Camera::upVector() const
 {
     return upvec;
 }
     
 /** Return the vector pointing to the right of the camera */
-const Vector& Camera::sideVec() const
+const Vector& Camera::sideVector() const
 {
     return sidevec;
 }
@@ -273,31 +207,292 @@ float Camera::range() const
     return rnge;
 }
 
-/** Return the (signed) distance from the camera to the specified point. A positive
-    distance is returned if the point is in front of the camera, while a negative
-    distance is returned if the point is behind the camera */
-double Camera::distance(const Vector &point) const
+/** Whether or not to depth cue */
+bool Camera::depthCue() const
 {
-    return fplanes[_near].distance(point);
+    return true;
 }
 
-/** Return whether or not the camera view has changed since the last call
-    to 'Camera::look' */
-bool Camera::viewChanged() const
+/** Whether or not the view from this camera is different to 'other' */
+bool Camera::differentView(const Camera &other) const
 {
-    return viewchanged;
+    return ( this != &other ) and
+           ( loc != other.loc and viewvec != other.viewvec and
+             upvec != other.upvec );
 }
 
-/** Return whether or not the size of the canvas has changed since the last
-    call to 'Camera::look' */
-bool Camera::sizeChanged() const
+Q_GLOBAL_STATIC( NullCamera, nullCamera )
+
+/** Return the global default camera */
+const NullCamera& Camera::null()
 {
-    return sizechanged;
+    return *(nullCamera());
 }
 
-/** Return whether a change in the camera state necessitates the canvas to be 
-    repainted */
-bool Camera::needRepaint() const
+/////////
+///////// Implementation of NullCamera
+/////////
+
+static const RegisterMetaType<NullCamera> r_nullcam;
+
+/** Serialise to a binary datastream */
+QDataStream SPIER_EXPORT &operator<<(QDataStream &ds, const NullCamera &nullcam)
 {
-    return viewchanged or sizechanged;
+    writeHeader(ds, r_nullcam, 1);
+    
+    ds << static_cast<const Camera&>(nullcam);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SPIER_EXPORT &operator>>(QDataStream &ds, NullCamera &nullcam)
+{
+    VersionID v = readHeader(ds, r_nullcam);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<Camera&>(nullcam);
+    }
+    else
+        throw version_error( v, "1", r_nullcam, CODELOC );
+        
+    return ds;
+}
+
+/** Constructor */
+NullCamera::NullCamera() : ConcreteProperty<NullCamera,Camera>()
+{}
+
+/** Copy constructor */
+NullCamera::NullCamera(const NullCamera &other)
+           : ConcreteProperty<NullCamera,Camera>(other)
+{}
+
+/** Destructor */
+NullCamera::~NullCamera()
+{}
+
+/** Copy assignment operator */
+NullCamera& NullCamera::operator=(const NullCamera &other)
+{
+    Camera::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool NullCamera::operator==(const NullCamera&) const
+{
+    return true;
+}
+
+/** Comparison operator */
+bool NullCamera::operator!=(const NullCamera&) const
+{
+    return false;
+}
+
+const char* NullCamera::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NullCamera>() );
+}
+
+/** Reset this camera */
+void NullCamera::reset()
+{}
+
+/** NullCamera does not move */
+void NullCamera::spin(const Angle&)
+{}
+
+/** NullCamera does not move */
+void NullCamera::rotate(const Angle&, const Vector&)
+{}
+
+/** NullCamera does not move */
+void NullCamera::zoom(double)
+{}
+
+/** NullCamera does not move */
+void NullCamera::translate(double, double)
+{}
+
+/** NullCamera does not move */
+void NullCamera::lookAt(const Vector&)
+{}
+
+/////////
+///////// Implementation of OrbitCamera
+/////////
+
+static const RegisterMetaType<OrbitCamera> r_orbcam;
+
+/** Serialise to a binary datastream */
+QDataStream SPIER_EXPORT &operator<<(QDataStream &ds, const OrbitCamera &orbcam)
+{
+    writeHeader(ds, r_orbcam, 1);
+    
+    ds << orbcam.lookat << orbcam.offsetx << orbcam.offsety
+       << orbcam.zoomdistance << static_cast<const Camera&>(orbcam);
+       
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SPIER_EXPORT &operator>>(QDataStream &ds, OrbitCamera &orbcam)
+{
+    VersionID v = readHeader(ds, r_orbcam);
+    
+    if (v == 1)
+    {
+        ds >> orbcam.lookat >> orbcam.offsetx >> orbcam.offsety
+           >> orbcam.zoomdistance >> static_cast<Camera&>(orbcam);
+    }
+    else
+        throw version_error(v, "1", r_orbcam, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+OrbitCamera::OrbitCamera() 
+            : ConcreteProperty<OrbitCamera,Camera>(),
+              lookat(0,0,0),
+              offsetx(0), offsety(0), zoomdistance(10)
+{
+    OrbitCamera::calculateViewVectors();
+}
+
+/** Construct an orbit camera looking at 'lookat' */
+OrbitCamera::OrbitCamera(const Vector &p)
+            : ConcreteProperty<OrbitCamera,Camera>(),
+              lookat(p), offsetx(0), offsety(0), zoomdistance(10)
+{
+    OrbitCamera::calculateViewVectors();
+}
+
+/** Copy constructor */
+OrbitCamera::OrbitCamera(const OrbitCamera &other)
+            : ConcreteProperty<OrbitCamera,Camera>(other),
+              lookat(other.lookat), offsetx(other.offsetx),
+              offsety(other.offsety), zoomdistance(other.zoomdistance)
+{}
+
+/** Destructor */
+OrbitCamera::~OrbitCamera()
+{}
+
+/** Copy assignment operator */
+OrbitCamera& OrbitCamera::operator=(const OrbitCamera &other)
+{
+    if (this != &other)
+    {
+        Camera::operator=(other);
+        
+        lookat = other.lookat;
+        offsetx = other.offsetx;
+        offsety = other.offsety;
+        zoomdistance = other.zoomdistance;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool OrbitCamera::operator==(const OrbitCamera &other) const
+{
+    return Camera::operator==(other) and 
+           lookat == other.lookat and
+           offsetx == other.offsetx and
+           offsety == other.offsety and
+           zoomdistance == other.zoomdistance;
+}
+
+/** Comparison operator */
+bool OrbitCamera::operator!=(const OrbitCamera &other) const
+{
+    return not OrbitCamera::operator==(other);
+}
+
+const char* OrbitCamera::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<OrbitCamera>() );
+}
+
+/** Calculate all of the vectors of the camera */
+void OrbitCamera::calculateViewVectors()
+{
+    //viewing is based on the plane that is perpendicular to 'viewvec'
+    //but that also contains 'lookat'
+
+    //the camera position is zoomdistance*viewvec away from this point
+    Camera::setViewLocation(
+            lookat - (zoomdistance * Camera::viewVector()) - 
+                     (offsetx * Camera::sideVector()) - 
+                     (offsety * Camera::upVector()) );
+}
+
+/** Set the new look-at point for the camera */
+void OrbitCamera::lookAt(const Vector &point)
+{
+    lookat = point;
+    offsetx = 0.0;
+    offsety = 0.0;
+    calculateViewVectors();
+}
+
+/** Zoom in on the object */
+void OrbitCamera::zoom(double delta)
+{
+    //decrease 'zoomdistance' by delta
+    zoomdistance -= delta;
+    
+    if (zoomdistance < 1.0)
+        zoomdistance = 1.0;
+
+    calculateViewVectors();
+}
+
+/** Spin around, while still looking at the object */
+void OrbitCamera::spin(const Angle &delta)
+{
+    Quaternion q(delta, Camera::viewVector());
+    
+    Camera::rotateView(q);
+
+    calculateViewVectors();
+}
+
+/** Rotate around, while still looking at the object */
+void OrbitCamera::rotate(const Angle &delta, const Vector &axis)
+{
+    Quaternion q(delta, axis);
+    
+    Camera::rotateView(q);
+    
+    calculateViewVectors();
+}
+
+/** Translate the view by dx and dy, but don't change the center  */
+void OrbitCamera::translate(double dx, double dy)
+{
+    offsetx += dx;
+    offsety += dy;
+    
+    calculateViewVectors();
+}
+
+/** Reset the camera to be looking at the origin */
+void OrbitCamera::reset()
+{
+    Camera::resetView();
+
+    lookat.set(0.0, 0.0, 0.0);
+
+    offsetx = 0.0;
+    offsety = 0.0;
+
+    zoomdistance = 10.0;
+    
+    this->calculateViewVectors();
 }

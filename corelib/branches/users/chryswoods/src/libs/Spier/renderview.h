@@ -32,7 +32,7 @@
 #include <QGLWidget>
 #include <QList>
 
-#include "glcanvas.h"
+#include "renderscene.h"
 
 SIRE_BEGIN_HEADER
 
@@ -56,19 +56,23 @@ protected:
     void resizeGL(int w, int h);
     void paintGL();
 
+    void drawCorners(QPainter &painter);
+    void drawUI(QPainter &painter);
+
 protected slots:
     void animate();
 
 private:
-    /** The set of GLCanvas objects that can be rendered on this widget */
-    QList<GLCanvasPtr> glcanvases;
-    
-    /** The last scene rendered on each canvas */
-    QList<QImage> canvas_images;
-    
-    /** How long did each frame take to render? */
-    QList<int> canvas_rendertimes;
-    
+    /** The current openGL rendering context */
+    GLRenderContext render_context;
+
+    /** All of the scenes that can be rendered on this widget */
+    QList<RenderScene*> render_scenes;
+
+    /** The current scene to render on this widget */
+    int scene_to_render;
+
+    /** The location of the banner */
     int yval;
 };
 

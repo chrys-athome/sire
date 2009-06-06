@@ -41,6 +41,8 @@ using namespace Spier;
 using namespace SireBase;
 using namespace SireStream;
 
+Q_GLOBAL_STATIC( VersionRegistry<QUuid>, glCanvasRegistry )
+
 static const RegisterMetaType<GLCanvas> r_glcanvas;
 
 /** Serialise to a binary datastream */
@@ -51,7 +53,7 @@ QDataStream SPIER_EXPORT &operator<<(QDataStream &ds, const GLCanvas &glcanvas)
     SharedDataStream sds(ds);
     
     sds << glcanvas.render_state << glcanvas.selector_state
-        << glcanvas.bg;
+        << glcanvas.bg << glcanvas.uid;
         
     return ds;
 }
@@ -66,10 +68,9 @@ QDataStream SPIER_EXPORT &operator>>(QDataStream &ds, GLCanvas &glcanvas)
         SharedDataStream sds(ds);
         
         sds >> glcanvas.render_state >> glcanvas.selector_state
-            >> glcanvas.bg;
+            >> glcanvas.bg >> glcanvas.uid;
             
-        glcanvas.current_w = 0;
-        glcanvas.current_h = 0;
+        glcanvas.version_number = glCanvasRegistry()->registerObject(glcanvas.uid);
     }
     else
         throw version_error( v, "1", r_glcanvas, CODELOC );
@@ -83,17 +84,19 @@ GLCanvas::GLCanvas()
            render_state( GLInitRenderState() ),
            selector_state( GLInitSelectorState() ),
            bg( GradientBackground() ),
-           current_w(0), current_h(0)
-{}
+           uid( QUuid::createUuid() )
+{
+    version_number = glCanvasRegistry()->registerObject(uid);
+}
 
 /** Copy constructor */
 GLCanvas::GLCanvas(const GLCanvas &other) 
          : ConcreteProperty<GLCanvas,Property>(other),
-           render_context(other.render_context),
            render_state(other.render_state),
            selector_state(other.selector_state),
            bg(other.bg),
-           current_w(other.current_w), current_h(other.current_h)
+           uid(other.uid), 
+           version_number(other.version_number)
 {}
 
 /** Destructor */
@@ -105,12 +108,11 @@ GLCanvas& GLCanvas::operator=(const GLCanvas &other)
 {
     if (this != &other)
     {
-        render_context = other.render_context;
         render_state = other.render_state;
         selector_state = other.selector_state;
         bg = other.bg;
-        current_w = other.current_w;
-        current_h = other.current_h;
+        uid = other.uid;
+        version_number = other.version_number;
         
         Property::operator=(other);
     }
@@ -121,10 +123,7 @@ GLCanvas& GLCanvas::operator=(const GLCanvas &other)
 /** Comparison operator */
 bool GLCanvas::operator==(const GLCanvas &other) const
 {
-    return this == &other or
-           ( render_state == other.render_state and
-             selector_state == other.selector_state and
-             bg == other.bg );
+    return uid == other.uid and version_number == other.version_number;
 }
 
 /** Comparison operator */
@@ -133,9 +132,34 @@ bool GLCanvas::operator!=(const GLCanvas &other) const
     return not GLCanvas::operator==(other);
 }
 
+/** Return the unique identifier for this canvas */
+const QUuid& GLCanvas::UID() const
+{
+    return uid;
+}
+
+/** Return the version number of this canvas */
+quint64 GLCanvas::version() const
+{
+    return version_number.minorVersion();
+}
+
+/** Internal function used to increment the version number of this canvas */
+void GLCanvas::incrementVersion()
+{
+    version_number.incrementMinor();
+}
+
 const char* GLCanvas::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<GLCanvas>() );
+}
+
+Q_GLOBAL_STATIC( GLCanvas, nullGLCanvas )
+
+const GLCanvas& GLCanvas::null()
+{
+    return *(nullGLCanvas());
 }
 
 /** Encode the 32bit index into a 24bit colour. Obviously this will only
@@ -271,13 +295,13 @@ const char* GLCanvas::typeName()
 }*/
 
 /** Clear the current error */
-void GLCanvas::clearError()
+void GLCanvas::clearError() const
 {
     glGetError();
 }
 
 /** Check the status of the openGL error flag */
-void GLCanvas::checkError(const QString &codeloc)
+void GLCanvas::checkError(const QString &codeloc) const
 {
     GLenum err = glGetError();
     
@@ -303,41 +327,16 @@ void GLCanvas::checkError(const QString &codeloc)
     }
 }
 
-/** Resize the display */
-void GLCanvas::resize(int w, int h)
-{
-    //cam->setSize(QSize(w,h));
-    
-    current_w = w;
-    current_h = h;
-}
-
 /** Paint the canvas (render the scene) */
-void GLCanvas::render(QGLContext *context, int w, int h)
+void GLCanvas::render(GLRenderContext &render_context) const
 {
-    if (context == 0)
-        return;
-        
-    if (not context->isValid())
-        return;
-
-    if (w != current_w or h != current_h)
-        this->resize(w, h);
-
-    //update the render context
-    render_context = GLRenderContext::getContext(context);
-
-    //lock this context (ensures nothing else is rendering)
-    GLRenderLocker lkr = render_context.lock();
-
     //now switch to the scene rendering state
-    render_context.makeCurrent();
     render_context.render( render_state );
         
     //paint the background
-    glPushAttrib(GL_ALL_ATTRIB_BITS);
+    render_context.pushState();
     render_context.render( bg );
-    glPopAttrib();
+    render_context.popState();
         
     //check for any openGL errors
     checkError(CODELOC);
@@ -352,23 +351,8 @@ void GLCanvas::render(QGLContext *context, int w, int h)
     object being drawn in a flat color that corresponds to the object ID.
     In this way, a picture is drawn whereby the objects can be selected
     by just looking up the ID associated with the color of each pixel */
-void GLCanvas::renderSelector(QGLContext *context, int w, int h)
+void GLCanvas::renderSelector(GLRenderContext &render_context) const
 {
-    if (context == 0)
-        return;
-        
-    if (not context->isValid())
-        return;
-
-    if (w != current_w or h != current_h)
-        this->resize(w, h);
-
-    //update the render context
-    render_context = GLRenderContext::getContext(context);
-
-    //lock this context (ensures nothing else is rendering)
-    GLRenderLocker lkr = render_context.lock();
-
     //now switch to the scene rendering state
     render_context.makeCurrent();
     render_context.render( selector_state );

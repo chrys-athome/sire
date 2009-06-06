@@ -41,6 +41,8 @@ SIRE_BEGIN_HEADER
 namespace Spier
 {
 
+class Camera;
+class GLViewFrustrum;
 class GLDisplayList;
 
 namespace detail
@@ -78,7 +80,7 @@ class SPIER_EXPORT GLRenderContext
 {
 
 public:
-    static GLRenderContext getContext(QGLContext *render_context);
+    static GLRenderContext getContext(QGLWidget &render_widget);
 
     GLRenderContext();
     GLRenderContext(const GLRenderContext &other);
@@ -105,16 +107,28 @@ public:
         return new GLRenderContext(*this);
     }
 
+    QGLWidget& widget();
     const QGLContext* context() const;
+    
+    QSize size() const;
+    
+    const GLViewFrustrum& frustrum() const;
     
     void makeCurrent();
     void doneCurrent();
     
     GLRenderLocker lock();
     
+    void changeView(const Camera &camera);
+    
     void render(const GLDisplayList &display_list);
 
+    void pushState();
+    void popState();
+
     bool isNull() const;
+
+    void deleteAll();
 
     static void deleteList(const GLDisplayList &display_list);
     

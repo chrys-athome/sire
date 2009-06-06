@@ -38,7 +38,25 @@
 
 #include "SireUnits/dimensions.h"
 
+#include "SireBase/property.h"
+
 SIRE_BEGIN_HEADER
+
+namespace Spier
+{
+class Camera;
+class NullCamera;
+class OrbitCamera;
+}
+
+QDataStream& operator<<(QDataStream&, const Spier::Camera&);
+QDataStream& operator>>(QDataStream&, Spier::Camera&);
+
+QDataStream& operator<<(QDataStream&, const Spier::NullCamera&);
+QDataStream& operator>>(QDataStream&, Spier::NullCamera&);
+
+QDataStream& operator<<(QDataStream&, const Spier::OrbitCamera&);
+QDataStream& operator>>(QDataStream&, Spier::OrbitCamera&);
 
 namespace Spier
 {
@@ -49,78 +67,75 @@ using SireMaths::Plane;
 using SireMaths::Sphere;
 
 /** The Camera is the view onto the world!
+
+    This is a basic camera which may be sub-classed to provide
+    more functionality.
  
     @author Christopher Woods
 */
-class SPIER_EXPORT Camera
+class SPIER_EXPORT Camera : public SireBase::Property
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const Camera&);
+friend QDataStream& ::operator>>(QDataStream&, Camera&);
 
 public:
     Camera();
     Camera(const Camera &other);
     
-    ~Camera();
-
-    Camera& operator=(const Camera &other);
-    
-    bool operator==(const Camera &other) const;
-    bool operator!=(const Camera &other) const;
+    virtual ~Camera();
 
     static const char* typeName()
     {
         return "Spier::Camera";
     }
     
-    const char* what() const
-    {
-        return Camera::typeName();
-    }
-    
-    Camera* clone() const
-    {
-        return new Camera(*this);
-    }
+    virtual Camera* clone() const=0;
 
-    const Vector& position() const;
+    const Vector& location() const;
 
-    const Vector& viewVec() const;
-    const Vector& sideVec() const;
-    const Vector& upVec() const;
+    const Vector& viewVector() const;
+    const Vector& sideVector() const;
+    const Vector& upVector() const;
     
     const SireUnits::Dimension::Angle& viewAngle() const;
     float range() const;
 
-    bool look(bool force=false);
+    bool differentView(const Camera &other) const;
 
-    double distance(const Vector &point) const;
-
-    bool contains(const Vector &point) const;
-    bool contains(const Sphere &sphere) const;
-
-    bool viewChanged() const;
-    bool sizeChanged() const;
-    bool needRepaint() const;
+    virtual bool depthCue() const;
     
-    void reset();
+    virtual void reset()=0;
 
-    void zoom(double delta);
-    void spin(const SireUnits::Dimension::Angle &delta);
-    void rotate(const SireUnits::Dimension::Angle &delta, const Vector &axis);    
-    void translate(double dx, double dy);
+    virtual void spin(const SireUnits::Dimension::Angle &delta)=0;
+    virtual void rotate(const SireUnits::Dimension::Angle &delta, const Vector &axis)=0;
+
+    virtual void zoom(double delta)=0;
+    virtual void translate(double dx, double dy)=0;
     
-    void lookAt(const Vector &lookat);
-    
-    void setSize(const QSize &size);
+    virtual void lookAt(const Vector &lookat)=0;
+
+    static const NullCamera& null();
 
 protected:
-    void calculateViewVectors();
+    Camera& operator=(const Camera &other);
+    
+    bool operator==(const Camera &other) const;
+    bool operator!=(const Camera &other) const;
 
+    void resetView();
+
+    void setViewLocation(const Vector &point);
+
+    void translateView(const Vector &delta);
+    void rotateView(const Quaternion &q);
+
+    void setViewAngle(const SireUnits::Dimension::Angle &viewangle);
+    void setViewRange(float range);
+
+private:
     /** The point at which the camera is located */
     Vector loc;
-    
-    /** The point in space that this camera is looking at
-        (this is the point about which the camera view rotates) */
-    Vector lookat;
     
     /** The normalised vector pointing straight ahead */
     Vector viewvec;
@@ -136,6 +151,82 @@ protected:
 
     /** The range of the camera */
     float rnge;
+};
+
+/** This is the null camera that just looks straight ahead */
+class SPIER_EXPORT NullCamera : public SireBase::ConcreteProperty<NullCamera,Camera>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const NullCamera&);
+friend QDataStream& ::operator>>(QDataStream&, NullCamera&);
+
+public:
+    NullCamera();
+    
+    NullCamera(const NullCamera &other);
+    
+    ~NullCamera();
+    
+    NullCamera& operator=(const NullCamera &other);
+    
+    bool operator==(const NullCamera &other) const;
+    bool operator!=(const NullCamera &other) const;
+    
+    static const char* typeName();
+    
+    void reset();
+
+    void spin(const SireUnits::Dimension::Angle &delta);
+    void rotate(const SireUnits::Dimension::Angle &delta, const Vector &axis);
+
+    void zoom(double delta);
+    void translate(double dx, double dy);
+    
+    void lookAt(const Vector &lookat);
+};
+
+/** This is a camera that moves by orbiting a central point.
+
+    @author Christopher Woods
+*/
+class SPIER_EXPORT OrbitCamera : public SireBase::ConcreteProperty<OrbitCamera,Camera>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const OrbitCamera&);
+friend QDataStream& ::operator>>(QDataStream&, OrbitCamera&);
+
+public:
+    OrbitCamera();
+    
+    OrbitCamera(const Vector &lookat);
+    
+    OrbitCamera(const OrbitCamera &other);
+    
+    ~OrbitCamera();
+    
+    OrbitCamera& operator=(const OrbitCamera &other);
+    
+    bool operator==(const OrbitCamera &other) const;
+    bool operator!=(const OrbitCamera &other) const;
+    
+    static const char* typeName();
+    
+    void reset();
+
+    void spin(const SireUnits::Dimension::Angle &delta);
+    void rotate(const SireUnits::Dimension::Angle &delta, const Vector &axis);
+
+    void zoom(double delta);
+    void translate(double dx, double dy);
+    
+    void lookAt(const Vector &lookat);
+
+private:
+    void calculateViewVectors();
+
+    /** The point in space that this camera is looking at
+        (this is the point about which the camera view rotates) */
+    Vector lookat;
     
     /** The x and y offsets of the camera (translation delta) */
     double offsetx,offsety;
@@ -144,24 +235,20 @@ protected:
         point 'lookat' and perpendicular to 'viewvec', to the 
         current camera position */
     double zoomdistance;
-    
-    /** The size of the canvas */
-    QSize sz;
-    
-    /** Enum giving the indicies of the six planes */
-    enum PLANEIDX{ _left=0, _right=1, _bottom=2, _top=3, _near=4, _far=5 };
-    
-    /** The six planes of the view frustrum (in world-space coordinates) */
-    Plane fplanes[6];
-
-    /** Whether or not the view has changed */
-    bool viewchanged;
-    
-    /** Whether or not the size of the canvas has changed */
-    bool sizechanged;
 };
 
+typedef SireBase::PropPtr<Camera> CameraPtr;
+
 }
+
+Q_DECLARE_METATYPE( Spier::NullCamera )
+Q_DECLARE_METATYPE( Spier::OrbitCamera )
+
+SIRE_EXPOSE_CLASS( Spier::Camera )
+SIRE_EXPOSE_CLASS( Spier::NullCamera )
+SIRE_EXPOSE_CLASS( Spier::OrbitCamera )
+
+SIRE_EXPOSE_PROPERTY( Spier::CameraPtr, Spier::Camera )
 
 SIRE_END_HEADER
 

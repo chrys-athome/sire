@@ -26,3 +26,59 @@
   *
 \*********************************************/
 
+#ifndef SPIER_GLSPHERE_H
+#define SPIER_GLSPHERE_H
+
+#include "glmesh.h"
+
+SIRE_BEGIN_HEADER
+
+namespace Spier
+{
+class GLSphere;
+}
+
+QDataStream& operator<<(QDataStream&, const Spier::GLSphere&);
+QDataStream& operator>>(QDataStream&, Spier::GLSphere&);
+
+namespace Spier
+{
+
+class GLSphereRenderFunction 
+        : public SireBase::ConcreteProperty<GLSphereRenderFunction,GLRenderFunction>
+{
+
+};
+
+/** This class holds a sphere */
+class SPIER_EXPORT GLSphere : public SireBase::ConcreteProperty<GLSphere,GLMesh>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const GLSphere&);
+friend QDataStream& ::operator>>(QDataStream&, GLSphere&);
+
+public:
+    GLSphere();
+    
+    GLSphere(const GLSphere &other);
+    
+    ~GLSphere();
+    
+    void render(GLRenderContext &render_context) const;
+    
+private:
+    /** The display lists for different resolution unit spheres */
+    GLDisplayList highres_sphere;
+    GLDisplayList midres_sphere;
+    GLDisplayList lowres_sphere;
+    
+    /** The radius of this sphere - this is so we can glScale the 
+        sphere mesh to the right size */
+    double sphere_radius;
+};
+
+}
+
+SIRE_END_HEADER
+
+#endif

@@ -19,6 +19,7 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
     # Define the files on which moc must be run
     set ( SPIER_MOC_HEADERS
           renderview.h
+          renderscene.h
           spierview.h
         )
 
@@ -43,6 +44,7 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
           glrendercontext.h
           glrenderfunction.h
           glsphere.h
+          glviewfrustrum.h
 
           ${SPIER_MOC_HEADERS}
         )
@@ -64,7 +66,9 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
           glrendercontext.cpp
           glrenderfunction.cpp
           glsphere.cpp
+          glviewfrustrum.cpp
 
+          renderscene.cpp
           renderview.cpp
           spierview.cpp
 

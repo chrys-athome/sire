@@ -31,8 +31,12 @@
 #include <QTimer>
 #include <QImage>
 #include <QTime>
+#include <QCoreApplication>
 
 #include "renderview.h"
+
+#include "SireError/exception.h"
+#include "SireError/printerror.h"
 
 using namespace Spier;
 
@@ -40,27 +44,45 @@ using namespace Spier;
 RenderView::RenderView(QWidget *parent, QGLWidget *share_widget)
            : QGLWidget(parent, share_widget), yval(0)
 {
-    this->setAutoBufferSwap(false);
+    try
+    {
+        //this GL widget controls its own buffer swapping!
+        this->setAutoBufferSwap(false);
 
-    setAutoFillBackground(false);
+        //don't fill the background!
+        this->setAutoFillBackground(false);
 
-    glcanvases.append( GLCanvas() );
-    canvas_images.append( QImage() );
-    canvas_rendertimes.append( 0 );
-    
-    QTimer *timer = new QTimer(this);
-    
-    connect( timer, SIGNAL(timeout()), this, SLOT(animate()) );
-    
-    timer->start(50);
+        render_scenes.append( new RenderScene(this) );
+        
+        scene_to_render = 0;
+
+        QTimer *timer = new QTimer(this);
+        
+        connect( timer, SIGNAL(timeout()), this, SLOT(animate()) );
+        
+        timer->start(50);
+    }
+    catch(const SireError::exception &e)
+    {
+        SireError::printError(e);
+        QCoreApplication::exit(-1);
+    }
 }
 
 /** Destructor */
 RenderView::~RenderView()
 {
-    makeCurrent();
+    //update the render context
+    render_context = GLRenderContext::getContext(*this);
+
+    //lock this context (ensures nothing else is rendering)
+    GLRenderLocker lkr = render_context.lock();
     
-    //clean up display lists...
+    //ensure that this is the context on which OpenGL calls will be made
+    render_context.makeCurrent();
+
+    //delete everything attached to this context
+    render_context.deleteAll();
 }
 
 /** Initialise the openGL view */
@@ -79,71 +101,13 @@ void RenderView::animate()
     
     if (yval > height())
         yval = -20;
-        
+
     this->updateGL();
 }
 
-/** Paint the scene */
-void RenderView::paintGL()
+/** Internal function used to draw the corners */
+void RenderView::drawCorners(QPainter &painter)
 {
-    QTime t;
-
-    if (canvas_images[0].isNull())
-    {
-        t.start();
-        glcanvases[0].edit().render( const_cast<QGLContext*>(this->context()), 
-                                     this->width(), this->height() );
-    
-        canvas_rendertimes[0] = t.elapsed();
-    
-        if (canvas_rendertimes[0] > 50)
-        {
-            //rendering was quite slow - save the output so that
-            //we don't slow down the interface
-            glReadBuffer( GL_BACK );
-    
-            canvas_images[0] = this->grabFrameBuffer();
-        }
-    }
-    else
-    {
-        t.start();
-        QPainter painter;
-        painter.begin(this);
-        painter.drawImage(0, 0, canvas_images[0]);
-        
-        if (t.elapsed() > 2*canvas_rendertimes[0])
-        {
-            //it is taking more than twice as long to recover the
-            //image than it did to render it! It is not worth saving it
-            qDebug() << "Recovering took" << t.elapsed()
-                     << "but drawing took" << canvas_rendertimes[0];
-                     
-            canvas_images[0] = QImage();
-        }
-    }
-    
-    //now draw the overlay
-    QPainter painter;
-    
-    painter.begin(this);
-    painter.setRenderHint(QPainter::Antialiasing);
-
-    QString text = tr("This is the Sire::Spier molecular viewer plugin");
-    QFontMetrics metrics = QFontMetrics(font());
-    int border = qMax(4, metrics.leading());
-
-    QRect rect = metrics.boundingRect(0, 0, width() - 2*border, int(height()*0.125),
-                                      Qt::AlignCenter | Qt::TextWordWrap, text);
-    painter.setRenderHint(QPainter::TextAntialiasing);
-    painter.setPen(Qt::white);
-    painter.fillRect(QRect(0, yval, width(), rect.height() + 2*border),
-                       QColor(0, 0, 0, 60));
-    painter.drawText((width() - rect.width())/2, yval + border,
-                       rect.width(), rect.height(),
-                       Qt::AlignCenter | Qt::TextWordWrap, text);
-
-
     const int corner_size = 25;
     const int corner_depth = 3;
 
@@ -193,6 +157,73 @@ void RenderView::paintGL()
     painter.setBrush( QColor(255,255,255,255) );
     
     painter.drawPath(path);
-    
-    this->swapBuffers();
+}
+
+/** Internal function used to draw the user interface */
+void RenderView::drawUI(QPainter &painter)
+{
+    //now draw the overlay
+    QString text = tr("This is the Sire::Spier molecular viewer plugin");
+    QFontMetrics metrics = QFontMetrics(font());
+    int border = qMax(4, metrics.leading());
+
+    QRect rect = metrics.boundingRect(0, 0, width() - 2*border, int(height()*0.125),
+                                      Qt::AlignCenter | Qt::TextWordWrap, text);
+    painter.setRenderHint(QPainter::TextAntialiasing);
+    painter.setPen(Qt::white);
+    painter.fillRect(QRect(0, yval, width(), rect.height() + 2*border),
+                       QColor(0, 0, 0, 60));
+    painter.drawText((width() - rect.width())/2, yval + border,
+                       rect.width(), rect.height(),
+                       Qt::AlignCenter | Qt::TextWordWrap, text);
+}
+
+/** Paint the scene */
+void RenderView::paintGL()
+{
+    try
+    {
+
+        if (not this->isVisible())
+            return;
+
+        if (not this->context()->isValid())
+            return;
+
+        //update the render context
+        render_context = GLRenderContext::getContext(*this);
+
+        //lock this context (ensures nothing else is rendering)
+        GLRenderLocker lkr = render_context.lock();
+        
+        //ensure that this is the context on which OpenGL calls will be made
+        render_context.makeCurrent();
+
+        //render the desired scene
+        if (scene_to_render >= 0 and scene_to_render < render_scenes.count())
+        {
+            render_scenes[scene_to_render]->render(render_context);
+        }
+        
+        //now draw the UI and the corners
+        render_context.pushState();
+        {
+            QPainter painter;
+            painter.begin(this);
+            painter.setRenderHint(QPainter::Antialiasing);
+
+            this->drawUI(painter);
+            this->drawCorners(painter);
+        }
+        render_context.popState();
+        
+        this->swapBuffers();
+        
+        render_context.doneCurrent();
+    }
+    catch(const SireError::exception &e)
+    {
+        SireError::printError(e);
+        QCoreApplication::exit(-1);
+    }
 }
