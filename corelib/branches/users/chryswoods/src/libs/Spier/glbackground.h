@@ -29,11 +29,21 @@
 #ifndef SPIER_GLBACKGROUND_H
 #define SPIER_GLBACKGROUND_H
 
-#include <QSharedData>
-
-#include "gldisplaylist.h"
+#include "glrenderfunction.h"
 
 SIRE_BEGIN_HEADER
+
+namespace Spier
+{
+class GLBackground;
+class GradientBackground;
+}
+
+QDataStream& operator<<(QDataStream&, const Spier::GLBackground&);
+QDataStream& operator>>(QDataStream&, Spier::GLBackground&);
+
+QDataStream& operator<<(QDataStream&, const Spier::GradientBackground&);
+QDataStream& operator>>(QDataStream&, Spier::GradientBackground&);
 
 namespace Spier
 {
@@ -43,8 +53,12 @@ namespace Spier
     
     @author Christopher Woods
 */
-class SPIER_EXPORT GLBackground : public QSharedData
+class SPIER_EXPORT GLBackground : public GLRenderFunction
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const GLBackground&);
+friend QDataStream& ::operator>>(QDataStream&, GLBackground&);
+
 public:
     GLBackground();
     GLBackground(const GLBackground &other);
@@ -56,16 +70,17 @@ public:
         return "Spier::GLBackground";
     }
     
-    virtual const char* what() const=0;
-    
     virtual GLBackground* clone() const=0;
-    
-    virtual void render(const QGLContext *context)=0;
 };
 
 /** This is a simple gradient background */
-class SPIER_EXPORT GradientBackground : public GLBackground
+class SPIER_EXPORT GradientBackground 
+            : public SireBase::ConcreteProperty<GradientBackground,GLBackground>
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const GradientBackground&);
+friend QDataStream& ::operator>>(QDataStream&, GradientBackground&);
+
 public:
     GradientBackground();
     GradientBackground(const GradientBackground &other);
@@ -77,25 +92,22 @@ public:
     bool operator==(const GradientBackground &other) const;
     bool operator!=(const GradientBackground &other) const;
     
-    static const char* typeName()
-    {
-        return "Spier::GradientBackground";
-    }
-    
-    const char* what() const
-    {
-        return GradientBackground::typeName();
-    }
+    static const char* typeName();
     
     GradientBackground* clone() const
     {
         return new GradientBackground(*this);
     }
     
-    void render(const QGLContext *render_context);
+    void operator()() const;
 };
 
 }
+
+Q_DECLARE_METATYPE( Spier::GradientBackground )
+
+SIRE_EXPOSE_CLASS( Spier::GLBackground )
+SIRE_EXPOSE_CLASS( Spier::GradientBackground )
 
 SIRE_END_HEADER
 

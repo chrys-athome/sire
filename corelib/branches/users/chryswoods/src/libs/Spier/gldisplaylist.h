@@ -29,38 +29,41 @@
 #ifndef SPIER_GLDISPLAYLIST_H
 #define SPIER_GLDISPLAYLIST_H
 
-#include <QGLWidget>
-#include <QGLContext>
-#include <QHash>
-#include <QList>
-
 #include <boost/shared_ptr.hpp>
-#include <boost/noncopyable.hpp>
 
-#include "sireglobal.h"
+#include "glrenderfunction.h"
 
 SIRE_BEGIN_HEADER
 
 namespace Spier
 {
-
 class GLDisplayList;
-class GLDisplayListRecorder;
-
-namespace detail
-{
-class GLDisplayListData;
 }
 
-/** This class holds an OpenGL display list. This display list
-    will have been compiled for a specific OpenGL context
+QDataStream& operator<<(QDataStream&, const Spier::GLDisplayList&);
+QDataStream& operator>>(QDataStream&, Spier::GLDisplayList&);
+
+namespace Spier
+{
+
+class GLRenderContext;
+
+/** This class holds an OpenGL display list. This display
+    list is used to save the OpenGL commands contained
+    in the passed GLRenderFunction
     
     @author Christopher Woods
 */
 class SPIER_EXPORT GLDisplayList
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const GLDisplayList&);
+friend QDataStream& ::operator>>(QDataStream&, GLDisplayList&);
+
 public:
     GLDisplayList();
+    GLDisplayList(const GLRenderFunction &renderfunc);
+    
     GLDisplayList(const GLDisplayList &other);
     
     ~GLDisplayList();
@@ -69,80 +72,37 @@ public:
     
     bool operator==(const GLDisplayList &other) const;
     bool operator!=(const GLDisplayList &other) const;
-    
-    bool play(const QGLContext *playing_context);
-    
-    void startRecording(const QGLContext *recording_context);
-    void stopRecording();
 
+    static const char* typeName();
+    
+    const char* what() const
+    {
+        return GLDisplayList::typeName();
+    }
+    
+    GLDisplayList* clone() const
+    {
+        return new GLDisplayList(*this);
+    }
+    
     bool isEmpty() const;
 
-    bool isValidFor(const QGLContext *render_context) const;
+    const GLRenderFunction& renderFunction() const;
     
-    const QGLContext* renderContext() const;
+    void render(GLRenderContext &render_contex) const;
 
 private:
-    boost::shared_ptr<detail::GLDisplayListData> d;
-};
-
-/** This simple class is used to ensure that recording stops
-    if an error occurs (RAII)
-    
-    @author Christopher Woods
-*/
-class SPIER_EXPORT GLDisplayListRecorder : public boost::noncopyable
-{
-public:
-    GLDisplayListRecorder();
-    GLDisplayListRecorder(GLDisplayList &list, const QGLContext *context);
-    
-    ~GLDisplayListRecorder();
-    
-private:
-    /** The GLDisplayList being recorded */
-    GLDisplayList recording_list;
-};
-
-/** This is the registry of all GLDisplayLists for a particular
-    QGLContext OpenGL rendering context
-    
-    @author Christopher Woods
-*/
-class SPIER_EXPORT GLDisplayListRegistry
-{
-public:
-    GLDisplayListRegistry();
-    ~GLDisplayListRegistry();
-    
-    static GLDisplayList getDisplayList(const QGLContext *render_context,
-                                        const void *key);
-    
-    static void saveDisplayList(const QGLContext *render_context,
-                                const void *key,
-                                const GLDisplayList &display_list);
-
-    static void copyDisplayList(const void *old_key, const void *new_key);
-
-    static void clearDisplayLists(const void *key);
-    static void clearDisplayLists(const QGLContext *render_context);
-
-private:
-    void clearLists(const void *key);
-    void copyList(const void *old_key, const void *new_key);
-    
-    /** The global set of registries for each render context */
-    static boost::shared_ptr< 
-                    QHash<const QGLContext*, GLDisplayListRegistry> > registries;
-    
-    /** All of the display lists for this context, indexed by 
-        the pointer of the object that uses the display list */
-    QHash<const void*, GLDisplayList> display_lists;
-    
-    /** The set of all display lists to delete */
-    QList<GLDisplayList> lists_to_delete;
+    /** Shared global pointer to the render function 
+         - this is global so that only one display list is 
+           created for the same function */
+    GlobalGLRenderFuncPtr render_func;
 };
 
 }
+
+Q_DECLARE_METATYPE( Spier::GLDisplayList )
+
+SIRE_EXPOSE_CLASS( Spier::GLDisplayList )
 
 SIRE_END_HEADER
 

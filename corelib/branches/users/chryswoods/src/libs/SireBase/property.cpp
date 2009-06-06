@@ -388,6 +388,12 @@ bool PropPtrBase::operator!=(const Property &other) const
            not ptr->equals(other);
 }
 
+/** Is this a unique pointer to the object? */
+bool PropPtrBase::unique() const
+{
+    return ptr.unique();
+}
+
 /** Detach this pointer from shared storage */
 void PropPtrBase::detach()
 {
@@ -427,6 +433,126 @@ Property& PropPtrBase::write()
     \throw SireError::invalid_cast
 */
 void PropPtrBase::throwCastingError(const char *got_type, const char *want_type)
+{
+    throw SireError::invalid_cast( QObject::tr(
+        "Cannot cast from a %1 into a %2.")
+            .arg(got_type).arg(want_type), CODELOC );
+}
+
+///////////////
+/////////////// Implementation of GlobalPropPtrBase
+///////////////
+
+static const RegisterMetaType<GlobalPropPtrBase> r_globalpropptr( MAGIC_ONLY,
+                                                      "SireBase::GlobalPropPtrBase" );
+
+/** Serialise to a binary datastream */
+QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, 
+                                        const GlobalPropPtrBase &propptr)
+{
+    writeHeader(ds, r_globalpropptr, 1);
+
+    SharedDataStream sds(ds);
+
+    sds << propptr.ptr;
+
+    return ds;
+}
+
+/** Deserialise from a binary datastream */
+QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, GlobalPropPtrBase &propptr)
+{
+    VersionID v = readHeader(ds, r_globalpropptr);
+
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+
+        sds >> propptr.ptr;
+    }
+    else
+        throw version_error(v, "1", r_globalpropptr, CODELOC);
+
+    return ds;
+}
+
+/** Construct to hold a pointer to 'property' */
+GlobalPropPtrBase::GlobalPropPtrBase(const Property &property)
+                  : ptr(property)
+{}
+
+/** Construct to hold a pointer to 'property' - this takes over
+    ownership of the pointer */
+GlobalPropPtrBase::GlobalPropPtrBase(Property *property)
+                  : ptr(property)
+{}
+
+/** Copy constructor */
+GlobalPropPtrBase::GlobalPropPtrBase(const GlobalPropPtrBase &other)
+                  : ptr(other.ptr)
+{}
+
+/** Destructor */
+GlobalPropPtrBase::~GlobalPropPtrBase()
+{}
+
+/** Copy assignment operator */
+GlobalPropPtrBase& GlobalPropPtrBase::operator=(const GlobalPropPtrBase &other)
+{
+    ptr = other.ptr;
+    return *this;
+}
+
+/** Comparison operator */
+bool GlobalPropPtrBase::operator==(const GlobalPropPtrBase &other) const
+{
+    return ptr.constData() == other.ptr.constData();
+}
+
+/** Comparison operator */
+bool GlobalPropPtrBase::operator!=(const GlobalPropPtrBase &other) const
+{
+    return ptr.constData() != other.ptr.constData();
+}
+
+/** Comparison operator */
+bool GlobalPropPtrBase::operator==(const Property &other) const
+{
+    return ptr.constData() == &other or
+           ptr->equals(other);
+}
+
+/** Comparison operator */
+bool GlobalPropPtrBase::operator!=(const Property &other) const
+{
+    return ptr.constData() != &other and
+           not ptr->equals(other);
+}
+
+/** Is this a unique pointer to the object? */
+bool GlobalPropPtrBase::unique() const
+{
+    return ptr.unique();
+}
+
+/** Allow automatic casting to a Property */
+GlobalPropPtrBase::operator const Property&() const
+{
+    return *ptr;
+}
+
+/** Return a read-only reference to the object */
+const Property& GlobalPropPtrBase::read() const
+{
+    BOOST_ASSERT( ptr.constData() != 0 );
+    return *ptr;
+}
+
+/** Throw an error as we can't cast 'got_type' into 'want_type'
+
+    \throw SireError::invalid_cast
+*/
+void GlobalPropPtrBase::throwCastingError(const char *got_type, const char *want_type)
 {
     throw SireError::invalid_cast( QObject::tr(
         "Cannot cast from a %1 into a %2.")
@@ -528,4 +654,93 @@ bool PropPtr<Property>::isNull() const
 PropPtr<Property> PropPtr<Property>::null()
 {
     return PropPtr<Property>();
+}
+
+////////
+//////// Full instantiation of GlobalPropPtr<Property>
+////////
+
+GlobalPropPtr<Property>::GlobalPropPtr() : GlobalPropPtrBase( Property::null() )
+{}
+
+GlobalPropPtr<Property>::GlobalPropPtr(const Property &property)
+                        : GlobalPropPtrBase(property)
+{}
+
+GlobalPropPtr<Property>::GlobalPropPtr(Property *property)
+                        : GlobalPropPtrBase(property)
+{}
+
+GlobalPropPtr<Property>::GlobalPropPtr(const GlobalPropPtrBase &other)
+                        : GlobalPropPtrBase(other)
+{}
+
+GlobalPropPtr<Property>::GlobalPropPtr(const GlobalPropPtr<Property> &other)
+                        : GlobalPropPtrBase(other)
+{}
+
+GlobalPropPtr<Property>::~GlobalPropPtr()
+{}
+
+GlobalPropPtr<Property>& GlobalPropPtr<Property>::operator=(
+                                            const GlobalPropPtr<Property> &other)
+{
+    GlobalPropPtrBase::operator=(other);
+    return *this;
+}
+
+GlobalPropPtr<Property>& GlobalPropPtr<Property>::operator=(const Property &property)
+{
+    return this->operator=( GlobalPropPtr<Property>(property) );
+}
+
+GlobalPropPtr<Property>& GlobalPropPtr<Property>::operator=(Property *property)
+{
+    return this->operator=( GlobalPropPtr<Property>(property) );
+}
+
+GlobalPropPtr<Property>& GlobalPropPtr<Property>::operator=(
+                                                   const GlobalPropPtrBase &property)
+{
+    return this->operator=( GlobalPropPtr<Property>(property) );
+}
+
+const Property* GlobalPropPtr<Property>::operator->() const
+{
+    return &(GlobalPropPtrBase::read());
+}
+
+const Property& GlobalPropPtr<Property>::operator*() const
+{
+    return GlobalPropPtrBase::read();
+}
+
+const Property& GlobalPropPtr<Property>::read() const
+{
+    return GlobalPropPtrBase::read();
+}
+
+const Property* GlobalPropPtr<Property>::data() const
+{
+    return &(GlobalPropPtrBase::read());
+}
+
+const Property* GlobalPropPtr<Property>::constData() const
+{
+    return &(GlobalPropPtrBase::read());
+}
+
+GlobalPropPtr<Property>::operator const Property&() const
+{
+    return GlobalPropPtrBase::read();
+}
+
+bool GlobalPropPtr<Property>::isNull() const
+{
+    return GlobalPropPtrBase::operator==( Property::null() );
+}
+
+GlobalPropPtr<Property> GlobalPropPtr<Property>::null()
+{
+    return GlobalPropPtr<Property>();
 }

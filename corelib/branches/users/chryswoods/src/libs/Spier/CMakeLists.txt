@@ -37,8 +37,11 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
           glbackground.h
           glcanvas.h
           gldisplaylist.h
+          glinitstate.h
           glmatrix.h
           glmesh.h
+          glrendercontext.h
+          glrenderfunction.h
           glsphere.h
 
           ${SPIER_MOC_HEADERS}
@@ -55,8 +58,11 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
           glbackground.cpp
           glcanvas.cpp
           gldisplaylist.cpp
+          glinitstate.cpp
           glmatrix.cpp
           glmesh.cpp
+          glrendercontext.cpp
+          glrenderfunction.cpp
           glsphere.cpp
 
           renderview.cpp

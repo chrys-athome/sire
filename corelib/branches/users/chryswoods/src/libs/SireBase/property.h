@@ -30,6 +30,7 @@
 #define SIREBASE_PROPERTY_H
 
 #include "sharedpolypointer.hpp"
+#include "globalsharedpointer.hpp"
 
 #include <QVariant>
 #include <QSharedData>
@@ -44,9 +45,13 @@ class VariantProperty;
 class NullProperty;
 
 class PropPtrBase;
+class GlobalPropPtrBase;
 
 template<class T>
 class PropPtr;
+
+template<class T>
+class GlobalPropPtr;
 
 }
 
@@ -62,10 +67,18 @@ QDataStream& operator>>(QDataStream&, SireBase::NullProperty&);
 QDataStream& operator<<(QDataStream&, const SireBase::PropPtrBase&);
 QDataStream& operator>>(QDataStream&, SireBase::PropPtrBase&);
 
+QDataStream& operator<<(QDataStream&, const SireBase::GlobalPropPtrBase&);
+QDataStream& operator>>(QDataStream&, SireBase::GlobalPropPtrBase&);
+
 template<class T>
 QDataStream& operator<<(QDataStream&, const SireBase::PropPtr<T>&);
 template<class T>
 QDataStream& operator>>(QDataStream&, SireBase::PropPtr<T>&);
+
+template<class T>
+QDataStream& operator<<(QDataStream&, const SireBase::GlobalPropPtr<T>&);
+template<class T>
+QDataStream& operator>>(QDataStream&, SireBase::GlobalPropPtr<T>&);
 
 class QMutex;
 
@@ -384,6 +397,8 @@ public:
 
     void detach();
 
+    bool unique() const;
+
     operator const Property&() const;
 
 protected:
@@ -404,6 +419,48 @@ protected:
 private:
     /** Shared pointer to the actual property */
     SharedPolyPointer<Property> ptr;
+};
+
+/** This is base class of the global polymorphic pointer holder for the entire
+    Property class hierarchy. This can hold implicitly 
+    shared pointers to any property class.
+
+    @author Christopher Woods
+*/
+class SIREBASE_EXPORT GlobalPropPtrBase
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const GlobalPropPtrBase&);
+friend QDataStream& ::operator>>(QDataStream&, GlobalPropPtrBase&);
+
+public:
+    ~GlobalPropPtrBase();
+
+    bool operator==(const Property &property) const;
+    bool operator!=(const Property &property) const;
+
+    bool operator==(const GlobalPropPtrBase &other) const;
+    bool operator!=(const GlobalPropPtrBase &other) const;
+
+    bool unique() const;
+
+    operator const Property&() const;
+
+protected:
+    GlobalPropPtrBase(const Property &property);
+    GlobalPropPtrBase(Property *property);
+    
+    GlobalPropPtrBase(const GlobalPropPtrBase &other);
+
+    GlobalPropPtrBase& operator=(const GlobalPropPtrBase &other);
+
+    const Property& read() const;
+
+    static void throwCastingError(const char *got_type, const char *want_type);
+
+private:
+    /** Global shared pointer to the actual property */
+    GlobalSharedPointer<Property> ptr;
 };
 
 /** This is the specialised pointer that is used to hold a hierarchy
@@ -460,6 +517,64 @@ public:
 protected:
     void assertSane() const;
 };
+
+/** This is the specialised global pointer that is used to hold a hierarchy
+    of properties that are derived from type 'T'
+    
+    @author Christopher Woods
+*/
+template<class T>
+class SIREBASE_EXPORT GlobalPropPtr : public GlobalPropPtrBase
+{
+
+friend QDataStream& ::operator<<<>(QDataStream&, const GlobalPropPtr<T>&);
+friend QDataStream& ::operator>><>(QDataStream&, GlobalPropPtr<T>&);
+
+public:
+    GlobalPropPtr();
+
+    GlobalPropPtr(const T &obj);
+    GlobalPropPtr(T *obj);
+    
+    GlobalPropPtr(const Property &property);
+
+    GlobalPropPtr(const GlobalPropPtrBase &other);
+
+    GlobalPropPtr(const GlobalPropPtr<T> &other);
+    
+    ~GlobalPropPtr();
+    
+    GlobalPropPtr<T>& operator=(const T &obj);
+    GlobalPropPtr<T>& operator=(T *obj);
+    
+    GlobalPropPtr<T>& operator=(const Property &property);
+
+    GlobalPropPtr<T>& operator=(const GlobalPropPtr<T> &other);
+    GlobalPropPtr<T>& operator=(const GlobalPropPtrBase &property);
+
+    const T* operator->() const;
+    const T& operator*() const;
+    
+    const T& read() const;
+
+    const T* data() const;
+    const T* constData() const;
+    
+    operator const T&() const;
+
+    bool isNull() const;
+
+    static GlobalPropPtr<T> null();
+
+protected:
+    void assertSane() const;
+};
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+///////
+/////// Implementation of PropPtr<T>
+///////
 
 /** Assert that this is sane - this is to make sure that the 
     Property really is derived from 'T' */
@@ -655,6 +770,188 @@ PropPtr<T>::operator const T&() const
     return this->read();
 }
 
+///////
+/////// Implementation of GlobalPropPtr<T>
+///////
+
+/** Assert that this is sane - this is to make sure that the 
+    Property really is derived from 'T' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void GlobalPropPtr<T>::assertSane() const
+{
+    const Property &p = GlobalPropPtrBase::read();
+
+    if (not p.isA<T>())
+    {
+        GlobalPropPtrBase::throwCastingError( p.what(), T::typeName() );
+    }
+}
+
+/** Return the null object */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+GlobalPropPtr<T> GlobalPropPtr<T>::null()
+{
+    return GlobalPropPtr<T>( T::null() );
+}
+
+/** Return whether this is the null object */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool GlobalPropPtr<T>::isNull() const
+{
+    return GlobalPropPtrBase::operator==( T::null() );
+}
+
+/** Null constructor */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+GlobalPropPtr<T>::GlobalPropPtr() : GlobalPropPtrBase( GlobalPropPtr<T>::null() )
+{}
+
+/** Construct from the object 'obj' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+GlobalPropPtr<T>::GlobalPropPtr(const T &obj) : GlobalPropPtrBase(obj)
+{}
+
+/** Construct from a pointer to the passed object 'obj' - this
+    takes over ownership of the pointer and can delete it at any time */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+GlobalPropPtr<T>::GlobalPropPtr(T *obj) : GlobalPropPtrBase(obj)
+{}
+
+/** Construct from the passed property
+
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+GlobalPropPtr<T>::GlobalPropPtr(const Property &property) : GlobalPropPtrBase(property)
+{
+    this->assertSane();
+}
+
+/** Construct from a pointer of another type */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+GlobalPropPtr<T>::GlobalPropPtr(const GlobalPropPtrBase &other) : GlobalPropPtrBase(other)
+{
+    this->assertSane();
+}
+
+/** Copy constructor */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+GlobalPropPtr<T>::GlobalPropPtr(const GlobalPropPtr<T> &other) : GlobalPropPtrBase(other)
+{}
+
+/** Destructor */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+GlobalPropPtr<T>::~GlobalPropPtr()
+{}
+
+/** Copy assignment operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+GlobalPropPtr<T>& GlobalPropPtr<T>::operator=(const GlobalPropPtr<T> &other)
+{
+    GlobalPropPtrBase::operator=(other);
+    return *this;
+}
+
+/** Create a pointer that points to the object 'obj' (or a copy, if this
+    object is on the stack) */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+GlobalPropPtr<T>& GlobalPropPtr<T>::operator=(const T &obj)
+{
+    return this->operator=( GlobalPropPtr<T>(obj) );
+}
+
+/** Create a pointer that points to the object 'obj' - this takes
+    over ownership of 'obj' and can delete it at any time */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+GlobalPropPtr<T>& GlobalPropPtr<T>::operator=(T *obj)
+{
+    return this->operator=( GlobalPropPtr<T>(obj) );
+}
+
+/** Construct from the passed property
+
+    \throw SireError::invalid_cast
+*/
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+GlobalPropPtr<T>& GlobalPropPtr<T>::operator=(const Property &property)
+{
+    return this->operator=( GlobalPropPtr<T>(property) );
+}
+
+/** Construct from the passed pointer to a property */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+GlobalPropPtr<T>& GlobalPropPtr<T>::operator=(const GlobalPropPtrBase &property)
+{
+    return this->operator=( GlobalPropPtr<T>(property) );
+}
+
+/** Return a reference to the object */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const T& GlobalPropPtr<T>::read() const
+{
+    //This is only safe as everything in this class ensures that 
+    //the base pointer really is a pointer to the derived type 'T' */
+    return static_cast<const T&>( GlobalPropPtrBase::read() );
+}
+
+/** Return the raw pointer to the object */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const T* GlobalPropPtr<T>::operator->() const
+{
+    return &(this->read());
+}
+
+/** Return a reference to the object */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const T& GlobalPropPtr<T>::operator*() const
+{
+    return this->read();
+}
+
+/** Return the raw pointer to the object */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const T* GlobalPropPtr<T>::data() const
+{
+    return &(this->read());
+}
+
+/** Return the raw pointer to the object */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const T* GlobalPropPtr<T>::constData() const
+{
+    return &(this->read());
+}
+
+/** Allow automatic casting to a T() */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+GlobalPropPtr<T>::operator const T&() const
+{
+    return this->read();
+}
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
+
 /** This is the specialised pointer that is used to hold a basic
     Property object
     
@@ -702,10 +999,59 @@ public:
     {}
 };
 
+/** This is the specialised global pointer that is used to hold a basic
+    Property object
+    
+    @author Christopher Woods
+*/
+template<>
+class SIREBASE_EXPORT GlobalPropPtr<Property> : public GlobalPropPtrBase
+{
+public:
+    GlobalPropPtr();
+
+    GlobalPropPtr(const Property &property);
+    GlobalPropPtr(Property *property);
+
+    GlobalPropPtr(const GlobalPropPtrBase &other);
+
+    GlobalPropPtr(const GlobalPropPtr<Property> &other);
+    
+    ~GlobalPropPtr();
+    
+    GlobalPropPtr<Property>& operator=(const Property &property);
+    GlobalPropPtr<Property>& operator=(Property *property);
+
+    GlobalPropPtr<Property>& operator=(const GlobalPropPtr<Property> &other);
+    GlobalPropPtr<Property>& operator=(const GlobalPropPtrBase &property);
+
+    const Property* operator->() const;
+    const Property& operator*() const;
+    
+    const Property& read() const;
+
+    const Property* data() const;
+    const Property* constData() const;
+    
+    operator const Property&() const;
+
+    bool isNull() const;
+
+    static GlobalPropPtr<Property> null();
+
+    void assertSane() const
+    {}
+};
+
 /** Create the type to hold a pointer to a generic Property */
 typedef PropPtr<Property> PropertyPtr;
 
+/** Create the type to hold a global pointer to a generic Property */
+typedef GlobalPropPtr<Property> GlobalPropertyPtr;
+
 } // end of namespace SireBase
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 /** Serialise a property pointer to a binary datastream */
 template<class T>
@@ -731,6 +1077,33 @@ QDataStream& operator>>(QDataStream &ds, SireBase::PropPtr<T> &prop)
     
     return ds;
 }
+
+/** Serialise a property pointer to a binary datastream */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator<<(QDataStream &ds, const SireBase::GlobalPropPtr<T> &prop)
+{
+    ds << static_cast<const SireBase::GlobalPropPtrBase&>(prop);
+    return ds;
+}
+
+/** Read a property pointer from a binary datastream */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QDataStream& operator>>(QDataStream &ds, SireBase::GlobalPropPtr<T> &prop)
+{
+    SireBase::GlobalPropPtr<T> ptr;
+    
+    ds >> static_cast<SireBase::GlobalPropPtrBase&>(ptr);
+    
+    ptr.assertSane();
+    
+    prop = ptr;
+    
+    return ds;
+}
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 Q_DECLARE_METATYPE(SireBase::NullProperty);
 Q_DECLARE_METATYPE(SireBase::VariantProperty);

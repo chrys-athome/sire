@@ -132,7 +132,7 @@ public:
     virtual SireUnits::Dimension::MolarEnergy 
                             kineticEnergy(const MoleculeView &molview) const=0;
     
-    static NullIntegratorWorkspace& null();
+    static const NullIntegratorWorkspace& null();
 
 protected:
     IntegratorWorkspace& operator=(const IntegratorWorkspace &other);
@@ -213,7 +213,7 @@ public:
     
     SireUnits::Dimension::MolarEnergy kineticEnergy() const;
     SireUnits::Dimension::MolarEnergy kineticEnergy(const MoleculeView &molview) const;
-    
+
     QHash<MolNum,AtomForces> forces() const;
     QHash<MolNum,AtomVelocities> velocities() const;
     QHash<MolNum,AtomMasses> masses() const;
@@ -238,7 +238,8 @@ public:
                     const VelocityGenerator &velgen,
                     const PropertyMap &map = PropertyMap());
 
-    void updateSystem(System &system, const Symbol &nrg_component);
+    void updateSystem(System &system, const Symbol &nrg_component,
+                      const PropertyMap &map = PropertyMap());
 
 private:
     void assertValidIndex(int i) const;

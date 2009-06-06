@@ -31,13 +31,22 @@
 
 #include <QSharedData>
 
-#include "SireBase/sharedpolypointer.hpp"
-
-#include "glbackground.h"
 #include "gldisplaylist.h"
+#include "glrendercontext.h"
+
+#include "SireBase/property.h"
+
 //#include "camera.h"
 
 SIRE_BEGIN_HEADER
+
+namespace Spier
+{
+class GLCanvas;
+}
+
+QDataStream& operator<<(QDataStream&, const Spier::GLCanvas&);
+QDataStream& operator>>(QDataStream&, Spier::GLCanvas&);
 
 namespace Spier
 {
@@ -49,43 +58,70 @@ namespace Spier
  
     @author Christopher Woods
 */
-class SPIER_EXPORT GLCanvas : public QSharedData
+class SPIER_EXPORT GLCanvas
+            : public SireBase::ConcreteProperty<GLCanvas,SireBase::Property>
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const GLCanvas&);
+friend QDataStream& ::operator>>(QDataStream&, GLCanvas&);
+
 public:
     GLCanvas();
     GLCanvas(const GLCanvas &other);
 
-    ~GLCanvas();
+    virtual ~GLCanvas();
 
     GLCanvas& operator=(const GLCanvas &other);
     
     bool operator==(const GLCanvas &other) const;
     bool operator!=(const GLCanvas &other) const;
 
-    void render(const QGLContext *render_context, int w, int h);
+    static const char* typeName();
+    
+    virtual GLCanvas* clone() const
+    {
+        return new GLCanvas(*this);
+    }
+
+    void render(QGLContext *render_context, int w, int h);
+    void renderSelector(QGLContext *render_context, int w, int h);
 
 protected:
     void resize(int w, int h);
-    
-    void initialise(const QGLContext *render_context);
 
     void clearError();
     void checkError(const QString &codeloc);
 
+    /** The current openGL rendering context */
+    GLRenderContext render_context;
+    
+    /** The display list containing the commands to set up 
+        the scene for normal rendering */
+    GLDisplayList render_state;
+
+    /** The display list containing the commands to set up
+        the scene for selector rendering */
+    GLDisplayList selector_state;
+
     /** The background of this canvas */
-    SireBase::SharedPolyPointer<GLBackground> bg;
+    GLDisplayList bg;
     
     /** The camera for this scene */
     //SireBase::SharedPolyPointer<Camera> cam;
     
-    /** The display list containing everything needed to initialise the state */
-    GLDisplayList init_state;
-    
     /** The current height and width of this canvas */
-    int current_w, current_h;
+    qint32 current_w, current_h;
 };
 
+typedef SireBase::PropPtr<GLCanvas> GLCanvasPtr;
+
 }
+
+Q_DECLARE_METATYPE( Spier::GLCanvas )
+
+SIRE_EXPOSE_CLASS( Spier::GLCanvas )
+
+SIRE_EXPOSE_PROPERTY( Spier::GLCanvasPtr, Spier::GLCanvas )
 
 SIRE_END_HEADER
 

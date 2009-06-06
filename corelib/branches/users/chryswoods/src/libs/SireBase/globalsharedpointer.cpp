@@ -26,54 +26,32 @@
   *
 \*********************************************/
 
-#ifndef SPIER_RENDERVIEW_H
-#define SPIER_RENDERVIEW_H
+#include <QHash>
 
-#include <QGLWidget>
-#include <QList>
+#include "globalsharedpointer.hpp"
 
-#include "glcanvas.h"
+using namespace SireBase;
 
-SIRE_BEGIN_HEADER
+Q_GLOBAL_STATIC( QMutex, globalPointerMutex );
+ 
+/** The registry of all global shared pointers */
+static QHash< QString,QSet<const void*> > *global_pointers(0);
 
-namespace Spier
+GlobalSharedPointerBase::GlobalSharedPointerBase()
+{}
+
+GlobalSharedPointerBase::~GlobalSharedPointerBase()
+{}
+
+QMutex* GlobalSharedPointerBase::registryMutex()
 {
-
-/** This class provides a view in which a 3D scene may be rendered
-
-    @author Christopher Woods
-*/
-class SPIER_EXPORT RenderView : public QGLWidget
-{
-    Q_OBJECT
-    
-public:
-    RenderView(QWidget *parent=0, QGLWidget *share_widget=0);
-    ~RenderView();
-
-protected:
-    void initializeGL();
-    void resizeGL(int w, int h);
-    void paintGL();
-
-protected slots:
-    void animate();
-
-private:
-    /** The set of GLCanvas objects that can be rendered on this widget */
-    QList<GLCanvasPtr> glcanvases;
-    
-    /** The last scene rendered on each canvas */
-    QList<QImage> canvas_images;
-    
-    /** How long did each frame take to render? */
-    QList<int> canvas_rendertimes;
-    
-    int yval;
-};
-
+    return globalPointerMutex();
 }
 
-SIRE_END_HEADER
-
-#endif
+QSet<const void*>& GlobalSharedPointerBase::getRegistry(const char *typname)
+{
+    if (not global_pointers)
+        global_pointers = new QHash< QString,QSet<const void*> >();
+        
+    return (*global_pointers)[ QLatin1String(typname) ];
+}

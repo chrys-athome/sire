@@ -195,7 +195,7 @@ const ForceTable& IntegratorWorkspace::forceTable() const
 Q_GLOBAL_STATIC( NullIntegratorWorkspace, nullIntegratorWorkspace );
 
 /** Return the global null workspace */
-NullIntegratorWorkspace& IntegratorWorkspace::null()
+const NullIntegratorWorkspace& IntegratorWorkspace::null()
 {
     return *(nullIntegratorWorkspace());
 }
@@ -580,14 +580,77 @@ void AtomicVelocityWorkspace::setVelocities(int i, const QVector<Vector> &new_ve
     vels_array.data()[i] = new_velocities;
 }
 
-
+/** Initialise this workspace from the passed system, using the specified
+    energy component represented by 'nrg_component' to calculate the forces,
+    the passed velocity generator to generate any missing velocities,
+    and the (optional) property map to obtain the names of properties
+    that are necessary for this workspace 
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+    \throw SireError::incompatible_error    
+*/
 void AtomicVelocityWorkspace::updateFrom(System &system, const Symbol &nrg_component,
                                          const VelocityGenerator &velgen,
                                          const PropertyMap &map)
-{}
+{
+    
+}
 
-void AtomicVelocityWorkspace::updateSystem(System &system, const Symbol &nrg_component)
-{}
+/** Update the system with the new coordinates - this also recalculates 
+    the force using the energy component represented by 'nrg_component' */
+void AtomicVelocityWorkspace::updateSystem(System &system, 
+                                           const Symbol &nrg_component,
+                                           const PropertyMap &map)
+{
+    /*
+    Molecules molecules = this->moleculeGroup().molecules();
+
+    const PropertyName &coords_property = map["coordinates"];
+
+    //loop over each molecule in the forcetable
+    const int nmols = this->forceTable().count();
+    
+    const MolForceTable *molforces_array = this->forceTable().constData();
+    const QVector<Vector> *coords_array = this->coords_array.constData();
+    
+    //update the coordinates in each molecule
+    for (int i=0; i<nmols; ++i)
+    {
+        const MolForceTable &molforces = molforces_array[i];
+        MolNum molnum = molforces.molNum();
+        
+        PartialMolecule new_mol = molecules[molnum];
+        
+        AtomCoords coords = new_mol.molecule().
+                                   .property(coords_property).asA<AtomCoords>();
+        
+        coords.copyFrom( coords_array[i], new_mol.selection() );
+
+        molecules.update( new_mol.molecule().edit().
+                                            .setProperty(coords_property, coords)
+                                            .commit() );
+    }
+    
+    //update the system with the new molecules
+    system.update(molecules);
+    
+    //update this workspace from the new system
+    IntegratorWorkspace::updateFrom(system, nrg_component);
+    
+    //collect all of the forces
+    QVector<Vector> *local_forces_array = forces_array.data();
+    
+    molforces_array = this->forceTable().constData();
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        local_forces_array[i] = molforces_array[i]
+                                    .toVector(molecules[molnum].selection());
+    }
+    
+    */
+}
 
 const char* AtomicVelocityWorkspace::typeName()
 {

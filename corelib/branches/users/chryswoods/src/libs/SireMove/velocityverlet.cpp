@@ -214,7 +214,7 @@ void VelocityVerlet::integrate(System &system, IntegratorWorkspace &workspace,
     }
     
     //now update the system with the new coordinates
-    ws.updateSystem(system, nrg_component);
+    ws.updateSystem(system, nrg_component, map);
     
     //now need to integrate the velocities
     for (int i=0; i<nmols; ++i)

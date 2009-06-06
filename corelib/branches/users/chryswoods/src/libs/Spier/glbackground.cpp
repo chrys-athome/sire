@@ -30,18 +30,50 @@
 
 #include "glbackground.h"
 
+#include "SireStream/datastream.h"
+
 using namespace Spier;
+using namespace SireBase;
+using namespace SireStream;
 
 ////////
 //////// Implementation of GLBackground
 ////////
 
+static const RegisterMetaType<GLBackground> r_glbg( MAGIC_ONLY, "Spier::GLBackground" );
+
+/** Serialise to a binary datastream */
+QDataStream SPIER_EXPORT &operator<<(QDataStream &ds, const GLBackground &glbg)
+{
+    writeHeader(ds, r_glbg, 1);
+    
+    ds << static_cast<const GLRenderFunction&>(glbg);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SPIER_EXPORT &operator>>(QDataStream &ds, GLBackground &glbg)
+{
+    VersionID v = readHeader(ds, r_glbg);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<GLRenderFunction&>(glbg);
+    }
+    else
+        throw version_error( v, "1", r_glbg, CODELOC );
+        
+    return ds;
+}
+
 /** Constructor */
-GLBackground::GLBackground() : QSharedData()
+GLBackground::GLBackground() : GLRenderFunction()
 {}
 
 /** Copy constructor */
-GLBackground::GLBackground(const GLBackground&) : QSharedData()
+GLBackground::GLBackground(const GLBackground &other) 
+             : GLRenderFunction(other)
 {}
 
 /** Destructor */
@@ -52,16 +84,42 @@ GLBackground::~GLBackground()
 //////// Implementation of GradientBackground
 ////////
 
+static const RegisterMetaType<GradientBackground> r_gradbg;
+
+/** Serialise to a binary datastream */
+QDataStream SPIER_EXPORT &operator<<(QDataStream &ds, const GradientBackground &gradbg)
+{
+    writeHeader(ds, r_gradbg, 1);
+    
+    ds << static_cast<const GLBackground&>(gradbg);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SPIER_EXPORT &operator>>(QDataStream &ds, GradientBackground &gradbg)
+{
+    VersionID v = readHeader(ds, r_gradbg);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<GLBackground&>(gradbg);
+    }
+    else
+        throw version_error(v, "1", r_gradbg, CODELOC);
+        
+    return ds;
+}
+
 /** Constructor */
-GradientBackground::GradientBackground() : GLBackground()
+GradientBackground::GradientBackground() 
+                   : ConcreteProperty<GradientBackground,GLBackground>()
 {}
 
 /** Copy constructor */
 GradientBackground::GradientBackground(const GradientBackground &other)
-                   : GLBackground(other)
-{
-    GLDisplayListRegistry::copyDisplayList(&other, this);
-}
+                   : ConcreteProperty<GradientBackground,GLBackground>(other)
+{}
 
 /** Destructor */
 GradientBackground::~GradientBackground()
@@ -70,65 +128,58 @@ GradientBackground::~GradientBackground()
 /** Copy assignment operator */
 GradientBackground& GradientBackground::operator=(const GradientBackground &other)
 {
-    GLDisplayListRegistry::copyDisplayList(&other, this);
+    GLBackground::operator=(other);
     return *this;
 }
 
 /** Comparison operator */
-bool GradientBackground::operator==(const GradientBackground &other) const
+bool GradientBackground::operator==(const GradientBackground&) const
 {
     return true;
 }
 
 /** Comparison operator */
-bool GradientBackground::operator!=(const GradientBackground &other) const
+bool GradientBackground::operator!=(const GradientBackground&) const
 {
-    return not this->operator==(other);
+    return false;
 }
 
 /** Render the background - this leaves the render state in the same
     state as when it started */
-void GradientBackground::render(const QGLContext *render_context)
+void GradientBackground::operator()() const
 {
-    GLDisplayList display_list = GLDisplayListRegistry::getDisplayList(render_context,
-                                                                       this);
-
-    if (display_list.isEmpty())
-    {
-        GLDisplayListRecorder recorder( display_list, render_context );
-       
-        glMatrixMode(GL_PROJECTION);
-        glPushMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
     
-        glLoadIdentity();
-        gluOrtho2D(0.0, 1.0, 0.0, 1.0);
+    glLoadIdentity();
+    gluOrtho2D(0.0, 1.0, 0.0, 1.0);
     
-        glMatrixMode(GL_MODELVIEW);
-        glPushMatrix();
-        glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
      
-        glDisable(GL_LIGHTING);
-        glDisable(GL_TEXTURE_2D);
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_FOG);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_FOG);
         
-        glBegin(GL_QUADS);
-        glColor3f(0.0,0.0,0.0);
-        glVertex2f(0.0,0.0);
-        glColor3f(0.0,0.0,0.5);
-        glVertex2f(1.0,0.0);
-        glColor3f(0.9,0.9,0.9);
-        glVertex2f(1.0,1.0);
-        glVertex2f(0.0,1.0);
-        glEnd();
+    glBegin(GL_QUADS);
+    glColor3f(0.0,0.0,0.0);
+    glVertex2f(0.0,0.0);
+    glColor3f(0.0,0.0,0.5);
+    glVertex2f(1.0,0.0);
+    glColor3f(0.9,0.9,0.9);
+    glVertex2f(1.0,1.0);
+    glVertex2f(0.0,1.0);
+    glEnd();
     
-        glMatrixMode(GL_PROJECTION);
-        glPopMatrix();
-        glMatrixMode(GL_MODELVIEW);
-        glPopMatrix();
-        
-        GLDisplayListRegistry::saveDisplayList(render_context, this, display_list);
-    }
-    else
-        display_list.play(render_context);
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+}
+
+const char* GradientBackground::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<GradientBackground>() );
 }

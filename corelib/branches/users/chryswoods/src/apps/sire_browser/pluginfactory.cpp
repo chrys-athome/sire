@@ -68,8 +68,12 @@ QObject* PluginFactory::create(const QString &mimeType, const QUrl &url,
         params[argumentNames[i]] = argumentValues[i];
     }
 
+    qDebug() << mimeType << url << params;
+
     if (mimeType == QLatin1String("application/x-sire_spierview"))
     {
+        qDebug() << CODELOC;
+    
         Spier::SpierView *spierview = new Spier::SpierView();
         
         spierview->setObjectName( getParameter<QString>(params, "name", "unnamed") );

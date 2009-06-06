@@ -19,6 +19,7 @@ set ( SIREBASE_HEADERS
       countflops.h
       errors.h
       findexe.h
+      globalsharedpointer.hpp
       increment.h
       incremint.h
       majorminorversion.h
@@ -52,6 +53,7 @@ set ( SIREBASE_SOURCES
       countflops.cpp
       errors.cpp
       findexe.cpp
+      globalsharedpointer.cpp
       majorminorversion.cpp
       meminfo.cpp
       packedarray2d.cpp

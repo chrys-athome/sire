@@ -29,27 +29,114 @@
 #include <QGLWidget>
 
 #include "glcanvas.h"
+#include "glbackground.h"
+#include "glinitstate.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 #include <QDebug>
 
 using namespace Spier;
+using namespace SireBase;
+using namespace SireStream;
+
+static const RegisterMetaType<GLCanvas> r_glcanvas;
+
+/** Serialise to a binary datastream */
+QDataStream SPIER_EXPORT &operator<<(QDataStream &ds, const GLCanvas &glcanvas)
+{
+    writeHeader(ds, r_glcanvas, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << glcanvas.render_state << glcanvas.selector_state
+        << glcanvas.bg;
+        
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SPIER_EXPORT &operator>>(QDataStream &ds, GLCanvas &glcanvas)
+{
+    VersionID v = readHeader(ds, r_glcanvas);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> glcanvas.render_state >> glcanvas.selector_state
+            >> glcanvas.bg;
+            
+        glcanvas.current_w = 0;
+        glcanvas.current_h = 0;
+    }
+    else
+        throw version_error( v, "1", r_glcanvas, CODELOC );
+
+    return ds;
+}
 
 /** Construct the GLCanvas */
-GLCanvas::GLCanvas() : QSharedData(), current_w(0), current_h(0)
-{
-    bg = GradientBackground();
-}
+GLCanvas::GLCanvas() 
+         : ConcreteProperty<GLCanvas,Property>(),
+           render_state( GLInitRenderState() ),
+           selector_state( GLInitSelectorState() ),
+           bg( GradientBackground() ),
+           current_w(0), current_h(0)
+{}
 
 /** Copy constructor */
 GLCanvas::GLCanvas(const GLCanvas &other) 
-         : QSharedData(),
-           bg(other.bg), init_state(other.init_state),
+         : ConcreteProperty<GLCanvas,Property>(other),
+           render_context(other.render_context),
+           render_state(other.render_state),
+           selector_state(other.selector_state),
+           bg(other.bg),
            current_w(other.current_w), current_h(other.current_h)
 {}
 
 /** Destructor */
 GLCanvas::~GLCanvas()
 {}
+
+/** Copy assignment operator */
+GLCanvas& GLCanvas::operator=(const GLCanvas &other)
+{
+    if (this != &other)
+    {
+        render_context = other.render_context;
+        render_state = other.render_state;
+        selector_state = other.selector_state;
+        bg = other.bg;
+        current_w = other.current_w;
+        current_h = other.current_h;
+        
+        Property::operator=(other);
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool GLCanvas::operator==(const GLCanvas &other) const
+{
+    return this == &other or
+           ( render_state == other.render_state and
+             selector_state == other.selector_state and
+             bg == other.bg );
+}
+
+/** Comparison operator */
+bool GLCanvas::operator!=(const GLCanvas &other) const
+{
+    return not GLCanvas::operator==(other);
+}
+
+const char* GLCanvas::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<GLCanvas>() );
+}
 
 /** Encode the 32bit index into a 24bit colour. Obviously this will only
     encode the index correctly if it is less than 2^24 */
@@ -225,77 +312,73 @@ void GLCanvas::resize(int w, int h)
     current_h = h;
 }
 
-/** Function called to initialise the scene */
-void GLCanvas::initialise(const QGLContext *render_context)
-{
-    if (not init_state.play(render_context))
-    {
-        GLDisplayListRecorder recorder(init_state, render_context);
-                
-        glClearColor(0.9,0.9,0.9,1.0);
-           
-        glEnable(GL_DEPTH_TEST);
-           
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    
-        glEnable(GL_LIGHTING);
-        glEnable(GL_LIGHT0);
-      
-        glShadeModel(GL_SMOOTH);
-      
-        GLfloat globalamb[] = { 0.5f, 0.5f, 0.5f, 1.0f };
-        glLightModelfv(GL_LIGHT_MODEL_AMBIENT, globalamb);
-    
-        GLfloat lightpos[] = { 150.0f, 150.0f, 0.0f, 1.0f };
-        glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
-    
-        glEnable(GL_FOG);
-        glFogi(GL_FOG_MODE, GL_EXP2);
-        glFogf(GL_FOG_START,0.0);
-        glFogf(GL_FOG_END,300.0);
-        glFogf(GL_FOG_DENSITY,0.01);
-    
-        GLfloat fogcolor[] = { 0.5f, 0.5f, 0.5f, 0.0f };
-        glFogfv(GL_FOG_COLOR, fogcolor);
-    
-        glCullFace(GL_BACK);
-        glEnable(GL_CULL_FACE);
-    
-        glEnable(GL_TEXTURE_2D);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-    }
-}
-
 /** Paint the canvas (render the scene) */
-void GLCanvas::render(const QGLContext *render_context, int w, int h)
+void GLCanvas::render(QGLContext *context, int w, int h)
 {
-    if (render_context == 0)
+    if (context == 0)
         return;
         
-    if (not render_context->isValid())
+    if (not context->isValid())
         return;
 
     if (w != current_w or h != current_h)
         this->resize(w, h);
 
+    //update the render context
+    render_context = GLRenderContext::getContext(context);
+
+    //lock this context (ensures nothing else is rendering)
+    GLRenderLocker lkr = render_context.lock();
+
     //now switch to the scene rendering state
-    this->initialise(render_context);
+    render_context.makeCurrent();
+    render_context.render( render_state );
         
     //paint the background
     glPushAttrib(GL_ALL_ATTRIB_BITS);
-    
-    bg->render(render_context);
-    
+    render_context.render( bg );
     glPopAttrib();
         
     //check for any openGL errors
     checkError(CODELOC);
-
-    //send the rendered scene to the front buffer
-    render_context->swapBuffers();
-
+    
     //make sure that all commands have gone to the renderer
     glFlush();
+    
+    //don't swap buffers, as the RenderView may wish to modify this scene
+}
+
+/** Paint the canvas in selector mode - this renders the scene with each
+    object being drawn in a flat color that corresponds to the object ID.
+    In this way, a picture is drawn whereby the objects can be selected
+    by just looking up the ID associated with the color of each pixel */
+void GLCanvas::renderSelector(QGLContext *context, int w, int h)
+{
+    if (context == 0)
+        return;
+        
+    if (not context->isValid())
+        return;
+
+    if (w != current_w or h != current_h)
+        this->resize(w, h);
+
+    //update the render context
+    render_context = GLRenderContext::getContext(context);
+
+    //lock this context (ensures nothing else is rendering)
+    GLRenderLocker lkr = render_context.lock();
+
+    //now switch to the scene rendering state
+    render_context.makeCurrent();
+    render_context.render( selector_state );
+        
+    //check for any openGL errors
+    checkError(CODELOC);
+    
+    //make sure that all commands have gone to the renderer
+    glFlush();
+    
+    //again, don't swap the buffer as the RenderView may wish to do things with it
+    //before it is displayed
 }

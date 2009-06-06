@@ -73,6 +73,39 @@ struct SharedPolyPointerHelper
     {
         return T::typeName();
     }
+    
+    /** Return whether or not the two objects are equal */
+    static bool equal(const T &obj0, const T &obj1)
+    {
+        return obj0.equals(obj1);
+    }
+    
+    /** Copy obj1 into obj1 */
+    static void copy(T &obj0, const T &obj1)
+    {
+        obj0.copy(obj1);
+    }
+    
+    /** Return whether or not 'obj' is an object of type 'S' */
+    template<class S>
+    static bool isA(const T &obj)
+    {
+        return obj.isA<S>();
+    }
+    
+    /** Return 'obj' cast to an object of type 'S' */
+    template<class S>
+    static const S& asA(const T &obj)
+    {
+        return obj.asA<S>();
+    }
+    
+    /** Return 'obj' cast to an object of type 'S' */
+    template<class S>
+    static S& asA(const T &obj)
+    {
+        return obj.asA<S>();
+    }
 };
 
 /** Small base class used to abstract template-independent
@@ -158,6 +191,8 @@ public:
     
     void detach();
     
+    bool unique() const;
+    
     T& operator*();
     const T& operator*() const;
     T* operator->();
@@ -178,7 +213,7 @@ public:
     bool operator==(const T *other_ptr) const;
     bool operator!=(const T *other_ptr) const;
 
-    inline const char* what() const
+    const char* what() const
     {
         return SharedPolyPointerHelper<T>::what(d);
     }
@@ -186,19 +221,33 @@ public:
     template<class S>
     bool isA() const
     {
-        return dynamic_cast<const S*>(this->constData()) != 0;
+        if (not d)
+            return false;
+            
+        else
+            return SharedPolyPointerHelper<T>::template isA<S>( *d );
     }
 
     template<class S>
     const S& asA() const
     {
-        return dynamic_cast<const S&>(*(this->constData()));
+        const char *typname = SharedPolyPointerHelper<T>::typeName();
+    
+        if (not d)
+            SharedPolyPointerBase::throwInvalidCast("NULL", typname);
+
+        return SharedPolyPointerHelper<T>::template asA<S>( *d );
     }
     
     template<class S>
     S& asA()
     {
-        return dynamic_cast<S&>(*(this->data()));
+        const char *typname = SharedPolyPointerHelper<T>::typeName();
+    
+        if (not d)
+            SharedPolyPointerBase::throwInvalidCast("NULL", typname);
+
+        return SharedPolyPointerHelper<T>::template asA<S>( *d );
     }
 
 private:
@@ -623,6 +672,14 @@ void SharedPolyPointer<T>::detach()
         T *x = SharedPolyPointerHelper<T>::clone(*d);
         qAtomicAssign(d, x);
     }
+}
+
+/** Return whether or not this pointer is unique (there are no copies) */
+template<class T>
+SIRE_INLINE_TEMPLATE
+bool SharedPolyPointer<T>::unique() const
+{
+    return (d and d->ref == 1);
 }
 
 /** Dereference this pointer */

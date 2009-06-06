@@ -26,7 +26,9 @@ int main(int argc, char **argv)
         QWebView *w = new QWebView();
         w->page()->setPluginFactory( new PluginFactory() );
 
+        qDebug() << "LOAD" << QUrl(argv[1]);
         w->load( QUrl(argv[1]) );
+        qDebug() << "DONE!";
 
         w->show();
 

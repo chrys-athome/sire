@@ -26,326 +26,107 @@
   *
 \*********************************************/
 
-#include <QMutex>
-
 #include "gldisplaylist.h"
+#include "glrendercontext.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 #include <QDebug>
 
-namespace Spier
-{
-namespace detail
-{
-
-class GLDisplayListData
-{
-public:
-    GLDisplayListData(const QGLContext *context);
-    ~GLDisplayListData();
-    
-    void aboutToDelete(const QGLContext *context);
-    
-    GLuint list_id;
-    const QGLContext *render_context;
-    
-    QMutex list_mutex;
-    
-    bool is_recording;
-};
-
-} // end of namespace detail
-} // end of namespace Spier
-
-
 using namespace Spier;
-using namespace Spier::detail;
+using namespace SireStream;
 
-////////
-//////// Implementation of GLDisplayListData
-////////
+static const RegisterMetaType<GLDisplayList> r_gldisplist;
 
-GLDisplayListData::GLDisplayListData(const QGLContext *context)
-                  : list_id(0), 
-                    render_context(context),
-                    list_mutex(QMutex::Recursive),
-                    is_recording(false)
+/** Serialise to a binary datastream */
+QDataStream SPIER_EXPORT &operator<<(QDataStream &ds, const GLDisplayList &gldisplist)
 {
-    if (context)
+    writeHeader(ds, r_gldisplist, 1);
+    
+    SharedDataStream sds(ds);
+    sds << gldisplist.render_func;
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIRE_EXPORT &operator>>(QDataStream &ds, GLDisplayList &gldisplist)
+{
+    VersionID v = readHeader(ds, r_gldisplist);
+    
+    if (v == 1)
     {
-        list_id = glGenLists(1);
-                
-        if (list_id)
-        {
-            is_recording = true;
-            glNewList(list_id, GL_COMPILE_AND_EXECUTE);
-            list_mutex.lock();
-        }
+        SharedDataStream sds(ds);
+        sds >> gldisplist.render_func;
     }
+    else
+        throw version_error(v, "1", r_gldisplist, CODELOC);
+        
+    return ds;
 }
-
-GLDisplayListData::~GLDisplayListData()
-{
-    if (is_recording)
-        qDebug() << "Trying to delete a GLDisplayListData object that "
-                 << "is being recorded!!!";
-
-    if (list_id)
-        glDeleteLists(list_id, 1);
-}
-
-void GLDisplayListData::aboutToDelete(const QGLContext *context)
-{
-    if (not list_id)
-        return;
-
-    if (render_context != context)
-        qDebug() << "Uh oh - we are going to delete a display list in the"
-                    "wrong context...";
-                    
-    glDeleteLists(list_id, 1);
-    list_id = 0;
-}
-
-////////
-//////// Implementation of GLDisplayRecorder
-////////
-
-/** Constructor */
-GLDisplayListRecorder::GLDisplayListRecorder() : boost::noncopyable()
-{}
-
-/** Construct for the passed GLDisplayList */
-GLDisplayListRecorder::GLDisplayListRecorder(GLDisplayList &list, 
-                                             const QGLContext *context)
-                      : boost::noncopyable()
-{
-    list.startRecording(context);
-    recording_list = list;
-}
-
-/** Destructor */
-GLDisplayListRecorder::~GLDisplayListRecorder()
-{
-    recording_list.stopRecording();
-}
-
-////////
-//////// Implementation of GLDisplayList
-////////
 
 /** Constructor */
 GLDisplayList::GLDisplayList()
 {}
 
+/** Construct to render the passed function */
+GLDisplayList::GLDisplayList(const GLRenderFunction &renderfunc)
+              : render_func(renderfunc)
+{}
+
 /** Copy constructor */
-GLDisplayList::GLDisplayList(const GLDisplayList &other) : d(other.d)
+GLDisplayList::GLDisplayList(const GLDisplayList &other)
+              : render_func(other.render_func)
 {}
 
 /** Destructor */
 GLDisplayList::~GLDisplayList()
-{}
+{
+    if (not render_func.isNull())
+    {
+        if (render_func.unique())
+        {
+            qDebug() << "Deleting the display list" << render_func->what();
+            //we don't need this display list any more
+            GLRenderContext::deleteList(*this);
+        }
+    }
+}
 
 /** Copy assignment operator */
 GLDisplayList& GLDisplayList::operator=(const GLDisplayList &other)
 {
-    d = other.d;
+    render_func = other.render_func;
     return *this;
 }
 
 /** Comparison operator */
 bool GLDisplayList::operator==(const GLDisplayList &other) const
 {
-    return d.get() == other.d.get();
+    return render_func == other.render_func;
 }
 
 /** Comparison operator */
 bool GLDisplayList::operator!=(const GLDisplayList &other) const
 {
-    return d.get() != other.d.get();
+    return render_func != other.render_func;
 }
 
-/** Play this display list */
-bool GLDisplayList::play(const QGLContext *playing_context)
+/** Render the contents of this display list on the context 'render_context' */
+void GLDisplayList::render(GLRenderContext &render_context) const
 {
-    if (d.get() != 0)
-    {
-        QMutexLocker lkr( &(d->list_mutex) );
-
-        if (d->render_context == playing_context)
-        {
-            glCallList( d->list_id );
-            return true;
-        }
-    }
-
-    return false;
-}
-
-/** Start recording a new display list */
-void GLDisplayList::startRecording(const QGLContext *render_context)
-{
-    if (d.unique())
-    {
-        d->aboutToDelete(render_context);
-    }
-    
-    d.reset( new GLDisplayListData(render_context) );
-}
-
-/** Stop recording a new display list */
-void GLDisplayList::stopRecording()
-{
-    if (d.get() != 0)
-    {
-        QMutexLocker lkr( &(d->list_mutex) );
-        
-        if (d->is_recording)
-        {
-            glEndList();
-            d->is_recording = false;
-            d->list_mutex.unlock();
-        }
-    }
+    render_context.render(*this);
 }
 
 /** Is this an empty list? */
 bool GLDisplayList::isEmpty() const
 {
-    return d.get() == 0;
+    return render_func.isNull();
 }
 
-/** Return whether or not this is a valid display list for 
-    the passed QGLContext */
-bool GLDisplayList::isValidFor(const QGLContext *render_context) const
+/** Return the render function for this display list */
+const GLRenderFunction& GLDisplayList::renderFunction() const
 {
-    return (d->render_context == render_context);
-}
-
-/** Return the render context for this display list */
-const QGLContext* GLDisplayList::renderContext() const
-{
-    return d->render_context;
-}
-
-////////
-//////// Implementation of GLDisplayListRegistry
-////////
-
-GLDisplayListRegistry::GLDisplayListRegistry()
-{}
-
-GLDisplayListRegistry::~GLDisplayListRegistry()
-{
-    //delete each display list
-    display_lists.clear();
-    lists_to_delete.clear();
-}
-
-Q_GLOBAL_STATIC( QMutex, dlistRegistryMutex );
-
-boost::shared_ptr< QHash<const QGLContext*,GLDisplayListRegistry> > 
-        GLDisplayListRegistry::registries;
-
-/** Return the display list for the object with key 'key' in the 
-    render context 'render_context' */
-GLDisplayList GLDisplayListRegistry::getDisplayList(const QGLContext *render_context,
-                                                    const void *key)
-{
-    QMutexLocker lkr( dlistRegistryMutex() );
-    
-    if (registries.get() == 0)
-        registries.reset( new QHash<const QGLContext*,GLDisplayListRegistry>() );
-
-
-    GLDisplayListRegistry &registry = (*registries)[render_context];
-
-    registry.lists_to_delete.clear();
-    return registry.display_lists.value(key, GLDisplayList());
-}
-
-/** Save the display list 'display_list' for the QGLContext render context
-    'render_context' for the object with key 'key' */
-void GLDisplayListRegistry::saveDisplayList(const QGLContext *render_context,
-                                            const void *key,
-                                            const GLDisplayList &display_list)
-{
-    if (display_list.renderContext() != render_context)
-        return;
-
-    QMutexLocker lkr( dlistRegistryMutex() );
-    
-    if (registries.get() == 0)
-        registries.reset( new QHash<const QGLContext*,GLDisplayListRegistry>() );
-
-    GLDisplayListRegistry &registry = (*registries)[render_context];
-
-    registry.display_lists.insert(key, display_list);
-    registry.lists_to_delete.clear();
-}
-
-void GLDisplayListRegistry::clearLists(const void *key)
-{
-    if (display_lists.contains(key))
-    {
-        lists_to_delete.append( display_lists.take(key) );
-    }
-}
-
-/** Clear all display lists associated with the key 'key' */
-void GLDisplayListRegistry::clearDisplayLists(const void *key)
-{
-    QMutexLocker lkr( dlistRegistryMutex() );
-    
-    if (registries.get() == 0)
-        registries.reset( new QHash<const QGLContext*,GLDisplayListRegistry>() );
-
-    for (QHash<const QGLContext*,GLDisplayListRegistry>::iterator
-                                                it = registries->begin();
-         it != registries->end();
-         ++it)
-    {
-        it->clearLists(key);
-    }
-}
-
-/** Clear all display lists associated with the render context 'render_context' */
-void GLDisplayListRegistry::clearDisplayLists(const QGLContext *render_context)
-{
-    QMutexLocker lkr( dlistRegistryMutex() );
-    
-    if (registries.get() == 0)
-        registries.reset( new QHash<const QGLContext*,GLDisplayListRegistry>() );
-
-    registries->remove(render_context);
-}
-
-void GLDisplayListRegistry::copyList(const void *old_key, const void *new_key)
-{
-    if (display_lists.contains(old_key))
-    {
-        if (display_lists.contains(new_key))
-            lists_to_delete.append( display_lists.take(new_key) );
-    
-        display_lists.insert( new_key, display_lists.value(old_key) );
-    }
-}
-
-/** Copy the display lists of key 'old_key' to the display list 'new_key' */
-void GLDisplayListRegistry::copyDisplayList(const void *old_key, const void *new_key)
-{
-    if (old_key == new_key)
-        return;
-
-    QMutexLocker lkr( dlistRegistryMutex() );
-    
-    if (registries.get() == 0)
-        registries.reset( new QHash<const QGLContext*,GLDisplayListRegistry>() );
-
-    for (QHash<const QGLContext*,GLDisplayListRegistry>::iterator
-                                                it = registries->begin();
-         it != registries->end();
-         ++it)
-    {
-        it->copyList(old_key, new_key);
-    }
+    return render_func;
 }
