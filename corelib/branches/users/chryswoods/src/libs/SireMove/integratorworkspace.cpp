@@ -32,6 +32,10 @@
 #include "SireSystem/system.h"
 
 #include "SireMol/moleculeview.h"
+#include "SireMol/molecule.h"
+#include "SireMol/partialmolecule.h"
+#include "SireMol/moleditor.h"
+#include "SireMol/atomcoords.h"
 
 #include "SireBase/quickcopy.hpp"
 
@@ -42,6 +46,7 @@
 
 using namespace SireMove;
 using namespace SireSystem;
+using namespace SireFF;
 using namespace SireMol;
 using namespace SireCAS;
 using namespace SireBase;
@@ -603,7 +608,6 @@ void AtomicVelocityWorkspace::updateSystem(System &system,
                                            const Symbol &nrg_component,
                                            const PropertyMap &map)
 {
-    /*
     Molecules molecules = this->moleculeGroup().molecules();
 
     const PropertyName &coords_property = map["coordinates"];
@@ -622,12 +626,12 @@ void AtomicVelocityWorkspace::updateSystem(System &system,
         
         PartialMolecule new_mol = molecules[molnum];
         
-        AtomCoords coords = new_mol.molecule().
+        AtomCoords coords = new_mol.molecule()
                                    .property(coords_property).asA<AtomCoords>();
         
         coords.copyFrom( coords_array[i], new_mol.selection() );
 
-        molecules.update( new_mol.molecule().edit().
+        molecules.update( new_mol.molecule().edit()
                                             .setProperty(coords_property, coords)
                                             .commit() );
     }
@@ -645,11 +649,11 @@ void AtomicVelocityWorkspace::updateSystem(System &system,
     
     for (int i=0; i<nmols; ++i)
     {
-        local_forces_array[i] = molforces_array[i]
-                                    .toVector(molecules[molnum].selection());
+        const MolForceTable &molforces = molforces_array[i];
+        MolNum molnum = molforces.molNum();
+
+        local_forces_array[i] = molforces.toVector(molecules[molnum].selection());
     }
-    
-    */
 }
 
 const char* AtomicVelocityWorkspace::typeName()

@@ -51,18 +51,20 @@ public:
     Editor<Parent,T>& operator=(const T &other);
 
     template<class V>
-    Parent& setProperty(const QString &key, const V &value);
+    Parent& setProperty(const SireBase::PropertyName &key, const V &value);
                            
     template<class V>
-    Parent& setMetadata(const QString &metakey, const V &value);
+    Parent& setMetadata(const SireBase::PropertyName &metakey, const V &value);
     
     template<class V>
-    Parent& setMetadata(const QString &key, const QString &metakey,
+    Parent& setMetadata(const SireBase::PropertyName &key, 
+                        const SireBase::PropertyName &metakey,
                         const V &value);
                            
-    Parent& removeProperty(const QString &key);
-    Parent& removeMetadata(const QString &metakey);
-    Parent& removeMetadata(const QString &key, const QString &metakey);
+    Parent& removeProperty(const SireBase::PropertyName &key);
+    Parent& removeMetadata(const SireBase::PropertyName &metakey);
+    Parent& removeMetadata(const SireBase::PropertyName &key, 
+                           const SireBase::PropertyName &metakey);
 
 protected:
     Editor();
@@ -121,9 +123,12 @@ Editor<Parent, T>& Editor<Parent, T>::operator=(const T &other)
 template<class Parent, class T>
 template<class V>
 SIRE_OUTOFLINE_TEMPLATE
-Parent& Editor<Parent, T>::setProperty(const QString &key, const V &value)
+Parent& Editor<Parent, T>::setProperty(const SireBase::PropertyName &key, 
+                                       const V &value)
 {
-    T::setProperty(key, value);
+    if (key.hasSource())
+        T::setProperty(key.source(), value);
+        
     return static_cast<Parent&>(*this);
 }
 
@@ -131,9 +136,12 @@ Parent& Editor<Parent, T>::setProperty(const QString &key, const V &value)
 template<class Parent, class T>
 template<class V>
 SIRE_OUTOFLINE_TEMPLATE
-Parent& Editor<Parent, T>::setMetadata(const QString &metakey, const V &value)
+Parent& Editor<Parent, T>::setMetadata(const SireBase::PropertyName &metakey, 
+                                       const V &value)
 {
-    T::setMetadata(metakey, value);
+    if (metakey.hasSource())
+        T::setMetadata(metakey.source(), value);
+        
     return static_cast<Parent&>(*this);
 }
 
@@ -144,10 +152,13 @@ Parent& Editor<Parent, T>::setMetadata(const QString &metakey, const V &value)
 template<class Parent, class T>
 template<class V>
 SIRE_OUTOFLINE_TEMPLATE
-Parent& Editor<Parent, T>::setMetadata(const QString &key, const QString &metakey,
-                                  const V &value)
+Parent& Editor<Parent, T>::setMetadata(const SireBase::PropertyName &key, 
+                                       const SireBase::PropertyName &metakey,
+                                       const V &value)
 {
-    T::setMetadata(key, metakey, value);
+    if (key.hasSource() and metakey.hasSource())
+        T::setMetadata(key.source(), metakey.source(), value);
+        
     return static_cast<Parent&>(*this);
 }
 
@@ -161,10 +172,14 @@ Parent& Editor<Parent, T>::setMetadata(const QString &key, const QString &metake
 */
 template<class Parent, class T>
 SIRE_OUTOFLINE_TEMPLATE
-Parent& Editor<Parent, T>::removeProperty(const QString &key)
+Parent& Editor<Parent, T>::removeProperty(const SireBase::PropertyName &key)
 {
-    T::assertContainsProperty(key);
-    this->d->removeProperty(key);
+    if (key.hasSource())
+    {
+        T::assertContainsProperty(key.source());
+        this->d->removeProperty(key.source());
+    }
+    
     return static_cast<Parent&>(*this);
 }
 
@@ -178,10 +193,14 @@ Parent& Editor<Parent, T>::removeProperty(const QString &key)
 */
 template<class Parent, class T>
 SIRE_OUTOFLINE_TEMPLATE
-Parent& Editor<Parent, T>::removeMetadata(const QString &metakey)
+Parent& Editor<Parent, T>::removeMetadata(const SireBase::PropertyName &metakey)
 {
-    T::assertContainsMetadata(metakey);
-    this->d->removeMetadata(metakey);
+    if (metakey.hasSource())
+    {
+        T::assertContainsMetadata(metakey.source());
+        this->d->removeMetadata(metakey.source());
+    }
+    
     return static_cast<Parent&>(*this);
 }
 
@@ -196,10 +215,15 @@ Parent& Editor<Parent, T>::removeMetadata(const QString &metakey)
 */
 template<class Parent, class T>
 SIRE_OUTOFLINE_TEMPLATE
-Parent& Editor<Parent, T>::removeMetadata(const QString &key, const QString &metakey)
+Parent& Editor<Parent, T>::removeMetadata(const SireBase::PropertyName &key, 
+                                          const SireBase::PropertyName &metakey)
 {
-    T::assertContainsMetadata(key, metakey);
-    this->d->removeMetadata(key, metakey);
+    if (key.hasSource() and metakey.hasSource())
+    {
+        T::assertContainsMetadata(key.source(), metakey.source());
+        this->d->removeMetadata(key.source(), metakey.source());
+    }
+    
     return static_cast<Parent&>(*this);
 }
 
