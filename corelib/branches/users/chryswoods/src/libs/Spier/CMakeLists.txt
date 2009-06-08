@@ -18,6 +18,7 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
 
     # Define the files on which moc must be run
     set ( SPIER_MOC_HEADERS
+          eventmonitor.h
           renderview.h
           renderscene.h
           spierview.h
@@ -56,6 +57,7 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
 
           camera.cpp
           color.cpp
+          eventmonitor.cpp
 
           glbackground.cpp
           glcanvas.cpp

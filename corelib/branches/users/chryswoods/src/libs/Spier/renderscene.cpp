@@ -186,7 +186,6 @@ void RenderScene::render(GLRenderContext &render_context)
              last_render->camera == cam )
         {
             //nothing in the scene has changed
-            qDebug() << "Restoring from a previous scene";
             int ms = this->render(render_context, last_render->screen_grab);
 
             //save the amount of time it took to restore the scene
@@ -194,12 +193,12 @@ void RenderScene::render(GLRenderContext &render_context)
 
             return;
         }
+        else
+            qDebug() << "SCENE or CAMERA has changed, so skipping cache...";
     }
     
     //ok, we don't have a previously rendered scene (or it is out of date)
     int ms = this->forceRender( render_context );
-    
-    return;
     
     if (ms > 50)
     {

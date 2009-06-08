@@ -32,8 +32,10 @@
 #include <QImage>
 #include <QTime>
 #include <QCoreApplication>
+#include <QSemaphore>
 
 #include "renderview.h"
+#include "eventmonitor.h"
 
 #include "SireError/exception.h"
 #include "SireError/printerror.h"
@@ -46,6 +48,15 @@ RenderView::RenderView(QWidget *parent, QGLWidget *share_widget)
 {
     try
     {
+        //start the animation timer
+        animation_timer.start();
+    
+        //this widget is click to focus
+        this->setFocusPolicy(Qt::WheelFocus);
+    
+        //install an event filter to filter all events to this widget
+        this->installEventFilter( new EventMonitor(*this) );
+    
         //this GL widget controls its own buffer swapping!
         this->setAutoBufferSwap(false);
 
@@ -98,19 +109,20 @@ void RenderView::resizeGL(int w, int h)
 
 void RenderView::animate()
 {
-    yval += 2;
+    yval += 50 * (0.001 * animation_timer.elapsed());
+    
+    animation_timer.start();
     
     if (yval > height())
         yval = -20;
-
+        
     this->updateGL();
 }
 
-/** Internal function used to draw the corners */
-void RenderView::drawCorners(QPainter &painter)
+static void drawCorners(QPainter &painter, const int width, 
+                        const int height, const int corner_size,
+                        const int corner_depth, const QColor &color)
 {
-    const int corner_size = 25;
-    const int corner_depth = 3;
 
     QPainterPath path;
     
@@ -124,7 +136,7 @@ void RenderView::drawCorners(QPainter &painter)
     path.quadTo(p3,  p2);
     path.closeSubpath();
     
-    p0 = QPointF(width(), 0);
+    p0 = QPointF(width, 0);
     p1 = p0 - QPointF(corner_size,0);
     p2 = p0 + QPointF(0,corner_size);
     p3 = p0 + QPointF(-corner_depth, corner_depth);
@@ -134,7 +146,7 @@ void RenderView::drawCorners(QPainter &painter)
     path.quadTo(p3,  p2);
     path.closeSubpath();
     
-    p0 = QPointF(width(), height());
+    p0 = QPointF(width, height);
     p1 = p0 - QPointF(corner_size,0);
     p2 = p0 - QPointF(0,corner_size);
     p3 = p0 - QPointF(corner_depth, corner_depth);
@@ -144,7 +156,7 @@ void RenderView::drawCorners(QPainter &painter)
     path.quadTo(p3,  p2);
     path.closeSubpath();
 
-    p0 = QPointF(0, height());
+    p0 = QPointF(0, height);
     p1 = p0 + QPointF(corner_size,0);
     p2 = p0 - QPointF(0,corner_size);
     p3 = p0 + QPointF(corner_depth, -corner_depth);
@@ -153,11 +165,25 @@ void RenderView::drawCorners(QPainter &painter)
     path.lineTo(p1);
     path.quadTo(p3,  p2);
     path.closeSubpath();
-    
-    painter.setPen( QColor(255,255,255,255) );
-    painter.setBrush( QColor(255,255,255,255) );
+
+    painter.setPen( color );
+    painter.setBrush( color );
     
     painter.drawPath(path);
+}
+
+/** Internal function used to draw the corners */
+void RenderView::drawCorners(QPainter &painter)
+{
+    if (this->hasFocus())
+    {
+        ::drawCorners(painter, width(), height(), 25, 3, QColor(0,0,255,128));
+        ::drawCorners(painter, width(), height(), 12, 2, QColor(255,255,255,255));
+    }
+    else
+    {
+        ::drawCorners(painter, width(), height(), 25, 3, QColor(255,255,255,255));
+    }
 }
 
 /** Internal function used to draw the user interface */
@@ -172,7 +198,7 @@ void RenderView::drawUI(QPainter &painter)
                                       Qt::AlignCenter | Qt::TextWordWrap, text);
     painter.setRenderHint(QPainter::TextAntialiasing);
     painter.setPen(Qt::white);
-    painter.fillRect(QRect(0, yval, width(), rect.height() + 2*border),
+    painter.fillRect(QRectF(0, yval, width(), rect.height() + 2*border),
                        QColor(0, 0, 0, 60));
     painter.drawText((width() - rect.width())/2, yval + border,
                        rect.width(), rect.height(),
@@ -182,9 +208,11 @@ void RenderView::drawUI(QPainter &painter)
 /** Paint the scene */
 void RenderView::paintGL()
 {
+    QTime t;
+    t.start();
+
     try
     {
-
         if (not this->isVisible())
             return;
 
@@ -226,5 +254,18 @@ void RenderView::paintGL()
     {
         SireError::printError(e);
         QCoreApplication::exit(-1);
+    }
+    
+    //don't bother rendering at more than 50 fps
+    int delta = 20 - t.elapsed();
+    
+    if (delta > 0)
+    {
+        QSemaphore s(1);
+        s.acquire();
+        
+        s.tryAcquire(1, delta);
+        
+        s.release();
     }
 }

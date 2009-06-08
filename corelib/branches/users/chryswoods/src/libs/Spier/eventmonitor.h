@@ -26,58 +26,69 @@
   *
 \*********************************************/
 
-#ifndef SPIER_RENDERVIEW_H
-#define SPIER_RENDERVIEW_H
+#ifndef SPIER_EVENTMONITOR_H
+#define SPIER_EVENTMONITOR_H
 
-#include <QGLWidget>
-#include <QList>
-#include <QTime>
+#include <QPointer>
 
-#include "renderscene.h"
+#include "renderview.h"
 
 SIRE_BEGIN_HEADER
+
+class QEvent;
+class QFocusEvent;
+class QMouseEvent;
+class QKeyEvent;
+class QWheelEvent;
 
 namespace Spier
 {
 
-/** This class provides a view in which a 3D scene may be rendered
-
+/** This class is a Qt event filter that monitors and processes
+    all of the events that are destined for a Spier::RenderView.
+    This allows for different event filters to be easily swapped
+    within a RenderView - and also allows all event monitoring
+    code to be separated from the RenderView code
+    
     @author Christopher Woods
 */
-class SPIER_EXPORT RenderView : public QGLWidget
+class SPIER_EXPORT EventMonitor : public QObject
 {
     Q_OBJECT
     
 public:
-    RenderView(QWidget *parent=0, QGLWidget *share_widget=0);
-    ~RenderView();
+    EventMonitor(RenderView &parent);
+    
+    ~EventMonitor();
+    
+    static const char* typeName()
+    {
+        return "Spier::EventMonitor";
+    }
 
 protected:
-    void initializeGL();
-    void resizeGL(int w, int h);
-    void paintGL();
+    const RenderView& renderView() const;
+    RenderView& renderView();
 
-    void drawCorners(QPainter &painter);
-    void drawUI(QPainter &painter);
+    bool inFocus() const;
 
-protected slots:
-    void animate();
+    bool eventFilter(QObject *watched, QEvent *event);
+
+    virtual bool keyEvent(QKeyEvent *event);
+    virtual bool mouseEvent(QMouseEvent *event);
+    virtual bool wheelEvent(QWheelEvent *event);
+
+    virtual bool mouseEnterEvent();
+    virtual bool mouseLeaveEvent();
+    
+    virtual bool focusEvent(QFocusEvent *event);
 
 private:
-    /** The current openGL rendering context */
-    GLRenderContext render_context;
-
-    /** All of the scenes that can be rendered on this widget */
-    QList<RenderScene*> render_scenes;
-
-    /** An animation timer */
-    QTime animation_timer;
-
-    /** The current scene to render on this widget */
-    int scene_to_render;
-
-    /** The location of the banner */
-    float yval;
+    /** Pointer to the parent render view */
+    QPointer<RenderView> render_view;
+    
+    /** Whether or not the widget is currently focussed */
+    bool in_focus;
 };
 
 }
