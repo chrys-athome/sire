@@ -170,17 +170,17 @@ void GLInitRenderState::operator()() const
     GLfloat lightpos[] = { 150.0f, 150.0f, 0.0f, 1.0f };
     glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
 
-    glEnable(GL_FOG);
+    /*glEnable(GL_FOG);
     glFogi(GL_FOG_MODE, GL_EXP2);
     glFogf(GL_FOG_START,0.0);
     glFogf(GL_FOG_END,300.0);
     glFogf(GL_FOG_DENSITY,0.01);
 
     GLfloat fogcolor[] = { 0.5f, 0.5f, 0.5f, 0.0f };
-    glFogfv(GL_FOG_COLOR, fogcolor);
+    glFogfv(GL_FOG_COLOR, fogcolor);*/
 
-    glCullFace(GL_BACK);
-    glEnable(GL_CULL_FACE);
+    //glCullFace(GL_BACK);
+    //glEnable(GL_CULL_FACE);
 
     glEnable(GL_TEXTURE_2D);
 

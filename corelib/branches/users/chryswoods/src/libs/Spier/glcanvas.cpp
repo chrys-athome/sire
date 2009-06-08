@@ -31,6 +31,7 @@
 #include "glcanvas.h"
 #include "glbackground.h"
 #include "glinitstate.h"
+#include "glsphere.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -327,6 +328,8 @@ void GLCanvas::checkError(const QString &codeloc) const
     }
 }
 
+static GLMeshPtr glmesh;
+
 /** Paint the canvas (render the scene) */
 void GLCanvas::render(GLRenderContext &render_context) const
 {
@@ -337,6 +340,12 @@ void GLCanvas::render(GLRenderContext &render_context) const
     render_context.pushState();
     render_context.render( bg );
     render_context.popState();
+
+    //paint the shapes
+    if (glmesh.isNull())
+        glmesh = GLSphere(1.0);
+        
+    glmesh->render(render_context);
         
     //check for any openGL errors
     checkError(CODELOC);

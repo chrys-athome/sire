@@ -599,7 +599,26 @@ void AtomicVelocityWorkspace::updateFrom(System &system, const Symbol &nrg_compo
                                          const VelocityGenerator &velgen,
                                          const PropertyMap &map)
 {
+    //update the molecule group and force table
+    IntegratorWorkspace::updateFrom(system, nrg_component);
     
+    //now get the coordinate, force and velocity arrays
+    const int nmols = this->forceTable().count();
+    
+    const MolForceTable *molforces_array = this->forceTable().constData();
+
+    QVector< QVector<Vector> > new_forces_array( nmols );
+    QVector< QVector<Vector> > new_coords_array( nmols );
+    QVector< QVector<Vector> > new_vels_array( nmols );
+    QVector< QVector<double> > new_inv_masses_array( nmols );
+    
+    #warning NEED TO WRITE CODE TO UPDATE ARRAYS
+    
+    //copy the result
+    forces_array = new_forces_array;
+    coords_array = new_coords_array;
+    vels_array = new_vels_array;
+    inv_masses_array = new_inv_masses_array;
 }
 
 /** Update the system with the new coordinates - this also recalculates 

@@ -44,6 +44,7 @@ namespace Spier
 class Camera;
 class GLViewFrustrum;
 class GLDisplayList;
+class GLMesh;
 
 namespace detail
 {
@@ -122,6 +123,7 @@ public:
     void changeView(const Camera &camera);
     
     void render(const GLDisplayList &display_list);
+    void render(const GLMesh &mesh);
 
     void pushState();
     void popState();

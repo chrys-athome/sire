@@ -199,6 +199,8 @@ void RenderScene::render(GLRenderContext &render_context)
     //ok, we don't have a previously rendered scene (or it is out of date)
     int ms = this->forceRender( render_context );
     
+    return;
+    
     if (ms > 50)
     {
         qDebug() << "Rendering was slow, so we'll cache the result" << ms;

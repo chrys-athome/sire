@@ -135,18 +135,18 @@ bool GLViewFrustrum::changeView(const Camera &new_camera, const QSize &new_size)
 {
     const Camera &old_camera = cam.read();
 
-    if ( &(new_camera) == &(old_camera) or old_camera.equals(new_camera) )
+    /*if ( &(new_camera) == &(old_camera) or old_camera.equals(new_camera) )
     {
         //same camera, so nothing has changed
         return false;
-    }
+    }*/
     
     bool changed = false;
     
-    if ( viewport_size != new_size or
+    /*if ( viewport_size != new_size or
          old_camera.viewAngle() != new_camera.viewAngle() or
          old_camera.depthCue() != new_camera.depthCue() or
-         old_camera.range() != new_camera.range() )
+         old_camera.range() != new_camera.range() )*/
     {
         GLfloat viewratio = (GLfloat)(new_size.width()) / 
                             (GLfloat)(new_size.height());
@@ -166,7 +166,7 @@ bool GLViewFrustrum::changeView(const Camera &new_camera, const QSize &new_size)
         changed = true;
     }
     
-    if (old_camera.differentView(new_camera))
+    //if (old_camera.differentView(new_camera))
     {
         //look through the camera
         const Vector &location = new_camera.location();

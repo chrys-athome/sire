@@ -149,13 +149,10 @@ bool GradientBackground::operator!=(const GradientBackground&) const
 void GradientBackground::operator()() const
 {
     glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    
     glLoadIdentity();
     gluOrtho2D(0.0, 1.0, 0.0, 1.0);
     
     glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
     glLoadIdentity();
      
     glDisable(GL_LIGHTING);
@@ -172,11 +169,6 @@ void GradientBackground::operator()() const
     glVertex2f(1.0,1.0);
     glVertex2f(0.0,1.0);
     glEnd();
-    
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
 }
 
 const char* GradientBackground::typeName()

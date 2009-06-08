@@ -35,6 +35,7 @@
 #include "gldisplaylist.h"
 #include "glrenderfunction.h"
 #include "glviewfrustrum.h"
+#include "glmesh.h"
 
 #include "SireError/errors.h"
 
@@ -160,6 +161,7 @@ void GLRenderContextData::deleteAll()
 
 GLRenderContextData::~GLRenderContextData()
 {
+    qDebug() << "DELETING A GLRenderContext";
     this->deleteAll();
 }
 
@@ -212,6 +214,8 @@ GLRenderContext GLRenderContext::getContext(QGLWidget &render_widget)
     
     if (r.get() == 0)
     {
+        qDebug() << "Creating a new GLRenderContext" << render_widget.context();
+    
         r.reset( new GLRenderContextData(render_widget) );
         glreg->insert( &render_widget, r );
     }
@@ -243,6 +247,8 @@ void GLRenderContext::deleteList(const GLDisplayList &display_list)
             
             if (d->display_lists.contains( &(display_list.renderFunction()) ))
             {
+                qDebug() << "DELETING a GLDisplayList" << d->render_widget->context();
+
                 GLuint id = d->display_lists.take( &(display_list.renderFunction()) );
                 d->lists_to_delete.append(id);
             }
@@ -355,6 +361,10 @@ void GLRenderContext::render(const GLDisplayList &display_list)
     
     if (list_id == 0)
     {
+        qDebug() << "COMPILING THE DISPLAY LIST FOR" 
+                 << display_list.renderFunction().what()
+                 << "TO THE GL CONTEXT" << this->context();
+        
         list_id = glGenLists(1);
         
         glNewList(list_id, GL_COMPILE);
@@ -365,6 +375,12 @@ void GLRenderContext::render(const GLDisplayList &display_list)
     }
     
     glCallList(list_id);
+}
+
+/** Render the passed mesh centered at the current render position */
+void GLRenderContext::render(const GLMesh &glmesh)
+{
+    glmesh.render( *this );
 }
 
 /** Push the current OpenGL state */

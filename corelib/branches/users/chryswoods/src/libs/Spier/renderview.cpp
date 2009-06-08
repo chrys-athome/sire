@@ -53,6 +53,7 @@ RenderView::RenderView(QWidget *parent, QGLWidget *share_widget)
         this->setAutoFillBackground(false);
 
         render_scenes.append( new RenderScene(this) );
+        render_scenes[0]->setCamera( OrbitCamera() );
         
         scene_to_render = 0;
 

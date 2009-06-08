@@ -48,6 +48,8 @@ QDataStream& operator>>(QDataStream&, Spier::NullGLMesh&);
 namespace Spier
 {
 
+class GLRenderContext;
+
 /** This is the base class of all meshes that can be rendered. 
 
     A mesh provides a single 3D shape that is rendered using
@@ -80,7 +82,10 @@ public:
     
     virtual GLMesh* clone() const=0;
     
-    virtual void render(GLRenderContext &render_context) const=0;
+    virtual void render(GLRenderContext &render_context,
+                        float distance_from_camera) const=0;
+
+    void render(GLRenderContext &render_context) const;
 
     static const NullGLMesh& null();
 
@@ -89,6 +94,31 @@ protected:
     
     bool operator==(const GLMesh &other) const;
     bool operator!=(const GLMesh &other) const;
+};
+
+/** This is a null mesh */
+class SPIER_EXPORT NullGLMesh : public SireBase::ConcreteProperty<NullGLMesh,GLMesh>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const NullGLMesh&);
+friend QDataStream& ::operator>>(QDataStream&, NullGLMesh&);
+
+public:
+    NullGLMesh();
+    
+    NullGLMesh(const NullGLMesh &other);
+    
+    ~NullGLMesh();
+    
+    NullGLMesh& operator=(const NullGLMesh &other);
+    
+    bool operator==(const NullGLMesh &other) const;
+    bool operator!=(const NullGLMesh &other) const;
+    
+    static const char* typeName();
+
+    void render(GLRenderContext &render_context, 
+                float distance_from_camera) const;
 };
 
 typedef SireBase::PropPtr<GLMesh> GLMeshPtr;

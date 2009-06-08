@@ -358,7 +358,7 @@ QDataStream SPIER_EXPORT &operator>>(QDataStream &ds, OrbitCamera &orbcam)
 OrbitCamera::OrbitCamera() 
             : ConcreteProperty<OrbitCamera,Camera>(),
               lookat(0,0,0),
-              offsetx(0), offsety(0), zoomdistance(10)
+              offsetx(0), offsety(0), zoomdistance(20)
 {
     OrbitCamera::calculateViewVectors();
 }
@@ -366,7 +366,7 @@ OrbitCamera::OrbitCamera()
 /** Construct an orbit camera looking at 'lookat' */
 OrbitCamera::OrbitCamera(const Vector &p)
             : ConcreteProperty<OrbitCamera,Camera>(),
-              lookat(p), offsetx(0), offsety(0), zoomdistance(10)
+              lookat(p), offsetx(0), offsety(0), zoomdistance(20)
 {
     OrbitCamera::calculateViewVectors();
 }

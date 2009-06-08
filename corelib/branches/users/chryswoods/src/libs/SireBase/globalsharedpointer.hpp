@@ -35,8 +35,6 @@
 
 #include "sharedpolypointer.hpp"
 
-#include <QDebug>
-
 SIRE_BEGIN_HEADER
 
 namespace SireBase
@@ -98,11 +96,7 @@ T* GlobalSharedPointerBase::registerObject(const T *obj_ptr)
 
         if ( SharedPolyPointerHelper<T>::equal(*obj_ptr, *global_obj) )
         {
-            //the objects are equal - delete the new copy and return
-            //the global copy
-            qDebug() << "DELETE" << obj_ptr << "(" << global_obj << ")";
-            delete obj_ptr;
-            
+            //the objects are equal - return the global copy
             return const_cast<T*>(global_obj);
         }
     }

@@ -30,16 +30,22 @@
 #define SPIER_GLSPHERE_H
 
 #include "glmesh.h"
+#include "gldisplaylist.h"
+#include "glrenderfunction.h"
 
 SIRE_BEGIN_HEADER
 
 namespace Spier
 {
 class GLSphere;
+class GLSphereRenderFunction;
 }
 
 QDataStream& operator<<(QDataStream&, const Spier::GLSphere&);
 QDataStream& operator>>(QDataStream&, Spier::GLSphere&);
+
+QDataStream& operator<<(QDataStream&, const Spier::GLSphereRenderFunction&);
+QDataStream& operator>>(QDataStream&, Spier::GLSphereRenderFunction&);
 
 namespace Spier
 {
@@ -48,9 +54,36 @@ class GLSphereRenderFunction
         : public SireBase::ConcreteProperty<GLSphereRenderFunction,GLRenderFunction>
 {
 
+friend QDataStream& ::operator<<(QDataStream&, const GLSphereRenderFunction&);
+friend QDataStream& ::operator>>(QDataStream&, GLSphereRenderFunction&);
+
+public:
+    GLSphereRenderFunction();
+    GLSphereRenderFunction(int resolution);
+    
+    GLSphereRenderFunction(const GLSphereRenderFunction &other);
+    
+    ~GLSphereRenderFunction();
+    
+    GLSphereRenderFunction& operator=(const GLSphereRenderFunction &other);
+    
+    bool operator==(const GLSphereRenderFunction &other) const;
+    bool operator!=(const GLSphereRenderFunction &other) const;
+    
+    static const char* typeName();
+    
+    void operator()() const;
+
+private:
+    /** The resolution of the sphere */
+    quint32 sphere_res;
 };
 
-/** This class holds a sphere */
+/** This class holds a sphere which will be rendered with its
+    origin at the current 3D 
+    
+    @author Christopher Woods
+*/
 class SPIER_EXPORT GLSphere : public SireBase::ConcreteProperty<GLSphere,GLMesh>
 {
 
@@ -60,13 +93,28 @@ friend QDataStream& ::operator>>(QDataStream&, GLSphere&);
 public:
     GLSphere();
     
+    GLSphere(double radius);
+    GLSphere(double radius, int hires, int midres, int lowres);
+    
     GLSphere(const GLSphere &other);
     
     ~GLSphere();
     
-    void render(GLRenderContext &render_context) const;
+    GLSphere& operator=(const GLSphere &other);
+    
+    bool operator==(const GLSphere &other) const;
+    bool operator!=(const GLSphere &other) const;
+    
+    static const char* typeName();
+    
+    double radius() const;
+    
+    void render(GLRenderContext &render_context,
+                float distance_from_camera) const;
     
 private:
+    void createSpheres();
+
     /** The display lists for different resolution unit spheres */
     GLDisplayList highres_sphere;
     GLDisplayList midres_sphere;
@@ -74,10 +122,16 @@ private:
     
     /** The radius of this sphere - this is so we can glScale the 
         sphere mesh to the right size */
-    double sphere_radius;
+    float sphere_radius;
 };
 
 }
+
+Q_DECLARE_METATYPE( Spier::GLSphere )
+Q_DECLARE_METATYPE( Spier::GLSphereRenderFunction )
+
+SIRE_EXPOSE_CLASS( Spier::GLSphere )
+SIRE_EXPOSE_CLASS( Spier::GLSphereRenderFunction )
 
 SIRE_END_HEADER
 
