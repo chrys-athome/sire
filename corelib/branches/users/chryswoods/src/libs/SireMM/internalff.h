@@ -450,11 +450,6 @@ public:
     
     static const char* typeName();
     
-    const char *what() const
-    {
-        return InternalFF::typeName();
-    }
-    
     InternalFF* clone() const
     {
         return new InternalFF(*this);
@@ -561,7 +556,7 @@ inline bool InternalFF::isStrict() const
     return isstrict;
 }
 
-#endif
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

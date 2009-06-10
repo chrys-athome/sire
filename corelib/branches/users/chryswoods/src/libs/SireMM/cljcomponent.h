@@ -90,10 +90,7 @@ public:
     
     ~CoulombComponent();
     
-    static const char* typeName()
-    {
-        return "SireMM::CoulombComponent";
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -132,10 +129,7 @@ public:
     
     ~LJComponent();
     
-    static const char* typeName()
-    {
-        return "SireMM::LJComponent";
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -194,10 +188,7 @@ public:
         return *this;
     }
     
-    static const char* typeName()
-    {
-        return "SireMM::CLJComponent";
-    }
+    static const char* typeName();
     
     const char* what() const
     {
@@ -348,9 +339,9 @@ public:
         return total();
     }
     
-    operator SireUnits::Dimension::Energy() const
+    operator SireUnits::Dimension::MolarEnergy() const
     {
-        return SireUnits::Dimension::Energy(total());
+        return SireUnits::Dimension::MolarEnergy(total());
     }
     
     operator CoulombEnergy() const

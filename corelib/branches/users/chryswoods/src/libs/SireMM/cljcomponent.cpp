@@ -105,6 +105,11 @@ void CoulombComponent::changeEnergy(FF &ff, const CoulombEnergy &delta) const
     FFComponent::changeEnergy(ff, this->total(), delta);
 }
 
+const char* CoulombComponent::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CoulombComponent>() );
+}
+
 //////
 ////// Implementation of LJComponent
 //////
@@ -173,6 +178,11 @@ void LJComponent::setEnergy(FF &ff, const LJEnergy &ljnrg) const
 void LJComponent::changeEnergy(FF &ff, const LJEnergy &delta) const
 {
     FFComponent::changeEnergy(ff, this->total(), delta);
+}
+
+const char* LJComponent::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<LJComponent>() );
 }
 
 //////
@@ -266,4 +276,9 @@ Symbols CLJComponent::symbols() const
     symbls.insert(*this);
     
     return symbls;
+}
+
+const char* CLJComponent::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CLJComponent>() );
 }

@@ -456,7 +456,7 @@ public:
     
 private:
     /** The symbol for the length of a bond */
-    Symbol _r;
+    Symbol r_;
 };
 
 /** This class holds the symbols required for the angle parameters.
@@ -472,7 +472,7 @@ public:
     
 private:
     /** The symbol for the size of the angle */
-    Symbol _theta;
+    Symbol theta_;
 };
 
 /** This class holds the symbols required for the dihedral parameters.
@@ -489,7 +489,7 @@ public:
     
 private:
     /** The symbol for the size of the torsion */
-    Symbol _phi;
+    Symbol phi_;
 };
 
 /** This class holds the symbols required for the improper parameters.
@@ -508,10 +508,10 @@ public:
 private:
     /** The symbol for the angle made by the improper bond
         with the plane of the other atoms */
-    Symbol _theta;
+    Symbol theta_;
     
     /** The symbol for the size of the improper torsion */
-    Symbol _phi;
+    Symbol phi_;
 };
 
 /** This class holds the symbols required for the stretch-stretch parameters.
@@ -529,13 +529,13 @@ public:
     
 private:
     /** The symbol for the length of the bond 0->1 */
-    Symbol _r01;
+    Symbol r01_;
     
     /** The symbol for the length of the bond 1<-2 */
-    Symbol _r21;
+    Symbol r21_;
     
     /** The symbol for the length of the bond 1->2 */
-    Symbol _r12;
+    Symbol r12_;
 };
 
 /** This class holds the symbols required for the stretch-bend parameters.
@@ -554,16 +554,16 @@ public:
     
 private:
     /** The symbol for the size of the angle */
-    Symbol _theta;
+    Symbol theta_;
 
     /** The symbol for the length of the bond 0->1 */
-    Symbol _r01;
+    Symbol r01_;
     
     /** The symbol for the length of the bond 1<-2 */
-    Symbol _r21;
+    Symbol r21_;
     
     /** The symbol for the length of the bond 1->2 */
-    Symbol _r12;
+    Symbol r12_;
 };
 
 /** This class holds the symbols required for the bend-bend parameters.
@@ -582,11 +582,11 @@ public:
     
 private:
     /** The symbol for the size of the angle 0->1<-2 */
-    Symbol _theta012;
+    Symbol theta012_;
     /** The symbol for the size of the angle 2->1<-3 */
-    Symbol _theta213;
+    Symbol theta213_;
     /** The symbol for the size of the angle 3->1<-0 */
-    Symbol _theta310;
+    Symbol theta310_;
 };
 
 /** This class holds the symbols required for the stretch-bend-torsion parameters
@@ -613,21 +613,21 @@ public:
     
 private:
     /** The symbol for the size of the torsion */
-    Symbol _phi;
+    Symbol phi_;
 
     /** The symbol for the angle 0->1<-2 */
-    Symbol _theta012;
+    Symbol theta012_;
     /** The symbol for the angle 3->2<-1 */
-    Symbol _theta321;
+    Symbol theta321_;
     
     /** The symbol for the length of the bond 0->1 */
-    Symbol _r01;
+    Symbol r01_;
     /** The symbol for the length of the bond 1->2 */
-    Symbol _r12;
+    Symbol r12_;
     /** The symbol for the length of the bond 3->2 */
-    Symbol _r32;
+    Symbol r32_;
     /** The symbol for the distance between the 0 and 3 atoms */
-    Symbol _r03;
+    Symbol r03_;
 };
 
 /** This class holds all of the symbols used by all of the
@@ -651,15 +651,15 @@ public:
     const StretchBendTorsionSymbols& stretchBendTorsion() const;
 
 private:
-    BondSymbols _bond;
-    AngleSymbols _angle;
-    DihedralSymbols _dihedral;
-    ImproperSymbols _improper;
-    BondSymbols _ureybradley;
-    StretchStretchSymbols _stretchstretch;
-    StretchBendSymbols _stretchbend;
-    BendBendSymbols _bendbend;
-    StretchBendTorsionSymbols _stretchbendtorsion;
+    BondSymbols bond_;
+    AngleSymbols angle_;
+    DihedralSymbols dihedral_;
+    ImproperSymbols improper_;
+    BondSymbols ureybradley_;
+    StretchStretchSymbols stretchstretch_;
+    StretchBendSymbols stretchbend_;
+    BendBendSymbols bendbend_;
+    StretchBendTorsionSymbols stretchbendtorsion_;
 };
 
 /** This class holds the internal parameters for a molecule

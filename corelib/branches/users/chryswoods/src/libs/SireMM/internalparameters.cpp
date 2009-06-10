@@ -1111,9 +1111,9 @@ InternalSymbolsBase::~InternalSymbolsBase()
 ////////// Implementation of BondSymbols
 //////////
 
-BondSymbols::BondSymbols() : _r("r")
+BondSymbols::BondSymbols() : r_("r")
 {
-    symbols.insert(_r);
+    symbols.insert(r_);
 }
 
 BondSymbols::~BondSymbols()
@@ -1122,16 +1122,16 @@ BondSymbols::~BondSymbols()
 /** Return the symbol representing the vector along the bond (r) */
 const Symbol& BondSymbols::r() const
 {
-    return _r;
+    return r_;
 }
 
 //////////
 ////////// Implementation of AngleSymbols
 //////////
 
-AngleSymbols::AngleSymbols() : _theta("theta")
+AngleSymbols::AngleSymbols() : theta_("theta")
 {
-    symbols.insert(_theta);
+    symbols.insert(theta_);
 }
 
 AngleSymbols::~AngleSymbols()
@@ -1140,16 +1140,16 @@ AngleSymbols::~AngleSymbols()
 /** Return the symbols representing the angle (theta) */
 const Symbol& AngleSymbols::theta() const
 {
-    return _theta;
+    return theta_;
 }
 
 //////////
 ////////// Implementation of DihedralSymbols
 //////////
 
-DihedralSymbols::DihedralSymbols() : _phi("phi")
+DihedralSymbols::DihedralSymbols() : phi_("phi")
 {
-    symbols.insert(_phi);
+    symbols.insert(phi_);
 }
 
 DihedralSymbols::~DihedralSymbols()
@@ -1158,17 +1158,17 @@ DihedralSymbols::~DihedralSymbols()
 /** Return the symbol representing the torsion (phi) */
 const Symbol& DihedralSymbols::phi() const
 {
-    return _phi;
+    return phi_;
 }
 
 //////////
 ////////// Implementation of ImproperSymbols
 //////////
 
-ImproperSymbols::ImproperSymbols() : _theta("theta"), _phi("phi")
+ImproperSymbols::ImproperSymbols() : theta_("theta"), phi_("phi")
 {
-    symbols.insert(_theta);
-    symbols.insert(_phi);
+    symbols.insert(theta_);
+    symbols.insert(phi_);
 }
 
 ImproperSymbols::~ImproperSymbols()
@@ -1178,13 +1178,13 @@ ImproperSymbols::~ImproperSymbols()
     and the plane formed by atoms 1-3 */  
 const Symbol& ImproperSymbols::theta() const
 {
-    return _theta;
+    return theta_;
 }
 
 /** Return the symbol representing the torsion 0-1-2-3 */
 const Symbol& ImproperSymbols::phi() const
 {
-    return _phi;
+    return phi_;
 }
 
 //////////
@@ -1192,11 +1192,11 @@ const Symbol& ImproperSymbols::phi() const
 //////////
 
 StretchStretchSymbols::StretchStretchSymbols()
-                      : _r01("r_{01}"), _r21("r_{21}"), _r12("r_{12}")
+                      : r01_("r_{01}"), r21_("r_{21}"), r12_("r_{12}")
 {
-    symbols.insert(_r01);
-    symbols.insert(_r21);
-    symbols.insert(_r12);
+    symbols.insert(r01_);
+    symbols.insert(r21_);
+    symbols.insert(r12_);
 }
 
 StretchStretchSymbols::~StretchStretchSymbols()
@@ -1205,19 +1205,19 @@ StretchStretchSymbols::~StretchStretchSymbols()
 /** Return the symbol representing the bond length r_{01} */
 const Symbol& StretchStretchSymbols::r01() const
 {
-    return _r01;
+    return r01_;
 }
 
 /** Return the symbol representing the bond length r_{21} */
 const Symbol& StretchStretchSymbols::r21() const
 {
-    return _r21;
+    return r21_;
 }
 
 /** Return the symbol representing the bond length r_{12} */
 const Symbol& StretchStretchSymbols::r12() const
 {
-    return _r12;
+    return r12_;
 }
 
 //////////
@@ -1225,12 +1225,12 @@ const Symbol& StretchStretchSymbols::r12() const
 //////////
 
 StretchBendSymbols::StretchBendSymbols()
-                   : _theta("theta"), _r01("r_{01}"), _r21("r_{21}"), _r12("r_{12}")
+                   : theta_("theta"), r01_("r_{01}"), r21_("r_{21}"), r12_("r_{12}")
 {
-    symbols.insert(_theta);
-    symbols.insert(_r01);
-    symbols.insert(_r21);
-    symbols.insert(_r12);
+    symbols.insert(theta_);
+    symbols.insert(r01_);
+    symbols.insert(r21_);
+    symbols.insert(r12_);
 }
 
 StretchBendSymbols::~StretchBendSymbols()
@@ -1239,25 +1239,25 @@ StretchBendSymbols::~StretchBendSymbols()
 /** Return the symbol representing the angle, theta */  
 const Symbol& StretchBendSymbols::theta() const
 {
-    return _theta;
+    return theta_;
 }
 
 /** Return the symbol representing the bond length, r_{01} */  
 const Symbol& StretchBendSymbols::r01() const
 {
-    return _r01;
+    return r01_;
 }
 
 /** Return the symbol representing the bond length, r_{21} */  
 const Symbol& StretchBendSymbols::r21() const
 {
-    return _r21;
+    return r21_;
 }
 
 /** Return the symbol representing the bond length r_{12} */
 const Symbol& StretchBendSymbols::r12() const
 {
-    return _r12;
+    return r12_;
 }
 
 //////////
@@ -1265,12 +1265,12 @@ const Symbol& StretchBendSymbols::r12() const
 //////////
 
 BendBendSymbols::BendBendSymbols()
-                : _theta012("theta_{012}"), _theta213("theta_{213}"),
-                  _theta310("theta_{310}")
+                : theta012_("theta_{012}"), theta213_("theta_{213}"),
+                  theta310_("theta_{310}")
 {
-    symbols.insert(_theta012);
-    symbols.insert(_theta213);
-    symbols.insert(_theta310);
+    symbols.insert(theta012_);
+    symbols.insert(theta213_);
+    symbols.insert(theta310_);
 }
 
 BendBendSymbols::~BendBendSymbols()
@@ -1279,19 +1279,19 @@ BendBendSymbols::~BendBendSymbols()
 /** Return the symbol representing the angle between atoms 0-1-2, theta_{012} */
 const Symbol& BendBendSymbols::theta012() const
 {
-    return _theta012;
+    return theta012_;
 }
 
 /** Return the symbol representing the angle between atoms 2-1-3, theta_{213} */
 const Symbol& BendBendSymbols::theta213() const
 {
-    return _theta213;
+    return theta213_;
 }
 
 /** Return the symbol representing the angle between atoms 3-1-0, theta_{310} */
 const Symbol& BendBendSymbols::theta310() const
 {
-    return _theta310;
+    return theta310_;
 }
 
 //////////
@@ -1299,17 +1299,17 @@ const Symbol& BendBendSymbols::theta310() const
 //////////
 
 StretchBendTorsionSymbols::StretchBendTorsionSymbols()
-                          : _phi("phi"), _theta012("theta_{012}"),
-                            _theta321("theta_{321}"), _r01("r_{01}"),
-                            _r12("r_{12}"), _r32("r_{32}"), _r03("r_{03}")
+                          : phi_("phi"), theta012_("theta_{012}"),
+                            theta321_("theta_{321}"), r01_("r_{01}"),
+                            r12_("r_{12}"), r32_("r_{32}"), r03_("r_{03}")
 {
-    symbols.insert(_phi);
-    symbols.insert(_theta012);
-    symbols.insert(_theta321);
-    symbols.insert(_r01);
-    symbols.insert(_r12);
-    symbols.insert(_r32);
-    symbols.insert(_r03);
+    symbols.insert(phi_);
+    symbols.insert(theta012_);
+    symbols.insert(theta321_);
+    symbols.insert(r01_);
+    symbols.insert(r12_);
+    symbols.insert(r32_);
+    symbols.insert(r03_);
 }
 
 StretchBendTorsionSymbols::~StretchBendTorsionSymbols()
@@ -1318,43 +1318,43 @@ StretchBendTorsionSymbols::~StretchBendTorsionSymbols()
 /** Return the symbol representing the torsion, phi */
 const Symbol& StretchBendTorsionSymbols::phi() const
 {
-    return _phi;
+    return phi_;
 }
 
 /** Return the symbol representing the angle between atoms 0-1-2, theta_{012} */
 const Symbol& StretchBendTorsionSymbols::theta012() const
 {
-    return _theta012;
+    return theta012_;
 }
 
 /** Return the symbol representing the angle between atoms 3-2-1, theta_{321} */
 const Symbol& StretchBendTorsionSymbols::theta321() const
 {
-    return _theta321;
+    return theta321_;
 }
 
 /** Return the symbol representing the bond between atoms 0-1, r_{01} */
 const Symbol& StretchBendTorsionSymbols::r01() const
 {
-    return _r01;
+    return r01_;
 }
 
 /** Return the symbol representing the bond between atoms 1-2, r_{12} */
 const Symbol& StretchBendTorsionSymbols::r12() const
 {
-    return _r12;
+    return r12_;
 }
 
 /** Return the symbol representing the bond between atoms 3-2, r_{32} */
 const Symbol& StretchBendTorsionSymbols::r32() const
 {
-    return _r32;
+    return r32_;
 }
 
 /** Return the symbol representing the distance from atom 0 to 3, r_{03} */
 const Symbol& StretchBendTorsionSymbols::r03() const
 {
-    return _r03;
+    return r03_;
 }
 
 //////////
@@ -1363,15 +1363,15 @@ const Symbol& StretchBendTorsionSymbols::r03() const
 
 InternalSymbols::InternalSymbols()
 {
-    symbols += _bond;
-    symbols += _angle;
-    symbols += _dihedral;
-    symbols += _improper;
-    symbols += _ureybradley;
-    symbols += _stretchstretch;
-    symbols += _stretchbend;
-    symbols += _bendbend;
-    symbols += _stretchbendtorsion; 
+    symbols += bond_;
+    symbols += angle_;
+    symbols += dihedral_;
+    symbols += improper_;
+    symbols += ureybradley_;
+    symbols += stretchstretch_;
+    symbols += stretchbend_;
+    symbols += bendbend_;
+    symbols += stretchbendtorsion_; 
 }
 
 InternalSymbols::~InternalSymbols()
@@ -1380,55 +1380,55 @@ InternalSymbols::~InternalSymbols()
 /** Return all of the symbols used in the bond parameters */
 const BondSymbols& InternalSymbols::bond() const
 {
-    return _bond;
+    return bond_;
 }
 
 /** Return all of the symbols used in the angle parameters */
 const AngleSymbols& InternalSymbols::angle() const
 {
-    return _angle;
+    return angle_;
 }
 
 /** Return all of the symbols used in the dihedral parameters */
 const DihedralSymbols& InternalSymbols::dihedral() const
 {
-    return _dihedral;
+    return dihedral_;
 }
 
 /** Return all of the symbols used in the improper parameters */
 const ImproperSymbols& InternalSymbols::improper() const
 {
-    return _improper;
+    return improper_;
 }
 
 /** Return all of the symbols used in the Urey-Bradley parameters */
 const BondSymbols& InternalSymbols::ureyBradley() const
 {
-    return _ureybradley;
+    return ureybradley_;
 }
 
 /** Return all of the symbols used in the stretch-stretch parameters */
 const StretchStretchSymbols& InternalSymbols::stretchStretch() const
 {
-    return _stretchstretch;
+    return stretchstretch_;
 }
 
 /** Return all of the symbols used in the stretch-bend parameters */
 const StretchBendSymbols& InternalSymbols::stretchBend() const
 {
-    return _stretchbend;
+    return stretchbend_;
 }
 
 /** Return all of the symbols used in the bend-bend parameters */
 const BendBendSymbols& InternalSymbols::bendBend() const
 {
-    return _bendbend;
+    return bendbend_;
 }
 
 /** Return all of the symbols used in the stretch-bend-torsion parameters */
 const StretchBendTorsionSymbols& InternalSymbols::stretchBendTorsion() const
 {
-    return _stretchbendtorsion;
+    return stretchbendtorsion_;
 }
 
 //////////

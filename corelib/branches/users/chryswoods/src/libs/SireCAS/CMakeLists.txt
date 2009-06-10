@@ -10,6 +10,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 # Define the headers in SireCAS
 set ( SIRECAS_HEADERS
       complexvalues.h
+      conditional.h
       constant.h
       doublefunc.h
       errors.h
@@ -48,6 +49,7 @@ set ( SIRECAS_SOURCES
       register_sirecas.cpp
 
       complexvalues.cpp           
+      conditional.cpp
       constant.cpp
       doublefunc.cpp                
       errors.cpp                  

@@ -872,9 +872,9 @@ public:
         return InternalEnergy::total();
     }
     
-    operator SireUnits::Dimension::Energy() const
+    operator SireUnits::Dimension::MolarEnergy() const
     {
-        return SireUnits::Dimension::Energy( InternalEnergy::total() );
+        return SireUnits::Dimension::MolarEnergy( InternalEnergy::total() );
     }
     
     operator BondEnergy() const

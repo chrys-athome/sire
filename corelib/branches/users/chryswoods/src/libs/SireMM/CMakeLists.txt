@@ -32,6 +32,11 @@ set ( SIREMM_HEADERS
       ljparameter.h
       ljparameterdb.h
       ljpotential.h
+      positionalrestraint.h
+      restraint.h
+      restraintcomponent.h
+      restraintff.h
+      restraintparameters.h
       softcljcomponent.h
       softcljpotential.h
       switchingfunction.h
@@ -70,6 +75,11 @@ set ( SIREMM_SOURCES
       ljparameter.cpp
       ljparameterdb.cpp
       ljpotential.cpp
+      positionalrestraint.cpp
+      restraint.cpp
+      restraintcomponent.cpp
+      restraintff.cpp
+      restraintparameters.cpp
       softcljcomponent.cpp
       softcljpotential.cpp
       switchingfunction.cpp

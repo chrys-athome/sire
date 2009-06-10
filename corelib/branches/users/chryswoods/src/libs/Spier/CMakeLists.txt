@@ -34,7 +34,9 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
     set ( SPIER_HEADERS
 
           camera.h
+          cameracommand.h
           color.h
+          command.h
 
           glbackground.h
           glcanvas.h
@@ -56,7 +58,9 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
           register_spier.cpp
 
           camera.cpp
+          cameracommand.cpp
           color.cpp
+          command.cpp
           eventmonitor.cpp
 
           glbackground.cpp

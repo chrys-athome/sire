@@ -159,9 +159,9 @@ public:
         return nrg;
     }
     
-    operator SireUnits::Dimension::Energy() const
+    operator SireUnits::Dimension::MolarEnergy() const
     {
-        return SireUnits::Dimension::Energy(nrg);
+        return SireUnits::Dimension::MolarEnergy(nrg);
     }
     
 private:
