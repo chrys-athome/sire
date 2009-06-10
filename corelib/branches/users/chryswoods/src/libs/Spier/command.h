@@ -31,8 +31,6 @@
 
 #include "SireBase/property.h"
 
-#include "renderview.h"
-
 SIRE_BEGIN_HEADER
 
 namespace Spier
@@ -50,6 +48,10 @@ QDataStream& operator>>(QDataStream&, Spier::NullCommand&);
 namespace Spier
 {
 
+class RenderView;
+
+typedef SireBase::PropPtr<Command> CommandPtr;
+
 /** This is the base class of all commands. Spier works by passing
     in commands, each of which can be undone, and each of which
     records the time at which it is performed. This allows a 
@@ -65,7 +67,7 @@ friend QDataStream& ::operator<<(QDataStream&, const Command&);
 friend QDataStream& ::operator>>(QDataStream&, Command&);
 
 public:
-    Command();
+    Command(const QString &description);
     
     Command(const Command &other);
     
@@ -77,23 +79,27 @@ public:
     }
     
     virtual Command* clone() const=0;
-    
-    int nChildren() const;
-    
-    const Command& child(int i) const;
+
+    const QString& text() const;
 
     virtual void operator()(RenderView &render_view) const=0;
 
     virtual void undo(RenderView &render_view) const=0;
     virtual void redo(RenderView &render_view) const=0;
 
-    virtual bool mergeWith(const Command &other)=0;
+    virtual CommandPtr mergeWith(const Command &other)=0;
+
+    static const NullCommand& null();
 
 protected:
     Command& operator=(const Command &other);
     
     bool operator==(const Command &other) const;
     bool operator!=(const Command &other) const;
+
+private:
+    /** The small text string that describes this command */
+    QString description_text;
 };
 
 /** This is a null command that does nothing */
@@ -121,7 +127,7 @@ public:
     void undo(RenderView &render_view) const;
     void redo(RenderView &render_view) const;
 
-    bool mergeWith(const Command &other);
+    CommandPtr mergeWith(const Command &other);
 };
 
 }
