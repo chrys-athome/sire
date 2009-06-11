@@ -37,6 +37,7 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include "SireError/errors.h"
 #include "SireCAS/errors.h"
 #include "SireMaths/errors.h"
 
@@ -1701,15 +1702,31 @@ Expression Conditional::series(const Symbol &symbol, int n) const
 /** Try to simplify this condition */
 Expression Conditional::simplify(int options) const
 {
-    if (condition().alwaysTrue())
-        return true_expression.simplify(options);
+    if (condition().isConstant())
+    {
+        if (condition().alwaysTrue())
+            return true_expression.simplify(options);
+        else
+            return false_expression.simplify(options);
+    }
     else
     {
         Conditional ret;
         
         Expression simple_cond = cond->simplify(options);
         
-        BOOST_ASSERT( simple_cond.base().isA<Condition>() );
+        if (simple_cond.isConstant())
+        {
+            if (simple_cond.isZero())
+                return false_expression.simplify(options);
+            else
+                return true_expression.simplify(options);
+        }
+        
+        if (not simple_cond.base().isA<Condition>())
+            throw SireError::program_bug( QObject::tr(
+                    "How have we lost the condition %1 and got %2 instead???")
+                        .arg(cond->toString(), simple_cond.toString()), CODELOC );
         
         ret.cond = simple_cond.base().asA<Condition>();
         ret.true_expression = true_expression.simplify(options);
@@ -1865,11 +1882,24 @@ Expression Conditional::substitute(const Identities &identities) const
 
     Expression new_cond = cond->substitute(identities);
     
-    BOOST_ASSERT(new_cond.base().isA<Condition>());
-    
-    ret.cond = new_cond.base().asA<Condition>();
+    if (new_cond.base().isA<Condition>())
+        ret.cond = new_cond.base().asA<Condition>();
+    else
+    {
+        if (new_cond.isConstant())
+        {
+            if (new_cond.isZero())
+                ret.cond = AlwaysFalse();
+            else
+                ret.cond = AlwaysTrue();
+        }
+        else
+            throw SireError::program_bug( QObject::tr(
+                    "How did the condition %1 turn into %2???")
+                        .arg(cond->toString(), new_cond.toString()), CODELOC );
+    }
 
-    if (cond->isConstant())
+    if (ret.cond->isConstant())
     {
         if (ret.cond->alwaysTrue())
         {

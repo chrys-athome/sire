@@ -52,9 +52,10 @@ namespace SireCAS
 class Symbol;
 
 /**
-This class holds a set of Symbols and their associated values. This is used when numerically evaluating an equation.
+    This class holds a set of Symbols and their associated values. This is used
+    when numerically evaluating an equation.
 
-@author Christopher Woods
+    @author Christopher Woods
 */
 class SIRECAS_EXPORT Values
 {
