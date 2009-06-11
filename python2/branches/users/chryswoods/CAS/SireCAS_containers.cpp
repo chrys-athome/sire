@@ -29,8 +29,6 @@
 #include <Python.h>
 #include <boost/python.hpp>
 
-#include "SireCAS/qhash_sirecas.h"
-
 #include <QVector>
 #include <QSet>
 

@@ -307,6 +307,7 @@ if __name__ == "__main__":
                 "MMDB" : "SireMMDB",
                 "Mol" : "SireMol",
                 "Move" : "SireMove",
+                "Spier" : "Spier",
                 "Squire" : "Squire",
                 "Stream" : "SireStream",
                 "System" : "SireSystem",

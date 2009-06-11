@@ -82,7 +82,8 @@ option (SIRE_TIME_FLOPS "Turn on floating point timing" OFF)
 
 # Sire depends on >= Python 2.2
 set (PYTHON_MIN_VERSION "2.2")
-include( FindPython )
+#include( FindPython )
+find_package( Python )
 
 if (NOT PYTHON_LIBS_FOUND)
     
@@ -268,6 +269,7 @@ add_subdirectory (MM)
 add_subdirectory (Mol)
 add_subdirectory (Move)
 add_subdirectory (Stream)
+#add_subdirectory (Spier)
 add_subdirectory (Squire)
 add_subdirectory (System)
 add_subdirectory (Units)
