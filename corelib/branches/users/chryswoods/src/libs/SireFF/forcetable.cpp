@@ -216,6 +216,51 @@ QVector<Vector> MolForceTable::toVector() const
     return PackedArray2D<Vector>::toQVector();
 }
 
+/** Add the force 'force' onto this table. This ignores
+    forces calculated for atoms that are in CutGroups that are
+    not in this table - this returns whether or not the
+    atom is in this table
+    
+    \throw SireError::invalid_index
+*/
+bool MolForceTable::add(const CGAtomIdx &cgatomidx, const Vector &force)
+{
+    CGIdx cgidx( cgatomidx.cutGroup().map(this->nCutGroups()) );
+    
+    int i = -1;
+    
+    if (this->selectedAll())
+    {
+        i = cgidx;
+    }
+    else if (cgidx_to_idx.contains(cgidx))
+    {
+        i = cgidx_to_idx.value(cgidx);
+    }
+    else
+    {
+        return false;
+    }
+    
+    int j = cgatomidx.atom().map( this->nValues(i) );
+    
+    this->operator()(i, j) += force;
+    
+    return true;
+}
+
+/** Subtract the force 'force' from this table. This ignores
+    forces calculated for atoms that are in CutGroups that are
+    not in this table - this returns whether or not the
+    atom is in this table
+    
+    \throw SireError::invalid_index
+*/
+bool MolForceTable::subtract(const CGAtomIdx &cgatomidx, const Vector &force)
+{
+    return this->add( cgatomidx, -force );
+}
+
 void MolForceTable::assertCompatibleWith(const AtomSelection &selection) const
 {
     if (not selection.selectedAll())

@@ -129,6 +129,8 @@ protected:
 
     void update(const Vector &new_molecule_point);
 
+    Vector restraintForce() const;
+
 private:
     /** The location of the restraint */
     Vector restraint_point;
@@ -190,6 +192,12 @@ public:
     
     void force(MolForceTable &forcetable, double scale_force=1) const;
 
+protected:
+    AtomicRestraint(const Atom &atom, const Vector &restraint_point,
+                    const Expression &restraint_expression,
+                    const Expression &diff_restraint_expression,
+                    const PropertyMap &map = PropertyMap());
+
 private:
     /** The index of the atom in the molecule to restrain */
     CGAtomIdx cgatomidx;
@@ -244,6 +252,13 @@ public:
 
     void force(MolForceTable &forcetable, double scale_force=1) const;
 
+protected:
+    CenterOfGeometryRestraint(const MoleculeView &molview,
+                              const Vector &restraint_point,
+                              const Expression &restraint_expression,
+                              const Expression &diff_restraint_expression,
+                              const PropertyMap &map = PropertyMap());
+
 private:
     /** The atoms that are affected by this restraint */
     AtomSelection selected_atoms;
@@ -297,7 +312,17 @@ public:
     void update(const MoleculeData &moldata, const PropertyMap &map);
                              
     void force(MolForceTable &forcetable, double scale_force=1) const;
-    
+
+protected:
+    CenterOfMassRestraint(const MoleculeView &molview,
+                          const Vector &restraint_point,
+                          const Expression &restraint_expression,
+                          const Expression &diff_restraint_expression,
+                          const PropertyMap &map = PropertyMap());
+
+private:
+    /** The atoms affected by this restraint */
+    AtomSelection selected_atoms;
 };
 
 }

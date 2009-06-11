@@ -64,6 +64,7 @@ namespace SireFF
 
 using SireMol::MoleculeView;
 using SireMol::CGIdx;
+using SireMol::CGAtomIdx;
 using SireMol::MolNum;
 using SireMol::MoleculeGroup;
 using SireMol::AtomSelection;
@@ -129,6 +130,9 @@ public:
 
     QVector<Vector> toVector() const;
     QVector<Vector> toVector(const AtomSelection &selection) const;
+    
+    bool add(const CGAtomIdx &cgatomidx, const Vector &force);
+    bool subtract(const CGAtomIdx &cgatomidx, const Vector &force);
 
 private:
     void assertCompatibleWith(const AtomSelection &selection) const;
