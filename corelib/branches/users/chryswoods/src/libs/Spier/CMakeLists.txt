@@ -49,6 +49,8 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
           glsphere.h
           glviewfrustrum.h
 
+          renderviewcommand.h
+
           ${SPIER_MOC_HEADERS}
         )
 
@@ -76,6 +78,7 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
 
           renderscene.cpp
           renderview.cpp
+          renderviewcommand.cpp
           spierview.cpp
 
           ${SPIER_HEADERS}

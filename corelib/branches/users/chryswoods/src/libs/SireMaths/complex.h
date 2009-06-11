@@ -145,6 +145,8 @@ public:
     operator std::complex<T>() const;
 
     bool isReal() const;
+    bool isPurelyComplex() const;
+    
     bool isZero() const;
 
     QString toString() const;

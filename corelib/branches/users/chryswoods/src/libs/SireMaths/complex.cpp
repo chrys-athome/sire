@@ -98,6 +98,12 @@ bool Complex::isReal() const
     return SireMaths::isZero(imag());
 }
 
+/** Is this a pure complex number (real == 0) */
+bool Complex::isPurelyComplex() const
+{
+    return SireMaths::isZero(real());
+}
+
 /** Is this zero? */
 bool Complex::isZero() const
 {

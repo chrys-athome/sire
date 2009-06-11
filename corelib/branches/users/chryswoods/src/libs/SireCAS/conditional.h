@@ -30,13 +30,14 @@
 #define SIRECAS_CONDITIONAL_H
 
 #include "exbase.h"
+#include "expression.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireCAS
 {
-class Conditional;
 class Condition;
+class Conditional;
 
 class GreaterThan;
 class LessThan;
@@ -44,6 +45,8 @@ class GreaterOrEqualThan;
 class LessOrEqualThan;
 class EqualTo;
 class NotEqualTo;
+class AlwaysTrue;
+class AlwaysFalse;
 }
 
 QDataStream& operator<<(QDataStream&, const SireCAS::Conditional&);
@@ -70,6 +73,12 @@ QDataStream& operator>>(QDataStream&, SireCAS::EqualTo&);
 QDataStream& operator<<(QDataStream&, const SireCAS::NotEqualTo&);
 QDataStream& operator>>(QDataStream&, SireCAS::NotEqualTo&);
 
+QDataStream& operator<<(QDataStream&, const SireCAS::AlwaysTrue&);
+QDataStream& operator>>(QDataStream&, SireCAS::AlwaysTrue&);
+
+QDataStream& operator<<(QDataStream&, const SireCAS::AlwaysFalse&);
+QDataStream& operator>>(QDataStream&, SireCAS::AlwaysFalse&);
+
 namespace SireCAS
 {
 
@@ -82,7 +91,7 @@ class SIRECAS_EXPORT Condition : public ExBase
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Condition&);
-friend QDataStream& ::operator>>(QDataStream&, const Condition&);
+friend QDataStream& ::operator>>(QDataStream&, Condition&);
 
 public:
     Condition();
@@ -92,18 +101,28 @@ public:
     
     ~Condition();
 
+    static const char* typeName()
+    {
+        return "SireCAS::Condition";
+    }
+
+    virtual Condition* clone() const=0;
+
     Expression differentiate(const Symbol &symbol) const;
     Expression integrate(const Symbol &symbol) const;
 
+    Expression simplify(int options=0) const;
+
+    Expression conjugate() const;
+
     bool isFunction(const Symbol&) const;
     bool isConstant() const;
+    bool isComplex() const;
+    bool isCompound() const;
 
     bool isNull() const;
 
     uint hash() const;
-
-    double evaluate(const Values &values) const;
-    Complex evaluate(const ComplexValues &values) const;
 
     Expression substitute(const Identities &identities) const;
 
@@ -113,16 +132,36 @@ public:
 
     QList<Factor> expand(const Symbol &symbol) const;
     
+    const Expression& leftHandSide() const;
+    const Expression& rightHandSide() const;
+
+    virtual bool alwaysTrue() const=0;
+    virtual bool alwaysFalse() const=0;
+    
+    QString toString() const;
+    
     bool evaluateCondition(const Values &values) const;
     bool evaluateCondition(const ComplexValues &values) const;
+
+    double evaluate(const Values &values) const;
+    Complex evaluate(const ComplexValues &values) const;
     
 protected:
     Condition& operator=(const Condition &other);
     
     bool operator==(const Condition &other) const;
-    bool operator!=(const Condition &other) const;
     
     virtual bool compareValues(double val0, double val1) const=0;
+    virtual bool compareValues(const Complex &val0, const Complex &val1) const=0;
+    
+    virtual QString operatorString() const=0;
+
+private:
+    /** The left hand side of the condition */
+    Expression lhs;
+    
+    /** The right hand side of the condition */
+    Expression rhs;
 };
 
 /** This is a conditional function that returns whether or 
@@ -139,7 +178,8 @@ friend QDataStream& ::operator>>(QDataStream&, GreaterThan&);
 
 public:
     GreaterThan();
-    GreaterThan(const Expression &ex0, const Expression &ex1);
+    GreaterThan(const Expression &left_hand_side, 
+                const Expression &right_hand_side);
     
     GreaterThan(const GreaterThan &other);
     
@@ -152,13 +192,485 @@ public:
 
     static const char* typeName();
     
+    const char* what() const
+    {
+        return GreaterThan::typeName();
+    }
+    
     GreaterThan* clone() const
     {
         return new GreaterThan(*this);
     }
 
+    bool alwaysTrue() const;
+    bool alwaysFalse() const;
+
 protected:
     bool compareValues(double val0, double val1) const;
+    bool compareValues(const Complex &val0, const Complex &val1) const;
+
+    QString operatorString() const;
+};
+
+/** This is a conditional function that returns whether or 
+    not the first expression is less than the second
+    expression
+    
+    @author Christopher Woods
+*/
+class SIRECAS_EXPORT LessThan : public Condition
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const LessThan&);
+friend QDataStream& ::operator>>(QDataStream&, LessThan&);
+
+public:
+    LessThan();
+    LessThan(const Expression &left_hand_side, 
+             const Expression &right_hand_side);
+    
+    LessThan(const LessThan &other);
+    
+    ~LessThan();
+    
+    LessThan& operator=(const LessThan &other);
+    
+    bool operator==(const LessThan &other) const;
+    bool operator==(const ExBase &other) const;
+
+    static const char* typeName();
+    
+    const char* what() const
+    {
+        return LessThan::typeName();
+    }
+    
+    LessThan* clone() const
+    {
+        return new LessThan(*this);
+    }
+
+    bool alwaysTrue() const;
+    bool alwaysFalse() const;
+
+protected:
+    bool compareValues(double val0, double val1) const;
+    bool compareValues(const Complex &val0, const Complex &val1) const;
+
+    QString operatorString() const;
+};
+
+/** This is a conditional function that returns whether or 
+    not the first expression is greater than or equal to 
+    the second expression 
+    
+    @author Christopher Woods
+*/
+class SIRECAS_EXPORT GreaterOrEqualThan : public Condition
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const GreaterOrEqualThan&);
+friend QDataStream& ::operator>>(QDataStream&, GreaterOrEqualThan&);
+
+public:
+    GreaterOrEqualThan();
+    GreaterOrEqualThan(const Expression &left_hand_side, 
+                       const Expression &right_hand_side);
+    
+    GreaterOrEqualThan(const GreaterOrEqualThan &other);
+    
+    ~GreaterOrEqualThan();
+    
+    GreaterOrEqualThan& operator=(const GreaterOrEqualThan &other);
+    
+    bool operator==(const GreaterOrEqualThan &other) const;
+    bool operator==(const ExBase &other) const;
+
+    static const char* typeName();
+    
+    const char* what() const
+    {
+        return GreaterOrEqualThan::typeName();
+    }
+    
+    GreaterOrEqualThan* clone() const
+    {
+        return new GreaterOrEqualThan(*this);
+    }
+
+    bool alwaysTrue() const;
+    bool alwaysFalse() const;
+
+protected:
+    bool compareValues(double val0, double val1) const;
+    bool compareValues(const Complex &val0, const Complex &val1) const;
+
+    QString operatorString() const;
+};
+
+/** This is a conditional function that returns whether or 
+    not the first expression is less than or equal to 
+    the second expression 
+    
+    @author Christopher Woods
+*/
+class SIRECAS_EXPORT LessOrEqualThan : public Condition
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const LessOrEqualThan&);
+friend QDataStream& ::operator>>(QDataStream&, LessOrEqualThan&);
+
+public:
+    LessOrEqualThan();
+    LessOrEqualThan(const Expression &left_hand_side, 
+                    const Expression &right_hand_side);
+    
+    LessOrEqualThan(const LessOrEqualThan &other);
+    
+    ~LessOrEqualThan();
+    
+    LessOrEqualThan& operator=(const LessOrEqualThan &other);
+    
+    bool operator==(const LessOrEqualThan &other) const;
+    bool operator==(const ExBase &other) const;
+
+    static const char* typeName();
+    
+    const char* what() const
+    {
+        return LessOrEqualThan::typeName();
+    }
+    
+    LessOrEqualThan* clone() const
+    {
+        return new LessOrEqualThan(*this);
+    }
+
+    bool alwaysTrue() const;
+    bool alwaysFalse() const;
+
+protected:
+    bool compareValues(double val0, double val1) const;
+    bool compareValues(const Complex &val0, const Complex &val1) const;
+
+    QString operatorString() const;
+};
+
+/** This is a conditional function that returns whether or 
+    not the first expression is equal to the second
+    expression 
+    
+    @author Christopher Woods
+*/
+class SIRECAS_EXPORT EqualTo : public Condition
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const EqualTo&);
+friend QDataStream& ::operator>>(QDataStream&, EqualTo&);
+
+public:
+    EqualTo();
+    EqualTo(const Expression &left_hand_side, 
+            const Expression &right_hand_side);
+    
+    EqualTo(const EqualTo &other);
+    
+    ~EqualTo();
+    
+    EqualTo& operator=(const EqualTo &other);
+    
+    bool operator==(const EqualTo &other) const;
+    bool operator==(const ExBase &other) const;
+
+    static const char* typeName();
+    
+    const char* what() const
+    {
+        return EqualTo::typeName();
+    }
+    
+    EqualTo* clone() const
+    {
+        return new EqualTo(*this);
+    }
+
+    bool alwaysTrue() const;
+    bool alwaysFalse() const;
+
+protected:
+    bool compareValues(double val0, double val1) const;
+    bool compareValues(const Complex &val0, const Complex &val1) const;
+
+    QString operatorString() const;
+};
+
+/** This is a conditional function that returns whether or 
+    not the first expression is not equal to the second
+    expression 
+    
+    @author Christopher Woods
+*/
+class SIRECAS_EXPORT NotEqualTo : public Condition
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const NotEqualTo&);
+friend QDataStream& ::operator>>(QDataStream&, NotEqualTo&);
+
+public:
+    NotEqualTo();
+    NotEqualTo(const Expression &left_hand_side, 
+               const Expression &right_hand_side);
+    
+    NotEqualTo(const NotEqualTo &other);
+    
+    ~NotEqualTo();
+    
+    NotEqualTo& operator=(const NotEqualTo &other);
+    
+    bool operator==(const NotEqualTo &other) const;
+    bool operator==(const ExBase &other) const;
+
+    static const char* typeName();
+    
+    const char* what() const
+    {
+        return NotEqualTo::typeName();
+    }
+    
+    NotEqualTo* clone() const
+    {
+        return new NotEqualTo(*this);
+    }
+
+    bool alwaysTrue() const;
+    bool alwaysFalse() const;
+
+protected:
+    bool compareValues(double val0, double val1) const;
+    bool compareValues(const Complex &val0, const Complex &val1) const;
+
+    QString operatorString() const;
+};
+
+/** This is an overloaded conditional that is always true */
+class SIRECAS_EXPORT AlwaysTrue : public Condition
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const AlwaysTrue&);
+friend QDataStream& ::operator>>(QDataStream&, AlwaysTrue&);
+
+public:
+    AlwaysTrue();
+    AlwaysTrue(const AlwaysTrue &other);
+    
+    ~AlwaysTrue();
+    
+    AlwaysTrue& operator=(const AlwaysTrue &other);
+    
+    bool operator==(const AlwaysTrue &other) const;
+    bool operator==(const ExBase &other) const;
+    
+    static const char* typeName();
+    
+    const char* what() const
+    {
+        return AlwaysTrue::typeName();
+    }
+    
+    AlwaysTrue* clone() const
+    {
+        return new AlwaysTrue(*this);
+    }
+
+    QString toString() const;
+    
+    Expression simplify(int options) const;
+
+    bool alwaysTrue() const;
+    bool alwaysFalse() const;
+
+    bool isFunction(const Symbol&) const;
+    bool isConstant() const;
+    bool isComplex() const;
+    bool isCompound() const;
+
+    bool isNull() const;
+
+    uint hash() const;
+
+    Expression substitute(const Identities &identities) const;
+
+    Symbols symbols() const;
+    Functions functions() const;
+    Expressions children() const;
+
+    QList<Factor> expand(const Symbol &symbol) const;
+    
+    bool evaluateCondition(const Values &values) const;
+    bool evaluateCondition(const ComplexValues &values) const;
+
+    double evaluate(const Values &values) const;
+    Complex evaluate(const ComplexValues &values) const;
+
+protected:
+    bool compareValues(double val0, double val1) const;
+    bool compareValues(const Complex &val0, const Complex &val1) const;
+
+    QString operatorString() const;
+};
+
+/** This is an overloaded conditional that is always false */
+class SIRECAS_EXPORT AlwaysFalse : public Condition
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const AlwaysFalse&);
+friend QDataStream& ::operator>>(QDataStream&, AlwaysFalse&);
+
+public:
+    AlwaysFalse();
+    AlwaysFalse(const AlwaysFalse &other);
+    
+    ~AlwaysFalse();
+    
+    AlwaysFalse& operator=(const AlwaysFalse &other);
+    
+    bool operator==(const AlwaysFalse &other) const;
+    bool operator==(const ExBase &other) const;
+    
+    static const char* typeName();
+    
+    const char* what() const
+    {
+        return AlwaysFalse::typeName();
+    }
+    
+    AlwaysFalse* clone() const
+    {
+        return new AlwaysFalse(*this);
+    }
+
+    QString toString() const;
+    
+    Expression simplify(int options) const;
+
+    bool alwaysTrue() const;
+    bool alwaysFalse() const;
+
+    bool isFunction(const Symbol&) const;
+    bool isConstant() const;
+    bool isComplex() const;
+    bool isCompound() const;
+
+    bool isNull() const;
+
+    uint hash() const;
+
+    Expression substitute(const Identities &identities) const;
+
+    Symbols symbols() const;
+    Functions functions() const;
+    Expressions children() const;
+
+    QList<Factor> expand(const Symbol &symbol) const;
+    
+    bool evaluateCondition(const Values &values) const;
+    bool evaluateCondition(const ComplexValues &values) const;
+
+    double evaluate(const Values &values) const;
+    Complex evaluate(const ComplexValues &values) const;
+
+protected:
+    bool compareValues(double val0, double val1) const;
+    bool compareValues(const Complex &val0, const Complex &val1) const;
+
+    QString operatorString() const;
+};
+
+/** This is a conditional expression. If the condition is true,
+    then true_expression is evaluated, else if the condition
+    is false then false_expression is evaluate
+    
+    @author Christopher Woods
+*/
+class SIRECAS_EXPORT Conditional : public ExBase
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const Conditional&);
+friend QDataStream& ::operator>>(QDataStream&, Conditional&);
+
+public:
+    Conditional();
+    
+    Conditional(const Condition &condition, 
+                const Expression &true_expression,
+                const Expression &false_expression);
+                
+    Conditional(const Conditional &other);
+    
+    ~Conditional();
+    
+    Conditional& operator=(const Conditional &other);
+    
+    bool operator==(const Conditional &other) const;
+    bool operator==(const ExBase &other) const;
+    
+    static const char* typeName();
+
+    const char* what() const
+    {
+        return Conditional::typeName();
+    }
+    
+    Conditional* clone() const
+    {
+        return new Conditional(*this);
+    }
+
+    const Condition& condition() const;
+    
+    const Expression& trueExpression() const;
+    const Expression& falseExpression() const;
+
+    Expression differentiate(const Symbol &symbol) const;
+    Expression integrate(const Symbol &symbol) const;
+
+    Expression series(const Symbol &symbol, int n) const;
+
+    Expression simplify(int options=0) const;
+
+    Expression conjugate() const;
+
+    bool isFunction(const Symbol&) const;
+    bool isConstant() const;
+    bool isComplex() const;
+    bool isCompound() const;
+
+    uint hash() const;
+
+    QString toString() const;
+
+    bool isNull() const;
+
+    double evaluate(const Values &values) const;
+    Complex evaluate(const ComplexValues &values) const;
+
+    Expression substitute(const Identities &identities) const;
+
+    Symbols symbols() const;
+    Functions functions() const;
+    Expressions children() const;
+
+    QList<Factor> expand(const Symbol &symbol) const;
+
+private:
+    /** The condition to be evaluated */
+    SireBase::SharedPolyPointer<Condition> cond;
+    
+    /** The expression to evaluate if the condition is true */
+    Expression true_expression;
+    
+    /** The expression to evaluate if the condition is false */
+    Expression false_expression;
 };
 
 }
@@ -171,8 +683,11 @@ Q_DECLARE_METATYPE( SireCAS::GreaterOrEqualThan )
 Q_DECLARE_METATYPE( SireCAS::LessOrEqualThan )
 Q_DECLARE_METATYPE( SireCAS::EqualTo )
 Q_DECLARE_METATYPE( SireCAS::NotEqualTo )
+Q_DECLARE_METATYPE( SireCAS::AlwaysTrue )
+Q_DECLARE_METATYPE( SireCAS::AlwaysFalse )
 
 SIRE_EXPOSE_CLASS( SireCAS::Conditional )
+
 SIRE_EXPOSE_CLASS( SireCAS::Condition )
 SIRE_EXPOSE_CLASS( SireCAS::GreaterThan )
 SIRE_EXPOSE_CLASS( SireCAS::LessThan )
@@ -180,5 +695,7 @@ SIRE_EXPOSE_CLASS( SireCAS::GreaterOrEqualThan )
 SIRE_EXPOSE_CLASS( SireCAS::LessOrEqualThan )
 SIRE_EXPOSE_CLASS( SireCAS::EqualTo )
 SIRE_EXPOSE_CLASS( SireCAS::NotEqualTo )
+SIRE_EXPOSE_CLASS( SireCAS::AlwaysTrue )
+SIRE_EXPOSE_CLASS( SireCAS::AlwaysFalse )
 
 #endif

@@ -82,10 +82,8 @@ public:
 
     const QString& text() const;
 
-    virtual void operator()(RenderView &render_view) const=0;
-
-    virtual void undo(RenderView &render_view) const=0;
-    virtual void redo(RenderView &render_view) const=0;
+    virtual void undo() const=0;
+    virtual void redo() const=0;
 
     virtual CommandPtr mergeWith(const Command &other)=0;
 
