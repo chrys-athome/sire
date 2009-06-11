@@ -29,6 +29,7 @@
 #include "conditional.h"
 #include "functions.h"
 #include "symbols.h"
+#include "identities.h"
 #include "expressions.h"
 #include "values.h"
 #include "complexvalues.h"

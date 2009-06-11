@@ -22,7 +22,7 @@ set ( SUBDIRS SireBase
               SireSystem
               SireUnits
               SireVol
-              Spier
+              #Spier
               Squire
             )
 
