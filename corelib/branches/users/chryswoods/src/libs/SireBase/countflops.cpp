@@ -34,7 +34,11 @@
 #include "SireError/errors.h"
 
 #ifdef SIRE_USE_SSE
-#include <emmintrin.h>
+    #ifdef __SSE__
+        #include <emmintrin.h>
+    #else
+        #undef SIRE_USE_SSE
+    #endif
 #endif
 
 using namespace SireBase;
@@ -233,17 +237,21 @@ double FlopsMark::benchmarkSum()
         {
             #ifdef SIRE_USE_SSE
             {
+                __m128d my_sse_sum = { 0, 0 };
+
                 for (int i=2; i<nvals; i+=2)
                 {
-                    __m128d low_pair = { my_values[i-1], my_values[i-2] };
-                    __m128d high_pair = { my_values[i], my_values[i-1] };
+                    __m128d low_pair = _mm_setr_pd( my_values[i-1], my_values[i-2] );
+                    __m128d high_pair = _mm_setr_pd( my_values[i], my_values[i-1] );
                     
                     //__m128d sse_sum = _mm_sqrt_pd( low_pair * high_pair );
-                    __m128d sse_sum = low_pair + high_pair;
+                    __m128d sse_sum = _mm_add_pd( low_pair, high_pair );
                     
-                    my_sum += ( *((const double*)(&sse_sum)) +
-                                *( ((const double*)(&sse_sum)) + 1 ) );
+                    my_sse_sum = _mm_add_pd(my_sse_sum, sse_sum);
                 }
+
+                my_sum += ( *((const double*)(&my_sse_sum)) +
+                            *( ((const double*)(&my_sse_sum)) + 1 ) );
             }
             #else
             {
@@ -316,17 +324,21 @@ double FlopsMark::benchmarkProduct()
         {
             #ifdef SIRE_USE_SSE
             {
+                __m128d my_sse_sum = { 0, 0 };
+
                 for (int i=2; i<nvals; i+=2)
                 {
-                    __m128d low_pair = { my_values[i-1], my_values[i-2] };
-                    __m128d high_pair = { my_values[i], my_values[i-1] };
+                    __m128d low_pair = _mm_setr_pd( my_values[i-1], my_values[i-2] );
+                    __m128d high_pair = _mm_setr_pd( my_values[i], my_values[i-1] );
                     
                     //__m128d sse_sum = _mm_sqrt_pd( low_pair * high_pair );
-                    __m128d sse_sum = low_pair * high_pair;
+                    __m128d sse_sum = _mm_mul_pd(low_pair, high_pair);
                     
-                    my_sum += ( *((const double*)(&sse_sum)) +
-                                *( ((const double*)(&sse_sum)) + 1 ) );
+                    my_sse_sum = _mm_add_pd(my_sse_sum, sse_sum);
                 }
+
+                my_sum += ( *((const double*)(&my_sse_sum)) +
+                            *( ((const double*)(&my_sse_sum)) + 1 ) );
             }
             #else
             {
@@ -399,17 +411,21 @@ double FlopsMark::benchmarkQuotient()
         {
             #ifdef SIRE_USE_SSE
             {
+                __m128d my_sse_sum = { 0, 0 };
+
                 for (int i=2; i<nvals; i+=2)
                 {
-                    __m128d low_pair = { my_values[i-1], my_values[i-2] };
-                    __m128d high_pair = { my_values[i], my_values[i-1] };
+                    __m128d low_pair = _mm_setr_pd( my_values[i-1], my_values[i-2] );
+                    __m128d high_pair = _mm_setr_pd( my_values[i], my_values[i-1] );
                     
                     //__m128d sse_sum = _mm_sqrt_pd( low_pair * high_pair );
-                    __m128d sse_sum = low_pair / high_pair;
-                    
-                    my_sum += ( *((const double*)(&sse_sum)) +
-                                *( ((const double*)(&sse_sum)) + 1 ) );
+                    __m128d sse_sum = _mm_div_pd(low_pair, high_pair);
+                
+                    my_sse_sum = _mm_add_pd(my_sse_sum, sse_sum);
                 }
+
+                my_sum += ( *((const double*)(&my_sse_sum)) +
+                           *( ((const double*)(&my_sse_sum)) + 1 ) );
             }
             #else
             {
@@ -482,16 +498,20 @@ double FlopsMark::benchmark()
         {
             #ifdef SIRE_USE_SSE
             {
+                __m128d my_sse_sum = { 0, 0 };
+
                 for (int i=2; i<nvals; i+=2)
                 {
-                    __m128d low_pair = { my_values[i-1], my_values[i-2] };
-                    __m128d high_pair = { my_values[i], my_values[i-1] };
+                    __m128d low_pair = _mm_setr_pd( my_values[i-1], my_values[i-2] );
+                    __m128d high_pair = _mm_setr_pd( my_values[i], my_values[i-1] );
                     
-                    __m128d sse_sum = _mm_sqrt_pd( low_pair * high_pair );
+                    __m128d sse_sum = _mm_sqrt_pd( _mm_mul_pd(low_pair, high_pair) );
                     
-                    my_sum += ( *((const double*)(&sse_sum)) +
-                                *( ((const double*)(&sse_sum)) + 1 ) );
+                    my_sse_sum = _mm_add_pd(my_sse_sum, sse_sum);
                 }
+
+                my_sum += ( *((const double*)(&my_sse_sum)) +
+                            *( ((const double*)(&my_sse_sum)) + 1 ) );
             }
             #else
             {

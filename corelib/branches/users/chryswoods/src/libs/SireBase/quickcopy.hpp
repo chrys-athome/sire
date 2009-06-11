@@ -29,6 +29,8 @@
 #ifndef SIREBASE_QUICKCOPY_HPP
 #define SIREBASE_QUICKCOPY_HPP
 
+#include <cstring>
+
 #include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
