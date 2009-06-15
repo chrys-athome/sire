@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#ifdef __SIRE_USE_MPI__
+#ifdef SIRE_USE_MPI
 #include <mpi.h>             // CONDITIONAL_INCLUDE
 #include "mpi/mpicluster.h"  // CONDITIONAL_INCLUDE
 #endif
@@ -77,7 +77,7 @@ using namespace SireCluster::detail;
     (only worth it if we have more than one MPI process!) */
 static bool usingMPI()
 {
-    #ifdef __SIRE_USE_MPI__
+    #ifdef SIRE_USE_MPI
         if (not ::MPI::Is_initialized())
         {
             int argc = 0;
@@ -111,7 +111,7 @@ ClusterPvt* globalCluster()
         global_cluster_is_running = true;
         execMutex()->unlock();
         
-        #ifdef __SIRE_USE_MPI__
+        #ifdef SIRE_USE_MPI
             if (::usingMPI())
                 SireCluster::MPI::MPICluster::start();
         #endif
@@ -119,7 +119,7 @@ ClusterPvt* globalCluster()
         //create a new backend
         Backend::create();
         
-        #ifdef __SIRE_USE_MPI__
+        #ifdef SIRE_USE_MPI
             //now wait until we have all got here
             if (::usingMPI())
                 SireCluster::MPI::MPICluster::sync();
@@ -184,7 +184,7 @@ bool Cluster::supportsMPI()
     rank of this process in the MPI group, or it is 0 */
 int Cluster::getRank()
 {
-    #ifdef __SIRE_USE_MPI__
+    #ifdef SIRE_USE_MPI
         if (::usingMPI())
             return SireCluster::MPI::MPICluster::getRank();
         else
@@ -198,7 +198,7 @@ int Cluster::getRank()
     size of the MPI group, or it is 1 */
 int Cluster::getCount()
 {
-    #ifdef __SIRE_USE_MPI__
+    #ifdef SIRE_USE_MPI
         if (::usingMPI())
             return SireCluster::MPI::MPICluster::getCount();
         else
@@ -220,7 +220,7 @@ void Cluster::registerBackend(const Backend &backend)
     {
         globalCluster()->local_backends.insert( backend.UID(), backend );
         
-        #ifdef __SIRE_USE_MPI__
+        #ifdef SIRE_USE_MPI
             //now inform the MPI connected nodes that a backend with this
             //UID is available on this node
             if (::usingMPI())
@@ -278,7 +278,7 @@ Frontend Cluster::_pvt_getFrontend()
     //ok, there were no locally available frontends
     lkr.unlock();
 
-    #ifdef __SIRE_USE_MPI__
+    #ifdef SIRE_USE_MPI
          if (::usingMPI())
             //see if there are any available remote backends
             return SireCluster::MPI::MPICluster::getFrontend();
@@ -322,7 +322,7 @@ QList<Frontend> Cluster::_pvt_getFrontends(int n)
     //ok, there were no locally available frontends
     lkr.unlock();
 
-    #ifdef __SIRE_USE_MPI__
+    #ifdef SIRE_USE_MPI
          if (::usingMPI())
          {
             //see if there are any available remote backends
@@ -361,7 +361,7 @@ Frontend Cluster::_pvt_getFrontend(const QUuid &uid)
     {
         lkr.unlock();
         
-        #ifdef __SIRE_USE_MPI__
+        #ifdef SIRE_USE_MPI
             if (::usingMPI())
                 //see if this node exists on any of the MPI nodes...
                 return SireCluster::MPI::MPICluster::getFrontend(uid);
@@ -894,7 +894,7 @@ bool Cluster::isLocal(const QUuid &uid)
     in this entire cluster */
 QList<QUuid> Cluster::UIDs()
 {
-    #ifdef __SIRE_USE_MPI__
+    #ifdef SIRE_USE_MPI
         if (::usingMPI())
             return SireCluster::MPI::MPICluster::UIDs();
         else
@@ -917,7 +917,7 @@ void Cluster::shutdown()
         global_cluster_is_running = false;
     }
 
-    #ifdef __SIRE_USE_MPI__
+    #ifdef SIRE_USE_MPI
         if (::usingMPI())
             //shutdown MPI - this stops the backends from 
             //receiving any more work from remote nodes

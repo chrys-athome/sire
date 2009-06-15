@@ -108,7 +108,9 @@ public:
     virtual void reset()=0;
 
     virtual void spin(const SireUnits::Dimension::Angle &delta)=0;
-    virtual void rotate(const SireUnits::Dimension::Angle &delta, const Vector &axis)=0;
+
+    virtual void rotate(const SireUnits::Dimension::Angle &dx, 
+                        const SireUnits::Dimension::Angle &dy)=0;
 
     virtual void zoom(double delta)=0;
     virtual void translate(double dx, double dy)=0;
@@ -177,7 +179,8 @@ public:
     void reset();
 
     void spin(const SireUnits::Dimension::Angle &delta);
-    void rotate(const SireUnits::Dimension::Angle &delta, const Vector &axis);
+    void rotate(const SireUnits::Dimension::Angle &dx, 
+                const SireUnits::Dimension::Angle &dy);
 
     void zoom(double delta);
     void translate(double dx, double dy);
@@ -214,7 +217,8 @@ public:
     void reset();
 
     void spin(const SireUnits::Dimension::Angle &delta);
-    void rotate(const SireUnits::Dimension::Angle &delta, const Vector &axis);
+    void rotate(const SireUnits::Dimension::Angle &dx,
+                const SireUnits::Dimension::Angle &dy);
 
     void zoom(double delta);
     void translate(double dx, double dy);

@@ -176,11 +176,7 @@ if (SIRE_FOUND)
     set (SIRE_VERSION "${SIRE_VERSION_MAJOR}.${SIRE_VERSION_MINOR}.${SIRE_VERSION_PATCH}")
 
     include ("${SIRE_INCLUDE_DIR}/cmake/SireLibraries.cmake")
-    include ("${SIRE_INCLUDE_DIR}/cmake/SireExtraIncludes.cmake")
-
-    if (NOT SIRE_FIND_QUIETLY)
-        message(STATUS "Required Sire header files in ${SIRE_EXTRA_INCLUDES}")
-    endif (NOT SIRE_FIND_QUIETLY)
+    include ("${SIRE_INCLUDE_DIR}/cmake/SireCompileVariables.cmake")
 
 else (SIRE_FOUND)
     if (SIRE_FIND_REQUIRED)

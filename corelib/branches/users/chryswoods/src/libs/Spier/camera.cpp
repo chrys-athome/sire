@@ -157,8 +157,8 @@ void Camera::translateView(const Vector &delta)
 void Camera::rotateView(const Quaternion &q)
 {
     viewvec = q.rotate(viewvec);
-    upvec = q.rotate(viewvec);
-    sidevec = q.rotate(viewvec);
+    upvec = q.rotate(upvec);
+    sidevec = q.rotate(sidevec);
 }
 
 /** Reset the camera */
@@ -306,7 +306,7 @@ void NullCamera::spin(const Angle&)
 {}
 
 /** NullCamera does not move */
-void NullCamera::rotate(const Angle&, const Vector&)
+void NullCamera::rotate(const Angle&, const Angle&)
 {}
 
 /** NullCamera does not move */
@@ -444,42 +444,64 @@ void OrbitCamera::lookAt(const Vector &point)
 /** Zoom in on the object */
 void OrbitCamera::zoom(double delta)
 {
-    //decrease 'zoomdistance' by delta
-    zoomdistance -= delta;
+    if (not SireMaths::isZero(delta))
+    {
+        //decrease 'zoomdistance' by delta
+        zoomdistance -= delta;
     
-    if (zoomdistance < 1.0)
-        zoomdistance = 1.0;
+        if (zoomdistance < 1.0)
+            zoomdistance = 1.0;
 
-    calculateViewVectors();
+        calculateViewVectors();
+    }
 }
 
 /** Spin around, while still looking at the object */
 void OrbitCamera::spin(const Angle &delta)
 {
-    Quaternion q(delta, Camera::viewVector());
+    if (not SireMaths::isZero(delta))
+    {
+        Quaternion q(delta, Camera::viewVector());
     
-    Camera::rotateView(q);
+        Camera::rotateView(q);
 
-    calculateViewVectors();
+        calculateViewVectors();
+    }
 }
 
 /** Rotate around, while still looking at the object */
-void OrbitCamera::rotate(const Angle &delta, const Vector &axis)
+void OrbitCamera::rotate(const Angle &dx, const Angle &dy)
 {
-    Quaternion q(delta, axis);
+    bool changed = false;
+
+    if (not SireMaths::isZero(dx))
+    {
+        Quaternion q(dx, Camera::upVector());
+        Camera::rotateView(q);
+        changed = true;
+    }
     
-    Camera::rotateView(q);
+    if (not SireMaths::isZero(dy))
+    {
+        Quaternion q(dy, Camera::sideVector());
+        Camera::rotateView(q);
+        changed = true;
+    }
     
-    calculateViewVectors();
+    if (changed)
+        calculateViewVectors();
 }
 
 /** Translate the view by dx and dy, but don't change the center  */
 void OrbitCamera::translate(double dx, double dy)
 {
-    offsetx += dx;
-    offsety += dy;
+    if ( not (SireMaths::isZero(dx) and SireMaths::isZero(dy)) )
+    {
+        offsetx += dx;
+        offsety += dy;
     
-    calculateViewVectors();
+        calculateViewVectors();
+    }
 }
 
 /** Reset the camera to be looking at the origin */

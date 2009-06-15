@@ -18,11 +18,12 @@ if (MPI_FOUND)
 
   include_directories( BEFORE SYSTEM ${MPI_INCLUDE_PATH} )
 
-  add_definitions( -D__SIRE_USE_MPI__ )
+  add_definitions( -DSIRE_USE_MPI )
 
   set ( SIRECLUSTER_EXTRA_LIBRARIES ${MPI_LIBRARY} ${MPI_EXTRA_LIBRARY} )
 
-  save_sire_extra_include(${MPI_INCLUDE_PATH})
+  save_sire_variable( "SIRE_MPI_INCLUDE_PATH" "${MPI_INCLUDE_PATH}" )
+  save_sire_variable( "SIRE_MPI_DEFINITIONS" "-DSIRE_USE_MPI" )
 
   set ( SIRECLUSTER_MPI_HEADERS
 
@@ -52,8 +53,10 @@ if (MPI_FOUND)
 
 else()
   message( STATUS "SireCluster will be compiled without MPI support." )   
-
+  save_sire_variable( "SIRE_MPI_DEFINITIONS" "" )
 endif()
+
+save_sire_variable( "SIRE_USE_MPI" "${MPI_FOUND}" )
 
 # Define the headers in SireCluster
 set ( SIRECLUSTER_HEADERS
@@ -101,6 +104,8 @@ target_link_libraries (SireCluster
                        SireStream
                        ${SIRECLUSTER_EXTRA_LIBRARIES}
                        )
+
+save_sire_variable( "SIRECLUSTER_EXTRA_LIBRARIES" "${SIRECLUSTER_EXTRA_LIBRARIES}" )
 
 # installation
 install( TARGETS SireCluster EXPORT SireLibraries

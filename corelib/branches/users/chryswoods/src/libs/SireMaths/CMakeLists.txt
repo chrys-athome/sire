@@ -12,9 +12,7 @@ message( STATUS "GSL paths ${GSL_LINK_DIRECTORIES} "
 
 include_directories( BEFORE ${GSL_INCLUDE_DIR})
 
-#add this include path to the list of extra include
-#paths required for Sire
-save_sire_extra_include(${GSL_INCLUDE_DIR})
+save_sire_variable( "SIRE_GSL_INCLUDE_PATH" "${GSL_INCLUDE_DIR}" )
 
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
@@ -87,6 +85,8 @@ target_link_libraries (SireMaths
                        SireStream
                        ${GSL_LIBRARIES}
                        )
+
+save_sire_variable( "SIREMATHS_EXTRA_LIBRARIES" "${GSL_LIBRARIES}" )
 
 # installation
 install( TARGETS SireMaths EXPORT SireLibraries

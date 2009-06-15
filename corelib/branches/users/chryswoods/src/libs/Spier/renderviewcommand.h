@@ -44,19 +44,27 @@ QDataStream& operator>>(QDataStream&, Spier::RenderViewCommand&);
 namespace Spier
 {
 
+class RVCommandStack;
+
 /** This is the base class of all commands that are applied
-    to a render view
+    to a render view. These commands can only be
+    called by committing them to a command stack
+    (the RVCommandStack). This is to ensure that the
+    undo history of the commands cannot become corrupted.
     
     @author Christopher Woods
 */
 class SPIER_EXPORT RenderViewCommand : public Command
 {
 
+friend class RVCommandStack;
+friend class RenderView;
+
 friend QDataStream& ::operator<<(QDataStream&, const RenderViewCommand&);
 friend QDataStream& ::operator>>(QDataStream&, RenderViewCommand&);
 
 public:
-    RenderViewCommand();
+    RenderViewCommand(const QString &description);
     
     RenderViewCommand(const RenderViewCommand &other);
     
@@ -66,12 +74,8 @@ public:
     {
         return "Spier::RenderViewCommand";
     }
-    
-    virtual CommandPtr operator()(RenderView &render_view) const=0;
 
 protected:
-    RenderViewCommand(RenderView &render_view);
-    
     RenderViewCommand& operator=(const RenderViewCommand &other);
     
     bool operator==(const RenderViewCommand &other) const;
@@ -80,11 +84,18 @@ protected:
     RenderView& renderView();
     
     const RenderView& renderView() const;
+    
+    CommandPtr operator()(RenderView &render_view) const;
+
+    void makeOrphan();
+
+    virtual void execute()=0;
 
 private:
-    /** Guarded pointer to the render view that is being
-        operated on by this command */
-    QPointer<RenderView> render_view;
+    /** Pointer to the render view on which this command operated.
+        This is automatically set to '0' by the RVCommandStack
+        if the RenderView is deleted */
+    RenderView *render_view;
 };
 
 }

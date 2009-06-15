@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#ifdef __SIRE_USE_MPI__
+#ifdef SIRE_USE_MPI
 
 #include <QTime>
 #include <QMutex>
@@ -537,4 +537,4 @@ Reply ReplyPtr::lock() const
     return Reply( d.lock() );
 }
 
-#endif // __SIRE_USE_MPI__
+#endif // SIRE_USE_MPI

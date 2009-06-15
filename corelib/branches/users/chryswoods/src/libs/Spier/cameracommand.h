@@ -29,7 +29,7 @@
 #ifndef SPIER_CAMERACOMMAND_H
 #define SPIER_CAMERACOMMAND_H
 
-#include "command.h"
+#include "renderviewcommand.h"
 
 #include "SireUnits/dimensions.h"
 
@@ -54,12 +54,14 @@ QDataStream& operator>>(QDataStream&, Spier::TranslateCamera&);
 namespace Spier
 {
 
+class Camera;
+
 /** This is the base class of all commands that are used
     to manipulate the camera
     
     @author Christopher Woods
 */
-class SPIER_EXPORT CameraCommand : public Command
+class SPIER_EXPORT CameraCommand : public RenderViewCommand
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const CameraCommand&);
@@ -82,6 +84,10 @@ protected:
     
     bool operator==(const CameraCommand &other) const;
     bool operator!=(const CameraCommand &other) const;
+
+    const Camera& getCamera() const;
+
+    void setCamera(const Camera &camera) const;
 };
 
 /** This command is used to rotate the camera */
@@ -109,13 +115,14 @@ public:
     bool operator!=(const RotateCamera &other) const;
     
     static const char* typeName();
-    
-    void operator()(RenderView &render_view) const;
 
-    void undo(RenderView &render_view) const;
-    void redo(RenderView &render_view) const;
+    void undo() const;
+    void redo() const;
 
-    CommandPtr mergeWith(const Command &other);
+    CommandPtr mergeWith(const Command &other) const;
+
+protected:
+    void execute();
 
 private:
     /** The amount by which to rotate the camera */
@@ -147,13 +154,14 @@ public:
     bool operator!=(const TranslateCamera &other) const;
     
     static const char* typeName();
-    
-    void operator()(RenderView &render_view) const;
 
-    void undo(RenderView &render_view) const;
-    void redo(RenderView &render_view) const;
+    void undo() const;
+    void redo() const;
 
-    CommandPtr mergeWith(const Command &other);
+    CommandPtr mergeWith(const Command &other) const;
+
+protected:
+    void execute();
 
 private:
     /** The amounts by which to translate the camera */

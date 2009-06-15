@@ -90,19 +90,19 @@ private:
 
     @author Christopher Woods
 */
-class RestraintParameters
+/*class RestraintParameters
 
    Restraints mol_restraints;
 
 
 class RestraintParameters3D
 
-    Restraints3D mol_restraints;
+    Restraints3D mol_restraints;*/
 
 }
 
-Q_DECLARE_METATYPE( SireMM::RestraintParameters )
-Q_DECLARE_METATYPE( SireMM::RestraintParameters3D )
+//Q_DECLARE_METATYPE( SireMM::RestraintParameters )
+//Q_DECLARE_METATYPE( SireMM::RestraintParameters3D )
 
 SIRE_EXPOSE_CLASS( SireMM::RestraintParameters )
 SIRE_EXPOSE_CLASS( SireMM::RestraintParameters3D )

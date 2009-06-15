@@ -36,11 +36,33 @@
 
 #include "renderview.h"
 #include "eventmonitor.h"
+#include "renderviewcommand.h"
+#include "cameracommand.h"
 
 #include "SireError/exception.h"
 #include "SireError/printerror.h"
 
+#include "SireError/errors.h"
+
 using namespace Spier;
+
+namespace Spier
+{
+
+void printError(const Command &command, const SireError::exception &e)
+{
+    QTextStream ts(stdout);
+    
+    ts << "\n**********************************************************\n"
+       << "An error occured while trying to run the command:\n"
+       << command.toString() << "\n"
+       << "**********************************************************\n\n"
+       << e.toString()
+       << "\n\nSorry! Scroll back up\n"
+       << "to the top of the error to work out what has gone wrong.\n\n";
+}
+
+}
 
 /** Constructor */
 RenderView::RenderView(QWidget *parent, QGLWidget *share_widget)
@@ -72,6 +94,8 @@ RenderView::RenderView(QWidget *parent, QGLWidget *share_widget)
         
         connect( timer, SIGNAL(timeout()), this, SLOT(animate()) );
         
+        needs_rerendering = true;
+        
         timer->start(50);
     }
     catch(const SireError::exception &e)
@@ -97,6 +121,53 @@ RenderView::~RenderView()
     render_context.deleteAll();
 }
 
+/** Execute the command 'command' */
+void RenderView::execute(const RenderViewCommand &command)
+{
+    try
+    {
+        command(*this);
+    }
+    catch(const SireError::exception &e)
+    {
+        Spier::printError(command, e);
+    }
+    catch(const std::exception &e)
+    {
+        Spier::printError(command, SireError::std_exception(e));
+    }
+    catch(...)
+    {
+        Spier::printError(command, SireError::unknown_exception( QObject::tr(
+                "An unknown exception occured!" ), CODELOC ));
+    }
+}
+
+/** Undo the last performed command. This does nothing if there
+    are no commands available to undo */
+void RenderView::undo()
+{}
+
+/** Redo the last command that was undone. This does nothing if
+    there are no commands available to redo */
+void RenderView::redo()
+{}
+
+/** Internal function called by CameraCommand used to get the
+    current state of the camera */
+const Camera& RenderView::getCamera() const
+{
+    return render_scenes.at(scene_to_render)->camera();
+}
+
+/** Internal function called by CameraCommand to set the current
+    state of the camera */
+void RenderView::setCamera(const Camera &camera)
+{
+    render_scenes[scene_to_render]->setCamera(camera);
+    this->triggerUpdate();
+}
+
 /** Initialise the openGL view */
 void RenderView::initializeGL()
 {}
@@ -107,6 +178,13 @@ void RenderView::resizeGL(int w, int h)
     glViewport(0, 0, (GLint)w, (GLint)h);
 }
 
+/** Call this to trigger a re-render of the view. This returns
+    immediately, as all it does is signal that a rendering is required */
+void RenderView::triggerUpdate()
+{
+    needs_rerendering = true;
+}
+
 void RenderView::animate()
 {
     yval += 50 * (0.001 * animation_timer.elapsed());
@@ -115,8 +193,12 @@ void RenderView::animate()
     
     if (yval > height())
         yval = -20;
-        
-    this->updateGL();
+
+    if (needs_rerendering)
+    {
+        needs_rerendering = false;
+        this->updateGL();
+    }
 }
 
 static void drawCorners(QPainter &painter, const int width, 

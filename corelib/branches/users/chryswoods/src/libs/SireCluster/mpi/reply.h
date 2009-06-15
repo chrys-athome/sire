@@ -29,7 +29,7 @@
 #ifndef SIRECLUSTER_MPI_REPLY_H
 #define SIRECLUSTER_MPI_REPLY_H
 
-#ifdef __SIRE_USE_MPI__
+#ifdef SIRE_USE_MPI
 
 #include "SireError/exception.h"
 
@@ -203,5 +203,5 @@ private:
 
 SIRE_END_HEADER
 
-#endif // __SIRE_USE_MPI__
+#endif // SIRE_USE_MPI
 #endif

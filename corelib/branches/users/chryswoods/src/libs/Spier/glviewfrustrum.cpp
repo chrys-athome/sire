@@ -195,6 +195,12 @@ bool GLViewFrustrum::changeView(const Camera &new_camera, const QSize &new_size)
 
         cam = new_camera;
         viewport_size = new_size;
+
+        qDebug() << "NEW CAMERA\n" 
+                 << cam->upVector().toString() << "\n"
+                 << cam->sideVector().toString() << "\n"
+                 << cam->viewVector().toString() << "\n";
+                 
         
         return true;
     }

@@ -36,6 +36,9 @@
 
 #include "SireCAS/values.h"
 #include "SireCAS/symbol.h"
+#include "SireCAS/conditional.h"
+
+#include "SireFF/forcetable.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -290,6 +293,17 @@ MolarEnergy PositionalRestraint::energy() const
                                                         molecule_point) ) );
 }
 
+/** Calculate the force acting along the vector from the molecule point
+    to the restraint point */
+Vector PositionalRestraint::restraintForce() const
+{
+    Vector delta = restraint_point - molecule_point;
+    double distance = delta.length();
+    
+    return (diff_restraint_function.evaluate( r() == distance ) / distance)
+                     * delta;
+}
+
 //////////////
 ////////////// Implementation of AtomicRestraint
 //////////////
@@ -347,6 +361,27 @@ AtomicRestraint::AtomicRestraint(const Atom &atom, const Vector &restraint_point
 {
     AtomicRestraint::update(atom.data(), map);
 }
+
+/** Construct the restraint that restrains the atom 'atom' to the 
+    point 'restraint_point' using the expression 'restraint_expression'
+    to calculate the energy and 'diff_restraint_expression' to calculate
+    the forces, and using the (optionally) supplied
+    property map to locate all of the necessary properties
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+AtomicRestraint::AtomicRestraint(const Atom &atom, const Vector &restraint_point,
+                                 const Expression &restraint_expression,
+                                 const Expression &diff_restraint_expression,
+                                 const PropertyMap &map)
+      : ConcreteProperty<AtomicRestraint,PositionalRestraint>(restraint_point,
+                                                              restraint_expression,
+                                                              diff_restraint_expression),
+         cgatomidx( atom.cgAtomIdx() )
+{
+    AtomicRestraint::update(atom.data(), map);
+}
                 
 /** Copy constructor */
 AtomicRestraint::AtomicRestraint(const AtomicRestraint &other)
@@ -391,7 +426,7 @@ static Expression harmonicFunction(double force_constant)
     if (SireMaths::isZero(force_constant))
         return 0;
     else
-        return force_constant * pow2(PositionalRestraint::r());
+        return force_constant * pow(PositionalRestraint::r(), 2);
 }
 
 static Expression diffHarmonicFunction(double force_constant)
@@ -434,11 +469,12 @@ static Expression halfHarmonicFunction(double force_constant, double length)
     else
     {
         const Symbol &r = PositionalRestraint::r();
-        return Conditional( GreaterThan(r, length), force_constant * pow2(r-length), 0 )
+        return Conditional( 
+                GreaterThan(r, length), force_constant * pow(r-length, 2), 0 );
     }
 }
 
-static Expression diffHalfHarmonicFunction(double force_constant, double length)
+static Expression diffHalfHarmonicFunction(double force_constant, double distance)
 {
     if ( SireMaths::isZero(force_constant) )
         return 0;
@@ -450,8 +486,8 @@ static Expression diffHalfHarmonicFunction(double force_constant, double length)
     else
     {
         const Symbol &r = PositionalRestraint::r();
-        return Conditional( GreaterThan(r, length), 
-                                (2*force_constant) * (r-length), 0 );
+        return Conditional( GreaterThan(r, distance), 
+                                (2*force_constant) * (r-distance), 0 );
     }
 }
 
@@ -505,10 +541,10 @@ void AtomicRestraint::force(MolForceTable &forcetable, double scale_force) const
 ////////////// Implementation of CenterOfGeometryRestraint
 //////////////
 
-static const RegisterMetaType<CenterOfGeometryRestraint> r_cogrestraint;
+//static const RegisterMetaType<CenterOfGeometryRestraint> r_cogrestraint;
 
 /** Serialise to a binary datastream */
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
+/*QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
                                       const CenterOfGeometryRestraint &cogrestraint)
 {
     writeHeader(ds, r_cogrestraint, 1);
@@ -519,11 +555,11 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
         << static_cast<const PositionalRestraint&>(cogrestraint);
         
     return ds;
-}
+}*/
 
 /** Extract from a binary datastream */
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
-                                      const CenterOfGeometryRestraint &cogrestraint)
+/*QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
+                                      CenterOfGeometryRestraint &cogrestraint)
 {
     VersionID v = readHeader(ds, r_cogrestraint);
     
@@ -538,10 +574,10 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
         throw version_error( v, "1", r_cogrestraint, CODELOC );
         
     return ds;
-}
+}*/
 
 /** Constructor */
-CenterOfGeometryRestraint::CenterOfGeometryRestraint();
+/*CenterOfGeometryRestraint::CenterOfGeometryRestraint();
 
 CenterOfGeometryRestraint::CenterOfGeometryRestraint(const MoleculeView &molview,
                                                      const Vector &restraint_point,
@@ -559,12 +595,12 @@ CenterOfGeometryRestraint& CenterOfGeometryRestraint::operator=(
                                         const CenterOfGeometryRestraint &other);
 
 bool CenterOfGeometryRestraint::operator==(const CenterOfGeometryRestraint &other) const;
-bool CenterOfGeometryRestraint::operator!=(const CenterOfGeometryRestraint &other) const;
+bool CenterOfGeometryRestraint::operator!=(const CenterOfGeometryRestraint &other) const;*/
 
 /** Return a restraint that restrains the center of geometry of 'molview' 
     to the point 'restraint_point' using a harmonic potential with a force
     constant of 'force_constant' */
-CenterOfGeometryRestraint CenterOfGeometryRestraint::harmonic(
+/*CenterOfGeometryRestraint CenterOfGeometryRestraint::harmonic(
                                  const MoleculeView &molview,
                                  const Vector &restraint_point,
                                  const HarmonicPositionForceConstant &force_constant,
@@ -574,13 +610,13 @@ CenterOfGeometryRestraint CenterOfGeometryRestraint::harmonic(
                                      ::harmonicFunction(force_constant),
                                      ::diffHarmonicFunction(force_constant),
                                      map);
-}
+}*/
 
 /** Return a restraint that restrains the center of geometry of 'molview' 
     to the point 'restraint_point' using a half-harmonic potential
     that starts beyond the distance 'distance' using the force constant
     'force_constant' */
-CenterOfGeometryRestraint CenterOfGeometryRestraint::halfHarmonic(
+/*CenterOfGeometryRestraint CenterOfGeometryRestraint::halfHarmonic(
                                 const MoleculeView &molview,
                                 const Vector &restraint_point,
                                 const Length &distance,
@@ -591,11 +627,11 @@ CenterOfGeometryRestraint CenterOfGeometryRestraint::halfHarmonic(
                                      ::halfHarmonicFunction(force_constant,distance),
                                      ::diffHalfHarmonicFunction(force_constant,distance),
                                      map);
-}
+}*/
 
-void update(const MoleculeData &moldata, const PropertyMap &map);
+/*void update(const MoleculeData &moldata, const PropertyMap &map);
 
-void force(MolForceTable &forcetable, double scale_force=1) const;
+void force(MolForceTable &forcetable, double scale_force=1) const;*/
 
 //////////////
 ////////////// Implementation of CenterOfMassRestraint

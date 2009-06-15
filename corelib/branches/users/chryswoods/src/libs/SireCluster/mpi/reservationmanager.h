@@ -29,7 +29,7 @@
 #ifndef SIRECLUSTER_MPI_RESERVATIONMANAGER_H
 #define SIRECLUSTER_MPI_RESERVATIONMANAGER_H
 
-#ifdef __SIRE_USE_MPI__
+#ifdef SIRE_USE_MPI
 
 #include <QUuid>
 #include <QThread>
@@ -137,6 +137,6 @@ private:
 } // end of namespace MPI
 } // end of namespace SireCluster
 
-#endif // __SIRE_USE_MPI__
+#endif // SIRE_USE_MPI
 #endif
 

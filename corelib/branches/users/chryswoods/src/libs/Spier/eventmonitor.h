@@ -87,6 +87,9 @@ private:
     /** Pointer to the parent render view */
     QPointer<RenderView> render_view;
     
+    /** The last known position of the mouse */
+    QPoint mouse_global_pos;
+    
     /** Whether or not the widget is currently focussed */
     bool in_focus;
 };

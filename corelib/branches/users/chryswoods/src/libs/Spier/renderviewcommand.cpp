@@ -31,6 +31,8 @@
 
 #include "SireStream/datastream.h"
 
+#include "SireError/errors.h"
+
 using namespace Spier;
 using namespace SireStream;
 
@@ -53,24 +55,25 @@ QDataStream SPIER_EXPORT &operator>>(QDataStream &ds, RenderViewCommand &rvcomma
 {
     VersionID v = readHeader(ds, r_rvcommand);
     
-    ds >> static_cast<Command&>(rvcommand);
+    if (v == 1)
+    {
+        ds >> static_cast<Command&>(rvcommand);
+        rvcommand.render_view = 0;
+    }
+    else
+        throw version_error( v, "1", r_rvcommand, CODELOC );
     
     return ds;
 }
 
 /** Constructor */
-RenderViewCommand::RenderViewCommand() : Command()
-{}
-
-/** Internal constructor used to store the render view on which 
-    this command has operated */
-RenderViewCommand::RenderViewCommand(RenderView &rv)
-                  : Command(), render_view(&rv)
+RenderViewCommand::RenderViewCommand(const QString &description) 
+                  : Command(description), render_view(0)
 {}
 
 /** Copy constructor */
 RenderViewCommand::RenderViewCommand(const RenderViewCommand &other)
-                  : Command(), render_view(other.render_view)
+                  : Command(other), render_view(other.render_view)
 {}
 
 /** Destructor */
@@ -82,11 +85,64 @@ RenderViewCommand& RenderViewCommand::operator=(const RenderViewCommand &other)
 {
     render_view = other.render_view;
     Command::operator=(other);
+    
+    return *this;
 }
 
-bool RenderViewCommand::operator==(const RenderViewCommand &other) const;
-bool RenderViewCommand::operator!=(const RenderViewCommand &other) const;
+/** Comparison operator */
+bool RenderViewCommand::operator==(const RenderViewCommand &other) const
+{
+    return render_view == other.render_view and 
+           Command::operator==(other);
+}
 
-RenderView& RenderViewCommand::renderView();
+/** Comparison operator */
+bool RenderViewCommand::operator!=(const RenderViewCommand &other) const
+{
+    return render_view != other.render_view or 
+           Command::operator!=(other);
+}
+
+/** Return the render view on which this command last operated
+
+    \throw SireError::nullptr_error
+*/
+RenderView& RenderViewCommand::renderView()
+{
+    if (not render_view)
+        throw SireError::nullptr_error( QObject::tr(
+                "Cannot get the RenderView of a command that has not been actioned "
+                "(%1).")
+                    .arg(this->toString()), CODELOC );
+
+    return *render_view;
+}
     
-const RenderView& RenderViewCommand::renderView() const;
+/** Return a const reference to the view on which this command
+    last operated
+    
+    \throw SireError::nullptr_error
+*/
+const RenderView& RenderViewCommand::renderView() const
+{
+    return const_cast<RenderViewCommand*>(this)->renderView();
+}
+
+/** Execute this command on the passed render view */
+CommandPtr RenderViewCommand::operator()(RenderView &renderview) const
+{
+    CommandPtr c = *this;
+    
+    RenderViewCommand &execute_command = c.edit().asA<RenderViewCommand>();
+    
+    execute_command.render_view = &renderview;
+    execute_command.execute();
+    
+    return c;
+}
+
+/** Make this command an orphan */
+void RenderViewCommand::makeOrphan()
+{
+    render_view = 0;
+}

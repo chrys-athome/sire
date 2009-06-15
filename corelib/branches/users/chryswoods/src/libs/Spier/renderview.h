@@ -40,6 +40,9 @@ SIRE_BEGIN_HEADER
 namespace Spier
 {
 
+class RenderViewCommand;
+class CameraCommand;
+
 /** This class provides a view in which a 3D scene may be rendered
 
     @author Christopher Woods
@@ -47,10 +50,32 @@ namespace Spier
 class SPIER_EXPORT RenderView : public QGLWidget
 {
     Q_OBJECT
+
+    //friend classes used to get access to the render view to
+    //allow commands (as editing functions can't be public
+    //in case they are used accidentally, thereby corrupting
+    //the undo stack)
+    
+    friend class CameraCommand;   // used to get and set the camera
     
 public:
     RenderView(QWidget *parent=0, QGLWidget *share_widget=0);
     ~RenderView();
+
+public slots:
+    void execute(const RenderViewCommand &command);
+
+    void undo();
+    void redo();
+
+    void triggerUpdate();
+
+signals:
+    void undoAvailable();
+    void undoUnavailable();
+    
+    void redoAvailable();
+    void redoUnavailable();
 
 protected:
     void initializeGL();
@@ -59,6 +84,9 @@ protected:
 
     void drawCorners(QPainter &painter);
     void drawUI(QPainter &painter);
+
+    const Camera& getCamera() const;        // called by CameraCommand
+    void setCamera(const Camera &camera);   // called by CameraCommand
 
 protected slots:
     void animate();
@@ -78,6 +106,9 @@ private:
 
     /** The location of the banner */
     float yval;
+    
+    /** Does the scene need to be updated? */
+    bool needs_rerendering;
 };
 
 }

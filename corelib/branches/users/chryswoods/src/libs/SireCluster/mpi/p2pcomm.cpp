@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#ifdef __SIRE_USE_MPI__
+#ifdef SIRE_USE_MPI
 
 #include <mpi.h>  // must be first to satisy mpich
 
@@ -572,4 +572,4 @@ bool P2PComm::hasFinished()
     return d->local_backend.isNull();
 }
 
-#endif
+#endif // SIRE_USE_MPI

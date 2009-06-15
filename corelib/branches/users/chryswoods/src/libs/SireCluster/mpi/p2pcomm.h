@@ -29,7 +29,7 @@
 #ifndef SIRECLUSTER_MPI_P2PCOMM_H
 #define SIRECLUSTER_MPI_P2PCOMM_H
 
-#ifdef __SIRE_USE_MPI__
+#ifdef SIRE_USE_MPI
 
 #include <mpi.h> // must be first to satisfy mpich
 
@@ -175,5 +175,5 @@ T P2PComm::awaitResponse()
 
 SIRE_END_HEADER
 
-#endif // __SIRE_USE_MPI__
+#endif // SIRE_USE_MPI
 #endif

@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#ifdef __SIRE_USE_MPI__
+#ifdef SIRE_USE_MPI
 
 #include <mpi.h> // needed first by mpich
 
@@ -452,4 +452,4 @@ QList<QUuid> ReservationManager::establishedConnections(const ReserveBackend &re
            d->mpibackends.value(request.subjectUID()).keys();
 }
 
-#endif
+#endif // SIRE_USE_MPI

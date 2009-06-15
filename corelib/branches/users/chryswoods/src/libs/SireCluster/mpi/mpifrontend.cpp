@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#ifdef __SIRE_USE_MPI__
+#ifdef SIRE_USE_MPI
 
 #include <mpi.h>
 
@@ -236,4 +236,4 @@ WorkPacket MPIFrontend::result()
         return WorkPacket();
 }
 
-#endif
+#endif // SIRE_USE_MPI

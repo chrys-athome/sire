@@ -29,7 +29,7 @@
 #ifndef SIRECLUSTER_MPI_MPIFRONTEND_H
 #define SIRECLUSTER_MPI_MPIFRONTEND_H
 
-#ifdef __SIRE_USE_MPI__
+#ifdef SIRE_USE_MPI
 
 #include <QMutex>
 
@@ -88,5 +88,5 @@ private:
 
 SIRE_END_HEADER
 
-#endif // __SIRE_USE_MPI__
+#endif // SIRE_USE_MPI
 #endif

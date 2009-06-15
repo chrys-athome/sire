@@ -29,7 +29,7 @@
 #ifndef SIRECLUSTER_MPI_SENDQUEUE_H
 #define SIRECLUSTER_MPI_SENDQUEUE_H
 
-#ifdef __SIRE_USE_MPI__
+#ifdef SIRE_USE_MPI
 
 #include <mpi.h>  // must be at the top, as that is what mpich needs
 
@@ -99,6 +99,6 @@ private:
 
 SIRE_END_HEADER
 
-#endif // __SIRE_USE_MPI__
+#endif // SIRE_USE_MPI
 #endif
 

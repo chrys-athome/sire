@@ -33,12 +33,16 @@
 #include <QWheelEvent>
 
 #include "eventmonitor.h"
+#include "cameracommand.h"
+
+#include "SireUnits/units.h"
 
 #include "SireError/errors.h"
 
 #include <QDebug>
 
 using namespace Spier;
+using namespace SireUnits;
 
 /** Constructor */
 EventMonitor::EventMonitor(RenderView &parent) 
@@ -91,6 +95,29 @@ bool EventMonitor::mouseEvent(QMouseEvent *event)
         in_focus = true;
     
     qDebug() << "GOT A MOUSE EVENT!";
+    
+    if (event->buttons() & Qt::LeftButton)
+    {
+        if (not mouse_global_pos.isNull())
+        {
+            renderView().execute( RotateCamera(
+                             -0.5*(event->globalX() - mouse_global_pos.x()) * degrees,
+                             -0.5*(event->globalY() - mouse_global_pos.y()) * degrees,
+                             0 * degrees ) );
+        }
+    }
+    
+    if (event->buttons() == Qt::NoButton)
+    {
+        //forget the mouse position
+        mouse_global_pos = QPoint();
+    }
+    else
+    {
+        //record the current position of the mouse
+        mouse_global_pos = event->globalPos();
+    }
+    
     return true;
 }
 

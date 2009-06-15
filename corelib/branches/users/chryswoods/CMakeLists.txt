@@ -20,6 +20,17 @@ endif ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
 # name the project
 project (SIRE)
 
+# Create a file in which we can save the values of all useful variables.
+# This will mean that projects using Sire won't have to set these variables
+set (SIRE_VARIABLES_FILE "${CMAKE_BINARY_DIR}/SireCompileVariables.cmake")
+file ( REMOVE ${SIRE_VARIABLES_FILE} )
+
+# This macro is used to save the names of variable to SireCompileVariables.cmake
+macro( SAVE_SIRE_VARIABLE _var _value )
+  file(APPEND ${SIRE_VARIABLES_FILE}
+        "set( ${_var} \"${_value}\" )\n")
+endmacro (SAVE_SIRE_VARIABLE)
+
 # project version
 set (SIRE_VERSION_MAJOR "0")
 set (SIRE_VERSION_MINOR "0")
@@ -32,9 +43,11 @@ math (EXPR SIRE_VERSION_NUMBER
 
 set (SIRE_VERSION_STRING "${SIRE_VERSION_MAJOR}_${SIRE_VERSION_MINOR}_${SIRE_VERSION_PATCH}")
 
-# Whether or not to use manual SSE (will probably be removed
-# in favour of compile-time detection)
-option (SIRE_USE_SSE "Turn on manual SSE code" ON)
+save_sire_variable( "SIRE_VERSION_MAJOR" "${SIRE_VERSION_MAJOR}" )
+save_sire_variable( "SIRE_VERSION_MINOR" "${SIRE_VERSION_MINOR}" )
+save_sire_variable( "SIRE_VERSION_PATCH" "${SIRE_VERSION_PATCH}" )
+save_sire_variable( "SIRE_VERSION" "${SIRE_VERSION}" )
+save_sire_variable( "SIRE_VERSION_STRING" "${SIRE_VERSION_STRING}" )
 
 # Ensure that the Sire's directories are searched for header files
 # before the system directories - this prevents problems in case
@@ -43,6 +56,7 @@ INCLUDE_DIRECTORIES( BEFORE ${SIRE_SOURCE_DIR} )
 
 # Turn off FLOP counting (timing) by default - this adds a small runtime penalty
 option (SIRE_TIME_FLOPS "Turn on floating point timing" OFF)
+save_sire_variable( "SIRE_TIME_FLOPS" "${SIRE_TIME_FLOPS}" )
 
 # Build shared libraries by default
 set (BUILD_SHARED_LIBS ON)
@@ -50,6 +64,9 @@ set (BUILD_SHARED_LIBS ON)
 # This is where you set your own compiler flags
 set (SIRE_USER_CFLAGS "" CACHE STRING "User supplied C compiler flags" )
 set (SIRE_USER_CPPFLAGS "" CACHE STRING "User supplied C++ compiler flags" )
+
+save_sire_variable( "SIRE_USER_CFLAGS" "${SIRE_USER_CFLAGS}" )
+save_sire_variable( "SIRE_USER_CPPFLAGS", "${SIRE_USER_CPPFLAGS}" )
 
 # Name of executable install dir
 set (SIRE_BIN "bin")
@@ -62,6 +79,13 @@ set (SIRE_INCLUDES "include/Sire")
 # CMake install files install dir
 set (SIRE_CMAKEFILES "include/Sire/cmake")
 
+save_sire_variable( "SIRE_INSTALL_PREFIX" "${CMAKE_INSTALL_PREFIX}" )
+save_sire_variable( "SIRE_BIN" "${SIRE_BIN}" )
+save_sire_variable( "SIRE_LIBS" "${SIRE_LIBS}" )
+save_sire_variable( "SIRE_ARCHIVES" "${SIRE_ARCHIVES}" )
+save_sire_variable( "SIRE_INCLUDES" "${SIRE_INCLUDES}" )
+save_sire_variable( "SIRE_CMAKEFILES" "${SIRE_CMAKEFILES}" )
+
 # Uncomment for more verbose compiling/linking
 # (or run 'make VERBOSE=1')
 # set (CMAKE_VERBOSE_MAKEFILE ON)
@@ -71,23 +95,15 @@ set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
 
 # Add option to turn on or off symbol hiding
 option ( SIRE_SYMBOL_HIDING "Turn on library symbol hiding" ON )
+save_sire_variable( "SIRE_SYMBOL_HIDING" "${SIRE_SYMBOL_HIDING}" )
 
 # Add option to turn on or off OpenMP compilation
 option ( SIRE_OPENMP "Turn on OpenMP support" ON )
+save_sire_variable( "SIRE_OPENMP" "${SIRE_OPENMP}" )
 
 # Add option to turn on or off vectorisation of the code
 option ( SIRE_VECTORISE "Turn on code vectorisation" ON )
-
-#now create a file that will hold a list of all of the 
-#extra include directories used by the Sire modules
-set (SIRE_EXTRA_INCLUDES_FILE "${CMAKE_BINARY_DIR}/SireExtraIncludes.cmake")
-file ( REMOVE ${SIRE_EXTRA_INCLUDES_FILE} )
-
-# This macro is used to record extra include files in SireExtraIncludes.cmake
-macro (SAVE_SIRE_EXTRA_INCLUDE _name)
-  file(APPEND ${SIRE_EXTRA_INCLUDES_FILE}
-        "list (APPEND SIRE_EXTRA_INCLUDES \"${_name}\")\n")
-endmacro (SAVE_SIRE_EXTRA_INCLUDE)
+save_sire_variable( "SIRE_VECTORISE" "${SIRE_VECTORISE}" )
 
 # Sire depends on >= Qt 4.2
 find_package( Qt4 4.2.0 COMPONENTS QtCore QtSQL QtGui QtOpenGL QtWebKit )
@@ -96,21 +112,26 @@ if ( ${QT_QTCORE_FOUND} AND ${QT_QTSQL_FOUND} )
    include (${QT_USE_FILE})
    message( STATUS "Using Qt version ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH} "
                    "(${QT_LIBRARIES})" )
+
+   save_sire_variable( "SIRE_QT_VERSION_MAJOR" "${QT_VERSION_MAJOR}" )
+   save_sire_variable( "SIRE_QT_VERSION_MINOR" "${QT_VERSION_MINOR}" )
+   save_sire_variable( "SIRE_QT_VERSION_PATCH" "${QT_VERSION_PATCH}" )
 else()
    message( FATAL_ERROR "Qt >= 4.2 is required by Sire" )
 endif()
 
-# Need also to find the boost libraries
-FIND_PACKAGE ( Boost  )
+# Sire depends on >= boost 1.31 - all libraries must be dynamically linked
+set (BOOST_ALL_DYN_LINK "YES")
+FIND_PACKAGE ( Boost 1.31 )
 
 if (Boost_FOUND)
   message(STATUS "Boost paths ${Boost_LIBRARY_DIRS} | ${Boost_INCLUDE_DIR}" )
   set ( BOOST_INCLUDE_DIRS "${Boost_INCLUDE_DIR}" )
   include_directories( ${Boost_INCLUDE_DIR} )
 
-  #add this include path to the list of extra include
-  #paths required for Sire
-  save_sire_extra_include(${Boost_INCLUDE_DIR})
+  #save the path to this include directory so that it can be
+  #used by anything compiling against Sire
+  save_sire_variable( "SIRE_Boost_INCLUDE_DIR" "${Boost_INCLUDE_DIR}" )
 else()
   message(FATAL_ERROR "Cannot find the boost libraries.")
 endif()  
@@ -325,11 +346,32 @@ message ( STATUS "C++ compiler flags     == ${CMAKE_CXX_FLAGS}" )
 # Add this to all shared libraries
 set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${SIRE_SHARE_LINK_FLAGS}" )
 set( CMAKE_STATIC_LINKER_FLAGS "${CMAKE_STATIC_LINKER_FLAGS} ${SIRE_STATIC_LINK_FLAGS}" )
-set( CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}" )
+set( CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS} ${SIRE_EXE_LINK_FLAGS}" )
 
 message( STATUS "Shared library flags    == ${CMAKE_SHARED_LINKER_FLAGS}" )
 message( STATUS "Static library flags    == ${CMAKE_STATIC_LINKER_FLAGS}" )
 message( STATUS "Executable link flags   == ${CMAKE_EXE_LINKER_FLAGS}" )
+
+# Now save the compile variables so that they can be re-used by libraries that use Sire
+save_sire_variable( "SIRE_C_COMPILER" "${CMAKE_C_COMPILER}" )
+save_sire_variable( "SIRE_CXX_COMPILER" "${CMAKE_CXX_COMPILER}" )
+save_sire_variable( "SIRE_C_FLAGS_RELEASE" "${SIRE_C_FLAGS_RELEASE}" )
+save_sire_variable( "SIRE_CXX_FLAGS_RELEASE" "${SIRE_CXX_FLAGS_RELEASE}" )
+save_sire_variable( "SIRE_C_FLAGS_SMALL" "${SIRE_C_FLAGS_SMALL}" )
+save_sire_variable( "SIRE_CXX_FLAGS_SMALL" "${SIRE_CXX_FLAGS_SMALL}" )
+save_sire_variable( "SIRE_C_FLAGS_DEBUG" "${SIRE_C_FLAGS_DEBUG}" )
+save_sire_variable( "SIRE_CXX_FLAGS_DEBUG" "${SIRE_CXX_FLAGS_DEBUG}" )
+save_sire_variable( "SIRE_SHARE_LINK_FLAGS" "${SIRE_SHARE_LINK_FLAGS}" )
+save_sire_variable( "SIRE_STATIC_LINK_FLAGS" "${SIRE_STATIC_LINK_FLAGS}" )
+save_sire_variable( "SIRE_EXE_LINK_FLAGS" "${SIRE_EXE_LINK_FLAGS}" )
+save_sire_variable( "SIRE_SMALL_FLAGS" "${SIRE_SMALL_FLAGS}" )
+save_sire_variable( "SIRE_WARNALL_FLAGS" "${SIRE_WARNALL_FLAGS}" )
+save_sire_variable( "SIRE_DEBUG_FLAGS" "${SIRE_DEBUG_FLAGS}" )
+save_sire_variable( "SIRE_RELEASE_FLAGS" "${SIRE_RELEASE_FLAGS}" )
+save_sire_variable( "SIRE_OPENMP_FLAGS" "${SIRE_OPENMP_FLAGS}" )
+save_sire_variable( "SIRE_VECTOR_FLAGS" "${SIRE_VECTOR_FLAGS}" )
+save_sire_variable( "SIRE_VISIBILITY_FLAGS" "${SIRE_VISIBILITY_FLAGS}" )
+save_sire_variable( "SIRE_PLATFORM_FLAGS" "${SIRE_PLATFORM_FLAGS}" )
 
 #include the build directory so that we can get sire_config.h and sire_version.h
 include_directories(${CMAKE_BINARY_DIR})
@@ -346,7 +388,7 @@ add_subdirectory (src/apps)
 include( GetSvnVersion )
 
 # install the extra includes file in the Sire/cmake directory
-install (FILES ${SIRE_EXTRA_INCLUDES_FILE} 
+install (FILES ${SIRE_VARIABLES_FILE} 
          DESTINATION ${SIRE_CMAKEFILES}
         )
 

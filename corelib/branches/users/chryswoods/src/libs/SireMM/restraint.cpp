@@ -258,7 +258,7 @@ MolarEnergy NullRestraint::energy() const
 }
 
 /** The null restraint will not change the force */
-void NullRestraint::force(ForceTable&, double) const
+void NullRestraint::force(MolForceTable&, double) const
 {}
 
 /** The null restraint cannot be updated */

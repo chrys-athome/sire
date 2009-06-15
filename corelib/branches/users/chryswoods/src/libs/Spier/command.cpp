@@ -105,6 +105,12 @@ bool Command::operator!=(const Command &other) const
            Property::operator!=(other);
 }
 
+/** Return a string representation of this command */
+QString Command::toString() const
+{
+    return QString( "%1( %2 )" ).arg(this->what()).arg(description_text);
+}
+
 /** Return the short string used to describe this 
     command to the user */
 const QString& Command::text() const
@@ -188,20 +194,16 @@ const char* NullCommand::typeName()
     return QMetaType::typeName( qMetaTypeId<NullCommand>() );
 }
 
-/** Null command does nothing */
-void NullCommand::operator()(RenderView&) const
-{}
-
 /** Undoing nothing does nothing */
-void NullCommand::undo(RenderView&) const
+void NullCommand::undo() const
 {}
 
 /** Redoing nothing does nothing */
-void NullCommand::redo(RenderView&) const
+void NullCommand::redo() const
 {}
 
 /** Merging a NullCommand with another command returns a command */
-CommandPtr NullCommand::mergeWith(const Command &command)
+CommandPtr NullCommand::mergeWith(const Command &command) const
 {
     return command;
 }

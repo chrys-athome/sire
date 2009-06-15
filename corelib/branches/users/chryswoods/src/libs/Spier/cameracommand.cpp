@@ -26,6 +26,7 @@
   *
 \*********************************************/
 
+#include "camera.h"
 #include "cameracommand.h"
 #include "renderview.h"
 
@@ -51,7 +52,7 @@ QDataStream SPIER_EXPORT &operator<<(QDataStream &ds, const CameraCommand &camco
 {
     writeHeader(ds, r_camcommand, 1);
     
-    ds << static_cast<const Command&>(camcommand);
+    ds << static_cast<const RenderViewCommand&>(camcommand);
     
     return ds;
 }
@@ -63,7 +64,7 @@ QDataStream SPIER_EXPORT &operator>>(QDataStream &ds, CameraCommand &camcommand)
     
     if (v == 1)
     {
-        ds >> static_cast<Command&>(camcommand);
+        ds >> static_cast<RenderViewCommand&>(camcommand);
     }
     else
         throw version_error( v, "1", r_camcommand, CODELOC );
@@ -73,12 +74,12 @@ QDataStream SPIER_EXPORT &operator>>(QDataStream &ds, CameraCommand &camcommand)
 
 /** Constructor */
 CameraCommand::CameraCommand(const QString &description)
-              : Command(description)
+              : RenderViewCommand(description)
 {}
 
 /** Copy constructor */
 CameraCommand::CameraCommand(const CameraCommand &other)
-              : Command(other)
+              : RenderViewCommand(other)
 {}
 
 /** Destructor */
@@ -88,20 +89,34 @@ CameraCommand::~CameraCommand()
 /** Copy assignment operator */
 CameraCommand& CameraCommand::operator=(const CameraCommand &other)
 {
-    Command::operator=(other);
+    RenderViewCommand::operator=(other);
     return *this;
 }
 
 /** Comparison operator */
 bool CameraCommand::operator==(const CameraCommand &other) const
 {
-    return Command::operator==(other);
+    return RenderViewCommand::operator==(other);
 }
 
 /** Comparison operator */
 bool CameraCommand::operator!=(const CameraCommand &other) const
 {
-    return Command::operator!=(other);
+    return RenderViewCommand::operator!=(other);
+}
+
+/** Internal function used by the Camera commands to get access to
+    the camera in a render view */
+const Camera& CameraCommand::getCamera() const
+{
+    return renderView().getCamera();
+}
+    
+/** Internal function used by the Camera commands to set the camera 
+    in a render view */
+void CameraCommand::setCamera(const Camera &camera) const
+{
+    const_cast<CameraCommand*>(this)->renderView().setCamera(camera);
 }
 
 ///////////
@@ -147,6 +162,148 @@ QDataStream SPIER_EXPORT &operator>>(QDataStream &ds, RotateCamera &rotatecam)
         throw version_error( v, "1", r_rotatecam, CODELOC );
         
     return ds;
+}
+
+/** Empty constructor */
+RotateCamera::RotateCamera()
+             : ConcreteProperty<RotateCamera,CameraCommand>(
+                    QObject::tr("Rotate camera (0, 0, 0)") )
+{
+    for (int i=0; i<3; ++i)
+    {
+        delta_rotate[i] = SireUnits::Dimension::Angle(0);
+    }
+}
+
+static QString degreeString(const SireUnits::Dimension::Angle &angle)
+{
+    return QString("%1%2").arg( angle.to(degrees) )
+                          .arg( QLatin1Char(176) );  //degree is ascii 176
+}
+
+/** Construct to rotate the camera by 'rotate_x' around the x-axis,
+    'rotate_y' around the y-axis and 'rotate_z' around the z-axis */
+RotateCamera::RotateCamera(const SireUnits::Dimension::Angle &rotate_x,
+                           const SireUnits::Dimension::Angle &rotate_y,
+                           const SireUnits::Dimension::Angle &rotate_z)
+             : ConcreteProperty<RotateCamera,CameraCommand>(
+                    QObject::tr("Rotate camera (%1, %2, %3)")
+                            .arg( ::degreeString(rotate_x),
+                                  ::degreeString(rotate_y),
+                                  ::degreeString(rotate_z) ) )
+{
+    delta_rotate[0] = rotate_x;
+    delta_rotate[1] = rotate_y;
+    delta_rotate[2] = rotate_z;
+}
+
+/** Copy constructor */
+RotateCamera::RotateCamera(const RotateCamera &other)
+             : ConcreteProperty<RotateCamera,CameraCommand>(other)
+{
+    for (int i=0; i<3; ++i)
+    {
+        delta_rotate[i] = other.delta_rotate[i];
+    }
+}
+
+/** Destructor */
+RotateCamera::~RotateCamera()
+{}
+
+/** Copy assignment operator */
+RotateCamera& RotateCamera::operator=(const RotateCamera &other)
+{
+    if (this != &other)
+    {
+        RenderViewCommand::operator=(other);
+    
+        for (int i=0; i<3; ++i)
+        {
+            delta_rotate[i] = other.delta_rotate[i];
+        }
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool RotateCamera::operator==(const RotateCamera &other) const
+{
+    return this == &other or
+           ( delta_rotate[0] == other.delta_rotate[0] and
+             delta_rotate[1] == other.delta_rotate[1] and
+             delta_rotate[2] == other.delta_rotate[2] and
+             RenderViewCommand::operator==(other) );
+}
+
+/** Comparison operator */
+bool RotateCamera::operator!=(const RotateCamera &other) const
+{
+    return not RotateCamera::operator==(other);
+}
+
+const char* RotateCamera::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<RotateCamera>() );
+}
+
+static void rotateCamera(CameraPtr &camera,
+                         const SireUnits::Dimension::Angle *delta)
+{
+    if ( not (SireMaths::isZero(delta[0]) and SireMaths::isZero(delta[1])) )
+    {
+        camera.edit().rotate(delta[0], 5*delta[1]);
+    }
+    
+    if ( not SireMaths::isZero(delta[2]) )
+    {
+        camera.edit().spin(delta[2]);
+    }
+}
+
+/** Execute this command */
+void RotateCamera::execute()
+{
+    CameraPtr camera = this->getCamera();
+    
+    ::rotateCamera(camera, delta_rotate);
+
+    this->setCamera(camera);
+}
+
+/** Undo this camera command */
+void RotateCamera::undo() const
+{
+    //undo this command
+    CameraPtr camera = this->getCamera();
+
+    SireUnits::Dimension::Angle undo_delta[3];
+    
+    for (int i=0; i<3; ++i)
+    {
+        undo_delta[i] = -(delta_rotate[i]);
+    }
+    
+    ::rotateCamera(camera, undo_delta);
+    
+    this->setCamera(camera);
+} 
+
+/** Redo this camera command */
+void RotateCamera::redo() const
+{
+    CameraPtr camera = this->getCamera();
+    
+    ::rotateCamera(camera, delta_rotate);
+
+    this->setCamera(camera);
+}
+
+/** Will eventually merge rotations together... */
+CommandPtr RotateCamera::mergeWith(const Command &other) const
+{
+    return CommandPtr();
 }
 
 ///////////

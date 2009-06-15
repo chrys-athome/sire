@@ -8,6 +8,11 @@
 include_directories( ${BOOST_INCLUDE_DIR}
                      ${PYTHON_INCLUDE_DIR} )
 
+if ( SIRE_USE_MPI )
+  include_directories( ${SIRE_MPI_INCLUDE_PATH} )
+  add_definitions( ${SIRE_MPI_DEFINITIONS} )
+endif()
+
 # Sire include paths
 include_directories( BEFORE ${SIRE_INCLUDE_DIR}/SireCluster
                             ${SIRE_INCLUDE_DIR} )

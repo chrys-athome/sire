@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#ifdef __SIRE_USE_MPI__
+#ifdef SIRE_USE_MPI
 
 #include "receivequeue.h"
 #include "mpicluster.h"
@@ -314,4 +314,4 @@ void ReceiveQueue::run2()
 
 }
 
-#endif // __SIRE_USE_MPI__
+#endif // SIRE_USE_MPI

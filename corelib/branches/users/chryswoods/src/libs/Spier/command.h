@@ -82,10 +82,12 @@ public:
 
     const QString& text() const;
 
+    QString toString() const;
+
     virtual void undo() const=0;
     virtual void redo() const=0;
 
-    virtual CommandPtr mergeWith(const Command &other)=0;
+    virtual CommandPtr mergeWith(const Command &other) const=0;
 
     static const NullCommand& null();
 
@@ -119,13 +121,11 @@ public:
     bool operator!=(const NullCommand &other) const;
     
     static const char* typeName();
-    
-    void operator()(RenderView &render_view) const;
 
-    void undo(RenderView &render_view) const;
-    void redo(RenderView &render_view) const;
+    void undo() const;
+    void redo() const;
 
-    CommandPtr mergeWith(const Command &other);
+    CommandPtr mergeWith(const Command &other) const;
 };
 
 }

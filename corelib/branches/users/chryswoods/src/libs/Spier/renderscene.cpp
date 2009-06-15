@@ -193,8 +193,6 @@ void RenderScene::render(GLRenderContext &render_context)
 
             return;
         }
-        else
-            qDebug() << "SCENE or CAMERA has changed, so skipping cache...";
     }
     
     //ok, we don't have a previously rendered scene (or it is out of date)

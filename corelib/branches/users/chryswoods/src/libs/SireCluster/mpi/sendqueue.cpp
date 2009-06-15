@@ -26,7 +26,7 @@
   *
 \*********************************************/
 
-#ifdef __SIRE_USE_MPI__
+#ifdef SIRE_USE_MPI
 
 #include <mpi.h>  // needs to be first for mpich
 
@@ -252,4 +252,4 @@ void SendQueue::run()
     send_comm = 0;
 }
 
-#endif // __SIRE_USE_MPI__
+#endif // SIRE_USE_MPI

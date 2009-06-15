@@ -13,6 +13,9 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
                          ${QT_QTGUI_INCLUDE_DIR}
                          ${OPENGL_INCLUDE_DIR} )
 
+    save_sire_variable( "SIRE_BUILD_SPIER" "ON" )
+    save_sire_variable( "SIRE_OPENGL_INCLUDE_DIR" "${OPENGL_INCLUDE_DIR}" )
+
     # Other Sire libraries
     include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
@@ -102,6 +105,8 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
                            ${OPENGL_glu_LIBRARY}
                            )
 
+    save_sire_variable( "SPIER_EXTRA_LIBRARIES" "${OPENGL_gl_LIBRARY};${OPENGL_glu_LIBRARY}" )
+
     # installation
     install( TARGETS Spier EXPORT SireLibraries
              RUNTIME DESTINATION ${SIRE_BIN}
@@ -114,4 +119,5 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
 
 else()
     message( STATUS "Not building the Spier library as QtGui or QtOpenGL are not available." )
+    save_sire_variable( "SIRE_BUILD_SPIER" "OFF" )
 endif()

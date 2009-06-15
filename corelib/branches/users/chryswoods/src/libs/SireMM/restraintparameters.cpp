@@ -37,7 +37,7 @@ using namespace SireStream;
 
 /** Constructor */
 RestraintSymbols::RestraintSymbols()
-                 : r_("r"), theta("theta_"), phi_("phi")
+                 : r_("r"), theta_("theta_"), phi_("phi")
 {}
 
 /** Destructor */

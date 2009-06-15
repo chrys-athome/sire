@@ -58,7 +58,6 @@ target_link_libraries (Squire
                        SireBase
                        SireStream
                        SireError
-                       ${SQUIRE_EXTRA_LIBRARIES}
                       )
 
 # installation
