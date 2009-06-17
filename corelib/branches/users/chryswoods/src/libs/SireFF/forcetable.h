@@ -134,6 +134,9 @@ public:
     bool add(const CGAtomIdx &cgatomidx, const Vector &force);
     bool subtract(const CGAtomIdx &cgatomidx, const Vector &force);
 
+    bool add(const AtomSelection &selected_atoms, const Vector &force);
+    bool subtract(const AtomSelection &selected_atoms, const Vector &force);
+
 private:
     void assertCompatibleWith(const AtomSelection &selection) const;
 

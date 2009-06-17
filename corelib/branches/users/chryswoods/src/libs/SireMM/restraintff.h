@@ -37,6 +37,8 @@
 
 #include "SireFF/detail/ffmolecules3d.h"
 
+#include "restraintparameters.h"
+
 namespace SireMM
 {
 class RestraintFF;

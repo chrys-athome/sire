@@ -261,6 +261,182 @@ bool MolForceTable::subtract(const CGAtomIdx &cgatomidx, const Vector &force)
     return this->add( cgatomidx, -force );
 }
 
+static void addForce(const Vector &force, Vector *forces, const int nats)
+{
+    for (int i=0; i<nats; ++i)
+    {
+        forces[i] += force;
+    }
+}
+
+/** Add the force 'force' onto this table for all of the atoms
+    in 'selected_atoms'. This ignores forces calculated for atoms 
+    that are in CutGroups that are not in this table - this returns whether 
+    or not any selected atoms are in this table
+    
+    \throw SireError::incompatible_error
+*/
+bool MolForceTable::add(const AtomSelection &selected_atoms, const Vector &force)
+{
+    this->assertCompatibleWith(selected_atoms);
+
+    if (selected_atoms.selectedNone() or this->isEmpty())
+        return false;
+
+    bool changed_atoms = false;
+
+    if (selected_atoms.selectedAll())
+    {
+        //this is easy - all atoms are selected for updating,
+        //so just update all of the forces in this table
+        ::addForce(force, this->valueData(), this->nValues());
+        
+        changed_atoms = true;
+    }
+    else if (this->selectedAll())
+    {
+        //easy(ish) case - all atoms are in this forcetable,
+        //so we only need to update the forces of the selected atoms
+    
+        if (selected_atoms.selectedAllCutGroups())
+        {
+            for (CGIdx i(0); i<ncgroups; ++i)
+            {
+                if (selected_atoms.selectedAll(i))
+                {
+                    ::addForce(force, this->data(i), this->nValues(i));
+                    changed_atoms = true;
+                }
+                else
+                {
+                    QSet<Index> idxs = selected_atoms.selectedAtoms(i);
+                    
+                    Vector *atomforces = this->data(i);
+                    const int nats = this->nValues(i);
+                    
+                    foreach (Index idx, idxs)
+                    {
+                        BOOST_ASSERT( idx >= 0 and idx < nats );
+                        atomforces[idx] += force;
+                    }
+                    
+                    changed_atoms = true;
+                }
+            }
+        }
+        else
+        {
+            QList<CGIdx> cgidxs = selected_atoms.selectedCutGroups();
+            
+            foreach (CGIdx i, cgidxs)
+            {
+                if (selected_atoms.selectedAll(i))
+                {
+                    ::addForce(force, this->data(i), this->nValues(i));
+                    changed_atoms = true;
+                }
+                else
+                {
+                    QSet<Index> idxs = selected_atoms.selectedAtoms(i);
+                    
+                    Vector *atomforces = this->data(i);
+                    const int nats = this->nValues(i);
+                    
+                    foreach (Index idx, idxs)
+                    {
+                        BOOST_ASSERT( idx >= 0 and idx < nats );
+                        atomforces[idx] += force;
+                    }
+                    
+                    changed_atoms = true;
+                }
+            }
+        }
+    }
+    else
+    {
+        //harder case - not all atoms are in this forcetable
+        //and not all atoms are selected for updating
+
+        if (selected_atoms.selectedAllCutGroups())
+        {
+            for (QHash<CGIdx,qint32>::const_iterator it = cgidx_to_idx.constBegin();
+                 it != cgidx_to_idx.constEnd();
+                 ++it)
+            {
+                const CGIdx cgidx = it.key();
+                const int i = it.value();
+                
+                if (selected_atoms.selectedAll(cgidx))
+                {
+                    ::addForce(force, this->data(i), this->nValues(i));
+                    changed_atoms = true;
+                }
+                else
+                {
+                    QSet<Index> idxs = selected_atoms.selectedAtoms(cgidx);
+                    
+                    Vector *atomforces = this->data(i);
+                    const int nats = this->nValues(i);
+                    
+                    foreach (Index idx, idxs)
+                    {
+                        BOOST_ASSERT( idx >= 0 and idx < nats );
+                        atomforces[idx] += force;
+                    }
+                }
+                
+                changed_atoms = true;
+            }
+        }
+        else
+        {
+            for (QHash<CGIdx,qint32>::const_iterator it = cgidx_to_idx.constBegin();
+                 it != cgidx_to_idx.constEnd();
+                 ++it)
+            {
+                const CGIdx cgidx = it.key();
+                const int i = it.value();
+                
+                if (selected_atoms.selectedAll(cgidx))
+                {
+                    ::addForce(force, this->data(i), this->nValues(i));
+                    changed_atoms = true;
+                }
+                else if (selected_atoms.selected(cgidx))
+                {
+                    QSet<Index> idxs = selected_atoms.selectedAtoms(cgidx);
+                    
+                    Vector *atomforces = this->data(i);
+                    const int nats = this->nValues(i);
+                    
+                    foreach (Index idx, idxs)
+                    {
+                        BOOST_ASSERT( idx >= 0 and idx < nats );
+                        atomforces[idx] += force;
+                    }
+                    
+                    changed_atoms = true;
+                }
+            }
+        }
+    }
+    
+    return changed_atoms;
+}
+
+/** Subtract the force 'force' from this table for all of the atoms
+    in 'selected_atoms'. This ignores forces calculated for atoms 
+    that are in CutGroups that are not in this table - this returns whether 
+    or not any selected atoms are in this table
+    
+    \throw SireError::incompatible_error
+*/
+bool MolForceTable::subtract(const AtomSelection &selected_atoms, const Vector &force)
+{
+    return MolForceTable::add( selected_atoms, -force );
+}
+
 void MolForceTable::assertCompatibleWith(const AtomSelection &selection) const
 {
     if (not selection.selectedAll())

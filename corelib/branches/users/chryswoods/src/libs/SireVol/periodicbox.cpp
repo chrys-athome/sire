@@ -32,7 +32,11 @@
 #include <cmath>
 
 #ifdef SIRE_USE_SSE
-#include <emmintrin.h>
+    #ifdef __SSE__
+        #include <emmintrin.h>   // CONDITIONAL_INCLUDE
+    #else
+        #undef SIRE_USE_SSE
+    #endif
 #endif
 
 #include "periodicbox.h"

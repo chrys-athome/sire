@@ -16,6 +16,7 @@ set ( SIREMM_HEADERS
       cljpotential.h
       cljnbpairs.h
       coulombpotential.h
+      distancerestraint.h
       errors.h
       fouratomfunctions.h
       intercljff.h
@@ -32,11 +33,13 @@ set ( SIREMM_HEADERS
       ljparameter.h
       ljparameterdb.h
       ljpotential.h
+      point.h
       positionalrestraint.h
       restraint.h
       restraintcomponent.h
       restraintff.h
       restraintparameters.h
+      restraints.h
       softcljcomponent.h
       softcljpotential.h
       switchingfunction.h
@@ -59,6 +62,7 @@ set ( SIREMM_SOURCES
       cljpotential.cpp
       cljnbpairs.cpp
       coulombpotential.cpp
+      distancerestraint.cpp
       errors.cpp
       fouratomfunctions.cpp
       intercljff.cpp
@@ -75,11 +79,13 @@ set ( SIREMM_SOURCES
       ljparameter.cpp
       ljparameterdb.cpp
       ljpotential.cpp
+      point.cpp
       positionalrestraint.cpp
       restraint.cpp
       restraintcomponent.cpp
       restraintff.cpp
       restraintparameters.cpp
+      restraints.cpp
       softcljcomponent.cpp
       softcljpotential.cpp
       switchingfunction.cpp

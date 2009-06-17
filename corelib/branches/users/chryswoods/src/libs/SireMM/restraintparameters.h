@@ -33,6 +33,8 @@
 
 #include "SireCAS/symbol.h"
 
+#include "SireFF/detail/atomiccoords3d.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMM
@@ -90,14 +92,20 @@ private:
 
     @author Christopher Woods
 */
-/*class RestraintParameters
+class RestraintParameters
+{
+public:
+    RestraintParameters();
+    ~RestraintParameters();
+};
 
-   Restraints mol_restraints;
 
-
-class RestraintParameters3D
-
-    Restraints3D mol_restraints;*/
+class RestraintParameters3D : public SireFF::detail::AtomicCoords3D
+{
+public:
+    RestraintParameters3D();
+    ~RestraintParameters3D();
+};
 
 }
 

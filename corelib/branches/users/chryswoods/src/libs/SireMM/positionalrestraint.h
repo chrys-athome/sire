@@ -328,8 +328,8 @@ private:
 }
 
 Q_DECLARE_METATYPE( SireMM::AtomicRestraint )
-//Q_DECLARE_METATYPE( SireMM::CenterOfGeometryRestraint )
-//Q_DECLARE_METATYPE( SireMM::CenterOfMassRestraint )
+Q_DECLARE_METATYPE( SireMM::CenterOfGeometryRestraint )
+Q_DECLARE_METATYPE( SireMM::CenterOfMassRestraint )
 
 SIRE_EXPOSE_CLASS( SireMM::PositionalRestraint )
 SIRE_EXPOSE_CLASS( SireMM::AtomicRestraint )

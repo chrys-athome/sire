@@ -94,11 +94,26 @@ Evaluator::Evaluator(const MoleculeView &molecule)
             selected_atoms(molecule.selection())
 {}
 
+/** Construct to evaluate for the entire molecule in 'moldata' */
+Evaluator::Evaluator(const MoleculeData &moldata)
+          : ConcreteProperty<Evaluator,MoleculeView>(moldata),
+            selected_atoms(moldata)
+{}
+
 /** Construct to evaluate properties of the passed selected atoms
     of the molecule viewed in 'molecule' */
 Evaluator::Evaluator(const MoleculeView &molecule,
                      const AtomSelection &atoms)
           : ConcreteProperty<Evaluator,MoleculeView>(molecule), selected_atoms(atoms)
+{
+    selected_atoms.assertCompatibleWith(this->data());
+}
+
+/** Construct to evaluate properties of the selected atoms of the 
+    passed molecule */
+Evaluator::Evaluator(const MoleculeData &moldata,
+                     const AtomSelection &atoms)
+          : ConcreteProperty<Evaluator,MoleculeView>(moldata), selected_atoms(atoms)
 {
     selected_atoms.assertCompatibleWith(this->data());
 }

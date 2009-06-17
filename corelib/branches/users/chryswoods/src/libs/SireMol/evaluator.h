@@ -94,7 +94,13 @@ public:
     Evaluator();
 
     Evaluator(const MoleculeView &molecule);
+    
+    Evaluator(const MoleculeData &moldata);
+    
     Evaluator(const MoleculeView &molecule,
+              const AtomSelection &selected_atoms);
+
+    Evaluator(const MoleculeData &moldata,
               const AtomSelection &selected_atoms);
 
     Evaluator(const Evaluator &other);

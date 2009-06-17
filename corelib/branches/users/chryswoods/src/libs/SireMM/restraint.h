@@ -42,9 +42,6 @@ class Restraint;
 class Restraint3D;
 
 class NullRestraint;
-
-class Restraints;
-class Restraints3D;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMM::Restraint&);
@@ -55,12 +52,6 @@ QDataStream& operator>>(QDataStream&, SireMM::Restraint3D&);
 
 QDataStream& operator<<(QDataStream&, const SireMM::NullRestraint&);
 QDataStream& operator>>(QDataStream&, SireMM::NullRestraint&);
-
-QDataStream& operator<<(QDataStream&, const SireMM::Restraints&);
-QDataStream& operator>>(QDataStream&, SireMM::Restraints&);
-
-QDataStream& operator<<(QDataStream&, const SireMM::Restraints3D&);
-QDataStream& operator>>(QDataStream&, SireMM::Restraints3D&);
 
 namespace SireMol
 {
@@ -112,7 +103,15 @@ public:
     virtual SireUnits::Dimension::MolarEnergy energy() const=0;
 
     virtual void update(const MoleculeData &moldata,
-                        const PropertyMap &map)=0;
+                        const PropertyMap &map = PropertyMap())=0;
+
+    virtual void update(const Molecules &molecules,
+                        const PropertyMap &map = PropertyMap())=0;
+
+    virtual Molecules molecules() const=0;
+    
+    virtual bool contains(MolNum molnum) const=0;
+    virtual bool contains(const MolID &molid) const=0;
 
     static const NullRestraint& null();
 
@@ -149,6 +148,7 @@ public:
     virtual Restraint3D* clone() const=0;
 
     virtual void force(MolForceTable &forcetable, double scale_force=1) const=0;
+    virtual void force(ForceTable &forcetable, double scale_force=1) const=0;
     
 protected:
     Restraint3D& operator=(const Restraint3D &other);
@@ -186,8 +186,15 @@ public:
     SireUnits::Dimension::MolarEnergy energy() const;
 
     void force(MolForceTable &forcetable, double scale_force=1) const;
+    void force(ForceTable &forcetable, double scale_force=1) const;
     
     void update(const MoleculeData &moldata, const PropertyMap &map);
+    void update(const Molecules &molecules, const PropertyMap &map);
+
+    Molecules molecules() const;
+    
+    bool contains(MolNum molnum) const;
+    bool contains(const MolID &molid) const;
 };
 
 typedef SireBase::PropPtr<Restraint> RestraintPtr;
@@ -196,15 +203,10 @@ typedef SireBase::PropPtr<Restraint3D> Restraint3DPtr;
 }
 
 Q_DECLARE_METATYPE( SireMM::NullRestraint )
-//Q_DECLARE_METATYPE( SireMM::Restraints )
-//Q_DECLARE_METATYPE( SireMM::Restraints3D )
 
 SIRE_EXPOSE_CLASS( SireMM::Restraint )
 SIRE_EXPOSE_CLASS( SireMM::Restraint3D )
 SIRE_EXPOSE_CLASS( SireMM::NullRestraint)
-
-//S I RE_EXPOSE_CLASS( SireMM::Restraints )
-//S I RE_EXPOSE_CLASS( SireMM::Restraints3D )
 
 SIRE_EXPOSE_PROPERTY( SireMM::RestraintPtr, Restraint )
 SIRE_EXPOSE_PROPERTY( SireMM::Restraint3DPtr, Restraint3D )

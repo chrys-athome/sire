@@ -541,10 +541,10 @@ void AtomicRestraint::force(MolForceTable &forcetable, double scale_force) const
 ////////////// Implementation of CenterOfGeometryRestraint
 //////////////
 
-//static const RegisterMetaType<CenterOfGeometryRestraint> r_cogrestraint;
+static const RegisterMetaType<CenterOfGeometryRestraint> r_cogrestraint;
 
 /** Serialise to a binary datastream */
-/*QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
                                       const CenterOfGeometryRestraint &cogrestraint)
 {
     writeHeader(ds, r_cogrestraint, 1);
@@ -555,10 +555,10 @@ void AtomicRestraint::force(MolForceTable &forcetable, double scale_force) const
         << static_cast<const PositionalRestraint&>(cogrestraint);
         
     return ds;
-}*/
+}
 
 /** Extract from a binary datastream */
-/*QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
                                       CenterOfGeometryRestraint &cogrestraint)
 {
     VersionID v = readHeader(ds, r_cogrestraint);
@@ -574,33 +574,95 @@ void AtomicRestraint::force(MolForceTable &forcetable, double scale_force) const
         throw version_error( v, "1", r_cogrestraint, CODELOC );
         
     return ds;
-}*/
+}
 
 /** Constructor */
-/*CenterOfGeometryRestraint::CenterOfGeometryRestraint();
+CenterOfGeometryRestraint::CenterOfGeometryRestraint()
+            : ConcreteProperty<CenterOfGeometryRestraint,PositionalRestraint>()
+{}
 
+/** Construct to restrain the center of geometry of the atoms in 'molview'
+    to the point 'restraint_point' using the expression 'restraint' for the
+    energy and force of the restraint, using the optionally supplied 
+    property map 'map' to find the necessary properties 
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
 CenterOfGeometryRestraint::CenterOfGeometryRestraint(const MoleculeView &molview,
                                                      const Vector &restraint_point,
                                                      const Expression &restraint,
-                                                     const PropertyMap &map);
-                          
+                                                     const PropertyMap &map)
+  : ConcreteProperty<CenterOfGeometryRestraint,PositionalRestraint>(restraint_point,
+                                                                    restraint),
+    selected_atoms(molview.selection())
+{
+    CenterOfGeometryRestraint::update(molview.data(), map);
+}
+
+/** Internal function used to specify the restraint energy and force
+    functions separately 
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+CenterOfGeometryRestraint::CenterOfGeometryRestraint(const MoleculeView &molview,
+                                                     const Vector &restraint_point,
+                                                     const Expression &restraint,
+                                                     const Expression &diff_restraint,
+                                                     const PropertyMap &map)
+  : ConcreteProperty<CenterOfGeometryRestraint,PositionalRestraint>(restraint_point,
+                                                                    restraint,
+                                                                    diff_restraint),
+    selected_atoms(molview.selection())
+{
+    CenterOfGeometryRestraint::update(molview.data(), map);
+}
+
+/** Copy constructor */                          
 CenterOfGeometryRestraint::CenterOfGeometryRestraint(
-                                        const CenterOfGeometryRestraint &other);
+                                        const CenterOfGeometryRestraint &other)
+        : ConcreteProperty<CenterOfGeometryRestraint,PositionalRestraint>(other),
+          selected_atoms(other.selected_atoms)
+{}
 
-CenterOfGeometryRestraint::~CenterOfGeometryRestraint();
+/** Destructor */
+CenterOfGeometryRestraint::~CenterOfGeometryRestraint()
+{}
 
-const char* CenterOfGeometryRestraint::typeName();
+const char* CenterOfGeometryRestraint::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CenterOfGeometryRestraint>() );
+}
 
+/** Copy assignment operator */
 CenterOfGeometryRestraint& CenterOfGeometryRestraint::operator=(
-                                        const CenterOfGeometryRestraint &other);
+                                        const CenterOfGeometryRestraint &other)
+{
+    PositionalRestraint::operator=(other);
+    selected_atoms = other.selected_atoms;
+    
+    return *this;
+}
 
-bool CenterOfGeometryRestraint::operator==(const CenterOfGeometryRestraint &other) const;
-bool CenterOfGeometryRestraint::operator!=(const CenterOfGeometryRestraint &other) const;*/
+/** Comparison operator */
+bool CenterOfGeometryRestraint::operator==(const CenterOfGeometryRestraint &other) const
+{
+    return selected_atoms == other.selected_atoms and
+           PositionalRestraint::operator==(other);
+}
+
+/** Comparison operator */
+bool CenterOfGeometryRestraint::operator!=(const CenterOfGeometryRestraint &other) const
+{
+    return selected_atoms != other.selected_atoms or
+           PositionalRestraint::operator!=(other);
+}
 
 /** Return a restraint that restrains the center of geometry of 'molview' 
     to the point 'restraint_point' using a harmonic potential with a force
     constant of 'force_constant' */
-/*CenterOfGeometryRestraint CenterOfGeometryRestraint::harmonic(
+CenterOfGeometryRestraint CenterOfGeometryRestraint::harmonic(
                                  const MoleculeView &molview,
                                  const Vector &restraint_point,
                                  const HarmonicPositionForceConstant &force_constant,
@@ -610,13 +672,13 @@ bool CenterOfGeometryRestraint::operator!=(const CenterOfGeometryRestraint &othe
                                      ::harmonicFunction(force_constant),
                                      ::diffHarmonicFunction(force_constant),
                                      map);
-}*/
+}
 
 /** Return a restraint that restrains the center of geometry of 'molview' 
     to the point 'restraint_point' using a half-harmonic potential
     that starts beyond the distance 'distance' using the force constant
     'force_constant' */
-/*CenterOfGeometryRestraint CenterOfGeometryRestraint::halfHarmonic(
+CenterOfGeometryRestraint CenterOfGeometryRestraint::halfHarmonic(
                                 const MoleculeView &molview,
                                 const Vector &restraint_point,
                                 const Length &distance,
@@ -627,12 +689,198 @@ bool CenterOfGeometryRestraint::operator!=(const CenterOfGeometryRestraint &othe
                                      ::halfHarmonicFunction(force_constant,distance),
                                      ::diffHalfHarmonicFunction(force_constant,distance),
                                      map);
-}*/
+}
 
-/*void update(const MoleculeData &moldata, const PropertyMap &map);
+/** Update this restraint */
+void CenterOfGeometryRestraint::update(const MoleculeData &moldata, 
+                                       const PropertyMap &map)
+{
+    Evaluator evaluator(moldata, selected_atoms);
+    PositionalRestraint::update( evaluator.centerOfGeometry(map) );
+}
 
-void force(MolForceTable &forcetable, double scale_force=1) const;*/
+/** Calculate the force acting on all of the atoms caused by this restraint */
+void CenterOfGeometryRestraint::force(MolForceTable &forcetable,
+                                      double scale_force) const
+{
+    //calculate the force acting along the vector from the restraint
+    //point to the molecule point
+    Vector f = PositionalRestraint::restraintForce();
+       
+    //add this onto the passed forcetable
+    forcetable.add( selected_atoms, scale_force*f );
+}
 
 //////////////
 ////////////// Implementation of CenterOfMassRestraint
 //////////////
+
+static const RegisterMetaType<CenterOfMassRestraint> r_comrestraint;
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
+                                      const CenterOfMassRestraint &comrestraint)
+{
+    writeHeader(ds, r_comrestraint, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << comrestraint.selected_atoms
+        << static_cast<const PositionalRestraint&>(comrestraint);
+        
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
+                                      CenterOfMassRestraint &comrestraint)
+{
+    VersionID v = readHeader(ds, r_comrestraint);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> comrestraint.selected_atoms
+            >> static_cast<PositionalRestraint&>(comrestraint);
+    }
+    else
+        throw version_error( v, "1", r_comrestraint, CODELOC );
+        
+    return ds;
+}
+
+/** Constructor */
+CenterOfMassRestraint::CenterOfMassRestraint()
+            : ConcreteProperty<CenterOfMassRestraint,PositionalRestraint>()
+{}
+
+/** Construct to restrain the center of mass of the atoms in 'molview'
+    to the point 'restraint_point' using the expression 'restraint' for the
+    energy and force of the restraint, using the optionally supplied 
+    property map 'map' to find the necessary properties 
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+CenterOfMassRestraint::CenterOfMassRestraint(const MoleculeView &molview,
+                                             const Vector &restraint_point,
+                                             const Expression &restraint,
+                                             const PropertyMap &map)
+  : ConcreteProperty<CenterOfMassRestraint,PositionalRestraint>(restraint_point,
+                                                                restraint),
+    selected_atoms(molview.selection())
+{
+    CenterOfMassRestraint::update(molview.data(), map);
+}
+
+/** Internal function used to specify the restraint energy and force
+    functions separately 
+    
+    \throw SireBase::missing_property
+    \throw SireError::invalid_cast
+*/
+CenterOfMassRestraint::CenterOfMassRestraint(const MoleculeView &molview,
+                                             const Vector &restraint_point,
+                                             const Expression &restraint,
+                                             const Expression &diff_restraint,
+                                             const PropertyMap &map)
+  : ConcreteProperty<CenterOfMassRestraint,PositionalRestraint>(restraint_point,
+                                                                restraint,
+                                                                diff_restraint),
+    selected_atoms(molview.selection())
+{
+    CenterOfMassRestraint::update(molview.data(), map);
+}
+
+/** Copy constructor */                          
+CenterOfMassRestraint::CenterOfMassRestraint(
+                                        const CenterOfMassRestraint &other)
+        : ConcreteProperty<CenterOfMassRestraint,PositionalRestraint>(other),
+          selected_atoms(other.selected_atoms)
+{}
+
+/** Destructor */
+CenterOfMassRestraint::~CenterOfMassRestraint()
+{}
+
+const char* CenterOfMassRestraint::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CenterOfMassRestraint>() );
+}
+
+/** Copy assignment operator */
+CenterOfMassRestraint& CenterOfMassRestraint::operator=(
+                                        const CenterOfMassRestraint &other)
+{
+    PositionalRestraint::operator=(other);
+    selected_atoms = other.selected_atoms;
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool CenterOfMassRestraint::operator==(const CenterOfMassRestraint &other) const
+{
+    return selected_atoms == other.selected_atoms and
+           PositionalRestraint::operator==(other);
+}
+
+/** Comparison operator */
+bool CenterOfMassRestraint::operator!=(const CenterOfMassRestraint &other) const
+{
+    return selected_atoms != other.selected_atoms or
+           PositionalRestraint::operator!=(other);
+}
+
+/** Return a restraint that restrains the center of mass of 'molview' 
+    to the point 'restraint_point' using a harmonic potential with a force
+    constant of 'force_constant' */
+CenterOfMassRestraint CenterOfMassRestraint::harmonic(
+                                 const MoleculeView &molview,
+                                 const Vector &restraint_point,
+                                 const HarmonicPositionForceConstant &force_constant,
+                                 const PropertyMap &map)
+{
+    return CenterOfMassRestraint(molview, restraint_point,
+                                 ::harmonicFunction(force_constant),
+                                 ::diffHarmonicFunction(force_constant),
+                                 map);
+}
+
+/** Return a restraint that restrains the center of mass of 'molview' 
+    to the point 'restraint_point' using a half-harmonic potential
+    that starts beyond the distance 'distance' using the force constant
+    'force_constant' */
+CenterOfMassRestraint CenterOfMassRestraint::halfHarmonic(
+                                const MoleculeView &molview,
+                                const Vector &restraint_point,
+                                const Length &distance,
+                                const HarmonicPositionForceConstant &force_constant,
+                                const PropertyMap &map)
+{
+    return CenterOfMassRestraint(molview, restraint_point, 
+                                 ::halfHarmonicFunction(force_constant,distance),
+                                 ::diffHalfHarmonicFunction(force_constant,distance),
+                                 map);
+}
+
+/** Update this restraint */
+void CenterOfMassRestraint::update(const MoleculeData &moldata, 
+                                   const PropertyMap &map)
+{
+    Evaluator evaluator(moldata, selected_atoms);
+    PositionalRestraint::update( evaluator.centerOfMass(map) );
+}
+
+/** Calculate the force acting on all of the atoms caused by this restraint */
+void CenterOfMassRestraint::force(MolForceTable &forcetable,
+                                  double scale_force) const
+{
+    //calculate the force acting along the vector from the restraint
+    //point to the molecule point
+    Vector f = PositionalRestraint::restraintForce();
+       
+    //add this onto the passed forcetable
+    forcetable.add( selected_atoms, scale_force*f );
+}

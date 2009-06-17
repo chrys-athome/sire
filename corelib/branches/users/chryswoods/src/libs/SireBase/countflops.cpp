@@ -35,7 +35,7 @@
 
 #ifdef SIRE_USE_SSE
     #ifdef __SSE__
-        #include <emmintrin.h>
+        #include <emmintrin.h>  // CONDITIONAL_INCLUDE
     #else
         #undef SIRE_USE_SSE
     #endif

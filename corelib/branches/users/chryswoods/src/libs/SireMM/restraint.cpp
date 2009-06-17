@@ -264,3 +264,25 @@ void NullRestraint::force(MolForceTable&, double) const
 /** The null restraint cannot be updated */
 void NullRestraint::update(const MoleculeData&, const PropertyMap&)
 {}
+
+/** The null restraint cannot be updated */
+void NullRestraint::update(const Molecules&, const PropertyMap&)
+{}
+
+/** There are no molecules in the NullRestraint */
+Molecules NullRestraint::molecules() const
+{
+    return Molecules();
+}
+
+/** There are no molecules in the NullRestraint */
+bool NullRestraint::contains(MolNum) const
+{
+    return false;
+}
+
+/** There are no molecules in the NullRestraint */
+bool NullRestraint::contains(const MolID&) const
+{
+    return false;
+}
