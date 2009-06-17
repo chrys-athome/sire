@@ -7,6 +7,10 @@
 #
 ################################
 
+# Uncomment for more verbose compiling/linking
+# (or run 'make VERBOSE=1')
+# set (CMAKE_VERBOSE_MAKEFILE ON)
+
 # require cmake >= 2.6.0
 cmake_minimum_required(VERSION 2.6.0 FATAL_ERROR)
 
@@ -57,15 +61,34 @@ message( STATUS "Libraries in ${SIRE_INSTALL_PREFIX}/${SIRE_LIBS}" )
 # Make sure that we are using the same compiler as that used to compile Sire
 option (SIRE_CHECK_COMPILER "Turn off to skip the compiler check" ON)
 
-if ( SIRE_CHECK_COMPILER )
-  if ( NOT ( (${SIRE_C_COMPILER} STREQUAL ${CMAKE_C_COMPILER}) AND
-             (${SIRE_CXX_COMPILER} STREQUAL ${CMAKE_CXX_COMPILER}) ) )
+macro( compare_strings RESULT val0 val1)
+  if (${val0} STREQUAL ${val1})
+    set( ${RESULT} TRUE )
+  else()
+    set( ${RESULT} FALSE )
+  endif()
+endmacro()
 
-    if ( NOT (${SIRE_C_COMPILER} STREQUAL ${CMAKE_C_COMPILER}) )
+macro( compare_values RESULT val0 val1)
+  if (${val0} EQUAL ${val1})
+    set( ${RESULT} TRUE )
+  else()
+    set( ${RESULT} FALSE )
+  endif()
+endmacro()
+
+if ( SIRE_CHECK_COMPILER )
+
+  compare_strings( SAME_C_COMPILER ${SIRE_C_COMPILER} ${CMAKE_C_COMPILER} )
+  compare_strings( SAME_CXX_COMPILER ${SIRE_CXX_COMPILER} ${CMAKE_CXX_COMPILER} )
+
+  if ( NOT SAME_C_COMPILER OR NOT SAME_CXX_COMPILER ) 
+
+    if ( NOT SAME_C_COMPILER )
       message( STATUS "Different C compilers! ${SIRE_C_COMPILER} vs. ${CMAKE_C_COMPILER}" )
     endif()
 
-    if ( NOT (${SIRE_CXX_COMPILER} STREQUAL ${CMAKE_CXX_COMPILER}) )
+    if ( NOT SAME_CXX_COMPILER )
       message( STATUS "Different C++ compilers! ${SIRE_CXX_COMPILER} vs. ${CMAKE_CXX_COMPILER}" )
     endif()
 
@@ -76,7 +99,7 @@ if ( SIRE_CHECK_COMPILER )
                    "(${CMAKE_C_COMPILER}, ${CMAKE_CXX_COMPILER}) than those used to"
                    "compile the Sire libraries"
                    "(${SIRE_C_COMPILER}, ${SIRE_CXX_COMPILER})."
-                   "You need to rerun cmake using the command;\n\n"
+                   "You need to remove CMakeCache.txt and rerun cmake using the command;\n\n"
                    "CC=${SIRE_C_COMPILER} CXX=${SIRE_CXX_COMPILER} cmake ${CMAKE_SOURCE_DIR}\n" )
   endif()
 endif()
@@ -92,13 +115,16 @@ if ( ${QT_QTCORE_FOUND} AND ${QT_QTSQL_FOUND} )
    message( STATUS "Using Qt version ${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH} "
                    "(${QT_LIBRARIES})" )
 
-   if ( NOT (${QT_VERSION_MAJOR} EQUAL ${SIRE_QT_VERSION_MAJOR}) )
+   compare_values( SAME_QT_MAJOR ${QT_VERSION_MAJOR} ${SIRE_QT_VERSION_MAJOR} )
+   compare_values( SAME_QT_MINOR ${QT_VERSION_MINOR} ${SIRE_QT_VERSION_MINOR} )
+   compare_values( SAME_QT_PATCH ${QT_VERSION_PATCH} ${SIRE_QT_VERSION_PATCH} )
+
+   if ( NOT SAME_QT_MAJOR )
       fatal_message( "Compiling the python wrappers against a different major"
                      "version of Qt (${QT_VERSION_MAJOR}) than Sire (${SIRE_QT_VERSION_MAJOR})"
                      "is not supported." )
    
-   elseif ( NOT ( (${QT_VERSION_MINOR} EQUAL ${SIRE_QT_VERSION_MINOR}) AND
-                  (${QT_VERSION_PATCH} EQUAL ${SIRE_QT_VERSION_PATCH}) ) )
+   elseif ( NOT SAME_QT_MINOR AND SAME_QT_PATCH )
 
       warning_message( "Compiling the python wrappers with a version of Qt"
                        "(${QT_VERSION_MAJOR}.${QT_VERSION_MINOR}.${QT_VERSION_PATCH})"
@@ -114,10 +140,6 @@ endif()
 # Build shared libraries by default
 option (BUILD_SHARED_LIBS "Build shared python modules" ON)
 
-# Uncomment for more verbose compiling/linking
-# (or run 'make VERBOSE=1')
-# set (CMAKE_VERBOSE_MAKEFILE ON)
-
 # Sire depends on >= Python 2.2
 set (PYTHON_MIN_VERSION "2.2")
 find_package( Python )
@@ -132,7 +154,7 @@ if (NOT PYTHON_LIBS_FOUND)
     endif()
 endif()
 
-if ( NOT (${PYTHON_MAJOR_VERSION} EQUAL 2) )
+if ( NOT ${PYTHON_MAJOR_VERSION} EQUAL 2 )
    fatal_message( "The python 2 wrappers can only be built for a python 2 interpreter."  
                   "The found python intepreter (${PYTHON_EXECUTABLE}) is version"
                   "${PYTHON_MAJOR_VERSION}.")
@@ -153,7 +175,9 @@ FIND_PACKAGE ( Boost 1.31 COMPONENTS python )
 if (Boost_FOUND)
   message(STATUS "Boost paths ${Boost_LIBRARY_DIRS} | ${Boost_INCLUDE_DIR}" )
 
-  if ( NOT (${SIRE_Boost_INCLUDE_DIR} STREQUAL ${Boost_INCLUDE_DIR}) )
+  compare_strings( SAME_BOOST_INCLUDE ${SIRE_Boost_INCLUDE_DIR} ${Boost_INCLUDE_DIR} )
+
+  if ( NOT SAME_BOOST_INCLUDE )
     warning_message( "It is not a good idea to compile the python wrappers against"
                      "boost libraries with headers in ${Boost_INCLUDE_DIR} when"
                      "Sire was built using different boost headers in ${SIRE_Boost_INCLUDE_DIR}." )
