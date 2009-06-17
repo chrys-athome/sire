@@ -104,8 +104,8 @@ class RestraintParameters3D
 //Q_DECLARE_METATYPE( SireMM::RestraintParameters )
 //Q_DECLARE_METATYPE( SireMM::RestraintParameters3D )
 
-SIRE_EXPOSE_CLASS( SireMM::RestraintParameters )
-SIRE_EXPOSE_CLASS( SireMM::RestraintParameters3D )
+//S I RE_EXPOSE_CLASS( SireMM::RestraintParameters )
+//S I RE_EXPOSE_CLASS( SireMM::RestraintParameters3D )
 
 SIRE_END_HEADER
 

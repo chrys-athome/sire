@@ -203,8 +203,8 @@ SIRE_EXPOSE_CLASS( SireMM::Restraint )
 SIRE_EXPOSE_CLASS( SireMM::Restraint3D )
 SIRE_EXPOSE_CLASS( SireMM::NullRestraint)
 
-//SIRE_EXPOSE_CLASS( SireMM::Restraints )
-//SIRE_EXPOSE_CLASS( SireMM::Restraints3D )
+//S I RE_EXPOSE_CLASS( SireMM::Restraints )
+//S I RE_EXPOSE_CLASS( SireMM::Restraints3D )
 
 SIRE_EXPOSE_PROPERTY( SireMM::RestraintPtr, Restraint )
 SIRE_EXPOSE_PROPERTY( SireMM::Restraint3DPtr, Restraint3D )

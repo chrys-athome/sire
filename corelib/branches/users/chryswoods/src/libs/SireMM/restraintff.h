@@ -291,8 +291,8 @@ inline const RestraintFF::Components& RestraintFF::components() const
 
 Q_DECLARE_METATYPE( SireMM::RestraintFF )
 
-SIRE_EXPOSE_CLASS( SireMM::RestraintParameterNames )
-SIRE_EXPOSE_CLASS( SireMM::RestraintParameterNames3D )
-SIRE_EXPOSE_CLASS( SireMM::RestraintFF )
+//S I RE_EXPOSE_CLASS( SireMM::RestraintParameterNames )
+//S I RE_EXPOSE_CLASS( SireMM::RestraintParameterNames3D )
+//S I RE_EXPOSE_CLASS( SireMM::RestraintFF )
 
 #endif

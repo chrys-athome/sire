@@ -368,6 +368,8 @@ public:
 //////// Implementation of HistogramBinT
 ////////
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Constructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -861,6 +863,8 @@ void HistogramT<T>::accumulate(const HistogramT<T> &other)
 {
     Histogram::accumulate(other);
 }
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 typedef HistogramT<SireUnits::Dimension::Length> LengthHistogram;
 typedef HistogramBinT<SireUnits::Dimension::Length> LengthHistogramBin;

@@ -38,13 +38,18 @@
 #include <QHash>
 #include <QMap>
 
-#include <boost/type_traits/is_pod.hpp>
-#include <boost/mpl/if.hpp>
+#ifndef GCCXML_PARSE
+   // GCCXML chokes on these files
+   #include <boost/type_traits/is_pod.hpp>
+   #include <boost/mpl/if.hpp>
+#endif
 
 SIRE_BEGIN_HEADER
 
 namespace Sire
 {
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 /** @file tostring.h
 
@@ -191,6 +196,16 @@ QString toString(const T &obj)
 {
     return qstr(obj);
 }
+
+#else // SIRE_SKIP_INLINE_FUNCTIONS
+
+template<class T>
+QString qstr(const T &obj);
+
+template<class T>
+QString toString(const T &obj);
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 
