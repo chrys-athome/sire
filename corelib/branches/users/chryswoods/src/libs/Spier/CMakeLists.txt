@@ -40,6 +40,7 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
           cameracommand.h
           color.h
           command.h
+          commandstack.h
 
           glbackground.h
           glcanvas.h
@@ -53,6 +54,7 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
           glviewfrustrum.h
 
           renderviewcommand.h
+          rvcommandstack.h
 
           ${SPIER_MOC_HEADERS}
         )
@@ -66,6 +68,7 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
           cameracommand.cpp
           color.cpp
           command.cpp
+          commandstack.cpp
           eventmonitor.cpp
 
           glbackground.cpp
@@ -82,6 +85,7 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
           renderscene.cpp
           renderview.cpp
           renderviewcommand.cpp
+          rvcommandstack.cpp
           spierview.cpp
 
           ${SPIER_HEADERS}

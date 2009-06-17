@@ -48,47 +48,67 @@ namespace SireCAS
 class SIRECAS_EXPORT Symbols : public QSet<Symbol>
 {
 public:
-    Symbols() : QSet<Symbol>()
-    {}
+    Symbols();
     
-    Symbols(const Symbol &sym) : QSet<Symbol>()
-    {
-        this->insert(sym);
-    }
+    Symbols(const Symbol &sym);
     
-    Symbols(const QSet<Symbol> &other) : QSet<Symbol>(other)
-    {}
+    Symbols(const QSet<Symbol> &other);
     
-    Symbols(const QList<Symbol> &other) : QSet<Symbol>()
-    {
-        int n = other.count();
-        for (int i=0; i<n; ++i)
-            insert( other.at(i) );
-    }
+    Symbols(const QList<Symbol> &other);
     
-    ~Symbols()
-    {}
+    ~Symbols();
     
-    QString toString() const
-    {
-        return Sire::toString( QSet<Symbol>(*this) );
-    }
+    QString toString() const;
     
-    void insert(const Symbol &symbol)
-    {
-        QSet<Symbol>::insert(symbol);
-    }
+    void insert(const Symbol &symbol);
     
-    void insert(const Symbols &symbols)
-    {
-        for (Symbols::const_iterator it = symbols.begin();
-             it != symbols.end();
-             ++it)
-        {
-            this->insert(*it);
-        }
-    }
+    void insert(const Symbols &symbols);
 };
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+inline Symbols::Symbols() : QSet<Symbol>()
+{}
+
+inline Symbols::Symbols(const Symbol &sym) : QSet<Symbol>()
+{
+    this->insert(sym);
+}
+
+inline Symbols::Symbols(const QSet<Symbol> &other) : QSet<Symbol>(other)
+{}
+
+inline Symbols::Symbols(const QList<Symbol> &other) : QSet<Symbol>()
+{
+    int n = other.count();
+    for (int i=0; i<n; ++i)
+        insert( other.at(i) );
+}
+
+inline Symbols::~Symbols()
+{}
+
+inline QString Symbols::toString() const
+{
+    return Sire::toString( QSet<Symbol>(*this) );
+}
+
+inline void Symbols::insert(const Symbol &symbol)
+{
+    QSet<Symbol>::insert(symbol);
+}
+
+inline void Symbols::insert(const Symbols &symbols)
+{
+    for (Symbols::const_iterator it = symbols.begin();
+         it != symbols.end();
+         ++it)
+    {
+        this->insert(*it);
+    }
+}
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

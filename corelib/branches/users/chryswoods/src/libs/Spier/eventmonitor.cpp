@@ -182,7 +182,11 @@ bool EventMonitor::eventFilter(QObject *watched, QEvent *event)
     if (not event)
         return false;
 
-    BOOST_ASSERT( watched == render_view.data() );
+    #if QT_VERSION >= 0x040400
+        BOOST_ASSERT( watched == render_view.data() );
+    #else
+        BOOST_ASSERT( watched == render_view.operator->() );
+    #endif
 
     switch( event->type() )
     {

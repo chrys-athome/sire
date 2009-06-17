@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include <QPainter>
+#include <QPainterPath>
 #include <QRectF>
 #include <QTimer>
 #include <QImage>
@@ -336,18 +337,5 @@ void RenderView::paintGL()
     {
         SireError::printError(e);
         QCoreApplication::exit(-1);
-    }
-    
-    //don't bother rendering at more than 50 fps
-    int delta = 20 - t.elapsed();
-    
-    if (delta > 0)
-    {
-        QSemaphore s(1);
-        s.acquire();
-        
-        s.tryAcquire(1, delta);
-        
-        s.release();
     }
 }

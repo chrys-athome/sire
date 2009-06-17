@@ -39,7 +39,6 @@
 #include "SireStream/shareddatastream.h"
 
 #include <boost/assert.hpp>
-#include <boost/type_traits/is_class.hpp>
 
 #include <QDebug>
 

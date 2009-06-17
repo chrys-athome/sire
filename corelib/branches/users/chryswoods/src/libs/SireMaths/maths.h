@@ -33,10 +33,13 @@
 
 #include <cmath>
 
-#include <boost/random/variate_generator.hpp>
-#include <boost/random/uniform_real.hpp>
-#include <boost/random/uniform_int.hpp>
-#include <boost/random/mersenne_twister.hpp>
+#ifndef GCCXML_PARSE
+    //some versions of GCCXML don't like these headers...
+    #include <boost/random/variate_generator.hpp>
+    #include <boost/random/uniform_real.hpp>
+    #include <boost/random/uniform_int.hpp>
+    #include <boost/random/mersenne_twister.hpp>
+#endif // GCCXML_PARSE
 
 #include <gsl/gsl_sys.h>
 
@@ -57,6 +60,8 @@ SIRE_BEGIN_HEADER
 
 namespace SireMaths
 {
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 typedef boost::variate_generator<boost::mt19937, boost::uniform_real<double> > UniformRand;
 typedef boost::variate_generator<boost::mt19937, boost::uniform_int<qint32> > UniformRanInt;
@@ -363,6 +368,114 @@ bool isZero(const T &val)
 {
     return (std::abs(val) < std::numeric_limits<T>::epsilon());
 }
+
+#else  // SIRE_SKIP_INLINE_FUNCTIONS
+
+class UniformRand;
+class UniformRanInt;
+class UniformRanUInt;
+class UniformRanInt64;
+class UniformRanUInt64;
+
+UniformRand uniformRanGenerator(double min=0.0, double max=1.0);
+UniformRand uniformRanGenerator(double min, double max, uint32_t seed);
+UniformRanInt uniformRanIntGenerator(qint32 min=0, qint32 max=100);
+UniformRanInt uniformRanIntGenerator(qint32 min, qint32 max, uint32_t seed);
+UniformRanUInt uniformRanUIntGenerator(quint32 min=0, quint32 max=100);
+UniformRanUInt uniformRanUIntGenerator(quint32 min, quint32 max, uint32_t seed);
+UniformRanInt64 uniformRanInt64Generator(qint64 min=0, qint64 max=100);
+UniformRanInt64 uniformRanInt64Generator(qint64 min, qint64 max, uint32_t seed);
+UniformRanUInt64 uniformRanUInt64Generator(quint64 min=0, quint64 max=100);
+UniformRanUInt64 uniformRanUInt64Generator(quint64 min, quint64 max, uint32_t seed);
+
+template<typename T>
+T pow_2(const T &x);
+
+template<typename T>
+T pow_3(const T &x);
+
+template<typename T>
+T pow_4(const T &x);
+
+template<typename T>
+T pow_5(const T &x);
+
+template<typename T>
+T pow_6(const T &x);
+
+template<typename T>
+T pow_7(const T &x);
+
+template<typename T>
+T pow_8(const T &x);
+
+template<typename T>
+T pow_9(const T &x);
+
+template<typename T>
+T pow_10(const T &x);
+
+template<typename T>
+T pow_11(const T &x);
+
+template<typename T>
+T pow_12(const T &x);
+
+template<typename T>
+T pow_13(const T &x);
+
+template<typename T>
+T pow_14(const T &x);
+
+template<typename T>
+T pow_15(const T &x);
+
+template<typename T>
+T pow_16(const T &x);
+
+template<typename T>
+T pow_17(const T &x);
+
+template<typename T>
+T pow_18(const T &x);
+
+template<typename T>
+T pow_19(const T &x);
+
+template<typename T>
+T pow_20(const T &x);
+
+template<typename T>
+T pow_21(const T &x);
+
+template<typename T>
+T pow_22(const T &x);
+
+template<typename T>
+T pow_23(const T &x);
+
+template<typename T>
+T pow_24(const T &x);
+
+double pow_pvt(double x, int n);
+
+double pow(double x, int n);
+
+bool isEven(int val);
+bool isOdd(int val);
+bool isInteger(double val);
+double pow(double x, double n);
+
+double invSqrt(double x);
+float invSqrt(float x);
+
+bool areEqual(double val0, double val1, double epsilon);
+bool areEqual(double val0, double val1);
+
+template<typename T>
+bool isZero(const T &val);
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 
