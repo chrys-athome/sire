@@ -33,6 +33,7 @@
 
 SIRE_BEGIN_HEADER
 
+/*
 namespace SireMM
 {
 class Restraints;
@@ -47,11 +48,11 @@ QDataStream& operator>>(QDataStream&, SireMM::Restraints3D&);
 
 namespace SireMM
 {
-
+*/
 /** This class holds a collection of restraints 
     
     @author Christopher Woods
-*/
+*//*
 class SIREMM_EXPORT Restraints 
         : public SireBase::ConcreteProperty<Restraints,SireBase::Property>
 {
@@ -91,12 +92,9 @@ public:
 };
 
 }
-
-Q_DECLARE_METATYPE( SireMM::Restraints )
-Q_DECLARE_METATYPE( SireMM::Restraints3D )
-
-SIRE_EXPOSE_CLASS( SireMM::Restraints )
-SIRE_EXPOSE_CLASS( SireMM::Restraints3D )
+*/
+//Q_ DECLARE_METATYPE( SireMM::Restraints )
+//Q_ DECLARE_METATYPE( SireMM::Restraints3D )
 
 SIRE_END_HEADER
 

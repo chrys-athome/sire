@@ -182,6 +182,18 @@ bool PeriodicBox::operator!=(const PeriodicBox &other) const
            (mincoords != other.mincoords or boxlength != other.boxlength);
 }
 
+/** A Periodic box is periodic! */
+bool PeriodicBox::isPeriodic() const
+{
+    return true;
+}
+
+/** A Periodic box is cartesian */
+bool PeriodicBox::isCartesian() const
+{
+    return true;
+}
+
 /** Return a string representation of this space */
 QString PeriodicBox::toString() const
 {
@@ -873,6 +885,30 @@ CoordGroupArray PeriodicBox::mapAsOneToSpace(const CoordGroupArray &groups,
     new_groups.translate( this->getScaleDelta(groups.aaBox().center(), other) );
                           
     return new_groups;
+}
+
+/** Return the copy of the periodic box which is the closest minimum image
+    to 'center' */
+AABox PeriodicBox::getMinimumImage(const AABox &aabox, const Vector &center) const
+{
+    Vector wrapdelta = wrapDelta(aabox.center(), center);
+    
+    if (wrapdelta.isZero())
+        return aabox;
+    else
+    {
+        AABox ret(aabox);
+        ret.translate(wrapdelta);
+        
+        return ret;
+    }
+}
+
+/** Return the copy of the point 'point' which is the closest minimum image
+    to 'center' */    
+Vector PeriodicBox::getMinimumImage(const Vector &point, const Vector &center) const
+{
+    return point + wrapDelta(point, center);
 }
 
 /** Return a list of copies of CoordGroup 'group' that are within

@@ -26,7 +26,13 @@
   *
 \*********************************************/
 
-#ifndef SIREMM_RESTRAINTFF_H
-#define SIREMM_RESTRAINTFF_H
+#include "SireVol/errors.h"
 
-#endif
+using namespace SireVol;
+
+const char* incompatible_space::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<incompatible_space>() );
+}
+
+static const RegisterMetaType<incompatible_space> r_incspace;

@@ -29,6 +29,9 @@
 #include "restraint.h"
 
 #include "SireMol/moleculedata.h"
+#include "SireMol/molecules.h"
+#include "SireMol/molid.h"
+#include "SireMol/molnum.h"
 
 #include "SireFF/forcetable.h"
 
@@ -129,8 +132,11 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
                                       const Restraint3D &restraint3d)
 {
     writeHeader(ds, r_restraint3d, 1);
-    
-    ds << static_cast<const Restraint&>(restraint3d);
+
+    SharedDataStream sds(ds);
+
+    sds << restraint3d.spce
+        << static_cast<const Restraint&>(restraint3d);
     
     return ds;
 }
@@ -142,7 +148,10 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, Restraint3D &restraint3d)
     
     if (v == 1)
     {
-        ds >> static_cast<Restraint&>(restraint3d);
+        SharedDataStream sds(ds);
+
+        sds >> restraint3d.spce
+            >> static_cast<Restraint&>(restraint3d);
     }
     else
         throw version_error( v, "1", r_restraint3d, CODELOC );
@@ -156,7 +165,7 @@ Restraint3D::Restraint3D() : Restraint()
 
 /** Copy constructor */
 Restraint3D::Restraint3D(const Restraint3D &other)
-            : Restraint()
+            : Restraint(), spce(other.spce)
 {}
 
 /** Destructor */
@@ -167,19 +176,33 @@ Restraint3D::~Restraint3D()
 Restraint3D& Restraint3D::operator=(const Restraint3D &other)
 {
     Restraint::operator=(other);
+    spce = other.spce;
+    
     return *this;
 }
 
 /** Comparison operator */
 bool Restraint3D::operator==(const Restraint3D &other) const
 {
-    return Restraint::operator==(other);
+    return spce == other.spce and Restraint::operator==(other);
 }
 
 /** Comparison operator */
 bool Restraint3D::operator!=(const Restraint3D &other) const
 {
-    return Restraint::operator!=(other);
+    return spce != other.spce or Restraint::operator!=(other);
+}
+
+/** Return the 3D space in which this restraint operates */
+const Space& Restraint3D::space() const
+{
+    return spce.read();
+}
+
+/** Set the 3D space in which this restraint operates */
+void Restraint3D::setSpace(const Space &space)
+{
+    spce = space;
 }
 
 ////////////
@@ -259,6 +282,10 @@ MolarEnergy NullRestraint::energy() const
 
 /** The null restraint will not change the force */
 void NullRestraint::force(MolForceTable&, double) const
+{}
+
+/** The null restraint will not change the force */
+void NullRestraint::force(ForceTable&, double) const
 {}
 
 /** The null restraint cannot be updated */

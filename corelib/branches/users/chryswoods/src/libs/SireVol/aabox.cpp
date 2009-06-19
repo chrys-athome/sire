@@ -127,6 +127,18 @@ bool AABox::operator!=(const AABox &other) const
           (rad != other.rad or cent != other.cent or halfextents != other.halfextents);
 }
 
+/** Return if the AABox is null */
+bool AABox::isNull() const
+{
+    return cent.isZero() and rad == 0;
+}
+
+/** Return if the AABox is empty */
+bool AABox::isEmpty() const
+{
+    return rad == 0;
+}
+
 /** Return an AABox constructed to contain the coordinates in 'coordinates' */
 AABox AABox::from(const QVector<Vector> &coordinates)
 {

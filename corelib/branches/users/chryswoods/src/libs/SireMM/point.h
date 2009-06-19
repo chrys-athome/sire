@@ -36,6 +36,8 @@
 #include "SireMol/selector.hpp"
 #include "SireMol/mover.hpp"
 
+#include "SireVol/space.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMM
@@ -70,6 +72,12 @@ QDataStream& operator>>(QDataStream&, SireMM::CenterOfGeometry&);
 QDataStream& operator<<(QDataStream&, const SireMM::CenterOfMass&);
 QDataStream& operator>>(QDataStream&, SireMM::CenterOfMass&);
 
+namespace SireFF
+{
+class MolForceTable;
+class ForceTable;
+}
+
 namespace SireMM
 {
 
@@ -80,7 +88,12 @@ using SireMol::Molecules;
 using SireMol::MolNum;
 using SireMol::MolID;
 
+using SireFF::MolForceTable;
+using SireFF::ForceTable;
+
 using SireBase::PropertyMap;
+
+using SireVol::Space;
 
 using SireMaths::Vector;
 
@@ -115,7 +128,11 @@ public:
     
     const Vector& point() const;
     
-    virtual void update(const MoleculeData &moldata, 
+    const Space& space() const;
+    
+    virtual void setSpace(const Space &space);
+    
+    virtual void update(const MoleculeData &moldata,
                         const PropertyMap &map = PropertyMap())=0;
                         
     virtual void update(const Molecules &molecules,
@@ -123,8 +140,20 @@ public:
     
     virtual Molecules molecules() const=0;
     
+    virtual int nMolecules() const=0;
+    
     virtual bool contains(MolNum molnum) const=0;
     virtual bool contains(const MolID &molid) const=0;
+    
+    virtual bool usesMoleculesIn(const ForceTable &forcetable) const=0;
+    virtual bool usesMoleculesIn(const Molecules &molecules) const=0;
+    
+    virtual bool addForce(MolForceTable &molforces, const Vector &force) const=0;
+    virtual bool addForce(ForceTable &forces, const Vector &force) const=0;
+    
+    static const VectorPoint& null();
+
+    static bool intraMoleculePoints(const Point &point0, const Point &point1);
     
 protected:
     Point(const Vector &point);
@@ -140,6 +169,9 @@ protected:
 private:
     /** The actual point in space */
     Vector p;
+    
+    /** The 3D space in which this point is calculated and exists */
+    SireVol::SpacePtr spce;
 };
 
 typedef SireBase::PropPtr<Point> PointPtr;
@@ -169,6 +201,9 @@ public:
     
     operator const Point&() const;
     
+    bool addForce(MolForceTable &molforces, const Vector &force) const;
+    bool addForce(ForceTable &forces, const Vector &force) const;
+    
 private:
     /** Pointer to the implementation of this point */
     PointPtr ptr;
@@ -196,7 +231,7 @@ public:
     
     static const char* typeName();
     
-    void update(const MoleculeData &moldata, 
+    void update(const MoleculeData &moldata,
                 const PropertyMap &map = PropertyMap());
                         
     void update(const Molecules &molecules,
@@ -204,10 +239,18 @@ public:
     
     Molecules molecules() const;
     
+    int nMolecules() const;
+    
     bool contains(MolNum molnum) const;
     bool contains(const MolID &molid) const;
 
+    bool usesMoleculesIn(const ForceTable &forcetable) const;
+    bool usesMoleculesIn(const Molecules &molecules) const;
+
     const Atom& atom() const;
+    
+    bool addForce(MolForceTable &molforces, const Vector &force) const;
+    bool addForce(ForceTable &forces, const Vector &force) const;
 
 private:
     /** The actual atom! */
@@ -244,8 +287,16 @@ public:
     
     Molecules molecules() const;
     
+    int nMolecules() const;
+    
     bool contains(MolNum molnum) const;
     bool contains(const MolID &molid) const;
+
+    bool usesMoleculesIn(const ForceTable &forcetable) const;
+    bool usesMoleculesIn(const Molecules &molecules) const;
+    
+    bool addForce(MolForceTable &molforces, const Vector &force) const;
+    bool addForce(ForceTable &forces, const Vector &force) const;
 };
 
 /** This point returns the center of a view of a molecule, or group
@@ -271,6 +322,8 @@ public:
     bool operator!=(const Center &other) const;
     
     static const char* typeName();
+
+    void setSpace(const Space &space);
     
     void update(const MoleculeData &moldata, 
                 const PropertyMap &map = PropertyMap());
@@ -280,8 +333,16 @@ public:
     
     Molecules molecules() const;
     
+    int nMolecules() const;
+    
     bool contains(MolNum molnum) const;
     bool contains(const MolID &molid) const;
+
+    bool usesMoleculesIn(const ForceTable &forcetable) const;
+    bool usesMoleculesIn(const Molecules &molecules) const;
+    
+    bool addForce(MolForceTable &molforces, const Vector &force) const;
+    bool addForce(ForceTable &forces, const Vector &force) const;
 
 private:
     void recalculatePoint(const PropertyMap &map);
@@ -316,6 +377,8 @@ public:
     bool operator!=(const CenterOfGeometry &other) const;
 
     static const char* typeName();
+
+    void setSpace(const Space &space);
     
     void update(const MoleculeData &moldata, 
                 const PropertyMap &map = PropertyMap());
@@ -325,8 +388,16 @@ public:
     
     Molecules molecules() const;
     
+    int nMolecules() const;
+    
     bool contains(MolNum molnum) const;
     bool contains(const MolID &molid) const;
+
+    bool usesMoleculesIn(const ForceTable &forcetable) const;
+    bool usesMoleculesIn(const Molecules &molecules) const;
+    
+    bool addForce(MolForceTable &molforces, const Vector &force) const;
+    bool addForce(ForceTable &forces, const Vector &force) const;
 
 private:
     void recalculatePoint(const PropertyMap &map);
@@ -361,6 +432,8 @@ public:
     bool operator!=(const CenterOfMass &other) const;
 
     static const char* typeName();
+
+    void setSpace(const Space &space);
     
     void update(const MoleculeData &moldata, 
                 const PropertyMap &map = PropertyMap());
@@ -370,8 +443,16 @@ public:
     
     Molecules molecules() const;
     
+    int nMolecules() const;
+    
     bool contains(MolNum molnum) const;
     bool contains(const MolID &molid) const;
+
+    bool usesMoleculesIn(const ForceTable &forcetable) const;
+    bool usesMoleculesIn(const Molecules &molecules) const;
+    
+    bool addForce(MolForceTable &molforces, const Vector &force) const;
+    bool addForce(ForceTable &forces, const Vector &force) const;
 
 private:
     void recalculatePoint(const PropertyMap &map);

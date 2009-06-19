@@ -117,6 +117,18 @@ QString Cartesian::toString() const
     return QObject::tr("Infinite cartesian space");
 }
 
+/** A Cartesian space is not periodic */
+bool Cartesian::isPeriodic() const
+{
+    return false;
+}
+
+/** A Cartesian space is cartesian */
+bool Cartesian::isCartesian() const
+{
+    return true;
+}
+
 /** Throw an exception as an infinite space doesn't have a volume! */
 SireUnits::Dimension::Volume Cartesian::volume() const
 {
@@ -750,6 +762,18 @@ CoordGroupArray Cartesian::getMinimumImage(const CoordGroupArray &groups,
                                            const Vector&) const
 {
     return groups;
+}
+
+/** A cartesian space is not periodic, so this just returns the input 'aabox' */
+AABox Cartesian::getMinimumImage(const AABox &aabox, const Vector&) const
+{
+    return aabox;
+}
+
+/** A cartesian space is not periodic, so this just returns the input 'point' */
+Vector Cartesian::getMinimumImage(const Vector &point, const Vector&) const
+{
+    return point;
 }
 
 /** Return a list of copies of CoordGroup 'group' that are within

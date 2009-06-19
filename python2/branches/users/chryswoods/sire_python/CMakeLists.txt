@@ -15,6 +15,11 @@ include_directories( BEFORE ${SIRE_INCLUDE_DIR} )
 # Other python wrapping directories
 include_directories(${CMAKE_SOURCE_DIR})
 
+if (SIRE_USE_MPI)
+  add_definitions( ${SIRE_MPI_DEFINITIONS} )
+  include_directories( ${SIRE_MPI_INCLUDE_PATH} )
+endif()
+
 # Define the sources in Helpers
 set ( SIREPYTHON_SOURCES
 
@@ -39,6 +44,7 @@ target_link_libraries (sire_python
                        SIRE_SireSystem
                        SIRE_SireIO
                        SIRE_SireError
+                       ${SIRECLUSTER_EXTRA_LIBRARIES}
                        ${PYTHON_LIBRARIES}
                       )
 

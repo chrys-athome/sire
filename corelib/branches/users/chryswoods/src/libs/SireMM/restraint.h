@@ -32,6 +32,8 @@
 #include "SireBase/property.h"
 #include "SireBase/propertymap.h"
 
+#include "SireVol/space.h"
+
 #include "SireUnits/dimensions.h"
 
 SIRE_BEGIN_HEADER
@@ -56,11 +58,15 @@ QDataStream& operator>>(QDataStream&, SireMM::NullRestraint&);
 namespace SireMol
 {
 class MoleculeData;
+class Molecules;
+class MolNum;
+class MolID;
 }
 
 namespace SireFF
 {
 class MolForceTable;
+class ForceTable;
 }
 
 namespace SireMM
@@ -69,8 +75,14 @@ namespace SireMM
 using SireBase::PropertyMap;
 
 using SireMol::MoleculeData;
+using SireMol::Molecules;
+using SireMol::MolNum;
+using SireMol::MolID;
 
 using SireFF::MolForceTable;
+using SireFF::ForceTable;
+
+using SireVol::Space;
 
 /** This is the base class of all restraints. A restraint is a
     function that calculates the energy or force acting on
@@ -150,11 +162,19 @@ public:
     virtual void force(MolForceTable &forcetable, double scale_force=1) const=0;
     virtual void force(ForceTable &forcetable, double scale_force=1) const=0;
     
+    const Space& space() const;
+    
+    virtual void setSpace(const Space &space);
+    
 protected:
     Restraint3D& operator=(const Restraint3D &other);
     
     bool operator==(const Restraint3D &other) const;
     bool operator!=(const Restraint3D &other) const;
+
+private:
+    /** The 3D space in which this restraint operates */
+    SireVol::SpacePtr spce;
 };
 
 /** This is a null restraint, that does not affect the energy
@@ -208,8 +228,8 @@ SIRE_EXPOSE_CLASS( SireMM::Restraint )
 SIRE_EXPOSE_CLASS( SireMM::Restraint3D )
 SIRE_EXPOSE_CLASS( SireMM::NullRestraint)
 
-SIRE_EXPOSE_PROPERTY( SireMM::RestraintPtr, Restraint )
-SIRE_EXPOSE_PROPERTY( SireMM::Restraint3DPtr, Restraint3D )
+SIRE_EXPOSE_PROPERTY( SireMM::RestraintPtr, SireMM::Restraint )
+SIRE_EXPOSE_PROPERTY( SireMM::Restraint3DPtr, SireMM::Restraint3D )
 
 SIRE_END_HEADER
 

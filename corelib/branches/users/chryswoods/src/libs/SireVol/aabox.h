@@ -108,6 +108,9 @@ public:
 
     QString toString() const;
 
+    bool isEmpty() const;
+    bool isNull() const;
+
     void add(const AABox &other);
     void add(const Vector &point);
     void add(const QVector<Vector> &points);

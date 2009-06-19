@@ -29,6 +29,8 @@
 #ifndef SPIER_COMMANDSTACK_H
 #define SPIER_COMMANDSTACK_H
 
+#include <QTime>
+
 #include "command.h"
 
 SIRE_BEGIN_HEADER
@@ -117,11 +119,11 @@ typedef SireBase::PropPtr<CommandStack> CommandStackPtr;
 
 }
 
-Q_DECLARE_METATYPE( Spier::CommandStack )
+//Q _ DECLARE_METATYPE( Spier::CommandStack )
 
-SIRE_EXPOSE_CLASS( Spier::CommandStack )
+//S I RE_EXPOSE_CLASS( Spier::CommandStack )
 
-SIRE_EXPOSE_PROPERTY( Spier::CommandStackPtr, Spier::CommandStack )
+//S I RE_EXPOSE_PROPERTY( Spier::CommandStackPtr, Spier::CommandStack )
 
 SIRE_END_HEADER
 

@@ -25,3 +25,13 @@ special_code = { "AtomLJs" : fix_AtomLJs,
                  "SireMM::ThreeAtomFunctions" : fix_AtomFunctions,
                  "SireMM::TwoAtomFunctions" : fix_AtomFunctions }
 
+implicitly_convertible = [ ("SireMaths::Vector", "SireMM::PointRef"),
+                           ("SireMol::Atom", "SireMM::PointRef"),
+                           ("SireMM::Point", "SireMM::PointRef") ]
+
+def fixMB(mb):
+    mb.add_declaration_code("#include \"SireMM/point.h\"")
+    mb.add_declaration_code("#include \"SireMol/molecules.h\"")
+    mb.add_declaration_code("#include \"SireMol/atom.h\"")
+    mb.add_declaration_code("#include \"SireMaths/vector.h\"")
+

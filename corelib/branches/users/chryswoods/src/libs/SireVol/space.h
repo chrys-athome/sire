@@ -277,6 +277,13 @@ public:
     CoordGroupArray mapAsOneFromSpace(const CoordGroupArray &groups,
                                       const Space &space) const;
 
+    /** Return whether or not this space is periodic */
+    virtual bool isPeriodic() const=0;
+    
+    /** Return whether or not this space is cartesian
+        ( x==y==z == 1 and all angle between x-y, y-z, x-z all 90 degrees ) */
+    virtual bool isCartesian() const=0;
+
     /** Return the minimum image copy of 'group' with respect to 'center'.
         For periodic spaces, this translates 'group' into the box that
         has its center at 'center' (i.e. returns the closest copy of
@@ -290,6 +297,16 @@ public:
         each 'group' to 'center' according to the minimum image convention) */
     virtual CoordGroupArray getMinimumImage(const CoordGroupArray &groups,
                                             const Vector &center) const=0;
+
+    /** Return the minimum image copy of 'aabox' with respect to 'center'.  
+        For periodic spaces, this returns the AABox translated into the 
+        box that has its center at 'center' */
+    virtual AABox getMinimumImage(const AABox &aabox, const Vector &center) const=0;
+    
+    /** Return the minimum image copy of 'point' with respect to 'center'. 
+        For periodic spaces, this returns the point translated into the
+        box that has its center at 'center' */
+    virtual Vector getMinimumImage(const Vector &point, const Vector &center) const=0;
 
     /** Return a list of copies of CoordGroup 'group' that are within
         'distance' of the CoordGroup 'center', translating 'group' so that

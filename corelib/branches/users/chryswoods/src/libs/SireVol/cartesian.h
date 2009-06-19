@@ -73,6 +73,9 @@ public:
 
     QString toString() const;
 
+    bool isPeriodic() const;
+    bool isCartesian() const;
+
     SireUnits::Dimension::Volume volume() const;
     SpacePtr setVolume(SireUnits::Dimension::Volume volume) const;
 
@@ -124,6 +127,10 @@ public:
 
     CoordGroupArray getMinimumImage(const CoordGroupArray &groups,
                                     const Vector &center) const;
+
+    AABox getMinimumImage(const AABox &aabox, const Vector &center) const;
+    
+    Vector getMinimumImage(const Vector &point, const Vector &center) const;
 
     QList< boost::tuple<double,CoordGroup> >
                getCopiesWithin(const CoordGroup &group,

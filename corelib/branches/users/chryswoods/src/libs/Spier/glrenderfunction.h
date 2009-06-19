@@ -119,7 +119,7 @@ Q_DECLARE_METATYPE(Spier::NullGLRenderFunction)
 SIRE_EXPOSE_CLASS( Spier::GLRenderFunction )
 SIRE_EXPOSE_CLASS( Spier::NullGLRenderFunction )
 
-SIRE_EXPOSE_PROPERTY( Spier::GLRenderFuncPtr, GLRenderFunction )
+SIRE_EXPOSE_PROPERTY( Spier::GLRenderFuncPtr, Spier::GLRenderFunction )
 
 SIRE_END_HEADER
 

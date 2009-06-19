@@ -14,6 +14,7 @@ set ( SIREVOL_HEADERS
       aabox.h
       cartesian.h
       coordgroup.h
+      errors.h
       periodicbox.h
       space.h
     )
@@ -26,6 +27,7 @@ set ( SIREVOL_SOURCES
       aabox.cpp
       cartesian.cpp
       coordgroup.cpp
+      errors.cpp
       periodicbox.cpp
       space.cpp
     
