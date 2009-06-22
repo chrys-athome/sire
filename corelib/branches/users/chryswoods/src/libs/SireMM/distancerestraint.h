@@ -62,6 +62,7 @@ namespace SireMM
 
 using SireCAS::Expression;
 using SireCAS::Symbol;
+using SireCAS::Symbols;
 
 // typedef the unit of a harmonic force constant ( MolarEnergy / Length^2 )
 typedef SireUnits::Dimension::PhysUnit<1,0,-2,0,0,-1,0> HarmonicDistanceForceConstant;
@@ -98,10 +99,15 @@ public:
     
     static const char* typeName();
     
+    const Point& point(int i) const;
+    
     const Point& point0() const;
     const Point& point1() const;
     
+    int nPoints() const;
+    
     static const Symbol& r();
+    static Symbols symbols();
 
     void setSpace(const Space &space);
 
@@ -123,6 +129,9 @@ public:
     
     bool contains(MolNum molnum) const;
     bool contains(const MolID &molid) const;
+    
+    bool usesMoleculesIn(const ForceTable &forcetable) const;
+    bool usesMoleculesIn(const Molecules &molecules) const;
 
     static DistanceRestraint
                     harmonic(const PointRef &point0,
@@ -142,7 +151,7 @@ protected:
 
 private:
     /** The two points between which the restraint is calculated */
-    PointPtr p0, p1;
+    PointPtr p[2];
     
     /** The expression used to calculate the energy */
     Expression nrg_expression;
@@ -154,12 +163,213 @@ private:
     bool intra_molecule_points;
 };
 
+/** This class provides a restraint that operates on a pair
+    of inter-point distances (e.g. the difference between
+    two bond lengths). You need to supply four points to this
+    restraint which are used to calculate the two distances
+    (r01 between points 0 and 1, and r23 between points 2 and 3)
+    
+    @author Christopher Woods
+*/
+class SIREMM_EXPORT DoubleDistanceRestraint 
+            : public SireBase::ConcreteProperty<DoubleDistanceRestraint,Restraint3D>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const DoubleDistanceRestraint&);
+friend QDataStream& ::operator>>(QDataStream&, DoubleDistanceRestraint&);
+
+public:
+    DoubleDistanceRestraint();
+    
+    DoubleDistanceRestraint(const PointRef &point0, const PointRef &point1,
+                            const PointRef &point2, const PointRef &point3,
+                            const Expression &restraint);
+
+    DoubleDistanceRestraint(const DoubleDistanceRestraint &other);
+    
+    ~DoubleDistanceRestraint();
+    
+    DoubleDistanceRestraint& operator=(const DoubleDistanceRestraint &other);
+    
+    bool operator==(const DoubleDistanceRestraint &other) const;
+    bool operator!=(const DoubleDistanceRestraint &other) const;
+    
+    static const char* typeName();
+    
+    int nPoints() const;
+    
+    const Point& point(int i) const;
+    
+    const Point& point0() const;
+    const Point& point1() const;
+    const Point& point2() const;
+    const Point& point3() const;
+    
+    static const Symbol& r01();
+    static const Symbol& r23();
+
+    static Symbols symbols();
+
+    void setSpace(const Space &space);
+
+    const Expression& restraintFunction() const;
+    const Expression& differentialRestraintFunction01() const;
+    const Expression& differentialRestraintFunction23() const;
+    
+    SireUnits::Dimension::MolarEnergy energy() const;
+
+    void force(MolForceTable &forcetable, double scale_force=1) const;
+    void force(ForceTable &forcetable, double scale_force=1) const;
+
+    void update(const MoleculeData &moldata, 
+                const PropertyMap &map = PropertyMap());
+                
+    void update(const Molecules &molecules,
+                const PropertyMap &map = PropertyMap());
+
+    Molecules molecules() const;
+    
+    bool contains(MolNum molnum) const;
+    bool contains(const MolID &molid) const;
+    
+    bool usesMoleculesIn(const ForceTable &forcetable) const;
+    bool usesMoleculesIn(const Molecules &molecules) const;
+
+private:
+    /** The four points between which the restraint is calculated */
+    PointPtr p[4];
+    
+    /** The expression used to calculate the energy */
+    Expression nrg_expression;
+    
+    /** The expression used to calculate the force between points 0 and 1 */
+    Expression force01_expression;
+    
+    /** The expression used to calculate the force between points 2 and 3 */
+    Expression force23_expression;
+    
+    /** Whether or not points 0 and 1 are both within the same molecule */
+    bool intra_molecule_points01;
+    
+    /** Whether or not points 2 and 3 are both within the same molecule */    
+    bool intra_molecule_points23;
+};
+
+/** This class provides a restraint that operates on a triple
+    of inter-point distances (e.g. the differences between
+    three bond lengths). You need to supply six points to this
+    restraint which are used to calculate the three distances
+    (r01 between points 0 and 1, r23 between points 2 and 3 
+     and r45 between points 4 and 5)
+    
+    @author Christopher Woods
+*/
+class SIREMM_EXPORT TripleDistanceRestraint 
+            : public SireBase::ConcreteProperty<TripleDistanceRestraint,Restraint3D>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const TripleDistanceRestraint&);
+friend QDataStream& ::operator>>(QDataStream&, TripleDistanceRestraint&);
+
+public:
+    TripleDistanceRestraint();
+    
+    TripleDistanceRestraint(const PointRef &point0, const PointRef &point1,
+                            const PointRef &point2, const PointRef &point3,
+                            const PointRef &point4, const PointRef &point5,
+                            const Expression &restraint);
+
+    TripleDistanceRestraint(const TripleDistanceRestraint &other);
+    
+    ~TripleDistanceRestraint();
+    
+    TripleDistanceRestraint& operator=(const TripleDistanceRestraint &other);
+    
+    bool operator==(const TripleDistanceRestraint &other) const;
+    bool operator!=(const TripleDistanceRestraint &other) const;
+    
+    static const char* typeName();
+    
+    int nPoints() const;
+    
+    const Point& point(int i) const;
+    
+    const Point& point0() const;
+    const Point& point1() const;
+    const Point& point2() const;
+    const Point& point3() const;
+    const Point& point4() const;
+    const Point& point5() const;
+    
+    static const Symbol& r01();
+    static const Symbol& r23();
+    static const Symbol& r45();
+
+    static Symbols symbols();
+
+    void setSpace(const Space &space);
+
+    const Expression& restraintFunction() const;
+    const Expression& differentialRestraintFunction01() const;
+    const Expression& differentialRestraintFunction23() const;
+    const Expression& differentialRestraintFunction45() const;
+    
+    SireUnits::Dimension::MolarEnergy energy() const;
+
+    void force(MolForceTable &forcetable, double scale_force=1) const;
+    void force(ForceTable &forcetable, double scale_force=1) const;
+
+    void update(const MoleculeData &moldata, 
+                const PropertyMap &map = PropertyMap());
+                
+    void update(const Molecules &molecules,
+                const PropertyMap &map = PropertyMap());
+
+    Molecules molecules() const;
+    
+    bool contains(MolNum molnum) const;
+    bool contains(const MolID &molid) const;
+    
+    bool usesMoleculesIn(const ForceTable &forcetable) const;
+    bool usesMoleculesIn(const Molecules &molecules) const;
+
+private:
+    /** The six points between which the restraint is calculated */
+    PointPtr p[6];
+    
+    /** The expression used to calculate the energy */
+    Expression nrg_expression;
+    
+    /** The expression used to calculate the force between points 0 and 1 */
+    Expression force01_expression;
+    
+    /** The expression used to calculate the force between points 2 and 3 */
+    Expression force23_expression;
+    
+    /** The expression used to calculate the force between points 4 and 5 */
+    Expression force45_expression;
+    
+    /** Whether or not points 0 and 1 are both within the same molecule */
+    bool intra_molecule_points01;
+    
+    /** Whether or not points 2 and 3 are both within the same molecule */    
+    bool intra_molecule_points23;
+    
+    /** Whether or not points 4 and 5 are both within the same molecule */    
+    bool intra_molecule_points45;
+};
+
 }
 
 Q_DECLARE_METATYPE( SireMM::DistanceRestraint )
+Q_DECLARE_METATYPE( SireMM::DoubleDistanceRestraint )
+Q_DECLARE_METATYPE( SireMM::TripleDistanceRestraint )
+
 Q_DECLARE_METATYPE( SireMM::HarmonicDistanceForceConstant )
 
 SIRE_EXPOSE_CLASS( SireMM::DistanceRestraint )
+SIRE_EXPOSE_CLASS( SireMM::DoubleDistanceRestraint )
+SIRE_EXPOSE_CLASS( SireMM::TripleDistanceRestraint )
 
 SIRE_END_HEADER
 

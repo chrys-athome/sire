@@ -362,6 +362,13 @@ double Values::operator()(const Symbol &sym) const
     return this->value(sym);
 }
 
+/** Add the value 'val' to this set */
+Values& Values::operator+=(const SymbolValue &val)
+{
+    this->add(val);
+    return *this;
+}
+
 /** Add the contents of 'other' to this set - this overwrites any
     existing values that are also in 'other' */
 Values& Values::operator+=(const Values &other)
@@ -391,4 +398,36 @@ Values& Values::operator+=(const Values &other)
 const char* Values::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Values>() );
+}
+
+namespace SireCAS
+{
+    Values SIRECAS_EXPORT operator+(const SymbolValue &val0, const SymbolValue &val1)
+    {
+        Values vals(val0);
+        vals += val1;
+        
+        return vals;
+    }
+
+    Values SIRECAS_EXPORT operator+(const Values &vals, const SymbolValue &val)
+    {
+        Values new_vals(vals);
+        new_vals += val;
+        return new_vals;
+    }
+    
+    Values SIRECAS_EXPORT operator+(const SymbolValue &val, const Values &vals)
+    {
+        Values new_vals(vals);
+        new_vals += val;
+        return new_vals;
+    }
+
+    Values SIRECAS_EXPORT operator+(const Values &vals0, const Values &vals1)
+    {
+        Values new_vals(vals0);
+        new_vals += vals1;
+        return new_vals;
+    }
 }

@@ -142,6 +142,7 @@ public:
 
     void reserve(int n);
 
+    Values& operator+=(const SymbolValue &val);
     Values& operator+=(const Values &other);
 
     QString toString() const;
@@ -152,6 +153,13 @@ private:
     QHash<SymbolID, double> vals;
 
 };
+
+Values operator+(const SymbolValue &val0, const SymbolValue &val1);
+
+Values operator+(const Values &vals, const SymbolValue &val);
+Values operator+(const SymbolValue &val, const Values &vals);
+
+Values operator+(const Values &vals0, const Values &vals1);
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 

@@ -313,3 +313,15 @@ bool NullRestraint::contains(const MolID&) const
 {
     return false;
 }
+    
+/** There are no molecules in the NullRestraint */
+bool NullRestraint::usesMoleculesIn(const ForceTable &forcetable) const
+{
+    return false;
+}
+
+/** There are no molecules in the NullRestraint */
+bool NullRestraint::usesMoleculesIn(const Molecules &molecules) const
+{
+    return false;
+}

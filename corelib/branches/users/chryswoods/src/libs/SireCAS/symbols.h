@@ -63,6 +63,11 @@ public:
     void insert(const Symbol &symbol);
     
     void insert(const Symbols &symbols);
+    
+    bool intersects(const QSet<Symbol> &other) const;
+    
+    bool contains(const Symbol &symbol) const;
+    bool contains(const QSet<Symbol> &other) const;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -106,6 +111,53 @@ inline void Symbols::insert(const Symbols &symbols)
     {
         this->insert(*it);
     }
+}
+
+inline bool Symbols::intersects(const QSet<Symbol> &other) const
+{
+    if (other.count() < this->count())
+    {
+        for (QSet<Symbol>::const_iterator it = other.constBegin();
+             it != other.constEnd();
+             ++it)
+        {
+            if (this->contains(*it))
+                return true;
+        }
+    }
+    else
+    {
+        for (QSet<Symbol>::const_iterator it = this->constBegin();
+             it != this->constEnd();
+             ++it)
+        {
+            if (other.contains(*it))
+                return true;
+        }
+    }
+    
+    return false;
+}
+
+inline bool Symbols::contains(const Symbol &symbol) const
+{
+    return QSet<Symbol>::contains(symbol);
+}
+
+inline bool Symbols::contains(const QSet<Symbol> &other) const
+{
+    if (other.count() > this->count())
+        return false;
+
+    for (QSet<Symbol>::const_iterator it = other.constBegin();
+         it != other.constEnd();
+         ++it)
+    {
+        if (not this->contains(*it))
+            return false;
+    }
+    
+    return true;
 }
 
 #endif // SIRE_SKIP_INLINE_FUNCTIONS

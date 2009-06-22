@@ -84,6 +84,8 @@ using SireFF::ForceTable;
 
 using SireVol::Space;
 
+class Point;
+
 /** This is the base class of all restraints. A restraint is a
     function that calculates the energy or force acting on
     a molecule caused by external potential, e.g. a harmonic
@@ -125,6 +127,8 @@ public:
     virtual bool contains(MolNum molnum) const=0;
     virtual bool contains(const MolID &molid) const=0;
 
+    virtual bool usesMoleculesIn(const Molecules &molecules) const=0;
+
     static const NullRestraint& null();
 
 protected:
@@ -161,6 +165,9 @@ public:
 
     virtual void force(MolForceTable &forcetable, double scale_force=1) const=0;
     virtual void force(ForceTable &forcetable, double scale_force=1) const=0;
+    
+    virtual bool usesMoleculesIn(const ForceTable &forcetable) const=0;
+    virtual bool usesMoleculesIn(const Molecules &molecules) const=0;
     
     const Space& space() const;
     
@@ -215,6 +222,9 @@ public:
     
     bool contains(MolNum molnum) const;
     bool contains(const MolID &molid) const;
+    
+    bool usesMoleculesIn(const ForceTable &forcetable) const;
+    bool usesMoleculesIn(const Molecules &molecules) const;
 };
 
 typedef SireBase::PropPtr<Restraint> RestraintPtr;
