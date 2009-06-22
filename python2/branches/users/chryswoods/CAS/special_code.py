@@ -41,8 +41,12 @@ def fix_expression(c):
 def fix_exbase(c):
     add_expression_operators(c)
 
-special_code = { "Expression" : fix_expression,
-                 "ExBase" : fix_exbase }
+def fix_SymbolValue(c):
+    c.add_declaration_code("#include \"SireCAS/values.h\"")
+
+special_code = { "SireCAS::Expression" : fix_expression,
+                 "SireCAS::ExBase" : fix_exbase,
+                 "SireCAS::SymbolValue" : fix_SymbolValue }
 
 implicitly_convertible = [ ("SireCAS::SymbolComplex", 
                             "SireCAS::ComplexValues"),
