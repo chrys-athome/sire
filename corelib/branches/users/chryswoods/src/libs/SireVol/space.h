@@ -217,6 +217,21 @@ public:
                                    const CoordGroup &group2,
                                    DistVectorMatrix &distmat) const=0;
 
+    /** Calculate the angle between the passed three points. This should return
+        the acute angle between the points, which should lie between 0 and 180 degrees */
+    virtual SireUnits::Dimension::Angle calcAngle(const Vector &point0,
+                                                  const Vector &point1,
+                                                  const Vector &point2) const=0;
+
+    /** Calculate the torsion angle between the passed four points. This should
+        return the torsion angle measured clockwise when looking down the 
+        torsion from point0-point1-point2-point3. This will lie between 0 and 360 
+        degrees */
+    virtual SireUnits::Dimension::Angle calcDihedral(const Vector &point0,
+                                                     const Vector &point1,
+                                                     const Vector &point2,
+                                                     const Vector &point3) const=0;
+
     /** Return whether or not these two groups are definitely beyond the distance 'dist'.
 
         \warning Note 'beyond' does not mean definitely within the distance!

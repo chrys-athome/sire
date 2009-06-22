@@ -49,6 +49,7 @@
 
 using namespace SireVol;
 using namespace SireBase;
+using namespace SireUnits::Dimension;
 using namespace SireStream;
 
 using boost::tuple;
@@ -637,6 +638,24 @@ double Cartesian::calcDistVectors(const CoordGroup &group0, const CoordGroup &gr
 
     //return the minimum distance
     return mindist;
+}
+
+/** Calculate the angle between the passed three points. This should return
+    the acute angle between the points, which should lie between 0 and 180 degrees */
+Angle Cartesian::calcAngle(const Vector &point0, const Vector &point1,
+                           const Vector &point2) const
+{
+    return Vector::angle(point0, point1, point2);
+}
+
+/** Calculate the torsion angle between the passed four points. This should
+    return the torsion angle measured clockwise when looking down the 
+    torsion from point0-point1-point2-point3. This will lie between 0 and 360 
+    degrees */
+Angle Cartesian::calcDihedral(const Vector &point0, const Vector &point1,
+                              const Vector &point2, const Vector &point3) const
+{
+    return Vector::dihedral(point0, point1, point2, point3);
 }
 
 /** Return whether or not two groups enclosed by the AABoxes 'aabox0'

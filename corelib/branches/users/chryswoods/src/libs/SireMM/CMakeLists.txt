@@ -9,6 +9,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the headers in SireMM
 set ( SIREMM_HEADERS
+      anglerestraint.h
       atomfunctions.h
       atomljs.h
       atompairs.hpp
@@ -16,6 +17,7 @@ set ( SIREMM_HEADERS
       cljpotential.h
       cljnbpairs.h
       coulombpotential.h
+      dihedralrestraint.h
       distancerestraint.h
       errors.h
       fouratomfunctions.h
@@ -55,12 +57,14 @@ set ( SIREMM_SOURCES
 
       register_siremm.cpp
 
+      anglerestraint.cpp
       atomfunctions.cpp
       atomljs.cpp
       cljcomponent.cpp
       cljpotential.cpp
       cljnbpairs.cpp
       coulombpotential.cpp
+      dihedralrestraint.cpp
       distancerestraint.cpp
       errors.cpp
       fouratomfunctions.cpp

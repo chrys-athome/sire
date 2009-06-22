@@ -606,6 +606,31 @@ double PeriodicBox::calcDistVectors(const CoordGroup &group0, const CoordGroup &
     return mindist;
 }
 
+/** Calculate the angle between the passed three points. This should return
+    the acute angle between the points, which should lie between 0 and 180 degrees */
+Angle PeriodicBox::calcAngle(const Vector &point0, const Vector &point1,
+                             const Vector &point2) const
+{
+    Vector p0 = this->getMinimumImage(point0, point1);
+    Vector p2 = this->getMinimumImage(point2, point1);
+
+    return Vector::angle(p0, point1, p2);
+}
+
+/** Calculate the torsion angle between the passed four points. This should
+    return the torsion angle measured clockwise when looking down the 
+    torsion from point0-point1-point2-point3. This will lie between 0 and 360 
+    degrees */
+Angle PeriodicBox::calcDihedral(const Vector &point0, const Vector &point1,
+                                const Vector &point2, const Vector &point3) const
+{
+    Vector p0 = this->getMinimumImage(point0, point1);
+    Vector p2 = this->getMinimumImage(point2, point1);
+    Vector p3 = this->getMinimumImage(point3, point1);
+
+    return Vector::dihedral(p0, point1, p2, p3);
+}
+
 /** Return whether or not two groups enclosed by the AABoxes 'aabox0' and 
     'aabox1' are definitely beyond the cutoff distance 'dist' */
 bool PeriodicBox::beyond(double dist, const AABox &aabox0, const AABox &aabox1) const

@@ -30,7 +30,6 @@
 #define SIREMM_DISTANCERESTRAINT_H
 
 #include "point.h"
-//#include "points.h"
 
 #include "restraint.h"
 

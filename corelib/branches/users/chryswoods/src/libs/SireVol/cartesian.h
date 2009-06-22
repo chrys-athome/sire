@@ -105,6 +105,15 @@ public:
     double calcDistVectors(const CoordGroup &group1, const CoordGroup &group2,
                            DistVectorMatrix &distmat) const;
 
+    SireUnits::Dimension::Angle calcAngle(const Vector &point0,
+                                          const Vector &point1,
+                                          const Vector &point2) const;
+
+    SireUnits::Dimension::Angle calcDihedral(const Vector &point0,
+                                             const Vector &point1,
+                                             const Vector &point2,
+                                             const Vector &point3) const;
+
     bool beyond(double dist, const AABox &aabox0, const AABox &aabox1) const;
 
     bool beyond(double dist, const CoordGroup &group0,
