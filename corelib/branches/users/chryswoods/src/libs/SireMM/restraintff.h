@@ -29,4 +29,172 @@
 #ifndef SIREMM_RESTRAINTFF_H
 #define SIREMM_RESTRAINTFF_H
 
+#include "restraint.h"
+#include "restraintcomponent.h"
+
+#include "SireFF/g1ff.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireMM
+{
+class RestraintFF;
+}
+
+QDataStream& operator<<(QDataStream&, const SireMM::RestraintFF&);
+QDataStream& operator>>(QDataStream&, SireMM::RestraintFF&);
+
+namespace SireMM
+{
+
+/** This is a forcefield that holds and evaluates a collection of 
+    Restraint3D restraints.
+    
+    @author Christopher Woods
+*/
+class SIREMM_EXPORT RestraintFF : public SireBase::ConcreteProperty<RestraintFF,G1FF>,
+                                  public FF3D
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const RestraintFF&);
+friend QDataStream& ::operator>>(QDataStream&, RestraintFF&);
+
+public:
+    RestraintFF();
+    RestraintFF(const QString &name);
+    
+    RestraintFF(const RestraintFF &other);
+    
+    ~RestraintFF();
+    
+    static const char* typeName();
+    
+    RestraintFF& operator=(const RestraintFF &other);
+    
+    bool operator==(const RestraintFF &other) const;
+    bool operator!=(const RestraintFF &other) const;
+    
+    const Space& space() const;
+    
+    bool setSpace(const Space &space);
+    
+    bool setValue(const Symbol &symbol, double value);
+    double getValue(const Symbol &symbol);
+    bool hasValue(const Symbol &symbol);
+    
+    bool setProperty(const QString &name, const Property &property);
+    const Property& property(const QString &name) const;
+    bool containsProperty(const QString &name) const;
+    const Properties& properties() const;
+    
+    Symbols symbols() const;
+    Symbols userSymbols() const;
+    Symbols builtinSymbols() const;
+    
+    Values values() const;
+    Values userValues() const;
+    Values builtinValues() const;
+    
+    RestraintFF differentiate(const Symbol &symbol) const;
+
+    using G1FF::add;
+    using G1FF::remove;
+    using G1FF::contains;
+    
+    bool add(const Restraint3D &restraint);
+    
+    bool contains(const Restraint3D &restraint);
+    
+    bool remove(const Restraint3D &restraint);
+
+    void removeRestraintAt(int i);
+    
+    QVector<Restraint3DPtr> restraints() const;
+    
+    const Restraint3D& restraintAt(int i) const;
+    
+    int nRestraints() const;
+
+    void mustNowRecalculateFromScratch();    
+
+    void force(ForceTable &forcetable, double scale_force=1);
+    
+    void force(ForceTable &forcetable, const Symbol &symbol,
+               double scale_force=1);
+
+protected:
+
+    ////
+    //// Virtual functions from SireFF::FF
+    ////
+
+    const RestraintComponent& _pvt_components() const;
+    
+    void recalculateEnergy();
+    
+    void _pvt_updateName();
+    
+    ////
+    //// Virtual functions from SireFF::G1FF
+    ////
+
+    void _pvt_added(const SireMol::PartialMolecule &mol, 
+                    const SireBase::PropertyMap&);
+                    
+    void _pvt_removed(const SireMol::PartialMolecule &mol);
+    
+    void _pvt_changed(const SireMol::Molecule &mol);
+    
+    void _pvt_changed(const QList<SireMol::Molecule> &mols);
+    
+    void _pvt_removedAll();
+    
+    bool _pvt_wouldChangeProperties(SireMol::MolNum molnum, 
+                                    const SireBase::PropertyMap &map) const;
+
+    void _pvt_added(const ViewsOfMol &mol, const PropertyMap &map);
+                            
+    void _pvt_removed(const ViewsOfMol &mol);
+
+    void _pvt_removedAll(const PartialMolecule &mol);
+    void _pvt_removedAll(const ViewsOfMol &mol);
+
+private:
+    void reindexRestraints();
+
+    void updateRestraints(const MoleculeData &moldata);
+    void updateRestraints(const Molecules &molecules);
+
+    /** The components of the energy */
+    RestraintComponent ffcomponents;
+    
+    /** All of the restraints in this forcefield */
+    QVector<Restraint3DPtr> restraints_by_idx;
+    
+    /** All of the old restraints - these are used when recalculating
+        the energy */
+    QHash<quint32,Restraint3DPtr> old_restraints_by_idx;
+    
+    /** Index of which restraints involve which molecules */
+    QHash< MolNum, QList<quint32> > restraints_by_molnum;
+
+    /** All of the values of the user symbols in the restraints */
+    Values user_values;
+    
+    /** All of the built-in symbols of the restraints */
+    Symbols builtin_symbols;
+    
+    /** Whether or not to recalculate everything from scratch */
+    bool recalc_from_scratch;
+};
+
+
+}
+
+Q_DECLARE_METATYPE( SireMM::RestraintFF )
+
+SIRE_EXPOSE_CLASS( SireMM::RestraintFF )
+
+SIRE_END_HEADER
+
 #endif

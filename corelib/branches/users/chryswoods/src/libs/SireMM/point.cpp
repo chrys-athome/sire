@@ -197,7 +197,8 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const AtomPoint &atompoin
     
     SharedDataStream sds(ds);
     
-    sds << atompoint.atm << static_cast<const Point&>(atompoint);
+    sds << atompoint.atm << atompoint.coords_property
+        << static_cast<const Point&>(atompoint);
     
     return ds;
 }
@@ -211,7 +212,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, AtomPoint &atompoint)
     {
         SharedDataStream sds(ds);
         
-        sds >> atompoint.atm >> static_cast<Point&>(atompoint);
+        sds >> atompoint.atm >> atompoint.coords_property
+            >> static_cast<Point&>(atompoint);
     }
     else
         throw version_error(v, "1", r_atompoint, CODELOC);
@@ -227,12 +229,14 @@ AtomPoint::AtomPoint() : ConcreteProperty<AtomPoint,Point>()
 AtomPoint::AtomPoint(const Atom &atom, const PropertyMap &map)
           : ConcreteProperty<AtomPoint,Point>(), atm(atom)
 {
-    AtomPoint::update(atom.data(), map);
+    coords_property = map["coordinates"];
+    AtomPoint::update(atom.data());
 }
 
 /** Copy constructor */
 AtomPoint::AtomPoint(const AtomPoint &other)
-          : ConcreteProperty<AtomPoint,Point>(other), atm(other.atm)
+          : ConcreteProperty<AtomPoint,Point>(other), 
+            atm(other.atm), coords_property(other.coords_property)
 {}
 
 /** Destructor */
@@ -244,6 +248,7 @@ AtomPoint& AtomPoint::operator=(const AtomPoint &other)
 {
     Point::operator=(other);
     atm = other.atm;
+    coords_property = other.coords_property;
     
     return *this;
 }
@@ -251,13 +256,15 @@ AtomPoint& AtomPoint::operator=(const AtomPoint &other)
 /** Comparison operator */
 bool AtomPoint::operator==(const AtomPoint &other) const
 {
-    return atm == other.atm and Point::operator==(other);
+    return atm == other.atm and coords_property == other.coords_property and
+           Point::operator==(other);
 }
 
 /** Comparison operator */
 bool AtomPoint::operator!=(const AtomPoint &other) const
 {
-    return atm != other.atm or Point::operator!=(other);
+    return atm != other.atm or coords_property != other.coords_property or
+           Point::operator!=(other);
 }
 
 const char* AtomPoint::typeName()
@@ -271,21 +278,21 @@ const char* AtomPoint::typeName()
     \throw SireError::incompatible_error
     \throw SireError::invalid_cast
 */
-void AtomPoint::update(const MoleculeData &moldata, const PropertyMap &map)
+void AtomPoint::update(const MoleculeData &moldata)
 {
     if (atm.data().number() == moldata.number())
     {
         atm.update(moldata);
-        this->updatePoint(atm.property<Vector>(map["coordinates"]));
+        this->updatePoint(atm.property<Vector>(coords_property));
     }
 }
                     
 /** Update this point */
-void AtomPoint::update(const Molecules &molecules, const PropertyMap &map)
+void AtomPoint::update(const Molecules &molecules)
 {
     if (molecules.contains(atm.data().number()))
     {
-        this->update( molecules[atm.data().number()].data(), map );
+        this->update( molecules[atm.data().number()].data() );
     }
 }
 
@@ -452,11 +459,11 @@ const char* VectorPoint::typeName()
 }
 
 /** A VectorPoint is not updatable */
-void VectorPoint::update(const MoleculeData&, const PropertyMap&)
+void VectorPoint::update(const MoleculeData&)
 {}
                     
 /** A VectorPoint is not updatable */
-void VectorPoint::update(const Molecules&, const PropertyMap&)
+void VectorPoint::update(const Molecules&)
 {}
 
 /** No molecules are needed to create this point */
@@ -520,7 +527,8 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const Center &center)
     
     SharedDataStream sds(ds);
     
-    sds << center.mols << static_cast<const Point&>(center);
+    sds << center.mols << center.property_map
+        << static_cast<const Point&>(center);
     
     return ds;
 }
@@ -534,7 +542,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, Center &center)
     {
         SharedDataStream sds(ds);
         
-        sds >> center.mols >> static_cast<Point&>(center);
+        sds >> center.mols >> center.property_map
+            >> static_cast<Point&>(center);
     }
     else
         throw version_error( v, "1", r_center, CODELOC );
@@ -553,9 +562,9 @@ Center::Center() : ConcreteProperty<Center,Point>()
     \throw SireError::invalid_cast
 */
 Center::Center(const MoleculeView &molview, const PropertyMap &map)
-       : ConcreteProperty<Center,Point>(), mols(molview)
+       : ConcreteProperty<Center,Point>(), mols(molview), property_map(map)
 {
-    this->recalculatePoint(map);
+    this->recalculatePoint();
 }
 
 /** Construct to get the center of the molecules in 'molecules', using the
@@ -565,14 +574,15 @@ Center::Center(const MoleculeView &molview, const PropertyMap &map)
     \throw SireError::invalid_cast
 */
 Center::Center(const Molecules &molecules, const PropertyMap &map)
-       : ConcreteProperty<Center,Point>(), mols(molecules)
+       : ConcreteProperty<Center,Point>(), mols(molecules), property_map(map)
 {
-    this->recalculatePoint(map);
+    this->recalculatePoint();
 }
 
 /** Copy constructor */
 Center::Center(const Center &other)
-       : ConcreteProperty<Center,Point>(other), mols(other.mols)
+       : ConcreteProperty<Center,Point>(other), mols(other.mols),
+         property_map(other.property_map)
 {}
 
 /** Destructor */
@@ -583,6 +593,7 @@ Center::~Center()
 Center& Center::operator=(const Center &other)
 {
     mols = other.mols;
+    property_map = other.property_map;
     Point::operator=(other);
     
     return *this;
@@ -591,13 +602,15 @@ Center& Center::operator=(const Center &other)
 /** Comparison operator */
 bool Center::operator==(const Center &other) const
 {
-    return mols == other.mols and Point::operator==(other);
+    return mols == other.mols and property_map == other.property_map and
+           Point::operator==(other);
 }
 
 /** Comparison operator */
 bool Center::operator!=(const Center &other) const
 {
-    return mols != other.mols or Point::operator!=(other);
+    return mols != other.mols or property_map != other.property_map or
+           Point::operator!=(other);
 }
 
 const char* Center::typeName()
@@ -630,41 +643,41 @@ void Center::setSpace(const Space &space)
 }
 
 /** Recalculate the point using the current space */
-void Center::recalculatePoint(const PropertyMap &map)
+void Center::recalculatePoint()
 {
     if (mols.isEmpty())
         return;
 
     Molecules::const_iterator it = mols.constBegin();
     
-    AABox aabox = it->evaluate().center();
+    AABox aabox = it->evaluate().center(property_map);
     
     for (++it; it != mols.constEnd(); ++it)
     {
-        aabox += it->evaluate().center();
+        aabox += it->evaluate().center(property_map);
     }
     
     this->updatePoint( aabox.center() );
 }
 
 /** Update the molecules used to create this point */
-void Center::update(const MoleculeData &moldata, const PropertyMap &map)
+void Center::update(const MoleculeData &moldata)
 {
     if (mols.contains(moldata.number()))
     {
         if (mols.update(moldata))
         {
-            this->recalculatePoint(map);
+            this->recalculatePoint();
         }
     }
 }
                     
 /** Update the molecules used to create this point */
-void Center::update(const Molecules &molecules, const PropertyMap &map)
+void Center::update(const Molecules &molecules)
 {
     if (not mols.update(molecules).isEmpty())
     {
-        this->recalculatePoint(map);
+        this->recalculatePoint();
     }
 }
 
@@ -766,7 +779,8 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CenterOfGeometry &c
     
     SharedDataStream sds(ds);
     
-    sds << cog.mols << static_cast<const Point&>(cog);
+    sds << cog.mols << cog.property_map
+        << static_cast<const Point&>(cog);
     
     return ds;
 }
@@ -780,7 +794,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CenterOfGeometry &cog)
     {
         SharedDataStream sds(ds);
         
-        sds >> cog.mols >> static_cast<Point&>(cog);
+        sds >> cog.mols >> cog.property_map
+            >> static_cast<Point&>(cog);
     }
     else
         throw version_error( v, "1", r_cog, CODELOC );
@@ -799,9 +814,10 @@ CenterOfGeometry::CenterOfGeometry() : ConcreteProperty<CenterOfGeometry,Point>(
     \throw SireError::invalid_cast
 */
 CenterOfGeometry::CenterOfGeometry(const MoleculeView &molview, const PropertyMap &map)
-                 : ConcreteProperty<CenterOfGeometry,Point>(), mols(molview)
+                 : ConcreteProperty<CenterOfGeometry,Point>(), 
+                   mols(molview), property_map(map)
 {
-    this->recalculatePoint(map);
+    this->recalculatePoint();
 }
 
 /** Construct to get the center of the molecules in 'molecules', using the
@@ -811,14 +827,16 @@ CenterOfGeometry::CenterOfGeometry(const MoleculeView &molview, const PropertyMa
     \throw SireError::invalid_cast
 */
 CenterOfGeometry::CenterOfGeometry(const Molecules &molecules, const PropertyMap &map)
-                 : ConcreteProperty<CenterOfGeometry,Point>(), mols(molecules)
+                 : ConcreteProperty<CenterOfGeometry,Point>(), 
+                   mols(molecules), property_map(map)
 {
-    this->recalculatePoint(map);
+    this->recalculatePoint();
 }
 
 /** Copy constructor */
 CenterOfGeometry::CenterOfGeometry(const CenterOfGeometry &other)
-                 : ConcreteProperty<CenterOfGeometry,Point>(other), mols(other.mols)
+                 : ConcreteProperty<CenterOfGeometry,Point>(other), 
+                   mols(other.mols), property_map(other.property_map)
 {}
 
 /** Destructor */
@@ -829,6 +847,7 @@ CenterOfGeometry::~CenterOfGeometry()
 CenterOfGeometry& CenterOfGeometry::operator=(const CenterOfGeometry &other)
 {
     mols = other.mols;
+    property_map = other.property_map;
     Point::operator=(other);
     
     return *this;
@@ -837,13 +856,15 @@ CenterOfGeometry& CenterOfGeometry::operator=(const CenterOfGeometry &other)
 /** Comparison operator */
 bool CenterOfGeometry::operator==(const CenterOfGeometry &other) const
 {
-    return mols == other.mols and Point::operator==(other);
+    return mols == other.mols and property_map == other.property_map and
+           Point::operator==(other);
 }
 
 /** Comparison operator */
 bool CenterOfGeometry::operator!=(const CenterOfGeometry &other) const
 {
-    return mols != other.mols or Point::operator!=(other);
+    return mols != other.mols or property_map != other.property_map or
+           Point::operator!=(other);
 }
 
 const char* CenterOfGeometry::typeName()
@@ -902,14 +923,15 @@ void CenterOfGeometry::setSpace(const Space &space)
 }
 
 /** Internal function used to recalculate the center */
-void CenterOfGeometry::recalculatePoint(const PropertyMap &map)
+void CenterOfGeometry::recalculatePoint()
 {
     if (mols.isEmpty())
         return;
 
     else if (mols.count() == 1)
     {
-        Point::updatePoint( mols.constBegin()->evaluate().centerOfGeometry(map) );
+        Point::updatePoint( mols.constBegin()->evaluate()
+                                        .centerOfGeometry(property_map) );
         return;
     }
 
@@ -919,29 +941,29 @@ void CenterOfGeometry::recalculatePoint(const PropertyMap &map)
          it != mols.constEnd();
          ++it)
     {
-        points.append( tuple<Vector,double>( it->evaluate().centerOfGeometry(map),
-                                             it->selection().nAtoms() ) );
+        points.append( tuple<Vector,double>(it->evaluate().centerOfGeometry(property_map),
+                                            it->selection().nAtoms()) );
     }
     
     Point::updatePoint( ::averagePoints(points) );
 }
 
 /** Update the molecules used to create this point */
-void CenterOfGeometry::update(const MoleculeData &moldata, const PropertyMap &map)
+void CenterOfGeometry::update(const MoleculeData &moldata)
 {
     if (mols.contains(moldata.number()))
     {
         if (mols.update(moldata))
-            this->recalculatePoint(map);
+            this->recalculatePoint();
     }
 }
                     
 /** Update the molecules used to create this point */
-void CenterOfGeometry::update(const Molecules &molecules, const PropertyMap &map)
+void CenterOfGeometry::update(const Molecules &molecules)
 {
     if (not mols.update(molecules).isEmpty())
     {
-        this->recalculatePoint(map);
+        this->recalculatePoint();
     }
 }
 
@@ -1043,7 +1065,8 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CenterOfMass &com)
     
     SharedDataStream sds(ds);
     
-    sds << com.mols << static_cast<const Point&>(com);
+    sds << com.mols << com.property_map
+        << static_cast<const Point&>(com);
     
     return ds;
 }
@@ -1057,7 +1080,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CenterOfMass &com)
     {
         SharedDataStream sds(ds);
         
-        sds >> com.mols >> static_cast<Point&>(com);
+        sds >> com.mols >> com.property_map
+            >> static_cast<Point&>(com);
     }
     else
         throw version_error( v, "1", r_com, CODELOC );
@@ -1076,9 +1100,10 @@ CenterOfMass::CenterOfMass() : ConcreteProperty<CenterOfMass,Point>()
     \throw SireError::invalid_cast
 */
 CenterOfMass::CenterOfMass(const MoleculeView &molview, const PropertyMap &map)
-                 : ConcreteProperty<CenterOfMass,Point>(), mols(molview)
+                 : ConcreteProperty<CenterOfMass,Point>(), 
+                   mols(molview), property_map(map)
 {
-    this->recalculatePoint(map);
+    this->recalculatePoint();
 }
 
 /** Construct to get the center of the molecules in 'molecules', using the
@@ -1088,14 +1113,16 @@ CenterOfMass::CenterOfMass(const MoleculeView &molview, const PropertyMap &map)
     \throw SireError::invalid_cast
 */
 CenterOfMass::CenterOfMass(const Molecules &molecules, const PropertyMap &map)
-                 : ConcreteProperty<CenterOfMass,Point>(), mols(molecules)
+                 : ConcreteProperty<CenterOfMass,Point>(), 
+                   mols(molecules), property_map(map)
 {
-    this->recalculatePoint(map);
+    this->recalculatePoint();
 }
 
 /** Copy constructor */
 CenterOfMass::CenterOfMass(const CenterOfMass &other)
-                 : ConcreteProperty<CenterOfMass,Point>(other), mols(other.mols)
+                 : ConcreteProperty<CenterOfMass,Point>(other), 
+                   mols(other.mols), property_map(other.property_map)
 {}
 
 /** Destructor */
@@ -1106,6 +1133,7 @@ CenterOfMass::~CenterOfMass()
 CenterOfMass& CenterOfMass::operator=(const CenterOfMass &other)
 {
     mols = other.mols;
+    property_map = other.property_map;
     Point::operator=(other);
     
     return *this;
@@ -1114,13 +1142,15 @@ CenterOfMass& CenterOfMass::operator=(const CenterOfMass &other)
 /** Comparison operator */
 bool CenterOfMass::operator==(const CenterOfMass &other) const
 {
-    return mols == other.mols and Point::operator==(other);
+    return mols == other.mols and property_map == other.property_map and
+           Point::operator==(other);
 }
 
 /** Comparison operator */
 bool CenterOfMass::operator!=(const CenterOfMass &other) const
 {
-    return mols != other.mols or Point::operator!=(other);
+    return mols != other.mols or property_map != other.property_map or
+           Point::operator!=(other);
 }
 
 const char* CenterOfMass::typeName()
@@ -1154,14 +1184,14 @@ void CenterOfMass::setSpace(const Space &space)
 }
 
 /** Internal function used to recalculate the center */
-void CenterOfMass::recalculatePoint(const PropertyMap &map)
+void CenterOfMass::recalculatePoint()
 {
     if (mols.isEmpty())
         return;
 
     else if (mols.count() == 1)
     {
-        Point::updatePoint( mols.constBegin()->evaluate().centerOfMass(map) );
+        Point::updatePoint( mols.constBegin()->evaluate().centerOfMass(property_map) );
         return;
     }
 
@@ -1173,7 +1203,7 @@ void CenterOfMass::recalculatePoint(const PropertyMap &map)
     {
         Evaluator evaluator(*it);
     
-        points.append( tuple<Vector,double>( evaluator.centerOfMass(map),
+        points.append( tuple<Vector,double>( evaluator.centerOfMass(property_map),
                                              evaluator.mass() ) );
     }
     
@@ -1181,21 +1211,21 @@ void CenterOfMass::recalculatePoint(const PropertyMap &map)
 }
 
 /** Update the molecules used to create this point */
-void CenterOfMass::update(const MoleculeData &moldata, const PropertyMap &map)
+void CenterOfMass::update(const MoleculeData &moldata)
 {
     if (mols.contains(moldata.number()))
     {
         if (mols.update(moldata))
-            this->recalculatePoint(map);
+            this->recalculatePoint();
     }
 }
                     
 /** Update the molecules used to create this point */
-void CenterOfMass::update(const Molecules &molecules, const PropertyMap &map)
+void CenterOfMass::update(const Molecules &molecules)
 {
     if (not mols.update(molecules).isEmpty())
     {
-        this->recalculatePoint(map);
+        this->recalculatePoint();
     }
 }
 

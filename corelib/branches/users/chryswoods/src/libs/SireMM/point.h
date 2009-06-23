@@ -132,11 +132,8 @@ public:
     
     virtual void setSpace(const Space &space);
     
-    virtual void update(const MoleculeData &moldata,
-                        const PropertyMap &map = PropertyMap())=0;
-                        
-    virtual void update(const Molecules &molecules,
-                        const PropertyMap &map = PropertyMap())=0;
+    virtual void update(const MoleculeData &moldata)=0;
+    virtual void update(const Molecules &molecules)=0;
     
     virtual Molecules molecules() const=0;
     
@@ -232,11 +229,8 @@ public:
     
     static const char* typeName();
     
-    void update(const MoleculeData &moldata,
-                const PropertyMap &map = PropertyMap());
-                        
-    void update(const Molecules &molecules,
-                const PropertyMap &map = PropertyMap());
+    void update(const MoleculeData &moldata);
+    void update(const Molecules &molecules);
     
     Molecules molecules() const;
     
@@ -256,6 +250,9 @@ public:
 private:
     /** The actual atom! */
     Atom atm;
+    
+    /** The coordinates property */
+    SireBase::PropertyName coords_property;
 };
 
 /** This is a simple wrapper for a point in space */
@@ -280,11 +277,8 @@ public:
     
     static const char* typeName();
     
-    void update(const MoleculeData &moldata, 
-                const PropertyMap &map = PropertyMap());
-                        
-    void update(const Molecules &molecules,
-                const PropertyMap &map = PropertyMap());
+    void update(const MoleculeData &moldata);
+    void update(const Molecules &molecules);
     
     Molecules molecules() const;
     
@@ -326,11 +320,8 @@ public:
 
     void setSpace(const Space &space);
     
-    void update(const MoleculeData &moldata, 
-                const PropertyMap &map = PropertyMap());
-                        
-    void update(const Molecules &molecules,
-                const PropertyMap &map = PropertyMap());
+    void update(const MoleculeData &moldata);
+    void update(const Molecules &molecules);
     
     Molecules molecules() const;
     
@@ -346,10 +337,13 @@ public:
     bool addForce(ForceTable &forces, const Vector &force) const;
 
 private:
-    void recalculatePoint(const PropertyMap &map);
+    void recalculatePoint();
 
     /** The molecules whose center is to be determined */
     Molecules mols;
+
+    /** The map used to find the properties */
+    PropertyMap property_map;
 };
 
 /** This point returns the center of geometry of a view of a molecule,
@@ -381,11 +375,8 @@ public:
 
     void setSpace(const Space &space);
     
-    void update(const MoleculeData &moldata, 
-                const PropertyMap &map = PropertyMap());
-                        
-    void update(const Molecules &molecules,
-                const PropertyMap &map = PropertyMap());
+    void update(const MoleculeData &moldata);
+    void update(const Molecules &molecules);
     
     Molecules molecules() const;
     
@@ -401,10 +392,13 @@ public:
     bool addForce(ForceTable &forces, const Vector &force) const;
 
 private:
-    void recalculatePoint(const PropertyMap &map);
+    void recalculatePoint();
 
     /** The molecules whose center of geometry is to be determined */
     Molecules mols;
+
+    /** The map used to find the properties */
+    PropertyMap property_map;
 };
 
 /** This point returns the center of mass of a view of a molecule,
@@ -436,11 +430,13 @@ public:
 
     void setSpace(const Space &space);
     
-    void update(const MoleculeData &moldata, 
-                const PropertyMap &map = PropertyMap());
+    bool wouldChangeProperties(const PropertyMap &map) const;
+    
+    void update(const MoleculeData &moldata);
+    void update(const MoleculeData &moldata, const PropertyMap &map);
                         
-    void update(const Molecules &molecules,
-                const PropertyMap &map = PropertyMap());
+    void update(const Molecules &molecules);
+    void update(const Molecules &molecules, const PropertyMap &map);
     
     Molecules molecules() const;
     
@@ -456,10 +452,13 @@ public:
     bool addForce(ForceTable &forces, const Vector &force) const;
 
 private:
-    void recalculatePoint(const PropertyMap &map);
+    void recalculatePoint();
 
     /** The molecules whose center of geometry is to be determined */
     Molecules mols;
+
+    /** The map used to find the properties */
+    PropertyMap property_map;
 };
 
 }
