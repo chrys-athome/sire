@@ -34,6 +34,9 @@
 
 #include "SireVol/space.h"
 
+#include "SireCAS/expression.h"
+#include "SireCAS/values.h"
+
 #include "SireUnits/dimensions.h"
 
 SIRE_BEGIN_HEADER
@@ -43,6 +46,8 @@ namespace SireMM
 class Restraint;
 class Restraint3D;
 
+class ExpressionRestraint3D;
+
 class NullRestraint;
 }
 
@@ -51,6 +56,9 @@ QDataStream& operator>>(QDataStream&, SireMM::Restraint&);
 
 QDataStream& operator<<(QDataStream&, const SireMM::Restraint3D&);
 QDataStream& operator>>(QDataStream&, SireMM::Restraint3D&);
+
+QDataStream& operator<<(QDataStream&, const SireMM::ExpressionRestraint3D&);
+QDataStream& operator>>(QDataStream&, SireMM::ExpressionRestraint3D&);
 
 QDataStream& operator<<(QDataStream&, const SireMM::NullRestraint&);
 QDataStream& operator>>(QDataStream&, SireMM::NullRestraint&);
@@ -69,6 +77,12 @@ class MolForceTable;
 class ForceTable;
 }
 
+namespace SireCAS
+{
+class Symbol;
+class Symbols;
+}
+
 namespace SireMM
 {
 
@@ -82,9 +96,17 @@ using SireMol::MolID;
 using SireFF::MolForceTable;
 using SireFF::ForceTable;
 
+using SireCAS::Symbol;
+using SireCAS::Symbols;
+using SireCAS::Values;
+using SireCAS::Expression;
+
 using SireVol::Space;
 
 class Point;
+
+typedef SireBase::PropPtr<Restraint> RestraintPtr;
+typedef SireBase::PropPtr<Restraint3D> Restraint3DPtr;
 
 /** This is the base class of all restraints. A restraint is a
     function that calculates the energy or force acting on
@@ -114,6 +136,8 @@ public:
     
     virtual Restraint* clone() const=0;
     
+    virtual QString toString() const=0;
+    
     virtual SireUnits::Dimension::MolarEnergy energy() const=0;
 
     virtual void update(const MoleculeData &moldata,
@@ -128,6 +152,21 @@ public:
     virtual bool contains(const MolID &molid) const=0;
 
     virtual bool usesMoleculesIn(const Molecules &molecules) const=0;
+
+    virtual void setValue(const Symbol &symbol, double value)=0;
+    virtual double getValue(const Symbol &symbol) const=0;
+
+    virtual bool hasValue(const Symbol &symbol) const=0;
+
+    virtual Symbols symbols() const=0;
+    virtual Symbols builtinSymbols() const=0;
+    virtual Symbols userSymbols() const=0;
+    
+    virtual Values values() const=0;
+    virtual Values builtinValues() const=0;
+    virtual Values userValues() const=0;
+
+    virtual RestraintPtr differentiate(const Symbol &symbol) const=0;
 
     static const NullRestraint& null();
 
@@ -184,6 +223,61 @@ private:
     SireVol::SpacePtr spce;
 };
 
+/** This is the base class of 3D restraints that use a user-supplied
+    energy function to calculate the restraint energy */
+class SIREMM_EXPORT ExpressionRestraint3D : public Restraint3D
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const ExpressionRestraint3D&);
+friend QDataStream& ::operator>>(QDataStream&, ExpressionRestraint3D&);
+
+public:
+    ExpressionRestraint3D();
+    ExpressionRestraint3D(const Expression &nrg_expression,
+                          const Values &values = Values());
+    
+    ExpressionRestraint3D(const ExpressionRestraint3D &other);
+    
+    ~ExpressionRestraint3D();
+
+    static const char* typeName()
+    {
+        return "SireMM::ExpressionRestraint3D";
+    }
+
+    QString toString() const;
+
+    const Expression& restraintFunction() const;
+
+    void setValue(const Symbol &symbol, double value);
+    double getValue(const Symbol &symbol) const;
+
+    bool hasValue(const Symbol &symbol) const;
+
+    Symbols symbols() const;
+    Symbols userSymbols() const;
+    
+    Values values() const;
+    Values userValues() const;
+
+    SireUnits::Dimension::MolarEnergy energy() const;
+
+protected:
+    ExpressionRestraint3D& operator=(const ExpressionRestraint3D &other);
+    
+    bool operator==(const ExpressionRestraint3D &other) const;
+    bool operator!=(const ExpressionRestraint3D &other) const;
+
+    void _pvt_setValue(const Symbol &symbol, double value);
+
+private:
+    /** The energy expression */
+    Expression nrg_expression;
+    
+    /** All values that are plugged into this expression */
+    Values vals;
+};
+
 /** This is a null restraint, that does not affect the energy
     or force on any molecule
     
@@ -209,8 +303,25 @@ public:
     bool operator!=(const NullRestraint &other) const;
     
     static const char* typeName();
+
+    QString toString() const;
     
     SireUnits::Dimension::MolarEnergy energy() const;
+
+    void setValue(const Symbol &symbol, double value);
+    double getValue(const Symbol &symbol) const;
+
+    bool hasValue(const Symbol &symbol) const;
+
+    Symbols symbols() const;
+    Symbols userSymbols() const;
+    Symbols builtinSymbols() const;
+
+    Values values() const;
+    Values userValues() const;
+    Values builtinValues() const;
+
+    RestraintPtr differentiate(const Symbol &symbol) const;
 
     void force(MolForceTable &forcetable, double scale_force=1) const;
     void force(ForceTable &forcetable, double scale_force=1) const;
@@ -226,9 +337,6 @@ public:
     bool usesMoleculesIn(const ForceTable &forcetable) const;
     bool usesMoleculesIn(const Molecules &molecules) const;
 };
-
-typedef SireBase::PropPtr<Restraint> RestraintPtr;
-typedef SireBase::PropPtr<Restraint3D> Restraint3DPtr;
 
 }
 

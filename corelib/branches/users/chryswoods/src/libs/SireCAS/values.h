@@ -101,6 +101,9 @@ public:
         return Values::typeName();
     }
 
+    bool operator==(const Values &other) const;
+    bool operator!=(const Values &other) const;
+
     void set(const Symbol &symbol, double value);
 
     void add(const SymbolValue &symval0);
@@ -136,6 +139,8 @@ public:
     QList<Symbol> keys() const;
     QList<Symbol> symbols() const;
 
+    bool isEmpty() const;
+
     int count() const;
 
     bool contains(const Symbol &symbol) const;
@@ -167,6 +172,12 @@ Values operator+(const Values &vals0, const Values &vals1);
 inline void Values::reserve(int n)
 {
     vals.reserve(n);
+}
+
+/** Return whether or not this set of values is empty */
+inline bool Values::isEmpty() const
+{
+    return vals.isEmpty();
 }
 
 /** Return the number of specified values in this set */

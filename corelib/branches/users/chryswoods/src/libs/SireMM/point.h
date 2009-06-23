@@ -192,6 +192,7 @@ public:
     PointRef(const Atom &atom);
     PointRef(const Vector &point);
     PointRef(const Point &point);
+    PointRef(const PointPtr &point);
     
     ~PointRef();
     

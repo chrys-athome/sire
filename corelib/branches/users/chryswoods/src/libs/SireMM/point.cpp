@@ -1300,6 +1300,10 @@ PointRef::PointRef(const Vector &point) : ptr( VectorPoint(point) )
 PointRef::PointRef(const Point &point) : ptr(point)
 {}
 
+/** Construct from the passed point */
+PointRef::PointRef(const PointPtr &point) : ptr(point)
+{}
+
 /** Destructor */
 PointRef::~PointRef()
 {}

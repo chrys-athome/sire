@@ -67,9 +67,8 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
     SharedDataStream sds(ds);
     
     sds << distrest.p[0] << distrest.p[1]
-        << distrest.nrg_expression
         << distrest.force_expression
-        << static_cast<const Restraint3D&>(distrest);
+        << static_cast<const ExpressionRestraint3D&>(distrest);
         
     return ds;
 }
@@ -84,9 +83,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, DistanceRestraint &distre
         SharedDataStream sds(ds);
         
         sds >> distrest.p[0] >> distrest.p[1]
-            >> distrest.nrg_expression
             >> distrest.force_expression
-            >> static_cast<Restraint3D&>(distrest);
+            >> static_cast<ExpressionRestraint3D&>(distrest);
 
         distrest.intra_molecule_points = Point::intraMoleculePoints(distrest.p[0],
                                                                     distrest.p[1]);
@@ -106,65 +104,51 @@ const Symbol& DistanceRestraint::r()
     return *(getRSymbol());
 }
 
-/** Return all of the symbols that can be used in this restraint function */
-Symbols DistanceRestraint::symbols()
-{
-    return Symbols(r());
-}
-
 /** Constructor */
 DistanceRestraint::DistanceRestraint()
-                  : ConcreteProperty<DistanceRestraint,Restraint3D>()
+                  : ConcreteProperty<DistanceRestraint,ExpressionRestraint3D>()
 {}
-
-static void validateFunction(const Expression &function,
-                             const Symbol &symbol)
-{
-    if (not function.isFunction(symbol))
-        throw SireCAS::missing_symbol( QObject::tr(
-            "The expression used for a positional restraint must be "
-            "a function of \"%1\". The passed expression (%2) is not "
-            "usable as it is a function of %3.")
-                .arg(symbol.toString())
-                .arg(function.toString())
-                .arg( Sire::toString(function.symbols()) ), CODELOC );
-                
-    if (function.symbols().count() > 1)
-        throw SireError::invalid_arg( QObject::tr(
-            "The expression used for a positional restraint must only "
-            "be a function of \"%1\". The passed expression (%2) is a "
-            "function of %3.")
-                .arg(symbol.toString())
-                .arg(function.toString())
-                .arg( Sire::toString(function.symbols()) ), CODELOC );
-}
 
 /** Construct a restraint that acts between the two points 'point0' and 'point1',
     restraining the distance between these points using the expression 
     'restraint' */
 DistanceRestraint::DistanceRestraint(const PointRef &point0, const PointRef &point1,
                                      const Expression &restraint)
-                  : ConcreteProperty<DistanceRestraint,Restraint3D>(),
-                    nrg_expression(restraint)
+         : ConcreteProperty<DistanceRestraint,ExpressionRestraint3D>(restraint)
 {
     p[0] = point0;
     p[1] = point1;
 
-    if (nrg_expression.isConstant())
-    {
-        nrg_expression = nrg_expression.evaluate(Values());
-        force_expression = 0;
-    }
-    else
-    {
-        ::validateFunction(nrg_expression, r());
-        force_expression = nrg_expression.differentiate(r());
+    force_expression = this->restraintFunction().differentiate(r());
         
-        if (force_expression.isConstant())
-            force_expression = force_expression.evaluate(Values());
-    }
+    if (force_expression.isConstant())
+        force_expression = force_expression.evaluate(Values());
     
     intra_molecule_points = Point::intraMoleculePoints(p[0], p[1]);
+    
+    this->calculateR();
+}
+
+/** Construct a restraint that acts between the two points 'point0' and 'point1',
+    restraining the distance between these points using the expression 
+    'restraint', with supplied values for this expression in 'values'.
+    Note that any extra values in 'values' that aren't in the expression
+    'restraint' are ignored */
+DistanceRestraint::DistanceRestraint(const PointRef &point0, const PointRef &point1,
+                                     const Expression &restraint, const Values &values)
+         : ConcreteProperty<DistanceRestraint,ExpressionRestraint3D>(restraint, values)
+{
+    p[0] = point0;
+    p[1] = point1;
+
+    force_expression = this->restraintFunction().differentiate(r());
+        
+    if (force_expression.isConstant())
+        force_expression = force_expression.evaluate(Values());
+    
+    intra_molecule_points = Point::intraMoleculePoints(p[0], p[1]);
+    
+    this->calculateR();
 }
 
 /** Internal constructor used to construct a restraint between the two 
@@ -176,21 +160,11 @@ DistanceRestraint::DistanceRestraint(const PointRef &point0, const PointRef &poi
 DistanceRestraint::DistanceRestraint(const PointRef &point0, const PointRef &point1,
                                      const Expression &nrg_restraint,
                                      const Expression &force_restraint)
-                  : ConcreteProperty<DistanceRestraint,Restraint3D>(),
-                    nrg_expression(nrg_restraint),
-                    force_expression(force_restraint)
+      : ConcreteProperty<DistanceRestraint,ExpressionRestraint3D>(nrg_restraint),
+        force_expression(force_restraint)
 {
     p[0] = point0;
     p[1] = point1;
-
-    if (nrg_expression.isConstant())
-    {
-        nrg_expression = nrg_expression.evaluate(Values());
-    }
-    else
-    {
-        ::validateFunction(nrg_expression, r());
-    }
 
     if (force_expression.isConstant())
     {
@@ -198,18 +172,24 @@ DistanceRestraint::DistanceRestraint(const PointRef &point0, const PointRef &poi
     }
     else
     {
-        ::validateFunction(force_expression, r());
+        if (not this->restraintFunction().symbols().contains(force_expression.symbols()))
+            throw SireError::incompatible_error( QObject::tr(
+                "You cannot use a force function which uses more symbols "
+                "(%1) than the energy function (%2).")
+                    .arg( Sire::toString(force_expression.symbols()),
+                          Sire::toString(restraintFunction().symbols()) ), CODELOC );
     }
     
     intra_molecule_points = Point::intraMoleculePoints(p[0], p[1]);
+    
+    this->calculateR();
 }
 
 /** Copy constructor */
 DistanceRestraint::DistanceRestraint(const DistanceRestraint &other)
-                  : ConcreteProperty<DistanceRestraint,Restraint3D>(other),
-                    nrg_expression(other.nrg_expression),
-                    force_expression(other.force_expression),
-                    intra_molecule_points(other.intra_molecule_points)
+      : ConcreteProperty<DistanceRestraint,ExpressionRestraint3D>(other),
+        force_expression(other.force_expression),
+        intra_molecule_points(other.intra_molecule_points)
 {
     for (int i=0; i<2; ++i)
     {
@@ -226,14 +206,13 @@ DistanceRestraint& DistanceRestraint::operator=(const DistanceRestraint &other)
 {
     if (this != &other)
     {
-        Restraint3D::operator=(other);
+        ExpressionRestraint3D::operator=(other);
 
         for (int i=0; i<2; ++i)
         {
             p[i] = other.p[i];
         }
         
-        nrg_expression = other.nrg_expression;
         force_expression = other.force_expression;
         intra_molecule_points = other.intra_molecule_points;
     }
@@ -245,9 +224,8 @@ DistanceRestraint& DistanceRestraint::operator=(const DistanceRestraint &other)
 bool DistanceRestraint::operator==(const DistanceRestraint &other) const
 {
     return this == &other or
-           ( Restraint3D::operator==(other) and
+           ( ExpressionRestraint3D::operator==(other) and
              p[0] == other.p[0] and p[1] == other.p[1] and
-             nrg_expression == other.nrg_expression and
              force_expression == other.force_expression);
 }
 
@@ -288,6 +266,24 @@ const Point& DistanceRestraint::point1() const
     return p[1].read();
 }
 
+/** Calculate the distance between the two points of this restraint */
+void DistanceRestraint::calculateR()
+{
+    if (this->restraintFunction().isFunction(r()))
+    {
+        double distance;
+
+        if (intra_molecule_points)
+            //we don't use the space when calculating intra-molecular distances
+            distance = Vector::distance( p[0].read().point(), p[1].read().point() );
+        else
+            distance = this->space().calcDist( p[0].read().point(),
+                                               p[1].read().point() );
+
+        ExpressionRestraint3D::_pvt_setValue(r(), distance);
+    }
+}
+
 /** Set the space used to evaluate the energy of this restraint
 
     \throw SireVol::incompatible_space
@@ -303,7 +299,9 @@ void DistanceRestraint::setSpace(const Space &new_space)
             p[0].edit().setSpace(new_space);
             p[1].edit().setSpace(new_space);
             
-            Restraint3D::setSpace(new_space);
+            ExpressionRestraint3D::setSpace(new_space);
+            
+            this->calculateR();
         }
         catch(...)
         {
@@ -313,10 +311,39 @@ void DistanceRestraint::setSpace(const Space &new_space)
     }
 }
 
-/** Return the function used to calculate the restraint energy */
-const Expression& DistanceRestraint::restraintFunction() const
+/** Return the built-in symbols of this restraint */
+Symbols DistanceRestraint::builtinSymbols() const
 {
-    return nrg_expression;
+    if (this->restraintFunction().isFunction(r()))
+        return r();
+    else
+        return Symbols();
+}
+
+/** Return the built-in values of this restraint */
+Values DistanceRestraint::builtinValues() const
+{
+    if (this->restraintFunction().isFunction(r()))
+        return (r() == this->values()[r()]);
+    else
+        return Values();
+}
+
+/** Return the restraint that is the differential of this restraint
+    with respect to the symbol 'symbol'
+    
+    \throw SireCAS::unavailable_differential
+*/
+RestraintPtr DistanceRestraint::differentiate(const Symbol &symbol) const
+{
+    if (this->restraintFunction().isFunction(symbol))
+    {
+        return DistanceRestraint( p[0], p[1],
+                                  this->restraintFunction().differentiate(symbol),
+                                  this->values() );
+    }
+    else
+        return NullRestraint();
 }
 
 /** Return the function used to calculate the restraint force */
@@ -325,23 +352,43 @@ const Expression& DistanceRestraint::differentialRestraintFunction() const
     return force_expression;
 }
 
-/** Return the energy of this restraint */
-MolarEnergy DistanceRestraint::energy() const
+template<class T>
+static void addForce(const Point &p0, const Point &p1, const Space &space,
+                     bool intra_molecule_points,
+                     bool in_p0, bool in_p1, const double force,
+                     T &forcetable)
 {
-    if (nrg_expression.isConstant())
-        return MolarEnergy( nrg_expression.evaluate(Values()) );
+    if ( SireMaths::isZero(force) )
+        return;
+    
+    Vector delta;
+
+    if (intra_molecule_points)
+        delta = p1.point() - p0.point();
     else
     {
-        double distance;
-        
-        if (intra_molecule_points)
-            //we don't use the space when calculating intra-molecular distances
-            distance = Vector::distance( p[0].read().point(), p[1].read().point() );
-        else
-            distance = this->space().calcDist( p[0].read().point(),
-                                               p[1].read().point() );
-                                                  
-        return MolarEnergy( nrg_expression.evaluate( r() == distance ) );
+        const Vector &point0 = p0.point();
+        Vector point1 = p1.point();
+    
+        point1 = space.getMinimumImage(point1, point0);
+    
+        delta = point1 - point0;
+    }
+
+    const double distance = delta.length();
+    
+    if ( SireMaths::isZero(distance) )
+        return;
+
+    const Vector f = (force / distance) * delta;
+    
+    if (not f.isZero())
+    {
+        if (in_p0)
+            p0.addForce(forcetable, -f);
+
+        if (in_p1)
+            p1.addForce(forcetable, f);
     }
 }
 
@@ -353,35 +400,13 @@ void DistanceRestraint::force(MolForceTable &forcetable, double scale_force) con
     bool in_p0 = p[0].read().contains(forcetable.molNum());
     bool in_p1 = p[1].read().contains(forcetable.molNum());
     
-    if (not (in_p0 or in_p1))
-        //this molecule is not affected by the restraint
-        return;
-        
-    Vector delta;
-    
-    if (intra_molecule_points)
-        delta = p[1].read().point() - p[0].read().point();
-    else
+    if (in_p0 or in_p1)
     {
-        const Vector &point0 = p[0].read().point();
-        Vector point1 = p[1].read().point();
-        
-        point1 = this->space().getMinimumImage(point1, point0);
-        
-        delta = point1 - point0;
-    }
-      
-    double distance = delta.length();
+        const double force = scale_force * force_expression.evaluate( 
+                                                ExpressionRestraint3D::values() );
 
-    Vector f = (force_expression.evaluate( r() == distance ) / distance) * delta;
-
-    if (not f.isZero())
-    {
-        if (in_p0)
-            p[0].read().addForce(forcetable, -scale_force*f);
-    
-        if (in_p1)
-            p[1].read().addForce(forcetable, scale_force*f);
+        addForce(p[0], p[1], space(), intra_molecule_points,
+                 in_p0, in_p1, force, forcetable);
     }
 }
 
@@ -393,35 +418,13 @@ void DistanceRestraint::force(ForceTable &forcetable, double scale_force) const
     bool in_p0 = p[0].read().usesMoleculesIn(forcetable);
     bool in_p1 = p[1].read().usesMoleculesIn(forcetable);
     
-    if (not (in_p0 or in_p1))
-        //this molecule is not affected by the restraint
-        return;
-
-    Vector delta;
-    
-    if (intra_molecule_points)
-        delta = p[1].read().point() - p[0].read().point();
-    else
+    if (in_p0 or in_p1)
     {
-        const Vector &point0 = p[0].read().point();
-        Vector point1 = p[1].read().point();
-        
-        point1 = this->space().getMinimumImage(point1, point0);
-        
-        delta = point1 - point0;
-    }
-      
-    double distance = delta.length();
+        const double force = scale_force * force_expression.evaluate( 
+                                                ExpressionRestraint3D::values() );
 
-    Vector f = (force_expression.evaluate( r() == distance ) / distance) * delta;
-
-    if (not f.isZero())
-    {
-        if (in_p0)
-            p[0].read().addForce(forcetable, -scale_force*f);
-    
-        if (in_p1)
-            p[1].read().addForce(forcetable, scale_force*f);
+        addForce(p[0], p[1], space(), intra_molecule_points,
+                 in_p0, in_p1, force, forcetable);
     }
 }
 
@@ -444,6 +447,8 @@ void DistanceRestraint::update(const MoleculeData &moldata, const PropertyMap &m
         {
             p[0].edit().update(moldata, map);
             p[1].edit().update(moldata, map);
+            
+            this->calculateR();
         }
         catch(...)
         {
@@ -454,10 +459,12 @@ void DistanceRestraint::update(const MoleculeData &moldata, const PropertyMap &m
     else if (in_p0)
     {
         p[0].edit().update(moldata, map);
+        this->calculateR();
     }
     else if (in_p1)
     {
         p[1].edit().update(moldata, map);
+        this->calculateR();
     }
 }
             
@@ -480,6 +487,7 @@ void DistanceRestraint::update(const Molecules &molecules, const PropertyMap &ma
         {
             p[0].edit().update(molecules, map);
             p[1].edit().update(molecules, map);
+            this->calculateR();
         }
         catch(...)
         {
@@ -490,10 +498,12 @@ void DistanceRestraint::update(const Molecules &molecules, const PropertyMap &ma
     else if (in_p0)
     {
         p[0].edit().update(molecules, map);
+        this->calculateR();
     }
     else if (in_p1)
     {
         p[1].edit().update(molecules, map);
+        this->calculateR();
     }
 }
 
@@ -647,10 +657,9 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
     
     sds << doubledistrest.p[0] << doubledistrest.p[1]
         << doubledistrest.p[2] << doubledistrest.p[3]
-        << doubledistrest.nrg_expression
         << doubledistrest.force01_expression
         << doubledistrest.force23_expression
-        << static_cast<const Restraint3D&>(doubledistrest);
+        << static_cast<const ExpressionRestraint3D&>(doubledistrest);
         
     return ds;
 }
@@ -667,10 +676,9 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
         
         sds >> doubledistrest.p[0] >> doubledistrest.p[1]
             >> doubledistrest.p[2] >> doubledistrest.p[3]
-            >> doubledistrest.nrg_expression
             >> doubledistrest.force01_expression
             >> doubledistrest.force23_expression
-            >> static_cast<Restraint3D&>(doubledistrest);
+            >> static_cast<ExpressionRestraint3D&>(doubledistrest);
 
         doubledistrest.intra_molecule_points01 = Point::intraMoleculePoints(
                                                                     doubledistrest.p[0],
@@ -703,41 +711,39 @@ const Symbol& DoubleDistanceRestraint::r23()
     return *(getR23Symbol());
 }
 
-/** Return all of the symbols that can be used in this restraint function */
-Symbols DoubleDistanceRestraint::symbols()
-{
-    Symbols syms;
-    syms.insert( r01() );
-    syms.insert( r23() );
-    
-    return syms;
-}
-
 /** Constructor */
 DoubleDistanceRestraint::DoubleDistanceRestraint()
-                        : ConcreteProperty<DoubleDistanceRestraint,Restraint3D>()
+          : ConcreteProperty<DoubleDistanceRestraint,ExpressionRestraint3D>()
 {}
 
-static void validateFunction(const Expression &function,
-                             const Symbols &symbols)
+void DoubleDistanceRestraint::calculateR()
 {
-    if (not function.symbols().intersects(symbols))
-        throw SireCAS::missing_symbol( QObject::tr(
-            "The expression used for a positional restraint must be "
-            "a function of at least one of \"%1\". The passed expression (%2) is not "
-            "usable as it is a function of %3.")
-                .arg( Sire::toString(symbols) )
-                .arg( function.toString() )
-                .arg( Sire::toString(function.symbols()) ), CODELOC );
-                
-    if (not symbols.contains(function.symbols()))
-        throw SireError::invalid_arg( QObject::tr(
-            "The expression used for a positional restraint must only "
-            "be a function of \"%1\". The passed expression (%2) is a "
-            "function of %3.")
-                .arg( Sire::toString(symbols) )
-                .arg(function.toString())
-                .arg( Sire::toString(function.symbols()) ), CODELOC );
+    if (this->restraintFunction().isFunction(r01()))
+    {
+        double d01;
+        
+        if (intra_molecule_points01)
+            //we don't use the space when calculating intra-molecular distances
+            d01 = Vector::distance( p[0].read().point(), p[1].read().point() );
+        else
+            d01 = this->space().calcDist( p[0].read().point(),
+                                          p[1].read().point() );
+        
+        ExpressionRestraint3D::_pvt_setValue( r01(), d01 );
+    }
+    
+    if (this->restraintFunction().isFunction(r23()))
+    {
+        double d23;
+        
+        if (intra_molecule_points23)
+            d23 = Vector::distance( p[2].read().point(), p[3].read().point() );
+        else
+            d23 = this->space().calcDist( p[2].read().point(),
+                                          p[3].read().point() );
+
+        ExpressionRestraint3D::_pvt_setValue( r23(), d23 );
+    }
 }
 
 /** Construct a restraint that acts on the two distances defined
@@ -747,45 +753,66 @@ DoubleDistanceRestraint::DoubleDistanceRestraint(const PointRef &point0,
                                                  const PointRef &point2,
                                                  const PointRef &point3,
                                                  const Expression &restraint)
-                  : ConcreteProperty<DoubleDistanceRestraint,Restraint3D>(),
-                    nrg_expression(restraint)
+  : ConcreteProperty<DoubleDistanceRestraint,ExpressionRestraint3D>(restraint)
 {
     p[0] = point0;
     p[1] = point1;
     p[2] = point2;
     p[3] = point3;
 
-    if (nrg_expression.isConstant())
-    {
-        nrg_expression = nrg_expression.evaluate(Values());
-        force01_expression = 0;
-        force23_expression = 0;
-    }
-    else
-    {
-        ::validateFunction(nrg_expression, symbols());
-        force01_expression = nrg_expression.differentiate(r01());
-        force23_expression = nrg_expression.differentiate(r23());
+    force01_expression = this->restraintFunction().differentiate(r01());
+    force23_expression = this->restraintFunction().differentiate(r23());
         
-        if (force01_expression.isConstant())
-            force01_expression = force01_expression.evaluate(Values());
+    if (force01_expression.isConstant())
+        force01_expression = force01_expression.evaluate(Values());
         
-        if (force23_expression.isConstant())
-            force23_expression = force23_expression.evaluate(Values());
-    }
+    if (force23_expression.isConstant())
+        force23_expression = force23_expression.evaluate(Values());
     
     intra_molecule_points01 = Point::intraMoleculePoints(p[0], p[1]);
     intra_molecule_points23 = Point::intraMoleculePoints(p[2], p[3]);
+
+    this->calculateR();
+}
+
+/** Construct a restraint that acts on the two distances defined
+    using the passed four points, using the expression 'restraint'
+    and supplied user values in 'values' */
+DoubleDistanceRestraint::DoubleDistanceRestraint(const PointRef &point0, 
+                                                 const PointRef &point1,
+                                                 const PointRef &point2,
+                                                 const PointRef &point3,
+                                                 const Expression &restraint,
+                                                 const Values &values)
+  : ConcreteProperty<DoubleDistanceRestraint,ExpressionRestraint3D>(restraint, values)
+{
+    p[0] = point0;
+    p[1] = point1;
+    p[2] = point2;
+    p[3] = point3;
+
+    force01_expression = this->restraintFunction().differentiate(r01());
+    force23_expression = this->restraintFunction().differentiate(r23());
+        
+    if (force01_expression.isConstant())
+        force01_expression = force01_expression.evaluate(Values());
+        
+    if (force23_expression.isConstant())
+        force23_expression = force23_expression.evaluate(Values());
+    
+    intra_molecule_points01 = Point::intraMoleculePoints(p[0], p[1]);
+    intra_molecule_points23 = Point::intraMoleculePoints(p[2], p[3]);
+
+    this->calculateR();
 }
 
 /** Copy constructor */
 DoubleDistanceRestraint::DoubleDistanceRestraint(const DoubleDistanceRestraint &other)
-                        : ConcreteProperty<DoubleDistanceRestraint,Restraint3D>(other),
-                          nrg_expression(other.nrg_expression),
-                          force01_expression(other.force01_expression),
-                          force23_expression(other.force23_expression),
-                          intra_molecule_points01(other.intra_molecule_points01),
-                          intra_molecule_points23(other.intra_molecule_points23)
+          : ConcreteProperty<DoubleDistanceRestraint,ExpressionRestraint3D>(other),
+            force01_expression(other.force01_expression),
+            force23_expression(other.force23_expression),
+            intra_molecule_points01(other.intra_molecule_points01),
+            intra_molecule_points23(other.intra_molecule_points23)
 {
     for (int i=0; i<this->nPoints(); ++i)
     {
@@ -803,14 +830,13 @@ DoubleDistanceRestraint& DoubleDistanceRestraint::operator=(
 {
     if (this != &other)
     {
-        Restraint3D::operator=(other);
+        ExpressionRestraint3D::operator=(other);
 
         for (int i=0; i<this->nPoints(); ++i)
         {
             p[i] = other.p[i];
         }
         
-        nrg_expression = other.nrg_expression;
         force01_expression = other.force01_expression;
         force23_expression = other.force23_expression;
         intra_molecule_points01 = other.intra_molecule_points01;
@@ -824,10 +850,9 @@ DoubleDistanceRestraint& DoubleDistanceRestraint::operator=(
 bool DoubleDistanceRestraint::operator==(const DoubleDistanceRestraint &other) const
 {
     return this == &other or
-           ( Restraint3D::operator==(other) and
+           ( ExpressionRestraint3D::operator==(other) and
              p[0] == other.p[0] and p[1] == other.p[1] and
              p[2] == other.p[2] and p[3] == other.p[3] and
-             nrg_expression == other.nrg_expression and
              force01_expression == other.force01_expression and
              force23_expression == other.force23_expression);
 }
@@ -881,6 +906,51 @@ const Point& DoubleDistanceRestraint::point3() const
     return p[3].read();
 }
 
+/** Return the built in symbols for this restraint */
+Symbols DoubleDistanceRestraint::builtinSymbols() const
+{
+    Symbols symbols;
+
+    if (this->restraintFunction().isFunction(r01()))
+        symbols += r01();
+    
+    if (this->restraintFunction().isFunction(r23()))
+        symbols += r23();
+        
+    return symbols;
+}
+
+/** Return the built in values for this restraint */
+Values DoubleDistanceRestraint::builtinValues() const
+{
+    Values vals;
+    
+    if (this->restraintFunction().isFunction(r01()))
+        vals.set( r01(), this->values()[r01()] );
+        
+    if (this->restraintFunction().isFunction(r23()))
+        vals.set( r23(), this->values()[r23()] );
+        
+    return vals;
+}
+
+/** Return the differential of this restraint with respect to the 
+    symbol 'symbol'
+    
+    \throw SireCAS::unavailable_differential
+*/
+RestraintPtr DoubleDistanceRestraint::differentiate(const Symbol &symbol) const
+{
+    if (this->restraintFunction().isFunction(symbol))
+    {
+        return DoubleDistanceRestraint( p[0], p[1], p[2], p[3],
+                                        restraintFunction().differentiate(symbol),
+                                        this->values() );
+    }
+    else
+        return NullRestraint();
+}
+
 /** Set the space used to evaluate the energy of this restraint
 
     \throw SireVol::incompatible_space
@@ -898,7 +968,9 @@ void DoubleDistanceRestraint::setSpace(const Space &new_space)
                 p[i].edit().setSpace(new_space);
             }
             
-            Restraint3D::setSpace(new_space);
+            ExpressionRestraint3D::setSpace(new_space);
+            
+            this->calculateR();
         }
         catch(...)
         {
@@ -906,12 +978,6 @@ void DoubleDistanceRestraint::setSpace(const Space &new_space)
             throw;
         }
     }
-}
-
-/** Return the function used to calculate the restraint energy */
-const Expression& DoubleDistanceRestraint::restraintFunction() const
-{
-    return nrg_expression;
 }
 
 /** Return the function used to calculate the restraint force along the 
@@ -928,34 +994,6 @@ const Expression& DoubleDistanceRestraint::differentialRestraintFunction23() con
     return force23_expression;
 }
 
-/** Return the energy of this restraint */
-MolarEnergy DoubleDistanceRestraint::energy() const
-{
-    if (nrg_expression.isConstant())
-        return MolarEnergy( nrg_expression.evaluate(Values()) );
-    else
-    {
-        double d01;
-        double d23;
-        
-        if (intra_molecule_points01)
-            //we don't use the space when calculating intra-molecular distances
-            d01 = Vector::distance( p[0].read().point(), p[1].read().point() );
-        else
-            d01 = this->space().calcDist( p[0].read().point(),
-                                          p[1].read().point() );
-        
-        if (intra_molecule_points23)
-            d23 = Vector::distance( p[2].read().point(), p[3].read().point() );
-        else
-            d23 = this->space().calcDist( p[2].read().point(),
-                                          p[3].read().point() );
-                                                                                                                                      
-        return MolarEnergy( nrg_expression.evaluate( (r01() == d01) +
-                                                     (r23() == d23) ) );
-    }
-}
-
 /** Calculate the force acting on the molecule in the forcetable 'forcetable' 
     caused by this restraint, and add it on to the forcetable scaled by 
     'scale_force' */
@@ -965,69 +1003,23 @@ void DoubleDistanceRestraint::force(MolForceTable &forcetable, double scale_forc
     bool in_p1 = p[1].read().contains(forcetable.molNum());
     bool in_p2 = p[2].read().contains(forcetable.molNum());
     bool in_p3 = p[3].read().contains(forcetable.molNum());
-    
-    if (not (in_p0 or in_p1 or in_p2 or in_p3))
-        //this molecule is not affected by the restraint
-        return;
-        
-    Vector delta01;
-    Vector delta23;
-    
-    if (intra_molecule_points01)
-        delta01 = p[1].read().point() - p[0].read().point();
-    else
-    {
-        const Vector &point0 = p[0].read().point();
-        Vector point1 = p[1].read().point();
-        
-        point1 = this->space().getMinimumImage(point1, point0);
-        
-        delta01 = point1 - point0;
-    }
-      
-    if (intra_molecule_points23)
-        delta23 = p[3].read().point() - p[2].read().point();
-    else
-    {
-        const Vector &point2 = p[2].read().point();
-        Vector point3 = p[3].read().point();
-        
-        point3 = this->space().getMinimumImage(point3, point2);
-        
-        delta23 = point3 - point2;
-    }
-      
-    double d01 = delta01.length();
-    double d23 = delta23.length();
-
-    Values vals = (r01() == d01) + (r23() == d23);
 
     if (in_p0 or in_p1)
     {
-        Vector f01 = (force01_expression.evaluate(vals) / d01) * delta01;
-        
-        if (not f01.isZero())
-        {
-            if (in_p0)
-                p[0].read().addForce(forcetable, -scale_force*f01);
-    
-            if (in_p1)
-                p[1].read().addForce(forcetable, scale_force*f01);
-        }
-    }
+        const double force = scale_force * force01_expression.evaluate( 
+                                                ExpressionRestraint3D::values() );
 
+        addForce(p[0], p[1], space(), intra_molecule_points01,
+                 in_p0, in_p1, force, forcetable);
+    }
+    
     if (in_p2 or in_p3)
     {
-        Vector f23 = (force23_expression.evaluate(vals) / d23) * delta23;
-    
-        if (not f23.isZero())
-        {
-            if (in_p2)
-                p[2].read().addForce(forcetable, -scale_force*f23);
-    
-            if (in_p3)
-                p[3].read().addForce(forcetable, scale_force*f23);
-        }
+        const double force = scale_force * force23_expression.evaluate( 
+                                                ExpressionRestraint3D::values() );
+
+        addForce(p[2], p[3], space(), intra_molecule_points23,
+                 in_p2, in_p3, force, forcetable);
     }
 }
 
@@ -1040,69 +1032,23 @@ void DoubleDistanceRestraint::force(ForceTable &forcetable, double scale_force) 
     bool in_p1 = p[1].read().usesMoleculesIn(forcetable);
     bool in_p2 = p[2].read().usesMoleculesIn(forcetable);
     bool in_p3 = p[3].read().usesMoleculesIn(forcetable);
-    
-    if (not (in_p0 or in_p1 or in_p2 or in_p3))
-        //this molecule is not affected by the restraint
-        return;
-
-    Vector delta01;
-    Vector delta23;
-    
-    if (intra_molecule_points01)
-        delta01 = p[1].read().point() - p[0].read().point();
-    else
-    {
-        const Vector &point0 = p[0].read().point();
-        Vector point1 = p[1].read().point();
-        
-        point1 = this->space().getMinimumImage(point1, point0);
-        
-        delta01 = point1 - point0;
-    }
-    
-    if (intra_molecule_points23)
-        delta23 = p[3].read().point() - p[2].read().point();
-    else
-    {
-        const Vector &point2 = p[2].read().point();
-        Vector point3 = p[3].read().point();
-        
-        point3 = this->space().getMinimumImage(point3, point2);
-        
-        delta23 = point3 - point2;
-    }
-      
-    double d01 = delta01.length();
-    double d23 = delta23.length();
-
-    Values vals = (r01() == d01) + (r23() == d23);
 
     if (in_p0 or in_p1)
     {
-        Vector f01 = (force01_expression.evaluate(vals) / d01) * delta01;
-        
-        if (not f01.isZero())
-        {
-            if (in_p0)
-                p[0].read().addForce(forcetable, -scale_force*f01);
-    
-            if (in_p1)
-                p[1].read().addForce(forcetable, scale_force*f01);
-        }
-    }
+        const double force = scale_force * force01_expression.evaluate( 
+                                                ExpressionRestraint3D::values() );
 
+        addForce(p[0], p[1], space(), intra_molecule_points01,
+                 in_p0, in_p1, force, forcetable);
+    }
+    
     if (in_p2 or in_p3)
     {
-        Vector f23 = (force23_expression.evaluate(vals) / d23) * delta23;
-    
-        if (not f23.isZero())
-        {
-            if (in_p2)
-                p[2].read().addForce(forcetable, -scale_force*f23);
-    
-            if (in_p3)
-                p[3].read().addForce(forcetable, scale_force*f23);
-        }
+        const double force = scale_force * force23_expression.evaluate( 
+                                                ExpressionRestraint3D::values() );
+
+        addForce(p[2], p[3], space(), intra_molecule_points23,
+                 in_p2, in_p3, force, forcetable);
     }
 }
 
@@ -1124,6 +1070,8 @@ void DoubleDistanceRestraint::update(const MoleculeData &moldata, const Property
             {
                 p[i].edit().update(moldata, map);
             }
+            
+            this->calculateR();
         }
         catch(...)
         {
@@ -1151,6 +1099,8 @@ void DoubleDistanceRestraint::update(const Molecules &molecules, const PropertyM
             {
                 p[i].edit().update(molecules, map);
             }
+            
+            this->calculateR();
         }
         catch(...)
         {
@@ -1226,11 +1176,10 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
     sds << tripledistrest.p[0] << tripledistrest.p[1]
         << tripledistrest.p[2] << tripledistrest.p[3]
         << tripledistrest.p[4] << tripledistrest.p[5]
-        << tripledistrest.nrg_expression
         << tripledistrest.force01_expression
         << tripledistrest.force23_expression
         << tripledistrest.force45_expression
-        << static_cast<const Restraint3D&>(tripledistrest);
+        << static_cast<const ExpressionRestraint3D&>(tripledistrest);
         
     return ds;
 }
@@ -1248,11 +1197,10 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
         sds >> tripledistrest.p[0] >> tripledistrest.p[1]
             >> tripledistrest.p[2] >> tripledistrest.p[3]
             >> tripledistrest.p[4] >> tripledistrest.p[5]
-            >> tripledistrest.nrg_expression
             >> tripledistrest.force01_expression
             >> tripledistrest.force23_expression
             >> tripledistrest.force45_expression
-            >> static_cast<Restraint3D&>(tripledistrest);
+            >> static_cast<ExpressionRestraint3D&>(tripledistrest);
 
         tripledistrest.intra_molecule_points01 = Point::intraMoleculePoints(
                                                                     tripledistrest.p[0],
@@ -1295,21 +1243,53 @@ const Symbol& TripleDistanceRestraint::r45()
     return *(getR45Symbol());
 }
 
-/** Return all of the symbols that can be used in this restraint function */
-Symbols TripleDistanceRestraint::symbols()
-{
-    Symbols syms;
-    syms.insert( r01() );
-    syms.insert( r23() );
-    syms.insert( r45() );
-    
-    return syms;
-}
-
 /** Constructor */
 TripleDistanceRestraint::TripleDistanceRestraint()
-                        : ConcreteProperty<TripleDistanceRestraint,Restraint3D>()
+    : ConcreteProperty<TripleDistanceRestraint,ExpressionRestraint3D>()
 {}
+
+void TripleDistanceRestraint::calculateR()
+{
+    if (this->restraintFunction().isFunction(r01()))
+    {
+        double d01;
+        
+        if (intra_molecule_points01)
+            //we don't use the space when calculating intra-molecular distances
+            d01 = Vector::distance( p[0].read().point(), p[1].read().point() );
+        else
+            d01 = this->space().calcDist( p[0].read().point(),
+                                          p[1].read().point() );
+        
+        ExpressionRestraint3D::_pvt_setValue( r01(), d01 );
+    }
+    
+    if (this->restraintFunction().isFunction(r23()))
+    {
+        double d23;
+        
+        if (intra_molecule_points23)
+            d23 = Vector::distance( p[2].read().point(), p[3].read().point() );
+        else
+            d23 = this->space().calcDist( p[2].read().point(),
+                                          p[3].read().point() );
+
+        ExpressionRestraint3D::_pvt_setValue( r23(), d23 );
+    }
+    
+    if (this->restraintFunction().isFunction(r45()))
+    {
+        double d45;
+        
+        if (intra_molecule_points45)
+            d45 = Vector::distance( p[4].read().point(), p[5].read().point() );
+        else
+            d45 = this->space().calcDist( p[4].read().point(),
+                                          p[5].read().point() );
+
+        ExpressionRestraint3D::_pvt_setValue( r45(), d45 );
+    }
+}
 
 /** Construct a restraint that acts on the three distances defined
     using the passed six points, using the expression 'restraint' */
@@ -1320,8 +1300,7 @@ TripleDistanceRestraint::TripleDistanceRestraint(const PointRef &point0,
                                                  const PointRef &point4,
                                                  const PointRef &point5,
                                                  const Expression &restraint)
-                  : ConcreteProperty<TripleDistanceRestraint,Restraint3D>(),
-                    nrg_expression(restraint)
+    : ConcreteProperty<TripleDistanceRestraint,ExpressionRestraint3D>(restraint)
 {
     p[0] = point0;
     p[1] = point1;
@@ -1330,45 +1309,74 @@ TripleDistanceRestraint::TripleDistanceRestraint(const PointRef &point0,
     p[4] = point4;
     p[5] = point5;
 
-    if (nrg_expression.isConstant())
-    {
-        nrg_expression = nrg_expression.evaluate(Values());
-        force01_expression = 0;
-        force23_expression = 0;
-        force45_expression = 0;
-    }
-    else
-    {
-        ::validateFunction(nrg_expression, symbols());
-        force01_expression = nrg_expression.differentiate(r01());
-        force23_expression = nrg_expression.differentiate(r23());
-        force45_expression = nrg_expression.differentiate(r45());
+    force01_expression = this->restraintFunction().differentiate(r01());
+    force23_expression = this->restraintFunction().differentiate(r23());
+    force45_expression = this->restraintFunction().differentiate(r45());
         
-        if (force01_expression.isConstant())
-            force01_expression = force01_expression.evaluate(Values());
+    if (force01_expression.isConstant())
+        force01_expression = force01_expression.evaluate(Values());
         
-        if (force23_expression.isConstant())
-            force23_expression = force23_expression.evaluate(Values());
+    if (force23_expression.isConstant())
+        force23_expression = force23_expression.evaluate(Values());
 
-        if (force45_expression.isConstant())
-            force45_expression = force45_expression.evaluate(Values());
-    }
+    if (force45_expression.isConstant())
+        force45_expression = force45_expression.evaluate(Values());
     
     intra_molecule_points01 = Point::intraMoleculePoints(p[0], p[1]);
     intra_molecule_points23 = Point::intraMoleculePoints(p[2], p[3]);
     intra_molecule_points45 = Point::intraMoleculePoints(p[4], p[5]);
+
+    this->calculateR();
+}
+
+/** Construct a restraint that acts on the three distances defined
+    using the passed six points, using the expression 'restraint' */
+TripleDistanceRestraint::TripleDistanceRestraint(const PointRef &point0, 
+                                                 const PointRef &point1,
+                                                 const PointRef &point2,
+                                                 const PointRef &point3,
+                                                 const PointRef &point4,
+                                                 const PointRef &point5,
+                                                 const Expression &restraint,
+                                                 const Values &values)
+    : ConcreteProperty<TripleDistanceRestraint,ExpressionRestraint3D>(restraint, values)
+{
+    p[0] = point0;
+    p[1] = point1;
+    p[2] = point2;
+    p[3] = point3;
+    p[4] = point4;
+    p[5] = point5;
+
+    force01_expression = this->restraintFunction().differentiate(r01());
+    force23_expression = this->restraintFunction().differentiate(r23());
+    force45_expression = this->restraintFunction().differentiate(r45());
+        
+    if (force01_expression.isConstant())
+        force01_expression = force01_expression.evaluate(Values());
+        
+    if (force23_expression.isConstant())
+        force23_expression = force23_expression.evaluate(Values());
+
+    if (force45_expression.isConstant())
+        force45_expression = force45_expression.evaluate(Values());
+    
+    intra_molecule_points01 = Point::intraMoleculePoints(p[0], p[1]);
+    intra_molecule_points23 = Point::intraMoleculePoints(p[2], p[3]);
+    intra_molecule_points45 = Point::intraMoleculePoints(p[4], p[5]);
+
+    this->calculateR();
 }
 
 /** Copy constructor */
 TripleDistanceRestraint::TripleDistanceRestraint(const TripleDistanceRestraint &other)
-                        : ConcreteProperty<TripleDistanceRestraint,Restraint3D>(other),
-                          nrg_expression(other.nrg_expression),
-                          force01_expression(other.force01_expression),
-                          force23_expression(other.force23_expression),
-                          force45_expression(other.force45_expression),
-                          intra_molecule_points01(other.intra_molecule_points01),
-                          intra_molecule_points23(other.intra_molecule_points23),
-                          intra_molecule_points45(other.intra_molecule_points45)
+    : ConcreteProperty<TripleDistanceRestraint,ExpressionRestraint3D>(other),
+      force01_expression(other.force01_expression),
+      force23_expression(other.force23_expression),
+      force45_expression(other.force45_expression),
+      intra_molecule_points01(other.intra_molecule_points01),
+      intra_molecule_points23(other.intra_molecule_points23),
+      intra_molecule_points45(other.intra_molecule_points45)
 {
     for (int i=0; i<this->nPoints(); ++i)
     {
@@ -1386,14 +1394,13 @@ TripleDistanceRestraint& TripleDistanceRestraint::operator=(
 {
     if (this != &other)
     {
-        Restraint3D::operator=(other);
+        ExpressionRestraint3D::operator=(other);
 
         for (int i=0; i<this->nPoints(); ++i)
         {
             p[i] = other.p[i];
         }
         
-        nrg_expression = other.nrg_expression;
         force01_expression = other.force01_expression;
         force23_expression = other.force23_expression;
         force45_expression = other.force45_expression;
@@ -1409,11 +1416,10 @@ TripleDistanceRestraint& TripleDistanceRestraint::operator=(
 bool TripleDistanceRestraint::operator==(const TripleDistanceRestraint &other) const
 {
     return this == &other or
-           ( Restraint3D::operator==(other) and
+           ( ExpressionRestraint3D::operator==(other) and
              p[0] == other.p[0] and p[1] == other.p[1] and
              p[2] == other.p[2] and p[3] == other.p[3] and
              p[4] == other.p[4] and p[5] == other.p[5] and
-             nrg_expression == other.nrg_expression and
              force01_expression == other.force01_expression and
              force23_expression == other.force23_expression and
              force45_expression == other.force45_expression);
@@ -1480,6 +1486,60 @@ const Point& TripleDistanceRestraint::point5() const
     return p[5].read();
 }
 
+/** Return the built-in symbols of this restraint */
+Symbols TripleDistanceRestraint::builtinSymbols() const
+{
+    Symbols symbols;
+    
+    if (this->restraintFunction().isFunction(r01()))
+        symbols += r01();
+        
+    if (this->restraintFunction().isFunction(r23()))
+        symbols += r23();
+
+    if (this->restraintFunction().isFunction(r45()))
+        symbols += r45();
+
+    return symbols;
+}
+
+/** Return the values of the built-in symbols of this restraint */
+Values TripleDistanceRestraint::builtinValues() const
+{
+    Values vals;
+    
+    if (this->restraintFunction().isFunction(r01()))
+    {
+        vals.set( r01(), this->values()[r01()] );
+    }
+    
+    if (this->restraintFunction().isFunction(r23()))
+    {
+        vals.set( r23(), this->values()[r23()] );
+    }
+    
+    if (this->restraintFunction().isFunction(r45()))
+    {
+        vals.set( r45(), this->values()[r45()] );
+    }
+
+    return vals;
+}
+
+/** Return the differential of this restraint with respect to 
+    the symbol 'symbol' */
+RestraintPtr TripleDistanceRestraint::differentiate(const Symbol &symbol) const
+{
+    if (this->restraintFunction().isFunction(symbol))
+    {
+        return TripleDistanceRestraint( p[0], p[1], p[2], p[3], p[4], p[5],
+                                        restraintFunction().differentiate(symbol),
+                                        this->values() );
+    }
+    else
+        return NullRestraint();
+}
+
 /** Set the space used to evaluate the energy of this restraint
 
     \throw SireVol::incompatible_space
@@ -1497,7 +1557,9 @@ void TripleDistanceRestraint::setSpace(const Space &new_space)
                 p[i].edit().setSpace(new_space);
             }
             
-            Restraint3D::setSpace(new_space);
+            ExpressionRestraint3D::setSpace(new_space);
+            
+            this->calculateR();
         }
         catch(...)
         {
@@ -1505,12 +1567,6 @@ void TripleDistanceRestraint::setSpace(const Space &new_space)
             throw;
         }
     }
-}
-
-/** Return the function used to calculate the restraint energy */
-const Expression& TripleDistanceRestraint::restraintFunction() const
-{
-    return nrg_expression;
 }
 
 /** Return the function used to calculate the restraint force along the 
@@ -1534,42 +1590,6 @@ const Expression& TripleDistanceRestraint::differentialRestraintFunction45() con
     return force45_expression;
 }
 
-/** Return the energy of this restraint */
-MolarEnergy TripleDistanceRestraint::energy() const
-{
-    if (nrg_expression.isConstant())
-        return MolarEnergy( nrg_expression.evaluate(Values()) );
-    else
-    {
-        double d01;
-        double d23;
-        double d45;
-        
-        if (intra_molecule_points01)
-            //we don't use the space when calculating intra-molecular distances
-            d01 = Vector::distance( p[0].read().point(), p[1].read().point() );
-        else
-            d01 = this->space().calcDist( p[0].read().point(),
-                                          p[1].read().point() );
-        
-        if (intra_molecule_points23)
-            d23 = Vector::distance( p[2].read().point(), p[3].read().point() );
-        else
-            d23 = this->space().calcDist( p[2].read().point(),
-                                          p[3].read().point() );
-        
-        if (intra_molecule_points45)
-            d45 = Vector::distance( p[5].read().point(), p[4].read().point() );
-        else
-            d45 = this->space().calcDist( p[4].read().point(),
-                                          p[5].read().point() );
-                                                                                                                                      
-        return MolarEnergy( nrg_expression.evaluate( (r01() == d01) +
-                                                     (r23() == d23) +
-                                                     (r45() == d45) ) );
-    }
-}
-
 /** Calculate the force acting on the molecule in the forcetable 'forcetable' 
     caused by this restraint, and add it on to the forcetable scaled by 
     'scale_force' */
@@ -1581,97 +1601,32 @@ void TripleDistanceRestraint::force(MolForceTable &forcetable, double scale_forc
     bool in_p3 = p[3].read().contains(forcetable.molNum());
     bool in_p4 = p[4].read().contains(forcetable.molNum());
     bool in_p5 = p[5].read().contains(forcetable.molNum());
-    
-    if (not (in_p0 or in_p1 or in_p2 or in_p3 or in_p4 or in_p5))
-        //this molecule is not affected by the restraint
-        return;
-        
-    Vector delta01;
-    Vector delta23;
-    Vector delta45;
-    
-    if (intra_molecule_points01)
-        delta01 = p[1].read().point() - p[0].read().point();
-    else
-    {
-        const Vector &point0 = p[0].read().point();
-        Vector point1 = p[1].read().point();
-        
-        point1 = this->space().getMinimumImage(point1, point0);
-        
-        delta01 = point1 - point0;
-    }
-      
-    if (intra_molecule_points23)
-        delta23 = p[3].read().point() - p[2].read().point();
-    else
-    {
-        const Vector &point2 = p[2].read().point();
-        Vector point3 = p[3].read().point();
-        
-        point3 = this->space().getMinimumImage(point3, point2);
-        
-        delta23 = point3 - point2;
-    }
-      
-    if (intra_molecule_points45)
-        delta45 = p[5].read().point() - p[4].read().point();
-    else
-    {
-        const Vector &point4 = p[4].read().point();
-        Vector point5 = p[5].read().point();
-        
-        point5 = this->space().getMinimumImage(point5, point4);
-        
-        delta45 = point5 - point4;
-    }
-      
-    double d01 = delta01.length();
-    double d23 = delta23.length();
-    double d45 = delta45.length();
-
-    Values vals = (r01() == d01) + (r23() == d23) + (r45() == d45);
 
     if (in_p0 or in_p1)
     {
-        Vector f01 = (force01_expression.evaluate(vals) / d01) * delta01;
-        
-        if (not f01.isZero())
-        {
-            if (in_p0)
-                p[0].read().addForce(forcetable, -scale_force*f01);
-    
-            if (in_p1)
-                p[1].read().addForce(forcetable, scale_force*f01);
-        }
-    }
+        const double force = scale_force * force01_expression.evaluate( 
+                                                ExpressionRestraint3D::values() );
 
+        addForce(p[0], p[1], space(), intra_molecule_points01,
+                 in_p0, in_p1, force, forcetable);
+    }
+    
     if (in_p2 or in_p3)
     {
-        Vector f23 = (force23_expression.evaluate(vals) / d23) * delta23;
-    
-        if (not f23.isZero())
-        {
-            if (in_p2)
-                p[2].read().addForce(forcetable, -scale_force*f23);
-    
-            if (in_p3)
-                p[3].read().addForce(forcetable, scale_force*f23);
-        }
-    }
+        const double force = scale_force * force23_expression.evaluate( 
+                                                ExpressionRestraint3D::values() );
 
+        addForce(p[2], p[3], space(), intra_molecule_points23,
+                 in_p2, in_p3, force, forcetable);
+    }
+    
     if (in_p4 or in_p5)
     {
-        Vector f45 = (force45_expression.evaluate(vals) / d45) * delta45;
-    
-        if (not f45.isZero())
-        {
-            if (in_p4)
-                p[4].read().addForce(forcetable, -scale_force*f45);
-    
-            if (in_p5)
-                p[5].read().addForce(forcetable, scale_force*f45);
-        }
+        const double force = scale_force * force45_expression.evaluate( 
+                                                ExpressionRestraint3D::values() );
+
+        addForce(p[4], p[5], space(), intra_molecule_points45,
+                 in_p4, in_p5, force, forcetable);
     }
 }
 
@@ -1686,97 +1641,32 @@ void TripleDistanceRestraint::force(ForceTable &forcetable, double scale_force) 
     bool in_p3 = p[3].read().usesMoleculesIn(forcetable);
     bool in_p4 = p[4].read().usesMoleculesIn(forcetable);
     bool in_p5 = p[5].read().usesMoleculesIn(forcetable);
-    
-    if (not (in_p0 or in_p1 or in_p2 or in_p3 or in_p4 or in_p5))
-        //this molecule is not affected by the restraint
-        return;
-
-    Vector delta01;
-    Vector delta23;
-    Vector delta45;
-    
-    if (intra_molecule_points01)
-        delta01 = p[1].read().point() - p[0].read().point();
-    else
-    {
-        const Vector &point0 = p[0].read().point();
-        Vector point1 = p[1].read().point();
-        
-        point1 = this->space().getMinimumImage(point1, point0);
-        
-        delta01 = point1 - point0;
-    }
-    
-    if (intra_molecule_points23)
-        delta23 = p[3].read().point() - p[2].read().point();
-    else
-    {
-        const Vector &point2 = p[2].read().point();
-        Vector point3 = p[3].read().point();
-        
-        point3 = this->space().getMinimumImage(point3, point2);
-        
-        delta23 = point3 - point2;
-    }
-    
-    if (intra_molecule_points45)
-        delta45 = p[5].read().point() - p[4].read().point();
-    else
-    {
-        const Vector &point4 = p[4].read().point();
-        Vector point5 = p[5].read().point();
-        
-        point5 = this->space().getMinimumImage(point5, point4);
-        
-        delta45 = point5 - point4;
-    }
-      
-    double d01 = delta01.length();
-    double d23 = delta23.length();
-    double d45 = delta45.length();
-
-    Values vals = (r01() == d01) + (r23() == d23) + (r45() == d45);
 
     if (in_p0 or in_p1)
     {
-        Vector f01 = (force01_expression.evaluate(vals) / d01) * delta01;
-        
-        if (not f01.isZero())
-        {
-            if (in_p0)
-                p[0].read().addForce(forcetable, -scale_force*f01);
-    
-            if (in_p1)
-                p[1].read().addForce(forcetable, scale_force*f01);
-        }
-    }
+        const double force = scale_force * force01_expression.evaluate( 
+                                                ExpressionRestraint3D::values() );
 
+        addForce(p[0], p[1], space(), intra_molecule_points01,
+                 in_p0, in_p1, force, forcetable);
+    }
+    
     if (in_p2 or in_p3)
     {
-        Vector f23 = (force23_expression.evaluate(vals) / d23) * delta23;
-    
-        if (not f23.isZero())
-        {
-            if (in_p2)
-                p[2].read().addForce(forcetable, -scale_force*f23);
-    
-            if (in_p3)
-                p[3].read().addForce(forcetable, scale_force*f23);
-        }
-    }
+        const double force = scale_force * force23_expression.evaluate( 
+                                                ExpressionRestraint3D::values() );
 
+        addForce(p[2], p[3], space(), intra_molecule_points23,
+                 in_p2, in_p3, force, forcetable);
+    }
+    
     if (in_p4 or in_p5)
     {
-        Vector f45 = (force45_expression.evaluate(vals) / d45) * delta45;
-    
-        if (not f45.isZero())
-        {
-            if (in_p4)
-                p[4].read().addForce(forcetable, -scale_force*f45);
-    
-            if (in_p5)
-                p[5].read().addForce(forcetable, scale_force*f45);
-        }
+        const double force = scale_force * force45_expression.evaluate( 
+                                                ExpressionRestraint3D::values() );
+
+        addForce(p[4], p[5], space(), intra_molecule_points45,
+                 in_p4, in_p5, force, forcetable);
     }
 }
 
@@ -1798,6 +1688,8 @@ void TripleDistanceRestraint::update(const MoleculeData &moldata, const Property
             {
                 p[i].edit().update(moldata, map);
             }
+            
+            this->calculateR();
         }
         catch(...)
         {
@@ -1825,6 +1717,8 @@ void TripleDistanceRestraint::update(const Molecules &molecules, const PropertyM
             {
                 p[i].edit().update(molecules, map);
             }
+            
+            this->calculateR();
         }
         catch(...)
         {

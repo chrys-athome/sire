@@ -58,6 +58,15 @@ public:
     
     ~Symbols();
     
+    Symbols& operator+=(const Symbols &other);
+    Symbols& operator-=(const Symbols &other);
+    
+    Symbols operator+(const Symbols &other) const;
+    Symbols operator-(const Symbols &other) const;
+    
+    Symbols& add(const Symbols &other);
+    Symbols& subtract(const Symbols &other);
+        
     QString toString() const;
     
     void insert(const Symbol &symbol);
@@ -92,6 +101,44 @@ inline Symbols::Symbols(const QList<Symbol> &other) : QSet<Symbol>()
 
 inline Symbols::~Symbols()
 {}
+
+inline Symbols& Symbols::add(const Symbols &other)
+{
+    QSet<Symbol>::unite(other);
+    return *this;
+}
+
+inline Symbols& Symbols::subtract(const Symbols &other)
+{
+    QSet<Symbol>::subtract(other);
+    return *this;
+}
+
+inline Symbols& Symbols::operator+=(const Symbols &other)
+{
+    return Symbols::add(other);
+}
+
+inline Symbols& Symbols::operator-=(const Symbols &other)
+{
+    return Symbols::subtract(other);
+}
+
+inline Symbols Symbols::operator+(const Symbols &other) const
+{
+    Symbols ret(*this);
+    ret += other;
+    
+    return ret;
+}
+
+inline Symbols Symbols::operator-(const Symbols &other) const
+{
+    Symbols ret(*this);
+    ret -= other;
+    
+    return ret;
+}
 
 inline QString Symbols::toString() const
 {

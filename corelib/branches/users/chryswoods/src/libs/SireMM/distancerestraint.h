@@ -35,6 +35,7 @@
 
 #include "SireCAS/expression.h"
 #include "SireCAS/symbol.h"
+#include "SireCAS/values.h"
 
 #include "SireUnits/dimensions.h"
 
@@ -75,7 +76,7 @@ typedef SireUnits::Dimension::PhysUnit<1,0,-2,0,0,-1,0> HarmonicDistanceForceCon
     @author Christopher Woods
 */
 class SIREMM_EXPORT DistanceRestraint 
-        : public SireBase::ConcreteProperty<DistanceRestraint,Restraint3D>
+        : public SireBase::ConcreteProperty<DistanceRestraint,ExpressionRestraint3D>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const DistanceRestraint&);
@@ -86,6 +87,9 @@ public:
     
     DistanceRestraint(const PointRef &point0, const PointRef &point1,
                       const Expression &restraint);
+    
+    DistanceRestraint(const PointRef &point0, const PointRef &point1,
+                      const Expression &restraint, const Values &values);
 
     DistanceRestraint(const DistanceRestraint &other);
     
@@ -106,14 +110,16 @@ public:
     int nPoints() const;
     
     static const Symbol& r();
-    static Symbols symbols();
+
+    Symbols builtinSymbols() const;
+    
+    Values builtinValues() const;
+
+    RestraintPtr differentiate(const Symbol &symbol) const;
 
     void setSpace(const Space &space);
 
-    const Expression& restraintFunction() const;
     const Expression& differentialRestraintFunction() const;
-    
-    SireUnits::Dimension::MolarEnergy energy() const;
 
     void force(MolForceTable &forcetable, double scale_force=1) const;
     void force(ForceTable &forcetable, double scale_force=1) const;
@@ -149,11 +155,10 @@ protected:
                       const Expression &force_restraint);
 
 private:
+    void calculateR();
+
     /** The two points between which the restraint is calculated */
     PointPtr p[2];
-    
-    /** The expression used to calculate the energy */
-    Expression nrg_expression;
     
     /** The expression used to calculate the force */
     Expression force_expression;
@@ -171,7 +176,7 @@ private:
     @author Christopher Woods
 */
 class SIREMM_EXPORT DoubleDistanceRestraint 
-            : public SireBase::ConcreteProperty<DoubleDistanceRestraint,Restraint3D>
+    : public SireBase::ConcreteProperty<DoubleDistanceRestraint,ExpressionRestraint3D>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const DoubleDistanceRestraint&);
@@ -183,6 +188,10 @@ public:
     DoubleDistanceRestraint(const PointRef &point0, const PointRef &point1,
                             const PointRef &point2, const PointRef &point3,
                             const Expression &restraint);
+
+    DoubleDistanceRestraint(const PointRef &point0, const PointRef &point1,
+                            const PointRef &point2, const PointRef &point3,
+                            const Expression &restraint, const Values &values);
 
     DoubleDistanceRestraint(const DoubleDistanceRestraint &other);
     
@@ -207,15 +216,16 @@ public:
     static const Symbol& r01();
     static const Symbol& r23();
 
-    static Symbols symbols();
+    Symbols builtinSymbols() const;
+    Values builtinValues() const;
+
+    RestraintPtr differentiate(const Symbol &symbol) const;
 
     void setSpace(const Space &space);
 
     const Expression& restraintFunction() const;
     const Expression& differentialRestraintFunction01() const;
     const Expression& differentialRestraintFunction23() const;
-    
-    SireUnits::Dimension::MolarEnergy energy() const;
 
     void force(MolForceTable &forcetable, double scale_force=1) const;
     void force(ForceTable &forcetable, double scale_force=1) const;
@@ -235,11 +245,10 @@ public:
     bool usesMoleculesIn(const Molecules &molecules) const;
 
 private:
+    void calculateR();
+
     /** The four points between which the restraint is calculated */
     PointPtr p[4];
-    
-    /** The expression used to calculate the energy */
-    Expression nrg_expression;
     
     /** The expression used to calculate the force between points 0 and 1 */
     Expression force01_expression;
@@ -264,7 +273,7 @@ private:
     @author Christopher Woods
 */
 class SIREMM_EXPORT TripleDistanceRestraint 
-            : public SireBase::ConcreteProperty<TripleDistanceRestraint,Restraint3D>
+       : public SireBase::ConcreteProperty<TripleDistanceRestraint,ExpressionRestraint3D>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const TripleDistanceRestraint&);
@@ -277,6 +286,11 @@ public:
                             const PointRef &point2, const PointRef &point3,
                             const PointRef &point4, const PointRef &point5,
                             const Expression &restraint);
+    
+    TripleDistanceRestraint(const PointRef &point0, const PointRef &point1,
+                            const PointRef &point2, const PointRef &point3,
+                            const PointRef &point4, const PointRef &point5,
+                            const Expression &restraint, const Values &values);
 
     TripleDistanceRestraint(const TripleDistanceRestraint &other);
     
@@ -304,7 +318,10 @@ public:
     static const Symbol& r23();
     static const Symbol& r45();
 
-    static Symbols symbols();
+    Symbols builtinSymbols() const;
+    Values builtinValues() const;
+
+    RestraintPtr differentiate(const Symbol &symbol) const;
 
     void setSpace(const Space &space);
 
@@ -312,8 +329,6 @@ public:
     const Expression& differentialRestraintFunction01() const;
     const Expression& differentialRestraintFunction23() const;
     const Expression& differentialRestraintFunction45() const;
-    
-    SireUnits::Dimension::MolarEnergy energy() const;
 
     void force(MolForceTable &forcetable, double scale_force=1) const;
     void force(ForceTable &forcetable, double scale_force=1) const;
@@ -333,11 +348,10 @@ public:
     bool usesMoleculesIn(const Molecules &molecules) const;
 
 private:
+    void calculateR();
+
     /** The six points between which the restraint is calculated */
     PointPtr p[6];
-    
-    /** The expression used to calculate the energy */
-    Expression nrg_expression;
     
     /** The expression used to calculate the force between points 0 and 1 */
     Expression force01_expression;

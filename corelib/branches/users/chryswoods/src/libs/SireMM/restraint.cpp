@@ -33,14 +33,22 @@
 #include "SireMol/molid.h"
 #include "SireMol/molnum.h"
 
+#include "SireCAS/symbols.h"
+#include "SireCAS/values.h"
+#include "SireCAS/expression.h"
+
 #include "SireFF/forcetable.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include "SireCAS/errors.h"
+#include "SireError/errors.h"
+
 using namespace SireMM;
 using namespace SireFF;
 using namespace SireMol;
+using namespace SireCAS;
 using namespace SireBase;
 using namespace SireUnits::Dimension;
 using namespace SireStream;
@@ -205,6 +213,219 @@ void Restraint3D::setSpace(const Space &space)
     spce = space;
 }
 
+///////////
+//////////// Implementation of ExpressionRestraint3D
+////////////
+
+static const RegisterMetaType<ExpressionRestraint3D> r_exprestraint3d( MAGIC_ONLY,
+                                                   ExpressionRestraint3D::typeName() );
+
+/** Serialise to a binary datastream */
+QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, 
+                                      const ExpressionRestraint3D &exprestraint3d)
+{
+    writeHeader(ds, r_exprestraint3d, 1);
+    
+    SharedDataStream sds(ds);
+    
+    sds << exprestraint3d.nrg_expression << exprestraint3d.vals
+        << static_cast<const Restraint3D&>(exprestraint3d);
+        
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, 
+                                      ExpressionRestraint3D &exprestraint3d)
+{
+    VersionID v = readHeader(ds, r_exprestraint3d);
+    
+    if (v == 1)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> exprestraint3d.nrg_expression >> exprestraint3d.vals
+            >> static_cast<Restraint3D&>(exprestraint3d);
+    }
+    else
+        throw version_error( v, "1", r_exprestraint3d, CODELOC );
+        
+    return ds;
+}
+
+/** Constructor */
+ExpressionRestraint3D::ExpressionRestraint3D() : Restraint3D()
+{}
+
+/** Construct to use the passed energy expression, with the supplied  
+    user values */
+ExpressionRestraint3D::ExpressionRestraint3D(const Expression &expression,
+                                             const Values &values)
+                      : Restraint3D(), nrg_expression(expression)
+{
+    if (expression.isConstant())
+    {
+        nrg_expression = expression.evaluate(Values());
+    }
+    else
+    {
+        if (not values.isEmpty())
+        {
+            //put in any missing values into 'user_vals'
+            foreach (Symbol symbol, this->userSymbols())
+            {
+                if (values.contains(symbol))
+                    vals.set( symbol, values[symbol] );
+            }
+        }
+    }
+}
+
+/** Copy constructor */
+ExpressionRestraint3D::ExpressionRestraint3D(const ExpressionRestraint3D &other)
+                      : Restraint3D(other), nrg_expression(other.nrg_expression),
+                        vals(other.vals)
+{}
+
+/** Destructor */
+ExpressionRestraint3D::~ExpressionRestraint3D()
+{}
+
+/** Copy assignment operator */
+ExpressionRestraint3D& ExpressionRestraint3D::operator=(
+                                                const ExpressionRestraint3D &other)
+{
+    if (this != &other)
+    {
+        Restraint3D::operator=(other);
+        nrg_expression = other.nrg_expression;
+        vals = other.vals;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool ExpressionRestraint3D::operator==(const ExpressionRestraint3D &other) const
+{
+    return this == &other or
+           (Restraint3D::operator==(other) and
+            nrg_expression == other.nrg_expression and
+            vals == other.vals);
+}
+
+/** Comparison operator */
+bool ExpressionRestraint3D::operator!=(const ExpressionRestraint3D &other) const
+{
+    return not ExpressionRestraint3D::operator==(other);
+}
+
+/** Return a string representation of this restraint */
+QString ExpressionRestraint3D::toString() const
+{
+    if (vals.isEmpty())
+        return QString("%1( %2 )").arg(this->what()).arg(nrg_expression.toString());
+    else
+        return QString("%1( %2 ; %3 )").arg( this->what() )
+                                       .arg( nrg_expression.toString() )
+                                       .arg( vals.toString() );
+}
+
+/** Return the function used to evaluate the restraint */
+const Expression& ExpressionRestraint3D::restraintFunction() const
+{
+    return nrg_expression;
+}
+
+/** Internal function used to set the value of the passed symbol to 'value' */
+void ExpressionRestraint3D::_pvt_setValue(const Symbol &symbol, double value)
+{
+    vals.set(symbol, value);
+}
+
+/** Set the value of 'symbol' to 'value'. Nothing is done if this
+    symbol is not in the passed expression. 
+    
+    \throw SireError::invalid_arg
+*/
+void ExpressionRestraint3D::setValue(const Symbol &symbol, double value)
+{
+    if (nrg_expression.isFunction(symbol))
+    {
+        if (this->builtinSymbols().contains(symbol))
+            throw SireError::invalid_arg( QObject::tr(
+                "You cannot set the value of the symbol %1 to %2 in "
+                "the restraint %3 as this symbol is one of the built-in "
+                "unchangable symbols of this restraint (%4).")
+                    .arg(symbol.toString()).arg(value)
+                    .arg(this->toString())
+                    .arg( Sire::toString(this->builtinSymbols()) ), CODELOC );
+
+        vals.set( symbol, value );
+    }
+}
+
+/** Return the value of the symbol 'symbol'
+
+    \throw SireCAS::missing_symbol
+*/
+double ExpressionRestraint3D::getValue(const Symbol &symbol) const
+{
+    if (not nrg_expression.isFunction(symbol))
+    {
+        throw SireCAS::missing_symbol( QObject::tr(
+                "There is no symbol %1 in the restraint %2. Available symbols "
+                "are %3.")
+                    .arg(symbol.toString(), this->toString())
+                    .arg(Sire::toString(this->symbols())), CODELOC );
+    }
+    
+    return vals[symbol];
+}
+
+/** Return whether or not this restraint has a value for the symbol 'symbol' */
+bool ExpressionRestraint3D::hasValue(const Symbol &symbol) const
+{
+    return nrg_expression.isFunction(symbol);
+}
+
+/** Return all of the symbols available in this restraint */
+Symbols ExpressionRestraint3D::symbols() const
+{
+    return nrg_expression.symbols();
+}
+
+/** Return all of the symbols in this expression that can be set by the user */
+Symbols ExpressionRestraint3D::userSymbols() const
+{
+    return this->symbols() - this->builtinSymbols();
+}
+
+/** Return all of the values set in the restraint expression */
+Values ExpressionRestraint3D::values() const
+{
+    return vals;
+}
+
+/** Return all of the values set by the used in this restraint expression */
+Values ExpressionRestraint3D::userValues() const
+{
+    Values ret;
+    
+    foreach (Symbol symbol, this->userSymbols())
+    {
+        ret.set( symbol, vals[symbol] );
+    }
+    
+    return ret;
+}
+
+/** Return the current energy of this restraint */
+MolarEnergy ExpressionRestraint3D::energy() const
+{
+    return MolarEnergy( nrg_expression.evaluate(vals) );
+}
+
 ////////////
 //////////// Implementation of NullRestraint
 ////////////
@@ -274,6 +495,12 @@ const char* NullRestraint::typeName()
     return QMetaType::typeName( qMetaTypeId<NullRestraint>() );
 }
 
+/** Return a string representation of this restraint */
+QString NullRestraint::toString() const
+{
+    return QObject::tr("NullRestraint()");
+}
+
 /** The null restraint has no energy */
 MolarEnergy NullRestraint::energy() const
 {
@@ -324,4 +551,75 @@ bool NullRestraint::usesMoleculesIn(const ForceTable &forcetable) const
 bool NullRestraint::usesMoleculesIn(const Molecules &molecules) const
 {
     return false;
+}
+
+/** Set the value of the symbol 'symbol' in this restraint to 'value'.
+    This does nothing if this symbol is not used in this restraint */
+void NullRestraint::setValue(const Symbol&, double)
+{}
+
+/** Return the value of the symbol 'symbol' in this restraint. This
+    raises an exception if this symbol is not used
+    
+    \throw SireCAS::missing_symbol
+*/
+double NullRestraint::getValue(const Symbol &symbol) const
+{
+    throw SireCAS::missing_symbol( QObject::tr(
+            "The NullRestraint class does not use the symbol %1.")
+                .arg(symbol.toString()), CODELOC );
+                
+    return 0;
+}
+
+/** Return whether or not this restraint has a value for the symbol 'symbol' */
+bool NullRestraint::hasValue(const Symbol&) const
+{
+    return false;
+}
+
+/** Return all of the symbols uses by this restraint */
+Symbols NullRestraint::symbols() const
+{
+    return Symbols();
+}
+
+/** Return the symbols that can be set by the user */
+Symbols NullRestraint::userSymbols() const
+{
+    return Symbols();
+}
+
+/** Return the symbols that are built into this restraint */
+Symbols NullRestraint::builtinSymbols() const
+{
+    return Symbols();
+}
+
+/** Return all of the values of all of the symbols used in this restraint */
+Values NullRestraint::values() const
+{
+    return Values();
+}
+
+/** Return the values that have been supplied by the user */
+Values NullRestraint::userValues() const
+{
+    return Values();
+}
+
+/** Return the values that are built into this restraint */
+Values NullRestraint::builtinValues() const
+{
+    return Values();
+}
+
+/** Return the differential of this restraint with respect to the 
+    symbol 'symbol'
+    
+    \throw SireCAS::unavailable_differential
+*/
+RestraintPtr NullRestraint::differentiate(const Symbol&) const
+{
+    return *this;
 }

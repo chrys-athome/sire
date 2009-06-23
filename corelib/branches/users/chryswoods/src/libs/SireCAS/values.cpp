@@ -119,6 +119,18 @@ Values::Values(const QHash<Symbol,double> &values)
 Values::Values(const Values &other) : vals(other.vals)
 {}
 
+/** Comparison operator */
+bool Values::operator==(const Values &other) const
+{
+    return vals == other.vals;
+}
+
+/** Comparison operator */
+bool Values::operator!=(const Values &other) const
+{
+    return vals != other.vals;
+}
+
 /** Return a string representation of these values */
 QString Values::toString() const
 {

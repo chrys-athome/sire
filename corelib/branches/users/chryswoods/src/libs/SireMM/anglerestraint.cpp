@@ -71,9 +71,8 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds,
     SharedDataStream sds(ds);
     
     sds << angrest.p[0] << angrest.p[1] << angrest.p[2]
-        << angrest.nrg_expression
         << angrest.force_expression
-        << static_cast<const Restraint3D&>(angrest);
+        << static_cast<const ExpressionRestraint3D&>(angrest);
         
     return ds;
 }
@@ -88,9 +87,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, AngleRestraint &angrest)
         SharedDataStream sds(ds);
         
         sds >> angrest.p[0] >> angrest.p[1] >> angrest.p[2]
-            >> angrest.nrg_expression
             >> angrest.force_expression
-            >> static_cast<Restraint3D&>(angrest);
+            >> static_cast<ExpressionRestraint3D&>(angrest);
 
         angrest.intra_molecule_points = Point::intraMoleculePoints(angrest.p[0],
                                                                    angrest.p[1]) and
@@ -111,37 +109,28 @@ const Symbol& AngleRestraint::theta()
     return *(getThetaSymbol());
 }
 
-/** Return all of the symbols that can be used in this restraint function */
-Symbols AngleRestraint::symbols()
-{
-    return Symbols(theta());
-}
-
 /** Constructor */
 AngleRestraint::AngleRestraint()
-               : ConcreteProperty<AngleRestraint,Restraint3D>()
+               : ConcreteProperty<AngleRestraint,ExpressionRestraint3D>()
 {}
 
-static void validateFunction(const Expression &function,
-                             const Symbol &symbol)
+void AngleRestraint::calculateTheta()
 {
-    if (not function.isFunction(symbol))
-        throw SireCAS::missing_symbol( QObject::tr(
-            "The expression used for a positional restraint must be "
-            "a function of \"%1\". The passed expression (%2) is not "
-            "usable as it is a function of %3.")
-                .arg(symbol.toString())
-                .arg(function.toString())
-                .arg( Sire::toString(function.symbols()) ), CODELOC );
-                
-    if (function.symbols().count() > 1)
-        throw SireError::invalid_arg( QObject::tr(
-            "The expression used for a positional restraint must only "
-            "be a function of \"%1\". The passed expression (%2) is a "
-            "function of %3.")
-                .arg(symbol.toString())
-                .arg(function.toString())
-                .arg( Sire::toString(function.symbols()) ), CODELOC );
+    if (this->restraintFunction().isFunction(theta()))
+    {
+        SireUnits::Dimension::Angle angle;
+        
+        if (intra_molecule_points)
+            //we don't use the space when calculating intra-molecular angles
+            angle = Vector::angle( p[0].read().point(), p[1].read().point(),
+                                   p[2].read().point() );
+        else
+            angle = this->space().calcAngle( p[0].read().point(),
+                                             p[1].read().point(),
+                                             p[2].read().point() );
+                                                  
+        ExpressionRestraint3D::_pvt_setValue(theta(), angle);
+    }
 }
 
 /** Construct a restraint that acts on the angle within the 
@@ -150,29 +139,45 @@ static void validateFunction(const Expression &function,
     'restraint' */
 AngleRestraint::AngleRestraint(const PointRef &point0, const PointRef &point1,
                                const PointRef &point2, const Expression &restraint)
-                  : ConcreteProperty<AngleRestraint,Restraint3D>(),
-                    nrg_expression(restraint)
+                  : ConcreteProperty<AngleRestraint,ExpressionRestraint3D>(restraint)
 {
     p[0] = point0;
     p[1] = point1;
     p[2] = point2;
 
-    if (nrg_expression.isConstant())
-    {
-        nrg_expression = nrg_expression.evaluate(Values());
-        force_expression = 0;
-    }
-    else
-    {
-        ::validateFunction(nrg_expression, theta());
-        force_expression = nrg_expression.differentiate(theta());
+    force_expression = this->restraintFunction().differentiate(theta());
         
-        if (force_expression.isConstant())
-            force_expression = force_expression.evaluate(Values());
-    }
+    if (force_expression.isConstant())
+        force_expression = force_expression.evaluate(Values());
     
     intra_molecule_points = Point::intraMoleculePoints(p[0], p[1]) and
                             Point::intraMoleculePoints(p[0], p[2]);
+
+    this->calculateTheta();
+}
+
+/** Construct a restraint that acts on the angle within the 
+    three points 'point0', 'point1' and 'point2' (theta == a(012)),
+    restraining the angle within these points using the expression 
+    'restraint' */
+AngleRestraint::AngleRestraint(const PointRef &point0, const PointRef &point1,
+                               const PointRef &point2, const Expression &restraint,
+                               const Values &values)
+      : ConcreteProperty<AngleRestraint,ExpressionRestraint3D>(restraint, values)
+{
+    p[0] = point0;
+    p[1] = point1;
+    p[2] = point2;
+
+    force_expression = this->restraintFunction().differentiate(theta());
+        
+    if (force_expression.isConstant())
+        force_expression = force_expression.evaluate(Values());
+    
+    intra_molecule_points = Point::intraMoleculePoints(p[0], p[1]) and
+                            Point::intraMoleculePoints(p[0], p[2]);
+
+    this->calculateTheta();
 }
 
 /** Internal constructor used to construct a restraint using the specified
@@ -181,22 +186,12 @@ AngleRestraint::AngleRestraint(const PointRef &point0, const PointRef &point1,
                                const PointRef &point2,
                                const Expression &nrg_restraint,
                                const Expression &force_restraint)
-                  : ConcreteProperty<AngleRestraint,Restraint3D>(),
-                    nrg_expression(nrg_restraint),
-                    force_expression(force_restraint)
+               : ConcreteProperty<AngleRestraint,ExpressionRestraint3D>(nrg_restraint),
+                 force_expression(force_restraint)
 {
     p[0] = point0;
     p[1] = point1;
     p[2] = point2;
-
-    if (nrg_expression.isConstant())
-    {
-        nrg_expression = nrg_expression.evaluate(Values());
-    }
-    else
-    {
-        ::validateFunction(nrg_expression, theta());
-    }
 
     if (force_expression.isConstant())
     {
@@ -204,17 +199,23 @@ AngleRestraint::AngleRestraint(const PointRef &point0, const PointRef &point1,
     }
     else
     {
-        ::validateFunction(force_expression, theta());
+        if (not this->restraintFunction().symbols().contains(force_expression.symbols()))
+            throw SireError::incompatible_error( QObject::tr(
+                "You cannot use a force function which uses more symbols "
+                "(%1) than the energy function (%2).")
+                    .arg( Sire::toString(force_expression.symbols()),
+                          Sire::toString(restraintFunction().symbols()) ), CODELOC );
     }
     
     intra_molecule_points = Point::intraMoleculePoints(p[0], p[1]) and
                             Point::intraMoleculePoints(p[0], p[2]);
+
+    this->calculateTheta();
 }
 
 /** Copy constructor */
 AngleRestraint::AngleRestraint(const AngleRestraint &other)
-                  : ConcreteProperty<AngleRestraint,Restraint3D>(other),
-                    nrg_expression(other.nrg_expression),
+                  : ConcreteProperty<AngleRestraint,ExpressionRestraint3D>(other),
                     force_expression(other.force_expression),
                     intra_molecule_points(other.intra_molecule_points)
 {
@@ -233,14 +234,13 @@ AngleRestraint& AngleRestraint::operator=(const AngleRestraint &other)
 {
     if (this != &other)
     {
-        Restraint3D::operator=(other);
+        ExpressionRestraint3D::operator=(other);
 
         for (int i=0; i<this->nPoints(); ++i)
         {
             p[i] = other.p[i];
         }
         
-        nrg_expression = other.nrg_expression;
         force_expression = other.force_expression;
         intra_molecule_points = other.intra_molecule_points;
     }
@@ -252,10 +252,9 @@ AngleRestraint& AngleRestraint::operator=(const AngleRestraint &other)
 bool AngleRestraint::operator==(const AngleRestraint &other) const
 {
     return this == &other or
-           ( Restraint3D::operator==(other) and
+           ( ExpressionRestraint3D::operator==(other) and
              p[0] == other.p[0] and p[1] == other.p[1] and
              p[2] == other.p[2] and
-             nrg_expression == other.nrg_expression and
              force_expression == other.force_expression);
 }
 
@@ -302,6 +301,39 @@ const Point& AngleRestraint::point2() const
     return p[2].read();
 }
 
+/** Return the built-in symbols of this restraint */
+Symbols AngleRestraint::builtinSymbols() const
+{
+    if (this->restraintFunction().isFunction(theta()))
+        return theta();
+    else
+        return Symbols();
+}
+
+/** Return the values of the built-in symbols of this restraint */
+Values AngleRestraint::builtinValues() const
+{
+    if (this->restraintFunction().isFunction(theta()))
+        return theta() == this->values()[theta()];
+    else
+        return Values();
+}
+
+/** Return the differential of this restraint with respect to 
+    the symbol 'symbol' 
+    
+    \throw SireCAS::unavailable_differential
+*/
+RestraintPtr AngleRestraint::differentiate(const Symbol &symbol) const
+{
+    if (this->restraintFunction().isFunction(symbol))
+        return AngleRestraint( p[0], p[1], p[2],
+                               restraintFunction().differentiate(symbol),
+                               this->values() );
+    else
+        return NullRestraint();
+}
+
 /** Set the space used to evaluate the energy of this restraint
 
     \throw SireVol::incompatible_space
@@ -320,6 +352,8 @@ void AngleRestraint::setSpace(const Space &new_space)
             }
             
             Restraint3D::setSpace(new_space);
+            
+            this->calculateTheta();
         }
         catch(...)
         {
@@ -329,38 +363,10 @@ void AngleRestraint::setSpace(const Space &new_space)
     }
 }
 
-/** Return the function used to calculate the restraint energy */
-const Expression& AngleRestraint::restraintFunction() const
-{
-    return nrg_expression;
-}
-
 /** Return the function used to calculate the restraint force */
 const Expression& AngleRestraint::differentialRestraintFunction() const
 {
     return force_expression;
-}
-
-/** Return the energy of this restraint */
-MolarEnergy AngleRestraint::energy() const
-{
-    if (nrg_expression.isConstant())
-        return MolarEnergy( nrg_expression.evaluate(Values()) );
-    else
-    {
-        SireUnits::Dimension::Angle angle;
-        
-        if (intra_molecule_points)
-            //we don't use the space when calculating intra-molecular angles
-            angle = Vector::angle( p[0].read().point(), p[1].read().point(),
-                                   p[2].read().point() );
-        else
-            angle = this->space().calcAngle( p[0].read().point(),
-                                             p[1].read().point(),
-                                             p[2].read().point() );
-                                                  
-        return MolarEnergy( nrg_expression.evaluate( theta() == angle.to(radians) ) );
-    }
 }
 
 /** Calculate the force acting on the molecule in the forcetable 'forcetable' 
@@ -417,6 +423,8 @@ void AngleRestraint::update(const MoleculeData &moldata, const PropertyMap &map)
             {
                 p[i].edit().update(moldata, map);
             }
+            
+            this->calculateTheta();
         }
         catch(...)
         {
@@ -444,6 +452,8 @@ void AngleRestraint::update(const Molecules &molecules, const PropertyMap &map)
             {
                 p[i].edit().update(molecules, map);
             }
+            
+            this->calculateTheta();
         }
         catch(...)
         {

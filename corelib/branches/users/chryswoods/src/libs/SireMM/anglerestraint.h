@@ -64,7 +64,7 @@ typedef SireUnits::Dimension::PhysUnit<1,2,-2,0,0,-1,-2> HarmonicAngleForceConst
     @author Christopher Woods
 */
 class SIREMM_EXPORT AngleRestraint 
-            : public SireBase::ConcreteProperty<AngleRestraint,Restraint3D>
+            : public SireBase::ConcreteProperty<AngleRestraint,ExpressionRestraint3D>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const AngleRestraint&);
@@ -75,6 +75,11 @@ public:
     
     AngleRestraint(const PointRef &point0, const PointRef &point1,
                    const PointRef &point2, const Expression &restraint);
+
+    
+    AngleRestraint(const PointRef &point0, const PointRef &point1,
+                   const PointRef &point2, const Expression &restraint,
+                   const Values &values);
 
     AngleRestraint(const AngleRestraint &other);
     
@@ -96,14 +101,15 @@ public:
     int nPoints() const;
     
     static const Symbol& theta();
-    static Symbols symbols();
+
+    Symbols builtinSymbols() const;
+    Values builtinValues() const;
+    
+    RestraintPtr differentiate(const Symbol &symbol) const;
 
     void setSpace(const Space &space);
 
-    const Expression& restraintFunction() const;
     const Expression& differentialRestraintFunction() const;
-    
-    SireUnits::Dimension::MolarEnergy energy() const;
 
     void force(MolForceTable &forcetable, double scale_force=1) const;
     void force(ForceTable &forcetable, double scale_force=1) const;
@@ -138,11 +144,10 @@ protected:
                    const Expression &force_restraint);
 
 private:
+    void calculateTheta();
+
     /** The three points between which the restraint is calculated */
     PointPtr p[3];
-    
-    /** The expression used to calculate the energy */
-    Expression nrg_expression;
     
     /** The expression used to calculate the force */
     Expression force_expression;

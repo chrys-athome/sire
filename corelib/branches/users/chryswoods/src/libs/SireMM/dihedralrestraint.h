@@ -51,7 +51,7 @@ namespace SireMM
     @author Christopher Woods
 */
 class SIREMM_EXPORT DihedralRestraint 
-            : public SireBase::ConcreteProperty<DihedralRestraint,Restraint3D>
+            : public SireBase::ConcreteProperty<DihedralRestraint,ExpressionRestraint3D>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const DihedralRestraint&);
@@ -63,6 +63,10 @@ public:
     DihedralRestraint(const PointRef &point0, const PointRef &point1,
                       const PointRef &point2, const PointRef &point3,
                       const Expression &restraint);
+    
+    DihedralRestraint(const PointRef &point0, const PointRef &point1,
+                      const PointRef &point2, const PointRef &point3,
+                      const Expression &restraint, const Values &values);
 
     DihedralRestraint(const DihedralRestraint &other);
     
@@ -85,14 +89,15 @@ public:
     int nPoints() const;
     
     static const Symbol& phi();
-    static Symbols symbols();
+
+    Symbols builtinSymbols() const;
+    Values builtinValues() const;
+    
+    RestraintPtr differentiate(const Symbol &symbol) const;
 
     void setSpace(const Space &space);
 
-    const Expression& restraintFunction() const;
     const Expression& differentialRestraintFunction() const;
-    
-    SireUnits::Dimension::MolarEnergy energy() const;
 
     void force(MolForceTable &forcetable, double scale_force=1) const;
     void force(ForceTable &forcetable, double scale_force=1) const;
@@ -129,11 +134,10 @@ protected:
                       const Expression &force_restraint);
 
 private:
+    void calculatePhi();
+
     /** The four points between which the restraint is calculated */
     PointPtr p[4];
-    
-    /** The expression used to calculate the energy */
-    Expression nrg_expression;
     
     /** The expression used to calculate the force */
     Expression force_expression;
