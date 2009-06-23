@@ -223,7 +223,6 @@ public:
 
     void setSpace(const Space &space);
 
-    const Expression& restraintFunction() const;
     const Expression& differentialRestraintFunction01() const;
     const Expression& differentialRestraintFunction23() const;
 
@@ -325,7 +324,6 @@ public:
 
     void setSpace(const Space &space);
 
-    const Expression& restraintFunction() const;
     const Expression& differentialRestraintFunction01() const;
     const Expression& differentialRestraintFunction23() const;
     const Expression& differentialRestraintFunction45() const;
