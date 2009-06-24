@@ -123,19 +123,11 @@ public:
 
     double minimumDistance(const CoordGroup &group) const;
 
-    CoordGroup mapFromCartesian(const CoordGroup &group) const;
-    CoordGroup mapToCartesian(const CoordGroup &group) const;
-    
-    CoordGroupArray mapFromCartesian(const CoordGroupArray &groups) const;
-    CoordGroupArray mapToCartesian(const CoordGroupArray &groups) const;
-    
-    CoordGroupArray mapAsOneFromCartesian(const CoordGroupArray &groups) const;
-    CoordGroupArray mapAsOneToCartesian(const CoordGroupArray &groups) const;
-
     CoordGroup getMinimumImage(const CoordGroup &group, const Vector &center) const;
 
     CoordGroupArray getMinimumImage(const CoordGroupArray &groups,
-                                    const Vector &center) const;
+                                    const Vector &center,
+                                    bool translate_as_one=false) const;
 
     AABox getMinimumImage(const AABox &aabox, const Vector &center) const;
     

@@ -13,6 +13,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIREID_HEADERS
       id.h
       idandset.hpp
+      identifier.h
       idorset.hpp
       index.h
       name.h
@@ -26,6 +27,7 @@ set ( SIREID_SOURCES
       register_sireid.cpp
 
       id.cpp
+      identifier.cpp
       index.cpp
 
       ${SIREID_HEADERS}
@@ -40,7 +42,6 @@ set_target_properties (SireID PROPERTIES
 
 # Link to other Sire libraries
 target_link_libraries (SireID
-                       SireBase
                        SireStream
                        )
 

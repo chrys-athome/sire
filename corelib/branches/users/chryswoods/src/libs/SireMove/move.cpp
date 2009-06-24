@@ -161,14 +161,18 @@ const Symbol& Move::energyComponent() const
     return nrgcomponent;
 }
 
-/** Set the property used to find the simulation box for this move */
+/** Set the property used to find the simulation box for this move. This
+    property is only used when the move involves changing the 
+    simulation box, or when trying to find the volume using
+    the 'volume' function */
 void Move::setSpaceProperty(const PropertyName &space_property)
 {
     spaceproperty = space_property;
 }
 
 /** Return the property used to find the simulation space (box) 
-    for this move */
+    for this move. This property is only used when the move 
+    involves changing the simulation box. */
 const PropertyName& Move::spaceProperty() const
 {
     return spaceproperty;
@@ -184,6 +188,20 @@ void Move::setCoordinatesProperty(const PropertyName &coords_property)
 const PropertyName& Move::coordinatesProperty() const
 {
     return coordsproperty;
+}
+
+/** Return the energy of the system 'system' - this is the energy
+    of this configuration that will be seen by this move */
+MolarEnergy Move::energy(System &system) const
+{
+    return system.energy(nrgcomponent);
+}
+
+/** Return the volume of the system 'system' - this is the volume
+    of this configuration that will be seen by this move */
+Volume Move::volume(const System &system) const
+{
+    return system.property(spaceproperty).asA<Space>().volume();
 }
 
 /** Return whether or not this move keeps the total energy constant */

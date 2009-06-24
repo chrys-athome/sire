@@ -117,16 +117,19 @@ public:
     void move(System &system);
     void move(System &system, int nmoves);
 
+    virtual SireUnits::Dimension::MolarEnergy energy(System &system) const;
+    virtual SireUnits::Dimension::Volume volume(const System &system) const;
+
     virtual void setGenerator(const RanGenerator &rangenerator)=0;
 
     const Symbol& energyComponent() const;
     virtual void setEnergyComponent(const Symbol &component);
 
-    const PropertyName& spaceProperty() const;
-    void setSpaceProperty(const PropertyName &spaceproperty);
-
     const PropertyName& coordinatesProperty() const;
     void setCoordinatesProperty(const PropertyName &coordsproperty);
+
+    const PropertyName& spaceProperty() const;
+    void setSpaceProperty(const PropertyName &spaceproperty);
 
     virtual Ensemble ensemble() const=0;
 

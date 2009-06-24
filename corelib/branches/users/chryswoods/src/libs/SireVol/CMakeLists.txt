@@ -13,6 +13,8 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIREVOL_HEADERS
       aabox.h
       cartesian.h
+      combinedspace.h
+      combinespaces.h
       coordgroup.h
       errors.h
       periodicbox.h
@@ -26,6 +28,8 @@ set ( SIREVOL_SOURCES
 
       aabox.cpp
       cartesian.cpp
+      combinedspace.cpp
+      combinespaces.cpp
       coordgroup.cpp
       errors.cpp
       periodicbox.cpp

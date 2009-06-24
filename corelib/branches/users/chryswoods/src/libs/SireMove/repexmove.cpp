@@ -370,7 +370,7 @@ void RepExSubMove::evaluateSwappedState(const Replica &replica)
                     
                 default:
                     throw SireError::unsupported( QObject::tr(
-                        "A request was made of an unsuppoted action in RepExSubMove. "
+                        "A request was made of an unsupported action in RepExSubMove. "
                         "The action with ID %1 was requested, but this is not "
                         "supported with this version of RepExSubMove.")
                             .arg(it->first), CODELOC );

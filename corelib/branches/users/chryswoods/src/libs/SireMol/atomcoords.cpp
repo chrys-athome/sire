@@ -374,28 +374,6 @@ AtomProperty<Vector>& AtomProperty<Vector>::set(CGIdx cgidx, const CoordGroup &c
     return *this;
 }
 
-/** Convert these coordinates so that they are correct for the infinite
-    cartesian space (assuming that they are currently in the space 'space') */
-void AtomProperty<Vector>::convertToCartesian(const Space &space)
-{
-    coords = space.mapAsOneToCartesian(coords);
-}
-
-/** Convert these coordinates so that they are correct for the space 'space'
-    (assuming that they are currently in the infinite cartesian space) */
-void AtomProperty<Vector>::convertFromCartesian(const Space &space)
-{
-    coords = space.mapAsOneFromCartesian(coords);
-}
-
-/** Change these coordinates so that they are mapped from the space 'from_space'
-    so that they are now correct for the space 'to_space' */
-void AtomProperty<Vector>::changeSpace(const Space &from_space,
-                                       const Space &to_space)
-{
-    coords = from_space.mapAsOneToSpace(coords, to_space);
-}
-
 /** Translate all of the atoms in this container by 'delta' */
 void AtomProperty<Vector>::translate(const Vector &delta)
 {

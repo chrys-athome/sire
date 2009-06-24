@@ -274,7 +274,6 @@ void MolecularDynamics::move(System &system, int nmoves, bool record_stats)
     {
         PropertyMap map;
         map.set("coordinates", this->coordinatesProperty());
-        map.set("space", this->spaceProperty());
     
         for (int i=0; i<nmoves; ++i)
         {

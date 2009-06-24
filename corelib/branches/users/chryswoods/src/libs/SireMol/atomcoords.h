@@ -146,12 +146,7 @@ public:
     void changeFrame(const AxisSet &from_frame, const AxisSet &to_frame);
     void changeFrame(CGIdx cgidx, const AxisSet &from_frame, 
                                   const AxisSet &to_frame);
-    
-    void convertToCartesian(const Space &space);
-    void convertFromCartesian(const Space &space);
-    
-    void changeSpace(const Space &from_space, const Space &to_space);
-    
+
     const CoordGroup* data() const;
     const CoordGroup* constData() const;
 

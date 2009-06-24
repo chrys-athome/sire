@@ -91,14 +91,6 @@ public:
     Mover<T>& changeFrame(const AxisSet &from_frame,
                           const AxisSet &to_frame,
                           const PropertyMap &map = PropertyMap());
-    
-    Mover<T>& toCartesian(const Space &from_space,
-                          const PropertyMap &map = PropertyMap());
-    Mover<T>& fromCartesian(const Space &to_space,
-                            const PropertyMap &map = PropertyMap());
-    
-    Mover<T>& changeSpace(const Space &from_space, const Space &to_space,
-                          const PropertyMap &map = PropertyMap());
                       
     Mover<T>& translate(const Vector &delta,
                         const PropertyMap &map = PropertyMap());
@@ -245,43 +237,6 @@ SIRE_OUTOFLINE_TEMPLATE
 Mover<T>& Mover<T>::mapInto(const AxisSet &axes, const PropertyMap &map)
 {
     MoverBase::mapInto(*(this->d), axes, map);
-    return *this;
-}
-
-/** Map the coordinates of all atoms in the molecule from the space 'space'  
-    to the infinite cartesian space (3D, no boundary conditions).
-    Note that this moves *all* of the atoms in the molecule - including the
-    atoms which aren't selected as part of this molecule */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-Mover<T>& Mover<T>::toCartesian(const Space &space, const PropertyMap &map)
-{
-    MoverBase::toCartesian(*(this->d), space, map);
-    return *this;
-}
-
-/** Map the coordinates of all atoms in the molecule from the infinite cartesian
-    space into the space 'space'. Note that this moves *all* of the atoms in 
-    the molecule - including the atoms which aren't selected as part of this
-    molecule */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-Mover<T>& Mover<T>::fromCartesian(const Space &space, const PropertyMap &map)
-{
-    MoverBase::fromCartesian(*(this->d), space, map);
-    return *this;
-}
-
-/** Change the space of all atoms in the molecule from 'from_space' to
-    'to_space' - this assumes that the atoms are already in 'from_space'.
-    This moves *all* atoms in the molecule, even those which aren't selected
-    as part of this molecule */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-Mover<T>& Mover<T>::changeSpace(const Space &from_space, const Space &to_space,
-                                const PropertyMap &map)
-{
-    MoverBase::changeSpace(*(this->d), from_space, to_space, map);
     return *this;
 }
 

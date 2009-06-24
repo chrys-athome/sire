@@ -16,12 +16,14 @@ set ( SIREBASE_HEADERS
       array2d.h
       chunkedhash.hpp
       chunkedvector.hpp
+      combineproperties.h
       countflops.h
       errors.h
       findexe.h
       globalsharedpointer.hpp
       increment.h
       incremint.h
+      linktoproperty.h
       majorminorversion.h
       meminfo.h
       packedarray2d.h
@@ -50,10 +52,12 @@ set ( SIREBASE_SOURCES
       array2d.cpp
       chunkedhash.cpp
       chunkedvector.cpp
+      combineproperties.cpp
       countflops.cpp
       errors.cpp
       findexe.cpp
       globalsharedpointer.cpp
+      linktoproperty.cpp
       majorminorversion.cpp
       meminfo.cpp
       packedarray2d.cpp
@@ -77,6 +81,7 @@ set_target_properties (SireBase PROPERTIES
 
 # Link to other Sire libraries
 target_link_libraries (SireBase
+                       SireID
                        SireStream
                        )
 

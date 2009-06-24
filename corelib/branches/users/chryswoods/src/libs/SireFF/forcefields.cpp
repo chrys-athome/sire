@@ -832,13 +832,15 @@ static const RegisterMetaType<ForceFields> r_ffields;
 /** Serialise to a binary datastream */
 QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const ForceFields &ffields)
 {
-    writeHeader(ds, r_ffields, 1);
+    writeHeader(ds, r_ffields, 2);
     
     SharedDataStream sds(ds);
     
     //write out all of the forcefields
     sds << ffields.ffields_by_idx
-        << ffields.ffsymbols;
+        << ffields.ffsymbols
+        << ffields.property_aliases
+        << ffields.combined_properties;
     
     return ds;
 }
@@ -848,7 +850,25 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, ForceFields &ffields)
 {
     VersionID v = readHeader(ds, r_ffields);
     
-    if (v == 1)
+    if (v == 2)
+    {
+        SharedDataStream sds(ds);
+
+        //read into a new object, as a lot can go wrong!
+        ForceFields new_ffields;
+
+        //read in the forcefields
+        sds >> new_ffields.ffields_by_idx
+            >> new_ffields.ffsymbols
+            >> new_ffields.property_aliases
+            >> new_ffields.combined_properties;
+
+        //rebuild the index
+        new_ffields.rebuildIndex();
+        
+        ffields = new_ffields;
+    }
+    else if (v == 1)
     {
         SharedDataStream sds(ds);
 
@@ -865,7 +885,7 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, ForceFields &ffields)
         ffields = new_ffields;
     }
     else
-        throw version_error(v, "1", r_ffields, CODELOC);
+        throw version_error(v, "1,2", r_ffields, CODELOC);
 
     return ds;
 }
@@ -1120,7 +1140,9 @@ ForceFields::ForceFields(const ForceFields &other)
               ffields_by_idx(other.ffields_by_idx),
               ffields_by_name(other.ffields_by_name),
               mgroups_by_num(other.mgroups_by_num),
-              ffsymbols(other.ffsymbols)
+              ffsymbols(other.ffsymbols),
+              property_aliases(other.property_aliases),
+              combined_properties(other.combined_properties)
 {}
 
 /** Destructor */
@@ -1136,6 +1158,8 @@ ForceFields& ForceFields::operator=(const ForceFields &other)
         ffields_by_name = other.ffields_by_name;
         mgroups_by_num = other.mgroups_by_num;
         ffsymbols = other.ffsymbols;
+        property_aliases = other.property_aliases;
+        combined_properties = other.combined_properties;
         
         MolGroupsBase::operator=(other);
     }
@@ -1146,13 +1170,19 @@ ForceFields& ForceFields::operator=(const ForceFields &other)
 /** Comparison operator */
 bool ForceFields::operator==(const ForceFields &other) const
 {
-    return ffields_by_idx == other.ffields_by_idx;
+    return this == &other or
+           ( ffields_by_idx == other.ffields_by_idx and
+             property_aliases == other.property_aliases and
+             combined_properties == other.combined_properties );
 }
 
 /** Comparison operator */
 bool ForceFields::operator!=(const ForceFields &other) const
 {
-    return ffields_by_idx != other.ffields_by_idx;
+    return this != &other and
+           ( ffields_by_idx != other.ffields_by_idx or
+             property_aliases != other.property_aliases or
+             combined_properties != other.combined_properties );
 }
 
 /** Internal function used to return the group with number 'mgnum' */
@@ -1628,19 +1658,41 @@ void ForceFields::force(ForceTable &forcetable, double scale_force)
 */
 void ForceFields::setProperty(const QString &name, const Property &value)
 {
-    QVector<FFPtr> new_ffields = ffields_by_idx;
-    
-    int nffields = new_ffields.count();
-    FFPtr *new_ffields_array = new_ffields.data();
-    
-    for (int i=0; i<nffields; ++i)
+    if (value.isA<LinkToProperty>())
     {
-        if (new_ffields_array[i].read().containsProperty(name))
-            new_ffields_array[i].edit().setProperty(name, value);
+        //this is a property alias
+        ...
     }
+    else if (value.isA<CombinedProperty>())
+    {
+        //this is a combined property
+        ...
+    }
+    else
+    {
+        QVector<FFPtr> new_ffields = ffields_by_idx;
     
-    //everything went ok!
-    ffields_by_idx = new_ffields;
+        int nffields = new_ffields.count();
+        FFPtr *new_ffields_array = new_ffields.data();
+    
+        bool changed_property = false;
+    
+        for (int i=0; i<nffields; ++i)
+        {
+            if (new_ffields_array[i].read().containsProperty(name))
+            {
+                if (new_ffields_array[i].edit().setProperty(name, value))
+                    changed_property = true;
+            }
+        }
+    
+        if (changed_property)
+            //update any combined properties
+            this->changedProperty(name, new_ffields);
+    
+        //everything went ok!
+        ffields_by_idx = new_ffields;
+    }
 }
 
 /** Set the property 'name' to have the value 'value' in all of the forcefields
@@ -1660,11 +1712,19 @@ void ForceFields::setProperty(const FFID &ffid, const QString &name,
     {
         QList<FFIdx> ffidxs = ffid.map(*this);
         
+        bool changed_property = false;
+        
         foreach (const FFIdx &ffidx, ffidxs)
         {
             if (this->_pvt_forceField(ffidx).containsProperty(name))
-                this->_pvt_forceField(ffidx).setProperty(name, value);
+            {
+                if (this->_pvt_forceField(ffidx).setProperty(name, value))
+                    changed_property = true;
+            }
         }
+        
+        if (changed_property)
+            this->changedProperty(name, ffields_by_idx);
     }
     catch(...)
     {
@@ -1682,6 +1742,40 @@ void ForceFields::setProperty(const FFID &ffid, const QString &name,
 */
 const Property& ForceFields::property(const QString &name) const
 {
+    if (property_aliases.contains(name))
+    {
+        const LinkToProperty &link = property_aliases.constFind(name)->read()
+                                                     .asA<LinkToProperty>();
+    
+        if (link.target().hasSource())
+        {
+            if (link.isFiltered())
+            {
+                return this->property(link.target().source(), 
+                                      link.filter().asA<FFID>());
+            }
+            else
+            {
+                if (link.target().source() != name)
+                    return this->property(link.target().source());
+                    
+                //fall through here is source() == name so that
+                //we avoid the circular reference and try to 
+                //find the original property using the code below
+            }
+        }
+        else if (link.target().hasValue())
+        {
+            return link.target().value();
+        }
+    }
+
+    if (combined_properties.contains(name))
+    {
+        return combined_properties.constFind(name)->read().asA<CombinedProperties>()
+                                                          .combinedProperty();
+    }
+
     int nffields = ffields_by_idx.count();
     const FFPtr *ffields_array = ffields_by_idx.constData();
     
@@ -1778,6 +1872,9 @@ const Property& ForceFields::property(const FFID &ffid, const QString &name) con
     with name 'name' */
 bool ForceFields::containsProperty(const QString &name) const
 {
+    if (property_aliases.contains(name) or combined_properties.contains(name))
+        return true;
+
     int nffields = ffields_by_idx.count();
     const FFPtr *ffields_array = ffields_by_idx.constData();
     
@@ -1812,18 +1909,22 @@ bool ForceFields::containsProperty(const FFID &ffid, const QString &name) const
 /** Return the names of all of the properties in all of the forcefields */
 QStringList ForceFields::propertyKeys() const
 {
+    QSet<QString> keys;
+    
+    keys.unite( property_aliases.keys() );
+    keys.unite( combined_properties.keys() );
+
     int nffields = this->nForceFields();
 
     if (nffields == 0)
     {
-        return QStringList();
+        return QStringList( keys.toList() );
     }
     else if (nffields == 1)
     {
-        return this->_pvt_forceField(0).propertyKeys();
+        keys.unite( this->_pvt_forceField(0).propertyKeys() );
+        return QStringList( keys.toList() );
     }
-    
-    QSet<QString> keys;
     
     for (int i=0; i<nffields; ++i)
     {
@@ -1866,11 +1967,6 @@ QStringList ForceFields::propertyKeys(const FFID &ffid) const
 */
 Properties ForceFields::properties() const
 {
-    if (this->nForceFields() == 1)
-    {
-        return this->_pvt_forceField(0).properties();
-    }
-
     Properties props;
     
     QStringList keys = this->propertyKeys();
@@ -2100,6 +2196,7 @@ void ForceFields::add(const FF &forcefield)
     {
         ffields_by_idx.append(ff);
         this->rebuildIndex();
+        this->rebuildCombinedProperties();
     }
     catch(...)
     {
@@ -2117,6 +2214,8 @@ void ForceFields::_pvt_remove(int i)
     {
         ffields_by_idx.remove(i);
         this->rebuildIndex();
+        this->cleanDanglingPropertyAliases();
+        this->rebuildCombinedProperties();
     }
     catch(...)
     {
@@ -2162,6 +2261,8 @@ void ForceFields::remove(const FFID &ffid)
         }
         
         this->rebuildIndex();
+        this->rebuildCombinedProperties();
+        this->cleanDanglingPropertyAliases();
     }
     catch(...)
     {
@@ -2180,6 +2281,10 @@ void ForceFields::removeAllForceFields()
         ffields_by_idx.clear();
         ffields_by_name.clear();
         mgroups_by_num.clear();
+
+        property_aliases.clear();
+        combined_properties.clear();
+
         this->clearIndex();
         this->rebuildIndex();
     }

@@ -979,8 +979,7 @@ bool System::containsProperty(const FFID &ffid, const QString &name) const
     return this->_pvt_forceFields().containsProperty(ffid, name);
 }
 
-/** Return the values of all of the properties of all of the forcefields,
-    indexed by the name of the forcefield 
+/** Return the values of all of the properties of this system
     
     \throw SireBase::duplicate_property
 */
@@ -989,8 +988,8 @@ Properties System::properties() const
     return this->_pvt_forceFields().properties();
 }
 
-/** Return the values of all of the properties of all of the forcefields
-    that match the ID 'ffid'
+/** Return the values of all of the properties of this system that
+    are in the forcefields that match the ID 'ffid'
     
     \throw SireBase::duplicate_property
     \throw SireFF::missing_forcefield

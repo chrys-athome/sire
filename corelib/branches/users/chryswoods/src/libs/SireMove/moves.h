@@ -84,10 +84,13 @@ public:
     virtual QString toString() const=0;
     
     virtual void setEnergyComponent(const Symbol &component)=0;
-    const Symbol& energyComponent() const;
+    virtual const Symbol& energyComponent() const;
 
     virtual void setSpaceProperty(const PropertyName &spaceproperty)=0;
-    const PropertyName& spaceProperty() const;
+    virtual const PropertyName& spaceProperty() const;
+    
+    virtual SireUnits::Dimension::MolarEnergy energy(System &system) const;
+    virtual SireUnits::Dimension::Volume volume(const System &system) const;
     
     Ensemble ensemble() const;
     
@@ -186,6 +189,9 @@ public:
     
     void setEnergyComponent(const Symbol &component);
     void setSpaceProperty(const PropertyName &spaceproperty); 
+
+    const Symbol& energyComponent() const;
+    const PropertyName& spaceProperty() const;
     
     void setGenerator(const RanGenerator &rangenerator);
     
@@ -199,6 +205,8 @@ private:
     void _pvt_setTemperature(const SireUnits::Dimension::Temperature &temperature);
     void _pvt_setPressure(const SireUnits::Dimension::Pressure &pressure);
     void _pvt_setFugacity(const SireUnits::Dimension::Pressure &fugacity);
+
+    bool sampleSameSpaceProperty() const;
 
     /** The move that will be repeatedly applied */
     MovePtr mv;

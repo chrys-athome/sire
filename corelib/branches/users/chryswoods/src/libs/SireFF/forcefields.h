@@ -297,6 +297,13 @@ private:
     /** All of the energy components, expressions and constants
         available in this collection of forcefields */
     QHash<Symbol, detail::FFSymbolPtr> ffsymbols;
+    
+    /** All of the property aliases, indexed by the property name
+        they alias */
+    QHash<QString, PropertyPtr> property_aliases;
+    
+    /** All of the combined properties, indexed by their name */
+    QHash<QString, PropertyPtr> combined_properties;
 };
 
 }

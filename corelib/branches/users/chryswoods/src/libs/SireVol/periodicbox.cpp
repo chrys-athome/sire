@@ -741,175 +741,55 @@ CoordGroupArray PeriodicBox::_pvt_getMinimumImage(const CoordGroupArray &groups,
 /** Return the closest periodic copy of each group in 'groups' to the
     point 'point', according to the minimum image convention.
     The effect of this is to move each 'group' into the box which is
-    now centered on 'point' */
+    now centered on 'point'. If 'translate_as_one' is true,
+    then this treats all groups as being part of one larger 
+    group, and so it translates it together. This is useful
+    to get the minimum image of a molecule as a whole, rather
+    than breaking the molecule across a box boundary */
 CoordGroupArray PeriodicBox::getMinimumImage(const CoordGroupArray &groups,
-                                             const Vector &point) const
+                                             const Vector &point,
+                                             bool translate_as_one) const
 {
-    //run through all of the groups and see if any of them need moving...
-    int ncg = groups.count();
-
-    const CoordGroup *group_array = groups.constData();
-
-    for (int i=0; i<ncg; ++i)
+    if (translate_as_one or groups.nCoordGroups() == 1)
     {
-        const CoordGroup &group = group_array[i];
-
-        Vector wrapdelta = wrapDelta(point, group.aaBox().center());
-
-        if ( not wrapdelta.isZero() )
+        Vector wrapdelta = wrapDelta(point, groups.aaBox().center());
+        
+        if (wrapdelta.isZero())
         {
-            //there is at least one CoordGroup that needs moving
-            // - look to translate them all!
-            return this->_pvt_getMinimumImage(groups, point);
+            return groups;
+        }
+        else
+        {
+            CoordGroupArray wrapped_groups( groups );
+            wrapped_groups.translate(wrapdelta);
+            
+            return wrapped_groups;
         }
     }
-
-    //all of the CoordGroups are in the box - just return the original array
-    return groups;
-
-}
-
-/** Return a copy of the passed CoordGroup that has been mapped from
-    an infinite cartesian space into this space */
-CoordGroup PeriodicBox::mapFromCartesian(const CoordGroup &group) const
-{
-    //this is the same as getting the minimum image from the
-    //center of the box
-    return getMinimumImage(group, this->center());
-}
-
-CoordGroup PeriodicBox::mapToCartesian(const CoordGroup &group) const
-{
-    return group;
-}
-
-/** Return a copy of an array of passed CoordGroups that have been mapped
-    from an infinite cartesian space into this space. */
-CoordGroupArray PeriodicBox::mapFromCartesian(const CoordGroupArray &groups) const
-{
-    return getMinimumImage(groups, this->center());
-}
-
-CoordGroupArray PeriodicBox::mapToCartesian(const CoordGroupArray &groups) const
-{
-    return groups;
-}
-
-CoordGroupArray PeriodicBox::mapAsOneFromCartesian(const CoordGroupArray &groups) const
-{
-    if (groups.nCoordGroups() == 0)
-        return groups;
-
-    //wrap all of the groups using the delta center of the groups
-    Vector wrapdelta = wrapDelta(groups.aaBox().center(), this->center());
-
-    if ( not wrapdelta.isZero() )
-    {
-        CoordGroupArray mapped_groups(groups);
-        mapped_groups.translate(wrapdelta);
-        return mapped_groups;
-    }
     else
-        return groups;
-}
-
-CoordGroupArray PeriodicBox::mapAsOneToCartesian(const CoordGroupArray &groups) const
-{
-    return groups;
-}
-
-/** Return the vector by which the point 'point' would need to be translated
-    so that it is mapped from this PeriodicBox into 'other' */
-Vector PeriodicBox::getScaleDelta(const Vector &point, 
-                                  const PeriodicBox &other) const
-{
-    //now get the scale factor for the change in dimension
-    Vector scale( other.boxlength.x() * this->invlength.x(),
-                  other.boxlength.y() * this->invlength.y(),
-                  other.boxlength.z() * this->invlength.z() );
-
-    //get the vector needed to translate this group into the central box
-    Vector wrapdelta = this->wrapDelta(this->center(), point);
-
-    //get the vector from the center of this box to the point
-    //when it is in this central box
-    Vector delta = point - wrapdelta - this->center();
-    
-    //multiply this by 'scale'
-    Vector new_delta = Vector( (scale.x() - 1) * delta.x(),
-                               (scale.y() - 1) * delta.y(),
-                               (scale.z() - 1) * delta.z() );
-
-    return other.center() - this->center() + new_delta - wrapdelta;
-}
-
-/** Return a copy of the passed CoordGroup mapped from this space to 
-    the other space 'space' */
-CoordGroup PeriodicBox::mapToSpace(const CoordGroup &group, const Space &space) const
-{
-    if (not space.isA<PeriodicBox>())
-        return Cartesian::mapToSpace(group, space);
-    
-    const PeriodicBox &other = space.asA<PeriodicBox>();
-    
-    if (this->operator==(other))
-        //there is nothing to do
-        return group;
-
-    return group.edit().translate( this->getScaleDelta(group.aaBox().center(),
-                                                       other) ).commit();
-}
-
-/** Return a copy of the passed CoordGroups mapped individually from this
-    space to the other space 'space' */
-CoordGroupArray PeriodicBox::mapToSpace(const CoordGroupArray &groups,
-                                        const Space &space) const
-{
-    if (not space.isA<PeriodicBox>())
-        return Cartesian::mapToSpace(groups, space);
-
-    const PeriodicBox &other = space.asA<PeriodicBox>();
-    
-    if (this->operator==(other))
-        //there is nothing to do
-        return groups;
-
-    int ncg = groups.count();
-    const CoordGroup *group_array = groups.constData();
-
-    //create a new array of the right size
-    QVector<CoordGroup> moved_groups(ncg);
-    CoordGroup *moved_array = moved_groups.data();
-
-    for (int i=0; i<ncg; ++i)
     {
-        moved_array[i] = group_array[i].edit().translate(
-                                this->getScaleDelta( group_array[i].aaBox().center(),
-                                                     other ) ).commit();
-    }
+        //run through all of the groups and see if any of them need moving...
+        int ncg = groups.count();
 
-    return CoordGroupArray(moved_groups);    
-}
-                                   
-/** Return a copy of the passed CoordGroups mapped as a single unit from this
-    space to the other space 'space' */
-CoordGroupArray PeriodicBox::mapAsOneToSpace(const CoordGroupArray &groups,
-                                             const Space &space) const
-{
-    if (not space.isA<PeriodicBox>())
-        return Cartesian::mapAsOneToSpace(groups, space);
+        const CoordGroup *group_array = groups.constData();
 
-    const PeriodicBox &other = space.asA<PeriodicBox>();
-    
-    if (this->operator==(other))
-        //there is nothing to do
+        for (int i=0; i<ncg; ++i)
+        {
+            const CoordGroup &group = group_array[i];
+
+            Vector wrapdelta = wrapDelta(point, group.aaBox().center());
+
+            if ( not wrapdelta.isZero() )
+            {
+                //there is at least one CoordGroup that needs moving
+                // - look to translate them all!
+                return this->_pvt_getMinimumImage(groups, point);
+            }
+        }
+
+        //all of the CoordGroups are in the box - just return the original array
         return groups;
-
-    CoordGroupArray new_groups(groups);
-    
-    new_groups.translate( this->getScaleDelta(groups.aaBox().center(), other) );
-                          
-    return new_groups;
+    }
 }
 
 /** Return the copy of the periodic box which is the closest minimum image

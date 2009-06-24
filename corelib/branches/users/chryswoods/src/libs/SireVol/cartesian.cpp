@@ -43,6 +43,8 @@
 #include "SireBase/countflops.h"
 
 #include "SireError/errors.h"
+#include "SireVol/errors.h"
+
 #include "SireStream/datastream.h"
 
 #include <QDebug>
@@ -133,7 +135,7 @@ bool Cartesian::isCartesian() const
 /** Throw an exception as an infinite space doesn't have a volume! */
 SireUnits::Dimension::Volume Cartesian::volume() const
 {
-    throw SireError::invalid_state( QObject::tr(
+    throw SireVol::incompatible_space( QObject::tr(
         "It is not possible to calculate the volume of an infinite space!"),
             CODELOC );
 
@@ -143,7 +145,7 @@ SireUnits::Dimension::Volume Cartesian::volume() const
 /** Throw an exception as an infinite space doesn't have a volume! */
 SpacePtr Cartesian::setVolume(SireUnits::Dimension::Volume) const
 {
-    throw SireError::invalid_state( QObject::tr(
+    throw SireVol::incompatible_space( QObject::tr(
         "It is not possible to change the volume of an infinite space!"),
             CODELOC );
 
@@ -734,38 +736,6 @@ double Cartesian::minimumDistance(const CoordGroup &group) const
     return sqrt(mindist2);
 }
 
-/** Return a copy of the passed CoordGroup that has been mapped from
-    an infinite cartesian space into this space */
-CoordGroup Cartesian::mapFromCartesian(const CoordGroup &group) const
-{
-    return group;
-}
-
-CoordGroup Cartesian::mapToCartesian(const CoordGroup &group) const
-{
-    return group;
-}
-
-CoordGroupArray Cartesian::mapFromCartesian(const CoordGroupArray &groups) const
-{
-    return groups;
-}
-
-CoordGroupArray Cartesian::mapToCartesian(const CoordGroupArray &groups) const
-{
-    return groups;
-}
-
-CoordGroupArray Cartesian::mapAsOneFromCartesian(const CoordGroupArray &groups) const
-{
-    return groups;
-}
-
-CoordGroupArray Cartesian::mapAsOneToCartesian(const CoordGroupArray &groups) const
-{
-    return groups;
-}
-
 /** Return the minimum image copy of 'group' with respect to 'center'.
     In this case, as this is not a periodic space, this just returns
     'group' */
@@ -778,7 +748,7 @@ CoordGroup Cartesian::getMinimumImage(const CoordGroup &group, const Vector&) co
     In this case, as this is not a periodic space, this just returns
     'groups' */
 CoordGroupArray Cartesian::getMinimumImage(const CoordGroupArray &groups,
-                                           const Vector&) const
+                                           const Vector&, bool) const
 {
     return groups;
 }

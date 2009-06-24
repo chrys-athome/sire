@@ -489,65 +489,6 @@ void MoverBase::mapInto(MoleculeData &moldata,
     MoverBase::mapInto(moldata, movable_atoms, axes, map);
 }
 
-/** Map all of the atoms in this molecule into the infinite cartesian
-    space, assuming that they are currently in the space 'space' */
-void MoverBase::toCartesian(MoleculeData &moldata, const Space &space,
-                            const PropertyMap &map)
-{
-    //get the name of the property that holds the coordinates
-    PropertyName coord_property = map["coordinates"];
-
-    //get the coordinates to be mapped
-    AtomCoords coords = moldata.property(coord_property).asA<AtomCoords>();
-
-    //map the coordinates
-    coords.convertToCartesian(space);
-
-    //save the new coordinates
-    if (coord_property.hasSource())
-        moldata.setProperty(coord_property.source(), coords);
-}
-
-/** Map all of the atoms in this molecule into the space 'space', 
-    assuming that they are currently in the infinite cartesian space */
-void MoverBase::fromCartesian(MoleculeData &moldata, const Space &space,
-                             const PropertyMap &map)
-{
-    //get the name of the property that holds the coordinates
-    PropertyName coord_property = map["coordinates"];
-
-    //get the coordinates to be mapped
-    AtomCoords coords = moldata.property(coord_property).asA<AtomCoords>();
-
-    //map the coordinates
-    coords.convertFromCartesian(space);
-
-    //save the new coordinates
-    if (coord_property.hasSource())
-        moldata.setProperty(coord_property.source(), coords);
-}
-
-/** Map all of the atoms in this molecule from the space 'from_space'
-    to the space 'to_space' assuming that they are already in the 
-    space 'from_space' */
-void MoverBase::changeSpace(MoleculeData &moldata, 
-                            const Space &from_space, const Space &to_space,
-                            const PropertyMap &map)
-{
-    //get the name of the property that holds the coordinates
-    PropertyName coord_property = map["coordinates"];
-
-    //get the coordinates to be mapped
-    AtomCoords coords = moldata.property(coord_property).asA<AtomCoords>();
-
-    //map the coordinates
-    coords.changeSpace(from_space, to_space);
-
-    //save the new coordinates
-    if (coord_property.hasSource())
-        moldata.setProperty(coord_property.source(), coords);
-}
-
 /** Map the atoms we are allowed to move from the coordinate frame
     'from_frame' to the coordinate frame 'to_frame', finding the 
     coordinates using the passed property map

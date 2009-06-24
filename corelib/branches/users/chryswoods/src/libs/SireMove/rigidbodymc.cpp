@@ -284,7 +284,7 @@ bool RigidBodyMC::synchronisedRotation() const
 }
 
 /** This internal function is used to actually move the molecule(s) */
-void RigidBodyMC::performMove(System &system, const Space &space,
+void RigidBodyMC::performMove(System &system,
                               double &old_bias, double &new_bias,
                               const PropertyMap &map)
 {
@@ -306,15 +306,11 @@ void RigidBodyMC::performMove(System &system, const Space &space,
         const PartialMolecule &oldmol = mol_and_bias.get<0>();
         old_bias = mol_and_bias.get<1>();
 
-        //perform the move - need to map to the infinite cartesian
-        //space, make the move, and then convert back again
         PartialMolecule newmol = oldmol.move()
-                                       .toCartesian(space, map)
                                        .rotate(rotdelta,
                                                oldmol.evaluate().centerOfGeometry(),
                                                map)
                                        .translate(delta, map)
-                                       .fromCartesian(space,map)
                                        .commit();
 
         //update the system with the new coordinates
@@ -341,15 +337,11 @@ void RigidBodyMC::performMove(System &system, const Space &space,
                  it != molecules.constEnd();
                  ++it)
             {
-                //perform the move - need to map to the infinite cartesian
-                //space, make the move, and then convert back again
                 PartialMolecule newmol = it->move()
-                                            .toCartesian(space, map)
                                             .rotate(rotdelta,
                                                     it->evaluate().centerOfGeometry(),
                                                     map)
                                             .translate(delta, map)
-                                            .fromCartesian(space,map)
                                             .commit();
                 
                 new_molecules.update(newmol);
@@ -368,12 +360,8 @@ void RigidBodyMC::performMove(System &system, const Space &space,
                  it != molecules.constEnd();
                  ++it)
             {
-                //perform the move - need to map to the infinite cartesian
-                //space, make the move, and then convert back again
                 PartialMolecule newmol = it->move()
-                                            .toCartesian(space, map)
                                             .translate(delta, map)
-                                            .fromCartesian(space,map)
                                             .commit();
 
                 new_molecules.update(newmol);
@@ -389,14 +377,10 @@ void RigidBodyMC::performMove(System &system, const Space &space,
             const PartialMolecule &oldmol = mol_and_bias.get<0>();
             old_bias = mol_and_bias.get<1>();
 
-            //perform the move - need to map to the infinite cartesian
-            //space, make the move, and then convert back again
             PartialMolecule newmol = oldmol.move()
-                                           .toCartesian(space, map)
                                            .rotate(rotdelta,
                                                    oldmol.evaluate().centerOfGeometry(),
                                                    map)
-                                           .fromCartesian(space,map)
                                            .commit();
 
             //update the system with the new coordinates
@@ -419,14 +403,10 @@ void RigidBodyMC::performMove(System &system, const Space &space,
              it != molecules.constEnd();
              ++it)
         {
-            //perform the move - need to map to the infinite cartesian
-            //space, make the move, and then convert back again
             PartialMolecule newmol = it->move()
-                                        .toCartesian(space, map)
                                         .rotate(rotdelta,
                                                 it->evaluate().centerOfGeometry(),
                                                 map)
-                                        .fromCartesian(space,map)
                                         .commit();
 
             new_molecules.update(newmol);
@@ -442,12 +422,8 @@ void RigidBodyMC::performMove(System &system, const Space &space,
         const PartialMolecule &oldmol = mol_and_bias.get<0>();
         old_bias = mol_and_bias.get<1>();
 
-        //perform the move - need to map to the infinite cartesian
-        //space, make the move, and then convert back again
         PartialMolecule newmol = oldmol.move()
-                                       .toCartesian(space, map)
                                        .translate(delta, map)
-                                       .fromCartesian(space,map)
                                        .commit();
 
         //update the system with the new coordinates
@@ -475,19 +451,7 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
     {
         PropertyMap map;
         map.set("coordinates", this->coordinatesProperty());
-        
-        const Space *space = &(Space::null());
-        
-        if ( this->spaceProperty().hasSource() )
-        {
-            if ( system.containsProperty(this->spaceProperty().source()) )
-                space = &( system.property( this->spaceProperty() ).asA<Space>() );
-        }
-        else
-        {
-            space = &(this->spaceProperty().value().asA<Space>());
-        }
-    
+            
         for (int i=0; i<nmoves; ++i)
         {
             //get the old total energy of the system
@@ -500,7 +464,7 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
             double old_bias = 1;
             double new_bias = 1;
 
-            this->performMove(system, *space, old_bias, new_bias, map);
+            this->performMove(system, old_bias, new_bias, map);
     
             //calculate the energy of the system
             double new_nrg = system.energy( this->energyComponent() );

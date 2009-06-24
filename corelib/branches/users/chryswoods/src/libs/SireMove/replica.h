@@ -115,9 +115,6 @@ public:
     bool isConstantLambda(const Symbol &lam) const;
     
 protected:
-    void setEnergyComponent(const Symbol &symbol);
-    void setSpaceProperty(const PropertyName &spaceproperty);
-
     void setLambdaComponent(const Symbol &symbol);
     void setLambdaValue(double value);
 
@@ -146,8 +143,6 @@ private:
         until the replica is unpacked */
     enum ReplicaCommand 
          { 
-           ENERGY_COMPONENT = 1,  // calls this->setEnergyComponent
-           SPACE_PROPERTY   = 2,  // calls this->setSpaceProperty
            LAMBDA_COMPONENT = 3,  // calls this->setLambdaComponent
            LAMBDA_VALUE     = 4,  // calls this->setLambdaValue
            REP_TEMPERATURE  = 5,  // calls this->setTemperature
@@ -169,15 +164,6 @@ private:
 
     /** The ensemble sampled by moves in this replica */
     Ensemble replica_ensemble;
-    
-    /** The property used to get the simulation space (for volume)
-        for this replica */
-    PropertyName space_property;
-    
-    /** The symbol that represents the component of the energy
-        that is evaluate for this replica - it is this energy
-        that is put into the replica exchange test */
-    Symbol nrg_component;
     
     /** The symbol representing the lambda coordinate for 
         lambda-based Hamiltonian replica exchange. This is null

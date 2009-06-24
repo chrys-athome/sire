@@ -191,7 +191,7 @@ const Symbol& Moves::energyComponent() const
 
 /** Return the name of the property of the system space that
     these moves use when they manipulate the simulation box. This
-    raises an error if not all moves are using the same property
+    raises an error if these moves do not all use the same property
     
     \throw SireError::incompatible_error
 */
@@ -199,32 +199,44 @@ const PropertyName& Moves::spaceProperty() const
 {
     QList<MovePtr> mvs = this->moves();
     
-    const PropertyName &property = mvs.takeFirst()->spaceProperty();
+    const PropertyName &prop = mvs.takeFirst()->spaceProperty();
     
     for (QList<MovePtr>::const_iterator it = mvs.constBegin();
          it != mvs.constEnd();
          ++it)
     {
-        if ((*it)->spaceProperty() != property)
+        if ((*it)->spaceProperty() != prop)
         {
-            QSet<QString> properties;
-            properties.insert( property.toString() );
+            QSet<QString> props;
+            props.insert(prop.source());
         
             for (QList<MovePtr>::const_iterator it2 = mvs.constBegin();
                  it2 != mvs.constEnd();
                  ++it2)
             {
-                properties.insert( (*it2)->spaceProperty().toString() );
+                props.insert( (*it2)->spaceProperty().source() );
             }
         
             throw SireError::incompatible_error( QObject::tr(
-                "Not all moves use the same System space property. "
-                "The properties used are are %1.")
-                    .arg( Sire::toString(properties.toList()) ), CODELOC );
+                "Not all moves sample using the same space property. "
+                "The space properties sampled are %1.")
+                    .arg( Sire::toString(props.toList()) ), CODELOC );
         }
     }
     
-    return property;
+    return prop;
+}
+
+/** Return the energy of the system that is seen by these moves */
+MolarEnergy Moves::energy(System &system) const
+{
+    return system.energy( this->energyComponent() );
+}
+
+/** Return the volume of the system as it is seen by these moves */
+Volume Moves::volume(const System &system) const
+{
+    return system.property( this->spaceProperty() ).asA<Space>().volume();
 }
 
 /** Return the ensemble that will be sampled by these moves */
@@ -672,6 +684,18 @@ void SameMoves::_pvt_setTemperature(const Temperature &temperature)
     {
         mv.edit().setTemperature(temperature);
     }
+}
+
+/** Return the space property used to calculate the system volume */
+const PropertyName& SameMoves::spaceProperty() const
+{
+    return mv.read().spaceProperty();
+}
+
+/** Return the energy component used to calculate the system energy */
+const Symbol& SameMoves::energyComponent() const
+{
+    return mv.read().energyComponent();
 }
 
 /** Set the pressure for all moves that have a constant pressure

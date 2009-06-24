@@ -256,42 +256,6 @@ public:
     /** Return the minimum distance between points within the group 'group'. */
     virtual double minimumDistance(const CoordGroup &group) const=0;
 
-    /** Return a copy of the passed CoordGroup that has been mapped from
-        an infinite cartesian space into this space */
-    virtual CoordGroup mapFromCartesian(const CoordGroup &group) const=0;
-
-    /** Return a copy of an array of passed CoordGroups that have been mapped
-        individually from an infinite cartesian space into this space. */
-    virtual CoordGroupArray mapFromCartesian(const CoordGroupArray &groups) const=0;
-
-    /** Return a copy of the passed CoordGroup that has been mapped into
-        the infinite cartesian space from this space */
-    virtual CoordGroup mapToCartesian(const CoordGroup &group) const=0;
-    
-    /** Return a copy of an array of passed CoordGroups that have been mapped
-        individually from to an infinite cartesian space from this space */
-    virtual CoordGroupArray mapToCartesian(const CoordGroupArray &groups) const=0;
-    
-    /** Return a copy of the passed CoordGroups that have been mapped as
-        a single unit from an infinite cartesian space into this space */
-    virtual CoordGroupArray mapAsOneFromCartesian(const CoordGroupArray &groups) const=0;
-    
-    /** Return a copy of the passed CoordGroups that have been mapped as a single
-        unit to the infinite Cartesian space from this space */
-    virtual CoordGroupArray mapAsOneToCartesian(const CoordGroupArray &groups) const=0;
-
-    virtual CoordGroup mapToSpace(const CoordGroup &group, const Space &space) const;
-    virtual CoordGroupArray mapToSpace(const CoordGroupArray &groups,
-                                       const Space &space) const;
-                                       
-    virtual CoordGroupArray mapAsOneToSpace(const CoordGroupArray &groups,
-                                            const Space &space) const;
-
-    CoordGroup mapFromSpace(const CoordGroup &group, const Space &space) const;
-    CoordGroupArray mapFromSpace(const CoordGroupArray &groups, const Space &space) const;
-    CoordGroupArray mapAsOneFromSpace(const CoordGroupArray &groups,
-                                      const Space &space) const;
-
     /** Return whether or not this space is periodic */
     virtual bool isPeriodic() const=0;
     
@@ -311,7 +275,8 @@ public:
         has its center at 'center' (i.e. returns the closest copy of
         each 'group' to 'center' according to the minimum image convention) */
     virtual CoordGroupArray getMinimumImage(const CoordGroupArray &groups,
-                                            const Vector &center) const=0;
+                                            const Vector &center,
+                                            bool translate_as_one=false) const=0;
 
     /** Return the minimum image copy of 'aabox' with respect to 'center'.  
         For periodic spaces, this returns the AABox translated into the 

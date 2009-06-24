@@ -129,26 +129,11 @@ public:
 
     double minimumDistance(const CoordGroup &group0, const CoordGroup &group1) const;
 
-    CoordGroup mapFromCartesian(const CoordGroup &group) const;
-    CoordGroup mapToCartesian(const CoordGroup &group) const;
-    
-    CoordGroupArray mapFromCartesian(const CoordGroupArray &groups) const;
-    CoordGroupArray mapToCartesian(const CoordGroupArray &groups) const;
-    
-    CoordGroupArray mapAsOneFromCartesian(const CoordGroupArray &groups) const;
-    CoordGroupArray mapAsOneToCartesian(const CoordGroupArray &groups) const;
-
-    CoordGroup mapToSpace(const CoordGroup &group, const Space &space) const;
-    CoordGroupArray mapToSpace(const CoordGroupArray &groups,
-                               const Space &space) const;
-                                       
-    CoordGroupArray mapAsOneToSpace(const CoordGroupArray &groups,
-                                    const Space &space) const;
-
     CoordGroup getMinimumImage(const CoordGroup &group, const Vector &center) const;
 
     CoordGroupArray getMinimumImage(const CoordGroupArray &groups,
-                                    const Vector &center) const;
+                                    const Vector &center,
+                                    bool translate_as_one=false) const;
 
     AABox getMinimumImage(const AABox &aabox, const Vector &center) const;
     
@@ -169,8 +154,6 @@ protected:
                                 const Vector &point) const;
 
     static int getWrapVal(double delta, double invlgth, double halflgth);
-
-    Vector getScaleDelta(const Vector &point, const PeriodicBox &other) const;
 
     /** The origin of the box (minimum coordinates) */
     Vector mincoords;
