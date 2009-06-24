@@ -146,7 +146,7 @@ void RestraintFF::reindexRestraints()
 }
 
 /** Constructor */
-RestraintFF::RestraintFF() : ConcreteProperty<RestraintFF,G1FF>(), FF3D(),
+RestraintFF::RestraintFF() : ConcreteProperty<RestraintFF,G1FF>(true), FF3D(),
                              recalc_from_scratch(true)
 {
     this->_pvt_updateName();
@@ -154,7 +154,7 @@ RestraintFF::RestraintFF() : ConcreteProperty<RestraintFF,G1FF>(), FF3D(),
 
 /** Construct, giving the forcefield the specified name */
 RestraintFF::RestraintFF(const QString &name)
-            : ConcreteProperty<RestraintFF,G1FF>(), FF3D(),
+            : ConcreteProperty<RestraintFF,G1FF>(true), FF3D(),
               recalc_from_scratch(true)
 {
     FF::setName(name);

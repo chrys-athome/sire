@@ -60,7 +60,8 @@ class MolNumViewIdx;
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT Molecules
+class SIREMOL_EXPORT Molecules 
+            : public SireBase::ConcreteProperty<Molecules,SireBase::Property>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Molecules&);
@@ -102,6 +103,8 @@ public:
     
     bool operator==(const Molecules &other) const;
     bool operator!=(const Molecules &other) const;
+    
+    QString toString() const;
     
     const ViewsOfMol& operator[](MolNum molnum) const;
     PartialMolecule operator[](const boost::tuple<MolNum,SireID::Index> &viewidx) const;
@@ -194,7 +197,6 @@ private:
         all of the molecules, indexed by 
         their molecule number */
     SireBase::ChunkedHash<MolNum,ViewsOfMol> mols;
-
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -235,6 +237,7 @@ Molecules Molecules::from(const T &molecules)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Molecules::Molecules(const QList<T> &molecules)
+          : SireBase::ConcreteProperty<Molecules,SireBase::Property>()
 {
     *this = Molecules::from(molecules);
 }
@@ -244,6 +247,7 @@ Molecules::Molecules(const QList<T> &molecules)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Molecules::Molecules(const QVector<T> &molecules)
+          : SireBase::ConcreteProperty<Molecules,SireBase::Property>()
 {
     *this = Molecules::from(molecules);
 }

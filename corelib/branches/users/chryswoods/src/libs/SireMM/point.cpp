@@ -272,6 +272,13 @@ const char* AtomPoint::typeName()
     return QMetaType::typeName( qMetaTypeId<AtomPoint>() );
 }
 
+/** Return a string representation */
+QString AtomPoint::toString() const
+{
+    return QString("AtomPoint{ %1 : %2 }").arg(atm.toString(),
+                                               this->point().toString());
+}
+
 /** Update this point 
 
     \throw SireBase::missing_property
@@ -458,6 +465,12 @@ const char* VectorPoint::typeName()
     return QMetaType::typeName( qMetaTypeId<VectorPoint>() );
 }
 
+/** Return a string representation */
+QString VectorPoint::toString() const
+{
+    return QString("VectorPoint{ %1 }").arg(this->point().toString());
+}
+
 /** A VectorPoint is not updatable */
 void VectorPoint::update(const MoleculeData&)
 {}
@@ -616,6 +629,13 @@ bool Center::operator!=(const Center &other) const
 const char* Center::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Center>() );
+}
+
+/** Return a string representation */
+QString Center::toString() const
+{
+    return QString("Center{ %1 : %2 }").arg(mols.toString())
+                                       .arg(this->point().toString());
 }
 
 /** Set the space - if there is more than one molecule, then this
@@ -870,6 +890,13 @@ bool CenterOfGeometry::operator!=(const CenterOfGeometry &other) const
 const char* CenterOfGeometry::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<CenterOfGeometry>() );
+}
+
+/** Return a string representation */
+QString CenterOfGeometry::toString() const
+{
+    return QString("CenterOfGeometry{ %1 : %2 }").arg(mols.toString())
+                                                 .arg(this->point().toString());
 }
 
 static Vector averagePoints(const QList< tuple<Vector,double> > &points)
@@ -1156,6 +1183,13 @@ bool CenterOfMass::operator!=(const CenterOfMass &other) const
 const char* CenterOfMass::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<CenterOfMass>() );
+}
+
+/** Return a string representation */
+QString CenterOfMass::toString() const
+{
+    return QString("CenterOfMass{ %1 : %2 }").arg(mols.toString())
+                                             .arg(this->point().toString());
 }
 
 /** Set the space used by this point - a CenterOfGeometry cannot

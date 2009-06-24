@@ -54,6 +54,7 @@
 #include <QDebug>
 
 using namespace SireMol;
+using namespace SireBase;
 using namespace SireStream;
 
 using boost::tuple;
@@ -63,11 +64,12 @@ static const RegisterMetaType<Molecules> r_mols;
 /** Serialise to a binary datastream */
 QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Molecules &mols)
 {
-    writeHeader(ds, r_mols, 1);
+    writeHeader(ds, r_mols, 2);
 
     SharedDataStream sds(ds);
 
-    sds << mols.mols;
+    sds << mols.mols
+        << static_cast<const Property&>(mols);
 
     return ds;
 }
@@ -77,14 +79,20 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Molecules &mols)
 {
     VersionID v = readHeader(ds, r_mols);
 
-    if (v == 1)
+    if (v == 2)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> mols.mols >> static_cast<Property&>(mols);
+    }
+    else if (v == 1)
     {
         SharedDataStream sds(ds);
 
         sds >> mols.mols;
     }
     else
-        throw version_error(v, "1", r_mols, CODELOC);
+        throw version_error(v, "1,2", r_mols, CODELOC);
 
     return ds;
 }
@@ -532,12 +540,13 @@ bool Molecules::uniteViews()
 }
 
 /** Construct an empty set of molecules */
-Molecules::Molecules()
+Molecules::Molecules() : ConcreteProperty<Molecules,Property>()
 {}
 
 /** Construct a set that contains only the passed view
     of a molecule */
 Molecules::Molecules(const MoleculeView &molecule)
+          : ConcreteProperty<Molecules,Property>()
 {
     this->add(molecule);
 }
@@ -545,13 +554,15 @@ Molecules::Molecules(const MoleculeView &molecule)
 /** Construct a set that contains the passed views 
     of a molecule */
 Molecules::Molecules(const ViewsOfMol &molviews)
+          : ConcreteProperty<Molecules,Property>()
 {
     this->add(molviews);
 }
 
 /** Copy constructor */
 Molecules::Molecules(const Molecules &other)
-          : mols(other.mols)
+          : ConcreteProperty<Molecules,Property>(other),
+            mols(other.mols)
 {}
 
 /** Destructor */
@@ -561,6 +572,7 @@ Molecules::~Molecules()
 /** Copy assignment operator */
 Molecules& Molecules::operator=(const Molecules &other)
 {
+    Property::operator=(other);
     mols = other.mols;
     return *this;
 }
@@ -568,13 +580,20 @@ Molecules& Molecules::operator=(const Molecules &other)
 /** Comparison operator */
 bool Molecules::operator==(const Molecules &other) const
 {
-    return mols == other.mols;
+    return mols == other.mols and Property::operator==(other);
 }
 
 /** Comparison operator */
 bool Molecules::operator!=(const Molecules &other) const
 {
-    return mols != other.mols;
+    return mols != other.mols or Property::operator!=(other);
+}
+
+/** Return a string representation of this set of molecules */
+QString Molecules::toString() const
+{
+    return QObject::tr("Molecules{ nMolecules() == %1, nViews() == %2 }")
+                .arg(this->nMolecules()).arg(this->nViews());
 }
 
 /** Return the numbers of all of the molecules in this set */

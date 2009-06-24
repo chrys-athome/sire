@@ -229,6 +229,8 @@ public:
     
     static const char* typeName();
     
+    QString toString() const;
+    
     void update(const MoleculeData &moldata);
     void update(const Molecules &molecules);
     
@@ -277,6 +279,8 @@ public:
     
     static const char* typeName();
     
+    QString toString() const;
+    
     void update(const MoleculeData &moldata);
     void update(const Molecules &molecules);
     
@@ -317,6 +321,8 @@ public:
     bool operator!=(const Center &other) const;
     
     static const char* typeName();
+
+    QString toString() const;
 
     void setSpace(const Space &space);
     
@@ -373,6 +379,8 @@ public:
 
     static const char* typeName();
 
+    QString toString() const;
+
     void setSpace(const Space &space);
     
     void update(const MoleculeData &moldata);
@@ -427,6 +435,8 @@ public:
     bool operator!=(const CenterOfMass &other) const;
 
     static const char* typeName();
+
+    QString toString() const;
 
     void setSpace(const Space &space);
     
