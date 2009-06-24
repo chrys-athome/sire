@@ -115,6 +115,8 @@ public:
     virtual Property* clone() const=0;
     virtual Property* create() const=0;
     
+    virtual QString toString() const;
+    
     virtual void copy(const Property &other)=0;
     virtual bool equals(const Property &other) const=0;
 
@@ -342,11 +344,10 @@ public:
     bool operator==(const VariantProperty &other) const;
     bool operator!=(const VariantProperty &other) const;
 
-    static const char* typeName()
-    {
-        return "SireBase::VariantProperty";
-    }
+    static const char* typeName();
     
+    QString toString() const;
+            
     template<class T>
     T convertTo() const
     {
@@ -372,6 +373,8 @@ public:
     ~NullProperty();
 
     static const char* typeName();
+    
+    QString toString() const;
 };
 
 /** This is base class of the polymorphic pointer holder for the entire

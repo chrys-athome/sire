@@ -219,7 +219,7 @@ Molecules Molecules::from(const T &molecules)
         
         if (mol != mols.mols.end())
         {
-            *mol = mol->add(*it);
+            mol->add(*it);
         }
         else
         {

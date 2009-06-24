@@ -39,7 +39,6 @@ set ( SIREMM_HEADERS
       restraint.h
       restraintcomponent.h
       restraintff.h
-      restraintparameters.h
       restraints.h
       softcljcomponent.h
       softcljpotential.h
@@ -86,7 +85,6 @@ set ( SIREMM_SOURCES
       restraint.cpp
       restraintcomponent.cpp
       restraintff.cpp
-      restraintparameters.cpp
       restraints.cpp
       softcljcomponent.cpp
       softcljpotential.cpp

@@ -407,7 +407,7 @@ Values ExpressionRestraint3D::values() const
     return vals;
 }
 
-/** Return all of the values set by the used in this restraint expression */
+/** Return all of the values set by the user in this restraint expression */
 Values ExpressionRestraint3D::userValues() const
 {
     Values ret;
@@ -516,11 +516,11 @@ void NullRestraint::force(ForceTable&, double) const
 {}
 
 /** The null restraint cannot be updated */
-void NullRestraint::update(const MoleculeData&, const PropertyMap&)
+void NullRestraint::update(const MoleculeData&)
 {}
 
 /** The null restraint cannot be updated */
-void NullRestraint::update(const Molecules&, const PropertyMap&)
+void NullRestraint::update(const Molecules&)
 {}
 
 /** There are no molecules in the NullRestraint */

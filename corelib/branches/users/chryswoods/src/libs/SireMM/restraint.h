@@ -140,11 +140,9 @@ public:
     
     virtual SireUnits::Dimension::MolarEnergy energy() const=0;
 
-    virtual void update(const MoleculeData &moldata,
-                        const PropertyMap &map = PropertyMap())=0;
+    virtual void update(const MoleculeData &moldata)=0;
 
-    virtual void update(const Molecules &molecules,
-                        const PropertyMap &map = PropertyMap())=0;
+    virtual void update(const Molecules &molecules)=0;
 
     virtual Molecules molecules() const=0;
     
@@ -326,8 +324,8 @@ public:
     void force(MolForceTable &forcetable, double scale_force=1) const;
     void force(ForceTable &forcetable, double scale_force=1) const;
     
-    void update(const MoleculeData &moldata, const PropertyMap &map);
-    void update(const Molecules &molecules, const PropertyMap &map);
+    void update(const MoleculeData &moldata);
+    void update(const Molecules &molecules);
 
     Molecules molecules() const;
     

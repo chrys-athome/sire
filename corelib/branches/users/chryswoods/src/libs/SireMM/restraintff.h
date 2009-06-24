@@ -33,6 +33,11 @@
 #include "restraintcomponent.h"
 
 #include "SireFF/g1ff.h"
+#include "SireFF/ff3d.h"
+
+#include "SireVol/space.h"
+
+#include "SireBase/properties.h"
 
 SIRE_BEGIN_HEADER
 
@@ -47,13 +52,28 @@ QDataStream& operator>>(QDataStream&, SireMM::RestraintFF&);
 namespace SireMM
 {
 
+using SireBase::Properties;
+
+using SireMol::Molecule;
+using SireMol::MoleculeData;
+using SireMol::PartialMolecule;
+using SireMol::ViewsOfMol;
+using SireMol::Molecules;
+
+using SireVol::Space;
+
+using SireCAS::Symbol;
+using SireCAS::Symbols;
+using SireCAS::Values;
+
 /** This is a forcefield that holds and evaluates a collection of 
     Restraint3D restraints.
     
     @author Christopher Woods
 */
-class SIREMM_EXPORT RestraintFF : public SireBase::ConcreteProperty<RestraintFF,G1FF>,
-                                  public FF3D
+class SIREMM_EXPORT RestraintFF 
+            : public SireBase::ConcreteProperty<RestraintFF,SireFF::G1FF>,
+              public SireFF::FF3D
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const RestraintFF&);
@@ -74,13 +94,20 @@ public:
     bool operator==(const RestraintFF &other) const;
     bool operator!=(const RestraintFF &other) const;
     
+    RestraintFF* clone() const
+    {
+        return new RestraintFF(*this);
+    }
+    
+    const RestraintComponent& components() const;
+    
     const Space& space() const;
     
     bool setSpace(const Space &space);
     
     bool setValue(const Symbol &symbol, double value);
-    double getValue(const Symbol &symbol);
-    bool hasValue(const Symbol &symbol);
+    double getValue(const Symbol &symbol) const;
+    bool hasValue(const Symbol &symbol) const;
     
     bool setProperty(const QString &name, const Property &property);
     const Property& property(const QString &name) const;
@@ -91,9 +118,7 @@ public:
     Symbols userSymbols() const;
     Symbols builtinSymbols() const;
     
-    Values values() const;
     Values userValues() const;
-    Values builtinValues() const;
     
     RestraintFF differentiate(const Symbol &symbol) const;
 
@@ -103,7 +128,7 @@ public:
     
     bool add(const Restraint3D &restraint);
     
-    bool contains(const Restraint3D &restraint);
+    bool contains(const Restraint3D &restraint) const;
     
     bool remove(const Restraint3D &restraint);
 
@@ -161,6 +186,7 @@ protected:
 
 private:
     void reindexRestraints();
+    void rebuildProperties();
 
     void updateRestraints(const MoleculeData &moldata);
     void updateRestraints(const Molecules &molecules);
@@ -178,11 +204,17 @@ private:
     /** Index of which restraints involve which molecules */
     QHash< MolNum, QList<quint32> > restraints_by_molnum;
 
+    /** The space in which the restraints are evaluated */
+    SireVol::SpacePtr spce;
+
     /** All of the values of the user symbols in the restraints */
     Values user_values;
     
     /** All of the built-in symbols of the restraints */
     Symbols builtin_symbols;
+    
+    /** All of the properties of this forcefield */
+    Properties props;
     
     /** Whether or not to recalculate everything from scratch */
     bool recalc_from_scratch;

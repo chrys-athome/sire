@@ -429,7 +429,7 @@ void DihedralRestraint::force(ForceTable &forcetable, double scale_force) const
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void DihedralRestraint::update(const MoleculeData &moldata, const PropertyMap &map)
+void DihedralRestraint::update(const MoleculeData &moldata)
 {
     if (this->contains(moldata.number()))
     {
@@ -439,7 +439,7 @@ void DihedralRestraint::update(const MoleculeData &moldata, const PropertyMap &m
         {
             for (int i=0; i<this->nPoints(); ++i)
             {
-                p[i].edit().update(moldata, map);
+                p[i].edit().update(moldata);
             }
             
             this->calculatePhi();
@@ -458,7 +458,7 @@ void DihedralRestraint::update(const MoleculeData &moldata, const PropertyMap &m
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void DihedralRestraint::update(const Molecules &molecules, const PropertyMap &map)
+void DihedralRestraint::update(const Molecules &molecules)
 {
     if (this->usesMoleculesIn(molecules))
     {
@@ -468,7 +468,7 @@ void DihedralRestraint::update(const Molecules &molecules, const PropertyMap &ma
         {
             for (int i=0; i<this->nPoints(); ++i)
             {
-                p[i].edit().update(molecules, map);
+                p[i].edit().update(molecules);
             }
             
             this->calculatePhi();
@@ -547,9 +547,7 @@ static Expression diffHarmonicFunction(double force_constant)
 }
 
 /** Return a distance restraint that applies a harmonic potential between 
-    the points 'point0' and 'point1' using a force constant 'force_constant'
-    and using the (optionally supplied) property map to find the 
-    required properties */
+    the points 'point0' and 'point1' using a force constant 'force_constant' */
 DihedralRestraint DihedralRestraint::harmonic(
                                         const PointRef &point0,
                                         const PointRef &point1,
@@ -598,8 +596,7 @@ static Expression diffHalfHarmonicFunction(double force_constant, double angle)
 
 /** Return a distance restraint that applied a half-harmonic potential 
     between the points 'point0' and 'point1' above a distance 'distance'
-    using a force constant 'force_constant' and using the
-    (optionally supplied) property map out find the required properties */
+    using a force constant 'force_constant' */
 DihedralRestraint DihedralRestraint::halfHarmonic(
                                         const PointRef &point0,
                                         const PointRef &point1,

@@ -102,11 +102,8 @@ public:
     void force(MolForceTable &forcetable, double scale_force=1) const;
     void force(ForceTable &forcetable, double scale_force=1) const;
 
-    void update(const MoleculeData &moldata, 
-                const PropertyMap &map = PropertyMap());
-                
-    void update(const Molecules &molecules,
-                const PropertyMap &map = PropertyMap());
+    void update(const MoleculeData &moldata);
+    void update(const Molecules &molecules);
 
     Molecules molecules() const;
     

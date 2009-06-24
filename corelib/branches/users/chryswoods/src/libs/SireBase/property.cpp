@@ -89,6 +89,13 @@ bool Property::operator!=(const Property&) const
     return false;
 }
 
+/** Default 'toString()' function for properties - it would
+    help if all properties output something more sensible */
+QString Property::toString() const
+{
+    return QString("%1()").arg( this->what() );
+}
+
 /** Throw an invalid cast!
 
     \throw SireError::invalid_cast
@@ -233,6 +240,23 @@ bool VariantProperty::operator!=(const VariantProperty &other) const
     return QVariant::operator!=(other);
 }
 
+const char* VariantProperty::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<VariantProperty>() );
+}
+
+/** String operator */
+QString VariantProperty::toString() const
+{
+    if (this->canConvert<QString>())
+        return this->value<QString>();
+    else
+    {
+        return QString("VariantProperty( %1() )")
+                    .arg(this->typeName());
+    }
+}
+
 ///////////////
 /////////////// Implementation of NullProperty
 ///////////////
@@ -294,6 +318,11 @@ const NullProperty& Property::null()
     }
     
     return *(global_null.constData());
+}
+
+QString NullProperty::toString() const
+{
+    return QObject::tr("NULL");
 }
 
 ///////////////

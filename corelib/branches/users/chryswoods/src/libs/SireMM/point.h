@@ -430,13 +430,8 @@ public:
 
     void setSpace(const Space &space);
     
-    bool wouldChangeProperties(const PropertyMap &map) const;
-    
     void update(const MoleculeData &moldata);
-    void update(const MoleculeData &moldata, const PropertyMap &map);
-                        
     void update(const Molecules &molecules);
-    void update(const Molecules &molecules, const PropertyMap &map);
     
     Molecules molecules() const;
     

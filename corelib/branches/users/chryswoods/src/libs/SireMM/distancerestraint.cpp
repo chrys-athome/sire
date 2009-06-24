@@ -434,7 +434,7 @@ void DistanceRestraint::force(ForceTable &forcetable, double scale_force) const
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void DistanceRestraint::update(const MoleculeData &moldata, const PropertyMap &map)
+void DistanceRestraint::update(const MoleculeData &moldata)
 {
     bool in_p0 = p[0].read().contains(moldata.number());
     bool in_p1 = p[1].read().contains(moldata.number());
@@ -445,8 +445,8 @@ void DistanceRestraint::update(const MoleculeData &moldata, const PropertyMap &m
         
         try
         {
-            p[0].edit().update(moldata, map);
-            p[1].edit().update(moldata, map);
+            p[0].edit().update(moldata);
+            p[1].edit().update(moldata);
             
             this->calculateR();
         }
@@ -458,12 +458,12 @@ void DistanceRestraint::update(const MoleculeData &moldata, const PropertyMap &m
     }
     else if (in_p0)
     {
-        p[0].edit().update(moldata, map);
+        p[0].edit().update(moldata);
         this->calculateR();
     }
     else if (in_p1)
     {
-        p[1].edit().update(moldata, map);
+        p[1].edit().update(moldata);
         this->calculateR();
     }
 }
@@ -474,7 +474,7 @@ void DistanceRestraint::update(const MoleculeData &moldata, const PropertyMap &m
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void DistanceRestraint::update(const Molecules &molecules, const PropertyMap &map)
+void DistanceRestraint::update(const Molecules &molecules)
 {
     bool in_p0 = p[0].read().usesMoleculesIn(molecules);
     bool in_p1 = p[1].read().usesMoleculesIn(molecules);
@@ -485,8 +485,8 @@ void DistanceRestraint::update(const Molecules &molecules, const PropertyMap &ma
         
         try
         {
-            p[0].edit().update(molecules, map);
-            p[1].edit().update(molecules, map);
+            p[0].edit().update(molecules);
+            p[1].edit().update(molecules);
             this->calculateR();
         }
         catch(...)
@@ -497,12 +497,12 @@ void DistanceRestraint::update(const Molecules &molecules, const PropertyMap &ma
     }
     else if (in_p0)
     {
-        p[0].edit().update(molecules, map);
+        p[0].edit().update(molecules);
         this->calculateR();
     }
     else if (in_p1)
     {
-        p[1].edit().update(molecules, map);
+        p[1].edit().update(molecules);
         this->calculateR();
     }
 }
@@ -579,9 +579,7 @@ static Expression diffHarmonicFunction(double force_constant)
 }
 
 /** Return a distance restraint that applies a harmonic potential between 
-    the points 'point0' and 'point1' using a force constant 'force_constant'
-    and using the (optionally supplied) property map to find the 
-    required properties */
+    the points 'point0' and 'point1' using a force constant 'force_constant' */
 DistanceRestraint DistanceRestraint::harmonic(
                                   const PointRef &point0,
                                   const PointRef &point1,
@@ -628,8 +626,7 @@ static Expression diffHalfHarmonicFunction(double force_constant, double distanc
 
 /** Return a distance restraint that applied a half-harmonic potential 
     between the points 'point0' and 'point1' above a distance 'distance'
-    using a force constant 'force_constant' and using the
-    (optionally supplied) property map out find the required properties */
+    using a force constant 'force_constant' */
 DistanceRestraint DistanceRestraint::halfHarmonic(
                                       const PointRef &point0,
                                       const PointRef &point1,
@@ -1058,7 +1055,7 @@ void DoubleDistanceRestraint::force(ForceTable &forcetable, double scale_force) 
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void DoubleDistanceRestraint::update(const MoleculeData &moldata, const PropertyMap &map)
+void DoubleDistanceRestraint::update(const MoleculeData &moldata)
 {
     if (this->contains(moldata.number()))
     {
@@ -1068,7 +1065,7 @@ void DoubleDistanceRestraint::update(const MoleculeData &moldata, const Property
         {
             for (int i=0; i<this->nPoints(); ++i)
             {
-                p[i].edit().update(moldata, map);
+                p[i].edit().update(moldata);
             }
             
             this->calculateR();
@@ -1087,7 +1084,7 @@ void DoubleDistanceRestraint::update(const MoleculeData &moldata, const Property
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void DoubleDistanceRestraint::update(const Molecules &molecules, const PropertyMap &map)
+void DoubleDistanceRestraint::update(const Molecules &molecules)
 {
     if (this->usesMoleculesIn(molecules))
     {
@@ -1097,7 +1094,7 @@ void DoubleDistanceRestraint::update(const Molecules &molecules, const PropertyM
         {
             for (int i=0; i<this->nPoints(); ++i)
             {
-                p[i].edit().update(molecules, map);
+                p[i].edit().update(molecules);
             }
             
             this->calculateR();
@@ -1676,7 +1673,7 @@ void TripleDistanceRestraint::force(ForceTable &forcetable, double scale_force) 
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void TripleDistanceRestraint::update(const MoleculeData &moldata, const PropertyMap &map)
+void TripleDistanceRestraint::update(const MoleculeData &moldata)
 {
     if (this->contains(moldata.number()))
     {
@@ -1686,7 +1683,7 @@ void TripleDistanceRestraint::update(const MoleculeData &moldata, const Property
         {
             for (int i=0; i<this->nPoints(); ++i)
             {
-                p[i].edit().update(moldata, map);
+                p[i].edit().update(moldata);
             }
             
             this->calculateR();
@@ -1705,7 +1702,7 @@ void TripleDistanceRestraint::update(const MoleculeData &moldata, const Property
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void TripleDistanceRestraint::update(const Molecules &molecules, const PropertyMap &map)
+void TripleDistanceRestraint::update(const Molecules &molecules)
 {
     if (this->usesMoleculesIn(molecules))
     {
@@ -1715,7 +1712,7 @@ void TripleDistanceRestraint::update(const Molecules &molecules, const PropertyM
         {
             for (int i=0; i<this->nPoints(); ++i)
             {
-                p[i].edit().update(molecules, map);
+                p[i].edit().update(molecules);
             }
             
             this->calculateR();
