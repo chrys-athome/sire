@@ -93,6 +93,8 @@ public:
 
     const PropertyName& at(int i) const;
 
+    QString toString() const;
+
     int nSources() const;
     int count() const;
     int size() const;

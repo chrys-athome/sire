@@ -792,6 +792,70 @@ void System::setProperty(const FFID &ffid, const QString &name, const Property &
     this->_pvt_forceFields().setProperty(ffid, name, value);
     sysversion.incrementMajor();
 }
+    
+/** Remove the property with name 'name'. Note that this can only
+    remove user-level properties - it cannot remove built-in properties
+    of the system. This does nothing if there is no user-level 
+    property with this name */
+void System::removeProperty(const QString &name)
+{
+    this->_pvt_forceFields().removeProperty(name);
+}
+
+/** Return whether or not the property 'name' exists and is a compound 
+    property (either a link or a combined property) */
+bool System::isCompoundProperty(const QString &name) const
+{
+    return this->_pvt_forceFields().isCompoundProperty(name);
+}
+
+/** Return whether or not the property 'name' exists and is a user 
+    supplied property (either a compound property or an extra
+    System property) */
+bool System::isUserProperty(const QString &name) const
+{
+    return this->_pvt_forceFields().isUserProperty(name);
+}
+
+/** Return whether or not the property 'name' exists and is a builtin
+    property of one of the forcefields in this System */
+bool System::isBuiltinProperty(const QString &name) const
+{
+    return this->_pvt_forceFields().isBuiltinProperty(name);
+}
+
+/** Return the raw compound property with name 'name' - this returns
+    the property representing the link, or the combined property,
+    and raises an exception if a compound property with this name
+    does not exist
+    
+    \throw SireBase::missing_property
+*/
+const Property& System::compoundProperty(const QString &name) const
+{
+    return this->_pvt_forceFields().compoundProperty(name);
+}
+
+/** Return the user-supplied property at 'name'. This raises an
+    exception if there is no user-supplied property with this name
+    
+    \throw SireBase::missing_property
+*/
+const Property& System::userProperty(const QString &name) const
+{
+    return this->_pvt_forceFields().userProperty(name);
+}
+
+/** Return the built-in property at 'name'. This will by-pass any
+    user-supplied property with this name, and will raise an
+    exception if there is no built-in property with this name
+    
+    \throw SireBase::missing_property
+*/
+const Property& System::builtinProperty(const QString &name) const
+{
+    return this->_pvt_forceFields().builtinProperty(name);
+}
 
 Q_GLOBAL_STATIC( QMutex, constraintMutex );
 Q_GLOBAL_STATIC( QSet<const System*>, constraintSet );
@@ -999,6 +1063,19 @@ Properties System::properties(const FFID &ffid) const
 {
     return this->_pvt_forceFields().properties(ffid);
 } 
+    
+/** Return the values of all user-level properties of this
+    system */
+Properties System::userProperties() const
+{
+    return this->_pvt_forceFields().userProperties();
+}
+
+/** Return the values of all built-in properties of this system */
+Properties System::builtinProperties() const
+{
+    return this->_pvt_forceFields().builtinProperties();
+}
 
 /** Return the list of all monitors of this system */
 const SystemMonitors& System::monitors() const

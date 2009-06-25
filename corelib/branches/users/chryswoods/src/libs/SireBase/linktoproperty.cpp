@@ -129,6 +129,19 @@ const char* LinkToProperty::typeName()
     return QMetaType::typeName( qMetaTypeId<LinkToProperty>() );
 }
 
+/** Return a string representation of this link */
+QString LinkToProperty::toString() const
+{
+    if (target_source.hasSource())
+        return QObject::tr("LinkTo( %1 )").arg(target_source.source());
+     
+    else if (target_source.hasValue())
+        return QObject::tr("LinkTo( %1 )").arg(target_source.value().toString());
+
+    else
+        return QObject::tr("LinkTo( NULL )");
+}
+
 /** Return the target of this link */
 const PropertyName& LinkToProperty::target() const
 {

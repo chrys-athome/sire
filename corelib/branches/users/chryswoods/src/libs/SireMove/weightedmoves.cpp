@@ -37,6 +37,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include "SireError/errors.h"
+
 using namespace SireMove;
 using namespace SireSystem;
 using namespace SireBase;
@@ -303,6 +305,102 @@ System WeightedMoves::move(const System &system, int nmoves, bool record_stats)
     }
 
     return run_system;
+}
+
+/** Return the energy component used by these moves. An exception
+    will be raised if the component moves use different energy
+    components to one another
+    
+    \throw SireError::incompatible_error
+*/
+const Symbol& WeightedMoves::energyComponent() const
+{
+    int nmoves = mvs.count();
+    
+    const tuple<MovePtr,double> *mvs_array = mvs.constData();
+    
+    if (nmoves == 0)
+        return Move::null().energyComponent();
+    
+    else
+    {
+        const Symbol &nrg = mvs_array[0].get<0>().read().energyComponent();
+        
+        QSet<Symbol> symbols;
+        
+        for (int i=1; i<nmoves; ++i)
+        {
+            if (nrg != mvs_array[i].get<0>().read().energyComponent())
+            {
+                symbols.insert(nrg);
+                symbols.insert(mvs_array[i].get<0>().read().energyComponent());
+                
+                for (int j=i+1; j<nmoves; ++j)
+                {
+                    symbols.insert( mvs_array[j].get<0>().read().energyComponent() );
+                }
+                
+                throw SireError::incompatible_error( QObject::tr(
+                        "Different moves are sampling from different energy "
+                        "components (%1) so a single energy component cannot "
+                        "be found for %2.")
+                            .arg( Sire::toString(symbols), this->toString() ),
+                                CODELOC );
+            }
+        }
+        
+        return nrg;
+    }
+}
+
+/** Return the space property used by these moves. An exception
+    will be raised if the component moves use different space
+    properties to one another
+    
+    \throw SireError::incompatible_error
+*/
+const PropertyName& WeightedMoves::spaceProperty() const
+{
+    int nmoves = mvs.count();
+    
+    const tuple<MovePtr,double> *mvs_array = mvs.constData();
+    
+    if (nmoves == 0)
+        return Move::null().spaceProperty();
+    
+    else
+    {
+        const PropertyName &space = mvs_array[0].get<0>().read().spaceProperty();
+        
+        QList<PropertyName> spaces;
+        
+        for (int i=1; i<nmoves; ++i)
+        {
+            if (space != mvs_array[i].get<0>().read().spaceProperty())
+            {
+                spaces.append(space);
+                spaces.append(mvs_array[i].get<0>().read().spaceProperty());
+                
+                for (int j=i+1; j<nmoves; ++j)
+                {
+                    const PropertyName &jspace = mvs_array[j].get<0>()
+                                                             .read().spaceProperty();
+                
+                    if (not spaces.contains(jspace))
+                        spaces.append(jspace);
+                }
+                
+                throw SireError::incompatible_error( QObject::tr(
+                        "Different moves are sampling from different space "
+                        "properties (%1) so a single space property cannot "
+                        "be found for %2.")
+                            .arg( Sire::toString(spaces), this->toString() ),
+                                CODELOC );
+            }
+        }
+        
+        return space;
+    }
 }
 
 /** Set the energy component of all of the moves to 'component' */

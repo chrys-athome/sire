@@ -96,6 +96,9 @@ public:
     void setEnergyComponent(const Symbol &component);
     void setSpaceProperty(const PropertyName &spaceproperty); 
 
+    const Symbol& energyComponent() const;
+    const PropertyName& spaceProperty() const;
+
     void setGenerator(const RanGenerator &rangenerator);
     
     const RanGenerator& generator() const;

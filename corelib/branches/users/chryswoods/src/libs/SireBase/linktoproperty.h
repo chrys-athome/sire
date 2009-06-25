@@ -79,6 +79,8 @@ public:
     
     static const char* typeName();
 
+    QString toString() const;
+
     const PropertyName& target() const;
     
     const SireID::ID& filter() const;

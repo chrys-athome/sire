@@ -44,6 +44,9 @@
 #include "SireMol/molecules.h"
 #include "SireMol/moleculegroup.h"
 
+#include "SireBase/linktoproperty.h"
+#include "SireBase/combineproperties.h"
+
 #include "tostring.h"
 
 #include "SireMol/errors.h"
@@ -839,6 +842,7 @@ QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const ForceFields &ffield
     //write out all of the forcefields
     sds << ffields.ffields_by_idx
         << ffields.ffsymbols
+        << ffields.additional_properties
         << ffields.property_aliases
         << ffields.combined_properties;
     
@@ -860,6 +864,7 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, ForceFields &ffields)
         //read in the forcefields
         sds >> new_ffields.ffields_by_idx
             >> new_ffields.ffsymbols
+            >> new_ffields.additional_properties
             >> new_ffields.property_aliases
             >> new_ffields.combined_properties;
 
@@ -1141,6 +1146,7 @@ ForceFields::ForceFields(const ForceFields &other)
               ffields_by_name(other.ffields_by_name),
               mgroups_by_num(other.mgroups_by_num),
               ffsymbols(other.ffsymbols),
+              additional_properties(other.additional_properties),
               property_aliases(other.property_aliases),
               combined_properties(other.combined_properties)
 {}
@@ -1158,6 +1164,7 @@ ForceFields& ForceFields::operator=(const ForceFields &other)
         ffields_by_name = other.ffields_by_name;
         mgroups_by_num = other.mgroups_by_num;
         ffsymbols = other.ffsymbols;
+        additional_properties = other.additional_properties;
         property_aliases = other.property_aliases;
         combined_properties = other.combined_properties;
         
@@ -1172,6 +1179,7 @@ bool ForceFields::operator==(const ForceFields &other) const
 {
     return this == &other or
            ( ffields_by_idx == other.ffields_by_idx and
+             additional_properties == other.additional_properties and
              property_aliases == other.property_aliases and
              combined_properties == other.combined_properties );
 }
@@ -1181,6 +1189,7 @@ bool ForceFields::operator!=(const ForceFields &other) const
 {
     return this != &other and
            ( ffields_by_idx != other.ffields_by_idx or
+             additional_properties != other.additional_properties or
              property_aliases != other.property_aliases or
              combined_properties != other.combined_properties );
 }
@@ -1650,6 +1659,381 @@ void ForceFields::force(ForceTable &forcetable, double scale_force)
     this->force(forcetable, this->totalComponent(), scale_force);
 }
 
+/** Sanitise the user properties. This removes dangling links,
+    invalid combined properties and additional properties
+    that have the same name as a built-in property. You need
+    to call this whenever you change a property or add or
+    remove a forcefield. This is because the because the
+    dependencies of properties can become quite complicated...! */
+void ForceFields::sanitiseUserProperties()
+{
+    bool something_changed = false;
+    
+    //need to keep iterating until nothing changes as there
+    //can be quite complicated dependencies caused by links 
+    //disappering causing combined properties to fall back
+    //to a different real value, which may then make the
+    //combined property invalid, which will then break
+    //another link...!
+    do
+    {
+        something_changed = false;
+
+        if (not additional_properties.isEmpty())
+        {
+            //we cannot have an additional property that is also 
+            //a built-in property
+            foreach (QString key, additional_properties.keys())
+            {
+                for (QVector<FFPtr>::const_iterator it = ffields_by_idx.constBegin();
+                     it != ffields_by_idx.constEnd();
+                     ++it)
+                {
+                    if (it->read().containsProperty(key))
+                    {
+                        //this is a built-in property!
+                        additional_properties.remove(key);
+                        something_changed = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (not property_aliases.isEmpty())
+        {
+            foreach (QString key, property_aliases.keys())
+            {
+                if (not this->isValidLink(key))
+                {
+                    property_aliases.remove(key);
+                    something_changed = true;
+                }
+            }
+        }
+
+        if (not combined_properties.isEmpty())
+        {
+            QSet<QString> updated_combinations;
+        
+            foreach (QString key, combined_properties.keys())
+            {
+                try
+                {
+                    if (not updated_combinations.contains(key))
+                        this->updateCombinedProperty(key, true, &updated_combinations);
+                }
+                catch(...)
+                {
+                    //we can no longer update this combined property or
+                    //one of its dependencies, so lets just remove it
+                    combined_properties.remove(key);
+                    something_changed = true;
+                }
+            }
+        }
+    
+    } while (something_changed);
+}
+
+/** Remove the property with name 'name'. Note that this can only
+    remove user-level properties - it cannot remove built-in properties
+    of the forcefields. This does nothing if there is no user-level 
+    property with this name */
+void ForceFields::removeProperty(const QString &name)
+{
+    combined_properties.remove(name);
+    property_aliases.remove(name);
+    additional_properties.remove(name);
+
+    this->sanitiseUserProperties();
+}
+
+/** Return whether or not the property 'name' exists and is a compound 
+    property (either a link or a combined property) */
+bool ForceFields::isCompoundProperty(const QString &name) const
+{
+    return combined_properties.contains(name) or 
+           property_aliases.contains(name);
+}
+
+/** Return whether or not the property 'name' exists and is a user 
+    supplied property (either a compound property or an extra
+    ForceFields property) */
+bool ForceFields::isUserProperty(const QString &name) const
+{
+    return this->isCompoundProperty(name) or additional_properties.contains(name);
+}
+
+/** Return whether or not the property 'name' exists and is a builtin
+    property of one of the forcefields in this set */
+bool ForceFields::isBuiltinProperty(const QString &name) const
+{
+    return (not this->isUserProperty(name)) and this->containsProperty(name);
+}
+
+/** Return the raw compound property with name 'name' - this returns
+    the property representing the link, or the combined property,
+    and raises an exception if a compound property with this name
+    does not exist
+    
+    \throw SireBase::missing_property
+*/
+const Property& ForceFields::compoundProperty(const QString &name) const
+{
+    bool is_link = property_aliases.contains(name);
+    bool is_combined = combined_properties.contains(name);
+    
+    if (is_link and is_combined)
+        throw SireError::program_bug( QObject::tr(
+            "How can the property %1 be both a link and a combined property?")
+                .arg(name), CODELOC );
+                
+    else if (not (is_link or is_combined))
+    {
+        QStringList compound_props = property_aliases.keys() + 
+                                     combined_properties.keys();
+    
+        if (not this->containsProperty(name))
+            throw SireBase::missing_property( QObject::tr(
+                    "There is no property %1 in this set of forcefields. "
+                    "Available compound properties are [ %2 ].")
+                        .arg(name, Sire::toString(compound_props)), CODELOC );
+
+        else
+            throw SireBase::missing_property( QObject::tr(
+                    "The property %1 is not a compound property. "
+                    "Available compound properties are [ %2 ].")
+                        .arg(name, Sire::toString(compound_props)), CODELOC );
+    }
+    else if (is_link)
+    {
+        return property_aliases.constFind(name)->read();
+    }
+    else
+        return combined_properties.constFind(name)->read();
+}
+
+/** Return the user-supplied property at 'name'. This raises an
+    exception if there is no user-supplied property with this name
+    
+    \throw SireBase::missing_property
+*/
+const Property& ForceFields::userProperty(const QString &name) const
+{
+    if (not this->isUserProperty(name))
+        throw SireBase::missing_property( QObject::tr(
+            "There is no user property with name %1. Available user properties "
+            "are [ %2 ].")
+                .arg(name, Sire::toString( property_aliases.keys() +
+                                           combined_properties.keys() + 
+                                           additional_properties.keys() ) ), CODELOC );
+
+    return this->property(name);
+}
+
+/** Return the built-in property at 'name'. This will by-pass any
+    user-supplied property with this name, and will raise an
+    exception if there is no built-in property with this name
+    
+    \throw SireBase::missing_property
+*/
+const Property& ForceFields::builtinProperty(const QString &name) const
+{
+    return this->property(FFIdx::null(), name);
+}
+
+/** Return all of the ForceFields level properties that are needed to
+    get the value of the property with name 'name' - note that this
+    does not include the names of ForceField level ("filtered") properties */
+void ForceFields::getDependencies(const QString &name, QSet<QString> &deps) const
+{
+    if (property_aliases.contains(name))
+    {
+        const LinkToProperty &link = property_aliases.constFind(name)
+                                                     ->read().asA<LinkToProperty>();
+                                                     
+        if (not link.isFiltered() and link.target().hasSource())
+        {
+            if (not deps.contains(link.target().source()))
+            {
+                deps.insert(link.target().source());
+                this->getDependencies(link.target().source(), deps);
+            }
+        }
+    }
+    else if (combined_properties.contains(name))
+    {
+        const CombineProperties &combined = combined_properties.constFind(name)
+                                                    ->read().asA<CombineProperties>();
+        
+        for (CombineProperties::const_iterator it = combined.constBegin();
+             it != combined.constEnd();
+             ++it)
+        {
+            if (it->hasSource())
+            {
+                if (not deps.contains(it->source()))
+                {
+                    deps.insert(it->source());
+                    this->getDependencies(it->source(), deps);
+                }
+            }
+        }
+    }
+}
+
+/** Assert that the property 'name' does not contain a circular
+    reference */
+void ForceFields::assertNonCircularProperty(const QString &name) const
+{
+    QSet<QString> deps;
+    
+    this->getDependencies(name, deps);
+
+    if (deps.contains(name))
+        throw SireError::invalid_state( QObject::tr(
+            "Circular link detected from %1 to %1. The dependencies "
+            "of this property are %2.")
+                .arg(name).arg( Sire::toString(deps) ), CODELOC );
+}
+
+/** Assert that the link at 'name' is valid */
+void ForceFields::assertValidLink(const QString &name) const
+{
+    if (not property_aliases.contains(name))
+        throw SireBase::missing_property( QObject::tr(
+                "There is no link with name %1.").arg(name), CODELOC );
+        
+    const LinkToProperty &link = property_aliases.constFind(name)
+                                                ->read().asA<LinkToProperty>();
+    
+    if (link.target().isNull())
+        throw SireError::invalid_state( QObject::tr(
+                "Null link detected from %1 -> NULL")
+                    .arg(name), CODELOC );
+
+    if (link.isFiltered())
+    {
+        if (not link.filter().isA<FFID>())
+            throw SireError::invalid_cast( QObject::tr(
+                    "You cannot not add a link that is filtered by a non FFID-derived "
+                    "identifier (as you can only filter on forcefield IDs). "
+                    "The link from %1 is %2.")
+                        .arg(name, link.toString()), CODELOC );
+    
+        this->map(link.filter().asA<FFID>());
+    }
+
+    //see if we can get this property
+    if (link.target().hasSource())
+    {
+        if (link.isFiltered())
+        {
+            //ensure that we can actually get the link
+            this->property(link.filter().asA<FFID>(), link.target().source());
+        }
+        else
+        {
+            //ensure that this property is not a circular link                
+            this->assertNonCircularProperty(name);
+
+            //ensure that we can actually get the link
+            this->property(link.target().source());
+        }
+    }
+}
+
+/** Return whether or not the specified link is valid */
+bool ForceFields::isValidLink(const QString &name) const
+{
+    try
+    {
+        this->assertValidLink(name);
+        return true;
+    }
+    catch(...)
+    {
+        return false;
+    }
+}
+
+/** Update the combined property with name 'name' - we have
+    already ensured that there are no circular references. This
+    optionally record the set of combined properties that were updated
+    when this was updated. This internal function is not atomic,
+    so should only be called by another function that explicitly
+    ensures atomicity */
+void ForceFields::updateCombinedProperty(const QString &name, 
+                                         bool update_dependencies,
+                                         QSet<QString> *updated_combinations)
+{
+    if (updated_combinations)
+    {
+        if (updated_combinations->contains(name))
+            return;
+    }
+
+    if (not combined_properties.contains(name))
+        throw SireBase::missing_property( QObject::tr(
+                "There is no property combination with name %1.").arg(name), CODELOC );
+        
+    CombineProperties &combined = combined_properties.find(name)
+                                           ->edit().asA<CombineProperties>();
+
+    //get all of the dependent properties of this combination
+    Properties dependencies;
+    
+    for (CombineProperties::const_iterator it = combined.constBegin();
+         it != combined.constEnd();
+         ++it)
+    {
+        if (it->hasSource())
+        {
+            if (update_dependencies and combined_properties.contains(it->source()))
+                this->updateCombinedProperty(it->source());
+            
+            dependencies.setProperty(it->source(), this->property(it->source()));
+        }
+    }
+
+    combined.updateFrom(dependencies);
+    
+    if (updated_combinations)
+        updated_combinations->insert(name);
+}
+
+/** Update all of the combined properties */
+void ForceFields::updateCombinedProperties()
+{
+    if (combined_properties.isEmpty())
+        return;
+
+    else if (combined_properties.count() == 1)
+    {
+        this->updateCombinedProperty( combined_properties.constBegin().key(), false );
+    }
+    else
+    {
+        QHash<QString,PropertyPtr> old_combined_properties = combined_properties;
+    
+        try
+        {
+            QSet<QString> updated_combinations;
+    
+            foreach (QString key, combined_properties.keys())
+            {
+                this->updateCombinedProperty(key, true, &updated_combinations);
+            }
+        }
+        catch(...)
+        {
+            combined_properties = old_combined_properties;
+            throw;
+        }
+    }
+}
+
 /** Set the property 'name' to have the value 'value' in *all* of the 
     forcefields contained in this set
     
@@ -1658,45 +2042,145 @@ void ForceFields::force(ForceTable &forcetable, double scale_force)
 */
 void ForceFields::setProperty(const QString &name, const Property &value)
 {
+    if (name.isEmpty())
+        return;
+
+    //is this property a link? If so, then we need to forward this
+    //setProperty to the target of the link
+    if (property_aliases.contains(name))
+    {
+        const LinkToProperty &link = property_aliases.constFind(name)->read()
+                                                        .asA<LinkToProperty>();
+                                                        
+        if (link.target().hasSource())
+        {
+            if (link.isFiltered())
+                this->setProperty(link.filter().asA<FFID>(), 
+                                  link.target().source(), value);
+            else
+                this->setProperty(link.target().source(), value);
+        }
+        
+        return;
+    }
+
     if (value.isA<LinkToProperty>())
     {
-        //this is a property alias
-        ...
+        //remove any existing link or combined property with this name
+        QHash<QString,PropertyPtr> old_combined_properties = combined_properties;
+        QHash<QString,PropertyPtr> old_property_aliases = property_aliases;
+        QHash<QString,PropertyPtr> old_additional_properties = additional_properties;
+        
+        try
+        {
+            additional_properties.remove(name);
+            combined_properties.remove(name);
+            property_aliases.insert(name, value);
+
+            this->assertValidLink(name);
+            this->sanitiseUserProperties();
+        }
+        catch(...)
+        {
+            additional_properties = old_additional_properties;
+            property_aliases = old_property_aliases;
+            combined_properties = old_combined_properties;
+            throw;
+        }
     }
-    else if (value.isA<CombinedProperty>())
+    else if (value.isA<CombineProperties>())
     {
-        //this is a combined property
-        ...
+        //remove any existing link or combined property with this name
+        QHash<QString,PropertyPtr> old_additional_properties = additional_properties;
+        QHash<QString,PropertyPtr> old_combined_properties = combined_properties;
+        QHash<QString,PropertyPtr> old_property_aliases = property_aliases;
+        
+        try
+        {
+            additional_properties.remove(name);
+            combined_properties.insert(name, value);
+            property_aliases.remove(name);
+
+            this->assertNonCircularProperty(name);
+            this->sanitiseUserProperties();
+        }
+        catch(...)
+        {
+            additional_properties = old_additional_properties;
+            property_aliases = old_property_aliases;
+            combined_properties = old_combined_properties;
+            throw;
+        }
     }
     else
     {
-        QVector<FFPtr> new_ffields = ffields_by_idx;
-    
-        int nffields = new_ffields.count();
-        FFPtr *new_ffields_array = new_ffields.data();
-    
-        bool changed_property = false;
-    
-        for (int i=0; i<nffields; ++i)
+        QVector<FFPtr> old_ffields_by_idx = ffields_by_idx;
+        QHash<QString,PropertyPtr> old_additional_properties = additional_properties;
+        QHash<QString,PropertyPtr> old_combined_properties = combined_properties;
+        QHash<QString,PropertyPtr> old_property_aliases = property_aliases;
+
+        try
         {
-            if (new_ffields_array[i].read().containsProperty(name))
+            if (additional_properties.contains(name))
             {
-                if (new_ffields_array[i].edit().setProperty(name, value))
-                    changed_property = true;
+                //we already know that the forcefields don't contain
+                //this property - update the additional property
+                additional_properties.insert(name, value);
+                this->sanitiseUserProperties();
+            }
+            else
+            {
+                //this is a new property that has replaced any link or combined property
+                combined_properties.remove(name);
+                property_aliases.remove(name);
+                
+                int nffields = ffields_by_idx.count();
+                FFPtr *ffields_array = ffields_by_idx.data();
+        
+                bool changed_property = false;
+                bool contains_property = false;
+        
+                for (int i=0; i<nffields; ++i)
+                {
+                    if (ffields_array[i].read().containsProperty(name))
+                    {
+                        contains_property = true;
+                        
+                        if (ffields_array[i].edit().setProperty(name, value))
+                            changed_property = true;
+                    }
+                }
+        
+                if (changed_property)
+                    this->sanitiseUserProperties();
+
+                else if (not contains_property)
+                    //there is no property in the forcefields, so add this
+                    //as an additional property - no need to sanitise
+                    //user properties as this is a totally new property
+                    additional_properties.insert(name, value);
             }
         }
-    
-        if (changed_property)
-            //update any combined properties
-            this->changedProperty(name, new_ffields);
-    
-        //everything went ok!
-        ffields_by_idx = new_ffields;
+        catch(...)
+        {
+            ffields_by_idx = old_ffields_by_idx;
+            additional_properties = old_additional_properties;
+            combined_properties = old_combined_properties;
+            property_aliases = old_property_aliases;
+            throw;
+        }
     }
 }
 
-/** Set the property 'name' to have the value 'value' in all of the forcefields
+/** Set the built-in property 'name' to have the value 'value' in all of the forcefields
     in this set that match the ID 'ffid'
+    
+    Note that because this operates on the level of individual forcefields,
+    it operates only on built-in properties, not on user-supplied properties
+
+    Note also that if this breaks any links or combined properties then
+    the broken links and combined properties (including all those that
+    depend on them) will be removed
     
     \throw SireFF::missing_forcefield
     \throw SireError::invalid_index
@@ -1724,7 +2208,7 @@ void ForceFields::setProperty(const FFID &ffid, const QString &name,
         }
         
         if (changed_property)
-            this->changedProperty(name, ffields_by_idx);
+            this->sanitiseUserProperties();
     }
     catch(...)
     {
@@ -1742,87 +2226,95 @@ void ForceFields::setProperty(const FFID &ffid, const QString &name,
 */
 const Property& ForceFields::property(const QString &name) const
 {
-    if (property_aliases.contains(name))
+    if (additional_properties.contains(name))
+    {
+        return additional_properties.constFind(name)->read();
+    }
+    else if (property_aliases.contains(name))
     {
         const LinkToProperty &link = property_aliases.constFind(name)->read()
                                                      .asA<LinkToProperty>();
+    
+        if (link.target().isNull())
+            throw SireError::program_bug( QObject::tr(
+                    "How did a null link from %1 get through???")
+                        .arg(name), CODELOC );
     
         if (link.target().hasSource())
         {
             if (link.isFiltered())
             {
-                return this->property(link.target().source(), 
-                                      link.filter().asA<FFID>());
+                return this->property(link.filter().asA<FFID>(),
+                                      link.target().source());
             }
             else
             {
-                if (link.target().source() != name)
-                    return this->property(link.target().source());
-                    
-                //fall through here is source() == name so that
-                //we avoid the circular reference and try to 
-                //find the original property using the code below
+                if (link.target().source() == name)
+                    throw SireError::program_bug( QObject::tr(
+                        "How did the circular reference from %1 to %1 get through?")
+                            .arg(name), CODELOC );
+
+                return this->property(link.target().source());
             }
         }
-        else if (link.target().hasValue())
-        {
+        else
             return link.target().value();
-        }
     }
-
-    if (combined_properties.contains(name))
+    else if (combined_properties.contains(name))
     {
-        return combined_properties.constFind(name)->read().asA<CombinedProperties>()
+        return combined_properties.constFind(name)->read().asA<CombineProperties>()
                                                           .combinedProperty();
     }
-
-    int nffields = ffields_by_idx.count();
-    const FFPtr *ffields_array = ffields_by_idx.constData();
-    
-    const Property *p = &(Property::null());
-    
-    for (int i=0; i<nffields; ++i)
+    else
     {
-        if (ffields_array[i]->containsProperty(name))
-        {
-            if ( p->equals(Property::null()) )
-            {
-                p = &(ffields_array[i]->property(name));
-            }
-            else if ( not p->equals(ffields_array[i]->property(name)) )
-            {
-                throw SireBase::duplicate_property( QObject::tr(
-                    "More than one forcefield contains the property (%1), and "
-                    "it has a different value in these forcefields. "
-                    "You will have to search for this property "
-                    "individually in each forcefield (e.g. using the "
-                    "ForceFields::forceFieldsWithProperty(...) member function).")
-                        .arg(name), CODELOC );
-            }
-        }
-    }
+        //there is no user property with this name - try to find 
+        //a built-in property with this name
     
-    if ( p->equals(Property::null()) )
-    {
-        QStringList property_keys;
-    
+        int nffields = ffields_by_idx.count();
+        const FFPtr *ffields_array = ffields_by_idx.constData();
+        
+        const Property *p = &(Property::null());
+        
         for (int i=0; i<nffields; ++i)
         {
-            property_keys += ffields_array[i]->propertyKeys();
+            if (ffields_array[i]->containsProperty(name))
+            {
+                if ( p->equals(Property::null()) )
+                {
+                    p = &(ffields_array[i]->property(name));
+                }
+                else if ( not p->equals(ffields_array[i]->property(name)) )
+                {
+                    throw SireBase::duplicate_property( QObject::tr(
+                        "More than one forcefield contains the property (%1), and "
+                        "it has a different value in these forcefields. "
+                        "You will have to search for this property "
+                        "individually in each forcefield (e.g. using the "
+                        "ForceFields::forceFieldsWithProperty(...) member function).")
+                            .arg(name), CODELOC );
+                }
+            }
         }
-    
-        throw SireBase::missing_property( QObject::tr(
-            "None of the contained forcefields have a property called %1. "
-            "Available properties are %2.")
-                .arg(name, Sire::toString(property_keys) ), CODELOC );
+        
+        if ( p->equals(Property::null()) )
+        {
+            throw SireBase::missing_property( QObject::tr(
+                "None of the contained forcefields have a property called %1. "
+                "Available properties are %2.")
+                    .arg(name, Sire::toString(this->propertyKeys()) ), CODELOC );
+        }
+        
+        return *p;
     }
-    
-    return *p;
 }
 
 /** Return the value of the property 'name' in the forcefields identified
     by the ID 'ffid'
     
+    Note that because this operates on the level of individual forcefields,
+    it can only return built-in properties, and ignores any 
+    user-supplied properties
+
     \throw SireBase::duplicate_property
     \throw SireFF::missing_forcefield
     \throw SireFF::duplicate_forcefield
@@ -1872,23 +2364,32 @@ const Property& ForceFields::property(const FFID &ffid, const QString &name) con
     with name 'name' */
 bool ForceFields::containsProperty(const QString &name) const
 {
-    if (property_aliases.contains(name) or combined_properties.contains(name))
-        return true;
-
-    int nffields = ffields_by_idx.count();
-    const FFPtr *ffields_array = ffields_by_idx.constData();
-    
-    for (int i=0; i<nffields; ++i)
+    if (this->isUserProperty(name))
     {
-        if (ffields_array[i]->containsProperty(name))
-            return true;
+        return true;
     }
+    else
+    {
+        //look for a built-in property with this name
+        int nffields = ffields_by_idx.count();
+        const FFPtr *ffields_array = ffields_by_idx.constData();
     
-    return false;
+        for (int i=0; i<nffields; ++i)
+        {
+            if (ffields_array[i]->containsProperty(name))
+                return true;
+        }
+    
+        return false;
+    }
 }
 
 /** Return whether or not any of the forcefields that match the ID 'ffid'
     contain the property with name 'name'
+    
+    Note that because this operates on the level of individual forcefields,
+    it can only return built-in properties, and ignores any 
+    user-supplied properties
     
     \throw SireFF::missing_forcefield
     \throw SireError::invalid_index
@@ -1911,8 +2412,9 @@ QStringList ForceFields::propertyKeys() const
 {
     QSet<QString> keys;
     
-    keys.unite( property_aliases.keys() );
-    keys.unite( combined_properties.keys() );
+    keys.unite( property_aliases.keys().toSet() );
+    keys.unite( combined_properties.keys().toSet() );
+    keys.unite( additional_properties.keys().toSet() );
 
     int nffields = this->nForceFields();
 
@@ -1922,7 +2424,7 @@ QStringList ForceFields::propertyKeys() const
     }
     else if (nffields == 1)
     {
-        keys.unite( this->_pvt_forceField(0).propertyKeys() );
+        keys.unite( this->_pvt_forceField(0).propertyKeys().toSet() );
         return QStringList( keys.toList() );
     }
     
@@ -1936,6 +2438,10 @@ QStringList ForceFields::propertyKeys() const
 
 /** Return the names of all of the properties in the forcefields 
     identified by the ID 'ffid'
+    
+    Note that because this operates on the level of individual forcefields,
+    it can only return built-in properties, and ignores any 
+    user-supplied properties
     
     \throw SireFF::missing_forcefield
     \throw SireError::invalid_index
@@ -1983,6 +2489,10 @@ Properties ForceFields::properties() const
     the ID 'ffid'. This will raise an error if there are properties with
     the same name in different forcefields that have different values.
     
+    Note that because this operates on the level of individual forcefields,
+    it can only return built-in properties, and ignores any 
+    user-supplied properties
+    
     \throw SireBase::duplicate_property
 */
 Properties ForceFields::properties(const FFID &ffid) const
@@ -2005,8 +2515,41 @@ Properties ForceFields::properties(const FFID &ffid) const
     
     return props;
 }
+    
+/** Return all of the user-supplied properties in this set of forcefields */
+Properties ForceFields::userProperties() const
+{
+    Properties props;
+    
+    foreach (QString key, additional_properties.keys())
+    {
+        props.setProperty(key, this->property(key));
+    }
+    
+    foreach (QString key, property_aliases.keys())
+    {
+        props.setProperty(key, this->property(key));
+    }
+    
+    foreach (QString key, combined_properties.keys())
+    {
+        props.setProperty(key, this->property(key));
+    }
+    
+    return props;
+}
+
+/** Return all of the built-in properties of the forcefields in this set */
+Properties ForceFields::builtinProperties() const
+{
+    return this->properties(FFIdx::null());
+}
 
 /** Return the list of all forcefields that contain a property with name 'name'
+    
+    Note that because this operates on the level of individual forcefields,
+    it can only return built-in properties, and ignores any 
+    user-supplied properties
 
     \throw SireBase::missing_property
 */
@@ -2033,6 +2576,10 @@ QVector<FFPtr> ForceFields::forceFieldsWithProperty(const QString &name) const
 
 /** Return the list of forcefields that match the ID "ffid" and that
     contain the property with name 'name'
+    
+    Note that because this operates on the level of individual forcefields,
+    it can only return built-in properties, and ignores any 
+    user-supplied properties
     
     \throw SireFF::missing_forcefield
     \throw SireBase::missing_property
@@ -2196,7 +2743,9 @@ void ForceFields::add(const FF &forcefield)
     {
         ffields_by_idx.append(ff);
         this->rebuildIndex();
-        this->rebuildCombinedProperties();
+        
+        //adding the forcefield may break some links
+        this->sanitiseUserProperties();
     }
     catch(...)
     {
@@ -2214,8 +2763,9 @@ void ForceFields::_pvt_remove(int i)
     {
         ffields_by_idx.remove(i);
         this->rebuildIndex();
-        this->cleanDanglingPropertyAliases();
-        this->rebuildCombinedProperties();
+
+        //removing the forcefield may break some links
+        this->sanitiseUserProperties();
     }
     catch(...)
     {
@@ -2261,8 +2811,9 @@ void ForceFields::remove(const FFID &ffid)
         }
         
         this->rebuildIndex();
-        this->rebuildCombinedProperties();
-        this->cleanDanglingPropertyAliases();
+
+        //removing the forcefield may break some links
+        this->sanitiseUserProperties();
     }
     catch(...)
     {

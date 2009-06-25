@@ -260,18 +260,6 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
         map.set("coordinates", this->coordinatesProperty());
         map.set("z-matrix", this->zmatrixProperty());
         
-        const Space *space = &(Space::null());
-        
-        if ( this->spaceProperty().hasSource() )
-        {
-            if ( system.containsProperty(this->spaceProperty().source()) )
-                space = &( system.property( this->spaceProperty() ).asA<Space>() );
-        }
-        else
-        {
-            space = &(this->spaceProperty().value().asA<Space>());
-        }
-                                   
         for (int i=0; i<nmoves; ++i)
         {
             //get the old energy of the system
@@ -290,17 +278,11 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
             const PartialMolecule &oldmol = mol_and_bias.get<0>();
             double old_bias = mol_and_bias.get<1>();
 
-            //move the molecule - first get the cartesian coordinates
-            //of the molecule
-            PartialMolecule newmol = oldmol.move()
-                                           .toCartesian(*space, map)
-                                           .commit();
-
-            ZMatrixCoords zmatrix( newmol, map );
+            ZMatrixCoords zmatrix( oldmol, map );
 
             //move the internal coordinates of selected atoms in the 
             //z-matrix
-            AtomSelection selected_atoms = newmol.selection();
+            AtomSelection selected_atoms = oldmol.selection();
             
             if (selected_atoms.selectedAll())
             {
@@ -326,17 +308,11 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
                 }
             }
 
-            //copy the coordinates back - mapping them back into 
-            //the simulation space
-            newmol = PartialMolecule(newmol.molecule().edit()
-                                           .setProperty( map["coordinates"].source(), 
-                                                         zmatrix.toCartesian() )
-                                            .commit(), oldmol.selection());
+            Molecule newmol = oldmol.molecule().edit()
+                                    .setProperty( map["coordinates"], 
+                                                  zmatrix.toCartesian() )
+                                    .commit();
             
-            newmol = newmol.move()
-                           .fromCartesian(*space, map)
-                           .commit();
-
             //update the system with the new coordinates
             system.update(newmol);
 

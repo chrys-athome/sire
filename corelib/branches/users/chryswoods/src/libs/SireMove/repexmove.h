@@ -131,7 +131,10 @@ private:
     
     /** Whether or not volumes and energies for the new state have been 
         calculated */
-     bool have_new_vals;
+    bool have_new_vals;
+    
+    /** Whether or not the replica move needs the volume of the system */
+    bool need_volume;
 };
 
 /** This class is used to perform replica exchange moves on a collection

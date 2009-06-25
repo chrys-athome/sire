@@ -83,14 +83,14 @@ public:
     
     virtual QString toString() const=0;
     
-    virtual void setEnergyComponent(const Symbol &component)=0;
-    virtual const Symbol& energyComponent() const;
-
-    virtual void setSpaceProperty(const PropertyName &spaceproperty)=0;
-    virtual const PropertyName& spaceProperty() const;
+    virtual const Symbol& energyComponent() const=0;
+    virtual const PropertyName& spaceProperty() const=0;
     
-    virtual SireUnits::Dimension::MolarEnergy energy(System &system) const;
-    virtual SireUnits::Dimension::Volume volume(const System &system) const;
+    virtual void setEnergyComponent(const Symbol &nrg_component);
+    virtual void setSpaceProperty(const PropertyName &space_property);
+    
+    SireUnits::Dimension::MolarEnergy energy(System &system) const;
+    SireUnits::Dimension::Volume volume(const System &system) const;
     
     Ensemble ensemble() const;
     
@@ -116,11 +116,8 @@ public:
                     const SireUnits::Dimension::MolarEnergy &chemical_potential);
     void setFugacity(const SireUnits::Dimension::Pressure &fugacity);
         
-    virtual System move(const System &system, int nmoves,
-                        bool record_stats)=0;
-    
-    System move(const System &system, int nmoves);
-    System move(const System &system);
+    virtual System move(const System &system, 
+                        int nmoves=1, bool record_stats=false)=0;
     
     virtual void clearStatistics()=0;
     
@@ -195,7 +192,7 @@ public:
     
     void setGenerator(const RanGenerator &rangenerator);
     
-    System move(const System &system, int nmoves, bool record_stats);
+    System move(const System &system, int nmoves=1, bool record_stats=false);
     
     void clearStatistics();
     

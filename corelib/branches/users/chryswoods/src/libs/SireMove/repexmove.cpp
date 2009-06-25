@@ -54,6 +54,7 @@ using namespace SireMove;
 using namespace SireMaths;
 using namespace SireCluster;
 using namespace SireBase;
+using namespace SireVol;
 using namespace SireUnits;
 using namespace SireUnits::Dimension;
 using namespace SireStream;
@@ -68,7 +69,7 @@ static const RegisterMetaType<RepExSubMove> r_repexsubmove;
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
                                         const RepExSubMove &repexsubmove)
 {
-    writeHeader(ds, r_repexsubmove, 1);
+    writeHeader(ds, r_repexsubmove, 2);
     
     SharedDataStream sds(ds);
     
@@ -82,6 +83,8 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
             << repexsubmove.new_volume_j.to(angstrom3) 
             << repexsubmove.new_energy_j.to(kcal_per_mol);
     }
+
+    sds << repexsubmove.need_volume;
     
     sds << static_cast<const SupraSubMove&>(repexsubmove);
     
@@ -93,7 +96,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExSubMove &repexsubm
 {
     VersionID v = readHeader(ds, r_repexsubmove);
     
-    if (v == 1)
+    if (v == 1 or v == 2)
     {
         RepExSubMove new_submove;
     
@@ -115,6 +118,11 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExSubMove &repexsubm
             new_submove.new_volume_j = new_volume_j * angstrom3;
             new_submove.new_energy_j = new_energy_j * kcal_per_mol;
         }
+        
+        if (v == 2)
+            sds >> new_submove.need_volume;
+        else
+            new_submove.need_volume = true;
         
         sds >> static_cast<SupraSubMove&>(new_submove);
         
@@ -142,7 +150,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RepExSubMove &repexsubm
         repexsubmove = new_submove;
     }
     else
-        throw version_error(v, "1", r_repexsubmove, CODELOC);
+        throw version_error(v, "1,2", r_repexsubmove, CODELOC);
         
     return ds;
 }
@@ -152,7 +160,7 @@ RepExSubMove::RepExSubMove()
              : ConcreteProperty<RepExSubMove,SupraSubMove>(),
                new_volume_i(0), new_energy_i(0),
                new_volume_j(0), new_energy_j(0),
-               have_new_vals(false)
+               have_new_vals(false), need_volume(false)
 {}
 
 /** Internal function used to add a property of our partner replica
@@ -173,6 +181,9 @@ RepExSubMove::RepExSubMove(const Replica &replica_a, const Replica &replica_b)
                new_volume_j(0), new_energy_j(0),
                have_new_vals(false)
 {
+    need_volume = replica_a.ensemble().isConstantPressure() and
+                  replica_b.ensemble().isConstantPressure();
+
     if (replica_b.lambdaValue() != replica_a.lambdaValue())
     {
         addPartnerProperty( LAMBDA_VALUE, replica_b.lambdaValue() );
@@ -183,9 +194,12 @@ RepExSubMove::RepExSubMove(const Replica &replica_a, const Replica &replica_b)
         addPartnerProperty( NRG_COMPONENT, replica_b.energyComponent() );
     }
     
-    if (replica_b.spaceProperty() != replica_a.spaceProperty())
+    if (need_volume)
     {
-        addPartnerProperty( SPACE_PROPERTY, replica_b.spaceProperty() );
+        if (replica_b.spaceProperty() != replica_a.spaceProperty())
+        {
+            addPartnerProperty( SPACE_PROPERTY, replica_b.spaceProperty() );
+        }
     }
 }
 
@@ -195,7 +209,7 @@ RepExSubMove::RepExSubMove(const RepExSubMove &other)
                new_volume_i(other.new_volume_i), new_energy_i(other.new_energy_i),
                new_volume_j(other.new_volume_j), new_energy_j(other.new_energy_j),
                partner_properties(other.partner_properties),
-               have_new_vals(other.have_new_vals)
+               have_new_vals(other.have_new_vals), need_volume(other.need_volume)
 {}
 
 /** Destructor */
@@ -216,6 +230,7 @@ RepExSubMove& RepExSubMove::operator=(const RepExSubMove &other)
         new_energy_j = other.new_energy_j;
         
         have_new_vals = other.have_new_vals;
+        need_volume = other.need_volume;
         
         SupraSubMove::operator=(other);
     }
@@ -228,6 +243,7 @@ bool RepExSubMove::operator==(const RepExSubMove &other) const
 {
     return (this == &other) or
            ( have_new_vals == other.have_new_vals and
+             need_volume == other.need_volume and
              new_volume_i == other.new_volume_i and
              new_energy_i == other.new_energy_i and
              new_volume_j == other.new_volume_j and
@@ -245,13 +261,24 @@ bool RepExSubMove::operator!=(const RepExSubMove &other) const
 QString RepExSubMove::toString() const
 {
     if (have_new_vals)
-        return QObject::tr( "RepExSubMove( E_i = %1 kcal mol-1, V_i = %2 A^3 : "
-                            "E_j = %3 kcal mol-1, V_j = %4 A^3 )")
-                 .arg( new_energy_i.to(kcal_per_mol) )
-                 .arg( new_volume_i.to(angstrom3) )
-                 .arg( new_energy_j.to(kcal_per_mol) )
-                 .arg( new_volume_j.to(angstrom3) );
-                 
+    {
+        if (need_volume)
+        {
+            return QObject::tr( "RepExSubMove( E_i = %1 kcal mol-1, V_i = %2 A^3 : "
+                                "E_j = %3 kcal mol-1, V_j = %4 A^3 )")
+                        .arg( new_energy_i.to(kcal_per_mol) )
+                        .arg( new_volume_i.to(angstrom3) )
+                        .arg( new_energy_j.to(kcal_per_mol) )
+                        .arg( new_volume_j.to(angstrom3) );
+        }
+        else
+        {
+            return QObject::tr( "RepExSubMove( E_i = %1 kcal mol-1 : "
+                                "E_j = %2 kcal mol-1 )")
+                        .arg( new_energy_i.to(kcal_per_mol) )
+                        .arg( new_energy_j.to(kcal_per_mol) );
+        }
+    }
     else
         return QObject::tr( "RepExSubMove()" );
 }
@@ -260,6 +287,13 @@ static void throwNoValues(const char *value, const QString &codeloc)
 {
     throw SireError::invalid_state( QObject::tr(
         "Cannot get the value of %1 as new values have not been evaluated!")
+            .arg(value), codeloc );
+}
+
+static void throwNoVolume(const char *value, const QString &codeloc)
+{
+    throw SireError::invalid_state( QObject::tr(
+        "Cannot get the volume %1 as the move indicated that volumes weren't necessary!")
             .arg(value), codeloc );
 }
 
@@ -279,7 +313,10 @@ Volume RepExSubMove::volume_i() const
 {
     if (not have_new_vals)
         ::throwNoValues( "V_i", CODELOC );
-        
+    
+    if (not need_volume)
+        ::throwNoVolume( "V_i", CODELOC );
+                
     return new_volume_i;
 }
 
@@ -299,6 +336,9 @@ Volume RepExSubMove::volume_j() const
 {
     if (not have_new_vals)
         ::throwNoValues( "V_j", CODELOC );
+    
+    if (not need_volume)
+        ::throwNoVolume( "V_j", CODELOC );
         
     return new_volume_j;
 }
@@ -334,8 +374,10 @@ void RepExSubMove::evaluateSwappedState(const Replica &replica)
         state_i.unpack();
 
     //get the energy and volume at this state
-    new_volume_i = state_i.volume();
     new_energy_i = state_i.energy();
+
+    if (need_volume)
+        new_volume_i = state_i.volume();
 
     if (partner_properties.isEmpty())
     {
@@ -344,7 +386,10 @@ void RepExSubMove::evaluateSwappedState(const Replica &replica)
     }
     else
     {
-        Replica state_j = state_i;
+        System state_j = state_i.subSystem();
+        
+        Symbol nrg_component = state_i.energyComponent();
+        PropertyName space_property = state_i.spaceProperty();
         
         for (QList< QPair<quint32,QVariant> >::const_iterator 
                                                 it = partner_properties.constBegin();
@@ -354,31 +399,40 @@ void RepExSubMove::evaluateSwappedState(const Replica &replica)
             switch (it->first)
             {
                 case LAMBDA_VALUE:
+                {
+                    if (state_i.lambdaComponent().isNull())
+                        throw SireError::incompatible_error( QObject::tr(
+                            "Cannot set the lambda value for a replica that doesn't "
+                            "have a lambda component!"), CODELOC );
+                
                     //set a new lambda value
-                    state_j.setLambdaValue( ::convert<double>(it->second) );
+                    state_j.setComponent( state_i.lambdaComponent(),
+                                          ::convert<double>(it->second) );
                     break;
-                    
+                }   
                 case NRG_COMPONENT:
                     //set a new Hamiltonian (represented by the component)
-                    state_j.setEnergyComponent( ::convert<Symbol>(it->second) );
+                    nrg_component = ::convert<Symbol>(it->second);
                     break;
                     
                 case SPACE_PROPERTY:
                     //set a new space property
-                    state_j.setSpaceProperty( ::convert<PropertyName>(it->second) );
+                    space_property = ::convert<PropertyName>(it->second);
                     break;
                     
                 default:
                     throw SireError::unsupported( QObject::tr(
-                        "A request was made of an unsupported action in RepExSubMove. "
+                        "A request was made of an unsuppoted action in RepExSubMove. "
                         "The action with ID %1 was requested, but this is not "
                         "supported with this version of RepExSubMove.")
                             .arg(it->first), CODELOC );
             }
         }
-        
-        new_volume_j = state_j.volume();
-        new_energy_j = state_j.energy();
+
+        new_energy_j = state_j.energy(nrg_component);
+
+        if (need_volume)
+            new_volume_j = state_j.property(space_property).asA<Space>().volume();
     }
 
     have_new_vals = true;

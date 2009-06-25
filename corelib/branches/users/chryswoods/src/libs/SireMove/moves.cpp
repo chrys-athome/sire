@@ -150,81 +150,35 @@ int Moves::nMoves() const
     
     return nmoves;
 }
-
-/** Return the energy component that these moves will sample. This
-    raises an error if not all moves are sampling the same energy
-    component 
     
-    \throw SireError::incompatible_error
+/** Set the energy component used by these moves - by default 
+    this will raise an error as setting the energy component is
+    not supported 
+    
+    \throw SireError::unsupported
 */
-const Symbol& Moves::energyComponent() const
+void Moves::setEnergyComponent(const Symbol &nrg_component)
 {
-    QList<MovePtr> mvs = this->moves();
-    
-    const Symbol &component = mvs.takeFirst()->energyComponent();
-    
-    for (QList<MovePtr>::const_iterator it = mvs.constBegin();
-         it != mvs.constEnd();
-         ++it)
-    {
-        if ((*it)->energyComponent() != component)
-        {
-            QSet<Symbol> symbols;
-            symbols.insert(component);
-        
-            for (QList<MovePtr>::const_iterator it2 = mvs.constBegin();
-                 it2 != mvs.constEnd();
-                 ++it2)
-            {
-                symbols.insert( (*it2)->energyComponent() );
-            }
-        
-            throw SireError::incompatible_error( QObject::tr(
-                "Not all moves sample the same energy component. "
-                "The energy components sampled are %1.")
-                    .arg( Sire::toString(symbols.toList()) ), CODELOC );
-        }
-    }
-    
-    return component;
+    throw SireError::unsupported( QObject::tr(
+            "The moves object %1 does not support the setting of the "
+            "energy component used during sampling (to %2).")
+                .arg(this->what())
+                .arg(nrg_component.toString()), CODELOC );
 }
 
-/** Return the name of the property of the system space that
-    these moves use when they manipulate the simulation box. This
-    raises an error if these moves do not all use the same property
+/** Set the space property used by these moves - by default 
+    this will raise an error as setting the space property is
+    not supported 
     
-    \throw SireError::incompatible_error
+    \throw SireError::unsupported
 */
-const PropertyName& Moves::spaceProperty() const
+void Moves::setSpaceProperty(const PropertyName &space_property)
 {
-    QList<MovePtr> mvs = this->moves();
-    
-    const PropertyName &prop = mvs.takeFirst()->spaceProperty();
-    
-    for (QList<MovePtr>::const_iterator it = mvs.constBegin();
-         it != mvs.constEnd();
-         ++it)
-    {
-        if ((*it)->spaceProperty() != prop)
-        {
-            QSet<QString> props;
-            props.insert(prop.source());
-        
-            for (QList<MovePtr>::const_iterator it2 = mvs.constBegin();
-                 it2 != mvs.constEnd();
-                 ++it2)
-            {
-                props.insert( (*it2)->spaceProperty().source() );
-            }
-        
-            throw SireError::incompatible_error( QObject::tr(
-                "Not all moves sample using the same space property. "
-                "The space properties sampled are %1.")
-                    .arg( Sire::toString(props.toList()) ), CODELOC );
-        }
-    }
-    
-    return prop;
+    throw SireError::unsupported( QObject::tr(
+            "The moves object %1 does not support the setting of the "
+            "space property used during sampling (to %2).")
+                .arg(this->what())
+                .arg(space_property.toString()), CODELOC );
 }
 
 /** Return the energy of the system that is seen by these moves */
@@ -512,20 +466,6 @@ void Moves::postCheck(System &system) const
                     .arg(unsatisfied_constraints.join("\n"))
                     .arg(this->toString()), CODELOC );
     }
-}
-
-/** Apply 'nmoves' moves on the system 'system', returning the system
-    after the moves. Move statistics are not recorded */
-System Moves::move(const System &system, int nblocks)
-{
-    return this->move(system, nblocks, false);
-}
-
-/** Apply a single move to the system 'system' and return the result.
-    No statistics are collected */
-System Moves::move(const System &system)
-{
-    return this->move(system, 1, false);
 }
 
 ///////

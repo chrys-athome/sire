@@ -199,6 +199,16 @@ public:
     void setProperty(const QString &name, const Property &value);
     void setProperty(const FFID &ffid, const QString &name, const Property &value);
     
+    void removeProperty(const QString &name);
+    
+    bool isCompoundProperty(const QString &name) const;
+    bool isUserProperty(const QString &name) const;
+    bool isBuiltinProperty(const QString &name) const;
+
+    const Property& compoundProperty(const QString &name) const;
+    const Property& userProperty(const QString &name) const;
+    const Property& builtinProperty(const QString &name) const;
+    
     void setComponent(const Symbol &symbol, double value);
     void setComponent(const Symbol &symbol, const SireCAS::Expression &expression);
     
@@ -220,6 +230,9 @@ public:
     
     Properties properties() const;
     Properties properties(const FFID &ffid) const;
+    
+    Properties userProperties() const;
+    Properties builtinProperties() const;
     
     const SystemMonitors& monitors() const;
     const ForceFields& forceFields() const;

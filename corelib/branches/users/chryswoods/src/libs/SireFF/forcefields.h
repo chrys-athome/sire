@@ -146,6 +146,16 @@ public:
     void setProperty(const QString &name, const Property &value);
     void setProperty(const FFID &ffid, const QString &name, const Property &value);
     
+    void removeProperty(const QString &name);
+    
+    bool isCompoundProperty(const QString &name) const;
+    bool isUserProperty(const QString &name) const;
+    bool isBuiltinProperty(const QString &name) const;
+
+    const Property& compoundProperty(const QString &name) const;
+    const Property& userProperty(const QString &name) const;
+    const Property& builtinProperty(const QString &name) const;
+    
     void setComponent(const Symbol &symbol, double value);
     void setComponent(const Symbol &symbol, const SireCAS::Expression &expression);
     
@@ -163,6 +173,9 @@ public:
     
     Properties properties() const;
     Properties properties(const FFID &ffid) const;
+    
+    Properties userProperties() const;
+    Properties builtinProperties() const;
     
     QVector<FFPtr> forceFieldsWithProperty(const QString &name) const;
     QVector<FFPtr> forceFieldsWithProperty(const FFID &ffid, const QString &name) const;
@@ -269,6 +282,19 @@ protected:
 private:
     void rebuildIndex();
 
+    void sanitiseUserProperties();
+
+    void getDependencies(const QString &name, QSet<QString> &deps) const;
+    void assertNonCircularProperty(const QString &name) const;
+    
+    void assertValidLink(const QString &name) const;
+    bool isValidLink(const QString &name) const;
+    
+    void updateCombinedProperty(const QString &name, bool update_dependencies=false,
+                                QSet<QString> *updated_combinations=0);
+                                
+    void updateCombinedProperties();
+
     const FF& _pvt_forceField(int idx) const;
     FF& _pvt_forceField(int idx);
 
@@ -297,6 +323,10 @@ private:
     /** All of the energy components, expressions and constants
         available in this collection of forcefields */
     QHash<Symbol, detail::FFSymbolPtr> ffsymbols;
+    
+    /** All of the additional normal properties. These are
+        used to store additional information about the forcefields */
+    QHash<QString, PropertyPtr> additional_properties;
     
     /** All of the property aliases, indexed by the property name
         they alias */

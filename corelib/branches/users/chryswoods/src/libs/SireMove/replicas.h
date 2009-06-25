@@ -108,6 +108,12 @@ public:
     void setSubSystem(int i, const System &system);
     void setSubSystem(int i, const SupraSubSystem &subsystem);
     
+    void setEnergyComponent(const Symbol &symbol);
+    void setEnergyComponent(int i, const Symbol &symbol);
+    
+    void setSpaceProperty(const PropertyName &spaceproperty);
+    void setSpaceProperty(int i, const PropertyName &spaceproperty);
+    
     void setLambdaComponent(const Symbol &symbol);
     void setLambdaComponent(int i, const Symbol &symbol);
     

@@ -65,6 +65,7 @@ friend QDataStream& ::operator>>(QDataStream&, PeriodicBox&);
 
 public:
     PeriodicBox();
+    PeriodicBox(const Vector &extents);
     PeriodicBox(const Vector &min, const Vector &max);
 
     PeriodicBox(const PeriodicBox &other);
@@ -84,12 +85,9 @@ public:
     SireUnits::Dimension::Volume volume() const;
     SpacePtr setVolume(SireUnits::Dimension::Volume volume) const;
 
-    void setDimension(const Vector &min, const Vector &max);
-
-    const Vector& minCoords() const;
-    const Vector& maxCoords() const;
-
-    Vector center() const;
+    void setDimensions(const Vector &dimensions);
+    
+    const Vector& dimensions() const;
 
     static const char* typeName();
 
@@ -143,8 +141,6 @@ public:
                getCopiesWithin(const CoordGroup &group,
                                const CoordGroup &center, double dist) const;
 
-    bool contains(const Vector &point) const;
-
 protected:
 
     Vector wrapDelta(const Vector &v0, const Vector &v1) const;
@@ -155,12 +151,6 @@ protected:
 
     static int getWrapVal(double delta, double invlgth, double halflgth);
 
-    /** The origin of the box (minimum coordinates) */
-    Vector mincoords;
-
-    /** The maximum coordinates of the box */
-    Vector maxcoords;
-
     /** The lengths of each side of the box */
     Vector boxlength;
 
@@ -170,41 +160,6 @@ protected:
     /** The inverse of the lengths of each side of the box */
     Vector invlength;
 };
-
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
-/** Return the minimum coordinates of the box (the origin) */
-inline const Vector& PeriodicBox::minCoords() const
-{
-    return mincoords;
-}
-
-/** Return the maximum coordinates of the box */
-inline const Vector& PeriodicBox::maxCoords() const
-{
-    return maxcoords;
-}
-
-/** Return the coordinates of the center of the box */
-inline Vector PeriodicBox::center() const
-{
-    return 0.5 * (maxcoords + mincoords);
-}
-
-/** Return whether this box contains the point 'point' (without the need
-    for periodic translation) */
-inline bool PeriodicBox::contains(const Vector &point) const
-{
-    return (point.x() >= mincoords.x() and
-            point.y() >= mincoords.y() and
-            point.z() >= mincoords.z()) and
-
-           (point.x() <= maxcoords.x() and
-            point.y() <= maxcoords.y() and
-            point.z() <= maxcoords.z());
-}
-
-#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

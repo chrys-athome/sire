@@ -89,26 +89,48 @@ CombineProperties::CombineProperties(const PropertyName &source)
     }
 }
 
+static bool hasSource(const QString &string)
+{
+    return true;
+}
+
+static QString getSource(const QString &string)
+{
+    return string;
+}
+
+static bool hasSource(const PropertyName &name)
+{
+    return name.hasSource();
+}
+
+static QString getSource(const PropertyName &name)
+{
+    return name.source();
+}
+
 template<class T>
 QVector<PropertyName> combine_properties(const T &props)
 {
-    QVector<PropertyName> properties;
+    QHash<QString,PropertyName> properties;
     
     for (typename T::const_iterator it = props.constBegin();
          it != props.constEnd();
          ++it)
     {
-        if (not it->isNull())
+        if ( ::hasSource(*it) )
         {
-            if (not properties.contains(*it))
-                properties.append(*it);
+            if (not properties.contains( ::getSource(*it) ))
+                properties.insert( ::getSource(*it), *it );
         }
     }
     
-    if (not properties.isEmpty())
-        properties.squeeze();
+    QVector<PropertyName> p = properties.values().toVector();
     
-    return properties;
+    if (not p.isEmpty())
+        p.squeeze();
+    
+    return p;
 }
 
 /** Construct to combine just the passed two properties */
@@ -225,6 +247,13 @@ int CombineProperties::size() const
 bool CombineProperties::isEmpty() const
 {
     return property_sources.isEmpty();
+}
+
+/** Return a string representation of this combination */
+QString CombineProperties::toString() const
+{
+    return QString( "%1( nSources() == %2 )" )
+                .arg(this->what()).arg(this->nSources());
 }
 
 CombineProperties::const_iterator CombineProperties::constBegin() const

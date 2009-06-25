@@ -59,8 +59,8 @@ static const RegisterMetaType<PeriodicBox> r_box;
 /** Serialise to a binary datastream */
 QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const PeriodicBox &box)
 {
-    writeHeader(ds, r_box, 1)
-               << box.mincoords << box.maxcoords
+    writeHeader(ds, r_box, 2)
+               << box.boxlength
                << static_cast<const Cartesian&>(box);
 
                //no need to store anything else as it can be regenerated
@@ -72,16 +72,24 @@ QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const PeriodicBox &box)
 QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, PeriodicBox &box)
 {
     VersionID v = readHeader(ds, r_box);
-
-    if (v == 1)
+    
+    if (v == 2)
+    {
+        Vector dimensions;
+    
+        ds >> dimensions >> static_cast<Cartesian&>(box);
+        
+        box.setDimensions(dimensions);
+    }
+    else if (v == 1)
     {
         Vector mincoords, maxcoords;
 
         ds >> mincoords >> maxcoords
            >> static_cast<Cartesian&>(box);
 
-           //regenerate the box dimensions
-           box.setDimension(mincoords, maxcoords);
+        //regenerate the box dimensions
+        box.setDimensions( maxcoords - mincoords );
     }
     else
         throw version_error(v, "1", r_box, CODELOC);
@@ -90,33 +98,26 @@ QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, PeriodicBox &box)
 }
 
 /** This is the maximum dimension of the box (so that .volume() doesn't overflow) */
-const Vector max_boxlength( std::pow(0.4 * std::numeric_limits<double>::max(),
+const Vector max_boxlength( std::pow(0.9 * std::numeric_limits<double>::max(),
                                      1.0/3.0) );
 
-/** Set the dimensions of this box so that it is the smallest possible that contains
-    the points 'min' and 'max'. The minimum coordinates of this box will be set to
-    the minimum of the coordinates of these two points, and the maximum coordinates
-    will be set to the maximum of the two points. */
-void PeriodicBox::setDimension(const Vector &min, const Vector &max)
+/** Set the dimensions of this box to 'dimensions' (the lengths of the 
+    three sides of this box) */
+void PeriodicBox::setDimensions(const Vector &dimensions)
 {
-    mincoords = min;
-    mincoords.setMin(max);
-
-    maxcoords = max;
-    maxcoords.setMax(min);
+    boxlength = Vector( abs(dimensions.x()),
+                        abs(dimensions.y()),
+                        abs(dimensions.z()) );
 
     //don't allow boxes that would cause .volume() to overflow
-    mincoords.setMax(-max_boxlength);
-    maxcoords.setMin( max_boxlength);
-
-    boxlength = maxcoords - mincoords;
+    boxlength.setMin(max_boxlength);
 
     if (boxlength.x() == 0 or boxlength.y() == 0 or boxlength.z() == 0)
     {
         throw SireError::invalid_arg( QObject::tr(
-            "Cannot set the box size to %1 to %2 as this would create "
-            "a box with at least one side that is equal to zero.")
-                .arg(min.toString(), max.toString()), CODELOC );
+            "Cannot set the box size of dimension %1 as "
+            "at least one side is equal to zero.")
+                .arg(boxlength.toString()), CODELOC );
     }
 
     for (int i=0; i<3; ++i)
@@ -126,24 +127,30 @@ void PeriodicBox::setDimension(const Vector &min, const Vector &max)
     }
 }
 
-/** Construct a default PeriodicBox volume (zero volume) */
+/** Construct a default PeriodicBox volume (maximum volume) */
 PeriodicBox::PeriodicBox() : ConcreteProperty<PeriodicBox,Cartesian>()
 {
     //set this to be a ridiculously large box
-    this->setDimension( -max_boxlength, max_boxlength );
+    this->setDimensions( max_boxlength );
+}
+
+/** Construct a PeriodicBox with the specified dimensions */
+PeriodicBox::PeriodicBox(const Vector &dimensions)
+            : ConcreteProperty<PeriodicBox,Cartesian>()
+{
+    this->setDimensions(dimensions);
 }
 
 /** Construct a PeriodicBox volume that goes from min to max */
 PeriodicBox::PeriodicBox(const Vector &min, const Vector &max)
             : ConcreteProperty<PeriodicBox,Cartesian>()
 {
-    this->setDimension(min,max);
+    this->setDimensions( max - min );
 }
 
 /** Copy constructor */
 PeriodicBox::PeriodicBox(const PeriodicBox &other)
             : ConcreteProperty<PeriodicBox,Cartesian>(other),
-              mincoords(other.mincoords), maxcoords(other.maxcoords),
               boxlength(other.boxlength),
               halflength(other.halflength), invlength(other.invlength)
 {}
@@ -157,8 +164,6 @@ PeriodicBox& PeriodicBox::operator=(const PeriodicBox &other)
 {
     if (this != &other)
     {
-        mincoords = other.mincoords;
-        maxcoords = other.maxcoords;
         boxlength = other.boxlength;
         halflength = other.halflength;
         invlength = other.invlength;
@@ -171,15 +176,13 @@ PeriodicBox& PeriodicBox::operator=(const PeriodicBox &other)
 /** Comparison operator */
 bool PeriodicBox::operator==(const PeriodicBox &other) const
 {
-    return this == &other or
-           (mincoords == other.mincoords and boxlength == other.boxlength);
+    return boxlength == other.boxlength;
 }
 
 /** Comparison operator */
 bool PeriodicBox::operator!=(const PeriodicBox &other) const
 {
-    return this != &other and
-           (mincoords != other.mincoords or boxlength != other.boxlength);
+    return boxlength != other.boxlength;
 }
 
 /** A Periodic box is periodic! */
@@ -194,12 +197,17 @@ bool PeriodicBox::isCartesian() const
     return true;
 }
 
+/** Return the dimensions of this box */
+const Vector& PeriodicBox::dimensions() const
+{
+    return boxlength;
+}
+
 /** Return a string representation of this space */
 QString PeriodicBox::toString() const
 {
-    return QObject::tr("PeriodicBox( %1 to %2 )")
-                .arg( this->minCoords().toString(), 
-                      this->maxCoords().toString() );
+    return QObject::tr("PeriodicBox( %1 )")
+                .arg( this->dimensions().toString() ); 
 }
 
 /** Return the number of boxes that are covered by the distance 'del', where
@@ -257,10 +265,7 @@ SpacePtr PeriodicBox::setVolume(SireUnits::Dimension::Volume vol) const
 
     double scl = std::pow( new_volume / old_volume, 1.0/3.0 ); // rats - no cbrt function!
 
-    Vector cent = this->center();
-    Vector new_halflength = scl * halflength;
-
-    return PeriodicBox(cent - new_halflength, cent + new_halflength);
+    return PeriodicBox( scl * boxlength );
 }
 
 /** Calculate the distance between two points */

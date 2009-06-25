@@ -57,11 +57,12 @@ static const RegisterMetaType<Replica> r_replica;
 /** Serialiase to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const Replica &replica)
 {
-    writeHeader(ds, r_replica, 4);
+    writeHeader(ds, r_replica, 3);
     
     SharedDataStream sds(ds);
     
-    sds << replica.replica_ensemble
+    sds << replica.replica_ensemble << replica.space_property
+        << replica.nrg_component
         << replica.lambda_component << replica.lambda_value
         << replica.vars_to_be_set
         << static_cast<const SupraSubSystem&>(replica);
@@ -74,30 +75,14 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, Replica &replica)
 {
     VersionID v = readHeader(ds, r_replica);
     
-    if (v == 4)
+    if (v == 3)
     {
         SharedDataStream sds(ds);
         
         Replica new_replica;
         
-        sds >> new_replica.replica_ensemble
-            >> new_replica.lambda_component >> new_replica.lambda_value
-            >> new_replica.vars_to_be_set
-            >> static_cast<SupraSubSystem&>(new_replica);
-        
-        replica = new_replica;
-    }
-    else if (v == 3)
-    {
-        SharedDataStream sds(ds);
-        
-        Replica new_replica;
-        
-        Symbol nrg_component;
-        PropertyName space_property;
-        
-        sds >> new_replica.replica_ensemble >> space_property
-            >> nrg_component
+        sds >> new_replica.replica_ensemble >> new_replica.space_property
+            >> new_replica.nrg_component
             >> new_replica.lambda_component >> new_replica.lambda_value
             >> new_replica.vars_to_be_set
             >> static_cast<SupraSubSystem&>(new_replica);
@@ -153,10 +138,14 @@ void Replica::updatedMoves()
 {
     const Moves &mvs = this->subMoves();
 
+    Symbol mvs_energy = mvs.energyComponent();
+    PropertyName mvs_space_property = mvs.spaceProperty();
     Ensemble mvs_ensemble = mvs.ensemble();
     
     ::assertSupportedEnsemble(mvs_ensemble);
 
+    nrg_component = mvs_energy;
+    space_property = mvs_space_property;
     replica_ensemble = mvs_ensemble;
     
     if (not lambda_component.isNull())
@@ -193,6 +182,8 @@ Replica::Replica(const Replica &other)
         : ConcreteProperty<Replica,SupraSubSystem>(other),
           vars_to_be_set(other.vars_to_be_set),
           replica_ensemble(other.replica_ensemble),
+          space_property(other.space_property),
+          nrg_component(other.nrg_component),
           lambda_component(other.lambda_component),
           lambda_value(other.lambda_value)
 {}
@@ -208,6 +199,8 @@ Replica& Replica::operator=(const Replica &other)
     {
         vars_to_be_set = other.vars_to_be_set;
         replica_ensemble = other.replica_ensemble;
+        space_property = other.space_property;
+        nrg_component = other.nrg_component;
         lambda_component = other.lambda_component;
         lambda_value = other.lambda_value;
         
@@ -222,6 +215,8 @@ bool Replica::operator==(const Replica &other) const
 {
     return (this == &other) or
            ( replica_ensemble == other.replica_ensemble and
+             space_property == other.space_property and
+             nrg_component == other.nrg_component and
              lambda_component == other.lambda_component and
              lambda_value == other.lambda_value and
              SupraSubSystem::operator==(other) );
@@ -237,6 +232,21 @@ bool Replica::operator!=(const Replica &other) const
 const Ensemble& Replica::ensemble() const
 {
     return replica_ensemble;
+}
+
+/** Return the energy component that describes the Hamiltonian
+    that is sampled by this replica */
+const Symbol& Replica::energyComponent() const
+{
+    return nrg_component;
+}
+
+/** Return the name of the property containing the simulation box
+    that is sampled by this replica - this is used to get the
+    volume of the simulation space */
+const PropertyName& Replica::spaceProperty() const
+{
+    return space_property;
 }
 
 /** Return the component that can be used to change the Hamiltonian
@@ -298,14 +308,16 @@ MolarEnergy Replica::chemicalPotential() const
     (this could be infinite!) */
 Volume Replica::volume() const
 {
-    return this->subMoves().volume( this->subSystem() );;
+    const Space &space = this->subSystem().property(space_property).asA<Space>();
+
+    return space.volume();
 }
 
 /** Return the total energy of this replica */
 MolarEnergy Replica::energy()
 {
     System sys = this->subSystem();
-    MolarEnergy nrg = this->subMoves().energy(sys);
+    MolarEnergy nrg = sys.energy(nrg_component);
     SupraSubSystem::setSubSystem(sys);
     
     return nrg;
@@ -422,6 +434,18 @@ void Replica::setSubMoves(const Moves &submoves)
                 new_moves.edit().setFugacity( old_moves->fugacity() );
         }
     
+        if (not nrg_component.isNull())
+        {
+            if (new_moves->energyComponent() != nrg_component)
+                new_moves.edit().setEnergyComponent(nrg_component);
+        }
+    
+        if (not space_property.isNull())
+        {
+            if (new_moves->spaceProperty() != space_property)
+                new_moves.edit().setSpaceProperty(space_property);
+        }
+    
         SupraSubSystem::setSubMoves(new_moves);
         this->updatedMoves();
     }
@@ -458,6 +482,53 @@ void Replica::deferCommand(ReplicaCommand command, const T &argument)
 {
     vars_to_be_set.append( 
         QPair<quint32,QVariant>( quint32(command), QVariant::fromValue<T>(argument) ) );
+}
+
+/** Internal function used to set the energy component that represents
+    the Hamiltonian sampled by this replica */
+void Replica::setEnergyComponent(const Symbol &symbol)
+{
+    if (this->isPacked())
+        this->deferCommand( ENERGY_COMPONENT, symbol );
+        
+    else
+    {
+        if (symbol == nrg_component)
+            return;
+    
+        if (not this->subSystem().hasComponent(symbol))
+            throw SireFF::missing_component( QObject::tr(
+                "Cannot set the energy component for this replica to %1, "
+                "as this system (%2) doesn't have such a component. Available energy "
+                "components are %3.")
+                    .arg(symbol.toString(), subSystem().toString(),
+                         Sire::toString(subSystem().components())), CODELOC );
+
+        MovesPtr mvs = SupraSubSystem::subMoves();
+        mvs.edit().setEnergyComponent(symbol);
+        SupraSubSystem::setSubMoves(mvs);
+
+        nrg_component = symbol;
+    }
+}
+
+/** Internal function used to set the property used to find the simulation space */
+void Replica::setSpaceProperty(const PropertyName &spaceproperty)
+{
+    if (this->isPacked())
+        this->deferCommand( SPACE_PROPERTY, spaceproperty );
+        
+    else
+    {
+        if (spaceproperty == space_property)
+            return;
+    
+        MovesPtr mvs = SupraSubSystem::subMoves();
+        mvs.edit().setSpaceProperty(spaceproperty);
+        SupraSubSystem::setSubMoves(mvs);
+        
+        space_property = spaceproperty;
+    }
 }
 
 /** Internal function to set the lambda component used for lambda-based Hamiltonian
@@ -738,6 +809,14 @@ void Replica::_post_unpack()
     {
         switch (it->first)
         {
+            case ENERGY_COMPONENT:
+                this->setEnergyComponent( ::convert<Symbol>(it->second) );
+                break;
+                
+            case SPACE_PROPERTY:
+                this->setSpaceProperty( ::convert<PropertyName>(it->second) );
+                break;
+                
             case LAMBDA_COMPONENT:
                 this->setLambdaComponent( ::convert<Symbol>(it->second) );
                 break;

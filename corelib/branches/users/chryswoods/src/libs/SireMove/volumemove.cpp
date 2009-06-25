@@ -41,6 +41,8 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include "SireError/errors.h"
+
 using namespace SireMove;
 using namespace SireMol;
 using namespace SireVol;
@@ -191,7 +193,7 @@ void VolumeMove::move(System &system, int nmoves, bool record_stats)
                                            .asA<Space>();
 
             //calculate the old energy and volume
-            double old_nrg = system.energy( this->energyComponent() );
+            double old_nrg = this->energy(system);
             Volume old_vol = old_space.volume();
             
             Volume new_vol = old_vol + Volume( generator().rand(-maxchange, maxchange) );
@@ -207,33 +209,22 @@ void VolumeMove::move(System &system, int nmoves, bool record_stats)
             if (this->spaceProperty().hasSource())
                 system.setProperty( this->spaceProperty().source(), new_space );
             
-            //now get all of the molecules in the system
-            Molecules all_mols = system.molecules();
+            throw SireError::incomplete_code( QObject::tr(
+                    "Need to switch VolumeMove to use a molecule group, "
+                    "and to use a volume changing function."), CODELOC );
             
-            //map all of the molecules into the new space
-            for (Molecules::const_iterator it = all_mols.constBegin();
-                 it != all_mols.constEnd();
-                 ++it)
-            {
-                Molecule mol = it->molecule()
-                                        .move().changeSpace(old_space, new_space, map);
-
-                all_mols.update(mol);
-            }
-            
-            //update all of the molecules
-            system.mustNowRecalculateFromScratch();
-            system.update(all_mols);
+            //update the molecules
+            //system.update(mols);
             
             //calculate the new energy
-            double new_nrg = system.energy();
+            double new_nrg = this->energy(system);
             
-            if (not this->test(new_nrg, old_nrg, all_mols.nMolecules(),
-                               new_vol, old_vol))
-            {
+            //if (not this->test(new_nrg, old_nrg, mols.nMolecules(),
+            //                   new_vol, old_vol))
+            //{
                 //move failed - go back to the last step
-                system = old_system;
-            }
+            //    system = old_system;
+            //}
             
             if (record_stats)
             {
