@@ -125,9 +125,6 @@ void PeriodicBox::setDimensions(const Vector &dimensions)
         invlength.set(i, 1.0/boxlength[i]);
         halflength.set(i, 0.5 * boxlength[i]);
     }
-
-    qDebug() << boxlength.toString() << invlength.toString()
-             << halflength.toString();
 }
 
 /** Construct a default PeriodicBox volume (maximum volume) */

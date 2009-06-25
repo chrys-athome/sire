@@ -251,7 +251,7 @@ void CombinedSpace::assertSameSpace(const QString &text, const QString &codeloc)
 /** Return a string representation of this space */
 QString CombinedSpace::toString() const
 {
-    if (spces.isEmpty() == 0)
+    if (spces.isEmpty())
         return QObject::tr( "CombinedSpace{ NULL }" );
     
     else if (spces.count() == 1)

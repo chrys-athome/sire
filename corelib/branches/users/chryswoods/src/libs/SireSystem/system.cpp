@@ -800,6 +800,7 @@ void System::setProperty(const FFID &ffid, const QString &name, const Property &
 void System::removeProperty(const QString &name)
 {
     this->_pvt_forceFields().removeProperty(name);
+    sysversion.incrementMajor();
 }
 
 /** Return whether or not the property 'name' exists and is a compound 

@@ -1840,7 +1840,7 @@ const Property& ForceFields::userProperty(const QString &name) const
 */
 const Property& ForceFields::builtinProperty(const QString &name) const
 {
-    return this->property(FFIdx::null(), name);
+    return this->property(FFIdentifier(), name);
 }
 
 /** Return all of the ForceFields level properties that are needed to
@@ -2542,7 +2542,7 @@ Properties ForceFields::userProperties() const
 /** Return all of the built-in properties of the forcefields in this set */
 Properties ForceFields::builtinProperties() const
 {
-    return this->properties(FFIdx::null());
+    return this->properties(FFIdentifier());
 }
 
 /** Return the list of all forcefields that contain a property with name 'name'

@@ -187,6 +187,18 @@ bool FFIdentifier::operator!=(const FFID &other) const
         return d->operator!=(other);
 }
 
+static QList<FFIdx> allFFIdxs(int n)
+{
+    QList<FFIdx> ffidxs;
+    
+    for (int i=0; i<n; ++i)
+    {
+        ffidxs.append( FFIdx(i) );
+    }
+    
+    return ffidxs;
+}
+
 /** Map this name to the index of the matching forcefield in the 
     passed ForceFields object 
     
@@ -194,6 +206,9 @@ bool FFIdentifier::operator!=(const FFID &other) const
 */
 QList<FFIdx> FFName::map(const ForceFields &ffields) const
 {
+    if (this->isNull())
+        return ::allFFIdxs(ffields.nForceFields());
+
     return ffields.map(*this);
 }
 
@@ -204,6 +219,9 @@ QList<FFIdx> FFName::map(const ForceFields &ffields) const
 */
 QList<FFIdx> FFIdx::map(const ForceFields &ffields) const
 {
+    if (this->isNull())
+        return ::allFFIdxs(ffields.nForceFields());
+
     return ffields.map(*this);
 }
 
@@ -217,15 +235,7 @@ QList<FFIdx> FFIdentifier::map(const ForceFields &ffields) const
 {
     if (d.get() == 0)
     {
-        int nffields = ffields.nForceFields();
-        QList<FFIdx> ffidxs;
-        
-        for (int i=0; i<nffields; ++i)
-        {
-            ffidxs.append( FFIdx(i) );
-        }
-        
-        return ffidxs;
+        return ::allFFIdxs(ffields.nForceFields());
     }
     else
         return d->map(ffields);
