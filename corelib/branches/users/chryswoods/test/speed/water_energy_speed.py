@@ -85,6 +85,8 @@ print "\nThis machine can run at; %.1f MFLOPS for sum, %.1f MFLOPS for sum+produ
 print "%.1f MFLOPS for sum+quotient and %.1f MFLOPS for sum+product+sqrt.\n" % \
                 (benchmark_quot, benchmark)
 
+print cljff.property("space")
+
 for i in range(0,5):
     t.start()
     cljff.mustNowRecalculateFromScratch()

@@ -105,9 +105,9 @@ const Vector max_boxlength( std::pow(0.9 * std::numeric_limits<double>::max(),
     three sides of this box) */
 void PeriodicBox::setDimensions(const Vector &dimensions)
 {
-    boxlength = Vector( abs(dimensions.x()),
-                        abs(dimensions.y()),
-                        abs(dimensions.z()) );
+    boxlength = Vector( std::abs(dimensions.x()),
+                        std::abs(dimensions.y()),
+                        std::abs(dimensions.z()) );
 
     //don't allow boxes that would cause .volume() to overflow
     boxlength.setMin(max_boxlength);
@@ -125,6 +125,9 @@ void PeriodicBox::setDimensions(const Vector &dimensions)
         invlength.set(i, 1.0/boxlength[i]);
         halflength.set(i, 0.5 * boxlength[i]);
     }
+
+    qDebug() << boxlength.toString() << invlength.toString()
+             << halflength.toString();
 }
 
 /** Construct a default PeriodicBox volume (maximum volume) */
@@ -145,7 +148,13 @@ PeriodicBox::PeriodicBox(const Vector &dimensions)
 PeriodicBox::PeriodicBox(const Vector &min, const Vector &max)
             : ConcreteProperty<PeriodicBox,Cartesian>()
 {
-    this->setDimensions( max - min );
+    Vector maxval = max;
+    maxval.setMax(min);
+    
+    Vector minval = min;
+    minval.setMin(max);
+
+    this->setDimensions( maxval - minval );
 }
 
 /** Copy constructor */
