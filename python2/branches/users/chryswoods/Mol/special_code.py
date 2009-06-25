@@ -248,9 +248,6 @@ def fix_Mover(c):
     c.decls("set").call_policies = call_policies.return_self()
     c.decls("setAll").call_policies = call_policies.return_self()
     c.decls("alignTo").call_policies = call_policies.return_self()
-    c.decls("fromCartesian").call_policies = call_policies.return_self()
-    c.decls("toCartesian").call_policies = call_policies.return_self()
-    c.decls("changeSpace").call_policies = call_policies.return_self()
 
     #also include all of the header files included in mover.cpp
     for header in active_headers["mover.h"].dependencies():
