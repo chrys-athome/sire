@@ -103,8 +103,6 @@ using SireCAS::Expression;
 
 using SireVol::Space;
 
-class Point;
-
 typedef SireBase::PropPtr<Restraint> RestraintPtr;
 typedef SireBase::PropPtr<Restraint3D> Restraint3DPtr;
 

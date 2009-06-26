@@ -26,3 +26,29 @@
   *
 \*********************************************/
 
+
+
+
+
+
+void ScaleVolumeFromCenter::setVolume(System &system, const Volume &volume,
+                                      const PropertyMap &map) const
+{
+    //get the center point from which we will be scaling
+    Vector center;
+    
+    if (scale_point.usesMoleculesIn(system))
+    {
+        //need to do a update on a copy here as we are not allowed
+        //to change this volume changer
+        PointPtr new_point(scale_point);
+        
+        new_point.edit().update(system);
+        
+        center = new_point.read().point();
+    }
+    else
+        center = scale_point.read().point();
+        
+    
+}

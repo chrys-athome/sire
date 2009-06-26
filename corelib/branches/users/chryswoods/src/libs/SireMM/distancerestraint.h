@@ -245,7 +245,7 @@ private:
     void calculateR();
 
     /** The four points between which the restraint is calculated */
-    PointPtr p[4];
+    SireFF::PointPtr p[4];
     
     /** The expression used to calculate the force between points 0 and 1 */
     Expression force01_expression;
@@ -344,7 +344,7 @@ private:
     void calculateR();
 
     /** The six points between which the restraint is calculated */
-    PointPtr p[6];
+    SireFF::PointPtr p[6];
     
     /** The expression used to calculate the force between points 0 and 1 */
     Expression force01_expression;

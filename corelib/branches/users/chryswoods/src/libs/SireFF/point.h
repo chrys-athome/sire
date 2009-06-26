@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREMM_POINT_H
-#define SIREMM_POINT_H
+#ifndef SIREFF_POINT_H
+#define SIREFF_POINT_H
 
 #include "SireBase/property.h"
 
@@ -40,7 +40,7 @@
 
 SIRE_BEGIN_HEADER
 
-namespace SireMM
+namespace SireFF
 {
 
 class Point;
@@ -54,23 +54,23 @@ class CenterOfGeometry;
 
 }
 
-QDataStream& operator<<(QDataStream&, const SireMM::Point&);
-QDataStream& operator>>(QDataStream&, SireMM::Point&);
+QDataStream& operator<<(QDataStream&, const SireFF::Point&);
+QDataStream& operator>>(QDataStream&, SireFF::Point&);
 
-QDataStream& operator<<(QDataStream&, const SireMM::AtomPoint&);
-QDataStream& operator>>(QDataStream&, SireMM::AtomPoint&);
+QDataStream& operator<<(QDataStream&, const SireFF::AtomPoint&);
+QDataStream& operator>>(QDataStream&, SireFF::AtomPoint&);
 
-QDataStream& operator<<(QDataStream&, const SireMM::VectorPoint&);
-QDataStream& operator>>(QDataStream&, SireMM::VectorPoint&);
+QDataStream& operator<<(QDataStream&, const SireFF::VectorPoint&);
+QDataStream& operator>>(QDataStream&, SireFF::VectorPoint&);
 
-QDataStream& operator<<(QDataStream&, const SireMM::Center&);
-QDataStream& operator>>(QDataStream&, SireMM::Center&);
+QDataStream& operator<<(QDataStream&, const SireFF::Center&);
+QDataStream& operator>>(QDataStream&, SireFF::Center&);
 
-QDataStream& operator<<(QDataStream&, const SireMM::CenterOfGeometry&);
-QDataStream& operator>>(QDataStream&, SireMM::CenterOfGeometry&);
+QDataStream& operator<<(QDataStream&, const SireFF::CenterOfGeometry&);
+QDataStream& operator>>(QDataStream&, SireFF::CenterOfGeometry&);
 
-QDataStream& operator<<(QDataStream&, const SireMM::CenterOfMass&);
-QDataStream& operator>>(QDataStream&, SireMM::CenterOfMass&);
+QDataStream& operator<<(QDataStream&, const SireFF::CenterOfMass&);
+QDataStream& operator>>(QDataStream&, SireFF::CenterOfMass&);
 
 namespace SireFF
 {
@@ -78,18 +78,17 @@ class MolForceTable;
 class ForceTable;
 }
 
-namespace SireMM
+namespace SireFF
 {
 
 using SireMol::Atom;
 using SireMol::MoleculeData;
 using SireMol::MoleculeView;
 using SireMol::Molecules;
+using SireMol::MoleculeGroup;
+using SireMol::MolGroupsBase;
 using SireMol::MolNum;
 using SireMol::MolID;
-
-using SireFF::MolForceTable;
-using SireFF::ForceTable;
 
 using SireBase::PropertyMap;
 
@@ -106,7 +105,7 @@ using SireMaths::Vector;
     
     @author Christopher Woods
 */
-class SIREMM_EXPORT Point : public SireBase::Property
+class SIREFF_EXPORT Point : public SireBase::Property
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Point&);
@@ -123,7 +122,7 @@ public:
     
     static const char* typeName()
     {
-        return "SireMM::Point";
+        return "SireFF::Point";
     }
     
     const Vector& point() const;
@@ -132,8 +131,10 @@ public:
     
     virtual void setSpace(const Space &space);
     
-    virtual void update(const MoleculeData &moldata)=0;
-    virtual void update(const Molecules &molecules)=0;
+    virtual bool update(const MoleculeData &moldata)=0;
+    virtual bool update(const Molecules &molecules)=0;
+    virtual bool update(const MoleculeGroup &molgroup)=0;
+    virtual bool update(const MolGroupsBase &molgroups)=0;
     
     virtual Molecules molecules() const=0;
     
@@ -144,6 +145,8 @@ public:
     
     virtual bool usesMoleculesIn(const ForceTable &forcetable) const=0;
     virtual bool usesMoleculesIn(const Molecules &molecules) const=0;
+    virtual bool usesMoleculesIn(const MoleculeGroup &molgroup) const=0;
+    virtual bool usesMoleculesIn(const MolGroupsBase &molgroups) const=0;
     
     virtual bool addForce(MolForceTable &molforces, const Vector &force) const=0;
     virtual bool addForce(ForceTable &forces, const Vector &force) const=0;
@@ -161,7 +164,7 @@ protected:
     bool operator==(const Point &other) const;
     bool operator!=(const Point &other) const;
 
-    void updatePoint(const Vector &point);
+    bool updatePoint(const Vector &point);
 
 private:
     /** The actual point in space */
@@ -183,7 +186,7 @@ typedef SireBase::PropPtr<Point> PointPtr;
     
     @author Christopher Woods
 */
-class SIREMM_EXPORT PointRef
+class SIREFF_EXPORT PointRef
 {
 public:
     PointRef(const Atom &atom);
@@ -208,7 +211,7 @@ private:
 };
 
 /** This point returns the location of an atom */
-class SIREMM_EXPORT AtomPoint : public SireBase::ConcreteProperty<AtomPoint,Point>
+class SIREFF_EXPORT AtomPoint : public SireBase::ConcreteProperty<AtomPoint,Point>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const AtomPoint&);
@@ -231,8 +234,10 @@ public:
     
     QString toString() const;
     
-    void update(const MoleculeData &moldata);
-    void update(const Molecules &molecules);
+    bool update(const MoleculeData &moldata);
+    bool update(const Molecules &molecules);
+    bool update(const MoleculeGroup &molgroup);
+    bool update(const MolGroupsBase &molgroups);
     
     Molecules molecules() const;
     
@@ -243,6 +248,8 @@ public:
 
     bool usesMoleculesIn(const ForceTable &forcetable) const;
     bool usesMoleculesIn(const Molecules &molecules) const;
+    bool usesMoleculesIn(const MoleculeGroup &molgroup) const;
+    bool usesMoleculesIn(const MolGroupsBase &molgroups) const;
 
     const Atom& atom() const;
     
@@ -258,7 +265,7 @@ private:
 };
 
 /** This is a simple wrapper for a point in space */
-class SIREMM_EXPORT VectorPoint : public SireBase::ConcreteProperty<VectorPoint,Point>
+class SIREFF_EXPORT VectorPoint : public SireBase::ConcreteProperty<VectorPoint,Point>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const VectorPoint&);
@@ -281,8 +288,10 @@ public:
     
     QString toString() const;
     
-    void update(const MoleculeData &moldata);
-    void update(const Molecules &molecules);
+    bool update(const MoleculeData &moldata);
+    bool update(const Molecules &molecules);
+    bool update(const MoleculeGroup &molgroup);
+    bool update(const MolGroupsBase &molgroups);
     
     Molecules molecules() const;
     
@@ -293,6 +302,8 @@ public:
 
     bool usesMoleculesIn(const ForceTable &forcetable) const;
     bool usesMoleculesIn(const Molecules &molecules) const;
+    bool usesMoleculesIn(const MoleculeGroup &molgroup) const;
+    bool usesMoleculesIn(const MolGroupsBase &molgroups) const;
     
     bool addForce(MolForceTable &molforces, const Vector &force) const;
     bool addForce(ForceTable &forces, const Vector &force) const;
@@ -300,7 +311,7 @@ public:
 
 /** This point returns the center of a view of a molecule, or group
     of molecules */
-class SIREMM_EXPORT Center : public SireBase::ConcreteProperty<Center,Point>
+class SIREFF_EXPORT Center : public SireBase::ConcreteProperty<Center,Point>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Center&);
@@ -326,8 +337,10 @@ public:
 
     void setSpace(const Space &space);
     
-    void update(const MoleculeData &moldata);
-    void update(const Molecules &molecules);
+    bool update(const MoleculeData &moldata);
+    bool update(const Molecules &molecules);
+    bool update(const MoleculeGroup &molgroup);
+    bool update(const MolGroupsBase &molgroups);
     
     Molecules molecules() const;
     
@@ -338,12 +351,14 @@ public:
 
     bool usesMoleculesIn(const ForceTable &forcetable) const;
     bool usesMoleculesIn(const Molecules &molecules) const;
+    bool usesMoleculesIn(const MoleculeGroup &molgroup) const;
+    bool usesMoleculesIn(const MolGroupsBase &molgroups) const;
     
     bool addForce(MolForceTable &molforces, const Vector &force) const;
     bool addForce(ForceTable &forces, const Vector &force) const;
 
 private:
-    void recalculatePoint();
+    bool recalculatePoint();
 
     /** The molecules whose center is to be determined */
     Molecules mols;
@@ -354,7 +369,7 @@ private:
 
 /** This point returns the center of geometry of a view of a molecule,
     or group of molecules */
-class SIREMM_EXPORT CenterOfGeometry 
+class SIREFF_EXPORT CenterOfGeometry 
             : public SireBase::ConcreteProperty<CenterOfGeometry,Point>
 {
 
@@ -383,8 +398,10 @@ public:
 
     void setSpace(const Space &space);
     
-    void update(const MoleculeData &moldata);
-    void update(const Molecules &molecules);
+    bool update(const MoleculeData &moldata);
+    bool update(const Molecules &molecules);
+    bool update(const MoleculeGroup &molgroup);
+    bool update(const MolGroupsBase &molgroups);
     
     Molecules molecules() const;
     
@@ -395,12 +412,14 @@ public:
 
     bool usesMoleculesIn(const ForceTable &forcetable) const;
     bool usesMoleculesIn(const Molecules &molecules) const;
+    bool usesMoleculesIn(const MoleculeGroup &molgroup) const;
+    bool usesMoleculesIn(const MolGroupsBase &molgroups) const;
     
     bool addForce(MolForceTable &molforces, const Vector &force) const;
     bool addForce(ForceTable &forces, const Vector &force) const;
 
 private:
-    void recalculatePoint();
+    bool recalculatePoint();
 
     /** The molecules whose center of geometry is to be determined */
     Molecules mols;
@@ -411,7 +430,7 @@ private:
 
 /** This point returns the center of mass of a view of a molecule,
     or group of molecules */
-class SIREMM_EXPORT CenterOfMass 
+class SIREFF_EXPORT CenterOfMass 
             : public SireBase::ConcreteProperty<CenterOfMass,Point>
 {
 
@@ -440,8 +459,10 @@ public:
 
     void setSpace(const Space &space);
     
-    void update(const MoleculeData &moldata);
-    void update(const Molecules &molecules);
+    bool update(const MoleculeData &moldata);
+    bool update(const Molecules &molecules);
+    bool update(const MoleculeGroup &molgroup);
+    bool update(const MolGroupsBase &molgroups);
     
     Molecules molecules() const;
     
@@ -452,12 +473,14 @@ public:
 
     bool usesMoleculesIn(const ForceTable &forcetable) const;
     bool usesMoleculesIn(const Molecules &molecules) const;
+    bool usesMoleculesIn(const MoleculeGroup &molgroup) const;
+    bool usesMoleculesIn(const MolGroupsBase &molgroups) const;
     
     bool addForce(MolForceTable &molforces, const Vector &force) const;
     bool addForce(ForceTable &forces, const Vector &force) const;
 
 private:
-    void recalculatePoint();
+    bool recalculatePoint();
 
     /** The molecules whose center of geometry is to be determined */
     Molecules mols;
@@ -468,21 +491,21 @@ private:
 
 }
 
-Q_DECLARE_METATYPE( SireMM::AtomPoint )
-Q_DECLARE_METATYPE( SireMM::VectorPoint )
-Q_DECLARE_METATYPE( SireMM::Center )
-Q_DECLARE_METATYPE( SireMM::CenterOfGeometry )
-Q_DECLARE_METATYPE( SireMM::CenterOfMass )
+Q_DECLARE_METATYPE( SireFF::AtomPoint )
+Q_DECLARE_METATYPE( SireFF::VectorPoint )
+Q_DECLARE_METATYPE( SireFF::Center )
+Q_DECLARE_METATYPE( SireFF::CenterOfGeometry )
+Q_DECLARE_METATYPE( SireFF::CenterOfMass )
 
-SIRE_EXPOSE_CLASS( SireMM::Point )
-SIRE_EXPOSE_CLASS( SireMM::PointRef )
-SIRE_EXPOSE_CLASS( SireMM::AtomPoint )
-SIRE_EXPOSE_CLASS( SireMM::VectorPoint )
-SIRE_EXPOSE_CLASS( SireMM::Center )
-SIRE_EXPOSE_CLASS( SireMM::CenterOfGeometry )
-SIRE_EXPOSE_CLASS( SireMM::CenterOfMass )
+SIRE_EXPOSE_CLASS( SireFF::Point )
+SIRE_EXPOSE_CLASS( SireFF::PointRef )
+SIRE_EXPOSE_CLASS( SireFF::AtomPoint )
+SIRE_EXPOSE_CLASS( SireFF::VectorPoint )
+SIRE_EXPOSE_CLASS( SireFF::Center )
+SIRE_EXPOSE_CLASS( SireFF::CenterOfGeometry )
+SIRE_EXPOSE_CLASS( SireFF::CenterOfMass )
 
-SIRE_EXPOSE_PROPERTY( SireMM::PointPtr, SireMM::Point )
+SIRE_EXPOSE_PROPERTY( SireFF::PointPtr, SireFF::Point )
 
 SIRE_END_HEADER
 

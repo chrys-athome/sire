@@ -125,9 +125,43 @@ protected:
     bool operator!=(const VolumeChanger &other) const;
     
 private:
+    /** The random number generator used by this volume changer */
+    RanGenerator rangen;
+
     /** The number of the molecule group that will be 
         moved by this volume changer */
     MGNum mgnum;
+};
+
+class SIREMOVE_EXPORT ScaleVolumeFromCenter
+            : public SireBase::ConcreteProperty<ScaleVolumeFromCenter,VolumeChanger>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const ScaleVolumeFromCenter&);
+friend QDataStream& ::operator>>(QDataStream&, ScaleVolumeFromCenter&);
+
+public:
+    ScaleVolumeFromCenter();
+    ScaleVolumeFromCenter(const PointRef &point);
+    
+    ScaleVolumeFromCenter(const ScaleVolumeFromCenter &other);
+    
+    ~ScaleVolumeFromCenter();
+    
+    ScaleVolumeFromCenter& operator=(const ScaleVolumeFromCenter &other);
+    
+    bool operator==(const ScaleVolumeFromCenter &other) const;
+    bool operator!=(const ScaleVolumeFromCenter &other) const;
+    
+    static const char* typeName();
+
+    int setVolume(System &system,
+                  const SireUnits::Dimension::Volume &volume,
+                  const PropertyMap &map = PropertyMap()) const;
+    
+private:
+    /** The point from which the volume will be scaled */
+    SireFF::PointPtr scale_point;
 };
 
 typedef SireBase::PropertyPtr<VolumeChanger> VolumeChangerPtr;

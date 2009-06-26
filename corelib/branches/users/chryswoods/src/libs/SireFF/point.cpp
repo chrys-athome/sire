@@ -28,12 +28,15 @@
 
 #include "point.h"
 
+#include "forcetable.h"
+
 #include "SireMol/evaluator.h"
 #include "SireMol/molecule.h"
+#include "SireMol/moleculegroup.h"
+#include "SireMol/moleculegroups.h"
+#include "SireMol/mgidx.h"
 
 #include "SireVol/aabox.h"
-
-#include "SireFF/forcetable.h"
 
 #include <boost/tuple/tuple.hpp>
 
@@ -42,7 +45,7 @@
 
 #include "SireVol/errors.h"
 
-using namespace SireMM;
+using namespace SireFF;
 using namespace SireMol;
 using namespace SireMaths;
 using namespace SireVol;
@@ -58,7 +61,7 @@ using boost::tuples::tuple;
 static const RegisterMetaType<Point> r_point( MAGIC_ONLY, Point::typeName() );
 
 /** Serialise to a binary datastream */
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const Point &point)
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const Point &point)
 {
     writeHeader(ds, r_point, 1);
     
@@ -71,7 +74,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const Point &point)
 }
 
 /** Extract from a binary datastream */
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, Point &point)
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, Point &point)
 {
     VersionID v = readHeader(ds, r_point);
     
@@ -134,10 +137,17 @@ const Vector& Point::operator()() const
     return p;
 }
 
-/** Update the point to 'point' */
-void Point::updatePoint(const Vector &point)
+/** Update the point to 'point', returning whether or not this
+    changes the point */
+bool Point::updatePoint(const Vector &point)
 {
-    p = point;
+    if (p != point)
+    {
+        p = point;
+        return true;
+    }
+    else
+        return false;
 }
 
 /** Return the point in 3D space */
@@ -191,7 +201,7 @@ const VectorPoint& Point::null()
 static const RegisterMetaType<AtomPoint> r_atompoint;
 
 /** Serialise to a binary datastream */
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const AtomPoint &atompoint)
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const AtomPoint &atompoint)
 {
     writeHeader(ds, r_atompoint, 1);
     
@@ -204,7 +214,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const AtomPoint &atompoin
 }
 
 /** Extract from a binary datastream */
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, AtomPoint &atompoint)
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, AtomPoint &atompoint)
 {
     VersionID v = readHeader(ds, r_atompoint);
     
@@ -279,28 +289,73 @@ QString AtomPoint::toString() const
                                                this->point().toString());
 }
 
-/** Update this point 
+/** Update this point, returning whether or not this changes
+    the location of this point 
 
     \throw SireBase::missing_property
     \throw SireError::incompatible_error
     \throw SireError::invalid_cast
 */
-void AtomPoint::update(const MoleculeData &moldata)
+bool AtomPoint::update(const MoleculeData &moldata)
 {
     if (atm.data().number() == moldata.number())
     {
         atm.update(moldata);
-        this->updatePoint(atm.property<Vector>(coords_property));
+        return this->updatePoint(atm.property<Vector>(coords_property));
     }
+    else
+        return false;
 }
                     
-/** Update this point */
-void AtomPoint::update(const Molecules &molecules)
+/** Update this point, returning whether or not this changes
+    the location of this point 
+
+    \throw SireBase::missing_property
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
+*/
+bool AtomPoint::update(const Molecules &molecules)
 {
     if (molecules.contains(atm.data().number()))
     {
-        this->update( molecules[atm.data().number()].data() );
+        return this->update( molecules[atm.data().number()].data() );
     }
+    else
+        return false;
+}
+                    
+/** Update this point, returning whether or not this changes
+    the location of this point 
+
+    \throw SireBase::missing_property
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
+*/
+bool AtomPoint::update(const MoleculeGroup &molgroup)
+{
+    if (molgroup.contains(atm.data().number()))
+    {
+        return this->update( molgroup[atm.data().number()].data() );
+    }
+    else
+        return false;
+}
+                    
+/** Update this point, returning whether or not this changes
+    the location of this point 
+
+    \throw SireBase::missing_property
+    \throw SireError::incompatible_error
+    \throw SireError::invalid_cast
+*/
+bool AtomPoint::update(const MolGroupsBase &molgroups)
+{
+    if (molgroups.contains(atm.data().number()))
+    {
+        return this->update( molgroups[atm.data().number()].data() );
+    }
+    else
+        return false;
 }
 
 /** Return the molecules needed to get this point */
@@ -362,6 +417,26 @@ bool AtomPoint::usesMoleculesIn(const Molecules &molecules) const
         return false;
 }
 
+/** Return whether or not this point uses data from any of the 
+    molecules in the group 'molgroup' */
+bool AtomPoint::usesMoleculesIn(const MoleculeGroup &molgroup) const
+{
+    if (not atm.isEmpty())
+        return molgroup.contains(atm.data().number());
+    else
+        return false;
+}
+
+/** Return whether or not this point uses data from any of the 
+    molecules in the groups in 'molgroups' */
+bool AtomPoint::usesMoleculesIn(const MolGroupsBase &molgroups) const
+{
+    if (not atm.isEmpty())
+        return molgroups.contains(atm.data().number());
+    else
+        return false;
+}
+
 /** Return the actual atom */
 const Atom& AtomPoint::atom() const
 {
@@ -399,7 +474,7 @@ bool AtomPoint::addForce(ForceTable &forces, const Vector &force) const
 static const RegisterMetaType<VectorPoint> r_vectorpoint;
 
 /** Serialise to a binary datastream */
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const VectorPoint &vectorpoint)
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const VectorPoint &vectorpoint)
 {
     writeHeader(ds, r_vectorpoint, 1);
     
@@ -409,7 +484,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const VectorPoint &vector
 }
 
 /** Extract from a binary datastream */
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, VectorPoint &vectorpoint)
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, VectorPoint &vectorpoint)
 {
     VersionID v = readHeader(ds, r_vectorpoint);
     
@@ -472,12 +547,28 @@ QString VectorPoint::toString() const
 }
 
 /** A VectorPoint is not updatable */
-void VectorPoint::update(const MoleculeData&)
-{}
+bool VectorPoint::update(const MoleculeData&)
+{
+    return false;
+}
                     
 /** A VectorPoint is not updatable */
-void VectorPoint::update(const Molecules&)
-{}
+bool VectorPoint::update(const Molecules&)
+{
+    return false;
+}
+
+/** A VectorPoint is not updatable */
+bool VectorPoint::update(const MoleculeGroup&)
+{
+    return false;
+}
+                    
+/** A VectorPoint is not updatable */
+bool VectorPoint::update(const MolGroupsBase&)
+{
+    return false;
+}
 
 /** No molecules are needed to create this point */
 Molecules VectorPoint::molecules() const
@@ -515,6 +606,18 @@ bool VectorPoint::usesMoleculesIn(const Molecules&) const
     return false;
 }
 
+/** No molecules are needed to create this point */
+bool VectorPoint::usesMoleculesIn(const MoleculeGroup&) const
+{
+    return false;
+}
+
+/** No molecules are needed to create this point */
+bool VectorPoint::usesMoleculesIn(const MolGroupsBase&) const
+{
+    return false;
+}
+
 /** No forces on a point */
 bool VectorPoint::addForce(MolForceTable&, const Vector&) const
 {
@@ -534,7 +637,7 @@ bool VectorPoint::addForce(ForceTable&, const Vector&) const
 static const RegisterMetaType<Center> r_center;
 
 /** Serialise to a binary datastream */
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const Center &center)
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const Center &center)
 {
     writeHeader(ds, r_center, 1);
     
@@ -547,7 +650,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const Center &center)
 }
 
 /** Extract from a binary datastream */
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, Center &center)
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, Center &center)
 {
     VersionID v = readHeader(ds, r_center);
     
@@ -663,10 +766,10 @@ void Center::setSpace(const Space &space)
 }
 
 /** Recalculate the point using the current space */
-void Center::recalculatePoint()
+bool Center::recalculatePoint()
 {
     if (mols.isEmpty())
-        return;
+        return false;
 
     Molecules::const_iterator it = mols.constBegin();
     
@@ -677,28 +780,44 @@ void Center::recalculatePoint()
         aabox += it->evaluate().center(property_map);
     }
     
-    this->updatePoint( aabox.center() );
+    return this->updatePoint( aabox.center() );
 }
 
 /** Update the molecules used to create this point */
-void Center::update(const MoleculeData &moldata)
+bool Center::update(const MoleculeData &moldata)
 {
     if (mols.contains(moldata.number()))
     {
         if (mols.update(moldata))
         {
-            this->recalculatePoint();
+            return this->recalculatePoint();
         }
     }
+    
+    return false;
 }
                     
 /** Update the molecules used to create this point */
-void Center::update(const Molecules &molecules)
+bool Center::update(const Molecules &molecules)
 {
     if (not mols.update(molecules).isEmpty())
     {
-        this->recalculatePoint();
+        return this->recalculatePoint();
     }
+    
+    return false;
+}
+                    
+/** Update the molecules used to create this point */
+bool Center::update(const MoleculeGroup &molgroup)
+{
+    return this->update(molgroup.molecules());
+}
+
+/** Update the molecules used to create this point */
+bool Center::update(const MolGroupsBase &molgroups)
+{
+    return this->update(molgroups.molecules());
 }
 
 /** Return all of the molecules used to generate this point */
@@ -764,6 +883,26 @@ bool Center::usesMoleculesIn(const Molecules &molecules) const
     return false;
 }
 
+/** Return whether or not this point uses data from any of the
+    molecules in the group 'molgroup' */
+bool Center::usesMoleculesIn(const MoleculeGroup &molgroup) const
+{
+    return this->usesMoleculesIn(molgroup.molecules());
+}
+
+/** Return whether or not this point uses data from any of the
+    molecules in the groups in 'molgroups' */
+bool Center::usesMoleculesIn(const MolGroupsBase &molgroups) const
+{
+    for (MGIdx i(0); i<molgroups.nGroups(); ++i)
+    {
+        if (this->usesMoleculesIn(molgroups[i]))
+            return true;
+    }
+    
+    return false;
+}
+
 /** Decompose the force 'force' acting on this point from the
     molecule whose forces are in 'molforces' and add the
     force onto the table */
@@ -793,7 +932,7 @@ bool Center::addForce(ForceTable &forces, const Vector &force) const
 static const RegisterMetaType<CenterOfGeometry> r_cog;
 
 /** Serialise to a binary datastream */
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CenterOfGeometry &cog)
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const CenterOfGeometry &cog)
 {
     writeHeader(ds, r_cog, 1);
     
@@ -806,7 +945,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CenterOfGeometry &c
 }
 
 /** Extract from a binary datastream */
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CenterOfGeometry &cog)
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, CenterOfGeometry &cog)
 {
     VersionID v = readHeader(ds, r_cog);
     
@@ -950,16 +1089,15 @@ void CenterOfGeometry::setSpace(const Space &space)
 }
 
 /** Internal function used to recalculate the center */
-void CenterOfGeometry::recalculatePoint()
+bool CenterOfGeometry::recalculatePoint()
 {
     if (mols.isEmpty())
-        return;
+        return false;
 
     else if (mols.count() == 1)
     {
-        Point::updatePoint( mols.constBegin()->evaluate()
-                                        .centerOfGeometry(property_map) );
-        return;
+        return Point::updatePoint( mols.constBegin()->evaluate()
+                                       .centerOfGeometry(property_map) );
     }
 
     QList< tuple<Vector,double> > points;
@@ -972,26 +1110,42 @@ void CenterOfGeometry::recalculatePoint()
                                             it->selection().nAtoms()) );
     }
     
-    Point::updatePoint( ::averagePoints(points) );
+    return Point::updatePoint( ::averagePoints(points) );
 }
 
 /** Update the molecules used to create this point */
-void CenterOfGeometry::update(const MoleculeData &moldata)
+bool CenterOfGeometry::update(const MoleculeData &moldata)
 {
     if (mols.contains(moldata.number()))
     {
         if (mols.update(moldata))
-            this->recalculatePoint();
+            return this->recalculatePoint();
     }
+    
+    return false;
 }
                     
 /** Update the molecules used to create this point */
-void CenterOfGeometry::update(const Molecules &molecules)
+bool CenterOfGeometry::update(const Molecules &molecules)
 {
     if (not mols.update(molecules).isEmpty())
     {
-        this->recalculatePoint();
+        return this->recalculatePoint();
     }
+    
+    return false;
+}
+                    
+/** Update the molecules used to create this point */
+bool CenterOfGeometry::update(const MoleculeGroup &molgroup)
+{
+    return this->update(molgroup.molecules());
+}
+
+/** Update the molecules used to create this point */
+bool CenterOfGeometry::update(const MolGroupsBase &molgroups)
+{
+    return this->update(molgroups.molecules());
 }
 
 /** Return all of the molecules used to generate this point */
@@ -1057,6 +1211,26 @@ bool CenterOfGeometry::usesMoleculesIn(const Molecules &molecules) const
     return false;
 }
 
+/** Return whether or not this point uses data from any of the
+    molecules in the group 'molgroup' */
+bool CenterOfGeometry::usesMoleculesIn(const MoleculeGroup &molgroup) const
+{
+    return this->usesMoleculesIn(molgroup.molecules());
+}
+
+/** Return whether or not this point uses data from any of the
+    molecules in the groups in 'molgroups' */
+bool CenterOfGeometry::usesMoleculesIn(const MolGroupsBase &molgroups) const
+{
+    for (MGIdx i(0); i<molgroups.nGroups(); ++i)
+    {
+        if (this->usesMoleculesIn(molgroups[i]))
+            return true;
+    }
+    
+    return false;
+}
+
 /** Decompose the force 'force' acting on this point from the
     molecule whose forces are in 'molforces' and add the
     force onto the table */
@@ -1086,7 +1260,7 @@ bool CenterOfGeometry::addForce(ForceTable &forces, const Vector &force) const
 static const RegisterMetaType<CenterOfMass> r_com;
 
 /** Serialise to a binary datastream */
-QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CenterOfMass &com)
+QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, const CenterOfMass &com)
 {
     writeHeader(ds, r_com, 1);
     
@@ -1099,7 +1273,7 @@ QDataStream SIREMM_EXPORT &operator<<(QDataStream &ds, const CenterOfMass &com)
 }
 
 /** Extract from a binary datastream */
-QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, CenterOfMass &com)
+QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, CenterOfMass &com)
 {
     VersionID v = readHeader(ds, r_com);
     
@@ -1218,15 +1392,15 @@ void CenterOfMass::setSpace(const Space &space)
 }
 
 /** Internal function used to recalculate the center */
-void CenterOfMass::recalculatePoint()
+bool CenterOfMass::recalculatePoint()
 {
     if (mols.isEmpty())
-        return;
+        return false;
 
     else if (mols.count() == 1)
     {
-        Point::updatePoint( mols.constBegin()->evaluate().centerOfMass(property_map) );
-        return;
+        return Point::updatePoint( mols.constBegin()->evaluate()
+                                       .centerOfMass(property_map) );
     }
 
     QList< tuple<Vector,double> > points;
@@ -1241,26 +1415,42 @@ void CenterOfMass::recalculatePoint()
                                              evaluator.mass() ) );
     }
     
-    Point::updatePoint( ::averagePoints(points) );
+    return Point::updatePoint( ::averagePoints(points) );
 }
 
 /** Update the molecules used to create this point */
-void CenterOfMass::update(const MoleculeData &moldata)
+bool CenterOfMass::update(const MoleculeData &moldata)
 {
     if (mols.contains(moldata.number()))
     {
         if (mols.update(moldata))
-            this->recalculatePoint();
+            return this->recalculatePoint();
     }
+    
+    return false;
 }
                     
 /** Update the molecules used to create this point */
-void CenterOfMass::update(const Molecules &molecules)
+bool CenterOfMass::update(const Molecules &molecules)
 {
     if (not mols.update(molecules).isEmpty())
     {
-        this->recalculatePoint();
+        return this->recalculatePoint();
     }
+    
+    return false;
+}
+                    
+/** Update the molecules used to create this point */
+bool CenterOfMass::update(const MoleculeGroup &molgroup)
+{
+    return this->update(molgroup.molecules());
+}
+
+/** Update the molecules used to create this point */
+bool CenterOfMass::update(const MolGroupsBase &molgroups)
+{
+    return this->update(molgroups.molecules());
 }
 
 /** Return all of the molecules used to generate this point */
@@ -1320,6 +1510,26 @@ bool CenterOfMass::usesMoleculesIn(const Molecules &molecules) const
          ++it)
     {
         if (molecules.contains(it->number()))
+            return true;
+    }
+    
+    return false;
+}
+
+/** Return whether or not this point uses data from any of the
+    molecules in the group 'molgroup' */
+bool CenterOfMass::usesMoleculesIn(const MoleculeGroup &molgroup) const
+{
+    return this->usesMoleculesIn(molgroup.molecules());
+}
+
+/** Return whether or not this point uses data from any of the
+    molecules in the groups in 'molgroups' */
+bool CenterOfMass::usesMoleculesIn(const MolGroupsBase &molgroups) const
+{
+    for (MGIdx i(0); i<molgroups.nGroups(); ++i)
+    {
+        if (this->usesMoleculesIn(molgroups[i]))
             return true;
     }
     
