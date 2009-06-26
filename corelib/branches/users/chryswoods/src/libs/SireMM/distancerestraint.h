@@ -29,7 +29,7 @@
 #ifndef SIREMM_DISTANCERESTRAINT_H
 #define SIREMM_DISTANCERESTRAINT_H
 
-#include "point.h"
+#include "SireFF/point.h"
 
 #include "restraint.h"
 
@@ -59,6 +59,9 @@ QDataStream& operator>>(QDataStream&, SireMM::TripleDistanceRestraint&);
 
 namespace SireMM
 {
+
+using SireFF::Point;
+using SireFF::PointRef;
 
 using SireCAS::Expression;
 using SireCAS::Symbol;
@@ -155,7 +158,7 @@ private:
     void calculateR();
 
     /** The two points between which the restraint is calculated */
-    PointPtr p[2];
+    SireFF::PointPtr p[2];
     
     /** The expression used to calculate the force */
     Expression force_expression;

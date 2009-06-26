@@ -83,15 +83,26 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, VolumeMove &volmove)
     return ds;
 }
 
-/** Construct a volume move that can be used to generate the ensemble
-    for a temperature of 25 C, pressure of 1 atm, and with a maximum 
-    change of 100 A^3 */
+/** Null constructor */
 VolumeMove::VolumeMove()
-           : ConcreteProperty<VolumeMove,MonteCarlo>(),
-             maxchange(100)
+           : ConcreteProperty<VolumeMove,MonteCarlo>(), maxchange(0)
 {
     MonteCarlo::setEnsemble( Ensemble::NPT( 25 * celsius, 1 * atm ) );
 }
+
+/** Construct a volume move that can be used to generate the ensemble
+    for a temperature of 25 C, pressure of 1 atm, and with a maximum 
+    change of 100 A^3 by moving the molecules in 'molgroup' 
+    using a ScaleVolumeFromCenter centered on the origin */
+VolumeMove::VolumeMove(const MoleculeGroup &molgroup)
+           : ConcreteProperty<VolumeMove,MonteCarlo>(),
+             
+             maxchange(100*angstrom3)
+
+/** Construct a volume move that can be used to generate the ensemble
+    for a temperature of 25 C, pressure of 1 atm, and with a maximum 
+    change of 100 A^3 */
+VolumeMove::VolumeMove(const VolumeChanger &volchanger);
 
 /** Construct a volume move that can be used to generate the ensemble
     for a temperature of 25 C, pressure of 1 atm, 
@@ -170,6 +181,40 @@ const Volume& VolumeMove::maximumVolumeChange() const
     return maxchange;
 }
 
+/** Set the volume changer used to change the volume to 'volchanger' */
+void VolumeMove::setVolumeChanger(const VolumeChanger &new_volchanger)
+{
+    volchanger = new_volchanger;
+}
+
+/** Set the volume changer used to change the volume to a 
+    ScaleVolumeFromCenter that scales the molecules in 'molgroup'
+    from the center of a box centered at (0,0,0) */
+void VolumeMove::setVolumeChanger(const MoleculeGroup &molgroup)
+{
+    volchanger = ScaleVolumeFromCenter(molgroup, Vector(0));
+}
+
+/** Return the volume changer used to change the volume */
+const VolumeChanger& VolumeMove::volumeChanger() const
+{
+    return volchanger.read();
+}
+
+/** Return the number of the molecule group that will be 
+    affected by the change in volume */
+MGNum VolumeMove::groupNumber() const
+{
+    return volchanger.read()->mgNum();
+}
+
+/** Set the random number generator used by this move */
+void VolumeMove::setGenerator(const RanGenerator &rangenerator)
+{
+    MonteCarlo::setGenerator(rangenerator);
+    volchanger.edit().setGenerator(this->generator());
+}
+
 /** Perform 'nmoves' volume moves on the passed system, optionally
     recording simulation statistics if 'record_stats' is true */
 void VolumeMove::move(System &system, int nmoves, bool record_stats)
@@ -184,47 +229,28 @@ void VolumeMove::move(System &system, int nmoves, bool record_stats)
     {
         PropertyMap map;
         map.set("coordinates", this->coordinatesProperty());
+        map.set("space", this->spaceProperty());
 
         for (int i=0; i<nmoves; ++i)
         {
             System old_system(system);
         
-            const Space &old_space = system.property( this->spaceProperty() )
-                                           .asA<Space>();
-
             //calculate the old energy and volume
             double old_nrg = this->energy(system);
-            Volume old_vol = old_space.volume();
+            Volume old_vol = this->volume(system);
             
-            Volume new_vol = old_vol + Volume( generator().rand(-maxchange, maxchange) );
+            int nmols = this->volumeChanger().randomChangeVolume(system, maxchange, map);
             
-            //create the new space
-            SpacePtr new_space = old_space.setVolume(new_vol);
-            
-            //read the new volume - it may be slightly different
-            //due to round off error
-            new_vol = new_space.read().volume();
-            
-            //set the new space
-            if (this->spaceProperty().hasSource())
-                system.setProperty( this->spaceProperty().source(), new_space );
-            
-            throw SireError::incomplete_code( QObject::tr(
-                    "Need to switch VolumeMove to use a molecule group, "
-                    "and to use a volume changing function."), CODELOC );
-            
-            //update the molecules
-            //system.update(mols);
-            
-            //calculate the new energy
+            //calculate the new energy and volume
             double new_nrg = this->energy(system);
+            Volume new_vol = this->volume(system);
             
-            //if (not this->test(new_nrg, old_nrg, mols.nMolecules(),
-            //                   new_vol, old_vol))
-            //{
+            if (not this->test(new_nrg, old_nrg, mols.nMolecules(),
+                               new_vol, old_vol))
+            {
                 //move failed - go back to the last step
-            //    system = old_system;
-            //}
+                system = old_system;
+            }
             
             if (record_stats)
             {

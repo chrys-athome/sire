@@ -86,8 +86,12 @@ public:
     SpacePtr setVolume(SireUnits::Dimension::Volume volume) const;
 
     void setDimensions(const Vector &dimensions);
+    void setDimensions(const Vector &mincoords, const Vector &maxcoords);
     
     const Vector& dimensions() const;
+
+    Vector minCoords(const Vector &center = Vector(0)) const;
+    Vector maxCoords(const Vector &center = Vector(0)) const;
 
     static const char* typeName();
 

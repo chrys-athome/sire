@@ -127,6 +127,19 @@ void PeriodicBox::setDimensions(const Vector &dimensions)
     }
 }
 
+/** Set the dimensions of the box so that they span from 'mincoords'  
+    to 'maxcoords' */
+void PeriodicBox::setDimensions(const Vector &mincoords, const Vector &maxcoords)
+{
+    Vector maxval = maxcoords;
+    maxval.setMax(mincoords);
+    
+    Vector minval = mincoords;
+    minval.setMin(maxcoords);
+
+    this->setDimensions( maxval - minval );
+}
+
 /** Construct a default PeriodicBox volume (maximum volume) */
 PeriodicBox::PeriodicBox() : ConcreteProperty<PeriodicBox,Cartesian>()
 {
@@ -142,16 +155,10 @@ PeriodicBox::PeriodicBox(const Vector &dimensions)
 }
 
 /** Construct a PeriodicBox volume that goes from min to max */
-PeriodicBox::PeriodicBox(const Vector &min, const Vector &max)
+PeriodicBox::PeriodicBox(const Vector &minval, const Vector &maxval)
             : ConcreteProperty<PeriodicBox,Cartesian>()
 {
-    Vector maxval = max;
-    maxval.setMax(min);
-    
-    Vector minval = min;
-    minval.setMin(max);
-
-    this->setDimensions( maxval - minval );
+    this->setDimensions(minval, maxval);
 }
 
 /** Copy constructor */
@@ -207,6 +214,18 @@ bool PeriodicBox::isCartesian() const
 const Vector& PeriodicBox::dimensions() const
 {
     return boxlength;
+}
+
+/** Return the minimum coordinates of the box that has its center at 'center' */
+Vector PeriodicBox::minCoords(const Vector &center) const
+{
+    return center + halflength;
+}
+
+/** Return the maximum coordinates of the box that has its center at 'center' */
+Vector PeriodicBox::maxCoords(const Vector &center) const
+{
+    return center - halflength;
 }
 
 /** Return a string representation of this space */

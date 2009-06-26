@@ -31,6 +31,7 @@ set ( SIREFF_HEADERS
       intra2b2gff.hpp
       intra2b3dff.hpp
       intra2b2g3dff.hpp
+      point.h
     )
 
 set ( SIREFF_DETAIL_HEADERS
@@ -58,6 +59,7 @@ set ( SIREFF_SOURCES
       forcetable.cpp
       g1ff.cpp
       g2ff.cpp
+      point.cpp
 
       detail/atomiccoords3d.cpp
       detail/ffmolecules.cpp

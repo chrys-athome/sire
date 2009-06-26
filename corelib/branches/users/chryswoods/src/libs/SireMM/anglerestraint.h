@@ -29,7 +29,7 @@
 #ifndef SIREMM_ANGLERESTRAINT_H
 #define SIREMM_ANGLERESTRAINT_H
 
-#include "point.h"
+#include "SireFF/point.h"
 
 #include "restraint.h"
 
@@ -50,6 +50,9 @@ QDataStream& operator>>(QDataStream&, SireMM::AngleRestraint&);
 
 namespace SireMM
 {
+
+using SireFF::Point;
+using SireFF::PointRef;
 
 using SireCAS::Expression;
 using SireCAS::Symbol;
@@ -145,7 +148,7 @@ private:
     void calculateTheta();
 
     /** The three points between which the restraint is calculated */
-    PointPtr p[3];
+    SireFF::PointPtr p[3];
     
     /** The expression used to calculate the force */
     Expression force_expression;

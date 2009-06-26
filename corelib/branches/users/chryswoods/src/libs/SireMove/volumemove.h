@@ -58,8 +58,9 @@ friend QDataStream& ::operator>>(QDataStream&, VolumeMove&);
 
 public:
     VolumeMove();
-    
-    VolumeMove(const SireUnits::Dimension::Volume &maxchange);
+
+    VolumeMove(const MoleculeGroup &molgroup);
+    VolumeMove(const VolumeChanger &volchanger);
     
     VolumeMove(const VolumeMove &other);
     
@@ -78,9 +79,17 @@ public:
     bool operator!=(const VolumeMove &other) const;
     
     QString toString() const;
+
+    void setVolumeChanger(const VolumeChanger &volchanger);
+    void setVolumeChanger(const MoleculeGroup &molgroup);
+    
+    const VolumeChanger& volumeChanger() const;
+
+    MGNum groupNumber() const;
+    
+    void setGenerator(const RanGenerator &rangenerator);
     
     void setMaximumVolumeChange(const SireUnits::Dimension::Volume &delta);
-    
     const SireUnits::Dimension::Volume& maximumVolumeChange() const;
     
     void move(System &system, int nmoves, bool record_stats=true);
@@ -90,6 +99,10 @@ protected:
     void _pvt_setPressure(const SireUnits::Dimension::Pressure &pressure);
     
 private:
+    /** The volume changing function used to change the volume of  
+        the system */
+    VolumeChangerPtr volchanger;
+
     #ifndef SKIP_BROKEN_GCCXML_PARTS
     /** The maximum volume change */
     SireUnits::Dimension::Volume maxchange;

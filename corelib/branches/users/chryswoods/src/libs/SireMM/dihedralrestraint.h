@@ -134,7 +134,7 @@ private:
     void calculatePhi();
 
     /** The four points between which the restraint is calculated */
-    PointPtr p[4];
+    SireFF::PointPtr p[4];
     
     /** The expression used to calculate the force */
     Expression force_expression;

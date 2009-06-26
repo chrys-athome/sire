@@ -43,6 +43,7 @@ set ( SIREMOVE_HEADERS
       uniformsampler.h
       velocitygenerator.h
       velocityverlet.h
+      volumechanger.h
       volumemove.h
       weightedmoves.h
       zmatmove.h
@@ -93,6 +94,7 @@ set ( SIREMOVE_SOURCES
       weightedmoves.cpp
       velocitygenerator.cpp
       velocityverlet.cpp
+      volumechanger.cpp
       volumemove.cpp
       zmatmove.cpp
       zmatrix.cpp   
