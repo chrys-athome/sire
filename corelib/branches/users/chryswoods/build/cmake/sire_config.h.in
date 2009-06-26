@@ -12,6 +12,8 @@
 
 #cmakedefine HAVE_MSTATS 1
 
+#cmakedefine HAVE_CUBEROOT 1
+
 #cmakedefine HAVE_MALLINFO 1
 
 #cmakedefine HAVE_SYSCTL 1

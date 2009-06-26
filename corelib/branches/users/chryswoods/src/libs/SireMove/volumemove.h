@@ -30,6 +30,7 @@
 #define SIREMOVE_VOLUMEMOVE_H
 
 #include "montecarlo.h"
+#include "volumechanger.h"
 
 SIRE_BEGIN_HEADER
 
@@ -43,6 +44,9 @@ QDataStream& operator>>(QDataStream&, SireMove::VolumeMove&);
 
 namespace SireMove
 {
+
+using SireMol::MGID;
+using SireMol::MoleculeGroup;
 
 /** This is a Monte Carlo volume move. This is used to allow
     the pressure to be kept constant
@@ -59,7 +63,9 @@ friend QDataStream& ::operator>>(QDataStream&, VolumeMove&);
 public:
     VolumeMove();
 
+    VolumeMove(const MGID &mgid);
     VolumeMove(const MoleculeGroup &molgroup);
+    
     VolumeMove(const VolumeChanger &volchanger);
     
     VolumeMove(const VolumeMove &other);
@@ -85,7 +91,7 @@ public:
     
     const VolumeChanger& volumeChanger() const;
 
-    MGNum groupNumber() const;
+    const MGID& groupID() const;
     
     void setGenerator(const RanGenerator &rangenerator);
     

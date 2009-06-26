@@ -149,6 +149,7 @@ check_include_files( emmintrin.h HAVE_EMMINTRIN_H )
 check_function_exists( mstats HAVE_MSTATS )
 check_function_exists( mallinfo HAVE_MALLINFO )
 check_function_exists( sysctl HAVE_SYSCTL )
+check_function_exists( cbrt HAVE_CUBEROOT )
 
 #create config.h
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/sire_config.h.in 

@@ -244,6 +244,7 @@ public:
     bool isEmpty() const;
 
     Molecules molecules() const;
+    Molecules molecules(const MGID &mgid) const;
     
     QList<MGNum> mgNums() const;
     QList<MGName> mgNames() const;

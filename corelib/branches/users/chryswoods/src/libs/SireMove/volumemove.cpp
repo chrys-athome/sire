@@ -33,6 +33,8 @@
 
 #include "SireMol/molecule.h"
 #include "SireMol/mover.hpp"
+#include "SireMol/moleculegroup.h"
+#include "SireMol/mgname.h"
 
 #include "SireUnits/dimensions.h"
 #include "SireUnits/units.h"
@@ -57,9 +59,10 @@ static const RegisterMetaType<VolumeMove> r_volmove;
 /** Serialise to a binary datastream */
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, const VolumeMove &volmove)
 {
-    writeHeader(ds, r_volmove, 1);
+    writeHeader(ds, r_volmove, 2);
     
-    ds << double(volmove.maxchange) 
+    ds << volmove.volchanger
+       << double(volmove.maxchange.to(angstrom3)) 
        << static_cast<const MonteCarlo&>(volmove);
        
     return ds;
@@ -70,12 +73,21 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, VolumeMove &volmove)
 {
     VersionID v = readHeader(ds, r_volmove);
     
-    if (v == 1)
+    if (v == 2)
+    {
+        double maxchange;
+        ds >> volmove.volchanger >> maxchange
+           >> static_cast<MonteCarlo&>(volmove);
+           
+        volmove.maxchange = maxchange * angstrom3;
+    }
+    else if (v == 1)
     {
         double maxchange;
         ds >> maxchange >> static_cast<MonteCarlo&>(volmove);
         
-        volmove.maxchange = Volume(maxchange);
+        volmove.maxchange = maxchange * angstrom3;
+        volmove.volchanger = ScaleVolumeFromCenter( MGIdentifier() );
     }
     else
         throw version_error( v, "1", r_volmove, CODELOC );
@@ -92,24 +104,36 @@ VolumeMove::VolumeMove()
 
 /** Construct a volume move that can be used to generate the ensemble
     for a temperature of 25 C, pressure of 1 atm, and with a maximum 
+    change of 100 A^3 by moving the molecules in the
+    molecule groups that match the ID 'mgid' 
+    using a ScaleVolumeFromCenter centered on the origin */
+VolumeMove::VolumeMove(const MGID &mgid)
+           : ConcreteProperty<VolumeMove,MonteCarlo>(),
+             volchanger( ScaleVolumeFromCenter(mgid) ),
+             maxchange(100*angstrom3)
+{
+    MonteCarlo::setEnsemble( Ensemble::NPT( 25 * celsius, 1 * atm ) );
+}
+
+/** Construct a volume move that can be used to generate the ensemble
+    for a temperature of 25 C, pressure of 1 atm, and with a maximum 
     change of 100 A^3 by moving the molecules in 'molgroup' 
     using a ScaleVolumeFromCenter centered on the origin */
 VolumeMove::VolumeMove(const MoleculeGroup &molgroup)
            : ConcreteProperty<VolumeMove,MonteCarlo>(),
-             
+             volchanger( ScaleVolumeFromCenter(molgroup) ),
              maxchange(100*angstrom3)
+{
+    MonteCarlo::setEnsemble( Ensemble::NPT( 25 * celsius, 1 * atm ) );
+}
 
 /** Construct a volume move that can be used to generate the ensemble
     for a temperature of 25 C, pressure of 1 atm, and with a maximum 
-    change of 100 A^3 */
-VolumeMove::VolumeMove(const VolumeChanger &volchanger);
-
-/** Construct a volume move that can be used to generate the ensemble
-    for a temperature of 25 C, pressure of 1 atm, 
-    and with a maximum change of 'maxchange' */
-VolumeMove::VolumeMove(const Volume &maxvolchange)
+    change of 100 A^3 using the passed volume changer */
+VolumeMove::VolumeMove(const VolumeChanger &volumechanger)
            : ConcreteProperty<VolumeMove,MonteCarlo>(),
-             maxchange(maxvolchange)
+             volchanger(volumechanger),
+             maxchange(100*angstrom3)
 {
     MonteCarlo::setEnsemble( Ensemble::NPT( 25 * celsius, 1 * atm ) );
 }
@@ -117,6 +141,7 @@ VolumeMove::VolumeMove(const Volume &maxvolchange)
 /** Copy constructor */
 VolumeMove::VolumeMove(const VolumeMove &other)
            : ConcreteProperty<VolumeMove,MonteCarlo>(other),
+             volchanger(other.volchanger),
              maxchange(other.maxchange)
 {}
 
@@ -127,6 +152,7 @@ VolumeMove::~VolumeMove()
 /** Copy assignment operator */
 VolumeMove& VolumeMove::operator=(const VolumeMove &other)
 {
+    volchanger = other.volchanger;
     maxchange = other.maxchange;
     MonteCarlo::operator=(other);
     
@@ -136,14 +162,16 @@ VolumeMove& VolumeMove::operator=(const VolumeMove &other)
 /** Comparison operator */
 bool VolumeMove::operator==(const VolumeMove &other) const
 {
-    return maxchange == other.maxchange and
+    return volchanger == other.volchanger and
+           maxchange == other.maxchange and
            MonteCarlo::operator==(other);
 }
 
 /** Comparison operator */
 bool VolumeMove::operator!=(const VolumeMove &other) const
 {
-    return maxchange != other.maxchange or
+    return volchanger != other.volchanger or
+           maxchange != other.maxchange or
            MonteCarlo::operator!=(other);
 }
 
@@ -201,11 +229,11 @@ const VolumeChanger& VolumeMove::volumeChanger() const
     return volchanger.read();
 }
 
-/** Return the number of the molecule group that will be 
-    affected by the change in volume */
-MGNum VolumeMove::groupNumber() const
+/** Return the ID that matches the molecule groups that
+    will be affected by this move */
+const MGID& VolumeMove::groupID() const
 {
-    return volchanger.read()->mgNum();
+    return volchanger.read().groupID();
 }
 
 /** Set the random number generator used by this move */
@@ -239,14 +267,20 @@ void VolumeMove::move(System &system, int nmoves, bool record_stats)
             double old_nrg = this->energy(system);
             Volume old_vol = this->volume(system);
             
-            int nmols = this->volumeChanger().randomChangeVolume(system, maxchange, map);
+            double old_bias = 1;
+            double new_bias = 1;
+            
+            int nmols = this->volumeChanger()
+                            .randomChangeVolume(system, maxchange, 
+                                                new_bias, old_bias, map);
             
             //calculate the new energy and volume
             double new_nrg = this->energy(system);
             Volume new_vol = this->volume(system);
             
-            if (not this->test(new_nrg, old_nrg, mols.nMolecules(),
-                               new_vol, old_vol))
+            if (not this->test(new_nrg, old_nrg, nmols, 
+                               new_vol, old_vol,
+                               new_bias, old_bias))
             {
                 //move failed - go back to the last step
                 system = old_system;

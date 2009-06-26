@@ -1471,6 +1471,34 @@ Molecules MolGroupsBase::molecules() const
     return all_mols;
 }
 
+/** Return the complete set of all molecules in the group(s) that
+    match the ID 'mgid'. If a view of a molecule appears multiple times
+    in this set then multiple copies of that view will be placed into the 
+    returned molecules object.
+    
+    Note that this is potentially a very slow function
+*/
+Molecules MolGroupsBase::molecules(const MGID &mgid) const
+{
+    QList<MGNum> mgnums = mgid.map(*this);
+    
+    if (mgnums.count() == 1)
+    {
+        return this->at(mgnums.at(0)).molecules();
+    }
+    else
+    {
+        Molecules all_mols;
+        
+        foreach (MGNum mgnum, mgnums)
+        {
+            all_mols += this->at(mgnum).molecules();
+        }
+        
+        return all_mols;
+    }
+}
+
 /** Return the numbers of all molecule groups in this set */
 QList<MGNum> MolGroupsBase::mgNums() const
 {
