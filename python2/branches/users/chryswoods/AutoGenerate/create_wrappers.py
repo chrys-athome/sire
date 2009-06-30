@@ -21,6 +21,8 @@ from pyplusplus.module_builder import module_builder_t
 from pyplusplus.decl_wrappers import calldef_wrapper
 from pyplusplus.code_creators import class_t
 from pyplusplus.code_creators import algorithm
+from pyplusplus.code_creators import free_function_t
+from pyplusplus.code_creators import mem_fun_t
 from pyplusplus.decl_wrappers import call_policies
 
 from pygccxml.declarations.matchers import access_type_matcher_t
@@ -54,6 +56,52 @@ def _generate_bases(self, base_creators):
     return declarations.templates.join( bases_identifier, bases )
 
 class_t._generate_bases = _generate_bases    
+
+####
+#### Override the free_function functions so that we fix a compile bug using xlC on AIX
+#### Overloaded function signatures output by Py++ look like this;
+####
+####  typedef void (*my_function_type)( args );
+####  def( "my_function", my_function_type( &my_function ) );
+####
+####  This breaks when there are multiple overload of "my_function" as the xlC compiler
+####  fails with "The call does not match any parameter list for "bp::def"" errors
+####
+####  The solution is for Py++ to create a variable of type my_function_type and pass this to def, e.g.
+####
+####  typedef void (*my_function_type)( args );
+####  my_function_type my_function_value( &my_function );
+####
+####  def( "my_function", my_function_value );
+####
+####  This compiles property using xlC. The below code changes free_function_t and
+####  mem_function_t to create the xlC compatible code, rather than the original Py++ code
+####
+def _create_function_type_alias_code( self, exported_class_alias=None  ):
+    f_type = self.declaration.function_type()
+    falias = self.function_type_alias
+    fname = declarations.full_name( self.declaration, with_defaults=False )
+    fvalue = re.sub("_type$", "_value", falias )
+
+    return "typedef %s;\n%s %s( &%s );" % (f_type.create_typedef( falias, with_defaults=False ),
+                                           falias, fvalue, fname)
+
+free_function_t.create_function_type_alias_code = _create_function_type_alias_code
+mem_fun_t.create_function_type_alias_code = _create_function_type_alias_code
+
+def _create_function_ref_code(self, use_function_alias=False):
+    fname = declarations.full_name( self.declaration, with_defaults=False )
+    if use_function_alias:
+        falias = self.function_type_alias
+        fvalue = re.sub("_type$", "_value", falias)
+        return fvalue
+    elif self.declaration.create_with_signature:
+        return '(%s)( &%s )' % ( self.declaration.function_type().partial_decl_string, fname )
+    else:
+        return '&%s' % fname
+
+free_function_t.create_function_ref_code = _create_function_ref_code
+mem_fun_t.create_function_ref_code = _create_function_ref_code
 
 #fix broken "operators" function
 def operators( self, name=None, symbol=None, function=None, return_type=None, arg_types=None, decl_type=None, header_dir=None, header_file=None, recursive=None ):

@@ -22,3 +22,14 @@ special_code = { "SireFF::ForceTable" : fix_ForceTable,
                  "SireFF::FFIdx" : fix_FFID,
                  "SireFF::FFName" : fix_FFID,
                  "SireFF::ForceFields" : fix_ForceFields }
+
+implicitly_convertible = [ ("SireMaths::Vector", "SireFF::PointRef"),
+                           ("SireMol::Atom", "SireFF::PointRef"),
+                           ("SireFF::Point", "SireFF::PointRef") ]
+
+def fixMB(mb):
+    mb.add_declaration_code("#include \"SireFF/point.h\"")
+    mb.add_declaration_code("#include \"SireMol/molecules.h\"")
+    mb.add_declaration_code("#include \"SireMol/atom.h\"")
+    mb.add_declaration_code("#include \"SireMaths/vector.h\"")
+
