@@ -77,6 +77,7 @@ namespace detail
 class LibraryInfo
 {
 public:
+    LibraryInfo();
     ~LibraryInfo();
 
     static void registerLibrary(const QString &library, 
@@ -96,12 +97,7 @@ public:
     static quint32 getMinimumSupportedVersion(const QString &library);
 
 private:
-    LibraryInfo();
-
     static LibraryInfo& libraryInfo();
-    
-    static QMutex data_mutex;
-    static LibraryInfo *global_library;
     
     QHash< QString, tuple<quint32,quint32> > library_info;
     QByteArray library_header;
@@ -117,16 +113,18 @@ LibraryInfo::LibraryInfo()
 LibraryInfo::~LibraryInfo()
 {}
 
-QMutex LibraryInfo::data_mutex;
-
-LibraryInfo* LibraryInfo::global_library(0);
+Q_GLOBAL_STATIC( QMutex, dataMutex );
+Q_GLOBAL_STATIC( LibraryInfo, globalLibrary );
 
 LibraryInfo& LibraryInfo::libraryInfo()
 {
+    LibraryInfo *global_library = globalLibrary();
+    
     if (not global_library)
+        throw std::exception();
+
+    if (global_library->library_info.isEmpty())
     {
-        global_library = new LibraryInfo();
-        
         //while we are here, register the SireStream and SireError libraries.
         //This has to be done here to prevent crashes caused by registration
         //being attempted before the static data in this file is initialised.
@@ -141,7 +139,7 @@ LibraryInfo& LibraryInfo::libraryInfo()
 void LibraryInfo::registerLibrary(const QString &library, 
                                   quint32 version, quint32 minversion)
 {
-    QMutexLocker lkr(&data_mutex);
+    QMutexLocker lkr( dataMutex() );
     
     if (minversion > version)
         minversion = version;
@@ -157,7 +155,7 @@ void LibraryInfo::registerLibrary(const QString &library,
     or a string containing every detail of the lack of support */
 QString LibraryInfo::getSupportReport(const QList< tuple<QString,quint32> > &libraries)
 {
-    QMutexLocker lkr(&data_mutex);
+    QMutexLocker lkr( dataMutex() );
 
     QStringList problems;
 
@@ -210,7 +208,7 @@ QString LibraryInfo::getSupportReport(const QList< tuple<QString,quint32> > &lib
 */
 void LibraryInfo::assertSupported(const QString &library, quint32 version)
 {
-    QMutexLocker lkr(&data_mutex);
+    QMutexLocker lkr( dataMutex() );
     
     if (not libraryInfo().library_info.contains(library))
     {
@@ -244,7 +242,7 @@ void LibraryInfo::assertSupported(const QString &library, quint32 version)
     this executable */
 QByteArray LibraryInfo::getLibraryHeader()
 {
-    QMutexLocker lkr(&data_mutex);
+    QMutexLocker lkr( dataMutex() );
     
     if (libraryInfo().library_header.isEmpty())
     {
@@ -336,7 +334,7 @@ void LibraryInfo::checkLibraryHeader(const QByteArray &header)
 
 quint32 LibraryInfo::getLibraryVersion(const QString &library)
 {
-    QMutexLocker lkr(&data_mutex);
+    QMutexLocker lkr( dataMutex() );
     
     if (not libraryInfo().library_info.contains(library))
     {
@@ -353,7 +351,7 @@ quint32 LibraryInfo::getLibraryVersion(const QString &library)
 
 quint32 LibraryInfo::getMinimumSupportedVersion(const QString &library)
 {
-    QMutexLocker lkr(&data_mutex);
+    QMutexLocker lkr( dataMutex() );
     
     if (not libraryInfo().library_info.contains(library))
     {

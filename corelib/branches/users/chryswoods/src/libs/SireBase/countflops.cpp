@@ -49,23 +49,23 @@ using namespace SireBase;
 /////// Implementation of CountFlops
 ///////
 
-QList<CountFlops::ThreadFlops*> CountFlops::ThreadFlops::thread_flops;
-QMutex CountFlops::ThreadFlops::thread_flops_mutex;
+Q_GLOBAL_STATIC( QList<CountFlops::ThreadFlops*>, threadFlops );
+
+Q_GLOBAL_STATIC( QMutex, threadFlopsMutex );
 
 CountFlops::ThreadFlops::ThreadFlops() : nflops(0)
 {
-    QMutexLocker lkr(&thread_flops_mutex);
-    thread_flops.append(this);
+    QMutexLocker lkr( threadFlopsMutex() );
+    threadFlops()->append(this);
 }
 
 CountFlops::ThreadFlops::~ThreadFlops()
 {
-    QMutexLocker lkr(&thread_flops_mutex);
-    thread_flops.removeAll(this);
+    QMutexLocker lkr( threadFlopsMutex() );
+    threadFlops()->removeAll(this);
 }
 
-/** Singleton copy of the counter */
-CountFlops CountFlops::global_counter;
+Q_GLOBAL_STATIC( CountFlops, globalCounter )
 
 /** Constructor */
 CountFlops::CountFlops()
@@ -81,21 +81,37 @@ CountFlops::~CountFlops()
 /** Return a mark for the current time and number of flops */
 FlopsMark CountFlops::mark()
 {
-    QMutexLocker lkr( &ThreadFlops::thread_flops_mutex );
+    QMutexLocker lkr( threadFlopsMutex() );
 
-    int nthreads = ThreadFlops::thread_flops.count();
+    int nthreads = threadFlops()->count();
+    
     QVector<int> thread_flops(nthreads);
     int *thread_flops_array = thread_flops.data();
 
     int i = 0;
-    foreach (const ThreadFlops *ptr, ThreadFlops::thread_flops)
+    foreach (const ThreadFlops *ptr, *(threadFlops()))
     {
         thread_flops_array[i] = ptr->nflops;
         ++i;
     }
 
     return FlopsMark(thread_flops, 
-                     global_counter.flop_timer.elapsed());
+                     globalCounter()->flop_timer.elapsed());
+}
+
+/** Add 'nflops' floating point operations to the count of floating
+    point operations for this thread */
+void CountFlops::addFlops(int nflops)
+{
+    ThreadFlops *ptr = (ThreadFlops*)(pthread_getspecific(globalCounter()->thread_key));
+    
+    if (ptr == 0)
+    {
+        ptr = new ThreadFlops();
+        pthread_setspecific(globalCounter()->thread_key, ptr);
+    }
+    
+    ptr->nflops += nflops;
 }
 
 #endif // SIRE_TIME_ROUTINES
@@ -198,8 +214,8 @@ double FlopsMark::operator-(const FlopsMark &other) const
     return (1000.0 * dnflops) / dms;
 }
 
-double FlopsMark::benchmark_sum(0);
-QMutex FlopsMark::benchmark_mutex;
+Q_GLOBAL_STATIC_WITH_ARGS( double, benchmarkSum, (0.0) )
+Q_GLOBAL_STATIC( QMutex, benchmarkMutex )
 
 /** Perform a simple benchmark to work out what the realistic maximum
     FLOPS count for this processor (compiled with this compiler)
@@ -208,7 +224,7 @@ double FlopsMark::benchmarkSum()
 {
     #ifdef SIRE_TIME_ROUTINES
 
-    QMutexLocker lkr( &benchmark_mutex );
+    QMutexLocker lkr( benchmarkMutex() );
 
     const int nvals = 1000;
     const int nloops = 100000;
@@ -277,7 +293,7 @@ double FlopsMark::benchmarkSum()
     
     //save the sum - this prevents the compiler from optimising 
     //away the benchmark
-    benchmark_sum = sum;
+    *(::benchmarkSum()) = sum;
     
     return after_sum - before_sum;
     
@@ -295,7 +311,7 @@ double FlopsMark::benchmarkProduct()
 {
     #ifdef SIRE_TIME_ROUTINES
 
-    QMutexLocker lkr( &benchmark_mutex );
+    QMutexLocker lkr( benchmarkMutex() );
 
     const int nvals = 1000;
     const int nloops = 100000;
@@ -364,7 +380,7 @@ double FlopsMark::benchmarkProduct()
     
     //save the sum - this prevents the compiler from optimising 
     //away the benchmark
-    benchmark_sum = sum;
+    *(::benchmarkSum()) = sum;
     
     return after_sum - before_sum;
     
@@ -382,7 +398,7 @@ double FlopsMark::benchmarkQuotient()
 {
     #ifdef SIRE_TIME_ROUTINES
 
-    QMutexLocker lkr( &benchmark_mutex );
+    QMutexLocker lkr( benchmarkMutex() );
 
     const int nvals = 1000;
     const int nloops = 100000;
@@ -451,7 +467,7 @@ double FlopsMark::benchmarkQuotient()
     
     //save the sum - this prevents the compiler from optimising 
     //away the benchmark
-    benchmark_sum = sum;
+    *(::benchmarkSum()) = sum;
     
     return after_sum - before_sum;
     
@@ -469,7 +485,7 @@ double FlopsMark::benchmark()
 {
     #ifdef SIRE_TIME_ROUTINES
 
-    QMutexLocker lkr( &benchmark_mutex );
+    QMutexLocker lkr( benchmarkMutex() );
 
     const int nvals = 1000;
     const int nloops = 100000;
@@ -537,7 +553,7 @@ double FlopsMark::benchmark()
     
     //save the sum - this prevents the compiler from optimising 
     //away the benchmark
-    benchmark_sum = sum;
+    *(::benchmarkSum()) = sum;
     
     return after_sum - before_sum;
     

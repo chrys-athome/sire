@@ -80,13 +80,6 @@ protected:
     FlopsMark(const QVector<int> &nflops, int ms);
     
 private:
-    /** Save the sum from the last benchmark - this prevents
-        the compiler from optimising the benchmark away! */
-    static double benchmark_sum;
-    
-    /** Mutex to ensure that only one benchmark is performed at a time */
-    static QMutex benchmark_mutex;
-
     /** The number of flops carried out by at this mark
         for each thread */
     QVector<int> nflops;
@@ -105,17 +98,6 @@ private:
 class SIREBASE_EXPORT CountFlops
 {
 public:
-    ~CountFlops();
-    
-    static void addFlops(int nflops);
-    static FlopsMark mark();
-
-private:
-    CountFlops();
-    
-    /** The global FLOP counter */
-    static CountFlops global_counter;
-
     class ThreadFlops
     {
     public:
@@ -123,31 +105,20 @@ private:
         ~ThreadFlops();
         
         int nflops;
-        
-        static QList<ThreadFlops*> thread_flops;
-        static QMutex thread_flops_mutex;
     };
 
+    CountFlops();
+    ~CountFlops();
+    
+    static void addFlops(int nflops);
+    static FlopsMark mark();
+
+private:
     pthread_key_t thread_key;
     
     /** The timer used to get the flop rate */
     QTime flop_timer;
 };
-
-/** Add 'nflops' floating point operations to the count of floating
-    point operations for this thread */
-inline void CountFlops::addFlops(int nflops)
-{
-    ThreadFlops *ptr = (ThreadFlops*)(pthread_getspecific(global_counter.thread_key));
-    
-    if (ptr == 0)
-    {
-        ptr = new ThreadFlops();
-        pthread_setspecific(global_counter.thread_key, ptr);
-    }
-    
-    ptr->nflops += nflops;
-}
 
 #endif //SIRE_TIME_ROUTINES
 

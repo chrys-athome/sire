@@ -122,7 +122,8 @@ endif()
 
 # Sire depends on >= boost 1.31 - all libraries must be dynamically linked
 set (BOOST_ALL_DYN_LINK "YES")
-FIND_PACKAGE ( Boost 1.31 )
+set (Boost_ADDITIONAL_VERSIONS "1.39" "1.39.0")
+FIND_PACKAGE ( Boost 1.31 REQUIRED )
 
 if (Boost_FOUND)
   message(STATUS "Boost paths ${Boost_LIBRARY_DIRS} | ${Boost_INCLUDE_DIR}" )
