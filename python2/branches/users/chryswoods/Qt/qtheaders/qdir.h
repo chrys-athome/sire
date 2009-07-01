@@ -142,6 +142,9 @@ public:
     void refresh() const;
 };
 
+template class QFlags<QDir::SortFlag>;
+template class QFlags<QDir::Filter>;
+
 #else // GCCXML_PARSE
 
 #include <QDir>

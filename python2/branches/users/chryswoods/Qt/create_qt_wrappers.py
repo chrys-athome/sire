@@ -20,14 +20,18 @@ wrap_classes = [ "QBool",
                  "QDate",
                  "QDateTime",
                  "QDir",
+                 "QFile",
+                 "QFileInfo",
                  "QIODevice",
+                 "QLocale",
                  "QString",
                  "QTime",
                  "QUuid",
+                 "QVariant",
 
-                 #"QFlags<QDir::SortFlag>",
-                 #"QFlags<QDir::Filter>",
-                 #"QFlags<QFile::Permission>",
+                 "QFlags<QDir::SortFlag>",
+                 "QFlags<QDir::Filter>",
+                 "QFlags<QFile::Permission>",
                  "QFlags<QIODevice::OpenModeFlag>"
                  #"QFlags<QTextStream::NumberFlag>"
                ]
@@ -122,7 +126,8 @@ mb.add_registration_code( "register_SireQt_containers();", tail=False )
 
 include_files = [ "<QString>", "<QByteArray>", "<QFile>", "<QFileInfo>", 
                   "<QDir>", "<QTextStream>", "<QDateTime>", "<QLocale>",
-                  "<QUuid>", "<qnamespace.h>" ]
+                  "<QUuid>", "<qnamespace.h>", "<QVariant>", "<QUrl>",
+                  "<QBitArray>" ]
 
 mb.enums().include()
 
@@ -132,6 +137,15 @@ for classname in wrap_classes:
    export_class(mb, classname, aliases, [], special_code)
 
 register_implicit_conversions(mb, implicitly_convertible)
+
+autoconvert_files = glob("autoconvert_*.cpp")
+
+for autoconvert_file in autoconvert_files:
+    c = re.match(r"autoconvert_(\w+).cpp", autoconvert_file)
+    c = c.groups()[0]
+
+    mb.add_declaration_code("void autoconvert_%s();" % c)
+    mb.add_registration_code("autoconvert_%s();" % c, tail=True)
 
 write_wrappers(mb, modulename, huge_classes, include_files)
 
@@ -145,6 +159,9 @@ pyppfiles = glob("*.pypp.cpp")
 
 for pyppfile in pyppfiles:
     print >>FILE,"       %s" % pyppfile
+
+for autoconvert_file in autoconvert_files:
+    print >>FILE,"       %s" % autoconvert_file
 
 print >>FILE,"       sireqt_containers.cpp"
 
