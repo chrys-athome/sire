@@ -6,9 +6,6 @@
 ## number of Qt classes that are necessary
 ## to use Sire from python
 ##
-## These wrappings are copied from the python-qt
-## project
-##
 ## I don't yet know how these wrappers interact
 ## with PyQt4 or any other Qt4 wrappers...
 ##
