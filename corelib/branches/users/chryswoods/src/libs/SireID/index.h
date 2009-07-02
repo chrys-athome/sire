@@ -301,7 +301,7 @@ T Index_T_<T>::operator--(qint32)
 }
 
 
-#endif SIRE_SKIP_INLINE_FUNCTIONS
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

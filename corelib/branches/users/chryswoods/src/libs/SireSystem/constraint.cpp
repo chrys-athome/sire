@@ -733,3 +733,9 @@ const char* WindowedComponent::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<WindowedComponent>() );
 }
+
+NullConstraint* NullConstraint::clone() const
+{
+    return new NullConstraint(*this);
+}
+

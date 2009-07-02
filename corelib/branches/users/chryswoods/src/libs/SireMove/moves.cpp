@@ -679,3 +679,9 @@ const char* SameMoves::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<SameMoves>() );
 }
+
+SameMoves* SameMoves::clone() const
+{
+    return new SameMoves(*this);
+}
+

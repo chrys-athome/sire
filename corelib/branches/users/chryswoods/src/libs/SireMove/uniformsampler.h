@@ -70,6 +70,8 @@ public:
 
     static const char* typeName();
 
+    UniformSampler* clone() const;
+
     tuple<PartialMolecule,double> sample() const;
 
     double probabilityOf(const PartialMolecule &molecule) const;

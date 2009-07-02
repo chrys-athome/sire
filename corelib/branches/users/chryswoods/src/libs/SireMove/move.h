@@ -202,6 +202,8 @@ public:
     
     static const char* typeName();
     
+    NullMove* clone() const;
+    
     QString toString() const;
     
     int nMoves() const;

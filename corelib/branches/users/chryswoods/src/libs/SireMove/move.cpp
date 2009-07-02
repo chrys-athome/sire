@@ -535,3 +535,9 @@ const char* NullMove::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<NullMove>() );
 }
+
+NullMove* NullMove::clone() const
+{
+    return new NullMove(*this);
+}
+

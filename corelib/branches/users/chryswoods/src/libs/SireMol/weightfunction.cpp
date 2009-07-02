@@ -135,6 +135,11 @@ AbsFromNumber::AbsFromNumber(const AbsFromNumber &other)
 AbsFromNumber::~AbsFromNumber()
 {}
 
+AbsFromNumber* AbsFromNumber::clone() const
+{
+    return new AbsFromNumber(*this);
+}
+
 inline double AbsFromNumber::weight(int nats0, int nats1) const
 {
     if (nats0 > nats1)

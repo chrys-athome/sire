@@ -115,6 +115,8 @@ private:
     QSet<typename ID::Identifier> ids;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Null constructor */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
@@ -382,6 +384,8 @@ QList<typename ID::Index> IDOrSet<ID>::map(const typename ID::SearchObject &obj)
 
     return idxs;
 }
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

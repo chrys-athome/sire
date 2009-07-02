@@ -155,6 +155,8 @@ public:
 
     static const char* typeName();
 
+    AbsFromNumber* clone() const;
+
     AbsFromNumber& operator=(const AbsFromNumber&)
     {
         return *this;

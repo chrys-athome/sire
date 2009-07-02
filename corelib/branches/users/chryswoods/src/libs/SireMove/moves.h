@@ -175,6 +175,8 @@ public:
     bool operator==(const SameMoves &other) const;
     bool operator!=(const SameMoves &other) const;
     
+    SameMoves* clone() const;
+    
     QString toString() const;
     
     using Moves::move;

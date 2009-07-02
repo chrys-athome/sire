@@ -144,6 +144,8 @@ public:
     bool operator==(const NullQM &other) const;
     bool operator!=(const NullQM &other) const;
 
+    NullQM* clone() const;
+
     bool supportsLatticeCharges() const
     {
         return true;

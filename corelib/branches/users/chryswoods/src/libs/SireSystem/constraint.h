@@ -134,6 +134,8 @@ public:
     
     static const char* typeName();
     
+    NullConstraint* clone() const;
+    
     QString toString() const;
     
     bool isSatisfied(System &system) const;

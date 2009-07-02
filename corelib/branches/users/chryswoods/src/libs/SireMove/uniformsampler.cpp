@@ -151,3 +151,9 @@ const char* UniformSampler::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<UniformSampler>() );
 }
+
+UniformSampler* UniformSampler::clone() const
+{
+    return new UniformSampler(*this);
+}
+

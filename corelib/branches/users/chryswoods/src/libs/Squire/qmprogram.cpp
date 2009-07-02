@@ -246,3 +246,9 @@ const char* NullQM::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<NullQM>() );
 }
+
+NullQM* NullQM::clone() const
+{
+    return new NullQM(*this);
+}
+
