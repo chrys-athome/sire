@@ -8,6 +8,8 @@ class QDate;
 class QTime;
 class QVariant;
 
+#include "qtheaders/qiodevice.h"
+
 class QLocale
 {
 public:

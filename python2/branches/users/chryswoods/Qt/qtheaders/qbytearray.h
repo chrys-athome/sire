@@ -44,10 +44,6 @@ public:
     bool isDetached() const;
     void clear();
 
-    char at(int i) const;
-    char operator[](int i) const;
-    char operator[](uint i) const;
-
     int indexOf(char c, int from = 0) const;
     int indexOf(const char *c, int from = 0) const;
     int indexOf(const QByteArray &a, int from = 0) const;

@@ -3,6 +3,8 @@
 
 #ifdef GCCXML_PARSE
 
+typedef unsigned char uchar;
+
 struct QUuid
 {
     enum Variant {

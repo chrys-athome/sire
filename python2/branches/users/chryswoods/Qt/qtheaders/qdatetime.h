@@ -5,6 +5,12 @@
 
 typedef long qint64;
 
+typedef unsigned int uint;
+typedef unsigned short ushort;
+
+class QString;
+class QDataStream;
+
 class QDate
 {
 public:

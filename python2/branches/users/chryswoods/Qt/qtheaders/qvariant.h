@@ -4,6 +4,7 @@
 #ifdef GCCXML_PARSE
 
 class QBitArray;
+class QChar;
 class QDataStream;
 class QDate;
 class QDateTime;
@@ -25,6 +26,12 @@ class QTextLength;
 class QUrl;
 class QVariant;
 class QVariantComparisonHelper;
+
+template<class Key, class T>
+class QMap;
+
+template<class T>
+class QList;
 
 class QVariant
 {
@@ -87,7 +94,6 @@ class QVariant
     QVariant();
     ~QVariant();
     QVariant(Type type);
-    QVariant(int typeOrUserType, const void *copy);
     QVariant(const QVariant &other);
 
     QVariant(QDataStream &s);

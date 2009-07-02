@@ -135,9 +135,7 @@ public:
         Unicode_3_0,
         Unicode_3_1,
         Unicode_3_2,
-        Unicode_4_0,
-        Unicode_4_1,
-        Unicode_5_0
+        Unicode_4_0
     };
 
 
@@ -160,9 +158,9 @@ public:
     QString decomposition() const;
     unsigned char combiningClass() const;
 
-    char toAscii() const;
-    char toLatin1() const;
-    ushort unicode() const;
+    //char toAscii() const;   // The signature of these functions changed
+    //char toLatin1() const;  // from Qt 4.2 to Qt 4.5 (const char toAscii() const
+    //ushort unicode() const; //     => char toAscii() const)
 
     static QChar fromAscii(char c);
     static QChar fromLatin1(char c);
