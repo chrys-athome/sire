@@ -353,10 +353,7 @@ public:
         return Function::typeName();
     }
 
-    Function* clone() const
-    {
-        return new Function(*this);
-    }
+    Function* clone() const;
 
     Expression substitute(const Identities &identities) const;
 

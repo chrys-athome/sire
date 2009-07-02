@@ -108,10 +108,7 @@ public:
         return ImproperID::typeName();
     }
     
-    ImproperID* clone() const
-    {
-        return new ImproperID(*this);
-    }
+    ImproperID* clone() const;
     
     uint hash() const;
 

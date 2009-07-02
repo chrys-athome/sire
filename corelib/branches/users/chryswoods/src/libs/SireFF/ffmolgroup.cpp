@@ -144,6 +144,14 @@ void FFMolGroupPvt::assertNotNull() const
                 CODELOC );
 }
 
+MoleculeGroup* FFMolGroupPvt::clone() const
+{
+    //return a FFMolGroup, not an FFMolGroupPvt - this
+    //allows the FFMolGroup to contain a *copy* of the
+    //forcefield
+    return new FFMolGroup(*this);
+}
+
 /////////
 ///////// Implementation of FFMolGroup
 /////////
@@ -776,3 +784,9 @@ const char* FFMolGroup::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<FFMolGroup>() );
 }
+
+FFMolGroup* FFMolGroup::clone() const
+{
+    return new FFMolGroup(*this);
+}
+

@@ -75,10 +75,7 @@ public:
         return CGAtomIdx::typeName();
     }
     
-    CGAtomIdx* clone() const
-    {
-        return new CGAtomIdx(*this);
-    }
+    CGAtomIdx* clone() const;
     
     static CGAtomIdx null();
     

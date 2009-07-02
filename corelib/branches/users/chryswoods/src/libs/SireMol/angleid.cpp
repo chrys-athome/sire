@@ -408,3 +408,9 @@ const char* AngleID::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<AngleID>() );
 }
+
+AngleID* AngleID::clone() const
+{
+    return new AngleID(*this);
+}
+

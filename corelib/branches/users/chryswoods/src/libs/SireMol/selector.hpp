@@ -117,15 +117,9 @@ public:
     Selector<T>& operator=(const Selector<T> &other);
     Selector<T>& operator=(const T &view);
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< Selector<T> >() );
-    }
+    static const char* typeName();
     
-    Selector<T>* clone() const
-    {
-        return new Selector<T>(*this);
-    }
+    Selector<T>* clone() const;
 
     bool operator==(const Selector<T> &other) const;
     bool operator!=(const Selector<T> &other) const;
@@ -366,6 +360,20 @@ SIRE_OUTOFLINE_TEMPLATE
 bool Selector<T>::operator!=(const Selector<T> &other) const
 {
     return idxs != other.idxs or MoleculeView::operator!=(other);
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const char* Selector<T>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< Selector<T> >() );
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Selector<T>* Selector<T>::clone() const
+{
+    return new Selector<T>(*this);
 }
 
 /** Return whether this set is empty */

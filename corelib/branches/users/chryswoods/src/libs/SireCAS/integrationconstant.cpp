@@ -105,3 +105,9 @@ const char* IntegrationConstant::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<IntegrationConstant>() );
 }
+
+IntegrationConstant* IntegrationConstant::clone() const
+{
+    return new IntegrationConstant(*this);
+}
+

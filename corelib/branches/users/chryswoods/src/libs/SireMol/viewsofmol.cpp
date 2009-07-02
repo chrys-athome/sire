@@ -1443,3 +1443,8 @@ namespace SireMol
 
     template class Mover<ViewsOfMol>;
 }
+
+ViewsOfMol* ViewsOfMol::clone() const
+{
+    return new ViewsOfMol(*this);
+}

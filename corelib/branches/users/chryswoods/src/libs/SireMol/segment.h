@@ -95,10 +95,7 @@ public:
 
     static const char* typeName();
     
-    Segment* clone() const
-    {
-        return new Segment(*this);
-    }
+    Segment* clone() const;
 
     QString toString() const;
     

@@ -95,10 +95,7 @@ public:
     
     static const char* typeName();
     
-    Residue* clone() const
-    {
-        return new Residue(*this);
-    }
+    Residue* clone() const;
 
     QString toString() const;
     

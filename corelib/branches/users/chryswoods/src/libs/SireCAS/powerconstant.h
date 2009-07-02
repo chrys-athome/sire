@@ -98,10 +98,7 @@ public:
         return PowerConstant::typeName();
     }
 
-    PowerConstant* clone() const
-    {
-        return new PowerConstant(*this);
-    }
+    PowerConstant* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -199,10 +196,7 @@ public:
         return Expression(pwr);
     }
 
-    IntegerPower* clone() const
-    {
-        return new IntegerPower(*this);
-    }
+    IntegerPower* clone() const;
 
 private:
 
@@ -245,10 +239,7 @@ public:
         return Expression(pwr);
     }
 
-    RationalPower* clone() const
-    {
-        return new RationalPower(*this);
-    }
+    RationalPower* clone() const;
 
 private:
 
@@ -290,10 +281,7 @@ public:
         return Expression(pwr);
     }
 
-    RealPower* clone() const
-    {
-        return new RealPower(*this);
-    }
+    RealPower* clone() const;
 
 private:
 
@@ -340,10 +328,7 @@ public:
         return true;
     }
 
-    ComplexPower* clone() const
-    {
-        return new ComplexPower(*this);
-    }
+    ComplexPower* clone() const;
 
 private:
 

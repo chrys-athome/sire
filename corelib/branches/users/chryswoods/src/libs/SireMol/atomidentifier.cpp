@@ -308,3 +308,8 @@ const char* AtomIdentifier::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<AtomIdentifier>() );
 }
+
+AtomIdentifier* AtomIdentifier::clone() const
+{
+    return new AtomIdentifier(*this);
+}

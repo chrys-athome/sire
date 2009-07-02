@@ -105,11 +105,6 @@ public:
         return AtomEditor::typeName();
     }
 
-    AtomEditor* clone() const
-    {
-        return new AtomEditor(*this);
-    }
-
     QString toString() const;
 
     ResEditor residue() const;
@@ -163,10 +158,7 @@ public:
         return AtomStructureEditor::typeName();
     }
     
-    AtomStructureEditor* clone() const
-    {
-        return new AtomStructureEditor(*this);
-    }
+    AtomStructureEditor* clone() const;
 
     AtomStructureEditor& operator=(const Atom &atom);
     AtomStructureEditor& operator=(const AtomStructureEditor &other);

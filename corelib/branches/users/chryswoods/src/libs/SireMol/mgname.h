@@ -74,10 +74,7 @@ public:
         return MGName::typeName();
     }
     
-    MGName* clone() const
-    {
-        return new MGName(*this);
-    }
+    MGName* clone() const;
     
     bool isNull() const;
     

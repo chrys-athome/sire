@@ -112,10 +112,7 @@ public:
 
     static const char* typeName();
 
-    Evaluator* clone() const
-    {
-        return new Evaluator(*this);
-    }
+    Evaluator* clone() const;
     
     QString toString() const;
     

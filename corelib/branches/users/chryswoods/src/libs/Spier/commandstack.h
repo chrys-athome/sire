@@ -75,10 +75,7 @@ public:
     
     static const char* typeName();
     
-    virtual CommandStack* clone() const
-    {
-        return new CommandStack(*this);
-    }
+    virtual CommandStack* clone() const;
     
     virtual void undo();
     virtual void redo();

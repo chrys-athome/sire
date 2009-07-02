@@ -75,10 +75,7 @@ public:
         return IntegrationConstant::typeName();
     }
 
-    IntegrationConstant* clone() const
-    {
-        return new IntegrationConstant(*this);
-    }
+    IntegrationConstant* clone() const;
 
     Expression integrate(const Symbol &symbol) const;
 };

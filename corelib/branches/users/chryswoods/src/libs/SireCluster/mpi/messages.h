@@ -145,7 +145,7 @@ friend QDataStream& ::operator>>(QDataStream&, MessageBase&);
 public:
     MessageBase(const MessageBase &other);
     
-    ~MessageBase();
+    virtual ~MessageBase();
     
     static const char* typeName()
     {
@@ -314,10 +314,7 @@ public:
         return Broadcast::typeName();
     }
     
-    Broadcast* clone() const
-    {
-        return new Broadcast(*this);
-    }
+    Broadcast* clone() const;
     
     QString toString() const;
     
@@ -389,10 +386,7 @@ public:
         return RegisterBackend::typeName();
     }
     
-    RegisterBackend* clone() const
-    {
-        return new RegisterBackend(*this);
-    }
+    RegisterBackend* clone() const;
     
     QString toString() const;
     
@@ -434,10 +428,7 @@ public:
         return GetUIDs::typeName();
     }
     
-    GetUIDs* clone() const
-    {
-        return new GetUIDs(*this);
-    }
+    GetUIDs* clone() const;
     
     void read();
     
@@ -474,10 +465,7 @@ public:
         return ReserveBackend::typeName();
     }
     
-    ReserveBackend* clone() const
-    {
-        return new ReserveBackend(*this);
-    }
+    ReserveBackend* clone() const;
     
     const QUuid& requestedUID() const;
     
@@ -525,10 +513,7 @@ public:
         return RequestAvailability::typeName();
     }
     
-    RequestAvailability* clone() const
-    {
-        return new RequestAvailability(*this);
-    }
+    RequestAvailability* clone() const;
     
     QString toString() const;
     
@@ -577,10 +562,7 @@ public:
         return Reservation::typeName();
     }
     
-    Reservation* clone() const
-    {
-        return new Reservation(*this);
-    }
+    Reservation* clone() const;
     
     QString toString() const;
     
@@ -632,10 +614,7 @@ public:
         return Result::typeName();
     }
     
-    Result* clone() const
-    {
-        return new Result(*this);
-    }
+    Result* clone() const;
     
     void read();
 
@@ -685,10 +664,7 @@ public:
         return Error::typeName();
     }
     
-    Error* clone() const
-    {
-        return new Error(*this);
-    }
+    Error* clone() const;
     
     void read();
 
@@ -731,10 +707,7 @@ public:
         return Shutdown::typeName();
     }
     
-    Shutdown* clone() const
-    {
-        return new Shutdown(*this);
-    }
+    Shutdown* clone() const;
 
     void read();
 };

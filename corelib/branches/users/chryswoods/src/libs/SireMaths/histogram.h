@@ -207,10 +207,7 @@ public:
         return Histogram::typeName();
     }
     
-    Histogram* clone() const
-    {
-        return new Histogram(*this);
-    }
+    Histogram* clone() const;
 
     bool operator==(const Histogram &other) const;
     bool operator!=(const Histogram &other) const;

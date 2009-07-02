@@ -93,10 +93,7 @@ public:
         return Replica::typeName();
     }
 
-    virtual Replica* clone() const
-    {
-        return new Replica(*this);
-    }
+    virtual Replica* clone() const;
     
     System system() const;
     MovesPtr moves() const;
@@ -203,10 +200,7 @@ public:
     
     static const char* typeName();
     
-    virtual Replicas* clone() const
-    {
-        return new Replicas(*this);
-    }
+    virtual Replicas* clone() const;
     
     virtual Replicas& operator=(const Replicas &other);
     

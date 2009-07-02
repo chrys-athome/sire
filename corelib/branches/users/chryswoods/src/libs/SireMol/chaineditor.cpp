@@ -691,3 +691,8 @@ const char* ChainStructureEditor::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<ChainStructureEditor>() );
 }
+
+ChainStructureEditor* ChainStructureEditor::clone() const
+{
+    return new ChainStructureEditor(*this);
+}

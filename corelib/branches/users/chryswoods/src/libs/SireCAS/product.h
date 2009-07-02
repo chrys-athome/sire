@@ -108,10 +108,7 @@ public:
     Product numerator() const;
     Product denominator() const;
 
-    Product* clone() const
-    {
-        return new Product(*this);
-    }
+    Product* clone() const;
 
     QList<Factor> expand(const Symbol &symbol) const;
 

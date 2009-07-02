@@ -75,10 +75,7 @@ public:
         return SpecifyMol::typeName();
     }
     
-    SpecifyMol* clone() const
-    {
-        return new SpecifyMol(*this);
-    }
+    SpecifyMol* clone() const;
     
     SpecifyMol& operator=(const SpecifyMol &other);
     

@@ -315,3 +315,21 @@ static const RegisterMetaType< IDAndSet<MGID> > r_idandset_mgid;
 static const RegisterMetaType< IDOrSet<MGID> > r_idorset_mgid;
 static const RegisterMetaType< Specify<MGID> > r_specify_mgid;
 
+
+MGNum* MGNum::clone() const
+{
+    return new MGNum(*this);
+}
+
+
+MGIdx* MGIdx::clone() const
+{
+    return new MGIdx(*this);
+}
+
+
+MGName* MGName::clone() const
+{
+    return new MGName(*this);
+}
+

@@ -389,3 +389,21 @@ const char* CGName::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<CGName>() );
 }
+
+CGIdentifier* CGIdentifier::clone() const
+{
+    return new CGIdentifier(*this);
+}
+
+
+CGName* CGName::clone() const
+{
+    return new CGName(*this);
+}
+
+
+CGIdx* CGIdx::clone() const
+{
+    return new CGIdx(*this);
+}
+

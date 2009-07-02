@@ -138,15 +138,9 @@ public:
     
     AtomProperty<T>& operator=(const AtomProperty<T> &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< AtomProperty<T> >() );
-    }
+    static const char* typeName();
     
-    AtomProperty<T>* clone() const
-    {
-        return new AtomProperty<T>(*this);
-    }
+    AtomProperty<T>* clone() const;
  
     bool operator==(const AtomProperty<T> &other) const;
     bool operator!=(const AtomProperty<T> &other) const;
@@ -325,6 +319,20 @@ SIRE_OUTOFLINE_TEMPLATE
 bool AtomProperty<T>::operator!=(const AtomProperty<T> &other) const
 {
     return props != other.props;
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+AtomProperty<T>* AtomProperty<T>::clone() const
+{
+    return new AtomProperty<T>(*this);
+}
+    
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const char* AtomProperty<T>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< AtomProperty<T> >() );
 }
 
 /** Return the array of properties for the atoms in the CutGroup

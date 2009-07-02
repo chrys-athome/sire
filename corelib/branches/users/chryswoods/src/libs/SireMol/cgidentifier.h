@@ -70,10 +70,7 @@ public:
         return CGIdentifier::typeName();
     }
     
-    CGIdentifier* clone() const
-    {
-        return new CGIdentifier(*this);
-    }
+    CGIdentifier* clone() const;
     
     bool isNull() const;
     

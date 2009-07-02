@@ -576,3 +576,39 @@ const char* Cot::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Cot>() );
 }
+
+Csc* Csc::clone() const
+{
+    return new Csc(*this);
+}
+
+
+Tan* Tan::clone() const
+{
+    return new Tan(*this);
+}
+
+
+Sin* Sin::clone() const
+{
+    return new Sin(*this);
+}
+
+
+Sec* Sec::clone() const
+{
+    return new Sec(*this);
+}
+
+
+Cot* Cot::clone() const
+{
+    return new Cot(*this);
+}
+
+
+Cos* Cos::clone() const
+{
+    return new Cos(*this);
+}
+

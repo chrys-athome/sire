@@ -75,10 +75,7 @@ public:
         return SireID::Index_T_<CGIdx>::what();
     }
     
-    CGIdx* clone() const
-    {
-        return new CGIdx(*this);
-    }
+    CGIdx* clone() const;
     
     static CGIdx null();
     

@@ -71,10 +71,7 @@ public:
         return MonitorName::typeName();
     }
     
-    MonitorName* clone() const
-    {
-        return new MonitorName(*this);
-    }
+    MonitorName* clone() const;
     
     bool isNull() const;
     

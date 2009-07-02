@@ -387,3 +387,20 @@ const char* ChainName::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<ChainName>() );
 }
+
+ChainIdentifier* ChainIdentifier::clone() const
+{
+    return new ChainIdentifier(*this);
+}
+
+ChainName* ChainName::clone() const
+{
+    return new ChainName(*this);
+}
+
+
+ChainIdx* ChainIdx::clone() const
+{
+    return new ChainIdx(*this);
+}
+

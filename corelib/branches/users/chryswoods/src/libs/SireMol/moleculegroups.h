@@ -406,10 +406,7 @@ public:
     
     ~MoleculeGroups();
 
-    MoleculeGroups* clone() const
-    {
-        return new MoleculeGroups(*this);
-    }
+    MoleculeGroups* clone() const;
     
     static const char* typeName();
     

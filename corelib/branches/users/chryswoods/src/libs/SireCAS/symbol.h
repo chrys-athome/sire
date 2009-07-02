@@ -122,10 +122,7 @@ public:
         return Symbol::typeName();
     }
 
-    Symbol* clone() const
-    {
-        return new Symbol(*this);
-    }
+    Symbol* clone() const;
 
     QString toString() const;
 

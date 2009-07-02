@@ -379,3 +379,9 @@ const char* ImproperID::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<ImproperID>() );
 }
+
+ImproperID* ImproperID::clone() const
+{
+    return new ImproperID(*this);
+}
+

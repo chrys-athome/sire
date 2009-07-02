@@ -84,10 +84,7 @@ public:
 
     static const char* typeName();
 
-    PartialMolecule* clone() const
-    {
-        return new PartialMolecule(*this);
-    }
+    PartialMolecule* clone() const;
 
     PartialMolecule& operator=(const MoleculeView &other);
     PartialMolecule& operator=(const PartialMolecule &other);

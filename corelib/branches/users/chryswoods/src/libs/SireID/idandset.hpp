@@ -81,20 +81,11 @@ public:
     
     ~IDAndSet();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< IDAndSet<ID> >() );
-    }
+    static const char* typeName();
     
-    const char* what() const
-    {
-        return IDAndSet<ID>::typeName();
-    }
+    const char* what() const;
     
-    IDAndSet<ID>* clone() const
-    {
-        return new IDAndSet<ID>(*this);
-    }
+    IDAndSet<ID>* clone() const;
     
     bool isNull() const;
     
@@ -203,6 +194,27 @@ template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
 IDAndSet<ID>::~IDAndSet()
 {}
+    
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+const char* IDAndSet<ID>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< IDAndSet<ID> >() );
+}
+
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+const char* IDAndSet<ID>::what() const
+{
+    return IDAndSet<ID>::typeName();
+}
+
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+IDAndSet<ID>* IDAndSet<ID>::clone() const
+{
+    return new IDAndSet<ID>(*this);
+}
 
 /** Is this selection null? */
 template<class ID>

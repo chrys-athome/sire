@@ -610,3 +610,8 @@ const char* CGStructureEditor::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<CGStructureEditor>() );
 }
+
+CGStructureEditor* CGStructureEditor::clone() const
+{
+    return new CGStructureEditor(*this);
+}

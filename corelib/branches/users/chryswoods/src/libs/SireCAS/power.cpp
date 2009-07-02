@@ -556,3 +556,9 @@ const char* Power::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Power>() );
 }
+
+Power* Power::clone() const
+{
+    return new Power(*this);
+}
+

@@ -89,10 +89,7 @@ public:
         return BondID::typeName();
     }
     
-    BondID* clone() const
-    {
-        return new BondID(*this);
-    }
+    BondID* clone() const;
     
     uint hash() const;
 

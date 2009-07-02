@@ -114,15 +114,9 @@ public:
     
     CGProperty<T>& operator=(const CGProperty<T> &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< CGProperty<T> >() );
-    }
+    static const char* typeName();
     
-    CGProperty<T>* clone() const
-    {
-        return new CGProperty<T>(*this);
-    }
+    CGProperty<T>* clone() const;
     
     bool operator==(const CGProperty<T> &other) const;
     bool operator!=(const CGProperty<T> &other) const;
@@ -261,6 +255,20 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& CGProperty<T>::operator[](const CGIdx &cgidx) const
 {
     return props.constData()[cgidx.map(props.count())];
+}
+    
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const char* CGProperty<T>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< CGProperty<T> >() );
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+CGProperty<T>* CGProperty<T>::clone() const
+{
+    return new CGProperty<T>(*this);
 }
 
 /** Return whether or not it is possible to convert the variant

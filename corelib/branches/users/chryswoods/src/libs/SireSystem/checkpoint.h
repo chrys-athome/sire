@@ -69,11 +69,6 @@ public:
     
     static const char* typeName();
     
-    CheckPoint* clone() const
-    {
-        return new CheckPoint(*this);
-    }
-    
     CheckPoint& operator=(const System &system);
     CheckPoint& operator=(const CheckPoint &other);
     

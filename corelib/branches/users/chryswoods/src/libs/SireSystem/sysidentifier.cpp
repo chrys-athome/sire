@@ -200,3 +200,8 @@ const char* SysIdentifier::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<SysIdentifier>() );
 }
+
+SysIdentifier* SysIdentifier::clone() const
+{
+    return new SysIdentifier(*this);
+}

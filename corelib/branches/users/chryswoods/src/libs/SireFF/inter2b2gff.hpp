@@ -77,25 +77,16 @@ public:
     
     ~Inter2B2GFF();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< Inter2B2GFF<Potential> >() );
-    }
+    static const char* typeName();
     
-    const char* what() const
-    {
-        return Inter2B2GFF<Potential>::typeName();
-    }
+    const char* what() const;
     
     Inter2B2GFF<Potential>& operator=(const Inter2B2GFF<Potential> &other);
     
     bool operator==(const Inter2B2GFF<Potential> &other) const;
     bool operator!=(const Inter2B2GFF<Potential> &other) const;
 
-    Inter2B2GFF<Potential>* clone() const
-    {
-        return new Inter2B2GFF<Potential>(*this);
-    }
+    Inter2B2GFF<Potential>* clone() const;
 
     const Components& components() const;
 
@@ -237,6 +228,27 @@ SIRE_OUTOFLINE_TEMPLATE
 bool Inter2B2GFF<Potential>::operator!=(const Inter2B2GFF<Potential> &other) const
 {
     return G2FF::operator!=(other);
+}
+
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+const char* Inter2B2GFF<Potential>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< Inter2B2GFF<Potential> >() );
+}
+
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+const char* Inter2B2GFF<Potential>::what() const
+{
+    return Inter2B2GFF<Potential>::typeName();
+}
+
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+Inter2B2GFF<Potential>* Inter2B2GFF<Potential>::clone() const
+{
+    return new Inter2B2GFF<Potential>(*this);
 }
 
 /** Return the symbols representing the energy components of this forcefield */

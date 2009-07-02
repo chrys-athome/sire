@@ -612,3 +612,8 @@ const char* Ensemble::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Ensemble>() );
 }
+
+Ensemble* Ensemble::clone() const
+{
+    return new Ensemble(*this);
+}

@@ -73,10 +73,7 @@ public:
         return ChainIdx::typeName();
     }
     
-    ChainIdx* clone() const
-    {
-        return new ChainIdx(*this);
-    }
+    ChainIdx* clone() const;
     
     static ChainIdx null();
     

@@ -72,10 +72,7 @@ public:
         return MGNum::typeName();
     }
     
-    MGNum* clone() const
-    {
-        return new MGNum(*this);
-    }
+    MGNum* clone() const;
     
     static MGNum getUniqueNumber();
     

@@ -72,10 +72,7 @@ public:
         return SysIdx::typeName();
     }
     
-    SysIdx* clone() const
-    {
-        return new SysIdx(*this);
-    }
+    SysIdx* clone() const;
     
     static SysIdx null();
     

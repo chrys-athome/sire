@@ -245,3 +245,9 @@ const char* FFIdentifier::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<FFIdentifier>() );
 }
+
+FFIdentifier* FFIdentifier::clone() const
+{
+    return new FFIdentifier(*this);
+}
+

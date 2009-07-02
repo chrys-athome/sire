@@ -96,11 +96,6 @@ public:
     ResEditor& operator=(const ResEditor &other);
     
     static const char* typeName();
-    
-    ResEditor* clone() const
-    {
-        return new ResEditor(*this);
-    }
 
     QString toString() const;
     
@@ -163,10 +158,7 @@ public:
         return ResStructureEditor::typeName();
     }
     
-    ResStructureEditor* clone() const
-    {
-        return new ResStructureEditor(*this);
-    }
+    ResStructureEditor* clone() const;
     
     ResStructureEditor& operator=(const Residue &residue);
     ResStructureEditor& operator=(const ResStructureEditor &other);

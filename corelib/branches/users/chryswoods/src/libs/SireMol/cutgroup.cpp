@@ -497,3 +497,8 @@ namespace SireMol
 
     template class Mover< Selector<CutGroup> >;
 }
+
+CutGroup* CutGroup::clone() const
+{
+    return new CutGroup(*this);
+}

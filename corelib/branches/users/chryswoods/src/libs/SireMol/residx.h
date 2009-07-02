@@ -73,10 +73,7 @@ public:
         return ResIdx::typeName();
     }
     
-    ResIdx* clone() const
-    {
-        return new ResIdx(*this);
-    }
+    ResIdx* clone() const;
     
     static ResIdx null();
     

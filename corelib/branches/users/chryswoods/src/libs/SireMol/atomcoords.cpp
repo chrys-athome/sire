@@ -748,3 +748,8 @@ const char* AtomCoords::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<AtomCoords>() );
 }
+
+AtomProperty<Vector>* AtomCoords::clone() const
+{
+    return new AtomProperty<Vector>(*this);
+}

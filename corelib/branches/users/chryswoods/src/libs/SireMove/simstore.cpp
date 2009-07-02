@@ -527,3 +527,8 @@ const char* SimStore::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<SimStore>() );
 }
+
+SimStore* SimStore::clone() const
+{
+    return new SimStore(*this);
+}

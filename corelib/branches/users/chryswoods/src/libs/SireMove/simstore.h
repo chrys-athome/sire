@@ -87,10 +87,7 @@ public:
         return SimStore::typeName();
     }
 
-    SimStore* clone() const
-    {
-        return new SimStore(*this);
-    }
+    SimStore* clone() const;
 
     void setSystem(const System &system);
     void setMoves(const Moves &moves);

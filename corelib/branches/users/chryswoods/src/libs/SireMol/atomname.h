@@ -76,10 +76,7 @@ public:
         return AtomName::typeName();
     }
     
-    AtomName* clone() const
-    {
-        return new AtomName(*this);
-    }
+    AtomName* clone() const;
     
     bool isNull() const;
     

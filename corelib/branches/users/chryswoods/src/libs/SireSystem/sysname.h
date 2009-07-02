@@ -71,10 +71,7 @@ public:
         return SysName::typeName();
     }
     
-    SysName* clone() const
-    {
-        return new SysName(*this);
-    }
+    SysName* clone() const;
     
     bool isNull() const;
     

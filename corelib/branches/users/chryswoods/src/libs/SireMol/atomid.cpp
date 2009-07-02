@@ -658,3 +658,21 @@ namespace SireID
 static const RegisterMetaType< Specify<AtomID> > r_specify_atomid;
 static const RegisterMetaType< IDAndSet<AtomID> > r_idandset_atomid;
 static const RegisterMetaType< IDOrSet<AtomID> > r_idorset_atomid;
+
+AtomNum* AtomNum::clone() const
+{
+    return new AtomNum(*this);
+}
+
+
+AtomName* AtomName::clone() const
+{
+    return new AtomName(*this);
+}
+
+
+AtomIdx* AtomIdx::clone() const
+{
+    return new AtomIdx(*this);
+}
+

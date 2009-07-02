@@ -563,3 +563,8 @@ const char* AtomStructureEditor::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<AtomStructureEditor>() );
 }
+
+AtomStructureEditor* AtomStructureEditor::clone() const
+{
+    return new AtomStructureEditor(*this);
+}

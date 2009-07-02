@@ -297,3 +297,8 @@ const char* MGIdentifier::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<MGIdentifier>() );
 }
+
+MGIdentifier* MGIdentifier::clone() const
+{
+    return new MGIdentifier(*this);
+}

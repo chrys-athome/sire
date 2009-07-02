@@ -93,10 +93,7 @@ public:
         return DihedralID::typeName();
     }
     
-    DihedralID* clone() const
-    {
-        return new DihedralID(*this);
-    }
+    DihedralID* clone() const;
     
     uint hash() const;
 

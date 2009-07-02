@@ -68,15 +68,9 @@ public:
     
     ~Mover();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< Mover<T> >() );
-    }
+    static const char* typeName();
 
-    Mover<T>* clone() const
-    {
-        return new Mover<T>(*this);
-    }
+    Mover<T>* clone() const;
     
     Mover<T>& operator=(const Mover<T> &other);
     Mover<T>& operator=(const T &other);
@@ -211,6 +205,20 @@ Mover<T>& Mover<T>::operator=(const T &other)
     MoverBase::setMovableAtoms(other.selection());
     
     return *this;
+}
+    
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const char* Mover<T>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< Mover<T> >() );
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Mover<T>* Mover<T>::clone() const
+{
+    return new Mover<T>(*this);
 }
 
 /** Commit this Mover - this returns the new copy of

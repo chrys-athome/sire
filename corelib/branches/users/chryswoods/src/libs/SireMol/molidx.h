@@ -72,10 +72,7 @@ public:
         return MolIdx::typeName();
     }
     
-    MolIdx* clone() const
-    {
-        return new MolIdx(*this);
-    }
+    MolIdx* clone() const;
     
     static MolIdx null();
     

@@ -143,10 +143,7 @@ public:
     
     static const char* typeName();
     
-    Ensemble* clone() const
-    {
-        return new Ensemble(*this);
-    }
+    Ensemble* clone() const;
     
     bool operator==(const Ensemble &other) const;
     bool operator!=(const Ensemble &other) const;

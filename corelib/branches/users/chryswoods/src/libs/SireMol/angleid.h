@@ -93,11 +93,8 @@ public:
         return AngleID::typeName();
     }
     
-    AngleID* clone() const
-    {
-        return new AngleID(*this);
-    }
-    
+    AngleID* clone() const;
+        
     uint hash() const;
 
     QString toString() const;

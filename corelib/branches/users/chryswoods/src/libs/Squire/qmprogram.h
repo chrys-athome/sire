@@ -139,11 +139,6 @@ public:
     
     static const char* typeName();
     
-    NullQM* clone() const
-    {
-        return new NullQM(*this);
-    }
-    
     NullQM& operator=(const NullQM &other);
     
     bool operator==(const NullQM &other) const;

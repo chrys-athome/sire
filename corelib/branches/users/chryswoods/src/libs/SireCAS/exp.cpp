@@ -236,3 +236,15 @@ const char* Ln::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Ln>() );
 }
+
+Ln* Ln::clone() const
+{
+    return new Ln(*this);
+}
+
+
+Exp* Exp::clone() const
+{
+    return new Exp(*this);
+}
+

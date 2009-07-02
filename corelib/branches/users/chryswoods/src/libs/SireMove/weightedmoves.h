@@ -76,11 +76,6 @@ public:
     
     static const char* typeName();
     
-    WeightedMoves* clone() const
-    {
-        return new WeightedMoves(*this);
-    }
-    
     QString toString() const;
     
     void add(const Move &move, double weight=1);

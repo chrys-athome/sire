@@ -589,3 +589,8 @@ namespace SireMol
     
     template class Mover< Selector<Chain> >;
 }
+
+Chain* Chain::clone() const
+{
+    return new Chain(*this);
+}

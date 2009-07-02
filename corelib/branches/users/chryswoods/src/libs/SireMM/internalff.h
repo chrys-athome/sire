@@ -450,10 +450,7 @@ public:
     
     static const char* typeName();
     
-    InternalFF* clone() const
-    {
-        return new InternalFF(*this);
-    }
+    InternalFF* clone() const;
     
     InternalFF& operator=(const InternalFF &other);
     

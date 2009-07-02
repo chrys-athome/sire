@@ -1025,3 +1025,31 @@ const char* IDOrSet<MolID>::typeName()
 {
     return QMetaType::typeName( qMetaTypeId< IDOrSet<MolID> >() );
 }
+
+IDOrSet<MolID>* IDOrSet<MolID>::clone() const
+{
+    return new IDOrSet<MolID>(*this);
+}
+
+IDAndSet<MolID>* IDAndSet<MolID>::clone() const
+{
+    return new IDAndSet<MolID>(*this);
+}
+
+MolIdx* MolIdx::clone() const
+{
+    return new MolIdx(*this);
+}
+
+
+MolName* MolName::clone() const
+{
+    return new MolName(*this);
+}
+
+
+MolNum* MolNum::clone() const
+{
+    return new MolNum(*this);
+}
+

@@ -113,15 +113,9 @@ public:
     
     ResProperty<T>& operator=(const ResProperty<T> &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< ResProperty<T> >() );
-    }
+    static const char* typeName();
     
-    ResProperty<T>* clone() const
-    {
-        return new ResProperty<T>(*this);
-    }
+    ResProperty<T>* clone() const;
     
     bool operator==(const ResProperty<T> &other) const;
     bool operator!=(const ResProperty<T> &other) const;
@@ -260,6 +254,20 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& ResProperty<T>::operator[](const ResIdx &residx) const
 {
     return props.constData()[residx.map(props.count())];
+}
+    
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const char* ResProperty<T>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< ResProperty<T> >() );
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+ResProperty<T>* ResProperty<T>::clone() const
+{
+    return new ResProperty<T>(*this);
 }
 
 /** Return whether or not it is possible to convert the variant

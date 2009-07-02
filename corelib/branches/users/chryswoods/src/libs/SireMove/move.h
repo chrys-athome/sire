@@ -202,11 +202,6 @@ public:
     
     static const char* typeName();
     
-    NullMove* clone() const
-    {
-        return new NullMove(*this);
-    }
-    
     QString toString() const;
     
     int nMoves() const;

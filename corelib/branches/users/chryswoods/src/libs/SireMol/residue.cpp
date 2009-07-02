@@ -541,3 +541,8 @@ namespace SireMol
 
     template class Mover< Selector<Residue> >;
 }
+
+Residue* Residue::clone() const
+{
+    return new Residue(*this);
+}

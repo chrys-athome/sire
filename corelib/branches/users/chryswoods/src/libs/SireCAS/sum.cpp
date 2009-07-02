@@ -702,3 +702,9 @@ const char* Sum::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Sum>() );
 }
+
+Sum* Sum::clone() const
+{
+    return new Sum(*this);
+}
+

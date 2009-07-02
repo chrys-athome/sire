@@ -70,10 +70,7 @@ public:
         return Identifier::typeName();
     }
     
-    Identifier* clone() const
-    {
-        return new Identifier(*this);
-    }
+    Identifier* clone() const;
     
     bool isNull() const;
     

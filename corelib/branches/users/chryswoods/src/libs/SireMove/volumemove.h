@@ -75,12 +75,7 @@ public:
     VolumeMove& operator=(const VolumeMove &other);
     
     static const char* typeName();
-    
-    VolumeMove* clone() const
-    {
-        return new VolumeMove(*this);
-    }
-    
+        
     bool operator==(const VolumeMove &other) const;
     bool operator!=(const VolumeMove &other) const;
     

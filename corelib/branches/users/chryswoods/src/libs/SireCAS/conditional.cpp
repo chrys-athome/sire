@@ -1979,3 +1979,57 @@ QList<Factor> Conditional::expand(const Symbol &symbol) const
     
     return ret;
 }
+
+Conditional* Conditional::clone() const
+{
+    return new Conditional(*this);
+}
+
+
+LessOrEqualThan* LessOrEqualThan::clone() const
+{
+    return new LessOrEqualThan(*this);
+}
+
+
+GreaterOrEqualThan* GreaterOrEqualThan::clone() const
+{
+    return new GreaterOrEqualThan(*this);
+}
+
+
+GreaterThan* GreaterThan::clone() const
+{
+    return new GreaterThan(*this);
+}
+
+
+EqualTo* EqualTo::clone() const
+{
+    return new EqualTo(*this);
+}
+
+
+AlwaysTrue* AlwaysTrue::clone() const
+{
+    return new AlwaysTrue(*this);
+}
+
+
+LessThan* LessThan::clone() const
+{
+    return new LessThan(*this);
+}
+
+
+AlwaysFalse* AlwaysFalse::clone() const
+{
+    return new AlwaysFalse(*this);
+}
+
+
+NotEqualTo* NotEqualTo::clone() const
+{
+    return new NotEqualTo(*this);
+}
+

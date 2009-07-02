@@ -101,10 +101,7 @@ public:
    
     static const char* typeName();
     
-    ViewsOfMol* clone() const
-    {
-        return new ViewsOfMol(*this);
-    }
+    ViewsOfMol* clone() const;
    
     ViewsOfMol& operator=(const ViewsOfMol &other);
     

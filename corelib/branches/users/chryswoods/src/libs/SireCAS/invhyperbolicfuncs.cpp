@@ -617,3 +617,39 @@ const char* ArcCoth::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<ArcCoth>() );
 }
+
+ArcTanh* ArcTanh::clone() const
+{
+    return new ArcTanh(*this);
+}
+
+
+ArcSinh* ArcSinh::clone() const
+{
+    return new ArcSinh(*this);
+}
+
+
+ArcCoth* ArcCoth::clone() const
+{
+    return new ArcCoth(*this);
+}
+
+
+ArcCsch* ArcCsch::clone() const
+{
+    return new ArcCsch(*this);
+}
+
+
+ArcSech* ArcSech::clone() const
+{
+    return new ArcSech(*this);
+}
+
+
+ArcCosh* ArcCosh::clone() const
+{
+    return new ArcCosh(*this);
+}
+

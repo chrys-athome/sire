@@ -97,11 +97,6 @@ public:
     ~MolEditor();
     
     static const char* typeName();
-    
-    MolEditor* clone() const
-    {
-        return new MolEditor(*this);
-    }
 
     QString toString() const;
     
@@ -177,10 +172,7 @@ public:
         return MolStructureEditor::typeName();
     }
     
-    MolStructureEditor* clone() const
-    {
-        return new MolStructureEditor(*this);
-    }
+    MolStructureEditor* clone() const;
     
     MolStructureEditor& operator=(const MoleculeView &molview);
     MolStructureEditor& operator=(const StructureEditor &other);

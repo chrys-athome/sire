@@ -103,111 +103,33 @@ template<class T>
 class SIREID_EXPORT Index_T_ : public IndexBase
 {
 public:
-    explicit Index_T_(qint32 idx=IndexBase::null()) : IndexBase(idx)
-    {}
+    explicit Index_T_(qint32 idx=IndexBase::null());
     
-    explicit Index_T_(const Index_T_<T> &other) : IndexBase(other)
-    {}
+    explicit Index_T_(const Index_T_<T> &other);
 
-    ~Index_T_()
-    {}
+    ~Index_T_();
 
-    const char* what() const
-    {
-        return T::typeName();
-    }
+    const char* what() const;
     
-    IndexBase* clone() const
-    {
-        return new T( static_cast<const T&>(*this) );
-    }
+    IndexBase* clone() const;
     
-    uint hash() const
-    {
-        return IndexBase::hash();
-    }
+    uint hash() const;
 
-    /** Comparison operator */
-    bool operator==(const T &other) const
-    {
-        return _idx == other._idx;
-    }
+    bool operator==(const T &other) const;
+    bool operator==(const ID &other) const;
+    bool operator==(qint32 val) const;
+    bool operator!=(const T &other) const;
+    bool operator!=(qint32 val) const;
     
-    /** Comparison operator */
-    bool operator==(const ID &other) const
-    {
-        return ID::compare<T>(static_cast<const T&>(*this),other);
-    }
+    T& operator=(qint32 idx);
     
-    /** Comparison operator */
-    bool operator==(qint32 val) const
-    {
-        return _idx == val;
-    }
+    T& operator+=(qint32 val);
+    T& operator++();
+    T operator++(qint32);
     
-    /** Comparison operator */
-    bool operator!=(const T &other) const
-    {
-        return _idx != other._idx;
-    }
-    
-    /** Comparison operator */
-    bool operator!=(qint32 val) const
-    {
-        return _idx != val;
-    }
-    
-    /** Assignment operator */
-    T& operator=(qint32 idx)
-    {
-        _idx = idx;
-        return static_cast<T&>(*this);
-    }
-    
-    /** Increment operator */
-    T& operator+=(qint32 val)
-    {
-        _idx += val;
-        return static_cast<T&>(*this);
-    }
-    
-    /** Increment operator */
-    T& operator++()
-    {
-        ++_idx;
-        return static_cast<T&>(*this);
-    }
-    
-    /** Increment operator */
-    T operator++(qint32)
-    {
-        T orig(*this);
-        ++_idx;
-        
-        return orig;
-    }
-    
-    /** Decrement operator */
-    T& operator-=(qint32 val)
-    {
-        _idx -= val;
-        return static_cast<T&>(*this);
-    }
-    
-    /** Decrement operator */
-    T& operator--()
-    {
-        --_idx;
-        return static_cast<T&>(*this);
-    }
-    
-    /** Decrement operator */
-    T operator--(qint32)
-    {
-        T orig(*this);
-        --_idx;
-        return orig;
-    }
+    T& operator-=(qint32 val);
+    T& operator--();
+    T operator--(qint32);
 };
 
 class SIREID_EXPORT Index : public Index_T_<Index>
@@ -221,21 +143,165 @@ public:
     
     static const char* typeName();
     
-    Index* clone() const
-    {
-        return new Index(*this);
-    }
+    Index* clone() const;
     
     static Index null();
     
     QString toString() const;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return a hash of this index */
 inline uint qHash(const IndexBase &index)
 {
     return index.hash();
 }
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Index_T_<T>::Index_T_(qint32 idx) : IndexBase(idx)
+{}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Index_T_<T>::Index_T_(const Index_T_<T> &other) : IndexBase(other)
+{}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Index_T_<T>::~Index_T_()
+{}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const char* Index_T_<T>::what() const
+{
+    return T::typeName();
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+IndexBase* Index_T_<T>::clone() const
+{
+    return new T( static_cast<const T&>(*this) );
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+uint Index_T_<T>::hash() const
+{
+    return IndexBase::hash();
+}
+
+/** Comparison operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool Index_T_<T>::operator==(const T &other) const
+{
+    return _idx == other._idx;
+}
+
+/** Comparison operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool Index_T_<T>::operator==(const ID &other) const
+{
+    return ID::compare<T>(static_cast<const T&>(*this),other);
+}
+
+/** Comparison operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool Index_T_<T>::operator==(qint32 val) const
+{
+    return _idx == val;
+}
+
+/** Comparison operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool Index_T_<T>::operator!=(const T &other) const
+{
+    return _idx != other._idx;
+}
+
+/** Comparison operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool Index_T_<T>::operator!=(qint32 val) const
+{
+    return _idx != val;
+}
+
+/** Assignment operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T& Index_T_<T>::operator=(qint32 idx)
+{
+    _idx = idx;
+    return static_cast<T&>(*this);
+}
+
+/** Increment operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T& Index_T_<T>::operator+=(qint32 val)
+{
+    _idx += val;
+    return static_cast<T&>(*this);
+}
+
+/** Increment operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T& Index_T_<T>::operator++()
+{
+    ++_idx;
+    return static_cast<T&>(*this);
+}
+
+/** Increment operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T Index_T_<T>::operator++(qint32)
+{
+    T orig(*this);
+    ++_idx;
+    
+    return orig;
+}
+
+/** Decrement operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T& Index_T_<T>::operator-=(qint32 val)
+{
+    _idx -= val;
+    return static_cast<T&>(*this);
+}
+
+/** Decrement operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T& Index_T_<T>::operator--()
+{
+    --_idx;
+    return static_cast<T&>(*this);
+}
+
+/** Decrement operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T Index_T_<T>::operator--(qint32)
+{
+    T orig(*this);
+    --_idx;
+    return orig;
+}
+
+
+#endif SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

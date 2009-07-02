@@ -480,3 +480,26 @@ const char* ResNum::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<ResNum>() );
 }
+
+ResIdentifier* ResIdentifier::clone() const
+{
+    return new ResIdentifier(*this);
+}
+
+ResName* ResName::clone() const
+{
+    return new ResName(*this);
+}
+
+
+ResNum* ResNum::clone() const
+{
+    return new ResNum(*this);
+}
+
+
+ResIdx* ResIdx::clone() const
+{
+    return new ResIdx(*this);
+}
+

@@ -69,11 +69,6 @@ public:
     FreeEnergyAverage& operator=(const FreeEnergyAverage &other);
     
     static const char* typeName();
-    
-    FreeEnergyAverage* clone() const 
-    {
-        return new FreeEnergyAverage(*this);
-    }
 
     SireUnits::Dimension::Temperature temperature() const;
 };

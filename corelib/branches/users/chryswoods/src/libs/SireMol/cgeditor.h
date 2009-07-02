@@ -102,11 +102,6 @@ public:
     
     static const char* typeName();
     
-    CGEditor* clone() const
-    {
-        return new CGEditor(*this);
-    }
-
     QString toString() const;
     
     MolEditor molecule() const;
@@ -163,10 +158,7 @@ public:
         return CGStructureEditor::typeName();
     }
     
-    CGStructureEditor* clone() const
-    {
-        return new CGStructureEditor(*this);
-    }
+    CGStructureEditor* clone() const;
     
     CGStructureEditor& operator=(const CutGroup &cutgroup);
     CGStructureEditor& operator=(const CGStructureEditor &other);

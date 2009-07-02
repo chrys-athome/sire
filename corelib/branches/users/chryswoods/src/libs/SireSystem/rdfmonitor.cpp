@@ -379,6 +379,11 @@ const char* RDF::typeName()
     return QMetaType::typeName( qMetaTypeId<RDF>() );
 }
 
+RDF* RDF::clone() const
+{
+    return new RDF(*this);
+}
+
 ////////
 //////// Implementation of RDFMonitor
 ////////

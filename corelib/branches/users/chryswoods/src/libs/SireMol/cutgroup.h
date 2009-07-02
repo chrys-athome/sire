@@ -95,10 +95,7 @@ public:
     
     static const char* typeName();
     
-    CutGroup* clone() const
-    {
-        return new CutGroup(*this);
-    }
+    CutGroup* clone() const;
 
     QString toString() const;
     

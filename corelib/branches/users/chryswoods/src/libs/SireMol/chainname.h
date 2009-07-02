@@ -75,10 +75,7 @@ public:
         return ChainName::typeName();
     }
     
-    ChainName* clone() const
-    {
-        return new ChainName(*this);
-    }
+    ChainName* clone() const;
     
     bool isNull() const;
     

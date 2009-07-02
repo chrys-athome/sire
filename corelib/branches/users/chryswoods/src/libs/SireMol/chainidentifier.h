@@ -67,10 +67,7 @@ public:
         return ChainIdentifier::typeName();
     }
     
-    ChainIdentifier* clone() const
-    {
-        return new ChainIdentifier(*this);
-    }
+    ChainIdentifier* clone() const;
     
     bool isNull() const;
     

@@ -77,11 +77,6 @@ public:
     
     static const char* typeName();
     
-    Molpro* clone() const
-    {
-        return new Molpro(*this);
-    }
-    
     Molpro& operator=(const Molpro &other);
     
     bool operator==(const Molpro &other) const;

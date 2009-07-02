@@ -71,10 +71,7 @@ public:
         return ChainResID::typeName();
     }
 
-    ChainResID* clone() const
-    {
-        return new ChainResID(*this);
-    }
+    ChainResID* clone() const;
 
     QString toString() const;
 

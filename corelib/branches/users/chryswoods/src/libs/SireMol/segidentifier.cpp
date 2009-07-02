@@ -389,3 +389,14 @@ const char* SegName::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<SegName>() );
 }
+
+SegIdentifier* SegIdentifier::clone() const
+{
+    return new SegIdentifier(*this);
+}
+
+SegIdx* SegIdx::clone() const
+{
+    return new SegIdx(*this);
+}
+

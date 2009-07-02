@@ -72,10 +72,7 @@ public:
         return Min::typeName();
     }
 
-    Min* clone() const
-    {
-        return new Min(*this);
-    }
+    Min* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -115,10 +112,7 @@ public:
         return Max::typeName();
     }
 
-    Max* clone() const
-    {
-        return new Max(*this);
-    }
+    Max* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;

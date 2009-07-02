@@ -2158,3 +2158,8 @@ const char* MoleculeGroup::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<MoleculeGroup>() );
 }
+
+MoleculeGroup* MoleculeGroup::clone() const
+{
+    return new MoleculeGroup(*this);
+}

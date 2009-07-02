@@ -144,3 +144,9 @@ const char* CGAtomIdx::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<CGAtomIdx>() );
 }
+
+CGAtomIdx* CGAtomIdx::clone() const
+{
+    return new CGAtomIdx(*this);
+}
+

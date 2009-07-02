@@ -212,3 +212,8 @@ const char* MonitorIdentifier::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<MonitorIdentifier>() );
 }
+
+MonitorIdentifier* MonitorIdentifier::clone() const
+{
+    return new MonitorIdentifier(*this);
+}

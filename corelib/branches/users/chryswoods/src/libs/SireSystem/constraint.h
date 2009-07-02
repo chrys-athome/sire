@@ -134,11 +134,6 @@ public:
     
     static const char* typeName();
     
-    NullConstraint* clone() const
-    {
-        return new NullConstraint(*this);
-    }
-    
     QString toString() const;
     
     bool isSatisfied(System &system) const;
@@ -179,11 +174,6 @@ public:
     bool operator!=(const PropertyConstraint &other) const;
     
     static const char* typeName();
-    
-    PropertyConstraint* clone() const
-    {
-        return new PropertyConstraint(*this);
-    }
     
     QString toString() const;
     
@@ -234,11 +224,6 @@ public:
     
     static const char* typeName();
     
-    ComponentConstraint* clone() const
-    {
-        return new ComponentConstraint(*this);
-    }
-    
     QString toString() const;
     
     const SireCAS::Symbol& component() const;
@@ -287,11 +272,6 @@ public:
     bool operator!=(const WindowedComponent &other) const;
     
     static const char* typeName();
-    
-    WindowedComponent* clone() const
-    {
-        return new WindowedComponent(*this);
-    }
     
     QString toString() const;
     

@@ -68,11 +68,8 @@ public:
         return FFIdentifier::typeName();
     }
     
-    FFIdentifier* clone() const
-    {
-        return new FFIdentifier(*this);
-    }
-    
+    FFIdentifier* clone() const;
+        
     bool isNull() const;
     
     uint hash() const;

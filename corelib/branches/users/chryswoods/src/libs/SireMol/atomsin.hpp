@@ -77,45 +77,23 @@ public:
     
     ~AtomsIn();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< AtomsIn<GROUP> >() );
-    }
+    static const char* typeName();
     
-    const char* what() const
-    {
-        return AtomsIn<GROUP>::typeName();
-    }
+    const char* what() const;
     
-    AtomsIn<GROUP>* clone() const
-    {
-        return new AtomsIn<GROUP>(*this);
-    }
+    AtomsIn<GROUP>* clone() const;
     
     AtomsIn<GROUP>& operator=(const AtomsIn<GROUP> &other);
 
     bool operator==(const AtomsIn<GROUP> &other) const;
     bool operator==(const SireID::ID &other) const;
     
-    bool operator!=(const AtomsIn<GROUP> &other) const
-    {
-        return not this->operator==(other);
-    }
+    bool operator!=(const AtomsIn<GROUP> &other) const;
+    bool operator!=(const SireID::ID &other) const;
     
-    bool operator!=(const SireID::ID &other) const
-    {
-        return not this->operator==(other);
-    }
+    bool isNull() const;
     
-    bool isNull() const
-    {
-        return groupid.isNull() and strt == 0 and end == -1;
-    }
-    
-    uint hash() const
-    {
-        return groupid.hash() + strt + end;
-    }
+    uint hash() const;
     
     QString toString() const;
     
@@ -218,6 +196,55 @@ SIRE_OUTOFLINE_TEMPLATE
 bool AtomsIn<GROUP>::operator==(const SireID::ID &other) const
 {
     return SireID::ID::compare< AtomsIn<GROUP> >(*this, other);
+}
+    
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+const char* AtomsIn<GROUP>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< AtomsIn<GROUP> >() );
+}
+
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+const char* AtomsIn<GROUP>::what() const
+{
+    return AtomsIn<GROUP>::typeName();
+}
+
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+AtomsIn<GROUP>* AtomsIn<GROUP>::clone() const
+{
+    return new AtomsIn<GROUP>(*this);
+}
+
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+bool AtomsIn<GROUP>::operator!=(const AtomsIn<GROUP> &other) const
+{
+    return not this->operator==(other);
+}
+
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+bool AtomsIn<GROUP>::operator!=(const SireID::ID &other) const
+{
+    return not this->operator==(other);
+}
+
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+bool AtomsIn<GROUP>::isNull() const
+{
+    return groupid.isNull() and strt == 0 and end == -1;
+}
+
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+uint AtomsIn<GROUP>::hash() const
+{
+    return groupid.hash() + strt + end;
 }
 
 /** Map this ID to the indicies of matching atoms 

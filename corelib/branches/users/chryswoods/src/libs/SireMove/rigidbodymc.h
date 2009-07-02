@@ -82,11 +82,6 @@ public:
 
     static const char* typeName();
 
-    RigidBodyMC* clone() const
-    {
-        return new RigidBodyMC(*this);
-    }
-
     bool operator==(const RigidBodyMC &other) const;
     bool operator!=(const RigidBodyMC &other) const;
 

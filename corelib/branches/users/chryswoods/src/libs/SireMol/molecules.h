@@ -94,10 +94,7 @@ public:
         return Molecules::typeName();
     }
 
-    Molecules* clone() const
-    {
-        return new Molecules(*this);
-    }
+    Molecules* clone() const;
 
     Molecules& operator=(const Molecules &other);
     

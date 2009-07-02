@@ -740,3 +740,21 @@ const char* WorkTest::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<WorkTest>() );
 }
+
+WorkTest* WorkTest::clone() const
+{
+    return new WorkTest(*this);
+}
+
+
+AbortPacket* AbortPacket::clone() const
+{
+    return new AbortPacket(*this);
+}
+
+
+ErrorPacket* ErrorPacket::clone() const
+{
+    return new ErrorPacket(*this);
+}
+

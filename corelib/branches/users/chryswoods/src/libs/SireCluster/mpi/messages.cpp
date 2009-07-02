@@ -1578,4 +1578,49 @@ const char* Message::typeName()
     return QMetaType::typeName( qMetaTypeId<Message>() );
 }
 
+Reservation* Reservation::clone() const
+{
+    return new Reservation(*this);
+}
+
+RequestAvailability* RequestAvailability::clone() const
+{
+    return new RequestAvailability(*this);
+}
+
+Result* Result::clone() const
+{
+    return new Result(*this);
+}
+
+GetUIDs* GetUIDs::clone() const
+{
+    return new GetUIDs(*this);
+}
+
+Shutdown* Shutdown::clone() const
+{
+    return new Shutdown(*this);
+}
+
+Broadcast* Broadcast::clone() const
+{
+    return new Broadcast(*this);
+}
+
+Error* Error::clone() const
+{
+    return new Error(*this);
+}
+
+RegisterBackend* RegisterBackend::clone() const
+{
+    return new RegisterBackend(*this);
+}
+
+ReserveBackend* ReserveBackend::clone() const
+{
+    return new ReserveBackend(*this);
+}
+
 #endif // SIRE_USE_MPI

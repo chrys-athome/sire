@@ -74,10 +74,7 @@ public:
         return AtomIdx::typeName();
     }
     
-    AtomIdx* clone() const
-    {
-        return new AtomIdx(*this);
-    }
+    AtomIdx* clone() const;
     
     static AtomIdx null();
     

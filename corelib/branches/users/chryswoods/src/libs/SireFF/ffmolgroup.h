@@ -104,10 +104,7 @@ public:
         return FFMolGroup::typeName();
     }
     
-    FFMolGroup* clone() const
-    {
-        return new FFMolGroup(*this);
-    }
+    FFMolGroup* clone() const;
     
     FFMolGroup& operator=(const FFMolGroup &other);
     FFMolGroup& operator=(const MoleculeGroup &other);
@@ -217,13 +214,7 @@ public:
 
     FFMolGroupPvt& operator=(const FFMolGroupPvt &other);
 
-    MoleculeGroup* clone() const
-    {
-        //return a FFMolGroup, not an FFMolGroupPvt - this
-        //allows the FFMolGroup to contain a *copy* of the
-        //forcefield
-        return new FFMolGroup(*this);
-    }
+    MoleculeGroup* clone() const;
 
     const FF& forceField() const
     {

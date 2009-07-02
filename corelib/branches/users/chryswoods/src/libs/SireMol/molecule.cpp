@@ -729,3 +729,8 @@ namespace SireMol
     ///// explicitly instantiate manipulator classes
     template class Mover<Molecule>;
 }
+
+Molecule* Molecule::clone() const
+{
+    return new Molecule(*this);
+}

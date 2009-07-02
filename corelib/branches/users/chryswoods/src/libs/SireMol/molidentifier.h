@@ -68,10 +68,7 @@ public:
         return MolIdentifier::typeName();
     }
     
-    MolIdentifier* clone() const
-    {
-        return new MolIdentifier(*this);
-    }
+    MolIdentifier* clone() const;
     
     bool isNull() const;
     

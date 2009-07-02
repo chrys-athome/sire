@@ -101,46 +101,21 @@ public:
     
     ~GroupAtomID();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< GroupAtomID<GROUP,ATOM> >() );
-    }
+    static const char* typeName();
     
-    const char* what() const
-    {
-        return GroupAtomID<GROUP,ATOM>::typeName();
-    }
+    const char* what() const;
     
-    GroupAtomID<GROUP,ATOM>* clone() const
-    {
-        return new GroupAtomID<GROUP,ATOM>(*this);
-    }
+    GroupAtomID<GROUP,ATOM>* clone() const;
     
-    bool operator==(const GroupAtomID<GROUP,ATOM> &other) const
-    {
-        return groupid == other.groupid and
-               atomid == other.atomid;
-    }
+    bool operator==(const GroupAtomID<GROUP,ATOM> &other) const;
     
-    bool operator!=(const GroupAtomID<GROUP,ATOM> &other) const
-    {
-        return not this->operator==(other);
-    }
+    bool operator!=(const GroupAtomID<GROUP,ATOM> &other) const;
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare< GroupAtomID<GROUP,ATOM> >(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
-    uint hash() const
-    {
-        return (groupid.hash() << 16) | (atomid.hash() & 0x0000FFFF);
-    }
+    uint hash() const;
     
-    bool isNull() const
-    {
-        return groupid.isNull() and atomid.isNull();
-    }
+    bool isNull() const;
     
     QString toString() const;
     
@@ -180,6 +155,63 @@ template<class GROUP, class ATOM>
 SIRE_OUTOFLINE_TEMPLATE
 GroupAtomID<GROUP,ATOM>::~GroupAtomID()
 {}
+    
+template<class GROUP, class ATOM>
+SIRE_OUTOFLINE_TEMPLATE
+const char* GroupAtomID<GROUP,ATOM>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< GroupAtomID<GROUP,ATOM> >() );
+}
+
+template<class GROUP, class ATOM>
+SIRE_OUTOFLINE_TEMPLATE
+const char* GroupAtomID<GROUP,ATOM>::what() const
+{
+    return GroupAtomID<GROUP,ATOM>::typeName();
+}
+
+template<class GROUP, class ATOM>
+SIRE_OUTOFLINE_TEMPLATE
+GroupAtomID<GROUP,ATOM>* GroupAtomID<GROUP,ATOM>::clone() const
+{
+    return new GroupAtomID<GROUP,ATOM>(*this);
+}
+
+template<class GROUP, class ATOM>
+SIRE_OUTOFLINE_TEMPLATE
+bool GroupAtomID<GROUP,ATOM>::operator==(const GroupAtomID<GROUP,ATOM> &other) const
+{
+    return groupid == other.groupid and
+           atomid == other.atomid;
+}
+
+template<class GROUP, class ATOM>
+SIRE_OUTOFLINE_TEMPLATE
+bool GroupAtomID<GROUP,ATOM>::operator!=(const GroupAtomID<GROUP,ATOM> &other) const
+{
+    return not this->operator==(other);
+}
+
+template<class GROUP, class ATOM>
+SIRE_OUTOFLINE_TEMPLATE
+bool GroupAtomID<GROUP,ATOM>::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare< GroupAtomID<GROUP,ATOM> >(*this, other);
+}
+
+template<class GROUP, class ATOM>
+SIRE_OUTOFLINE_TEMPLATE
+uint GroupAtomID<GROUP,ATOM>::hash() const
+{
+    return (groupid.hash() << 16) | (atomid.hash() & 0x0000FFFF);
+}
+
+template<class GROUP, class ATOM>
+SIRE_OUTOFLINE_TEMPLATE
+bool GroupAtomID<GROUP,ATOM>::isNull() const
+{
+    return groupid.isNull() and atomid.isNull();
+}
 
 /** Return a string representation of this ID */
 template<class GROUP, class ATOM>

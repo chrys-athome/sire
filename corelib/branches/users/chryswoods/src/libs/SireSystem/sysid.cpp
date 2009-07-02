@@ -310,3 +310,15 @@ namespace SireID
 static const RegisterMetaType< Specify<SysID> > r_specify_sysid;
 static const RegisterMetaType< IDAndSet<SysID> > r_idandset_sysid;
 static const RegisterMetaType< IDOrSet<SysID> > r_idorset_sysid;
+
+SysIdx* SysIdx::clone() const
+{
+    return new SysIdx(*this);
+}
+
+
+SysName* SysName::clone() const
+{
+    return new SysName(*this);
+}
+

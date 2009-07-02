@@ -1228,3 +1228,8 @@ const char* SupraSystem::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<SupraSystem>() );
 }
+
+SupraSystem* SupraSystem::clone() const
+{
+    return new SupraSystem(*this);
+}

@@ -116,11 +116,6 @@ public:
         return ZMatrixLine::typeName();
     }
     
-    ZMatrixLine* clone() const
-    {
-        return new ZMatrixLine(*this);
-    }
-    
     QString toString() const;
     
     AtomIdx operator[](int i) const;
@@ -179,11 +174,6 @@ public:
         return ZMatrixCoordsLine::typeName();
     }
     
-    ZMatrixCoordsLine* clone() const
-    {
-        return new ZMatrixCoordsLine(*this);
-    }
-    
     QString toString() const;
     
     Length bondLength() const;
@@ -228,11 +218,6 @@ public:
     bool operator!=(const ZMatrix &other) const;
     
     static const char* typeName();
-    
-    ZMatrix* clone() const
-    {
-        return new ZMatrix(*this);
-    }
 
     const ZMatrixLine& operator[](const AtomID &atom) const;
     
@@ -344,11 +329,6 @@ public:
     bool operator!=(const ZMatrixCoords &other) const;
     
     static const char* typeName();
-    
-    ZMatrixCoords* clone() const
-    {
-        return new ZMatrixCoords(*this);
-    }
 
     ZMatrixCoordsLine operator[](const AtomID &atom) const;
     

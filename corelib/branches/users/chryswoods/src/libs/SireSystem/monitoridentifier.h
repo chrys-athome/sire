@@ -68,12 +68,9 @@ public:
         return MonitorIdentifier::typeName();
     }
     
-    MonitorIdentifier* clone() const
-    {
-        return new MonitorIdentifier(*this);
-    }
-    
     bool isNull() const;
+    
+    MonitorIdentifier* clone() const;
     
     uint hash() const;
                 

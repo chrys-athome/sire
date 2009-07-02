@@ -123,3 +123,8 @@ const char* I::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<I>() );
 }
+
+I* I::clone() const
+{
+    return new I(*this);
+}

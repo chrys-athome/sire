@@ -84,25 +84,16 @@ public:
     
     ~Intra2B2GFF();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< Intra2B2GFF<Potential> >() );
-    }
+    static const char* typeName();
     
-    const char* what() const
-    {
-        return Intra2B2GFF<Potential>::typeName();
-    }
+    const char* what() const;
     
     Intra2B2GFF<Potential>& operator=(const Intra2B2GFF<Potential> &other);
     
     bool operator==(const Intra2B2GFF<Potential> &other) const;
     bool operator!=(const Intra2B2GFF<Potential> &other) const;
 
-    Intra2B2GFF<Potential>* clone() const
-    {
-        return new Intra2B2GFF<Potential>(*this);
-    }
+    Intra2B2GFF<Potential>* clone() const;
 
     const Components& components() const;
 
@@ -246,6 +237,27 @@ SIRE_OUTOFLINE_TEMPLATE
 bool Intra2B2GFF<Potential>::operator!=(const Intra2B2GFF<Potential> &other) const
 {
     return G2FF::operator!=(other);
+}
+    
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+const char* Intra2B2GFF<Potential>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< Intra2B2GFF<Potential> >() );
+}
+
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+const char* Intra2B2GFF<Potential>::what() const
+{
+    return Intra2B2GFF<Potential>::typeName();
+}
+
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+Intra2B2GFF<Potential>* Intra2B2GFF<Potential>::clone() const
+{
+    return new Intra2B2GFF<Potential>(*this);
 }
 
 /** Assert that the intramolecular nonbonded scale factors for the 

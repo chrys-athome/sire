@@ -131,10 +131,7 @@ public:
         return MoleculeGroup::typeName();
     }
 
-    virtual MoleculeGroup* clone() const
-    {
-        return new MoleculeGroup(*this);
-    }
+    virtual MoleculeGroup* clone() const;
 
     MoleculeGroup& operator=(const MoleculeGroup &other);
 

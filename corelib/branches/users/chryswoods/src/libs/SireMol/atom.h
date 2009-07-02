@@ -103,10 +103,7 @@ public:
     
     static const char* typeName();
     
-    Atom* clone() const
-    {
-        return new Atom(*this);
-    }
+    Atom* clone() const;
     
     AtomSelection selection() const;
 

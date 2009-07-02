@@ -96,10 +96,7 @@ public:
         return RDF::typeName();
     }
     
-    RDF* clone() const
-    {
-        return new RDF(*this);
-    }
+    RDF* clone() const;
     
     bool operator==(const RDF &other) const;
     bool operator!=(const RDF &other) const;
@@ -160,11 +157,6 @@ public:
     RDFMonitor& operator=(const RDFMonitor &other);
     
     static const char* typeName();
-    
-    RDFMonitor* clone() const
-    {
-        return new RDFMonitor(*this);
-    }
     
     bool operator==(const RDFMonitor &other) const;
     bool operator!=(const RDFMonitor &other) const;

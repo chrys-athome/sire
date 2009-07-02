@@ -68,10 +68,7 @@ public:
         return MGIdentifier::typeName();
     }
     
-    MGIdentifier* clone() const
-    {
-        return new MGIdentifier(*this);
-    }
+    MGIdentifier* clone() const;
     
     bool isNull() const;
     

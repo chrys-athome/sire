@@ -170,11 +170,6 @@ public:
         return false;
     }
 
-    AbsFromNumber* clone() const
-    {
-        return new AbsFromNumber(*this);
-    }
-
     double operator()(const MoleculeData &moldata,
                       const AtomSelection &group0,
                       const AtomSelection &group1,
@@ -222,11 +217,6 @@ public:
     bool operator!=(const RelFromNumber&) const
     {
         return false;
-    }
-
-    RelFromNumber* clone() const
-    {
-        return new RelFromNumber(*this);
     }
 
     double operator()(const MoleculeData &moldata,
@@ -278,11 +268,6 @@ public:
         return false;
     }
 
-    AbsFromMass* clone() const
-    {
-        return new AbsFromMass(*this);
-    }
-
     double operator()(const MoleculeData &moldata,
                       const AtomSelection &group0,
                       const AtomSelection &group1,
@@ -330,11 +315,6 @@ public:
     bool operator!=(const RelFromMass&) const
     {
         return false;
-    }
-
-    RelFromMass* clone() const
-    {
-        return new RelFromMass(*this);
     }
 
     double operator()(const MoleculeData &moldata,

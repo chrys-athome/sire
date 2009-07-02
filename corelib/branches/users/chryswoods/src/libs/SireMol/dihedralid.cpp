@@ -379,3 +379,9 @@ const char* DihedralID::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<DihedralID>() );
 }
+
+DihedralID* DihedralID::clone() const
+{
+    return new DihedralID(*this);
+}
+

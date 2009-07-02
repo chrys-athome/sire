@@ -227,3 +227,8 @@ const char* MolIdentifier::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<MolIdentifier>() );
 }
+
+MolIdentifier* MolIdentifier::clone() const
+{
+    return new MolIdentifier(*this);
+}

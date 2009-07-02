@@ -65,10 +65,7 @@ public:
         return ResIdentifier::typeName();
     }
     
-    ResIdentifier* clone() const
-    {
-        return new ResIdentifier(*this);
-    }
+    ResIdentifier* clone() const;
     
     bool isNull() const;
     

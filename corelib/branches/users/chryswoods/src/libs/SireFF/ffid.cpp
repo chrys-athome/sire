@@ -293,3 +293,15 @@ namespace SireID
 static const RegisterMetaType< Specify<FFID> > r_specify_ffid;
 static const RegisterMetaType< IDAndSet<FFID> > r_idandset_ffid;
 static const RegisterMetaType< IDOrSet<FFID> > r_idorset_ffid;
+
+FFIdx* FFIdx::clone() const
+{
+    return new FFIdx(*this);
+}
+
+
+FFName* FFName::clone() const
+{
+    return new FFName(*this);
+}
+

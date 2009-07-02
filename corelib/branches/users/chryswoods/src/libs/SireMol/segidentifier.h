@@ -67,10 +67,7 @@ public:
         return SegIdentifier::typeName();
     }
     
-    SegIdentifier* clone() const
-    {
-        return new SegIdentifier(*this);
-    }
+    SegIdentifier* clone() const;
     
     bool isNull() const;
     

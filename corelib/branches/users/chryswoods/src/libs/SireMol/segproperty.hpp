@@ -113,15 +113,9 @@ public:
     
     SegProperty<T>& operator=(const SegProperty<T> &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< SegProperty<T> >() );
-    }
+    static const char* typeName();
     
-    SegProperty<T>* clone() const
-    {
-        return new SegProperty<T>(*this);
-    }
+    SegProperty<T>* clone() const;
     
     bool operator==(const SegProperty<T> &other) const;
     bool operator!=(const SegProperty<T> &other) const;
@@ -260,6 +254,20 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& SegProperty<T>::operator[](const SegIdx &segidx) const
 {
     return props.constData()[segidx.map(props.count())];
+}
+    
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const char* SegProperty<T>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< SegProperty<T> >() );
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+SegProperty<T>* SegProperty<T>::clone() const
+{
+    return new SegProperty<T>(*this);
 }
 
 /** Return whether or not it is possible to convert the variant

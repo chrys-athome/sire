@@ -76,11 +76,6 @@ public:
     bool operator!=(const GLCanvas &other) const;
 
     static const char* typeName();
-    
-    virtual GLCanvas* clone() const
-    {
-        return new GLCanvas(*this);
-    }
 
     const QUuid& UID() const;
     quint64 version() const;

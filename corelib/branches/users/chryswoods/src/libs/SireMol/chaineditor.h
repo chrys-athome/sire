@@ -96,11 +96,6 @@ public:
     ChainEditor& operator=(const ChainEditor &other);
     
     static const char* typeName();
-    
-    ChainEditor* clone() const
-    {
-        return new ChainEditor(*this);
-    }
 
     QString toString() const;
     
@@ -163,10 +158,7 @@ public:
         return ChainStructureEditor::typeName();
     }
     
-    ChainStructureEditor* clone() const
-    {
-        return new ChainStructureEditor(*this);
-    }
+    ChainStructureEditor* clone() const;
     
     QString toString() const;
     

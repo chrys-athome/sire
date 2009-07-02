@@ -297,3 +297,15 @@ namespace SireID
 static const RegisterMetaType< Specify<MonitorID> > r_specify_monid;
 static const RegisterMetaType< IDAndSet<MonitorID> > r_idandset_monid;
 static const RegisterMetaType< IDOrSet<MonitorID> > r_idorset_monid;
+
+MonitorIdx* MonitorIdx::clone() const
+{
+    return new MonitorIdx(*this);
+}
+
+
+MonitorName* MonitorName::clone() const
+{
+    return new MonitorName(*this);
+}
+

@@ -93,10 +93,7 @@ public:
     
     static const char* typeName();
     
-    virtual SupraSystem* clone() const
-    {
-        return new SupraSystem(*this);
-    }
+    virtual SupraSystem* clone() const;
     
     const SupraSubSystem& operator[](int i) const;
     

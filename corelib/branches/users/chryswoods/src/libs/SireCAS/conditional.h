@@ -197,10 +197,7 @@ public:
         return GreaterThan::typeName();
     }
     
-    GreaterThan* clone() const
-    {
-        return new GreaterThan(*this);
-    }
+    GreaterThan* clone() const;
 
     bool alwaysTrue() const;
     bool alwaysFalse() const;
@@ -245,10 +242,7 @@ public:
         return LessThan::typeName();
     }
     
-    LessThan* clone() const
-    {
-        return new LessThan(*this);
-    }
+    LessThan* clone() const;
 
     bool alwaysTrue() const;
     bool alwaysFalse() const;
@@ -293,10 +287,7 @@ public:
         return GreaterOrEqualThan::typeName();
     }
     
-    GreaterOrEqualThan* clone() const
-    {
-        return new GreaterOrEqualThan(*this);
-    }
+    GreaterOrEqualThan* clone() const;
 
     bool alwaysTrue() const;
     bool alwaysFalse() const;
@@ -341,10 +332,7 @@ public:
         return LessOrEqualThan::typeName();
     }
     
-    LessOrEqualThan* clone() const
-    {
-        return new LessOrEqualThan(*this);
-    }
+    LessOrEqualThan* clone() const;
 
     bool alwaysTrue() const;
     bool alwaysFalse() const;
@@ -389,10 +377,7 @@ public:
         return EqualTo::typeName();
     }
     
-    EqualTo* clone() const
-    {
-        return new EqualTo(*this);
-    }
+    EqualTo* clone() const;
 
     bool alwaysTrue() const;
     bool alwaysFalse() const;
@@ -437,10 +422,7 @@ public:
         return NotEqualTo::typeName();
     }
     
-    NotEqualTo* clone() const
-    {
-        return new NotEqualTo(*this);
-    }
+    NotEqualTo* clone() const;
 
     bool alwaysTrue() const;
     bool alwaysFalse() const;
@@ -477,10 +459,7 @@ public:
         return AlwaysTrue::typeName();
     }
     
-    AlwaysTrue* clone() const
-    {
-        return new AlwaysTrue(*this);
-    }
+    AlwaysTrue* clone() const;
 
     QString toString() const;
     
@@ -544,10 +523,7 @@ public:
         return AlwaysFalse::typeName();
     }
     
-    AlwaysFalse* clone() const
-    {
-        return new AlwaysFalse(*this);
-    }
+    AlwaysFalse* clone() const;
 
     QString toString() const;
     
@@ -621,10 +597,7 @@ public:
         return Conditional::typeName();
     }
     
-    Conditional* clone() const
-    {
-        return new Conditional(*this);
-    }
+    Conditional* clone() const;
 
     const Condition& condition() const;
     

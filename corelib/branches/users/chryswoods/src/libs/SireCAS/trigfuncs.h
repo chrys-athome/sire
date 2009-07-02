@@ -88,10 +88,7 @@ public:
         return Cos::typeName();
     }
 
-    Cos* clone() const
-    {
-        return new Cos(*this);
-    }
+    Cos* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -141,10 +138,7 @@ public:
         return Sin::typeName();
     }
 
-    Sin* clone() const
-    {
-        return new Sin(*this);
-    }
+    Sin* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -193,10 +187,7 @@ public:
         return Tan::typeName();
     }
 
-    Tan* clone() const
-    {
-        return new Tan(*this);
-    }
+    Tan* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -245,10 +236,7 @@ public:
         return Sec::typeName();
     }
 
-    Sec* clone() const
-    {
-        return new Sec(*this);
-    }
+    Sec* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -297,10 +285,7 @@ public:
         return Csc::typeName();
     }
 
-    Csc* clone() const
-    {
-        return new Csc(*this);
-    }
+    Csc* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -349,10 +334,7 @@ public:
         return Cot::typeName();
     }
 
-    Cot* clone() const
-    {
-        return new Cot(*this);
-    }
+    Cot* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;

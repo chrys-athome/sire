@@ -73,10 +73,7 @@ public:
         return FFName::typeName();
     }
     
-    FFName* clone() const
-    {
-        return new FFName(*this);
-    }
+    FFName* clone() const;
     
     bool isNull() const;
     

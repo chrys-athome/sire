@@ -73,10 +73,7 @@ public:
         return MGIdx::typeName();
     }
     
-    MGIdx* clone() const
-    {
-        return new MGIdx(*this);
-    }
+    MGIdx* clone() const;
     
     static MGIdx null();
     

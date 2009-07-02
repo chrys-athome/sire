@@ -99,10 +99,7 @@ public:
 
     static const char* typeName();
 
-    AtomProperty<Vector>* clone() const
-    {
-        return new AtomProperty<Vector>(*this);
-    }
+    AtomProperty<Vector>* clone() const;
 
     bool isCompatibleWith(const MoleculeInfoData &molinfo) const;
 

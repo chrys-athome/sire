@@ -78,10 +78,7 @@ public:
         return MolAtomID::typeName();
     }
     
-    MolAtomID* clone() const
-    {
-        return new MolAtomID(*this);
-    }
+    MolAtomID* clone() const;
     
     bool isNull() const;
     

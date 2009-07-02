@@ -578,3 +578,39 @@ const char* Coth::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Coth>() );
 }
+
+Cosh* Cosh::clone() const
+{
+    return new Cosh(*this);
+}
+
+
+Tanh* Tanh::clone() const
+{
+    return new Tanh(*this);
+}
+
+
+Sinh* Sinh::clone() const
+{
+    return new Sinh(*this);
+}
+
+
+Coth* Coth::clone() const
+{
+    return new Coth(*this);
+}
+
+
+Csch* Csch::clone() const
+{
+    return new Csch(*this);
+}
+
+
+Sech* Sech::clone() const
+{
+    return new Sech(*this);
+}
+

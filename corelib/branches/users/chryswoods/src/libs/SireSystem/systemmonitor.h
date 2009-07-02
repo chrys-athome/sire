@@ -98,11 +98,6 @@ public:
     
     static const char *typeName();
     
-    NullMonitor* clone() const
-    {
-        return new NullMonitor(*this);
-    }
-    
     void clearStatistics();
     
     void monitor(System &system);

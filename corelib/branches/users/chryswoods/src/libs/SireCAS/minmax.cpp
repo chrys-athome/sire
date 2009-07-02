@@ -245,3 +245,15 @@ const char* Max::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Max>() );
 }
+
+Max* Max::clone() const
+{
+    return new Max(*this);
+}
+
+
+Min* Min::clone() const
+{
+    return new Min(*this);
+}
+

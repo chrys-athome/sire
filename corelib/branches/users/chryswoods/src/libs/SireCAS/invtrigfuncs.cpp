@@ -604,3 +604,39 @@ const char* ArcCot::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<ArcCot>() );
 }
+
+ArcCsc* ArcCsc::clone() const
+{
+    return new ArcCsc(*this);
+}
+
+
+ArcTan* ArcTan::clone() const
+{
+    return new ArcTan(*this);
+}
+
+
+ArcSin* ArcSin::clone() const
+{
+    return new ArcSin(*this);
+}
+
+
+ArcCot* ArcCot::clone() const
+{
+    return new ArcCot(*this);
+}
+
+
+ArcSec* ArcSec::clone() const
+{
+    return new ArcSec(*this);
+}
+
+
+ArcCos* ArcCos::clone() const
+{
+    return new ArcCos(*this);
+}
+

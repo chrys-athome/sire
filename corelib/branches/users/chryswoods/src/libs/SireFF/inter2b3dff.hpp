@@ -63,25 +63,16 @@ public:
     
     ~Inter2B3DFF();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< Inter2B3DFF<Potential> >() );
-    }
+    static const char* typeName();
     
-    const char* what() const
-    {
-        return Inter2B3DFF<Potential>::typeName();
-    }
+    const char* what() const;
     
     Inter2B3DFF<Potential>& operator=(const Inter2B3DFF<Potential> &other);
     
     bool operator==(const Inter2B3DFF<Potential> &other) const;
     bool operator!=(const Inter2B3DFF<Potential> &other) const;
     
-    Inter2B3DFF<Potential>* clone() const
-    {
-        return new Inter2B3DFF<Potential>(*this);
-    }
+    Inter2B3DFF<Potential>* clone() const;
     
     void force(ForceTable &forcetable, double scale_force=1);
     
@@ -160,6 +151,27 @@ SIRE_OUTOFLINE_TEMPLATE
 bool Inter2B3DFF<Potential>::operator!=(const Inter2B3DFF<Potential> &other) const
 {
     return Inter2BFF<Potential>::operator!=(other);
+}
+
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+const char* Inter2B3DFF<Potential>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< Inter2B3DFF<Potential> >() );
+}
+
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+const char* Inter2B3DFF<Potential>::what() const
+{
+    return Inter2B3DFF<Potential>::typeName();
+}
+
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+Inter2B3DFF<Potential>* Inter2B3DFF<Potential>::clone() const
+{
+    return new Inter2B3DFF<Potential>(*this);
 }
 
 /** Pack the coordinates of the molecules so that they all lie 

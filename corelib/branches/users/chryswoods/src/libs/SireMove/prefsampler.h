@@ -129,11 +129,6 @@ public:
     
     static const char* typeName();
     
-    PrefSampler* clone() const
-    {
-        return new PrefSampler(*this);
-    }
-    
     bool operator==(const PrefSampler &other) const;
     bool operator!=(const PrefSampler &other) const;
     

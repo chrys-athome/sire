@@ -75,45 +75,24 @@ public:
     
     ~ResIn();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< ResIn<GROUP> >() );
-    }
+    static const char* typeName();
     
-    const char* what() const
-    {
-        return ResIn<GROUP>::typeName();
-    }
+    const char* what() const;
     
-    ResIn<GROUP>* clone() const
-    {
-        return new ResIn<GROUP>(*this);
-    }
+    ResIn<GROUP>* clone() const;
     
     ResIn<GROUP>& operator=(const ResIn<GROUP> &other);
 
     bool operator==(const ResIn<GROUP> &other) const;
     bool operator==(const SireID::ID &other) const;
     
-    bool operator!=(const ResIn<GROUP> &other) const
-    {
-        return not this->operator==(other);
-    }
+    bool operator!=(const ResIn<GROUP> &other) const;
     
-    bool operator!=(const SireID::ID &other) const
-    {
-        return not this->operator==(other);
-    }
+    bool operator!=(const SireID::ID &other) const;
     
-    bool isNull() const
-    {
-        return groupid.isNull() and strt == 0 and end == -1;
-    }
+    bool isNull() const;
     
-    uint hash() const
-    {
-        return groupid.hash() + strt + end;
-    }
+    uint hash() const;
     
     QString toString() const;
     
@@ -170,6 +149,55 @@ template<class GROUP>
 SIRE_OUTOFLINE_TEMPLATE
 ResIn<GROUP>::~ResIn()
 {}
+    
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+const char* ResIn<GROUP>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< ResIn<GROUP> >() );
+}
+
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+const char* ResIn<GROUP>::what() const
+{
+    return ResIn<GROUP>::typeName();
+}
+
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+ResIn<GROUP>* ResIn<GROUP>::clone() const
+{
+    return new ResIn<GROUP>(*this);
+}
+
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+bool ResIn<GROUP>::operator!=(const ResIn<GROUP> &other) const
+{
+    return not this->operator==(other);
+}
+
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+bool ResIn<GROUP>::operator!=(const SireID::ID &other) const
+{
+    return not this->operator==(other);
+}
+
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+bool ResIn<GROUP>::isNull() const
+{
+    return groupid.isNull() and strt == 0 and end == -1;
+}
+
+template<class GROUP>
+SIRE_OUTOFLINE_TEMPLATE
+uint ResIn<GROUP>::hash() const
+{
+    return groupid.hash() + strt + end;
+}
 
 /** Return a string representation of this ID */
 template<class GROUP>

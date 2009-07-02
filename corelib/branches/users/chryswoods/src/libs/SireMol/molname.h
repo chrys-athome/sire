@@ -73,10 +73,7 @@ public:
         return MolName::typeName();
     }
     
-    MolName* clone() const
-    {
-        return new MolName(*this);
-    }
+    MolName* clone() const;
     
     bool isNull() const;
     

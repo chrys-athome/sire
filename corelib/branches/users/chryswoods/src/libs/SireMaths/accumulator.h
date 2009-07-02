@@ -140,11 +140,6 @@ public:
     
     static const char* typeName();
     
-    NullAccumulator* clone() const
-    {
-        return new NullAccumulator(*this);
-    }
-    
     bool operator==(const NullAccumulator &other) const;
     bool operator!=(const NullAccumulator &other) const;
     
@@ -173,11 +168,6 @@ public:
     Average& operator=(const Average &other);
     
     static const char* typeName();
-    
-    Average* clone() const
-    {
-        return new Average(*this);
-    }
     
     bool operator==(const Average &other) const;
     bool operator!=(const Average &other) const;
@@ -217,11 +207,6 @@ public:
     AverageAndStddev& operator=(const AverageAndStddev &other);
     
     static const char* typeName();
-
-    AverageAndStddev* clone() const
-    {
-        return new AverageAndStddev(*this);
-    }
     
     bool operator==(const AverageAndStddev &other) const;
     bool operator!=(const AverageAndStddev &other) const;
@@ -269,11 +254,6 @@ public:
     
     static const char* typeName();
     
-    ExpAverage* clone() const
-    {
-        return new ExpAverage(*this);
-    }
-    
     bool operator==(const ExpAverage &other) const;
     bool operator!=(const ExpAverage &other) const;
     
@@ -318,11 +298,6 @@ public:
     Median& operator=(const Median &other);
     
     static const char* typeName();
-    
-    Median* clone() const
-    {
-        return new Median(*this);
-    }
     
     bool operator==(const Median &other) const;
     bool operator!=(const Median &other) const;
@@ -372,11 +347,6 @@ public:
     RecordValues& operator=(const RecordValues &other);
     
     static const char* typeName();
-    
-    RecordValues* clone() const
-    {
-        return new RecordValues(*this);
-    }
     
     bool operator==(const RecordValues &other) const;
     bool operator!=(const RecordValues &other) const;

@@ -121,11 +121,6 @@ public:
         return AtomIdxMatcher::typeName();
     }
 
-    AtomIdxMatcher* clone() const
-    {
-        return new AtomIdxMatcher(*this);
-    }
-
     AtomIdxMatcher& operator=(const AtomIdxMatcher &other);
     
     bool operator==(const AtomIdxMatcher &other) const;
@@ -162,11 +157,6 @@ public:
     const char* what() const
     {
         return AtomNameMatcher::typeName();
-    }
-
-    AtomNameMatcher* clone() const
-    {
-        return new AtomNameMatcher(*this);
     }
 
     AtomNameMatcher& operator=(const AtomNameMatcher &other);

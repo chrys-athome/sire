@@ -1106,3 +1106,9 @@ const char* Product::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Product>() );
 }
+
+Product* Product::clone() const
+{
+    return new Product(*this);
+}
+

@@ -72,10 +72,7 @@ public:
         return FFIdx::typeName();
     }
     
-    FFIdx* clone() const
-    {
-        return new FFIdx(*this);
-    }
+    FFIdx* clone() const;
     
     static FFIdx null();
     

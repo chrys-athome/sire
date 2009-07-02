@@ -95,10 +95,7 @@ public:
     
     static const char* typeName();
     
-    MolecularDynamics* clone() const
-    {
-        return new MolecularDynamics(*this);
-    }
+    MolecularDynamics* clone() const;
     
     bool operator==(const MolecularDynamics &other) const;
     bool operator!=(const MolecularDynamics &other) const;

@@ -80,10 +80,7 @@ public:
         return AtomNum::typeName();
     }
     
-    AtomNum* clone() const
-    {
-        return new AtomNum(*this);
-    }
+    AtomNum* clone() const;
     
     bool isNull() const;
     

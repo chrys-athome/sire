@@ -452,3 +452,8 @@ namespace SireMol
 
     template class Mover< Selector<Atom> >;
 }
+
+Atom* Atom::clone() const
+{
+    return new Atom(*this);
+}

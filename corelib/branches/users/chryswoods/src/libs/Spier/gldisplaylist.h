@@ -80,11 +80,6 @@ public:
         return GLDisplayList::typeName();
     }
     
-    GLDisplayList* clone() const
-    {
-        return new GLDisplayList(*this);
-    }
-    
     bool isEmpty() const;
 
     const GLRenderFunction& renderFunction() const;

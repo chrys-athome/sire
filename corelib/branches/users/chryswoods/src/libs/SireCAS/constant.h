@@ -75,10 +75,7 @@ public:
         return Constant::typeName();
     }
 
-    Constant* clone() const
-    {
-        return new Constant();
-    }
+    Constant* clone() const;
 
     QString toString() const;
 

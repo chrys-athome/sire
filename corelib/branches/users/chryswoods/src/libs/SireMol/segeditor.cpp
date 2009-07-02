@@ -611,3 +611,14 @@ const char* SegStructureEditor::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<SegStructureEditor>() );
 }
+
+SegStructureEditor* SegStructureEditor::clone() const
+{
+    return new SegStructureEditor(*this);
+}
+
+Segment* Segment::clone() const
+{
+    return new Segment(*this);
+}
+

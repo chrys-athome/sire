@@ -355,3 +355,9 @@ const char* Symbol::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Symbol>() );
 }
+
+Symbol* Symbol::clone() const
+{
+    return new Symbol(*this);
+}
+

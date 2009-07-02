@@ -102,11 +102,6 @@ public:
     {
         return GLRenderContext::typeName();
     }
-    
-    GLRenderContext* clone() const
-    {
-        return new GLRenderContext(*this);
-    }
 
     QGLWidget& widget();
     const QGLContext* context() const;

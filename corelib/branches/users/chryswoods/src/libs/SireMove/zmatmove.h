@@ -85,11 +85,6 @@ public:
     
     static const char* typeName();
 
-    ZMatMove* clone() const
-    {
-        return new ZMatMove(*this);
-    }
-
     bool operator==(const ZMatMove &other) const;
     bool operator!=(const ZMatMove &other) const;
 

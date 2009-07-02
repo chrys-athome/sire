@@ -72,10 +72,7 @@ public:
         return MolNum::typeName();
     }
     
-    MolNum* clone() const
-    {
-        return new MolNum(*this);
-    }
+    MolNum* clone() const;
     
     static MolNum getUniqueNumber();
     

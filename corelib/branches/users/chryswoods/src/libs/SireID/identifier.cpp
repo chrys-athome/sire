@@ -170,3 +170,9 @@ const char* Identifier::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Identifier>() );
 }
+
+Identifier* Identifier::clone() const
+{
+    return new Identifier(*this);
+}
+

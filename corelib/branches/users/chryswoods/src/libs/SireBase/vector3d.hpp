@@ -78,10 +78,7 @@ public:
     
     const T& operator[](int i) const;
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< Vector3D<T> >() );
-    }
+    static const char* typeName();
     
     const T& x() const;
     const T& y() const;
@@ -183,6 +180,13 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& Vector3D<T>::operator[](int i) const
 {
     return sc[ i % 3 ];
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE   
+const char* Vector3D<T>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< Vector3D<T> >() );
 }
 
 /** Return the x component */

@@ -94,10 +94,7 @@ public:
     bool operator==(const RestraintFF &other) const;
     bool operator!=(const RestraintFF &other) const;
     
-    RestraintFF* clone() const
-    {
-        return new RestraintFF(*this);
-    }
+    RestraintFF* clone() const;
     
     const RestraintComponent& components() const;
     

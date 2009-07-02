@@ -157,3 +157,9 @@ const char* Constant::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Constant>() );
 }
+
+Constant* Constant::clone() const
+{
+    return new Constant(*this);
+}
+

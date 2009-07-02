@@ -88,10 +88,7 @@ public:
         return Cosh::typeName();
     }
 
-    Cosh* clone() const
-    {
-        return new Cosh(*this);
-    }
+    Cosh* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -141,10 +138,7 @@ public:
         return Sinh::typeName();
     }
 
-    Sinh* clone() const
-    {
-        return new Sinh(*this);
-    }
+    Sinh* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -193,10 +187,7 @@ public:
         return Tanh::typeName();
     }
 
-    Tanh* clone() const
-    {
-        return new Tanh(*this);
-    }
+    Tanh* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -245,10 +236,7 @@ public:
         return Sech::typeName();
     }
 
-    Sech* clone() const
-    {
-        return new Sech(*this);
-    }
+    Sech* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -297,10 +285,7 @@ public:
         return Csch::typeName();
     }
 
-    Csch* clone() const
-    {
-        return new Csch(*this);
-    }
+    Csch* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -349,10 +334,7 @@ public:
         return Coth::typeName();
     }
 
-    Coth* clone() const
-    {
-        return new Coth(*this);
-    }
+    Coth* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;

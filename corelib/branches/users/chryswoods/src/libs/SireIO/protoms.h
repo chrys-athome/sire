@@ -240,10 +240,7 @@ public:
         return ProtoMS::typeName();
     }
     
-    ProtoMS* clone() const
-    {
-        return new ProtoMS(*this);
-    }
+    ProtoMS* clone() const;
 
     static const ProtoMSParameters& parameters()
     {

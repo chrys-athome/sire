@@ -96,11 +96,6 @@ public:
     SegEditor& operator=(const SegEditor &other);
     
     static const char* typeName();
-    
-    SegEditor* clone() const
-    {
-        return new SegEditor(*this);
-    }
 
     QString toString() const;
     
@@ -158,10 +153,7 @@ public:
         return SegStructureEditor::typeName();
     }
     
-    SegStructureEditor* clone() const
-    {
-        return new SegStructureEditor(*this);
-    }
+    SegStructureEditor* clone() const;
     
     SegStructureEditor& operator=(const Segment &residue);
     SegStructureEditor& operator=(const SegStructureEditor &other);

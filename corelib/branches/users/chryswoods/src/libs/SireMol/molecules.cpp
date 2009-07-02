@@ -963,3 +963,8 @@ const char* Molecules::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Molecules>() );
 }
+
+Molecules* Molecules::clone() const
+{
+    return new Molecules(*this);
+}

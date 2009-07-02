@@ -882,3 +882,7 @@ const char* Evaluator::typeName()
     return QMetaType::typeName( qMetaTypeId<Evaluator>() );
 }
 
+Evaluator* Evaluator::clone() const
+{
+    return new Evaluator(*this);
+}

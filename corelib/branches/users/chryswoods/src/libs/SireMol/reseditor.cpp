@@ -665,3 +665,8 @@ const char* ResStructureEditor::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<ResStructureEditor>() );
 }
+
+ResStructureEditor* ResStructureEditor::clone() const
+{
+    return new ResStructureEditor(*this);
+}

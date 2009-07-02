@@ -74,10 +74,7 @@ public:
         return AtomIdentifier::typeName();
     }
     
-    AtomIdentifier* clone() const
-    {
-        return new AtomIdentifier(*this);
-    }
+    AtomIdentifier* clone() const;
     
     bool isNull() const;
     

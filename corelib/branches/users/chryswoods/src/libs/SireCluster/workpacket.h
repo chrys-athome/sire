@@ -209,10 +209,7 @@ public:
     
     AbortPacket& operator=(const AbortPacket &other);
     
-    AbortPacket* clone() const
-    {
-        return new AbortPacket(*this);
-    }
+    AbortPacket* clone() const;
     
     static const char* typeName();
     
@@ -250,10 +247,7 @@ public:
     
     ErrorPacket& operator=(const ErrorPacket &other);
     
-    ErrorPacket* clone() const
-    {
-        return new ErrorPacket(*this);
-    }
+    ErrorPacket* clone() const;
     
     static const char* typeName();
     
@@ -294,10 +288,7 @@ public:
     
     WorkTest& operator=(const WorkTest &other);
     
-    WorkTest* clone() const
-    {
-        return new WorkTest(*this);
-    }
+    WorkTest* clone() const;
     
     static const char* typeName();
     

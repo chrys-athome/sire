@@ -73,10 +73,7 @@ public:
         return SegIdx::typeName();
     }
     
-    SegIdx* clone() const
-    {
-        return new SegIdx(*this);
-    }
+    SegIdx* clone() const;
     
     static SegIdx null();
     

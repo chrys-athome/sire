@@ -95,11 +95,6 @@ public:
         return RepExReplica::typeName();
     }
     
-    RepExReplica* clone() const
-    {
-        return new RepExReplica(*this);
-    }
-    
     bool operator==(const RepExReplica &other) const;
     bool operator!=(const RepExReplica &other) const;
 
@@ -208,11 +203,6 @@ public:
     const char* what() const
     {
         return RepExReplicas::typeName();
-    }
-    
-    RepExReplicas* clone() const
-    {
-        return new RepExReplicas(*this);
     }
 
     bool operator==(const RepExReplicas &other) const;

@@ -485,3 +485,33 @@ const char* ComplexPower::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<ComplexPower>() );
 }
+
+RealPower* RealPower::clone() const
+{
+    return new RealPower(*this);
+}
+
+
+ComplexPower* ComplexPower::clone() const
+{
+    return new ComplexPower(*this);
+}
+
+
+IntegerPower* IntegerPower::clone() const
+{
+    return new IntegerPower(*this);
+}
+
+
+RationalPower* RationalPower::clone() const
+{
+    return new RationalPower(*this);
+}
+
+
+PowerConstant* PowerConstant::clone() const
+{
+    return new PowerConstant(*this);
+}
+

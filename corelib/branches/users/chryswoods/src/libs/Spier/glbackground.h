@@ -94,11 +94,6 @@ public:
     
     static const char* typeName();
     
-    GradientBackground* clone() const
-    {
-        return new GradientBackground(*this);
-    }
-    
     void operator()() const;
 };
 

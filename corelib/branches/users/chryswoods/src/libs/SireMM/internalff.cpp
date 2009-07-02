@@ -2695,3 +2695,8 @@ const char* InternalFF::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<InternalFF>() );
 }
+
+InternalFF* InternalFF::clone() const
+{
+    return new InternalFF(*this);
+}

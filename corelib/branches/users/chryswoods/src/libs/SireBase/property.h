@@ -134,50 +134,13 @@ public:
     }
 
     template<class T>
-    bool isA() const
-    {
-        return dynamic_cast<const T*>(this) != 0;
-    }
+    bool isA() const;
 
     template<class T>
-    const T& asA() const
-    {
-        const T* as_t = dynamic_cast<const T*>(this);
-        
-        if (not as_t)
-        {
-            if (QLatin1String(T::typeName()) == QLatin1String(this->what()))
-            {
-                //these are the same object - perhaps the typeinfo objects
-                //are in different shared libraries?
-                as_t = (const T*)(this);
-            }
-            else
-                throwInvalidCast(T::typeName());
-        }
-        
-        return *as_t;
-    }
+    const T& asA() const;
     
     template<class T>
-    T& asA()
-    {
-        T* as_t = dynamic_cast<T*>(this);
-        
-        if (not as_t)
-        {
-            if (QLatin1String(T::typeName()) == QLatin1String(this->what()))
-            {
-                //these are the same object - perhaps the typeinfo objects
-                //are in different shared libraries?
-                as_t = (T*)(this);
-            }
-            else
-                throwInvalidCast(T::typeName());
-        }
-           
-        return *as_t;
-    }
+    T& asA();
 
     static const NullProperty& null();
 
@@ -204,117 +167,44 @@ template<class Derived, class Base>
 class SIREBASE_EXPORT ConcreteProperty : public Base
 {
 public:
-    ConcreteProperty() : Base()
-    {}
+    ConcreteProperty();
 
     template<class T0>
-    ConcreteProperty(const T0 &t0) : Base(t0)
-    {}
+    ConcreteProperty(const T0 &t0);
 
     template<class T0, class T1>
-    ConcreteProperty(const T0 &t0, const T1 &t1) : Base(t0,t1)
-    {}
+    ConcreteProperty(const T0 &t0, const T1 &t1);
 
     template<class T0, class T1, class T2>
-    ConcreteProperty(const T0 &t0, const T1 &t1,
-                     const T2 &t2) : Base(t0,t1,t2)
-    {}
+    ConcreteProperty(const T0 &t0, const T1 &t1, const T2 &t2);
 
-    virtual ~ConcreteProperty()
-    {}
+    virtual ~ConcreteProperty();
 
-    ConcreteProperty<Derived,Base>& operator=(const Property &other)
-    {
-        const Derived* other_t = dynamic_cast<const Derived*>(&other);
+    ConcreteProperty<Derived,Base>& operator=(const Property &other);
 
-        if (!other_t)
-            Base::throwInvalidCast(other);
+    bool operator==(const Property &other) const;
 
-        return static_cast<Derived*>(this)->operator=(*other_t);
-    }
+    bool operator!=(const Property &other) const;
 
-    bool operator==(const Property &other) const
-    {
-        const Derived* other_t = dynamic_cast<const Derived*>(&other);
+    const char* what() const;
 
-        if (other_t)
-            return static_cast<const Derived*>(this)->operator==(*other_t);
-        else
-            return false;
-    }
+    ConcreteProperty<Derived,Base>* clone() const;
 
-    bool operator!=(const Property &other) const
-    {
-        const Derived* other_t = dynamic_cast<const Derived*>(&other);
+    ConcreteProperty<Derived,Base>* create() const;
 
-        if (other_t)
-            return static_cast<const Derived*>(this)->operator!=(*other_t);
-        else
-            return true;
-    }
+    void copy(const Property &other);
 
-    const char* what() const
-    {
-        return Derived::typeName();
-    }
+    bool equals(const Property &other) const;
 
-    ConcreteProperty<Derived,Base>* clone() const
-    {
-        return new Derived( static_cast<const Derived&>(*this) );
-    }
-
-    ConcreteProperty<Derived,Base>* create() const
-    {
-        return new Derived();
-    }
-
-    void copy(const Property &other)
-    {
-        ConcreteProperty<Derived,Base>::operator=(other);
-    }
-
-    bool equals(const Property &other) const
-    {
-        return ConcreteProperty<Derived,Base>::operator==(other);
-    }
-
-    void save(QDataStream &ds) const
-    {
-        ds << static_cast<const Derived&>(*this);
-    }
-
-    void load(QDataStream &ds)
-    {
-        ds >> static_cast<Derived&>(*this);
-    }
-
-//     void save(XMLStream &) const
-//     {
-//         //xs << static_cast<const Derived&>(*this);
-//     }
-// 
-//     void load(XMLStream &)
-//     {
-//         //xs >> static_cast<Derived&>(*this);
-//     }
+    void save(QDataStream &ds) const;
+    void load(QDataStream &ds);
 
 protected:
     ConcreteProperty<Derived,Base>&
-    operator=(const ConcreteProperty<Derived,Base> &other)
-    {
-        Base::operator=(other);
-        return *this;
-    }
+    operator=(const ConcreteProperty<Derived,Base> &other);
 
-    bool operator==(const ConcreteProperty<Derived,Base> &other) const
-    {
-        return Base::operator==(other);
-    }
-
-    bool operator!=(const ConcreteProperty<Derived,Base> &other) const
-    {
-        return Base::operator!=(other);
-    }
+    bool operator==(const ConcreteProperty<Derived,Base> &other) const;
+    bool operator!=(const ConcreteProperty<Derived,Base> &other) const;
 };
 
 /** This is a simple property that holds any value as a QVariant. This
@@ -574,6 +464,204 @@ protected:
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+///////
+/////// Implementation of Property template functions
+///////
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool Property::isA() const
+{
+    return dynamic_cast<const T*>(this) != 0;
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const T& Property::asA() const
+{
+    const T* as_t = dynamic_cast<const T*>(this);
+    
+    if (not as_t)
+    {
+        if (QLatin1String(T::typeName()) == QLatin1String(this->what()))
+        {
+            //these are the same object - perhaps the typeinfo objects
+            //are in different shared libraries?
+            as_t = (const T*)(this);
+        }
+        else
+            throwInvalidCast(T::typeName());
+    }
+    
+    return *as_t;
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+T& Property::asA()
+{
+    T* as_t = dynamic_cast<T*>(this);
+    
+    if (not as_t)
+    {
+        if (QLatin1String(T::typeName()) == QLatin1String(this->what()))
+        {
+            //these are the same object - perhaps the typeinfo objects
+            //are in different shared libraries?
+            as_t = (T*)(this);
+        }
+        else
+            throwInvalidCast(T::typeName());
+    }
+       
+    return *as_t;
+}
+
+///////
+/////// Implementation of ConcreteProperty<T>
+///////
+
+template<class Derived, class Base>
+SIRE_OUTOFLINE_TEMPLATE
+ConcreteProperty<Derived,Base>::ConcreteProperty() : Base()
+{}
+
+template<class Derived, class Base>
+template<class T0>
+SIRE_OUTOFLINE_TEMPLATE
+ConcreteProperty<Derived,Base>::ConcreteProperty(const T0 &t0) : Base(t0)
+{}
+
+template<class Derived, class Base>
+template<class T0, class T1>
+SIRE_OUTOFLINE_TEMPLATE
+ConcreteProperty<Derived,Base>::ConcreteProperty(const T0 &t0, const T1 &t1) 
+                               : Base(t0,t1)
+{}
+
+template<class Derived, class Base>
+template<class T0, class T1, class T2>
+SIRE_OUTOFLINE_TEMPLATE
+ConcreteProperty<Derived,Base>::ConcreteProperty(const T0 &t0, const T1 &t1,
+                                                 const T2 &t2) : Base(t0,t1,t2)
+{}
+
+template<class Derived, class Base>
+SIRE_OUTOFLINE_TEMPLATE
+ConcreteProperty<Derived,Base>::~ConcreteProperty()
+{}
+
+template<class Derived, class Base>
+SIRE_OUTOFLINE_TEMPLATE
+ConcreteProperty<Derived,Base>& 
+ConcreteProperty<Derived,Base>::operator=(const Property &other)
+{
+    const Derived* other_t = dynamic_cast<const Derived*>(&other);
+
+    if (!other_t)
+        Base::throwInvalidCast(other);
+
+    return static_cast<Derived*>(this)->operator=(*other_t);
+}
+
+template<class Derived, class Base>
+SIRE_OUTOFLINE_TEMPLATE
+bool ConcreteProperty<Derived,Base>::operator==(const Property &other) const
+{
+    const Derived* other_t = dynamic_cast<const Derived*>(&other);
+
+    if (other_t)
+        return static_cast<const Derived*>(this)->operator==(*other_t);
+    else
+        return false;
+}
+
+template<class Derived, class Base>
+SIRE_OUTOFLINE_TEMPLATE
+bool ConcreteProperty<Derived,Base>::operator!=(const Property &other) const
+{
+    const Derived* other_t = dynamic_cast<const Derived*>(&other);
+
+    if (other_t)
+        return static_cast<const Derived*>(this)->operator!=(*other_t);
+    else
+        return true;
+}
+
+template<class Derived, class Base>
+SIRE_OUTOFLINE_TEMPLATE
+const char* ConcreteProperty<Derived,Base>::what() const
+{
+    return Derived::typeName();
+}
+
+template<class Derived, class Base>
+SIRE_OUTOFLINE_TEMPLATE
+ConcreteProperty<Derived,Base>* ConcreteProperty<Derived,Base>::clone() const
+{
+    return new Derived( static_cast<const Derived&>(*this) );
+}
+
+template<class Derived, class Base>
+SIRE_OUTOFLINE_TEMPLATE
+ConcreteProperty<Derived,Base>* ConcreteProperty<Derived,Base>::create() const
+{
+    return new Derived();
+}
+
+template<class Derived, class Base>
+SIRE_OUTOFLINE_TEMPLATE
+void ConcreteProperty<Derived,Base>::copy(const Property &other)
+{
+    ConcreteProperty<Derived,Base>::operator=(other);
+}
+
+template<class Derived, class Base>
+SIRE_OUTOFLINE_TEMPLATE
+bool ConcreteProperty<Derived,Base>::equals(const Property &other) const
+{
+    return ConcreteProperty<Derived,Base>::operator==(other);
+}
+
+template<class Derived, class Base>
+SIRE_OUTOFLINE_TEMPLATE
+void ConcreteProperty<Derived,Base>::save(QDataStream &ds) const
+{
+    ds << static_cast<const Derived&>(*this);
+}
+
+template<class Derived, class Base>
+SIRE_OUTOFLINE_TEMPLATE
+void ConcreteProperty<Derived,Base>::load(QDataStream &ds)
+{
+    ds >> static_cast<Derived&>(*this);
+}
+
+template<class Derived, class Base>
+SIRE_OUTOFLINE_TEMPLATE
+ConcreteProperty<Derived,Base>&
+ConcreteProperty<Derived,Base>::operator=(const ConcreteProperty<Derived,Base> &other)
+{
+    Base::operator=(other);
+    return *this;
+}
+
+template<class Derived, class Base>
+SIRE_OUTOFLINE_TEMPLATE
+bool ConcreteProperty<Derived,Base>::operator==(
+                                    const ConcreteProperty<Derived,Base> &other) const
+{
+    return Base::operator==(other);
+}
+
+template<class Derived, class Base>
+SIRE_OUTOFLINE_TEMPLATE
+bool ConcreteProperty<Derived,Base>::operator!=(
+                                    const ConcreteProperty<Derived,Base> &other) const
+{
+    return Base::operator!=(other);
+}
 
 ///////
 /////// Implementation of PropPtr<T>

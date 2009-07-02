@@ -115,10 +115,7 @@ public:
 
     static const char* typeName();
     
-    Molecule* clone() const
-    {
-        return new Molecule(*this);
-    }
+    Molecule* clone() const;
 
     QString toString() const;
     

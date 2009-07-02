@@ -76,10 +76,7 @@ public:
         return I::typeName();
     }
 
-    I* clone() const
-    {
-        return new I();
-    }
+    I* clone() const;
 
     QString toString() const;
     double evaluate(const Values&) const;

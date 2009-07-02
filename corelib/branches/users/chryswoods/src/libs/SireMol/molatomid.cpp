@@ -305,3 +305,9 @@ const char* MolAtomID::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<MolAtomID>() );
 }
+
+MolAtomID* MolAtomID::clone() const
+{
+    return new MolAtomID(*this);
+}
+

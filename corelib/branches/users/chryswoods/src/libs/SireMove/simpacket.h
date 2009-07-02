@@ -89,10 +89,7 @@ public:
         return SimPacket::typeName();
     }
     
-    SimPacket* clone() const
-    {
-        return new SimPacket(*this);
-    }
+    SimPacket* clone() const;
     
     bool operator==(const SimPacket &other) const;
     bool operator!=(const SimPacket &other) const;

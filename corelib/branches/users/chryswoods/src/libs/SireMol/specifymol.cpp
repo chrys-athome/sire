@@ -212,3 +212,8 @@ const char* SpecifyMol::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<SpecifyMol>() );
 }
+
+SpecifyMol* SpecifyMol::clone() const
+{
+    return new SpecifyMol(*this);
+}

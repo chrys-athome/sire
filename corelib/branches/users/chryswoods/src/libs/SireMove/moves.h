@@ -170,11 +170,6 @@ public:
     
     static const char* typeName();
     
-    SameMoves* clone() const
-    {
-        return new SameMoves(*this);
-    }
-    
     SameMoves& operator=(const SameMoves &other);
     
     bool operator==(const SameMoves &other) const;

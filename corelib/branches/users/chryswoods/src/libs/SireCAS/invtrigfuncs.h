@@ -88,10 +88,7 @@ public:
         return ArcCos::typeName();
     }
 
-    ArcCos* clone() const
-    {
-        return new ArcCos(*this);
-    }
+    ArcCos* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -141,10 +138,7 @@ public:
         return ArcSin::typeName();
     }
 
-    ArcSin* clone() const
-    {
-        return new ArcSin(*this);
-    }
+    ArcSin* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -193,10 +187,7 @@ public:
         return ArcTan::typeName();
     }
 
-    ArcTan* clone() const
-    {
-        return new ArcTan(*this);
-    }
+    ArcTan* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -245,10 +236,7 @@ public:
         return ArcSec::typeName();
     }
 
-    ArcSec* clone() const
-    {
-        return new ArcSec(*this);
-    }
+    ArcSec* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -297,10 +285,7 @@ public:
         return ArcCsc::typeName();
     }
 
-    ArcCsc* clone() const
-    {
-        return new ArcCsc(*this);
-    }
+    ArcCsc* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -349,10 +334,7 @@ public:
         return ArcCot::typeName();
     }
 
-    ArcCot* clone() const
-    {
-        return new ArcCot(*this);
-    }
+    ArcCot* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;

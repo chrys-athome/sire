@@ -114,3 +114,9 @@ const char* ChainResID::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<ChainResID>() );
 }
+
+ChainResID* ChainResID::clone() const
+{
+    return new ChainResID(*this);
+}
+

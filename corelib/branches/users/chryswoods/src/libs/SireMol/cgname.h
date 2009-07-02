@@ -74,10 +74,7 @@ public:
         return CGName::typeName();
     }
     
-    CGName* clone() const
-    {
-        return new CGName(*this);
-    }
+    CGName* clone() const;
     
     bool isNull() const;
     

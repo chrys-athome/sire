@@ -71,49 +71,25 @@ public:
     
     ~GroupGroupID();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< GroupGroupID<G0,G1> >() );
-    }
+    static const char* typeName();
     
-    const char* what() const
-    {
-        return GroupGroupID<G0,G1>::typeName();
-    }
+    const char* what() const;
        
-    GroupGroupID<G0,G1>* clone() const
-    {
-        return new GroupGroupID<G0,G1>(*this);
-    }
+    GroupGroupID<G0,G1>* clone() const;
     
     using SireID::ID::operator!=;
     
-    bool operator==(const SireID::ID &other) const
-    {
-        return SireID::ID::compare< GroupGroupID<G0,G1> >(*this, other);
-    }
+    bool operator==(const SireID::ID &other) const;
     
-    bool operator==(const GroupGroupID<G0,G1> &other) const
-    {
-        return g0 == other.g0 and g1 == other.g1;
-    }
+    bool operator==(const GroupGroupID<G0,G1> &other) const;
     
-    bool operator!=(const GroupGroupID<G0,G1> &other) const
-    {
-        return g0 != other.g0 or g1 != other.g1;
-    }
+    bool operator!=(const GroupGroupID<G0,G1> &other) const;
     
     QString toString() const;
     
-    uint hash() const
-    {
-        return (g0.hash() << 16) | (g1.hash() & 0x0000FFFF);
-    }
+    uint hash() const;
     
-    bool isNull() const
-    {
-        return g0.isNull() and g1.isNull();
-    }
+    bool isNull() const;
              
     QList<AtomIdx> map(const MolInfo &molinfo) const;
 
@@ -150,6 +126,62 @@ template<class G0, class G1>
 SIRE_OUTOFLINE_TEMPLATE
 GroupGroupID<G0,G1>::~GroupGroupID()
 {}
+    
+template<class G0, class G1>
+SIRE_OUTOFLINE_TEMPLATE
+const char* GroupGroupID<G0,G1>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< GroupGroupID<G0,G1> >() );
+}
+
+template<class G0, class G1>
+SIRE_OUTOFLINE_TEMPLATE
+const char* GroupGroupID<G0,G1>::what() const
+{
+    return GroupGroupID<G0,G1>::typeName();
+}
+   
+template<class G0, class G1>
+SIRE_OUTOFLINE_TEMPLATE
+GroupGroupID<G0,G1>* GroupGroupID<G0,G1>::clone() const
+{
+    return new GroupGroupID<G0,G1>(*this);
+}
+
+template<class G0, class G1>
+SIRE_OUTOFLINE_TEMPLATE
+bool GroupGroupID<G0,G1>::operator==(const SireID::ID &other) const
+{
+    return SireID::ID::compare< GroupGroupID<G0,G1> >(*this, other);
+}
+
+template<class G0, class G1>
+SIRE_OUTOFLINE_TEMPLATE
+bool GroupGroupID<G0,G1>::operator==(const GroupGroupID<G0,G1> &other) const
+{
+    return g0 == other.g0 and g1 == other.g1;
+}
+
+template<class G0, class G1>
+SIRE_OUTOFLINE_TEMPLATE
+bool GroupGroupID<G0,G1>::operator!=(const GroupGroupID<G0,G1> &other) const
+{
+    return g0 != other.g0 or g1 != other.g1;
+}
+
+template<class G0, class G1>
+SIRE_OUTOFLINE_TEMPLATE
+uint GroupGroupID<G0,G1>::hash() const
+{
+    return (g0.hash() << 16) | (g1.hash() & 0x0000FFFF);
+}
+
+template<class G0, class G1>
+SIRE_OUTOFLINE_TEMPLATE
+bool GroupGroupID<G0,G1>::isNull() const
+{
+    return g0.isNull() and g1.isNull();
+}
 
 /** Return a string representation of this match */
 template<class G0, class G1>

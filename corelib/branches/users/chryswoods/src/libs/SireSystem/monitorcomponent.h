@@ -79,11 +79,6 @@ public:
     
     static const char* typeName();
     
-    MonitorComponent* clone() const
-    {
-        return new MonitorComponent(*this);
-    }
-    
     bool operator==(const MonitorComponent &other) const;
     bool operator!=(const MonitorComponent &other) const;
     

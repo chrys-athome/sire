@@ -79,11 +79,6 @@ public:
     MTSMC& operator=(const MTSMC &other);
     
     static const char* typeName();
-    
-    MTSMC* clone() const
-    {
-        return new MTSMC(*this);
-    }
 
     bool operator==(const MTSMC &other) const;
     bool operator!=(const MTSMC &other) const;

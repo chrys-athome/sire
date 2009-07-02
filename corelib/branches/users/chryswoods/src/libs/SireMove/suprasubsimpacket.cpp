@@ -241,3 +241,8 @@ const char* SupraSubSimPacket::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<SupraSubSimPacket>() );
 }
+
+SupraSubSimPacket* SupraSubSimPacket::clone() const
+{
+    return new SupraSubSimPacket(*this);
+}

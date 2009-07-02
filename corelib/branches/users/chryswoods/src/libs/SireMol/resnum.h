@@ -73,10 +73,7 @@ public:
         return ResNum::typeName();
     }
     
-    ResNum* clone() const
-    {
-        return new ResNum(*this);
-    }
+    ResNum* clone() const;
     
     bool isNull() const;
     

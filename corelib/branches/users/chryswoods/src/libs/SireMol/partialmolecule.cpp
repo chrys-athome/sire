@@ -794,3 +794,8 @@ namespace SireMol
 
     template class Mover<PartialMolecule>;
 }
+
+PartialMolecule* PartialMolecule::clone() const
+{
+    return new PartialMolecule(*this);
+}

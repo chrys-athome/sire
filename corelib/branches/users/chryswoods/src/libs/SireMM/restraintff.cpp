@@ -933,3 +933,8 @@ void RestraintFF::force(ForceTable &forcetable, const Symbol &symbol, double sca
                 .arg(symbol.toString(), this->toString(), 
                      ffcomponents.total().toString()), CODELOC );
 }
+
+RestraintFF* RestraintFF::clone() const
+{
+    return new RestraintFF(*this);
+}

@@ -80,10 +80,7 @@ public:
         return SupraSimPacket::typeName();
     }
     
-    SupraSimPacket* clone() const
-    {
-        return new SupraSimPacket(*this);
-    }
+    SupraSimPacket* clone() const;
     
     bool shouldPack() const;
     int approximatePacketSize() const;

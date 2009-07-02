@@ -302,3 +302,8 @@ const char* MolecularDynamics::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<MolecularDynamics>() );
 }
+
+MolecularDynamics* MolecularDynamics::clone() const
+{
+    return new MolecularDynamics(*this);
+}

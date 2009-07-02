@@ -334,3 +334,8 @@ const char* SimPacket::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<SimPacket>() );
 }
+
+SimPacket* SimPacket::clone() const
+{
+    return new SimPacket(*this);
+}

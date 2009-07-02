@@ -81,10 +81,7 @@ public:
         return Exp::typeName();
     }
 
-    Exp* clone() const
-    {
-        return new Exp(*this);
-    }
+    Exp* clone() const;
 
     QString toString() const;
 
@@ -129,10 +126,7 @@ public:
         return Ln::typeName();
     }
 
-    Ln* clone() const
-    {
-        return new Ln(*this);
-    }
+    Ln* clone() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;

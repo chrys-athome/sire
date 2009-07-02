@@ -81,20 +81,11 @@ public:
     
     ~IDOrSet();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< IDOrSet<ID> >() );
-    }
+    static const char* typeName();
     
-    const char* what() const
-    {
-        return IDOrSet<ID>::typeName();
-    }
+    const char* what() const;
     
-    IDOrSet<ID>* clone() const
-    {
-        return new IDOrSet<ID>(*this);
-    }
+    IDOrSet<ID>* clone() const;
     
     bool isNull() const;
     
@@ -203,6 +194,27 @@ template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
 IDOrSet<ID>::~IDOrSet()
 {}
+    
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+const char* IDOrSet<ID>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< IDOrSet<ID> >() );
+}
+
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+const char* IDOrSet<ID>::what() const
+{
+    return IDOrSet<ID>::typeName();
+}
+
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+IDOrSet<ID>* IDOrSet<ID>::clone() const
+{
+    return new IDOrSet<ID>(*this);
+}
 
 /** Is this selection null? */
 template<class ID>

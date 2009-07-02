@@ -68,10 +68,7 @@ public:
         return SysIdentifier::typeName();
     }
     
-    SysIdentifier* clone() const
-    {
-        return new SysIdentifier(*this);
-    }
+    SysIdentifier* clone() const;
     
     bool isNull() const;
     

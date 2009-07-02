@@ -113,15 +113,9 @@ public:
     
     ChainProperty<T>& operator=(const ChainProperty<T> &other);
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< ChainProperty<T> >() );
-    }
+    static const char* typeName();
     
-    ChainProperty<T>* clone() const
-    {
-        return new ChainProperty<T>(*this);
-    }
+    ChainProperty<T>* clone() const;
     
     bool operator==(const ChainProperty<T> &other) const;
     bool operator!=(const ChainProperty<T> &other) const;
@@ -260,6 +254,20 @@ SIRE_OUTOFLINE_TEMPLATE
 const T& ChainProperty<T>::operator[](const ChainIdx &chainidx) const
 {
     return props.constData()[chainidx.map(props.count())];
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const char* ChainProperty<T>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< ChainProperty<T> >() );
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+ChainProperty<T>* ChainProperty<T>::clone() const
+{
+    return new ChainProperty<T>(*this);
 }
 
 /** Return whether or not it is possible to convert the variant

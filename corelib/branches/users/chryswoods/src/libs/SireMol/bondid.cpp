@@ -354,3 +354,9 @@ const char* BondID::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<BondID>() );
 }
+
+BondID* BondID::clone() const
+{
+    return new BondID(*this);
+}
+

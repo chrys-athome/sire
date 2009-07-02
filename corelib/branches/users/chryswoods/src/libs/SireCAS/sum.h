@@ -104,10 +104,7 @@ public:
 
     Expression reduce() const;
 
-    Sum* clone() const
-    {
-        return new Sum(*this);
-    }
+    Sum* clone() const;
 
     QList<Factor> expand(const Symbol &symbol) const;
 

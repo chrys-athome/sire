@@ -701,3 +701,9 @@ const char* Function::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Function>() );
 }
+
+Function* Function::clone() const
+{
+    return new Function(*this);
+}
+

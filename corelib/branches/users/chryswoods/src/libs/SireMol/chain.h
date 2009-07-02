@@ -90,10 +90,7 @@ public:
     
     static const char* typeName();
     
-    Chain* clone() const
-    {
-        return new Chain(*this);
-    }
+    Chain* clone() const;
     
     bool operator==(const Chain &other) const;
     bool operator!=(const Chain &other) const;

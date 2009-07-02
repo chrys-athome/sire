@@ -73,10 +73,7 @@ public:
         return MonitorIdx::typeName();
     }
     
-    MonitorIdx* clone() const
-    {
-        return new MonitorIdx(*this);
-    }
+    MonitorIdx* clone() const;
     
     static MonitorIdx null();
     

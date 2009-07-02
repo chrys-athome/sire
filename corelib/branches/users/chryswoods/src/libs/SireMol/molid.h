@@ -147,10 +147,7 @@ public:
         return IDAndSet<MolID>::typeName();
     }
     
-    IDAndSet<MolID>* clone() const
-    {
-        return new IDAndSet<MolID>(*this);
-    }
+    IDAndSet<MolID>* clone() const;
     
     bool isNull() const;
     
@@ -210,10 +207,7 @@ public:
         return IDOrSet<MolID>::typeName();
     }
     
-    IDOrSet<MolID>* clone() const
-    {
-        return new IDOrSet<MolID>(*this);
-    }
+    IDOrSet<MolID>* clone() const;
     
     bool isNull() const;
     

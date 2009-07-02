@@ -63,25 +63,16 @@ public:
     
     ~Intra2B2G3DFF();
     
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< Intra2B2G3DFF<Potential> >() );
-    }
+    static const char* typeName();
     
-    const char* what() const
-    {
-        return Intra2B2G3DFF<Potential>::typeName();
-    }
+    const char* what() const;
     
     Intra2B2G3DFF<Potential>& operator=(const Intra2B2G3DFF<Potential> &other);
     
     bool operator==(const Intra2B2G3DFF<Potential> &other) const;
     bool operator!=(const Intra2B2G3DFF<Potential> &other) const;
     
-    Intra2B2G3DFF<Potential>* clone() const
-    {
-        return new Intra2B2G3DFF<Potential>(*this);
-    }
+    Intra2B2G3DFF<Potential>* clone() const;
     
     void force(ForceTable &forcetable, double scale_force=1);
     
@@ -147,6 +138,27 @@ SIRE_OUTOFLINE_TEMPLATE
 bool Intra2B2G3DFF<Potential>::operator!=(const Intra2B2G3DFF<Potential> &other) const
 {
     return Intra2B2GFF<Potential>::operator!=(other);
+}
+    
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+const char* Intra2B2G3DFF<Potential>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< Intra2B2G3DFF<Potential> >() );
+}
+
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+const char* Intra2B2G3DFF<Potential>::what() const
+{
+    return Intra2B2G3DFF<Potential>::typeName();
+}
+
+template<class Potential>
+SIRE_OUTOFLINE_TEMPLATE
+Intra2B2G3DFF<Potential>* Intra2B2G3DFF<Potential>::clone() const
+{
+    return new Intra2B2G3DFF<Potential>(*this);
 }
 
 /** Calculate the forces acting on the molecules in the passed forcetable

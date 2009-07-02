@@ -844,3 +844,8 @@ const char* MolStructureEditor::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<MolStructureEditor>() );
 }
+
+MolStructureEditor* MolStructureEditor::clone() const
+{
+    return new MolStructureEditor(*this);
+}

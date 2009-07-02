@@ -74,10 +74,7 @@ public:
         return ResName::typeName();
     }
     
-    ResName* clone() const
-    {
-        return new ResName(*this);
-    }
+    ResName* clone() const;
     
     bool isNull() const;
     

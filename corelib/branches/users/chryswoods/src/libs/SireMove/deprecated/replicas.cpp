@@ -853,3 +853,13 @@ const char* Replicas::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Replicas>() );
 }
+
+Replica* Replica::clone() const
+{
+    return new Replica(*this);
+}
+
+Replicas* Replicas::clone() const
+{
+    return new Replicas(*this);
+}

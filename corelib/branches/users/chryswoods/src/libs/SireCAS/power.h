@@ -153,10 +153,7 @@ public:
         return pwr.isCompound();
     }
 
-    Power* clone() const
-    {
-        return new Power(*this);
-    }
+    Power* clone() const;
 
 private:
 
