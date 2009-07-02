@@ -47,7 +47,13 @@ void SIREERROR_EXPORT export_SireError()
     export_exceptions();
 
     boost::python::def( "getBackTrace", &SireError::getBackTrace );
-    boost::python::def( "printError", (void (*)(const QString&))&SireError::printError );
+
+    {
+        typedef void (*printError_type)(const QString&);
+        printError_type printError_value( &SireError::printError );
+
+        boost::python::def( "printError", printError_value );
+    }
 }
 
 }

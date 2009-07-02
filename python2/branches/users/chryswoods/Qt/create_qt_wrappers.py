@@ -64,8 +64,21 @@ def fix_QString(c):
     c.decls( "setUnicode" ).call_policies = call_policies.return_self()
     c.decls( "setNum" ).call_policies = call_policies.return_self()
 
+    c.add_declaration_code("PyObject* QString__str__(QString const& s);")
+    c.add_declaration_code("PyObject* convert(QString const& s);")
+
+    c.add_registration_code("def(\"__str__\", &QString__str__ )")
+    c.add_registration_code("def(\"__repr__\", &QString__str__ )")
+    c.add_registration_code("def(\"__unicode__\", &convert )")
+
+def fix_QChar(c):
+    c.add_declaration_code("PyObject* convert(QChar const& c);")
+    c.add_registration_code("def(\"__str__\", &convert )")
+    c.add_registration_code("def(\"__repr__\", &convert )")
+
 special_code = { "QByteArray" : fix_QByteArray, 
-                 "QString" : fix_QString }
+                 "QString" : fix_QString,
+                 "QChar" : fix_QChar }
 
 aliases = { "QFlags<QDir::SortFlag>" : "SortFlags",
             "QFlags<QDir::Filter>" : "Filters",
@@ -134,7 +147,7 @@ mb.enums().include()
 #export each class in turn
 for classname in wrap_classes:
    #tell the program to write wrappers for this class
-   export_class(mb, classname, aliases, [], special_code)
+   export_class(mb, classname, aliases, [], special_code, False)
 
 register_implicit_conversions(mb, implicitly_convertible)
 

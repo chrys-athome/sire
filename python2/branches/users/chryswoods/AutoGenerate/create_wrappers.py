@@ -177,7 +177,7 @@ def has_clone_function(t):
     try:
         c = mb.class_( string.join(str(t.base).split(" ")[0:-1], " ").split("::")[1] )
     except:
-        print "WARNING!!! Couldn't find the class for %s" % t
+        print "WARNING!!! Couldn't find the class for %s" % (t)
         return False
 
     try:
@@ -186,7 +186,7 @@ def has_clone_function(t):
     except:
         return False
 
-def export_class(mb, classname, aliases, includes, special_code):
+def export_class(mb, classname, aliases, includes, special_code, auto_str_function=True):
    """Do all the work necessary to allow the class called 'classname'
       to be exported, using the supplied aliases, and using the 
       supplied special code, and adding the header files in 'includes'
@@ -198,6 +198,10 @@ def export_class(mb, classname, aliases, includes, special_code):
    #include the class in the wrapper
    c.include()
 
+   #write out all function signatures
+   c.calldefs().create_with_signature = True
+   c.always_expose_using_scope = True
+   
    #add the extra include files for this class
    for include_file in includes:
        c.add_declaration_code("#include %s" % include_file)
@@ -311,27 +315,28 @@ def export_class(mb, classname, aliases, includes, special_code):
            
 
    #is there a "toString" function for this class?
-   if has_function(c, "toString"):
-       #there is a .toString() member function - we can thus use the 
-       #templer __str__ function provided in the Helpers directory
-       c.add_declaration_code( "#include \"Helpers/str.hpp\"" )
+   if auto_str_function:
+       if has_function(c, "toString"):
+           #there is a .toString() member function - we can thus use the 
+           #templer __str__ function provided in the Helpers directory
+           c.add_declaration_code( "#include \"Helpers/str.hpp\"" )
        
-       c.add_registration_code( "def( \"__str__\", &__str__< %s > )" % c.decl_string )
-       c.add_registration_code( "def( \"__repr__\", &__str__< %s > )" % c.decl_string )   
+           c.add_registration_code( "def( \"__str__\", &__str__< %s > )" % c.decl_string )
+           c.add_registration_code( "def( \"__repr__\", &__str__< %s > )" % c.decl_string )   
 
-   else:
-       #there is no .toString() function
-       # - instead create a new __str__ that just returns a pretty form
-       #   of the name of the class
-       name = str(c.decl_string)
+       else:
+           #there is no .toString() function
+           # - instead create a new __str__ that just returns a pretty form
+           #   of the name of the class
+           name = str(c.decl_string)
        
-       if name.startswith("::"):
-           name = name[2:]
+           if name.startswith("::"):
+               name = name[2:]
        
-       c.add_declaration_code( "const char* pvt_get_name(const %s&){ return \"%s\";}" % (name,name) )
+           c.add_declaration_code( "const char* pvt_get_name(const %s&){ return \"%s\";}" % (name,name) )
        
-       c.add_registration_code("def( \"__str__\", &pvt_get_name)")
-       c.add_registration_code("def( \"__repr__\", &pvt_get_name)")
+           c.add_registration_code("def( \"__str__\", &pvt_get_name)")
+           c.add_registration_code("def( \"__repr__\", &pvt_get_name)")
            
    #provide an alias for this class
    if (classname in aliases):
@@ -342,27 +347,41 @@ def register_implicit_conversions(mb, implicitly_convertible):
        that have been specifically specified in 'implicitly_convertible'"""
 
     #remove all existing implicit conversions
-    mb.constructors().allow_implicit_conversion = False
-    mb.casting_operators().exclude()
-    
+    try:
+        mb.constructors().allow_implicit_conversion = False
+    except:
+        pass
+
+    try:
+        mb.casting_operators().exclude()
+    except:
+        pass    
+
     #add our manual implicit conversions to the declaration section
     for conversion in implicitly_convertible:
        mb.add_registration_code("bp::implicitly_convertible< %s, %s >();" % conversion)
 
-def write_wrappers(mb, module, huge_classes):
+def write_wrappers(mb, module, huge_classes, header_files = [] ):
    """This function performs the actual work of writing the wrappers to disk"""
                    
    #make sure that the protected and private member functions and 
    #data aren't wrapped
-   mb.calldefs( access_type_matcher_t( 'protected' ) ).exclude()
-   mb.calldefs( access_type_matcher_t( 'private' ) ).exclude()
+   try:
+       mb.calldefs( access_type_matcher_t( 'protected' ) ).exclude()
+   except:
+       pass
+
+   try:
+       mb.calldefs( access_type_matcher_t( 'private' ) ).exclude()
+   except:
+       pass
  
    #build a code creator - this must be done after the above, as
    #otherwise our modifications above won't take effect
    mb.build_code_creator( module_name="_%s" % module )
 
    #get rid of the standard headers
-   mb.code_creator.replace_included_headers( [] )
+   mb.code_creator.replace_included_headers( header_files )
 
    #give each piece of code the GPL license header
    mb.code_creator.license = "// (C) Christopher Woods, GPL >= 2 License\n"
@@ -370,8 +389,6 @@ def write_wrappers(mb, module, huge_classes):
    #use local directory paths
    mb.code_creator.user_defined_directories.append(".")
 
-   #create all the wrappers for the module in the 
-   #directory "autogen_files"
    mb.split_module( ".", huge_classes )
 
 def needPropertyWrappers(active_headers):

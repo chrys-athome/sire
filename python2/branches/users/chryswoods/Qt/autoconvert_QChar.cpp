@@ -29,6 +29,7 @@
 #include <Python.h>
 
 #include <boost/python.hpp>
+#include <QChar>
 #include <QString>
 #include <QRegExp>
 #include <wchar.h>
@@ -37,45 +38,19 @@
 
 using namespace boost::python;
 
-/** This function converts a QString to a python unicode object
+PyObject* convert(QString const& s);
+
+/** This function converts a QChar to a python (8 bit) str object
 
 */
-PyObject* convert(QString const& s)
+PyObject* convert(QChar const& c)
 {
-    //get Qt to encode the string as UTF8, which python can then decode
-    // - this is probably not as efficient as it could be, but Sire
-    //   is not a text processing app ;-)
-    QByteArray utf8 = s.toUtf8();
-
-    if (utf8.isEmpty())
-        return PyUnicode_DecodeUTF8(0, 0, "strict");
-    else
-    {
-        return PyUnicode_DecodeUTF8(utf8.constData(), utf8.count(), "strict");
-    }
+    return convert( QString(c) );
 }
 
-/** This is the QString __str__ function */
-PyObject* QString__str__(QString const& s)
-{
-    PyObject *unicode_object = convert(s);
-
-    PyObject *str_object = PyUnicode_AsUTF8String(unicode_object);
-
-    Py_DECREF(unicode_object);
-
-    if (str_object == 0)
-    {
-        Py_DECREF(str_object);
-        boost::python::throw_error_already_set();
-    }    
-
-    return str_object;
-}
-
-/** This function convert a python string or unicode to a QString */
-void QString_from_python_str_or_unicode( PyObject* obj_ptr,
-                                         converter::rvalue_from_python_stage1_data* data )
+/** This function convert a python string or unicode to a QChar */
+void QChar_from_python_str_or_unicode( PyObject* obj_ptr,
+                                       converter::rvalue_from_python_stage1_data* data )
 {
     // First, convert the object to a python unicode object
     PyObject* unicode_object;
@@ -128,29 +103,41 @@ void QString_from_python_str_or_unicode( PyObject* obj_ptr,
 
     Py_DECREF(utf8);
 
-    void* storage = ((converter::rvalue_from_python_storage<QString>*) data)->storage.bytes;
-    new (storage) QString(unicode_qstring);
+    QChar unicode_qchar;
+    
+    if (unicode_qstring.count() > 0)
+       unicode_qchar = unicode_qstring[0];
+
+    void* storage = ((converter::rvalue_from_python_storage<QChar>*) data)->storage.bytes;
+    new (storage) QChar(unicode_qchar);
     data->convertible = storage;
 }
 
 /** The actual struct used to control the conversion */
-struct QString_from_python
+struct QChar_from_python
 {
-    QString_from_python()
+    QChar_from_python()
     {
         converter::registry::push_back(  &convertible,
                                          &construct,
-                                         type_id<QString>() );
+                                         type_id<QChar>() );
     }
 
     /** Can the python object pointed to by 'obj_ptr' be converted
-        to a QString?
+        to a QChar?
     */
     static void* convertible(PyObject* obj_ptr)
     {
-        if ( PyString_Check(obj_ptr) or
-             PyUnicode_Check(obj_ptr) )
-                return obj_ptr;
+        if ( PyString_Check(obj_ptr) )
+        {
+             if (PyString_GET_SIZE(obj_ptr) == 1){ return obj_ptr; }
+             else{ return 0; }
+        }
+        else if ( PyUnicode_Check(obj_ptr) )
+        {
+             if (PyUnicode_GET_SIZE(obj_ptr) == 1){ return obj_ptr; }
+             else{ return 0; }
+        }
         else
             return 0;
     }
@@ -160,19 +147,12 @@ struct QString_from_python
                             converter::rvalue_from_python_stage1_data* data)
     {
         //use python-qt conversion function
-        QString_from_python_str_or_unicode(obj_ptr, data);
+        QChar_from_python_str_or_unicode(obj_ptr, data);
     }
 };
 
-/** This exports the QString wrapper. I use the python-qt conversion to convert
-    from python to QString, then a full wrapping of QString to convert from
-    QString to python. This allows me to have a fully-featured QString type
-    that is visible from python.
-
-    @author Christopher Woods
-*/
-void autoconvert_QString()
+void autoconvert_QChar()
 {
     //code to get a QString from a python object
-    QString_from_python();
+    QChar_from_python();
 }
