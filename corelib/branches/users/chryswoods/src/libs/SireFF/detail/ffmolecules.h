@@ -449,7 +449,7 @@ FFMolecule<PTNL>::FFMolecule(const PartialMolecule &molecule,
 template<class PTNL>
 SIRE_OUTOFLINE_TEMPLATE
 FFMolecule<PTNL>::FFMolecule(const PartialMolecule &molecule,
-                             const FFMolecule<PTNL>::Parameters &parameters)
+                             const typename FFMolecule<PTNL>::Parameters &parameters)
                  : FFMoleculeBase(molecule),
                    params(parameters)
 {}

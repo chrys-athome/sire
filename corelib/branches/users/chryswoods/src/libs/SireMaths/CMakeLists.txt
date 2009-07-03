@@ -80,7 +80,6 @@ set_target_properties (SireMaths PROPERTIES
 target_link_libraries (SireMaths
                        SireID
                        SireBase
-                       SireStream
                        SireUnits
                        SireStream
                        ${GSL_LIBRARIES}

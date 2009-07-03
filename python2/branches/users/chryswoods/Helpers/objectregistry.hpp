@@ -22,6 +22,9 @@ public:
     static QByteArray save(const boost::python::object &object);
     static void save(const boost::python::object &object, const QString &filename);
 
+    virtual ObjectRegistry* clone() const=0;
+    virtual const char* what() const=0;
+
     template<class T>
     static void registerConverterFor();
 
@@ -32,7 +35,7 @@ protected:
                             const boost::python::object &object) const=0;
 
     static void registerConverter(const char *type_name,
-                                  ObjectRegistry *converter);
+                                  const ObjectRegistry &converter);
 
     static const ObjectRegistry& getConverter(const QString &type_name);
 
@@ -64,6 +67,10 @@ public:
     ~ObjectRegistryT()
     {}
 
+    ObjectRegistry* clone() const;
+
+    const char* what() const;
+
 protected:
     boost::python::object convertFromVoid(const void * const ptr) const
     {
@@ -90,6 +97,20 @@ private:
     ObjectRegistryT() : ObjectRegistry()
     {}
 };
+    
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+ObjectRegistry* ObjectRegistryT<T>::clone() const
+{
+    return new ObjectRegistryT<T>();
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const char* ObjectRegistryT<T>::what() const
+{
+    return T::typeName();
+}
 
 }
 
@@ -97,7 +118,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void ObjectRegistry::registerConverterFor()
 {
-    ObjectRegistry::registerConverter( T::typeName(), new detail::ObjectRegistryT<T>() );
+    ObjectRegistry::registerConverter( T::typeName(), detail::ObjectRegistryT<T>() );
 }
 
 SIRE_END_HEADER

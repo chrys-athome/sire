@@ -186,6 +186,23 @@ def has_clone_function(t):
     except:
         return False
 
+
+def is_Index_T_(c):
+    for base in c.bases:
+        if str(base.related_class).find("SireID::Index_T_") != -1:
+            return True
+
+    return False
+
+
+def fix_Index_T_(c):
+   """The Index_T_<T> classes need extra work to wrap... This function does that work"""
+   try:
+       c.operators("==").exclude()
+   except:
+       pass
+
+
 def export_class(mb, classname, aliases, includes, special_code, auto_str_function=True):
    """Do all the work necessary to allow the class called 'classname'
       to be exported, using the supplied aliases, and using the 
@@ -299,6 +316,10 @@ def export_class(mb, classname, aliases, includes, special_code, auto_str_functi
                   
           except AttributeError:
               pass
+
+   #If this is an Index_T_ class then fix the operators
+   if is_Index_T_(c):
+      fix_Index_T_(c)
 
    #if this class can be streamed to a QDataStream then add
    #streaming operators
@@ -579,9 +600,10 @@ if __name__ == "__main__":
 
         FILE.close()
 
-    #now export all of the operators
+    #now export all of the namespace-level operators
     for operator in mb.operators():
-        if str(operator).find(module) != -1:
+        p = str(operator.parent)
+        if p.find(module) != -1 and p.find("[namespace]") != -1:
             operator.include()        
 
     #write the code that wraps up the Property classes

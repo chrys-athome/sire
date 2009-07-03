@@ -1,6 +1,8 @@
 
-//mpich requires that mpi.h is included first
-#include <mpi.h>
+#ifdef SIRE_USE_MPI
+    //mpich requires that mpi.h is included first
+    #include <mpi.h>
+#endif
 
 #include <Python.h>
 
@@ -96,8 +98,10 @@ int main(int argc, char **argv)
         //now read the number of OpenMP threads per process
         int nomp = 1;
 
-        //start MPI - ABSOLUTELY must use multi-threaded MPI
-        ::MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
+        #ifdef SIRE_USE_MPI
+            //start MPI - ABSOLUTELY must use multi-threaded MPI
+            ::MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
+        #endif
 
         //are we the first node in the cluster?
         if (Cluster::getRank() == 0)
@@ -111,9 +115,15 @@ int main(int argc, char **argv)
 
             //start the cluster - on the master we need one extra
             //thread for the Python interpreter
-            ::MPI::COMM_WORLD.Barrier();
+            #ifdef SIRE_USE_MPI
+                ::MPI::COMM_WORLD.Barrier();
+            #endif
+
             Cluster::start(ppn);
-            ::MPI::COMM_WORLD.Barrier();
+
+            #ifdef SIRE_USE_MPI
+                ::MPI::COMM_WORLD.Barrier();
+            #endif
 
             //run python - each argument is a python script
             if (argc >= 2)
@@ -171,9 +181,15 @@ int main(int argc, char **argv)
 
             //exec the Cluster - this starts the cluster and then
             //blocks while it is running
-            ::MPI::COMM_WORLD.Barrier();
+            #ifdef SIRE_USE_MPI
+                ::MPI::COMM_WORLD.Barrier();
+            #endif
+ 
             Cluster::start(ppn);
-            ::MPI::COMM_WORLD.Barrier();
+
+            #ifdef SIRE_USE_MPI
+                ::MPI::COMM_WORLD.Barrier();
+            #endif
 
             Cluster::wait();
             status = 0;
@@ -198,21 +214,27 @@ int main(int argc, char **argv)
     }
 
     //shutdown the cluster
-    if (::MPI::COMM_WORLD.Get_rank() == 0)
-    {
+    #ifdef SIRE_USE_MPI
+        if (::MPI::COMM_WORLD.Get_rank() == 0)
+        {
+            printf("Shutting down the cluster...\n");
+            Cluster::shutdown();
+        }
+
+        //wait for all of the MPI jobs to finish
+        ::MPI::COMM_WORLD.Barrier();
+
+        if (::MPI::COMM_WORLD.Get_rank() == 0)
+        {
+            printf("The entire cluster has now shutdown.\n");
+        }
+
+        ::MPI::Finalize();
+    #else
         printf("Shutting down the cluster...\n");
         Cluster::shutdown();
-    }
-
-    //wait for all of the MPI jobs to finish
-    ::MPI::COMM_WORLD.Barrier();
-
-    if (::MPI::COMM_WORLD.Get_rank() == 0)
-    {
         printf("The entire cluster has now shutdown.\n");
-    }
-
-    ::MPI::Finalize();
+    #endif
 
     //now shutdown Python - currently commented out
     //as calling these functions causes a bus error...

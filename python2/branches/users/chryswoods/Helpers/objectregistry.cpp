@@ -3,6 +3,8 @@
 
 #include <QMutex>
 
+#include <cstdlib>
+
 #include "SireStream/streamdata.hpp"
 
 #include "SireError/errors.h"
@@ -157,23 +159,25 @@ void ObjectRegistry::save(const object &obj, const QString &filename)
 
 Q_GLOBAL_STATIC( QMutex, registryMutex );
  
-static QHash< QString, shared_ptr<ObjectRegistry> > *registry(0);
+typedef QHash< QString,ObjectRegistry* > ObjectRegistryType;
 
-static QHash< QString,shared_ptr<ObjectRegistry> >& getRegistry()
+Q_GLOBAL_STATIC( ObjectRegistryType, objectRegistry );
+
+static ObjectRegistryType& getRegistry()
 { 
-    if (not registry)
-    {
-       registry = new QHash< QString,shared_ptr<ObjectRegistry> >();
-    }
+    ObjectRegistryType *registry = objectRegistry();
+    
+    if (registry == 0)
+        std::abort();
 
     return *registry;
 }
 
 void ObjectRegistry::registerConverter(const char *type_name,
-                                       ObjectRegistry *converter)
+                                       const ObjectRegistry &converter)
 {
     QMutexLocker lkr( registryMutex() );
-    getRegistry().insert( type_name, shared_ptr<ObjectRegistry>(converter) );   
+    getRegistry().insert( type_name, converter.clone() );   
 }
 
 const ObjectRegistry& ObjectRegistry::getConverter(const QString &type_name)
@@ -189,6 +193,13 @@ const ObjectRegistry& ObjectRegistry::getConverter(const QString &type_name)
                CODELOC );
     }
 
-    return *(getRegistry().constFind(type_name)->get());
+    const ObjectRegistry *registry = *(getRegistry().constFind(type_name));
+    
+    if (registry == 0)
+        throw SireError::program_bug( QObject::tr(
+                "How did the registry become null for %1?").arg(type_name), 
+                    CODELOC );
+
+    return *registry;
 }
 
