@@ -93,6 +93,21 @@ save_sire_variable( "SIRE_CMAKEFILES" "${SIRE_CMAKEFILES}" )
 # Path to the project's extra cmake files
 set (CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/build/cmake)
 
+# Options to pass to 'strip' when stripping the libraries
+# (on linux, aix and mac need to use '-x' to ensure we leave
+#  the global symbols)
+set ( SIRE_STRIP_OPTIONS "-x" CACHE STRING "Options to pass to 'strip'" )
+save_sire_variable( "SIRE_STRIP_OPTIONS" "${SIRE_STRIP_OPTIONS}" )
+
+set ( SIRE_STRIP_COMMAND "${CMAKE_STRIP} ${SIRE_STRIP_OPTIONS}" )
+
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/cmake_strip.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/cmake_strip"
+  IMMEDIATE @ONLY)
+
+set ( CMAKE_STRIP "${CMAKE_CURRENT_BINARY_DIR}/cmake_strip" )
+
 # Add option to turn on or off symbol hiding
 option ( SIRE_SYMBOL_HIDING "Turn on library symbol hiding" ON )
 save_sire_variable( "SIRE_SYMBOL_HIDING" "${SIRE_SYMBOL_HIDING}" )
@@ -397,3 +412,13 @@ install (FILES ${SIRE_VARIABLES_FILE}
 
 install (FILES ${CMAKE_CURRENT_BINARY_DIR}/sire_config.h
          DESTINATION ${SIRE_INCLUDES})
+
+# These commands are used to create an 'uninstall' target
+# (this is copied from the vtk.org wiki)
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/cmake_uninstall.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+  IMMEDIATE @ONLY)
+
+add_custom_target(uninstall
+  "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")

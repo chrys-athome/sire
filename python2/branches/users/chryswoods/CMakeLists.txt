@@ -58,6 +58,15 @@ message( STATUS "Sire root = ${SIRE_INSTALL_PREFIX}" )
 message( STATUS "Header files in ${SIRE_INCLUDE_DIR}" )
 message( STATUS "Libraries in ${SIRE_INSTALL_PREFIX}/${SIRE_LIBS}" )
 
+set ( SIRE_STRIP_COMMAND "${CMAKE_STRIP} ${SIRE_STRIP_OPTIONS}" )
+
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/cmake_strip.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/cmake_strip"
+  IMMEDIATE @ONLY)
+
+set ( CMAKE_STRIP "${CMAKE_CURRENT_BINARY_DIR}/cmake_strip" )
+
 # Make sure that we are using the same compiler as that used to compile Sire
 option (SIRE_CHECK_COMPILER "Turn off to skip the compiler check" ON)
 
@@ -249,3 +258,14 @@ add_subdirectory (sire_ipython)
 install( FILES __init__.py
          DESTINATION ${SIRE_PYTHON}/Sire 
        )
+
+# These commands are used to create an 'uninstall' target
+# (this is copied from the vtk.org wiki)
+configure_file(
+  "${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/cmake_uninstall.cmake.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+  IMMEDIATE @ONLY)
+
+add_custom_target(uninstall
+  "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
+

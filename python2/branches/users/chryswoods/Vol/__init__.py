@@ -9,6 +9,7 @@
 ##
 
 import Sire.Base
+import Sire.Maths
 import Sire.Units
 
 # Import all of the classes and functions from the C++ library

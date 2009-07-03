@@ -64,6 +64,12 @@ if (SIRE_INCLUDE_DIR)
     #Read the whole file
     set (SIRE_VERSION 0)
     set (SIRE_LIB_VERSION "")
+
+    if ( NOT EXISTS "${SIRE_INCLUDE_DIR}/sire_version.h" )
+        message( FATAL_ERROR "Cannot find ${SIRE_INCLUDE_DIR}/sire_version.h - has "
+                             "Sire been removed since you last ran cmake? Is it installed properly?")
+    endif()
+
     file (READ "${SIRE_INCLUDE_DIR}/sire_version.h" _SIRE_VERSION_H_CONTENTS)
 
     string(REGEX REPLACE ".*#define SIRE_VERSION[ ]+([0-9]+).*" 
@@ -174,6 +180,17 @@ if (SIRE_FOUND)
     endif (NOT SIRE_FIND_QUIETLY)
 
     set (SIRE_VERSION "${SIRE_VERSION_MAJOR}.${SIRE_VERSION_MINOR}.${SIRE_VERSION_PATCH}")
+
+    set ( SIRE_LIB_CMAKE "${SIRE_INCLUDE_DIR}/cmake/SireLibraries.cmake" )
+    set ( SIRE_COMP_CMAKE "${SIRE_INCLUDE_DIR}/cmake/SireCompileVariables.cmake" )
+
+    if ( NOT EXISTS "${SIRE_LIB_CMAKE}" )
+        message(FATAL_ERROR "Cannot find ${SIRE_LIB_CMAKE} - has Sire been installed correctly?")
+    endif()
+
+    if ( NOT EXISTS "${SIRE_COMP_CMAKE}" )
+        message(FATAL_ERROR "Cannot find ${SIRE_COMP_CMAKE} - has Sire been installed correctly?")
+    endif()
 
     include ("${SIRE_INCLUDE_DIR}/cmake/SireLibraries.cmake")
     include ("${SIRE_INCLUDE_DIR}/cmake/SireCompileVariables.cmake")
