@@ -16,8 +16,9 @@ macro ( EXPORT_THIS_SYMBOL_ONLY  _symbol _mangled_symbol )
   elseif ( ${CMAKE_CXX_COMPILER} MATCHES "xlC" )
     # we need to create an 'exported_symbols' file that just contains
     # this symbol
-    file( WRITE "exported_symbols" "${_symbol}\n" )
-    set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -bE:exported_symbols" )
+    set( _filename "${CMAKE_BINARY_DIR}/${_symbol}_export_file" )
+    file( WRITE "${_filename}" "${_symbol}\n" )
+    set( CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -bE:${_filename}" )
 
   elseif ( ${CMAKE_CXX_COMPILER} MATCHES "icpc" )
 

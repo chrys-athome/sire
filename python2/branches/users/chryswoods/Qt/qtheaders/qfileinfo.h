@@ -6,6 +6,10 @@
 class QDir;
 class QDateTime;
 
+class QString;
+
+typedef unsigned int uint;
+
 #include "qtheaders/qfile.h"
 
 class QFileInfo
