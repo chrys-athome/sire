@@ -51,6 +51,9 @@ target_link_libraries (Units
                        ${PYTHON_LIBRARIES}
                       )
 
+include( LimitSirePythonExportSymbols )
+export_this_symbol_only( "init_Units" "_init_Units" )
+
 # installation
 set( INSTALLDIR ${SIRE_PYTHON}/Sire/Units )
 

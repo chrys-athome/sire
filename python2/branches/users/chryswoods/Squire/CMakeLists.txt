@@ -46,6 +46,9 @@ target_link_libraries (Squire
                        ${PYTHON_LIBRARIES}
                       )
 
+include( LimitSirePythonExportSymbols )
+export_this_symbol_only( "init_Squire" "_init_Squire" )
+
 # installation
 set( INSTALLDIR ${SIRE_PYTHON}/Sire/Squire )
 

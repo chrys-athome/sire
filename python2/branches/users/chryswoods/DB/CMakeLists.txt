@@ -46,6 +46,9 @@ target_link_libraries (DB
                        ${PYTHON_LIBRARIES}
                       )
 
+include( LimitSirePythonExportSymbols )
+export_this_symbol_only( "init_DB" "_init_DB" )
+
 # installation
 set( INSTALLDIR ${SIRE_PYTHON}/Sire/DB )
 

@@ -46,6 +46,9 @@ target_link_libraries (Base
                        ${BOOST_PYTHON_LIBRARY}
                       )
 
+include( LimitSirePythonExportSymbols )
+export_this_symbol_only( "init_Base" "_init_Base" )
+
 # installation
 set( INSTALLDIR ${SIRE_PYTHON}/Sire/Base )
 

@@ -46,6 +46,9 @@ target_link_libraries (System
                        ${PYTHON_LIBRARIES}
                       )
 
+include( LimitSirePythonExportSymbols )
+export_this_symbol_only( "init_System" "_init_System" )
+
 # installation
 set( INSTALLDIR ${SIRE_PYTHON}/Sire/System )
 

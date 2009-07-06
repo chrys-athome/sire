@@ -46,6 +46,10 @@ target_link_libraries (CAS
                        ${PYTHON_LIBRARIES}
                       )
 
+
+include( LimitSirePythonExportSymbols )
+export_this_symbol_only( "init_CAS" "_init_CAS" )
+
 # installation
 set( INSTALLDIR ${SIRE_PYTHON}/Sire/CAS )
 

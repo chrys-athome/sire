@@ -46,6 +46,9 @@ target_link_libraries (ID
                        ${PYTHON_LIBRARIES}
                       )
 
+include( LimitSirePythonExportSymbols )
+export_this_symbol_only( "init_ID" "_init_ID" )
+
 # installation
 set( INSTALLDIR ${SIRE_PYTHON}/Sire/ID )
 

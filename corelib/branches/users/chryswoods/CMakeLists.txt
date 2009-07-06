@@ -184,6 +184,8 @@ set( SIRE_SHARE_LINK_FLAGS "" CACHE INTERNAL "Flags needed to link shared librar
 set( SIRE_STATIC_LINK_FLAGS "" CACHE INTERNAL "Flags needed to link static libraries" )
 set( SIRE_EXE_LINK_FLAGS "" CACHE INTERNAL "Flags needed to link executables" )
 
+include (CheckCXXCompilerFlag)
+
 # Add compiler specific flags
 if ( CMAKE_COMPILER_IS_GNUCC )
 
@@ -257,11 +259,22 @@ if ( CMAKE_COMPILER_IS_GNUCC )
       set ( SIRE_VISIBILITY_FLAGS "-DSIRE_NO_VISIBILITY_AVAILABLE" ) 
     endif()
 
+    # does the compiler support creation of position independent executables (pie)
+    # (these protect against overflow attacks as load libraries at random addresses)
+    check_cxx_compiler_flag(-fPIE HAVE_FPIE_SUPPORT)
+
+    if (HAVE_FPIE_SUPPORT)
+      message( STATUS "gcc has PIE support" )
+      set( SIRE_PLATFORM_FLAGS "${SIRE_PLATFORM_FLAGS} -fPIE" )
+      set( SIRE_SHARE_LINK_FLAGS "${SIRE_SHARE_LINK_FLAGS} -pie" )
+      set( SIRE_EXE_LINK_FLAGS "${SIRE_EXE_LINK_FLAGS} -pie" )
+    endif()
+
     # Ensure that the libraries don't contain any undefined symbols
     if(APPLE)
-        set ( SIRE_SHARE_LINK_FLAGS "-rdynamic -Wl" )
+        set ( SIRE_SHARE_LINK_FLAGS "${SIRE_SHARE_LINK_FLAGS} -rdynamic -Wl" )
     else(UNIX)
-        set ( SIRE_SHARE_LINK_FLAGS "-rdynamic -Wl,--no-undefined" )
+        set ( SIRE_SHARE_LINK_FLAGS "${SIRE_SHARE_LINK_FLAGS} -rdynamic -Wl,--no-undefined" )
     endif()
 
 elseif ( ${CMAKE_CXX_COMPILER} MATCHES "xlC" )

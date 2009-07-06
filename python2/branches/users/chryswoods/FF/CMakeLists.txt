@@ -46,6 +46,9 @@ target_link_libraries (FF
                        ${PYTHON_LIBRARIES}
                       )
 
+include( LimitSirePythonExportSymbols )
+export_this_symbol_only( "init_FF" "_init_FF" )
+
 # installation
 set( INSTALLDIR ${SIRE_PYTHON}/Sire/FF )
 

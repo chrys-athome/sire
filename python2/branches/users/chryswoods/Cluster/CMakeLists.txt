@@ -51,6 +51,9 @@ target_link_libraries (Cluster
                        ${PYTHON_LIBRARIES}
                       )
 
+include( LimitSirePythonExportSymbols )
+export_this_symbol_only( "init_Cluster" "_init_Cluster" )
+
 # installation
 set( INSTALLDIR ${SIRE_PYTHON}/Sire/Cluster )
 

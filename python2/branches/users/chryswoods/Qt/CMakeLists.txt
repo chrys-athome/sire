@@ -46,6 +46,9 @@ set_target_properties (Qt
                          SUFFIX ${PYTHON_MODULE_EXTENSION}
                       )
 
+include( LimitSirePythonExportSymbols )
+export_this_symbol_only( "init_Qt" "_init_Qt" )
+
 # installation
 set( INSTALLDIR ${SIRE_PYTHON}/Sire/Qt )
 

@@ -40,6 +40,10 @@ target_link_libraries (Error
                        ${PYTHON_LIBRARIES}
                       )
 
+
+include( LimitSirePythonExportSymbols )
+export_this_symbol_only( "init_Error" "_init_Error" )
+
 # installation
 set( INSTALLDIR ${SIRE_PYTHON}/Sire/Error )
 

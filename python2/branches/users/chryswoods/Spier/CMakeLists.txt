@@ -48,6 +48,9 @@ if ( SIRE_BUILD_SPIER )
                          ${PYTHON_LIBRARIES}
                         )
 
+  include( LimitSirePythonExportSymbols )
+  export_this_symbol_only( "init_Spier" "_init_Spier" )
+
   # installation
   set( INSTALLDIR ${SIRE_PYTHON}/Sire/Spier )
 

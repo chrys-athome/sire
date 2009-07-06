@@ -46,6 +46,9 @@ target_link_libraries (Move
                        ${PYTHON_LIBRARIES}
                       )
 
+include( LimitSirePythonExportSymbols )
+export_this_symbol_only( "init_Move" "_init_Move" )
+
 # installation
 set( INSTALLDIR ${SIRE_PYTHON}/Sire/Move )
 
