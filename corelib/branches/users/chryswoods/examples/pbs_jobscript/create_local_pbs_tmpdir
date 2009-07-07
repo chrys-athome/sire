@@ -1,0 +1,16 @@
+#!/bin/env python
+
+import sys
+import os
+from socket import gethostname
+
+if len(sys.argv) < 2:
+    print >>sys.stderr,"USAGE: create_local_pbs_tmpdir /path/to/tmpdir"
+    sys.exit(-1)
+
+tmpdir = sys.argv[1]
+
+if not os.path.exists(tmpdir):
+    print "Creating TMPDIR %s on %s..." % (tmpdir, gethostname())
+    os.makedirs(tmpdir)
+

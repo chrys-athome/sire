@@ -65,7 +65,20 @@ CountFlops::ThreadFlops::~ThreadFlops()
     threadFlops()->removeAll(this);
 }
 
-Q_GLOBAL_STATIC( CountFlops, globalCounter )
+CountFlops* CountFlops::global_counter( 0 );
+
+void CountFlops::createGlobalCounter()
+{
+    CountFlops *flops = new CountFlops();
+    
+    QMutexLocker lkr( threadFlopsMutex() );
+    
+    if (global_counter == 0)
+        global_counter = flops;
+        
+    else
+        delete flops;
+}
 
 /** Constructor */
 CountFlops::CountFlops()
@@ -81,6 +94,9 @@ CountFlops::~CountFlops()
 /** Return a mark for the current time and number of flops */
 FlopsMark CountFlops::mark()
 {
+    if (global_counter == 0)
+        CountFlops::createGlobalCounter();
+
     QMutexLocker lkr( threadFlopsMutex() );
 
     int nthreads = threadFlops()->count();
@@ -96,22 +112,7 @@ FlopsMark CountFlops::mark()
     }
 
     return FlopsMark(thread_flops, 
-                     globalCounter()->flop_timer.elapsed());
-}
-
-/** Add 'nflops' floating point operations to the count of floating
-    point operations for this thread */
-void CountFlops::addFlops(int nflops)
-{
-    ThreadFlops *ptr = (ThreadFlops*)(pthread_getspecific(globalCounter()->thread_key));
-    
-    if (ptr == 0)
-    {
-        ptr = new ThreadFlops();
-        pthread_setspecific(globalCounter()->thread_key, ptr);
-    }
-    
-    ptr->nflops += nflops;
+                     global_counter->flop_timer.elapsed());
 }
 
 #endif // SIRE_TIME_ROUTINES

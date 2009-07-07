@@ -72,21 +72,6 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, SireMaths::Vector &vec
     return ds;
 }
 
-/** Create the vector (val,val,val) */
-Vector::Vector(double val)
-{
-    for (int i=0; i<3; i++)
-        sc[i] = val;
-}
-
-/** Create the vector (xpos,ypos,zpos) */
-Vector::Vector(double x, double y, double z)
-{
-    sc[0] = x;
-    sc[1] = y;
-    sc[2] = z;
-}
-
 /** Construct from a tuple of three values */
 Vector::Vector( const tuple<double,double,double> &pos )
 {
@@ -108,82 +93,6 @@ Vector::Vector(const Vector& other)
 Vector::Vector(const QString &str)
 {
     *this = Vector::fromString(str);
-}
-
-/** Destructor */
-Vector::~Vector()
-{}
-
-/** Copy assignment operator */
-const Vector& Vector::operator=(const Vector &other)
-{
-    quickCopy<double>(sc, other.sc, 4);
-
-    return *this;
-}
-
-/** Comparison operator */
-bool Vector::operator==(const Vector &other) const
-{
-    return &other == this or
-           (sc[0] == other.sc[0] and sc[1] == other.sc[1] and
-            sc[2] == other.sc[2]);
-}
-
-/** Comparison operator */
-bool Vector::operator!=(const Vector &other) const
-{
-    return &other != this and
-           (sc[0] != other.sc[0] or sc[1] != other.sc[1] or
-            sc[2] != other.sc[2]);
-}
-
-/** Return a raw pointer to the array of coordinates */
-const double* Vector::data() const
-{
-    return &(sc[0]);
-}
-
-/** Return a raw pointer to the array of coordinates */
-const double* Vector::constData() const
-{
-    return &(sc[0]);
-}
-
-/** Return the x component of the vector */
-double Vector::x() const
-{
-    return sc[0];
-}
-
-/** Return the y component of the vector */
-double Vector::y() const
-{
-    return sc[1];
-}
-
-/** Return the z component of the vector */
-double Vector::z() const
-{
-    return sc[2];
-}
-
-/** Return the length of the vector */
-double Vector::length() const
-{
-    return std::sqrt( pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]) );
-}
-
-/** Return the length^2 of the vector */
-double Vector::length2() const
-{
-    return pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]);
-}
-
-/** Return the inverse of the length of the vector */
-double Vector::invLength() const
-{
-    return double(1) / std::sqrt( pow_2(sc[0]) + pow_2(sc[1]) + pow_2(sc[2]) );
 }
 
 /** Return the inverse length squared */
@@ -648,31 +557,12 @@ Matrix Vector::metricTensor() const
                    -xz, -yz, x2 + y2 );
 }
 
-/** Increment, decrement, negate etc. */
-const Vector& Vector::operator+=(const Vector &other)
+/** Return the multiple of this vector with the matrix 'm' */
+const Vector SIREMATHS_EXPORT SireMaths::operator*(const Matrix &m, const Vector &p)
 {
-    for (int i=0; i<3; i++)
-        sc[i] += other.sc[i];
-
-    return *this;
-}
-
-/** Increment, decrement, negate etc. */
-const Vector& Vector::operator-=(const Vector &other)
-{
-    for (int i=0; i<3; i++)
-        sc[i] -= other.sc[i];
-
-    return *this;
-}
-
-/** Increment, decrement, negate etc. */
-const Vector& Vector::operator*=(const double &val)
-{
-    for (int i=0; i<3; i++)
-        sc[i] *= val;
-
-    return *this;
+    return Vector(m.xx*p.sc[0] + m.yx*p.sc[1] + m.zx*p.sc[2],
+                  m.xy*p.sc[0] + m.yy*p.sc[1] + m.zy*p.sc[2],
+                  m.xz*p.sc[0] + m.yz*p.sc[1] + m.zz*p.sc[2]);
 }
 
 /** Increment, decrement, negate etc. */
@@ -689,36 +579,6 @@ const Vector& Vector::operator/=(const double &val)
 }
 
 /** Increment, decrement, negate etc. */
-Vector Vector::operator-() const
-{
-    return Vector(-sc[0],-sc[1],-sc[2]);
-}
-
-/** Increment, decrement, negate etc. */
-const Vector SIREMATHS_EXPORT SireMaths::operator+(const Vector &p1, const Vector &p2)
-{
-    return Vector(p1.sc[0]+p2.sc[0], p1.sc[1]+p2.sc[1], p1.sc[2]+p2.sc[2]);
-}
-
-/** Increment, decrement, negate etc. */
-const Vector SIREMATHS_EXPORT SireMaths::operator-(const Vector &p1, const Vector &p2)
-{
-    return Vector(p1.sc[0]-p2.sc[0], p1.sc[1]-p2.sc[1], p1.sc[2]-p2.sc[2]);
-}
-
-/** Increment, decrement, negate etc. */
-const Vector SIREMATHS_EXPORT SireMaths::operator*(const Vector &p1, double c)
-{
-    return Vector(p1.sc[0]*c, p1.sc[1]*c, p1.sc[2]*c);
-}
-
-/** Increment, decrement, negate etc. */
-const Vector SIREMATHS_EXPORT SireMaths::operator*(double c, const Vector &p1)
-{
-    return Vector(p1.sc[0]*c, p1.sc[1]*c, p1.sc[2]*c);
-}
-
-/** Increment, decrement, negate etc. */
 const Vector SIREMATHS_EXPORT SireMaths::operator/(const Vector &p1, double c)
 {
     if (isZero(c))
@@ -726,14 +586,6 @@ const Vector SIREMATHS_EXPORT SireMaths::operator/(const Vector &p1, double c)
             "Cannot divide a vector by zero! %1 / 0 is a error!").arg(p1.toString()),CODELOC);
 
     return Vector(p1.sc[0]/c, p1.sc[1]/c, p1.sc[2]/c);
-}
-
-/** Return the multiple of this vector with the matrix 'm' */
-const Vector SIREMATHS_EXPORT SireMaths::operator*(const Matrix &m, const Vector &p)
-{
-    return Vector(m.xx*p.sc[0] + m.yx*p.sc[1] + m.zx*p.sc[2],
-                  m.xy*p.sc[0] + m.yy*p.sc[1] + m.zy*p.sc[2],
-                  m.xz*p.sc[0] + m.yz*p.sc[1] + m.zz*p.sc[2]);
 }
 
 const char* Vector::typeName()

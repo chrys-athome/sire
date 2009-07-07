@@ -35,7 +35,9 @@
 #include <QVector>
 #include <QMutex>
 
-#include <pthread.h>
+#ifdef SIRE_TIME_ROUTINES
+#include <pthread.h>  // CONDITIONAL_INCLUDE 
+#endif
 
 SIRE_BEGIN_HEADER
 
@@ -114,11 +116,39 @@ public:
     static FlopsMark mark();
 
 private:
+    static CountFlops *global_counter;
+
+    static void createGlobalCounter();
+
     pthread_key_t thread_key;
     
     /** The timer used to get the flop rate */
     QTime flop_timer;
 };
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+/** Add 'nflops' floating point operations to the count of floating
+    point operations for this thread */
+inline void CountFlops::addFlops(int nflops)
+{
+    if (global_counter == 0)
+    {
+        CountFlops::createGlobalCounter();
+    }
+
+    ThreadFlops *ptr = (ThreadFlops*)(pthread_getspecific(global_counter->thread_key));
+    
+    if (ptr == 0)
+    {
+        ptr = new ThreadFlops();
+        pthread_setspecific(global_counter->thread_key, ptr);
+    }
+    
+    ptr->nflops += nflops;
+}
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 #endif //SIRE_TIME_ROUTINES
 
