@@ -15,6 +15,8 @@ set ( SIRESYSTEM_HEADERS
       constraints.h
       checkpoint.h
       errors.h
+      identityconstraint.h
+      moleculeconstraint.h
       monitorcomponent.h
       monitorcomponents.h
       monitorid.h
@@ -23,6 +25,7 @@ set ( SIRESYSTEM_HEADERS
       monitormonitor.h
       monitorname.h
       rdfmonitor.h
+      spacewrapper.h
       sysid.h
       sysidentifier.h
       sysidx.h
@@ -41,12 +44,15 @@ set ( SIRESYSTEM_SOURCES
       constraints.cpp
       checkpoint.cpp
       errors.cpp
+      identityconstraint.cpp
+      moleculeconstraint.cpp
       monitorcomponent.cpp
       monitorcomponents.cpp
       monitorid.cpp
       monitoridentifier.cpp
       monitormonitor.cpp
       rdfmonitor.cpp
+      spacewrapper.cpp
       sysid.cpp
       sysidentifier.cpp
       system.cpp

@@ -98,13 +98,11 @@ public:
     
     virtual Constraint* clone() const=0;
     
-    virtual QString toString() const=0;
-    
     virtual bool apply(System &system) const=0;
 
-    virtual bool isSatisfied(System &system) const=0;
+    virtual bool isSatisfied(const System &system) const=0;
     
-    void assertSatisfied(System &system) const;
+    void assertSatisfied(const System &system) const;
     
     static const NullConstraint& null();
     
@@ -138,7 +136,7 @@ public:
     
     QString toString() const;
     
-    bool isSatisfied(System &system) const;
+    bool isSatisfied(const System &system) const;
     
     bool apply(System &system) const;
 };
@@ -179,7 +177,7 @@ public:
     
     QString toString() const;
     
-    bool isSatisfied(System &system) const;
+    bool isSatisfied(const System &system) const;
     
     bool apply(System &system) const;
 
@@ -232,7 +230,7 @@ public:
     
     const SireCAS::Expression& expression() const;
     
-    bool isSatisfied(System &system) const;
+    bool isSatisfied(const System &system) const;
     
     bool apply(System &system) const;
 
@@ -284,7 +282,7 @@ public:
     
     int stepSize() const;
     
-    bool isSatisfied(System &system) const;
+    bool isSatisfied(const System &system) const;
     
     bool apply(System &system) const;
 
