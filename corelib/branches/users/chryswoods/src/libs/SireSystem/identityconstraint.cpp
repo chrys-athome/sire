@@ -45,7 +45,7 @@ class IdentityPrice
 {
 public:
     IdentityPrice(const DistVector &distvector=DistVector(), 
-                  MolNum molnum, MGNum mgnum);
+                  MolNum molnum);
     
     IdentityPrice(const IdentityPrice &other);
     
@@ -63,6 +63,8 @@ public:
     bool operator>=(const IdentityPrice &other) const;
     
     double distance() const;
+
+    MolNum molNum() const;
     
 private:
     /** The minimum image vector from the molecule to the 
@@ -72,9 +74,6 @@ private:
     
     /** The number of the molecule */
     MolNum molnum;
-    
-    /** The number of the molecule group */
-    MGNum mgnum;
 };
 
 } // end of namespace detail
@@ -87,13 +86,13 @@ using namespace SireSystem::detail;
 /////////
 
 /** Constructor */
-IdentityPrice::IdentityPrice(const DistVector &dvec, MolNum mol_num, MGNum mg_num)
-              : distvec(dvec), molnum(mol_num), mgnum(mg_num)
+IdentityPrice::IdentityPrice(const DistVector &dvec, MolNum mol_num)
+              : distvec(dvec), molnum(mol_num)
 {}
 
 /** Copy constructor */
 IdentityPrice::IdentityPrice(const IdentityPrice &other)
-              : distvec(other.distvec), molnum(other.molnum), mgnum(other.mgnum)
+              : distvec(other.distvec), molnum(other.molnum)
 {}
 
 /** Destructor */
@@ -105,24 +104,33 @@ IdentityPrice& IdentityPrice::operator=(const IdentityPrice &other)
 {
     distvec = other.distvec;
     molnum = other.molnum;
-    mgnum = other.mgnum;
     return *this;
+}
+
+/** Return the distance between the point and the molecule */    
+double IdentityPrice::distance() const
+{
+    return distvec.length();
+}
+
+/** Return the number of the molecule */
+MolNum IdentityPrice::molNum() const
+{
+    return molnum;
 }
 
 /** Equality comparison */
 bool IdentityPrice::operator==(const IdentityPrice &other) const
 {
     return distvec == other.distvec and 
-           molnum == other.molnum and
-           mgnum == other.mgnum;
+           molnum == other.molnum;
 }
 
 /** Inequality comparison */
 bool IdentityPrice::operator!=(const IdentityPrice &other) const
 {
     return distvec != other.distvec or 
-           molnum != other.molnum or
-           mgnum != other.mgnum;
+           molnum != other.molnum;
 }
 
 /** Compare two prices - this is used to provide a unique ordering
@@ -133,9 +141,9 @@ bool IdentityPrice::operator!=(const IdentityPrice &other) const
     have identical minimum image coordinates), if then compares
     the indicies of the molecule groups in the IdentityConstraint
     that contain the molecules, and then if these are equal, then
-    it then compares the index of the molecules in the molecule
-    group - this ensures that there is a 100% unique ordering
-    of prices for all molecules, regardless of the  */
+    it then compares the molecule numbers - this ensures that 
+    there is a 100% unique ordering of prices for all molecules, 
+    regardless of their arrangement  */
 bool IdentityPrice::operator<(const IdentityPrice &other) const
 {
     if (distvec.length() < other.distvec.length())
@@ -158,11 +166,7 @@ bool IdentityPrice::operator<(const IdentityPrice &other) const
                 
                 else if (distvec.z() == other.distvec.z())
                 {
-                    if (molnum.value() < other.molnum.value())
-                        return true;
-                        
-                    else if (molnum.value() == other.molnum.value())
-                        return mgnum.value() < other.mgnum.value();
+                    return (molnum.value() < other.molnum.value());
                 }
             }
         }
@@ -195,11 +199,7 @@ bool IdentityPrice::operator>(const IdentityPrice &other) const
                     
                 else if (distvec.z() == other.distvec.z())
                 {
-                    if (molnum.value() > other.molnum.value())
-                        return true;
-                    
-                    else if (molnum.value() == other.molnum.value())
-                        return mgnum.value() > other.mgnum.value();
+                    return (molnum.value() > other.molnum.value());
                 }
             }
         }
@@ -232,58 +232,50 @@ void IdentityConstraint::recalculatePointPrices(int i, const System &system)
 {
     const Point &point = identity_points.at(i).read();
     
-    int ngroups = molgroups.count();
-    
     const int max_nprices = identity_points.count() + nbuffer;
+        
+    const Space &space = system.property(map["space"]).asA<Space>();
     
     QMap<IdentityPrice,void*> prices;
     
-    IdentityPrice highest_price( DistVector(0), MolNum(0), MGNum(0) );
+    IdentityPrice highest_price( DistVector(0), MolNum(0) );
     
-    for (int mgidx=0; mgidx<ngroups; ++mgidx)
+    for (Molecules::const_iterator it = molgroup.constBegin();
+         it != molgroup.constEnd();
+         ++it)
     {
-        const MoleculeGroup &molgroup = molgroups.at(i).read();
-        const PropertyMap &map = property_maps.at(i);
-        
-        const Space &space = system.property(map["space"]).asA<Space>();
-        
-        for (Molecules::const_iterator it = molgroup.constBegin();
-             it != molgroup.constEnd();
-             ++it)
-        {
-            const ViewsOfMol &mol = *it;
-            
-            DistVector distance = space.calcDistVector( point(), 
-                                                        mol.evaluate().center(map) );
+        const ViewsOfMol &mol = *it;
+          
+        DistVector distance = space.calcDistVector( point(), 
+                                                    mol.evaluate().center(map) );
                                 
-            IdentityPrice price(distance, mol.number(), group.mgNum());
+        IdentityPrice price(distance, mol.number());
                                                                      
-            if (price > highest_price)
-            {
-                if (prices.count() >= max_nprices)
-                    //no need to record this price
-                    continue;
+        if (price > highest_price)
+        {
+            if (prices.count() >= max_nprices)
+                //no need to record this price
+                continue;
                     
-                else
-                {
-                    //record this price, and the fact that it is 
-                    //now the highest price
-                    prices.insert( price, 0 );
-                    highest_price = price;
-                }
-            }
             else
             {
-                //add this price, as it is not the highest
+                //record this price, and the fact that it is 
+                //now the highest price
                 prices.insert( price, 0 );
+                highest_price = price;
+            }
+        }
+        else
+        {
+            //add this price, as it is not the highest
+            prices.insert( price, 0 );
                 
-                if (prices.count() > max_nprices)
-                {
-                    while (prices.count() > max_nprices)
-                        removeHighestPrice(prices);
+            if (prices.count() > max_nprices)
+            {
+                while (prices.count() > max_nprices)
+                    removeHighestPrice(prices);
                         
-                    highest_price = highestPrice(prices);
-                }
+                highest_price = highestPrice(prices);
             }
         }
     }
@@ -305,10 +297,10 @@ void IdentityConstraint::recalculateMoleculePrices(const Molecules &molecules,
         return;
     }
 
-    int ngroups = molgroups.count();
-    
     int npoints = identity_points.count();
     const PointPtr *points_array = identity_points.constData();
+
+    const Space &space = system.property( map["space"] ).asA<Space>();
     
     QMap<IdentityPrice,void*> *prices_array = identity_prices.data();
     
@@ -316,128 +308,43 @@ void IdentityConstraint::recalculateMoleculePrices(const Molecules &molecules,
     
     const int max_nprices = npoints + nbuffer;
     
-    for (int mgidx=0; mgidx<ngroups; ++mgidx)
+    for (Molecules::const_iterator it = molecules.constBegin();
+         it != molecules.constEnd();
+         ++it)
     {
-        const MoleculeGroup &molgroup = molgroups.at(i).read();
-        const PropertyMap &map = property_maps.at(i);
+        if (recalculated_point_prices.count() == npoints)
+            //all points have been recalculated
+            return;
         
-        const Space &space = system.property( map["space"] ).asA<Space>();
-        
-        for (Molecules::const_iterator it = molecules.constBegin();
-             it != molecules.constEnd();
-             ++it)
+        else if (molgroup.contains(it->number()))
         {
-            if (recalculated_point_prices.count() == npoints)
-                //all points have been recalculated
-                return;
-        
-            else if (molgroup.contains(it->number()))
-            {
-                //get the molecule as it exists in this molecule group
-                const ViewsOfMol &mol = molgroup[ it->number() ];
+            //get the molecule as it exists in this molecule group
+            const ViewsOfMol &mol = molgroup[ it->number() ];
 
-                for (int i=0; i<npoints; ++i)
-                {
-                    if (recalculated_point_prices.contains(i))
-                        //we've already completely recalculated this point
-                        continue;
-                        
-                    const Point &point = points_array[i].read();
-                    
-                    QHash<IdentityPrice,void*> &prices = prices_array[i];
-                    
-                    DistVector distance = space.calcDistVector( point(),
-                                                         mol.evaluate().center(map) );
-                                                         
-                    IdentityPrice new_price(distance, molnum, group.mgNum());
-                
-                    IdentityPrice old_price = takePrice(prices, molnum, mgnum);
-                    
-                    if (old_price.isNull())
-                    {
-                        if (new_price < highestPrice(prices))
-                        {
-                            //this molecule has moved into contention
-                            prices.insert(new_price, 0);
-                            
-                            while (prices.count() > max_nprices)
-                                removeHighestPrice(prices);
-                        }
-                    }
-                    else
-                    {
-                        //this molecule is already in contention - has this changed?
-                        if (new_price < old_price or new_price < highestPrice(prices))
-                            //this can't have changed
-                            prices.insert(new_price, 0);
-                        
-                        else
-                        {
-                            //this molecule may have moved out of contention - 
-                            //we need to recalculate prices for this point
-                            this->recalculatePointPrices(i, system);
-                            recalculated_point_prices.insert(i);
-                        
-                            if (recalculated_point_prices.count() == npoints)
-                                //all points have been recalculated
-                                return;
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/** Internal function used to recalculate some of the prices,
-    when only the molecule 'molnum' has changed */
-void IdentityConstraint::recalculateMoleculePrices(MolNum molnum, 
-                                                   const System &system,
-                                                   QSet<int> &recalculated_points)
-{
-    int ngroups = molgroups.count();
-    
-    int npoints = identity_points.count();
-    const PointPtr *points_array = identity_points.constData();
-    
-    const int max_nprices = npoints + nbuffer;
-    
-    for (int mgidx=0; mgidx<ngroups; ++mgidx)
-    {
-        const MoleculeGroup &molgroup = molgroups.at(i).read();
-        const PropertyMap &map = property_maps.at(i);
-        
-        const Space &space = system.property( map["space"] ).asA<Space>();
-        
-        if (molgroup.contains(molnum))
-        {
-            const ViewsOfMol &mol = molgroup[molnum];
-        
             for (int i=0; i<npoints; ++i)
             {
-                if (recalculated_points.contains(i))
-                    //this point has already been completely recalculated
+                if (recalculated_point_prices.contains(i))
+                    //we've already completely recalculated this point
                     continue;
-            
+                        
                 const Point &point = points_array[i].read();
-            
-                QHash<IdentityPrice,void*> &prices = identity_prices[i];
-            
-                //calculate the new distance to this point
-                DistVector distance = space.calcDistVector( point(),
-                                                            mol.evaluate().center(map) );
-            
-                IdentityPrice new_price(distance, molnum, group.mgNum());
-            
-                IdentityPrice old_price = takePrice(prices, molnum, mgnum);
                 
+                QHash<IdentityPrice,void*> &prices = prices_array[i];
+                    
+                DistVector distance = space.calcDistVector( point(),
+                                                     mol.evaluate().center(map) );
+                                                         
+                IdentityPrice new_price(distance, molnum, group.mgNum());
+               
+                IdentityPrice old_price = takePrice(prices, molnum, mgnum);
+                    
                 if (old_price.isNull())
                 {
                     if (new_price < highestPrice(prices))
                     {
                         //this molecule has moved into contention
                         prices.insert(new_price, 0);
-                        
+                            
                         while (prices.count() > max_nprices)
                             removeHighestPrice(prices);
                     }
@@ -448,21 +355,93 @@ void IdentityConstraint::recalculateMoleculePrices(MolNum molnum,
                     if (new_price < old_price or new_price < highestPrice(prices))
                         //this can't have changed
                         prices.insert(new_price, 0);
-                    
+                        
                     else
                     {
                         //this molecule may have moved out of contention - 
                         //we need to recalculate prices for this point
                         this->recalculatePointPrices(i, system);
-                        recalculated_points.insert(i);
+                        recalculated_point_prices.insert(i);
                     
-                        if (recalculated_points.count() == npoints)
+                        if (recalculated_point_prices.count() == npoints)
                             //all points have been recalculated
                             return;
                     }
                 }
-            }
+
+            } // end of loop over points
         }
+
+    } // end of loop over molecules
+}
+
+/** Internal function used to recalculate some of the prices,
+    when only the molecule 'molnum' has changed */
+void IdentityConstraint::recalculateMoleculePrices(MolNum molnum, 
+                                                   const System &system,
+                                                   QSet<int> &recalculated_points)
+{
+    int npoints = identity_points.count();
+    const PointPtr *points_array = identity_points.constData();
+    
+    const int max_nprices = npoints + nbuffer;
+
+    const Space &space = system.property( map["space"] ).asA<Space>();
+    
+    if (molgroup.contains(molnum))
+    {
+        const ViewsOfMol &mol = molgroup[molnum];
+    
+        for (int i=0; i<npoints; ++i)
+        {
+            if (recalculated_points.contains(i))
+                //this point has already been completely recalculated
+                continue;
+        
+            const Point &point = points_array[i].read();
+        
+            QHash<IdentityPrice,void*> &prices = identity_prices[i];
+        
+            //calculate the new distance to this point
+            DistVector distance = space.calcDistVector( point(),
+                                                        mol.evaluate().center(map) );
+        
+            IdentityPrice new_price(distance, molnum, group.mgNum());
+        
+            IdentityPrice old_price = takePrice(prices, molnum, mgnum);
+            
+            if (old_price.isNull())
+            {
+                if (new_price < highestPrice(prices))
+                {
+                    //this molecule has moved into contention
+                    prices.insert(new_price, 0);
+                    
+                    while (prices.count() > max_nprices)
+                        removeHighestPrice(prices);
+                }
+            }
+            else
+            {
+                //this molecule is already in contention - has this changed?
+                if (new_price < old_price or new_price < highestPrice(prices))
+                    //this can't have changed
+                    prices.insert(new_price, 0);
+                
+                else
+                {
+                    //this molecule may have moved out of contention - 
+                    //we need to recalculate prices for this point
+                    this->recalculatePointPrices(i, system);
+                    recalculated_points.insert(i);
+                
+                    if (recalculated_points.count() == npoints)
+                        //all points have been recalculated
+                        return;
+                }
+            }
+
+        } // end of loop over points
     }
 }
 
@@ -478,39 +457,34 @@ void IdentityConstraint::recalculatePrices(const System &system)
     }
 }
 
-/** Internal function used to update all of the molecule
-    groups to the same version used in the passed system */
-bool IdentityConstraint::updateGroups(const System &system)
+/** Internal function used to update the molecule
+    group to the same version used in the passed system */
+bool IdentityConstraint::updateGroup(const System &system)
 {
-    int ngroups = molgroups.count();
-    IdentityGroup *groups_array = molgroups.data();
-    
-    for (int i=0; i<ngroups; ++i)
-    {
-        const IdentityGroup &old_group = groups_array[i];
-        const MoleculeGroup &new_group = system[ old_group.mgNum() ];
+    const MoleculeGroup &old_group = molgroup.read();
+    const MoleculeGroup &new_group = system[ molgroup.mgNum() ];
         
-        if (old_group.version() == new_group.version())
-            //nothing has changed
-            continue;
+    if (old_group.version() == new_group.version())
+        //nothing has changed
+        return false;
             
-        else if (old_group.version().minorVersion() 
-                                    == new_group.version().minorVersion())
-        {
-            //only the coordinates of the molecules have changed
-            // - there is no need to revalidate the group
-            old_group.update(new_group);
-        }
-        else
-        {
-            //there has been a major version change - this means that
-            //molecules may have been added or removed - we need to
-            //revalidate that this molecule group is right for this
-            //constraint
-            this->validateGroup(new_group);
-            
-            old_group.update(new_group);
-        }
+    else if (old_group.version().minorVersion() 
+                                 == new_group.version().minorVersion())
+    {
+        //only the coordinates of the molecules have changed
+        // - there is no need to revalidate the group
+        molgroup = new_group;
+        return true;
+    }
+    else
+    {
+        //there has been a major version change - this means that
+        //molecules may have been added or removed - we need to
+        //revalidate that this molecule group is right for this
+        //constraint
+        this->validateGroup(new_group);
+        molgroup = new_group;
+        return true;
     }
 }
 
@@ -556,37 +530,60 @@ QSet<int> IdentityConstraint::updatePoints(const System &system)
     return changed_points;
 }
 
+/** Internal function that uses the recalculated point prices to 
+    work out what needs to be changed to maintain the identity constraint */
+Molecules IdentityConstraint::applyIdentityConstraint(const System &system) const
+{
+    //loop through prices to see if there is any change in order...
+    
+}
+
 /** Update this constraint so that it uses the same version of 
     the molecules as that used in the passed system, and return
     the molecules that need to be changed to maintain the constaint
     
     Call this function when you don't know which molecules have
     changed since the last update, or when the contents of 
-    molecule groups have changed
+    the molecule group has changed
     
     \throw SireError::incompatible_error
     \throw SireSystem::unachievable_constraint
 */
 Molecules IdentityConstraint::update(const System &system)
 {
-    this->assertCompatibleWith(system);
-    
-    if (system.version() == this->sysVersion())
+    if (system.UID() == this->sysUID() and system.version() == this->sysVersion())
         //nothing has changed
         return Molecules();
 
-    this->updateGroups(system);
-    this->updatePoints(system);
-    this->recalculatePrices(system);
+    IdentityConstraint old_state(*this);
     
-    //use the new prices to apply the constraint
-    Molecules changed_mols = this->applyIdentityConstraint(system);
+    try
+    {
+        bool group_changed = this->updateGroup(system);
+        QSet<int> changed_points = this->updatePoints(system);
+        
+        if (group_changed or (not changed_points.isEmpty()))
+        {
+            //something changed
+            this->recalculatePrices(system);
     
-    //save the fact that we have been updated for this
-    //version of the system
-    MoleculeConstaint::updated(system);
+            //use the new prices to apply the constraint
+            Molecules changed_mols = this->applyIdentityConstraint(system);
     
-    return changed_mols;
+            //save the fact that we have been updated for this
+            //version of the system
+            MoleculeConstaint::updated(system);
+    
+            return changed_mols;
+        }
+    }
+    catch(...)
+    {
+        IdentityConstraint::operator=(old_state);
+        throw;
+    }
+    
+    return Molecules();
 }
 
 /** Update this constraint so that it uses the same version of 
@@ -603,7 +600,11 @@ Molecules IdentityConstraint::update(const System &system, MolNum changed_mol)
 {
     this->assertCompatibleWith(system);
     
-    if (system.version() == this->sysVersion())
+    if (system.UID() != this->sysUID())
+        //the whole system has changed!
+        return this->update(system);
+    
+    else if (system.version() == this->sysVersion())
         //nothing has changed
         return Molecules();
     
@@ -611,34 +612,47 @@ Molecules IdentityConstraint::update(const System &system, MolNum changed_mol)
         //something more than a molecule has changed
         return this->update(system);
 
-    this->updateGroups(system);
-
-    //update all of the points with the new system
-    QSet<int> changed_points = this->updatePoints(system);
-
-    if (changed_points.count() == this->nPoints())
-        //we need to recalculate everything
-        this->recalculatePrices(system);
-    else
+    IdentityConstraint old_state(*this);
+    
+    try
     {
-        //recalculate prices for the changed points
-        foreach (int changed_point, changed_points)
+        bool group_changed = this->updateGroup(system);
+
+        //update all of the points with the new system
+        QSet<int> changed_points = this->updatePoints(system);
+
+        if (changed_points.count() == this->nPoints())
+            //we need to recalculate everything
+            this->recalculatePrices(system);
+        else
         {
-            this->recalculatePointPrices(i, system);
+            //recalculate prices for the changed points
+            foreach (int changed_point, changed_points)
+            {
+                this->recalculatePointPrices(i, system);
+            }
+    
+            if (group_changed)
+                //now recalculate prices for the changed molecule
+                this->recalculateMoleculePrices(changed_mol, system, changed_points);
         }
     
-        //now recalculate prices for the changed molecule
-        this->recalculateMoleculePrices(changed_mol, system, changed_points);
+        //use the new prices to apply the constraint
+        Molecules changed_mols = this->applyIdentityConstraint(system);
+    
+        //save the fact that we have been updated for this
+        //version of the system
+        MoleculeConstaint::updated(system);
+    
+        return changed_mols;
+    }
+    catch(...)
+    {
+        IdentityConstraint::operator=(old_state);
+        throw;
     }
     
-    //use the new prices to apply the constraint
-    Molecules changed_mols = this->applyIdentityConstraint(system);
-    
-    //save the fact that we have been updated for this
-    //version of the system
-    MoleculeConstaint::updated(system);
-    
-    return changed_mols;
+    return Molecules();
 }
 
 /** Update this constraint so that it uses the same version of 
@@ -653,9 +667,11 @@ Molecules IdentityConstraint::update(const System &system, MolNum changed_mol)
 */
 Molecules IdentityConstraint::update(const System &system, const Molecules &molecules)
 {
-    this->assertCompatibleWith(system);
+    if (system.UID() != this->sysUID())
+        //the whole system has changed!
+        return this->update(system);
     
-    if (system.version() == this->sysVersion())
+    else if (system.version() == this->sysVersion())
         //nothing has changed
         return Molecules();
     
@@ -663,34 +679,47 @@ Molecules IdentityConstraint::update(const System &system, const Molecules &mole
         //something more than a molecule has changed
         return this->update(system);
 
-    this->updateGroups(system);
-
-    //update all of the points with the new system
-    QSet<int> changed_points = this->updatePoints(system);
-
-    if (changed_points.count() == this->nPoints())
-        //we need to recalculate everything
-        this->recalculatePrices(system);
-    else
+    IdentityConstraint old_state(*this);
+    
+    try
     {
-        //recalculate prices for the changed points
-        foreach (int changed_point, changed_points)
+        bool group_changed = this->updateGroup(system);
+
+        //update all of the points with the new system
+        QSet<int> changed_points = this->updatePoints(system);
+
+        if (changed_points.count() == this->nPoints())
+            //we need to recalculate everything
+            this->recalculatePrices(system);
+        else
         {
-            this->recalculatePointPrices(i, system);
+            //recalculate prices for the changed points
+            foreach (int changed_point, changed_points)
+            {
+                this->recalculatePointPrices(i, system);
+            }
+    
+            if (group_changed)
+                //now recalculate prices for the changed molecules
+                this->recalculateMoleculePrices(molecules, system, changed_points);
         }
     
-        //now recalculate prices for the changed molecules
-        this->recalculateMoleculePrices(molecules, system, changed_points);
+        //use the new prices to apply the constraint
+        Molecules changed_mols = this->applyIdentityConstraint(system);
+    
+        //save the fact that we have been updated for this
+        //version of the system
+        MoleculeConstaint::updated(system);
+        
+        return changed_mols;
+    }
+    catch(...)
+    {
+        IdentityConstraint::operator=(old_state);
+        throw;
     }
     
-    //use the new prices to apply the constraint
-    Molecules changed_mols = this->applyIdentityConstraint(system);
-    
-    //save the fact that we have been updated for this
-    //version of the system
-    MoleculeConstaint::updated(system);
-    
-    return changed_mols;
+    return Molecules();
 }
 
 /** Return whether or not this constraint affects or uses information
@@ -706,15 +735,7 @@ bool IdentityConstraint::involvesMolecule(MolNum molnum) const
             return true;
     }
     
-    for (QList<MolGroupPtr>::const_iterator it = molgroups.constBegin();
-         it != molgroups.constEnd();
-         ++it)
-    {
-        if (it->read().contains(molnum))
-            return true;
-    }
-    
-    return false;
+    return molgroup.read().contains(molnum);
 }
 
 /** Return whether or not this constraint affects or uses information
@@ -729,18 +750,13 @@ bool IdentityConstraint::involvesMoleculesFrom(const Molecules &molecules) const
         if (points_array[i].read().usesMoleculesIn(molecules))
             return true;
     }
-    
-    for (QList<MolGroupPtr>::const_iterator it = molgroups.constBegin();
-         it != molgroups.constEnd();
+
+    for (Molecules::const_iterator it = molecules.constBegin();
+         it != molecules.constEnd();
          ++it)
     {
-        for (Molecules::const_iterator it2 = molecules.constBegin();
-             it2 != molecules.constEnd();
-             ++it2)
-        {
-            if (it->read().contains(it2.key()))
-                return true;
-        }
+        if (molgroup.read().contains(it.key()))
+            return true;
     }
     
     return false;

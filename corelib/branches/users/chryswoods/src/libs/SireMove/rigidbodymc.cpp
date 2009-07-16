@@ -317,8 +317,6 @@ void RigidBodyMC::performMove(System &system,
         system.update(newmol);
 
         //get the new bias on this molecule
-        smplr.edit().updateFrom(system);
-
         new_bias = smplr.read().probabilityOf(newmol);
     }
     else if (sync_trans)
@@ -387,8 +385,6 @@ void RigidBodyMC::performMove(System &system,
             system.update(newmol);
 
             //get the new bias on this molecule
-            smplr.edit().updateFrom(system);
-
             new_bias = smplr.read().probabilityOf(newmol);
         }
     }
@@ -430,8 +426,6 @@ void RigidBodyMC::performMove(System &system,
         system.update(newmol);
 
         //get the new bias on this molecule
-        smplr.edit().updateFrom(system);
-
         new_bias = smplr.read().probabilityOf(newmol);
     }
 }
@@ -457,9 +451,8 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
             //get the old total energy of the system
             double old_nrg = system.energy( this->energyComponent() );
 
-            //save the old system and sampler
+            //save the old system
             System old_system(system);
-            SamplerPtr old_sampler(smplr);
 
             double old_bias = 1;
             double new_bias = 1;
@@ -474,7 +467,6 @@ void RigidBodyMC::move(System &system, int nmoves, bool record_stats)
             if (not this->test(new_nrg, old_nrg, new_bias, old_bias))
             {
                 //the move has been rejected - reset the state
-                smplr = old_sampler;
                 system = old_system;
             }
 

@@ -29,10 +29,14 @@
 #ifndef SIREBASE_ARRAY2D_HPP
 #define SIREBASE_ARRAY2D_HPP
 
+#include <QStringList>
+
 #include "array2d.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
+
+#include "tostring.h"
 
 SIRE_BEGIN_HEADER
 
@@ -86,6 +90,13 @@ public:
     const T& operator()(quint32 i, quint32 j) const;
     T& operator()(quint32 i, quint32 j);
     const T& at(quint32 i, quint32 j) const;
+
+    QString toString() const;
+
+    void set(quint32 i, quint32 j, const T &value);
+    void setAll(const T &value);
+
+    const T& get(quint32 i, quint32 j) const;
 
     void redimension(quint32 nrows, quint32 ncolumns);
 
@@ -183,6 +194,20 @@ const T& Array2D<T>::at(quint32 i, quint32 j) const
     return Array2D<T>::operator()(i,j);
 }
 
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void Array2D<T>::set(quint32 i, quint32 j, const T &value)
+{
+    this->operator()(i,j) = value;
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const T& Array2D<T>::get(quint32 i, quint32 j) const
+{
+    return this->operator()(i,j);
+}
+
 /** Redimension this Array2D to nrows by ncolumns objects.
     This will keep any existing data in the top left of the
     matrix if the matrix gets bigger, or it will crop any
@@ -202,7 +227,7 @@ void Array2D<T>::redimension(quint32 nrows, quint32 ncolumns)
     ncolumns = qMin(ncolumns, this->nColumns());
     
     T *data = new_array.data();
-    T *old_data = array.constData();
+    const T *old_data = array.constData();
     
     for (quint32 i=0; i<nrows; ++i)
     {
@@ -262,6 +287,61 @@ Array2D<T> Array2D<T>::transpose() const
             new_array[trans.map(j,i)] = old_array[this->map(i,j)];
         }
     }
+    
+    return trans;
+}
+
+/** Set all values in this array equal to 'value' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void Array2D<T>::setAll(const T &value)
+{
+    T *array_data = this->array.data();
+    int count = this->array.count();
+    
+    for (int i=0; i<count; ++i)
+        array_data[i] = value;
+}
+
+/** Return a string representation of this array */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QString Array2D<T>::toString() const
+{
+    if (this->nRows() == 0)
+        return "( )";
+        
+    else if (this->nRows() == 1)
+    {
+        QStringList row;
+        for (quint32 j=0; j<this->nColumns(); ++j)
+        {
+            row.append( Sire::toString( this->operator()(0,j) ) );
+        }
+        
+        return QString("( %1 )").arg( row.join(", ") );
+    }
+
+    QStringList rows;
+    
+    for (quint32 i=0; i<this->nRows(); ++i)
+    {
+        QStringList row;
+        
+        for (quint32 j=0; j<this->nColumns(); ++j)
+        {
+            row.append( Sire::toString( this->operator()(i,j) ) );
+        }
+        
+        if (i == 0)
+            rows.append( QString("/ %1 \\").arg( row.join(", ") ) );
+        else if (i == quint32(this->nRows() - 1))
+            rows.append( QString("\\ %1 /").arg( row.join(", ") ) );
+        else
+            rows.append( QString("| %1 |").arg( row.join(", ") ) );
+    }
+    
+    return rows.join("\n");
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
@@ -297,6 +377,12 @@ QDataStream& operator>>(QDataStream &ds, SireBase::Array2D<T> &array)
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
+
+SIRE_EXPOSE_ALIAS( SireBase::Array2D<double>, SireBase::Array2D_double_ )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+template class SireBase::Array2D<double>;
+#endif
 
 SIRE_END_HEADER
 

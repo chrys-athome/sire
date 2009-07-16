@@ -123,6 +123,17 @@ friend QDataStream& ::operator>>(QDataStream&, IdentityConstraint&);
 public:
     IdentityConstraint();
     
+    IdentityConstraint(const MoleculeGroup &molgroup,
+                       const PropertyMap &map = PropertyMap());
+    
+    IdentityConstraint(const PointRef &point,
+                       const MoleculeGroup &molgroup,
+                       const PropertyMap &map = PropertyMap());
+                       
+    IdentityConstraint(const QList<PointPtr> &points,
+                       const MoleculeGroup &molgroup,
+                       const PropertyMap &map = PropertyMap());
+    
     IdentityConstraint(const IdentityConstraint &other);
     
     ~IdentityConstraint();
@@ -136,9 +147,11 @@ public:
     
     QString toString() const;
     
-    QList<MoleculeGroup> moleculeGroups() const;
+    const MoleculeGroup& moleculeGroup() const;
     
     QVector<PointPtr> points() const;
+
+    const PropertyMap& propertyMap() const;
     
     bool involvesMolecule(MolNum molnum) const;
     bool involvesMoleculesFrom(const Molecules &molecules) const;
@@ -148,25 +161,20 @@ public:
     Molecules update(const System &system, const Molecules &molecules);
 
 private:
-    /** The molecule groups that provide additional
-        candidate molecules for the constraint. *ALL* of the
-        molecules in these groups must have the same atom
-        arrangement, and the same as the molecules that
-        occupy the points (so that their AtomCoords properties can
-        be swapped) */
-    QList<MolGroupPtr> molgroups;
+    /** The molecule group containing the molecules whose identities
+        are being constrained */
+    MolGroupPtr molgroup;
     
     /** The set of points that provide the locations that
-        identify the molecules */
+        identify the molecules. These 'n' points constrain
+        the identity of the first 'n' molecule in 'molgroup'
+        (with point 'i' constraining the identity of 
+        molecule 'i') */
     QVector<PointPtr> identity_points;
 
-    /** The numbers of the molecules that occupy these
-        points - this constraint ensures that these molecules
-        will always be the best ones to be at these points */
-    QVector<MolNum> identity_mols;
-
-    /** The coordinates property of all of the molecules */
-    PropertyName coords_property;
+    /** The property map used to find the properties used
+        by this constraint */
+    PropertyMap map;
     
     /** The prices of best npoints+nbuffer molecules for
         each point (the prices contain the identities

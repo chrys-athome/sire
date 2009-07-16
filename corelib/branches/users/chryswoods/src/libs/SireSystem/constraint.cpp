@@ -98,7 +98,7 @@ Constraint& Constraint::operator=(const Constraint &other)
 
     \throw SireSystem::constraint_error
 */
-void Constraint::assertSatisfied(System &system) const
+void Constraint::assertSatisfied(const System &system) const
 {
     if (not this->isSatisfied(system))
         throw SireSystem::constraint_error( QObject::tr(
@@ -179,7 +179,7 @@ QString NullConstraint::toString() const
 }
 
 /** Return whether this constraint is satisfied */
-bool NullConstraint::isSatisfied(System&) const
+bool NullConstraint::isSatisfied(const System&) const
 {
     return true;
 }
@@ -319,15 +319,17 @@ QString PropertyConstraint::toString() const
 }
 
 /** Return whether or not this constraint is satisfied in the passed system */
-bool PropertyConstraint::isSatisfied(System &system) const
+bool PropertyConstraint::isSatisfied(const System &system) const
 {
     //evaluate the equation
-    Values vals = system.componentValues( eqn.symbols() );
+    System system_copy(system);
+        
+    Values vals = system_copy.componentValues( eqn.symbols() );
     double val = eqn.evaluate(vals);
 
     //does the system have a property with the right value?
-    double sysval = system.property(ffid, propname).asA<VariantProperty>()
-                                                   .convertTo<double>();
+    double sysval = system_copy.property(ffid, propname).asA<VariantProperty>()
+                                                        .convertTo<double>();
                                                    
     return val == sysval;
 }
@@ -461,14 +463,15 @@ const Expression& ComponentConstraint::expression() const
 }
 
 /** Return whether or not this constraint is satisfied in the passed system */
-bool ComponentConstraint::isSatisfied(System &system) const
+bool ComponentConstraint::isSatisfied(const System &system) const
 {
     //evaluate the equation
-    Values vals = system.componentValues( eqn.symbols() );
+    System copy_system(system);
+    Values vals = copy_system.componentValues( eqn.symbols() );
     double val = eqn.evaluate(vals);
 
     //does the system have a component with the right value?
-    double sysval = system.componentValue(constrained_component);
+    double sysval = copy_system.componentValue(constrained_component);
                                                    
     return val == sysval;
 }
@@ -696,13 +699,15 @@ static double getNextWindow(double reference_value,
 }
 
 /** Return whether or not this constraint is satisfied */
-bool WindowedComponent::isSatisfied(System &system) const
+bool WindowedComponent::isSatisfied(const System &system) const
 {
     if (window_values.isEmpty())
         return true;
 
-    double current_val = system.componentValue(constrained_component);
-    double ref_val = system.componentValue(reference_component);
+    System copy_system(system);
+
+    double current_val = copy_system.componentValue(constrained_component);
+    double ref_val = copy_system.componentValue(reference_component);
     
     if (window_values.count() == 1)
         return window_values.at(0) == current_val;

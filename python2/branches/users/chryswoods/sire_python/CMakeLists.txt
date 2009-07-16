@@ -17,7 +17,7 @@ include_directories(${CMAKE_SOURCE_DIR})
 
 if (SIRE_USE_MPI)
   add_definitions( ${SIRE_MPI_DEFINITIONS} )
-  include_directories( ${SIRE_MPI_INCLUDE_PATH} )
+  include_directories( BEFORE SYSTEM ${SIRE_MPI_INCLUDE_PATH} )
 endif()
 
 # Define the sources in Helpers

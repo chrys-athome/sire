@@ -805,8 +805,39 @@ double PrefSampler::probabilityOf(const PartialMolecule &molecule) const
     }
     else
     {
-        //return the normalised probability
-        return molweights.constData()[idx] / sum_of_weights;
+        //get the version of the molecule in the group
+        const ViewsOfMol &oldmol = this->group()[molecule.number()];
+        
+        if (oldmol.version() == molecule.version())
+            //return the normalised probability
+            return molweights.constData()[idx] / sum_of_weights;
+    
+        else
+        {
+            //this is a different version of the molecule - calculate
+            //what the probability of this new molecule would be...
+            Symbol _r = PrefSampler::r();
+
+            Values vals;
+            vals.set( PrefSampler::k(), sampling_constant );
+    
+            //calculate the distance from the focal point
+            PropertyMap map;
+            map.set("coordinates", coords_property);
+            
+            Vector new_center = molecule.evaluate()
+                                        .centerOfGeometry(map);
+                               
+            double dist = current_space.read().calcDist(new_center, focal_point);
+
+            vals.set(_r, dist);
+        
+            double new_weight = sampling_expression.evaluate(vals);
+
+            double new_sum = sum_of_weights + new_weight - molweights.constData()[idx];
+            
+            return new_weight / new_sum;
+        }
     }
 }
 

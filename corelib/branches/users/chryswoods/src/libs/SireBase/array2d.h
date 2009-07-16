@@ -114,6 +114,8 @@ inline void Array2DBase::assertValidIndex(quint32 i, quint32 j) const
 
 }
 
+SIRE_EXPOSE_CLASS( SireBase::Array2DBase )
+
 SIRE_END_HEADER
 
 #endif

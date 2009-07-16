@@ -28,6 +28,7 @@ set ( SIREMATHS_HEADERS
       freeenergyaverage.h
       histogram.h
       line.h
+      linearap.h
       maths.h
       matrix.h
       matrix4.h
@@ -55,6 +56,7 @@ set ( SIREMATHS_SOURCES
       freeenergyaverage.cpp
       histogram.cpp
       line.cpp
+      linearap.cpp
       matrix4.cpp
       matrix.cpp
       plane.cpp
