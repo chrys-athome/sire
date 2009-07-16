@@ -3,7 +3,7 @@ from Sire.Base import *
 from Sire.Maths import *
 from Sire.Qt import *
 
-costs = Array2D_double_(500,500)
+costs = Array2D_double_(12,12)
 
 rand = RanGenerator()
 
@@ -14,7 +14,7 @@ t.start()
 
 for i in range(0,costs.nRows()):
     for j in range(0,costs.nColumns()):
-        d = rand.rand(0,50)
+        d = rand.rand(0,5)
         costs.set(i,j, d*d)
 
 ms = t.elapsed()
@@ -42,11 +42,15 @@ print "\nSolution took %d ms (%d ms with checking)" % (ms, ms2)
 
 print "Total cost = %f" % calculate_total_cost(costs, rows_to_columns)
 
-#t.start()
-#rows_to_columns = brute_force_linear_assignment(costs)
-#ms = t.elapsed()
-#
-#print "\nBrute force solution:"
-#print rows_to_columns
-#
-#print "\nSolution took %d ms" % ms
+t.start()
+rows_to_columns2 = brute_force_linear_assignment(costs)
+ms = t.elapsed()
+
+print "\nBrute force solution:"
+print rows_to_columns2
+
+print "Total cost = %f" % calculate_total_cost(costs, rows_to_columns2)
+
+print "\nSolution took %d ms" % ms
+
+assert( rows_to_columns == rows_to_columns2 )

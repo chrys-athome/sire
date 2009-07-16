@@ -162,132 +162,6 @@ static void check_linear_assignment(const SireBase::Array2D<double> &costs,
     }
 }
 
-/** Get all permutations of 'n' items - this is a silly function
-    that is messy and just used for testing */
-static QVector< QVector<int> > getPermutations(int n)
-{
-    QVector< QVector<int> > permutations;
-
-    if (n == 0)
-        return permutations;
-        
-    else if (n == 1)
-    {
-        permutations.append( QVector<int>(1,0) );
-        return permutations;
-    }
-    else if (n == 2)
-    {
-        QVector<int> permutation(2);
-        
-        permutation[0] = 0;
-        permutation[1] = 1;
-        
-        permutations.append(permutation);
-        
-        permutation[0] = 1;
-        permutation[1] = 0;
-        
-        permutations.append(permutation);
-        
-        return permutations;
-    }
-    else if (n == 3)
-    {
-        QVector<int> permutation(3);
-        
-        for (int i=0; i<3; ++i)
-        {
-            for (int j=0; j<3; ++j)
-            {
-                for (int k=0; k<3; ++k)
-                {
-                    if (i != j and i != j and j != k)
-                    {
-                        permutation[0] = i;
-                        permutation[1] = j;
-                        permutation[2] = k;
-                        
-                        permutations.append(permutation);
-                    }
-                }
-            }
-        }
-        
-        return permutations;
-    }
-    else if (n == 4)
-    {
-        QVector<int> permutation(4);
-        
-        for (int i=0; i<4; ++i)
-        {
-            for (int j=0; j<4; ++j)
-            {
-                for (int k=0; k<4; ++k)
-                {
-                    for (int l=0; l<4; ++l)
-                    {
-                        if (i != j and i != j and i != k and i != l and
-                            j != k and j != l and
-                            k != l)
-                        {
-                            permutation[0] = i;
-                            permutation[1] = j;
-                            permutation[2] = k;
-                            permutation[3] = l;
-                        
-                            permutations.append(permutation);
-                        }
-                    }
-                }
-            }
-        }
-        
-        return permutations;
-    }
-    else if (n == 5)
-    {
-        QVector<int> permutation(5);
-        
-        for (int i=0; i<5; ++i)
-        {
-            for (int j=0; j<5; ++j)
-            {
-                for (int k=0; k<5; ++k)
-                {
-                    for (int l=0; l<5; ++l)
-                    {
-                        for (int m=0; m<5; ++m)
-                        {
-                            if (i != j and i != j and i != k and i != l and i != m and
-                                j != k and j != l and j != m and
-                                k != l and k != m and
-                                l != m)
-                            {
-                                permutation[0] = i;
-                                permutation[1] = j;
-                                permutation[2] = k;
-                                permutation[3] = l;
-                                permutation[4] = m;
-                            
-                                permutations.append(permutation);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        
-        return permutations;
-    }
-    else
-        throw SireError::invalid_arg( QObject::tr(
-                "This function can only get permutations up to 5."), CODELOC );
-                
-    return permutations;
-}
-
 namespace SireMaths
 {
 
@@ -688,58 +562,6 @@ QVector<int> SIREMATHS_EXPORT solve_linear_assignment( const Array2D<double> &co
     return rows_to_columns;
 }
 
-/** Solve the linear assignment problem using a brute force algorithm
-    (*very* poor scaling and very inefficient) */
-QVector<int> SIREMATHS_EXPORT brute_force_linear_assignment(const Array2D<double> &costs)
-{
-    const int dim = costs.nRows();
-
-    if (dim == 0)
-        return QVector<int>();
-        
-    if (dim != int(costs.nColumns()))
-        throw SireError::invalid_arg( QObject::tr(
-                "Cannot solve the linear assignment problem as this code "
-                "only supports dense square matricies, and you have passed "
-                "in a rectangular matrix of dimension %1 by %2.")
-                    .arg(costs.nRows()).arg(costs.nColumns()), CODELOC );
-
-    QVector<int> rows_to_columns(dim, -1);
-
-    if (dim == 1)
-    {
-        //simple solution
-        rows_to_columns[0] = 0;
-        return rows_to_columns;
-    }
-
-    //try every possible combination and record the one with the lowest
-    //total cost
-    double mincost = std::numeric_limits<double>::max();
-
-    QVector< QVector<int> > permutations = getPermutations(dim);
-    
-    for (int i=0; i<permutations.count(); ++i)
-    {
-        const int *permutation = permutations.at(i).constData();
-        
-        double total_cost = 0;
-        
-        for (int j=0; j<dim; ++j)
-        {
-            total_cost += costs(j, permutation[j]);
-        }
-        
-        if (total_cost < mincost)
-        {
-            mincost = total_cost;
-            rows_to_columns = permutations.at(i);
-        }
-    }
-    
-    return rows_to_columns;
-}
-
 /** Return the total cost of the arrangement in 'rows_to_columns' using the
     costs in the linear assignment costs matrix in 'costs' */
 double SIREMATHS_EXPORT calculate_total_cost( const SireBase::Array2D<double> &costs,
@@ -769,6 +591,75 @@ double SIREMATHS_EXPORT calculate_total_cost( const SireBase::Array2D<double> &c
     }
     
     return total_cost;
+}
+
+void visit(const Array2D<double> &costs,
+           QVector<int> &rows_to_columns, int k, 
+           QVector<int> &min_rows_to_columns, double &mincost)
+{
+    static int level = -2;
+    level = level + 1; 
+    rows_to_columns[k] = level;
+    const int N = rows_to_columns.count();
+
+    if (level == N-1)
+    {
+        //evaluate the price of this combination
+        double cost = calculate_total_cost(costs, rows_to_columns);
+        //qDebug() << "TESTING:" << rows_to_columns << "cost ==" << cost << mincost;
+        
+        if (cost < mincost)
+        {
+            min_rows_to_columns = rows_to_columns;
+            mincost = cost;
+            //qDebug() << " *** NEW MINIMUM ***";
+        }
+    }
+    else
+    {
+        for (int i=0; i<N; ++i)
+        {
+            if (rows_to_columns[i] == -1)
+                visit(costs, rows_to_columns, i, min_rows_to_columns, mincost);
+        }
+    }
+
+    level = level - 1; 
+    rows_to_columns[k] = -1;
+}
+
+/** Solve the linear assignment problem using a brute force algorithm
+    (*very* poor scaling and very inefficient) */
+QVector<int> SIREMATHS_EXPORT brute_force_linear_assignment(const Array2D<double> &costs)
+{
+    const int dim = costs.nRows();
+
+    if (dim == 0)
+        return QVector<int>();
+        
+    if (dim != int(costs.nColumns()))
+        throw SireError::invalid_arg( QObject::tr(
+                "Cannot solve the linear assignment problem as this code "
+                "only supports dense square matricies, and you have passed "
+                "in a rectangular matrix of dimension %1 by %2.")
+                    .arg(costs.nRows()).arg(costs.nColumns()), CODELOC );
+
+    QVector<int> rows_to_columns(dim, -1);
+
+    if (dim == 1)
+    {
+        //simple solution
+        rows_to_columns[0] = 0;
+        return rows_to_columns;
+    }
+
+    double mincost = std::numeric_limits<double>::max();
+
+    QVector<int> min_rows_to_columns(dim, -1);
+    
+    visit(costs, rows_to_columns, 0, min_rows_to_columns, mincost);
+    
+    return min_rows_to_columns;
 }
 
 /** Return the minimum possible total cost from the linear assignment 
