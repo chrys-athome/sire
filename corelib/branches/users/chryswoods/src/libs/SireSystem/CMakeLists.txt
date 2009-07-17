@@ -15,7 +15,7 @@ set ( SIRESYSTEM_HEADERS
       constraints.h
       checkpoint.h
       errors.h
-      #identityconstraint.h
+      identityconstraint.h
       moleculeconstraint.h
       monitorcomponent.h
       monitorcomponents.h
@@ -44,7 +44,7 @@ set ( SIRESYSTEM_SOURCES
       constraints.cpp
       checkpoint.cpp
       errors.cpp
-      #identityconstraint.cpp
+      identityconstraint.cpp
       moleculeconstraint.cpp
       monitorcomponent.cpp
       monitorcomponents.cpp

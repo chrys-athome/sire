@@ -31,13 +31,15 @@
 
 #include <QVector>
 
-#include "constraint.h"
+#include "moleculeconstraint.h"
 
 #include "SireBase/propertymap.h"
 
 #include "SireMaths/vector.h"
 
 #include "SireMol/moleculegroup.h"
+
+#include "SireFF/point.h"
 
 SIRE_BEGIN_HEADER
 
@@ -59,10 +61,11 @@ using SireMaths::Vector;
 using SireMol::MoleculeGroup;
 using SireMol::Molecules;
 using SireMol::MolID;
+using SireMol::MolNum;
 
 namespace detail
 {
-class IdentityPrice;
+class IdentityConstraintPvt;
 }
 
 /** An identity constraint provides a method of constraining
@@ -114,7 +117,7 @@ class IdentityPrice;
     @author Christopher Woods
 */
 class SIRESYSTEM_EXPORT IdentityConstraint
-               : public SireBase::ConcreteProperty<IdentityConstraint,Constraint>
+               : public SireBase::ConcreteProperty<IdentityConstraint,MoleculeConstraint>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const IdentityConstraint&);
@@ -126,11 +129,15 @@ public:
     IdentityConstraint(const MoleculeGroup &molgroup,
                        const PropertyMap &map = PropertyMap());
     
-    IdentityConstraint(const PointRef &point,
+    IdentityConstraint(const SireFF::PointRef &point,
                        const MoleculeGroup &molgroup,
                        const PropertyMap &map = PropertyMap());
                        
-    IdentityConstraint(const QList<PointPtr> &points,
+    IdentityConstraint(const QList<SireFF::PointPtr> &points,
+                       const MoleculeGroup &molgroup,
+                       const PropertyMap &map = PropertyMap());
+    
+    IdentityConstraint(const QVector<SireFF::PointPtr> &points,
                        const MoleculeGroup &molgroup,
                        const PropertyMap &map = PropertyMap());
     
@@ -149,7 +156,7 @@ public:
     
     const MoleculeGroup& moleculeGroup() const;
     
-    QVector<PointPtr> points() const;
+    QVector<SireFF::PointPtr> points() const;
 
     const PropertyMap& propertyMap() const;
     
@@ -161,31 +168,8 @@ public:
     Molecules update(const System &system, const Molecules &molecules);
 
 private:
-    /** The molecule group containing the molecules whose identities
-        are being constrained */
-    MolGroupPtr molgroup;
-    
-    /** The set of points that provide the locations that
-        identify the molecules. These 'n' points constrain
-        the identity of the first 'n' molecule in 'molgroup'
-        (with point 'i' constraining the identity of 
-        molecule 'i') */
-    QVector<PointPtr> identity_points;
-
-    /** The property map used to find the properties used
-        by this constraint */
-    PropertyMap map;
-    
-    /** The prices of best npoints+nbuffer molecules for
-        each point (the prices contain the identities
-        of the molecules) - a QMap is used to ensure that
-        the prices are always sorted */
-    QVector< QMap<detail::IdentityPrice,void*> > identity_prices;
-    
-    /** The number of buffer points to record - this is used
-        as an optimisation (so that the prices of all molecules
-        against all points don't need to be saved or recorded) */
-    quint32 nbuffer;
+    /** The helper class that is used to implement the constraint */
+    SireBase::SharedPolyPointer<detail::IdentityConstraintPvt> d;
 };
 
 }
