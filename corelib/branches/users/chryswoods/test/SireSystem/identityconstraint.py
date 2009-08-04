@@ -186,3 +186,20 @@ mols = idcons.update(system)
 print mols
 printMolecules(mols)
 
+print "\nAPPLICATION TEST"
+
+idcons = IdentityConstraint( [centers[99], centers[100], centers[101], centers[102]], system[MGIdx(0)] )
+mols = idcons.update(system)
+print "\nDEFAULT"
+print mols
+printMolecules(mols)
+
+print "\nUPDATING SYSTEM"
+print system.version()
+system.update(mols)
+print system.version()
+
+mols = idcons.update(system)
+print "\nPOST-UPDATE"
+print mols
+printMolecules(mols)

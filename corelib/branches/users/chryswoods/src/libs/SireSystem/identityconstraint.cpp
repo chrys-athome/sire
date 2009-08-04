@@ -2407,13 +2407,10 @@ bool IdentityConstraint::involvesMoleculesFrom(const Molecules &molecules) const
     ensure that this constraint is maintained */
 Molecules IdentityConstraint::update(const System &system)
 {
-    QTime t;
-    t.start();
-
     Molecules mols_to_change;
 
     if (system.UID() != this->sysUID() or
-        system.version() == this->sysVersion())
+        system.version() != this->sysVersion())
     {
         IdentityConstraint old_state(*this);
 
@@ -2434,10 +2431,6 @@ Molecules IdentityConstraint::update(const System &system)
     }
     else
         mols_to_change = d.constData()->applyConstraint();
-
-    int ms = t.elapsed();
-    qDebug() << "UPDATING CONSTRAINT TOOK" << ms << "ms (nmols =="
-             << mols_to_change.count() << ")";
     
     return mols_to_change;
 }
@@ -2449,12 +2442,10 @@ Molecules IdentityConstraint::update(const System &system)
     since the last update. */
 Molecules IdentityConstraint::update(const System &system, MolNum changed_mol)
 {
-    if (system.UID() == this->sysUID() and
-        system.version() == this->sysVersion())
-    {
-        return d.constData()->applyConstraint();
-    }
-    else
+    Molecules mols_to_change;
+
+    if (system.UID() != this->sysUID() or
+        system.version() != this->sysVersion())
     {
         IdentityConstraint old_state(*this);
         
@@ -2465,16 +2456,18 @@ Molecules IdentityConstraint::update(const System &system, MolNum changed_mol)
         try
         {
             this->updatedFrom(system);
-            return d->update(system, changed_mol, new_system);
+            mols_to_change = d->update(system, changed_mol, new_system);
         }
         catch(...)
         {
             IdentityConstraint::operator=(old_state);
             throw;
         }
-        
-        return Molecules();
     }
+    else
+        mols_to_change = d.constData()->applyConstraint();
+        
+    return mols_to_change;
 }
 
 /** Update this constraint so that it is applied to the system 'system'
@@ -2484,12 +2477,10 @@ Molecules IdentityConstraint::update(const System &system, MolNum changed_mol)
     since the last update. */
 Molecules IdentityConstraint::update(const System &system, const Molecules &molecules)
 {
-    if (system.UID() == this->sysUID() and
-        system.version() == this->sysVersion())
-    {
-        return d.constData()->applyConstraint();
-    }
-    else
+    Molecules mols_to_change;
+
+    if (system.UID() != this->sysUID() or
+        system.version() != this->sysVersion())
     {
         IdentityConstraint old_state(*this);
         
@@ -2500,14 +2491,16 @@ Molecules IdentityConstraint::update(const System &system, const Molecules &mole
         try
         {
             this->updatedFrom(system);
-            return d->update(system, molecules, new_system);
+            mols_to_change = d->update(system, molecules, new_system);
         }
         catch(...)
         {
             IdentityConstraint::operator=(old_state);
             throw;
         }
-        
-        return Molecules();
     }
+    else
+        mols_to_change = d.constData()->applyConstraint();
+        
+    return mols_to_change;
 }
