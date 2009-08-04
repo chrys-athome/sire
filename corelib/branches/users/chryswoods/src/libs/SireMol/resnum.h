@@ -84,10 +84,13 @@ public:
     ResNum& operator=(const ResNum &other);
     
     bool operator==(const SireID::ID &other) const;
-
     bool operator==(const ResNum &other) const;
-    
     bool operator!=(const ResNum &other) const;
+
+    bool operator<(const ResNum &other) const;
+    bool operator<=(const ResNum &other) const;
+    bool operator>(const ResNum &other) const;
+    bool operator>=(const ResNum &other) const;
 
     QList<ResIdx> map(const MolInfo &molinfo) const;
 };

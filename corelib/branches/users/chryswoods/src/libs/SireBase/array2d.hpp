@@ -104,6 +104,10 @@ public:
     T* data();
     const T* constData() const;
 
+    const T* row(quint32 i) const;
+    T* row(quint32 i);
+    const T* constRow(quint32 i) const;
+
     Array2D<T> transpose() const;
 
 private:
@@ -265,6 +269,30 @@ SIRE_INLINE_TEMPLATE
 const T* Array2D<T>::constData() const
 {
     return array.constData();
+}
+
+/** Return a raw pointer to the first item in row 'i' */
+template<class T>
+SIRE_INLINE_TEMPLATE
+const T* Array2D<T>::row(quint32 i) const
+{
+    return array.data() + Array2DBase::map(i,0);
+}
+
+/** Return a raw pointer to the first item in row 'i' */
+template<class T>
+SIRE_INLINE_TEMPLATE
+T* Array2D<T>::row(quint32 i)
+{
+    return array.data() + Array2DBase::map(i,0);
+}
+
+/** Return a raw pointer to the first item in row 'i' */
+template<class T>
+SIRE_INLINE_TEMPLATE
+const T* Array2D<T>::constRow(quint32 i) const
+{
+    return array.constData() + Array2DBase::map(i,0);
 }
 
 /** Return the transpose of this matrix */

@@ -87,8 +87,12 @@ public:
     bool operator==(const SireID::ID &other) const;
     
     bool operator==(const MolNum &other) const;
-    
     bool operator!=(const MolNum &other) const;
+
+    bool operator<(const MolNum &other) const;
+    bool operator<=(const MolNum &other) const;
+    bool operator>(const MolNum &other) const;
+    bool operator>=(const MolNum &other) const;
     
     QList<MolNum> map(const Molecules &molecules) const;
     QList<MolNum> map(const MoleculeGroup&) const;

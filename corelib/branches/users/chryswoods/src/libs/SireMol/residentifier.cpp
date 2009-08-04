@@ -471,6 +471,26 @@ bool ResNum::operator!=(const ResNum &other) const
     return _num != other._num;
 }
 
+bool ResNum::operator<(const ResNum &other) const
+{
+    return _num < other._num;
+}
+
+bool ResNum::operator<=(const ResNum &other) const
+{
+    return _num <= other._num;
+}
+
+bool ResNum::operator>(const ResNum &other) const
+{
+    return _num > other._num;
+}
+
+bool ResNum::operator>=(const ResNum &other) const
+{
+    return _num >= other._num;
+}
+
 QList<ResIdx> ResNum::map(const MolInfo &molinfo) const
 {
     return molinfo.map(*this);

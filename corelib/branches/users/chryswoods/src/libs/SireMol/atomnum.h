@@ -91,10 +91,13 @@ public:
     AtomNum& operator=(const AtomNum &other);
     
     bool operator==(const SireID::ID &other) const;
-
     bool operator==(const AtomNum &other) const;
-    
     bool operator!=(const AtomNum &other) const;
+
+    bool operator<(const AtomNum &other) const;
+    bool operator<=(const AtomNum &other) const;
+    bool operator>(const AtomNum &other) const;
+    bool operator>=(const AtomNum &other) const;
 
     QList<AtomIdx> map(const MolInfo &molinfo) const;
 };

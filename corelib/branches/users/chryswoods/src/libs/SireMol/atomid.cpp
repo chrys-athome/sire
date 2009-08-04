@@ -543,6 +543,26 @@ bool AtomNum::operator!=(const AtomNum &other) const
     return _num != other._num;
 }
 
+bool AtomNum::operator<(const AtomNum &other) const
+{
+    return _num < other._num;
+}
+
+bool AtomNum::operator<=(const AtomNum &other) const
+{
+    return _num <= other._num;
+}
+
+bool AtomNum::operator>(const AtomNum &other) const
+{
+    return _num > other._num;
+}
+
+bool AtomNum::operator>=(const AtomNum &other) const
+{
+    return _num >= other._num;
+}
+
 QList<AtomIdx> AtomNum::map(const MolInfo &molinfo) const
 {
     return molinfo.map(*this);

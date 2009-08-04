@@ -292,6 +292,26 @@ bool MGNum::operator!=(const MGNum &other) const
     return _num != other._num;
 }
 
+bool MGNum::operator<(const MGNum &other) const
+{
+    return _num < other._num;
+}
+
+bool MGNum::operator<=(const MGNum &other) const
+{
+    return _num <= other._num;
+}
+
+bool MGNum::operator>(const MGNum &other) const
+{
+    return _num > other._num;
+}
+
+bool MGNum::operator>=(const MGNum &other) const
+{
+    return _num >= other._num;
+}
+
 QList<MGNum> MGNum::map(const MolGroupsBase &molgroups) const
 {
     return molgroups.map(*this);

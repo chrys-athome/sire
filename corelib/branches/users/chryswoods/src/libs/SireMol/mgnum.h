@@ -85,10 +85,13 @@ public:
     MGNum& operator=(const MGNum &other);
     
     bool operator==(const SireID::ID &other) const;
-
     bool operator==(const MGNum &other) const;
-    
     bool operator!=(const MGNum &other) const;
+
+    bool operator<(const MGNum &other) const;
+    bool operator<=(const MGNum &other) const;
+    bool operator>(const MGNum &other) const;
+    bool operator>=(const MGNum &other) const;
     
     QList<MGNum> map(const MolGroupsBase&) const;
 };

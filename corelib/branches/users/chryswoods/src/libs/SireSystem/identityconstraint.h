@@ -163,6 +163,10 @@ public:
     bool involvesMolecule(MolNum molnum) const;
     bool involvesMoleculesFrom(const Molecules &molecules) const;
     
+    void useManyPointsAlgorithm();
+    void useFewPointsAlgorithm();
+    void useSinglePointAlgorithm();
+    
     Molecules update(const System &system);
     Molecules update(const System &system, MolNum changed_mol);
     Molecules update(const System &system, const Molecules &molecules);

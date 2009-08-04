@@ -11,6 +11,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 # Define the headers in SireSystem
 set ( SIRESYSTEM_HEADERS
+      closemols.h
       constraint.h
       constraints.h
       checkpoint.h
@@ -40,6 +41,7 @@ set ( SIRESYSTEM_SOURCES
 
       register_siresystem.cpp
 
+      closemols.cpp
       constraint.cpp
       constraints.cpp
       checkpoint.cpp

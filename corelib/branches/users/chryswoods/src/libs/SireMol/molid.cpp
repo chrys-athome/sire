@@ -354,6 +354,26 @@ bool MolNum::operator!=(const MolNum &other) const
     return _num != other._num;
 }
 
+bool MolNum::operator<(const MolNum &other) const
+{
+    return _num < other._num;
+}
+
+bool MolNum::operator<=(const MolNum &other) const
+{
+    return _num <= other._num;
+}
+
+bool MolNum::operator>(const MolNum &other) const
+{
+    return _num > other._num;
+}
+
+bool MolNum::operator>=(const MolNum &other) const
+{
+    return _num >= other._num;
+}
+
 QList<MolNum> MolNum::map(const Molecules &molecules) const
 {
     if (not molecules.contains(*this))

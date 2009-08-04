@@ -42,6 +42,7 @@
 
 #include "SireFF/ffname.h"
 #include "SireFF/forcefield.h"
+#include "SireFF/point.h"
 
 #include "SireBase/properties.h"
 
@@ -53,6 +54,8 @@ using boost::python::register_tuple;
 void register_SireFF_containers()
 {
     register_list< QVector<ForceField> >();
+    register_list< QVector<PointPtr> >();
+    register_list< QList<PointPtr> >();
 
     #if QT_VERSION >= 0x402000
     register_dict< QHash<FFName,Properties>();

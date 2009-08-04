@@ -25,7 +25,8 @@ special_code = { "SireFF::ForceTable" : fix_ForceTable,
 
 implicitly_convertible = [ ("SireMaths::Vector", "SireFF::PointRef"),
                            ("SireMol::Atom", "SireFF::PointRef"),
-                           ("SireFF::Point", "SireFF::PointRef") ]
+                           ("SireFF::Point", "SireFF::PointRef"),
+                           ("SireFF::PointRef", "SireFF::PointPtr") ]
 
 def fixMB(mb):
     mb.add_declaration_code("#include \"SireFF/point.h\"")
