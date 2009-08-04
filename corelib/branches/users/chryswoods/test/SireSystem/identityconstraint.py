@@ -145,15 +145,18 @@ print mols
 printMolecules(mols)
 
 print "\nFEWPOINTS"
-idcons = IdentityConstraint( [centers[20], centers[10]], system[MGIdx(0)] )
 idcons.useFewPointsAlgorithm()
 mols = idcons.update(system)
 print mols
 printMolecules(mols)
 
 print "\nMANYPOINTS"
-idcons = IdentityConstraint( [centers[20], centers[10]], system[MGIdx(0)] )
 idcons.useManyPointsAlgorithm()
+mols = idcons.update(system)
+print mols
+printMolecules(mols)
+
+print "\nREPEAT MANYPOINTS"
 mols = idcons.update(system)
 print mols
 printMolecules(mols)
@@ -166,21 +169,18 @@ print mols
 printMolecules(mols)
 
 print "\nSINGLEPOINT"
-idcons = IdentityConstraint( [centers[99]], system[MGIdx(0)] )
 idcons.useSinglePointAlgorithm()
 mols = idcons.update(system)
 print mols
 printMolecules(mols)
 
 print "\nFEWPOINTS"
-idcons = IdentityConstraint( [centers[99]], system[MGIdx(0)] )
 idcons.useFewPointsAlgorithm()
 mols = idcons.update(system)
 print mols
 printMolecules(mols)
 
 print "\nMANYPOINTS"
-idcons = IdentityConstraint( [centers[99]], system[MGIdx(0)] )
 idcons.useManyPointsAlgorithm()
 mols = idcons.update(system)
 print mols

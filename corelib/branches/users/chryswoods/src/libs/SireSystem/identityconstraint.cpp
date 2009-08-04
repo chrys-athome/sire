@@ -96,6 +96,8 @@ public:
     virtual Molecules update(const System &system, const Molecules &molecules,
                              bool new_system)=0;
 
+    virtual Molecules applyConstraint() const=0;
+
     const MolGroupPtr& molGroupPtr() const;
 
     const MoleculeGroup& moleculeGroup() const;
@@ -160,6 +162,8 @@ public:
     Molecules update(const System &system, bool new_system);
     Molecules update(const System &system, MolNum changed_mol, bool new_system);
     Molecules update(const System &system, const Molecules &molecules, bool new_system);
+
+    Molecules applyConstraint() const;
 };
 
 /** This is the IdentityConstraint helper class that is used
@@ -200,14 +204,14 @@ public:
     Molecules update(const System &system, MolNum changed_mol, bool new_system);
     Molecules update(const System &system, const Molecules &molecules, bool new_system);
 
+    Molecules applyConstraint() const;
+
 private:
     void recalculateDistances();
     void recalculateDistances(MolNum molnum);
     void recalculateDistances(const Molecules &molecules);
 
     void assignMoleculesToPoints();
-
-    Molecules applyConstraint();
 
     /** The (squared) distances between all molecules and all points */
     QHash< MolNum, QVector<double> > point_distances;
@@ -252,6 +256,8 @@ public:
     Molecules update(const System &system, bool new_system);
     Molecules update(const System &system, MolNum changed_mol, bool new_system);
     Molecules update(const System &system, const Molecules &molecules, bool new_system);
+    
+    Molecules applyConstraint() const;
 
 private:
     void rebuildMolToMolNum();
@@ -261,8 +267,6 @@ private:
     void recalculateDistances(const Molecules &changed_mols);
 
     void assignMoleculesToPoints();
-    
-    Molecules applyConstraint();
 
     /** The collection of the 'npoints' closest molecules to each
         of the identity points */
@@ -321,13 +325,13 @@ public:
     Molecules update(const System &system, bool new_system);
     Molecules update(const System &system, MolNum changed_mol, bool new_system);
     Molecules update(const System &system, const Molecules &molecules, bool new_system);
+    
+    Molecules applyConstraint() const;
 
 private:
     void recalculateDistances();
     void recalculateDistances(MolNum changed_mol);
     void recalculateDistances(const Molecules &molecules);
-    
-    Molecules applyConstraint() const;
 
     /** The number of the current molecule closest to the point */
     MolNum closest_molnum;
@@ -569,6 +573,11 @@ Molecules NullIdentityConstraintHelper::update(const System&, MolNum, bool)
 }
 
 Molecules NullIdentityConstraintHelper::update(const System&, const Molecules&, bool)
+{
+    return Molecules();
+}
+
+Molecules NullIdentityConstraintHelper::applyConstraint() const
 {
     return Molecules();
 }
@@ -1196,6 +1205,25 @@ void FewPointsHelper::rebuildMolToMolNum()
     mol_to_molnum.squeeze();
 }
 
+/** Internal function used to invert a mapping of points to molecules
+    into a mapping of molecules to points */
+static QVector<int> invert(const QVector<int> &point_to_mol)
+{
+    QVector<int> mol_to_point = point_to_mol;
+    
+    const int *point_to_mol_array = point_to_mol.constData();
+    int *mol_to_point_array = mol_to_point.data();
+    
+    const int npoints = point_to_mol.count();
+    
+    for (int i=0; i<npoints; ++i)
+    {
+        mol_to_point_array[ point_to_mol_array[i] ] = i;
+    }
+    
+    return mol_to_point;
+}
+
 /** This function uses the distances between all points and molecules
     stored in 'point_distances' to work out the optimum assignment
     of molecules to points such that the total distance between
@@ -1313,7 +1341,11 @@ void FewPointsHelper::assignMoleculesToPoints()
     //now calculate optimum assignment of molecules to points that
     //minimises the total distance between each molecule and its
     //assigned point
-    mol_to_point = solve_linear_assignment(distmatrix.transpose());
+    QVector<int> point_to_mol = solve_linear_assignment(distmatrix);
+
+    //point_to_mol maps points to molecules - we need to invert this
+    //so that we map molecules to points
+    mol_to_point = ::invert(point_to_mol);
 
     //do we have the correct arrangement? (the nth point maps
     //to the nth molecule)
@@ -1363,10 +1395,8 @@ static Molecule swapCoordinatesTo(const Molecules &molecules,
     and stored in 'point_distances' to work out which are the best molecules
     to maintain the constraint. This then returns which molecules must
     change to maintain the constraint */
-Molecules FewPointsHelper::applyConstraint()
+Molecules FewPointsHelper::applyConstraint() const
 {
-    this->assignMoleculesToPoints();
-    
     if (mol_to_point.isEmpty())
         //nothing needs to be changed as the constraint is satisfied
         return Molecules();
@@ -1453,6 +1483,7 @@ Molecules FewPointsHelper::update(const System &system, bool new_system)
         this->recalculateDistances();
     }
 
+    this->assignMoleculesToPoints();
     return this->applyConstraint();
 }
 
@@ -1508,6 +1539,7 @@ Molecules FewPointsHelper::update(const System &system, MolNum changed_mol,
             this->recalculateDistances(changed_mol);
     }
 
+    this->assignMoleculesToPoints();
     return this->applyConstraint();
 }
 
@@ -1566,6 +1598,7 @@ Molecules FewPointsHelper::update(const System &system, const Molecules &molecul
             this->recalculateDistances(molecules);
     }
 
+    this->assignMoleculesToPoints();
     return this->applyConstraint();
 }
 
@@ -1917,7 +1950,11 @@ void ManyPointsHelper::assignMoleculesToPoints()
     //now calculate optimum assignment of molecules to points that
     //minimises the total distance between each molecule and its
     //assigned point
-    mol_to_point = solve_linear_assignment(distmatrix.transpose());
+    QVector<int> point_to_mol = solve_linear_assignment(distmatrix);
+    
+    //point_to_mol maps points to molecules - we need to swap this
+    //so that mol_to_point maps molecules to points
+    mol_to_point = ::invert(point_to_mol);
 
     //do we have the correct arrangement? (the nth point maps
     //to the nth molecule)
@@ -1948,10 +1985,8 @@ void ManyPointsHelper::assignMoleculesToPoints()
     and stored in 'point_distances' to work out which are the best molecules
     to maintain the constraint. This then returns which molecules must
     change to maintain the constraint */
-Molecules ManyPointsHelper::applyConstraint()
+Molecules ManyPointsHelper::applyConstraint() const
 {
-    this->assignMoleculesToPoints();
-    
     if (mol_to_point.isEmpty())
         //nothing needs to be changed as the constraint is satisfied
         return Molecules();
@@ -2022,6 +2057,7 @@ Molecules ManyPointsHelper::update(const System &system, bool new_system)
         this->recalculateDistances();
     }
 
+    this->assignMoleculesToPoints();
     return this->applyConstraint();
 }
 
@@ -2052,6 +2088,7 @@ Molecules ManyPointsHelper::update(const System &system, MolNum changed_mol,
         this->recalculateDistances(changed_mol);
     }
 
+    this->assignMoleculesToPoints();
     return this->applyConstraint();
 }
 
@@ -2082,6 +2119,7 @@ Molecules ManyPointsHelper::update(const System &system, const Molecules &molecu
         this->recalculateDistances(molecules);
     }
 
+    this->assignMoleculesToPoints();
     return this->applyConstraint();
 }
 
@@ -2195,6 +2233,8 @@ void IdentityConstraint::useManyPointsAlgorithm()
     d = new ManyPointsHelper( this->moleculeGroup(),
                               this->points(),
                               this->propertyMap() );
+
+    this->updatedFrom( System() );
 }
 
 /** Function used for debugging that switches this object over
@@ -2204,6 +2244,8 @@ void IdentityConstraint::useFewPointsAlgorithm()
     d = new FewPointsHelper( this->moleculeGroup(),
                              this->points(),
                              this->propertyMap() );
+
+    this->updatedFrom( System() );
 }
 
 /** Function used for debugging that switches this object over
@@ -2222,6 +2264,8 @@ void IdentityConstraint::useSinglePointAlgorithm()
     d = new SinglePointHelper( this->moleculeGroup(),
                                this->points().first(),
                                this->propertyMap() );
+
+    this->updatedFrom( System() );
 }
   
 /** Construct the constraint that constrains the identities of the 
@@ -2388,6 +2432,8 @@ Molecules IdentityConstraint::update(const System &system)
             throw;
         }
     }
+    else
+        mols_to_change = d.constData()->applyConstraint();
 
     int ms = t.elapsed();
     qDebug() << "UPDATING CONSTRAINT TOOK" << ms << "ms (nmols =="
@@ -2406,7 +2452,7 @@ Molecules IdentityConstraint::update(const System &system, MolNum changed_mol)
     if (system.UID() == this->sysUID() and
         system.version() == this->sysVersion())
     {
-        return Molecules();
+        return d.constData()->applyConstraint();
     }
     else
     {
@@ -2441,7 +2487,7 @@ Molecules IdentityConstraint::update(const System &system, const Molecules &mole
     if (system.UID() == this->sysUID() and
         system.version() == this->sysVersion())
     {
-        return Molecules();
+        return d.constData()->applyConstraint();
     }
     else
     {
