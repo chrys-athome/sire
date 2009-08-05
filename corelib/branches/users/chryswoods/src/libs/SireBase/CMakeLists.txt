@@ -35,6 +35,7 @@ set ( SIREBASE_HEADERS
       propertymap.h
       quickcopy.hpp
       qvariant_metatype.h
+      savestate.h
       shareddatapointer.hpp
       sharedpolypointer.hpp
       sharedpolypointer_cast.hpp
@@ -65,6 +66,7 @@ set ( SIREBASE_SOURCES
       properties.cpp
       property.cpp
       propertymap.cpp
+      savestate.cpp
       sharedpolypointer.cpp
       stringmangler.cpp     
       tempdir.cpp 

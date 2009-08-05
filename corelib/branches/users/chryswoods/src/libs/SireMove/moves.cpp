@@ -411,9 +411,9 @@ void Moves::preCheck(System &system) const
         QStringList unsatisfied_constraints;
     
         //a constraint is violated - get all unsatisfied constraints
-        Constraints constraints = system.constraints();
+        QVector<ConstraintPtr> constraints = system.constraints().constraints();
         
-        for (Constraints::const_iterator it = constraints.constBegin();
+        for (QVector<ConstraintPtr>::const_iterator it = constraints.constBegin();
              it != constraints.constEnd();
              ++it)
         {
@@ -443,9 +443,9 @@ void Moves::postCheck(System &system) const
         QStringList unsatisfied_constraints;
     
         //a constraint is violated - get all unsatisfied constraints
-        Constraints constraints = system.constraints();
+        QVector<ConstraintPtr> constraints = system.constraints().constraints();
         
-        for (Constraints::const_iterator it = constraints.constBegin();
+        for (QVector<ConstraintPtr>::const_iterator it = constraints.constBegin();
              it != constraints.constEnd();
              ++it)
         {

@@ -29,9 +29,11 @@
 #ifndef SIRESYSTEM_CONSTRAINTS_H
 #define SIRESYSTEM_CONSTRAINTS_H
 
-#include <QList>
+#include <QVector>
 
 #include "constraint.h"
+
+#include "SireBase/property.h"
 
 SIRE_BEGIN_HEADER
 
@@ -43,27 +45,35 @@ class Constraints;
 QDataStream& operator<<(QDataStream&, const SireSystem::Constraints&);
 QDataStream& operator>>(QDataStream&, SireSystem::Constraints&);
 
+namespace SireMol
+{
+class MolNum;
+class Molecules;
+}
+
 namespace SireSystem
 {
+
+using SireMol::MolNum;
+using SireMol::Molecules;
 
 /** This class is used to hold and organise a collection of Constraint objects
 
     @author Christopher Woods
 */
-class SIRESYSTEM_EXPORT Constraints
+class SIRESYSTEM_EXPORT Constraints 
+            : public SireBase::ConcreteProperty<Constraints,SireBase::Property>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const Constraints&);
 friend QDataStream& ::operator>>(QDataStream&, Constraints&);
 
 public:
-    typedef QList<ConstraintPtr>::const_iterator iterator;
-    typedef QList<ConstraintPtr>::const_iterator const_iterator;
-
     Constraints();
     
     Constraints(const Constraint &constraint);
 
+    Constraints(const QVector<ConstraintPtr> &constraints);
     Constraints(const QList<ConstraintPtr> &constraints);
     
     Constraints(const Constraints &other);
@@ -94,12 +104,13 @@ public:
     int size() const;
     
     int nConstraints() const;
+
+    QVector<ConstraintPtr> constraints() const;
     
-    const_iterator constBegin() const;
-    const_iterator constEnd() const;
+    QVector<ConstraintPtr> componentConstraints() const;
+    QVector<ConstraintPtr> moleculeConstraints() const;
     
-    const_iterator begin() const;
-    const_iterator end() const;
+    bool hasMoleculeConstraints() const;
     
     void add(const Constraint &constraint);
     void add(const Constraints &constraints);
@@ -107,15 +118,39 @@ public:
     void remove(const Constraint &constraint);
     void remove(const Constraints &constraints);
     
-    bool areSatisfied(System &system) const;
-    void assertSatisfied(System &system) const;
+    void removeAt(int i);
     
-    void apply(System &system) const;
+    bool areSatisfied(const System &system) const;
+    void assertSatisfied(const System &system) const;
+    
+    bool moleculeConstraintsAreSatisfied(const System &system) const;
+    void assertMoleculeConstraintsAreSatisfied(const System &system) const;
+    
+    void apply(System &system);
+    
+    void applyMoleculeConstraints(System &system);
+    void applyMoleculeConstraints(System &system, MolNum molnum);
+    void applyMoleculeConstraints(System &system, const Molecules &molecules);
 
 private:
-    /** The list of all constraints that are to be applied to the system */
-    QList<ConstraintPtr> cons;
+    void resolveMoleculeConstraints(System &system, Molecules changed_mols);
+
+    /** The list of all component constraints that are to be 
+        applied to the system - these are constraints that change
+        the values of components or properties of the system */
+    QVector<ConstraintPtr> cons;
+    
+    /** The list of all molecule constraints that are to be 
+        applied to the system - these are constraints that change
+        the coordinates or properties of molecules in the system */
+    QVector<ConstraintPtr> molcons;
 };
+
+/** Return whether or not this set has any molecule constraints */
+inline bool Constraints::hasMoleculeConstraints() const
+{
+    return not molcons.isEmpty();
+}
 
 }
 

@@ -41,6 +41,7 @@
 #include "Base/convertpackedarray.hpp"
 
 #include "SireSystem/systemmonitor.h"
+#include "SireSystem/constraint.h"
 
 using namespace SireSystem;
 
@@ -49,5 +50,7 @@ using boost::python::register_tuple;
 void register_SireSystem_containers()
 {
     register_list< QList<SysMonPtr> >();
+    register_list< QList<ConstraintPtr> >();
+    register_list< QVector<ConstraintPtr> >();
 }
 

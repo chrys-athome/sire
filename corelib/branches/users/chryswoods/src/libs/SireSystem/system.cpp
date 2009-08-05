@@ -44,6 +44,8 @@
 #include "SireMol/molecules.h"
 #include "SireMol/moleculegroup.h"
 
+#include "SireBase/savestate.h"
+
 #include "SireMol/errors.h"
 #include "SireError/errors.h"
 
@@ -198,7 +200,8 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds, System &system)
 System::System()
        : ConcreteProperty<System,MolGroupsBase>(),
          uid( QUuid::createUuid() ),
-         sysversion( systemRegistry().registerObject(uid) )
+         sysversion( systemRegistry().registerObject(uid) ),
+         applying_constraints(false)
 {
     molgroups[0] = ForceFields();
     molgroups[1] = MoleculeGroups();
@@ -224,7 +227,8 @@ System::System(const QString &name)
        : ConcreteProperty<System,MolGroupsBase>(),
          uid( QUuid::createUuid() ),
          sysname(name),
-         sysversion( systemRegistry().registerObject(uid) )
+         sysversion( systemRegistry().registerObject(uid) ),
+         applying_constraints(false)
 {
     molgroups[0] = ForceFields();
     molgroups[1] = MoleculeGroups();
@@ -236,7 +240,8 @@ System::System(const System &other)
          uid(other.uid), sysname(other.sysname), sysversion(other.sysversion),
          sysmonitors(other.sysmonitors),
          cons(other.cons),
-         mgroups_by_num(other.mgroups_by_num)
+         mgroups_by_num(other.mgroups_by_num),
+         applying_constraints(other.applying_constraints)
 {
     molgroups[0] = other.molgroups[0];
     molgroups[1] = other.molgroups[1];
@@ -259,6 +264,7 @@ System& System::operator=(const System &other)
         sysmonitors = other.sysmonitors;
         cons = other.cons;
         mgroups_by_num = other.mgroups_by_num;
+        applying_constraints = other.applying_constraints;
         
         MolGroupsBase::operator=(other);
     }
@@ -858,57 +864,80 @@ const Property& System::builtinProperty(const QString &name) const
     return this->_pvt_forceFields().builtinProperty(name);
 }
 
-Q_GLOBAL_STATIC( QMutex, constraintMutex );
-Q_GLOBAL_STATIC( QSet<const System*>, constraintSet );
-
-/** This static function is used to apply the constraints to a system
-    to ensure that circular dependencies don't lead to infinite recursion. */
-static void applyConstraints(System &system)
-{
-    QMutexLocker lkr( constraintMutex() );
-    
-    QSet<const System*> *set = constraintSet();
-
-    if (set->contains(&system))
-        //we are already processing the constraints
-        //of this system
-        return;
-
-    set->insert(&system);
-    lkr.unlock();
-    
-    //get all of the constraints and process them one at a time
-    Constraints constraints = system.constraints();
-    
-    for (Constraints::const_iterator it = constraints.constBegin();
-         it != constraints.constEnd();
-         ++it)
-    {
-        it->read().apply(system);
-    }
-    
-    lkr.relock();
-    set->remove(&system);
-}
-
-/** Apply the system constraints */
+/** Apply the system (and molecule) constraints */
 void System::applyConstraints()
 {
-    System new_system(*this);
-    ::applyConstraints(new_system);
+    if (applying_constraints)
+        return;
 
-    this->operator=(new_system);
+    SaveState old_state = SaveState::save(*this);
+
+    try
+    {
+        //take a copy of the constraints so that
+        //we know that they won't be changed behind our back
+        //as the constraints are applied
+        Constraints constraints = cons;
+    
+        applying_constraints = true;
+    
+        constraints.apply(*this);
+
+        //copy back the constraints (they may have been
+        //changed by the application)
+        cons = constraints;
+        
+        applying_constraints = false;
+    }
+    catch(...)
+    {
+        old_state.restore(*this);
+        throw;
+    }
 }
 
 /** Return whether or not the constraints are satisfied */
-bool System::constraintsSatisfied()
+bool System::constraintsSatisfied() const
 {
-    if (this->nConstraints() > 0)
+    return cons.areSatisfied(*this);
+}
+
+/** Apply the molecule constraints */
+void System::applyMoleculeConstraints()
+{
+    if (applying_constraints)
+        return;
+
+    SaveState old_state = SaveState::save(*this);
+    
+    try
     {
-        return cons.areSatisfied(*this);
+        //take a copy of the constraints so that
+        //we know that they won't be changed behind our back
+        //as the constraints are applied
+        Constraints constraints = cons;
+    
+        applying_constraints = true;
+    
+        constraints.applyMoleculeConstraints(*this);
+
+        //copy back the constraints (they may have been
+        //changed by the application)
+        cons = constraints;
+        
+        applying_constraints = false;
     }
-    else
-        return true;
+    catch(...)
+    {
+        old_state.restore(*this);
+        throw;
+    }
+}
+
+/** Return whether or not the molecule constraints are satisfied */
+bool System::moleculeConstraintsAreSatisfied() const
+{
+    return cons.moleculeConstraintsAreSatisfied(*this);
 }
 
 /** Set the energy component equal to the constant value 'value'. This will
@@ -919,17 +948,17 @@ bool System::constraintsSatisfied()
 */
 void System::setComponent(const Symbol &symbol, double value)
 {
-    System old_state(*this);
-    
+    SaveState old_state = SaveState::save(*this);
+        
     try
     {
         _pvt_forceFields().setComponent(symbol, value);
-        ::applyConstraints(*this);
+        this->applyConstraints();
         sysversion.incrementMajor();
     }
     catch(...)
     {
-        this->operator=(old_state);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -942,17 +971,17 @@ void System::setComponent(const Symbol &symbol, double value)
 */
 void System::setComponent(const Symbol &symbol, const SireCAS::Expression &expression)
 {
-    System old_state(*this);
+    SaveState old_state = SaveState::save(*this);
 
     try
     {
         _pvt_forceFields().setComponent(symbol, expression);
-        ::applyConstraints(*this);
+        this->applyConstraints();
         sysversion.incrementMajor();
     }
     catch(...)
     {
-        this->operator=(old_state);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -1188,6 +1217,48 @@ void System::setMonitors(const SystemMonitors &monitors, int frequency)
     this->setMonitors(new_monitors);
 }
 
+/** Internal function used to apply the molecule constraints after 
+    any of the molecules have changed */
+void System::_pvt_applyMoleculeConstraints()
+{
+    if (cons.hasMoleculeConstraints() and not applying_constraints)
+    {
+        Constraints constraints = cons;
+        applying_constraints = true;
+        constraints.applyMoleculeConstraints(*this);
+        cons = constraints;
+        applying_constraints = false;
+    }
+}
+
+/** Internal function used to apply the molecule constraints after 
+    the molecule with number 'molnum' has changed */
+void System::_pvt_applyMoleculeConstraints(MolNum molnum)
+{
+    if (cons.hasMoleculeConstraints() and not applying_constraints)
+    {
+        Constraints constraints = cons;
+        applying_constraints = true;
+        constraints.applyMoleculeConstraints(*this, molnum);
+        cons = constraints;
+        applying_constraints = false;
+    }
+}
+
+/** Internal function used to apply the molecule constraints after 
+    the molecules in 'molecules' have changed */
+void System::_pvt_applyMoleculeConstraints(const Molecules &molecules)
+{
+    if (cons.hasMoleculeConstraints() and not applying_constraints)
+    {
+        Constraints constraints = cons;
+        applying_constraints = true;
+        constraints.applyMoleculeConstraints(*this, molecules);
+        cons = constraints;
+        applying_constraints = false;
+    }
+}
+
 /** Add the forcefield 'forcefield' to this system. This will raise
     an exception if this forcefield (or one with the same name)
     is already present in this set. Note that if the added
@@ -1203,17 +1274,18 @@ void System::add(const FF &forcefield)
     FFPtr ff( forcefield );
     ff.edit().update( this->matchToExistingVersion(forcefield.molecules()) );
 
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
         this->_pvt_forceFields().add(ff.read());
         this->rebuildIndex();
         sysversion.incrementMajor();
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -1244,17 +1316,18 @@ void System::add(const MoleculeGroup &molgroup)
         MolGroupPtr mgroup(molgroup);
         mgroup.edit().update( this->matchToExistingVersion(molgroup.molecules()) );
 
-        System old_system(*this);
+        SaveState old_state = SaveState::save(*this);
         
         try
         {
             this->_pvt_moleculeGroups().add(mgroup);
             this->rebuildIndex();
             sysversion.incrementMajor();
+            this->_pvt_applyMoleculeConstraints();
         }
         catch(...)
         {
-            this->operator=(old_system);
+            old_state.restore(*this);
             throw;
         }
     }
@@ -1263,17 +1336,24 @@ void System::add(const MoleculeGroup &molgroup)
 /** Add the passed constraint to the system */
 void System::add(const Constraints &constraints)
 {
-    System new_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
-    int nconstraints = new_system.cons.count();
-    
-    new_system.cons.add(constraints);
-    
-    if (new_system.cons.count() != nconstraints)
+    try
     {
-        new_system.sysversion.incrementMajor();
-        new_system.applyConstraints();
-        this->operator=(new_system);
+        int nconstraints = cons.count();
+    
+        cons.add(constraints);
+    
+        if (cons.count() != nconstraints)
+        {
+            sysversion.incrementMajor();
+            this->applyConstraints();
+        }
+    }
+    catch(...)
+    {
+        old_state.restore(*this);
+        throw;
     }
 }
 
@@ -1289,14 +1369,20 @@ void System::setConstraints(const Constraints &constraints)
     if (cons == constraints)
         return;
 
-    System new_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
-    new_system.cons = constraints;
-    new_system.sysversion.incrementMajor();
+    try
+    {
+        cons = constraints;
+        sysversion.incrementMajor();
     
-    new_system.applyConstraints();
-    
-    this->operator=(new_system);
+        this->applyConstraints();
+    }
+    catch(...)
+    {
+        old_state.restore(*this);
+        throw;
+    }
 }
 
 /** Remove all monitors that match the ID 'monid'
@@ -1316,17 +1402,18 @@ void System::remove(const MonitorID &monid)
 */
 void System::remove(const FFID &ffid)
 {
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
         this->_pvt_forceFields().remove(ffid);
         this->rebuildIndex();
         sysversion.incrementMajor();
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -1353,7 +1440,7 @@ void System::remove(const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -1380,10 +1467,11 @@ void System::remove(const MGID &mgid)
         }
         
         sysversion.incrementMajor();
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -1406,7 +1494,7 @@ void System::remove(const MolID &molid)
 {
     QList<MolNum> molnums = molid.map(*this);
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -1421,10 +1509,11 @@ void System::remove(const MolID &molid)
         }
         
         sysversion.incrementMinor();
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -1437,7 +1526,10 @@ void System::remove(const Constraints &constraints)
     cons.remove(constraints);
     
     if (cons.count() != nconstraints)
+    {
         sysversion.incrementMajor();
+        this->applyConstraints();
+    }
 }
 
 /** Remove the passed constraint from this system */
@@ -1456,20 +1548,32 @@ void System::removeAllMolecules()
     from this system */
 void System::removeAllMoleculeGroups()
 {
-    QList<MGNum> mgnums = this->_pvt_constMoleculeGroups().mgNums();
+    SaveState old_state = SaveState::save(*this);
     
-    if (not mgnums.isEmpty())
+    try
     {
-        this->_pvt_moleculeGroups().remove( IDOrSet<MGID>(mgnums) );
-        
-        foreach (MGNum mgnum, mgnums)
-        {
-            this->removeFromIndex(mgnum);
-            mgroups_by_num.remove(mgnum);
-        }
-    }
+        QList<MGNum> mgnums = this->_pvt_constMoleculeGroups().mgNums();
     
-    sysversion.incrementMajor();
+        if (not mgnums.isEmpty())
+        {
+            this->_pvt_moleculeGroups().remove( IDOrSet<MGID>(mgnums) );
+        
+            foreach (MGNum mgnum, mgnums)
+            {
+                this->removeFromIndex(mgnum);
+                mgroups_by_num.remove(mgnum);
+            }
+        }
+        
+        sysversion.incrementMajor();
+        
+        this->_pvt_applyMoleculeConstraints();
+    }
+    catch(...)
+    {
+        old_state.restore(*this);
+        throw;
+    }
 }
 
 /** Completely remove all monitors from this system */
@@ -1488,17 +1592,29 @@ void System::removeAllForceFields()
 {
     if (this->nForceFields() == 0)
         return;
-        
-    QList<MGNum> mgnums = this->_pvt_forceFields().mgNums();
-    this->_pvt_forceFields().removeAllForceFields();
 
-    foreach (MGNum mgnum, mgnums)
-    {
-        this->removeFromIndex(mgnum);
-        mgroups_by_num.remove(mgnum);
-    }
+    SaveState old_state = SaveState::save(*this);
     
-    sysversion.incrementMajor();
+    try
+    {
+        QList<MGNum> mgnums = this->_pvt_forceFields().mgNums();
+        this->_pvt_forceFields().removeAllForceFields();
+
+        foreach (MGNum mgnum, mgnums)
+        {
+            this->removeFromIndex(mgnum);
+            mgroups_by_num.remove(mgnum);
+        }
+        
+        sysversion.incrementMajor();
+        
+        this->_pvt_applyMoleculeConstraints();
+    }
+    catch(...)
+    {
+        old_state.restore(*this);
+        throw;
+    }
 }
 
 /** Remove all constraints from this system */
@@ -1541,7 +1657,7 @@ void System::add(const MoleculeView &molview, const MGID &mgid,
     PartialMolecule view(molview);
     view.update( this->matchToExistingVersion(molview.data()) );
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -1556,10 +1672,12 @@ void System::add(const MoleculeView &molview, const MGID &mgid,
         }
         
         sysversion.incrementMinor();
+        
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -1584,7 +1702,7 @@ void System::add(const ViewsOfMol &molviews, const MGID &mgid,
     ViewsOfMol views(molviews);
     views.update( this->matchToExistingVersion(molviews.data()) );
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -1599,10 +1717,12 @@ void System::add(const ViewsOfMol &molviews, const MGID &mgid,
         }
         
         sysversion.incrementMinor();
+
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -1626,7 +1746,7 @@ void System::add(const Molecules &molecules, const MGID &mgid,
     
     Molecules mols = this->matchToExistingVersion(molecules);
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -1641,10 +1761,12 @@ void System::add(const Molecules &molecules, const MGID &mgid,
         }
         
         sysversion.incrementMinor();
+
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -1669,7 +1791,7 @@ void System::add(const MoleculeGroup &molgroup, const MGID &mgid,
     MolGroupPtr group(molgroup);
     group.edit().update( this->matchToExistingVersion(molgroup.molecules()) );
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -1684,10 +1806,12 @@ void System::add(const MoleculeGroup &molgroup, const MGID &mgid,
         }
         
         sysversion.incrementMinor();
+
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -1714,7 +1838,7 @@ void System::addIfUnique(const MoleculeView &molview, const MGID &mgid,
     PartialMolecule view(molview);
     view.update( this->matchToExistingVersion(molview.data()) );
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -1729,10 +1853,12 @@ void System::addIfUnique(const MoleculeView &molview, const MGID &mgid,
         }
         
         sysversion.incrementMinor();
+
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -1759,7 +1885,7 @@ void System::addIfUnique(const ViewsOfMol &molviews, const MGID &mgid,
     ViewsOfMol views(molviews);
     views.update( this->matchToExistingVersion(molviews.data()) );
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -1774,10 +1900,12 @@ void System::addIfUnique(const ViewsOfMol &molviews, const MGID &mgid,
         }
         
         sysversion.incrementMinor();
+
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -1803,7 +1931,7 @@ void System::addIfUnique(const Molecules &molecules, const MGID &mgid,
     
     Molecules mols = this->matchToExistingVersion(molecules);
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -1818,10 +1946,12 @@ void System::addIfUnique(const Molecules &molecules, const MGID &mgid,
         }
         
         sysversion.incrementMinor();
+
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -1848,7 +1978,7 @@ void System::addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid,
     MolGroupPtr group(molgroup);
     group.edit().update( this->matchToExistingVersion(molgroup.molecules()) );
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -1863,10 +1993,12 @@ void System::addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid,
         }
         
         sysversion.incrementMinor();
+
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -1992,33 +2124,24 @@ void System::removeAll(const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
-    if (mgnums.count() == 1)
+    SaveState old_state = SaveState::save(*this);
+
+    try
     {
-        MGNum mgnum = mgnums.at(0);
+        foreach (MGNum mgnum, mgnums)
+        {
+            this->_pvt_moleculeGroups(mgnum).removeAll(mgnum);
+            this->clearIndex(mgnum);
+        }
         
-        this->_pvt_moleculeGroups(mgnum).removeAll(mgnum);
-        this->clearIndex(mgnum);
         sysversion.incrementMinor();
+
+        this->_pvt_applyMoleculeConstraints();
     }
-    else
+    catch(...)
     {
-        System old_system(*this);
-    
-        try
-        {
-            foreach (MGNum mgnum, mgnums)
-            {
-                this->_pvt_moleculeGroups(mgnum).removeAll(mgnum);
-                this->clearIndex(mgnum);
-            }
-            
-            sysversion.incrementMinor();
-        }
-        catch(...)
-        {
-            this->operator=(old_system);
-            throw;
-        }
+        old_state.restore(*this);
+        throw;
     }
 }
 
@@ -2035,7 +2158,7 @@ void System::remove(const MoleculeView &molview, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -2050,10 +2173,12 @@ void System::remove(const MoleculeView &molview, const MGID &mgid)
         }
         
         sysversion.incrementMinor();
+
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -2071,7 +2196,7 @@ void System::remove(const ViewsOfMol &molviews, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -2086,10 +2211,12 @@ void System::remove(const ViewsOfMol &molviews, const MGID &mgid)
         }
         
         sysversion.incrementMinor();
+
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -2107,7 +2234,7 @@ void System::remove(const Molecules &molecules, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -2129,10 +2256,12 @@ void System::remove(const Molecules &molecules, const MGID &mgid)
         }
         
         sysversion.incrementMinor();
+
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -2162,7 +2291,7 @@ void System::removeAll(const MoleculeView &molview, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -2177,10 +2306,12 @@ void System::removeAll(const MoleculeView &molview, const MGID &mgid)
         }
         
         sysversion.incrementMinor();
+
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -2196,7 +2327,7 @@ void System::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -2211,10 +2342,12 @@ void System::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
         }
         
         sysversion.incrementMinor();
+
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -2230,7 +2363,7 @@ void System::removeAll(const Molecules &molecules, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -2252,10 +2385,12 @@ void System::removeAll(const Molecules &molecules, const MGID &mgid)
         }
         
         sysversion.incrementMinor();
+
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -2283,7 +2418,7 @@ void System::remove(MolNum molnum, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -2294,10 +2429,12 @@ void System::remove(MolNum molnum, const MGID &mgid)
         }
         
         sysversion.incrementMinor();
+
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -2312,7 +2449,7 @@ void System::remove(const QSet<MolNum> &molnums, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -2323,10 +2460,12 @@ void System::remove(const QSet<MolNum> &molnums, const MGID &mgid)
         }
         
         sysversion.incrementMinor();
+
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -2340,34 +2479,29 @@ void System::remove(const QSet<MolNum> &molnums, const MGID &mgid)
 */
 void System::update(const MoleculeData &moldata)
 {
-    if (this->_pvt_constMoleculeGroups().contains(moldata.number()))
+    bool in_molgroup = this->_pvt_constMoleculeGroups().contains(moldata.number());
+    bool in_ffields = this->_pvt_constForceFields().contains(moldata.number());
+
+    if (in_molgroup or in_ffields)
     {
-        if (this->_pvt_constForceFields().contains(moldata.number()))
-        {
-            System old_system(*this);
-            
-            try
-            {
-                this->_pvt_forceFields().update(moldata);
-                this->_pvt_moleculeGroups().update(moldata);
-            }
-            catch(...)
-            {
-                this->operator=(old_system);
-                throw;
-            }
-        }
-        else
-        {
-            this->_pvt_moleculeGroups().update(moldata);
-        }
+        SaveState old_state = SaveState::save(*this);
         
-        sysversion.incrementMinor();
-    }
-    else if (this->_pvt_forceFields().contains(moldata.number()))
-    {
-        this->_pvt_forceFields().update(moldata);
-        sysversion.incrementMinor();
+        try
+        {
+            if (in_molgroup)
+                this->_pvt_moleculeGroups().update(moldata);
+                
+            if (in_ffields)
+                this->_pvt_forceFields().update(moldata);
+                
+            sysversion.incrementMinor();
+            
+            this->_pvt_applyMoleculeConstraints(moldata.number());
+        }
+        catch(...)
+        {
+            old_state.restore(*this);
+        }
     }
 }
 
@@ -2388,27 +2522,31 @@ void System::update(const Molecules &molecules)
         return;
     }
 
-    if (this->_pvt_constMoleculeGroups().isEmpty())
+    bool in_molgroup = not this->_pvt_constMoleculeGroups().isEmpty();
+    bool in_ffields = not this->_pvt_constForceFields().isEmpty();
+    
+    if (in_molgroup or in_ffields)
     {
-        this->_pvt_forceFields().update(molecules);
-    }
-    else
-    {
-        System old_system(*this);
+        SaveState old_state = SaveState::save(*this);
         
         try
         {
-            this->_pvt_forceFields().update(molecules);
-            this->_pvt_moleculeGroups().update(molecules);
+            if (in_ffields)
+                this->_pvt_forceFields().update(molecules);
+            
+            if (in_molgroup)
+                this->_pvt_moleculeGroups().update(molecules);
+
+            sysversion.incrementMinor();
+            
+            this->_pvt_applyMoleculeConstraints(molecules);
         }
         catch(...)
         {
-            this->operator=(old_system);
+            old_state.restore(*this);
             throw;
         }
     }
-    
-    sysversion.incrementMinor();
 }
 
 /** Update this system so that it uses the same version of the molecules
@@ -2444,7 +2582,7 @@ void System::setContents(const MGID &mgid, const MoleculeView &molview,
     PartialMolecule view(molview);
     view.update( this->matchToExistingVersion(molview.data()) );
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -2460,10 +2598,12 @@ void System::setContents(const MGID &mgid, const MoleculeView &molview,
         }
         
         sysversion.incrementMinor();
+        
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -2489,7 +2629,7 @@ void System::setContents(const MGID &mgid, const ViewsOfMol &molviews,
     ViewsOfMol views(molviews);
     views.update( this->matchToExistingVersion(molviews.data()) );
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -2505,10 +2645,12 @@ void System::setContents(const MGID &mgid, const ViewsOfMol &molviews,
         }
         
         sysversion.incrementMinor();
+        
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -2533,7 +2675,7 @@ void System::setContents(const MGID &mgid, const Molecules &molecules,
     
     Molecules mols = this->matchToExistingVersion(molecules);
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -2549,10 +2691,12 @@ void System::setContents(const MGID &mgid, const Molecules &molecules,
         }
         
         sysversion.incrementMinor();
+
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }
@@ -2578,7 +2722,7 @@ void System::setContents(const MGID &mgid, const MoleculeGroup &molgroup,
     MolGroupPtr group(molgroup);
     group.edit().update( this->matchToExistingVersion(molgroup.molecules()) );
     
-    System old_system(*this);
+    SaveState old_state = SaveState::save(*this);
     
     try
     {
@@ -2594,10 +2738,12 @@ void System::setContents(const MGID &mgid, const MoleculeGroup &molgroup,
         }
         
         sysversion.incrementMinor();
+
+        this->_pvt_applyMoleculeConstraints();
     }
     catch(...)
     {
-        this->operator=(old_system);
+        old_state.restore(*this);
         throw;
     }
 }

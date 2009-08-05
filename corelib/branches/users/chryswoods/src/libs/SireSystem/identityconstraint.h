@@ -171,6 +171,8 @@ public:
     Molecules update(const System &system, MolNum changed_mol);
     Molecules update(const System &system, const Molecules &molecules);
 
+    bool isSatisfied(const System &system) const;
+
 private:
     /** The helper class that is used to implement the constraint */
     SireBase::SharedPolyPointer<detail::IdentityConstraintPvt> d;

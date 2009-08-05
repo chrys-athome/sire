@@ -153,8 +153,10 @@ public:
     void collectStats();
 
     void applyConstraints();
-
-    bool constraintsSatisfied();
+    bool constraintsSatisfied() const;
+    
+    void applyMoleculeConstraints();
+    bool moleculeConstraintsAreSatisfied() const;
 
     using SireMol::MolGroupsBase::at;
     
@@ -386,6 +388,10 @@ private:
 
     void _pvt_throwMissingGroup(MGNum mgnum) const;
 
+    void _pvt_applyMoleculeConstraints();
+    void _pvt_applyMoleculeConstraints(MolNum molnum);
+    void _pvt_applyMoleculeConstraints(const Molecules &molecules);
+
     /** The unique ID for this system */
     QUuid uid;
     
@@ -409,6 +415,11 @@ private:
     /** The index of which of the two set of MoleculeGroups each
         individual molecule group in this set is in */
     QHash<MGNum,int> mgroups_by_num;
+    
+    /** This flag indicates whether or not constraints
+        are in the process of being applied - this prevents
+        infinite recursion */
+    bool applying_constraints;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS

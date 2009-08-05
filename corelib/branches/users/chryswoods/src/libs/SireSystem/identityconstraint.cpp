@@ -2504,3 +2504,19 @@ Molecules IdentityConstraint::update(const System &system, const Molecules &mole
         
     return mols_to_change;
 }
+
+/** Return whether or not this constraint is satisfied for 
+    the passed system */
+bool IdentityConstraint::isSatisfied(const System &system) const
+{
+    if (this->sysUID() == system.UID() and
+        this->sysVersion() == system.version())
+    {
+        return d->applyConstraint().isEmpty();
+    }
+    else
+    {
+        IdentityConstraint c(*this);
+        return c.update(system).isEmpty();
+    }
+}
