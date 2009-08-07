@@ -16,6 +16,7 @@ set ( SQUIRE_HEADERS
       qmpotential.h
       qmprogram.h
 
+      hf.h
       latticecharges.h
 
       molpro.h
@@ -32,6 +33,7 @@ set ( SQUIRE_SOURCES
       qmpotential.cpp
       qmprogram.cpp
 
+      hf.cpp
       latticecharges.cpp
       
       molpro.cpp

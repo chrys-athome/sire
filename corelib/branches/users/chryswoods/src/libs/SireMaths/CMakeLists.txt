@@ -21,11 +21,13 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 set ( SIREMATHS_HEADERS
       accumulator.h
       axisset.h
+      boys.h
       complex.h
       constants.h
       distvector.h
       errors.h
       freeenergyaverage.h
+      gamma.h
       histogram.h
       line.h
       linearap.h
@@ -50,10 +52,12 @@ set ( SIREMATHS_SOURCES
 
       accumulator.cpp
       axisset.cpp
+      boys.cpp
       complex.cpp
       distvector.cpp
       errors.cpp
       freeenergyaverage.cpp
+      gamma.cpp
       histogram.cpp
       line.cpp
       linearap.cpp
