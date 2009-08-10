@@ -18,7 +18,7 @@ if ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
 endif ( CMAKE_BINARY_DIR STREQUAL CMAKE_SOURCE_DIR )
 
 # name the project
-project (SIRE)
+project (SIRE CXX C Fortran)
 
 # Create a file in which we can save the values of all useful variables.
 # This will mean that projects using Sire won't have to set these variables
@@ -303,6 +303,7 @@ endif()
 message( STATUS  "CMAKE_SYSTEM_NAME      == ${CMAKE_SYSTEM_NAME}" )
 message( STATUS  "CMAKE_C_COMPILER       == ${CMAKE_C_COMPILER}" )
 message( STATUS  "CMAKE_CXX_COMPILER     == ${CMAKE_CXX_COMPILER}" )
+message( STATUS  "CMAKE_Fortran_COMPILER == ${CMAKE_Fortran_COMPILER}" )
 
 message ( STATUS "SIRE_SMALL_FLAGS       == ${SIRE_SMALL_FLAGS}" )
 message ( STATUS "SIRE_WARNALL_FLAGS     == ${SIRE_WARNALL_FLAGS}" )

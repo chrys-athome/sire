@@ -26,28 +26,44 @@
   *
 \*********************************************/
 
-#ifndef SIREMATHS_BOYS_H
-#define SIREMATHS_BOYS_H
+#ifndef SQUIRE_BLAS_H
+#define SQUIRE_BLAS_H
 
-#include "sireglobal.h"
+#ifdef SQUIRE_HAVE_BLAS_AND_LAPACK
+
+#include <QVector>
+
+#include "SireBase/array2d.hpp"
 
 SIRE_BEGIN_HEADER
 
-namespace SireMaths
+namespace Squire
 {
 
-double boys_f0(double x);
-double boys_f1(double x);
-double boys_f2(double x);
-double boys_f3(double x);
+typedef SireBase::Array2D<double> MatrixType;
+typedef QVector<double> VectorType;
 
-double boys(double m, double x);
-double boys(int m, double x);
+MatrixType dgemm(char TRANSA, char TRANSB,
+                 const MatrixType &A, const MatrixType &B);
+
+MatrixType dgemm(char TRANSA, char TRANSB,
+                 double ALPHA, const MatrixType &A, const MatrixType &B,
+                 double BETA, const MatrixType &C);
+                      
+
+void dgemm(char TRANSA, char TRANSB,
+           const MatrixType &A, const MatrixType &B,
+           MatrixType &result);
+
+void dgemm(char TRANSA, char TRANSB,
+           double ALPHA, const MatrixType &A, const MatrixType &B,
+           double BETA, const MatrixType &C,
+           MatrixType &result);
 
 }
 
-SIRE_EXPOSE_FUNCTION( SireMaths::boys )
-
 SIRE_END_HEADER
+
+#endif // SQUIRE_HAVE_BLAS_AND_LAPACK
 
 #endif

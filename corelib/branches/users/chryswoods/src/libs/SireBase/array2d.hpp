@@ -80,6 +80,8 @@ public:
     Array2D();
 
     Array2D(quint32 nrows, quint32 ncolumns);
+    
+    Array2D(quint32 nrows, quint32 ncolumns, const T &default_value);
 
     Array2D(const Array2D<T> &other);
 
@@ -132,6 +134,19 @@ Array2D<T>::Array2D(quint32 nrows, quint32 ncolumns)
     if (nrows*ncolumns > 0)
     {
         array = QVector<T>(nrows*ncolumns);
+        array.squeeze();
+    }
+}
+
+/** Construct a Array2D that holds nrow rows of ncolumn columns. */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Array2D<T>::Array2D(quint32 nrows, quint32 ncolumns, const T &default_value)
+           : Array2DBase(nrows,ncolumns)
+{
+    if (nrows*ncolumns > 0)
+    {
+        array = QVector<T>(nrows*ncolumns, default_value);
         array.squeeze();
     }
 }

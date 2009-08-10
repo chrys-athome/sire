@@ -26,28 +26,28 @@
   *
 \*********************************************/
 
-#ifndef SIREMATHS_BOYS_H
-#define SIREMATHS_BOYS_H
+#ifndef SQUIRE_SQUIRE_LAPACK_H
+#define SQUIRE_SQUIRE_LAPACK_H
 
-#include "sireglobal.h"
+#ifdef SQUIRE_HAVE_BLAS_AND_LAPACK
+
+#include "squire_blas.h"
 
 SIRE_BEGIN_HEADER
 
-namespace SireMaths
+namespace Squire
 {
 
-double boys_f0(double x);
-double boys_f1(double x);
-double boys_f2(double x);
-double boys_f3(double x);
+VectorType dsyev(char JOBZ, char UPLO, MatrixType &A);
+VectorType dsyev(char JOBZ, char UPLO, MatrixType &A, int &INFO);
 
-double boys(double m, double x);
-double boys(int m, double x);
+void dsyev(char JOBZ, char UPLO, MatrixType &A, VectorType &W);
+void dsyev(char JOBZ, char UPLO, MatrixType &A, VectorType &W, int &INFO);
 
 }
 
-SIRE_EXPOSE_FUNCTION( SireMaths::boys )
-
 SIRE_END_HEADER
+
+#endif // SQUIRE_HAVE_BLAS_AND_LAPACK
 
 #endif
