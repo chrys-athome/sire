@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QVarLengthArray>
+
 #include "identityconstraint.h"
 #include "system.h"
 #include "closemols.h"
@@ -1341,7 +1343,7 @@ void FewPointsHelper::assignMoleculesToPoints()
     //now calculate optimum assignment of molecules to points that
     //minimises the total distance between each molecule and its
     //assigned point
-    QVector<int> point_to_mol = solve_linear_assignment(distmatrix);
+    QVector<int> point_to_mol = solve_linear_assignment(distmatrix, true);
 
     //point_to_mol maps points to molecules - we need to invert this
     //so that we map molecules to points
@@ -1400,6 +1402,8 @@ Molecules FewPointsHelper::applyConstraint() const
     if (mol_to_point.isEmpty())
         //nothing needs to be changed as the constraint is satisfied
         return Molecules();
+
+    //qDebug() << "ORDER IS INCORRECT" << mol_to_point;
         
     //the order is incorrect - we need to swap the molecules around
     const Molecules molecules = this->moleculeGroup().molecules();
@@ -1416,6 +1420,9 @@ Molecules FewPointsHelper::applyConstraint() const
     
     const PropertyName &coords_property = map["coordinates"];
     
+    QVarLengthArray<int,4> lost_coords;
+    QVarLengthArray<int,4> lost_mols;
+    
     for (int i=0; i<n_to_match; ++i)
     {
         const int new_i = mol_to_point_array[i];
@@ -1428,6 +1435,13 @@ Molecules FewPointsHelper::applyConstraint() const
                                                   mol_to_molnum_array[i],
                                                   mol_to_molnum_array[new_i],
                                                   coords_property) );
+            
+            //qDebug() << "Giving coordinates of" << new_i << "to molecule" << i;
+
+            if (new_i >= n_to_match)
+                //molecule at 'new_i' will not get new coordinates
+                //unless further action is taken...
+                lost_mols.append(new_i);
         
             //we now need to find the new index of the ith molecule, to
             //see if we need to swap it now (as it has moved to not be associated
@@ -1435,15 +1449,28 @@ Molecules FewPointsHelper::applyConstraint() const
             int new_j = mol_to_point.indexOf(i, n_to_match);
             
             if (new_j != -1)
-            {
-                //molecule i is now not associated with any points - copy
-                //its coordinates to the new molecule so that they are not lost
-                changed_mols.add( ::swapCoordinatesTo(molecules,
-                                                      mol_to_molnum_array[new_i],
-                                                      mol_to_molnum_array[i],
-                                                      coords_property) );
-            }
+                //the coordinates of molecule i will be lost unless
+                //further action is taken (they need to be matched up
+                //with one of the molecules in 'lost_mols'
+                lost_coords.append(i);
         }
+    }
+    
+    BOOST_ASSERT( lost_mols.count() == lost_coords.count() );
+    
+    int n = lost_mols.count();
+    
+    for (int j=0; j<n; ++j)
+    {
+        const int i = lost_coords[j];
+        const int new_i = lost_mols[j];
+    
+        //qDebug() << "...and coordinates of" << i << "to molecule" << new_i;
+            
+        changed_mols.add( ::swapCoordinatesTo(molecules,
+                                              mol_to_molnum_array[new_i],
+                                              mol_to_molnum_array[i],
+                                              coords_property) );
     }
     
     return changed_mols;
@@ -2005,6 +2032,9 @@ Molecules ManyPointsHelper::applyConstraint() const
     
     const PropertyName &coords_property = map["coordinates"];
     
+    QVarLengthArray<int, 4> lost_mols;
+    QVarLengthArray<int, 4> lost_coords;
+    
     for (int i=0; i<n_to_match; ++i)
     {
         const int new_i = mol_to_point_array[i];
@@ -2017,6 +2047,11 @@ Molecules ManyPointsHelper::applyConstraint() const
                                                   molnums_array[i],
                                                   molnums_array[new_i],
                                                   coords_property) );
+
+            if (new_i >= n_to_match)
+                //molecule at 'new_i' will not get new coordinates
+                //unless further action is taken...
+                lost_mols.append(new_i);
         
             //we now need to find the new index of the ith molecule, to
             //see if we need to swap it now (as it has moved to not be associated
@@ -2024,15 +2059,26 @@ Molecules ManyPointsHelper::applyConstraint() const
             int new_j = mol_to_point.indexOf(i, n_to_match);
             
             if (new_j != -1)
-            {
-                //molecule i is now not associated with any points - copy
-                //its coordinates to the new molecule so that they are not lost
-                changed_mols.add( ::swapCoordinatesTo(molecules,
-                                                      molnums_array[new_i],
-                                                      molnums_array[i],
-                                                      coords_property) );
-            }
+                //the coordinates of molecule i will be lost unless
+                //further action is taken (they need to be matched up
+                //with one of the molecules in 'lost_mols'
+                lost_coords.append(i);
         }
+    }
+
+    BOOST_ASSERT( lost_mols.count() == lost_coords.count() );
+    
+    int n = lost_mols.count();
+    
+    for (int j=0; j<n; ++j)
+    {
+        const int i = lost_coords[j];
+        const int new_i = lost_mols[j];
+            
+        changed_mols.add( ::swapCoordinatesTo(molecules,
+                                              molnums_array[new_i],
+                                              molnums_array[i],
+                                              coords_property) );
     }
     
     return changed_mols;

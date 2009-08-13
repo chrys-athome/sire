@@ -48,15 +48,19 @@ using namespace SireBase;
 ////////// Implementation of S_GTO
 //////////
 
-S_GTO::S_GTO() : alfa(0)
+S_GTO::S_GTO() : alfa(0), scl(1)
 {}
 
-S_GTO::S_GTO(const Vector &center, double alpha)
-      : cent(center), alfa(alpha)
-{}
+S_GTO::S_GTO(const Vector &center, double alpha, double scale)
+      : cent(center), alfa(alpha), scl(scale)
+{
+    //set scl equal to 'scl' times the normalisation
+    //factor for this orbital
+    scl *= std::pow(2*alfa/pi, 0.75);
+}
 
 S_GTO::S_GTO(const S_GTO &other)
-      : cent(other.cent), alfa(other.alfa)
+      : cent(other.cent), alfa(other.alfa), scl(other.scl)
 {}
 
 S_GTO::~S_GTO()
@@ -66,6 +70,7 @@ S_GTO& S_GTO::operator=(const S_GTO &other)
 {
     cent = other.cent;
     alfa = other.alfa;
+    scl = other.scl;
     return *this;
 }
 
@@ -79,9 +84,29 @@ double S_GTO::alpha() const
     return alfa;
 }
 
+double S_GTO::scale() const
+{
+    return scl;
+}
+
 int S_GTO::angularMomentum()
 {
     return 0;
+}
+
+S_GTO S_GTO::multiply(const S_GTO &s0, const S_GTO &s1)
+{
+    //the product of two Gaussians is a Gaussian :-)
+    const double alpha_times_beta = s0.alpha() * s1.alpha();
+    const double alpha_plus_beta = s0.alpha() + s1.alpha();
+    const double R2 = Vector::distance2(s0.center(), s1.center());
+    
+    return S_GTO( (s0.alpha()*s0.center() + s1.alpha()*s1.center()) /
+                  alpha_plus_beta,
+                  
+                  alpha_plus_beta,
+                  
+                  std::exp( -alpha_times_beta*R2 / alpha_plus_beta ) );
 }
 
 //////////
@@ -125,6 +150,42 @@ double PointCharge::charge() const
 
 const double pi2 = pi*pi;
 
+double twoe(double A, double B, double C, double D,
+            double RAB2, double RCD2, double RPQ2)
+{
+    const double pi = 3.14159265358998;
+    
+    return 2.000 * std::pow(pi,2.5) / ((A+B)*(C+D)*std::sqrt(A+B+C+D))
+         * boys_f0((A+B)*(C+D)*RPQ2/(A+B+C+D))
+         * std::exp(-A*B*RAB2/(A+B)-C*D*RCD2/(C+D));
+}
+
+double SQUIRE_EXPORT Squire::electron_integral(const S_GTO &A, const S_GTO &B,
+                                               const S_GTO &C, const S_GTO &D)
+{
+    //multiply A and B together (to make P) and C and D to make Q
+    S_GTO P = S_GTO::multiply(A, B);
+    S_GTO Q = S_GTO::multiply(C, D);
+    
+    // from Szabo and Ostland
+    // (AB|CD) = 2 pi^5/2 / [(alpha+beta)*(gamma+delta)(alpha+beta+gamma+delta)^1/2]
+    //            * exp[ -alpha beta/(alpha+beta)|Ra-Rb|^2 
+    //                   -gamma delta/(gamma+delta)|Rc-Rd|^2
+    //            * F0[(alpha+beta)(gamma+delta)/(alpha+beta+gamma+delta)|Rp-Rq|^2]
+
+    const double abcd = P.alpha() + Q.alpha();
+    const double ab_times_cd = P.alpha() * Q.alpha();
+    
+    qDebug() << "TEST" << twoe(A.alpha(), B.alpha(), C.alpha(), D.alpha(),
+                               Vector::distance2(A.center(), B.center()),
+                               Vector::distance2(C.center(), D.center()),
+                               Vector::distance2(P.center(), Q.center()));
+    
+    return (2 * std::pow(pi, 2.5) / (ab_times_cd * std::sqrt(abcd))) *
+           P.scale() * Q.scale() *
+           boys_f0( ab_times_cd * Vector::distance2(P.center(),Q.center()) / abcd );
+}
+
 double SQUIRE_EXPORT Squire::overlap_integral(const S_GTO &s0, const S_GTO &s1)
 {
     double eta = 1 / (s0.alpha() + s1.alpha());
@@ -132,28 +193,7 @@ double SQUIRE_EXPORT Squire::overlap_integral(const S_GTO &s0, const S_GTO &s1)
     
     double R2 = Vector::distance2(s0.center(), s1.center());
     
-    double xnorm = std::pow(4*s0.alpha()*s1.alpha()/pi2, 0.75);
-    
-    return xnorm * std::pow(pi*eta,1.5) * std::exp(-zeta*R2);
-}
-
-/** Calculate the overlap integral for two s-type gaussian basis
-    functions centred at A and B with exponents alpha and beta
-    (thanks to Darragh for all these integrals - originally in
-    Fortran90 - I've converted to C++ - any errors are my fault!!!)
-*/
-double OvInt(const Vector &A, const Vector &B, double alpha, double beta)
-{
-    double eta = 1.0 / (alpha+beta);
-    double zeta = alpha*beta*eta;
-
-    Vector AB = A - B;
-
-    double R2 = Vector::dot(AB, AB);
-
-    double xnorm = std::pow(4.0*alpha*beta/(pi*pi), 0.75);
-
-    return xnorm * std::pow(pi*eta,1.5) * std::exp(-zeta*R2);
+    return s0.scale() * s1.scale() * std::pow(pi*eta,1.5) * std::exp(-zeta*R2);
 }
 
 double SQUIRE_EXPORT Squire::kinetic_integral(const S_GTO &s0, const S_GTO &s1)
@@ -163,24 +203,10 @@ double SQUIRE_EXPORT Squire::kinetic_integral(const S_GTO &s0, const S_GTO &s1)
     
     double R2 = Vector::distance2(s0.center(), s1.center());
     
-    double xnorm = std::pow(4*s0.alpha()*s1.alpha()/pi2, 0.75);
+    double xnorm = 1; //std::pow(4*s0.alpha()*s1.alpha()/pi2, 0.75);
     
     return xnorm * zeta * std::pow(pi*eta, 1.5) * (3 - 2*zeta*R2)
                                                 * std::exp(-zeta*R2);
-}
-
-/** Calculate the kinetic energy integral for two s-type gaussian basis
-    functions centred at A and B with exponents alpha and beta */
-double KEInt(const Vector &A, const Vector &B, double alpha, double beta)
-{
-    double eta = 1.0 / (alpha+beta);
-    double zeta = alpha * beta * eta;
-    Vector AB = A - B;
-    double R2 = Vector::dot(AB,AB);
-    double xnorm=std::pow(4*alpha*beta/(pi*pi), 0.75);
-    
-    return xnorm * zeta * 
-                std::pow(pi*eta, 1.5) * (3.0 - 2.0*zeta*R2) * std::exp(-zeta*R2);
 }
 
 double SQUIRE_EXPORT Squire::potential_integral(const PointCharge &chg,
@@ -193,7 +219,7 @@ double SQUIRE_EXPORT Squire::potential_integral(const PointCharge &chg,
     Vector P = (eta*(s0.alpha()*s0.center() + s1.alpha()*s1.center())) - chg.center();
 
     double argf1 = (s0.alpha() + s1.alpha()) * P.length2();
-    double xnorm = std::pow(4*s0.alpha()*s1.alpha()/pi2, 0.75);
+    double xnorm = 1; //std::pow(4*s0.alpha()*s1.alpha()/pi2, 0.75);
     
     return -2*xnorm*chg.charge()*pi*eta*std::exp(-zeta*R2)*boys_f0(argf1);
 }

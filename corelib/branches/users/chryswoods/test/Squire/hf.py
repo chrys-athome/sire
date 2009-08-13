@@ -9,6 +9,7 @@ C = PointCharge(Vector(0,0,0), 1.0)
 print "OVERLAP ",overlap_integral(A,B)
 print "KINETIC ",kinetic_integral(A,B)
 print "POTENTIAL ",potential_integral(C, A,B)
+print "ELECTRON ",electron_integral(A, B, A, B)
 
 #basis
 #0.0 0.0 0.0  0  0.5

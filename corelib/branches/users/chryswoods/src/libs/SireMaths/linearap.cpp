@@ -361,7 +361,7 @@ QVector<int> SIREMATHS_EXPORT solve_linear_assignment( const Array2D<double> &co
             }
             
             int i0 = columns_to_rows[j1];
-            
+                    
             if (first_min < second_min)
                 //change the reduction of the first minimum column
                 //to increase the minimum reduced cost in the row
@@ -513,7 +513,8 @@ QVector<int> SIREMATHS_EXPORT solve_linear_assignment( const Array2D<double> &co
         // update column prices.
         for (int k=0; k<=last; ++k)  
         { 
-            int j1 = columns_to_rows[k]; 
+            int j1 = collist[k]; 
+            
             v[j1] += d[j1] - min;
         }
 
@@ -531,11 +532,6 @@ QVector<int> SIREMATHS_EXPORT solve_linear_assignment( const Array2D<double> &co
         }
         while (ii != freerow);
     }
-    
-    //qDebug() << "\n(3) rows_to_columns" << rows_to_columns;
-    //qDebug() << "(3) columns_to_rows" << columns_to_rows;
-    //qDebug() << "(3) u" << u;
-    //qDebug() << "(3) v" << v;
     
     if (check_result)
     {

@@ -68,7 +68,7 @@ class SQUIRE_EXPORT S_GTO
 {
 public:
     S_GTO();
-    S_GTO(const Vector &cent, double alpha);
+    S_GTO(const Vector &cent, double alpha, double scale=1);
     S_GTO(const S_GTO &other);
     
     ~S_GTO();
@@ -76,13 +76,18 @@ public:
     S_GTO& operator=(const S_GTO &other);
     
     const Vector& center() const;
+
     double alpha() const;
+    double scale() const;
     
     static int angularMomentum();
+
+    static S_GTO multiply(const S_GTO &s0, const S_GTO &s1);
 
 private:
     Vector cent;
     double alfa;
+    double scl;
 };
 
 class SQUIRE_EXPORT PointCharge
@@ -107,6 +112,8 @@ private:
 double kinetic_integral(const S_GTO &s0, const S_GTO &s1);
 double overlap_integral(const S_GTO &s0, const S_GTO &s1);
 double potential_integral(const PointCharge &chg, const S_GTO &s0, const S_GTO &s1);
+double electron_integral(const S_GTO &A, const S_GTO &B,
+                         const S_GTO &C, const S_GTO &D);
 
 }
 
@@ -117,6 +124,7 @@ SIRE_EXPOSE_CLASS( Squire::PointCharge )
 SIRE_EXPOSE_FUNCTION( Squire::kinetic_integral )
 SIRE_EXPOSE_FUNCTION( Squire::overlap_integral )
 SIRE_EXPOSE_FUNCTION( Squire::potential_integral )
+SIRE_EXPOSE_FUNCTION( Squire::electron_integral )
 
 SIRE_END_HEADER
 
