@@ -117,24 +117,24 @@ static void lapack_not_supported()
 namespace Squire
 {
 
-VectorType SQUIRE_EXPORT Squire::dsyev(char JOBZ, char UPLO, MatrixType &A)
+VectorType SQUIRE_EXPORT dsyev(char JOBZ, char UPLO, MatrixType &A)
 {
     lapack_not_supported();
     return VectorType();
 }
 
-VectorType SQUIRE_EXPORT Squire::dsyev(char JOBZ, char UPLO, MatrixType &A, int &INFO)
+VectorType SQUIRE_EXPORT dsyev(char JOBZ, char UPLO, MatrixType &A, int &INFO)
 {
     lapack_not_supported();
     return VectorType();
 }
 
-void SQUIRE_EXPORT Squire::dsyev(char JOBZ, char UPLO, MatrixType &A, VectorType &W)
+void SQUIRE_EXPORT dsyev(char JOBZ, char UPLO, MatrixType &A, VectorType &W)
 {
     lapack_not_supported();
 }
 
-void SQUIRE_EXPORT Squire::dsyev(char JOBZ, char UPLO, MatrixType &A, 
+void SQUIRE_EXPORT dsyev(char JOBZ, char UPLO, MatrixType &A, 
                                  VectorType &W, int &INFO)
 {
     lapack_not_supported();

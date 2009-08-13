@@ -140,14 +140,14 @@ static void blas_not_supported()
 namespace Squire
 {
 
-MatrixType SQUIRE_EXPORT Squire::dgemm(char TRANSA, char TRANSB,
-                                       const MatrixType &A, const MatrixType &B)
+MatrixType SQUIRE_EXPORT dgemm(char TRANSA, char TRANSB,
+                               const MatrixType &A, const MatrixType &B)
 {
     blas_not_supported();
     return MatrixType();
 }
 
-MatrixType SQUIRE_EXPORT Squire::dgemm(char TRANSA, char TRANSB,
+MatrixType SQUIRE_EXPORT dgemm(char TRANSA, char TRANSB,
                  double ALPHA, const MatrixType &A, const MatrixType &B,
                  double BETA, const MatrixType &C)
 {
@@ -155,14 +155,14 @@ MatrixType SQUIRE_EXPORT Squire::dgemm(char TRANSA, char TRANSB,
     return MatrixType();
 }
                       
-void SQUIRE_EXPORT Squire::dgemm(char TRANSA, char TRANSB,
+void SQUIRE_EXPORT dgemm(char TRANSA, char TRANSB,
            const MatrixType &A, const MatrixType &B,
            MatrixType &result)
 {
     blas_not_supported();
 }
 
-void SQUIRE_EXPORT Squire::dgemm(char TRANSA, char TRANSB,
+void SQUIRE_EXPORT dgemm(char TRANSA, char TRANSB,
            double ALPHA, const MatrixType &A, const MatrixType &B,
            double BETA, const MatrixType &C,
            MatrixType &result)
