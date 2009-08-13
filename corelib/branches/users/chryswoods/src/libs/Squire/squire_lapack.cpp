@@ -140,6 +140,6 @@ void SQUIRE_EXPORT dsyev(char JOBZ, char UPLO, MatrixType &A,
     lapack_not_supported();
 }
 
-}
+} // end of namespace Squire
 
 #endif // SQUIRE_HAVE_BLAS_AND_LAPACK
