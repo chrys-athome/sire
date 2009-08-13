@@ -29,8 +29,6 @@
 #ifndef SQUIRE_BLAS_H
 #define SQUIRE_BLAS_H
 
-#ifdef SQUIRE_HAVE_BLAS_AND_LAPACK
-
 #include <QVector>
 
 #include "SireBase/array2d.hpp"
@@ -63,7 +61,5 @@ void dgemm(char TRANSA, char TRANSB,
 }
 
 SIRE_END_HEADER
-
-#endif // SQUIRE_HAVE_BLAS_AND_LAPACK
 
 #endif

@@ -101,4 +101,45 @@ VectorType SQUIRE_EXPORT dsyev(char JOBZ, char UPLO, MatrixType &A, int &INFO)
 
 } // end of namespace Squire
 
+#else  // SQUIRE_HAVE_BLAS_AND_LAPACK
+
+#include "SireError/errors.h"
+#include "squire_lapack.h"
+
+static void lapack_not_supported()
+{
+    throw SireError::unsupported( QObject::tr(
+            "LAPACK is not available in this version of Squire. You "
+            "need to recompile Squire, telling it where the LAPACK "
+            "libraries are located."), CODELOC );
+}
+
+namespace Squire
+{
+
+VectorType SQUIRE_EXPORT Squire::dsyev(char JOBZ, char UPLO, MatrixType &A)
+{
+    lapack_not_supported();
+    return VectorType();
+}
+
+VectorType SQUIRE_EXPORT Squire::dsyev(char JOBZ, char UPLO, MatrixType &A, int &INFO)
+{
+    lapack_not_supported();
+    return VectorType();
+}
+
+void SQUIRE_EXPORT Squire::dsyev(char JOBZ, char UPLO, MatrixType &A, VectorType &W)
+{
+    lapack_not_supported();
+}
+
+void SQUIRE_EXPORT Squire::dsyev(char JOBZ, char UPLO, MatrixType &A, 
+                                 VectorType &W, int &INFO)
+{
+    lapack_not_supported();
+}
+
+}
+
 #endif // SQUIRE_HAVE_BLAS_AND_LAPACK

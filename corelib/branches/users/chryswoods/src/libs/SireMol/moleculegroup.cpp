@@ -1725,7 +1725,7 @@ QList<ViewsOfMol> MoleculeGroup::remove(const Molecules &molecules)
         if (not removed_views.isEmpty())
             removed_mols.append(removed_views);
     }
-    
+
     if (not removed_mols.isEmpty())
         d->incrementMajor();
     

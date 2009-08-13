@@ -423,10 +423,15 @@ bool Molecules::update(const MoleculeData &moldata)
 {
     Molecules::const_iterator it = mols.constFind(moldata.number());
     
-    if (it != mols.end() and *it != moldata)
+    if (it != mols.constEnd())
     {
-        mols.find(moldata.number())->update(moldata);
-        return true;
+        if (it->data() != moldata)
+        {
+            mols.find(moldata.number())->update(moldata);
+            return true;
+        }
+        else
+            return false;
     }
     else
         return false;

@@ -124,6 +124,54 @@ MatrixType SQUIRE_EXPORT dgemm(char TRANSA, char TRANSB,
 
 } // end of namespace Squire
 
+#else  // SQUIRE_HAVE_BLAS_AND_LAPACK
+
+#include "SireError/errors.h"
+#include "squire_blas.h"
+
+static void blas_not_supported()
+{
+    throw SireError::unsupported( QObject::tr(
+            "BLAS is not available in this version of Squire. You "
+            "need to recompile Squire, telling it where the BLAS "
+            "libraries are located."), CODELOC );
+}
+
+namespace Squire
+{
+
+MatrixType SQUIRE_EXPORT Squire::dgemm(char TRANSA, char TRANSB,
+                                       const MatrixType &A, const MatrixType &B)
+{
+    blas_not_supported();
+    return MatrixType();
+}
+
+MatrixType SQUIRE_EXPORT Squire::dgemm(char TRANSA, char TRANSB,
+                 double ALPHA, const MatrixType &A, const MatrixType &B,
+                 double BETA, const MatrixType &C)
+{
+    blas_not_supported();
+    return MatrixType();
+}
+                      
+void SQUIRE_EXPORT Squire::dgemm(char TRANSA, char TRANSB,
+           const MatrixType &A, const MatrixType &B,
+           MatrixType &result)
+{
+    blas_not_supported();
+}
+
+void SQUIRE_EXPORT Squire::dgemm(char TRANSA, char TRANSB,
+           double ALPHA, const MatrixType &A, const MatrixType &B,
+           double BETA, const MatrixType &C,
+           MatrixType &result)
+{
+    blas_not_supported();
+}
+
+} // end of namespace Squire
+
 #endif // SQUIRE_HAVE_BLAS_AND_LAPACK
 
 #endif

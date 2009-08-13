@@ -29,8 +29,6 @@
 #ifndef SQUIRE_SQUIRE_LAPACK_H
 #define SQUIRE_SQUIRE_LAPACK_H
 
-#ifdef SQUIRE_HAVE_BLAS_AND_LAPACK
-
 #include "squire_blas.h"
 
 SIRE_BEGIN_HEADER
@@ -47,7 +45,5 @@ void dsyev(char JOBZ, char UPLO, MatrixType &A, VectorType &W, int &INFO);
 }
 
 SIRE_END_HEADER
-
-#endif // SQUIRE_HAVE_BLAS_AND_LAPACK
 
 #endif
