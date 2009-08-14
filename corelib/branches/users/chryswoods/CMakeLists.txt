@@ -152,6 +152,34 @@ else()
   message(FATAL_ERROR "Cannot find the boost libraries.")
 endif()  
 
+# Now look for BLAS and LAPACK - if these are not found then
+# a local version will have to be used instead
+set( BLA_STATIC OFF )
+find_package( BLAS )
+find_package( LAPACK )
+
+if (BLAS_FOUND)
+  message( STATUS "Found BLAS library ${BLAS_LIBRARIES}" )
+  set( SIRE_USE_BLAS ON )
+  save_sire_variable( "SIRE_BLAS_LIBRARIES" "${BLAS_LIBRARIES}" )
+else()
+  message( STATUS "Using internal (non-optimal) BLAS functions." )
+  save_sire_variable( SIRE_USE_BLAS OFF )
+endif()
+
+save_sire_variable( "SIRE_USE_BLAS" "${SIRE_USE_BLAS}" )
+
+if (LAPACK_FOUND)
+  message( STATUS "Found LAPACK library ${LAPACK_LIBRARIES}" )
+  set( SIRE_USE_LAPACK ON )
+  save_sire_variable( "SIRE_LAPACK_LIBRARIES" "${LAPACK_LIBRARIES}" )
+else()
+  message( STATUS "Using internal (non-optimal) LAPACK functions." )
+  set( SIRE_USE_LAPACK OFF )
+endif()
+
+save_sire_variable( "SIRE_USE_LAPACK" "${SIRE_USE_LAPACK}" )
+
 # Now run some platform tests - the results will be placed in config.h
 include (CheckIncludeFiles)
 include (CheckSymbolExists)

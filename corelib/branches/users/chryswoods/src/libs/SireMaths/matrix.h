@@ -48,7 +48,6 @@ namespace SireMaths
 {
 
 class Vector;
-class Matrix4;
 
 const Matrix operator+(const Matrix &m1, const Matrix &m2);
 const Matrix operator-(const Matrix &m1, const Matrix &m2);
@@ -66,7 +65,6 @@ class SIREMATHS_EXPORT Matrix
 {
 
 friend class Quaternion;
-friend class Matrix4;
 
 friend QDataStream& ::operator<<(QDataStream&, const Matrix&);
 friend QDataStream& ::operator>>(QDataStream&, Matrix&);

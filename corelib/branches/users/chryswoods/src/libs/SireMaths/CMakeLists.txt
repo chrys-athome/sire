@@ -4,6 +4,36 @@
 #
 ########################################
 
+# We need to sort out the naming convention for the 
+# fortran blas and lapack libraries
+if ( SIRE_USE_BLAS OR SIRE_USE_LAPACK )
+  include( FortranCInterface )
+endif()
+
+if ( SIRE_USE_BLAS )
+  set( SIRE_BLAS_FUNCTIONS
+       DGEMM
+     )
+
+  if (NOT CMAKE_GENERATOR STREQUAL "Xcode" )
+    create_fortran_c_interface( Sire SIRE_BLAS_FUNCTIONS sire_blas_f.h )
+  endif()
+
+  add_definitions( -DSIRE_HAVE_BLAS )
+endif()
+
+if ( SIRE_USE_LAPACK )
+  set( SIRE_LAPACK_FUNCTIONS
+       DSYEV
+     )
+
+  if (NOT CMAKE_GENERATOR STREQUAL "Xcode" )
+    create_fortran_c_interface( Sire SIRE_LAPACK_FUNCTIONS sire_lapack_f.h )
+  endif()
+
+  add_definitions( -DSIRE_HAVE_LAPACK )
+endif()
+
 # SireMaths depends on >= GSL 1.6
 find_package(GSL 1.6 REQUIRED)
 
@@ -33,7 +63,7 @@ set ( SIREMATHS_HEADERS
       linearap.h
       maths.h
       matrix.h
-      matrix4.h
+      nmatrix.h
       plane.h
       quaternion.h
       rangenerator.h
@@ -43,6 +73,10 @@ set ( SIREMATHS_HEADERS
       torsion.h
       triangle.h
       vector.h
+      nvector.h
+
+      sire_blas.h
+      sire_lapack.h
     )
 
 # Define the sources in SireMaths
@@ -61,8 +95,8 @@ set ( SIREMATHS_SOURCES
       histogram.cpp
       line.cpp
       linearap.cpp
-      matrix4.cpp
       matrix.cpp
+      nmatrix.cpp
       plane.cpp
       quaternion.cpp
       rangenerator.cpp
@@ -71,7 +105,11 @@ set ( SIREMATHS_SOURCES
       torsion.cpp
       triangle.cpp
       vector.cpp
-    
+      nvector.cpp    
+
+      sire_blas.cpp
+      sire_lapack.cpp
+
       ${SIREMATHS_HEADERS}
     )
 
@@ -89,7 +127,9 @@ target_link_libraries (SireMaths
                        SireUnits
                        SireStream
                        ${GSL_LIBRARIES}
-                       )
+                       ${LAPACK_LIBRARIES}
+                       ${BLAS_LIBRARIES}
+                      )
 
 save_sire_variable( "SIREMATHS_EXTRA_LIBRARIES" "${GSL_LIBRARIES}" )
 

@@ -97,7 +97,7 @@ inline quint32 Array2DBase::nColumns() const
 /** Map the 2D index (i,j) into the 1D index into memory */
 inline quint32 Array2DBase::map(quint32 i, quint32 j) const
 {
-    return (i*nrows) + j;
+    return (i*ncolumns) + j;
 }
 
 /** Assert that the index (i,j) is valid for this matrix

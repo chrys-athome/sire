@@ -34,7 +34,6 @@
 #include "SireMaths/vector.h"
 #include "SireMaths/matrix.h"
 #include "SireMaths/quaternion.h"
-#include "SireMaths/matrix4.h"
 
 #include "atom.h"
 
@@ -172,7 +171,7 @@ AxisSet SIREMOL_EXPORT calculateAlignmentAxes(const S &moveatoms, const T &refat
     movcog /= nats;
     
     //now calculate the 4*4 quaternion matrix...
-    Matrix4 qmat(0.0);
+    /*Matrix4 qmat(0.0);
     
     for (int i=0; i<nats; i++)
     {
@@ -205,6 +204,9 @@ AxisSet SIREMOL_EXPORT calculateAlignmentAxes(const S &moveatoms, const T &refat
     Matrix mat = q.toMatrix();
     
     return AxisSet(mat, refcog - movcog);
+    */
+    
+    return AxisSet();
 }
 
 }
