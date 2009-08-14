@@ -99,7 +99,7 @@ NMatrix::NMatrix(int nr, int nc)
 
 /** Construct a matrix with 'nrows' rows and 'ncolumns' columns.
     The values in the matrix are initialised to 'initial_value' */
-NMatrix::NMatrix(int nrows, int ncolumns, double initial_value)
+NMatrix::NMatrix(int nr, int nc, double initial_value)
         : nrows(nr), ncolumns(nc), is_transpose(false)
 {
     if (nr <= 0 or nc <= 0)
@@ -123,14 +123,14 @@ NMatrix::NMatrix(const Matrix &matrix)
     
     double *data = array.data();
     
-    qMemCopy(data, matrix.column(0).constData(), 3*sizeof(double));
-    qMemCopy(data+3, matrix.column(1).constData(), 3*sizeof(double));
-    qMemCopy(data+6, matrix.column(2).constData(), 3*sizeof(double));
+    qMemCopy(data, matrix.column0().constData(), 3*sizeof(double));
+    qMemCopy(data+3, matrix.column1().constData(), 3*sizeof(double));
+    qMemCopy(data+6, matrix.column2().constData(), 3*sizeof(double));
 }
 
 /** Construct from the passed Array */
 NMatrix::NMatrix(const SireBase::Array2D<double> &array2d)
-        : nrows(array.nRows()), ncolumns(array.nColumns()), is_transpose(true)
+        : nrows(array2d.nRows()), ncolumns(array2d.nColumns()), is_transpose(true)
 {
     int sz = array2d.nRows() * array2d.nColumns();
 
@@ -140,6 +140,41 @@ NMatrix::NMatrix(const SireBase::Array2D<double> &array2d)
         array.squeeze();
         
         qMemCopy(array.data(), array2d.constData(), sz*sizeof(double));
+    }
+}
+
+/** Construct from the passed array */
+NMatrix::NMatrix(const QVector< QVector<double> > &array2d)
+        : nrows(array2d.count()), ncolumns(0), is_transpose(true)
+{
+    const QVector<double> *array2d_data = array2d.constData();
+    
+    for (int i=0; i<nrows; ++i)
+    {
+        ncolumns = qMax(ncolumns, array2d_data[i].count());
+    }
+    
+    if (ncolumns > 0)
+    {
+        array = QVector<double>(nrows*ncolumns, 0);
+        array.squeeze();
+        
+        double *d = array.data();
+        
+        for (int i=0; i<nrows; ++i)
+        {
+            const double *array_d = array2d_data[i].constData();
+            const int sz = array2d_data[i].count();
+            
+            for (int j=0; j<sz; ++j)
+            {
+                d[offset(i,j)] = array_d[j];
+            }
+        }
+    }
+    else
+    {
+        nrows = 0;
     }
 }
 
@@ -192,6 +227,30 @@ NMatrix::NMatrix(const NVector &vector, bool transpose)
     }
 }
 
+/** Construct from the passed vector - this is copied to a column
+    matrix, unless 'transpose' is true, in which case this is 
+    copied as a row matrix */
+NMatrix::NMatrix(const QVector<double> &vector, bool transpose)
+        : nrows(0), ncolumns(0), is_transpose(false)
+{
+    if (vector.count() > 0)
+    {
+        array = vector;
+        array.squeeze();
+
+        if (transpose)
+        {
+            nrows = 1;
+            ncolumns = vector.count();
+        }
+        else
+        {
+            nrows = vector.count();
+            ncolumns = 1;
+        }
+    }
+}
+
 /** Copy constructor */
 NMatrix::NMatrix(const NMatrix &other)
         : array(other.array), nrows(other.nrows),
@@ -201,6 +260,16 @@ NMatrix::NMatrix(const NMatrix &other)
 /** Destructor */
 NMatrix::~NMatrix()
 {}
+
+const char* NMatrix::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NMatrix>() );
+}
+
+const char* NMatrix::what() const
+{
+    return NMatrix::typeName();
+}
 
 /** Copy assignment operator */
 NMatrix& NMatrix::operator=(const NMatrix &other)
@@ -316,16 +385,17 @@ void NMatrix::assertNColumns(int nc) const
     if you want to directly access the data) the call 'fullTranspose()' */
 NMatrix NMatrix::transpose() const
 {
-    //   / a b c \      / a d g j \
-    //   | d e f |  =>  | b e h k |
-    //   | g h i |      \ c f i l /
-    //   \ j k l /
+    /*   / a b c \      / a d g j \
+         | d e f |  =>  | b e h k |
+         | g h i |      \ c f i l /
+         \ j k l /
     
-    // in memory stored as column-major
-    // (a d g j b e h k c f i l)
-    //
-    //  offset(i,j)   == i + (j*nrows)     [2,1] => 2+4 == 6 == 'h'
-    //  offset(i,j)^T == (i*ncolumns) + j  [1,2] => 4+2 == 6 == 'h'
+       in memory stored as column-major
+       (a d g j b e h k c f i l)
+      
+        offset(i,j)   == i + (j*nrows)     [2,1] => 2+4 == 6 == 'h'
+        offset(i,j)^T == (i*ncolumns) + j  [1,2] => 4+2 == 6 == 'h'
+    */
 
     NMatrix ret(*this);
     ret.is_transpose = not is_transpose;
@@ -347,7 +417,7 @@ NMatrix NMatrix::fullTranspose() const
     {
         //the data needs to be transposed
         double *ret_data = ret.array.data();
-        double *this_data = array.constData();
+        const double *this_data = array.constData();
         
         for (qint32 i=0; i<nrows; ++i)
         {
@@ -476,8 +546,9 @@ NMatrix& NMatrix::operator*=(const NMatrix &other)
 NMatrix NMatrix::inverse() const
 {
     this->assertSquare();
-    NMatrix factors = dgeco(*this);
-    return dgedi_inverse(factors);
+    std::pair< NMatrix,QVector<int> > factors_with_pivot = dgeco(*this);
+    return dgedi_inverse(factors_with_pivot.first,
+                         factors_with_pivot.second);
 }
 
 /** Matrix division - this multiplies this matrix with the inverse of 'other' 
@@ -637,7 +708,7 @@ NVector NMatrix::operator*(const Vector &vector) const
             
             for (int j=0; j<3; ++i)
             {
-                sum += vector[j]*d[offset(i,j)]
+                sum += vector[j]*d[offset(i,j)];
             }
         }
         
@@ -729,7 +800,7 @@ NVector NMatrix::column(int j) const
         
         for (int i=0; i<nrows; ++i)
         {
-            d[i] = row[ i*ncolumns + j ];
+            d[i] = column[ i*ncolumns + j ];
         }
     }
     else
@@ -904,7 +975,7 @@ QString NMatrix::toString() const
         
         if (i == 0)
             rows.append( QString("/ %1 \\").arg( row.join(", ") ) );
-        else if (i == quint32(this->nRows() - 1))
+        else if (i == this->nRows() - 1)
             rows.append( QString("\\ %1 /").arg( row.join(", ") ) );
         else
             rows.append( QString("| %1 |").arg( row.join(", ") ) );
@@ -923,8 +994,9 @@ double NMatrix::determinant() const
 {
     this->assertSquare();
     
-    NMatrix factors = dgeco(*this);
-    return dgedi_determinant(factors);
+    std::pair< NMatrix,QVector<int> > factors_with_pivot = dgeco(*this);
+    return dgedi_determinant(factors_with_pivot.first,
+                             factors_with_pivot.second);
 }
 
 /** Return the trace of this matrix - this is only valid for a square matrix
@@ -966,6 +1038,13 @@ NVector NMatrix::diagonal() const
     }
     
     return vector;
+}
+
+/** Return whether or not this is a transposed matrix (data
+    is stored in row-major order rather than column-major order) */
+bool NMatrix::isTransposed() const
+{
+    return is_transpose;
 }
 
 /** Return the eigenvalues and eigenvectors of this matrix. This

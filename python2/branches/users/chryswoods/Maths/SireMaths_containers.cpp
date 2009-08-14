@@ -38,8 +38,11 @@
 #include "Helpers/convertdict.hpp"
 #include "Helpers/convertset.hpp"
 #include "Helpers/tuples.hpp"
+#include "Helpers/pair.hpp"
 
 #include "SireMaths/vector.h"
+#include "SireMaths/nmatrix.h"
+#include "SireMaths/nvector.h"
 
 using namespace SireMaths;
 
@@ -49,6 +52,7 @@ void register_SireMaths_containers()
 {
     register_list< QList<Vector> >();
     register_list< QVector<Vector> >();
+    register_pair< NVector,NMatrix >();
 
     register_tuple< boost::tuple<Vector,Vector,Vector> >();
 }

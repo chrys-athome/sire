@@ -39,6 +39,14 @@ def findGlobals():
 
     print >>FILE, "}\n"
 
+def fix_NMatrixNVector(c):
+   for o in c.operators("()"):
+       if o.call_policies is None:
+           o.exclude()
+
+special_code = { "SireMaths::NMatrix" : fix_NMatrixNVector,
+                 "SireMaths::NVector" : fix_NMatrixNVector }
+
 def fixMB(mb):
    mb.add_declaration_code("#include \"_Maths_global_variables.pyman.hpp\"")
    mb.add_registration_code("register_man_global_variables();")

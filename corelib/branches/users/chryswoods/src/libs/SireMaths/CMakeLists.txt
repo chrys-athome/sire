@@ -13,6 +13,7 @@ endif()
 if ( SIRE_USE_BLAS )
   set( SIRE_BLAS_FUNCTIONS
        DGEMM
+       DGEMV
      )
 
   if (NOT CMAKE_GENERATOR STREQUAL "Xcode" )
@@ -25,6 +26,14 @@ endif()
 if ( SIRE_USE_LAPACK )
   set( SIRE_LAPACK_FUNCTIONS
        DSYEV
+       DGECO
+       DGEDI
+     )
+
+  set( SIRE_LINPACK_SOURCES
+       dgeco.f
+       dgedi.f
+       dgefa.f
      )
 
   if (NOT CMAKE_GENERATOR STREQUAL "Xcode" )
@@ -64,6 +73,7 @@ set ( SIREMATHS_HEADERS
       maths.h
       matrix.h
       nmatrix.h
+      nvector.h
       plane.h
       quaternion.h
       rangenerator.h
@@ -73,7 +83,6 @@ set ( SIREMATHS_HEADERS
       torsion.h
       triangle.h
       vector.h
-      nvector.h
 
       sire_blas.h
       sire_lapack.h
@@ -97,6 +106,7 @@ set ( SIREMATHS_SOURCES
       linearap.cpp
       matrix.cpp
       nmatrix.cpp
+      nvector.cpp
       plane.cpp
       quaternion.cpp
       rangenerator.cpp
@@ -105,10 +115,11 @@ set ( SIREMATHS_SOURCES
       torsion.cpp
       triangle.cpp
       vector.cpp
-      nvector.cpp    
 
       sire_blas.cpp
       sire_lapack.cpp
+
+      ${SIRE_LINPACK_SOURCES}
 
       ${SIREMATHS_HEADERS}
     )

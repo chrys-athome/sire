@@ -31,8 +31,7 @@
 
 #include "sireglobal.h"
 
-#include <boost/fusion/adapted/std_pair.hpp>
-#include <boost/fusion/include/std_pair.hpp>
+#include <utility>
 
 SIRE_BEGIN_HEADER
 
@@ -53,9 +52,6 @@ NMatrix dgemm(double alpha, const NMatrix &A, const NMatrix &B,
               double beta, const NMatrix &C);
 
 }
-
-SIRE_EXPOSE_FUNCTION( SireMaths::dgemv )
-SIRE_EXPOSE_FUNCTION( SireMaths::dgemm )
 
 SIRE_END_HEADER
 

@@ -33,8 +33,7 @@
 
 #include <QVector>
 
-#include <boost/fusion/adapted/std_pair.hpp>
-#include <boost/fusion/include/std_pair.hpp>
+#include <utility>
 
 SIRE_BEGIN_HEADER
 
@@ -48,21 +47,15 @@ std::pair<NVector,NMatrix> dsyev(const NMatrix &A, bool upper=true);
 
 NVector dsyev_eigenvalues(const NMatrix &A, bool upper=true);
 
-std::pair< NMatrix,QVector<int> > deco(const NMatrix &A);
+std::pair< NMatrix,QVector<int> > dgeco(const NMatrix &A);
+
+NMatrix dgedi_inverse(const NMatrix &A, const QVector<int> &IPVT);
 
 double dgedi_determinant(const NMatrix &A, const QVector<int> &IPVT);
 
 std::pair<double,NMatrix> dgedi(const NMatrix &A, const QVector<int> &IPVT);
 
 }
-
-SIRE_EXPOSE_FUNCTION( SireMaths::dsyev )
-SIRE_EXPOSE_FUNCTION( SireMaths::dsyev_eigenvalues )
-
-SIRE_EXPOSE_FUNCTION( SireMaths::deco )
-
-SIRE_EXPOSE_FUNCTION( SireMaths::dgedi )
-SIRE_EXPOSE_FUNCTION( SireMaths::dgedi_determinant )
 
 SIRE_END_HEADER
 

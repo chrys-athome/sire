@@ -29,10 +29,11 @@
 #ifndef SIREMATHS_NMATRIX_H
 #define SIREMATHS_NMATRIX_H
 
+#include <QVector>
+
 #include "sireglobal.h"
 
-#include <boost/fusion/adapted/std_pair.hpp>
-#include <boost/fusion/include/std_pair.hpp>
+#include <utility>
 
 SIRE_BEGIN_HEADER
 
@@ -81,13 +82,19 @@ public:
     
     NMatrix(const Matrix &matrix);
     NMatrix(const SireBase::Array2D<double> &array);
-    
+    NMatrix(const QVector< QVector<double> > &array);
+
     NMatrix(const Vector &vector, bool transpose=false);
-    NMatrix(const NVector &vector, bool transpose=false);
+    NMatrix(const QVector<double> &vector, bool transpose=false);
+    NMatrix(const NVector &vector, bool transpose=false);    
     
     NMatrix(const NMatrix &other);
     
     ~NMatrix();
+    
+    static const char* typeName();
+    
+    const char* what() const;
     
     NMatrix& operator=(const NMatrix &other);
     
@@ -154,6 +161,8 @@ public:
     
     NMatrix transpose() const;
     NMatrix fullTranspose() const;
+
+    bool isTransposed() const;
 
     void assertValidIndex(int i, int j) const;
     
