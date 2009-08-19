@@ -96,7 +96,7 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, Molpro &molpro)
 static const QString default_energy_template =
        "memory,@MEMORY_REQUIREMENT@\n"
        "geomtyp=xyz\n"
-       "geometry={ NOSYM, NOORIENT,\n"
+       "geometry={\n"
        "@NUM_QM_ATOMS@  ! number of atoms\n"
        "This is an auto-generated molpro command file generated using Sire\n"
        "@QM_COORDS@\n"

@@ -16,8 +16,13 @@ set ( SQUIRE_HEADERS
       qmpotential.h
       qmprogram.h
 
+      gto.h
       hf.h
       latticecharges.h
+
+      orbital.h
+      pointcharge.h
+      pointdipole.h
 
       molpro.h
     )
@@ -33,10 +38,15 @@ set ( SQUIRE_SOURCES
       qmpotential.cpp
       qmprogram.cpp
 
+      gto.cpp
       hf.cpp
       latticecharges.cpp
       
       molpro.cpp
+
+      orbital.cpp
+      pointcharge.cpp
+      pointdipole.cpp
 
       ${SQUIRE_HEADERS}
     )

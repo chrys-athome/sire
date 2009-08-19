@@ -728,6 +728,37 @@ int NMatrix::nColumns() const
     return ncolumns;
 }
 
+/** Redimension this matrix to have 'nrows' rows and 'ncolumns' 
+    columns. The contents of this matrix are undefined after
+    this redimension. This function will only reallocate
+    memory if there is not enough memory allocated to store
+    the new matrix. Use this function if you want to use
+    the same piece of memory over and over again for lots
+    of different size matricies - just create a matrix with
+    the maximum dimension, then call this 'redimension' function
+    whenever you want to change. It is very fast, as it just
+    updates the internal record of the size of the matrix */
+void NMatrix::redimension(int nr, int nc)
+{
+    const int sz = nr * nc;
+    
+    if (sz <= 0)
+    {
+        nrows = 0;
+        ncolumns = 0;
+    }
+    else
+    {
+        if (sz > array.count())
+            array.resize(sz);
+            
+        nrows = nr;
+        ncolumns = nc;
+        
+        is_transpose = false;
+    }
+}
+
 /** Assert that there is an ith row! 
 
     \throw SireError::invalid_index
@@ -850,9 +881,16 @@ void NMatrix::setRow(int i, const NVector &row)
     double *d = array.data();
     const double *v = row.constData();
     
-    for (int j=0; j<ncolumns; ++j)
+    if (is_transpose)
     {
-        d[offset(i,j)] = v[j];
+        qMemCopy(d + offset(i,0), v, ncolumns*sizeof(double));
+    }
+    else
+    {
+        for (int j=0; j<ncolumns; ++j)
+        {
+            d[offset(i,j)] = v[j];
+        }
     }
 }
 
@@ -885,9 +923,16 @@ void NMatrix::setColumn(int j, const NVector &column)
     double *d = array.data();
     const double *v = column.constData();
     
-    for (int i=0; i<nrows; ++i)
+    if (is_transpose)
     {
-        d[offset(i,j)] = v[i];
+        for (int i=0; i<nrows; ++i)
+        {
+            d[offset(i,j)] = v[i];
+        }
+    }
+    else
+    {
+        qMemCopy(d + offset(0,j), v, nrows*sizeof(double));
     }
 }
 
@@ -930,6 +975,12 @@ const double* NMatrix::constData() const
     return array.constData();
 }
 
+/** Return the QVector containing the memory of this Matrix */
+QVector<double> NMatrix::memory() const
+{
+    return array;
+}
+
 /** Calculate the offset in the 1D array of the value
     at index [i,j]
     
@@ -954,7 +1005,7 @@ QString NMatrix::toString() const
         QStringList row;
         for (qint32 j=0; j<ncolumns; ++j)
         {
-            row.append( QString::number(d[j], 'g', 6) );
+            row.append( QString("%1").arg(d[j], 8) );
         }
         
         return QString("( %1 )").arg( row.join(", ") );
@@ -970,7 +1021,7 @@ QString NMatrix::toString() const
         
         for (qint32 j=0; j<ncolumns; ++j)
         {
-            row.append( QString::number(d[offset(i,j)], 'g', 6) );
+            row.append( QString("%1").arg(d[offset(i,j)], 8) );
         }
         
         if (i == 0)
@@ -982,6 +1033,210 @@ QString NMatrix::toString() const
     }
     
     return rows.join("\n");
+}
+
+/** Reflect the contents of the top half to the bottom
+    half. If n == nRows(), then this sets 
+    
+    matrix[n-i,j] = matrix[i,j]
+    
+    1 2 3      1 2 3  
+    4 5 6  =>  4 5 6  
+    7 8 9      1 2 3
+    
+    \throw SireError::incompatible_error
+*/
+void NMatrix::reflectTopToBottom()
+{
+    double *data = array.data();
+    
+    for (int i=0; i<nrows/2; ++i)
+    {
+        for (int j=0; j<ncolumns; ++j)
+        {
+            data[ offset(nrows-i-1,j) ] = data[ offset(i,j) ];
+        }
+    }
+}
+
+/** Reflect the contents of the bottom half to the top
+    half. If n == nRows(), then this sets 
+    
+    matrix[i,j] = matrix[n-i,j]
+    
+    1 2 3      7 8 9  
+    4 5 6  =>  4 5 6  
+    7 8 9      7 8 9
+    
+    \throw SireError::incompatible_error
+*/
+void NMatrix::reflectBottomToTop()
+{
+    double *data = array.data();
+    
+    for (int i=0; i<nrows/2; ++i)
+    {
+        for (int j=0; j<ncolumns; ++j)
+        {
+            data[ offset(i,j) ] = data[ offset(nrows-i-1,j) ];
+        }
+    }
+}
+
+/** Reflect the contents of the left half to the right
+    half. If n == nColumns(), then this sets 
+    
+    matrix[i,n-j] = matrix[i,j]
+    
+    1 2 3      1 2 1  
+    4 5 6  =>  4 5 4  
+    7 8 9      7 8 7
+    
+    \throw SireError::incompatible_error
+*/
+void NMatrix::reflectLeftToRight()
+{
+    double *data = array.data();
+    
+    for (int i=0; i<nrows; ++i)
+    {
+        for (int j=0; j<ncolumns/2; ++j)
+        {
+            data[ offset(i,ncolumns-j-1) ] = data[ offset(i,j) ];
+        }
+    }
+}
+
+/** Reflect the contents of the left half to the right
+    half. If n == nColumns(), then this sets 
+    
+    matrix[i,j] = matrix[i,n-j]
+    
+    1 2 3      3 2 3  
+    4 5 6  =>  6 5 6  
+    7 8 9      9 8 9
+    
+    \throw SireError::incompatible_error
+*/
+void NMatrix::reflectRightToLeft()
+{
+    double *data = array.data();
+    
+    for (int i=0; i<nrows; ++i)
+    {
+        for (int j=0; j<ncolumns/2; ++j)
+        {
+            data[ offset(i,j) ] = data[ offset(i,ncolumns-j-1) ];
+        }
+    }
+}
+
+/** Copy the contents of the top left diagonal to the bottom
+    right diagonal. If n == nRows(), then this sets 
+    
+    matrix[n-j,n-i] = matrix[i,j]
+    
+    1 2 3      1 2 3       [2,1] => [1,0]    [0,2] == [0,2]
+    4 5 6  =>  4 5 2       [1,2] => [0,1]    [1,1] == [1,1]
+    7 8 9      7 4 1       [2,2] => [0,0]    [2,0] == [2,0]
+    
+    This must be a square matrix.
+    
+    \throw SireError::incompatible_error
+*/
+void NMatrix::reflectTopLeftToBottomRight()
+{
+    assertSquare();
+    
+    double *data = array.data();
+    
+    for (int i=0; i<nrows-1; ++i)
+    {
+        for (int j=0; j<nrows-i-1; ++j)
+        {
+            data[ offset(nrows-j-1,nrows-i-1) ] = data[ offset(i,j) ];
+        }
+    }
+}
+
+/** Copy the contents of the top right diagonal to the bottom
+    left diagonal. This sets matrix[j,i] = matrix[i,j]
+    
+    This must be a square matrix.
+    
+    1 2 3      1 2 3
+    4 5 6  =>  2 5 6
+    7 8 9      3 6 9
+    
+    \throw SireError::incompatible_error
+*/
+void NMatrix::reflectTopRightToBottomLeft()
+{
+    assertSquare();
+    
+    double *data = array.data();
+    
+    for (int i=0; i<nrows-1; ++i)
+    {
+        for (int j=i+1; j<nrows; ++j)
+        {
+            data[ offset(j,i) ] = data[ offset(i,j) ];
+        }
+    }
+}
+
+/** Copy the contents of the bottom right diagonal to the top
+    left diagonal. If n == nRows(), then this sets 
+    
+    matrix[i,j] = matrix[n-j,n-i]
+    
+    This must be a square matrix.
+
+    1 2 3      9 6 3
+    4 5 6  =>  8 5 6
+    7 8 9      7 8 9
+    
+    \throw SireError::incompatible_error
+*/
+void NMatrix::reflectBottomRightToTopLeft()
+{
+    assertSquare();
+    
+    double *data = array.data();
+    
+    for (int i=0; i<nrows-1; ++i)
+    {
+        for (int j=0; j<nrows-i-1; ++j)
+        {
+            data[ offset(i,j) ] = data[ offset(nrows-j-1,nrows-i-1) ];
+        }
+    }
+}
+
+/** Copy the contents of the bottom left diagonal to the top
+    right diagonal. This sets matrix[i,j] = matrix[j,i]
+    
+    This must be a square matrix.
+
+    1 2 3      1 4 7
+    4 5 6  =>  4 5 8
+    7 8 9      7 8 9
+    
+    \throw SireError::incompatible_error
+*/
+void NMatrix::reflectBottomLeftToTopRight()
+{
+    assertSquare();
+    
+    double *data = array.data();
+    
+    for (int i=0; i<nrows-1; ++i)
+    {
+        for (int j=i+1; j<nrows; ++j)
+        {
+            data[ offset(i,j) ] = data[ offset(j,i) ];
+        }
+    }
 }
 
 /** Return the determinant of this matrix

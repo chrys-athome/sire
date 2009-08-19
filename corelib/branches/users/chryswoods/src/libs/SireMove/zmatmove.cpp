@@ -322,7 +322,8 @@ void ZMatMove::move(System &system, int nmoves, bool record_stats)
             //get the new bias on this molecule
             smplr.edit().updateFrom(system);
         
-            double new_bias = smplr.read().probabilityOf(newmol);
+            double new_bias = smplr.read().probabilityOf( PartialMolecule(newmol,
+                                                              oldmol.selection()) );
 
             //accept or reject the move based on the change of energy
             //and the biasing factors

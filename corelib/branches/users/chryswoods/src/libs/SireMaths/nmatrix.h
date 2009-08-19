@@ -145,10 +145,24 @@ public:
     const double* data() const;
     const double* constData() const;
     
+    QVector<double> memory() const;
+    
     int offset(int i, int j) const;
     int checkedOffset(int i, int j) const;
     
+    void redimension(int nrows, int ncolumns);
+    
     QString toString() const;
+
+    void reflectTopToBottom();
+    void reflectBottomToTop();
+    void reflectLeftToRight();
+    void reflectRightToLeft();
+
+    void reflectTopLeftToBottomRight();
+    void reflectTopRightToBottomLeft();
+    void reflectBottomRightToTopLeft();
+    void reflectBottomLeftToTopRight();
 
     double determinant() const;
     double trace() const;

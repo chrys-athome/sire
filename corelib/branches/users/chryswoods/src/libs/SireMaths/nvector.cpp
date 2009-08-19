@@ -520,7 +520,7 @@ QString NVector::toString() const
     {
         const double *d = array.constData();
     
-        return QString("( %1 )").arg( QString::number(d[0], 'g', 6) );
+        return QString("( %1 )").arg( QString::number(d[0], 'g', 8) );
     }
 
     QStringList rows;
@@ -532,11 +532,11 @@ QString NVector::toString() const
         QString numstr = QString::number(d[i], 'g', 6);
     
         if (i == 0)
-            rows.append( QString("/ %1 \\").arg(numstr) );
+            rows.append( QString("/ %1 \\").arg(numstr, 8) );
         else if (i == this->nRows() - 1)
-            rows.append( QString("\\ %1 /").arg(numstr) );
+            rows.append( QString("\\ %1 /").arg(numstr, 8) );
         else
-            rows.append( QString("| %1 |").arg(numstr) );
+            rows.append( QString("| %1 |").arg(numstr, 8) );
     }
     
     return rows.join("\n");

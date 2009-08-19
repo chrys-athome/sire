@@ -74,6 +74,7 @@ set ( SIREMATHS_HEADERS
       matrix.h
       nmatrix.h
       nvector.h
+      n4matrix.h
       plane.h
       quaternion.h
       rangenerator.h
@@ -107,6 +108,7 @@ set ( SIREMATHS_SOURCES
       matrix.cpp
       nmatrix.cpp
       nvector.cpp
+      n4matrix.cpp
       plane.cpp
       quaternion.cpp
       rangenerator.cpp

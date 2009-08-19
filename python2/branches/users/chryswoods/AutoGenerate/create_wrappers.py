@@ -280,6 +280,10 @@ def export_class(mb, classname, aliases, includes, special_code, auto_str_functi
        except:
            pass
 
+   for o in c.operators():
+       if o.call_policies is None:
+           o.exclude()
+
    #run any class specific code
    if (classname in special_code):
      print "Running special code for %s" % classname

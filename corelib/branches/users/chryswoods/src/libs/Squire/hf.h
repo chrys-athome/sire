@@ -64,32 +64,6 @@ private:
     QVector<PointCharge> chgs;
 };
 
-class SQUIRE_EXPORT S_GTO
-{
-public:
-    S_GTO();
-    S_GTO(const Vector &cent, double alpha, double scale=1);
-    S_GTO(const S_GTO &other);
-    
-    ~S_GTO();
-    
-    S_GTO& operator=(const S_GTO &other);
-    
-    const Vector& center() const;
-
-    double alpha() const;
-    double scale() const;
-    
-    static int angularMomentum();
-
-    static S_GTO multiply(const S_GTO &s0, const S_GTO &s1);
-
-private:
-    Vector cent;
-    double alfa;
-    double scl;
-};
-
 class SQUIRE_EXPORT PointCharge
 {
 public:

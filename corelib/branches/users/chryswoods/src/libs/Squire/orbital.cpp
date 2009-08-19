@@ -26,39 +26,3 @@
   *
 \*********************************************/
 
-#ifndef SIREMATHS_LINEARAP_H
-#define SIREMATHS_LINEARAP_H
-
-#include <QVector>
-
-#include "sireglobal.h"
-
-SIRE_BEGIN_HEADER
-
-namespace SireMaths
-{
-
-class NMatrix;
-
-QVector<int> solve_linear_assignment( const NMatrix &costs,
-                                      bool check_result = false );
-
-QVector<int> brute_force_linear_assignment( const NMatrix &costs );
-
-double calculate_total_cost( const NMatrix &costs,
-                             const QVector<int> &rows_to_columns );
-
-double get_lowest_total_cost( const NMatrix &costs );
-
-}
-
-SIRE_EXPOSE_FUNCTION( SireMaths::solve_linear_assignment )
-
-SIRE_EXPOSE_FUNCTION( SireMaths::calculate_total_cost )
-SIRE_EXPOSE_FUNCTION( SireMaths::get_lowest_total_cost )
-
-SIRE_EXPOSE_FUNCTION( SireMaths::brute_force_linear_assignment )
-
-SIRE_END_HEADER
-
-#endif

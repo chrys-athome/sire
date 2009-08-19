@@ -33,6 +33,8 @@
 #include "closemols.h"
 
 #include "SireMaths/linearap.h"
+#include "SireMaths/nmatrix.h"
+#include "SireMaths/nvector.h"
 
 #include "SireMol/molecules.h"
 #include "SireMol/molecule.h"
@@ -216,7 +218,7 @@ private:
     void assignMoleculesToPoints();
 
     /** The (squared) distances between all molecules and all points */
-    QHash< MolNum, QVector<double> > point_distances;
+    QHash<MolNum,NVector> point_distances;
     
     /** The current mapping of molecules to points - if this is
         empty than the molecules are correctly mapped so that the
@@ -281,7 +283,7 @@ private:
     
     /** The distances between all molecules in 'mol_to_molnum' and 
         all of the identity points */
-    QHash< MolNum, QVector<double> > point_distances;
+    QHash<MolNum,NVector> point_distances;
     
     /** The current mapping of molecules to points - if this is empty
         then the molecules are correctly mapped (i.e. the nth molecule
@@ -1013,7 +1015,7 @@ void FewPointsHelper::recalculateDistances(MolNum molnum)
                                          
     Vector center = coords.array().aaBox().center();
     
-    QVector<double> &distances = point_distances[molnum];
+    NVector &distances = point_distances[molnum];
 
     BOOST_ASSERT(distances.count() == npoints);
     
@@ -1086,7 +1088,7 @@ void FewPointsHelper::recalculateDistances(const Molecules &changed_mols)
                                          
         Vector center = coords.array().aaBox().center();
 
-        QVector<double> &distances = point_distances[molnum];
+        NVector &distances = point_distances[molnum];
     
         BOOST_ASSERT(distances.count() == npoints);
     
@@ -1112,7 +1114,7 @@ void FewPointsHelper::recalculateDistances(const Molecules &changed_mols)
     between the molecules in 'mol_to_molnum' and all of the identity points */
 void FewPointsHelper::recalculateDistances()
 {
-    point_distances = QHash< MolNum,QVector<double> >();
+    point_distances = QHash<MolNum,NVector>();
     
     const Molecules &molecules = this->moleculeGroup().molecules();
     
@@ -1146,7 +1148,7 @@ void FewPointsHelper::recalculateDistances()
                                              
         Vector center = coords.array().aaBox().center();
         
-        QVector<double> distances(npoints);
+        NVector distances(npoints);
         double *distances_array = distances.data();
         
         for (int j=0; j<npoints; ++j)
@@ -1250,93 +1252,69 @@ void FewPointsHelper::assignMoleculesToPoints()
     //candidate molecule and every point - one molecule per row, one point
     //per column - this has to be a square matrix, so missing rows/columns
     //are given a value of 0
-    Array2D<double> distmatrix;
+    NMatrix distmatrix;
     
     if (nmols == npoints)
     {
-        distmatrix = Array2D<double>(nmols, nmols);
-        
+        distmatrix = NMatrix(nmols, nmols);
+        distmatrix.transpose(); // change to row-major memory order
+
         for (int i=0; i<nmols; ++i)
         {
             const MolNum &molnum = mol_to_molnum_array[i];
             
-            QHash< MolNum,QVector<double> >::const_iterator 
-                                                it = point_distances.constFind(molnum);
+            QHash<MolNum,NVector>::const_iterator 
+                                       it = point_distances.constFind(molnum);
                                                 
             BOOST_ASSERT( it != point_distances.constEnd() );
             
-            const QVector<double> &distances = it.value();
-            
-            BOOST_ASSERT( distances.count() == npoints );
-            
-            double *row = distmatrix.row(i);
-            
-            qMemCopy( row, distances.constData(), npoints*sizeof(double) );
+            distmatrix.setRow(i, it.value());
         }
     }
     else if (nmols > npoints)
     {
         //there are more molecules than points - we create some extra
         //points which have zero distance to all molecules
-        distmatrix = Array2D<double>(nmols, nmols);
+        distmatrix = NMatrix(nmols, nmols);
+        distmatrix.transpose(); // change to row-major memory order
         
         const int nzeroes = nmols - npoints;
-        QVector<double> zeroes(nzeroes, 0.0);
+        NVector new_row(npoints + nzeroes);
         
         for (int i=0; i<nmols; ++i)
         {
             const MolNum &molnum = mol_to_molnum_array[i];
             
-            QHash< MolNum,QVector<double> >::const_iterator 
-                                                it = point_distances.constFind(molnum);
+            QHash<MolNum,NVector>::const_iterator 
+                                   it = point_distances.constFind(molnum);
                                                 
             BOOST_ASSERT( it != point_distances.constEnd() );
             
-            const QVector<double> &distances = it.value();
+            const NVector &distances = it.value();
             
-            BOOST_ASSERT( distances.count() == npoints );
+            qMemCopy( new_row.data(), distances.constData(), npoints*sizeof(double) );
             
-            double *row = distmatrix.row(i);
-            
-            qMemCopy( row, distances.constData(), npoints*sizeof(double) );
-
-            //fill the rest of the row with zeroes
-            qMemCopy( row+npoints, zeroes.constData(), nzeroes*sizeof(double) );
+            distmatrix.setRow( i, new_row );
         }
     }
     else
     {
         //there are more points than molecules - we create some extra
         //molecules that are all equally a very long way from all of the points
-        distmatrix = Array2D<double>(npoints, npoints);
+        distmatrix = NMatrix(npoints, npoints, std::numeric_limits<double>::max());
+        distmatrix.transpose(); // change to row-major memory order
 
         //copy the distances to the real molecules
         for (int i=0; i<nmols; ++i)
         {
             const MolNum &molnum = mol_to_molnum_array[i];
             
-            QHash< MolNum,QVector<double> >::const_iterator 
-                                                it = point_distances.constFind(molnum);
+            QHash<MolNum,NVector>::const_iterator 
+                                        it = point_distances.constFind(molnum);
                                                 
             BOOST_ASSERT( it != point_distances.constEnd() );
             
-            const QVector<double> &distances = it.value();
-            
-            BOOST_ASSERT( distances.count() == npoints );
-            
-            double *row = distmatrix.row(i);
-            
-            qMemCopy( row, distances.constData(), npoints*sizeof(double) );
-        }
-
-        //now add some extra molecules that are really far from all points
-        QVector<double> far(npoints, std::numeric_limits<double>::max());
-        
-        for (int i=nmols; i<npoints; ++i)
-        {
-            double *row = distmatrix.row(i);
-            
-            qMemCopy( row, far.constData(), npoints*sizeof(double) );
+            distmatrix.setRow(i, it.value());
         }
     }
 
@@ -1718,7 +1696,7 @@ void ManyPointsHelper::recalculateDistances(MolNum molnum)
                                              
     Vector center = coords.array().aaBox().center();
         
-    QVector<double> distances = point_distances.value(molnum);
+    NVector distances = point_distances.value(molnum);
     
     const double *const_distances_array = distances.constData();
     
@@ -1786,7 +1764,7 @@ void ManyPointsHelper::recalculateDistances(const Molecules &new_molecules)
         
         Vector center = coords.array().aaBox().center();
             
-        QVector<double> distances = point_distances.value(molnum);
+        NVector distances = point_distances.value(molnum);
         
         const double *const_distances_array = distances.constData();
         
@@ -1815,7 +1793,7 @@ void ManyPointsHelper::recalculateDistances(const Molecules &new_molecules)
     and all of the points */
 void ManyPointsHelper::recalculateDistances()
 {
-    point_distances = QHash< MolNum,QVector<double> >();
+    point_distances = QHash<MolNum,NVector>();
     
     const Molecules &molecules = this->moleculeGroup().molecules();
     
@@ -1843,7 +1821,7 @@ void ManyPointsHelper::recalculateDistances()
                                              
         Vector center = coords.array().aaBox().center();
         
-        QVector<double> distances(npoints);
+        NVector distances(npoints);
         double *distances_array = distances.data();
         
         for (int i=0; i<npoints; ++i)
@@ -1884,93 +1862,72 @@ void ManyPointsHelper::assignMoleculesToPoints()
     //molecule and every point - one molecule per row, one point
     //per column - this has to be a square matrix, so missing rows/columns
     //are given a value of 0
-    Array2D<double> distmatrix;
+    NMatrix distmatrix;
     
     if (nmols == npoints)
     {
-        distmatrix = Array2D<double>(nmols, nmols);
+        distmatrix = NMatrix(nmols, nmols);
+        distmatrix.transpose(); // change to row-major memory order
         
         for (int i=0; i<nmols; ++i)
         {
             const MolNum &molnum = molnums_array[i];
             
-            QHash< MolNum,QVector<double> >::const_iterator 
-                                                it = point_distances.constFind(molnum);
+            QHash<MolNum,NVector>::const_iterator 
+                                       it = point_distances.constFind(molnum);
                                                 
             BOOST_ASSERT( it != point_distances.constEnd() );
             
-            const QVector<double> &distances = it.value();
-            
-            BOOST_ASSERT( distances.count() == npoints );
-            
-            double *row = distmatrix.row(i);
-            
-            qMemCopy( row, distances.constData(), npoints*sizeof(double) );
+            distmatrix.setRow(i, it.value());
         }
     }
     else if (nmols > npoints)
     {
         //there are more molecules than points - we create some extra
         //points which have zero distance to all molecules
-        distmatrix = Array2D<double>(nmols, nmols);
+        distmatrix = NMatrix(nmols, nmols);
+        distmatrix.transpose(); // change to row-major memory order
         
         const int nzeroes = nmols - npoints;
-        QVector<double> zeroes(nzeroes, 0.0);
+
+        NVector new_row(npoints + nzeroes, 0.0);
         
         for (int i=0; i<nmols; ++i)
         {
             const MolNum &molnum = molnums_array[i];
             
-            QHash< MolNum,QVector<double> >::const_iterator 
-                                                it = point_distances.constFind(molnum);
+            QHash<MolNum,NVector>::const_iterator 
+                                     it = point_distances.constFind(molnum);
                                                 
             BOOST_ASSERT( it != point_distances.constEnd() );
             
-            const QVector<double> &distances = it.value();
+            const NVector &distances = it.value();
             
             BOOST_ASSERT( distances.count() == npoints );
             
-            double *row = distmatrix.row(i);
-            
-            qMemCopy( row, distances.constData(), npoints*sizeof(double) );
+            qMemCopy( new_row.data(), distances.constData(), npoints*sizeof(double) );
 
-            //fill the rest of the row with zeroes
-            qMemCopy( row+npoints, zeroes.constData(), nzeroes*sizeof(double) );
+            distmatrix.setRow(i, new_row);
         }
     }
     else
     {
         //there are more points than molecules - we create some extra
         //molecules that are all equally a very long way from all of the points
-        distmatrix = Array2D<double>(npoints, npoints);
+        distmatrix = NMatrix(npoints, npoints, std::numeric_limits<double>::max());
+        distmatrix.transpose(); // change to row-major memory order
 
         //copy the distances to the real molecules
         for (int i=0; i<nmols; ++i)
         {
             const MolNum &molnum = molnums_array[i];
             
-            QHash< MolNum,QVector<double> >::const_iterator 
-                                                it = point_distances.constFind(molnum);
+            QHash<MolNum,NVector>::const_iterator 
+                                        it = point_distances.constFind(molnum);
                                                 
             BOOST_ASSERT( it != point_distances.constEnd() );
             
-            const QVector<double> &distances = it.value();
-            
-            BOOST_ASSERT( distances.count() == npoints );
-            
-            double *row = distmatrix.row(i);
-            
-            qMemCopy( row, distances.constData(), npoints*sizeof(double) );
-        }
-
-        //now add some extra molecules that are really far from all points
-        QVector<double> far(npoints, std::numeric_limits<double>::max());
-        
-        for (int i=nmols; i<npoints; ++i)
-        {
-            double *row = distmatrix.row(i);
-            
-            qMemCopy( row, far.constData(), npoints*sizeof(double) );
+            distmatrix.setRow(i, it.value());
         }
     }
 
