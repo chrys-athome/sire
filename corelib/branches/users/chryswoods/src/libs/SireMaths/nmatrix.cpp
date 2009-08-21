@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "nmatrix.h"
+#include "trigmatrix.h"
 #include "matrix.h"
 #include "nvector.h"
 #include "vector.h"
@@ -247,6 +248,32 @@ NMatrix::NMatrix(const QVector<double> &vector, bool transpose)
         {
             nrows = vector.count();
             ncolumns = 1;
+        }
+    }
+}
+
+/** Construct from the passed triangular matrix */
+NMatrix::NMatrix(const TrigMatrix &matrix)
+        : nrows(0), ncolumns(0), is_transpose(false)
+{
+    if (matrix.nRows() > 0)
+    {
+        nrows = matrix.nRows();
+        ncolumns = nrows;
+        
+        array = QVector<double>(nrows * ncolumns);
+        array.squeeze();
+        
+        double *d = array.data();
+        const double *md = matrix.constData();
+        
+        for (int j=0; j<nrows; ++j)
+        {
+            for (int i=0; i<nrows; ++i)
+            {
+                *d = md[ matrix.offset(i,j) ];
+                ++d;
+            }
         }
     }
 }
@@ -849,7 +876,7 @@ NVector NMatrix::column(int j) const
 */
 void NMatrix::set(int i, int j, double value)
 {
-    array.data()[offset(i,j)] = value;
+    array.data()[checkedOffset(i,j)] = value;
 }
 
 /** Set the values of all data in the row 'i' to 'value'

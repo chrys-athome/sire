@@ -32,6 +32,9 @@
 #include "gto.h"
 
 #include "SireMaths/vector.h"
+#include "SireMaths/trigmatrix.h"
+
+#include "SireBase/array2d.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -63,6 +66,9 @@ class PointCharge;
 class PointDipole;
 
 using SireMaths::Vector;
+using SireMaths::TrigMatrix;
+
+using SireBase::Array2D;
 
 /** This is a single S-type Gaussian Type Orbital shell */
 class SQUIRE_EXPORT S_GTO : public SireBase::ConcreteProperty<S_GTO,GTO>
@@ -217,24 +223,58 @@ public:
     
     int nContractions() const;
     
-    const Vector& P(int i) const;
-    
-    double eta(int i) const;
-    double G(int i) const;
+    const Array2D<Vector>& P(int i) const;
+    const Array2D<Vector>& Q(int i) const;
 
-    const Vector* pData() const;
-    const double* etaData() const;
-    const double* gData() const;
+    double R2() const;
+    
+    const TrigMatrix& eta() const;
+    const TrigMatrix& G() const;
+
+    const TrigMatrix& chi() const;
+    
+    const TrigMatrix& alpha_plus_beta() const;
+    const TrigMatrix& alpha_times_beta() const;
+    
+    const TrigMatrix& G() const;
+    const TrigMatrix& G_AB() const;
+    const TrigMatrix& G_CD() const;
 
 private:
-    /** The centers of this combined CSS shell pair */
-    QVector<Vector> Ps;
+    /** The centers of this combined CSS shell pair - for 
+        orbitals a and b, with centers A and B, and exponents
+        alpha[i] and beta[i,j], we get;
+        
+        P[i,j] = (alpha[i]*A + beta[j]*B) / (alpha + beta)
+    */
+    Array2D<Vector> _P;
     
-    /** The alpha values of the combined gaussian */
-    QVector<double> etas;
+    /** The distance between the two centers */
+    double _R2;
     
-    /** The scaling factors for this combined gaussian */
-    QVector<double> Gs;
+    /** The alpha values of the combined gaussian. This is 
+    
+        eta[i,j] = alpha[i] + beta[j]
+        
+        note that eta[i,j] == eta[j,i]
+    */
+    TrigMatrix _eta;
+    
+    /** The chi value of the combined gaussian,
+    
+        chi[i,j] = alpha[i]*beta[j] / (alpha[i] + beta[j])
+
+        note that chi[i,j] == chi[j,i]
+    */
+    TrigMatrix _chi;
+    
+    /** The scaling factors for this combined gaussian. This is;
+    
+        G[i,j] = scl_a[i] * scl_b[j] * exp( (-alpha[i]*beta[j]/(alpha[i]+beta[j])) R2 )
+
+        note that G[i,j] == G[j,i]
+    */
+    TrigMatrix _G;
 };    
 
 //////////
@@ -245,31 +285,31 @@ double kinetic_integral(const SS_GTO &ss);
 double overlap_integral(const SS_GTO &ss);
 
 double potential_integral(const PointCharge &Q, const SS_GTO &ss);
-//double potential_integral(const PointDipole &Q, const SS_GTO &ss);
+double potential_integral(const PointDipole &Q, const SS_GTO &ss);
 
 double electron_integral(const SS_GTO &ss0, const SS_GTO &ss1);
 
-//double kinetic_integral(const CSS_GTO &css);
-//double overlap_integral(const CSS_GTO &css);
+double kinetic_integral(const CSS_GTO &css);
+double overlap_integral(const CSS_GTO &css);
 
-//double potential_integral(const PointCharge &Q, const CSS_GTO &css);
-//double potential_integral(const PointDipole &Q, const CSS_GTO &css);
+double potential_integral(const PointCharge &Q, const CSS_GTO &css);
+double potential_integral(const PointDipole &Q, const CSS_GTO &css);
 
-//double electron_integral(const SS_GTO &ss, const CSS_GTO &css);
-//double electron_integral(const CSS_GTO &css, const SS_GTO &ss);
-//double electron_integral(const CSS_GTO &css0, const CSS_GTO &css1);
+double electron_integral(const SS_GTO &ss, const CSS_GTO &css);
+double electron_integral(const CSS_GTO &css, const SS_GTO &ss);
+double electron_integral(const CSS_GTO &css0, const CSS_GTO &css1);
 
 }
 
 Q_DECLARE_METATYPE( Squire::S_GTO )
 Q_DECLARE_METATYPE( Squire::CS_GTO )
 Q_DECLARE_METATYPE( Squire::SS_GTO )
-//Q _ DECLARE_METATYPE( Squire::CSS_GTO )
+Q_DECLARE_METATYPE( Squire::CSS_GTO )
 
 SIRE_EXPOSE_CLASS( Squire::S_GTO )
 SIRE_EXPOSE_CLASS( Squire::CS_GTO )
 SIRE_EXPOSE_CLASS( Squire::SS_GTO )
-//S IRE_EXPOSE_CLASS( Squire::CSS_GTO )
+SIRE_EXPOSE_CLASS( Squire::CSS_GTO )
 
 SIRE_EXPOSE_FUNCTION( Squire::kinetic_integral )
 SIRE_EXPOSE_FUNCTION( Squire::potential_integral )

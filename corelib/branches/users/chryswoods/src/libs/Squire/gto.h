@@ -29,9 +29,9 @@
 #ifndef SQUIRE_GTO_H
 #define SQUIRE_GTO_H
 
-#include <QVector>
-
 #include "orbital.h"
+
+#include "SireMaths/nvector.h"
 
 SIRE_BEGIN_HEADER
 
@@ -49,6 +49,8 @@ QDataStream& operator>>(QDataStream&, Squire::CGTO&);
 
 namespace Squire
 {
+
+using SireMaths::NVector;
 
 /** This is the base class of all single Gaussian Type Orbital shells (GTOs)
     (S_GTO (l==0), P_GTO (l==1), DPlus_GTO (l>=2))
@@ -105,12 +107,11 @@ private:
 };
 
 /** This is the base class of all Contracted Gaussian Type Orbitals (CGTO).
-    (e.g. CS_GTO (l==0), CP_GTO (l==1), CD_GTO (l==2), CF_GTO (l==3) and
-    CGPlus_GTO (l>=4))
+    (e.g. CS_GTO (l==0), CP_GTO (l==1), CDPlus_GTO (l==2)
 
     This contains just a single orbital shell, containing the 
     correct number of orbitals for its angular momentum
-    (1 for S, 3 for P, 5 for D etc.)
+    (1 for S, 3 for P, 5+ for DPlus etc.)
     
     An orbital shell contains all of the orbitals for a particular shell
     
@@ -132,18 +133,13 @@ public:
 
     int nContractions() const;
     
-    double alpha(int i) const;
-    double beta(int i) const;
+    const NVector& alpha() const;
+    const NVector& beta() const;
     
-    double scale(int i) const;
-    
-    const double* alphaData() const;
-    const double* betaData() const;
-    
-    const double* scaleData() const;
+    const NVector& scale() const;
     
 protected:
-    CGTO(const QVector<double> &alphas, const QVector<double> &scales);
+    CGTO(const NVector &alphas, const NVector &scales);
     
     CGTO& operator=(const CGTO &other);
     
@@ -152,11 +148,11 @@ protected:
 
 private:
     /** The orbital exponents (alpha) */
-    QVector<double> alfas;
+    NVector alfas;
     
     /** The multiplication factors (including normalisation
         constant) */
-    QVector<double> scls;
+    NVector scls;
 };
 
 }

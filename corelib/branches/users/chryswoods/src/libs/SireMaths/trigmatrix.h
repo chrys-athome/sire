@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREMATHS_NMATRIX_H
-#define SIREMATHS_NMATRIX_H
+#ifndef SIREMATHS_TRIGMATRIX_H
+#define SIREMATHS_TRIGMATRIX_H
 
 #include <QVector>
 
@@ -39,91 +39,104 @@ SIRE_BEGIN_HEADER
 
 namespace SireMaths
 {
-class NMatrix;
+class TrigMatrix;
 }
 
-QDataStream& operator<<(QDataStream&, const SireMaths::NMatrix&);
-QDataStream& operator>>(QDataStream&, SireMaths::NMatrix&);
-
-namespace SireBase
-{
-template<class T>
-class Array2D;
-}
+QDataStream& operator<<(QDataStream&, const SireMaths::TrigMatrix&);
+QDataStream& operator>>(QDataStream&, SireMaths::TrigMatrix&);
 
 namespace SireMaths
 {
 
-class Matrix;
-class Vector;
+class NMatrix;
 class NVector;
-class TrigMatrix;
+class Vector;
 
-/** This is a dense, double, general N*M 2-dimensional matrix.
-    The data is stored in column-major order, suitable for
-    use with Fortran BLAS or LAPACK functions. This is 
-    designed for high speed.
+/** This is a dense, double, general N*N 2-dimensional 
+    triangular matrix, with m[i,j] == m[j,i].
+    
+    Only the upper diagonal half of the matrix is stored,
+    in a packed format, which is not suitable for
+    BLAS or LAPACK functions (a conversion to a NMatrix
+    has to be performed first)
     
     The data is implicitly shared (copy on write), so 
     copying a matrix is very fast.
+                  0 1 2 3 4 
+    Matrix =  0 / a b c d e \    m[i,j] == m[j,i]
+              1 | b f g h i |
+              2 | c g j k l |    dimension == n == 5
+              3 | d h k m n |
+              4 \ e i l n o /
+              
+    This is stored in memory as;
+           0 1 2 3 4 5 6 7 8 9 0 1 2 3 4
+    v == [ a b c d e f g h i j k l m n o ]
+    
+    a == 0  (15-15), f == 5 (15-10), j == 9 (15-6), m == 12 (15-3), o == 14 (15-1)
+    
+    so m[i,j] == v[ S(n) - S(n-i) + j - i ]   if i >= j or
+                 m[j,i]                       if j < i
+    
+    where S(k) == Sum_1^k (k) == (k^2 + k)/2
+    
+     S(1) == 1, S(2) == 3, S(3) == 6, S(4) == 10, S(5) == 15
+    
+    m[0,1] == 'b'   v[15 - 15 + 1 - 0 ] == v[1] == 'b'
+    m[3,2] == 'k'   m[3,2] == m[2,3] == v[15 - 6 + 3 - 2] == v[10] == 'k'
+    m[4,4] == 'o'   v[15 - 1 + 4 - 4 ] == v[14] == 'o'
+
+    Simplified expression is m[i,j] = v[1/2 (-i - i^2 + 2 j + 2 i n)]
     
     @author Christopher Woods
 */
-class SIREMATHS_EXPORT NMatrix
+class SIREMATHS_EXPORT TrigMatrix
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const NMatrix&);
-friend QDataStream& ::operator>>(QDataStream&, NMatrix&);
+friend QDataStream& ::operator<<(QDataStream&, const TrigMatrix&);
+friend QDataStream& ::operator>>(QDataStream&, TrigMatrix&);
 
 public:
-    NMatrix();
+    TrigMatrix();
     
-    NMatrix(int nrows, int ncolumns);
-    NMatrix(int nrows, int ncolumns, double initial_value);
+    TrigMatrix(int dimension);
+    TrigMatrix(int dimension, double initial_value);
     
-    NMatrix(const Matrix &matrix);
-    NMatrix(const SireBase::Array2D<double> &array);
-    NMatrix(const QVector< QVector<double> > &array);
-
-    NMatrix(const Vector &vector, bool transpose=false);
-    NMatrix(const QVector<double> &vector, bool transpose=false);
-    NMatrix(const NVector &vector, bool transpose=false);    
+    TrigMatrix(const NMatrix &matrix, bool take_upper=true);
     
-    NMatrix(const TrigMatrix &matrix);
+    TrigMatrix(const TrigMatrix &other);
     
-    NMatrix(const NMatrix &other);
-    
-    ~NMatrix();
+    ~TrigMatrix();
     
     static const char* typeName();
     
     const char* what() const;
     
-    NMatrix& operator=(const NMatrix &other);
+    TrigMatrix& operator=(const TrigMatrix &other);
     
-    bool operator==(const NMatrix &other) const;
-    bool operator!=(const NMatrix &other) const;
+    bool operator==(const TrigMatrix &other) const;
+    bool operator!=(const TrigMatrix &other) const;
     
     double& operator()(int i, int j);
     const double& operator()(int i, int j) const;
     
-    NMatrix& operator+=(const NMatrix &other);
-    NMatrix& operator-=(const NMatrix &other);
-    NMatrix& operator*=(const NMatrix &other);
-    NMatrix& operator/=(const NMatrix &other);
+    TrigMatrix& operator+=(const TrigMatrix &other);
+    TrigMatrix& operator-=(const TrigMatrix &other);
+    TrigMatrix& operator*=(const TrigMatrix &other);
+    TrigMatrix& operator/=(const TrigMatrix &other);
     
-    NMatrix& operator*=(double scale);
-    NMatrix& operator/=(double scale);
+    TrigMatrix& operator*=(double scale);
+    TrigMatrix& operator/=(double scale);
 
-    NMatrix operator-() const;
+    TrigMatrix operator-() const;
     
-    NMatrix operator+(const NMatrix &other) const;
-    NMatrix operator-(const NMatrix &other) const;
-    NMatrix operator*(const NMatrix &other) const;
-    NMatrix operator/(const NMatrix &other) const;
+    TrigMatrix operator+(const TrigMatrix &other) const;
+    TrigMatrix operator-(const TrigMatrix &other) const;
+    TrigMatrix operator*(const TrigMatrix &other) const;
+    TrigMatrix operator/(const TrigMatrix &other) const;
     
-    NMatrix operator*(double scale) const;
-    NMatrix operator/(double scale) const;
+    TrigMatrix operator*(double scale) const;
+    TrigMatrix operator/(double scale) const;
     
     NVector operator*(const NVector &vector) const;
     NVector operator*(const Vector &vector) const;
@@ -153,19 +166,9 @@ public:
     int offset(int i, int j) const;
     int checkedOffset(int i, int j) const;
     
-    void redimension(int nrows, int ncolumns);
+    void redimension(int dimension);
     
     QString toString() const;
-
-    void reflectTopToBottom();
-    void reflectBottomToTop();
-    void reflectLeftToRight();
-    void reflectRightToLeft();
-
-    void reflectTopLeftToBottomRight();
-    void reflectTopRightToBottomLeft();
-    void reflectBottomRightToTopLeft();
-    void reflectBottomLeftToTopRight();
 
     double determinant() const;
     double trace() const;
@@ -174,10 +177,10 @@ public:
     
     std::pair<NVector,NMatrix> diagonalise() const;
 
-    NMatrix inverse() const;
+    TrigMatrix inverse() const;
     
-    NMatrix transpose() const;
-    NMatrix fullTranspose() const;
+    TrigMatrix transpose() const;
+    TrigMatrix fullTranspose() const;
 
     bool isTransposed() const;
 
@@ -195,30 +198,27 @@ private:
     /** The raw data for the matrix */
     QVector<double> array;
     
-    /** The number of rows and columns in the matrix */
-    qint32 nrows, ncolumns;
-    
-    /** Whether the transpose of this matrix is stored */
-    bool is_transpose;
+    /** The number of rows in the matrix (square matrix!) */
+    qint32 nrows;
 };
 
 /** Return the offset into the 1D array for the value
     at index [i,j] - note that this performs *NO* checking,
     and invalid input will result in invalid output. If you
     want to check the indicies, use checkOffset(int i, int j) */
-inline int NMatrix::offset(int i, int j) const
+inline int TrigMatrix::offset(int i, int j) const
 {
-    if (is_transpose)
-        return (i*ncolumns) + j;
+    if (i <= j)
+        return (2*(j + i*nrows) - i - i*i) / 2;
     else
-        return i + (j*nrows);
+        return (2*(i + j*nrows) - j - j*j) / 2;
 }
 
 }
 
-Q_DECLARE_METATYPE( SireMaths::NMatrix )
+Q_DECLARE_METATYPE( SireMaths::TrigMatrix )
 
-SIRE_EXPOSE_CLASS( SireMaths::NMatrix )
+SIRE_EXPOSE_CLASS( SireMaths::TrigMatrix )
 
 SIRE_END_HEADER
 

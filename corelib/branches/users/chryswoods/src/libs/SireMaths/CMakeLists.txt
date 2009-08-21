@@ -83,6 +83,7 @@ set ( SIREMATHS_HEADERS
       sphere.h
       torsion.h
       triangle.h
+      trigmatrix.h
       vector.h
 
       sire_blas.h
@@ -116,6 +117,7 @@ set ( SIREMATHS_SOURCES
       sphere.cpp
       torsion.cpp
       triangle.cpp
+      trigmatrix.cpp
       vector.cpp
 
       sire_blas.cpp

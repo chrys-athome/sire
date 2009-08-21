@@ -193,7 +193,7 @@ CGTO::CGTO() : OrbitalShell()
     
     \throw SireError::incompatible_error
 */
-CGTO::CGTO(const QVector<double> &alphas, const QVector<double> &scales)
+CGTO::CGTO(const NVector &alphas, const NVector &scales)
      : OrbitalShell(), alfas(alphas), scls(scales)
 {
     if (alfas.count() != scls.count())
@@ -204,11 +204,9 @@ CGTO::CGTO(const QVector<double> &alphas, const QVector<double> &scales)
 
     //set scl equal to 'scl' times the normalisation
     //factor for this orbital
-    scls.squeeze();
-    
     for (int i=0; i<scls.count(); ++i)
     {
-        scls[i] *= std::pow(2*alfas.at(i)/pi, 0.75);
+        scls[i] *= std::pow(2*alfas.constData()[i]/pi, 0.75);
     }
 }
 
@@ -250,48 +248,23 @@ int CGTO::nContractions() const
     return alfas.count();
 }
 
-/** Return the ith alpha value 
-
-    \throw SireError::invalid_index
-*/
-double CGTO::alpha(int i) const
+/** Return the vector of alpha values */
+const NVector& CGTO::alpha() const
 {
-    return alfas.constData()[ Index(i).map(alfas.count()) ];
+    return alfas;
 }
 
 /** Convenient synonym for 'alpha()' - so you can write
     a.alpha() * b.beta() and have it mean what you expect */
-double CGTO::beta(int i) const
+const NVector& CGTO::beta() const
 {
-    return CGTO::alpha(i);
+    return CGTO::alpha();
 }
 
-/** Return the ith (normalised) scale value
-
-    \throw SireError::invalid_index
-*/
-double CGTO::scale(int i) const
+/** Return the vector of scaling factors */
+const NVector& CGTO::scale() const
 {
-    return scls.constData()[ Index(i).map(scls.count()) ];
-}
-
-/** Return a pointer to the raw array containing the alpha values */
-const double* CGTO::alphaData() const
-{
-    return alfas.constData();
-}
-
-/** Convenient synonym for 'alphaData()' - so you can write
-    a.alphaData()[i] * b.betaData()[i] and have it mean what you expect */
-const double* CGTO::betaData() const
-{
-    return CGTO::alphaData();
-}
-
-/** Return a pointer to the raw array containing the scale values */
-const double* CGTO::scaleData() const
-{
-    return scls.constData();
+    return scls;
 }
 
 const char* CGTO::typeName()

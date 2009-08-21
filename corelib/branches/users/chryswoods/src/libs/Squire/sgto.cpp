@@ -389,7 +389,7 @@ const char* SS_GTO::typeName()
 ////////////
 //////////// Integrals involving just SS_GTO shell pairs
 ////////////
-//////////// These are given in;
+//////////// These are derived in;
 //////////// Molecular Integrals Over Gaussian Basis Functions
 //////////// Peter M. W. Gill
 //////////// Advanced Quantum Chemistry, 1994
@@ -400,53 +400,24 @@ namespace Squire
 
 const double two_pi_to_2_5 = 2 * std::pow(pi, 2.5);
 
+/////////////
+///////////// Integrals involving just SS_GTO
+/////////////
 double SQUIRE_EXPORT kinetic_integral(const SS_GTO &P)
 {
-    /*
-    double eta = 1.0 / (s0.alpha() + s1.alpha());
-    double zeta = s0.alpha() * s1.alpha() * eta;
-    
-    double R2 = Vector::distance2(s0.center(), s1.center());
-    
-    return s0.scale() * s1.scale() * zeta * std::pow(pi*eta, 1.5) * (3 - 2*zeta*R2)
-                                                * std::exp(-zeta*R2);
-    */
-
     return P.chi() * std::pow( pi / P.eta(), 1.5 ) * (3 - 2*P.chi()*P.R2()) * P.G();
 }
 
 double SQUIRE_EXPORT overlap_integral(const SS_GTO &P)
 {
-    /*
-    double eta = 1 / (s0.alpha() + s1.alpha());
-    double zeta = s0.alpha() * s1.alpha() * eta;
-    
-    double R2 = Vector::distance2(s0.center(), s1.center());
-    
-    return s0.scale() * s1.scale() * std::pow(pi*eta,1.5) * std::exp(-zeta*R2);
-    */
-
     return std::pow( pi / P.eta(), 1.5 ) * P.G();
 }
 
 double SQUIRE_EXPORT potential_integral(const PointCharge &Q, const SS_GTO &P)
 {
-    /*
-    double eta = 1 / (s0.alpha() + s1.alpha());
-    double zeta = s0.alpha() * s1.alpha() * eta;
-    double R2 = Vector::distance2(s0.center(), s1.center());
+    const double T = P.eta() * ((P.P() - Q.center()).length2());
     
-    Vector P = (eta*(s0.alpha()*s0.center() + s1.alpha()*s1.center())) - chg.center();
-
-    double argf1 = (s0.alpha() + s1.alpha()) * P.length2();
-    
-    return -2*s0.scale()*s1.scale()*chg.charge()*pi*eta*
-                    std::exp(-zeta*R2)*boys_f0(argf1);
-    */
-    
-    const double argf1 = P.eta() * ((P.P() - Q.center()).length2());
-    
-    return -2 * P.G() * Q.charge() * pi * boys_f0(argf1) / P.eta();
+    return -2 * P.G() * Q.charge() * pi * boys_f0(T) / P.eta();
 }
 
 //double SQUIRE_EXPORT potential_integral(const PointDipole &Q, const SS_GTO &ss);
@@ -463,5 +434,37 @@ double SQUIRE_EXPORT electron_integral(const SS_GTO &P, const SS_GTO &Q)
            P.G_AB() * Q.G_CD() *
            boys_f0( T );
 }
+
+/////////////
+///////////// Integrals involving just SS_GTO and CSS_GTO
+/////////////
+
+double SQUIRE_EXPORT electron_integral(const CSS_GTO &P, const SS_GTO &Q)
+{
+    double integral_sum(0);
+
+    for (int i=0; i<P.nContractions(); ++i)
+    {
+        const double zeta_plus_eta = P.zetaData()[i] + Q.eta();
+        const double zeta_times_eta = P.zetaData()[i] * Q.eta();
+
+        const double R2 = Vector::distance2( P.pData()[i], Q.Q() );
+
+        const double T = (zeta_times_eta/zeta_plus_eta) * R2;
+
+        integral_sum += (two_pi_to_2_5 / (zeta_times_eta * std::sqrt(zeta_plus_eta))) *
+                         P.G_ABData()[i] * Q.G_CD() *
+                         boys_f0( T );
+}
+
+double SQUIRE_EXPORT electron_integral(const SS_GTO &P, const CSS_GTO &Q)
+{
+    return electron_integral(Q, P);
+}
+
+/////////////
+///////////// Integrals involving just CSS_GTO
+/////////////
+
 
 } // end of namespace Squire
