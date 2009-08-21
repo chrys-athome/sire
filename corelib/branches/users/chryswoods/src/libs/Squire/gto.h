@@ -29,7 +29,7 @@
 #ifndef SQUIRE_GTO_H
 #define SQUIRE_GTO_H
 
-#include "SireMaths/vector.h"
+#include <QVector>
 
 #include "orbital.h"
 
@@ -38,68 +38,29 @@ SIRE_BEGIN_HEADER
 namespace Squire
 {
 class GTO;
-class C_GTO;
-
-class S_GTO;
-class CS_GTO;
-
-class P_GTO;
-class CP_GTO;
-
-class D_GTO;
-class CD_GTO;
-
-class F_GTO;
-class CF_GTO;
-
-class GPlus_GTO;
-class CGPlus_GTO;
+class CGTO;
 }
 
 QDataStream& operator<<(QDataStream&, const Squire::GTO&);
 QDataStream& operator>>(QDataStream&, Squire::GTO&);
 
-QDataStream& operator<<(QDataStream&, const Squire::C_GTO&);
-QDataStream& operator>>(QDataStream&, Squire::C_GTO&);
-
-QDataStream& operator<<(QDataStream&, const Squire::S_GTO&);
-QDataStream& operator>>(QDataStream&, Squire::S_GTO&);
-
-QDataStream& operator<<(QDataStream&, const Squire::CS_GTO&);
-QDataStream& operator>>(QDataStream&, Squire::CS_GTO&);
-
-QDataStream& operator<<(QDataStream&, const Squire::P_GTO&);
-QDataStream& operator>>(QDataStream&, Squire::P_GTO&);
-
-QDataStream& operator<<(QDataStream&, const Squire::CP_GTO&);
-QDataStream& operator>>(QDataStream&, Squire::CP_GTO&);
-
-QDataStream& operator<<(QDataStream&, const Squire::D_GTO&);
-QDataStream& operator>>(QDataStream&, Squire::D_GTO&);
-
-QDataStream& operator<<(QDataStream&, const Squire::CD_GTO&);
-QDataStream& operator>>(QDataStream&, Squire::CD_GTO&);
-
-QDataStream& operator<<(QDataStream&, const Squire::F_GTO&);
-QDataStream& operator>>(QDataStream&, Squire::F_GTO&);
-
-QDataStream& operator<<(QDataStream&, const Squire::CF_GTO&);
-QDataStream& operator>>(QDataStream&, Squire::CF_GTO&);
-
-QDataStream& operator<<(QDataStream&, const Squire::GPlus_GTO&);
-QDataStream& operator>>(QDataStream&, Squire::GPlus_GTO&);
-
-QDataStream& operator<<(QDataStream&, const Squire::CGPlus_GTO&);
-QDataStream& operator>>(QDataStream&, Squire::CGPlus_GTO&);
+QDataStream& operator<<(QDataStream&, const Squire::CGTO&);
+QDataStream& operator>>(QDataStream&, Squire::CGTO&);
 
 namespace Squire
 {
 
-class PointCharge;
-
 /** This is the base class of all single Gaussian Type Orbital shells (GTOs)
-    (e.g. S_GTO (l==0), P_GTO (l==1), D_GTO (l==2), F_GTO (l==3) and
-    GPlus_GTO (l>=4))
+    (S_GTO (l==0), P_GTO (l==1), DPlus_GTO (l>=2))
+    
+    These orbitals are not used directly - rather they are combined into
+    shell-pair orbitals, e.g. SS_GTO, SP_GTO etc. Integral functions then
+    use these shell-pair orbital objects. The shell pair classes are;
+    
+    SS_GTO, CSS_GTO
+    PP_GTO, CPP_GTO, SP_GTO, CSP_GTO
+    DPlusDPlus_GTO, CDPlusDPlus_GTO, PDPlus_GTO, CPDPlus_GTO, 
+                                     SDPlus_GTO, CSDPlus_GTO
     
     An orbital shell contains all of the orbitals for a particular shell
     
@@ -113,19 +74,28 @@ friend QDataStream& ::operator>>(QDataStream&, GTO&);
 
 public:
     GTO();
-    ~GTO();
+    GTO(const GTO &other);
     
-    const Vector& center() const;
+    virtual ~GTO();
+    
+    static const char* typeName();
+    
+    virtual GTO* clone() const=0;
 
     double alpha() const;
+    double beta() const;
+    
     double scale() const;
 
-    static int angularMomentum();
-
 protected:
-    /** The center of this orbital (x,y,z) */
-    Vector cent;
+    GTO(double alpha, double scale);
+
+    GTO& operator=(const GTO &other);
     
+    bool operator==(const GTO &other) const;
+    bool operator!=(const GTO &other) const;
+
+private:
     /** The orbital exponent (alpha) */
     double alfa;
     
@@ -134,7 +104,7 @@ protected:
     double scl;
 };
 
-/** This is the base class of all Contracted Gaussian Type Orbitals (C_GTO).
+/** This is the base class of all Contracted Gaussian Type Orbitals (CGTO).
     (e.g. CS_GTO (l==0), CP_GTO (l==1), CD_GTO (l==2), CF_GTO (l==3) and
     CGPlus_GTO (l>=4))
 
@@ -146,30 +116,41 @@ protected:
     
     @author Christopher Woods
 */
-class SQUIRE_EXPORT C_GTO : public OrbitalShell
+class SQUIRE_EXPORT CGTO : public OrbitalShell
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const C_GTO&);
-friend QDataStream& ::operator>>(QDataStream&, C_GTO&);
+friend QDataStream& ::operator<<(QDataStream&, const CGTO&);
+friend QDataStream& ::operator>>(QDataStream&, CGTO&);
 
 public:
-    C_GTO();
-    ~C_GTO();
+    CGTO();
+    virtual ~CGTO();
+
+    static const char* typeName();
     
-    static int angularMomentum();
+    virtual CGTO* clone() const=0;
 
     int nContractions() const;
     
     double alpha(int i) const;
+    double beta(int i) const;
+    
     double scale(int i) const;
     
     const double* alphaData() const;
+    const double* betaData() const;
+    
     const double* scaleData() const;
     
 protected:
-    /** The center of this orbital (x,y,z) */
-    Vector cent;
+    CGTO(const QVector<double> &alphas, const QVector<double> &scales);
     
+    CGTO& operator=(const CGTO &other);
+    
+    bool operator==(const CGTO &other) const;
+    bool operator!=(const CGTO &other) const;
+
+private:
     /** The orbital exponents (alpha) */
     QVector<double> alfas;
     
@@ -178,143 +159,10 @@ protected:
     QVector<double> scls;
 };
 
-/** This is a single S-type (l==0) Gaussian Type Orbital Shell.
-    An S-orbital shell contains just a single S-orbital
-*/
-class SQUIRE_EXPORT S_GTO : public GTO
-{
-public:
-    S_GTO();
-    S_GTO(const Vector &cent, double alpha, double scale=1);
-    S_GTO(const S_GTO &other);
-    
-    ~S_GTO();
-    
-    S_GTO& operator=(const S_GTO &other);
-    
-    static int angularMomentum();
-    static int nOrbitals();
-
-    S_GTO operator*(const S_GTO &other) const;
-    CS_GTO operator*(const CS_GTO &other) const;
-};
-
-/** This is a contracted S-type (l==0) Gaussian Type Orbital shell. */
-class SQUIRE_EXPORT CS_GTO : public C_GTO
-{
-public:
-    CS_GTO();
-    
-    CS_GTO(const CS_GTO &other);
-    
-    ~CS_GTO();
-    
-    CS_GTO& operator=(const CS_GTO &other);
-    
-    static int angularMomentum();
-    static int nOrbitals();
-
-    CS_GTO operator*(const CS_GTO &other) const;
-    CS_GTO operator*(const S_GTO &other) const;
-};
-
-////////
-//////// All of the functions used to calculate integrals
-//////// involving these orbitals
-////////
-
-/////////
-///////// Integrals for general GTO shells
-/////////
-NMatrix kinetic(const GTO &A, const GTO &B);
-NMatrix potential(const PointCharge &Q, const GTO &A, const GTO &B);
-NMatrix overlap(const GTO &A, const GTO &B);
-
-double sum_electron_repulsion(const GTO &A, const GTO &B,
-                              const GTO &C, const GTO &D);
-
-/////////
-///////// Integrals for general C_GTOs
-/////////
-NMatrix kinetic(const C_GTO &A, const C_GTO &B);
-NMatrix potential(const PointCharge &Q, const C_GTO &A, const C_GTO &B);
-NMatrix overlap(const C_GTO &A, const C_GTO &B);
-
-double sum_electron_repulsion(const C_GTO &A, const C_GTO &B,
-                              const C_GTO &C, const C_GTO &D);
-
-/////////
-///////// Integrals for S_GTO / S_GTO
-/////////
-double kinetic(const S_GTO &A, const S_GTO &B);
-double kinetic(const SS_GTO &AB);
-
-double potential(const PointCharge &Q, const S_GTO &A, const S_GTO &B);
-double potential(const PointCharge &Q, const SS_GTO &AB);
-
-double overlap(const S_GTO &A, const S_GTO &B);
-double overlap(const SS_GTO &AB);
-
-double sum_electron_repulsion(const S_GTO &A, const S_GTO &B,
-                              const S_GTO &C, const S_GTO &D);
-                              
-double sum_electron_repulsion(const SS_GTO &AB, const SS_GTO &CD);
-
-//////////
-////////// Integrals for CS_GTO / CS_GTO
-//////////
-double kinetic(const CS_GTO &A, const CS_GTO &B);
-double kinetic(const CS_GTO &AB);
-
-double potential(const PointCharge &Q, const CS_GTO &A, const CS_GTO &B);
-double potential(const PointCharge &Q, const CS_GTO &AB);
-
-double overlap(const CS_GTO &A, const CS_GTO &B);
-double overlap(const CS_GTO &AB);
-
-double electron_repulsion(const CS_GTO &A, const CS_GTO &B,
-                          const CS_GTO &C, const CS_GTO &D);
-                          
-double electron_repulsion(const CS_GTO &AB, const CS_GTO &CD);
-
-double sum_electron_repulsion(const CS_GTO &A, const CS_GTO &B,
-                              const CS_GTO &C, const CS_GTO &D);
-                              
-double sum_electron_repulsion(const CS_GTO &AB, const CS_GTO &CD);
-
-//////////
-////////// Integrals for S_GTO/P_GTO
-//////////
-Vector kinetic(const S_GTO &S, const P_GTO &P);
-Vector kinetic(const P_GTO &P, const S_GTO &S);
-
-Vector kinetic(const SP_GTO &SP);
-
-Vector potential(const PointCharge &Q, const S_GTO &S, const P_GTO &P);
-Vector potential(const PointCharge &Q, const P_GTO &P, const S_GTO &S);
-
-Vector potential(const PointCharge &Q, const SP_GTO &SP);
-
-Vector overlap(const S_GTO &S, const P_GTO &P);
-Vector overlap(const P_GTO &P, const S_GTO &S);
-
-Vector overlap(const SP_GTO &SP);
-
-double sum_electron_repulsion(const P_GTO &A, const P_GTO &B,
-                              const P_GTO &C, const P_GTO &D);
-
-double sum_electron_repulsion(
-
 }
 
-Q_DECLARE_METATYPE( Squire::S_GTO )
-Q_DECLARE_METATYPE( Squire::CS_GTO )
-
 SIRE_EXPOSE_CLASS( Squire::GTO )
-SIRE_EXPOSE_CLASS( Squire::C_GTO )
-
-SIRE_EXPOSE_CLASS( Squire::S_GTO )
-SIRE_EXPOSE_CLASS( Squire::CS_GTO )
+SIRE_EXPOSE_CLASS( Squire::CGTO )
 
 SIRE_END_HEADER
 

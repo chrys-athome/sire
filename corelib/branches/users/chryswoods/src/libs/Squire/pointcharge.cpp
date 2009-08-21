@@ -26,3 +26,102 @@
   *
 \*********************************************/
 
+#include "pointcharge.h"
+
+#include "SireUnits/units.h"
+
+#include "SireStream/datastream.h"
+
+using namespace Squire;
+using namespace SireUnits;
+using namespace SireUnits::Dimension;
+using namespace SireStream;
+
+static const RegisterMetaType<PointCharge> r_pointcharge;
+
+/** Serialise to a binary datastream */
+QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const PointCharge &q)
+{
+    writeHeader(ds, r_pointcharge, 1);
+    
+    ds << q.cent << q.q;
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, PointCharge &q)
+{
+    VersionID v = readHeader(ds, r_pointcharge);
+    
+    if (v == 1)
+    {
+        ds >> q.cent >> q.q;
+    }
+    else
+        throw version_error(v, "1", r_pointcharge, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+PointCharge::PointCharge() : q(0)
+{}
+
+/** Construct a point charge at the specified location with the 
+    specified charge */
+PointCharge::PointCharge(const Vector &coords, const Charge &charge)
+            : cent(coords), q(charge.to(mod_electron))
+{}
+
+/** Construct a point charge at the specified location with the 
+    specified charge */
+PointCharge::PointCharge(const Charge &charge, const Vector &coords)
+            : cent(coords), q(charge.to(mod_electron))
+{}
+
+/** Copy constructor */
+PointCharge::PointCharge(const PointCharge &other)
+            : cent(other.cent), q(other.q)
+{}
+
+/** Destructor */
+PointCharge::~PointCharge()
+{}
+
+/** Copy assignment operator */
+PointCharge& PointCharge::operator=(const PointCharge &other)
+{
+    cent = other.cent;
+    q = other.q;
+    return *this;
+}
+
+/** Comparison operator */
+bool PointCharge::operator==(const PointCharge &other) const
+{
+    return q == other.q and cent == other.cent;
+}
+
+/** Comparison operator */
+bool PointCharge::operator!=(const PointCharge &other) const
+{
+    return q != other.q or cent != other.cent;
+}
+
+/** Return the location of this point charge */
+const Vector& PointCharge::center() const
+{
+    return cent;
+}
+
+/** Return the magnitude of this point charge (in internal units) */
+double PointCharge::charge() const
+{
+    return q;
+}
+
+const char* PointCharge::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<PointCharge>() );
+}

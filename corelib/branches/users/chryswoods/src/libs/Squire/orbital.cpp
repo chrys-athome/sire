@@ -26,3 +26,146 @@
   *
 \*********************************************/
 
+#include "orbital.h"
+
+#include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
+
+using namespace Squire;
+using namespace SireBase;
+using namespace SireStream;
+
+////////////
+//////////// Implementation of Orbital
+////////////
+
+static const RegisterMetaType<Orbital> r_orbital( MAGIC_ONLY, Orbital::typeName() );
+
+/** Serialise to a binary datastream */
+QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const Orbital &orbital)
+{
+    writeHeader(ds, r_orbital, 1);
+    
+    ds << static_cast<const Property&>(orbital);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, Orbital &orbital)
+{
+    VersionID v = readHeader(ds, r_orbital);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<Property&>(orbital);
+    }
+    else
+        throw version_error(v, "1", r_orbital, CODELOC);
+
+    return ds;
+}
+
+/** Constructor */
+Orbital::Orbital() : Property()
+{}
+
+/** Copy constructor */
+Orbital::Orbital(const Orbital &other) : Property(other)
+{}
+
+/** Destructor */
+Orbital::~Orbital()
+{}
+
+/** Copy assignment operator */
+Orbital& Orbital::operator=(const Orbital &other)
+{
+    Property::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool Orbital::operator==(const Orbital &other) const
+{
+    return Property::operator==(other);
+}
+
+/** Comparison operator */
+bool Orbital::operator!=(const Orbital &other) const
+{
+    return Property::operator!=(other);
+}
+
+const char* Orbital::typeName()
+{
+    return "Squire::Orbital";
+}
+
+////////////
+//////////// Implementation of OrbitalShell
+////////////
+
+static const RegisterMetaType<OrbitalShell> r_orbshell( MAGIC_ONLY, 
+                                                        OrbitalShell::typeName() );
+                                                        
+/** Serialise to a binary datastream */
+QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const OrbitalShell &orbshell)
+{
+    writeHeader(ds, r_orbshell, 1);
+    
+    ds << static_cast<const Orbital&>(orbshell);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, OrbitalShell &orbshell)
+{
+    VersionID v = readHeader(ds, r_orbshell);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<Orbital&>(orbshell);
+    }
+    else
+        throw version_error(v, "1", r_orbshell, CODELOC);
+
+    return ds;
+}
+
+/** Constructor */
+OrbitalShell::OrbitalShell() : Orbital()
+{}
+
+/** Copy constructor */
+OrbitalShell::OrbitalShell(const OrbitalShell &other) : Orbital(other)
+{}
+
+/** Destructor */
+OrbitalShell::~OrbitalShell()
+{}
+
+/** Copy assignment operator */
+OrbitalShell& OrbitalShell::operator=(const OrbitalShell &other)
+{
+    Orbital::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool OrbitalShell::operator==(const OrbitalShell &other) const
+{
+    return Orbital::operator==(other);
+}
+
+/** Comparison operator */
+bool OrbitalShell::operator!=(const OrbitalShell &other) const
+{
+    return Orbital::operator!=(other);
+}
+
+const char* OrbitalShell::typeName()
+{
+    return "Squire::OrbitalShell";
+}

@@ -25,6 +25,9 @@ set ( SQUIRE_HEADERS
       pointdipole.h
 
       molpro.h
+
+      pgto.h
+      sgto.h
     )
 
 set ( SQUIRE_SOURCES
@@ -47,6 +50,9 @@ set ( SQUIRE_SOURCES
       orbital.cpp
       pointcharge.cpp
       pointdipole.cpp
+
+      pgto.cpp
+      sgto.cpp
 
       ${SQUIRE_HEADERS}
     )

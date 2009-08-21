@@ -26,3 +26,73 @@
   *
 \*********************************************/
 
+#ifndef SQUIRE_POINTCHARGE_H
+#define SQUIRE_POINTCHARGE_H
+
+#include "SireMaths/vector.h"
+#include "SireUnits/dimensions.h"
+
+SIRE_BEGIN_HEADER
+
+namespace Squire
+{
+class PointCharge;
+}
+
+QDataStream& operator<<(QDataStream&, const Squire::PointCharge&);
+QDataStream& operator>>(QDataStream&, Squire::PointCharge&);
+
+namespace Squire
+{
+
+using SireMaths::Vector;
+
+/** This class holds a single point charge. This class is designed
+    for speed, and is used within the integral program (the charge
+    is held in internal units, and the point is mapped into the
+    correct space for the QM program)
+    
+    @author Christopher Woods
+*/
+class SQUIRE_EXPORT PointCharge
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const PointCharge&);
+friend QDataStream& ::operator>>(QDataStream&, PointCharge&);
+
+public:
+    PointCharge();
+    PointCharge(const Vector &coords, const SireUnits::Dimension::Charge &charge);
+    PointCharge(const SireUnits::Dimension::Charge &charge, const Vector &coords);
+    
+    PointCharge(const PointCharge &other);
+    
+    ~PointCharge();
+    
+    static const char* typeName();
+    
+    PointCharge& operator=(const PointCharge &other);
+    
+    bool operator==(const PointCharge &other) const;
+    bool operator!=(const PointCharge &other) const;
+    
+    const Vector& center() const;
+    double charge() const;
+    
+private:
+    /** The location of this charge, mapped into the correct space */
+    Vector cent;
+    
+    /** The charge, in internal units */
+    double q;
+};
+
+}
+
+Q_DECLARE_METATYPE( Squire::PointCharge )
+
+SIRE_EXPOSE_CLASS( Squire::PointCharge )
+
+SIRE_END_HEADER
+
+#endif

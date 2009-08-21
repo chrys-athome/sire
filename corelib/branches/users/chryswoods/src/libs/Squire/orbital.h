@@ -26,3 +26,109 @@
   *
 \*********************************************/
 
+#ifndef SQUIRE_ORBITAL_H
+#define SQUIRE_ORBITAL_H
+
+#include "SireBase/property.h"
+
+SIRE_BEGIN_HEADER
+
+namespace Squire
+{
+class Orbital;
+class OrbitalShell;
+}
+
+QDataStream& operator<<(QDataStream&, const Squire::Orbital&);
+QDataStream& operator>>(QDataStream&, Squire::Orbital&);
+
+QDataStream& operator<<(QDataStream&, const Squire::OrbitalShell&);
+QDataStream& operator>>(QDataStream&, Squire::OrbitalShell&);
+
+namespace Squire
+{
+
+/** This is the base class of all orbitals.
+
+    Orbital classes (like OrbitalShell) are designed to hold
+    information about an orbital, and are not meant to be
+    used directly in an integral program (indeed, an orbital
+    normally doesn't even have coordinate information, as
+    this is provided by the molecule that holds the orbital).
+    
+    Orbital classes are thus virtual and not designed for speed.
+
+    @author Christopher Woods
+*/
+class SQUIRE_EXPORT Orbital : public SireBase::Property
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const Orbital&);
+friend QDataStream& ::operator>>(QDataStream&, Orbital&);
+
+public:
+    Orbital();
+    
+    Orbital(const Orbital &other);
+    
+    virtual ~Orbital();
+    
+    static const char* typeName();
+    
+    virtual Orbital* clone() const=0;
+
+protected:
+    Orbital& operator=(const Orbital &other);
+    
+    bool operator==(const Orbital &other) const;
+    bool operator!=(const Orbital &other) const;
+};
+
+/** This is the base class of a shell of orbitals. An orbital
+    shell contains the typical atomic orbitals (e.g. a p-shell
+    contains 3 orbitals, p_x, p_y and p_z)
+
+    OrbitalShell classes (like Orbital) are designed to hold
+    information about an orbital, and are not meant to be
+    used directly in an integral program (indeed, an orbital
+    normally doesn't even have coordinate information, as
+    this is provided by the molecule that holds the orbital).
+    
+    Orbital classes are thus virtual and not designed for speed.
+    
+    @author Christopher Woods
+*/
+class SQUIRE_EXPORT OrbitalShell : public Orbital
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const OrbitalShell&);
+friend QDataStream& ::operator>>(QDataStream&, OrbitalShell&);
+
+public:
+    OrbitalShell();
+    OrbitalShell(const OrbitalShell &other);
+    
+    virtual ~OrbitalShell();
+    
+    static const char* typeName();
+    
+    virtual OrbitalShell* clone() const=0;
+    
+    virtual int angularMomentum() const=0;
+    virtual int nOrbitals() const=0;
+
+protected:
+    OrbitalShell& operator=(const OrbitalShell &other);
+    
+    bool operator==(const OrbitalShell &other) const;
+    bool operator!=(const OrbitalShell &other) const;
+};
+
+}
+
+SIRE_EXPOSE_CLASS( Squire::Orbital )
+SIRE_EXPOSE_CLASS( Squire::OrbitalShell )
+
+SIRE_END_HEADER
+
+#endif
