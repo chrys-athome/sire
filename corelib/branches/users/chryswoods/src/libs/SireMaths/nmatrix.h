@@ -95,6 +95,9 @@ public:
     
     ~NMatrix();
     
+    static NMatrix createRowMajor(int nrows, int ncolumns);
+    static NMatrix createColumnMajor(int nrows, int ncolumns);
+    
     static const char* typeName();
     
     const char* what() const;
@@ -219,6 +222,15 @@ inline int NMatrix::offset(int i, int j) const
 Q_DECLARE_METATYPE( SireMaths::NMatrix )
 
 SIRE_EXPOSE_CLASS( SireMaths::NMatrix )
+
+SIRE_EXPOSE_ALIAS( SireBase::Array2D<SireMaths::Vector>, SireBase::Array2D_Vector_ )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+#include "SireBase/array2d.hpp"
+#include "vector.h"
+template class SireBase::Array2D<SireMaths::Vector>;
+#endif
+
 
 SIRE_END_HEADER
 

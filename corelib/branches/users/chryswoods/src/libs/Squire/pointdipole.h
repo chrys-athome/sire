@@ -26,3 +26,71 @@
   *
 \*********************************************/
 
+#ifndef SQUIRE_POINTDIPOLE_H
+#define SQUIRE_POINTDIPOLE_H
+
+#include "SireMaths/vector.h"
+
+SIRE_BEGIN_HEADER
+
+namespace Squire
+{
+class PointDipole;
+}
+
+QDataStream& operator<<(QDataStream&, const Squire::PointDipole&);
+QDataStream& operator>>(QDataStream&, Squire::PointDipole&);
+
+namespace Squire
+{
+
+using SireMaths::Vector;
+
+/** This class holds a single point dipole. This class is designed
+    for speed, and is used within the integral program (the dipole
+    is held in internal units, and the point is mapped into the
+    correct space for the QM program)
+    
+    @author Christopher Woods
+*/
+class SQUIRE_EXPORT PointDipole
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const PointDipole&);
+friend QDataStream& ::operator>>(QDataStream&, PointDipole&);
+
+public:
+    PointDipole();
+    PointDipole(const Vector &coords, const Vector &dipole);
+    
+    PointDipole(const PointDipole &other);
+    
+    ~PointDipole();
+    
+    static const char* typeName();
+    
+    PointDipole& operator=(const PointDipole &other);
+    
+    bool operator==(const PointDipole &other) const;
+    bool operator!=(const PointDipole &other) const;
+    
+    const Vector& center() const;
+    const Vector& dipole() const;
+    
+private:
+    /** The location of this dipole, mapped into the correct space */
+    Vector cent;
+    
+    /** The dipole, in internal units */
+    Vector dipol;
+};
+
+}
+
+Q_DECLARE_METATYPE( Squire::PointDipole )
+
+SIRE_EXPOSE_CLASS( Squire::PointDipole )
+
+SIRE_END_HEADER
+
+#endif

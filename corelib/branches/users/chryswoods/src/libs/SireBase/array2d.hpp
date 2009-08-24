@@ -89,6 +89,9 @@ public:
 
     Array2D<T>& operator=(const Array2D<T> &other);
 
+    bool operator==(const Array2D<T> &other) const;
+    bool operator!=(const Array2D<T> &other) const;
+
     const T& operator()(quint32 i, quint32 j) const;
     T& operator()(quint32 i, quint32 j);
     const T& at(quint32 i, quint32 j) const;
@@ -173,6 +176,22 @@ Array2D<T>& Array2D<T>::operator=(const Array2D<T> &other)
     Array2DBase::operator=(other);
     array = other.array;
     return *this;
+}
+
+/** Comparison operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool Array2D<T>::operator==(const Array2D<T> &other) const
+{
+    return Array2DBase::operator==(other) and array == other.array;
+}
+
+/** Comparison operator */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+bool Array2D<T>::operator!=(const Array2D<T> &other) const
+{
+    return Array2DBase::operator!=(other) or array != other.array;
 }
 
 /** Return a reference to the object in the ith row and

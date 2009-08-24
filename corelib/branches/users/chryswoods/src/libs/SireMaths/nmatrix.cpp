@@ -288,6 +288,22 @@ NMatrix::NMatrix(const NMatrix &other)
 NMatrix::~NMatrix()
 {}
 
+/** Construct a matrix with dimension 'nrows' by 'ncolumns' that
+    stores the data in column-major order */
+NMatrix NMatrix::createColumnMajor(int nr, int nc)
+{
+    return NMatrix(nr, nc);
+}
+
+/** Construct a matrix with dimension 'nrows' by 'ncolumns' that 
+    stores the data in row-major order */
+NMatrix NMatrix::createRowMajor(int nr, int nc)
+{
+    NMatrix ret(nr, nc);
+    ret.is_transpose = true;
+    return ret;
+}
+
 const char* NMatrix::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<NMatrix>() );

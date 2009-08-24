@@ -73,6 +73,9 @@ protected:
 
     Array2DBase& operator=(const Array2DBase &other);
 
+    bool operator==(const Array2DBase &other) const;
+    bool operator!=(const Array2DBase &other) const;
+
 private:
     void throwInvalidIndex(quint32 i, quint32 j) const;
     

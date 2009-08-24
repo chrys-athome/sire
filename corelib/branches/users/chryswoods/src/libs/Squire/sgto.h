@@ -32,7 +32,7 @@
 #include "gto.h"
 
 #include "SireMaths/vector.h"
-#include "SireMaths/trigmatrix.h"
+#include "SireMaths/nmatrix.h"
 
 #include "SireBase/array2d.hpp"
 
@@ -66,7 +66,7 @@ class PointCharge;
 class PointDipole;
 
 using SireMaths::Vector;
-using SireMaths::TrigMatrix;
+using SireMaths::NMatrix;
 
 using SireBase::Array2D;
 
@@ -221,24 +221,24 @@ public:
     bool operator==(const CSS_GTO &other) const;
     bool operator!=(const CSS_GTO &other) const;
     
-    int nContractions() const;
+    int nPairs() const;
     
-    const Array2D<Vector>& P(int i) const;
-    const Array2D<Vector>& Q(int i) const;
+    const Array2D<Vector>& P() const;
+    const Array2D<Vector>& Q() const;
 
     double R2() const;
     
-    const TrigMatrix& eta() const;
-    const TrigMatrix& G() const;
+    const NMatrix& eta() const;
+    const NMatrix& zeta() const;
 
-    const TrigMatrix& chi() const;
+    const NMatrix& chi() const;
     
-    const TrigMatrix& alpha_plus_beta() const;
-    const TrigMatrix& alpha_times_beta() const;
+    const NMatrix& alpha_plus_beta() const;
+    NMatrix alpha_times_beta() const;
     
-    const TrigMatrix& G() const;
-    const TrigMatrix& G_AB() const;
-    const TrigMatrix& G_CD() const;
+    const NMatrix& G() const;
+    const NMatrix& G_AB() const;
+    const NMatrix& G_CD() const;
 
 private:
     /** The centers of this combined CSS shell pair - for 
@@ -255,26 +255,21 @@ private:
     /** The alpha values of the combined gaussian. This is 
     
         eta[i,j] = alpha[i] + beta[j]
-        
-        note that eta[i,j] == eta[j,i]
+
     */
-    TrigMatrix _eta;
+    NMatrix _eta;
     
     /** The chi value of the combined gaussian,
     
         chi[i,j] = alpha[i]*beta[j] / (alpha[i] + beta[j])
-
-        note that chi[i,j] == chi[j,i]
     */
-    TrigMatrix _chi;
+    NMatrix _chi;
     
     /** The scaling factors for this combined gaussian. This is;
     
         G[i,j] = scl_a[i] * scl_b[j] * exp( (-alpha[i]*beta[j]/(alpha[i]+beta[j])) R2 )
-
-        note that G[i,j] == G[j,i]
     */
-    TrigMatrix _G;
+    NMatrix _G;
 };    
 
 //////////

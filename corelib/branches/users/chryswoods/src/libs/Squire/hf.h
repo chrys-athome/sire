@@ -43,7 +43,9 @@ using SireMaths::Vector;
 
 class Orbital;
 class S_GTO;
+class CS_GTO;
 class PointCharge;
+class PointDipole;
 
 /** This is my first attempt at a small HF program */
 class SQUIRE_EXPORT HF
@@ -58,16 +60,26 @@ public:
     void add(const Orbital &orbital);
     void add(const Vector &point, const Orbital &orbital);
     void add(const Vector &point, const SireUnits::Dimension::Charge &charge);
+    void add(const Vector &point, const Vector &dipole);
 
 private:
-    /** All of the coordinates of the centers */
-    QVector<Vector> centers;
+    /** All of the coordinates of the s_orbital centers */
+    QVector<Vector> s_centers;
 
     /** All of the S-basis functions */
     QVector<S_GTO> s_orbs;
     
+    /** All of the coordinates of the cs_orbital centers */
+    QVector<Vector> cs_centers;
+    
+    /** All of the contracted S-basis functions */
+    QVector<CS_GTO> cs_orbs;
+    
     /** All of the point charges (nuclei) */
     QVector<PointCharge> chgs;
+    
+    /** All of the point dipoles */
+    QVector<PointDipole> dipols;
 };
 
 }

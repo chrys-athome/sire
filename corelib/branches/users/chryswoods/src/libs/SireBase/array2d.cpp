@@ -91,6 +91,18 @@ Array2DBase& Array2DBase::operator=(const Array2DBase &other)
     return *this;
 }
 
+/** Comparison operator */
+bool Array2DBase::operator==(const Array2DBase &other) const
+{
+    return nrows == other.nrows and ncolumns == other.ncolumns;
+}
+
+/** Comparison operator */
+bool Array2DBase::operator!=(const Array2DBase &other) const
+{
+    return nrows != other.nrows or ncolumns != other.ncolumns;
+}
+
 /** Throw an invalid index exception */
 void Array2DBase::throwInvalidIndex(quint32 i, quint32 j) const
 {
