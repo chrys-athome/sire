@@ -133,6 +133,7 @@ public:
     bool operator!=(const SP_GTO &other) const;
     
     const Vector& P_minus_A() const;
+    const Vector& Q_minus_C() const;
     
     const SS_GTO& SS() const;
 
@@ -175,6 +176,9 @@ public:
 
     const Vector& P_minus_A() const;
     const Vector& P_minus_B() const;
+
+    const Vector& Q_minus_C() const;
+    const Vector& Q_minus_D() const;
 
     double scale() const;
 
@@ -220,6 +224,9 @@ Matrix overlap_integral(const PP_GTO &pp);
 
 Matrix potential_integral(const PointCharge &Q, const PP_GTO &pp);
 Matrix potential_integral(const PointDipole &Q, const PP_GTO &pp);
+
+Matrix electron_integral(const SS_GTO &P, const PP_GTO &Q);
+Matrix electron_integral(const PP_GTO &P, const SS_GTO &Q);
 
 Array2D<Matrix> electron_integral(const PP_GTO &pp0, const PP_GTO &pp1);
 

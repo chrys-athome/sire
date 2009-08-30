@@ -44,9 +44,17 @@ double boys_f3(double x);
 double boys(double m, double x);
 double boys(int m, double x);
 
+void multi_boys_2(double x, double boys[2]);
+void multi_boys_3(double x, double boys[3]);
+void multi_boys_4(double x, double boys[4]);
+void multi_boys_n(double x, double boys[], int n);
+
+QVector<double> multi_boys(double x, int n);
+
 }
 
 SIRE_EXPOSE_FUNCTION( SireMaths::boys )
+SIRE_EXPOSE_FUNCTION( SireMaths::multi_boys )
 
 SIRE_END_HEADER
 

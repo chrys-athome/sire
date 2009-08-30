@@ -67,3 +67,20 @@ printInt( pot_int( SS_GTO(x,S,x,S) ), pot_int( SP_GTO(x,S,x,P) ),
           pot_int( SS_GTO(y,S,x,S) ), pot_int( SP_GTO(y,S,x,P) ),
           pot_int( SP_GTO(y,P,x,S) ), pot_int( PP_GTO(y,P,x,P) ) )
 
+ssss = electron_integral(SS_GTO(x,S,x,S),SS_GTO(x,S,x,S))
+psss = electron_integral(SP_GTO(x,P,x,S),SS_GTO(x,S,x,S))
+ppss = electron_integral(PP_GTO(x,P,x,P),SS_GTO(x,S,x,S))
+
+print "\nELECTRON";
+print "0  0  0  0  %f" % (ssss)
+print "1  0  0  0  %f" % (psss[0])
+print "2  0  0  0  %f" % (psss[1])
+print "3  0  0  0  %f" % (psss[2])
+
+print ppss
+
+print electron_integral(PP_GTO(x,P,x,P),SS_GTO(y,S,y,S))
+
+print electron_integral(SP_GTO(x,S,x,P),SP_GTO(x,S,x,P))
+print electron_integral(SP_GTO(x,S,x,P),SP_GTO(y,S,y,P))
+print electron_integral(SP_GTO(x,S,y,P),SP_GTO(x,S,y,P))

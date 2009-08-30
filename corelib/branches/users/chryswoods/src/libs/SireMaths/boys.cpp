@@ -132,4 +132,91 @@ double SIREMATHS_EXPORT boys(double m, double x)
     return boys( int(m), x );
 }
 
+void SIREMATHS_EXPORT multi_boys_2(double x, double boys[2])
+{    
+    if (x != 0)
+    {
+        boys[0] = boys_f0(x);
+    
+        //use upward recursion to get boysf1 and boysf2
+        const double one_over_two_x = 1 / (2*x);
+        const double exp_minus_x = std::exp(-x);
+        
+        boys[1] = one_over_two_x * (boys[0] - exp_minus_x);
+    }
+    else
+    {
+        boys[0] = 1;
+        boys[1] = 1.0/3.0;
+    }
+}
+
+void SIREMATHS_EXPORT multi_boys_3(double x, double boys[3])
+{    
+    if (x != 0)
+    {
+        boys[0] = boys_f0(x);
+    
+        //use upward recursion to get boysf1 and boysf2
+        const double one_over_two_x = 1 / (2*x);
+        const double exp_minus_x = std::exp(-x);
+        
+        boys[1] = one_over_two_x * (boys[0] - exp_minus_x);
+        boys[2] = one_over_two_x * (3*boys[1] - exp_minus_x);
+    }
+    else
+    {
+        boys[0] = 1;
+        boys[1] = 1.0/3.0;
+        boys[2] = 1.0/5.0;
+    }
+}
+
+void SIREMATHS_EXPORT multi_boys_4(double x, double boys[4])
+{    
+    if (x != 0)
+    {
+        boys[0] = boys_f0(x);
+    
+        //use upward recursion to get boysf1, boysf2 and boysf3
+        const double one_over_two_x = 1 / (2*x);
+        const double exp_minus_x = std::exp(-x);
+        
+        boys[1] = one_over_two_x * (boys[0] - exp_minus_x);
+        boys[2] = one_over_two_x * (3*boys[1] - exp_minus_x);
+        boys[3] = one_over_two_x * (5*boys[2] - exp_minus_x);
+    }
+    else
+    {
+        boys[0] = 1;
+        boys[1] = 1.0/3.0;
+        boys[2] = 1.0/5.0;
+        boys[3] = 1.0/7.0;
+    }
+}
+
+void SIREMATHS_EXPORT multi_boys_n(double x, double b[], int n)
+{
+    //use downward recursion from boys_n
+    b[n-1] = boys(n-1, x);
+    
+    const double two_x = 2*x;
+    const double exp_minus_x = std::exp(-x);
+    
+    for (int i=n-2; i>=0; --i)
+    {
+        b[i] = (1 / (2*i + 1.0)) * (two_x * b[i+1] + exp_minus_x);
+    }
+}
+
+QVector<double> SIREMATHS_EXPORT multi_boys(double x, int n)
+{
+    QVector<double> boys(n, 0);
+    boys.squeeze();
+    
+    multi_boys_n(x, boys.data(), n);
+    
+    return boys;
+}
+
 } // end of namespace SireMaths

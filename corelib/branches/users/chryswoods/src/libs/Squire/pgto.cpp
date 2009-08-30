@@ -235,6 +235,12 @@ const Vector& SP_GTO::P_minus_A() const
     return p_minus_a;
 }
 
+/** Synonym for P_minus_A */
+const Vector& SP_GTO::Q_minus_C() const
+{
+    return SP_GTO::P_minus_A();
+}
+
 /** Return the additional scaling constant needed to normalise
     the integrals */
 double SP_GTO::scale() const
@@ -352,6 +358,18 @@ const Vector& PP_GTO::P_minus_B() const
     return p_minus_b;
 }
 
+/** Synonym for P_minus_A */
+const Vector& PP_GTO::Q_minus_C() const
+{
+    return PP_GTO::P_minus_A();
+}
+
+/** Synonym for Q_minus_D */
+const Vector& PP_GTO::Q_minus_D() const
+{
+    return PP_GTO::P_minus_B();
+}
+
 /** Return the additional scaling constant needed to normalise the
     integrals involving this shell-pair */
 double PP_GTO::scale() const
@@ -395,17 +413,10 @@ Vector SQUIRE_EXPORT potential_integral(const PointCharge &Q, const SP_GTO &sp)
     const Vector P_minus_C = sp.SS().P() - Q.center();
     const double U = sp.SS().eta() * P_minus_C.length2();
 
-    const double boys0 = boys_f0(U);
-    
-    if (U != 0)
-    {
-        //use upward recursion to get boysf1
-        const double boys1 = (1 / (2*U)) * (boys0 - std::exp(-U));
-    
-        return prefac * ((boys0 * sp.P_minus_A()) - (boys1 * P_minus_C));
-    }
-    else
-        return prefac * (boys0 * sp.P_minus_A());
+    double boys[2];
+    multi_boys_2(U, boys);
+
+    return prefac * ((boys[0] * sp.P_minus_A()) - (boys[1] * P_minus_C));
 }
 
 Vector SQUIRE_EXPORT potential_integral(const PointDipole &Q, const SP_GTO &sp)
@@ -414,22 +425,114 @@ Vector SQUIRE_EXPORT potential_integral(const PointDipole &Q, const SP_GTO &sp)
     return Vector();
 }
 
+Vector SQUIRE_EXPORT electron_integral(const SS_GTO &P, const SP_GTO &Q)
+{
+    // (pi,s|ss) = (Pi-Ai)(ss|ss)^0 + (Wi-Pi)(ss|ss)^1
+    //
+    // (ss|ss)^m = (eta+zeta)^-1/2 K_AB K_CD Fm(T)
+    //
+    // (pi,s|ss) = (eta+zeta)^-1/2 K_AB K_CD { (Pi-Ai)F0(T) + (Wi-Pi)F1(T) }
+
+    const double zeta = P.zeta();
+    const double eta = Q.SS().eta();
+
+    const double zeta_plus_eta = zeta + eta;
+    const double zeta_times_eta = zeta * eta;
+
+    const double R2 = Vector::distance2( P.P(), Q.SS().Q() );
+    const double T = (zeta_times_eta/zeta_plus_eta) * R2;
+
+    const Vector W_minus_P = ((eta/zeta_plus_eta) * P.P()) + 
+                             ((zeta/zeta_plus_eta) * Q.SS().Q()) - 
+                             Q.SS().P();
+
+    const double prefactor = Q.scale() * P.K() * Q.SS().K() / std::sqrt(zeta_plus_eta);
+
+    double boys[2];
+    multi_boys_2(T, boys);
+    
+    return prefactor * ( (Q.P_minus_A() * boys[0]) + (W_minus_P * boys[1]) );
+}
+
 Vector SQUIRE_EXPORT electron_integral(const SP_GTO &sp0, const SS_GTO &ss1)
 {
-    throw SireError::incomplete_code( "Not implemented", CODELOC );
-    return Vector();
+    return electron_integral(ss1, sp0);
 }
 
-Vector SQUIRE_EXPORT electron_integral(const SS_GTO &ss0, const SP_GTO &sp1)
+Matrix SQUIRE_EXPORT electron_integral(const SP_GTO &P, const SP_GTO &Q)
 {
-    throw SireError::incomplete_code( "Not implemented", CODELOC );
-    return Vector();
-}
+    // (pi,s|pk,s) = (Qk-Ck)(pi,s|ss)^0 + (Wk-Qk)(pi,s|ss)^1 + 
+    //                 delta_ik/2(eta+zeta) (ss|ss)^1
+    
+    // (pi,s|ss)^m = (Pi-Ai)(ss|ss)^m + (Wi-Pi)(ss|ss)^m+1
+    
+    // (pi,s|pk,s) = (Qk-Ck)(Pi-Ai)(ss|ss)^0 + (Qk-Ck)(Wi-Pi)(ss|ss)^1 +
+    //               (Wk-Qk)(Pi-Ai)(ss|ss)^1 + (Wk-Qk)(Wi-Pi)(ss|ss)^2 +
+    //                  delta_ik/2(eta+zeta) (ss|ss)^1
+    
+    // (ss|ss)^m = (eta+zeta)^-1/2 K_AB K_CD Fm(T)
+    
+    // (pi,s|pk,s) = (eta+zeta)^-1/2 K_AB K_CD * {
+    //               (Pi-Ai)(Qk-Ck)F0(T) +
+    //               [(Wi-Pi)(Qk-Ck) + (Wk-Qk)(Pi-Ai)]F1(T) +
+    //               (Wi-Pi)(Wk-Qk)F2(T) +
+    //               delta_ik/2(eta+zeta) F1(T) }
 
-Matrix SQUIRE_EXPORT electron_integral(const SP_GTO &sp0, const SP_GTO &sp1)
-{
-    throw SireError::incomplete_code( "Not implemented", CODELOC );
-    return Matrix();
+    const double zeta = P.SS().zeta();
+    const double eta = Q.SS().eta();
+
+    const double zeta_plus_eta = zeta + eta;
+    const double zeta_times_eta = zeta * eta;
+
+    const double R2 = Vector::distance2( P.SS().P(), Q.SS().Q() );
+    const double T = (zeta_times_eta/zeta_plus_eta) * R2;
+
+    const Vector W = ((eta/zeta_plus_eta) * P.SS().P()) + 
+                     ((zeta/zeta_plus_eta) * Q.SS().Q());
+
+    const Vector W_minus_P = W - P.SS().P();
+    const Vector W_minus_Q = W - Q.SS().Q();
+
+    const double prefac = P.scale() * Q.scale() * P.SS().K_AB() * Q.SS().K_CD() / 
+                            std::sqrt(P.SS().eta() + Q.SS().zeta());
+
+    double boys[3];
+    multi_boys_3(T, boys);
+
+    Matrix mat;
+    double *m = mat.data();
+    
+    const double *p_minus_a = P.P_minus_A().constData();
+    const double *q_minus_c = Q.Q_minus_C().constData();
+    const double *w_minus_p = W_minus_P.constData();
+    const double *w_minus_q = W_minus_Q.constData();
+
+    //do the off-diagonal elements
+    for (int i=0; i<2; ++i)
+    {
+        for (int k=i+1; k<3; ++k)
+        {
+            const double val = prefac * (
+                (p_minus_a[i]*q_minus_c[k]*boys[0]) +
+       ((w_minus_p[i]*q_minus_c[k] + w_minus_q[k]*p_minus_a[i])*boys[1]) +
+                (w_minus_p[i]*w_minus_q[k]*boys[2]) );
+                
+            m[ mat.offset(i,k) ] = val;
+            m[ mat.offset(k,i) ] = val;
+        }
+    }
+    
+    //do the diagonal elements
+    for (int i=0; i<3; ++i)
+    {
+        m[ mat.offset(i,i) ] = prefac * (
+                (p_minus_a[i]*q_minus_c[i]*boys[0]) +
+       ((w_minus_p[i]*q_minus_c[i] + w_minus_q[i]*p_minus_a[i])*boys[1]) +
+                (w_minus_p[i]*w_minus_q[i]*boys[2]) +
+                (boys[1] / (2*zeta_plus_eta)) );
+    }
+    
+    return mat;
 }
 
 Matrix SQUIRE_EXPORT kinetic_integral(const PP_GTO &pp)
@@ -563,31 +666,18 @@ Matrix SQUIRE_EXPORT potential_integral(const PointCharge &Q, const PP_GTO &pp)
     const double *p_minus_b = pp.P_minus_B().constData();
     const double *p_minus_c = P_minus_C.constData();
     
-    double boys0 = 1;
-    double boys1 = 1.0 / 3.0;
-    double boys2 = 1.0 / 5.0;
-    
-    if (U != 0)
-    {
-        boys0 = boys_f0(U);
-    
-        //use upward recursion to get boysf1 and boysf2
-        const double one_over_two_U = 1 / (2*U);
-        const double exp_minus_U = std::exp(-U);
-        
-        boys1 = one_over_two_U * (boys0 - exp_minus_U);
-        boys2 = one_over_two_U * (3*boys1 - exp_minus_U);
-    }
+    double boys[3];
+    multi_boys_3(U, boys);
     
     //fill in the off-diagonal elements
     for (int i=0; i<2; ++i)
     {
         for (int j=i+1; j<3; ++j)
         {
-            const double v = prefac * ( (p_minus_b[j]*p_minus_a[i]*boys0) - 
+            const double v = prefac * ( (p_minus_b[j]*p_minus_a[i]*boys[0]) - 
                               ( ((p_minus_b[j]*p_minus_c[i])+(p_minus_c[j]*p_minus_a[i]))
-                                    * boys1 ) +
-                                (p_minus_c[j]*p_minus_c[i]*boys2) );
+                                    * boys[1] ) +
+                                (p_minus_c[j]*p_minus_c[i]*boys[2]) );
                                 
             m[ mat.offset(i,j) ] = v;
             m[ mat.offset(j,i) ] = v;
@@ -597,11 +687,11 @@ Matrix SQUIRE_EXPORT potential_integral(const PointCharge &Q, const PP_GTO &pp)
     //fill in the diagonal
     for (int i=0; i<3; ++i)
     {
-        m[ mat.offset(i,i) ] = prefac * ( (p_minus_b[i]*p_minus_a[i]*boys0) - 
+        m[ mat.offset(i,i) ] = prefac * ( (p_minus_b[i]*p_minus_a[i]*boys[0]) - 
                               ( ((p_minus_b[i]*p_minus_c[i])+(p_minus_c[i]*p_minus_a[i]))
-                                    * boys1 ) +
-                                (p_minus_c[i]*p_minus_c[i]*boys2) +
-                                 ( (boys0-boys1) / (2*pp.SS().eta()) ) );
+                                    * boys[1] ) +
+                                (p_minus_c[i]*p_minus_c[i]*boys[2]) +
+                                 ( (boys[0]-boys[1]) / (2*pp.SS().eta()) ) );
     }
     
     return mat;
@@ -611,6 +701,86 @@ Matrix SQUIRE_EXPORT potential_integral(const PointDipole &Q, const PP_GTO &pp)
 {
     throw SireError::incomplete_code( "Not implemented", CODELOC );
     return Matrix();
+}
+
+Matrix SQUIRE_EXPORT electron_integral(const PP_GTO &P, const SS_GTO &Q)
+{
+    // (pi,pj|ss) = (Pj-Bj)(pi,s|ss)^0 + (Wj-Pj)(pi,s|ss)^1 +
+    //                  delta_ij/2(zeta+eta) { (ss|ss)^0 - rho/zeta (ss|ss)^1 }
+    
+    // (pi,s|ss)^m = (Pi-Ai)(ss|ss)^m + (Wi-Pi)(ss|ss)^m+1
+    
+    // (pi,pj|ss) = (Pj-Bj)(Pi-Ai)(ss|ss)^0 + (Pj-Bj)(Wi-Pi)(ss|ss)^1 +
+    //              (Wj-Pj)(Pi-Ai)(ss|ss)^1 + (Wj-Pj)(Wi-Pi)(ss|ss)^2 + 
+    //                  delta_ij/2(zeta+eta) { (ss|ss)^0 - rho/zeta (ss|ss)^1 }
+    
+    // (ss|ss)^m = (zeta+eta)^-1/2 K_AB K_CD Fm(T)
+    
+    // (pi,pj|ss) = (zeta+eta)^-1/2 K_AB K_CD {
+    //                 (Pi-Ai)(Pj-Bj)F0(T) + 
+    //                 [(Pi-Ai)(Wj-Pj) + (Pj-Bj)(Wi-Pi)]F1(T) +
+    //                 (Wi-Pi)(Wj-Pj)F2(T) +
+    //                 delta_ij/2(zeta+eta) [ F0(T) - rho/zeta F1(T) ] }
+
+    const double zeta = P.SS().zeta();
+    const double eta = Q.eta();
+
+    const double zeta_plus_eta = zeta + eta;
+    const double zeta_times_eta = zeta * eta;
+    const double rho = zeta_times_eta / zeta_plus_eta;
+
+    const double R2 = Vector::distance2( P.SS().P(), Q.Q() );
+    const double T = rho * R2;
+
+    const Vector W_minus_P = ((zeta/zeta_plus_eta) * P.SS().P()) + 
+                             ((eta/zeta_plus_eta) * Q.Q()) - 
+                             P.SS().P();
+
+    const double prefactor = P.scale() * P.scale() * 
+                             P.SS().K() * Q.K() / std::sqrt(zeta_plus_eta);
+
+    double boys[3];
+    multi_boys_3(T, boys);
+
+    const double *p_minus_a = P.P_minus_A().constData();
+    const double *p_minus_b = p_minus_a;
+    const double *w_minus_p = W_minus_P.constData();
+    
+    Matrix mat;
+    double *m = mat.data();
+    
+    //do the off-diagonal elements
+    for (int i=0; i<2; ++i)
+    {
+        for (int j=i+1; j<3; ++j)
+        {
+            const double val = prefactor * (
+                    (p_minus_a[i]*p_minus_b[j]*boys[0]) +
+                    ((p_minus_a[i]*w_minus_p[j] + p_minus_b[j]*w_minus_p[i])*boys[1]) +
+                    (w_minus_p[i]*w_minus_p[j]*boys[2]) );
+
+            m[ mat.offset(i,j) ] = val;
+            m[ mat.offset(j,i) ] = val;
+        }
+    }
+    
+    //now do the diagonal elements
+    const double extra = ( boys[0] - (rho*boys[1])/zeta ) / (2*zeta_plus_eta);
+    
+    for (int i=0; i<3; ++i)
+    {
+        m[ mat.offset(i,i) ] = prefactor * (
+                    (p_minus_a[i]*p_minus_b[i]*boys[0]) +
+                    ((p_minus_a[i]*w_minus_p[i] + p_minus_b[i]*w_minus_p[i])*boys[1]) +
+                    (w_minus_p[i]*w_minus_p[i]*boys[2]) + extra );
+    }
+    
+    return mat;
+}
+
+Matrix SQUIRE_EXPORT electron_integral(const SS_GTO &P, const PP_GTO &Q)
+{
+    return electron_integral(Q,P);
 }
 
 Array2D<Matrix> SQUIRE_EXPORT electron_integral(const PP_GTO &pp0, const PP_GTO &pp1)
