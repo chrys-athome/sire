@@ -33,6 +33,8 @@
 #include "maths.h"
 
 #include "SireMaths/errors.h"
+#include "SireError/errors.h"
+
 #include "SireStream/datastream.h"
 
 #include <gsl/gsl_eigen.h>
@@ -49,9 +51,12 @@ static const RegisterMetaType<Matrix> r_matrix;
 /** Serialise to a binary data stream */
 QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Matrix &matrix)
 {
-    writeHeader(ds, r_matrix, 1) << matrix.xx << matrix.xy << matrix.xz
-                                 << matrix.yx << matrix.yy << matrix.yz
-                                 << matrix.zx << matrix.zy << matrix.zz;
+    writeHeader(ds, r_matrix, 1);
+    
+    for (int i=0; i<9; ++i)
+    {
+        ds << matrix.array[i];
+    }
 
     return ds;
 }
@@ -63,9 +68,10 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Matrix &matrix)
 
     if (v == 1)
     {
-        ds >> matrix.xx >> matrix.xy >> matrix.xz
-           >> matrix.yx >> matrix.yy >> matrix.yz
-           >> matrix.zx >> matrix.zy >> matrix.zz;
+        for (int i=0; i<9; ++i)
+        {
+            ds >> matrix.array[i];
+        }
     }
     else
         throw version_error(v, "1", r_matrix, CODELOC);
@@ -75,42 +81,63 @@ QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Matrix &matrix)
 
 /** Construct a default Matrix (identity matrix) */
 Matrix::Matrix()
-       : xx(1), xy(0), xz(0),
-         yx(0), yy(1), yz(0),
-         zx(0), zy(0), zz(1)
-{}
+{
+    for (int i=0; i<8; ++i)
+    {
+        array[i] = 0;
+    }
+    
+    array[0] = 1;
+    array[4] = 1;
+    array[8] = 1;
+}
 
 /** Construct a matrix whose diagonal elements equal 'diagonal_value'
     and whose off-diagonal elements equal zero */
 Matrix::Matrix(double diagonal_value)
-       : xx(diagonal_value), xy(0), xz(0),
-         yx(0), yy(diagonal_value), yz(0),
-         zx(0), zy(0), zz(diagonal_value)
-{}
+{
+    for (int i=0; i<8; ++i)
+    {
+        array[i] = 0;
+    }
+    
+    array[0] = diagonal_value;
+    array[4] = diagonal_value;
+    array[8] = diagonal_value;
+}
 
 /** Construct a Matrix. Elements listed as row 1, then
     row 2, then row 3. */
-Matrix::Matrix(double sxx, double sxy, double sxz,
-               double syx, double syy, double syz,
-               double szx, double szy, double szz)
-             : xx(sxx),xy(sxy),xz(sxz),
-               yx(syx),yy(syy),yz(syz),
-               zx(szx),zy(szy),zz(szz)
-{}
+Matrix::Matrix(double xx, double xy, double xz,
+               double yx, double yy, double yz,
+               double zx, double zy, double zz)
+{
+    array[0] = xx;
+    array[1] = xy;
+    array[2] = xz;
+    
+    array[3] = yx;
+    array[4] = yy;
+    array[5] = yz;
+    
+    array[6] = zx;
+    array[7] = zy;
+    array[8] = zz;
+}
 
 /** Copy constructor */
 Matrix::Matrix(const Matrix &m)
-       : xx(m.xx),xy(m.xy),xz(m.xz),
-         yx(m.yx),yy(m.yy),yz(m.yz),
-         zx(m.zx),zy(m.zy),zz(m.zz)
-{}
+{
+    qMemCopy(this->data(), m.constData(), 9*sizeof(double));
+}
 
 /** Construct a matrix from three vectors - each vector is a row */
 Matrix::Matrix(const Vector &r1, const Vector &r2, const Vector &r3)
-      : xx(r1.x()),xy(r1.y()),xz(r1.z()),
-        yx(r2.x()),yy(r2.y()),yz(r2.z()),
-        zx(r3.x()),zy(r3.y()),zz(r3.z())
-{}
+{
+    qMemCopy(this->data(), r1.constData(), 3*sizeof(double));
+    qMemCopy(this->data()+3, r2.constData(), 3*sizeof(double));
+    qMemCopy(this->data()+6, r3.constData(), 3*sizeof(double));
+}
 
 /** Construct a matrix from a tuple of three vectors - each
     vector is a row */
@@ -120,21 +147,71 @@ Matrix::Matrix(const tuple<Vector,Vector,Vector> &rows)
     const Vector &r2 = rows.get<1>();
     const Vector &r3 = rows.get<2>();
     
-    xx = r1.x(); xy = r1.y(); xz = r1.z();
-    yx = r2.x(); yy = r2.y(); yz = r2.z();
-    zx = r3.x(); zy = r3.y(); zz = r3.z();
+    qMemCopy(this->data(), r1.constData(), 3*sizeof(double));
+    qMemCopy(this->data()+3, r2.constData(), 3*sizeof(double));
+    qMemCopy(this->data()+6, r3.constData(), 3*sizeof(double));
 }
 
 /** Destructor */
 Matrix::~Matrix()
 {}
 
+/** Return the offset into the array of the value at index [i,j]
+
+    \throw SireError::invalid_index
+*/
+int Matrix::checkedOffset(int i, int j) const
+{
+    if (i < 0 or i > 2 or j < 0 or j > 2)
+        throw SireError::invalid_index( QObject::tr(    
+                "Invalid index for 3x3 matrix - [%1,%2]")
+                    .arg(i).arg(j), CODELOC );
+                    
+    return offset(i,j);
+}
+
+/** Return the value at index [i,j]
+
+    \throw SireError::invalid_index
+*/
+const double& Matrix::operator()(int i, int j) const
+{
+    return array[ checkedOffset(i,j) ];
+}
+
+/** Return the value at index [i,j]
+
+    \throw SireError::invalid_index
+*/
+double& Matrix::operator()(int i, int j)
+{
+    return array[ checkedOffset(i,j) ];
+}
+
+/** Return a raw pointer to the data of this matrix */
+double* Matrix::data()
+{
+    return array;
+}
+
+/** Return a raw pointer to the data of this matrix */
+const double* Matrix::data() const
+{
+    return array;
+}
+
+/** Return a raw pointer to the data of this matrix */
+const double* Matrix::constData() const
+{
+    return array;
+}
+
 /** Return the determinant of the matrix */
 double Matrix::determinant() const
 {
-    double d = xx*(yy*zz-zy*yz) +
-               yx*(zy*xz-xy*zz) +
-               zx*(xy*yz-yy*xz);
+    double d = xx()*(yy()*zz()-zy()*yz()) +
+               yx()*(zy()*xz()-xy()*zz()) +
+               zx()*(xy()*yz()-yy()*xz());
     return d;
 }
 
@@ -142,142 +219,172 @@ double Matrix::determinant() const
 QString Matrix::toString() const
 {
     return QObject::tr("( %1, %2, %3 | %4, %5, %6 | %7, %8, %9 )")
-                  .arg(xx).arg(yx).arg(zx).arg(xy).arg(yy).arg(zy).arg(xz).arg(yz).arg(zz);
+                  .arg(xx()).arg(xy()).arg(xz())
+                  .arg(yx()).arg(yy()).arg(yz())
+                  .arg(zx()).arg(zy()).arg(zz());
 }
 
 /** Return the trace of the matrix */
 Vector Matrix::trace() const
 {
-    return Vector(xx,yy,zz);
+    return Vector(xx(),yy(),zz());
 }
 
 /** Return each column */
 Vector Matrix::column0() const
 {
-    return Vector(xx,xy,xz);
+    return Vector(xx(),yx(),zx());
 }
 
 /** Return each column */
 Vector Matrix::column1() const
 {
-    return Vector(yx,yy,yz);
+    return Vector(xy(),yy(),zy());
 }
 
 /** Return each column */
 Vector Matrix::column2() const
 {
-    return Vector(zx,zy,zz);
+    return Vector(xz(),yz(),zz());
 }
 
 /** Return each row */
 Vector Matrix::row0() const
 {
-    return Vector(xx,yx,zx);
+    return Vector(xx(),xy(),xz());
 }
 
 /** Return each row */
 Vector Matrix::row1() const
 {
-    return Vector(xy,yy,zy);
+    return Vector(yx(),yy(),yz());
 }
 
 /** Return each row */
 Vector Matrix::row2() const
 {
-    return Vector(xz,yz,zz);
+    return Vector(zx(),zy(),zz());
 }
 
 /** Return the transpose of the matrix */
 Matrix Matrix::transpose() const
 {
-    return Matrix(xx,yx,zx,xy,yy,zy,xz,yz,zz);
+    return Matrix(xx(),yx(),zx(),xy(),yy(),zy(),xz(),yz(),zz());
 }
 
 /** Set the matrix to identity */
 void Matrix::setToIdentity()
 {
-    xx = 1;
-    yy = 1;
-    zz = 1;
+    for (int i=1; i<8; ++i)
+    {
+        array[i] = 0;
+    }
 
-    xy = 0;
-    xz = 0;
-    yx = 0;
-    yz = 0;
-    zx = 0;
-    zy = 0;
+    array[0] = 1;
+    array[4] = 1;
+    array[8] = 1;
 }
 
 /** Return whether or not this matrix is equal to the identity matrix */
 bool Matrix::isIdentity() const
 {
-    return xx == 1 and yy == xx and zz == xx and
-           xy == 0 and xz == xy and yx == xy and
-           yz == xy and zx == xy and zy == xy;
+    return xx() == 1 and yy() == 1 and zz() == 1 and
+           xy() == 0 and xz() == 0 and yx() == 0 and
+           yz() == 0 and zx() == 0 and zy() == 0;
 
 }
 
 bool Matrix::operator==(const Matrix& m)
 {
-    return xx==m.xx and xy==m.xy and xz==m.xz and
-           yx==m.yx and yy==m.yy and yx==m.yz and
-           zx==m.zx and zy==m.zy and zz==m.zz;
+    for (int i=0; i<9; ++i)
+    {
+        if (array[i] != m.array[i])
+            return false;
+    }
+    
+    return true;
 }
 
 bool Matrix::operator!=(const Matrix& m)
 {
-    return xx!=m.xx or xy!=m.xy or xz!=m.xz or
-           yx!=m.yx or yy!=m.yy or yz!=m.yz or
-           zx!=m.zx or zy!=m.zy or zz!=m.zz;
+    return not this->operator==(m);
+}
+
+/** Return the identity matrix */
+Matrix Matrix::identity()
+{
+    return Matrix();
+}
+
+/** Return the null matrix */
+Matrix Matrix::zero()
+{
+    return Matrix(0.0,0.0,0.0, 0.0,0.0,0.0, 0.0,0.0,0.0);
+}
+
+Matrix& Matrix::operator*=(const Matrix &m)
+{
+    double sxx = m.xx()*xx() + m.yx()*xy() + m.zx()*xz();
+    double syx = m.xx()*yx() + m.yx()*yy() + m.zx()*yz();
+    double szx = m.xx()*zx() + m.yx()*zy() + m.zx()*zz();
+
+    double sxy = m.xy()*xx() + m.yy()*xy() + m.zy()*xz();
+    double syy = m.xy()*yx() + m.yy()*yy() + m.zy()*yz();
+    double szy = m.xy()*zx() + m.yy()*zy() + m.zy()*zz();
+
+    double sxz = m.zx()*xx() + m.yz()*xy() + m.zz()*xz();
+    double syz = m.zx()*yx() + m.yz()*yy() + m.zz()*yz();
+    double szz = m.zx()*zx() + m.yz()*zy() + m.zz()*zz();
+
+    array[0] = sxx;
+    array[1] = sxy;
+    array[2] = sxz;
+
+    array[3] = syx;
+    array[4] = syy;
+    array[5] = syz;
+
+    array[6] = szx;
+    array[7] = szy;
+    array[8] = szz;
+
+    return *this;
+}
+
+const Matrix SIREMATHS_EXPORT SireMaths::operator*(const Matrix &m1, const Matrix &m2)
+{
+    Matrix ret(m1);
+    ret *= m2;
+    
+    return ret;
 }
 
 Matrix& Matrix::operator+=(const Matrix &m)
 {
-    xx += m.xx;
-    xy += m.xy;
-    xz += m.xz;
-
-    yx += m.yx;
-    yy += m.yy;
-    yz += m.yz;
-
-    zx += m.zx;
-    zy += m.zy;
-    zz += m.zz;
+    for (int i=0; i<9; ++i)
+    {
+        array[i] += m.array[i];
+    }
 
     return *this;
 }
 
 Matrix& Matrix::operator-=(const Matrix &m)
 {
-    xx -= m.xx;
-    xy -= m.xy;
-    xz -= m.xz;
-
-    yx -= m.yx;
-    yy -= m.yy;
-    yz -= m.yz;
-
-    zx -= m.zx;
-    zy -= m.zy;
-    zz -= m.zz;
+    for (int i=0; i<9; ++i)
+    {
+        array[i] -= m.array[i];
+    }
 
     return *this;
 }
 
 Matrix& Matrix::operator*=(double c)
 {
-    xx *= c;
-    xy *= c;
-    xz *= c;
-
-    yx *= c;
-    yy *= c;
-    yz *= c;
-
-    zx *= c;
-    zy *= c;
-    zz *= c;
+    for (int i=0; i<9; ++i)
+    {
+        array[i] *= c;
+    }
 
     return *this;
 }
@@ -288,47 +395,36 @@ Matrix& Matrix::operator/=(double c)
         throw SireMaths::math_error(QObject::tr(
                             "Cannot divide a matrix by 0"),CODELOC);
 
-    xx /= c;
-    xy /= c;
-    xz /= c;
-
-    yx /= c;
-    yy /= c;
-    yz /= c;
-
-    zx /= c;
-    zy /= c;
-    zz /= c;
-
-    return *this;
+    return this->operator*=( 1 / c );
 }
 
 const Matrix SIREMATHS_EXPORT SireMaths::operator+(const Matrix &m1, const Matrix &m2)
 {
-    return Matrix( m1.xx+m2.xx, m1.xy+m2.xy, m1.xz+m2.xz,
-                   m1.yx+m2.yx, m1.yy+m2.yy, m1.yz+m2.yz,
-                   m1.zx+m2.zx, m1.zy+m2.zy, m1.zz+m2.zz);
+    Matrix ret(m1);
+    ret += m2;
+    
+    return ret;
 }
 
 const Matrix SIREMATHS_EXPORT SireMaths::operator-(const Matrix &m1, const Matrix &m2)
 {
-    return Matrix( m1.xx-m2.xx, m1.xy-m2.xy, m1.xz-m2.xz,
-                   m1.yx-m2.yx, m1.yy-m2.yy, m1.yz-m2.yz,
-                   m1.zx-m2.zx, m1.zy-m2.zy, m1.zz-m2.zz);
+    Matrix ret(m1);
+    ret -= m2;
+    return ret;
 }
 
 const Matrix SIREMATHS_EXPORT SireMaths::operator*(const Matrix &m, double c)
 {
-    return Matrix(m.xx*c, m.xy*c, m.xz*c,
-                  m.yx*c, m.yy*c, m.yz*c,
-                  m.zx*c, m.zy*c, m.zz*c);
+    Matrix ret(m);
+    ret *= c;
+    return ret;
 }
 
 const Matrix SIREMATHS_EXPORT SireMaths::operator*(double c, const Matrix &m)
 {
-    return Matrix(m.xx*c, m.xy*c, m.xz*c,
-                  m.yx*c, m.yy*c, m.yz*c,
-                  m.zx*c, m.zy*c, m.zz*c);
+    Matrix ret(m);
+    ret *= c;
+    return ret;
 }
 
 /** Return the inverse of this matrix. Throws a math_error if this
@@ -351,17 +447,17 @@ Matrix Matrix::inverse() const
     //form the elements of the inverse matrix
     Matrix inv;
 
-    inv.xx = det * (yy*zz - zy*yz);
-    inv.xy = det * (xz*zy - zz*xy);
-    inv.xz = det * (xy*yz - yy*xz);
+    inv.array[0] = det * (yy()*zz() - zy()*yz());
+    inv.array[1] = det * (xz()*zy() - zz()*xy());
+    inv.array[2] = det * (xy()*yz() - yy()*xz());
 
-    inv.yx = det * (zx*yz - yx*zz);
-    inv.yy = det * (xx*zz - zx*xz);
-    inv.yz = det * (xz*yx - yz*xx);
+    inv.array[3] = det * (zx()*yz() - yx()*zz());
+    inv.array[4] = det * (xx()*zz() - zx()*xz());
+    inv.array[5] = det * (xz()*yx() - yz()*xx());
 
-    inv.zx = det * (yx*zy - zx*yy);
-    inv.zy = det * (xy*zx - xx*zy);
-    inv.zz = det * (xx*yy - yx*xy);
+    inv.array[6] = det * (yx()*zy() - zx()*yy());
+    inv.array[7] = det * (xy()*zx() - xx()*zy());
+    inv.array[8] = det * (xx()*yy() - yx()*xy());
 
     return inv;
 }
@@ -369,7 +465,7 @@ Matrix Matrix::inverse() const
 /** Return whether or not this is a symmetric matrix */
 bool Matrix::isSymmetric() const
 {
-    return ( zx == xz and yx == xy and yz == zy );
+    return ( zx() == xz() and yx() == xy() and yz() == zy() );
 }
 
 /** Ensure that this matrix is symmetric - this is done by copying the upper-right
@@ -383,16 +479,17 @@ void Matrix::enforceSymmetric()
          xy yy zy
          xz yz zz  **/
 
-    xz = zx;
-    xy = yx;
-    yz = zy;
+    array[2] = zx();
+    array[1] = yx();
+    array[5] = zy();
 }
 
 Matrix convertGSLMatrix(gsl_matrix *mat)
 {
-    return Matrix( gsl_matrix_get(mat,0,0), gsl_matrix_get(mat,1,0), gsl_matrix_get(mat,2,0),
-                   gsl_matrix_get(mat,0,1), gsl_matrix_get(mat,1,1), gsl_matrix_get(mat,2,1),
-                   gsl_matrix_get(mat,0,2), gsl_matrix_get(mat,1,2), gsl_matrix_get(mat,2,2) );
+    return 
+      Matrix( gsl_matrix_get(mat,0,0), gsl_matrix_get(mat,1,0), gsl_matrix_get(mat,2,0),
+              gsl_matrix_get(mat,0,1), gsl_matrix_get(mat,1,1), gsl_matrix_get(mat,2,1),
+              gsl_matrix_get(mat,0,2), gsl_matrix_get(mat,1,2), gsl_matrix_get(mat,2,2) );
 }
 
 /** Obtain the principal axes of this matrix. This can only be performed if this
@@ -406,25 +503,12 @@ Matrix Matrix::getPrincipalAxes() const
     //assume that this matrix is symmetrical - we will thus
     //only look at the values in the upper-right diagonal
 
-    //we first need to copy the contents of this matrix into an array...
-    double *sym_mtx = new double[9];
-
-    sym_mtx[0] = xx;
-    sym_mtx[1] = yx;
-    sym_mtx[2] = zx;
-
-    sym_mtx[3] = yx;
-    sym_mtx[4] = yy;
-    sym_mtx[5] = zy;
-
-    sym_mtx[6] = zx;
-    sym_mtx[7] = zy;
-    sym_mtx[8] = zz;
-
     //now use the GNU Scientific Library to solve the eigenvalue
     //problem for this matrix
+    double new_array[9];
+    qMemCopy(new_array, array, 9*sizeof(double));
 
-    gsl_matrix_view m = gsl_matrix_view_array(sym_mtx,3,3);
+    gsl_matrix_view m = gsl_matrix_view_array(new_array,3,3);
 
     //allocate space for the resulting eigenvectors and eigenvalues
     gsl_vector *eig_val = gsl_vector_alloc(3);
@@ -449,9 +533,6 @@ Matrix Matrix::getPrincipalAxes() const
     //free up the memory used by the GSL data...
     gsl_vector_free(eig_val);
     gsl_matrix_free(eig_vec);
-
-    //free up the memory held by the copy of this matrix
-    delete[] sym_mtx;
 
     //finally, return the matrix of principal components
     return ret;

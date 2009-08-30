@@ -13,6 +13,7 @@ set ( SIREIO_HEADERS
       iobase.h
       pdb.h
       protoms.h
+      tinker.h
       trajectorymonitor.h
     )
 
@@ -25,6 +26,7 @@ set ( SIREIO_SOURCES
       iobase.cpp
       pdb.cpp
       protoms.cpp
+      tinker.cpp
       trajectorymonitor.cpp    
 
       ${SIREIO_HEADERS}

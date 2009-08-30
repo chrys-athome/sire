@@ -153,7 +153,8 @@ const double& Vector::at(unsigned int i) const
 /** Return whether or not this is a zero length vector */
 bool Vector::isZero() const
 {
-    return SireMaths::isZero(sc[0]) and SireMaths::isZero(sc[1]) and SireMaths::isZero(sc[2]);
+    return SireMaths::isZero(sc[0]) and SireMaths::isZero(sc[1]) 
+                and SireMaths::isZero(sc[2]);
 }
 
 /** Return a normalised form of the vector */
@@ -560,9 +561,9 @@ Matrix Vector::metricTensor() const
 /** Return the multiple of this vector with the matrix 'm' */
 const Vector SIREMATHS_EXPORT SireMaths::operator*(const Matrix &m, const Vector &p)
 {
-    return Vector(m.xx*p.sc[0] + m.yx*p.sc[1] + m.zx*p.sc[2],
-                  m.xy*p.sc[0] + m.yy*p.sc[1] + m.zy*p.sc[2],
-                  m.xz*p.sc[0] + m.yz*p.sc[1] + m.zz*p.sc[2]);
+    return Vector(m.xx()*p.sc[0] + m.yx()*p.sc[1] + m.zx()*p.sc[2],
+                  m.xy()*p.sc[0] + m.yy()*p.sc[1] + m.zy()*p.sc[2],
+                  m.xz()*p.sc[0] + m.yz()*p.sc[1] + m.zz()*p.sc[2]);
 }
 
 /** Increment, decrement, negate etc. */

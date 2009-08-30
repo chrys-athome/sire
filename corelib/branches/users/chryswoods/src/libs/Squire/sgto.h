@@ -76,6 +76,8 @@ class SQUIRE_EXPORT S_GTO : public SireBase::ConcreteProperty<S_GTO,GTO>
 public:
     S_GTO();
     S_GTO(double alpha, double scale=1);
+
+    explicit S_GTO(const GTO &other);
     
     S_GTO(const S_GTO &other);
     
@@ -100,6 +102,8 @@ class SQUIRE_EXPORT CS_GTO : public SireBase::ConcreteProperty<CS_GTO,CGTO>
 public:
     CS_GTO();
     CS_GTO(const QVector<double> &alphas, const QVector<double> &scales);
+    
+    explicit CS_GTO(const CGTO &other);
     
     CS_GTO(const CS_GTO &other);
     
@@ -153,9 +157,11 @@ public:
     double alpha_plus_beta() const;
     double alpha_times_beta() const;
     
-    double G() const;
-    double G_AB() const;
-    double G_CD() const;
+    double K() const;
+    double K_AB() const;
+    double K_CD() const;
+
+    double overlap() const;
 
 private:
     /** The center of this combined SS shell pair - for 
@@ -180,11 +186,15 @@ private:
     */
     double _chi;
     
-    /** The scaling factor for this combined gaussian. This is;
+    /** The K value for this combined gaussian. This is;
     
-        G = scl_a * scl_b * exp( (-alpha*beta/(alpha+beta))|A-B|^2 )
+        G = sqrt(2) * pi^(5/4) * scl_a * scl_b * exp( (-alpha*beta/(alpha+beta))|A-B|^2 )
+                / (alpha_beta)
     */
-    double _G;
+    double _K;
+    
+    /** The overlap integral for this pair of orbitals (s||s) */
+    double _overlap;
 };    
 
 /** This is the combined SS shell pair composed from two contracted
@@ -236,9 +246,11 @@ public:
     const NMatrix& alpha_plus_beta() const;
     NMatrix alpha_times_beta() const;
     
-    const NMatrix& G() const;
-    const NMatrix& G_AB() const;
-    const NMatrix& G_CD() const;
+    const NMatrix& K() const;
+    const NMatrix& K_AB() const;
+    const NMatrix& K_CD() const;
+
+    const NMatrix& overlap() const;
 
 private:
     /** The centers of this combined CSS shell pair - for 
@@ -265,11 +277,15 @@ private:
     */
     NMatrix _chi;
     
-    /** The scaling factors for this combined gaussian. This is;
+    /** The K value for this combined gaussian. This is;
     
-        G[i,j] = scl_a[i] * scl_b[j] * exp( (-alpha[i]*beta[j]/(alpha[i]+beta[j])) R2 )
+        K = sqrt(2) * pi^(5/4) * scl_a * scl_b * exp( (-alpha*beta/(alpha+beta))|A-B|^2 )
+                / (alpha_beta)
     */
-    NMatrix _G;
+    NMatrix _K;
+    
+    /** The overlap integral between each pair of primitives (s||s) */
+    NMatrix _overlap;
 };    
 
 //////////
@@ -282,7 +298,11 @@ double overlap_integral(const SS_GTO &ss);
 double potential_integral(const PointCharge &Q, const SS_GTO &ss);
 double potential_integral(const PointDipole &Q, const SS_GTO &ss);
 
+double potential_integral(const PointCharge &Q, const SS_GTO &ss, int m);
+double potential_integral(const PointDipole &Q, const SS_GTO &ss, int m);
+
 double electron_integral(const SS_GTO &ss0, const SS_GTO &ss1);
+double electron_integral(const SS_GTO &ss0, const SS_GTO &ss1, int m);
 
 double kinetic_integral(const CSS_GTO &css);
 double overlap_integral(const CSS_GTO &css);
@@ -290,9 +310,16 @@ double overlap_integral(const CSS_GTO &css);
 double potential_integral(const PointCharge &Q, const CSS_GTO &css);
 double potential_integral(const PointDipole &Q, const CSS_GTO &css);
 
+double potential_integral(const PointCharge &Q, const CSS_GTO &css, int m);
+double potential_integral(const PointDipole &Q, const CSS_GTO &css, int m);
+
 double electron_integral(const SS_GTO &ss, const CSS_GTO &css);
 double electron_integral(const CSS_GTO &css, const SS_GTO &ss);
 double electron_integral(const CSS_GTO &css0, const CSS_GTO &css1);
+
+double electron_integral(const SS_GTO &ss, const CSS_GTO &css, int m);
+double electron_integral(const CSS_GTO &css, const SS_GTO &ss, int m);
+double electron_integral(const CSS_GTO &css0, const CSS_GTO &css1, int m);
 
 }
 

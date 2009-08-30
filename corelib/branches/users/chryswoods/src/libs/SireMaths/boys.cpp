@@ -50,6 +50,9 @@ double SIREMATHS_EXPORT boys_f0(double x)
 
 double SIREMATHS_EXPORT boys_f1(double x)
 {
+    if (x == 0)
+        return 1.0/3.0;
+
     //use upward recurrance
     const double f_0_x = boys_f0(x);
     const double e_to_minus_x = std::exp(-x);
@@ -59,6 +62,9 @@ double SIREMATHS_EXPORT boys_f1(double x)
 
 double SIREMATHS_EXPORT boys_f2(double x)
 {
+    if (x == 0)
+        return 1.0/5.0;
+
     //use upward recurrance
     const double f_0_x = boys_f0(x);
     const double e_to_minus_x = std::exp(-x);
@@ -66,20 +72,23 @@ double SIREMATHS_EXPORT boys_f2(double x)
 
     const double f_1_x = one_over_two_x * (f_0_x - e_to_minus_x);
     
-    return one_over_two_x * (2*f_1_x - e_to_minus_x);
+    return one_over_two_x * (3*f_1_x - e_to_minus_x);
 }
 
 double SIREMATHS_EXPORT boys_f3(double x)
 {
+    if (x == 0)
+        return 1.0/7.0;
+
     //use upward recurrance
     const double f_0_x = boys_f0(x);
     const double e_to_minus_x = std::exp(-x);
     const double one_over_two_x = 1 / (2*x);
 
     const double f_1_x = one_over_two_x * (f_0_x - e_to_minus_x);
-    const double f_2_x = one_over_two_x * (2*f_1_x - e_to_minus_x);
+    const double f_2_x = one_over_two_x * (3*f_1_x - e_to_minus_x);
     
-    return one_over_two_x * (3*f_2_x - e_to_minus_x);
+    return one_over_two_x * (5*f_2_x - e_to_minus_x);
 }
 
 double SIREMATHS_EXPORT boys(int m, double x)

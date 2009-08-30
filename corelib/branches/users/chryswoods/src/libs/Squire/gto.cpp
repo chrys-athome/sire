@@ -79,15 +79,10 @@ GTO::GTO() : OrbitalShell(), alfa(0), scl(0)
 {}
 
 /** Construct with the specified value of the alpha (exponent)
-    and scale (unnormalised) - this automatically adjusts 'scale' 
-    so to construct the normalised gaussian */
+    and scale (unnormalised) */
 GTO::GTO(double alpha, double scale) 
     : OrbitalShell(), alfa(alpha), scl(scale)
-{
-    //set scl equal to 'scl' times the normalisation
-    //factor for this orbital
-    scl *= std::pow(2*alfa/pi, 0.75);
-}
+{}
 
 /** Copy constructor */
 GTO::GTO(const GTO &other) 
@@ -137,8 +132,7 @@ double GTO::beta() const
     return GTO::alpha();
 }
 
-/** Return the scaling factor (which includes the normalisation factor)
-    for this gaussian */
+/** Return the unnormalised scaling factor for this gaussian */
 double GTO::scale() const
 {
     return scl;
@@ -201,13 +195,6 @@ CGTO::CGTO(const NVector &alphas, const NVector &scales)
                 "You cannot construct a contracted GTO using a different "
                 "number of alpha values (%1) to scale factor values (%2).")
                     .arg(alphas.count()).arg(scales.count()), CODELOC );
-
-    //set scl equal to 'scl' times the normalisation
-    //factor for this orbital
-    for (int i=0; i<scls.count(); ++i)
-    {
-        scls[i] *= std::pow(2*alfas.constData()[i]/pi, 0.75);
-    }
 }
 
 /** Destructor */
@@ -261,7 +248,7 @@ const NVector& CGTO::beta() const
     return CGTO::alpha();
 }
 
-/** Return the vector of scaling factors */
+/** Return the vector of unnormalised scaling factors */
 const NVector& CGTO::scale() const
 {
     return scls;

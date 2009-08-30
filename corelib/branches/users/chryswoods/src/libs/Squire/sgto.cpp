@@ -86,6 +86,11 @@ S_GTO::S_GTO(double alpha, double scale)
       : ConcreteProperty<S_GTO,GTO>(alpha, scale)
 {}
 
+/** Construct from another GTO - this creates the S GTO equivalent
+    of the passed GTO */
+S_GTO::S_GTO(const GTO &other) : ConcreteProperty<S_GTO,GTO>(other)
+{}
+
 /** Copy constructor */
 S_GTO::S_GTO(const S_GTO &other) : ConcreteProperty<S_GTO,GTO>(other)
 {}
@@ -170,6 +175,11 @@ CS_GTO::CS_GTO(const QVector<double> &alphas, const QVector<double> &scales)
        : ConcreteProperty<CS_GTO,CGTO>(alphas, scales)
 {}
 
+/** Construct from another GTO - this creates the S GTO equivalent
+    of the passed GTO */
+CS_GTO::CS_GTO(const CGTO &other) : ConcreteProperty<CS_GTO,CGTO>(other)
+{}
+
 /** Copy constructor */
 CS_GTO::CS_GTO(const CS_GTO &other) : ConcreteProperty<CS_GTO,CGTO>(other)
 {}
@@ -225,7 +235,8 @@ QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const SS_GTO &ssgto)
 {
     writeHeader(ds, r_ssgto, 1);
     
-    ds << ssgto._P << ssgto._R2 << ssgto._eta << ssgto._chi << ssgto._G;
+    ds << ssgto._P << ssgto._R2 << ssgto._eta << ssgto._chi 
+       << ssgto._K << ssgto._overlap;
     
     return ds;
 }
@@ -237,7 +248,8 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, SS_GTO &ssgto)
     
     if (v == 1)
     {
-        ds >> ssgto._P >> ssgto._R2 >> ssgto._eta >> ssgto._chi >> ssgto._G;
+        ds >> ssgto._P >> ssgto._R2 >> ssgto._eta >> ssgto._chi 
+           >> ssgto._K >> ssgto._overlap;
     }
     else
         throw version_error(v, "1", r_ssgto, CODELOC);
@@ -246,8 +258,11 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, SS_GTO &ssgto)
 }
 
 /** Null constructor */
-SS_GTO::SS_GTO() : _R2(0), _eta(0), _chi(0), _G(0)
+SS_GTO::SS_GTO() : _R2(0), _eta(0), _chi(0), _K(0), _overlap(0)
 {}
+
+static const double sqrt_two_times_pi_to_5_4 = std::sqrt(2.0) * std::pow(pi, (5.0/4.0));
+static const double four_over_pi2 = 4 / (pi*pi);
 
 /** Construct a S-S shell pair from the passed two S orbital shells,
     located at the specified points */
@@ -262,12 +277,20 @@ SS_GTO::SS_GTO(const Vector &A, const S_GTO &a,
     _R2 = Vector::distance2(A, B);
     _eta = alpha_plus_beta;
     _chi = alpha_times_beta / alpha_plus_beta;
-    _G = a.scale() * b.scale() * std::exp(-_chi*_R2);
+    
+    const double scl = a.scale() * b.scale() *
+                          std::pow( four_over_pi2 * a.alpha() * b.beta(), 0.75 );
+    
+    const double G = scl * std::exp(-_chi*_R2);
+    _overlap = std::pow( pi / _eta, 1.5 ) * G;
+
+    _K = sqrt_two_times_pi_to_5_4 * G / alpha_plus_beta;
 }
 
 /** Copy constructor */
 SS_GTO::SS_GTO(const SS_GTO &other) 
-       : _P(other._P), _R2(other._R2), _eta(other._eta), _chi(other._chi), _G(other._G)
+       : _P(other._P), _R2(other._R2), _eta(other._eta), _chi(other._chi), 
+         _K(other._K), _overlap(other._overlap)
 {}
 
 /** Destructor */
@@ -281,7 +304,8 @@ SS_GTO& SS_GTO::operator=(const SS_GTO &other)
     _R2 = other._R2;
     _eta = other._eta;
     _chi = other._chi;
-    _G = other._G;
+    _K = other._K;
+    _overlap = other._overlap;
     
     return *this;
 }
@@ -290,7 +314,7 @@ SS_GTO& SS_GTO::operator=(const SS_GTO &other)
 bool SS_GTO::operator==(const SS_GTO &other) const
 {
     return _P == other._P and _R2 == other._R2 and 
-           _eta == other._eta and _G == other._G;
+           _eta == other._eta and _K == other._K;
 }
 
 /** Comparison operator */
@@ -363,22 +387,34 @@ double SS_GTO::alpha_times_beta() const
     return _chi * _eta;
 }
 
-/** Return the scale factor for this shell pair */
-double SS_GTO::G() const
+/** Return the K value for this shell pair
+
+    K = sqrt(2) * pi^(5/4) * scl_a * scl_b * exp( (-alpha*beta/(alpha+beta))|A-B|^2 )
+                / (alpha_beta)
+
+    (see Obara and Saika paper)
+*/
+double SS_GTO::K() const
 {
-    return _G;
+    return _K;
 }
 
-/** Synonym for SS_GTO::G() */
-double SS_GTO::G_AB() const
+/** Synonym for SS_GTO::K() */
+double SS_GTO::K_AB() const
 {
-    return SS_GTO::G();
+    return SS_GTO::K();
 }
 
-/** Synonym for SS_GTO::G_CD() */
-double SS_GTO::G_CD() const
+/** Synonym for SS_GTO::K() */
+double SS_GTO::K_CD() const
 {
-    return SS_GTO::G();
+    return SS_GTO::K();
+}
+
+/** Return the overlap integral for this pair of orbitals (s||s) */
+double SS_GTO::overlap() const
+{
+    return _overlap;
 }
 
 const char* SS_GTO::typeName()
@@ -397,7 +433,8 @@ QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const CSS_GTO &cssgto)
 {
     writeHeader(ds, r_cssgto, 1);
     
-    ds << cssgto._P << cssgto._R2 << cssgto._eta << cssgto._chi << cssgto._G;
+    ds << cssgto._P << cssgto._R2 << cssgto._eta << cssgto._chi 
+       << cssgto._K << cssgto._overlap;
     
     return ds;
 }
@@ -409,7 +446,8 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, CSS_GTO &cssgto)
     
     if (v == 1)
     {
-        ds >> cssgto._P >> cssgto._R2 >> cssgto._eta >> cssgto._chi >> cssgto._G;
+        ds >> cssgto._P >> cssgto._R2 >> cssgto._eta >> cssgto._chi 
+           >> cssgto._K >> cssgto._overlap;
     }
     else
         throw version_error(v, "1", r_cssgto, CODELOC);
@@ -431,12 +469,14 @@ CSS_GTO::CSS_GTO(const Vector &A, const S_GTO &a,
     _P = Array2D<Vector>(1, 1);
     _eta = NMatrix::createRowMajor(1, 1);
     _chi = NMatrix::createRowMajor(1, 1);
-    _G = NMatrix::createRowMajor(1, 1);
+    _K = NMatrix::createRowMajor(1, 1);
+    _overlap = NMatrix::createRowMajor(1, 1);
 
     Vector *Pdata = _P.data();
     double *etadata = _eta.data();
     double *chidata = _chi.data();
-    double *Gdata = _G.data();
+    double *Kdata = _K.data();
+    double *odata = _overlap.data();
 
     //the product of two Gaussians is a Gaussian :-)
     const double alpha_times_beta = a.alpha() * b.alpha();
@@ -445,7 +485,13 @@ CSS_GTO::CSS_GTO(const Vector &A, const S_GTO &a,
     Pdata[0] = (a.alpha()*A + b.alpha()*B) / alpha_plus_beta;
     etadata[0] = alpha_plus_beta;
     chidata[0] = alpha_times_beta / alpha_plus_beta;
-    Gdata[0] = a.scale() * b.scale() * std::exp(-chidata[0]*_R2);
+
+    const double scl = a.scale() * b.scale() *
+                          std::pow( four_over_pi2 * a.alpha() * b.beta(), 0.75 );
+    
+    const double G = scl * std::exp(-chidata[0]*_R2);
+    odata[0] = std::pow( pi / etadata[0], 1.5 ) * G;
+    Kdata[0] = sqrt_two_times_pi_to_5_4 * G / alpha_plus_beta;
 }
 
 /** Construct a S-S shell pair from the passed S and contracted S orbital shells,
@@ -466,12 +512,14 @@ CSS_GTO::CSS_GTO(const Vector &A, const S_GTO &a,
     _P = Array2D<Vector>(1, n);
     _eta = NMatrix::createRowMajor(1, n);
     _chi = NMatrix::createRowMajor(1, n);
-    _G = NMatrix::createRowMajor(1, n);
+    _K = NMatrix::createRowMajor(1, n);
+    _overlap = NMatrix::createRowMajor(1, n);
 
     Vector *Pdata = _P.data();
     double *etadata = _eta.data();
     double *chidata = _chi.data();
-    double *Gdata = _G.data();
+    double *Kdata = _K.data();
+    double *odata = _overlap.data();
 
     const double *balpha = b.alpha().constData();
     const double *bscl = b.scale().constData();
@@ -485,7 +533,13 @@ CSS_GTO::CSS_GTO(const Vector &A, const S_GTO &a,
         Pdata[i] = (a.alpha()*A + balpha[i]*B) / alpha_plus_beta;
         etadata[i] = alpha_plus_beta;
         chidata[i] = alpha_times_beta / alpha_plus_beta;
-        Gdata[i] = a.scale() * bscl[i] * std::exp(-chidata[i]*_R2);
+        
+        const double scl = a.scale() * bscl[i] *
+                          std::pow( four_over_pi2 * a.alpha() * balpha[i], 0.75 );
+
+        const double G = scl * std::exp(-chidata[i]*_R2);
+        odata[i] = std::pow( pi / etadata[i], 1.5 ) * G;
+        Kdata[i] = sqrt_two_times_pi_to_5_4 * G / alpha_plus_beta;
     }
 }
 
@@ -516,12 +570,14 @@ CSS_GTO::CSS_GTO(const Vector &A, const CS_GTO &a,
     _P = Array2D<Vector>(na, nb);
     _eta = NMatrix::createRowMajor(na, nb);
     _chi = NMatrix::createRowMajor(na, nb);
-    _G = NMatrix::createRowMajor(na, nb);
+    _K = NMatrix::createRowMajor(na, nb);
+    _overlap = NMatrix::createRowMajor(na, nb);
 
     Vector *Pdata = _P.data();
     double *etadata = _eta.data();
     double *chidata = _chi.data();
-    double *Gdata = _G.data();
+    double *Kdata = _K.data();
+    double *odata = _overlap.data();
 
     const double *aalpha = a.alpha().constData();
     const double *ascl = a.scale().constData();
@@ -546,7 +602,13 @@ CSS_GTO::CSS_GTO(const Vector &A, const CS_GTO &a,
             Pdata[idx] = (a_alpha_times_A + balpha[j]*B) / alpha_plus_beta;
             etadata[idx] = alpha_plus_beta;
             chidata[idx] = alpha_times_beta / alpha_plus_beta;
-            Gdata[idx] = a_scale * bscl[j] * std::exp(-chidata[idx]*_R2);
+            
+            const double scl = a_scale * bscl[j] *
+                         std::pow( four_over_pi2 * a_alpha * balpha[j], 0.75 );
+
+            const double G = scl * std::exp(-chidata[idx]*_R2);
+            odata[idx] = std::pow( pi / etadata[idx], 1.5 ) * G;
+            Kdata[idx] = sqrt_two_times_pi_to_5_4 * G / alpha_plus_beta;
             
             ++idx;
         }
@@ -555,7 +617,8 @@ CSS_GTO::CSS_GTO(const Vector &A, const CS_GTO &a,
 
 /** Copy constructor */
 CSS_GTO::CSS_GTO(const CSS_GTO &other) 
-       : _P(other._P), _R2(other._R2), _eta(other._eta), _chi(other._chi), _G(other._G)
+       : _P(other._P), _R2(other._R2), _eta(other._eta), _chi(other._chi), 
+         _K(other._K), _overlap(other._overlap)
 {}
 
 /** Destructor */
@@ -569,7 +632,8 @@ CSS_GTO& CSS_GTO::operator=(const CSS_GTO &other)
     _R2 = other._R2;
     _eta = other._eta;
     _chi = other._chi;
-    _G = other._G;
+    _K = other._K;
+    _overlap = other._overlap;
     
     return *this;
 }
@@ -578,7 +642,7 @@ CSS_GTO& CSS_GTO::operator=(const CSS_GTO &other)
 bool CSS_GTO::operator==(const CSS_GTO &other) const
 {
     return _P == other._P and _R2 == other._R2 and 
-           _eta == other._eta and _G == other._G;
+           _eta == other._eta and _K == other._K;
 }
 
 /** Comparison operator */
@@ -590,7 +654,7 @@ bool CSS_GTO::operator!=(const CSS_GTO &other) const
 /** The number of primitive pairs in this shell-pair */
 int CSS_GTO::nPairs() const
 {
-    return _G.memory().count();
+    return _K.memory().count();
 }
 
 /** Return the centers of this shell-pair
@@ -673,22 +737,34 @@ NMatrix CSS_GTO::alpha_times_beta() const
     return a_times_b;
 }
 
-/** Return the scale factor for this shell pair */
-const NMatrix& CSS_GTO::G() const
+/** Return the K value for this shell pair
+
+    K = sqrt(2) * pi^(5/4) * scl_a * scl_b * exp( (-alpha*beta/(alpha+beta))|A-B|^2 )
+                / (alpha_beta)
+
+    (see Obara and Saika paper)
+*/
+const NMatrix& CSS_GTO::K() const
 {
-    return _G;
+    return _K;
 }
 
-/** Synonym for CSS_GTO::G() */
-const NMatrix& CSS_GTO::G_AB() const
+/** Synonym for CSS_GTO::K() */
+const NMatrix& CSS_GTO::K_AB() const
 {
-    return CSS_GTO::G();
+    return CSS_GTO::K();
 }
 
-/** Synonym for CSS_GTO::G_CD() */
-const NMatrix& CSS_GTO::G_CD() const
+/** Synonym for CSS_GTO::K() */
+const NMatrix& CSS_GTO::K_CD() const
 {
-    return CSS_GTO::G();
+    return CSS_GTO::K();
+}
+
+/** Return the overlap integral for each pair of primitives (s||s) */
+const NMatrix& CSS_GTO::overlap() const
+{
+    return _overlap;
 }
 
 const char* CSS_GTO::typeName()
@@ -700,34 +776,49 @@ const char* CSS_GTO::typeName()
 //////////// Integrals involving just SS_GTO shell pairs
 ////////////
 //////////// These are derived in;
-//////////// Molecular Integrals Over Gaussian Basis Functions
-//////////// Peter M. W. Gill
-//////////// Advanced Quantum Chemistry, 1994
+//////////// "Efficient recursive computation of molecular integrals
+////////////  over Cartesian Gaussian functions"
+////////////
+//////////// Obara and Saika
+//////////// J. Chem. Phys., 84 (7), 3963-3974, 1986
 ////////////
 
 namespace Squire
 {
-
-const double two_pi_to_2_5 = 2 * std::pow(pi, 2.5);
 
 /////////////
 ///////////// Integrals involving just SS_GTO
 /////////////
 double SQUIRE_EXPORT kinetic_integral(const SS_GTO &P)
 {
-    return P.chi() * std::pow( pi / P.eta(), 1.5 ) * (3 - 2*P.chi()*P.R2()) * P.G();
+    // (s|nabla|s) = chi {3 - 2 chi (A-B)^2} (s||s)
+
+    return P.chi() * (3 - 2*P.chi()*P.R2()) * P.overlap();
 }
 
 double SQUIRE_EXPORT overlap_integral(const SS_GTO &P)
 {
-    return std::pow( pi / P.eta(), 1.5 ) * P.G();
+    // (s||s) = (pi/eta)^(3/2) exp{-eta(A-B)^2}
+
+    return P.overlap();
 }
 
 double SQUIRE_EXPORT potential_integral(const PointCharge &Q, const SS_GTO &P)
 {
-    const double T = P.eta() * ((P.P() - Q.center()).length2());
-    
-    return -2 * P.G() * Q.charge() * pi * boys_f0(T) / P.eta();
+    // (s|Q|s) = 2 (pi/eta)^(1/2) (s||s) F0{ eta (P-Q)^2 }
+
+    const double U = P.eta() * ((P.P() - Q.center()).length2());
+
+    return -2 * Q.charge() * std::sqrt( P.eta() * one_over_pi ) * 
+                        P.overlap() * boys_f0(U); 
+}
+
+double SQUIRE_EXPORT potential_integral(const PointCharge &Q, const SS_GTO &P, int m)
+{
+    const double U = P.eta() * ((P.P() - Q.center()).length2());
+
+    return -2 * Q.charge() * std::sqrt( P.eta() * one_over_pi ) * 
+                     P.overlap() * boys(m, U); 
 }
 
 double SQUIRE_EXPORT potential_integral(const PointDipole &Q, const SS_GTO &P)
@@ -736,17 +827,36 @@ double SQUIRE_EXPORT potential_integral(const PointDipole &Q, const SS_GTO &P)
     return 0;
 }
 
+double SQUIRE_EXPORT potential_integral(const PointDipole &Q, const SS_GTO &P, int m)
+{
+    throw SireError::incomplete_code("Not implemented", CODELOC);
+    return 0;
+}
+
 double SQUIRE_EXPORT electron_integral(const SS_GTO &P, const SS_GTO &Q)
 {
+    // (si sj | sk sl) = K_ij K_kl F0{ (zeta*eta/(zeta+eta)) (P-Q)^2 }
+
     const double zeta_plus_eta = P.zeta() + Q.eta();
     const double zeta_times_eta = P.zeta() * Q.eta();
 
     const double R2 = Vector::distance2( P.P(), Q.Q() );
     const double T = (zeta_times_eta/zeta_plus_eta) * R2;
 
-    return (two_pi_to_2_5 / (zeta_times_eta * std::sqrt(zeta_plus_eta))) *
-           P.G_AB() * Q.G_CD() *
-           boys_f0( T );
+    return P.K() * Q.K() * boys_f0(T) / std::sqrt(zeta_plus_eta);
+}
+
+double SQUIRE_EXPORT electron_integral(const SS_GTO &P, const SS_GTO &Q, int m)
+{
+    // (si sj | sk sl)^m = K_ij K_kl Fm{ (zeta*eta/(zeta+eta)) (P-Q)^2 }
+
+    const double zeta_plus_eta = P.zeta() + Q.eta();
+    const double zeta_times_eta = P.zeta() * Q.eta();
+
+    const double R2 = Vector::distance2( P.P(), Q.Q() );
+    const double T = (zeta_times_eta/zeta_plus_eta) *   R2;
+
+    return P.K() * Q.K() * boys(m, T) / std::sqrt(zeta_plus_eta);
 }
 
 /////////////
@@ -759,19 +869,50 @@ double SQUIRE_EXPORT electron_integral(const CSS_GTO &P, const SS_GTO &Q)
     
     const int npairs = P.nPairs();
     
+    const double *zeta = P.zeta().constData();
+    const Vector *p = P.P().constData();
+    const double *K = P.K().constData();
+    
     for (int i=0; i<npairs; ++i)
     {
-        const double zeta_plus_eta = P.zeta().constData()[i] + Q.eta();
-        const double zeta_times_eta = P.zeta().constData()[i] * Q.eta();
+        const double zeta_plus_eta = zeta[i] + Q.eta();
+        const double zeta_times_eta = zeta[i] * Q.eta();
 
-        const double R2 = Vector::distance2( P.P().constData()[i], Q.Q() );
+        const double R2 = Vector::distance2( p[i], Q.Q() );
 
         const double T = (zeta_times_eta/zeta_plus_eta) * R2;
 
-        integral_sum += (two_pi_to_2_5 / (zeta_times_eta * std::sqrt(zeta_plus_eta))) *
-                         P.G().constData()[i] * Q.G_CD() *
-                         boys_f0( T );
+        integral_sum += K[i] * boys_f0(T) / zeta_plus_eta;
     }
+    
+    integral_sum *= Q.K();
+    
+    return integral_sum;
+}
+
+double SQUIRE_EXPORT electron_integral(const CSS_GTO &P, const SS_GTO &Q, int m)
+{
+    double integral_sum(0);
+    
+    const int npairs = P.nPairs();
+    
+    const double *zeta = P.zeta().constData();
+    const Vector *p = P.P().constData();
+    const double *K = P.K().constData();
+    
+    for (int i=0; i<npairs; ++i)
+    {
+        const double zeta_plus_eta = zeta[i] + Q.eta();
+        const double zeta_times_eta = zeta[i] * Q.eta();
+
+        const double R2 = Vector::distance2( p[i], Q.Q() );
+
+        const double T = (zeta_times_eta/zeta_plus_eta) * R2;
+
+        integral_sum += K[i] * boys(m, T) / zeta_plus_eta;
+    }
+    
+    integral_sum *= Q.K();
     
     return integral_sum;
 }
@@ -781,26 +922,29 @@ double SQUIRE_EXPORT electron_integral(const SS_GTO &P, const CSS_GTO &Q)
     return electron_integral(Q, P);
 }
 
+double SQUIRE_EXPORT electron_integral(const SS_GTO &P, const CSS_GTO &Q, int m)
+{
+    return electron_integral(Q, P, m);
+}
+
 /////////////
 ///////////// Integrals involving just CSS_GTO
 /////////////
 double SQUIRE_EXPORT kinetic_integral(const CSS_GTO &P)
 {
+    // (s|nabla|s) = chi {3 - 2 chi (A-B)^2} (s||s)
+
     const int npairs = P.nPairs();
+    
+    const double *chi = P.chi().constData();
+    const double two_R2 = P.R2() * 2;
+    const double *overlap = P.overlap().constData();
     
     double integral_sum = 0;
     
-    qDebug() << "npairs ==" << npairs;
-    
     for (int i=0; i<npairs; ++i)
     {
-        const double val = P.chi().constData()[i] * 
-                            std::pow( pi / P.eta().constData()[i], 1.5 ) * 
-                                       (3 - 2*P.chi().constData()[i] * P.R2()) * 
-                                                P.G().constData()[i];
-
-        integral_sum += val;
-        qDebug() << val;
+        integral_sum += chi[i] * (3 - two_R2*chi[i]) * overlap[i];
     }
     
     return integral_sum;
@@ -809,13 +953,13 @@ double SQUIRE_EXPORT kinetic_integral(const CSS_GTO &P)
 double SQUIRE_EXPORT overlap_integral(const CSS_GTO &P)
 {
     const int npairs = P.nPairs();
+    const double *odata = P.overlap().constData();
 
     double integral_sum = 0;
 
     for (int i=0; i<npairs; ++i)
     {
-        integral_sum += std::pow( pi / P.eta().constData()[i], 1.5 ) * 
-                            P.G().constData()[i];
+        integral_sum += odata[i];
     }
     
     return integral_sum;
@@ -826,20 +970,52 @@ double SQUIRE_EXPORT potential_integral(const PointCharge &Q, const CSS_GTO &P)
     const int npairs = P.nPairs();
     
     double integral_sum = 0;
+
+    const double *eta = P.eta().constData();
+    const Vector *p = P.P().constData();
+    const double *overlap = P.overlap().constData();
     
     for (int i=0; i<npairs; ++i)
     {
-        const double T = P.eta().constData()[i] * 
-                            ((P.P().constData()[i] - Q.center()).length2());
-    
-        integral_sum += -2 * P.G().constData()[i] * Q.charge() * pi * boys_f0(T) / 
-                                    P.eta().constData()[i];
+        const double U = eta[i] * ((p[i] - Q.center()).length2());
+        
+        integral_sum += std::sqrt(eta[i] * one_over_pi) * overlap[i] * boys_f0(U);
     }
+    
+    integral_sum *= (-2 * Q.charge());
+    
+    return integral_sum;
+}
+
+double SQUIRE_EXPORT potential_integral(const PointCharge &Q, const CSS_GTO &P, int m)
+{
+    const int npairs = P.nPairs();
+    
+    double integral_sum = 0;
+
+    const double *eta = P.eta().constData();
+    const Vector *p = P.P().constData();
+    const double *overlap = P.overlap().constData();
+    
+    for (int i=0; i<npairs; ++i)
+    {
+        const double U = eta[i] * ((p[i] - Q.center()).length2());
+        
+        integral_sum += std::sqrt(eta[i] * one_over_pi) * overlap[i] * boys(m, U);
+    }
+    
+    integral_sum *= (-2 * Q.charge());
     
     return integral_sum;
 }
 
 double SQUIRE_EXPORT potential_integral(const PointDipole &Q, const CSS_GTO &P)
+{
+    throw SireError::incomplete_code("Not implemented", CODELOC);
+    return 0;
+}
+
+double SQUIRE_EXPORT potential_integral(const PointDipole &Q, const CSS_GTO &P, int m)
 {
     throw SireError::incomplete_code("Not implemented", CODELOC);
     return 0;
@@ -852,27 +1028,77 @@ double SQUIRE_EXPORT electron_integral(const CSS_GTO &P, const CSS_GTO &Q)
     const int np = P.nPairs();
     const int nq = Q.nPairs();
     
+    const double *zeta = P.zeta().constData();
+    const double *eta = Q.eta().constData();
+    const double *K_AB = P.K_AB().constData();
+    const double *K_CD = Q.K_CD().constData();
+    
+    const Vector *p = P.P().constData();
+    const Vector *q = Q.Q().constData();
+    
     for (int i=0; i<np; ++i)
     {
+        const double zeta_i = zeta[i];
+        const Vector &p_i = p[i];
+
+        double my_sum = 0;
+    
         for (int j=0; j<nq; ++j)
         {
-            const double zeta_plus_eta = P.zeta().constData()[i] + Q.eta().constData()[j];
-            const double zeta_times_eta = P.zeta().constData()[i] * Q.eta().constData()[j];
+            const double zeta_plus_eta = zeta_i + eta[j];
+            const double zeta_times_eta = zeta_i * eta[j];
 
-            const double R2 = Vector::distance2( P.P().constData()[i], 
-                                                 Q.Q().constData()[j] );
+            const double R2 = Vector::distance2( p_i, q[j] ); 
 
             const double T = (zeta_times_eta/zeta_plus_eta) * R2;
 
-            integral_sum += (two_pi_to_2_5 / (zeta_times_eta * std::sqrt(zeta_plus_eta))) *
-                             P.G().constData()[i] * 
-                             Q.G().constData()[j] *
-                             boys_f0( T );
+            my_sum += K_CD[j] * boys_f0(T) / std::sqrt(zeta_plus_eta);
         }
+        
+        integral_sum += K_AB[i] * my_sum;
     }
     
     return integral_sum;
 }
 
+double SQUIRE_EXPORT electron_integral(const CSS_GTO &P, const CSS_GTO &Q, int m)
+{
+    double integral_sum(0);
+    
+    const int np = P.nPairs();
+    const int nq = Q.nPairs();
+    
+    const double *zeta = P.zeta().constData();
+    const double *eta = Q.eta().constData();
+    const double *K_AB = P.K_AB().constData();
+    const double *K_CD = P.K_CD().constData();
+    
+    const Vector *p = P.P().constData();
+    const Vector *q = Q.Q().constData();
+    
+    for (int i=0; i<np; ++i)
+    {
+        const double zeta_i = zeta[i];
+        const Vector &p_i = p[i];
+
+        double my_sum = 0;
+    
+        for (int j=0; j<nq; ++j)
+        {
+            const double zeta_plus_eta = zeta_i + eta[j];
+            const double zeta_times_eta = zeta_i * eta[j];
+
+            const double R2 = Vector::distance2( p_i, q[j] ); 
+
+            const double T = (zeta_times_eta/zeta_plus_eta) * R2;
+
+            my_sum += K_CD[j] * boys(m, T) / zeta_plus_eta;
+        }
+        
+        integral_sum += K_AB[i] * my_sum;
+    }
+    
+    return integral_sum;
+}
 
 } // end of namespace Squire

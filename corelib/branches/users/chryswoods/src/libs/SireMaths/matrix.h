@@ -92,6 +92,17 @@ public:
         return Matrix::typeName();
     }
 
+    const double& operator()(int i, int j) const;
+    double& operator()(int i, int j);
+    
+    double* data();
+    
+    const double* data() const;
+    const double* constData() const;
+
+    int offset(int i, int j) const;
+    int checkedOffset(int i, int j) const;
+
     Matrix transpose() const;
     Matrix inverse() const;
     Vector trace() const;
@@ -101,6 +112,18 @@ public:
     bool isSymmetric() const;
     void enforceSymmetric();
     Matrix getPrincipalAxes() const;
+
+    double xx() const;
+    double xy() const;
+    double xz() const;
+    
+    double yx() const;
+    double yy() const;
+    double yz() const;
+    
+    double zx() const;
+    double zy() const;
+    double zz() const;
 
     Vector column0() const;
     Vector column1() const;
@@ -140,78 +163,72 @@ public:
 
 protected:
     /** The components of the matrix */
-
-    //First column0, (xx,xy,xz)
-    double xx,xy,xz;
-    //Now column1, (yx,yy,yz)
-    double yx,yy,yz;
-    //Now column2, (zx,zy,zz)
-    double zx,zy,zz;
+    double array[9];
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
-/** Return the identiy matrix */
-inline Matrix Matrix::identity()
+/** Return the offset into the array of the value at index [i,j] */
+inline int Matrix::offset(int i, int j) const
 {
-    return Matrix();
+    return 3*i + j;
 }
 
-/** Return the null matrix */
-inline Matrix Matrix::zero()
+/** Return the xx element (matrix[0,0]) */
+inline double Matrix::xx() const
 {
-    return Matrix(0.0,0.0,0.0, 0.0,0.0,0.0, 0.0,0.0,0.0 );
+    return array[0];
 }
 
-inline Matrix& Matrix::operator*=(const Matrix &m)
+/** Return the xy element (matrix[0,1]) */
+inline double Matrix::xy() const
 {
-    double sxx = m.xx*xx + m.yx*xy + m.zx*xz;
-    double syx = m.xx*yx + m.yx*yy + m.zx*yz;
-    double szx = m.xx*zx + m.yx*zy + m.zx*zz;
-
-    double sxy = m.xy*xx + m.yy*xy + m.zy*xz;
-    double syy = m.xy*yx + m.yy*yy + m.zy*yz;
-    double szy = m.xy*zx + m.yy*zy + m.zy*zz;
-
-    double sxz = m.zx*xx + m.yz*xy + m.zz*xz;
-    double syz = m.zx*yx + m.yz*yy + m.zz*yz;
-    double szz = m.zx*zx + m.yz*zy + m.zz*zz;
-
-    xx = sxx;
-    xy = sxy;
-    xz = sxz;
-
-    yx = syx;
-    yy = syy;
-    yz = syz;
-
-    zx = szx;
-    zy = szy;
-    zz = szz;
-
-    return *this;
+    return array[1];
 }
 
-inline const Matrix operator*(const Matrix &m1, const Matrix &m2)
+/** Return the xz element (matrix[0,2]) */
+inline double Matrix::xz() const
 {
-    double sxx = m1.xx*m2.xx + m1.yx*m2.xy + m1.zx*m2.xz;
-    double syx = m1.xx*m2.yx + m1.yx*m2.yy + m1.zx*m2.yz;
-    double szx = m1.xx*m2.zx + m1.yx*m2.zy + m1.zx*m2.zz;
-
-    double sxy = m1.xy*m2.xx + m1.yy*m2.xy + m1.zy*m2.xz;
-    double syy = m1.xy*m2.yx + m1.yy*m2.yy + m1.zy*m2.yz;
-    double szy = m1.xy*m2.zx + m1.yy*m2.zy + m1.zy*m2.zz;
-
-    double sxz = m1.zx*m2.xx + m1.yz*m2.xy + m1.zz*m2.xz;
-    double syz = m1.zx*m2.yx + m1.yz*m2.yy + m1.zz*m2.yz;
-    double szz = m1.zx*m2.zx + m1.yz*m2.zy + m1.zz*m2.zz;
-
-    return Matrix(sxx,sxy,sxz,
-                  syx,syy,syz,
-                  szx,szy,szz);
+    return array[2];
 }
 
-#endif //SIRE_SKIP_INLINE_FUNCTIONS
+/** Return the yx element (matrix[1,0]) */
+inline double Matrix::yx() const
+{
+    return array[3];
+}
+
+/** Return the yy element (matrix[1,1]) */
+inline double Matrix::yy() const
+{
+    return array[4];
+}
+
+/** Return the yz element (matrix[1,2]) */
+inline double Matrix::yz() const
+{
+    return array[5];
+}
+
+/** Return the zx element (matrix[2,0]) */
+inline double Matrix::zx() const
+{
+    return array[6];
+}
+
+/** Return the zy element (matrix[2,1]) */
+inline double Matrix::zy() const
+{
+    return array[7];
+}
+
+/** Return the zz element (matrix[2,2]) */
+inline double Matrix::zz() const
+{
+    return array[8];
+}
+
+#endif // #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

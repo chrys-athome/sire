@@ -175,12 +175,13 @@ const Quaternion SIREMATHS_EXPORT SireMaths::operator*(const Vector &p, const Qu
 /** Convert into a matrix */
 Matrix Quaternion::toMatrix() const
 {
-    return Matrix( 1.0-(2.0*sc[1]*sc[1])-(2.0*sc[2]*sc[2]), (2.0*sc[0]*sc[1])+(2.0*sc[3]*sc[2]),
-                    (2.0*sc[0]*sc[2])-(2.0*sc[3]*sc[1]),
-                    (2.0*sc[0]*sc[1])-(2.0*sc[3]*sc[2]), 1.0-(2.0*sc[0]*sc[0])-(2.0*sc[2]*sc[2]),
-                    (2.0*sc[1]*sc[2])+(2.0*sc[3]*sc[0]),
-                    (2.0*sc[0]*sc[2])+(2.0*sc[1]*sc[3]), (2.0*sc[1]*sc[2])-(2.0*sc[0]*sc[3]),
-                    1.0-(2.0*sc[0]*sc[0])-(2.0*sc[1]*sc[1]) );
+    return 
+     Matrix( 1.0-(2.0*sc[1]*sc[1])-(2.0*sc[2]*sc[2]), (2.0*sc[0]*sc[1])+(2.0*sc[3]*sc[2]),
+             (2.0*sc[0]*sc[2])-(2.0*sc[3]*sc[1]),
+             (2.0*sc[0]*sc[1])-(2.0*sc[3]*sc[2]), 1.0-(2.0*sc[0]*sc[0])-(2.0*sc[2]*sc[2]),
+             (2.0*sc[1]*sc[2])+(2.0*sc[3]*sc[0]),
+             (2.0*sc[0]*sc[2])+(2.0*sc[1]*sc[3]), (2.0*sc[1]*sc[2])-(2.0*sc[0]*sc[3]),
+             1.0-(2.0*sc[0]*sc[0])-(2.0*sc[1]*sc[1]) );
 }
 
 /** Use this quaternion to rotate 'p' */
@@ -220,7 +221,7 @@ Quaternion Quaternion::identity()
 /** Get from a matrix */
 void Quaternion::fromMatrix(const Matrix &m)
 {
-    double trace = m.xx+m.yy+m.zz;
+    double trace = m.xx()+m.yy()+m.zz();
 
     if (trace >= 0.000001)
     {
@@ -228,40 +229,40 @@ void Quaternion::fromMatrix(const Matrix &m)
         sc[3] = 0.5*s;
         s = 0.5 / s;
 
-        sc[0] = (m.yz-m.zy)*s;
-        sc[1] = (m.zx-m.xz)*s;
-        sc[2] = (m.xy-m.yx)*s;
+        sc[0] = (m.yz()-m.zy())*s;
+        sc[1] = (m.zx()-m.xz())*s;
+        sc[2] = (m.xy()-m.yx())*s;
     }
     else
     {
-        if ( (m.zz > m.yy) && (m.zz > m.yy) )
+        if ( (m.zz() > m.yy()) && (m.zz() > m.yy()) )
         {
-            double s = sqrt( m.zz - m.xx - m.yy + 1 );
+            double s = sqrt( m.zz() - m.xx() - m.yy() + 1 );
             sc[2] = 0.5*s;
             s = 0.5 / s;
 
-            sc[0] = (m.xz+m.zx)*s;
-            sc[1] = (m.zy+m.yz)*s;
-            sc[3] = (m.xy-m.yx)*s;
+            sc[0] = (m.xz()+m.zx())*s;
+            sc[1] = (m.zy()+m.yz())*s;
+            sc[3] = (m.xy()-m.yx())*s;
         }
-        else if (m.yy > m.xx)
+        else if (m.yy() > m.xx())
         {
-            double s = sqrt( m.yy - m.zz - m.xx + 1 );
+            double s = sqrt( m.yy() - m.zz() - m.xx() + 1 );
             sc[1] = 0.5*s;
             s = 0.5 / s;
 
-            sc[2] = (m.zy + m.yz) * s;
-            sc[0] = (m.yx + m.xy) * s;
-            sc[3] = (m.zx - m.xz) * s;
+            sc[2] = (m.zy() + m.yz()) * s;
+            sc[0] = (m.yx() + m.xy()) * s;
+            sc[3] = (m.zx() - m.xz()) * s;
         }
         else
         {
-            double s = sqrt( m.xx - m.yy - m.zz + 1 );
+            double s = sqrt( m.xx() - m.yy() - m.zz() + 1 );
             sc[0] = 0.5*s;
             s = 0.5 / s;
-            sc[1] = (m.yx + m.xy) * s;
-            sc[2] = (m.xz + m.zx) * s;
-            sc[3] = (m.yx - m.zy) * s;
+            sc[1] = (m.yx() + m.xy()) * s;
+            sc[2] = (m.xz() + m.zx()) * s;
+            sc[3] = (m.yx() - m.zy()) * s;
         }
     }
 
