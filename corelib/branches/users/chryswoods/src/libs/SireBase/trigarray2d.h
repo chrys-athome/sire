@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREBASE_ARRAY2D_H
-#define SIREBASE_ARRAY2D_H
+#ifndef SIREBASE_TRIGARRAY2D_H
+#define SIREBASE_TRIGARRAY2D_H
 
 #include "sireglobal.h"
 
@@ -35,108 +35,107 @@ SIRE_BEGIN_HEADER
 
 namespace SireBase
 {
-class Array2DBase;
+class TrigArray2DBase;
 }
 
-QDataStream& operator<<(QDataStream&, const SireBase::Array2DBase&);
-QDataStream& operator>>(QDataStream&, SireBase::Array2DBase&);
+QDataStream& operator<<(QDataStream&, const SireBase::TrigArray2DBase&);
+QDataStream& operator>>(QDataStream&, SireBase::TrigArray2DBase&);
 
 namespace SireBase
 {
 
-/** Base class of the Array2D<T> class
+/** Base class of the TrigArray2D<T> class
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT Array2DBase
+class SIREMOL_EXPORT TrigArray2DBase
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const Array2DBase&);
-friend QDataStream& ::operator>>(QDataStream&, Array2DBase&);
+friend QDataStream& ::operator<<(QDataStream&, const TrigArray2DBase&);
+friend QDataStream& ::operator>>(QDataStream&, TrigArray2DBase&);
 
 public:
-    ~Array2DBase();
+    ~TrigArray2DBase();
     
     int nRows() const;
     int nColumns() const;
     
+    int map(int i, int j) const;
+    
     int offset(int i, int j) const;
     int checkedOffset(int i, int j) const;
-    
-    int map(int i, int j) const;
     
     void assertValidIndex(int i, int j) const;
 
 protected:
-    Array2DBase();
+    TrigArray2DBase();
 
-    Array2DBase(int nrows, int ncolumns);
+    TrigArray2DBase(int dimension);
 
-    Array2DBase(const Array2DBase &other);
+    TrigArray2DBase(const TrigArray2DBase &other);
 
-    Array2DBase& operator=(const Array2DBase &other);
+    TrigArray2DBase& operator=(const TrigArray2DBase &other);
 
-    bool operator==(const Array2DBase &other) const;
-    bool operator!=(const Array2DBase &other) const;
+    bool operator==(const TrigArray2DBase &other) const;
+    bool operator!=(const TrigArray2DBase &other) const;
 
 private:
     void throwInvalidIndex(int i, int j) const;
     
-    /** The number of rows and columns in the matrix */
-    qint32 nrows, ncolumns;
+    /** The dimension of this square matrix */
+    qint32 dim;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 /** Return the number of rows in the matrix */
-inline int Array2DBase::nRows() const
+inline int TrigArray2DBase::nRows() const
 {
-    return nrows;
+    return dim;
 }
 
 /** Return the number of columns in the matrix */
-inline int Array2DBase::nColumns() const
+inline int TrigArray2DBase::nColumns() const
 {
-    return ncolumns;
+    return dim;
 }
 
-/** Return the location in the 1D array of the item at index [i,j] */
-inline int Array2DBase::offset(int i, int j) const
+/** Return the offset into the array of the value at index [i,j] */
+inline int TrigArray2DBase::offset(int i, int j) const
 {
-    return (i*ncolumns) + j;
+    if (i <= j)
+        return (2*(j + i*dim) - i - i*i) / 2;
+    else
+        return (2*(i + j*dim) - j - j*j) / 2;
 }
 
 /** Map the 2D index (i,j) into the 1D index into memory */
-inline int Array2DBase::map(int i, int j) const
+inline int TrigArray2DBase::map(int i, int j) const
 {
-    return Array2DBase::offset(i,j);
+    return TrigArray2DBase::offset(i, j);
 }
 
 /** Assert that the index (i,j) is valid for this matrix
 
     \throw SireError::invalid_index
 */
-inline void Array2DBase::assertValidIndex(int i, int j) const
+inline void TrigArray2DBase::assertValidIndex(int i, int j) const
 {
-    if (i < 0 or i >= nrows or j < 0 or j >= ncolumns)
+    if (i < 0 or i >= dim or j < 0 or j >= dim)
         throwInvalidIndex(i,j);
 }
 
-/** Return the location in the 1D array of the item at index [i,j] 
-
-    \throw SireError::invalid_index
-*/
-inline int Array2DBase::checkedOffset(int i, int j) const
+inline int TrigArray2DBase::checkedOffset(int i, int j) const
 {
-    Array2DBase::assertValidIndex(i,j);
-    return Array2DBase::offset(i,j);
+    TrigArray2DBase::assertValidIndex(i,j);
+    return TrigArray2DBase::offset(i,j);
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 
-SIRE_EXPOSE_CLASS( SireBase::Array2DBase )
+SIRE_EXPOSE_CLASS( SireBase::TrigArray2DBase )
 
 SIRE_END_HEADER
 

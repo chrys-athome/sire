@@ -28,7 +28,7 @@
 
 #include "database.h"
 
-#include "ThirdParty/sqlite3.h"
+#include "ThirdParty/sqlite3.h" // CONDITIONAL_INCLUDE
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"

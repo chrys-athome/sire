@@ -42,6 +42,8 @@ set ( SIREBASE_HEADERS
       sparsematrix.hpp
       stringmangler.h
       tempdir.h
+      trigarray2d.h
+      trigarray2d.hpp
       vector3d.hpp
     )
 
@@ -69,7 +71,8 @@ set ( SIREBASE_SOURCES
       savestate.cpp
       sharedpolypointer.cpp
       stringmangler.cpp     
-      tempdir.cpp 
+      tempdir.cpp
+      trigarray2d.cpp 
 
       ${SIREBASE_HEADERS}
     )

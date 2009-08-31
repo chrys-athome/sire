@@ -36,6 +36,7 @@
 #include "sire_lapack.h"
 
 #include "SireBase/array2d.hpp"
+#include "SireBase/trigarray2d.hpp"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"

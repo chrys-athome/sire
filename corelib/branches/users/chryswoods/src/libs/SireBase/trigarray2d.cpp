@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#include "array2d.h"
-#include "array2d.hpp"
+#include "trigarray2d.h"
+#include "trigarray2d.hpp"
 
 #include "SireError/errors.h"
 
@@ -36,92 +36,80 @@
 using namespace SireBase;
 using namespace SireStream;
 
-static const RegisterMetaType<Array2DBase> r_array2d( MAGIC_ONLY,
-                                                      "SireBase::Array2D<T>" );
+static const RegisterMetaType<TrigArray2DBase> r_array2d( MAGIC_ONLY,
+                                                          "SireBase::TrigArray2D<T>" );
                                                       
 /** Serialise to a binary datastream */
 QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds,
-                                        const Array2DBase &array2d)
+                                        const TrigArray2DBase &array2d)
 {
-    writeHeader(ds, r_array2d, 2);
-    ds << array2d.nrows << array2d.ncolumns;
+    writeHeader(ds, r_array2d, 1);
+    ds << array2d.dim;
     
     return ds;
 }
 
 /** Extract from a binary datastream */
 QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds,
-                                        Array2DBase &array2d)
+                                        TrigArray2DBase &array2d)
 {
     VersionID v = readHeader(ds, r_array2d);
     
-    if (v == 2)
+    if (v == 1)
     {
-        ds >> array2d.nrows >> array2d.ncolumns;
-    }
-    else if (v == 1)
-    {
-        quint32 nrows, ncolumns;
-        ds >> nrows >> ncolumns;
-        
-        array2d.nrows = nrows;
-        array2d.ncolumns = ncolumns;
+        ds >> array2d.dim;
     }
     else
-        throw version_error(v, "1,2", r_array2d, CODELOC);
+        throw version_error(v, "1", r_array2d, CODELOC);
     
     return ds;
 }
 
 /** Null constructor */
-Array2DBase::Array2DBase() : nrows(0), ncolumns(0)
+TrigArray2DBase::TrigArray2DBase() : dim(0)
 {}
 
-/** Construct with the specified number of rows and columns */
-Array2DBase::Array2DBase(int nr, int nc)
-            : nrows(nr), ncolumns(nc)
+/** Construct with the specified dimension [dim,dim] */
+TrigArray2DBase::TrigArray2DBase(int dimension)
+            : dim(dimension)
 {
-    if (nr < 0)
-        nrows = 0;
-        
-    if (nc < 0)
-        ncolumns = 0;
+    if (dimension < 0)
+        dim = 0;
 }
 
 /** Copy constructor */
-Array2DBase::Array2DBase(const Array2DBase &other)
-            : nrows(other.nrows), ncolumns(other.ncolumns)
+TrigArray2DBase::TrigArray2DBase(const TrigArray2DBase &other)
+                : dim(other.dim)
 {}
 
 /** Destructor */
-Array2DBase::~Array2DBase()
+TrigArray2DBase::~TrigArray2DBase()
 {}
 
 /** Copy assignment operator */
-Array2DBase& Array2DBase::operator=(const Array2DBase &other)
+TrigArray2DBase& TrigArray2DBase::operator=(const TrigArray2DBase &other)
 {
-    nrows = other.nrows;
-    ncolumns = other.ncolumns;
+    dim = other.dim;
     return *this;
 }
 
 /** Comparison operator */
-bool Array2DBase::operator==(const Array2DBase &other) const
+bool TrigArray2DBase::operator==(const TrigArray2DBase &other) const
 {
-    return nrows == other.nrows and ncolumns == other.ncolumns;
+    return dim == other.dim;
 }
 
 /** Comparison operator */
-bool Array2DBase::operator!=(const Array2DBase &other) const
+bool TrigArray2DBase::operator!=(const TrigArray2DBase &other) const
 {
-    return nrows != other.nrows or ncolumns != other.ncolumns;
+    return dim != other.dim;
 }
 
 /** Throw an invalid index exception */
-void Array2DBase::throwInvalidIndex(int i, int j) const
+void TrigArray2DBase::throwInvalidIndex(int i, int j) const
 {
     throw SireError::invalid_index( QObject::tr(
         "Index (%1,%2) is not valid for this matrix. The "
         "number of rows is %3, and number of columns is %4.")
-            .arg(i).arg(j).arg(nrows).arg(ncolumns), CODELOC );
+            .arg(i).arg(j).arg(dim).arg(dim), CODELOC );
 }

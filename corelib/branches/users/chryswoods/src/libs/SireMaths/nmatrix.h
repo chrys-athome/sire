@@ -49,6 +49,9 @@ namespace SireBase
 {
 template<class T>
 class Array2D;
+
+template<class T>
+class TrigArray2D;
 }
 
 namespace SireMaths
@@ -224,11 +227,22 @@ Q_DECLARE_METATYPE( SireMaths::NMatrix )
 SIRE_EXPOSE_CLASS( SireMaths::NMatrix )
 
 SIRE_EXPOSE_ALIAS( SireBase::Array2D<SireMaths::Vector>, SireBase::Array2D_Vector_ )
+SIRE_EXPOSE_ALIAS( SireBase::Array2D<SireMaths::Matrix>, SireBase::Array2D_Matrix_ )
+
+SIRE_EXPOSE_ALIAS( SireBase::TrigArray2D<SireMaths::Vector>, 
+                   SireBase::TrigArray2D_Vector_ )
+SIRE_EXPOSE_ALIAS( SireBase::TrigArray2D<SireMaths::Matrix>, 
+                   SireBase::TrigArray2D_Matrix_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
 #include "SireBase/array2d.hpp"
+#include "SireBase/trigarray2d.hpp"
 #include "vector.h"
+#include "matrix.h"
 template class SireBase::Array2D<SireMaths::Vector>;
+template class SireBase::Array2D<SireMaths::Matrix>;
+template class SireBase::TrigArray2D<SireMaths::Vector>;
+template class SireBase::TrigArray2D<SireMaths::Matrix>;
 #endif
 
 

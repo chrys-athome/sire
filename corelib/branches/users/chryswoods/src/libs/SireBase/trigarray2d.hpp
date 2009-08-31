@@ -26,12 +26,12 @@
   *
 \*********************************************/
 
-#ifndef SIREBASE_ARRAY2D_HPP
-#define SIREBASE_ARRAY2D_HPP
+#ifndef SIREBASE_TRIGARRAY2D_HPP
+#define SIREBASE_TRIGARRAY2D_HPP
 
 #include <QStringList>
 
-#include "array2d.h"
+#include "trigarray2d.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -43,54 +43,53 @@ SIRE_BEGIN_HEADER
 namespace SireBase
 {
 template<class T>
-class Array2D;
+class TrigArray2D;
 }
 
 template<class T>
-QDataStream& operator<<(QDataStream&, const SireBase::Array2D<T>&);
+QDataStream& operator<<(QDataStream&, const SireBase::TrigArray2D<T>&);
 template<class T>
-QDataStream& operator>>(QDataStream&, SireBase::Array2D<T>&);
+QDataStream& operator>>(QDataStream&, SireBase::TrigArray2D<T>&);
 
 namespace SireBase
 {
 
-/** This provides a 2D matrix of objects of type T. All objects
-    are packed together in memory in row-major order, e.g.
+/** This provides a 2D symmetric matrix of objects of type T. All objects
+    are packed together in memory, in packed format
     
         j0   j1   j2
     i0   0    1    2
-    i1   3    4    5
-    i2   6    7    8
+    i1   1    3    4
+    i2   2    4    5
     
     Arranged in memory as;
     
-    [ (i0,j0), (i0,j1), (i0,j2), (i1,j0),  ... etc. ]
-    [    0   ,    1   ,    2   ,   3    ,  ... etc. ]
+    [ (i0,j0), (i0,j1), (i0,j2), (i1,j1), (i1,j2), (i2,j2) ]
+    [    0   ,    1   ,    2   ,   3    ,    4,       5    ]
     
     @author Christopher Woods
 */
 template<class T>
-class Array2D : public Array2DBase
+class TrigArray2D : public TrigArray2DBase
 {
 
-friend QDataStream& ::operator<<<>(QDataStream&, const Array2D<T>&);
-friend QDataStream& ::operator>><>(QDataStream&, Array2D<T>&);
+friend QDataStream& ::operator<<<>(QDataStream&, const TrigArray2D<T>&);
+friend QDataStream& ::operator>><>(QDataStream&, TrigArray2D<T>&);
 
 public:
-    Array2D();
+    TrigArray2D();
 
-    Array2D(int nrows, int ncolumns);
-    
-    Array2D(int nrows, int ncolumns, const T &default_value);
+    TrigArray2D(int dimension);
+    TrigArray2D(int dimension, const T &default_value);
 
-    Array2D(const Array2D<T> &other);
+    TrigArray2D(const TrigArray2D<T> &other);
 
-    ~Array2D();
+    ~TrigArray2D();
 
-    Array2D<T>& operator=(const Array2D<T> &other);
+    TrigArray2D<T>& operator=(const TrigArray2D<T> &other);
 
-    bool operator==(const Array2D<T> &other) const;
-    bool operator!=(const Array2D<T> &other) const;
+    bool operator==(const TrigArray2D<T> &other) const;
+    bool operator!=(const TrigArray2D<T> &other) const;
 
     const T& operator()(int i, int j) const;
     T& operator()(int i, int j);
@@ -103,53 +102,54 @@ public:
 
     const T& get(int i, int j) const;
 
-    void redimension(int nrows, int ncolumns);
+    void redimension(int dimension);
 
     const T* data() const;
     T* data();
     const T* constData() const;
 
-    const T* row(int i) const;
-    T* row(int i);
-    const T* constRow(int i) const;
-
-    Array2D<T> transpose() const;
+    TrigArray2D<T> transpose() const;
 
 private:
-    /** The 1D array of entries in this Array2D */
+    /** The 1D array of entries in this TrigArray2D */
     QVector<T> array;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
-/** Construct a null Array2D */
+/** Construct a null TrigArray2D */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Array2D<T>::Array2D() : Array2DBase()
+TrigArray2D<T>::TrigArray2D() : TrigArray2DBase()
 {}
 
-/** Construct a Array2D that holds nrow rows of ncolumn columns. */
+/** Construct a TrigArray2D that holds a [dimension,dimension] square
+    symmetric matrix of values */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Array2D<T>::Array2D(int nrows, int ncolumns)
-           : Array2DBase(nrows,ncolumns)
+TrigArray2D<T>::TrigArray2D(int dimension) : TrigArray2DBase(dimension)
 {
-    if (this->nRows() * this->nColumns() > 0)
+    if (TrigArray2DBase::nRows() > 0)
     {
-        array = QVector<T>(this->nRows() * this->nColumns());
+        const int dim = TrigArray2D::nRows();
+
+        array = QVector<T>( (dim*dim + dim)/2 );
         array.squeeze();
     }
 }
 
-/** Construct a Array2D that holds nrow rows of ncolumn columns. */
+/** Construct a TrigArray2D that holds a square symmetric matrix  
+    of dimension [dimension,dimension] */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Array2D<T>::Array2D(int nrows, int ncolumns, const T &default_value)
-           : Array2DBase(nrows,ncolumns)
+TrigArray2D<T>::TrigArray2D(int dimension, const T &default_value)
+               : TrigArray2DBase(dimension)
 {
-    if (this->nRows() * this->nColumns() > 0)
+    if (TrigArray2DBase::nRows() > 0)
     {
-        array = QVector<T>(this->nRows() * this->nColumns(), default_value);
+        const int dim = TrigArray2D::nRows();
+    
+        array = QVector<T>( (dim*dim + dim)/2, default_value );
         array.squeeze();
     }
 }
@@ -157,23 +157,23 @@ Array2D<T>::Array2D(int nrows, int ncolumns, const T &default_value)
 /** Copy constructor. Fast as this class is implicitly shared */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Array2D<T>::Array2D(const Array2D<T> &other)
-           : Array2DBase(other), array(other.array)
+TrigArray2D<T>::TrigArray2D(const TrigArray2D<T> &other)
+               : TrigArray2DBase(other), array(other.array)
 {}
 
 /** Destructor */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Array2D<T>::~Array2D()
+TrigArray2D<T>::~TrigArray2D()
 {}
 
 /** Copy assignment operator - fast as this class is implicitly 
     shared */
 template<class T>
 SIRE_INLINE_TEMPLATE
-Array2D<T>& Array2D<T>::operator=(const Array2D<T> &other)
+TrigArray2D<T>& TrigArray2D<T>::operator=(const TrigArray2D<T> &other)
 {
-    Array2DBase::operator=(other);
+    TrigArray2DBase::operator=(other);
     array = other.array;
     return *this;
 }
@@ -181,17 +181,17 @@ Array2D<T>& Array2D<T>::operator=(const Array2D<T> &other)
 /** Comparison operator */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-bool Array2D<T>::operator==(const Array2D<T> &other) const
+bool TrigArray2D<T>::operator==(const TrigArray2D<T> &other) const
 {
-    return Array2DBase::operator==(other) and array == other.array;
+    return TrigArray2DBase::operator==(other) and array == other.array;
 }
 
 /** Comparison operator */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-bool Array2D<T>::operator!=(const Array2D<T> &other) const
+bool TrigArray2D<T>::operator!=(const TrigArray2D<T> &other) const
 {
-    return Array2DBase::operator!=(other) or array != other.array;
+    return TrigArray2DBase::operator!=(other) or array != other.array;
 }
 
 /** Return a reference to the object in the ith row and
@@ -201,10 +201,9 @@ bool Array2D<T>::operator!=(const Array2D<T> &other) const
 */
 template<class T>
 SIRE_INLINE_TEMPLATE
-const T& Array2D<T>::operator()(int i, int j) const
+const T& TrigArray2D<T>::operator()(int i, int j) const
 {
-    Array2DBase::assertValidIndex(i,j);
-    return array.constData()[ Array2DBase::map(i,j) ];
+    return array.constData()[ TrigArray2DBase::checkedOffset(i,j) ];
 }
 
 /** Return a reference to the object in the ith row and
@@ -214,10 +213,9 @@ const T& Array2D<T>::operator()(int i, int j) const
 */
 template<class T>
 SIRE_INLINE_TEMPLATE
-T& Array2D<T>::operator()(int i, int j)
+T& TrigArray2D<T>::operator()(int i, int j)
 {
-    Array2DBase::assertValidIndex(i,j);
-    return array.data()[ Array2DBase::map(i,j) ];
+    return array.data()[ TrigArray2DBase::checkedOffset(i,j) ];
 }
 
 /** Return a reference to the object in the ith row and
@@ -227,55 +225,48 @@ T& Array2D<T>::operator()(int i, int j)
 */
 template<class T>
 SIRE_INLINE_TEMPLATE
-const T& Array2D<T>::at(int i, int j) const
+const T& TrigArray2D<T>::at(int i, int j) const
 {
-    return Array2D<T>::operator()(i,j);
+    return TrigArray2D<T>::operator()(i,j);
 }
 
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void Array2D<T>::set(int i, int j, const T &value)
+void TrigArray2D<T>::set(int i, int j, const T &value)
 {
     this->operator()(i,j) = value;
 }
 
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-const T& Array2D<T>::get(int i, int j) const
+const T& TrigArray2D<T>::get(int i, int j) const
 {
     return this->operator()(i,j);
 }
 
-/** Redimension this Array2D to nrows by ncolumns objects.
+/** Redimension this TrigArray2D to [dimension,dimension] objects.
     This will keep any existing data in the top left of the
     matrix if the matrix gets bigger, or it will crop any
     extra data to the bottom right if the matrix gets smaller 
 */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void Array2D<T>::redimension(int nrows, int ncolumns)
+void TrigArray2D<T>::redimension(int dimension)
 {
-    if (nrows < 0)
-        nrows = 0;
-        
-    if (ncolumns < 0)
-        ncolumns = 0;
-
-    if (nrows == this->nRows() and ncolumns == this->nColumns())
+    if (TrigArray2DBase::nRows() == dimension)
         return;
 
-    Array2D<T> new_array(nrows, ncolumns);
+    TrigArray2D<T> new_array(dimension);
     
     //copy the data...
-    nrows = qMin(nrows, this->nRows());
-    ncolumns = qMin(ncolumns, this->nColumns());
+    dimension = qMin(dimension, TrigArray2DBase::nRows());
     
     T *data = new_array.data();
     const T *old_data = array.constData();
     
-    for (int i=0; i<nrows; ++i)
+    for (int i=0; i<TrigArray2DBase::nRows(); ++i)
     {
-        for (int j=0; j<ncolumns; ++j)
+        for (int j=0; j<TrigArray2DBase::nRows(); ++j)
         {
             data[this->map(i,j)] = old_data[this->map(i,j)];
         }
@@ -288,7 +279,7 @@ void Array2D<T>::redimension(int nrows, int ncolumns)
     that the data is in row-major order */
 template<class T>
 SIRE_INLINE_TEMPLATE
-const T* Array2D<T>::data() const
+const T* TrigArray2D<T>::data() const
 {
     return array.data();
 }
@@ -297,7 +288,7 @@ const T* Array2D<T>::data() const
     that the data is in row-major order */
 template<class T>
 SIRE_INLINE_TEMPLATE
-T* Array2D<T>::data()
+T* TrigArray2D<T>::data()
 {
     return array.data();
 }
@@ -306,63 +297,23 @@ T* Array2D<T>::data()
     that the data is in row-major order */
 template<class T>
 SIRE_INLINE_TEMPLATE
-const T* Array2D<T>::constData() const
+const T* TrigArray2D<T>::constData() const
 {
     return array.constData();
-}
-
-/** Return a raw pointer to the first item in row 'i' */
-template<class T>
-SIRE_INLINE_TEMPLATE
-const T* Array2D<T>::row(int i) const
-{
-    return array.data() + Array2DBase::map(i,0);
-}
-
-/** Return a raw pointer to the first item in row 'i' */
-template<class T>
-SIRE_INLINE_TEMPLATE
-T* Array2D<T>::row(int i)
-{
-    return array.data() + Array2DBase::map(i,0);
-}
-
-/** Return a raw pointer to the first item in row 'i' */
-template<class T>
-SIRE_INLINE_TEMPLATE
-const T* Array2D<T>::constRow(int i) const
-{
-    return array.constData() + Array2DBase::map(i,0);
 }
 
 /** Return the transpose of this matrix */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Array2D<T> Array2D<T>::transpose() const
+TrigArray2D<T> TrigArray2D<T>::transpose() const
 {
-    if (array.isEmpty())
-        return Array2D<T>();
-    
-    Array2D trans( this->nColumns(), this->nRows() );
-    
-    T *new_array = trans.data();
-    const T *old_array = array.constData();
-    
-    for (int i=0; i < this->nRows(); ++i)
-    {
-        for (int j=0; j < this->nColumns(); ++j)
-        {
-            new_array[trans.map(j,i)] = old_array[this->map(i,j)];
-        }
-    }
-    
-    return trans;
+    return *this;
 }
 
 /** Set all values in this array equal to 'value' */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void Array2D<T>::setAll(const T &value)
+void TrigArray2D<T>::setAll(const T &value)
 {
     T *array_data = this->array.data();
     int count = this->array.count();
@@ -374,7 +325,7 @@ void Array2D<T>::setAll(const T &value)
 /** Return a string representation of this array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-QString Array2D<T>::toString() const
+QString TrigArray2D<T>::toString() const
 {
     if (this->nRows() == 0)
         return "( )";
@@ -421,11 +372,11 @@ QString Array2D<T>::toString() const
 /** Serialise to a binary datastream */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds, const SireBase::Array2D<T> &array)
+QDataStream& operator<<(QDataStream &ds, const SireBase::TrigArray2D<T> &array)
 {
     SireStream::SharedDataStream sds(ds);
     
-    sds << static_cast<const SireBase::Array2DBase&>(array)
+    sds << static_cast<const SireBase::TrigArray2DBase&>(array)
         << array.array;
         
     return ds;
@@ -434,11 +385,11 @@ QDataStream& operator<<(QDataStream &ds, const SireBase::Array2D<T> &array)
 /** Extract from a binary datastream */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds, SireBase::Array2D<T> &array)
+QDataStream& operator>>(QDataStream &ds, SireBase::TrigArray2D<T> &array)
 {
     SireStream::SharedDataStream sds(ds);
     
-    sds >> static_cast<SireBase::Array2DBase&>(array)
+    sds >> static_cast<SireBase::TrigArray2DBase&>(array)
         >> array.array;
         
     return ds;
@@ -446,10 +397,10 @@ QDataStream& operator>>(QDataStream &ds, SireBase::Array2D<T> &array)
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
 
-SIRE_EXPOSE_ALIAS( SireBase::Array2D<double>, SireBase::Array2D_double_ )
+SIRE_EXPOSE_ALIAS( SireBase::TrigArray2D<double>, SireBase::TrigArray2D_double_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
-template class SireBase::Array2D<double>;
+template class SireBase::TrigArray2D<double>;
 #endif
 
 SIRE_END_HEADER
