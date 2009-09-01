@@ -43,7 +43,7 @@ using SireMaths::Vector;
 
 class Orbital;
 class S_GTO;
-class CS_GTO;
+class P_GTO;
 class PointCharge;
 class PointDipole;
 
@@ -69,11 +69,11 @@ private:
     /** All of the S-basis functions */
     QVector<S_GTO> s_orbs;
     
-    /** All of the coordinates of the cs_orbital centers */
-    QVector<Vector> cs_centers;
+    /** All of the coordinates of the p_orbital centers */
+    QVector<Vector> p_centers;
     
-    /** All of the contracted S-basis functions */
-    QVector<CS_GTO> cs_orbs;
+    /** All of the P-basis functions */
+    QVector<P_GTO> p_orbs;
     
     /** All of the point charges (nuclei) */
     QVector<PointCharge> chgs;

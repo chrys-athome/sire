@@ -35,40 +35,40 @@ def printInt(sxsx, sxpx, pxsx, pxpx,
 
 
 print "OVERLAP"
-printInt( overlap_integral( SS_GTO(x,S,x,S) ), overlap_integral( SP_GTO(x,S,x,P) ),
-          overlap_integral( SP_GTO(x,P,x,S) ), overlap_integral( PP_GTO(x,P,x,P) ),
-          overlap_integral( SS_GTO(y,S,y,S) ), overlap_integral( SP_GTO(y,S,y,P) ),
-          overlap_integral( SP_GTO(y,P,y,S) ), overlap_integral( PP_GTO(y,P,y,P) ),
-          overlap_integral( SS_GTO(x,S,y,S) ), overlap_integral( SP_GTO(x,S,y,P) ),
-          overlap_integral( SP_GTO(x,P,y,S) ), overlap_integral( PP_GTO(x,P,y,P) ),
-          overlap_integral( SS_GTO(y,S,x,S) ), overlap_integral( SP_GTO(y,S,x,P) ),
-          overlap_integral( SP_GTO(y,P,x,S) ), overlap_integral( PP_GTO(y,P,x,P) ) )
+printInt( overlap_integral( SS_GTO(x,S,x,S) ), overlap_integral( PS_GTO(x,S,x,P) ),
+          overlap_integral( PS_GTO(x,P,x,S) ), overlap_integral( PP_GTO(x,P,x,P) ),
+          overlap_integral( SS_GTO(y,S,y,S) ), overlap_integral( PS_GTO(y,S,y,P) ),
+          overlap_integral( PS_GTO(y,P,y,S) ), overlap_integral( PP_GTO(y,P,y,P) ),
+          overlap_integral( SS_GTO(x,S,y,S) ), overlap_integral( PS_GTO(x,S,y,P) ),
+          overlap_integral( PS_GTO(x,P,y,S) ), overlap_integral( PP_GTO(x,P,y,P) ),
+          overlap_integral( SS_GTO(y,S,x,S) ), overlap_integral( PS_GTO(y,S,x,P) ),
+          overlap_integral( PS_GTO(y,P,x,S) ), overlap_integral( PP_GTO(y,P,x,P) ) )
 
 print "\nKINETIC"
-printInt( kinetic_integral( SS_GTO(x,S,x,S) ), kinetic_integral( SP_GTO(x,S,x,P) ),
-          kinetic_integral( SP_GTO(x,P,x,S) ), kinetic_integral( PP_GTO(x,P,x,P) ),
-          kinetic_integral( SS_GTO(y,S,y,S) ), kinetic_integral( SP_GTO(y,S,y,P) ),
-          kinetic_integral( SP_GTO(y,P,y,S) ), kinetic_integral( PP_GTO(y,P,y,P) ),
-          kinetic_integral( SS_GTO(x,S,y,S) ), kinetic_integral( SP_GTO(x,S,y,P) ),
-          kinetic_integral( SP_GTO(x,P,y,S) ), kinetic_integral( PP_GTO(x,P,y,P) ),
-          kinetic_integral( SS_GTO(y,S,x,S) ), kinetic_integral( SP_GTO(y,S,x,P) ),
-          kinetic_integral( SP_GTO(y,P,x,S) ), kinetic_integral( PP_GTO(y,P,x,P) ) )
+printInt( kinetic_integral( SS_GTO(x,S,x,S) ), kinetic_integral( PS_GTO(x,S,x,P) ),
+          kinetic_integral( PS_GTO(x,P,x,S) ), kinetic_integral( PP_GTO(x,P,x,P) ),
+          kinetic_integral( SS_GTO(y,S,y,S) ), kinetic_integral( PS_GTO(y,S,y,P) ),
+          kinetic_integral( PS_GTO(y,P,y,S) ), kinetic_integral( PP_GTO(y,P,y,P) ),
+          kinetic_integral( SS_GTO(x,S,y,S) ), kinetic_integral( PS_GTO(x,S,y,P) ),
+          kinetic_integral( PS_GTO(x,P,y,S) ), kinetic_integral( PP_GTO(x,P,y,P) ),
+          kinetic_integral( SS_GTO(y,S,x,S) ), kinetic_integral( PS_GTO(y,S,x,P) ),
+          kinetic_integral( PS_GTO(y,P,x,S) ), kinetic_integral( PP_GTO(y,P,x,P) ) )
 
 def pot_int( GTO ):
     return potential_integral(C, GTO) + potential_integral(D, GTO)
 
 print "\nPOTENTIAL"
-printInt( pot_int( SS_GTO(x,S,x,S) ), pot_int( SP_GTO(x,S,x,P) ),
-          pot_int( SP_GTO(x,P,x,S) ), pot_int( PP_GTO(x,P,x,P) ),
-          pot_int( SS_GTO(y,S,y,S) ), pot_int( SP_GTO(y,S,y,P) ),
-          pot_int( SP_GTO(y,P,y,S) ), pot_int( PP_GTO(y,P,y,P) ),
-          pot_int( SS_GTO(x,S,y,S) ), pot_int( SP_GTO(x,S,y,P) ),
-          pot_int( SP_GTO(x,P,y,S) ), pot_int( PP_GTO(x,P,y,P) ),
-          pot_int( SS_GTO(y,S,x,S) ), pot_int( SP_GTO(y,S,x,P) ),
-          pot_int( SP_GTO(y,P,x,S) ), pot_int( PP_GTO(y,P,x,P) ) )
+printInt( pot_int( SS_GTO(x,S,x,S) ), pot_int( PS_GTO(x,S,x,P) ),
+          pot_int( PS_GTO(x,P,x,S) ), pot_int( PP_GTO(x,P,x,P) ),
+          pot_int( SS_GTO(y,S,y,S) ), pot_int( PS_GTO(y,S,y,P) ),
+          pot_int( PS_GTO(y,P,y,S) ), pot_int( PP_GTO(y,P,y,P) ),
+          pot_int( SS_GTO(x,S,y,S) ), pot_int( PS_GTO(x,S,y,P) ),
+          pot_int( PS_GTO(x,P,y,S) ), pot_int( PP_GTO(x,P,y,P) ),
+          pot_int( SS_GTO(y,S,x,S) ), pot_int( PS_GTO(y,S,x,P) ),
+          pot_int( PS_GTO(y,P,x,S) ), pot_int( PP_GTO(y,P,x,P) ) )
 
 ssss = electron_integral(SS_GTO(x,S,x,S),SS_GTO(x,S,x,S))
-psss = electron_integral(SP_GTO(x,P,x,S),SS_GTO(x,S,x,S))
+psss = electron_integral(PS_GTO(x,P,x,S),SS_GTO(x,S,x,S))
 ppss = electron_integral(PP_GTO(x,P,x,P),SS_GTO(x,S,x,S))
 
 print "\nELECTRON";
@@ -79,8 +79,21 @@ print "3  0  0  0  %f" % (psss[2])
 
 print ppss
 
+ssss = electron_integral(SS_GTO(x,S,x,S),SS_GTO(y,S,y,S))
+psss = electron_integral(PS_GTO(x,P,x,S),SS_GTO(y,S,y,S))
+ppss = electron_integral(PP_GTO(x,P,x,P),SS_GTO(y,S,y,S))
+
+print "0  0  4  4  %f" % ssss
+print "1  0  4  4  %f" % (psss[0])
+print "2  0  4  4  %f" % (psss[1])
+print "3  0  4  4  %f" % (psss[2])  
+
+print ppss
+
 print electron_integral(PP_GTO(x,P,x,P),SS_GTO(y,S,y,S))
 
-print electron_integral(SP_GTO(x,S,x,P),SP_GTO(x,S,x,P))
-print electron_integral(SP_GTO(x,S,x,P),SP_GTO(y,S,y,P))
-print electron_integral(SP_GTO(x,S,y,P),SP_GTO(x,S,y,P))
+print electron_integral(PS_GTO(x,S,x,P),PS_GTO(x,S,x,P))
+print electron_integral(PS_GTO(x,S,x,P),PS_GTO(y,S,y,P))
+print electron_integral(PS_GTO(x,S,y,P),PS_GTO(x,S,y,P))
+print electron_integral(PP_GTO(x,P,x,P),PP_GTO(x,P,x,P))
+

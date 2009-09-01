@@ -36,38 +36,30 @@
 #include "SireMaths/matrix.h"
 #include "SireMaths/nmatrix.h"
 
-#include "SireBase/array2d.hpp"
-
 SIRE_BEGIN_HEADER
 
 namespace Squire
 {
 class P_GTO;
-class CP_GTO;
 
 class PP_GTO;
-class SP_GTO;
-class CPP_GTO;
-class CSP_GTO;
+class PS_GTO;
+}
+
+namespace SireBase
+{
+template<class T>
+class TrigArray2D;
 }
 
 QDataStream& operator<<(QDataStream&, const Squire::P_GTO&);
 QDataStream& operator>>(QDataStream&, Squire::P_GTO&);
 
-QDataStream& operator<<(QDataStream&, const Squire::CP_GTO&);
-QDataStream& operator>>(QDataStream&, Squire::CP_GTO&);
+QDataStream& operator<<(QDataStream&, const Squire::PS_GTO&);
+QDataStream& operator>>(QDataStream&, Squire::PS_GTO&);
 
 QDataStream& operator<<(QDataStream&, const Squire::PP_GTO&);
 QDataStream& operator>>(QDataStream&, Squire::PP_GTO&);
-
-QDataStream& operator<<(QDataStream&, const Squire::SP_GTO&);
-QDataStream& operator>>(QDataStream&, Squire::SP_GTO&);
-
-QDataStream& operator<<(QDataStream&, const Squire::CPP_GTO&);
-QDataStream& operator>>(QDataStream&, Squire::CPP_GTO&);
-
-QDataStream& operator<<(QDataStream&, const Squire::CSP_GTO&);
-QDataStream& operator>>(QDataStream&, Squire::CSP_GTO&);
 
 namespace Squire
 {
@@ -77,9 +69,8 @@ class PointDipole;
 
 using SireMaths::Vector;
 using SireMaths::Matrix;
-using SireMaths::NMatrix;
 
-using SireBase::Array2D;
+using SireBase::TrigArray2D;
  
 /** This is a single P-type shell of Gaussian Type Orbitals */
 class SQUIRE_EXPORT P_GTO : public SireBase::ConcreteProperty<P_GTO,GTO>
@@ -108,41 +99,45 @@ public:
 };
 
 /** This is a combined S-P GTO shell pair */
-class SQUIRE_EXPORT SP_GTO
+class SQUIRE_EXPORT PS_GTO : public SireBase::ConcreteProperty<PS_GTO,GTOPair>
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const SP_GTO&);
-friend QDataStream& ::operator>>(QDataStream&, SP_GTO&);
+friend QDataStream& ::operator<<(QDataStream&, const PS_GTO&);
+friend QDataStream& ::operator>>(QDataStream&, PS_GTO&);
 
 public:
-    SP_GTO();
-    SP_GTO(const Vector &A, const S_GTO &a,
+    PS_GTO();
+    PS_GTO(const Vector &A, const S_GTO &a,
            const Vector &B, const P_GTO &b);
-    SP_GTO(const Vector &A, const P_GTO &a,
+    PS_GTO(const Vector &A, const P_GTO &a,
            const Vector &B, const S_GTO &b);
            
-    SP_GTO(const SP_GTO &other);
+    PS_GTO(const PS_GTO &other);
     
-    ~SP_GTO();
+    ~PS_GTO();
     
     static const char* typeName();
     
-    SP_GTO& operator=(const SP_GTO &other);
+    PS_GTO& operator=(const PS_GTO &other);
     
-    bool operator==(const SP_GTO &other) const;
-    bool operator!=(const SP_GTO &other) const;
+    bool operator==(const PS_GTO &other) const;
+    bool operator!=(const PS_GTO &other) const;
     
     const Vector& P_minus_A() const;
-    const Vector& Q_minus_C() const;
+    const Vector& P_minus_B() const;
     
-    const SS_GTO& SS() const;
+    const Vector& Q_minus_C() const;
+    const Vector& Q_minus_D() const;
 
     double scale() const;
 
-private:
-    /** The combined SS GTO (used for Obara-Saika recursion) */
-    SS_GTO ss;
+    int angularMomentum0() const;
+    int angularMomentum1() const;
     
+    int nOrbitals0() const;
+    int nOrbitals1() const;
+
+private:
     /** The vector from the center of the P-orbital to
         the 'center of mass' of the shell-pair */
     Vector p_minus_a;
@@ -152,7 +147,7 @@ private:
 };
 
 /** This is a combined P-P GTO shell pair */
-class SQUIRE_EXPORT PP_GTO
+class SQUIRE_EXPORT PP_GTO : public SireBase::ConcreteProperty<PP_GTO,GTOPair>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const PP_GTO&);
@@ -182,12 +177,13 @@ public:
 
     double scale() const;
 
-    const SS_GTO& SS() const;
+    int angularMomentum0() const;
+    int angularMomentum1() const;
+    
+    int nOrbitals0() const;
+    int nOrbitals1() const;
 
 private:
-    /** The combined SS-GTO (used for obara-saika recursion) */
-    SS_GTO ss;
-
     /** The vector from the center of the first P orbital to the 
         center of mass of the gaussian */
     Vector p_minus_a;
@@ -200,44 +196,115 @@ private:
     double norm_scl;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+/** Return the vector from the center of the p orbital shell
+    to the center of mass of the combined gaussian */
+inline const Vector& PS_GTO::P_minus_A() const
+{
+    return p_minus_a;
+}
+
+/** Synonym for P_minus_A */
+inline const Vector& PS_GTO::P_minus_B() const
+{
+    return PS_GTO::P_minus_A();
+}
+
+/** Synonym for P_minus_A */
+inline const Vector& PS_GTO::Q_minus_C() const
+{
+    return PS_GTO::P_minus_A();
+}
+
+/** Synonym for P_minus_A */
+inline const Vector& PS_GTO::Q_minus_D() const
+{
+    return PS_GTO::P_minus_A();
+}
+
+/** Return the additional scaling constant needed to normalise
+    the integrals */
+inline double PS_GTO::scale() const
+{
+    return norm_scl;
+}
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
+
 //////////
-////////// Functions involving SP-orbitals
+////////// Integral functions involving P and S orbitals
 //////////
 
-Vector kinetic_integral(const SP_GTO &sp);
-Vector overlap_integral(const SP_GTO &sp);
+Vector kinetic_integral(const PS_GTO &P);
+Vector overlap_integral(const PS_GTO &P);
 
-Vector potential_integral(const PointCharge &Q, const SP_GTO &sp);
-Vector potential_integral(const PointDipole &Q, const SP_GTO &sp);
+Vector potential_integral(const QVector<PointCharge> &C, const PS_GTO &P);
+Vector potential_integral(const QVector<PointDipole> &C, const PS_GTO &P);
 
-Vector electron_integral(const SS_GTO &ss0, const SP_GTO &sp1);
-Vector electron_integral(const SP_GTO &sp0, const SS_GTO &ss1);
+Vector potential_integral(const PointCharge &C, const PS_GTO &P);
+Vector potential_integral(const PointDipole &C, const PS_GTO &P);
 
-Matrix electron_integral(const SP_GTO &sp0, const SP_GTO &sp1);
+Vector potential_integral(const QVector<PointCharge> &C, const PS_GTO &P, int m);
+Vector potential_integral(const QVector<PointDipole> &C, const PS_GTO &P, int m);
 
-//////////
-////////// Functions involving P-orbitals (only)
-//////////
+Vector potential_integral(const PointCharge &C, const PS_GTO &P, int m);
+Vector potential_integral(const PointDipole &C, const PS_GTO &P, int m);
 
-Matrix kinetic_integral(const PP_GTO &pp);
-Matrix overlap_integral(const PP_GTO &pp);
+Matrix kinetic_integral(const PP_GTO &P);
+Matrix overlap_integral(const PP_GTO &P);
 
-Matrix potential_integral(const PointCharge &Q, const PP_GTO &pp);
-Matrix potential_integral(const PointDipole &Q, const PP_GTO &pp);
+Matrix potential_integral(const QVector<PointCharge> &C, const PP_GTO &P);
+Matrix potential_integral(const QVector<PointDipole> &C, const PP_GTO &P);
 
-Matrix electron_integral(const SS_GTO &P, const PP_GTO &Q);
+Matrix potential_integral(const PointCharge &C, const PP_GTO &P);
+Matrix potential_integral(const PointDipole &C, const PP_GTO &P);
+
+Matrix potential_integral(const QVector<PointCharge> &C, const PP_GTO &P, int m);
+Matrix potential_integral(const QVector<PointDipole> &C, const PP_GTO &P, int m);
+
+Matrix potential_integral(const PointCharge &C, const PP_GTO &P, int m);
+Matrix potential_integral(const PointDipole &C, const PP_GTO &P, int m);
+
+///// Electron integrals involving S and P orbitals
+
+Vector electron_integral(const PS_GTO &P, const SS_GTO &Q);
+Vector electron_integral(const SS_GTO &P, const PS_GTO &Q);
+
+Matrix electron_integral(const PS_GTO &P, const PS_GTO &Q);
+
 Matrix electron_integral(const PP_GTO &P, const SS_GTO &Q);
+Matrix electron_integral(const SS_GTO &P, const PP_GTO &Q);
 
-Array2D<Matrix> electron_integral(const PP_GTO &pp0, const PP_GTO &pp1);
+SireBase::TrigArray2D<Vector> electron_integral(const PP_GTO &P, const PS_GTO &Q);
+SireBase::TrigArray2D<Vector> electron_integral(const PS_GTO &P, const PP_GTO &Q);
+
+SireBase::TrigArray2D<Matrix> electron_integral(const PP_GTO &P, const PP_GTO &Q);
+
+Vector electron_integral(const PS_GTO &P, const SS_GTO &Q, int m);
+Vector electron_integral(const SS_GTO &P, const PS_GTO &Q, int m);
+
+Matrix electron_integral(const PS_GTO &P, const PS_GTO &Q, int m);
+
+Matrix electron_integral(const PP_GTO &P, const SS_GTO &Q, int m);
+Matrix electron_integral(const SS_GTO &P, const PP_GTO &Q, int m);
+
+SireBase::TrigArray2D<Vector> 
+electron_integral(const PP_GTO &P, const PS_GTO &Q, int m);
+SireBase::TrigArray2D<Vector> 
+electron_integral(const PS_GTO &P, const PP_GTO &Q, int m);
+
+SireBase::TrigArray2D<Matrix> 
+electron_integral(const PP_GTO &P, const PP_GTO &Q, int m);
 
 }
 
 Q_DECLARE_METATYPE( Squire::P_GTO )
-Q_DECLARE_METATYPE( Squire::SP_GTO )
+Q_DECLARE_METATYPE( Squire::PS_GTO )
 Q_DECLARE_METATYPE( Squire::PP_GTO )
 
 SIRE_EXPOSE_CLASS( Squire::P_GTO )
-SIRE_EXPOSE_CLASS( Squire::SP_GTO )
+SIRE_EXPOSE_CLASS( Squire::PS_GTO )
 SIRE_EXPOSE_CLASS( Squire::PP_GTO )
 
 SIRE_EXPOSE_FUNCTION( Squire::kinetic_integral )

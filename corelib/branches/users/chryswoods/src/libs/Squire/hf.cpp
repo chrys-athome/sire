@@ -28,6 +28,7 @@
 
 #include "hf.h"
 #include "sgto.h"
+#include "pgto.h"
 #include "pointcharge.h"
 #include "pointdipole.h"
 
@@ -71,10 +72,10 @@ void HF::add(const Vector &center, const Orbital &orbital)
         s_centers.append(center);
         s_orbs.append(orbital.asA<S_GTO>());
     }
-    else if (orbital.isA<CS_GTO>())
+    else if (orbital.isA<P_GTO>())
     {
-        cs_centers.append(center);
-        cs_orbs.append(orbital.asA<CS_GTO>());
+        p_centers.append(center);
+        p_orbs.append(orbital.asA<P_GTO>());
     }
     else
         throw SireError::unsupported( QObject::tr(
@@ -111,93 +112,7 @@ static NMatrix make_overlap_matrix(const Array2D<SS_GTO> &orbitals)
     return overlap_matrix;
 }
 
-static NMatrix make_overlap_matrix(const Array2D<CSS_GTO> &orbitals)
-{
-    const int norbitals = orbitals.nRows();
-    
-    NMatrix overlap_matrix(norbitals, norbitals);
-
-    //calculate the overlap matrix - this is the overlap integral
-    //of all pairs of orbitals
-    for (int i=0; i<norbitals; ++i)
-    {
-        for (int j=0; j<norbitals; ++j)
-        {
-            overlap_matrix(i,j) = overlap_integral( orbitals(i,j) );
-        }
-    }
-
-    return overlap_matrix;
-}
-
 static NMatrix make_core_fock_matrix(const Array2D<SS_GTO> &orbitals,
-                                     const QVector<PointCharge> &charges)
-{
-    const int norbitals = orbitals.nRows();
-    const int ncharges = charges.count();
-
-    NMatrix fock_matrix(norbitals, norbitals);
-    NMatrix kinetic_matrix(norbitals, norbitals);
-    NMatrix nuclear_matrix(norbitals, norbitals, 0);
-    
-    //kinetic energy
-    for (int i=0; i<norbitals; ++i)
-    {
-        for (int j=0; j<norbitals; ++j)
-        {
-            kinetic_matrix(i,j) = kinetic_integral( orbitals(i,j) ); 
-        }
-    }
-    
-    qDebug() << "KINETIC MATRIX\n" << kinetic_matrix.toString();
-    
-    //nuclear-electron energy
-    for (int k=0; k<ncharges; ++k)
-    {
-        NMatrix my_nuclear_matrix(norbitals, norbitals);
-    
-        for (int i=0; i<norbitals; ++i)
-        {
-            for (int j=0; j<norbitals; ++j)
-            {
-                my_nuclear_matrix(i,j) = potential_integral(charges[k], orbitals(i,j));
-            }
-        }
-
-        nuclear_matrix += my_nuclear_matrix;
-        
-        qDebug() << "NUCLEAR MATRIX" << k << "\n" << my_nuclear_matrix.toString();
-    }
-
-    qDebug() << "NUCLEAR MATRIX\n" << nuclear_matrix.toString();
-    
-    for (int i=0; i<norbitals; ++i)
-    {
-        for (int j=0; j<norbitals; ++j)
-        {
-            fock_matrix(i,j) = kinetic_matrix(i,j) + nuclear_matrix(i,j);
-        }
-    }
-    
-    for (int i=0; i<norbitals; ++i)
-    {
-        for (int j=0; j<norbitals; ++j)
-        {
-            for (int k=0; k<norbitals; ++k)
-            {
-                for (int l=0; l<norbitals; ++l)
-                {
-                    qDebug() << i+1 << j+1 << k+1 << l+1 
-                             << electron_integral(orbitals(i,j), orbitals(k,l));
-                }
-            }
-        }
-    }
-    
-    return fock_matrix;
-}
-
-static NMatrix make_core_fock_matrix(const Array2D<CSS_GTO> &orbitals,
                                      const QVector<PointCharge> &charges)
 {
     const int norbitals = orbitals.nRows();
@@ -293,35 +208,6 @@ NMatrix make_G(const NMatrix &P, const Array2D<SS_GTO> &orbitals)
     return G;
 }
 
-NMatrix make_G(const NMatrix &P, const Array2D<CSS_GTO> &orbitals)
-{
-    const int norbitals = orbitals.nRows();
-    
-    NMatrix G(norbitals, norbitals);
-    
-    for (int i=0; i<norbitals; ++i)
-    {
-        for (int j=0; j<norbitals; ++j)
-        {
-            double v = 0;
-            
-            for (int k=0; k<norbitals; ++k)
-            {
-                for (int l=0; l<norbitals; ++l)
-                {
-                    v += P(k,l)*
-                            ( electron_integral(orbitals(i,j), orbitals(k,l))
-                              - 0.5*electron_integral(orbitals(i,l),orbitals(k,j)) );
-                }
-            }
-            
-            G(i,j) = v;
-        }
-    }
-    
-    return G;
-}
-
 double calc_e(const NMatrix &P, const NMatrix &H, const NMatrix &F)
 {
     double e_elec = 0;
@@ -375,28 +261,28 @@ double nuclear_energy(const QVector<PointCharge> &charges)
 
 void HF::solve()
 {
-    const int norbitals = cs_orbs.count();
+    const int norbitals = s_orbs.count();
 
     if (norbitals == 0)
         return;
 
     //make matrix of all orbital shell pairs
-    Array2D<CSS_GTO> css_orbitals(norbitals, norbitals);
+    Array2D<SS_GTO> ss_orbitals(norbitals, norbitals);
     
     for (int i=0; i<norbitals; ++i)
     {
         for (int j=0; j<norbitals; ++j)
         {
-            css_orbitals(i,j) = CSS_GTO( cs_centers.at(i), cs_orbs.at(i),
-                                         cs_centers.at(j), cs_orbs.at(j) );
+            ss_orbitals(i,j) = SS_GTO( s_centers.at(i), s_orbs.at(i),
+                                       s_centers.at(j), s_orbs.at(j) );
         }
     }
 
     //need to create the overlap matrix
-    NMatrix S = make_overlap_matrix(css_orbitals);
+    NMatrix S = make_overlap_matrix(ss_orbitals);
     
     //and the Fock matrix
-    NMatrix H = make_core_fock_matrix(css_orbitals, chgs);
+    NMatrix H = make_core_fock_matrix(ss_orbitals, chgs);
     
     qDebug() << "S\n" << S.toString();
     qDebug() << "H\n" << H.toString();
@@ -420,7 +306,7 @@ void HF::solve()
     NMatrix P(norbitals, norbitals, 0);
 
     //build the new fock matrix from the current density matrix
-    NMatrix G = make_G(P, css_orbitals);
+    NMatrix G = make_G(P, ss_orbitals);
     NMatrix F = H + G;
 
     double e_elec = calc_e(P, H, F);
@@ -473,7 +359,7 @@ void HF::solve()
         P = NEW_P;
 
         //build the new fock matrix from the current density matrix
-        G = make_G(P, css_orbitals);
+        G = make_G(P, ss_orbitals);
         F = H + G;
 
         qDebug() << "G\n" << G.toString();

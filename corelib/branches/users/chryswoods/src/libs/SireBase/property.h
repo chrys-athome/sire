@@ -178,6 +178,27 @@ public:
     template<class T0, class T1, class T2>
     ConcreteProperty(const T0 &t0, const T1 &t1, const T2 &t2);
 
+    template<class T0, class T1, class T2, class T3>
+    ConcreteProperty(const T0 &t0, const T1 &t1, const T2 &t2, const T3 &t3);
+
+    template<class T0, class T1, class T2, class T3, class T4>
+    ConcreteProperty(const T0 &t0, const T1 &t1, const T2 &t2, const T3 &t3,
+                     const T4 &t4);
+
+    template<class T0, class T1, class T2, class T3, class T4, class T5>
+    ConcreteProperty(const T0 &t0, const T1 &t1, const T2 &t2, const T3 &t3,
+                     const T4 &t4, const T5 &t5);
+
+    template<class T0, class T1, class T2, class T3, class T4, 
+             class T5, class T6>
+    ConcreteProperty(const T0 &t0, const T1 &t1, const T2 &t2, const T3 &t3,
+                     const T4 &t4, const T5 &t5, const T6 &t6);
+
+    template<class T0, class T1, class T2, class T3, class T4, 
+             class T5, class T6, class T7>
+    ConcreteProperty(const T0 &t0, const T1 &t1, const T2 &t2, const T3 &t3,
+                     const T4 &t4, const T5 &t5, const T6 &t6, const T7 &t7);
+
     virtual ~ConcreteProperty();
 
     ConcreteProperty<Derived,Base>& operator=(const Property &other);
@@ -545,6 +566,56 @@ template<class T0, class T1, class T2>
 SIRE_OUTOFLINE_TEMPLATE
 ConcreteProperty<Derived,Base>::ConcreteProperty(const T0 &t0, const T1 &t1,
                                                  const T2 &t2) : Base(t0,t1,t2)
+{}
+
+template<class Derived, class Base>
+template<class T0, class T1, class T2, class T3>
+SIRE_OUTOFLINE_TEMPLATE
+ConcreteProperty<Derived,Base>::ConcreteProperty(const T0 &t0, const T1 &t1,
+                                                 const T2 &t2, const T3 &t3) 
+                               : Base(t0,t1,t2,t3)
+{}
+
+template<class Derived, class Base>
+template<class T0, class T1, class T2, class T3,
+         class T4>
+SIRE_OUTOFLINE_TEMPLATE
+ConcreteProperty<Derived,Base>::ConcreteProperty(const T0 &t0, const T1 &t1,
+                                                 const T2 &t2, const T3 &t3,
+                                                 const T4 &t4) 
+                               : Base(t0,t1,t2,t3,t4)
+{}
+
+template<class Derived, class Base>
+template<class T0, class T1, class T2, class T3,
+         class T4, class T5>
+SIRE_OUTOFLINE_TEMPLATE
+ConcreteProperty<Derived,Base>::ConcreteProperty(const T0 &t0, const T1 &t1,
+                                                 const T2 &t2, const T3 &t3,
+                                                 const T4 &t4, const T5 &t5) 
+                               : Base(t0,t1,t2,t3,t4,t5)
+{}
+
+template<class Derived, class Base>
+template<class T0, class T1, class T2, class T3,
+         class T4, class T5, class T6>
+SIRE_OUTOFLINE_TEMPLATE
+ConcreteProperty<Derived,Base>::ConcreteProperty(const T0 &t0, const T1 &t1,
+                                                 const T2 &t2, const T3 &t3,
+                                                 const T4 &t4, const T5 &t5,
+                                                 const T6 &t6) 
+                               : Base(t0,t1,t2,t3,t4,t5,t6)
+{}
+
+template<class Derived, class Base>
+template<class T0, class T1, class T2, class T3,
+         class T4, class T5, class T6, class T7>
+SIRE_OUTOFLINE_TEMPLATE
+ConcreteProperty<Derived,Base>::ConcreteProperty(const T0 &t0, const T1 &t1,
+                                                 const T2 &t2, const T3 &t3,
+                                                 const T4 &t4, const T5 &t5,
+                                                 const T6 &t6, const T7 &t7) 
+                               : Base(t0,t1,t2,t3,t4,t5,t6,t7)
 {}
 
 template<class Derived, class Base>

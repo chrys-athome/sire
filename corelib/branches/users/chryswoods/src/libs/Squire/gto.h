@@ -31,38 +31,38 @@
 
 #include "orbital.h"
 
-#include "SireMaths/nvector.h"
+#include "SireMaths/vector.h"
 
 SIRE_BEGIN_HEADER
 
 namespace Squire
 {
 class GTO;
-class CGTO;
+class GTOPair;
 }
 
 QDataStream& operator<<(QDataStream&, const Squire::GTO&);
 QDataStream& operator>>(QDataStream&, Squire::GTO&);
 
-QDataStream& operator<<(QDataStream&, const Squire::CGTO&);
-QDataStream& operator>>(QDataStream&, Squire::CGTO&);
+QDataStream& operator<<(QDataStream&, const Squire::GTOPair&);
+QDataStream& operator>>(QDataStream&, Squire::GTOPair&);
 
 namespace Squire
 {
 
-using SireMaths::NVector;
+using SireMaths::Vector;
 
 /** This is the base class of all single Gaussian Type Orbital shells (GTOs)
-    (S_GTO (l==0), P_GTO (l==1), DPlus_GTO (l>=2))
+    (S_GTO (l==0), P_GTO (l==1), D_GTO (l==2), FPlus_GTO (l>=3))
     
     These orbitals are not used directly - rather they are combined into
     shell-pair orbitals, e.g. SS_GTO, SP_GTO etc. Integral functions then
     use these shell-pair orbital objects. The shell pair classes are;
     
-    SS_GTO, CSS_GTO
-    PP_GTO, CPP_GTO, SP_GTO, CSP_GTO
-    DPlusDPlus_GTO, CDPlusDPlus_GTO, PDPlus_GTO, CPDPlus_GTO, 
-                                     SDPlus_GTO, CSDPlus_GTO
+    SS_GTO
+    PP_GTO, PS_GTO
+    DD_GTO, DP_GTO, DS_GTO
+    FPlusFPlus_GTO, FPlusD_GTO, FPlusP_GTO, FPlusS_GTO
     
     An orbital shell contains all of the orbitals for a particular shell
     
@@ -106,59 +106,181 @@ private:
     double scl;
 };
 
-/** This is the base class of all Contracted Gaussian Type Orbitals (CGTO).
-    (e.g. CS_GTO (l==0), CP_GTO (l==1), CDPlus_GTO (l==2)
-
-    This contains just a single orbital shell, containing the 
-    correct number of orbitals for its angular momentum
-    (1 for S, 3 for P, 5+ for DPlus etc.)
-    
-    An orbital shell contains all of the orbitals for a particular shell
+/** This is the base class of all of the combined shell-pairs
+    (e.g. SS_GTO, PS_GTO etc.)
     
     @author Christopher Woods
 */
-class SQUIRE_EXPORT CGTO : public OrbitalShell
+class SQUIRE_EXPORT GTOPair : public ShellPair
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const CGTO&);
-friend QDataStream& ::operator>>(QDataStream&, CGTO&);
+friend QDataStream& ::operator<<(QDataStream&, const GTOPair&);
+friend QDataStream& ::operator>>(QDataStream&, GTOPair&);
 
 public:
-    CGTO();
-    virtual ~CGTO();
+    GTOPair();
+    GTOPair(const GTOPair &other);
+    
+    virtual ~GTOPair();
 
     static const char* typeName();
     
-    virtual CGTO* clone() const=0;
+    virtual GTOPair* clone() const=0;
+    
+    const Vector& P() const;
+    const Vector& Q() const;
+    
+    double R2() const;
+    
+    double zeta() const;
+    double eta() const;
+    
+    double xi() const;
+    
+    double K() const;
+    double K_AB() const;
+    double K_CD() const;
 
-    int nContractions() const;
+    double ss() const;
     
-    const NVector& alpha() const;
-    const NVector& beta() const;
+    static double T(const GTOPair &P, const GTOPair &Q);
+    static double preFac(const GTOPair &P, const GTOPair &Q);
     
-    const NVector& scale() const;
+    static Vector W(const GTOPair &P, const GTOPair &Q);
     
 protected:
-    CGTO(const NVector &alphas, const NVector &scales);
+    GTOPair(const Vector &A, const GTO &a,
+            const Vector &B, const GTO &b);
     
-    CGTO& operator=(const CGTO &other);
+    GTOPair& operator=(const GTOPair &other);
     
-    bool operator==(const CGTO &other) const;
-    bool operator!=(const CGTO &other) const;
+    bool operator==(const GTOPair &other) const;
+    bool operator!=(const GTOPair &other) const;
 
 private:
-    /** The orbital exponents (alpha) */
-    NVector alfas;
+    /** The center of this combined SS shell pair - for 
+        the orbitals a and b, with centers A and B and 
+        exponents alpha and beta, we get;
+        
+        P = (alpha*A + beta*B) / (alpha + beta) */
+    Vector _P;
     
-    /** The multiplication factors (including normalisation
-        constant) */
-    NVector scls;
+    /** The distance squared between the two centers */
+    double _R2;
+    
+    /** The zeta value of the combined gaussian. This is;
+    
+        zeta = alpha+beta
+    */
+    double _zeta;
+    
+    /** The xi value of the combined gaussian,
+    
+        xi = alpha*beta / (alpha + beta) 
+    */
+    double _xi;
+    
+    /** The K value for this combined gaussian. This is;
+    
+        K = sqrt(2) * pi^(5/4) * scl_a * scl_b * exp( (-alpha*beta/(alpha+beta))|A-B|^2 )
+                / (alpha_beta)
+    */
+    double _K;
+    
+    /** The (s||s) overlap integral for this pair of orbitals */
+    double _ss;
 };
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+/** Return the center of this shell-pair
+
+    P = Q = (alpha*A + beta*B) / (alpha + beta)
+*/
+inline const Vector& GTOPair::P() const
+{
+    return _P;
+}
+
+/** Return the center of this shell-pair 
+
+    Q = P = (alpha*A + beta*B) / (alpha + beta)
+*/
+inline const Vector& GTOPair::Q() const
+{
+    return GTOPair::P();
+}
+
+/** Return the distance-squared between the two orbitals
+    that make up this shell-pair */
+inline double GTOPair::R2() const
+{
+    return _R2;
+}
+
+/** Return the zeta value of this shell-pair 
+
+    zeta = eta = alpha+beta
+*/
+inline double GTOPair::zeta() const
+{
+    return _zeta;
+}
+
+/** Return the eta value of this shell-pair 
+
+    eta = zeta = alpha+beta
+*/
+inline double GTOPair::eta() const
+{
+    return GTOPair::zeta();
+}
+
+/** Return the xi value of this shell-pair.
+
+    xi = (alpha * beta) / (alpha + beta)
+*/
+inline double GTOPair::xi() const
+{
+    return _xi;
+}
+
+/** Return the K value for this shell pair
+
+    K = sqrt(2) * pi^(5/4) * scl_a * scl_b * exp( (-alpha*beta/(alpha+beta))|A-B|^2 )
+                / (alpha_beta)
+
+    (see Obara and Saika paper)
+*/
+inline double GTOPair::K() const
+{
+    return _K;
+}
+
+/** Synonym for GTOPair::K() */
+inline double GTOPair::K_AB() const
+{
+    return GTOPair::K();
+}
+
+/** Synonym for GTOPair::K() */
+inline double GTOPair::K_CD() const
+{
+    return GTOPair::K();
+}
+
+/** Return the (s||s) overlap integral for this pair of orbitals */
+inline double GTOPair::ss() const
+{
+    return _ss;
+}
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 
 SIRE_EXPOSE_CLASS( Squire::GTO )
-SIRE_EXPOSE_CLASS( Squire::CGTO )
+SIRE_EXPOSE_CLASS( Squire::GTOPair )
 
 SIRE_END_HEADER
 

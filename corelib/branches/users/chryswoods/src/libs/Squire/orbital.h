@@ -37,6 +37,7 @@ namespace Squire
 {
 class Orbital;
 class OrbitalShell;
+class ShellPair;
 }
 
 QDataStream& operator<<(QDataStream&, const Squire::Orbital&);
@@ -44,6 +45,9 @@ QDataStream& operator>>(QDataStream&, Squire::Orbital&);
 
 QDataStream& operator<<(QDataStream&, const Squire::OrbitalShell&);
 QDataStream& operator>>(QDataStream&, Squire::OrbitalShell&);
+
+QDataStream& operator<<(QDataStream&, const Squire::ShellPair&);
+QDataStream& operator>>(QDataStream&, Squire::ShellPair&);
 
 namespace Squire
 {
@@ -124,10 +128,42 @@ protected:
     bool operator!=(const OrbitalShell &other) const;
 };
 
+/** The base class of all combined pair orbitals */
+class SQUIRE_EXPORT ShellPair : public SireBase::Property
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const ShellPair&);
+friend QDataStream& ::operator>>(QDataStream&, ShellPair&);
+
+public:
+    ShellPair();
+    ShellPair(const ShellPair &other);
+    
+    virtual ~ShellPair();
+    
+    static const char* typeName();
+
+    virtual ShellPair* clone() const=0;
+    
+    virtual int angularMomentum0() const=0;
+    virtual int angularMomentum1() const=0;
+    
+    virtual int nOrbitals0() const=0;
+    virtual int nOrbitals1() const=0;
+
+protected:
+    ShellPair& operator=(const ShellPair &other);
+    
+    bool operator==(const ShellPair &other) const;
+    bool operator!=(const ShellPair &other) const;
+};
+
 }
 
 SIRE_EXPOSE_CLASS( Squire::Orbital )
 SIRE_EXPOSE_CLASS( Squire::OrbitalShell )
+
+SIRE_EXPOSE_CLASS( Squire::ShellPair )
 
 SIRE_END_HEADER
 

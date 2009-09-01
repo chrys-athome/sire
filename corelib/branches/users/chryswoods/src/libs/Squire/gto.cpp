@@ -144,117 +144,144 @@ const char* GTO::typeName()
 }
 
 //////////
-////////// Implementation of CGTO
+////////// Implementation of ShellPair
 //////////
 
-static const RegisterMetaType<CGTO> r_cgto( MAGIC_ONLY, CGTO::typeName() );
+static const RegisterMetaType<GTOPair> r_gtopair( MAGIC_ONLY, GTOPair::typeName() );
 
 /** Serialise to a binary datastream */
-QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const CGTO &cgto)
+QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const GTOPair &gtopair)
 {
-    writeHeader(ds, r_cgto, 1);
+    writeHeader(ds, r_gtopair, 1);
     
-    SharedDataStream sds(ds);
-    
-    sds << cgto.alfas << cgto.scls << static_cast<const OrbitalShell&>(cgto);
-    
+    ds << gtopair._P << gtopair._R2 << gtopair._zeta << gtopair._xi
+       << gtopair._K << gtopair._ss
+       << static_cast<const ShellPair&>(gtopair);
+       
     return ds;
 }
 
 /** Extract from a binary datastream */
-QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, CGTO &cgto)
+QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, GTOPair &gtopair)
 {
-    VersionID v = readHeader(ds, r_cgto);
+    VersionID v = readHeader(ds, r_gtopair);
     
     if (v == 1)
     {
-        SharedDataStream sds(ds);
-        
-        sds >> cgto.alfas >> cgto.scls >> static_cast<OrbitalShell&>(cgto);
+        ds >> gtopair._P >> gtopair._R2 >> gtopair._zeta
+           >> gtopair._xi >> gtopair._K >> gtopair._ss
+           >> static_cast<ShellPair&>(gtopair);
     }
     else
-        throw version_error(v, "1", r_cgto, CODELOC);
+        throw version_error(v, "1", r_gtopair, CODELOC);
         
     return ds;
 }
 
-/** Constructor */
-CGTO::CGTO() : OrbitalShell()
+/** Null constructor */
+GTOPair::GTOPair() 
+        : ShellPair(), _R2(0), _zeta(0), _xi(0), _K(0), _ss(0)
 {}
 
-/** Construct using the passed alphas (exponents) and (unnormalised) 
-    scaling factors 
-    
-    \throw SireError::incompatible_error
-*/
-CGTO::CGTO(const NVector &alphas, const NVector &scales)
-     : OrbitalShell(), alfas(alphas), scls(scales)
+static const double sqrt_two_times_pi_to_5_4 = std::sqrt(2.0) * std::pow(pi, (5.0/4.0));
+static const double four_over_pi2 = 4 / (pi*pi);
+
+/** Construct a shell pair from the passed two GTO orbital shells,
+    located at the specified points */
+GTOPair::GTOPair(const Vector &A, const GTO &a,
+                 const Vector &B, const GTO &b)
+        : ShellPair()
 {
-    if (alfas.count() != scls.count())
-        throw SireError::incompatible_error( QObject::tr(
-                "You cannot construct a contracted GTO using a different "
-                "number of alpha values (%1) to scale factor values (%2).")
-                    .arg(alphas.count()).arg(scales.count()), CODELOC );
+    //the product of two Gaussians is a Gaussian :-)
+    const double alpha_times_beta = a.alpha() * b.alpha();
+    const double alpha_plus_beta = a.alpha() + b.alpha();
+    
+    _P = (a.alpha()*A + b.alpha()*B) / alpha_plus_beta;
+    _R2 = Vector::distance2(A, B);
+    _zeta = alpha_plus_beta;
+    _xi = alpha_times_beta / alpha_plus_beta;
+    
+    const double scl = a.scale() * b.scale() *
+                          std::pow( four_over_pi2 * a.alpha() * b.beta(), 0.75 );
+    
+    const double G = scl * std::exp(-_xi*_R2);
+    _ss = std::pow( pi / _zeta, 1.5 ) * G;
+
+    _K = sqrt_two_times_pi_to_5_4 * G / alpha_plus_beta;
 }
 
-/** Destructor */
-CGTO::~CGTO()
+/** Copy constructor */
+GTOPair::GTOPair(const GTOPair &other) 
+        : ShellPair(other),
+          _P(other._P), _R2(other._R2), _zeta(other._zeta), _xi(other._xi), 
+          _K(other._K), _ss(other._ss)
 {}
 
-/** Copy assignment operator */
-CGTO& CGTO::operator=(const CGTO &other)
+/** Destructor */
+GTOPair::~GTOPair()
+{}
+
+const char* GTOPair::typeName()
 {
-    if (this != &other)
-    {
-        alfas = other.alfas;
-        scls = other.scls;
-        OrbitalShell::operator=(other);
-    }
+    return "Squire::GTOPair";
+}
+
+/** Copy assignment operator */
+GTOPair& GTOPair::operator=(const GTOPair &other)
+{
+    _P = other._P;
+    _R2 = other._R2;
+    _zeta = other._zeta;
+    _xi = other._xi;
+    _K = other._K;
+    _ss = other._ss;
+    
+    ShellPair::operator=(other);
     
     return *this;
 }
 
 /** Comparison operator */
-bool CGTO::operator==(const CGTO &other) const
+bool GTOPair::operator==(const GTOPair &other) const
 {
-    return this == &other or
-           (alfas == other.alfas and scls == other.scls and 
-            OrbitalShell::operator==(other ) );
+    return _P == other._P and _R2 == other._R2 and 
+           _zeta == other._zeta and _K == other._K and
+           ShellPair::operator==(other);
 }
 
 /** Comparison operator */
-bool CGTO::operator!=(const CGTO &other) const
+bool GTOPair::operator!=(const GTOPair &other) const
 {
     return not this->operator==(other);
 }
 
-/** Return the number of contractions (primitive gaussians) that
-    are used to construct this orbital */
-int CGTO::nContractions() const
+/** Return the T value for the two passed GTOPair pairs
+
+    T = (zeta eta / (zeta+eta)) (P-Q)^2
+*/
+double GTOPair::T(const GTOPair &P, const GTOPair &Q)
 {
-    return alfas.count();
+    return ( (P.zeta()*Q.eta()) / (P.zeta()+Q.eta()) ) * 
+                Vector::distance2(P.P(), Q.Q());
 }
 
-/** Return the vector of alpha values */
-const NVector& CGTO::alpha() const
+/** Return the prefactor value for the two passed GTOPair pairs
+
+    preFac = K_AB K_CD / Sqrt(zeta+eta)
+*/
+double GTOPair::preFac(const GTOPair &P, const GTOPair &Q)
 {
-    return alfas;
+    return P.K_AB() * Q.K_CD() / std::sqrt(P.zeta() + Q.eta());
 }
 
-/** Convenient synonym for 'alpha()' - so you can write
-    a.alpha() * b.beta() and have it mean what you expect */
-const NVector& CGTO::beta() const
-{
-    return CGTO::alpha();
-}
+/** Return the W value for the two passed GTOPair pairs 
 
-/** Return the vector of unnormalised scaling factors */
-const NVector& CGTO::scale() const
+    W = (zeta/(zeta+eta)) P + (eta/(zeta+eta)) Q
+*/
+Vector GTOPair::W(const GTOPair &P, const GTOPair &Q)
 {
-    return scls;
-}
-
-const char* CGTO::typeName()
-{
-    return "Squire::CGTO";
+    const double zeta_plus_eta = P.zeta() + Q.eta();
+    
+    return ( (P.zeta()/zeta_plus_eta) * P.P() ) + 
+           ( (Q.eta()/zeta_plus_eta) * Q.Q() );
 }

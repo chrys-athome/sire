@@ -49,7 +49,13 @@ void multi_boys_3(double x, double boys[3]);
 void multi_boys_4(double x, double boys[4]);
 void multi_boys_n(double x, double boys[], int n);
 
+void multi_boys_2(double x, double boys[2], int start);
+void multi_boys_3(double x, double boys[3], int start);
+void multi_boys_4(double x, double boys[4], int start);
+void multi_boys_n(double x, double boys[], int n, int start);
+
 QVector<double> multi_boys(double x, int n);
+QVector<double> multi_boys(double x, int n, int start);
 
 }
 

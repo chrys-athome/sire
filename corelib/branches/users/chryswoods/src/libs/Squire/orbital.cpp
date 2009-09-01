@@ -169,3 +169,70 @@ const char* OrbitalShell::typeName()
 {
     return "Squire::OrbitalShell";
 }
+
+////////////
+//////////// Implementation of ShellPair
+////////////
+
+static const RegisterMetaType<ShellPair> r_shellpair( MAGIC_ONLY, ShellPair::typeName() );
+
+/** Serialise to a binary datastream */
+QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const ShellPair &pair)
+{
+    writeHeader(ds, r_shellpair, 1);
+    
+    ds << static_cast<const Property&>(pair);
+    
+    return ds;
+}
+
+/** Extract from a binary datastream */
+QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, ShellPair &pair)
+{
+    VersionID v = readHeader(ds, r_shellpair);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<Property&>(pair);
+    }
+    else
+        throw version_error(v, "1", r_shellpair, CODELOC);
+        
+    return ds;
+}
+
+/** Constructor */
+ShellPair::ShellPair() : Property()
+{}
+
+/** Copy constructor */
+ShellPair::ShellPair(const ShellPair &other) : Property(other)
+{}
+
+/** Destructor */
+ShellPair::~ShellPair()
+{}
+
+/** Copy assignment operator */
+ShellPair& ShellPair::operator=(const ShellPair &other)
+{
+    Property::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool ShellPair::operator==(const ShellPair &other) const
+{
+    return Property::operator==(other);
+}
+
+/** Comparison operator */
+bool ShellPair::operator!=(const ShellPair &other) const
+{
+    return Property::operator!=(other);
+}
+
+const char* ShellPair::typeName()
+{
+    return "Squire::ShellPair";
+}

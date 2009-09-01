@@ -31,20 +31,12 @@
 
 #include "gto.h"
 
-#include "SireMaths/vector.h"
-#include "SireMaths/nmatrix.h"
-
-#include "SireBase/array2d.hpp"
-
 SIRE_BEGIN_HEADER
 
 namespace Squire
 {
 class S_GTO;
 class SS_GTO;
-
-class CS_GTO;
-class CSS_GTO;
 }
 
 QDataStream& operator<<(QDataStream&, const Squire::S_GTO&);
@@ -53,22 +45,11 @@ QDataStream& operator>>(QDataStream&, Squire::S_GTO&);
 QDataStream& operator<<(QDataStream&, const Squire::SS_GTO&);
 QDataStream& operator>>(QDataStream&, Squire::SS_GTO&);
 
-QDataStream& operator<<(QDataStream&, const Squire::CS_GTO&);
-QDataStream& operator>>(QDataStream&, Squire::CS_GTO&);
-
-QDataStream& operator<<(QDataStream&, const Squire::CSS_GTO&);
-QDataStream& operator>>(QDataStream&, Squire::CSS_GTO&);
-
 namespace Squire
 {
 
 class PointCharge;
 class PointDipole;
-
-using SireMaths::Vector;
-using SireMaths::NMatrix;
-
-using SireBase::Array2D;
 
 /** This is a single S-type Gaussian Type Orbital shell */
 class SQUIRE_EXPORT S_GTO : public SireBase::ConcreteProperty<S_GTO,GTO>
@@ -76,8 +57,6 @@ class SQUIRE_EXPORT S_GTO : public SireBase::ConcreteProperty<S_GTO,GTO>
 public:
     S_GTO();
     S_GTO(double alpha, double scale=1);
-
-    explicit S_GTO(const GTO &other);
     
     S_GTO(const S_GTO &other);
     
@@ -94,35 +73,9 @@ public:
     int nOrbitals() const;
 };
 
-/** This is a single contracted S-type Gaussian Type Orbital shell */
-
-/** This is a contracted S-type (l==0) Gaussian Type Orbital shell. */
-class SQUIRE_EXPORT CS_GTO : public SireBase::ConcreteProperty<CS_GTO,CGTO>
-{
-public:
-    CS_GTO();
-    CS_GTO(const QVector<double> &alphas, const QVector<double> &scales);
-    
-    explicit CS_GTO(const CGTO &other);
-    
-    CS_GTO(const CS_GTO &other);
-    
-    ~CS_GTO();
-    
-    static const char* typeName();
-    
-    CS_GTO& operator=(const CS_GTO &other);
-
-    bool operator==(const CS_GTO &other) const;
-    bool operator!=(const CS_GTO &other) const;
-    
-    int angularMomentum() const;
-    int nOrbitals() const;
-};
-
 /** This is the combined SS shell pair composed from two S-type
     GTO shells */
-class SQUIRE_EXPORT SS_GTO
+class SQUIRE_EXPORT SS_GTO : public SireBase::ConcreteProperty<SS_GTO,GTOPair>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const SS_GTO&);
@@ -130,8 +83,8 @@ friend QDataStream& ::operator>>(QDataStream&, SS_GTO&);
 
 public:
     SS_GTO();
-    SS_GTO(const Vector &p0, const S_GTO &s0,
-           const Vector &p1, const S_GTO &s1);
+    SS_GTO(const Vector &A, const S_GTO &a,
+           const Vector &B, const S_GTO &b);
 
     SS_GTO(const SS_GTO &other);
     
@@ -143,195 +96,43 @@ public:
     
     bool operator==(const SS_GTO &other) const;
     bool operator!=(const SS_GTO &other) const;
-    
-    const Vector& P() const;
-    const Vector& Q() const;
-    
-    double R2() const;
-    
-    double eta() const;
-    double zeta() const;
-    
-    double chi() const;
-    
-    double alpha_plus_beta() const;
-    double alpha_times_beta() const;
-    
-    double K() const;
-    double K_AB() const;
-    double K_CD() const;
 
-    double overlap() const;
-
-private:
-    /** The center of this combined SS shell pair - for 
-        the orbitals a and b, with centers A and B and 
-        exponents alpha and beta, we get;
-        
-        P = (alpha*A + beta*B) / (alpha + beta) */
-    Vector _P;
+    int angularMomentum0() const;
+    int angularMomentum1() const;
     
-    /** The distance squared between the two centers */
-    double _R2;
-    
-    /** The eta value of the combined gaussian. This is;
-    
-        eta = alpha+beta
-    */
-    double _eta;
-    
-    /** The chi value of the combined gaussian,
-    
-        chi = alpha*beta / (alpha + beta) 
-    */
-    double _chi;
-    
-    /** The K value for this combined gaussian. This is;
-    
-        G = sqrt(2) * pi^(5/4) * scl_a * scl_b * exp( (-alpha*beta/(alpha+beta))|A-B|^2 )
-                / (alpha_beta)
-    */
-    double _K;
-    
-    /** The overlap integral for this pair of orbitals (s||s) */
-    double _overlap;
-};    
-
-/** This is the combined SS shell pair composed from two contracted
-    S-type GTO shells, or from a CS_GTO and a S_GTO */
-class SQUIRE_EXPORT CSS_GTO
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const CSS_GTO&);
-friend QDataStream& ::operator>>(QDataStream&, CSS_GTO&);
-
-public:
-    CSS_GTO();
-
-    CSS_GTO(const Vector &p0, const S_GTO &s0,
-            const Vector &p1, const S_GTO &s1);
-
-    CSS_GTO(const Vector &p0, const S_GTO &s0,
-            const Vector &p1, const CS_GTO &s1);
-
-    CSS_GTO(const Vector &p0, const CS_GTO &s0,
-            const Vector &p1, const S_GTO &s1);
-
-    CSS_GTO(const Vector &p0, const CS_GTO &s0,
-            const Vector &p1, const CS_GTO &s1);
-
-    CSS_GTO(const CSS_GTO &other);
-    
-    ~CSS_GTO();
-    
-    static const char* typeName();
-    
-    CSS_GTO& operator=(const CSS_GTO &other);
-    
-    bool operator==(const CSS_GTO &other) const;
-    bool operator!=(const CSS_GTO &other) const;
-    
-    int nPairs() const;
-    
-    const Array2D<Vector>& P() const;
-    const Array2D<Vector>& Q() const;
-
-    double R2() const;
-    
-    const NMatrix& eta() const;
-    const NMatrix& zeta() const;
-
-    const NMatrix& chi() const;
-    
-    const NMatrix& alpha_plus_beta() const;
-    NMatrix alpha_times_beta() const;
-    
-    const NMatrix& K() const;
-    const NMatrix& K_AB() const;
-    const NMatrix& K_CD() const;
-
-    const NMatrix& overlap() const;
-
-private:
-    /** The centers of this combined CSS shell pair - for 
-        orbitals a and b, with centers A and B, and exponents
-        alpha[i] and beta[i,j], we get;
-        
-        P[i,j] = (alpha[i]*A + beta[j]*B) / (alpha + beta)
-    */
-    Array2D<Vector> _P;
-    
-    /** The distance between the two centers */
-    double _R2;
-    
-    /** The alpha values of the combined gaussian. This is 
-    
-        eta[i,j] = alpha[i] + beta[j]
-
-    */
-    NMatrix _eta;
-    
-    /** The chi value of the combined gaussian,
-    
-        chi[i,j] = alpha[i]*beta[j] / (alpha[i] + beta[j])
-    */
-    NMatrix _chi;
-    
-    /** The K value for this combined gaussian. This is;
-    
-        K = sqrt(2) * pi^(5/4) * scl_a * scl_b * exp( (-alpha*beta/(alpha+beta))|A-B|^2 )
-                / (alpha_beta)
-    */
-    NMatrix _K;
-    
-    /** The overlap integral between each pair of primitives (s||s) */
-    NMatrix _overlap;
+    int nOrbitals0() const;
+    int nOrbitals1() const;
 };    
 
 //////////
-////////// Functions involving S-orbitals (only)
+////////// Integrals involving only S-orbitals
 //////////
 
-double kinetic_integral(const SS_GTO &ss);
-double overlap_integral(const SS_GTO &ss);
+double kinetic_integral(const SS_GTO &P);
+double overlap_integral(const SS_GTO &P);
 
-double potential_integral(const PointCharge &Q, const SS_GTO &ss);
-double potential_integral(const PointDipole &Q, const SS_GTO &ss);
+double potential_integral(const QVector<PointCharge> &C, const SS_GTO &P);
+double potential_integral(const QVector<PointDipole> &C, const SS_GTO &P);
 
-double potential_integral(const PointCharge &Q, const SS_GTO &ss, int m);
-double potential_integral(const PointDipole &Q, const SS_GTO &ss, int m);
+double potential_integral(const QVector<PointCharge> &C, const SS_GTO &P, int m);
+double potential_integral(const QVector<PointDipole> &C, const SS_GTO &P, int m);
 
-double electron_integral(const SS_GTO &ss0, const SS_GTO &ss1);
-double electron_integral(const SS_GTO &ss0, const SS_GTO &ss1, int m);
+double potential_integral(const PointCharge &Q, const SS_GTO &P);
+double potential_integral(const PointDipole &Q, const SS_GTO &P);
 
-double kinetic_integral(const CSS_GTO &css);
-double overlap_integral(const CSS_GTO &css);
+double potential_integral(const PointCharge &C, const SS_GTO &P, int m);
+double potential_integral(const PointDipole &C, const SS_GTO &P, int m);
 
-double potential_integral(const PointCharge &Q, const CSS_GTO &css);
-double potential_integral(const PointDipole &Q, const CSS_GTO &css);
-
-double potential_integral(const PointCharge &Q, const CSS_GTO &css, int m);
-double potential_integral(const PointDipole &Q, const CSS_GTO &css, int m);
-
-double electron_integral(const SS_GTO &ss, const CSS_GTO &css);
-double electron_integral(const CSS_GTO &css, const SS_GTO &ss);
-double electron_integral(const CSS_GTO &css0, const CSS_GTO &css1);
-
-double electron_integral(const SS_GTO &ss, const CSS_GTO &css, int m);
-double electron_integral(const CSS_GTO &css, const SS_GTO &ss, int m);
-double electron_integral(const CSS_GTO &css0, const CSS_GTO &css1, int m);
+double electron_integral(const SS_GTO &P, const SS_GTO &Q);
+double electron_integral(const SS_GTO &P, const SS_GTO &Q, int m);
 
 }
 
 Q_DECLARE_METATYPE( Squire::S_GTO )
-Q_DECLARE_METATYPE( Squire::CS_GTO )
 Q_DECLARE_METATYPE( Squire::SS_GTO )
-Q_DECLARE_METATYPE( Squire::CSS_GTO )
 
 SIRE_EXPOSE_CLASS( Squire::S_GTO )
-SIRE_EXPOSE_CLASS( Squire::CS_GTO )
 SIRE_EXPOSE_CLASS( Squire::SS_GTO )
-SIRE_EXPOSE_CLASS( Squire::CSS_GTO )
 
 SIRE_EXPOSE_FUNCTION( Squire::kinetic_integral )
 SIRE_EXPOSE_FUNCTION( Squire::potential_integral )
