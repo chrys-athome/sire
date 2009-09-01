@@ -178,7 +178,7 @@ PS_GTO::PS_GTO(const Vector &A, const P_GTO &a,
     position 'B' */
 PS_GTO::PS_GTO(const Vector &A, const S_GTO &a,
                const Vector &B, const P_GTO &b)
-       : ConcreteProperty<PS_GTO,GTOPair>(A, a, B, b)
+       : ConcreteProperty<PS_GTO,GTOPair>(B, b, A, a)
 {
     p_minus_a = P() - B;
     norm_scl = std::sqrt(4 * b.beta());
@@ -840,13 +840,14 @@ Vector SQUIRE_EXPORT electron_integral(const SS_GTO &P, const PS_GTO &Q, int m)
 static Matrix my_electron_integral(const PS_GTO &P, const PS_GTO &Q,
                                    const double boys[3])
 {
-    // (ps|ps) = prefac * { Fm(T) (Pi-Ai) (Qk-Ck) + Fm+2(T) (Wi-Pi) (Wk-Qk) +
-    //                      Fm+1(T) [ (Qk-Ck)(Wi-Pi) + (Pi-Ai)(Wk-Qk) +
+    // (ps|ps) = prefac * { F0(T) (Pi-Ai) (Qk-Ck) + 
+    //                      F2(T) (Wi-Pi) (Wk-Qk) +
+    //                      F1(T) [(Qk-Ck)(Wi-Pi) + (Pi-Ai)(Wk-Qk) +
     //                                (delta_ik / 2(zeta+eta)) ] }
 
     const double prefac = P.scale() * Q.scale() * GTOPair::preFac(P, Q);
+
     const Vector W = GTOPair::W(P, Q);
-    
     const Vector W_minus_P = W - P.P();
     const Vector W_minus_Q = W - Q.Q();
     
@@ -874,14 +875,13 @@ static Matrix my_electron_integral(const PS_GTO &P, const PS_GTO &Q,
     }
     
     //do the diagonal elements
-    const double extra_ii = prefac / (2*P.zeta()+Q.eta());
+    const double extra_ii = 0.5 / (P.zeta()+Q.eta());
     
     for (int i=0; i<3; ++i)
     {
         m[ mat.offset(i,i) ] = prefac * (
                                  boys[0]*pa[i]*qc[i] + boys[2]*wp[i]*wq[i] + 
-                                 boys[1]*(qc[i]*wp[i] + pa[i]*wq[i])
-                                         ) + extra_ii;
+                                 boys[1]*(qc[i]*wp[i] + pa[i]*wq[i] + extra_ii) );
     }
     
     return mat;
@@ -906,7 +906,51 @@ Matrix SQUIRE_EXPORT electron_integral(const PS_GTO &P, const PS_GTO &Q, int m)
 static Matrix my_electron_integral(const PP_GTO &P, const SS_GTO &Q, 
                                    const double boys[3])
 {
-    return Matrix(0);
+    // (pp|ss) = prefac * { F2(T) (Wi-Pi)(Wj-Pj) + 
+    //                      F0(T) (Pi-Ai)(Pj-Bj) +
+    //                      F1(T) [(Pj-Bj)(Wi-Pi) + (Pi-Ai)(Wj-Pj)] +
+    //                      delta_ij/2zeta [F0(T) - rho/zeta F1(T)] }
+
+    const double prefac = P.scale() * GTOPair::preFac(P,Q);
+    const double rho = GTOPair::rho(P,Q);
+    const Vector W_minus_P = GTOPair::W(P,Q) - P.P();
+
+    Matrix mat;
+    double *m = mat.data();
+    
+    const double *pa = P.P_minus_A().constData();
+    const double *pb = P.P_minus_B().constData();
+    const double *wp = W_minus_P.constData();
+    
+    //do the off-diagonal elements
+    for (int i=0; i<2; ++i)
+    {
+        for (int j=i+1; j<3; ++j)
+        {
+            const double val = prefac * (
+                                   boys[0]*pa[i]*pb[j] + 
+                                   boys[2]*wp[i]*wp[j] +
+                                   boys[1]*(pb[j]*wp[i] + pa[i]*wp[j]) );
+        
+            m[ mat.offset(i,j) ] = val;
+            m[ mat.offset(j,i) ] = val;
+        }
+    }
+    
+    const double one_over_zeta = 1 / P.zeta();
+    
+    const double extra = 0.5 * one_over_zeta * (boys[0] - 
+                                                boys[1] * rho * one_over_zeta);
+                                                
+    for (int i=0; i<3; ++i)
+    {
+        m[ mat.offset(i,i) ] = prefac * (
+                                   boys[0]*pa[i]*pb[i] + 
+                                   boys[2]*wp[i]*wp[i] +
+                                   boys[1]*(pb[i]*wp[i] + pa[i]*wp[i]) + extra );
+    }
+    
+    return mat;
 }
 
 /** Return the electron repulsion integral (pp|ss) */
@@ -940,7 +984,115 @@ Matrix SQUIRE_EXPORT electron_integral(const SS_GTO &P, const PP_GTO &Q, int m)
 static TrigArray2D<Vector> 
 my_electron_integral(const PP_GTO &P, const PS_GTO &Q, const double boys[4])
 {
-    return TrigArray2D<Vector>(3);
+    // (pp|ps) = prefactor * { F3(T) (Wi-Pi)(Wj-Pj)(Wk-Qk) +
+    // 
+    //                         F0(T) (Pi-Ai)(Pj-Bj)(Qk-Ck) +
+    //
+    //                         F1(T) [(Pj-Bj)(Qk-Ck)(Wi-Pi) + 
+    //                                (Pi-Ai)(Qk-Ck)(Wj-Pj) +
+    //                                (Pi-Ai)(Pj-Bj)(Wk-Qk)] +
+    //
+    //                         F2(T) [(Qk-Ck)(Wi-Pi)(Wj-Pj) +
+    //                                (Pj-Bj)(Wi-Pi)(Wk-Qk) +
+    //                                (Pi-Ai)(Wj-Pj)(Wk-Qk)] +
+    //
+    //        delta_ij/(2zeta)[ F0(T)(Qk-Ck) + 
+    //                          F1(T)[(Wk-Qj) - (rho/zeta)(Qk-Ck)] -
+    //                          F2(T)[rho/zeta (Wk-Qk)] ] +
+    //
+    //        delta_ik/2(zeta+eta)[ F1(T)(Pj-Bj) + F2(T)(Wj-Pj) ] +
+    //
+    //        delta_jk/2(zeta+eta)[ F1(T)(Pi-Ai) + F2(T)(Wi-Pi) ] }
+
+    const double prefac = P.scale() * Q.scale() * GTOPair::preFac(P,Q);
+    const double rho = GTOPair::rho(P,Q);
+
+    const Vector W = GTOPair::W(P,Q);
+    const Vector W_minus_P = W - P.P();
+    const Vector W_minus_Q = W - Q.Q();
+    
+    const double *pa = P.P_minus_A().constData();
+    const double *pb = P.P_minus_B().constData();
+    const double *qc = Q.Q_minus_C().constData();
+    const double *wp = W_minus_P.constData();
+    const double *wq = W_minus_Q.constData();
+
+    const double inv_zeta = 0.5 / P.zeta();
+    const double inv_zeta_eta = 1.0 / (2.0*(P.zeta()+Q.eta()));
+    
+    const Vector extra_ij = inv_zeta * 
+                               (boys[0]*Q.Q_minus_C() + 
+                                boys[1]*(W_minus_Q - (rho/P.zeta())*Q.Q_minus_C()) -
+                                boys[2]*(rho/P.zeta())*W_minus_Q);
+                                        
+    const Vector extra_ik = inv_zeta_eta * (boys[1]*P.P_minus_B() + boys[2]*W_minus_P);
+    const Vector extra_jk = inv_zeta_eta * (boys[1]*P.P_minus_A() + boys[2]*W_minus_P);
+
+    const double *ij = extra_ij.constData();
+    const double *ik = extra_ik.constData();
+    const double *jk = extra_jk.constData();
+
+    TrigArray2D<Vector> mat(3);
+    
+    Vector *m = mat.data();
+    
+    //do the off-diagonal elements
+    for (int i=0; i<2; ++i)
+    {
+        for (int j=i+1; j<3; ++j)
+        {
+            Vector v;
+            double *vdata = v.data();
+            
+            //do the common parts of i,j,k
+            for (int k=0; k<3; ++k)
+            {
+                vdata[k] = boys[3]*wp[i]*wp[j]*wq[k] + 
+                           boys[0]*pa[i]*pb[j]*qc[k] +
+                           boys[1]*(pb[j]*qc[k]*wp[i] + 
+                                    pa[i]*qc[k]*wp[j] +
+                                    pa[i]*pb[j]*wq[k]) +
+                           boys[2]*(qc[k]*wp[i]*wp[j] +
+                                    pb[j]*wp[i]*wq[k] +
+                                    pa[i]*wp[j]*wq[k]);
+            }
+            
+            //do i == k
+            vdata[i] += ik[j];
+            
+            //do j == k
+            vdata[j] += jk[i];
+            
+            m[ mat.offset(i,j) ] = prefac * v;
+        }
+    }
+
+    //do the diagonal elements
+    for (int i=0; i<3; ++i)
+    {
+        Vector v;
+        double *vdata = v.data();
+        
+        //do the common parts of i,j,k
+        for (int k=0; k<3; ++k)
+        {
+            vdata[k] = boys[3]*wp[i]*wp[i]*wq[k] + 
+                       boys[0]*pa[i]*pb[i]*qc[k] +
+                       boys[1]*(pb[i]*qc[k]*wp[i] + 
+                                pa[i]*qc[k]*wp[i] +
+                                pa[i]*pb[i]*wq[k]) +
+                       boys[2]*(qc[k]*wp[i]*wp[i] +
+                                pb[i]*wp[i]*wq[k] +
+                                pa[i]*wp[i]*wq[k]) + ij[k];
+        }
+        
+        //do i == j == k
+        vdata[i] += ik[i] + jk[i];
+        
+        m[ mat.offset(i,i) ] = prefac * v;
+    }
+
+    return mat;
 }
 
 /** Return the electron repulsion integral (pp|ps) */

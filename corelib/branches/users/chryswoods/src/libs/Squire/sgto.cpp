@@ -357,27 +357,13 @@ double SQUIRE_EXPORT potential_integral(const PointDipole &C, const SS_GTO &P, i
 /** Return the electron repulsion integral, (ss|ss) */
 double SQUIRE_EXPORT electron_integral(const SS_GTO &P, const SS_GTO &Q)
 {
-    // (ss|ss) = K_AB K_CD F0{ (zeta*eta/(zeta+eta)) (P-Q)^2 } / Sqrt(zeta+eta)
-    const double zeta_plus_eta = P.zeta() + Q.eta();
-    const double zeta_times_eta = P.zeta() * Q.eta();
-
-    const double R2 = Vector::distance2( P.P(), Q.Q() );
-    const double T = (zeta_times_eta/zeta_plus_eta) * R2;
-
-    return P.K_AB() * Q.K_CD() * boys_f0(T) / std::sqrt(zeta_plus_eta);
+    return GTOPair::preFac(P,Q) * boys_f0( GTOPair::T(P,Q) );
 }
 
 /** Return the electron repulsion integral, (ss|ss)^m */
 double SQUIRE_EXPORT electron_integral(const SS_GTO &P, const SS_GTO &Q, int m)
 {
-    // (ss|ss) = K_AB K_CD Fm{ (zeta*eta/(zeta+eta)) (P-Q)^2 } / Sqrt(zeta+eta)
-    const double zeta_plus_eta = P.zeta() + Q.eta();
-    const double zeta_times_eta = P.zeta() * Q.eta();
-
-    const double R2 = Vector::distance2( P.P(), Q.Q() );
-    const double T = (zeta_times_eta/zeta_plus_eta) *   R2;
-
-    return P.K_AB() * Q.K_CD() * boys(m, T) / std::sqrt(zeta_plus_eta);
+    return GTOPair::preFac(P,Q) * boys_f1( GTOPair::T(P,Q) );
 }
 
 } // end of namespace Squire

@@ -135,6 +135,8 @@ public:
         return Vector::typeName();
     }
 
+    double* data();
+
     const double* data() const;
     const double* constData() const;
 
@@ -280,6 +282,12 @@ inline bool Vector::operator!=(const Vector &other) const
     return &other != this and
            (sc[0] != other.sc[0] or sc[1] != other.sc[1] or
             sc[2] != other.sc[2]);
+}
+
+/** Return a raw pointer to the array of coordinates */
+inline double* Vector::data()
+{
+    return &(sc[0]);
 }
 
 /** Return a raw pointer to the array of coordinates */

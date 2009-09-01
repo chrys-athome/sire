@@ -67,33 +67,25 @@ printInt( pot_int( SS_GTO(x,S,x,S) ), pot_int( PS_GTO(x,S,x,P) ),
           pot_int( SS_GTO(y,S,x,S) ), pot_int( PS_GTO(y,S,x,P) ),
           pot_int( PS_GTO(y,P,x,S) ), pot_int( PP_GTO(y,P,x,P) ) )
 
-ssss = electron_integral(SS_GTO(x,S,x,S),SS_GTO(x,S,x,S))
-psss = electron_integral(PS_GTO(x,P,x,S),SS_GTO(x,S,x,S))
-ppss = electron_integral(PP_GTO(x,P,x,P),SS_GTO(x,S,x,S))
+print "xxxx ssss ",electron_integral(SS_GTO(x,S,x,S),SS_GTO(x,S,x,S))
+print "xxxx psss ",electron_integral(PS_GTO(x,P,x,S),SS_GTO(x,S,x,S))
+print "xxxx ppss ",electron_integral(PP_GTO(x,P,x,P),SS_GTO(x,S,x,S))
 
-print "\nELECTRON";
-print "0  0  0  0  %f" % (ssss)
-print "1  0  0  0  %f" % (psss[0])
-print "2  0  0  0  %f" % (psss[1])
-print "3  0  0  0  %f" % (psss[2])
+print "yxxx ssss ",electron_integral(SS_GTO(x,S,x,S),SS_GTO(x,S,y,S))
+print "yyxx ssss  ",electron_integral(SS_GTO(x,S,x,S),SS_GTO(y,S,y,S))
+print "yyyx ssss ",electron_integral(SS_GTO(x,S,y,S),SS_GTO(y,S,y,S))
+print "yyyy ssss ",electron_integral(SS_GTO(y,S,y,S),SS_GTO(y,S,y,S))
 
-print ppss
+print "yyxx ssps ",electron_integral(PS_GTO(x,P,x,S),SS_GTO(y,S,y,S))
+print "yyxx sspp ",electron_integral(PP_GTO(x,P,x,P),SS_GTO(y,S,y,S))
+print "yyxx ppss ",electron_integral(SS_GTO(x,S,x,S),PP_GTO(y,P,y,P))
 
-ssss = electron_integral(SS_GTO(x,S,x,S),SS_GTO(y,S,y,S))
-psss = electron_integral(PS_GTO(x,P,x,S),SS_GTO(y,S,y,S))
-ppss = electron_integral(PP_GTO(x,P,x,P),SS_GTO(y,S,y,S))
+print "yxyx spss ",electron_integral(PS_GTO(x,P,y,S),SS_GTO(x,S,y,S))
 
-print "0  0  4  4  %f" % ssss
-print "1  0  4  4  %f" % (psss[0])
-print "2  0  4  4  %f" % (psss[1])
-print "3  0  4  4  %f" % (psss[2])  
-
-print ppss
-
-print electron_integral(PP_GTO(x,P,x,P),SS_GTO(y,S,y,S))
-
-print electron_integral(PS_GTO(x,S,x,P),PS_GTO(x,S,x,P))
-print electron_integral(PS_GTO(x,S,x,P),PS_GTO(y,S,y,P))
-print electron_integral(PS_GTO(x,S,y,P),PS_GTO(x,S,y,P))
-print electron_integral(PP_GTO(x,P,x,P),PP_GTO(x,P,x,P))
-
+print "xxxx psps ",electron_integral(PS_GTO(x,P,x,S),PS_GTO(x,P,x,S))
+print "yyxx psps ",electron_integral(PS_GTO(y,P,y,S),PS_GTO(x,P,x,S))
+print "yxyx psps ",electron_integral(PS_GTO(x,S,y,P),PS_GTO(x,S,y,P))
+print "yxyx spsp ",electron_integral(PS_GTO(y,S,x,P),PS_GTO(y,S,x,P))
+print "yxyx spps ",electron_integral(PS_GTO(y,S,x,P),PS_GTO(y,P,x,S))
+print "xxxx ppps ",electron_integral(PP_GTO(y,P,y,P),PS_GTO(x,P,x,S))
+print "yxyx ppps ",electron_integral(PP_GTO(y,P,x,P),PS_GTO(y,P,x,S))

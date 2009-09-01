@@ -144,6 +144,9 @@ public:
     double ss() const;
     
     static double T(const GTOPair &P, const GTOPair &Q);
+    
+    static double rho(const GTOPair &P, const GTOPair &Q);
+    
     static double preFac(const GTOPair &P, const GTOPair &Q);
     
     static Vector W(const GTOPair &P, const GTOPair &Q);

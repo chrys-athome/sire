@@ -255,14 +255,22 @@ bool GTOPair::operator!=(const GTOPair &other) const
     return not this->operator==(other);
 }
 
+/** Return the rho value for the two passed GTOPair pairs 
+
+    rho = (zeta * eta) / (zeta + eta)
+*/
+double GTOPair::rho(const GTOPair &P, const GTOPair &Q)
+{
+    return (P.zeta() * Q.eta()) / (P.zeta() + Q.eta());
+}
+
 /** Return the T value for the two passed GTOPair pairs
 
-    T = (zeta eta / (zeta+eta)) (P-Q)^2
+    T = rho (P-Q)^2
 */
 double GTOPair::T(const GTOPair &P, const GTOPair &Q)
 {
-    return ( (P.zeta()*Q.eta()) / (P.zeta()+Q.eta()) ) * 
-                Vector::distance2(P.P(), Q.Q());
+    return GTOPair::rho(P,Q) * Vector::distance2(P.P(), Q.Q());
 }
 
 /** Return the prefactor value for the two passed GTOPair pairs
