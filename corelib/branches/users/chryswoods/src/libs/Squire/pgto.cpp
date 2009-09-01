@@ -1128,7 +1128,323 @@ TrigArray2D<Vector> SQUIRE_EXPORT electron_integral(const PS_GTO &P,
 static TrigArray2D<Matrix>
 my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
 {
-    return TrigArray2D<Matrix>(3);
+    // (pp|pp) = prefac * {  F4(T)(WPi WPj WQk WQl) + 
+    //                       
+    //          F3(T)[ (QDl WPi WPj WQk) + (QCk WPi WPj WQl) +
+    //                 (PBj WPi WQk WQl) + (PAi WPj WQk WQl) ] +
+    //
+    //          F0(T)[ PAi PBj QCk QDl ] +
+    //
+    //          F2(T)[ (QCk QDl WPi WPj) + (PAi PBj WQk WQl) ] +
+    //
+    //          F1(T)[ (PBj QCk QDl WPi) + (PAi QCk QDl WPj) + 
+    //                 (PAi PBk QDl WQk) + (PAi PBj QCk WQl) ] +
+    //
+    //  delta_ij/2zeta{ F3(T)[-rho/zeta WQk WQl] + F0(T)[QCk QDl] +
+    //                  F2(T)[-rho/zeta[QDl WQk + QCk WQl] + WQk WQl ] +
+    //                  F1(T)[-rho/zeta[QCk QDl] + QDl WQk + QCk WQl ] } +
+    //
+    //  delta_kl/2eta { F3(T)[-rho/eta WPi WPj ] + F0(T)[PAi PBj] + 
+    //                  F2(T)[-rho/eta [PBj WPi + PAi WPj] + WPi WPj ] +
+    //                  F1(T)[-rho/eta [PAi PBj] + PBj WPi + PAi WPj ] } +
+    //
+    //  delta_ik/2(e+z){ F3(T)[WPj WQl] + F2(T)[QDl WPj + PBj WQl] + 
+    //                   F1(T)[PBj QDl] } +
+    //
+    //  delta_il/2(e+z){ F3(T)[WPj WQk] + F2(T)[QCk WPj + PBj WQk] +
+    //                   F1(T)[PBj QCk] } +
+    //
+    //  delta_jk/2(e+z){ F3(T)[WPi WQl] + F2(T)[QDl WPi + PAi WQl] + 
+    //                   F1(T)[PAi QDl] } +
+    //
+    //  delta_jl/2(e+z){ F3(T)[WPi WQk] + F2(T)[QCk WPi + PAi WQk] + 
+    //                   F1(T)[PAi QCk] } +
+    //
+    //  delta_il delta_jk/4(e+z)^2{ F2(T) } +
+    //
+    //  delta_ik delta_jl/4(e+z)^2{ F2(T) } }
+    //
+    //  delta_ij delta_kl/4ez { F0(T) + (rho/ez) F2(T) + 
+    //                          F1(T)[-rho/eta - rho/zeta] } +
+
+    const double prefac = P.scale() * Q.scale() + GTOPair::preFac(P,Q);
+    
+    const double rho = GTOPair::rho(P,Q);
+    const Vector W = GTOPair::W(P,Q);
+    
+    const Vector W_minus_P = W - P.P();
+    const Vector W_minus_Q = W - Q.Q();
+
+    const double *pa = P.P_minus_A().constData();
+    const double *pb = P.P_minus_B().constData();
+    const double *qc = Q.Q_minus_C().constData();
+    const double *qd = Q.Q_minus_D().constData();
+    const double *wp = W_minus_P.constData();
+    const double *wq = W_minus_Q.constData();
+    
+    TrigArray2D<Matrix> mat(3);
+    Matrix *m = mat.data();
+    
+    const double prefac_over_2zeta = prefac / (2*P.zeta());
+    const double prefac_over_2eta = prefac / (2*Q.eta());
+    const double prefac_over_2e_pl_z = prefac / (2*(P.zeta()+Q.eta()));
+    const double prefac_over_4e_pl_z2 = prefac / (4*pow_2(P.zeta()+Q.eta()));
+    const double prefac_over_4ez = prefac / (4*P.zeta()*Q.eta());
+    
+    const double rho_over_zeta = rho / P.zeta();
+    const double rho_over_eta = rho / Q.eta();
+    const double rho_over_ez = rho / (P.zeta()*Q.eta());
+    
+    //the delta_xy parts are 3x3 matricies
+    Matrix delta_ij, delta_kl, delta_ik, delta_il, delta_jk, delta_jl;
+    double *m_ij = delta_ij.data();
+    double *m_kl = delta_kl.data();
+    double *m_ik = delta_ik.data();
+    double *m_il = delta_il.data();
+    double *m_jk = delta_jk.data();
+    double *m_jl = delta_jl.data();
+    
+    // i == j
+    for (int k=0; k<3; ++k)
+    {
+        for (int l=0; l<3; ++l)
+        {
+            m_ij[ delta_ij.offset(k,l) ] = prefac_over_2zeta * 
+                   ( boys[0]*qc[k]*qd[l] -
+                     boys[3]*rho_over_zeta*wq[k]*wq[l] +
+                     boys[2]*(wq[k]*wq[l] - rho_over_zeta*(qd[l]*wq[k] + qc[k]*wq[l])) +
+                     boys[1]*(qd[l]*wq[k] + qc[k]*wq[l] - rho_over_zeta*qc[k]*qd[l]) );
+        }
+    }
+    
+    // k == l
+    for (int i=0; i<3; ++i)
+    {
+        for (int j=0; j<3; ++j)
+        {
+            m_kl[ delta_kl.offset(i,j) ] = prefac_over_2eta * (
+                    boys[0]*pa[i]*pb[j] -
+                    boys[3]*rho_over_eta*wp[i]*wp[j] +
+                    boys[2]*(wp[i]*wp[j] - rho_over_eta*(pb[j]*wp[i] + pa[i]*wp[j])) +
+                    boys[1]*(pb[j]*wp[i] + pa[i]*wp[j] - rho_over_eta*pa[i]*pb[j]) );
+        }
+    }
+    
+    // i == k
+    for (int j=0; j<3; ++j)
+    {
+        for (int l=0; l<3; ++l)
+        {
+            m_ik[ delta_ik.offset(j,l) ] = prefac_over_2e_pl_z * (
+                        boys[1]*pb[j]*qd[l] + 
+                        boys[2]*(qd[l]*wp[j] + pb[j]*wq[l]) +
+                        boys[3]*wp[j]*wq[l] );
+        }
+    }
+    
+    // i == l
+    for (int j=0; j<3; ++j)
+    {
+        for (int k=0; k<3; ++k)
+        {
+            m_il[ delta_il.offset(j,k) ] = prefac_over_2e_pl_z * (
+                        boys[1]*pb[j]*qc[k] +
+                        boys[2]*(qc[k]*wp[j] + pb[j]*wq[k]) +
+                        boys[3]*wp[j]*wq[k] );
+        }
+    }
+    
+    // j == k
+    for (int i=0; i<3; ++i)
+    {
+        for (int l=0; l<3; ++l)
+        {
+            m_jk[ delta_jk.offset(i,l) ] = prefac_over_2e_pl_z * (
+                        boys[1]*pa[i]*qd[l] +
+                        boys[2]*(qd[l]*wp[i] + pa[i]*wq[l]) +
+                        boys[3]*wp[i]*wq[l] );
+        }
+    }
+    
+    // j == l
+    for (int i=0; i<3; ++i)
+    {
+        for (int k=0; k<3; ++k)
+        {
+            m_jl[ delta_jl.offset(i,k) ] = prefac_over_2e_pl_z * (
+                        boys[1]*pa[i]*qc[k] +
+                        boys[2]*(qc[k]*wp[i] + pa[i]*wq[k]) +
+                        boys[3]*wp[i]*wq[k] );
+        }
+    }
+    
+    // i == l and j == k
+    for (int i=0; i<3; ++i)
+    {
+        m_il[ delta_il.offset(i,i) ] += prefac_over_4e_pl_z2 * boys[2];
+    }
+
+    // i == k and j == l
+    for (int i=0; i<3; ++i)
+    {
+        m_ik[ delta_ik.offset(i,i) ] += prefac_over_4e_pl_z2 * boys[2];
+    }
+    
+    // i == j and k == l
+    for (int i=0; i<3; ++i)
+    {
+        m_ij[ delta_ij.offset(i,i) ] += prefac_over_4ez * (
+                                boys[0] - 
+                                boys[1]*(rho_over_eta + rho_over_zeta) + 
+                                boys[2]*rho_over_ez );
+    }
+    
+    /////////
+    ///////// Now everything is pre-computed, lets do the real work
+    /////////
+    
+    //first do the off-diagonal (i,j) elements
+    for (int i=0; i<2; ++i)
+    {
+        for (int j=i+1; j<3; ++j)
+        {
+            Matrix &ij_mat = m[ mat.offset(i,j) ];
+            double *ij_m = ij_mat.data();
+
+            //do the off-diagonal (k,l) elements
+            for (int k=0; k<2; ++k)
+            {
+                for (int l=k+1; k<3; ++k)
+                {
+                    //first the part common to all...
+                    const double val = prefac * (
+                                       boys[4]*wp[i]*wp[j]*wq[k]*wq[l] +
+                                       boys[3]*(qd[l]*wp[i]*wp[j]*wq[k] + 
+                                                qc[k]*wp[i]*wp[j]*wq[l] +
+                                                pb[j]*wp[i]*wq[k]*wq[l] +
+                                                pa[i]*wp[j]*wq[k]*wq[l]) +
+                                       boys[0]*pa[i]*pb[j]*qc[k]*qd[l] +
+                                       boys[2]*(qc[k]*qd[l]*wp[i]*wp[j] +
+                                                pa[i]*pb[j]*wq[k]*wq[l]) +
+                                       boys[1]*(pb[j]*qc[k]*qd[l]*wp[i] +
+                                                pa[i]*qc[k]*qd[l]*wp[j] +
+                                                pa[i]*pb[k]*qd[l]*pb[j] +
+                                                pa[i]*pb[j]*qc[k]*wq[l]) );
+                                                
+                    ij_m[ ij_mat.offset(k,l) ] = val;
+                    ij_m[ ij_mat.offset(l,k) ] = val;
+                }
+            }
+            
+            //do the diagonal elements (k == l)
+            for (int k=0; k<3; ++k)
+            {
+                const double val = prefac * (
+                                   boys[4]*wp[i]*wp[j]*wq[k]*wq[k] +
+                                   boys[3]*(qd[k]*wp[i]*wp[j]*wq[k] + 
+                                            qc[k]*wp[i]*wp[j]*wq[k] +
+                                            pb[j]*wp[i]*wq[k]*wq[k] +
+                                            pa[i]*wp[j]*wq[k]*wq[k]) +
+                                   boys[0]*pa[i]*pb[j]*qc[k]*qd[k] +
+                                   boys[2]*(qc[k]*qd[k]*wp[i]*wp[j] +
+                                            pa[i]*pb[j]*wq[k]*wq[k]) +
+                                   boys[1]*(pb[j]*qc[k]*qd[k]*wp[i] +
+                                            pa[i]*qc[k]*qd[k]*wp[j] +
+                                            pa[i]*pb[k]*qd[k]*pb[j] +
+                                            pa[i]*pb[j]*qc[k]*wq[k]) );
+                ij_m[ ij_mat.offset(k,k) ] = val + m_kl[ delta_kl.offset(i,j) ];
+            }
+            
+            //now add on the deltas
+            
+            // i == k, j == k
+            for (int l=0; l<3; ++l)
+            {
+                ij_m[ ij_mat.offset(i,l) ] += m_ik[ delta_ik.offset(j,l) ];
+                ij_m[ ij_mat.offset(j,l) ] += m_jk[ delta_jk.offset(i,l) ];
+            }
+            
+            // i == l, j == l
+            for (int k=0; k<3; ++k)
+            {
+                ij_m[ ij_mat.offset(k,i) ] += m_il[ delta_il.offset(j,k) ];
+                ij_m[ ij_mat.offset(k,j) ] += m_jl[ delta_jl.offset(i,k) ]; 
+            }
+        }
+    }
+    
+    //now do the diagonal (i==j) elements
+    for (int i=0; i<3; ++i)
+    {
+        Matrix &ij_mat = m[ mat.offset(i,i) ];
+        double *ij_m = ij_mat.data();
+
+        //do the off-diagonal (k,l) elements
+        for (int k=0; k<2; ++k)
+        {
+            for (int l=k+1; k<3; ++k)
+            {
+                //first the part common to all...
+                const double val = prefac * (
+                                   boys[4]*wp[i]*wp[i]*wq[k]*wq[l] +
+                                   boys[3]*(qd[l]*wp[i]*wp[i]*wq[k] + 
+                                            qc[k]*wp[i]*wp[i]*wq[l] +
+                                            pb[i]*wp[i]*wq[k]*wq[l] +
+                                            pa[i]*wp[i]*wq[k]*wq[l]) +
+                                   boys[0]*pa[i]*pb[i]*qc[k]*qd[l] +
+                                   boys[2]*(qc[k]*qd[l]*wp[i]*wp[i] +
+                                            pa[i]*pb[i]*wq[k]*wq[l]) +
+                                   boys[1]*(pb[i]*qc[k]*qd[l]*wp[i] +
+                                            pa[i]*qc[k]*qd[l]*wp[i] +
+                                            pa[i]*pb[k]*qd[l]*pb[i] +
+                                            pa[i]*pb[i]*qc[k]*wq[l]) );
+                                            
+                ij_m[ ij_mat.offset(k,l) ] = val;
+                ij_m[ ij_mat.offset(l,k) ] = val;
+            }
+        }
+        
+        //do the diagonal elements (k == l)
+        for (int k=0; k<3; ++k)
+        {
+            const double val = prefac * (
+                               boys[4]*wp[i]*wp[i]*wq[k]*wq[k] +
+                               boys[3]*(qd[k]*wp[i]*wp[i]*wq[k] + 
+                                        qc[k]*wp[i]*wp[i]*wq[k] +
+                                        pb[i]*wp[i]*wq[k]*wq[k] +
+                                        pa[i]*wp[i]*wq[k]*wq[k]) +
+                               boys[0]*pa[i]*pb[i]*qc[k]*qd[k] +
+                               boys[2]*(qc[k]*qd[k]*wp[i]*wp[i] +
+                                        pa[i]*pb[i]*wq[k]*wq[k]) +
+                               boys[1]*(pb[i]*qc[k]*qd[k]*wp[i] +
+                                        pa[i]*qc[k]*qd[k]*wp[i] +
+                                        pa[i]*pb[k]*qd[k]*pb[i] +
+                                        pa[i]*pb[i]*qc[k]*wq[k]) );
+
+            ij_m[ ij_mat.offset(k,k) ] = val + m_kl[ delta_kl.offset(i,i) ];
+        }
+        
+        //now add on the deltas
+        // i == k, j == k
+        for (int l=0; l<3; ++l)
+        {
+            ij_m[ ij_mat.offset(i,l) ] += m_ik[ delta_ik.offset(i,l) ];
+            ij_m[ ij_mat.offset(i,l) ] += m_jk[ delta_jk.offset(i,l) ];
+        }
+        
+        // i == l, j == l
+        for (int k=0; k<3; ++k)
+        {
+            ij_m[ ij_mat.offset(k,i) ] += m_il[ delta_il.offset(i,k) ];
+            ij_m[ ij_mat.offset(k,i) ] += m_jl[ delta_jl.offset(i,k) ]; 
+        }
+
+        
+        // i == j
+        ij_mat += delta_ij;
+    }
+    
+    return mat;
 }
 
 /** Return the electron repulsion integral (pp|pp) */

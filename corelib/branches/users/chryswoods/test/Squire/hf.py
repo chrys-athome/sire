@@ -89,3 +89,6 @@ print "yxyx spsp ",electron_integral(PS_GTO(y,S,x,P),PS_GTO(y,S,x,P))
 print "yxyx spps ",electron_integral(PS_GTO(y,S,x,P),PS_GTO(y,P,x,S))
 print "xxxx ppps ",electron_integral(PP_GTO(y,P,y,P),PS_GTO(x,P,x,S))
 print "yxyx ppps ",electron_integral(PP_GTO(y,P,x,P),PS_GTO(y,P,x,S))
+print "xxxx pppp ",electron_integral(PP_GTO(x,P,x,P),PP_GTO(x,P,x,P))
+print "yyxx pppp ",electron_integral(PP_GTO(y,P,y,P),PP_GTO(x,P,x,P))
+
