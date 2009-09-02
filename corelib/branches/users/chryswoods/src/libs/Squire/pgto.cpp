@@ -1135,10 +1135,12 @@ my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
     //
     //          F0(T)[ PAi PBj QCk QDl ] +
     //
-    //          F2(T)[ (QCk QDl WPi WPj) + (PAi PBj WQk WQl) ] +
+    //          F2(T)[ (QCk QDl WPi WPj) + (PBj QDl WPi WQk) +
+    //                 (PAi QDl WPj WQk) + (PBj QCk WPi WQl) +
+    //                 (PAi QCk WPj WQl) + (PAi PBj WQk WQl) ] +
     //
     //          F1(T)[ (PBj QCk QDl WPi) + (PAi QCk QDl WPj) + 
-    //                 (PAi PBk QDl WQk) + (PAi PBj QCk WQl) ] +
+    //                 (PAi PBj QDl WQk) + (PAi PBj QCk WQl) ] +
     //
     //  delta_ij/2zeta{ F3(T)[-rho/zeta WQk WQl] + F0(T)[QCk QDl] +
     //                  F2(T)[-rho/zeta[QDl WQk + QCk WQl] + WQk WQl ] +
@@ -1325,6 +1327,10 @@ my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
                                                 pa[i]*wp[j]*wq[k]*wq[l]) +
                                        boys[0]*pa[i]*pb[j]*qc[k]*qd[l] +
                                        boys[2]*(qc[k]*qd[l]*wp[i]*wp[j] +
+                                                pb[j]*qd[l]*wp[i]*wq[k] +
+                                                pa[i]*qd[l]*wp[j]*wq[k] +
+                                                pb[j]*qc[k]*wp[i]*wq[l] +
+                                                pa[i]*qc[k]*wp[j]*wq[l] +
                                                 pa[i]*pb[j]*wq[k]*wq[l]) +
                                        boys[1]*(pb[j]*qc[k]*qd[l]*wp[i] +
                                                 pa[i]*qc[k]*qd[l]*wp[j] +
@@ -1347,11 +1353,16 @@ my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
                                             pa[i]*wp[j]*wq[k]*wq[k]) +
                                    boys[0]*pa[i]*pb[j]*qc[k]*qd[k] +
                                    boys[2]*(qc[k]*qd[k]*wp[i]*wp[j] +
+                                            pb[j]*qd[k]*wp[i]*wq[k] +
+                                            pa[i]*qd[k]*wp[j]*wq[k] +
+                                            pb[j]*qc[k]*wp[i]*wq[k] +
+                                            pa[i]*qc[k]*wp[j]*wq[k] +
                                             pa[i]*pb[j]*wq[k]*wq[k]) +
                                    boys[1]*(pb[j]*qc[k]*qd[k]*wp[i] +
                                             pa[i]*qc[k]*qd[k]*wp[j] +
                                             pa[i]*pb[k]*qd[k]*pb[j] +
                                             pa[i]*pb[j]*qc[k]*wq[k]) );
+                
                 ij_m[ ij_mat.offset(k,k) ] = val + m_kl[ delta_kl.offset(i,j) ];
             }
             
@@ -1393,6 +1404,10 @@ my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
                                             pa[i]*wp[i]*wq[k]*wq[l]) +
                                    boys[0]*pa[i]*pb[i]*qc[k]*qd[l] +
                                    boys[2]*(qc[k]*qd[l]*wp[i]*wp[i] +
+                                            pb[i]*qd[l]*wp[i]*wq[k] +
+                                            pa[i]*qd[l]*wp[i]*wq[k] +
+                                            pb[i]*qc[k]*wp[i]*wq[l] +
+                                            pa[i]*qc[k]*wp[i]*wq[l] +
                                             pa[i]*pb[i]*wq[k]*wq[l]) +
                                    boys[1]*(pb[i]*qc[k]*qd[l]*wp[i] +
                                             pa[i]*qc[k]*qd[l]*wp[i] +
@@ -1415,6 +1430,10 @@ my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
                                         pa[i]*wp[i]*wq[k]*wq[k]) +
                                boys[0]*pa[i]*pb[i]*qc[k]*qd[k] +
                                boys[2]*(qc[k]*qd[k]*wp[i]*wp[i] +
+                                        pb[i]*qd[k]*wp[i]*wq[k] +
+                                        pa[i]*qd[k]*wp[i]*wq[k] +
+                                        pb[i]*qc[k]*wp[i]*wq[k] +
+                                        pa[i]*qc[k]*wp[i]*wq[k] +
                                         pa[i]*pb[i]*wq[k]*wq[k]) +
                                boys[1]*(pb[i]*qc[k]*qd[k]*wp[i] +
                                         pa[i]*qc[k]*qd[k]*wp[i] +
@@ -1438,7 +1457,6 @@ my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
             ij_m[ ij_mat.offset(k,i) ] += m_il[ delta_il.offset(i,k) ];
             ij_m[ ij_mat.offset(k,i) ] += m_jl[ delta_jl.offset(i,k) ]; 
         }
-
         
         // i == j
         ij_mat += delta_ij;
