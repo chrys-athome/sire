@@ -21,6 +21,8 @@ if ( SIRE_USE_BLAS )
   endif()
 
   add_definitions( -DSIRE_HAVE_BLAS )
+
+  list(APPEND SIREMATHS_EXTRA_LIBRARIES ${BLAS_LIBRARIES})
 endif()
 
 if ( SIRE_USE_LAPACK )
@@ -41,6 +43,8 @@ if ( SIRE_USE_LAPACK )
   endif()
 
   add_definitions( -DSIRE_HAVE_LAPACK )
+
+  list(APPEND SIREMATHS_EXTRA_LIBRARIES ${LAPACK_LIBRARIES})
 endif()
 
 # SireMaths depends on >= GSL 1.6
@@ -48,6 +52,8 @@ find_package(GSL 1.6 REQUIRED)
 
 message( STATUS "GSL paths ${GSL_LINK_DIRECTORIES} "
                 "${GSL_LIBRARIES} | ${GSL_INCLUDE_DIR}" )
+
+list(APPEND SIREMATHS_EXTRA_LIBRARIES ${GSL_LIBRARIES})
 
 include_directories( BEFORE ${GSL_INCLUDE_DIR})
 
@@ -141,12 +147,10 @@ target_link_libraries (SireMaths
                        SireBase
                        SireUnits
                        SireStream
-                       ${GSL_LIBRARIES}
-                       ${LAPACK_LIBRARIES}
-                       ${BLAS_LIBRARIES}
+                       ${SIREMATHS_EXTRA_LIBRARIES}
                       )
 
-save_sire_variable( "SIREMATHS_EXTRA_LIBRARIES" "${GSL_LIBRARIES}" )
+save_sire_variable( "SIREMATHS_EXTRA_LIBRARIES" "${SIREMATHS_EXTRA_LIBRARIES}" )
 
 # installation
 install( TARGETS SireMaths EXPORT SireLibraries

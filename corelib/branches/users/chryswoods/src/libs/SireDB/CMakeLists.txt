@@ -7,6 +7,9 @@
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
+# Set the compile options for Sqlite3
+set ( SQLITE3_OPTIONS "-DSQLITE_THREADSAFE=0;-DSQLITE_OMIT_LOAD_EXTENSION" )
+
 # Define the headers in SireDB
 set ( SIREDB_HEADERS
       database.h
@@ -34,6 +37,7 @@ set ( SIREDB_SOURCES
 
 # sqlite3 cannot be compiled with GCC -ffast-math
 string( REGEX REPLACE "-ffast-math" " " CMAKE_C_FLAGS ${CMAKE_C_FLAGS} )
+add_definitions( ${SQLITE3_OPTIONS} )
 
 add_library (SireDB ${SIREDB_SOURCES})
 
