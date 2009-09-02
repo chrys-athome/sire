@@ -26,27 +26,37 @@
   *
 \*********************************************/
 
-#include "sire_lapack.h"
-#include "nvector.h"
-#include "nmatrix.h"
+#ifndef SIREMATHS_SIRE_LINPACK_H
+#define SIREMATHS_SIRE_LINPACK_H
 
-#include <cmath>
+#include "sireglobal.h"
 
-#include "SireError/errors.h"
-#include "SireMaths/errors.h"
+#include <QVector>
 
-typedef int LAPACK_INT;
+#include <utility>
 
-#include "sire_lapack_f.h" // CONDITIONAL_INCLUDE
-
-// Here are all of the prototypes of the LAPACK functions used
-// by sire_lapack
-extern "C"
-{
-
-} // end of extern "C"
+SIRE_BEGIN_HEADER
 
 namespace SireMaths
 {
 
-} // end of namespace SireMaths
+class NMatrix;
+class NVector;
+
+std::pair<NVector,NMatrix> dsyev(const NMatrix &A, bool upper=true);
+
+NVector dsyev_eigenvalues(const NMatrix &A, bool upper=true);
+
+std::pair< NMatrix,QVector<int> > dgeco(const NMatrix &A);
+
+NMatrix dgedi_inverse(const NMatrix &A, const QVector<int> &IPVT);
+
+double dgedi_determinant(const NMatrix &A, const QVector<int> &IPVT);
+
+std::pair<double,NMatrix> dgedi(const NMatrix &A, const QVector<int> &IPVT);
+
+}
+
+SIRE_END_HEADER
+
+#endif

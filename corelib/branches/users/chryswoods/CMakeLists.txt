@@ -6,8 +6,8 @@
 #
 ################################
 
-# require cmake >= 2.6.0
-cmake_minimum_required(VERSION 2.6.0 FATAL_ERROR)
+# require cmake >= 2.6.4
+cmake_minimum_required(VERSION 2.6.4 FATAL_ERROR)
 
 # use loose loop syntax in CMakeLists files
 set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )

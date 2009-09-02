@@ -1219,6 +1219,8 @@ my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
         }
     }
     
+    qDebug() << "delta_ij\n" << delta_ij.toString();
+    
     // k == l
     for (int i=0; i<3; ++i)
     {
@@ -1231,6 +1233,8 @@ my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
                     boys[1]*(pb[j]*wp[i] + pa[i]*wp[j] - rho_over_eta*pa[i]*pb[j]) );
         }
     }
+
+    qDebug() << "delta_kl\n" << delta_kl.toString();
     
     // i == k
     for (int j=0; j<3; ++j)
@@ -1243,6 +1247,8 @@ my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
                         boys[3]*wp[j]*wq[l] );
         }
     }
+
+    qDebug() << "delta_ik\n" << delta_ik.toString();
     
     // i == l
     for (int j=0; j<3; ++j)
@@ -1255,6 +1261,8 @@ my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
                         boys[3]*wp[j]*wq[k] );
         }
     }
+
+    qDebug() << "delta_il\n" << delta_il.toString();
     
     // j == k
     for (int i=0; i<3; ++i)
@@ -1267,6 +1275,8 @@ my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
                         boys[3]*wp[i]*wq[l] );
         }
     }
+
+    qDebug() << "delta_jk\n" << delta_jk.toString();
     
     // j == l
     for (int i=0; i<3; ++i)
@@ -1279,6 +1289,8 @@ my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
                         boys[3]*wp[i]*wq[k] );
         }
     }
+
+    qDebug() << "delta_jl\n" << delta_jl.toString();
     
     // i == l and j == k
     for (int i=0; i<3; ++i)
@@ -1298,8 +1310,12 @@ my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
         m_ij[ delta_ij.offset(i,i) ] += prefac_over_4ez * (
                                 boys[0] - 
                                 boys[1]*(rho_over_eta + rho_over_zeta) + 
-                                boys[2]*rho_over_ez );
+                                boys[2]*rho*rho_over_ez );
     }
+
+    qDebug() << "delta_ij\n" << delta_ij.toString();
+    qDebug() << "delta_il\n" << delta_il.toString();
+    qDebug() << "delta_ik\n" << delta_ik.toString();
     
     /////////
     ///////// Now everything is pre-computed, lets do the real work
@@ -1367,7 +1383,7 @@ my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
             }
             
             //now add on the deltas
-            
+
             // i == k, j == k
             for (int l=0; l<3; ++l)
             {
@@ -1442,7 +1458,7 @@ my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
 
             ij_m[ ij_mat.offset(k,k) ] = val + m_kl[ delta_kl.offset(i,i) ];
         }
-        
+
         //now add on the deltas
         // i == k, j == k
         for (int l=0; l<3; ++l)
