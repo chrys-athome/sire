@@ -43,14 +43,6 @@ typedef int LINPACK_INT;
 // by sire_linpack
 extern "C"
 {
-    /** This is dsyev - see LINPACK API for documentation */
-    void SireDSYEV(const char *JOBZ, const char *UPLO, 
-                   const LINPACK_INT *N, double *A, 
-                   const LINPACK_INT *LDA, 
-                   double *W, double *WORK, 
-                   const LINPACK_INT *LWORK, 
-                   LINPACK_INT *INFO);
-
     /** This is dgeco - see LINPACK API for documentation */
     void SireDGECO(double *A, const LINPACK_INT *LDA, 
                    const LINPACK_INT *N, LINPACK_INT *IPVT, 
@@ -65,94 +57,6 @@ extern "C"
 
 namespace SireMaths
 {
-
-std::pair<NVector,NMatrix> SIREMATHS_EXPORT dsyev(const NMatrix &A, bool upper)
-{
-    if (A.isTransposed())
-    {
-        //we can only process a column-major ordered matrix...
-        return dsyev( A.transpose().fullTranspose(), upper );
-    }
-
-    char JOBZ, UPLO;
-    LINPACK_INT N, LDA, LWORK, INFO;
-    
-    JOBZ = 'V';
-    
-    if (upper)
-        UPLO = 'U';
-    else
-        UPLO = 'L';
-        
-    N = A.nRows();
-    
-    BOOST_ASSERT( A.nColumns() == N );
-    
-    LDA = N;
-    
-    NVector EIGVAL(N);
-    
-    QVector<double> WORK( 5*N );
-    LWORK = WORK.count();
-    
-    INFO = 0;
-    
-    NMatrix EIGVEC( A );
-    
-    SireDSYEV(&JOBZ, &UPLO, &N, EIGVEC.data(),
-              &LDA, EIGVAL.data(), WORK.data(), &LWORK, &INFO);
-              
-    if (INFO != 0)
-        throw SireMaths::domain_error( QObject::tr(
-                "There was a problem running dsyev - INFO == %1. A ==\n%2.")
-                    .arg(INFO).arg(A.toString()), CODELOC );
-    
-    return std::pair<NVector,NMatrix>(EIGVAL, EIGVEC);
-}
-
-NVector SIREMATHS_EXPORT dsyev_eigenvalues(const NMatrix &A, bool upper)
-{
-    if (A.isTransposed())
-    {
-        //we can only process a column-major ordered matrix...
-        return dsyev_eigenvalues( A.transpose().fullTranspose(), upper );
-    }
-
-    char JOBZ, UPLO;
-    LINPACK_INT N, LDA, LWORK, INFO;
-    
-    JOBZ = 'N';
-    
-    if (upper)
-        UPLO = 'U';
-    else
-        UPLO = 'L';
-        
-    N = A.nRows();
-    
-    BOOST_ASSERT( A.nColumns() == N );
-    
-    LDA = N;
-    
-    NVector EIGVAL(N);
-    
-    QVector<double> WORK( 5*N );
-    LWORK = WORK.count();
-    
-    INFO = 0;
-    
-    NMatrix A_COPY( A );
-    
-    SireDSYEV(&JOBZ, &UPLO, &N, A_COPY.data(),
-              &LDA, EIGVAL.data(), WORK.data(), &LWORK, &INFO);
-              
-    if (INFO != 0)
-        throw SireMaths::domain_error( QObject::tr(
-                "There was a problem running dsyev - INFO == %1. A ==\n%2.")
-                    .arg(INFO).arg(A.toString()), CODELOC );
-    
-    return EIGVAL;
-}
 
 std::pair< NMatrix,QVector<int> > SIREMATHS_EXPORT dgeco(const NMatrix &A)
 {

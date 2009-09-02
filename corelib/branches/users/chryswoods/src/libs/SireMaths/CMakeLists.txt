@@ -15,10 +15,10 @@ set( SIRE_BLAS_FUNCTIONS
    )
 
 set( SIRE_LAPACK_FUNCTIONS
+     DSYEV
    )
 
 set( SIRE_LINPACK_FUNCTIONS
-     DSYEV
      DGECO
      DGEDI
    )
@@ -28,8 +28,24 @@ if ( SIRE_USE_BLAS )
   set( SIREBLASPACK_HAS_LIBRARIES TRUE )
 else()
   set( SIRE_BLAS_SOURCES
+       ThirdParty/BLAS/idamax.f
+       ThirdParty/BLAS/dasum.f
+       ThirdParty/BLAS/daxpy.f
+       ThirdParty/BLAS/dcopy.f
+       ThirdParty/BLAS/ddot.f
        ThirdParty/BLAS/dgemm.f
        ThirdParty/BLAS/dgemv.f
+       ThirdParty/BLAS/dger.f
+       ThirdParty/BLAS/dnrm2.f
+       ThirdParty/BLAS/dscal.f
+       ThirdParty/BLAS/dswap.f
+       ThirdParty/BLAS/dsymv.f
+       ThirdParty/BLAS/dsyr2.f
+       ThirdParty/BLAS/dsyr2k.f
+       ThirdParty/BLAS/dtrmm.f
+       ThirdParty/BLAS/dtrmv.f
+       ThirdParty/BLAS/lsame.f
+       ThirdParty/BLAS/xerbla.f
      )
 endif()
 
@@ -49,6 +65,40 @@ if ( SIRE_USE_LAPACK )
   set( SIREBLASPACK_HAS_LIBRARIES TRUE )
 else()
   set( SIRE_LAPACK_SOURCES
+       ThirdParty/LAPACK/disnan.f
+       ThirdParty/LAPACK/dlae2.f
+       ThirdParty/LAPACK/dlaev2.f
+       ThirdParty/LAPACK/dlaisnan.f
+       ThirdParty/LAPACK/dlamch.f
+       ThirdParty/LAPACK/dlanst.f
+       ThirdParty/LAPACK/dlansy.f
+       ThirdParty/LAPACK/dlapy2.f
+       ThirdParty/LAPACK/dlascl.f
+       ThirdParty/LAPACK/dlarf.f
+       ThirdParty/LAPACK/dlarfb.f
+       ThirdParty/LAPACK/dlartg.f
+       ThirdParty/LAPACK/dlarfg.f
+       ThirdParty/LAPACK/dlarft.f
+       ThirdParty/LAPACK/dlaset.f
+       ThirdParty/LAPACK/dlasr.f
+       ThirdParty/LAPACK/dlasrt.f
+       ThirdParty/LAPACK/dlassq.f
+       ThirdParty/LAPACK/dlatrd.f
+       ThirdParty/LAPACK/dorg2l.f
+       ThirdParty/LAPACK/dorg2r.f
+       ThirdParty/LAPACK/dorgql.f
+       ThirdParty/LAPACK/dorgqr.f
+       ThirdParty/LAPACK/dorgtr.f
+       ThirdParty/LAPACK/dsyev.f
+       ThirdParty/LAPACK/dsytd2.f
+       ThirdParty/LAPACK/dsytrd.f
+       ThirdParty/LAPACK/dsteqr.f
+       ThirdParty/LAPACK/dsterf.f
+       ThirdParty/LAPACK/ilaenv.f
+       ThirdParty/LAPACK/iladlc.f
+       ThirdParty/LAPACK/iladlr.f
+       ThirdParty/LAPACK/ieeeck.f
+       ThirdParty/LAPACK/iparmq.f
      )
 endif()
 

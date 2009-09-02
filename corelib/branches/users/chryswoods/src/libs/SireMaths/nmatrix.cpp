@@ -34,6 +34,7 @@
 
 #include "sire_blas.h"
 #include "sire_lapack.h"
+#include "sire_linpack.h"
 
 #include "SireBase/array2d.hpp"
 #include "SireBase/trigarray2d.hpp"

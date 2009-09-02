@@ -43,10 +43,105 @@ typedef int LAPACK_INT;
 // by sire_lapack
 extern "C"
 {
+    /** This is dsyev - see LAPACK API for documentation */
+    void SireDSYEV(const char *JOBZ, const char *UPLO, 
+                   const LAPACK_INT *N, double *A, 
+                   const LAPACK_INT *LDA, 
+                   double *W, double *WORK, 
+                   const LAPACK_INT *LWORK, 
+                   LAPACK_INT *INFO);
 
 } // end of extern "C"
 
 namespace SireMaths
 {
+
+std::pair<NVector,NMatrix> SIREMATHS_EXPORT dsyev(const NMatrix &A, bool upper)
+{
+    if (A.isTransposed())
+    {
+        //we can only process a column-major ordered matrix...
+        return dsyev( A.transpose().fullTranspose(), upper );
+    }
+
+    char JOBZ, UPLO;
+    LAPACK_INT N, LDA, LWORK, INFO;
+    
+    JOBZ = 'V';
+    
+    if (upper)
+        UPLO = 'U';
+    else
+        UPLO = 'L';
+        
+    N = A.nRows();
+    
+    BOOST_ASSERT( A.nColumns() == N );
+    
+    LDA = N;
+    
+    NVector EIGVAL(N);
+    
+    QVector<double> WORK( 5*N );
+    LWORK = WORK.count();
+    
+    INFO = 0;
+    
+    NMatrix EIGVEC( A );
+    
+    SireDSYEV(&JOBZ, &UPLO, &N, EIGVEC.data(),
+              &LDA, EIGVAL.data(), WORK.data(), &LWORK, &INFO);
+              
+    if (INFO != 0)
+        throw SireMaths::domain_error( QObject::tr(
+                "There was a problem running dsyev - INFO == %1. A ==\n%2.")
+                    .arg(INFO).arg(A.toString()), CODELOC );
+    
+    return std::pair<NVector,NMatrix>(EIGVAL, EIGVEC);
+}
+
+NVector SIREMATHS_EXPORT dsyev_eigenvalues(const NMatrix &A, bool upper)
+{
+    if (A.isTransposed())
+    {
+        //we can only process a column-major ordered matrix...
+        return dsyev_eigenvalues( A.transpose().fullTranspose(), upper );
+    }
+
+    char JOBZ, UPLO;
+    LAPACK_INT N, LDA, LWORK, INFO;
+    
+    JOBZ = 'N';
+    
+    if (upper)
+        UPLO = 'U';
+    else
+        UPLO = 'L';
+        
+    N = A.nRows();
+    
+    BOOST_ASSERT( A.nColumns() == N );
+    
+    LDA = N;
+    
+    NVector EIGVAL(N);
+    
+    QVector<double> WORK( 5*N );
+    LWORK = WORK.count();
+    
+    INFO = 0;
+    
+    NMatrix A_COPY( A );
+    
+    SireDSYEV(&JOBZ, &UPLO, &N, A_COPY.data(),
+              &LDA, EIGVAL.data(), WORK.data(), &LWORK, &INFO);
+              
+    if (INFO != 0)
+        throw SireMaths::domain_error( QObject::tr(
+                "There was a problem running dsyev - INFO == %1. A ==\n%2.")
+                    .arg(INFO).arg(A.toString()), CODELOC );
+    
+    return EIGVAL;
+}
 
 } // end of namespace SireMaths

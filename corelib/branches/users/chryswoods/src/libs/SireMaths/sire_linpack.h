@@ -43,10 +43,6 @@ namespace SireMaths
 class NMatrix;
 class NVector;
 
-std::pair<NVector,NMatrix> dsyev(const NMatrix &A, bool upper=true);
-
-NVector dsyev_eigenvalues(const NMatrix &A, bool upper=true);
-
 std::pair< NMatrix,QVector<int> > dgeco(const NMatrix &A);
 
 NMatrix dgedi_inverse(const NMatrix &A, const QVector<int> &IPVT);
