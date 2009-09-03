@@ -782,7 +782,7 @@ CoordGroupArray PeriodicBox::getMinimumImage(const CoordGroupArray &groups,
 {
     if (translate_as_one or groups.nCoordGroups() == 1)
     {
-        Vector wrapdelta = wrapDelta(point, groups.aaBox().center());
+        Vector wrapdelta = wrapDelta(groups.aaBox().center(), point);
         
         if (wrapdelta.isZero())
         {

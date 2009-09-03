@@ -70,7 +70,7 @@ friend QDataStream& ::operator>>(QDataStream&, SpaceWrapper&);
 
 public:
     SpaceWrapper();
-    SpaceWrapper(const Point &point,
+    SpaceWrapper(const SireFF::PointRef &point,
                  const MoleculeGroup &molgroup,
                  const PropertyMap &map = PropertyMap());
     

@@ -161,3 +161,8 @@ void CombineSpaces::updateFrom(const Properties &properties)
         this->setCombinedProperty( CombinedSpace(spaces) );
     }
 }
+
+const char* CombineSpaces::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<CombineSpaces>() );
+}

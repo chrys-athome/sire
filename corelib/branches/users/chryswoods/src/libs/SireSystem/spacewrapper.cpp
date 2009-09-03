@@ -87,7 +87,7 @@ SpaceWrapper::SpaceWrapper() : ConcreteProperty<SpaceWrapper,MoleculeConstraint>
 /** Construct to wrap all of the molecules in the group 'molgroup' 
     into the same periodic box as the point 'point' using the
     supplied property map to find the space and coordinate properties */
-SpaceWrapper::SpaceWrapper(const Point &point,
+SpaceWrapper::SpaceWrapper(const PointRef &point,
                            const MoleculeGroup &wrap_group,
                            const PropertyMap &wrap_map)
              : ConcreteProperty<SpaceWrapper,MoleculeConstraint>(),

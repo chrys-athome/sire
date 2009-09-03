@@ -260,6 +260,38 @@ bool Symbol::operator==(const ExBase &other) const
     return sym != 0 and sym->ID() == this->ID();
 }
 
+/** Comparison operator - a Symbol is greater than another
+    symbol if it's string representation is greater - this
+    allows lists of symbols to be sorted alphabetically */
+bool Symbol::operator<(const Symbol &other) const
+{
+    return stringrep < other.stringrep;
+}
+
+/** Comparison operator - a Symbol is greater than another
+    symbol if it's string representation is greater - this
+    allows lists of symbols to be sorted alphabetically */
+bool Symbol::operator>(const Symbol &other) const
+{
+    return stringrep > other.stringrep;
+}
+
+/** Comparison operator - a Symbol is greater than another
+    symbol if it's string representation is greater - this
+    allows lists of symbols to be sorted alphabetically */
+bool Symbol::operator<=(const Symbol &other) const
+{
+    return stringrep <= other.stringrep;
+}
+
+/** Comparison operator - a Symbol is greater than another
+    symbol if it's string representation is greater - this
+    allows lists of symbols to be sorted alphabetically */
+bool Symbol::operator>=(const Symbol &other) const
+{
+    return stringrep >= other.stringrep;
+}
+
 /** Return a string representation of this symbol */
 QString Symbol::toString() const
 {

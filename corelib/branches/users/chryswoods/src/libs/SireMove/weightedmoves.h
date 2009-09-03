@@ -90,6 +90,10 @@ public:
 
     void setEnergyComponent(const Symbol &component);
     void setSpaceProperty(const PropertyName &spaceproperty); 
+    
+    void setCombinedSpaceProperty(const PropertyName &spaceproperty);
+
+    bool hasCombinedSpaceProperty() const;
 
     const Symbol& energyComponent() const;
     const PropertyName& spaceProperty() const;
@@ -111,6 +115,10 @@ private:
     
     /** The random number generator used to pick moves */
     RanGenerator rangenerator;
+    
+    /** If a combined space is used, this is the name of the 
+        combined space property */
+    PropertyName combined_space;
     
     /** The value of the maximum weight */
     double maxweight;

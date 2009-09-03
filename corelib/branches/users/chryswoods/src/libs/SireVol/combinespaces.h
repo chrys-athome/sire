@@ -83,6 +83,8 @@ public:
     bool operator==(const CombineSpaces &other) const;
     bool operator!=(const CombineSpaces &other) const;
     
+    static const char* typeName();
+    
     void updateFrom(const Properties &properties);
 };
 

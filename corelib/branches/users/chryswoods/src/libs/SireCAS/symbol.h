@@ -113,6 +113,11 @@ public:
 
     bool operator==(const ExBase &other) const;
 
+    bool operator<(const Symbol &other) const;
+    bool operator>(const Symbol &other) const;
+    bool operator<=(const Symbol &other) const;
+    bool operator>=(const Symbol &other) const;
+
     uint hash() const;
 
     static const char* typeName();

@@ -54,7 +54,7 @@ static const RegisterMetaType<WeightedMoves> r_weightedmoves;
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds, 
                                         const WeightedMoves &weightedmoves)
 {
-    writeHeader(ds, r_weightedmoves, 1);
+    writeHeader(ds, r_weightedmoves, 2);
     
     SharedDataStream sds(ds);
     
@@ -68,7 +68,8 @@ QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
         sds << mvs_array[i].get<0>() << mvs_array[i].get<1>();
     }
     
-    sds << weightedmoves.rangenerator << static_cast<const Moves&>(weightedmoves);
+    sds << weightedmoves.rangenerator << weightedmoves.combined_space
+        << static_cast<const Moves&>(weightedmoves);
     
     return ds;
 }
@@ -78,7 +79,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, WeightedMoves &weighted
 {
     VersionID v = readHeader(ds, r_weightedmoves);
     
-    if (v == 1)
+    if (v == 1 or v == 2)
     {
         SharedDataStream sds(ds);
         
@@ -99,7 +100,14 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, WeightedMoves &weighted
         
         weightedmoves.mvs = mvs;
         
-        sds >> weightedmoves.rangenerator >> static_cast<Moves&>(weightedmoves);
+        sds >> weightedmoves.rangenerator;
+        
+        if (v == 2)
+            sds >> weightedmoves.combined_space;
+        else
+            weightedmoves.combined_space = PropertyName();
+        
+        sds >> static_cast<Moves&>(weightedmoves);
         
         weightedmoves.recalculateWeights();
     }
@@ -118,6 +126,7 @@ WeightedMoves::WeightedMoves()
 WeightedMoves::WeightedMoves(const WeightedMoves &other)
               : ConcreteProperty<WeightedMoves,Moves>(other),
                 mvs(other.mvs), rangenerator(other.rangenerator), 
+                combined_space(other.combined_space),
                 maxweight(other.maxweight)
 {}
 
@@ -130,6 +139,7 @@ WeightedMoves& WeightedMoves::operator=(const WeightedMoves &other)
 {
     mvs = other.mvs;
     rangenerator = other.rangenerator;
+    combined_space = other.combined_space;
     maxweight = other.maxweight;
     
     Moves::operator=(other);
@@ -147,13 +157,13 @@ static bool operator==(const tuple<MovePtr,double> &t0,
 /** Comparison operator */
 bool WeightedMoves::operator==(const WeightedMoves &other) const
 {
-    return mvs == other.mvs;
+    return mvs == other.mvs and combined_space == other.combined_space;
 }
 
 /** Comparison operator */
 bool WeightedMoves::operator!=(const WeightedMoves &other) const
 {
-    return mvs != other.mvs;
+    return mvs != other.mvs or combined_space != other.combined_space;
 }
 
 /** Return a string representation */
@@ -163,11 +173,13 @@ QString WeightedMoves::toString() const
     
     for (int i=0; i<mvs.count(); ++i)
     {
-        moves.append( QObject::tr("   %1 : %2").arg(i+1)
-                                            .arg(mvs.at(i).get<0>()->toString()) );
+        moves.append( QObject::tr("  %1 : weight == %2\n"
+                                  "       %3").arg(i+1)
+                                              .arg(mvs.at(i).get<1>())
+                                              .arg(mvs.at(i).get<0>()->toString()) );
     }
     
-    return QObject::tr("WeightedMoves(\n%1\n             )")
+    return QObject::tr("WeightedMoves{\n%1\n}")
                 .arg(moves.join("\n"));
 }
 
@@ -361,6 +373,10 @@ const Symbol& WeightedMoves::energyComponent() const
 */
 const PropertyName& WeightedMoves::spaceProperty() const
 {
+    if (not combined_space.isNull())
+        //we are using a combined space property
+        return combined_space;
+
     int nmoves = mvs.count();
     
     const tuple<MovePtr,double> *mvs_array = mvs.constData();
@@ -426,6 +442,10 @@ void WeightedMoves::setEnergyComponent(const Symbol &component)
     find the simulation space (simulation box) to 'spaceproperty' */
 void WeightedMoves::setSpaceProperty(const PropertyName &spaceproperty)
 {
+    if (spaceproperty == combined_space)
+        //nothing needs to be done
+        return;
+
     int nmoves = mvs.count();
     
     if (nmoves > 0)
@@ -440,6 +460,24 @@ void WeightedMoves::setSpaceProperty(const PropertyName &spaceproperty)
             }
         }
     }
+    
+    combined_space = PropertyName();
+}
+
+/** Set the combined space property - this tells this moves object
+    to return a different space that represents the combined space
+    of all of the sub-moves. Note that this does not change the
+    space used in the sub-moves */
+void WeightedMoves::setCombinedSpaceProperty(const PropertyName &space)
+{
+    combined_space = space;
+}
+
+/** Return whether or not these moves use a combined space to 
+    calculate the volume */
+bool WeightedMoves::hasCombinedSpaceProperty() const
+{
+    return not combined_space.isNull();
 }
 
 /** Set the temperature for all moves that have a constant temperature
