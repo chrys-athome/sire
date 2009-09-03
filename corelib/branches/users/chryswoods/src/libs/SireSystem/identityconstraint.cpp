@@ -38,6 +38,7 @@
 
 #include "SireMol/molecules.h"
 #include "SireMol/molecule.h"
+#include "SireMol/moleculegroup.h"
 #include "SireMol/moleditor.h"
 #include "SireMol/viewsofmol.h"
 
@@ -2522,4 +2523,57 @@ bool IdentityConstraint::isSatisfied(const System &system) const
         IdentityConstraint c(*this);
         return c.update(system).isEmpty();
     }
+}
+
+static MolGroupPtr constrain(const MoleculeGroup &molgroup, 
+                             IdentityConstraint &constraint,
+                             const PropertyMap &map)
+{
+    System tmp_system;
+    tmp_system.add(molgroup);
+    
+    if (not map["space"].hasValue())
+        tmp_system.setProperty("space", Cartesian());
+    
+    Molecules changed_mols = constraint.update(tmp_system);
+    
+    MolGroupPtr new_molgroup( molgroup );
+    new_molgroup.edit().update(changed_mols);
+    
+    return new_molgroup;
+}
+
+/** Static function used to constrain the identities of the molecules
+    in 'molgroup' against the point 'point'. This makes the first molecule
+    in the group have the identity that matches this point */
+MolGroupPtr IdentityConstraint::constrain(const MoleculeGroup &molgroup,
+                                          const PointRef &point,
+                                          const PropertyMap &map)
+{
+    IdentityConstraint constraint(point, molgroup, map);
+    return ::constrain(molgroup, constraint, map);
+}
+
+/** Static function used to constrain the identities of the molecules
+    in 'molgroup' against the identity points in 'points' - the
+    first npoints molecules in the group are constrained in order
+    against the points */
+MolGroupPtr IdentityConstraint::constrain(const MoleculeGroup &molgroup,
+                                          const QVector<PointPtr> &points,
+                                          const PropertyMap &map)
+{
+    IdentityConstraint constraint(points, molgroup, map);
+    return ::constrain(molgroup, constraint, map);
+}
+
+/** Static function used to constrain the identities of the molecules
+    in 'molgroup' against the identity points in 'points' - the
+    first npoints molecules in the group are constrained in order
+    against the points */
+MolGroupPtr IdentityConstraint::constrain(const MoleculeGroup &molgroup,
+                                          const QList<PointPtr> &points,
+                                          const PropertyMap &map)
+{
+    IdentityConstraint constraint(points, molgroup, map);
+    return ::constrain(molgroup, constraint, map);
 }

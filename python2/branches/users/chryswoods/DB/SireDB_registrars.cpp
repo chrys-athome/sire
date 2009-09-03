@@ -3,14 +3,14 @@
 
 #include "SireDB_registrars.h"
 
-#include "errors.h"
+#include "database.h"
 
 #include "Helpers/objectregistry.hpp"
 
 void register_SireDB_objects()
 {
 
-    ObjectRegistry::registerConverterFor< SireDB::database_error >();
+    ObjectRegistry::registerConverterFor< SireDB::Database >();
 
 }
 

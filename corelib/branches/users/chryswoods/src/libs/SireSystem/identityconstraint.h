@@ -173,6 +173,18 @@ public:
 
     bool isSatisfied(const System &system) const;
 
+    static SireMol::MolGroupPtr constrain(const MoleculeGroup &molgroup,
+                                          const SireFF::PointRef &point,
+                                          const PropertyMap &map = PropertyMap());
+                                   
+    static SireMol::MolGroupPtr constrain(const MoleculeGroup &molgroup,
+                                          const QVector<SireFF::PointPtr> &points,
+                                          const PropertyMap &map = PropertyMap());
+
+    static SireMol::MolGroupPtr constrain(const MoleculeGroup &molgroup,
+                                          const QList<SireFF::PointPtr> &points,
+                                          const PropertyMap &map = PropertyMap());
+
 private:
     /** The helper class that is used to implement the constraint */
     SireBase::SharedPolyPointer<detail::IdentityConstraintPvt> d;

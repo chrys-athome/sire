@@ -5,11 +5,15 @@
 
 #include "boost/python.hpp"
 
+#include "Database.pypp.hpp"
+
 namespace bp = boost::python;
 
 #include "SireDB_registrars.h"
 
 BOOST_PYTHON_MODULE(_DB){
     register_SireDB_objects();
+
+    register_Database_class();
 }
 

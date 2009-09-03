@@ -1003,15 +1003,43 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
                  "Here's the output from ProtoMS. Can you see what's gone wrong?\n")
                     .arg(charge_property, lj_property)
                     .arg(Sire::toString(editmol.propertyKeys())) );
-                    
-        QTextStream ts2(&f);
+
+        QFileInfo finfo( QString("%1/protoms_output").arg(tmpdir.path()) );
+
+        QFile f2( finfo.absoluteFilePath() );
         
-        QString line2 = ts2.readLine();
-        
-        while (not line2.isNull())
+        if (not f2.open(QIODevice::ReadOnly))
         {
-            errors.append(line2);
-            line2 = ts2.readLine();
+        
+            errors.append( QString("Cannot open the file %1.")
+                                .arg(finfo.absoluteFilePath()) );
+                                
+            if (finfo.exists())
+                errors.append( QString("This is weird, as the file exists "
+                                       "(size == %1 bytes)").arg(finfo.size()) );
+            else
+                errors.append( QString(
+                                    "This is because the output file doesn't exist.") );
+        }
+        else
+        {
+            QTextStream ts2(&f2);
+        
+            bool read_line = false;
+        
+            while (not ts2.atEnd())
+            {
+                QString line2 = ts2.readLine();
+                errors.append(line2);
+                read_line = true;
+            }
+            
+            if (not read_line)
+                errors.append( 
+                   QString("The output file %1 appears to be empty "
+                           "(size == %d bytes)")
+                                  .arg(finfo.absoluteFilePath())
+                                  .arg(finfo.size()) );
         }
         
         throw SireError::process_error( errors.join("\n"), CODELOC );
