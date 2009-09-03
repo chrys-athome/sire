@@ -49,7 +49,7 @@ class PS_GTO;
 namespace SireBase
 {
 template<class T>
-class TrigArray2D;
+class Array2D;
 }
 
 QDataStream& operator<<(QDataStream&, const Squire::P_GTO&);
@@ -276,10 +276,19 @@ Matrix electron_integral(const PS_GTO &P, const PS_GTO &Q);
 Matrix electron_integral(const PP_GTO &P, const SS_GTO &Q);
 Matrix electron_integral(const SS_GTO &P, const PP_GTO &Q);
 
-SireBase::TrigArray2D<Vector> electron_integral(const PP_GTO &P, const PS_GTO &Q);
-SireBase::TrigArray2D<Vector> electron_integral(const PS_GTO &P, const PP_GTO &Q);
+SireBase::Array2D<Vector> electron_integral(const PP_GTO &P, const PS_GTO &Q);
+SireBase::Array2D<Vector> electron_integral(const PS_GTO &P, const PP_GTO &Q);
 
-SireBase::TrigArray2D<Matrix> electron_integral(const PP_GTO &P, const PP_GTO &Q);
+void electron_integral(const PP_GTO &P, const PS_GTO &Q,
+                       SireBase::Array2D<Vector> &matrix);
+                       
+void electron_integral(const PS_GTO &P, const PP_GTO &Q,
+                       SireBase::Array2D<Vector> &matrix);
+
+SireBase::Array2D<Matrix> electron_integral(const PP_GTO &P, const PP_GTO &Q);
+
+void electron_integral(const PP_GTO &P, const PP_GTO &Q, 
+                       SireBase::Array2D<Matrix> &matrix);
 
 Vector electron_integral(const PS_GTO &P, const SS_GTO &Q, int m);
 Vector electron_integral(const SS_GTO &P, const PS_GTO &Q, int m);
@@ -289,13 +298,22 @@ Matrix electron_integral(const PS_GTO &P, const PS_GTO &Q, int m);
 Matrix electron_integral(const PP_GTO &P, const SS_GTO &Q, int m);
 Matrix electron_integral(const SS_GTO &P, const PP_GTO &Q, int m);
 
-SireBase::TrigArray2D<Vector> 
+SireBase::Array2D<Vector> 
 electron_integral(const PP_GTO &P, const PS_GTO &Q, int m);
-SireBase::TrigArray2D<Vector> 
+SireBase::Array2D<Vector> 
 electron_integral(const PS_GTO &P, const PP_GTO &Q, int m);
 
-SireBase::TrigArray2D<Matrix> 
+void electron_integral(const PP_GTO &P, const PS_GTO &Q, int m,
+                       SireBase::Array2D<Vector> &matrix);
+                       
+void electron_integral(const PS_GTO &P, const PP_GTO &Q, int m,
+                       SireBase::Array2D<Vector> &matrix);
+
+SireBase::Array2D<Matrix> 
 electron_integral(const PP_GTO &P, const PP_GTO &Q, int m);
+
+void electron_integral(const PP_GTO &P, const PP_GTO &Q, int m, 
+                       SireBase::Array2D<Matrix> &matrix);
 
 }
 

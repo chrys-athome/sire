@@ -32,7 +32,7 @@
 
 #include "SireMaths/boys.h"
 
-#include "SireBase/trigarray2d.hpp"
+#include "SireBase/array2d.hpp"
 
 #include "SireError/errors.h"
 
@@ -859,10 +859,9 @@ static Matrix my_electron_integral(const PS_GTO &P, const PS_GTO &Q,
     const double *wp = W_minus_P.constData();
     const double *wq = W_minus_Q.constData();
     
-    //do the off-diagonal elements
-    for (int i=0; i<2; ++i)
+    for (int i=0; i<3; ++i)
     {
-        for (int k=i+1; k<3; ++k)
+        for (int k=0; k<3; ++k)
         {
             const double val = prefac * (
                                  boys[0]*pa[i]*qc[k] + boys[2]*wp[i]*wq[k] + 
@@ -870,18 +869,15 @@ static Matrix my_electron_integral(const PS_GTO &P, const PS_GTO &Q,
                                          );
 
             m[ mat.offset(i,k) ] = val;
-            m[ mat.offset(k,i) ] = val;
         }
     }
     
-    //do the diagonal elements
-    const double extra_ii = 0.5 / (P.zeta()+Q.eta());
+    //do the diagonal i == k elements
+    const double extra = 0.5 * prefac / (P.zeta()+Q.eta());
     
     for (int i=0; i<3; ++i)
     {
-        m[ mat.offset(i,i) ] = prefac * (
-                                 boys[0]*pa[i]*qc[i] + boys[2]*wp[i]*wq[i] + 
-                                 boys[1]*(qc[i]*wp[i] + pa[i]*wq[i] + extra_ii) );
+        m[ mat.offset(i,i) ] += extra;
     }
     
     return mat;
@@ -922,10 +918,9 @@ static Matrix my_electron_integral(const PP_GTO &P, const SS_GTO &Q,
     const double *pb = P.P_minus_B().constData();
     const double *wp = W_minus_P.constData();
     
-    //do the off-diagonal elements
-    for (int i=0; i<2; ++i)
+    for (int i=0; i<3; ++i)
     {
-        for (int j=i+1; j<3; ++j)
+        for (int j=0; j<3; ++j)
         {
             const double val = prefac * (
                                    boys[0]*pa[i]*pb[j] + 
@@ -933,21 +928,18 @@ static Matrix my_electron_integral(const PP_GTO &P, const SS_GTO &Q,
                                    boys[1]*(pb[j]*wp[i] + pa[i]*wp[j]) );
         
             m[ mat.offset(i,j) ] = val;
-            m[ mat.offset(j,i) ] = val;
         }
     }
     
+    //now do i == j
     const double one_over_zeta = 1 / P.zeta();
     
-    const double extra = 0.5 * one_over_zeta * (boys[0] - 
+    const double extra = 0.5 * prefac * one_over_zeta * (boys[0] - 
                                                 boys[1] * rho * one_over_zeta);
-                                                
+            
     for (int i=0; i<3; ++i)
     {
-        m[ mat.offset(i,i) ] = prefac * (
-                                   boys[0]*pa[i]*pb[i] + 
-                                   boys[2]*wp[i]*wp[i] +
-                                   boys[1]*(pb[i]*wp[i] + pa[i]*wp[i]) + extra );
+        m[ mat.offset(i,i) ] += extra;
     }
     
     return mat;
@@ -981,8 +973,8 @@ Matrix SQUIRE_EXPORT electron_integral(const SS_GTO &P, const PP_GTO &Q, int m)
     return electron_integral(Q,P,m);
 }
 
-static TrigArray2D<Vector> 
-my_electron_integral(const PP_GTO &P, const PS_GTO &Q, const double boys[4])
+static void my_electron_integral(const PP_GTO &P, const PS_GTO &Q, const double boys[4],
+                                 Array2D<Vector> &mat)
 {
     // (pp|ps) = prefactor * { F3(T) (Wi-Pi)(Wj-Pj)(Wk-Qk) +
     // 
@@ -1017,7 +1009,7 @@ my_electron_integral(const PP_GTO &P, const PS_GTO &Q, const double boys[4])
     const double *wp = W_minus_P.constData();
     const double *wq = W_minus_Q.constData();
 
-    const double inv_zeta = 0.5 / P.zeta();
+    const double inv_zeta = prefac / P.zeta();
     const double inv_zeta_eta = 1.0 / (2.0*(P.zeta()+Q.eta()));
     
     const Vector extra_ij = inv_zeta * 
@@ -1028,18 +1020,17 @@ my_electron_integral(const PP_GTO &P, const PS_GTO &Q, const double boys[4])
     const Vector extra_ik = inv_zeta_eta * (boys[1]*P.P_minus_B() + boys[2]*W_minus_P);
     const Vector extra_jk = inv_zeta_eta * (boys[1]*P.P_minus_A() + boys[2]*W_minus_P);
 
-    const double *ij = extra_ij.constData();
     const double *ik = extra_ik.constData();
     const double *jk = extra_jk.constData();
 
-    TrigArray2D<Vector> mat(3);
+    mat.redimension(3,3);
     
     Vector *m = mat.data();
     
     //do the off-diagonal elements
-    for (int i=0; i<2; ++i)
+    for (int i=0; i<3; ++i)
     {
-        for (int j=i+1; j<3; ++j)
+        for (int j=0; j<3; ++j)
         {
             Vector v;
             double *vdata = v.data();
@@ -1067,66 +1058,83 @@ my_electron_integral(const PP_GTO &P, const PS_GTO &Q, const double boys[4])
         }
     }
 
-    //do the diagonal elements
+    //add the i==j parts onto the matrix
     for (int i=0; i<3; ++i)
     {
-        Vector v;
-        double *vdata = v.data();
-        
-        //do the common parts of i,j,k
-        for (int k=0; k<3; ++k)
-        {
-            vdata[k] = boys[3]*wp[i]*wp[i]*wq[k] + 
-                       boys[0]*pa[i]*pb[i]*qc[k] +
-                       boys[1]*(pb[i]*qc[k]*wp[i] + 
-                                pa[i]*qc[k]*wp[i] +
-                                pa[i]*pb[i]*wq[k]) +
-                       boys[2]*(qc[k]*wp[i]*wp[i] +
-                                pb[i]*wp[i]*wq[k] +
-                                pa[i]*wp[i]*wq[k]) + ij[k];
-        }
-        
-        //do i == j == k
-        vdata[i] += ik[i] + jk[i];
-        
-        m[ mat.offset(i,i) ] = prefac * v;
+        m[ mat.offset(i,i) ] += extra_ij;
     }
-
-    return mat;
 }
 
-/** Return the electron repulsion integral (pp|ps) */
-TrigArray2D<Vector> SQUIRE_EXPORT electron_integral(const PP_GTO &P, const PS_GTO &Q)
+/** Calculate the electron repulsion integral (pp|ps) into the passed matrix */
+void SQUIRE_EXPORT electron_integral(const PP_GTO &P, const PS_GTO &Q,
+                                     Array2D<Vector> &matrix)
 {
     double boys[4];
     multi_boys_4( GTOPair::T(P,Q), boys );
-    return my_electron_integral(P,Q,boys);
+    my_electron_integral(P, Q, boys, matrix);
+    
+    return;
+}
+
+/** Calculate the electron repulsion integral (ps|pp) into the passed matrix */
+void SQUIRE_EXPORT electron_integral(const PS_GTO &P, const PP_GTO &Q,
+                                     Array2D<Vector> &matrix)
+{
+    electron_integral(Q, P, matrix);
+    return;
+}
+
+/** Return the electron repulsion integral (pp|ps) */
+Array2D<Vector> SQUIRE_EXPORT electron_integral(const PP_GTO &P, const PS_GTO &Q)
+{
+    Array2D<Vector> matrix(3,3);
+    electron_integral(P, Q, matrix);
+    return matrix;
 }
 
 /** Return the electron repulsion integral (ps,pp) */
-TrigArray2D<Vector> SQUIRE_EXPORT electron_integral(const PS_GTO &P, const PP_GTO &Q)
+Array2D<Vector> SQUIRE_EXPORT electron_integral(const PS_GTO &P, const PP_GTO &Q)
 {
     return electron_integral(Q,P);
 }
 
-/** Return the auxilliary electron repulsion integral (pp|ps)^m */
-TrigArray2D<Vector> SQUIRE_EXPORT electron_integral(const PP_GTO &P, 
-                                                    const PS_GTO &Q, int m)
+/** Calculate the electron repulsion integral (pp|ps) into the passed matrix */
+void SQUIRE_EXPORT electron_integral(const PP_GTO &P, const PS_GTO &Q, int m,
+                                     Array2D<Vector> &matrix)
 {
     double boys[4];
     multi_boys_4( GTOPair::T(P,Q), boys, m );
-    return my_electron_integral(P,Q,boys);
+    my_electron_integral(P, Q, boys, matrix);
+    
+    return;
+}
+
+/** Calculate the electron repulsion integral (ps|pp) into the passed matrix */
+void SQUIRE_EXPORT electron_integral(const PS_GTO &P, const PP_GTO &Q, int m,
+                                     Array2D<Vector> &matrix)
+{
+    electron_integral(Q, P, m, matrix);
+    return;
+}
+
+/** Return the auxilliary electron repulsion integral (pp|ps)^m */
+Array2D<Vector> SQUIRE_EXPORT electron_integral(const PP_GTO &P, 
+                                                    const PS_GTO &Q, int m)
+{
+    Array2D<Vector> matrix(3,3);
+    electron_integral(P, Q, m, matrix);
+    return matrix;
 }
 
 /** Return the auxilliary electron repulsion integral (ps,pp)^m */
-TrigArray2D<Vector> SQUIRE_EXPORT electron_integral(const PS_GTO &P, 
-                                                    const PP_GTO &Q, int m)
+Array2D<Vector> SQUIRE_EXPORT electron_integral(const PS_GTO &P, 
+                                                const PP_GTO &Q, int m)
 {
     return electron_integral(Q,P,m);
 }
 
-static TrigArray2D<Matrix>
-my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
+static void my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5],
+                                 Array2D<Matrix> &mat)
 {
     // (pp|pp) = prefac * {  F4(T)(WPi WPj WQk WQl) + 
     //                       
@@ -1184,7 +1192,7 @@ my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
     const double *wp = W_minus_P.constData();
     const double *wq = W_minus_Q.constData();
     
-    TrigArray2D<Matrix> mat(3);
+    mat.redimension(3,3);
     Matrix *m = mat.data();
     
     const double prefac_over_2zeta = prefac / (2*P.zeta());
@@ -1477,25 +1485,45 @@ my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double boys[5])
         // i == j
         ij_mat += delta_ij;
     }
-    
-    return mat;
 }
 
-/** Return the electron repulsion integral (pp|pp) */
-TrigArray2D<Matrix> SQUIRE_EXPORT electron_integral(const PP_GTO &P, const PP_GTO &Q)
+/** Calculate into the passed matrix the electron repulsion integral (pp|pp) */
+void SQUIRE_EXPORT electron_integral(const PP_GTO &P, const PP_GTO &Q,
+                                     Array2D<Matrix> &matrix)
 {
     double boys[5];
     multi_boys_n( GTOPair::T(P,Q), boys, 5 );
-    return my_electron_integral(P, Q, boys);
+    my_electron_integral(P, Q, boys, matrix);
+    
+    return;
 }
 
-/** Return the auxilliary electron repulsion integral (pp|pp)^m */
-TrigArray2D<Matrix> SQUIRE_EXPORT electron_integral(const PP_GTO &P,
-                                                    const PP_GTO &Q, int m)
+/** Return the electron repulsion integral (pp|pp) */
+Array2D<Matrix> SQUIRE_EXPORT electron_integral(const PP_GTO &P, const PP_GTO &Q)
+{
+    Array2D<Matrix> matrix(3,3);
+    electron_integral(P, Q, matrix);
+    return matrix;
+}
+
+/** Calculate into the passed matrix the electron repulsion integral (pp|pp)^m */
+void SQUIRE_EXPORT electron_integral(const PP_GTO &P, const PP_GTO &Q, int m,
+                                     Array2D<Matrix> &matrix)
 {
     double boys[5];
     multi_boys_n( GTOPair::T(P,Q), boys, 5, m );
-    return my_electron_integral(P, Q, boys);
+    my_electron_integral(P, Q, boys, matrix);
+    
+    return;
+}
+
+/** Return the auxilliary electron repulsion integral (pp|pp)^m */
+Array2D<Matrix> SQUIRE_EXPORT electron_integral(const PP_GTO &P,
+                                                const PP_GTO &Q, int m)
+{
+    Array2D<Matrix> matrix(3,3);
+    electron_integral(P, Q, matrix);
+    return matrix;
 }
 
 } // end of namespace Squire
