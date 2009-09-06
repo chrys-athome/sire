@@ -76,11 +76,14 @@ print "yyxx ssss  ",electron_integral(SS_GTO(x,S,x,S),SS_GTO(y,S,y,S))
 print "yyyx ssss ",electron_integral(SS_GTO(x,S,y,S),SS_GTO(y,S,y,S))
 print "yyyy ssss ",electron_integral(SS_GTO(y,S,y,S),SS_GTO(y,S,y,S))
 
+print "yxxx sppp ",electron_integral(PS_GTO(y,S,x,P),PP_GTO(x,P,x,P))
+
 print "yyxx ssps ",electron_integral(PS_GTO(x,P,x,S),SS_GTO(y,S,y,S))
 print "yyxx sspp ",electron_integral(PP_GTO(x,P,x,P),SS_GTO(y,S,y,S))
 print "yyxx ppss ",electron_integral(SS_GTO(x,S,x,S),PP_GTO(y,P,y,P))
 
 print "yxyx spss ",electron_integral(PS_GTO(x,P,y,S),SS_GTO(x,S,y,S))
+print "yyyx psss ",electron_integral(PS_GTO(y,P,y,S),SS_GTO(y,S,x,S))
 
 print "xxxx psps ",electron_integral(PS_GTO(x,P,x,S),PS_GTO(x,P,x,S))
 print "yyxx psps ",electron_integral(PS_GTO(y,P,y,S),PS_GTO(x,P,x,S))
@@ -89,6 +92,9 @@ print "yxyx spsp ",electron_integral(PS_GTO(y,S,x,P),PS_GTO(y,S,x,P))
 print "yxyx spps ",electron_integral(PS_GTO(y,S,x,P),PS_GTO(y,P,x,S))
 print "xxxx ppps ",electron_integral(PP_GTO(y,P,y,P),PS_GTO(x,P,x,S))
 print "yxyx ppps ",electron_integral(PP_GTO(y,P,x,P),PS_GTO(y,P,x,S))
+
+print "\npppp"
 print "xxxx pppp ",electron_integral(PP_GTO(x,P,x,P),PP_GTO(x,P,x,P))
 print "yyxx pppp ",electron_integral(PP_GTO(y,P,y,P),PP_GTO(x,P,x,P))
-
+print "yxyx pppp ",electron_integral(PP_GTO(y,P,x,P),PP_GTO(y,P,x,P))
+print "yyyx pppp ",electron_integral(PP_GTO(y,P,y,P),PP_GTO(y,P,x,P))

@@ -33,6 +33,8 @@
 
 #include "tostring.h"
 
+#include <limits>
+
 #include <QDebug>
 
 using namespace SireMaths;

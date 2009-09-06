@@ -289,7 +289,7 @@ if ( CMAKE_COMPILER_IS_GNUCC )
 
     # Ensure that the libraries don't contain any undefined symbols
     if(APPLE)
-        set ( SIRE_SHARE_LINK_FLAGS "${SIRE_SHARE_LINK_FLAGS} -rdynamic -Wl" )
+        set ( SIRE_SHARE_LINK_FLAGS "${SIRE_SHARE_LINK_FLAGS} -Wl" )
     else(UNIX)
         set ( SIRE_SHARE_LINK_FLAGS "${SIRE_SHARE_LINK_FLAGS} -rdynamic -Wl,--no-undefined" )
     endif()

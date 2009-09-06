@@ -294,7 +294,7 @@ PP_GTO::PP_GTO(const Vector &A, const P_GTO &a,
 {
     p_minus_a = P() - A;
     p_minus_b = P() - B;
-    
+
     norm_scl = std::sqrt( 16 * a.alpha() * b.beta() );
 }
   
@@ -873,7 +873,7 @@ static Matrix my_electron_integral(const PS_GTO &P, const PS_GTO &Q,
     }
     
     //do the diagonal i == k elements
-    const double extra = 0.5 * prefac / (P.zeta()+Q.eta());
+    const double extra = 0.5 * boys[1] * prefac / (P.zeta()+Q.eta());
     
     for (int i=0; i<3; ++i)
     {
@@ -1009,8 +1009,8 @@ static void my_electron_integral(const PP_GTO &P, const PS_GTO &Q, const double 
     const double *wp = W_minus_P.constData();
     const double *wq = W_minus_Q.constData();
 
-    const double inv_zeta = prefac / P.zeta();
-    const double inv_zeta_eta = 1.0 / (2.0*(P.zeta()+Q.eta()));
+    const double inv_zeta = 0.5 * prefac / P.zeta();
+    const double inv_zeta_eta = 0.5 / (P.zeta()+Q.eta());
     
     const Vector extra_ij = inv_zeta * 
                                (boys[0]*Q.Q_minus_C() + 
@@ -1174,10 +1174,10 @@ static void my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double 
     //
     //  delta_ik delta_jl/4(e+z)^2{ F2(T) } }
     //
-    //  delta_ij delta_kl/4ez { F0(T) + (rho/ez) F2(T) + 
+    //  delta_ij delta_kl/4ez { F0(T) + (rho^2/ez) F2(T) + 
     //                          F1(T)[-rho/eta - rho/zeta] } +
 
-    const double prefac = P.scale() * Q.scale() + GTOPair::preFac(P,Q);
+    const double prefac = P.scale() * Q.scale() * GTOPair::preFac(P,Q);
     
     const double rho = GTOPair::rho(P,Q);
     const Vector W = GTOPair::W(P,Q);
@@ -1195,11 +1195,11 @@ static void my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double 
     mat.redimension(3,3);
     Matrix *m = mat.data();
     
-    const double prefac_over_2zeta = prefac / (2*P.zeta());
-    const double prefac_over_2eta = prefac / (2*Q.eta());
-    const double prefac_over_2e_pl_z = prefac / (2*(P.zeta()+Q.eta()));
-    const double prefac_over_4e_pl_z2 = prefac / (4*pow_2(P.zeta()+Q.eta()));
-    const double prefac_over_4ez = prefac / (4*P.zeta()*Q.eta());
+    const double prefac_over_2zeta = 0.5 * prefac / P.zeta();
+    const double prefac_over_2eta = 0.5 * prefac / Q.eta();
+    const double prefac_over_2e_pl_z = 0.5 * prefac / (P.zeta()+Q.eta());
+    const double prefac_over_4e_pl_z2 = 0.25 * prefac / pow_2(P.zeta()+Q.eta());
+    const double prefac_over_4ez = 0.25 * prefac / (P.zeta()*Q.eta());
     
     const double rho_over_zeta = rho / P.zeta();
     const double rho_over_eta = rho / Q.eta();
@@ -1227,8 +1227,6 @@ static void my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double 
         }
     }
     
-    qDebug() << "delta_ij\n" << delta_ij.toString();
-    
     // k == l
     for (int i=0; i<3; ++i)
     {
@@ -1241,8 +1239,6 @@ static void my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double 
                     boys[1]*(pb[j]*wp[i] + pa[i]*wp[j] - rho_over_eta*pa[i]*pb[j]) );
         }
     }
-
-    qDebug() << "delta_kl\n" << delta_kl.toString();
     
     // i == k
     for (int j=0; j<3; ++j)
@@ -1255,8 +1251,6 @@ static void my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double 
                         boys[3]*wp[j]*wq[l] );
         }
     }
-
-    qDebug() << "delta_ik\n" << delta_ik.toString();
     
     // i == l
     for (int j=0; j<3; ++j)
@@ -1269,8 +1263,6 @@ static void my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double 
                         boys[3]*wp[j]*wq[k] );
         }
     }
-
-    qDebug() << "delta_il\n" << delta_il.toString();
     
     // j == k
     for (int i=0; i<3; ++i)
@@ -1283,8 +1275,6 @@ static void my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double 
                         boys[3]*wp[i]*wq[l] );
         }
     }
-
-    qDebug() << "delta_jk\n" << delta_jk.toString();
     
     // j == l
     for (int i=0; i<3; ++i)
@@ -1297,8 +1287,6 @@ static void my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double 
                         boys[3]*wp[i]*wq[k] );
         }
     }
-
-    qDebug() << "delta_jl\n" << delta_jl.toString();
     
     // i == l and j == k
     for (int i=0; i<3; ++i)
@@ -1320,10 +1308,6 @@ static void my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double 
                                 boys[1]*(rho_over_eta + rho_over_zeta) + 
                                 boys[2]*rho*rho_over_ez );
     }
-
-    qDebug() << "delta_ij\n" << delta_ij.toString();
-    qDebug() << "delta_il\n" << delta_il.toString();
-    qDebug() << "delta_ik\n" << delta_ik.toString();
     
     /////////
     ///////// Now everything is pre-computed, lets do the real work
