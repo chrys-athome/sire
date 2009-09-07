@@ -46,6 +46,12 @@
 
 SIRE_BEGIN_HEADER
 
+namespace SireBase
+{
+template<class T>
+class PropPtr;
+}
+
 namespace Sire
 {
 
@@ -108,6 +114,13 @@ inline QString qstr(const QStringList &strings)
         return strings.at(0);
     else
         return QString("[ %1 ]").arg( strings.join(", ") );
+}
+
+/** Used to return a string representation of a SireBase::PropPtr */
+template<class T>
+QString qstr(const SireBase::PropPtr<T> &ptr)
+{
+    return qstr( ptr.read() );
 }
 
 /** Used to return a string representation of a QList */

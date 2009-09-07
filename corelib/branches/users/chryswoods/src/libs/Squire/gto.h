@@ -39,6 +39,8 @@ namespace Squire
 {
 class GTO;
 class GTOPair;
+class S_GTO;
+class SS_GTO;
 }
 
 QDataStream& operator<<(QDataStream&, const Squire::GTO&);
@@ -51,6 +53,8 @@ namespace Squire
 {
 
 using SireMaths::Vector;
+
+typedef SireBase::PropPtr<GTO> GTOPtr;
 
 /** This is the base class of all single Gaussian Type Orbital shells (GTOs)
     (S_GTO (l==0), P_GTO (l==1), D_GTO (l==2), FPlus_GTO (l>=3))
@@ -84,10 +88,16 @@ public:
     
     virtual GTO* clone() const=0;
 
+	GTOPtr multiply(double coefficient) const;
+
     double alpha() const;
     double beta() const;
     
     double scale() const;
+
+	bool isNull() const;
+
+	static const GTO& null();
 
 protected:
     GTO(double alpha, double scale);
@@ -143,6 +153,8 @@ public:
 
     double ss() const;
     
+    bool isNull() const;
+    
     static double T(const GTOPair &P, const GTOPair &Q);
     
     static double rho(const GTOPair &P, const GTOPair &Q);
@@ -150,6 +162,8 @@ public:
     static double preFac(const GTOPair &P, const GTOPair &Q);
     
     static Vector W(const GTOPair &P, const GTOPair &Q);
+    
+    static const GTOPair& null();
     
 protected:
     GTOPair(const Vector &A, const GTO &a,
@@ -279,8 +293,6 @@ inline double GTOPair::ss() const
 }
 
 #endif // SIRE_SKIP_INLINE_FUNCTIONS
-
-typedef SireBase::PropPtr<GTO> GTOPtr;
 
 }
 

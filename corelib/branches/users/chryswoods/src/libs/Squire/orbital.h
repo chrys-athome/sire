@@ -80,6 +80,8 @@ public:
     static const char* typeName();
     
     virtual Orbital* clone() const=0;
+    
+    virtual QString toString() const=0;
 
 protected:
     Orbital& operator=(const Orbital &other);

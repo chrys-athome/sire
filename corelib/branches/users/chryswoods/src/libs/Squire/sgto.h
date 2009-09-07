@@ -69,6 +69,8 @@ public:
     bool operator==(const S_GTO &other) const;
     bool operator!=(const S_GTO &other) const;
     
+    QString toString() const;
+    
     int angularMomentum() const;
     int nOrbitals() const;
 };

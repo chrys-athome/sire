@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "gto.h"
+#include "sgto.h"
 
 #include "SireMaths/maths.h"
 
@@ -82,7 +83,12 @@ GTO::GTO() : OrbitalShell(), alfa(0), scl(0)
     and scale (unnormalised) */
 GTO::GTO(double alpha, double scale) 
     : OrbitalShell(), alfa(alpha), scl(scale)
-{}
+{
+	if (scl < 0)
+    	throw SireError::invalid_arg( QObject::tr(
+        		"Squire does not support the use of GTOs with negative "
+                "scale factors."), CODELOC );
+}
 
 /** Copy constructor */
 GTO::GTO(const GTO &other) 
@@ -119,6 +125,31 @@ bool GTO::operator!=(const GTO &other) const
     return not this->operator==(other);
 }
 
+/** Return whether or not this orbital shell is null - it is null
+    if the scale or exponent are 0 */
+bool GTO::isNull() const
+{
+	return alfa == 0 or scl == 0;
+}
+
+/** Return this orbital shell multiplied by 'coefficient' */
+GTOPtr GTO::multiply(double coefficient) const
+{
+	if (coefficient < 0)
+    	throw SireError::invalid_arg( QObject::tr(
+        		"Squire does not support GTOs with negative scale factors."),
+                	CODELOC );
+
+	GTOPtr ret( this->clone() );
+    
+    ret.edit().scl *= coefficient;
+    
+    if (ret.read().scl == 0)
+    	return GTOPtr();
+    else
+		return ret;
+}
+
 /** Return the value of alpha (the exponent) for this gaussian */
 double GTO::alpha() const
 {
@@ -141,6 +172,21 @@ double GTO::scale() const
 const char* GTO::typeName()
 {
     return "Squire::GTO";
+}
+
+static SharedPolyPointer<GTO> global_null_gto;
+
+const GTO& GTO::null()
+{
+    if (global_null_gto.constData() == 0)
+    {
+        QMutexLocker lkr( globalLock() );
+        
+        if (global_null_gto.constData() == 0)
+            global_null_gto = new S_GTO();
+    }
+    
+    return *(global_null_gto.constData());
 }
 
 //////////
@@ -192,22 +238,33 @@ GTOPair::GTOPair(const Vector &A, const GTO &a,
                  const Vector &B, const GTO &b)
         : ShellPair()
 {
-    //the product of two Gaussians is a Gaussian :-)
-    const double alpha_times_beta = a.alpha() * b.alpha();
-    const double alpha_plus_beta = a.alpha() + b.alpha();
-    
-    _P = (a.alpha()*A + b.alpha()*B) / alpha_plus_beta;
-    _R2 = Vector::distance2(A, B);
-    _zeta = alpha_plus_beta;
-    _xi = alpha_times_beta / alpha_plus_beta;
-    
-    const double scl = a.scale() * b.scale() *
-                          std::pow( four_over_pi2 * a.alpha() * b.beta(), 0.75 );
-    
-    const double G = scl * std::exp(-_xi*_R2);
-    _ss = std::pow( pi / _zeta, 1.5 ) * G;
+	if (a.isNull() or b.isNull())
+    {
+		_R2 = 0;
+        _zeta = 0;
+        _xi = 0;
+        _K = 0;
+        _ss = 0;
+    }
+    else
+    {
+        //the product of two Gaussians is a Gaussian :-)
+        const double alpha_times_beta = a.alpha() * b.alpha();
+        const double alpha_plus_beta = a.alpha() + b.alpha();
+        
+        _P = (a.alpha()*A + b.alpha()*B) / alpha_plus_beta;
+        _R2 = Vector::distance2(A, B);
+        _zeta = alpha_plus_beta;
+        _xi = alpha_times_beta / alpha_plus_beta;
+        
+        const double scl = a.scale() * b.scale() *
+                              std::pow( four_over_pi2 * a.alpha() * b.beta(), 0.75 );
+        
+        const double G = scl * std::exp(-_xi*_R2);
+        _ss = std::pow( pi / _zeta, 1.5 ) * G;
 
-    _K = sqrt_two_times_pi_to_5_4 * G / alpha_plus_beta;
+        _K = sqrt_two_times_pi_to_5_4 * G / alpha_plus_beta;
+	}
 }
 
 /** Copy constructor */
@@ -292,4 +349,25 @@ Vector GTOPair::W(const GTOPair &P, const GTOPair &Q)
     
     return ( (P.zeta()/zeta_plus_eta) * P.P() ) + 
            ( (Q.eta()/zeta_plus_eta) * Q.Q() );
+}
+
+/** Return whether or not this pair is null */
+bool GTOPair::isNull() const
+{
+	return _ss == 0;
+}
+
+static SharedPolyPointer<GTOPair> global_null_gtopair;
+
+const GTOPair& GTOPair::null()
+{
+    if (global_null_gtopair.constData() == 0)
+    {
+        QMutexLocker lkr( globalLock() );
+        
+        if (global_null_gtopair.constData() == 0)
+            global_null_gtopair = new SS_GTO();
+    }
+    
+    return *(global_null_gtopair.constData());
 }

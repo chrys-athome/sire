@@ -110,6 +110,16 @@ bool S_GTO::operator!=(const S_GTO &other) const
     return GTO::operator!=(other);
 }
 
+/** Return a string representation of this orbital */
+QString S_GTO::toString() const
+{
+	if (GTO::scale() == 1)
+		return QObject::tr("S (alpha = %1)").arg( GTO::alpha() );
+	else
+		return QObject::tr("S (alpha = %1, scale = %2)")
+        			.arg( GTO::alpha() ).arg(GTO::scale());
+}
+
 /** Return the angular momentum of this orbital shell (l==0) */
 int S_GTO::angularMomentum() const
 {

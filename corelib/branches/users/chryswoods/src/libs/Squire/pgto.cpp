@@ -116,6 +116,16 @@ bool P_GTO::operator!=(const P_GTO &other) const
     return GTO::operator!=(other);
 }
 
+/** Return a string representation of this orbital */
+QString P_GTO::toString() const
+{
+	if (GTO::scale() == 1)
+		return QObject::tr("P (alpha = %1)").arg( GTO::alpha() );
+	else
+		return QObject::tr("P (alpha = %1, scale = %2)")
+        			.arg( GTO::alpha() ).arg(GTO::scale());
+}
+
 /** The angular momentum of P-GTOs is 1 */
 int P_GTO::angularMomentum() const
 {

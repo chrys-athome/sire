@@ -30,6 +30,7 @@
 #define SQUIRE_CGTO_H
 
 #include <QVector>
+#include <boost/tuple/tuple.hpp>
 
 #include "gto.h"
 
@@ -53,7 +54,7 @@ namespace Squire
     
     @author Christopher Woods
 */
-class SQUIRE_EXPORT CGTO : public SireBase::ConcreteProperty<CGTO,GTO>
+class SQUIRE_EXPORT CGTO : public SireBase::ConcreteProperty<CGTO,OrbitalShell>
 {
 
 friend QDataStream& ::operator<<(QDataStream&, const CGTO&);
@@ -62,13 +63,58 @@ friend QDataStream& ::operator>>(QDataStream&, CGTO&);
 public:
 	CGTO();
     
+    CGTO(const GTO &primitive);
+    CGTO(const QVector<GTOPtr> &primitives);
+    
+    CGTO(const boost::tuple<double,GTOPtr> &primitive);
+    CGTO(const boost::tuple<GTOPtr,double> &primitive);
+    
+    CGTO(const GTO &primitive, double coefficient);
+    CGTO(double coefficient, const GTO &primitive);
+    
+    CGTO(const QVector< boost::tuple<double,GTOPtr> > &primitives);
+    CGTO(const QVector< boost::tuple<GTOPtr,double> > &primitives);
+    
+    CGTO(const QVector<GTOPtr> &primitives,
+         const QVector<double> &coefficients);
+         
+	CGTO(const QVector<double> &coefficients,
+         const QVector<GTOPtr> &primitives);
+    
     CGTO(const CGTO &other);
     
     ~CGTO();
+
+	static const char* typeName();
+    
+    CGTO& operator=(const CGTO &other);
+    
+    bool operator==(const CGTO &other) const;
+    bool operator!=(const CGTO &other) const;
+    
+    const QVector<GTOPtr>& primitives() const;
+    
+    int nPrimitives() const;
+    
+    bool isNull() const;
+    
+    QString toString() const;
+    
+    int angularMomentum() const;
+    int nOrbitals() const;
+    
+private:
+	void assertSane();
+
+	/** All of the primitives that make up this contracted GTO shell */
+    QVector<GTOPtr> prims;
 };
 
 }
 
+Q_DECLARE_METATYPE( Squire::CGTO )
+
+SIRE_EXPOSE_CLASS( Squire::CGTO )
 
 SIRE_END_HEADER
 
