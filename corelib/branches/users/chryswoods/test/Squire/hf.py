@@ -90,7 +90,8 @@ print "yyxx psps ",electron_integral(PS_GTO(y,P,y,S),PS_GTO(x,P,x,S))
 print "yxyx psps ",electron_integral(PS_GTO(x,S,y,P),PS_GTO(x,S,y,P))
 print "yxyx spsp ",electron_integral(PS_GTO(y,S,x,P),PS_GTO(y,S,x,P))
 print "yxyx spps ",electron_integral(PS_GTO(y,S,x,P),PS_GTO(y,P,x,S))
-print "xxxx ppps ",electron_integral(PP_GTO(y,P,y,P),PS_GTO(x,P,x,S))
+print "xxxx ppps ",electron_integral(PP_GTO(x,P,x,P),PS_GTO(x,P,x,S))
+print "yyxx ppps ",electron_integral(PP_GTO(y,P,y,P),PS_GTO(x,P,x,S))
 print "yxyx ppps ",electron_integral(PP_GTO(y,P,x,P),PS_GTO(y,P,x,S))
 
 print "\npppp"

@@ -1313,18 +1313,16 @@ static void my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double 
     ///////// Now everything is pre-computed, lets do the real work
     /////////
     
-    //first do the off-diagonal (i,j) elements
-    for (int i=0; i<2; ++i)
+    for (int i=0; i<3; ++i)
     {
-        for (int j=i+1; j<3; ++j)
+        for (int j=0; j<3; ++j)
         {
             Matrix &ij_mat = m[ mat.offset(i,j) ];
             double *ij_m = ij_mat.data();
 
-            //do the off-diagonal (k,l) elements
-            for (int k=0; k<2; ++k)
+            for (int k=0; k<3; ++k)
             {
-                for (int l=k+1; k<3; ++k)
+                for (int l=0; l<3; ++l)
                 {
                     //first the part common to all...
                     const double val = prefac * (
@@ -1342,39 +1340,21 @@ static void my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double 
                                                 pa[i]*pb[j]*wq[k]*wq[l]) +
                                        boys[1]*(pb[j]*qc[k]*qd[l]*wp[i] +
                                                 pa[i]*qc[k]*qd[l]*wp[j] +
-                                                pa[i]*pb[k]*qd[l]*pb[j] +
+                                                pa[i]*pb[j]*qd[l]*wq[k] +
                                                 pa[i]*pb[j]*qc[k]*wq[l]) );
                                                 
                     ij_m[ ij_mat.offset(k,l) ] = val;
-                    ij_m[ ij_mat.offset(l,k) ] = val;
                 }
             }
-            
-            //do the diagonal elements (k == l)
-            for (int k=0; k<3; ++k)
-            {
-                const double val = prefac * (
-                                   boys[4]*wp[i]*wp[j]*wq[k]*wq[k] +
-                                   boys[3]*(qd[k]*wp[i]*wp[j]*wq[k] + 
-                                            qc[k]*wp[i]*wp[j]*wq[k] +
-                                            pb[j]*wp[i]*wq[k]*wq[k] +
-                                            pa[i]*wp[j]*wq[k]*wq[k]) +
-                                   boys[0]*pa[i]*pb[j]*qc[k]*qd[k] +
-                                   boys[2]*(qc[k]*qd[k]*wp[i]*wp[j] +
-                                            pb[j]*qd[k]*wp[i]*wq[k] +
-                                            pa[i]*qd[k]*wp[j]*wq[k] +
-                                            pb[j]*qc[k]*wp[i]*wq[k] +
-                                            pa[i]*qc[k]*wp[j]*wq[k] +
-                                            pa[i]*pb[j]*wq[k]*wq[k]) +
-                                   boys[1]*(pb[j]*qc[k]*qd[k]*wp[i] +
-                                            pa[i]*qc[k]*qd[k]*wp[j] +
-                                            pa[i]*pb[k]*qd[k]*pb[j] +
-                                            pa[i]*pb[j]*qc[k]*wq[k]) );
-                
-                ij_m[ ij_mat.offset(k,k) ] = val + m_kl[ delta_kl.offset(i,j) ];
-            }
+
             
             //now add on the deltas
+            
+            // k == l
+            for (int k=0; k<3; ++k)
+            {
+                ij_m[ ij_mat.offset(k,k) ] += m_kl[ delta_kl.offset(i,j) ];
+            }
 
             // i == k, j == k
             for (int l=0; l<3; ++l)
@@ -1391,83 +1371,12 @@ static void my_electron_integral(const PP_GTO &P, const PP_GTO &Q, const double 
             }
         }
     }
-    
-    //now do the diagonal (i==j) elements
+
+	//do the i == j diagonal
     for (int i=0; i<3; ++i)
-    {
-        Matrix &ij_mat = m[ mat.offset(i,i) ];
-        double *ij_m = ij_mat.data();
-
-        //do the off-diagonal (k,l) elements
-        for (int k=0; k<2; ++k)
-        {
-            for (int l=k+1; k<3; ++k)
-            {
-                //first the part common to all...
-                const double val = prefac * (
-                                   boys[4]*wp[i]*wp[i]*wq[k]*wq[l] +
-                                   boys[3]*(qd[l]*wp[i]*wp[i]*wq[k] + 
-                                            qc[k]*wp[i]*wp[i]*wq[l] +
-                                            pb[i]*wp[i]*wq[k]*wq[l] +
-                                            pa[i]*wp[i]*wq[k]*wq[l]) +
-                                   boys[0]*pa[i]*pb[i]*qc[k]*qd[l] +
-                                   boys[2]*(qc[k]*qd[l]*wp[i]*wp[i] +
-                                            pb[i]*qd[l]*wp[i]*wq[k] +
-                                            pa[i]*qd[l]*wp[i]*wq[k] +
-                                            pb[i]*qc[k]*wp[i]*wq[l] +
-                                            pa[i]*qc[k]*wp[i]*wq[l] +
-                                            pa[i]*pb[i]*wq[k]*wq[l]) +
-                                   boys[1]*(pb[i]*qc[k]*qd[l]*wp[i] +
-                                            pa[i]*qc[k]*qd[l]*wp[i] +
-                                            pa[i]*pb[k]*qd[l]*pb[i] +
-                                            pa[i]*pb[i]*qc[k]*wq[l]) );
-                                            
-                ij_m[ ij_mat.offset(k,l) ] = val;
-                ij_m[ ij_mat.offset(l,k) ] = val;
-            }
-        }
-        
-        //do the diagonal elements (k == l)
-        for (int k=0; k<3; ++k)
-        {
-            const double val = prefac * (
-                               boys[4]*wp[i]*wp[i]*wq[k]*wq[k] +
-                               boys[3]*(qd[k]*wp[i]*wp[i]*wq[k] + 
-                                        qc[k]*wp[i]*wp[i]*wq[k] +
-                                        pb[i]*wp[i]*wq[k]*wq[k] +
-                                        pa[i]*wp[i]*wq[k]*wq[k]) +
-                               boys[0]*pa[i]*pb[i]*qc[k]*qd[k] +
-                               boys[2]*(qc[k]*qd[k]*wp[i]*wp[i] +
-                                        pb[i]*qd[k]*wp[i]*wq[k] +
-                                        pa[i]*qd[k]*wp[i]*wq[k] +
-                                        pb[i]*qc[k]*wp[i]*wq[k] +
-                                        pa[i]*qc[k]*wp[i]*wq[k] +
-                                        pa[i]*pb[i]*wq[k]*wq[k]) +
-                               boys[1]*(pb[i]*qc[k]*qd[k]*wp[i] +
-                                        pa[i]*qc[k]*qd[k]*wp[i] +
-                                        pa[i]*pb[k]*qd[k]*pb[i] +
-                                        pa[i]*pb[i]*qc[k]*wq[k]) );
-
-            ij_m[ ij_mat.offset(k,k) ] = val + m_kl[ delta_kl.offset(i,i) ];
-        }
-
-        //now add on the deltas
-        // i == k, j == k
-        for (int l=0; l<3; ++l)
-        {
-            ij_m[ ij_mat.offset(i,l) ] += m_ik[ delta_ik.offset(i,l) ];
-            ij_m[ ij_mat.offset(i,l) ] += m_jk[ delta_jk.offset(i,l) ];
-        }
-        
-        // i == l, j == l
-        for (int k=0; k<3; ++k)
-        {
-            ij_m[ ij_mat.offset(k,i) ] += m_il[ delta_il.offset(i,k) ];
-            ij_m[ ij_mat.offset(k,i) ] += m_jl[ delta_jl.offset(i,k) ]; 
-        }
-        
+    {        
         // i == j
-        ij_mat += delta_ij;
+        m[ mat.offset(i,i) ] += delta_ij;
     }
 }
 
