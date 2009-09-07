@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) <year>  <name of author>
+  *  Copyright (C) 2009  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,35 +26,3 @@
   *
 \*********************************************/
 
-#include <Python.h>
-#include <boost/python.hpp>
-
-#include <QVector>
-#include <QSet>
-
-#include <boost/tuple/tuple.hpp>
-
-#include "Helpers/convertlist.hpp"
-#include "Helpers/convertdict.hpp"
-#include "Helpers/convertset.hpp"
-#include "Helpers/tuples.hpp"
-
-#include "SireBase/property.h"
-
-#include "Squire/qmprogram.h"
-#include "Squire/gto.h"
-
-using boost::python::register_tuple;
-
-using namespace Squire;
-
-void register_Squire_containers()
-{
-    register_tuple< boost::tuple<double,GTOPtr> >();
-    register_tuple< boost::tuple<GTOPtr,double> >();
-
-    register_list< QVector< boost::tuple<double,GTOPtr> > >();
-    register_list< QVector< boost::tuple<GTOPtr,double> > >();
-
-    register_list< QVector<GTOPtr> >();
-}

@@ -522,8 +522,19 @@ if __name__ == "__main__":
         print "Cannot continue as I don't know where the header files are"
         sys.exit(-1)
 
-    qt_include_dirs = [ qtdir, "%s/QtCore" % qtdir, "%s/QtGui" % qtdir,
+    qt_include_dirs = []
+
+    mac = True
+
+    if mac:
+        qt_include_dirs = [ "%s/QtCore.framework/Headers" % qtdir,
+                            "%s/QtGui.framework/Headers" % qtdir, 
+                            "%s/QtOpenGL.framework/Headers" % qtdir ]
+    else:
+        qt_include_dirs = [ qtdir, "%s/QtCore" % qtdir, "%s/QtGui" % qtdir,
                                "%s/QtOpenGL" % qtdir ]
+
+
     boost_include_dirs = [ boostdir ]
     gsl_include_dirs = [ gsldir ]
 

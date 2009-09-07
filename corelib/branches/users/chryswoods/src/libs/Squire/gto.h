@@ -280,10 +280,14 @@ inline double GTOPair::ss() const
 
 #endif // SIRE_SKIP_INLINE_FUNCTIONS
 
+typedef SireBase::PropPtr<GTO> GTOPtr;
+
 }
 
 SIRE_EXPOSE_CLASS( Squire::GTO )
 SIRE_EXPOSE_CLASS( Squire::GTOPair )
+
+SIRE_EXPOSE_PROPERTY( Squire::GTOPtr, Squire::GTO )
 
 SIRE_END_HEADER
 

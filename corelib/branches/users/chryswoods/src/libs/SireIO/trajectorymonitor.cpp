@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include <QFile>
+#include <QFileInfo>
 #include <QDir>
 #include <QByteArray>
 #include <QTemporaryFile>
@@ -407,24 +408,27 @@ void TrajectoryMonitor::writeToDisk(const QString &file_template) const
         
         f.close();
         
-        //now write the system space to disk
-        if (filename.endsWith(".pdb", Qt::CaseInsensitive))
+        if (i <= space_frames.count())
         {
-            filename.replace(".pdb", ".xsc", Qt::CaseInsensitive);
-        }
-        else
-            filename += ".xsc";
+        	//now write the system space to disk
+			QString suffix = QFileInfo(filename).completeSuffix();
             
-        QFile g(filename);        
+            if (not suffix.isEmpty())
+	            filename.replace( filename.lastIndexOf(suffix), suffix.count(), "xsc");
+	        else
+	            filename += ".xsc";
+	            
+	        QFile g(filename);        
 
-        if (not g.open( QIODevice::WriteOnly ))
-            throw SireError::file_error(g);
+	        if (not g.open( QIODevice::WriteOnly ))
+	            throw SireError::file_error(g);
 
-        QTextStream ts(&g);
-        
-        ts << space_frames.at(i-1).read().toString();
-        
-        g.close();
+	        QTextStream ts(&g);
+            
+    	    ts << space_frames.at(i-1).read().toString();
+			        
+	        g.close();
+    	}
     }
 }
 
@@ -451,12 +455,23 @@ void TrajectoryMonitor::monitor(System &system)
             
         //compress the data and save it to a temporary file
         frame_data = qCompress(frame_data);
+
+        //get the space
+		SpacePtr space;
+
+        const PropertyName &space_property = mol_properties["space"];
+        
+        if (space_property.hasSource())
+        {
+	        if (system.containsProperty(space_property.source()))
+		        space = system.property(space_property.source());
+		}
+        else if (space_property.hasValue())
+        	space = space_property.value();
             
         //now save this data to a temporary file
         traj_frames.append( ::writeToDisk(frame_data, temp_dir) );
-            
-        //save the system space
-        space_frames.append( system.property(mol_properties["space"]) );
+		space_frames.append(space);
     }
     catch(...)
     {}

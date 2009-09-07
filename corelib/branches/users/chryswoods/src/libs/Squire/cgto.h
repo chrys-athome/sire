@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) <year>  <name of author>
+  *  Copyright (C) 2009  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,35 +26,50 @@
   *
 \*********************************************/
 
-#include <Python.h>
-#include <boost/python.hpp>
+#ifndef SQUIRE_CGTO_H
+#define SQUIRE_CGTO_H
 
 #include <QVector>
-#include <QSet>
 
-#include <boost/tuple/tuple.hpp>
+#include "gto.h"
 
-#include "Helpers/convertlist.hpp"
-#include "Helpers/convertdict.hpp"
-#include "Helpers/convertset.hpp"
-#include "Helpers/tuples.hpp"
+SIRE_BEGIN_HEADER
 
-#include "SireBase/property.h"
-
-#include "Squire/qmprogram.h"
-#include "Squire/gto.h"
-
-using boost::python::register_tuple;
-
-using namespace Squire;
-
-void register_Squire_containers()
+namespace Squire
 {
-    register_tuple< boost::tuple<double,GTOPtr> >();
-    register_tuple< boost::tuple<GTOPtr,double> >();
-
-    register_list< QVector< boost::tuple<double,GTOPtr> > >();
-    register_list< QVector< boost::tuple<GTOPtr,double> > >();
-
-    register_list< QVector<GTOPtr> >();
+class CGTO;
 }
+
+QDataStream& operator<<(QDataStream&, const Squire::CGTO&);
+QDataStream& operator>>(QDataStream&, Squire::CGTO&);
+
+namespace Squire
+{
+
+/** This class holds a contracted set of gaussian type orbitals.
+    The contracted set represents only a single orbital shell.
+    All shells in the contraction must have the same
+    angular momentum
+    
+    @author Christopher Woods
+*/
+class SQUIRE_EXPORT CGTO : public SireBase::ConcreteProperty<CGTO,GTO>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const CGTO&);
+friend QDataStream& ::operator>>(QDataStream&, CGTO&);
+
+public:
+	CGTO();
+    
+    CGTO(const CGTO &other);
+    
+    ~CGTO();
+};
+
+}
+
+
+SIRE_END_HEADER
+
+#endif

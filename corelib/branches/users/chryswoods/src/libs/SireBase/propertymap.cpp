@@ -64,6 +64,9 @@ QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, PropertyName &propname)
     {
         SharedDataStream sds(ds);
         sds >> propname.src >> propname.val >> propname.value_is_default;
+        
+        if (propname.src.isEmpty())
+        	propname.src = QString::null;
     }
     else
         throw version_error(v, "1", r_propname, CODELOC);
@@ -151,7 +154,7 @@ PropertyName PropertyName::none()
 /** Return whether or not the source has been set */
 bool PropertyName::hasSource() const
 {
-    return not src.isNull();
+    return not src.isEmpty();
 }
 
 /** Return whether or not the value has been set */
@@ -169,7 +172,7 @@ bool PropertyName::hasDefaultValue() const
 /** Return whether this property is null */
 bool PropertyName::isNull() const
 {
-    return src.isNull() and val.isNull();
+    return src.isEmpty() and val.isNull();
 }
 
 /** Return the source of the property - this is only valid
@@ -385,6 +388,13 @@ QString PropertyMap::toString() const
          it != propmap.constEnd();
          ++it)
     {
+    	qDebug() << it.key() << it.value().hasSource() << it.value().hasValue();
+        
+        if (it.value().hasSource())
+        {
+        	qDebug() << "SOURCE (" << it.value().source() << ")";
+        }
+        
         items.append( QString("%1 == %2").arg( it.key(), it.value().toString() ) );
     }
     

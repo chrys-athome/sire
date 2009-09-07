@@ -1434,7 +1434,7 @@ Molecules FewPointsHelper::applyConstraint() const
                 lost_coords.append(i);
         }
     }
-    
+
     BOOST_ASSERT( lost_mols.count() == lost_coords.count() );
     
     int n = lost_mols.count();
@@ -1466,7 +1466,7 @@ Molecules FewPointsHelper::update(const System &system, bool new_system)
     bool new_points = this->updatePoints(system);
 
     bool new_space = false;
-    
+
     if (new_system)
         new_space = this->updateSpace(system);
 
@@ -1490,6 +1490,7 @@ Molecules FewPointsHelper::update(const System &system, bool new_system)
     }
 
     this->assignMoleculesToPoints();
+
     return this->applyConstraint();
 }
 
@@ -2412,12 +2413,12 @@ bool IdentityConstraint::involvesMoleculesFrom(const Molecules &molecules) const
 Molecules IdentityConstraint::update(const System &system)
 {
     Molecules mols_to_change;
-
+	
     if (system.UID() != this->sysUID() or
         system.version() != this->sysVersion())
     {
         IdentityConstraint old_state(*this);
-
+        
         bool new_system = (system.UID() != this->sysUID() or
                            system.version().majorVersion() 
                                             != this->sysVersion().majorVersion());
@@ -2435,7 +2436,7 @@ Molecules IdentityConstraint::update(const System &system)
     }
     else
         mols_to_change = d.constData()->applyConstraint();
-    
+
     return mols_to_change;
 }
 

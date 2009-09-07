@@ -26,6 +26,7 @@ set ( SQUIRE_HEADERS
 
       molpro.h
 
+      cgto.h
       pgto.h
       sgto.h
     )
@@ -51,6 +52,7 @@ set ( SQUIRE_SOURCES
       pointcharge.cpp
       pointdipole.cpp
 
+      cgto.cpp
       pgto.cpp
       sgto.cpp
 
