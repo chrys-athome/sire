@@ -31,6 +31,10 @@
 
 #include "gto.h"
 
+#include "SireBase/trigarray2d.hpp"
+
+#include "SireMaths/trigmatrix.h"
+
 SIRE_BEGIN_HEADER
 
 namespace Squire
@@ -47,6 +51,9 @@ QDataStream& operator>>(QDataStream&, Squire::SS_GTO&);
 
 namespace Squire
 {
+
+using SireMaths::TrigMatrix;
+using SireBase::TrigArray2D;
 
 class PointCharge;
 class PointDipole;
@@ -105,6 +112,31 @@ public:
     int nOrbitals0() const;
     int nOrbitals1() const;
 };    
+
+/** This class is used to calculate integrals involving just SS pairs
+
+	@author Christopher Woods
+*/
+class SS_GTOs
+{
+public:
+	SS_GTOs();
+    SS_GTOs(const SS_GTOs &other);
+    
+    ~SS_GTOs();
+    
+    SS_GTOs& operator=(const SS_GTOs &other);
+
+	TrigMatrix overlap_integral() const;
+    TrigMatrix kinetic_integral() const;
+    
+    TrigMatrix potential_integral(const QVector<PointCharge> &C) const;
+    TrigMatrix potential_integral(const QVector<PointCharge> &C, int m) const;
+    
+private:
+	/** All of the orbital pairs */
+    TrigArray2D<SS_GTO> orbs;
+};
 
 //////////
 ////////// Integrals involving only S-orbitals

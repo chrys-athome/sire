@@ -148,6 +148,80 @@ void CGTO::assertSane()
     prims.squeeze();
 }
 
+/** Construct from just the passed GTO */
+CGTO::CGTO(const GTO &gto)
+     : ConcreteProperty<CGTO,OrbitalShell>()
+{
+	prims.append(gto);
+    this->assertSane();
+}
+
+/** Constructor from the passed GTOs */
+CGTO::CGTO(const GTO &p0, const GTO &p1)
+     : ConcreteProperty<CGTO,OrbitalShell>()
+{
+	prims.append(p0);
+    prims.append(p1);
+    this->assertSane();
+}
+   
+/** Constructor from the passed GTOs */
+CGTO::CGTO(const GTO &p0, const GTO &p1, const GTO &p2)
+     : ConcreteProperty<CGTO,OrbitalShell>()
+{
+	prims.append(p0);
+    prims.append(p1);
+	prims.append(p2);
+    this->assertSane();
+}
+
+/** Constructor from the passed GTOs */
+CGTO::CGTO(const GTO &p0, const GTO &p1, const GTO &p2,
+           const GTO &p3)
+     : ConcreteProperty<CGTO,OrbitalShell>()
+{
+	prims.append(p0);
+    prims.append(p1);
+	prims.append(p2);
+	prims.append(p3);
+    this->assertSane();
+}
+
+/** Constructor from the passed GTOs */
+CGTO::CGTO(const GTO &p0, const GTO &p1, const GTO &p2,
+           const GTO &p3, const GTO &p4)
+     : ConcreteProperty<CGTO,OrbitalShell>()
+{
+	prims.append(p0);
+    prims.append(p1);
+	prims.append(p2);
+	prims.append(p3);
+	prims.append(p4);
+    this->assertSane();
+}
+
+/** Constructor from the passed GTOs */
+CGTO::CGTO(const GTO &p0, const GTO &p1, const GTO &p2,
+           const GTO &p3, const GTO &p4, const GTO &p5)
+     : ConcreteProperty<CGTO,OrbitalShell>()
+{
+	prims.append(p0);
+    prims.append(p1);
+	prims.append(p2);
+	prims.append(p3);
+	prims.append(p4);
+	prims.append(p5);
+    this->assertSane();
+}
+
+/** Construct from the passed GTOs */
+CGTO::CGTO(const QVector<GTOPtr> &gtos)
+     : ConcreteProperty<CGTO,OrbitalShell>(),
+       prims(gtos)
+{
+	this->assertSane();
+}
+
 /** Construct from the passed set of primitives and coefficients.
     All of the primitives must have the same angular momentum 
 

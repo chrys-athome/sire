@@ -64,6 +64,16 @@ public:
 	CGTO();
     
     CGTO(const GTO &primitive);
+
+    CGTO(const GTO &p0, const GTO &p1);
+    CGTO(const GTO &p0, const GTO &p1, const GTO &p2);
+    CGTO(const GTO &p0, const GTO &p1, const GTO &p2,
+         const GTO &p3);
+    CGTO(const GTO &p0, const GTO &p1, const GTO &p2,
+         const GTO &p3, const GTO &p4);
+    CGTO(const GTO &p0, const GTO &p1, const GTO &p2,
+         const GTO &p3, const GTO &p4, const GTO &p5);
+    
     CGTO(const QVector<GTOPtr> &primitives);
     
     CGTO(const boost::tuple<double,GTOPtr> &primitive);

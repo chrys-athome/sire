@@ -153,6 +153,9 @@ public:
 
     double ss() const;
     
+    double Q_AB() const;
+    double Q_CD() const;
+    
     bool isNull() const;
     
     static double T(const GTOPair &P, const GTOPair &Q);
@@ -173,6 +176,8 @@ protected:
     
     bool operator==(const GTOPair &other) const;
     bool operator!=(const GTOPair &other) const;
+
+	void setQ(double q);
 
 private:
     /** The center of this combined SS shell pair - for 
@@ -206,6 +211,9 @@ private:
     
     /** The (s||s) overlap integral for this pair of orbitals */
     double _ss;
+    
+    /** The prescreening value - sqrt[ (ss|ss) ] - for this GTO pair */
+    double _Q_AB;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -284,6 +292,19 @@ inline double GTOPair::K_AB() const
 inline double GTOPair::K_CD() const
 {
     return GTOPair::K();
+}
+
+/** Return the value used for pre-screening this GTO pair. If this 
+    pair is 'ab', then this is equal to max[ sqrt[ (a_i,b_j|a_i,b_j) ] ] */
+inline double GTOPair::Q_AB() const
+{
+	return _Q_AB;
+}
+
+/** Synonym for GTOPair::Q() */
+inline double GTOPair::Q_CD() const
+{
+	return GTOPair::Q_AB();
 }
 
 /** Return the (s||s) overlap integral for this pair of orbitals */

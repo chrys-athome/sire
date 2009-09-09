@@ -28,6 +28,8 @@ softclj.add( mol0 )
 softclj.add( mol1 )
 
 softclj.setAlpha(2, 0.0)
+softclj.setAlpha(3, 0.5)
+softclj.setAlpha(4, 1.0)
 softclj.removeAlpha(0)
 
 clj = InterCLJFF("CLJ")
@@ -39,8 +41,6 @@ def printComponents(energies):
     """Use this function to print out the energies that are in 'energies'"""
     
     components = energies.symbols()
-    
-    components.sort( key=str )
     
     for component in components:
         print "%s == %f kcal mol-1" % (component, energies[component])

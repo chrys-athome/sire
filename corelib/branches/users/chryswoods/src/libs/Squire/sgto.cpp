@@ -176,7 +176,9 @@ SS_GTO::SS_GTO() : ConcreteProperty<SS_GTO,GTOPair>()
 SS_GTO::SS_GTO(const Vector &A, const S_GTO &a,
                const Vector &B, const S_GTO &b)
        : ConcreteProperty<SS_GTO,GTOPair>(A, a, B, b)
-{}
+{
+	this->setQ( std::sqrt(electron_integral(*this, *this)) );
+}
 
 /** Copy constructor */
 SS_GTO::SS_GTO(const SS_GTO &other) : ConcreteProperty<SS_GTO,GTOPair>(other)

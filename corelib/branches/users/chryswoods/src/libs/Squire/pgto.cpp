@@ -174,6 +174,20 @@ PS_GTO::PS_GTO()
        : ConcreteProperty<PS_GTO,GTOPair>(), norm_scl(0)
 {}
 
+static double getQ( const Matrix &e )
+{
+    const double *mat = e.constData();
+    
+    double max_e = 0;
+    
+    for (int i=0; i<9; ++i)
+    {
+    	max_e = qMax(max_e, mat[i]);
+    }
+
+	return std::sqrt(max_e);
+}
+
 /** Construct combining orbital 'a' at position 'A' with orbital 'b' at
     position 'B' */
 PS_GTO::PS_GTO(const Vector &A, const P_GTO &a,
@@ -182,6 +196,8 @@ PS_GTO::PS_GTO(const Vector &A, const P_GTO &a,
 {
     p_minus_a = P() - A;
     norm_scl = std::sqrt(4 * a.alpha());
+    
+    GTOPair::setQ( ::getQ(electron_integral(*this,*this)) );
 }
 
 /** Construct combining orbital 'a' at position 'A' with orbital 'b' at
@@ -192,6 +208,8 @@ PS_GTO::PS_GTO(const Vector &A, const S_GTO &a,
 {
     p_minus_a = P() - B;
     norm_scl = std::sqrt(4 * b.beta());
+    
+    GTOPair::setQ( ::getQ(electron_integral(*this,*this)) );
 }
   
 /** Copy constructor */     
@@ -306,6 +324,25 @@ PP_GTO::PP_GTO(const Vector &A, const P_GTO &a,
     p_minus_b = P() - B;
 
     norm_scl = std::sqrt( 16 * a.alpha() * b.beta() );
+    
+    Array2D<Matrix> e = electron_integral(*this, *this);
+    
+    double max_e = 0;
+    
+    for (int i=0; i<3; ++i)
+    {
+    	for (int j=0; j<3; ++j)
+        {
+        	const double *mat = e.constData()[ e.offset(i,j) ].constData();
+            
+            for (int k=0; k<9; ++k)
+            {
+             	max_e = qMax(max_e, mat[k]);
+            }
+        }
+    }
+    
+    GTOPair::setQ( std::sqrt(max_e) );
 }
   
 /** Copy constructor */     

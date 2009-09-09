@@ -201,7 +201,7 @@ QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const GTOPair &gtopair)
     writeHeader(ds, r_gtopair, 1);
     
     ds << gtopair._P << gtopair._R2 << gtopair._zeta << gtopair._xi
-       << gtopair._K << gtopair._ss
+       << gtopair._K << gtopair._ss << gtopair._Q_AB
        << static_cast<const ShellPair&>(gtopair);
        
     return ds;
@@ -215,7 +215,7 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, GTOPair &gtopair)
     if (v == 1)
     {
         ds >> gtopair._P >> gtopair._R2 >> gtopair._zeta
-           >> gtopair._xi >> gtopair._K >> gtopair._ss
+           >> gtopair._xi >> gtopair._K >> gtopair._ss >> gtopair._Q_AB
            >> static_cast<ShellPair&>(gtopair);
     }
     else
@@ -226,7 +226,7 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, GTOPair &gtopair)
 
 /** Null constructor */
 GTOPair::GTOPair() 
-        : ShellPair(), _R2(0), _zeta(0), _xi(0), _K(0), _ss(0)
+        : ShellPair(), _R2(0), _zeta(0), _xi(0), _K(0), _ss(0), _Q_AB(0)
 {}
 
 static const double sqrt_two_times_pi_to_5_4 = std::sqrt(2.0) * std::pow(pi, (5.0/4.0));
@@ -236,7 +236,7 @@ static const double four_over_pi2 = 4 / (pi*pi);
     located at the specified points */
 GTOPair::GTOPair(const Vector &A, const GTO &a,
                  const Vector &B, const GTO &b)
-        : ShellPair()
+        : ShellPair(), _Q_AB(0)
 {
 	if (a.isNull() or b.isNull())
     {
@@ -271,7 +271,7 @@ GTOPair::GTOPair(const Vector &A, const GTO &a,
 GTOPair::GTOPair(const GTOPair &other) 
         : ShellPair(other),
           _P(other._P), _R2(other._R2), _zeta(other._zeta), _xi(other._xi), 
-          _K(other._K), _ss(other._ss)
+          _K(other._K), _ss(other._ss), _Q_AB(other._Q_AB)
 {}
 
 /** Destructor */
@@ -292,6 +292,7 @@ GTOPair& GTOPair::operator=(const GTOPair &other)
     _xi = other._xi;
     _K = other._K;
     _ss = other._ss;
+    _Q_AB = other._Q_AB;
     
     ShellPair::operator=(other);
     
@@ -310,6 +311,13 @@ bool GTOPair::operator==(const GTOPair &other) const
 bool GTOPair::operator!=(const GTOPair &other) const
 {
     return not this->operator==(other);
+}
+
+/** Internal function used by the constructors of derived GTOs to 
+    set the value of Q */
+void GTOPair::setQ(double q)
+{
+	_Q_AB = q;
 }
 
 /** Return the rho value for the two passed GTOPair pairs 

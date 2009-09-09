@@ -321,17 +321,23 @@ QString PropertyConstraint::toString() const
 /** Return whether or not this constraint is satisfied in the passed system */
 bool PropertyConstraint::isSatisfied(const System &system) const
 {
-    //evaluate the equation
-    System system_copy(system);
-        
-    Values vals = system_copy.componentValues( eqn.symbols() );
-    double val = eqn.evaluate(vals);
-
-    //does the system have a property with the right value?
-    double sysval = system_copy.property(ffid, propname).asA<VariantProperty>()
-                                                        .convertTo<double>();
+	try
+    {
+	    //does the system have a property with the right value?
+	    double current_val = system.property(ffid, propname).asA<VariantProperty>()
+    	                                                    .convertTo<double>();
                                                    
-    return val == sysval;
+	    //evaluate the equation
+	    System system_copy(system);
+        
+	    Values vals = system_copy.componentValues( eqn.symbols() );
+
+	    return current_val == eqn.evaluate(vals);
+    }
+    catch(...)
+    {
+    	return false;
+    }
 }
 
 /** Apply this constraint to the system */
@@ -340,12 +346,24 @@ bool PropertyConstraint::apply(System &system) const
     //evaluate the equation
     Values vals = system.componentValues( eqn.symbols() );
     double val = eqn.evaluate(vals);
-    
-    Version old_version = system.version();
+
+	try
+    {
+	    if (system.containsProperty(ffid, propname))
+	    {
+        	double current_val = system.property(ffid, propname).asA<VariantProperty>()
+            													.convertTo<double>();
+
+			if (val == current_val)
+            	return false; 
+        }
+    }
+	catch(...)
+    {}
     
     system.setProperty(ffid, propname, VariantProperty(val));
 
-    return old_version != system.version();
+    return true;
 }
 
 const char* PropertyConstraint::typeName()
@@ -465,15 +483,22 @@ const Expression& ComponentConstraint::expression() const
 /** Return whether or not this constraint is satisfied in the passed system */
 bool ComponentConstraint::isSatisfied(const System &system) const
 {
-    //evaluate the equation
-    System copy_system(system);
-    Values vals = copy_system.componentValues( eqn.symbols() );
-    double val = eqn.evaluate(vals);
+	try
+    {
+	    //evaluate the equation
+	    System copy_system(system);
+	    Values vals = copy_system.componentValues( eqn.symbols() );
+	    double val = eqn.evaluate(vals);
 
-    //does the system have a component with the right value?
-    double sysval = copy_system.componentValue(constrained_component);
-                                                   
-    return val == sysval;
+	    //does the system have a component with the right value?
+	    double sysval = copy_system.componentValue(constrained_component);
+
+	    return val == sysval;
+    }
+    catch(...)
+    {
+    	return false;
+    }
 }
 
 /** Apply this constraint to the system */
@@ -482,12 +507,23 @@ bool ComponentConstraint::apply(System &system) const
     //evaluate the equation
     Values vals = system.componentValues( eqn.symbols() );
     double val = eqn.evaluate(vals);
-    
-    Version old_version = system.version();
+
+	try
+    {
+		if (system.hasComponent(constrained_component))
+        {
+			double current_val = system.componentValue(constrained_component);
+        
+    	    if (val == current_val)
+            	return false;
+    	}
+    }
+    catch(...)
+    {}
     
     system.setComponent(constrained_component, val);
 
-    return old_version != system.version();
+	return true;
 }
 
 const char* ComponentConstraint::typeName()

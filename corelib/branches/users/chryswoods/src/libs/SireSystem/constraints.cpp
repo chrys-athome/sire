@@ -679,13 +679,12 @@ void Constraints::apply(System &system)
         for (int i=0; i<max_loops; ++i)
         {
             bool something_changed = false;
-        
+
             for (QVector<ConstraintPtr>::const_iterator it = cons.constBegin();
                  it != cons.constEnd();
                  ++it)
             {
                 bool this_changed = it->read().apply(system);
-                
                 something_changed = something_changed or this_changed;
             }
             
@@ -720,6 +719,10 @@ void Constraints::apply(System &system)
                         "cannot be satisfied:\n%2")
                             .arg(max_loops)
                             .arg(broken_constraints.join("\n")), CODELOC );
+
+		//we got here, but there were no broken constraints - we must
+        //now apply the molecule constraints
+        this->applyMoleculeConstraints(system);
     }
     catch(...)
     {

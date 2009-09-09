@@ -888,6 +888,8 @@ void System::applyConstraints()
         cons = constraints;
         
         applying_constraints = false;
+        
+		cons.assertSatisfied(*this);
     }
     catch(...)
     {
