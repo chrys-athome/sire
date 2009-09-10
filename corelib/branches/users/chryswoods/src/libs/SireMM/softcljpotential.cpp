@@ -57,6 +57,8 @@
     #endif
 #endif
 
+#undef SIRE_USE_SSE
+
 #include <QDebug>
 
 using namespace SireMM;

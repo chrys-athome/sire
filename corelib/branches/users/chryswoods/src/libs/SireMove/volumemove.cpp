@@ -40,6 +40,8 @@
 #include "SireUnits/units.h"
 #include "SireUnits/temperature.h"
 
+#include "SireBase/savestate.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -250,7 +252,8 @@ void VolumeMove::move(System &system, int nmoves, bool record_stats)
     if (nmoves <= 0)
         return;
 
-    System old_system_state(system);
+    SaveState old_system_state = SaveState::save(system);
+
     VolumeMove old_state(*this);
     
     try
@@ -294,7 +297,7 @@ void VolumeMove::move(System &system, int nmoves, bool record_stats)
     }
     catch(...)
     {
-        system = old_system_state;
+        old_system_state.restore(system);
         this->operator=(old_state);
         throw;
     }

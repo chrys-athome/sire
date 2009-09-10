@@ -388,13 +388,6 @@ QString PropertyMap::toString() const
          it != propmap.constEnd();
          ++it)
     {
-    	qDebug() << it.key() << it.value().hasSource() << it.value().hasValue();
-        
-        if (it.value().hasSource())
-        {
-        	qDebug() << "SOURCE (" << it.value().source() << ")";
-        }
-        
         items.append( QString("%1 == %2").arg( it.key(), it.value().toString() ) );
     }
     

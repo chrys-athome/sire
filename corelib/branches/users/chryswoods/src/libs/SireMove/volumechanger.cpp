@@ -498,7 +498,7 @@ int ScaleVolumeFromCenter::setVolume(System &system, const Volume &volume,
     }
     else
         center = scale_point.read().point();
-        
+	
     //set the new volume of this space
     SpacePtr space = old_space.setVolume( volume );
 
@@ -531,7 +531,10 @@ int ScaleVolumeFromCenter::setVolume(System &system, const Volume &volume,
             molecules.update(mol);
         }
     }
-    
+
+	if (space_property.hasSource())
+	    system.setProperty(space_property.source(), space);    
+
     system.update(molecules);
     
     return old_molecules.nMolecules();
