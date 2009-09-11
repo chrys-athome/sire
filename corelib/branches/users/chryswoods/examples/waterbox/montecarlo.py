@@ -174,6 +174,9 @@ system.add(cljff)
 waters.setName("waters")
 system.add(waters)
 
+# Add a constraint that waters are mapped back into the periodic box
+system.add( SpaceWrapper(Vector(0,0,0), waters) )
+
 print "Calculating the starting energy... (should be -16364.5 kcal mol-1)"
 print "...Initial energy = %s" % system.energy()
 
@@ -201,7 +204,7 @@ volmc.setPressure( 1*atm )
 # one VolumeMove for every nMolecules() rigid body moves
 moves = WeightedMoves()
 moves.add( volmc, 1 )
-moves.add( rbmc, waters.nMolecules() )
+moves.add( rbmc, 0.1 * waters.nMolecules() )
 
 # The simulation is now ready to run - create an output directory
 # to collect the output
@@ -214,10 +217,10 @@ if os.path.exists("montecarlo_output"):
 
 os.makedirs("montecarlo_output")
 
-# Run 10 blocks of 1000 moves
-for i in range(0,10):
+# Run 200 blocks of 5000 moves
+for i in range(0,200):
     t.start()
-    sim = Simulation.run(system, moves, 1000)
+    sim = Simulation.run(system, moves, 5000)
     ms = t.elapsed()
 
     print "Block %3d complete - took %d ms" % (i+1, ms)
@@ -242,11 +245,15 @@ for i in range(0,10):
     # the volume is held in the "space" property of the system
     vol = system.property("space")
 
+    print "Simulation box: %s" % vol
+
     mincoords = vol.minCoords()
     maxcoords = vol.maxCoords()
 
     print >>xscfile,"%f %f %f  %f %f %f" % (mincoords[0], mincoords[1], mincoords[2], 
                                             maxcoords[0], maxcoords[1], maxcoords[2])
+
+    xscfile.close()
 
 print "Simulation complete!"
 

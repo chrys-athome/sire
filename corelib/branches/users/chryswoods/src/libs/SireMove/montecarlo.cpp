@@ -254,7 +254,7 @@ bool MonteCarlo::test(double new_energy, double old_energy,
 
     double x = std::exp( beta * (new_energy - old_energy + p_deltav) + vratio );
 
-    if ( x > 1 or x > rangenerator.rand() )
+    if ( x > 1 or x >= rangenerator.rand() )
     {
         ++naccept;
         return true;
@@ -280,9 +280,9 @@ bool MonteCarlo::test(double new_energy, double old_energy,
     double beta = -1.0 / (k_boltz * ensmble.temperature().value());
 
     double x =  (new_bias / old_bias) * 
-                    std::exp( -beta * (new_energy - old_energy + p_deltav) + vratio );
+                    std::exp( beta * (new_energy - old_energy + p_deltav) + vratio );
 
-    if ( x > 1 or x > rangenerator.rand() )
+    if ( x > 1 or x >= rangenerator.rand() )
     {
         ++naccept;
         return true;
