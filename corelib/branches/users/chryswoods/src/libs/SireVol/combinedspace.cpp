@@ -555,6 +555,22 @@ Vector CombinedSpace::getMinimumImage(const Vector &point, const Vector &center)
     return spces.at(0).read().getMinimumImage(point, center);
 }
 
+/** Return the center of the box that contains the point 'p' assuming
+    that the center for the central box is located at the origin */
+Vector CombinedSpace::getBoxCenter(const Vector &p) const
+{
+	this->assertSameSpace("Cannot get the box center", CODELOC);
+    return spces.at(0).read().getBoxCenter(p);
+}
+
+/** Return the center of the box that contains the point 'p' assuming
+    that the center for the central box is located at 'center' */
+Vector CombinedSpace::getBoxCenter(const Vector &p, const Vector &center) const
+{
+	this->assertSameSpace("Cannot get the box center", CODELOC);
+    return spces.at(0).read().getBoxCenter(p, center);
+}
+
 /** Return a list of copies of CoordGroup 'group' that are within
     'distance' of the CoordGroup 'center', translating 'group' so that
     it has the right coordinates to be around 'center'. As this is not

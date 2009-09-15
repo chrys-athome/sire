@@ -791,6 +791,20 @@ Cartesian::getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
     return closegroups;
 }
 
+/** Return the center of the box that contains the point 'p' assuming
+    that the center for the central box is located at the origin */
+Vector Cartesian::getBoxCenter(const Vector&) const
+{
+	return Vector(0,0,0);
+}
+
+/** Return the center of the box that contains the point 'p' assuming
+    that the center for the central box is located at 'center' */
+Vector Cartesian::getBoxCenter(const Vector&, const Vector &center) const
+{
+	return center;
+}
+
 const char* Cartesian::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Cartesian>() );

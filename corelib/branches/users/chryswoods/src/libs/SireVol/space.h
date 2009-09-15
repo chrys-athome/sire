@@ -263,6 +263,14 @@ public:
         ( x==y==z == 1 and all angle between x-y, y-z, x-z all 90 degrees ) */
     virtual bool isCartesian() const=0;
 
+    /** Return the center of the box that contains the point 'p' assuming
+        that the center for the central box is located at the origin */
+    virtual Vector getBoxCenter(const Vector &p) const=0;
+
+	/** Return the center of the box that contains the point 'p' assuming
+        that the center for the central box is located at 'center' */
+    virtual Vector getBoxCenter(const Vector &p, const Vector &center) const=0;
+
     /** Return the minimum image copy of 'group' with respect to 'center'.
         For periodic spaces, this translates 'group' into the box that
         has its center at 'center' (i.e. returns the closest copy of

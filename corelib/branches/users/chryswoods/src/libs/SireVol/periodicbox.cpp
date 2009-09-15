@@ -941,6 +941,20 @@ PeriodicBox::getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
     return neargroups;
 }
 
+/** Return the center of the box that contains the point 'p' assuming
+    that the center for the central box is located at the origin */
+Vector PeriodicBox::getBoxCenter(const Vector &p) const
+{
+	return wrapDelta( p, Vector(0,0,0) );
+}
+
+/** Return the center of the box that contains the point 'p' assuming
+    that the center for the central box is located at 'center' */
+Vector PeriodicBox::getBoxCenter(const Vector &p, const Vector &center) const
+{
+	return wrapDelta( p, center );
+}
+
 const char* PeriodicBox::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<PeriodicBox>() );

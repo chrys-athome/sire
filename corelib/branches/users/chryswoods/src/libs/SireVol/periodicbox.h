@@ -131,6 +131,9 @@ public:
 
     double minimumDistance(const CoordGroup &group0, const CoordGroup &group1) const;
 
+	Vector getBoxCenter(const Vector &p) const;
+    Vector getBoxCenter(const Vector &p, const Vector &center) const;
+
     CoordGroup getMinimumImage(const CoordGroup &group, const Vector &center) const;
 
     CoordGroupArray getMinimumImage(const CoordGroupArray &groups,
