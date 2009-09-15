@@ -518,27 +518,11 @@ int ScaleVolumeFromCenter::setVolume(System &system, const Volume &volume,
          ++it)
     {
         PartialMolecule mol( *it );
-        
-        //the translation of the molecule will be molecule will be made
-        //up of two parts - the first is the translation within the box...
-        
-        //get the current center of this view
+
+		//all we need to do is scale the molecule from the center!
         Vector old_mol_center = mol.evaluate().center(map);
-        
-        Vector old_mol_in_box_center = old_space.getMinimumImage(old_mol_center, center);
-        
-        Vector new_mol_in_box_center = scale_ratio * (old_mol_in_box_center - center);
-        
-        Vector delta_within_box = new_mol_in_box_center - old_mol_in_box_center;
-        
-        //...the second part is the translation of the box itself
-        //that this molecule is within
-        Vector old_box_center = old_space.getBoxCenter(old_mol_center, center);
-        Vector new_box_center = space.read().getBoxCenter(old_mol_center, center);
-        
-        Vector delta_box_center = new_box_center - old_box_center;
-        
-        Vector delta = delta_box_center + delta_within_box;
+
+		Vector delta = (scale_ratio - 1) * (old_mol_center - center);
         
         if (not delta.isZero())
         {
