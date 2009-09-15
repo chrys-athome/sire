@@ -113,7 +113,8 @@ public:
     int nOrbitals1() const;
 };    
 
-/** This class is used to calculate integrals involving just SS pairs
+/** This internal class is used to calculate integrals involving just SS pairs.
+    It is used as a temporary object to aid in the calculation of integrals.
 
 	@author Christopher Woods
 */
@@ -121,6 +122,10 @@ class SS_GTOs
 {
 public:
 	SS_GTOs();
+    
+    SS_GTOs(const QVector<S_GTO> &s_gtos, 
+        	const QVector<Vector> &centers);
+    
     SS_GTOs(const SS_GTOs &other);
     
     ~SS_GTOs();

@@ -246,7 +246,7 @@ void SendQueue::run()
     
     //we're not sending any more messages, so release the resources
     //held by the communicator
-    send_comm->Barrier();
+    //send_comm->Barrier();
     send_comm->Free();
     delete send_comm;
     send_comm = 0;

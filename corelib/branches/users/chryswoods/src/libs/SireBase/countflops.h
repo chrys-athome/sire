@@ -100,7 +100,7 @@ private:
 class SIREBASE_EXPORT CountFlops
 {
 public:
-    class ThreadFlops
+    class SIREBASE_EXPORT ThreadFlops
     {
     public:
         ThreadFlops();

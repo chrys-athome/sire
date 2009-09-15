@@ -379,3 +379,153 @@ double SQUIRE_EXPORT electron_integral(const SS_GTO &P, const SS_GTO &Q, int m)
 }
 
 } // end of namespace Squire
+
+//////////////
+////////////// Implementation of SS_GTOs
+//////////////
+
+/** Null constructor */
+SS_GTOs::SS_GTOs()
+{}
+
+/** Construct for the passed set of S orbitals (on the associated
+    centers)
+    
+    \throw SireError::incompatible_error
+*/
+SS_GTOs::SS_GTOs(const QVector<S_GTO> &s_gtos, 
+        		 const QVector<Vector> &centers)
+{
+	const int n = s_gtos.count();
+    
+    if (n != centers.count())
+    	throw SireError::incompatible_error( QObject::tr(
+        		"The number of S orbitals (%1) does not equal the number "
+                "of centers (%2)!")
+                	.arg(n).arg(centers.count()), CODELOC );
+
+	if (n <= 0)
+    	return;
+        
+	orbs = TrigArray2D<SS_GTO>(n);
+    
+    SS_GTO *orbs_data = orbs.data();
+
+	const S_GTO *s = s_gtos.constData();
+    const Vector *c = centers.constData();
+    
+    for (int i=0; i<n; ++i)
+    {
+    	const S_GTO &si = s[i];
+        const Vector &ci = c[i];
+    
+    	for (int j=i; j<n; ++j)
+        {
+        	orbs_data[ orbs.offset(i,j) ] = SS_GTO(ci, si, c[j], s[j]);
+        }
+    }
+}
+
+/** Copy constructor */
+SS_GTOs::SS_GTOs(const SS_GTOs &other) : orbs(other.orbs)
+{}
+
+/** Destructor */
+SS_GTOs::~SS_GTOs()
+{}
+
+/** Copy assignment operator */
+SS_GTOs& SS_GTOs::operator=(const SS_GTOs &other)
+{
+	orbs = other.orbs;
+    return *this;
+}
+
+/** Return the overlap integrals between all pairs of S orbitals in this set */
+TrigMatrix SS_GTOs::overlap_integral() const
+{
+	const int n = orbs.count();
+    
+    if (n <= 0)
+    	return TrigMatrix();
+    
+    TrigMatrix mat(orbs.nRows());
+
+	const SS_GTO *orbs_data = orbs.constData();
+    double *m = mat.data();
+    
+    for (int i=0; i<n; ++i)
+    {
+    	m[i] = Squire::overlap_integral(orbs_data[i]);
+    }
+    
+    return mat;
+}
+
+/** Return the kinetic energy integral between all pairs of S orbitals in this set */
+TrigMatrix SS_GTOs::kinetic_integral() const
+{
+	const int n = orbs.count();
+    
+    if (n <= 0)
+    	return TrigMatrix();
+        
+	TrigMatrix mat(orbs.nRows());
+    
+    const SS_GTO *orbs_data = orbs.constData();
+    double *m = mat.data();
+    
+    for (int i=0; i<n; ++i)
+    {
+    	m[i] = Squire::kinetic_integral(orbs_data[i]);
+    }
+    
+    return mat;
+}
+
+/** Return the potential energy integral of all pairs of S orbitals in this
+    set with the array of point charges in 'C' */
+TrigMatrix SS_GTOs::potential_integral(const QVector<PointCharge> &C) const
+{
+	const int n = orbs.count();
+    
+    if (n <= 0 or C.count() == 0)
+    	return TrigMatrix();
+
+	TrigMatrix mat(orbs.nRows());
+    
+    const SS_GTO *orbs_data = orbs.constData();
+    double *m = mat.data();
+    
+    for (int i=0; i<n; ++i)
+    {
+    	m[i] = Squire::potential_integral(C, orbs_data[i]);
+    }
+    
+    return mat;
+}
+
+/** Return the mth auxilliary potential energy integral of all pairs of S
+    orbitals in this set with the array of point charges in 'C' */
+TrigMatrix SS_GTOs::potential_integral(const QVector<PointCharge> &C, int maux) const
+{
+	if (maux == 0)
+    	return this->potential_integral(C);
+
+	const int n = orbs.count();
+    
+    if (n <= 0 or C.count() == 0)
+    	return TrigMatrix();
+        
+	TrigMatrix mat(orbs.nRows());
+    
+    const SS_GTO *orbs_data = orbs.constData();
+    double *m = mat.data();
+    
+    for (int i=0; i<n; ++i)
+    {
+    	m[i] = Squire::potential_integral(C, orbs_data[i], maux);
+    }
+    
+    return mat;
+}

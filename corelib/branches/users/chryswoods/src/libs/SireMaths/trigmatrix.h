@@ -144,6 +144,9 @@ public:
     int nRows() const;
     int nColumns() const;
     
+    int count() const;
+    int size() const;
+    
     NVector row(int i) const;
     NVector column(int j) const;
     
@@ -212,6 +215,20 @@ inline int TrigMatrix::offset(int i, int j) const
         return (2*(j + i*nrows) - i - i*i) / 2;
     else
         return (2*(i + j*nrows) - j - j*j) / 2;
+}
+
+/** Return the number of unique elements in this matrix
+    (the size of the underlying 1D array) */
+inline int TrigMatrix::count() const
+{
+	return array.count();
+}
+
+/** Return the number of unique elements in this matrix
+    (the size of the underlying 1D array) */
+inline int TrigMatrix::size() const
+{
+	return TrigMatrix::count();
 }
 
 }

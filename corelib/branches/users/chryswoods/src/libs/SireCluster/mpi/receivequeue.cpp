@@ -304,7 +304,7 @@ void ReceiveQueue::run2()
         }
     }
 
-    recv_comm->Barrier();
+    //recv_comm->Barrier();
     
     //release the resources held by this communicator
     recv_comm->Free();

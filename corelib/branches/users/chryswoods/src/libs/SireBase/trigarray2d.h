@@ -57,6 +57,9 @@ friend QDataStream& ::operator>>(QDataStream&, TrigArray2DBase&);
 public:
     ~TrigArray2DBase();
     
+    int size() const;
+    int count() const;
+    
     int nRows() const;
     int nColumns() const;
     
@@ -98,6 +101,20 @@ inline int TrigArray2DBase::nRows() const
 inline int TrigArray2DBase::nColumns() const
 {
     return dim;
+}
+
+/** Return the number of unique items in this array (the size of 
+    the underlying 1D array) */
+inline int TrigArray2DBase::size() const
+{
+	return (dim*dim + dim)/2;
+}
+
+/** Return the number of unique items in this array (the size of 
+    the underlying 1D array) */
+inline int TrigArray2DBase::count() const
+{
+	return TrigArray2DBase::size();
 }
 
 /** Return the offset into the array of the value at index [i,j] */
