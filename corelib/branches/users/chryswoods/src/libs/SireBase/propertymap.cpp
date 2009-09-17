@@ -347,6 +347,13 @@ const char* PropertyMap::typeName()
     return QMetaType::typeName( qMetaTypeId<PropertyMap>() );
 }
 
+/** Return whether or not this map is default - if it is,
+    then it doesn't specify any properties */
+bool PropertyMap::isDefault() const
+{
+    return propmap.isEmpty();
+}
+
 /** Return whether or not this map specifies the source or value
     of the property called 'name' */
 bool PropertyMap::specified(const QString &name) const

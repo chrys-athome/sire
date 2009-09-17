@@ -55,11 +55,17 @@ class Space;
 QDataStream& operator<<(QDataStream&, const SireVol::Space&);
 QDataStream& operator>>(QDataStream&, SireVol::Space&);
 
+namespace SireMaths
+{
+class RanGenerator;
+}
+
 namespace SireVol
 {
 
 using SireMaths::Vector;
 using SireMaths::DistVector;
+using SireMaths::RanGenerator;
 
 class Cartesian;
 
@@ -270,6 +276,18 @@ public:
 	/** Return the center of the box that contains the point 'p' assuming
         that the center for the central box is located at 'center' */
     virtual Vector getBoxCenter(const Vector &p, const Vector &center) const=0;
+
+    /** Return a random point within this space, using the passed 
+        random number generator to generate the necessary random numbers,
+        and placing the center of the box at 'center' */
+    virtual Vector getRandomPoint(const Vector &center, 
+                                  const RanGenerator &generator) const=0;
+
+    virtual Vector getRandomPoint(const Vector &center) const;
+
+    virtual Vector getRandomPoint(const RanGenerator &generator) const;
+
+    virtual Vector getRandomPoint() const;
 
     /** Return the minimum image copy of 'group' with respect to 'center'.
         For periodic spaces, this translates 'group' into the box that

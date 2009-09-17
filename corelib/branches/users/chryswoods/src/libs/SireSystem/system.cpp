@@ -1478,25 +1478,28 @@ void System::remove(const MGID &mgid)
     }
 }
 
-/** Remove the molecule group 'molgroup'. 
+/** Remove the molecules contained in the molecule group 'molgroup'.
+    This doesn't remove the molecule group itself though. If you
+    want to remove the molecule group, use System::remove(molgroup.number())
 
     \throw SireMol::missing_group
-    \throw SireError::invalid_arg
 */
-void System::remove(const MoleculeGroup &molgroup)
+bool System::remove(const MoleculeGroup &molgroup)
 {
-    this->remove(molgroup.number());
+    return this->remove(molgroup.molecules());
 }
 
 /** Remove all molecules from this system that match the ID 'molid'
 
     \throw SireMol::missing_molecule
 */
-void System::remove(const MolID &molid)
+bool System::remove(const MolID &molid)
 {
     QList<MolNum> molnums = molid.map(*this);
     
     SaveState old_state = SaveState::save(*this);
+    
+    bool mols_removed = false;
     
     try
     {
@@ -1505,6 +1508,7 @@ void System::remove(const MolID &molid)
             foreach (MGNum mgnum, this->groupsContaining(molnum))
             {
                 molgroups[mgroups_by_num.value(mgnum)].edit().remove(molnum, mgnum);
+                mols_removed = true;
             }
             
             this->removeFromIndex(molnum);
@@ -1518,6 +1522,8 @@ void System::remove(const MolID &molid)
         old_state.restore(*this);
         throw;
     }
+    
+    return mols_removed;
 }
 
 /** Remove the constraints in 'constraints' from the list of constraints
@@ -1541,9 +1547,9 @@ void System::remove(const Constraint &constraint)
 }
 
 /** Completely remove all molecules from this system */
-void System::removeAllMolecules()
+bool System::removeAllMolecules()
 {
-    this->removeAll();
+    return this->removeAll();
 }
 
 /** Completely remove all non-forcefield molecule groups
@@ -2122,18 +2128,23 @@ void System::addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void System::removeAll(const MGID &mgid)
+bool System::removeAll(const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     SaveState old_state = SaveState::save(*this);
 
+    bool mols_removed = false;
+
     try
     {
         foreach (MGNum mgnum, mgnums)
         {
-            this->_pvt_moleculeGroups(mgnum).removeAll(mgnum);
-            this->clearIndex(mgnum);
+            if (this->_pvt_moleculeGroups(mgnum).removeAll(mgnum))
+            {
+                this->clearIndex(mgnum);
+                mols_removed = true;
+            }
         }
         
         sysversion.incrementMinor();
@@ -2145,6 +2156,8 @@ void System::removeAll(const MGID &mgid)
         old_state.restore(*this);
         throw;
     }
+    
+    return mols_removed;
 }
 
 /** Remove the view 'molview' from the specified groups in this
@@ -2156,11 +2169,13 @@ void System::removeAll(const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void System::remove(const MoleculeView &molview, const MGID &mgid)
+bool System::remove(const MoleculeView &molview, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     SaveState old_state = SaveState::save(*this);
+    
+    bool mols_removed = false;
     
     try
     {
@@ -2168,7 +2183,9 @@ void System::remove(const MoleculeView &molview, const MGID &mgid)
         {
             MolGroupsBase &molgroups = this->_pvt_moleculeGroups(mgnum);
             
-            molgroups.remove(molview, mgnum);
+            bool mol_removed = molgroups.remove(molview, mgnum);
+            
+            mols_removed = mols_removed or mol_removed;
             
             if (not molgroups.at(mgnum).contains(molview.data().number()))
                 this->removeFromIndex(mgnum, molview.data().number());
@@ -2183,6 +2200,8 @@ void System::remove(const MoleculeView &molview, const MGID &mgid)
         old_state.restore(*this);
         throw;
     }
+    
+    return mols_removed;
 }
 
 /** Remove the views in 'molviews' from the specified groups in this
@@ -2194,11 +2213,13 @@ void System::remove(const MoleculeView &molview, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void System::remove(const ViewsOfMol &molviews, const MGID &mgid)
+bool System::remove(const ViewsOfMol &molviews, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     SaveState old_state = SaveState::save(*this);
+    
+    bool mols_removed = false;
     
     try
     {
@@ -2206,7 +2227,8 @@ void System::remove(const ViewsOfMol &molviews, const MGID &mgid)
         {
             MolGroupsBase &molgroups = this->_pvt_moleculeGroups(mgnum);
             
-            molgroups.remove(molviews, mgnum);
+            bool mol_removed = molgroups.remove(molviews, mgnum);
+            mols_removed = mols_removed or mol_removed;
             
             if (not molgroups.at(mgnum).contains(molviews.number()))
                 this->removeFromIndex(mgnum, molviews.number());
@@ -2221,6 +2243,8 @@ void System::remove(const ViewsOfMol &molviews, const MGID &mgid)
         old_state.restore(*this);
         throw;
     }
+    
+    return mols_removed;
 }
 
 /** Remove them molecules in 'molecules' from the specified groups in this
@@ -2232,11 +2256,13 @@ void System::remove(const ViewsOfMol &molviews, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void System::remove(const Molecules &molecules, const MGID &mgid)
+bool System::remove(const Molecules &molecules, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     SaveState old_state = SaveState::save(*this);
+    
+    bool mols_removed = false;
     
     try
     {
@@ -2244,7 +2270,8 @@ void System::remove(const Molecules &molecules, const MGID &mgid)
         {
             MolGroupsBase &molgroups = this->_pvt_moleculeGroups(mgnum);
             
-            molgroups.remove(molecules, mgnum);
+            bool mol_removed = molgroups.remove(molecules, mgnum);
+            mols_removed = mols_removed or mol_removed;
             
             const MoleculeGroup &molgroup = molgroups.at(mgnum);
             
@@ -2266,6 +2293,8 @@ void System::remove(const Molecules &molecules, const MGID &mgid)
         old_state.restore(*this);
         throw;
     }
+    
+    return mols_removed;
 }
 
 /** Remove the views in the molecule group 'molgroup' from the specified 
@@ -2277,9 +2306,9 @@ void System::remove(const Molecules &molecules, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void System::remove(const MoleculeGroup &molgroup, const MGID &mgid)
+bool System::remove(const MoleculeGroup &molgroup, const MGID &mgid)
 {
-    this->remove(molgroup.molecules(), mgid);
+    return this->remove(molgroup.molecules(), mgid);
 }
 
 /** Remove the all copies of the view in 'molview' from the specified 
@@ -2289,11 +2318,13 @@ void System::remove(const MoleculeGroup &molgroup, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void System::removeAll(const MoleculeView &molview, const MGID &mgid)
+bool System::removeAll(const MoleculeView &molview, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     SaveState old_state = SaveState::save(*this);
+    
+    bool mols_removed = false;
     
     try
     {
@@ -2301,7 +2332,8 @@ void System::removeAll(const MoleculeView &molview, const MGID &mgid)
         {
             MolGroupsBase &molgroups = this->_pvt_moleculeGroups(mgnum);
             
-            molgroups.removeAll(molview, mgnum);
+            bool mol_removed = molgroups.removeAll(molview, mgnum);
+            mols_removed = mols_removed or mol_removed;
             
             if (not molgroups.at(mgnum).contains(molview.data().number()))
                 this->removeFromIndex(mgnum, molview.data().number());
@@ -2316,6 +2348,8 @@ void System::removeAll(const MoleculeView &molview, const MGID &mgid)
         old_state.restore(*this);
         throw;
     }
+    
+    return mols_removed;
 }
 
 /** Remove the all copies of the views in 'molviews' from the specified 
@@ -2325,11 +2359,13 @@ void System::removeAll(const MoleculeView &molview, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void System::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
+bool System::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     SaveState old_state = SaveState::save(*this);
+    
+    bool mols_removed = false;
     
     try
     {
@@ -2337,7 +2373,8 @@ void System::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
         {
             MolGroupsBase &molgroups = this->_pvt_moleculeGroups(mgnum);
             
-            molgroups.removeAll(molviews, mgnum);
+            bool mol_removed = molgroups.removeAll(molviews, mgnum);
+            mols_removed = mols_removed or mol_removed;
             
             if (not molgroups.at(mgnum).contains(molviews.number()))
                 this->removeFromIndex(mgnum, molviews.number());
@@ -2352,6 +2389,8 @@ void System::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
         old_state.restore(*this);
         throw;
     }
+    
+    return mols_removed;
 }
 
 /** Remove the all copies of the molecules in 'molecules' from the specified 
@@ -2361,11 +2400,13 @@ void System::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void System::removeAll(const Molecules &molecules, const MGID &mgid)
+bool System::removeAll(const Molecules &molecules, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     SaveState old_state = SaveState::save(*this);
+    
+    bool mols_removed = false;
     
     try
     {
@@ -2373,7 +2414,8 @@ void System::removeAll(const Molecules &molecules, const MGID &mgid)
         {
             MolGroupsBase &molgroups = this->_pvt_moleculeGroups(mgnum);
             
-            molgroups.removeAll(molecules, mgnum);
+            bool mol_removed = molgroups.removeAll(molecules, mgnum);
+            mols_removed = mols_removed or mol_removed;
             
             const MoleculeGroup &molgroup = molgroups.at(mgnum);
             
@@ -2395,6 +2437,8 @@ void System::removeAll(const Molecules &molecules, const MGID &mgid)
         old_state.restore(*this);
         throw;
     }
+    
+    return mols_removed;
 }
 
 /** Remove the all copies of the molecules in the molecule group 'molgroup' 
@@ -2405,9 +2449,9 @@ void System::removeAll(const Molecules &molecules, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void System::removeAll(const MoleculeGroup &molgroup, const MGID &mgid)
+bool System::removeAll(const MoleculeGroup &molgroup, const MGID &mgid)
 {
-    this->removeAll(molgroup.molecules(), mgid);
+    return this->removeAll(molgroup.molecules(), mgid);
 }
 
 /** Remove all views of the molecule with number 'molnum' from the molecule
@@ -2416,18 +2460,23 @@ void System::removeAll(const MoleculeGroup &molgroup, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void System::remove(MolNum molnum, const MGID &mgid)
+bool System::remove(MolNum molnum, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     SaveState old_state = SaveState::save(*this);
     
+    bool mols_removed = false;
+    
     try
     {
         foreach (MGNum mgnum, mgnums)
         {
-            this->_pvt_moleculeGroups(mgnum).remove(molnum, mgnum);
-            this->removeFromIndex(mgnum, molnum);
+            if (this->_pvt_moleculeGroups(mgnum).remove(molnum, mgnum))
+            {
+                this->removeFromIndex(mgnum, molnum);
+                mols_removed = true;
+            }
         }
         
         sysversion.incrementMinor();
@@ -2439,6 +2488,8 @@ void System::remove(MolNum molnum, const MGID &mgid)
         old_state.restore(*this);
         throw;
     }
+    
+    return mols_removed;
 }
 
 /** Remove all of the molecules whose numbers are in 'molnums' from
@@ -2447,18 +2498,23 @@ void System::remove(MolNum molnum, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void System::remove(const QSet<MolNum> &molnums, const MGID &mgid)
+bool System::remove(const QSet<MolNum> &molnums, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     SaveState old_state = SaveState::save(*this);
     
+    bool mols_removed = false;
+    
     try
     {
         foreach (MGNum mgnum, mgnums)
         {
-            this->_pvt_moleculeGroups(mgnum).remove(molnums, mgnum);
-            this->removeFromIndex(mgnum, molnums);
+            if (this->_pvt_moleculeGroups(mgnum).remove(molnums, mgnum))
+            {
+                this->removeFromIndex(mgnum, molnums);
+                mols_removed = true;
+            }
         }
         
         sysversion.incrementMinor();
@@ -2470,6 +2526,8 @@ void System::remove(const QSet<MolNum> &molnums, const MGID &mgid)
         old_state.restore(*this);
         throw;
     }
+    
+    return mols_removed;
 }
 
 /** Update this system so that it uses the version of the molecule

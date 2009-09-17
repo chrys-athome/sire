@@ -64,6 +64,7 @@ set ( SIREMOL_HEADERS
       groupgroupids.h
       mgid.h
       mgidentifier.h
+      mgidsandmaps.h
       mgidx.h
       mgname.h
       mgnum.h
@@ -151,6 +152,7 @@ set ( SIREMOL_SOURCES
       groupgroupids.cpp
       mgid.cpp
       mgidentifier.cpp
+      mgidsandmaps.cpp
       molatomid.cpp
       molecule.cpp
       moleculecutting.cpp

@@ -14,8 +14,11 @@ set ( SIREMOVE_HEADERS
       dynamics.h
       ensemble.h
       errors.h
+      gibbsmove.h
       integrator.h
       integratorworkspace.h
+      moldeleter.h
+      molinserter.h
       moleculardynamics.h
       montecarlo.h
       move.h
@@ -64,8 +67,11 @@ set ( SIREMOVE_SOURCES
       dynamics.cpp
       ensemble.cpp
       errors.cpp
+      gibbsmove.cpp
       integrator.cpp
       integratorworkspace.cpp
+      moldeleter.cpp
+      molinserter.cpp
       moleculardynamics.cpp
       montecarlo.cpp
       move.cpp

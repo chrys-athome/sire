@@ -42,6 +42,8 @@
 #include "periodicbox.h"
 #include "coordgroup.h"
 
+#include "SireMaths/rangenerator.h"
+
 #include "SireBase/countflops.h"
 
 #include "SireError/errors.h"
@@ -939,6 +941,18 @@ PeriodicBox::getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
     }
 
     return neargroups;
+}
+
+/** Return a random point within the box (placing the center of the box
+    is at the center 'center') */
+Vector PeriodicBox::getRandomPoint(const Vector &center, 
+                                   const RanGenerator &generator) const
+{
+    return Vector( generator.rand( -halflength[0], halflength[0] ),
+                   generator.rand( -halflength[1], halflength[1] ),
+                   generator.rand( -halflength[2], halflength[2] ) )
+        
+               + center;
 }
 
 /** Return the center of the box that contains the point 'p' assuming

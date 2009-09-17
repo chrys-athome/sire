@@ -32,6 +32,7 @@
 
 #include "SireSystem/system.h"
 
+#include "SireMol/molecule.h"
 #include "SireMol/partialmolecule.h"
 
 #include "SireMol/errors.h"
@@ -135,6 +136,28 @@ tuple<PartialMolecule,double> UniformSampler::sample() const
     return tuple<PartialMolecule,double>(group().viewAt(i), 1.0 / nviews);
 }
 
+/** Return a random molecule from the molecule group, together with
+    the probability of choosing that molecule. This returns the entire
+    molecule even if only a part of the molecule is in the group */
+tuple<Molecule,double> UniformSampler::sampleMolecule() const
+{
+    //how many molecules are there in the molecule group?
+    int nmols = group().nMolecules();
+    
+    if (nmols == 0)
+        throw SireMol::missing_molecule( QObject::tr(
+            "The MoleculeGroup is empty, so we can't choose a molecule!"),
+                CODELOC );
+    
+    else if (nmols == 1)
+        return tuple<Molecule,double>( Molecule(group().moleculeAt(0)) , 1);
+
+    //choose a random molecule
+    quint32 i = generator().randInt(nmols-1);
+    
+    return tuple<Molecule,double>( Molecule(group().moleculeAt(i)), 1.0 / nmols );
+}
+
 /** Return the probability of selecting the view in 'molview' from
     the system 'system'. A probability of zero is returned if
     this view cannot be chosen from the molecule group. */
@@ -142,6 +165,18 @@ double UniformSampler::probabilityOf(const PartialMolecule &molecule) const
 {
     if (group().contains(molecule))
         return 1.0 / group().nViews();
+        
+    else
+        return 0;
+}
+
+/** Return the probability of selecting the molecule 'molecule' from
+    the system 'system'. A probability of zero is returned if
+    this molecule cannot be chosen from the molecule group */
+double UniformSampler::probabilityOfMolecule(const Molecule &molecule) const
+{
+    if (group().contains(molecule.number()))
+        return 1.0 / group().nMolecules();
         
     else
         return 0;

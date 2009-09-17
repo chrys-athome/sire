@@ -29,6 +29,7 @@
 #include "sampler.h"
 #include "uniformsampler.h"
 
+#include "SireMol/molecule.h"
 #include "SireMol/partialmolecule.h"
 
 #include "SireSystem/system.h"

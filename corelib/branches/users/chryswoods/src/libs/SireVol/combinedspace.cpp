@@ -32,6 +32,8 @@
 
 #include "SireID/index.h"
 
+#include "SireMaths/rangenerator.h"
+
 #include "SireError/errors.h"
 #include "SireVol/errors.h"
 
@@ -553,6 +555,26 @@ Vector CombinedSpace::getMinimumImage(const Vector &point, const Vector &center)
 {
     this->assertSameSpace("Cannot get minimum images", CODELOC);
     return spces.at(0).read().getMinimumImage(point, center);
+}
+
+/** Return a random point within the spaces used in this combined space */
+Vector CombinedSpace::getRandomPoint(const Vector &center,
+                                     const RanGenerator &generator) const
+{
+    if (spces.isEmpty())
+        return center;
+    
+    else if (spces.count() == 1)
+    {
+        return spces.at(0).read().getRandomPoint(center, generator);
+    }
+    else
+    {
+        //choose a space at random
+        int idx = generator.randInt( spces.count() - 1 );
+        
+        return spces.at(idx).read().getRandomPoint(center, generator);
+    }
 }
 
 /** Return the center of the box that contains the point 'p' assuming

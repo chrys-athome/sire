@@ -33,7 +33,7 @@
 #include <QString>
 #include <QStringList>
 
-#include "sireglobal.h"
+#include "SireID/id.h"
 
 SIRE_BEGIN_HEADER
 

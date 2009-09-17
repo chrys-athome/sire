@@ -3268,16 +3268,24 @@ void ForceFields::addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void ForceFields::removeAll(const MGID &mgid)
+bool ForceFields::removeAll(const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     ForceFields old_state( *this );
     
+    bool mols_removed = false;
+    
     try
     {
         foreach (const MGNum &mgnum, mgnums)
         {
+            if (not mols_removed)
+            {
+                if (not this->at(mgnum).isEmpty())
+                    mols_removed = true;
+            }
+        
             this->_pvt_forceField(mgnum).removeAll(mgnum);
             
             MolGroupsBase::clearIndex(mgnum);
@@ -3288,6 +3296,8 @@ void ForceFields::removeAll(const MGID &mgid)
         this->operator=(old_state);
         throw;
     }
+    
+    return mols_removed;
 }
 
 /** Remove the view 'molview' from the specified groups in this
@@ -3299,11 +3309,13 @@ void ForceFields::removeAll(const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void ForceFields::remove(const MoleculeView &molview, const MGID &mgid)
+bool ForceFields::remove(const MoleculeView &molview, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     ForceFields old_state( *this );
+    
+    bool mols_removed = false;
     
     try
     {
@@ -3311,7 +3323,9 @@ void ForceFields::remove(const MoleculeView &molview, const MGID &mgid)
         {
             FF &ff = this->_pvt_forceField(mgnum);
             
-            ff.remove(molview, mgnum);
+            bool mol_removed = ff.remove(molview, mgnum);
+            
+            mols_removed = mols_removed or mol_removed;
             
             if (not ff.group(mgnum).contains(molview.data().number()))
             {
@@ -3324,6 +3338,8 @@ void ForceFields::remove(const MoleculeView &molview, const MGID &mgid)
         this->operator=(old_state);
         throw;
     }
+    
+    return mols_removed;
 }
 
 /** Remove the views in 'molviews' from the specified groups in this
@@ -3335,11 +3351,13 @@ void ForceFields::remove(const MoleculeView &molview, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void ForceFields::remove(const ViewsOfMol &molviews, const MGID &mgid)
+bool ForceFields::remove(const ViewsOfMol &molviews, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     ForceFields old_state( *this );
+    
+    bool mols_removed = false;
     
     try
     {
@@ -3347,7 +3365,9 @@ void ForceFields::remove(const ViewsOfMol &molviews, const MGID &mgid)
         {
             FF &ff = this->_pvt_forceField(mgnum);
             
-            ff.remove(molviews, mgnum);
+            bool mol_removed = ff.remove(molviews, mgnum);
+            
+            mols_removed = mols_removed or mol_removed;
             
             if (not ff.group(mgnum).contains(molviews.number()))
             {
@@ -3360,6 +3380,8 @@ void ForceFields::remove(const ViewsOfMol &molviews, const MGID &mgid)
         this->operator=(old_state);
         throw;
     }
+    
+    return mols_removed;
 }
 
 /** Remove them molecules in 'molecules' from the specified groups in this
@@ -3371,11 +3393,13 @@ void ForceFields::remove(const ViewsOfMol &molviews, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void ForceFields::remove(const Molecules &molecules, const MGID &mgid)
+bool ForceFields::remove(const Molecules &molecules, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     ForceFields old_state( *this );
+    
+    bool mols_removed = false;
     
     try
     {
@@ -3383,7 +3407,9 @@ void ForceFields::remove(const Molecules &molecules, const MGID &mgid)
         {
             FF &ff = this->_pvt_forceField(mgnum);
             
-            ff.remove(molecules, mgnum);
+            bool mol_removed = ff.remove(molecules, mgnum);
+            
+            mols_removed = mols_removed or mol_removed;
             
             const MoleculeGroup &molgroup = ff.group(mgnum);
             
@@ -3403,6 +3429,8 @@ void ForceFields::remove(const Molecules &molecules, const MGID &mgid)
         this->operator=(old_state);
         throw;
     }
+    
+    return mols_removed;
 }
 
 /** Remove the views in the molecule group 'molgroup' from the specified 
@@ -3414,9 +3442,9 @@ void ForceFields::remove(const Molecules &molecules, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void ForceFields::remove(const MoleculeGroup &molgroup, const MGID &mgid)
+bool ForceFields::remove(const MoleculeGroup &molgroup, const MGID &mgid)
 {
-    this->remove(molgroup.molecules(), mgid);
+    return this->remove(molgroup.molecules(), mgid);
 }
 
 /** Remove the all copies of the view in 'molview' from the specified 
@@ -3426,11 +3454,13 @@ void ForceFields::remove(const MoleculeGroup &molgroup, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void ForceFields::removeAll(const MoleculeView &molview, const MGID &mgid)
+bool ForceFields::removeAll(const MoleculeView &molview, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     ForceFields old_state( *this );
+    
+    bool mols_removed = false;
     
     try
     {
@@ -3438,7 +3468,9 @@ void ForceFields::removeAll(const MoleculeView &molview, const MGID &mgid)
         {
             FF &ff = this->_pvt_forceField(mgnum);
             
-            ff.removeAll(molview, mgnum);
+            bool mol_removed = ff.removeAll(molview, mgnum);
+            
+            mols_removed = mols_removed or mol_removed;
             
             if (not ff.group(mgnum).contains(molview.data().number()))
             {
@@ -3451,6 +3483,8 @@ void ForceFields::removeAll(const MoleculeView &molview, const MGID &mgid)
         this->operator=(old_state);
         throw;
     }
+    
+    return mols_removed;
 }
 
 /** Remove the all copies of the views in 'molviews' from the specified 
@@ -3460,11 +3494,13 @@ void ForceFields::removeAll(const MoleculeView &molview, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void ForceFields::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
+bool ForceFields::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     ForceFields old_state( *this );
+    
+    bool mols_removed = false;
     
     try
     {
@@ -3472,7 +3508,9 @@ void ForceFields::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
         {
             FF &ff = this->_pvt_forceField(mgnum);
             
-            ff.removeAll(molviews, mgnum);
+            bool mol_removed = ff.removeAll(molviews, mgnum);
+            
+            mols_removed = mols_removed or mol_removed;
             
             if (not ff.group(mgnum).contains(molviews.number()))
             {
@@ -3485,6 +3523,8 @@ void ForceFields::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
         this->operator=(old_state);
         throw;
     }
+    
+    return mols_removed;
 }
 
 /** Remove the all copies of the molecules in 'molecules' from the specified 
@@ -3494,11 +3534,13 @@ void ForceFields::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void ForceFields::removeAll(const Molecules &molecules, const MGID &mgid)
+bool ForceFields::removeAll(const Molecules &molecules, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     ForceFields old_state( *this );
+    
+    bool mols_removed = false;
     
     try
     {
@@ -3506,7 +3548,9 @@ void ForceFields::removeAll(const Molecules &molecules, const MGID &mgid)
         {
             FF &ff = this->_pvt_forceField(mgnum);
             
-            ff.removeAll(molecules, mgnum);
+            bool mol_removed = ff.removeAll(molecules, mgnum);
+            
+            mols_removed = mols_removed or mol_removed;
             
             const MoleculeGroup &group = ff.group(mgnum);
             
@@ -3526,6 +3570,8 @@ void ForceFields::removeAll(const Molecules &molecules, const MGID &mgid)
         this->operator=(old_state);
         throw;
     }
+    
+    return mols_removed;
 }
 
 /** Remove the all copies of the molecules in the molecule group 'molgroup' 
@@ -3536,9 +3582,9 @@ void ForceFields::removeAll(const Molecules &molecules, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void ForceFields::removeAll(const MoleculeGroup &molgroup, const MGID &mgid)
+bool ForceFields::removeAll(const MoleculeGroup &molgroup, const MGID &mgid)
 {
-    this->removeAll(molgroup, mgid);
+    return this->removeAll(molgroup, mgid);
 }
 
 /** Remove all views of the molecule with number 'molnum' from the molecule
@@ -3547,27 +3593,37 @@ void ForceFields::removeAll(const MoleculeGroup &molgroup, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void ForceFields::remove(MolNum molnum, const MGID &mgid)
+bool ForceFields::remove(MolNum molnum, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     if (mgnums.count() == 1)
     {
         MGNum mgnum = mgnums.at(0);
-        this->_pvt_forceField(mgnum).remove(molnum, mgnum);
-        MolGroupsBase::removeFromIndex(mgnum, molnum);
+        
+        if (this->_pvt_forceField(mgnum).remove(molnum, mgnum))
+        {
+            MolGroupsBase::removeFromIndex(mgnum, molnum);
+            return true;
+        }
+        else
+            return false;
     }
     else
     {
         ForceFields old_state( *this );
     
+        bool mols_removed = false;
+    
         try
         {
             foreach (const MGNum &mgnum, mgnums)
             {
-                this->_pvt_forceField(mgnum).remove(molnum, mgnum);
-            
-                MolGroupsBase::removeFromIndex(mgnum, molnum);
+                if (this->_pvt_forceField(mgnum).remove(molnum, mgnum))
+                {
+                    MolGroupsBase::removeFromIndex(mgnum, molnum);
+                    mols_removed = true;
+                }
             }
         }
         catch(...)
@@ -3575,6 +3631,8 @@ void ForceFields::remove(MolNum molnum, const MGID &mgid)
             this->operator=(old_state);
             throw;
         }
+        
+        return mols_removed;
     }
 }
 
@@ -3584,19 +3642,23 @@ void ForceFields::remove(MolNum molnum, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void ForceFields::remove(const QSet<MolNum> &molnums, const MGID &mgid)
+bool ForceFields::remove(const QSet<MolNum> &molnums, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     ForceFields old_state( *this );
+
+    bool mols_removed = false;
     
     try
     {
         foreach (const MGNum &mgnum, mgnums)
         {
-            this->_pvt_forceField(mgnum).remove(molnums, mgnum);
-            
-            MolGroupsBase::removeFromIndex(mgnum, molnums);
+            if (this->_pvt_forceField(mgnum).remove(molnums, mgnum))
+            {
+                MolGroupsBase::removeFromIndex(mgnum, molnums);
+                mols_removed = true;
+            }
         }
     }
     catch(...)
@@ -3604,6 +3666,8 @@ void ForceFields::remove(const QSet<MolNum> &molnums, const MGID &mgid)
         this->operator=(old_state);
         throw;
     }
+    
+    return mols_removed;
 }
 
 /** Update all of the forcefields so that they use the version of the data 

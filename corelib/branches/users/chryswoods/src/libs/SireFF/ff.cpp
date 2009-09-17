@@ -696,15 +696,25 @@ void FF::addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid,
     
     \throw SireMol::missing_group
 */
-void FF::removeAll(const MGID &mgid)
+bool FF::removeAll(const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
+    bool mols_removed = false;
+    
     foreach (MGNum mgnum, mgnums)
     {
+        if (not mols_removed)
+        {
+            if (not this->at(mgnum).isEmpty())
+                mols_removed = true;
+        }
+        
         this->group_removeAll( this->mgIdx(mgnum) );
         this->clearIndex(mgnum);
     }
+    
+    return mols_removed;
 }
 
 /** Remove the view 'molview' from the specified groups in this
@@ -715,12 +725,12 @@ void FF::removeAll(const MGID &mgid)
     
     \throw SireMol::missing_group
 */
-void FF::remove(const MoleculeView &molview, const MGID &mgid)
+bool FF::remove(const MoleculeView &molview, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     if (mgnums.isEmpty())
-        return;
+        return false;
         
     else if (mgnums.count() == 1)
     {
@@ -731,11 +741,17 @@ void FF::remove(const MoleculeView &molview, const MGID &mgid)
         {
             if (not this->group(mgnum).contains(molview.data().number()))
                 this->removeFromIndex(mgnum, molview.data().number());
+                
+            return true;
         }
+        else
+            return false;
     }
     else
     {
         boost::shared_ptr<FF> old_state( this->clone() );
+
+        bool removed_mol = false;
         
         try
         {
@@ -745,6 +761,8 @@ void FF::remove(const MoleculeView &molview, const MGID &mgid)
                 
                 if (this->group_remove(mgidx, molview))
                 {
+                    removed_mol = true;
+                
                     if (not this->group(mgnum).contains(molview.data().number()))
                         this->removeFromIndex(mgnum, molview.data().number());
                 }
@@ -755,6 +773,8 @@ void FF::remove(const MoleculeView &molview, const MGID &mgid)
             this->copy(*old_state);
             throw;
         }
+        
+        return removed_mol;
     }
 }
 
@@ -766,12 +786,12 @@ void FF::remove(const MoleculeView &molview, const MGID &mgid)
     
     \throw SireMol::missing_group
 */
-void FF::remove(const ViewsOfMol &molviews, const MGID &mgid)
+bool FF::remove(const ViewsOfMol &molviews, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     if (mgnums.isEmpty())
-        return;
+        return false;
         
     else if (mgnums.count() == 1)
     {
@@ -784,11 +804,17 @@ void FF::remove(const ViewsOfMol &molviews, const MGID &mgid)
         {
             if (not this->group(mgnum).contains(molviews.number()))
                 this->removeFromIndex(mgnum, molviews.number());
+                
+            return true;
         }
+        else
+            return false;
     }
     else
     {
         boost::shared_ptr<FF> old_state( this->clone() );
+        
+        bool removed_mol = false;
         
         try
         {
@@ -800,6 +826,8 @@ void FF::remove(const ViewsOfMol &molviews, const MGID &mgid)
                 
                 if (not removed_views.isEmpty())
                 {
+                    removed_mol = true;
+                
                     if (not this->group(mgnum).contains(molviews.number()))
                         this->removeFromIndex(mgnum, molviews.number());
                 }
@@ -810,6 +838,8 @@ void FF::remove(const ViewsOfMol &molviews, const MGID &mgid)
             this->copy(*old_state);
             throw;
         }
+        
+        return removed_mol;
     }
 }
 
@@ -821,13 +851,13 @@ void FF::remove(const ViewsOfMol &molviews, const MGID &mgid)
     
     \throw SireMol::missing_group
 */
-void FF::remove(const Molecules &molecules, const MGID &mgid)
+bool FF::remove(const Molecules &molecules, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     if (mgnums.isEmpty())
-        return;
-    
+        return false;
+        
     else if (mgnums.count() == 1)
     {
         MGNum mgnum = *(mgnums.constBegin());
@@ -845,11 +875,18 @@ void FF::remove(const Molecules &molecules, const MGID &mgid)
         }
         
         if (not removed_molnums.isEmpty())
+        {
             this->removeFromIndex(mgnum, removed_molnums);
+            return true;
+        }
+        else 
+            return false;
     }
     else
     {
         boost::shared_ptr<FF> old_state( this->clone() );
+
+        bool mols_removed = false;
         
         try
         {
@@ -869,7 +906,10 @@ void FF::remove(const Molecules &molecules, const MGID &mgid)
                 }
                 
                 if (not removed_molnums.isEmpty())
+                {
                     this->removeFromIndex(mgnum, removed_molnums);
+                    mols_removed = true;
+                }
             }
         }
         catch(...)
@@ -877,6 +917,8 @@ void FF::remove(const Molecules &molecules, const MGID &mgid)
             this->copy(*old_state);
             throw;
         }
+        
+        return mols_removed;
     }
 }
 
@@ -888,9 +930,9 @@ void FF::remove(const Molecules &molecules, const MGID &mgid)
     
     \throw SireMol::missing_group
 */
-void FF::remove(const MoleculeGroup &molgroup, const MGID &mgid)
+bool FF::remove(const MoleculeGroup &molgroup, const MGID &mgid)
 {
-    this->remove(molgroup.molecules(), mgid);
+    return this->remove(molgroup.molecules(), mgid);
 }
 
 /** Remove the view 'molview' from the specified groups in this
@@ -901,12 +943,12 @@ void FF::remove(const MoleculeGroup &molgroup, const MGID &mgid)
     
     \throw SireMol::missing_group
 */
-void FF::removeAll(const MoleculeView &molview, const MGID &mgid)
+bool FF::removeAll(const MoleculeView &molview, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     if (mgnums.isEmpty())
-        return;
+        return false;
         
     else if (mgnums.count() == 1)
     {
@@ -917,11 +959,17 @@ void FF::removeAll(const MoleculeView &molview, const MGID &mgid)
         {
             if (not this->group(mgnum).contains(molview.data().number()))
                 this->removeFromIndex(mgnum, molview.data().number());
+                
+            return true;
         }
+        else
+            return false;
     }
     else
     {
         boost::shared_ptr<FF> old_state( this->clone() );
+        
+        bool mols_removed = false;
         
         try
         {
@@ -931,6 +979,8 @@ void FF::removeAll(const MoleculeView &molview, const MGID &mgid)
                 
                 if (this->group_removeAll(mgidx, molview))
                 {
+                    mols_removed = true;
+                
                     if (not this->group(mgnum).contains(molview.data().number()))
                         this->removeFromIndex(mgnum, molview.data().number());
                 }
@@ -941,6 +991,8 @@ void FF::removeAll(const MoleculeView &molview, const MGID &mgid)
             this->copy(*old_state);
             throw;
         }
+        
+        return mols_removed;
     }
 }
 
@@ -952,12 +1004,12 @@ void FF::removeAll(const MoleculeView &molview, const MGID &mgid)
     
     \throw SireMol::missing_group
 */
-void FF::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
+bool FF::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     if (mgnums.isEmpty())
-        return;
+        return false;
         
     else if (mgnums.count() == 1)
     {
@@ -970,11 +1022,17 @@ void FF::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
         {
             if (not this->group(mgnum).contains(molviews.number()))
                 this->removeFromIndex(mgnum, molviews.number());
+                
+            return true;
         }
+        else
+            return false;
     }
     else
     {
         boost::shared_ptr<FF> old_state( this->clone() );
+        
+        bool mols_removed = false;
         
         try
         {
@@ -986,6 +1044,8 @@ void FF::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
                 
                 if (not removed_views.isEmpty())
                 {
+                    mols_removed = true;
+                
                     if (not this->group(mgnum).contains(molviews.number()))
                         this->removeFromIndex(mgnum, molviews.number());
                 }
@@ -996,6 +1056,8 @@ void FF::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
             this->copy(*old_state);
             throw;
         }
+        
+        return mols_removed;
     }
 }
 
@@ -1007,12 +1069,12 @@ void FF::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
     
     \throw SireMol::missing_group
 */
-void FF::removeAll(const Molecules &molecules, const MGID &mgid)
+bool FF::removeAll(const Molecules &molecules, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     if (mgnums.isEmpty())
-        return;
+        return false;
     
     else if (mgnums.count() == 1)
     {
@@ -1031,11 +1093,18 @@ void FF::removeAll(const Molecules &molecules, const MGID &mgid)
         }
         
         if (not removed_molnums.isEmpty())
+        {
             this->removeFromIndex(mgnum, removed_molnums);
+            return true;
+        }
+        else
+            return false;
     }
     else
     {
         boost::shared_ptr<FF> old_state( this->clone() );
+
+        bool mols_removed = false;
         
         try
         {
@@ -1055,7 +1124,10 @@ void FF::removeAll(const Molecules &molecules, const MGID &mgid)
                 }
                 
                 if (not removed_molnums.isEmpty())
+                {
                     this->removeFromIndex(mgnum, removed_molnums);
+                    mols_removed = true;
+                }
             }
         }
         catch(...)
@@ -1063,6 +1135,8 @@ void FF::removeAll(const Molecules &molecules, const MGID &mgid)
             this->copy(*old_state);
             throw;
         }
+        
+        return mols_removed;
     }
 }
 
@@ -1074,9 +1148,9 @@ void FF::removeAll(const Molecules &molecules, const MGID &mgid)
     
     \throw SireMol::missing_group
 */
-void FF::removeAll(const MoleculeGroup &molgroup, const MGID &mgid)
+bool FF::removeAll(const MoleculeGroup &molgroup, const MGID &mgid)
 {
-    this->removeAll(molgroup.molecules(), mgid);
+    return this->removeAll(molgroup.molecules(), mgid);
 }
 
 /** Completely remove the molecule with number 'molnum' from the 
@@ -1084,12 +1158,12 @@ void FF::removeAll(const MoleculeGroup &molgroup, const MGID &mgid)
     
     \throw SireMol::missing_group
 */
-void FF::remove(MolNum molnum, const MGID &mgid)
+bool FF::remove(MolNum molnum, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     if (mgnums.isEmpty())
-        return;
+        return false;
         
     else if (mgnums.count() == 1)
     {
@@ -1099,11 +1173,18 @@ void FF::remove(MolNum molnum, const MGID &mgid)
         ViewsOfMol removed_views = this->group_remove(mgidx, molnum);
 
         if (not removed_views.isEmpty())
+        {
             this->removeFromIndex(mgnum, molnum);
+            return true;
+        }
+        else
+            return false;
     }
     else
     {
         boost::shared_ptr<FF> old_state( this->clone() );
+        
+        bool mols_removed = false;
         
         try
         {
@@ -1114,7 +1195,10 @@ void FF::remove(MolNum molnum, const MGID &mgid)
                 ViewsOfMol removed_views = this->group_remove(mgidx, molnum);
                 
                 if (not removed_views.isEmpty())
+                {
                     this->removeFromIndex(mgnum, molnum);
+                    mols_removed = true;
+                }
             }
         }
         catch(...)
@@ -1122,6 +1206,8 @@ void FF::remove(MolNum molnum, const MGID &mgid)
             this->copy(*old_state);
             throw;
         }
+        
+        return mols_removed;
     }
 }
 
@@ -1130,12 +1216,12 @@ void FF::remove(MolNum molnum, const MGID &mgid)
     
     \throw SireMol::missing_group
 */
-void FF::remove(const QSet<MolNum> &molnums, const MGID &mgid)
+bool FF::remove(const QSet<MolNum> &molnums, const MGID &mgid)
 {
     QList<MGNum> mgnums = mgid.map(*this);
     
     if (mgnums.isEmpty())
-        return;
+        return false;
         
     else if (mgnums.count() == 1)
     {
@@ -1152,11 +1238,18 @@ void FF::remove(const QSet<MolNum> &molnums, const MGID &mgid)
         }
         
         if (not removed_molnums.isEmpty())
+        {
             this->removeFromIndex(mgnum, removed_molnums);
+            return true;
+        }
+        else
+            return false;
     }
     else
     {
         boost::shared_ptr<FF> old_state( this->clone() );
+        
+        bool mols_removed = false;
         
         try
         {
@@ -1174,7 +1267,10 @@ void FF::remove(const QSet<MolNum> &molnums, const MGID &mgid)
                 }
                 
                 if (not removed_molnums.isEmpty())
+                {
                     this->removeFromIndex(mgnum, removed_molnums);
+                    mols_removed = true;
+                }
             }
         }
         catch(...)
@@ -1182,6 +1278,8 @@ void FF::remove(const QSet<MolNum> &molnums, const MGID &mgid)
             this->copy(*old_state);
             throw;
         }
+        
+        return mols_removed;
     }
 }
 

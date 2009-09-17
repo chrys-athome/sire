@@ -42,6 +42,8 @@
 
 #include "SireBase/countflops.h"
 
+#include "SireMaths/rangenerator.h"
+
 #include "SireError/errors.h"
 #include "SireVol/errors.h"
 
@@ -789,6 +791,20 @@ Cartesian::getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
     }
 
     return closegroups;
+}
+
+/** Return a random point in this space - this can be truly anywhere!!!
+
+    (well, it is limited to within -10^20 and 10^20 angstroms)
+*/
+Vector Cartesian::getRandomPoint(const Vector&, const RanGenerator &generator) const
+{
+    static const double max_rand = 1.0e20;
+    static const double min_rand = -max_rand;
+
+    return Vector( generator.rand(min_rand, max_rand),
+                   generator.rand(min_rand, max_rand),
+                   generator.rand(min_rand, max_rand) );
 }
 
 /** Return the center of the box that contains the point 'p' assuming

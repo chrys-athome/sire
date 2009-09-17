@@ -524,7 +524,7 @@ if __name__ == "__main__":
 
     qt_include_dirs = []
 
-    mac = True
+    mac = False
 
     if mac:
         qt_include_dirs = [ "%s/QtCore.framework/Headers" % qtdir,

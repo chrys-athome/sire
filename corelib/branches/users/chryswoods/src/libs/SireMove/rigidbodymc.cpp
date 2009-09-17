@@ -308,7 +308,7 @@ void RigidBodyMC::performMove(System &system,
 
         PartialMolecule newmol = oldmol.move()
                                        .rotate(rotdelta,
-                                               oldmol.evaluate().centerOfGeometry(),
+                                               oldmol.evaluate().centerOfGeometry(map),
                                                map)
                                        .translate(delta, map)
                                        .commit();
@@ -337,7 +337,7 @@ void RigidBodyMC::performMove(System &system,
             {
                 PartialMolecule newmol = it->move()
                                             .rotate(rotdelta,
-                                                    it->evaluate().centerOfGeometry(),
+                                                    it->evaluate().centerOfGeometry(map),
                                                     map)
                                             .translate(delta, map)
                                             .commit();
@@ -376,10 +376,10 @@ void RigidBodyMC::performMove(System &system,
             old_bias = mol_and_bias.get<1>();
 
             PartialMolecule newmol = oldmol.move()
-                                           .rotate(rotdelta,
-                                                   oldmol.evaluate().centerOfGeometry(),
-                                                   map)
-                                           .commit();
+                                          .rotate(rotdelta,
+                                                  oldmol.evaluate().centerOfGeometry(map),
+                                                  map)
+                                          .commit();
 
             //update the system with the new coordinates
             system.update(newmol);
@@ -401,7 +401,7 @@ void RigidBodyMC::performMove(System &system,
         {
             PartialMolecule newmol = it->move()
                                         .rotate(rotdelta,
-                                                it->evaluate().centerOfGeometry(),
+                                                it->evaluate().centerOfGeometry(map),
                                                 map)
                                         .commit();
 

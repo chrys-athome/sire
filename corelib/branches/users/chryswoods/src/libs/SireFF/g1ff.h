@@ -96,20 +96,20 @@ public:
     void addIfUnique(const Molecules &molecules);
     void addIfUnique(const MoleculeGroup &molgroup);
 
-    void removeAll();
+    bool removeAll();
     
-    void remove(const MoleculeView &molview);
-    void remove(const ViewsOfMol &molviews);
-    void remove(const Molecules &molecules);
-    void remove(const MoleculeGroup &molgroup);
+    bool remove(const MoleculeView &molview);
+    bool remove(const ViewsOfMol &molviews);
+    bool remove(const Molecules &molecules);
+    bool remove(const MoleculeGroup &molgroup);
     
-    void removeAll(const MoleculeView &molview);
-    void removeAll(const ViewsOfMol &molviews);
-    void removeAll(const Molecules &molecules);
-    void removeAll(const MoleculeGroup &molgroup);
+    bool removeAll(const MoleculeView &molview);
+    bool removeAll(const ViewsOfMol &molviews);
+    bool removeAll(const Molecules &molecules);
+    bool removeAll(const MoleculeGroup &molgroup);
 
-    void remove(MolNum molnum);
-    void remove(const QSet<MolNum> &molnums);
+    bool remove(MolNum molnum);
+    bool remove(const QSet<MolNum> &molnums);
 
     void setContents(const MoleculeView &molview);
     void setContents(const ViewsOfMol &molview);

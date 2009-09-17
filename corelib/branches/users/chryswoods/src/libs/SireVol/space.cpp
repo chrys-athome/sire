@@ -31,6 +31,8 @@
 #include "space.h"
 #include "cartesian.h"
 
+#include "SireMaths/rangenerator.h"
+
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
@@ -88,6 +90,30 @@ Space::~Space()
 SpacePtr Space::changeVolume(SireUnits::Dimension::Volume delta) const
 {
     return this->setVolume( this->volume() + delta );
+}
+
+/** Return a random point within this space using the passed
+    random number generator to generate any necessary random
+    numbers, and centering the box at the origin */
+Vector Space::getRandomPoint(const RanGenerator &generator) const
+{
+    return this->getRandomPoint(Vector(0,0,0), generator);
+}
+
+/** Return a random point within this space using the global 
+    random number generator and with the box centered at 'center' */
+Vector Space::getRandomPoint(const Vector &center) const
+{
+    RanGenerator generator;
+    return this->getRandomPoint(center, generator);
+}
+
+/** Return a random point within this space using the global
+    random number generator, and with the box centered at the origin */
+Vector Space::getRandomPoint() const
+{
+    RanGenerator generator;
+    return this->getRandomPoint(Vector(0,0,0), generator);
 }
 
 /** Assert that 'other' is of the same type as this space

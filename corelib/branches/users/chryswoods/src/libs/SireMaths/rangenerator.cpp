@@ -614,6 +614,39 @@ void RanGenerator::setState(const QVector<quint32> &state)
     }
 }
 
+Q_GLOBAL_STATIC( RanGenerator, globalGenerator );
+
+/** Return a reference to the global random number generator 
+    (shared between all threads) */
+const RanGenerator& RanGenerator::global()
+{
+    return *(globalGenerator());
+}
+
+/** Seed the global random number generator */
+void RanGenerator::seedGlobal()
+{
+    globalGenerator()->seed();
+}
+
+/** Seed the global random number generator */
+void RanGenerator::seedGlobal(quint32 seed)
+{
+    globalGenerator()->seed(seed);
+}
+
+/** Seed the global random number generator */
+void RanGenerator::seedGlobal(const QVector<quint32> &seed)
+{
+    globalGenerator()->seed(seed);
+}
+
+/** Seed the global random number generator */
+void RanGenerator::seedGlobal(const RanGenerator &rangen)
+{
+    globalGenerator()->d.reset( new RanGeneratorPvt(*(rangen.d)) );
+}
+
 const char* RanGenerator::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<RanGenerator>() );

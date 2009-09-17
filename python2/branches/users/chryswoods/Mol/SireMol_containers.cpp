@@ -53,6 +53,7 @@
 #include "SireMol/moleculegroups.h"
 #include "SireMol/mgnum.h"
 #include "SireMol/mgname.h"
+#include "SireMol/mgidsandmaps.h"
 #include "SireMol/partialmolecule.h"
 
 #include "Base/convertpackedarray.hpp"
@@ -81,9 +82,22 @@ void register_SireMol_containers()
     register_list< QList<Molecule> >();
     register_list< QList<MolGroupPtr> >();
 
+    register_list< QList<MGIdentifier> >();
+    register_list< QList<MolIdentifier> >();
+    register_list< QList<SegIdentifier> >();
+    register_list< QList<ChainIdentifier> >();
+    register_list< QList<ResIdentifier> >();
+    register_list< QList<CGIdentifier> >();
+    register_list< QList<AtomIdentifier> >();
+
+    register_list< QList< boost::tuple<MolGroupPtr,SireBase::PropertyMap> > >();
+    register_list< QList< boost::tuple<MGIdentifier,SireBase::PropertyMap> > >();
+
     register_list< QList< boost::tuple<AtomIdentifier,AtomIdentifier> > >();
 
     register_list< QVector< boost::tuple<MolNum,SireID::Index> > >(); 
+
+    register_list< QList<MGIDsAndMaps> >();
 
     register_tuple< boost::tuple<AtomIdx,AtomIdx> >();
     register_tuple< boost::tuple<AtomIdx,AtomIdx,AtomIdx> >();
@@ -96,6 +110,11 @@ void register_SireMol_containers()
     register_tuple< boost::tuple<PartialMolecule,double> >();
 
     register_tuple< boost::tuple<MolNum,SireID::Index> >();
+
+    register_tuple< boost::tuple<MolGroupPtr,SireBase::PropertyMap> >();
+    register_tuple< boost::tuple<MGIdentifier,SireBase::PropertyMap> >();
+    register_tuple< boost::tuple<QList<MGIdentifier>,SireBase::PropertyMap> >();
+    register_tuple< boost::tuple<QList<MolGroupPtr>,SireBase::PropertyMap> >();
 
     register_PackedArray< SireBase::PackedArray2D<Element> >();
 

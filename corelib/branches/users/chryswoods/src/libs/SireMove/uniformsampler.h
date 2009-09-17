@@ -73,8 +73,10 @@ public:
     UniformSampler* clone() const;
 
     tuple<PartialMolecule,double> sample() const;
+    tuple<Molecule,double> sampleMolecule() const;
 
     double probabilityOf(const PartialMolecule &molecule) const;
+    double probabilityOfMolecule(const Molecule &molecule) const;
 };
 
 }

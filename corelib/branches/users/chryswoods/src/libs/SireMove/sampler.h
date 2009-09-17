@@ -49,6 +49,7 @@ QDataStream& operator>>(QDataStream&, SireMove::Sampler&);
 
 namespace SireMol
 {
+class Molecule;
 class PartialMolecule;
 }
 
@@ -66,6 +67,7 @@ using SireBase::Property;
 
 using SireMaths::RanGenerator;
 
+using SireMol::Molecule;
 using SireMol::PartialMolecule;
 using SireMol::MolGroupPtr;
 using SireMol::MoleculeGroup;
@@ -110,8 +112,10 @@ public:
     virtual void updateFrom(const System &system);
 
     virtual tuple<PartialMolecule,double> sample() const=0;
+    virtual tuple<Molecule,double> sampleMolecule() const=0;
 
     virtual double probabilityOf(const PartialMolecule &molecule) const=0;
+    virtual double probabilityOfMolecule(const Molecule &molecule) const=0;
 
     static const UniformSampler& null();
 

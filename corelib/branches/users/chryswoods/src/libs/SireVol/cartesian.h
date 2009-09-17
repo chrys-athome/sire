@@ -123,6 +123,8 @@ public:
 
     double minimumDistance(const CoordGroup &group) const;
 
+    Vector getRandomPoint(const Vector &center, const RanGenerator &generator) const;
+
 	Vector getBoxCenter(const Vector &p) const;
     Vector getBoxCenter(const Vector &p, const Vector &center) const;
 

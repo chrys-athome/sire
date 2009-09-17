@@ -1612,37 +1612,41 @@ void MolGroupsBase::unite(const MoleculeGroup &molgroup, const MGID &mgid)
     view is not contained by any of the groups. If a group has
     multiple copies of this view, then this removes only
     the first copy. */
-void MolGroupsBase::remove(const MoleculeView &molview)
+bool MolGroupsBase::remove(const MoleculeView &molview)
 {
     //get the groups containing this molecule
     QList<MGNum> mgnums = molnum_to_mgnum.value( molview.data().number() );
 
     if (not mgnums.isEmpty())
-        this->remove( molview, IDOrSet<MGID>(mgnums) );
+        return this->remove( molview, IDOrSet<MGID>(mgnums) );
+    else
+        return false;
 }
 
 /** Remove the views of the molecule in 'molviews' from all of
     the groups in this set. This does nothing if none of these
     views are contained by any of the groups. If a group contains
     multiple copies of a view, then only the first copy is removed. */
-void MolGroupsBase::remove(const ViewsOfMol &molviews)
+bool MolGroupsBase::remove(const ViewsOfMol &molviews)
 {
     //get the groups containing this molecules
     QList<MGNum> mgnums = molnum_to_mgnum.value( molviews.number() );
     
     if (not mgnums.isEmpty())
-        this->remove( molviews, IDOrSet<MGID>(mgnums) );
+        return this->remove( molviews, IDOrSet<MGID>(mgnums) );
+    else
+        return false;
 }
 
 /** Remove all of the views of all of the molecules in 'molecules'
     from all of the groups in this set. If a group contains multiple
     copies of a view then only the first copy is removed */
-void MolGroupsBase::remove(const Molecules &molecules)
+bool MolGroupsBase::remove(const Molecules &molecules)
 {
     if (molecules.isEmpty() or this->isEmpty())
-        return;
+        return false;
 
-    this->remove( molecules, IDOrSet<MGID>(mgidx_to_num) );
+    return this->remove( molecules, IDOrSet<MGID>(mgidx_to_num) );
 }
 
 /** Remove all of the views of all of the molecules in 'molgroup'
@@ -1650,77 +1654,82 @@ void MolGroupsBase::remove(const Molecules &molecules)
     group. If you want to remove the group, then use the 
     MolGroupsBase::remove(MGNum) function. Note that this also
     only removes the first copy of any duplicated views. */
-void MolGroupsBase::remove(const MoleculeGroup &molgroup)
+bool MolGroupsBase::remove(const MoleculeGroup &molgroup)
 {
-    this->remove(molgroup.molecules());
+    return this->remove(molgroup.molecules());
 }
 
 /** Remove all copies of the view of the molecule in 'molview'
     from all of the groups in this set. This removes all copies
     of a view (even duplicate copies) */
-void MolGroupsBase::removeAll(const MoleculeView &molview)
+bool MolGroupsBase::removeAll(const MoleculeView &molview)
 {
     QList<MGNum> mgnums = molnum_to_mgnum.value(molview.data().number());
     
     if (not mgnums.isEmpty())
-        this->removeAll( molview, IDOrSet<MGID>(mgnums) );
+        return this->removeAll( molview, IDOrSet<MGID>(mgnums) );
+    else
+        return false;
 }
 
 /** Remove all copies of the views of the molecule in 'molviews'
     from all of the groups in this set. This removes all
     copies of the views (even duplicate copies) */
-void MolGroupsBase::removeAll(const ViewsOfMol &molviews)
+bool MolGroupsBase::removeAll(const ViewsOfMol &molviews)
 {
     QList<MGNum> mgnums = molnum_to_mgnum.value(molviews.number());
     
     if (not mgnums.isEmpty())
-        this->removeAll( molviews, IDOrSet<MGID>(mgnums) );
+        return this->removeAll( molviews, IDOrSet<MGID>(mgnums) );
+    else
+        return false;
 }
 
 /** Remove all copies of all views of all molecules in 'molecules'
     from all of the groups in this set. This removes all copies
     of the views (even duplicate copies) */
-void MolGroupsBase::removeAll(const Molecules &molecules)
+bool MolGroupsBase::removeAll(const Molecules &molecules)
 {
     if (molecules.isEmpty() or this->isEmpty())
-        return;
+        return false;
         
-    this->removeAll(molecules, IDOrSet<MGID>(mgidx_to_num));
+    return this->removeAll(molecules, IDOrSet<MGID>(mgidx_to_num));
 }
 
 /** Remove all copies of all views of all molecules in the 
     group 'molgroup' from this set. Note that this removes
     the molecules, not the group. Note also that all copies
     of the views are removed (even duplicate copies) */
-void MolGroupsBase::removeAll(const MoleculeGroup &molgroup)
+bool MolGroupsBase::removeAll(const MoleculeGroup &molgroup)
 {
-    this->removeAll(molgroup.molecules());
+    return this->removeAll(molgroup.molecules());
 }
 
 /** Completely remove all views of the molecule with number
     'molnum' from all of the groups from this set. This
     does nothing if there are no views of this molecule
     in any of the groups  */
-void MolGroupsBase::remove(MolNum molnum)
+bool MolGroupsBase::remove(MolNum molnum)
 {
     QList<MGNum> mgnums = molnum_to_mgnum.value(molnum);
     
     if (not mgnums.isEmpty())
-        this->remove(molnum, IDOrSet<MGID>(mgnums));
+        return this->remove(molnum, IDOrSet<MGID>(mgnums));
+    else
+        return false;
 }
 
 /** Completely remove all views of the molecules whose numbers
     are in 'molnums' from all of the groups in this set. This
     does nothing if there are no views of these molecules in
     any of the groups */
-void MolGroupsBase::remove(const QSet<MolNum> &molnums)
+bool MolGroupsBase::remove(const QSet<MolNum> &molnums)
 {
     if (molnums.isEmpty())
-        return;
+        return false;
     else if (molnums.count() == 1)
     {
-        this->remove( *(molnums.begin()) );
-        return;
+        return this->remove( *(molnums.begin()) );
     }
 
     //get the list of groups that contain these molecules
@@ -1734,16 +1743,20 @@ void MolGroupsBase::remove(const QSet<MolNum> &molnums)
     mgnums = mgnums.toSet().toList();
     
     if (not mgnums.isEmpty())
-        this->remove(molnums, IDOrSet<MGID>(mgnums));
+        return this->remove(molnums, IDOrSet<MGID>(mgnums));
+    else
+        return false;
 }
 
 /** Completely clear all of the groups in this set */
-void MolGroupsBase::removeAll()
+bool MolGroupsBase::removeAll()
 {
     if (this->nMolecules() > 1)
     {
-        this->removeAll( IDOrSet<MGID>(mgidx_to_num) );
+        return this->removeAll( IDOrSet<MGID>(mgidx_to_num) );
     }
+    else
+        return false;
 }
 
 /** Update the copies in this set of the molecule viewed in 'molview' 
@@ -2202,11 +2215,13 @@ void MoleculeGroups::remove(MGNum mgnum)
     }
 }
 
-/** Remove the group 'molgroup' from this set. This does nothing
-    if this group doesn't exist in this set */
-void MoleculeGroups::remove(const MoleculeGroup &molgroup)
+/** Remove the molecules contained in 'molgroup' from this set. 
+    Note that this *does not* remove this molecule group itself 
+     - if you want to remove the molecule group, use
+     MoleculeGroups::remove(molgroup.number()) */
+bool MoleculeGroups::remove(const MoleculeGroup &molgroup)
 {
-    this->remove(molgroup.number());
+    return this->remove(molgroup.molecules());
 }
 
 /** Remove the groups that match the ID 'mgid' from this set. This
@@ -2229,16 +2244,18 @@ void MoleculeGroups::remove(const MGID &mgid)
 /** Remove the molecules that match the ID 'molid' from this set.
     This does nothing if there are no molecules that match this
     ID in this set */
-void MoleculeGroups::remove(const MolID &molid)
+bool MoleculeGroups::remove(const MolID &molid)
 {
     try
     {
         QList<MolNum> molnums = this->map(molid);
         
-        MolGroupsBase::remove( molnums.toSet() );
+        return MolGroupsBase::remove( molnums.toSet() );
     }
     catch(...)
     {}
+    
+    return false;
 }
 
 /** Remove operator */
@@ -2491,11 +2508,13 @@ void MoleculeGroups::addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void MoleculeGroups::remove(const MoleculeView &molview, const MGID &mgid)
+bool MoleculeGroups::remove(const MoleculeView &molview, const MGID &mgid)
 {
     QList<MGNum> mgnums = this->map(mgid);
     
     MolNum molnum = molview.data().number();
+    
+    bool removed_mol = false;
     
     foreach (MGNum mgnum, mgnums)
     {
@@ -2503,10 +2522,14 @@ void MoleculeGroups::remove(const MoleculeView &molview, const MGID &mgid)
         
         if (mgroup.edit().remove(molview))
         {
+            removed_mol = true;
+        
             if (not mgroup.read().contains(molnum))
                 this->removeFromIndex(mgnum,molnum);
         }
     }
+    
+    return removed_mol;
 }
 
 /** Remove the views of the molecule in 'molviews' from the groups
@@ -2516,11 +2539,13 @@ void MoleculeGroups::remove(const MoleculeView &molview, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void MoleculeGroups::remove(const ViewsOfMol &molviews, const MGID &mgid)
+bool MoleculeGroups::remove(const ViewsOfMol &molviews, const MGID &mgid)
 {
     QList<MGNum> mgnums = this->map(mgid);
     
     MolNum molnum = molviews.number();
+    
+    bool removed_mol = false;
     
     foreach (MGNum mgnum, mgnums)
     {
@@ -2530,10 +2555,14 @@ void MoleculeGroups::remove(const ViewsOfMol &molviews, const MGID &mgid)
         
         if (not removed_views.isEmpty())
         {
+            removed_mol = true;
+        
             if (not mgroup.read().contains(molnum))
                 this->removeFromIndex(mgnum,molnum);
         }
     }
+    
+    return removed_mol;
 }
 
 /** Remove all of the views of the molecules in 'molecules' from 
@@ -2543,15 +2572,20 @@ void MoleculeGroups::remove(const ViewsOfMol &molviews, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void MoleculeGroups::remove(const Molecules &molecules, const MGID &mgid)
+bool MoleculeGroups::remove(const Molecules &molecules, const MGID &mgid)
 {
     QList<MGNum> mgnums = this->map(mgid);
+    
+    bool removed_mol = false;
     
     foreach (MGNum mgnum, mgnums)
     {
         MolGroupPtr &mgroup = *(mgroups.find(mgnum));
     
         QList<ViewsOfMol> removed_mols = mgroup.edit().remove(molecules);
+
+        if (not removed_mols.isEmpty())
+            removed_mol = true;
 
         QSet<MolNum> removed_molnums;
         
@@ -2564,6 +2598,8 @@ void MoleculeGroups::remove(const Molecules &molecules, const MGID &mgid)
         if (not removed_molnums.isEmpty())
             this->removeFromIndex(mgnum, removed_molnums);
     }
+    
+    return removed_mol;
 }
 
 /** Remove all of the views of the molecules in the group 'molgroup' from 
@@ -2573,9 +2609,9 @@ void MoleculeGroups::remove(const Molecules &molecules, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void MoleculeGroups::remove(const MoleculeGroup &molgroup, const MGID &mgid)
+bool MoleculeGroups::remove(const MoleculeGroup &molgroup, const MGID &mgid)
 {
-    this->remove(molgroup.molecules(), mgid);
+    return this->remove(molgroup.molecules(), mgid);
 }
 
 /** Remove all copies of the view of the molecule in 'molview' from
@@ -2584,11 +2620,13 @@ void MoleculeGroups::remove(const MoleculeGroup &molgroup, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void MoleculeGroups::removeAll(const MoleculeView &molview, const MGID &mgid)
+bool MoleculeGroups::removeAll(const MoleculeView &molview, const MGID &mgid)
 {
     QList<MGNum> mgnums = this->map(mgid);
     
     MolNum molnum = molview.data().number();
+    
+    bool removed_mol = false;
     
     foreach (MGNum mgnum, mgnums)
     {
@@ -2596,10 +2634,14 @@ void MoleculeGroups::removeAll(const MoleculeView &molview, const MGID &mgid)
         
         if (mgroup.edit().removeAll(molview))
         {
+            removed_mol = true;
+        
             if (not mgroup.read().contains(molnum))
                 this->removeFromIndex(mgnum, molnum);
         }
     }
+    
+    return removed_mol;
 }
 
 /** Remove all copies of the views of the molecule in 'molviews' from
@@ -2608,11 +2650,13 @@ void MoleculeGroups::removeAll(const MoleculeView &molview, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void MoleculeGroups::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
+bool MoleculeGroups::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
 {
     QList<MGNum> mgnums = this->map(mgid);
     
     MolNum molnum = molviews.number();
+    
+    bool removed_mol = false;
     
     foreach (MGNum mgnum, mgnums)
     {
@@ -2622,10 +2666,14 @@ void MoleculeGroups::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
         
         if (not removed_views.isEmpty())
         {
+            removed_mol = true;
+        
             if (not mgroup.read().contains(molnum))
                 this->removeFromIndex(mgnum, molnum);
         }
     }
+    
+    return removed_mol;
 }
 
 /** Remove all copies of the views of the molecules in 'molecules'
@@ -2634,15 +2682,20 @@ void MoleculeGroups::removeAll(const ViewsOfMol &molviews, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void MoleculeGroups::removeAll(const Molecules &molecules, const MGID &mgid)
+bool MoleculeGroups::removeAll(const Molecules &molecules, const MGID &mgid)
 {
     QList<MGNum> mgnums = this->map(mgid);
+    
+    bool removed_mol = false;
     
     foreach (MGNum mgnum, mgnums)
     {
         MolGroupPtr &mgroup = *(mgroups.find(mgnum));
     
         QList<ViewsOfMol> removed_mols = mgroup.edit().removeAll(molecules);
+        
+        if (not removed_mols.isEmpty())
+            removed_mol = true;
         
         QSet<MolNum> removed_molnums;
         
@@ -2654,6 +2707,8 @@ void MoleculeGroups::removeAll(const Molecules &molecules, const MGID &mgid)
         
         this->removeFromIndex(mgnum,removed_molnums);
     }
+    
+    return removed_mol;
 }
 
 /** Remove all of the molecules from all of the groups identified by
@@ -2662,15 +2717,25 @@ void MoleculeGroups::removeAll(const Molecules &molecules, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void MoleculeGroups::removeAll(const MGID &mgid)
+bool MoleculeGroups::removeAll(const MGID &mgid)
 {
     QList<MGNum> mgnums = this->map(mgid);
     
+    bool removed_mol = false;
+    
     foreach (MGNum mgnum, mgnums)
     {
-        mgroups.find(mgnum)->edit().removeAll();
-        this->removeFromIndex(mgnum);
+        MoleculeGroup &molgroup = mgroups.find(mgnum)->edit();
+        
+        if (not molgroup.isEmpty())
+        {
+            removed_mol = true;
+            molgroup.removeAll();
+            this->removeFromIndex(mgnum);
+        }
     }
+
+    return removed_mol;
 }
 
 /** Remove all of the views of the molecules in the group 'molgroup'
@@ -2679,9 +2744,9 @@ void MoleculeGroups::removeAll(const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void MoleculeGroups::removeAll(const MoleculeGroup &molgroup, const MGID &mgid)
+bool MoleculeGroups::removeAll(const MoleculeGroup &molgroup, const MGID &mgid)
 {
-    this->removeAll(molgroup.molecules(), mgid);
+    return this->removeAll(molgroup.molecules(), mgid);
 }
 
 /** Remove all views of the molecule with number 'molnum' from the 
@@ -2691,9 +2756,11 @@ void MoleculeGroups::removeAll(const MoleculeGroup &molgroup, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void MoleculeGroups::remove(MolNum molnum, const MGID &mgid)
+bool MoleculeGroups::remove(MolNum molnum, const MGID &mgid)
 {
     QList<MGNum> mgnums = this->map(mgid);
+    
+    bool removed_mol = false;
     
     foreach (MGNum mgnum, mgnums)
     {
@@ -2702,8 +2769,13 @@ void MoleculeGroups::remove(MolNum molnum, const MGID &mgid)
         ViewsOfMol removed_views = mgroup.edit().remove(molnum);
         
         if (not removed_views.isEmpty())
-            this->removeFromIndex(molnum);
+        {
+            removed_mol = true;
+            this->removeFromIndex(mgnum, molnum);
+        }
     }
+    
+    return removed_mol;
 }
 
 /** Remove the molecules whose numbers are in 'molnums' from the 
@@ -2712,15 +2784,20 @@ void MoleculeGroups::remove(MolNum molnum, const MGID &mgid)
     \throw SireMol::missing_group
     \throw SireError::invalid_index
 */
-void MoleculeGroups::remove(const QSet<MolNum> &molnums, const MGID &mgid)
+bool MoleculeGroups::remove(const QSet<MolNum> &molnums, const MGID &mgid)
 {
     QList<MGNum> mgnums = this->map(mgid);
+    
+    bool removed_mol = false;
     
     foreach (MGNum mgnum, mgnums)
     {
         MolGroupPtr &mgroup = *(mgroups.find(mgnum));
     
         QList<ViewsOfMol> removed_mols = mgroup.edit().remove(molnums);
+        
+        if (not removed_mols.isEmpty())
+            removed_mol = true;
         
         QSet<MolNum> removed_nums;
         
@@ -2731,6 +2808,8 @@ void MoleculeGroups::remove(const QSet<MolNum> &molnums, const MGID &mgid)
         
         this->removeFromIndex(mgnum, removed_nums);
     }
+    
+    return removed_mol;
 }
 
 /** Update all of the groups to use the version of the molecule

@@ -1196,59 +1196,59 @@ void G1FF::addIfUnique(const MoleculeGroup &group)
     FF::addIfUnique(group, MGIdx(0));
 }
 
-void G1FF::removeAll()
+bool G1FF::removeAll()
 {
-    FF::removeAll(MGIdx(0));
+    return FF::removeAll(MGIdx(0));
 }
 
-void G1FF::remove(const MoleculeView &molview)
+bool G1FF::remove(const MoleculeView &molview)
 {
-    FF::remove(molview, MGIdx(0));
+    return FF::remove(molview, MGIdx(0));
 }
 
-void G1FF::remove(const ViewsOfMol &molviews)
+bool G1FF::remove(const ViewsOfMol &molviews)
 {
-    FF::remove(molviews, MGIdx(0));
+    return FF::remove(molviews, MGIdx(0));
 }
 
-void G1FF::remove(const Molecules &molecules)
+bool G1FF::remove(const Molecules &molecules)
 {
-    FF::remove(molecules, MGIdx(0));
+    return FF::remove(molecules, MGIdx(0));
 }
 
-void G1FF::remove(const MoleculeGroup &group)
+bool G1FF::remove(const MoleculeGroup &group)
 {
-    FF::remove(group, MGIdx(0));
+    return FF::remove(group, MGIdx(0));
 }
 
-void G1FF::removeAll(const MoleculeView &molview)
+bool G1FF::removeAll(const MoleculeView &molview)
 {
-    FF::removeAll(molview, MGIdx(0));
+    return FF::removeAll(molview, MGIdx(0));
 }
 
-void G1FF::removeAll(const ViewsOfMol &molviews)
+bool G1FF::removeAll(const ViewsOfMol &molviews)
 {
-    FF::removeAll(molviews, MGIdx(0));
+    return FF::removeAll(molviews, MGIdx(0));
 }
 
-void G1FF::removeAll(const Molecules &molecules)
+bool G1FF::removeAll(const Molecules &molecules)
 {
-    FF::removeAll(molecules, MGIdx(0));
+    return FF::removeAll(molecules, MGIdx(0));
 }
 
-void G1FF::removeAll(const MoleculeGroup &group)
+bool G1FF::removeAll(const MoleculeGroup &group)
 {
-    FF::removeAll(group, MGIdx(0));
+    return FF::removeAll(group, MGIdx(0));
 }
 
-void G1FF::remove(MolNum molnum)
+bool G1FF::remove(MolNum molnum)
 {
-    FF::remove(molnum, MGIdx(0));
+    return FF::remove(molnum, MGIdx(0));
 }
 
-void G1FF::remove(const QSet<MolNum> &molnums)
+bool G1FF::remove(const QSet<MolNum> &molnums)
 {
-    FF::remove(molnums, MGIdx(0));
+    return FF::remove(molnums, MGIdx(0));
 }
 
 void G1FF::setContents(const MoleculeView &molview)

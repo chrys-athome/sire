@@ -227,20 +227,20 @@ public:
     void addIfUnique(const Molecules &molecules, const MGID &mgid);
     void addIfUnique(const MoleculeGroup &molgroup, const MGID &mgid);
 
-    void removeAll(const MGID &mgid);
+    bool removeAll(const MGID &mgid);
     
-    void remove(const MoleculeView &molview, const MGID &mgid);
-    void remove(const ViewsOfMol &molviews, const MGID &mgid);
-    void remove(const Molecules &molecules, const MGID &mgid);
-    void remove(const MoleculeGroup &molgroup, const MGID &mgid);
+    bool remove(const MoleculeView &molview, const MGID &mgid);
+    bool remove(const ViewsOfMol &molviews, const MGID &mgid);
+    bool remove(const Molecules &molecules, const MGID &mgid);
+    bool remove(const MoleculeGroup &molgroup, const MGID &mgid);
     
-    void removeAll(const MoleculeView &molview, const MGID &mgid);
-    void removeAll(const ViewsOfMol &molviews, const MGID &mgid);
-    void removeAll(const Molecules &molecules, const MGID &mgid);
-    void removeAll(const MoleculeGroup &molgroup, const MGID &mgid);
+    bool removeAll(const MoleculeView &molview, const MGID &mgid);
+    bool removeAll(const ViewsOfMol &molviews, const MGID &mgid);
+    bool removeAll(const Molecules &molecules, const MGID &mgid);
+    bool removeAll(const MoleculeGroup &molgroup, const MGID &mgid);
 
-    void remove(MolNum molnum, const MGID &mgid);
-    void remove(const QSet<MolNum> &molnums, const MGID &mgid);
+    bool remove(MolNum molnum, const MGID &mgid);
+    bool remove(const QSet<MolNum> &molnums, const MGID &mgid);
 
     void update(const MoleculeData &moldata);
     void update(const MoleculeView &molview);

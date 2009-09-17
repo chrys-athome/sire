@@ -32,6 +32,7 @@
 
 #include "SireMol/atomselection.h"
 #include "SireMol/molidentifier.h"
+#include "SireMol/molecule.h"
 
 #include "SireBase/majorminorversion.h"
 
@@ -782,7 +783,34 @@ tuple<PartialMolecule,double> PrefSampler::sample() const
                                                  molweight / sum_of_weights);
         }
     }
+}
 
+/** Sample a whole molecule from the group, and return it and the 
+    probability with which it was chosen. This returns the whole
+    molecule, even if only part of the molecule was in the group */
+tuple<Molecule,double> PrefSampler::sampleMolecule() const
+{
+    //pick a random view
+    tuple<PartialMolecule,double> pick_mol = this->sample();
+    
+    Molecule mol( pick_mol.get<0>() );
+    
+    if (group().nViews(mol.number()) > 1)
+    {
+        //we need to sum up the probability of each view of this molecule
+        ViewsOfMol views = group()[ mol.number() ];
+        
+        double sum_prob = 0;
+        
+        for (int i=0; i<views.nViews(); ++i)
+        {
+            sum_prob += this->probabilityOf( views.at(i) );
+        }
+        
+        return tuple<Molecule,double>(mol, sum_prob);
+    }
+    else
+        return tuple<Molecule,double>(mol, pick_mol.get<1>());
 }
 
 /** Return the probability with which the molecule 'molecule' was 
@@ -839,6 +867,26 @@ double PrefSampler::probabilityOf(const PartialMolecule &molecule) const
             return new_weight / new_sum;
         }
     }
+}
+
+/** Return the probability that the molecule 'mol' would have been picked
+    by this sampler */
+double PrefSampler::probabilityOfMolecule(const Molecule &molecule) const
+{
+    if (not group().contains(molecule.number()))
+        return 0;
+
+    //get the views of this molecule
+    ViewsOfMol views = group()[molecule.number()];
+    
+    double sum_of_prob = 0;
+    
+    for (int i=0; i<views.nViews(); ++i)
+    {
+        sum_of_prob += this->probabilityOf(views.at(i));
+    }
+    
+    return sum_of_prob;
 }
 
 /** Set the focal molecule of this sampler */

@@ -197,6 +197,8 @@ public:
     PropertyName operator[](const QString &name) const;
     PropertyName operator[](const PropertyName &name) const;
 
+    bool isDefault() const;
+
     bool specified(const char *name) const;
     bool specified(const QString &name) const;
     bool specified(const PropertyName &name) const;

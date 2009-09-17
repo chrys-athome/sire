@@ -140,8 +140,10 @@ public:
     void updateFrom(const System &system);
     
     tuple<PartialMolecule,double> sample() const;
+    tuple<Molecule,double> sampleMolecule() const;
 
     double probabilityOf(const PartialMolecule &molecule) const;
+    double probabilityOfMolecule(const Molecule &molecule) const;
 
     void setFocalMolecule(const MoleculeView &molview);
     void setFocalPoint(const Vector &point);

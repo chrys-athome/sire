@@ -121,6 +121,13 @@ public:
 
     QVector<quint32> getState() const;
     void setState(const QVector<quint32> &state);
+    
+    static const RanGenerator& global();
+    
+    static void seedGlobal();
+    static void seedGlobal(quint32 seed);
+    static void seedGlobal(const QVector<quint32> &seed);
+    static void seedGlobal(const RanGenerator &other);
 
 private:
     detail::RanGeneratorPvt& nonconst_d() const;
