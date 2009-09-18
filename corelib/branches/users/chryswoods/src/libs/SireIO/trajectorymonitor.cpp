@@ -436,6 +436,7 @@ void TrajectoryMonitor::writeToDisk(const QString &file_template) const
 void TrajectoryMonitor::clearStatistics()
 {
     traj_frames.clear();
+    space_frames.clear();
 }
 
 /** Monitor the system, writing an additional frame of the trajectory
