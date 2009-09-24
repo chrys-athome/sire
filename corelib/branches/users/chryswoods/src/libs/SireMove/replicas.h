@@ -97,6 +97,8 @@ public:
     
     const QVector<quint32>& replicaIDs() const;
     
+    QVector<double> lambdaTrajectory() const;
+    
     void setReplicas(const Replicas &replicas);
     
     void setReplica(const Replica &replica);

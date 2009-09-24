@@ -51,8 +51,10 @@ for i in range(0,len(lambda_values)):
 zmatmove = ZMatMove( internalff.groups()[0] )
 zmatmove.setTemperature( 298 * kelvin )
 
+nsubmoves = 1000
+
 replicas.setSubMoves( SameMoves(zmatmove) )
-replicas.setNSubMoves(10000)
+replicas.setNSubMoves(nsubmoves)
 
 # Average energy should be 1/2 kT
 theo_nrg = 0.5 * gasr * 298
@@ -61,12 +63,16 @@ print "Running a simulation - initial energy = %f kcal mol-1" % system.energy().
 
 repexmove = RepExMove()
 
-replica_ids = []
+lambda_trajectory = []
+
+i = -1
 
 def printInfo(replicas):
 
+    lamtraj = replicas.lambdaTrajectory()
+    lambda_trajectory.append(lamtraj)
+
     ids = replicas.replicaIDs()
-    replica_ids.append(ids)
 
     for j in range(0,replicas.count()):
         replica = replicas[j]
@@ -74,7 +80,7 @@ def printInfo(replicas):
         zmatmove = replica.subMoves()[0]
 
         print "Replica %d: lambda = %f: ID = %d" % (j, replica.lambdaValue(), ids[j])
-        print "%d : Energy = %f kcal mol-1" % ( (i+1)*10000, \
+        print "%d : Energy = %f kcal mol-1" % ( (i+1)*replica.nSubMoves(), \
                                             system.energy().to(kcal_per_mol) )
 
         avg_nrg = system[MonitorName("average energy")].accumulator().average()
@@ -84,7 +90,7 @@ def printInfo(replicas):
 
 printInfo(replicas)
 
-for i in range(0,20):
+for i in range(0,10):
     sim = SupraSim.run( replicas, repexmove, 1 )
     
     replicas = sim.system()
@@ -93,24 +99,6 @@ for i in range(0,20):
     printInfo(replicas)
 
     print "      Replica exchange acceptance ratio: %f %%" % (100*repexmove.acceptanceRatio())
-
-def getLambdaTrajectory(replica_ids, lambda_values):
-    lambda_trajectory = []
-
-    for ids in replica_ids:
-        lamtraj = [None] * len(ids)
-
-        j = 0
-
-        for id in ids:
-            lamtraj[id] = lambda_values[j]
-            j += 1
-
-        lambda_trajectory.append(lamtraj)
-
-    return lambda_trajectory
-
-lambda_trajectory = getLambdaTrajectory(replica_ids, lambda_values)
 
 print "\nReplica trajectory"
 for i in range(0, len(lambda_trajectory)):

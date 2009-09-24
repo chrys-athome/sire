@@ -293,6 +293,24 @@ const QVector<quint32>& Replicas::replicaIDs() const
     return replica_ids;
 }
 
+/** Return the lambda values for each of the replicas, in replica ID order.
+    This allows the lambda trajectory for each replica to be easily
+    collected during a simulation */
+QVector<double> Replicas::lambdaTrajectory() const
+{
+    if (this->nReplicas() == 0)
+        return QVector<double>();
+
+    QVector<double> lamtraj( this->nReplicas() );
+    
+    for (int i=0; i<this->nReplicas(); ++i)
+    {
+        lamtraj[ replica_ids[i] ] = this->at(i).lambdaValue();
+    }
+    
+    return lamtraj;
+}
+
 /** Set the replicas from a copy of passed replicas */
 void Replicas::setReplicas(const Replicas &replicas)
 {
