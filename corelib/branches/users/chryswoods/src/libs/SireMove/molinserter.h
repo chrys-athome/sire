@@ -242,7 +242,7 @@ SIRE_EXPOSE_CLASS( SireMove::MolInserter )
 SIRE_EXPOSE_CLASS( SireMove::NullInserter )
 SIRE_EXPOSE_CLASS( SireMove::UniformInserter )
 
-SIRE_EXPOSE_PROPERTY( SireMove::MolInserterPtr, SireMol::MolInserter )
+SIRE_EXPOSE_PROPERTY( SireMove::MolInserterPtr, SireMove::MolInserter )
 
 SIRE_END_HEADER
 

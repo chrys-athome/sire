@@ -94,17 +94,18 @@ system.setComponent( lam, 1.0 )
 print system.energies()
 
 #create 5 replicas that map from lambda=0 to lambda=1
-replicas = RepExReplicas(system, 5)
-replicas.setMoves(moves)
-replicas.setNMoves(1000)
+replicas = Replicas(system, 5)
+replicas.setSubMoves(moves)
+replicas.setNSubMoves(1000)
 
 replicas.setLambdaComponent(lam)
 
 for i in range(0, 5):
-    replicas.setLambdaValue( i, i*0.02 )
+    replicas.setLambdaValue( i, i*0.0025 )
 
 for i in range(0,5):
-    print i, replicas[i].lambdaValue(), replicas[i].energy()
+    print i, replicas[i].lambdaValue(), replicas[i].energy(), \
+             replicas[i].subSystem().energy(lam)
 
 data = save(replicas)
 
@@ -116,21 +117,13 @@ for i in range(0,5):
 repmove = RepExMove()
 
 print "Running the replica exchange moves"
-repmove.move(replicas, 1)
+sim = SupraSim.run( replicas, repmove, 1, True )
 
-print repmove.nAccepted(), repmove.nRejected()
+replicas = sim.system()
+repmove = sim.moves()
 
-for i in range(0,5):
-    print i, replicas[i].lambdaValue(), replicas[i].energy()
-
-nodes = Cluster.getNodes(5)
-
-print nodes
-
-print "Running the replicas exchange moves on the cluster"
-repmove.move(nodes, replicas, 1)
-
-print repmove.nAccepted(), repmove.nRejected()
+print "Accepted ",repmove[0].nAccepted(), "Rejected ",repmove[0].nRejected()
 
 for i in range(0,5):
-    print i, replicas[i].lambdaValue(), replicas[i].energy()
+    print i, replicas[i].lambdaValue(), replicas[i].energy(), \
+             replicas[i].subSystem().energy(lam)

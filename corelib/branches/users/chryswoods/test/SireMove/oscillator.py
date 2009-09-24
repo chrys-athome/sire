@@ -33,6 +33,10 @@ system.add( internalff )
 system.add( "average energy", MonitorComponent(system.totalComponent()) )
 
 zmatmove = ZMatMove( internalff.groups()[0] )
+zmatmove.setTemperature( 298 * kelvin )
+
+# Average energy should be 1/2 kT
+theo_nrg = 0.5 * gasr * 298
 
 print "Running a simulation - initial energy = %f kcal mol-1" % system.energy().to(kcal_per_mol)
 
@@ -47,8 +51,9 @@ for i in range(0,100):
     print "%d : Energy = %f kcal mol-1" % ( (i+1)*10000, \
                                             system.energy().to(kcal_per_mol) )
 
-    print "      Average energy = %f kcal mol-1" % system[MonitorName("average energy")] \
-                                                       .accumulator().average()
+    avg_nrg = system[MonitorName("average energy")].accumulator().average()
+
+    print "      Average energy = %f kcal mol-1 : error = %f kcal mol-1" % (avg_nrg, theo_nrg-avg_nrg)
 
 print "Finished - final energy = %f kcal mol-1" % system.energy().to(kcal_per_mol)
 print "         - final average = %f kcal mol-1" % system[MonitorName("average energy")] \

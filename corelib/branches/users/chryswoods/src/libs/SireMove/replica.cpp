@@ -395,7 +395,7 @@ void Replica::setSubSystem(const System &subsystem)
         new_system.setComponent(lambda_component, lambda_value);
     }
     
-    SupraSubSystem::setSubSystem(subsystem);
+    SupraSubSystem::setSubSystem(new_system);
 }
 
 /** Internal function used to set the sub-moves that contain
@@ -733,7 +733,7 @@ void Replica::swapInSystem(const SimStore &simstore, bool swap_monitors)
         else
             new_system = simstore.system();
     
-        if (swap_monitors)
+        if (not swap_monitors)
             new_system.setMonitors( this->subSystem().monitors() );
             
         this->setSubSystem(new_system);
