@@ -157,7 +157,7 @@ static const RegisterMetaType<Ln> r_ln;
 /** Serialise to a binary datastream */
 QDataStream SIRE_EXPORT &operator<<(QDataStream &ds, const Ln &ln)
 {
-    writeHeader(ds, r_ln, 1) << static_cast<const Ln&>(ln);
+    writeHeader(ds, r_ln, 1) << static_cast<const SingleFunc&>(ln);
 
     return ds;
 }
