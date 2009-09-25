@@ -31,6 +31,8 @@
 
 #include "qmpotential.h"
 
+#include "SireMol/atomcharges.h"
+
 SIRE_BEGIN_HEADER
 
 namespace Squire
@@ -45,8 +47,16 @@ QDataStream& operator>>(QDataStream&, Squire::QMProgram&);
 QDataStream& operator<<(QDataStream&, const Squire::NullQM&);
 QDataStream& operator>>(QDataStream&, Squire::NullQM&);
 
+namespace SireMol
+{
+class Molecule;
+}
+
 namespace Squire
 {
+
+using SireMol::AtomCharges;
+using SireMol::Molecule;
 
 class LatticeCharges;
 
@@ -94,6 +104,11 @@ public:
     {
         return false;
     }
+    
+    virtual AtomCharges calculateCharges(const Molecule &molecule,
+                                         const PropertyMap &map) const;
+
+    virtual AtomCharges calculateCharges(const Molecule &molecule) const;
     
     static const NullQM& null();
     

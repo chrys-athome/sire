@@ -31,6 +31,8 @@
 #include "qmprogram.h"
 #include "latticecharges.h"
 
+#include "SireMol/molecule.h"
+
 #include "SireError/errors.h"
 
 #include "SireStream/datastream.h"
@@ -83,6 +85,24 @@ QMProgram::QMProgram(const QMProgram &other) : Property(other)
 /** Destructor */
 QMProgram::~QMProgram()
 {}
+
+/** Calculate the charges on the molecule 'molecule' using the properties
+    specified in the passed property map */
+AtomCharges QMProgram::calculateCharges(const Molecule &molecule,
+                                        const PropertyMap &map) const
+{
+    throw SireError::unsupported( QObject::tr(
+            "Calculating the charges via this interface (%1) is not "
+            "yet supported.")
+                .arg(this->what()), CODELOC );
+}
+
+/** Calculate the charges on the molecule 'molecule' using the default
+    property locations */
+AtomCharges QMProgram::calculateCharges(const Molecule &molecule) const
+{
+    return this->calculateCharges( molecule, PropertyMap() );
+}
 
 /** Return the QM energy of the molecules 'molecules' surrounded by the 
     field of point charges 'lattice_charges' */

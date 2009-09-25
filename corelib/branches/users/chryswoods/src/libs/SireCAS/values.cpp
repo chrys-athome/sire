@@ -135,17 +135,25 @@ bool Values::operator!=(const Values &other) const
 QString Values::toString() const
 {
     QStringList words;
+    QStringList lines;
     
-    for (QHash<SymbolID,double>::const_iterator it = vals.constBegin();
-         it != vals.constEnd();
-         ++it)
+    QList<Symbol> syms = this->symbols();
+    
+    qSort(syms);
+    
+    foreach (const Symbol &sym, syms)
     {
-        words.append( QString("%1 == %2")
-                            .arg(Symbol(it.key()).toString())
-                            .arg(it.value()) );
+        words.append( QString("%1 == %2").arg(sym.toString())
+                                         .arg(this->value(sym)) );
+
+        if (words.count() == 4)
+        {
+            lines.append( words.join(", ") );
+            words.clear();
+        }
     }
     
-    return QString("{ %1 }").arg( words.join(", ") );
+    return QString("{ %1 }").arg( lines.join("\n  ") );
 }
 
 /** Return a list of the symbols that are present in this set */

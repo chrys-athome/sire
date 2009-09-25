@@ -25,6 +25,7 @@ set ( SQUIRE_HEADERS
       pointdipole.h
 
       molpro.h
+      mopac.h
 
       cgto.h
       pgto.h
@@ -47,6 +48,7 @@ set ( SQUIRE_SOURCES
       latticecharges.cpp
       
       molpro.cpp
+      mopac.cpp
 
       orbital.cpp
       pointcharge.cpp
