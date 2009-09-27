@@ -110,6 +110,10 @@ public:
 
     virtual AtomCharges calculateCharges(const Molecule &molecule) const;
     
+    virtual QString chargeCommandFile(const Molecule &molecule) const;
+    virtual QString chargeCommandFile(const Molecule &molecule,
+                                      const PropertyMap &map) const;
+    
     static const NullQM& null();
     
 protected:

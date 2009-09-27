@@ -115,6 +115,24 @@ double QMProgram::calculateEnergy(const QMPotential::Molecules &molecules,
             .arg(this->what()), CODELOC );
 }
 
+/** Return the command file that would be used to calculate the atomic
+    partial charges of the passed molecule */
+QString QMProgram::chargeCommandFile(const Molecule &molecule,
+                                     const PropertyMap &map) const
+{
+    throw SireError::unsupported( QObject::tr(
+            "Calculating the charges via this interface (%1) is not "
+            "yet supported.")
+                .arg(this->what()), CODELOC );
+}
+
+/** Return the command file that would be used to calculate the atomic
+    partial charges of the passed molecule */
+QString QMProgram::chargeCommandFile(const Molecule &molecule) const
+{
+    return this->chargeCommandFile(molecule, PropertyMap());
+}
+
 /** Return the command file that would be used to calculate the energy
     of the molecules in 'molecules' in the field of point charges in
     'lattice_charges' */

@@ -30,12 +30,16 @@
 #include "qmpotential.h"
 
 #include "SireMol/element.h"
+#include "SireMol/atomcharges.h"
+#include "SireMol/atomelements.h"
+#include "SireMol/atomcoords.h"
 
 #include "SireBase/tempdir.h"
 #include "SireBase/findexe.h"
 #include "SireBase/process.h"
 
 #include "SireUnits/units.h"
+#include "SireUnits/dimensions.h"
 
 #include "tostring.h"
 
@@ -52,6 +56,7 @@ using namespace SireMol;
 using namespace SireVol;
 using namespace SireBase;
 using namespace SireUnits;
+using namespace SireUnits::Dimension;
 using namespace SireStream;
 using namespace SireStream;
 
@@ -67,6 +72,8 @@ QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const Mopac &mopac)
     sds << mopac.env_variables
         << mopac.mopac_exe << mopac.qm_method
         << mopac.energy_template << mopac.force_template
+        << mopac.charge_template
+        << mopac.mopac_input_filename << mopac.mopac_output_filename
         << mopac.total_charge;
         
     return ds;
@@ -84,6 +91,8 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, Mopac &mopac)
         sds >> mopac.env_variables
             >> mopac.mopac_exe >> mopac.qm_method
             >> mopac.energy_template >> mopac.force_template
+            >> mopac.charge_template
+            >> mopac.mopac_input_filename >> mopac.mopac_output_filename
             >> mopac.total_charge;
     }
     else
@@ -94,10 +103,15 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, Mopac &mopac)
 
 static const QString default_energy_template =
        "@QM_METHOD@ 1SCF CHARGE=@QM_CHARGE@ GEO-OK MMOK PRECISE\n"
-       "created by Sire for mopac6\n\n"
+       "SCF single point calculation. Created by Sire for Mopac 6\n\n"
        "@QM_COORDS@\n";
 
 static const QString default_force_template = "! NEEDS TO BE WRITTEN";
+
+static const QString default_charge_template =
+       "@QM_METHOD@ 1SCF CHARGE=@QM_CHARGE@ GEO-OK MMOK PRECISE MULLIK\n"
+       "SCF Mulliken point charge calculation. Created by Sire for Mopac 6\n\n"
+       "@QM_COORDS@\n";
 
 /** Constructor */
 Mopac::Mopac() 
@@ -105,28 +119,37 @@ Mopac::Mopac()
         qm_method("AM1"),
         energy_template(default_energy_template),
         force_template(default_force_template),
+        charge_template(default_charge_template),
+        mopac_input_filename("FOR005"),
+        mopac_output_filename("FOR006"),
         total_charge(0)
 {}
 
 /** Construct, passing in the location of the Mopac executable */
 Mopac::Mopac(const QString &mopac)
-       : ConcreteProperty<Mopac,QMProgram>(),
-         qm_method("AM1"),
-         energy_template(default_energy_template),
-         force_template(default_force_template),
-         total_charge(0)
+      : ConcreteProperty<Mopac,QMProgram>(),
+        qm_method("AM1"),
+        energy_template(default_energy_template),
+        force_template(default_force_template),
+        charge_template(default_charge_template),
+        mopac_input_filename("FOR005"),
+        mopac_output_filename("FOR006"),
+        total_charge(0)
 {
     this->setExecutable(mopac);
 }
 
 /** Copy constructor */
 Mopac::Mopac(const Mopac &other)
-       : ConcreteProperty<Mopac,QMProgram>(other),
-         env_variables(other.env_variables), mopac_exe(other.mopac_exe),
-         qm_method(other.qm_method),
-         energy_template(other.energy_template),
-         force_template(other.force_template),
-         total_charge(other.total_charge)
+      : ConcreteProperty<Mopac,QMProgram>(other),
+        env_variables(other.env_variables), mopac_exe(other.mopac_exe),
+        qm_method(other.qm_method),
+        energy_template(other.energy_template),
+        force_template(other.force_template),
+        charge_template(other.charge_template),
+        mopac_input_filename(other.mopac_input_filename),
+        mopac_output_filename(other.mopac_output_filename),
+        total_charge(other.total_charge)
 {}
 
 /** Destructor */
@@ -143,6 +166,9 @@ Mopac& Mopac::operator=(const Mopac &other)
         qm_method = other.qm_method;
         energy_template = other.energy_template;
         force_template = other.force_template;
+        charge_template = other.charge_template;
+        mopac_input_filename = other.mopac_input_filename;
+        mopac_output_filename = other.mopac_output_filename;
         total_charge = other.total_charge;
     }
     
@@ -158,6 +184,9 @@ bool Mopac::operator==(const Mopac &other) const
             qm_method == other.qm_method and
             energy_template == other.energy_template and
             force_template == other.force_template and
+            charge_template == other.charge_template and
+            mopac_input_filename == other.mopac_input_filename and
+            mopac_output_filename == other.mopac_output_filename and
             total_charge == other.total_charge);
 }
 
@@ -227,6 +256,42 @@ void Mopac::setTotalCharge(int charge)
     total_charge = charge;
 }
 
+/** Tell this interface which name Mopac uses for the input file. This
+    is hardcoded into Mopac and depends on the system on which this
+    program is running, e.g. 'FOR005' is the name for the Mopac
+    I am using on OS X */
+void Mopac::setMopacInputFilename(const QString &f)
+{
+    mopac_input_filename = f;
+}
+
+/** Tell this interface which name Mopac uses for the output file. This
+    is hardcoded into Mopac and depends on the system on which this
+    program is running, e.g. 'FOR006' is the name for the Mopac
+    I am using on OS X */
+void Mopac::setMopacOutputFilename(const QString &f)
+{
+    mopac_output_filename = f;
+}
+
+/** Return the name of the file mopac is using for input. This
+    is hardcoded into Mopac and depends on the system on which this
+    program is running, e.g. 'FOR005' is the name for the Mopac
+    I am using on OS X */
+const QString& Mopac::mopacInputFilename() const
+{
+    return mopac_input_filename;
+}
+
+/** Return the name of the file mopac is using for output. This
+    is hardcoded into Mopac and depends on the system on which this
+    program is running, e.g. 'FOR006' is the name for the Mopac
+    I am using on OS X */
+const QString& Mopac::mopacOutputFilename() const
+{
+    return mopac_output_filename;
+}
+
 /** Return the total charge of the system */
 int Mopac::totalCharge() const
 {
@@ -237,7 +302,7 @@ int Mopac::totalCharge() const
     Mopac to calculate an energy. The following tags will
     be substituted in the template;
     
-    @QM_METHOD@          - the desired QM method (e.g. HF)
+    @QM_METHOD@          - the desired QM method (e.g. AM1 or PM3)
     @QM_COORDS@          - the list of elements and coordinates of QM atoms
     @QM_CHARGE@          - the total charge of the system
 */
@@ -257,7 +322,7 @@ const QString& Mopac::energyTemplate() const
     Mopac to calculate the forces. The following tags will
     be substituted in the template;
     
-    @QM_METHOD@          - the desired QM method (e.g. HF)
+    @QM_METHOD@          - the desired QM method (e.g. AM1 or PM3)
     @QM_COORDS@          - the list of elements and coordinates of QM atoms
     @QM_CHARGE@          - the total charge of the system
 */
@@ -273,114 +338,217 @@ const QString& Mopac::forceTemplate() const
     return force_template;
 }
 
-/** Function used to substitute in the atom and lattice coordinates
+/** Set the template for the command file to be used to get
+    Mopac to calculate atomic partial charges. The following tags will
+    be substituted in the template;
+    
+    @QM_METHOD@          - the desired QM method (e.g. AM1 or PM3)
+    @QM_COORDS@          - the list of elements and coordinates of QM atoms
+    @QM_CHARGE@          - the total charge of the system
+*/
+void Mopac::setChargeTemplate(const QString &cmd_template)
+{
+    charge_template = cmd_template;
+}
+
+/** Return the template for the command file to be used to get Mopac
+    to calculate atomic partial charges. */
+const QString& Mopac::chargeTemplate() const
+{
+    return force_template;
+}
+
+static void writeMopacLine(const Element &element,
+                           double x, double y, double z,
+                           QTextStream &ts)
+{
+    ts.setFieldWidth(5);
+    
+    ts << element.symbol();
+
+    ts.setFieldWidth(12);
+    ts << x;
+
+    ts.setFieldWidth(0);
+    ts << "  0  ";
+
+    ts.setFieldWidth(12);
+    ts << y;
+
+    ts.setFieldWidth(0);
+    ts << "  0  ";
+
+    ts.setFieldWidth(12);
+    ts << z;
+
+    ts.setFieldWidth(0);
+    ts << "  0\n";
+}
+
+/** Function used to substitute in the atom coordinates
     into the provided mopac command template */
 QString Mopac::createCommandFile(QString cmd_template,
-                                 const QMPotential::Molecule &molecule) const
+                                 const QList< QPair<Vector,Element> > &atoms) const
 {
+    if (atoms.isEmpty())
+        return QString::null;
+
     cmd_template.replace( QLatin1String("@QM_METHOD@"),
                           qm_method, Qt::CaseInsensitive );
 
     cmd_template.replace( QLatin1String("@QM_CHARGE@"),
                           QString::number(total_charge), Qt::CaseInsensitive );
                   
-    //now build the list of all of the atoms
-    QStringList atom_coords;
-    
-    //loop through the atoms...
-    const CoordGroupArray &coords = molecule.coordinates();
-    const PackedArray2D<Element> &elements = molecule.parameters().atomicParameters();
-        
-    int natoms = coords.nCoords();
-        
-    BOOST_ASSERT( natoms == elements.nValues() );
-        
-    const Vector *coords_array = coords.constCoordsData();
-    const Element *elements_array = elements.constValueData();
-        
     QString coords_string;
     QTextStream ts(&coords_string);
-        
-    for (int i=0; i<natoms; ++i)
+
+    ts.setFieldAlignment(QTextStream::AlignRight);
+    ts.setRealNumberNotation(QTextStream::FixedNotation);
+    ts.setRealNumberPrecision(4);
+    
+    //if there are less than 4 atoms, then we need to write a z-matrix.
+    // Otherwise, we write out cartesian coordinates
+    if (atoms.count() < 4)
     {
-        const Element &element = elements_array[i];
+        //first atom is at the origin
+        ::writeMopacLine( atoms.at(0).second, 0, 0, 0, ts );
         
-        if (element.nProtons() > 0)
+        if (atoms.count() > 1)
         {
-            //this is not a dummy atom!
-            const Vector &c = coords_array[i];
+            //the second atom is along the x-axis, bonded to the first
+            ::writeMopacLine( atoms.at(1).second, 
+            
+                              Length(Vector::distance(atoms.at(1).first, 
+                                                      atoms.at(0).first)).to(angstrom),
+                                                      
+                              0, 0, ts );
 
-            //000000000011111111112222222222333333333344444444445555
-            //012345678901234567890123456789012345678901234567890123
-            //    O      5.9450  0       -4.8230  0       11.3560  0
-
-            ts.setFieldAlignment(QTextStream::AlignRight);
-            ts.setRealNumberNotation(QTextStream::FixedNotation);
-            ts.setRealNumberPrecision(4);
-            
-            ts.setFieldWidth(5);
-            ts << element.symbol();
-            
-            ts.setFieldWidth(12);
-            ts << c.x();
-            
-            ts.setFieldWidth(0);
-            ts << "  0  ";
-            
-            ts.setFieldWidth(12);
-            ts << c.y();
-            
-            ts.setFieldWidth(0);
-            ts << "  0  ";
-            
-            ts.setFieldWidth(12);
-            ts << c.z();
-
-            ts.setFieldWidth(0);
-            ts << "  0\n";
+            if (atoms.count() > 2)
+            {
+                //the third atom is bonded to the second, angled to the first
+                ::writeMopacLine( atoms.at(2).second,
+                
+                        Length( Vector::distance(atoms.at(2).first, 
+                                                 atoms.at(1).first) ).to(angstrom),
+                                                 
+                        Vector::angle(atoms.at(2).first, atoms.at(1).first,
+                                      atoms.at(0).first).to(degrees),
+                        
+                        0, ts );
+            }
         }
     }
-                          
+    else
+    {
+        for (QList< QPair<Vector,Element> >::const_iterator it = atoms.constBegin();
+             it != atoms.constEnd();
+             ++it)
+        {
+            const Vector &v = it->first;
+        
+            ::writeMopacLine( it->second,
+                              Length(v.x()).to(angstrom),
+                              Length(v.y()).to(angstrom),
+                              Length(v.z()).to(angstrom), ts );
+        }
+    }
+
     cmd_template.replace( QLatin1String("@QM_COORDS@"),
                           coords_string, Qt::CaseInsensitive );
                                        
     return cmd_template;
 }
 
+/** Function used to substitute in the atom coordinates
+    into the provided mopac command template */
+QString Mopac::createCommandFile(QString cmd_template,
+                                 const QMPotential::Molecules &molecules) const
+{
+    int nmols = molecules.count();
+    const ChunkedVector<QMPotential::Molecule> &molecules_array 
+                                                    = molecules.moleculesByIndex();
+
+    //first, collect together all of the coordinates and elements...
+    QList< QPair<Vector,Element> > atoms;
+    
+    for (int i=0; i<nmols; ++i)
+    {
+        const QMPotential::Molecule &molecule = molecules_array[i];
+
+        //loop through the atoms...
+        const CoordGroupArray &coords = molecule.coordinates();
+        const PackedArray2D<Element> &elements = molecule.parameters().atomicParameters();
+        
+        int natoms = coords.nCoords();
+        
+        BOOST_ASSERT( natoms == elements.nValues() );
+        
+        const Vector *coords_array = coords.constCoordsData();
+        const Element *elements_array = elements.constValueData();
+        
+        for (int j=0; j<natoms; ++j)
+        {
+            const Element &element = elements_array[j];
+        
+            if (element.nProtons() > 0)
+            {
+                //this is not a dummy atom!
+                const Vector &c = coords_array[j];
+                
+                atoms.append( QPair<Vector,Element>(c, element) );
+            }
+        }
+    }
+    
+    return this->createCommandFile(cmd_template, atoms);
+}
+
 /** Return the command file that will be used to calculate the energy of the 
     molecules in 'molecules' */
 QString Mopac::energyCommandFile(const QMPotential::Molecules &molecules) const
 {
-    QStringList cmdfiles;
-
-    for (int i=0; i<molecules.count(); ++i)
-    {
-        cmdfiles.append( createCommandFile(energy_template, 
-                                           molecules.moleculesByIndex().at(i)) );
-    }
-
-    return cmdfiles.join("\n\n");
+    return createCommandFile(energy_template, molecules);
 }
 
 /** Return the command files that will be used to calculate the forces on the  
     atoms of the molecules in 'molecules' */
 QString Mopac::forceCommandFile(const QMPotential::Molecules &molecules) const
 {
-    QStringList cmdfiles;
-
-    for (int i=0; i<molecules.count(); ++i)
-    {
-        cmdfiles.append( createCommandFile(force_template, 
-                                           molecules.moleculesByIndex().at(i)) );
-    }
-
-    return cmdfiles.join("\n\n");
+    return createCommandFile(force_template, molecules);
 }
 
 /** Extract the energy from the mopac output in 'mopac_output' */
-double Mopac::extractEnergy(QFile &mopac_output) const
+double Mopac::extractEnergy(const QStringList &lines) const
 {
-    return 0;
+    // Looking for the line;
+    // FINAL HEAT OF FORMATION =        -59.22261 KCAL
+    QRegExp regexp("FINAL HEAT OF FORMATION\\s*=\\s*([-\\d\\.]+)\\s* KCAL");
+
+    foreach (const QString &line, lines)
+    {
+        if (regexp.indexIn(line) != -1)
+        {
+            //we've found the FINAL HEAT OF FORMATION line
+            QString num = regexp.cap(1);
+        
+            bool ok;
+        
+            double nrg = num.toDouble(&ok);
+        
+            if (not ok)
+                throw SireError::process_error( QObject::tr(
+                    "The energy obtained from Mopac is garbled (%1) - %2.")
+                        .arg(regexp.cap(1), regexp.cap(0)), CODELOC );
+        
+            //the energy is already in kcal per mol
+            return nrg * kcal_per_mol;
+        }
+    }
+
+    //the FINAL HEAT OF FORMATION line was not found!
+    throw SireError::process_error( QObject::tr(
+            "Could not find the total energy in the mopac output!\n"
+                "%1").arg(lines.join("\n")), CODELOC );
 }
 
 /** Internal function used to write the shell script that is used to
@@ -411,12 +579,14 @@ QString Mopac::writeShellFile(const TempDir &tempdir) const
     {
         //the user hasn't specified a mopac executable - try to find one
         QString found_mopac = SireBase::findExe("mopac").absoluteFilePath();
-        ts << found_mopac << "\n";
+        ts << found_mopac << " > " << mopac_output_filename << "\n";
     }
     else
-        ts << mopac_exe << "\n";
+        ts << mopac_exe << " > " << mopac_output_filename << "\n";
 
-    ts << "sync\n";
+    //this 'sync' costs 100ms to perform, which is quite long compared
+    //to the mopac calculation, but may be necessary on some filesystems...
+    //ts << "sync\n";
     
     f.close();
     
@@ -435,10 +605,7 @@ static QByteArray readAll(const QString &file)
         return QByteArray();
 }
 
-/** Return the energy calculate according to the Mopac command
-    file 'cmd_file' (this is the contents of the file, not
-    the path to the file) */
-double Mopac::calculateEnergy(const QString &cmdfile, int ntries) const
+QStringList Mopac::runMopac(const QString &cmdfile) const
 {
     //create a temporary directory in which to run Mopac
     QString tmppath = env_variables.value("TMPDIR");
@@ -447,13 +614,13 @@ double Mopac::calculateEnergy(const QString &cmdfile, int ntries) const
         tmppath = QDir::temp().absolutePath();
 
     TempDir tmpdir(tmppath);
-    tmpdir.doNotDelete();
+    //tmpdir.doNotDelete();
 
     //write the file processed by the shell used to run the job
     QString shellfile = this->writeShellFile(tmpdir);
 
     {
-        QFile f( QString("%1/FOR005").arg(tmpdir.path()) );
+        QFile f( QString("%1/%2").arg(tmpdir.path(), mopac_input_filename) );
         f.open( QIODevice::WriteOnly );
    
         //write the command file
@@ -476,9 +643,11 @@ double Mopac::calculateEnergy(const QString &cmdfile, int ntries) const
     if (p.isError())
     {
         QByteArray shellcontents = ::readAll(shellfile);
-        QByteArray cmdcontents = ::readAll(QString("%1/mopac_input").arg(tmpdir.path()));
-        QByteArray outputcontents = ::readAll(QString("%1/mopac_output")
-                                                    .arg(tmpdir.path()));
+        QByteArray cmdcontents = ::readAll(QString("%1/%2")
+                                              .arg(tmpdir.path(), mopac_input_filename));
+
+        QByteArray outputcontents = ::readAll(QString("%1/%2")
+                                              .arg(tmpdir.path(), mopac_output_filename));
 
         throw SireError::process_error( QObject::tr(
             "There was an error running the Mopac job.\n"
@@ -501,12 +670,13 @@ double Mopac::calculateEnergy(const QString &cmdfile, int ntries) const
     }
 
     //read all of the output
-    QFile f( QString("%1/mopac_output").arg(tmpdir.path()) );
+    QFile f( QString("%1/%2").arg(tmpdir.path(), mopac_output_filename) );
     
     if ( not (f.exists() and f.open(QIODevice::ReadOnly)) )
     {
         QByteArray shellcontents = ::readAll(shellfile);
-        QByteArray cmdcontents = ::readAll(QString("%1/mopac_input").arg(tmpdir.path()));
+        QByteArray cmdcontents = ::readAll(QString("%1/%2")
+                                            .arg(tmpdir.path(), mopac_input_filename));
     
         throw SireError::process_error( QObject::tr(
             "There was an error running the Mopac job - no output was created.\n"
@@ -522,11 +692,29 @@ double Mopac::calculateEnergy(const QString &cmdfile, int ntries) const
                       QLatin1String(cmdcontents) ), CODELOC );
     }
 
+    QStringList lines;
+    
+    QTextStream ts(&f);
+    
+    while (not ts.atEnd())
+    {
+        lines.append( ts.readLine() );
+    }
+    
+    return lines;
+}
+
+/** Return the energy calculate according to the Mopac command
+    file 'cmd_file' (this is the contents of the file, not
+    the path to the file) */
+double Mopac::calculateEnergy(const QString &cmdfile, int ntries) const
+{
+    QStringList lines = this->runMopac(cmdfile);
 
     try
     {
         //parse the output to get the energy
-        return this->extractEnergy(f);
+        return this->extractEnergy(lines);
     }
     catch(...)
     {
@@ -537,25 +725,11 @@ double Mopac::calculateEnergy(const QString &cmdfile, int ntries) const
 
         qDebug() << "Printing out the last" << nlines_to_print << "lines of output...";
 
-        QFile f( QString("%1/mopac_output").arg(tmpdir.path()) );
+        int start = qMax( 0, lines.count() - nlines_to_print );
 
-        if ( not (f.exists() and f.open(QIODevice::ReadOnly)) )    
-            qDebug() << "Could not read the file" << tmpdir.path() << "/mopac_output";
-        else
+        for (int i=start; i < lines.count(); ++i)
         {
-            QStringList lines;
- 
-            QTextStream ts(&f);
-
-            while (not ts.atEnd())
-            {
-                lines.append( ts.readLine() );
-
-                if (lines.count() > nlines_to_print)
-                    lines.removeFirst();
-            }
-
-            foreach (QString line, lines){ qDebug() << qPrintable(line); }
+            qDebug() << lines.at(i);
         }
 
         if (ntries <= 0)
@@ -578,6 +752,135 @@ double Mopac::calculateEnergy(const QMPotential::Molecules &molecules,
     return this->calculateEnergy(cmdfile, ntries);
 }
 
+QString Mopac::_pvt_chargeCommandFile(const Molecule &molecule,
+                                      const PropertyMap &map,
+                                      QHash<int,int> *atom_idxs) const
+{
+    const AtomElements &elements = molecule.property( map["element"] )
+                                           .asA<AtomElements>();
+                                           
+    const AtomCoords &coords = molecule.property( map["coordinates"] )
+                                       .asA<AtomCoords>();
+                                       
+    QList< QPair<Vector,Element> > atoms;
+    
+    int nats = coords.nAtoms();
+    
+    const Vector *coords_array = coords.array().constCoordsData();
+    const Element *elements_array = elements.array().constValueData();
+    
+    if (atom_idxs)
+    {
+        atom_idxs->clear();
+        atom_idxs->reserve(nats);
+    
+        int j = 1;
+    
+        for (int i=0; i<nats; ++i)
+        {
+            if (elements_array[i].nProtons() > 0)
+            {
+                atoms.append( QPair<Vector,Element>(coords_array[i], elements_array[i]) );
+                atom_idxs->insert( j, i );
+                ++j;
+            }
+        }
+    }
+    else
+    {
+        for (int i=0; i<nats; ++i)
+        {
+            if (elements_array[i].nProtons() > 0)
+                atoms.append( QPair<Vector,Element>(coords_array[i], elements_array[i]) );
+        }
+    }
+    
+    return createCommandFile(charge_template, atoms);
+}
+
+/** Return the command file used to calculate partial atomic charges */
+QString Mopac::chargeCommandFile(const Molecule &molecule, const PropertyMap &map) const
+{
+    return this->_pvt_chargeCommandFile(molecule, map, 0);
+}
+
+/** Use Mopac to calculate the partial charges for the passed molecule
+    (using the total charge set in this program) */    
+AtomCharges Mopac::calculateCharges(const Molecule &molecule,
+                                    const PropertyMap &map) const
+{
+    QHash<int,int> atom_idxs;
+    
+    QString cmdfile = this->_pvt_chargeCommandFile(molecule, map, &atom_idxs);
+
+    const int ntries = 5;
+    
+    int itry = 0;
+    
+    while (true)
+    {
+        try
+        {
+            const QStringList lines = this->runMopac(cmdfile);
+
+            //we are looking for the line
+            //          MULLIKEN POPULATIONS AND CHARGES
+            int idx = lines.indexOf( 
+                                QRegExp("\\s*MULLIKEN POPULATIONS AND CHARGES\\s*") );
+    
+            if (idx == -1)
+                throw SireError::process_error( QObject::tr(
+                        "Could not find the partial charges in the mopac output!\n"
+                        "%1").arg(lines.join("\n")), CODELOC );
+
+            const MoleculeInfoData &molinfo = molecule.data().info();
+
+            AtomCharges chgs(molinfo);
+    
+            for (int i=idx+1; i<lines.count(); ++i)
+            {
+                const QStringList words = lines[i].split(" ",QString::SkipEmptyParts);
+            
+                if (words.count() < 3)
+                    //we've finished
+                    break;
+                    
+                bool ok;
+                    
+                int iatm = words[0].toInt(&ok);
+
+                if (not ok)
+                    throw SireError::process_error( QObject::tr(
+                            "Could not find the partial charge from the line "
+                            "%1 (full output is;%2)")
+                                .arg(lines[i], lines.join("\n")), CODELOC );
+                    
+                chgs.set( molinfo.cgAtomIdx( AtomIdx(atom_idxs[iatm]) ),
+                          words[2].toDouble(&ok) * mod_electron );
+                          
+                if (not ok)
+                    throw SireError::process_error( QObject::tr(
+                            "Could not find the partial charge from the line "
+                            "%1 (full output is;%2)")
+                                .arg(lines[i], lines.join("\n")), CODELOC );
+            }
+
+            return chgs;
+        }
+        catch(...)
+        {
+            ++itry;
+        
+            qDebug() << "PROBLEM RUNNING MOPAC - TRY" << itry << "of" << ntries;
+        
+            if (itry >= ntries)
+                throw;
+        }
+    }
+    
+    return AtomCharges();
+}
+                                    
 const char* Mopac::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Mopac>() );

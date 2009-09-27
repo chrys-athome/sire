@@ -31,7 +31,10 @@
 
 #include <QHash>
 #include <QString>
+#include <QStringList>
 #include <QProcess>
+#include <QList>
+#include <QPair>
 
 #include "qmprogram.h"
 #include "latticecharges.h"
@@ -106,20 +109,44 @@ public:
     
     const QString& forceTemplate() const;
 
+    void setChargeTemplate(const QString &charge_template);
+    
+    const QString &chargeTemplate() const;
+
+    void setMopacInputFilename(const QString &filename);
+    void setMopacOutputFilename(const QString &filename);
+    
+    const QString& mopacInputFilename() const;
+    const QString& mopacOutputFilename() const;
+
+    AtomCharges calculateCharges(const Molecule &molecule,
+                                 const PropertyMap &map) const;
+
 protected:
     double calculateEnergy(const QMPotential::Molecules &molecules,
                            int ntries = 5) const;
 
     QString energyCommandFile(const QMPotential::Molecules &molecules) const;
     QString forceCommandFile(const QMPotential::Molecules &molecules) const;
+    QString chargeCommandFile(const Molecule &molecule,
+                              const PropertyMap &map) const;
 
 private:
+    QString createCommandFile(QString cmd_template,
+                     const QList< QPair<Vector,SireMol::Element> > &atoms) const;
+
     QString createCommandFile(QString cmd_template, 
-                              const QMPotential::Molecule &molecule) const;  
+                              const QMPotential::Molecules &molecules) const;  
 
     QString writeShellFile(const SireBase::TempDir &tempdir) const;
 
-    double extractEnergy(QFile &mopac_output) const;
+    QStringList runMopac(const QString &cmdfile) const;
+
+    QString _pvt_chargeCommandFile(const Molecule &molecule,
+                                   const PropertyMap &map,
+                                   QHash<int,int> *atom_idx) const;
+
+    double extractEnergy(const QStringList &mopac_output) const;
 
     double calculateEnergy(const QString &cmd_file, int ntries) const;
 
@@ -134,14 +161,25 @@ private:
     QString qm_method;
     
     /** The template command file used for the energy calculations.
-        The basis set, QM method and atom coordinates are substituted
+        The QM method and atom coordinates are substituted
         into this template */
     QString energy_template;
     
     /** The template command file used for the force calculations.
-        The basis set, QM method and atom coordinates are substituted
+        The QM method and atom coordinates are substituted
         into this template */
     QString force_template;
+    
+    /** The template command file used for the atomic charge
+        calculations. The QM method and atom coordinates
+        are substituted into this template */
+    QString charge_template;
+    
+    /** The name mopac uses for the input file (e.g. FOR005) */
+    QString mopac_input_filename;
+    
+    /** The name mopac uses for the output file (e.g. FOR006) */
+    QString mopac_output_filename;
     
     /** The total charge of the system */
     qint32 total_charge;
