@@ -99,3 +99,29 @@ SegEditorBase.setProperty = __set_property__
 Segment.metadata = __get_metadata__
 SegEditorBase.setMetadata = __set_metadata__
 
+##########
+########## CLUDGY WORKAROUND
+##########
+
+# python wrappers can't distinguish between AtomProperty
+# typedefs, and the full template classes,
+#  (e.g. AtomLJs.array gives an lvalue error
+#   as it wants a AtomProperty<LJParameter>)
+#
+#  I can fix this by accessing the arrays first
+#  via the following code
+
+__p = Sire.Base.Properties()
+
+def _pvt_property_cludge_fix(C):
+   __p.setProperty("c", C())
+   t = __p.property("c").array()
+
+__props = [ AtomCharges, AtomElements ]
+
+for __prop in __props:
+    _pvt_property_cludge_fix(__prop)
+
+##########
+########## END OF CLUDGY WORKAROUND
+##########

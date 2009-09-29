@@ -18,3 +18,9 @@ from Sire.MM._MM import *
 # Now define some pure Python functions and classes that are part of 
 # this library...
 
+###### PROPERTY KLUDGE FIX
+
+__props = [ AtomLJs ]
+
+for __prop in __props:
+    Sire.Mol._pvt_property_cludge_fix(__prop)

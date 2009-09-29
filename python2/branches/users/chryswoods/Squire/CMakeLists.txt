@@ -42,6 +42,7 @@ set_target_properties (Squire
 target_link_libraries (Squire
                        SirePython2
                        SIRE_Squire
+                       SIRE_SireSystem
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}
                       )

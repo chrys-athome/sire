@@ -9,6 +9,9 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
 set ( SQUIRE_HEADERS
 
+      am1bcc.h
+      qmchargecalculator.h
+      qmchargeconstraint.h
       qmff.h
       qmmmelecembedpotential.h
       qmmmff.h
@@ -36,6 +39,9 @@ set ( SQUIRE_SOURCES
 
       register_squire.cpp
 
+      am1bcc.cpp
+      qmchargecalculator.cpp
+      qmchargeconstraint.cpp
       qmff.cpp
       qmmmelecembedpotential.cpp
       qmmmff.cpp
@@ -73,6 +79,7 @@ set_target_properties (Squire PROPERTIES
 
 # Link to other Sire libraries
 target_link_libraries (Squire
+                       SireSystem
                        SireMM
                        SireFF
                        SireMol

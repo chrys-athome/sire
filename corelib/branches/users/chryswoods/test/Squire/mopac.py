@@ -5,7 +5,7 @@ from Sire.Units import *
 
 from Sire.Qt import *
 
-water = PDB().readMolecule("test/io/tip4p.pdb")
+water = PDB().readMolecule("test/io/sb2.pdb")
 
 qmff = QMFF()
 
