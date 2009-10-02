@@ -69,6 +69,15 @@ public:
     
     bool operator==(const AM1BCC &other) const;
     bool operator!=(const AM1BCC &other) const;
+
+    void setEnvironment(const QString &variable, const QString &value);
+
+    const QHash<QString,QString>& environment() const;
+
+    QString environment(const QString &variable) const;
+    
+    void setTotalCharge(int charge);
+    int totalCharge() const;
     
     AtomCharges operator()(const PartialMolecule &molecule,
                            const PropertyMap &map = PropertyMap()) const;
@@ -78,6 +87,13 @@ public:
                           const PropertyMap &map = PropertyMap()) const;
 
 private:
+    QString getAmberHome() const;
+
+    AtomCharges convertAM1MullikenToAM1BCC(const AtomCharges &am1mulliken,
+                                           const Molecule &molecule,
+                                           const PropertyMap &map,
+                                           const QString &amberhome) const;
+    
     /** Currently, this uses Mopac to calculate the 
         AM1 Mulliken charges */
     Mopac mopac;

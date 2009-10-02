@@ -79,6 +79,7 @@ set_target_properties (Squire PROPERTIES
 
 # Link to other Sire libraries
 target_link_libraries (Squire
+                       SireIO
                        SireSystem
                        SireMM
                        SireFF

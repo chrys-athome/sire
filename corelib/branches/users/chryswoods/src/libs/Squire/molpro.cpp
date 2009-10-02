@@ -561,7 +561,9 @@ QString Molpro::writeShellFile(const TempDir &tempdir) const
     QString cmdfile = QString("%1/run_molpro.cmd").arg(tempdir.path());
     
     QFile f(cmdfile);
-    f.open(QIODevice::WriteOnly);
+    
+    if (not f.open(QIODevice::WriteOnly))
+        throw SireError::file_error(f, CODELOC);
     
     QTextStream ts(&f);
 
@@ -626,7 +628,9 @@ double Molpro::calculateEnergy(const QString &cmdfile, int ntries) const
 
     {
         QFile f( QString("%1/molpro_input").arg(tmpdir.path()) );
-        f.open( QIODevice::WriteOnly );
+        
+        if (not f.open( QIODevice::WriteOnly ))
+            throw SireError::file_error(f, CODELOC);
    
         //write the command file
         f.write( cmdfile.toAscii() );
@@ -744,6 +748,9 @@ double Molpro::calculateEnergy(const QString &cmdfile, int ntries) const
 double Molpro::calculateEnergy(const QMPotential::Molecules &molecules,
                                int ntries) const
 {
+    if (molecules.count() == 0)
+        return 0;
+
     //create the command file to be used by Molpro
     QString cmdfile = this->energyCommandFile(molecules);
     
@@ -756,6 +763,9 @@ double Molpro::calculateEnergy(const QMPotential::Molecules &molecules,
                                const LatticeCharges &lattice_charges,
                                int ntries) const
 {
+    if (molecules.count() == 0)
+        return 0;
+
     //create the command file to be used by Molpro
     QString cmdfile = this->energyCommandFile(molecules, lattice_charges);
     

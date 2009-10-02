@@ -559,7 +559,9 @@ QString Mopac::writeShellFile(const TempDir &tempdir) const
     QString cmdfile = QString("%1/run_mopac.cmd").arg(tempdir.path());
     
     QFile f(cmdfile);
-    f.open(QIODevice::WriteOnly);
+    
+    if (not f.open(QIODevice::WriteOnly))
+        throw SireError::file_error(f, CODELOC);
     
     QTextStream ts(&f);
 
@@ -621,7 +623,9 @@ QStringList Mopac::runMopac(const QString &cmdfile) const
 
     {
         QFile f( QString("%1/%2").arg(tmpdir.path(), mopac_input_filename) );
-        f.open( QIODevice::WriteOnly );
+        
+        if (not f.open( QIODevice::WriteOnly ))
+            throw SireError::file_error(f, CODELOC);
    
         //write the command file
         f.write( cmdfile.toAscii() );

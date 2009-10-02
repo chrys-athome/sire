@@ -9,13 +9,13 @@ from Sire.Move import *
 
 import os
 
-mol = PDB().readMolecule("test/io/sb2.pdb")
+mol = PDB().readMolecule("test/io/methanol.pdb")
 
-mol = mol.edit().rename("sb2").commit()
+mol = mol.edit().rename("methanol").commit()
 
 protoms = ProtoMS("%s/Work/ProtoMS/protoms2" % os.getenv("HOME"))
 
-protoms.addParameterFile("test/ff/sb2.ff")
+protoms.addParameterFile("test/ff/methanol.par")
 
 mol = protoms.parameterise(mol, ProtoMS.SOLUTE)
 
