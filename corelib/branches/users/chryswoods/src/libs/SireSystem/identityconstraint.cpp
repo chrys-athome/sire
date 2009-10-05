@@ -1258,7 +1258,7 @@ void FewPointsHelper::assignMoleculesToPoints()
     if (nmols == npoints)
     {
         distmatrix = NMatrix(nmols, nmols);
-        distmatrix.transpose(); // change to row-major memory order
+        distmatrix = distmatrix.transpose(); // change to row-major memory order
 
         for (int i=0; i<nmols; ++i)
         {
@@ -1277,7 +1277,7 @@ void FewPointsHelper::assignMoleculesToPoints()
         //there are more molecules than points - we create some extra
         //points which have zero distance to all molecules
         distmatrix = NMatrix(nmols, nmols);
-        distmatrix.transpose(); // change to row-major memory order
+        distmatrix = distmatrix.transpose(); // change to row-major memory order
         
         const int nzeroes = nmols - npoints;
         NVector new_row(npoints + nzeroes);
@@ -1303,7 +1303,7 @@ void FewPointsHelper::assignMoleculesToPoints()
         //there are more points than molecules - we create some extra
         //molecules that are all equally a very long way from all of the points
         distmatrix = NMatrix(npoints, npoints, std::numeric_limits<double>::max());
-        distmatrix.transpose(); // change to row-major memory order
+        distmatrix = distmatrix.transpose(); // change to row-major memory order
 
         //copy the distances to the real molecules
         for (int i=0; i<nmols; ++i)
@@ -1319,6 +1319,72 @@ void FewPointsHelper::assignMoleculesToPoints()
         }
     }
 
+    //find the smallest and second smallest absolute difference between distances
+    // - this is used to see if there are any degeneracies
+    {
+        double delta0 = std::numeric_limits<double>::max();
+        double delta1 = delta0;
+    
+        const int nrows = distmatrix.nRows();
+        const int ncolumns = distmatrix.nColumns();
+        
+        const double *distmatrix_array = distmatrix.constData();
+        
+        for (int i=0; i<nrows; ++i)
+        {
+            const double *row = &(distmatrix_array[ distmatrix.offset(i,0) ]);
+            
+            for (int j=0; j<ncolumns-1; ++j)
+            {
+                for (int k=j+1; k<ncolumns; ++k)
+                {
+                    const double delta = std::abs(row[k] - row[j]);
+                    
+                    if (delta <= delta0)
+                    {
+                        if (delta < delta0)
+                        {
+                            delta1 = delta0;
+                            delta0 = delta;
+                        }
+                    }
+                    else if (delta < delta1)
+                    {
+                        delta1 = delta;
+                    }
+                }
+            }
+        }
+    
+        if (delta0 == 0)
+        {
+            //there are degeneracies - some molecules are an identical
+            //distance from some points
+            if (delta1 == std::numeric_limits<double>::max())
+                //really degenerate!
+                delta1 = 0.1;
+    
+            //add a small penalty function that make molecule 'i' prefer
+            //point 'i', or the point as close to point 'i' as possible. This
+            //is used to help remove degeneracies caused by using points with
+            //the same coordinates. If multiple points have the same coordinates,
+            //then the molecule with index closest to the index of the point
+            //will be preferred - this penalty function has to be kept to 
+            //about 10% of the smallest non-zero difference between distances,
+            //so that it doesn't affect the assignment of points with no degeneracies
+
+            const double scl = 0.1 * delta1 / (ncolumns * nrows);
+
+            for (int i=0; i<distmatrix.nRows(); ++i)
+            {
+                for (int j=0; j<distmatrix.nColumns(); ++j)
+                {
+                    distmatrix(i,j) += scl * (i-j) * (i-j);
+                }
+            }
+        }
+    }
+    
     //now calculate optimum assignment of molecules to points that
     //minimises the total distance between each molecule and its
     //assigned point
@@ -1451,6 +1517,8 @@ Molecules FewPointsHelper::applyConstraint() const
                                               mol_to_molnum_array[i],
                                               coords_property) );
     }
+    
+    //qDebug() << "IdentityConstraint" << changed_mols.molNums();
     
     return changed_mols;
 }
