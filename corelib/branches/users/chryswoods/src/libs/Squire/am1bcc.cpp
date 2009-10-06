@@ -35,6 +35,7 @@
 #include "SireMol/atomname.h"
 #include "SireMol/resname.h"
 #include "SireMol/groupatomids.h"
+#include "SireMol/atomcoords.h"
 
 #include "SireUnits/units.h"
 #include "SireUnits/dimensions.h"
@@ -301,6 +302,66 @@ static void addChargesToAC(const AtomCharges &mulliken_charges,
     }
 }
 
+static AtomCharges extractAM1BCC(const QString &file, const Molecule &molecule)
+{
+    QFile f(file);
+
+    if (not f.open(QIODevice::ReadOnly))
+        throw SireError::file_error(f, CODELOC);
+
+    const MoleculeInfoData &molinfo = molecule.data().info();
+        
+    AtomCharges am1bcc_chgs( molinfo );
+        
+    QTextStream ts( &f );
+    
+    while (not ts.atEnd())
+    {
+        QString line = ts.readLine();
+
+        if (line.startsWith("ATOM"))
+        {
+            QStringList words = line.split(" ", QString::SkipEmptyParts);
+            
+            if (words.count() < 10)
+            {
+                f.close();
+                
+                throw SireError::file_error( QObject::tr(
+                        "The AC Atom line \"%1\" does not look like a valid "
+                        "antechamber format ATOM line. Here's the complete "
+                        "file;\n%2")
+                            .arg(line).arg(::getOutput(file)), CODELOC );
+            }
+                    
+            AtomName atmnam( words[2] );
+            ResName resnam( words[3] );
+            
+            //get the CGAtomIdx of the atom with this atom and residue name
+            CGAtomIdx cgatomidx = molinfo.cgAtomIdx( atmnam + resnam );
+            
+            bool ok;
+            
+            Charge chg = words[8].toDouble(&ok) * mod_electron;
+
+            if (not ok)
+            {
+                f.close();
+                
+                throw SireError::file_error( QObject::tr(
+                        "The AC Atom line \"%1\" does not look like a valid "
+                        "antechamber format ATOM line. Here's the complete "
+                        "file;\n%2")
+                            .arg(line).arg(::getOutput(file)), CODELOC );
+            }
+            
+            am1bcc_chgs.set( cgatomidx, chg );
+        }
+    }
+    
+    return am1bcc_chgs;
+}
+
 /** Internal function used to convert AM1 mulliken charges to AM1-BCC charges */
 AtomCharges AM1BCC::convertAM1MullikenToAM1BCC(const AtomCharges &mulliken_charges,
                                                const Molecule &molecule,
@@ -320,26 +381,22 @@ AtomCharges AM1BCC::convertAM1MullikenToAM1BCC(const AtomCharges &mulliken_charg
     //all of this will be performed in a temporary directory!
     TempDir tmpdir;
     
+    const QString pdbfile = QString("%1/molecule.pdb").arg(tmpdir.path());
+    const QString acfile = QString("%1/molecule.AC").arg(tmpdir.path());
+    const QString am1file = QString("%1/am1mulliken.AC").arg(tmpdir.path());
+    const QString am1bccfile = QString("%1/am1bcc.AC").arg(tmpdir.path());
+    
     //first we need a PDB of the molecule to input to antechamber
-    PDB().write(molecule, QString("%1/molecule.pdb").arg(tmpdir.path()), map);
-
-    qDebug() << getOutput( QString("%1/molecule.pdb").arg(tmpdir.path()) );
+    PDB().write(molecule, pdbfile, map);
 
     //now we run antechamber on this PDB to create the AC file (needed by am1bcc)
     ::runProcess( QString("%1/bin/antechamber -i molecule.pdb -fi pdb "
                           "-o molecule.AC -j 4 -fo ac -nc %2")
                   .arg(amberhome).arg(mopac.totalCharge()),
             tmpdir.path(), env );
-
-    qDebug() << getOutput( QString("%1/molecule.AC").arg(tmpdir.path()) );
     
     //now we edit the resulting AC file to insert the AM1 mulliken charges...
-    ::addChargesToAC( mulliken_charges,
-                      QString("%1/molecule.AC").arg(tmpdir.path()),
-                      QString("%1/am1mulliken.AC").arg(tmpdir.path()),
-                      molecule );
-
-    qDebug() << getOutput( QString("%1/am1mulliken.AC").arg(tmpdir.path()) );
+    ::addChargesToAC( mulliken_charges, acfile, am1file, molecule );
     
     //use "am1bcc" to convert the charges to AM1-BCC charges
     ::runProcess(
@@ -348,11 +405,8 @@ AtomCharges AM1BCC::convertAM1MullikenToAM1BCC(const AtomCharges &mulliken_charg
                     .arg(amberhome),
             tmpdir.path(), env);
 
-    qDebug() << getOutput( QString("%1/am1bcc.AC").arg(tmpdir.path()) );
-
     //finally(!) read the output AC file and extract all of the AM1-BCC charges
-
-    return mulliken_charges;
+    return ::extractAM1BCC( am1bccfile, molecule );
 }
 
 /** Return the amber directory (AMBERHOME) */
@@ -466,6 +520,16 @@ AtomCharges AM1BCC::operator()(const PartialMolecule &molecule,
     return am1bcc_chgs;
 }
 
+/** Simple internal function to return whether 'val0' and 'val1'
+    are comparable */
+static bool comparable(const double val0, const double val1)
+{
+    const double diff = val0 - val1;
+    const double tol = 1e-5;
+
+    return ( diff > -tol and diff < tol);
+}
+
 /** This returns whether or not the charges will change when going
     from 'oldmol' to 'newmol' - note that this assumes that the 
     charges in 'oldmol' are already AM1BCC charges! If they are
@@ -474,5 +538,128 @@ bool AM1BCC::mayChangeCharges(const PartialMolecule &oldmol,
                               const PartialMolecule &newmol,
                               const PropertyMap &map) const
 {
-    return true;
+    const MoleculeData &olddata = oldmol.data();
+    const MoleculeData &newdata = newmol.data();
+
+    //the charges won't change if the molecule hasn't changed!
+    if (olddata.version() == newdata.version())
+        return false;
+        
+    //if atoms have been added or removed, then the charges will change
+    if (olddata.info() != newdata.info())
+        return true;
+
+    //the charges won't change if the elements or coordinates
+    //properties haven't changed
+    const PropertyName &coords_property = map["coordinates"];
+    const PropertyName &element_property = map["element"];
+    
+    if (olddata.hasProperty(element_property))
+    {
+        if (not newdata.hasProperty(element_property))
+            return true;
+            
+        if (olddata.version(element_property) != newdata.version(element_property))
+            return true;
+    }
+    else if (newdata.hasProperty(element_property))
+    {
+        return true;
+    }
+    
+    if (olddata.hasProperty(coords_property))
+    {
+        if (not newdata.hasProperty(coords_property))
+            return true;
+            
+        if (olddata.version(coords_property) != newdata.version(coords_property))
+        {
+            //the coordinates have changed - this will only affect the charges
+            //if the conformation of the molecule has changed - we can test
+            //this by building rudimentary z-matricies of the two versions 
+            //of the molecules and making comparisons that way
+            const QVector<Vector> old_coords = olddata.property(coords_property)
+                                                      .asA<AtomCoords>().toVector();
+                                                  
+            const QVector<Vector> new_coords = newdata.property(coords_property)
+                                                      .asA<AtomCoords>().toVector();
+                                                  
+            const int nats = old_coords.count();
+            BOOST_ASSERT( new_coords.count() == nats );
+            
+            if (nats <= 1)
+                return false;
+            
+            const Vector *old_coords_array = old_coords.constData();
+            const Vector *new_coords_array = new_coords.constData();
+            
+            //do atom 2
+            if ( not ::comparable(
+                        Vector::distance2(old_coords_array[1], old_coords_array[0]),
+                        Vector::distance2(new_coords_array[1], new_coords_array[0])) )
+            {
+                return true;
+            }
+            else if (nats < 3)
+            {
+                return false;
+            }
+            
+            //do atom 3
+            if ( not (::comparable(
+                        Vector::distance2(old_coords_array[2], old_coords_array[1]),
+                        Vector::distance2(new_coords_array[2], new_coords_array[1])) and
+                 
+                      ::comparable(
+                        Vector::angle(old_coords_array[2], old_coords_array[1],
+                                      old_coords_array[0]),
+                        Vector::angle(new_coords_array[2], new_coords_array[1],
+                                      new_coords_array[0])) ) )
+            {
+                return true;
+            }
+            else if (nats < 4)
+            {
+                return false;
+            }
+            
+            //now do the remaining atoms
+            for (int i=3; i<nats; ++i)
+            {
+                const Vector &old_v0 = old_coords_array[i];
+                const Vector &old_v1 = old_coords_array[i-1];
+                const Vector &old_v2 = old_coords_array[i-2];
+                const Vector &old_v3 = old_coords_array[i-3];
+                
+                const Vector &new_v0 = new_coords_array[i];
+                const Vector &new_v1 = new_coords_array[i-1];
+                const Vector &new_v2 = new_coords_array[i-2];
+                const Vector &new_v3 = new_coords_array[i-3];
+                
+                const double old_bond = Vector::distance2(old_v0, old_v1);
+                const double new_bond = Vector::distance2(new_v0, new_v1);
+                
+                const Angle old_ang = Vector::angle(old_v0, old_v1, old_v2);
+                const Angle new_ang = Vector::angle(new_v0, new_v1, new_v2);
+                
+                const Angle old_dih = Vector::dihedral(old_v0, old_v1, old_v2, old_v3);
+                const Angle new_dih = Vector::dihedral(new_v0, new_v1, new_v2, new_v3);
+                
+                if ( not (::comparable(old_bond, new_bond) and
+                          ::comparable(old_ang, new_ang) and
+                          ::comparable(old_dih, new_dih)) )
+                {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+    }
+    else if (newdata.hasProperty(coords_property))
+    {
+        return true;
+    }
+
+    return false;
 }

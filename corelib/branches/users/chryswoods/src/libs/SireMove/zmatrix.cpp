@@ -1297,7 +1297,8 @@ ZMatrixCoords::ZMatrixCoords(const ZMatrix &zmatrix, const AtomCoords &coords)
     find the coordinates */
 ZMatrixCoords::ZMatrixCoords(const ZMatrix &zmatrix, const PartialMolecule &molecule,
                              const PropertyMap &map)
-              : ConcreteProperty<ZMatrixCoords,MoleculeProperty>()
+              : ConcreteProperty<ZMatrixCoords,MoleculeProperty>(),
+                zmat(zmatrix), need_rebuild(false)
 {
     zmatrix.assertCompatibleWith( molecule.data().info() );
 
@@ -1454,6 +1455,12 @@ QVector<ZMatrixCoordsLine> ZMatrixCoords::lines() const
     }
     
     return coords;
+}
+
+/** Return just the internal coordinates */
+const QVector<Vector>& ZMatrixCoords::internalCoordinates() const
+{
+    return internal_coords;
 }
 
 /** Return the index of AtomIdx to z-matrix line number. This

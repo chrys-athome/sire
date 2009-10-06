@@ -394,9 +394,11 @@ special_code = { "SireMol::Atom" : fix_Atom,
                  "SireMol::CGIdx" : fix_CGIdx,
                  "SireMol::CGAtomIdx" : fix_CGAtomIdx }
 
-implicitly_convertible = [ ("SireMol::MoleculeView", "SireMol::MoleculeData") ]
+implicitly_convertible = [ ("SireMol::MoleculeView", "SireMol::MoleculeData"),
+                           ("SireMol::MoleculeView", "SireMol::PartialMolecule") ]
 
 def fixMB(mb):
     mb.add_declaration_code("#include \"SireMol/moleculedata.h\"")
     mb.add_declaration_code("#include \"SireMol/moleculeview.h\"")
-
+    mb.add_declaration_code("#include \"SireMol/partialmolecule.h\"")
+    mb.add_declaration_code("#include \"SireMol/mover.hpp\"")

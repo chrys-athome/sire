@@ -374,6 +374,8 @@ public:
     
     const AtomCoords& toCartesian() const;
     
+    const QVector<Vector>& internalCoordinates() const;
+    
     void moveBond(const AtomID &atom, const Length &delta);
     void moveAngle(const AtomID &atom, const Angle &delta);
     void moveDihedral(const AtomID &atom, const Angle &delta);
