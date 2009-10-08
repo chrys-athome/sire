@@ -494,7 +494,15 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 bool Property::isA() const
 {
-    return dynamic_cast<const T*>(this) != 0;
+    if (dynamic_cast<const T*>(this) != 0)
+    {
+        //this isA<T>() !
+        return true;
+    }
+    else
+    {
+        return QLatin1String(T::typeName()) == QLatin1String(this->what());
+    }
 }
 
 template<class T>

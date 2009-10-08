@@ -36,6 +36,9 @@
 #include "SireMaths/matrix.h"
 #include "SireMaths/nmatrix.h"
 
+#include "SireBase/trigarray2d.hpp"
+#include "SireBase/array2d.hpp"
+
 SIRE_BEGIN_HEADER
 
 namespace Squire
@@ -44,12 +47,6 @@ class P_GTO;
 
 class PP_GTO;
 class PS_GTO;
-}
-
-namespace SireBase
-{
-template<class T>
-class Array2D;
 }
 
 QDataStream& operator<<(QDataStream&, const Squire::P_GTO&);
@@ -69,9 +66,12 @@ class PointDipole;
 
 using SireMaths::Vector;
 using SireMaths::Matrix;
+using SireMaths::TrigMatrix;
+using SireMaths::NMatrix;
 
 using SireBase::TrigArray2D;
- 
+using SireBase::Array2D;
+
 /** This is a single P-type shell of Gaussian Type Orbitals */
 class SQUIRE_EXPORT P_GTO : public SireBase::ConcreteProperty<P_GTO,GTO>
 {
@@ -196,6 +196,70 @@ private:
     
     /** The extra factor for the scaling constant */
     double norm_scl;
+};
+
+/** This class is used to calculate integrals involving PS orbital
+    pairs
+    
+    @author Christopher Woods
+*/
+class SQUIRE_EXPORT PS_GTOs
+{
+public:
+    PS_GTOs();
+
+    PS_GTOs(const QVector<S_GTO> &s_gtos,
+            const QVector<Vector> &s_centers,
+            const QVector<P_GTO> &p_gtos,
+            const QVector<Vector> &p_centers);
+            
+    PS_GTOs(const PS_GTOs &other);
+    
+    ~PS_GTOs();
+    
+    PS_GTOs& operator=(const PS_GTOs &other);
+    
+    bool operator==(const PS_GTOs &other) const;
+    bool operator!=(const PS_GTOs &other) const;
+    
+    NMatrix overlap_integral() const;
+    NMatrix kinetic_integral() const;
+    
+    NMatrix potential_integral(const QVector<PointCharge> &C) const;
+    NMatrix potential_integral(const QVector<PointCharge> &C, int m) const;
+
+private:
+    /** All of the orbital pairs */
+    Array2D<PS_GTO> orbs;
+};
+
+/** This class is used to calculate integrals involving PP orbital pairs */
+class SQUIRE_EXPORT PP_GTOs
+{
+public:
+    PP_GTOs();
+
+    PP_GTOs(const QVector<P_GTO> &p_gtos,
+            const QVector<Vector> &p_centers);
+            
+    PP_GTOs(const PP_GTOs &other);
+    
+    ~PP_GTOs();
+    
+    PP_GTOs& operator=(const PP_GTOs &other);
+    
+    bool operator==(const PP_GTOs &other) const;
+    bool operator!=(const PP_GTOs &other) const;
+    
+    TrigMatrix overlap_integral() const;
+    TrigMatrix kinetic_integral() const;
+    
+    TrigMatrix potential_integral(const QVector<PointCharge> &C) const;
+    TrigMatrix potential_integral(const QVector<PointCharge> &C, int m) const;
+
+private:
+    /** All of the orbital pairs */
+    TrigArray2D<PP_GTO> orbs;
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -326,6 +390,7 @@ Q_DECLARE_METATYPE( Squire::PP_GTO )
 SIRE_EXPOSE_CLASS( Squire::P_GTO )
 SIRE_EXPOSE_CLASS( Squire::PS_GTO )
 SIRE_EXPOSE_CLASS( Squire::PP_GTO )
+SIRE_EXPOSE_CLASS( Squire::PS_GTOs )
 
 SIRE_EXPOSE_FUNCTION( Squire::kinetic_integral )
 SIRE_EXPOSE_FUNCTION( Squire::overlap_integral )

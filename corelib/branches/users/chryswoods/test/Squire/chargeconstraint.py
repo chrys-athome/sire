@@ -16,6 +16,7 @@ mol = mol.edit().rename("methanol").commit()
 protoms = ProtoMS("%s/Work/ProtoMS/protoms2" % os.getenv("HOME"))
 
 protoms.addParameterFile("test/ff/methanol.par")
+protoms.addParameterFile("test/ff/solvents.ff")
 
 mol = protoms.parameterise(mol, ProtoMS.SOLUTE)
 
@@ -72,4 +73,41 @@ print system.constraintsSatisfied()
 mol = system[ MGIdx(0) ][ mol.number() ].molecule()
 
 print mol.property("charge").array()
+
+water = PDB().read("test/io/water.pdb")
+
+tip4p = water[ MolIdx(0) ].molecule()
+
+tip4p = protoms.parameterise(tip4p, ProtoMS.SOLVENT)
+
+chgs = tip4p.property("charge")
+ljs = tip4p.property("LJ")
+
+for i in range(0, water.nMolecules()):
+    tip4p = water[ MolIdx(i) ].molecule()
+    tip4p = tip4p.edit().setProperty("charge", chgs) \
+                        .setProperty("LJ", ljs) \
+                 .commit()
+
+    water.update(tip4p)
+
+cljff = InterGroupCLJFF("solute-solvent")
+
+cljff.add( mol, MGIdx(0) )
+cljff.add( water, MGIdx(1) )
+
+system.add(cljff)
+
+waterff = InterCLJFF("solvent")
+waterff.add( water )
+
+system.add(waterff)
+
+all = MoleculeGroup("all")
+all.add(mol)
+all.add(water)
+
+moves = RigidBodyMC(all)
+
+moves.move( system, 100 )
 

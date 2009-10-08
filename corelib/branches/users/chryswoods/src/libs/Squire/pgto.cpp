@@ -1467,3 +1467,432 @@ Array2D<Matrix> SQUIRE_EXPORT electron_integral(const PP_GTO &P,
 }
 
 } // end of namespace Squire
+
+///////////
+/////////// Implementation of PS_GTOs
+///////////
+
+/** Constructor */
+PS_GTOs::PS_GTOs()
+{}
+
+/** Construct for the set of s orbitals s_gtos located at centers
+    s_centers, and p orbitals p_gtos located at centers
+    p_centers */
+PS_GTOs::PS_GTOs(const QVector<S_GTO> &s_gtos,
+                 const QVector<Vector> &s_centers,
+                 const QVector<P_GTO> &p_gtos,
+                 const QVector<Vector> &p_centers)
+{
+    if (s_gtos.count() != s_centers.count())
+        throw SireError::invalid_arg( QObject::tr(
+                "You must pass in the same number of centers (%1) as "
+                "there are S orbitals (%2).")
+                    .arg(s_centers.count()).arg(s_gtos.count()), CODELOC );
+
+    if (p_gtos.count() != p_centers.count())
+        throw SireError::invalid_arg( QObject::tr(
+                "You must pass in the same number of centers (%1) as "
+                "there are P orbitals (%2).")
+                    .arg(p_centers.count()).arg(p_gtos.count()), CODELOC );
+    
+    if (s_gtos.isEmpty() or p_gtos.isEmpty())
+        return;
+
+    //build all of the orbital pairs
+    orbs = Array2D<PS_GTO>(p_gtos.count(), s_gtos.count());
+    
+    const int np = p_gtos.count();
+    const int ns = s_gtos.count();
+    
+    const P_GTO *p_gtos_array = p_gtos.constData();
+    const Vector *p_centers_array = p_centers.constData();
+    
+    const S_GTO *s_gtos_array = s_gtos.constData();
+    const Vector *s_centers_array = s_centers.constData();
+    
+    PS_GTO *orbs_array = orbs.data();
+    
+    //the PS array is row-major
+    for (int i=0; i<np; ++i)
+    {
+        const P_GTO &p_gto = p_gtos_array[i];
+        const Vector &p_center = p_centers_array[i];
+    
+        for (int j=0; j<ns; ++j)
+        {
+            *orbs_array = PS_GTO( p_center, p_gto,
+                                  s_centers_array[j], s_gtos_array[j] );
+                                  
+            ++orbs_array;
+        }
+    }
+}
+
+/** Copy constructor */
+PS_GTOs::PS_GTOs(const PS_GTOs &other)
+        : orbs(other.orbs)
+{}
+
+/** Destructor */
+PS_GTOs::~PS_GTOs()
+{}
+
+/** Copy assignment operator */
+PS_GTOs& PS_GTOs::operator=(const PS_GTOs &other)
+{
+    orbs = other.orbs;
+    return *this;
+}
+
+/** Comparison operator */
+bool PS_GTOs::operator==(const PS_GTOs &other) const
+{
+    return orbs == other.orbs;
+}
+
+/** Comparison operator */
+bool PS_GTOs::operator!=(const PS_GTOs &other) const
+{
+    return orbs != other.orbs;
+}
+
+/** Return the overlap integrals for each pair of orbitals */
+NMatrix PS_GTOs::overlap_integral() const
+{
+    if (orbs.nRows() == 0 or orbs.nColumns() == 0)
+        return NMatrix();
+
+    const int nrows = orbs.nRows();
+    const int ncols = orbs.nColumns();
+
+    //3 p-orbitals per p shell
+    NMatrix mat = NMatrix::createRowMajor(3 * nrows, ncols);
+    
+    double *m = mat.data();
+    const PS_GTO *orbs_array = orbs.constData();
+    
+    const int sz = nrows * ncols;
+    
+    for (int i=0; i<sz; ++i)
+    {
+        const Vector v = Squire::overlap_integral( orbs_array[i] );
+
+        m[ 3*i     ] = v.x();
+        m[ 3*i + 1 ] = v.y();
+        m[ 3*i + 2 ] = v.z();
+    }
+    
+    return mat;
+}
+
+/** Return the kinetic energy integrals for each pair of orbitals */
+NMatrix PS_GTOs::kinetic_integral() const
+{
+    if (orbs.nRows() == 0 or orbs.nColumns() == 0)
+        return NMatrix();
+
+    const int nrows = orbs.nRows();
+    const int ncols = orbs.nColumns();
+
+    //3 p-orbitals per p shell
+    NMatrix mat = NMatrix::createRowMajor(3 * nrows, ncols);
+    
+    double *m = mat.data();
+    const PS_GTO *orbs_array = orbs.constData();
+    
+    const int sz = nrows * ncols;
+    
+    for (int i=0; i<sz; ++i)
+    {
+        const Vector v = Squire::kinetic_integral( orbs_array[i] );
+
+        m[ 3*i     ] = v.x();
+        m[ 3*i + 1 ] = v.y();
+        m[ 3*i + 2 ] = v.z();
+    }
+    
+    return mat;
+}
+
+/** Return the potential energy integral for each pair of orbitals
+    interacting with the point charges in 'C' */
+NMatrix PS_GTOs::potential_integral(const QVector<PointCharge> &C) const
+{
+    if (orbs.nRows() == 0 or orbs.nColumns() == 0 or C.isEmpty())
+        return NMatrix();
+
+    const int nrows = orbs.nRows();
+    const int ncols = orbs.nColumns();
+
+    //3 p-orbitals per p shell
+    NMatrix mat = NMatrix::createRowMajor(3 * nrows, ncols);
+    
+    double *m = mat.data();
+    const PS_GTO *orbs_array = orbs.constData();
+    
+    const int sz = nrows * ncols;
+    
+    for (int i=0; i<sz; ++i)
+    {
+        const Vector v = Squire::potential_integral( C, orbs_array[i] );
+
+        m[ 3*i     ] = v.x();
+        m[ 3*i + 1 ] = v.y();
+        m[ 3*i + 2 ] = v.z();
+    }
+    
+    return mat;
+}
+
+/** Return the mth auxillary potential energy integral for each pair of orbitals
+    interacting with the point charges in 'C' */
+NMatrix PS_GTOs::potential_integral(const QVector<PointCharge> &C, int maux) const
+{
+    if (orbs.nRows() == 0 or orbs.nColumns() == 0 or C.isEmpty())
+        return NMatrix();
+
+    const int nrows = orbs.nRows();
+    const int ncols = orbs.nColumns();
+
+    //3 p-orbitals per p shell
+    NMatrix mat = NMatrix::createRowMajor(3 * nrows, ncols);
+    
+    double *m = mat.data();
+    const PS_GTO *orbs_array = orbs.constData();
+    
+    const int sz = nrows * ncols;
+    
+    for (int i=0; i<sz; ++i)
+    {
+        const Vector v = Squire::potential_integral( C, orbs_array[i], maux );
+
+        m[ 3*i     ] = v.x();
+        m[ 3*i + 1 ] = v.y();
+        m[ 3*i + 2 ] = v.z();
+    }
+    
+    return mat;
+}
+
+///////////
+/////////// Implementation of PP_GTOs
+///////////
+
+/** Constructor */
+PP_GTOs::PP_GTOs()
+{}
+
+/** Construct for the set of p orbitals p_gtos located at centers
+    p_centers */
+PP_GTOs::PP_GTOs(const QVector<P_GTO> &p_gtos,
+                 const QVector<Vector> &p_centers)
+{
+    if (p_gtos.count() != p_centers.count())
+        throw SireError::invalid_arg( QObject::tr(
+                "You must pass in the same number of centers (%1) as "
+                "there are P orbitals (%2).")
+                    .arg(p_centers.count()).arg(p_gtos.count()), CODELOC );
+    
+    if (p_gtos.isEmpty())
+        return;
+
+    //build all of the orbital pairs
+    const int n = p_gtos.count();
+
+    orbs = TrigArray2D<PP_GTO>(n);
+    
+    const P_GTO *p = p_gtos.constData();
+    const Vector *c = p_centers.constData();
+    
+    PP_GTO *orbs_data = orbs.data();
+    
+    for (int i=0; i<n; ++i)
+    {
+    	const P_GTO &pi = p[i];
+        const Vector &ci = c[i];
+    
+    	for (int j=i; j<n; ++j)
+        {
+        	orbs_data[ orbs.offset(i,j) ] = PP_GTO(ci, pi, c[j], p[j]);
+        }
+    }
+}
+
+/** Copy constructor */
+PP_GTOs::PP_GTOs(const PP_GTOs &other)
+        : orbs(other.orbs)
+{}
+
+/** Destructor */
+PP_GTOs::~PP_GTOs()
+{}
+
+/** Copy assignment operator */
+PP_GTOs& PP_GTOs::operator=(const PP_GTOs &other)
+{
+    orbs = other.orbs;
+    return *this;
+}
+
+/** Comparison operator */
+bool PP_GTOs::operator==(const PP_GTOs &other) const
+{
+    return orbs == other.orbs;
+}
+
+/** Comparison operator */
+bool PP_GTOs::operator!=(const PP_GTOs &other) const
+{
+    return orbs != other.orbs;
+}
+
+/** Return the overlap integrals for each pair of orbitals */
+TrigMatrix PP_GTOs::overlap_integral() const
+{
+	const int n = orbs.count();
+    
+    if (n <= 0)
+    	return TrigMatrix();
+    
+    //3 p orbitals per p shell
+    const int nr = orbs.nRows();
+    TrigMatrix mat( 3 * nr );
+
+	const PP_GTO *orbs_data = orbs.constData();
+    double *m = mat.data();
+    
+    for (int i=0; i<nr; ++i)
+    {
+        for (int j=i; j<nr; ++j)
+        {
+            const Matrix r = Squire::overlap_integral(orbs_data[i]);
+    
+            const int ioff = 3*i;
+            const int joff = 3*j;
+    
+            for (int ii=0; ii<3; ++ii)
+            {
+                for (int jj=0; jj<3; ++jj)
+                {
+                    m[ orbs.offset( ioff + ii, joff + jj ) ] = r(ii,jj); 
+                }
+            }
+        }
+    }
+    
+    return mat;
+}
+
+/** Return the kinetic energy integrals for each pair of orbitals */
+TrigMatrix PP_GTOs::kinetic_integral() const
+{
+	const int n = orbs.count();
+    
+    if (n <= 0)
+    	return TrigMatrix();
+    
+    //3 p orbitals per p shell
+    const int nr = orbs.nRows();
+    TrigMatrix mat( 3 * nr );
+
+	const PP_GTO *orbs_data = orbs.constData();
+    double *m = mat.data();
+    
+    for (int i=0; i<nr; ++i)
+    {
+        for (int j=i; j<nr; ++j)
+        {
+            const Matrix r = Squire::kinetic_integral(orbs_data[i]);
+    
+            const int ioff = 3*i;
+            const int joff = 3*j;
+    
+            for (int ii=0; ii<3; ++ii)
+            {
+                for (int jj=0; jj<3; ++jj)
+                {
+                    m[ orbs.offset( ioff + ii, joff + jj ) ] = r(ii,jj); 
+                }
+            }
+        }
+    }
+    
+    return mat;
+}
+
+/** Return the potential energy integral for each pair of orbitals
+    interacting with the point charges in 'C' */
+TrigMatrix PP_GTOs::potential_integral(const QVector<PointCharge> &C) const
+{
+	const int n = orbs.count();
+    
+    if (n <= 0 or C.isEmpty())
+    	return TrigMatrix();
+    
+    //3 p orbitals per p shell
+    const int nr = orbs.nRows();
+    TrigMatrix mat( 3 * nr );
+
+	const PP_GTO *orbs_data = orbs.constData();
+    double *m = mat.data();
+    
+    for (int i=0; i<nr; ++i)
+    {
+        for (int j=i; j<nr; ++j)
+        {
+            const Matrix r = Squire::potential_integral(C, orbs_data[i]);
+    
+            const int ioff = 3*i;
+            const int joff = 3*j;
+    
+            for (int ii=0; ii<3; ++ii)
+            {
+                for (int jj=0; jj<3; ++jj)
+                {
+                    m[ orbs.offset( ioff + ii, joff + jj ) ] = r(ii,jj); 
+                }
+            }
+        }
+    }
+    
+    return mat;
+}
+
+/** Return the mth auxillary potential energy integral for each pair of orbitals
+    interacting with the point charges in 'C' */
+TrigMatrix PP_GTOs::potential_integral(const QVector<PointCharge> &C, int maux) const
+{
+	const int n = orbs.count();
+    
+    if (n <= 0 or C.isEmpty())
+    	return TrigMatrix();
+    
+    //3 p orbitals per p shell
+    const int nr = orbs.nRows();
+    TrigMatrix mat( 3 * nr );
+
+	const PP_GTO *orbs_data = orbs.constData();
+    double *m = mat.data();
+    
+    for (int i=0; i<nr; ++i)
+    {
+        for (int j=i; j<nr; ++j)
+        {
+            const Matrix r = Squire::potential_integral(C, orbs_data[i], maux);
+    
+            const int ioff = 3*i;
+            const int joff = 3*j;
+    
+            for (int ii=0; ii<3; ++ii)
+            {
+                for (int jj=0; jj<3; ++jj)
+                {
+                    m[ orbs.offset( ioff + ii, joff + jj ) ] = r(ii,jj); 
+                }
+            }
+        }
+    }
+    
+    return mat;
+}

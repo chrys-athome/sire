@@ -113,12 +113,12 @@ public:
     int nOrbitals1() const;
 };    
 
-/** This internal class is used to calculate integrals involving just SS pairs.
-    It is used as a temporary object to aid in the calculation of integrals.
+/** This class is used to calculate integrals involving just SS pairs.
+    It is used to aid in the calculation of integrals.
 
 	@author Christopher Woods
 */
-class SS_GTOs
+class SQUIRE_EXPORT SS_GTOs
 {
 public:
 	SS_GTOs();
@@ -172,6 +172,7 @@ Q_DECLARE_METATYPE( Squire::SS_GTO )
 
 SIRE_EXPOSE_CLASS( Squire::S_GTO )
 SIRE_EXPOSE_CLASS( Squire::SS_GTO )
+SIRE_EXPOSE_CLASS( Squire::SS_GTOs )
 
 SIRE_EXPOSE_FUNCTION( Squire::kinetic_integral )
 SIRE_EXPOSE_FUNCTION( Squire::potential_integral )
