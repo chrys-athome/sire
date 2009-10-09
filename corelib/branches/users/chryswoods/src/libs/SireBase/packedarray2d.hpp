@@ -1796,7 +1796,7 @@ QVector< QVector<T> > PackedArray2D<T>::toQVectorVector() const
     
     for (int i=0; i<this->count(); ++i)
     {
-        ret[i] = arrays[i].toQVector();
+        ret_array[i] = arrays[i].toQVector();
     }
     
     return ret;

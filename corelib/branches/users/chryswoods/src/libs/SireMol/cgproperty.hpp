@@ -38,6 +38,8 @@
 
 #include "SireError/errors.h"
 
+#include "tostring.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -130,6 +132,8 @@ public:
     const T* data() const;
     const T* constData() const;
 
+    QString toString() const;
+
     bool isEmpty() const;
 
     int size() const;
@@ -138,6 +142,8 @@ public:
     int nCutGroups() const;
 
     void assignFrom(const CGProperty<QVariant> &variant);
+
+    const QVector<T>& array() const;
     
     CGProperty<QVariant> toVariant() const;
     
@@ -269,6 +275,24 @@ SIRE_OUTOFLINE_TEMPLATE
 CGProperty<T>* CGProperty<T>::clone() const
 {
     return new CGProperty<T>(*this);
+}
+
+/** Return the underlying array holding the contents of this property */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const QVector<T>& CGProperty<T>::array() const
+{
+    return props;
+}
+
+/** Return a string representation of this property */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QString CGProperty<T>::toString() const
+{
+    return QString("CGProperty<%1>( %2 )")
+                .arg( QMetaType::typeName( qMetaTypeId<T>() ) )
+                .arg( Sire::toString(this->array()) );
 }
 
 /** Return whether or not it is possible to convert the variant

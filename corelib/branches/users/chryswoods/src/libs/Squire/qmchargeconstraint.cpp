@@ -191,36 +191,17 @@ Molecule QMChargeConstraint::_pvt_calculateCharges(const PartialMolecule &molecu
     
     const PropertyName &charge_property = this->propertyMap()["charge"];
 
-    qDebug() << charge_property.toString();
-    
     if (molecule.hasProperty(charge_property))
     {
         const Property &old_chgs = molecule.property(charge_property);
         
-        qDebug() << old_chgs.what();
-        
-        if (not old_chgs.isA<AtomCharges>())
-        {
-            qDebug() << "NOT IS_A!!!";
-            
-            if (QLatin1String(old_chgs.what()) == QLatin1String(new_chgs.what()))
-            {
-                qDebug() << "BUT MATCHING TYPENAME STRINGS!!!";
-            }
-        }
-        
         if (old_chgs.isA<AtomCharges>())
         {  
-            qDebug() << "OLD" << old_chgs.asA<AtomCharges>().array().toQVector();
-            qDebug() << "NEW" << new_chgs.array().toQVector();
-        
             if (old_chgs.asA<AtomCharges>() == new_chgs)
                 //the charges haven't changed
                 return Molecule();
         }
     }
-    
-    qDebug() << CODELOC;
     
     return molecule.molecule().edit()
                               .setProperty(charge_property, new_chgs)
@@ -297,7 +278,9 @@ void QMChargeConstraint::_pvt_update(const System &system)
                     mols_to_change.remove(it.key());
                     
                     if (not new_new_mol.isEmpty())
+                    {
                         mols_to_change.add(new_new_mol);
+                    }
                 }
             }
             else if (old_mols.contains(it.key()))
@@ -318,7 +301,9 @@ void QMChargeConstraint::_pvt_update(const System &system)
                         Molecule new_new_mol = this->_pvt_calculateCharges(new_mol);
                         
                         if (not new_new_mol.isEmpty())
+                        {
                             mols_to_change.add(new_new_mol);
+                        }
                     }
                 }
             }

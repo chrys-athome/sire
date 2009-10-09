@@ -38,6 +38,8 @@
 
 #include "SireError/errors.h"
 
+#include "tostring.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -133,6 +135,10 @@ public:
 
     int size() const;
     int count() const;
+
+    QString toString() const;
+    
+    const QVector<T>& array() const;
     
     int nChains() const;
 
@@ -268,6 +274,24 @@ SIRE_OUTOFLINE_TEMPLATE
 ChainProperty<T>* ChainProperty<T>::clone() const
 {
     return new ChainProperty<T>(*this);
+}
+
+/** Return the underlying array holding the contents of this property */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const QVector<T>& ChainProperty<T>::array() const
+{
+    return props;
+}
+
+/** Return a string representation of this property */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QString ChainProperty<T>::toString() const
+{
+    return QString("ChainProperty<%1>( %2 )")
+                .arg( QMetaType::typeName( qMetaTypeId<T>() ) )
+                .arg( Sire::toString(this->array()) );
 }
 
 /** Return whether or not it is possible to convert the variant

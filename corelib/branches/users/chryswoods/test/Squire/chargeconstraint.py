@@ -6,6 +6,8 @@ from Sire.Mol import *
 from Sire.MM import *
 from Sire.Maths import *
 from Sire.Move import *
+from Sire.Vol import *
+from Sire.Units import *
 
 import os
 
@@ -56,15 +58,9 @@ print system.energy()
 chg_constraint = QMChargeConstraint(solute)
 chg_constraint.setChargeCalculator( AM1BCC() )
 
-print chg_constraint.isSatisfied(system)
-
-mols = chg_constraint.update(system)
-
-system.update(mols)
-
-print chg_constraint.isSatisfied(system)
-
 system.add(chg_constraint)
+
+print system.constraintsSatisfied()
 
 print system.energy()
 
@@ -77,7 +73,6 @@ print mol.property("charge").array()
 water = PDB().read("test/io/water.pdb")
 
 tip4p = water[ MolIdx(0) ].molecule()
-
 tip4p = protoms.parameterise(tip4p, ProtoMS.SOLVENT)
 
 chgs = tip4p.property("charge")
@@ -90,6 +85,11 @@ for i in range(0, water.nMolecules()):
                  .commit()
 
     water.update(tip4p)
+
+words = open("test/io/water.xsc", "r").readlines()[0].split()
+
+space = PeriodicBox( Vector( float(words[0]), float(words[1]), float(words[2]) ),
+                     Vector( float(words[3]), float(words[4]), float(words[5]) ) )
 
 cljff = InterGroupCLJFF("solute-solvent")
 
@@ -107,7 +107,23 @@ all = MoleculeGroup("all")
 all.add(mol)
 all.add(water)
 
-moves = RigidBodyMC(all)
+system.add(all)
 
-moves.move( system, 100 )
+system.setProperty("space", space)
+
+rbmc = RigidBodyMC(all)
+zmatmc = ZMatMove(solute)
+
+moves = WeightedMoves()
+moves.add(rbmc, 500)
+moves.add(zmatmc)
+
+for i in range(0,100):
+    print "MOVE"
+    system = moves.move( system, 500, True )
+    print "ENERGY = %f kcal mol-1" % (system.energy().to(kcal_per_mol))
+    print moves
+
+    mol = system[ solute.name() ][ MolIdx(0) ].molecule()
+    print "CHARGES ",mol.property("charge").array()
 

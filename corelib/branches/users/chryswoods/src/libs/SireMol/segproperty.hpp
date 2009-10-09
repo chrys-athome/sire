@@ -38,6 +38,8 @@
 
 #include "SireError/errors.h"
 
+#include "tostring.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -135,6 +137,10 @@ public:
     int count() const;
     
     int nSegments() const;
+
+    QString toString() const;
+    
+    const QVector<T>& array() const;
 
     void assignFrom(const SegProperty<QVariant> &values);
     
@@ -268,6 +274,24 @@ SIRE_OUTOFLINE_TEMPLATE
 SegProperty<T>* SegProperty<T>::clone() const
 {
     return new SegProperty<T>(*this);
+}
+
+/** Return the underlying array holding the contents of this property */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+const QVector<T>& SegProperty<T>::array() const
+{
+    return props;
+}
+
+/** Return a string representation of this property */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QString SegProperty<T>::toString() const
+{
+    return QString("SegProperty<%1>( %2 )")
+                .arg( QMetaType::typeName( qMetaTypeId<T>() ) )
+                .arg( Sire::toString(this->array()) );
 }
 
 /** Return whether or not it is possible to convert the variant

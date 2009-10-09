@@ -42,6 +42,8 @@
 
 #include "SireError/errors.h"
 
+#include "tostring.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMol
@@ -169,6 +171,8 @@ public:
 
     const T* data(CGIdx cgidx) const;
     const T* constData(CGIdx cgidx) const;
+
+    QString toString() const;
 
     bool isEmpty() const;
 
@@ -472,6 +476,16 @@ SIRE_OUTOFLINE_TEMPLATE
 const PackedArray2D<T>& AtomProperty<T>::array() const
 {
     return props;
+}
+
+/** Return a string representation of this property */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QString AtomProperty<T>::toString() const
+{
+    return QString("AtomProperty<%1>( %2 )")
+                .arg( QMetaType::typeName( qMetaTypeId<T>() ) )
+                .arg( Sire::toString(this->array().toQVectorVector()) );
 }
 
 /** Return a raw pointer to the array of arrays */
