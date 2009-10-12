@@ -212,6 +212,11 @@ public:
             const QVector<Vector> &s_centers,
             const QVector<P_GTO> &p_gtos,
             const QVector<Vector> &p_centers);
+
+    PS_GTOs(const QVector<P_GTO> &p_gtos,
+            const QVector<Vector> &p_centers,
+            const QVector<S_GTO> &s_gtos,
+            const QVector<Vector> &s_centers);
             
     PS_GTOs(const PS_GTOs &other);
     
@@ -229,6 +234,11 @@ public:
     NMatrix potential_integral(const QVector<PointCharge> &C, int m) const;
 
 private:
+    void _pvt_create(const QVector<S_GTO> &s_gtos,
+                     const QVector<Vector> &s_centers,
+                     const QVector<P_GTO> &p_gtos,
+                     const QVector<Vector> &p_centers);
+
     /** All of the orbital pairs */
     Array2D<PS_GTO> orbs;
 };
@@ -391,6 +401,7 @@ SIRE_EXPOSE_CLASS( Squire::P_GTO )
 SIRE_EXPOSE_CLASS( Squire::PS_GTO )
 SIRE_EXPOSE_CLASS( Squire::PP_GTO )
 SIRE_EXPOSE_CLASS( Squire::PS_GTOs )
+SIRE_EXPOSE_CLASS( Squire::PP_GTOs )
 
 SIRE_EXPOSE_FUNCTION( Squire::kinetic_integral )
 SIRE_EXPOSE_FUNCTION( Squire::overlap_integral )

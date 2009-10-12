@@ -1476,13 +1476,10 @@ Array2D<Matrix> SQUIRE_EXPORT electron_integral(const PP_GTO &P,
 PS_GTOs::PS_GTOs()
 {}
 
-/** Construct for the set of s orbitals s_gtos located at centers
-    s_centers, and p orbitals p_gtos located at centers
-    p_centers */
-PS_GTOs::PS_GTOs(const QVector<S_GTO> &s_gtos,
-                 const QVector<Vector> &s_centers,
-                 const QVector<P_GTO> &p_gtos,
-                 const QVector<Vector> &p_centers)
+void PS_GTOs::_pvt_create(const QVector<S_GTO> &s_gtos,
+                          const QVector<Vector> &s_centers,
+                          const QVector<P_GTO> &p_gtos,
+                          const QVector<Vector> &p_centers)
 {
     if (s_gtos.count() != s_centers.count())
         throw SireError::invalid_arg( QObject::tr(
@@ -1527,6 +1524,28 @@ PS_GTOs::PS_GTOs(const QVector<S_GTO> &s_gtos,
             ++orbs_array;
         }
     }
+}
+
+/** Construct for the set of s orbitals s_gtos located at centers
+    s_centers, and p orbitals p_gtos located at centers
+    p_centers */
+PS_GTOs::PS_GTOs(const QVector<S_GTO> &s_gtos,
+                 const QVector<Vector> &s_centers,
+                 const QVector<P_GTO> &p_gtos,
+                 const QVector<Vector> &p_centers)
+{
+    this->_pvt_create(s_gtos, s_centers, p_gtos, p_centers);
+}
+
+/** Construct for the set of s orbitals s_gtos located at centers
+    s_centers, and p orbitals p_gtos located at centers
+    p_centers */
+PS_GTOs::PS_GTOs(const QVector<P_GTO> &p_gtos,
+                 const QVector<Vector> &p_centers,
+                 const QVector<S_GTO> &s_gtos,
+                 const QVector<Vector> &s_centers)
+{
+    this->_pvt_create(s_gtos, s_centers, p_gtos, p_centers);
 }
 
 /** Copy constructor */

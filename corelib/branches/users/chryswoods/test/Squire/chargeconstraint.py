@@ -125,5 +125,5 @@ for i in range(0,100):
     print moves
 
     mol = system[ solute.name() ][ MolIdx(0) ].molecule()
-    print "CHARGES ",mol.property("charge").array()
+    print "CHARGES ",mol.property("charge")
 

@@ -42,7 +42,10 @@
 #include "SireBase/property.h"
 
 #include "Squire/qmprogram.h"
+#include "Squire/pointcharge.h"
 #include "Squire/gto.h"
+#include "Squire/sgto.h"
+#include "Squire/pgto.h"
 
 using boost::python::register_tuple;
 
@@ -55,6 +58,11 @@ void register_Squire_containers()
 
     register_list< QVector< boost::tuple<double,GTOPtr> > >();
     register_list< QVector< boost::tuple<GTOPtr,double> > >();
+
+    register_list< QVector<PointCharge> >();
+
+    register_list< QVector<S_GTO> >();
+    register_list< QVector<P_GTO> >();
 
     register_list< QVector<GTOPtr> >();
 }
