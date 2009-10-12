@@ -263,6 +263,10 @@ void ReceiveQueue::run2()
         //everyone else listens to broadcasts from the master
         while (true)
         {
+
+            //block until everyone is ready to receive the message
+            recv_comm->Barrier();
+
             int count;
             recv_comm->Bcast( &count, 1, ::MPI::INT, MPICluster::master() );
         
@@ -291,6 +295,15 @@ void ReceiveQueue::run2()
                         //as we could deadlock at shutdown if we do!
                         message.read();
                         
+                        //the master will send a zero size message to signal
+                        //that it has also quit - wait for that message now
+                        recv_comm->Barrier();
+                        recv_comm->Bcast( &count, 1, ::MPI::INT, MPICluster::master() );
+                        
+                        if (count != 0)
+                            qDebug() << "Shutdown has not been followed by a zero "
+                                     << "shutdown message from the master?" << count;
+                        
                         //stop listening for any further messages
                         break;
                     }
@@ -304,14 +317,13 @@ void ReceiveQueue::run2()
         }
     }
 
-    //recv_comm->Barrier();
+    recv_comm->Barrier();
     
     //release the resources held by this communicator
     recv_comm->Free();
     
     delete recv_comm;
     recv_comm = 0;
-
 }
 
 #endif // SIRE_USE_MPI

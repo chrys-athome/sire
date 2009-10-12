@@ -1,4 +1,4 @@
-#!/bin/env python
+#!/usr/bin/env python
 
 import os
 import sys
@@ -95,8 +95,15 @@ n_nodes = len( os.popen("cat %s" % pbs_nodefile, "r").readlines() )
 
 print "NNODES = %d : NUNIQUENODES = %d" % (n_nodes, n_unique_nodes)
 
+#Set the environment variable SIRE_SSH if you want to use something other than ssh
+#for the mpdboot
+sire_ssh = os.getenv("SIRE_SSH")
+
 #start the MPI daemons - this is necessary if PBS hasn't done it for you
-os.system("mpdboot -f nodefile -n %d" % (n_unique_nodes))
+if sire_ssh is None:
+    os.system("mpdboot -f nodefile -n %d" % (n_unique_nodes))
+else:
+    os.system("mpdboot --rsh=\"%s\" -f nodefile -n %d" % (sire_ssh,n_unique_nodes)
 
 #check the MPI cluster
 os.system("mpdtrace")
