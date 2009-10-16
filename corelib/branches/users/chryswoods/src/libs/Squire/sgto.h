@@ -138,6 +138,9 @@ public:
     TrigMatrix potential_integral(const QVector<PointCharge> &C) const;
     TrigMatrix potential_integral(const QVector<PointCharge> &C, int m) const;
     
+    TrigMatrix coulomb_integral(const SS_GTOs &other) const;
+    TrigMatrix exchange_integral(const SS_GTOs &other) const;
+    
 private:
 	/** All of the orbital pairs */
     TrigArray2D<SS_GTO> orbs;

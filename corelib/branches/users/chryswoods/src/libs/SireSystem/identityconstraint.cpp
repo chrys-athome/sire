@@ -1321,6 +1321,7 @@ void FewPointsHelper::assignMoleculesToPoints()
 
     //find the smallest and second smallest absolute difference between distances
     // - this is used to see if there are any degeneracies
+    //if (false)
     {
         double delta0 = std::numeric_limits<double>::max();
         double delta1 = delta0;
@@ -1336,8 +1337,18 @@ void FewPointsHelper::assignMoleculesToPoints()
             
             for (int j=0; j<ncolumns-1; ++j)
             {
+                if (row[j] == 0)
+                    //skip 'zero' points as these have been added
+                    //to account for more molecules than points
+                    continue;
+            
                 for (int k=j+1; k<ncolumns; ++k)
                 {
+                    if (row[k] == 0)
+                        //skip 'zero' points as these have been added
+                        //to account for more molecules that points
+                        continue;
+                
                     const double delta = std::abs(row[k] - row[j]);
                     
                     if (delta <= delta0)
@@ -2233,7 +2244,7 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
         PropertyMap map;
         
         sds >> molgroup >> points >> map;
-        
+
         IdentityConstraint new_constraint(points, molgroup, map);
         
         sds >> static_cast<MoleculeConstraint&>(new_constraint);

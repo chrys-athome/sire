@@ -710,9 +710,34 @@ QVector<int> SIREMATHS_EXPORT solve_linear_assignment( const NMatrix &costs,
         nfree = 0;
         
         int k = 0;
+
+        int old_k = -1;
+        int old_numfree = -1;
+
+        int nrepeat = 0;
         
         while (k < numfree)
         {
+            if (k == old_k and numfree == old_numfree)
+            {
+                ++nrepeat;
+                
+                if (nrepeat > 10000)
+                {
+                    qDebug() << "The linear assignment problem has not converged!!!";
+                
+                    throw SireError::program_bug( QObject::tr(  
+                            "The linear assignment problem is not converging!!!"),
+                                CODELOC );
+                }
+            }
+            else
+            {
+                nrepeat = 0;
+                old_k = k;
+                old_numfree = numfree;
+            }
+        
             int i = free[k];
             ++k;
             
@@ -745,7 +770,7 @@ QVector<int> SIREMATHS_EXPORT solve_linear_assignment( const NMatrix &costs,
             }
             
             int i0 = columns_to_rows[j1];
-                    
+                                    
             if (first_min < second_min)
                 //change the reduction of the first minimum column
                 //to increase the minimum reduced cost in the row

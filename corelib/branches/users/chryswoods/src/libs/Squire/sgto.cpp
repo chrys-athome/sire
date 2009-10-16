@@ -529,3 +529,67 @@ TrigMatrix SS_GTOs::potential_integral(const QVector<PointCharge> &C, int maux) 
     
     return mat;
 }
+
+/** Return the coulomb integral between this set of pair of 
+    S orbitals and the pairs other S orbitals in 'other' */
+TrigMatrix SS_GTOs::coulomb_integral(const SS_GTOs &other) const
+{
+    // J_ij = D_ij Sum_kl < s_i s_j | s_k s_l >
+
+    // (this does not include Dij)
+
+    const int n = orbs.count();
+    const int other_n = other.orbs.count();
+    
+    if (n <= 0 or other_n <= 0)
+        return TrigMatrix();
+    
+    TrigMatrix mat(orbs.nRows());
+    
+    const SS_GTO *orbs_data = orbs.constData();
+    const SS_GTO *other_orbs_data = other.orbs.constData();
+
+    double *m = mat.data();
+
+    for (int i=0; i<n; ++i)
+    {
+        const SS_GTO &orb = orbs_data[i];
+        
+        double j_sum = 0;
+        
+        for (int j=0; j<other_n; ++j)
+        {
+            j_sum += Squire::electron_integral( orb, other_orbs_data[j] );
+        }
+        
+        m[i] = j_sum;
+    }
+    
+    return mat;
+}
+
+/** Return the exchange integral between this set of pair of 
+    orbitals and the other set of pairs in 'other' */
+TrigMatrix SS_GTOs::exchange_integral(const SS_GTOs &other) const
+{
+    // K_ij = D_ij Sum_kl < s_i s_k | s_j s_l >
+    
+    // (this does not include D_ij)
+    
+    const int n = orbs.count();
+    const int other_n = other.orbs.count();
+    
+    if (n <= 0 or other_n <= 0)
+        return TrigMatrix();
+    
+    TrigMatrix mat(orbs.nRows());
+    
+    const SS_GTO *orbs_data = orbs.constData();
+    const SS_GTO *other_orbs_data = other.orbs.constData();
+
+    double *m = mat.data();
+
+    throw SireError::incomplete_code( QObject::tr("NEED TO FINISH"), CODELOC );
+
+    return TrigMatrix();
+}
