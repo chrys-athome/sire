@@ -89,8 +89,8 @@ std::pair<NVector,NMatrix> SIREMATHS_EXPORT dsyev(const NMatrix &A, bool upper)
     
     NMatrix EIGVEC( A );
     
-    SireDSYEV(&JOBZ, &UPLO, &N, EIGVEC.data(),
-              &LDA, EIGVAL.data(), WORK.data(), &LWORK, &INFO);
+    ::SireDSYEV(&JOBZ, &UPLO, &N, EIGVEC.data(),
+                &LDA, EIGVAL.data(), WORK.data(), &LWORK, &INFO);
               
     if (INFO != 0)
         throw SireMaths::domain_error( QObject::tr(
@@ -133,8 +133,8 @@ NVector SIREMATHS_EXPORT dsyev_eigenvalues(const NMatrix &A, bool upper)
     
     NMatrix A_COPY( A );
     
-    SireDSYEV(&JOBZ, &UPLO, &N, A_COPY.data(),
-              &LDA, EIGVAL.data(), WORK.data(), &LWORK, &INFO);
+    ::SireDSYEV(&JOBZ, &UPLO, &N, A_COPY.data(),
+                &LDA, EIGVAL.data(), WORK.data(), &LWORK, &INFO);
               
     if (INFO != 0)
         throw SireMaths::domain_error( QObject::tr(

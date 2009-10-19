@@ -1327,7 +1327,7 @@ void FewPointsHelper::assignMoleculesToPoints()
         double delta1 = delta0;
     
         const int nrows = distmatrix.nRows();
-        const int ncolumns = distmatrix.nColumns();
+        const int ncolumns = qMin( distmatrix.nColumns(), npoints );
         
         const double *distmatrix_array = distmatrix.constData();
         
@@ -1337,18 +1337,8 @@ void FewPointsHelper::assignMoleculesToPoints()
             
             for (int j=0; j<ncolumns-1; ++j)
             {
-                if (row[j] == 0)
-                    //skip 'zero' points as these have been added
-                    //to account for more molecules than points
-                    continue;
-            
                 for (int k=j+1; k<ncolumns; ++k)
                 {
-                    if (row[k] == 0)
-                        //skip 'zero' points as these have been added
-                        //to account for more molecules that points
-                        continue;
-                
                     const double delta = std::abs(row[k] - row[j]);
                     
                     if (delta <= delta0)
@@ -1386,9 +1376,9 @@ void FewPointsHelper::assignMoleculesToPoints()
 
             const double scl = 0.1 * delta1 / (ncolumns * nrows);
 
-            for (int i=0; i<distmatrix.nRows(); ++i)
+            for (int i=0; i<nrows; ++i)
             {
-                for (int j=0; j<distmatrix.nColumns(); ++j)
+                for (int j=0; j<ncolumns; ++j)
                 {
                     distmatrix(i,j) += scl * (i-j) * (i-j);
                 }
@@ -1404,6 +1394,15 @@ void FewPointsHelper::assignMoleculesToPoints()
     //point_to_mol maps points to molecules - we need to invert this
     //so that we map molecules to points
     mol_to_point = ::invert(point_to_mol);
+
+    //if there are more molecules than points, then the last set of 
+    //molecules are not associated with points. To ensure deterministic
+    //mapping the extra molecules must be ordered so that they are
+    //assigned to the null points in order
+    if (nmols > npoints)
+    {
+        qSort( mol_to_point.data() + npoints, mol_to_point.data() + nmols );
+    }
 
     //do we have the correct arrangement? (the nth point maps
     //to the nth molecule)

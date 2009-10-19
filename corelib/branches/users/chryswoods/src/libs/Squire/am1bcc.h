@@ -78,7 +78,9 @@ public:
     
     void setTotalCharge(int charge);
     int totalCharge() const;
-    
+
+    void setScaleFactor(double sclfac);
+
     AtomCharges operator()(const PartialMolecule &molecule,
                            const PropertyMap &map = PropertyMap()) const;
 

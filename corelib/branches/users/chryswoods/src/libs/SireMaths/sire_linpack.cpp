@@ -77,7 +77,7 @@ std::pair< NMatrix,QVector<int> > SIREMATHS_EXPORT dgeco(const NMatrix &A)
     
     NMatrix A_OUT(A);
     
-    SireDGECO(A_OUT.data(), &LDA, &N, IPVT.data(), &RCOND, Z.data());
+    ::SireDGECO(A_OUT.data(), &LDA, &N, IPVT.data(), &RCOND, Z.data());
     
     return std::pair< NMatrix,QVector<int> >(A_OUT, IPVT);
 }
@@ -100,8 +100,8 @@ NMatrix SIREMATHS_EXPORT dgedi_inverse(const NMatrix &A, const QVector<int> &IPV
     
     double DET[2];
     
-    SireDGEDI(A_OUT.data(), &LDA, &N, IPVT.constData(), &(DET[0]), 
-              WORK.data(), &JOB);
+    ::SireDGEDI(A_OUT.data(), &LDA, &N, IPVT.constData(), &(DET[0]), 
+                WORK.data(), &JOB);
               
     return A_OUT;
 }
@@ -124,8 +124,8 @@ double SIREMATHS_EXPORT dgedi_determinant(const NMatrix &A, const QVector<int> &
     
     double DET[2];
     
-    SireDGEDI(A_OUT.data(), &LDA, &N, IPVT.constData(), &(DET[0]), 
-              WORK.data(), &JOB);
+    ::SireDGEDI(A_OUT.data(), &LDA, &N, IPVT.constData(), &(DET[0]), 
+                WORK.data(), &JOB);
               
     // DET contains DET[0] * 10^DET[1]
     return DET[0] * std::pow(10,DET[1]);
@@ -150,8 +150,8 @@ std::pair<double,NMatrix> SIREMATHS_EXPORT dgedi(const NMatrix &A,
     
     double DET[2];
     
-    SireDGEDI(A_OUT.data(), &LDA, &N, IPVT.constData(), &(DET[0]), 
-              WORK.data(), &JOB);
+    ::SireDGEDI(A_OUT.data(), &LDA, &N, IPVT.constData(), &(DET[0]), 
+                WORK.data(), &JOB);
               
     // DET contains DET[0] * 10^DET[1]
     return std::pair<double,NMatrix>( DET[0] * std::pow(10,DET[1]), A_OUT );

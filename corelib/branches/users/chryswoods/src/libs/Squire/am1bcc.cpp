@@ -159,12 +159,28 @@ QString AM1BCC::environment(const QString &variable) const
 void AM1BCC::setTotalCharge(int charge)
 {
     mopac.setTotalCharge(charge);
+    
+    if (charge != 0)
+        //we cannot scale non-zero total charge molecules
+        QMChargeCalculator::setScaleFactor(1.0);
 }
 
 /** Return the total charge of the molecule whose charges are being generated */
 int AM1BCC::totalCharge() const
 {
     return mopac.totalCharge();
+}
+
+/** Set the scale factor for the charges */
+void AM1BCC::setScaleFactor(double sclfac)
+{
+    if (sclfac != 1 and this->totalCharge() != 0)
+        throw SireError::incompatible_error( QObject::tr(
+            "It is not possible to use a scaling factor (%1) with a molecule "
+            "with a non-zero total charge (charge == %2)")
+                .arg(sclfac).arg(this->totalCharge()), CODELOC );
+                
+    QMChargeCalculator::setScaleFactor(sclfac);
 }
 
 static QString getOutput(const QString &filename)
@@ -302,7 +318,8 @@ static void addChargesToAC(const AtomCharges &mulliken_charges,
     }
 }
 
-static AtomCharges extractAM1BCC(const QString &file, const Molecule &molecule)
+static AtomCharges extractAM1BCC(const QString &file, const Molecule &molecule,
+                                 const double sclfac)
 {
     QFile f(file);
 
@@ -342,7 +359,7 @@ static AtomCharges extractAM1BCC(const QString &file, const Molecule &molecule)
             
             bool ok;
             
-            Charge chg = words[8].toDouble(&ok) * mod_electron;
+            Charge chg = sclfac * words[8].toDouble(&ok) * mod_electron;
 
             if (not ok)
             {
@@ -406,7 +423,7 @@ AtomCharges AM1BCC::convertAM1MullikenToAM1BCC(const AtomCharges &mulliken_charg
             tmpdir.path(), env);
 
     //finally(!) read the output AC file and extract all of the AM1-BCC charges
-    return ::extractAM1BCC( am1bccfile, molecule );
+    return ::extractAM1BCC( am1bccfile, molecule, this->scaleFactor() );
 }
 
 /** Return the amber directory (AMBERHOME) */

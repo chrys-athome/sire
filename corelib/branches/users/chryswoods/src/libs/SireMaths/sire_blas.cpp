@@ -99,9 +99,9 @@ NVector SIREMATHS_EXPORT dgemv(const NMatrix &A, const NVector &X)
     ALPHA = 1;
     BETA = 0;
     
-    SireDGEMV( &TRANSA, &M, &N, &ALPHA, A.constData(),
-               &LDA, X.constData(), &INCX, &BETA,
-               Y.data(), &INCY );
+    ::SireDGEMV( &TRANSA, &M, &N, &ALPHA, A.constData(),
+                 &LDA, X.constData(), &INCX, &BETA,
+                 Y.data(), &INCY );
 
     return Y;
 }
@@ -141,9 +141,9 @@ NVector SIREMATHS_EXPORT dgemv(double alpha, const NMatrix &A, const NVector &X,
     ALPHA = alpha;
     BETA = beta;
     
-    SireDGEMV( &TRANSA, &M, &N, &ALPHA, A.constData(),
-               &LDA, X.constData(), &INCX, &BETA,
-               RESULT.data(), &INCY );
+    ::SireDGEMV( &TRANSA, &M, &N, &ALPHA, A.constData(),
+                 &LDA, X.constData(), &INCX, &BETA,
+                 RESULT.data(), &INCY );
 
     return RESULT;
 }
@@ -192,9 +192,9 @@ NMatrix SIREMATHS_EXPORT dgemm(const NMatrix &A, const NMatrix &B)
     double ALPHA = 1;
     double BETA = 0;
 
-    SireDGEMM( &TRANSA, &TRANSB, &M, &N, &K, 
-               &ALPHA, A.constData(), &LDA,
-               B.constData(), &LDB, &BETA, C.data(), &LDC );
+    ::SireDGEMM( &TRANSA, &TRANSB, &M, &N, &K, 
+                 &ALPHA, A.constData(), &LDA,
+                 B.constData(), &LDB, &BETA, C.data(), &LDC );
                
     return C;
 }
@@ -251,9 +251,9 @@ NMatrix dgemm(double alpha, const NMatrix &A, const NMatrix &B,
     double ALPHA = alpha;
     double BETA = beta;
 
-    SireDGEMM( &TRANSA, &TRANSB, &M, &N, &K, 
-               &ALPHA, A.constData(), &LDA,
-               B.constData(), &LDB, &BETA, RESULT.data(), &LDC );
+    ::SireDGEMM( &TRANSA, &TRANSB, &M, &N, &K, 
+                 &ALPHA, A.constData(), &LDA,
+                 B.constData(), &LDB, &BETA, RESULT.data(), &LDC );
                
     return RESULT;
 }

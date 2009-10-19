@@ -89,6 +89,10 @@ public:
     static const char* typeName();
     
     virtual QMChargeCalculator* clone() const=0;
+
+    virtual void setScaleFactor(double sclfactor);
+    
+    double scaleFactor() const;
     
     virtual AtomCharges operator()(const PartialMolecule &molecule,
                                    const PropertyMap &map = PropertyMap()) const=0;
@@ -107,6 +111,10 @@ protected:
     
     bool operator==(const QMChargeCalculator &other) const;
     bool operator!=(const QMChargeCalculator &other) const;
+
+private:
+    /** The scale factor that multiples the calculated charges */
+    double sclfac;
 };
 
 /** This is a null charge calculator - this returns zero 

@@ -52,9 +52,10 @@ static const RegisterMetaType<QMChargeCalculator> r_chgcalc( MAGIC_ONLY,
 QDataStream SIRESYSTEM_EXPORT &operator<<(QDataStream &ds,
                                           const QMChargeCalculator &chgcalc)
 {
-    writeHeader(ds, r_chgcalc, 1);
+    writeHeader(ds, r_chgcalc, 2);
     
-    ds << static_cast<const Property&>(chgcalc);
+    ds << chgcalc.sclfac
+       << static_cast<const Property&>(chgcalc);
     
     return ds;
 }
@@ -65,23 +66,29 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
 {
     VersionID v = readHeader(ds, r_chgcalc);
     
-    if (v == 1)
+    if (v == 2)
+    {
+        ds >> chgcalc.sclfac >> static_cast<Property&>(chgcalc);
+    }
+    else if (v == 1)
     {
         ds >> static_cast<Property&>(chgcalc);
+        
+        chgcalc.sclfac = 1;
     }
     else
-        throw version_error(v, "1", r_chgcalc, CODELOC);
+        throw version_error(v, "1,2", r_chgcalc, CODELOC);
         
     return ds;
 }
 
 /** Constructor */
-QMChargeCalculator::QMChargeCalculator() : Property()
+QMChargeCalculator::QMChargeCalculator() : Property(), sclfac(1)
 {}
 
 /** Copy constructor */
 QMChargeCalculator::QMChargeCalculator(const QMChargeCalculator &other)
-                   : Property(other)
+                   : Property(other), sclfac(other.sclfac)
 {}
 
 /** Destructor */
@@ -91,6 +98,7 @@ QMChargeCalculator::~QMChargeCalculator()
 /** Copy assignment operator */
 QMChargeCalculator& QMChargeCalculator::operator=(const QMChargeCalculator &other)
 {
+    sclfac = other.sclfac;
     Property::operator=(other);
     return *this;
 }
@@ -98,13 +106,13 @@ QMChargeCalculator& QMChargeCalculator::operator=(const QMChargeCalculator &othe
 /** Comparison operator */
 bool QMChargeCalculator::operator==(const QMChargeCalculator &other) const
 {
-    return Property::operator==(other);
+    return sclfac == other.sclfac and Property::operator==(other);
 }
 
 /** Comparison operator */
 bool QMChargeCalculator::operator!=(const QMChargeCalculator &other) const
 {
-    return Property::operator!=(other);
+    return sclfac != other.sclfac or Property::operator!=(other);
 }
 
 const char* QMChargeCalculator::typeName()
@@ -117,6 +125,18 @@ AtomCharges QMChargeCalculator::calculate(const PartialMolecule &molecule,
                                         const PropertyMap &map) const
 {
     return this->operator()(molecule, map);
+}
+
+/** Return the scale factor for the charges */
+double QMChargeCalculator::scaleFactor() const
+{
+    return sclfac;
+}
+
+/** Set the scale factor for the charges */
+void QMChargeCalculator::setScaleFactor(double scl)
+{
+    sclfac = scl;
 }
 
 static SharedPolyPointer<NullQMChargeCalculator> shared_null;
