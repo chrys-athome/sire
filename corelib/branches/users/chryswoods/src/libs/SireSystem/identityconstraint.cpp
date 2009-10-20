@@ -2270,7 +2270,8 @@ IdentityConstraint::IdentityConstraint()
 IdentityConstraint::IdentityConstraint(const MoleculeGroup &molgroup,
                                        const PropertyMap &map)
                    : ConcreteProperty<IdentityConstraint,MoleculeConstraint>(),
-                     d( new ManyPointsHelper(molgroup, map) )
+                     d( static_cast<IdentityConstraintPvt*>(
+                                new ManyPointsHelper(molgroup, map) ) )
 {}
 
 /** Construct the constraint that constrains the identity of a single
@@ -2282,7 +2283,8 @@ IdentityConstraint::IdentityConstraint(const PointRef &point,
                                        const MoleculeGroup &molgroup,
                                        const PropertyMap &map)
                    : ConcreteProperty<IdentityConstraint,MoleculeConstraint>(),
-                     d( new SinglePointHelper(molgroup, point, map) )
+                     d( static_cast<IdentityConstraintPvt*>(
+                                new SinglePointHelper(molgroup, point, map) ) )
 {}
 
 /** Construct the constraint that constrains the identities of the 
@@ -2300,22 +2302,26 @@ IdentityConstraint::IdentityConstraint(const QVector<PointPtr> &points,
         d = IdentityConstraintPvt::null();
     
     else if (points.count() == 1)
-        d = new SinglePointHelper(molgroup, points.first(), map);
+        d = static_cast<IdentityConstraintPvt*>(
+                    new SinglePointHelper(molgroup, points.first(), map) );
     
     else if (points.count() > 0.5 * molgroup.nMolecules())
-        d = new ManyPointsHelper(molgroup, points, map);
+        d = static_cast<IdentityConstraintPvt*>(
+                    new ManyPointsHelper(molgroup, points, map) );
         
     else
-        d = new FewPointsHelper(molgroup, points, map);
+        d = static_cast<IdentityConstraintPvt*>(
+                    new FewPointsHelper(molgroup, points, map) );
 }                  
 
 /** Function used for debugging that switches this object over
     to using the many points algorithm to apply the constraint */
 void IdentityConstraint::useManyPointsAlgorithm()
 {
-    d = new ManyPointsHelper( this->moleculeGroup(),
-                              this->points(),
-                              this->propertyMap() );
+    d = static_cast<IdentityConstraintPvt*>(
+                new ManyPointsHelper( this->moleculeGroup(),
+                                      this->points(),
+                                      this->propertyMap() ) );
 
     this->updatedFrom( System() );
 }
@@ -2324,9 +2330,10 @@ void IdentityConstraint::useManyPointsAlgorithm()
     to using the few points algorithm to apply the constraint */
 void IdentityConstraint::useFewPointsAlgorithm()
 {
-    d = new FewPointsHelper( this->moleculeGroup(),
-                             this->points(),
-                             this->propertyMap() );
+    d = static_cast<IdentityConstraintPvt*>(
+                new FewPointsHelper( this->moleculeGroup(),
+                                     this->points(),
+                                     this->propertyMap() ) );
 
     this->updatedFrom( System() );
 }
@@ -2344,9 +2351,10 @@ void IdentityConstraint::useSinglePointAlgorithm()
                 "is just a single point - not when there are %1 points.")
                     .arg(this->points().count()), CODELOC );
                     
-    d = new SinglePointHelper( this->moleculeGroup(),
-                               this->points().first(),
-                               this->propertyMap() );
+    d = static_cast<IdentityConstraintPvt*>(
+                        new SinglePointHelper( this->moleculeGroup(),
+                                               this->points().first(),
+                                               this->propertyMap() ) );
 
     this->updatedFrom( System() );
 }
@@ -2366,7 +2374,8 @@ IdentityConstraint::IdentityConstraint(const QList<PointPtr> &points,
         d = IdentityConstraintPvt::null();
     
     else if (points.count() == 1)
-        d = new SinglePointHelper(molgroup, points.first(), map);
+        d = static_cast<IdentityConstraintPvt*>(
+                        new SinglePointHelper(molgroup, points.first(), map) );
     
     else
     {
