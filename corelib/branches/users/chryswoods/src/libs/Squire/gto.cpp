@@ -183,7 +183,7 @@ const GTO& GTO::null()
         QMutexLocker lkr( globalLock() );
         
         if (global_null_gto.constData() == 0)
-            global_null_gto = new S_GTO();
+            global_null_gto = static_cast<GTO*>(new S_GTO());
     }
     
     return *(global_null_gto.constData());
@@ -374,7 +374,7 @@ const GTOPair& GTOPair::null()
         QMutexLocker lkr( globalLock() );
         
         if (global_null_gtopair.constData() == 0)
-            global_null_gtopair = new SS_GTO();
+            global_null_gtopair = static_cast<GTOPair*>(new SS_GTO());
     }
     
     return *(global_null_gtopair.constData());

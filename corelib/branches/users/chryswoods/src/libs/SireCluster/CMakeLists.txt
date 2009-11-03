@@ -9,9 +9,7 @@
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
-find_package( MPI )
-
-if (MPI_FOUND)
+if ( SIRE_USE_MPI )
   message( STATUS " ** Adding MPI support to SireCluster ** " )
   message( STATUS "MPI headers: ${MPI_INCLUDE_PATH}" )
   message( STATUS "MPI libraries: ${MPI_LIBRARY} ${MPI_EXTRA_LIBRARY}" )

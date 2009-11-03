@@ -180,6 +180,17 @@ endif()
 
 save_sire_variable( "SIRE_USE_LAPACK" "${SIRE_USE_LAPACK}" )
 
+# Now look for MPI libraries
+find_package( MPI )
+
+if (MPI_FOUND)
+  message( STATUS "Found MPI, so switching MPI support on" )
+  set ( SIRE_USE_MPI ON )
+else()
+  message( STATUS "MPI could not be found. MPI support switched off" )
+  set ( SIRE_USE_MPI OFF )
+endif()
+
 # Now run some platform tests - the results will be placed in config.h
 include (CheckIncludeFiles)
 include (CheckSymbolExists)
