@@ -20,14 +20,7 @@ if ( SIRE_USE_MPI )
   add_definitions( -DSIRE_USE_MPI )
 endif()
 
-# Define the sources in sire
-set ( SIRE_HEADERS
-      restartpacket.h
-    )
-
 set ( SIRE_SOURCES
-
-      restartpacket.cpp
 
       main.cpp
 

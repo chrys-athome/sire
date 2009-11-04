@@ -6,6 +6,9 @@
 
 #include <cstdio>
 
+#include <QFile>
+#include <QByteArray>
+
 #include "SireError/errors.h"
 #include "SireError/printerror.h"
 
@@ -16,9 +19,21 @@
 
 #include "SireBase/process.h"
 
-#include "restartpacket.h"
+#include "SireSystem/system.h"
+#include "SireMove/suprasystem.h"
+
+#include "SireMove/moves.h"
+#include "SireMove/supramoves.h"
+
+#include "SireMove/simpacket.h"
+#include "SireMove/suprasimpacket.h"
+
+#include "SireStream/streamdata.hpp"
 
 using namespace SireCluster;
+using namespace SireMove;
+using namespace SireSystem;
+using namespace SireStream;
 
 using std::printf;
 
@@ -63,6 +78,103 @@ void fatal_error_signal (int sig)
 
 #endif // Q_OS_UNIX
 
+void throwIncompatibleError(const Property *p0, const Property *p1)
+{
+    throw SireError::incompatible_error( QObject::tr(
+        "We can only perform a restart simulation "
+        "with a System and Move(s) object, or with a SupraSystem and "
+        "SupraMove(s) object. It cannot work with a %1 and %2.")
+            .arg(p0->what()).arg(p1->what()), CODELOC );
+}
+
+/** This reads a simulation restart file and creates a workpacket
+    to run the next step in the simulation */
+WorkPacket createWorkPacket(const char *filename,
+                            int nmoves, bool record_stats)
+{
+    //read the contents of the restart file into memory
+    QFile f(filename);
+
+    if (not f.open( QIODevice::ReadOnly) )
+        throw SireError::file_error(f, CODELOC);
+    
+    QByteArray restart_data = f.readAll();
+
+    if (restart_data.isEmpty())
+        throw SireError::file_error( QObject::tr(
+            "There was an error reading data from the file %1. Either "
+            "the file is empty, or some read error has occured.")
+                .arg(filename), CODELOC );
+
+    //sanity check the header
+    {
+        FileHeader header = SireStream::getDataHeader(restart_data);
+    
+        if (header.dataTypes().count() != 2)
+        {
+            throw SireError::incompatible_error( QObject::tr(
+                "A RestartPacket can only process a restart file that contains "
+                "two objects; the first should be the System or SupraSystem to "
+                "be simulated, while the second should be the moves to be "
+                "applied. The types available in the passed restart file "
+                "are [ %1 ].").arg(header.dataTypes().join(", ")), CODELOC );
+        }
+    }
+    
+    //unpack the binary data
+    QList< boost::tuple<boost::shared_ptr<void>,QString> > objects 
+                         = SireStream::load(restart_data);
+    
+    if (not objects.count() == 2)
+        throw SireError::file_error( QObject::tr(
+            "The restart file may be corrupted as despite the header claiming "
+            "there were two objects, the number of objects is actually equal "
+            "to %1.").arg(objects.count()), CODELOC );
+    
+    //the objects must both be derived from Property - if they are not
+    //then this will cause a segfault
+    Property *p0 = static_cast<Property*>(objects[0].get<0>().get());
+    Property *p1 = static_cast<Property*>(objects[1].get<0>().get());
+    
+    //the first object should be derived from System or SupraSystem
+    if (p0->isA<System>())
+    {
+        //the second object must be a 'Move' or 'Moves'
+        if (p1->isA<Moves>())
+        {
+            return SimPacket(p0->asA<System>(), p1->asA<Moves>(),
+                             nmoves, record_stats);
+        }
+        else if (p1->isA<Move>())
+        {
+            return SimPacket(p0->asA<System>(), SameMoves(p1->asA<Move>()),
+                             nmoves, record_stats);
+        }
+        else
+            ::throwIncompatibleError(p0, p1);
+    }
+    else if (p0->isA<SupraSystem>())
+    {
+        //the second object must be a 'SupraMove' or 'SupraMoves'
+        if (p1->isA<SupraMoves>())
+        {
+            return SupraSimPacket(p0->asA<SupraSystem>(), p1->asA<SupraMoves>(),
+                                  nmoves, record_stats);
+        }
+        else if (p1->isA<SupraMove>())
+        {
+            return SupraSimPacket(p0->asA<SupraSystem>(),
+                                  SameSupraMoves(p1->asA<SupraMove>()),
+                                  nmoves, record_stats);
+        }
+        else
+            ::throwIncompatibleError(p0, p1);
+    }
+    else
+        ::throwIncompatibleError(p0, p1);
+        
+    return WorkPacket();
+}
 
 int main(int argc, char **argv)
 {
@@ -113,31 +225,47 @@ int main(int argc, char **argv)
 
                 Nodes nodes = Cluster::getNodes(nrestarts);
 
+                ThisThread this_thread = nodes.borrowThisThread();
+
                 QList<Promise> promises;
+                QList<const char*> running_files;
  
                 //submit all of the simulations
                 for (int i=0; i<nrestarts; ++i)
                 {
-                    Node node = nodes.getNode();
-                    printf("\nRunning simulation %d of %d: %s\n", 
-                           i+1, nrestarts, argv[i+1]);
-                           
-                    promises.append( node.startJob( 
-                                Sire::RestartPacket( QLatin1String(argv[i+1]) ) ) );
+                    try 
+                    {
+                        //create a workpacket for this simulation
+                        WorkPacket workpacket = createWorkPacket(argv[i+1], 1, true);
+
+                        printf("\nRunning simulation %d of %d: %s\n", 
+                               i+1, nrestarts, argv[i+1]);
+                        
+                        Node node = nodes.getNode();
+                        
+                        promises.append( node.startJob(workpacket) ); 
+                        running_files.append( argv[i+1] );
+                    }
+                    catch (const SireError::exception &e) 
+                    {
+                        printf("\nThere was a problem when reading %s.\n", argv[i+1]);
+                        SireError::printError(e);
+                    }
                 }
                 
                 //wait for them all to finish
-                for (int i=0; i<nrestarts; ++i)
+                for (int i=0; i < promises.count(); ++i)
                 {
                     promises[i].wait();
                 }
 
                 //did any simulations finish in error?
-                for (int i=0; i<nrestarts; ++i)
+                for (int i=0; i < promises.count(); ++i)
                 {
                     if (promises[i].isError())
                     {
-                        printf("\nThere was a problem when running %s.\n", argv[i+1]);
+                        printf("\nThere was a problem when running %s.\n",
+                               running_files[i]);
                         
                         try
                         {
