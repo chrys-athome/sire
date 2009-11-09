@@ -20,6 +20,13 @@ if ( SIRE_USE_MPI )
   add_definitions( -DSIRE_USE_MPI )
 endif()
 
+set ( SIRE_RCCS
+
+      sire.qrc
+    )
+
+QT4_ADD_RESOURCES( SIRE_RCC_SRCS ${SIRE_RCCS} )
+
 set ( SIRE_SOURCES
 
       main.cpp
@@ -28,7 +35,7 @@ set ( SIRE_SOURCES
     )
 
 # generate the application
-add_executable ( sire ${SIRE_SOURCES} )
+add_executable ( sire ${SIRE_SOURCES} ${SIRE_RCC_SRCS} )
 
 set_target_properties (sire PROPERTIES
                        VERSION ${SIRE_VERSION}

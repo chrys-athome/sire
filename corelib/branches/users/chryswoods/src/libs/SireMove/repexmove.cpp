@@ -665,8 +665,6 @@ static SupraSubSim submitSimulation(Nodes &nodes, const Replica &replica,
 {
     Node node = nodes.getNode();
 
-    qDebug() << "Reserving node" << node.UID();
-
     return SupraSubSim::run( node, replica, RepExSubMove(), 1, record_stats );
 }
 
@@ -684,8 +682,6 @@ static QPair<SupraSubSim,SupraSubSim> submitSimulation(
     //the node is released once the simulation has finished
     {
         Node node_a = nodes.getNode();
-
-        qDebug() << "Reserving node" << node_a.UID();
         
         sims.first = SupraSubSim::run( node_a, replica_a,
                                        RepExSubMove(replica_a, replica_b),
@@ -693,8 +689,6 @@ static QPair<SupraSubSim,SupraSubSim> submitSimulation(
     }
      
     Node node_b = nodes.getNode();
-
-    qDebug() << "Reserving node" << node_b.UID();
 
     sims.second = SupraSubSim::run( node_b, replica_b,
                                     RepExSubMove(replica_b, replica_a),

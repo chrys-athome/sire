@@ -9,6 +9,8 @@ from Sire.CAS import *
 from Sire.Vol import *
 from Sire.Units import *
 
+import Sire.Stream
+
 protodir = "/Users/chris/Work/ProtoMS"
 
 print "Parameterising the oscillator..."
@@ -89,6 +91,8 @@ def printInfo(replicas):
         print "      Acceptance ratio = %f %%" % (100 * zmatmove.acceptanceRatio())
 
 printInfo(replicas)
+
+#Sire.Stream.save( (replicas, repexmove), "test/SireMove/reti_oscillator.s3" )
 
 for i in range(0,10):
     sim = SupraSim.run( replicas, repexmove, 1 )

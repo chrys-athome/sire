@@ -298,11 +298,35 @@ QByteArray save(const T &old_obj)
     return detail::streamDataSave( &old_obj, old_obj.what() );
 }
 
+template<class T0, class T1>
+SIRE_OUTOFLINE_TEMPLATE
+QByteArray save(const T0 &obj0, const T1 &obj1)
+{
+    QList< boost::tuple<const void*,const char*> > objects;
+    
+    objects.append( boost::tuple<const void*,const char*>( &obj0, obj0.what() ) );
+    objects.append( boost::tuple<const void*,const char*>( &obj1, obj1.what() ) );
+    
+    return detail::streamDataSave( objects );
+}
+
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-void save(const T &old_obj, const QString &filename)
+void saveToFile(const T &old_obj, const QString &filename)
 {
     detail::streamDataSave( &old_obj, old_obj.what(), filename );
+}
+
+template<class T0, class T1>
+SIRE_OUTOFLINE_TEMPLATE
+void saveToFile(const T0 &obj0, const T1 &obj1, const QString &filename)
+{
+    QList< boost::tuple<const void*,const char*> > objects;
+    
+    objects.append( boost::tuple<const void*,const char*>( &obj0, obj0.what() ) );
+    objects.append( boost::tuple<const void*,const char*>( &obj1, obj1.what() ) );
+    
+    detail::streamDataSave( objects, filename );
 }
 
 #endif // SIRE_SKIP_INLINE_FUNCTIONS
