@@ -832,6 +832,8 @@ int main(int argc, char **argv)
 
                 printOut("\n");
 
+                QVector<int> error_count(nrestarts, 0);
+
                 for (int ir=0; ir<repeat; ++ir)
                 {
                     const QDateTime time_start = QDateTime::currentDateTime();
@@ -847,13 +849,27 @@ int main(int argc, char **argv)
                     ThisThread this_thread = nodes.borrowThisThread();
 
                     QList<Promise> promises;
+                    QList<int> restart_idxs;
                     QStringList running_files;
+
+                    int nskipped = 0;
  
                     //submit all of the simulations
                     for (int i=0; i<nrestarts; ++i)
                     {
                         const RestartFile &r = restart_files.at(i);
                 
+                        if (error_count[i] > 5)
+                        {
+                            printOut( QObject::tr(
+                                "Skipping %1 as it has failed five times in a row!")
+                                    .arg(r.filename) );
+
+                            ++nskipped;
+
+                            continue;
+                        }
+                    
                         try 
                         {
                             //create a workpacket for this simulation
@@ -868,6 +884,7 @@ int main(int argc, char **argv)
                         
                             promises.append( node.startJob(workpacket) ); 
                             running_files.append( r.filename );
+                            restart_idxs.append( i );
                         }
                         catch (const SireError::exception &e) 
                         {
@@ -875,7 +892,16 @@ int main(int argc, char **argv)
                                         .arg(r.filename) );
 
                             SireError::printError(e);
+                            
+                            error_count[i] += 1;
                         }
+                    }
+
+                    if (nskipped == nrestarts)
+                    {
+                        printBox( QObject::tr(
+                                    "All restart files have finished in error!") );
+                        break;
                     }
                 
                     //wait for them all to finish
@@ -898,6 +924,11 @@ int main(int argc, char **argv)
                                 
                             //save the files to the new binary restart file
                             saveRestartFile(promises[i].result(), newfile);
+                            
+                            //update the name of this restart file (for repetitions)
+                            restart_files[ restart_idxs[i] ].filename = newfile;
+                            
+                            error_count[ restart_idxs[i] ] = 0;
                         }
                     }
 
@@ -908,6 +939,8 @@ int main(int argc, char **argv)
                         {
                             printOut( QObject::tr("There was a problem when running %1.")
                                         .arg(running_files[i]) );
+                        
+                            error_count[ restart_idxs[i] ] += 1;
                         
                             try
                             {
