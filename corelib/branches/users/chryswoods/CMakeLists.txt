@@ -121,7 +121,7 @@ option ( SIRE_VECTORISE "Turn on code vectorisation" ON )
 save_sire_variable( "SIRE_VECTORISE" "${SIRE_VECTORISE}" )
 
 # Sire depends on >= Qt 4.2
-find_package( Qt4 4.2.0 COMPONENTS QtCore QtGui QtOpenGL QtWebKit )
+find_package( Qt4 4.2.0 COMPONENTS QtCore QtXml QtGui QtOpenGL QtWebKit )
 
 if ( ${QT_QTCORE_FOUND} )
    include (${QT_USE_FILE})

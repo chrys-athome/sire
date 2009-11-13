@@ -1,5 +1,5 @@
-#ifndef SIREGLOBAL_H
-#define SIREGLOBAL_H
+#ifndef SIRENGLOBAL_H
+#define SIRENGLOBAL_H
 
 /** This file contains some global macros that are used
     to improve the portability of the code. */
@@ -19,85 +19,86 @@
 #undef CODELOC
 #endif
 
-#define CODELOC QString("FILE: %1, LINE: %2, FUNCTION: %3").arg(__FILE__).arg(__LINE__).arg(BOOST_CURRENT_FUNCTION)
+#define CODELOC \
+   QObject::tr("FILE: %1, LINE: %2, FUNCTION: %3") \
+           .arg(__FILE__).arg(__LINE__).arg(BOOST_CURRENT_FUNCTION)
 
 //copy the QT_BEGIN_HEADER and QT_END_HEADER
 //to SIRE_BEGIN_HEADER and SIRE_END_HEADER. This
 //will allow me to change their definition at some
-//future point in time without having to mess with
-//Qt
-#define SIRE_BEGIN_HEADER QT_BEGIN_HEADER
-#define SIRE_END_HEADER QT_END_HEADER
+//future point in time without having to mess with Qt
+#define SIREN_BEGIN_HEADER QT_BEGIN_HEADER
+#define SIREN_END_HEADER QT_END_HEADER
 
 //create keywords that control whether classes or functions are
 //exposed to a scripting language
-#define SIRE_EXPOSE_FUNCTION(f)  /* Exposing function #1 */
-#define SIRE_EXPOSE_CLASS(c)     /* Exposing class #1 */
-#define SIRE_EXPOSE_ALIAS(c,a)   /* Exposing class #1 as alias #2 */
-#define SIRE_EXPOSE_PROPERTY(c,a)  /* Exposing property #1 of base class #2 */
-#define SIRE_EXPOSE_ATOM_PROPERTY(c,a) /* Exposing atom property #1 with alias #2 */
-#define SIRE_EXPOSE_CUTGROUP_PROPERTY(c,a) /* Exposing CutGroup property #1 with alias #2 */
-#define SIRE_EXPOSE_RESIDUE_PROPERTY(c,a) /* Exposing residue property #1 with alias #2 */
-#define SIRE_EXPOSE_CHAIN_PROPERTY(c,a) /* Exposing chain property #1 with alias #2 */
-#define SIRE_EXPOSE_SEGMENT_PROPERTY(c,a) /* Exposing segment property #1 with alias #2 */
+#define SIREN_EXPOSE_FUNCTION(f)  /* Exposing function #1 */
+#define SIREN_EXPOSE_CLASS(c)     /* Exposing class #1 */
+#define SIREN_EXPOSE_ALIAS(c,a)   /* Exposing class #1 as alias #2 */
+#define SIREN_EXPOSE_PROPERTY(c,a)  /* Exposing property #1 of base class #2 */
+#define SIREN_EXPOSE_ATOM_PROPERTY(c,a) /* Exposing atom property #1 with alias #2 */
+#define SIREN_EXPOSE_CUTGROUP_PROPERTY(c,a) /* Exposing CutGroup property #1 with alias #2 */
+#define SIREN_EXPOSE_RESIDUE_PROPERTY(c,a) /* Exposing residue property #1 with alias #2 */
+#define SIREN_EXPOSE_CHAIN_PROPERTY(c,a) /* Exposing chain property #1 with alias #2 */
+#define SIREN_EXPOSE_SEGMENT_PROPERTY(c,a) /* Exposing segment property #1 with alias #2 */
 
 //create the keyword used to export a symbol - this
 //is a copy of Q_DECL_EXPORT, which will definitely
 //be set to the correct value
-#ifndef SIRE_NO_VISIBILITY_AVAILABLE
-#define SIRE_EXPORT Q_DECL_EXPORT
+#ifndef SIREN_NO_VISIBILITY_AVAILABLE
+#define SIREN_EXPORT Q_DECL_EXPORT
 
 //create the keyword to import a symbol - this is copied
 //from Q_DECL_IMPORT, which will definitely be set to
 //the correct value
-#define SIRE_IMPORT Q_DECL_IMPORT
+#define SIREN_IMPORT Q_DECL_IMPORT
 #else
-#define SIRE_EXPORT
-#define SIRE_IMPORT
+#define SIREN_EXPORT
+#define SIREN_IMPORT
 #endif
 
 //create the keyword to fix symbol visibility problems for out-of-line
 //template functions
-#define SIRE_OUTOFLINE_TEMPLATE Q_OUTOFLINE_TEMPLATE
+#define SIREN_OUTOFLINE_TEMPLATE Q_OUTOFLINE_TEMPLATE
 
 //do the same for inline template functions
-#define SIRE_INLINE_TEMPLATE Q_INLINE_TEMPLATE
+#define SIREN_INLINE_TEMPLATE Q_INLINE_TEMPLATE
 
 //Sire is much more picky about what the compiler can support
 //than Qt - use the results of the Qt portability tests
 //to check that the C++ compiler is up to scratch
 
 #ifdef Q_BROKEN_TEMPLATE_SPECIALIZATION
-#error Sire requires a C++ compiler that can handle templates in \
+#error Siren requires a C++ compiler that can handle templates in \
        a standards compliant manner. Please use a more recent version \
        of your compiler, or try gcc >= 3.0
 #endif
 
 #ifdef QT_NO_PARTIAL_TEMPLATE_SPECIALIZATION
-#error Sire requires that the C++ compiler supports \
+#error Siren requires that the C++ compiler supports \
        partial template specialization. Please use a more \
      recent version of your compiler, or try gcc >= 3.0
 #endif
 
 #ifdef Q_NO_USING_KEYWORD
-#error Sire requires that the C++ compiler supports the 'using' \
+#error Siren requires that the C++ compiler supports the 'using' \
        keyword. Please use a more recent version of your compiler \
      or try gcc >= 3.0
 #endif
 
 #ifdef QT_NO_MEMBER_TEMPLATES
-#error Sire requires that the C++ compiler supports the use of \
+#error Siren requires that the C++ compiler supports the use of \
        member templates. Please use a more recent version of your \
      compiler or try gcc >= 3.0
 #endif
 
 #ifdef QT_NO_THREAD
-#error Sire requires that Qt was built with threading enabled. \
+#error Siren requires that Qt was built with threading enabled. \
        Please recompile Qt with threading enabled.
 #endif
 
 #ifdef QT_NO_TEXTSTREAM
-#error Sire requires that Qt was built with QTextStream enabled \
+#error Siren requires that Qt was built with QTextStream enabled \
        Please recompile Qt with QTextStream enabled.
 #endif
 
@@ -105,10 +106,6 @@
 //are available
 #if  !(QT_EDITION & QT_MODULE_CORE)
 #error Sire requires that the QtCore module is enabled.
-#endif
-
-#if !(QT_EDITION & QT_MODULE_SQL)
-#error Sire requires that the QtSql module is enabled.
 #endif
 
 /** These functions convert a pointer into an integer.
@@ -210,47 +207,56 @@
 //created dynamically)
 #include <QMetaType>
 
-namespace Sire
+namespace Siren
 {
-typedef quint32 MagicID;
 
-MagicID getMagic(const char *type_name);
+typedef quint64 CLASS_UID;
+typedef quint32 VERSION_ID;
+typedef quint32 HASH_CODE;
 
-/** Enum used to register with only the magic ID */
-enum MagicOnlyEnum{ MAGIC_ONLY = 1 };
 /** Enum used to register without using the streaming operators */
-enum NoStreamEnum{ NO_STREAM = 2 };
+enum VirtualClassEnum{ VIRTUAL_CLASS = 1 };
+
+namespace detail
+{
 
 class RegisterMetaTypeBase
 {
 public:
-    RegisterMetaTypeBase(MagicID magic, const char *type_name, int ID)
-          : magicid(magic), typnam(type_name), id(ID)
+    RegisterMetaTypeBase(CLASS_UID c_uid, VERSION_ID v_id, const QString &name)
+          : class_uid(c_uid), version_id(v_id), type_name(name)
     {}
 
     ~RegisterMetaTypeBase()
     {}
 
-    MagicID magicID() const
+    CLASS_UID UID() const
     {
-        return magicid;
+        return class_uid;
     }
 
-    const char* typeName() const
+    HASH_CODE hashBase() const
     {
-        return typnam;
+        return (class_uid / 0xF0000000);
     }
 
-    int ID() const
+    VERSION_ID version() const
     {
-        return id;
+        return version_id;
+    }
+
+    QString typeName() const
+    {
+        return type_name;
     }
 
 private:
-    MagicID magicid;
-    const char *typnam;
-    int id;
+    CLASS_UID class_uid;
+    VERSION_ID version_id;
+    QString type_name;
 };
+
+} // end of namespace detail
 
 /** This is used to register the type 'T' - this
     needs to be called once for each public type.
@@ -258,57 +264,49 @@ private:
     @author Christopher Woods
 */
 template<class T>
-class RegisterMetaType : public RegisterMetaTypeBase
+class RegisterMetaType : public detail::RegisterMetaTypeBase
 {
 public:
-
-    /** Use this constructor to register a concrete class */
-    RegisterMetaType()
-        : RegisterMetaTypeBase( getMagic( QMetaType::typeName( qMetaTypeId<T>() ) ),
-                                QMetaType::typeName( qMetaTypeId<T>() ),
-                                qMetaTypeId<T>() )
+    /** Use this constructor to register a class */
+    RegisterMetaType( CLASS_UID class_uid, VERSION_ID version_id )
+        : detail::RegisterMetaTypeBase( class_uid, version_id,
+                                        QMetaType::typeName( qMetaTypeId<T>() ) )
     {
         qRegisterMetaType<T>(this->typeName());
         qRegisterMetaTypeStreamOperators<T>(this->typeName());
+     
+        //build the full inheritance and interface hierarchy of this class
+        T::registerInheritance();
+        
+        singleton = this;
     }
 
-    /** Use this construct to register a pure-virtual class */
-    RegisterMetaType(MagicOnlyEnum, const char *type_name)
-        : RegisterMetaTypeBase( getMagic(type_name), type_name, 0 )
-    {}
-
-    /** Use this constructor to register a class that cannot be streamed */
-    RegisterMetaType(NoStreamEnum )
-        : RegisterMetaTypeBase( getMagic( QMetaType::typeName( qMetaTypeId<T>() ) ),
-                                QMetaType::typeName( qMetaTypeId<T>() ),
-                                qMetaTypeId<T>() )
+    /** Use this constructor to register a virtual class */
+    RegisterMetaType( VirtualClassEnum, CLASS_UID class_uid, VERSION_ID version_id )
+        : detail::RegisterMetaTypeBase( class_uid, version_id,
+                                        QMetaType::typeName( qMetaTypeId<T>() ) )
     {
-        qRegisterMetaType<T>(this->typeName());
+        singleton = this;
     }
 
     /** Destructor */
     ~RegisterMetaType()
     {}
+
+    static const detail::RegisterMetaTypeBase* getRegistration()
+    {
+        return singleton;
+    }
+
+private:
+    /** Global shared pointer to this singleton object */
+    static const detail::RegisterMetaTypeBase *singleton;
 };
 
-} // namespace Sire
+template<class T>
+const detail::RegisterMetaTypeBase* RegisterMetaType<T>::singleton = 0;
 
-namespace SireStream
-{
-class XMLStream; // This class is used to stream objects to and from XML files
-
-} // namespace SireStream
-
-using Sire::RegisterMetaTypeBase;
-using Sire::RegisterMetaType;
-using Sire::MAGIC_ONLY;
-using Sire::NO_STREAM;
-using Sire::MagicID;
-using Sire::getMagic;
-using SireStream::XMLStream;
-
-class QDataStream;
-class QTextStream;
+} // end of namespace Siren
 
 #else  // else #ifdef __cplusplus
 
@@ -332,43 +330,14 @@ class QTextStream;
 #endif
 ///////////////////////////////////////////////////
 
-#ifndef SIRE_NO_VISIBILITY_AVAILABLE
-#define SIRE_EXPORT Q_DECL_EXPORT
-#define SIRE_IMPORT Q_DECL_IMPORT
+#ifndef SIREN_NO_VISIBILITY_AVAILABLE
+#define SIREN_EXPORT Q_DECL_EXPORT
+#define SIREN_IMPORT Q_DECL_IMPORT
 #else
-#define SIRE_EXPORT
-#define SIRE_IMPORT
+#define SIREN_EXPORT
+#define SIREN_IMPORT
 #endif
 
 #endif // #ifdef __cplusplus
 
-//I now define seperate SIRE_EXPORT macros for each of the different Sire libraries.
-//Eventually these will need to be changed to work properly on windows...
-#define SIREBASE_EXPORT SIRE_EXPORT
-#define SIRECAS_EXPORT SIRE_EXPORT
-#define SIRECLUSTER_EXPORT SIRE_EXPORT
-#define SIREDB_EXPORT SIRE_EXPORT
-#define SIREERROR_EXPORT SIRE_EXPORT
-#define SIREFF_EXPORT SIRE_EXPORT
-#define SIREID_EXPORT SIRE_EXPORT
-#define SIREIO_EXPORT SIRE_EXPORT
-#define SIREMM_EXPORT SIRE_EXPORT
-#define SIREMMDB_EXPORT SIRE_EXPORT
-#define SIREMATHS_EXPORT SIRE_EXPORT
-#define SIREMOL_EXPORT SIRE_EXPORT
-#define SIREMOVE_EXPORT SIRE_EXPORT
-#define SIREMPI_EXPORT SIRE_EXPORT
-#define SIREPY_EXPORT SIRE_EXPORT
-#define SIREQT_EXPORT SIRE_EXPORT
-#define SIRESTREAM_EXPORT SIRE_EXPORT
-#define SIRESYSTEM_EXPORT SIRE_EXPORT
-#define SIRETEST_EXPORT SIRE_EXPORT
-#define SIREUNITTEST_EXPORT SIRE_EXPORT
-#define SIREUNITS_EXPORT SIRE_EXPORT
-#define SIREVOL_EXPORT SIRE_EXPORT
-#define SIREN_EXPORT SIRE_EXPORT
-#define SPIER_EXPORT SIRE_EXPORT
-#define SQUIRE_EXPORT SIRE_EXPORT
-
 #endif // SIREGLOBAL_H
-
