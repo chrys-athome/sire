@@ -31,7 +31,7 @@
 
 #include <QDomNode>
 
-#include "sirenglobal.h"
+#include "detail/sharedpolypointer.hpp"
 
 SIREN_BEGIN_HEADER
 
@@ -51,6 +51,18 @@ public:
     
     void closeChild();
 };
+
+template<class T>
+XMLStream& operator<<(XMLStream&, const detail::SharedPolyPointer<T>&);
+
+template<class T>
+XMLStream& operator>>(XMLStream&, detail::SharedPolyPointer<T>&);
+
+template<class T>
+XMLStream& operator<<(XMLStream&, const detail::GlobalSharedPointer<T>&);
+
+template<class T>
+XMLStream& operator>>(XMLStream&, detail::GlobalSharedPointer<T>&);
 
 }
 

@@ -44,6 +44,8 @@ public:
     Shared();
     
     virtual ~Shared();
+    
+    virtual void detach() const=0;
 };
 
 }

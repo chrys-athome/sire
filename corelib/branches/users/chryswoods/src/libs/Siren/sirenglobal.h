@@ -35,12 +35,7 @@
 #define SIREN_EXPOSE_FUNCTION(f)  /* Exposing function #1 */
 #define SIREN_EXPOSE_CLASS(c)     /* Exposing class #1 */
 #define SIREN_EXPOSE_ALIAS(c,a)   /* Exposing class #1 as alias #2 */
-#define SIREN_EXPOSE_PROPERTY(c,a)  /* Exposing property #1 of base class #2 */
-#define SIREN_EXPOSE_ATOM_PROPERTY(c,a) /* Exposing atom property #1 with alias #2 */
-#define SIREN_EXPOSE_CUTGROUP_PROPERTY(c,a) /* Exposing CutGroup property #1 with alias #2 */
-#define SIREN_EXPOSE_RESIDUE_PROPERTY(c,a) /* Exposing residue property #1 with alias #2 */
-#define SIREN_EXPOSE_CHAIN_PROPERTY(c,a) /* Exposing chain property #1 with alias #2 */
-#define SIREN_EXPOSE_SEGMENT_PROPERTY(c,a) /* Exposing segment property #1 with alias #2 */
+#define SIREN_EXPOSE_OBJECT_PTR(c,a)  /* Exposing pointer #1 to object class #2 */
 
 //create the keyword used to export a symbol - this
 //is a copy of Q_DECL_EXPORT, which will definitely
@@ -272,19 +267,15 @@ public:
         : detail::RegisterMetaTypeBase( class_uid, version_id,
                                         QMetaType::typeName( qMetaTypeId<T>() ) )
     {
-        qRegisterMetaType<T>(this->typeName());
-        qRegisterMetaTypeStreamOperators<T>(this->typeName());
-     
-        //build the full inheritance and interface hierarchy of this class
-        T::registerInheritance();
+        qRegisterMetaType<T>(this->typeName().toAscii().constData());
+        qRegisterMetaTypeStreamOperators<T>(this->typeName().toAscii().constData());
         
         singleton = this;
     }
 
     /** Use this constructor to register a virtual class */
     RegisterMetaType( VirtualClassEnum, CLASS_UID class_uid, VERSION_ID version_id )
-        : detail::RegisterMetaTypeBase( class_uid, version_id,
-                                        QMetaType::typeName( qMetaTypeId<T>() ) )
+        : detail::RegisterMetaTypeBase( class_uid, version_id, T::typeName() )
     {
         singleton = this;
     }

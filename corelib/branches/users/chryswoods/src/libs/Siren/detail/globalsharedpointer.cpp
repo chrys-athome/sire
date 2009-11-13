@@ -48,10 +48,10 @@ QMutex* GlobalSharedPointerBase::registryMutex()
     return globalPointerMutex();
 }
 
-QSet<const void*>& GlobalSharedPointerBase::getRegistry(const char *typname)
+QSet<const void*>& GlobalSharedPointerBase::getRegistry(const QString &typname)
 {
     if (not global_pointers)
         global_pointers = new QHash< QString,QSet<const void*> >();
         
-    return (*global_pointers)[ QLatin1String(typname) ];
+    return (*global_pointers)[typname];
 }

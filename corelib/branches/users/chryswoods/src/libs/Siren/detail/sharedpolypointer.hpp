@@ -71,13 +71,13 @@ struct SharedPolyPointerHelper
     }
 
     /** Return the type of the object */
-    static const char* what(const T &obj)
+    static QString what(const T &obj)
     {
         return obj.what();
     }
 
     /** Return the typename directly */
-    static const char* typeName()
+    static QString typeName()
     {
         return T::typeName();
     }
@@ -129,7 +129,7 @@ public:
 
     ~SharedPolyPointerBase();
 
-    static void save(QDataStream &ds, const char *objname,
+    static void save(QDataStream &ds, const QString &objname,
                      const void *data);
 
     static void* read(QDataStream &ds);
@@ -221,7 +221,7 @@ public:
     bool operator==(const T *other_ptr) const;
     bool operator!=(const T *other_ptr) const;
 
-    const char* what() const
+    QString what() const
     {
         return SharedPolyPointerHelper<T>::what(d);
     }
@@ -239,7 +239,7 @@ public:
     template<class S>
     const S& asA() const
     {
-        const char *typname = SharedPolyPointerHelper<T>::typeName();
+        QString typname = SharedPolyPointerHelper<T>::typeName();
     
         if (not d)
             SharedPolyPointerBase::throwInvalidCast("NULL", typname);
@@ -250,7 +250,7 @@ public:
     template<class S>
     S& asA()
     {
-        const char *typname = SharedPolyPointerHelper<T>::typeName();
+        QString typname = SharedPolyPointerHelper<T>::typeName();
     
         if (not d)
             SharedPolyPointerBase::throwInvalidCast("NULL", typname);

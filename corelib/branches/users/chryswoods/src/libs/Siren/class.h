@@ -51,6 +51,8 @@ public:
     Class();
     
     Class(const Object &object);
+
+    Class(const QString &type_name);
     
     Class(const Class &other);
     

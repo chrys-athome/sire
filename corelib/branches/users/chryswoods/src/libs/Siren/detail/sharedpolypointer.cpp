@@ -43,17 +43,17 @@ SharedPolyPointerBase::~SharedPolyPointerBase()
     \throw SireError::unknown_type
     \throw SireError::program_bug
 */
-void SharedPolyPointerBase::save(QDataStream &ds, const char *objname,
+void SharedPolyPointerBase::save(QDataStream &ds, const QString &objname,
                                  const void *data)
 {
-    if (objname == 0 or data == 0)
+    if (objname.isEmpty() or data == 0)
     {
         ds << QString::null;
     }
     else
     {
         //get the ID number of this type
-        int id = QMetaType::type( objname );
+        int id = QMetaType::type( objname.toLatin1().constData() );
 
         if ( id == 0 or not QMetaType::isRegistered(id) )
             throw Siren::unknown_type(QObject::tr(

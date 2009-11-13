@@ -39,7 +39,9 @@ SIREN_BEGIN_HEADER
 namespace Siren
 {
 
-class StdoutLogger;
+class Logger;
+
+typedef ObjPtr<Logger> LoggerPtr;
 
 /** This is the base class of all of the Loggers. These are 
     simple classes that provide a means of recording output
@@ -59,13 +61,20 @@ public:
     
     virtual ~Logger();
 
-    static StdoutLogger getDefault();
+    static LoggerPtr getDefault();
+    static void setDefault(const Logger &logger);
 
     ///////////////////////
-    // Mutable functions //
+    // Logger            //
     ///////////////////////
 
     virtual void write(const QString &text)=0;
+
+    ///////////////////////
+    // Shared Interface  //
+    ///////////////////////
+    
+    virtual void detach() const=0;
 
 protected:
     friend class Interfaces<Logger,Mutable,Shared>;
@@ -85,15 +94,31 @@ public:
     
     bool operator==(const StdoutLogger &other) const;
     bool operator!=(const StdoutLogger &other) const;
+
+    ////////////////////////
+    // Implements Object  //
+    ////////////////////////
     
     HASH_CODE hashCode() const;
     QString toString() const;
     bool test(Logger &logger) const;
 
+    ////////////////////////
+    // Implements Logger  //
+    ////////////////////////
+    
+    void write(const QString &text);
+
+    void detach() const;
+
+    ///////////////////////
+    // Mutable Interface //
+    ///////////////////////
+
     ObjRef saveState() const;
     void restoreState(const Object &object);
     
-    void write(const QString &text);
+    
 };
 
 }

@@ -47,7 +47,9 @@ class SIREN_EXPORT Tester
 {
 public:
     Tester();
-    Tester(const Logger &logger);
+    
+    Tester(const Object &object);
+    Tester(const Object &object, Logger &logger);
     
     Tester(const Tester &other);
     
@@ -63,6 +65,13 @@ public:
     bool test(Logger &logger) const;
     
     bool allPassed() const;
+
+    ///////////////////////
+    // Mutable Interface //
+    ///////////////////////
+    
+    ObjRef saveState() const;
+    void restoreState(const Object &old_state);
 
     ///////////////////////
     // Mutable functions //
@@ -84,7 +93,7 @@ public:
     void expect_false(const QString &description, const QString &location,
                       bool flag);
     
-    void expect_roughly_equal(const QString &description,
+    void expect_roughly_equal(const QString &description, 
                               const QString &location,
                               double x, double y);
     

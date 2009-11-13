@@ -67,7 +67,7 @@ protected:
     GlobalSharedPointerBase();
 
     static QMutex* registryMutex();
-    static QSet<const void*>& getRegistry(const char *typname); 
+    static QSet<const void*>& getRegistry(const QString &typname); 
 
     template<class T>
     static T* registerObject(const T *obj_ptr);

@@ -46,6 +46,8 @@ void Class::buildInheritedTypes()
     }
 }
 
+Q_GLOBAL_STATIC( QHash<QString,const Class*>, registered_types );
+
 /** Null constructor */
 Class::Class() 
       : Implements<Class, Object>(), metatype(0), super_class(0),
@@ -58,6 +60,7 @@ Class::Class(const detail::RegisterMetaTypeBase *r)
         is_concrete(false)
 {
     buildInheritedTypes();
+    registered_types.insert( this->name(), this );
 }
 
 /** Internal constructor used by Object to create a derived class type */
@@ -68,12 +71,55 @@ Class::Class(const detail::RegisterMetaTypeBase *r,
         interface_types(interfaces), is_concrete(concrete)
 {
     buildInheritedTypes();
+    registered_types.insert( this->name(), this );
 }
 
 /** Construct the class type object for the passed object */
 Class::Class(const Object &object) : Implements<Class, Object>()
 {
     this->operator=( object.getClass() );
+}
+
+/** Construct the Class object for the type with name 'type_name' 
+
+    \throw Siren::unknown_type
+*/
+Class::Class(const QString &type_name) : Implements<Class, Object>()
+{
+    if (type_name.isEmpty())
+    {
+        this->operator=( None().getClass() );
+    }
+    else if (registered_types()->contains(type_name))
+    {
+        this->operator=( *(registered_types()->value(type_name)) );
+    }
+    else
+    {
+        //get the type that represents this name
+        int id = QMetaType::type( type_name.toLatin1().constData() );
+
+        if ( id == 0 or not QMetaType::isRegistered(id) )
+            throw Siren::unknown_type( QObject::tr(
+                  "Cannot create the Class for type \"%1\". "
+                  "This could be because either this is not a concrete type, "
+                  "or that the library or module containing "
+                  "this type has been loaded and that it has been registered "
+                  "with QMetaType.").arg(type_name), CODELOC );
+
+        //create a default-constructed object of this type
+        boost::shared_ptr<Object> ptr;
+        
+        ptr.reset( static_cast<Object*>(QMetaType::construct(id,0)) );
+
+        if (ptr.get() == 0)
+            throw Siren::program_bug( QObject::tr(
+                    "Could not create an object of type \"%1\" despite "
+                    "this type having been registered with QMetaType. This is "
+                    "a program bug!!!").arg(type_name), CODELOC );
+
+        this->operator=( ptr->getClass() );
+    }
 }
 
 /** Copy constructor */
