@@ -29,6 +29,9 @@ set ( SIREN_PUBLIC_HEADERS
       sirenglobal.h
       tostring.h
 
+      objptr.hpp
+      objref.h
+
       mutable.h
       shared.h
 
@@ -63,6 +66,9 @@ set ( SIREN_SOURCES
       streamdata.cpp
       tester.cpp
       xmlstream.cpp
+
+      objptr.cpp
+      objref.cpp
 
       class.cpp
       interface.cpp

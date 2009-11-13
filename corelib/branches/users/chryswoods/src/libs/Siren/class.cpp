@@ -26,7 +26,11 @@
   *
 \*********************************************/
 
+#include <QMutex>
+
 #include "class.h"
+
+#include "Siren/errors.h"
 
 using namespace Siren;
 
@@ -46,7 +50,9 @@ void Class::buildInheritedTypes()
     }
 }
 
-Q_GLOBAL_STATIC( QHash<QString,const Class*>, registered_types );
+typedef QHash<QString,const Class*> ClassRegistryType;
+
+Q_GLOBAL_STATIC( ClassRegistryType, registered_types );
 
 /** Null constructor */
 Class::Class() 
@@ -60,18 +66,18 @@ Class::Class(const detail::RegisterMetaTypeBase *r)
         is_concrete(false)
 {
     buildInheritedTypes();
-    registered_types.insert( this->name(), this );
+    registered_types()->insert( this->name(), this );
 }
 
 /** Internal constructor used by Object to create a derived class type */
 Class::Class(const detail::RegisterMetaTypeBase *r, 
              const Class &base_class, const QStringList &interfaces, 
              bool concrete)
-      : Implements<Class, Object>(), metatype(r), super_class(base_class),
+      : Implements<Class, Object>(), metatype(r), super_class(&base_class),
         interface_types(interfaces), is_concrete(concrete)
 {
     buildInheritedTypes();
-    registered_types.insert( this->name(), this );
+    registered_types()->insert( this->name(), this );
 }
 
 /** Construct the class type object for the passed object */
@@ -271,7 +277,7 @@ bool Class::canCast(const QString &classname) const
 */
 void Class::assertCanCast(const QString &classname) const
 {
-    if (not this->casCast(classname))
+    if (not this->canCast(classname))
         throw Siren::invalid_cast( QObject::tr(
                 "It is not possible to cast from type %1 to type %2.")
                     .arg(this->name(), classname), CODELOC );

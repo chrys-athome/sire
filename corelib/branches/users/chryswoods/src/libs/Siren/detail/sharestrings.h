@@ -26,17 +26,17 @@
   *
 \*********************************************/
 
-#ifndef SIRESTREAM_SHARESTRINGS_H
-#define SIRESTREAM_SHARESTRINGS_H
+#ifndef SIREN_SHARESTRINGS_H
+#define SIREN_SHARESTRINGS_H
 
 #include <QString>
 #include <QStringList>
 
-#include "sireglobal.h"
+#include "sirenglobal.h"
 
-SIRE_BEGIN_HEADER
+SIREN_BEGIN_HEADER
 
-namespace SireStream
+namespace Siren
 {
 
 QString shareString(const QString &string);
@@ -45,6 +45,6 @@ void shareStrings(QStringList &strings);
 
 }
 
-SIRE_END_HEADER
+SIREN_END_HEADER
 
 #endif

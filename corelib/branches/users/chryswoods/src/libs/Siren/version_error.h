@@ -26,10 +26,10 @@
   *
 \*********************************************/
 
+#include "Siren/exception.h"
+
 #ifndef SIREN_VERSION_ERROR_H
 #define SIREN_VERSION_ERROR_H
-
-#include "Siren/exception.h"
 
 SIREN_BEGIN_HEADER
 
@@ -46,6 +46,8 @@ class SIREN_EXPORT version_error : public ImplementsException<version_error,exce
 public:
     version_error();
 
+    version_error(const QString &error, const QString place=QString::null);
+
     version_error(VERSION_ID wrongid, 
                   const detail::RegisterMetaTypeBase &info,
                   QString place=QString::null);
@@ -61,8 +63,8 @@ public:
 
 }
 
-SIREN_END_HEADER
-
 Q_DECLARE_METATYPE(Siren::version_error)
+
+SIREN_END_HEADER
 
 #endif

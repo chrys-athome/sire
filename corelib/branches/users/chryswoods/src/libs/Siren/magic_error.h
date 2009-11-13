@@ -43,7 +43,7 @@ namespace Siren
 
     @author Christopher Woods
 */
-class SIREN_EXPORT magic_error : public ConcreteException<magic_error,exception>
+class SIREN_EXPORT magic_error : public ImplementsException<magic_error,exception>
 {
 public:
     magic_error();

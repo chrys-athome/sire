@@ -485,14 +485,14 @@ private:
     /** Shared pointer to the registry of shared objects that 
         have already been streamed */
     boost::shared_ptr<detail::SharedDataRegistry> registry;
-
-    /** Reference to the actual QDataStream that is used to
-        stream the data */
-    QDataStream &ds;
     
     /** Pointer to the datastream (necessary if we have to
         create one ourselves!) */
     QDataStream *local_ds;
+
+    /** Reference to the actual QDataStream that is used to
+        stream the data */
+    QDataStream &ds;
 };
 
 /** This function just saves the object using the standard QDataStream operator */

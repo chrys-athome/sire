@@ -30,15 +30,12 @@
 
 #include "datastream.h"
 
-#include "detail/sharestrings.h"
-
-#include "errors.h"
-#include "printerror.h"
-
 #include "version_error.h"
 #include "magic_error.h"
 
-#include "tostring.h"
+#include "detail/sharestrings.h"
+
+#include "Siren/errors.h"
 
 #include <QtEndian>
 
@@ -107,7 +104,7 @@ void SharedDataRegistry::throwIDError(quint32 registered_id) const
             .arg(registered_id), CODELOC );
 }
 
-typedef QHash< QDataStream*, weak_ptr<DataRegistry> > GlobalRegistry;
+typedef QHash< QDataStream*, weak_ptr<SharedDataRegistry> > GlobalRegistry;
 
 Q_GLOBAL_STATIC( QMutex, registryMutex );
 Q_GLOBAL_STATIC( GlobalRegistry, globalRegistry );
@@ -167,7 +164,7 @@ static quint64 SHARED_DATASTREAM_MAGIC = 9840821822734431312LLU;
 
 quint64 SharedDataRegistry::magic()
 {
-    return DATASTREAM_MAGIC;
+    return SHARED_DATASTREAM_MAGIC;
 }
 
 /** Try to find the magic number in the next 64bits of the datastream. This
@@ -192,7 +189,7 @@ bool SharedDataRegistry::peekMagic()
     //now read the number
     quint64 magic_number = qFromBigEndian<quint64>( *((quint64*)magic_number_data) );
     
-    return (magic_number == DATASTREAM_MAGIC);
+    return (magic_number == SHARED_DATASTREAM_MAGIC);
 }
 
 /** This function is used to read the version number from the data stream
@@ -217,11 +214,11 @@ void SharedDataRegistry::readVersion()
     
     (*ds) >> magic_number >> version_number;
     
-    if (magic_number != DATASTREAM_MAGIC)
+    if (magic_number != SHARED_DATASTREAM_MAGIC)
         throw Siren::program_bug( QObject::tr(
             "Something went wrong when reading the DataStream version! "
             "The magic number changed (from %1 to %2)")
-                .arg(DATASTREAM_MAGIC).arg(magic_number), CODELOC );
+                .arg(SHARED_DATASTREAM_MAGIC).arg(magic_number), CODELOC );
                 
     if (version_number == 0)
         throw Siren::program_bug( QObject::tr(
@@ -249,7 +246,7 @@ void SharedDataRegistry::writeVersion()
     //we are at version 2
     version_number = 2;
     
-    (*ds) << DATASTREAM_MAGIC << version_number;
+    (*ds) << SHARED_DATASTREAM_MAGIC << version_number;
 }
 
 ////////
@@ -358,11 +355,11 @@ quint32 DataStream::loadID()
         quint64 magic;
         ds >> magic >> id;
         
-        if (magic != DATASTREAM_MAGIC)
+        if (magic != SHARED_DATASTREAM_MAGIC)
             throw Siren::corrupted_data( QObject::tr(
                 "There was a problem reading the magic number of the "
                 "DataStream - read %1, but expected %2.")
-                    .arg(magic).arg(DATASTREAM_MAGIC), CODELOC );
+                    .arg(magic).arg(SHARED_DATASTREAM_MAGIC), CODELOC );
     }
     else
         throw Siren::version_error( QObject::tr(
@@ -387,7 +384,7 @@ void DataStream::writeVersion()
     registry->writeVersion();
 }
 
-namespace SireStream
+namespace Siren
 {
 
 namespace detail
@@ -420,16 +417,16 @@ struct GetQStringPointer
 
 } // end of namespace detail
 
-DataStream SIRESTREAM_EXPORT &operator<<(DataStream &sds, 
-                                         const QString &string)
+DataStream SIREN_EXPORT &operator<<(DataStream &sds, 
+                                    const QString &string)
 {
-    sds.sharedSave<QString, GetQStringPointer>( shareString(string) );
+    sds.sharedSave<QString, detail::GetQStringPointer>( shareString(string) );
     return sds;
 }
 
-DataStream SIRESTREAM_EXPORT &operator>>(DataStream &sds, QString &string)
+DataStream SIREN_EXPORT &operator>>(DataStream &sds, QString &string)
 {
-    sds.sharedLoad<QString, GetQStringPointer>(string);
+    sds.sharedLoad<QString, detail::GetQStringPointer>(string);
     string = shareString(string);
     
     return sds;
@@ -446,8 +443,8 @@ DataStream SIREN_EXPORT &writeHeader(DataStream &ds,
 
 /** Read the header of the binary object to check that the type is correct
     and to obtain the binary data version */
-VersionID SIREN_EXPORT readHeader(DataStream &ds,
-                                  const detail::RegisterMetaTypeBase &r_type)
+VERSION_ID SIREN_EXPORT readHeader(DataStream &ds,
+                                   const detail::RegisterMetaTypeBase &r_type)
 {
     CLASS_UID uid;
     VERSION_ID v;

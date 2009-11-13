@@ -64,8 +64,6 @@ public:
     program_bug(const program_bug &other);
 
     ~program_bug() throw();
-    
-    void throwSelf() const;
 };
 
 /** This exception is thrown when unsupported hardware is detected (e.g. unsupported
@@ -83,8 +81,6 @@ public:
     unsupported(const unsupported &other);
 
     ~unsupported() throw();
-
-    void throwSelf() const;
 };
 
 /** This exception is thrown when an invalid key is used, e.g. a hash or set is
@@ -101,8 +97,6 @@ public:
     invalid_key(const invalid_key &other);
 
     ~invalid_key() throw();
-    
-    void throwSelf() const;
 };
 
 /** This exception is thrown when an invalid index is used, e.g. an invalid index
@@ -119,8 +113,6 @@ public:
     invalid_index(const invalid_index &other);
 
     ~invalid_index() throw();
-    
-    void throwSelf() const;
 };
 
 /** This exception is thrown when an invalid cast is attempted, e.g. a dynamic_cast
@@ -137,8 +129,6 @@ public:
     invalid_cast(const invalid_cast &other);
 
     ~invalid_cast() throw();
-    
-    void throwSelf() const;
 };
 
 /** This exception is thrown whenever something incompatible is requested, e.g.
@@ -157,8 +147,6 @@ public:
     incompatible_error(const incompatible_error &other);
 
     ~incompatible_error() throw();
-
-    void throwSelf() const;
 };
 
 /** This exception is thrown when request is made of an unknown type, e.g.
@@ -176,8 +164,6 @@ public:
     unknown_type(const unknown_type &other);
 
     ~unknown_type() throw();
-    
-    void throwSelf() const;
 };
 
 /** This exception is thrown whenever an attempt is made to copy an uncopyable object.
@@ -195,8 +181,6 @@ public:
     noncopyable_error(const noncopyable_error &other);
 
     ~noncopyable_error() throw();
-    
-    void throwSelf() const;
 };
 
 /** This exception is thrown when an attempt is made to access a null pointer.
@@ -212,8 +196,6 @@ public:
     nullptr_error(const nullptr_error &other);
 
     ~nullptr_error() throw();
-    
-    void throwSelf() const;
 };
 
 /** This exception is thrown whenever there is an error with locking a resource,
@@ -230,8 +212,6 @@ public:
     lock_error(const lock_error &other);
 
     ~lock_error() throw();
-    
-    void throwSelf() const;
 };
 
 /** This exception is thrown whenever an assertation fails. This is normally
@@ -250,8 +230,6 @@ public:
     assertation_error(const assertation_error &other);
 
     ~assertation_error() throw();
-
-    void throwSelf() const;
 };
 
 /** This exception is thrown whenever there is an file handling error */
@@ -267,8 +245,6 @@ public:
     file_error(const file_error &other);
 
     ~file_error() throw();
-    
-    void throwSelf() const;
 };
 
 /** This exception is thrown whenever there is an error with a child process */
@@ -285,8 +261,6 @@ public:
     process_error(const process_error &other);
     
     ~process_error() throw();
-    
-    void throwSelf() const;
 };
 
 /** This exception is thrown whenever a request is made of a resource
@@ -302,8 +276,6 @@ public:
     unavailable_resource(const unavailable_resource &other);
 
     ~unavailable_resource() throw();
-    
-    void throwSelf() const;
 };
 
 /** This exception is thrown whenever there is an input/output error */
@@ -317,8 +289,6 @@ public:
     io_error(const io_error &other);
 
     ~io_error() throw();
-    
-    void throwSelf() const;
 };
 
 /** This exception is thrown whenever a function is called with invalid arguments.
@@ -336,8 +306,6 @@ public:
     invalid_arg(const invalid_arg &other);
 
     ~invalid_arg() throw();
-    
-    void throwSelf() const;
 };
 
 /** This exception is thrown whenever the code detects that it has entered an
@@ -355,8 +323,6 @@ public:
     invalid_state(const invalid_state &other);
 
     ~invalid_state() throw();
-    
-    void throwSelf() const;
 };
 
 /** This exception is thrown whenever an invalid operation is requested
@@ -374,8 +340,6 @@ public:
     invalid_operation(const invalid_operation &other);
 
     ~invalid_operation() throw();
-    
-    void throwSelf() const;
 };
 
 /** This exception is thrown whenever the program tries to use code that has yet
@@ -394,8 +358,6 @@ public:
     incomplete_code(const incomplete_code &other);
 
     ~incomplete_code() throw();
-    
-    void throwSelf() const;
 };
 
 /** This exception is used to translate a std::exception into a Siren::exception */
@@ -416,8 +378,6 @@ public:
     std_exception(const std::exception &error);
 
     ~std_exception() throw();
-    
-    void throwSelf() const;
 
 protected:
     static QString getWhatString(QString typstring, const std::exception &error);
@@ -438,8 +398,6 @@ public:
     unknown_error(const unknown_error &other);
 
     ~unknown_error() throw();
-    
-    void throwSelf() const;
 };
 
 /** This exception is thrown whenever a problem is detected
@@ -459,8 +417,23 @@ public:
     dependency_error(const dependency_error &other);
 
     ~dependency_error() throw();
+};
+
+/** This exception is thrown whenever corrupted data is detected
     
-    void throwSelf() const;
+    @author Christopher Woods
+*/
+class SIREN_EXPORT corrupted_data 
+        : public ImplementsException<corrupted_data,exception>
+{
+public:
+    corrupted_data();
+
+    corrupted_data(QString err, QString place=QString::null);
+
+    corrupted_data(const corrupted_data &other);
+
+    ~corrupted_data() throw();
 };
 
 /** This exception is thrown whenever there is an error with an
@@ -478,8 +451,6 @@ public:
     id_error(const id_error &other);
 
     ~id_error() throw();
-    
-    void throwSelf() const;
 };
 
 }
@@ -506,6 +477,7 @@ Q_DECLARE_METATYPE(Siren::incomplete_code)
 Q_DECLARE_METATYPE(Siren::std_exception)
 Q_DECLARE_METATYPE(Siren::unknown_error)
 Q_DECLARE_METATYPE(Siren::unknown_type)
+Q_DECLARE_METATYPE(Siren::corrupted_data)
 Q_DECLARE_METATYPE(Siren::dependency_error)
 
 SIREN_END_HEADER

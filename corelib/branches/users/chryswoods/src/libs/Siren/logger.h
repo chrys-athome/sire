@@ -41,6 +41,8 @@ namespace Siren
 
 class Logger;
 
+template<class T> class ObjPtr;
+
 typedef ObjPtr<Logger> LoggerPtr;
 
 /** This is the base class of all of the Loggers. These are 
@@ -117,8 +119,6 @@ public:
 
     ObjRef saveState() const;
     void restoreState(const Object &object);
-    
-    
 };
 
 }
