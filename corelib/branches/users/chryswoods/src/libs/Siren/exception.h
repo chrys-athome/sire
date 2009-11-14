@@ -53,7 +53,7 @@ namespace Siren
 
     @author Christopher Woods
 */
-class SIREN_EXPORT exception : public Object
+class SIREN_EXPORT exception : public Extends<exception,Object>
 {
 public:
     exception();
@@ -62,8 +62,6 @@ public:
     exception(const exception &other);
 
     virtual ~exception() throw();
-    
-    static void unpackAndThrow(const QByteArray &errordata);
 
     QString error() const throw();
     QString from() const throw();
@@ -72,13 +70,29 @@ public:
     QString why() const throw();
     QString pid() const throw();
 
-    HASH_CODE hashCode() const throw();
+    HASH_CODE hashCode() const;
 
     QString toString() const throw();
+
+    bool test(Logger &logger) const;
 
     virtual void throwSelf() const=0;
 
 protected:
+    void save(DataStream &ds) const;
+    void load(DataStream &ds);
+    
+    void save(XMLStream &xml) const;
+    void load(XMLStream &xml);
+
+    virtual bool testException() const=0;
+
+    exception& operator=(const exception &other);
+    
+    bool operator==(const exception &other) const;
+    bool operator!=(const exception &other) const;
+
+private:
     QString err;  ///< The error associated with the exception.
     QString plce; ///< Description of from where the exception was thrown.
     QStringList bt; ///< Backtrace at the point that the exception was constructed
@@ -126,16 +140,17 @@ public:
     virtual ~ImplementsException() throw();
 
     ImplementsException<Derived,Base>& operator=(const Object &other);
+    ImplementsException<Derived,Base>& operator=(const Derived &other);
 
     bool operator==(const Object &other) const;
-
     bool operator!=(const Object &other) const;
+    
+    bool operator==(const Derived &other) const;
+    bool operator!=(const Derived &other) const;
 
     static QString typeName();
 
     QString what() const;
-
-    ImplementsException<Derived,Base>* clone() const;
 
     const Class& getClass() const;
 
@@ -145,11 +160,23 @@ public:
     void throwSelf() const;
 
 protected:
+    static const Class& createTypeInfo();
+
+    ImplementsException<Derived,Base>* clone() const;
+
     ImplementsException<Derived,Base>&
     operator=(const ImplementsException<Derived,Base> &other);
 
     bool operator==(const ImplementsException<Derived,Base> &other) const;
     bool operator!=(const ImplementsException<Derived,Base> &other) const;
+    
+    bool testException() const;
+
+    Base& super();
+    const Base& super() const;
+
+private:
+    static const Class* class_typeinfo;
 };
 
 void setProcessString(const QString &s);
@@ -161,6 +188,243 @@ QString getPIDString();
 
 void printError(const Siren::exception &e);
 void printError(const QString &s);
+
+#ifndef SIREN_SKIP_INLINE_FUNCTIONS
+
+//////
+////// Implementation of 'ImplementsException'
+//////
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+ImplementsException<Derived,Base>::ImplementsException() : Base()
+{}
+
+template<class Derived, class Base>
+template<class T0>
+SIREN_OUTOFLINE_TEMPLATE
+ImplementsException<Derived,Base>::ImplementsException(const T0 &t0) : Base(t0)
+{}
+
+template<class Derived, class Base>
+template<class T0, class T1>
+SIREN_OUTOFLINE_TEMPLATE
+ImplementsException<Derived,Base>::ImplementsException(const T0 &t0, const T1 &t1)
+                                  : Base(t0, t1)
+{}
+
+template<class Derived, class Base>
+template<class T0, class T1, class T2>
+SIREN_OUTOFLINE_TEMPLATE
+ImplementsException<Derived,Base>::ImplementsException(const T0 &t0, const T1 &t1, 
+                                                       const T2 &t2)
+                                  : Base(t0, t1, t2)
+{}
+
+template<class Derived, class Base>
+template<class T0, class T1, class T2, class T3>
+SIREN_OUTOFLINE_TEMPLATE
+ImplementsException<Derived,Base>::ImplementsException(const T0 &t0, const T1 &t1, 
+                                                       const T2 &t2, const T3 &t3)
+                                  : Base(t0, t1, t2, t3)
+{}
+
+template<class Derived, class Base>
+template<class T0, class T1, class T2, class T3, class T4>
+SIREN_OUTOFLINE_TEMPLATE
+ImplementsException<Derived,Base>::ImplementsException(const T0 &t0, const T1 &t1,
+                                                       const T2 &t2, const T3 &t3, 
+                                                       const T4 &t4)
+                                  : Base(t0, t1, t2, t3, t4)
+{}
+
+template<class Derived, class Base>
+template<class T0, class T1, class T2, class T3, class T4, class T5>
+SIREN_OUTOFLINE_TEMPLATE
+ImplementsException<Derived,Base>::ImplementsException(const T0 &t0, const T1 &t1, 
+                                                       const T2 &t2, const T3 &t3, 
+                                                       const T4 &t4, const T5 &t5)
+                                  : Base(t0, t1, t2, t3, t4, t5)
+{}
+
+template<class Derived, class Base>
+template<class T0, class T1, class T2, class T3, class T4, 
+         class T5, class T6>
+SIREN_OUTOFLINE_TEMPLATE
+ImplementsException<Derived,Base>::ImplementsException(const T0 &t0, const T1 &t1, 
+                                                       const T2 &t2, const T3 &t3, 
+                                                       const T4 &t4, const T5 &t5, 
+                                                       const T6 &t6)
+                                  : Base(t0, t1, t2, t3, t4, t5, t6)
+{}
+
+template<class Derived, class Base>
+template<class T0, class T1, class T2, class T3, class T4, 
+         class T5, class T6, class T7>
+SIREN_OUTOFLINE_TEMPLATE
+ImplementsException<Derived,Base>::ImplementsException(const T0 &t0, const T1 &t1, 
+                                                       const T2 &t2, const T3 &t3, 
+                                                       const T4 &t4, const T5 &t5, 
+                                                       const T6 &t6, const T7 &t7)
+                                  : Base(t0, t1, t2, t3, t4, t5, t6, t7)
+{}
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+ImplementsException<Derived,Base>::~ImplementsException() throw()
+{}
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+QString ImplementsException<Derived,Base>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Derived>() );
+}
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+QString ImplementsException<Derived,Base>::what() const
+{
+    return ImplementsException<Derived,Base>::typeName();
+}
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+ImplementsException<Derived,Base>* ImplementsException<Derived,Base>::clone() const
+{
+    const Derived* derived_this = dynamic_cast<const Derived*>(this);
+
+    BOOST_ASSERT( derived_this );
+    
+    return new Derived( *derived_this );
+}
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+void ImplementsException<Derived,Base>::copy(const Object &other)
+{
+    ImplementsException<Derived,Base>::operator=( other.asA<Derived>() );
+}
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+bool ImplementsException<Derived,Base>::equals(const Object &other) const
+{
+    return ImplementsException<Derived,Base>::operator==( other.asA<Derived>() );
+}
+
+/** Return the class typeinfo object for 'Derived' */
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+const Class& ImplementsException<Derived,Base>::createTypeInfo()
+{
+    if ( ImplementsException<Derived,Base>::class_typeinfo == 0 )
+    {
+        QMutexLocker lkr( &(Object::globalLock()) );
+        
+        if ( ImplementsException<Derived,Base>::class_typeinfo == 0 )
+        {
+            const Class &base_class = Base::createTypeInfo();
+            QStringList interfaces = Derived::listInterfaces();
+
+            const detail::RegisterMetaTypeBase *r
+                    = RegisterMetaType<Derived>::getRegistration();
+                    
+            if (not r)
+                Object::throwUnregisteredMetaTypeError( Derived::typeName() );
+        
+            ImplementsException<Derived,Base>::class_typeinfo = 
+                    Object::registerConcreteClass(r, base_class, interfaces);
+        }
+    }
+
+    return *(ImplementsException<Derived,Base>::class_typeinfo);
+}
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+const Class& ImplementsException<Derived,Base>::getClass() const
+{
+    return ImplementsException<Derived,Base>::createTypeInfo();
+}
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+ImplementsException<Derived,Base>&
+ImplementsException<Derived,Base>::operator=(const Derived &other)
+{
+    Base::operator=(other);
+    return *this;
+}
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+ImplementsException<Derived,Base>&
+ImplementsException<Derived,Base>::operator=(
+                                const ImplementsException<Derived,Base> &other)
+{
+    const Derived* other_t = dynamic_cast<const Derived*>(&other);
+
+    BOOST_ASSERT( other_t );
+
+    return static_cast<Derived*>(this)->operator=(*other_t);
+}
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+bool ImplementsException<Derived,Base>::operator==(const Derived &other) const
+{
+    return Base::operator==(other);
+}
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+bool ImplementsException<Derived,Base>::operator!=(const Derived &other) const
+{
+    return Base::operator!=(other);
+}
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+bool ImplementsException<Derived,Base>::operator==(
+                                const ImplementsException<Derived,Base> &other) const
+{
+    const Derived* other_t = dynamic_cast<const Derived*>(&other);
+
+    BOOST_ASSERT( other_t );
+
+    return static_cast<const Derived*>(this)->operator==(*other_t);
+}
+
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+bool ImplementsException<Derived,Base>::operator!=(
+                                const ImplementsException<Derived,Base> &other) const
+{
+    const Derived* other_t = dynamic_cast<const Derived*>(&other);
+
+    BOOST_ASSERT( other_t );
+
+    return static_cast<const Derived*>(this)->operator!=(*other_t);
+}
+
+/** Return the superclass of this type */
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+Base& ImplementsException<Derived,Base>::super()
+{
+    return *this;
+}
+
+/** Return the superclass of this type */
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+const Base& ImplementsException<Derived,Base>::super() const
+{
+    return *this;
+}
+
+#endif // SIREN_SKIP_INLINE_FUNCTIONS
 
 }
 

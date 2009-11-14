@@ -27,6 +27,11 @@
 \*********************************************/
 
 #include "objptr.hpp"
+#include "class.h"
+#include "datastream.h"
+#include "xmlstream.h"
+
+#include "Siren/errors.h"
 
 using namespace Siren;
 using namespace Siren::detail;

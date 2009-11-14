@@ -832,8 +832,12 @@ DataStream& operator>>(DataStream &sds, T &value)
 
 DataStream& writeHeader(DataStream &ds, const detail::RegisterMetaTypeBase &r_type);
 
+DataStream& writeHeader(DataStream &ds, const Class &c);
+
 VERSION_ID readHeader(DataStream &ds, 
                       const detail::RegisterMetaTypeBase &r_type);
+
+VERSION_ID readHeader(DataStream &ds, const Class &c);
 
 } // end of namespace Siren
 

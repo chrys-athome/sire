@@ -26,32 +26,3 @@
   *
 \*********************************************/
 
-#ifndef SIREN_SHARED_H
-#define SIREN_SHARED_H
-
-#include "interface.h"
-
-SIREN_BEGIN_HEADER
-
-namespace Siren
-{
-
-/** Implement this interface if your class is shared
-    (it points to a single, shared resource) */
-class Shared : public virtual Interface
-{
-public:
-    Shared();
-    
-    virtual ~Shared();
-    
-    virtual void detach() const=0;
-};
-
-}
-
-SIREN_EXPOSE_CLASS( Siren::Shared )
-
-SIREN_END_HEADER
-
-#endif

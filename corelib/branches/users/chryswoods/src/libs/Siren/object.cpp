@@ -146,37 +146,10 @@ bool Object::operator!=(const Object&) const
     return false;
 }
 
-/** Return a copy of this object. This only performs
-    a shallow copy if this type implements the Shared 
-    interface */
+/** Return a copy of this object. */
 ObjRef Object::copy() const
 {
     return ObjRef( this->clone() );
-}
-    
-/** Return a copy of this object. This performs a deep 
-    copy if this type implements the Shared interface */
-ObjRef Object::deepCopy() const
-{
-    //we need to detach this object from shared storage
-    //if it implements the 'Shared' interface
-    //
-    //(note that any object that can hold Shared objects
-    // must inherit from the Shared interface!)
-    const Shared *shared_iface = dynamic_cast<const Shared*>(this);
-    
-    if (shared_iface)
-    {
-        shared_iface->detach();
-    }
-    
-    return ObjRef( this->clone() );
-}
-
-/** Deep-copy 'other' into this object */
-void Object::deepCopy(const Object &other)
-{
-    this->copy( other.deepCopy() );
 }
 
 Q_GLOBAL_STATIC_WITH_ARGS( QMutex, objectGlobalMutex, (QMutex::Recursive) );

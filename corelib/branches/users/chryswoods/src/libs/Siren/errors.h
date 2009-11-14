@@ -43,12 +43,6 @@ SIREN_BEGIN_HEADER
 namespace Siren
 {
 
-namespace detail
-{
-    QString fileError(const QFile &f);
-    QString processError(const QString &executable, const QProcess &p);
-}
-
 /** This exception is thrown when the code detects a programming bug. I hope that
     eventually Sire will not throw too many of these!
 
@@ -365,17 +359,17 @@ class SIREN_EXPORT std_exception : public ImplementsException<std_exception,exce
 {
 public:
     std_exception();
-    std_exception(const std::logic_error &error);
-    std_exception(const std::domain_error &error);
-    std_exception(const std::invalid_argument &error);
-    std_exception(const std::length_error &error);
-    std_exception(const std::out_of_range &error);
-    std_exception(const std::runtime_error &error);
-    std_exception(const std::range_error &error);
-    std_exception(const std::overflow_error &error);
-    std_exception(const std::underflow_error &error);
-    std_exception(const std::bad_alloc &error);
-    std_exception(const std::exception &error);
+    std_exception(const std::logic_error &error, QString place=QString::null);
+    std_exception(const std::domain_error &error, QString place=QString::null);
+    std_exception(const std::invalid_argument &error, QString place=QString::null);
+    std_exception(const std::length_error &error, QString place=QString::null);
+    std_exception(const std::out_of_range &error, QString place=QString::null);
+    std_exception(const std::runtime_error &error, QString place=QString::null);
+    std_exception(const std::range_error &error, QString place=QString::null);
+    std_exception(const std::overflow_error &error, QString place=QString::null);
+    std_exception(const std::underflow_error &error, QString place=QString::null);
+    std_exception(const std::bad_alloc &error, QString place=QString::null);
+    std_exception(const std::exception &error, QString place=QString::null);
 
     ~std_exception() throw();
 

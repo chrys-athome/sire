@@ -32,6 +32,8 @@
 #include "sirenglobal.h"
 
 #include <QSharedData>
+#include <QMutex>
+
 #include <boost/assert.hpp>
 
 SIREN_BEGIN_HEADER
@@ -87,29 +89,46 @@ template<class T> class GlobalSharedPointer;
      or serialization), or, if they are basic, they are inherited
     from Siren::Primitive
     
-    A Siren object provides the single root of all non-primitive
-    objects, together with a .metaClass() function that returns
+    A Siren object provides the single root of all non-primitive,
+    non-handle objects, together with a .getClass() function that returns
     a Siren::Class object that contains information about the type.
     
     In addition, all Siren::Objects support in-place unit testing,
-    with each object containing a .test() method that is called
-    via the Siren::Class object, e.g.
+    with each object containing a .test() method, e.g.
     
-    obj.Class().test();
+    obj.test();
     
     or
     
-    obj.Class().test( logger );
+    obj.test( logger );
     
     This returns true if all tests passed. This allows unit tests
     to be written with the object, in the same implementation
     file as the object (and to have full access to the private
     data of the object).
     
-    Furthermore, each Siren::Object contains a .invariant() method
-    that returns whether or not the object is currently maintaining
-    its invariant. This is useful for design-by-contract or 
-    debugging.
+    Object derived classes have three constraints;
+    
+      (1) They must have a well-defined state. This means that their
+          state must be savable, and can be restored at a later point.
+          This means that temporal data cannot be placed into an object
+          (as the state of a clock cannot be saved, then restored, as then
+           its time would be wrong! - however, if the current time was not
+           part of the Clocks state, then it could be saved and restored)
+    
+      (2) Their state must not rely on shared data. This is because the  
+          state of an Object can only be changed via its public interface.
+          If it could contain shared data, then its state could be changed
+          by any other object that contains a reference to that shared data.
+          If you want to hold shared data, then you need to use the 
+          Handle classes. (note that an Object can hold a Handle to 
+          some shared data if, and only if, this shared data is not
+          part of the state of the object, e.g. if the handle was to a
+          Node one which the object will be computed, or to a Logger
+          to which output should be directed.
+          
+      (3) All Object derived classes *MUST* be able to be saved and restored
+          to binary and XML.
     
     Finally, a full metatype system is used, so that objects can 
     be constructed, cloned, queried, and serialized and deserialized 
@@ -127,19 +146,19 @@ template<class T> class GlobalSharedPointer;
     obj.getClass().version();  // Return the version number for the data in 
                                // this class (used for serialisation)
     
-    ObjectPtr new_obj = obj.clone();  // clone the current object
+    ObjRef new_obj = obj.copy();  // clone the current object
     
-    ObjectPtr new_obj = obj.getClass().create();  // create a new object
+    ObjRef new_obj = obj.getClass().create();  // create a new object
     
     obj.isA<T>();   // return whether 'obj' is of type 'T'
     
     obj.asA<T>();   // return 'obj' cast as an object of type 'T'
     
-    QDataStream ds;
+    DataStream ds;
     
     ds << obj;   // save 'obj' to a binary stream
     
-    ObjectPtr new_obj;
+    ObjRef new_obj;
     ds >> new_obj;   // read 'new_obj' from a binary stream
     
     XMLStream xds;
@@ -155,15 +174,19 @@ template<class T> class GlobalSharedPointer;
     interface types, which are pure virtual base classes with
     no member data (similar to Interfaces in Java).
     
-    Siren::Object is a virtual class. While you can override
-    the virtual methods manually, it is much easier if
-    you inherit from Implements<D,B>, where D is your
-    new concrete class and B is the class from which it inherits.
+    Siren::Object is a virtual class. You must inherit from
+    Implements<D,B>, where D is your new concrete class and 
+    B is the class from which it inherits.
     
     For example, if NewObj is a concrete class derived from Object,
     the it should inherit from Implements<NewObj,Object>. 
     The Implements class does all of the hard work of 
     filling in the virtual functions of Object.
+    
+    If you are deriving a new virtual class from Object, then 
+    you must inherit from Extends<D,B>, e.g. if NewObj is a 
+    virtual class derived from Object, then it should inherit
+    from Extends<NewObj,Object>.
     
     Each Siren::Object is immutable (unchangeable). If you want
     to create a mutable object, you *must* inherit from the
@@ -172,14 +195,23 @@ template<class T> class GlobalSharedPointer;
     the mutable object (e.g. to protect an invariant if
     an exception is thrown).
     
+    For example, let imagine Foo is a concrete class derived
+    from Bar, and Foo implements the Mutable interface. Also, 
+    Bar is a virtual class derived from Object. The inheritance
+    hierarchy would look like this;
+    
+    class Bar : public Extends<Bar,Object>{ ... };
+    
+    class Foo : public Implements<Foo,Bar>, public Interfaces<Foo,Mutable> { ... };
+    
     Each Siren::Object must also be non-shared. This means that
     as long as access to the object is protected by a mutex,
     then the object is thread-safe. This also means that the 
     object cannot be changed 'behind-the-back', e.g. a shared
     object can be changed using any of the references/handles to that object.
+
     If you want a shared object, then you will need to
-    inherit from the Shared interface, that provides
-    methods that allow a shared object to be detached.
+    create a class that is based on Siren::Handle.
     
     @author Christopher Woods
 */
@@ -203,7 +235,6 @@ public:
     virtual QString what() const=0;
 
     virtual ObjRef copy() const;
-    virtual ObjRef deepCopy() const;
     
     virtual QString toString() const;
 
@@ -213,8 +244,6 @@ public:
     /** Reimplement this function to copy the 
         contents of 'other' into this object */
     virtual void copy(const Object &other)=0;
-    
-    virtual void deepCopy(const Object &other);
 
     /** Reimplement this function to return whether
         or not this object equals (by value) 'other' */
@@ -270,7 +299,7 @@ protected:
                                         const Class &base_class,
                                         const QStringList &interfaces );
 
-    /** Return a clone (shallow-copy) of this object. */
+    /** Return a clone of this object. */
     virtual Object* clone() const=0;
 
     virtual void load(const QDomNode &dom);
@@ -403,7 +432,6 @@ public:
     QString what() const;
 
     ObjRef copy() const;
-    ObjRef deepCopy() const;
 
     const Class& getClass() const;
 
@@ -606,7 +634,7 @@ template<class T0, class T1, class T2, class T3>
 SIREN_OUTOFLINE_TEMPLATE
 Implements<Derived,Base>::Implements(const T0 &t0, const T1 &t1, const T2 &t2, 
                                      const T3 &t3)
-                         : Base(t0, t1, t2)
+                         : Base(t0, t1, t2, t3)
 {}
 
 template<class Derived, class Base>

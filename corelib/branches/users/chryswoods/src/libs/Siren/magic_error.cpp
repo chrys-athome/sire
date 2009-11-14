@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2007  Christopher Woods
+  *  Copyright (C) 2009  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,76 +26,41 @@
   *
 \*********************************************/
 
+#include "class.h"
 #include "magic_error.h"
 
-#include "datastream.h"
+using namespace Siren;
 
-#include "version_error.h"
+static const RegisterMetaType<magic_error> r_magic_error( 189316926129508445, 1 );
 
-#include "SireError/errors.h"
+magic_error::magic_error() : ImplementsException<magic_error,exception>()
+{}
 
-using namespace SireStream;
-using namespace SireError;
+magic_error::magic_error(QString err, QString place)
+            : ImplementsException<magic_error,exception>(err, place)
+{}
 
-// Define the streaming operators for SireError here
-// This is to remove the circular dependency of SireError on SireStream
-
-/** Implementation of SireError::exception */
-static const RegisterMetaType<exception> r_exception( MAGIC_ONLY,
-                                                      "SireError::exception" );
-
-/** Serialise to a binary data stream */
-QDataStream SIRESTREAM_EXPORT &operator<<(QDataStream &ds, const exception &e)
+static QString errorString(QString type_name, CLASS_UID wrongid, CLASS_UID rightid)
 {
-    writeHeader(ds, r_exception, 1)
-       << e.err << e.plce << e.bt << e.pidstr;
-
-    return ds;
+    return QObject::tr( "The magic number (%1) is not the correct magic number "
+                        "for the class %2 (the correct number is %3).")
+                            .arg(type_name).arg(wrongid).arg(rightid);
 }
 
-/** Deserialise from a binary data stream */
-QDataStream SIRESTREAM_EXPORT &operator>>(QDataStream &ds, exception &e)
-{
-    VersionID v = readHeader(ds, r_exception);
+magic_error::magic_error(CLASS_UID wrongid, const detail::RegisterMetaTypeBase &info,
+                         QString place)
+            : ImplementsException<magic_error,exception>(
+                    ::errorString(info.typeName(), wrongid, info.UID()), place )
+{}
 
-    if (v == 1)
-    {
-        ds >> e.err >> e.plce >> e.bt >> e.pidstr;
-    }
-    else
-        throw SireStream::version_error(v, "1", r_exception, CODELOC);
+magic_error::magic_error(CLASS_UID wrongid, const Class &c, QString place)
+            : ImplementsException<magic_error,exception>(
+                    ::errorString(c.name(), wrongid, c.UID()), place )
+{}
+            
+magic_error::magic_error(const magic_error &other)
+            : ImplementsException<magic_error,exception>(other)
+{}
 
-    return ds;
-}
-
-const char* magic_error::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<magic_error>() );
-}
-
-static const RegisterMetaType<SireError::program_bug> r_program_bug;
-static const RegisterMetaType<SireError::unsupported> r_unsupported;
-static const RegisterMetaType<SireError::id_error> r_id_error;
-static const RegisterMetaType<SireError::invalid_key> r_invalid_key;
-static const RegisterMetaType<SireError::invalid_index> r_invalid_index;
-static const RegisterMetaType<SireError::invalid_cast> r_invalid_cast;
-static const RegisterMetaType<SireError::noncopyable_error> r_noncopyable_error;
-static const RegisterMetaType<SireError::nullptr_error> r_nullptr_error;
-static const RegisterMetaType<SireError::lock_error> r_lock_error;
-static const RegisterMetaType<SireError::assertation_failed> r_assertation_failed;
-static const RegisterMetaType<SireError::incompatible_error> r_incompatible_error;
-static const RegisterMetaType<SireError::file_error> r_file_error;
-static const RegisterMetaType<SireError::io_error> r_io_error;
-static const RegisterMetaType<SireError::process_error> r_process_error;
-static const RegisterMetaType<SireError::invalid_arg> r_invalid_arg;
-static const RegisterMetaType<SireError::invalid_state> r_invalid_state;
-static const RegisterMetaType<SireError::invalid_operation> r_invalid_operation;
-static const RegisterMetaType<SireError::unavailable_resource> r_unavailable_resource;
-static const RegisterMetaType<SireError::incomplete_code> r_incomplete_code;
-static const RegisterMetaType<SireError::std_exception> r_std_exception;
-static const RegisterMetaType<SireError::unknown_exception> r_unknown_exception;
-static const RegisterMetaType<SireError::unknown_type> r_unknown_type;
-static const RegisterMetaType<SireError::dependency_error> r_dependency_error;
-static const RegisterMetaType<SireError::version_error> r_version_error;
-
-static RegisterMetaType<magic_error> r_magic_error;
+magic_error::~magic_error() throw()
+{}

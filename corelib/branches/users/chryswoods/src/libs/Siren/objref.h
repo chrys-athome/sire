@@ -81,7 +81,6 @@ public:
     QString what() const;
 
     ObjRef copy() const;
-    ObjRef deepCopy() const;
     
     QString toString() const;
 
@@ -89,7 +88,6 @@ public:
     bool test(Logger &logger) const;
 
     void copy(const Object &other);
-    void deepCopy(const Object &other);
 
     bool equals(const Object &other) const;
     

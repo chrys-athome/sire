@@ -35,87 +35,8 @@
 
 using namespace Siren;
 
-namespace boost
-{
-
-/** The boost::assert macro calls this function if the assertation fails.
-    This function converts the information passed by the macro into
-    a Siren::assertation_error exception, which is thrown. */
-void SIREN_EXPORT assertion_failed(char const * expr, char const * function,
-                                   char const * file, long line)
-{
-    QString s = QObject::tr("**PROGRAM BUG** %1 in %2, at line %3 in file %4")
-                     .arg(expr).arg(function).arg(file).arg(line);
-
-    throw SireError::assertation_error(s,CODELOC);
-}
-
-}
-
-namespace Siren
-{
-
-/** Now implement the std_exception constructors */
-
-std_exception::std_exception()
-              : exception(QObject::tr("Null std::exception"))
-{}
-
-std_exception::std_exception(const std::logic_error &error)
-              : exception(std_exception::getWhatString("logic_error", error))
-{}
-
-std_exception::std_exception(const std::domain_error &error)
-              : exception(std_exception::getWhatString("logic_error", error))
-{}
-
-std_exception::std_exception(const std::invalid_argument &error)
-              : exception(std_exception::getWhatString("invalid_argument", error))
-{}
-
-std_exception::std_exception(const std::bad_alloc &error)
-              : exception(std_exception::getWhatString("bad_alloc", error))
-{}
-
-std_exception::std_exception(const std::length_error &error)
-              : exception(std_exception::getWhatString("length_error", error))
-{}
-
-std_exception::std_exception(const std::out_of_range &error)
-              : exception(std_exception::getWhatString("out_of_range", error))
-{}
-
-std_exception::std_exception(const std::runtime_error &error)
-              : exception(std_exception::getWhatString("runtime_error", error))
-{}
-
-std_exception::std_exception(const std::range_error &error)
-              : exception(std_exception::getWhatString("range_error", error))
-{}
-
-std_exception::std_exception(const std::overflow_error &error)
-              : exception(std_exception::getWhatString("overflow_error", error))
-{}
-
-std_exception::std_exception(const std::underflow_error &error)
-              : exception(std_exception::getWhatString("underflow_error", error))
-{}
-
-std_exception::std_exception(const std::exception &error)
-              : exception(std_exception::getWhatString("exception", error))
-{}
-
-std_exception::~ std_exception() throw()
-{}
-
-QString std_exception::getWhatString(QString typstring, const std::exception &error)
-{
-    return QObject::tr("Caught standard exception 'std::%1' (%2)")
-         .arg(typstring).arg(error.what());
-}
-
 /** Return a string representation of the QFile::FileError */
-QString SIREERROR_EXPORT fileError(const QFile &f)
+static QString fileError(const QFile &f)
 {
     switch( f.error() )
     {
@@ -170,7 +91,7 @@ QString SIREERROR_EXPORT fileError(const QFile &f)
     }
 }
 
-QString exitStatusString(QProcess::ExitStatus stat)
+static QString exitStatusString(QProcess::ExitStatus stat)
 {
     switch (stat)
     {
@@ -183,8 +104,7 @@ QString exitStatusString(QProcess::ExitStatus stat)
     }
 }
 
-QString SIREERROR_EXPORT processError(const QString &executable,
-                                      const QProcess &process)
+static QString processError(const QString &executable, const QProcess &process)
 {
     QString err = QObject::tr("There was an error while running the program \"%1\". ")
                           .arg(executable);
@@ -220,119 +140,93 @@ QString SIREERROR_EXPORT processError(const QString &executable,
     }
 }
 
-const char* program_bug::typeName()
+namespace boost
 {
-    return QMetaType::typeName( qMetaTypeId<program_bug>() );
-}
 
-const char* unsupported::typeName()
+/** The boost::assert macro calls this function if the assertation fails.
+    This function converts the information passed by the macro into
+    a Siren::assertation_error exception, which is thrown. */
+void SIREN_EXPORT assertion_failed(char const * expr, char const * function,
+                                   char const * file, long line)
 {
-    return QMetaType::typeName( qMetaTypeId<unsupported>() );
-}
+    QString s = QObject::tr("**PROGRAM BUG** %1 in %2, at line %3 in file %4")
+                     .arg(expr).arg(function).arg(file).arg(line);
 
-const char* id_error::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<id_error>() );
-}
-
-const char* invalid_key::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<invalid_key>() );
-}
-
-const char* invalid_index::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<invalid_index>() );
-}
-
-const char* invalid_cast::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<invalid_cast>() );
-}
-
-const char* noncopyable_error::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<noncopyable_error>() );
-}
-
-const char* nullptr_error::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<nullptr_error>() );
-}
-
-const char* lock_error::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<lock_error>() );
-}
-
-const char* assertation_failed::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<assertation_failed>() );
-}
-
-const char* incompatible_error::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<incompatible_error>() );
-}
-
-const char* file_error::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<file_error>() );
-}
-
-const char* io_error::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<io_error>() );
-}
-
-const char* process_error::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<process_error>() );
-}
-
-const char* invalid_arg::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<invalid_arg>() );
-}
-
-const char* invalid_state::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<invalid_state>() );
-}
-
-const char* invalid_operation::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<invalid_operation>() );
-}
-
-const char* unavailable_resource::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<unavailable_resource>() );
-}
-
-const char* incomplete_code::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<incomplete_code>() );
-}
-
-const char* std_exception::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<std_exception>() );
-}
-
-const char* unknown_exception::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<unknown_exception>() );
-}
-
-const char* unknown_type::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<unknown_type>() );
-}
-
-const char* dependency_error::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<dependency_error>() );
+    throw Siren::assertation_error(s,CODELOC);
 }
 
 }
+
+//////////
+////////// Implementation of std_exception
+//////////
+
+static const RegisterMetaType<std_exception> r_std_exp( 3838993618888824392, 1 );
+
+static QString getWhatString(QString typstring, const std::exception &error)
+{
+    return QObject::tr("Caught standard exception 'std::%1' (%2)")
+         .arg(typstring).arg(error.what());
+}
+
+std_exception::std_exception()
+              : ImplementsException<std_exception,exception>()
+{}
+
+std_exception::std_exception(const std::logic_error &error, QString place)
+              : ImplementsException<std_exception,exception>(
+                        ::getWhatString("logic_error", error), place)
+{}
+
+std_exception::std_exception(const std::domain_error &error, QString place)
+              : ImplementsException<std_exception,exception>(
+                        ::getWhatString("logic_error", error), place)
+{}
+
+std_exception::std_exception(const std::invalid_argument &error, QString place)
+              : ImplementsException<std_exception,exception>(
+                        ::getWhatString("invalid_argument", error), place)
+{}
+
+std_exception::std_exception(const std::bad_alloc &error, QString place)
+              : ImplementsException<std_exception,exception>(
+                        ::getWhatString("bad_alloc", error), place)
+{}
+
+std_exception::std_exception(const std::length_error &error, QString place)
+              : ImplementsException<std_exception,exception>(
+                        ::getWhatString("length_error", error), place)
+{}
+
+std_exception::std_exception(const std::out_of_range &error, QString place)
+              : ImplementsException<std_exception,exception>(
+                        ::getWhatString("out_of_range", error), place)
+{}
+
+std_exception::std_exception(const std::runtime_error &error, QString place)
+              : ImplementsException<std_exception,exception>(
+                        ::getWhatString("runtime_error", error), place)
+{}
+
+std_exception::std_exception(const std::range_error &error, QString place)
+              : ImplementsException<std_exception,exception>(
+                        ::getWhatString("range_error", error), place)
+{}
+
+std_exception::std_exception(const std::overflow_error &error, QString place)
+              : ImplementsException<std_exception,exception>(
+                        ::getWhatString("overflow_error", error), place)
+{}
+
+std_exception::std_exception(const std::underflow_error &error, QString place)
+              : ImplementsException<std_exception,exception>(
+                        ::getWhatString("underflow_error", error), place)
+{}
+
+std_exception::std_exception(const std::exception &error, QString place)
+              : ImplementsException<std_exception,exception>(
+                        ::getWhatString("exception", error), place)
+{}
+
+std_exception::~ std_exception() throw()
+{}

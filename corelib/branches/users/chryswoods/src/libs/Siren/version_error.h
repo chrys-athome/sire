@@ -53,6 +53,12 @@ public:
                   QString place=QString::null);
 
     version_error(VERSION_ID wrongid, QString supported_ids,
+                  const Class &c, QString place=QString::null);
+
+    version_error(VERSION_ID wrongid, 
+                  const Class &c, QString place=QString::null);
+
+    version_error(VERSION_ID wrongid, QString supported_ids,
                   const detail::RegisterMetaTypeBase &info,
                   QString place=QString::null);
 

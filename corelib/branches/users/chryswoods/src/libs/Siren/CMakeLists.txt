@@ -33,9 +33,9 @@ set ( SIREN_PUBLIC_HEADERS
       objref.h
 
       mutable.h
-      shared.h
 
       class.h 
+      handle.h
       interface.h     
       object.h
       primitive.h
@@ -71,6 +71,7 @@ set ( SIREN_SOURCES
       objref.cpp
 
       class.cpp
+      handle.cpp
       interface.cpp
       object.cpp
       primitive.cpp

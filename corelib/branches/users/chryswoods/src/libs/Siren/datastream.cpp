@@ -441,6 +441,14 @@ DataStream SIREN_EXPORT &writeHeader(DataStream &ds,
     return ds;
 }
 
+/** Write a header to the data stream that describes the type and version
+    of the object that is about to be written */
+DataStream SIREN_EXPORT &writeHeader(DataStream &ds, const Class &c)
+{
+    ds << c.UID() << c.version();
+    return ds;
+}
+
 /** Read the header of the binary object to check that the type is correct
     and to obtain the binary data version */
 VERSION_ID SIREN_EXPORT readHeader(DataStream &ds,
@@ -453,6 +461,21 @@ VERSION_ID SIREN_EXPORT readHeader(DataStream &ds,
 
     if (uid != r_type.UID())
         throw magic_error( uid, r_type, CODELOC );
+
+    return v;
+}
+
+/** Read the header of the binary object to check that the type is correct
+    and to obtain the binary data version */
+VERSION_ID SIREN_EXPORT readHeader(DataStream &ds, const Class &c)
+{
+    CLASS_UID uid;
+    VERSION_ID v;
+    
+    ds >> uid >> v;
+    
+    if (uid != c.UID())
+        throw magic_error( uid, c, CODELOC );
 
     return v;
 }

@@ -32,7 +32,6 @@
 #include "object.h"
 
 #include "mutable.h"
-#include "shared.h"
 
 SIREN_BEGIN_HEADER
 
@@ -54,7 +53,7 @@ typedef ObjPtr<Logger> LoggerPtr;
 */
 class SIREN_EXPORT Logger 
             : public Extends<Logger,Object>, 
-              public Interfaces<Logger,Mutable,Shared>
+              public Interfaces<Logger,Mutable>
 {
 public:
     Logger();
@@ -72,14 +71,8 @@ public:
 
     virtual void write(const QString &text)=0;
 
-    ///////////////////////
-    // Shared Interface  //
-    ///////////////////////
-    
-    virtual void detach() const=0;
-
 protected:
-    friend class Interfaces<Logger,Mutable,Shared>;
+    friend class Interfaces<Logger,Mutable>;
     static void registerInterfaces();
 };
 
@@ -110,8 +103,6 @@ public:
     ////////////////////////
     
     void write(const QString &text);
-
-    void detach() const;
 
     ///////////////////////
     // Mutable Interface //

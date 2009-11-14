@@ -27,7 +27,9 @@
 \*********************************************/
 
 #include "objref.h"
+#include "class.h"
 #include "datastream.h"
+#include "xmlstream.h"
 
 using namespace Siren;
 using namespace Siren::detail;
@@ -77,6 +79,8 @@ XMLStream SIREN_EXPORT &operator>>(XMLStream &xml, ObjRef &obj)
     xml >> obj.d;
     return xml;
 }
+
+Q_GLOBAL_STATIC_WITH_ARGS( SharedPolyPointer<Object>, getNone, (None()) );
 
 /** Construct a null reference - this points to 'None' */
 ObjRef::ObjRef() : d( *(getNone()) )
@@ -155,16 +159,10 @@ QString ObjRef::what() const
     return d->what();
 }
 
-/** Return a shallow copy of the object */
+/** Return a copy of the object */
 ObjRef ObjRef::copy() const
 {
     return d->copy();
-}
-
-/** Return a deep copy of the object */
-ObjRef ObjRef::deepCopy() const
-{
-    return d->deepCopy();
 }
 
 /** Return a string representation of this object */
@@ -194,13 +192,6 @@ bool ObjRef::test(Logger &logger) const
 void ObjRef::copy(const Object &other)
 {
     d->copy(other);
-}
-
-/** Deep copy the passed object 'other' - note that this
-    copies into the object referred to by this reference */
-void ObjRef::deepCopy(const Object &other)
-{
-    d->deepCopy(other);
 }
 
 /** Return whether or not this object equals 'other' */
