@@ -78,7 +78,6 @@ set ( SIREN_SOURCES
 
       ${SIREN_PRIVATE_HEADERS}
 
-      detail/getmagic.cpp
       detail/globalsharedpointer.cpp
       detail/sharedpolypointer.cpp
       detail/sharestrings.cpp

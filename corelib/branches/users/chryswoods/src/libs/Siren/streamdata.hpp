@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2008  Christopher Woods
+  *  Copyright (C) 2009  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIRESTREAM_STREAMHELPER_HPP
-#define SIRESTREAM_STREAMHELPER_HPP
+#ifndef SIREN_STREAMHELPER_HPP
+#define SIREN_STREAMHELPER_HPP
 
 #include <QByteArray>
 #include <QLocale>
@@ -40,21 +40,9 @@
 
 #include "md5sum.h"
 
-#include "sireglobal.h"
+SIREN_BEGIN_HEADER
 
-#include <QDebug>
-
-SIRE_BEGIN_HEADER
-
-namespace SireStream
-{
-class FileHeader;
-}
-
-QDataStream& operator<<(QDataStream&, const SireStream::FileHeader&);
-QDataStream& operator>>(QDataStream&, SireStream::FileHeader&);
-
-namespace SireStream
+namespace Siren
 {
 
 namespace detail
@@ -114,18 +102,8 @@ QList< boost::tuple<boost::shared_ptr<void>,QString> > load(const QString &filen
     
     @author Christopher Woods
 */
-class SIRESTREAM_EXPORT FileHeader
+class SIREN_EXPORT FileHeader : public Implements<FileHeader,Object>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const FileHeader&);
-friend QDataStream& ::operator>>(QDataStream&, FileHeader&);
-
-friend QByteArray detail::streamDataSave( 
-                        const QList< boost::tuple<const void*,const char*> >& );
-
-friend QByteArray detail::streamDataSave( 
-                        const QList< boost::tuple<boost::shared_ptr<void>,QString> >& );
-
 public:
     FileHeader();
     FileHeader(const FileHeader &other);
@@ -135,6 +113,10 @@ public:
     FileHeader& operator=(const FileHeader &other);
     
     QString toString() const;
+    
+    HASH_CODE hashCode() const;
+    
+    bool test(Logger &logger) const;
     
     const QString& createdBy() const;
     const QDateTime& createdWhen() const;
@@ -166,7 +148,20 @@ public:
     void assertCompatible() const;
     void assertNotCorrupted(const QByteArray &compressed_data) const;
 
+protected:
+    void save(DataStream &ds) const;
+    void load(DataStream &ds);
+    
+    void save(XMLStream &xml) const;
+    void load(XMLStream &xml);
+
 private:
+    friend QByteArray detail::streamDataSave( 
+                        const QList< boost::tuple<const void*,const char*> >& );
+
+    friend QByteArray detail::streamDataSave( 
+                        const QList< boost::tuple<boost::shared_ptr<void>,QString> >& );
+
     FileHeader(const QString &type_name,
                const QByteArray &compressed_data,
                const QByteArray &raw_data);
@@ -227,7 +222,7 @@ void registerLibrary(const QString &library,
 quint32 getLibraryVersion(const QString &library);
 quint32 getMinimumSupportedVersion(const QString &library);
 
-class SIRESTREAM_EXPORT RegisterLibrary
+class SIREN_EXPORT RegisterLibrary
 {
 public:
     RegisterLibrary()
@@ -243,7 +238,7 @@ public:
     {}
 };
 
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+#ifndef SIREN_SKIP_INLINE_FUNCTIONS
 
 /** This loads an object of type T from the passed blob of binary
     data. Note that this data *must* have been created by the "save"
@@ -254,11 +249,11 @@ public:
     \throw SireError::invalid_cast
 */
 template<class T>
-SIRE_OUTOFLINE_TEMPLATE
+SIREN_OUTOFLINE_TEMPLATE
 T loadType(const QByteArray &data)
 {
     QList< boost::tuple<boost::shared_ptr<void>,QString> > new_objs
-            = SireStream::load(data);
+            = Siren::load(data);
 
     if ( new_objs.isEmpty() )
     {
@@ -273,11 +268,11 @@ T loadType(const QByteArray &data)
 }
 
 template<class T>
-SIRE_OUTOFLINE_TEMPLATE
+SIREN_OUTOFLINE_TEMPLATE
 T loadType(const QString &filename)
 {
     QList< boost::tuple<boost::shared_ptr<void>,QString> > new_objs
-            = SireStream::load(filename);
+            = Siren::load(filename);
 
     if ( new_objs.isEmpty() )
     {
@@ -292,14 +287,14 @@ T loadType(const QString &filename)
 }
 
 template<class T>
-SIRE_OUTOFLINE_TEMPLATE
+SIREN_OUTOFLINE_TEMPLATE
 QByteArray save(const T &old_obj)
 {
     return detail::streamDataSave( &old_obj, old_obj.what() );
 }
 
 template<class T0, class T1>
-SIRE_OUTOFLINE_TEMPLATE
+SIREN_OUTOFLINE_TEMPLATE
 QByteArray save(const T0 &obj0, const T1 &obj1)
 {
     QList< boost::tuple<const void*,const char*> > objects;
@@ -311,14 +306,14 @@ QByteArray save(const T0 &obj0, const T1 &obj1)
 }
 
 template<class T>
-SIRE_OUTOFLINE_TEMPLATE
+SIREN_OUTOFLINE_TEMPLATE
 void saveToFile(const T &old_obj, const QString &filename)
 {
     detail::streamDataSave( &old_obj, old_obj.what(), filename );
 }
 
 template<class T0, class T1>
-SIRE_OUTOFLINE_TEMPLATE
+SIREN_OUTOFLINE_TEMPLATE
 void saveToFile(const T0 &obj0, const T1 &obj1, const QString &filename)
 {
     QList< boost::tuple<const void*,const char*> > objects;
@@ -329,16 +324,18 @@ void saveToFile(const T0 &obj0, const T1 &obj1, const QString &filename)
     detail::streamDataSave( objects, filename );
 }
 
-#endif // SIRE_SKIP_INLINE_FUNCTIONS
+#endif // SIREN_SKIP_INLINE_FUNCTIONS
 
 }
 
-SIRE_EXPOSE_FUNCTION( SireStream::getDataHeader )
-SIRE_EXPOSE_FUNCTION( SireStream::getLibraryVersion )
-SIRE_EXPOSE_FUNCTION( SireStream::getMinimumSupportedVersion )
+Q_DECLARE_METATYPE( Siren::FileHeader )
 
-SIRE_EXPOSE_CLASS( SireStream::FileHeader )
+SIREN_EXPOSE_FUNCTION( SireStream::getDataHeader )
+SIREN_EXPOSE_FUNCTION( SireStream::getLibraryVersion )
+SIREN_EXPOSE_FUNCTION( SireStream::getMinimumSupportedVersion )
 
-SIRE_END_HEADER
+SIREN_EXPOSE_CLASS( Siren::FileHeader )
+
+SIREN_END_HEADER
 
 #endif

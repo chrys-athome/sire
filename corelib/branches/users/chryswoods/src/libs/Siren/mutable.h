@@ -47,6 +47,8 @@ public:
     Mutable();
     virtual ~Mutable();
 
+    static QString typeName();
+
     virtual ObjRef saveState() const=0;
     
     virtual void restoreState(const Object &object)=0;

@@ -26,3 +26,12 @@
   *
 \*********************************************/
 
+#include "interface.h"
+
+using namespace Siren;
+
+Interface::Interface()
+{}
+    
+Interface::~Interface()
+{}

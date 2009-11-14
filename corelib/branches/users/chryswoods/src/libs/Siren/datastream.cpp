@@ -30,6 +30,7 @@
 
 #include "datastream.h"
 
+#include "class.h"
 #include "version_error.h"
 #include "magic_error.h"
 
@@ -338,6 +339,12 @@ quint64 DataStream::magic()
 bool DataStream::peekMagic()
 {
     return registry->peekMagic();
+}
+
+/** Allow automatic casting to a QDataStream */
+DataStream::operator QDataStream&()
+{
+    return ds;
 }
 
 /** Read the ID number of the next shared object from the stream */

@@ -471,6 +471,8 @@ public:
 
     quint32 version() const;
 
+    operator QDataStream&();
+
 private:
     void readVersion();
     void writeVersion();

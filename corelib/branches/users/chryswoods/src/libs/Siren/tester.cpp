@@ -28,8 +28,4 @@
 
 #include "tester.h"
 
-void Tester::registerInterfaces()
-{
-    Implements<Tester,Object>::registerInterfaces();
-    Interfaces<Tester,Mutable>::registerInterfaces();
-}
+using namespace Siren;

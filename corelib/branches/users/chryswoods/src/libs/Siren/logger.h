@@ -72,8 +72,12 @@ public:
     virtual void write(const QString &text)=0;
 
 protected:
-    friend class Interfaces<Logger,Mutable>;
-    static void registerInterfaces();
+    friend class Extends<Logger,Object>;
+    
+    static QStringList listInterfaces()
+    {
+        return Interfaces<Logger,Mutable>::listInterfaces();
+    }
 };
 
 class SIREN_EXPORT StdoutLogger : public Implements<StdoutLogger,Logger>

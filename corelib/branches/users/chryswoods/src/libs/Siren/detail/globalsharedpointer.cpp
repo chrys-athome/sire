@@ -30,7 +30,8 @@
 
 #include "globalsharedpointer.hpp"
 
-using namespace SireBase;
+using namespace Siren;
+using namespace Siren::detail;
 
 Q_GLOBAL_STATIC( QMutex, globalPointerMutex );
  

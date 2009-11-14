@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREBASE_GLOBALSHAREDPOINTER_HPP
-#define SIREBASE_GLOBALSHAREDPOINTER_HPP
+#ifndef SIREN_GLOBALSHAREDPOINTER_HPP
+#define SIREN_GLOBALSHAREDPOINTER_HPP
 
 #include <QMutex>
 #include <QMutexLocker>

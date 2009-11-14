@@ -46,23 +46,22 @@
 
 #include "tostring.h"
 
-#include "shareddatastream.h"
+#include "datastream.h"
 
-#include "sire_version.h"        // CONDITIONAL_INCLUDE
+#include "siren_version.h"        // CONDITIONAL_INCLUDE
 
-#include "SireStream/version_error.h"
+#include "Siren/version_error.h"
 
-#include "SireStream/errors.h"
-#include "SireError/errors.h"
+#include "Siren/errors.h"
 
 #include <QDebug>
 
-using namespace SireStream;
+using namespace Siren;
 
 using boost::tuple;
 using boost::shared_ptr;
 
-namespace SireStream
+namespace Siren
 {
 namespace detail
 {
@@ -338,11 +337,11 @@ quint32 LibraryInfo::getLibraryVersion(const QString &library)
     
     if (not libraryInfo().library_info.contains(library))
     {
-        throw SireError::unsupported( QObject::tr(
+        throw Siren::unsupported( QObject::tr(
             "The library %1 is not available to this program. Available libraries "
             "are %2.")
                 .arg(library)
-                .arg( Sire::toString(libraryInfo().library_info.keys()) ),
+                .arg( Siren::toString(libraryInfo().library_info.keys()) ),
                     CODELOC );
     }
     
@@ -355,11 +354,11 @@ quint32 LibraryInfo::getMinimumSupportedVersion(const QString &library)
     
     if (not libraryInfo().library_info.contains(library))
     {
-        throw SireError::unsupported( QObject::tr(
+        throw Siren::unsupported( QObject::tr(
             "The library %1 is not available to this program. Available libraries "
             "are %2.")
                 .arg(library)
-                .arg( Sire::toString(libraryInfo().library_info.keys()) ),
+                .arg( Siren::toString(libraryInfo().library_info.keys()) ),
                     CODELOC );
     }
     
@@ -367,139 +366,79 @@ quint32 LibraryInfo::getMinimumSupportedVersion(const QString &library)
 }
 
 } // end of namespace detail
-} // end of namespace SireStream
+} // end of namespace Siren
 
 /////////
 ///////// Implementation of FileHeader
 /////////
 
-/** Write the header to the data stream */
-QDataStream SIRESTREAM_EXPORT &operator<<(QDataStream &ds,
-                                          const FileHeader &header)
-{
-    ds << header.version();
+static const RegisterMetaType<FileHeader> r_fileheader( 959183239965567304UL, 1 );
 
-    //versions 1 and 2 uses the Qt 4.2 data format
-    ds.setVersion(QDataStream::Qt_4_2);
+void FileHeader::save(DataStream &ds) const
+{
+    writeHeader(ds, r_fileheader);
 
     QByteArray data;
-    QDataStream ds2(&data, QIODevice::WriteOnly);
-    
-    ds.setVersion(QDataStream::Qt_4_2);
-    
-    ds2 << header.created_by
-        << header.created_when
-        << header.created_where
-        << header.system_info;
-       
-    if (header.version() == 2) 
-        ds2 << header.type_names;
-    
-    else if (header.version() == 1)
+    ////////////////
     {
-        if (header.type_names.count() != 1)
-            throw SireError::version_error( QObject::tr(
-                "Version 1 of the FileHeader format does not support multiple "
-                "type names, yet the types ( %1 ) are being streamed!")
-                    .arg(header.type_names.join(", ")), CODELOC );
-                    
-        ds2 << header.type_names.at(0);
-    }
-        
-    ds2 << header.build_repository
-        << header.build_version
-        << header.required_libraries
-        << header.system_locale
-        << header.data_digest
-        << header.compressed_size
-        << header.uncompressed_size;
-        
-    ds << qCompress(data, 9);
+        DataStream ds2(&data, QIODevice::WriteOnly);
     
-    return ds;
+        ds2 << created_by
+            << created_when
+            << created_where
+            << system_info
+            << type_names
+            << build_repository
+            << build_version
+            << required_libraries
+            << system_locale
+            << data_digest
+            << compressed_size
+            << uncompressed_size;
+    }
+    
+    ds << qCompress(data, 9);
+
+    Object::save(ds);
 }
 
-/** Read the header from the data stream */
-QDataStream SIRESTREAM_EXPORT &operator>>(QDataStream &ds,
-                                          FileHeader &header)
+void FileHeader::load(DataStream &ds)
 {
-    quint32 version;
-    ds >> version;
-    
-    if (version == 2)
+    VERSION_ID v = readHeader(ds, r_fileheader);
+
+    if (v == r_fileheader.version())
     {
-        //Version 2 uses the Qt 4.2 data format
-        ds.setVersion(QDataStream::Qt_4_2);
-    
         QByteArray data;
         ds >> data;
 
         data = qUncompress(data);
     
-        QDataStream ds2(data);
+        DataStream ds2(data);
     
-        ds2.setVersion(QDataStream::Qt_4_2);
-    
-        ds2 >> header.created_by
-            >> header.created_when
-            >> header.created_where
-            >> header.system_info
-            >> header.type_names
-            >> header.build_repository
-            >> header.build_version
-            >> header.required_libraries
-            >> header.system_locale
-            >> header.data_digest
-            >> header.compressed_size
-            >> header.uncompressed_size;
+        ds2 >> created_by
+            >> created_when
+            >> created_where
+            >> system_info
+            >> type_names
+            >> build_repository
+            >> build_version
+            >> required_libraries
+            >> system_locale
+            >> data_digest
+            >> compressed_size
+            >> uncompressed_size;
             
-        header.version_number = version;
-    }
-    else if (version == 1)
-    {
-        //Version 1 uses the Qt 4.2 data format
-        ds.setVersion(QDataStream::Qt_4_2);
-    
-        QByteArray data;
-        ds >> data;
-
-        data = qUncompress(data);
-    
-        QDataStream ds2(data);
-    
-        ds2.setVersion(QDataStream::Qt_4_2);
-    
-        QString type_name;
-    
-        ds2 >> header.created_by
-            >> header.created_when
-            >> header.created_where
-            >> header.system_info
-            >> type_name
-            >> header.build_repository
-            >> header.build_version
-            >> header.required_libraries
-            >> header.system_locale
-            >> header.data_digest
-            >> header.compressed_size
-            >> header.uncompressed_size;
-            
-        header.type_names.clear();
-        header.type_names.append(type_name);
-            
-        header.version_number = version;
+        version_number = v;
     }
     else
-        throw version_error( QObject::tr(
-            "The header version (%1) is not recognised. Only header version "
-            "1+2 are supported in this program.")
-                .arg(version), CODELOC );
+        throw version_error(v, r_fileheader, CODELOC);
         
-    return ds;
+    Object::load(ds);
 }
 
 /** Null constructor */
-FileHeader::FileHeader() : compressed_size(0), uncompressed_size(0), version_number(0)
+FileHeader::FileHeader() : compressed_size(0), uncompressed_size(0), 
+                           version_number(r_fileheader.version())
 {}
 
 static QString *system_info(0);
@@ -806,13 +745,13 @@ static const QString& getSystemInfo()
     lines.append( QString("Qt runtime version: %1").arg( qVersion() ) );
     lines.append( QString("Qt compile version: %1").arg( QT_VERSION_STR ) );
 
-    lines.append( QString("Sire compile version: %1.%2.%3")
-                        .arg(SIRE_VERSION_MAJOR)
-                        .arg(SIRE_VERSION_MINOR)
-                        .arg(SIRE_VERSION_PATCH) );
+    lines.append( QString("Siren compile version: %1.%2.%3")
+                        .arg(SIREN_VERSION_MAJOR)
+                        .arg(SIREN_VERSION_MINOR)
+                        .arg(SIREN_VERSION_PATCH) );
                         
-    lines.append( QString("Compile flags: %1").arg(SIRE_COMPILE_FLAGS) );
-    lines.append( QString("Link flags: %1").arg(SIRE_LINK_FLAGS) );
+    lines.append( QString("Compile flags: %1").arg(SIREN_COMPILE_FLAGS) );
+    lines.append( QString("Link flags: %1").arg(SIREN_LINK_FLAGS) );
 
     QString info = lines.join("\n");
     
@@ -824,7 +763,8 @@ static const QString& getSystemInfo()
 /** Internal constructor used by streamDataSave */
 FileHeader::FileHeader(const QStringList &typ_names,
                        const QByteArray &compressed_data,
-                       const QByteArray &raw_data) : version_number(0)
+                       const QByteArray &raw_data) 
+           : Implements<FileHeader,Object>(), version_number(0)
 {
     //these two may be UNIX only...
     created_by = std::getenv("USER");
@@ -837,12 +777,12 @@ FileHeader::FileHeader(const QStringList &typ_names,
     
     type_names = typ_names;
     
-    build_repository = SIRE_REPOSITORY_URL;
-    build_version = SIRE_REPOSITORY_VERSION;
+    build_repository = SIREN_REPOSITORY_URL;
+    build_version = SIREN_REPOSITORY_VERSION;
     
     required_libraries = detail::LibraryInfo::getLibraryHeader();
     
-    data_digest = MD5Sum(compressed_data);
+    data_digest = MD5Sum::fromData(compressed_data);
     
     compressed_size = compressed_data.count();
     uncompressed_size = raw_data.count();
@@ -852,7 +792,8 @@ FileHeader::FileHeader(const QStringList &typ_names,
 
 /** Copy constructor */
 FileHeader::FileHeader(const FileHeader &other)
-           : created_by(other.created_by), created_when(other.created_when),
+           : Implements<FileHeader,Object>(other),
+             created_by(other.created_by), created_when(other.created_when),
              created_where(other.created_where), 
              system_info(other.system_info),
              type_names(other.type_names),
@@ -888,6 +829,8 @@ FileHeader& FileHeader::operator=(const FileHeader &other)
         compressed_size = other.compressed_size;
         uncompressed_size = other.uncompressed_size;
         version_number = other.version_number;
+        
+        Object::operator=(other);
     }
     
     return *this;
@@ -963,7 +906,7 @@ double FileHeader::compressionRatio() const
 QString FileHeader::dataType() const
 {
     if (type_names.count() != 1)
-        throw SireError::invalid_state( QObject::tr(
+        throw Siren::invalid_state( QObject::tr(
             "To get the data type, there must be just one object in the data. "
             "The number of objects in this data is %1 ( %2 ).")
                 .arg(type_names.count()).arg(type_names.join(", ")),
@@ -1073,16 +1016,16 @@ void FileHeader::assertCompatible() const
 void FileHeader::assertNotCorrupted(const QByteArray &compressed_data) const
 {
     if (quint32(compressed_data.size()) != compressed_size)
-        throw SireStream::corrupted_data( QObject::tr(
+        throw Siren::corrupted_data( QObject::tr(
             "The data for the object(s) [ %1 ] appears to be corrupt as it "
             "is the wrong size (%2 bytes vs. the expected %3 bytes)")
                 .arg(type_names.join(", ")).arg(compressed_data.size())
                 .arg(compressed_size), CODELOC );
                 
-    MD5Sum new_digest(compressed_data);
+    MD5Sum new_digest = MD5Sum::fromData(compressed_data);
     
     if (data_digest != new_digest)
-        throw SireStream::corrupted_data( QObject::tr(
+        throw Siren::corrupted_data( QObject::tr(
             "The data for the object(s) [ %1 ] appears to be corrupt as the "
             "digests don't match (%2 vs. %3)")
                 .arg(type_names.join(", "))
@@ -1096,8 +1039,8 @@ void FileHeader::assertNotCorrupted(const QByteArray &compressed_data) const
     
     Currently, we only use version 1, which has this format;
     
-    SIRE_MAGIC_NUMBER  (quint32 = 251785387)
-    VERSION_NUMBER     (quint32 = 2)
+    SIREN_MAGIC_NUMBER (quint32 = 251785385)
+    VERSION_NUMBER     (quint32 = 1)
     QByteArray         (compressed array containing the file header)
     QByteArray         (compressed array containing the saved object)
     
@@ -1107,8 +1050,8 @@ quint32 FileHeader::version() const
 {
     if (version_number == 0)
         //the version has not been set - so use the latest version
-        //available - which is '2' in this case
-        return 2;
+        //available - which is '1' in this case
+        return 1;
     else
         return version_number;
 }
@@ -1117,21 +1060,21 @@ quint32 FileHeader::version() const
 ///////// Implementation of free functions
 /////////
 
-namespace SireStream
+namespace Siren
 {
 namespace detail
 {
 
-void SIRESTREAM_EXPORT throwStreamDataInvalidCast(const QString &load_type,
-                                                  const QString &cast_type)
+void SIREN_EXPORT throwStreamDataInvalidCast(const QString &load_type,
+                                             const QString &cast_type)
 {
-    throw SireError::invalid_cast( QObject::tr(
+    throw Siren::invalid_cast( QObject::tr(
         "Cannot load the binary data for the object of type %1 into "
         "an object of type %2.")
             .arg(load_type).arg(cast_type), CODELOC );
 }
 
-static quint32 SIRE_MAGIC_NUMBER(251785387);
+static quint32 SIREN_MAGIC_NUMBER(251785385);
 
 static int RESERVE_SIZE = 48 * 1024 * 1024;
 
@@ -1140,31 +1083,25 @@ static int RESERVE_SIZE = 48 * 1024 * 1024;
     
     Currently, we use version 1 of the format, which has;
     
-    SIRE_MAGIC_NUMBER  (quint32 = 251785387)
+    SIREN_MAGIC_NUMBER (quint32 = 251785385)
     VERSION_NUMBER     (quint32 = 1)
     QByteArray         (compressed array containing the file header)
     QByteArray         (compressed array containing the saved object)
     
     All of this is written using Qt datastream format for Qt 4.2
 */
-QByteArray SIRESTREAM_EXPORT streamDataSave( 
+QByteArray SIREN_EXPORT streamDataSave( 
                                const QList< tuple<const void*,const char*> > &objects )
 {
     FileHeader header;
     
-    if (header.version() == 1 or header.version() == 2)
+    if (header.version() == 1)
     {
         int nobjects = objects.count();
         
         if (nobjects == 0)
             return QByteArray();
             
-        else if (nobjects > 1 and header.version() == 1)
-            throw SireError::version_error( QObject::tr(
-                "Version 1 of the global Sire format is incapable of saving "
-                "multiple objects, while you are trying to save %1 objects.")
-                    .arg(nobjects), CODELOC );
-
         //use the QMetaType streaming function to save this object
         QByteArray object_data;
     
@@ -1174,18 +1111,8 @@ QByteArray SIRESTREAM_EXPORT streamDataSave(
         if (object_data.capacity() != RESERVE_SIZE)
             qWarning() << "Possible memory allocation error!";
     
-        QDataStream ds2(&object_data, QIODevice::WriteOnly);
+        DataStream ds2(&object_data, QIODevice::WriteOnly);
 
-        //version 1 of the format uses Qt 4.2 datastream format
-        ds2.setVersion( QDataStream::Qt_4_2 );
-        
-        std::auto_ptr<SharedDataStream> sds;
-        
-        if (nobjects > 1)
-            //create a shared data stream so that sub-objects in 
-            //top-level objects can be shared
-            sds.reset( new SharedDataStream(ds2) );
-    
         QStringList type_names;
     
         for (int i=0; i<nobjects; ++i)
@@ -1196,14 +1123,14 @@ QByteArray SIRESTREAM_EXPORT streamDataSave(
             int id = QMetaType::type( type_name.toLatin1().constData() );
 
             if ( id == 0 or not QMetaType::isRegistered(id) )
-                throw SireError::unknown_type(QObject::tr(
+                throw Siren::unknown_type(QObject::tr(
                     "The object with type \"%1\" does not appear to have been "
                     "registered with QMetaType. It cannot be streamed! (%2, %3)")
                         .arg(type_name).arg(id).arg(QMetaType::isRegistered(id)), 
                             CODELOC);
 
             if (not QMetaType::save(ds2, id, objects.at(i).get<0>()))
-                throw SireError::program_bug(QObject::tr(
+                throw Siren::program_bug(QObject::tr(
                     "There was an error saving the object of type \"%1\". "
                     "Has the programmer remembered to add a RegisterMetaType "
                     "for this class?")
@@ -1228,10 +1155,10 @@ QByteArray SIRESTREAM_EXPORT streamDataSave(
         if (data.capacity() != RESERVE_SIZE)
             qWarning() << "Possible memory allocation error!";
 
-        QDataStream ds(&data, QIODevice::WriteOnly);
+        DataStream ds(&data, QIODevice::WriteOnly);
     
         //write a magic number - then the header
-        ds << SIRE_MAGIC_NUMBER;
+        ds << SIREN_MAGIC_NUMBER;
         ds << header;
 
         //now write the object data
@@ -1253,129 +1180,41 @@ QByteArray SIRESTREAM_EXPORT streamDataSave(
     
     Currently, we use version 1 of the format, which has;
     
-    SIRE_MAGIC_NUMBER  (quint32 = 251785387)
+    SIREN_MAGIC_NUMBER (quint32 = 251785387)
     VERSION_NUMBER     (quint32 = 1)
     QByteArray         (compressed array containing the file header)
     QByteArray         (compressed array containing the saved object)
-    
-    All of this is written using Qt datastream format for Qt 4.2
 */
-QByteArray SIRESTREAM_EXPORT streamDataSave( 
-                               const QList< tuple<shared_ptr<void>,QString> > &objects )
+QByteArray SIREN_EXPORT streamDataSave( 
+                            const QList< tuple<shared_ptr<void>,QString> > &objects )
 {
-    FileHeader header;
+    QList< tuple<const void*,const char*> > objs;
     
-    if (header.version() == 1 or header.version() == 2)
+    for (int i=0; i<objects.count(); ++i)
     {
-        int nobjects = objects.count();
-        
-        if (nobjects == 0)
-            return QByteArray();
-            
-        else if (nobjects > 1 and header.version() == 1)
-            throw SireError::version_error( QObject::tr(
-                "Version 1 of the global Sire format is incapable of saving "
-                "multiple objects, while you are trying to save %1 objects.")
-                    .arg(nobjects), CODELOC );
-
-        //use the QMetaType streaming function to save this object
-        QByteArray object_data;
-    
-        //reserve at least 48MB of space (most things shouldn't be this big)
-        object_data.reserve( RESERVE_SIZE );
-
-        if (object_data.capacity() != RESERVE_SIZE)
-            qWarning() << "Possible memory allocation error!";
-    
-        QDataStream ds2(&object_data, QIODevice::WriteOnly);
-
-        //version 1 of the format uses Qt 4.2 datastream format
-        ds2.setVersion( QDataStream::Qt_4_2 );
-        
-        std::auto_ptr<SharedDataStream> sds;
-        
-        if (nobjects > 1)
-            //create a shared data stream so that sub-objects in 
-            //top-level objects can be shared
-            sds.reset( new SharedDataStream(ds2) );
-    
-        QStringList type_names;
-    
-        for (int i=0; i<nobjects; ++i)
-        {
-            QString type_name = objects.at(i).get<1>();
-        
-            //get the ID number of this type
-            int id = QMetaType::type( type_name.toLatin1().constData() );
-
-            if ( id == 0 or not QMetaType::isRegistered(id) )
-                throw SireError::unknown_type(QObject::tr(
-                    "The object with type \"%1\" does not appear to have been "
-                    "registered with QMetaType. It cannot be streamed! (%2, %3)")
-                        .arg(type_name).arg(id).arg(QMetaType::isRegistered(id)), 
-                            CODELOC);
-
-            if (not QMetaType::save(ds2, id, objects.at(i).get<0>().get()))
-                throw SireError::program_bug(QObject::tr(
-                    "There was an error saving the object of type \"%1\". "
-                    "Has the programmer remembered to add a RegisterMetaType "
-                    "for this class?")
-                        .arg(type_name), CODELOC);
-
-            type_names.append(type_name);
-        }
-
-        //compress the object data (level 3 compression seems best, giving
-        //about a ten-fold reduction for only a 30% increase in serialisation time)
-        QByteArray compressed_object_data = qCompress(object_data, 3);
-
-        //now write a header for the object
-        header = FileHeader( type_names, compressed_object_data, object_data );
-    
-        //clear the uncompressed data to save space
-        object_data = QByteArray();
-    
-        QByteArray data;
-        data.reserve( RESERVE_SIZE );
-        
-        if (data.capacity() != RESERVE_SIZE)
-            qWarning() << "Possible memory allocation error!";
-
-        QDataStream ds(&data, QIODevice::WriteOnly);
-    
-        //write a magic number - then the header
-        ds << SIRE_MAGIC_NUMBER;
-        ds << header;
-
-        //now write the object data
-        ds << compressed_object_data;
-
-        return data;
+        objs.append( tuple<const void*,const char*>(
+                        objects.at(i).get<0>().get(),
+                        objects.at(i).get<1>().toAscii().constData()) );
     }
-    else
-        throw version_error( QObject::tr(
-            "Cannot write the object information, as it should be written using "
-            "the global Sire format %1, while we can only write versions 1 and 2.")
-                    .arg(header.version()), CODELOC );
-
-    return QByteArray();
+    
+    return streamDataSave(objs);
 }
 
 /** Overloaded function that saves the object directly to a file, rather than
     to an array */
-void SIRESTREAM_EXPORT streamDataSave( 
+void SIREN_EXPORT streamDataSave( 
                             const QList< tuple<const void*,const char*> > &objects, 
                             const QString &filename )
 {
     QFile f(filename);
     
     if (not f.open(QIODevice::WriteOnly))
-        throw SireError::file_error(f, CODELOC);
+        throw Siren::file_error(f, CODELOC);
 
     QByteArray data = streamDataSave(objects);
 
     if (f.write(data) == -1)
-        throw SireError::file_error( QObject::tr(
+        throw Siren::file_error( QObject::tr(
             "There was an error writing to the file %1. Is there enough space to "
             "to write a file of %d bytes?").arg(filename).arg(data.count()),
                 CODELOC );
@@ -1383,25 +1222,25 @@ void SIRESTREAM_EXPORT streamDataSave(
 
 /** Overloaded function that saves the object directly to a file, rather than
     to an array */
-void SIRESTREAM_EXPORT streamDataSave( 
+void SIREN_EXPORT streamDataSave( 
                             const QList< tuple<shared_ptr<void>,QString> > &objects, 
                             const QString &filename )
 {
     QFile f(filename);
     
     if (not f.open(QIODevice::WriteOnly))
-        throw SireError::file_error(f, CODELOC);
+        throw Siren::file_error(f, CODELOC);
 
     QByteArray data = streamDataSave(objects);
 
     if (f.write(data) == -1)
-        throw SireError::file_error( QObject::tr(
+        throw Siren::file_error( QObject::tr(
             "There was an error writing to the file %1. Is there enough space to "
             "to write a file of %d bytes?").arg(filename).arg(data.count()),
                 CODELOC );
 }
 
-QByteArray SIRESTREAM_EXPORT streamDataSave( const void *object, const char *type_name )
+QByteArray SIREN_EXPORT streamDataSave( const void *object, const char *type_name )
 {
     QList< tuple<const void*,const char *> > objects;
     
@@ -1410,8 +1249,8 @@ QByteArray SIRESTREAM_EXPORT streamDataSave( const void *object, const char *typ
     return streamDataSave(objects);
 }
 
-void SIRESTREAM_EXPORT streamDataSave( const void *object, const char *type_name,
-                                       const QString &filename )
+void SIREN_EXPORT streamDataSave( const void *object, const char *type_name,
+                                  const QString &filename )
 {
     QList< tuple<const void*,const char *> > objects;
     
@@ -1421,26 +1260,26 @@ void SIRESTREAM_EXPORT streamDataSave( const void *object, const char *type_name
 }
 
 } // end of namespace detail
-} // end of namespace SireStream
+} // end of namespace Siren
 
-namespace SireStream
+namespace Siren
 {
 
-/** This function is called by each Sire library when it is loaded
+/** This function is called by each library when it is loaded
     to register the library with the streaming system. You should
     not call this function yourself! */
-void SIRESTREAM_EXPORT registerLibrary(const QString &library,
-                                       quint32 version, 
-                                       quint32 min_supported_version)
+void SIREN_EXPORT registerLibrary(const QString &library,
+                                  quint32 version, 
+                                  quint32 min_supported_version)
 {
     detail::LibraryInfo::registerLibrary(library, version, min_supported_version);
 }
 
 /** Return the version of the loaded library called 'library'
 
-    \throw SireError::unsupported
+    \throw Siren::unsupported
 */
-quint32 SIRESTREAM_EXPORT getLibraryVersion(const QString &library)
+quint32 SIREN_EXPORT getLibraryVersion(const QString &library)
 {
     return detail::LibraryInfo::getLibraryVersion(library);
 }
@@ -1448,30 +1287,30 @@ quint32 SIRESTREAM_EXPORT getLibraryVersion(const QString &library)
 /** Return the minimum data version that the library 'library' is capable
     of reading
     
-    \throw SireError::unsupported
+    \throw Siren::unsupported
 */
-quint32 SIRESTREAM_EXPORT getMinimumSupportedVersion(const QString &library)
+quint32 SIREN_EXPORT getMinimumSupportedVersion(const QString &library)
 {
     return detail::LibraryInfo::getMinimumSupportedVersion(library);
 }
 
-using namespace SireStream::detail;
+using namespace Siren::detail;
 
 /** This loads an object from the passed blob of binary data. This binary
     data *must* have been created by the "save" function below. */
-QList< tuple<shared_ptr<void>,QString> > SIRESTREAM_EXPORT load(const QByteArray &data)
+QList< tuple<shared_ptr<void>,QString> > SIREN_EXPORT load(const QByteArray &data)
 {
     QList< tuple<shared_ptr<void>,QString> > loaded_objects;
 
-    QDataStream ds(data);
+    DataStream ds(data);
     
     //read the magic
     quint32 magic;
     ds >> magic;
     
-    if (magic != SIRE_MAGIC_NUMBER)
+    if (magic != SIREN_MAGIC_NUMBER)
         throw version_error( QObject::tr(
-            "This data does not appear to have been written by the SireStream::save() "
+            "This data does not appear to have been written by the Siren::save() "
             "function."), CODELOC );
     
     //read the version and the libraries and versions
@@ -1490,7 +1329,7 @@ QList< tuple<shared_ptr<void>,QString> > SIRESTREAM_EXPORT load(const QByteArray
         return loaded_objects;
     }
 
-    if (header.version() == 1 or header.version() == 2)
+    if (header.version() == 1)
     {
         //read in the binary data containing all of the objects
         QByteArray object_data;
@@ -1507,17 +1346,9 @@ QList< tuple<shared_ptr<void>,QString> > SIRESTREAM_EXPORT load(const QByteArray
         //uncompress the data
         object_data = qUncompress(object_data);
     
-        QDataStream ds2(object_data);
-    
-        //version 1 uses Qt 4.2 datastream format
-        ds2.setVersion( QDataStream::Qt_4_2 );
+        DataStream ds2(object_data);
 
         int nobjects = header.dataTypes().count();
-        
-        std::auto_ptr<SharedDataStream> sds;
-        
-        if (nobjects > 1)
-            sds.reset( new SharedDataStream(ds2) );
         
         for (int i=0; i<nobjects; ++i)
         {
@@ -1527,7 +1358,7 @@ QList< tuple<shared_ptr<void>,QString> > SIRESTREAM_EXPORT load(const QByteArray
             int id = QMetaType::type( datatype.toLatin1().constData() );
 
             if ( id == 0 or not QMetaType::isRegistered(id) )
-                throw SireError::unknown_type( QObject::tr(
+                throw Siren::unknown_type( QObject::tr(
                     "Cannot deserialise an object of type \"%1\". "
                     "Ensure that the library or module containing "
                     "this type has been loaded and that it has been registered "
@@ -1537,14 +1368,14 @@ QList< tuple<shared_ptr<void>,QString> > SIRESTREAM_EXPORT load(const QByteArray
             shared_ptr<void> ptr( QMetaType::construct(id,0), detail::void_deleter(id) );
 
             if (ptr.get() == 0)
-                throw SireError::program_bug( QObject::tr(
+                throw Siren::program_bug( QObject::tr(
                         "Could not create an object of type \"%1\" despite "
                         "this type having been registered with QMetaType. This is "
                         "a program bug!!!").arg(datatype), CODELOC );
     
             //load the object from the datastream
             if ( not QMetaType::load(ds2, id, ptr.get()) )
-                throw SireError::program_bug(QObject::tr(
+                throw Siren::program_bug(QObject::tr(
                     "There was an error loading the object of type \"%1\"")
                         .arg(datatype), CODELOC);
 
@@ -1564,17 +1395,17 @@ QList< tuple<shared_ptr<void>,QString> > SIRESTREAM_EXPORT load(const QByteArray
 
 /** This loads an object from the specified file. This binary
     data *must* have been created by the "save" function below. */
-QList< tuple<shared_ptr<void>,QString> > SIRESTREAM_EXPORT load(const QString &filename)
+QList< tuple<shared_ptr<void>,QString> > SIREN_EXPORT load(const QString &filename)
 {
     QFile f(filename);
     
     if (not f.open( QIODevice::ReadOnly) )
-        throw SireError::file_error(f, CODELOC);
+        throw Siren::file_error(f, CODELOC);
         
     QByteArray data = f.readAll();
     
     if (data.isEmpty())
-        throw SireError::file_error( QObject::tr(
+        throw Siren::file_error( QObject::tr(
             "There was an error reading data from the file %1. Either "
             "the file is empty, or some read error has occured.")
                 .arg(filename), CODELOC );
@@ -1583,17 +1414,17 @@ QList< tuple<shared_ptr<void>,QString> > SIRESTREAM_EXPORT load(const QString &f
 }
 
 /** Return the header for the data */
-FileHeader SIRESTREAM_EXPORT getDataHeader(const QByteArray &data)
+FileHeader SIREN_EXPORT getDataHeader(const QByteArray &data)
 {
-    QDataStream ds(data);
+    DataStream ds(data);
     
     //read the magic
     quint32 magic;
     ds >> magic;
     
-    if (magic != SIRE_MAGIC_NUMBER)
+    if (magic != SIREN_MAGIC_NUMBER)
         throw version_error( QObject::tr(
-            "This data does not appear to have been written by the SireStream::save() "
+            "This data does not appear to have been written by the Siren::save() "
             "function."), CODELOC );
     
     //read the version and the libraries and versions
@@ -1605,22 +1436,22 @@ FileHeader SIRESTREAM_EXPORT getDataHeader(const QByteArray &data)
 }
 
 /** Return the header of the file */
-FileHeader SIRESTREAM_EXPORT getDataHeader(const QString &filename)
+FileHeader SIREN_EXPORT getDataHeader(const QString &filename)
 {
     QFile f(filename);
     
     if (not f.open( QIODevice::ReadOnly) )
-        throw SireError::file_error(f, CODELOC);
+        throw Siren::file_error(f, CODELOC);
 
-    QDataStream ds(&f);
+    DataStream ds(&f);
     
     //read the magic
     quint32 magic;
     ds >> magic;
     
-    if (magic != SIRE_MAGIC_NUMBER)
+    if (magic != SIREN_MAGIC_NUMBER)
         throw version_error( QObject::tr(
-            "This data does not appear to have been written by the SireStream::save() "
+            "This data does not appear to have been written by the Siren::save() "
             "function."), CODELOC );
     
     //read the version and the libraries and versions
@@ -1631,4 +1462,4 @@ FileHeader SIRESTREAM_EXPORT getDataHeader(const QString &filename)
     return header;
 }
 
-} //end of namespace SireStream
+} //end of namespace Siren

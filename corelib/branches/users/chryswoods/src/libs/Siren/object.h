@@ -282,8 +282,6 @@ public:
 
 protected:
     static const Class& createTypeInfo();
-    
-    static QStringList listInterfaces();
 
     static QMutex& globalLock();
 
@@ -298,6 +296,8 @@ protected:
     static Class* registerVirtualClass( const detail::RegisterMetaTypeBase *r,
                                         const Class &base_class,
                                         const QStringList &interfaces );
+
+    static QStringList listInterfaces();
 
     /** Return a clone of this object. */
     virtual Object* clone() const=0;

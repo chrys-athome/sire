@@ -30,6 +30,7 @@
 #define SIREN_TESTER_H
 
 #include "logger.h"
+#include "objptr.hpp"
 
 SIREN_BEGIN_HEADER
 
@@ -100,11 +101,17 @@ public:
     void unexpected_error(const Siren::exception &e);
     
 protected:
-    friend class Interfaces<Tester,Mutable>;
-    static void registerInterfaces();
+    friend class Implements<Tester,Object>;
+    static QStringList listInterfaces()
+    {
+        return Interfaces<Tester,Mutable>::listInterfaces();
+    }
 
     void save(DataStream &ds) const;
     void load(DataStream &ds);
+
+    void save(XMLStream &xml) const;
+    void load(XMLStream &xml);
 
 private:
     /** The logger to which the output of the tests is written */

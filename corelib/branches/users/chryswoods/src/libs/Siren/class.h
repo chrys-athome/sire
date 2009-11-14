@@ -26,13 +26,13 @@
   *
 \*********************************************/
 
-#include "object.h"
-
 #ifndef SIREN_CLASS_H
 #define SIREN_CLASS_H
 
 #include <QSet>
 #include <QStringList>
+
+#include "object.h"
 
 SIREN_BEGIN_HEADER
 

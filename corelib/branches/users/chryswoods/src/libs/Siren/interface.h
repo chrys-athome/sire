@@ -29,7 +29,9 @@
 #ifndef SIREN_INTERFACE_H
 #define SIREN_INTERFACE_H
 
-#include "object.h"
+#include <QStringList>
+
+#include "sirenglobal.h"
 
 SIREN_BEGIN_HEADER
 
@@ -51,8 +53,6 @@ public:
     
     virtual ~Interface();
 
-    static const char* typeName();
-
 protected:
     static bool IS_INTERFACE()
     {
@@ -71,9 +71,9 @@ protected:
         return false;
     }
     
-    static const char* typeName()
+    static QString typeName()
     {
-        return 0;
+        return QString::null;
     }
 };
 
@@ -120,31 +120,35 @@ protected:
         return false;
     }
 
-    static void registerInterfaces()
+    static QStringList listInterfaces()
     {
+        QStringList ifaces;
+    
         if (I0::IS_INTERFACE())
-            RegisterMetaType<Derived>::registerInterface( I0::typeName() );
+            ifaces.append( I0::typeName() );
         
         if (I1::IS_INTERFACE())
-            RegisterMetaType<Derived>::registerInterface( I1::typeName() );
+            ifaces.append( I0::typeName() );
 
         if (I2::IS_INTERFACE())
-            RegisterMetaType<Derived>::registerInterface( I2::typeName() );
+            ifaces.append( I0::typeName() );
 
         if (I3::IS_INTERFACE())
-            RegisterMetaType<Derived>::registerInterface( I3::typeName() );
+            ifaces.append( I0::typeName() );
 
         if (I4::IS_INTERFACE())
-            RegisterMetaType<Derived>::registerInterface( I4::typeName() );
+            ifaces.append( I0::typeName() );
 
         if (I5::IS_INTERFACE())
-            RegisterMetaType<Derived>::registerInterface( I5::typeName() );
+            ifaces.append( I0::typeName() );
 
         if (I6::IS_INTERFACE())
-            RegisterMetaType<Derived>::registerInterface( I6::typeName() );
+            ifaces.append( I0::typeName() );
 
         if (I7::IS_INTERFACE())
-            RegisterMetaType<Derived>::registerInterface( I7::typeName() );
+            ifaces.append( I0::typeName() );
+
+        return ifaces;
     }
 };
 

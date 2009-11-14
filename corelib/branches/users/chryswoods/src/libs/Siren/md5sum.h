@@ -26,8 +26,8 @@
   *
 \*********************************************/
 
-#ifndef SIREN_DETAIL_MD5SUM_H
-#define SIREN_DETAIL_MD5SUM_H
+#ifndef SIREN_MD5SUM_H
+#define SIREN_MD5SUM_H
 
 #include "object.h"
 
@@ -37,9 +37,7 @@ class QFile;
 class QString;
 class QByteArray;
 
-typedef unsigned char md5_byte_t;
-
-namespace SireStream
+namespace Siren
 {
 
 /**
@@ -49,33 +47,53 @@ namespace SireStream
  * @author Christopher Woods
  */
 
-class SIREN_EXPORT MD5Sum : public ConcreteObject<MD5Sum,Object>
+class SIREN_EXPORT MD5Sum : public Implements<MD5Sum,Object>
 {
 
 public:
     MD5Sum();
-
-    MD5Sum(const QByteArray &buffer);
-
-    MD5Sum(const char *buffer, unsigned int sz);
-
-    MD5Sum(const QString &file);
-
     MD5Sum(const MD5Sum &sum);
   
     ~MD5Sum();
   
-    const MD5Sum& operator=(const MD5Sum &other);
+    MD5Sum& operator=(const MD5Sum &other);
 
     bool operator==(const MD5Sum &other) const;
     bool operator!=(const MD5Sum &other) const;
 
-    const md5_byte_t* digest() const;
+    static MD5Sum fromData(const QByteArray &data);
+    static MD5Sum fromData(const char *buffer, unsigned int sz);
+    
+    static MD5Sum fromFile(const QString &filename);
+
+    static MD5Sum fromText(const QString &text);
+
+    ///////////////////////
+    // Implements Object //
+    ///////////////////////
 
     QString toString() const;
 
+    HASH_CODE hashCode() const;
+
+    bool test(Logger &logger) const;
+
+protected:
+
+    ///////////////////////
+    // Implements Object //
+    ///////////////////////
+
+    void save(DataStream &ds) const;
+    void load(DataStream &ds);
+    
+    void save(XMLStream &ds) const;
+    void load(XMLStream &ds);
+
 private:
     void generate(const char *buffer, unsigned int sz);
+
+    typedef unsigned char md5_byte_t;
   
     /** Pointer to the storage of the md5 digest */
     md5_byte_t dgst[16];

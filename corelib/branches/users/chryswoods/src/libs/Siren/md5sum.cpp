@@ -26,81 +26,80 @@
   *
 \*********************************************/
 
-#include "md5sum.h"
-
 #include <QString>
 #include <QRegExp>
 #include <QFile>
 #include <QByteArray>
 
-#include "../ThirdParty/md5.h"      // CONDITIONAL_INCLUDE
+#include "md5sum.h"
+#include "datastream.h"
+#include "xmlstream.h"
+#include "tester.h"
+#include "logger.h"
+#include "objref.h"
+
+#include "Siren/errors.h"
+
+#include "third_party/md5.h"      // CONDITIONAL_INCLUDE
 
 using namespace Siren;
-using namespace Siren::detail;
 
-QDataStream SIRESTREAM_EXPORT &operator<<(QDataStream &ds, const MD5Sum &md5sum)
-{
-    for (int i=0; i<16; ++i)
-    {
-        ds << quint8(md5sum.dgst[i]);
-    }
-    
-    return ds;
-}
+static const RegisterMetaType<MD5Sum> r_md5sum( 18066477408090997958UL, 1 );
 
-QDataStream SIRESTREAM_EXPORT &operator>>(QDataStream &ds, MD5Sum &md5sum)
-{
-    for (int i=0; i<16; ++i)
-    {
-        quint8 c;
-        ds >> c;
-        
-        md5sum.dgst[i] = c;
-    }
-    
-    return ds;
-}
-
-MD5Sum::MD5Sum()
+/** Generate the null MD5Sum */
+MD5Sum::MD5Sum() : Implements<MD5Sum,Object>()
 {
     //generate the null digest
     generate(0,0);
 }
 
-MD5Sum::MD5Sum(const QByteArray &buffer)
+/** Generate the MD5 sum for the buffer 'buffer' */
+MD5Sum MD5Sum::fromData(const QByteArray &buffer)
 {
-    generate(buffer.data(),buffer.size());
+    MD5Sum r;
+
+    r.generate(buffer.data(),buffer.size());
+    
+    return r;
 }
 
-MD5Sum::MD5Sum(const QString &file)
+/** Generate the MD5 sum for the buffer 'buffer' */
+MD5Sum MD5Sum::fromData(const char *buffer, unsigned int sz)
+{
+    MD5Sum r;
+
+    r.generate(buffer,sz);
+    
+    return r;
+}
+
+MD5Sum MD5Sum::fromFile(const QString &file)
 {
     //get the string of bytes in 'file'
     QFile f(file);
+    
     if (!f.open(QIODevice::ReadOnly))
-    {
-        //generate the null digest
-        generate(0,0);
-    }
+        throw Siren::file_error(f, CODELOC);
 
     //get the string of bytes
     QByteArray bytes = f.readAll();
     f.close();
 
-    generate(bytes.data(),bytes.size());
+    return MD5Sum::fromData(bytes);
 }
 
-MD5Sum::MD5Sum(const char *buffer, unsigned int sz)
+MD5Sum MD5Sum::fromText(const QString &text)
 {
-    generate(buffer,sz);
+    return MD5Sum::fromData( text.toUtf8() );
 }
 
-MD5Sum::MD5Sum(const MD5Sum &other)
+MD5Sum::MD5Sum(const MD5Sum &other) : Implements<MD5Sum,Object>(other)
 {
     for (int i=0; i<16; i++)
         dgst[i] = other.dgst[i];
 }
 
-MD5Sum::~ MD5Sum()
+MD5Sum::~MD5Sum()
 {}
 
 void MD5Sum::generate(const char* buffer, unsigned int sz)
@@ -117,14 +116,16 @@ void MD5Sum::generate(const char* buffer, unsigned int sz)
     md5_finish(&state,dgst);
 }
 
-const MD5Sum& MD5Sum::operator=(const MD5Sum &other)
+MD5Sum& MD5Sum::operator=(const MD5Sum &other)
 {
-    if (*this == other)
+    if (this == &other)
         return *this;
     else
     {
         for (int i=0; i<16; i++)
             dgst[i] = other.dgst[i];
+
+        Object::operator=(other);
 
         return *this;
     }
@@ -132,18 +133,79 @@ const MD5Sum& MD5Sum::operator=(const MD5Sum &other)
 
 QString MD5Sum::toString() const
 {
-    return QString().sprintf("%02x%02x%02x%02x-%02x%02x%02x%02x-%02x%02x%02x%02x-%02x%02x%02x%02x",
-                             dgst[0],dgst[1],dgst[2],dgst[3],
-                             dgst[4],dgst[5],dgst[6],dgst[7],
-                             dgst[8],dgst[9],dgst[10],dgst[11],
-                             dgst[12],dgst[13],dgst[14],dgst[15]);
+    return QString().sprintf(
+        "%02x%02x%02x%02x-%02x%02x%02x%02x-%02x%02x%02x%02x-%02x%02x%02x%02x",
+                   dgst[0],dgst[1],dgst[2],dgst[3],
+                   dgst[4],dgst[5],dgst[6],dgst[7],
+                   dgst[8],dgst[9],dgst[10],dgst[11],
+                   dgst[12],dgst[13],dgst[14],dgst[15]);
 }
 
-const md5_byte_t* MD5Sum::digest() const
+HASH_CODE MD5Sum::hashCode() const
 {
-    return dgst;
-} 
- 
+    int sum = r_md5sum.hashBase();
+    
+    for (int i=0; i<16; ++i)
+    {
+        sum += dgst[i];
+    }
+    
+    return sum;
+}
+
+bool MD5Sum::test(Logger &logger) const
+{
+    Tester tester(*this, logger);
+
+    try
+    {
+        // Test 1
+        {
+            tester.nextTest();
+            tester.expect_equal( QObject::tr("Test a clone is equal."),
+                                 CODELOC,
+                                 *this, this->copy() );
+        }
+        
+        // Test 2
+        {
+            tester.nextTest();
+            tester.expect_equal( QObject::tr("None.what() is \"Siren::None\""),
+                                 CODELOC,
+                                 this->what(), "Siren::MD5Sum" );
+        }
+        
+        // Test 3
+        {
+            tester.nextTest();
+
+            // MD5 "Hello World" == e59ff97941044f85df5297e1c302d260
+            QString test_string = QLatin1String("Hello World");
+        
+            MD5Sum r = MD5Sum::fromText(test_string);
+            
+            tester.expect_equal( QObject::tr("MD5 sum of 'Hello World'"),
+                                 CODELOC, 
+                                 r.toString(), 
+                                 QString("e59ff97941044f85df5297e1c302d260") );
+        }
+    }
+    catch(const Siren::exception &e)
+    {
+        tester.unexpected_error(e);
+    }
+    catch(const std::exception &e)
+    {
+        tester.unexpected_error( std_exception(e) );
+    }
+    catch(...)
+    {
+        tester.unexpected_error( unknown_error(CODELOC) );
+    }
+    
+    return tester.allPassed();
+}
+
 bool MD5Sum::operator==(const MD5Sum &other) const
 {
     return (dgst[0] == other.dgst[0] and
@@ -182,4 +244,36 @@ bool MD5Sum::operator!=(const MD5Sum &other) const
             dgst[13] != other.dgst[13] or
             dgst[14] != other.dgst[14] or
             dgst[15] != other.dgst[15]);
+}
+
+void MD5Sum::save(DataStream &ds) const
+{
+    writeHeader(ds, r_md5sum);
+
+    for (int i=0; i<16; ++i)
+    {
+        ds << quint8(dgst[i]);
+    }
+    
+    Object::save(ds);
+}
+
+void MD5Sum::load(DataStream &ds)
+{
+    VERSION_ID v = readHeader(ds, r_md5sum);
+    
+    if (v == r_md5sum.version())
+    {
+        for (int i=0; i<16; ++i)
+        {
+            quint8 c;
+            ds >> c;
+        
+            dgst[i] = c;
+        }
+    }
+    else
+        throw version_error(v, r_md5sum, CODELOC);
+
+    Object::load(ds);
 }

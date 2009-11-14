@@ -33,6 +33,7 @@
 #include <QDebug>
 
 using namespace Siren;
+using namespace Siren::detail;
 
 /** Destructor */
 SharedPolyPointerBase::~SharedPolyPointerBase()
@@ -102,7 +103,7 @@ void* SharedPolyPointerBase::read(QDataStream &ds)
                   "with QMetaType.").arg(type_name), CODELOC );
 
         //create a default-constructed object of this type
-        ptr = QMetaType::construct(id,0);
+        void *ptr = QMetaType::construct(id,0);
 
         if (not ptr)
             throw Siren::program_bug( QObject::tr(

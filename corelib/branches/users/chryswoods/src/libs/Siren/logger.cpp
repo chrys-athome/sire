@@ -26,10 +26,6 @@
   *
 \*********************************************/
 
+#include "logger.h"
 
-
-void Logger::registerInterfaces()
-{
-    Extends<Logger,Object>::registerInterfaces();
-    Interfaces<Logger,Mutable,Shared>::registerInterfaces();
-}
+using namespace Siren;

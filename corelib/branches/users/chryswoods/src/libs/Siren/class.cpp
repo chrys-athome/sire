@@ -29,6 +29,7 @@
 #include <QMutex>
 
 #include "class.h"
+#include "objref.h"
 
 #include "Siren/errors.h"
 

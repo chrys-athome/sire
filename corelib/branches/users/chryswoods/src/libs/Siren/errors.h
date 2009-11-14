@@ -232,7 +232,7 @@ class SIREN_EXPORT file_error : public ImplementsException<file_error,exception>
 public:
     file_error();
 
-    file_error(const QString &err, const QString &place=QString::null);
+    file_error(QString err, QString place=QString::null);
     
     file_error(const QFile &file, QString place=QString::null);
     
@@ -247,7 +247,7 @@ class SIREN_EXPORT process_error : public ImplementsException<process_error,exce
 public:
     process_error();
 
-    process_error(const QString &err, const QString place=QString::null);
+    process_error(QString err, QString place=QString::null);
 
     process_error(const QString &executable, const QProcess &process,
                   QString place=QString::null);
@@ -260,7 +260,7 @@ public:
 /** This exception is thrown whenever a request is made of a resource
     that is just not available */
 class SIREN_EXPORT unavailable_resource 
-        : ImplementsException<unavailable_resource,exception>
+        : public ImplementsException<unavailable_resource,exception>
 {
 public:
     unavailable_resource();
@@ -372,9 +372,6 @@ public:
     std_exception(const std::exception &error, QString place=QString::null);
 
     ~std_exception() throw();
-
-protected:
-    static QString getWhatString(QString typstring, const std::exception &error);
 };
 
 /** This exception is thrown whenever an unidentified exception needs translating into
