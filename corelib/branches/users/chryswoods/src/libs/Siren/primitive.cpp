@@ -26,3 +26,23 @@
   *
 \*********************************************/
 
+#include "primitive.h"
+
+using namespace Siren;
+
+//////////
+////////// Implementation of String
+//////////
+
+
+//////////
+////////// Implementation of Number
+//////////
+
+
+//////////
+////////// Instantiate templates
+//////////
+
+template class PrimitiveObject<String>;
+template class PrimitiveObject<Number>;
