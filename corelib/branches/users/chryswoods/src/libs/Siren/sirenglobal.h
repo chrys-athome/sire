@@ -36,6 +36,7 @@
 #define SIREN_EXPOSE_CLASS(c)     /* Exposing class #1 */
 #define SIREN_EXPOSE_ALIAS(c,a)   /* Exposing class #1 as alias #2 */
 #define SIREN_EXPOSE_OBJECT_PTR(c,a)  /* Exposing pointer #1 to object class #2 */
+#define SIREN_EXPOSE_HANDLE_PTR(c,a)  /* Exposing pointer #1 to object class #2 */
 
 //create the keyword used to export a symbol - this
 //is a copy of Q_DECL_EXPORT, which will definitely
@@ -209,9 +210,6 @@ typedef quint64 CLASS_UID;
 typedef quint32 VERSION_ID;
 typedef quint32 HASH_CODE;
 
-/** Enum used to register without using the streaming operators */
-enum VirtualClassEnum{ VIRTUAL_CLASS = 1 };
-
 namespace detail
 {
 
@@ -251,7 +249,14 @@ private:
     QString type_name;
 };
 
+struct VIRTUAL_CLASS_TYPE{ };
+struct NONSTREAMING_CLASS_TYPE{ };
+
 } // end of namespace detail
+
+static const detail::VIRTUAL_CLASS_TYPE VIRTUAL_CLASS = detail::VIRTUAL_CLASS_TYPE();
+static const detail::NONSTREAMING_CLASS_TYPE NONSTREAMING_CLASS = 
+                                                detail::NONSTREAMING_CLASS_TYPE();
 
 /** This is used to register the type 'T' - this
     needs to be called once for each public type.
@@ -262,8 +267,8 @@ template<class T>
 class RegisterMetaType : public detail::RegisterMetaTypeBase
 {
 public:
-    /** Use this constructor to register a class */
-    RegisterMetaType( CLASS_UID class_uid, VERSION_ID version_id )
+    /** Use this constructor to register a concrete class */
+    RegisterMetaType( CLASS_UID class_uid, VERSION_ID version_id=1 )
         : detail::RegisterMetaTypeBase( class_uid, version_id,
                                         QMetaType::typeName( qMetaTypeId<T>() ) )
     {
@@ -274,8 +279,18 @@ public:
     }
 
     /** Use this constructor to register a virtual class */
-    RegisterMetaType( VirtualClassEnum, CLASS_UID class_uid, VERSION_ID version_id )
+    RegisterMetaType( const detail::VIRTUAL_CLASS_TYPE&, 
+                      CLASS_UID class_uid, VERSION_ID version_id=1 )
         : detail::RegisterMetaTypeBase( class_uid, version_id, T::typeName() )
+    {
+        singleton = this;
+    }
+
+    /** Use this constructor to register a concrete class that can't be streamed */
+    RegisterMetaType( const detail::NONSTREAMING_CLASS_TYPE&,
+                      CLASS_UID class_uid, VERSION_ID version_id=1)
+        : detail::RegisterMetaTypeBase( class_uid, version_id,
+                                        QMetaType::typeName( qMetaTypeId<T>() ) )
     {
         singleton = this;
     }

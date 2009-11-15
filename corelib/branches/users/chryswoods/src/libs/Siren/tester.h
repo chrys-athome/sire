@@ -31,6 +31,7 @@
 
 #include "logger.h"
 #include "objptr.hpp"
+#include "mutable.h"
 
 SIREN_BEGIN_HEADER
 

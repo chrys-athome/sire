@@ -108,6 +108,7 @@ protected:
 
 private:
     friend class Object;   // so can call these constructors
+    friend class Handle;   // so can call these constructors
     
     Class(const detail::RegisterMetaTypeBase *r);
     Class(const detail::RegisterMetaTypeBase *r, 

@@ -29,9 +29,9 @@
 #ifndef SIREN_LOGGER_H
 #define SIREN_LOGGER_H
 
-#include "object.h"
+#include <QIODevice>
 
-#include "mutable.h"
+#include "handle.h"
 
 SIREN_BEGIN_HEADER
 
@@ -40,10 +40,6 @@ namespace Siren
 
 class Logger;
 
-template<class T> class ObjPtr;
-
-typedef ObjPtr<Logger> LoggerPtr;
-
 /** This is the base class of all of the Loggers. These are 
     simple classes that provide a means of recording output
     during a function call (e.g. by either printing directly
@@ -51,77 +47,38 @@ typedef ObjPtr<Logger> LoggerPtr;
     
     @author Christopher Woods
 */
-class SIREN_EXPORT Logger 
-            : public Extends<Logger,Object>, 
-              public Interfaces<Logger,Mutable>
+class SIREN_EXPORT Logger : public ImplementsHandle<Logger, Handles<QIODevice> >
 {
 public:
     Logger();
+    Logger(QIODevice *device);
     
     Logger(const Logger &other);
     
     virtual ~Logger();
 
-    static LoggerPtr getDefault();
-    static void setDefault(const Logger &logger);
+    ///////////////////////
+    // Implements Handle //
+    ///////////////////////
+    
+    QString toString() const;
+    
+    HASH_CODE hashCode() const;
+
+    bool test(Logger &logger) const;
 
     ///////////////////////
     // Logger            //
     ///////////////////////
 
-    virtual void write(const QString &text)=0;
-
-protected:
-    friend class Extends<Logger,Object>;
-    
-    static QStringList listInterfaces()
-    {
-        return Interfaces<Logger,Mutable>::listInterfaces();
-    }
-};
-
-class SIREN_EXPORT StdoutLogger : public Implements<StdoutLogger,Logger>
-{
-public:
-    StdoutLogger();
-    
-    StdoutLogger(const StdoutLogger &other);
-    
-    ~StdoutLogger();
-    
-    StdoutLogger& operator=(const StdoutLogger &other);
-    
-    bool operator==(const StdoutLogger &other) const;
-    bool operator!=(const StdoutLogger &other) const;
-
-    ////////////////////////
-    // Implements Object  //
-    ////////////////////////
-    
-    HASH_CODE hashCode() const;
-    QString toString() const;
-    bool test(Logger &logger) const;
-
-    ////////////////////////
-    // Implements Logger  //
-    ////////////////////////
-    
-    void write(const QString &text);
-
-    ///////////////////////
-    // Mutable Interface //
-    ///////////////////////
-
-    ObjRef saveState() const;
-    void restoreState(const Object &object);
+    virtual void write(const QString &text);
 };
 
 }
 
-Q_DECLARE_METATYPE( Siren::StdoutLogger )
+Q_DECLARE_METATYPE( Siren::Logger )
 
 SIREN_EXPOSE_CLASS( Siren::Logger )
-SIREN_EXPOSE_CLASS( Siren::StdoutLogger )
 
 SIREN_END_HEADER
 

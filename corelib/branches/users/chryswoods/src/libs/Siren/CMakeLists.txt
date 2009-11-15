@@ -29,6 +29,8 @@ set ( SIREN_PUBLIC_HEADERS
       sirenglobal.h
       tostring.h
 
+      hanptr.hpp
+      hanref.h
       objptr.hpp
       objref.h
 
@@ -67,6 +69,8 @@ set ( SIREN_SOURCES
       tester.cpp
       xmlstream.cpp
 
+      hanptr.cpp
+      hanref.cpp
       objptr.cpp
       objref.cpp
 

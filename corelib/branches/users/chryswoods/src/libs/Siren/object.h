@@ -82,6 +82,8 @@ class GlobalSharedPointerBase;
 template<class T> class GlobalSharedPointer;
 }
 
+QMutex& globalRegistrationLock();
+
 /** This is the base class of all Siren virtual objects.
     
     All Siren objects are inherited from either this class

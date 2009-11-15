@@ -88,10 +88,13 @@ class NONE_7 : public NONE_BASE {};
 }
 
 /** Use this class to provide the list of interfaces that an
-    object inherits, e.g.
+    object or handle inherits, e.g.
     
-    class MyClass : public Implements<MyClass,Object>,
-                    public Interfaces<MyInterface,MyOtherInterface>
+    class MyObject : public Implements<MyObject,Object>,
+                     public Interfaces<MyInterface,MyOtherInterface>
+
+    class MyHandle : public Handles<MyHandle,HandleData>,
+                     public Interfaces<MyInterface,MyOtherInterface>
 
     @author Christopher Woods
 */

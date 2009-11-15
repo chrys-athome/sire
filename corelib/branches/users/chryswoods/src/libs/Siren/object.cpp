@@ -154,15 +154,18 @@ ObjRef Object::copy() const
 
 Q_GLOBAL_STATIC_WITH_ARGS( QMutex, objectGlobalMutex, (QMutex::Recursive) );
 
+QMutex SIREN_EXPORT &Siren::globalRegistrationLock()
+{
+    QMutex *m = objectGlobalMutex();
+    BOOST_ASSERT( m );
+    return *m;
+}
+
 /** Return the mutex that can be used as a lock
     on all object registration */
 QMutex& Object::globalLock()
 {
-    QMutex *m = objectGlobalMutex();
-    
-    BOOST_ASSERT( m );
-    
-    return *m;
+    return globalRegistrationLock();
 }
 
 /** This function is (semi-)automatically overridden by
@@ -242,9 +245,8 @@ bool Object::test(Logger &logger) const
     and write the results to the default logger */
 bool Object::test() const
 {
-    LoggerPtr logger = Logger::getDefault();
-
-    return this->test( logger.edit() );
+    Logger logger;
+    return this->test(logger);
 }
 
 /** Reimplement this function to load this object from 
