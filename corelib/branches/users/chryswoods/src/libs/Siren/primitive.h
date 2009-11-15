@@ -35,6 +35,24 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
+class String;
+class Number;
+}
+
+DataStream& operator<<(DataStream&, const Siren::String&);
+DataStream& operator>>(DataStream&, Siren::String&);
+
+DataStream& operator<<(DataStream&, const Siren::Number&);
+DataStream& operator>>(DataStream&, Siren::Number&);
+
+XMLStream& operator<<(XMLStream&, const Siren::String&);
+XMLStream& operator>>(XMLStream&, Siren::String&);
+
+XMLStream& operator<<(XMLStream&, const Siren::Number&);
+XMLStream& operator>>(XMLStream&, Siren::Number&);
+
+namespace Siren
+{
 
 class Logger;
 
@@ -109,6 +127,13 @@ public:
     
     operator const T&() const;
 
+protected:
+    void save(DataStream &ds) const;
+    void load(DataStream &ds);
+    
+    void save(XMLStream &xml) const;
+    void load(XMLStream &xml);
+
 private:
     /** The actual primitive object */
     T primitive_object;
@@ -142,7 +167,6 @@ public:
     bool operator!=(const String &other) const;
     
     operator const QString&() const;
-    operator const char*() const;
     
     static QString typeName();
     
@@ -154,6 +178,12 @@ public:
     bool test(Logger &logger) const;
     
 private:
+    friend DataStream& ::operator<<(DataStream&, const String&);
+    friend DataStream& ::operator>>(DataStream&, String&);
+    
+    friend XMLStream& ::operator<<(XMLStream&, const String&);
+    friend XMLStream& ::operator>>(XMLStream&, String&);
+
     /** The actual text in the string */
     QString text;
 };
@@ -207,6 +237,12 @@ public:
     operator double() const;
 
 private:
+    friend DataStream& ::operator<<(DataStream&, const Number&);
+    friend DataStream& ::operator>>(DataStream&, Number&);
+    
+    friend XMLStream& ::operator<<(XMLStream&, const Number&);
+    friend XMLStream& ::operator>>(XMLStream&, Number&);
+
     union
     {
         qint64 integer_value;

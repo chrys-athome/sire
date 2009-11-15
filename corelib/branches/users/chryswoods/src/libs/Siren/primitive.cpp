@@ -26,7 +26,13 @@
   *
 \*********************************************/
 
+#include <cmath>
+#include <limits>
+
 #include "primitive.h"
+#include "logger.h"
+
+#include "Siren/errors.h"
 
 using namespace Siren;
 
@@ -34,11 +40,323 @@ using namespace Siren;
 ////////// Implementation of String
 //////////
 
+static const RegisterMetaType< PrimitiveObject<String> > r_string(11503173771973241010UL);
+
+DataStream SIREN_EXPORT &operator<<(DataStream &ds, const String &s)
+{
+    ds << s.text;
+    return ds;
+}
+
+DataStream SIREN_EXPORT &operator>>(DataStream &ds, String &s)
+{
+    ds >> s.text;
+    return ds;
+}
+
+/** Null constructor */
+String::String() : Primitive<String>()
+{}
+
+/** Construct the string equal to 'text' */
+String::String(const QString &t) : Primitive<String>(), text(t)
+{}
+
+/** Copy constructor */
+String::String(const String &other) : Primitive<String>(other), text(other.text)
+{}
+
+/** Destructor */
+String::~String()
+{}
+
+/** Copy assignment operator */
+String& String::operator=(const String &other)
+{
+    text = other.text;
+    return *this;
+}
+
+/** Comparison operator */
+bool String::operator==(const String &other) const
+{
+    return text == other.text;
+}
+
+/** Comparison operator */
+bool String::operator!=(const String &other) const
+{
+    return text != other.text;
+}
+
+/** Allow automatic casting to a QString */
+String::operator const QString&() const
+{
+    return text;
+}
+
+QString String::typeName()
+{
+    return "Siren::String";
+}
+
+QString String::toString() const
+{
+    return text;
+}
+
+HASH_CODE String::hashCode() const
+{
+    return qHash(text);
+}
+
+bool String::test() const
+{
+    return true;
+}
+
+bool String::test(Logger&) const
+{
+    return true;
+}
 
 //////////
 ////////// Implementation of Number
 //////////
 
+static const RegisterMetaType< PrimitiveObject<Number> > r_number(8898074123716037135UL);
+
+DataStream SIREN_EXPORT &operator<<(DataStream &ds, const Number &number)
+{
+    if (number.is_integer)
+    {
+        ds << true << number.number_data.integer_value;
+    }
+    else
+    {
+        ds << false << number.number_data.float_value;
+    }
+
+    return ds;
+}
+
+DataStream SIREN_EXPORT &operator>>(DataStream &ds, Number &number)
+{
+    bool is_integer;
+    
+    ds >> is_integer;
+    
+    if (is_integer)
+    {
+        qint64 val;
+        ds >> val;
+        
+        number = Number::fromInteger(val);
+    }
+    else
+    {
+        double val;
+        ds >> val;
+        
+        number = Number::fromFloat(val);
+    }
+    
+    return ds;
+}
+
+/** Null constructor */
+Number::Number() : Primitive<Number>()
+{
+    is_integer = true;
+    number_data.integer_value = 0;
+}
+
+/** Construct to hold the integer 'value' */
+Number::Number(qint64 value) : Primitive<Number>()
+{
+    is_integer = true;
+    number_data.integer_value = value;
+}
+
+/** Construct to hold the floating point value 'value' */
+Number::Number(double value) : Primitive<Number>()
+{
+    is_integer = false;
+    number_data.float_value = value;
+}
+
+/** Copy constructor */
+Number::Number(const Number &other) : Primitive<Number>()
+{
+    is_integer = other.is_integer;
+    
+    if (is_integer)
+    {
+        number_data.integer_value = other.number_data.integer_value;
+    }
+    else
+    {
+        number_data.float_value = other.number_data.float_value;
+    }
+}
+
+/** Destructor */
+Number::~Number()
+{}
+
+/** Copy assignment operator */
+Number& Number::operator=(const Number &other)
+{
+    if (this != &other)
+    {
+        is_integer = other.is_integer;
+        
+        if (is_integer)
+        {
+            number_data.integer_value = other.number_data.integer_value;
+        }
+        else
+        {
+            number_data.float_value = other.number_data.float_value;
+        }
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool Number::operator==(const Number &other) const
+{
+    if (is_integer and other.is_integer)
+    {
+        return number_data.integer_value == other.number_data.integer_value;
+    }
+    else if ( (not is_integer) and (not other.is_integer) )
+    {
+        return number_data.float_value == other.number_data.float_value;
+    }
+    else if (is_integer)
+    {
+        return double(number_data.integer_value) == other.number_data.float_value;
+    }
+    else
+    {
+        return double(other.number_data.integer_value) == number_data.float_value;
+    }
+}
+
+/** Comparison operator */
+bool Number::operator!=(const Number &other) const
+{
+    return not Number::operator==(other);
+}
+
+QString Number::typeName()
+{
+    return "Siren::Number";
+}
+
+QString Number::toString() const
+{
+    if (is_integer)
+        return QString::number( number_data.integer_value );
+    else
+        return QString::number( number_data.float_value );
+}
+
+/** Hash this Number */
+HASH_CODE Number::hashCode() const
+{
+    if (is_integer)
+        return number_data.integer_value;
+    else
+        return *( (qint64*)(&(number_data.float_value)) );
+}
+
+bool Number::test(Logger &logger) const
+{
+    return true;
+}
+
+bool Number::test() const
+{
+    Logger logger;
+    return test(logger);
+}
+
+/** Construct a number from the passed value */
+Number Number::fromInteger(qint64 value)
+{
+    return Number(value);
+}
+
+/** Construct a number from the passed value */
+Number Number::fromFloat(double value)
+{
+    return Number(value);
+}
+
+/** Return this number as an integer - it is an error
+    to cast a non-integer value to an integer
+    
+    \throw Siren::invalid_cast
+*/
+qint64 Number::toInteger() const
+{
+    if (is_integer)
+        return number_data.integer_value;
+    else
+    {
+        double d;
+        double v = std::modf( number_data.float_value, &d );
+        
+        if (d < 1e-8)
+            throw Siren::invalid_cast( QObject::tr(
+                    "Cannot cast from floating point number %1 to an integer.")
+                        .arg(number_data.float_value), CODELOC);
+        
+        else if (v > double(std::numeric_limits<qint64>::max()))
+            throw Siren::invalid_cast( QObject::tr(
+                    "Cannot cast from floating point number %1 to an integer, "
+                    "as it is too large (greater than %2).")
+                        .arg(number_data.float_value)
+                        .arg(std::numeric_limits<qint64>::max()), CODELOC );
+
+        else if (v < double(std::numeric_limits<qint64>::min()))
+            throw Siren::invalid_cast( QObject::tr(
+                    "Cannot cast from floating point number %1 to an integer, "
+                    "as it is too small (less than %2).")
+                        .arg(number_data.float_value)
+                        .arg(std::numeric_limits<qint64>::min()), CODELOC );
+        
+        else
+            return qint64(v);
+    }
+}
+
+/** Return this number as a float */
+double Number::toFloat() const
+{
+    if (is_integer)
+        return double( number_data.integer_value );
+    else
+        return number_data.float_value;
+}
+
+/** Allow automatic casting to an integer
+
+    \throw Siren::invalid_cast
+*/
+Number::operator qint64() const
+{
+    return this->toInteger();
+}
+
+/** Allow automatic casting to a floating point number */
+Number::operator double() const
+{
+    return this->toFloat();
+}
 
 //////////
 ////////// Instantiate templates
