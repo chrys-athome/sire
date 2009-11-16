@@ -120,6 +120,15 @@ save_sire_variable( "SIRE_OPENMP" "${SIRE_OPENMP}" )
 option ( SIRE_VECTORISE "Turn on code vectorisation" ON )
 save_sire_variable( "SIRE_VECTORISE" "${SIRE_VECTORISE}" )
 
+# Add an option to force off Fortran compilation and linking
+# (it may not work on this platform!)
+option ( SIRE_DISABLE_FORTRAN "Turn off Fortran compilation and linking" OFF )
+save_sire_variable( "SIRE_DISABLE_FORTRAN" "${SIRE_DISABLE_FORTRAN}" )
+
+if (SIRE_DISABLE_FORTRAN)
+  message( STATUS "Disabling any code that requires compilation of linking to Fortran" )
+endif()
+
 # Sire depends on >= Qt 4.2
 find_package( Qt4 4.2.0 COMPONENTS QtCore QtXml QtGui QtOpenGL QtWebKit )
 
@@ -320,6 +329,11 @@ elseif ( ${CMAKE_CXX_COMPILER} MATCHES "xlC" )
     set ( SIRE_PLATFORM_FLAGS "-qrtti=all -qthreaded" )
 
     set ( SIRE_SHARE_LINK_FLAGS "-qmkshrobj" )
+
+    # Turn off Fortran code because this produces weird link errors!
+    message( STATUS "Disabling Fortran code as this leads to link errors!" )
+    message( STATUS "This will disable sire_blas, sire_lapack and sire_linpack" )
+    set ( SIRE_DISABLE_FORTRAN ON )
 
 elseif( ${CMAKE_CXX_COMPILER} MATCHES "icpc" )
 

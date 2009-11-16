@@ -32,6 +32,8 @@
 
 #include "SireError/errors.h"
 
+#ifndef SIRE_DISABLE_FORTRAN
+
 typedef int BLAS_INT;
 
 #include "sire_blas_f.h" // CONDITIONAL_INCLUDE
@@ -60,6 +62,8 @@ extern "C"
 
 } // end of extern "C"
 
+#endif // SIRE_DISABLE_FORTRAN
+
 namespace SireMaths
 {
 
@@ -69,6 +73,15 @@ namespace SireMaths
 */
 NVector SIREMATHS_EXPORT dgemv(const NMatrix &A, const NVector &X)
 {
+    #ifdef SIRE_DISABLE_FORTRAN
+    throw SireError::unsupported( QObject::tr(
+            "dgemv not available as BLAS does not work with this version of Sire."),
+                    CODELOC );
+
+    return NVector();
+
+    #else
+
     A.assertNColumns( X.nRows() );
 
     char TRANSA;
@@ -104,11 +117,22 @@ NVector SIREMATHS_EXPORT dgemv(const NMatrix &A, const NVector &X)
                  Y.data(), &INCY );
 
     return Y;
+    
+    #endif // SIRE_DISABLE_FORTRAN
 }
 
 NVector SIREMATHS_EXPORT dgemv(double alpha, const NMatrix &A, const NVector &X,
                                double beta, const NVector &Y)
 {
+    #ifdef SIRE_DISABLE_FORTRAN
+    throw SireError::unsupported( QObject::tr(
+            "dgemv not available as BLAS does not work with this version of Sire."),
+                    CODELOC );
+
+    return NVector();
+
+    #else
+
     A.assertNColumns( X.nRows() );
     Y.assertNRows( X.nRows() );
 
@@ -146,12 +170,23 @@ NVector SIREMATHS_EXPORT dgemv(double alpha, const NMatrix &A, const NVector &X,
                  RESULT.data(), &INCY );
 
     return RESULT;
+    
+    #endif // SIRE_DISABLE_FORTRAN
 }
 
 
 /** Return the matrix product of A \times B */
 NMatrix SIREMATHS_EXPORT dgemm(const NMatrix &A, const NMatrix &B)
 {
+    #ifdef SIRE_DISABLE_FORTRAN
+    throw SireError::unsupported( QObject::tr(
+            "dgemm not available as BLAS does not work with this version of Sire."),
+                    CODELOC );
+
+    return NMatrix();
+
+    #else
+
     B.assertNRows( A.nColumns() );
 
     char TRANSA, TRANSB;
@@ -197,6 +232,8 @@ NMatrix SIREMATHS_EXPORT dgemm(const NMatrix &A, const NMatrix &B)
                  B.constData(), &LDB, &BETA, C.data(), &LDC );
                
     return C;
+    
+    #endif // SIRE_DISABLE_FORTRAN
 }
 
 /** Return the matrix product of 
@@ -206,6 +243,15 @@ NMatrix SIREMATHS_EXPORT dgemm(const NMatrix &A, const NMatrix &B)
 NMatrix dgemm(double alpha, const NMatrix &A, const NMatrix &B, 
               double beta, const NMatrix &C)
 {
+    #ifdef SIRE_DISABLE_FORTRAN
+    throw SireError::unsupported( QObject::tr(
+            "dgemm not available as BLAS does not work with this version of Sire."),
+                    CODELOC );
+
+    return NMatrix();
+
+    #else
+ 
     A.assertNColumns( B.nRows() );
     C.assertNRows( A.nRows() );
     C.assertNColumns( B.nColumns() );
@@ -256,6 +302,8 @@ NMatrix dgemm(double alpha, const NMatrix &A, const NMatrix &B,
                  B.constData(), &LDB, &BETA, RESULT.data(), &LDC );
                
     return RESULT;
+    
+    #endif // SIRE_DISABLE_FORTRAN
 }
 
 } // end of namespace SireMaths

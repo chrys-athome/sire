@@ -35,6 +35,8 @@
 #include "SireError/errors.h"
 #include "SireMaths/errors.h"
 
+#ifndef SIRE_DISABLE_FORTRAN
+
 typedef int LINPACK_INT;
 
 #include "sire_linpack_f.h" // CONDITIONAL_INCLUDE
@@ -55,11 +57,23 @@ extern "C"
 
 } // end of extern "C"
 
+#endif // SIRE_DISABLE_FORTRAN
+
 namespace SireMaths
 {
 
 std::pair< NMatrix,QVector<int> > SIREMATHS_EXPORT dgeco(const NMatrix &A)
 {
+    #ifdef SIRE_DISABLE_FORTRAN
+
+    throw SireError::unsupported( QObject::tr(
+            "dgeco not available as LINPACK does not work with this version of Sire."),
+                    CODELOC );
+
+    return std::pair< NMatrix,QVector<int> >();
+
+    #else
+
     LINPACK_INT LDA, N;
     
     if (A.isTransposed())
@@ -80,10 +94,23 @@ std::pair< NMatrix,QVector<int> > SIREMATHS_EXPORT dgeco(const NMatrix &A)
     ::SireDGECO(A_OUT.data(), &LDA, &N, IPVT.data(), &RCOND, Z.data());
     
     return std::pair< NMatrix,QVector<int> >(A_OUT, IPVT);
+    
+    #endif // SIRE_DISABLE_FORTRAN
 }
 
 NMatrix SIREMATHS_EXPORT dgedi_inverse(const NMatrix &A, const QVector<int> &IPVT)
 {
+    #ifdef SIRE_DISABLE_FORTRAN
+
+    throw SireError::unsupported( QObject::tr(
+            "dgedi_inverse not available as LINPACK does not work "
+            "with this version of Sire."),
+                    CODELOC );
+
+    return NMatrix();
+
+    #else
+
     LINPACK_INT LDA, N, JOB;
 
     N = A.nRows();
@@ -104,10 +131,23 @@ NMatrix SIREMATHS_EXPORT dgedi_inverse(const NMatrix &A, const QVector<int> &IPV
                 WORK.data(), &JOB);
               
     return A_OUT;
+
+    #endif // SIRE_DISABLE_FORTRAN
 }
 
 double SIREMATHS_EXPORT dgedi_determinant(const NMatrix &A, const QVector<int> &IPVT)
 {
+    #ifdef SIRE_DISABLE_FORTRAN
+
+    throw SireError::unsupported( QObject::tr(
+            "dgedi_determinant not available as LINPACK does not work "
+            "with this version of Sire."),
+                    CODELOC );
+
+    return 0;
+
+    #else
+    
     LINPACK_INT LDA, N, JOB;
 
     N = A.nRows();
@@ -129,11 +169,23 @@ double SIREMATHS_EXPORT dgedi_determinant(const NMatrix &A, const QVector<int> &
               
     // DET contains DET[0] * 10^DET[1]
     return DET[0] * std::pow(10,DET[1]);
+    
+    #endif // SIRE_DISABLE_FORTRAN
 }
 
 std::pair<double,NMatrix> SIREMATHS_EXPORT dgedi(const NMatrix &A, 
                                                  const QVector<int> &IPVT)
 {
+    #ifdef SIRE_DISABLE_FORTRAN
+    
+    throw SireError::unsupported( QObject::tr(
+            "dgedi not available as LINPACK does not work with this version of Sire."),
+                    CODELOC );
+
+    return std::pair<double,NMatrix>();
+
+    #else
+
     LINPACK_INT LDA, N, JOB;
 
     N = A.nRows();
@@ -155,6 +207,8 @@ std::pair<double,NMatrix> SIREMATHS_EXPORT dgedi(const NMatrix &A,
               
     // DET contains DET[0] * 10^DET[1]
     return std::pair<double,NMatrix>( DET[0] * std::pow(10,DET[1]), A_OUT );
+
+    #endif // SIRE_DISABLE_FORTRAN
 }
 
 } // end of namespace SireMaths

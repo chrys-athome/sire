@@ -35,6 +35,8 @@
 #include "SireError/errors.h"
 #include "SireMaths/errors.h"
 
+#ifndef SIRE_DISABLE_FORTRAN
+
 typedef int LAPACK_INT;
 
 #include "sire_lapack_f.h" // CONDITIONAL_INCLUDE
@@ -53,11 +55,22 @@ extern "C"
 
 } // end of extern "C"
 
+#endif // SIRE_DISABLE_FORTRAN
+
 namespace SireMaths
 {
 
 std::pair<NVector,NMatrix> SIREMATHS_EXPORT dsyev(const NMatrix &A, bool upper)
 {
+    #ifdef SIRE_DISABLE_FORTRAN
+    throw SireError::unsupported( QObject::tr(
+            "dsyev not available as LAPACK does not work with this version of Sire."),
+                    CODELOC );
+
+    return std::pair<NVector,NMatrix>();
+
+    #else
+
     if (A.isTransposed())
     {
         //we can only process a column-major ordered matrix...
@@ -98,10 +111,23 @@ std::pair<NVector,NMatrix> SIREMATHS_EXPORT dsyev(const NMatrix &A, bool upper)
                     .arg(INFO).arg(A.toString()), CODELOC );
     
     return std::pair<NVector,NMatrix>(EIGVAL, EIGVEC);
+
+    #endif // SIRE_DISABLE_FORTRAN
 }
 
 NVector SIREMATHS_EXPORT dsyev_eigenvalues(const NMatrix &A, bool upper)
 {
+    #ifdef SIRE_DISABLE_FORTRAN
+    
+    throw SireError::unsupported( QObject::tr(
+            "dsyev_eigenvalues not available as LAPACK does not work "
+            "with this version of Sire."),
+                    CODELOC );
+
+    return NVector();
+
+    #else
+
     if (A.isTransposed())
     {
         //we can only process a column-major ordered matrix...
@@ -142,6 +168,8 @@ NVector SIREMATHS_EXPORT dsyev_eigenvalues(const NMatrix &A, bool upper)
                     .arg(INFO).arg(A.toString()), CODELOC );
     
     return EIGVAL;
+    
+    #endif // SIRE_DISABLE_FORTRAN
 }
 
 } // end of namespace SireMaths

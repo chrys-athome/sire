@@ -4,111 +4,118 @@
 #
 ########################################
 
-# We first create a library (SireBLASPACK) that provides an interface
-# to BLAS, LAPACK and LINPACK. This library either links
-# to those libraries, or it provides the necessary functions
-# from those libraries if they are not available.
+if (SIRE_DISABLE_FORTRAN)
+  add_definitions( "-DSIRE_DISABLE_FORTRAN" )
+  message( STATUS "Disabling SireMaths BLAS/LAPACK/LINPACK interfaces.")
+  message( STATUS "Have to do this as Fortran code has been disabled.")
 
-set( SIRE_BLAS_FUNCTIONS
-     DGEMM
-     DGEMV
-   )
-
-set( SIRE_LAPACK_FUNCTIONS
-     DSYEV
-   )
-
-set( SIRE_LINPACK_FUNCTIONS
-     DGECO
-     DGEDI
-   )
-
-if ( SIRE_USE_BLAS )
-  list(APPEND SIREBLASPACK_LIBRARIES ${BLAS_LIBRARIES})
-  set( SIREBLASPACK_HAS_LIBRARIES TRUE )
 else()
-  set( SIRE_BLAS_SOURCES
-       ThirdParty/BLAS/idamax.f
-       ThirdParty/BLAS/dasum.f
-       ThirdParty/BLAS/daxpy.f
-       ThirdParty/BLAS/dcopy.f
-       ThirdParty/BLAS/ddot.f
-       ThirdParty/BLAS/dgemm.f
-       ThirdParty/BLAS/dgemv.f
-       ThirdParty/BLAS/dger.f
-       ThirdParty/BLAS/dnrm2.f
-       ThirdParty/BLAS/dscal.f
-       ThirdParty/BLAS/dswap.f
-       ThirdParty/BLAS/dsymv.f
-       ThirdParty/BLAS/dsyr2.f
-       ThirdParty/BLAS/dsyr2k.f
-       ThirdParty/BLAS/dtrmm.f
-       ThirdParty/BLAS/dtrmv.f
-       ThirdParty/BLAS/lsame.f
-       ThirdParty/BLAS/xerbla.f
-     )
-endif()
+  # We first create a library (SireBLASPACK) that provides an interface
+  # to BLAS, LAPACK and LINPACK. This library either links
+  # to those libraries, or it provides the necessary functions
+  # from those libraries if they are not available.
 
-if ( SIRE_USE_LINPACK )
-  list(APPEND SIREBLASPACK_LIBRARIES ${LINPACK_LIBRARIES})
-  set( SIREBLASPACK_HAS_LIBRARIES TRUE )
-else()
-  set( SIRE_LINPACK_SOURCES
-       ThirdParty/LINPACK/dgeco.f
-       ThirdParty/LINPACK/dgedi.f
-       ThirdParty/LINPACK/dgefa.f
+  set( SIRE_BLAS_FUNCTIONS
+       DGEMM
+       DGEMV
      )
-endif()
 
-if ( SIRE_USE_LAPACK )
-  list(APPEND SIREBLASPACK_LIBRARIES ${LAPACK_LIBRARIES})
-  set( SIREBLASPACK_HAS_LIBRARIES TRUE )
-else()
-  set( SIRE_LAPACK_SOURCES
-       ThirdParty/LAPACK/disnan.f
-       ThirdParty/LAPACK/dlae2.f
-       ThirdParty/LAPACK/dlaev2.f
-       ThirdParty/LAPACK/dlaisnan.f
-       ThirdParty/LAPACK/dlamch.f
-       ThirdParty/LAPACK/dlanst.f
-       ThirdParty/LAPACK/dlansy.f
-       ThirdParty/LAPACK/dlapy2.f
-       ThirdParty/LAPACK/dlascl.f
-       ThirdParty/LAPACK/dlarf.f
-       ThirdParty/LAPACK/dlarfb.f
-       ThirdParty/LAPACK/dlartg.f
-       ThirdParty/LAPACK/dlarfg.f
-       ThirdParty/LAPACK/dlarft.f
-       ThirdParty/LAPACK/dlaset.f
-       ThirdParty/LAPACK/dlasr.f
-       ThirdParty/LAPACK/dlasrt.f
-       ThirdParty/LAPACK/dlassq.f
-       ThirdParty/LAPACK/dlatrd.f
-       ThirdParty/LAPACK/dorg2l.f
-       ThirdParty/LAPACK/dorg2r.f
-       ThirdParty/LAPACK/dorgql.f
-       ThirdParty/LAPACK/dorgqr.f
-       ThirdParty/LAPACK/dorgtr.f
-       ThirdParty/LAPACK/dsyev.f
-       ThirdParty/LAPACK/dsytd2.f
-       ThirdParty/LAPACK/dsytrd.f
-       ThirdParty/LAPACK/dsteqr.f
-       ThirdParty/LAPACK/dsterf.f
-       ThirdParty/LAPACK/ilaenv.f
-       ThirdParty/LAPACK/iladlc.f
-       ThirdParty/LAPACK/iladlr.f
-       ThirdParty/LAPACK/ieeeck.f
-       ThirdParty/LAPACK/iparmq.f
+  set( SIRE_LAPACK_FUNCTIONS
+       DSYEV
      )
-endif()
 
-if (NOT CMAKE_GENERATOR STREQUAL "Xcode" )
-  # We need to sort out the naming convention for the
-  # fortran blas, lapack and linpack libraries
-  include( FortranCInterface )
-  create_fortran_c_interface( Sire SIRE_BLAS_FUNCTIONS sire_blas_f.h )
-  create_fortran_c_interface( Sire SIRE_LAPACK_FUNCTIONS sire_lapack_f.h )
-  create_fortran_c_interface( Sire SIRE_LINPACK_FUNCTIONS sire_linpack_f.h )
+  set( SIRE_LINPACK_FUNCTIONS
+       DGECO
+       DGEDI
+     )
+
+  if ( SIRE_USE_BLAS )
+    list(APPEND SIREBLASPACK_LIBRARIES ${BLAS_LIBRARIES})
+    set( SIREBLASPACK_HAS_LIBRARIES TRUE )
+  else()
+    set( SIRE_BLAS_SOURCES
+         ThirdParty/BLAS/idamax.f
+         ThirdParty/BLAS/dasum.f
+         ThirdParty/BLAS/daxpy.f
+         ThirdParty/BLAS/dcopy.f
+         ThirdParty/BLAS/ddot.f
+         ThirdParty/BLAS/dgemm.f
+         ThirdParty/BLAS/dgemv.f
+         ThirdParty/BLAS/dger.f
+         ThirdParty/BLAS/dnrm2.f
+         ThirdParty/BLAS/dscal.f
+         ThirdParty/BLAS/dswap.f
+         ThirdParty/BLAS/dsymv.f
+         ThirdParty/BLAS/dsyr2.f
+         ThirdParty/BLAS/dsyr2k.f
+         ThirdParty/BLAS/dtrmm.f
+         ThirdParty/BLAS/dtrmv.f
+         ThirdParty/BLAS/lsame.f
+         ThirdParty/BLAS/xerbla.f
+       )
+  endif()
+
+  if ( SIRE_USE_LINPACK )
+    list(APPEND SIREBLASPACK_LIBRARIES ${LINPACK_LIBRARIES})
+    set( SIREBLASPACK_HAS_LIBRARIES TRUE )
+  else()
+    set( SIRE_LINPACK_SOURCES
+         ThirdParty/LINPACK/dgeco.f
+         ThirdParty/LINPACK/dgedi.f
+         ThirdParty/LINPACK/dgefa.f
+       )
+  endif()
+
+  if ( SIRE_USE_LAPACK )
+    list(APPEND SIREBLASPACK_LIBRARIES ${LAPACK_LIBRARIES})
+    set( SIREBLASPACK_HAS_LIBRARIES TRUE )
+  else()
+    set( SIRE_LAPACK_SOURCES
+         ThirdParty/LAPACK/disnan.f
+         ThirdParty/LAPACK/dlae2.f
+         ThirdParty/LAPACK/dlaev2.f
+         ThirdParty/LAPACK/dlaisnan.f
+         ThirdParty/LAPACK/dlamch.f
+         ThirdParty/LAPACK/dlanst.f
+         ThirdParty/LAPACK/dlansy.f
+         ThirdParty/LAPACK/dlapy2.f
+         ThirdParty/LAPACK/dlascl.f
+         ThirdParty/LAPACK/dlarf.f
+         ThirdParty/LAPACK/dlarfb.f
+         ThirdParty/LAPACK/dlartg.f
+         ThirdParty/LAPACK/dlarfg.f
+         ThirdParty/LAPACK/dlarft.f
+         ThirdParty/LAPACK/dlaset.f
+         ThirdParty/LAPACK/dlasr.f
+         ThirdParty/LAPACK/dlasrt.f
+         ThirdParty/LAPACK/dlassq.f
+         ThirdParty/LAPACK/dlatrd.f
+         ThirdParty/LAPACK/dorg2l.f
+         ThirdParty/LAPACK/dorg2r.f
+         ThirdParty/LAPACK/dorgql.f
+         ThirdParty/LAPACK/dorgqr.f
+         ThirdParty/LAPACK/dorgtr.f
+         ThirdParty/LAPACK/dsyev.f
+         ThirdParty/LAPACK/dsytd2.f
+         ThirdParty/LAPACK/dsytrd.f
+         ThirdParty/LAPACK/dsteqr.f
+         ThirdParty/LAPACK/dsterf.f
+         ThirdParty/LAPACK/ilaenv.f
+         ThirdParty/LAPACK/iladlc.f
+         ThirdParty/LAPACK/iladlr.f
+         ThirdParty/LAPACK/ieeeck.f
+         ThirdParty/LAPACK/iparmq.f
+       )
+  endif()
+
+  if (NOT CMAKE_GENERATOR STREQUAL "Xcode" )
+    # We need to sort out the naming convention for the
+    # fortran blas, lapack and linpack libraries
+    include( FortranCInterface )
+    create_fortran_c_interface( Sire SIRE_BLAS_FUNCTIONS sire_blas_f.h )
+    create_fortran_c_interface( Sire SIRE_LAPACK_FUNCTIONS sire_lapack_f.h )
+    create_fortran_c_interface( Sire SIRE_LINPACK_FUNCTIONS sire_linpack_f.h )
+  endif()
 endif()
 
 # SireMaths depends on >= GSL 1.6
@@ -126,15 +133,17 @@ save_sire_variable( "SIRE_GSL_INCLUDE_PATH" "${GSL_INCLUDE_DIR}" )
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 
-# Define the sources in SireBLASPACK
-set( SIREBLASPACK_SOURCES
-  
-     ${SIRE_BLAS_SOURCES}
-     ${SIRE_LAPACK_SOURCES}
-     ${SIRE_LINPACK_SOURCES}
+if ( NOT SIRE_DISABLE_FORTRAN )
+  # Define the sources in SireBLASPACK
+  set( SIREBLASPACK_SOURCES
+   
+       ${SIRE_BLAS_SOURCES}
+       ${SIRE_LAPACK_SOURCES}
+       ${SIRE_LINPACK_SOURCES}
 
-     sire_blaspack.f
-   )
+       sire_blaspack.f
+     )
+endif()
 
 # Define the headers in SireMaths
 set ( SIREMATHS_HEADERS
@@ -208,17 +217,19 @@ set ( SIREMATHS_SOURCES
       ${SIREMATHS_HEADERS}
     )
 
-add_library (SireBLASPACK ${SIREBLASPACK_SOURCES})
+if (NOT SIRE_DISABLE_FORTRAN)
+  add_library (SireBLASPACK ${SIREBLASPACK_SOURCES})
 
-set_target_properties (SireBLASPACK PROPERTIES
-                       VERSION ${SIRE_VERSION}
-                       SOVERSION ${SIRE_VERSION_MAJOR}
-                      )
-
-if ( SIREBLASPACK_HAS_LIBRARIES )
-  target_link_libraries (SireBLASPACK
-                         ${SIREBLASPACK_LIBRARIES}
+  set_target_properties (SireBLASPACK PROPERTIES
+                         VERSION ${SIRE_VERSION}
+                         SOVERSION ${SIRE_VERSION_MAJOR}
                         )
+
+  if ( SIREBLASPACK_HAS_LIBRARIES )
+    target_link_libraries (SireBLASPACK
+                           ${SIREBLASPACK_LIBRARIES}
+                          )
+  endif()
 endif()
 
 add_library (SireMaths ${SIREMATHS_SOURCES})
@@ -234,9 +245,12 @@ target_link_libraries (SireMaths
                        SireBase
                        SireUnits
                        SireStream
-                       SireBLASPACK
                        ${SIREMATHS_EXTRA_LIBRARIES}
                       )
+
+if (NOT SIRE_DISABLE_FORTRAN)
+  target_link_libraries (SireMaths SireBLASPACK )
+endif()
 
 save_sire_variable( "SIREMATHS_EXTRA_LIBRARIES" "${SIREMATHS_EXTRA_LIBRARIES}" )
 
@@ -247,11 +261,13 @@ install( TARGETS SireMaths EXPORT SireLibraries
          ARCHIVE DESTINATION ${SIRE_ARCHIVES}
        )
 
-install( TARGETS SireBLASPACK EXPORT SireLibraries
-         RUNTIME DESTINATION ${SIRE_BIN}
-         LIBRARY DESTINATION ${SIRE_LIBS}
-         ARCHIVE DESTINATION ${SIRE_ARCHIVES}
-       )
+if (NOT SIRE_DISABLE_FORTRAN)
+  install( TARGETS SireBLASPACK EXPORT SireLibraries
+           RUNTIME DESTINATION ${SIRE_BIN}
+           LIBRARY DESTINATION ${SIRE_LIBS}
+           ARCHIVE DESTINATION ${SIRE_ARCHIVES}
+         )
+endif()
 
 install( FILES ${SIREMATHS_HEADERS}
          DESTINATION ${SIRE_INCLUDES}/SireMaths )

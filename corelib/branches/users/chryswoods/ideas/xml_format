@@ -1,3 +1,58 @@
+<strings>
+  <stringdata id="1">Hello World\n</stringdata>
+</strings>
+
+<references>
+  <reference id="2">
+    <object class="SireMol::MoleculeData">
+       ....
+    </object>
+  </reference>
+</references>
+
+<object class="SireMol::Molecule" version="1">
+  <bases>
+    <object class="SireMol::MoleculeData" version="2">
+    </object>
+  </bases>
+
+  <data>
+    <scalar name="properties">
+      <object class="SireBase::Properties" version="1">
+        <dictionary name="props" size="2">
+          <entry>
+            <key>
+              <string id="1"/>
+            </key>
+            <value>
+              <number>343.15</number>
+            </value>
+          </entry>
+        </dictionary>
+      </object>
+    </scalar>
+
+    <array name="example" size="2">
+      <primitive class="SireMaths::Vector" version="1">
+        <array name="coords" count="3">
+          <number value="0"/>
+          <number value="3.2"/>
+          <number value="1.5"/>
+        </array>
+      </primitive>
+      <primitive class="SireMaths::Vector" version="1">
+        <array name="coords" count="3">
+          <number>0.0</number>
+          <number>
+        </array>
+      </primitive>
+    </array>
+
+    <reference class="SireMol::MoleculeData" id="14325"/>
+  </data>
+</object>
+
+
 <SireML
    xmlns="http://siremol.org/xml/1" 
    xmlns:Stream="http://siremol.org/xml/1/Stream"
