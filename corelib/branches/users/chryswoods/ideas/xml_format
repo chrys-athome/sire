@@ -1,35 +1,91 @@
-<references>
-  <reference id="1">
-    <array count="23" class="Siren::ObjRef" version="1">
-      <object index="0">
-        <reference id="2"/>
+Siren Markup language - version 1
+
+Available tags:
+
+<sirenml>   : used to enclose a Siren object document (Siren Markup Language)
+<object>    : describes an object  (anything which is not described by other tags!)
+<base>      : describes a base class of an object
+<number>    : describes a number (any type of number)
+<string>    : describes a strinng (any text - UTF8 encoded)
+<flag>      : a boolean true/false flag
+<array>     : an array (vector/list) of values - order is important
+<map>       : a key/value map (dictionary/hash) of values - multimap is supported
+<set>       : a set of values - order is not important, each object appears once
+<reference> : a reference to a shared value
+<entry>     : contains an entry in a map - this must contain a single <key>, but
+              potentially many <value> tags
+<key>       : denotes the key in a map
+<value>     : denotes a value in a map
+
+All strings are shared, and all references are shared. To support this 
+there are further tags:
+
+<targets>    : the collection of all targets of the references
+<target>     : an individual target of a reference
+<strings>    : the collection of all strings in the file
+<strdata>    : the actual data for the string - this is always UTF-8 encoded
+               (as it the whole XML document)
+
+There are several attributes that are used to help identify and manage the data:
+
+type        : This holds the C++ class name of the type, or the type of the number
+              (e.g. int64, int32, uint8 etc.) 
+              
+              [required in <object>, <reference>, <number>, <base>, <array>, <map> and <set>]
+
+name        : This is the name of the data / variable.
+
+              [optional in <object>, <array>, <map>, <set>, <number>, <array>, <string>,
+                           <flag>, <reference> ]
+
+id          : This is the ID number of the shared data or shared string
+
+              [required in <string>, <reference>, <strdata>, <target>]
+
+version     : This is the version number of an object - if it doesn't exist, the
+              version is assumed to be "1"
+
+              [optional in <object>]
+
+index       : This is the index number of some data in an array
+
+              [required in any item that is placed in an array]
+
+count       : This is the number of items in a container
+
+              [required in <array>, <map>, <set>]
+
+<?xml version="1.0" encoding="utf-8" ?>
+<sirenml xmlns="http://siremol.org/siren/xml/1" version="1">
+  <targets>
+    <target id="1">
+      <array count="23" class="Siren::ObjRef">
+        <reference index="0" id="2" type="Siren::Object"/>
+        <reference index="1" id="2" type="Siren::Object"/>
+      </array>
+    </target>
+    <target id="2">
+      <object type="Siren::None">
+        <base type="Siren::Object"/>
       </object>
-      <object index="1">
-        <reference id="3"/>
-      </object>
-    </array>
-  </reference>
-  <reference id="2">
-    <object class="Siren::None" version="1">
-      <base class="Siren::Object" version="1"/>
+    </target>
+  </targets>
+
+  <object name="foo" type="NS::Bar" version="2">
+    <base type="NS::BarBase">
+      <base type="Siren::Object"/>
+    </base>
+
+    <object name="value" type="NS::Value">
+      <base class="Siren::Object"/>
+
+      <string name="name" id="12"/>
+
+      <number name="x" type="float" value="1.2324"/>
+      <number name="y" type="float" value="42"/>
+      <number name="z" type="float" value="0"/>
     </object>
-  </reference>
-</references>
 
-<object name="foo" class="NS::Bar" version="1">
-  <base class="NS::BarBase" version="1">
-    <base class="Siren::Object" version="1"/>
-  </base>
-
-  <object name="value" class="NS::Value" version="1">
-    <base class="Siren::Object" version="1"/>
-
-    <string name="name" id="12"/>
-
-    <number name="x" type="float" value="1.2324"/>
-    <number name="y" type="float" value="42"/>
-    <number name="z" type="float" value="0"/>
+    <reference name="data" type="Siren::ObjRef" id="1"/>
   </object>
-
-  <reference name="data" id="1"/>
-</object>
+</sirenml>

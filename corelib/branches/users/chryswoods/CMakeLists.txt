@@ -129,6 +129,11 @@ if (SIRE_DISABLE_FORTRAN)
   message( STATUS "Disabling any code that requires compilation of linking to Fortran" )
 endif()
 
+# Add an option to force the compilation to ignore any MPI libraries
+# (this is useful on clusters where the MPI-enabled build cannot run
+#  on the head node, and yet you still want to run tests!)
+option( SIRE_DISABLE_MPI "Turn off MPI compilation and linking" OFF )
+
 # Sire depends on >= Qt 4.2
 find_package( Qt4 4.2.0 COMPONENTS QtCore QtXml QtGui QtOpenGL QtWebKit )
 
@@ -189,15 +194,20 @@ endif()
 
 save_sire_variable( "SIRE_USE_LAPACK" "${SIRE_USE_LAPACK}" )
 
-# Now look for MPI libraries
-find_package( MPI )
+if (SIRE_DISABLE_MPI)
+  message( STATUS "Disabling MPI support in Sire" )
 
-if (MPI_FOUND)
-  message( STATUS "Found MPI, so switching MPI support on" )
-  set ( SIRE_USE_MPI ON )
 else()
-  message( STATUS "MPI could not be found. MPI support switched off" )
-  set ( SIRE_USE_MPI OFF )
+  # Now look for MPI libraries
+  find_package( MPI )
+
+  if (MPI_FOUND)
+    message( STATUS "Found MPI, so switching MPI support on" )
+    set ( SIRE_USE_MPI ON )
+  else()
+    message( STATUS "MPI could not be found. MPI support switched off" )
+    set ( SIRE_USE_MPI OFF )
+  endif()
 endif()
 
 # Now run some platform tests - the results will be placed in config.h
@@ -336,12 +346,14 @@ elseif ( ${CMAKE_CXX_COMPILER} MATCHES "xlC" )
     set ( SIRE_DISABLE_FORTRAN ON )
 
     # This is a hack to automatically turn on MPI support on HPCx
-    if ( NOT SIRE_USE_MPI )
-      set( SIRE_USE_MPI ON )
-      set( MPI_INCLUDE_PATH "/usr/lpp/ppe.poe/include;/opt/rsct/lapi/include" )
-      set( MPI_LIBRARY "-L/usr/lpp/ppe.poe/lib -L/usr/lpp/ppe.poe/lib/ip -lmpi_r -lvtd_r -llapi_r -binitfini:poe_remote_main" )
-      set( MPI_EXTRA_LIBRARY "-L/usr/lpp/ppe.poe/lib/threads -lpthreads" )
-      set( MPI_DEFINITIONS "-D_MPI_CPP_BINDINGS" )
+    if ( NOT SIRE_DISABLE_MPI )
+      if ( NOT SIRE_USE_MPI )
+        set( SIRE_USE_MPI ON )
+        set( MPI_INCLUDE_PATH "/usr/lpp/ppe.poe/include;/opt/rsct/lapi/include" )
+        set( MPI_LIBRARY "-L/usr/lpp/ppe.poe/lib -L/usr/lpp/ppe.poe/lib/ip -lmpi_r -lvtd_r -llapi_r -binitfini:poe_remote_main" )
+        set( MPI_EXTRA_LIBRARY "-L/usr/lpp/ppe.poe/lib/threads -lpthreads" )
+        set( MPI_DEFINITIONS "-D_MPI_CPP_BINDINGS" )
+      endif()
     endif()
 
 elseif( ${CMAKE_CXX_COMPILER} MATCHES "icpc" )

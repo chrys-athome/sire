@@ -31,6 +31,8 @@
 
 #include "SireStream/streamdata.hpp"
 
+#include "sire_version.h"
+
 using namespace SireCluster;
 using namespace SireMove;
 using namespace SireSystem;
@@ -66,11 +68,18 @@ void printBox(const QString &line, QTextStream &stream)
     
     int maxlength = 0;
     
-    foreach (const QString &l, lines)
+    for (QStringList::iterator it = lines.begin(); it != lines.end(); ++it)
     {
-        if (l.length() > maxlength)
-            maxlength = l.length();
+        *it = it->simplified();
+    
+        if (it->length() > maxlength)
+            maxlength = it->length();
     }
+    
+    const int max_maxlength = 80;
+    
+    if (maxlength > max_maxlength)
+        maxlength = max_maxlength;
     
     QString hashline = ::repeated( "-", maxlength + 2 );
     
@@ -80,8 +89,21 @@ void printBox(const QString &line, QTextStream &stream)
     
     foreach (const QString &l, lines)
     {
-        stream << "| " << l.simplified().leftJustified(maxlength) << " |";
-        endl(stream);
+        if (l.length() > max_maxlength)
+        {
+            for (int j=0; j<l.length(); j+=max_maxlength)
+            {
+                stream << "| " << l.mid(j,max_maxlength).leftJustified(maxlength)
+                       << " |";
+
+                endl(stream);
+            }
+        }
+        else
+        {
+            stream << "| " << l.leftJustified(maxlength) << " |";
+            endl(stream);
+        }
     }
     
     stream << "*" << hashline << "*";
@@ -154,6 +176,41 @@ void throwIncompatibleError(const Property *p0, const Property *p1)
         "with a System and Move(s) object, or with a SupraSystem and "
         "SupraMove(s) object. It cannot work with a %1 and %2.")
             .arg(p0->what()).arg(p1->what()), CODELOC );
+}
+
+/** Load up all of the passed restart file to see if it is valid */
+void testLoad(const QString &filename)
+{
+    QFile f(filename);
+    
+    if (not f.open( QIODevice::ReadOnly) )
+        throw SireError::file_error(f, CODELOC);
+        
+    QByteArray restart_data = f.readAll();
+    
+    if (restart_data.isEmpty())
+        throw SireError::file_error( QObject::tr(
+            "There was an error reading data from the file %1. Either "
+            "the file is empty, or some read error has occured.")
+                .arg(filename), CODELOC );
+
+    //read the header
+    {
+        FileHeader header = SireStream::getDataHeader(restart_data);
+        
+        printBox( header.toString() );
+    }
+    
+    //unpack the binary data
+    QList< boost::tuple<boost::shared_ptr<void>,QString> > objects 
+                         = SireStream::load(restart_data);
+
+    for (int i=0; i<objects.count(); ++i)
+    {
+        printOut( QObject::tr("Read object %1 of %2. It is a %3.")
+                    .arg(i+1).arg(objects.count())
+                    .arg(objects.at(i).get<1>()) );
+    }
 }
 
 /** This reads a simulation restart file and creates a workpacket
@@ -339,6 +396,9 @@ void printLicense()
 void printHelp()
 {
     printOut( QObject::tr("Usage: sire\n"
+                          "            (-h / --help)\n"
+                          "            (-v / --version)\n"
+                          "            (-T / --test)\n"
                           "            (-r number / --repeat=number)\n"
                           "            (-t hh:mm:ss / --time=hh:mm:ss)\n"
                           "            (-n number / --nmoves=number)\n"
@@ -346,6 +406,9 @@ void printHelp()
                           "            restart_file\n"
                           "            (restart_file2 restart_file3 ...)\n\n"
                           "where:\n"
+                          "  -h / --help       : Print this help text.\n"
+                          "  -v / --version    : Print the version of this program.\n"
+                          "  -T / --test       : Just test loading the restart files.\n"
                           "  -r / --repeat     : The number of times to repeat the "
                           "simulation.\n"
                           "  -t / --time       : The maximum run time for the simulation "
@@ -363,6 +426,13 @@ void printHelp()
                           "would run 1000 moves of the system in \"restart_1.s3\" and "
                           "(possibly in parallel) 2000 moves of the system in "
                           "\"restart_2.s3\".\n") );
+}
+
+void printVersion()
+{
+    printOut( QObject::tr("Sire version: %1.%2.%3 (%4)")
+                .arg(SIRE_VERSION_MAJOR).arg(SIRE_VERSION_MINOR)
+                .arg(SIRE_VERSION_PATCH).arg(SIRE_REPOSITORY_VERSION) );
 }
 
 int readTime(const QString &time, bool &ok)
@@ -504,7 +574,7 @@ int readNMoves(const QString &nmoves, bool &ok)
 }
 
 QList<RestartFile> parseCommandLine(int argc, char **argv, 
-                                    int &repeat, int &time, bool &ok)
+                                    int &repeat, int &time, bool &ok, bool &test)
 {
     //  sire --repeat=10 --time=02:00:00 --nmoves=100 --statistics=true
     //                    restart_file --nmoves=150 restart_file2
@@ -520,6 +590,7 @@ QList<RestartFile> parseCommandLine(int argc, char **argv,
 
     int nmoves = 1;
     bool record_stats = true;
+    test = false;
 
     QList<RestartFile> restart_files;
 
@@ -549,6 +620,15 @@ QList<RestartFile> parseCommandLine(int argc, char **argv,
             {
                 printLicense();
                 return QList<RestartFile>();
+            }
+            else if (arg == QLatin1String("--version"))
+            {
+                printVersion();
+                return QList<RestartFile>();
+            }
+            else if (arg == QLatin1String("--test"))
+            {
+                test = true;
             }
             else if (arg.startsWith("--time"))
             {
@@ -648,6 +728,15 @@ QList<RestartFile> parseCommandLine(int argc, char **argv,
             {
                 printLicense();
                 return QList<RestartFile>();
+            }
+            else if (arg == QLatin1String("-v"))
+            {
+                printVersion();
+                return QList<RestartFile>();
+            }
+            else if (arg == QLatin1String("-T"))
+            {
+                test = true;
             }
             else if (arg == QLatin1String("-t"))
             {
@@ -814,16 +903,35 @@ int main(int argc, char **argv)
             #endif
 
             int time, repeat;
-            bool ok;
+            bool ok, test_load;
 
             QList<RestartFile> restart_files = parseCommandLine(argc, argv,
-                                                                repeat, time, ok);
+                                                                repeat, time, 
+                                                                ok, test_load);
 
             int nrestarts = restart_files.count();
         
             if (not ok)
             {
                 status = -1;
+            }
+            else if (test_load and nrestarts > 0)
+            {
+                //just test loading all of the restart files
+                for (int i=0; i<nrestarts; ++i)
+                {
+                    printOut( QObject::tr("Loading restart file %1...")
+                                .arg(restart_files.at(i).filename) );
+                
+                    try 
+                    {
+                        testLoad(restart_files.at(i).filename);
+                    }
+                    catch(const SireError::exception &e) 
+                    {
+                        printError(e);
+                    }
+                }
             }
             else if (nrestarts > 0)
             {
