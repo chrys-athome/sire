@@ -14,10 +14,11 @@ if ( SIRE_USE_MPI )
   message( STATUS " ** Adding MPI support to sire ** " )
   message( STATUS "MPI headers: ${MPI_INCLUDE_PATH}" )
   message( STATUS "MPI libraries: ${MPI_LIBRARY} ${MPI_EXTRA_LIBRARY}" )
+  message( STATUS "MPI definitions: ${MPI_DEFINITIONS}" )
 
   include_directories( BEFORE SYSTEM ${MPI_INCLUDE_PATH} )
 
-  add_definitions( -DSIRE_USE_MPI )
+  add_definitions( -DSIRE_USE_MPI ${MPI_DEFINITIONS} )
 endif()
 
 set ( SIRE_RCCS

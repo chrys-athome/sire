@@ -44,6 +44,22 @@ void printOut(const QString &line)
     endl(stream);
 }
 
+static QString repeated(const QString &s, int n)
+{
+    #if QT_VERSION >= 0x040500
+        return s.repeated(n);
+    #else
+        QString r = s;
+        
+        for (int i=1; i<n; ++i)
+        {
+            r += s;
+        }
+        
+        return r;
+    #endif
+}
+
 void printBox(const QString &line, QTextStream &stream)
 {
     QStringList lines = line.split("\n");
@@ -56,7 +72,7 @@ void printBox(const QString &line, QTextStream &stream)
             maxlength = l.length();
     }
     
-    QString hashline = QString("-").repeated( maxlength + 2 );
+    QString hashline = ::repeated( "-", maxlength + 2 );
     
     endl(stream);
     stream << "*" << hashline << "*";

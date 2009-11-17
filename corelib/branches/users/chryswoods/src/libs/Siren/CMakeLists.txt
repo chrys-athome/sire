@@ -41,6 +41,7 @@ set ( SIREN_PUBLIC_HEADERS
       interface.h     
       object.h
       primitive.h
+      stream.h
 
     )
 
@@ -79,6 +80,7 @@ set ( SIREN_SOURCES
       interface.cpp
       object.cpp
       primitive.cpp
+      stream.cpp
 
       ${SIREN_PRIVATE_HEADERS}
 

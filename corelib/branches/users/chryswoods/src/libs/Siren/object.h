@@ -45,8 +45,7 @@ class Class;
 
 class None;
 
-class DataStream;
-class XMLStream;
+class Stream;
 
 class Logger;
 
@@ -57,18 +56,6 @@ class ObjRef;
 
 class QDomNode;
 class QMutex;
-
-using Siren::XMLStream;
-using Siren::DataStream;
-
-QDataStream& operator<<(QDataStream&, const Siren::Object&);
-QDataStream& operator>>(QDataStream&, Siren::Object&);
-
-DataStream& operator<<(DataStream&, const Siren::Object&);
-DataStream& operator>>(DataStream&, Siren::Object&);
-
-XMLStream& operator<<(XMLStream&, const Siren::Object&);
-XMLStream& operator>>(XMLStream&, Siren::Object&);
 
 namespace Siren
 {
@@ -276,6 +263,11 @@ public:
     */
     virtual HASH_CODE hashCode() const=0;
 
+    void save(Stream &s) const;
+    void load(Stream &s);
+    
+    virtual void stream(Stream &s);
+
     template<class T>
     bool isA() const;
 
@@ -304,12 +296,6 @@ protected:
     /** Return a clone of this object. */
     virtual Object* clone() const=0;
 
-    virtual void load(const QDomNode &dom);
-    virtual void save(QDomNode &dom) const;
-
-    virtual void load(DataStream &ds);
-    virtual void save(DataStream &ds) const;
-
     Object& operator=(const Object &other);
     
     bool operator==(const Object &other) const;
@@ -320,12 +306,6 @@ private:
     friend class detail::SharedPolyPointer<Object>;
     friend class detail::GlobalSharedPointer<Object>;
     friend class detail::GlobalSharedPointerBase;
-
-    friend DataStream& ::operator<<(DataStream&, const Object&);
-    friend DataStream& ::operator>>(DataStream&, Object&);
-
-    friend XMLStream& ::operator<<(XMLStream&, const Object&);
-    friend XMLStream& ::operator>>(XMLStream&, Object&);
 
     friend void qAtomicAssign(Object *&d, Object *x);
 
@@ -479,9 +459,7 @@ public:
     
     bool test(Logger &logger) const;
 
-protected:
-    void save(DataStream &ds) const;
-    void load(DataStream &ds);
+    void stream(Stream &s);
 };
 
 #ifndef SIREN_SKIP_INLINE_FUNCTIONS

@@ -335,6 +335,15 @@ elseif ( ${CMAKE_CXX_COMPILER} MATCHES "xlC" )
     message( STATUS "This will disable sire_blas, sire_lapack and sire_linpack" )
     set ( SIRE_DISABLE_FORTRAN ON )
 
+    # This is a hack to automatically turn on MPI support on HPCx
+    if ( NOT SIRE_USE_MPI )
+      set( SIRE_USE_MPI ON )
+      set( MPI_INCLUDE_PATH "/usr/lpp/ppe.poe/include;/opt/rsct/lapi/include" )
+      set( MPI_LIBRARY "-L/usr/lpp/ppe.poe/lib -L/usr/lpp/ppe.poe/lib/ip -lmpi_r -lvtd_r -llapi_r -binitfini:poe_remote_main" )
+      set( MPI_EXTRA_LIBRARY "-L/usr/lpp/ppe.poe/lib/threads -lpthreads" )
+      set( MPI_DEFINITIONS "-D_MPI_CPP_BINDINGS" )
+    endif()
+
 elseif( ${CMAKE_CXX_COMPILER} MATCHES "icpc" )
 
     message( STATUS "Detected the Intel C++ and C compilers" )

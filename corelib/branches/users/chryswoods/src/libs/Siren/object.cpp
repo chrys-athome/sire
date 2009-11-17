@@ -34,8 +34,7 @@
 #include "objptr.hpp"
 #include "logger.h"
 #include "tester.h"
-#include "datastream.h"
-#include "xmlstream.h"
+#include "stream.h"
 
 #include "Siren/errors.h"
 
@@ -46,68 +45,7 @@ using namespace Siren::detail;
 //////// Implementation of Object
 ////////
 
-static const RegisterMetaType<Object> r_object( VIRTUAL_CLASS,
-                                                18292577219026618092UL, 1 );
-
-/** Serialise to a binary datastream - this will share-stream objects
-    (so repeated shared objects will be streamed just once, with 
-    references to later copies used) */
-DataStream SIREN_EXPORT &operator<<(DataStream &ds, const Object &object)
-{
-    object.save( ds );
-    return ds;
-}
-
-/** Read this object from a binary datastream */
-DataStream SIREN_EXPORT &operator>>(DataStream &ds, Object &object)
-{
-    object.load( ds );
-    return ds;
-}
-                                  
-/** Serialise to a binary QDataStream */
-QDataStream SIREN_EXPORT &operator<<(QDataStream &ds, const Object &object)
-{
-    DataStream sds(ds);
-    
-    sds << object;
-    
-    return ds;
-}
-
-/** Extract from a binary QDataStream */
-QDataStream SIREN_EXPORT &operator>>(QDataStream &ds, Object &object)
-{
-    DataStream sds(ds);
-    
-    sds >> object;
-    
-    return ds;
-}
-
-/** Serialise to XML */
-XMLStream SIREN_EXPORT &operator<<(XMLStream &xml, const Object &object)
-{
-    QDomNode root_node = xml.createChild();
-
-    object.save(root_node);
-    
-    xml.closeChild();
-    
-    return xml;
-}
-
-/** Extract from an XML document */
-XMLStream SIREN_EXPORT &operator>>(XMLStream &xml, Object &object)
-{
-    QDomNode root_node = xml.createChild();
-
-    object.load(root_node);
-    
-    xml.closeChild();
-    
-    return xml;
-}
+static const RegisterMetaType<Object> r_object( VIRTUAL_CLASS );
 
 /** Constructor */
 Object::Object() : QSharedData()
@@ -150,6 +88,30 @@ bool Object::operator!=(const Object&) const
 ObjRef Object::copy() const
 {
     return ObjRef( this->clone() );
+}
+
+/** Save this object to the passed stream */
+void Object::save(Stream &s) const
+{
+    s.assertIsSaving();
+    const_cast<Object*>(this)->stream(s);
+}
+
+/** Load this object from the passed stream */
+void Object::load(Stream &s)
+{
+    s.assertIsLoading();
+    this->stream(s);
+}
+
+/** Stream this object to/from the passed stream
+    (this loads the object if the stream is opened
+     for loading, while it saves the object if the 
+     stream is opened for saving) */
+void Object::stream(Stream &s)
+{
+    Schema schema = s.start<Object>(1);
+    schema.assertVersion(1);
 }
 
 Q_GLOBAL_STATIC_WITH_ARGS( QMutex, objectGlobalMutex, (QMutex::Recursive) );
@@ -343,20 +305,14 @@ QString None::toString() const
     return "None";
 }
 
-void None::save(DataStream &ds) const
+void None::stream(Stream &s)
 {
-    writeHeader(ds, r_none);
-    Object::save(ds);
-}
+    Schema schema = s.schema<None>(1);
+    schema.assertVersion(1);
 
-void None::load(DataStream &ds)
-{
-    VERSION_ID v = readHeader(ds, r_none);
+    schema.data("value") & value;
     
-    if (v != r_none.version())
-        throw version_error(v, r_none, CODELOC);
-
-    Object::load(ds);
+    Object::stream( scheme.base() );
 }
 
 bool None::test(Logger &logger) const

@@ -30,6 +30,7 @@
 #define SIREN_PRIMITIVE_H
 
 #include "objref.h"
+#include "stream.h"
 
 SIREN_BEGIN_HEADER
 
@@ -38,18 +39,6 @@ namespace Siren
 class String;
 class Number;
 }
-
-DataStream& operator<<(DataStream&, const Siren::String&);
-DataStream& operator>>(DataStream&, Siren::String&);
-
-DataStream& operator<<(DataStream&, const Siren::Number&);
-DataStream& operator>>(DataStream&, Siren::Number&);
-
-XMLStream& operator<<(XMLStream&, const Siren::String&);
-XMLStream& operator>>(XMLStream&, Siren::String&);
-
-XMLStream& operator<<(XMLStream&, const Siren::Number&);
-XMLStream& operator>>(XMLStream&, Siren::Number&);
 
 namespace Siren
 {
@@ -67,6 +56,8 @@ struct PrimitiveHelper
     static QString toString(const T &object);
     
     static HASH_CODE hashCode(const T &object);
+    
+    static void stream(T &object, Stream &s);
     
     static bool test(const T &object, Logger &logger);
 };
@@ -95,6 +86,9 @@ public:
     ~Primitive();
     
     operator ObjRef() const;
+    
+    void save(Stream &s) const;
+    void load(Stream &s);
 };
 
 /** This is a simple wrapper that provides a Siren::Object
@@ -122,17 +116,12 @@ public:
     QString toString() const;
     
     HASH_CODE hashCode() const;
+
+    void stream(Stream &s);
     
     bool test(Logger &logger) const;
     
     operator const T&() const;
-
-protected:
-    void save(DataStream &ds) const;
-    void load(DataStream &ds);
-    
-    void save(XMLStream &xml) const;
-    void load(XMLStream &xml);
 
 private:
     /** The actual primitive object */
@@ -173,17 +162,13 @@ public:
     QString toString() const;
     
     HASH_CODE hashCode() const;
+
+    void stream(Stream &s);
     
     bool test() const;
     bool test(Logger &logger) const;
     
 private:
-    friend DataStream& ::operator<<(DataStream&, const String&);
-    friend DataStream& ::operator>>(DataStream&, String&);
-    
-    friend XMLStream& ::operator<<(XMLStream&, const String&);
-    friend XMLStream& ::operator>>(XMLStream&, String&);
-
     /** The actual text in the string */
     QString text;
 };
@@ -232,17 +217,13 @@ public:
 
     qint64 toInteger() const;
     double toFloat() const;
+
+    void stream(Stream &s);
     
     operator qint64() const;
     operator double() const;
 
 private:
-    friend DataStream& ::operator<<(DataStream&, const Number&);
-    friend DataStream& ::operator>>(DataStream&, Number&);
-    
-    friend XMLStream& ::operator<<(XMLStream&, const Number&);
-    friend XMLStream& ::operator>>(XMLStream&, Number&);
-
     union
     {
         qint64 integer_value;
@@ -286,6 +267,13 @@ HASH_CODE PrimitiveHelper<T>::hashCode(const T &object)
     
 template<class T>
 SIREN_OUTOFLINE_TEMPLATE
+void PrimitiveHelper<T>::stream(T &object, Stream &s)
+{
+    t.stream(s);
+}
+    
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
 bool PrimitiveHelper<T>::test(const T &object, Logger &logger)
 {
     return object.test(logger);
@@ -315,6 +303,26 @@ SIREN_OUTOFLINE_TEMPLATE
 Primitive<T>::operator ObjRef() const
 {
     return ObjRef( PrimitiveObject<T>(static_cast<const T&>(*this)) );
+}
+
+/** Save this object to the passed stream */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+void Primitive<T>::save(Stream &s) const
+{
+    s.assertIsSaving();
+    T *t_ptr = const_cast<T*>( static_cast<const T*>(this) );
+    t_ptr->stream(s);
+}
+
+/** Load this object from the passed stream */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+void Primitive<T>::load(Stream &s)
+{
+    s.assertIsLoading();
+    T *t_ptr = static_cast<T*>(this);
+    t_ptr->stream(s);
 }
 
 /////////
@@ -425,6 +433,23 @@ SIREN_OUTOFLINE_TEMPLATE
 bool PrimitiveObject<T>::test(Logger &logger) const
 {
     return detail::PrimitiveHelper<T>::test(primitive_object, logger);
+}
+
+/** Stream this object */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+void PrimitiveObject<T>::stream(Stream &s)
+{
+    Schema schema = s.schema<T>(1);
+
+    if (schema.version() == 1)
+    {
+        detail::PrimitiveHelper<T>::stream(primitive_object, s);
+    }
+    else
+        schema.throwUnsupportedVersion("1");
+
+    super().stream(s);
 }
 
 /** Allow automatic casting back to the primitive */
