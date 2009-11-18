@@ -27,5 +27,6 @@
 \*********************************************/
 
 #include "tester.h"
+#include "stream.h"
 
 using namespace Siren;

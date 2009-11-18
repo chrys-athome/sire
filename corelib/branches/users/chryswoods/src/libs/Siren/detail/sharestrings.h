@@ -38,11 +38,14 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
+namespace detail
+{
 
 QString shareString(const QString &string);
 
 void shareStrings(QStringList &strings);
 
+}
 }
 
 SIREN_END_HEADER

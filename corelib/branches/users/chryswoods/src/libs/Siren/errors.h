@@ -30,7 +30,6 @@
 #define SIREN_ERRORS_H
 
 #include "Siren/exception.h"
-#include "Siren/version_error.h"
 
 #include <stdexcept>
 #include <QObject>
@@ -427,6 +426,23 @@ public:
     ~corrupted_data() throw();
 };
 
+/** This exception is thrown whenever there is an error with the version number of
+    the binary data streaming protocol.
+
+    @author Christopher Woods
+*/
+class SIREN_EXPORT version_error : public ImplementsException<version_error,exception>
+{
+public:
+    version_error();
+
+    version_error(const QString &error, const QString place=QString::null);
+
+    version_error(const version_error &other);
+    
+    ~version_error() throw();
+};
+
 /** This exception is thrown whenever there is an error with an
     ID number
 
@@ -469,6 +485,7 @@ Q_DECLARE_METATYPE(Siren::std_exception)
 Q_DECLARE_METATYPE(Siren::unknown_error)
 Q_DECLARE_METATYPE(Siren::unknown_type)
 Q_DECLARE_METATYPE(Siren::corrupted_data)
+Q_DECLARE_METATYPE(Siren::version_error)
 Q_DECLARE_METATYPE(Siren::dependency_error)
 
 SIREN_END_HEADER

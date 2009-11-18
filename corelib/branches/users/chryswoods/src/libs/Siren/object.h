@@ -41,6 +41,14 @@ SIREN_BEGIN_HEADER
 namespace Siren
 {
 class Object;
+class Stream;
+}
+
+Siren::Stream& operator&(Siren::Stream &s, const Siren::Object &object);
+
+namespace Siren
+{
+class Object;
 class Class;
 
 class None;

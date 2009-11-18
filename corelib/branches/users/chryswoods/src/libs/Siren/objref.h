@@ -37,19 +37,18 @@ SIREN_BEGIN_HEADER
 namespace Siren
 {
 class ObjRef;
+class Stream;
 }
 
-QDataStream& operator<<(QDataStream&, const Siren::ObjRef&);
-QDataStream& operator>>(QDataStream&, Siren::ObjRef&);
-
-DataStream& operator<<(DataStream&, const Siren::ObjRef&);
-DataStream& operator>>(DataStream&, Siren::ObjRef&);
-
-XMLStream& operator<<(XMLStream&, const Siren::ObjRef&);
-XMLStream& operator>>(XMLStream&, Siren::ObjRef&);
+Siren::Stream& operator&(Siren::Stream &s, Siren::ObjRef &object);
 
 namespace Siren
 {
+
+namespace detail
+{
+template<class T> struct StreamHelper;
+}
 
 /** This is a light-weight reference to an object. This class is 
     used when a new object is returned from a function. This class
@@ -78,6 +77,8 @@ public:
 
     Class getClass() const;
 
+    static QString typeName();
+
     QString what() const;
 
     ObjRef copy() const;
@@ -91,6 +92,11 @@ public:
 
     bool equals(const Object &other) const;
     
+    void save(Stream &s) const;
+    void load(Stream &s);
+    
+    void stream(Stream &s);
+    
     HASH_CODE hashCode() const;
 
     template<class T>
@@ -102,14 +108,10 @@ public:
     operator const Object&() const;
     
 private:
+    friend class detail::StreamHelper<ObjRef>;
+
     /** The shared pointer to the actual object */
     detail::SharedPolyPointer<Object> d;
-
-    friend DataStream& ::operator<<(DataStream&, const ObjRef&);
-    friend DataStream& ::operator>>(DataStream&, ObjRef&);
-
-    friend XMLStream& ::operator<<(XMLStream&, const ObjRef&);
-    friend XMLStream& ::operator>>(XMLStream&, ObjRef&);
 };
 
 #ifndef SIREN_SKIP_INLINE_FUNCTIONS

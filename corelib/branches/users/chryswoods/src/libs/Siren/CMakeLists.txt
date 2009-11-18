@@ -13,21 +13,23 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs/Siren
                     ${QT_QTXML_INCLUDE_DIR})
 
 set ( SIREN_PUBLIC_HEADERS
-  
-      datastream.h
-      errors.h
-      exception.h
-      getbacktrace.h
-      logger.h
-      md5sum.h
-      magic_error.h
-      version_error.h
-      streamdata.hpp
-      tester.h
-      xmlstream.h
 
       sirenglobal.h
       tostring.h
+      getbacktrace.h
+      md5sum.h
+  
+      exception.h
+      errors.h
+
+      logger.h
+      tester.h
+
+      stream.h
+      streamqt.h
+      streamdata.hpp
+      datastream.h
+      xmlstream.h
 
       hanptr.hpp
       hanref.h
@@ -41,7 +43,6 @@ set ( SIREN_PUBLIC_HEADERS
       interface.h     
       object.h
       primitive.h
-      stream.h
 
     )
 
@@ -58,16 +59,19 @@ set ( SIREN_SOURCES
 
       ${SIREN_PUBLIC_HEADERS}
 
-      datastream.cpp
-      errors.cpp
-      exception.cpp
       getbacktrace.cpp
-      logger.cpp
       md5sum.cpp
-      magic_error.cpp
-      version_error.cpp
-      streamdata.cpp
+ 
+      exception.cpp
+      errors.cpp
+
+      logger.cpp
       tester.cpp
+
+      stream.cpp
+      streamqt.cpp
+      streamqt.cpp
+      datastream.cpp
       xmlstream.cpp
 
       hanptr.cpp
@@ -80,7 +84,6 @@ set ( SIREN_SOURCES
       interface.cpp
       object.cpp
       primitive.cpp
-      stream.cpp
 
       ${SIREN_PRIVATE_HEADERS}
 

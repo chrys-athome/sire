@@ -38,6 +38,8 @@ SIREN_BEGIN_HEADER
 namespace Siren
 {
 
+class exception;
+
 /** This class is used by the unit tests for each Siren::Object
     to report the progress and status of individual tests
     
@@ -65,6 +67,8 @@ public:
     QString toString() const;
     HASH_CODE hashCode() const;
     bool test(Logger &logger) const;
+    
+    void stream(Stream &s);
     
     bool allPassed() const;
 
@@ -107,12 +111,6 @@ protected:
     {
         return Interfaces<Tester,Mutable>::listInterfaces();
     }
-
-    void save(DataStream &ds) const;
-    void load(DataStream &ds);
-
-    void save(XMLStream &xml) const;
-    void load(XMLStream &xml);
 
 private:
     /** The logger to which the output of the tests is written */

@@ -40,52 +40,6 @@ using namespace Siren::detail;
 //////// Implementation of ObjPtrBase
 ////////
 
-/** Serialise to a binary datastream */
-DataStream SIREN_EXPORT &operator<<(DataStream &ds, const ObjPtrBase &objptr)
-{
-    ds << objptr.ptr;
-    return ds;
-}
-
-/** Extract from a binary datastream */
-DataStream SIREN_EXPORT &operator>>(DataStream &ds, ObjPtrBase &objptr)
-{
-    ds >> objptr.ptr;
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIREN_EXPORT &operator<<(QDataStream &ds, const ObjPtrBase &objptr)
-{
-    DataStream sds(ds);
-    sds << objptr;
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREN_EXPORT &operator>>(QDataStream &ds, ObjPtrBase &objptr)
-{
-    DataStream sds(ds);
-    sds >> objptr;
-    
-    return ds;
-}
-
-/** Serialise to XML */
-XMLStream SIREN_EXPORT &operator<<(XMLStream &xml, const ObjPtrBase &objptr)
-{
-    xml << objptr.ptr;
-    return xml;
-}
-
-/** Extract from XML */
-XMLStream SIREN_EXPORT &operator>>(XMLStream &xml, ObjPtrBase &objptr)
-{
-    xml >> objptr.ptr;
-    return xml;
-}
-
 /** Construct the pointer to the passed object */
 ObjPtrBase::ObjPtrBase(const Object &object) : ptr(object)
 {}
@@ -237,52 +191,6 @@ void ObjPtrBase::throwCastingError(QString got_type, QString want_type)
 ////////
 //////// Implementation of GlobalObjPtrBase
 ////////
-
-/** Serialise to a binary datastream */
-DataStream SIREN_EXPORT &operator<<(DataStream &ds, const GlobalObjPtrBase &objptr)
-{
-    ds << objptr.ptr;
-    return ds;
-}
-
-/** Extract from a binary datastream */
-DataStream SIREN_EXPORT &operator>>(DataStream &ds, GlobalObjPtrBase &objptr)
-{
-    ds >> objptr.ptr;
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIREN_EXPORT &operator<<(QDataStream &ds, const GlobalObjPtrBase &objptr)
-{
-    DataStream sds(ds);
-    sds << objptr;
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREN_EXPORT &operator>>(QDataStream &ds, GlobalObjPtrBase &objptr)
-{
-    DataStream sds(ds);
-    sds >> objptr;
-    
-    return ds;
-}
-
-/** Serialise to XML */
-XMLStream SIREN_EXPORT &operator<<(XMLStream &xml, const GlobalObjPtrBase &objptr)
-{
-    xml << objptr.ptr;
-    return xml;
-}
-
-/** Extract from XML */
-XMLStream SIREN_EXPORT &operator>>(XMLStream &xml, GlobalObjPtrBase &objptr)
-{
-    xml >> objptr.ptr;
-    return xml;
-}
 
 /** Construct to hold a pointer to 'object' */
 GlobalObjPtrBase::GlobalObjPtrBase(const Object &object)

@@ -39,6 +39,8 @@ SIREN_BEGIN_HEADER
 namespace Siren
 {
 
+class HanRef;
+
 /** This class is used to provide type-information about
     each of the Siren::Object derived classes
     
@@ -80,15 +82,16 @@ public:
     
     QStringList interfaces() const;
     
-    CLASS_UID UID() const;
-    
-    VERSION_ID version() const;
-    
-    ObjRef create() const;
+    ObjRef createObject() const;
+    HanRef createHandle() const;
 
     bool canCreate() const;
     
     bool isConcrete() const;
+    
+    bool isObject() const;
+    bool isHandle() const;
+    bool isPrimitive() const;
     
     bool canCast(const QString &classname) const;
 
@@ -102,15 +105,14 @@ public:
 
 protected:
     bool test(Logger &logger) const;
-    
-    void save(DataStream &ds) const;
-    void load(DataStream &ds);
+    void stream(Stream &s);
 
 private:
     friend class Object;   // so can call these constructors
     friend class Handle;   // so can call these constructors
     
     Class(const detail::RegisterMetaTypeBase *r);
+
     Class(const detail::RegisterMetaTypeBase *r, 
           const Class &base_class, const QStringList &interfaces, 
           bool is_concrete);
@@ -133,6 +135,15 @@ private:
     
     /** Whether or not this is a concrete type */
     bool is_concrete;
+    
+    /** Whether or not this is derived from Siren::Object */
+    bool is_object;
+    
+    /** Whether or not this is derived from Siren::Handle */
+    bool is_handle;
+    
+    /** Whether or not this is a primitive type */
+    bool is_primitive;
 };
 
 /** Return whether or not this class implements the type 'T' */

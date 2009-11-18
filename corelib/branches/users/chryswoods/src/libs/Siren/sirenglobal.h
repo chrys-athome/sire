@@ -206,8 +206,6 @@
 namespace Siren
 {
 
-typedef quint64 CLASS_UID;
-typedef quint32 VERSION_ID;
 typedef quint32 HASH_CODE;
 
 namespace detail
@@ -216,36 +214,13 @@ namespace detail
 class RegisterMetaTypeBase
 {
 public:
-    RegisterMetaTypeBase(CLASS_UID c_uid, VERSION_ID v_id, const QString &name)
-          : class_uid(c_uid), version_id(v_id), type_name(name)
+    RegisterMetaTypeBase(const QString &name) : type_name(name)
     {}
 
     ~RegisterMetaTypeBase()
     {}
 
-    CLASS_UID UID() const
-    {
-        return class_uid;
-    }
-
-    HASH_CODE hashBase() const
-    {
-        return (class_uid / 0xF0000000);
-    }
-
-    VERSION_ID version() const
-    {
-        return version_id;
-    }
-
-    QString typeName() const
-    {
-        return type_name;
-    }
-
 private:
-    CLASS_UID class_uid;
-    VERSION_ID version_id;
     QString type_name;
 };
 
@@ -268,9 +243,8 @@ class RegisterMetaType : public detail::RegisterMetaTypeBase
 {
 public:
     /** Use this constructor to register a concrete class */
-    RegisterMetaType( CLASS_UID class_uid, VERSION_ID version_id=1 )
-        : detail::RegisterMetaTypeBase( class_uid, version_id,
-                                        QMetaType::typeName( qMetaTypeId<T>() ) )
+    RegisterMetaType()
+        : detail::RegisterMetaTypeBase( QMetaType::typeName( qMetaTypeId<T>() ) )
     {
         qRegisterMetaType<T>(this->typeName().toAscii().constData());
         qRegisterMetaTypeStreamOperators<T>(this->typeName().toAscii().constData());
@@ -279,18 +253,15 @@ public:
     }
 
     /** Use this constructor to register a virtual class */
-    RegisterMetaType( const detail::VIRTUAL_CLASS_TYPE&, 
-                      CLASS_UID class_uid, VERSION_ID version_id=1 )
-        : detail::RegisterMetaTypeBase( class_uid, version_id, T::typeName() )
+    RegisterMetaType( const detail::VIRTUAL_CLASS_TYPE& )
+        : detail::RegisterMetaTypeBase( T::typeName() )
     {
         singleton = this;
     }
 
     /** Use this constructor to register a concrete class that can't be streamed */
-    RegisterMetaType( const detail::NONSTREAMING_CLASS_TYPE&,
-                      CLASS_UID class_uid, VERSION_ID version_id=1)
-        : detail::RegisterMetaTypeBase( class_uid, version_id,
-                                        QMetaType::typeName( qMetaTypeId<T>() ) )
+    RegisterMetaType( const detail::NONSTREAMING_CLASS_TYPE& )
+        : detail::RegisterMetaTypeBase( QMetaType::typeName( qMetaTypeId<T>() ) )
     {
         singleton = this;
     }

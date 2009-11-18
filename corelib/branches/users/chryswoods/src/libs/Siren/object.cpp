@@ -47,6 +47,12 @@ using namespace Siren::detail;
 
 static const RegisterMetaType<Object> r_object( VIRTUAL_CLASS );
 
+Stream SIREN_EXPORT &operator&(Stream &s, Object &object)
+{
+    object.stream(s);
+    return s;
+}
+
 /** Constructor */
 Object::Object() : QSharedData()
 {}
@@ -110,8 +116,7 @@ void Object::load(Stream &s)
      stream is opened for saving) */
 void Object::stream(Stream &s)
 {
-    Schema schema = s.start<Object>(1);
-    schema.assertVersion(1);
+    s.assertVersion<Object>(1);
 }
 
 Q_GLOBAL_STATIC_WITH_ARGS( QMutex, objectGlobalMutex, (QMutex::Recursive) );
@@ -211,43 +216,6 @@ bool Object::test() const
     return this->test(logger);
 }
 
-/** Reimplement this function to load this object from 
-    a XML DOM - the calls of derived classes should
-    proceed in sequence, with Object::load() called last */
-void Object::load(const QDomNode &dom)
-{
-    throw Siren::incomplete_code( QObject::tr(
-                "Loading objects from XML has yet to be implemented..."), CODELOC );
-}
-
-/** Reimplement this function to save this object to
-    a XML DOM - the calls of derived classes should
-    proceed in sequence, with Object::save() called last */
-void Object::save(QDomNode &dom) const
-{
-    throw Siren::incomplete_code( QObject::tr(
-                "Saving objects to XML has yet to be implemented..."), CODELOC );
-}
-
-/** Reimplement this function to load this object from
-    a binary datastream - the calls of derived classes
-    should proceed in sequence, with Object::load() called last */
-void Object::load(DataStream &ds)
-{
-    writeHeader(ds, r_object);
-}
-
-/** Reimplement this function to save this object to 
-    a binary datastream - this calls of derived classes
-    should proceed in sequence, with Object::save() called last */
-void Object::save(DataStream &ds) const
-{
-    VERSION_ID v = readHeader(ds, r_object);
-    
-    if (v != r_object.version())
-        throw Siren::version_error( v, r_object, CODELOC );
-}
-
 bool Object::private_implements(const QString &class_type) const
 {
     return this->getClass().canCast(class_type);
@@ -262,7 +230,7 @@ void Object::private_assertCanCast(const QString &class_type) const
 ////////// Implementation of None
 //////////
 
-static const RegisterMetaType<None> r_none( 13600120236270837364UL, 1 );
+static const RegisterMetaType<None> r_none;
 
 /** Constructor */
 None::None() : Implements<None,Object>()
@@ -297,7 +265,7 @@ bool None::operator!=(const None &other) const
 
 HASH_CODE None::hashCode() const
 {
-    return r_none.hashBase();
+    return qHash( None::typeName() );
 }
 
 QString None::toString() const
@@ -307,12 +275,10 @@ QString None::toString() const
 
 void None::stream(Stream &s)
 {
-    Schema schema = s.schema<None>(1);
-    schema.assertVersion(1);
+    s.assertVersion<None>(1);
 
-    schema.data("value") & value;
-    
-    Object::stream( scheme.base() );
+    Schema schema = s.item<None>();
+    Object::stream( schema.base() );
 }
 
 bool None::test(Logger &logger) const

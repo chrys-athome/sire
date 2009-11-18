@@ -149,11 +149,7 @@ public:
     void assertNotCorrupted(const QByteArray &compressed_data) const;
 
 protected:
-    void save(DataStream &ds) const;
-    void load(DataStream &ds);
-    
-    void save(XMLStream &xml) const;
-    void load(XMLStream &xml);
+    void stream(Stream &s);
 
 private:
     friend QByteArray detail::streamDataSave( 

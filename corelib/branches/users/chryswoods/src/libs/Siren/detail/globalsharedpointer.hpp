@@ -46,11 +46,6 @@ class GlobalSharedPointer;
 }
 }
 
-template<class T>
-QDataStream& operator<<(QDataStream&, const Siren::detail::GlobalSharedPointer<T>&);
-template<class T>
-QDataStream& operator>>(QDataStream&, Siren::detail::GlobalSharedPointer<T>&);
-
 namespace Siren
 {
 
@@ -148,12 +143,7 @@ template<class T>
 class SIREN_EXPORT GlobalSharedPointer
         : private SharedPolyPointer<T>, private GlobalSharedPointerBase
 {
-
-friend QDataStream& ::operator<<<>(QDataStream&, const GlobalSharedPointer<T>&);
-friend QDataStream& ::operator>><>(QDataStream&, GlobalSharedPointer<T>&);
-
 public:
-
     typedef T element_type;
     typedef T value_type;
     typedef T* pointer;
@@ -557,30 +547,6 @@ const S& GlobalSharedPointer<T>::asA() const
 } // end of namespace detail
 
 } // end of namespace Siren
-
-#ifndef SIREN_SKIP_INLINE_FUNCTIONS
-
-template<class T>
-QDataStream& operator<<(QDataStream &ds, 
-                        const Siren::detail::GlobalSharedPointer<T> &obj)
-{
-    ds << static_cast<const Siren::detail::SharedPolyPointer<T>&>(obj);
-    return ds;
-}
-
-template<class T>
-QDataStream& operator>>(QDataStream &ds, Siren::detail::GlobalSharedPointer<T> &obj)
-{
-    obj = 0;
-    
-    ds >> static_cast<Siren::detail::SharedPolyPointer<T>&>(obj);
-    
-    obj.registerGlobalPointer(false);
-    
-    return ds;
-}
-
-#endif //SIREN_SKIP_INLINE_FUNCTIONS
 
 SIREN_END_HEADER
 

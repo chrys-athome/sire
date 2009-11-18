@@ -27,11 +27,10 @@
 \*********************************************/
 
 #include "class.h"
+#include "stream.h"
+#include "getbacktrace.h"
 
 #include "Siren/exception.h"
-#include "Siren/datastream.h"
-
-#include "getbacktrace.h"
 
 #include <QThreadStorage>
 
@@ -163,40 +162,16 @@ bool exception::operator!=(const exception &other) const
     return not exception::operator==(other);
 }
 
-void exception::save(DataStream &ds) const
+void exception::stream(Stream &s)
 {
-    //write info about the derived exception
-    writeHeader(ds, this->getClass());
+    Schema schema = s.item(this->getClass());
     
-    //now write info for the exception itself
-    writeHeader(ds, r_exception);
+    schema.data("error") & err;
+    schema.data("where") & plce;
+    schema.data("backtrace") & bt;
+    schema.data("pid") & pidstr;
     
-    ds << err << plce << bt << pidstr;
-    
-    Object::save(ds);
-}
-
-void exception::load(DataStream &ds)
-{
-    //read info about the derived exception
-    Class c = this->getClass();
-    
-    VERSION_ID v = readHeader(ds, c);
-    
-    if (v != c.version())
-        throw version_error(v, c, CODELOC);
-        
-    //read this exception
-    v = readHeader(ds, r_exception);
-    
-    if (v == r_exception.version())
-    {
-        ds >> err >> plce >> bt >> pidstr;
-    }
-    else
-        throw version_error(v, r_exception, CODELOC);
-
-    Object::load(ds);
+    Object::stream( schema.base() );
 }
 
 /** Return the error message associated with this exception.

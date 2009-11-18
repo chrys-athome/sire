@@ -28,56 +28,15 @@
 
 #include "objref.h"
 #include "class.h"
-#include "datastream.h"
-#include "xmlstream.h"
+#include "stream.h"
 
 using namespace Siren;
 using namespace Siren::detail;
 
-/** Serialise to a binary datastream */
-DataStream SIREN_EXPORT &operator<<(DataStream &ds, const ObjRef &obj)
+Stream SIREN_EXPORT &operator<<(Stream &s, ObjRef &object)
 {
-    ds << obj.d;
-    return ds;
-}
-
-/** Extract from a binary datastream */
-DataStream SIREN_EXPORT &operator>>(DataStream &ds, ObjRef &obj)
-{
-    ds >> obj.d;
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIREN_EXPORT &operator<<(QDataStream &ds, const ObjRef &obj)
-{
-    DataStream sds(ds);
-    sds << obj;
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREN_EXPORT &operator>>(QDataStream &ds, ObjRef &obj)
-{
-    DataStream sds(ds);
-    sds >> obj;
-    
-    return ds;
-}
-
-/** Serialise to XML */
-XMLStream SIREN_EXPORT &operator<<(XMLStream &xml, const ObjRef &obj)
-{
-    xml << obj.d;
-    return xml;
-}
-
-/** Extract from XML */
-XMLStream SIREN_EXPORT &operator>>(XMLStream &xml, ObjRef &obj)
-{
-    xml >> obj.d;
-    return xml;
+    object.stream(s);
+    return s;
 }
 
 Q_GLOBAL_STATIC_WITH_ARGS( SharedPolyPointer<Object>, getNone, (None()) );
@@ -147,6 +106,12 @@ bool ObjRef::operator!=(const Object &other) const
     return not ObjRef::operator==(other);
 }
 
+/** Return the name of this class */
+QString ObjRef::typeName()
+{
+    return "Siren::ObjRef";
+}
+
 /** Return the Class type for the object */
 Class ObjRef::getClass() const
 {
@@ -204,6 +169,55 @@ bool ObjRef::equals(const Object &other) const
 HASH_CODE ObjRef::hashCode() const
 {
     return d->hashCode();
+}
+
+namespace Siren
+{
+namespace detail
+{
+
+template<>
+struct StreamHelper<ObjRef>
+{   
+    static QString typeName()
+    {
+        return ObjRef::typeName();
+    }
+    
+    static const void* getKey(const ObjRef &object)
+    {
+        return object.d.constData();
+    }
+    
+    static ObjRef null()
+    {
+        return ObjRef();
+    }
+};
+
+} // end of namespace detail
+} // end of namespace Siren
+
+/** Stream the object in this reference */
+void ObjRef::stream(Stream &s)
+{
+    s.assertVersion<ObjRef>(1);
+    
+    SharedSchema shared = s.shared(*this);
+    
+    if (shared.mustStream())
+    {
+        if (s.isSaving())
+        {
+            d->save(s);
+        }
+        else
+        {
+            ObjRef new_obj = s.loadNextObject();
+            
+            d = new_obj.d;
+        }
+    }
 }
 
 /** Allow automatic casting to an Object */

@@ -3,17 +3,19 @@ Siren Markup language - version 1
 Available tags:
 
 <sirenml>   : used to enclose a Siren object document (Siren Markup Language)
+<class>     : used to describe the encoding of a particular class (versioning)
+<classes>   : used to hold all class tags
 <object>    : describes an object  (anything which is not described by other tags!)
 <base>      : describes a base class of an object
 <number>    : describes a number (any type of number)
-<string>    : describes a strinng (any text - UTF8 encoded)
+<string>    : describes a string (any text - UTF8 encoded) - this refers to a store of strings
 <flag>      : a boolean true/false flag
 <array>     : an array (vector/list) of values - order is important
 <map>       : a key/value map (dictionary/hash) of values - multimap is supported
 <set>       : a set of values - order is not important, each object appears once
+<binary>    : a lump of binary data - this refers to a store of binary blobs
 <reference> : a reference to a shared value
-<entry>     : contains an entry in a map - this must contain a single <key>, but
-              potentially many <value> tags
+<entry>     : contains an entry in a map - this must contain a single <key> <value> pair
 <key>       : denotes the key in a map
 <value>     : denotes a value in a map
 
@@ -25,27 +27,28 @@ there are further tags:
 <strings>    : the collection of all strings in the file
 <strdata>    : the actual data for the string - this is always UTF-8 encoded
                (as it the whole XML document)
+<binaries>   : the collection of all binary blobs in the file
+<bindata>    : the actual binary blob
 
 There are several attributes that are used to help identify and manage the data:
 
 type        : This holds the C++ class name of the type, or the type of the number
               (e.g. int64, int32, uint8 etc.) 
               
-              [required in <object>, <reference>, <number>, <base>, <array>, <map> and <set>]
+              [required in <object>, <number>, <base>, <class>]
 
 name        : This is the name of the data / variable.
 
               [optional in <object>, <array>, <map>, <set>, <number>, <array>, <string>,
-                           <flag>, <reference> ]
+                           <flag>, <reference>, <binary> ]
 
-id          : This is the ID number of the shared data or shared string
+id          : This is the ID number of the shared data, string or binary object
 
-              [required in <string>, <reference>, <strdata>, <target>]
+              [required in <string>, <reference>, <binary>, <strdata>, <target>, <bindata>]
 
-version     : This is the version number of an object - if it doesn't exist, the
-              version is assumed to be "1"
+version     : This is the version number of a class
 
-              [optional in <object>]
+              [required in <class>]
 
 index       : This is the index number of some data in an array
 
@@ -57,11 +60,16 @@ count       : This is the number of items in a container
 
 <?xml version="1.0" encoding="utf-8" ?>
 <sirenml xmlns="http://siremol.org/siren/xml/1" version="1">
+  <classes>
+    <class type="NS::Bar" version="1"/>
+    <class type="Siren::Object" version="1"/>
+  </classes>
+
   <targets>
     <target id="1">
-      <array count="23" class="Siren::ObjRef">
-        <reference index="0" id="2" type="Siren::Object"/>
-        <reference index="1" id="2" type="Siren::Object"/>
+      <array count="23">
+        <reference index="0" id="2"/>
+        <reference index="1" id="2"/>
       </array>
     </target>
     <target id="2">
@@ -71,7 +79,17 @@ count       : This is the number of items in a container
     </target>
   </targets>
 
-  <object name="foo" type="NS::Bar" version="2">
+  <strings>
+    <strdata id="1">Hello World</strdata>
+    <strdata id="2">CA</strdata>
+  </strings>
+
+  <binaries>
+    <bindata id="1">R0lGODlhZABqALMAAFrMYr/BvlKOVJKOg2xZUKmenMfDw8tgWJpVUbaxs</bindata>
+    <bindata id="2">yzGCEmtVmkFqHa7MByK1rCV8OWagwUjTsw2FhG9s5ylQCRxtIF+g</bindata>
+  </binaries>
+
+  <object name="foo" type="NS::Bar">
     <base type="NS::BarBase">
       <base type="Siren::Object"/>
     </base>
@@ -79,13 +97,24 @@ count       : This is the number of items in a container
     <object name="value" type="NS::Value">
       <base class="Siren::Object"/>
 
-      <string name="name" id="12"/>
+      <string name="name" id="1"/>
 
       <number name="x" type="float" value="1.2324"/>
       <number name="y" type="float" value="42"/>
       <number name="z" type="float" value="0"/>
     </object>
 
-    <reference name="data" type="Siren::ObjRef" id="1"/>
+    <reference name="data" id="1"/>
   </object>
+
+  <array count="2">
+    <array index=0 count="2">
+     <number index=0 type="int64" value="0"/>
+      <number index=1 type="int64" value="1"/>
+    </array>
+    <array index=1 count="2">
+      <number index=0 type="int64" value="1"/>
+      <number index=1 type="int64" value="0"/>
+    </array>
+  </array>
 </sirenml>

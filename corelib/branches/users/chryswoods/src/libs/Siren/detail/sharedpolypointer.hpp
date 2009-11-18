@@ -29,8 +29,6 @@
 #ifndef SIREN_SHAREDPOLYPOINTER_HPP
 #define SIREN_SHAREDPOLYPOINTER_HPP
 
-#include "../datastream.h"
-
 SIREN_BEGIN_HEADER
 
 namespace Siren
@@ -43,12 +41,6 @@ class SharedPolyPointer;
 }
 
 }
-
-template<class T>
-QDataStream& operator<<(QDataStream&, const Siren::detail::SharedPolyPointer<T>&);
-
-template<class T>
-QDataStream& operator>>(QDataStream&, Siren::detail::SharedPolyPointer<T>&);
 
 namespace Siren
 {
@@ -154,9 +146,6 @@ protected:
 template <class T>
 class SIREN_EXPORT SharedPolyPointer : private SharedPolyPointerBase
 {
-
-friend QDataStream& ::operator<<<>(QDataStream&, const SharedPolyPointer<T>&);
-friend QDataStream& ::operator>><>(QDataStream&, SharedPolyPointer<T>&);
 
 public:
 
@@ -809,59 +798,7 @@ bool SharedPolyPointer<T>::operator!=(const T *other_ptr) const
 #endif //SIREN_SKIP_INLINE_FUNCTIONS
 
 } // end of namespace detail
-
 } // end of namespace Siren
-
-#ifndef SIREN_SKIP_INLINE_FUNCTIONS
-
-/** Serialise to a binary data stream
-
-    \throw SireError::unknown_type
-    \throw SireError::program_bug
-*/
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds,
-                        const Siren::detail::SharedPolyPointer<T> &ptr)
-{
-    if (ptr.d == 0)
-        Siren::detail::SharedPolyPointerBase::save(ds, 0, 0);
-    else
-    {
-        Siren::detail::SharedPolyPointerBase::save(ds,
-                      Siren::detail::SharedPolyPointerHelper<T>::what(*(ptr.d)), ptr.d);
-    }
-
-    return ds;
-}
-
-/** Deserialise from a binary data stream */
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds,
-                        Siren::detail::SharedPolyPointer<T> &ptr)
-{
-    ptr = static_cast<T*>(
-              Siren::detail::SharedPolyPointerBase::read(ds) );
-
-    return ds;
-}
-
-template<class T>
-SIREN_INLINE_TEMPLATE
-const T* get_pointer(Siren::detail::SharedPolyPointer<T> const & p)
-{
-    return p.constData();
-}
-
-template<class T>
-SIREN_INLINE_TEMPLATE
-T* get_pointer(Siren::detail::SharedPolyPointer<T> &p)
-{
-    return p.data();
-}
-
-#endif //SIREN_SKIP_INLINE_FUNCTIONS
 
 SIREN_END_HEADER
 

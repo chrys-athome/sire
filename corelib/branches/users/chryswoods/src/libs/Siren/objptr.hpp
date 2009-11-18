@@ -32,6 +32,7 @@
 #include "object.h"
 #include "class.h"
 #include "datastream.h"
+#include "stream.h"
 
 #include "detail/sharedpolypointer.hpp"
 #include "detail/globalsharedpointer.hpp"
@@ -51,54 +52,6 @@ template<class T> class ObjPtr;
 template<class T> class GlobalObjPtr;
 
 }
-
-QDataStream& operator<<(QDataStream&, const Siren::detail::ObjPtrBase&);
-QDataStream& operator>>(QDataStream&, Siren::detail::ObjPtrBase&);
-
-DataStream& operator<<(DataStream&, const Siren::detail::ObjPtrBase&);
-DataStream& operator>>(DataStream&, Siren::detail::ObjPtrBase&);
-
-XMLStream& operator<<(XMLStream&, const Siren::detail::ObjPtrBase&);
-XMLStream& operator>>(XMLStream&, Siren::detail::ObjPtrBase&);
-
-template<class T>
-QDataStream& operator<<(QDataStream&, const Siren::ObjPtr<T>&);
-template<class T>
-QDataStream& operator>>(QDataStream&, Siren::ObjPtr<T>&);
-
-template<class T>
-DataStream& operator<<(DataStream&, const Siren::ObjPtr<T>&);
-template<class T>
-DataStream& operator>>(DataStream&, Siren::ObjPtr<T>&);
-
-template<class T>
-XMLStream& operator<<(XMLStream&, const Siren::ObjPtr<T>&);
-template<class T>
-XMLStream& operator>>(XMLStream&, Siren::ObjPtr<T>&);
-
-QDataStream& operator<<(QDataStream&, const Siren::detail::GlobalObjPtrBase&);
-QDataStream& operator>>(QDataStream&, Siren::detail::GlobalObjPtrBase&);
-
-DataStream& operator<<(DataStream&, const Siren::detail::GlobalObjPtrBase&);
-DataStream& operator>>(DataStream&, Siren::detail::GlobalObjPtrBase&);
-
-XMLStream& operator<<(XMLStream&, const Siren::detail::GlobalObjPtrBase&);
-XMLStream& operator>>(XMLStream&, Siren::detail::GlobalObjPtrBase&);
-
-template<class T>
-QDataStream& operator<<(QDataStream&, const Siren::GlobalObjPtr<T>&);
-template<class T>
-QDataStream& operator>>(QDataStream&, Siren::GlobalObjPtr<T>&);
-
-template<class T>
-DataStream& operator<<(DataStream&, const Siren::GlobalObjPtr<T>&);
-template<class T>
-DataStream& operator>>(DataStream&, Siren::GlobalObjPtr<T>&);
-
-template<class T>
-XMLStream& operator<<(XMLStream&, const Siren::GlobalObjPtr<T>&);
-template<class T>
-XMLStream& operator>>(XMLStream&, Siren::GlobalObjPtr<T>&);
 
 namespace Siren
 {
@@ -156,12 +109,6 @@ protected:
 private:
     /** Shared pointer to the actual Object */
     detail::SharedPolyPointer<Object> ptr;
-
-    friend DataStream& ::operator<<(DataStream&, const ObjPtrBase&);
-    friend DataStream& ::operator>>(DataStream&, ObjPtrBase&);
-
-    friend XMLStream& ::operator<<(XMLStream&, const ObjPtrBase&);
-    friend XMLStream& ::operator>>(XMLStream&, ObjPtrBase&);
 };
 
 /** This is base class of the global polymorphic pointer holder for the entire
@@ -207,12 +154,6 @@ protected:
 private:
     /** Global shared pointer to the actual object */
     detail::GlobalSharedPointer<Object> ptr;
-
-    friend DataStream& ::operator<<(DataStream&, const GlobalObjPtrBase&);
-    friend DataStream& ::operator>>(DataStream&, GlobalObjPtrBase&);
-
-    friend XMLStream& ::operator<<(XMLStream&, const GlobalObjPtrBase&);
-    friend XMLStream& ::operator>>(XMLStream&, GlobalObjPtrBase&);
 };
 
 } // end of namespace detail
@@ -632,123 +573,45 @@ typedef GlobalObjPtr<Object> GlobalObjectPtr;
 #ifndef SIREN_SKIP_INLINE_FUNCTIONS
 
 template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds, const Siren::ObjPtr<T> &obj)
+Siren::Stream& operator&(Siren::Stream &s, Siren::ObjPtr<T> &object)
 {
-    return ( ds << static_cast<const Siren::detail::ObjPtrBase&>(obj) );
+    s.assertVersion("Siren::ObjPtr", 1);
+
+    if (s.isLoading())
+    {
+        Siren::ObjRef objref;
+        s >> objref;
+        
+        object = objref;
+    }
+    else
+    {
+        Siren::ObjRef objref = object;
+        s << objref;
+    }
+
+    return s;
 }
 
 template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds, Siren::ObjPtr<T> &obj)
+Siren::Stream& operator&(Siren::Stream &s, Siren::GlobalObjPtr<T> &object)
 {
-    Siren::ObjPtr<T> new_obj;
-    ds >> static_cast<Siren::detail::ObjPtrBase&>(new_obj);
+    s.assertVersion("Siren::GlobalObjPtr", 1);
     
-    new_obj.assertSane();
-    obj = new_obj;
-
-    return ds;
-}
-
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-DataStream& operator<<(DataStream &ds, const Siren::ObjPtr<T> &obj)
-{
-    return ( ds << static_cast<const Siren::detail::ObjPtrBase&>(obj) );
-}
-
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-DataStream& operator>>(DataStream &ds, Siren::ObjPtr<T> &obj)
-{
-    Siren::ObjPtr<T> new_obj;
-    ds >> static_cast<Siren::detail::ObjPtrBase&>(new_obj);
+    if (s.isLoading())
+    {
+        Siren::ObjRef objref;
+        s >> objref;
+        
+        object = objref;
+    }
+    else
+    {
+        Siren::ObjRef objref = object;
+        s << objref;
+    }
     
-    new_obj.assertSane();
-    obj = new_obj;
-
-    return ds;
-}
-
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-XMLStream& operator<<(XMLStream &xml, const Siren::ObjPtr<T> &obj)
-{
-    return ( xml << static_cast<const Siren::detail::ObjPtrBase&>(obj) );
-}
-
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-XMLStream& operator>>(XMLStream &xml, Siren::ObjPtr<T> &obj)
-{
-    Siren::ObjPtr<T> new_obj;
-    xml >> static_cast<Siren::detail::ObjPtrBase&>(new_obj);
-    
-    new_obj.assertSane();
-    obj = new_obj;
-
-    return xml;
-}
-
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds, const Siren::GlobalObjPtr<T> &obj)
-{
-    return ( ds << static_cast<const Siren::detail::GlobalObjPtrBase&>(obj) );
-}
-
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds, Siren::GlobalObjPtr<T> &obj)
-{
-    Siren::GlobalObjPtr<T> new_obj;
-    ds >> static_cast<Siren::detail::GlobalObjPtrBase&>(new_obj);
-    
-    new_obj.assertSane();
-    obj = new_obj;
-
-    return ds;
-}
-
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-DataStream& operator<<(DataStream &ds, const Siren::GlobalObjPtr<T> &obj)
-{
-    return ( ds << static_cast<const Siren::detail::GlobalObjPtrBase&>(obj) );
-}
-
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-DataStream& operator>>(DataStream &ds, Siren::GlobalObjPtr<T> &obj)
-{
-    Siren::GlobalObjPtr<T> new_obj;
-    ds >> static_cast<Siren::detail::GlobalObjPtrBase&>(new_obj);
-    
-    new_obj.assertSane();
-    obj = new_obj;
-
-    return ds;
-}
-
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-XMLStream& operator<<(XMLStream &xml, const Siren::GlobalObjPtr<T> &obj)
-{
-    return ( xml << static_cast<const Siren::detail::GlobalObjPtrBase&>(obj) );
-}
-
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-XMLStream& operator>>(XMLStream &xml, Siren::GlobalObjPtr<T> &obj)
-{
-    Siren::GlobalObjPtr<T> new_obj;
-    xml >> static_cast<Siren::detail::GlobalObjPtrBase&>(new_obj);
-    
-    new_obj.assertSane();
-    obj = new_obj;
-
-    return xml;
+    return s;
 }
 
 #endif // SIREN_SKIP_INLINE_FUNCTIONS

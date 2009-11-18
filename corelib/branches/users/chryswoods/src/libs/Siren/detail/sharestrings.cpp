@@ -37,6 +37,8 @@ static QSet<QString> *string_registry(0);
 
 namespace Siren
 {
+namespace detail
+{
 
 /** This function adds the string 'string' to shared storage, and returns 
     a copy of the shared-stored value. Use this function to ensure that
@@ -77,4 +79,5 @@ void SIREN_EXPORT shareStrings(QStringList &strings)
     }
 }
 
-}
+} // end of namespace detail
+} // end of namespace Siren
