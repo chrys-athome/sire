@@ -76,11 +76,11 @@ public:
 
     bool test(Logger &logger) const;
 
+    void stream(Stream &s);
+
     virtual void throwSelf() const=0;
 
 protected:
-    void stream(Stream &s);
-
     virtual bool testException() const=0;
 
     exception& operator=(const exception &other);
@@ -190,6 +190,9 @@ void printError(const QString &s);
 //////
 ////// Implementation of 'ImplementsException'
 //////
+
+template<class Derived, class Base>
+const Class* ImplementsException<Derived,Base>::class_typeinfo = 0;
 
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
@@ -418,6 +421,29 @@ SIREN_OUTOFLINE_TEMPLATE
 const Base& ImplementsException<Derived,Base>::super() const
 {
     return *this;
+}
+
+/** Throw this exception */
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+void ImplementsException<Derived,Base>::throwSelf() const
+{
+    throw Derived( static_cast<const Derived&>(*this) );
+}
+
+/** Test this exception */
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+bool ImplementsException<Derived,Base>::testException() const
+{
+    try
+    {
+        this->throwSelf();
+    }
+    catch(const Derived &self)
+    {}
+    
+    return true;
 }
 
 #endif // SIREN_SKIP_INLINE_FUNCTIONS

@@ -37,6 +37,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireCAS
 {
+class Constant;
+}
+
+QDataStream& operator<<(QDataStream&, const SireCAS::Constant&);
+QDataStream& operator>>(QDataStream&, SireCAS::Constant&);
+
+namespace SireCAS
+{
 
 /**
 This class represents a constant value (e.g. a number).

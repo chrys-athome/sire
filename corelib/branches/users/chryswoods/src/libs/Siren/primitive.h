@@ -38,31 +38,18 @@ namespace Siren
 {
 class String;
 class Number;
+
+template<class T>
+class Primitive;
 }
+
+template<class T>
+Siren::Stream& operator&(Siren::Stream&, Siren::Primitive<T>&);
 
 namespace Siren
 {
 
 class Logger;
-
-namespace detail
-{
-
-template<class T>
-struct PrimitiveHelper
-{
-    static QString typeName();
-    
-    static QString toString(const T &object);
-    
-    static HASH_CODE hashCode(const T &object);
-    
-    static void stream(T &object, Stream &s);
-    
-    static bool test(const T &object, Logger &logger);
-};
-
-} // end of namespace detail
 
 /** This is the base class of Primitive types. This just
     provides the functionality to allow automatic
@@ -86,9 +73,11 @@ public:
     ~Primitive();
     
     operator ObjRef() const;
-    
-    void save(Stream &s) const;
+
     void load(Stream &s);
+    void save(Stream &s) const;
+    
+    void stream(Stream &s);
 };
 
 /** This is a simple wrapper that provides a Siren::Object
@@ -238,50 +227,6 @@ private:
 #ifndef SIREN_SKIP_INLINE_FUNCTIONS
 
 /////////
-///////// Implementation of PrimitiveHelper
-/////////
-
-namespace detail
-{
-
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-QString PrimitiveHelper<T>::typeName()
-{
-    return T::typeName();
-}
-    
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-QString PrimitiveHelper<T>::toString(const T &object)
-{
-    return object.toString();
-}
-    
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-HASH_CODE PrimitiveHelper<T>::hashCode(const T &object)
-{
-    return object.hashCode();
-}
-    
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-void PrimitiveHelper<T>::stream(T &object, Stream &s)
-{
-    t.stream(s);
-}
-    
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-bool PrimitiveHelper<T>::test(const T &object, Logger &logger)
-{
-    return object.test(logger);
-}
-
-} // end of namespace detail
-
-/////////
 ///////// Implementation of Primitive
 /////////
 
@@ -305,24 +250,27 @@ Primitive<T>::operator ObjRef() const
     return ObjRef( PrimitiveObject<T>(static_cast<const T&>(*this)) );
 }
 
-/** Save this object to the passed stream */
-template<class T>
-SIREN_OUTOFLINE_TEMPLATE
-void Primitive<T>::save(Stream &s) const
-{
-    s.assertIsSaving();
-    T *t_ptr = const_cast<T*>( static_cast<const T*>(this) );
-    t_ptr->stream(s);
-}
-
-/** Load this object from the passed stream */
 template<class T>
 SIREN_OUTOFLINE_TEMPLATE
 void Primitive<T>::load(Stream &s)
 {
     s.assertIsLoading();
-    T *t_ptr = static_cast<T*>(this);
-    t_ptr->stream(s);
+    static_cast<T*>(this)->stream(s);
+}
+
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+void Primitive<T>::save(Stream &s) const
+{
+    s.assertIsSaving();
+    const_cast<T*>( static_cast<const T*>(this) )->stream(s);
+}
+
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+void Primitive<T>::stream(Stream &s)
+{
+    static_cast<T*>(this)->stream(s);
 }
 
 /////////
@@ -416,7 +364,7 @@ template<class T>
 SIREN_OUTOFLINE_TEMPLATE
 QString PrimitiveObject<T>::toString() const
 {
-    return detail::PrimitiveHelper<T>::toString(primitive_object);
+    return primitive_object.toString();
 }
 
 /** Return a hash code for this object */
@@ -424,7 +372,7 @@ template<class T>
 SIREN_OUTOFLINE_TEMPLATE
 HASH_CODE PrimitiveObject<T>::hashCode() const
 {
-    return detail::PrimitiveHelper<T>::hashCode(primitive_object);
+    return primitive_object.hashCode();
 }
 
 /** Test this object */
@@ -432,7 +380,7 @@ template<class T>
 SIREN_OUTOFLINE_TEMPLATE
 bool PrimitiveObject<T>::test(Logger &logger) const
 {
-    return detail::PrimitiveHelper<T>::test(primitive_object, logger);
+    return primitive_object.test(logger);
 }
 
 /** Stream this object */
@@ -440,16 +388,13 @@ template<class T>
 SIREN_OUTOFLINE_TEMPLATE
 void PrimitiveObject<T>::stream(Stream &s)
 {
-    Schema schema = s.schema<T>(1);
+    s.assertVersion("PrimitiveObject", 1);
 
-    if (schema.version() == 1)
-    {
-        detail::PrimitiveHelper<T>::stream(primitive_object, s);
-    }
-    else
-        schema.throwUnsupportedVersion("1");
+    Schema schema = s.item<T>();
 
-    super().stream(s);
+    schema.data("primitive") & primitive_object;
+
+    Object::stream( schema.base() );
 }
 
 /** Allow automatic casting back to the primitive */
@@ -471,18 +416,35 @@ const T& primitive_cast( const Object &object )
     return object.asA< PrimitiveObject<T> >();
 }
 
-#endif
+#endif // SIREN_SKIP_INLINE_FUNCTIONS
 
 typedef PrimitiveObject<String> StringObject;
 typedef PrimitiveObject<Number> NumberObject;
 
 }
 
+#ifndef SIREN_SKIP_INLINE_FUNCTIONS
+
+template<class T>
+Siren::Stream& operator&(Siren::Stream &s, Siren::Primitive<T> &object)
+{
+    object.stream(s);
+    return s;
+}
+
+#endif // SIREN_SKIP_INLINE_FUNCTIONS
+
+Q_DECLARE_METATYPE( Siren::String);
+Q_DECLARE_METATYPE( Siren::Number);
+
 Q_DECLARE_METATYPE( Siren::StringObject )
 Q_DECLARE_METATYPE( Siren::NumberObject )
 
 SIREN_EXPOSE_CLASS( Siren::String )
 SIREN_EXPOSE_CLASS( Siren::Number )
+
+SIREN_EXPOSE_CLASS( Siren::StringObject )
+SIREN_EXPOSE_CLASS( Siren::NumberObject )
 
 SIREN_END_HEADER
 

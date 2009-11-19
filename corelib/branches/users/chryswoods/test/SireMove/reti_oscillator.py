@@ -33,29 +33,13 @@ internalff.add( oscillator )
 system = System()
 system.add( internalff )
 
-#Sire.Stream.save( system, "test.s3" )
-
 lam = Symbol("lambda")
-
-f = lam * internalff.components().total()
-print f
-# here is the problem - serialisation of expression is broken on hpcx!
-Sire.Stream.save( f, "test.s3" )
-sys.exit(0)
 
 system.setComponent(lam, 0.01)
 
-# the save here doesn't break hpcx
-#Sire.Stream.save( system, "test.s3" )
-
-#system.setComponent(system.totalComponent(), lam * internalff.components().total())
-
-# adding save here breaks hpcx
-#Sire.Stream.save( system, "test.s3" )
+system.setComponent(system.totalComponent(), lam * internalff.components().total())
 
 system.add( "average energy", MonitorComponent(system.totalComponent()) )
-
-#Sire.Stream.save( system, "test.s3" )
 
 lambda_values = [ 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9 ]
 
@@ -108,7 +92,6 @@ def printInfo(replicas):
 
 printInfo(replicas)
 
-Sire.Stream.save( (replicas, repexmove), "test.s3" )
 #Sire.Stream.save( (replicas, repexmove), "test/SireMove/reti_oscillator.s3" )
 
 for i in range(0,10):

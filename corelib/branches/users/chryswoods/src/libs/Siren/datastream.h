@@ -58,26 +58,67 @@ public:
 
     ~DataStream();
 
-private:
-    void readVersion();
-    void writeVersion();
-
-    static quint64 magic();
-
-    bool peekMagic();
-
-    quint32 readObjectID();
-
-    /** Shared pointer to the registry of shared objects that 
-        have already been streamed */
-    std::auto_ptr<SharedDataRegistry> registry;
+    Stream& operator&(bool &b); 
     
-    /** Shared pointer to the datastream */
-    std::auto_ptr<QDataStream> local_ds;
+    Stream& operator&(qint8 &i);
+    Stream& operator&(quint8 &i);
+    Stream& operator&(quint16 &i);
+    Stream& operator&(qint16 &i);
+    Stream& operator&(qint32 &i);
+    Stream& operator&(quint64 &i);
+    Stream& operator&(qint64 &i);
+    Stream& operator&(quint32 &i);
 
-    /** Reference to the actual QDataStream that is used to
-        stream the data */
-    QDataStream &ds;
+    Stream& operator&(float &f);
+    Stream& operator&(double &f);
+    
+protected:
+    void startItem(const QString &type_name);
+    void startArray(const QString &type_name, int count);
+    void startSet(const QString &type_name, int count);
+    void startMap(const QString &key_type, const QString &value_type, 
+                  int count, bool allow_duplicates);
+
+    void nextData(const char *data_name);
+    void nextBase();
+
+    void nextIndex(int i);
+    
+    void nextEntry();
+    
+    void nextKey();
+    void nextValue();
+
+    void endItem(const QString &type_name);
+    void endArray(const QString &type_name);
+    void endSet(const QString &type_name);
+    void endMap(const QString &key_type, const QString &value_type);
+
+    int readReference();
+    void createReference(int id);
+    
+    void startTarget(int id);
+    void endTarget(int id);
+
+    int readStringReference();
+    void createStringReference(int id);
+    
+    QString readString(int id);
+    void writeString(int id, const QString &text);
+
+    int readBlobReference();
+    void createBlobReference(int id);
+
+    QByteArray readBlob(int id);
+    void writeBlob(int id, const QByteArray &blob);
+
+    int readClassID(const QString &class_name, int &version);
+    void writeClassID(const QString &class_name, int id, int version);
+    
+    QString peekNextType();
+
+    int readMagic();
+    void writeMagic(int magic);
 };
 
 } // end of namespace Siren

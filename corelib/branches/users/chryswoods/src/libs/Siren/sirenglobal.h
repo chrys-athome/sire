@@ -220,6 +220,11 @@ public:
     ~RegisterMetaTypeBase()
     {}
 
+    const QString& typeName() const
+    {
+        return type_name;
+    }
+
 private:
     QString type_name;
 };
@@ -247,7 +252,7 @@ public:
         : detail::RegisterMetaTypeBase( QMetaType::typeName( qMetaTypeId<T>() ) )
     {
         qRegisterMetaType<T>(this->typeName().toAscii().constData());
-        qRegisterMetaTypeStreamOperators<T>(this->typeName().toAscii().constData());
+        //qRegisterMetaTypeStreamOperators<T>(this->typeName().toAscii().constData());
         
         singleton = this;
     }
@@ -263,6 +268,7 @@ public:
     RegisterMetaType( const detail::NONSTREAMING_CLASS_TYPE& )
         : detail::RegisterMetaTypeBase( QMetaType::typeName( qMetaTypeId<T>() ) )
     {
+        qRegisterMetaType<T>(this->typeName().toAscii().constData());
         singleton = this;
     }
 

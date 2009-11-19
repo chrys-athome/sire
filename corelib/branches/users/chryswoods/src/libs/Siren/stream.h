@@ -44,6 +44,7 @@ namespace Siren
 class Stream;
 class Class;
 class ObjRef;
+class Object;
 
 /** This is the base class of all schemas */
 class SIREN_EXPORT SchemaBase
@@ -249,7 +250,7 @@ struct StreamHelper
     
     static const void* getKey(const T &object)
     {
-        return &object;
+        return object.constData();
     }
     
     static T null()
@@ -543,6 +544,8 @@ public:
 
     Stream& operator&(QString &s);
     Stream& operator&(QByteArray &b);
+    
+    Stream& operator&(Object &object);
     
     ObjRef loadNextObject();
 

@@ -38,6 +38,100 @@
 
 SIREN_BEGIN_HEADER
 
+namespace Siren
+{
+    namespace detail
+    {
+        template<> 
+        struct StreamHelper<QString>
+        {
+            static QString typeName(){ return "QString"; }
+            
+            static const void* getKey(const QString &object)
+            {
+                return object.constData();
+            }
+            
+            static QString null(){ return QString::null; }
+        };
+        
+        template<class T>
+        struct StreamHelper< QList<T> >
+        {
+            static QString typeName()
+            {
+                return QString("QList< %1 >").arg( StreamHelper<T>::typeName() );
+            }
+            
+            static const void* getKey(const QList<T> &object)
+            {
+                if (object.isEmpty())
+                    return 0;
+                else
+                    return &(object.first());
+            }
+            
+            static QList<T> null(){ return QList<T>(); }
+        };
+        
+        template<class T>
+        struct StreamHelper< QVector<T> >
+        {
+            static QString typeName()
+            {
+                return QString("QVector< %1 >").arg( StreamHelper<T>::typeName() );
+            }
+            
+            static const void* getKey(const QVector<T> &object)
+            {
+                return object.constData();
+            }
+            
+            static QVector<T> null(){ return QVector<T>(); }
+        };
+        
+        template<class T>
+        struct StreamHelper< QSet<T> >
+        {
+            static QString typeName()
+            {
+                return QString("QSet< %1 >").arg( StreamHelper<T>::typeName() );
+            }
+            
+            static const void* getKey(const QSet<T> &object)
+            {
+                if (object.isEmpty())
+                    return 0;
+                else
+                    return &(*(object.constBegin()));
+            }
+            
+            static QSet<T> null(){ return QSet<T>(); }
+        };
+        
+        template<class Key, class Value>
+        struct StreamHelper< QHash<Key,Value> >
+        {
+            static QString typeName()
+            {
+                return QString("QHash< %1, %2 >")
+                            .arg( StreamHelper<Key>::typeName(),
+                                  StreamHelper<Value>::typeName() );
+            }
+            
+            static const void* getKey(const QHash<Key,Value> &object)
+            {
+                if (object.isEmpty())
+                    return 0;
+                else
+                    return &(object.constBegin().value());
+            }
+            
+            static QHash<Key,Value> null() { return QHash<Key,Value>(); }
+        };
+    }
+}
+
 /** Streaming operator for QVector<T> */
 template<class T>
 SIREN_OUTOFLINE_TEMPLATE
@@ -74,6 +168,92 @@ Siren::Stream& operator&(Siren::Stream &s, QVector<T> &vector)
                 schema.index(i) >> array[i];
             }
         }  
+    }
+    
+    return s;
+}
+
+/** Streaming operator for QList<T> */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+Siren::Stream& operator&(Siren::Stream &s, QList<T> &list)
+{
+    s.assertVersion("QList", 1);
+    
+    Siren::SharedSchema shared = s.shared(list);
+    
+    if (shared.mustStream())
+    {
+        int sz = list.count();
+        
+        Siren::ArraySchema schema = s.array<T>(sz);
+        
+        if (s.isSaving())
+        {
+            int i = 0;
+        
+            for (typename QList<T>::const_iterator it = list.constBegin();
+                 it != list.constEnd();
+                 ++it)
+            {
+                schema.index(i) << *it;
+                ++i;
+            }
+        }
+        else
+        {
+            list.clear();
+            
+            for (int i=0; i<sz; ++i)
+            {
+                T val;
+                schema.index(i) >> val;
+                
+                list.append(val);
+            }
+        }
+    }
+    
+    return s;
+}
+
+/** Streaming operator for QSet<T> */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+Siren::Stream& operator&(Siren::Stream &s, QSet<T> &set)
+{
+    s.assertVersion("QSet", 1);
+    
+    Siren::SharedSchema shared = s.shared(set);
+    
+    if (shared.mustStream())
+    {
+        int sz = set.count();
+        
+        Siren::SetSchema schema = s.set<T>(sz);
+        
+        if (s.isSaving())
+        {
+            for (typename QSet<T>::const_iterator it = set.constBegin();
+                 it != set.constEnd();
+                 ++it)
+            {
+                schema.entry() << *it;
+            }
+        }
+        else
+        {
+            set.clear();
+            set.reserve(sz);
+            
+            for (int i=0; i<sz; ++i)
+            {
+                T value;
+                schema.entry() >> value;
+                
+                set.insert(value);
+            }
+        }
     }
     
     return s;

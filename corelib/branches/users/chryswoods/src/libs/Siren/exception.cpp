@@ -28,9 +28,13 @@
 
 #include "class.h"
 #include "stream.h"
+#include "tester.h"
+#include "logger.h"
 #include "getbacktrace.h"
+#include "streamqt.h"
 
 #include "Siren/exception.h"
+#include "Siren/errors.h"
 
 #include <QThreadStorage>
 
@@ -107,8 +111,7 @@ QString SIREN_EXPORT getPIDString()
 ////////// Implementation of exception
 //////////
 
-static const RegisterMetaType<exception> r_exception( VIRTUAL_CLASS,
-                                                      6882276539483628797UL, 1 );
+static const RegisterMetaType<exception> r_exception( VIRTUAL_CLASS );
 
 /** Construct a null exception */
 exception::exception() : Extends<exception,Object>()
@@ -164,6 +167,8 @@ bool exception::operator!=(const exception &other) const
 
 void exception::stream(Stream &s)
 {
+    s.assertVersion<exception>(1);
+
     Schema schema = s.item(this->getClass());
     
     schema.data("error") & err;
@@ -217,6 +222,32 @@ QString exception::why() const throw()
 QString exception::pid() const throw()
 {
     return pidstr;
+}
+
+bool exception::test(Logger &logger) const
+{
+    Tester tester(*this, logger);
+
+    try
+    {
+        tester.nextTest( QObject::tr("Test throwing the exception \"%1\".")
+                                .arg(this->what()) );
+        this->testException();
+    }
+    catch(const Siren::exception &e)
+    {
+        tester.unexpected_error(e);
+    }
+    catch(const std::exception &e)
+    {
+        tester.unexpected_error( std_exception(e) );
+    }
+    catch(...)
+    {
+        tester.unexpected_error( unknown_error(CODELOC) );
+    }
+    
+    return tester.allPassed();
 }
 
 HASH_CODE exception::hashCode() const

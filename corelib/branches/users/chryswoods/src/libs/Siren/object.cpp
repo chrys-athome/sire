@@ -47,12 +47,6 @@ using namespace Siren::detail;
 
 static const RegisterMetaType<Object> r_object( VIRTUAL_CLASS );
 
-Stream SIREN_EXPORT &operator&(Stream &s, Object &object)
-{
-    object.stream(s);
-    return s;
-}
-
 /** Constructor */
 Object::Object() : QSharedData()
 {}

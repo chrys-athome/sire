@@ -29,6 +29,8 @@
 #ifndef SIREN_SHAREDPOLYPOINTER_HPP
 #define SIREN_SHAREDPOLYPOINTER_HPP
 
+#include "sirenglobal.h"
+
 SIREN_BEGIN_HEADER
 
 namespace Siren

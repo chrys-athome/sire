@@ -40,8 +40,7 @@ using namespace Siren::detail;
 ///////// Implementation of Handle
 /////////
 
-static const RegisterMetaType<Handle> r_handle( VIRTUAL_CLASS,
-                                                997753709359927996UL, 1 );
+static const RegisterMetaType<Handle> r_handle( VIRTUAL_CLASS );
 
 /** Return the mutex that can be used as a lock
     on all registration */

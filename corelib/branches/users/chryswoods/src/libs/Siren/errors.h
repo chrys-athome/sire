@@ -436,7 +436,7 @@ class SIREN_EXPORT version_error : public ImplementsException<version_error,exce
 public:
     version_error();
 
-    version_error(const QString &error, const QString place=QString::null);
+    version_error(QString err, const QString place=QString::null);
 
     version_error(const version_error &other);
     

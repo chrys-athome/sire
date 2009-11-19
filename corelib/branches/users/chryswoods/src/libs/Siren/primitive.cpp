@@ -40,19 +40,8 @@ using namespace Siren;
 ////////// Implementation of String
 //////////
 
-static const RegisterMetaType< PrimitiveObject<String> > r_string(11503173771973241010UL);
-
-DataStream SIREN_EXPORT &operator<<(DataStream &ds, const String &s)
-{
-    ds << s.text;
-    return ds;
-}
-
-DataStream SIREN_EXPORT &operator>>(DataStream &ds, String &s)
-{
-    ds >> s.text;
-    return ds;
-}
+static const RegisterMetaType<String> r_string;
+static const RegisterMetaType<StringObject> r_string_object;
 
 /** Null constructor */
 String::String() : Primitive<String>()
@@ -120,49 +109,21 @@ bool String::test(Logger&) const
     return true;
 }
 
+void String::stream(Stream &s)
+{
+    s.assertVersion<String>(1);
+    
+    Schema schema = s.item<String>();
+    
+    schema.data("text") & text;
+}
+
 //////////
 ////////// Implementation of Number
 //////////
 
-static const RegisterMetaType< PrimitiveObject<Number> > r_number(8898074123716037135UL);
-
-DataStream SIREN_EXPORT &operator<<(DataStream &ds, const Number &number)
-{
-    if (number.is_integer)
-    {
-        ds << true << number.number_data.integer_value;
-    }
-    else
-    {
-        ds << false << number.number_data.float_value;
-    }
-
-    return ds;
-}
-
-DataStream SIREN_EXPORT &operator>>(DataStream &ds, Number &number)
-{
-    bool is_integer;
-    
-    ds >> is_integer;
-    
-    if (is_integer)
-    {
-        qint64 val;
-        ds >> val;
-        
-        number = Number::fromInteger(val);
-    }
-    else
-    {
-        double val;
-        ds >> val;
-        
-        number = Number::fromFloat(val);
-    }
-    
-    return ds;
-}
+static const RegisterMetaType<Number> r_number;
+static const RegisterMetaType< PrimitiveObject<Number> > r_number_object;
 
 /** Null constructor */
 Number::Number() : Primitive<Number>()
@@ -356,6 +317,20 @@ Number::operator qint64() const
 Number::operator double() const
 {
     return this->toFloat();
+}
+
+void Number::stream(Stream &s)
+{
+    s.assertVersion<Number>(1);
+    
+    Schema schema = s.item<Number>();
+    
+    schema.data("is_integer") & is_integer;
+    
+    if (is_integer)
+        schema.data("integer_value") & number_data.integer_value;
+    else
+        schema.data("float_value") & number_data.float_value;
 }
 
 //////////

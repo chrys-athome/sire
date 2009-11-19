@@ -41,14 +41,6 @@ SIREN_BEGIN_HEADER
 namespace Siren
 {
 class Object;
-class Stream;
-}
-
-Siren::Stream& operator&(Siren::Stream &s, const Siren::Object &object);
-
-namespace Siren
-{
-class Object;
 class Class;
 
 class None;
@@ -315,7 +307,7 @@ private:
     friend class detail::GlobalSharedPointer<Object>;
     friend class detail::GlobalSharedPointerBase;
 
-    friend void qAtomicAssign(Object *&d, Object *x);
+    friend void qAtomicAssign<Object>(Object *&d, Object *x);
 
     bool private_implements(const QString &class_type) const;
     void private_assertCanCast(const QString &class_type) const;
@@ -843,6 +835,18 @@ const T& Object::asA() const
 inline uint qHash(const Siren::Object &object)
 {
     return object.hashCode();
+}
+
+template<>
+inline void qAtomicAssign<Siren::Object>(Siren::Object *&d, 
+                                         Siren::Object *x)
+{
+    if (d == x)
+        return;
+    x->ref.ref();
+    if (!d->ref.deref())
+        delete d;
+    d = x;
 }
 
 #endif // SIREN_SKIP_INLINE_FUNCTIONS

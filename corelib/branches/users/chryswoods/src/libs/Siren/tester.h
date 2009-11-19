@@ -84,6 +84,7 @@ public:
     ///////////////////////
 
     void nextTest();
+    void nextTest(const QString &description);
     
     template<class S, class T>
     void expect_equal(const QString &description, const QString &location,

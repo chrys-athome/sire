@@ -77,18 +77,7 @@ public:
     HASH_CODE hashCode() const;
 
     bool test(Logger &logger) const;
-
-protected:
-
-    ///////////////////////
-    // Implements Object //
-    ///////////////////////
-
-    void save(DataStream &ds) const;
-    void load(DataStream &ds);
-    
-    void save(XMLStream &ds) const;
-    void load(XMLStream &ds);
+    void stream(Stream &s);
 
 private:
     void generate(const char *buffer, unsigned int sz);

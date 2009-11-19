@@ -30,6 +30,7 @@
 
 #include "class.h"
 #include "objref.h"
+#include "hanref.h"
 
 #include "Siren/errors.h"
 
@@ -42,9 +43,9 @@ void Class::buildInheritedTypes()
 
     if (super_class)
     {
-        is_object = super_class.isObject();
-        is_handle = super_class.isHandle();
-        is_primitive = super_class.isPrimitive();
+        is_object = super_class->isObject();
+        is_handle = super_class->isHandle();
+        is_primitive = super_class->isPrimitive();
     
         inherited_types = super_class->inherited_types;
     }
@@ -231,24 +232,6 @@ bool Class::implements(const QString &type_name) const
 QStringList Class::interfaces() const
 {
     return interface_types;
-}
-
-/** Return the UID for this class */
-CLASS_UID Class::UID() const
-{
-    if (metatype)
-        return metatype->UID();
-    else
-        return 0;
-}
-
-/** Return the version number of this class */
-VERSION_ID Class::version() const
-{
-    if (metatype)
-        return metatype->version();
-    else
-        return 0;
 }
 
 /** Create a default-constructed object of this class.

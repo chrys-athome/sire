@@ -627,6 +627,13 @@ Stream& Stream::operator&(QByteArray &blob)
     return *this;
 }
 
+/** Stream an object */
+Stream& Stream::operator&(Object &object)
+{
+    object.stream(*this);
+    return *this;
+}
+
 /** Return the schema for the object with Class 'c', saying either that
     we will write version 'version', or that we will support
     the version up to a maximum of 'version'

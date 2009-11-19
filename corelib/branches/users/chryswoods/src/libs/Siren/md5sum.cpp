@@ -44,7 +44,7 @@
 
 using namespace Siren;
 
-static const RegisterMetaType<MD5Sum> r_md5sum( 18066477408090997958UL, 1 );
+static const RegisterMetaType<MD5Sum> r_md5sum;
 
 /** Generate the null MD5Sum */
 MD5Sum::MD5Sum() : Implements<MD5Sum,Object>()
@@ -134,7 +134,7 @@ MD5Sum& MD5Sum::operator=(const MD5Sum &other)
 QString MD5Sum::toString() const
 {
     return QString().sprintf(
-        "%02x%02x%02x%02x-%02x%02x%02x%02x-%02x%02x%02x%02x-%02x%02x%02x%02x",
+        "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
                    dgst[0],dgst[1],dgst[2],dgst[3],
                    dgst[4],dgst[5],dgst[6],dgst[7],
                    dgst[8],dgst[9],dgst[10],dgst[11],
@@ -143,7 +143,7 @@ QString MD5Sum::toString() const
 
 HASH_CODE MD5Sum::hashCode() const
 {
-    int sum = r_md5sum.hashBase();
+    int sum = qHash( MD5Sum::typeName() );
     
     for (int i=0; i<16; ++i)
     {
@@ -246,34 +246,38 @@ bool MD5Sum::operator!=(const MD5Sum &other) const
             dgst[15] != other.dgst[15]);
 }
 
-void MD5Sum::save(DataStream &ds) const
+void MD5Sum::stream(Stream &s)
 {
-    writeHeader(ds, r_md5sum);
-
-    for (int i=0; i<16; ++i)
-    {
-        ds << quint8(dgst[i]);
-    }
+    s.assertVersion<MD5Sum>(1);
     
-    Object::save(ds);
-}
+    Schema schema = s.item<MD5Sum>();
 
-void MD5Sum::load(DataStream &ds)
-{
-    VERSION_ID v = readHeader(ds, r_md5sum);
-    
-    if (v == r_md5sum.version())
+    if (s.isSaving())
     {
-        for (int i=0; i<16; ++i)
-        {
-            quint8 c;
-            ds >> c;
+        //convert to QByteArray and stream that
+        const char *ptr = (const char*)( &dgst );
+
+        QByteArray data = QByteArray::fromRawData(ptr, 16);
         
-            dgst[i] = c;
-        }
+        schema.data("digest") << data;
     }
     else
-        throw version_error(v, r_md5sum, CODELOC);
+    {
+        QByteArray data;
+        schema.data("digest") >> data;
 
-    Object::load(ds);
+        if (data.count() != 16)
+            throw Siren::corrupted_data( QObject::tr(
+                    "The size of the digest must be 16 bytes! It is currently %1 bytes.")
+                        .arg(data.count()), CODELOC );
+
+        const md5_byte_t *ptr = (const md5_byte_t*)( data.constData() );
+
+        for (int i=0; i<16; ++i)
+        {
+            dgst[i] = ptr[i];
+        }
+    }
+    
+    Object::stream( schema.base() );
 }
