@@ -29,6 +29,9 @@
 #include "handle.h"
 #include "class.h"
 #include "hanref.h"
+#include "stream.h"
+#include "tester.h"
+#include "logger.h"
 
 #include "Siren/errors.h"
 
@@ -217,6 +220,12 @@ bool HanRef::tryLock(int ms)
         return d->tryLock(ms);
     else
         return true;
+}
+
+/** Return whether or not this reference is null */
+bool HanRef::isNull() const
+{
+    return d.get() == 0;
 }
 
 /** Allow automatic casting to a 'Handle'

@@ -104,6 +104,9 @@
 #error Sire requires that the QtCore module is enabled.
 #endif
 
+namespace Siren
+{
+
 /** These functions convert a pointer into an integer.
 
     toInt(void*) : Returns an integer from the pointer. Returns
@@ -197,6 +200,8 @@
 #else
   #fatal No QT_POINTER_SIZE macro defined!
 #endif
+
+} // end of namespace Siren
 
 //Add functions that are used to register all public
 //types (this allows them to be streamed to a binary file and

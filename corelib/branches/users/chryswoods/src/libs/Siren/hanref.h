@@ -77,6 +77,8 @@ public:
     bool tryLock();
     bool tryLock(int ms);
     
+    bool isNull() const;
+    
     template<class T>
     bool isA() const;
     

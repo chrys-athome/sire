@@ -159,12 +159,6 @@ protected:
     static const Class& createTypeInfo();
 
     ImplementsException<Derived,Base>* clone() const;
-
-    ImplementsException<Derived,Base>&
-    operator=(const ImplementsException<Derived,Base> &other);
-
-    bool operator==(const ImplementsException<Derived,Base> &other) const;
-    bool operator!=(const ImplementsException<Derived,Base> &other) const;
     
     bool testException() const;
 
@@ -302,14 +296,17 @@ template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
 void ImplementsException<Derived,Base>::copy(const Object &other)
 {
-    ImplementsException<Derived,Base>::operator=( other.asA<Derived>() );
+    static_cast<Derived*>(this)->operator=( other.asA<Derived>() );
 }
 
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
 bool ImplementsException<Derived,Base>::equals(const Object &other) const
 {
-    return ImplementsException<Derived,Base>::operator==( other.asA<Derived>() );
+    if (not other.isA<Derived>())
+        return false;
+    else
+        return static_cast<const Derived*>(this)->operator==( other.asA<Derived>() );
 }
 
 /** Return the class typeinfo object for 'Derived' */
@@ -358,19 +355,6 @@ ImplementsException<Derived,Base>::operator=(const Derived &other)
 
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
-ImplementsException<Derived,Base>&
-ImplementsException<Derived,Base>::operator=(
-                                const ImplementsException<Derived,Base> &other)
-{
-    const Derived* other_t = dynamic_cast<const Derived*>(&other);
-
-    BOOST_ASSERT( other_t );
-
-    return static_cast<Derived*>(this)->operator=(*other_t);
-}
-
-template<class Derived, class Base>
-SIREN_OUTOFLINE_TEMPLATE
 bool ImplementsException<Derived,Base>::operator==(const Derived &other) const
 {
     return Base::operator==(other);
@@ -385,26 +369,31 @@ bool ImplementsException<Derived,Base>::operator!=(const Derived &other) const
 
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
-bool ImplementsException<Derived,Base>::operator==(
-                                const ImplementsException<Derived,Base> &other) const
+ImplementsException<Derived,Base>&
+ImplementsException<Derived,Base>::operator=(const Object &other)
 {
-    const Derived* other_t = dynamic_cast<const Derived*>(&other);
-
-    BOOST_ASSERT( other_t );
-
-    return static_cast<const Derived*>(this)->operator==(*other_t);
+    Base::operator=(other.asA<Derived>());
+    return *this;
 }
 
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
-bool ImplementsException<Derived,Base>::operator!=(
-                                const ImplementsException<Derived,Base> &other) const
+bool ImplementsException<Derived,Base>::operator==(const Object &other) const
 {
-    const Derived* other_t = dynamic_cast<const Derived*>(&other);
+    if (not other.isA<Derived>())
+        return false;
 
-    BOOST_ASSERT( other_t );
+    return Base::operator==(other.asA<Derived>());
+}
 
-    return static_cast<const Derived*>(this)->operator!=(*other_t);
+template<class Derived, class Base>
+SIREN_OUTOFLINE_TEMPLATE
+bool ImplementsException<Derived,Base>::operator!=(const Object &other) const
+{
+    if (not other.isA<Derived>())
+        return true;
+
+    return Base::operator!=(other.asA<Derived>());
 }
 
 /** Return the superclass of this type */

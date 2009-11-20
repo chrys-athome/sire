@@ -38,6 +38,11 @@
 
 SIREN_BEGIN_HEADER
 
+Siren::Stream& operator&(Siren::Stream&, QDateTime&);
+Siren::Stream& operator&(Siren::Stream&, QDate&);
+Siren::Stream& operator&(Siren::Stream&, QTime&);
+Siren::Stream& operator&(Siren::Stream&, QLocale&);
+
 namespace Siren
 {
     namespace detail
@@ -144,26 +149,24 @@ Siren::Stream& operator&(Siren::Stream &s, QVector<T> &vector)
     if (shared.mustStream())
     {
         //this vector has not yet been streamed
-        int sz = vector.count();
-
-        Siren::ArraySchema schema = s.array<T>(sz);
+        Siren::ArraySchema schema = s.array<T>(vector.count());
     
         if (s.isSaving())
         {
             const T *array = vector.constData();
         
-            for (int i=0; i<sz; ++i)
+            for (int i=0; i<schema.count(); ++i)
             {
                 schema.index(i) << array[i];
             }
         }
         else
         {
-            vector.resize(sz);
+            vector.resize(schema.count());
         
             T *array = vector.data();
         
-            for (int i=0; i<sz; ++i)
+            for (int i=0; i<schema.count(); ++i)
             {
                 schema.index(i) >> array[i];
             }
@@ -184,9 +187,7 @@ Siren::Stream& operator&(Siren::Stream &s, QList<T> &list)
     
     if (shared.mustStream())
     {
-        int sz = list.count();
-        
-        Siren::ArraySchema schema = s.array<T>(sz);
+        Siren::ArraySchema schema = s.array<T>(list.count());
         
         if (s.isSaving())
         {
@@ -204,7 +205,7 @@ Siren::Stream& operator&(Siren::Stream &s, QList<T> &list)
         {
             list.clear();
             
-            for (int i=0; i<sz; ++i)
+            for (int i=0; i<schema.count(); ++i)
             {
                 T val;
                 schema.index(i) >> val;
@@ -228,9 +229,7 @@ Siren::Stream& operator&(Siren::Stream &s, QSet<T> &set)
     
     if (shared.mustStream())
     {
-        int sz = set.count();
-        
-        Siren::SetSchema schema = s.set<T>(sz);
+        Siren::SetSchema schema = s.set<T>(set.count());
         
         if (s.isSaving())
         {
@@ -244,9 +243,9 @@ Siren::Stream& operator&(Siren::Stream &s, QSet<T> &set)
         else
         {
             set.clear();
-            set.reserve(sz);
+            set.reserve(schema.count());
             
-            for (int i=0; i<sz; ++i)
+            for (int i=0; i<schema.count(); ++i)
             {
                 T value;
                 schema.entry() >> value;
@@ -270,9 +269,7 @@ Siren::Stream& operator&(Siren::Stream &s, QHash<Key,Value> &hash)
 
     if (shared.mustStream())
     {
-        int sz = hash.count();
-    
-        Siren::MapSchema schema = s.map<Key,Value>(sz);
+        Siren::MapSchema schema = s.map<Key,Value>(hash.count());
         
         if (s.isSaving())
         {
@@ -287,9 +284,9 @@ Siren::Stream& operator&(Siren::Stream &s, QHash<Key,Value> &hash)
         else
         {
             hash.clear();
-            hash.reserve(sz);
+            hash.reserve(schema.count());
             
-            for (int i=0; i<sz; ++i)
+            for (int i=0; i<schema.count(); ++i)
             {
                 Key key;
                 Value value;

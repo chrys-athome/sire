@@ -29,6 +29,8 @@
 #include "objref.h"
 #include "class.h"
 #include "stream.h"
+#include "tester.h"
+#include "logger.h"
 
 using namespace Siren;
 using namespace Siren::detail;
@@ -218,6 +220,26 @@ void ObjRef::stream(Stream &s)
             d = new_obj.d;
         }
     }
+}
+
+/** Save this object to a stream */
+void ObjRef::save(Stream &s) const
+{
+    s.assertIsSaving();
+    const_cast<ObjRef*>(this)->stream(s);
+}
+
+/** Load this object from a stream */
+void ObjRef::load(Stream &s)
+{
+    s.assertIsLoading();
+    this->stream(s);
+}
+
+/** Allow explicit dereferncing of an Object */
+const Object& ObjRef::operator*() const
+{
+    return *d;
 }
 
 /** Allow automatic casting to an Object */

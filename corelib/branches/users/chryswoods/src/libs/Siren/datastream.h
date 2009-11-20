@@ -45,18 +45,24 @@ class SharedDataRegistry;
 
     @author Christopher Woods
 */
-class SIREN_EXPORT DataStream : public Stream
+class SIREN_EXPORT DataStream : public ImplementsHandle<DataStream,Stream>
 {
 public:
     DataStream();
-   
     DataStream(QIODevice *d);
     DataStream(QByteArray *a, QIODevice::OpenMode mode);
     DataStream(const QByteArray &a);
     
     DataStream(QDataStream &ds);
 
+    DataStream(const DataStream &other);
+
     ~DataStream();
+
+    DataStream& operator=(const DataStream &other);
+    
+    bool operator==(const DataStream &other) const;
+    bool operator!=(const DataStream &other) const;
 
     Stream& operator&(bool &b); 
     
@@ -72,12 +78,16 @@ public:
     Stream& operator&(float &f);
     Stream& operator&(double &f);
     
+    uint hashCode() const;
+    QString toString() const;
+    bool test(Logger &logger) const;
+    
 protected:
     void startItem(const QString &type_name);
-    void startArray(const QString &type_name, int count);
-    void startSet(const QString &type_name, int count);
-    void startMap(const QString &key_type, const QString &value_type, 
-                  int count, bool allow_duplicates);
+    int startArray(const QString &type_name, int count);
+    int startSet(const QString &type_name, int count);
+    int startMap(const QString &key_type, const QString &value_type, 
+                 int count, bool allow_duplicates);
 
     void nextData(const char *data_name);
     void nextBase();
@@ -119,9 +129,25 @@ protected:
 
     int readMagic();
     void writeMagic(int magic);
+
+private:
+    void registerDataStream();
+
+    /** Shared pointer to a datastream is one had to be created */
+    boost::shared_ptr<QDataStream> ds_ptr;
+
+    /** The version number of the DataStream format */
+    int ds_version;
+
+    /** Reference to the active datastream */
+    QDataStream *ds;
 };
 
 } // end of namespace Siren
+
+Q_DECLARE_METATYPE( Siren::DataStream )
+
+SIREN_EXPOSE_CLASS( Siren::DataStream )
 
 SIREN_END_HEADER
 

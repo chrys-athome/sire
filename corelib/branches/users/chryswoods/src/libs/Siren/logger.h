@@ -57,6 +57,11 @@ public:
     
     virtual ~Logger();
 
+    Logger& operator=(const Logger &other);
+    
+    bool operator==(const Logger &other) const;
+    bool operator!=(const Logger &other) const;
+
     ///////////////////////
     // Implements Handle //
     ///////////////////////
@@ -71,7 +76,8 @@ public:
     // Logger            //
     ///////////////////////
 
-    virtual void write(const QString &text);
+    void write(const QString &text);
+    void writeHeader(const QString &text, int level);
 };
 
 }

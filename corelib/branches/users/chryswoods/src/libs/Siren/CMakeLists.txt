@@ -27,7 +27,6 @@ set ( SIREN_PUBLIC_HEADERS
 
       stream.h
       streamqt.h
-      streamdata.hpp
       datastream.h
       xmlstream.h
 
@@ -69,7 +68,6 @@ set ( SIREN_SOURCES
       tester.cpp
 
       stream.cpp
-      streamqt.cpp
       streamqt.cpp
       datastream.cpp
       xmlstream.cpp

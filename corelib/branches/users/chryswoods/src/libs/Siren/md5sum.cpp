@@ -172,7 +172,7 @@ bool MD5Sum::test(Logger &logger) const
             tester.nextTest();
             tester.expect_equal( QObject::tr("None.what() is \"Siren::None\""),
                                  CODELOC,
-                                 this->what(), "Siren::MD5Sum" );
+                                 this->what(), QLatin1String("Siren::MD5Sum") );
         }
         
         // Test 3

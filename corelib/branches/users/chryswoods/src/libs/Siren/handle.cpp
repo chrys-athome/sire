@@ -379,32 +379,40 @@ bool WeakHandle::operator!=(const WeakHandle &other) const
     return not WeakHandle::operator==(other);
 }
 
+/** Return whether or not this weak handle has expired */
+bool WeakHandle::expired() const
+{
+    return weak_lock.expired();
+}
+
 /** Return a handle to the resource being locked. This will return 
     a null reference if the resource is no longer available */
-HanRef WeakHandle::lock()
+HanRef WeakHandle::lock() const
 {
     if (not weak_handle)
         return HanRef();
 
-    if (not neutered_handle->restoreFromWeakHandle(weak_handle))
+    WeakHandle *nonconst_this = const_cast<WeakHandle*>(this);
+
+    if (not nonconst_this->neutered_handle->restoreFromWeakHandle(weak_handle))
     {
-        neutered_handle->deleteWeakHandle(weak_handle);
-        weak_handle = 0;
-        neutered_handle.reset();
-        weak_lock.reset();
+        nonconst_this->neutered_handle->deleteWeakHandle(weak_handle);
+        nonconst_this->weak_handle = 0;
+        nonconst_this->neutered_handle.reset();
+        nonconst_this->weak_lock.reset();
         
         return HanRef();
     }
     
-    neutered_handle->resource_lock = weak_lock.lock();
+    nonconst_this->neutered_handle->resource_lock = weak_lock.lock();
     
-    if (neutered_handle->resource_lock.get() == 0)
-        neutered_handle->setValidResource();
+    if (nonconst_this->neutered_handle->resource_lock.get() == 0)
+        nonconst_this->neutered_handle->setValidResource();
         
-    HanRef new_handle = neutered_handle->copy();
+    HanRef new_handle = nonconst_this->neutered_handle->copy();
     
     //re-neuter the handle
-    neutered_handle->neuter();
+    nonconst_this->neutered_handle->neuter();
     
     return new_handle;
 }

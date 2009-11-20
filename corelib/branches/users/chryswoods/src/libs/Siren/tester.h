@@ -29,9 +29,10 @@
 #ifndef SIREN_TESTER_H
 #define SIREN_TESTER_H
 
+#include "object.h"
 #include "logger.h"
-#include "objptr.hpp"
 #include "mutable.h"
+#include "tostring.h"
 
 SIREN_BEGIN_HEADER
 
@@ -63,6 +64,8 @@ public:
     
     bool operator==(const Tester &other) const;
     bool operator!=(const Tester &other) const;
+    
+    static QString typeName(){ return Implements<Tester,Object>::typeName(); }
     
     QString toString() const;
     uint hashCode() const;
@@ -114,8 +117,19 @@ protected:
     }
 
 private:
+    void notEqualError(const QString &obj0, const QString &obj1,
+                       const QString &description, const QString &location);
+    void notDifferentError(const QString &obj1, const QString &obj1,
+                           const QString &description, const QString &location);
+
+    void testPassed(const QString &description);
+    void testFailed(const QString &description, const QString &location);
+
     /** The logger to which the output of the tests is written */
-    ObjPtr<Logger> logger;
+    Logger logger;
+    
+    /** The type name of the class being tested */
+    QString tested_class;
     
     /** The current test number */
     quint32 current_test;
@@ -127,7 +141,31 @@ private:
     quint32 num_errors;
 };
 
+#ifndef SIREN_SKIP_INLINE_FUNCTIONS
+
+/** Call this to test if 'obj0' and 'obj1' are equal */
+template<class S, class T>
+void Tester::expect_equal(const QString &description, const QString &location,
+                          const S &obj0, const T &obj1)
+{
+    if (obj0 != obj1)
+        this->notEqualError( Siren::toString(obj0), Siren::toString(obj1),
+                             description, location );
 }
+
+/** Call this to test is 'obj0' and 'obj1' are not equal */
+template<class S, class T>
+void Tester::expect_different(const QString &description, const QString &location,
+                              const S &obj0, const T &obj1)
+{
+    if (obj0 == obj1)
+        this->notDifferentError( Siren::toString(obj0), Siren::toString(obj1),
+                                 description, location );
+}
+
+#endif // SIREN_SKIP_INLINE_FUNCTIONS
+
+} // end of namespace Siren
 
 Q_DECLARE_METATYPE( Siren::Tester )
 

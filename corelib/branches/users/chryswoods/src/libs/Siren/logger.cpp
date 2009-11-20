@@ -75,6 +75,25 @@ Logger::Logger(const Logger &other)
 Logger::~Logger()
 {}
 
+/** Copy assignment operator */
+Logger& Logger::operator=(const Logger &other)
+{
+    Handles<QTextStream>::operator=(other);
+    return *this;
+}
+
+/** Comparison operator */
+bool Logger::operator==(const Logger &other) const
+{
+    return Handles<QTextStream>::operator==(other);
+}
+
+/** Comparison operator */
+bool Logger::operator!=(const Logger &other) const
+{
+    return Handles<QTextStream>::operator!=(other);
+}
+
 /** Return a string representation of this logger */
 QString Logger::toString() const
 {
@@ -117,4 +136,79 @@ void Logger::write(const QString &text)
 {
     HandleLocker lkr(*this);
     resource() << text;
+}
+
+static QString repeated(const QString &s, int n)
+{
+    #if QT_VERSION >= 0x040500
+        return s.repeated(n);
+    #else
+        QString r = s;
+        
+        for (int i=1; i<n; ++i)
+        {
+            r += s;
+        }
+        
+        return r;
+    #endif
+}
+
+static void printBox(const QString &line, QTextStream &stream)
+{
+    QStringList lines = line.split("\n");
+    
+    int maxlength = 0;
+    
+    for (QStringList::iterator it = lines.begin(); it != lines.end(); ++it)
+    {
+        *it = it->simplified();
+    
+        if (it->length() > maxlength)
+            maxlength = it->length();
+    }
+    
+    const int max_maxlength = 80;
+    
+    if (maxlength > max_maxlength)
+        maxlength = max_maxlength;
+    
+    QString hashline = ::repeated( "-", maxlength + 2 );
+    
+    endl(stream);
+    stream << "*" << hashline << "*";
+    endl(stream);
+    
+    foreach (const QString &l, lines)
+    {
+        if (l.length() > max_maxlength)
+        {
+            for (int j=0; j<l.length(); j+=max_maxlength)
+            {
+                stream << "| " << l.mid(j,max_maxlength).leftJustified(maxlength)
+                       << " |";
+
+                endl(stream);
+            }
+        }
+        else
+        {
+            stream << "| " << l.leftJustified(maxlength) << " |";
+            endl(stream);
+        }
+    }
+    
+    stream << "*" << hashline << "*";
+    endl(stream);
+    endl(stream);
+}
+
+/** Write the passed text to the logger, in 'header' format. 
+    This is a level 'level' header (headers can run from h1 to h6,
+    as in html) */
+void Logger::writeHeader(const QString &text, int)
+{
+    HandleLocker lkr(*this);
+    
+    ::printBox(text, resource());
 }

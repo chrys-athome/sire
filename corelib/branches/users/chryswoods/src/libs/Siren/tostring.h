@@ -20,8 +20,8 @@ SIREN_BEGIN_HEADER
 
 namespace Siren
 {
-template<class T>
-class ObjPtr;
+template<class T> class ObjPtr;
+template<class T> class HanPtr;
 }
 
 namespace Siren
@@ -76,6 +76,13 @@ inline QString qstr(const QString &string)
     return string;
 }
 
+/** Used to return a string representation of a QString! */
+template<>
+inline QString qstr(const QLatin1String &string)
+{
+    return string;
+}
+
 /** Used to return a string representation of a QStringList */
 template<>
 inline QString qstr(const QStringList &strings)
@@ -88,11 +95,24 @@ inline QString qstr(const QStringList &strings)
         return QString("[ %1 ]").arg( strings.join(", ") );
 }
 
-/** Used to return a string representation of a SireBase::PropPtr */
+/** Used to return a string representation of a Siren::ObjPtr */
 template<class T>
 QString qstr(const Siren::ObjPtr<T> &ptr)
 {
-    return qstr( ptr.read() );
+    if (ptr.isNull())
+        return QString("Siren::ObjPtr<%1>::null").arg( T::typeName() );
+    else
+        return qstr( ptr.read() );
+}
+
+/** Used to return a string representation of a Siren::HanPtr */
+template<class T>
+QString qstr(const Siren::HanPtr<T> &ptr)
+{
+    if (ptr.isNull())
+        return QString("Siren::HanPtr<%1>::null").arg( T::typeName() );
+    else
+        return qstr( *ptr );
 }
 
 /** Used to return a string representation of a QList */
@@ -192,7 +212,7 @@ QString toString(const T &obj);
 
 #endif // SIREN_SKIP_INLINE_FUNCTIONS
 
-}
+} // end namespace Siren
 
 SIREN_END_HEADER
 

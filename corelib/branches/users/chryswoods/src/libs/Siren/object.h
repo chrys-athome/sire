@@ -33,6 +33,7 @@
 
 #include <QSharedData>
 #include <QMutex>
+#include <QStringList>
 
 #include <boost/assert.hpp>
 
@@ -293,13 +294,13 @@ protected:
 
     static QStringList listInterfaces();
 
-    /** Return a clone of this object. */
-    virtual Object* clone() const=0;
-
     Object& operator=(const Object &other);
     
     bool operator==(const Object &other) const;
     bool operator!=(const Object &other) const;
+
+    /** Return a clone of this object. */
+    virtual Object* clone() const=0;
 
 private:
     friend class detail::SharedPolyPointerHelper<Object>;
@@ -405,10 +406,6 @@ public:
 
     Implements<Derived,Base>& operator=(const Object &other);
 
-    bool operator==(const Object &other) const;
-
-    bool operator!=(const Object &other) const;
-
     static QString typeName();
 
     QString what() const;
@@ -425,12 +422,6 @@ protected:
 
     Implements<Derived,Base>* clone() const;
 
-    Implements<Derived,Base>&
-    operator=(const Implements<Derived,Base> &other);
-
-    bool operator==(const Implements<Derived,Base> &other) const;
-    bool operator!=(const Implements<Derived,Base> &other) const;
-
     Base& super();
     const Base& super() const;
 
@@ -440,7 +431,7 @@ private:
 
 /** This class is used to represent nothing - it is the equivalent
     of Python's None object */
-class None : public Implements<None,Object>
+class SIREN_EXPORT None : public Implements<None,Object>
 {
 public:
     None();
@@ -693,14 +684,17 @@ template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
 void Implements<Derived,Base>::copy(const Object &other)
 {
-    Implements<Derived,Base>::operator=( other.asA<Derived>() );
+    static_cast<Derived*>(this)->operator=( other.asA<Derived>() );
 }
 
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
 bool Implements<Derived,Base>::equals(const Object &other) const
 {
-    return Implements<Derived,Base>::operator==( other.asA<Derived>() );
+    if (not other.isA<Derived>())
+        return false;
+    else
+        return static_cast<const Derived*>(this)->operator==( other.asA<Derived>() );
 }
 
 /** Return the class typeinfo object for 'Derived' */
@@ -741,35 +735,9 @@ const Class& Implements<Derived,Base>::getClass() const
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
 Implements<Derived,Base>&
-Implements<Derived,Base>::operator=(const Implements<Derived,Base> &other)
+Implements<Derived,Base>::operator=(const Object &other)
 {
-    const Derived* other_t = dynamic_cast<const Derived*>(&other);
-
-    BOOST_ASSERT( other_t );
-
-    return static_cast<Derived*>(this)->operator=(*other_t);
-}
-
-template<class Derived, class Base>
-SIREN_OUTOFLINE_TEMPLATE
-bool Implements<Derived,Base>::operator==(const Implements<Derived,Base> &other) const
-{
-    const Derived* other_t = dynamic_cast<const Derived*>(&other);
-
-    BOOST_ASSERT( other_t );
-
-    return static_cast<const Derived*>(this)->operator==(*other_t);
-}
-
-template<class Derived, class Base>
-SIREN_OUTOFLINE_TEMPLATE
-bool Implements<Derived,Base>::operator!=(const Implements<Derived,Base> &other) const
-{
-    const Derived* other_t = dynamic_cast<const Derived*>(&other);
-
-    BOOST_ASSERT( other_t );
-
-    return static_cast<const Derived*>(this)->operator!=(*other_t);
+    return static_cast<Derived*>(this)->operator=( other.asA<Derived>() );
 }
 
 /** Return the superclass of this type */
@@ -853,6 +821,16 @@ inline void qAtomicAssign<Siren::Object>(Siren::Object *&d,
     if (!d->ref.deref())
         delete d;
     d = x;
+}
+
+inline bool operator==(const Siren::Object &obj0, const Siren::Object &obj1)
+{
+    return obj0.equals(obj1);
+}
+
+inline bool operator!=(const Siren::Object &obj0, const Siren::Object &obj1)
+{
+    return not obj0.equals(obj1);
 }
 
 #endif // SIREN_SKIP_INLINE_FUNCTIONS

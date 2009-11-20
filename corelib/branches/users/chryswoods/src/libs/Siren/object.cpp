@@ -296,7 +296,7 @@ bool None::test(Logger &logger) const
             tester.nextTest();
             tester.expect_equal( QObject::tr("None.what() is \"Siren::None\""),
                                  CODELOC,
-                                 this->what(), "Siren::None" );
+                                 this->what(), QLatin1String("Siren::None") );
         }
         
         // Test 3

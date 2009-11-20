@@ -117,6 +117,11 @@ public:
     ~Interfaces()
     {}
 
+    static QString typeName()
+    {
+        return Derived::typeName();
+    }
+
 protected:
     static bool IS_INTERFACE()
     {

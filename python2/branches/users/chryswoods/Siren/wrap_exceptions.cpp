@@ -25,3 +25,26 @@
   *  at http://siremol.org
   *
 \*********************************************/
+
+#include <Python.h>
+#include <boost/python.hpp>
+#include <QObject>
+
+#include "Siren/exception.h"
+
+using namespace boost::python;
+
+namespace Siren
+{
+
+void exception_translator( const Siren::exception &ex )
+{
+    PyErr_SetString(PyExc_UserWarning,ex.toString().toAscii());
+}
+
+void SIREN_EXPORT export_exceptions()
+{
+    register_exception_translator<Siren::exception>(&exception_translator);
+}
+
+}

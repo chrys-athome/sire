@@ -33,10 +33,13 @@
 #include "hanref.h"
 #include "tester.h"
 #include "logger.h"
+#include "stream.h"
 
 #include "Siren/errors.h"
 
 using namespace Siren;
+
+static const RegisterMetaType<Class> r_class;
 
 void Class::buildInheritedTypes()
 {

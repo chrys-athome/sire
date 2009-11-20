@@ -430,22 +430,86 @@ void SharedHelperBase::throwStillInConstructionError(const char* this_type) cons
 }
 
 ////////
+//////// Implementation of StreamRegistry
+////////
+
+StreamRegistry::StreamRegistry() : boost::noncopyable()
+{}
+
+StreamRegistry::~StreamRegistry()
+{}
+
+////////
 //////// Implementation of Stream
 ////////
 
-/** Constructor */
-Stream::Stream() : boost::noncopyable(), needs_decoration(false), is_saving(true)
+static const RegisterMetaType<Stream> r_stream( VIRTUAL_CLASS );
+
+/** Null Constructor */
+Stream::Stream()
+       : ExtendsHandle< Stream, Handles<StreamRegistry> >(),
+         needs_decoration(false), is_saving(true)
+{}
+
+/** Non-null constructor */
+Stream::Stream(bool)
+       : ExtendsHandle< Stream, Handles<StreamRegistry> >( new StreamRegistry() ), 
+         needs_decoration(false), is_saving(true)
+{}
+
+/** Copy constructor */
+Stream::Stream(const Stream &other)
+       : ExtendsHandle< Stream, Handles<StreamRegistry> >(other),
+         needs_decoration(other.needs_decoration), is_saving(other.is_saving)
 {}
 
 /** Destructor */
 Stream::~Stream()
 {}
 
+QString Stream::typeName()
+{
+    return "Siren::Stream";
+}
+
+/** Copy assignment operator */
+Stream& Stream::operator=(const Stream &other)
+{
+    if (this != &other)
+    {
+        Handles<StreamRegistry>::operator=(other);
+        needs_decoration = other.needs_decoration;
+        is_saving = other.is_saving;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool Stream::operator==(const Stream &other) const
+{
+    return Handles<detail::StreamRegistry>::operator==(other);
+}
+
+/** Comparison operator */
+bool Stream::operator!=(const Stream &other) const
+{
+    return not Stream::operator==(other);
+}
+
+/** Return the name of the class type associated with the magic
+    number 'magic', or return a null string if there is no
+    type associated with this number */
+QString Stream::getClassType(int magic) const
+{
+    return resource().types_by_id.value(magic, QString::null);
+}
+
 /** Check that the next thing to read/write really is an object
     of type 'type_name', and return/set the version number of the class */
 int Stream::checkVersion(const QString &type_name, int version)
 {
-    int id = types_by_name.value(type_name, -1);
+    int id = resource().types_by_name.value(type_name, -1);
 
     if (this->isLoading())
     {
@@ -456,8 +520,9 @@ int Stream::checkVersion(const QString &type_name, int version)
             
             id = this->readClassID(type_name, actual_version);
             
-            types_by_name.insert(type_name, id);
-            type_versions_by_id.insert(id, actual_version);
+            resource().types_by_name.insert(type_name, id);
+            resource().types_by_id.insert(id, type_name);
+            resource().type_versions_by_id.insert(id, actual_version);
             
             return actual_version;
         }
@@ -477,7 +542,7 @@ int Stream::checkVersion(const QString &type_name, int version)
                             .arg(type_name).arg(magic).arg(id), CODELOC );
             }
             
-            return type_versions_by_id.value(id);
+            return resource().type_versions_by_id.value(id);
         }
     }
     else
@@ -486,13 +551,14 @@ int Stream::checkVersion(const QString &type_name, int version)
         if (id == -1)
         {
             //we haven't written an object of this type yet
-            id = types_by_name.count() + 1;
+            id = resource().types_by_name.count() + 1;
             
             //write this data to the stream
             this->writeClassID(type_name, id, version);
             
-            types_by_name.insert(type_name, id);
-            type_versions_by_id.insert(id, version);
+            resource().types_by_name.insert(type_name, id);
+            resource().types_by_id.insert(id, type_name);
+            resource().type_versions_by_id.insert(id, version);
             
             return version;
         }
@@ -503,7 +569,7 @@ int Stream::checkVersion(const QString &type_name, int version)
                 //we don't read through objects
                 this->writeMagic(id);
 
-            return type_versions_by_id.value(id);
+            return resource().type_versions_by_id.value(id);
         }
     }
 }
@@ -539,20 +605,20 @@ Stream& Stream::operator&(QString &text)
             return *this;
         }
     
-        QHash<QString,int>::const_iterator it = strings_by_key.constFind(text);
+        QHash<QString,int>::const_iterator it = resource().strings_by_key.constFind(text);
         
-        if (it == strings_by_key.constEnd())
+        if (it == resource().strings_by_key.constEnd())
         {
             text = ::detail::shareString(text);
         
             //this is a new string
-            int new_id = strings_by_key.count() + 1;
+            int new_id = resource().strings_by_key.count() + 1;
             
             this->createStringReference(new_id);
             this->writeString(new_id, text);
             
-            strings_by_key.insert(text, new_id);
-            strings_by_id.insert(new_id, text);
+            resource().strings_by_key.insert(text, new_id);
+            resource().strings_by_id.insert(new_id, text);
         }
         else
         {
@@ -563,15 +629,15 @@ Stream& Stream::operator&(QString &text)
     {
         int id = this->readStringReference();
         
-        if (strings_by_id.contains(id))
+        if (resource().strings_by_id.contains(id))
         {
-            text = strings_by_id.value(id);
+            text = resource().strings_by_id.value(id);
         }
         else
         {
             text = ::detail::shareString( this->readString(id) );
-            strings_by_key.insert(text, id);
-            strings_by_id.insert(id, text);
+            resource().strings_by_key.insert(text, id);
+            resource().strings_by_id.insert(id, text);
         }
     }
     
@@ -590,18 +656,18 @@ Stream& Stream::operator&(QByteArray &blob)
         }
     
         QHash<const void*,int>::const_iterator 
-                        it = blobs_by_key.constFind(blob.constData());
+                        it = resource().blobs_by_key.constFind(blob.constData());
         
-        if (it == blobs_by_key.constEnd())
+        if (it == resource().blobs_by_key.constEnd())
         {
             //this is a new blob
-            int new_id = blobs_by_key.count() + 1;
+            int new_id = resource().blobs_by_key.count() + 1;
             
             this->createBlobReference(new_id);
             this->writeBlob(new_id, blob);
             
-            blobs_by_key.insert(blob.constData(), new_id);
-            blobs_by_id.insert(new_id, blob);
+            resource().blobs_by_key.insert(blob.constData(), new_id);
+            resource().blobs_by_id.insert(new_id, blob);
         }
         else
         {
@@ -612,15 +678,15 @@ Stream& Stream::operator&(QByteArray &blob)
     {
         int id = this->readBlobReference();
         
-        if (blobs_by_id.contains(id))
+        if (resource().blobs_by_id.contains(id))
         {
-            blob = blobs_by_id.value(id);
+            blob = resource().blobs_by_id.value(id);
         }
         else
         {
             blob = this->readBlob(id);
-            blobs_by_key.insert(blob.constData(), id);
-            blobs_by_id.insert(id, blob);
+            resource().blobs_by_key.insert(blob.constData(), id);
+            resource().blobs_by_id.insert(id, blob);
         }
     }
     
@@ -673,27 +739,27 @@ void Stream::saveLoadingMode()
 /** Return whether or not the object with key 'key' has been streamed */
 bool Stream::haveStreamed(const void *key) const
 {
-    return sdata_by_key.contains(key);
+    return resource().sdata_by_key.contains(key);
 }
 
 /** Return whether or not the object with ID 'id' has been streamed */
 bool Stream::haveStreamed(int id) const
 {
-    return sdata_by_id.contains(id);
+    return resource().sdata_by_id.contains(id);
 }
 
 /** Return the ID reference number for the object with key 'key' */
 int Stream::getID(const void *key)
 {
-    if (not sdata_by_key.contains(key))
+    if (not resource().sdata_by_key.contains(key))
     {
-        int new_id = sdata_by_key.count() + 1;
-        sdata_by_key.insert( key, new_id );
+        int new_id = resource().sdata_by_key.count() + 1;
+        resource().sdata_by_key.insert( key, new_id );
         
         return new_id;
     }
     else
-        return sdata_by_key.value(key);
+        return resource().sdata_by_key.value(key);
 }
 
 /** Return a reference to the helper that contains a copy of the 
@@ -704,9 +770,9 @@ int Stream::getID(const void *key)
 const SharedHelperBase& Stream::getReference(int id) const
 {
     QHash< int, boost::shared_ptr<SharedHelperBase> >::const_iterator 
-                    it = sdata_by_id.constFind(id);
+                    it = resource().sdata_by_id.constFind(id);
                     
-    if (it == sdata_by_id.constEnd())
+    if (it == resource().sdata_by_id.constEnd())
         throw Siren::corrupted_data( QObject::tr(
                 "There is a problem as the reference with ID %1 does not "
                 "appear to exist in the archive?")
@@ -720,7 +786,7 @@ const SharedHelperBase& Stream::getReference(int id) const
 void Stream::startTarget(int id, SharedHelperBase *helper)
 {
     this->assertIsLoading();
-    sdata_by_id.insert( id, boost::shared_ptr<SharedHelperBase>(helper) );
+    resource().sdata_by_id.insert( id, boost::shared_ptr<SharedHelperBase>(helper) );
 
     this->startTarget(id);
 }
@@ -729,9 +795,9 @@ void Stream::startTarget(int id, SharedHelperBase *helper)
 void Stream::finaliseObject(int id)
 {
     QHash< int, boost::shared_ptr<SharedHelperBase> >::iterator 
-                    it = sdata_by_id.find(id);
+                    it = resource().sdata_by_id.find(id);
                     
-    if (it != sdata_by_id.end())
+    if (it != resource().sdata_by_id.end())
         it.value()->finalise();
 }
 

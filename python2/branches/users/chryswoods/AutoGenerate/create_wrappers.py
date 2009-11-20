@@ -151,6 +151,7 @@ def find_class(mb, classname):
        elif clas.alias == classname:
            return clas
 
+   print "Cannot find the class %s" % classname
    raise "Cannot find the class %s" % classname
 
 def export_function(mb, function, includes):
@@ -161,15 +162,18 @@ def export_function(mb, function, includes):
    name = function.split("::")[-1]
    root = "::".join(function.split("::")[0:-1]) + "::"
 
-   for f in mb.free_functions(name):
-       demangled = f.demangled
+   try:
+       for f in mb.free_functions(name):
+           demangled = f.demangled
        
-       if demangled:
-           if demangled.find(root) != -1:
-               f.include()
+           if demangled:
+               if demangled.find(root) != -1:
+                   f.include()
 
-               for include in includes:
-                   f.add_declaration_code("#include %s" % include)
+                   for include in includes:
+                       f.add_declaration_code("#include %s" % include)
+   except:
+       print "Something went wrong exporting %s" % name
 
 def has_clone_function(t):
     c = None
@@ -280,9 +284,12 @@ def export_class(mb, classname, aliases, includes, special_code, auto_str_functi
        except:
            pass
 
-   for o in c.operators():
-       if o.call_policies is None:
-           o.exclude()
+   try:
+       for o in c.operators():
+           if o.call_policies is None:
+               o.exclude()
+   except:
+       print "Class %s has no operators" % classname
 
    #run any class specific code
    if (classname in special_code):
@@ -544,7 +551,9 @@ if __name__ == "__main__":
                                            boost_include_dirs + gsl_include_dirs,
                            define_symbols = ["GCCXML_PARSE",
                                              "SIRE_SKIP_INLINE_FUNCTIONS",
-                                             "SIRE_INSTANTIATE_TEMPLATES"] )
+                                             "SIREN_SKIP_INLINE_FUNCTIONS",
+                                             "SIRE_INSTANTIATE_TEMPLATES",
+                                             "SIREN_INSTANTIATE_TEMPLATES"] )
 
     #get rid of all virtual python functions - this is to stop slow wrapper code
     #from being generated for C++ virtual objects

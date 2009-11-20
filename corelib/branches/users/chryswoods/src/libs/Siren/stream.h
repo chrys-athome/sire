@@ -34,7 +34,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "sirenglobal.h"
+#include "handle.h"
 
 SIREN_BEGIN_HEADER
 
@@ -133,6 +133,8 @@ class ContainerSchema : public SchemaBase
 {
 public:
     ~ContainerSchema();
+    
+    int count() const;
     
 protected:
     ContainerSchema();
@@ -307,6 +309,46 @@ private:
     
     /** Pointer to the shared object while it is being constructed */
     const T *constructing_object;
+};
+
+/** This class holds the registry of shared streamed objects */
+class SIREN_EXPORT StreamRegistry : public boost::noncopyable
+{
+public:
+    StreamRegistry();
+    ~StreamRegistry();
+
+    /** Index of all of the class names streamed so far, together
+        with their ID number */
+    QHash<QString,int> types_by_name;
+    
+    /** Index of all of the class names streamed so far, index
+        by their ID number */
+    QHash<int,QString> types_by_id;
+    
+    /** Index of all of the class versions */
+    QHash<int,int> type_versions_by_id;
+
+    /** Actual pointers to the copies of shared data stored in 
+        this stream - indexed by ID */
+    QHash< int, boost::shared_ptr<detail::SharedHelperBase> > sdata_by_id;
+
+    /** The keys for each piece of shared data, mapped to the 
+        index of that data in the stream. The key is normally the 
+        pointer to the actual underlying piece of shared data */
+    QHash<const void*,int> sdata_by_key;
+
+    /** Shared string stored in this stream, indexed by ID */
+    QHash<int,QString> strings_by_id;
+    
+    /** The ID of each string stored in this stream */
+    QHash<QString,int> strings_by_key;
+
+    /** Shared binary blobs stored in this stream, indexed by ID */
+    QHash<int,QByteArray> blobs_by_id;
+    
+    /** The pointer for each piece of binary data mapped to ID number */
+    QHash<const void*,int> blobs_by_key;
 };
 
 #ifndef SIREN_SKIP_INLINE_FUNCTIONS
@@ -521,12 +563,13 @@ const char* SharedHelper<T>::what() const
     
     @author Christopher Woods
 */
-class SIREN_EXPORT Stream : boost::noncopyable
+class SIREN_EXPORT Stream 
+        : public ExtendsHandle< Stream, Handles<detail::StreamRegistry> >
 {
 public:
-    Stream();
-    
     virtual ~Stream();
+
+    static QString typeName();
 
     virtual Stream& operator&(bool &b)=0; 
     
@@ -591,57 +634,122 @@ public:
     Stream& operator>>(T &data);
 
 protected:
+    Stream();
+    Stream(bool);
+    
+    Stream(const Stream &other);
+    
+    Stream& operator=(const Stream &other);
+    
+    bool operator==(const Stream &other) const;
+    bool operator!=(const Stream &other) const;
+
     void saveNeedsDecoration(bool needs_decoration);
     
     void saveSavingMode();
     void saveLoadingMode();
 
+    /** Called to signify the start of a new item (scalar) of type 'type_name'.
+        If this is a decorated stream, then it is up to you to verify that
+        the type in the stream is the same as the type.
+    */
     virtual void startItem(const QString &type_name)=0;
-    virtual void startArray(const QString &type_name, int count)=0;
-    virtual void startSet(const QString &type_name, int count)=0;
-    virtual void startMap(const QString &key_type, const QString &value_type, 
-                          int count, bool allow_duplicates)=0;
+    
+    /** Called to signify the start of a new array of 'count' elements, returning
+        the number of elements */
+    virtual int startArray(const QString &type_name, int count)=0;
+    
+    /** Called to signify the start of a new set of 'count' elements, returning
+        the number of elements */
+    virtual int startSet(const QString &type_name, int count)=0;
+    
+    /** Called to signify the start of a new map of 'count' elements, returning
+        the number of elements */
+    virtual int startMap(const QString &key_type, const QString &value_type, 
+                         int count, bool allow_duplicates)=0;
 
+    /** Called to signify the next data item, with field name 'data_name' */
     virtual void nextData(const char *data_name)=0;
+    
+    /** Called to signify the next base class item */
     virtual void nextBase()=0;
 
+    /** Called to signify the next item at index 'i' in an array */
     virtual void nextIndex(int i)=0;
     
+    /** Called to signify the next entry in a set */
     virtual void nextEntry()=0;
     
+    /** Called to signify the next key in a map */
     virtual void nextKey()=0;
+    /** Called to signify the next value in a map */
     virtual void nextValue()=0;
 
+    /** Called to signify the end of an item of type 'type_name' */
     virtual void endItem(const QString &type_name)=0;
+
+    /** Called to signify the end of an array of type 'type_name' */
     virtual void endArray(const QString &type_name)=0;
+
+    /** Called to signify the end of a set of type 'type_name' */
     virtual void endSet(const QString &type_name)=0;
+
+    /** Called to signify the end of a map of type 'type_name' */
     virtual void endMap(const QString &key_type, const QString &value_type)=0;
 
+    /** Read a reference number and return it */
     virtual int readReference()=0;
+    /** Write the reference number 'id' */
     virtual void createReference(int id)=0;
     
+    /** Called to signify the start of the reference target with ID 'id' */
     virtual void startTarget(int id)=0;
+    /** Called to signify the end of the reference target with ID 'id' */
     virtual void endTarget(int id)=0;
 
+    /** Read a string reference number and return it */
     virtual int readStringReference()=0;
+    /** Write the string reference number ID 'id' */
     virtual void createStringReference(int id)=0;
     
+    /** Read the string with reference ID 'id' and return it */
     virtual QString readString(int id)=0;
+    /** Write the string with reference 'ID' and value 'text' */
     virtual void writeString(int id, const QString &text)=0;
 
+    /** Read a binary large object (Blob) reference and return it */
     virtual int readBlobReference()=0;
+    /** Write the Blob reference ID 'id' */
     virtual void createBlobReference(int id)=0;
 
+    /** Read and return the Blob with reference ID 'id' */
     virtual QByteArray readBlob(int id)=0;
+    /** Write the Blob 'blob' with reference ID 'id' */
     virtual void writeBlob(int id, const QByteArray &blob)=0;
 
+    /** Read the class ID and data format version for the class with
+        name 'class_name' - the class ID is returned and 'version' updated */
     virtual int readClassID(const QString &class_name, int &version)=0;
+    
+    /** Write the class ID 'id' and data format version 'version' for the class 
+        with type name 'class_name' */
     virtual void writeClassID(const QString &class_name, int id, int version)=0;
     
+    /** Peek into the stream and return the class name of the type of
+        the next object. This does not advance the stream */
     virtual QString peekNextType()=0;
 
+    /** For non-decorated streams (which rely on magic numbers), read and
+        return the next magic number. This number will always be 
+        less than 2^30, so will fit into a 32 bit signed integer. */
     virtual int readMagic()=0;
+    
+    /** For non-decorated streams, write the magic number 'magic'.
+        This number will always be less than 2^30, so will fit into a 
+        32 bit signed integer. */
     virtual void writeMagic(int magic)=0;
+
+    QString getClassType(int magic) const;
 
 private:
     friend class Schema;
@@ -665,34 +773,6 @@ private:
 
     void throwUnsupportedError(const QString &type_name, int got_version,
                                const QString &supported_versions) const;
-
-    /** Index of all of the class names streamed so far, together
-        with their ID number */
-    QHash<QString,int> types_by_name;
-    
-    /** Index of all of the class versions */
-    QHash<int,int> type_versions_by_id;
-
-    /** Actual pointers to the copies of shared data stored in 
-        this stream - indexed by ID */
-    QHash< int, boost::shared_ptr<detail::SharedHelperBase> > sdata_by_id;
-
-    /** The keys for each piece of shared data, mapped to the 
-        index of that data in the stream. The key is normally the 
-        pointer to the actual underlying piece of shared data */
-    QHash<const void*,int> sdata_by_key;
-
-    /** Shared string stored in this stream, indexed by ID */
-    QHash<int,QString> strings_by_id;
-    
-    /** The ID of each string stored in this stream */
-    QHash<QString,int> strings_by_key;
-
-    /** Shared binary blobs stored in this stream, indexed by ID */
-    QHash<int,QByteArray> blobs_by_id;
-    
-    /** The pointer for each piece of binary data mapped to ID number */
-    QHash<const void*,int> blobs_by_key;
 
     /** Whether or not this stream requires decorators */
     bool needs_decoration;
@@ -746,6 +826,12 @@ inline bool SharedSchema::mustStream() const
 ////////// hopefully speed up calls when method naming 
 ////////// is not used
 ////////// 
+
+/** Return the number of items to stream for this container */
+inline int ContainerSchema::count() const
+{
+    return n_to_stream;
+}
 
 /** Tell that container that the next item in the container
     is about to be streamed */
@@ -980,7 +1066,7 @@ SIREN_OUTOFLINE_TEMPLATE
 ArraySchema Stream::array(int count)
 {
     const QString type_name = detail::StreamHelper<T>::typeName();
-    this->startArray( type_name, count );
+    count = this->startArray( type_name, count );
     return ArraySchema(this, type_name, count, this->needs_decoration);
 }
 
@@ -989,7 +1075,7 @@ SIREN_OUTOFLINE_TEMPLATE
 SetSchema Stream::set(int count)
 {
     const QString type_name = detail::StreamHelper<T>::typeName();
-    this->startSet( type_name, count );
+    count = this->startSet( type_name, count );
     return SetSchema(this, type_name, count, this->needs_decoration);
 }
 
@@ -1000,7 +1086,7 @@ MapSchema Stream::map(int count, bool allow_duplicates)
     const QString key_type = detail::StreamHelper<Key>::typeName();
     const QString value_type = detail::StreamHelper<Value>::typeName();
     
-    this->startMap( key_type, value_type, count, allow_duplicates );
+    count = this->startMap( key_type, value_type, count, allow_duplicates );
     
     return MapSchema(this, key_type, value_type, count, this->needs_decoration);
 }
@@ -1030,6 +1116,8 @@ Stream& Stream::operator>>(T &data)
 #endif // SIREN_SKIP_INLINE_FUNCTIONS
 
 }
+
+SIREN_EXPOSE_CLASS( Siren::Stream )
 
 SIREN_END_HEADER
 

@@ -105,6 +105,8 @@ public:
     template<class T>
     const T& asA() const;
     
+    const Object& operator*() const;
+    
     operator const Object&() const;
     
 private:

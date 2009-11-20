@@ -30,6 +30,7 @@
 #define SIREN_HANDLE_H
 
 #include <QMutex>
+#include <QStringList>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
@@ -98,6 +99,11 @@ public:
     Handle(const Handle &other);
     
     virtual ~Handle();
+
+    virtual Handle& operator=(const Handle &other);
+    
+    virtual bool operator==(const Handle &other) const;
+    virtual bool operator!=(const Handle &other) const;
 
     virtual const Class& getClass() const=0;
 
@@ -191,11 +197,6 @@ protected:
         not the object being Handled. */
     virtual Handle* clone() const=0;
 
-    Handle& operator=(const Handle &other);
-    
-    bool operator==(const Handle &other) const;
-    bool operator!=(const Handle &other) const;
-
     void setValidResource();
 
     friend class HandleLocker;
@@ -234,10 +235,10 @@ public:
     ~Handles();
     
 protected:
-    Handles& operator=(const Handles &other);
+    Handles<T>& operator=(const Handles<T> &other);
     
-    bool operator==(const Handles &other) const;
-    bool operator!=(const Handles &other) const;
+    bool operator==(const Handles<T> &other) const;
+    bool operator!=(const Handles<T> &other) const;
 
     T& resource();
     const T& resource() const;
@@ -301,7 +302,9 @@ public:
     bool operator==(const WeakHandle &other) const;
     bool operator!=(const WeakHandle &other) const;
     
-    HanRef lock();
+    HanRef lock() const;
+    
+    bool expired() const;
     
 private:
     /** A neutered copy of the Handle */
@@ -407,7 +410,6 @@ public:
     ImplementsHandle<Derived,Base>& operator=(const Handle &other);
 
     bool operator==(const Handle &other) const;
-
     bool operator!=(const Handle &other) const;
 
     static QString typeName();
@@ -425,13 +427,7 @@ protected:
     static const Class& createTypeInfo();
 
     ImplementsHandle<Derived,Base>* clone() const;
-
-    ImplementsHandle<Derived,Base>&
-    operator=(const ImplementsHandle<Derived,Base> &other);
-
-    bool operator==(const ImplementsHandle<Derived,Base> &other) const;
-    bool operator!=(const ImplementsHandle<Derived,Base> &other) const;
-
+    
     Base& super();
     const Base& super() const;
 
@@ -474,6 +470,36 @@ template<class T>
 SIREN_OUTOFLINE_TEMPLATE
 Handles<T>::~Handles()
 {}
+
+/** Copy the handle form 'other' */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+Handles<T>& Handles<T>::operator=(const Handles<T> &other)
+{
+    if (this != &other)
+    {
+        resource_ptr = other.resource_ptr;
+        Handle::operator=(other);
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+bool Handles<T>::operator==(const Handles<T> &other) const
+{
+    return resource_ptr.get() == other.resource_ptr.get();
+}
+
+/** Comparison operator */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+bool Handles<T>::operator!=(const Handles<T> &other) const
+{
+    return not Handles<T>::operator!=(other);
+}
 
 /** Internal function called by WeakHandle to neutralise this handle */
 template<class T>
@@ -578,6 +604,9 @@ const T& Handles<T>::constResource() const
 //////
 ////// Implementation of 'ExtendsHandle'
 //////
+
+template<class Derived, class Base>
+const Class* ExtendsHandle<Derived,Base>::class_typeinfo = 0;
 
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
@@ -699,6 +728,9 @@ const Class& ExtendsHandle<Derived,Base>::createTypeInfo()
 //////
 
 template<class Derived, class Base>
+const Class* ImplementsHandle<Derived,Base>::class_typeinfo = 0;
+
+template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
 ImplementsHandle<Derived,Base>::ImplementsHandle() : Base()
 {}
@@ -801,14 +833,17 @@ template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
 void ImplementsHandle<Derived,Base>::copy(const Handle &other)
 {
-    ImplementsHandle<Derived,Base>::operator=( other.asA<Derived>() );
+    static_cast<Derived*>(this)->operator=( other.asA<Derived>() );
 }
 
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
 bool ImplementsHandle<Derived,Base>::equals(const Handle &other) const
 {
-    return ImplementsHandle<Derived,Base>::operator==( other.asA<Derived>() );
+    if (other.isA<Derived>())
+        return static_cast<const Derived*>(this)->operator==( other.asA<Derived>() );
+    else
+        return false;
 }
 
 /** Return the class typeinfo object for 'Derived' */
@@ -849,37 +884,29 @@ const Class& ImplementsHandle<Derived,Base>::getClass() const
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
 ImplementsHandle<Derived,Base>&
-ImplementsHandle<Derived,Base>::operator=(const ImplementsHandle<Derived,Base> &other)
+ImplementsHandle<Derived,Base>::operator=(const Handle &other)
 {
-    const Derived* other_t = dynamic_cast<const Derived*>(&other);
-
-    BOOST_ASSERT( other_t );
-
-    return static_cast<Derived*>(this)->operator=(*other_t);
+    return static_cast<Derived*>(this)->operator=( other.asA<Derived>() );
 }
 
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
-bool ImplementsHandle<Derived,Base>::operator==(
-                        const ImplementsHandle<Derived,Base> &other) const
+bool ImplementsHandle<Derived,Base>::operator==(const Handle &other) const
 {
-    const Derived* other_t = dynamic_cast<const Derived*>(&other);
-
-    BOOST_ASSERT( other_t );
-
-    return static_cast<const Derived*>(this)->operator==(*other_t);
+    if (not other.isA<Derived>())
+        return false;
+        
+    return static_cast<const Derived*>(this)->operator==(other.asA<Derived>());
 }
 
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
-bool ImplementsHandle<Derived,Base>::operator!=(
-                        const ImplementsHandle<Derived,Base> &other) const
+bool ImplementsHandle<Derived,Base>::operator!=(const Handle &other) const
 {
-    const Derived* other_t = dynamic_cast<const Derived*>(&other);
-
-    BOOST_ASSERT( other_t );
-
-    return static_cast<const Derived*>(this)->operator!=(*other_t);
+    if (not other.isA<Derived>())
+        return true;
+        
+    return static_cast<const Derived*>(this)->operator!=(other.asA<Derived>());
 }
 
 /** Return the superclass of this type */
@@ -972,6 +999,16 @@ const T& Handle::asA() const
 inline uint qHash(const Siren::Handle &handle)
 {
     return handle.hashCode();
+}
+
+inline bool operator==(const Siren::Handle &han0, const Siren::Handle &han1)
+{
+    return han0.operator==(han1);
+}
+
+inline bool operator!=(const Siren::Handle &han0, const Siren::Handle &han1)
+{
+    return han0.operator!=(han1);
 }
 
 #endif // SIREN_SKIP_INLINE_FUNCTIONS

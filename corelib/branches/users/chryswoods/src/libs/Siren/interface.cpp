@@ -27,11 +27,31 @@
 \*********************************************/
 
 #include "interface.h"
+#include "mutable.h"
 
 using namespace Siren;
+
+//////////
+////////// Implementation of Interface
+//////////
 
 Interface::Interface()
 {}
     
 Interface::~Interface()
 {}
+
+//////////
+////////// Implementation of Mutable
+//////////
+
+Mutable::Mutable() : Interface()
+{}
+
+Mutable::~Mutable()
+{}
+
+QString Mutable::typeName()
+{
+    return "Siren::Mutable";
+}
