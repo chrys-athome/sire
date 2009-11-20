@@ -98,6 +98,8 @@ const Class& Handle::createTypeInfo()
     return *class_typeinfo;
 }
 
+const Class* Handle::class_typeinfo = 0;
+
 /** Null constructor */
 Handle::Handle()
 {}

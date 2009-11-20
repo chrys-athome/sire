@@ -65,7 +65,7 @@ public:
     bool operator!=(const Tester &other) const;
     
     QString toString() const;
-    HASH_CODE hashCode() const;
+    uint hashCode() const;
     bool test(Logger &logger) const;
     
     void stream(Stream &s);

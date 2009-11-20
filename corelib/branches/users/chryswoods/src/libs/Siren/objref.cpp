@@ -166,7 +166,7 @@ bool ObjRef::equals(const Object &other) const
 }
 
 /** Return the hash code for this object */
-HASH_CODE ObjRef::hashCode() const
+uint ObjRef::hashCode() const
 {
     return d->hashCode();
 }

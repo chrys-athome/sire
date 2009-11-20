@@ -104,7 +104,7 @@ public:
     
     QString toString() const;
     
-    HASH_CODE hashCode() const;
+    uint hashCode() const;
 
     void stream(Stream &s);
     
@@ -150,7 +150,7 @@ public:
     
     QString toString() const;
     
-    HASH_CODE hashCode() const;
+    uint hashCode() const;
 
     void stream(Stream &s);
     
@@ -196,7 +196,7 @@ public:
     
     QString toString() const;
     
-    HASH_CODE hashCode() const;
+    uint hashCode() const;
     
     bool test() const;
     bool test(Logger &logger) const;
@@ -370,7 +370,7 @@ QString PrimitiveObject<T>::toString() const
 /** Return a hash code for this object */
 template<class T>
 SIREN_OUTOFLINE_TEMPLATE
-HASH_CODE PrimitiveObject<T>::hashCode() const
+uint PrimitiveObject<T>::hashCode() const
 {
     return primitive_object.hashCode();
 }

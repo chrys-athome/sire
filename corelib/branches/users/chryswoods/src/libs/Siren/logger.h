@@ -29,7 +29,7 @@
 #ifndef SIREN_LOGGER_H
 #define SIREN_LOGGER_H
 
-#include <QIODevice>
+#include <QTextStream>
 
 #include "handle.h"
 
@@ -47,11 +47,11 @@ class Logger;
     
     @author Christopher Woods
 */
-class SIREN_EXPORT Logger : public ImplementsHandle<Logger, Handles<QIODevice> >
+class SIREN_EXPORT Logger : public ImplementsHandle<Logger, Handles<QTextStream> >
 {
 public:
     Logger();
-    Logger(QIODevice *device);
+    Logger(QTextStream *stream);
     
     Logger(const Logger &other);
     
@@ -63,7 +63,7 @@ public:
     
     QString toString() const;
     
-    HASH_CODE hashCode() const;
+    uint hashCode() const;
 
     bool test(Logger &logger) const;
 

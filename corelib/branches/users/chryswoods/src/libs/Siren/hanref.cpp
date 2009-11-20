@@ -174,7 +174,7 @@ bool HanRef::equals(const Handle &other) const
 }
 
 /** Return the hash code for the referred handle */
-HASH_CODE HanRef::hashCode() const
+uint HanRef::hashCode() const
 {
     if (d.get() != 0)
         return d->hashCode();

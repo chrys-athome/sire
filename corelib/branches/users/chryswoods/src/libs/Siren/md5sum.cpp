@@ -141,7 +141,7 @@ QString MD5Sum::toString() const
                    dgst[12],dgst[13],dgst[14],dgst[15]);
 }
 
-HASH_CODE MD5Sum::hashCode() const
+uint MD5Sum::hashCode() const
 {
     int sum = qHash( MD5Sum::typeName() );
     

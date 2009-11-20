@@ -65,7 +65,7 @@ public:
     bool operator==(const Class &other) const;
     bool operator!=(const Class &other) const;
     
-    HASH_CODE hashCode() const;
+    uint hashCode() const;
 
     QString toString() const;
     

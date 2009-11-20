@@ -250,7 +250,7 @@ bool exception::test(Logger &logger) const
     return tester.allPassed();
 }
 
-HASH_CODE exception::hashCode() const
+uint exception::hashCode() const
 {
     return qHash(err) + qHash(plce);
 }

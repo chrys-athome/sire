@@ -853,6 +853,26 @@ inline bool Stream::isLoading() const
     return not is_saving;
 }
 
+/** Assert that this stream is in saving mode
+
+    \throw Siren::invalid_state
+*/
+inline void Stream::assertIsSaving() const
+{
+    if (not is_saving)
+        Stream::throwNotSavingError();
+}
+
+/** Assert that this stream is in loading mode
+
+    \throw Siren::invalid_state
+*/
+inline void Stream::assertIsLoading() const
+{
+    if (is_saving)
+        Stream::throwNotLoadingError();
+}
+
 /** Check the version of the object of type 'T', suggesting the 
     desired writing version, and returning the actual version */
 template<class T>

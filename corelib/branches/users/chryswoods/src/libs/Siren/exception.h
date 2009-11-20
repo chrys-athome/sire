@@ -70,7 +70,7 @@ public:
     QString why() const throw();
     QString pid() const throw();
 
-    HASH_CODE hashCode() const;
+    uint hashCode() const;
 
     QString toString() const throw();
 

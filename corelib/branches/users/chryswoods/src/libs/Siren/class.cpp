@@ -31,6 +31,8 @@
 #include "class.h"
 #include "objref.h"
 #include "hanref.h"
+#include "tester.h"
+#include "logger.h"
 
 #include "Siren/errors.h"
 
@@ -206,6 +208,22 @@ QString Class::name() const
         return QString::null;
 }
 
+QString Class::toString() const
+{
+    QStringList t;
+    
+    if (is_handle)
+        t.append( QObject::tr("handle") );
+    
+    if (is_object)
+        t.append( QObject::tr("object") );
+        
+    if (is_primitive)
+        t.append( QObject::tr("primitive") );
+
+    return QObject::tr("Class( %1, %2 )").arg(this->name(), t.join(":"));
+}
+
 /** Return whether or not this class has a superclass */
 bool Class::hasSuper() const
 {
@@ -302,6 +320,22 @@ HanRef Class::createHandle() const
     return HanRef(handle);
 }
 
+void Class::stream(Stream &s)
+{
+    s.assertVersion<Class>(1);
+    
+    Schema schema = s.item<Class>();
+    
+    QString class_name = this->name();
+    
+    schema.data("class_name") & class_name;
+    
+    if (s.isLoading())
+    {
+        Class::operator=( Class(class_name) );
+    }
+}
+
 /** Return whether or not we can create an object of this type */
 bool Class::canCreate() const
 {
@@ -326,6 +360,12 @@ bool Class::isHandle() const
     return is_handle;
 }
 
+/** Return whether or not this is a Primitive type */
+bool Class::isPrimitive() const
+{
+    return is_primitive;
+}
+
 /** Return whether or not this class can be cast to 'classname' */
 bool Class::canCast(const QString &classname) const
 {
@@ -344,7 +384,63 @@ void Class::assertCanCast(const QString &classname) const
                     .arg(this->name(), classname), CODELOC );
 }
 
-HASH_CODE Class::hashCode() const
+bool Class::test(Logger &logger) const
+{
+    Tester tester(*this, logger);
+    
+    try
+    {
+        Class c = this->getClass();
+    
+        // Test 1
+        {
+            tester.nextTest();
+            
+            tester.expect_equal( 
+                  QObject::tr("Test a c->getClass() is Class(\"Siren::Class\""),
+                  CODELOC,
+                  c, Class(Class::typeName()) );
+        }
+        
+        // Test 2
+        {
+            tester.nextTest();
+            tester.expect_equal( QObject::tr("c->getClass().name() is correct."),
+                                 CODELOC,
+                                 c.name(), Class::typeName());
+        }
+        
+        // Test 3
+        {
+            tester.nextTest();
+            
+            tester.expect_true( QObject::tr("Class::getClass() has a super type."),
+                                CODELOC, c.hasSuper() );
+            
+            Class o = c.super();
+            
+            tester.expect_equal( QObject::tr("Super class is object."),
+                                 CODELOC,
+                                 o, Class(Object::typeName()) );
+        }
+    }
+    catch(const Siren::exception &e)
+    {
+        tester.unexpected_error(e);
+    }
+    catch(const std::exception &e)
+    {
+        tester.unexpected_error( std_exception(e) );
+    }
+    catch(...)
+    {
+        tester.unexpected_error( unknown_error(CODELOC) );
+    }
+    
+    return tester.allPassed();
+}
+
+uint Class::hashCode() const
 {
     return qHash( this->name() ); 
 }

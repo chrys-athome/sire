@@ -47,6 +47,8 @@ using namespace Siren::detail;
 
 static const RegisterMetaType<Object> r_object( VIRTUAL_CLASS );
 
+const Class* Object::class_typeinfo = 0;
+
 /** Constructor */
 Object::Object() : QSharedData()
 {}
@@ -257,7 +259,7 @@ bool None::operator!=(const None &other) const
     return Object::operator!=(other);
 }
 
-HASH_CODE None::hashCode() const
+uint None::hashCode() const
 {
     return qHash( None::typeName() );
 }

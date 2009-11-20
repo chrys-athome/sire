@@ -149,7 +149,7 @@ public:
         
         Then return the hash code hash = 37 * (result + sum(c))
     */
-    virtual HASH_CODE hashCode() const=0;
+    virtual uint hashCode() const=0;
 
     void lock();
     void unlock();
@@ -213,7 +213,7 @@ private:
     bool private_implements(const QString &class_type) const;
     void private_assertCanCast(const QString &class_type) const;
 
-    static Class* class_typeinfo;
+    static const Class* class_typeinfo;
 
     /** Shared pointer to the mutex used to 
         lock access to this resource */
@@ -414,9 +414,9 @@ public:
 
     QString what() const;
 
-    HanRef copy() const;
-
     const Class& getClass() const;
+
+    using Handle::copy;
 
     void copy(const Handle &other);
     bool equals(const Handle &other) const;
@@ -456,7 +456,10 @@ Handles<T>::Handles() : Handle()
 template<class T>
 SIREN_OUTOFLINE_TEMPLATE
 Handles<T>::Handles(T *resource) : Handle(), resource_ptr(resource)
-{}
+{
+    if (resource)
+        Handle::setValidResource();
+}
 
 /** Copy constructor */
 template<class T>
@@ -498,7 +501,7 @@ void* Handles<T>::copyWeakHandle(void *weak_ptr)
 {
     if (weak_ptr)
         return new boost::weak_ptr<T>( 
-                    static_cast<const boost::weak_ptr<T>&>(weak_ptr) );
+                    *static_cast<const boost::weak_ptr<T>*>(weak_ptr) );
     else
         return 0;
 }

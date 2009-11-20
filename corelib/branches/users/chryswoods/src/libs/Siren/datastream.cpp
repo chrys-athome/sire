@@ -25,3 +25,31 @@
   *  at http://siremol.org
   *
 \*********************************************/
+
+#include "datastream.h"
+
+using namespace Siren;
+
+/** Constructor */
+DataStream::DataStream() : Stream()
+{}
+
+/** Construct the stream for the device 'd' */
+DataStream::DataStream(QIODevice *d) : Stream()
+{}
+
+/** Construct the stream for the data 'a', opened using the passed mode */
+DataStream::DataStream(QByteArray *a, QIODevice::OpenMode mode) : Stream()
+{}
+
+/** Construct the stream to read from the passed data 'a' */
+DataStream::DataStream(const QByteArray &a) : Stream()
+{}
+
+/** Construct the stream for the passed QDataStream */
+DataStream::DataStream(QDataStream &ds) : Stream()
+{}
+
+/** Destructor */
+DataStream::~DataStream()
+{}

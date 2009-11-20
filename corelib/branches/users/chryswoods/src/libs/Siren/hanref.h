@@ -69,7 +69,7 @@ public:
     
     bool equals(const Handle &other) const;
     
-    HASH_CODE hashCode() const;
+    uint hashCode() const;
     
     void lock();
     void unlock();

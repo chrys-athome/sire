@@ -206,8 +206,6 @@
 namespace Siren
 {
 
-typedef quint32 HASH_CODE;
-
 namespace detail
 {
 

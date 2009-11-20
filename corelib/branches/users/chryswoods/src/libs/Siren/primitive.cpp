@@ -94,7 +94,7 @@ QString String::toString() const
     return text;
 }
 
-HASH_CODE String::hashCode() const
+uint String::hashCode() const
 {
     return qHash(text);
 }
@@ -226,7 +226,7 @@ QString Number::toString() const
 }
 
 /** Hash this Number */
-HASH_CODE Number::hashCode() const
+uint Number::hashCode() const
 {
     if (is_integer)
         return number_data.integer_value;

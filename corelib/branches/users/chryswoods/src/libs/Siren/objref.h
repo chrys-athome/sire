@@ -97,7 +97,7 @@ public:
     
     void stream(Stream &s);
     
-    HASH_CODE hashCode() const;
+    uint hashCode() const;
 
     template<class T>
     bool isA() const;

@@ -261,7 +261,7 @@ public:
         
         Then return the hash code hash = 37 * (result + sum(c))
     */
-    virtual HASH_CODE hashCode() const=0;
+    virtual uint hashCode() const=0;
 
     void save(Stream &s) const;
     void load(Stream &s);
@@ -312,7 +312,7 @@ private:
     bool private_implements(const QString &class_type) const;
     void private_assertCanCast(const QString &class_type) const;
 
-    static Class* class_typeinfo;
+    static const Class* class_typeinfo;
 };
 
 /** Derive virtual classes using this template type */
@@ -413,9 +413,9 @@ public:
 
     QString what() const;
 
-    ObjRef copy() const;
-
     const Class& getClass() const;
+
+    using Object::copy;
 
     void copy(const Object &other);
     bool equals(const Object &other) const;
@@ -453,7 +453,7 @@ public:
     bool operator==(const None &other) const;
     bool operator!=(const None &other) const;
     
-    HASH_CODE hashCode() const;
+    uint hashCode() const;
     
     QString toString() const;
     
@@ -467,6 +467,9 @@ public:
 //////
 ////// Implementation of 'Extends'
 //////
+
+template<class Derived, class Base>
+const Class* Extends<Derived,Base>::class_typeinfo;
 
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
@@ -583,6 +586,9 @@ const Class& Extends<Derived,Base>::createTypeInfo()
 //////
 ////// Implementation of 'Implements'
 //////
+
+template<class Derived, class Base>
+const Class* Implements<Derived,Base>::class_typeinfo;
 
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
