@@ -51,7 +51,6 @@ set ( SIREN_PRIVATE_HEADERS
       detail/globalsharedpointer.hpp
       detail/sharedpolypointer.hpp
       detail/sharedpolypointer_cast.hpp
-      detail/streampolypointer.hpp
     )
 
 set ( SIREN_SOURCES

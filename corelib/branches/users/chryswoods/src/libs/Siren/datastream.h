@@ -64,19 +64,19 @@ public:
     bool operator==(const DataStream &other) const;
     bool operator!=(const DataStream &other) const;
 
-    Stream& operator&(bool &b); 
+    DataStream& operator&(bool &b); 
     
-    Stream& operator&(qint8 &i);
-    Stream& operator&(quint8 &i);
-    Stream& operator&(quint16 &i);
-    Stream& operator&(qint16 &i);
-    Stream& operator&(qint32 &i);
-    Stream& operator&(quint64 &i);
-    Stream& operator&(qint64 &i);
-    Stream& operator&(quint32 &i);
+    DataStream& operator&(qint8 &i);
+    DataStream& operator&(quint8 &i);
+    DataStream& operator&(quint16 &i);
+    DataStream& operator&(qint16 &i);
+    DataStream& operator&(qint32 &i);
+    DataStream& operator&(quint64 &i);
+    DataStream& operator&(qint64 &i);
+    DataStream& operator&(quint32 &i);
 
-    Stream& operator&(float &f);
-    Stream& operator&(double &f);
+    DataStream& operator&(float &f);
+    DataStream& operator&(double &f);
     
     uint hashCode() const;
     QString toString() const;

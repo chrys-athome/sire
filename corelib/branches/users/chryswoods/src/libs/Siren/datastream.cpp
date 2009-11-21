@@ -127,6 +127,9 @@ DataStream::DataStream(QIODevice *d)
              ds_ptr( new QDataStream(d) ), ds(ds_ptr.get())
 {
     registerDataStream();
+    
+    if (d == 0)
+        DataStream::operator=( DataStream() );
 }
 
 /** Construct the stream for the data 'a', opened using the passed mode */
@@ -209,7 +212,7 @@ bool DataStream::test(Logger &logger) const
 }
 
 /** Stream a logical value */
-Stream& DataStream::operator&(bool &b)
+DataStream& DataStream::operator&(bool &b)
 {
     if (not isNull())
     {
@@ -223,7 +226,7 @@ Stream& DataStream::operator&(bool &b)
 }
 
 /** Stream an integer */
-Stream& DataStream::operator&(qint8 &i)
+DataStream& DataStream::operator&(qint8 &i)
 {
     if (not isNull())
     {
@@ -237,7 +240,7 @@ Stream& DataStream::operator&(qint8 &i)
 }
 
 /** Stream an integer */
-Stream& DataStream::operator&(quint8 &i)
+DataStream& DataStream::operator&(quint8 &i)
 {
     if (not isNull())
     {
@@ -251,7 +254,7 @@ Stream& DataStream::operator&(quint8 &i)
 }
 
 /** Stream an integer */
-Stream& DataStream::operator&(quint16 &i)
+DataStream& DataStream::operator&(quint16 &i)
 {
     if (not isNull())
     {
@@ -265,7 +268,7 @@ Stream& DataStream::operator&(quint16 &i)
 }
 
 /** Stream an integer */
-Stream& DataStream::operator&(qint16 &i)
+DataStream& DataStream::operator&(qint16 &i)
 {
     if (not isNull())
     {
@@ -279,7 +282,7 @@ Stream& DataStream::operator&(qint16 &i)
 }
 
 /** Stream an integer */
-Stream& DataStream::operator&(qint32 &i)
+DataStream& DataStream::operator&(qint32 &i)
 {
     if (not isNull())
     {
@@ -293,7 +296,7 @@ Stream& DataStream::operator&(qint32 &i)
 }
 
 /** Stream an integer */
-Stream& DataStream::operator&(quint64 &i)
+DataStream& DataStream::operator&(quint64 &i)
 {
     if (not isNull())
     {
@@ -307,7 +310,7 @@ Stream& DataStream::operator&(quint64 &i)
 }
 
 /** Stream an integer */
-Stream& DataStream::operator&(qint64 &i)
+DataStream& DataStream::operator&(qint64 &i)
 {
     if (not isNull())
     {
@@ -321,7 +324,7 @@ Stream& DataStream::operator&(qint64 &i)
 }
 
 /** Stream an integer */
-Stream& DataStream::operator&(quint32 &i)
+DataStream& DataStream::operator&(quint32 &i)
 {
     if (not isNull())
     {
@@ -335,7 +338,7 @@ Stream& DataStream::operator&(quint32 &i)
 }
 
 /** Stream a floating point number */
-Stream& DataStream::operator&(float &f)
+DataStream& DataStream::operator&(float &f)
 {
     if (not isNull())
     {
@@ -349,7 +352,7 @@ Stream& DataStream::operator&(float &f)
 }
 
 /** Stream a floating point number */
-Stream& DataStream::operator&(double &f)
+DataStream& DataStream::operator&(double &f)
 {
     if (not isNull())
     {
