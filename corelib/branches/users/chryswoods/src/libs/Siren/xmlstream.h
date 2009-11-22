@@ -31,6 +31,7 @@
 
 #include <QDomDocument>
 #include <QDomElement>
+#include <QStack>
 
 #include "stream.h"
 
@@ -137,43 +138,115 @@ private:
     template<class T>
     void stream_float(const QString &type, T &value);
 
+    int startContainer(const QString &container_tag, 
+                       const QString &type_name, int count);
+
+    void endContainer(const QString &container_tag, const QString &type_name);
+
     class Document
     {
     public:
         Document();
         ~Document();
         
-        void assertAttributeExists(const QString &value, 
-                                   const QString &tag, 
-                                   const QString &attribute) const;
+        void initialiseDocument(bool is_saving);
         
-        void corruptedData(const QString &error_text) const;
+        void assertAttributeExists(QDomElement &tag,
+                                   const QString &value, 
+                                   const QString &attribute);
         
-        void startTarget(int id, bool is_saving);
-        void endTarget();
-        
-        void startString(int id, bool is_saving);
-        void endString();
-        
-        void startBlob(int id, bool is_saving);
-        void endBlob();
+        void corrupted_data(const QString &error_string, QDomElement element);
         
         void pushStack();
         void popStack();
         
+        void startTarget(int id, bool is_saving);
+        void endTarget(int id);
+        
+        void writeString(int id, const QString &string);
+        QString readString(int id);
+        
+        void writeBlob(int id, const QByteArray &blob);
+        QByteArray readBlob(int id);
+        
         QDomElement createChild(const QString &tag_name);
         QDomElement getChild(const QString &tag_name);
         
+        void startChild(QDomElement &child);
+        void endChild();
+        
+        void startContainer(QDomElement &container);
+        void endContainer();
+        
+        int getIntAttribute(QDomElement &element, const QString &attribute);
+        
+        void createReference(QString tag_name, int id);
+        int readReference(QString tag_name);
+        
+        int readClassID(const QString &class_name, int &version);
+        void writeClassID(const QString &class_name, int id, int version);
+        
+        /** The DOM for the XML document being streamed */
         QDomDocument dom;
 
-        QDomElement current_element;
-        QDomElement last_element;
+        /** The document root for this document */
+        QDomElement document_root;
 
+        /** The current element being processed - new elements
+            are created as children of this element */
+        QDomElement current_element;
+
+        /** A stack of elements - this allows us to temparily
+            jump to another part of the document - this is necessary
+            when we write shared objects to a <target> */
         QStack<QDomElement> current_element_stack;
-        QStack<QDomElement> last_element_stack; 
+    
+        /** A stack of map entries that are still waiting for values 
+            to be streamed */
+        QStack<QDomElement> entries_awaiting_values;
+    
+        /** The current entry in a container being iterated over */
+        QDomElement container_iterator;
+    
+        /** A stack of entries of containers being read */
+        QStack<QDomElement> container_iterator_stack;
+    
+        /** The next item to be streamed must have the name 'next_name' */
+        QString next_name;
+        /** The next item to be streamed must have the index 'next_index' */
+        QString next_index;
         
+        /** The IO device to which this XML document will be written */
         QIODevice *device;
+        /** The string to which this XML document will be written */
         QString *string;
+        
+        /** The version number of the Siren XML format */
+        int sirenml_version;
+        
+        /** If true, then the next item is a base class */
+        bool next_is_base;
+        
+        /** If true, then the next item is an entry in a set */
+        bool next_is_entry;
+        
+        /** If true, then the next item is a key in a map */
+        bool next_is_key;
+        
+        /** If true, then the next item is a value in a map */
+        bool next_is_value;
+        
+    private:
+        QDomElement findTarget(const QString &targets, int id,
+                               const QString &target, const QString &id_tag);
+
+        bool foundChild(QDomElement &element);
+        
+        void clearNextState();
+        
+        void missingChildError(const QString &tag_name, QString err=QString::null);
+        
+        void assertCurrentIsContainer(QString container);
     };
 
     /** The document containing the XML */

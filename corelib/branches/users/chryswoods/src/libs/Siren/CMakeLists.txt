@@ -90,6 +90,13 @@ set ( SIREN_SOURCES
     
       third_party/md5.h
       third_party/md5.c
+     
+      third_party/encode.h
+      third_party/decode.h
+      third_party/cencode.h
+      third_party/cdecode.h
+      third_party/cencode.c
+      third_party/cdecode.c
     )
 
 

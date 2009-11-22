@@ -153,6 +153,8 @@ void Tester::stream(Stream &s)
     schema.data("current_test") & current_test;
     schema.data("num_current_errors") & num_current_errors;
     schema.data("num_errors") & num_errors;
+    
+    Object::stream( schema.base() );
 }
 
 /** Return whether or not all of the tests passed */

@@ -113,6 +113,7 @@ void Object::load(Stream &s)
 void Object::stream(Stream &s)
 {
     s.assertVersion<Object>(1);
+    s.item<Object>();
 }
 
 Q_GLOBAL_STATIC_WITH_ARGS( QMutex, objectGlobalMutex, (QMutex::Recursive) );

@@ -591,7 +591,13 @@ ObjRef Stream::loadNextObject()
     //create a Class for this type
     Class c( next_type );
     
-    return c.createObject();
+    //now create an object of this type...
+    ObjRef obj = c.createObject();
+    
+    //now read this object
+    const_cast<Object&>(*obj).stream(*this);
+    
+    return obj;
 }
 
 /** Stream the passed string */

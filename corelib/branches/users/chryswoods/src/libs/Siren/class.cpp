@@ -333,6 +333,8 @@ void Class::stream(Stream &s)
     
     schema.data("class_name") & class_name;
     
+    Object::stream( schema.base() );
+    
     if (s.isLoading())
     {
         Class::operator=( Class(class_name) );
