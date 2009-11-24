@@ -758,7 +758,7 @@ int XMLStream::Document::readClassID(const QString &class_name, int &version)
                 "is required to supply the IDs and versions of classes."),
                     document_root );
 
-    QDomElement clas = classes.firstChildElement(class_name);
+    QDomElement clas = classes.firstChildElement("class");
     
     while (not clas.isNull())
     {

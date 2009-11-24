@@ -136,6 +136,7 @@ void Logger::write(const QString &text)
 {
     HandleLocker lkr(*this);
     resource() << text;
+    endl(resource());
 }
 
 static QString repeated(const QString &s, int n)
@@ -203,12 +204,115 @@ static void printBox(const QString &line, QTextStream &stream)
     endl(stream);
 }
 
+static void printStarred(const QString &line, QTextStream &stream)
+{
+    QStringList lines = line.split("\n");
+    
+    int maxlength = 0;
+    
+    for (QStringList::iterator it = lines.begin(); it != lines.end(); ++it)
+    {
+        *it = it->simplified();
+    
+        if (it->length() > maxlength)
+            maxlength = it->length();
+    }
+    
+    const int max_maxlength = 80;
+    
+    if (maxlength > max_maxlength)
+        maxlength = max_maxlength;
+    
+    QString hashline = ::repeated( "*", maxlength + 2 );
+    
+    endl(stream);
+    stream << "*" << hashline << "*";
+    endl(stream);
+    
+    foreach (const QString &l, lines)
+    {
+        if (l.length() > max_maxlength)
+        {
+            for (int j=0; j<l.length(); j+=max_maxlength)
+            {
+                stream << "* " << l.mid(j,max_maxlength).leftJustified(maxlength)
+                       << " *";
+
+                endl(stream);
+            }
+        }
+        else
+        {
+            stream << "* " << l.leftJustified(maxlength) << " *";
+            endl(stream);
+        }
+    }
+    
+    stream << "*" << hashline << "*";
+    endl(stream);
+    endl(stream);
+}
+
+static void printUnderlined(const QString &line, QTextStream &stream)
+{
+    QStringList lines = line.split("\n");
+    
+    int maxlength = 0;
+    
+    for (QStringList::iterator it = lines.begin(); it != lines.end(); ++it)
+    {
+        *it = it->simplified();
+    
+        if (it->length() > maxlength)
+            maxlength = it->length();
+    }
+    
+    const int max_maxlength = 80;
+    
+    if (maxlength > max_maxlength)
+        maxlength = max_maxlength;
+    
+    QString hashline = ::repeated( "-", maxlength);
+    
+    endl(stream);
+    stream << hashline;
+    endl(stream);
+    
+    foreach (const QString &l, lines)
+    {
+        if (l.length() > max_maxlength)
+        {
+            for (int j=0; j<l.length(); j+=max_maxlength)
+            {
+                stream <<l.mid(j,max_maxlength).leftJustified(maxlength);
+                endl(stream);
+            }
+        }
+        else
+        {
+            stream << l.leftJustified(maxlength);
+            endl(stream);
+        }
+    }
+    
+    stream << hashline;
+    endl(stream);
+    endl(stream);
+}
+
 /** Write the passed text to the logger, in 'header' format. 
     This is a level 'level' header (headers can run from h1 to h6,
     as in html) */
-void Logger::writeHeader(const QString &text, int)
+void Logger::writeHeader(const QString &text, int level)
 {
     HandleLocker lkr(*this);
     
-    ::printBox(text, resource());
+    if (level <= 1)
+        ::printBox(text, resource());
+
+    else if (level == 2)
+        ::printStarred(text, resource());
+        
+    else
+        ::printUnderlined(text, resource());
 }

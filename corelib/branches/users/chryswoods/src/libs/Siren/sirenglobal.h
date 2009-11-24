@@ -43,14 +43,19 @@
 //be set to the correct value
 #ifndef SIREN_NO_VISIBILITY_AVAILABLE
 #define SIREN_EXPORT Q_DECL_EXPORT
+#define SIRENTEST_EXPORT Q_DECL_EXPORT
 
 //create the keyword to import a symbol - this is copied
 //from Q_DECL_IMPORT, which will definitely be set to
 //the correct value
 #define SIREN_IMPORT Q_DECL_IMPORT
+#define SIRENTEST_IMPORT Q_DECL_IMPORT
+
 #else
 #define SIREN_EXPORT
+#define SIRENTEST_EXPORT
 #define SIREN_IMPORT
+#define SIRENTEST_IMPORT
 #endif
 
 //create the keyword to fix symbol visibility problems for out-of-line
@@ -218,7 +223,9 @@ class RegisterMetaTypeBase
 {
 public:
     RegisterMetaTypeBase(const QString &name) : type_name(name)
-    {}
+    {
+        RegisterMetaTypeBase::registerClassName(name);
+    }
 
     ~RegisterMetaTypeBase()
     {}
@@ -229,6 +236,8 @@ public:
     }
 
 private:
+    static void registerClassName(const QString &name);
+
     QString type_name;
 };
 
@@ -319,9 +328,13 @@ const detail::RegisterMetaTypeBase* RegisterMetaType<T>::singleton = 0;
 #ifndef SIREN_NO_VISIBILITY_AVAILABLE
 #define SIREN_EXPORT Q_DECL_EXPORT
 #define SIREN_IMPORT Q_DECL_IMPORT
+#define SIRENTEST_EXPORT Q_DECL_EXPORT
+#define SIRENTEST_IMPORT Q_DECL_IMPORT
 #else
 #define SIREN_EXPORT
 #define SIREN_IMPORT
+#define SIRENTEST_EXPORT
+#define SIRENTEST_IMPORT
 #endif
 
 #endif // #ifdef __cplusplus

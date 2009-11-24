@@ -125,11 +125,17 @@ private:
     void testPassed(const QString &description);
     void testFailed(const QString &description, const QString &location);
 
+    void printLastTestSummary();
+    void printSummary();
+
     /** The logger to which the output of the tests is written */
     Logger logger;
     
     /** The type name of the class being tested */
     QString tested_class;
+    
+    /** The list of failed locations */
+    QStringList failed_locations;
     
     /** The current test number */
     quint32 current_test;
@@ -151,6 +157,8 @@ void Tester::expect_equal(const QString &description, const QString &location,
     if (obj0 != obj1)
         this->notEqualError( Siren::toString(obj0), Siren::toString(obj1),
                              description, location );
+    else
+        this->testPassed(description);
 }
 
 /** Call this to test is 'obj0' and 'obj1' are not equal */
@@ -161,6 +169,8 @@ void Tester::expect_different(const QString &description, const QString &locatio
     if (obj0 == obj1)
         this->notDifferentError( Siren::toString(obj0), Siren::toString(obj1),
                                  description, location );
+    else
+        this->testPassed(description);
 }
 
 #endif // SIREN_SKIP_INLINE_FUNCTIONS

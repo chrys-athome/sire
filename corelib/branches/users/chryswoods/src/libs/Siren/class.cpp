@@ -37,9 +37,39 @@
 
 #include "Siren/errors.h"
 
+#include <QDebug>
+
 using namespace Siren;
 
 static const RegisterMetaType<Class> r_class;
+
+Q_GLOBAL_STATIC( QStringList, classRegistry );
+
+void detail::RegisterMetaTypeBase::registerClassName(const QString &class_name)
+{
+    QStringList *reg = classRegistry();
+    
+    if (not reg)
+        qDebug() << "CANNOT REGISTER" << class_name;
+    else
+        reg->append(class_name);
+}
+
+/** Return the complete (sorted) list of all of the class types
+    that have been registered using RegisterMetaType<T> */
+QStringList Class::registeredTypes()
+{
+    QStringList *reg = classRegistry();
+    
+    if (reg)
+    {
+        QStringList l = *reg;
+        qSort(l);
+        return l;
+    }
+    else
+        return QStringList();
+}
 
 void Class::buildInheritedTypes()
 {

@@ -70,7 +70,9 @@ Tester::Tester(const Tester &other)
 
 /** Destructor */
 Tester::~Tester()
-{}
+{
+    this->printSummary();
+}
 
 /** Copy assignment operator */
 Tester& Tester::operator=(const Tester &other)
@@ -189,31 +191,38 @@ void Tester::testFailed(const QString &description, const QString &location)
 
     num_current_errors += 1;
     num_errors += 1;
-
-    logger.write( QObject::tr("Number of failures: %1  (%2 total).")
-                    .arg(num_current_errors).arg(num_errors) );
-                    
     
-    logger.write( QObject::tr("Failed test located at {%1}.").arg(location) );
+    failed_locations.append(location);
+}
+
+void Tester::printLastTestSummary()
+{
+    if (num_current_errors > 0)
+        logger.writeHeader( QObject::tr("%1 of the above tests failed!")
+                                    .arg(num_current_errors), 3 );
 }
 
 /** Advance to the next test */
 void Tester::nextTest()
 {
+    printLastTestSummary();
+
     current_test += 1;
     num_current_errors = 0;
     
-    logger.writeHeader( QObject::tr("Test %1").arg(current_test), 2 );
+    logger.writeHeader( QObject::tr("Test %1").arg(current_test), 1 );
 }
 
 /** Advance to the next test, which is described in 'description' */
 void Tester::nextTest(const QString &description)
 {
+    printLastTestSummary();
+
     current_test += 1;
     num_current_errors = 0;
     
     logger.writeHeader( QObject::tr("Test %1\n%2")
-                           .arg(current_test).arg(description), 2 );
+                           .arg(current_test).arg(description), 1 );
 }
 
 /** Test if 'flag' is true. 'flag' is the output of the test run at
@@ -283,4 +292,28 @@ void Tester::notDifferentError(const QString &obj0, const QString &obj1,
 {
     this->testFailed( QObject::tr("%1 (%2 == %3)")
                         .arg(description, obj0, obj1), location );
+
+}
+
+/** Print a summary of all of the tests */
+void Tester::printSummary()
+{
+    printLastTestSummary();
+
+    if (num_errors == 0)
+    {
+        logger.writeHeader( QObject::tr("All tests passed!"), 2 );
+        return;
+    }
+
+    QStringList lines;
+    
+    lines.append( QObject::tr("In total, %1 of the above tests failed.")
+                        .arg(num_errors) );
+                        
+    lines.append( QObject::tr("\nThe locations of the errors, in order, are;") );
+    
+    lines += failed_locations;
+    
+    logger.writeHeader( lines.join("\n"), 2 );
 }

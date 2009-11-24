@@ -9,9 +9,9 @@ s = QString()
 
 xml = XMLStream(s, QIODevice.WriteOnly)
 
+m.stream(xml)
 c.stream(xml)
 t.stream(xml)
-m.stream(xml)
 
 xml = 0
 
@@ -19,7 +19,12 @@ print s
 
 xml = XMLStream(s)
 
+print m
 print xml.loadNextObject()
+
+print c
 print xml.loadNextObject()
+
+print t
 print xml.loadNextObject()
 

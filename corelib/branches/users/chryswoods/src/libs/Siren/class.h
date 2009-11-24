@@ -103,6 +103,8 @@ public:
     template<class T>
     void assertCanCast() const;
 
+    static QStringList registeredTypes();
+
 protected:
     bool test(Logger &logger) const;
     void stream(Stream &s);
