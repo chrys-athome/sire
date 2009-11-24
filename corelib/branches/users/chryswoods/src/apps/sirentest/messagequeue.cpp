@@ -32,6 +32,8 @@
 #include "messagequeue.h"
 #include "sharedmemory.h"
 
+#include <QDebug>
+
 using namespace SirenTest;
 
 /** Constructor */
@@ -166,6 +168,14 @@ bool MessageQueue::isTails() const
     return not is_heads;
 }
 
+QString MessageQueue::me() const
+{
+    if (isHeads())
+        return "CLIENT";
+    else
+        return "SERVER";
+}
+
 /** Send the message 'message' - this is safe as we have
     sole access to the shared memory buffer */
 void MessageQueue::sendData(const QByteArray &data)
@@ -184,8 +194,12 @@ void MessageQueue::sendData(const QByteArray &data)
 
     if (partial_sent.isEmpty())
     {
-        partial_sent = send_queue.dequeue();
+        partial_sent = data;
         n_to_send = 0;
+    }
+    else
+    {
+        Q_ASSERT( partial_sent.constData() == data.constData() );
     }
         
     quint32 total_sz = partial_sent.count();
@@ -215,9 +229,9 @@ void MessageQueue::sendData(const QByteArray &data)
     else
         *((quint32*)(shmem_data)) = quint32( TAILS_SEND );
     
-    *((quint32*)(shmem_data) + 4) = total_sz;
-    *((quint32*)(shmem_data) + 8) = send_sz;
-    *((quint32*)(shmem_data) + 12) = n_to_send;
+    *((quint32*)(shmem_data) + 1) = total_sz;
+    *((quint32*)(shmem_data) + 2) = send_sz;
+    *((quint32*)(shmem_data) + 3) = n_to_send;
 
     int start = (nchunks - n_to_send) * chunk_sz;
     
@@ -254,6 +268,9 @@ void MessageQueue::receiveData()
     
     std::memcpy(partial_receive.data() + start, shmem_data+16, chunk_sz);
     
+    //now clear the buffer
+    std::memset(shmem->data(), 0, shmem->size());
+    
     if (n_left == 1)
     {
         //we've finished receiving the data
@@ -287,7 +304,10 @@ void MessageQueue::pollForMessages()
         {
             case EMPTY:
             {
-                if (not send_queue.isEmpty())
+                if (not partial_sent.isEmpty())
+                    this->sendData(partial_sent);
+
+                else if (not send_queue.isEmpty())
                     this->sendData(send_queue.dequeue());
                     
                 break;

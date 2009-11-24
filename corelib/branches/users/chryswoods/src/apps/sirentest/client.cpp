@@ -44,14 +44,16 @@ int Client::run(int argc, char **argv)
     QCoreApplication *a = new QCoreApplication(argc, argv);
     
     /** Construct the Client object */
-    Client *c = new Client();
+    Client *client = new Client();
 
-    c->startServerProcess();
+    client->startServerProcess();
+    
+    client->message_q->send( "Sut dych chi?" );
 
     int exit_code = a->exec();
     
     delete a;
-    delete c;
+    delete client;
     
     return exit_code;
 }
@@ -157,5 +159,7 @@ void Client::send(const QByteArray &data)
 /** A message has been received */
 void Client::receivedMessage()
 {
-    qDebug() << message_q->receive();
+    qDebug() << "CLIENT" << message_q->receive();
+    
+    message_q->send("Da iawn. A chi?");
 }

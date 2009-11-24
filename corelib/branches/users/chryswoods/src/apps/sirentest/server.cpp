@@ -72,8 +72,6 @@ int Server::run(int argc, char **argv)
 
     connect(server, SIGNAL(fatalError()), a, SLOT(quit()));
     
-    server->message_q->send( "Hello World" );
-    
     int exit_code = a->exec();
     
     delete server;
@@ -86,6 +84,7 @@ int Server::run(int argc, char **argv)
 Server::Server(QObject *parent) : QObject(parent)
 {
     message_q = new MessageQueue(this);
+    connect(message_q, SIGNAL(receivedMessage()), this, SLOT(receivedMessage()));
 }
 
 /** Destructor */
@@ -121,5 +120,7 @@ void Server::receivedMessage()
 {
     QByteArray message = message_q->receive();
     
-    qDebug() << message;
+    qDebug() << "SERVER" << message;
+    
+    message_q->send("Da iawn. A chi?");
 }

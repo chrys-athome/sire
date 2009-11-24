@@ -92,6 +92,8 @@ private:
     void sendData(const QByteArray &data);
     void receiveData();
 
+    QString me() const;
+
     /** Pointer to the shared memory used to exchange messages */
     QSharedMemory *shmem;
     
