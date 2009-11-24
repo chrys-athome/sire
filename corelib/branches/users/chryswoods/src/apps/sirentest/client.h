@@ -30,12 +30,14 @@
 #define SIRENTEST_CLIENT_H
 
 #include <QProcess>
+#include <QHash>
 
 #include "Siren/sirenglobal.h"
 
 SIREN_BEGIN_HEADER
 
 class QProcess;
+class QTimer;
 
 namespace SirenTest
 {
@@ -59,17 +61,34 @@ public:
     Client(QObject *parent=0);
     ~Client();
 
+    void runTests(const QStringList &classes_to_test);
+
 protected slots:
     void serverProcessExited(int exitCode, QProcess::ExitStatus exit_status);
     void serverProcessError(QProcess::ProcessError error);
 
     void receivedMessage();
 
+    void runNextTest();
+
+private slots:
+    void testTimeout();
+
 private:
     void startServerProcess();
+    
+    void testPassed();
+    void testFailed(QString error);
 
-    void send(const QByteArray &message);
     QByteArray receive();
+
+    void printSummary();
+
+    /** The list of all classes to test */
+    QStringList classes_to_test;
+
+    /** All of the tests that failed, indexed by class */
+    QHash<QString,QString> failed_tests;
 
     /** The message queue used for communication */
     MessageQueue *message_q;
@@ -79,6 +98,12 @@ private:
 
     /** The QProcess containing the server */
     QProcess *server_process;
+
+    /** A timer to catch tests that take too long */
+    QTimer *test_timer;
+
+    /** The index of the current class being tested */
+    int current_test;
 
     /** Whether or not to keep the child process alive */
     bool keep_alive;

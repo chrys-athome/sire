@@ -29,7 +29,7 @@
 #ifndef SIREN_SHAREDPOLYPOINTER_HPP
 #define SIREN_SHAREDPOLYPOINTER_HPP
 
-#include "sirenglobal.h"
+#include "Siren/sirenglobal.h"
 
 SIREN_BEGIN_HEADER
 

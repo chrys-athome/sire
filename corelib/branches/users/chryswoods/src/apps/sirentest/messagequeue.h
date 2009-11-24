@@ -71,6 +71,7 @@ public:
 
 public slots:
     void send(const QByteArray &message);
+    void clear();
     
 signals:
     void receivedMessage();
@@ -90,7 +91,7 @@ private:
     bool isTails() const;
 
     void sendData(const QByteArray &data);
-    void receiveData();
+    bool receiveData();
 
     QString me() const;
 

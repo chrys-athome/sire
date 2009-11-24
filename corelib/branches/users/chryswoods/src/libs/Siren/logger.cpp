@@ -53,13 +53,13 @@ Logger::Logger(QTextStream *textstream)
         throw Siren::invalid_arg( QObject::tr(
                 "You cannot create a Logger from a null QTextStream!"), CODELOC );
                 
-    if (textstream->device() == 0)
+    if (textstream->device() == 0 and textstream->string() == 0)
         throw Siren::invalid_arg( QObject::tr(
                 "You cannot create a Logger from a QTextStream that is "
                 "not attached to a valid device!"), CODELOC );
                 
-    if ( not (textstream->device()->openMode() != 
-                QIODevice::WriteOnly|QIODevice::Append) )
+    if (textstream->device() != 0 and not (textstream->device()->openMode() != 
+                                           QIODevice::WriteOnly|QIODevice::Append) )
         throw Siren::invalid_arg( QObject::tr(
                 "You cannot create a Logger from a QTextStream that is connected "
                 "to a device that is not opened in WriteOnly or Append mode."),

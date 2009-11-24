@@ -30,14 +30,18 @@
 #include <QUuid>
 #include <QTextStream>
 #include <QProcess>
+#include <QTimer>
 
 #include "client.h"
 #include "sharedmemory.h"
 #include "messagequeue.h"
 
+#include "Siren/class.h"
+
 #include <QDebug>
 
 using namespace SirenTest;
+using namespace Siren;
 
 int Client::run(int argc, char **argv)
 {
@@ -47,9 +51,12 @@ int Client::run(int argc, char **argv)
     Client *client = new Client();
 
     client->startServerProcess();
-    
-    client->message_q->send( "Sut dych chi?" );
 
+    //get the list of classes to test
+    QStringList test_classes = Class::registeredTypes();
+    
+    client->runTests(test_classes);
+    
     int exit_code = a->exec();
     
     delete a;
@@ -79,48 +86,174 @@ Client::Client(QObject *parent) : QObject(parent), keep_alive(true)
 
     connect(server_process, SIGNAL(error(QProcess::ProcessError)),
             this, SLOT(serverProcessError(QProcess::ProcessError)));
+
+    test_timer = new QTimer(this);
+    
+    connect(test_timer, SIGNAL(timeout()), this, SLOT(testTimeout()));
 }
 
 Client::~Client()
 {}
 
+/** Run the tests for all of the passed classes */
+void Client::runTests(const QStringList &classes)
+{
+    classes_to_test = classes;
+    current_test = -1;
+    
+    QTimer::singleShot(0, this, SLOT(runNextTest()));
+}
+
+/** Run the next test */
+void Client::runNextTest()
+{
+    test_timer->stop();
+    message_q->clear();
+    
+    ++current_test;
+
+    if (current_test >= classes_to_test.count())
+    {
+        //we've finished
+        keep_alive = false;
+        
+        disconnect(this, 0,0,0);
+        disconnect(server_process, 0,0,0);
+        disconnect(message_q, 0,0,0);
+        disconnect(test_timer, 0,0,0);
+        
+        server_process->terminate();
+        server_process->waitForFinished();
+
+        this->printSummary();
+    
+        QCoreApplication::exit(0);
+        return;
+    }
+
+    QByteArray data;
+    {
+        QDataStream ds(&data, QIODevice::WriteOnly);
+        ds << classes_to_test.at(current_test);
+    }
+    
+    QTextStream ts(stdout);
+    
+    ts.setFieldWidth(3);
+    ts.setRealNumberPrecision(0);
+    ts.setRealNumberNotation(QTextStream::FixedNotation);
+    ts << ( (100.0*(current_test+1))/classes_to_test.count() );
+    
+    ts.setFieldWidth(0);
+    ts << "%    ";
+    
+    ts.setFieldWidth(40);
+    ts << classes_to_test.at(current_test);
+    
+    ts.setFieldWidth(0);
+    ts << " : ";
+    
+    message_q->send(data);
+    
+    //each test has 60 seconds to complete
+    test_timer->start(60000);
+}
+
+/** Print a summary of all of the failures */
+void Client::printSummary()
+{
+    QStringList failed_classes = failed_tests.keys();
+    qSort(failed_classes);
+    
+    QTextStream ts(stdout);
+    
+    if (failed_tests.isEmpty())
+    {
+        ts << endl << endl << "ALL TESTS PASSED - EVERYTHING IS OK!" << endl;
+    }
+    else
+    {
+        ts << endl << "DETAILS OF FAILED TESTS" << endl;
+    
+        foreach (QString failed_class, failed_classes)
+        {
+            ts << endl << " ****** " << failed_class << " ******" << endl;
+            ts << failed_tests.value(failed_class) << endl;
+        }
+    }
+    
+    ts << "\n  ------- Goodbye ------ " << endl;
+}
+
+/** Called when a test passes */
+void Client::testPassed()
+{
+    if (current_test >= 0 and current_test < classes_to_test.count())
+    {
+        QTextStream ts(stdout);
+        ts << "  Passed" << endl;
+    }
+    
+    this->runNextTest();
+}
+
+/** Called when a test failed */
+void Client::testFailed(QString error)
+{
+    if (current_test >= 0 and current_test < classes_to_test.count())
+    {
+        failed_tests[ classes_to_test.at(current_test) ] += error;
+
+
+        QTextStream ts(stdout);
+        ts << "**Failed**" << endl;
+    }
+
+    this->runNextTest();
+}
+
 /** Slot called when the server process exits */
 void Client::serverProcessExited(int exitCode, QProcess::ExitStatus)
 {
+    test_timer->stop();
+
+    //are we running a test?
+    this->testFailed( QObject::tr("CRASHED!") );
+
     if (keep_alive)
+    {
         this->startServerProcess();
+    }
 }
 
-static QString getError(QProcess::ProcessError error)
+static QString toString(QProcess::ProcessError error)
 {
-    switch (error)
+    switch(error)
     {
-    case QProcess::FailedToStart:
-        return QObject::tr("QProcess::FailedToStart");
-    case QProcess::Crashed:
-        return QObject::tr("QProcess::Crashed");
-    case QProcess::Timedout:
-        return QObject::tr("QProcess::Timedout");
-    case QProcess::WriteError:
-        return QObject::tr("QProcess:WriteError");
-    case QProcess::ReadError:
-        return QObject::tr("QProcess:ReadError");
-    default:
-        return QObject::tr("QProcess::UnknownError");
+        case QProcess::FailedToStart:
+            return QObject::tr("QProcess::FailedToStart");
+        case QProcess::Crashed:
+            return QObject::tr("QProcess::Crashed");
+        case QProcess::Timedout:
+            return QObject::tr("QProcess::Timedout");
+        case QProcess::WriteError:
+            return QObject::tr("QProcess::WriteError");
+        case QProcess::ReadError:
+            return QObject::tr("QProcess::ReadError");
+        default:
+            return QObject::tr("QProcess::FailedToStart");
     }
 }
 
 void Client::serverProcessError(QProcess::ProcessError error)
 {
-    qDebug() << "Server process had an error!" << ::getError(error);
-    
-    if (error == QProcess::Crashed)
+    test_timer->stop();
+
+    if (current_test >= 0 and current_test < classes_to_test.count())
     {
-        qDebug() << "Server process crashed!";
-    }
-    else if (error == QProcess::FailedToStart)
-    {
-        qDebug() << "Server process failed to start!";
+        failed_tests[ classes_to_test.at(current_test) ] += 
+                            QObject::tr("\n ** ERROR (%1) ** \n")
+                                    .arg( ::toString(error) );
     }
 }
 
@@ -150,16 +283,40 @@ void Client::startServerProcess()
     server_process->start(server_name, QIODevice::ReadOnly);
 }
 
-/** Send a message to the server */
-void Client::send(const QByteArray &data)
+/** The test has timed out */
+void Client::testTimeout()
 {
-    message_q->send(data);
+    test_timer->stop();
+
+    if (current_test >= 0 and current_test < classes_to_test.count())
+    {
+        failed_tests[ classes_to_test.at(current_test) ] += 
+                            QObject::tr("\n ** TIMEOUT ** \n");
+    }
+
+    //lets just assume that the test has hung - just kill the process
+    server_process->terminate();
 }
 
-/** A message has been received */
+/** A message has been received - the test has finished */
 void Client::receivedMessage()
 {
-    qDebug() << "CLIENT" << message_q->receive();
+    test_timer->stop();
     
-    message_q->send("Da iawn. A chi?");
+    bool passed;
+    QString test_output;
+    {
+        QByteArray data = message_q->receive();
+        
+        if (not data.isEmpty())
+        {
+            QDataStream ds(data);
+            ds >> passed >> test_output;
+        }
+    }
+    
+    if (passed)
+        this->testPassed();
+    else
+        this->testFailed(test_output);
 }

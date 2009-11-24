@@ -32,9 +32,16 @@
 #include "server.h"
 #include "messagequeue.h"
 
+#include "Siren/class.h"
+#include "Siren/objref.h"
+#include "Siren/hanref.h"
+#include "Siren/logger.h"
+#include "Siren/exception.h"
+
 #include <QDebug>
 
 using namespace SirenTest;
+using namespace Siren;
 
 int Server::run(int argc, char **argv)
 {
@@ -115,12 +122,66 @@ bool Server::connectClient(const QString &shmem_key, int version)
     return true;
 }
 
-/** We've received a message */
+/** We've received a message - this will be the name of a class to test */
 void Server::receivedMessage()
 {
     QByteArray message = message_q->receive();
     
-    qDebug() << "SERVER" << message;
+    QString class_to_test;
+    {
+        QDataStream ds(message);
+        ds >> class_to_test;
+    }
     
-    message_q->send("Da iawn. A chi?");
+    bool passed;
+    QString test_output;
+    
+    try
+    {
+        Class c(class_to_test);
+
+        if (not c.isConcrete())
+            passed = true;
+        else
+        {
+            Logger logger( new QTextStream(&test_output, QIODevice::WriteOnly) );
+        
+            if (c.isHandle())
+            {
+                HanRef handle = c.createHandle();
+                passed = handle.test(logger);
+            }
+            else
+            {
+                ObjRef object = c.createObject();
+                passed = object.test(logger);
+            }
+        }
+    }
+    catch(const Siren::exception &e)
+    {
+        passed = false;
+        test_output += QObject::tr("\n\nCaught unexpected exception %1, %2, "
+                                   "thrown from %3.")
+                            .arg(e.what(), e.error(), e.where());
+    }
+    catch(const std::exception &e)
+    {
+        passed = false;
+        test_output += QObject::tr("\n\nCaught unexpected exception %1.")
+                             .arg(e.what());
+    }
+    catch(...)
+    {
+        passed = false;
+        test_output += QObject::tr("\n\nCaught unknown and unexpected exception.");
+    }
+    
+    QByteArray result;
+    {
+        QDataStream ds(&result, QIODevice::WriteOnly);
+        ds << passed << test_output;
+    }
+    
+    message_q->send(result);
 }

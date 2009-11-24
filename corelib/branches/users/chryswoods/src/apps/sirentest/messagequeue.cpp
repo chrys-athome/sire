@@ -245,12 +245,12 @@ void MessageQueue::sendData(const QByteArray &data)
 }
 
 /** Receive the next message */
-void MessageQueue::receiveData()
+bool MessageQueue::receiveData()
 {    
     const int max_size = shmem->size() - 16;
     
     if (max_size <= 0)
-        return;
+        return false;
     
     qint8 *shmem_data = (qint8*)(shmem->data());
     
@@ -276,12 +276,13 @@ void MessageQueue::receiveData()
         //we've finished receiving the data
         received_queue.enqueue(partial_receive);
         partial_receive = QByteArray();
-        emit( receivedMessage() );
+        return true;
     }
     else
     {
         //immediately poll to receive the next part of the message
         QTimer::singleShot(0, this, SLOT(pollForMessages()));
+        return false;
     }
 }
 
@@ -300,6 +301,8 @@ void MessageQueue::pollForMessages()
         //giving the state of the shared memory buffer
         quint32 state = *((quint32*)(shmem->data()));
     
+        bool message_received = false;
+    
         switch(state)
         {
             case EMPTY:
@@ -315,14 +318,14 @@ void MessageQueue::pollForMessages()
             case HEADS_SEND:
             {
                 if (isTails())
-                    this->receiveData();
+                    message_received = this->receiveData();
                     
                 break;
             }
             case TAILS_SEND:
             {
                 if (isHeads())
-                    this->receiveData();
+                    message_received = this->receiveData();
                     
                 break;
             }
@@ -333,9 +336,39 @@ void MessageQueue::pollForMessages()
         }
         
         shmem->unlock();
+        
+        if (message_received)
+            emit( receivedMessage() );
     }
     catch(...)
     {
         shmem->unlock();
+        throw;
+    }
+}
+
+/** Completely clear the message buffer */
+void MessageQueue::clear()
+{
+    if (not shmem->isAttached())
+        return;
+
+    try
+    {
+        shmem->lock();
+        
+        std::memset( shmem->data(), 0, shmem->size() );
+        
+        partial_sent = QByteArray();
+        partial_receive = QByteArray();
+        send_queue.clear();
+        received_queue.clear();
+        
+        shmem->unlock();
+    }
+    catch(...)
+    {
+        //shmem->unlock();
+        throw;
     }
 }

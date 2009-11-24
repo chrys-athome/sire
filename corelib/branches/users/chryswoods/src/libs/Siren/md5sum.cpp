@@ -42,6 +42,8 @@
 
 #include "third_party/md5.h"      // CONDITIONAL_INCLUDE
 
+#include <QDebug>
+
 using namespace Siren;
 
 static const RegisterMetaType<MD5Sum> r_md5sum;

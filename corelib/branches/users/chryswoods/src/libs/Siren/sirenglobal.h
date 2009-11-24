@@ -222,9 +222,10 @@ namespace detail
 class RegisterMetaTypeBase
 {
 public:
-    RegisterMetaTypeBase(const QString &name) : type_name(name)
+    RegisterMetaTypeBase(const QString &name, bool reg=true) : type_name(name)
     {
-        RegisterMetaTypeBase::registerClassName(name);
+        if (reg)
+            RegisterMetaTypeBase::registerClassName(name);
     }
 
     ~RegisterMetaTypeBase()
@@ -271,7 +272,7 @@ public:
 
     /** Use this constructor to register a virtual class */
     RegisterMetaType( const detail::VIRTUAL_CLASS_TYPE& )
-        : detail::RegisterMetaTypeBase( T::typeName() )
+        : detail::RegisterMetaTypeBase( T::typeName(), false )
     {
         singleton = this;
     }

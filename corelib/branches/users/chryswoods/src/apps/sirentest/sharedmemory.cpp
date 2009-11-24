@@ -53,8 +53,6 @@ Q_GLOBAL_STATIC( SharedMemoryRegistry, sharedMemoryRegistry );
         any shared memory has been detached */
     void fatal_error_signal(int sig)
     {
-        qDebug() << "FATAL ERROR!";
-
         if (error_in_progress)
             raise(sig);
  
@@ -85,7 +83,6 @@ Q_GLOBAL_STATIC( SharedMemoryRegistry, sharedMemoryRegistry );
     manages to escape! */
 static void error_abort()
 {
-    qDebug() << "FATAL EXCEPTION!";
     SirenTest::detachAllSharedMemory();
 }
 
@@ -147,8 +144,6 @@ void SIREN_EXPORT detachAllSharedMemory()
     
     if (not processes->isEmpty())
     {
-        qDebug() << "KILLING CHILD PROCESSES";
-        
         for (ProcessPointers::const_iterator it = processes->constBegin();
              it != processes->constEnd();
              ++it)
@@ -157,8 +152,6 @@ void SIREN_EXPORT detachAllSharedMemory()
             {
                 if (it->data()->pid() != 0)
                 {
-                    qDebug() << "Killing" << it->data()->pid();
-                    
                     //use SIGTERM on Unix as the child has a chance
                     //of handling this signal and cleaning up
                     it->data()->terminate();
@@ -166,8 +159,6 @@ void SIREN_EXPORT detachAllSharedMemory()
             }
         }
     }
-
-    qDebug() << "DETACHING SHARED MEMORY";
 
     SharedMemoryRegistry *registry = sharedMemoryRegistry();
     

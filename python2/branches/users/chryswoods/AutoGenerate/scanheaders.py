@@ -174,6 +174,9 @@ def scanFiles(dir, module_dir, atom_properties, cg_properties,
 
     #read each file, looking for SIRE_EXPOSE_FUNCTION or SIRE_EXPOSE_CLASS
     for file in h_files + hpp_files:
+        if file.find("sirenglobal.h") != -1:
+            continue
+
         try:
             lines = open("%s/%s" % (dir,file), "r").readlines()
         except:

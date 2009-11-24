@@ -117,7 +117,7 @@ endif()
 include_directories (BEFORE ${SIRE_INCLUDE_DIR})
 
 # Sire depends on >= Qt 4.2
-find_package( Qt4 4.2.0 COMPONENTS QtCore QtSQL QtGui QtOpenGL QtWebKit )
+find_package( Qt4 4.2.0 COMPONENTS QtCore QtXml QtSQL QtGui QtOpenGL QtWebKit )
 
 if ( ${QT_QTCORE_FOUND} AND ${QT_QTSQL_FOUND} )
    include (${QT_USE_FILE})

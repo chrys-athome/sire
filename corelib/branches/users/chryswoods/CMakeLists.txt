@@ -220,10 +220,12 @@ check_function_exists( lseek64 HAVE_LSEEK64 )
 
 check_include_files( malloc/malloc.h HAVE_MALLOC_MALLOC_H )
 check_include_files( emmintrin.h HAVE_EMMINTRIN_H )
+check_include_files( execinfo.h HAVE_EXECINFO_H )
 check_function_exists( mstats HAVE_MSTATS )
 check_function_exists( mallinfo HAVE_MALLINFO )
 check_function_exists( sysctl HAVE_SYSCTL )
 check_function_exists( cbrt HAVE_CUBEROOT )
+check_symbol_exists( backtrace "execinfo.h" HAVE_BACKTRACE )
 
 #create config.h
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/build/cmake/sire_config.h.in 

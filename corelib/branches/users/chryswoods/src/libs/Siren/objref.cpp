@@ -32,6 +32,8 @@
 #include "tester.h"
 #include "logger.h"
 
+#include <QDebug>
+
 using namespace Siren;
 using namespace Siren::detail;
 

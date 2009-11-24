@@ -71,7 +71,8 @@ Tester::Tester(const Tester &other)
 /** Destructor */
 Tester::~Tester()
 {
-    this->printSummary();
+    if (not tested_class.isEmpty())
+        this->printSummary();
 }
 
 /** Copy assignment operator */

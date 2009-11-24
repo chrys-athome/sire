@@ -27,15 +27,18 @@
 \*********************************************/
 
 #include "getbacktrace.h"
+#include "siren_config.h"
 
 #include <QObject>
 #include <QString>
 #include <QRegExp>
 #include <QDebug>
 
-#ifdef _HAVE_EXECINFO_H_
-  #include <execinfo.h>
-  #include <cxxabi.h>
+#ifdef HAVE_BACKTRACE
+  #ifdef HAVE_EXECINFO_H
+    #include <execinfo.h>
+    #include <cxxabi.h>
+  #endif
 #endif
 
 namespace Siren
@@ -70,7 +73,7 @@ QStringList SIREN_EXPORT getBackTrace()
 {
     //now get the backtrace of the code at this point
     //(we can only do this if we have 'execinfo.h'
-#ifdef _HAVE_EXECINFO_H_
+#ifdef HAVE_BACKTRACE
     
     //create a void* array to hold the function addresses. We will only go at most 128 deep
     void *func_addresses[128];

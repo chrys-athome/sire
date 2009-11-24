@@ -18,4 +18,8 @@
 
 #cmakedefine HAVE_SYSCTL 1
 
+#cmakedefine HAVE_BACKTRACE 1
+
+#cmakedefine HAVE_EXECINFO_H 1
+
 #endif

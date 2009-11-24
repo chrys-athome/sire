@@ -58,6 +58,24 @@ namespace detail
 {
 
 template<class T>
+const char* getString(T value)
+{
+    return value;
+}
+
+template<>
+inline const char* getString<const char*>(const char *value)
+{
+    return value;
+}
+
+template<>
+inline const char* getString<QString>(QString value)
+{
+    return value.toAscii().constData();
+}
+
+template<class T>
 class SIRE_EXPORT ObjectRegistryT : public ObjectRegistry
 {
 
@@ -109,7 +127,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 const char* ObjectRegistryT<T>::what() const
 {
-    return T::typeName();
+    return getString( T::typeName() );
 }
 
 }
@@ -118,7 +136,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void ObjectRegistry::registerConverterFor()
 {
-    ObjectRegistry::registerConverter( T::typeName(), detail::ObjectRegistryT<T>() );
+    ObjectRegistry::registerConverter( detail::getString(T::typeName()), detail::ObjectRegistryT<T>() );
 }
 
 SIRE_END_HEADER

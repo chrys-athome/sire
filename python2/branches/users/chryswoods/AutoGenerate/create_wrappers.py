@@ -535,11 +535,12 @@ if __name__ == "__main__":
 
     if mac:
         qt_include_dirs = [ "%s/QtCore.framework/Headers" % qtdir,
+                            "%s/QtXml.framework/Headers" % qtdir,
                             "%s/QtGui.framework/Headers" % qtdir, 
                             "%s/QtOpenGL.framework/Headers" % qtdir ]
     else:
         qt_include_dirs = [ qtdir, "%s/QtCore" % qtdir, "%s/QtGui" % qtdir,
-                               "%s/QtOpenGL" % qtdir ]
+                                   "%s/QtXml" % qtdir,  "%s/QtOpenGL" % qtdir ]
 
 
     boost_include_dirs = [ boostdir ]
@@ -580,6 +581,7 @@ if __name__ == "__main__":
         functions = active_headers[header].functions()
 
         for clas in classes:
+            print "Trying to export the class %s" % clas
             export_class(mb, clas, aliases, includes, special_code)
 
         for func in functions:
