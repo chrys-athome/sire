@@ -1,0 +1,134 @@
+
+#load parameters from ProtoMS input files
+mmdb = MMDB()
+
+ProtoMS().load("oplsaa.clj", mmdb)
+ProtoMS().load("solvents.tmpl", mmdb)
+
+#load solvent waters from PDB file
+waters = PDB().load("waters.pdb")
+
+#convert the waters to rigid, single-cutgroup molecules
+waters = Molecule.create(waters, RigidMoleculeCutting())
+    
+if (waters.count() == 0):
+    raise "IOError"
+
+#all waters the same, so get the parameters from the first water
+waterclj = mmdb.getParameters(water[0])
+
+#create an intermolecular CLJ forcefield
+cljff = InterCLJFF()   # InterCLJFF really an Interface<InterCLJFF> to a local invoker
+
+cljff.set( GeometricCombiningRules() )
+cljff.add( waters, waterclj )
+
+sys = SimSystem()   # SimSystem is a Interface<InterCLJFF> to a local invoker
+
+sys.forcefield().addComponent(cljff, "CLJ")
+
+#alternatively, could do 
+# sys.forcefield().addComponent(cljff, "CLJ")
+# sys.forcefield().getComponent("CLJ").add( waters, waterclj )  # synchronous call
+# sys.forcefield().getComponent("CLJ").set( GeometricCombiningRules() )  # synchronous call
+
+# nrg = sys.forcefield().energy()  # returns total energy of this forcefield
+# nrg = sys.forcefield("simple").energy() # returns total energy of the additional, "simple" forcefield
+# nrg = sys.forcefield("reduced").energy()  # returns energy of reduced forcefield...
+
+sim0 = Simulation(sys)  # Simulation is an Interface<Simulation> to a local invoker
+
+moves = MoveList()
+moves.add( 1000 * MCMove(sys, waters) )
+moves.add( 1 * VolumeMove(sys) )
+moves.add( 1 * MTSMCMove(sys, waters, sys.forcefield(), sys.forcefield("simple")) )
+moves.setMoveChoice( RandomChoice() )
+
+# could do;  moves.setMoveChoice( MassWeightedChoice() )
+#       or;  moves.setMoveChoice( SequentialMoves() )
+#       or;  moves.setMoveChoice( MoleculeCountWeightedChoice() )  etc.
+
+actions = ActionList()
+actions.add( Simulate(moves, 50000) )
+actions.add( PrintPDB(waters) )
+
+sim0.setActions(actions)
+
+restartinfo = sim0.dump()
+
+report = sim0.run(200)  # asynchronous call - runs the list of actions 200 times
+
+print report
+
+
+## for replica exchange, could do;
+
+sim1 = sim0.clone()  #  tough - need to clone Molecules, keep a list that maps old IDs to new IDs,
+                     #  then runs through entire contents of simulation (incl. actions/moves) and 
+                     #  updates the 
+
+sim0.setLambda(0.0)
+sim1.setLambda(1.0)
+
+rem = SupraSimulation()                # Can have special 'RETISimulation' that has better 
+                                       # Job queuing logic (e.g. rem.setProcessors(availableprocs))
+rem.addSimulation( sim0, "Lambda 0" )
+rem.addSimulation( sim1, "Lambda 1" )
+
+moves = SupraMoveList()
+moves.add( 1 * RunSims(rem, rem.simulations()) )  # run the actions in each simulation
+moves.add( 1 * RETIMove(rem, rem.simulations()) ) # perform a RETI move
+moves.setMoveChoice(SequentialMoves())
+
+rem.addAction( Simulate(moves, 1) )
+rem.addAction( printPDB(rem.simulations()) )
+
+sim0.sendTo(Processor(1))
+sim1.sendTo(Processor(2))
+
+report = rem.run(200) # run action list 200 times, e.g. 200 * (50k sim moves, followed by 1 RETI move, 
+                      # followed by printing the PDB of the system)
+
+#have a queue of actions to perform on each simulation (or SupraSimulation)
+
+##############################
+
+Objects:
+
+Atom: Just contains geometric, elemental and identification information
+
+CutGroup: Just groups Atoms into logical groups
+
+BondGroup: Just contains bonding information
+
+Molecule:  Just contains geometric and bonding data about a molecule
+
+ForceField: Contains a list of molecules, and how to calculate the energy/force of those molecules
+       -- Uses Volume to calculate intermolecular distances
+
+FFGroup: Contains a list of ForceFields, grouped into a single total energy. Has functions to set
+         the volume of all ForceFields in the group
+
+System: Contains everything about the system, e.g. list of molecules, FFGroup, volume, current lambda
+        state etc. Functions to set volume and access all parts.
+        
+Moves:  Moves operate on the System, change the system atomically according to internal rules.        
+
+Simulation: Contains a System, then a set of actions that are performed in sequence whenever the 
+            simulation is 'run()'. These actions can include a MoveList, which is a list of moves
+            to perform on the system. Actions can also include editing the system, printing things
+            out etc. A System cannot be changed by anything else while it is being 'run()' by 
+            a simulation. (the Simulation thread will lock the System)
+            
+SupraSimulation: A suprasimulation is one level above a simulation, and contains multiple simulations. 
+                 (e.g. replica exchange). A SupraSimulation also has a list of actions (SupraActions)
+                 which can contain moves (SupraMoves). SupraSimulations come in many types and can 
+                 be highly specialised, e.g. RETISimulation could have a very complex scheduling
+                 system to maximise runtime and progress of replicas. 
+                 
+                 However, all a SupraSimulation can do is edit a Simulation (e.g. change molecules,
+                 change lambda etc.), get the energy of the System in the simulation, edit the 
+                 ActionList of the Simulation, and tell the Simulation to 'run()'.
+                 
+                 A SuperSimulation is also run via its own 'run()' function, which does one loop 
+                 through its ActionList (e.g. run(50) would perform 50 loops of the ActionList)

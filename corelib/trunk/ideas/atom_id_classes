@@ -1,0 +1,118 @@
+
+ala = ResName("ALA")
+ca = AtomName("CA")
+chain_b = ChainName("B")
+
+//return the first atom called 'CA' in the fourth residue
+//called 'ALA'
+atom = mol.select( (ala[3] + ca)[0] )
+
+atom = mol.select( ( (chain_b[0] + ala)[2] + ca)[0] )
+
+//return the first atom called 'CA' in the last residue
+//called 'ALA' in chain 'B'
+atom = mol.select( ((chain_b[0] + ala)[-1] + ca)[0] )
+
+//select all of the atoms called 'CA' in all of the 'ALA' 
+//residues in all of the chains called chain_b
+atoms = mol.selectAll( chain_b + ala + ca )
+
+//moves the first and second of these atoms
+atoms = atoms.move(0).translate( [1,2,3] )
+atoms = atoms.move(1).translate( [2,3,4] )
+
+//select all of the residues called 'ALA'
+residues = mol.selectAll( ala )
+
+//move the first and second of these residues
+residues = residues.move(0).translate( [1,2,3] ).move(1).translate( [2,3,4] )
+
+//combine selection and move together
+mol = mol.selectAll(ala).move(0).translate([1,2,3]).move(1).translate([2,3,4])
+
+// Manipulator<Residues,Mover> Residues::move(int idx) const
+
+// Manipulator<Mol, Type> : public Mol, public Type  <- type uses the d ptr from Mol
+
+Atom -> Single Atom
+Atoms -> Collection of Atoms in the Molecule (PartialMolecule)
+
+Residue -> Single Residue
+Residues -> Collection of Residues in the Molecule
+
+Chain -> Single Chain
+Chains -> Collection of Chains in the Molecule
+
+Segment -> Single Segment
+Segments -> Collection of Segments in the Molecule
+
+class AtomID
+   virtual CGAtomIdx index(const MoleculeInfo &molinfo) const=0;
+   
+   template<class T>
+   bool isA() const;
+   
+   template<class T>
+   const T& asA() const;
+
+class AtomIndex : public AtomID
+class CGAtomIdx : public AtomID
+ 
+class AtomIdx : public AtomID  - no auto conversion from int
+
+class AtomIdxAllowImpl : public AtomIdx  - allow auto conversion from int
+
+class AtomIndentifier - holds AtomID boost::shared_ptr
+
+now all classes that need to ID atoms can use;
+
+.move(const AtomID &atomid0, const AtomID &atomid1)
+
+and classes that return a generic atom ID can return AtomIdentifier
+
+This removes the need to have IDMolAtom
+
+Can also do the same thing for CutGroup, Residue, Segment, Molecule and MoleculeGroup,
+
+e.g. MolGroupIdentifier, MolGroupID, MolGroupIdx, MolGroupNum, MolGroupName
+     MoleculeIdentifier, MoleculeID, MoleculeIdx, MoleculeNum, MoleculeName
+     SegmentIdentifier,  SegmentID,  SegmentIdx,  SegmentNum,  SegmentName
+     CutGroupIdentifier, CutGroupID, CutGroupIdx, CutGroupNum, CutGroupName
+     ResidueIdentifier,  ResidueID,  ResidueIdx,  ResidueNum,  ResidueName
+     
+     Identifier = shared_ptr holder class
+     ID = generic ID base class
+     Idx = index class - index into a list or array
+     Num = user- or program-supplied number (takes over from MoleculeID and MoleculeGroupID,
+                                             not use MoleculeNum and MoleculeGroupNum) 
+
+If an ID is not unique, then the first matching object is returned, (e.g. first residue
+that matches ResidueName).
+
+Derived ID types also exist...
+
+MolAtomIdentifier, tuple holding a MoleculeIdentifier with an AtomIdentifier
+       - this identifies an Atom in an identified Molecule
+       
+
+Can also short circuit,
+
+CGAtomID takes CutGroupID and AtomID in constructor, but can also create class that
+is a specific overload
+
+Only guaranteed unique ID is the Idx, e.g. AtomIdx is always unique as it is the
+index of the atom in whatever container it is in.
+
+Mapping the IDs from one molecule to another is performed by functions - normally
+python supplied functions. Function takes two AtomSelections and returns a hash
+mapping the CGAtomIdxs from one molecule to the other.
+
+class MappingFunction;
+   virtual Hash<CGAtomIdx,CGAtomIdx> operator()(AtomSelection a, AtomSelection b) const=0;
+
+Allow python to overload this, so that the python implementation of this class can
+accept a python function as an argument, and it will then pass the two atom selections
+to that function (which will do type checking) and will then type check the return value.
+This will also (somehow) save the python code in the MappingFunction object, thereby 
+allowing it to be saved and restored.
+

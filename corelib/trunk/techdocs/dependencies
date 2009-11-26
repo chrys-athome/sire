@@ -1,0 +1,59 @@
+
+-------------------
+Qt
+Version >= 4
+
+Why? Main platform on which the code is written.
+Provides container classes and helps portability across 
+Windows, Linux and Mac
+
+Qt must be compiled with the QSQLITE SQL driver, and with
+openGL and threading enabled. Qt has many dependencies, which
+should be handled automatically by most platforms. In particular,
+Sire needs the Sqlite Qt driver to be compiled and installed.
+
+-------------------
+Boost
+Version ???
+
+Why? Sire makes heavy use of several Boost libaries, e.g.
+boost::python, boost::smart_ptr, boost::tuple, boost::assert,
+etc. This is a really excellent collection of libraries that
+no self-respecting C++ programmer should be without :-)
+
+-------------------
+Python
+Version >= 2.4
+
+Why? Required to run the program. Sire contains an embedded
+Python parser, and exposes a lot of classes to Python.
+
+-------------------
+GNU Scientific Library (GSL)
+Version ???
+
+Why? Used by SireMaths to perform matrix diagonalisation. Provides
+convienient access to BLAS and LAPACK type functionality. I will eventually
+integrate this more with the program and expose to python.
+
+-------------------
+BLAS/CBLAS
+Version ???
+
+Why? Dependency of GSL.
+
+-------------------
+GiNaC
+Version >= 1.3
+
+Why? GiNaC is a symbolic algebra system. This will be used by Sire
+to allow arbitrary functions to be used for internal energy functions, 
+and for the combination of forcefield components into total energies
+or forces.
+
+-------------------
+CLN
+Version ???
+
+Why? Dependency of GiNaC
+

@@ -1,0 +1,250 @@
+
+TIP4PFF
+
+Cumalative changes...
+
+Same as InterCLJFF Speed == 5171ms
+
+Copy CLJFF functions into Tip4PFF  Speed = 5333 ms
+
+Explicitly calculate CLJPairMatrix Speed = 5307 ms
+
+Only get CLJ for one molecule Speed = 5027
+
+Use double nrg return for accumalating energies  Speed = 5121 ms
+
+Use only a single scale factor  Speed = 5207 ms
+
+Skip mol with mol (just do cutgroup with cutgroup)  Speed = 4973
+
+Fully skipping mol with mol  Speed = 4915
+
+Using .constData()[i]  Speed = 4876
+
+Inline energy calculation  Speed = 4958
+
+Hard-coded cutoff distance  Speed = 4866
+
+Hard-coded switching function  Speed = 4831
+
+Switching over to Cartesian Space. Compare InterCLJFF with Tip4PFF
+and recording the difference in time;
+
+Benchmark:  2681 vs. 2405,  Tip4PFF is 276 ms faster
+
+Moving array access for mol0 outside inner loop:
+            2701 vs. 2355, Tip4PFF is 346 ms faster
+            
+Not calling workspace and switchingFunction() in the loop
+            2830 vs. 2452, Tip4PFF is 378 ms faster
+
+Compiling with -O2 rather than without any optimisation (woops!)
+             809 vs. 643, Tip4PFF is 163 ms faster
+
+Compiling with -O2 on my laptop (Pentium M 1.4 GHz)
+            1304 vs. 1139, Tip4PFF is 165 ms faster
+
+This compiles to Sire(480) taking 565 ms. I thus need to improve the
+speed of Sire by at least two times!
+
+Moving cutgroup beyond() test out of function into pair loop
+            1304 vs. 1107, Tip4PFF is 197 ms faster
+
+Only storing CoordGroups and only one copy of parameters...
+            1348 vs. 1082, Tip4PFF is 266 ms faster
+
+Changing CoordGroup to have inline access to coordinate pointer (by exposing CoordGroupPvt)
+            1266 vs. 1042, Tip4PFF is 224 ms faster
+
+There is still quite a lot of work still to do...
+
+Working back on my work computer again...
+
+Optimising placement of conditions...
+            838 vs. 594, Tip4PFF is 244 ms faster
+
+Optimising placement of feather factor
+            752 vs. 718, Tip4PFF is 34 ms faster
+
+Using SharedPolyPointer
+            746 vs. 709, Tip4PFF is 37 ms faster
+
+Making energy function into a static member function of Tip4PFF
+            749 vs. 653, Tip4PFF is 96 ms faster
+
+Dropping the switching function from Tip4PFF (as it is now all explicit)
+            772 vs. 562, Tip4PFF is 210 ms faster
+
+Cleaning up referencing of CLJPairMatrix
+            782 vs. 564, Tip4PFF is 218 ms faster
+
+Giving a pointer to Coordinate array in CoordGroupBase
+            725 vs. 626, Tip4PFF is 99 ms faster
+
+Giving an AABox directly to the CoordGroupBase
+            727 vs. 625, Tip4PFF is 102 ms faster
+
+Performing AABox test directly
+            772 vs. 582, Tip4PFF is 190 ms faster
+
+Copying AABoxes into their own Vector (so contiguous in memory)
+            718 vs. 513, Tip4PFF is 205 ms faster
+
+Performing all distance calculations explicitly
+            732 vs. 504, Tip4PFF is 228 ms faster
+
+Performing calculation using local copy of coordinates in a QVector
+            732 vs. 510, Tip4PFF is 222 ms faster
+
+No redimension of distmat and cljmat
+            734 vs. 485, Tip4PFF is 249 ms faster
+
+Redimension pairmatrix all of the time
+            776 vs. 541, Tip4PFF is 235 ms faster
+
+Calculate distances explicitly
+            782 vs. 502, Tip4PFF is 280 ms faster
+
+Getting rid of extraneous energy
+            782 vs. 503, Tip4PFF is 279 ms faster
+
+Calculating CLJ parameters in main pair loop
+            710 vs. 431, Tip4PFF is 279 ms faster
+
+Removed now unnecessary workspace
+            783 vs. 540, Tip4PFF is 243 ms faster
+
+Passing direct pointers to the coordinates and clj parameters
+            713 vs. 516, Tip4PFF is 197 ms faster
+
+Reverted CoordGroup back to its original state
+            734 vs. 434, Tip4PFF is 300 ms faster
+
+Added single-cutgroup block to CLJFF
+            783 vs. 515, Tip4PFF is 268 ms faster
+
+Reverted PairMatrix
+            715 vs. 517, Tip4PFF is 198 ms faster
+
+Skipping multi-cutgroup for single cutgroup
+            672 vs. 433, Tip4PFF is 239 ms faster
+
+Moving sphere cut test further up the call chain in InterCLJFF
+            682 vs. 433, Tip4PFF is 249 ms faster
+
+Reverted CLJFF and InterCLJFF
+            737 vs. 434, Tip4PFF is 303 ms faster
+
+Adding a single cutgroup block to CLJFF thus appears to be sensible
+            697 vs. 432, Tip4PFF is 265 ms faster
+            (so adding single CutGroup block has knocked ~40ms off the time)
+
+Switching both CombiningRules and SwitchingFunction over to use SharedPolyPointer
+            684 vs. 434, Tip4PFF is 250 ms faster
+
+Calculating distance rather that invDist2
+            733 vs. 432, Tip4PFF is 300 ms faster
+
+Calculating invDist rather than invDist2
+            776 vs. 434, Tip4PFF is 343 ms faster
+
+Calculating dist2 rather than invDist2 
+            690 vs. 434, Tip4PFF is 255 ms faster
+
+Calculating invDist2
+            677 vs. 432. Tip4PFF is 243 ms faster
+
+Calculating invDistance2() seems to be best
+
+Skipping update of pairmatrix if sizes don't change
+            674 vs. 434, Tip4PFF is 240 ms faster
+
+Inlined combining rules in CLJPair
+            647 vs. 397, TIP4PFF is 250 ms faster
+
+Testing speed of parts. Setting calculateEnergy(mol,mol) to 0.0
+means speed is 17 ms. e.g. calling calculateEnergy(mol,mol) for all
+water pairs and extracting and summing the result takes 17 ms.
+
+Changing beyond() so do beyond(0.3) now takes 131ms. This means that 
+doing sphere test for all water pairs takes 131-17 = 114 ms.
+
+Returning after calculating distances takes 279ms, so distance calculations
+for all pairs within the cutoff are taking 279-131 = 148ms
+
+Skipping the evaluation of the energy (but doing everything else, so just
+really doing combination of clj parameters) takes 437 ms, so combining
+CLJ parameters is taking 437 - 279 = 158 ms!
+
+Checking this - now returning after just calculating CLJ pairs - no 
+distance calculation, takes 389 ms, so combining CLJ takes 389-131 = 258 ms
+
+There is definitely something wrong with the CLJ parameter combination...
+
+Even with geometric combining rules I find that it takes forever...!
+
+Time for entire calculation without combining rules is 441 ms, again confirming
+about 230 ms for combining rules!
+
+Moving the cljmatrix.redimension() out of the pair loop gives 428 ms, so redimensioning
+each time is costing only 13 ms.
+
+Skipping coulomb calculation (again, no combining rules) gives 379 ms
+Skipping LJ calculation (") gives 420 ms
+Skipping both gives 349 ms
+
+Skipping coulomb calculation (with combining rules) gives 590 ms
+Skipping LJ calculation (") gives 712 ms
+Skipping both gives 559 ms
+
+removing references to CLJPairMatrix and CLJ parameters from inner loop takes
+(with no coulomb or LJ calculation) 580 ms
+
+Now back at home on my laptop
+(my laptop calculates the full calculation at 1126 vs. 725, so Tip4PFF is 401 ms faster)
+
+Removing the calculation of CLJ pairs reduces the calculation to 835 ms
+
+Skipping energy (just doing space.beyond()) takes 200 ms.
+
+Skipping all but distance calculation takes 575 ms  - distances thus take 375 ms.
+
+Setting beyond() to 0.2 now takes 186 ms.
+
+Tip4PFF - skip coulomb - takes 602ms
+        - skip LJ - takes 688ms
+
+Tip4PFF - faked the charge and sigma values - takes 512 ms
+
+Doing the same with InterCLJFF only reduces the time to 825 ms
+
+Setting beyond() to 0.3 for Tip4PFF reduces the time to 59 ms. 
+
+Now back at work with full Tip4PFF and InterCLJFF
+        645 vs. 396, Tip4PFF is 259 ms faster
+
+Changing InterCLJFF so that it uses separate arrays for the Charge and LJ parameters...
+        988 vs. 344, Tip4PFF is 644 ms faster
+
+Simplifying python wrapping of CombiningRules gives
+        980 vs. 396, Tip4PFF is 584 ms faster
+
+Simplifying geometric combining rules to remove intermediates gives
+        677 vs. 395, Tip4PFF is 282 ms faster
+
+Simplifying the python wrapping of SwitchingFunction gives
+        669 vs. 394, Tip4PFF is 275 ms faster
+
+Calculating combined parameters with no intermediates in Tip4PFF gives
+        662 vs. 249, Tip4PFF is 413 ms faster
+
+Calculating combined parameters with no intermediates in InterCLJFF gives
+        478 vs. 249, Tip4PFF is 229 ms faster
+
+Calculating chg2 gives
+        471 vs. 253, Tip4PFF is 218 ms faster
+
+Removing all references to combining rules gives
+        455 vs. 249, Tip4PFF is 206 ms faster
+
+
