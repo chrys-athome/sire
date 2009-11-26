@@ -39,6 +39,8 @@ using namespace Siren;
 Q_GLOBAL_STATIC_WITH_ARGS( Logger, getDefaultLogger, 
                            (new QTextStream(stdout, QIODevice::WriteOnly)) );
 
+static const RegisterHandle<Logger> r_logger;
+
 /** Constructor - by default this writes to standard output */
 Logger::Logger() : ImplementsHandle<Logger, Handles<QTextStream> >()
 {
@@ -124,11 +126,6 @@ QString Logger::toString() const
 uint Logger::hashCode() const
 {
     return toInt( &(resource()) );
-}
-
-bool Logger::test(Logger &logger) const
-{
-    return false;
 }
 
 /** Write the passed text to the logger. */

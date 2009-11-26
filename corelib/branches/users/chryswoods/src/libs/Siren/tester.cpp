@@ -36,7 +36,7 @@
 
 using namespace Siren;
 
-static const RegisterMetaType<Tester> r_tester;
+static const RegisterObject<Tester> r_tester;
 
 /** Null constructor - this will write to the default logger */
 Tester::Tester() 
@@ -57,6 +57,22 @@ Tester::Tester(const Object &object)
 Tester::Tester(const Object &object, Logger &log)
        : Implements<Tester,Object>(), Interfaces<Tester,Mutable>(),
          logger(log), tested_class(object.what()),
+         current_test(0), num_current_errors(0), num_errors(0)
+{}
+
+/** Construct the tester for the passed handle - this 
+    will write any output to the default logger */
+Tester::Tester(const Handle &handle)
+       : Implements<Tester,Object>(), Interfaces<Tester,Mutable>(),
+         tested_class(handle.what()),
+         current_test(0), num_current_errors(0), num_errors(0)
+{}
+
+/** Construct the tester for the passed handle, writing
+    any output to the passed logger */
+Tester::Tester(const Handle &handle, Logger &log)
+       : Implements<Tester,Object>(), Interfaces<Tester,Mutable>(),
+         logger(log), tested_class(handle.what()),
          current_test(0), num_current_errors(0), num_errors(0)
 {}
 

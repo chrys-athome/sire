@@ -443,7 +443,7 @@ StreamRegistry::~StreamRegistry()
 //////// Implementation of Stream
 ////////
 
-static const RegisterMetaType<Stream> r_stream( VIRTUAL_CLASS );
+static const RegisterHandle<Stream> r_stream( VIRTUAL_CLASS );
 
 /** Null Constructor */
 Stream::Stream()

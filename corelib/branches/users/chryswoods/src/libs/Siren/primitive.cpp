@@ -31,6 +31,7 @@
 
 #include "primitive.h"
 #include "logger.h"
+#include "tester.h"
 
 #include "Siren/errors.h"
 
@@ -40,8 +41,7 @@ using namespace Siren;
 ////////// Implementation of String
 //////////
 
-static const RegisterMetaType<String> r_string;
-static const RegisterMetaType<StringObject> r_string_object;
+static const RegisterPrimitive<String> r_string;
 
 /** Null constructor */
 String::String() : Primitive<String>()
@@ -84,11 +84,6 @@ String::operator const QString&() const
     return text;
 }
 
-QString String::typeName()
-{
-    return "Siren::String";
-}
-
 QString String::toString() const
 {
     return text;
@@ -122,8 +117,7 @@ void String::stream(Stream &s)
 ////////// Implementation of Number
 //////////
 
-static const RegisterMetaType<Number> r_number;
-static const RegisterMetaType< PrimitiveObject<Number> > r_number_object;
+static const RegisterPrimitive<Number> r_number;
 
 /** Null constructor */
 Number::Number() : Primitive<Number>()
@@ -212,11 +206,6 @@ bool Number::operator!=(const Number &other) const
     return not Number::operator==(other);
 }
 
-QString Number::typeName()
-{
-    return "Siren::Number";
-}
-
 QString Number::toString() const
 {
     if (is_integer)
@@ -236,7 +225,22 @@ uint Number::hashCode() const
 
 bool Number::test(Logger &logger) const
 {
-    return true;
+    Tester tester(*this, logger);
+    
+    try
+    {
+        tester.nextTest();
+    
+        tester.expect_equal(
+            QObject::tr("Number.getClass() equals Class(\"Siren::Number\")"),
+            CODELOC, this->getClass(), Class( Number::typeName() ) );
+    }
+    catch(const Siren::exception &e)
+    {
+        tester.unexpected_error(e);
+    }
+
+    return tester.allPassed();;
 }
 
 bool Number::test() const

@@ -42,7 +42,7 @@
 
 using namespace Siren;
 
-static const RegisterMetaType<XMLStream> r_xmlstream;
+static const RegisterHandle<XMLStream> r_xmlstream;
 
 /////////
 ///////// Implementation of XMLStream::Document
@@ -937,11 +937,6 @@ QString XMLStream::toString() const
         return QObject::tr("XMLStream(=saving=)");
     else
         return QObject::tr("XMLStream(=loading=)");
-}
-
-bool XMLStream::test(Logger &logger) const
-{
-    return false;
 }
 
 /** Stream a logical value. These are represented using;

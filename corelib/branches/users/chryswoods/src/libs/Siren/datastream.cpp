@@ -43,6 +43,8 @@ typedef QHash<const QDataStream*,WeakHandle> DSRegistryType;
 Q_GLOBAL_STATIC( QMutex, registryMutex )
 Q_GLOBAL_STATIC( DSRegistryType, datastreamRegistry );
 
+static const RegisterHandle<DataStream> r_datastream;
+
 void DataStream::registerDataStream()
 {
     ///// Register this DataStream against a global registry
@@ -204,11 +206,6 @@ QString DataStream::toString() const
         return QObject::tr("DataStream(=saving=)");
     else
         return QObject::tr("DataStream(=loading=)");
-}
-
-bool DataStream::test(Logger &logger) const
-{
-    return false;
 }
 
 /** Stream a logical value */

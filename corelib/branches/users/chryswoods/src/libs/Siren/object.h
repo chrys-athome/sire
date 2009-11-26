@@ -42,6 +42,13 @@ SIREN_BEGIN_HEADER
 namespace Siren
 {
 class Object;
+}
+
+QDataStream& operator<<(QDataStream&, const Siren::Object&);
+QDataStream& operator>>(QDataStream&, Siren::Object&);
+
+namespace Siren
+{
 class Class;
 
 class None;
@@ -284,11 +291,11 @@ protected:
     
     static void throwInvalidCast(const QString &from_type, const QString &to_type);
 
-    static Class* registerConcreteClass( const detail::RegisterMetaTypeBase *r,
+    static Class* registerConcreteClass( const RegisterMetaType *r,
                                          const Class &base_class,
                                          const QStringList &interfaces);
                                         
-    static Class* registerVirtualClass( const detail::RegisterMetaTypeBase *r,
+    static Class* registerVirtualClass( const RegisterMetaType *r,
                                         const Class &base_class,
                                         const QStringList &interfaces );
 
@@ -560,8 +567,7 @@ const Class& Extends<Derived,Base>::createTypeInfo()
             const Class &base_class = Base::createTypeInfo();
             QStringList interfaces = Derived::listInterfaces();
 
-            const detail::RegisterMetaTypeBase *r
-                    = RegisterMetaType<Derived>::getRegistration();
+            const RegisterMetaType *r = RegisterObject<Derived>::getRegistration();
                     
             if (not r)
                 Object::throwUnregisteredMetaTypeError( Derived::typeName() );
@@ -711,8 +717,7 @@ const Class& Implements<Derived,Base>::createTypeInfo()
             const Class &base_class = Base::createTypeInfo();
             QStringList interfaces = Derived::listInterfaces();
 
-            const detail::RegisterMetaTypeBase *r
-                    = RegisterMetaType<Derived>::getRegistration();
+            const RegisterMetaType *r = RegisterObject<Derived>::getRegistration();
                     
             if (not r)
                 Object::throwUnregisteredMetaTypeError( Derived::typeName() );

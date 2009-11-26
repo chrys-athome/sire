@@ -40,7 +40,7 @@ using namespace Siren::detail;
 ///////// Implementation of Handle
 /////////
 
-static const RegisterMetaType<Handle> r_handle( VIRTUAL_CLASS );
+static const RegisterHandle<Handle> r_handle( VIRTUAL_CLASS );
 
 /** Return the mutex that can be used as a lock
     on all registration */
@@ -67,19 +67,19 @@ void Handle::throwUnregisteredMetaTypeError(const QString &type_name)
 }
 
 /** Function called by 'ImplementsHandle' to register a concrete type */
-Class* Handle::registerConcreteClass( const RegisterMetaTypeBase *r,
+Class* Handle::registerConcreteClass( const RegisterMetaType *r,
                                       const Class &base_class,
                                       const QStringList &interfaces )
 {
-    return new Class( r, base_class, interfaces, true );
+    return new Class( r, base_class, interfaces );
 }
 
 /** Function called by 'ExtendsHandle' to register a virtual type */
-Class* Handle::registerVirtualClass( const RegisterMetaTypeBase *r,
+Class* Handle::registerVirtualClass( const RegisterMetaType *r,
                                      const Class &base_class,
                                      const QStringList &interfaces )
 {
-    return new Class( r, base_class, interfaces, false );
+    return new Class( r, base_class, interfaces );
 }
 
 /** Create and return the Class object for Siren::Handle */

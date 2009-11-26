@@ -46,7 +46,7 @@
 
 using namespace Siren;
 
-static const RegisterMetaType<MD5Sum> r_md5sum;
+static const RegisterObject<MD5Sum> r_md5sum;
 
 /** Generate the null MD5Sum */
 MD5Sum::MD5Sum() : Implements<MD5Sum,Object>()
@@ -56,21 +56,21 @@ MD5Sum::MD5Sum() : Implements<MD5Sum,Object>()
 }
 
 /** Generate the MD5 sum for the buffer 'buffer' */
-MD5Sum MD5Sum::fromData(const QByteArray &buffer)
-{
-    MD5Sum r;
-
-    r.generate(buffer.data(),buffer.size());
-    
-    return r;
-}
-
-/** Generate the MD5 sum for the buffer 'buffer' */
 MD5Sum MD5Sum::fromData(const char *buffer, unsigned int sz)
 {
     MD5Sum r;
 
     r.generate(buffer,sz);
+    
+    return r;
+}
+
+/** Generate the MD5 sum for the buffer 'buffer' */
+MD5Sum MD5Sum::fromData(const QByteArray &buffer)
+{
+    MD5Sum r;
+
+    r.generate(buffer.data(),buffer.size());
     
     return r;
 }
@@ -181,12 +181,12 @@ bool MD5Sum::test(Logger &logger) const
         {
             tester.nextTest();
 
-            // MD5 "Hello World" == e59ff97941044f85df5297e1c302d260
-            QString test_string = QLatin1String("Hello World");
+            // MD5 "Hello World\n" == e59ff97941044f85df5297e1c302d260
+            QString test_string = QLatin1String("Hello World\n");
         
             MD5Sum r = MD5Sum::fromText(test_string);
             
-            tester.expect_equal( QObject::tr("MD5 sum of 'Hello World'"),
+            tester.expect_equal( QObject::tr("MD5 sum of 'Hello World\n'"),
                                  CODELOC, 
                                  r.toString(), 
                                  QString("e59ff97941044f85df5297e1c302d260") );

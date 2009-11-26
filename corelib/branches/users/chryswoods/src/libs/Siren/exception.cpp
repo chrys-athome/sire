@@ -111,7 +111,7 @@ QString SIREN_EXPORT getPIDString()
 ////////// Implementation of exception
 //////////
 
-static const RegisterMetaType<exception> r_exception( VIRTUAL_CLASS );
+static const RegisterObject<exception> r_exception( VIRTUAL_CLASS );
 
 /** Construct a null exception */
 exception::exception() : Extends<exception,Object>()

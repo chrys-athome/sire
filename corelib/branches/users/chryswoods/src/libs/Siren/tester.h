@@ -33,6 +33,7 @@
 #include "logger.h"
 #include "mutable.h"
 #include "tostring.h"
+#include "primitive.h"
 
 SIREN_BEGIN_HEADER
 
@@ -55,6 +56,14 @@ public:
     
     Tester(const Object &object);
     Tester(const Object &object, Logger &logger);
+    
+    Tester(const Handle &handle);
+    Tester(const Handle &handle, Logger &logger);
+    
+    template<class T>
+    Tester(const Primitive<T> &primitive);
+    template<class T>
+    Tester(const Primitive<T> &primitive, Logger &logger);
     
     Tester(const Tester &other);
     
@@ -148,6 +157,26 @@ private:
 };
 
 #ifndef SIREN_SKIP_INLINE_FUNCTIONS
+
+/** Construct the tester for the passed object - this 
+    will write any output to the default logger */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+Tester::Tester(const Primitive<T>&)
+       : Implements<Tester,Object>(), Interfaces<Tester,Mutable>(),
+         tested_class( Primitive<T>::typeName() ),
+         current_test(0), num_current_errors(0), num_errors(0)
+{}
+
+/** Construct the tester for the passed object, writing
+    any output to the passed logger */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+Tester::Tester(const Primitive<T>&, Logger &log)
+       : Implements<Tester,Object>(), Interfaces<Tester,Mutable>(),
+         logger(log), tested_class( Primitive<T>::typeName() ),
+         current_test(0), num_current_errors(0), num_errors(0)
+{}
 
 /** Call this to test if 'obj0' and 'obj1' are equal */
 template<class S, class T>

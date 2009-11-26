@@ -31,6 +31,8 @@
 
 #include "objref.h"
 #include "stream.h"
+#include "datastream.h"
+#include "class.h"
 
 SIREN_BEGIN_HEADER
 
@@ -45,6 +47,11 @@ class Primitive;
 
 template<class T>
 Siren::Stream& operator&(Siren::Stream&, Siren::Primitive<T>&);
+
+template<class T>
+QDataStream& operator<<(QDataStream&, const Siren::Primitive<T>&);
+template<class T>
+QDataStream& operator>>(QDataStream&, Siren::Primitive<T>&);
 
 namespace Siren
 {
@@ -73,6 +80,10 @@ public:
     ~Primitive();
     
     operator ObjRef() const;
+    
+    static QString typeName();
+
+    Class getClass() const;
 
     void load(Stream &s);
     void save(Stream &s) const;
@@ -146,8 +157,6 @@ public:
     
     operator const QString&() const;
     
-    static QString typeName();
-    
     QString toString() const;
     
     uint hashCode() const;
@@ -191,8 +200,6 @@ public:
     
     bool operator==(const Number &other) const;
     bool operator!=(const Number &other) const;
-    
-    static QString typeName();
     
     QString toString() const;
     
@@ -242,12 +249,32 @@ SIREN_OUTOFLINE_TEMPLATE
 Primitive<T>::~Primitive()
 {}
   
+/** Return the type name of the primitive type */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+QString Primitive<T>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<T>() );
+}
+  
 /** Allow automatic casting to an Object reference */
 template<class T>
 SIREN_OUTOFLINE_TEMPLATE
 Primitive<T>::operator ObjRef() const
 {
     return ObjRef( PrimitiveObject<T>(static_cast<const T&>(*this)) );
+}
+
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+Class Primitive<T>::getClass() const
+{
+    const RegisterMetaType *metatype = RegisterPrimitive<T>::getRegistration();
+    
+    if (metatype)
+        return Class( metatype->typeName() );
+    else
+        return Class( QMetaType::typeName( qMetaTypeId<T>() ) );
 }
 
 template<class T>
@@ -432,16 +459,35 @@ Siren::Stream& operator&(Siren::Stream &s, Siren::Primitive<T> &object)
     return s;
 }
 
+template<class T>
+QDataStream& operator<<(QDataStream &ds, const Siren::Primitive<T> &object)
+{
+    Siren::DataStream sds(ds);
+    object.save(sds);
+    return ds;
+}
+
+template<class T>
+QDataStream& operator>>(QDataStream &ds, Siren::Primitive<T> &object)
+{
+    Siren::DataStream sds(ds);
+    object.load(sds);
+    return ds;
+}
+
 #endif // SIREN_SKIP_INLINE_FUNCTIONS
 
-Q_DECLARE_METATYPE( Siren::String);
-Q_DECLARE_METATYPE( Siren::Number);
+Q_DECLARE_METATYPE( Siren::String );
+Q_DECLARE_METATYPE( Siren::Number );
 
 Q_DECLARE_METATYPE( Siren::StringObject )
 Q_DECLARE_METATYPE( Siren::NumberObject )
 
 SIREN_EXPOSE_CLASS( Siren::String )
 SIREN_EXPOSE_CLASS( Siren::Number )
+
+SIREN_EXPOSE_ALIAS( Siren::Primitive<Siren::String>, Siren::StringBase )
+SIREN_EXPOSE_ALIAS( Siren::Primitive<Siren::Number>, Siren::NumberBase )
 
 SIREN_EXPOSE_ALIAS( Siren::PrimitiveObject<Siren::String>, Siren::StringObject )
 SIREN_EXPOSE_ALIAS( Siren::PrimitiveObject<Siren::Number>, Siren::NumberObject )

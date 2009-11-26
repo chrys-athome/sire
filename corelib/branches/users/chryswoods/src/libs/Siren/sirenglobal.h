@@ -216,19 +216,14 @@ namespace Siren
 namespace Siren
 {
 
-namespace detail
+/** This is the base class of all metatype registrations */
+class RegisterMetaType
 {
+protected:
+    enum { IS_OBJECT = 1, IS_HANDLE = 2, IS_PRIMITIVE = 3 };
 
-class RegisterMetaTypeBase
-{
 public:
-    RegisterMetaTypeBase(const QString &name, bool reg=true) : type_name(name)
-    {
-        if (reg)
-            RegisterMetaTypeBase::registerClassName(name);
-    }
-
-    ~RegisterMetaTypeBase()
+    ~RegisterMetaType()
     {}
 
     const QString& typeName() const
@@ -236,71 +231,211 @@ public:
         return type_name;
     }
 
+    bool isObject() const
+    {
+        return sub_type == IS_OBJECT;
+    }
+
+    bool isHandle() const
+    {
+        return sub_type == IS_HANDLE;
+    }
+
+    bool isPrimitive() const
+    {
+        return sub_type == IS_PRIMITIVE;
+    }
+
+    bool isConcrete() const
+    {
+        return is_concrete;
+    }
+
+protected:
+    RegisterMetaType(int subtype, const QString &name, 
+                     bool reg=true) : type_name(name), sub_type(subtype)
+    {
+        if (reg)
+        {
+            is_concrete = true;
+            RegisterMetaType::registerClassName(name, this);
+        }
+        else
+            is_concrete = false;
+    }
+
 private:
-    static void registerClassName(const QString &name);
+    static void registerClassName(const QString &name, 
+                                  const RegisterMetaType *metatype);
 
     QString type_name;
+    qint8 sub_type;
+    bool is_concrete;
 };
 
+
+namespace detail
+{
 struct VIRTUAL_CLASS_TYPE{ };
 struct NONSTREAMING_CLASS_TYPE{ };
-
 } // end of namespace detail
 
 static const detail::VIRTUAL_CLASS_TYPE VIRTUAL_CLASS = detail::VIRTUAL_CLASS_TYPE();
 static const detail::NONSTREAMING_CLASS_TYPE NONSTREAMING_CLASS = 
                                                 detail::NONSTREAMING_CLASS_TYPE();
 
-/** This is used to register the type 'T' - this
-    needs to be called once for each public type.
+/** This is used to register a Siren::Object of type 'T' - this
+    needs to be called once for each public Siren::Object
 
     @author Christopher Woods
 */
 template<class T>
-class RegisterMetaType : public detail::RegisterMetaTypeBase
+class RegisterObject : public RegisterMetaType
 {
 public:
-    /** Use this constructor to register a concrete class */
-    RegisterMetaType()
-        : detail::RegisterMetaTypeBase( QMetaType::typeName( qMetaTypeId<T>() ) )
+    /** Use this constructor to register a concrete Object */
+    RegisterObject()
+        : RegisterMetaType( 
+                    RegisterMetaType::IS_OBJECT,
+                    QMetaType::typeName( qMetaTypeId<T>() ) )
     {
         qRegisterMetaType<T>(this->typeName().toAscii().constData());
-        //qRegisterMetaTypeStreamOperators<T>(this->typeName().toAscii().constData());
+        qRegisterMetaTypeStreamOperators<T>(this->typeName().toAscii().constData());
         
         singleton = this;
     }
 
-    /** Use this constructor to register a virtual class */
-    RegisterMetaType( const detail::VIRTUAL_CLASS_TYPE& )
-        : detail::RegisterMetaTypeBase( T::typeName(), false )
+    /** Use this constructor to register a virtual Object */
+    RegisterObject( const detail::VIRTUAL_CLASS_TYPE& )
+        : RegisterMetaType( RegisterMetaType::IS_OBJECT, T::typeName(), false )
     {
-        singleton = this;
-    }
-
-    /** Use this constructor to register a concrete class that can't be streamed */
-    RegisterMetaType( const detail::NONSTREAMING_CLASS_TYPE& )
-        : detail::RegisterMetaTypeBase( QMetaType::typeName( qMetaTypeId<T>() ) )
-    {
-        qRegisterMetaType<T>(this->typeName().toAscii().constData());
         singleton = this;
     }
 
     /** Destructor */
-    ~RegisterMetaType()
+    ~RegisterObject()
     {}
 
-    static const detail::RegisterMetaTypeBase* getRegistration()
+    static const RegisterMetaType* getRegistration()
     {
         return singleton;
     }
 
 private:
     /** Global shared pointer to this singleton object */
-    static const detail::RegisterMetaTypeBase *singleton;
+    static const RegisterMetaType *singleton;
 };
 
 template<class T>
-const detail::RegisterMetaTypeBase* RegisterMetaType<T>::singleton = 0;
+const RegisterMetaType* RegisterObject<T>::singleton = 0;
+
+/** This is used to register a Siren::Handle of type 'T' - this
+    needs to be called once for each public Siren::Handle
+
+    @author Christopher Woods
+*/
+template<class T>
+class RegisterHandle : public RegisterMetaType
+{
+public:
+    /** Use this constructor to register a concrete Handle */
+    RegisterHandle()
+        : RegisterMetaType( 
+                    RegisterMetaType::IS_HANDLE,
+                    QMetaType::typeName( qMetaTypeId<T>() ) )
+    {
+        qRegisterMetaType<T>(this->typeName().toAscii().constData());
+        singleton = this;
+    }
+
+    /** Use this constructor to register a virtual Handle */
+    RegisterHandle( const detail::VIRTUAL_CLASS_TYPE& )
+        : RegisterMetaType( RegisterMetaType::IS_HANDLE, T::typeName(), false )
+    {
+        singleton = this;
+    }
+
+    /** Destructor */
+    ~RegisterHandle()
+    {}
+
+    static const RegisterMetaType* getRegistration()
+    {
+        return singleton;
+    }
+
+private:
+    /** Global shared pointer to this singleton object */
+    static const RegisterMetaType *singleton;
+};
+
+template<class T>
+const RegisterMetaType* RegisterHandle<T>::singleton = 0;
+
+template<class T> class PrimitiveObject;
+
+/** This is the base class of RegisterPrimitive<T> */
+class RegisterPrimitiveBase : public RegisterMetaType
+{
+public:
+    ~RegisterPrimitiveBase()
+    {}
+    
+    const RegisterMetaType* getObjectRegistration() const
+    {
+        return primitive_object;
+    }
+    
+protected:
+    RegisterPrimitiveBase(int subtype, const QString &name)
+            : RegisterMetaType(subtype, name, true)
+    {}
+
+    const RegisterMetaType *primitive_object;
+};
+
+/** This is used to register a Siren::Primitive<T> derived type 
+    of type 'T' - this needs to be called once for each public Siren::Primitive
+
+    @author Christopher Woods
+*/
+template<class T>
+class RegisterPrimitive : public RegisterPrimitiveBase
+{
+public:
+    /** Use this constructor to register a Primitive */
+    RegisterPrimitive()
+        : RegisterPrimitiveBase( 
+                    RegisterMetaType::IS_PRIMITIVE,
+                    QMetaType::typeName( qMetaTypeId<T>() ) )
+    {
+        qRegisterMetaType<T>(this->typeName().toAscii().constData());
+        qRegisterMetaTypeStreamOperators<T>(this->typeName().toAscii().constData());
+        
+        singleton = this;
+        primitive_object = &reg_object;
+    }
+
+    /** Destructor */
+    ~RegisterPrimitive()
+    {}
+
+    static const RegisterMetaType* getRegistration()
+    {
+        return singleton;
+    }
+
+private:
+    /** The registration class for the PrimitiveObject<T> class that
+        can be used to hold and create this primitive */
+    RegisterObject< PrimitiveObject<T> > reg_object;
+
+    /** Global shared pointer to this singleton object */
+    static const RegisterMetaType *singleton;
+};
+
+template<class T>
+const RegisterMetaType* RegisterPrimitive<T>::singleton = 0;
 
 } // end of namespace Siren
 

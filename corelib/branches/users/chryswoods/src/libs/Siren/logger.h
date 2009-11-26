@@ -67,10 +67,7 @@ public:
     ///////////////////////
     
     QString toString() const;
-    
     uint hashCode() const;
-
-    bool test(Logger &logger) const;
 
     ///////////////////////
     // Logger            //

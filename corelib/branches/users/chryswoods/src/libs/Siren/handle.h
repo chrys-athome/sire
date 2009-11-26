@@ -183,11 +183,11 @@ protected:
     
     static void throwInvalidCast(const QString &from_type, const QString &to_type);
 
-    static Class* registerConcreteClass( const detail::RegisterMetaTypeBase *r,
+    static Class* registerConcreteClass( const RegisterMetaType *r,
                                          const Class &base_class,
                                          const QStringList &interfaces);
                                         
-    static Class* registerVirtualClass( const detail::RegisterMetaTypeBase *r,
+    static Class* registerVirtualClass( const RegisterMetaType *r,
                                         const Class &base_class,
                                         const QStringList &interfaces );
 
@@ -709,8 +709,7 @@ const Class& ExtendsHandle<Derived,Base>::createTypeInfo()
             const Class &base_class = Base::createTypeInfo();
             QStringList interfaces = Derived::listInterfaces();
 
-            const detail::RegisterMetaTypeBase *r
-                    = RegisterMetaType<Derived>::getRegistration();
+            const RegisterMetaType *r = RegisterHandle<Derived>::getRegistration();
                     
             if (not r)
                 Handle::throwUnregisteredMetaTypeError( Derived::typeName() );
@@ -860,8 +859,7 @@ const Class& ImplementsHandle<Derived,Base>::createTypeInfo()
             const Class &base_class = Base::createTypeInfo();
             QStringList interfaces = Derived::listInterfaces();
 
-            const detail::RegisterMetaTypeBase *r
-                    = RegisterMetaType<Derived>::getRegistration();
+            const RegisterMetaType *r = RegisterHandle<Derived>::getRegistration();
                     
             if (not r)
                 Handle::throwUnregisteredMetaTypeError( Derived::typeName() );

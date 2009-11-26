@@ -27,7 +27,8 @@
 \*********************************************/
 
 #include "getbacktrace.h"
-#include "siren_config.h"
+
+#include "siren_config.h"  // CONDITIONAL_INCLUDE
 
 #include <QObject>
 #include <QString>
@@ -36,8 +37,8 @@
 
 #ifdef HAVE_BACKTRACE
   #ifdef HAVE_EXECINFO_H
-    #include <execinfo.h>
-    #include <cxxabi.h>
+    #include <execinfo.h>  // CONDITIONAL_INCLUDE
+    #include <cxxabi.h>    // CONDITIONAL_INCLUDE
   #endif
 #endif
 

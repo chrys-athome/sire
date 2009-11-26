@@ -323,8 +323,7 @@ const Class& ImplementsException<Derived,Base>::createTypeInfo()
             const Class &base_class = Base::createTypeInfo();
             QStringList interfaces = Derived::listInterfaces();
 
-            const detail::RegisterMetaTypeBase *r
-                    = RegisterMetaType<Derived>::getRegistration();
+            const RegisterMetaType *r = RegisterObject<Derived>::getRegistration();
                     
             if (not r)
                 Object::throwUnregisteredMetaTypeError( Derived::typeName() );

@@ -78,7 +78,6 @@ public:
     
     uint hashCode() const;
     QString toString() const;
-    bool test(Logger &logger) const;
     
 protected:
     void startItem(const QString &type_name);

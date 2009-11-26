@@ -42,7 +42,6 @@
 
 typedef QVector< QPointer<QSharedMemory> > SharedMemoryRegistry;
 
-Q_GLOBAL_STATIC( QMutex, registryMutex );
 Q_GLOBAL_STATIC( SharedMemoryRegistry, sharedMemoryRegistry );
 
 #ifdef Q_OS_UNIX

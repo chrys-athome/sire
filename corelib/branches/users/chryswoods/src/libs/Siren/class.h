@@ -113,16 +113,15 @@ private:
     friend class Object;   // so can call these constructors
     friend class Handle;   // so can call these constructors
     
-    Class(const detail::RegisterMetaTypeBase *r);
+    Class(const RegisterMetaType *r);
 
-    Class(const detail::RegisterMetaTypeBase *r, 
-          const Class &base_class, const QStringList &interfaces, 
-          bool is_concrete);
+    Class(const RegisterMetaType *r, 
+          const Class &base_class, const QStringList &interfaces);
           
     void buildInheritedTypes();
           
     /** Pointer to the metatype for this class */
-    const detail::RegisterMetaTypeBase *metatype;
+    const RegisterMetaType *metatype;
           
     /** Pointer to this types superclass (null if this has
         no superclass) */
@@ -134,18 +133,6 @@ private:
     /** The complete set of all types inherited from and 
         implemented in this type */
     QSet<QString> inherited_types;
-    
-    /** Whether or not this is a concrete type */
-    bool is_concrete;
-    
-    /** Whether or not this is derived from Siren::Object */
-    bool is_object;
-    
-    /** Whether or not this is derived from Siren::Handle */
-    bool is_handle;
-    
-    /** Whether or not this is a primitive type */
-    bool is_primitive;
 };
 
 /** Return whether or not this class implements the type 'T' */

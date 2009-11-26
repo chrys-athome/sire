@@ -41,29 +41,32 @@
 
 using namespace Siren;
 
-static const RegisterMetaType<Class> r_class;
+static const RegisterObject<Class> r_class;
 
-Q_GLOBAL_STATIC( QStringList, classRegistry );
+typedef QHash<QString,const RegisterMetaType*> MetaTypeRegistry;
 
-void detail::RegisterMetaTypeBase::registerClassName(const QString &class_name)
+Q_GLOBAL_STATIC( MetaTypeRegistry, metaTypeRegistry );
+
+void RegisterMetaType::registerClassName(const QString &class_name,
+                                         const RegisterMetaType *metatype)
 {
-    QStringList *reg = classRegistry();
+    MetaTypeRegistry *reg = metaTypeRegistry();
     
     if (not reg)
         qDebug() << "CANNOT REGISTER" << class_name;
     else
-        reg->append(class_name);
+        reg->insert(class_name, metatype);
 }
 
 /** Return the complete (sorted) list of all of the class types
     that have been registered using RegisterMetaType<T> */
 QStringList Class::registeredTypes()
 {
-    QStringList *reg = classRegistry();
+    MetaTypeRegistry *reg = metaTypeRegistry();
     
     if (reg)
     {
-        QStringList l = *reg;
+        QStringList l = reg->keys();
         qSort(l);
         return l;
     }
@@ -77,24 +80,7 @@ void Class::buildInheritedTypes()
         return;
 
     if (super_class)
-    {
-        is_object = super_class->isObject();
-        is_handle = super_class->isHandle();
-        is_primitive = super_class->isPrimitive();
-    
         inherited_types = super_class->inherited_types;
-    }
-    else
-    {
-        if (metatype->typeName() == "Siren::Object")
-            is_object = true;
-            
-        else if (metatype->typeName() == "Siren::Handle")
-            is_handle = true;
-            
-        else
-            is_primitive = true;
-    }
 
     inherited_types.insert( metatype->typeName() );
     
@@ -104,36 +90,32 @@ void Class::buildInheritedTypes()
     }
 }
 
-typedef QHash<QString,const Class*> ClassRegistryType;
+typedef QHash< QString,boost::shared_ptr<Class> > ClassRegistryType;
 
 Q_GLOBAL_STATIC( ClassRegistryType, registered_types );
 
 /** Null constructor */
 Class::Class() 
-      : Implements<Class, Object>(), metatype(0), super_class(0),
-        is_concrete(false), is_object(false), is_handle(false), is_primitive(false)
-
+      : Implements<Class, Object>(), metatype(0), super_class(0)
 {}
 
-/** Internal constructor used by Object to create its class type */
-Class::Class(const detail::RegisterMetaTypeBase *r)
-      : Implements<Class, Object>(), metatype(r), super_class(0),
-        is_concrete(false), is_object(false), is_handle(false), is_primitive(false)
+/** Internal constructor used by Object, Handle and 
+    primitive types to create their class types */
+Class::Class(const RegisterMetaType *r)
+      : Implements<Class, Object>(), metatype(r), super_class(0)
 {
     buildInheritedTypes();
-    registered_types()->insert( this->name(), this );
+    registered_types()->insert( this->name(), boost::shared_ptr<Class>(new Class(*this)));
 }
 
 /** Internal constructor used by Object to create a derived class type */
-Class::Class(const detail::RegisterMetaTypeBase *r, 
-             const Class &base_class, const QStringList &interfaces, 
-             bool concrete)
+Class::Class(const RegisterMetaType *r, 
+             const Class &base_class, const QStringList &interfaces)
       : Implements<Class, Object>(), metatype(r), super_class(&base_class),
-        interface_types(interfaces), is_concrete(concrete),
-        is_object(false), is_handle(false), is_primitive(false)
+        interface_types(interfaces)
 {
     buildInheritedTypes();
-    registered_types()->insert( this->name(), this );
+    registered_types()->insert( this->name(), boost::shared_ptr<Class>(new Class(*this)));
 }
 
 /** Construct the class type object for the passed object */
@@ -146,7 +128,8 @@ Class::Class(const Object &object) : Implements<Class, Object>()
 
     \throw Siren::unknown_type
 */
-Class::Class(const QString &type_name) : Implements<Class, Object>()
+Class::Class(const QString &type_name) 
+      : Implements<Class, Object>(), metatype(0), super_class(0)
 {
     if (type_name.isEmpty())
     {
@@ -158,29 +141,68 @@ Class::Class(const QString &type_name) : Implements<Class, Object>()
     }
     else
     {
-        //get the type that represents this name
-        int id = QMetaType::type( type_name.toLatin1().constData() );
-
-        if ( id == 0 or not QMetaType::isRegistered(id) )
-            throw Siren::unknown_type( QObject::tr(
-                  "Cannot create the Class for type \"%1\". "
-                  "This could be because either this is not a concrete type, "
-                  "or that the library or module containing "
-                  "this type has been loaded and that it has been registered "
-                  "with QMetaType.").arg(type_name), CODELOC );
-
-        //create a default-constructed object of this type
-        boost::shared_ptr<Object> ptr;
+        MetaTypeRegistry *reg = metaTypeRegistry();
         
-        ptr.reset( static_cast<Object*>(QMetaType::construct(id,0)) );
+        if (reg)
+        {
+            if (reg->contains(type_name))
+            {
+                const RegisterMetaType *mt = reg->value(type_name);
+                
+                if (not mt->isConcrete())
+                {
+                    //this is a hack - until we create an object
+                    //of this type we can't know it's inheritance
+                    //hierarchy, so here we just create a basic Class
+                    //object that just knows its RegisterMetaType object
+                    metatype = mt; 
+                }
+                else if (mt->isObject())
+                {
+                    //create an object of this type so that we get
+                    //the full class hierarchy
+                    int typ = QMetaType::type(type_name.toLatin1().constData());
 
-        if (ptr.get() == 0)
-            throw Siren::program_bug( QObject::tr(
-                    "Could not create an object of type \"%1\" despite "
-                    "this type having been registered with QMetaType. This is "
-                    "a program bug!!!").arg(type_name), CODELOC );
+                    std::auto_ptr<Object> ptr( static_cast<Object*>(
+                                                        QMetaType::construct(typ)) );
+                                
+                    if (ptr.get() == 0)
+                        throw Siren::program_bug( QObject::tr(
+                            "Unable to create an Object of type %1, ID = %2.")
+                                .arg(type_name).arg(typ), CODELOC );
+                                
+                    this->operator=( ptr->getClass() );
+                }
+                else if (mt->isHandle())
+                {
+                    //create a Handle of this type so that we get
+                    //the full class hierarchy
+                    int typ = QMetaType::type(type_name.toLatin1().constData());
 
-        this->operator=( ptr->getClass() );
+                    std::auto_ptr<Handle> ptr( static_cast<Handle*>(
+                                                        QMetaType::construct(typ)) );
+                                
+                    if (ptr.get() == 0)
+                        throw Siren::program_bug( QObject::tr(
+                            "Unable to create a Handle of type %1, ID = %2.")
+                                .arg(type_name).arg(typ), CODELOC );
+                                
+                    this->operator=( ptr->getClass() );
+                }
+                else if (mt->isPrimitive())
+                {
+                    this->operator=( Class(mt) );
+                }
+            }
+        }
+        else 
+            throw Siren::unknown_type( QObject::tr(
+              "Cannot create the Class for type \"%1\". "
+              "This could be because either this is not a concrete type, "
+              "or that the library or module containing "
+              "this type has been loaded, or that the programmer "
+              "has not registered the type with RegisterObject, "
+              "RegisterHandle or RegisterPrimitive.").arg(type_name), CODELOC );
     }
 }
 
@@ -189,11 +211,7 @@ Class::Class(const Class &other)
       : Implements<Class, Object>(other),
         metatype(other.metatype), super_class(other.super_class),
         interface_types(other.interface_types),
-        inherited_types(other.inherited_types),
-        is_concrete(other.is_concrete),
-        is_object(other.is_object),
-        is_handle(other.is_handle),
-        is_primitive(other.is_primitive)
+        inherited_types(other.inherited_types)
 {}
 
 /** Destructor */
@@ -211,10 +229,6 @@ Class& Class::operator=(const Class &other)
         super_class = other.super_class;
         interface_types = other.interface_types;
         inherited_types = other.inherited_types;
-        is_concrete = other.is_concrete;
-        is_object = other.is_object;
-        is_handle = other.is_handle;
-        is_primitive = other.is_primitive;
     }
     
     return *this;
@@ -223,7 +237,7 @@ Class& Class::operator=(const Class &other)
 /** Comparison operator */
 bool Class::operator==(const Class &other) const
 {
-    return metatype == other.metatype and super_class == other.super_class;
+    return metatype == other.metatype;
 }
 
 /** Comparison operator */
@@ -245,13 +259,13 @@ QString Class::toString() const
 {
     QStringList t;
     
-    if (is_handle)
+    if (isHandle())
         t.append( QObject::tr("handle") );
     
-    if (is_object)
+    if (isObject())
         t.append( QObject::tr("object") );
         
-    if (is_primitive)
+    if (isPrimitive())
         t.append( QObject::tr("primitive") );
 
     return QObject::tr("Class( %1, %2 )").arg(this->name(), t.join(":"));
@@ -293,30 +307,63 @@ QStringList Class::interfaces() const
 */
 ObjRef Class::createObject() const
 {
-    if (not this->isObject())
+    if (metatype == 0)
+        return ObjRef();
+
+    else if (this->isHandle())
         throw Siren::invalid_operation( QObject::tr(
-                "You cannot create an Object of type %1 as this class "
-                "is not derived from Siren::Object.")
+                "You cannot create an object of type %1 as this class "
+                "is derived from Siren::Handle - you must use "
+                "Class::createHandle() to create objects of this type.")
                     .arg(this->name()), CODELOC );
 
-    else if (not is_concrete)
+    else if (not isConcrete())
         throw Siren::invalid_operation( QObject::tr(
                 "You cannot create an object of type %1 as it is not "
                 "concrete (it is virtual).")
                     .arg(this->name()), CODELOC );
 
-    int type_id = QMetaType::type( this->name().toAscii().constData() );
     
-    if (not type_id)
-        throw Siren::program_bug( QObject::tr(
-                "You cannot create an object of type %1 as it does not "
-                "appear to be registered with QMetaType - has the programmer "
-                "registered this type using RegisterMetaType<%1>()?")
-                    .arg(this->name()), CODELOC );
+    if (isPrimitive())
+    {
+        //we'll create a PrimitiveObject instead so that we have the
+        //benefits of a virtual class
+        const RegisterPrimitiveBase *prim_mt 
+                        = static_cast<const RegisterPrimitiveBase*>(metatype);
+        
+        const RegisterMetaType *prim_obj_mt = prim_mt->getObjectRegistration();
+        
+        if (not prim_obj_mt)
+            throw Siren::program_bug( QObject::tr(
+                "Why does the Primitive registration for %1 not have a "
+                "PrimitiveObject registration?").arg(this->name()), CODELOC );
+                
+        int type_id = QMetaType::type( prim_obj_mt->typeName().toAscii().constData() );
+        
+        if (not type_id)
+            throw Siren::program_bug( QObject::tr(
+                "Why hasn't the PrimitiveObject<T> for %1 not been "
+                "registered with QMetaType?").arg(prim_obj_mt->typeName()), CODELOC );
 
-    Object *obj = static_cast<Object*>( QMetaType::construct(type_id) );
+        Object *obj = static_cast<Object*>( QMetaType::construct(type_id) );
+        
+        return ObjRef(obj);
+    }
+    else
+    {
+        int type_id = QMetaType::type( this->name().toAscii().constData() );
     
-    return ObjRef(obj);
+        if (not type_id)
+            throw Siren::program_bug( QObject::tr(
+                    "You cannot create an object of type %1 as it does not "
+                    "appear to be registered with QMetaType - has the programmer "
+                    "registered this type using RegisterObject<%1>()?")
+                        .arg(this->name()), CODELOC );
+
+        Object *obj = static_cast<Object*>( QMetaType::construct(type_id) );
+    
+        return ObjRef(obj);
+    }
 }
 
 /** Create a default-constructed object of this class.
@@ -333,7 +380,7 @@ HanRef Class::createHandle() const
                 "is not derived from Siren::Handle.")
                     .arg(this->name()), CODELOC );
 
-    else if (not is_concrete)
+    else if (not isConcrete())
         throw Siren::invalid_operation( QObject::tr(
                 "You cannot create an object of type %1 as it is not "
                 "concrete (it is virtual).")
@@ -374,31 +421,43 @@ void Class::stream(Stream &s)
 /** Return whether or not we can create an object of this type */
 bool Class::canCreate() const
 {
-    return is_concrete;
+    return this->isConcrete();
 }
 
 /** Return whether or not this is a concrete type */
 bool Class::isConcrete() const
 {
-    return is_concrete;
+    if (metatype)
+        return metatype->isConcrete();
+    else
+        return true;
 }
 
 /** Return whether or not this is a type derived from Siren::Object */
 bool Class::isObject() const
 {
-    return is_object;
+    if (metatype)
+        return metatype->isObject();
+    else
+        return true;
 }
 
 /** Return whether or not this is a type derived from Siren::Handle */
 bool Class::isHandle() const
 {
-    return is_handle;
+    if (metatype)
+        return metatype->isHandle();
+    else
+        return false;
 }
 
 /** Return whether or not this is a Primitive type */
 bool Class::isPrimitive() const
 {
-    return is_primitive;
+    if (metatype)
+        return metatype->isPrimitive();
+    else
+        return false;
 }
 
 /** Return whether or not this class can be cast to 'classname' */

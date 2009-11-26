@@ -45,7 +45,7 @@ using namespace Siren::detail;
 //////// Implementation of Object
 ////////
 
-static const RegisterMetaType<Object> r_object( VIRTUAL_CLASS );
+static const RegisterObject<Object> r_object( VIRTUAL_CLASS );
 
 const Class* Object::class_typeinfo = 0;
 
@@ -150,19 +150,19 @@ void Object::throwUnregisteredMetaTypeError(const QString &type_name)
 }
 
 /** Function called by 'Implements' to register a concrete type */
-Class* Object::registerConcreteClass( const RegisterMetaTypeBase *r,
+Class* Object::registerConcreteClass( const RegisterMetaType *r,
                                       const Class &base_class,
                                       const QStringList &interfaces )
 {
-    return new Class( r, base_class, interfaces, true );
+    return new Class( r, base_class, interfaces );
 }
 
 /** Function called by 'Implements' to register a virtual type */
-Class* Object::registerVirtualClass( const RegisterMetaTypeBase *r,
+Class* Object::registerVirtualClass( const RegisterMetaType *r,
                                      const Class &base_class,
                                      const QStringList &interfaces )
 {
-    return new Class( r, base_class, interfaces, false );
+    return new Class( r, base_class, interfaces );
 }
 
 /** Create and return the Class object for Siren::Object */
@@ -227,7 +227,7 @@ void Object::private_assertCanCast(const QString &class_type) const
 ////////// Implementation of None
 //////////
 
-static const RegisterMetaType<None> r_none;
+static const RegisterObject<None> r_none;
 
 /** Constructor */
 None::None() : Implements<None,Object>()
@@ -336,3 +336,20 @@ bool None::test(Logger &logger) const
     return tester.allPassed();
 }
 
+/** Stream function for all object */
+QDataStream SIREN_EXPORT &operator<<(QDataStream &ds, const Object &object)
+{
+    DataStream sds(ds);
+    object.save(sds);
+    
+    return ds;
+}
+
+/** Stream function for all object */
+QDataStream SIREN_EXPORT &operator>>(QDataStream &ds, Object &object)
+{
+    DataStream sds(ds);
+    object.load(sds);
+    
+    return ds;
+}
