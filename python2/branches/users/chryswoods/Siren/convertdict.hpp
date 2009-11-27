@@ -29,14 +29,14 @@
 #ifndef PYWRAP_SIREPY_CONVERTDICT_HPP
 #define PYWRAP_SIREPY_CONVERTDICT_HPP
 
-#include "sireglobal.h"
+#include "Siren/sirenglobal.h"
 
 #include <boost/python.hpp>
 #include <boost/tuple/tuple.hpp>
 
 namespace bp = boost::python;
 
-SIRE_BEGIN_HEADER
+SIREN_BEGIN_HEADER
 
 /** This struct provides the from-Python conversion from a dict
     to a dict or hash-like container of type 'C' (e.g. QHash, QMap) */
@@ -166,6 +166,6 @@ void register_dict()
                                         bp::type_id<C>() );
 }
 
-SIRE_END_HEADER
+SIREN_END_HEADER
 
 #endif

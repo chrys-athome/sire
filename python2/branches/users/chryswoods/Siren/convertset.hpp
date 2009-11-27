@@ -29,14 +29,14 @@
 #ifndef PYWRAP_SIREPY_CONVERTSET_HPP
 #define PYWRAP_SIREPY_CONVERTSET_HPP
 
-#include "sireglobal.h"
+#include "Siren/sirenglobal.h"
 
 #include <boost/python.hpp>
 #include <boost/tuple/tuple.hpp>
 
 namespace bp = boost::python;
 
-SIRE_BEGIN_HEADER
+SIREN_BEGIN_HEADER
 
 /** This struct provides the from-Python conversion from a list or
     tuple to a list-like container of type 'C' (e.g. QSet) */
@@ -198,6 +198,6 @@ void register_set()
                                         bp::type_id<C>() );
 }
 
-SIRE_END_HEADER
+SIREN_END_HEADER
 
 #endif

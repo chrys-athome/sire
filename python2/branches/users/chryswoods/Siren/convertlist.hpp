@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2009  Christopher Woods
+  *  Copyright (C) 2006  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,31 +26,33 @@
   *
 \*********************************************/
 
-#ifndef PYWRAP_SIREPY_PAIR_HPP
-#define PYWRAP_SIREPY_PAIR_HPP
+#ifndef PYWRAP_SIREPY_CONVERTLIST_HPP
+#define PYWRAP_SIREPY_CONVERTLIST_HPP
 
-#include "sireglobal.h"
+#include "Siren/sirenglobal.h"
 
 #include <boost/python.hpp>
-#include <utility>
+#include <boost/tuple/tuple.hpp>
 
 namespace bp = boost::python;
 
-SIRE_BEGIN_HEADER
+SIREN_BEGIN_HEADER
 
 /** This struct provides the from-Python conversion from a list or
-    tuple to a pair of type std::pair<S,T> */
-template<class S, class T>
-struct from_py_pair
+    tuple to a list-like container of type 'C' (e.g. QVector, QList) */
+template<class C>
+struct from_py_list
 {
+    typedef typename C::value_type T;
+
     /** Constructor - register the conversion functions
         for this type */
-    from_py_pair()
+    from_py_list()
     {
         boost::python::converter::registry::push_back(
             &convertible,
             &construct,
-            bp::type_id< std::pair<S,T> >());
+            bp::type_id< C >());
     }
 
     /** Test whether or not it is possible to convert the PyObject
@@ -66,14 +68,12 @@ struct from_py_pair
             //how many elements are there?
             int n = PyTuple_Size(obj_ptr);
 
-            if (n != 2)
-                return 0;
-
-            if (not bp::extract<S>(t[0]).check())
-                return 0;
-
-            if (not bp::extract<T>(t[1]).check())
-                return 0;
+            //can they all be converted to type 'T'?
+            for (int i=0; i<n; ++i)
+            {
+                if (not bp::extract<T>(t[i]).check())
+                    return 0;
+            }
 
             //the tuple is ok!
             return obj_ptr;
@@ -87,14 +87,12 @@ struct from_py_pair
             //how many elements are there?
             int n = PyList_Size(obj_ptr);
 
-            if (n != 2)
-                return 0;
-
-            if (not bp::extract<S>(l[0]).check())
-                return 0;
-
-            if (not bp::extract<T>(l[0]).check())
-                return 0;
+            //can all of the elements be converted to type 'T'?
+            for (int i=0; i<n; ++i)
+            {
+                if (not bp::extract<T>(l[i]).check())
+                    return 0;
+            }
 
             //the list is ok!
             return obj_ptr;
@@ -117,16 +115,20 @@ struct from_py_pair
 
             //locate the storage space for the result
             void* storage =
-                ( (bp::converter::rvalue_from_python_storage< std::pair<S,T> >*)data )->storage.bytes;
+                ( (bp::converter::rvalue_from_python_storage<C>*)data )->storage.bytes;
 
             //create the T container
-            new (storage) std::pair<S,T>();
+            new (storage) C();
 
-            std::pair<S,T> *container = static_cast<std::pair<S,T>*>(storage);
+            C *container = static_cast<C*>(storage);
 
             //add all of the elements from the tuple - get the number of elements in the tuple
-            container->first = bp::extract<S>(t[0])();
-            container->second = bp::extract<T>(t[1])();
+            int n = PyTuple_Size(obj_ptr);
+
+            for (int i=0; i<n; ++i)
+            {
+                container->append( bp::extract<T>(t[i])() );
+            }
 
             data->convertible = storage;
         }
@@ -137,43 +139,55 @@ struct from_py_pair
 
             //locate the storage space for the result
             void* storage =
-                ( (bp::converter::rvalue_from_python_storage< std::pair<S,T> >*)data )->storage.bytes;
+                ( (bp::converter::rvalue_from_python_storage<C>*)data )->storage.bytes;
 
             //create the T container
-            new (storage) std::pair<S,T>();
+            new (storage) C();
 
-            std::pair<S,T> *container = static_cast<std::pair<S,T>*>(storage);
+            C *container = static_cast<C*>(storage);
 
             //add all of the elements from the tuple - get the number of elements in the tuple
-            container->first = bp::extract<S>(l[0])();
-            container->second = bp::extract<T>(l[1])();
+            int n = PyList_Size(obj_ptr);
+
+            for (int i=0; i<n; ++i)
+            {
+                container->append( bp::extract<T>(l[i])() );
+            }
 
             data->convertible = storage;
         }
     }
 };
 
-template<class S, class T>
-struct to_py_pair
+template<class C>
+struct to_py_list
 {
-    static PyObject* convert(const std::pair<S,T> &cpp_pair)
+    static PyObject* convert(const C &cpp_list)
     {
-        bp::tuple python_tuple = bp::make_tuple( cpp_pair.first, cpp_pair.second );
+        bp::list python_list;
 
-        return bp::incref( python_tuple.ptr() );
+        //add all items to the python dictionary
+        for (typename C::const_iterator it = cpp_list.begin();
+             it != cpp_list.end();
+             ++it)
+        {
+            python_list.append(*it);
+        }
+
+        return bp::incref( python_list.ptr() );
     }
 };
 
-template<class S, class T>
-void register_pair()
+template<class C>
+void register_list()
 {
-    bp::to_python_converter< std::pair<S,T>, to_py_pair<S,T> >();
+    bp::to_python_converter< C, to_py_list<C> >();
 
-    bp::converter::registry::push_back( &from_py_pair<S,T>::convertible,
-                                        &from_py_pair<S,T>::construct,
-                                        bp::type_id< std::pair<S,T> >() );
+    bp::converter::registry::push_back( &from_py_list<C>::convertible,
+                                        &from_py_list<C>::construct,
+                                        bp::type_id<C>() );
 }
 
-SIRE_END_HEADER
+SIREN_END_HEADER
 
 #endif

@@ -33,9 +33,9 @@
 #include "SireUnits/dimensions.h"
 #include "SireUnits/temperature.h"
 
-#include "generalunit.h"
+#include "register_unit_conversion.hpp"
 
-#include "SireMM/distancerestraint.h"
+//#include "SireMM/distancerestraint.h"
 
 using namespace SireUnits;
 using namespace SireUnits::Dimension;
@@ -73,6 +73,6 @@ void register_SireUnits_dimensions()
     register_dimension< Potential >();
     register_dimension< Capacitance >();
 
-    register_dimension< SireMM::HarmonicDistanceForceConstant >();
+    //register_dimension< SireMM::HarmonicDistanceForceConstant >();
 
 }

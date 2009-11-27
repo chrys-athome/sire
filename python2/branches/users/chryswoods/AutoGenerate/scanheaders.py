@@ -102,6 +102,7 @@ class HeaderInfo:
         self._metatypes = []
 
     def addClass(self, classname):
+        print "Adding %s" % classname
         self._classes.append(classname)
 
     def addFunction(self, func):
@@ -115,6 +116,8 @@ class HeaderInfo:
         self._metatypes.append(classname)
 
     def addAlias(self, classname, alias):
+        alias = alias.replace(" ","_")
+        print "Aliasing %s to %s..." % (classname, alias)
         self._aliases[classname] = alias
 
     def addProperty(self, prop, propbase):
@@ -141,10 +144,12 @@ class HeaderInfo:
     def hasProperties(self):
         return len(self._properties) > 0
 
-match_class = r"SIRE[N?]_EXPOSE_CLASS\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
-match_alias = r"SIRE[N?]_EXPOSE_ALIAS\(\s*\n*\s*\(?([<>,\-\s\w\d:]+)\)?\s*\n*,\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
-match_function = r"SIRE[N?]_EXPOSE_FUNCTION\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
-match_property = r"SIRE[N?]_EXPOSE_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
+match_class = r"SIREN*_EXPOSE_CLASS\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
+match_primitive = r"SIREN*_EXPOSE_PRIMITIVE\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
+match_alias_prim = r"SIREN*_EXPOSE_ALIAS_PRIMITIVE\(\s*\n*\s*\(?([<>,\-\s\w\d:]+)\)?\s*\n*,\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
+match_alias = r"SIREN*_EXPOSE_ALIAS\(\s*\n*\s*\(?([<>,\-\s\w\d:]+)\)?\s*\n*,\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
+match_function = r"SIREN*_EXPOSE_FUNCTION\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
+match_property = r"SIREN*_EXPOSE_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
 match_atom_property = r"SIRE_EXPOSE_ATOM_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
 match_res_property = r"SIRE_EXPOSE_RESIDUE_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
 match_cg_property = r"SIRE_EXPOSE_CUTGROUP_PROPERTY\(\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*,\s*\n*\s*\(?([<>,\s\w\d:]+)\)?\s*\n*\s*\)"
@@ -189,7 +194,7 @@ def scanFiles(dir, module_dir, atom_properties, cg_properties,
                 active_files[file] = HeaderInfo(file, dir, module_dir)
 
             active_files[file].addClass(m.groups()[0].strip())
-            exposed_classes.append(m.groups()[0].strip())
+            exposed_classes.append(m.groups()[0].replace(" ","").strip())
 
         for m in re.finditer(match_alias, text):
             if file not in active_files:
@@ -197,7 +202,50 @@ def scanFiles(dir, module_dir, atom_properties, cg_properties,
 
             active_files[file].addClass(m.groups()[0].strip())
             active_files[file].addAlias(m.groups()[0].strip(), m.groups()[1].strip())
-            exposed_classes.append(m.groups()[0].strip())
+            exposed_classes.append(m.groups()[0].replace(" ","").strip())
+
+        for m in re.finditer(match_alias_prim, text):
+            if file not in active_files:
+                active_files[file] = HeaderInfo(file, dir, module_dir)
+
+            name = m.groups()[0].strip()
+            alias = m.groups()[1].strip()
+            base_name = "Siren::Primitive< %s >" % name
+            object_name = "Siren::PrimitiveObject< %s >" % name
+            base_alias = "%sBase" % alias
+            object_alias = "%sObject" % alias
+
+            active_files[file].addClass(name)
+            active_files[file].addClass(base_name)
+            active_files[file].addClass(object_name)
+
+            active_files[file].addAlias(name, alias)
+            active_files[file].addAlias(base_name, base_alias)
+            active_files[file].addAlias(object_name, object_alias)
+
+            exposed_classes.append(name.replace(" ",""))
+            exposed_classes.append(base_name.replace(" ",""))
+            exposed_classes.append(object_name.replace(" ",""))
+
+        for m in re.finditer(match_primitive, text):
+            if file not in active_files:
+                active_files[file] = HeaderInfo(file, dir, module_dir)
+
+            name = m.groups()[0].strip()
+            base_name = "Siren::Primitive< %s >" % name
+            object_name = "Siren::PrimitiveObject< %s >" % name
+            base_alias = "%sBase" % name
+            object_alias = "%sObject" % name
+
+            active_files[file].addClass(name)
+            active_files[file].addClass(base_name)
+            active_files[file].addClass(object_name)
+            active_files[file].addAlias(base_name, base_alias)
+            active_files[file].addAlias(object_name, object_alias)
+
+            exposed_classes.append(name.replace(" ",""))
+            exposed_classes.append(base_name.replace(" ",""))
+            exposed_classes.append(object_name.replace(" ",""))
 
         for m in re.finditer(match_function, text):
             if file not in active_files:

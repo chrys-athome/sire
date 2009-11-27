@@ -31,7 +31,6 @@ add_library (Qt ${WRAPQT_SOURCES})
 
 target_link_libraries (Qt
                        ${QT_QTCORE_LIBRARY}
-                       SIRE_SireBase
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}
                       )
@@ -45,9 +44,6 @@ set_target_properties (Qt
                          PREFIX "_"
                          SUFFIX ${PYTHON_MODULE_EXTENSION}
                       )
-
-include( LimitSirePythonExportSymbols )
-export_this_symbol_only( "init_Qt" "_init_Qt" )
 
 # installation
 set( INSTALLDIR ${SIRE_PYTHON}/Sire/Qt )

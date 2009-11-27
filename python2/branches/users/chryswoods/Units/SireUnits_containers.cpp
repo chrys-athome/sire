@@ -34,15 +34,15 @@
 
 #include <boost/tuple/tuple.hpp>
 
-#include "Helpers/convertlist.hpp"
-#include "Helpers/convertdict.hpp"
-#include "Helpers/convertset.hpp"
-#include "Helpers/tuples.hpp"
-#include "Base/convertpackedarray.hpp"
+#include "Siren/convertlist.hpp"
+#include "Siren/convertdict.hpp"
+#include "Siren/convertset.hpp"
+#include "Siren/tuples.hpp"
+//#include "Base/convertpackedarray.hpp"
 
 #include "SireUnits/dimensions.h"
 
-#include "SireBase/packedarray2d.hpp"
+//#include "SireBase/packedarray2d.hpp"
 
 using namespace SireUnits;
 
@@ -50,6 +50,6 @@ using boost::python::register_tuple;
 
 void register_SireUnits_containers()
 {
-    register_PackedArray< SireBase::PackedArray2D<Dimension::Charge> >();
-    register_PackedArray< SireBase::PackedArray2D<Dimension::Mass> >();
+    //register_PackedArray< SireBase::PackedArray2D<Dimension::Charge> >();
+    //register_PackedArray< SireBase::PackedArray2D<Dimension::Mass> >();
 }

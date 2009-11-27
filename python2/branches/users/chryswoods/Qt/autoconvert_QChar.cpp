@@ -34,7 +34,7 @@
 #include <QRegExp>
 #include <wchar.h>
 
-#include "Helpers/str.hpp"
+#include "Siren/str.hpp"
 
 using namespace boost::python;
 

@@ -23,7 +23,6 @@ set ( WRAPUNITS_SOURCES
 
       _Units.main.cpp
      
-      generalunit.cpp
       sireunits_dimensions.cpp
       _Units_global_variables.pyman.cpp
 
@@ -44,9 +43,7 @@ set_target_properties (Units
 		       )
 		       
 target_link_libraries (Units
-                       SirePython2
                        SIRE_SireUnits
-                       SIRE_SireBase
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}
                       )

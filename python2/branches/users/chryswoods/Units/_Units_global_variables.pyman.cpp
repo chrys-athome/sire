@@ -60,29 +60,55 @@ void register_man_global_variables()
 
     scope().attr("angstrom") = angstrom;
 
+    scope().attr("angstroms") = angstroms;
+
     scope().attr("picometer") = picometer;
+
+    scope().attr("picometers") = picometers;
 
     scope().attr("nanometer") = nanometer;
 
+    scope().attr("nanometers") = nanometers;
+
     scope().attr("micrometer") = micrometer;
+
+    scope().attr("micrometers") = micrometers;
 
     scope().attr("millimeter") = millimeter;
 
+    scope().attr("millimeters") = millimeters;
+
     scope().attr("centimeter") = centimeter;
+
+    scope().attr("centimeters") = centimeters;
 
     scope().attr("meter") = meter;
 
+    scope().attr("meters") = meters;
+
     scope().attr("kilometer") = kilometer;
+
+    scope().attr("kilometers") = kilometers;
+
+    scope().attr("bohr_radius") = bohr_radius;
 
     scope().attr("bohr_radii") = bohr_radii;
 
     scope().attr("inch") = inch;
 
+    scope().attr("inches") = inches;
+
     scope().attr("foot") = foot;
+
+    scope().attr("feet") = feet;
 
     scope().attr("yard") = yard;
 
+    scope().attr("yards") = yards;
+
     scope().attr("mile") = mile;
+
+    scope().attr("miles") = miles;
 
     scope().attr("angstrom2") = angstrom2;
 
@@ -104,19 +130,35 @@ void register_man_global_variables()
 
     scope().attr("gram") = gram;
 
+    scope().attr("grams") = grams;
+
     scope().attr("kilogram") = kilogram;
+
+    scope().attr("kilograms") = kilograms;
 
     scope().attr("tonne") = tonne;
 
+    scope().attr("tonnes") = tonnes;
+
     scope().attr("milligram") = milligram;
+
+    scope().attr("milligrams") = milligrams;
 
     scope().attr("microgram") = microgram;
 
+    scope().attr("micrograms") = micrograms;
+
     scope().attr("nanogram") = nanogram;
+
+    scope().attr("nanograms") = nanograms;
 
     scope().attr("picogram") = picogram;
 
+    scope().attr("picograms") = picograms;
+
     scope().attr("femtogram") = femtogram;
+
+    scope().attr("femtograms") = femtograms;
 
     scope().attr("kg_per_mol") = kg_per_mol;
 
@@ -134,37 +176,35 @@ void register_man_global_variables()
 
     scope().attr("mod_electron") = mod_electron;
 
-    scope().attr("faraday") = faraday;
+    scope().attr("mod_electrons") = mod_electrons;
 
     scope().attr("coulomb") = coulomb;
 
-    scope().attr("coulomb_per_mol") = coulomb_per_mol;
+    scope().attr("coulombs") = coulombs;
 
     scope().attr("e_charge") = e_charge;
 
-    scope().attr("kcal_per_mol") = kcal_per_mol;
+    scope().attr("coulombs_per_mol") = coulombs_per_mol;
+
+    scope().attr("faraday") = faraday;
+
+    scope().attr("faradays") = faradays;
 
     scope().attr("kcal") = kcal;
 
-    scope().attr("cal_per_mol") = cal_per_mol;
-
     scope().attr("cal") = cal;
-
-    scope().attr("kJ_per_mol") = kJ_per_mol;
 
     scope().attr("kilojoule") = kilojoule;
 
-    scope().attr("MJ_per_mol") = MJ_per_mol;
+    scope().attr("kilojoules") = kilojoules;
 
     scope().attr("megajoule") = megajoule;
 
-    scope().attr("J_per_mol") = J_per_mol;
+    scope().attr("megajoules") = megajoules;
 
     scope().attr("joule") = joule;
 
-    scope().attr("int_kcal_per_mol") = int_kcal_per_mol;
-
-    scope().attr("int_cal_per_mol") = int_cal_per_mol;
+    scope().attr("joules") = joules;
 
     scope().attr("int_kcal") = int_kcal;
 
@@ -172,41 +212,89 @@ void register_man_global_variables()
 
     scope().attr("hartree") = hartree;
 
+    scope().attr("hartrees") = hartrees;
+
+    scope().attr("kcal_per_mol") = kcal_per_mol;
+
+    scope().attr("cal_per_mol") = cal_per_mol;
+
+    scope().attr("kJ_per_mol") = kJ_per_mol;
+
+    scope().attr("MJ_per_mol") = MJ_per_mol;
+
+    scope().attr("J_per_mol") = J_per_mol;
+
+    scope().attr("int_kcal_per_mol") = int_kcal_per_mol;
+
+    scope().attr("int_cal_per_mol") = int_cal_per_mol;
+
     scope().attr("akma_time") = akma_time;
 
     scope().attr("second") = second;
 
+    scope().attr("seconds") = seconds;
+
     scope().attr("millisecond") = millisecond;
+
+    scope().attr("milliseconds") = milliseconds;
 
     scope().attr("microsecond") = microsecond;
 
+    scope().attr("microseconds") = microseconds;
+
     scope().attr("nanosecond") = nanosecond;
+
+    scope().attr("nanoseconds") = nanoseconds;
 
     scope().attr("picosecond") = picosecond;
 
+    scope().attr("picoseconds") = picoseconds;
+
     scope().attr("femtosecond") = femtosecond;
+
+    scope().attr("femtoseconds") = femtoseconds;
 
     scope().attr("minute") = minute;
 
+    scope().attr("minutes") = minutes;
+
     scope().attr("hour") = hour;
+
+    scope().attr("hours") = hours;
 
     scope().attr("day") = day;
 
+    scope().attr("days") = days;
+
     scope().attr("week") = week;
+
+    scope().attr("weeks") = weeks;
 
     scope().attr("fortnight") = fortnight;
 
+    scope().attr("fortnights") = fortnights;
+
     scope().attr("newton") = newton;
+
+    scope().attr("newtons") = newtons;
 
     scope().attr("ounce") = ounce;
 
+    scope().attr("ounces") = ounces;
+
     scope().attr("pound") = pound;
 
+    scope().attr("pounds") = pounds;
+
     scope().attr("stone") = stone;
+
+    scope().attr("stones") = stones;
 
     scope().attr("hundredweight") = hundredweight;
 
     scope().attr("pascal") = pascal;
+
+    scope().attr("pascals") = pascals;
 
     scope().attr("bar") = bar;
 
@@ -220,15 +308,35 @@ void register_man_global_variables()
 
     scope().attr("amp") = amp;
 
+    scope().attr("amps") = amps;
+
     scope().attr("volt") = volt;
+
+    scope().attr("volts") = volts;
 
     scope().attr("farad") = farad;
 
+    scope().attr("farads") = farads;
+
     scope().attr("watt") = watt;
 
-    scope().attr("watt_per_mol") = watt_per_mol;
+    scope().attr("watts") = watts;
+
+    scope().attr("watts_per_mol") = watts_per_mol;
 
     scope().attr("c") = c;
+
+    scope().attr("g_accel") = g_accel;
+
+    scope().attr("electron_mass") = electron_mass;
+
+    scope().attr("proton_mass") = proton_mass;
+
+    scope().attr("neutron_mass") = neutron_mass;
+
+    scope().attr("atomic_mass_constant") = atomic_mass_constant;
+
+    scope().attr("molar_volume") = molar_volume;
 
     scope().attr("epsilon0") = epsilon0;
 
@@ -244,21 +352,9 @@ void register_man_global_variables()
 
     scope().attr("G_newton") = G_newton;
 
-    scope().attr("g_accel") = g_accel;
-
     scope().attr("h_planck") = h_planck;
 
     scope().attr("h_slash") = h_slash;
-
-    scope().attr("electron_mass") = electron_mass;
-
-    scope().attr("proton_mass") = proton_mass;
-
-    scope().attr("neutron_mass") = neutron_mass;
-
-    scope().attr("atomic_mass_constant") = atomic_mass_constant;
-
-    scope().attr("molar_volume") = molar_volume;
 
     scope().attr("celsius") = celsius;
 

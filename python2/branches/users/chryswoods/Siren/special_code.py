@@ -10,10 +10,10 @@ special_code = { "Siren::Mutable" : add_object_headers }
 
 implicitly_convertible = [ ("Siren::Object", "Siren::ObjRef"),
                            ("Siren::Handle", "Siren::HanRef"),
-                           ("Siren::Number", "Siren::NumberObject"),
-                           ("Siren::String", "Siren::StringObject"),
-                           ("Siren::NumberObject", "Siren::Number"),
-                           ("Siren::StringObject", "Siren::String") ]
+                           ("Siren::Number", "Siren::PrimitiveObject<Siren::Number>"),
+                           ("Siren::String", "Siren::PrimitiveObject<Siren::String>"),
+                           ("Siren::PrimitiveObject<Siren::Number>", "Siren::Number"),
+                           ("Siren::PrimitiveObject<Siren::String>", "Siren::String") ]
 
 def fixMB(mb):
    mb.add_declaration_code("#include \"object.h\"")

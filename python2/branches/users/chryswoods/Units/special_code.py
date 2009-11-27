@@ -39,7 +39,7 @@ def findGlobals():
     
     
     for line in lines:
-        match = re.search(r"const Dimension::([\w\d\-<,>]+)\s+(\w+)", line)
+        match = re.search(r"const Dimension::([\w\d\-<,>]+)\s+SIREUNITS_EXPORT\s+(\w+)", line)
     
         if match:
             name = match.group(2)
@@ -65,6 +65,7 @@ def fix_GeneralUnit(c):
 
 def fixMB(mb):
    mb.add_declaration_code("#include \"SireUnits/temperature.h\"")
+   mb.add_declaration_code("#include \"SireUnits/generalunit.h\"")
    mb.add_declaration_code("#include \"sireunits_dimensions.h\"")
    mb.add_declaration_code("#include \"_Units_global_variables.pyman.hpp\"")
   
@@ -80,9 +81,9 @@ special_code = { "SireUnits::Dimension::GeneralUnit" : fix_GeneralUnit,
                  "SireUnits::Celsius" : fix_GeneralUnit,
                  "SireUnits::Fahrenheit" : fix_GeneralUnit }
 
-implicitly_convertible = [ ("SireUnits::Dimension::TempBase",
+implicitly_convertible = [ ("SireUnits::Dimension::detail::Temperature",
                             "SireUnits::Dimension::Temperature"),
-                           ("SireUnits::Dimension::TempBase",
-                            "double"),
+                           ("SireUnits::Dimension::detail::Temperature",
+                            "double")
                          ]
  

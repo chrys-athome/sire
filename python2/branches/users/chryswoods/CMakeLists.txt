@@ -225,36 +225,31 @@ message( STATUS  "Shared library flags   == ${CMAKE_SHARED_LINKER_FLAGS}" )
 message( STATUS  "Static library flags   == ${CMAKE_STATIC_LINKER_FLAGS}" )
 message( STATUS  "Executable link flags  == ${CMAKE_EXE_LINKER_FLAGS}" )
 
-# Add the helper library
-add_subdirectory (Helpers)
-
 # Recurse into the module subdirectories 
 add_subdirectory (Qt)
-add_subdirectory (Error)
-add_subdirectory (Base)
-add_subdirectory (CAS)
-add_subdirectory (Cluster)
-add_subdirectory (DB)
-add_subdirectory (FF)
-add_subdirectory (ID)
-add_subdirectory (IO)
-add_subdirectory (Maths)
-add_subdirectory (MM)
-add_subdirectory (Mol)
-add_subdirectory (Move)
+#add_subdirectory (Base)
+#add_subdirectory (CAS)
+#add_subdirectory (Cluster)
+#add_subdirectory (DB)
+#add_subdirectory (FF)
+#add_subdirectory (ID)
+#add_subdirectory (IO)
+#add_subdirectory (Maths)
+#add_subdirectory (MM)
+#add_subdirectory (Mol)
+#add_subdirectory (Move)
 add_subdirectory (Siren)
-add_subdirectory (Stream)
 #add_subdirectory (Spier)
-add_subdirectory (Squire)
-add_subdirectory (System)
+#add_subdirectory (Squire)
+#add_subdirectory (System)
 add_subdirectory (Units)
-add_subdirectory (Vol)
+#add_subdirectory (Vol)
 
 #also compile the sire_python executable
-add_subdirectory (sire_python)
+#add_subdirectory (sire_python)
 
 #and the sire_ipython executable
-add_subdirectory (sire_ipython)
+#add_subdirectory (sire_ipython)
 
 install( FILES __init__.py
          DESTINATION ${SIRE_PYTHON}/Sire 

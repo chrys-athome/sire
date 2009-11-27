@@ -8,5 +8,7 @@
 #
 ########################
 
+import Sire.Siren
+
 from  _Units import *
 

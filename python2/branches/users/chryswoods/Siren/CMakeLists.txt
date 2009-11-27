@@ -42,7 +42,6 @@ set_target_properties (Siren
 		       )
 		       
 target_link_libraries (Siren
-                       SirePython2
                        SIRE_Siren
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}

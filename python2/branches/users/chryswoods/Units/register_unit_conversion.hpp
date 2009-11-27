@@ -1,145 +1,15 @@
-#ifndef PYWRAP_SIREUNITS_GENERALUNIT_H
-#define PYWRAP_SIREUNITS_GENERALUNIT_H
+#ifndef PYWRAP_SIREUNITS_REGISTER_UNIT_CONVERSION_H
+#define PYWRAP_SIREUNITS_REGISTER_UNIT_CONVERSION_H
 
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 #include <Python.h>
 #include <boost/python.hpp>
-#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
-#include <QString>
+#include "SireUnits/generalunit.h"
 
-#include "SireUnits/dimensions.h"
-
-SIRE_BEGIN_HEADER
-
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 namespace bp = boost::python;
-#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 namespace SireUnits
 {
-
-namespace Dimension
-{
-
-class GeneralUnit;
-class TempBase;
-class _Pvt_Kelvin;
-
-namespace detail
-{
-void registerTypeName(const GeneralUnit &unit, const char *typnam);
-}
-
-class GeneralUnit : public Unit
-{
-public:
-    GeneralUnit();
-
-    template<class D>
-    explicit GeneralUnit(const D &unit) : Unit(unit)
-    {
-        Mass = D::MASS();
-        Length = D::LENGTH();
-        Time = D::TIME();
-        Charge = D::CHARGE();
-        temperature = D::TEMPERATURE();
-        Quantity = D::QUANTITY();
-        Angle = D::ANGLE();
-        detail::registerTypeName(*this, D::typeName());
-    }
-    
-    GeneralUnit(const GeneralUnit &other);
-    
-    ~GeneralUnit();
-
-    QString typeName() const;
-    QString what() const;
-
-    int MASS() const;
-    int LENGTH() const;
-    int TIME() const;
-    int CHARGE() const;
-    int TEMPERATURE() const;
-    int QUANTITY() const;
-    int ANGLE() const;
-
-    GeneralUnit& operator=(const GeneralUnit &other);
-    
-    bool operator==(const GeneralUnit &other) const;
-    
-    bool operator!=(const GeneralUnit &other) const;
-    
-    GeneralUnit operator-() const;
-    
-    GeneralUnit& operator+=(const GeneralUnit &other);
-    
-    GeneralUnit& operator-=(const GeneralUnit &other);
-    
-    GeneralUnit operator+(const GeneralUnit &other) const;
-    
-    GeneralUnit operator-(const GeneralUnit &other) const;
-
-    GeneralUnit operator*=(const GeneralUnit &other);
-
-    GeneralUnit operator/=(const GeneralUnit &other);
-    
-    GeneralUnit operator*(const GeneralUnit &other) const;
-    
-    GeneralUnit operator/(const GeneralUnit &other) const;
-    
-    GeneralUnit& operator*=(double val);
-    GeneralUnit& operator/=(double val);
-    
-    GeneralUnit& operator*=(int val);
-    GeneralUnit& operator/=(int val);
-    
-    GeneralUnit operator*(double val) const;
-    GeneralUnit operator/(double val) const;
-    
-    GeneralUnit operator*(int val) const;
-    GeneralUnit operator/(int val) const;
-    
-    GeneralUnit invert() const;
-    
-    double to(const TempBase &other) const;
-    double to(const GeneralUnit &other) const;
-    
-    QString toString() const;
-
-private:
-    void assertCompatible(const GeneralUnit &other) const;
-
-    int Mass, Length, Time, Charge, temperature, Quantity, Angle;
-};
-
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
-inline GeneralUnit operator*(double val, const GeneralUnit &unit)
-{
-    return unit * val;
-}
-
-inline GeneralUnit operator*(int val, const GeneralUnit &unit)
-{
-    return unit * val;
-}
-
-inline GeneralUnit operator/(double val, const GeneralUnit &unit)
-{
-    return unit.invert() * val;
-}
-
-inline GeneralUnit operator/(int val, const GeneralUnit &unit)
-{
-    return unit.invert() * val;
-}
-
-#endif //SIRE_SKIP_INLINE_FUNCTIONS
-
-} // end of namespace Dimension
-
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 template<class D>
 struct from_general_unit
@@ -243,12 +113,6 @@ void register_dimension()
           bp::type_id<D>() );
 }
 
-#endif //SIRE_SKIP_INLINE_FUNCTIONS
-
 }
-
-SIRE_EXPOSE_CLASS( SireUnits::Dimension::GeneralUnit )
-
-SIRE_END_HEADER
 
 #endif

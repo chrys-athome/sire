@@ -36,11 +36,11 @@
 
 #include <QString>
 
-#include "sireglobal.h"
+#include "Siren/sirenglobal.h"
 
 using namespace boost::python;
 
-SIRE_BEGIN_HEADER
+SIREN_BEGIN_HEADER
 
 /** The function used to get a string representation of a POD type */
 template<class T>
@@ -163,6 +163,6 @@ object __str__dict(const C &container)
     }
 }
 
-SIRE_END_HEADER
+SIREN_END_HEADER
 
 #endif
