@@ -8,8 +8,8 @@
 ## (C) Christopher Woods
 ##
 
-#ensure that the SireQt and SireError libraries are loaded as
+#ensure that the SireQt and Siren libraries are loaded as
 #these are vital for the rest of the module
 import Sire.Qt
-import Sire.Error
+import Sire.Siren
 

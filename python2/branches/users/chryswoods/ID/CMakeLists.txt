@@ -40,14 +40,10 @@ set_target_properties (ID
 		       )
 		       
 target_link_libraries (ID
-                       SirePython2
                        SIRE_SireID
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}
                       )
-
-include( LimitSirePythonExportSymbols )
-export_this_symbol_only( "init_ID" "_init_ID" )
 
 # installation
 set( INSTALLDIR ${SIRE_PYTHON}/Sire/ID )

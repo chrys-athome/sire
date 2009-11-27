@@ -361,7 +361,6 @@ if __name__ == "__main__":
                 "Siren" : "Siren",
                 "Spier" : "Spier",
                 "Squire" : "Squire",
-                "Stream" : "SireStream",
                 "System" : "SireSystem",
                 "Units" : "SireUnits",
                 "Vol" : "SireVol" }
