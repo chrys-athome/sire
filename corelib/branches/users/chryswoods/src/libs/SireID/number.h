@@ -29,19 +29,13 @@
 #ifndef SIREID_NUMBER_H
 #define SIREID_NUMBER_H
 
-#include "sireglobal.h"
-
 #include <limits>
 
+#include "id.h"
+
+#include "Siren/stream.h"
+
 SIRE_BEGIN_HEADER
-
-namespace SireID
-{
-class Number;
-}
-
-QDataStream& operator<<(QDataStream&, const SireID::Number&);
-QDataStream& operator>>(QDataStream&, SireID::Number&);
 
 namespace SireID
 {
@@ -58,41 +52,41 @@ namespace SireID
     containers. Generally an object should keep its number
     throughout its lifetime.
     
+    Use this class by deriving
+    
+    class AtomNum : public Implements<AtomNum,Number>,
+                    public Interfaces<AtomNum,AtomID>
+    
     @author Christopher Woods
 */
-class SIREID_EXPORT Number
+class SIREID_EXPORT Number : public Siren::Extends<Number,ID>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Number&);
-friend QDataStream& ::operator>>(QDataStream&, Number&);
-
 public:
+    Number(qint32 num=0);
+    Number(const Number &other);
+
     ~Number();
+    
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
+
+    bool isNull() const;
     
     operator qint32() const;
     
     static qint32 null();
     
-    bool isNull() const;
-
-    uint hash() const;
-    
     qint32 value() const;
     
 protected:
-    Number(qint32 num=0);
+    Number& operator=(const Number &other);
     
-    Number(const Number &other);
-    
+    bool operator==(const Number &other) const;
+    bool operator!=(const Number &other) const;
+
     /** The actual number */
     qint32 _num;
 };
-
-/** Return a hash of this Number */
-inline uint qHash(const Number &number)
-{
-    return number.hash();
-}
 
 }
 

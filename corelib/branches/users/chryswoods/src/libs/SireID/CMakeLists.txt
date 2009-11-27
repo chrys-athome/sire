@@ -40,7 +40,7 @@ set_target_properties (SireID PROPERTIES
 
 # Link to other Sire libraries
 target_link_libraries (SireID
-                       SireStream
+                       Siren
                        )
 
 # installation

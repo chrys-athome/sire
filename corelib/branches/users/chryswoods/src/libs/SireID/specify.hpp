@@ -33,18 +33,9 @@
 
 #include "SireID/index.h"
 
+#include "Siren/stream.h"
+
 SIRE_BEGIN_HEADER
-
-namespace SireID
-{
-template<class ID>
-class Specify;
-}
-
-template<class ID>
-QDataStream& operator<<(QDataStream&, const SireID::Specify<ID>&);
-template<class ID>
-QDataStream& operator>>(QDataStream&, SireID::Specify<ID>&);
 
 namespace SireID
 {
@@ -56,12 +47,8 @@ namespace SireID
     @author Christopher Woods
 */
 template<class ID>
-class SIREID_EXPORT Specify : public ID
+class SIREID_EXPORT Specify : public Siren::Implements< Specify<ID>, ID >
 {
-
-friend QDataStream& ::operator<<<>(QDataStream&, const Specify<ID>&);
-friend QDataStream& ::operator>><>(QDataStream&, Specify<ID>&);
-
 public:
     Specify();
     Specify(const ID &id, qint32 i);
@@ -70,21 +57,11 @@ public:
     Specify(const Specify<ID> &other);
     
     ~Specify();
-    
-    static const char* typeName();
-    
-    const char* what() const;
-    
-    Specify<ID>* clone() const;
 
     Specify<ID>& operator=(const Specify<ID> &other);
     
     bool operator==(const Specify<ID> &other) const;
-    bool operator==(const SireID::ID &other) const;
-
     bool operator!=(const Specify<ID> &other) const;
-    
-    bool operator!=(const SireID::ID &other) const;
     
     Specify<ID> operator[](int i) const;
     
@@ -92,11 +69,11 @@ public:
     
     Specify<ID> operator()(int i, int j) const;
     
-    uint hash() const;
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &s);
     
     bool isNull() const;
-    
-    QString toString() const;
     
     QList<typename ID::Index> map(const typename ID::SearchObject &obj) const;
 
@@ -113,28 +90,29 @@ private:
 /** Null constructor */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-Specify<ID>::Specify() : ID(), strt(0), end(-1)
+Specify<ID>::Specify() : Implements< Specify<ID>,ID >(), strt(0), end(-1)
 {}
 
 /** Construct, using the passed ID and index */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
 Specify<ID>::Specify(const ID &idobj, qint32 i)
-            : ID(), id(idobj), strt(i), end(i)
+            : Implements< Specify<ID>,ID >(), id(idobj), strt(i), end(i)
 {}
 
 /** Construct using the passed ID and range */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
 Specify<ID>::Specify(const ID &idobj, qint32 i, qint32 j)
-            : ID(), id(idobj), strt(i), end(j)
+            : Implements< Specify<ID>,ID >(), id(idobj), strt(i), end(j)
 {}
   
 /** Copy constructor */  
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
 Specify<ID>::Specify(const Specify<ID> &other)
-            : ID(other), id(other.id), strt(other.strt), end(other.end)
+            : Implements< Specify<ID>,ID >(other), 
+              id(other.id), strt(other.strt), end(other.end)
 {}
   
 /** Destructor */  
@@ -165,15 +143,14 @@ SIRE_OUTOFLINE_TEMPLATE
 bool Specify<ID>::operator==(const Specify<ID> &other) const
 {
     return strt == other.strt and end == other.end and 
-           id == other.id;
+           id == other.id and ID::operator==(other);
 }
 
-/** Comparison operator */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-bool Specify<ID>::operator==(const SireID::ID &other) const
+bool Specify<ID>::operator!=(const Specify<ID> &other) const
 {
-    return SireID::ID::compare< Specify<ID> >(*this, other);
+    return not this->operator==(other);
 }
 
 /** Return a string representation of this ID */
@@ -222,41 +199,6 @@ QList<typename ID::Index> Specify<ID>::map(const typename ID::SearchObject &obj)
 
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-const char* Specify<ID>::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId< Specify<ID> >() );
-}
-
-template<class ID>
-SIRE_OUTOFLINE_TEMPLATE
-const char* Specify<ID>::what() const
-{
-    return Specify<ID>::typeName();
-}
-
-template<class ID>
-SIRE_OUTOFLINE_TEMPLATE
-Specify<ID>* Specify<ID>::clone() const
-{
-    return new Specify<ID>(*this);
-}
-
-template<class ID>
-SIRE_OUTOFLINE_TEMPLATE
-bool Specify<ID>::operator!=(const Specify<ID> &other) const
-{
-    return not this->operator==(other);
-}
-
-template<class ID>
-SIRE_OUTOFLINE_TEMPLATE
-bool Specify<ID>::operator!=(const SireID::ID &other) const
-{
-    return not this->operator==(other);
-}
-
-template<class ID>
-SIRE_OUTOFLINE_TEMPLATE
 Specify<ID> Specify<ID>::operator[](int i) const
 {
     return Specify<ID>(*this, i);
@@ -278,9 +220,9 @@ Specify<ID> Specify<ID>::operator()(int i, int j) const
 
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-uint Specify<ID>::hash() const
+uint Specify<ID>::hashCode() const
 {
-    return id.hash() + strt + end;
+    return id.hashCode() + strt + end;
 }
 
 template<class ID>
@@ -290,26 +232,23 @@ bool Specify<ID>::isNull() const
     return id.isNull();
 }
 
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+void Specify<ID>::stream(Stream &s)
+{
+    s.assertVersion< Specify<ID> >(1);
+    
+    Siren::Schema schema = s.item< Specify<ID> >();
+    
+    schema.data("identifier") & id;
+    schema.data("start_index") & strt;
+    schema.data("end_index") & end;
+    
+    ID::stream( schema.base() );
+}
+
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
 
-}
-
-/** Serialise to a binary datastream */
-template<class ID>
-SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds, const SireID::Specify<ID> &id)
-{
-    ds << id.id << id.strt << id.end;
-    return ds;
-}
-
-/** Extract from a binary datastream */
-template<class ID>
-SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds, SireID::Specify<ID> &id)
-{
-    ds >> id.id >> id.strt >> id.end;
-    return ds;
 }
 
 SIRE_END_HEADER

@@ -28,55 +28,29 @@
 
 #include "identifier.h"
 
-#include "SireStream/datastream.h"
-#include "SireStream/streampolypointer.hpp"
+#include "Siren/stream.h"
 
 using namespace SireID;
-using namespace SireStream;
+using namespace Siren;
 
-static const RegisterMetaType<Identifier> r_id;
-
-/** Serialise to a binary datastream */
-QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const Identifier &id)
-{
-    writeHeader(ds, r_id, 1);
-    
-    SireStream::savePolyPointer(ds, id.d);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREID_EXPORT &operator>>(QDataStream &ds, Identifier &id)
-{
-    VersionID v = readHeader(ds, r_id);
-    
-    if (v == 1)
-    {
-        SireStream::loadPolyPointer(ds, id.d);
-    }
-    else
-        throw version_error( v, "1", r_id, CODELOC );
-        
-    return ds;
-}
+static const RegisterObject<Identifier> r_id;
 
 /** Null constructor */
-Identifier::Identifier() : ID()
+Identifier::Identifier() : Implements<Identifier,ID>()
 {}
 
 /** Construct from the passed ID */
-Identifier::Identifier(const ID &id) : ID()
+Identifier::Identifier(const ID &id) : Implements<Identifier,ID>()
 {
     if (id.isA<Identifier>())
         d = id.asA<Identifier>().d;
     else if (not id.isNull())
-        d.reset( id.clone() );
+        d = id;
 }
 
 /** Copy constructor */
 Identifier::Identifier(const Identifier &other)
-           : ID(other), d(other.d)
+           : Implements<Identifier,ID>(other), d(other.d)
 {}
 
 /** Destructor */
@@ -86,22 +60,22 @@ Identifier::~Identifier()
 /** Is this ID null? */
 bool Identifier::isNull() const
 {
-    return d.get() == 0;
+    return d.constData() == 0;
 }
 
 /** Return a hash of this identifier */
-uint Identifier::hash() const
+uint Identifier::hashCode() const
 {
-    if (d.get() == 0)
+    if (d.constData() == 0)
         return 0;
     else
-        return d->hash();
+        return d->hashCode();
 }
             
 /** Return a string representatio of this ID */
 QString Identifier::toString() const
 {
-    if (d.get() == 0)
+    if (d.constData() == 0)
         return "null";
     else
         return d->toString();
@@ -110,7 +84,7 @@ QString Identifier::toString() const
 /** Return the base type of this ID */
 const ID& Identifier::base() const
 {
-    if (d.get() == 0)
+    if (d.constData() == 0)
         return *this;
     else
         return *d;
@@ -129,9 +103,9 @@ Identifier& Identifier::operator=(const ID &other)
     if (other.isA<Identifier>())
         d = other.asA<Identifier>().d;
     else if (other.isNull())
-        d.reset();
+        d = 0;
     else
-        d.reset(other.clone());
+        d = other;
     
     return *this;
 }
@@ -139,40 +113,26 @@ Identifier& Identifier::operator=(const ID &other)
 /** Comparison operator */
 bool Identifier::operator==(const ID &other) const
 {
-    return ID::compare<Identifier>(*this, other);
+    if (this->isNull())
+        return false;
+    else
+        return *d == other;
 }
 
 /** Comparison operator */
 bool Identifier::operator!=(const ID &other) const
 {
-    return ID::operator!=(other);
+    return Identifier::operator!=(other);
 }
 
 /** Comparison operator */
 bool Identifier::operator==(const Identifier &other) const
 {
-    if (d.get() == 0 or other.d.get() == 0)
-        return d.get() == other.d.get();
-    else
-        return d == other.d or *d == *(other.d);
+    return Identifier::operator==(other.base());
 }
 
 /** Comparison operator */
 bool Identifier::operator!=(const Identifier &other) const
 {
-    if (d.get() == 0 or other.d.get() == 0)
-        return d.get() != other.d.get();
-    else
-        return d != other.d and *d != *(other.d);
+    return not Identifier::operator==(other);
 }
-
-const char* Identifier::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Identifier>() );
-}
-
-Identifier* Identifier::clone() const
-{
-    return new Identifier(*this);
-}
-

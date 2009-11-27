@@ -30,45 +30,54 @@
 #include "name.h"
 #include "number.h"
 
+#include "Siren/stream.h"
+
 using namespace SireID;
+using namespace Siren;
 
 ///////////
 /////////// Implementation of ID
 ///////////
 
-ID::ID()
+static const RegisterObject<ID> r_id( VIRTUAL_CLASS );
+
+ID::ID() : Extends<ID,Object>()
 {}
 
-ID::ID(const ID&)
+ID::ID(const ID &other) : Extends<ID,Object>(other)
 {}
 
 ID::~ID()
 {}
 
+QString ID::typeName()
+{
+    return "SirenID::ID";
+}
+
+ID& ID::operator=(const ID &other)
+{
+    Object::operator=(other);
+    return *this;
+}
+
+void ID::stream(Stream &s)
+{
+    s.assertVersion<ID>(1);
+    
+    Schema schema = s.item<ID>();
+    
+    Object::stream( schema.base() );
+}
+
 ///////////
 /////////// Implementation of Name
 ///////////
 
-/** Serialise a Name class */
-QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const SireID::Name &name)
-{
-    SireStream::SharedDataStream sds(ds);
-    sds << name._name << name.case_sensitive;
-
-    return ds;
-}
-
-/** Deserialise a Name class */
-QDataStream SIREID_EXPORT &operator>>(QDataStream &ds, SireID::Name &name)
-{
-    SireStream::SharedDataStream sds(ds);
-    sds >> name._name >> name.case_sensitive;
-    
-    return ds;
-}
+static const RegisterObject<Name> r_name( VIRTUAL_CLASS );
 
 Name::Name(const QString &name, CaseSensitivity case_sensitivity) 
-     : _name(name)
+     : Extends<Name,ID>(), _name(name)
 {
     switch (case_sensitivity)
     {
@@ -82,7 +91,7 @@ Name::Name(const QString &name, CaseSensitivity case_sensitivity)
 }
 
 Name::Name(const Name &other) 
-     : _name(other._name), case_sensitive(other.case_sensitive)
+     : Extends<Name,ID>(other), _name(other._name), case_sensitive(other.case_sensitive)
 {}
 
 Name::~Name()
@@ -92,6 +101,8 @@ Name& Name::operator=(const Name &other)
 {
     _name = other._name;
     case_sensitive = other.case_sensitive;
+    
+    ID::operator=(other);
     
     return *this;
 }
@@ -121,7 +132,7 @@ bool Name::isCaseSensitive() const
     return case_sensitive;
 }
 
-uint Name::hash() const
+uint Name::hashCode() const
 {
     return ::qHash(_name);
 }
@@ -136,29 +147,27 @@ const QString& Name::value() const
     return _name;
 }
 
+void Name::stream(Stream &s)
+{
+    s.assertVersion<Name>(1);
+    
+    Schema schema = s.item<Name>();
+    
+    schema.data("name") & _name;
+    
+    ID::stream( schema.base() );
+}
+
 ///////////
 /////////// Implementation of Number
 ///////////
 
+static const RegisterObject<Number> r_number( VIRTUAL_CLASS );
 
-/** Serialise a Number class */
-QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const SireID::Number &number)
-{
-    ds << number._num;
-    return ds;
-}
-
-/** Deserialise a Number class */
-QDataStream SIREID_EXPORT &operator>>(QDataStream &ds, SireID::Number &number)
-{
-    ds >> number._num;
-    return ds;
-}
-
-Number::Number(qint32 num) : _num(num)
+Number::Number(qint32 num) : Extends<Number,ID>(), _num(num)
 {}
 
-Number::Number(const Number &other) : _num(other._num)
+Number::Number(const Number &other) : Extends<Number,ID>(other), _num(other._num)
 {}
 
 Number::~Number()
@@ -174,7 +183,7 @@ qint32 Number::null()
     return std::numeric_limits<qint32>::min();
 }
 
-uint Number::hash() const
+uint Number::hashCode() const
 {
     return quint32(_num);
 }
@@ -187,4 +196,15 @@ bool Number::isNull() const
 qint32 Number::value() const
 {
     return _num;
+}
+
+void Number::stream(Stream &s)
+{
+    s.assertVersion<Number>(1);
+    
+    Schema schema = s.item<Number>();
+    
+    schema.data("number") & _num;
+    
+    ID::stream( schema.base() );
 }

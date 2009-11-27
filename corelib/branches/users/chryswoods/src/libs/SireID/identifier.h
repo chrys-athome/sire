@@ -31,17 +31,9 @@
 
 #include "id.h"
 
-#include <boost/shared_ptr.hpp>
+#include "Siren/objptr.hpp"
 
 SIRE_BEGIN_HEADER
-
-namespace SireID
-{
-class Identifier;
-}
-
-QDataStream& operator<<(QDataStream&, const SireID::Identifier&);
-QDataStream& operator>>(QDataStream&, SireID::Identifier&);
 
 namespace SireID
 {
@@ -50,12 +42,8 @@ namespace SireID
 
     @author Christopher Woods
 */
-class SIREID_EXPORT Identifier : public ID
+class SIREID_EXPORT Identifier : public Siren::Implements<Identifier,ID>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Identifier&);
-friend QDataStream& ::operator>>(QDataStream&, Identifier&);
-
 public:
     Identifier();
     Identifier(const ID &id);
@@ -63,18 +51,9 @@ public:
     
     ~Identifier();
     
-    static const char* typeName();
-    
-    const char* what() const
-    {
-        return Identifier::typeName();
-    }
-    
-    Identifier* clone() const;
-    
     bool isNull() const;
     
-    uint hash() const;
+    uint hashCode() const;
                 
     QString toString() const;
     
@@ -91,13 +70,8 @@ public:
 
 private:
     /** Pointer to the ID */
-    boost::shared_ptr<ID> d;
+    Siren::ObjPtr<ID> d;
 };
-
-inline uint qHash(const Identifier &id)
-{
-    return id.hash();
-}
 
 }
 

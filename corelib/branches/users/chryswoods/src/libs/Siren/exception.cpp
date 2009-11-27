@@ -156,8 +156,7 @@ exception& exception::operator=(const exception &other)
 bool exception::operator==(const exception &other) const
 {
     return err == other.err and plce == other.plce and
-           bt == other.bt and pidstr == other.pidstr and
-           Object::operator==(other);
+           bt == other.bt and pidstr == other.pidstr;
 }
 
 bool exception::operator!=(const exception &other) const

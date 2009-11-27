@@ -132,8 +132,7 @@ bool Tester::operator==(const Tester &other) const
              tested_class == other.tested_class and
              current_test == other.current_test and
              num_current_errors == other.num_current_errors and 
-             num_errors == other.num_errors and
-             Object::operator==(other) );
+             num_errors == other.num_errors );
 }
 
 /** Comparison operator */

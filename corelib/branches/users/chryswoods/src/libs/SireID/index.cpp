@@ -28,50 +28,55 @@
 
 #include "index.h"
 
-#include "SireError/errors.h"
-
-#include "SireStream/datastream.h"
+#include "Siren/errors.h"
+#include "Siren/stream.h"
 
 using namespace SireID;
-using namespace SireStream;
+using namespace Siren;
 
 ////////
 //////// Implementation of IndexBase
 ////////
 
-/** Serialise an Idx class */
-QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const IndexBase &idx)
-{
-    ds << idx._idx;
-    return ds;
-}
+static const RegisterObject<IndexBase> r_indexbase( VIRTUAL_CLASS );
 
-/** Deserialise an Idx class */
-QDataStream SIREID_EXPORT &operator>>(QDataStream &ds, IndexBase &idx)
-{
-    ds >> idx._idx;
-    return ds;
-}
-
-IndexBase::IndexBase(qint32 idx) : _idx(idx)
+IndexBase::IndexBase(qint32 idx) : Extends<IndexBase,ID>(), _idx(idx)
 {}
 
-IndexBase::IndexBase(const IndexBase &other) : _idx(other._idx)
+IndexBase::IndexBase(const IndexBase &other) 
+          : Extends<IndexBase,ID>(other), _idx(other._idx)
+{}
+
+IndexBase::~IndexBase()
 {}
 
 IndexBase& IndexBase::operator=(const IndexBase &other)
 {
     _idx = other._idx;
+    ID::operator=(other);
+    
     return *this;
 }
 
-IndexBase::~IndexBase()
-{}
+bool IndexBase::operator==(const IndexBase &other) const
+{
+    return _idx == other._idx;
+}
+
+bool IndexBase::operator!=(const IndexBase &other) const
+{
+    return _idx != other._idx;
+}
 
 /** Return the null index */
 qint32 IndexBase::null()
 {
     return std::numeric_limits<qint32>::min();
+}
+
+QString IndexBase::typeName()
+{
+    return "SireID::IndexBase";
 }
 
 /** Return whether this is a null index - a null
@@ -83,9 +88,20 @@ bool IndexBase::isNull() const
 }
 
 /** Hash this Index */
-uint IndexBase::hash() const
+uint IndexBase::hashCode() const
 {
     return quint32(_idx);
+}
+
+void IndexBase::stream(Stream &s)
+{
+    s.assertVersion<IndexBase>(1);
+    
+    Schema schema = s.item<IndexBase>();
+    
+    schema.data("index") & _idx;
+    
+    ID::stream( schema.base() );
 }
 
 /** Return the raw value of this index */
@@ -103,17 +119,17 @@ IndexBase::operator qint32() const
 void IndexBase::throwInvalidIndex(qint32 n) const
 {
     if (n == 0)
-        throw SireError::invalid_index(QObject::tr(
+        throw Siren::invalid_index(QObject::tr(
             "Cannot access item at index %1 as the container is empty!")
                 .arg(_idx), CODELOC );
 
     else if (n == 1)
-        throw SireError::invalid_index(QObject::tr(
+        throw Siren::invalid_index(QObject::tr(
             "Cannot access item at index %1 as there is only item in the "
             "container.").arg(_idx), CODELOC );
     
     else
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
             "No item at index %1. Index range is from %2 to %3.")
                 .arg(_idx).arg(-n).arg(n-1), CODELOC );
 }
@@ -142,37 +158,12 @@ qint32 IndexBase::map(qint32 n) const
 //////// Implementation of Index
 ////////
 
-static const RegisterMetaType<Index> r_index;
+static const RegisterObject<Index> r_index;
 
-/** Serialise to a binary datastream */
-QDataStream SIREID_EXPORT &operator<<(QDataStream &ds, const Index &index)
-{
-    writeHeader(ds, r_index, 1);
-    
-    ds << static_cast<const Index_T_<Index>&>(index);
-    
-    return ds;
-}
-    
-/** Extract from a binary datastream */
-QDataStream SIREID_EXPORT &operator>>(QDataStream &ds, Index &index)
-{
-    VersionID v = readHeader(ds, r_index);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<Index_T_<Index>&>(index);
-    }
-    else
-        throw version_error( v, "1", r_index, CODELOC );
-    
-    return ds;
-}
-
-Index::Index(qint32 idx) : Index_T_<Index>(idx)
+Index::Index(qint32 idx) : Implements< Index,IndexType<Index> >(idx)
 {}
 
-Index::Index(const Index &other) : Index_T_<Index>(other)
+Index::Index(const Index &other) : Implements< Index,IndexType<Index> >(other)
 {}
 
 Index::~Index()
@@ -186,9 +177,4 @@ Index Index::null()
 QString Index::toString() const
 {
     return QString("Index(%1)").arg(_idx);
-}
-
-const char* Index::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Index>() );
 }

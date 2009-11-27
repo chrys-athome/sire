@@ -302,9 +302,6 @@ protected:
     static QStringList listInterfaces();
 
     Object& operator=(const Object &other);
-    
-    bool operator==(const Object &other) const;
-    bool operator!=(const Object &other) const;
 
     /** Return a clone of this object. */
     virtual Object* clone() const=0;

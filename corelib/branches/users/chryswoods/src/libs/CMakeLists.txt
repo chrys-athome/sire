@@ -12,7 +12,7 @@ set ( SUBDIRS
            #   SireCluster
            #   SireDB
            #   SireFF
-           #   SireID
+              SireID
            #   SireIO
            #   SireMaths
            #   SireMM

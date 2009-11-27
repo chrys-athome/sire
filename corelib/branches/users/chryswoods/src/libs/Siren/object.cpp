@@ -72,20 +72,6 @@ Object& Object::operator=(const Object&)
     return *this;
 }
 
-/** Comparison operator - this is blocked by default - use .equals()
-    to do a value comparison of two different objects of unknown type */
-bool Object::operator==(const Object&) const
-{
-    return true;
-}
-
-/** Comparison operator - this is blocked by default - use .equals()
-    to do a value comparison of two different objects of unknown type */
-bool Object::operator!=(const Object&) const
-{
-    return false;
-}
-
 /** Return a copy of this object. */
 ObjRef Object::copy() const
 {
@@ -251,13 +237,13 @@ None& None::operator=(const None &other)
 /** Comparison operator */
 bool None::operator==(const None &other) const
 {
-    return Object::operator==(other);
+    return true;
 }
 
 /** Comparison operator */
 bool None::operator!=(const None &other) const
 {
-    return Object::operator!=(other);
+    return false;
 }
 
 uint None::hashCode() const

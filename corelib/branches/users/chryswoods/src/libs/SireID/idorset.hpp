@@ -39,17 +39,6 @@ SIRE_BEGIN_HEADER
 
 namespace SireID
 {
-template<class ID>
-class IDOrSet;
-}
-
-template<class ID>
-QDataStream& operator<<(QDataStream&, const SireID::IDOrSet<ID>&);
-template<class ID>
-QDataStream& operator>>(QDataStream&, SireID::IDOrSet<ID>&);
-
-namespace SireID
-{
 
 /** This class holds a set of IDs, thereby allowing for
     "or" matching of IDs 
@@ -57,12 +46,8 @@ namespace SireID
     @author Christopher Woods
 */
 template<class ID>
-class SIREID_EXPORT IDOrSet : public ID
+class SIREID_EXPORT IDOrSet : public Siren::Implements< IDOrSet<ID>, ID >
 {
-
-friend QDataStream& ::operator<<<>(QDataStream&, const IDOrSet<ID>&);
-friend QDataStream& ::operator>><>(QDataStream&, IDOrSet<ID>&);
-
 public:
     typedef typename ID::Identifier Identifier;
     typedef typename ID::Index Index;
@@ -81,17 +66,11 @@ public:
     
     ~IDOrSet();
     
-    static const char* typeName();
-    
-    const char* what() const;
-    
-    IDOrSet<ID>* clone() const;
-    
     bool isNull() const;
     
-    uint hash() const;
-                
+    uint hashCode() const;
     QString toString() const;
+    void stream(Siren::Stream &s);
 
     const QSet<Identifier>& IDs() const;
     
@@ -120,7 +99,8 @@ private:
 /** Null constructor */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-IDOrSet<ID>::IDOrSet() : ID()
+IDOrSet<ID>::IDOrSet() 
+            : Siren::Implements< IDOrSet<ID>, ID >()
 {}
 
 /** Add the passed ID to the list */
@@ -144,7 +124,8 @@ void IDOrSet<ID>::add(const ID &id)
 /** Construct from the passed ID */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-IDOrSet<ID>::IDOrSet(const ID &id) : ID()
+IDOrSet<ID>::IDOrSet(const ID &id)
+            : Siren::Implements< IDOrSet<ID>, ID >()
 {
     this->add(id);
 }
@@ -152,7 +133,8 @@ IDOrSet<ID>::IDOrSet(const ID &id) : ID()
 /** Construct from the passed IDs */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-IDOrSet<ID>::IDOrSet(const ID &id0, const ID &id1) : ID()
+IDOrSet<ID>::IDOrSet(const ID &id0, const ID &id1)
+            : Siren::Implements< IDOrSet<ID>, ID >()
 {
     this->add(id0);
     this->add(id1);
@@ -161,7 +143,8 @@ IDOrSet<ID>::IDOrSet(const ID &id0, const ID &id1) : ID()
 /** Construct from the passed list of IDs */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-IDOrSet<ID>::IDOrSet(const QList<typename ID::Identifier> &new_ids) : ID()
+IDOrSet<ID>::IDOrSet(const QList<typename ID::Identifier> &new_ids)
+            : Siren::Implements< IDOrSet<ID>, ID >()
 {
     for (typename QList<Identifier>::const_iterator it = new_ids.constBegin();
          it != new_ids.constEnd();
@@ -175,7 +158,8 @@ IDOrSet<ID>::IDOrSet(const QList<typename ID::Identifier> &new_ids) : ID()
 template<class ID>
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-IDOrSet<ID>::IDOrSet(const T &new_ids) : ID()
+IDOrSet<ID>::IDOrSet(const T &new_ids)
+            : Siren::Implements< IDOrSet<ID>, ID >()
 {
     for (typename T::const_iterator it = new_ids.constBegin();
          it != new_ids.constEnd();
@@ -188,7 +172,8 @@ IDOrSet<ID>::IDOrSet(const T &new_ids) : ID()
 /** Copy constructor */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-IDOrSet<ID>::IDOrSet(const IDOrSet &other) : ID(other), ids(other.ids)
+IDOrSet<ID>::IDOrSet(const IDOrSet &other)
+            : Siren::Implements< IDOrSet<ID>, ID >(others), ids(other.ids)
 {}
 
 /** Destructor */
@@ -196,27 +181,6 @@ template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
 IDOrSet<ID>::~IDOrSet()
 {}
-    
-template<class ID>
-SIRE_OUTOFLINE_TEMPLATE
-const char* IDOrSet<ID>::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId< IDOrSet<ID> >() );
-}
-
-template<class ID>
-SIRE_OUTOFLINE_TEMPLATE
-const char* IDOrSet<ID>::what() const
-{
-    return IDOrSet<ID>::typeName();
-}
-
-template<class ID>
-SIRE_OUTOFLINE_TEMPLATE
-IDOrSet<ID>* IDOrSet<ID>::clone() const
-{
-    return new IDOrSet<ID>(*this);
-}
 
 /** Is this selection null? */
 template<class ID>
@@ -229,7 +193,7 @@ bool IDOrSet<ID>::isNull() const
 /** Return a hash of this identifier */
 template<class ID>
 SIRE_OUTOFLINE_TEMPLATE
-uint IDOrSet<ID>::hash() const
+uint IDOrSet<ID>::hashCode() const
 {
     uint h = 0;
     
@@ -241,6 +205,19 @@ uint IDOrSet<ID>::hash() const
     }
     
     return h;
+}
+
+template<class ID>
+SIRE_OUTOFLINE_TEMPLATE
+void IDOrSet<ID>::stream(Siren::Stream &s)
+{
+    s.assertVersion< IDOrSet<ID> >(1);
+    
+    Siren::Schema schema = s.item< IDOrSet<ID> >();
+    
+    schema.data("identifiers") & ids;
+    
+    ID::stream( schema.base() );
 }
             
 /** Return a string representatio of this ID */
@@ -388,26 +365,6 @@ QList<typename ID::Index> IDOrSet<ID>::map(const typename ID::SearchObject &obj)
 #endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 }
-
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
-/** Serialise to a binary datastream */
-template<class ID>
-SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds, const SireID::IDOrSet<ID> &idset)
-{
-    ds << idset.ids;
-    return ds;
-}
-
-/** Extract from a binary datastream */
-template<class ID>
-SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds, SireID::IDOrSet<ID> &idset)
-{
-    ds >> idset.ids;
-    return ds;
-}
-#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 SIRE_END_HEADER
 

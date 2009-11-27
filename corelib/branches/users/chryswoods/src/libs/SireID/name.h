@@ -32,17 +32,11 @@
 #include <QHash>
 #include <QString>
 
-#include "SireStream/shareddatastream.h"
+#include "id.h"
+
+#include "Siren/stream.h"
 
 SIRE_BEGIN_HEADER
-
-namespace SireID
-{
-class Name;
-}
-
-QDataStream& operator<<(QDataStream&, const SireID::Name&);
-QDataStream& operator>>(QDataStream&, SireID::Name&);
 
 namespace SireID
 {
@@ -59,36 +53,38 @@ enum CaseSensitivity{  CaseInsensitive = 0,
     helps, as generally only the first object with a specified name
     is returned if there are in fact multiple objects with the same
     name.
+
+    Derive from this class with code like;
+    
+    class AtomName : public Implements<AtomName,Name>,
+                     public Interfaces<AtomName,AtomID>
     
     @author Christopher Woods
 */
-class SIREID_EXPORT Name
+class SIREID_EXPORT Name : public Siren::Extends<Name,ID>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Name&);
-friend QDataStream& ::operator>>(QDataStream&, Name&);
-
 public:
+    Name(const QString &name = QString::null,
+         CaseSensitivity = CaseSensitive);
+    
+    Name(const Name &other);
+
     ~Name();
+
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
+
+    bool isNull() const;
     
     operator QString() const;
 
-    bool isNull() const;
-
     bool isEmpty() const;
-
-    uint hash() const;
     
     const QString& value() const;
 
     bool isCaseSensitive() const;
 
 protected:
-    explicit Name(const QString &name = QString::null,
-                  CaseSensitivity = CaseSensitive);
-    
-    Name(const Name &other);
-
     Name& operator=(const Name &other);
     
     bool operator==(const Name &other) const;
@@ -101,16 +97,10 @@ protected:
     bool case_sensitive;
 };
 
-/** Return a hash of this Name */
-inline uint qHash(const Name &name)
-{
-    return name.hash();
 }
-
-}
-
-SIRE_END_HEADER
 
 SIRE_EXPOSE_CLASS( SireID::Name )
+
+SIRE_END_HEADER
 
 #endif
