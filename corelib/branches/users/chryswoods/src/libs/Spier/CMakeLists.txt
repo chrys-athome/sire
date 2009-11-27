@@ -62,8 +62,6 @@ if ( QT_QTGUI_FOUND AND QT_QTOPENGL_FOUND )
     # Define the sources in Spier
     set ( SPIER_SOURCES
 
-          register_spier.cpp
-
           camera.cpp
           cameracommand.cpp
           color.cpp

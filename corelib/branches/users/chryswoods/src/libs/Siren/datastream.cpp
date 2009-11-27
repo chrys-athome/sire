@@ -89,7 +89,7 @@ void DataStream::registerDataStream()
         ds->setVersion( QDataStream::Qt_4_2 );
 
         //here's a magic number to check we are ok...
-        const qint64 magic_number = 4506264543405497370UL;
+        const qint64 magic_number = 6264543UL;
         ds_version = 1;
 
         if (ds->device()->isReadable())

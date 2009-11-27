@@ -36,8 +36,6 @@ set ( SQUIRE_HEADERS
 
 set ( SQUIRE_SOURCES
 
-      register_squire.cpp
-
       am1bcc.cpp
       qmchargecalculator.cpp
       qmchargeconstraint.cpp

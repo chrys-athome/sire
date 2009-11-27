@@ -50,8 +50,6 @@ set ( SIREBASE_HEADERS
 # Define the sources in SireBase
 set ( SIREBASE_SOURCES
 
-      register_sirebase.cpp
-
       array2d.cpp
       chunkedhash.cpp
       chunkedvector.cpp

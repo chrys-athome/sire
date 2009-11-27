@@ -115,8 +115,6 @@ set ( SIREMOL_HEADERS
 # Define the sources in SireMol
 set ( SIREMOL_SOURCES
 
-      register_siremol.cpp
-
       angleid.cpp
       atom.cpp
       atomcoords.cpp

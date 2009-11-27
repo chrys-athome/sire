@@ -29,33 +29,22 @@
 #ifndef SIREUNITS_DIMENSIONS_H
 #define SIREUNITS_DIMENSIONS_H
 
-#include "SireMaths/constants.h"
-
 #include <boost/static_assert.hpp>
+
+#include "Siren/primitive.h"
+#include "Siren/stream.h"
+
+#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireUnits
 {
-namespace Dimension
-{
-class Unit;
-}
-}
-
-QDataStream& operator<<(QDataStream&, const SireUnits::Dimension::Unit&);
-QDataStream& operator>>(QDataStream&, SireUnits::Dimension::Unit&);
-
-namespace SireUnits
-{
-
-using SireMaths::pi;
-
 
 namespace Dimension
 {
 
-class TempBase;
+namespace detail{ class Temperature; }
 
 /** This is the base class of all units - at its heart, this is
     just a scale factor - how many times the base unit is the
@@ -66,48 +55,25 @@ class TempBase;
 class SIREUNITS_EXPORT Unit
 {
 
-friend QDataStream& ::operator<<(QDataStream&, const Unit&);
-friend QDataStream& ::operator>>(QDataStream&, Unit&);
-
 public:
-    ~Unit()
-    {}
+    ~Unit();
 
-    operator double() const
-    {
-        return sclfac;
-    }
+    operator double() const;
 
-    double value() const
-    {
-        return sclfac;
-    }
+    double value() const;
 
-    double scaleFactor() const
-    {
-        return sclfac;
-    }
+    double scaleFactor() const;
 
-    double convertToInternal(double value) const
-    {
-        return value * sclfac;
-    }
+    double convertToInternal(double value) const;
 
-    double convertFromInternal(double value) const
-    {
-        return value / sclfac;
-    }
+    double convertFromInternal(double value) const;
 
 protected:
-    Unit(double scale_factor) : sclfac(scale_factor)
-    {}
+    Unit(double scale_factor);
     
-    Unit(const TempBase &temperature);
+    Unit(const detail::Temperature &temperature);
 
-    void setScale(double scale_factor)
-    {
-        sclfac = scale_factor;
-    }
+    void setScale(double scale_factor);
 
 private:
     double sclfac;
@@ -121,201 +87,382 @@ QString getUnitString(double value, int M, int L, int T, int C, int t, int Q, in
 
     @author Christopher Woods
 */
-template<int M, int L, int T,
-         int C, int t, int Q, int A>
-class SIREUNITS_EXPORT PhysUnit : public Unit
+template<int M, int L, int T, int C, int t, int Q, int A>
+class SIREUNITS_EXPORT PhysUnit : public Unit, 
+                                  public Siren::Primitive< PhysUnit<M,L,T,C,t,Q,A> >
 {
 public:
-    PhysUnit() : Unit(0)
-    {}
+    PhysUnit();
 
-    explicit PhysUnit(double scale_factor)
-               : Unit(scale_factor)
-    {}
+    explicit PhysUnit(double scale_factor);
+    explicit PhysUnit(const detail::Temperature &temperature);
 
-    explicit PhysUnit(const TempBase &temperature) : Unit(temperature)
-    {
-        //this must be a Temperature!
-        BOOST_STATIC_ASSERT( t == 1 and M == 0 and L == 0 and 
-                             T == 0 and C == 0 and Q == 0 and A == 0);
-    }
+    PhysUnit(const PhysUnit<M,L,T,C,t,Q,A> &other);
 
-    PhysUnit(const PhysUnit<M,L,T,C,t,Q,A> &other)
-               : Unit(other)
-    {}
+    ~PhysUnit();
 
-    ~PhysUnit()
-    {}
-
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId< PhysUnit<M,L,T,C,t,Q,A> >() );
-    }
-    
-    const char* what() const
-    {
-        return PhysUnit<M,L,T,C,t,Q,A>::typeName();
-    }
+    static QString typeName();
 
     PhysUnit<M,L,T,C,t,Q,A>
-    operator=(const PhysUnit<M,L,T,C,t,Q,A> &other)
-    {
-        Unit::setScale(other.scaleFactor());
-        return *this;
-    }
+    operator=(const PhysUnit<M,L,T,C,t,Q,A> &other);
 
-    bool operator==(const PhysUnit<M,L,T,C,t,Q,A> &other) const
-    {
-        return scaleFactor() == other.scaleFactor();
-    }
+    bool operator==(const PhysUnit<M,L,T,C,t,Q,A> &other) const;
 
-    bool operator!=(const PhysUnit<M,L,T,C,t,Q,A> &other) const
-    {
-        return scaleFactor() != other.scaleFactor();
-    }
+    bool operator!=(const PhysUnit<M,L,T,C,t,Q,A> &other) const;
 
-    PhysUnit<M,L,T,C,t,Q,A> operator-() const
-    {
-        return PhysUnit<M,L,T,C,t,Q,A>( -scaleFactor() );
-    }
+    PhysUnit<M,L,T,C,t,Q,A> operator-() const;
 
     PhysUnit<M,L,T,C,t,Q,A>
-    operator+(const PhysUnit<M,L,T,C,t,Q,A> &other) const
-    {
-        return PhysUnit<M,L,T,C,t,Q,A>(
-                  scaleFactor() + other.scaleFactor());
-    }
+    operator+(const PhysUnit<M,L,T,C,t,Q,A> &other) const;
 
     PhysUnit<M,L,T,C,t,Q,A>
-    operator-(const PhysUnit<M,L,T,C,t,Q,A> &other) const
-    {
-        return PhysUnit<M,L,T,C,t,Q,A>(
-                  scaleFactor() - other.scaleFactor());
-    }
+    operator-(const PhysUnit<M,L,T,C,t,Q,A> &other) const;
 
     PhysUnit<M,L,T,C,t,Q,A>&
-    operator+=(const PhysUnit<M,L,T,C,t,Q,A> &other)
-    {
-        Unit::setScale( scaleFactor() + other.scaleFactor() );
-        return *this;
-    }
+    operator+=(const PhysUnit<M,L,T,C,t,Q,A> &other);
 
     PhysUnit<M,L,T,C,t,Q,A>&
-    operator-=(const PhysUnit<M,L,T,C,t,Q,A> &other)
-    {
-        Unit::setScale( scaleFactor() - other.scaleFactor() );
-        return *this;
-    }
+    operator-=(const PhysUnit<M,L,T,C,t,Q,A> &other);
 
-    PhysUnit<M,L,T,C,t,Q,A> operator*(double val) const
-    {
-        return PhysUnit<M,L,T,C,t,Q,A>(scaleFactor() * val);
-    }
+    PhysUnit<M,L,T,C,t,Q,A> operator*(double val) const;
 
-    PhysUnit<M,L,T,C,t,Q,A> operator/(double val) const
-    {
-        return PhysUnit<M,L,T,C,t,Q,A>(scaleFactor() / val);
-    }
+    PhysUnit<M,L,T,C,t,Q,A> operator/(double val) const;
 
-    PhysUnit<M,L,T,C,t,Q,A> operator*(int val) const
-    {
-        return PhysUnit<M,L,T,C,t,Q,A>(scaleFactor() * val);
-    }
+    PhysUnit<M,L,T,C,t,Q,A> operator*(int val) const;
 
-    PhysUnit<M,L,T,C,t,Q,A> operator/(int val) const
-    {
-        return PhysUnit<M,L,T,C,t,Q,A>(scaleFactor() / val);
-    }
+    PhysUnit<M,L,T,C,t,Q,A> operator/(int val) const;
 
     template<int _M, int _L, int _T,
              int _C, int _t, int _Q, int _A>
     PhysUnit<M+_M, L+_L, T+_T, C+_C, t+_t, Q+_Q, A+_A>
-    operator*(const PhysUnit<_M,_L,_T,_C,_t,_Q,_A> &other) const
-    {
-        return PhysUnit<M+_M,L+_L,T+_T,C+_C,t+_t,Q+_Q,A+_A>(
-                  scaleFactor() * other.scaleFactor());
-    }
+    operator*(const PhysUnit<_M,_L,_T,_C,_t,_Q,_A> &other) const;
 
     template<int _M, int _L, int _T,
              int _C, int _t, int _Q, int _A>
     PhysUnit<M-_M, L-_L, T-_T, C-_C, t-_t, Q-_Q, A-_A>
-    operator/(const PhysUnit<_M,_L,_T,_C,_t,_Q,_A> &other) const
-    {
-        return PhysUnit<M-_M,L-_L,T-_T,C-_C,t-_t,Q-_Q,A-_A>(
-                  scaleFactor() / other.scaleFactor());
-    }
+    operator/(const PhysUnit<_M,_L,_T,_C,_t,_Q,_A> &other) const;
 
-    PhysUnit<-M,-L,-T,-C,-t,-Q,-A> invert() const
-    {
-        return PhysUnit<-M,-L,-T,-C,-t,-Q,-A>( 1.0 / scaleFactor() );
-    }
+    PhysUnit<-M,-L,-T,-C,-t,-Q,-A> invert() const;
 
-    double in(const PhysUnit<M,L,T,C,t,Q,A> &units) const
-    {
-        return units.convertFromInternal(*this);
-    }
+    double in(const PhysUnit<M,L,T,C,t,Q,A> &units) const;
     
-    double to(const PhysUnit<M,L,T,C,t,Q,A> &units) const
-    {
-        return this->in(units);
-    }
+    double to(const PhysUnit<M,L,T,C,t,Q,A> &units) const;
 
-    QString toString() const
-    {
-        return SireUnits::Dimension::getUnitString(this->scaleFactor(), M,L,T,C,t,Q,A);
-    }
+    QString toString() const;
 
-    static int MASS()
-    {
-        return M;
-    }
-    
-    static int LENGTH()
-    {
-        return L;
-    }
-    
-    static int TIME()
-    {
-        return T;
-    }
-    
-    static int CHARGE()
-    {
-        return C;
-    }
-    
-    static int TEMPERATURE()
-    {
-        return t;
-    }
-    
-    static int QUANTITY()
-    {
-        return Q;
-    }
-    
-    static int ANGLE()
-    {
-        return A;
-    }
+    void stream(Siren::Stream &s);
+
+    static int MASS();
+    static int LENGTH();
+    static int TIME();
+    static int CHARGE();
+    static int TEMPERATURE();
+    static int QUANTITY();
+    static int ANGLE();
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+//////////
+////////// Implementation of Unit
+//////////
+
+inline Unit::Unit(double scale_factor) : sclfac(scale_factor)
+{}
+
+inline Unit::~Unit()
+{}
+
+inline void Unit::setScale(double scale_factor)
+{
+    sclfac = scale_factor;
+}
+
+inline Unit::operator double() const
+{
+    return sclfac;
+}
+
+inline double Unit::value() const
+{
+    return sclfac;
+}
+
+inline double Unit::scaleFactor() const
+{
+    return sclfac;
+}
+
+//////////
+////////// Implementation of PhysUnit
+//////////
+
 template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M,L,T,C,t,Q,A>::PhysUnit() 
+        : Unit(0), Siren::Primitive< PhysUnit<M,L,T,C,t,Q,A> >()
+{}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M,L,T,C,t,Q,A>::PhysUnit(double scale_factor)
+           : Unit(scale_factor), Siren::Primitive< PhysUnit<M,L,T,C,t,Q,A> >()
+{}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M,L,T,C,t,Q,A>::PhysUnit(const detail::Temperature &temperature) 
+           : Unit(temperature), Siren::Primitive< PhysUnit<M,L,T,C,t,Q,A> >()
+{
+    //this must be a Temperature!
+    BOOST_STATIC_ASSERT( t == 1 and M == 0 and L == 0 and 
+                         T == 0 and C == 0 and Q == 0 and A == 0);
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M,L,T,C,t,Q,A>::PhysUnit(const PhysUnit<M,L,T,C,t,Q,A> &other)
+           : Unit(other), Siren::Primitive< PhysUnit<M,L,T,C,t,Q,A> >()
+{}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M,L,T,C,t,Q,A>::~PhysUnit()
+{}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+QString PhysUnit<M,L,T,C,t,Q,A>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< PhysUnit<M,L,T,C,t,Q,A> >() );
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
 PhysUnit<M,L,T,C,t,Q,A>
-operator*(double val, const PhysUnit<M,L,T,C,t,Q,A> &unit)
+PhysUnit<M,L,T,C,t,Q,A>::operator=(const PhysUnit<M,L,T,C,t,Q,A> &other)
+{
+    Unit::setScale(other.scaleFactor());
+    return *this;
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+bool PhysUnit<M,L,T,C,t,Q,A>::operator==(const PhysUnit<M,L,T,C,t,Q,A> &other) const
+{
+    return scaleFactor() == other.scaleFactor();
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+bool PhysUnit<M,L,T,C,t,Q,A>::operator!=(const PhysUnit<M,L,T,C,t,Q,A> &other) const
+{
+    return scaleFactor() != other.scaleFactor();
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M,L,T,C,t,Q,A> PhysUnit<M,L,T,C,t,Q,A>::operator-() const
+{
+    return PhysUnit<M,L,T,C,t,Q,A>( -scaleFactor() );
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M,L,T,C,t,Q,A>
+PhysUnit<M,L,T,C,t,Q,A>::operator+(const PhysUnit<M,L,T,C,t,Q,A> &other) const
+{
+    return PhysUnit<M,L,T,C,t,Q,A>(
+              scaleFactor() + other.scaleFactor());
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M,L,T,C,t,Q,A>
+PhysUnit<M,L,T,C,t,Q,A>::operator-(const PhysUnit<M,L,T,C,t,Q,A> &other) const
+{
+    return PhysUnit<M,L,T,C,t,Q,A>(
+              scaleFactor() - other.scaleFactor());
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M,L,T,C,t,Q,A>&
+PhysUnit<M,L,T,C,t,Q,A>::operator+=(const PhysUnit<M,L,T,C,t,Q,A> &other)
+{
+    Unit::setScale( scaleFactor() + other.scaleFactor() );
+    return *this;
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M,L,T,C,t,Q,A>&
+PhysUnit<M,L,T,C,t,Q,A>::operator-=(const PhysUnit<M,L,T,C,t,Q,A> &other)
+{
+    Unit::setScale( scaleFactor() - other.scaleFactor() );
+    return *this;
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M,L,T,C,t,Q,A> PhysUnit<M,L,T,C,t,Q,A>::operator*(double val) const
+{
+    return PhysUnit<M,L,T,C,t,Q,A>(scaleFactor() * val);
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M,L,T,C,t,Q,A> PhysUnit<M,L,T,C,t,Q,A>::operator/(double val) const
+{
+    return PhysUnit<M,L,T,C,t,Q,A>(scaleFactor() / val);
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M,L,T,C,t,Q,A> PhysUnit<M,L,T,C,t,Q,A>::operator*(int val) const
+{
+    return PhysUnit<M,L,T,C,t,Q,A>(scaleFactor() * val);
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M,L,T,C,t,Q,A> PhysUnit<M,L,T,C,t,Q,A>::operator/(int val) const
+{
+    return PhysUnit<M,L,T,C,t,Q,A>(scaleFactor() / val);
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+template<int _M, int _L, int _T,
+         int _C, int _t, int _Q, int _A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M+_M, L+_L, T+_T, C+_C, t+_t, Q+_Q, A+_A>
+PhysUnit<M,L,T,C,t,Q,A>::operator*(const PhysUnit<_M,_L,_T,_C,_t,_Q,_A> &other) const
+{
+    return PhysUnit<M+_M,L+_L,T+_T,C+_C,t+_t,Q+_Q,A+_A>(
+              scaleFactor() * other.scaleFactor());
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+template<int _M, int _L, int _T,
+         int _C, int _t, int _Q, int _A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M-_M, L-_L, T-_T, C-_C, t-_t, Q-_Q, A-_A>
+PhysUnit<M,L,T,C,t,Q,A>::operator/(const PhysUnit<_M,_L,_T,_C,_t,_Q,_A> &other) const
+{
+    return PhysUnit<M-_M,L-_L,T-_T,C-_C,t-_t,Q-_Q,A-_A>(
+              scaleFactor() / other.scaleFactor());
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<-M,-L,-T,-C,-t,-Q,-A> PhysUnit<M,L,T,C,t,Q,A>::invert() const
+{
+    return PhysUnit<-M,-L,-T,-C,-t,-Q,-A>( 1.0 / scaleFactor() );
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+double PhysUnit<M,L,T,C,t,Q,A>::in(const PhysUnit<M,L,T,C,t,Q,A> &units) const
+{
+    return units.convertFromInternal(*this);
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+double PhysUnit<M,L,T,C,t,Q,A>::to(const PhysUnit<M,L,T,C,t,Q,A> &units) const
+{
+    return this->in(units);
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+QString PhysUnit<M,L,T,C,t,Q,A>::toString() const
+{
+    return SireUnits::Dimension::getUnitString(this->scaleFactor(), M,L,T,C,t,Q,A);
+}
+
+/** Stream this unit */
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+void PhysUnit<M,L,T,C,t,Q,A>::stream(Siren::Stream &s)
+{
+    s.assertVersion< PhysUnit<M,L,T,C,t,Q,A> >(1);
+    
+    Siren::Schema schema = s.item< PhysUnit<M,L,T,C,t,Q,A> >();
+    
+    double v = this->value();
+    
+    schema.data("value") & v;
+    
+    if (s.isSaving())
+        this->setScale(v);
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+int PhysUnit<M,L,T,C,t,Q,A>::MASS()
+{
+    return M;
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+int PhysUnit<M,L,T,C,t,Q,A>::LENGTH()
+{
+    return L;
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+int PhysUnit<M,L,T,C,t,Q,A>::TIME()
+{
+    return T;
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+int PhysUnit<M,L,T,C,t,Q,A>::CHARGE()
+{
+    return C;
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+int PhysUnit<M,L,T,C,t,Q,A>::TEMPERATURE()
+{
+    return t;
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+int PhysUnit<M,L,T,C,t,Q,A>::QUANTITY()
+{
+    return Q;
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+int PhysUnit<M,L,T,C,t,Q,A>::ANGLE()
+{
+    return A;
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M,L,T,C,t,Q,A> operator*(double val, const PhysUnit<M,L,T,C,t,Q,A> &unit)
 {
     return PhysUnit<M,L,T,C,t,Q,A>( val * unit.scaleFactor() );
 }
 
 template<int M, int L, int T, int C, int t, int Q, int A>
-PhysUnit<M,L,T,C,t,Q,A>
-operator*(int val, const PhysUnit<M,L,T,C,t,Q,A> &unit)
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M,L,T,C,t,Q,A> operator*(int val, const PhysUnit<M,L,T,C,t,Q,A> &unit)
 {
     return PhysUnit<M,L,T,C,t,Q,A>( val * unit.scaleFactor() );
 }
 
 template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
 PhysUnit<-M,-L,-T,-C,-t,-Q,-A>
 operator/(double val, const PhysUnit<M,L,T,C,t,Q,A> &unit)
 {
@@ -323,64 +470,42 @@ operator/(double val, const PhysUnit<M,L,T,C,t,Q,A> &unit)
 }
 
 template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
 PhysUnit<-M,-L,-T,-C,-t,-Q,-A>
 operator/(int val, const PhysUnit<M,L,T,C,t,Q,A> &unit)
 {
     return PhysUnit<-M,-L,-T,-C,-t,-Q,-A>( val / unit.scaleFactor() );
 }
 
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Typedef the various unit dimensions (including derived units) */
 #ifndef SKIP_BROKEN_GCCXML_PARTS
 typedef PhysUnit<0,0,0,0,0,0,0> Dimensionless;
-
 typedef PhysUnit<1,0,0,0,0,0,0> Mass;
-
 typedef PhysUnit<1,0,0,0,0,-1,0> MolarMass;
-
 typedef PhysUnit<0,1,0,0,0,0,0> Length;
-
 typedef PhysUnit<0,0,1,0,0,0,0> Time;
-
 typedef PhysUnit<0,0,0,1,0,0,0> Charge;
-
 typedef PhysUnit<0,0,0,1,0,-1,0> MolarCharge;
-
 typedef PhysUnit<0,0,0,0,1,0,0> Temperature;
-
 typedef PhysUnit<0,0,0,0,0,1,0> Quantity;
-
 typedef PhysUnit<0,0,0,0,0,0,1> Angle;
-
 typedef PhysUnit<0,2,0,0,0,0,0> Area;
-
 typedef PhysUnit<0,3,0,0,0,0,0> Volume;
-
 typedef PhysUnit<0,3,0,0,0,-1,0> MolarVolume;
-
 typedef PhysUnit<0,1,-1,0,0,0,0> Velocity;
-
 typedef PhysUnit<0,0,-1,0,0,0,1> AngularVelocity;
-
 typedef PhysUnit<0,1,-2,0,0,0,0> Acceleration;
-
 typedef PhysUnit<0,0,-2,0,0,0,1> AngularAcceleration;
-
 typedef PhysUnit<1,2,-2,0,0,0,0> Energy;
-
 typedef PhysUnit<1,2,-2,0,0,-1,0> MolarEnergy;
-
 typedef PhysUnit<1,2,-3,0,0,0,0> Power;
-
 typedef PhysUnit<1,2,-3,0,0,-1,0> MolarPower;
-
 typedef PhysUnit<1,-3,0,0,0,0,0> Density;
-
 typedef PhysUnit<1,-3,0,0,0,-1,0> MolarDensity;
-
 typedef PhysUnit<1,1,-2,0,0,0,0> Force;
-
 typedef PhysUnit<1,-1,-2,0,0,0,0> Pressure;
-
 typedef PhysUnit<0,0,-1,1,0,0,0> Current;
 typedef PhysUnit<-1,-2,2,2,0,0,0> Capacitance;
 typedef PhysUnit<1,2,-2,-1,0,0,0> Potential;
@@ -420,52 +545,34 @@ class Potential;
 
 }
 
-/** Serialise a unit to a binary datastream (this does not check
-    the type of unit!) */
-inline QDataStream& operator<<(QDataStream &ds,
-                               const SireUnits::Dimension::Unit &unit)
-{
-    ds << unit.sclfac;
-    return ds;
-}
-
-/** Extract from a binary datastream (this does not check the type
-    of unit!) */
-inline QDataStream& operator>>(QDataStream &ds,
-                               SireUnits::Dimension::Unit &unit)
-{
-    ds >> unit.sclfac;
-    return ds;
-}
-
-Q_DECLARE_METATYPE( SireUnits::Dimension::Dimensionless );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Mass );
-Q_DECLARE_METATYPE( SireUnits::Dimension::MolarMass );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Length );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Time );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Charge );
-Q_DECLARE_METATYPE( SireUnits::Dimension::MolarCharge );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Temperature );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Quantity );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Angle );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Area );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Volume );
-Q_DECLARE_METATYPE( SireUnits::Dimension::MolarVolume );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Velocity );
-Q_DECLARE_METATYPE( SireUnits::Dimension::AngularVelocity );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Acceleration );
-Q_DECLARE_METATYPE( SireUnits::Dimension::AngularAcceleration );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Energy );
-Q_DECLARE_METATYPE( SireUnits::Dimension::MolarEnergy );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Power );
-Q_DECLARE_METATYPE( SireUnits::Dimension::MolarPower );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Density );
-Q_DECLARE_METATYPE( SireUnits::Dimension::MolarDensity );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Force );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Pressure );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Capacitance );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Current );
-Q_DECLARE_METATYPE( SireUnits::Dimension::Potential );
+Q_DECLARE_METATYPE( SireUnits::Dimension::Dimensionless )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Mass )
+Q_DECLARE_METATYPE( SireUnits::Dimension::MolarMass )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Length )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Time )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Charge )
+Q_DECLARE_METATYPE( SireUnits::Dimension::MolarCharge )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Temperature )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Quantity )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Angle )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Area )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Volume )
+Q_DECLARE_METATYPE( SireUnits::Dimension::MolarVolume )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Velocity )
+Q_DECLARE_METATYPE( SireUnits::Dimension::AngularVelocity )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Acceleration )
+Q_DECLARE_METATYPE( SireUnits::Dimension::AngularAcceleration )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Energy )
+Q_DECLARE_METATYPE( SireUnits::Dimension::MolarEnergy )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Power )
+Q_DECLARE_METATYPE( SireUnits::Dimension::MolarPower )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Density )
+Q_DECLARE_METATYPE( SireUnits::Dimension::MolarDensity )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Force )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Pressure )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Capacitance )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Current )
+Q_DECLARE_METATYPE( SireUnits::Dimension::Potential )
 
 Q_DECLARE_TYPEINFO( SireUnits::Dimension::Dimensionless, Q_MOVABLE_TYPE );
 Q_DECLARE_TYPEINFO( SireUnits::Dimension::Mass, Q_MOVABLE_TYPE );
@@ -497,6 +604,70 @@ Q_DECLARE_TYPEINFO( SireUnits::Dimension::Current, Q_MOVABLE_TYPE );
 Q_DECLARE_TYPEINFO( SireUnits::Dimension::Potential, Q_MOVABLE_TYPE );
 
 SIRE_EXPOSE_CLASS( SireUnits::Dimension::Unit )
+
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Dimensionless )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Mass )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::MolarMass )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Length )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Time )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Charge )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::MolarCharge )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Temperature )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Quantity )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Angle )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Area )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Volume )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::MolarVolume )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Velocity )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::AngularVelocity )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Acceleration )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::AngularAcceleration )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Energy )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::MolarEnergy )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Power )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::MolarPower )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Density )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::MolarDensity )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Force )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Pressure )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Capacitance )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Current )
+SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Potential )
+
+#ifdef SIRE_INSTANTIATE_TEMPLATES
+namespace SireUnits { namespace Dimension {
+
+template class PhysUnit<0,0,0,0,0,0,0>;
+template class PhysUnit<1,0,0,0,0,0,0>;
+template class PhysUnit<1,0,0,0,0,-1,0>;
+template class PhysUnit<0,1,0,0,0,0,0>;
+template class PhysUnit<0,0,1,0,0,0,0>;
+template class PhysUnit<0,0,0,1,0,0,0>;
+template class PhysUnit<0,0,0,1,0,-1,0>;
+template class PhysUnit<0,0,0,0,1,0,0>;
+template class PhysUnit<0,0,0,0,0,1,0>;
+template class PhysUnit<0,0,0,0,0,0,1>;
+template class PhysUnit<0,2,0,0,0,0,0>;
+template class PhysUnit<0,3,0,0,0,0,0>;
+template class PhysUnit<0,3,0,0,0,-1,0>;
+template class PhysUnit<0,1,-1,0,0,0,0>;
+template class PhysUnit<0,0,-1,0,0,0,1>;
+template class PhysUnit<0,1,-2,0,0,0,0>;
+template class PhysUnit<0,0,-2,0,0,0,1>;
+template class PhysUnit<1,2,-2,0,0,0,0>;
+template class PhysUnit<1,2,-2,0,0,-1,0>;
+template class PhysUnit<1,2,-3,0,0,0,0>;
+template class PhysUnit<1,2,-3,0,0,-1,0>;
+template class PhysUnit<1,-3,0,0,0,0,0>;
+template class PhysUnit<1,-3,0,0,0,-1,0>;
+template class PhysUnit<1,1,-2,0,0,0,0>;
+template class PhysUnit<1,-1,-2,0,0,0,0>;
+template class PhysUnit<0,0,-1,1,0,0,0>;
+template class PhysUnit<-1,-2,2,2,0,0,0>;
+template class PhysUnit<1,2,-2,-1,0,0,0>;
+
+}}
+#endif // SIRE_INSTANTIATE_TEMPLATES
 
 SIRE_END_HEADER
 

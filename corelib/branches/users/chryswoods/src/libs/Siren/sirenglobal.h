@@ -38,6 +38,13 @@
 #define SIREN_EXPOSE_OBJECT_PTR(c,a)  /* Exposing pointer #1 to object class #2 */
 #define SIREN_EXPOSE_HANDLE_PTR(c,a)  /* Exposing pointer #1 to object class #2 */
 
+#ifdef SIREN_INSTANTIATE_TEMPLATES
+    #define SIREN_EXPOSE_PRIMITIVE(X) \
+        template class Siren::Primitive<X>; template class Siren::PrimitiveObject<X>;
+#else
+    #define SIREN_EXPOSE_PRIMITIVE(c) /* Exposing primitive type #1 */
+#endif
+
 //create the keyword used to export a symbol - this
 //is a copy of Q_DECL_EXPORT, which will definitely
 //be set to the correct value

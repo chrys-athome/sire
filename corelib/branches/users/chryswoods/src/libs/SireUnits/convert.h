@@ -43,7 +43,7 @@ namespace SireUnits
 // Conversion functions for derived units      //
 /////////////////////////////////////////////////
 
-inline double convertFrom(double val, const Dimension::TempBase &from_units)
+inline double convertFrom(double val, const Dimension::detail::Temperature &from_units)
 {
     return from_units.convertToInternal(val);
 }
@@ -53,7 +53,7 @@ inline double convertFrom(double val, const Dimension::Unit &from_units)
     return from_units.convertToInternal(val);
 }
 
-inline double convertTo(double val, const Dimension::TempBase &to_units)
+inline double convertTo(double val, const Dimension::detail::Temperature &to_units)
 {
     return to_units.convertFromInternal(val);
 }
@@ -63,14 +63,14 @@ inline double convertTo(double val, const Dimension::Unit &to_units)
     return to_units.convertFromInternal(val);
 }
 
-inline double convert(double val, const Dimension::TempBase &from_units,
-                                  const Dimension::TempBase &to_units)
+inline double convert(double val, const Dimension::detail::Temperature &from_units,
+                                  const Dimension::detail::Temperature &to_units)
 {
     return convertTo( convertFrom(val,from_units), to_units );
 }
 
 inline double convert(double val, const Dimension::Unit &from_units,
-                                  const Dimension::TempBase &to_units)
+                                  const Dimension::detail::Temperature &to_units)
 {
     return convertTo( convertFrom(val,from_units), to_units );
 }
@@ -81,7 +81,7 @@ inline double convert(double val, const Dimension::Unit &from_units,
     return convertTo( convertFrom(val,from_units), to_units );
 }
 
-inline double convert(double val, const Dimension::TempBase &to_units)
+inline double convert(double val, const Dimension::detail::Temperature &to_units)
 {
     return convertTo(val, to_units);
 }

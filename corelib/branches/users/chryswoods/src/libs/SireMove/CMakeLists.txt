@@ -62,8 +62,6 @@ set ( SIREMOVE_DEPRECATED_HEADERS
 # Define the sources in SireMove
 set ( SIREMOVE_SOURCES
 
-      register_siremove.cpp
-
       dynamics.cpp
       ensemble.cpp
       errors.cpp

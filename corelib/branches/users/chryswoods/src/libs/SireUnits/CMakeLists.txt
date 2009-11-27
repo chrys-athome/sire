@@ -20,10 +20,11 @@ set ( SIREUNITS_HEADERS
 # Define the sources in SireUnits
 set ( SIREUNITS_SOURCES
 
-      register_sireunits.cpp
-
       angle.cpp
       convert.cpp            
+      dimensions.cpp
+      temperature.cpp
+      units.cpp
     
       ${SIREUNITS_HEADERS}
     )
@@ -37,7 +38,7 @@ set_target_properties (SireUnits PROPERTIES
 
 # Link to other Sire libraries
 target_link_libraries (SireUnits
-                       SireStream
+                       Siren
                        )
 
 # installation

@@ -34,24 +34,24 @@ else()
     set( SIREBLASPACK_HAS_LIBRARIES TRUE )
   else()
     set( SIRE_BLAS_SOURCES
-         ThirdParty/BLAS/idamax.f
-         ThirdParty/BLAS/dasum.f
-         ThirdParty/BLAS/daxpy.f
-         ThirdParty/BLAS/dcopy.f
-         ThirdParty/BLAS/ddot.f
-         ThirdParty/BLAS/dgemm.f
-         ThirdParty/BLAS/dgemv.f
-         ThirdParty/BLAS/dger.f
-         ThirdParty/BLAS/dnrm2.f
-         ThirdParty/BLAS/dscal.f
-         ThirdParty/BLAS/dswap.f
-         ThirdParty/BLAS/dsymv.f
-         ThirdParty/BLAS/dsyr2.f
-         ThirdParty/BLAS/dsyr2k.f
-         ThirdParty/BLAS/dtrmm.f
-         ThirdParty/BLAS/dtrmv.f
-         ThirdParty/BLAS/lsame.f
-         ThirdParty/BLAS/xerbla.f
+         third_party/BLAS/idamax.f
+         third_party/BLAS/dasum.f
+         third_party/BLAS/daxpy.f
+         third_party/BLAS/dcopy.f
+         third_party/BLAS/ddot.f
+         third_party/BLAS/dgemm.f
+         third_party/BLAS/dgemv.f
+         third_party/BLAS/dger.f
+         third_party/BLAS/dnrm2.f
+         third_party/BLAS/dscal.f
+         third_party/BLAS/dswap.f
+         third_party/BLAS/dsymv.f
+         third_party/BLAS/dsyr2.f
+         third_party/BLAS/dsyr2k.f
+         third_party/BLAS/dtrmm.f
+         third_party/BLAS/dtrmv.f
+         third_party/BLAS/lsame.f
+         third_party/BLAS/xerbla.f
        )
   endif()
 
@@ -60,9 +60,9 @@ else()
     set( SIREBLASPACK_HAS_LIBRARIES TRUE )
   else()
     set( SIRE_LINPACK_SOURCES
-         ThirdParty/LINPACK/dgeco.f
-         ThirdParty/LINPACK/dgedi.f
-         ThirdParty/LINPACK/dgefa.f
+         third_party/LINPACK/dgeco.f
+         third_party/LINPACK/dgedi.f
+         third_party/LINPACK/dgefa.f
        )
   endif()
 
@@ -71,40 +71,40 @@ else()
     set( SIREBLASPACK_HAS_LIBRARIES TRUE )
   else()
     set( SIRE_LAPACK_SOURCES
-         ThirdParty/LAPACK/disnan.f
-         ThirdParty/LAPACK/dlae2.f
-         ThirdParty/LAPACK/dlaev2.f
-         ThirdParty/LAPACK/dlaisnan.f
-         ThirdParty/LAPACK/dlamch.f
-         ThirdParty/LAPACK/dlanst.f
-         ThirdParty/LAPACK/dlansy.f
-         ThirdParty/LAPACK/dlapy2.f
-         ThirdParty/LAPACK/dlascl.f
-         ThirdParty/LAPACK/dlarf.f
-         ThirdParty/LAPACK/dlarfb.f
-         ThirdParty/LAPACK/dlartg.f
-         ThirdParty/LAPACK/dlarfg.f
-         ThirdParty/LAPACK/dlarft.f
-         ThirdParty/LAPACK/dlaset.f
-         ThirdParty/LAPACK/dlasr.f
-         ThirdParty/LAPACK/dlasrt.f
-         ThirdParty/LAPACK/dlassq.f
-         ThirdParty/LAPACK/dlatrd.f
-         ThirdParty/LAPACK/dorg2l.f
-         ThirdParty/LAPACK/dorg2r.f
-         ThirdParty/LAPACK/dorgql.f
-         ThirdParty/LAPACK/dorgqr.f
-         ThirdParty/LAPACK/dorgtr.f
-         ThirdParty/LAPACK/dsyev.f
-         ThirdParty/LAPACK/dsytd2.f
-         ThirdParty/LAPACK/dsytrd.f
-         ThirdParty/LAPACK/dsteqr.f
-         ThirdParty/LAPACK/dsterf.f
-         ThirdParty/LAPACK/ilaenv.f
-         ThirdParty/LAPACK/iladlc.f
-         ThirdParty/LAPACK/iladlr.f
-         ThirdParty/LAPACK/ieeeck.f
-         ThirdParty/LAPACK/iparmq.f
+         third_party/LAPACK/disnan.f
+         third_party/LAPACK/dlae2.f
+         third_party/LAPACK/dlaev2.f
+         third_party/LAPACK/dlaisnan.f
+         third_party/LAPACK/dlamch.f
+         third_party/LAPACK/dlanst.f
+         third_party/LAPACK/dlansy.f
+         third_party/LAPACK/dlapy2.f
+         third_party/LAPACK/dlascl.f
+         third_party/LAPACK/dlarf.f
+         third_party/LAPACK/dlarfb.f
+         third_party/LAPACK/dlartg.f
+         third_party/LAPACK/dlarfg.f
+         third_party/LAPACK/dlarft.f
+         third_party/LAPACK/dlaset.f
+         third_party/LAPACK/dlasr.f
+         third_party/LAPACK/dlasrt.f
+         third_party/LAPACK/dlassq.f
+         third_party/LAPACK/dlatrd.f
+         third_party/LAPACK/dorg2l.f
+         third_party/LAPACK/dorg2r.f
+         third_party/LAPACK/dorgql.f
+         third_party/LAPACK/dorgqr.f
+         third_party/LAPACK/dorgtr.f
+         third_party/LAPACK/dsyev.f
+         third_party/LAPACK/dsytd2.f
+         third_party/LAPACK/dsytrd.f
+         third_party/LAPACK/dsteqr.f
+         third_party/LAPACK/dsterf.f
+         third_party/LAPACK/ilaenv.f
+         third_party/LAPACK/iladlc.f
+         third_party/LAPACK/iladlr.f
+         third_party/LAPACK/ieeeck.f
+         third_party/LAPACK/iparmq.f
        )
   endif()
 
@@ -117,18 +117,6 @@ else()
     create_fortran_c_interface( Sire SIRE_LINPACK_FUNCTIONS sire_linpack_f.h )
   endif()
 endif()
-
-# SireMaths depends on >= GSL 1.6
-find_package(GSL 1.6 REQUIRED)
-
-message( STATUS "GSL paths ${GSL_LINK_DIRECTORIES} "
-                "${GSL_LIBRARIES} | ${GSL_INCLUDE_DIR}" )
-
-list(APPEND SIREMATHS_EXTRA_LIBRARIES ${GSL_LIBRARIES})
-
-include_directories( BEFORE ${GSL_INCLUDE_DIR})
-
-save_sire_variable( "SIRE_GSL_INCLUDE_PATH" "${GSL_INCLUDE_DIR}" )
 
 # Other Sire libraries
 include_directories(${CMAKE_SOURCE_DIR}/src/libs)
@@ -183,8 +171,6 @@ set ( SIREMATHS_HEADERS
 # Define the sources in SireMaths
 set ( SIREMATHS_SOURCES
 
-      register_siremaths.cpp
-
       accumulator.cpp
       axisset.cpp
       boys.cpp
@@ -214,6 +200,9 @@ set ( SIREMATHS_SOURCES
       sire_lapack.cpp
       sire_linpack.cpp
 
+      third_party/GSL/fcmp.c
+      third_party/GSL/fcmp.h
+
       ${SIREMATHS_HEADERS}
     )
 
@@ -242,9 +231,8 @@ set_target_properties (SireMaths PROPERTIES
 # Link to other Sire libraries, and GSL
 target_link_libraries (SireMaths
                        SireID
-                       SireBase
                        SireUnits
-                       SireStream
+                       Siren
                        ${SIREMATHS_EXTRA_LIBRARIES}
                       )
 

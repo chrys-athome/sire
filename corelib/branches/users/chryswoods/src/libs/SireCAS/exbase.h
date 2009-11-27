@@ -49,6 +49,7 @@ QDataStream& operator>>(QDataStream&, SireCAS::ExBase&);
 namespace SireMaths
 {
 class Complex;
+class Rational;
 }
 
 namespace SireCAS

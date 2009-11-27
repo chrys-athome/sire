@@ -40,8 +40,6 @@ set ( SIRESYSTEM_HEADERS
 # Define the sources in SireSystem
 set ( SIRESYSTEM_SOURCES
 
-      register_siresystem.cpp
-
       chargeconstraint.cpp
       closemols.cpp
       constraint.cpp

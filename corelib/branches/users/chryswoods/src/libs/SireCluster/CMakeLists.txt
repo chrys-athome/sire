@@ -72,8 +72,6 @@ set ( SIRECLUSTER_HEADERS
 # Define the sources in SireCluster
 set ( SIRECLUSTER_SOURCES
 
-      register_sirecluster.cpp
-
       backend.cpp
       cluster.cpp
       frontend.cpp

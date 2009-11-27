@@ -29,9 +29,6 @@
 #ifndef SIREUNITS_UNITS_H
 #define SIREUNITS_UNITS_H
 
-//skip this completely when parsing with gccxml as it is broken!
-#ifndef SKIP_BROKEN_GCCXML_PARTS
-
 #include <limits>
 #include <cmath>
 
@@ -41,311 +38,201 @@ SIRE_BEGIN_HEADER
 
 namespace SireUnits
 {
-
-/** This file defines physical constants, in internal units of this program
-
-    We use the AKMA units (same as charmm)
-        Angstroms, Kilocalories per Mole, Atomic mass units
-
-    energy = kcal mol-1 (thermal)     (really MolarEnergy)
-    length = angstrom
-    mass = g mol-1                    (really MolarMass)
-    time = AKMA time == 48.88821 fs == 0.04888821 ps
-    charge = unit electrons
-
-    Where necessary, physical constants were downloaded from
-    the NIST website (web pages referenced where appropriate).
-    
-    Physical constants were last checked on 28/10/2008
-*/
-
-/** Avogadro's number */
-//http://physics.nist.gov/cgi-bin/cuu/Value?na|search_for=physchem_in!
-const Dimension::Quantity mole( 6.02214179e23 );
-
-const Dimension::Quantity dozen( 12 );
-
-/////////////////////////////////////////////////
-// Units of angle. Internal unit = radians     //
-/////////////////////////////////////////////////
-
-const Dimension::Angle radians( 1 );
-const Dimension::Angle radian( 1 );
-
-const Dimension::Angle degrees = radians * pi / 180.0;
-const Dimension::Angle degree = degrees;
-
-const Dimension::Angle angle_minute = degree / 60;
-const Dimension::Angle angle_minutes = angle_minute;
-
-const Dimension::Angle angle_second = angle_minute / 60;
-const Dimension::Angle angle_seconds = angle_second;
-
-const Dimension::Angle octant = 45 * degrees;
-const Dimension::Angle octants = octant;
-
-const Dimension::Angle sextant = 60 * degrees;
-const Dimension::Angle sextants = sextant;
-
-const Dimension::Angle quadrant = 90 * degrees;
-const Dimension::Angle quadrants = quadrant;
-
-const Dimension::Angle gradian = quadrant / 100;
-const Dimension::Angle gradians = gradian;
-const Dimension::Angle grad = gradian;
-const Dimension::Angle gon = gradian;
-
-const Dimension::Angle revolution = 360 * degrees;
-const Dimension::Angle revolutions = revolution;
-const Dimension::Angle revs = revolution;
-
-const Dimension::Angle circumference = revolution;
-
-/////////////////////////////////////////////////
-// Units of length. Internal unit = Angstroms  //
-/////////////////////////////////////////////////
-
-const Dimension::Length angstrom(1);
-
-const Dimension::Length picometer( 0.01 * angstrom );
-const Dimension::Length nanometer( 1000 * picometer );
-const Dimension::Length micrometer( 1000 * nanometer );
-const Dimension::Length millimeter( 1000 * micrometer );
-const Dimension::Length centimeter( 10 * millimeter );
-const Dimension::Length meter( 100 * centimeter );
-const Dimension::Length kilometer( 1000 * meter );
-
-//http://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0|search_for=bohr
-const Dimension::Length bohr_radii( 0.52917720859 * angstrom );
-
-const Dimension::Length inch( 2.54 * centimeter );
-const Dimension::Length foot( 12 * inch );
-const Dimension::Length yard( 3 * foot );
-const Dimension::Length mile( 1760 * yard );
-
-/////////////////////////////////////////////////
-// Units of area. Internal unit = Angstroms^2  //
-/////////////////////////////////////////////////
-
-const Dimension::Area angstrom2 = angstrom * angstrom;
-const Dimension::Area picometer2 = picometer * picometer;
-const Dimension::Area nanometer2 = nanometer * nanometer;
-
-const Dimension::Area meter2 = meter * meter;
-
-/////////////////////////////////////////////////
-// Units of volume. Internal unit = Angstroms^3  //
-/////////////////////////////////////////////////
-
-const Dimension::Volume angstrom3 = angstrom * angstrom * angstrom;
-const Dimension::Volume picometer3 = picometer * picometer * picometer;
-const Dimension::Volume nanometer3 = nanometer * nanometer * nanometer;
-
-const Dimension::Volume meter3 = meter * meter * meter;
-
-///////////////////////////////////////////////////////
-// Units of mass. Internal unit = g mol-1            //
-///////////////////////////////////////////////////////
-
-const Dimension::MolarMass g_per_mol(1);
-
-const Dimension::Mass gram( mole * g_per_mol );
-const Dimension::Mass kilogram( 1000 * gram );
-const Dimension::Mass tonne( 1000 * kilogram );
-
-const Dimension::Mass milligram( 0.001 * gram );
-const Dimension::Mass microgram( 0.001 * milligram );
-const Dimension::Mass nanogram( 0.001 * microgram );
-const Dimension::Mass picogram( 0.001 * nanogram );
-const Dimension::Mass femtogram( 0.001 * picogram );
-
-const Dimension::MolarMass kg_per_mol( 1000 * g_per_mol );
-const Dimension::MolarMass tonne_per_mol( 1000 * kg_per_mol );
-const Dimension::MolarMass mg_per_mol( 0.001 * g_per_mol );
-const Dimension::MolarMass ug_per_mol( 0.001 * mg_per_mol );
-const Dimension::MolarMass ng_per_mol( 0.001 * ug_per_mol );
-const Dimension::MolarMass pg_per_mol( 0.001 * ng_per_mol );
-const Dimension::MolarMass fg_per_mol( 0.001 * pg_per_mol );
-
-///////////////////////////////////////////////////////
-// Units of Charge. Internal unit = |e|              //
-///////////////////////////////////////////////////////
-
-const Dimension::Charge mod_electron(1);
-const Dimension::MolarCharge faraday(1);
-
-//http://physics.nist.gov/cgi-bin/cuu/Value?e|search_for=elecmag_in!
-const Dimension::Charge coulomb = mod_electron / 1.602176487e-19;
-const Dimension::MolarCharge coulomb_per_mol = coulomb / mole;
-
-const Dimension::Charge e_charge = -mod_electron;
-
-/////////////////////////////////////////////////
-// Units of Energy. Internal unit = kcal mol-1 //
-/////////////////////////////////////////////////
-
-const Dimension::MolarEnergy kcal_per_mol(1);
-const Dimension::Energy kcal = mole * kcal_per_mol;
-
-const Dimension::MolarEnergy cal_per_mol = 0.001 * kcal_per_mol;
-const Dimension::Energy cal = 0.001 * kcal;
-
-const Dimension::MolarEnergy kJ_per_mol = kcal_per_mol / 4.184;
-const Dimension::Energy kilojoule = mole * kJ_per_mol;
-
-const Dimension::MolarEnergy MJ_per_mol = 1000 * kJ_per_mol;
-const Dimension::Energy megajoule = 1000 * kilojoule;
-
-const Dimension::MolarEnergy J_per_mol = 0.001 * kJ_per_mol;
-const Dimension::Energy joule = 0.001 * kilojoule;
-
-/** Conversion factor from international kcal mol-1 to internal units  */
-const Dimension::MolarEnergy int_kcal_per_mol( 4.1868 * kJ_per_mol );
-const Dimension::MolarEnergy int_cal_per_mol( 0.001 * int_kcal_per_mol );
-
-const Dimension::Energy int_kcal( mole * int_kcal_per_mol );
-const Dimension::Energy int_cal( 0.001 * int_kcal );
-
-//http://physics.nist.gov/cgi-bin/cuu/Value?hr|search_for=hartree
-const Dimension::Energy hartree(4.35974394e-18 * joule);
-
-////////////////////////////////////////////////////////////
-// Units of time. Internal unit = akma_time == 48.8882 fs //
-////////////////////////////////////////////////////////////
-
-const Dimension::Time akma_time(1);
-
-const Dimension::Time second( std::sqrt( (kg_per_mol * meter * meter) / J_per_mol ) );
-const Dimension::Time millisecond = 0.001 * second;
-const Dimension::Time microsecond = 0.001 * millisecond;
-const Dimension::Time nanosecond = 0.001 * microsecond;
-const Dimension::Time picosecond = 0.001 * nanosecond;
-const Dimension::Time femtosecond = 0.001 * picosecond;
-
-const Dimension::Time minute( 60 * second );
-const Dimension::Time hour( 60 * minute );
-const Dimension::Time day( 24 * hour );
-const Dimension::Time week( 7 * day );
-const Dimension::Time fortnight( 2 * week );
-
-//////////////////////////////////////////////////////////
-// Units of force. Internal units = kcal mol-1 A-1      //
-//////////////////////////////////////////////////////////
-
-/** Convert a force in Newtons to internal units */
-const Dimension::Force newton( joule / meter );
-
-/** Weights */
-const Dimension::Force ounce = 0.27801385095 * newton;
-const Dimension::Force pound = 16 * ounce;
-const Dimension::Force stone = 14 * pound;
-const Dimension::Force hundredweight = 8 * stone;
-
-//////////////////////////////////////////////////////////
-// Units of pressure. Internal units = kcal mol-1 A-2   //
-//////////////////////////////////////////////////////////
-
-const Dimension::Pressure pascal = newton / (meter*meter);
-
-const Dimension::Pressure bar = 100000 * pascal;
-const Dimension::Pressure atm = 101325 * pascal;
-
-const Dimension::Pressure psi = pound / (inch*inch);
-const Dimension::Pressure mmHg = 133.322 * pascal;
-
-//////////////////////////////////////////////////////////
-// Units of temperature. Internal units = Kelvin        //
-//////////////////////////////////////////////////////////
-
-const Dimension::Temperature kelvin(1);
-
-// other temperature units defined in temperature.h
-
-//////////////////////////////////////////////////////////
-// Now some miscellaneous units                         //
-//////////////////////////////////////////////////////////
-
-/** Convert the units of current (amps) */
-const Dimension::Current amp = coulomb / second;
-
-/** Volts */
-const Dimension::Potential volt = joule / coulomb;
-
-/** Convert the units of capacitance (farads) */
-const Dimension::Capacitance farad = coulomb / volt;
-
-/** Convert power in Watts */
-const Dimension::Power watt = joule / second;
-const Dimension::MolarPower watt_per_mol = J_per_mol / second;
-
-///////////////////////////////////////////////////////////
-// Now physical constants converted into internal units. //
-//  The values of these are taken from the 1998 CODATA   //
-//  values - see fundemental_constants.pdf in techdocs   //
-///////////////////////////////////////////////////////////
-
-/** Speed of light in a vacuum */
-//http://physics.nist.gov/cgi-bin/cuu/Value?c|search_for=c
-const Dimension::Velocity c = 299792458 * (meter / second);
-
-/** Epsilon_0 (electrostatic constant) 8.854187817e-12 F m-1 */
-//http://physics.nist.gov/cgi-bin/cuu/Value?ep0|search_for=permittivity
-const double epsilon0 = 8.854187817e-12 * (farad / meter);
-
-/** 4 * pi * epsilon_0 */
-const double four_pi_eps0 = 4.0 * SireMaths::pi * epsilon0;
-
-/** 1 / (4 * pi * epsilon0) */
-const double one_over_four_pi_eps0 = 1.0 / four_pi_eps0;
-
-/** Gas constant (8.314472 J mol-1 K-1) */
-//http://physics.nist.gov/cgi-bin/cuu/Value?r|search_for=gas
-const double gasr = 8.314472 * (J_per_mol / kelvin);
-
-/** Boltzmann constant J K-1 (is equal to gasr in internal units of kcal mol-1 K-1) */
-const double k_boltz = gasr;
-
-/** Magnetic constant, mu0, 4pi * 10-7 N A-2 */
-const double mu0 = 4.0e-7 * pi * (newton / (amp*amp));
-
-/** Newton's gravitational constant */
-//http://physics.nist.gov/cgi-bin/cuu/Value?bg|search_for=gravitational
-const double G_newton = 6.67428e-11 * ((meter*meter*meter) / (kilogram * second * second));
-
-/** Acceleration due to gravity on Earth */
-const Dimension::Acceleration g_accel = 9.8 * meter / (second*second);
-
-/** Planck's constant */
-//http://physics.nist.gov/cgi-bin/cuu/Value?h|search_for=planck
-const double h_planck = 6.62606896e-34 * (joule * second);
-
-/** Plank / 2pi */
-const double h_slash = h_planck / (2.0*pi);
-
-/** Mass of an electron */
-//http://physics.nist.gov/cgi-bin/cuu/Value?me|search_for=mass
-const Dimension::Mass electron_mass = 9.10938215e-31 * kilogram;
-
-/** Mass of a proton */
-//http://physics.nist.gov/cgi-bin/cuu/Value?mp|search_for=mass
-const Dimension::Mass proton_mass = 1.672621637e-27 * kilogram;
-
-/** Mass of a neutron */
-//http://physics.nist.gov/cgi-bin/cuu/Value?mn|search_for=mass
-const Dimension::Mass neutron_mass = 1.674927211e-27 * kilogram;
-
-/** Atomic mass constant */
-//http://physics.nist.gov/cgi-bin/cuu/Value?u|search_for=mass
-const Dimension::Mass atomic_mass_constant = 1.660538782e-27 * kilogram;
-
-/** Molar volume of an ideal gas  (273.15 K, 101.325 kPa) */
-//http://physics.nist.gov/cgi-bin/cuu/Value?mvolstd|search_for=molar+volume
-const Dimension::MolarVolume molar_volume = 22.413996e-3 * (meter*meter*meter) / mole;
+extern const Dimension::Quantity mole;
+extern const Dimension::Quantity dozen;
+
+extern const Dimension::Angle radians;
+extern const Dimension::Angle radian;
+extern const Dimension::Angle degrees;
+extern const Dimension::Angle degree;
+extern const Dimension::Angle angle_minute;
+extern const Dimension::Angle angle_minutes;
+extern const Dimension::Angle angle_second;
+extern const Dimension::Angle angle_seconds;
+extern const Dimension::Angle octant;
+extern const Dimension::Angle octants;
+extern const Dimension::Angle sextant;
+extern const Dimension::Angle sextants;
+extern const Dimension::Angle quadrant;
+extern const Dimension::Angle quadrants;
+extern const Dimension::Angle gradian;
+extern const Dimension::Angle gradians;
+extern const Dimension::Angle grad;
+extern const Dimension::Angle gon;
+extern const Dimension::Angle revolution;
+extern const Dimension::Angle revolutions;
+extern const Dimension::Angle revs;
+extern const Dimension::Angle circumference;
+
+extern const Dimension::Length angstrom;
+extern const Dimension::Length angstroms;
+extern const Dimension::Length picometer;
+extern const Dimension::Length picometers;
+extern const Dimension::Length nanometer;
+extern const Dimension::Length nanometers;
+extern const Dimension::Length micrometer;
+extern const Dimension::Length micrometers;
+extern const Dimension::Length millimeter;
+extern const Dimension::Length millimeters;
+extern const Dimension::Length centimeter;
+extern const Dimension::Length centimeters;
+extern const Dimension::Length meter;
+extern const Dimension::Length meters;
+extern const Dimension::Length kilometer;
+extern const Dimension::Length kilometers;
+extern const Dimension::Length bohr_radius;
+extern const Dimension::Length bohr_radii;
+extern const Dimension::Length inch;
+extern const Dimension::Length inches;
+extern const Dimension::Length foot;
+extern const Dimension::Length feet;
+extern const Dimension::Length yard;
+extern const Dimension::Length yards;
+extern const Dimension::Length mile;
+extern const Dimension::Length miles;
+
+extern const Dimension::Area angstrom2;
+extern const Dimension::Area picometer2;
+extern const Dimension::Area nanometer2;
+extern const Dimension::Area meter2;
+
+extern const Dimension::Volume angstrom3;
+extern const Dimension::Volume picometer3;
+extern const Dimension::Volume nanometer3;
+extern const Dimension::Volume meter3;
+
+extern const Dimension::MolarMass g_per_mol;
+
+extern const Dimension::Mass gram;
+extern const Dimension::Mass grams;
+extern const Dimension::Mass kilogram;
+extern const Dimension::Mass kilograms;
+extern const Dimension::Mass tonne;
+extern const Dimension::Mass tonnes;
+extern const Dimension::Mass milligram;
+extern const Dimension::Mass milligrams;
+extern const Dimension::Mass microgram;
+extern const Dimension::Mass micrograms;
+extern const Dimension::Mass nanogram;
+extern const Dimension::Mass nanograms;
+extern const Dimension::Mass picogram;
+extern const Dimension::Mass picograms;
+extern const Dimension::Mass femtogram;
+extern const Dimension::Mass femtograms;
+
+extern const Dimension::MolarMass kg_per_mol;
+extern const Dimension::MolarMass tonne_per_mol;
+extern const Dimension::MolarMass mg_per_mol;
+extern const Dimension::MolarMass ug_per_mol;
+extern const Dimension::MolarMass ng_per_mol;
+extern const Dimension::MolarMass pg_per_mol;
+extern const Dimension::MolarMass fg_per_mol;
+
+extern const Dimension::Charge mod_electron;
+extern const Dimension::Charge mod_electrons;
+extern const Dimension::Charge coulomb;
+extern const Dimension::Charge coulombs;
+extern const Dimension::Charge e_charge;
+
+extern const Dimension::MolarCharge coulombs_per_mol;
+extern const Dimension::MolarCharge faraday;
+extern const Dimension::MolarCharge faradays;
+
+extern const Dimension::Energy kcal;
+extern const Dimension::Energy cal;
+extern const Dimension::Energy kilojoule;
+extern const Dimension::Energy kilojoules;
+extern const Dimension::Energy megajoule;
+extern const Dimension::Energy megajoules;
+extern const Dimension::Energy joule;
+extern const Dimension::Energy joules;
+extern const Dimension::Energy int_kcal;
+extern const Dimension::Energy int_cal;
+extern const Dimension::Energy hartree;
+extern const Dimension::Energy hartrees;
+
+extern const Dimension::MolarEnergy kcal_per_mol;
+extern const Dimension::MolarEnergy cal_per_mol;
+extern const Dimension::MolarEnergy kJ_per_mol;
+extern const Dimension::MolarEnergy MJ_per_mol;
+extern const Dimension::MolarEnergy J_per_mol;
+extern const Dimension::MolarEnergy int_kcal_per_mol;
+extern const Dimension::MolarEnergy int_cal_per_mol;
+
+extern const Dimension::Time akma_time;
+
+extern const Dimension::Time second;
+extern const Dimension::Time seconds;
+extern const Dimension::Time millisecond;
+extern const Dimension::Time milliseconds;
+extern const Dimension::Time microsecond;
+extern const Dimension::Time microseconds;
+extern const Dimension::Time nanosecond;
+extern const Dimension::Time nanoseconds;
+extern const Dimension::Time picosecond;
+extern const Dimension::Time picoseconds;
+extern const Dimension::Time femtosecond;
+extern const Dimension::Time femtoseconds;
+extern const Dimension::Time minute;
+extern const Dimension::Time minutes;
+extern const Dimension::Time hour;
+extern const Dimension::Time hours;
+extern const Dimension::Time day;
+extern const Dimension::Time days;
+extern const Dimension::Time week;
+extern const Dimension::Time weeks;
+extern const Dimension::Time fortnight;
+extern const Dimension::Time fortnights;
+
+extern const Dimension::Force newton;
+extern const Dimension::Force newtons;
+extern const Dimension::Force ounce;
+extern const Dimension::Force ounces;
+extern const Dimension::Force pound;
+extern const Dimension::Force pounds;
+extern const Dimension::Force stone;
+extern const Dimension::Force stones;
+extern const Dimension::Force hundredweight;
+
+extern const Dimension::Pressure pascal;
+extern const Dimension::Pressure pascals;
+extern const Dimension::Pressure bar;
+extern const Dimension::Pressure atm;
+extern const Dimension::Pressure psi;
+extern const Dimension::Pressure mmHg;
+
+extern const Dimension::Temperature kelvin;
+
+extern const Dimension::Current amp;
+extern const Dimension::Current amps;
+extern const Dimension::Potential volt;
+extern const Dimension::Potential volts;
+extern const Dimension::Capacitance farad;
+extern const Dimension::Capacitance farads;
+extern const Dimension::Power watt;
+extern const Dimension::Power watts;
+extern const Dimension::MolarPower watts_per_mol;
+
+extern const Dimension::Velocity c;
+extern const Dimension::Acceleration g_accel;
+extern const Dimension::Mass electron_mass;
+extern const Dimension::Mass proton_mass;
+extern const Dimension::Mass neutron_mass;
+extern const Dimension::Mass atomic_mass_constant;
+extern const Dimension::MolarVolume molar_volume;
+
+extern const double epsilon0;
+extern const double four_pi_eps0;
+extern const double one_over_four_pi_eps0;
+extern const double gasr;
+extern const double k_boltz;
+extern const double mu0;
+extern const double G_newton;
+extern const double h_planck;
+extern const double h_slash;
 
 }
 
 SIRE_END_HEADER
-
-#endif // end of 'ifndef SKIP_BROKEN_GCCXML_PARTS'
 
 #endif

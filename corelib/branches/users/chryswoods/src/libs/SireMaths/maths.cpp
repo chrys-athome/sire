@@ -26,25 +26,3 @@
   *
 \*********************************************/
 
-#ifndef SIRESTREAM_SHARESTRINGS_H
-#define SIRESTREAM_SHARESTRINGS_H
-
-#include <QString>
-#include <QStringList>
-
-#include "sireglobal.h"
-
-SIRE_BEGIN_HEADER
-
-namespace SireStream
-{
-
-QString shareString(const QString &string);
-
-void shareStrings(QStringList &strings);
-
-}
-
-SIRE_END_HEADER
-
-#endif

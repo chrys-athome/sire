@@ -23,8 +23,6 @@ set ( SIREDB_HEADERS
 # Define the sources in SireDB
 set ( SIREDB_SOURCES
 
-      register_siredb.cpp
-
       database.cpp
       diskcache.cpp
       errors.cpp

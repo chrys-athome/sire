@@ -29,7 +29,7 @@
 #ifndef SIREMATHS_MATHS_H
 #define SIREMATHS_MATHS_H
 
-#include "sireglobal.h"
+#include "Siren/sirenglobal.h"
 
 #include <cmath>
 
@@ -352,13 +352,13 @@ inline float invSqrt(float x)
     around 1e-6 */
 inline bool areEqual(double val0, double val1, double epsilon)
 {
-    return not ( gsl_fcmp(val0,val1,epsilon) );
+    return not ( third_party::gsl_fcmp(val0,val1,epsilon) );
 }
 
 /** Return true if two numbers are equal */
 inline bool areEqual(double val0, double val1)
 {
-    return not ( gsl_fcmp(val0,val1,1e-6) );
+    return not ( third_party::gsl_fcmp(val0,val1,1e-6) );
 }
 
 /** Return true if this number is equal to zero */

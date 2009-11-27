@@ -10,6 +10,7 @@ include_directories(${CMAKE_SOURCE_DIR}/src/libs)
 # Define the headers in SireCAS
 set ( SIRECAS_HEADERS
       abs.h
+      casnode.h
       complexvalues.h
       conditional.h
       constant.h
@@ -30,6 +31,7 @@ set ( SIRECAS_HEADERS
       invhyperbolicfuncs.h
       invtrigfuncs.h
       minmax.h
+      noderef.h
       powerconstant.h
       power.h
       product.h
@@ -47,9 +49,8 @@ set ( SIRECAS_HEADERS
 # Define the sources in SireCAS
 set ( SIRECAS_SOURCES
 
-      register_sirecas.cpp
-
       abs.cpp
+      casnode.cpp
       complexvalues.cpp           
       conditional.cpp
       constant.cpp
@@ -69,7 +70,8 @@ set ( SIRECAS_SOURCES
       integrationconstant.cpp     
       invhyperbolicfuncs.cpp      
       invtrigfuncs.cpp 
-      minmax.cpp           
+      minmax.cpp 
+      noderef.cpp          
       powerconstant.cpp           
       power.cpp                   
       product.cpp                 
@@ -93,9 +95,7 @@ set_target_properties (SireCAS PROPERTIES
 
 # Link to other Sire libraries, and GSL
 target_link_libraries (SireCAS
-                       SireMaths
-                       SireBase
-                       SireStream
+                       Siren
                        )
 
 # installation

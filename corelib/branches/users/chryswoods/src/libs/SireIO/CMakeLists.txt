@@ -20,8 +20,6 @@ set ( SIREIO_HEADERS
 # Define the sources in SireIO
 set ( SIREIO_SOURCES
 
-      register_sireio.cpp
-
       errors.cpp
       iobase.cpp
       pdb.cpp

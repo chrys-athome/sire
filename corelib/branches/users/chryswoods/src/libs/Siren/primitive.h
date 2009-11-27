@@ -483,19 +483,8 @@ Q_DECLARE_METATYPE( Siren::Number );
 Q_DECLARE_METATYPE( Siren::StringObject )
 Q_DECLARE_METATYPE( Siren::NumberObject )
 
-SIREN_EXPOSE_CLASS( Siren::String )
-SIREN_EXPOSE_CLASS( Siren::Number )
-
-SIREN_EXPOSE_ALIAS( Siren::Primitive<Siren::String>, Siren::StringBase )
-SIREN_EXPOSE_ALIAS( Siren::Primitive<Siren::Number>, Siren::NumberBase )
-
-SIREN_EXPOSE_ALIAS( Siren::PrimitiveObject<Siren::String>, Siren::StringObject )
-SIREN_EXPOSE_ALIAS( Siren::PrimitiveObject<Siren::Number>, Siren::NumberObject )
-
-#ifdef SIREN_INSTANTIATE_TEMPLATES
-template class Siren::PrimitiveObject<Siren::String>;
-template class Siren::PrimitiveObject<Siren::Number>;
-#endif
+SIREN_EXPOSE_PRIMITIVE( Siren::String )
+SIREN_EXPOSE_PRIMITIVE( Siren::Number )
 
 SIREN_END_HEADER
 

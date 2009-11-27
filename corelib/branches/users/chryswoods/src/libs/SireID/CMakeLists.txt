@@ -24,8 +24,6 @@ set ( SIREID_HEADERS
 # Define the sources in SireID
 set ( SIREID_SOURCES
 
-      register_sireid.cpp
-
       id.cpp
       identifier.cpp
       index.cpp

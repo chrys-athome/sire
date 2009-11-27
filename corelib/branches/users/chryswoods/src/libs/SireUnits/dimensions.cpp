@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2009  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,24 +26,24 @@
   *
 \*********************************************/
 
-#ifndef SIREERROR_GETBACKTRACE_H
-#define SIREERROR_GETBACKTRACE_H
+#include "dimensions.h"
+#include "units.h"
+#include "temperature.h"
 
-#include <QStringList>
+using namespace SireUnits;
+using namespace SireUnits::Dimension;
+using namespace Siren;
 
-#include "sireglobal.h"
+Unit::Unit(const detail::Temperature &temperature) 
+     : sclfac( temperature.in(kelvin) )
+{}
 
-SIRE_BEGIN_HEADER
-
-namespace SireError
+double Unit::convertToInternal(double value) const
 {
+    return value * sclfac;
+}
 
-QStringList getBackTrace();
-
-};
-
-SIRE_EXPOSE_FUNCTION( SireError::getBackTrace )
-
-SIRE_END_HEADER
-
-#endif
+double Unit::convertFromInternal(double value) const
+{
+    return value / sclfac;
+}

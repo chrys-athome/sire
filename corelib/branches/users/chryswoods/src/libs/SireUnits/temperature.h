@@ -31,6 +31,8 @@
 
 #include "dimensions.h"
 
+#include "Siren/object.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireUnits
@@ -42,409 +44,178 @@ class Fahrenheit;
 namespace Dimension
 {
 
-//skip this completely when parsing with gccxml as it is broken!
-#ifdef SKIP_BROKEN_GCCXML_PARTS
-
-class Temperature
+namespace detail
 {
-public:
-    Temperature();
-    Temperature(double);
-    ~Temperature();
 
-    operator double() const;
-};
-
-#endif // end of 'ifdef SKIP_BROKEN_GCCXML_PARTS'
-
-class TempBase
+class SIREUNITS_EXPORT Temperature : public Siren::Extends<Temperature,Siren::Object>
 {
+
 friend class SireUnits::Celsius;
 friend class SireUnits::Fahrenheit;
 
 public:
-    TempBase(double value = 0) : val(value)
-    {}
+    Temperature(double value=0);
+    Temperature(const SireUnits::Dimension::Temperature &temperature);
 
-    TempBase(const TempBase &other) : val(other.val)
-    {}
+    Temperature(const SireUnits::Dimension::detail::Temperature &other);
 
-    TempBase(const Temperature &temp) : val(temp)
-    {}
+    virtual ~Temperature();
 
-    virtual ~TempBase()
-    {}
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
-    TempBase& operator=(const TempBase &other)
-    {
-        val = other.val;
-        return *this;
-    }
+    Temperature& operator=(const SireUnits::Dimension::Temperature &temperature);
+    Temperature& operator=(const SireUnits::Dimension::detail::Temperature &other);
 
-    TempBase& operator=(const Temperature &temp)
-    {
-        val = double(temp);
-        return *this;
-    }
+    bool operator==(const SireUnits::Dimension::Temperature &temp) const;
+    bool operator!=(const SireUnits::Dimension::Temperature &temp) const;
 
-    bool operator==(const TempBase &other) const
-    {
-        return val == other.val;
-    }
+    bool operator==(const SireUnits::Dimension::detail::Temperature &other) const;
+    bool operator!=(const SireUnits::Dimension::detail::Temperature &other) const;
 
-    bool operator!=(const TempBase &other) const
-    {
-        return val != other.val;
-    }
+    operator SireUnits::Dimension::Temperature() const;
 
-    bool operator==(const Temperature &temp) const
-    {
-        return val == double(temp);
-    }
+    operator double() const;
 
-    bool operator!=(const Temperature &temp) const
-    {
-        return val != double(temp);
-    }
+    double in(const SireUnits::Dimension::detail::Temperature &other) const;
+    double in(const SireUnits::Dimension::Temperature &temp) const;
 
-    /** Convert this into a temperature object */
-    operator Temperature() const
-    {
-        return Temperature(val);
-    }
-
-    operator double() const
-    {
-        return val;
-    }
-
-    double in(const TempBase &other) const
-    {
-        return other.convertFromInternal(val) / other.convertFromInternal();
-    }
-
-    double in(const Temperature &temp) const
-    {
-        return val * temp;
-    }
-
-    double to(const TempBase &other) const
-    {
-        return this->in(other);
-    }
+    double to(const SireUnits::Dimension::detail::Temperature &other) const;
 
     virtual double convertToInternal(double value) const=0;
     virtual double convertFromInternal(double value) const=0;
 
-    double convertFromInternal() const
-    {
-        return this->convertFromInternal(val);
-    }
+    double convertFromInternal() const;
 
 protected:
-    /** This holds the temperature in internal units (K) */
+    /** This holds the temperature in internal units (Kelvin) */
     double val;
 };
 
-/** Construct a Unit from a TempBase */
-inline Unit::Unit(const TempBase &temperature)
-            : sclfac(temperature)
-{}
+} // end of namespace detail
 
 } //end of namespace Dimension
 
-class Celsius : public Dimension::TempBase
+class Celsius : public Siren::Implements<Celsius,Dimension::detail::Temperature>
 {
 
 public:
-    Celsius() : Dimension::TempBase(1)
-    {}
+    Celsius();
 
-    explicit Celsius(double value) : Dimension::TempBase()
-    {
-        val = convertToInternal(value);
-    }
+    explicit Celsius(double value);
 
-    Celsius(const Dimension::Temperature &temp) : Dimension::TempBase(temp)
-    {}
+    Celsius(const SireUnits::Dimension::Temperature &temperature);
 
-    Celsius(const Dimension::TempBase &other) : Dimension::TempBase(other)
-    {}
+    Celsius(const SireUnits::Dimension::detail::Temperature &temperature);
 
-    Celsius(const Celsius &other)
-          : Dimension::TempBase(other)
-    {}
+    Celsius(const Celsius &other);
 
-    ~Celsius()
-    {}
+    ~Celsius();
 
-    double convertToInternal(double value) const
-    {
-        return value + 273.15;
-    }
+    QString toString() const;
+    void stream(Siren::Stream &s);
 
-    double convertFromInternal(double value) const
-    {
-        return value - 273.15;
-    }
+    double convertToInternal(double value) const;
 
-    double convertFromInternal() const
-    {
-        return Dimension::TempBase::convertFromInternal();
-    }
+    double convertFromInternal(double value) const;
 
-    Celsius& operator=(const Celsius &other)
-    {
-        Dimension::TempBase::operator=(other);
-        return *this;
-    }
+    double convertFromInternal() const;
 
-    Celsius& operator=(const Dimension::Temperature &temp)
-    {
-        Dimension::TempBase::operator=(temp);
-        return *this;
-    }
+    Celsius& operator=(const Celsius &other);
 
-    Celsius operator-() const
-    {
-        return Celsius(-convertFromInternal());
-    }
+    bool operator==(const Celsius &other) const;
+    bool operator!=(const Celsius &other) const;
 
-    Celsius operator+(const Celsius &other) const
-    {
-        return Celsius(convertFromInternal() + other.convertFromInternal());
-    }
+    Celsius operator-() const;
 
-    Celsius operator-(const Celsius &other) const
-    {
-        return Celsius(convertFromInternal() - other.convertFromInternal());
-    }
+    Celsius operator+(const Celsius &other) const;
 
-    Celsius& operator+=(const Celsius &other)
-    {
-        convertToInternal( convertFromInternal() + other.convertFromInternal() );
-        return *this;
-    }
+    Celsius operator-(const Celsius &other) const;
 
-    Celsius& operator-=(const Celsius &other)
-    {
-        convertToInternal( convertFromInternal() - other.convertFromInternal() );
-        return *this;
-    }
+    Celsius& operator+=(const Celsius &other);
 
-    Celsius operator+(const Dimension::Temperature &other) const
-    {
-        return *this + Celsius(other);
-    }
+    Celsius& operator-=(const Celsius &other);
 
-    Celsius operator-(const Dimension::Temperature &other) const
-    {
-        return *this - Celsius(other);
-    }
+    Celsius operator*(double value) const;
 
-    Celsius& operator+=(const Dimension::Temperature &other)
-    {
-        return this->operator+=(Celsius(other));
-    }
+    Celsius operator/(double value) const;
 
-    Celsius& operator-=(const Dimension::Temperature &other)
-    {
-        return this->operator-=(Celsius(other));
-    }
+    Celsius operator*(int value) const;
 
-    Celsius operator*(double value) const
-    {
-        return Celsius(value * convertFromInternal());
-    }
-
-    Celsius operator/(double value) const
-    {
-        return Celsius(value / convertFromInternal());
-    }
-
-    Celsius operator*(int value) const
-    {
-        return Celsius(value * convertFromInternal());
-    }
-
-    Celsius operator/(int value) const
-    {
-        return Celsius(value / convertFromInternal());
-    }
+    Celsius operator/(int value) const;
 };
 
-inline Celsius operator*(double value, const Celsius &temp)
-{
-    return temp * value;
-}
-
-#ifndef SKIP_BROKEN_GCCXML_PARTS
-inline Dimension::PhysUnit<0,0,0,0,-1,0,0> operator/(double value, const Celsius &temp)
-{
-    return Dimension::PhysUnit<0,0,0,0,-1,0,0>(value / temp.convertFromInternal());
-}
-
-inline Dimension::PhysUnit<0,0,0,0,-1,0,0> operator/(int value, const Celsius &temp)
-{
-    return Dimension::PhysUnit<0,0,0,0,-1,0,0>(value / temp.convertFromInternal());
-}
-#endif
-
-inline Celsius operator*(int value, const Celsius &temp)
-{
-    return temp * value;
-}
-
-class Fahrenheit : public Dimension::TempBase
+class SIREUNITS_EXPORT Fahrenheit 
+        : public Siren::Implements<Fahrenheit,Dimension::detail::Temperature>
 {
 
 public:
-    Fahrenheit() : Dimension::TempBase(1)
-    {}
+    Fahrenheit();
+    
+    explicit Fahrenheit(double value);
 
-    explicit Fahrenheit(double value) : Dimension::TempBase()
-    {
-        val = convertToInternal(value);
-    }
+    Fahrenheit(const SireUnits::Dimension::Temperature &temperature);
 
-    Fahrenheit(const Dimension::Temperature &temp) : Dimension::TempBase(temp)
-    {}
+    Fahrenheit(const SireUnits::Dimension::detail::Temperature &temperature);
 
-    Fahrenheit(const Dimension::TempBase &other) : Dimension::TempBase(other)
-    {}
+    Fahrenheit(const Fahrenheit &other);
 
-    Fahrenheit(const Fahrenheit &other)
-          : Dimension::TempBase(other)
-    {}
+    ~Fahrenheit();
 
-    ~Fahrenheit()
-    {}
+    QString toString() const;
+    void stream(Siren::Stream &s);
 
-    double convertToInternal(double value) const
-    {
-        return (value + 459.67) / 1.8;
-    }
+    Fahrenheit& operator=(const Fahrenheit &other);
 
-    double convertFromInternal(double value) const
-    {
-        return (value * 1.8) - 459.67;
-    }
+    bool operator==(const Fahrenheit &other) const;
+    bool operator!=(const Fahrenheit &other) const;
 
-    double convertFromInternal() const
-    {
-        return Dimension::TempBase::convertFromInternal();
-    }
+    double convertToInternal(double value) const;
 
-    Fahrenheit& operator=(const Fahrenheit &other)
-    {
-        Dimension::TempBase::operator=(other);
-        return *this;
-    }
+    double convertFromInternal(double value) const;
 
-    Fahrenheit& operator=(const Dimension::Temperature &temp)
-    {
-        Dimension::TempBase::operator=(temp);
-        return *this;
-    }
+    double convertFromInternal() const;
 
-    Fahrenheit operator-() const
-    {
-        return Fahrenheit(-convertFromInternal());
-    }
+    Fahrenheit operator-() const;
 
-    Fahrenheit operator+(const Fahrenheit &other) const
-    {
-        return Fahrenheit(convertFromInternal() + other.convertFromInternal());
-    }
+    Fahrenheit operator+(const Fahrenheit &other) const;
 
-    Fahrenheit operator-(const Fahrenheit &other) const
-    {
-        return Fahrenheit(convertFromInternal() - other.convertFromInternal());
-    }
+    Fahrenheit operator-(const Fahrenheit &other) const;
 
-    Fahrenheit& operator+=(const Fahrenheit &other)
-    {
-        convertToInternal( convertFromInternal() + other.convertFromInternal() );
-        return *this;
-    }
+    Fahrenheit& operator+=(const Fahrenheit &other);
 
-    Fahrenheit& operator-=(const Fahrenheit &other)
-    {
-        convertToInternal( convertFromInternal() - other.convertFromInternal() );
-        return *this;
-    }
+    Fahrenheit& operator-=(const Fahrenheit &other);
 
-    Fahrenheit operator+(const Dimension::Temperature &other) const
-    {
-        return *this + Fahrenheit(other);
-    }
+    Fahrenheit operator*(double value) const;
 
-    Fahrenheit operator-(const Dimension::Temperature &other) const
-    {
-        return *this - Fahrenheit(other);
-    }
+    Fahrenheit operator/(double value) const;
 
-    Fahrenheit& operator+=(const Dimension::Temperature &other)
-    {
-        return this->operator+=(Fahrenheit(other));
-    }
+    Fahrenheit operator*(int value) const;
 
-    Fahrenheit& operator-=(const Dimension::Temperature &other)
-    {
-        return this->operator-=(Fahrenheit(other));
-    }
-
-    Fahrenheit operator*(double value) const
-    {
-        return Fahrenheit(value * convertFromInternal());
-    }
-
-    Fahrenheit operator/(double value) const
-    {
-        return Fahrenheit(value / convertFromInternal());
-    }
-
-    Fahrenheit operator*(int value) const
-    {
-        return Fahrenheit(value * convertFromInternal());
-    }
-
-    Fahrenheit operator/(int value) const
-    {
-        return Fahrenheit(value / convertFromInternal());
-    }
+    Fahrenheit operator/(int value) const;
 };
 
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+Celsius operator*(double value, const Celsius &temperature);
+Celsius operator*(int value, const Celsius &temperature);
 
-inline Fahrenheit operator*(double value, const Fahrenheit &temp)
-{
-    return temp * value;
-}
+Dimension::PhysUnit<0,0,0,0,-1,0,0> operator/(double value, const Celsius &temperature);
+Dimension::PhysUnit<0,0,0,0,-1,0,0> operator/(int value, const Celsius &temperature);
 
-inline Dimension::PhysUnit<0,0,0,0,-1,0,0> operator/(double value, const Fahrenheit &temp)
-{
-    return Dimension::PhysUnit<0,0,0,0,-1,0,0>(value / temp.convertFromInternal());
-}
+Fahrenheit operator*(double value, const Fahrenheit &temperature);
+Fahrenheit operator*(int value, const Fahrenheit &temperature);
 
-inline Dimension::PhysUnit<0,0,0,0,-1,0,0> operator/(int value, const Fahrenheit &temp)
-{
-    return Dimension::PhysUnit<0,0,0,0,-1,0,0>(value / temp.convertFromInternal());
-}
-
-inline Fahrenheit operator*(int value, const Fahrenheit &temp)
-{
-    return temp * value;
-}
-
-#endif //SIRE_SKIP_INLINE_FUNCTIONS
+Dimension::PhysUnit<0,0,0,0,-1,0,0> operator/(double value, const Fahrenheit &temperature);
+Dimension::PhysUnit<0,0,0,0,-1,0,0> operator/(int value, const Fahrenheit &temperature);
 
 const Celsius celsius(1);
 const Fahrenheit fahrenheit(1);
 
 }
 
-SIRE_EXPOSE_CLASS( SireUnits::Dimension::TempBase )
+Q_DECLARE_METATYPE( SireUnits::Celsius )
+Q_DECLARE_METATYPE( SireUnits::Fahrenheit )
+
+SIRE_EXPOSE_ALIAS( SireUnits::Dimension::detail::Temperature, detail_Temperature )
 SIRE_EXPOSE_CLASS( SireUnits::Celsius )
 SIRE_EXPOSE_CLASS( SireUnits::Fahrenheit )
 
