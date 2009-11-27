@@ -65,6 +65,9 @@ public:
     template<class T>
     Tester(const Primitive<T> &primitive, Logger &logger);
     
+    Tester(const QString &type_name);
+    Tester(const QString &type_name, Logger &logger);
+    
     Tester(const Tester &other);
     
     ~Tester();

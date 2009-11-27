@@ -6,25 +6,24 @@
 ###############################
 
 # List of each subdirectory
-set ( SUBDIRS SireBase
-              SireCAS
-              SireCluster
-              SireDB
-              SireError
-              SireFF
-              SireID
-              SireIO
-              SireMaths
-              SireMM
-              SireMol
-              SireMove
-              SireStream
-              SireSystem
+set ( SUBDIRS 
+           #   SireBase
+           #   SireCAS
+           #   SireCluster
+           #   SireDB
+           #   SireFF
+           #   SireID
+           #   SireIO
+           #   SireMaths
+           #   SireMM
+           #   SireMol
+           #   SireMove
+           #   SireSystem
               SireUnits
-              SireVol
+           #   SireVol
               Siren
-              Spier
-              Squire
+           #   Spier
+           #   Squire
             )
 
 foreach (DIR ${SUBDIRS})
@@ -33,7 +32,6 @@ endforeach (DIR)
 
 set ( SIRE_HEADERS
       sireglobal.h
-      tostring.h
     )
     
 install( FILES ${SIRE_HEADERS}

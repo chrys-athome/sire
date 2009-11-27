@@ -329,37 +329,38 @@ const Dimension::Velocity c = 299792458 * (meter / second);
 
 /** Epsilon_0 (electrostatic constant) 8.854187817e-12 F m-1 */
 //http://physics.nist.gov/cgi-bin/cuu/Value?ep0|search_for=permittivity
-const double epsilon0 = 8.854187817e-12 * (farad / meter);
+const Dimension::GeneralUnit epsilon0 = 8.854187817e-12 * (farad / meter);
 
 /** 4 * pi * epsilon_0 */
-const double four_pi_eps0 = 4.0 * pi * epsilon0;
+const Dimension::GeneralUnit four_pi_eps0 = 4.0 * pi * epsilon0;
 
 /** 1 / (4 * pi * epsilon0) */
-const double one_over_four_pi_eps0 = 1.0 / four_pi_eps0;
+const Dimension::GeneralUnit one_over_four_pi_eps0 = 1.0 / four_pi_eps0;
 
 /** Gas constant (8.314472 J mol-1 K-1) */
 //http://physics.nist.gov/cgi-bin/cuu/Value?r|search_for=gas
-const double gasr = 8.314472 * (J_per_mol / kelvin);
+const Dimension::GeneralUnit gasr = 8.314472 * (J_per_mol / kelvin);
 
 /** Boltzmann constant J K-1 (is equal to gasr in internal units of kcal mol-1 K-1) */
-const double k_boltz = gasr;
+const Dimension::GeneralUnit k_boltz = gasr / Dimension::GeneralUnit(mole);
 
 /** Magnetic constant, mu0, 4pi * 10-7 N A-2 */
-const double mu0 = 4.0e-7 * pi * (newton / (amp*amp));
+const Dimension::GeneralUnit mu0 = 4.0e-7 * pi * (newton / (amp*amp));
 
 /** Newton's gravitational constant */
 //http://physics.nist.gov/cgi-bin/cuu/Value?bg|search_for=gravitational
-const double G_newton = 6.67428e-11 * ((meter*meter*meter) / (kilogram * second * second));
+const Dimension::GeneralUnit G_newton 
+        = 6.67428e-11 * ((meter*meter*meter) / (kilogram * second * second));
 
 /** Acceleration due to gravity on Earth */
 const Dimension::Acceleration g_accel = 9.8 * meter / (second*second);
 
 /** Planck's constant */
 //http://physics.nist.gov/cgi-bin/cuu/Value?h|search_for=planck
-const double h_planck = 6.62606896e-34 * (joule * second);
+const Dimension::GeneralUnit h_planck = 6.62606896e-34 * (joule * second);
 
 /** Plank / 2pi */
-const double h_slash = h_planck / (2.0*pi);
+const Dimension::GeneralUnit h_slash = h_planck / (2.0*pi);
 
 /** Mass of an electron */
 //http://physics.nist.gov/cgi-bin/cuu/Value?me|search_for=mass

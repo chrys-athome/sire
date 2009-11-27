@@ -47,8 +47,8 @@ typedef QHash<QString,const RegisterMetaType*> MetaTypeRegistry;
 
 Q_GLOBAL_STATIC( MetaTypeRegistry, metaTypeRegistry );
 
-void RegisterMetaType::registerClassName(const QString &class_name,
-                                         const RegisterMetaType *metatype)
+void SIREN_EXPORT RegisterMetaType::registerClassName(const QString &class_name,
+                                                      const RegisterMetaType *metatype)
 {
     MetaTypeRegistry *reg = metaTypeRegistry();
     

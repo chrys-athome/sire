@@ -75,6 +75,9 @@ protected:
 
     void setScale(double scale_factor);
 
+    uint hashCode(int M, int L, int T, int C, int t, int Q, int A) const;
+    bool test(Siren::Logger &test, int M, int L, int T, int C, int t, int Q, int A) const;
+
 private:
     double sclfac;
 };
@@ -149,6 +152,9 @@ public:
     double to(const PhysUnit<M,L,T,C,t,Q,A> &units) const;
 
     QString toString() const;
+
+    uint hashCode() const;
+    bool test(Siren::Logger &logger) const;
 
     void stream(Siren::Stream &s);
 
@@ -381,6 +387,20 @@ QString PhysUnit<M,L,T,C,t,Q,A>::toString() const
     return SireUnits::Dimension::getUnitString(this->scaleFactor(), M,L,T,C,t,Q,A);
 }
 
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+uint PhysUnit<M,L,T,C,t,Q,A>::hashCode() const
+{
+    return Unit::hashCode(M,L,T,C,t,Q,A);
+}
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+bool PhysUnit<M,L,T,C,t,Q,A>::test(Siren::Logger &logger) const
+{
+    return Unit::test(logger, M, L, T, C, t, Q, A);
+}
+
 /** Stream this unit */
 template<int M, int L, int T, int C, int t, int Q, int A>
 SIRE_OUTOFLINE_TEMPLATE
@@ -394,7 +414,7 @@ void PhysUnit<M,L,T,C,t,Q,A>::stream(Siren::Stream &s)
     
     schema.data("value") & v;
     
-    if (s.isSaving())
+    if (s.isLoading())
         this->setScale(v);
 }
 
@@ -480,7 +500,6 @@ operator/(int val, const PhysUnit<M,L,T,C,t,Q,A> &unit)
 #endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 /** Typedef the various unit dimensions (including derived units) */
-#ifndef SKIP_BROKEN_GCCXML_PARTS
 typedef PhysUnit<0,0,0,0,0,0,0> Dimensionless;
 typedef PhysUnit<1,0,0,0,0,0,0> Mass;
 typedef PhysUnit<1,0,0,0,0,-1,0> MolarMass;
@@ -509,37 +528,6 @@ typedef PhysUnit<1,-1,-2,0,0,0,0> Pressure;
 typedef PhysUnit<0,0,-1,1,0,0,0> Current;
 typedef PhysUnit<-1,-2,2,2,0,0,0> Capacitance;
 typedef PhysUnit<1,2,-2,-1,0,0,0> Potential;
-
-#else // else with 'ifndef SKIP_BROKEN_GCCXML_PARTS'
-
-class Dimensionless;
-class Mass;
-class MolarMass;
-class Length;
-class Time;
-class Charge;
-class MolarCharge;
-class Temperature;
-class Quantity;
-class Angle;
-class Area;
-class Volume;
-class MolarVolume;
-class Velocity;
-class Acceleration;
-class Energy;
-class MolarEnergy;
-class Power;
-class MolarPower;
-class Density;
-class MolarDensity;
-class Force;
-class Pressure;
-class Capacitance;
-class Current;
-class Potential;
-
-#endif // end of 'ifndef SKIP_BROKEN_GCCXML_PARTS'
 
 } // end of namespace Dimension
 
@@ -574,6 +562,35 @@ Q_DECLARE_METATYPE( SireUnits::Dimension::Capacitance )
 Q_DECLARE_METATYPE( SireUnits::Dimension::Current )
 Q_DECLARE_METATYPE( SireUnits::Dimension::Potential )
 
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Dimensionless> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Mass> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::MolarMass> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Length> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Time> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Charge> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::MolarCharge> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Temperature> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Quantity> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Angle> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Area> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Volume> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::MolarVolume> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Velocity> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::AngularVelocity> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Acceleration> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::AngularAcceleration> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Energy> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::MolarEnergy> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Power> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::MolarPower> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Density> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::MolarDensity> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Force> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Pressure> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Capacitance> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Current> )
+Q_DECLARE_METATYPE( Siren::PrimitiveObject<SireUnits::Dimension::Potential> )
+
 Q_DECLARE_TYPEINFO( SireUnits::Dimension::Dimensionless, Q_MOVABLE_TYPE );
 Q_DECLARE_TYPEINFO( SireUnits::Dimension::Mass, Q_MOVABLE_TYPE );
 Q_DECLARE_TYPEINFO( SireUnits::Dimension::MolarMass, Q_MOVABLE_TYPE );
@@ -604,70 +621,6 @@ Q_DECLARE_TYPEINFO( SireUnits::Dimension::Current, Q_MOVABLE_TYPE );
 Q_DECLARE_TYPEINFO( SireUnits::Dimension::Potential, Q_MOVABLE_TYPE );
 
 SIRE_EXPOSE_CLASS( SireUnits::Dimension::Unit )
-
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Dimensionless )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Mass )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::MolarMass )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Length )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Time )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Charge )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::MolarCharge )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Temperature )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Quantity )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Angle )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Area )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Volume )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::MolarVolume )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Velocity )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::AngularVelocity )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Acceleration )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::AngularAcceleration )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Energy )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::MolarEnergy )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Power )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::MolarPower )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Density )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::MolarDensity )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Force )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Pressure )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Capacitance )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Current )
-SIRE_EXPOSE_PRIMITIVE( SireUnits::Dimension::Potential )
-
-#ifdef SIRE_INSTANTIATE_TEMPLATES
-namespace SireUnits { namespace Dimension {
-
-template class PhysUnit<0,0,0,0,0,0,0>;
-template class PhysUnit<1,0,0,0,0,0,0>;
-template class PhysUnit<1,0,0,0,0,-1,0>;
-template class PhysUnit<0,1,0,0,0,0,0>;
-template class PhysUnit<0,0,1,0,0,0,0>;
-template class PhysUnit<0,0,0,1,0,0,0>;
-template class PhysUnit<0,0,0,1,0,-1,0>;
-template class PhysUnit<0,0,0,0,1,0,0>;
-template class PhysUnit<0,0,0,0,0,1,0>;
-template class PhysUnit<0,0,0,0,0,0,1>;
-template class PhysUnit<0,2,0,0,0,0,0>;
-template class PhysUnit<0,3,0,0,0,0,0>;
-template class PhysUnit<0,3,0,0,0,-1,0>;
-template class PhysUnit<0,1,-1,0,0,0,0>;
-template class PhysUnit<0,0,-1,0,0,0,1>;
-template class PhysUnit<0,1,-2,0,0,0,0>;
-template class PhysUnit<0,0,-2,0,0,0,1>;
-template class PhysUnit<1,2,-2,0,0,0,0>;
-template class PhysUnit<1,2,-2,0,0,-1,0>;
-template class PhysUnit<1,2,-3,0,0,0,0>;
-template class PhysUnit<1,2,-3,0,0,-1,0>;
-template class PhysUnit<1,-3,0,0,0,0,0>;
-template class PhysUnit<1,-3,0,0,0,-1,0>;
-template class PhysUnit<1,1,-2,0,0,0,0>;
-template class PhysUnit<1,-1,-2,0,0,0,0>;
-template class PhysUnit<0,0,-1,1,0,0,0>;
-template class PhysUnit<-1,-2,2,2,0,0,0>;
-template class PhysUnit<1,2,-2,-1,0,0,0>;
-
-}}
-#endif // SIRE_INSTANTIATE_TEMPLATES
 
 SIRE_END_HEADER
 

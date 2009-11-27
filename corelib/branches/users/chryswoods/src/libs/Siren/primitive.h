@@ -445,9 +445,6 @@ const T& primitive_cast( const Object &object )
 
 #endif // SIREN_SKIP_INLINE_FUNCTIONS
 
-typedef PrimitiveObject<String> StringObject;
-typedef PrimitiveObject<Number> NumberObject;
-
 }
 
 #ifndef SIREN_SKIP_INLINE_FUNCTIONS
@@ -479,9 +476,6 @@ QDataStream& operator>>(QDataStream &ds, Siren::Primitive<T> &object)
 
 Q_DECLARE_METATYPE( Siren::String );
 Q_DECLARE_METATYPE( Siren::Number );
-
-Q_DECLARE_METATYPE( Siren::StringObject )
-Q_DECLARE_METATYPE( Siren::NumberObject )
 
 SIREN_EXPOSE_PRIMITIVE( Siren::String )
 SIREN_EXPOSE_PRIMITIVE( Siren::Number )

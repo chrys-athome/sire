@@ -46,7 +46,7 @@ MessageQueue::MessageQueue(QObject *parent) : QObject(parent), is_heads(true)
     
     connect(poller, SIGNAL(timeout()), this, SLOT(pollForMessages()));
 
-    poller->start(50);
+    poller->start(2);
 }
 
 /** Destructor */

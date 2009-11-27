@@ -61,6 +61,8 @@ public:
 
     virtual ~Temperature();
 
+    static QString typeName();
+
     uint hashCode() const;
     void stream(Siren::Stream &s);
 
@@ -96,7 +98,8 @@ protected:
 
 } //end of namespace Dimension
 
-class Celsius : public Siren::Implements<Celsius,Dimension::detail::Temperature>
+class SIREUNITS_EXPORT Celsius 
+        : public Siren::Implements<Celsius,Dimension::detail::Temperature>
 {
 
 public:
@@ -215,7 +218,7 @@ const Fahrenheit fahrenheit(1);
 Q_DECLARE_METATYPE( SireUnits::Celsius )
 Q_DECLARE_METATYPE( SireUnits::Fahrenheit )
 
-SIRE_EXPOSE_ALIAS( SireUnits::Dimension::detail::Temperature, detail_Temperature )
+SIRE_EXPOSE_CLASS( SireUnits::Dimension::detail::Temperature )
 SIRE_EXPOSE_CLASS( SireUnits::Celsius )
 SIRE_EXPOSE_CLASS( SireUnits::Fahrenheit )
 

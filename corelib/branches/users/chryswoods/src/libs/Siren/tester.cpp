@@ -76,6 +76,22 @@ Tester::Tester(const Handle &handle, Logger &log)
          current_test(0), num_current_errors(0), num_errors(0)
 {}
 
+/** Construct the tester for the class with the passed name - this 
+    will write any output to the default logger */
+Tester::Tester(const QString &type_name)
+       : Implements<Tester,Object>(), Interfaces<Tester,Mutable>(),
+         tested_class(type_name),
+         current_test(0), num_current_errors(0), num_errors(0)
+{}
+
+/** Construct the tester for the class with the passed name, writing
+    any output to the passed logger */
+Tester::Tester(const QString &type_name, Logger &log)
+       : Implements<Tester,Object>(), Interfaces<Tester,Mutable>(),
+         logger(log), tested_class(type_name),
+         current_test(0), num_current_errors(0), num_errors(0)
+{}
+
 /** Copy constructor */
 Tester::Tester(const Tester &other)
        : Implements<Tester,Object>(other), Interfaces<Tester,Mutable>(),

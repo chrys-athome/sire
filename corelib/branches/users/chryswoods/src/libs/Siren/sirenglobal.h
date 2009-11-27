@@ -40,9 +40,18 @@
 
 #ifdef SIREN_INSTANTIATE_TEMPLATES
     #define SIREN_EXPOSE_PRIMITIVE(X) \
-        template class Siren::Primitive<X>; template class Siren::PrimitiveObject<X>;
+        namespace Siren { \
+        template class Siren::Primitive<X>; template class Siren::PrimitiveObject<X>; } \
+        Q_DECLARE_METATYPE( Siren::PrimitiveObject< X > )
+
+    #define SIREN_EXPOSE_ALIAS_PRIMITIVE(X,Y) \
+        namespace Siren { \
+        template class Siren::Primitive<Y>; template class Siren::PrimitiveObject<Y>; } \
+        Q_DECLARE_METATYPE( Siren::PrimitiveObject<Y> )
 #else
-    #define SIREN_EXPOSE_PRIMITIVE(c) /* Exposing primitive type #1 */
+    #define SIREN_EXPOSE_PRIMITIVE(X) Q_DECLARE_METATYPE( Siren::PrimitiveObject< X > )
+    #define SIREN_EXPOSE_ALIAS_PRIMITIVE(X,Y) \
+        Q_DECLARE_METATYPE( Siren::PrimitiveObject<Y> )
 #endif
 
 //create the keyword used to export a symbol - this

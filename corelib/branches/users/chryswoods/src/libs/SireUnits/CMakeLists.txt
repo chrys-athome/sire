@@ -13,6 +13,7 @@ set ( SIREUNITS_HEADERS
       angle.h
       convert.h
       dimensions.h
+      generalunit.h
       temperature.h
       units.h
     )
@@ -23,6 +24,7 @@ set ( SIREUNITS_SOURCES
       angle.cpp
       convert.cpp            
       dimensions.cpp
+      generalunit.cpp
       temperature.cpp
       units.cpp
     

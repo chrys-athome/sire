@@ -147,7 +147,7 @@ void Client::runNextTest()
     ts.setFieldWidth(0);
     ts << "%    ";
     
-    ts.setFieldWidth(40);
+    ts.setFieldWidth(65);
     ts << classes_to_test.at(current_test);
     
     ts.setFieldWidth(0);

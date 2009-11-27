@@ -36,6 +36,8 @@ using namespace Siren;
 /////////// Implementation of detail::Temperature
 ///////////
 
+static const RegisterObject<Temperature> r_temperature( VIRTUAL_CLASS );
+
 namespace SireUnits { namespace Dimension { namespace detail {
 
 Temperature::Temperature(double value) : Extends<Temperature,Object>(), val(value)
@@ -52,6 +54,25 @@ Temperature::Temperature(const SireUnits::Dimension::detail::Temperature &other)
 Temperature::~Temperature()
 {}
 
+QString Temperature::typeName()
+{
+    return "SireUnits::Dimension::detail::Temperature";
+}
+
+void Temperature::stream(Stream &s)
+{
+    s.assertVersion<Temperature>(1);
+    
+    Schema schema = s.item<Temperature>();
+    
+    Object::stream(schema.base());
+}
+
+uint Temperature::hashCode() const
+{
+    return qHash(this->what()) + *((uint*)(&val));
+}
+
 SireUnits::Dimension::detail::Temperature& 
 Temperature::operator=(const SireUnits::Dimension::detail::Temperature &other)
 {
@@ -67,6 +88,23 @@ bool Temperature::operator==(const SireUnits::Dimension::detail::Temperature &ot
 bool Temperature::operator!=(const SireUnits::Dimension::detail::Temperature &other) const
 {
     return val != other.val;
+}
+
+SireUnits::Dimension::detail::Temperature& 
+Temperature::operator=(const SireUnits::Dimension::Temperature &other)
+{
+    val = other.value();
+    return *this;
+}
+
+bool Temperature::operator==(const SireUnits::Dimension::Temperature &other) const
+{
+    return val == other.value();
+}
+
+bool Temperature::operator!=(const SireUnits::Dimension::Temperature &other) const
+{
+    return val != other.value();
 }
 
 /** Convert this into a temperature object */
@@ -105,6 +143,8 @@ double Temperature::convertFromInternal() const
 ///////////
 /////////// Implementation of Celsius
 ///////////
+
+static const RegisterObject<Celsius> r_celsius;
 
 Celsius::Celsius() 
         : Implements<Celsius,SireUnits::Dimension::detail::Temperature>(1)
@@ -149,6 +189,8 @@ void Celsius::stream(Siren::Stream &s)
     
     if (s.isSaving())
         val = convertToInternal(v);
+        
+    Temperature::stream( schema.base() );
 }
 
 double Celsius::convertToInternal(double value) const
@@ -233,6 +275,8 @@ Celsius Celsius::operator/(int value) const
 /////////// Implementation of Fahrenheit
 ///////////
 
+static const RegisterObject<Fahrenheit> r_fahrenheit;
+
 Fahrenheit::Fahrenheit() 
         : Implements<Fahrenheit,SireUnits::Dimension::detail::Temperature>(1)
 {}
@@ -276,6 +320,8 @@ void Fahrenheit::stream(Siren::Stream &s)
     
     if (s.isSaving())
         val = convertToInternal(v);
+
+    Temperature::stream( schema.base() );
 }
 
 double Fahrenheit::convertToInternal(double value) const
