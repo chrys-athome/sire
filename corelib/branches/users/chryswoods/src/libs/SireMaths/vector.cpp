@@ -33,9 +33,11 @@
 #include "SireBase/quickcopy.hpp"
 
 #include "SireUnits/units.h"
-#include "SireStream/datastream.h"
 
-#include "SireError/errors.h"
+#include "Siren/stream.h"
+#include "Siren/tester.h"
+#include "Siren/logger.h"
+#include "Siren/errors.h"
 
 #include <QString>
 #include <QRegExp>
@@ -45,35 +47,15 @@
 using namespace SireMaths;
 using namespace SireBase;
 using namespace SireUnits;
-using namespace SireStream;
+using namespace SireUnits::Dimension;
+using namespace Siren;
 
-static const RegisterMetaType<Vector> r_vector;
+static const RegisterPrimitive<Vector> r_vector;
 
-/** Serialise to a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const SireMaths::Vector &vec)
-{
-    writeHeader(ds, r_vector, 1) << vec.x() << vec.y() << vec.z();
-
-    return ds;
-}
-
-/** Deserialise from a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, SireMaths::Vector &vec)
-{
-    VersionID v = readHeader(ds, r_vector);
-
-    if (v == 1)
-    {
-        ds >> vec.sc[0] >> vec.sc[1] >> vec.sc[2];
-    }
-    else
-        throw version_error(v, "1", r_vector, CODELOC);
-
-    return ds;
-}
+namespace Siren{ template class PrimitiveObject<Vector>; }
 
 /** Construct from a tuple of three values */
-Vector::Vector( const tuple<double,double,double> &pos )
+Vector::Vector( const tuple<double,double,double> &pos ) : Primitive<Vector>()
 {
     sc[0] = pos.get<0>();
     sc[1] = pos.get<1>();
@@ -81,7 +63,7 @@ Vector::Vector( const tuple<double,double,double> &pos )
 }
 
 /** Copy constructor */
-Vector::Vector(const Vector& other)
+Vector::Vector(const Vector& other) : Primitive<Vector>()
 {
     quickCopy<double>(sc, other.sc, 4);
 }
@@ -90,9 +72,75 @@ Vector::Vector(const Vector& other)
 
     \throw SireError::invalid_arg
 */
-Vector::Vector(const QString &str)
+Vector::Vector(const QString &str) : Primitive<Vector>()
 {
     *this = Vector::fromString(str);
+}
+
+uint Vector::hashCode() const
+{
+    return qHash(sc[0]) + qHash(sc[1]) + qHash(sc[2]);
+}
+
+void Vector::stream(Stream &s)
+{
+    s.assertVersion<Vector>(1);
+    
+    Schema schema = s.item<Vector>();
+    
+    schema.data("x") & sc[0];
+    schema.data("y") & sc[1];
+    schema.data("z") & sc[2];
+}
+
+bool Vector::test(Logger &logger) const
+{
+    Tester tester( *this, logger );
+    
+    try 
+    {
+        Vector v(1,2,3);
+        
+        tester.expect_equal( QObject::tr("v(1,2,3).x() is 1"), CODELOC,
+                             v.x(), 1.0 );
+                             
+        tester.expect_equal( QObject::tr("v(1,2,3).y() is 2"), CODELOC,
+                             v.y(), 2.0 );
+
+        tester.expect_equal( QObject::tr("v(1,2,3).z() is 3"), CODELOC,
+                             v.z(), 3.0 );
+
+        v = Vector(0,0,0);
+        
+        tester.expect_equal( QObject::tr("Vector() is (0,0,0)"), CODELOC,
+                             v, Vector() );
+
+        v = Vector(1,2,3);
+        v = v + v;
+
+        tester.expect_equal( QObject::tr("Vector(1,2,3) + Vector(1,2,3) is "
+                                         "Vector(2,4,6)"), CODELOC,
+                             v, Vector(2,4,6) );
+                             
+        v = Vector(1,2,3);
+        v = v * 5;
+        
+        tester.expect_equal( QObject::tr("Vector(1,2,3) * 5 is Vector(5,10,15)"),
+                             CODELOC,
+                             v, Vector(5,10,15) );
+    }
+    catch (const Siren::exception &e) 
+    {
+        tester.unexpected_error(e);
+    }
+    
+    return tester.allPassed();
+}
+
+bool Vector::test() const
+{
+    Logger logger;
+    return Vector::test(logger);
 }
 
 /** Return the inverse length squared */
@@ -219,7 +267,7 @@ Vector Vector::fromString(const QString &str)
     //use a regexp to extract the contents...
     if (vecregexp.indexIn(str) == -1)
     {
-        throw SireError::invalid_arg( QObject::tr(
+        throw Siren::invalid_arg( QObject::tr(
                 "Cannot find anything that looks like a vector in the string "
                 "\"%1\"").arg(str), CODELOC );
     }
@@ -587,9 +635,4 @@ const Vector SIREMATHS_EXPORT SireMaths::operator/(const Vector &p1, double c)
             "Cannot divide a vector by zero! %1 / 0 is a error!").arg(p1.toString()),CODELOC);
 
     return Vector(p1.sc[0]/c, p1.sc[1]/c, p1.sc[2]/c);
-}
-
-const char* Vector::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Vector>() );
 }

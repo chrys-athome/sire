@@ -37,16 +37,8 @@ SIRE_BEGIN_HEADER
 
 namespace SireMaths
 {
+
 class Matrix;
-}
-
-class QDataStream;
-QDataStream& operator<<(QDataStream&, const SireMaths::Matrix&);
-QDataStream& operator>>(QDataStream&, SireMaths::Matrix&);
-
-namespace SireMaths
-{
-
 class Vector;
 
 const Matrix operator+(const Matrix &m1, const Matrix &m2);
@@ -56,19 +48,12 @@ const Vector operator*(const Matrix &m, const Vector &p);
 const Matrix operator*(const Matrix &m, double c);
 const Matrix operator*(double c, const Matrix &m);
 
-/**
-This class represents a 3x3 square matrix, used to represent 3D transformations.
+/** This class represents a 3x3 square matrix, used to represent 3D transformations.
 
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIREMATHS_EXPORT Matrix
+class SIREMATHS_EXPORT Matrix : public Siren::Primitive<Matrix>
 {
-
-friend class Quaternion;
-
-friend QDataStream& ::operator<<(QDataStream&, const Matrix&);
-friend QDataStream& ::operator>>(QDataStream&, Matrix&);
-
 public:
     Matrix();
 
@@ -85,12 +70,10 @@ public:
 
     ~Matrix();
 
-    static const char* typeName();
-    
-    const char* what() const
-    {
-        return Matrix::typeName();
-    }
+    QString toString() const;
+
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     const double& operator()(int i, int j) const;
     double& operator()(int i, int j);
@@ -106,8 +89,6 @@ public:
     Matrix transpose() const;
     Matrix inverse() const;
     Vector trace() const;
-
-    QString toString() const;
 
     bool isSymmetric() const;
     void enforceSymmetric();
@@ -142,11 +123,7 @@ public:
     static Matrix identity();
     static Matrix zero();
 
-    bool operator==(const Matrix& m);
-    bool operator!=(const Matrix& m);
-
-    friend bool operator==(const Matrix &m1, const Matrix &m2);
-    friend bool operator!=(const Matrix &m1, const Matrix &m2);
+    bool operator==(const Matrix& m) const;
 
     Matrix& operator+=(const Matrix &m);
     Matrix& operator-=(const Matrix &m);
@@ -162,6 +139,8 @@ public:
     friend const Matrix operator*(double c, const Matrix &m);
 
 protected:
+    friend class Quaternion;
+    
     /** The components of the matrix */
     double array[9];
 };
@@ -235,7 +214,7 @@ inline double Matrix::zz() const
 Q_DECLARE_METATYPE(SireMaths::Matrix)
 Q_DECLARE_TYPEINFO(SireMaths::Matrix, Q_MOVABLE_TYPE);
 
-SIRE_EXPOSE_CLASS( SireMaths::Matrix )
+SIRE_EXPOSE_PRIMITIVE( SireMaths::Matrix )
 
 SIRE_END_HEADER
 

@@ -37,6 +37,24 @@
 
 using namespace Siren;
 
+namespace Siren { namespace detail {
+
+    void testNotImplemented(Logger &logger, QString type_name)
+    {
+        logger.write( QObject::tr(
+                "Testing of %1 failed as no unit tests have been written "
+                "for this class. Please ask the author to provide some tests.")
+                    .arg(type_name) );
+    }
+
+    void testNotImplemented(QString type_name)
+    {
+        Logger logger;
+        testNotImplemented(logger, type_name);
+    }
+
+}}
+
 //////////
 ////////// Implementation of String
 //////////

@@ -29,16 +29,44 @@
 #include "SireMaths/errors.h"
 
 using namespace SireMaths;
+using namespace Siren;
 
-const char* math_error::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<math_error>() );
-}
+//////////
+////////// Implementation of math_error
+//////////
 
-const char* domain_error::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<domain_error>() );
-}
+static const RegisterObject<math_error> r_math_error;
 
-static const RegisterMetaType<math_error> r_math;
-static const RegisterMetaType<domain_error> r_domain;
+math_error::math_error() : ImplementsException<math_error, exception>()
+{}
+
+math_error::math_error(QString err, QString place)
+            : ImplementsException<math_error,exception>(err, place)
+{}
+
+math_error::math_error(const math_error &other)
+            : ImplementsException<math_error,exception>(other)
+{}
+
+math_error::~math_error() throw()
+{}
+
+//////////
+////////// Implementation of domain_error
+//////////
+
+static const RegisterObject<domain_error> r_domain_error;
+
+domain_error::domain_error() : ImplementsException<domain_error, exception>()
+{}
+
+domain_error::domain_error(QString err, QString place)
+            : ImplementsException<domain_error,exception>(err, place)
+{}
+
+domain_error::domain_error(const domain_error &other)
+            : ImplementsException<domain_error,exception>(other)
+{}
+
+domain_error::~domain_error() throw()
+{}

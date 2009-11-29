@@ -33,54 +33,25 @@
 #include "maths.h"
 
 #include "SireMaths/errors.h"
-#include "SireError/errors.h"
 
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
+#include "Siren/errors.h"
 
 #include <gsl/gsl_eigen.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
 
 using namespace SireMaths;
-using namespace SireStream;
+using namespace Siren;
 
 using boost::tuple;
 
-static const RegisterMetaType<Matrix> r_matrix;
+static const RegisterPrimitive<Matrix> r_matrix;
 
-/** Serialise to a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Matrix &matrix)
-{
-    writeHeader(ds, r_matrix, 1);
-    
-    for (int i=0; i<9; ++i)
-    {
-        ds << matrix.array[i];
-    }
-
-    return ds;
-}
-
-/** Deserialise from a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Matrix &matrix)
-{
-    VersionID v = readHeader(ds, r_matrix);
-
-    if (v == 1)
-    {
-        for (int i=0; i<9; ++i)
-        {
-            ds >> matrix.array[i];
-        }
-    }
-    else
-        throw version_error(v, "1", r_matrix, CODELOC);
-
-    return ds;
-}
+namespace Siren { template class Primitive<Matrix>; }
 
 /** Construct a default Matrix (identity matrix) */
-Matrix::Matrix()
+Matrix::Matrix() : Primitive<Matrix>()
 {
     for (int i=0; i<8; ++i)
     {
@@ -94,7 +65,7 @@ Matrix::Matrix()
 
 /** Construct a matrix whose diagonal elements equal 'diagonal_value'
     and whose off-diagonal elements equal zero */
-Matrix::Matrix(double diagonal_value)
+Matrix::Matrix(double diagonal_value) : Primitive<Matrix>()
 {
     for (int i=0; i<8; ++i)
     {
@@ -110,7 +81,7 @@ Matrix::Matrix(double diagonal_value)
     row 2, then row 3. */
 Matrix::Matrix(double xx, double xy, double xz,
                double yx, double yy, double yz,
-               double zx, double zy, double zz)
+               double zx, double zy, double zz) : Primitive<Matrix>()
 {
     array[0] = xx;
     array[1] = xy;
@@ -126,13 +97,13 @@ Matrix::Matrix(double xx, double xy, double xz,
 }
 
 /** Copy constructor */
-Matrix::Matrix(const Matrix &m)
+Matrix::Matrix(const Matrix &m) : Primitive<Matrix>()
 {
     qMemCopy(this->data(), m.constData(), 9*sizeof(double));
 }
 
 /** Construct a matrix from three vectors - each vector is a row */
-Matrix::Matrix(const Vector &r1, const Vector &r2, const Vector &r3)
+Matrix::Matrix(const Vector &r1, const Vector &r2, const Vector &r3) : Primitive<Matrix>()
 {
     qMemCopy(this->data(), r1.constData(), 3*sizeof(double));
     qMemCopy(this->data()+3, r2.constData(), 3*sizeof(double));
@@ -141,7 +112,7 @@ Matrix::Matrix(const Vector &r1, const Vector &r2, const Vector &r3)
 
 /** Construct a matrix from a tuple of three vectors - each
     vector is a row */
-Matrix::Matrix(const tuple<Vector,Vector,Vector> &rows)
+Matrix::Matrix(const tuple<Vector,Vector,Vector> &rows) : Primitive<Matrix>()
 {
     const Vector &r1 = rows.get<0>();
     const Vector &r2 = rows.get<1>();
@@ -163,7 +134,7 @@ Matrix::~Matrix()
 int Matrix::checkedOffset(int i, int j) const
 {
     if (i < 0 or i > 2 or j < 0 or j > 2)
-        throw SireError::invalid_index( QObject::tr(    
+        throw Siren::invalid_index( QObject::tr(    
                 "Invalid index for 3x3 matrix - [%1,%2]")
                     .arg(i).arg(j), CODELOC );
                     
@@ -222,6 +193,23 @@ QString Matrix::toString() const
                   .arg(xx()).arg(xy()).arg(xz())
                   .arg(yx()).arg(yy()).arg(yz())
                   .arg(zx()).arg(zy()).arg(zz());
+}
+
+uint Matrix::hashCode() const
+{
+    return qHash(xx()) + qHash(yy()) + qHash(zz());
+}
+
+void Matrix::stream(Stream &s)
+{
+    s.assertVersion<Matrix>(1);
+    
+    ArraySchema schema = s.array<Matrix>(9);
+    
+    for (int i=0; i<9; ++i)
+    {
+        schema.index(i) & array[i];
+    }
 }
 
 /** Return the trace of the matrix */
@@ -294,7 +282,7 @@ bool Matrix::isIdentity() const
 
 }
 
-bool Matrix::operator==(const Matrix& m)
+bool Matrix::operator==(const Matrix& m) const
 {
     for (int i=0; i<9; ++i)
     {
@@ -303,11 +291,6 @@ bool Matrix::operator==(const Matrix& m)
     }
     
     return true;
-}
-
-bool Matrix::operator!=(const Matrix& m)
-{
-    return not this->operator==(m);
 }
 
 /** Return the identity matrix */
@@ -484,14 +467,6 @@ void Matrix::enforceSymmetric()
     array[5] = zy();
 }
 
-Matrix convertGSLMatrix(gsl_matrix *mat)
-{
-    return 
-      Matrix( gsl_matrix_get(mat,0,0), gsl_matrix_get(mat,1,0), gsl_matrix_get(mat,2,0),
-              gsl_matrix_get(mat,0,1), gsl_matrix_get(mat,1,1), gsl_matrix_get(mat,2,1),
-              gsl_matrix_get(mat,0,2), gsl_matrix_get(mat,1,2), gsl_matrix_get(mat,2,2) );
-}
-
 /** Obtain the principal axes of this matrix. This can only be performed if this
     matrix is symmetric. You should only call this function for matricies that
     you know are symmetric, as this function will assume that the matrix is
@@ -500,45 +475,9 @@ Matrix convertGSLMatrix(gsl_matrix *mat)
     the lowest. */
 Matrix Matrix::getPrincipalAxes() const
 {
-    //assume that this matrix is symmetrical - we will thus
-    //only look at the values in the upper-right diagonal
+    throw Siren::incomplete_code( QObject::tr(
+            "I need to write new code to get the principal axes of a 3x3 matrix..."),
+                CODELOC );
 
-    //now use the GNU Scientific Library to solve the eigenvalue
-    //problem for this matrix
-    double new_array[9];
-    qMemCopy(new_array, array, 9*sizeof(double));
-
-    gsl_matrix_view m = gsl_matrix_view_array(new_array,3,3);
-
-    //allocate space for the resulting eigenvectors and eigenvalues
-    gsl_vector *eig_val = gsl_vector_alloc(3);
-    gsl_matrix *eig_vec = gsl_matrix_alloc(3,3);
-
-    //now allocate some workspace for the calculation...
-    gsl_eigen_symmv_workspace *w = gsl_eigen_symmv_alloc(3);
-
-    //perform the calculation
-    gsl_eigen_symmv(&m.matrix, eig_val, eig_vec, w);
-
-    //free the space used by the calculation
-    gsl_eigen_symmv_free(w);
-
-    //now sort the eigenvectors from the smallest eigenvalue to
-    //the largest
-    gsl_eigen_symmv_sort (eig_val, eig_vec, GSL_EIGEN_SORT_ABS_ASC);
-
-    //now copy the results back into a new Matrix
-    Matrix ret = convertGSLMatrix(eig_vec);
-
-    //free up the memory used by the GSL data...
-    gsl_vector_free(eig_val);
-    gsl_matrix_free(eig_vec);
-
-    //finally, return the matrix of principal components
-    return ret;
-}
-
-const char* Matrix::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Matrix>() );
+    return Matrix();
 }

@@ -58,6 +58,12 @@ namespace Siren
 
 class Logger;
 
+namespace detail
+{ 
+    void testNotImplemented(QString type_name); 
+    void testNotImplemented(Logger &logger, QString type_name);
+}
+
 /** This is the base class of Primitive types. This just
     provides the functionality to allow automatic
     conversion of Object types. Primitives are simple
@@ -83,10 +89,19 @@ public:
     
     static QString typeName();
 
+    bool operator!=(const Derived &other) const;
+
+    QString what() const;
+
     Class getClass() const;
+
+    uint hashCode() const;
 
     void load(Stream &s);
     void save(Stream &s) const;
+    
+    bool test() const;
+    bool test(Logger &logger) const;
     
     void stream(Stream &s);
 };
@@ -249,12 +264,29 @@ SIREN_OUTOFLINE_TEMPLATE
 Primitive<T>::~Primitive()
 {}
   
+/** Automatically provide that obvious overload that
+    T != T is not (T == T) */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+bool Primitive<T>::operator!=(const T &other) const
+{
+    return not static_cast<const T*>(this)->operator==(other);
+}
+  
 /** Return the type name of the primitive type */
 template<class T>
 SIREN_OUTOFLINE_TEMPLATE
 QString Primitive<T>::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<T>() );
+}
+  
+/** Return the type name of the primitive type */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+QString Primitive<T>::what() const
+{
+    return Primitive<T>::typeName();
 }
   
 /** Allow automatic casting to an Object reference */
@@ -298,6 +330,29 @@ SIREN_OUTOFLINE_TEMPLATE
 void Primitive<T>::stream(Stream &s)
 {
     static_cast<T*>(this)->stream(s);
+}
+
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+uint Primitive<T>::hashCode() const
+{
+    return static_cast<const T*>(this)->hashCode();
+}
+
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+bool Primitive<T>::test(Logger &logger) const
+{
+    detail::testNotImplemented(logger, T::typeName());
+    return false;
+}
+
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+bool Primitive<T>::test() const
+{
+    detail::testNotImplemented( T::typeName() );
+    return false;
 }
 
 /////////
@@ -450,6 +505,14 @@ const T& primitive_cast( const Object &object )
 #ifndef SIREN_SKIP_INLINE_FUNCTIONS
 
 template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+uint qHash(const Siren::Primitive<T> &object)
+{
+    return object.hashCode();
+}
+
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
 Siren::Stream& operator&(Siren::Stream &s, Siren::Primitive<T> &object)
 {
     object.stream(s);
@@ -457,6 +520,7 @@ Siren::Stream& operator&(Siren::Stream &s, Siren::Primitive<T> &object)
 }
 
 template<class T>
+SIREN_OUTOFLINE_TEMPLATE
 QDataStream& operator<<(QDataStream &ds, const Siren::Primitive<T> &object)
 {
     Siren::DataStream sds(ds);
@@ -465,6 +529,7 @@ QDataStream& operator<<(QDataStream &ds, const Siren::Primitive<T> &object)
 }
 
 template<class T>
+SIREN_OUTOFLINE_TEMPLATE
 QDataStream& operator>>(QDataStream &ds, Siren::Primitive<T> &object)
 {
     Siren::DataStream sds(ds);

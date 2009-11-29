@@ -175,6 +175,7 @@ set ( SIREMATHS_SOURCES
       axisset.cpp
       boys.cpp
       complex.cpp
+      constants.cpp
       distvector.cpp
       errors.cpp
       freeenergyaverage.cpp
@@ -182,6 +183,7 @@ set ( SIREMATHS_SOURCES
       histogram.cpp
       line.cpp
       linearap.cpp
+      maths.cpp
       matrix.cpp
       nmatrix.cpp
       nvector.cpp
@@ -200,10 +202,10 @@ set ( SIREMATHS_SOURCES
       sire_lapack.cpp
       sire_linpack.cpp
 
-      third_party/GSL/fcmp.c
-      third_party/GSL/fcmp.h
-
       ${SIREMATHS_HEADERS}
+
+      third_party/GSL/fcmp.cpp
+      third_party/GSL/fcmp.h
     )
 
 if (NOT SIRE_DISABLE_FORTRAN)

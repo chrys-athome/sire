@@ -36,45 +36,33 @@
 
 #include "sireglobal.h"
 
+#include "Siren/primitive.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireMaths
 {
-class AxisSet;
-}
 
-class QDataStream;
-QDataStream& operator<<(QDataStream&, const SireMaths::AxisSet&);
-QDataStream& operator>>(QDataStream&, SireMaths::AxisSet&);
-
-namespace SireMaths
-{
-
-/**
-This class provides a complete set of orthonormal axes that provide a frame of reference (origin+axes) for a coordinate system. 
+/** This class provides a complete set of orthonormal axes 
+    that provide a frame of reference (origin+axes) for a coordinate system. 
  
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIREMATHS_EXPORT AxisSet
+class SIREMATHS_EXPORT AxisSet : public Siren::Primitive<AxisSet>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const AxisSet&);
-friend QDataStream& ::operator>>(QDataStream&, AxisSet&);
-
 public:
     AxisSet();
     AxisSet(const Matrix &matrx, Vector orign = Vector());
     AxisSet(const AxisSet &other);
     ~AxisSet();
 
-    static const char* typeName();
+    AxisSet& operator=(const AxisSet &other);
     
-    const char* what() const
-    {
-        return AxisSet::typeName();
-    }
+    bool operator==(const AxisSet &other) const;
 
     QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
     
     const Matrix& matrix() const;
     const Matrix& invMatrix() const;
@@ -125,7 +113,7 @@ inline const Vector& AxisSet::origin() const
 Q_DECLARE_METATYPE(SireMaths::AxisSet);
 Q_DECLARE_TYPEINFO(SireMaths::AxisSet, Q_MOVABLE_TYPE);
 
-SIRE_EXPOSE_CLASS( SireMaths::AxisSet )
+SIRE_EXPOSE_PRIMITIVE( SireMaths::AxisSet )
 
 SIRE_END_HEADER
 

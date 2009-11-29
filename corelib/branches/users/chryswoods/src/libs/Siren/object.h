@@ -65,6 +65,11 @@ class ObjRef;
 class QDomNode;
 class QMutex;
 
+inline uint qHash(double value)
+{
+    return *( (quint64*)(&value) );
+}
+
 namespace Siren
 {
 

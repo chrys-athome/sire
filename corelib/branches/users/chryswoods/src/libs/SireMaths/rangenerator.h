@@ -35,15 +35,9 @@
 
 #include "sireglobal.h"
 
+#include "Siren/object.h"
+
 SIRE_BEGIN_HEADER
-
-namespace SireMaths
-{
-class RanGenerator;
-}
-
-QDataStream& operator<<(QDataStream&, const SireMaths::RanGenerator&);
-QDataStream& operator>>(QDataStream&, SireMaths::RanGenerator&);
 
 namespace SireMaths
 {
@@ -64,12 +58,9 @@ void seed_qrand();
 
     @author Christopher Woods
 */
-class SIREMATHS_EXPORT RanGenerator
+class SIREMATHS_EXPORT RanGenerator 
+        : public Siren::Implements<RanGenerator,Siren::Object>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const RanGenerator&);
-friend QDataStream& ::operator>>(QDataStream&, RanGenerator&);
-
 public:
     RanGenerator();
     RanGenerator(quint32 seed);
@@ -79,17 +70,15 @@ public:
 
     ~RanGenerator();
 
-    static const char* typeName();
-    
-    const char* what() const
-    {
-        return RanGenerator::typeName();
-    }
-
     RanGenerator& operator=(const RanGenerator &other);
 
     bool operator==(const RanGenerator &other) const;
     bool operator!=(const RanGenerator &other) const;
+
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
+    bool test(Siren::Logger &logger) const;
 
     void seed();
     void seed(quint32 seed);

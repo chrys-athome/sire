@@ -261,6 +261,81 @@ struct StreamHelper
     }
 };
 
+template<>
+struct StreamHelper<quint8>
+{
+    static QString typeName(){ return "uint8"; }
+    static quint8 null(){ return 0; }
+};
+
+template<>
+struct StreamHelper<qint8>
+{
+    static QString typeName(){ return "int8"; }
+    static qint8 null(){ return 0; }
+};
+
+template<>
+struct StreamHelper<quint32>
+{
+    static QString typeName(){ return "uint32"; }
+    static quint32 null(){ return 0; }
+};
+
+template<>
+struct StreamHelper<qint32>
+{
+    static QString typeName(){ return "int32"; }
+    static qint32 null(){ return 0; }
+};
+
+template<>
+struct StreamHelper<quint64>
+{
+    static QString typeName(){ return "uint64"; }
+    static quint64 null(){ return 0; }
+};
+
+template<>
+struct StreamHelper<qint64>
+{
+    static QString typeName(){ return "int64"; }
+    static qint64 null(){ return 0; }
+};
+
+template<>
+struct StreamHelper<float>
+{
+    static QString typeName(){ return "flaot"; }
+    static float null(){ return 0; }
+};
+
+template<>
+struct StreamHelper<double>
+{
+    static QString typeName(){ return "double"; }
+    static double null(){ return 0; }
+};
+
+template<class T>
+struct StreamHelper< boost::shared_ptr<T> >
+{
+    static QString typeName()
+    {
+        return QString("shared_ptr< %1 >").arg(T::typeName());
+    }
+    
+    static const void* getKey(const boost::shared_ptr<T> &object)
+    {
+        return object.get();
+    }
+    
+    static boost::shared_ptr<T> null()
+    {
+        return boost::shared_ptr<T>();
+    }
+};
+
 /** This is the virtual base class that helps with streaming
     shared objects */
 class SIREN_EXPORT SharedHelperBase

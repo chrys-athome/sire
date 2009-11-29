@@ -29,39 +29,29 @@
 #ifndef SIREMATHS_VECTOR_H
 #define SIREMATHS_VECTOR_H
 
-class QDataStream;
 class QString;
 
 #include <QObject>
 
 #include <boost/tuple/tuple.hpp>
 
+#include "SireMaths/maths.h"
 #include "SireMaths/errors.h"
-
-#include "maths.h"
 
 #include "SireUnits/dimensions.h"
 
+#include "Siren/primitive.h"
+
 SIRE_BEGIN_HEADER
-
-namespace SireMaths
-{
-class Vector;
-}
-
-class QDataStream;
-QDataStream& operator<<(QDataStream&, const SireMaths::Vector&);
-QDataStream& operator>>(QDataStream&, SireMaths::Vector&);
 
 namespace SireMaths
 {
 
 class Quaternion;
 class Matrix;
+class Vector;
 
 using boost::tuple;
-
-using SireUnits::Dimension::Angle;
 
 const Vector operator+(const Vector &p1, const Vector &p2);
 const Vector operator-(const Vector &p1, const Vector &p2);
@@ -72,49 +62,18 @@ const Quaternion operator*(const Vector &p1, const Quaternion &p2);
 const Quaternion operator*(const Quaternion &p1, const Vector &p2);
 const Vector operator*(const Matrix &m, const Vector &p);
 
-/**
-This is a simple 3D vector.
+/** 
+    This is a simple 3D vector.
+    
+    A vector is implemented as a very simple collection of 3 doubles. It should
+    thus be very efficient in terms of speed and size as there is no array. This
+    does mean that the .x(), .y() and .z() functions provide faster access
+    than the [] operator.
 
-A vector is implemented as a very simple collection of 3 doubles. It should
-thus be very efficient in terms of speed and size as there is no array. This
-does mean that the .x(), .y() and .z() functions provide faster access
-than the [] operator.
-
-There is a length/distance and a fastLength/fastDistance. The normal
-version uses the standard library's sqrt function, while the fast versions
-use a numerical approximation that is quite accurate (to within 1-2%).
-
-These have been benchmarked on my development system using the 'testSpeed'
-static function. The results are;
-
-100,000,000 evaluations of vectors (1.0,2.0,3.0), (3.0,2.0,1.0)
-
-distance took on average 4498 ms
-distance2 took on average 148 ms
-fastDistance took on average 350 ms
-
-This shows that you should normally use 'distance2' for distance checking,
-with fastDistance if you are not concerned with total accuracy.
-
-The error with fastDistance has an oscillating value, with the error having
-a maximum overestimate of 1*10-5, and maximum underestimate of 0.00065 between
-the distances of 0.0 and 150.0
-
-Within this range the percentage error also oscillates, with the oscillations
-having a random frequency, but almost constant amplitude of 0.0005%. See the
-graph in techdocs/fastLengthError.png and the script techdocs/fastLengthError.py
-
-@author Christopher Woods
+    @author Christopher Woods
 */
-
-class Quaternion;
-
-class SIREMATHS_EXPORT Vector
+class SIREMATHS_EXPORT Vector : public Siren::Primitive<Vector>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Vector&);
-friend QDataStream& ::operator>>(QDataStream&, Vector&);
-
 public:
     typedef double value_type;
 
@@ -128,12 +87,25 @@ public:
     
     ~Vector();
 
-    static const char* typeName();
+    const Vector& operator=(const Vector &other);
 
-    const char* what() const
-    {
-        return Vector::typeName();
-    }
+    bool operator==(const Vector &p1) const;
+    bool operator!=(const Vector &p1) const;
+    
+    const Vector& operator+=(const Vector &other);
+    const Vector& operator-=(const Vector &other);
+    const Vector& operator*=(const double &other);
+    const Vector& operator/=(const double &other);
+    Vector operator-() const;
+
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
+    
+    bool test() const;
+    bool test(Siren::Logger &logger) const;
+    
+    QString toString() const;
+    static Vector fromString(const QString &str);
 
     double* data();
 
@@ -150,17 +122,6 @@ public:
 
     Vector direction() const;
     double magnitude() const;
-
-    const Vector& operator=(const Vector &other);
-
-    bool operator==(const Vector &p1) const;
-    bool operator!=(const Vector &p1) const;
-    
-    const Vector& operator+=(const Vector &other);
-    const Vector& operator-=(const Vector &other);
-    const Vector& operator*=(const double &other);
-    const Vector& operator/=(const double &other);
-    Vector operator-() const;
 
     void set(double x, double y, double z);
     void setX(double x);
@@ -189,10 +150,6 @@ public:
 
     bool isZero() const;
 
-    QString toString() const;
-
-    static Vector fromString(const QString &str);
-
     static double dot(const Vector &v0, const Vector &v1);
     static Vector cross(const Vector &v0, const Vector &v1);
 
@@ -202,10 +159,10 @@ public:
     Vector max(const Vector &other) const;
     Vector min(const Vector &other) const;
 
-    Angle bearing() const;
-    Angle bearingXY(const Vector &v) const;
-    Angle bearingXZ(const Vector &v) const;
-    Angle bearingYZ(const Vector &v) const;
+    SireUnits::Dimension::Angle bearing() const;
+    SireUnits::Dimension::Angle bearingXY(const Vector &v) const;
+    SireUnits::Dimension::Angle bearingXZ(const Vector &v) const;
+    SireUnits::Dimension::Angle bearingYZ(const Vector &v) const;
 
     Matrix metricTensor() const;
 
@@ -215,14 +172,18 @@ public:
     static double invDistance(const Vector &v1, const Vector &v2);
     static double invDistance2(const Vector &v1, const Vector &v2);
 
-    static Angle angle(const Vector &v0, const Vector &v1);
-    static Angle angle(const Vector &v0, const Vector &v1, const Vector &v2);
+    static SireUnits::Dimension::Angle angle(const Vector &v0, const Vector &v1);
+    static SireUnits::Dimension::Angle angle(const Vector &v0, const Vector &v1, 
+                                             const Vector &v2);
 
-    static Angle dihedral(const Vector &v0, const Vector &v1,
-                          const Vector &v2, const Vector &v3);
+    static SireUnits::Dimension::Angle dihedral(const Vector &v0, const Vector &v1,
+                                                const Vector &v2, const Vector &v3);
 
-    static Vector generate(double dst, const Vector &v1, const Angle &ang,
-                           const Vector &v2, const Angle &dih, const Vector &v3);
+    static Vector generate(double dst, const Vector &v1, 
+                           const SireUnits::Dimension::Angle &ang,
+                           const Vector &v2, 
+                           const SireUnits::Dimension::Angle &dih, 
+                           const Vector &v3);
 
     friend const Vector operator+(const Vector &p1, const Vector &p2);
     friend const Vector operator-(const Vector &p1, const Vector &p2);
@@ -402,7 +363,7 @@ inline const Vector operator*(double c, const Vector &p1)
 Q_DECLARE_METATYPE(SireMaths::Vector)
 Q_DECLARE_TYPEINFO(SireMaths::Vector, Q_MOVABLE_TYPE);
 
-SIRE_EXPOSE_CLASS( SireMaths::Vector )
+SIRE_EXPOSE_PRIMITIVE( SireMaths::Vector )
 
 SIRE_END_HEADER
 

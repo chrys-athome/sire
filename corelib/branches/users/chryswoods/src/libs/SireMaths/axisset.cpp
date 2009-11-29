@@ -26,57 +26,54 @@
   *
 \*********************************************/
 
-#include <QDataStream>
-
-#include "SireStream/datastream.h"
-
 #include "axisset.h"
 
+#include "Siren/stream.h"
+
 using namespace SireMaths;
-using namespace SireStream;
+using namespace Siren;
 
-static const RegisterMetaType<AxisSet> r_axisset;
+static const RegisterPrimitive<AxisSet> r_axisset;
 
-/** Serialise to a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const AxisSet &ax)
-{
-    writeHeader(ds, r_axisset, 1) << ax.mat << ax.invmat << ax.orgn;
-    return ds;
-}
-
-/** Deserialise from a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, AxisSet &ax)
-{
-    VersionID v = readHeader(ds, r_axisset);
-
-    if (v == 1)
-    {
-        ds >> ax.mat >> ax.invmat >> ax.orgn;
-    }
-    else
-        throw version_error(v, "1", r_axisset, CODELOC);
-
-    return ds;
-}
+namespace Siren{ template class PrimitiveObject<AxisSet>; }
 
 /** Construct an empty AxisSet. This represents the standard cartesian axes, centered
     on the origin */
-AxisSet::AxisSet() : mat(), invmat(), orgn()
+AxisSet::AxisSet() : Primitive<AxisSet>(), mat(), invmat(), orgn()
 {}
 
 /** Construct an AxisSet using matrix 'matrx', and origin 'orign' */
 AxisSet::AxisSet(const Matrix &matrx, Vector vec)
-        : mat(matrx), invmat(mat.inverse()), orgn(vec)
+        : Primitive<AxisSet>(), mat(matrx), invmat(mat.inverse()), orgn(vec)
 {}
 
 /** Copy constructor */
 AxisSet::AxisSet(const AxisSet &other)
-        : mat(other.mat), invmat(other.invmat), orgn(other.orgn)
+        : Primitive<AxisSet>(), mat(other.mat), invmat(other.invmat), orgn(other.orgn)
 {}
 
 /** Destructor */
 AxisSet::~AxisSet()
 {}
+
+/** Copy assignment operator */
+AxisSet& AxisSet::operator=(const AxisSet &other)
+{
+    if (this != &other)
+    {
+        mat = other.mat;
+        invmat = other.invmat;
+        orgn = other.orgn;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool AxisSet::operator==(const AxisSet &other) const
+{
+    return orgn == other.orgn and mat == other.mat;
+}
 
 /** Convert a vector from the cartesian frame to this coordinate frame */
 Vector AxisSet::fromIdentity(const Vector &vec) const
@@ -110,7 +107,20 @@ QString AxisSet::toString() const
     return QObject::tr("AxisSet, %1, %2").arg(orgn.toString(),mat.toString());
 }
 
-const char* AxisSet::typeName()
+uint AxisSet::hashCode() const
 {
-    return QMetaType::typeName( qMetaTypeId<AxisSet>() );
+    return qHash(mat) + qHash(orgn);
+}
+
+void AxisSet::stream(Stream &s)
+{
+    s.assertVersion<AxisSet>(1);
+    
+    Schema schema = s.item<AxisSet>();
+    
+    schema.data("origin") & orgn;
+    schema.data("axes") & mat;
+    
+    if (s.isLoading())
+        invmat = mat.inverse();
 }

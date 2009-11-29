@@ -29,19 +29,9 @@
 #ifndef SIREMATHS_MATHS_H
 #define SIREMATHS_MATHS_H
 
-#include "Siren/sirenglobal.h"
+#include "sireglobal.h"
 
 #include <cmath>
-
-#ifndef GCCXML_PARSE
-    //some versions of GCCXML don't like these headers...
-    #include <boost/random/variate_generator.hpp>
-    #include <boost/random/uniform_real.hpp>
-    #include <boost/random/uniform_int.hpp>
-    #include <boost/random/mersenne_twister.hpp>
-#endif // GCCXML_PARSE
-
-#include <gsl/gsl_sys.h>
 
 #include "constants.h"
 
@@ -61,83 +51,10 @@ SIRE_BEGIN_HEADER
 namespace SireMaths
 {
 
+bool areEqual(double val0, double val1, double epsilon);
+bool areEqual(double val0, double val1);
+
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
-typedef boost::variate_generator<boost::mt19937, boost::uniform_real<double> > UniformRand;
-typedef boost::variate_generator<boost::mt19937, boost::uniform_int<qint32> > UniformRanInt;
-typedef boost::variate_generator<boost::mt19937, boost::uniform_int<quint32> > UniformRanUInt;
-typedef boost::variate_generator<boost::mt19937, boost::uniform_int<qint64> > UniformRanInt64;
-typedef boost::variate_generator<boost::mt19937, boost::uniform_int<quint64> > UniformRanUInt64;
-
-/** Function to return a uniform double random number generator with a range
-    from 'min' to 'max' */
-inline UniformRand uniformRanGenerator(double min=0.0, double max=1.0)
-{
-    return UniformRand( boost::mt19937(), boost::uniform_real<double>(min,max) );
-}
-
-/** Function to return a uniform double random number generator with a range
-    from 'min' to 'max' and seeded with 'seed' */
-inline UniformRand uniformRanGenerator(double min, double max, uint32_t seed)
-{
-    return UniformRand( boost::mt19937(seed), boost::uniform_real<double>(min,max) );
-}
-
-/** Function to return a uniform int random number generate with a range from
-    'min' to 'max' */
-inline UniformRanInt uniformRanIntGenerator(qint32 min=0, qint32 max=100)
-{
-    return UniformRanInt( boost::mt19937(), boost::uniform_int<qint32>(min,max) );
-}
-
-/** Function to return a uniform int random number generate with a range from
-    'min' to 'max' and seeded with 'seed' */
-inline UniformRanInt uniformRanIntGenerator(qint32 min, qint32 max, uint32_t seed)
-{
-    return UniformRanInt( boost::mt19937(seed), boost::uniform_int<qint32>(min,max) );
-}
-
-/** Function to return a uniform uint random number generate with a range from
-    'min' to 'max' */
-inline UniformRanUInt uniformRanUIntGenerator(quint32 min=0, quint32 max=100)
-{
-    return UniformRanUInt( boost::mt19937(), boost::uniform_int<quint32>(min,max) );
-}
-
-/** Function to return a uniform uint random number generate with a range from
-    'min' to 'max' and seeded with 'seed' */
-inline UniformRanUInt uniformRanUIntGenerator(quint32 min, quint32 max, uint32_t seed)
-{
-    return UniformRanUInt( boost::mt19937(seed), boost::uniform_int<quint32>(min,max) );
-}
-
-/** Function to return a uniform int random number generate with a range from
-    'min' to 'max' */
-inline UniformRanInt64 uniformRanInt64Generator(qint64 min=0, qint64 max=100)
-{
-    return UniformRanInt64( boost::mt19937(), boost::uniform_int<qint64>(min,max) );
-}
-
-/** Function to return a uniform int random number generate with a range from
-    'min' to 'max' and seeded with 'seed' */
-inline UniformRanInt64 uniformRanInt64Generator(qint64 min, qint64 max, uint32_t seed)
-{
-    return UniformRanInt64( boost::mt19937(seed), boost::uniform_int<qint64>(min,max) );
-}
-
-/** Function to return a uniform uint random number generate with a range from
-    'min' to 'max' */
-inline UniformRanUInt64 uniformRanUInt64Generator(quint64 min=0, quint64 max=100)
-{
-    return UniformRanUInt64( boost::mt19937(), boost::uniform_int<quint64>(min,max) );
-}
-
-/** Function to return a uniform uint random number generate with a range from
-    'min' to 'max' and seeded with 'seed' */
-inline UniformRanUInt64 uniformRanUInt64Generator(quint64 min, quint64 max, uint32_t seed)
-{
-    return UniformRanUInt64( boost::mt19937(seed), boost::uniform_int<quint64>(min,max) );
-}
 
 /** Return x raised to the power 2 */
 template<typename T>
@@ -344,23 +261,6 @@ inline float invSqrt(float x)
     return float(1.0) / std::sqrt(x);
 }
 
-/** Return true if two numbers are equal. This uses gsl_fcmp
-    for the comparison, and the values must be equal to within
-    a range of 2*delta, where delta = 2^k * epsilon, where
-    k equals the maximum base-2 exponent of val0 and val1 as
-    calculated via frexp(). This should normally be a value
-    around 1e-6 */
-inline bool areEqual(double val0, double val1, double epsilon)
-{
-    return not ( third_party::gsl_fcmp(val0,val1,epsilon) );
-}
-
-/** Return true if two numbers are equal */
-inline bool areEqual(double val0, double val1)
-{
-    return not ( third_party::gsl_fcmp(val0,val1,1e-6) );
-}
-
 /** Return true if this number is equal to zero */
 template<typename T>
 SIRE_INLINE_TEMPLATE
@@ -370,23 +270,6 @@ bool isZero(const T &val)
 }
 
 #else  // SIRE_SKIP_INLINE_FUNCTIONS
-
-class UniformRand;
-class UniformRanInt;
-class UniformRanUInt;
-class UniformRanInt64;
-class UniformRanUInt64;
-
-UniformRand uniformRanGenerator(double min=0.0, double max=1.0);
-UniformRand uniformRanGenerator(double min, double max, uint32_t seed);
-UniformRanInt uniformRanIntGenerator(qint32 min=0, qint32 max=100);
-UniformRanInt uniformRanIntGenerator(qint32 min, qint32 max, uint32_t seed);
-UniformRanUInt uniformRanUIntGenerator(quint32 min=0, quint32 max=100);
-UniformRanUInt uniformRanUIntGenerator(quint32 min, quint32 max, uint32_t seed);
-UniformRanInt64 uniformRanInt64Generator(qint64 min=0, qint64 max=100);
-UniformRanInt64 uniformRanInt64Generator(qint64 min, qint64 max, uint32_t seed);
-UniformRanUInt64 uniformRanUInt64Generator(quint64 min=0, quint64 max=100);
-UniformRanUInt64 uniformRanUInt64Generator(quint64 min, quint64 max, uint32_t seed);
 
 template<typename T>
 T pow_2(const T &x);

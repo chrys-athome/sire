@@ -30,11 +30,11 @@
 #include "matrix.h"
 
 #include "SireUnits/units.h"
-#include "SireStream/datastream.h"
 
 #include "SireBase/quickcopy.hpp"
 
-#include "SireError/errors.h"
+#include "Siren/errors.h"
+#include "Siren/stream.h"
 
 #include <QString>
 #include <QRegExp>
@@ -43,46 +43,21 @@
 
 using namespace SireMaths;
 using namespace SireUnits;
+using namespace SireUnits::Dimension;
 using namespace SireBase;
-using namespace SireStream;
+using namespace Siren;
 
-static const RegisterMetaType<DistVector> r_distvector;
-
-/** Serialise to a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, 
-                                         const SireMaths::DistVector &vec)
-{
-    writeHeader(ds, r_distvector, 1) << vec.sc[0] << vec.sc[1]
-                                     << vec.sc[2] << vec.sc[3];
-
-    return ds;
-}
-
-/** Deserialise from a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, 
-                                         SireMaths::DistVector &vec)
-{
-    VersionID v = readHeader(ds, r_distvector);
-
-    if (v == 1)
-    {
-        ds >> vec.sc[0] >> vec.sc[1] >> vec.sc[2] >> vec.sc[3];
-    }
-    else
-        throw version_error(v, "1", r_distvector, CODELOC);
-
-    return ds;
-}
+static const RegisterPrimitive<DistVector> r_distvector;
 
 /** Create the zero vector */
-DistVector::DistVector() : Vector()
+DistVector::DistVector() : Primitive<DistVector>()
 {
     for (int i=0; i<4; i++)
         sc[i] = 0;
 }
 
 /** Create from the passed vector */
-DistVector::DistVector( const Vector &vec ) : Vector()
+DistVector::DistVector( const Vector &vec ) : Primitive<DistVector>()
 {
     double dist = vec.length();
     
@@ -117,7 +92,7 @@ DistVector::~DistVector()
 
 
 /** Copy constructor */
-DistVector::DistVector(const DistVector& other)
+DistVector::DistVector(const DistVector& other) : Primitive<DistVector>()
 {
     quickCopy<double>(sc, other.sc, 4);
 }
@@ -282,9 +257,9 @@ double DistVector::b() const
 }
 
 /** Return the direction of this vector */
-const Vector& DistVector::direction() const
+Vector DistVector::direction() const
 {
-    return *this;
+    return Vector(x(), y(), z());
 }
 
 /** Return the magnitude of this vector */
@@ -437,7 +412,20 @@ DistVector DistVector::operator-() const
     return ret;
 }
 
-const char* DistVector::typeName()
+uint DistVector::hashCode() const
 {
-    return QMetaType::typeName( qMetaTypeId<DistVector>() );
+    return qHash(x()) + qHash(y()) + qHash(z());
+}
+
+void DistVector::stream(Stream &s)
+{
+    s.assertVersion<DistVector>(1);
+    
+    Schema schema = s.item<DistVector>();
+    
+    schema.data("x") & sc[0];
+    schema.data("y") & sc[1];
+    schema.data("z") & sc[2];
+    
+    schema.data("length") & sc[3];
 }

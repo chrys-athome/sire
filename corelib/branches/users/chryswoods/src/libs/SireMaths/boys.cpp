@@ -31,7 +31,7 @@
 #include "boys.h"
 #include "gamma.h"
 
-#include "SireError/errors.h"
+#include "Siren/errors.h"
 
 #include <QDebug>
 
@@ -139,7 +139,7 @@ double SIREMATHS_EXPORT boys(int m, double x)
 /** Return the boys function Fm(x) */
 double SIREMATHS_EXPORT boys(double m, double x)
 {
-    throw SireError::incomplete_code( QObject::tr("No floating point boys!"), CODELOC );
+    throw Siren::incomplete_code( QObject::tr("No floating point boys!"), CODELOC );
     return boys( int(m), x );
 }
 

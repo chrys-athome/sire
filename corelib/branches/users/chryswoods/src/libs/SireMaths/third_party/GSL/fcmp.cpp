@@ -22,12 +22,19 @@
  *
  */
 
-#include <config.h>
-#include <gsl/gsl_sys.h>
+/** Edited by C. Woods to separate it into its own file, and to 
+    move it into the SireMaths::third_party C++ namespace */
+
 #include <math.h>
 
-int
-gsl_fcmp (const double x1, const double x2, const double epsilon)
+#include "fcmp.h"
+
+namespace SireMaths
+{ 
+namespace third_party
+{
+
+int gsl_fcmp (const double x1, const double x2, const double epsilon)
 {
   int exponent;
   double delta, difference;
@@ -60,3 +67,5 @@ gsl_fcmp (const double x1, const double x2, const double epsilon)
     }
 }
 
+}
+}

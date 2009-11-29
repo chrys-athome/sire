@@ -31,6 +31,7 @@
 #include <cmath>
 
 #include "accumulator.h"
+
 #include "SireMaths/maths.h"
 
 #include "SireError/errors.h"

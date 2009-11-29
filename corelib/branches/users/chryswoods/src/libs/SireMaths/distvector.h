@@ -35,26 +35,14 @@ SIRE_BEGIN_HEADER
 
 namespace SireMaths
 {
-class DistVector;
-}
-
-QDataStream& operator<<(QDataStream&, const SireMaths::DistVector&);
-QDataStream& operator>>(QDataStream&, SireMaths::DistVector&);
-
-namespace SireMaths
-{
 
 /** This is a vector that stores the vector as a unit vector giving
     the direction, and a scalar giving the magnitude
     
     @author Christopher Woods
 */
-class SIREMATHS_EXPORT DistVector : private Vector
+class SIREMATHS_EXPORT DistVector : public Siren::Primitive<DistVector>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const DistVector&);
-friend QDataStream& ::operator>>(QDataStream&, DistVector&);
-
 public:
     DistVector();
     
@@ -64,12 +52,15 @@ public:
     
     ~DistVector();
 
-    static const char* typeName();
+    const DistVector& operator=(const DistVector &other);
 
-    const char* what() const
-    {
-        return DistVector::typeName();
-    }
+    bool operator==(const DistVector &p1) const;
+    bool operator!=(const DistVector &p1) const;
+
+    QString toString() const;
+
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     double x() const;
     double y() const;
@@ -79,13 +70,8 @@ public:
     double g() const;
     double b() const;
 
-    const Vector& direction() const;
+    Vector direction() const;
     double magnitude() const;
-
-    const DistVector& operator=(const DistVector &other);
-
-    bool operator==(const DistVector &p1) const;
-    bool operator!=(const DistVector &p1) const;
     
     const DistVector& operator+=(const DistVector &other);
     const DistVector& operator-=(const DistVector &other);
@@ -110,8 +96,6 @@ public:
 
     bool isZero() const;
 
-    QString toString() const;
-
     static DistVector fromString(const QString &str);
 
     static double dot(const DistVector &v0, const DistVector &v1);
@@ -123,10 +107,10 @@ public:
     DistVector max(const DistVector &other) const;
     DistVector min(const DistVector &other) const;
 
-    Angle bearing() const;
-    Angle bearingXY(const DistVector &v) const;
-    Angle bearingXZ(const DistVector &v) const;
-    Angle bearingYZ(const DistVector &v) const;
+    SireUnits::Dimension::Angle bearing() const;
+    SireUnits::Dimension::Angle bearingXY(const DistVector &v) const;
+    SireUnits::Dimension::Angle bearingXZ(const DistVector &v) const;
+    SireUnits::Dimension::Angle bearingYZ(const DistVector &v) const;
 
     Matrix metricTensor() const;
 
@@ -136,18 +120,23 @@ public:
     static double invDistance(const DistVector &v1, const DistVector &v2);
     static double invDistance2(const DistVector &v1, const DistVector &v2);
 
-    static Angle angle(const DistVector &v0, const DistVector &v1);
-    static Angle angle(const DistVector &v0, const DistVector &v1, 
-                       const DistVector &v2);
+    static SireUnits::Dimension::Angle angle(const DistVector &v0, const DistVector &v1);
+    static SireUnits::Dimension::Angle angle(const DistVector &v0, const DistVector &v1, 
+                                             const DistVector &v2);
 
-    static Angle dihedral(const DistVector &v0, const DistVector &v1,
-                          const DistVector &v2, const DistVector &v3);
+    static SireUnits::Dimension::Angle 
+                        dihedral(const DistVector &v0, const DistVector &v1,
+                                 const DistVector &v2, const DistVector &v3);
 
-    static DistVector generate(double dst, const DistVector &v1, const Angle &ang,
-                               const DistVector &v2, const Angle &dih, 
-                               const DistVector &v3);
+    static DistVector generate(double dst, 
+                           const DistVector &v1, const SireUnits::Dimension::Angle &ang,
+                           const DistVector &v2, const SireUnits::Dimension::Angle &dih, 
+                           const DistVector &v3);
 
     operator Vector() const;
+
+private:
+    double sc[4];
 };
 
 }
@@ -155,7 +144,7 @@ public:
 Q_DECLARE_TYPEINFO(SireMaths::DistVector, Q_MOVABLE_TYPE);
 Q_DECLARE_METATYPE(SireMaths::DistVector);
 
-SIRE_EXPOSE_CLASS( SireMaths::DistVector )
+SIRE_EXPOSE_PRIMITIVE( SireMaths::DistVector )
 
 SIRE_END_HEADER
 

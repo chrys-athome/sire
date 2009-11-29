@@ -14,7 +14,7 @@ set ( SUBDIRS
            #   SireFF
               SireID
            #   SireIO
-           #   SireMaths
+              SireMaths
            #   SireMM
            #   SireMol
            #   SireMove

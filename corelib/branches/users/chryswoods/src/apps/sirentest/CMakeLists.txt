@@ -86,6 +86,7 @@ set_target_properties (sirentest_backend PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SirenTest
                        SireUnits
+                       SireID
                        Siren
                       )
 

@@ -26,3 +26,26 @@
   *
 \*********************************************/
 
+#include "SireMaths/maths.h"
+
+#include "third_party/GSL/fcmp.h" // CONDITIONAL_INCLUDE
+
+namespace SireMaths
+{
+    /** Return true if two numbers are equal. This uses gsl_fcmp
+        for the comparison, and the values must be equal to within
+        a range of 2*delta, where delta = 2^k * epsilon, where
+        k equals the maximum base-2 exponent of val0 and val1 as
+        calculated via frexp(). This should normally be a value
+        around 1e-6 */
+    bool SIREMATHS_EXPORT areEqual(double val0, double val1, double epsilon)
+    {
+        return not ( third_party::gsl_fcmp(val0,val1,epsilon) );
+    }
+
+    /** Return true if two numbers are equal */
+    bool SIREMATHS_EXPORT areEqual(double val0, double val1)
+    {
+        return not ( third_party::gsl_fcmp(val0,val1,1e-6) );
+    }
+}
