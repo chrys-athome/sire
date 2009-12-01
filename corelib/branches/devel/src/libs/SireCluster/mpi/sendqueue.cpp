@@ -119,9 +119,6 @@ void SendQueue::run()
     SireError::setThreadString("SendQueue");
     SireMaths::seed_qrand();
     
-    //wait until everyone has got here
-    send_comm->Barrier();
-
     QMutexLocker lkr(&datamutex);
     
     if (message_queue.isEmpty())
@@ -167,9 +164,6 @@ void SendQueue::run()
                 
                 BOOST_ASSERT( size != 0 );
 
-                //block until all of the nodes are ready to receive the message
-                send_comm->Barrier();
-                
                 //tell the nodes how large the message is
                 send_comm->Bcast( &size, 1, ::MPI::INT, MPICluster::master());
                 
@@ -244,14 +238,12 @@ void SendQueue::run()
     if ( MPICluster::isMaster() )
     {
         int quit = 0;
-        send_comm->Barrier();
+        //send_comm->Barrier();
         send_comm->Bcast( &quit, 1, ::MPI::INT, MPICluster::master());
     }
     
     //we're not sending any more messages, so release the resources
     //held by the communicator
-    send_comm->Barrier();
-
     send_comm->Free();
 
     delete send_comm;

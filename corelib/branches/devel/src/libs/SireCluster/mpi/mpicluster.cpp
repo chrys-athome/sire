@@ -115,7 +115,22 @@ public:
     bool already_shutting_down;
 };
 
-Q_GLOBAL_STATIC( MPIClusterPvt, globalCluster );
+Q_GLOBAL_STATIC( QMutex, mpiGlobalMutex );
+
+static MPIClusterPvt *global_cluster = 0;
+
+static MPIClusterPvt* globalCluster()
+{
+    if (global_cluster == 0)
+    {
+        QMutexLocker lkr( mpiGlobalMutex() );
+        
+        if (global_cluster == 0)
+            global_cluster = new MPIClusterPvt();
+    }
+
+    return global_cluster;
+}
 
 static void ensureMPIStarted()
 {
@@ -166,7 +181,7 @@ MPIClusterPvt::MPIClusterPvt() : global_comm(0),
         
     //get the global MPI communicator
     global_comm = &(::MPI::COMM_WORLD.Clone());
-        
+
     ::MPI::Intracomm *send_comm, *recv_comm;
         
     if ( MPICluster::isMaster() )
@@ -192,6 +207,9 @@ MPIClusterPvt::MPIClusterPvt() : global_comm(0),
         
     send_queue->start();
     receive_queue->start();
+
+    //wait for everyone to get here
+    global_comm->Barrier();
     
     already_shutting_down = false;
 }
@@ -239,13 +257,11 @@ void MPICluster::start()
 void MPICluster::sync()
 {
     ::ensureMPIStarted();
-    
+
     if (not ::MPI::Is_finalized())
     {
         if (globalCluster()->global_comm)
-        {
             globalCluster()->global_comm->Barrier();
-        }
     }
 }
 
@@ -265,7 +281,6 @@ P2PComm MPICluster::createP2P(int master_rank, int slave_rank)
         //need to do anything, unless it is us!
         if (is_master)
         {
-            qDebug() << "Found an intra-process P2PComm on process" << my_rank;
             return P2PComm::createLocal();
         }
         else

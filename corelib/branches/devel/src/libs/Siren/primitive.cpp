@@ -341,5 +341,9 @@ void Number::stream(Stream &s)
 ////////// Instantiate templates
 //////////
 
+namespace Siren
+{
 template class PrimitiveObject<String>;
 template class PrimitiveObject<Number>;
+}
+

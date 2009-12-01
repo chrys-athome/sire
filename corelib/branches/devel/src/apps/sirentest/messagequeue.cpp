@@ -29,6 +29,8 @@
 #include <QSharedMemory>
 #include <QTimer>
 
+#include <cstring>
+
 #include "messagequeue.h"
 #include "sharedmemory.h"
 

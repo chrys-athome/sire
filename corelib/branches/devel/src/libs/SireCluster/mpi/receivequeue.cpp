@@ -211,9 +211,6 @@ void ReceiveQueue::run2()
     SireError::setThreadString("ReceiveQueue_B");
     SireMaths::seed_qrand();
 
-    //wait until everyone has got here
-    recv_comm->Barrier();
-
     QByteArray message_data;
 
     if (MPICluster::isMaster())
@@ -263,10 +260,6 @@ void ReceiveQueue::run2()
         //everyone else listens to broadcasts from the master
         while (true)
         {
-
-            //block until everyone is ready to receive the message
-            recv_comm->Barrier();
-
             int count;
             recv_comm->Bcast( &count, 1, ::MPI::INT, MPICluster::master() );
         
@@ -297,7 +290,7 @@ void ReceiveQueue::run2()
                         
                         //the master will send a zero size message to signal
                         //that it has also quit - wait for that message now
-                        recv_comm->Barrier();
+                        //recv_comm->Barrier();
                         recv_comm->Bcast( &count, 1, ::MPI::INT, MPICluster::master() );
                         
                         if (count != 0)
@@ -317,8 +310,6 @@ void ReceiveQueue::run2()
         }
     }
 
-    recv_comm->Barrier();
-    
     //release the resources held by this communicator
     recv_comm->Free();
     
