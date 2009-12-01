@@ -34,61 +34,63 @@
 
 #include "SireMaths/maths.h"
 
-#include "SireError/errors.h"
-
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
+#include "Siren/objref.h"
+#include "Siren/errors.h"
+#include "Siren/stream.h"
+#include "Siren/streamqt.h"
 
 #include <QDebug>
 
 using namespace SireMaths;
-using namespace SireBase;
-using namespace SireStream;
+using namespace Siren;
 
 /////////
 ///////// Implementation of Accumulator
 /////////
 
-static const RegisterMetaType<Accumulator> r_accum( MAGIC_ONLY,
-                                                    Accumulator::typeName() );
-                                                    
-/** Serialise to a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Accumulator &accum)
-{
-    writeHeader(ds, r_accum, 1);
-    
-    ds << accum.nvalues << static_cast<const Property&>(accum);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Accumulator &accum)
-{
-    VersionID v = readHeader(ds, r_accum);
-    
-    if (v == 1)
-    {
-        ds >> accum.nvalues >> static_cast<Property&>(accum);
-    }
-    else
-        throw version_error(v, "1", r_accum, CODELOC);
-        
-    return ds;
-}
+static const RegisterObject<Accumulator> r_accum( VIRTUAL_CLASS );
 
 /** Constructor */
-Accumulator::Accumulator() : Property(), nvalues(0)
+Accumulator::Accumulator() 
+            : Extends<Accumulator,Object>(),
+              Interfaces<Accumulator,Mutable>(), nvalues(0)
 {}
 
 /** Copy constructor */
 Accumulator::Accumulator(const Accumulator &other)
-            : Property(other), nvalues(other.nvalues)
+            : Extends<Accumulator,Object>(other),
+              Interfaces<Accumulator,Mutable>(), nvalues(other.nvalues)
 {}
 
 /** Destructor */
 Accumulator::~Accumulator()
 {}
+
+QString Accumulator::typeName()
+{
+    return "Siren::Accumulator";
+}
+
+ObjRef Accumulator::saveState() const
+{
+    return this->copy();
+}
+
+void Accumulator::restoreState(const Object &object)
+{
+    this->copy(object);
+}
+
+void Accumulator::stream(Stream &s)
+{
+    s.assertVersion<Accumulator>(1);
+    
+    Schema schema = s.item<Accumulator>();
+    
+    schema.data("nvalues") & nvalues;
+    
+    Object::stream( schema.base() );
+}
 
 /** Return the number of values that have been sampled */
 int Accumulator::nSamples() const
@@ -130,7 +132,7 @@ void Accumulator::clear()
 Accumulator& Accumulator::operator=(const Accumulator &other)
 {
     nvalues = other.nvalues;
-    Property::operator=(other);
+    Object::operator=(other);
     return *this;
 }
 
@@ -146,132 +148,34 @@ bool Accumulator::operator!=(const Accumulator &other) const
     return nvalues != other.nvalues;
 }
 
-/////////
-///////// Implementation of NullAccumulator
-/////////
-
-static const RegisterMetaType<NullAccumulator> r_null;
-
-/** Serialise to a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const NullAccumulator &null)
+uint Accumulator::hashCode() const
 {
-    writeHeader(ds, r_null, 1);
-    
-    ds << static_cast<const Accumulator&>(null);
-    
-    return ds;
+    return qHash(this->what()) + qHash(this->value()) 
+             + qHash(this->nSamples());
 }
 
-/** Extract from a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, NullAccumulator &null)
+/** Return the value of this accumulator - this meaning
+    of the value depends on the type, e.g. Average would
+    return the mean average value, Median would return
+    the median value etc. */
+double Accumulator::value() const
 {
-    VersionID v = readHeader(ds, r_null);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<Accumulator&>(null);
-    }
-    else
-        throw version_error(v, "1", r_null, CODELOC);
-        
-    return ds;
-}
-
-/** Construct an empty average */
-NullAccumulator::NullAccumulator() 
-                : ConcreteProperty<NullAccumulator,Accumulator>()
-{}
-
-/** Copy constructor */
-NullAccumulator::NullAccumulator(const NullAccumulator &other)
-        : ConcreteProperty<NullAccumulator,Accumulator>(other)
-{}
-
-/** Destructor */
-NullAccumulator::~NullAccumulator()
-{}
-
-/** Copy assignment operator */
-NullAccumulator& NullAccumulator::operator=(const NullAccumulator &other)
-{
-    Accumulator::operator=(other);
-    return *this;
-}
-
-/** Comparison operator */
-bool NullAccumulator::operator==(const NullAccumulator &other) const
-{
-    return true;
-}
-
-/** Comparison operator */
-bool NullAccumulator::operator!=(const NullAccumulator &other) const
-{
-    return false;
-}
-
-/** Accumulate the passed value onto the average */
-void NullAccumulator::accumulate(double)
-{}
-
-const char* NullAccumulator::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<NullAccumulator>() );
-}
-
-static SharedPolyPointer<NullAccumulator> shared_null;
-
-const NullAccumulator& Accumulator::null()
-{
-    if (shared_null.constData() == 0)
-    {
-        QMutexLocker lkr( SireBase::globalLock() );
-        
-        if (shared_null.constData() == 0)
-            shared_null = new NullAccumulator();
-    }
-    
-    return *(shared_null.constData());
+    return this->operator double();
 }
 
 /////////
 ///////// Implementation of Average
 /////////
 
-static const RegisterMetaType<Average> r_avg;
-
-/** Serialise to a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Average &avg)
-{
-    writeHeader(ds, r_avg, 1);
-    
-    ds << avg.avgval << static_cast<const Accumulator&>(avg);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Average &avg)
-{
-    VersionID v = readHeader(ds, r_avg);
-    
-    if (v == 1)
-    {
-        ds >> avg.avgval >> static_cast<Accumulator&>(avg);
-    }
-    else
-        throw version_error(v, "1", r_avg, CODELOC);
-        
-    return ds;
-}
+static const RegisterObject<Average> r_avg;
 
 /** Construct an empty average */
-Average::Average() : ConcreteProperty<Average,Accumulator>(), avgval(0)
+Average::Average() : Implements<Average,Accumulator>(), avgval(0)
 {}
 
 /** Copy constructor */
 Average::Average(const Average &other)
-        : ConcreteProperty<Average,Accumulator>(other), avgval(other.avgval)
+        : Implements<Average,Accumulator>(other), avgval(other.avgval)
 {}
 
 /** Destructor */
@@ -301,6 +205,23 @@ bool Average::operator==(const Average &other) const
 bool Average::operator!=(const Average &other) const
 {
     return not this->operator==(other);
+}
+
+QString Average::toString() const
+{
+    return QObject::tr("Average( value() = %1, nSamples() = %2 )")
+                .arg(this->value()).arg(this->nSamples());
+}
+
+void Average::stream(Stream &s)
+{
+    s.assertVersion<Average>(1);
+    
+    Schema schema = s.item<Average>();
+    
+    schema.data("average") & avgval;
+    
+    Accumulator::stream( schema.base() );
 }
 
 /** Completely clear the statistics in this accumulator */
@@ -337,53 +258,21 @@ Average::operator double() const
     return this->average();
 }
 
-const char* Average::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Average>() );
-}
-
 /////////
 ///////// Implementation of AverageAndStddev
 /////////
 
-static const RegisterMetaType<AverageAndStddev> r_avgstddev;
-
-/** Serialise to a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, 
-                                         const AverageAndStddev &avgstddev)
-{
-    writeHeader(ds, r_avgstddev, 1);
-    
-    ds << avgstddev.avgval2 << static_cast<const Average&>(avgstddev);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds,
-                                         AverageAndStddev &avgstddev)
-{
-    VersionID v = readHeader(ds, r_avgstddev);
-    
-    if (v == 1)
-    {
-        ds >> avgstddev.avgval2 >> static_cast<Average&>(avgstddev);
-    }
-    else
-        throw version_error( v, "1", r_avgstddev, CODELOC );
-        
-    return ds;
-}
+static const RegisterObject<AverageAndStddev> r_avgstddev;
 
 /** Construct an empty average */
 AverageAndStddev::AverageAndStddev()
-                 : ConcreteProperty<AverageAndStddev,Average>(),
+                 : Implements<AverageAndStddev,Average>(),
                    avgval2(0)
 {}
 
 /** Copy constructor */
 AverageAndStddev::AverageAndStddev(const AverageAndStddev &other)
-                 : ConcreteProperty<AverageAndStddev,Average>(other),
+                 : Implements<AverageAndStddev,Average>(other),
                    avgval2(other.avgval2)
 {}
 
@@ -461,54 +350,39 @@ double AverageAndStddev::meanOfSquares() const
     return avgval2;
 }
 
-const char* AverageAndStddev::typeName()
+QString AverageAndStddev::toString() const
 {
-    return QMetaType::typeName( qMetaTypeId<AverageAndStddev>() );
+    return QObject::tr("AverageAndStdDev( value() = %1, stddev() = %2, nSamples() = %3 )")
+                .arg(this->value()).arg(this->stddev()).arg(this->nSamples());
+}
+
+void AverageAndStddev::stream(Stream &s)
+{
+    s.assertVersion<AverageAndStddev>(1);
+    
+    Schema schema = s.item<AverageAndStddev>();
+    
+    schema.data("average^2") & avgval2;
+    
+    Average::stream( schema.base() );
 }
 
 /////////
 ///////// Implementation of ExpAverage
 /////////
 
-static const RegisterMetaType<ExpAverage> r_expavg;
-
-/** Serialise to a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const ExpAverage &expavg)
-{
-    writeHeader(ds, r_expavg, 1);
-    
-    ds << expavg.avgval << expavg.sclfac
-       << static_cast<const Accumulator&>(expavg);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, ExpAverage &expavg)
-{
-    VersionID v = readHeader(ds, r_expavg);
-    
-    if (v == 1)
-    {
-        ds >> expavg.avgval >> expavg.sclfac
-           >> static_cast<Accumulator&>(expavg);
-    }
-    else
-        throw version_error(v, "1", r_expavg, CODELOC);
-        
-    return ds;
-}
+static const RegisterObject<ExpAverage> r_expavg;
 
 /** Construct an empty average using the passed scale factor.
 
     \throw SireError::invalid_arg
 */
 ExpAverage::ExpAverage(double scale_factor) 
-           : ConcreteProperty<ExpAverage,Accumulator>(), 
+           : Implements<ExpAverage,Accumulator>(), 
              avgval(0), sclfac(scale_factor)
 {
     if (scale_factor == 0)
-        throw SireError::invalid_arg( QObject::tr(
+        throw Siren::invalid_arg( QObject::tr(
             "You cannot construct an exponential average using a scale "
             "factor of zero."), CODELOC );
             
@@ -518,7 +392,7 @@ ExpAverage::ExpAverage(double scale_factor)
 
 /** Copy constructor */
 ExpAverage::ExpAverage(const ExpAverage &other)
-        : ConcreteProperty<ExpAverage,Accumulator>(other), 
+        : Implements<ExpAverage,Accumulator>(other), 
           avgval(other.avgval), sclfac(other.sclfac)
 {}
 
@@ -595,54 +469,40 @@ double ExpAverage::scaleFactor() const
     return 1.0 / sclfac;
 }
 
-const char* ExpAverage::typeName()
+QString ExpAverage::toString() const
 {
-    return QMetaType::typeName( qMetaTypeId<ExpAverage>() );
+    return QObject::tr("ExpAverage( value() = %1, nSamples() = %2 )")
+                .arg(this->value()).arg(this->nSamples());
+}
+
+void ExpAverage::stream(Stream &s)
+{
+    s.assertVersion<ExpAverage>(1);
+    
+    Schema schema = s.item<ExpAverage>();
+    
+    schema.data("average") & avgval;
+    schema.data("scale_factor") & sclfac;
+    
+    Accumulator::stream( schema.base() );
 }
 
 /////////
 ///////// Implementation of Median
 /////////
 
-static const RegisterMetaType<Median> r_median;
-
-/** Serialise to a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Median &median)
-{
-    writeHeader(ds, r_median, 1);
-    
-    ds << median.minval << median.maxval
-       << static_cast<const Accumulator&>(median);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Median &median)
-{
-    VersionID v = readHeader(ds, r_median);
-    
-    if (v == 1)
-    {
-        ds >> median.minval >> median.maxval
-           >> static_cast<Accumulator&>(median);
-    }
-    else
-        throw version_error(v, "1", r_median, CODELOC);
-        
-    return ds;
-}
+static const RegisterObject<Median> r_median;
 
 /** Construct an empty average */
 Median::Median() 
-       : ConcreteProperty<Median,Accumulator>(), 
+       : Implements<Median,Accumulator>(), 
          minval(  std::numeric_limits<double>::max() ),
          maxval( -std::numeric_limits<double>::max() )
 {}
 
 /** Copy constructor */
 Median::Median(const Median &other)
-        : ConcreteProperty<Median,Accumulator>(other), 
+        : Implements<Median,Accumulator>(other), 
           minval(other.minval), maxval(other.maxval)
 {}
 
@@ -734,52 +594,37 @@ double Median::minimum() const
     return this->min();
 }
 
-const char* Median::typeName()
+QString Median::toString() const
 {
-    return QMetaType::typeName( qMetaTypeId<Median>() );
+    return QObject::tr("Median( value() = %1, nSamples() = %2 )")
+                .arg(this->value()).arg(this->nSamples());
+}
+
+void Median::stream(Stream &s)
+{
+    s.assertVersion<Median>(1);
+    
+    Schema schema = s.item<Median>();
+    
+    schema.data("minimum") & minval;
+    schema.data("maximum") & maxval;
+    
+    Accumulator::stream( schema.base() );
 }
 
 /////////
 ///////// Implementation of RecordValues
 /////////
 
-static const RegisterMetaType<RecordValues> r_recval;
-
-/** Serialise to a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const RecordValues &recval)
-{
-    writeHeader(ds, r_recval, 1);
-    
-    ds << recval.vals
-       << static_cast<const Accumulator&>(recval);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, RecordValues &recval)
-{
-    VersionID v = readHeader(ds, r_recval);
-    
-    if (v == 1)
-    {
-        ds >> recval.vals
-           >> static_cast<Accumulator&>(recval);
-    }
-    else
-        throw version_error(v, "1", r_recval, CODELOC);
-        
-    return ds;
-}
+static const RegisterObject<RecordValues> r_recval;
 
 /** Construct an empty average */
-RecordValues::RecordValues() 
-             : ConcreteProperty<RecordValues,Accumulator>()
+RecordValues::RecordValues() : Implements<RecordValues,Accumulator>()
 {}
 
 /** Copy constructor */
 RecordValues::RecordValues(const RecordValues &other)
-             : ConcreteProperty<RecordValues,Accumulator>(other), 
+             : Implements<RecordValues,Accumulator>(other), 
                vals(other.vals)
 {}
 
@@ -982,7 +827,19 @@ QVector<double> RecordValues::values() const
     return vals;
 }
 
-const char* RecordValues::typeName()
+QString RecordValues::toString() const
 {
-    return QMetaType::typeName( qMetaTypeId<RecordValues>() );
+    return QObject::tr("RecordValues( value() = %1, nSamples() = %2 )")
+                .arg(this->value()).arg(this->nSamples());
+}
+
+void RecordValues::stream(Stream &s)
+{
+    s.assertVersion<RecordValues>(1);
+    
+    Schema schema = s.item<RecordValues>();
+    
+    schema.data("values") & vals;
+    
+    Accumulator::stream( schema.base() );
 }

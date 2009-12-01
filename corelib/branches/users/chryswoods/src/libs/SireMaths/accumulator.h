@@ -29,7 +29,13 @@
 #ifndef SIREMATHS_ACCUMULATOR_H
 #define SIREMATHS_ACCUMULATOR_H
 
+#include <QVector>
+
 #include "Siren/object.h"
+#include "Siren/objptr.hpp"
+#include "Siren/mutable.h"
+
+#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
@@ -58,15 +64,15 @@ public:
     ///////////////////////////
     // Extends Siren::Object //
     ///////////////////////////
-    
     static QString typeName();
-
+    uint hashCode() const;
     void stream(Siren::Stream &s);
 
     ///////////////////////////////
     // Interfaces Siren::Mutable //
     ///////////////////////////////
-    
+    Siren::ObjRef saveState() const;
+    void restoreState(const Siren::Object &object);
     
     ////////////////////////////
     // SireMaths::Accumulator //
@@ -83,11 +89,19 @@ public:
     
     virtual operator double() const=0;
     
+    virtual double value() const;
+    
 protected:
     Accumulator& operator=(const Accumulator &other);
     
     bool operator==(const Accumulator &other) const;
     bool operator!=(const Accumulator &other) const;
+
+    friend class Siren::Extends<Accumulator,Object>;
+    static QStringList listInterfaces()
+    {
+        return Siren::Interfaces<Accumulator,Siren::Mutable>::listInterfaces();
+    }
 
 private:
     /** The number of values that have been accumulated */
@@ -116,9 +130,7 @@ public:
     //////////////////////////////
     // Implements Siren::Object //
     //////////////////////////////
-    
     QString toString() const;
-    int hashCode() const;
     void stream(Siren::Stream &s);
     
     ////////////////////////////
@@ -161,9 +173,7 @@ public:
     //////////////////////////////
     // Implements Siren::Object //
     //////////////////////////////
-    
     QString toString() const;
-    int hashCode() const;
     void stream(Siren::Stream &s);
 
     ////////////////////////////
@@ -212,9 +222,7 @@ public:
     //////////////////////////////
     // Implements Siren::Object //
     //////////////////////////////
-    
     QString toString() const;
-    int hashCode() const;
     void stream(Siren::Stream &s);
 
     ////////////////////////////
@@ -262,9 +270,7 @@ public:
     //////////////////////////////
     // Implements Siren::Object //
     //////////////////////////////
-    
     QString toString() const;
-    int hashCode() const;
     void stream(Siren::Stream &s);
 
     ////////////////////////////
@@ -316,9 +322,7 @@ public:
     //////////////////////////////
     // Implements Siren::Object //
     //////////////////////////////
-    
     QString toString() const;
-    int hashCode() const;
     void stream(Siren::Stream &s);
 
     ////////////////////////////
