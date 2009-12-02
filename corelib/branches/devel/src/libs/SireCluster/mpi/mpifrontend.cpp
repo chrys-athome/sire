@@ -33,10 +33,12 @@
 #include <QTime>
 
 #include "mpifrontend.h"
+#include "mpicluster.h"
 
 #include "SireCluster/workpacket.h"
 
 #include "SireError/printerror.h"
+#include "SireError/getbacktrace.h"
 
 #include <QDebug>
 
@@ -70,13 +72,15 @@ QUuid MPIFrontend::UID()
     if (p2p.isNull())
         return QUuid();
     
-    else
+    else if (cached_uid.isNull())
     {
         QMutexLocker lkr(&datamutex);
-    
+
         p2p.sendMessage( P2PComm::GETUID );
-        return p2p.awaitResponse<QUuid>();
+        cached_uid = p2p.awaitResponse<QUuid>();
     }
+    
+    return cached_uid;
 }
 
 /** Start a job on the backend */

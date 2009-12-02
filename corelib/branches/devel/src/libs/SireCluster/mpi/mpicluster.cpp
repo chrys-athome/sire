@@ -103,7 +103,7 @@ public:
     QHash<QUuid,ReplyPtr> reply_registry;
 
     /** The global (private) MPI communicator */
-    ::MPI::Intracomm *global_comm;
+    ::MPI::Intracomm global_comm;
 
     /** The send message event loop */
     SendQueue *send_queue;
@@ -145,8 +145,7 @@ static void ensureMPIStarted()
 }
 
 /** Construct the global cluster */
-MPIClusterPvt::MPIClusterPvt() : global_comm(0),
-                                 send_queue(0), receive_queue(0),
+MPIClusterPvt::MPIClusterPvt() : send_queue(0), receive_queue(0),
                                  already_shutting_down(true)
 {
     //create the private send and receive communicators
@@ -180,24 +179,27 @@ MPIClusterPvt::MPIClusterPvt() : global_comm(0),
     }
         
     //get the global MPI communicator
-    global_comm = &(::MPI::COMM_WORLD.Clone());
+    ::MPI::Group mpigroup = ::MPI::COMM_WORLD.Get_group();
+    global_comm = ::MPI::COMM_WORLD.Create(mpigroup);
 
-    ::MPI::Intracomm *send_comm, *recv_comm;
+    ::MPI::Intracomm send_comm, recv_comm;
         
     if ( MPICluster::isMaster() )
     {
         //create the send, then receive communicators
-        send_comm = &(global_comm->Clone());
-        recv_comm = &(global_comm->Clone());
+        send_comm = global_comm.Create(mpigroup);
+        recv_comm = global_comm.Create(mpigroup);
     }
     else
     {
         //must be the other way around (as all other nodes
         //listen to the master)
-        recv_comm = &(global_comm->Clone());
-        send_comm = &(global_comm->Clone());
+        recv_comm = global_comm.Create(mpigroup);
+        send_comm = global_comm.Create(mpigroup);
     }
-        
+    
+    mpigroup.Free();
+    
     //create and start the reservation manager
     ReservationManager::start();
         
@@ -209,7 +211,7 @@ MPIClusterPvt::MPIClusterPvt() : global_comm(0),
     receive_queue->start();
 
     //wait for everyone to get here
-    global_comm->Barrier();
+    global_comm.Barrier();
     
     already_shutting_down = false;
 }
@@ -220,12 +222,7 @@ MPIClusterPvt::~MPIClusterPvt()
     //stop the reservation manager
     ReservationManager::shutdown();
 
-    if (global_comm)
-    {
-        global_comm->Free();
-        delete global_comm;
-        global_comm = 0;
-    }
+    global_comm.Free();
 
     if (send_queue)
     {
@@ -259,10 +256,7 @@ void MPICluster::sync()
     ::ensureMPIStarted();
 
     if (not ::MPI::Is_finalized())
-    {
-        if (globalCluster()->global_comm)
-            globalCluster()->global_comm->Barrier();
-    }
+        globalCluster()->global_comm.Barrier();
 }
 
 /** Create a new P2P communicator that allow for direct and
@@ -292,7 +286,7 @@ P2PComm MPICluster::createP2P(int master_rank, int slave_rank)
         // - this requires a collective operation
         QMutexLocker lkr( &(globalCluster()->datamutex) );
         
-        if (globalCluster()->global_comm == 0 or ::MPI::Is_finalized())
+        if (::MPI::Is_finalized())
             return P2PComm();
         
         int rank = 0;
@@ -301,7 +295,7 @@ P2PComm MPICluster::createP2P(int master_rank, int slave_rank)
             rank = 1;
         
         ::MPI::Intracomm private_comm = 
-                    globalCluster()->global_comm->Split( (is_master or is_slave),
+                    globalCluster()->global_comm.Split( (is_master or is_slave),
                                                          is_slave );
         
         return P2PComm::create(private_comm, master_rank, slave_rank);
@@ -758,13 +752,8 @@ void MPICluster::informedShutdown()
         globalCluster()->backend_registry.clear();
 
         //finally, get rid of the global communicator
-        if (globalCluster()->global_comm)
-        {
-            globalCluster()->global_comm->Barrier();
-            globalCluster()->global_comm->Free();
-            delete globalCluster()->global_comm;
-            globalCluster()->global_comm = 0;
-        }
+        globalCluster()->global_comm.Barrier();
+        globalCluster()->global_comm.Free();
     }
     
     //shut down the cluster - this will call MPICluster::shutdown,

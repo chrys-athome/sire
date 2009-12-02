@@ -41,7 +41,7 @@
 using namespace SireCluster::MPI;
 
 /** Construct a queue that listens for messages using 'recv_comm' */
-ReceiveQueue::ReceiveQueue(::MPI::Intracomm *comm)
+ReceiveQueue::ReceiveQueue(::MPI::Intracomm comm)
              : QThread(), boost::noncopyable(),
                recv_comm(comm), been_stopped(false)
 {
@@ -66,7 +66,7 @@ ReceiveQueue::~ReceiveQueue()
     
     delete secondthread;
     
-    delete recv_comm;
+    recv_comm.Free();
 }
 
 /** Start the two background event loops */
@@ -220,7 +220,7 @@ void ReceiveQueue::run2()
         while (keep_listening)
         {        
             //the master listens for messages from anyone
-            if (recv_comm->Iprobe(MPI_ANY_SOURCE, 1, status))
+            if (recv_comm.Iprobe(MPI_ANY_SOURCE, 1, status))
             {
                 //there is a message from one of the slaves
                 int slave_rank = status.Get_source();
@@ -231,8 +231,8 @@ void ReceiveQueue::run2()
                 
                 //perhaps change this to use Irecv so that we can kill
                 //the communication if 'keep_listening' is set to false
-                recv_comm->Recv(message_data.data(), count, ::MPI::BYTE,
-                                slave_rank, 1);
+                recv_comm.Recv(message_data.data(), count, ::MPI::BYTE,
+                               slave_rank, 1);
 
                 //unpack the message
                 Message message = this->unpackMessage(message_data, slave_rank);
@@ -252,69 +252,78 @@ void ReceiveQueue::run2()
                 }
             }
             else
-                QThread::msleep(200);
+                QThread::msleep(50);
         }
     }
     else
     {
-        //everyone else listens to broadcasts from the master
+        //everyone else listens to messages from the master
+        ::MPI::Status status;
+        
         while (true)
         {
-            int count;
-            recv_comm->Bcast( &count, 1, ::MPI::INT, MPICluster::master() );
-        
-            if (count == 0)
+            if (recv_comm.Iprobe(MPICluster::master(), 1, status))
             {
-                //we've just been told to quit
-                break;
-            }
+                //there is a message from the master - it should be a
+                //single integer giving the size of the broadcast
+                int count = status.Get_count(::MPI::INT);
+                
+                if (count != 1)
+                    qDebug() << "HAVE NOT GOT AN INTEGER?";
+                    
+                recv_comm.Recv( &count, 1, ::MPI::INT, MPICluster::master(), 1 );
         
-            //receive the message
-            message_data.resize(count + 1);
+                if (count == 0)
+                    //we've just been told to quit
+                    break;
         
-            recv_comm->Bcast( message_data.data(), count, 
-                              ::MPI::BYTE, MPICluster::master() );
+                //receive the message
+                message_data.resize(count + 1);
         
-            Message message = this->unpackMessage( message_data,
-                                                   MPICluster::master() );
+                recv_comm.Recv( message_data.data(), count, 
+                                 ::MPI::BYTE, MPICluster::master(), 1 );
+
+                Message message = this->unpackMessage( message_data,
+                                                       MPICluster::master() );
         
-            if (not message.isNull())
-            {
-                if (message.isA<Messages::Shutdown>())
+                if (not message.isNull())
                 {
-                    if (message.isRecipient(MPICluster::getRank()))
+                    if (message.isA<Messages::Shutdown>())
                     {
-                        //shutdown here and now - don't queue this message
-                        //as we could deadlock at shutdown if we do!
-                        message.read();
+                        if (message.isRecipient(MPICluster::getRank()))
+                        {
+                            //shutdown here and now - don't queue this message
+                            //as we could deadlock at shutdown if we do!
+                            message.read();
                         
-                        //the master will send a zero size message to signal
-                        //that it has also quit - wait for that message now
-                        //recv_comm->Barrier();
-                        recv_comm->Bcast( &count, 1, ::MPI::INT, MPICluster::master() );
+                            //the master will send a zero size message to signal
+                            //that it has also quit - wait for that message now
+                            //recv_comm->Barrier();
+                            recv_comm.Recv( &count, 1, ::MPI::INT, 
+                                            MPICluster::master(), 1 );
                         
-                        if (count != 0)
-                            qDebug() << "Shutdown has not been followed by a zero "
-                                     << "shutdown message from the master?" << count;
+                            if (count != 0)
+                                qDebug() << "Shutdown has not been followed by a zero "
+                                         << "shutdown message from the master?" << count;
                         
-                        //stop listening for any further messages
-                        break;
+                            //stop listening for any further messages
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        if (message.isRecipient(MPICluster::getRank()))
+                            this->received(message);
                     }
                 }
-                else
-                {
-                    if (message.isRecipient(MPICluster::getRank()))
-                        this->received(message);
-                }
             }
+            else
+                QThread::msleep(50);
         }
     }
 
     //release the resources held by this communicator
-    recv_comm->Free();
-    
-    delete recv_comm;
-    recv_comm = 0;
+    recv_comm.Free();
 }
 
 #endif // SIRE_USE_MPI

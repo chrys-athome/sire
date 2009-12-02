@@ -227,7 +227,7 @@ void ReservationManager::run()
             lkr.relock();
         }
         else if (keep_going)
-            waiter.wait( &datamutex, 2000 );
+            waiter.wait( &datamutex, 50 );
     }
     
     //send a response back to any remaining requests saying that

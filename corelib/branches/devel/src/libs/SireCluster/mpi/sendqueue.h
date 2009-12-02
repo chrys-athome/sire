@@ -60,7 +60,7 @@ namespace MPI
 class SendQueue : private QThread, public boost::noncopyable
 {
 public:
-    SendQueue(::MPI::Intracomm *send_comm);
+    SendQueue(::MPI::Intracomm send_comm);
     ~SendQueue();
     
     void start();
@@ -84,7 +84,7 @@ private:
     QWaitCondition waiter;
     
     /** The communicator to use to send messages */
-    ::MPI::Intracomm *send_comm;
+    ::MPI::Intracomm send_comm;
     
     /** The list of messages to send */
     QQueue<Message> message_queue;
