@@ -31,6 +31,7 @@
 #include <QBuffer>
 
 #include "logger.h"
+#include "hanref.h"
 
 #include "Siren/errors.h"
 

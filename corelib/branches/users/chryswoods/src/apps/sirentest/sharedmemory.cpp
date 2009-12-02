@@ -32,6 +32,8 @@
 #include <QMutex>
 #include <QProcess>
 
+#include <cstdlib>
+
 #include "sharedmemory.h"
 
 #ifdef Q_OS_UNIX

@@ -77,7 +77,7 @@ public:
     bool operator==(const Tester &other) const;
     bool operator!=(const Tester &other) const;
     
-    static QString typeName(){ return Implements<Tester,Object>::typeName(); }
+    static QString typeName();
     
     QString toString() const;
     uint hashCode() const;
@@ -131,7 +131,7 @@ protected:
 private:
     void notEqualError(const QString &obj0, const QString &obj1,
                        const QString &description, const QString &location);
-    void notDifferentError(const QString &obj1, const QString &obj1,
+    void notDifferentError(const QString &obj1, const QString &obj2,
                            const QString &description, const QString &location);
 
     void testPassed(const QString &description);

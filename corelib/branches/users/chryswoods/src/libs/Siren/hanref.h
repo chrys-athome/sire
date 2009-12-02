@@ -60,7 +60,7 @@ public:
     
     QString what() const;
     
-    HanRef copy() const;
+    HanRef clone() const;
     
     bool test() const;
     bool test(Logger &logger) const;

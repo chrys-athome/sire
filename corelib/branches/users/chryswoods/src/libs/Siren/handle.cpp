@@ -185,9 +185,9 @@ void Handle::assertNotNull() const
 
 /** Return a copy of this handle - note this copies the
     handle, not the object being handled! */
-HanRef Handle::copy() const
+HanRef Handle::clone() const
 {
-    return HanRef( this->clone() );
+    return HanRef( this->ptr_clone() );
 }
 
 /** Return a string representation of this handle */
@@ -323,7 +323,7 @@ WeakHandle::WeakHandle() : weak_handle(0)
 /** Construct a weak handle to 'handle' */
 WeakHandle::WeakHandle(const Handle &handle) : weak_handle(0)
 {
-    neutered_handle.reset( handle.clone() );
+    neutered_handle.reset( handle.ptr_clone() );
 
     weak_handle = neutered_handle->createWeakHandle();
     weak_lock = neutered_handle->resource_lock;
@@ -409,7 +409,7 @@ HanRef WeakHandle::lock() const
     if (nonconst_this->neutered_handle->resource_lock.get() == 0)
         nonconst_this->neutered_handle->setValidResource();
         
-    HanRef new_handle = nonconst_this->neutered_handle->copy();
+    HanRef new_handle = nonconst_this->neutered_handle->clone();
     
     //re-neuter the handle
     nonconst_this->neutered_handle->neuter();

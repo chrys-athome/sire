@@ -39,7 +39,7 @@ using namespace Siren;
 
 namespace Siren { namespace detail {
 
-    void testNotImplemented(Logger &logger, QString type_name)
+    void SIREN_EXPORT testNotImplemented(Logger &logger, QString type_name)
     {
         logger.write( QObject::tr(
                 "Testing of %1 failed as no unit tests have been written "
@@ -47,7 +47,7 @@ namespace Siren { namespace detail {
                     .arg(type_name) );
     }
 
-    void testNotImplemented(QString type_name)
+    void SIREN_EXPORT testNotImplemented(QString type_name)
     {
         Logger logger;
         testNotImplemented(logger, type_name);
@@ -359,5 +359,9 @@ void Number::stream(Stream &s)
 ////////// Instantiate templates
 //////////
 
+namespace Siren
+{
 template class PrimitiveObject<String>;
 template class PrimitiveObject<Number>;
+}
+

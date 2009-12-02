@@ -166,7 +166,7 @@ bool MD5Sum::test(Logger &logger) const
             tester.nextTest();
             tester.expect_equal( QObject::tr("Test a clone is equal."),
                                  CODELOC,
-                                 *this, this->copy() );
+                                 *this, this->clone() );
         }
         
         // Test 2

@@ -39,6 +39,7 @@
 #include "SireMaths/rangenerator.h"
 
 #include "SireError/printerror.h"
+#include "SireError/errors.h"
 
 #include <QDebug>
 
@@ -236,35 +237,58 @@ void BackendPvt::run()
     
     while (true)
     {
-        WorkPacket local_packet;
-        
-        //// copy the work packet into a local space
+        try
         {
-            QMutexLocker lkr(&datamutex);
+            WorkPacket local_packet;
+        
+            //// copy the work packet into a local space
+            {
+                QMutexLocker lkr(&datamutex);
             
-            if (not keep_running)
-                break;
+                if (not keep_running)
+                    break;
                 
-            if (workpacket.hasFinished())
-                break;
+                if (workpacket.hasFinished())
+                    break;
                 
-            local_packet = workpacket;
+                local_packet = workpacket;
+            }
+        
+            //now perform the work on the local packet
+            local_packet.runChunk();
+        
+            //// copy the local work back to the global work
+            {
+                QMutexLocker lkr(&datamutex);
+            
+                if (workpacket.hasFinished())    
+                    break;
+                
+                workpacket = local_packet;
+            
+                if (not keep_running)
+                    break;
+            }
         }
-        
-        //now perform the work on the local packet
-        local_packet.runChunk();
-        
-        //// copy the local work back to the global work
+        catch(const SireError::exception &e)
         {
             QMutexLocker lkr(&datamutex);
-            
-            if (workpacket.hasFinished())    
-                break;
-                
-            workpacket = local_packet;
-            
-            if (not keep_running)
-                break;
+            workpacket = ErrorPacket(e);
+            break;
+        }
+        catch(const std::exception &e)
+        {
+            QMutexLocker lkr(&datamutex);
+            workpacket = ErrorPacket(SireError::std_exception(e));
+            break;
+        }
+        catch(...)
+        {
+            QMutexLocker lkr(&datamutex);
+            workpacket = ErrorPacket(SireError::unknown_exception( QObject::tr(
+                    "An unknown error occured while running a workpacket."),
+                        CODELOC ) );
+            break;
         }
     }
     

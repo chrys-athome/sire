@@ -26,7 +26,7 @@ if not node.isLocal():
     print "I'm running on a non-local node!"
 
 #start the job, but don't autodelete the node
-promise = node.startJob( WorkTest(0, 10), False )
+promise = node.startJob( WorkTest(0, 3), False )
 
 promise.wait()
 

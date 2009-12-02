@@ -82,7 +82,7 @@ public:
                     CODELOC );
         }
         
-        private_comm.Barrier();
+        //private_comm.Barrier();
         
         is_master = (my_rank == master_rank);
         is_slave = (my_rank == slave_rank);
@@ -109,13 +109,21 @@ public:
                     envelope[0] = P2PComm::EXIT;
                     envelope[1] = 0;
                     
-                    private_comm.Send(envelope, 2, ::MPI::INT, P2PComm::SLAVE, 0);
+                    private_comm.Send(envelope, 2, ::MPI::INT, P2PComm::SLAVE, 1);
                 }
             
-                private_comm.Barrier();
+                //private_comm.Barrier();
                 private_comm.Free();
             }
         }
+    }
+    
+    void waitForResponse(int rank, int tag)
+    {
+        ::MPI::Status status;
+        
+        while (not private_comm.Iprobe(rank, tag))
+            QThread::msleep(5);
     }
     
     /** Mutex to protect access to this communicator */
@@ -174,25 +182,25 @@ void P2PCommPvt::sendResponse(const T &response)
     //send this to the master
     int size = data.count();
     
-    private_comm.Send( &size, 1, ::MPI::INT, P2PComm::MASTER, 0 );
+    private_comm.Send( &size, 1, ::MPI::INT, P2PComm::MASTER, 1 );
     
     if (size > 0)
     {
         private_comm.Send( data.constData(), size, ::MPI::BYTE,
-                           P2PComm::MASTER, 0 );
+                           P2PComm::MASTER, 1 );
     }
 }
 
 /** This just sends a quick integer response back to the master */
 void P2PCommPvt::sendIntegerResponse(int response)
 {
-    private_comm.Send( &response, 1, ::MPI::INT, P2PComm::MASTER, 0 );
+    private_comm.Send( &response, 1, ::MPI::INT, P2PComm::MASTER, 1 );
 }
 
 /** This just sends a quick float response back to the master */
 void P2PCommPvt::sendFloatResponse(float response)
 {
-    private_comm.Send( &response, 1, ::MPI::FLOAT, P2PComm::MASTER, 0 );
+    private_comm.Send( &response, 1, ::MPI::FLOAT, P2PComm::MASTER, 1 );
 }
 
 template<class T>
@@ -225,13 +233,14 @@ void P2PCommPvt::run()
         lkr.unlock();
 
         //wait for a message from the master
-        private_comm.Recv(envelope, 2, ::MPI::INT, P2PComm::MASTER, 0);
+        this->waitForResponse(P2PComm::MASTER, 1);
+        private_comm.Recv(envelope, 2, ::MPI::INT, P2PComm::MASTER, 1);
 
         if (envelope[1] > 0)
         {
             message_data.resize(envelope[1]+1);
             private_comm.Recv(message_data.data(), envelope[1], ::MPI::BYTE, 
-                              P2PComm::MASTER, 0);
+                              P2PComm::MASTER, 1);
         }
         
         lkr.relock();
@@ -290,7 +299,7 @@ void P2PCommPvt::run()
         }
     }
 
-    private_comm.Barrier();
+    //private_comm.Barrier();
     private_comm.Free();
     private_comm = ::MPI::COMM_NULL;
     
@@ -412,7 +421,7 @@ P2PComm P2PComm::create(::MPI::Intracomm private_comm,
         //we are not involved
         if (private_comm != ::MPI::COMM_NULL)
         {
-            private_comm.Barrier();
+            //private_comm.Barrier();
             private_comm.Free();
         }
     }
@@ -463,12 +472,12 @@ void P2PComm::_pvt_sendMessage(int message, const QByteArray &data)
     envelope[0] = message;
     envelope[1] = data.count();
     
-    d->private_comm.Send( envelope, 2, ::MPI::INT, P2PComm::SLAVE, 0 );
+    d->private_comm.Send( envelope, 2, ::MPI::INT, P2PComm::SLAVE, 1 );
 
     if (not data.isEmpty())
     {
         d->private_comm.Send( data.constData(), data.count(), ::MPI::BYTE,
-                              P2PComm::SLAVE, 0 );
+                              P2PComm::SLAVE, 1 );
     }
 }
 
@@ -488,7 +497,8 @@ int P2PComm::awaitIntegerResponse()
 
     int message;
     
-    d->private_comm.Recv(&message, 1, ::MPI::INT, P2PComm::SLAVE, 0);
+    d->waitForResponse(P2PComm::SLAVE, 1);
+    d->private_comm.Recv(&message, 1, ::MPI::INT, P2PComm::SLAVE, 1);
 
     return message;
 }
@@ -509,7 +519,8 @@ float P2PComm::awaitFloatResponse()
 
     float message;
     
-    d->private_comm.Recv(&message, 1, ::MPI::FLOAT, P2PComm::SLAVE, 0);
+    d->waitForResponse(P2PComm::SLAVE, 1);
+    d->private_comm.Recv(&message, 1, ::MPI::FLOAT, P2PComm::SLAVE, 1);
 
     return message;
 }
@@ -530,14 +541,15 @@ QByteArray P2PComm::_pvt_awaitResponse()
 
     int size;
     
-    d->private_comm.Recv(&size, 1, ::MPI::INT, P2PComm::SLAVE, 0);
+    d->waitForResponse(P2PComm::SLAVE, 1);
+    d->private_comm.Recv(&size, 1, ::MPI::INT, P2PComm::SLAVE, 1);
     
     if (size <= 0)
         return QByteArray();
         
     QByteArray data( size+1, ' ' );
     
-    d->private_comm.Recv( data.data(), size, ::MPI::BYTE, P2PComm::SLAVE, 0);
+    d->private_comm.Recv( data.data(), size, ::MPI::BYTE, P2PComm::SLAVE, 1);
     
     return data;
 }

@@ -78,6 +78,9 @@ private:
     /** A mutex used to protect access to the communicator */
     QMutex datamutex;
 
+    /** The cached QUuid */
+    QUuid cached_uid;
+
     /** The point-to-point communicator used to communicate
         with the remote backend */
     P2PComm p2p;

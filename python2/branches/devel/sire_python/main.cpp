@@ -116,13 +116,13 @@ int main(int argc, char **argv)
             //start the cluster - on the master we need one extra
             //thread for the Python interpreter
             #ifdef SIRE_USE_MPI
-                ::MPI::COMM_WORLD.Barrier();
+                //::MPI::COMM_WORLD.Barrier();
             #endif
 
             Cluster::start(ppn);
 
             #ifdef SIRE_USE_MPI
-                ::MPI::COMM_WORLD.Barrier();
+                //::MPI::COMM_WORLD.Barrier();
             #endif
 
             //run python - each argument is a python script
@@ -182,13 +182,13 @@ int main(int argc, char **argv)
             //exec the Cluster - this starts the cluster and then
             //blocks while it is running
             #ifdef SIRE_USE_MPI
-                ::MPI::COMM_WORLD.Barrier();
+                //::MPI::COMM_WORLD.Barrier();
             #endif
  
             Cluster::start(ppn);
 
             #ifdef SIRE_USE_MPI
-                ::MPI::COMM_WORLD.Barrier();
+                //::MPI::COMM_WORLD.Barrier();
             #endif
 
             Cluster::wait();

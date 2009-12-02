@@ -29,9 +29,12 @@
 #include <QTextStream>
 #include <QTextCodec>
 
+#include <limits>
+
 #include "xmlstream.h"
 #include "logger.h"
 #include "tester.h"
+#include "hanref.h"
 
 #include "third_party/encode.h"   // CONDITIONAL_INCLUDE
 #include "third_party/decode.h"   // CONDITIONAL_INCLUDE
@@ -983,7 +986,7 @@ XMLStream& XMLStream::operator&(bool &b)
 }
 
 template<class T>
-static T getSignedInteger(const QString &string, bool *ok)
+T getSignedInteger(const QString &string, bool *ok)
 {
     qint64 val = string.toLongLong(ok, 0);
     
@@ -1003,7 +1006,7 @@ static T getSignedInteger(const QString &string, bool *ok)
 }
 
 template<class T>
-static T getUnsignedInteger(const QString &string, bool *ok)
+T getUnsignedInteger(const QString &string, bool *ok)
 {
     quint64 val = string.toULongLong(ok, 0);
     
@@ -1022,31 +1025,31 @@ static T getUnsignedInteger(const QString &string, bool *ok)
 }
 
 template<class T>
-static T getInteger(const QString &string, bool *ok)
+T getInteger(const QString &string, bool *ok)
 {
     return getSignedInteger<T>(string, ok);
 }
 
 template<>
-static quint8 getInteger<quint8>(const QString &string, bool *ok)
+quint8 getInteger<quint8>(const QString &string, bool *ok)
 {
     return getUnsignedInteger<quint8>(string, ok);
 }
 
 template<>
-static quint16 getInteger<quint16>(const QString &string, bool *ok)
+quint16 getInteger<quint16>(const QString &string, bool *ok)
 {
     return getUnsignedInteger<quint16>(string, ok);
 }
 
 template<>
-static quint32 getInteger<quint32>(const QString &string, bool *ok)
+quint32 getInteger<quint32>(const QString &string, bool *ok)
 {
     return getUnsignedInteger<quint32>(string, ok);
 }
 
 template<>
-static quint64 getInteger<quint64>(const QString &string, bool *ok)
+quint64 getInteger<quint64>(const QString &string, bool *ok)
 {
     return getUnsignedInteger<quint64>(string, ok);
 }

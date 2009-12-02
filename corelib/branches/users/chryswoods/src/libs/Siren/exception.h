@@ -158,7 +158,7 @@ public:
 protected:
     static const Class& createTypeInfo();
 
-    ImplementsException<Derived,Base>* clone() const;
+    ImplementsException<Derived,Base>* ptr_clone() const;
     
     bool testException() const;
 
@@ -283,7 +283,7 @@ QString ImplementsException<Derived,Base>::what() const
 
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
-ImplementsException<Derived,Base>* ImplementsException<Derived,Base>::clone() const
+ImplementsException<Derived,Base>* ImplementsException<Derived,Base>::ptr_clone() const
 {
     const Derived* derived_this = dynamic_cast<const Derived*>(this);
 

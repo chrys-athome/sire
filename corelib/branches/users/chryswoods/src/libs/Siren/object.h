@@ -236,7 +236,7 @@ public:
         (same as object.getClass().fullName()) */
     virtual QString what() const=0;
 
-    virtual ObjRef copy() const;
+    virtual ObjRef clone() const;
     
     virtual QString toString() const;
 
@@ -309,7 +309,7 @@ protected:
     Object& operator=(const Object &other);
 
     /** Return a clone of this object. */
-    virtual Object* clone() const=0;
+    virtual Object* ptr_clone() const=0;
 
 private:
     friend class detail::SharedPolyPointerHelper<Object>;
@@ -421,15 +421,13 @@ public:
 
     const Class& getClass() const;
 
-    using Object::copy;
-
     void copy(const Object &other);
     bool equals(const Object &other) const;
 
 protected:
     static const Class& createTypeInfo();
 
-    Implements<Derived,Base>* clone() const;
+    Implements<Derived,Base>* ptr_clone() const;
 
     Base& super();
     const Base& super() const;
@@ -679,7 +677,7 @@ QString Implements<Derived,Base>::what() const
 
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
-Implements<Derived,Base>* Implements<Derived,Base>::clone() const
+Implements<Derived,Base>* Implements<Derived,Base>::ptr_clone() const
 {
     const Derived* derived_this = dynamic_cast<const Derived*>(this);
 

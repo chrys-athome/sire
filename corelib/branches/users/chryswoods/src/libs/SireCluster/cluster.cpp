@@ -150,7 +150,6 @@ void Cluster::start(int ppn)
         //add extra threads to this process
         for (int i=1; i<ppn; ++i)
         {
-            qDebug() << "Backend::create()";
             Backend::create();
         }
     }

@@ -129,9 +129,9 @@ QString ObjRef::what() const
 }
 
 /** Return a copy of the object */
-ObjRef ObjRef::copy() const
+ObjRef ObjRef::clone() const
 {
-    return d->copy();
+    return d->clone();
 }
 
 /** Return a string representation of this object */

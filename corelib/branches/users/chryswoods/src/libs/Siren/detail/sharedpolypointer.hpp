@@ -61,7 +61,7 @@ struct SharedPolyPointerHelper
     /** Return a copy of the object (a clone). */
     static T* clone(const T &obj)
     {
-        return obj.clone();
+        return obj.ptr_clone();
     }
 
     /** Return the type of the object */

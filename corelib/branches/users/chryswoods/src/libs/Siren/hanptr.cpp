@@ -27,13 +27,14 @@
 \*********************************************/
 
 #include "hanptr.hpp"
+#include "hanref.h"
 
 #include "Siren/errors.h"
 
 using namespace Siren;
 using namespace Siren::detail;
 
-HanPtrBase::HanPtrBase(const Handle &handle) : ptr( handle.clone() )
+HanPtrBase::HanPtrBase(const Handle &handle) : ptr( handle.ptr_clone() )
 {}
 
 HanPtrBase::HanPtrBase(Handle *handle) : ptr(handle)
@@ -90,7 +91,7 @@ void HanPtrBase::detach()
 {
     if (ptr.get() and not ptr.unique())
     {
-        ptr.reset( ptr->clone() );
+        ptr.reset( ptr->ptr_clone() );
     }
 }
 

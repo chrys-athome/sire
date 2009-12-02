@@ -72,10 +72,10 @@ Object& Object::operator=(const Object&)
     return *this;
 }
 
-/** Return a copy of this object. */
-ObjRef Object::copy() const
+/** Return a clone of this object. */
+ObjRef Object::clone() const
 {
-    return ObjRef( this->clone() );
+    return ObjRef( this->ptr_clone() );
 }
 
 /** Save this object to the passed stream */
@@ -275,7 +275,7 @@ bool None::test(Logger &logger) const
             tester.nextTest();
             tester.expect_equal( QObject::tr("Test a clone is equal."),
                                  CODELOC,
-                                 *this, this->copy() );
+                                 *this, this->clone() );
         }
         
         // Test 2
