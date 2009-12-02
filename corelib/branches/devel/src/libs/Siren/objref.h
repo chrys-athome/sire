@@ -81,7 +81,7 @@ public:
 
     QString what() const;
 
-    ObjRef copy() const;
+    ObjRef clone() const;
     
     QString toString() const;
 

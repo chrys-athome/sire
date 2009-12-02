@@ -34,6 +34,7 @@
 #include "xmlstream.h"
 #include "logger.h"
 #include "tester.h"
+#include "hanref.h"
 
 #include "third_party/encode.h"   // CONDITIONAL_INCLUDE
 #include "third_party/decode.h"   // CONDITIONAL_INCLUDE

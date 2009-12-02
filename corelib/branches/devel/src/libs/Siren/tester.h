@@ -74,7 +74,7 @@ public:
     bool operator==(const Tester &other) const;
     bool operator!=(const Tester &other) const;
     
-    static QString typeName(){ return Implements<Tester,Object>::typeName(); }
+    static QString typeName();
     
     QString toString() const;
     uint hashCode() const;

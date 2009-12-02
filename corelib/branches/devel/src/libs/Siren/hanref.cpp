@@ -48,7 +48,7 @@ HanRef::HanRef(Handle *handle) : d(handle)
 
 /** Construct for the handle 'handle' - this creates a reference
     to a clone of this handle */
-HanRef::HanRef(const Handle &handle) : d(handle.clone())
+HanRef::HanRef(const Handle &handle) : d(handle.ptr_clone())
 {}
 
 /** Copy constructor */
@@ -91,7 +91,7 @@ void HanRef::detach()
     if (d.get())
     {
         if (not d.unique())
-            d.reset( d->clone() );
+            d.reset( d->ptr_clone() );
     }
 }
 
@@ -128,13 +128,13 @@ QString HanRef::what() const
 }
 
 /** Return a copy of this reference */
-HanRef HanRef::copy() const
+HanRef HanRef::clone() const
 {
     HanRef r;
     
     if (d.get() != 0)
     {
-        r.d.reset( d->clone() );
+        r.d.reset( d->ptr_clone() );
     }
     
     return r;

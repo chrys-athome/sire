@@ -116,7 +116,7 @@ public:
 
     bool isNull() const;
 
-    virtual HanRef copy() const;
+    virtual HanRef clone() const;
     
     virtual QString toString() const;
 
@@ -195,7 +195,7 @@ protected:
 
     /** Return a clone of this Handle - this clones the Handle,
         not the object being Handled. */
-    virtual Handle* clone() const=0;
+    virtual Handle* ptr_clone() const=0;
 
     void setValidResource();
 
@@ -418,15 +418,13 @@ public:
 
     const Class& getClass() const;
 
-    using Handle::copy;
-
     void copy(const Handle &other);
     bool equals(const Handle &other) const;
 
 protected:
     static const Class& createTypeInfo();
 
-    ImplementsHandle<Derived,Base>* clone() const;
+    ImplementsHandle<Derived,Base>* ptr_clone() const;
     
     Base& super();
     const Base& super() const;
@@ -819,7 +817,7 @@ QString ImplementsHandle<Derived,Base>::what() const
 
 template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
-ImplementsHandle<Derived,Base>* ImplementsHandle<Derived,Base>::clone() const
+ImplementsHandle<Derived,Base>* ImplementsHandle<Derived,Base>::ptr_clone() const
 {
     const Derived* derived_this = dynamic_cast<const Derived*>(this);
 

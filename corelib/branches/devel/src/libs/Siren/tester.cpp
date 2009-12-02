@@ -137,6 +137,11 @@ uint Tester::hashCode() const
     return qHash( Tester::typeName() ) + qHash(tested_class) + num_errors;
 }
 
+QString Tester::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Tester>() );
+}
+
 /** Run the unit tests of the Tester class ;-) */
 bool Tester::test(Logger &logger) const
 {
