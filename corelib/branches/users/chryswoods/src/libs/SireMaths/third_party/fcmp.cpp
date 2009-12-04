@@ -1,4 +1,11 @@
-/* sys/gsl_compare.c
+
+#include "fcmp.h"
+
+#include <math.h>
+
+/** gsl_fcmp copied from gsl_fcmp.c
+
+ * sys/gsl_compare.c
  * 
  * Copyright (C) 2002 Gert Van den Eynde
  * 
@@ -20,21 +27,10 @@
  * University of Michigan Center for the Study of Complex Systems
  * Ted.Belding@umich.edu
  *
- */
+ *
 
-/** Edited by C. Woods to separate it into its own file, and to 
-    move it into the SireMaths::third_party C++ namespace */
-
-#include <math.h>
-
-#include "fcmp.h"
-
-namespace SireMaths
-{ 
-namespace third_party
-{
-
-int gsl_fcmp (const double x1, const double x2, const double epsilon)
+*/
+int local_gsl_fcmp (const double x1, const double x2, const double epsilon)
 {
   int exponent;
   double delta, difference;
@@ -67,5 +63,13 @@ int gsl_fcmp (const double x1, const double x2, const double epsilon)
     }
 }
 
-}
+namespace SireMaths
+{
+    namespace third_party
+    {
+        int SIREMATHS_EXPORT fcmp(const double x1, const double x2, const double epsilon)
+        {
+            return local_gsl_fcmp(x1, x2, epsilon);
+        }
+    }
 }

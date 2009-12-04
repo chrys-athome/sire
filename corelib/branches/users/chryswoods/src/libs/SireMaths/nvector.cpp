@@ -30,53 +30,26 @@
 #include "nmatrix.h"
 #include "vector.h"
 
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
+#include "Siren/stream.h"
+#include "Siren/streamqt.h"
 
-#include "SireError/errors.h"
+#include "Siren/errors.h"
 #include "SireMaths/errors.h"
 
 using namespace SireMaths;
-using namespace SireStream;
+using namespace Siren;
 
-static const RegisterMetaType<NVector> r_nvector;
-
-/** Serialise to a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const NVector &vector)
-{
-    writeHeader(ds, r_nvector, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << vector.array;
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, NVector &vector)
-{
-    VersionID v = readHeader(ds, r_nvector);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        
-        sds >> vector.array;
-    }
-    else
-        throw version_error(v, "1", r_nvector, CODELOC);
-        
-    return ds;
-}
+static const RegisterObject<NVector> r_nvector;
 
 /** Null constructor */
 NVector::NVector()
+        : Implements<NVector,Object>(), Interfaces<NVector,Mutable>()
 {}
 
 /** Construct a column vector with 'nrows' rows - the values
     of the rows are not initialised */
-NVector::NVector(int nrows) : array(nrows)
+NVector::NVector(int nrows) 
+        : Implements<NVector,Object>(), Interfaces<NVector,Mutable>(), array(nrows)
 {
     array.squeeze();
 }
@@ -84,13 +57,15 @@ NVector::NVector(int nrows) : array(nrows)
 /** Construct a column vector with 'nrows' rows, all
     initialised to the value 'initial_value' */
 NVector::NVector(int nrows, double initial_value)
-        : array(nrows, initial_value)
+        : Implements<NVector,Object>(), Interfaces<NVector,Mutable>(), 
+          array(nrows, initial_value)
 {
     array.squeeze();
 }
 
 /** Construct from the passed 3-vector */
-NVector::NVector(const Vector &vector) : array(3)
+NVector::NVector(const Vector &vector) 
+        : Implements<NVector,Object>(), Interfaces<NVector,Mutable>(), array(3)
 {
     array.squeeze();
     
@@ -98,13 +73,16 @@ NVector::NVector(const Vector &vector) : array(3)
 }
 
 /** Construct from the passed vector */
-NVector::NVector(const QVector<double> &vector) : array(vector)
+NVector::NVector(const QVector<double> &vector) 
+        : Implements<NVector,Object>(), Interfaces<NVector,Mutable>(), array(vector)
 {
     array.squeeze();
 }
 
 /** Copy constructor */
-NVector::NVector(const NVector &other) : array(other.array)
+NVector::NVector(const NVector &other) 
+        : Implements<NVector,Object>(other), Interfaces<NVector,Mutable>(), 
+          array(other.array)
 {}
 
 /** Destructor */
@@ -114,11 +92,6 @@ NVector::~NVector()
 const char* NVector::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<NVector>() );
-}
-
-const char* NVector::what() const
-{
-    return NVector::typeName();
 }
 
 /** Copy assignment operator */
@@ -142,12 +115,12 @@ bool NVector::operator!=(const NVector &other) const
 
 /** Assert that the index 'i' is valid
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void NVector::assertValidIndex(int i) const
 {
     if (i < 0 or i >= array.count())
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
                 "The column vector with dimension %1 does not have a value "
                 "at index %2.")
                     .arg(array.count()).arg(i), CODELOC );
@@ -155,18 +128,18 @@ void NVector::assertValidIndex(int i) const
 
 /** Assert that the index [i,j] is valid
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void NVector::assertValidIndex(int i, int j) const
 {
     if (j != 0)
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
                 "A column vector only has a single column, so the vector "
                 "with dimension [%1,1] cannot have an index [%2,%3].")
                     .arg(array.count()).arg(i).arg(j), CODELOC );
 
     if (i < 0 or i >= array.count())
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
                 "The column vector with dimension [%1,1] does not have a value "
                 "at index [%2,%3].")
                     .arg(array.count()).arg(i).arg(j), CODELOC );
@@ -174,12 +147,12 @@ void NVector::assertValidIndex(int i, int j) const
 
 /** Assert that this column vector has 'nrows' rows
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 void NVector::assertNRows(int nrows) const
 {
     if (nrows != array.count())
-        throw SireError::incompatible_error( QObject::tr(
+        throw Siren::incompatible_error( QObject::tr(
                 "The column vector with dimension %1 is not compatible "
                 "as the number of rows does not equal %2.")
                     .arg(array.count()).arg(nrows), CODELOC );
@@ -188,17 +161,17 @@ void NVector::assertNRows(int nrows) const
 /** Assert that this column vector has 'ncolumns' columns - note
     that this is a column vector, so only has 1 column! 
     
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 void NVector::assertNColumns(int ncolumns) const
 {
     if (array.isEmpty())
-        throw SireError::incompatible_error( QObject::tr(
+        throw Siren::incompatible_error( QObject::tr(
                 "The null vector is incompatible as the number of columns "
                 "does not equal %1.").arg(ncolumns), CODELOC );
 
     if (ncolumns != 1)
-        throw SireError::incompatible_error( QObject::tr(
+        throw Siren::incompatible_error( QObject::tr(
                 "By definition, a column vector of dimension %1 only "
                 "has one column, so it is incompatible with something that "
                 "requires the number of columns to be equal to %2.")
@@ -208,7 +181,7 @@ void NVector::assertNColumns(int ncolumns) const
 /** Return a modifiable reference to the ith row of this 
     column vector
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 double& NVector::operator[](int i)
 {
@@ -219,7 +192,7 @@ double& NVector::operator[](int i)
 /** Return a modifiable reference to the ith row of this 
     column vector
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 double& NVector::operator()(int i)
 {
@@ -228,7 +201,7 @@ double& NVector::operator()(int i)
 
 /** Return a modifiable reference to the value at [i,j]
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 double& NVector::operator()(int i, int j)
 {
@@ -238,7 +211,7 @@ double& NVector::operator()(int i, int j)
 
 /** Return the value at index 'i'
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 const double& NVector::operator[](int i) const
 {
@@ -248,7 +221,7 @@ const double& NVector::operator[](int i) const
 
 /** Return the value at index 'i'
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 const double& NVector::operator()(int i) const
 {
@@ -257,7 +230,7 @@ const double& NVector::operator()(int i) const
 
 /** Return the value at index [i,j] 
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 const double& NVector::operator()(int i, int j) const
 {
@@ -422,7 +395,7 @@ NVector NVector::operator/(double scale) const
 
 /** Set the value at [i,0] to 'value'
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void NVector::set(int i, double value)
 {
@@ -432,7 +405,7 @@ void NVector::set(int i, double value)
 
 /** Set the value at [i,j] to 'value'
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void NVector::set(int i, int j, double value)
 {
@@ -542,9 +515,32 @@ QString NVector::toString() const
     return rows.join("\n");
 }
 
+uint NVector::hashCode() const
+{
+    uint hashcode = qHash( NVector::typeName() );
+    
+    if (not array.isEmpty())
+    {
+        hashcode += qHash(array.count()) + qHash(array.constData()[0]);
+    }
+    
+    return hashcode;
+}
+
+void NVector::stream(Stream &s)
+{
+    s.assertVersion<NVector>(1);
+    
+    Schema schema = s.item<NVector>();
+    
+    schema.data("array") & array;
+    
+    Object::stream(schema.base());
+}
+
 /** Return the dot product of this vector with 'other'
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 double NVector::dot(const NVector &other) const
 {
@@ -566,7 +562,7 @@ double NVector::dot(const NVector &other) const
 
 /** Return the cross product of this vector with 'other'
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
     \throw SireMaths::domain_error
 */
 NVector NVector::cross(const NVector &other) const
@@ -583,13 +579,13 @@ NVector NVector::cross(const NVector &other) const
     }
     else if (this->nRows() == 7)
     {
-        throw SireError::incomplete_code( QObject::tr(
+        throw Siren::incomplete_code( QObject::tr(
                 "While the cross product is defined for 7-dimensional vectors, "
                 "it is not yet implemented in this code!"), CODELOC );
     }
     else
     {
-        throw SireError::incompatible_error( QObject::tr(
+        throw Siren::incompatible_error( QObject::tr(
                 "The cross-product is only defined for 3- and 7-dimensional "
                 "vectors. A column vector of rank %1 is not supported.")
                     .arg(this->nRows()), CODELOC );

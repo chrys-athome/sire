@@ -49,9 +49,9 @@ public:
 
     static QString typeName();
 
-    virtual ObjRef saveState() const=0;
+    virtual ObjRef saveState() const;
     
-    virtual void restoreState(const Object &object)=0;
+    virtual void restoreState(const Object &object);
 };
 
 }

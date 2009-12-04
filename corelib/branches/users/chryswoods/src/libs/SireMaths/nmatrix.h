@@ -31,19 +31,14 @@
 
 #include <QVector>
 
-#include "sireglobal.h"
-
 #include <utility>
 
+#include "sireglobal.h"
+
+#include "Siren/object.h"
+#include "Siren/mutable.h"
+
 SIRE_BEGIN_HEADER
-
-namespace SireMaths
-{
-class NMatrix;
-}
-
-QDataStream& operator<<(QDataStream&, const SireMaths::NMatrix&);
-QDataStream& operator>>(QDataStream&, SireMaths::NMatrix&);
 
 namespace SireBase
 {
@@ -72,12 +67,10 @@ class TrigMatrix;
     
     @author Christopher Woods
 */
-class SIREMATHS_EXPORT NMatrix
+class SIREMATHS_EXPORT NMatrix 
+        : public Siren::Implements<NMatrix,Siren::Object>,
+          public Siren::Interfaces<NMatrix,Siren::Mutable>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const NMatrix&);
-friend QDataStream& ::operator>>(QDataStream&, NMatrix&);
-
 public:
     NMatrix();
     
@@ -100,10 +93,6 @@ public:
     
     static NMatrix createRowMajor(int nrows, int ncolumns);
     static NMatrix createColumnMajor(int nrows, int ncolumns);
-    
-    static const char* typeName();
-    
-    const char* what() const;
     
     NMatrix& operator=(const NMatrix &other);
     
@@ -134,6 +123,12 @@ public:
     NVector operator*(const NVector &vector) const;
     NVector operator*(const Vector &vector) const;
     
+    static QString typeName();
+    
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
+    
     int nRows() const;
     int nColumns() const;
     
@@ -160,8 +155,6 @@ public:
     int checkedOffset(int i, int j) const;
     
     void redimension(int nrows, int ncolumns);
-    
-    QString toString() const;
 
     void reflectTopToBottom();
     void reflectBottomToTop();
@@ -197,6 +190,13 @@ public:
 
     void assertSquare() const;
 
+protected:
+    friend class Siren::Implements<NMatrix,Siren::Object>;
+    static QStringList listInterfaces()
+    {
+        return Siren::Interfaces<NMatrix,Siren::Mutable>::listInterfaces();
+    }
+
 private:
     /** The raw data for the matrix */
     QVector<double> array;
@@ -207,6 +207,8 @@ private:
     /** Whether the transpose of this matrix is stored */
     bool is_transpose;
 };
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 /** Return the offset into the 1D array for the value
     at index [i,j] - note that this performs *NO* checking,
@@ -219,6 +221,8 @@ inline int NMatrix::offset(int i, int j) const
     else
         return i + (j*nrows);
 }
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

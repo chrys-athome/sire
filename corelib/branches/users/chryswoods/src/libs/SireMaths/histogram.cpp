@@ -30,43 +30,29 @@
 
 #include "SireID/index.h"
 
-#include "SireError/errors.h"
-
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
+#include "Siren/errors.h"
+#include "Siren/stream.h"
+#include "Siren/streamqt.h"
 
 using namespace SireMaths;
 using namespace SireID;
-using namespace SireUnits::Dimension;
-using namespace SireStream;
+using namespace Siren;
 
 ///////////
 /////////// Implementation of HistogramBin
 ///////////
 
-/** Serialise to a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds,
-                                         const HistogramBin &bin)
-{
-    ds << bin.minimum() << bin.maximum();
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, HistogramBin &bin)
-{
-    ds >> bin.minval >> bin.maxval;
-    return ds;
-}
+static const RegisterObject<HistogramBin> r_histbin;
 
 /** Null constructor */
-HistogramBin::HistogramBin() : minval(0), maxval(0)
+HistogramBin::HistogramBin() 
+             : Implements<HistogramBin,Object>(), minval(0), maxval(0)
 {}
 
 /** Construct a bin that contains the values that match
     minval <= value < maxval */
 HistogramBin::HistogramBin(double min, double max)
-             : minval(min), maxval(max)
+             : Implements<HistogramBin,Object>(), minval(min), maxval(max)
 {
     if (minval > maxval)
     {
@@ -76,7 +62,8 @@ HistogramBin::HistogramBin(double min, double max)
 
 /** Copy constructor */
 HistogramBin::HistogramBin(const HistogramBin &other)
-             : minval(other.minval), maxval(other.maxval)
+             : Implements<HistogramBin,Object>(other),
+               minval(other.minval), maxval(other.maxval)
 {}
 
 /** Copy assignment operator */
@@ -124,105 +111,37 @@ QString HistogramBin::toString() const
                     .arg(minval).arg(maxval);
 }
 
-///////////
-/////////// Implementation of HistogramValue
-///////////
-
-/** Serialise to a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds,
-                                         const HistogramValue &value)
+uint HistogramBin::hashCode() const
 {
-    ds << value.val << static_cast<const HistogramBin&>(value);
-    return ds;
+    return qHash( HistogramBin::typeName() ) 
+            + qHash(minval) + qHash(maxval);
 }
 
-/** Extract from a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds,
-                                         HistogramValue &value)
+void HistogramBin::stream(Stream &s)
 {
-    ds >> value.val >> static_cast<HistogramBin&>(value);
-    return ds;
-}
-
-/** Null constructor */
-HistogramValue::HistogramValue() : HistogramBin(), val(0)
-{}
-
-/** Construct the value for the bin 'bin' equal to 'value' */
-HistogramValue::HistogramValue(const HistogramBin &bin, double value)
-               : HistogramBin(bin), val(value)
-{}
-
-/** Copy constructor */
-HistogramValue::HistogramValue(const HistogramValue &other)
-               : HistogramBin(other), val(other.val)
-{}
-
-/** Destructor */
-HistogramValue::~HistogramValue()
-{}
-
-/** Copy assignment operator */
-HistogramValue& HistogramValue::operator=(const HistogramValue &other)
-{
-    val = other.val;
-    HistogramBin::operator=(other);
+    s.assertVersion<HistogramBin>(1);
     
-    return *this;
-}
-
-/** Comparison operator */
-bool HistogramValue::operator==(const HistogramValue &other) const
-{
-    return val == other.val and HistogramBin::operator==(other);
-}
-
-/** Comparison operator */
-bool HistogramValue::operator!=(const HistogramValue &other) const
-{
-    return val != other.val or HistogramBin::operator!=(other);
-}
-
-/** Return the value of the bin */
-double HistogramValue::value() const
-{
-    return val;
-}
-
-/** Return a string representation */
-QString HistogramValue::toString() const
-{
-    return QObject::tr("Bin[ %1 <= x < %2 ] == %3")
-                    .arg( minimum() ).arg( maximum() ).arg(val);
+    Schema schema = s.item<HistogramBin>();
+    
+    schema.data("minimum") & minval;
+    schema.data("maximum") & maxval;
 }
 
 ///////////
 /////////// Implementation of HistogramRange
 ///////////
 
-/** Serialise to a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds,
-                                         const HistogramRange &range)
-{
-    ds << range.minval << range.invwidth << range.nbins;
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, 
-                                         HistogramRange &range)
-{
-    ds >> range.minval >> range.invwidth >> range.nbins;
-    return ds;
-}
+static const RegisterObject<HistogramRange> r_histrange;
 
 /** Null constructor */
-HistogramRange::HistogramRange() : minval(0), invwidth(1), nbins(0)
+HistogramRange::HistogramRange() 
+               : Implements<HistogramRange,Object>(),
+                 minval(0), invwidth(1), nbins(0)
 {}
 
 /** Construct a histogram range from min <= value < max, using 'nbins' bins */
 HistogramRange::HistogramRange(double min, double max, int numbins)
-               : nbins(numbins)
+               : Implements<HistogramRange,Object>(), nbins(numbins)
 {
     if (min > max)
     {
@@ -245,6 +164,7 @@ HistogramRange::HistogramRange(double min, double max, int numbins)
 /** Construct a histogram range from min <= value < max, using a bin width
     of 'binwidth' */
 HistogramRange::HistogramRange(double min, double max, double binwidth)
+               : Implements<HistogramRange,Object>()
 {
     if (min > max)
     {
@@ -267,7 +187,8 @@ HistogramRange::HistogramRange(double min, double max, double binwidth)
 
 /** Copy constructor */
 HistogramRange::HistogramRange(const HistogramRange &other)
-               : minval(other.minval), invwidth(other.invwidth), nbins(other.nbins)
+               : Implements<HistogramRange,Object>(other),
+                 minval(other.minval), invwidth(other.invwidth), nbins(other.nbins)
 {}
 
 /** Destructor */
@@ -367,43 +288,33 @@ QString HistogramRange::toString() const
                     .arg( minimum() ).arg( maximum() ).arg(nBins());
 }
 
+uint HistogramRange::hashCode() const
+{
+    return qHash( HistogramRange::typeName() ) + 
+             qHash(minval) + qHash(nbins);
+}
+
+void HistogramRange::stream(Stream &s)
+{
+    s.assertVersion<HistogramRange>(1);
+    
+    Schema schema = s.item<HistogramRange>();
+    
+    schema.data("minimum") & minval;
+    schema.data("inv_width") & invwidth;
+    schema.data("nbins") & nbins;
+}
+
 ///////////
 /////////// Implementation of Histogram
 ///////////
 
-static const RegisterMetaType<Histogram> r_histogram;
-
-/** Serialise to a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Histogram &histogram)
-{
-    writeHeader(ds, r_histogram, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << histogram.binvals << static_cast<const HistogramRange&>(histogram);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Histogram &histogram)
-{
-    VersionID v = readHeader(ds, r_histogram);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        
-        sds >> histogram.binvals >> static_cast<HistogramRange&>(histogram);
-    }
-    else
-        throw version_error( v, "1", r_histogram, CODELOC );
-        
-    return ds;
-}
+static const RegisterObject<Histogram> r_histogram;
 
 /** Null constructor */
-Histogram::Histogram() : HistogramRange()
+Histogram::Histogram() 
+          : Implements<Histogram,Object>(),
+            Interfaces<Histogram,Mutable>()
 {}
 
 static QVector<double> create(const HistogramRange &range)
@@ -421,22 +332,26 @@ static QVector<double> create(const HistogramRange &range)
 /** Construct a histogram that can hold values from min <= value < max, 
     using 'nbins' bins */
 Histogram::Histogram(double min, double max, int nbins)
-          : HistogramRange(min, max, nbins)
+          : Implements<Histogram,Object>(), 
+            Interfaces<Histogram,Mutable>(),
+            r(min, max, nbins)
 {
-    binvals = ::create(*this);
+    binvals = ::create(r);
 }
 
 /** Construct a histogram that can hold values from min <= value < max,
     using a bin width of 'binwidth' */
 Histogram::Histogram(double min, double max, double binwidth)
-          : HistogramRange(min, max, binwidth)
+          : Implements<Histogram,Object>(), 
+            Interfaces<Histogram,Mutable>(),
+            r(min, max, binwidth)
 {
-    binvals = ::create(*this);
+    binvals = ::create(r);
 }
 
 /** Construct a histogram using the passed range */
 Histogram::Histogram(const HistogramRange &range)
-          : HistogramRange(range), binvals( ::create(range) )
+          : Implements<Histogram,Object>(), r(range), binvals( ::create(range) )
 {}
 
 /** Construct a histogram using the passed range and values 
@@ -445,10 +360,12 @@ Histogram::Histogram(const HistogramRange &range)
 */
 Histogram::Histogram(const HistogramRange &range,
                      const QVector<double> &values)
-          : HistogramRange(range), binvals(values)
+          : Implements<Histogram,Object>(), 
+            Interfaces<Histogram,Mutable>(),
+            r(range), binvals(values)
 {
     if (range.nBins() != values.count())
-        throw SireError::incompatible_error( QObject::tr(
+        throw Siren::incompatible_error( QObject::tr(
             "The histogram is incompatible with the array of passed values "
             "because the number of values (%1) is not equal to the number "
             "of histogram bins (%2).")
@@ -457,7 +374,9 @@ Histogram::Histogram(const HistogramRange &range,
 
 /** Copy constructor */
 Histogram::Histogram(const Histogram &other)
-          : HistogramRange(other), binvals(other.binvals)
+          : Implements<Histogram,Object>(other),
+            Interfaces<Histogram,Mutable>(), 
+            r(other.r), binvals(other.binvals)
 {}
 
 /** Destructor */
@@ -468,32 +387,31 @@ Histogram::~Histogram()
 Histogram& Histogram::operator=(const Histogram &other)
 {
     binvals = other.binvals;
-    HistogramRange::operator=(other);
+    r = other.r;
     return *this;
 }
 
 /** Comparison operator */
 bool Histogram::operator==(const Histogram &other) const
 {
-    return HistogramRange::operator==(other) and binvals == other.binvals;
+    return r == other.r and binvals == other.binvals;
 }
 
 /** Comparison operator */
 bool Histogram::operator!=(const Histogram &other) const
 {
-    return HistogramRange::operator!=(other) or binvals != other.binvals;
+    return r != other.r or binvals != other.binvals;
 }
 
 /** Return the value of the ith bin
 
     \throw SireError::invalid_index
 */
-HistogramValue Histogram::operator[](int i) const
+double Histogram::operator[](int i) const
 {
-    i = Index(i).map( this->nBins() );
+    i = Index(i).map( r.nBins() );
 
-    return HistogramValue( HistogramRange::operator[](i),
-                           binvals.constData()[i] );
+    return binvals.constData()[i];
 }
 
 /** Return a raw pointer to the values in this histogram */
@@ -511,7 +429,7 @@ const double* Histogram::constData() const
 /** Accumulate the value 'value' (with a weight of 'weight') */
 void Histogram::accumulate(double value, double weight)
 {
-    int idx = this->bin(value);
+    int idx = r.bin(value);
     
     if (idx != -1)
         binvals[idx] += weight;
@@ -526,10 +444,10 @@ void Histogram::accumulate(double value)
 /** Accumulte the values in the passed histogram into this one */
 void Histogram::accumulate(const Histogram &other)
 {
-    if ( static_cast<const HistogramRange&>(*this).operator==(other) )
+    if ( r == other.r )
     {
         //we have the same range - just add the values
-        for (int i=0; i<this->nBins(); ++i)
+        for (int i=0; i<r.nBins(); ++i)
         {
             binvals[i] += other.binvals.at(i);
         }
@@ -537,10 +455,10 @@ void Histogram::accumulate(const Histogram &other)
         return;
     }
 
-    for (int i=0; i<other.nBins(); ++i)
+    for (int i=0; i<other.r.nBins(); ++i)
     {
-        int min_idx = this->bin( other.minimum() );
-        int max_idx = this->bin( other.maximum() );
+        int min_idx = r.bin( other.r.minimum() );
+        int max_idx = r.bin( other.r.maximum() );
         
         if (min_idx == -1)
         {
@@ -552,7 +470,7 @@ void Histogram::accumulate(const Histogram &other)
         }
         else if (max_idx == -1)
         {
-            max_idx = this->nBins() - 1;
+            max_idx = r.nBins() - 1;
         }
         
         double val = other.binvals.at(i) / double(max_idx - min_idx + 1);
@@ -568,27 +486,22 @@ void Histogram::accumulate(const Histogram &other)
 QString Histogram::toString() const
 {
     return QObject::tr("Histogram[ %1 <= x < %2 : nBins() == %3 ]")
-                    .arg( minimum() ).arg( maximum() ).arg( nBins() );
+                    .arg( r.minimum() ).arg( r.maximum() ).arg( r.nBins() );
 }
 
-const char* Histogram::typeName()
+uint Histogram::hashCode() const
 {
-    return QMetaType::typeName( qMetaTypeId<Histogram>() );
+    return qHash( Histogram::typeName() ) + qHash(r);
 }
 
-//// Fully instantiate the Length and Energy histogram classes
-
-namespace SireMaths
+void Histogram::stream(Stream &s)
 {
-
-template class HistogramT<Length>;
-template class HistogramBinT<Length>;
-template class HistogramValueT<Length>;
-template class HistogramRangeT<Length>;
-
-template class HistogramT<Energy>;
-template class HistogramBinT<Energy>;
-template class HistogramValueT<Energy>;
-template class HistogramRangeT<Energy>;
-
+    s.assertVersion<Histogram>(1);
+    
+    Schema schema = s.item<Histogram>();
+    
+    schema.data("range") & r;
+    schema.data("data") & binvals;
+    
+    Object::stream( schema.base() );
 }

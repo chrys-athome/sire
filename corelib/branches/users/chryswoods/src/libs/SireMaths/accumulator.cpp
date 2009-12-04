@@ -73,7 +73,7 @@ QString Accumulator::typeName()
 
 ObjRef Accumulator::saveState() const
 {
-    return this->copy();
+    return this->clone();
 }
 
 void Accumulator::restoreState(const Object &object)

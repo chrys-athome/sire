@@ -46,6 +46,19 @@ using namespace Siren;
 
 static const RegisterPrimitive<GeneralUnit> r_genunit;
 
+namespace SireUnits { namespace Dimension { namespace detail
+{
+    void SIREUNITS_EXPORT throwIncompatible(const GeneralUnit &unit,
+                           int M, int L, int T, int C, int t, int Q, int A)
+    {
+        throw Siren::incompatible_error( QObject::tr(
+                "Cannot convert the unit %1 into a unit of type %2.")
+                    .arg( unit.toString() )
+                    .arg( SireUnits::Dimension::getUnitString(1.0, M, L, T, C, t, Q, A) ),
+                        CODELOC );
+    }
+}}}
+
 GeneralUnit::GeneralUnit() : Unit(1), Primitive<GeneralUnit>()
 {
     Mass = 0;

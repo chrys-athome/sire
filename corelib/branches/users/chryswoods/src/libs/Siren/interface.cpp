@@ -40,18 +40,3 @@ Interface::Interface()
     
 Interface::~Interface()
 {}
-
-//////////
-////////// Implementation of Mutable
-//////////
-
-Mutable::Mutable() : Interface()
-{}
-
-Mutable::~Mutable()
-{}
-
-QString Mutable::typeName()
-{
-    return "Siren::Mutable";
-}

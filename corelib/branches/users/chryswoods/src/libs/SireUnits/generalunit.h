@@ -39,7 +39,14 @@ namespace SireUnits
 namespace Dimension
 {
 
-namespace detail { class Temperature; }
+class GeneralUnit;
+
+namespace detail 
+{ 
+    class Temperature; 
+    void throwIncompatible(const GeneralUnit &unit,
+                           int M, int L, int T, int C, int t, int Q, int A);
+}
 
 /** This class can hold a general unit - this is used when
     there isn't a template-specialised form of the unit, and
@@ -134,6 +141,24 @@ template<int M, int L, int T, int C, int t, int Q, int A>
 bool operator!=(const PhysUnit<M,L,T,C,t,Q,A> &unit, const GeneralUnit &genunit);
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
+template<int M, int L, int T, int C, int t, int Q, int A>
+SIRE_OUTOFLINE_TEMPLATE
+PhysUnit<M,L,T,C,t,Q,A>::PhysUnit(const GeneralUnit &unit)
+                        : Unit(unit), Siren::Primitive< PhysUnit<M,L,T,C,t,Q,A> >()
+{
+    //must be of the right type!
+    if ( unit.MASS() != M or
+         unit.LENGTH() != L or
+         unit.TIME() != T or
+         unit.CHARGE() != C or
+         unit.TEMPERATURE() != t or
+         unit.QUANTITY() != Q or
+         unit.ANGLE() != A )
+    {
+        detail::throwIncompatible(unit, M, L, T, C, t, Q, A);
+    }
+}
 
 template<int M, int L, int T, int C, int t, int Q, int A>
 SIRE_OUTOFLINE_TEMPLATE

@@ -204,8 +204,8 @@ set ( SIREMATHS_SOURCES
 
       ${SIREMATHS_HEADERS}
 
-      third_party/GSL/fcmp.cpp
-      third_party/GSL/fcmp.h
+      third_party/fcmp.cpp
+      third_party/fcmp.h
     )
 
 if (NOT SIRE_DISABLE_FORTRAN)

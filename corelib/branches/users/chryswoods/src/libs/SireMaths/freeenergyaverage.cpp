@@ -30,59 +30,30 @@
 
 #include "SireUnits/units.h"
 
-#include "SireStream/datastream.h"
-
 using namespace SireMaths;
 using namespace SireUnits;
 using namespace SireUnits::Dimension;
-using namespace SireBase;
-using namespace SireStream;
+using namespace Siren;
 
-static const RegisterMetaType<FreeEnergyAverage> r_avg;
-
-/** Serialise to a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds,
-                                         const FreeEnergyAverage &avg)
-{
-    writeHeader(ds, r_avg, 1);
-    
-    ds << static_cast<const ExpAverage&>(avg);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, FreeEnergyAverage &avg)
-{
-    VersionID v = readHeader(ds, r_avg);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<ExpAverage&>(avg);
-    }
-    else
-        throw version_error(v, "1", r_avg, CODELOC);
-        
-    return ds;
-}
+static const RegisterObject<FreeEnergyAverage> r_avg;
 
 /** Constructor - this defaults to accumulating the average
     at room temperature (25 C) */
 FreeEnergyAverage::FreeEnergyAverage()
-                  : ConcreteProperty<FreeEnergyAverage,ExpAverage>(
+                  : Implements<FreeEnergyAverage,ExpAverage>(
                         -k_boltz * double(25*celsius) )
 {}
 
 /** Construct an accumulator to accumulate the free energy average
     at the specified temperature */
 FreeEnergyAverage::FreeEnergyAverage(const Temperature &temperature)
-                  : ConcreteProperty<FreeEnergyAverage,ExpAverage>(
-                        -k_boltz * temperature )
+                  : Implements<FreeEnergyAverage,ExpAverage>(
+                        -k_boltz * temperature.to(kelvin) )
 {}
 
 /** Copy constructor */
 FreeEnergyAverage::FreeEnergyAverage(const FreeEnergyAverage &other)
-                  : ConcreteProperty<FreeEnergyAverage,ExpAverage>(other)
+                  : Implements<FreeEnergyAverage,ExpAverage>(other)
 {}
 
 /** Destructor */
@@ -96,14 +67,43 @@ FreeEnergyAverage& FreeEnergyAverage::operator=(const FreeEnergyAverage &other)
     return *this;
 }
 
+/** Comparison operator */
+bool FreeEnergyAverage::operator==(const FreeEnergyAverage &other) const
+{
+    return ExpAverage::operator==(other);
+}
+
+/** Comparison operator */
+bool FreeEnergyAverage::operator!=(const FreeEnergyAverage &other) const
+{
+    return ExpAverage::operator!=(other);
+}
+
+QString FreeEnergyAverage::toString() const
+{
+    return QObject::tr(
+            "FreeEnergyAverage( value() = %1, nSamples() = %2, temperature() = %3 °C )")
+                .arg(this->value()).arg(this->nSamples())
+                .arg(this->temperature().to(celsius));
+}
+
+void FreeEnergyAverage::stream(Stream &s)
+{
+    s.assertVersion<FreeEnergyAverage>(1);
+    
+    Schema schema = s.item<FreeEnergyAverage>();
+    
+    ExpAverage::stream( schema.base() );
+}
+
+uint FreeEnergyAverage::hashCode() const
+{
+    return qHash(FreeEnergyAverage::typeName()) + ExpAverage::hashCode();
+}
+
 /** Return the temperature at which the free energy average
     is being accumulated */
 Temperature FreeEnergyAverage::temperature() const
 {
     return Temperature( -(ExpAverage::scaleFactor()) / k_boltz );
-}
-
-const char* FreeEnergyAverage::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<FreeEnergyAverage>() );
 }

@@ -33,15 +33,10 @@
 
 #include "sireglobal.h"
 
+#include "Siren/object.h"
+#include "Siren/mutable.h"
+
 SIRE_BEGIN_HEADER
-
-namespace SireMaths
-{
-class N4Matrix;
-}
-
-QDataStream& operator<<(QDataStream&, const SireMaths::N4Matrix&);
-QDataStream& operator>>(QDataStream&, SireMaths::N4Matrix&);
 
 namespace SireBase
 {
@@ -67,11 +62,9 @@ class NVector;
     @author Christopher Woods
 */
 class SIREMATHS_EXPORT N4Matrix
+          : public Siren::Implements<N4Matrix,Siren::Object>,
+            public Siren::Interfaces<N4Matrix,Siren::Mutable>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const N4Matrix&);
-friend QDataStream& ::operator>>(QDataStream&, N4Matrix&);
-
 public:
     N4Matrix();
     
@@ -88,8 +81,6 @@ public:
     ~N4Matrix();
     
     static const char* typeName();
-    
-    const char* what() const;
     
     N4Matrix& operator=(const N4Matrix &other);
     
@@ -114,6 +105,10 @@ public:
     
     N4Matrix operator*(double scale) const;
     N4Matrix operator/(double scale) const;
+    
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
     
     void add(int i, int j, const NMatrix &matrix);
     void subtract(int i, int j, const NMatrix &matrix);
@@ -143,8 +138,6 @@ public:
     
     void redimension(int nbigrows, int nbigcolumns,
                      int nrows, int ncolumns);
-    
-    QString toString() const;
 
     void assertValidIndex(int i, int j, int k, int l) const;
     
@@ -160,6 +153,13 @@ public:
     void assertNRows(int nrows) const;
     void assertNColumns(int ncolumns) const;
 
+protected:
+    friend class Siren::Implements<N4Matrix,Siren::Object>;
+    static QStringList listInterfaces()
+    {
+        return Siren::Interfaces<N4Matrix,Siren::Mutable>::listInterfaces();
+    }
+
 private:
     /** The raw data for the matrix */
     QVector<double> array;
@@ -167,6 +167,8 @@ private:
     /** The number of big rows, big columns, rows and columns in the matrix */
     qint32 nbigrows, nbigcolumns, nrows, ncolumns;
 };
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 /** Return the offset into the 1D array for the value
     at index [i,j,k,l] - note that this performs *NO* checking,
@@ -176,6 +178,8 @@ inline int N4Matrix::offset(int i, int j, int k, int l) const
 {
     return k + (l*nrows) + (i*nrows*ncolumns) + (j*nrows*ncolumns*nbigrows);
 }
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 
@@ -194,4 +198,3 @@ template class SireBase::Array2D<SireMaths::NMatrix>;
 SIRE_END_HEADER
 
 #endif
-

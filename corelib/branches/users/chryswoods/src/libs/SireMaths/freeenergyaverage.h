@@ -37,14 +37,6 @@ SIRE_BEGIN_HEADER
 
 namespace SireMaths
 {
-class FreeEnergyAverage;
-}
-
-QDataStream& operator<<(QDataStream&, const SireMaths::FreeEnergyAverage&);
-QDataStream& operator>>(QDataStream&, SireMaths::FreeEnergyAverage&);
-
-namespace SireMaths
-{
 
 /** This class provides a shortcut to accumulating the free energy
     average (this is just an ExpAverage with a more directed interface)
@@ -52,12 +44,8 @@ namespace SireMaths
     @author Christopher Woods
 */
 class SIREMATHS_EXPORT FreeEnergyAverage
-           : public SireBase::ConcreteProperty<FreeEnergyAverage,ExpAverage>
+           : public Siren::Implements<FreeEnergyAverage,ExpAverage>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const FreeEnergyAverage&);
-friend QDataStream& ::operator>>(QDataStream&, FreeEnergyAverage&);
-
 public:
     FreeEnergyAverage();
     FreeEnergyAverage(const SireUnits::Dimension::Temperature &temperature);
@@ -67,10 +55,15 @@ public:
     ~FreeEnergyAverage();
     
     FreeEnergyAverage& operator=(const FreeEnergyAverage &other);
-    
-    static const char* typeName();
 
+    bool operator==(const FreeEnergyAverage &other) const;
+    bool operator!=(const FreeEnergyAverage &other) const;
+    
     SireUnits::Dimension::Temperature temperature() const;
+
+    void stream(Siren::Stream &s);
+    QString toString() const;
+    uint hashCode() const;
 };
 
 }

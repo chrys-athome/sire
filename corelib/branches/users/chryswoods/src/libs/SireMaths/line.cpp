@@ -28,44 +28,21 @@
 
 #include <QDataStream>
 
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
 
 #include "line.h"
 
 using namespace SireMaths;
-using namespace SireStream;
+using namespace Siren;
 
-static const RegisterMetaType<Line> r_line;
-
-/** Serialise to a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const SireMaths::Line &line)
-{
-    writeHeader(ds, r_line, 1) << line.points[0] << line.points[1];
-
-    return ds;
-}
-
-/** Deserialise from a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, SireMaths::Line &line)
-{
-    VersionID v = readHeader(ds, r_line);
-
-    if (v == 1)
-    {
-        ds >> line.points[0] >> line.points[1];
-    }
-    else
-        throw version_error(v, "1", r_line, CODELOC);
-
-    return ds;
-}
+static const RegisterPrimitive<Line> r_line;
 
 /** Construct a zero line */
-Line::Line()
+Line::Line() : Primitive<Line>()
 {}
 
 /** Construct a line from point0 to point1 */
-Line::Line(const Vector &point0, const Vector &point1)
+Line::Line(const Vector &point0, const Vector &point1) : Primitive<Line>()
 {
     points[0] = point0;
     points[1] = point1;
@@ -75,6 +52,28 @@ Line::Line(const Vector &point0, const Vector &point1)
 Line::~Line()
 {}
 
+Line& Line::operator=(const Line &other)
+{
+    if (this != &other)
+    {
+        points[0] = other.points[0];
+        points[1] = other.points[1];
+    }
+    
+    return *this;
+}
+
+bool Line::operator==(const Line &other) const
+{
+    return points[0] == other.points[0] and
+           points[1] == other.points[1];
+}
+
+bool Line::operator!=(const Line &other) const
+{
+    return not Line::operator==(other);
+}
+
 /** Return a string representation of the line */
 QString Line::toString() const
 {
@@ -82,7 +81,18 @@ QString Line::toString() const
             .arg(point(0).toString(),point(1).toString()).arg(length());
 }
 
-const char* Line::typeName()
+uint Line::hashCode() const
 {
-    return QMetaType::typeName( qMetaTypeId<Line>() );
+    return qHash( Line::typeName() ) + qHash(points[0]) + 
+           qHash(points[1]);
+}
+
+void Line::stream(Stream &s)
+{
+    s.assertVersion<Line>(1);
+    
+    Schema schema = s.item<Line>();
+    
+    schema.data("point_0") & points[0];
+    schema.data("point_1") & points[1];
 }

@@ -76,6 +76,8 @@ set ( SIREN_SOURCES
       objptr.cpp
       objref.cpp
 
+      mutable.cpp
+
       class.cpp
       handle.cpp
       interface.cpp

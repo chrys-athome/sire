@@ -88,13 +88,6 @@ public:
     bool allPassed() const;
 
     ///////////////////////
-    // Mutable Interface //
-    ///////////////////////
-    
-    ObjRef saveState() const;
-    void restoreState(const Object &old_state);
-
-    ///////////////////////
     // Mutable functions //
     ///////////////////////
 

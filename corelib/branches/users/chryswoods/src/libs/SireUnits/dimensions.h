@@ -44,6 +44,7 @@ namespace SireUnits
 namespace Dimension
 {
 
+class GeneralUnit;
 namespace detail{ class Temperature; }
 
 /** This is the base class of all units - at its heart, this is
@@ -98,7 +99,9 @@ public:
     PhysUnit();
 
     explicit PhysUnit(double scale_factor);
-    explicit PhysUnit(const detail::Temperature &temperature);
+
+    PhysUnit(const detail::Temperature &temperature);
+    PhysUnit(const GeneralUnit &unit);
 
     PhysUnit(const PhysUnit<M,L,T,C,t,Q,A> &other);
 

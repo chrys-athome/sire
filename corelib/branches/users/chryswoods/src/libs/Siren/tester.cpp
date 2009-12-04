@@ -202,21 +202,6 @@ bool Tester::allPassed() const
     return num_errors == 0;
 }
 
-/** Save the current state of this tester */
-ObjRef Tester::saveState() const
-{
-    return new Tester(*this);
-}
-
-/** Restore the state of this tester from the passed object
-
-    \throw Siren::invalid_cast
-*/
-void Tester::restoreState(const Object &old_state)
-{
-    Tester::operator=( old_state.asA<Tester>() );
-}
-
 void Tester::testPassed(const QString &description)
 {
     logger.write( QObject::tr("%1 : Passed!").arg(description) );

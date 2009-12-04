@@ -29,9 +29,8 @@
 #include "linearap.h"
 #include "nmatrix.h"
 
-#include "SireError/errors.h"
-
-#include "tostring.h"
+#include "Siren/errors.h"
+#include "Siren/tostring.h"
 
 #include <limits>
 
@@ -83,7 +82,7 @@ static void check_linear_assignment(const NMatrix &costs,
     else if (dim == 1)
     {
         if (rows_to_columns[0] != 0 or columns_to_rows[0] != 0)
-            throw SireError::program_bug( QObject::tr(
+            throw Siren::program_bug( QObject::tr(
                 "How on earth did we get the single cost assignment wrong???"),
                     CODELOC );
                     
@@ -100,12 +99,12 @@ static void check_linear_assignment(const NMatrix &costs,
                 reduced_cost = 0;
             
             if (reduced_cost < 0)
-                throw SireError::program_bug( QObject::tr(
+                throw Siren::program_bug( QObject::tr(
                     "Negative reduced cost %1 (%2,%3)\n%4\n%5\n%6\n%7")
                         .arg(reduced_cost)
                         .arg(i).arg(j)
-                        .arg( Sire::toString(rows_to_columns) )
-                        .arg( Sire::toString(u), Sire::toString(v) )
+                        .arg( Siren::toString(rows_to_columns) )
+                        .arg( Siren::toString(u), Siren::toString(v) )
                         .arg( costs.toString() ), CODELOC );
         }
     }
@@ -117,11 +116,11 @@ static void check_linear_assignment(const NMatrix &costs,
         double reduced_cost = costs(i,j) - u[i] - v[j];
         
         if ( not isTiny(reduced_cost) )
-            throw SireError::program_bug( QObject::tr(
+            throw Siren::program_bug( QObject::tr(
                 "Non null reduced cost %1\n%2\n%3\n%4\n%5")
                     .arg(reduced_cost)
-                    .arg( Sire::toString(rows_to_columns) )
-                    .arg( Sire::toString(u), Sire::toString(v) )
+                    .arg( Siren::toString(rows_to_columns) )
+                    .arg( Siren::toString(u), Siren::toString(v) )
                     .arg( costs.toString() ), CODELOC );
     }
 
@@ -133,9 +132,9 @@ static void check_linear_assignment(const NMatrix &costs,
         
         if (matched[j])
         {
-            throw SireError::program_bug( QObject::tr(
+            throw Siren::program_bug( QObject::tr(
                 "Column is matched more than once! %1\n%2")
-                    .arg(j).arg( Sire::toString(rows_to_columns) ),
+                    .arg(j).arg( Siren::toString(rows_to_columns) ),
                         CODELOC );
         }
         else
@@ -147,11 +146,11 @@ static void check_linear_assignment(const NMatrix &costs,
         int j = rows_to_columns[i];
         
         if (i != columns_to_rows[j])
-            throw SireError::program_bug( QObject::tr(
+            throw Siren::program_bug( QObject::tr(
                 "Error in row solution i != j (%1, %2, %3)\n%4\n%5")
                     .arg(i).arg(j).arg(columns_to_rows[j])
-                    .arg( Sire::toString(rows_to_columns),
-                          Sire::toString(columns_to_rows) ), CODELOC );
+                    .arg( Siren::toString(rows_to_columns),
+                          Siren::toString(columns_to_rows) ), CODELOC );
     }
     
     for (int j=0; j<dim; ++j)
@@ -159,11 +158,11 @@ static void check_linear_assignment(const NMatrix &costs,
         int i = columns_to_rows[j];
         
         if (j != rows_to_columns[i])
-            throw SireError::program_bug( QObject::tr(
+            throw Siren::program_bug( QObject::tr(
                 "Error in column solution j != i (%1, %2, %3)\n%4\n%5")
                     .arg(j).arg(i).arg(rows_to_columns[i])
-                    .arg( Sire::toString(rows_to_columns),
-                          Sire::toString(columns_to_rows) ), CODELOC );
+                    .arg( Siren::toString(rows_to_columns),
+                          Siren::toString(columns_to_rows) ), CODELOC );
     }
 }
 
@@ -602,7 +601,7 @@ QVector<int> SIREMATHS_EXPORT solve_linear_assignment( const NMatrix &costs,
         return QVector<int>();
         
     if (dim != int(costs.nColumns()))
-        throw SireError::invalid_arg( QObject::tr(
+        throw Siren::invalid_arg( QObject::tr(
                 "Cannot solve the linear assignment problem as this code "
                 "only supports dense square matricies, and you have passed "
                 "in a rectangular matrix of dimension %1 by %2.")
@@ -726,7 +725,7 @@ QVector<int> SIREMATHS_EXPORT solve_linear_assignment( const NMatrix &costs,
                 {
                     qDebug() << "The linear assignment problem has not converged!!!";
                 
-                    throw SireError::program_bug( QObject::tr(  
+                    throw Siren::program_bug( QObject::tr(  
                             "The linear assignment problem is not converging!!!"),
                                 CODELOC );
                 }
@@ -985,14 +984,14 @@ double SIREMATHS_EXPORT calculate_total_cost( const NMatrix &costs,
     int dim = costs.nRows();
     
     if (dim != int(costs.nColumns()))
-        throw SireError::invalid_arg( QObject::tr(
+        throw Siren::invalid_arg( QObject::tr(
                 "Cannot solve the linear assignment problem as this code "
                 "only supports dense square matricies, and you have passed "
                 "in a rectangular matrix of dimension %1 by %2.")
                     .arg(costs.nRows()).arg(costs.nColumns()), CODELOC );
 
     if (rows_to_columns.count() != dim)
-        throw SireError::invalid_arg( QObject::tr(
+        throw Siren::invalid_arg( QObject::tr(
             "Cannot calculate the total cost as the number of rows in wrong "
             "(%1 vs. %2)").arg(rows_to_columns.count()).arg(dim), CODELOC );
 
@@ -1053,7 +1052,7 @@ QVector<int> SIREMATHS_EXPORT brute_force_linear_assignment(const NMatrix &costs
         return QVector<int>();
         
     if (dim != int(costs.nColumns()))
-        throw SireError::invalid_arg( QObject::tr(
+        throw Siren::invalid_arg( QObject::tr(
                 "Cannot solve the linear assignment problem as this code "
                 "only supports dense square matricies, and you have passed "
                 "in a rectangular matrix of dimension %1 by %2.")

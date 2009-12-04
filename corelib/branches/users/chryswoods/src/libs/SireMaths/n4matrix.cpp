@@ -32,57 +32,29 @@
 
 #include "SireBase/array2d.hpp"
 
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
+#include "Siren/stream.h"
+#include "Siren/streamqt.h"
 
-#include "SireError/errors.h"
+#include "Siren/errors.h"
 #include "SireMaths/errors.h"
 
 using namespace SireMaths;
 using namespace SireBase;
-using namespace SireStream;
+using namespace Siren;
 
-static const RegisterMetaType<N4Matrix> r_n4matrix;
-
-/** Serialise to a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const N4Matrix &matrix)
-{
-    writeHeader(ds, r_n4matrix, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << matrix.array << matrix.nbigrows << matrix.nbigcolumns 
-        << matrix.nrows << matrix.ncolumns;
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, N4Matrix &matrix)
-{
-    VersionID v = readHeader(ds, r_n4matrix);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        
-        sds >> matrix.array >> matrix.nbigrows >> matrix.nbigcolumns 
-            >> matrix.nrows >> matrix.nbigcolumns;
-    }
-    else
-        throw version_error(v, "1", r_n4matrix, CODELOC);
-        
-    return ds;
-}
+static const RegisterObject<N4Matrix> r_n4matrix;
 
 /** Null constructor */
-N4Matrix::N4Matrix() : nbigrows(0), nbigcolumns(0), nrows(0), ncolumns(0)
+N4Matrix::N4Matrix() 
+         : Implements<N4Matrix,Object>(), Interfaces<N4Matrix,Mutable>(),
+           nbigrows(0), nbigcolumns(0), nrows(0), ncolumns(0)
 {}
 
 /** Construct a matrix with 'nbigrows' big rows, 'nbigcolumns' big columns,
     'nrows' rows and 'ncolumns' columns. The values in the matrix are not initialised */
 N4Matrix::N4Matrix(int nbr, int nbc, int nr, int nc)
-         : nbigrows(nbr), nbigcolumns(nbc), nrows(nr), ncolumns(nc)
+         : Implements<N4Matrix,Object>(), Interfaces<N4Matrix,Mutable>(),
+           nbigrows(nbr), nbigcolumns(nbc), nrows(nr), ncolumns(nc)
 {
     if (nbr <= 0 or nbc <= 0 or nr <= 0 or nc <= 0)
     {
@@ -102,7 +74,8 @@ N4Matrix::N4Matrix(int nbr, int nbc, int nr, int nc)
     'nrows' rows and 'ncolumns' columns. The values in the matrix are
     initialised to be equal to 'initial_value' */
 N4Matrix::N4Matrix(int nbr, int nbc, int nr, int nc, double initial_value)
-         : nbigrows(nbr), nbigcolumns(nbc), nrows(nr), ncolumns(nc)
+         : Implements<N4Matrix,Object>(), Interfaces<N4Matrix,Mutable>(),
+           nbigrows(nbr), nbigcolumns(nbc), nrows(nr), ncolumns(nc)
 {
     if (nbr <= 0 or nbc <= 0 or nr <= 0 or nc <= 0)
     {
@@ -121,7 +94,8 @@ N4Matrix::N4Matrix(int nbr, int nbc, int nr, int nc, double initial_value)
 /** Construct from the passed matrix - this creates a matrix
     of dimension [1, 1, matrix.nRows(), matrix.nColumns()] */
 N4Matrix::N4Matrix(const NMatrix &matrix)
-         : nbigrows(0), nbigcolumns(0), nrows(0), ncolumns(0) 
+         : Implements<N4Matrix,Object>(), Interfaces<N4Matrix,Mutable>(),
+           nbigrows(0), nbigcolumns(0), nrows(0), ncolumns(0) 
 {
     if (matrix.nRows() != 0)
     {
@@ -148,7 +122,8 @@ N4Matrix::N4Matrix(const NMatrix &matrix)
 
 /** Construct from the passed Array or Matricies */
 N4Matrix::N4Matrix(const SireBase::Array2D<NMatrix> &array4d)
-         : nbigrows(array4d.nRows()), nbigcolumns(array4d.nColumns())
+         : Implements<N4Matrix,Object>(), Interfaces<N4Matrix,Mutable>(),
+           nbigrows(array4d.nRows()), nbigcolumns(array4d.nColumns())
 {
     int sz = array4d.nRows() * array4d.nColumns();
 
@@ -160,9 +135,9 @@ N4Matrix::N4Matrix(const SireBase::Array2D<NMatrix> &array4d)
         
         const NMatrix *array4d_data = array4d.constData();
         
-        for (uint i=0; i<array4d.nRows(); ++i)
+        for (int i=0; i<array4d.nRows(); ++i)
         {
-            for (uint j=0; j<array4d.nColumns(); ++j)
+            for (int j=0; j<array4d.nColumns(); ++j)
             {
                 int idx = array4d.map(i,j);
             
@@ -207,7 +182,8 @@ N4Matrix::N4Matrix(const SireBase::Array2D<NMatrix> &array4d)
 
 /** Construct from the passed vector of vector of vector of vectors... */
 N4Matrix::N4Matrix(const QVector< QVector< QVector< QVector<double> > > > &array4d)
-         : nbigrows(0), nbigcolumns(0), nrows(0), ncolumns(0)
+         : Implements<N4Matrix,Object>(), Interfaces<N4Matrix,Mutable>(),
+           nbigrows(0), nbigcolumns(0), nrows(0), ncolumns(0)
 {
     const QVector< QVector< QVector<double> > > *array4d_data = array4d.constData();
     
@@ -237,7 +213,8 @@ N4Matrix::N4Matrix(const QVector< QVector< QVector< QVector<double> > > > &array
 
 /** Copy constructor */
 N4Matrix::N4Matrix(const N4Matrix &other)
-         : array(other.array), nbigrows(other.nbigrows),
+         : Implements<N4Matrix,Object>(other), Interfaces<N4Matrix,Mutable>(),
+           array(other.array), nbigrows(other.nbigrows),
            nbigcolumns(other.nbigcolumns), nrows(other.nrows),
            ncolumns(other.ncolumns)
 {}
@@ -249,11 +226,6 @@ N4Matrix::~N4Matrix()
 const char* N4Matrix::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<N4Matrix>() );
-}
-
-const char* N4Matrix::what() const
-{
-    return N4Matrix::typeName();
 }
 
 /** Copy assignment operator */
@@ -288,14 +260,14 @@ bool N4Matrix::operator!=(const N4Matrix &other) const
 
 /** Assert that the index [i,j,k,l] is valid for this matrix
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void N4Matrix::assertValidIndex(int i, int j, int k, int l) const
 {
     if ( i < 0 or i >= nbigrows or j < 0 or j >= nbigcolumns or
          k < 0 or k >= nrows or l < 0 or l >= ncolumns )
     {
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
             "The index [%1,%2,%3,%4] is invalid for the matrix with "
             "dimension [%5,%6,%7,%8].")
                 .arg(i).arg(j).arg(k).arg(l)
@@ -306,7 +278,7 @@ void N4Matrix::assertValidIndex(int i, int j, int k, int l) const
 
 /** Return a modifiable reference to the value at [i,j,k,l]
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 double& N4Matrix::operator()(int i, int j, int k, int l)
 {
@@ -317,7 +289,7 @@ double& N4Matrix::operator()(int i, int j, int k, int l)
 
 /** Return a reference to the value at [i,j,k,l]
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 const double& N4Matrix::operator()(int i, int j, int k, int l) const
 {
@@ -328,7 +300,7 @@ const double& N4Matrix::operator()(int i, int j, int k, int l) const
 
 /** Return the sub-matrix view at [i,j] 
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 NMatrix N4Matrix::operator()(int i, int j) const
 {
@@ -337,12 +309,12 @@ NMatrix N4Matrix::operator()(int i, int j) const
 
 /** Assert that this matrix has 'nbigrows' big rows
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 void N4Matrix::assertNBigRows(int nr) const
 {
     if (nr != nbigrows)
-        throw SireError::incompatible_error( QObject::tr(
+        throw Siren::incompatible_error( QObject::tr(
                 "The number of big rows in this matrix (dimension "
                 "[%1,%2,%3,%4]) is not "
                 "equal to %5.")
@@ -352,12 +324,12 @@ void N4Matrix::assertNBigRows(int nr) const
 
 /** Assert that this matrix has 'nbigcolumns' big columns
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 void N4Matrix::assertNBigColumns(int nc) const
 {
     if (nc != ncolumns)
-        throw SireError::incompatible_error( QObject::tr(
+        throw Siren::incompatible_error( QObject::tr(
                 "The number of big columns in this matrix (dimension "
                 "[%1,%2,%3,%4]) is not "
                 "equal to %5.")
@@ -367,12 +339,12 @@ void N4Matrix::assertNBigColumns(int nc) const
 
 /** Assert that this matrix has 'nrows' rows
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 void N4Matrix::assertNRows(int nr) const
 {
     if (nr != nrows)
-        throw SireError::incompatible_error( QObject::tr(
+        throw Siren::incompatible_error( QObject::tr(
                 "The number of rows in this matrix (dimension "
                 "[%1,%2,%3,%4]) is not "
                 "equal to %5.")
@@ -382,12 +354,12 @@ void N4Matrix::assertNRows(int nr) const
 
 /** Assert that this matrix has 'ncolumns' columns
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 void N4Matrix::assertNColumns(int nc) const
 {
     if (nc != ncolumns)
-        throw SireError::incompatible_error( QObject::tr(
+        throw Siren::incompatible_error( QObject::tr(
                 "The number of columns in this matrix (dimension "
                 "[%1,%2,%3,%4]) is not "
                 "equal to %5.")
@@ -397,7 +369,7 @@ void N4Matrix::assertNColumns(int nc) const
 
 /** Matrix addition 
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 N4Matrix& N4Matrix::operator+=(const N4Matrix &other)
 {
@@ -420,7 +392,7 @@ N4Matrix& N4Matrix::operator+=(const N4Matrix &other)
 
 /** Matrix subtraction 
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 N4Matrix& N4Matrix::operator-=(const N4Matrix &other)
 {
@@ -493,7 +465,7 @@ N4Matrix N4Matrix::operator-() const
 
 /** Matrix addition 
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 N4Matrix N4Matrix::operator+(const N4Matrix &other) const
 {
@@ -505,7 +477,7 @@ N4Matrix N4Matrix::operator+(const N4Matrix &other) const
 
 /** Matrix subtraction 
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 N4Matrix N4Matrix::operator-(const N4Matrix &other) const
 {
@@ -595,12 +567,12 @@ void N4Matrix::redimension(int nbr, int nbc, int nr, int nc)
 
 /** Assert that there is an ith big row! 
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void N4Matrix::assertValidBigRow(int i) const
 {
     if (i < 0 or i >= nbigrows)
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
                 "The matrix with dimension [%1,%2,%3,%4] does not have "
                 "a big row with index %5.")
                     .arg(nbigrows).arg(nbigcolumns)
@@ -609,12 +581,12 @@ void N4Matrix::assertValidBigRow(int i) const
 
 /** Assert that there is an jth big column! 
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void N4Matrix::assertValidBigColumn(int j) const
 {
     if (j < 0 or j >= nbigcolumns)
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
                 "The matrix with dimension [%1,%2,%3,%4] does not have "
                 "a big column with index %5.")
                     .arg(nbigrows).arg(nbigcolumns)
@@ -623,12 +595,12 @@ void N4Matrix::assertValidBigColumn(int j) const
 
 /** Assert that there is an kth row! 
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void N4Matrix::assertValidRow(int k) const
 {
     if (k < 0 or k >= nrows)
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
                 "The matrix with dimension [%1,%2,%3,%4] does not have "
                 "a row with index %5.")
                     .arg(nbigrows).arg(nbigcolumns)
@@ -637,12 +609,12 @@ void N4Matrix::assertValidRow(int k) const
 
 /** Assert that there is an lth column! 
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void N4Matrix::assertValidColumn(int l) const
 {
     if (l < 0 or l >= ncolumns)
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
                 "The matrix with dimension [%1,%2,%3,%4] does not have "
                 "a big row with index %5.")
                     .arg(nbigrows).arg(nbigcolumns)
@@ -651,7 +623,7 @@ void N4Matrix::assertValidColumn(int l) const
 
 /** Return the sub-matrix view at [i,j,k,l] 
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 NMatrix N4Matrix::view(int i, int j) const
 {
@@ -666,8 +638,8 @@ NMatrix N4Matrix::view(int i, int j) const
 
 /** Set the view at [i,j] equal to 'matrix'
 
-    \throw SireError::invalid_index
-    \throw SireError::incompatible_error
+    \throw Siren::invalid_index
+    \throw Siren::incompatible_error
 */
 void N4Matrix::set(int i, int j, const NMatrix &matrix)
 {
@@ -690,8 +662,8 @@ void N4Matrix::set(int i, int j, const NMatrix &matrix)
 
 /** Add the contents of 'matrix' to the sub-matrix view at [i,j]
     
-    \throw SireError::invalid_index
-    \throw SireError::incompatible_error
+    \throw Siren::invalid_index
+    \throw Siren::incompatible_error
 */
 void N4Matrix::add(int i, int j, const NMatrix &matrix)
 {
@@ -719,8 +691,8 @@ void N4Matrix::add(int i, int j, const NMatrix &matrix)
 
 /** Subtract the contents of 'matrix' from the sub-matrix view at [i,j]
     
-    \throw SireError::invalid_index
-    \throw SireError::incompatible_error
+    \throw Siren::invalid_index
+    \throw Siren::incompatible_error
 */
 void N4Matrix::subtract(int i, int j, const NMatrix &matrix)
 {
@@ -748,7 +720,7 @@ void N4Matrix::subtract(int i, int j, const NMatrix &matrix)
 
 /** Set the value at [i,j,k,l] equal to 'value'
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void N4Matrix::set(int i, int j, int k, int l, double value)
 {
@@ -803,7 +775,7 @@ QVector<double> N4Matrix::memory() const
 /** Calculate the offset in the 1D array of the value
     at index [i,j,k,l]
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 int N4Matrix::checkedOffset(int i, int j, int k, int l) const
 {
@@ -817,4 +789,24 @@ QString N4Matrix::toString() const
     return QObject::tr( "N4Matrix( %1 by %2 by %3 by %4 )" )
                 .arg(nbigrows).arg(nbigcolumns)
                 .arg(nrows).arg(ncolumns);
+}
+
+uint N4Matrix::hashCode() const
+{
+    return qHash( N4Matrix::typeName() ) +  
+            qHash(nbigrows) + qHash(nbigcolumns) + 
+             qHash(nrows) + qHash(ncolumns);
+}
+
+void N4Matrix::stream(Stream &s)
+{
+    s.assertVersion<N4Matrix>(1);
+    
+    Schema schema = s.item<N4Matrix>();
+    
+    schema.data("nbigrows") & nbigrows;
+    schema.data("nbigcolumns") & nbigcolumns;
+    schema.data("nrows") & nrows;
+    schema.data("ncolumns") & ncolumns;
+    schema.data("array") & array;
 }

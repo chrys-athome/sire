@@ -33,15 +33,10 @@
 
 #include "sireglobal.h"
 
+#include "Siren/object.h"
+#include "Siren/mutable.h"
+
 SIRE_BEGIN_HEADER
-
-namespace SireMaths
-{
-class NVector;
-}
-
-QDataStream& operator<<(QDataStream&, const SireMaths::NVector&);
-QDataStream& operator>>(QDataStream&, SireMaths::NVector&);
 
 namespace SireMaths
 {
@@ -54,11 +49,9 @@ class Vector;
     @author Christopher Woods
 */
 class SIREMATHS_EXPORT NVector
+            : public Siren::Implements<NVector,Siren::Object>,
+              public Siren::Interfaces<NVector,Siren::Mutable>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const NVector&);
-friend QDataStream& ::operator>>(QDataStream&, NVector&);
-
 public:
     NVector();
     
@@ -73,8 +66,6 @@ public:
     ~NVector();
     
     static const char* typeName();
-
-    const char* what() const;
     
     NVector& operator=(const NVector &other);
     
@@ -105,6 +96,10 @@ public:
     NVector operator*(double scale) const;
     NVector operator/(double scale) const;
     
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
+    
     double* data();
     
     const double* data() const;
@@ -128,8 +123,6 @@ public:
     
     bool isZero() const;
     
-    QString toString() const;
-    
     double dot(const NVector &other) const;
     
     NVector cross(const NVector &other) const;
@@ -142,15 +135,26 @@ public:
     void assertNRows(int nrows) const;
     void assertNColumns(int ncolumns) const;
 
+protected:
+    friend class Siren::Implements<NVector,Siren::Object>;
+    static QStringList listInterfaces()
+    {
+        return Siren::Interfaces<NVector,Siren::Mutable>::listInterfaces();
+    }
+
 private:
     /** The raw data for the vector */
     QVector<double> array;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 inline NVector operator*(double scale, const NVector &vector)
 {
     return vector * scale;
 }
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

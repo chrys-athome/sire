@@ -26,53 +26,45 @@
   *
 \*********************************************/
 
-#include <cmath>
+#include "mutable.h"
+#include "objref.h"
 
-#include "gamma.h"
+#include "Siren/errors.h"
 
-#include <boost/math/special_functions/gamma.hpp>
+using namespace Siren;
 
-namespace SireMaths
+Mutable::Mutable()
+{}
+
+Mutable::~Mutable()
+{}
+
+QString Mutable::typeName()
 {
-
-/** Return the value of the Gamma function 
-    \Gamma(\alpha) = \int_0^{\infty} t^{\alpha-1} e^{-t} dt 
-*/
-double SIREMATHS_EXPORT Gamma(double alpha)
-{
-    return boost::math::tgamma(alpha);
+    return "Siren::Mutable";
 }
 
-/** Synonym for SireMaths::Gamma */
-double SIREMATHS_EXPORT gamma(double alpha)
+ObjRef Mutable::saveState() const
 {
-    return Gamma(alpha);
+    const Object *obj = dynamic_cast<const Object*>(this);
+    
+    if (not obj)
+        throw Siren::program_bug( QObject::tr(
+            "You must derive Mutable objects from Siren::Object... (%1)")
+                .arg( typeid(*this).name() ), CODELOC );
+                
+    
+    return obj->clone();        
 }
 
-/** Return the incomplete gamma function
-    \Gamma(\alpha) = \int_x^{\infty} t^{\alpha-1} e^{-t} dt */
-double SIREMATHS_EXPORT Gamma(double alpha, double x)
+void Mutable::restoreState(const Object &object)
 {
-    return boost::math::gamma_q(alpha, x) * boost::math::tgamma(alpha);
+    Object *obj = dynamic_cast<Object*>(this);
+    
+    if (not obj)
+        throw Siren::program_bug( QObject::tr(
+            "You must derive Mutable objects from Siren::Object... (%1)")
+                .arg( typeid(*this).name() ), CODELOC );
+    
+    obj->copy(object);
 }
-
-/** Return the incomplete gamma function
-    \Gamma(\alpha) = \int_0^{x} t^{\alpha-1} e^{-t} dt */
-double SIREMATHS_EXPORT gamma(double alpha, double x)
-{
-    return boost::math::gamma_p(alpha, x) * boost::math::tgamma(alpha);
-}
-
-/** Synonym for gamma(alpha,x) */
-double SIREMATHS_EXPORT incomplete_gamma_lower(double alpha, double x)
-{
-    return gamma(alpha,x);
-}
-
-/** Synonym for Gamma(alpha,x) */
-double SIREMATHS_EXPORT incomplete_gamma_higher(double alpha, double x)
-{
-    return Gamma(alpha,x);
-}
-
-} // end of namespace SireMaths

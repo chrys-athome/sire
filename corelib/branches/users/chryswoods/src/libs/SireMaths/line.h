@@ -37,40 +37,26 @@ SIRE_BEGIN_HEADER
 
 namespace SireMaths
 {
-class Line;
-}
 
-class QDataStream;
-QDataStream& operator<<(QDataStream&, const SireMaths::Line&);
-QDataStream& operator>>(QDataStream&, SireMaths::Line&);
-
-namespace SireMaths
-{
-
-/**
-This class represents a line in three-dimensional space. (or two points)
+/** This class represents a line in three-dimensional space. (or two points)
  
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIREMATHS_EXPORT Line
+class SIREMATHS_EXPORT Line : public Siren::Primitive<Line>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Line&);
-friend QDataStream& ::operator>>(QDataStream&, Line&);
-
 public:
     Line();
     Line(const Vector &point0, const Vector &point1);
     ~Line();
 
-    static const char* typeName();
+    Line& operator=(const Line &other);
     
-    const char* what() const
-    {
-        return Line::typeName();
-    }
+    bool operator==(const Line &other) const;
+    bool operator!=(const Line &other) const;
 
     QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     double length() const;
     Vector vector() const;
@@ -82,7 +68,6 @@ public:
     const Vector& at(int i) const;
 
 private:
-
     /** The two points that make up the line */
     Vector points[2];
 };
@@ -132,7 +117,7 @@ inline double Line::length() const
 Q_DECLARE_METATYPE(SireMaths::Line)
 Q_DECLARE_TYPEINFO(SireMaths::Line, Q_MOVABLE_TYPE);
 
-SIRE_EXPOSE_CLASS( SireMaths::Line )
+SIRE_EXPOSE_PRIMITIVE( SireMaths::Line )
 
 SIRE_END_HEADER
 
