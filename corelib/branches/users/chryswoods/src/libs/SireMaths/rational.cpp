@@ -112,6 +112,11 @@ bool Rational::operator!=(const Rational &other) const
     return r != other.r;
 }
 
+QString Rational::toString() const
+{
+    return QString("%1 / %2").arg( numerator() ).arg( denominator() );
+}
+
 int Rational::numerator() const
 {
     return r.numerator();

@@ -127,7 +127,7 @@ public:
 
     Complex negative() const;
 
-    std::complex<double> toStdComplex() const;
+    const std::complex<double>& toStdComplex() const;
 
 private:
     std::complex<double> z;

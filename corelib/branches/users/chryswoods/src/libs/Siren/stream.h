@@ -46,6 +46,8 @@ class Class;
 class ObjRef;
 class Object;
 
+template<class T> class Primitive;
+
 /** This is the base class of all schemas */
 class SIREN_EXPORT SchemaBase
 {
@@ -103,7 +105,7 @@ private:
 };
 
 /** This schema is used to help stream shared data types */
-class SharedSchema : public SchemaBase
+class SIREN_EXPORT SharedSchema : public SchemaBase
 {
 public:
     SharedSchema();
@@ -129,7 +131,7 @@ private:
 };
 
 /** This is the base class of all container schemas */
-class ContainerSchema : public SchemaBase
+class SIREN_EXPORT ContainerSchema : public SchemaBase
 {
 public:
     ~ContainerSchema();
@@ -161,7 +163,7 @@ protected:
 };
 
 /** This is the schema used to help stream arrays */
-class ArraySchema : public ContainerSchema
+class SIREN_EXPORT ArraySchema : public ContainerSchema
 {
 public:
     ArraySchema();
@@ -183,7 +185,7 @@ private:
 };
 
 /** This is the schema used to help stream sets */
-class SetSchema : public ContainerSchema
+class SIREN_EXPORT SetSchema : public ContainerSchema
 {
 public:
     SetSchema();
@@ -205,7 +207,7 @@ private:
 };
 
 /** This is the schema used to help stream maps */
-class MapSchema : public ContainerSchema
+class SIREN_EXPORT MapSchema : public ContainerSchema
 {
 public:
     MapSchema();
@@ -664,6 +666,9 @@ public:
     Stream& operator&(QByteArray &b);
     
     Stream& operator&(Object &object);
+    
+    template<class T>
+    Stream& operator&(Primitive<T> &primitive);
     
     ObjRef loadNextObject();
 

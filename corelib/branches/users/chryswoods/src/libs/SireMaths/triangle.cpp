@@ -32,44 +32,21 @@
 
 #include "SireUnits/units.h"
 
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
 
-using namespace SireStream;
+using namespace Siren;
 using namespace SireUnits;
 using namespace SireMaths;
 
-static const RegisterMetaType<Triangle> r_triangle;
-
-/** Serialise to a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Triangle &triangle)
-{
-    writeHeader(ds, r_triangle, 1)
-          << triangle.points[0] << triangle.points[1] << triangle.points[2];
-
-    return ds;
-}
-
-/** Deserialise from a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Triangle &triangle)
-{
-    VersionID v = readHeader(ds, r_triangle);
-
-    if (v == 1)
-    {
-        ds >> triangle.points[0] >> triangle.points[1] >> triangle.points[2];
-    }
-    else
-        throw version_error(v, "1", r_triangle, CODELOC);
-
-    return ds;
-}
+static const RegisterPrimitive<Triangle> r_triangle;
 
 /** Create a zero triangle */
-Triangle::Triangle()
+Triangle::Triangle() : Primitive<Triangle>()
 {}
 
 /** Create a triangle from point 0 -> 1 -> 2 */
 Triangle::Triangle(const Vector &point0, const Vector &point1, const Vector &point2)
+         : Primitive<Triangle>()
 {
     points[0] = point0;
     points[1] = point1;
@@ -77,7 +54,7 @@ Triangle::Triangle(const Vector &point0, const Vector &point1, const Vector &poi
 }
 
 /** Copy constructor */
-Triangle::Triangle(const Triangle &other)
+Triangle::Triangle(const Triangle &other) : Primitive<Triangle>()
 {
     for (int i=0; i<3; ++i)
         points[i] = other.points[i];
@@ -86,6 +63,25 @@ Triangle::Triangle(const Triangle &other)
 /** Destructor */
 Triangle::~Triangle()
 {}
+
+Triangle& Triangle::operator=(const Triangle &other)
+{
+    if (this != &other)
+    {
+        points[0] = other.points[0];
+        points[1] = other.points[1];
+        points[2] = other.points[2];
+    }
+    
+    return *this;
+}
+
+bool Triangle::operator==(const Triangle &other) const
+{
+    return points[0] == other.points[0] and
+           points[1] == other.points[1] and
+           points[2] == other.points[2];
+}
 
 /** Return a string representation of the triangle */
 QString Triangle::toString() const
@@ -96,7 +92,19 @@ QString Triangle::toString() const
                 .arg(angle2().to(degrees));
 }
 
-const char* Triangle::typeName()
+uint Triangle::hashCode() const
 {
-    return QMetaType::typeName( qMetaTypeId<Triangle>() );
+    return qHash(Triangle::typeName()) + qHash(points[0])
+            + qHash(points[1]) + qHash(points[2]);
+}
+
+void Triangle::stream(Stream &s)
+{
+    s.assertVersion<Triangle>(1);
+    
+    Schema schema = s.item<Triangle>();
+    
+    schema.data("point_0") & points[0];
+    schema.data("point_1") & points[1];
+    schema.data("point_2") & points[2];
 }

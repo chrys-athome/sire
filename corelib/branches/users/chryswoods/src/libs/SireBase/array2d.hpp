@@ -33,23 +33,12 @@
 
 #include "array2d.h"
 
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
-
-#include "tostring.h"
+#include "Siren/mutable.h"
+#include "Siren/tostring.h"
+#include "Siren/stream.h"
+#include "Siren/streamqt.h"
 
 SIRE_BEGIN_HEADER
-
-namespace SireBase
-{
-template<class T>
-class Array2D;
-}
-
-template<class T>
-QDataStream& operator<<(QDataStream&, const SireBase::Array2D<T>&);
-template<class T>
-QDataStream& operator>>(QDataStream&, SireBase::Array2D<T>&);
 
 namespace SireBase
 {
@@ -70,12 +59,9 @@ namespace SireBase
     @author Christopher Woods
 */
 template<class T>
-class Array2D : public Array2DBase
+class Array2D : public Siren::Implements<Array2D<T>,Array2DBase>,
+                public Siren::Interfaces<Array2D<T>,Siren::Mutable>
 {
-
-friend QDataStream& ::operator<<<>(QDataStream&, const Array2D<T>&);
-friend QDataStream& ::operator>><>(QDataStream&, Array2D<T>&);
-
 public:
     Array2D();
 
@@ -91,6 +77,9 @@ public:
 
     bool operator==(const Array2D<T> &other) const;
     bool operator!=(const Array2D<T> &other) const;
+
+    static QString typeName();
+    void stream(Siren::Stream &s);
 
     const T& operator()(int i, int j) const;
     T& operator()(int i, int j);
@@ -115,6 +104,13 @@ public:
 
     Array2D<T> transpose() const;
 
+protected:
+    friend class Siren::Implements<Array2D<T>,Array2DBase>;
+    static QStringList listInterfaces()
+    {
+        return Siren::Interfaces<Array2D<T>,Siren::Mutable>::listInterfaces();
+    }
+
 private:
     /** The 1D array of entries in this Array2D */
     QVector<T> array;
@@ -125,14 +121,17 @@ private:
 /** Construct a null Array2D */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Array2D<T>::Array2D() : Array2DBase()
+Array2D<T>::Array2D() 
+           : Siren::Implements<Array2D<T>,Array2DBase>(),
+             Siren::Interfaces<Array2D<T>,Siren::Mutable>()
 {}
 
 /** Construct a Array2D that holds nrow rows of ncolumn columns. */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Array2D<T>::Array2D(int nrows, int ncolumns)
-           : Array2DBase(nrows,ncolumns)
+           : Siren::Implements<Array2D<T>,Array2DBase>(nrows,ncolumns),
+             Siren::Interfaces<Array2D<T>,Siren::Mutable>()
 {
     if (this->nRows() * this->nColumns() > 0)
     {
@@ -145,7 +144,8 @@ Array2D<T>::Array2D(int nrows, int ncolumns)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Array2D<T>::Array2D(int nrows, int ncolumns, const T &default_value)
-           : Array2DBase(nrows,ncolumns)
+           : Siren::Implements<Array2D<T>,Array2DBase>(nrows, ncolumns),
+             Siren::Interfaces<Array2D<T>,Siren::Mutable>()
 {
     if (this->nRows() * this->nColumns() > 0)
     {
@@ -158,7 +158,8 @@ Array2D<T>::Array2D(int nrows, int ncolumns, const T &default_value)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 Array2D<T>::Array2D(const Array2D<T> &other)
-           : Array2DBase(other), array(other.array)
+           : Siren::Implements<Array2D<T>,Array2DBase>(other),
+             Siren::Interfaces<Array2D<T>,Siren::Mutable>(), array(other.array)
 {}
 
 /** Destructor */
@@ -371,6 +372,13 @@ void Array2D<T>::setAll(const T &value)
         array_data[i] = value;
 }
 
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QString Array2D<T>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< Array2D<T> >() );
+}
+
 /** Return a string representation of this array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
@@ -384,7 +392,7 @@ QString Array2D<T>::toString() const
         QStringList row;
         for (int j=0; j<this->nColumns(); ++j)
         {
-            row.append( Sire::toString( this->operator()(0,j) ) );
+            row.append( Siren::toString( this->operator()(0,j) ) );
         }
         
         return QString("( %1 )").arg( row.join(", ") );
@@ -398,7 +406,7 @@ QString Array2D<T>::toString() const
         
         for (int j=0; j<this->nColumns(); ++j)
         {
-            row.append( Sire::toString( this->operator()(i,j) ) );
+            row.append( Siren::toString( this->operator()(i,j) ) );
         }
         
         if (i == 0)
@@ -412,39 +420,24 @@ QString Array2D<T>::toString() const
     return rows.join("\n");
 }
 
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void Array2D<T>::stream(Siren::Stream &s)
+{
+    s.assertVersion< Array2D<T> >(1);
+    
+    Siren::Schema schema = s.item< Array2D<T> >();
+    
+    schema.data("array") & this->array;
+    
+    Array2DBase::stream( schema.base() );
+}
+
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
-/** Serialise to a binary datastream */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds, const SireBase::Array2D<T> &array)
-{
-    SireStream::SharedDataStream sds(ds);
-    
-    sds << static_cast<const SireBase::Array2DBase&>(array)
-        << array.array;
-        
-    return ds;
-}
-
-/** Extract from a binary datastream */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds, SireBase::Array2D<T> &array)
-{
-    SireStream::SharedDataStream sds(ds);
-    
-    sds >> static_cast<SireBase::Array2DBase&>(array)
-        >> array.array;
-        
-    return ds;
-}
-
-#endif //SIRE_SKIP_INLINE_FUNCTIONS
+Q_DECLARE_METATYPE( SireBase::Array2D<double> )
 
 SIRE_EXPOSE_ALIAS( SireBase::Array2D<double>, SireBase::Array2D_double_ )
 

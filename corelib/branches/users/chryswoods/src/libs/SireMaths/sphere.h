@@ -31,33 +31,17 @@
 
 #include "vector.h"
 
-#include "sireglobal.h"
-
 SIRE_BEGIN_HEADER
 
 namespace SireMaths
 {
-class Sphere;
-}
 
-class QDataStream;
-QDataStream& operator<<(QDataStream&, const SireMaths::Sphere&);
-QDataStream& operator>>(QDataStream&, SireMaths::Sphere&);
-
-namespace SireMaths
-{
-
-/**
-This class is a mathematical representation of a sphere.
+/** This class is a mathematical representation of a sphere.
  
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIREMATHS_EXPORT Sphere
+class SIREMATHS_EXPORT Sphere : public Siren::Primitive<Sphere>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Sphere&);
-friend QDataStream& ::operator>>(QDataStream&, Sphere&);
-
 public:
     Sphere();
     Sphere(const double &radius);
@@ -66,15 +50,14 @@ public:
     
     ~Sphere();
 
-    static const char* typeName();
-    
-    const char* what() const
-    {
-        return Sphere::typeName();
-    }
+    Sphere& operator=(const Sphere &other);
 
     bool operator==(const Sphere &other) const;
     bool operator!=(const Sphere &other) const;
+
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     const Vector& position() const;
     const Vector& center() const;
@@ -85,7 +68,6 @@ public:
     void setRadius(double radius);
 
 private:
-
     /** The location of the center of the sphere */
     Vector _center;
 
@@ -120,7 +102,7 @@ inline double Sphere::radius() const
 Q_DECLARE_METATYPE(SireMaths::Sphere)
 Q_DECLARE_TYPEINFO(SireMaths::Sphere, Q_MOVABLE_TYPE);
 
-SIRE_EXPOSE_CLASS( SireMaths::Sphere )
+SIRE_EXPOSE_PRIMITIVE( SireMaths::Sphere )
 
 SIRE_END_HEADER
 

@@ -35,22 +35,16 @@ class QString;
 
 #include "SireUnits/dimensions.h"
 
+#include "Siren/primitive.h"
+
 SIRE_BEGIN_HEADER
-
-namespace SireMaths
-{
-class Quaternion;
-}
-
-class QDataStream;
-QDataStream& operator<<(QDataStream&, const SireMaths::Quaternion&);
-QDataStream& operator>>(QDataStream&, SireMaths::Quaternion&);
 
 namespace SireMaths
 {
 
 class Vector;
 class Matrix;
+class Quaternion;
 
 const Quaternion operator+(const Quaternion &p1, const Quaternion &p2);
 const Quaternion operator-(const Quaternion &p1, const Quaternion &p2);
@@ -58,17 +52,12 @@ const Quaternion operator*(const Quaternion &p1, const Quaternion &p2);
 const Quaternion operator*(const Quaternion &p1, const Vector &p2);
 const Quaternion operator*(const Vector &p1, const Quaternion &p2);
 
-/**
-This is a quaternion class that is used to handle 3D rotations and SLERP.
+/** This is a quaternion class that is used to handle 3D rotations and SLERP.
  
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIREMATHS_EXPORT Quaternion
+class SIREMATHS_EXPORT Quaternion : public Siren::Primitive<Quaternion>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Quaternion&);
-friend QDataStream& ::operator>>(QDataStream&, Quaternion&);
-
 public:
     Quaternion();
     Quaternion(const Quaternion& p1);
@@ -78,13 +67,10 @@ public:
     Quaternion(double x, double y, double z, double w);
     
     ~Quaternion();
-    
-    static const char* typeName();
-    
-    const char* what() const
-    {
-        return Quaternion::typeName();
-    }
+
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     double x() const;
     double y() const;
@@ -98,7 +84,6 @@ public:
 
     double dot(const Quaternion &q) const;
 
-    QString toString() const;
     static Quaternion fromString(const QString &str);
 
     Matrix toMatrix() const;
@@ -140,7 +125,7 @@ private:
 Q_DECLARE_METATYPE(SireMaths::Quaternion)
 Q_DECLARE_TYPEINFO(SireMaths::Quaternion, Q_MOVABLE_TYPE);
 
-SIRE_EXPOSE_CLASS( SireMaths::Quaternion )
+SIRE_EXPOSE_PRIMITIVE( SireMaths::Quaternion )
 
 SIRE_END_HEADER
 

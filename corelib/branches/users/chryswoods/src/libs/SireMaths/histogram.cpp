@@ -383,6 +383,11 @@ Histogram::Histogram(const Histogram &other)
 Histogram::~Histogram()
 {}
 
+QString Histogram::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<Histogram>() );
+}
+
 /** Copy assignment operator */
 Histogram& Histogram::operator=(const Histogram &other)
 {

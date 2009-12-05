@@ -583,6 +583,32 @@ void RanGenerator::seedGlobal(const RanGenerator &rangen)
     globalGenerator()->d.reset( new RanGeneratorPvt(*(rangen.d)) );
 }
 
+uint RanGenerator::hashCode() const
+{
+    return qHash( RanGenerator::typeName() );
+}
+
+QString RanGenerator::toString() const
+{
+    return RanGenerator::typeName();
+}
+
+bool RanGenerator::test(Logger &logger) const
+{
+    Tester tester(*this, logger);
+    
+    try
+    {
+        throw Siren::incomplete_code( QObject::tr("NEED SOME TESTS!"), CODELOC );
+    }
+    catch(const Siren::exception &e)
+    {
+        tester.unexpected_error(e);
+    }
+    
+    return tester.allPassed();
+}
+
 void RanGenerator::stream(Stream &s)
 {
     s.assertVersion<RanGenerator>(1);

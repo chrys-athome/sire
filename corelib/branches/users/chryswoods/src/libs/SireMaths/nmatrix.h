@@ -226,7 +226,19 @@ inline int NMatrix::offset(int i, int j) const
 
 }
 
+#include "SireBase/array2d.hpp"
+#include "SireBase/trigarray2d.hpp"
+
+#include "vector.h"
+#include "matrix.h"
+
 Q_DECLARE_METATYPE( SireMaths::NMatrix )
+
+Q_DECLARE_METATYPE( SireBase::Array2D<SireMaths::Vector> )
+Q_DECLARE_METATYPE( SireBase::Array2D<SireMaths::Matrix> )
+
+Q_DECLARE_METATYPE( SireBase::TrigArray2D<SireMaths::Vector> )
+Q_DECLARE_METATYPE( SireBase::TrigArray2D<SireMaths::Matrix> )
 
 SIRE_EXPOSE_CLASS( SireMaths::NMatrix )
 
@@ -239,10 +251,6 @@ SIRE_EXPOSE_ALIAS( SireBase::TrigArray2D<SireMaths::Matrix>,
                    SireBase::TrigArray2D_Matrix_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
-#include "SireBase/array2d.hpp"
-#include "SireBase/trigarray2d.hpp"
-#include "vector.h"
-#include "matrix.h"
 template class SireBase::Array2D<SireMaths::Vector>;
 template class SireBase::Array2D<SireMaths::Matrix>;
 template class SireBase::TrigArray2D<SireMaths::Vector>;

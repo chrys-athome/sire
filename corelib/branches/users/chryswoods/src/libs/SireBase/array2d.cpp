@@ -29,57 +29,22 @@
 #include "array2d.h"
 #include "array2d.hpp"
 
-#include "SireError/errors.h"
-
-#include "SireStream/datastream.h"
+#include "Siren/errors.h"
+#include "Siren/stream.h"
 
 using namespace SireBase;
-using namespace SireStream;
+using namespace Siren;
 
-static const RegisterMetaType<Array2DBase> r_array2d( MAGIC_ONLY,
-                                                      "SireBase::Array2D<T>" );
-                                                      
-/** Serialise to a binary datastream */
-QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds,
-                                        const Array2DBase &array2d)
-{
-    writeHeader(ds, r_array2d, 2);
-    ds << array2d.nrows << array2d.ncolumns;
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds,
-                                        Array2DBase &array2d)
-{
-    VersionID v = readHeader(ds, r_array2d);
-    
-    if (v == 2)
-    {
-        ds >> array2d.nrows >> array2d.ncolumns;
-    }
-    else if (v == 1)
-    {
-        quint32 nrows, ncolumns;
-        ds >> nrows >> ncolumns;
-        
-        array2d.nrows = nrows;
-        array2d.ncolumns = ncolumns;
-    }
-    else
-        throw version_error(v, "1,2", r_array2d, CODELOC);
-    
-    return ds;
-}
+static const RegisterObject<Array2DBase> r_array2d(VIRTUAL_CLASS);
+static const RegisterObject< Array2D<double> > r_array2d_double;
 
 /** Null constructor */
-Array2DBase::Array2DBase() : nrows(0), ncolumns(0)
+Array2DBase::Array2DBase() : Extends<Array2DBase,Object>(), nrows(0), ncolumns(0)
 {}
 
 /** Construct with the specified number of rows and columns */
 Array2DBase::Array2DBase(int nr, int nc)
-            : nrows(nr), ncolumns(nc)
+            : Extends<Array2DBase,Object>(), nrows(nr), ncolumns(nc)
 {
     if (nr < 0)
         nrows = 0;
@@ -90,7 +55,8 @@ Array2DBase::Array2DBase(int nr, int nc)
 
 /** Copy constructor */
 Array2DBase::Array2DBase(const Array2DBase &other)
-            : nrows(other.nrows), ncolumns(other.ncolumns)
+            : Extends<Array2DBase,Object>(other), 
+              nrows(other.nrows), ncolumns(other.ncolumns)
 {}
 
 /** Destructor */
@@ -105,6 +71,23 @@ Array2DBase& Array2DBase::operator=(const Array2DBase &other)
     return *this;
 }
 
+QString Array2DBase::typeName()
+{
+    return "SireBase::Array2DBase";
+}
+
+void Array2DBase::stream(Stream &s)
+{
+    s.assertVersion<Array2DBase>(1);
+    
+    Schema schema = s.item<Array2DBase>();
+    
+    schema.data("nrows") & nrows;
+    schema.data("ncolumns") & ncolumns;
+    
+    Object::stream( schema.base() );
+}
+
 /** Comparison operator */
 bool Array2DBase::operator==(const Array2DBase &other) const
 {
@@ -115,6 +98,11 @@ bool Array2DBase::operator==(const Array2DBase &other) const
 bool Array2DBase::operator!=(const Array2DBase &other) const
 {
     return nrows != other.nrows or ncolumns != other.ncolumns;
+}
+
+uint Array2DBase::hashCode() const
+{
+    return qHash( this->what() ) + qHash(nrows) + qHash(ncolumns);
 }
 
 /** Throw an invalid index exception */

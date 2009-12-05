@@ -37,53 +37,28 @@
 
 #include "SireBase/array2d.hpp"
 
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
+#include "Siren/stream.h"
+#include "Siren/streamqt.h"
 
-#include "SireError/errors.h"
+#include "Siren/errors.h"
 
 using namespace SireMaths;
 using namespace SireBase;
-using namespace SireStream;
+using namespace Siren;
 
-static const RegisterMetaType<TrigMatrix> r_trigmatrix;
-
-/** Serialise to a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const TrigMatrix &matrix)
-{
-    writeHeader(ds, r_trigmatrix, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << matrix.array << matrix.nrows;
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, TrigMatrix &matrix)
-{
-    VersionID v = readHeader(ds, r_trigmatrix);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        
-        sds >> matrix.array >> matrix.nrows;
-    }
-    else
-        throw version_error(v, "1", r_trigmatrix, CODELOC);
-        
-    return ds;
-}
+static const RegisterObject<TrigMatrix> r_trigmatrix;
 
 /** Null constructor */
-TrigMatrix::TrigMatrix() : nrows(0)
+TrigMatrix::TrigMatrix() 
+           : Implements<TrigMatrix,Object>(), Interfaces<TrigMatrix,Mutable>(),
+             nrows(0)
 {}
 
 /** Construct a matrix with dimension 'dimension*dimension'
     The values in the matrix are not initialised */
-TrigMatrix::TrigMatrix(int dimension) : nrows(dimension)
+TrigMatrix::TrigMatrix(int dimension) 
+           : Implements<TrigMatrix,Object>(), Interfaces<TrigMatrix,Mutable>(),
+             nrows(dimension)
 {
     if (nrows <= 0)
     {
@@ -98,7 +73,9 @@ TrigMatrix::TrigMatrix(int dimension) : nrows(dimension)
 
 /** Construct a matrix with dimension 'dimension*dimension'
     The values in the matrix are initialised to 'initial_value' */
-TrigMatrix::TrigMatrix(int dimension, double initial_value) : nrows(dimension)
+TrigMatrix::TrigMatrix(int dimension, double initial_value) 
+           : Implements<TrigMatrix,Object>(), Interfaces<TrigMatrix,Mutable>(),
+             nrows(dimension)
 {
     if (nrows <= 0)
     {
@@ -114,7 +91,9 @@ TrigMatrix::TrigMatrix(int dimension, double initial_value) : nrows(dimension)
 /** Construct from the passed Matrix - if 'take_upper' is true,
     then the upper right diagonal is copied - otherwise the 
     lower left diagonal is taken */
-TrigMatrix::TrigMatrix(const NMatrix &matrix, bool take_upper) : nrows(0)
+TrigMatrix::TrigMatrix(const NMatrix &matrix, bool take_upper) 
+           : Implements<TrigMatrix,Object>(), Interfaces<TrigMatrix,Mutable>(),
+             nrows(0)
 {
     if (matrix.nRows() > 0)
     {
@@ -153,21 +132,17 @@ TrigMatrix::TrigMatrix(const NMatrix &matrix, bool take_upper) : nrows(0)
 
 /** Copy constructor */
 TrigMatrix::TrigMatrix(const TrigMatrix &other)
-        : array(other.array), nrows(other.nrows)
+        : Implements<TrigMatrix,Object>(other), Interfaces<TrigMatrix,Mutable>(),
+          array(other.array), nrows(other.nrows)
 {}
 
 /** Destructor */
 TrigMatrix::~TrigMatrix()
 {}
 
-const char* TrigMatrix::typeName()
+QString TrigMatrix::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<TrigMatrix>() );
-}
-
-const char* TrigMatrix::what() const
-{
-    return TrigMatrix::typeName();
 }
 
 /** Copy assignment operator */
@@ -197,13 +172,13 @@ bool TrigMatrix::operator!=(const TrigMatrix &other) const
 
 /** Assert that the index [i,j] is valid for this matrix
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void TrigMatrix::assertValidIndex(int i, int j) const
 {
     if ( i < 0 or i >= nrows or j < 0 or j >= nrows )
     {
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
             "The index [%1,%2] is invalid for the matrix with dimension [%1,%2].")
                 .arg(i).arg(j).arg(nrows).arg(nrows), CODELOC );
     }
@@ -215,7 +190,7 @@ void TrigMatrix::assertSquare() const
 
 /** Return a modifiable reference to the value at [i,j]
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 double& TrigMatrix::operator()(int i, int j)
 {
@@ -226,7 +201,7 @@ double& TrigMatrix::operator()(int i, int j)
 
 /** Return a reference to the value at [i,j]
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 const double& TrigMatrix::operator()(int i, int j) const
 {
@@ -237,12 +212,12 @@ const double& TrigMatrix::operator()(int i, int j) const
 
 /** Assert that this matrix has 'nrows' rows
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 void TrigMatrix::assertNRows(int nr) const
 {
     if (nr != nrows)
-        throw SireError::incompatible_error( QObject::tr(
+        throw Siren::incompatible_error( QObject::tr(
                 "The number of rows in this matrix (dimension [%1,%2]) is not "
                 "equal to %3.")
                     .arg(nrows).arg(nrows).arg(nr), CODELOC );
@@ -250,12 +225,12 @@ void TrigMatrix::assertNRows(int nr) const
 
 /** Assert that this matrix has 'ncolumns' columns
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 void TrigMatrix::assertNColumns(int nc) const
 {
     if (nc != nrows)
-        throw SireError::incompatible_error( QObject::tr(
+        throw Siren::incompatible_error( QObject::tr(
                 "The number of columns in this matrix (dimension [%1,%2]) is not "
                 "equal to %3.")
                     .arg(nrows).arg(nrows).arg(nc), CODELOC );
@@ -276,7 +251,7 @@ TrigMatrix TrigMatrix::fullTranspose() const
 
 /** Matrix addition 
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 TrigMatrix& TrigMatrix::operator+=(const TrigMatrix &other)
 {
@@ -296,7 +271,7 @@ TrigMatrix& TrigMatrix::operator+=(const TrigMatrix &other)
 
 /** Matrix subtraction 
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 TrigMatrix& TrigMatrix::operator-=(const TrigMatrix &other)
 {
@@ -351,7 +326,7 @@ TrigMatrix& TrigMatrix::operator/=(double scale)
 /** Matrix multiplication - this uses dgemm under the hood
     for speed 
     
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */  
 TrigMatrix& TrigMatrix::operator*=(const TrigMatrix &other)
 {
@@ -364,7 +339,7 @@ TrigMatrix& TrigMatrix::operator*=(const TrigMatrix &other)
     
     This uses LAPACK under the hood, for speed
     
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
     \throw SireMaths::domain_error
 */
 TrigMatrix TrigMatrix::inverse() const
@@ -375,7 +350,7 @@ TrigMatrix TrigMatrix::inverse() const
 /** Matrix division - this multiplies this matrix with the inverse of 'other' 
 
     \throw SireMaths::domain_error
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 TrigMatrix& TrigMatrix::operator/=(const TrigMatrix &other)
 {
@@ -401,7 +376,7 @@ TrigMatrix TrigMatrix::operator-() const
 
 /** Matrix addition 
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 TrigMatrix TrigMatrix::operator+(const TrigMatrix &other) const
 {
@@ -413,7 +388,7 @@ TrigMatrix TrigMatrix::operator+(const TrigMatrix &other) const
 
 /** Matrix subtraction 
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 TrigMatrix TrigMatrix::operator-(const TrigMatrix &other) const
 {
@@ -426,7 +401,7 @@ TrigMatrix TrigMatrix::operator-(const TrigMatrix &other) const
 /** Matrix multiplication - this uses dgemm under the hood
     for speed 
     
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */  
 TrigMatrix TrigMatrix::operator*(const TrigMatrix &other) const
 {
@@ -440,7 +415,7 @@ TrigMatrix TrigMatrix::operator*(const TrigMatrix &other) const
 /** Matrix division - this multiplies this matrix with the inverse of 'other' 
 
     \throw SireMaths::domain_error
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 TrigMatrix TrigMatrix::operator/(const TrigMatrix &other) const
 {
@@ -477,7 +452,7 @@ TrigMatrix TrigMatrix::operator/(double scale) const
 
     This uses dgemv under the hood for speed
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 NVector TrigMatrix::operator*(const NVector &vector) const
 {
@@ -490,7 +465,7 @@ NVector TrigMatrix::operator*(const NVector &vector) const
 
     This uses dgemv under the hood for speed
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 NVector TrigMatrix::operator*(const Vector &vector) const
 {
@@ -538,31 +513,31 @@ void TrigMatrix::redimension(int dimension)
 
 /** Assert that there is an ith row! 
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void TrigMatrix::assertValidRow(int i) const
 {
     if (i < 0 or i >= nrows)
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
                 "The matrix with dimension [%1,%2] does not have a row with index %3.")
                     .arg(nrows).arg(nrows).arg(i), CODELOC );
 }
 
 /** Assert that there is an jth column! 
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void TrigMatrix::assertValidColumn(int j) const
 {
     if (j < 0 or j >= nrows)
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
                 "The matrix with dimension [%1,%2] does not have a column with index %3.")
                     .arg(nrows).arg(nrows).arg(j), CODELOC );
 }
 
 /** Return a vector containing the contents of the ith row 
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 NVector TrigMatrix::row(int i) const
 {
@@ -583,7 +558,7 @@ NVector TrigMatrix::row(int i) const
 
 /** Return a vector containing the contents of the jth column
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 NVector TrigMatrix::column(int j) const
 {
@@ -603,7 +578,7 @@ NVector TrigMatrix::column(int j) const
 
 /** Set the value of [i,j] (and [j,i]) to 'value'
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void TrigMatrix::set(int i, int j, double value)
 {
@@ -612,7 +587,7 @@ void TrigMatrix::set(int i, int j, double value)
 
 /** Set the values of all data in the row 'i' to 'value'
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void TrigMatrix::setRow(int i, double value)
 {
@@ -628,8 +603,8 @@ void TrigMatrix::setRow(int i, double value)
 
 /** Copy the vector 'row' to row 'i'
 
-    \throw SireError::invalid_index
-    \throw SireError::incompatible_error
+    \throw Siren::invalid_index
+    \throw Siren::incompatible_error
 */
 void TrigMatrix::setRow(int i, const NVector &row)
 {
@@ -647,7 +622,7 @@ void TrigMatrix::setRow(int i, const NVector &row)
 
 /** Set the values of all data in the column 'j' to 'value'
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void TrigMatrix::setColumn(int j, double value)
 {
@@ -663,8 +638,8 @@ void TrigMatrix::setColumn(int j, double value)
 
 /** Copy the vector 'column' to column 'j'
 
-    \throw SireError::invalid_index
-    \throw SireError::incompatible_error
+    \throw Siren::invalid_index
+    \throw Siren::incompatible_error
 */
 void TrigMatrix::setColumn(int j, const NVector &column)
 {
@@ -725,7 +700,7 @@ QVector<double> TrigMatrix::memory() const
 /** Calculate the offset in the 1D array of the value
     at index [i,j]
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 int TrigMatrix::checkedOffset(int i, int j) const
 {
@@ -776,11 +751,33 @@ QString TrigMatrix::toString() const
     return rows.join("\n");
 }
 
+uint TrigMatrix::hashCode() const
+{
+    uint hashcode = qHash( TrigMatrix::typeName() ) + qHash(nrows);
+    
+    if (not array.isEmpty())
+        hashcode += qHash( array.at(0) );
+        
+    return hashcode;
+}
+
+void TrigMatrix::stream(Stream &s)
+{
+    s.assertVersion<TrigMatrix>(1);
+    
+    Schema schema = s.item<TrigMatrix>();
+    
+    schema.data("nrows") & nrows;
+    schema.data("array") & array;
+    
+    Object::stream( schema.base() );
+}
+
 /** Return the determinant of this matrix
 
     This uses LAPACK under the hood, for speed
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 double TrigMatrix::determinant() const
 {
@@ -789,7 +786,7 @@ double TrigMatrix::determinant() const
 
 /** Return the trace of this matrix - this is only valid for a square matrix
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 double TrigMatrix::trace() const
 {
@@ -807,7 +804,7 @@ double TrigMatrix::trace() const
 /** Return a vector containing the diagonal of this matrix - this is only
     valid for a square matrix
     
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 NVector TrigMatrix::diagonal() const
 {
@@ -834,7 +831,7 @@ bool TrigMatrix::isTransposed() const
 /** Return the eigenvalues and eigenvectors of this matrix. This
     uses LAPACK under the hood for speed
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
     \throw SireMaths::domain_error
 */
 std::pair<NVector,NMatrix> TrigMatrix::diagonalise() const

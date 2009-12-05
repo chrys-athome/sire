@@ -33,23 +33,12 @@
 
 #include "trigarray2d.h"
 
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
-
-#include "tostring.h"
+#include "Siren/mutable.h"
+#include "Siren/stream.h"
+#include "Siren/streamqt.h"
+#include "Siren/tostring.h"
 
 SIRE_BEGIN_HEADER
-
-namespace SireBase
-{
-template<class T>
-class TrigArray2D;
-}
-
-template<class T>
-QDataStream& operator<<(QDataStream&, const SireBase::TrigArray2D<T>&);
-template<class T>
-QDataStream& operator>>(QDataStream&, SireBase::TrigArray2D<T>&);
 
 namespace SireBase
 {
@@ -70,12 +59,10 @@ namespace SireBase
     @author Christopher Woods
 */
 template<class T>
-class TrigArray2D : public TrigArray2DBase
+class TrigArray2D 
+        : public Siren::Implements<TrigArray2D<T>,TrigArray2DBase>,
+          public Siren::Interfaces<TrigArray2D<T>,Siren::Mutable>
 {
-
-friend QDataStream& ::operator<<<>(QDataStream&, const TrigArray2D<T>&);
-friend QDataStream& ::operator>><>(QDataStream&, TrigArray2D<T>&);
-
 public:
     TrigArray2D();
 
@@ -95,7 +82,10 @@ public:
     T& operator()(int i, int j);
     const T& at(int i, int j) const;
 
+    static QString typeName();
+
     QString toString() const;
+    void stream(Siren::Stream &s);
 
     void set(int i, int j, const T &value);
     void setAll(const T &value);
@@ -110,6 +100,13 @@ public:
 
     TrigArray2D<T> transpose() const;
 
+protected:
+    friend class Siren::Implements<TrigArray2D<T>,TrigArray2DBase>;
+    static QStringList listInterfaces()
+    {
+        return Siren::Interfaces<TrigArray2D<T>,Siren::Mutable>::listInterfaces();
+    }
+
 private:
     /** The 1D array of entries in this TrigArray2D */
     QVector<T> array;
@@ -120,14 +117,18 @@ private:
 /** Construct a null TrigArray2D */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-TrigArray2D<T>::TrigArray2D() : TrigArray2DBase()
+TrigArray2D<T>::TrigArray2D() 
+               : Siren::Implements<TrigArray2D<T>,TrigArray2DBase>(),
+                 Siren::Interfaces<TrigArray2D<T>,Siren::Mutable>()
 {}
 
 /** Construct a TrigArray2D that holds a [dimension,dimension] square
     symmetric matrix of values */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-TrigArray2D<T>::TrigArray2D(int dimension) : TrigArray2DBase(dimension)
+TrigArray2D<T>::TrigArray2D(int dimension) 
+               : Siren::Implements<TrigArray2D<T>,TrigArray2DBase>(dimension),
+                 Siren::Interfaces<TrigArray2D<T>,Siren::Mutable>()
 {
     if (TrigArray2DBase::nRows() > 0)
     {
@@ -143,7 +144,8 @@ TrigArray2D<T>::TrigArray2D(int dimension) : TrigArray2DBase(dimension)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 TrigArray2D<T>::TrigArray2D(int dimension, const T &default_value)
-               : TrigArray2DBase(dimension)
+               : Siren::Implements<TrigArray2D<T>,TrigArray2DBase>(dimension),
+                 Siren::Interfaces<TrigArray2D<T>,Siren::Mutable>()
 {
     if (TrigArray2DBase::nRows() > 0)
     {
@@ -158,7 +160,8 @@ TrigArray2D<T>::TrigArray2D(int dimension, const T &default_value)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 TrigArray2D<T>::TrigArray2D(const TrigArray2D<T> &other)
-               : TrigArray2DBase(other), array(other.array)
+               : Siren::Implements<TrigArray2D<T>,TrigArray2DBase>(other),
+                 Siren::Interfaces<TrigArray2D<T>,Siren::Mutable>(), array(other.array)
 {}
 
 /** Destructor */
@@ -335,7 +338,7 @@ QString TrigArray2D<T>::toString() const
         QStringList row;
         for (int j=0; j<this->nColumns(); ++j)
         {
-            row.append( Sire::toString( this->operator()(0,j) ) );
+            row.append( Siren::toString( this->operator()(0,j) ) );
         }
         
         return QString("( %1 )").arg( row.join(", ") );
@@ -349,7 +352,7 @@ QString TrigArray2D<T>::toString() const
         
         for (int j=0; j<this->nColumns(); ++j)
         {
-            row.append( Sire::toString( this->operator()(i,j) ) );
+            row.append( Siren::toString( this->operator()(i,j) ) );
         }
         
         if (i == 0)
@@ -363,39 +366,31 @@ QString TrigArray2D<T>::toString() const
     return rows.join("\n");
 }
 
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+QString TrigArray2D<T>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< TrigArray2D<T> >() );
+}
+
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+void TrigArray2D<T>::stream(Siren::Stream &s)
+{
+    s.assertVersion< TrigArray2D<T> >(1);
+    
+    Siren::Schema schema = s.item< TrigArray2D<T> >();
+    
+    schema.data("array") & this->array;
+    
+    TrigArray2DBase::stream( schema.base() );
+}
+
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
-/** Serialise to a binary datastream */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds, const SireBase::TrigArray2D<T> &array)
-{
-    SireStream::SharedDataStream sds(ds);
-    
-    sds << static_cast<const SireBase::TrigArray2DBase&>(array)
-        << array.array;
-        
-    return ds;
-}
-
-/** Extract from a binary datastream */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds, SireBase::TrigArray2D<T> &array)
-{
-    SireStream::SharedDataStream sds(ds);
-    
-    sds >> static_cast<SireBase::TrigArray2DBase&>(array)
-        >> array.array;
-        
-    return ds;
-}
-
-#endif //SIRE_SKIP_INLINE_FUNCTIONS
+Q_DECLARE_METATYPE( SireBase::TrigArray2D<double> )
 
 SIRE_EXPOSE_ALIAS( SireBase::TrigArray2D<double>, SireBase::TrigArray2D_double_ )
 

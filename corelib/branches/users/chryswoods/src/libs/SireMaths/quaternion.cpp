@@ -34,39 +34,15 @@
 #include <QRegExp>
 #include <cmath>
 
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
 
 using namespace SireMaths;
-using namespace SireStream;
+using namespace Siren;
 
-static const RegisterMetaType<Quaternion> r_quat;
-
-/** Serialise to a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Quaternion &quat)
-{
-    writeHeader(ds, r_quat, 1)  << quat.sc[0] << quat.sc[1]
-                                << quat.sc[2] << quat.sc[3];
-
-    return ds;
-}
-
-/** Deserialise from a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Quaternion &quat)
-{
-    VersionID v = readHeader(ds, r_quat);
-
-    if (v == 1)
-    {
-        ds >> quat.sc[0] >> quat.sc[1] >> quat.sc[2] >> quat.sc[3];
-    }
-    else
-        throw version_error(v, "1", r_quat, CODELOC);
-
-    return ds;
-}
+static const RegisterPrimitive<Quaternion> r_quat;
 
 /** Construct a null (identity) quaternion */
-Quaternion::Quaternion()
+Quaternion::Quaternion() : Primitive<Quaternion>()
 {
     for (int i=0; i<3; i++)
         sc[i] = 0.0;
@@ -76,6 +52,7 @@ Quaternion::Quaternion()
 
 /** Construct a quaternion from x,y,z,w - this normalises the values, so could be slow */
 Quaternion::Quaternion(double x, double y, double z, double w)
+           : Primitive<Quaternion>()
 {
     sc[0] = x;
     sc[1] = y;
@@ -95,7 +72,7 @@ Quaternion::Quaternion(double x, double y, double z, double w)
 }
 
 /** Copy constructor */
-Quaternion::Quaternion(const Quaternion& p)
+Quaternion::Quaternion(const Quaternion& p) : Primitive<Quaternion>()
 {
     for (int i=0; i<4; i++)
         sc[i] = p.sc[i];
@@ -103,6 +80,7 @@ Quaternion::Quaternion(const Quaternion& p)
 
 /** Construct a quaternion which represents a rotation of 'angle' around 'axis' */
 Quaternion::Quaternion(SireUnits::Dimension::Angle angle, const Vector &axis)
+           : Primitive<Quaternion>()
 {
     //the unit quaternion can be represented by;
     // Q = cos(theta) + u*sin(theta)
@@ -137,13 +115,37 @@ Quaternion::Quaternion(SireUnits::Dimension::Angle angle, const Vector &axis)
 }
 
 /** Construct from a Matrix */
-Quaternion::Quaternion(const Matrix &m)
+Quaternion::Quaternion(const Matrix &m) : Primitive<Quaternion>()
 {
     this->fromMatrix(m);
 }
 
 Quaternion::~Quaternion()
 {}
+
+QString Quaternion::toString() const
+{
+    return QString("( %1, %2, %3, %4 )")
+                .arg(sc[0]).arg(sc[1]).arg(sc[2]).arg(sc[3]);
+}
+
+uint Quaternion::hashCode() const
+{
+    return qHash(Quaternion::typeName()) + 
+           qHash(sc[0]) + qHash(sc[1]) + qHash(sc[2]) + qHash(sc[3]);
+}
+
+void Quaternion::stream(Stream &s)
+{
+    s.assertVersion<Quaternion>(1);
+    
+    Schema schema = s.item<Quaternion>();
+    
+    schema.data("x") & sc[0];
+    schema.data("y") & sc[1];
+    schema.data("z") & sc[2];
+    schema.data("w") & sc[3];
+}
 
 bool Quaternion::isIdentity() const
 {
@@ -267,13 +269,6 @@ void Quaternion::fromMatrix(const Matrix &m)
     }
 
     renormalise();
-}
-
-/** Return a string representation of this Quaternion */
-QString Quaternion::toString() const
-{
-    QString s;
-    return s.sprintf("(%8.3f, %8.3f, %8.3f, %8.3f)",sc[0],sc[1],sc[2],sc[3]);
 }
 
 QRegExp quatregexp("([0-9.-]+),\\s{0,}([0-9.-]+),\\s{0,}([0-9.-]+),\\s{0,}([0-9.-]+)");
@@ -426,11 +421,6 @@ void Quaternion::renormalise()
     sc[1] *= l;
     sc[2] *= l;
     sc[3] *= l;
-}
-
-const char* Quaternion::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Quaternion>() );
 }
 
 /** In-place addition operator */

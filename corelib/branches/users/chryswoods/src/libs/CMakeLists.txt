@@ -7,7 +7,7 @@
 
 # List of each subdirectory
 set ( SUBDIRS 
-           #   SireBase
+              SireBase
            #   SireCAS
            #   SireCluster
            #   SireDB

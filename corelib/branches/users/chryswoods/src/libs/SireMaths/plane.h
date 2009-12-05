@@ -31,18 +31,7 @@
 
 #include "vector.h"
 
-#include "sireglobal.h"
-
 SIRE_BEGIN_HEADER
-
-namespace SireMaths
-{
-class Plane;
-}
-
-class QDataStream;
-QDataStream& operator<<(QDataStream&, const SireMaths::Plane&);
-QDataStream& operator>>(QDataStream&, SireMaths::Plane&);
 
 namespace SireMaths
 {
@@ -53,12 +42,8 @@ namespace SireMaths
  
     @author Christopher Woods
 */
-class SIREMATHS_EXPORT Plane
+class SIREMATHS_EXPORT Plane : public Siren::Primitive<Plane>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Plane&);
-friend QDataStream& ::operator>>(QDataStream&, Plane&);
-
 public:
     Plane();
     Plane(const Vector &normal, const double &distance);
@@ -67,12 +52,14 @@ public:
     Plane(const Plane &other);
     ~Plane();
 
-    static const char* typeName();
+    Plane& operator=(const Plane &other);
     
-    const char* what() const
-    {
-        return Plane::typeName();
-    }
+    bool operator==(const Plane &other) const;
+    bool operator!=(const Plane &other) const;
+    
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     const Vector& normal() const;
     const double& distanceFromOrigin() const;
@@ -85,10 +72,8 @@ public:
     double distance(const Vector &point) const;
 
 private:
-
     Vector norm;
     double dist;
-
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
@@ -142,7 +127,7 @@ inline double Plane::distance(const Vector &point) const
 Q_DECLARE_METATYPE(SireMaths::Plane)
 Q_DECLARE_TYPEINFO(SireMaths::Plane, Q_MOVABLE_TYPE);
 
-SIRE_EXPOSE_CLASS( SireMaths::Plane )
+SIRE_EXPOSE_PRIMITIVE( SireMaths::Plane )
 
 SIRE_END_HEADER
 

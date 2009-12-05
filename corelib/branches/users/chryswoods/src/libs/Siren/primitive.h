@@ -45,14 +45,6 @@ template<class T>
 class Primitive;
 }
 
-template<class T>
-Siren::Stream& operator&(Siren::Stream&, Siren::Primitive<T>&);
-
-template<class T>
-QDataStream& operator<<(QDataStream&, const Siren::Primitive<T>&);
-template<class T>
-QDataStream& operator>>(QDataStream&, Siren::Primitive<T>&);
-
 namespace Siren
 {
 
@@ -513,10 +505,10 @@ uint qHash(const Siren::Primitive<T> &object)
 
 template<class T>
 SIREN_OUTOFLINE_TEMPLATE
-Siren::Stream& operator&(Siren::Stream &s, Siren::Primitive<T> &object)
+Siren::Stream& Siren::Stream::operator&(Siren::Primitive<T> &object)
 {
-    object.stream(s);
-    return s;
+    object.stream(*this);
+    return *this;
 }
 
 template<class T>

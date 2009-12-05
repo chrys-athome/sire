@@ -30,46 +30,22 @@
 
 #include "SireUnits/units.h"
 
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
 
-using namespace SireStream;
+using namespace Siren;
 using namespace SireUnits;
 using namespace SireMaths;
 
-static RegisterMetaType<Torsion> r_torsion;
-
-/** Serialise to a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Torsion &torsion)
-{
-    writeHeader(ds, r_torsion, 1) << torsion.points[0] << torsion.points[1]
-                                  << torsion.points[2] << torsion.points[3];
-
-    return ds;
-}
-
-/** Deserialise from a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Torsion &torsion)
-{
-    VersionID v = readHeader(ds, r_torsion);
-
-    if (v == 1)
-    {
-        ds >> torsion.points[0] >> torsion.points[1]
-           >> torsion.points[2] >> torsion.points[3];
-    }
-    else
-        throw version_error(v, "1", r_torsion, CODELOC);
-
-    return ds;
-}
+static RegisterPrimitive<Torsion> r_torsion;
 
 /** Construct a zero torsion */
-Torsion::Torsion()
+Torsion::Torsion() : Primitive<Torsion>()
 {}
 
 /** Construct a torsion from the points 0 to 4 */
 Torsion::Torsion(const Vector &point0, const Vector &point1,
                  const Vector &point2, const Vector &point3)
+        : Primitive<Torsion>()
 {
     points[0] = point0;
     points[1] = point1;
@@ -81,11 +57,48 @@ Torsion::Torsion(const Vector &point0, const Vector &point1,
 Torsion::~Torsion()
 {}
 
+Torsion& Torsion::operator=(const Torsion &other)
+{
+    if (this != &other)
+    {
+        for (int i=0; i<4; ++i)
+            points[i] = other.points[i];
+    }
+    
+    return *this;
+}
+
+bool Torsion::operator==(const Torsion &other) const
+{
+    return points[0] == other.points[0] and
+           points[1] == other.points[1] and
+           points[2] == other.points[2] and
+           points[3] == other.points[3];
+}
+
 /** Return a string representation of this torsion */
 QString Torsion::toString() const
 {
     return QObject::tr("Torsion: Angle %1 degrees, length03 = %2")
                   .arg(angle().to(degrees)).arg(vector03().length());
+}
+
+uint Torsion::hashCode() const
+{
+    return qHash(Torsion::typeName()) + qHash(points[0])  
+           + qHash(points[1]) + qHash(points[2]) + qHash(points[3]);
+}
+
+void Torsion::stream(Stream &s)
+{
+    s.assertVersion<Torsion>(1);
+    
+    Schema schema = s.item<Torsion>();
+    
+    schema.data("point_0") & points[0];
+    schema.data("point_1") & points[1];
+    schema.data("point_2") & points[2];
+    schema.data("point_3") & points[3];
 }
 
 /** Return the torsion angle of this torsion (the torsion angle 0-1-2-3 
@@ -168,9 +181,4 @@ const Vector& Torsion::operator[] ( int i ) const
 const Vector& Torsion::at( int i ) const
 {
     return this->point(i);
-}
-
-const char* Torsion::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Torsion>() );
 }

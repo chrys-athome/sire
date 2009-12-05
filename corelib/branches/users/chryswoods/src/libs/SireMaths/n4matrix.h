@@ -183,15 +183,16 @@ inline int N4Matrix::offset(int i, int j, int k, int l) const
 
 }
 
+#include "nmatrix.h"
+
 Q_DECLARE_METATYPE( SireMaths::N4Matrix )
+Q_DECLARE_METATYPE( SireBase::Array2D<SireMaths::NMatrix> )
 
 SIRE_EXPOSE_CLASS( SireMaths::N4Matrix )
 
 SIRE_EXPOSE_ALIAS( SireBase::Array2D<SireMaths::NMatrix>, SireBase::Array2D_NMatrix_ )
 
 #ifdef SIRE_INSTANTIATE_TEMPLATES
-#include "SireBase/array2d.hpp"
-#include "nmatrix.h"
 template class SireBase::Array2D<SireMaths::NMatrix>;
 #endif
 

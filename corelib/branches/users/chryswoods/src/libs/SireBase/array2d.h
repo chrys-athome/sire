@@ -31,15 +31,9 @@
 
 #include "sireglobal.h"
 
+#include "Siren/object.h"
+
 SIRE_BEGIN_HEADER
-
-namespace SireBase
-{
-class Array2DBase;
-}
-
-QDataStream& operator<<(QDataStream&, const SireBase::Array2DBase&);
-QDataStream& operator>>(QDataStream&, SireBase::Array2DBase&);
 
 namespace SireBase
 {
@@ -48,14 +42,16 @@ namespace SireBase
 
     @author Christopher Woods
 */
-class SIREMOL_EXPORT Array2DBase
+class SIREMOL_EXPORT Array2DBase 
+            : public Siren::Extends<Array2DBase,Siren::Object>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Array2DBase&);
-friend QDataStream& ::operator>>(QDataStream&, Array2DBase&);
-
 public:
     ~Array2DBase();
+    
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
+    
+    static QString typeName();
     
     int nRows() const;
     int nColumns() const;

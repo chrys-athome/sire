@@ -28,44 +28,21 @@
 
 #include "plane.h"
 
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
 
 using namespace SireMaths;
-using namespace SireStream;
+using namespace Siren;
 
-static const RegisterMetaType<Plane> r_plane;
-
-/** Serialise to a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Plane &plane)
-{
-    writeHeader(ds, r_plane, 1) << plane.norm << plane.dist;
-
-    return ds;
-}
-
-/** Deserialise from a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Plane &plane)
-{
-    VersionID v = readHeader(ds, r_plane);
-
-    if (v == 1)
-    {
-        ds >> plane.norm >> plane.dist;
-    }
-    else
-        throw version_error(v, "1",  r_plane, CODELOC);
-
-    return ds;
-}
+static const RegisterPrimitive<Plane> r_plane;
 
 /** Construct a default plane - this is the x/y plane, lying at the origin */
-Plane::Plane() : norm(0.0,0.0,1.0), dist(0.0)
+Plane::Plane() : Primitive<Plane>(), norm(0.0,0.0,1.0), dist(0.0)
 {}
 
 /** Construct the plane lying perpendicular to 'normal' and at a distance of 'dist'
     from the origin */
 Plane::Plane(const Vector &normal, const double &distance)
-      : dist(distance)
+      : Primitive<Plane>(), dist(distance)
 {
     //normalise the normal
     try
@@ -82,6 +59,7 @@ Plane::Plane(const Vector &normal, const double &distance)
 /** Construct a plane that lies perpendicular to 'normal' and that also contains
     the point 'contains_point' */
 Plane::Plane(const Vector &normal, const Vector &contains_point)
+      : Primitive<Plane>()
 {
     //normalise the normal
     try
@@ -102,7 +80,7 @@ Plane::Plane(const Vector &normal, const Vector &contains_point)
 
 /** Construct the plane that fulfills the equation "ax + by + cz + d = 0" */
 Plane::Plane(const double &a, const double &b, const double &c, const double &d)
-      : norm(a,b,c), dist(d)
+      : Primitive<Plane>(), norm(a,b,c), dist(d)
 {
     double lgth = norm.length();
 
@@ -121,14 +99,42 @@ Plane::Plane(const double &a, const double &b, const double &c, const double &d)
 }
 
 /** Copy constructor */
-Plane::Plane(const Plane &other) : norm(other.norm), dist(other.dist)
+Plane::Plane(const Plane &other) : Primitive<Plane>(), norm(other.norm), dist(other.dist)
 {}
 
 /** Destructor */
 Plane::~Plane()
 {}
 
-const char* Plane::typeName()
+Plane& Plane::operator=(const Plane &other)
 {
-    return QMetaType::typeName( qMetaTypeId<Plane>() );
+    norm = other.norm;
+    dist = other.dist;
+    return *this;
+}
+
+bool Plane::operator==(const Plane &other) const
+{
+    return norm == other.norm and dist == other.dist;
+}
+
+QString Plane::toString() const
+{
+    return QObject::tr("Plane( [%1,%2,%3] : %4 )")
+                .arg(norm.x()).arg(norm.y()).arg(norm.z()).arg(dist);
+}
+
+uint Plane::hashCode() const
+{
+    return qHash(Plane::typeName()) + qHash(norm) + qHash(dist);
+}
+
+void Plane::stream(Stream &s)
+{
+    s.assertVersion<Plane>(1);
+    
+    Schema schema = s.item<Plane>();
+    
+    schema.data("normal") & norm;
+    schema.data("distance") & dist;
 }

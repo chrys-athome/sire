@@ -48,6 +48,8 @@ using namespace SireBase;
 using namespace Siren;
 
 static const RegisterObject<NMatrix> r_nmatrix;
+static const RegisterObject< Array2D<Vector> > r_array2d_vector;
+static const RegisterObject< Array2D<Matrix> > r_array2d_matrix;
 
 /** Null constructor */
 NMatrix::NMatrix() 

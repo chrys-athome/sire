@@ -32,7 +32,7 @@
 
 #include <cmath>
 
-#include "SireError/errors.h"
+#include "Siren/errors.h"
 #include "SireMaths/errors.h"
 
 #ifndef SIRE_DISABLE_FORTRAN

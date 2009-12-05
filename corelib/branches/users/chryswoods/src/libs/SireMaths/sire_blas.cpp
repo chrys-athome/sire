@@ -30,7 +30,7 @@
 #include "nvector.h"
 #include "nmatrix.h"
 
-#include "SireError/errors.h"
+#include "Siren/errors.h"
 
 #ifndef SIRE_DISABLE_FORTRAN
 
@@ -74,7 +74,7 @@ namespace SireMaths
 NVector SIREMATHS_EXPORT dgemv(const NMatrix &A, const NVector &X)
 {
     #ifdef SIRE_DISABLE_FORTRAN
-    throw SireError::unsupported( QObject::tr(
+    throw Siren::unsupported( QObject::tr(
             "dgemv not available as BLAS does not work with this version of Sire."),
                     CODELOC );
 
@@ -125,7 +125,7 @@ NVector SIREMATHS_EXPORT dgemv(double alpha, const NMatrix &A, const NVector &X,
                                double beta, const NVector &Y)
 {
     #ifdef SIRE_DISABLE_FORTRAN
-    throw SireError::unsupported( QObject::tr(
+    throw Siren::unsupported( QObject::tr(
             "dgemv not available as BLAS does not work with this version of Sire."),
                     CODELOC );
 
@@ -179,7 +179,7 @@ NVector SIREMATHS_EXPORT dgemv(double alpha, const NMatrix &A, const NVector &X,
 NMatrix SIREMATHS_EXPORT dgemm(const NMatrix &A, const NMatrix &B)
 {
     #ifdef SIRE_DISABLE_FORTRAN
-    throw SireError::unsupported( QObject::tr(
+    throw Siren::unsupported( QObject::tr(
             "dgemm not available as BLAS does not work with this version of Sire."),
                     CODELOC );
 
@@ -244,7 +244,7 @@ NMatrix dgemm(double alpha, const NMatrix &A, const NMatrix &B,
               double beta, const NMatrix &C)
 {
     #ifdef SIRE_DISABLE_FORTRAN
-    throw SireError::unsupported( QObject::tr(
+    throw Siren::unsupported( QObject::tr(
             "dgemm not available as BLAS does not work with this version of Sire."),
                     CODELOC );
 

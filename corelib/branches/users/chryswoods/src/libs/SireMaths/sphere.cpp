@@ -28,42 +28,20 @@
 
 #include "sphere.h"
 
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
 
-using namespace SireStream;
+using namespace Siren;
 using namespace SireMaths;
 
-static const RegisterMetaType<Sphere> r_sphere;
-
-/** Serialise to a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator<<(QDataStream &ds, const Sphere &sphere)
-{
-    writeHeader(ds, r_sphere, 1) << sphere._center << sphere._radius;
-
-    return ds;
-}
-
-/** Deserialise from a binary data stream */
-QDataStream SIREMATHS_EXPORT &operator>>(QDataStream &ds, Sphere &sphere)
-{
-    VersionID v = readHeader(ds, r_sphere);
-
-    if (v == 1)
-    {
-        ds >> sphere._center >> sphere._radius;
-    }
-    else
-        throw version_error(v, "1", r_sphere, CODELOC);
-
-    return ds;
-}
+static const RegisterPrimitive<Sphere> r_sphere;
 
 /** Create a default sphere, centered on the origin with zero radius */
-Sphere::Sphere() : _center(0.0), _radius(0.0)
+Sphere::Sphere() : Primitive<Sphere>(), _center(0.0), _radius(0.0)
 {}
 
 /** Create a sphere with radius 'radius', centered on the origin */
-Sphere::Sphere(const double &radius) : _center(0.0), _radius(radius)
+Sphere::Sphere(const double &radius) 
+       : Primitive<Sphere>(), _center(0.0), _radius(radius)
 {
     if (radius < 0.0)
         _radius = -radius;
@@ -71,7 +49,7 @@ Sphere::Sphere(const double &radius) : _center(0.0), _radius(radius)
 
 /** Create a sphere centered at 'position' and with radius 'radius' */
 Sphere::Sphere(const Vector &position, const double &radius)
-       : _center(position), _radius(radius)
+       : Primitive<Sphere>(), _center(position), _radius(radius)
 {
     if (radius < 0.0)
         _radius = -radius;
@@ -79,12 +57,19 @@ Sphere::Sphere(const Vector &position, const double &radius)
 
 /** Copy constructor */
 Sphere::Sphere(const Sphere &other)
-       : _center(other._center), _radius(other._radius)
+       : Primitive<Sphere>(), _center(other._center), _radius(other._radius)
 {}
 
 /** Destructor */
 Sphere::~Sphere()
 {}
+
+Sphere& Sphere::operator=(const Sphere &other)
+{
+    _radius = other._radius;
+    _center = other._center;
+    return *this;
+}
 
 /** Comparison operator */
 bool Sphere::operator==(const Sphere &other) const
@@ -119,7 +104,24 @@ void Sphere::setRadius(double radius)
         _radius = 0.0;
 }
 
-const char* Sphere::typeName()
+QString Sphere::toString() const
 {
-    return QMetaType::typeName( qMetaTypeId<Sphere>() );
+    return QObject::tr("Sphere( center:[%1,%2,%3], radius:%4 )")
+                .arg(_center.x()).arg(_center.y()).arg(_center.z())
+                .arg(_radius);
+}
+
+uint Sphere::hashCode() const
+{
+    return qHash(Sphere::typeName()) + qHash(_center) + qHash(_radius);
+}
+
+void Sphere::stream(Stream &s)
+{
+    s.assertVersion<Sphere>(1);
+    
+    Schema schema = s.item<Sphere>();
+    
+    schema.data("center") & _center;
+    schema.data("radius") & _radius;
 }

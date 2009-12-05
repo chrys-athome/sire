@@ -30,20 +30,14 @@
 #define SIREMATHS_TRIGMATRIX_H
 
 #include <QVector>
+#include <utility>
 
 #include "sireglobal.h"
 
-#include <utility>
+#include "Siren/object.h"
+#include "Siren/mutable.h"
 
 SIRE_BEGIN_HEADER
-
-namespace SireMaths
-{
-class TrigMatrix;
-}
-
-QDataStream& operator<<(QDataStream&, const SireMaths::TrigMatrix&);
-QDataStream& operator>>(QDataStream&, SireMaths::TrigMatrix&);
 
 namespace SireMaths
 {
@@ -90,12 +84,10 @@ class Vector;
     
     @author Christopher Woods
 */
-class SIREMATHS_EXPORT TrigMatrix
+class SIREMATHS_EXPORT TrigMatrix 
+        : public Siren::Implements<TrigMatrix,Siren::Object>,
+          public Siren::Interfaces<TrigMatrix,Siren::Mutable>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const TrigMatrix&);
-friend QDataStream& ::operator>>(QDataStream&, TrigMatrix&);
-
 public:
     TrigMatrix();
     
@@ -108,9 +100,7 @@ public:
     
     ~TrigMatrix();
     
-    static const char* typeName();
-    
-    const char* what() const;
+    static QString typeName();
     
     TrigMatrix& operator=(const TrigMatrix &other);
     
@@ -172,6 +162,8 @@ public:
     void redimension(int dimension);
     
     QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     double determinant() const;
     double trace() const;
@@ -197,6 +189,13 @@ public:
 
     void assertSquare() const;
 
+protected:
+    friend class Siren::Implements<TrigMatrix,Siren::Object>;
+    static QStringList listInterfaces()
+    {
+        return Siren::Interfaces<TrigMatrix,Siren::Mutable>::listInterfaces();
+    }
+
 private:
     /** The raw data for the matrix */
     QVector<double> array;
@@ -204,6 +203,8 @@ private:
     /** The number of rows in the matrix (square matrix!) */
     qint32 nrows;
 };
+
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 /** Return the offset into the 1D array for the value
     at index [i,j] - note that this performs *NO* checking,
@@ -230,6 +231,8 @@ inline int TrigMatrix::size() const
 {
 	return TrigMatrix::count();
 }
+
+#endif // SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

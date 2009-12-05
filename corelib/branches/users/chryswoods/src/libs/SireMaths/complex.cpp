@@ -48,6 +48,17 @@ Complex::Complex(const Complex &other) : Primitive<Complex>(), z(other.z)
 Complex::~Complex()
 {}
 
+uint Complex::hashCode() const
+{
+    return qHash( Complex::typeName() ) + 
+           qHash(z.real()) + qHash(z.imag());
+}
+
+const std::complex<double>& Complex::toStdComplex() const
+{
+    return z;
+}
+
 void Complex::stream(Stream &s)
 {
     s.assertVersion<Complex>(1);

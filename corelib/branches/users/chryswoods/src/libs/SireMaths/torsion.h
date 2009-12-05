@@ -39,46 +39,32 @@ SIRE_BEGIN_HEADER
 
 namespace SireMaths
 {
-class Torsion;
-}
-
-class QDataStream;
-QDataStream& operator<<(QDataStream&, const SireMaths::Torsion&);
-QDataStream& operator>>(QDataStream&, SireMaths::Torsion&);
-
-namespace SireMaths
-{
 
 using SireUnits::Dimension::Angle;
 
-/**
-This class represents a torsion in three dimensional space, e.g. four points 
-in space, not necessarily lying in a plane. A torsion is used to calculate 
-dihedral angles (imagine each point is an atom). I am not happy with the 
-name of this class, and welcome suggestions :-)
+/** This class represents a torsion in three dimensional space, e.g. four points 
+    in space, not necessarily lying in a plane. A torsion is used to calculate 
+    dihedral angles (imagine each point is an atom). I am not happy with the 
+    name of this class, and welcome suggestions :-)
  
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIREMATHS_EXPORT Torsion
+class SIREMATHS_EXPORT Torsion : public Siren::Primitive<Torsion>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Torsion&);
-friend QDataStream& ::operator>>(QDataStream&, Torsion&);
-
 public:
     Torsion();
     Torsion( const Vector &point0, const Vector &point1,
              const Vector &point2, const Vector &point3 );
     ~Torsion();
+
+    Torsion& operator=(const Torsion &other);
     
-    static const char* typeName();
-    
-    const char* what() const
-    {
-        return Torsion::typeName();
-    }
+    bool operator==(const Torsion &other) const;
+    bool operator!=(const Torsion &other) const;
 
     QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     Angle angle() const;
 
@@ -109,7 +95,7 @@ private:
 Q_DECLARE_METATYPE(SireMaths::Torsion)
 Q_DECLARE_TYPEINFO(SireMaths::Torsion, Q_MOVABLE_TYPE);
 
-SIRE_EXPOSE_CLASS( SireMaths::Torsion )
+SIRE_EXPOSE_PRIMITIVE( SireMaths::Torsion )
 
 SIRE_END_HEADER
 

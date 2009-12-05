@@ -29,49 +29,22 @@
 #include "trigarray2d.h"
 #include "trigarray2d.hpp"
 
-#include "SireError/errors.h"
-
-#include "SireStream/datastream.h"
+#include "Siren/errors.h"
+#include "Siren/stream.h"
 
 using namespace SireBase;
-using namespace SireStream;
+using namespace Siren;
 
-static const RegisterMetaType<TrigArray2DBase> r_array2d( MAGIC_ONLY,
-                                                          "SireBase::TrigArray2D<T>" );
-                                                      
-/** Serialise to a binary datastream */
-QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds,
-                                        const TrigArray2DBase &array2d)
-{
-    writeHeader(ds, r_array2d, 1);
-    ds << array2d.dim;
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds,
-                                        TrigArray2DBase &array2d)
-{
-    VersionID v = readHeader(ds, r_array2d);
-    
-    if (v == 1)
-    {
-        ds >> array2d.dim;
-    }
-    else
-        throw version_error(v, "1", r_array2d, CODELOC);
-    
-    return ds;
-}
+static const RegisterObject<TrigArray2DBase> r_array2d(VIRTUAL_CLASS);
+static const RegisterObject< TrigArray2D<double> > r_array2d_double;
 
 /** Null constructor */
-TrigArray2DBase::TrigArray2DBase() : dim(0)
+TrigArray2DBase::TrigArray2DBase() : Extends<TrigArray2DBase,Object>(), dim(0)
 {}
 
 /** Construct with the specified dimension [dim,dim] */
 TrigArray2DBase::TrigArray2DBase(int dimension)
-            : dim(dimension)
+            : Extends<TrigArray2DBase,Object>(), dim(dimension)
 {
     if (dimension < 0)
         dim = 0;
@@ -79,12 +52,33 @@ TrigArray2DBase::TrigArray2DBase(int dimension)
 
 /** Copy constructor */
 TrigArray2DBase::TrigArray2DBase(const TrigArray2DBase &other)
-                : dim(other.dim)
+                : Extends<TrigArray2DBase,Object>(other), dim(other.dim)
 {}
 
 /** Destructor */
 TrigArray2DBase::~TrigArray2DBase()
 {}
+
+QString TrigArray2DBase::typeName()
+{
+    return "SireBase::TrigArray2DBase";
+}
+
+uint TrigArray2DBase::hashCode() const
+{
+    return qHash( TrigArray2DBase::typeName() ) + qHash(dim);
+}
+
+void TrigArray2DBase::stream(Stream &s)
+{
+    s.assertVersion<TrigArray2DBase>(1);
+    
+    Schema schema = s.item<TrigArray2DBase>();
+    
+    schema.data("dimension") & dim;
+    
+    Object::stream( schema.base() );
+}
 
 /** Copy assignment operator */
 TrigArray2DBase& TrigArray2DBase::operator=(const TrigArray2DBase &other)

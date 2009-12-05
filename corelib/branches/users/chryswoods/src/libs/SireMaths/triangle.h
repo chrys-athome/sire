@@ -38,29 +38,15 @@ SIRE_BEGIN_HEADER
 
 namespace SireMaths
 {
-class Triangle;
-}
-
-class QDataStream;
-QDataStream& operator<<(QDataStream&, const SireMaths::Triangle&);
-QDataStream& operator>>(QDataStream&, SireMaths::Triangle&);
-
-namespace SireMaths
-{
 
 using SireUnits::Dimension::Angle;
 
-/**
-This class represents a triangle in three-dimensional space. (or three points)
+/** This class represents a triangle in three-dimensional space. (or three points)
  
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIREMATHS_EXPORT Triangle
+class SIREMATHS_EXPORT Triangle : public Siren::Primitive<Triangle>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Triangle&);
-friend QDataStream& ::operator>>(QDataStream&, Triangle&);
-
 public:
     Triangle();
     Triangle(const Vector &point0, const Vector &point1, 
@@ -70,14 +56,13 @@ public:
     
     ~Triangle();
 
-    static const char* typeName();
+    Triangle& operator=(const Triangle &other);
     
-    const char* what() const
-    {
-        return Triangle::typeName();
-    }
+    bool operator==(const Triangle &other) const;
 
     QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     Angle angle() const;
     
@@ -102,7 +87,6 @@ public:
     const Vector& at(int i) const;
 
 private:
-
     /** The three points that make up the triangle */
     Vector points[3];
 };
@@ -207,7 +191,7 @@ inline Angle Triangle::angle() const
 Q_DECLARE_METATYPE(SireMaths::Triangle)
 Q_DECLARE_TYPEINFO(SireMaths::Triangle, Q_MOVABLE_TYPE);
 
-SIRE_EXPOSE_CLASS( SireMaths::Triangle )
+SIRE_EXPOSE_PRIMITIVE( SireMaths::Triangle )
 
 SIRE_END_HEADER
 
