@@ -400,6 +400,11 @@ quint64 MemInfo::mMappedBytes() const
         return resource().mMappedBytes();
 }
 
+uint MemInfo::hashCode() const
+{
+    return qHash( MemInfo::typeName() );
+}
+
 /** Return the total number of bytes in use by the program. This number
     will be less than or equal to the number of bytes returned by "allocatedBytes".
     This will be less if memory fragmentation means that pages of memory are

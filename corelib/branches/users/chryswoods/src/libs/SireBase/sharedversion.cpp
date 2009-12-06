@@ -69,6 +69,21 @@ bool SharedVersion::operator==(const SharedVersion &other) const
     return Handles<VersionData>::operator==(other);
 }
 
+bool SharedVersion::operator!=(const SharedVersion &other) const
+{
+    return not SharedVersion::operator==(other);
+}
+
+uint SharedVersion::hashCode() const
+{
+    return qHash( SharedVersion::typeName() ) + qHash(v);
+}
+
+QString SharedVersion::toString() const
+{
+    return v.toString();
+}
+
 /** Increment the major version number - this resets the 
     minor version number to 0 */
 void SharedVersion::incrementMajor()

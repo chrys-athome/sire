@@ -192,6 +192,8 @@ public:
 
     const T* operator->() const;
     const T& operator*() const;
+
+    static QString typeName();
     
     const T& read() const;
     T& edit();
@@ -246,6 +248,8 @@ public:
 
     const T* data() const;
     const T* constData() const;
+    
+    static QString typeName();
     
     operator const T&() const;
 
@@ -350,6 +354,13 @@ ObjPtr<T>& ObjPtr<T>::operator=(const ObjPtrBase &object)
     return this->operator=( ObjPtr<T>(object) );
 }
 
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+QString ObjPtr<T>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< ObjPtr<T> >() );
+}
+
 /** Return a reference to the object */
 template<class T>
 SIREN_OUTOFLINE_TEMPLATE
@@ -416,6 +427,27 @@ SIREN_OUTOFLINE_TEMPLATE
 ObjPtr<T>::operator const T&() const
 {
     return this->read();
+}
+
+template<class T>
+Siren::Stream& Siren::Stream::operator&(Siren::ObjPtr<T> &object)
+{
+    this->assertVersion("Siren::ObjPtr", 1);
+
+    if (this->isLoading())
+    {
+        Siren::ObjRef objref;
+        *this >> objref;
+        
+        object = objref;
+    }
+    else
+    {
+        Siren::ObjRef objref = object;
+        *this << objref;
+    }
+
+    return *this;
 }
 
 //////
@@ -563,6 +595,34 @@ GlobalObjPtr<T>::operator const T&() const
     return this->read();
 }
 
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+QString GlobalObjPtr<T>::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId< GlobalObjPtr<T> >() );
+}
+
+template<class T>
+Stream& Stream::operator&(GlobalObjPtr<T> &object)
+{
+    this->assertVersion("Siren::GlobalObjPtr", 1);
+    
+    if (this->isLoading())
+    {
+        Siren::ObjRef objref;
+        *this >> objref;
+        
+        object = objref;
+    }
+    else
+    {
+        Siren::ObjRef objref = object;
+        *this << objref;
+    }
+    
+    return *this;
+}
+
 #endif // SIREN_SKIP_INLINE_FUNCTIONS
 
 typedef ObjPtr<Object> ObjectPtr;
@@ -570,51 +630,8 @@ typedef GlobalObjPtr<Object> GlobalObjectPtr;
 
 }
 
-#ifndef SIREN_SKIP_INLINE_FUNCTIONS
-
-template<class T>
-Siren::Stream& operator&(Siren::Stream &s, Siren::ObjPtr<T> &object)
-{
-    s.assertVersion("Siren::ObjPtr", 1);
-
-    if (s.isLoading())
-    {
-        Siren::ObjRef objref;
-        s >> objref;
-        
-        object = objref;
-    }
-    else
-    {
-        Siren::ObjRef objref = object;
-        s << objref;
-    }
-
-    return s;
-}
-
-template<class T>
-Siren::Stream& operator&(Siren::Stream &s, Siren::GlobalObjPtr<T> &object)
-{
-    s.assertVersion("Siren::GlobalObjPtr", 1);
-    
-    if (s.isLoading())
-    {
-        Siren::ObjRef objref;
-        s >> objref;
-        
-        object = objref;
-    }
-    else
-    {
-        Siren::ObjRef objref = object;
-        s << objref;
-    }
-    
-    return s;
-}
-
-#endif // SIREN_SKIP_INLINE_FUNCTIONS
+Q_DECLARE_METATYPE( Siren::ObjectPtr )
+Q_DECLARE_METATYPE( Siren::GlobalObjectPtr )
 
 SIREN_EXPOSE_OBJECT_PTR( Siren::ObjectPtr, Siren::Object )
 

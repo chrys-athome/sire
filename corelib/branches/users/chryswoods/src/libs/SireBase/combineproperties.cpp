@@ -31,56 +31,23 @@
 
 #include "SireID/index.h"
 
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
+#include "Siren/objref.h"
+#include "Siren/stream.h"
+#include "Siren/streamqt.h"
 
 using namespace SireBase;
 using namespace SireID;
-using namespace SireStream;
+using namespace Siren;
 
-static const RegisterMetaType<CombineProperties> r_combineprops( MAGIC_ONLY,
-                                                    CombineProperties::typeName() );
-                                                    
-/** Serialise to a binary datastream */
-QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds,
-                                        const CombineProperties &combineprops)
-{
-    writeHeader(ds, r_combineprops, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << combineprops.property_sources << combineprops.combined_property
-        << static_cast<const Property&>(combineprops);
-        
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds,
-                                        CombineProperties &combineprops)
-{
-    VersionID v = readHeader(ds, r_combineprops);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        
-        sds >> combineprops.property_sources >> combineprops.combined_property
-            >> static_cast<Property&>(combineprops);
-    }
-    else
-        throw version_error( v, "1", r_combineprops, CODELOC );
-        
-    return ds;
-}
+static const RegisterObject<CombineProperties> r_combineprops( VIRTUAL_CLASS );
 
 /** Constructor */
-CombineProperties::CombineProperties() : Property()
+CombineProperties::CombineProperties() : Extends<CombineProperties,Object>()
 {}
 
 /** Construct for just the single passed property */
 CombineProperties::CombineProperties(const PropertyName &source)
-                  : Property()
+                  : Extends<CombineProperties,Object>()
 {
     if (not source.isNull())
     {
@@ -136,7 +103,7 @@ QVector<PropertyName> combine_properties(const T &props)
 /** Construct to combine just the passed two properties */
 CombineProperties::CombineProperties(const PropertyName &property0,
                                      const PropertyName &property1)
-                  : Property()
+                  : Extends<CombineProperties,Object>()
 {
     QVector<PropertyName> props(2);
     props[0] = property0;
@@ -147,27 +114,31 @@ CombineProperties::CombineProperties(const PropertyName &property0,
                   
 /** Construct to combine together the list of passed properties */
 CombineProperties::CombineProperties(const QList<PropertyName> &properties)
-                  : Property(), property_sources( ::combine_properties(properties) )
+                  : Extends<CombineProperties,Object>(), 
+                    property_sources( ::combine_properties(properties) )
 {}
 
 /** Construct to combine together the list of passed properties */
 CombineProperties::CombineProperties(const QList<QString> &properties)
-                  : Property(), property_sources( ::combine_properties(properties) )
+                  : Extends<CombineProperties,Object>(), 
+                    property_sources( ::combine_properties(properties) )
 {}
 
 /** Construct to combine together the list of passed properties */
 CombineProperties::CombineProperties(const QVector<PropertyName> &properties)
-                  : Property(), property_sources( ::combine_properties(properties) )
+                  : Extends<CombineProperties,Object>(), 
+                    property_sources( ::combine_properties(properties) )
 {}
 
 /** Construct to combine together the list of passed properties */
 CombineProperties::CombineProperties(const QVector<QString> &properties)
-                  : Property(), property_sources( ::combine_properties(properties) )
+                  : Extends<CombineProperties,Object>(), 
+                    property_sources( ::combine_properties(properties) )
 {}
 
 /** Copy constructor */
 CombineProperties::CombineProperties(const CombineProperties &other)
-                  : Property(other), 
+                  : Extends<CombineProperties,Object>(other), 
                     property_sources(other.property_sources),
                     combined_property(other.combined_property)
 {}
@@ -183,7 +154,6 @@ CombineProperties& CombineProperties::operator=(const CombineProperties &other)
     {
         property_sources = other.property_sources;
         combined_property = other.combined_property;
-        Property::operator=(other);
     }
     
     return *this;
@@ -194,14 +164,30 @@ bool CombineProperties::operator==(const CombineProperties &other) const
 {
     return this == &other or
            ( property_sources == other.property_sources and
-             combined_property == other.combined_property and
-             Property::operator==(other) );
+             combined_property == other.combined_property );
 }
 
 /** Comparison operator */
 bool CombineProperties::operator!=(const CombineProperties &other) const
 {
     return not this->operator==(other);
+}
+
+QString CombineProperties::typeName()
+{
+    return "SireBase::CombineProperties";
+}
+
+void CombineProperties::stream(Stream &s)
+{
+    s.assertVersion<CombineProperties>(1);
+    
+    Schema schema = s.item<CombineProperties>();
+    
+    schema.data("sources") & property_sources;
+    schema.data("combined_property") & combined_property;
+    
+    Object::stream( schema.base() );
 }
 
 /** Return the ith property source 
@@ -278,13 +264,13 @@ CombineProperties::const_iterator CombineProperties::end() const
 
 /** Return the combined property. This will be null if this property
     has not been updated, or if there are no properties to combine */
-const Property& CombineProperties::combinedProperty() const
+const Object& CombineProperties::combinedProperty() const
 {
     return combined_property;
 }
 
 /** Internal function used to set the combined property */
-void CombineProperties::setCombinedProperty(const Property &property)
+void CombineProperties::setCombinedProperty(const Object &property)
 {
     combined_property = property;
 }

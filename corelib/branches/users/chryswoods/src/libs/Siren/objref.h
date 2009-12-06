@@ -121,6 +121,14 @@ private:
 
 #ifndef SIREN_SKIP_INLINE_FUNCTIONS
 
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+ObjRef::ObjRef( const ObjPtr<T> &ptr )
+{
+    if (not ptr.isNull())
+        this->operator=( *ptr );
+}
+
 /** Return whether or not this object is an object of type 'T' */
 template<class T>
 SIREN_INLINE_TEMPLATE

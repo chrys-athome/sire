@@ -29,25 +29,13 @@
 #ifndef SIREBASE_PROPERTIES_H
 #define SIREBASE_PROPERTIES_H
 
-#include "property.h"
 #include "propertymap.h"
 
 #include <QSharedDataPointer>
 
 SIRE_BEGIN_HEADER
 
-namespace SireBase
-{
-class Properties;
-}
-
-QDataStream& operator<<(QDataStream&, const SireBase::Properties&);
-QDataStream& operator>>(QDataStream&, SireBase::Properties&);
-
-XMLStream& operator<<(XMLStream&, const SireBase::Properties&);
-XMLStream& operator>>(XMLStream&, SireBase::Properties&);
-
-QTextStream& operator<<(QTextStream&, const SireBase::Properties&);
+namespace Siren{ namespace detail{ template<class T> class StreamHelper; } }
 
 namespace SireBase
 {
@@ -65,20 +53,11 @@ class PropertiesData;
 
     @author Christopher Woods
 */
-class SIREBASE_EXPORT Properties : public ConcreteProperty<Properties,Property>
+class SIREBASE_EXPORT Properties : public Siren::Implements<Properties,Siren::Object>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Properties&);
-friend QDataStream& ::operator>>(QDataStream&, Properties&);
-
-friend XMLStream& ::operator<<(XMLStream&, const Properties&);
-friend XMLStream& ::operator>>(XMLStream&, Properties&);
-
-friend class detail::PropertiesData; // so can call private constructor
-
 public:
-    typedef QHash<QString,PropertyPtr>::const_iterator const_iterator;
-    typedef QHash<QString,PropertyPtr>::const_iterator iterator;
+    typedef QHash<QString,Siren::ObjectPtr>::const_iterator const_iterator;
+    typedef QHash<QString,Siren::ObjectPtr>::const_iterator iterator;
 
     Properties();
 
@@ -91,15 +70,14 @@ public:
     bool operator==(const Properties &other) const;
     bool operator!=(const Properties &other) const;
 
-    static const char* typeName()
-    {
-        return "SireBase::Properties";
-    }
-
-    const Property& operator[](const PropertyName &key) const;
+    const Object& operator[](const PropertyName &key) const;
 
     bool isEmpty() const;
 
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &s);
+    
     QStringList propertyKeys() const;
     
     QStringList metadataKeys() const;
@@ -123,31 +101,31 @@ public:
     const_iterator end() const;
     const_iterator constEnd() const;
 
-    const Property& property(const PropertyName &key) const;
-    const Property& property(const PropertyName &key,
-                             const Property &default_value) const;
+    const Siren::Object& property(const PropertyName &key) const;
+    const Siren::Object& property(const PropertyName &key,
+                                  const Siren::Object &default_value) const;
     
-    const Property& metadata(const PropertyName &metakey) const;
-    const Property& metadata(const PropertyName &metakey,
-                             const Property &default_value) const;
+    const Siren::Object& metadata(const PropertyName &metakey) const;
+    const Siren::Object& metadata(const PropertyName &metakey,
+                                  const Siren::Object &default_value) const;
     
-    const Property& metadata(const PropertyName &key,
-                             const PropertyName &metakey) const;
-    const Property& metadata(const PropertyName &key,
-                             const PropertyName &metakey,
-                             const Property &default_value) const;
+    const Siren::Object& metadata(const PropertyName &key,
+                                  const PropertyName &metakey) const;
+    const Siren::Object& metadata(const PropertyName &key,
+                                  const PropertyName &metakey,
+                                  const Siren::Object &default_value) const;
 
     const Properties& allMetadata() const;
     const Properties& allMetadata(const PropertyName &key) const;
 
-    void setProperty(const QString &key, const Property &value);
+    void setProperty(const QString &key, const Siren::Object &value);
 
-    void setProperty(const QString &key, const Property &value,
+    void setProperty(const QString &key, const Siren::Object &value,
                      bool clear_metadata);
     
-    void setMetadata(const QString &metakey, const Property &value);
+    void setMetadata(const QString &metakey, const Siren::Object &value);
     void setMetadata(const QString &key,
-                     const QString &metakey, const Property &value);
+                     const QString &metakey, const Siren::Object &value);
 
     void removeProperty(const QString &key);
 
@@ -176,11 +154,11 @@ public:
     bool hasMetadataOfType(const PropertyName &key,
                            const PropertyName &metakey) const;
 
-    const char* propertyType(const PropertyName &key) const;
+    QString propertyType(const PropertyName &key) const;
     
-    const char* metadataType(const PropertyName &metakey) const;
-    const char* metadataType(const PropertyName &key,
-                             const PropertyName &metakey) const;
+    QString metadataType(const PropertyName &metakey) const;
+    QString metadataType(const PropertyName &key,
+                         const PropertyName &metakey) const;
     
     void assertContainsProperty(const PropertyName &key) const;
     
@@ -189,7 +167,12 @@ public:
                                 const PropertyName &metakey) const;
 
 private:
+    friend class detail::PropertiesData; // so can call private constructor
+    friend class Siren::detail::StreamHelper<Properties>;
+
     Properties(bool);
+
+    const void* shareKey() const;
 
     /** Implicitly shared pointer to the data of this object */
     QSharedDataPointer<detail::PropertiesData> d;

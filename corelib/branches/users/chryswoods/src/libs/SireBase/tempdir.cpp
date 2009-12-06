@@ -123,6 +123,10 @@ TempDir::TempDir(const QString &temp_root)
     this->createDirectory(temp_root);
 }
 
+TempDir::TempDir(const TempDir &other) 
+        : ImplementsHandle< TempDir, Handles<TempDirData> >(other)
+{}
+
 static void removeDirectory(QDir &dir)
 {
     //get the list of all files in this directory

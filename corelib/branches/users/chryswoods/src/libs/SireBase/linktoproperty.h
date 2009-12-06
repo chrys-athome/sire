@@ -29,20 +29,11 @@
 #ifndef SIREBASE_LINKTOPROPERTY_H
 #define SIREBASE_LINKTOPROPERTY_H
 
-#include "property.h"
 #include "propertymap.h"
 
 #include "SireID/identifier.h"
 
 SIRE_BEGIN_HEADER
-
-namespace SireBase
-{
-class LinkToProperty;
-}
-
-QDataStream& operator<<(QDataStream&, const SireBase::LinkToProperty&);
-QDataStream& operator>>(QDataStream&, SireBase::LinkToProperty&);
 
 namespace SireBase
 {
@@ -56,12 +47,9 @@ namespace SireBase
     
     @author Christopher Woods
 */
-class SIREBASE_EXPORT LinkToProperty : public ConcreteProperty<LinkToProperty,Property>
+class SIREBASE_EXPORT LinkToProperty 
+            : public Siren::Implements<LinkToProperty,Siren::Object>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const LinkToProperty&);
-friend QDataStream& ::operator>>(QDataStream&, LinkToProperty&);
-
 public:
     LinkToProperty();
     
@@ -76,10 +64,10 @@ public:
     
     bool operator==(const LinkToProperty &other) const;
     bool operator!=(const LinkToProperty &other) const;
-    
-    static const char* typeName();
 
     QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     const PropertyName& target() const;
     

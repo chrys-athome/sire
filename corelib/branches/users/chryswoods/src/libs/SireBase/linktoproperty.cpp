@@ -28,66 +28,34 @@
 
 #include "linktoproperty.h"
 
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
+#include "Siren/stream.h"
 
 using namespace SireID;
 using namespace SireBase;
-using namespace SireStream;
+using namespace Siren;
 
-static const RegisterMetaType<LinkToProperty> r_link;
-
-/** Serialise to a binary datastream */
-QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, const LinkToProperty &link)
-{
-    writeHeader(ds, r_link, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << link.target_source << link.id_filter
-        << static_cast<const Property&>(link);
-        
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, LinkToProperty &link)
-{
-    VersionID v = readHeader(ds, r_link);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        
-        sds >> link.target_source >> link.id_filter
-            >> static_cast<Property&>(link);
-    }
-    else
-        throw version_error( v, "1", r_link, CODELOC );
-
-    return ds;
-}
+static const RegisterObject<LinkToProperty> r_link;
 
 /** Constructor */
-LinkToProperty::LinkToProperty() : ConcreteProperty<LinkToProperty,Property>()
+LinkToProperty::LinkToProperty() : Implements<LinkToProperty,Object>()
 {}
 
 /** Construct to link to the property 'source' */
 LinkToProperty::LinkToProperty(const PropertyName &source)
-               : ConcreteProperty<LinkToProperty,Property>(),
+               : Implements<LinkToProperty,Object>(),
                  target_source(source)
 {}
 
 /** Construct to link to the property 'source' in the objects
     identified by 'filter' */
 LinkToProperty::LinkToProperty(const PropertyName &source, const ID &filter)
-               : ConcreteProperty<LinkToProperty,Property>(),
+               : Implements<LinkToProperty,Object>(),
                  target_source(source), id_filter(filter)
 {}
 
 /** Copy constructor */
 LinkToProperty::LinkToProperty(const LinkToProperty &other)
-               : ConcreteProperty<LinkToProperty,Property>(other),
+               : Implements<LinkToProperty,Object>(other),
                  target_source(other.target_source), id_filter(other.id_filter)
 {}
 
@@ -102,7 +70,6 @@ LinkToProperty& LinkToProperty::operator=(const LinkToProperty &other)
     {
         target_source = other.target_source;
         id_filter = other.id_filter;
-        Property::operator=(other);
     }
     
     return *this;
@@ -112,21 +79,13 @@ LinkToProperty& LinkToProperty::operator=(const LinkToProperty &other)
 bool LinkToProperty::operator==(const LinkToProperty &other) const
 {
     return target_source == other.target_source and
-           id_filter == other.id_filter and
-           Property::operator==(other);
+           id_filter == other.id_filter;
 }
 
 /** Comparison operator */
 bool LinkToProperty::operator!=(const LinkToProperty &other) const
 {
-    return target_source != other.target_source or
-           id_filter != other.id_filter or
-           Property::operator!=(other);
-}
-
-const char* LinkToProperty::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<LinkToProperty>() );
+    return not LinkToProperty::operator==(other);
 }
 
 /** Return a string representation of this link */
@@ -140,6 +99,23 @@ QString LinkToProperty::toString() const
 
     else
         return QObject::tr("LinkTo( NULL )");
+}
+
+uint LinkToProperty::hashCode() const
+{
+    return qHash( LinkToProperty::typeName() ) + qHash(target_source);
+}
+
+void LinkToProperty::stream(Stream &s)
+{
+    s.assertVersion<LinkToProperty>(1);
+    
+    Schema schema = s.item<LinkToProperty>();
+    
+    schema.data("target_source") & target_source;
+    schema.data("id_filter") & id_filter;
+    
+    Object::stream( schema.base() );
 }
 
 /** Return the target of this link */

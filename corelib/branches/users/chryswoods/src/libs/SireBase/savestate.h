@@ -29,7 +29,9 @@
 #ifndef SIREBASE_SAVESTATE_H
 #define SIREBASE_SAVESTATE_H
 
-#include "property.h"
+#include "Siren/objptr.hpp"
+
+#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
@@ -37,7 +39,7 @@ namespace SireBase
 {
 
 /** This class is used to save the state of an object derived
-    from SireBase::Property. This is used
+    from Siren::Object. This is used
     when the state of an object is repeatedly saved in nested
     function calls (to protect against an exception being thrown)
     but only the state in the top-level function call will actually
@@ -64,7 +66,7 @@ namespace SireBase
     Usage:
     
     \code
-    class Foo : public ConcreteProperty<Foo,Property>
+    class Foo : public Implements<Foo,Object>
     {
     public:
         Foo();
@@ -133,21 +135,21 @@ public:
         
     SaveState& operator=(const SaveState &other);
         
-    void restore(Property &object);
+    void restore(Siren::Object &object);
 
     bool isNull();
 
-    static SaveState save(const Property &object);
-    static SaveState forceSave(const Property &object);
+    static SaveState save(const Siren::Object &object);
+    static SaveState forceSave(const Siren::Object &object);
 
 private:
-    SaveState(const Property &object, bool force=false);
+    SaveState(const Siren::Object &object, bool force=false);
 
     /** Pointer to the old state of the object */
-    PropertyPtr old_state;
+    Siren::ObjectPtr old_state;
 
     /** Pointer to the current state of the object */
-    const Property *current_state;
+    const Siren::Object *current_state;
 
     /** Whether or not this is a forced state */
     bool forced_state;

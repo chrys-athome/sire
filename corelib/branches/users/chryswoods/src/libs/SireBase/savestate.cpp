@@ -31,8 +31,10 @@
 
 #include "savestate.h"
 
-#include "SireError/errors.h"
+#include "Siren/objref.h"
+#include "Siren/errors.h"
 
+using namespace Siren;
 using namespace SireBase;
 
 typedef QThreadStorage< QSet<const void*>* > StateRegistry;
@@ -62,7 +64,7 @@ SaveState::SaveState() : current_state(0), forced_state(false)
 {}
 
 /** Internal constructor */
-SaveState::SaveState(const Property &object, bool force)
+SaveState::SaveState(const Object &object, bool force)
           : old_state( object.clone() ), current_state(&object),
             forced_state(force)
 {}
@@ -106,12 +108,12 @@ SaveState& SaveState::operator=(const SaveState &other)
     
 /** Restore the state of the object 'object' - this does nothing
     if this is a null state */
-void SaveState::restore(Property &object)
+void SaveState::restore(Object &object)
 {
     if (current_state)
     {
         if (&object != current_state)
-            throw SireError::program_bug( QObject::tr(
+            throw Siren::program_bug( QObject::tr(
                 "An attempt is being made to restore the state of the wrong object! "
                 "%1 vs. %2")
                     .arg(toInt(&object)).arg(toInt(current_state)), CODELOC );
@@ -128,7 +130,7 @@ bool SaveState::isNull()
 
 /** Save the state of the object 'object' - this returns a null state
     if the state of this object has already been saved */
-SaveState SaveState::save(const Property &object)
+SaveState SaveState::save(const Object &object)
 {
     QSet<const void*> &registry = ::stateRegistry();
     
@@ -144,7 +146,7 @@ SaveState SaveState::save(const Property &object)
 /** Force the saving of the state of the object 'object' - this
     saves the state even if an existing state of this object has
     been saved */
-SaveState SaveState::forceSave(const Property &object)
+SaveState SaveState::forceSave(const Object &object)
 {
     QSet<const void*> &registry = ::stateRegistry();
     

@@ -47,6 +47,8 @@ class ObjRef;
 class Object;
 
 template<class T> class Primitive;
+template<class T> class ObjPtr;
+template<class T> class GlobalObjPtr;
 
 /** This is the base class of all schemas */
 class SIREN_EXPORT SchemaBase
@@ -670,6 +672,12 @@ public:
     
     Stream& operator&(Object &object);
     Stream& operator&(ObjRef &objref);
+    
+    template<class T>
+    Stream& operator&(ObjPtr<T> &objptr);
+    
+    template<class T>
+    Stream& operator&(GlobalObjPtr<T> &objptr);
     
     template<class T>
     Stream& operator&(Primitive<T> &primitive);

@@ -29,7 +29,6 @@ set ( SIREBASE_HEADERS
       pairmatrix.hpp
       process.h
       properties.h
-      property.h
       propertymap.h
       quickcopy.hpp
       savestate.h
@@ -60,7 +59,6 @@ set ( SIREBASE_SOURCES
       packedarray2d.cpp
       process.cpp
       properties.cpp
-      property.cpp
       propertymap.cpp
       savestate.cpp
       sharedversion.cpp
@@ -83,7 +81,6 @@ set_target_properties (SireBase PROPERTIES
 # Link to other Sire libraries
 target_link_libraries (SireBase
                        SireID
-                       SireStream
                        )
 
 # installation

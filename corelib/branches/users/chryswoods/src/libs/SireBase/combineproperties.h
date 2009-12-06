@@ -29,21 +29,14 @@
 #ifndef SIREBASE_COMBINEPROPERTIES_H
 #define SIREBASE_COMBINEPROPERTIES_H
 
-#include "property.h"
 #include "propertymap.h"
+
+#include "Siren/objptr.hpp"
 
 #include <QList>
 #include <QVector>
 
 SIRE_BEGIN_HEADER
-
-namespace SireBase
-{
-class CombineProperties;
-}
-
-QDataStream& operator<<(QDataStream&, const SireBase::CombineProperties&);
-QDataStream& operator>>(QDataStream&, SireBase::CombineProperties&);
 
 namespace SireBase
 {
@@ -57,12 +50,9 @@ namespace SireBase
     
     @author Christopher Woods
 */
-class SIREBASE_EXPORT CombineProperties : public Property
+class SIREBASE_EXPORT CombineProperties 
+        : public Siren::Extends<CombineProperties,Siren::Object>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const CombineProperties&);
-friend QDataStream& ::operator>>(QDataStream&, CombineProperties&);
-
 public:
     typedef QVector<PropertyName>::const_iterator const_iterator;
     typedef const_iterator iterator;
@@ -84,10 +74,9 @@ public:
     
     ~CombineProperties();
 
-    static const char* typeName()
-    {
-        return "SireBase::CombineProperties";
-    }
+    static QString typeName();
+
+    void stream(Siren::Stream &s);
 
     const PropertyName& operator[](int i) const;
 
@@ -107,7 +96,7 @@ public:
     const_iterator constEnd() const;
     const_iterator end() const;
     
-    const Property& combinedProperty() const;
+    const Object& combinedProperty() const;
     
     /** Update this combined property by fetching the necessary
         properties to combine from 'properties'
@@ -124,14 +113,14 @@ protected:
     bool operator==(const CombineProperties &other) const;
     bool operator!=(const CombineProperties &other) const;
 
-    void setCombinedProperty(const Property &property);
+    void setCombinedProperty(const Object &property);
 
 private:
     /** The sources of the properties to be combined together */
     QVector<PropertyName> property_sources;
 
     /** The combined property */
-    PropertyPtr combined_property;
+    Siren::ObjectPtr combined_property;
 };
 
 }
