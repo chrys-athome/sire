@@ -29,101 +29,42 @@
 #ifndef SIREBASE_ERRORS_H
 #define SIREBASE_ERRORS_H
 
-#include "SireError/exception.h"
+#include "Siren/exception.h"
+
+#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireBase
 {
 
-/** This is the base class of all SireBase errors */
-class SIREBASE_EXPORT sirebase_error : public SireError::exception
+/** This exception is thrown when a request is made of a non-existant property */
+class SIREBASE_EXPORT missing_property
+        : public Siren::ImplementsException<missing_property,Siren::exception>
 {
 public:
-    sirebase_error() : exception()
-    {}
+    missing_property();
 
-    sirebase_error(QString err, QString place = QString::null) : exception(err,place)
-    {}
+    missing_property(QString err, QString place = QString::null);
 
-    sirebase_error(const sirebase_error &other) : exception(other)
-    {}
+    missing_property(const missing_property &other);
 
-    ~sirebase_error() throw()
-    {}
-
-    static const char* typeName()
-    {
-        return "SireBase::sirebase_error";
-    }
+    ~missing_property() throw();
 };
-
-/** This exception is thrown when a request is made of a non-existant property
-
-    @author Christopher Woods
-*/
-class SIREBASE_EXPORT missing_property : public sirebase_error
-{
-public:
-    missing_property() : sirebase_error()
-    {}
-
-    missing_property(QString err, QString place = QString::null)
-              : sirebase_error(err,place)
-    {}
-
-    missing_property(const missing_property &other) : sirebase_error(other)
-    {}
-
-    ~missing_property() throw()
-    {}
-
-    static const char* typeName();
-
-    const char* what() const throw()
-    {
-        return missing_property::typeName();
-    }
-    
-    void throwSelf() const
-    {
-        throw missing_property(*this);
-    }
-};
-
 
 /** This exception is thrown when a request is made to duplicate a
-    property when this would be inappropriate
-
-    @author Christopher Woods
-*/
-class SIREBASE_EXPORT duplicate_property : public sirebase_error
+    property when this would be inappropriate */
+class SIREBASE_EXPORT duplicate_property
+        : public Siren::ImplementsException<duplicate_property,Siren::exception>
 {
 public:
-    duplicate_property() : sirebase_error()
-    {}
+    duplicate_property();
 
-    duplicate_property(QString err, QString place = QString::null)
-              : sirebase_error(err,place)
-    {}
+    duplicate_property(QString err, QString place = QString::null);
 
-    duplicate_property(const duplicate_property &other) : sirebase_error(other)
-    {}
+    duplicate_property(const duplicate_property &other);
 
-    ~duplicate_property() throw()
-    {}
-
-    static const char* typeName();
-
-    const char* what() const throw()
-    {
-        return duplicate_property::typeName();
-    }
-    
-    void throwSelf() const
-    {
-        throw duplicate_property(*this);
-    }
+    ~duplicate_property() throw();
 };
 
 }

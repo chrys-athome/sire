@@ -29,9 +29,9 @@
 #ifndef SIREBASE_MEMINFO_H
 #define SIREBASE_MEMINFO_H
 
-#include "sireglobal.h"
+#include "Siren/handle.h"
 
-#include <boost/shared_ptr.hpp>
+#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
@@ -48,7 +48,8 @@ class MemInfoPvt;
     
     @author Christopher Woods
 */
-class SIREBASE_EXPORT MemInfo
+class SIREBASE_EXPORT MemInfo 
+        : public Siren::ImplementsHandle< MemInfo, Siren::Handles<detail::MemInfoPvt> >
 {
 public:
     MemInfo();
@@ -60,6 +61,7 @@ public:
     MemInfo& operator=(const MemInfo &other);
     
     QString toString() const;
+    uint hashCode() const;
     
     quint64 allocatedBytes() const;
     quint64 mMappedBytes() const;
@@ -78,13 +80,11 @@ public:
     static void startMonitoring(const QString &filename, int ms=1000);
     
     static void stopMonitoring();
-    
-private:  
-    /** PIMPL pointer */
-    boost::shared_ptr<detail::MemInfoPvt> d;
 };
 
 }
+
+Q_DECLARE_METATYPE( SireBase::MemInfo )
 
 SIRE_EXPOSE_CLASS(SireBase::MemInfo)
 

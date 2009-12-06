@@ -116,6 +116,9 @@ public:
     SharedSchema& operator=(const SharedSchema &other);
     
     bool mustStream() const;
+
+    Stream& data(const char *data_name);
+    Stream& base();
     
     void end();
 
@@ -899,6 +902,26 @@ inline Stream& Schema::base()
 inline bool SharedSchema::mustStream() const
 {
     return must_stream;
+}
+
+/** Tell the stream that the next object will be 
+    a member variable, with name 'name' */
+inline Stream& SharedSchema::data(const char *name)
+{
+    if (needs_decoration)
+        stream->nextData(name);
+        
+    return *stream;
+}
+
+/** Tell the stream that the next object will be
+    a base class of this object */
+inline Stream& SharedSchema::base()
+{
+    if (needs_decoration)
+        stream->nextBase();
+        
+    return *stream;
 }
 
 //////////

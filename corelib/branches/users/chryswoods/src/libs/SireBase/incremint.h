@@ -46,7 +46,7 @@ namespace SireBase
 
 /** This is a simple class that provides a thread-safe
     incrementable integer. This can be used, for example,
-    to give a unique version of ID number to objects.
+    to give a unique version or ID number to objects.
     
     @author Christopher Woods
 */

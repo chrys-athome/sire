@@ -20,11 +20,9 @@ set ( SIREBASE_HEADERS
       countflops.h
       errors.h
       findexe.h
-      globalsharedpointer.hpp
       increment.h
       incremint.h
       linktoproperty.h
-      majorminorversion.h
       meminfo.h
       packedarray2d.h
       packedarray2d.hpp
@@ -34,17 +32,17 @@ set ( SIREBASE_HEADERS
       property.h
       propertymap.h
       quickcopy.hpp
-      qvariant_metatype.h
       savestate.h
-      shareddatapointer.hpp
-      sharedpolypointer.hpp
-      sharedpolypointer_cast.hpp
+      sharedversion.h
       sparsematrix.hpp
+      streambase.h
       stringmangler.h
       tempdir.h
       trigarray2d.h
       trigarray2d.hpp
       vector3d.hpp
+      version.h
+      versionregistry.hpp
     )
 
 # Define the sources in SireBase
@@ -57,9 +55,7 @@ set ( SIREBASE_SOURCES
       countflops.cpp
       errors.cpp
       findexe.cpp
-      globalsharedpointer.cpp
       linktoproperty.cpp
-      majorminorversion.cpp
       meminfo.cpp
       packedarray2d.cpp
       process.cpp
@@ -67,10 +63,11 @@ set ( SIREBASE_SOURCES
       property.cpp
       propertymap.cpp
       savestate.cpp
-      sharedpolypointer.cpp
+      sharedversion.cpp
       stringmangler.cpp     
       tempdir.cpp
       trigarray2d.cpp 
+      version.cpp
 
       ${SIREBASE_HEADERS}
     )

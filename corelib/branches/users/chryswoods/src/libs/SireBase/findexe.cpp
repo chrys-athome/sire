@@ -33,7 +33,7 @@
 #include <QDir>
 #include <QProcess>
 
-#include "SireError/errors.h"
+#include "Siren/errors.h"
 
 QFileInfo SIREBASE_EXPORT SireBase::findExe(const QString &exe)
 {
@@ -71,7 +71,7 @@ QFileInfo SIREBASE_EXPORT SireBase::findExe(const QString &exe)
         }
     }
 
-    throw SireError::process_error( QObject::tr(
+    throw Siren::process_error( QObject::tr(
               "Could not find the executable \"%1\" in the current directory, nor "
               "in the system PATH.").arg(exe), CODELOC );
 

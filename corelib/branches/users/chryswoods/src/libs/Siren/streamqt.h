@@ -33,6 +33,7 @@
 #include <QHash>
 #include <QSet>
 #include <QMap>
+#include <QVarLengthArray>
 
 #include "stream.h"
 
@@ -135,6 +136,39 @@ namespace Siren
             static QHash<Key,Value> null() { return QHash<Key,Value>(); }
         };
     }
+}
+
+/** Streaming operator for QVarLengthArray<T> */
+template<class T, int N>
+SIREN_OUTOFLINE_TEMPLATE
+Siren::Stream& operator&(Siren::Stream &s, QVarLengthArray<T,N> &array)
+{
+    s.assertVersion("QVarLengthArray", 1);
+    
+    Siren::ArraySchema schema = s.array<T>(array.count());
+    
+    if (s.isSaving())
+    {
+        const T *data = array.constData();
+        
+        for (int i=0; i<schema.count(); ++i)
+        {
+            s << data[i];
+        }
+    }
+    else
+    {
+        array.resize(schema.count());
+        
+        T *data = array.data();
+        
+        for (int i=0; i<schema.count(); ++i)
+        {
+            s >> data[i];
+        }
+    }
+    
+    return s;
 }
 
 /** Streaming operator for QVector<T> */

@@ -31,7 +31,7 @@
 #include <QDebug>
 #include <cmath>
 
-#include "SireError/errors.h"
+#include "Siren/errors.h"
 
 #ifdef SIRE_USE_SSE
     #ifdef __SSE__
@@ -175,12 +175,12 @@ int FlopsMark::nThreads() const
 /** Return a FlopsMark object that contains just the information
     for the ith thread
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 FlopsMark FlopsMark::threadFlops(int i) const
 {
     if (i < 0 or i >= this->nThreads())
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
             "Invalid index %1. The number of available threads == %2.")
                 .arg(i).arg(this->nThreads()), CODELOC );
 
@@ -192,7 +192,7 @@ FlopsMark FlopsMark::threadFlops(int i) const
 /** Return a FlopsMark object that contains just the information
     for the ith thread
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 FlopsMark FlopsMark::operator[](int i) const
 {

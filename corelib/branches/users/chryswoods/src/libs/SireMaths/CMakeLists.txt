@@ -232,9 +232,9 @@ set_target_properties (SireMaths PROPERTIES
 
 # Link to other Sire libraries, and GSL
 target_link_libraries (SireMaths
+                       SireBase
                        SireID
                        SireUnits
-                       Siren
                        ${SIREMATHS_EXTRA_LIBRARIES}
                       )
 

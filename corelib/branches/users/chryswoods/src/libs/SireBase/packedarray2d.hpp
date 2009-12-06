@@ -29,45 +29,16 @@
 #ifndef SIREBASE_PACKEDARRAY2D_HPP
 #define SIREBASE_PACKEDARRAY2D_HPP
 
-#include "qvariant_metatype.h"
-
 #include <QVarLengthArray>
 
 #include "packedarray2d.h"
 #include "quickcopy.hpp"
-
-#include "SireStream/shareddatastream.h"
 
 #include <boost/assert.hpp>
 
 #include <QDebug>
 
 SIRE_BEGIN_HEADER
-
-namespace SireBase
-{
-template<class T>
-class PackedArray2D;
-
-namespace detail
-{
-template<class T>
-class PackedArray2D_Array;
-}
-
-}
-
-template<class T>
-QDataStream& operator<<(QDataStream&, const SireBase::PackedArray2D<T>&);
-template<class T>
-QDataStream& operator>>(QDataStream&, SireBase::PackedArray2D<T>&);
-
-template<class T>
-QDataStream& operator<<(QDataStream&, 
-                        const SireBase::detail::PackedArray2D_Array<T>&);
-template<class T>
-QDataStream& operator>>(QDataStream&, 
-                        SireBase::detail::PackedArray2D_Array<T>&);
 
 namespace SireBase
 {
@@ -315,9 +286,6 @@ class PackedArray2D_Array
 friend class PackedArray2DMemory<T>;
 friend class PackedArray2D<T>;
 
-friend QDataStream& ::operator<<<>(QDataStream&, const PackedArray2D_Array<T>&);
-friend QDataStream& ::operator>><>(QDataStream&, PackedArray2D_Array<T>&);
-
 public:
     PackedArray2D_Array();
     
@@ -383,9 +351,6 @@ class PackedArray2D
 
 friend class detail::PackedArray2DMemory<T>;
 
-friend QDataStream& ::operator<<<>(QDataStream&, const PackedArray2D<T>&);
-friend QDataStream& ::operator>><>(QDataStream&, PackedArray2D<T>&);
-
 public:
     typedef typename detail::PackedArray2D_Array<T> Array;
     typedef T value_type;
@@ -401,6 +366,10 @@ public:
     PackedArray2D(const PackedArray2D<T> &other);
     
     ~PackedArray2D();
+    
+    static PackedArray2D<T> create(int size);
+    static PackedArray2D<T> create(const QVector<int> &sizes);
+    static PackedArray2D<T> create(const QVarLengthArray<quint32> &sizes);
     
     PackedArray2D<T>& operator=(const PackedArray2D<T> &other);
     
@@ -443,10 +412,6 @@ public:
     void update(quint32 i, const Array &array);
 
     void assertValidIndex(quint32 i) const;
-
-    PackedArray2D<QVariant> toVariant() const;
-    
-    static PackedArray2D<T> fromVariant(const PackedArray2D<QVariant> &variant);
 
 private:
     /** Implicitly shared pointer to the array data */
@@ -1802,147 +1767,6 @@ QVector< QVector<T> > PackedArray2D<T>::toQVectorVector() const
     return ret;
 }
 
-namespace detail
-{
-
-void throwCannotConvertVariantError(const char *this_type, 
-                                    const char *type_t,
-                                    const QString &codeloc);
-
-template<class T>
-T default_construct()
-{
-    return T();
-}
-
-template<>
-inline double default_construct<double>()
-{
-    return double(0);
-}
-
-template<>
-inline qint64 default_construct<qint64>()
-{
-    return qint64(0);
-}
-
-template<class T>
-struct VariantConverter
-{
-    static PackedArray2D<QVariant> output(const PackedArray2D<T> &array)
-    {
-        if (array.isEmpty())
-            return PackedArray2D<QVariant>();
-            
-        int narrays = array.nArrays();
-        
-        QVector< QVector<QVariant> > variant(narrays);
-        QVector<QVariant> *variant_array = variant.data();
-        const typename PackedArray2D<T>::Array *array_array = array.constData();
-        
-        for (int i=0; i<narrays; ++i)
-        {
-            const typename PackedArray2D<T>::Array &this_array = array_array[i];
-        
-            int nvalues = this_array.count();
-            const T *this_array_array = this_array.constData();
-            
-            QVector<QVariant> this_variant(nvalues);
-            QVariant *this_variant_array = this_variant.data();
-            
-            for (int j=0; j<nvalues; ++j)
-            {
-                this_variant_array[j] = QVariant::fromValue<T>(this_array_array[j]);
-            }
-            
-            variant_array[i] = this_variant;
-        }
-        
-        return PackedArray2D<QVariant>(variant);
-    }
-    
-    static PackedArray2D<T> input(const PackedArray2D<QVariant> &variant)
-    {
-        if (variant.isEmpty())
-            return PackedArray2D<T>();
-            
-        int narrays = variant.nArrays();
-        
-        QVector< QVector<T> > array(narrays);
-        QVector<T> *array_array = array.data();
-        const typename PackedArray2D<QVariant>::Array *variant_array 
-                                                            = variant.constData();
-        
-        for (int i=0; i<narrays; ++i)
-        {
-            const typename PackedArray2D<QVariant>::Array &this_variant 
-                                                                = variant_array[i];
-        
-            int nvalues = this_variant.count();
-            const QVariant *this_variant_array = this_variant.constData();
-            
-            QVector<T> this_array(nvalues);
-            T *this_array_array = this_array.data();
-            
-            for (int j=0; j<nvalues; ++j)
-            {
-                const QVariant &value = this_variant_array[j];
-             
-                if (value.isNull())
-                {
-                    //use a default-constructed value
-                    this_array_array[j] = SireBase::detail::default_construct<T>();
-                }
-                else if (not value.canConvert<T>())
-                {
-                    throwCannotConvertVariantError(value.typeName(),
-                                            QMetaType::typeName( qMetaTypeId<T>() ),
-                                            CODELOC );
-                }
-                else
-                    this_array_array[j] = value.value<T>();
-            }
-            
-            array_array[i] = this_array;
-        }
-        
-        return PackedArray2D<T>(array);
-    }
-};
-
-template<>
-struct SIREBASE_EXPORT VariantConverter<QVariant>
-{
-    static PackedArray2D<QVariant> output(const PackedArray2D<QVariant> &array)
-    {
-        return array;
-    }
-    
-    static PackedArray2D<QVariant> input(const PackedArray2D<QVariant> &variant)
-    {
-        return variant;
-    }
-};
-
-}
-
-/** Return this array converted into an array of QVariants */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-PackedArray2D<QVariant> PackedArray2D<T>::toVariant() const
-{
-    return detail::VariantConverter<T>::output(*this);
-}
-
-/** Return a PackedArray constructed from an array of QVariants */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-PackedArray2D<T> PackedArray2D<T>::fromVariant(const PackedArray2D<QVariant> &variant)
-{
-    return detail::VariantConverter<T>::input(variant);
-}
-
 /** Update the ith array so that it has the same contents as 'array'
 
     \throw SireError::incompatible_error
@@ -1955,257 +1779,105 @@ void PackedArray2D<T>::update(quint32 i, const Array &array)
     d->arrayData()[i].update(array);
 }
 
+/** Return a default-constructed array of size 'size' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+PackedArray2D<T> PackedArray2D<T>::create(int size)
+{
+    if (size <= 0)
+        return PackedArray2D<T>();
+    else
+    {
+        SireBase::detail::SharedArray2DPtr< SireBase::detail::PackedArray2DData<T> > d
+                                    = SireBase::detail::createArray<T>(1, size);
+    
+        SireBase::detail::PackedArray2DData<T> *dptr = d.data();
+        dptr->setNValuesInArray(0, size);
+        dptr->close();
+        
+        PackedArray2D<T> ret;
+        ret.d = d;
+        return ret;
+    }
+}
+
+/** Construct a default-constructed array with array sizes in 'sizes' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+PackedArray2D<T> PackedArray2D<T>::create(const QVector<int> &sizes)
+{
+    quint32 nvals = 0;
+    quint32 narrays = sizes.count();
+    
+    for (quint32 i=0; i<narrays; ++i)
+        nvals += sizes[i];
+
+    if (nvals == 0)
+    {
+        return PackedArray2D<T>();
+    }
+    else
+    {
+        SireBase::detail::SharedArray2DPtr< SireBase::detail::PackedArray2DData<T> > d
+                                    = SireBase::detail::createArray<T>(narrays, nvals);
+    
+        SireBase::detail::PackedArray2DData<T> *dptr = d.data();
+    
+        //dimension each packed array
+        for (quint32 i=0; i<narrays; ++i)
+        {
+            //dimension the array
+            dptr->setNValuesInArray(i, sizes[i]);
+        }
+    
+        dptr->close();
+        
+        PackedArray2D<T> ret;
+        ret.d = d;
+        return ret;
+    }
+}
+
+/** Construct a default-constructed array with array sizes in 'sizes' */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+PackedArray2D<T> PackedArray2D<T>::create(const QVarLengthArray<quint32> &sizes)
+{
+    quint32 nvals = 0;
+    quint32 narrays = sizes.count();
+    
+    for (quint32 i=0; i<narrays; ++i)
+        nvals += sizes[i];
+
+    if (nvals == 0)
+    {
+        return PackedArray2D<T>();
+    }
+    else
+    {
+        SireBase::detail::SharedArray2DPtr< SireBase::detail::PackedArray2DData<T> > d
+                                    = SireBase::detail::createArray<T>(narrays, nvals);
+    
+        SireBase::detail::PackedArray2DData<T> *dptr = d.data();
+    
+        //dimension each packed array
+        for (quint32 i=0; i<narrays; ++i)
+        {
+            //dimension the array
+            dptr->setNValuesInArray(i, sizes[i]);
+        }
+    
+        dptr->close();
+        
+        PackedArray2D<T> ret;
+        ret.d = d;
+        return ret;
+    }
+}
+
 #endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 } // end of namespace SireBase
-
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
-/** Serialise a PackedArray2D<T>::Array to a binary datastream */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds,
-                        const typename SireBase::PackedArray2D<T>::Array &array)
-{
-    SireBase::detail::writePackedArray2DArrayHeader(ds, 1);
-    
-    //serialise the number of objects in this array
-    ds << quint32(array.count());
-    
-    //serialise all of the values
-    for (int i=0; i<array.count(); ++i)
-    {
-        ds << array.constData()[i];
-    }
-    
-    return ds;
-}
-
-/** Extract a PackedArray2D<T>::Array from a binary datastream */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds,
-                        typename SireBase::PackedArray2D<T>::Array &array)
-{
-    SireBase::detail::readPackedArray2DArrayHeader(ds, 1);
-    
-    //extract the number of objects
-    quint32 nvals;
-    ds >> nvals;
-    
-    if (nvals == 0)
-    {
-        array = SireBase::PackedArray2D<T>::Array();
-        return ds;
-    }
-    
-    //create an array of sufficient size
-    typename SireBase::PackedArray2D<T>::Array new_array(nvals);
-    
-    //read in the values
-    T *data = new_array.data();
-    
-    for (int i=0; i<nvals; ++i)
-    {
-        ds >> data[i];
-    }
-    
-    array = new_array;
-    
-    return ds;
-}
-
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds,
-                        const SireBase::detail::SharedArray2DPtr< 
-                                    SireBase::detail::PackedArray2DData<T> > &d)
-{
-    SireStream::SharedDataStream sds(ds);
-
-    quint32 narrays = d->nArrays();
-
-    //serialise the number of arrays in this array
-    sds << narrays;
-    
-    if (narrays == 0)
-        return ds;
-    
-    //now go through each array and serialise the number of values
-    //in each array
-    for (quint32 i=0; i<narrays; ++i)
-    {
-        sds << quint32( d->arrayData()[i].count() );
-    }
-    
-    //now serialise all of the data
-    quint32 nvalues = d->nValues();
-    const T *array_data = d->valueData();
-    
-    for (quint32 i=0; i<nvalues; ++i)
-    {
-        sds << array_data[i];
-    }
-    
-    return ds;
-}
-
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds,
-                        SireBase::detail::SharedArray2DPtr< 
-                                    SireBase::detail::PackedArray2DData<T> > &d)
-{
-    SireStream::SharedDataStream sds(ds);
-
-    //get the number of arrays in this array
-    quint32 narrays;
-    
-    sds >> narrays;
-    
-    if (narrays == 0)
-    {
-        d = SireBase::detail::getSharedNull<T>();
-        return ds;
-    }
-
-    QVarLengthArray<quint32> array_sizes(narrays);
-
-    quint32 nvals = 0;
-    
-    for (quint32 i=0; i<narrays; ++i)
-    {
-        sds >> array_sizes[i];
-        nvals += array_sizes[i];
-    }
-
-    if (nvals == 0)
-    {
-        d = SireBase::detail::getSharedNull<T>();
-        return ds;
-    }
-    
-    SireBase::detail::SharedArray2DPtr< SireBase::detail::PackedArray2DData<T> > d2 
-                                    = SireBase::detail::createArray<T>(narrays, nvals);
-    
-    SireBase::detail::PackedArray2DData<T> *dptr = d2.data();
-    
-    //dimension each packed array
-    for (quint32 i=0; i<narrays; ++i)
-    {
-        //dimension the array
-        dptr->setNValuesInArray(i, array_sizes[i]);
-    }
-    
-    dptr->close();
-    
-    //now extract all of the objects...
-    T *data = dptr->valueData();
-    
-    for (quint32 i=0; i<nvals; ++i)
-    {
-        sds >> data[i];
-    }
-    
-    d = d2;
-    
-    return ds;
-}
-
-namespace SireBase{ namespace detail {
-
-template<class T>
-struct GetPackedArrayPointer
-{
-    static bool isEmpty(const SharedArray2DPtr< PackedArray2DData<T> > &d)
-    {
-        return d.constData() == 0;
-    }
-
-    static const void* value(const SharedArray2DPtr< PackedArray2DData<T> > &d)
-    {
-        return d.constData();
-    }
-    
-    static void load(QDataStream &ds, SharedArray2DPtr< PackedArray2DData<T> > &d)
-    {
-        ds >> d;
-    }
-    
-    static void save(QDataStream &ds, const SharedArray2DPtr< PackedArray2DData<T> > &d)
-    {
-        ds << d;
-    }
-};
-
-}}
-
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-SireStream::SharedDataStream& operator>>(SireStream::SharedDataStream &sds,
-                                         SireBase::detail::SharedArray2DPtr< 
-                                            SireBase::detail::PackedArray2DData<T> > &d)
-{
-    sds.sharedLoad< SireBase::detail::SharedArray2DPtr<
-                        SireBase::detail::PackedArray2DData<T> >,
-                            SireBase::detail::GetPackedArrayPointer<T> >(d);
-
-    return sds;
-}
-
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-SireStream::SharedDataStream& operator<<(SireStream::SharedDataStream &sds,
-                                         const SireBase::detail::SharedArray2DPtr< 
-                                            SireBase::detail::PackedArray2DData<T> > &d)
-{
-    sds.sharedSave< SireBase::detail::SharedArray2DPtr<
-                        SireBase::detail::PackedArray2DData<T> >,
-                            SireBase::detail::GetPackedArrayPointer<T> >(d);
-
-    return sds;
-}
-
-/** Serialise a PackedArray2D<T> to a binary datastream */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator<<(QDataStream &ds, 
-                        const SireBase::PackedArray2D<T> &arrays)
-{
-    SireBase::detail::writePackedArray2DHeader(ds);
-    
-    SireStream::SharedDataStream sds(ds);
-    
-    sds << arrays.d;
-    
-    return ds;
-}
-
-/** Extract a PackedArray2D<T> from a binary datastream */
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-QDataStream& operator>>(QDataStream &ds, 
-                        SireBase::PackedArray2D<T> &arrays)
-{
-    SireStream::VersionID v = SireBase::detail::readPackedArray2DHeader(ds);
-    
-    SireStream::SharedDataStream sds(ds);
-    
-    if (v == 2)
-    {
-        sds >> arrays.d;
-    }
-    else if (v == 1)
-    {
-        ds >> arrays.d;
-    }
-    else
-        qFatal("SEVERE PROGRAM BUG IN %s", qPrintable(CODELOC));
-    
-    return ds;
-}
-
-#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 SIRE_END_HEADER
 

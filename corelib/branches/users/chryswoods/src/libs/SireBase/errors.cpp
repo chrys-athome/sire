@@ -29,16 +29,45 @@
 #include "SireBase/errors.h"
 
 using namespace SireBase;
+using namespace Siren;
 
-const char* duplicate_property::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<duplicate_property>() );
-}
+//////////
+////////// Implementation of missing_property
+//////////
 
-const char* missing_property::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<missing_property>() );
-}
+static const RegisterObject<missing_property> r_missing_property;
 
-static const RegisterMetaType<duplicate_property> r_dprop;
-static const RegisterMetaType<missing_property> r_mprop;
+missing_property::missing_property() : ImplementsException<missing_property, exception>()
+{}
+
+missing_property::missing_property(QString err, QString place)
+                 : ImplementsException<missing_property,exception>(err, place)
+{}
+
+missing_property::missing_property(const missing_property &other)
+                 : ImplementsException<missing_property,exception>(other)
+{}
+
+missing_property::~missing_property() throw()
+{}
+
+//////////
+////////// Implementation of duplicate_property
+//////////
+
+static const RegisterObject<duplicate_property> r_duplicate_property;
+
+duplicate_property::duplicate_property() 
+                   : ImplementsException<duplicate_property, exception>()
+{}
+
+duplicate_property::duplicate_property(QString err, QString place)
+                   : ImplementsException<duplicate_property,exception>(err, place)
+{}
+
+duplicate_property::duplicate_property(const duplicate_property &other)
+                   : ImplementsException<duplicate_property,exception>(other)
+{}
+
+duplicate_property::~duplicate_property() throw()
+{}

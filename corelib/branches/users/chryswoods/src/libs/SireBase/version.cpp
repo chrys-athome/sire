@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2008  Christopher Woods
+  *  Copyright (C) 2009  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,13 +26,49 @@
   *
 \*********************************************/
 
-#ifndef SIREBASE_QVARIANT_METATYPE_H
-#define SIREBASE_QVARIANT_METATYPE_H
+#include "version.h"
 
-#include <QVariant>
+using namespace SireBase;
+using namespace Siren;
 
-Q_DECLARE_METATYPE( QVariant )
+static const RegisterPrimitive<Version> r_version;
 
-#endif
+/** Constructor */
+Version::Version() : Primitive<Version>(), maj(0), min(0)
+{}
 
+/** Constructor */
+Version::Version(quint64 major, quint64 minor)
+        : Primitive<Version>(), maj(major), min(minor)
+{}
 
+/** Copy constructor */
+Version::Version(const Version &other)
+        : Primitive<Version>(), maj(other.maj), min(other.min)
+{}
+
+/** Destructor */
+Version::~Version()
+{}
+
+/** Return a string representation of this version number */
+QString Version::toString() const
+{
+    return QString("%1.%2").arg(maj).arg(min);
+}
+
+uint Version::hashCode() const
+{
+    return qHash( Version::typeName() ) 
+              + qHash(maj) + qHash(min);
+}
+
+void Version::stream(Stream &s)
+{
+    s.assertVersion<Version>(1);
+    
+    Schema schema = s.item<Version>();
+    
+    schema.data("major") & maj;
+    schema.data("minor") & min;
+}

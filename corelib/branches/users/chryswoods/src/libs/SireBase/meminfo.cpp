@@ -41,6 +41,7 @@
 #include <QDebug>
 
 using namespace SireBase;
+using namespace Siren;
 
 //////////////////////////////////////////////////
 ///
@@ -337,12 +338,17 @@ using namespace SireBase;
 /////////// Implementation of MemInfo
 ///////////
 
+using namespace SireBase::detail;
+
+static const RegisterHandle<MemInfo> r_meminfo;
+
 /** Null constructor */
-MemInfo::MemInfo()
+MemInfo::MemInfo() : ImplementsHandle< MemInfo,Handles<MemInfoPvt> >()
 {}
 
 /** Copy constructor */
-MemInfo::MemInfo(const MemInfo &other) : d(other.d)
+MemInfo::MemInfo(const MemInfo &other) 
+        : ImplementsHandle< MemInfo,Handles<MemInfoPvt> >(other)
 {}
 
 /** Destructor */
@@ -352,7 +358,7 @@ MemInfo::~MemInfo()
 /** Copy assignment operator */
 MemInfo& MemInfo::operator=(const MemInfo &other)
 {
-    d = other.d;
+    Handles<MemInfoPvt>::operator=(other);
     return *this;
 }
 
@@ -360,12 +366,12 @@ MemInfo& MemInfo::operator=(const MemInfo &other)
     a platform dependent string, but can be useful to print to the user */
 QString MemInfo::toString() const
 {
-    if (d.get() == 0)
+    if (isNull())
         return QObject::tr("Memory usage not measured. Use MemInfo::takeMeasurement() "
                            "to take a reading.");
                            
     else
-        return d->toString();
+        return resource().toString();
 }
 
 /** Return the total number of bytes allocated to this process by 
@@ -374,11 +380,11 @@ QString MemInfo::toString() const
     may mean that not all of this memory is in use. */
 quint64 MemInfo::allocatedBytes() const
 {
-    if (d.get() == 0)
+    if (isNull())
         return 0;
         
     else
-        return d->allocatedBytes();
+        return resource().allocatedBytes();
 }
 
 /** Return the total number of bytes that have been allocated via
@@ -388,10 +394,10 @@ quint64 MemInfo::allocatedBytes() const
     via mmap */
 quint64 MemInfo::mMappedBytes() const
 {
-    if (d.get() == 0)
+    if (isNull())
         return 0;
     else
-        return d->mMappedBytes();
+        return resource().mMappedBytes();
 }
 
 /** Return the total number of bytes in use by the program. This number
@@ -401,18 +407,17 @@ quint64 MemInfo::mMappedBytes() const
     by the program */
 quint64 MemInfo::usedBytes() const
 {
-    if (d.get() == 0)
+    if (isNull())
         return 0;
     else
-        return d->usedBytes();
+        return resource().usedBytes();
 }
 
 /** Take a measurement of the current memory usage of the process */
 MemInfo MemInfo::takeMeasurement()
 {
     MemInfo ret;
-    
-    ret.d.reset( new detail::MemInfoPvt() );
+    ret.setResource( new MemInfoPvt() );
     
     return ret;
 }
@@ -423,44 +428,44 @@ MemInfo MemInfo::takeMeasurement()
     the total system memory */
 quint64 MemInfo::totalSystemMemory() const
 {
-    if (d.get() == 0)
+    if (isNull())
         return 0;
     
     else
-        return d->totalSystemMemory();
+        return resource().totalSystemMemory();
 }
 
 /** Return the total number of bytes of virtual memory available on this system
     (this includes system memory) */
 quint64 MemInfo::totalVirtualMemory() const
 {
-    if (d.get() == 0)
+    if (isNull())
         return 0;
         
     else
-        return d->totalVirtualMemory();
+        return resource().totalVirtualMemory();
 }
 
 /** Return the total amount of system memory in use.
     (actual memory, not virtual memory) */
 quint64 MemInfo::usedSystemMemory() const
 {
-    if (d.get() == 0)
+    if (isNull())
         return 0;
     
     else
-        return d->usedSystemMemory();
+        return resource().usedSystemMemory();
 }
 
 /** Return the total amount of virtual memory in use.
     (includes system memory) */
 quint64 MemInfo::usedVirtualMemory() const
 {
-    if (d.get() == 0)
+    if (isNull())
         return 0;
     
     else
-        return d->usedVirtualMemory();
+        return resource().usedVirtualMemory();
 }
 
 class MemoryMonitor : public QThread

@@ -243,6 +243,8 @@ protected:
     T& resource();
     const T& resource() const;
 
+    void setResource( T *resource );
+
     const T& constResource() const;
     
     void neuter();
@@ -597,6 +599,14 @@ const T& Handles<T>::constResource() const
 {
     Handle::assertNotNull();
     return *(resource_ptr.get());
+}
+
+/** Internal function used to set the resource of a handle */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+void Handles<T>::setResource( T *resource )
+{
+    resource_ptr.reset(resource);
 }
 
 //////
