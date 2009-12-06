@@ -35,6 +35,7 @@
 #include "chunkedhash.hpp"
 #include "chunkedvector.hpp"
 #include "packedarray2d.hpp"
+#include "sparsematrix.hpp"
 
 SIRE_BEGIN_HEADER
 
@@ -114,7 +115,7 @@ namespace Siren
         };
         
         template<class T>
-        struct StreamHelper< SireBase::PackedArray2D<T>::Array >
+        struct StreamHelper< typename SireBase::PackedArray2D<T>::Array >
         {
             static QString typeName()
             {
@@ -122,7 +123,8 @@ namespace Siren
                         .arg( StreamHelper<T>::typeName() );
             }
             
-            static const void* getKey(const SireBase::PackedArray2D<T>::Array &object)
+            static const void* getKey(
+                        const typename SireBase::PackedArray2D<T>::Array &object)
             {
                 if (object.isEmpty())
                     return 0;
@@ -131,17 +133,64 @@ namespace Siren
                     return object.constData();
             }
             
-            static SireBase::PackedArray2D<T> null()
+            static typename SireBase::PackedArray2D<T>::Array null()
             {
                 return SireBase::PackedArray2D<T>::Array();
+            }
+        };
+
+        template<class T>
+        struct StreamHelper< SireBase::SparseMatrix<T> >
+        {
+            static QString typeName()
+            {
+                return QString("SireBase::SparseMatrix< %1 >")
+                        .arg( StreamHelper<T>::typeName() );
+            }
+            
+            static const void* getKey(const SireBase::SparseMatrix<T> &object)
+            {
+                if (object.isEmpty())
+                {
+                    if (T() == object.defaultValue())
+                        //this is really empty
+                        return 0;
+                }
+                
+                return object.shareKey();
+            }
+            
+            static SireBase::SparseMatrix<T> null()
+            { 
+                return SireBase::SparseMatrix<T>(); 
             }
         };
     }
 }
 
+/** Streaming operator for SparseMatrix<T> */
+template<class T>
+SIRE_OUTOFLINE_TEMPLATE
+Siren::Stream& operator&(Siren::Stream &s, SireBase::SparseMatrix<T> &matrix)
+{
+    s.assertVersion("SireBase::SparseMatrix", 1);
+    
+    Siren::SharedSchema shared = s.shared(matrix);
+    
+    if (shared.mustStream())
+    {
+        shared.data("default") & matrix.def;
+        shared.data("is_symmetric") & matrix.is_symmetric;
+        shared.data("is_transpose") & matrix.is_transpose;
+        shared.data("data") & matrix.data;
+    }
+    
+    return s;
+}
+
 /** Streaming operator for ChunkedVector<T> */
 template<class T, int N>
-SIREN_OUTOFLINE_TEMPLATE
+SIRE_OUTOFLINE_TEMPLATE
 Siren::Stream& operator&(Siren::Stream &s, SireBase::ChunkedVector<T,N> &vector)
 {
     s.assertVersion("SireBase::ChunkedVector", 1);
@@ -177,7 +226,8 @@ Siren::Stream& operator&(Siren::Stream &s, SireBase::ChunkedVector<T,N> &vector)
 /** Streaming operator for PackedArray2D<T>::Array */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-Siren::Stream& operator&(Siren::Stream &s, SireBase::PackedArray2D<T>::Array &array)
+Siren::Stream& operator&(Siren::Stream &s, 
+                         typename SireBase::PackedArray2D<T>::Array &array)
 {
     s.assertVersion("SireBase::PackedArray2D::Array", 1);
     
@@ -185,7 +235,7 @@ Siren::Stream& operator&(Siren::Stream &s, SireBase::PackedArray2D<T>::Array &ar
     
     if (shared.mustStream())
     {
-        ArraySchema schema = s.array<T>( array.count() );
+        Siren::ArraySchema schema = s.array<T>( array.count() );
         
         if (s.isSaving())
         {
@@ -198,7 +248,8 @@ Siren::Stream& operator&(Siren::Stream &s, SireBase::PackedArray2D<T>::Array &ar
         }
         else
         {
-            PackedArray2D<T> new_array = PackedArray2D<T>::create(schema.count());
+            SireBase::PackedArray2D<T> new_array
+                                = SireBase::PackedArray2D<T>::create(schema.count());
             
             T *data = new_array.valueData();
             
@@ -235,23 +286,24 @@ Siren::Stream& operator&(Siren::Stream &s, SireBase::PackedArray2D<T> &array)
                 array_sizes[i] = array.nValues(i);
         }
 
-        shared.item("array_sizes") & array_sizes;
+        shared.data("array_sizes") & array_sizes;
         
-        shared.item("array");
-        ArraySchema arrayschema = s.array<T>(array.nValues());
+        shared.data("array");
+        Siren::ArraySchema arrayschema = s.array<T>(array.nValues());
 
         if (s.isSaving())
         {
             const T *data = array.constValueData();
             
-            for (quint32 i=0; i<nvalues; ++i)
+            for (quint32 i=0; i<arrayschema.count(); ++i)
             {
                 arrayschema.index(i) << data[i];
             }
         }
         else
         {
-            PackedArray2D<T> new_array = PackedArray2D<T>::create(array_sizes);
+            SireBase::PackedArray2D<T> new_array 
+                            = SireBase::PackedArray2D<T>::create(array_sizes);
             
             T *data = array.valueData();
             

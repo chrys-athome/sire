@@ -754,6 +754,12 @@ bool Stream::haveStreamed(int id) const
     return resource().sdata_by_id.contains(id);
 }
 
+Stream& Stream::operator&(ObjRef &objref)
+{
+    objref.stream(*this);
+    return *this;
+}
+
 /** Return the ID reference number for the object with key 'key' */
 int Stream::getID(const void *key)
 {

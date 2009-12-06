@@ -669,6 +669,7 @@ public:
     Stream& operator&(QByteArray &b);
     
     Stream& operator&(Object &object);
+    Stream& operator&(ObjRef &objref);
     
     template<class T>
     Stream& operator&(Primitive<T> &primitive);
@@ -1191,7 +1192,8 @@ MapSchema Stream::map(int count, bool allow_duplicates)
     
     count = this->startMap( key_type, value_type, count, allow_duplicates );
     
-    return MapSchema(this, key_type, value_type, count, this->needs_decoration);
+    return MapSchema(this, key_type, value_type, count, 
+                     allow_duplicates, this->needs_decoration);
 }
 
 /** Explicitly request saving of an object */

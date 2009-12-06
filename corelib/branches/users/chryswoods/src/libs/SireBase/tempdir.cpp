@@ -31,13 +31,31 @@
 
 #include "tempdir.h"
 
-#include "tostring.h"
-
-#include "SireError/errors.h"
+#include "Siren/tostring.h"
+#include "Siren/errors.h"
 
 #include <QDebug>
 
 using namespace SireBase;
+using namespace SireBase::detail;
+using namespace Siren;
+
+namespace SireBase { namespace detail {
+
+    class TempDirData
+    {
+    public:
+        TempDirData() : do_not_delete(false)
+        {}
+        
+        ~TempDirData()
+        {}
+        
+        QDir dir;
+        bool do_not_delete;
+    };
+
+}}
 
 static QString getUserName()
 {
@@ -50,7 +68,7 @@ static QString getUserName()
 
 static QMutex tmpdir_mutex;
 
-static QDir createDirectory(const QString &temp_root, int ntries)
+static QString createDirectory(const QString &temp_root, int ntries)
 {
     QString dirname = QString("%1/%2_sire_%3")
                             .arg(temp_root, getUserName(),
@@ -74,30 +92,33 @@ static QDir createDirectory(const QString &temp_root, int ntries)
             return ::createDirectory(temp_root, ntries-1);
         }
         else
-            throw SireError::file_error( QObject::tr(
+            throw Siren::file_error( QObject::tr(
                 "Could not create the temporary directory \"%1\". Please "
                 "ensure that there is enough disk space and that you have "
                 "permission to write to the directory \"%2\".")
                     .arg(dirname, temp_root), CODELOC );
     }
     
-    return QDir(dirname);
+    return dirname;
 }
 
 /** Create a new temporary directory in QDir::tempPath() */
 void TempDir::createDirectory(const QString &temp_root)
 {
-    tmpdir = ::createDirectory(temp_root, 5);
+    this->setResource( new TempDirData() );
+    resource().dir = QDir(::createDirectory(temp_root, 5));
 }
 
 /** This creates a new temporary directory in QDir::tempPath() */
-TempDir::TempDir() : do_not_delete(false)
+TempDir::TempDir() 
+        : ImplementsHandle< TempDir, Handles<TempDirData> >()
 {
     this->createDirectory( QDir::tempPath() );
 }
 
 /** This creates a new temporary directory in 'temp_root' */
-TempDir::TempDir(const QString &temp_root) : do_not_delete(false)
+TempDir::TempDir(const QString &temp_root) 
+        : ImplementsHandle< TempDir, Handles<TempDirData> >()
 {
     this->createDirectory(temp_root);
 }
@@ -138,14 +159,30 @@ static void removeDirectory(QDir &dir)
     anything that it contains */
 TempDir::~TempDir()
 {
-    if (not do_not_delete)
-        ::removeDirectory(tmpdir);
+    if (this->unique() and not resource().do_not_delete)
+        ::removeDirectory( resource().dir );
+}
+
+TempDir& TempDir::operator=(const TempDir &other)
+{
+    Handles<TempDirData>::operator=(other);
+    return *this;
+}
+
+bool TempDir::operator==(const TempDir &other) const
+{
+    return Handles<TempDirData>::operator==(other);
+}
+
+bool TempDir::operator!=(const TempDir &other) const
+{
+    return not TempDir::operator==(other);
 }
 
 /** This returns the complete path to the temporary directory */
 QString TempDir::path() const
 {
-    return tmpdir.absolutePath();
+    return resource().dir.absolutePath();
 }
 
 /** Return a string representation of this TempDir */
@@ -154,10 +191,16 @@ QString TempDir::toString() const
     return QString("TempDir(\"%1\")").arg(this->path());
 }
 
+uint TempDir::hashCode() const
+{
+    return qHash( TempDir::typeName() ) + qHash(path());
+}
+
 /** Tell the TempDir not to delete the directory when this object
     is deleted - this can be used when you are debugging to prevent
     the directory from disappearing! */
 void TempDir::doNotDelete()
 {
-    do_not_delete = true;
+    HandleLocker lkr(*this);
+    resource().do_not_delete = true;
 }

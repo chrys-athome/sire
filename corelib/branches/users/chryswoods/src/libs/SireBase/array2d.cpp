@@ -108,7 +108,7 @@ uint Array2DBase::hashCode() const
 /** Throw an invalid index exception */
 void Array2DBase::throwInvalidIndex(int i, int j) const
 {
-    throw SireError::invalid_index( QObject::tr(
+    throw Siren::invalid_index( QObject::tr(
         "Index (%1,%2) is not valid for this matrix. The "
         "number of rows is %3, and number of columns is %4.")
             .arg(i).arg(j).arg(nrows).arg(ncolumns), CODELOC );

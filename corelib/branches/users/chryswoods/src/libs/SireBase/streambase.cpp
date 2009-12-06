@@ -26,23 +26,17 @@
   *
 \*********************************************/
 
-#include "Siren/errors.h"
+#include "streambase.h"
 
-#include "chunkedvector.hpp"
+using namespace Siren;
+using namespace SireBase;
 
-namespace SireBase
+void SparseIndex::stream(Stream &s)
 {
-
-namespace detail
-{
-
-void SIREBASE_EXPORT ChunkedVector_throwOutOfRangeError(int i, int n)
-{
-    throw Siren::invalid_index( QObject::tr(
-        "Invalid index (%1) for a ChunkedVector of size %2.")
-            .arg(i).arg(n), CODELOC );
-}
-
-}
-
+    s.assertVersion<SparseIndex>(1);
+    
+    Schema schema = s.item<SparseIndex>();
+    
+    schema.data("i") & i;
+    schema.data("j") & j;
 }

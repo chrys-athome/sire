@@ -40,7 +40,7 @@ SIRE_BEGIN_HEADER
 namespace SireBase
 {
 
-template<class T, int N> class ChunkedVector<T,N>;
+template<class T, int N> class ChunkedVector;
 
 namespace detail
 {

@@ -33,21 +33,12 @@
 #include <QString>
 #include <QList>
 
-#include "property.h"
+#include "Siren/object.h"
+#include "Siren/objptr.hpp"
+
+#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
-
-namespace SireBase
-{
-class PropertyName;
-class PropertyMap;
-}
-
-QDataStream& operator<<(QDataStream&, const SireBase::PropertyName&);
-QDataStream& operator>>(QDataStream&, SireBase::PropertyName&);
-
-QDataStream& operator<<(QDataStream&, const SireBase::PropertyMap&);
-QDataStream& operator>>(QDataStream&, SireBase::PropertyMap&);
 
 namespace SireBase
 {
@@ -71,8 +62,8 @@ class Properties;
     is instead used as part of the Property::set( ) function,
     so that the user can write;
     
-    cljff.add( mol, Property::set("charges","chgs") + 
-                    Property::set("ljs","ljparams") );
+    cljff.add( mol, PropertyMap::set("charges","chgs") + 
+                    PropertyMap::set("ljs","ljparams") );
                     
     The PropertyMap/PropertyName classes provide a kwargs
     like interface for the C++ classes - indeed the python
@@ -86,31 +77,21 @@ class Properties;
 
     @author Christopher Woods
 */
-class SIREBASE_EXPORT PropertyName
+class SIREBASE_EXPORT PropertyName 
+        : public Siren::Implements<PropertyName,Siren::Object>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const PropertyName&);
-friend QDataStream& ::operator>>(QDataStream&, PropertyName&);
-
 public:
     PropertyName();
     PropertyName(const char* source);
     
     PropertyName(const QString &source);
-    PropertyName(const QString &source, const Property &default_value);
+    PropertyName(const QString &source, const Object &default_value);
     
-    PropertyName(const Property &value);
+    PropertyName(const Object &value);
 
     PropertyName(const PropertyName &other);
 
     ~PropertyName();
-
-    static const char* typeName();
-    
-    const char* what() const
-    {
-        return PropertyName::typeName();
-    }
 
     PropertyName& operator=(const PropertyName &other);
 
@@ -125,9 +106,11 @@ public:
     bool isNull() const;
 
     const QString& source() const;
-    const Property& value() const;
+    const Object& value() const;
 
     QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     static PropertyName none();
 
@@ -137,7 +120,7 @@ private:
     QString src;
     
     /** The supplied or default value of the property */
-    PropertyPtr val;
+    Siren::ObjPtr<Object> val;
     
     /** Is the supplied value a default value? */
     bool value_is_default;
@@ -163,12 +146,8 @@ private:
 
     @author Christopher Woods
 */
-class SIREBASE_EXPORT PropertyMap
+class SIREBASE_EXPORT PropertyMap : public Siren::Implements<PropertyMap,Siren::Object>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const PropertyMap&);
-friend QDataStream& ::operator>>(QDataStream&, PropertyMap&);
-
 public:
     PropertyMap();
     PropertyMap(const QString &property, const PropertyName &propname);
@@ -178,13 +157,6 @@ public:
     PropertyMap(const PropertyMap &other);
 
     ~PropertyMap();
-
-    static const char* typeName();
-
-    const char* what() const
-    {
-        return PropertyMap::typeName();
-    }
 
     PropertyMap& operator=(const PropertyMap &other);
 
@@ -206,6 +178,8 @@ public:
     void set(const QString &name, const PropertyName &source);
 
     QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
 private:
     /** Hash indexing all of the PropertyNames */

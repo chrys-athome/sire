@@ -64,6 +64,7 @@ set ( SIREBASE_SOURCES
       propertymap.cpp
       savestate.cpp
       sharedversion.cpp
+      streambase.cpp
       stringmangler.cpp     
       tempdir.cpp
       trigarray2d.cpp 

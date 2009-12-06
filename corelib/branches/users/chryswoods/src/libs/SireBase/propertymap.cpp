@@ -28,72 +28,42 @@
 
 #include "propertymap.h"
 
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
+#include "Siren/objref.h"
+#include "Siren/stream.h"
+#include "Siren/streamqt.h"
 
 #include <QDebug>
 
 using namespace SireBase;
-using namespace SireStream;
+using namespace Siren;
 
 ////////////
 //////////// Implementation of PropertyName
 ////////////
 
-static const RegisterMetaType<PropertyName> r_propname;
-
-/** Serialise to a binary datastream */
-QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, 
-                                      const PropertyName &propname)
-{
-    writeHeader(ds, r_propname, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << propname.src << propname.val << propname.value_is_default;
-    
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, PropertyName &propname)
-{
-    VersionID v = readHeader(ds, r_propname);
-
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        sds >> propname.src >> propname.val >> propname.value_is_default;
-        
-        if (propname.src.isEmpty())
-        	propname.src = QString::null;
-    }
-    else
-        throw version_error(v, "1", r_propname, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<PropertyName> r_propname;
 
 /** Null constructor */
-PropertyName::PropertyName() : value_is_default(false)
+PropertyName::PropertyName() 
+             : Implements<PropertyName,Object>(), value_is_default(false)
 {}
 
 /** Construct a PropertyName that searches for the
     property using the source 'source' */
 PropertyName::PropertyName(const char *source)
-             : src(source), value_is_default(false)
+             : Implements<PropertyName,Object>(), src(source), value_is_default(false)
 {}
 
 /** Construct a PropertyName that searches for the 
     property using the source 'source' */
 PropertyName::PropertyName(const QString &source)
-             : src(source), value_is_default(false)
+             : Implements<PropertyName,Object>(), src(source), value_is_default(false)
 {}
 
 /** Construct a PropertyName that uses the supplied
     value, rather than searching for the property */
-PropertyName::PropertyName(const Property &value)
-             : val(value)
+PropertyName::PropertyName(const Object &value)
+             : Implements<PropertyName,Object>(), val(value)
 {}
 
 /** Construct a PropertyName that searches for the property
@@ -101,15 +71,17 @@ PropertyName::PropertyName(const Property &value)
     specifically provided - otherwise the supplied default
     value of the property is used instead */
 PropertyName::PropertyName(const QString &source, 
-                           const Property &default_value)
-             : src(source), val(default_value), value_is_default(true)
+                           const Object &default_value)
+             : Implements<PropertyName,Object>(),
+               src(source), val(default_value), value_is_default(true)
 {
     BOOST_ASSERT(not source.isEmpty());
 }
 
 /** Copy constructor */
 PropertyName::PropertyName(const PropertyName &other)
-             : src(other.src), val(other.val), value_is_default(other.value_is_default)
+             : Implements<PropertyName,Object>(other),
+               src(other.src), val(other.val), value_is_default(other.value_is_default)
 {}
 
 /** Destructor */
@@ -138,11 +110,6 @@ bool PropertyName::operator!=(const PropertyName &other) const
 {
     return src != other.src or val != other.val or 
            value_is_default != other.value_is_default;
-}
-
-const char* PropertyName::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<PropertyName>() );
 }
 
 /** Return a PropertyName that says that this property is not set */
@@ -182,11 +149,16 @@ const QString& PropertyName::source() const
     return src;
 }
 
+static None none;
+
 /** Return the value of the property - this is only valid
     if .hasValue() is true */
-const Property& PropertyName::value() const
+const Object& PropertyName::value() const
 {
-    return val;
+    if (val.isNull())
+        return ::none;
+    else
+        return *val;
 }
 
 /** Return a string representation of this propertyname */
@@ -205,59 +177,49 @@ QString PropertyName::toString() const
         return "NULL";
 }
 
+uint PropertyName::hashCode() const
+{
+    return qHash(PropertyName::typeName()) + qHash(src);
+}
+
+void PropertyName::stream(Stream &s)
+{
+    s.assertVersion<PropertyName>(1);
+    
+    Schema schema = s.item<PropertyName>();
+    
+    schema.data("source") & src;
+    schema.data("value") & val;
+    schema.data("value_is_default") & value_is_default;
+    
+    Object::stream( schema.base() );
+}
+
 ////////////
 //////////// Implementation of PropertyMap
 ////////////
 
-static const RegisterMetaType<PropertyMap> r_propmap;
-
-/** Serialise to a binary datastream */
-QDataStream SIREFF_EXPORT &operator<<(QDataStream &ds, 
-                                      const PropertyMap &propmap)
-{
-    writeHeader(ds, r_propmap, 1);
-    
-    SharedDataStream sds(ds);
-    sds << propmap.propmap;
-    
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIREFF_EXPORT &operator>>(QDataStream &ds, 
-                                      PropertyMap &propmap)
-{
-    VersionID v = readHeader(ds, r_propmap);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        sds >> propmap.propmap;
-    }
-    else
-        throw version_error(v, "1", r_propmap, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<PropertyMap> r_propmap;
 
 /** Null constructor */
-PropertyMap::PropertyMap()
+PropertyMap::PropertyMap() : Implements<PropertyMap,Object>()
 {}
 
 /** Construct a map that holds just a single PropertyName */
 PropertyMap::PropertyMap(const QString &property, const PropertyName &propname)
+            : Implements<PropertyMap,Object>()
 {
     propmap.insert(property, propname);
 }
 
 /** Construct a map that holds lots of PropertyNames */
 PropertyMap::PropertyMap(const QHash<QString,PropertyName> &propnames)
-            : propmap(propnames)
+            : Implements<PropertyMap,Object>(), propmap(propnames)
 {}
 
 /** Copy constructor */
 PropertyMap::PropertyMap(const PropertyMap &other)
-            : propmap(other.propmap)
+            : Implements<PropertyMap,Object>(other), propmap(other.propmap)
 {}
 
 /** Destructor */
@@ -342,11 +304,6 @@ PropertyName PropertyMap::operator[](const PropertyName &propname) const
         return propname;
 }
 
-const char* PropertyMap::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<PropertyMap>() );
-}
-
 /** Return whether or not this map is default - if it is,
     then it doesn't specify any properties */
 bool PropertyMap::isDefault() const
@@ -399,4 +356,20 @@ QString PropertyMap::toString() const
     }
     
     return QString("[ %1 ]").arg( items.join(", ") );
+}
+
+uint PropertyMap::hashCode() const
+{
+    return qHash( PropertyMap::typeName() ) + qHash( propmap.count() );
+}
+
+void PropertyMap::stream(Stream &s)
+{
+    s.assertVersion<PropertyMap>(1);
+    
+    Schema schema = s.item<PropertyMap>();
+    
+    schema.data("map") & propmap;
+    
+    Object::stream( schema.base() );
 }

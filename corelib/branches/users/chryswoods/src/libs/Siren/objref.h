@@ -38,9 +38,9 @@ namespace Siren
 {
 class ObjRef;
 class Stream;
-}
 
-Siren::Stream& operator&(Siren::Stream &s, Siren::ObjRef &object);
+template<class T> class ObjPtr;
+}
 
 namespace Siren
 {
@@ -61,6 +61,9 @@ public:
     ObjRef();
     ObjRef(const Object &obj);
     ObjRef(Object *obj);
+    
+    template<class T>
+    ObjRef(const ObjPtr<T> &ptr);
     
     ObjRef(const ObjRef &other);
     

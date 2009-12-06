@@ -33,76 +33,69 @@
 
 #include "sireglobal.h"
 
+#include "Siren/primitive.h"
+
 SIRE_BEGIN_HEADER
 
 namespace SireBase
 {
-template<class T>
-class SparseMatrix;
-
-namespace detail { class Index; }
-
+template<class T> class SparseMatrix;
 }
 
 template<class T>
-QDataStream& operator<<(QDataStream&, const SireBase::SparseMatrix<T>&);
-template<class T>
-QDataStream& operator>>(QDataStream&, SireBase::SparseMatrix<T>&);
-
-QDataStream& operator<<(QDataStream&, const SireBase::detail::Index&);
-QDataStream& operator>>(QDataStream&, SireBase::detail::Index&);
+Siren::Stream& operator&(Siren::Stream&, SireBase::SparseMatrix<T>&);
 
 namespace SireBase
 {
 
-namespace detail
-{
-
-/** Small class used to index a matrix */
-class Index
+/** Small class used to index the SparseMatrix */
+class SparseIndex : public Siren::Primitive<SparseIndex>
 {
 public:
-    Index(quint32 ii=0, quint32 jj=0) : i(ii), j(jj)
+    SparseIndex(quint32 ii=0, quint32 jj=0) 
+            : Siren::Primitive<SparseIndex>(), i(ii), j(jj)
     {}
 
-    Index(const Index &other) : i(other.i), j(other.j)
+    SparseIndex(const SparseIndex &other) 
+            : Siren::Primitive<SparseIndex>(), i(other.i), j(other.j)
     {}
 
-    ~Index()
+    ~SparseIndex()
     {}
 
-    Index& operator=(const Index &other)
+    SparseIndex& operator=(const SparseIndex &other)
     {
         i = other.i;
         j = other.j;
         return *this;
     }
 
-    bool operator==(const Index &other) const
+    bool operator==(const SparseIndex &other) const
     {
         return i == other.i and j == other.j;
     }
 
-    bool operator!=(const Index &other) const
+    bool operator!=(const SparseIndex &other) const
     {
         return i != other.i or j != other.j;
     }
+    
+    uint hashCode() const
+    {
+        return (i << 16) & (j | 0x0000FFFF);
+    }
 
+    QString toString() const
+    {
+        return QString("(%1,%2)").arg(i).arg(j);
+    }
+
+    void stream(Siren::Stream &s);
+
+private:
     quint32 i;
     quint32 j;
 };
-
-inline uint qHash(const Index &idx)
-{
-    return (idx.i << 16) & (idx.j | 0x0000FFFF);
-}
-
-} // end of namespace detail
-
-} // end of namespace SireBase
-
-namespace SireBase
-{
 
 /** This simple template class is used to provide a sparse matrix
     that can efficiently hold a matrix of objects. This class is
@@ -128,10 +121,9 @@ template<class T>
 class SIREBASE_EXPORT SparseMatrix
 {
 
-friend QDataStream& ::operator<<<>(QDataStream&, const SparseMatrix<T>&);
-friend QDataStream& ::operator>><>(QDataStream&, SparseMatrix<T>&);
-
 template<class U> friend class SparseMatrix;
+
+friend Siren::Stream& operator&<>(Siren::Stream&, SparseMatrix<T>&);
 
 public:
     SparseMatrix(const T &default_value = T(), 
@@ -156,29 +148,27 @@ public:
 
     bool isEmpty() const;
     bool isSymmetric() const;
+    bool isTranspose() const;
 
     const T& defaultValue() const;
 
     SparseMatrix<T> transpose() const;
     
+    const void* shareKey() const;
+    
 private:
-    /** Possible state of the sparse matrix */
-    enum MATRIX_STATE
-    {
-        NORMAL     = 1,     //normal matrix
-        TRANSPOSE  = 2,     //the transpose of the matrix is stored
-        SYMMETRIC  = 4      //this is a symmetrix matrix
-    };
-    
-    /** The state of this matrix */
-    MATRIX_STATE current_state;
-    
     /** The default value of each element of the matrix */
     T def;
 
     /** Hash which is used to store all of the elements of the matrix */
-    QHash<detail::Index,T> data;
-};
+    QHash<SparseIndex,T> data;
+
+    /** Is this is a symmetric matrix? */
+    bool is_symmetric;
+    
+    /** Is the transpose stored? */
+    bool is_transpose;
+};    
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
@@ -186,37 +176,21 @@ private:
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 SparseMatrix<T>::SparseMatrix(const T &default_value,
-                              bool is_symmetric) 
-                : current_state(NORMAL), def(default_value)
-{
-    if (is_symmetric)
-        current_state = SYMMETRIC;
-}
+                              bool is_sym) 
+                : is_symmetric(is_sym), is_transpose(false), def(default_value)
+{}
 
 /** Construct this SparseMatrix by casting the passed SparseMatrix<U> */
 template<class T>
 template<class U>
 SIRE_OUTOFLINE_TEMPLATE
 SparseMatrix<T>::SparseMatrix(const SparseMatrix<U> &other)
+                : is_symmetric(other.is_symmetric),
+                  is_transpose(other.is_transpose)
 {
-    switch (other.current_state)
-    {
-        case SparseMatrix<U>::NORMAL:
-            current_state = SparseMatrix<T>::NORMAL;
-            break;
-            
-        case SparseMatrix<U>::TRANSPOSE:
-            current_state = SparseMatrix<T>::TRANSPOSE;
-            break;
-            
-        case SparseMatrix<U>::SYMMETRIC:
-            current_state = SparseMatrix<T>::SYMMETRIC;
-            break;
-    }
-
     def = T(other.def);
 
-    for (typename QHash<detail::Index,U>::const_iterator it = other.data.constBegin();
+    for (typename QHash<SparseIndex,U>::const_iterator it = other.data.constBegin();
          it != other.data.constEnd();
          ++it)
     {
@@ -228,7 +202,8 @@ SparseMatrix<T>::SparseMatrix(const SparseMatrix<U> &other)
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 SparseMatrix<T>::SparseMatrix(const SparseMatrix<T> &other)
-                : current_state(other.current_state), def(other.def), data(other.data)
+                : def(other.def), data(other.data),
+                  is_symmetric(other.is_symmetric), is_transpose(other.is_transpose)
 {}
 
 /** Destructor */
@@ -246,7 +221,8 @@ SparseMatrix<T>& SparseMatrix<T>::operator=(const SparseMatrix<T> &other)
     {
         data = other.data;
         def = other.def;
-        current_state = other.current_state;        
+        is_symmetric = other.is_symmetric;
+        is_transpose = other.is_transpose;
     }
 
     return *this;
@@ -257,7 +233,8 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 bool SparseMatrix<T>::operator==(const SparseMatrix<T> &other) const
 {
-    return current_state == other.current_state and
+    return is_symmetric == other.is_symmetric and
+           is_transpose == other.is_transpose and
            def == other.def and
            data == other.data;
 }
@@ -267,9 +244,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 bool SparseMatrix<T>::operator!=(const SparseMatrix<T> &other) const
 {
-    return current_state != other.current_state or
-           def != other.def or
-           data != other.data;
+    return not SparseMatrix<T>::operator==(other);
 }
 
 /** Return the element at index (i,j) - this returns the default
@@ -278,19 +253,19 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 const T& SparseMatrix<T>::operator()(quint32 i, quint32 j) const
 {
-    detail::Index idx;
+    SparseIndex idx;
     
-    if ( current_state == TRANSPOSE or
-         (current_state == SYMMETRIC and j < i) )
+    if ( is_transpose or
+         (is_symmetric and j < i) )
     {
-        idx = detail::Index(j,i);
+        idx = SparseIndex(j,i);
     }
     else
     {
-        idx = detail::Index(i,j);
+        idx = SparseIndex(i,j);
     }
 
-    typename QHash<detail::Index,T>::const_iterator it = data.constFind(idx);
+    typename QHash<SparseIndex,T>::const_iterator it = data.constFind(idx);
 
     if (it != data.constEnd())
         return *it;
@@ -303,16 +278,16 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void SparseMatrix<T>::set(quint32 i, quint32 j, const T &value)
 {
-    detail::Index idx;
+    SparseIndex idx;
     
-    if ( current_state == TRANSPOSE or
-         (current_state == SYMMETRIC and j < i) )
+    if ( is_transpose or
+         (is_symmetric and j < i) )
     {
-        idx = detail::Index(j,i);
+        idx = SparseIndex(j,i);
     }
     else
     {
-        idx = detail::Index(i,j);
+        idx = SparseIndex(i,j);
     }
     
     if (value == def)
@@ -344,7 +319,15 @@ template<class T>
 SIRE_INLINE_TEMPLATE
 bool SparseMatrix<T>::isSymmetric() const
 {
-    return current_state == SYMMETRIC;
+    return is_symmetric;
+}
+
+/** Return whether or not the transpose is stored */
+template<class T>
+SIRE_INLINE_TEMPLATE
+bool SparseMatrix<T>::isTranspose() const
+{
+    return is_transpose;
 }
 
 /** Return the default value of this sparse matrix */
@@ -361,18 +344,9 @@ SIRE_OUTOFLINE_TEMPLATE
 SparseMatrix<T> SparseMatrix<T>::transpose() const
 {
     SparseMatrix<T> ret(*this);
-    
-    switch( this->current_state )
-    {
-        case NORMAL:
-            ret.current_state = TRANSPOSE;
-            break;
-        case TRANSPOSE:
-            ret.current_state = NORMAL;
-            break;
-        case SYMMETRIC:
-            break;
-    }
+
+    if (not ret.is_symmetric)
+        ret.is_transpose = not is_transpose;
     
     return ret;
 }
@@ -381,61 +355,7 @@ SparseMatrix<T> SparseMatrix<T>::transpose() const
 
 } // end of namespace SireBase
 
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
-inline QDataStream& operator<<(QDataStream &ds, const SireBase::detail::Index &idx)
-{
-    ds << idx.i << idx.j;
-    return ds;
-}
-
-inline QDataStream& operator>>(QDataStream &ds, SireBase::detail::Index &idx)
-{
-    ds >> idx.i >> idx.j;
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-template<class T>
-QDataStream& operator<<(QDataStream &ds, const SireBase::SparseMatrix<T> &matrix)
-{
-    ds << qint32(matrix.current_state)
-       << matrix.def
-       << matrix.data;
-       
-    return ds;
-}
-
-/** Extract from a binary datastream */
-template<class T>
-QDataStream& operator>>(QDataStream &ds, SireBase::SparseMatrix<T> &matrix)
-{
-    qint32 typ;
-    
-    ds >> typ >> matrix.def >> matrix.data;
-    
-    switch (typ)
-    {
-        case SireBase::SparseMatrix<T>::NORMAL:
-            matrix.current_state = SireBase::SparseMatrix<T>::NORMAL;
-            break;
-        
-        case SireBase::SparseMatrix<T>::TRANSPOSE:
-            matrix.current_state = SireBase::SparseMatrix<T>::TRANSPOSE;
-            break;
-        
-        case SireBase::SparseMatrix<T>::SYMMETRIC:
-            matrix.current_state = SireBase::SparseMatrix<T>::SYMMETRIC;
-            break;
-        
-        default:
-            matrix.current_state = SireBase::SparseMatrix<T>::NORMAL;
-    }
-    
-    return ds;
-}
-
-#endif //SIRE_SKIP_INLINE_FUNCTIONS
+Q_DECLARE_METATYPE( SireBase::SparseIndex )
 
 SIRE_END_HEADER
 

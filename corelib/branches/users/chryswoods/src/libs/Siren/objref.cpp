@@ -37,12 +37,6 @@
 using namespace Siren;
 using namespace Siren::detail;
 
-Stream SIREN_EXPORT &operator<<(Stream &s, ObjRef &object)
-{
-    object.stream(s);
-    return s;
-}
-
 Q_GLOBAL_STATIC_WITH_ARGS( SharedPolyPointer<Object>, getNone, (None()) );
 
 /** Construct a null reference - this points to 'None' */

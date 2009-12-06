@@ -1388,7 +1388,7 @@ QList<T> ChunkedHash<Key,T,N>::values(const Key &key) const
     shared streaming subsystem */
 template<class Key, class Value, int N>
 SIRE_OUTOFLINE_TEMPLATE
-const void* ChunkedHash<Key,T,N>::shareKey() const
+const void* ChunkedHash<Key,Value,N>::shareKey() const
 {
     if (this->isEmpty())
         return 0;

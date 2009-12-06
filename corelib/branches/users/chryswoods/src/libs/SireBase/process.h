@@ -29,9 +29,9 @@
 #ifndef SIREBASE_PROCESS_H
 #define SIREBASE_PROCESS_H
 
-#include "sireglobal.h"
+#include "Siren/handle.h"
 
-#include <boost/shared_ptr.hpp>
+#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
@@ -52,6 +52,8 @@ class ProcessData;
     @author Christopher Woods
 */
 class SIREBASE_EXPORT Process
+        : public Siren::ImplementsHandle< Process,
+                                          Siren::Handles<detail::ProcessData> >
 {
 public:
     Process();
@@ -63,16 +65,9 @@ public:
     
     bool operator==(const Process &other) const;
     bool operator!=(const Process &other) const;
-    
-    static const char* typeName()
-    {
-        return "SireBase::Process";
-    }
-    
-    const char* what() const
-    {
-        return Process::typeName();
-    }
+
+    uint hashCode() const;
+    QString toString() const;
     
     void wait();
     bool wait(int ms);
@@ -93,12 +88,11 @@ public:
 
 private:
     void cleanUpJob(int status, int child_exit_status);
-
-    /** PIMPL pointer to the data for this process */
-    boost::shared_ptr<detail::ProcessData> d;
 };
 
 }
+
+Q_DECLARE_METATYPE( SireBase::Process )
 
 SIRE_EXPOSE_CLASS( SireBase::Process )
 

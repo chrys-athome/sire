@@ -48,6 +48,8 @@ class SIREMOL_EXPORT TrigArray2DBase
 public:
     ~TrigArray2DBase();
 
+    static QString typeName();
+
     uint hashCode() const;
     void stream(Siren::Stream &s);
     

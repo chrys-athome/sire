@@ -30,56 +30,34 @@
 
 #include "stringmangler.h"
 
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
+#include "Siren/stream.h"
 
 using namespace SireBase;
-using namespace SireStream;
+using namespace Siren;
 
 ////////
 //////// Implementation of StringMangler
 ////////
 
-static const RegisterMetaType<StringMangler> r_stringmangler( MAGIC_ONLY,
-                                                  "SireBase::StringMangler" );
-                                                  
-/** Serialise to a binary datastream */
-QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds, 
-                                        const StringMangler &stringmangler)
-{
-    writeHeader(ds, r_stringmangler, 1);
-    ds << static_cast<const Property&>(stringmangler);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, StringMangler &stringmangler)
-{
-    VersionID v = readHeader(ds, r_stringmangler);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<Property&>(stringmangler);
-    }
-    else
-        throw version_error( v, "1", r_stringmangler, CODELOC );
-    
-    return ds;
-}
+static const RegisterObject<StringMangler> r_stringmangler( VIRTUAL_CLASS );
 
 /** Constructor */
-StringMangler::StringMangler() : Property()
+StringMangler::StringMangler() : Extends<StringMangler,Object>()
 {}
 
 /** Copy constructor */
 StringMangler::StringMangler(const StringMangler &other)
-              : Property(other)
+              : Extends<StringMangler,Object>(other)
 {}
 
 /** Destructor */
 StringMangler::~StringMangler()
 {}
+
+QString StringMangler::typeName()
+{
+    return "SireBase::StringMangler";
+}
 
 /** Mangle the input string */
 QString StringMangler::operator()(const QString &input) const
@@ -87,45 +65,28 @@ QString StringMangler::operator()(const QString &input) const
     return this->mangle(input);
 }
 
+void StringMangler::stream(Stream &s)
+{
+    s.assertVersion<StringMangler>(1);
+    
+    Schema schema = s.item<StringMangler>();
+    
+    Object::stream( schema.base() );
+}
+
 ////////
 //////// Implementation of NoMangling
 ////////
 
-static const RegisterMetaType<NoMangling> r_nomangle;
-
-/** Serialise to a binary datastream */
-QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds,
-                                        const NoMangling &nomangle)
-{
-    writeHeader(ds, r_nomangle, 1);
-    
-    ds << static_cast<const StringMangler&>(nomangle);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, NoMangling &nomangle)
-{
-    VersionID v = readHeader(ds, r_nomangle);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<StringMangler&>(nomangle);
-    }
-    else
-        throw version_error(v, "1", r_nomangle, CODELOC);
-        
-    return ds;
-}
+static const RegisterObject<NoMangling> r_nomangle;
 
 /** Constructor */
-NoMangling::NoMangling() : ConcreteProperty<NoMangling,StringMangler>()
+NoMangling::NoMangling() : Implements<NoMangling,StringMangler>()
 {}
 
 /** Copy constructor */
 NoMangling::NoMangling(const NoMangling &other)
-           : ConcreteProperty<NoMangling,StringMangler>(other)
+           : Implements<NoMangling,StringMangler>(other)
 {}
 
 /** Destructor */
@@ -150,71 +111,44 @@ bool NoMangling::operator!=(const NoMangling&) const
     return false;
 }
 
-const char* NoMangling::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<NoMangling>() );
-}
-
 /** Mangle the string - remove all initial and trailing spaces */
 QString NoMangling::mangle(const QString &input) const
 {
     return input;
 }
 
-static SharedPolyPointer<NoMangling> shared_null;
-
-const NoMangling& StringMangler::null()
+QString NoMangling::toString() const
 {
-    if (shared_null.constData() == 0)
-    {
-        QMutexLocker lkr( globalLock() );
-        
-        if (shared_null.constData() == 0)
-            shared_null = new NoMangling();
-    }
+    return QObject::tr("NoMangling()");
+}
+
+uint NoMangling::hashCode() const
+{
+    return qHash( NoMangling::typeName() );
+}
+
+void NoMangling::stream(Stream &s)
+{
+    s.assertVersion<NoMangling>(1);
     
-    return *(shared_null.constData());
+    Schema schema = s.item<NoMangling>();
+    
+    StringMangler::stream( schema.base() );
 }
 
 ////////
 //////// Implementation of TrimString
 ////////
 
-static const RegisterMetaType<TrimString> r_trimstring;
-
-/** Serialise to a binary datastream */
-QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds,
-                                        const TrimString &trimstring)
-{
-    writeHeader(ds, r_trimstring, 1);
-    
-    ds << static_cast<const StringMangler&>(trimstring);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, TrimString &trimstring)
-{
-    VersionID v = readHeader(ds, r_trimstring);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<StringMangler&>(trimstring);
-    }
-    else
-        throw version_error(v, "1", r_trimstring, CODELOC);
-        
-    return ds;
-}
+static const RegisterObject<TrimString> r_trimstring;
 
 /** Constructor */
-TrimString::TrimString() : ConcreteProperty<TrimString,StringMangler>()
+TrimString::TrimString() : Implements<TrimString,StringMangler>()
 {}
 
 /** Copy constructor */
 TrimString::TrimString(const TrimString &other)
-           : ConcreteProperty<TrimString,StringMangler>(other)
+           : Implements<TrimString,StringMangler>(other)
 {}
 
 /** Destructor */
@@ -239,56 +173,44 @@ bool TrimString::operator!=(const TrimString&) const
     return false;
 }
 
-const char* TrimString::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<TrimString>() );
-}
-
 /** Mangle the string - remove all initial and trailing spaces */
 QString TrimString::mangle(const QString &input) const
 {
     return input.trimmed();
 }
 
+QString TrimString::toString() const
+{
+    return QObject::tr("TrimString()");
+}
+
+uint TrimString::hashCode() const
+{
+    return qHash( TrimString::typeName() );
+}
+
+void TrimString::stream(Stream &s)
+{
+    s.assertVersion<TrimString>(1);
+    
+    Schema schema = s.item<TrimString>();
+    
+    StringMangler::stream( schema.base() );
+}
+
 ////////
 //////// Implementation of UpperCaseString
 ////////
 
-static const RegisterMetaType<UpperCaseString> r_upperstring;
-
-/** Serialise to a binary datastream */
-QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds,
-                                        const UpperCaseString &upperstring)
-{
-    writeHeader(ds, r_upperstring, 1);
-    
-    ds << static_cast<const StringMangler&>(upperstring);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, UpperCaseString &upperstring)
-{
-    VersionID v = readHeader(ds, r_upperstring);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<StringMangler&>(upperstring);
-    }
-    else
-        throw version_error(v, "1", r_upperstring, CODELOC);
-        
-    return ds;
-}
+static const RegisterObject<UpperCaseString> r_upperstring;
 
 /** Constructor */
-UpperCaseString::UpperCaseString() : ConcreteProperty<UpperCaseString,StringMangler>()
+UpperCaseString::UpperCaseString() : Implements<UpperCaseString,StringMangler>()
 {}
 
 /** Copy constructor */
 UpperCaseString::UpperCaseString(const UpperCaseString &other)
-           : ConcreteProperty<UpperCaseString,StringMangler>(other)
+           : Implements<UpperCaseString,StringMangler>(other)
 {}
 
 /** Destructor */
@@ -313,56 +235,44 @@ bool UpperCaseString::operator!=(const UpperCaseString&) const
     return false;
 }
 
-const char* UpperCaseString::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<UpperCaseString>() );
-}
-
 /** Mangle the string - remove all initial and trailing spaces */
 QString UpperCaseString::mangle(const QString &input) const
 {
     return input.trimmed().toUpper();
 }
 
+QString UpperCaseString::toString() const
+{
+    return QObject::tr("UpperCaseString()");
+}
+
+uint UpperCaseString::hashCode() const
+{
+    return qHash( UpperCaseString::typeName() );
+}
+
+void UpperCaseString::stream(Stream &s)
+{
+    s.assertVersion<UpperCaseString>(1);
+    
+    Schema schema = s.item<UpperCaseString>();
+    
+    StringMangler::stream( schema.base() );
+}
+
 ////////
 //////// Implementation of LowerCaseString
 ////////
 
-static const RegisterMetaType<LowerCaseString> r_lowerstring;
-
-/** Serialise to a binary datastream */
-QDataStream SIREBASE_EXPORT &operator<<(QDataStream &ds,
-                                        const LowerCaseString &lowerstring)
-{
-    writeHeader(ds, r_lowerstring, 1);
-    
-    ds << static_cast<const StringMangler&>(lowerstring);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREBASE_EXPORT &operator>>(QDataStream &ds, LowerCaseString &lowerstring)
-{
-    VersionID v = readHeader(ds, r_lowerstring);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<StringMangler&>(lowerstring);
-    }
-    else
-        throw version_error(v, "1", r_lowerstring, CODELOC);
-        
-    return ds;
-}
+static const RegisterObject<LowerCaseString> r_lowerstring;
 
 /** Constructor */
-LowerCaseString::LowerCaseString() : ConcreteProperty<LowerCaseString,StringMangler>()
+LowerCaseString::LowerCaseString() : Implements<LowerCaseString,StringMangler>()
 {}
 
 /** Copy constructor */
 LowerCaseString::LowerCaseString(const LowerCaseString &other)
-           : ConcreteProperty<LowerCaseString,StringMangler>(other)
+           : Implements<LowerCaseString,StringMangler>(other)
 {}
 
 /** Destructor */
@@ -387,13 +297,27 @@ bool LowerCaseString::operator!=(const LowerCaseString&) const
     return false;
 }
 
-const char* LowerCaseString::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<LowerCaseString>() );
-}
-
 /** Mangle the string - remove all initial and trailing spaces */
 QString LowerCaseString::mangle(const QString &input) const
 {
     return input.trimmed().toLower();
+}
+
+QString LowerCaseString::toString() const
+{
+    return QObject::tr("LowerCaseString()");
+}
+
+uint LowerCaseString::hashCode() const
+{
+    return qHash( LowerCaseString::typeName() );
+}
+
+void LowerCaseString::stream(Stream &s)
+{
+    s.assertVersion<LowerCaseString>(1);
+    
+    Schema schema = s.item<LowerCaseString>();
+    
+    StringMangler::stream( schema.base() );
 }

@@ -29,34 +29,12 @@
 #ifndef SIREBASE_STRINGMANGLER_H
 #define SIREBASE_STRINGMANGLER_H
 
-#include "property.h"
+#include "Siren/object.h"
+#include "Siren/objptr.hpp"
+
+#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
-
-namespace SireBase
-{
-class StringMangler;
-
-class NoMangling;
-class TrimString;
-class LowerCaseString;
-class UpperCaseString;
-}
-
-QDataStream& operator<<(QDataStream&, const SireBase::StringMangler&);
-QDataStream& operator>>(QDataStream&, SireBase::StringMangler&);
-
-QDataStream& operator<<(QDataStream&, const SireBase::NoMangling&);
-QDataStream& operator>>(QDataStream&, SireBase::NoMangling&);
-
-QDataStream& operator<<(QDataStream&, const SireBase::TrimString&);
-QDataStream& operator>>(QDataStream&, SireBase::TrimString&);
-
-QDataStream& operator<<(QDataStream&, const SireBase::LowerCaseString&);
-QDataStream& operator>>(QDataStream&, SireBase::LowerCaseString&);
-
-QDataStream& operator<<(QDataStream&, const SireBase::UpperCaseString&);
-QDataStream& operator>>(QDataStream&, SireBase::UpperCaseString&);
 
 namespace SireBase
 {
@@ -68,7 +46,7 @@ namespace SireBase
     
     @author Christopher Woods
 */
-class SIREBASE_EXPORT StringMangler : public Property
+class SIREBASE_EXPORT StringMangler : public Siren::Extends<StringMangler,Siren::Object>
 {
 public:
     StringMangler();
@@ -76,26 +54,20 @@ public:
     
     virtual ~StringMangler();
     
-    virtual StringMangler* clone() const=0;
-    
-    static const char* typeName()
-    {
-        return "SireBase::StringMangler";
-    }
+    static QString typeName();
+
+    void stream(Siren::Stream &s);
     
     QString operator()(const QString &input) const;
     
     virtual QString mangle(const QString &input) const=0;
-    
-    static const NoMangling& null();
 };
 
 /** This mangler does absolutely nothing to the string!
     
     @author Christopher Woods
 */
-class SIREBASE_EXPORT NoMangling 
-               : public ConcreteProperty<NoMangling,StringMangler>
+class SIREBASE_EXPORT NoMangling : public Siren::Implements<NoMangling,StringMangler>
 {
 public:
     NoMangling();
@@ -103,12 +75,14 @@ public:
     
     ~NoMangling();
     
-    static const char* typeName();
-    
     NoMangling& operator=(const NoMangling &other);
     
     bool operator==(const NoMangling &other) const;
     bool operator!=(const NoMangling &other) const;
+
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     QString mangle(const QString &input) const;
 };
@@ -118,8 +92,7 @@ public:
     
     @author Christopher Woods
 */
-class SIREBASE_EXPORT TrimString 
-               : public ConcreteProperty<TrimString,StringMangler>
+class SIREBASE_EXPORT TrimString : public Siren::Implements<TrimString,StringMangler>
 {
 public:
     TrimString();
@@ -127,12 +100,14 @@ public:
     
     ~TrimString();
     
-    static const char* typeName();
-    
     TrimString& operator=(const TrimString &other);
     
     bool operator==(const TrimString &other) const;
     bool operator!=(const TrimString &other) const;
+
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     QString mangle(const QString &input) const;
 };
@@ -143,7 +118,7 @@ public:
     @author Christopher Woods
 */
 class SIREBASE_EXPORT UpperCaseString 
-            : public ConcreteProperty<UpperCaseString,StringMangler>
+            : public Siren::Implements<UpperCaseString,StringMangler>
 {
 public:
     UpperCaseString();
@@ -151,12 +126,14 @@ public:
     
     ~UpperCaseString();
     
-    static const char* typeName();
-    
     UpperCaseString& operator=(const UpperCaseString &other);
     
     bool operator==(const UpperCaseString &other) const;
     bool operator!=(const UpperCaseString &other) const;
+
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     QString mangle(const QString &input) const;
 };
@@ -167,7 +144,7 @@ public:
     @author Christopher Woods
 */
 class SIREBASE_EXPORT LowerCaseString 
-            : public ConcreteProperty<LowerCaseString,StringMangler>
+            : public Siren::Implements<LowerCaseString,StringMangler>
 {
 public:
     LowerCaseString();
@@ -175,17 +152,19 @@ public:
     
     ~LowerCaseString();
     
-    static const char* typeName();
-    
     LowerCaseString& operator=(const LowerCaseString &other);
     
     bool operator==(const LowerCaseString &other) const;
     bool operator!=(const LowerCaseString &other) const;
 
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
+
     QString mangle(const QString &input) const;
 };
 
-typedef PropPtr<StringMangler> StringManglerPtr;
+typedef Siren::ObjPtr<StringMangler> StringManglerPtr;
 
 }
 
@@ -200,7 +179,7 @@ SIRE_EXPOSE_CLASS( SireBase::TrimString )
 SIRE_EXPOSE_CLASS( SireBase::UpperCaseString )
 SIRE_EXPOSE_CLASS( SireBase::LowerCaseString )
 
-SIRE_EXPOSE_PROPERTY( SireBase::StringManglerPtr, SireBase::StringMangler )
+SIRE_EXPOSE_OBJECT_PTR( SireBase::StringManglerPtr, SireBase::StringMangler )
 
 SIRE_END_HEADER
 

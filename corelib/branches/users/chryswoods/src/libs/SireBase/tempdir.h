@@ -31,6 +31,8 @@
 
 #include <QDir>
 
+#include "Siren/handle.h"
+
 #include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
@@ -38,54 +40,47 @@ SIRE_BEGIN_HEADER
 namespace SireBase
 {
 
+namespace detail{ class TempDirData; }
+
 /** This class provides a temporary directory that is created in the 
     constructor, and deleted in the destructor.
     
     @author Christopher Woods
 */
 class SIREBASE_EXPORT TempDir
+        : public Siren::ImplementsHandle< TempDir,
+                                          Siren::Handles<detail::TempDirData> >
 {
 public:
     TempDir();
     TempDir(const QString &temp_root);
 
+    TempDir(const TempDir &other);
+
     ~TempDir();
+
+    TempDir& operator=(const TempDir &other);
     
-    static const char* typeName()
-    {
-        return "SireBase::TempDir";
-    }
-    
-    const char* what() const
-    {
-        return TempDir::typeName();
-    }
+    bool operator==(const TempDir &other) const;
+    bool operator!=(const TempDir &other) const;
     
     QString toString() const;
+    uint hashCode() const;
     
     QString path() const;
     
     void doNotDelete();
     
 private:
-    TempDir(const TempDir&)
-    {}
-    
-    TempDir& operator=(const TempDir&)
-    {
-        return *this;
-    }
-
     void createDirectory(const QString &temp_root);
-
-    /** The temporary directory */
-    QDir tmpdir;
     
     /** Whether or not to delete the directory at exit */
     bool do_not_delete;
 };
 
 }
+
+Q_DECLARE_METATYPE( SireBase::TempDir )
 
 SIRE_EXPOSE_CLASS( SireBase::TempDir )
 

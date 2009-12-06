@@ -234,6 +234,8 @@ public:
     
     ~Handles();
     
+    bool unique() const;
+    
 protected:
     Handles<T>& operator=(const Handles<T> &other);
     
@@ -607,6 +609,14 @@ SIREN_OUTOFLINE_TEMPLATE
 void Handles<T>::setResource( T *resource )
 {
     resource_ptr.reset(resource);
+}
+
+/** Return whether or not this is the only handle holding the resource */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+bool Handles<T>::unique() const
+{
+    return resource_ptr.unique();
 }
 
 //////
