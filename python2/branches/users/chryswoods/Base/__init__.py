@@ -12,5 +12,8 @@
 ## (C) Christopher Woods
 ##
 
+import Sire.Qt
+import Sire.Siren
+
 from Sire.Base._Base import *
 

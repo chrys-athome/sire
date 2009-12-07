@@ -7,10 +7,7 @@ def fix_Array2D(c):
 special_code = { "SireBase::Array2D<double>" : fix_Array2D }
 
 implicitly_convertible = [ ("QString", "SireBase::PropertyName"),
-                           ("QString", "SireBase::VariantProperty"),
-                           ("double", "SireBase::VariantProperty"),
-                           ("QString", "SireBase::PropertyName"),
-                           ("SireBase::Property", "SireBase::PropertyName"),
+                           ("Siren::Object", "SireBase::PropertyName"),
                            ("QHash<QString,SireBase::PropertyName>", "SireBase::PropertyMap") ] 
 
 def fixMB(mb):

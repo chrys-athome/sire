@@ -8,7 +8,6 @@
 ##
 
 import Sire.Qt
-import Sire.Error
 import Sire.Base
 
 # Import all of the classes and functions from the C++ library

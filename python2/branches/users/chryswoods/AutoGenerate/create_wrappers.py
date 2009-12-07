@@ -238,6 +238,9 @@ def export_class(mb, classname, aliases, includes, special_code, auto_str_functi
    for include_file in includes:
        c.add_declaration_code("#include %s" % include_file)
 
+   #also include Siren/logger.h
+   c.add_declaration_code("#include \"Siren/logger.h\"")
+
    #ensure that the list of bases includes *all* bases,
    # - this is to fix problems with typeerror being
    #   thrown for derived types
@@ -259,14 +262,14 @@ def export_class(mb, classname, aliases, includes, special_code, auto_str_functi
    except:
        pass
 
-   for f in funs:
-       print f
-
-       if has_clone_function(f.return_type):
-           print "HAS CLONE FUNCTION"
-           f.call_policies = call_policies.custom_call_policies( \
-                 "bp::return_value_policy<bp::clone_const_reference>", \
-                 "Helpers/clone_const_reference.hpp" )
+   #for f in funs:
+   #    print f
+   #
+   #    if has_clone_function(f.return_type):
+   #        print "HAS CLONE FUNCTION"
+   #        f.call_policies = call_policies.custom_call_policies( \
+   #              "bp::return_value_policy<bp::clone_const_reference>", \
+   #              "Siren/clone_const_reference.hpp" )
 
    #also add any operator[] or operator() functions
    try:
@@ -275,15 +278,15 @@ def export_class(mb, classname, aliases, includes, special_code, auto_str_functi
    except:
        pass
 
-   for f in funs:
-       print f
-
-       if (str(f).find("[]") != -1) or (str(f).find("()") != -1):
-           if has_clone_function(f.return_type):
-               print "HAS CLONE FUNCTION"
-               f.call_policies = call_policies.custom_call_policies( \
-                   "bp::return_value_policy<bp::clone_const_reference>", \
-                   "Helpers/clone_const_reference.hpp" )
+   #for f in funs:
+   #    print f
+   #
+   #    if (str(f).find("[]") != -1) or (str(f).find("()") != -1):
+   #        if has_clone_function(f.return_type):
+   #            print "HAS CLONE FUNCTION"
+   #            f.call_policies = call_policies.custom_call_policies( \
+   #                "bp::return_value_policy<bp::clone_const_reference>", \
+   #                "Siren/clone_const_reference.hpp" )
 
    #remove any declarations that return a pointer to something
    #(special code is needed in these cases!)
