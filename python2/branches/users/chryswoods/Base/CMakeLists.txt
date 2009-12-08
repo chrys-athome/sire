@@ -40,7 +40,6 @@ set_target_properties (Base
 		       )
 		       
 target_link_libraries (Base
-                       SirePython2
                        SIRE_SireBase
                        ${PYTHON_LIBRARIES}
                        ${BOOST_PYTHON_LIBRARY}

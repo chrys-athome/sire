@@ -73,6 +73,8 @@ inline uint qHash(double value)
 namespace Siren
 {
 
+Object* extractPointer(ObjRef &objref);
+
 namespace detail
 {
 template<class T> class SharedPolyPointerHelper;
@@ -318,6 +320,7 @@ private:
     friend class detail::GlobalSharedPointerBase;
 
     friend void qAtomicAssign<Object>(Object *&d, Object *x);
+    friend Object* extractPointer(ObjRef &objref);
 
     bool private_implements(const QString &class_type) const;
     void private_assertCanCast(const QString &class_type) const;

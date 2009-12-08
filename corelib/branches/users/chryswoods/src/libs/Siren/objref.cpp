@@ -39,6 +39,25 @@ using namespace Siren::detail;
 
 Q_GLOBAL_STATIC_WITH_ARGS( SharedPolyPointer<Object>, getNone, (None()) );
 
+namespace Siren
+{
+    Object SIREN_EXPORT *extractPointer(ObjRef &objref)
+    {
+        objref.d.detach();
+        
+        Object *ptr = objref.d;
+        
+        //increase the reference count of the pointer so 
+        //that it won't be deleted
+        ptr->ref.ref();
+        
+        objref.d = *(getNone());
+        
+        return ptr;
+    }
+}
+
+
 /** Construct a null reference - this points to 'None' */
 ObjRef::ObjRef() : d( *(getNone()) )
 {}
@@ -108,6 +127,19 @@ bool ObjRef::operator!=(const Object &other) const
 QString ObjRef::typeName()
 {
     return "Siren::ObjRef";
+}
+
+/** Return whether or not this is a unique reference to 
+    the object */
+bool ObjRef::unique() const
+{
+    return d.unique();
+}
+
+/** Return whether or not this is none */
+bool ObjRef::isNone() const
+{
+    return d->isA<None>();
 }
 
 /** Return the Class type for the object */

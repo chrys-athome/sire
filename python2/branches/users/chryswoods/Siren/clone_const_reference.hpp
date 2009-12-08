@@ -15,6 +15,10 @@
 #include <boost/mpl/if.hpp>
 #include <boost/python/to_python_indirect.hpp>
 
+#include "Siren/objref.h"
+
+#include <QDebug>
+
 namespace boost
 {
 namespace python
@@ -31,7 +35,11 @@ struct make_clone_reference_holder
         if (p == 0)
             return python::detail::none();
         else
-            return detail::make_owning_holder::execute<T>(p->clone());
+        {
+            Siren::ObjRef objref = p->clone();
+            Siren::Object *ptr = Siren::extractPointer(objref);
+            return detail::make_owning_holder::execute<Siren::Object>(ptr);
+        }
     }
 };
 

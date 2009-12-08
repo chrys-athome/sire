@@ -262,14 +262,12 @@ def export_class(mb, classname, aliases, includes, special_code, auto_str_functi
    except:
        pass
 
-   #for f in funs:
-   #    print f
-   #
-   #    if has_clone_function(f.return_type):
-   #        print "HAS CLONE FUNCTION"
-   #        f.call_policies = call_policies.custom_call_policies( \
-   #              "bp::return_value_policy<bp::clone_const_reference>", \
-   #              "Siren/clone_const_reference.hpp" )
+   for f in funs:
+       if has_clone_function(f.return_type):
+           print "HAS CLONE FUNCTION"
+           f.call_policies = call_policies.custom_call_policies( \
+                 "bp::return_value_policy<bp::clone_const_reference>", \
+                 "Siren/clone_const_reference.hpp" )
 
    #also add any operator[] or operator() functions
    try:
@@ -278,15 +276,13 @@ def export_class(mb, classname, aliases, includes, special_code, auto_str_functi
    except:
        pass
 
-   #for f in funs:
-   #    print f
-   #
-   #    if (str(f).find("[]") != -1) or (str(f).find("()") != -1):
-   #        if has_clone_function(f.return_type):
-   #            print "HAS CLONE FUNCTION"
-   #            f.call_policies = call_policies.custom_call_policies( \
-   #                "bp::return_value_policy<bp::clone_const_reference>", \
-   #                "Siren/clone_const_reference.hpp" )
+   for f in funs:
+       if (str(f).find("[]") != -1) or (str(f).find("()") != -1):
+           if has_clone_function(f.return_type):
+               print "HAS CLONE FUNCTION"
+               f.call_policies = call_policies.custom_call_policies( \
+                   "bp::return_value_policy<bp::clone_const_reference>", \
+                   "Siren/clone_const_reference.hpp" )
 
    #remove any declarations that return a pointer to something
    #(special code is needed in these cases!)
@@ -463,9 +459,7 @@ def writePropertyWrappers(mb, sourcedir, active_headers):
 
    FILE = open("%s_properties.cpp" % sourcedir, "w")
 
-   print >>FILE,"#include <Python.h>"
-   print >>FILE,"#include <boost/python.hpp>\n"
-   print >>FILE,"#include \"Base/convertproperty.hpp\""
+   print >>FILE,"#include \"Siren/convertobjptr.hpp\"\n"
    print >>FILE,"#include \"%s_properties.h\"\n" % sourcedir
 
    for header in active_headers:
@@ -481,7 +475,7 @@ def writePropertyWrappers(mb, sourcedir, active_headers):
        active_header = active_headers[header]
        if active_header.hasProperties():
            for property in active_header.properties():
-               print >>FILE,"    register_property_container< %s, %s >();" % (property[0], property[1])
+               print >>FILE,"    register_objptr< %s >();" % (property[0])
 
    print >>FILE,"}"
 

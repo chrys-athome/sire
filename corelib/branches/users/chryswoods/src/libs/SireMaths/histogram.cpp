@@ -419,6 +419,27 @@ double Histogram::operator[](int i) const
     return binvals.constData()[i];
 }
 
+/** Return the value of the ith bin
+
+    \throw SireError::invalid_index
+*/
+double Histogram::at(int i) const
+{
+    return this->operator[](i);
+}
+
+/** Return the range of this histogram */
+const HistogramRange& Histogram::range() const
+{
+    return r;
+}
+
+/** Return the range of this histogram */
+const HistogramRange& Histogram::bins() const
+{
+    return r;
+}
+
 /** Return a raw pointer to the values in this histogram */
 const double* Histogram::data() const
 {

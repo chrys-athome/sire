@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) <year>  <name of author>
+  *  Copyright (C) 2009  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,34 +26,44 @@
   *
 \*********************************************/
 
-#include <Python.h>
+#ifndef PYWRAP_SIREN_CONVERTOBJPTR_HPP
+#define PYWRAP_SIREN_CONVERTOBJPTR_HPP
+
 #include <boost/python.hpp>
 
-#include <QVector>
-#include <QSet>
+#include "Siren/sirenglobal.h"
+#include "Siren/objref.h"
+#include "Siren/objptr.hpp"
 
-#include <boost/tuple/tuple.hpp>
+namespace bp = boost::python;
 
-#include "Siren/convertlist.hpp"
-#include "Siren/convertdict.hpp"
-#include "Siren/convertset.hpp"
-#include "Siren/tuples.hpp"
-#include "Siren/pair.hpp"
+SIREN_BEGIN_HEADER
 
-#include "SireMaths/vector.h"
-#include "SireMaths/nmatrix.h"
-#include "SireMaths/nvector.h"
-
-using namespace SireMaths;
-using namespace Siren;
-
-using boost::python::register_tuple;
-
-void register_SireMaths_containers()
+template<class T>
+struct to_py_objptr
 {
-    register_list< QList<Vector> >();
-    register_list< QVector<Vector> >();
-    register_pair< NVector,NMatrix >();
+    typedef typename T::value_type pointee_type;
 
-    register_tuple< boost::tuple<Vector,Vector,Vector> >();
+    static PyObject* convert(const T &objptr)
+    {
+        if (objptr.isNull())
+            return bp::detail::none();
+        else
+        {
+            Siren::ObjRef objref = objptr->clone();
+            return bp::detail::make_owning_holder::execute<Siren::Object>(
+                             Siren::extractPointer(objref) );
+        }
+    }
+};
+
+template<class T>
+void register_objptr()
+{
+    bp::to_python_converter< T, to_py_objptr<T> >();
+    bp::implicitly_convertible< typename T::value_type, T >();
 }
+
+SIREN_END_HEADER
+
+#endif

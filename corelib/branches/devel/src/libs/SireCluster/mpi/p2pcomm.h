@@ -114,10 +114,10 @@ public:
     void sendMessage(int message, const T &data);
     
     template<class T>
-    T awaitResponse();
+    T awaitResponse(bool urgent=false);
     
-    int awaitIntegerResponse();
-    float awaitFloatResponse();
+    int awaitIntegerResponse(bool urgent=false);
+    float awaitFloatResponse(bool urgent=false);
     
 protected:
     static P2PComm createLocal();
@@ -127,7 +127,7 @@ protected:
 private:
     void _pvt_sendMessage(int message, const QByteArray &data);
     
-    QByteArray _pvt_awaitResponse();
+    QByteArray _pvt_awaitResponse(bool urgent);
     
     /** Shared pointer to the implementation */
     boost::shared_ptr<detail::P2PCommPvt> d;
@@ -152,9 +152,9 @@ void P2PComm::sendMessage(int message, const T &data)
     response */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
-T P2PComm::awaitResponse()
+T P2PComm::awaitResponse(bool urgent)
 {
-    QByteArray bindata = this->_pvt_awaitResponse();
+    QByteArray bindata = this->_pvt_awaitResponse(urgent);
     
     if (bindata.isEmpty())
         return T();

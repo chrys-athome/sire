@@ -76,6 +76,11 @@ bool Torsion::operator==(const Torsion &other) const
            points[3] == other.points[3];
 }
 
+bool Torsion::operator!=(const Torsion &other) const
+{
+    return not Torsion::operator==(other);
+}
+
 /** Return a string representation of this torsion */
 QString Torsion::toString() const
 {

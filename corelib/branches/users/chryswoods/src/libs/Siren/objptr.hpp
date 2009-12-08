@@ -173,6 +173,8 @@ template<class T>
 class SIREN_EXPORT ObjPtr : public detail::ObjPtrBase
 {
 public:
+    typedef T value_type;
+
     ObjPtr();
 
     ObjPtr(const T &obj);
@@ -224,6 +226,8 @@ template<class T>
 class SIREN_EXPORT GlobalObjPtr : public detail::GlobalObjPtrBase
 {
 public:
+    typedef T value_type;
+
     GlobalObjPtr();
 
     GlobalObjPtr(const T &obj);

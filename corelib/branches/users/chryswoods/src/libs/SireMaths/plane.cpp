@@ -118,6 +118,11 @@ bool Plane::operator==(const Plane &other) const
     return norm == other.norm and dist == other.dist;
 }
 
+bool Plane::operator!=(const Plane &other) const
+{
+    return not Plane::operator==(other);
+}
+
 QString Plane::toString() const
 {
     return QObject::tr("Plane( [%1,%2,%3] : %4 )")

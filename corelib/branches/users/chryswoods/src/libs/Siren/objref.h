@@ -50,6 +50,8 @@ namespace detail
 template<class T> struct StreamHelper;
 }
 
+Object* extractPointer(ObjRef &objref);
+
 /** This is a light-weight reference to an object. This class is 
     used when a new object is returned from a function. This class
     will automatically cast itself back into a real const Object& 
@@ -86,6 +88,9 @@ public:
 
     ObjRef clone() const;
     
+    bool unique() const;
+    bool isNone() const;
+    
     QString toString() const;
 
     bool test() const;
@@ -114,6 +119,8 @@ public:
     
 private:
     friend class detail::StreamHelper<ObjRef>;
+
+    friend Object* extractPointer(ObjRef &objref);
 
     /** The shared pointer to the actual object */
     detail::SharedPolyPointer<Object> d;
