@@ -29,72 +29,21 @@
 #include "values.h"
 #include "symbol.h"
 
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
+#include "Siren/stream.h"
+#include "Siren/streamqt.h"
 
-using namespace SireStream;
+using namespace Siren;
 using namespace SireCAS;
 
-static const RegisterMetaType<Values> r_values;
-
-/** Serialise to a binary data stream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Values &values)
-{
-    writeHeader(ds, r_values, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << quint32( values.vals.count() );
-    
-    for (QHash<SymbolID,double>::const_iterator it = values.vals.constBegin();
-         it != values.vals.constEnd();
-         ++it)
-    {
-        sds << Symbol(it.key()) << it.value();
-    }
-
-    return ds;
-}
-
-/** Deserialise from a binary data stream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Values &values)
-{
-    VersionID v = readHeader(ds, r_values);
-
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        
-        quint32 nvals;
-        sds >> nvals;
-        
-        QHash<SymbolID,double> vals;
-        vals.reserve(nvals);
-        
-        for (quint32 i=0; i<nvals; ++i)
-        {
-            Symbol symbol; 
-            double value;
-            
-            sds >> symbol >> value;
-            
-            vals.insert( symbol.ID(), value );
-        }
-    
-        values.vals = vals;
-    }
-    else
-        throw version_error(v, "1", r_values, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<Values> r_values;
 
 /** Construct an empty set of values */
-Values::Values()
+Values::Values() : Implements<Values,Object>()
 {}
 
 /** Construct from a list of values */
 Values::Values(const QList<SymbolValue> &values)
+       : Implements<Values,Object>()
 {
     for (QList<SymbolValue>::const_iterator it = values.begin();
          it != values.end();
@@ -106,6 +55,7 @@ Values::Values(const QList<SymbolValue> &values)
 
 /** Construct from a hash of values indexed by symbols */
 Values::Values(const QHash<Symbol,double> &values)
+       : Implements<Values,Object>()
 {
     for (QHash<Symbol,double>::const_iterator it = values.begin();
          it != values.end();
@@ -116,7 +66,8 @@ Values::Values(const QHash<Symbol,double> &values)
 }
 
 /** Copy constructor */
-Values::Values(const Values &other) : vals(other.vals)
+Values::Values(const Values &other)
+       : Implements<Values,Object>(other), vals(other.vals)
 {}
 
 /** Comparison operator */
@@ -179,6 +130,7 @@ QList<Symbol> Values::keys() const
 
 /** Construct from the passed values */
 Values::Values(const SymbolValue &val0)
+       : Implements<Values,Object>()
 {
     add(val0);
 }
@@ -296,12 +248,14 @@ void Values::add(const SymbolValue &val0, const SymbolValue &val1, const SymbolV
 
 /** Construct from the passed values */
 Values::Values(const SymbolValue &val0, const SymbolValue &val1)
+       : Implements<Values,Object>()
 {
     add(val0,val1);
 }
 
 /** Construct from the passed values */
 Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2)
+       : Implements<Values,Object>()
 {
     add(val0,val1,val2);
 }
@@ -309,6 +263,7 @@ Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolVal
 /** Construct from the passed values */
 Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
                const SymbolValue &val3)
+       : Implements<Values,Object>()
 {
     add(val0,val1,val2,val3);
 }
@@ -316,6 +271,7 @@ Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolVal
 /** Construct from the passed values */
 Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
                const SymbolValue &val3, const SymbolValue &val4)
+       : Implements<Values,Object>()
 {
     add(val0,val1,val2,val3,val4);
 }
@@ -323,6 +279,7 @@ Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolVal
 /** Construct from the passed values */
 Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
                const SymbolValue &val3, const SymbolValue &val4, const SymbolValue &val5)
+       : Implements<Values,Object>()
 {
     add(val0,val1,val2,val3,val4,val5);
 }
@@ -331,6 +288,7 @@ Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolVal
 Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
                const SymbolValue &val3, const SymbolValue &val4, const SymbolValue &val5,
                const SymbolValue &val6)
+       : Implements<Values,Object>()
 {
     add(val0,val1,val2,val3,val4,val5,val6);
 }
@@ -339,6 +297,7 @@ Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolVal
 Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
                const SymbolValue &val3, const SymbolValue &val4, const SymbolValue &val5,
                const SymbolValue &val6, const SymbolValue &val7)
+       : Implements<Values,Object>()
 {
     add(val0,val1,val2,val3,val4,val5,val6,val7);
 }
@@ -347,6 +306,7 @@ Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolVal
 Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
                const SymbolValue &val3, const SymbolValue &val4, const SymbolValue &val5,
                const SymbolValue &val6, const SymbolValue &val7, const SymbolValue &val8)
+       : Implements<Values,Object>()
 {
     add(val0,val1,val2,val3,val4,val5,val6,val7,val8);
 }
@@ -356,6 +316,7 @@ Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolVal
                const SymbolValue &val3, const SymbolValue &val4, const SymbolValue &val5,
                const SymbolValue &val6, const SymbolValue &val7, const SymbolValue &val8,
                const SymbolValue &val9)
+       : Implements<Values,Object>()
 {
     add(val0,val1,val2,val3,val4,val5,val6,val7,val8,val9);
 }
@@ -363,6 +324,22 @@ Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolVal
 /** Destructor */
 Values::~Values()
 {}
+
+uint Values::hashCode() const
+{
+    return qHash( Values::typeName() ) + qHash( vals.count() );
+}
+
+void Values::stream(Stream &s)
+{
+    s.assertVersion<Values>(1);
+    
+    Schema schema = s.item<Values>();
+    
+    schema.data("values") & vals;
+    
+    Object::stream( schema.base() );
+}
 
 /** Return the value of the Symbol with ID 'id', or 0.0 if there is no such symbol */
 double Values::value(const Symbol &sym) const
@@ -436,7 +413,7 @@ int Values::count() const
 /** Add a SymbolValue to the set of values */
 void Values::add(const SymbolValue &val0)
 {
-    vals.insert(val0.ID(), val0.value());
+    vals.insert(val0.first, val0.second);
 }
 
 /** Set the Symbol 'symbol' equal to 'value' */

@@ -31,41 +31,37 @@
 
 #include <QHash>
 
-#include "exbase.h"
 #include "expression.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireCAS
 {
-class Sum;
-}
 
-QDataStream& operator<<(QDataStream&, const SireCAS::Sum&);
-QDataStream& operator>>(QDataStream&, SireCAS::Sum&);
+/** This class holds a collection of expressions that are 
+    to be added (or subtracted) from one another
 
-namespace SireCAS
-{
-
-/**
-This class holds a collection of expressions that are to be added (or subtracted) from one another
-
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIRECAS_EXPORT Sum : public ExBase
+class SIRECAS_EXPORT Sum : public Siren::Implements<Sum,CASNode>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Sum&);
-friend QDataStream& ::operator>>(QDataStream&, Sum&);
-
 public:
     Sum();
     Sum(const Expression &ex0, const Expression &ex1);
-    Sum(const Expressions &expressions);
+    Sum(const QList<Expression> &expressions);
 
     Sum(const Sum &other);
 
     ~Sum();
+
+    Sum& operator=(const Sum &other);
+    
+    bool operator==(const Sum &other) const;
+    bool operator!=(const Sum &other) const;
+    
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &s);
 
     Expression differentiate(const Symbol &symbol) const;
     Expression integrate(const Symbol &symbol) const;
@@ -81,45 +77,29 @@ public:
     bool isComplex() const;
     bool isCompound() const;
 
-    bool operator==(const ExBase &other) const;
-    uint hash() const;
-
-    static const char* typeName();
-
-    const char* what() const
-    {
-        return Sum::typeName();
-    }
-
-    QString toString() const;
-
     double evaluate(const Values &values) const;
-    Complex evaluate(const ComplexValues &values) const;
+    SireMaths::Complex evaluate(const ComplexValues &values) const;
 
     Expression substitute(const Identities &identities) const;
 
-    Symbols symbols() const;
-    Functions functions() const;
-    Expressions children() const;
+    QSet<Symbol> symbols() const;
+    QList<Expression> children() const;
 
     Expression reduce() const;
-
-    Sum* clone() const;
 
     QList<Factor> expand(const Symbol &symbol) const;
 
 private:
-
     void add(const Expression &ex);
 
-    Expression take(const ExpressionBase &ex);
-    void add(double fac, const ExpressionBase &ex);
+    Expression take(const CASNode &ex);
+    void add(double fac, const CASNode &ex);
 
-    /** The positive parts of the sum */
-    QHash<ExpressionBase, Expression> posparts;
+    /** The positive parts of the sum, indexed by their core */
+    QHash<Expression, Expression> posparts;
 
-    /** The negative parts of the sum */
-    QHash<ExpressionBase, Expression> negparts;
+    /** The negative parts of the sum, indexed by their core */
+    QHash<Expression, Expression> negparts;
 
     /** The start value of the sum */
     double strtval;

@@ -27,65 +27,57 @@
 \*********************************************/
 
 #include "integrationconstant.h"
+#include "expression.h"
+
+#include "SireMaths/complex.h"
 
 #include "SireCAS/errors.h"
 
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
 
-using namespace SireStream;
+using namespace SireMaths;
+using namespace Siren;
 using namespace SireCAS;
 
-static const RegisterMetaType<IntegrationConstant> r_intconst;
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const IntegrationConstant &ic)
-{
-    writeHeader(ds, r_intconst, 1) << static_cast<const Symbol&>(ic);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, IntegrationConstant &ic)
-{
-    VersionID v = readHeader(ds, r_intconst);
-
-    if (v == 1)
-    {
-        ds >> static_cast<Symbol&>(ic);
-    }
-    else
-        throw version_error(v, "1", r_intconst, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<IntegrationConstant> r_intconst;
 
 /** Constructor */
 IntegrationConstant::IntegrationConstant()
-                    : Symbol("C")
+                    : Implements<IntegrationConstant,Symbol>("C")
 {}
 
 /** Copy constructor */
 IntegrationConstant::IntegrationConstant( const IntegrationConstant &other )
-                    : Symbol(other)
+                    : Implements<IntegrationConstant,Symbol>(other)
 {}
 
 /** Destructor */
 IntegrationConstant::~IntegrationConstant()
 {}
 
-/** Comparison operator */
-bool IntegrationConstant::operator==(const ExBase &other) const
+IntegrationConstant& IntegrationConstant::operator=(const IntegrationConstant &other)
 {
-    const IntegrationConstant *other_ic = dynamic_cast<const IntegrationConstant*>(&other);
-
-    return other_ic != 0 and typeid(other).name() == typeid(*this).name();
+    Symbol::operator=(other);
+    return *this;
 }
 
-/** Return a hash for this object */
-uint IntegrationConstant::hash() const
+bool IntegrationConstant::operator==(const IntegrationConstant &other) const
 {
-    return ( r_intconst.magicID() << 16 ) | ( r_intconst.magicID() << 16 );
+    return Symbol::operator==(other);
+}
+
+bool IntegrationConstant::operator!=(const IntegrationConstant &other) const
+{
+    return Symbol::operator!=(other);
+}
+
+void IntegrationConstant::stream(Stream &s)
+{
+    s.assertVersion<IntegrationConstant>(1);
+    
+    Schema schema = s.item<IntegrationConstant>();
+    
+    Symbol::stream( schema.base() );
 }
 
 /** Cannot integrate an expression containing an integration constant. This
@@ -100,14 +92,3 @@ Expression IntegrationConstant::integrate(const Symbol&) const
 
     return Expression();
 }
-
-const char* IntegrationConstant::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<IntegrationConstant>() );
-}
-
-IntegrationConstant* IntegrationConstant::clone() const
-{
-    return new IntegrationConstant(*this);
-}
-

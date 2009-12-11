@@ -26,6 +26,10 @@
   *
 \*********************************************/
 
+#include "factor.h"
+
+using namespace SireCAS;
+
 ////////
 //////// Implementation of Factor
 ////////

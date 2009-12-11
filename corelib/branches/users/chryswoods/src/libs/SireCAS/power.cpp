@@ -204,7 +204,7 @@ Expression PowerFunction::integrate(const Symbol &symbol) const
     {
         //power of form f(x)^n,  integral is 1/(f'(x)*(n+1)) * f(x)^n+1
         Expression newpower = pwr + 1;
-        return Power(cre,newpower).reduce() / (newpower * cre.diff(symbol));
+        return Power(cre,newpower).reduce() / (newpower * cre.differentiate(symbol));
     }
     else if (pwr_is_func and not cre_is_func)
     {
@@ -352,7 +352,9 @@ static QList<Factor> multiply(const QList<Factor> &f0s, const QList<Factor> &f1s
     {
         foreach (const Factor &f1, f1s)
         {
-            factors[ f0.power() + f1.power() ] += (f0.factor() * f1.factor());
+            Expression power = f0.power() + f1.power();
+        
+            factors[power] = factors[power] + (f0.factor() * f1.factor());
         }
     }
     

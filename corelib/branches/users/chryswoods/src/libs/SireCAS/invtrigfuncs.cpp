@@ -124,13 +124,13 @@ QString ArcCos::stringRep() const
 /** The differential of acos(x) = -1 / sqrt(1-x^2) */
 Expression ArcCos::diff() const
 {
-    return -1 / sqrt( 1 - pow(x(),2) );
+    return -1 / sqrt( 1 - SireCAS::pow(x(),2) );
 }
 
 /** Integral of acos(x) = x acos(x) - sqrt(1-x^2) */
 Expression ArcCos::integ() const
 {
-    return x()*ArcCos(x()) - sqrt(1 - pow(x(),2));
+    return x()*ArcCos(x()) - sqrt(1 - SireCAS::pow(x(),2));
 }
 
 ////////////
@@ -215,13 +215,13 @@ QString ArcSin::stringRep() const
 /** The differential of asin(x) = 1 / sqrt(1-x^2) */
 Expression ArcSin::diff() const
 {
-    return 1 / sqrt( 1 - pow(x(),2) );
+    return 1 / sqrt( 1 - SireCAS::pow(x(),2) );
 }
 
 /** Integral of asin(x) = x asin(x) + sqrt(1-x^2) */
 Expression ArcSin::integ() const
 {
-    return  x()*ArcSin(x()) + sqrt( 1 - pow(x(),2) );
+    return  x()*ArcSin(x()) + sqrt( 1 - SireCAS::pow(x(),2) );
 }
 
 ////////////
@@ -299,13 +299,13 @@ QString ArcTan::stringRep() const
 /** The differential of atan(x) = 1 / (1+x^2) */
 Expression ArcTan::diff() const
 {
-    return 1 / ( 1 + pow(x(),2) );
+    return 1 / ( 1 + SireCAS::pow(x(),2) );
 }
 
 /** Integral of atan(x) = x atan(x) - 0.5 ln( 1 + x^2 ) */
 Expression ArcTan::integ() const
 {
-    return x()*ArcTan(x()) - 0.5*Ln( 1 + pow(x(),2) );
+    return x()*ArcTan(x()) - 0.5*Ln( 1 + SireCAS::pow(x(),2) );
 }
 
 ////////////
@@ -390,13 +390,14 @@ QString ArcCsc::stringRep() const
 /** The differential of acsc(x) = -1 / (x^2 sqrt(1 - x^-2)) */
 Expression ArcCsc::diff() const
 {
-    return -1 / ( pow(x(),2) * sqrt( 1 - pow(x(),-2) ) );
+    return -1 / ( SireCAS::pow(x(),2) * sqrt( 1 - SireCAS::pow(x(),-2) ) );
 }
 
 /** Integral of acsc(x) = x acsc(x) + Ln[ x ( 1 + sqrt( (x^2-1)/x^2 ) ) ] */
 Expression ArcCsc::integ() const
 {
-    return x()*ArcCsc(x()) + Ln( x() * ( 1 + sqrt( (pow(x(),2)-1) / pow(x(),2) ) ) );
+    return x()*ArcCsc(x()) + 
+           Ln( x() * ( 1 + sqrt( (SireCAS::pow(x(),2)-1) / SireCAS::pow(x(),2) ) ) );
 }
 
 ////////////
@@ -487,7 +488,8 @@ Expression ArcSec::diff() const
 /** Integral of asec(x) = x asec(x) - ln( x ( 1 + sqrt( (x^2-1)/x^2 ) ) ) */
 Expression ArcSec::integ() const
 {
-    return x()*ArcSec(x()) - Ln( x() * ( 1 + sqrt( (pow(x(),2) - 1) / pow(x(),2) ) ) );
+    return x()*ArcSec(x()) - 
+           Ln( x() * ( 1 + sqrt( (SireCAS::pow(x(),2) - 1) / SireCAS::pow(x(),2) ) ) );
 }
 
 ////////////
@@ -565,12 +567,12 @@ QString ArcCot::stringRep() const
 /** The differential of acot(x) = -1 / (1+x^2) */
 Expression ArcCot::diff() const
 {
-    return -1 / (1 + pow(x(),2));
+    return -1 / (1 + SireCAS::pow(x(),2));
 }
 
 /** Integral of acot(x) = x acot(x) + 0.5*Ln(1+x^2) */
 Expression ArcCot::integ() const
 {
-    return x()*ArcCot(x()) + 0.5 * Ln( 1 + pow(x(),2) );
+    return x()*ArcCot(x()) + 0.5 * Ln( 1 + SireCAS::pow(x(),2) );
 }
 

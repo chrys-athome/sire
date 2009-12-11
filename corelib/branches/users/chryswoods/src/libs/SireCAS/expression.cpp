@@ -27,72 +27,68 @@
 \*********************************************/
 
 #include "expression.h"
-#include "exbase.h"
 #include "sum.h"
 #include "product.h"
 #include "symbol.h"
-#include "symbols.h"
-#include "functions.h"
 #include "power.h"
 #include "powerconstant.h"
 #include "identities.h"
 #include "values.h"
 #include "complexvalues.h"
 #include "i.h"
+#include "factor.h"
 #include "integrationconstant.h"
 
 #include "SireMaths/maths.h"
 #include "SireMaths/complex.h"
 
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
 
-using namespace SireStream;
+using namespace Siren;
 using namespace SireCAS;
 using namespace SireMaths;
 
-static const RegisterMetaType<Expression> r_expression;
+static const RegisterObject<Expression> r_expression;
 
-/** Serialise an Expression to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Expression &ex)
+static CASNodePtr constant_ptr;
+
+static const CASNode& getConstant()
 {
-    writeHeader(ds, r_expression, 1) << ex.fac << ex.exbase;
-
-    return ds;
-}
-
-/** Deserialise an Expression from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Expression &ex)
-{
-    VersionID v = readHeader(ds, r_expression);
-
-    if (v == 1)
+    if (constant_ptr.constData() == 0)
     {
-        ds >> ex.fac >> ex.exbase;
+        QMutexLocker lkr( &Siren::globalRegistrationLock() );
+        
+        if (constant_ptr.constData() == 0)
+            constant_ptr = new Constant();
     }
-    else
-        throw version_error(v, "1", r_expression, CODELOC);
-
-    return ds;
+    
+    return *(constant_ptr.constData());
 }
 
-/** Construct an empty (zero) expression */
-Expression::Expression() : fac(0)
+/** Construct '0' */
+Expression::Expression() : Implements<Expression,CASNode>(),
+                           casnode( getConstant() ), fac(0)
 {}
 
-/** Construct a constant expression equal to 'constant' */
-Expression::Expression(int constant) : fac(constant)
+/** Construct 'constant' */
+Expression::Expression(int constant) : Implements<Expression,CASNode>(),
+                                       casnode( getConstant() ), fac(constant)
 {}
 
-/** Construct a constant expression equal to 'constant' */
-Expression::Expression(double constant) : fac(constant)
+/** Construct 'constant' */
+Expression::Expression(double constant) : Implements<Expression,CASNode>(),
+                                          casnode( getConstant() ), fac(constant)
 {}
 
-/** Construct a constant expression equal to 'constant' */
-Expression::Expression(const Rational &constant) : fac(SireMaths::toDouble(constant))
+/** Construct 'constant' */
+Expression::Expression(const SireMaths::Rational &constant)
+           : Implements<Expression,CASNode>(),
+             casnode( getConstant() ), fac(constant)
 {}
 
-/** Construct a constant expression equal to 'constant' */
-Expression::Expression(const Complex &constant)
+/** Construct 'constant' */
+Expression::Expression(const Complex &constant) : Implements<Expression,CASNode>(),
+                                                  casnode( getConstant() )
 {
     if (constant.isZero())
         fac = 0.0;
@@ -101,110 +97,366 @@ Expression::Expression(const Complex &constant)
     else if (SireMaths::isZero(constant.real()))
     {
         fac = constant.imag();
-        exbase = I();
+        casnode = I();
     }
     else
     {
         fac = constant.imag();
-        exbase = Sum((constant.real() / fac), I());
+        casnode = Sum((constant.real() / fac), I());
     }
 }
 
-/** Construct an expression that is equal to 1*(base) */
-Expression::Expression(const ExpressionBase &base)
-           : exbase(base), fac(1)
+/** Construct from the passed node */
+Expression::Expression(const CASNode &node) 
+           : Implements<Expression,CASNode>(), casnode(node), fac(1)
 {
-    if (exbase.isConstant() and not exbase.isComplex())
+    if (node.isA<Expression>())
     {
-        exbase = ExpressionBase();
-        fac = base.evaluate(Values());
+        casnode = node.asA<Expression>().casnode;
+        fac = node.asA<Expression>().fac;
     }
-}
-
-/** Construct an expression that is equal to 1*(base) */
-Expression::Expression(const ExBase &base)
-           : exbase(base), fac(1)
-{
-    if (exbase.isConstant() and not exbase.isComplex())
+    else if (node.isConstant())
     {
-        exbase = ExpressionBase();
-        fac = base.evaluate(Values());
+        if (node.isComplex())
+        {
+            Complex val = node.evaluate( ComplexValues() );
+            
+            this->operator=( Expression(val) );
+        }
+        else
+        {
+            double val = node.evaluate(Values());
+            
+            this->operator=( Expression(val) );
+        }
     }
 }
 
 /** Copy constructor */
 Expression::Expression(const Expression &other)
-           : exbase(other.exbase), fac(other.fac)
+           : Implements<Expression,CASNode>(other),
+             casnode(other.casnode), fac(other.fac)
 {}
 
 /** Destructor */
 Expression::~Expression()
 {}
 
-/** Assignment operator */
+/** Copy assignment operator */
 Expression& Expression::operator=(const Expression &other)
 {
-    exbase = other.exbase;
-    fac = other.fac;
+    if (this != &other)
+    {
+        fac = other.fac;
+        casnode = other.casnode;
+        CASNode::operator=(other);
+    }
+    
     return *this;
 }
 
-/** self-addition */
-Expression& Expression::operator+=(const Expression &other)
+/** Comparison operator */
+bool Expression::operator==(const Expression &other) const
 {
-    return operator=( this->add(other) );
+    return fac == other.fac and casnode.equals(other.casnode);
 }
 
-/** self-subtraction */
-Expression& Expression::operator-=(const Expression &other)
+bool Expression::operator!=(const Expression &other) const
 {
-    return operator=( this->subtract(other) );
+    return not Expression::operator==(other);
 }
 
-/** self-multiplication */
-Expression& Expression::operator*=(const Expression &other)
+/** Return the factor by which the base node of this expression is multiplied */
+double Expression::factor() const
 {
-    return operator=( this->multiply(other) );
+    return fac;
 }
 
-/** self-division */
-Expression& Expression::operator/=(const Expression &other)
+/** Return the base node of this expression */
+const CASNode& Expression::node() const
 {
-    return operator=( this->divide(other) );
+    return *casnode;
 }
 
-/** Evaluate the numerical value of this expression, using the values
-    supplied in 'values'. Any unidentified symbols or functions are
-    assumed to be equal to zero. Note that this only performs real-arithmetic,
-    so an exception will be thrown if any part of this expression generates
-    a complex result.
+QString Expression::toString() const
+{
+    if (isConstant())
+        return evaluate(ComplexValues()).toString();
+    else
+    {
+        QString basestr = casnode->toString();
 
-    \throw SireMaths::domain_error
+        if ( SireMaths::areEqual(fac,1.0) )
+            return basestr;
+        else if ( SireMaths::areEqual(fac,-1.0) )
+        {
+            if (this->isCompound())
+                return QString("-[%1]").arg(basestr);
+            else
+                return QString("-%1").arg(basestr);
+        }
+        else if (this->isCompound())
+            return QString("%1 [%2]").arg(fac).arg(basestr);
+        else
+            return QString("%1 %2").arg(fac).arg(basestr);
+    }
+}
+
+uint Expression::hashCode() const
+{
+    return qHash(Expression::typeName()) + qHash(fac) + qHash(node());
+}
+
+void Expression::stream(Siren::Stream &s)
+{
+    s.assertVersion<Expression>(1);
+    
+    Schema schema = s.item<Expression>();
+    
+    schema.data("factor") & fac;
+    schema.data("node") & casnode;
+    
+    CASNode::stream( schema.base() );
+}
+
+Expression Expression::operator-() const
+{
+    Expression ret( *this );
+    ret.fac *= -1;
+    
+    return ret;
+}
+
+/** Differentiate this expression with respect to 'symbol' and return
+    the resulting expression.
+
+    \throw SireCAS::unavailable_differential
 */
-double Expression::evaluate(const Values &values) const
+Expression Expression::differentiate(const Symbol &symbol, int level) const
 {
-    return fac * exbase.evaluate(values);
+    if (level <= 0 or this->isZero())
+        return *this;
+    else if (level > 0 and this->isConstant())
+        return Expression(0);
+    else if (not casnode->isFunction(symbol))
+        // d f(y) / dx = 0
+        return Expression(0);
+    else
+    {
+        //calculate the differential of the base expression with respect
+        //to symbol
+        Expression diff = fac * casnode->differentiate(symbol);
+
+        if (not diff.isZero())
+        {
+            if (level == 1)
+                return diff;
+            else
+                return diff.differentiate(symbol, level-1);
+        }
+        else
+            return diff;
+    }
 }
 
-/** Evaluate the numerical value of this expression using complex
-    arithmetic. Any unidentified symbols or functions are assumed
-    to be equal to zero.
+/** Differentiate this expression with respect to 'symbol' and return
+    the resulting expression.
+
+    \throw SireCAS::unavailable_differential
 */
-Complex Expression::evaluate(const ComplexValues &values) const
+Expression Expression::differentiate(const Symbol &symbol) const
 {
-    return fac * exbase.evaluate(values);
+    return this->differentiate(symbol, 1);
 }
 
-/** Convienient synonym for evaluate() */
-double Expression::operator()(const Values &values) const
+/** Integrate this expression with respect to 'symbol' and return the
+    resulting expression.
+
+    \throw SireCAS::unavailable_integral
+*/
+Expression Expression::integrate(const Symbol &symbol) const
 {
-    return evaluate(values);
+    if (this->isZero())
+        return Expression(0);
+    else if (not casnode->isFunction(symbol))
+        //exbase is constant with respect to 'symbol' - return symbol*exbase + C
+        return (fac * *casnode * symbol) + IntegrationConstant();
+    else
+        //calculate the integral with respect to the symbol (add integration constant)
+        return (fac * casnode->integrate(symbol)) + IntegrationConstant();
 }
 
-/** Convienient synonym for evaluate() */
-Complex Expression::operator()(const ComplexValues &values) const
+/** Return the complex conjugate of this expression */
+Expression Expression::conjugate() const
 {
-    return evaluate(values);
+    return fac * casnode->conjugate();
+}
+
+/** Return a series expansion of this function with respect to 'symbol'
+    up to order 'n'. If an expansion is not possible, then this just
+    returns this expression */
+Expression Expression::series(const Symbol &symbol, int n) const
+{
+    return fac * casnode->series(symbol,n);
+}
+
+/** Try to simplify this expression by using built-in identities. If
+    SireCAS::UNSAFE_COMPLEX_SIMPLIFICATIONS is passed, then allow the use
+    of identities that are not necessarily true in the complex domain,
+    e.g. z = sin(arcsin(z)) */
+Expression Expression::simplify(int options) const
+{ 
+    return fac * casnode->simplify(options);
+}
+
+/** Return whether or not this expression is '0' for all values */
+bool Expression::isZero() const
+{
+    return SireMaths::isZero(fac);
+}
+
+/** Return whether or not this expression is constant for all values */
+bool Expression::isConstant() const
+{
+    return casnode->isConstant();
+}
+
+/** Return whether or not this is a function of 'symbol' */
+bool Expression::isFunction(const Symbol &symbol) const
+{
+    return casnode->isFunction(symbol);
+}
+
+/** Return whether or not this is a compound expression (contains more
+    than a single expression, e.g. Sum, Product or PowerFunction) */
+bool Expression::isCompound() const
+{
+    return casnode->isCompound();
+}
+
+/** Return whether or not this expression has complex parts */
+bool Expression::isComplex() const
+{
+    return casnode->isComplex();
+}
+
+/** Return this expression added to 'ex' */
+Expression Expression::add(const CASNode &node) const
+{
+    return Sum(*this, Expression(node)).reduce();
+}
+
+/** Return this expression added to 'val' */
+Expression Expression::add(double val) const
+{
+    return Sum(*this, Expression(val)).reduce();
+}
+
+/** Return this expression added to 'val' */
+Expression Expression::add(const Complex &val) const
+{
+    return Sum(*this, Expression(val)).reduce();
+}
+
+/** Return an expression that is this - ex */
+Expression Expression::subtract(const CASNode &node) const
+{
+    return Sum(*this, node.negate()).reduce();
+}
+
+/** Return an expression that is this - val */
+Expression Expression::subtract(double val) const
+{
+    return Sum(*this, -val).reduce();
+}
+
+/** Return an expression that is this - val */
+Expression Expression::subtract(const SireMaths::Complex &val) const
+{
+    return Sum(*this, -val).reduce();
+}
+
+/** Return an expression that is this multiplied by 'ex' */
+Expression Expression::multiply(const CASNode &node) const
+{
+    if (this->isConstant())
+        return node.multiply( this->evaluate(ComplexValues()) );
+    else if (node.isConstant())
+        return this->multiply( node.evaluate(ComplexValues()) );
+    else
+        return Product(*this, Expression(node)).reduce();
+}
+
+/** Return an expression that is this multipled by 'val' */
+Expression Expression::multiply(double val) const
+{
+    if (casnode->isA<IntegrationConstant>())
+    {
+        return *this;
+    }
+    else
+    {
+        double newfactor = fac * val;
+
+        if (SireMaths::isZero(newfactor))
+            return Expression(0);
+        else
+        {
+            Expression ret(*this);
+            ret.fac = newfactor;
+
+            return ret;
+        }
+    }
+}
+
+/** Return an expression that is this multiplied by the complex value z */
+Expression Expression::multiply(const SireMaths::Complex &z) const
+{
+    if (z.isReal())
+        return this->multiply(z.real());
+    else if (SireMaths::isZero(z.real()))
+        return Product( *this, z.imag() * I() ).reduce();
+    else
+        return Product( *this, z.real() + z.imag()*I() ).reduce();
+}
+
+/** Return an expression that is this / node */
+Expression Expression::divide(const CASNode &node) const
+{
+    if (node.isConstant())
+        return divide( node.evaluate(ComplexValues()) );
+    else
+        return multiply(node.invert());
+}
+
+/** Return an expression that is this divided by 'val' */
+Expression Expression::divide(double val) const
+{
+    if ( SireMaths::areEqual(val,1.0) )
+        return *this;
+    else
+        return multiply( double(1.0) / val );
+}
+
+/** Return an expression that is divided by the complex number z */
+Expression Expression::divide(const SireMaths::Complex &val) const
+{
+    return multiply( val.inverse() );
+}
+
+/** Return the negative of this expression */
+Expression Expression::negate() const
+{
+    Expression ret(*this);
+    ret.fac *= -1;
+    return ret;
+}
+
+/** Return 1 / expression */
+Expression Expression::invert() const
+{
+    return this->pow(-1);
 }
 
 /** Return this expression raised to the power 'n' */
@@ -218,6 +470,24 @@ Expression Expression::pow(int n) const
         return SireMaths::pow(evaluate(ComplexValues()), n);
     else
         return IntegerPower( *this, n ).reduce();
+}
+
+/** Return the square of this expression */
+Expression Expression::squared() const
+{
+    return this->pow(2);
+}
+
+/** Return the cube of this expression */
+Expression Expression::cubed() const
+{
+    return this->pow(3);
+}
+
+/** Return the nth root of this expression */
+Expression Expression::root(int n) const
+{
+    return this->pow( Rational(1,n) );
 }
 
 /** Return this expression raised to the rational power 'n' */
@@ -254,7 +524,7 @@ Expression Expression::pow(const Complex &n) const
 }
 
 /** Return this expression raised to a function */
-Expression Expression::pow(const Expression &n) const
+Expression Expression::pow(const CASNode &n) const
 {
     if (n.isConstant())
         return pow(n.evaluate(ComplexValues()));
@@ -262,326 +532,47 @@ Expression Expression::pow(const Expression &n) const
         return Power( *this, n ).reduce();
 }
 
-/** Return 1 / expression */
-Expression Expression::invert() const
+/** Evaluate the numerical value of this expression, using the values
+    supplied in 'values'. Any unidentified symbols or functions are
+    assumed to be equal to zero. Note that this only performs real-arithmetic,
+    so an exception will be thrown if any part of this expression generates
+    a complex result.
+
+    \throw SireMaths::domain_error
+*/
+double Expression::evaluate(const Values &values) const
 {
-    return this->pow(-1);
+    return fac * casnode->evaluate(values);
 }
 
-/** Return the square of this expression */
-Expression Expression::squared() const
+/** Evaluate the numerical value of this expression using complex
+    arithmetic. Any unidentified symbols or functions are assumed
+    to be equal to zero.
+*/
+Complex Expression::evaluate(const ComplexValues &values) const
 {
-    return this->pow(2);
-}
-
-/** Return the cube of this expression */
-Expression Expression::cubed() const
-{
-    return this->pow(3);
-}
-
-/** Return the nth root of this expression */
-Expression Expression::root(int n) const
-{
-    return this->pow( Rational(1,n) );
-}
-
-/** Return the negative of this expression */
-Expression Expression::negate() const
-{
-    Expression ret(*this);
-    ret.fac = -(ret.fac);
-    return ret;
-}
-
-/** Negation operator */
-Expression Expression::operator-() const
-{
-    return this->negate();
-}
-
-/** Return this expression added to 'ex' */
-Expression Expression::add(const Expression &ex) const
-{
-    return Sum(*this, ex).reduce();
-}
-
-/** Return this expression added to 'val' */
-Expression Expression::add(double val) const
-{
-    return Sum(*this, Expression(val)).reduce();
-}
-
-/** Return this expression added to 'val' */
-Expression Expression::add(const Complex &val) const
-{
-    return Sum(*this, Expression(val)).reduce();
-}
-
-/** Return an expression that is this - ex */
-Expression Expression::subtract(const Expression &ex) const
-{
-    return Sum(*this, ex.negate()).reduce();
-}
-
-/** Return an expression that is this - val */
-Expression Expression::subtract(double val) const
-{
-    return Sum(*this, -val).reduce();
-}
-
-/** Return an expression that is this - val */
-Expression Expression::subtract(const Complex &val) const
-{
-    return Sum(*this, -val).reduce();
-}
-
-/** Return an expression that is this multipled by 'val' */
-Expression Expression::multiply(double val) const
-{
-    if (exbase.isA<IntegrationConstant>())
-    {
-        return Expression(exbase);
-    }
-    else
-    {
-        double newfactor = fac * val;
-
-        if (SireMaths::isZero(newfactor))
-            return Expression(0);
-        else
-        {
-            Expression ret(*this);
-            ret.fac = newfactor;
-
-            return ret;
-        }
-    }
-}
-
-/** Return an expression that is this multiplied by the complex value z */
-Expression Expression::multiply(const Complex &z) const
-{
-    if (z.isReal())
-        return multiply(z.real());
-    else if (SireMaths::isZero(z.real()))
-        return Product( *this, z.imag() * I() ).reduce();
-    else
-        return Product( *this, z.real() + z.imag()*I() ).reduce();
-}
-
-/** Return an expression that is this multiplied by 'ex' */
-Expression Expression::multiply(const Expression &ex) const
-{
-    if (this->isConstant())
-        return ex.multiply( this->evaluate(ComplexValues()) );
-    else if (ex.isConstant())
-        return multiply( ex.evaluate(ComplexValues()) );
-    else
-        return Product(*this, ex).reduce();
-}
-
-/** Return an expression that is this divided by 'val' */
-Expression Expression::divide(double val) const
-{
-    if ( SireMaths::areEqual(val,1.0) )
-        return *this;
-    else
-        return multiply( double(1.0) / val );
-}
-
-/** Return an expression that is divided by the complex number z */
-Expression Expression::divide(const Complex &z) const
-{
-    return multiply( z.inverse() );
-}
-
-/** Return an expression that is this / ex */
-Expression Expression::divide(const Expression &ex) const
-{
-    if (ex.isConstant())
-        return divide( ex.evaluate(ComplexValues()) );
-    else
-        return multiply(ex.invert());
+    return fac * casnode->evaluate(values);
 }
 
 /** Return an expression whereby the identities in 'identities' have
     been substituted into this expression */
 Expression Expression::substitute(const Identities &identities) const
 {
-    Expression ret = exbase.substitute(identities);
+    Expression ret = casnode->substitute(identities);
     ret.fac *= fac;
     return ret;
 }
 
-/** Return the complex conjugate of this expression */
-Expression Expression::conjugate() const
-{
-    return fac * exbase.conjugate();
-}
-
-/** Try to simplify this expression by using built-in identities. If
-    SireCAS::UNSAFE_COMPLEX_SIMPLIFICATIONS is passed, then allow the use
-    of identities that are not necessarily true in the complex domain,
-    e.g. z = sin(arcsin(z)) */
-Expression Expression::simplify(int options) const
-{
-    return fac * exbase.simplify(options);
-}
-
-/** Differentiate this expression with respect to 'symbol' and return
-    the resulting expression.
-
-    \throw SireCAS::unavailable_differential
-*/
-Expression Expression::differentiate(const Symbol &symbol, int level) const
-{
-    if (level <= 0 or this->isZero())
-        return *this;
-    else if (level > 0 and this->isConstant())
-        return Expression(0);
-    else if (not exbase.isFunction(symbol))
-        // d f(y) / dx = 0
-        return Expression(0);
-    else
-    {
-        //calculate the differential of the base expression with respect
-        //to symbol
-        Expression diff = fac * exbase.differentiate(symbol);
-
-        if (not diff.isZero())
-        {
-            if (level == 1)
-                return diff;
-            else
-                return diff.differentiate(symbol, level-1);
-        }
-        else
-            return diff;
-    }
-}
-
-/** Synonym for differentiate */
-Expression Expression::diff(const Symbol &symbol, int level) const
-{
-    return differentiate(symbol,level);
-}
-
-/** Integrate this expression with respect to 'symbol' and return the
-    resulting expression.
-
-    \throw SireCAS::unavailable_integral
-*/
-Expression Expression::integrate(const Symbol &symbol) const
-{
-    if (this->isZero())
-        return Expression(0);
-    else if (not exbase.isFunction(symbol))
-        //exbase is constant with respect to 'symbol' - return symbol*exbase + C
-        return fac*exbase*symbol + IntegrationConstant();
-    else
-        //calculate the integral with respect to the symbol (add integration constant)
-        return fac * exbase.integrate(symbol) + IntegrationConstant();
-}
-
-/** Synonym for integrate */
-Expression Expression::integ(const Symbol &symbol) const
-{
-    return integrate(symbol);
-}
-
-/** Return a series expansion of this function with respect to 'symbol'
-    up to order 'n'. If an expansion is not possible, then this just
-    returns this expression */
-Expression Expression::series(const Symbol &symbol, int n) const
-{
-    return fac * exbase.series(symbol,n);
-}
-
-/** Return whether or not this expression is equal to '0' for all values */
-bool Expression::isZero() const
-{
-    return SireMaths::isZero(fac);
-}
-
-/** Return whether or not this expression is constant for all values */
-bool Expression::isConstant() const
-{
-    return exbase.isConstant();
-}
-
-/** Return whether or not this is a function of 'symbol' */
-bool Expression::isFunction(const Symbol &symbol) const
-{
-    return exbase.isFunction(symbol);
-}
-
-/** Return whether or not this is a compound expression (contains more
-    than a single expression, e.g. Sum, Product or PowerFunction) */
-bool Expression::isCompound() const
-{
-    return exbase.isCompound();
-}
-
-/** Return whether or not this expression has complex parts */
-bool Expression::isComplex() const
-{
-    return exbase.isComplex();
-}
-
-/** Return a string representation of this expression */
-QString Expression::toString() const
-{
-    if (isConstant())
-        return evaluate(ComplexValues()).toString();
-    else
-    {
-        QString basestr = exbase.toString();
-
-        if ( SireMaths::areEqual(fac,1.0) )
-            return basestr;
-        else if ( SireMaths::areEqual(fac,-1.0) )
-        {
-            if (this->isCompound())
-                return QString("-[%1]").arg(basestr);
-            else
-                return QString("-%1").arg(basestr);
-        }
-        else if (this->isCompound())
-            return QString("%1 [%2]").arg(fac).arg(basestr);
-        else
-            return QString("%1 %2").arg(fac).arg(basestr);
-    }
-}
-
-/** Return the ExpressionBase base-part of this expression */
-const ExpressionBase& Expression::base() const
-{
-    return exbase;
-}
-
-/** Return the factor of this expression */
-double Expression::factor() const
-{
-    return fac;
-}
-
 /** Return the child expressions that make up this expression */
-Expressions Expression::children() const
+QList<Expression> Expression::children() const
 {
-    return exbase.children();
+    return casnode->children();
 }
 
 /** Return all of the symbols used in this expression */
-Symbols Expression::symbols() const
+QSet<Symbol> Expression::symbols() const
 {
-    return exbase.symbols();
-}
-
-/** Return all of the functions used in this expression */
-Functions Expression::functions() const
-{
-    return exbase.functions();
+    return casnode->symbols();
 }
 
 /** Return the factors and powers for the symbol 'symbol', given the values of the 
@@ -594,7 +585,7 @@ Functions Expression::functions() const
 */
 QList<Factor> Expression::expand(const Symbol &symbol) const
 {
-    QList<Factor> factors = exbase.expand(symbol);
+    QList<Factor> factors = casnode->expand(symbol);
     
     if (fac != 1)
     {
@@ -607,199 +598,4 @@ QList<Factor> Expression::expand(const Symbol &symbol) const
     }
     
     return factors;
-}
-
-const char* Expression::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Expression>() );
-}
-
-/** Comparison operator */
-bool Expression::operator==(const Expression &other) const
-{
-    return fac == other.fac and exbase == other.exbase;
-}
-
-/** Comparison operator */
-bool Expression::operator!=(const Expression &other) const
-{
-    return fac != other.fac or exbase != other.exbase;
-}
-
-namespace SireCAS
-{
-
-    /** Addition operator */
-    Expression operator+(const Expression &ex0,
-                                const Expression &ex1)
-    {
-        return ex0.add(ex1);
-    }
-
-    /** Addition operator */
-    Expression operator+(const Expression &ex,
-                                double val)
-    {
-        return ex.add(val);
-    }
-
-    /** Addition operator */
-    Expression operator+(double val,
-                                const Expression &ex)
-    {
-        return ex.add(val);
-    }
-
-    /** Addition operator */
-    Expression operator+(const Expression &ex,
-                                const Complex &val)
-    {
-        return ex.add(val);
-    }
-
-    /** Addition operator */
-    Expression operator+(const Complex &val,
-                                const Expression &ex)
-    {
-        return ex.add(val);
-    }
-
-    /** Subtraction operator */
-    Expression operator-(const Expression &ex0,
-                                const Expression &ex1)
-    {
-        return ex0.subtract(ex1);
-    }
-
-    /** Subtraction operator */
-    Expression operator-(const Expression &ex,
-                                double val)
-    {
-        return ex.subtract(val);
-    }
-
-    /** Subtraction operator */
-    Expression operator-(double val,
-                                const Expression &ex)
-    {
-        return ex.negate().add(val);
-    }
-
-
-    /** Multiplication operator */
-    Expression operator*(const Expression &ex0,
-                                const Expression &ex1)
-    {
-        return ex0.multiply(ex1);
-    }
-
-    /** Multiplication operator */
-    Expression operator*(double val, const Expression &ex)
-    {
-        return ex.multiply(val);
-    }
-
-    /** Multiplication operator */
-    Expression operator*(const Expression &ex, double val)
-    {
-        return ex.multiply(val);
-    }
-
-    /** Multiplication operator */
-    Expression operator*(const Complex &val, const Expression &ex)
-    {
-        return ex.multiply(val);
-    }
-
-    /** Multiplication operator */
-    Expression operator*(const Expression &ex, const Complex &val)
-    {
-        return ex.multiply(val);
-    }
-
-    /** Division operator */
-    Expression operator/(const Expression &ex0,
-                                const Expression &ex1)
-    {
-        return ex0.divide(ex1);
-    }
-
-    /** Division operator */
-    Expression operator/(const Expression &ex,
-                                double val)
-    {
-        return ex.divide(val);
-    }
-
-    /** Division operator */
-    Expression operator/(double val,
-                                const Expression &ex)
-    {
-        return ex.invert().multiply(val);
-    }
-
-    /** Division operator */
-    Expression operator/(const Expression &ex,
-                                const Complex &val)
-    {
-        return ex.divide(val);
-    }
-
-    /** Division operator */
-    Expression operator/(const Complex &val,
-                                const Expression &ex)
-    {
-        return ex.invert().multiply(val);
-    }
-
-    /** Raise an expression to the nth power */
-    Expression pow(const Expression &ex0, int n)
-    {
-        return ex0.pow(n);
-    }
-
-    /** Raise an expression to a rational power */
-    Expression pow(const Expression &ex0,
-                          const SireMaths::Rational &n)
-    {
-        return ex0.pow(n);
-    }
-
-    /** Raise an expression to a real power */
-    Expression pow(const Expression &ex0, double n)
-    {
-        return ex0.pow(n);
-    }
-
-    /** Raise an expression to a functional power */
-    Expression pow(const Expression &ex0,
-                          const Expression &n)
-    {
-        return ex0.pow(n);
-    }
-
-    /** Raise an expression to a complex power */
-    Expression pow(const Expression &ex0, const Complex &n)
-    {
-        return ex0.pow(n);
-    }
-
-    /** Take the nth root of an expression */
-    Expression root(const Expression &ex0, int n)
-    {
-        return ex0.root(n);
-    }
-
-    /** Take the square root of an expression */
-    Expression sqrt(const Expression &ex0)
-    {
-        return ex0.root(2);
-    }
-
-    /** Take the cube root of an expression */
-    Expression cbrt(const Expression &ex0)
-    {
-        return ex0.root(3);
-    }
-
 }

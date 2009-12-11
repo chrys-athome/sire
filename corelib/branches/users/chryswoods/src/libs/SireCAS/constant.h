@@ -29,29 +29,18 @@
 #ifndef SIRECAS_CONSTANT_H
 #define SIRECAS_CONSTANT_H
 
-#include "exbase.h"
-
-#include "sireglobal.h"
+#include "casnode.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireCAS
 {
-class Constant;
-}
 
-QDataStream& operator<<(QDataStream&, const SireCAS::Constant&);
-QDataStream& operator>>(QDataStream&, SireCAS::Constant&);
+/** This class represents a constant value (e.g. a number).
 
-namespace SireCAS
-{
-
-/**
-This class represents a constant value (e.g. a number).
-
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIRECAS_EXPORT Constant : public ExBase
+class SIRECAS_EXPORT Constant : public Siren::Implements<Constant,CASNode>
 {
 public:
     Constant();
@@ -59,43 +48,26 @@ public:
 
     ~Constant();
 
-    ///////
-    /////// Virtual functions - you may wish to override these
-    /////// in your derived class
-    ///////
+    Constant& operator=(const Constant &other);
+    
+    bool operator==(const Constant &other) const;
+    bool operator!=(const Constant &other) const;
+
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     Expression differentiate(const Symbol &symbol) const;
     Expression integrate(const Symbol &symbol) const;
 
-    ///////
-    /////// Pure-virtual functions - these must be overridden
-    /////// in your derived class
-    ///////
-
-    bool operator==(const ExBase &other) const;
-
-    uint hash() const;
-
-    static const char* typeName();
-
-    const char* what() const
-    {
-        return Constant::typeName();
-    }
-
-    Constant* clone() const;
-
-    QString toString() const;
-
     double evaluate(const Values &values) const;
-    Complex evaluate(const ComplexValues &values) const;
+    SireMaths::Complex evaluate(const ComplexValues &values) const;
 
     Expression substitute(const Identities &identities) const;
 
-    Symbols symbols() const;
-    Functions functions() const;
+    QSet<Symbol> symbols() const;
 
-    Expressions children() const;
+    QList<Expression> children() const;
 
     QList<Factor> expand(const Symbol &symbol) const;
 };

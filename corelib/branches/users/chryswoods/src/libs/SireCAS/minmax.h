@@ -35,26 +35,10 @@ SIRE_BEGIN_HEADER
 
 namespace SireCAS
 {
-class Min;
-class Max;
-}
-
-QDataStream& operator<<(QDataStream&, const SireCAS::Min&);
-QDataStream& operator>>(QDataStream&, SireCAS::Min&);
-
-QDataStream& operator<<(QDataStream&, const SireCAS::Max&);
-QDataStream& operator>>(QDataStream&, SireCAS::Max&);
-
-namespace SireCAS
-{
 
 /** Minimum value of two expressions */
-class SIRECAS_EXPORT Min : public DoubleFunc
+class SIRECAS_EXPORT Min : public Siren::Implements<Min,DoubleFunc>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Min&);
-friend QDataStream& ::operator>>(QDataStream&, Min&);
-
 public:
     Min();
     Min(const Expression &x, const Expression &y);
@@ -63,38 +47,24 @@ public:
 
     ~Min();
 
-    bool operator==(const ExBase &other) const;
-
-    static const char* typeName();
-
-    const char* what() const
-    {
-        return Min::typeName();
-    }
-
-    Min* clone() const;
+    Min& operator=(const Min &other);
+    
+    bool operator==(const Min &other) const;
+    bool operator!=(const Min &other) const;
+    
+    void stream(Siren::Stream &s);
 
     double evaluate(const Values &values) const;
-    Complex evaluate(const ComplexValues &values) const;
+    SireMaths::Complex evaluate(const ComplexValues &values) const;
 
 protected:
     Expression functionOf(const Expression &x, const Expression &y) const;
-
-    QString stringRep() const
-    {
-        return "min";
-    }
-
-    uint magic() const;
+    QString stringRep() const;
 };
 
 /** Maximum value of two expressions */
-class SIRECAS_EXPORT Max : public DoubleFunc
+class SIRECAS_EXPORT Max : public Siren::Implements<Max,DoubleFunc>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Max&);
-friend QDataStream& ::operator>>(QDataStream&, Max&);
-
 public:
     Max();
     Max(const Expression &x, const Expression &y);
@@ -103,29 +73,19 @@ public:
 
     ~Max();
 
-    bool operator==(const ExBase &other) const;
+    Max& operator=(const Max &other);
+    
+    bool operator==(const Max &other) const;
+    bool operator!=(const Max &other) const;
 
-    static const char* typeName();
-
-    const char* what() const
-    {
-        return Max::typeName();
-    }
-
-    Max* clone() const;
+    void stream(Siren::Stream &s);
 
     double evaluate(const Values &values) const;
-    Complex evaluate(const ComplexValues &values) const;
+    SireMaths::Complex evaluate(const ComplexValues &values) const;
 
 protected:
     Expression functionOf(const Expression &x, const Expression &y) const;
-
-    QString stringRep() const
-    {
-        return "max";
-    }
-
-    uint magic() const;
+    QString stringRep() const;
 };
 
 }

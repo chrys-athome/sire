@@ -28,44 +28,23 @@
 
 #include "identities.h"
 #include "symbol.h"
-#include "function.h"
+#include "expression.h"
 
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
+#include "Siren/streamqt.h"
 
-using namespace SireStream;
+using namespace Siren;
 using namespace SireCAS;
 
-static const RegisterMetaType<Identities> r_identities;
-
-/** Serialise to a binary data stream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Identities &ids)
-{
-    writeHeader(ds, r_identities, 1) << ids.idhash << ids.funchash;
-
-    return ds;
-}
-
-/** Deserialise from a binary data stream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Identities &ids)
-{
-    VersionID v = readHeader(ds, r_identities);
-
-    if (v == 1)
-    {
-        ds >> ids.idhash >> ids.funchash;
-    }
-    else
-        throw version_error(v, "1", r_identities, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<Identities> r_identities;
 
 /** Construct an empty set of identities */
-Identities::Identities()
+Identities::Identities() : Implements<Identities,Object>()
 {}
 
 /** Construct from a list of passed expressions */
 Identities::Identities(const QList<SymbolExpression> &expressions)
+           : Implements<Identities,Object>()
 {
     for (QList<SymbolExpression>::const_iterator it = expressions.begin();
          it != expressions.end();
@@ -77,6 +56,7 @@ Identities::Identities(const QList<SymbolExpression> &expressions)
 
 /** Construct with a hash of expressions indexed by symbol */
 Identities::Identities(const QHash<Symbol,Expression> &expressions)
+           : Implements<Identities,Object>()
 {
     for (QHash<Symbol,Expression>::const_iterator it = expressions.begin();
          it != expressions.end();
@@ -89,33 +69,39 @@ Identities::Identities(const QHash<Symbol,Expression> &expressions)
 
 /** Construct with the passed expressions */
 Identities::Identities(const SymbolExpression &symex0)
+           : Implements<Identities,Object>()
 {
     add(symex0);
 }
 
 /** Copy constructor */
-Identities::Identities(const Identities &other) : idhash(other.idhash)
+Identities::Identities(const Identities &other)
+           : Implements<Identities,Object>(other), idhash(other.idhash)
 {}
 
 /** Destructor */
 Identities::~Identities()
 {}
 
+uint Identities::hashCode() const
+{
+    return qHash( Identities::typeName() ) + qHash( idhash.count() );
+}
+
+void Identities::stream(Stream &s)
+{
+    s.assertVersion<Identities>(1);
+    
+    Schema schema = s.item<Identities>();
+    
+    schema.data("identities") & idhash;
+    
+    Object::stream( schema.base() );
+}
+
 /** Set the Symbol 'symbol' equal to 'expression' */
 void Identities::set(const Symbol &symbol, const Expression &expression)
 {
-    if (symbol.isA<Function>())
-    {
-        //do we already have an expression for this function?
-        const Function &func = symbol.asA<Function>();
-
-        //remove any existing function with this signature
-        idhash.remove( function(func).ID() );
-
-        //store this function in the funchash
-        funchash.insert( func.signature(), func );
-    }
-
     idhash.insert(symbol.ID(), expression);
 }
 
@@ -134,23 +120,6 @@ Expression Identities::expression(const Symbol &symbol) const
         return idhash[symbol.ID()];
     else
         return symbol;
-}
-
-/** Return whether or not this set of identities contains an identity for
-    the function 'func' (or one of its relations) */
-bool Identities::contains(const Function &func) const
-{
-    return funchash.contains( func.signature() );
-}
-
-/** Return the actual form of the function 'func' stored in this set of
-    identities, or the null function if it is not present here */
-Function Identities::function(const Function &func) const
-{
-    if ( funchash.contains(func.signature()) )
-        return funchash[func.signature()].base().asA<Function>();
-    else
-        return Function();
 }
 
 /** Add the passed expressions */
@@ -274,6 +243,7 @@ void Identities::add(const SymbolExpression &symex0, const SymbolExpression &sym
 
 /** Construct from the passed values */
 Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &symex1)
+           : Implements<Identities,Object>()
 {
     add(symex0,symex1);
 }
@@ -281,6 +251,7 @@ Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &s
 /** Construct from the passed values */
 Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
                        const SymbolExpression &symex2)
+           : Implements<Identities,Object>()
 {
     add(symex0,symex1,symex2);
 }
@@ -288,6 +259,7 @@ Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &s
 /** Construct from the passed values */
 Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
                        const SymbolExpression &symex2, const SymbolExpression &symex3)
+           : Implements<Identities,Object>()
 {
     add(symex0,symex1,symex2,symex3);
 }
@@ -296,6 +268,7 @@ Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &s
 Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
                        const SymbolExpression &symex2, const SymbolExpression &symex3,
                        const SymbolExpression &symex4)
+           : Implements<Identities,Object>()
 {
     add(symex0,symex1,symex2,symex3,symex4);
 }
@@ -304,6 +277,7 @@ Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &s
 Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
                        const SymbolExpression &symex2, const SymbolExpression &symex3,
                        const SymbolExpression &symex4, const SymbolExpression &symex5)
+           : Implements<Identities,Object>()
 {
     add(symex0,symex1,symex2,symex3,symex4,symex5);
 }
@@ -313,6 +287,7 @@ Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &s
                        const SymbolExpression &symex2, const SymbolExpression &symex3,
                        const SymbolExpression &symex4, const SymbolExpression &symex5,
                        const SymbolExpression &symex6)
+           : Implements<Identities,Object>()
 {
     add(symex0,symex1,symex2,symex3,symex4,symex5,symex6);
 }
@@ -322,6 +297,7 @@ Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &s
                        const SymbolExpression &symex2, const SymbolExpression &symex3,
                        const SymbolExpression &symex4, const SymbolExpression &symex5,
                        const SymbolExpression &symex6, const SymbolExpression &symex7)
+           : Implements<Identities,Object>()
 {
     add(symex0,symex1,symex2,symex3,symex4,symex5,symex6,symex7);
 }
@@ -332,6 +308,7 @@ Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &s
                        const SymbolExpression &symex4, const SymbolExpression &symex5,
                        const SymbolExpression &symex6, const SymbolExpression &symex7,
                        const SymbolExpression &symex8)
+           : Implements<Identities,Object>()
 {
     add(symex0,symex1,symex2,symex3,symex4,symex5,symex6,symex7,symex8);
 }
@@ -342,6 +319,7 @@ Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &s
                        const SymbolExpression &symex4, const SymbolExpression &symex5,
                        const SymbolExpression &symex6, const SymbolExpression &symex7,
                        const SymbolExpression &symex8, const SymbolExpression &symex9)
+           : Implements<Identities,Object>()
 {
     add(symex0,symex1,symex2,symex3,symex4,symex5,symex6,symex7,symex8,symex9);
 }
@@ -349,5 +327,5 @@ Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &s
 /** Add the SymbolExpression to this set of identities */
 void Identities::add(const SymbolExpression &symex0)
 {
-    set( symex0.symbol(), symex0.expression() );
+    set( symex0.first, symex0.second );
 }

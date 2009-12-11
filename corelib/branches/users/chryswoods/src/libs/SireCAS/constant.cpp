@@ -28,57 +28,69 @@
 
 #include "constant.h"
 #include "expression.h"
-#include "expressions.h"
 #include "symbol.h"
-#include "symbols.h"
 #include "values.h"
 #include "complexvalues.h"
 #include "identities.h"
-#include "functions.h"
-#include "integrationconstant.h"
+#include "factor.h"
 
-#include "SireStream/datastream.h"
+#include "SireMaths/complex.h"
 
-using namespace SireStream;
+#include "Siren/stream.h"
+
+using namespace Siren;
+using namespace SireMaths;
 using namespace SireCAS;
 
-static const RegisterMetaType<Constant> r_constant;
-
-/** Serialise a constant to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Constant &constant)
-{
-    writeHeader(ds, r_constant, 1)
-            << static_cast<const ExBase&>(constant);
-
-    return ds;
-}
-
-/** Deserialise a constant from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Constant &constant)
-{
-    VersionID v = readHeader(ds, r_constant);
-
-    if (v == 1)
-    {
-        ds >> static_cast<ExBase&>(constant);
-    }
-    else
-        throw version_error(v, "1", r_constant, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<Constant> r_constant;
 
 /** Construct a constant */
-Constant::Constant() : ExBase()
+Constant::Constant() : Implements<Constant,CASNode>()
 {}
 
 /** Copy constructor */
-Constant::Constant(const Constant&) : ExBase()
+Constant::Constant(const Constant &other) : Implements<Constant,CASNode>(other)
 {}
 
 /** Destructor */
 Constant::~Constant()
 {}
+
+Constant& Constant::operator=(const Constant &other)
+{
+    CASNode::operator=(other);
+    return *this;
+}
+
+bool Constant::operator==(const Constant&) const
+{
+    return true;
+}
+
+bool Constant::operator!=(const Constant&) const
+{
+    return false;
+}
+
+uint Constant::hashCode() const
+{
+    return qHash( Constant::typeName() );
+}
+
+void Constant::stream(Stream &s)
+{
+    s.assertVersion<Constant>(1);
+    
+    Schema schema = s.item<Constant>();
+    
+    CASNode::stream( schema.base() );
+}
+
+/** Return a string representation of this constant (actually an empty string!) */
+QString Constant::toString() const
+{
+    return QString("1.0");
+}
 
 /** Differential of a constant is zero */
 Expression Constant::differentiate(const Symbol&) const
@@ -90,24 +102,6 @@ Expression Constant::differentiate(const Symbol&) const
 Expression Constant::integrate(const Symbol &symbol) const
 {
     return *this * symbol;
-}
-
-/** Comparison operator */
-bool Constant::operator==(const ExBase &other) const
-{
-    return typeid(other).name() == typeid(*this).name();
-}
-
-/** Hash a constant */
-uint Constant::hash() const
-{
-    return (r_constant.magicID() << 16) | (r_constant.magicID() & 0x0000FFFF);
-}
-
-/** Return a string representation of this constant (actually an empty string!) */
-QString Constant::toString() const
-{
-    return QString("1.0");
 }
 
 /** Evaluation of a constant is 1 */
@@ -129,21 +123,15 @@ Expression Constant::substitute(const Identities&) const
 }
 
 /** No symbols in a constant */
-Symbols Constant::symbols() const
+QSet<Symbol> Constant::symbols() const
 {
-    return Symbols();
-}
-
-/** No functions in a constant */
-Functions Constant::functions() const
-{
-    return Functions();
+    return QSet<Symbol>();
 }
 
 /** No children in a constant */
-Expressions Constant::children() const
+QList<Expression> Constant::children() const
 {
-    return Expressions();
+    return QList<Expression>();
 }
 
 QList<Factor> Constant::expand(const Symbol &symbol) const
@@ -152,14 +140,3 @@ QList<Factor> Constant::expand(const Symbol &symbol) const
     ret.append( Factor( symbol, 1, 0 ) );
     return ret;
 }
-
-const char* Constant::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Constant>() );
-}
-
-Constant* Constant::clone() const
-{
-    return new Constant(*this);
-}
-

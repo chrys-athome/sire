@@ -36,6 +36,7 @@
 
 #include <cmath>
 
+using namespace SireMaths;
 using namespace SireCAS;
 using namespace Siren;
 

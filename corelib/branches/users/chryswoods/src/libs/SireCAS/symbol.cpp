@@ -231,7 +231,7 @@ Expression Symbol::differentiate(const Symbol &sym) const
 Expression Symbol::integrate(const Symbol &sym) const
 {
     if (sym.ID() == ID())
-        return 0.5 * pow(sym,2);
+        return 0.5 * SireCAS::pow(sym,2);
     else
         return *this * sym;
 }

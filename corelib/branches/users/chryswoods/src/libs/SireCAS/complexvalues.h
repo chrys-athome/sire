@@ -50,7 +50,7 @@ public:
     ComplexValues();
 
     ComplexValues(const QList<SymbolComplex> &values);
-    ComplexValues(const QHash<Symbol,Complex> &values);
+    ComplexValues(const QHash<Symbol,SireMaths::Complex> &values);
 
     ComplexValues(const SymbolComplex &symval0);
     ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1);
@@ -98,7 +98,7 @@ public:
     uint hashCode() const;
     void stream(Siren::Stream &s);
 
-    void set(const Symbol &symbol, const Complex &value);
+    void set(const Symbol &symbol, const SireMaths::Complex &value);
 
     void add(const SymbolComplex &symval0);
     void add(const SymbolComplex &symval0, const SymbolComplex &symval1);
@@ -131,13 +131,13 @@ public:
              const SymbolComplex &symval6, const SymbolComplex &symval7,
              const SymbolComplex &symval8, const SymbolComplex &symval9);
 
-    Complex value(const Symbol &sym) const;
+    SireMaths::Complex value(const Symbol &sym) const;
 
-    const QHash<SymbolID,Complex>& values() const;
+    const QHash<SymbolID,SireMaths::Complex>& values() const;
 
 private:
     /** Hash mapping Symbol IDs to actual numerical values */
-    QHash<SymbolID, Complex> vals;
+    QHash<SymbolID,SireMaths::Complex> vals;
 };
 
 }

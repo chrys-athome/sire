@@ -87,7 +87,7 @@ public:
     bool evaluateCondition(const ComplexValues &values) const;
 
     double evaluate(const Values &values) const;
-    Complex evaluate(const ComplexValues &values) const;
+    SireMaths::Complex evaluate(const ComplexValues &values) const;
     
 protected:
     Condition& operator=(const Condition &other);
@@ -96,7 +96,7 @@ protected:
     bool operator!=(const Condition &other) const;
     
     virtual bool compareValues(double val0, double val1) const=0;
-    virtual bool compareValues(const Complex &val0, const Complex &val1) const=0;
+    virtual bool compareValues(const SireMaths::Complex &val0, const SireMaths::Complex &val1) const=0;
     
     virtual QString operatorString() const=0;
 
@@ -137,7 +137,7 @@ public:
 
 protected:
     bool compareValues(double val0, double val1) const;
-    bool compareValues(const Complex &val0, const Complex &val1) const;
+    bool compareValues(const SireMaths::Complex &val0, const SireMaths::Complex &val1) const;
 
     QString operatorString() const;
 };
@@ -171,7 +171,7 @@ public:
 
 protected:
     bool compareValues(double val0, double val1) const;
-    bool compareValues(const Complex &val0, const Complex &val1) const;
+    bool compareValues(const SireMaths::Complex &val0, const SireMaths::Complex &val1) const;
 
     QString operatorString() const;
 };
@@ -206,7 +206,7 @@ public:
 
 protected:
     bool compareValues(double val0, double val1) const;
-    bool compareValues(const Complex &val0, const Complex &val1) const;
+    bool compareValues(const SireMaths::Complex &val0, const SireMaths::Complex &val1) const;
 
     QString operatorString() const;
 };
@@ -241,7 +241,7 @@ public:
 
 protected:
     bool compareValues(double val0, double val1) const;
-    bool compareValues(const Complex &val0, const Complex &val1) const;
+    bool compareValues(const SireMaths::Complex &val0, const SireMaths::Complex &val1) const;
 
     QString operatorString() const;
 };
@@ -275,7 +275,7 @@ public:
 
 protected:
     bool compareValues(double val0, double val1) const;
-    bool compareValues(const Complex &val0, const Complex &val1) const;
+    bool compareValues(const SireMaths::Complex &val0, const SireMaths::Complex &val1) const;
 
     QString operatorString() const;
 };
@@ -309,7 +309,7 @@ public:
 
 protected:
     bool compareValues(double val0, double val1) const;
-    bool compareValues(const Complex &val0, const Complex &val1) const;
+    bool compareValues(const SireMaths::Complex &val0, const SireMaths::Complex &val1) const;
 
     QString operatorString() const;
 };
@@ -353,11 +353,11 @@ public:
     bool evaluateCondition(const ComplexValues &values) const;
 
     double evaluate(const Values &values) const;
-    Complex evaluate(const ComplexValues &values) const;
+    SireMaths::Complex evaluate(const ComplexValues &values) const;
 
 protected:
     bool compareValues(double val0, double val1) const;
-    bool compareValues(const Complex &val0, const Complex &val1) const;
+    bool compareValues(const SireMaths::Complex &val0, const SireMaths::Complex &val1) const;
 
     QString operatorString() const;
 };
@@ -401,11 +401,11 @@ public:
     bool evaluateCondition(const ComplexValues &values) const;
 
     double evaluate(const Values &values) const;
-    Complex evaluate(const ComplexValues &values) const;
+    SireMaths::Complex evaluate(const ComplexValues &values) const;
 
 protected:
     bool compareValues(double val0, double val1) const;
-    bool compareValues(const Complex &val0, const Complex &val1) const;
+    bool compareValues(const SireMaths::Complex &val0, const SireMaths::Complex &val1) const;
 
     QString operatorString() const;
 };
@@ -458,7 +458,7 @@ public:
     bool isCompound() const;
 
     double evaluate(const Values &values) const;
-    Complex evaluate(const ComplexValues &values) const;
+    SireMaths::Complex evaluate(const ComplexValues &values) const;
 
     Expression substitute(const Identities &identities) const;
 

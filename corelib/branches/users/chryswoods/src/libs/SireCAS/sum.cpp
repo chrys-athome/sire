@@ -30,19 +30,19 @@
 
 #include "sum.h"
 #include "expression.h"
-#include "symbols.h"
-#include "functions.h"
 #include "complexvalues.h"
 #include "values.h"
 #include "identities.h"
 #include "i.h"
 #include "integrationconstant.h"
 
-#include "SireStream/datastream.h"
+#include "SireMaths/complex.h"
+
+#include "Siren/stream.h"
 
 #include <QDebug>
 
-using namespace SireStream;
+using namespace Siren;
 using namespace SireCAS;
 
 static const RegisterMetaType<Sum> r_sum;

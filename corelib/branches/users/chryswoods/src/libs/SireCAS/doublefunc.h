@@ -29,22 +29,10 @@
 #ifndef SIRECAS_DOUBLEFUNC_H
 #define SIRECAS_DOUBLEFUNC_H
 
-#include "exbase.h"
 #include "symbol.h"
-#include "symbols.h"
-#include "functions.h"
 #include "expression.h"
-#include "expressions.h"
 
 SIRE_BEGIN_HEADER
-
-namespace SireCAS
-{
-class DoubleFunc;
-}
-
-QDataStream& operator<<(QDataStream&, const SireCAS::DoubleFunc&);
-QDataStream& operator>>(QDataStream&, SireCAS::DoubleFunc&);
 
 namespace SireCAS
 {
@@ -53,12 +41,8 @@ namespace SireCAS
 
     @author Christopher Woods
 */
-class SIRECAS_EXPORT DoubleFunc : public ExBase
+class SIRECAS_EXPORT DoubleFunc : public Siren::Extends<DoubleFunc,CASNode>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const DoubleFunc&);
-friend QDataStream& ::operator>>(QDataStream&, DoubleFunc&);
-
 public:
     DoubleFunc();
     DoubleFunc(const Expression &x, const Expression &y);
@@ -67,9 +51,9 @@ public:
 
     ~DoubleFunc();
 
-    DoubleFunc& operator=(const DoubleFunc &other);
-
-    uint hash() const;
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &s);
 
     const Expression& x() const;
     const Expression& y() const;
@@ -81,12 +65,9 @@ public:
     bool isComplex() const;
     bool isCompound() const;
 
-    QString toString() const;
-
     Expression substitute(const Identities &identities) const;
-    Symbols symbols() const;
-    Functions functions() const;
-    Expressions children() const;
+    QSet<Symbol> symbols() const;
+    QList<Expression> children() const;
 
     Expression differentiate(const Symbol &symbol) const;
     Expression integrate(const Symbol &symbol) const;
@@ -94,33 +75,18 @@ public:
     QList<Factor> expand(const Symbol &symbol) const;
 
 protected:
+    DoubleFunc& operator=(const DoubleFunc &other);
+    bool operator==(const DoubleFunc &other) const;
+    bool operator!=(const DoubleFunc &other) const;
 
     virtual Expression functionOf(const Expression &x, 
                                   const Expression &y) const=0;
 
     virtual QString stringRep() const=0;
 
-    virtual uint magic() const=0;
-
     /** The two expressions that this function operates on */
     Expression ex0, ex1;
 };
-
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
-/** Return the first argument - viewed as this is f( x(), y() ) */
-inline const Expression& DoubleFunc::x() const
-{
-    return ex0;
-}
-
-/** Return the second argument - viewed as this is f( x(), y() ) */
-inline const Expression& DoubleFunc::y() const
-{
-    return ex1;
-}
-
-#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 /** To declare a new function copy Min or Max (in minmax.h) */
 

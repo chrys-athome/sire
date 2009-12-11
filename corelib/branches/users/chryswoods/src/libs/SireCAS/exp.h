@@ -63,7 +63,7 @@ public:
     void stream(Siren::Stream &s);
 
     double evaluate(const Values &values) const;
-    Complex evaluate(const ComplexValues &values) const;
+    SireMaths::Complex evaluate(const ComplexValues &values) const;
 
     Expression differentiate(const Symbol &symbol) const;
     Expression integrate(const Symbol &symbol) const;
@@ -97,7 +97,7 @@ public:
     void stream(Siren::Stream &s);
 
     double evaluate(const Values &values) const;
-    Complex evaluate(const ComplexValues &values) const;
+    SireMaths::Complex evaluate(const ComplexValues &values) const;
 
 protected:
     Expression functionOf(const Expression &arg) const;

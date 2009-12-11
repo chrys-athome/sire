@@ -39,6 +39,7 @@
 #include "Siren/stream.h"
 
 using namespace Siren;
+using namespace SireMaths;
 using namespace SireCAS;
 
 ////////////
@@ -284,7 +285,7 @@ QString Tan::stringRep() const
 /** The differential of tan(x) = sec^2(x) */
 Expression Tan::diff() const
 {
-    return pow( Sec(x()), 2 );
+    return SireCAS::pow( Sec(x()), 2 );
 }
 
 /** Integral of tan(x) = ln [ sec(x) ] + C */
@@ -539,7 +540,7 @@ QString Cot::stringRep() const
 /** The differential of cot(x) = -csc^2(x) */
 Expression Cot::diff() const
 {
-    return -(pow( Csc(x()), 2 ));
+    return -(SireCAS::pow( Csc(x()), 2 ));
 }
 
 /** Integral of cot(x) = ln( sin(x) ) */

@@ -217,13 +217,13 @@ QString ArcSinh::stringRep() const
 /** The differential of asinh(x) = 1 / sqrt(1+x^2) */
 Expression ArcSinh::diff() const
 {
-    return 1 / sqrt( 1 + pow(x(),2) );
+    return 1 / sqrt( 1 + SireCAS::pow(x(),2) );
 }
 
 /** Integral of asinh(x) = x*asinh(x) - sqrt(1+x^2) */
 Expression ArcSinh::integ() const
 {
-    return  x()*ArcSinh(x()) - sqrt( 1 + pow(x(),2) );
+    return  x()*ArcSinh(x()) - sqrt( 1 + SireCAS::pow(x(),2) );
 }
 
 ////////////
@@ -309,13 +309,13 @@ QString ArcTanh::stringRep() const
 /** The differential of atanh(x) = 1 / (1-x^2) */
 Expression ArcTanh::diff() const
 {
-    return 1 / ( 1 - pow(x(),2) );
+    return 1 / ( 1 - SireCAS::pow(x(),2) );
 }
 
 /** Integral of atanh(x) = x arctanh(x) + 0.5 ln( x^2 - 1 ) */
 Expression ArcTanh::integ() const
 {
-    return x()*ArcTanh(x()) + 0.5*Ln( pow(x(),2) - 1 );
+    return x()*ArcTanh(x()) + 0.5*Ln( SireCAS::pow(x(),2) - 1 );
 }
 
 ////////////
@@ -401,13 +401,14 @@ QString ArcCsch::stringRep() const
 /** The differential of acsch(x) = -1 / (x^2 sqrt(1 + x^-2)) */
 Expression ArcCsch::diff() const
 {
-    return -1 / ( pow(x(),2) * sqrt( 1 + pow(x(),-2) ) );
+    return -1 / ( SireCAS::pow(x(),2) * sqrt( 1 + SireCAS::pow(x(),-2) ) );
 }
 
 /** Integral of acsch(x) = x acsch(x) + Ln[ x ( 1 + sqrt( (x^2+1)/x^2 ) ) ] */
 Expression ArcCsch::integ() const
 {
-    return x()*ArcCsch(x()) + Ln( x() * ( 1 + sqrt( (pow(x(),2)+1) / pow(x(),2) ) ) );
+    return x()*ArcCsch(x()) + 
+           Ln( x() * ( 1 + sqrt( (SireCAS::pow(x(),2)+1) / SireCAS::pow(x(),2) ) ) );
 }
 
 ////////////
@@ -585,11 +586,11 @@ QString ArcCoth::stringRep() const
 /** The differential of acoth(x) = 1 / (1-x^2) */
 Expression ArcCoth::diff() const
 {
-    return 1 / (1 - pow(x(),2));
+    return 1 / (1 - SireCAS::pow(x(),2));
 }
 
 /** Integral of acoth(x) = x acoth(x) + (1/2) ln( x^2 - 1 ) */
 Expression ArcCoth::integ() const
 {
-    return x()*ArcCoth(x()) + 0.5*Ln( pow(x(),2) - 1 );
+    return x()*ArcCoth(x()) + 0.5*Ln( SireCAS::pow(x(),2) - 1 );
 }

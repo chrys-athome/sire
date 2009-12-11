@@ -62,7 +62,7 @@ public:
     void stream(Siren::Stream &s);
 
     double evaluate(const Values &values) const;
-    Complex evaluate(const ComplexValues &values) const;
+    SireMaths::Complex evaluate(const ComplexValues &values) const;
 
     Expression core() const;
     Expression power() const;
@@ -125,7 +125,7 @@ public:
     void stream(Siren::Stream &s);
 
     double evaluate(const Values &values) const;
-    Complex evaluate(const ComplexValues &values) const;
+    SireMaths::Complex evaluate(const ComplexValues &values) const;
 
     Expression power() const;
 
@@ -155,7 +155,7 @@ public:
     void stream(Siren::Stream &s);
 
     double evaluate(const Values &values) const;
-    Complex evaluate(const ComplexValues &values) const;
+    SireMaths::Complex evaluate(const ComplexValues &values) const;
 
     Expression power() const;
 
@@ -184,7 +184,7 @@ public:
     void stream(Siren::Stream &s);
 
     double evaluate(const Values &values) const;
-    Complex evaluate(const ComplexValues &values) const;
+    SireMaths::Complex evaluate(const ComplexValues &values) const;
 
     Expression power() const;
 
@@ -213,7 +213,7 @@ public:
     void stream(Siren::Stream &s);
     
     double evaluate(const Values &values) const;
-    Complex evaluate(const ComplexValues &values) const;
+    SireMaths::Complex evaluate(const ComplexValues &values) const;
 
     Expression power() const;
 

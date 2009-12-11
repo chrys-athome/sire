@@ -31,66 +31,60 @@
 #include "expression.h"
 #include "complexvalues.h"
 
+#include "SireMaths/complex.h"
 #include "SireMaths/errors.h"
 
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
 
-using namespace SireStream;
+using namespace SireMaths;
+using namespace Siren;
 using namespace SireCAS;
 
 ////////
 //////// Implementation of Min
 ////////
 
-static const RegisterMetaType<Min> r_min;
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Min &min)
-{
-    writeHeader(ds, r_min, 1) << static_cast<const DoubleFunc&>(min);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Min &min)
-{
-    VersionID v = readHeader(ds, r_min);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<DoubleFunc&>(min);
-    }
-    else
-        throw version_error(v, "1", r_min, CODELOC);
-        
-    return ds;
-}
+static const RegisterObject<Min> r_min;
 
 /** Constructor */
-Min::Min() : DoubleFunc()
+Min::Min() : Implements<Min,DoubleFunc>()
 {}
 
 /** Construct min(x(), y()) */
-Min::Min(const Expression &x, const Expression &y) : DoubleFunc(x,y)
+Min::Min(const Expression &x, const Expression &y) : Implements<Min,DoubleFunc>(x,y)
 {}
 
 /** Copy constructor */
-Min::Min(const Min &other) : DoubleFunc(other)
+Min::Min(const Min &other) : Implements<Min,DoubleFunc>(other)
 {}
 
 /** Destructor */
 Min::~Min()
 {}
 
-/** Comparison operator */
-bool Min::operator==(const ExBase &other) const
+Min& Min::operator=(const Min &other)
 {
-    const Min *other_min = dynamic_cast<const Min*>(&other);
+    DoubleFunc::operator=(other);
+    return *this;
+}
 
-    return other_min != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->x() == other_min->x() 
-                 and this->y() == other_min->y();
+bool Min::operator==(const Min &other) const
+{
+    return DoubleFunc::operator==(other);
+}
+
+bool Min::operator!=(const Min &other) const
+{
+    return DoubleFunc::operator!=(other);
+}
+
+void Min::stream(Stream &s)
+{
+    s.assertVersion<Min>(1);
+    
+    Schema schema = s.item<Min>();
+    
+    DoubleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -131,70 +125,51 @@ Expression Min::functionOf(const Expression &ex, const Expression &ey) const
         return Expression(Min(ex, ey));
 }
 
-/** Return the magic */
-uint Min::magic() const
-{
-    return r_min.magicID();
-}
-
-const char* Min::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Min>() );
-}
-
 ////////
 //////// Implementation of Max
 ////////
 
-static const RegisterMetaType<Max> r_max;
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Max &max)
-{
-    writeHeader(ds, r_max, 1) << static_cast<const DoubleFunc&>(max);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Max &max)
-{
-    VersionID v = readHeader(ds, r_max);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<DoubleFunc&>(max);
-    }
-    else
-        throw version_error(v, "1", r_max, CODELOC);
-        
-    return ds;
-}
+static const RegisterObject<Max> r_max;
 
 /** Constructor */
-Max::Max() : DoubleFunc()
+Max::Max() : Implements<Max,DoubleFunc>()
 {}
 
 /** Construct min(x(), y()) */
-Max::Max(const Expression &x, const Expression &y) : DoubleFunc(x,y)
+Max::Max(const Expression &x, const Expression &y) : Implements<Max,DoubleFunc>(x,y)
 {}
 
 /** Copy constructor */
-Max::Max(const Max &other) : DoubleFunc(other)
+Max::Max(const Max &other) : Implements<Max,DoubleFunc>(other)
 {}
 
 /** Destructor */
 Max::~Max()
 {}
 
-/** Comparison operator */
-bool Max::operator==(const ExBase &other) const
+Max& Max::operator=(const Max &other)
 {
-    const Max *other_max = dynamic_cast<const Max*>(&other);
+    DoubleFunc::operator=(other);
+    return *this;
+}
 
-    return other_max != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->x() == other_max->x() 
-                 and this->y() == other_max->y();
+bool Max::operator==(const Max &other) const
+{
+    return DoubleFunc::operator==(other);
+}
+
+bool Max::operator!=(const Max &other) const
+{
+    return DoubleFunc::operator!=(other);
+}
+
+void Max::stream(Stream &s)
+{
+    s.assertVersion<Max>(1);
+    
+    Schema schema = s.item<Max>();
+    
+    DoubleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -234,26 +209,3 @@ Expression Max::functionOf(const Expression &ex, const Expression &ey) const
      else
         return Expression(Max(ex, ey));
 }
-
-/** Return the magic */
-uint Max::magic() const
-{
-    return r_max.magicID();
-}
-
-const char* Max::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Max>() );
-}
-
-Max* Max::clone() const
-{
-    return new Max(*this);
-}
-
-
-Min* Min::clone() const
-{
-    return new Min(*this);
-}
-

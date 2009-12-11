@@ -30,55 +30,34 @@
 #include "values.h"
 #include "complexvalues.h"
 #include "identities.h"
+#include "factor.h"
+
+#include "SireMaths/complex.h"
 
 #include "SireCAS/errors.h"
 
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
 
 #include <QDebug>
 
-using namespace SireStream;
+using namespace Siren;
 using namespace SireCAS;
+using namespace SireMaths;
 
-//register the pure virtual base class
-static const RegisterMetaType<DoubleFunc> r_doublefunc(MAGIC_ONLY, "SireCAS::DoubleFunc");
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const DoubleFunc &func)
-{
-    writeHeader(ds, r_doublefunc, 1) 
-            << func.ex0 << func.ex1 << static_cast<const ExBase&>(func);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, DoubleFunc &func)
-{
-    VersionID v = readHeader(ds, r_doublefunc);
-
-    if (v == 1)
-    {
-        ds >> func.ex0 >> func.ex1 >> static_cast<ExBase&>(func);
-    }
-    else
-        throw version_error(v, "1", r_doublefunc, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<DoubleFunc> r_doublefunc( VIRTUAL_CLASS );
 
 /** Null constructor */
-DoubleFunc::DoubleFunc() : ExBase()
+DoubleFunc::DoubleFunc() : Extends<DoubleFunc,CASNode>()
 {}
 
 /** Construct a function that operates on the expressions 'x' and 'y' */
 DoubleFunc::DoubleFunc(const Expression &x, const Expression &y) 
-           : ExBase(), ex0(x), ex1(y)
+           : Extends<DoubleFunc,CASNode>(), ex0(x), ex1(y)
 {}
 
 /** Copy constructor */
 DoubleFunc::DoubleFunc(const DoubleFunc &other)
-           : ExBase(), ex0(other.ex0), ex1(other.ex1)
+           : Extends<DoubleFunc,CASNode>(other), ex0(other.ex0), ex1(other.ex1)
 {}
 
 /** Destructor */
@@ -88,11 +67,24 @@ DoubleFunc::~DoubleFunc()
 /** Copy assignment */
 DoubleFunc& DoubleFunc::operator=(const DoubleFunc &other)
 {
-    ExBase::operator=(other);
-    ex0 = other.ex0;
-    ex1 = other.ex1;
+    if (this != &other)
+    {
+        CASNode::operator=(other);
+        ex0 = other.ex0;
+        ex1 = other.ex1;
+    }
 
     return *this;
+}
+
+bool DoubleFunc::operator==(const DoubleFunc &other) const
+{
+    return ex0 == other.ex0 and ex1 == other.ex1;
+}
+
+bool DoubleFunc::operator!=(const DoubleFunc &other) const
+{
+    return not DoubleFunc::operator==(other);
 }
 
 /** Return the conjugate of this function */
@@ -128,7 +120,7 @@ bool DoubleFunc::isCompound() const
 /** Return a string representation of this function */
 QString DoubleFunc::toString() const
 {
-    return QString("%1(%2,%3)").arg(stringRep(), ex0.toString(), ex1.toString());
+    return QObject::tr("%1( %2, %3 )").arg(stringRep(), ex0.toString(), ex1.toString());
 }
 
 /** Substitute into this expression */
@@ -139,21 +131,20 @@ Expression DoubleFunc::substitute(const Identities &identities) const
 }
 
 /** Return the symbols used in this function */
-Symbols DoubleFunc::symbols() const
+QSet<Symbol> DoubleFunc::symbols() const
 {
     return ex0.symbols() + ex1.symbols();
 }
 
-/** Return the functions used in this function */
-Functions DoubleFunc::functions() const
-{
-    return ex0.functions() + ex1.functions();
-}
-
 /** Return the child expression of this function */
-Expressions DoubleFunc::children() const
+QList<Expression> DoubleFunc::children() const
 {
-    return Expressions(ex0) + Expressions(ex1);
+    QList<Expression> exs;
+    
+    exs.append(ex0);
+    exs.append(ex1);
+
+    return exs;
 }
 
 /** Return the differential of this function with respect to 'symbol' */
@@ -198,9 +189,14 @@ QList<Factor> DoubleFunc::expand(const Symbol &symbol) const
     return ret;
 }
 
-/** Return a has for the function */
-uint DoubleFunc::hash() const
+/** Return the first argument - viewed as this is f( x(), y() ) */
+const Expression& DoubleFunc::x() const
 {
-    qDebug() << CODELOC;
-    return (magic() << 16) | (ex0.hash() & 0x0000FF00) | (ex1.hash() & 0x000000FF);
+    return ex0;
+}
+
+/** Return the second argument - viewed as this is f( x(), y() ) */
+const Expression& DoubleFunc::y() const
+{
+    return ex1;
 }

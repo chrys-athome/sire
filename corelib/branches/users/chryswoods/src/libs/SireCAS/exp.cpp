@@ -128,7 +128,7 @@ Expression Exp::differentiate(const Symbol &symbol) const
 /** Integral of e^x is e^x + c */
 Expression Exp::integrate(const Symbol &symbol) const
 {
-    return Exp(pwr) / pwr.diff(symbol);
+    return Exp(pwr) / pwr.differentiate(symbol);
 }
 
 /** Return the core of this power */

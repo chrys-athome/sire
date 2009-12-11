@@ -53,9 +53,6 @@ class ComplexValues;
 class Symbol;
 class Factor;
 
-using SireMaths::Complex;
-using SireMaths::Rational;
-
 /** This is the virtual node class of all SireCAS nodes. A node
     is a point in a CAS expression tree (an expression is a tree
     of nodes, and is evaluated by summing the values of each node)
@@ -82,21 +79,56 @@ public:
     // SireCAS::CASNode //
     //////////////////////
 
+    double operator()(const Values &values) const;
+    SireMaths::Complex operator()(const ComplexValues &values) const;
+
     virtual Expression operator-() const;
 
     virtual Expression differentiate(const Symbol &symbol) const;
+    virtual Expression differentiate(const Symbol &symbol, int n) const;
+    
     virtual Expression integrate(const Symbol &symbol) const;
+
+    virtual Expression conjugate() const;
 
     virtual Expression series(const Symbol &symbol, int n) const;
 
     virtual Expression simplify(int options=0) const;
 
-    virtual Expression conjugate() const;
-
     virtual bool isFunction(const Symbol&) const;
     virtual bool isConstant() const;
     virtual bool isComplex() const;
     virtual bool isCompound() const;
+
+    virtual Expression add(const CASNode &node) const;
+    virtual Expression add(double val) const;
+    virtual Expression add(const SireMaths::Complex &val) const;
+
+    virtual Expression subtract(const CASNode &node) const;
+    virtual Expression subtract(double val) const;
+    virtual Expression subtract(const SireMaths::Complex &val) const;
+
+    virtual Expression multiply(const CASNode &node) const;
+    virtual Expression multiply(double val) const;
+    virtual Expression multiply(const SireMaths::Complex &val) const;
+
+    virtual Expression divide(const CASNode &node) const;
+    virtual Expression divide(double val) const;
+    virtual Expression divide(const SireMaths::Complex &val) const;
+
+    virtual Expression negate() const;
+    virtual Expression invert() const;
+
+    virtual Expression pow(int n) const;
+    virtual Expression squared() const;
+    virtual Expression cubed() const;
+
+    virtual Expression pow(const SireMaths::Rational &n) const;
+    virtual Expression pow(double n) const;
+    virtual Expression pow(const SireMaths::Complex &n) const;
+    virtual Expression pow(const CASNode &n) const;
+
+    virtual Expression root(int n) const;
 
     /** Evaluate this CASNode using values 'values'. Any
         missing symbols are assumed to equal zero.
@@ -110,7 +142,7 @@ public:
 
     /** Evaluate this CASNode using the complex values 'values'.
         Any missing symbols are assumed to equal zero. */
-    virtual Complex evaluate(const ComplexValues &values) const=0;
+    virtual SireMaths::Complex evaluate(const ComplexValues &values) const=0;
 
     /** Return an expression that has the identities in 'identities'
         substituted into this expression */
@@ -121,6 +153,9 @@ public:
 
     /** Return the child expressions of this Expression */
     virtual QList<Expression> children() const=0;
+
+    template<class T>
+    QList<T> children() const;
     
     /** Rearrange this expression into the form
         m x^i + n x^j + ... + constant
@@ -140,31 +175,31 @@ protected:
 Expression operator+(const CASNode &node0, const CASNode &node1);
 Expression operator+(const CASNode &node, double value);
 Expression operator+(double value, const CASNode &node);
-Expression operator+(const CASNode &node, const Complex &value);
-Expression operator+(const Complex &value, const CASNode &node);
+Expression operator+(const CASNode &node, const SireMaths::Complex &value);
+Expression operator+(const SireMaths::Complex &value, const CASNode &node);
 
 Expression operator-(const CASNode &node0, const CASNode &node1);
 Expression operator-(const CASNode &node, double value);
 Expression operator-(double value, const CASNode &node);
-Expression operator-(const CASNode &node, const Complex &value);
-Expression operator-(const Complex &value, const CASNode &node);
+Expression operator-(const CASNode &node, const SireMaths::Complex &value);
+Expression operator-(const SireMaths::Complex &value, const CASNode &node);
 
 Expression operator*(const CASNode &node0, const CASNode &node1);
 Expression operator*(const CASNode &node, double value);
 Expression operator*(double value, const CASNode &node);
-Expression operator*(const CASNode &node, const Complex &value);
-Expression operator*(const Complex &value, const CASNode &node);
+Expression operator*(const CASNode &node, const SireMaths::Complex &value);
+Expression operator*(const SireMaths::Complex &value, const CASNode &node);
 
 Expression operator/(const CASNode &node0, const CASNode &node1);
 Expression operator/(const CASNode &node, double value);
 Expression operator/(double value, const CASNode &node);
-Expression operator/(const CASNode &node, const Complex &value);
-Expression operator/(const Complex &value, const CASNode &node);
+Expression operator/(const CASNode &node, const SireMaths::Complex &value);
+Expression operator/(const SireMaths::Complex &value, const CASNode &node);
 
 Expression pow(const CASNode &node, int n);
-Expression pow(const CASNode &node, const Rational &n);
+Expression pow(const CASNode &node, const SireMaths::Rational &n);
 Expression pow(const CASNode &node, double n);
-Expression pow(const CASNode &node, const Complex &n);
+Expression pow(const CASNode &node, const SireMaths::Complex &n);
 Expression pow(const CASNode &node, const CASNode &n);
 
 Expression root(const CASNode &node, int n);
@@ -176,6 +211,10 @@ typedef Siren::ObjPtr<CASNode> CASNodePtr;
 }
 
 SIRE_EXPOSE_CLASS( SireCAS::CASNode )
+
+SIRE_EXPOSE_FUNCTION( SireCAS::pow )
+SIRE_EXPOSE_FUNCTION( SireCAS::sqrt )
+SIRE_EXPOSE_FUNCTION( SireCAS::cbrt )
 
 SIRE_EXPOSE_OBJECT_PTR( SireCAS::CASNodePtr, SireCAS::CASNode )
 

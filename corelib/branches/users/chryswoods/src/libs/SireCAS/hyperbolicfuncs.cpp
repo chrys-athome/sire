@@ -284,7 +284,7 @@ QString Tanh::stringRep() const
 /** The differential of tanh(x) = sech^2(x) */
 Expression Tanh::diff() const
 {
-    return pow( Sech(x()), 2 );
+    return SireCAS::pow( Sech(x()), 2 );
 }
 
 /** Integral of tan(x) = ln [ cosh(x) ] + C */
@@ -539,7 +539,7 @@ QString Coth::stringRep() const
 /** The differential of coth(x) = -csch^2(x) */
 Expression Coth::diff() const
 {
-    return -(pow( Csch(x()), 2 ));
+    return -(SireCAS::pow( Csch(x()), 2 ));
 }
 
 /** Integral of coth(x) = ln( sinh(x) ) */

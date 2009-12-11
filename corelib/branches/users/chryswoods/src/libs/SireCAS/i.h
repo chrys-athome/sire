@@ -31,56 +31,34 @@
 
 #include "constant.h"
 
-#include "SireMaths/complex.h"
-
 SIRE_BEGIN_HEADER
 
 namespace SireCAS
 {
-class I;
-}
 
-QDataStream& operator<<(QDataStream&, const SireCAS::I&);
-QDataStream& operator>>(QDataStream&, SireCAS::I&);
+/** This is the complex number, i
 
-namespace SireCAS
-{
-
-using SireMaths::Complex;
-
-/**
-This is the complex number, i
-
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIRECAS_EXPORT I : public Constant
+class SIRECAS_EXPORT I : public Siren::Implements<I,Constant>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const I&);
-friend QDataStream& ::operator>>(QDataStream&, I&);
-
 public:
     I();
     I(const I &other);
 
     ~I();
 
-    bool operator==(const ExBase &other) const;
+    I& operator=(const I &other);
+    
+    bool operator==(const I &other) const;
+    bool operator!=(const I &other) const;
 
-    uint hash() const;
-
-    static const char* typeName();
-
-    const char* what() const
-    {
-        return I::typeName();
-    }
-
-    I* clone() const;
-
+    uint hashCode() const;
     QString toString() const;
+    void stream(Siren::Stream &s);
+
     double evaluate(const Values&) const;
-    Complex evaluate(const ComplexValues&) const;
+    SireMaths::Complex evaluate(const ComplexValues&) const;
 
     Expression conjugate() const;
 

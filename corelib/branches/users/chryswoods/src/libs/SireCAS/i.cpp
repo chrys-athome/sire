@@ -30,62 +30,57 @@
 #include "expression.h"
 #include "complexvalues.h"
 
+#include "SireMaths/complex.h"
 #include "SireMaths/errors.h"
 
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
 
-using namespace SireStream;
+using namespace Siren;
+using namespace SireMaths;
 using namespace SireCAS;
 
-static const RegisterMetaType<SireCAS::I> r_i;
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const I &i)
-{
-    writeHeader(ds, r_i, 1) << static_cast<const Constant&>(i);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, I &i)
-{
-    VersionID v = readHeader(ds, r_i);
-
-    if (v == 1)
-    {
-        ds >> static_cast<Constant&>(i);
-    }
-    else
-        throw version_error(v, "1", r_i, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<SireCAS::I> r_i;
 
 /** Constructor */
-I::I() : Constant()
+I::I() : Implements<I,Constant>()
 {}
 
 /** Copy constructor */
-I::I(const I &other) : Constant(other)
+I::I(const I &other) : Implements<I,Constant>(other)
 {}
 
 /** Destructor */
 I::~I()
 {}
 
-/** Comparison operator */
-bool I::operator==(const ExBase &other) const
+I& I::operator=(const I &other)
 {
-    const I *other_i = dynamic_cast<const I*>(&other);
-
-    return other_i != 0 and typeid(other).name() == typeid(*this).name();
+    Constant::operator=(other);
+    return *this;
 }
 
-/** Return a hash of this expression */
-uint I::hash() const
+bool I::operator==(const I &other) const
 {
-    return ( r_i.magicID() << 16 ) | ( r_i.magicID() & 0x0000FFFF );
+    return true;
+}
+
+bool I::operator!=(const I &other) const
+{
+    return false;
+}
+
+uint I::hashCode() const
+{
+    return qHash( I::typeName() );
+}
+
+void I::stream(Stream &s)
+{
+    s.assertVersion<I>(1);
+    
+    Schema schema = s.item<I>();
+    
+    Constant::stream( schema.base() );
 }
 
 /** Return a string representation */
@@ -117,14 +112,4 @@ Expression I::conjugate() const
 bool I::isComplex() const
 {
     return true;
-}
-
-const char* I::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<I>() );
-}
-
-I* I::clone() const
-{
-    return new I(*this);
 }
