@@ -618,6 +618,18 @@ void ProtoMS::processBondLine(const QStringList &words, const Molecule &mol,
     if (type == SOLVENT)
         return;
 
+    //skip lines involving dummy atoms
+    if ( words[2] == "DUM" or words[4] == "DUM" or
+         words[7] == "DUM" or words[9] == "DUM" )
+    {
+        return;
+    }
+
+    if (words.count() < 15)
+        throw SireError::io_error( QObject::tr(
+            "Cannot understand the ProtoMS bond line\n%1")
+                .arg(words.join(" ")), CODELOC );
+
     Symbol r = InternalPotential::symbols().bond().r();
     
     Expression bondfunc = words[12].toDouble() 
@@ -646,6 +658,12 @@ void ProtoMS::processAngleLine(const QStringList &words, const Molecule &mol,
 {
     if (type == SOLVENT)
         return;
+
+    //skip lines involving dummy atoms
+    if ( words[4] == "DUM" or words[9] == "DUM" or words[14] == "DUM" )
+    {
+        return;
+    }
 
     Symbol theta = InternalPotential::symbols().angle().theta();
     
@@ -707,13 +725,21 @@ QString ProtoMS::processDihedralLine(QTextStream &ts, const QStringList &words,
 {
     //read in the parameter - each cosine term is on a separate line
     QString line = ts.readLine();
-    
+
+    //skip lines involving dummy atoms
+    if ( words[4] == "DUM" or words[9] == "DUM" or
+         words[14] == "DUM" or words[19] == "DUM" )
+    {
+        return line;
+    }
+
     Expression dihedralfunc;
     
     Symbol phi = InternalPotential::symbols().dihedral().phi();
     
     while (not line.isNull())
     {
+        //qDebug() << line;
         QStringList words = line.split(" ", QString::SkipEmptyParts);
     
         if (words[1] != "DihedralParameter")
@@ -937,6 +963,8 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
     
     while (not line.isNull())
     {
+        //qDebug() << line;
+
         if (line.startsWith("PARAMS "))
         {
             QStringList words = line.split(" ", QString::SkipEmptyParts);
