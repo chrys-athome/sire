@@ -30,6 +30,9 @@
 #define SIRECAS_CASNODE_H
 
 #include "Siren/object.h"
+#include "Siren/objptr.hpp"
+
+#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
@@ -65,7 +68,7 @@ public:
     CASNode();
     CASNode(const CASNode &other);
     
-    virtual CASNode();
+    virtual ~CASNode();
 
     ///////////////////////////
     // Extends Siren::Object //
@@ -135,32 +138,24 @@ protected:
 };
 
 Expression operator+(const CASNode &node0, const CASNode &node1);
-Expression operator+(const CASNode &node, const Expression &expression);
-Expression operator+(const Expression &expression, const CASNode &node);
 Expression operator+(const CASNode &node, double value);
 Expression operator+(double value, const CASNode &node);
 Expression operator+(const CASNode &node, const Complex &value);
 Expression operator+(const Complex &value, const CASNode &node);
 
 Expression operator-(const CASNode &node0, const CASNode &node1);
-Expression operator-(const CASNode &node, const Expression &expression);
-Expression operator-(const Expression &expression, const CASNode &node);
 Expression operator-(const CASNode &node, double value);
 Expression operator-(double value, const CASNode &node);
 Expression operator-(const CASNode &node, const Complex &value);
 Expression operator-(const Complex &value, const CASNode &node);
 
 Expression operator*(const CASNode &node0, const CASNode &node1);
-Expression operator*(const CASNode &node, const Expression &expression);
-Expression operator*(const Expression &expression, const CASNode &node);
 Expression operator*(const CASNode &node, double value);
 Expression operator*(double value, const CASNode &node);
 Expression operator*(const CASNode &node, const Complex &value);
 Expression operator*(const Complex &value, const CASNode &node);
 
 Expression operator/(const CASNode &node0, const CASNode &node1);
-Expression operator/(const CASNode &node, const Expression &expression);
-Expression operator/(const Expression &expression, const CASNode &node);
 Expression operator/(const CASNode &node, double value);
 Expression operator/(double value, const CASNode &node);
 Expression operator/(const CASNode &node, const Complex &value);
@@ -170,11 +165,20 @@ Expression pow(const CASNode &node, int n);
 Expression pow(const CASNode &node, const Rational &n);
 Expression pow(const CASNode &node, double n);
 Expression pow(const CASNode &node, const Complex &n);
-Expression pow(const CASNode &node, const Expression &n);
 Expression pow(const CASNode &node, const CASNode &n);
+
+Expression root(const CASNode &node, int n);
+Expression sqrt(const CASNode &node);
+Expression cbrt(const CASNode &node);
+
+typedef Siren::ObjPtr<CASNode> CASNodePtr;
 
 }
 
 SIRE_EXPOSE_CLASS( SireCAS::CASNode )
 
+SIRE_EXPOSE_OBJECT_PTR( SireCAS::CASNodePtr, SireCAS::CASNode )
+
 SIRE_END_HEADER
+
+#endif

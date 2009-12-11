@@ -32,24 +32,12 @@
 #include <QHash>
 #include <QList>
 
-#include "symbolvalue.h"
-#include "symbols.h"
+#include "symbol.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireCAS
 {
-class Values;
-}
-
-class QDataStream;
-QDataStream& operator<<(QDataStream&, const SireCAS::Values&);
-QDataStream& operator>>(QDataStream&, SireCAS::Values&);
-
-namespace SireCAS
-{
-
-class Symbol;
 
 /**
     This class holds a set of Symbols and their associated values. This is used
@@ -57,12 +45,8 @@ class Symbol;
 
     @author Christopher Woods
 */
-class SIRECAS_EXPORT Values
+class SIRECAS_EXPORT Values : public Siren::Implements<Values,Siren::Object>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Values&);
-friend QDataStream& ::operator>>(QDataStream&, Values&);
-
 public:
     Values();
     Values(const QList<SymbolValue> &values);
@@ -94,15 +78,17 @@ public:
 
     ~Values();
 
-    static const char* typeName();
-    
-    const char* what() const
-    {
-        return Values::typeName();
-    }
+    Values& operator=(const Values &other);
 
     bool operator==(const Values &other) const;
     bool operator!=(const Values &other) const;
+
+    Values& operator+=(const SymbolValue &val);
+    Values& operator+=(const Values &other);
+
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &s);
 
     void set(const Symbol &symbol, double value);
 
@@ -147,16 +133,9 @@ public:
 
     void reserve(int n);
 
-    Values& operator+=(const SymbolValue &val);
-    Values& operator+=(const Values &other);
-
-    QString toString() const;
-
 private:
-
     /** Hash mapping Symbol IDs to actual numerical values */
     QHash<SymbolID, double> vals;
-
 };
 
 Values operator+(const SymbolValue &val0, const SymbolValue &val1);
@@ -165,52 +144,6 @@ Values operator+(const Values &vals, const SymbolValue &val);
 Values operator+(const SymbolValue &val, const Values &vals);
 
 Values operator+(const Values &vals0, const Values &vals1);
-
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
-/** Reserve space for at least 'n' items */
-inline void Values::reserve(int n)
-{
-    vals.reserve(n);
-}
-
-/** Return whether or not this set of values is empty */
-inline bool Values::isEmpty() const
-{
-    return vals.isEmpty();
-}
-
-/** Return the number of specified values in this set */
-inline int Values::count() const
-{
-    return vals.count();
-}
-
-/** Add a SymbolValue to the set of values */
-inline void Values::add(const SymbolValue &val0)
-{
-    vals.insert(val0.ID(), val0.value());
-}
-
-/** Set the Symbol 'symbol' equal to 'value' */
-inline void Values::set(const Symbol &symbol, double value)
-{
-    vals.insert(symbol.ID(), value);
-}
-
-/** Return the hash mapping the symbol ID to a value */
-inline const QHash<SymbolID,double>& Values::values() const
-{
-    return vals;
-}
-
-/** Return whether or not a value for the symbol 'symbol' has been set */
-inline bool Values::contains(const Symbol &symbol) const
-{
-    return vals.contains(symbol.ID());
-}
-
-#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

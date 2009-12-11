@@ -30,67 +30,56 @@
 #include "values.h"
 #include "complexvalues.h"
 
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
+#include "SireMaths/complex.h"
+
+#include "Siren/stream.h"
 
 #include <cmath>
 
 using namespace SireCAS;
-using namespace SireStream;
+using namespace Siren;
 
-static const RegisterMetaType<Abs> r_abs;
-
-/** Serialise to a binary datastream */
-QDataStream SIRE_EXPORT &operator<<(QDataStream &ds, const Abs &abs)
-{
-    writeHeader(ds, r_abs, 1) << static_cast<const SingleFunc&>(abs);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRE_EXPORT &operator>>(QDataStream &ds, Abs &abs)
-{
-    VersionID v = readHeader(ds, r_abs);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(abs);
-    }
-    else
-        throw version_error(v, "1", r_abs, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<Abs> r_abs;
 
 /** Construct an empty Abs(0) */
-Abs::Abs() : SingleFunc()
+Abs::Abs() : Implements<Abs,SingleFunc>()
 {}
 
 /** Construct abs(expression) */
-Abs::Abs(const Expression &expression) : SingleFunc(expression)
+Abs::Abs(const Expression &expression) : Implements<Abs,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-Abs::Abs(const Abs &other) : SingleFunc(other)
+Abs::Abs(const Abs &other) : Implements<Abs,SingleFunc>(other)
 {}
 
 /** Destructor */
 Abs::~Abs()
 {}
 
-/** Comparison operator */
-bool Abs::operator==(const ExBase &other) const
+Abs& Abs::operator=(const Abs &other)
 {
-    const Abs *other_abs = dynamic_cast<const Abs*>(&other);
-    return other_abs != 0 and typeid(other).name() == typeid(*this).name()
-             and this->argument() == other_abs->argument();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Return the magic for this function */
-uint Abs::magic() const
+bool Abs::operator==(const Abs &other) const
 {
-    return r_abs.magicID();
+    return SingleFunc::operator==(other);
+}
+
+bool Abs::operator!=(const Abs &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void Abs::stream(Stream &s)
+{
+    s.assertVersion<Abs>(1);
+    
+    Schema schema = s.item<Abs>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -107,6 +96,19 @@ Complex Abs::evaluate(const ComplexValues &values) const
     return Complex( std::abs(arg.real()), std::abs(arg.imag()) );
 }
 
+Expression Abs::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return Abs(arg);
+}
+
+QString Abs::stringRep() const
+{
+    return QObject::tr("abs");
+}
+
 /** d |x| / dx = x / |x|  (signum function) */
 Expression Abs::diff() const
 {
@@ -117,14 +119,4 @@ Expression Abs::diff() const
 Expression Abs::integ() const
 {
     return 0.5 * (x() * *this);
-}
-
-const char* Abs::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Abs>() );
-}
-
-Abs* Abs::clone() const
-{
-    return new Abs(*this);
 }

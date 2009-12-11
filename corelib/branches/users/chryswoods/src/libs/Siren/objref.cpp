@@ -57,7 +57,6 @@ namespace Siren
     }
 }
 
-
 /** Construct a null reference - this points to 'None' */
 ObjRef::ObjRef() : d( *(getNone()) )
 {}

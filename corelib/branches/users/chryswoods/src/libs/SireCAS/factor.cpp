@@ -26,3 +26,59 @@
   *
 \*********************************************/
 
+////////
+//////// Implementation of Factor
+////////
+
+Factor::Factor() : f(1), p(1)
+{}
+
+Factor::Factor(const Symbol &symbol,
+               const Expression &factor, const Expression &power)
+       : s(symbol), f(factor), p(power)
+{}
+
+Factor::Factor(const Symbol &symbol, 
+               double factor, double power) 
+       : s(symbol), f(factor), p(power)
+{}
+
+Factor::Factor(const Factor &other) : s(other.s), f(other.f), p(other.p)
+{}
+
+Factor::~Factor()
+{}
+
+Factor& Factor::operator=(const Factor &other)
+{
+    f = other.f;
+    p = other.p;
+    s = other.s;
+    
+    return *this;
+}
+
+bool Factor::operator==(const Factor &other) const
+{
+    return f == other.f and p == other.p and s == other.s;
+}
+
+bool Factor::operator!=(const Factor &other) const
+{
+    return f != other.f or p != other.p or s != other.s;
+}
+
+static QString get_string(const Expression &expression)
+{
+    if (expression.isCompound())
+    {
+        return QString("[%1]").arg(expression.toString());
+    }
+    else
+        return expression.toString();
+}
+
+QString Factor::toString() const
+{
+    return QString("%1 %2^%3").arg(::get_string(f), s.toString(), ::get_string(p));
+}

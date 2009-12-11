@@ -38,30 +38,13 @@ SIRE_BEGIN_HEADER
 
 namespace SireCAS
 {
-class Exp;
-class Ln;
-}
 
-QDataStream& operator<<(QDataStream&, const SireCAS::Exp&);
-QDataStream& operator>>(QDataStream&, SireCAS::Exp&);
+/** This is the exponential function, e^x
 
-QDataStream& operator<<(QDataStream&, const SireCAS::Ln&);
-QDataStream& operator>>(QDataStream&, SireCAS::Ln&);
-
-namespace SireCAS
-{
-
-/**
-This is the exponential function, e^x
-
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIRECAS_EXPORT Exp : public PowerFunction
+class SIRECAS_EXPORT Exp : public Siren::Implements<Exp,PowerFunction>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Exp&);
-friend QDataStream& ::operator>>(QDataStream&, Exp&);
-
 public:
     Exp();
     Exp(const Expression &power);
@@ -70,20 +53,14 @@ public:
 
     ~Exp();
 
-    bool operator==(const ExBase &other) const;
-
-    uint hash() const;
-
-    static const char* typeName();
-
-    const char* what() const
-    {
-        return Exp::typeName();
-    }
-
-    Exp* clone() const;
+    Exp& operator=(const Exp &other);
+    
+    bool operator==(const Exp &other) const;
+    bool operator!=(const Exp &other) const;
 
     QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -95,21 +72,16 @@ public:
     Expression power() const;
 
 private:
-
     /** The expression to which 'e' is raised to */
     Expression pwr;
 };
 
 /** This is the natural logarithm (ln) function
 
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIRECAS_EXPORT Ln : public SingleFunc
+class SIRECAS_EXPORT Ln : public Siren::Implements<Ln,SingleFunc>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Ln&);
-friend QDataStream& ::operator>>(QDataStream&, Ln&);
-
 public:
     Ln();
     Ln(const Expression &expression);
@@ -117,36 +89,19 @@ public:
     Ln(const Ln &other);
     ~Ln();
 
-    bool operator==(const ExBase &other) const;
-
-    static const char* typeName();
-
-    const char* what() const
-    {
-        return Ln::typeName();
-    }
-
-    Ln* clone() const;
+    Ln& operator=(const Ln &other);
+    
+    bool operator==(const Ln &other) const;
+    bool operator!=(const Ln &other) const;
+    
+    void stream(Siren::Stream &s);
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
 
 protected:
-
-    Expression functionOf(const Expression &arg) const
-    {
-        if (arg == argument())
-            return Expression(*this);
-        else
-            return Expression(Ln(arg));
-    }
-
-    QString stringRep() const
-    {
-        return "ln";
-    }
-
-    uint magic() const;
+    Expression functionOf(const Expression &arg) const;
+    QString stringRep() const;
 
     Expression diff() const;
     Expression integ() const;

@@ -31,54 +31,21 @@
 
 #include "power.h"
 
+#include "SireMaths/rational.h"
 #include "SireMaths/complex.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireCAS
 {
-class PowerConstant;
-class ConstantPower;
-class IntegerPower;
-class RationalPower;
-class RealPower;
-class ComplexPower;
-}
 
-QDataStream& operator<<(QDataStream&, const SireCAS::PowerConstant&);
-QDataStream& operator>>(QDataStream&, SireCAS::PowerConstant&);
+/** This class represents a constant raised to a generic power, e.g. 10^x
 
-QDataStream& operator<<(QDataStream&, const SireCAS::ConstantPower&);
-QDataStream& operator>>(QDataStream&, SireCAS::ConstantPower&);
-
-QDataStream& operator<<(QDataStream&, const SireCAS::IntegerPower&);
-QDataStream& operator>>(QDataStream&, SireCAS::IntegerPower&);
-
-QDataStream& operator<<(QDataStream&, const SireCAS::RationalPower&);
-QDataStream& operator>>(QDataStream&, SireCAS::RationalPower&);
-
-QDataStream& operator<<(QDataStream&, const SireCAS::RealPower&);
-QDataStream& operator>>(QDataStream&, SireCAS::RealPower&);
-
-QDataStream& operator<<(QDataStream&, const SireCAS::ComplexPower&);
-QDataStream& operator>>(QDataStream&, SireCAS::ComplexPower&);
-
-namespace SireCAS
-{
-
-using SireMaths::Complex;
-
-/**
-This class represents a constant raised to a generic power, e.g. 10^x
-
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIRECAS_EXPORT PowerConstant : public PowerFunction
+class SIRECAS_EXPORT PowerConstant 
+        : public Siren::Implements<PowerConstant,PowerFunction>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const PowerConstant&);
-friend QDataStream& ::operator>>(QDataStream&, PowerConstant&);
-
 public:
     PowerConstant();
     PowerConstant(double val, const Expression &power);
@@ -87,88 +54,61 @@ public:
 
     ~PowerConstant();
 
-    bool operator==(const ExBase &other) const;
-
-    uint hash() const;
-
-    static const char* typeName();
-
-    const char* what() const
-    {
-        return PowerConstant::typeName();
-    }
-
-    PowerConstant* clone() const;
+    PowerConstant& operator=(const PowerConstant &other);
+    
+    bool operator==(const PowerConstant &other) const;
+    bool operator!=(const PowerConstant &other) const;
+    
+    void stream(Siren::Stream &s);
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
 
-    Expression core() const
-    {
-        return Expression(cre);
-    }
-
-    Expression power() const
-    {
-        return pwr;
-    }
+    Expression core() const;
+    Expression power() const;
 
 private:
-
     /** The constant value */
     double cre;
 
     /** The expression by which the constant is raised to the power */
     Expression pwr;
-
 };
 
-/**
-This class represents an expression raised to a constant power. This is the
-base class of RationalPower (expression raised to a rational power) and
-RealPower (expression raised to a non-rational power).
+/** This class represents an expression raised to a constant power. This is the
+    base class of RationalPower (expression raised to a rational power) and
+    RealPower (expression raised to a non-rational power).
 
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIRECAS_EXPORT ConstantPower : public PowerFunction
+class SIRECAS_EXPORT ConstantPower 
+        : public Siren::Extends<ConstantPower,PowerFunction>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const ConstantPower&);
-friend QDataStream& ::operator>>(QDataStream&, ConstantPower&);
-
 public:
-    ConstantPower() : PowerFunction()
-    {}
+    ConstantPower();
+    ConstantPower(const Expression &expression);
 
-    ConstantPower(const Expression &expression) : PowerFunction(), ex(expression)
-    {}
+    ~ConstantPower();
 
-    ConstantPower(const ConstantPower &other) : PowerFunction(), ex(other.ex)
-    {}
+    Expression core() const;
 
-    ~ConstantPower()
-    {}
-
-    Expression core() const
-    {
-        return ex;
-    }
-
-    uint hash() const;
+    void stream(Siren::Stream &s);
 
 protected:
+    ConstantPower(const ConstantPower &other);
+
+    ConstantPower& operator=(const ConstantPower &other);
+    bool operator==(const ConstantPower &other) const;
+    bool operator!=(const ConstantPower &other) const;
 
     /** The expression that is raised to a power */
     Expression ex;
 };
 
 /** This class represents an expression raised to a constant integer power */
-class SIRECAS_EXPORT IntegerPower : public ConstantPower
+class SIRECAS_EXPORT IntegerPower 
+        : public Siren::Implements<IntegerPower,ConstantPower>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const IntegerPower&);
-friend QDataStream& ::operator>>(QDataStream&, IntegerPower&);
-
 public:
     IntegerPower();
     IntegerPower(const Expression &expression, int power);
@@ -177,83 +117,57 @@ public:
 
     ~IntegerPower();
 
-    bool operator==(const ExBase &other) const;
-
-    uint hash() const;
-
-    static const char* typeName();
-
-    const char* what() const
-    {
-        return IntegerPower::typeName();
-    }
+    IntegerPower& operator=(const IntegerPower &other);
+    
+    bool operator==(const IntegerPower &other) const;
+    bool operator!=(const IntegerPower &other) const;
+    
+    void stream(Siren::Stream &s);
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
 
-    Expression power() const
-    {
-        return Expression(pwr);
-    }
-
-    IntegerPower* clone() const;
+    Expression power() const;
 
 private:
-
     /** The integer power */
-    int pwr;
+    qint32 pwr;
 };
 
 
 /** This class represents an expression raised to a rational power */
-class SIRECAS_EXPORT RationalPower : public ConstantPower
+class SIRECAS_EXPORT RationalPower 
+        : public Siren::Implements<RationalPower,ConstantPower>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const RationalPower&);
-friend QDataStream& ::operator>>(QDataStream&, RationalPower&);
-
 public:
     RationalPower();
-    RationalPower(const Expression &expression, const Rational &power);
+    RationalPower(const Expression &expression, const SireMaths::Rational &power);
 
     RationalPower(const RationalPower &other);
 
     ~RationalPower();
 
-    bool operator==(const ExBase &other) const;
-
-    uint hash() const;
-
-    static const char* typeName();
-
-    const char* what() const
-    {
-        return RationalPower::typeName();
-    }
+    RationalPower& operator=(const RationalPower &other);
+    
+    bool operator==(const RationalPower &other) const;
+    bool operator!=(const RationalPower &other) const;
+    
+    void stream(Siren::Stream &s);
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
 
-    Expression power() const
-    {
-        return Expression(pwr);
-    }
-
-    RationalPower* clone() const;
+    Expression power() const;
 
 private:
-
     /** The rational power */
-    Rational pwr;
+    SireMaths::Rational pwr;
 };
 
 /** This class represents an expression raised to a real power */
-class SIRECAS_EXPORT RealPower : public ConstantPower
+class SIRECAS_EXPORT RealPower 
+        : public Siren::Implements<RealPower,ConstantPower>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const RealPower&);
-friend QDataStream& ::operator>>(QDataStream&, RealPower&);
-
 public:
     RealPower();
     RealPower(const Expression &expression, double power);
@@ -262,78 +176,52 @@ public:
 
     ~RealPower();
 
-    bool operator==(const ExBase &other) const;
+    RealPower& operator=(const RealPower &other);
+    
+    bool operator==(const RealPower &other) const;
+    bool operator!=(const RealPower &other) const;
 
-    uint hash() const;
-
-    static const char* typeName();
-
-    const char* what() const
-    {
-        return RealPower::typeName();
-    }
+    void stream(Siren::Stream &s);
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
 
-    Expression power() const
-    {
-        return Expression(pwr);
-    }
-
-    RealPower* clone() const;
+    Expression power() const;
 
 private:
-
     /** The real power */
     double pwr;
 };
 
 /** This class represents an expression raised to a complex power */
-class SIRECAS_EXPORT ComplexPower : public ConstantPower
+class SIRECAS_EXPORT ComplexPower 
+            : public Siren::Implements<ComplexPower,ConstantPower>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const ComplexPower&);
-friend QDataStream& ::operator>>(QDataStream&, ComplexPower&);
-
 public:
     ComplexPower();
-    ComplexPower(const Expression &expression, const Complex &power);
+    ComplexPower(const Expression &expression, const SireMaths::Complex &power);
 
     ComplexPower(const ComplexPower &other);
 
     ~ComplexPower();
-
-    bool operator==(const ExBase &other) const;
-
-    uint hash() const;
-
-    static const char* typeName();
-
-    const char* what() const
-    {
-        return ComplexPower::typeName();
-    }
-
+    
+    ComplexPower& operator=(const ComplexPower &other);
+    
+    bool operator==(const ComplexPower &other) const;
+    bool operator!=(const ComplexPower &other) const;
+    
+    void stream(Siren::Stream &s);
+    
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
 
-    Expression power() const
-    {
-        return Expression(pwr);
-    }
+    Expression power() const;
 
-    bool isComplex() const
-    {
-        return true;
-    }
-
-    ComplexPower* clone() const;
+    bool isComplex() const;
 
 private:
-
     /** The complex power */
-    Complex pwr;
+    SireMaths::Complex pwr;
 };
 
 }

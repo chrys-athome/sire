@@ -31,40 +31,21 @@
 
 #include <QHash>
 
-#include "symbolcomplex.h"
 #include "values.h"
-#include "symbols.h"
-
-#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireCAS
 {
-class ComplexValues;
-}
 
-class QDataStream;
-QDataStream& operator<<(QDataStream&, const SireCAS::ComplexValues&);
-QDataStream& operator>>(QDataStream&, SireCAS::ComplexValues&);
+/** This class holds a set of Symbols and their associated complex values. 
+    This is used when numerically evaluating an equation using complex maths.
 
-namespace SireCAS
-{
-
-class Symbol;
-
-/**
-This class holds a set of Symbols and their associated complex values. 
-This is used when numerically evaluating an equation using complex maths.
-
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIRECAS_EXPORT ComplexValues
+class SIRECAS_EXPORT ComplexValues 
+            : public Siren::Implements<ComplexValues,Siren::Object>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const ComplexValues&);
-friend QDataStream& ::operator>>(QDataStream&, ComplexValues&);
-
 public:
     ComplexValues();
 
@@ -108,12 +89,14 @@ public:
 
     ~ComplexValues();
 
-    static const char* typeName();
-
-    const char* what() const
-    {
-        return ComplexValues::typeName();
-    }
+    ComplexValues& operator=(const ComplexValues &other);
+    
+    bool operator==(const ComplexValues &other) const;
+    bool operator!=(const ComplexValues &other) const;
+    
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     void set(const Symbol &symbol, const Complex &value);
 
@@ -153,33 +136,9 @@ public:
     const QHash<SymbolID,Complex>& values() const;
 
 private:
-
     /** Hash mapping Symbol IDs to actual numerical values */
     QHash<SymbolID, Complex> vals;
-
 };
-
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
-/** Add a SymbolComplex to the set of values */
-inline void ComplexValues::add(const SymbolComplex &val0)
-{
-    vals.insert(val0.ID(), val0.value());
-}
-
-/** Set the Symbol 'symbol' equal to 'value' */
-inline void ComplexValues::set(const Symbol &symbol, const Complex &value)
-{
-    vals.insert(symbol.ID(), value);
-}
-
-/** Return the hash mapping Symbol IDs to complex values */
-inline const QHash<SymbolID,Complex>& ComplexValues::values() const
-{
-    return vals;
-}
-
-#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

@@ -16,14 +16,9 @@ set ( SIRECAS_HEADERS
       constant.h
       doublefunc.h
       errors.h
-      exbase.h
       exp.h
-      expressionbase.h
       expression.h
-      expressions.h
-      function.h
-      functions.h
-      functionsignature.h
+      factor.h
       hyperbolicfuncs.h
       i.h
       identities.h
@@ -31,17 +26,12 @@ set ( SIRECAS_HEADERS
       invhyperbolicfuncs.h
       invtrigfuncs.h
       minmax.h
-      noderef.h
       powerconstant.h
       power.h
       product.h
       singlefunc.h
       sum.h
       symbol.h
-      symbols.h
-      symbolcomplex.h
-      symbolexpression.h
-      symbolvalue.h
       trigfuncs.h
       values.h
     )
@@ -56,14 +46,9 @@ set ( SIRECAS_SOURCES
       constant.cpp
       doublefunc.cpp                
       errors.cpp                  
-      exbase.cpp                  
       exp.cpp                     
-      expressionbase.cpp          
       expression.cpp              
-      expressions.cpp             
-      function.cpp                
-      functions.cpp               
-      functionsignature.cpp       
+      factor.cpp
       hyperbolicfuncs.cpp         
       i.cpp                       
       identities.cpp              
@@ -71,14 +56,12 @@ set ( SIRECAS_SOURCES
       invhyperbolicfuncs.cpp      
       invtrigfuncs.cpp 
       minmax.cpp 
-      noderef.cpp          
       powerconstant.cpp           
       power.cpp                   
       product.cpp                 
       singlefunc.cpp              
       sum.cpp                     
       symbol.cpp                  
-      symbolexpression.cpp        
       trigfuncs.cpp               
       values.cpp
       
@@ -95,7 +78,7 @@ set_target_properties (SireCAS PROPERTIES
 
 # Link to other Sire libraries, and GSL
 target_link_libraries (SireCAS
-                       Siren
+                       SireMaths
                        )
 
 # installation

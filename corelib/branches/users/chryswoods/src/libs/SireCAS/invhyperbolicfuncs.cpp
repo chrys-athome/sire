@@ -35,203 +35,66 @@
 #include "expression.h"
 #include "complexvalues.h"
 
+#include "SireMaths/complex.h"
 #include "SireMaths/errors.h"
 
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
 
 #ifndef HAVE_ASINH
-#define asinh gsl_asinh
+    #include <boost/math/special_functions/asinh.hpp>
+    #define asinh boost::math::asinh
 #endif
 
 using namespace SireCAS;
-using namespace SireStream;
-
-////////////
-//////////// Register the functions
-////////////
-
-static const RegisterMetaType<ArcCosh> r_arccosh;
-static const RegisterMetaType<ArcSinh> r_arcsinh;
-static const RegisterMetaType<ArcTanh> r_arctanh;
-static const RegisterMetaType<ArcCsch> r_arccsch;
-static const RegisterMetaType<ArcSech> r_arcsech;
-static const RegisterMetaType<ArcCoth> r_arccoth;
-
-////////////
-//////////// Stream the functions
-////////////
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcCosh &arccosh)
-{
-    writeHeader(ds, r_arccosh, 1) << static_cast<const SingleFunc&>(arccosh);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcCosh &arccosh)
-{
-    VersionID v = readHeader(ds, r_arccosh);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(arccosh);
-    }
-    else
-        throw version_error(v, "1", r_arccosh, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcSinh &arcsinh)
-{
-    writeHeader(ds, r_arcsinh, 1) << static_cast<const SingleFunc&>(arcsinh);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcSinh &arcsinh)
-{
-    VersionID v = readHeader(ds, r_arcsinh);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(arcsinh);
-    }
-    else
-        throw version_error(v, "1", r_arcsinh, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcTanh &arctanh)
-{
-    writeHeader(ds, r_arctanh, 1) << static_cast<const SingleFunc&>(arctanh);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcTanh &arctanh)
-{
-    VersionID v = readHeader(ds, r_arctanh);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(arctanh);
-    }
-    else
-        throw version_error(v, "1", r_arctanh, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcCsch &arccsch)
-{
-    writeHeader(ds, r_arccsch, 1) << static_cast<const SingleFunc&>(arccsch);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcCsch &arccsch)
-{
-    VersionID v = readHeader(ds, r_arccsch);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(arccsch);
-    }
-    else
-        throw version_error(v, "1", r_arccsch, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcSech &arcsech)
-{
-    writeHeader(ds, r_arcsech, 1) << static_cast<const SingleFunc&>(arcsech);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcSech &arcsech)
-{
-    VersionID v = readHeader(ds, r_arcsech);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(arcsech);
-    }
-    else
-        throw version_error(v, "1", r_arcsech, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcCoth &arccoth)
-{
-    writeHeader(ds, r_arccoth, 1) << static_cast<const SingleFunc&>(arccoth);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcCoth &arccoth)
-{
-    VersionID v = readHeader(ds, r_arccoth);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(arccoth);
-    }
-    else
-        throw version_error(v, "1", r_arccoth, CODELOC);
-
-    return ds;
-}
+using namespace Siren;
+using namespace SireMaths;
 
 ////////////
 //////////// Implementation of Inverse-hyperbolic-cosine
 ////////////
 
+static const RegisterObject<ArcCosh> r_arccosh;
+
 /** Null constructor */
-ArcCosh::ArcCosh() : SingleFunc()
+ArcCosh::ArcCosh() : Implements<ArcCosh,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-ArcCosh::ArcCosh(const Expression &expression) : SingleFunc(expression)
+ArcCosh::ArcCosh(const Expression &expression)
+        : Implements<ArcCosh,SingleFunc>(expression)
 {}
 
 /** Create cos(cos(expression)) */
-ArcCosh::ArcCosh(const ArcCosh &other) : SingleFunc(other)
+ArcCosh::ArcCosh(const ArcCosh &other) : Implements<ArcCosh,SingleFunc>(other)
 {}
 
 /** Destructor */
 ArcCosh::~ArcCosh()
 {}
 
-/** Return the magic */
-uint ArcCosh::magic() const
+ArcCosh& ArcCosh::operator=(const ArcCosh &other)
 {
-    return r_arccosh.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool ArcCosh::operator==(const ExBase &other) const
+bool ArcCosh::operator==(const ArcCosh &other) const
 {
-    const ArcCosh *other_cos = dynamic_cast<const ArcCosh*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool ArcCosh::operator!=(const ArcCosh &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void ArcCosh::stream(Stream &s)
+{
+    s.assertVersion<ArcCosh>(1);
+    
+    Schema schema = s.item<ArcCosh>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -253,6 +116,19 @@ Complex ArcCosh::evaluate(const ComplexValues &values) const
     return SireMaths::arccosh( x().evaluate(values) );
 }
 
+Expression ArcCosh::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return ArcCosh(arg);
+}
+
+QString ArcCosh::stringRep() const
+{
+    return QObject::tr("arccosh");
+}
+
 /** The differential of acosh(x) = 1 / [sqrt(x-1)*sqrt(x+1)] */
 Expression ArcCosh::diff() const
 {
@@ -269,35 +145,48 @@ Expression ArcCosh::integ() const
 //////////// Implementation of Inverse-hyperbolic-sine
 ////////////
 
+static const RegisterObject<ArcSinh> r_arcsinh;
+
 /** Null constructor */
-ArcSinh::ArcSinh() : SingleFunc()
+ArcSinh::ArcSinh() : Implements<ArcSinh,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-ArcSinh::ArcSinh(const Expression &expression) : SingleFunc(expression)
+ArcSinh::ArcSinh(const Expression &expression) 
+        : Implements<ArcSinh,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-ArcSinh::ArcSinh(const ArcSinh &other) : SingleFunc(other)
+ArcSinh::ArcSinh(const ArcSinh &other) : Implements<ArcSinh,SingleFunc>(other)
 {}
 
 /** Destructor */
 ArcSinh::~ArcSinh()
 {}
 
-/** Return the magic */
-uint ArcSinh::magic() const
+ArcSinh& ArcSinh::operator=(const ArcSinh &other)
 {
-    return r_arcsinh.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool ArcSinh::operator==(const ExBase &other) const
+bool ArcSinh::operator==(const ArcSinh &other) const
 {
-    const ArcSinh *other_cos = dynamic_cast<const ArcSinh*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool ArcSinh::operator!=(const ArcSinh &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void ArcSinh::stream(Stream &s)
+{
+    s.assertVersion<ArcSinh>(1);
+    
+    Schema schema = s.item<ArcSinh>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -310,6 +199,19 @@ double ArcSinh::evaluate(const Values &values) const
 Complex ArcSinh::evaluate(const ComplexValues &values) const
 {
     return SireMaths::arcsinh( x().evaluate(values) );
+}
+
+Expression ArcSinh::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return ArcSinh(arg);
+}
+
+QString ArcSinh::stringRep() const
+{
+    return QObject::tr("arcsinh");
 }
 
 /** The differential of asinh(x) = 1 / sqrt(1+x^2) */
@@ -328,35 +230,48 @@ Expression ArcSinh::integ() const
 //////////// Implementation of Inverse-hyperbolic-tangent
 ////////////
 
+static const RegisterObject<ArcTanh> r_arctanh;
+
 /** Null constructor */
-ArcTanh::ArcTanh() : SingleFunc()
+ArcTanh::ArcTanh() : Implements<ArcTanh,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-ArcTanh::ArcTanh(const Expression &expression) : SingleFunc(expression)
+ArcTanh::ArcTanh(const Expression &expression) 
+        : Implements<ArcTanh,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-ArcTanh::ArcTanh(const ArcTanh &other) : SingleFunc(other)
+ArcTanh::ArcTanh(const ArcTanh &other) : Implements<ArcTanh,SingleFunc>(other)
 {}
 
 /** Destructor */
 ArcTanh::~ArcTanh()
 {}
 
-/** Return the magic */
-uint ArcTanh::magic() const
+ArcTanh& ArcTanh::operator=(const ArcTanh &other)
 {
-    return r_arctanh.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool ArcTanh::operator==(const ExBase &other) const
+bool ArcTanh::operator==(const ArcTanh &other) const
 {
-    const ArcTanh *other_cos = dynamic_cast<const ArcTanh*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool ArcTanh::operator!=(const ArcTanh &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void ArcTanh::stream(Stream &s)
+{
+    s.assertVersion<ArcTanh>(1);
+    
+    Schema schema = s.item<ArcTanh>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -378,6 +293,19 @@ Complex ArcTanh::evaluate(const ComplexValues &values) const
     return SireMaths::arctanh( x().evaluate(values) );
 }
 
+Expression ArcTanh::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return ArcTanh(arg);
+}
+
+QString ArcTanh::stringRep() const
+{
+    return QObject::tr("arctanh");
+}
+
 /** The differential of atanh(x) = 1 / (1-x^2) */
 Expression ArcTanh::diff() const
 {
@@ -394,35 +322,48 @@ Expression ArcTanh::integ() const
 //////////// Implementation of Inverse-hyperbolic-cosecant
 ////////////
 
+static const RegisterObject<ArcCsch> r_arccsch;
+
 /** Null constructor */
-ArcCsch::ArcCsch() : SingleFunc()
+ArcCsch::ArcCsch() : Implements<ArcCsch,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-ArcCsch::ArcCsch(const Expression &expression) : SingleFunc(expression)
+ArcCsch::ArcCsch(const Expression &expression) 
+        : Implements<ArcCsch,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-ArcCsch::ArcCsch(const ArcCsch &other) : SingleFunc(other)
+ArcCsch::ArcCsch(const ArcCsch &other) : Implements<ArcCsch,SingleFunc>(other)
 {}
 
 /** Destructor */
 ArcCsch::~ArcCsch()
 {}
 
-/** Return the magic */
-uint ArcCsch::magic() const
+ArcCsch& ArcCsch::operator=(const ArcCsch &other)
 {
-    return r_arccsch.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool ArcCsch::operator==(const ExBase &other) const
+bool ArcCsch::operator==(const ArcCsch &other) const
 {
-    const ArcCsch *other_cos = dynamic_cast<const ArcCsch*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool ArcCsch::operator!=(const ArcCsch &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void ArcCsch::stream(Stream &s)
+{
+    s.assertVersion<ArcCsch>(1);
+    
+    Schema schema = s.item<ArcCsch>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -444,6 +385,19 @@ Complex ArcCsch::evaluate(const ComplexValues &values) const
     return SireMaths::arccsch( x().evaluate(values) );
 }
 
+Expression ArcCsch::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return ArcCsch(arg);
+}
+
+QString ArcCsch::stringRep() const
+{
+    return QObject::tr("arccsch");
+}
+
 /** The differential of acsch(x) = -1 / (x^2 sqrt(1 + x^-2)) */
 Expression ArcCsch::diff() const
 {
@@ -460,35 +414,48 @@ Expression ArcCsch::integ() const
 //////////// Implementation of inverse-secant
 ////////////
 
+static const RegisterObject<ArcSech> r_arcsech;
+
 /** Null constructor */
-ArcSech::ArcSech() : SingleFunc()
+ArcSech::ArcSech() : Implements<ArcSech,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-ArcSech::ArcSech(const Expression &expression) : SingleFunc(expression)
+ArcSech::ArcSech(const Expression &expression) 
+        : Implements<ArcSech,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-ArcSech::ArcSech(const ArcSech &other) : SingleFunc(other)
+ArcSech::ArcSech(const ArcSech &other) : Implements<ArcSech,SingleFunc>(other)
 {}
 
 /** Destructor */
 ArcSech::~ArcSech()
 {}
 
-/** Return the magic */
-uint ArcSech::magic() const
+ArcSech& ArcSech::operator=(const ArcSech &other)
 {
-    return r_arcsech.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool ArcSech::operator==(const ExBase &other) const
+bool ArcSech::operator==(const ArcSech &other) const
 {
-    const ArcSech *other_cos = dynamic_cast<const ArcSech*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool ArcSech::operator!=(const ArcSech &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void ArcSech::stream(Stream &s)
+{
+    s.assertVersion<ArcSech>(1);
+    
+    Schema schema = s.item<ArcSech>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -510,6 +477,19 @@ Complex ArcSech::evaluate(const ComplexValues &values) const
     return SireMaths::arcsech( x().evaluate(values) );
 }
 
+Expression ArcSech::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return ArcSech(arg);
+}
+
+QString ArcSech::stringRep() const
+{
+    return QObject::tr("arcsech");
+}
+
 /** The differential of asech(x) = 1 / [x (x+1) sqrt( (1-x)/(1+x) )] */
 Expression ArcSech::diff() const
 {
@@ -526,35 +506,48 @@ Expression ArcSech::integ() const
 //////////// Implementation of Inverse-hyperbolic-cotangent
 ////////////
 
+static const RegisterObject<ArcCoth> r_arccoth;
+
 /** Null constructor */
-ArcCoth::ArcCoth() : SingleFunc()
+ArcCoth::ArcCoth() : Implements<ArcCoth,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-ArcCoth::ArcCoth(const Expression &expression) : SingleFunc(expression)
+ArcCoth::ArcCoth(const Expression &expression) 
+        : Implements<ArcCoth,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-ArcCoth::ArcCoth(const ArcCoth &other) : SingleFunc(other)
+ArcCoth::ArcCoth(const ArcCoth &other) : Implements<ArcCoth,SingleFunc>(other)
 {}
 
 /** Destructor */
 ArcCoth::~ArcCoth()
 {}
 
-/** Return the magic */
-uint ArcCoth::magic() const
+ArcCoth& ArcCoth::operator=(const ArcCoth &other)
 {
-    return r_arccoth.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool ArcCoth::operator==(const ExBase &other) const
+bool ArcCoth::operator==(const ArcCoth &other) const
 {
-    const ArcCoth *other_cos = dynamic_cast<const ArcCoth*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool ArcCoth::operator!=(const ArcCoth &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void ArcCoth::stream(Stream &s)
+{
+    s.assertVersion<ArcCoth>(1);
+    
+    Schema schema = s.item<ArcCoth>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -576,6 +569,19 @@ Complex ArcCoth::evaluate(const ComplexValues &values) const
     return SireMaths::arccoth( x().evaluate(values) );
 }
 
+Expression ArcCoth::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return ArcCoth(arg);
+}
+
+QString ArcCoth::stringRep() const
+{
+    return QObject::tr("arccoth");
+}
+
 /** The differential of acoth(x) = 1 / (1-x^2) */
 Expression ArcCoth::diff() const
 {
@@ -587,69 +593,3 @@ Expression ArcCoth::integ() const
 {
     return x()*ArcCoth(x()) + 0.5*Ln( pow(x(),2) - 1 );
 }
-
-const char* ArcCosh::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<ArcCosh>() );
-}
-
-const char* ArcSinh::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<ArcSinh>() );
-}
-
-const char* ArcTanh::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<ArcTanh>() );
-}
-
-const char* ArcCsch::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<ArcCsch>() );
-}
-
-const char* ArcSech::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<ArcSech>() );
-}
-
-const char* ArcCoth::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<ArcCoth>() );
-}
-
-ArcTanh* ArcTanh::clone() const
-{
-    return new ArcTanh(*this);
-}
-
-
-ArcSinh* ArcSinh::clone() const
-{
-    return new ArcSinh(*this);
-}
-
-
-ArcCoth* ArcCoth::clone() const
-{
-    return new ArcCoth(*this);
-}
-
-
-ArcCsch* ArcCsch::clone() const
-{
-    return new ArcCsch(*this);
-}
-
-
-ArcSech* ArcSech::clone() const
-{
-    return new ArcSech(*this);
-}
-
-
-ArcCosh* ArcCosh::clone() const
-{
-    return new ArcCosh(*this);
-}
-

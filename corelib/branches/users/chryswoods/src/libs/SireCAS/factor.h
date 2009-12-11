@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2009  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,44 +26,62 @@
   *
 \*********************************************/
 
-#ifndef SIRECAS_EXPRESSIONS_H
-#define SIRECAS_EXPRESSIONS_H
+#ifndef SIRECAS_FACTOR_H
+#define SIRECAS_FACTOR_H
 
-#include  <QList>
-
+#include "symbol.h"
 #include "expression.h"
-
-#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireCAS
 {
 
-class Expression;
+/** This is a small class that can hold the factor and power of a symbol
 
-/**
-Expressions provides a list of expressions.
-
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIRECAS_EXPORT Expressions : public QList<Expression>
+class SIRECAS_EXPORT Factor : public Siren::Implements<Factor,Siren::Object>
 {
 public:
-    Expressions();
+    Factor();
+    
+    Factor(const Symbol &symbol, double factor, double power);
+    Factor(const Symbol &symbol,
+           const Expression &factor, const Expression &power);
+    
+    Factor(const Factor &other);
+    
+    ~Factor();
+    
+    Factor& operator=(const Factor &other);
+    
+    bool operator==(const Factor &other) const;
+    bool operator!=(const Factor &other) const;
+    
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
+    
+    const Symbol& symbol() const;
 
-    Expressions(const Expression &expression);
+    const Expression& factor() const;
+    
+    const Expression& power() const;
 
-    Expressions(const QList<Expression> &expressions);
+private:
+    /** The symbol for the factor */
+    Symbol s;
 
-    ~Expressions();
-
-    Expressions differentiate(const Symbol &symbol) const;
-    Expressions integrate(const Symbol &symbol) const;
-
+    /** The factor and power */
+    Expression f, p;
 };
 
 }
+
+Q_DECLARE_METATYPE( SireCAS::Factor )
+
+SIRE_EXPOSE_CLASS( SireCAS::Factor )
 
 SIRE_END_HEADER
 

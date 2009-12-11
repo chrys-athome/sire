@@ -29,65 +29,41 @@
 #ifndef SIRECAS_EXPRESSION_H
 #define SIRECAS_EXPRESSION_H
 
-#include "SireMaths/rational.h"
-
-#include "expressionbase.h"
-#include "expressions.h"
-
-#include "sireglobal.h"
+#include "casnode.h"
 
 SIRE_BEGIN_HEADER
 
-namespace SireCAS
+namespace SireMaths
 {
-class Expression;
+class Rational;
+class Complex;
 }
 
-QDataStream& operator<<(QDataStream&, const SireCAS::Expression&);
-QDataStream& operator>>(QDataStream&, SireCAS::Expression&);
-
 namespace SireCAS
 {
 
-using SireMaths::Rational;
-
 class Identities;
-class Symbols;
-class Functions;
 class Factor;
 
-/**
-An Expression is the base class of all algebraic entities.
+/** An Expression is the base class of all algebraic entities.
 
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIRECAS_EXPORT Expression
+class SIRECAS_EXPORT Expression : public Siren::Implements<Expression,CASNode>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Expression&);
-friend QDataStream& ::operator>>(QDataStream&, Expression&);
-
 public:
     Expression();
 
     Expression(int constant);
-    Expression(const Rational &constant);
     Expression(double constant);
-    Expression(const Complex &constant);
+    Expression(const SireMaths::Rational &constant);
+    Expression(const SireMaths::Complex &constant);
 
-    Expression(const ExpressionBase &base);
-    Expression(const ExBase &base);
+    Expression(const CASNode &node);
 
     Expression(const Expression &other);
 
     ~Expression();
-
-    static const char* typeName();
-    
-    const char* what() const
-    {
-        return Expression::typeName();
-    }
 
     bool operator==(const Expression &other) const;
     bool operator!=(const Expression &other) const;
@@ -104,21 +80,25 @@ public:
 
     Expression operator-() const;
 
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
+
     Expression add(const Expression &ex) const;
     Expression add(double val) const;
-    Expression add(const Complex &val) const;
+    Expression add(const SireMaths::Complex &val) const;
 
     Expression subtract(const Expression &ex) const;
     Expression subtract(double val) const;
-    Expression subtract(const Complex &val) const;
+    Expression subtract(const SireMaths::Complex &val) const;
 
     Expression multiply(const Expression &ex) const;
     Expression multiply(double val) const;
-    Expression multiply(const Complex &val) const;
+    Expression multiply(const SireMaths::Complex &val) const;
 
     Expression divide(const Expression &ex) const;
     Expression divide(double val) const;
-    Expression divide(const Complex &val) const;
+    Expression divide(const SireMaths::Complex &val) const;
 
     Expression negate() const;
     Expression invert() const;
@@ -128,9 +108,9 @@ public:
     Expression squared() const;
     Expression cubed() const;
 
-    Expression pow(const Rational &n) const;
+    Expression pow(const SireMaths::Rational &n) const;
     Expression pow(double n) const;
-    Expression pow(const Complex &n) const;
+    Expression pow(const SireMaths::Complex &n) const;
     Expression pow(const Expression &n) const;
 
     Expression root(int n) const;
@@ -141,6 +121,7 @@ public:
     QList<Factor> expand(const Symbol &symbol) const;
 
     double factor() const;
+    const CASNode& node() const;
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
@@ -159,275 +140,46 @@ public:
     bool isCompound() const;
     bool isComplex() const;
 
-    QString toString() const;
-
-    uint hash() const
-    {
-        return exbase.hash();
-    }
-
-    const ExpressionBase& base() const;
-
-    Symbols symbols() const;
-    Functions functions() const;
-    Expressions children() const;
+    QSet<Symbol> symbols() const;
+    QList<Expression> children() const;
 
     template<class T>
     QList<T> children() const;
 
 private:
-
     /** The base of this expression */
-    ExpressionBase exbase;
+    CASNodePtr casnode;
 
     /** The factor of the expression */
     double fac;
 };
 
-Expression operator+(const Expression &ex0, const Expression &ex1);
-Expression operator+(const Expression &ex, double val);
-Expression operator+(double val, const Expression &ex);
-Expression operator+(const Expression &ex, const Complex &val);
-Expression operator+(const Complex &val, const Expression &ex);
-Expression operator-(const Expression &ex0, const Expression &ex1);
-Expression operator-(const Expression &ex, double val);
-Expression operator-(double val, const Expression &ex);
-Expression operator*(const Expression &ex0, const Expression &ex1);
-Expression operator*(double val, const Expression &ex);
-Expression operator*(const Expression &ex, double val);
-Expression operator*(const Complex &val, const Expression &ex);
-Expression operator*(const Expression &ex, const Complex &val);
-Expression operator/(const Expression &ex0, const Expression &ex1);
-Expression operator/(const Expression &ex, double val);
-Expression operator/(double val, const Expression &ex);
-Expression operator/(const Expression &ex, const Complex &val);
-Expression operator/(const Complex &val, const Expression &ex);
-Expression pow(const Expression &ex0, int n);
-Expression pow(const Expression &ex0, const SireMaths::Rational &n);
-Expression pow(const Expression &ex0, double n);
-Expression pow(const Expression &ex0, const Expression &n);
-Expression pow(const Expression &ex0, const Complex &n);
-Expression root(const Expression &ex0, int n);
-Expression sqrt(const Expression &ex0);
-Expression cbrt(const Expression &ex0);
-
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
-/** Return a hash for an expression */
-inline uint qHash(const Expression &ex)
-{
-    return ex.hash();
-}
 
 /** Return a list of all children of type 'T' in this expression */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 QList<T> Expression::children() const
 {
-    Expressions exs = this->children();
+    QList<Expression> exs = this->children();
 
     QList<T> children_t;
 
-    for (Expressions::const_iterator it = exs.constBegin();
+    for (typename QList<Expression>::const_iterator it = exs.constBegin();
          it != exs.constEnd();
          ++it)
     {
-        const ExpressionBase &base = it->base();
+        const CASNode &n = it->node();
 
         //gccxml doesn't like this section, so remove it
         //when we are generating the python wrappers
         #ifndef SKIP_BROKEN_GCCXML_PARTS
-        if (base.isA<T>())
-            children_t.append( base.asA<T>() );
+        if (n.isA<T>())
+            children_t.append( n.asA<T>() );
         #endif
     }
 
     return children_t;
-}
-
-/** Comparison operator */
-inline bool Expression::operator==(const Expression &other) const
-{
-    return fac == other.fac and exbase == other.exbase;
-}
-
-/** Comparison operator */
-inline bool Expression::operator!=(const Expression &other) const
-{
-    return fac != other.fac or exbase != other.exbase;
-}
-
-/** Addition operator */
-inline Expression operator+(const Expression &ex0,
-                            const Expression &ex1)
-{
-    return ex0.add(ex1);
-}
-
-/** Addition operator */
-inline Expression operator+(const Expression &ex,
-                            double val)
-{
-    return ex.add(val);
-}
-
-/** Addition operator */
-inline Expression operator+(double val,
-                            const Expression &ex)
-{
-    return ex.add(val);
-}
-
-/** Addition operator */
-inline Expression operator+(const Expression &ex,
-                            const Complex &val)
-{
-    return ex.add(val);
-}
-
-/** Addition operator */
-inline Expression operator+(const Complex &val,
-                            const Expression &ex)
-{
-    return ex.add(val);
-}
-
-/** Subtraction operator */
-inline Expression operator-(const Expression &ex0,
-                            const Expression &ex1)
-{
-    return ex0.subtract(ex1);
-}
-
-/** Subtraction operator */
-inline Expression operator-(const Expression &ex,
-                            double val)
-{
-    return ex.subtract(val);
-}
-
-/** Subtraction operator */
-inline Expression operator-(double val,
-                            const Expression &ex)
-{
-    return ex.negate().add(val);
-}
-
-
-/** Multiplication operator */
-inline Expression operator*(const Expression &ex0,
-                            const Expression &ex1)
-{
-    return ex0.multiply(ex1);
-}
-
-/** Multiplication operator */
-inline Expression operator*(double val, const Expression &ex)
-{
-    return ex.multiply(val);
-}
-
-/** Multiplication operator */
-inline Expression operator*(const Expression &ex, double val)
-{
-    return ex.multiply(val);
-}
-
-/** Multiplication operator */
-inline Expression operator*(const Complex &val, const Expression &ex)
-{
-    return ex.multiply(val);
-}
-
-/** Multiplication operator */
-inline Expression operator*(const Expression &ex, const Complex &val)
-{
-    return ex.multiply(val);
-}
-
-/** Division operator */
-inline Expression operator/(const Expression &ex0,
-                            const Expression &ex1)
-{
-    return ex0.divide(ex1);
-}
-
-/** Division operator */
-inline Expression operator/(const Expression &ex,
-                            double val)
-{
-    return ex.divide(val);
-}
-
-/** Division operator */
-inline Expression operator/(double val,
-                            const Expression &ex)
-{
-    return ex.invert().multiply(val);
-}
-
-/** Division operator */
-inline Expression operator/(const Expression &ex,
-                            const Complex &val)
-{
-    return ex.divide(val);
-}
-
-/** Division operator */
-inline Expression operator/(const Complex &val,
-                            const Expression &ex)
-{
-    return ex.invert().multiply(val);
-}
-
-/** Raise an expression to the nth power */
-inline Expression pow(const Expression &ex0, int n)
-{
-    return ex0.pow(n);
-}
-
-/** Raise an expression to a rational power */
-inline Expression pow(const Expression &ex0,
-                      const SireMaths::Rational &n)
-{
-    return ex0.pow(n);
-}
-
-/** Raise an expression to a real power */
-inline Expression pow(const Expression &ex0, double n)
-{
-    return ex0.pow(n);
-}
-
-/** Raise an expression to a functional power */
-inline Expression pow(const Expression &ex0,
-                      const Expression &n)
-{
-    return ex0.pow(n);
-}
-
-/** Raise an expression to a complex power */
-inline Expression pow(const Expression &ex0, const Complex &n)
-{
-    return ex0.pow(n);
-}
-
-/** Take the nth root of an expression */
-inline Expression root(const Expression &ex0, int n)
-{
-    return ex0.root(n);
-}
-
-/** Take the square root of an expression */
-inline Expression sqrt(const Expression &ex0)
-{
-    return ex0.root(2);
-}
-
-/** Take the cube root of an expression */
-inline Expression cbrt(const Expression &ex0)
-{
-    return ex0.root(3);
 }
 
 #endif //SIRE_SKIP_INLINE_FUNCTIONS

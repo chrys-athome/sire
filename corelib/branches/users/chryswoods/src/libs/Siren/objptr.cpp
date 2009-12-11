@@ -64,6 +64,33 @@ ObjPtrBase& ObjPtrBase::operator=(const ObjPtrBase &other)
     return *this;
 }
 
+/** Value comparison function */
+bool ObjPtrBase::equals(const ObjPtrBase &other) const
+{
+    if (ptr.constData() == 0)
+    {
+        return other.ptr.constData() == 0;
+    }
+    else if (other.ptr.constData() == 0)
+    {
+        return false;
+    }
+    else 
+    {
+        return ptr->equals(*(other.ptr));
+    }
+}
+
+/** Value comparison function */
+bool ObjPtrBase::equals(const Object &other) const
+{
+    if (ptr.constData() == 0)
+        return false;
+        
+    else
+        return ptr->equals(other);
+}
+
 /** Comparison operator - this just performs pointer based
     comparison (so compares memory addresses) */
 bool ObjPtrBase::operator==(const Object &object) const

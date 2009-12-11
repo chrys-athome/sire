@@ -35,28 +35,16 @@ SIRE_BEGIN_HEADER
 
 namespace SireCAS
 {
-class IntegrationConstant;
-}
 
-QDataStream& operator<<(QDataStream&, const SireCAS::IntegrationConstant&);
-QDataStream& operator>>(QDataStream&, SireCAS::IntegrationConstant&);
+/** This class represents a constant of integration. This is not a number or 
+    function in the normal sense, but rather a placeholder that is created 
+    during indefinite integration.
 
-namespace SireCAS
-{
-
-/**
-This class represents a constant of integration. This is not a number or 
-function in the normal sense, but rather a placeholder that is created 
-during indefinite integration.
-
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIRECAS_EXPORT IntegrationConstant : public Symbol
+class SIRECAS_EXPORT IntegrationConstant 
+            : public Siren::Implements<IntegrationConstant,Symbol>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const IntegrationConstant&);
-friend QDataStream& ::operator>>(QDataStream&, IntegrationConstant&);
-
 public:
     IntegrationConstant();
 
@@ -64,18 +52,12 @@ public:
 
     ~IntegrationConstant();
 
-    bool operator==(const ExBase &other) const;
-
-    uint hash() const;
-
-    static const char* typeName();
-
-    const char* what() const
-    {
-        return IntegrationConstant::typeName();
-    }
-
-    IntegrationConstant* clone() const;
+    IntegrationConstant& operator=(const IntegrationConstant &other);
+    
+    bool operator==(const IntegrationConstant &other) const;
+    bool operator!=(const IntegrationConstant &other) const;
+    
+    void stream(Siren::Stream &s);
 
     Expression integrate(const Symbol &symbol) const;
 };

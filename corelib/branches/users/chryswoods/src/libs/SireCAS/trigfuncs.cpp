@@ -26,203 +26,66 @@
   *
 \*********************************************/
 
+#include <cmath>
+
+#include "SireMaths/complex.h"
+
 #include "trigfuncs.h"
 #include "exp.h"
 #include "identities.h"
 #include "expression.h"
 #include "complexvalues.h"
 
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
 
-using namespace SireStream;
+using namespace Siren;
 using namespace SireCAS;
-
-////////////
-//////////// Register the trig functions
-////////////
-
-static const RegisterMetaType<Cos> r_cos;
-static const RegisterMetaType<Sin> r_sin;
-static const RegisterMetaType<Tan> r_tan;
-static const RegisterMetaType<Csc> r_csc;
-static const RegisterMetaType<Sec> r_sec;
-static const RegisterMetaType<Cot> r_cot;
-
-////////////
-//////////// Stream the trig functions
-////////////
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Cos &cos)
-{
-    writeHeader(ds, r_cos, 1) << static_cast<const SingleFunc&>(cos);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Cos &cos)
-{
-    VersionID v = readHeader(ds, r_cos);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(cos);
-    }
-    else
-        throw version_error(v, "1", r_cos, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Sin &sin)
-{
-    writeHeader(ds, r_sin, 1) << static_cast<const SingleFunc&>(sin);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Sin &sin)
-{
-    VersionID v = readHeader(ds, r_sin);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(sin);
-    }
-    else
-        throw version_error(v, "1", r_sin, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Tan &tan)
-{
-    writeHeader(ds, r_tan, 1) << static_cast<const SingleFunc&>(tan);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Tan &tan)
-{
-    VersionID v = readHeader(ds, r_tan);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(tan);
-    }
-    else
-        throw version_error(v, "1", r_tan, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Csc &csc)
-{
-    writeHeader(ds, r_csc, 1) << static_cast<const SingleFunc&>(csc);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Csc &csc)
-{
-    VersionID v = readHeader(ds, r_csc);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(csc);
-    }
-    else
-        throw version_error(v, "1", r_csc, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Sec &sec)
-{
-    writeHeader(ds, r_sec, 1) << static_cast<const SingleFunc&>(sec);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Sec &sec)
-{
-    VersionID v = readHeader(ds, r_sec);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(sec);
-    }
-    else
-        throw version_error(v, "1", r_sec, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Cot &cot)
-{
-    writeHeader(ds, r_cot, 1) << static_cast<const SingleFunc&>(cot);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Cot &cot)
-{
-    VersionID v = readHeader(ds, r_cot);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(cot);
-    }
-    else
-        throw version_error(v, "1", r_cot, CODELOC);
-
-    return ds;
-}
 
 ////////////
 //////////// Implementation of Cosine
 ////////////
 
+static const RegisterObject<Cos> r_cos;
+
 /** Null constructor */
-Cos::Cos() : SingleFunc()
+Cos::Cos() : Implements<Cos,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-Cos::Cos(const Expression &expression) : SingleFunc(expression)
+Cos::Cos(const Expression &expression) : Implements<Cos,SingleFunc>(expression)
 {}
 
 /** Create cos(cos(expression)) */
-Cos::Cos(const Cos &other) : SingleFunc(other)
+Cos::Cos(const Cos &other) : Implements<Cos,SingleFunc>(other)
 {}
 
 /** Destructor */
 Cos::~Cos()
 {}
 
-/** Return the magic */
-uint Cos::magic() const
+Cos& Cos::operator=(const Cos &other)
 {
-    return r_cos.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool Cos::operator==(const ExBase &other) const
+bool Cos::operator==(const Cos &other) const
 {
-    const Cos *other_cos = dynamic_cast<const Cos*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool Cos::operator!=(const Cos &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void Cos::stream(Stream &s)
+{
+    s.assertVersion<Cos>(1);
+    
+    Schema schema = s.item<Cos>();
+    
+    SingleFunc::stream(schema.base());
 }
 
 /** Evaluate this function */
@@ -235,6 +98,19 @@ double Cos::evaluate(const Values &values) const
 Complex Cos::evaluate(const ComplexValues &values) const
 {
     return SireMaths::cos( x().evaluate(values) );
+}
+
+Expression Cos::functionOf(const Expression &arg) const
+{
+    if (arg == this->argument())
+        return *this;
+    else
+        return Cos(arg);
+}
+
+QString Cos::stringRep() const
+{
+    return QObject::tr("cos");
 }
 
 /** The differential of cos(x) = -sin(x) */
@@ -253,35 +129,47 @@ Expression Cos::integ() const
 //////////// Implementation of Sine
 ////////////
 
+static const RegisterObject<Sin> r_sin;
+
 /** Null constructor */
-Sin::Sin() : SingleFunc()
+Sin::Sin() : Implements<Sin,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-Sin::Sin(const Expression &expression) : SingleFunc(expression)
+Sin::Sin(const Expression &expression) : Implements<Sin,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-Sin::Sin(const Sin &other) : SingleFunc(other)
+Sin::Sin(const Sin &other) : Implements<Sin,SingleFunc>(other)
 {}
 
 /** Destructor */
 Sin::~Sin()
 {}
 
-/** Return the magic */
-uint Sin::magic() const
+Sin& Sin::operator=(const Sin &other)
 {
-    return r_sin.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool Sin::operator==(const ExBase &other) const
+bool Sin::operator==(const Sin &other) const
 {
-    const Sin *other_cos = dynamic_cast<const Sin*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool Sin::operator!=(const Sin &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void Sin::stream(Stream &s)
+{
+    s.assertVersion<Sin>(1);
+    
+    Schema schema = s.item<Sin>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -294,6 +182,19 @@ double Sin::evaluate(const Values &values) const
 Complex Sin::evaluate(const ComplexValues &values) const
 {
     return SireMaths::sin( x().evaluate(values) );
+}
+
+Expression Sin::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return Sin(arg);
+}
+
+QString Sin::stringRep() const
+{
+    return QObject::tr("sin");
 }
 
 /** The differential of sin(x) = cos(x) */
@@ -312,35 +213,47 @@ Expression Sin::integ() const
 //////////// Implementation of Tangent
 ////////////
 
+static const RegisterObject<Tan> r_tan;
+
 /** Null constructor */
-Tan::Tan() : SingleFunc()
+Tan::Tan() : Implements<Tan,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-Tan::Tan(const Expression &expression) : SingleFunc(expression)
+Tan::Tan(const Expression &expression) : Implements<Tan,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-Tan::Tan(const Tan &other) : SingleFunc(other)
+Tan::Tan(const Tan &other) : Implements<Tan,SingleFunc>(other)
 {}
 
 /** Destructor */
 Tan::~Tan()
 {}
 
-/** Return the magic */
-uint Tan::magic() const
+Tan& Tan::operator=(const Tan &other)
 {
-    return r_tan.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool Tan::operator==(const ExBase &other) const
+bool Tan::operator==(const Tan &other) const
 {
-    const Tan *other_cos = dynamic_cast<const Tan*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool Tan::operator!=(const Tan &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void Tan::stream(Stream &s)
+{
+    s.assertVersion<Tan>(1);
+    
+    Schema schema = s.item<Tan>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -353,6 +266,19 @@ double Tan::evaluate(const Values &values) const
 Complex Tan::evaluate(const ComplexValues &values) const
 {
     return SireMaths::tan( x().evaluate(values) );
+}
+
+Expression Tan::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return Tan(arg);
+}
+
+QString Tan::stringRep() const
+{
+    return QObject::tr("tan");
 }
 
 /** The differential of tan(x) = sec^2(x) */
@@ -371,35 +297,47 @@ Expression Tan::integ() const
 //////////// Implementation of Cosecant
 ////////////
 
+static const RegisterObject<Csc> r_csc;
+
 /** Null constructor */
-Csc::Csc() : SingleFunc()
+Csc::Csc() : Implements<Csc,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-Csc::Csc(const Expression &expression) : SingleFunc(expression)
+Csc::Csc(const Expression &expression) : Implements<Csc,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-Csc::Csc(const Csc &other) : SingleFunc(other)
+Csc::Csc(const Csc &other) : Implements<Csc,SingleFunc>(other)
 {}
 
 /** Destructor */
 Csc::~Csc()
 {}
 
-/** Return the magic */
-uint Csc::magic() const
+Csc& Csc::operator=(const Csc &other)
 {
-    return r_csc.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool Csc::operator==(const ExBase &other) const
+bool Csc::operator==(const Csc &other) const
 {
-    const Csc *other_cos = dynamic_cast<const Csc*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool Csc::operator!=(const Csc &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void Csc::stream(Stream &s)
+{
+    s.assertVersion<Csc>(1);
+    
+    Schema schema = s.item<Csc>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -413,6 +351,19 @@ double Csc::evaluate(const Values &values) const
 Complex Csc::evaluate(const ComplexValues &values) const
 {
     return SireMaths::csc( x().evaluate(values) );
+}
+
+Expression Csc::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return Csc(arg);
+}
+
+QString Csc::stringRep() const
+{
+    return QObject::tr("csc");
 }
 
 /** The differential of csc(x) = -csc(x) cot(x) */
@@ -431,35 +382,47 @@ Expression Csc::integ() const
 //////////// Implementation of Secant
 ////////////
 
+static const RegisterObject<Sec> r_sec;
+
 /** Null constructor */
-Sec::Sec() : SingleFunc()
+Sec::Sec() : Implements<Sec,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-Sec::Sec(const Expression &expression) : SingleFunc(expression)
+Sec::Sec(const Expression &expression) : Implements<Sec,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-Sec::Sec(const Sec &other) : SingleFunc(other)
+Sec::Sec(const Sec &other) : Implements<Sec,SingleFunc>(other)
 {}
 
 /** Destructor */
 Sec::~Sec()
 {}
 
-/** Return the magic */
-uint Sec::magic() const
+Sec& Sec::operator=(const Sec &other)
 {
-    return r_sec.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool Sec::operator==(const ExBase &other) const
+bool Sec::operator==(const Sec &other) const
 {
-    const Sec *other_cos = dynamic_cast<const Sec*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool Sec::operator!=(const Sec &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void Sec::stream(Stream &s)
+{
+    s.assertVersion<Sec>(1);
+    
+    Schema schema = s.item<Sec>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -473,6 +436,19 @@ double Sec::evaluate(const Values &values) const
 Complex Sec::evaluate(const ComplexValues &values) const
 {
     return SireMaths::sec( x().evaluate(values) );
+}
+
+Expression Sec::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return Sec(arg);
+}
+
+QString Sec::stringRep() const
+{
+    return QObject::tr("sec");
 }
 
 /** The differential of sec(x) = sec(x) tan(x) */
@@ -491,35 +467,47 @@ Expression Sec::integ() const
 //////////// Implementation of Cotangent
 ////////////
 
+static const RegisterObject<Cot> r_cot;
+
 /** Null constructor */
-Cot::Cot() : SingleFunc()
+Cot::Cot() : Implements<Cot,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-Cot::Cot(const Expression &expression) : SingleFunc(expression)
+Cot::Cot(const Expression &expression) : Implements<Cot,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-Cot::Cot(const Cot &other) : SingleFunc(other)
+Cot::Cot(const Cot &other) : Implements<Cot,SingleFunc>(other)
 {}
 
 /** Destructor */
 Cot::~Cot()
 {}
 
-/** Return the magic */
-uint Cot::magic() const
+Cot& Cot::operator=(const Cot &other)
 {
-    return r_cot.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool Cot::operator==(const ExBase &other) const
+bool Cot::operator==(const Cot &other) const
 {
-    const Cot *other_cos = dynamic_cast<const Cot*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool Cot::operator!=(const Cot &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void Cot::stream(Stream &s)
+{
+    s.assertVersion<Cot>(1);
+    
+    Schema schema = s.item<Cot>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -535,6 +523,19 @@ Complex Cot::evaluate(const ComplexValues &values) const
     return SireMaths::cot( x().evaluate(values) );
 }
 
+Expression Cot::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return Cot(arg);
+}
+
+QString Cot::stringRep() const
+{
+    return QObject::tr("cot");
+}
+
 /** The differential of cot(x) = -csc^2(x) */
 Expression Cot::diff() const
 {
@@ -546,69 +547,3 @@ Expression Cot::integ() const
 {
     return Ln( Sin(x()) );
 }
-
-const char* Cos::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Cos>() );
-}
-
-const char* Sin::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Sin>() );
-}
-
-const char* Tan::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Tan>() );
-}
-
-const char* Csc::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Csc>() );
-}
-
-const char* Sec::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Sec>() );
-}
-
-const char* Cot::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Cot>() );
-}
-
-Csc* Csc::clone() const
-{
-    return new Csc(*this);
-}
-
-
-Tan* Tan::clone() const
-{
-    return new Tan(*this);
-}
-
-
-Sin* Sin::clone() const
-{
-    return new Sin(*this);
-}
-
-
-Sec* Sec::clone() const
-{
-    return new Sec(*this);
-}
-
-
-Cot* Cot::clone() const
-{
-    return new Cot(*this);
-}
-
-
-Cos* Cos::clone() const
-{
-    return new Cos(*this);
-}
-

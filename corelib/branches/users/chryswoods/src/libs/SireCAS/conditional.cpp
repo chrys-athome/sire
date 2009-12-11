@@ -27,72 +27,42 @@
 \*********************************************/
 
 #include "conditional.h"
-#include "functions.h"
-#include "symbols.h"
 #include "identities.h"
-#include "expressions.h"
 #include "values.h"
 #include "complexvalues.h"
+#include "factor.h"
 
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
-
-#include "SireError/errors.h"
 #include "SireCAS/errors.h"
+
+#include "Siren/objref.h"
+#include "Siren/stream.h"
+#include "Siren/errors.h"
+
+#include "SireMaths/complex.h"
 #include "SireMaths/errors.h"
 
 using namespace SireCAS;
-using namespace SireStream;
+using namespace SireMaths;
+using namespace Siren;
 
 ///////////
 /////////// Implementation of Condition
 ///////////
 
-static const RegisterMetaType<Condition> r_condition(MAGIC_ONLY,Condition::typeName());
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Condition &condition)
-{
-    writeHeader(ds, r_condition, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << condition.lhs << condition.rhs 
-        << static_cast<const ExBase&>(condition);
-        
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Condition &condition)
-{
-    VersionID v = readHeader(ds, r_condition);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        
-        sds >> condition.lhs >> condition.rhs
-            >> static_cast<ExBase&>(condition);
-    }
-    else
-        throw version_error( v, "1", r_condition, CODELOC );
-        
-    return ds;
-}
+static const RegisterObject<Condition> r_condition( VIRTUAL_CLASS );
 
 /** Null constructor */
-Condition::Condition() : ExBase()
+Condition::Condition() : Extends<Condition,CASNode>()
 {}
 
 /** Construct with the passed left and right hand side of the condition */
 Condition::Condition(const Expression &lhs_, const Expression &rhs_)
-          : ExBase(), lhs(lhs_), rhs(rhs_)
+          : Extends<Condition,CASNode>(), lhs(lhs_), rhs(rhs_)
 {}
 
 /** Copy constructor */
 Condition::Condition(const Condition &other)
-          : ExBase(other), lhs(other.lhs), rhs(other.rhs)
+          : Extends<Condition,CASNode>(other), lhs(other.lhs), rhs(other.rhs)
 {}
 
 /** Destructor */
@@ -104,7 +74,7 @@ Condition& Condition::operator=(const Condition &other)
 {
     lhs = other.lhs;
     rhs = other.rhs;
-    ExBase::operator=(other);
+    CASNode::operator=(other);
     
     return *this;
 }
@@ -114,6 +84,12 @@ bool Condition::operator==(const Condition &other) const
 {
     return this == &other or
            (lhs == other.lhs and rhs == other.rhs);
+}
+
+/** Comparison operator */
+bool Condition::operator!=(const Condition &other) const
+{
+    return not Condition::operator==(other);
 }
 
 /** Differentiate this expression */
@@ -139,17 +115,19 @@ Expression Condition::integrate(const Symbol &symbol) const
 /** Simplify this condition */
 Expression Condition::simplify(int options) const
 {
-    SharedPolyPointer<Condition> ret = *this;
+    CASNodePtr ret = *this;
     
-    ret->lhs = lhs.simplify(options);
-    ret->rhs = rhs.simplify(options);
+    Condition &c = ret.edit().asA<Condition>();
     
-    if (ret->alwaysTrue())
+    c.lhs = lhs.simplify(options);
+    c.rhs = rhs.simplify(options);
+    
+    if (c.alwaysTrue())
         return AlwaysTrue();
-    else if (ret->alwaysFalse())
+    else if (c.alwaysFalse())
         return AlwaysFalse();
     else
-        return *ret;
+        return c;
 }
 
 /** The complex conjugate of a condition is the condition */
@@ -182,31 +160,21 @@ bool Condition::isCompound() const
     return not this->isConstant();
 }
 
-/** Return whether or not this is null */
-bool Condition::isNull() const
-{
-    return false;
-}
-
-/** Hash this condition */
-uint Condition::hash() const
-{
-    return lhs.hash() + rhs.hash();
-}
-
 /** Substitute in the passed identities */
 Expression Condition::substitute(const Identities &identities) const
 {
-    SharedPolyPointer<Condition> ret( *this );
+    CASNodePtr ret( *this );
     
-    ret->lhs = lhs.substitute(identities);
-    ret->rhs = rhs.substitute(identities);
+    Condition &c = ret.edit().asA<Condition>();
     
-    return *ret;
+    c.lhs = lhs.substitute(identities);
+    c.rhs = rhs.substitute(identities);
+    
+    return c;
 }
 
 /** Return the symbols used in this expression */
-Symbols Condition::symbols() const
+QSet<Symbol> Condition::symbols() const
 {
     if (this->alwaysTrue())
         return lhs.symbols();
@@ -216,20 +184,10 @@ Symbols Condition::symbols() const
         return lhs.symbols() + rhs.symbols();
 }
 
-/** Return the functions in this expression */
-Functions Condition::functions() const
-{
-    return lhs.functions() + rhs.functions();
-}
-
 /** Return all of the child expressions in this condition */
-Expressions Condition::children() const
+QList<Expression> Condition::children() const
 {
-    Expressions exps;
-    exps.append(lhs);
-    exps.append(rhs);
-    
-    return exps;
+    return lhs.children() + rhs.children();
 }
 
 /** Expand this condition into factors of the passed symbol */
@@ -258,8 +216,25 @@ const Expression& Condition::rightHandSide() const
 /** Return a string representation of this expression */
 QString Condition::toString() const
 {
-    return QString("%1 %2 %3")
+    return QObject::tr("%1 %2 %3")
                 .arg(lhs.toString(), this->operatorString(), rhs.toString());
+}
+
+uint Condition::hashCode() const
+{
+    return qHash(this->what()) + qHash(lhs) + qHash(rhs);
+}
+
+void Condition::stream(Stream &s)
+{
+    s.assertVersion<Condition>(1);
+    
+    Schema schema = s.item<Condition>();
+    
+    schema.data("left-hand-side") & lhs;
+    schema.data("right-hand-side") & rhs;
+    
+    CASNode::stream( schema.base() );
 }
 
 /** Evalute this condition, returning whether or not it is true or false */
@@ -304,46 +279,21 @@ Complex Condition::evaluate(const ComplexValues &values) const
 /////////// Implementation of GreaterThan
 ///////////
 
-static const RegisterMetaType<GreaterThan> r_greaterthan;
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const GreaterThan &greaterthan)
-{
-    writeHeader(ds, r_greaterthan, 1);
-    
-    ds << static_cast<const Condition&>(greaterthan);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, GreaterThan &greaterthan)
-{
-    VersionID v = readHeader(ds, r_greaterthan);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<Condition&>(greaterthan);
-    }
-    else
-        throw version_error( v, "1", r_greaterthan, CODELOC );
-        
-    return ds;
-}
+static const RegisterObject<GreaterThan> r_greaterthan;
 
 /** Constructor */
-GreaterThan::GreaterThan() : Condition()
+GreaterThan::GreaterThan() : Implements<GreaterThan,Condition>()
 {}
 
 /** Construct to compare 'left_hand_side' with 'right_hand_side' */
 GreaterThan::GreaterThan(const Expression &left_hand_side,
                          const Expression &right_hand_side)
-            : Condition(left_hand_side, right_hand_side)
+            : Implements<GreaterThan,Condition>(left_hand_side, right_hand_side)
 {}
 
 /** Copy constructor */
 GreaterThan::GreaterThan(const GreaterThan &other)
-            : Condition(other)
+            : Implements<GreaterThan,Condition>(other)
 {}
 
 /** Destructor */
@@ -364,19 +314,18 @@ bool GreaterThan::operator==(const GreaterThan &other) const
 }
 
 /** Comparison operator */
-bool GreaterThan::operator==(const ExBase &other) const
+bool GreaterThan::operator!=(const GreaterThan &other) const
 {
-    const GreaterThan *other_t  = dynamic_cast<const GreaterThan*>(&other);
-    
-    if (other_t)
-        return GreaterThan::operator==(*other_t);
-    else
-        return false;
+    return Condition::operator!=(other);
 }
 
-const char* GreaterThan::typeName()
+void GreaterThan::stream(Stream &s)
 {
-    return QMetaType::typeName( qMetaTypeId<GreaterThan>() );
+    s.assertVersion<GreaterThan>(1);
+    
+    Schema schema = s.item<GreaterThan>();
+    
+    Condition::stream( schema.base() );
 }
 
 /** Compare the values 'val0' and 'val1' */
@@ -411,7 +360,7 @@ bool GreaterThan::compareValues(const Complex &val0, const Complex &val1) const
 /** Return the string representation of this operator */
 QString GreaterThan::operatorString() const
 {
-    return QString(">");
+    return QObject::tr(">");
 }
 
 /** Return whether or not we can be absolutely sure that this
@@ -446,46 +395,21 @@ bool GreaterThan::alwaysFalse() const
 /////////// Implementation of LessThan
 ///////////
 
-static const RegisterMetaType<LessThan> r_lessthan;
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const LessThan &lessthan)
-{
-    writeHeader(ds, r_lessthan, 1);
-    
-    ds << static_cast<const Condition&>(lessthan);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, LessThan &lessthan)
-{
-    VersionID v = readHeader(ds, r_lessthan);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<Condition&>(lessthan);
-    }
-    else
-        throw version_error( v, "1", r_lessthan, CODELOC );
-        
-    return ds;
-}
+static const RegisterObject<LessThan> r_lessthan;
 
 /** Constructor */
-LessThan::LessThan() : Condition()
+LessThan::LessThan() : Implements<LessThan,Condition>()
 {}
 
 /** Construct to compare 'left_hand_side' with 'right_hand_side' */
 LessThan::LessThan(const Expression &left_hand_side,
                    const Expression &right_hand_side)
-         : Condition(left_hand_side, right_hand_side)
+         : Implements<LessThan,Condition>(left_hand_side, right_hand_side)
 {}
 
 /** Copy constructor */
 LessThan::LessThan(const LessThan &other)
-         : Condition(other)
+         : Implements<LessThan,Condition>(other)
 {}
 
 /** Destructor */
@@ -506,19 +430,18 @@ bool LessThan::operator==(const LessThan &other) const
 }
 
 /** Comparison operator */
-bool LessThan::operator==(const ExBase &other) const
+bool LessThan::operator!=(const LessThan &other) const
 {
-    const LessThan *other_t  = dynamic_cast<const LessThan*>(&other);
-    
-    if (other_t)
-        return LessThan::operator==(*other_t);
-    else
-        return false;
+    return Condition::operator!=(other);
 }
 
-const char* LessThan::typeName()
+void LessThan::stream(Stream &s)
 {
-    return QMetaType::typeName( qMetaTypeId<LessThan>() );
+    s.assertVersion<LessThan>(1);
+    
+    Schema schema = s.item<LessThan>();
+    
+    Condition::stream( schema.base() );
 }
 
 /** Compare the values 'val0' and 'val1' */
@@ -553,7 +476,7 @@ bool LessThan::compareValues(const Complex &val0, const Complex &val1) const
 /** Return the string representation of this operator */
 QString LessThan::operatorString() const
 {
-    return QString("<");
+    return QObject::tr("<");
 }
 
 /** Return whether or not we can be absolutely sure that this
@@ -588,46 +511,21 @@ bool LessThan::alwaysFalse() const
 /////////// Implementation of GreaterOrEqualThan
 ///////////
 
-static const RegisterMetaType<GreaterOrEqualThan> r_gethan;
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const GreaterOrEqualThan &gethan)
-{
-    writeHeader(ds, r_gethan, 1);
-    
-    ds << static_cast<const Condition&>(gethan);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, GreaterOrEqualThan &gethan)
-{
-    VersionID v = readHeader(ds, r_gethan);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<Condition&>(gethan);
-    }
-    else
-        throw version_error( v, "1", r_gethan, CODELOC );
-        
-    return ds;
-}
+static const RegisterObject<GreaterOrEqualThan> r_gethan;
 
 /** Constructor */
-GreaterOrEqualThan::GreaterOrEqualThan() : Condition()
+GreaterOrEqualThan::GreaterOrEqualThan() : Implements<GreaterOrEqualThan,Condition>()
 {}
 
 /** Construct to compare 'left_hand_side' with 'right_hand_side' */
 GreaterOrEqualThan::GreaterOrEqualThan(const Expression &left_hand_side,
                                        const Expression &right_hand_side)
-                   : Condition(left_hand_side, right_hand_side)
+        : Implements<GreaterOrEqualThan,Condition>(left_hand_side, right_hand_side)
 {}
 
 /** Copy constructor */
 GreaterOrEqualThan::GreaterOrEqualThan(const GreaterOrEqualThan &other)
-                   : Condition(other)
+                   : Implements<GreaterOrEqualThan,Condition>(other)
 {}
 
 /** Destructor */
@@ -648,19 +546,18 @@ bool GreaterOrEqualThan::operator==(const GreaterOrEqualThan &other) const
 }
 
 /** Comparison operator */
-bool GreaterOrEqualThan::operator==(const ExBase &other) const
+bool GreaterOrEqualThan::operator!=(const GreaterOrEqualThan &other) const
 {
-    const GreaterOrEqualThan *other_t  = dynamic_cast<const GreaterOrEqualThan*>(&other);
-    
-    if (other_t)
-        return GreaterOrEqualThan::operator==(*other_t);
-    else
-        return false;
+    return Condition::operator!=(other);
 }
 
-const char* GreaterOrEqualThan::typeName()
+void GreaterOrEqualThan::stream(Stream &s)
 {
-    return QMetaType::typeName( qMetaTypeId<GreaterOrEqualThan>() );
+    s.assertVersion<GreaterOrEqualThan>(1);
+    
+    Schema schema = s.item<GreaterOrEqualThan>();
+    
+    Condition::stream( schema.base() );
 }
 
 /** Compare the values 'val0' and 'val1' */
@@ -695,7 +592,7 @@ bool GreaterOrEqualThan::compareValues(const Complex &val0, const Complex &val1)
 /** Return the string representation of this operator */
 QString GreaterOrEqualThan::operatorString() const
 {
-    return QString(">=");
+    return QObject::tr(">=");
 }
 
 /** Return whether or not we can be absolutely sure that this
@@ -730,46 +627,21 @@ bool GreaterOrEqualThan::alwaysFalse() const
 /////////// Implementation of LessOrEqualThan
 ///////////
 
-static const RegisterMetaType<LessOrEqualThan> r_lethan;
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const LessOrEqualThan &lethan)
-{
-    writeHeader(ds, r_lethan, 1);
-    
-    ds << static_cast<const Condition&>(lethan);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, LessOrEqualThan &lethan)
-{
-    VersionID v = readHeader(ds, r_lethan);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<Condition&>(lethan);
-    }
-    else
-        throw version_error( v, "1", r_lethan, CODELOC );
-        
-    return ds;
-}
+static const RegisterObject<LessOrEqualThan> r_lethan;
 
 /** Constructor */
-LessOrEqualThan::LessOrEqualThan() : Condition()
+LessOrEqualThan::LessOrEqualThan() : Implements<LessOrEqualThan,Condition>()
 {}
 
 /** Construct to compare 'left_hand_side' with 'right_hand_side' */
 LessOrEqualThan::LessOrEqualThan(const Expression &left_hand_side,
                                  const Expression &right_hand_side)
-                : Condition(left_hand_side, right_hand_side)
+                : Implements<LessOrEqualThan,Condition>(left_hand_side, right_hand_side)
 {}
 
 /** Copy constructor */
 LessOrEqualThan::LessOrEqualThan(const LessOrEqualThan &other)
-                : Condition(other)
+                : Implements<LessOrEqualThan,Condition>(other)
 {}
 
 /** Destructor */
@@ -790,19 +662,18 @@ bool LessOrEqualThan::operator==(const LessOrEqualThan &other) const
 }
 
 /** Comparison operator */
-bool LessOrEqualThan::operator==(const ExBase &other) const
+bool LessOrEqualThan::operator!=(const LessOrEqualThan &other) const
 {
-    const LessOrEqualThan *other_t  = dynamic_cast<const LessOrEqualThan*>(&other);
-    
-    if (other_t)
-        return LessOrEqualThan::operator==(*other_t);
-    else
-        return false;
+    return Condition::operator!=(other);
 }
 
-const char* LessOrEqualThan::typeName()
+void LessOrEqualThan::stream(Stream &s)
 {
-    return QMetaType::typeName( qMetaTypeId<LessOrEqualThan>() );
+    s.assertVersion<LessOrEqualThan>(1);
+    
+    Schema schema = s.item<LessOrEqualThan>();
+    
+    Condition::stream( schema.base() );
 }
 
 /** Compare the values 'val0' and 'val1' */
@@ -837,7 +708,7 @@ bool LessOrEqualThan::compareValues(const Complex &val0, const Complex &val1) co
 /** Return the string representation of this operator */
 QString LessOrEqualThan::operatorString() const
 {
-    return QString("<=");
+    return QObject::tr("<=");
 }
 
 /** Return whether or not we can be absolutely sure that this
@@ -872,46 +743,21 @@ bool LessOrEqualThan::alwaysFalse() const
 /////////// Implementation of EqualTo
 ///////////
 
-static const RegisterMetaType<EqualTo> r_equalto;
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const EqualTo &equalto)
-{
-    writeHeader(ds, r_equalto, 1);
-    
-    ds << static_cast<const Condition&>(equalto);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, EqualTo &equalto)
-{
-    VersionID v = readHeader(ds, r_equalto);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<Condition&>(equalto);
-    }
-    else
-        throw version_error( v, "1", r_equalto, CODELOC );
-        
-    return ds;
-}
+static const RegisterObject<EqualTo> r_equalto;
 
 /** Constructor */
-EqualTo::EqualTo() : Condition()
+EqualTo::EqualTo() : Implements<EqualTo,Condition>()
 {}
 
 /** Construct to compare 'left_hand_side' with 'right_hand_side' */
 EqualTo::EqualTo(const Expression &left_hand_side,
                  const Expression &right_hand_side)
-        : Condition(left_hand_side, right_hand_side)
+        : Implements<EqualTo,Condition>(left_hand_side, right_hand_side)
 {}
 
 /** Copy constructor */
 EqualTo::EqualTo(const EqualTo &other)
-        : Condition(other)
+        : Implements<EqualTo,Condition>(other)
 {}
 
 /** Destructor */
@@ -932,19 +778,18 @@ bool EqualTo::operator==(const EqualTo &other) const
 }
 
 /** Comparison operator */
-bool EqualTo::operator==(const ExBase &other) const
+bool EqualTo::operator!=(const EqualTo &other) const
 {
-    const EqualTo *other_t  = dynamic_cast<const EqualTo*>(&other);
-    
-    if (other_t)
-        return EqualTo::operator==(*other_t);
-    else
-        return false;
+    return Condition::operator!=(other);
 }
 
-const char* EqualTo::typeName()
+void EqualTo::stream(Stream &s)
 {
-    return QMetaType::typeName( qMetaTypeId<EqualTo>() );
+    s.assertVersion<EqualTo>(1);
+    
+    Schema schema = s.item<EqualTo>();
+    
+    Condition::stream( schema.base() );
 }
 
 /** Compare the values 'val0' and 'val1' */
@@ -979,7 +824,7 @@ bool EqualTo::compareValues(const Complex &val0, const Complex &val1) const
 /** Return the string representation of this operator */
 QString EqualTo::operatorString() const
 {
-    return QString("==");
+    return QObject::tr("==");
 }
 
 /** Return whether or not we can be absolutely sure that this
@@ -1014,46 +859,21 @@ bool EqualTo::alwaysFalse() const
 /////////// Implementation of NotEqualTo
 ///////////
 
-static const RegisterMetaType<NotEqualTo> r_notequalto;
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const NotEqualTo &notequalto)
-{
-    writeHeader(ds, r_notequalto, 1);
-    
-    ds << static_cast<const Condition&>(notequalto);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, NotEqualTo &notequalto)
-{
-    VersionID v = readHeader(ds, r_notequalto);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<Condition&>(notequalto);
-    }
-    else
-        throw version_error( v, "1", r_notequalto, CODELOC );
-        
-    return ds;
-}
+static const RegisterObject<NotEqualTo> r_notequalto;
 
 /** Constructor */
-NotEqualTo::NotEqualTo() : Condition()
+NotEqualTo::NotEqualTo() : Implements<NotEqualTo,Condition>()
 {}
 
 /** Construct to compare 'left_hand_side' with 'right_hand_side' */
 NotEqualTo::NotEqualTo(const Expression &left_hand_side,
                        const Expression &right_hand_side)
-           : Condition(left_hand_side, right_hand_side)
+           : Implements<NotEqualTo,Condition>(left_hand_side, right_hand_side)
 {}
 
 /** Copy constructor */
 NotEqualTo::NotEqualTo(const NotEqualTo &other)
-           : Condition(other)
+           : Implements<NotEqualTo,Condition>(other)
 {}
 
 /** Destructor */
@@ -1074,19 +894,18 @@ bool NotEqualTo::operator==(const NotEqualTo &other) const
 }
 
 /** Comparison operator */
-bool NotEqualTo::operator==(const ExBase &other) const
+bool NotEqualTo::operator!=(const NotEqualTo &other) const
 {
-    const NotEqualTo *other_t  = dynamic_cast<const NotEqualTo*>(&other);
-    
-    if (other_t)
-        return NotEqualTo::operator==(*other_t);
-    else
-        return false;
+    return Condition::operator!=(other);
 }
 
-const char* NotEqualTo::typeName()
+void NotEqualTo::stream(Stream &s)
 {
-    return QMetaType::typeName( qMetaTypeId<NotEqualTo>() );
+    s.assertVersion<NotEqualTo>(1);
+    
+    Schema schema = s.item<NotEqualTo>();
+    
+    Condition::stream( schema.base() );
 }
 
 /** Compare the values 'val0' and 'val1' */
@@ -1121,7 +940,7 @@ bool NotEqualTo::compareValues(const Complex &val0, const Complex &val1) const
 /** Return the string representation of this operator */
 QString NotEqualTo::operatorString() const
 {
-    return QString("!=");
+    return QObject::tr("!=");
 }
 
 /** Return whether or not we can be absolutely sure that this
@@ -1156,39 +975,14 @@ bool NotEqualTo::alwaysFalse() const
 /////////// Implementation of AlwaysTrue
 ///////////
 
-static const RegisterMetaType<AlwaysTrue> r_alwaystrue;
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const AlwaysTrue &alwaystrue)
-{
-    writeHeader(ds, r_alwaystrue, 1);
-    
-    ds << static_cast<const Condition&>(alwaystrue);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, AlwaysTrue &alwaystrue)
-{
-    VersionID v = readHeader(ds, r_alwaystrue);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<Condition&>(alwaystrue);
-    }
-    else
-        throw version_error( v, "1", r_alwaystrue, CODELOC );
-        
-    return ds;
-}
+static const RegisterObject<AlwaysTrue> r_alwaystrue;
 
 /** Constructor */
-AlwaysTrue::AlwaysTrue() : Condition()
+AlwaysTrue::AlwaysTrue() : Implements<AlwaysTrue,Condition>()
 {}
 
 /** Copy constructor */
-AlwaysTrue::AlwaysTrue(const AlwaysTrue &other) : Condition(other)
+AlwaysTrue::AlwaysTrue(const AlwaysTrue &other) : Implements<AlwaysTrue,Condition>(other)
 {}
 
 /** Destructor */
@@ -1209,14 +1003,18 @@ bool AlwaysTrue::operator==(const AlwaysTrue&) const
 }
 
 /** Comparison operator */
-bool AlwaysTrue::operator==(const ExBase &other) const
+bool AlwaysTrue::operator!=(const AlwaysTrue &other) const
 {
-    return dynamic_cast<const AlwaysTrue*>(&other) != 0;
+    return false;
 }
 
-const char* AlwaysTrue::typeName()
+void AlwaysTrue::stream(Stream &s)
 {
-    return QMetaType::typeName( qMetaTypeId<AlwaysTrue>() );
+    s.assertVersion<AlwaysTrue>(1);
+    
+    Schema schema = s.item<AlwaysTrue>();
+    
+    Condition::stream( schema.base() );
 }
 
 /** Return a string representation of truth */
@@ -1267,14 +1065,8 @@ bool AlwaysTrue::isCompound() const
     return false;
 }
 
-/** Truth is never empty */
-bool AlwaysTrue::isNull() const
-{
-    return false;
-}
-
 /** Hash truth */
-uint AlwaysTrue::hash() const
+uint AlwaysTrue::hashCode() const
 {
     return 1;
 }
@@ -1286,21 +1078,15 @@ Expression AlwaysTrue::substitute(const Identities&) const
 }
 
 /** There are no symbols in truth */
-Symbols AlwaysTrue::symbols() const
+QSet<Symbol> AlwaysTrue::symbols() const
 {
-    return Symbols();
-}
-
-/** There are no functions in truth */
-Functions AlwaysTrue::functions() const
-{
-    return Functions();
+    return QSet<Symbol>();
 }
 
 /** The truth has no children */
-Expressions AlwaysTrue::children() const
+QList<Expression> AlwaysTrue::children() const
 {
-    return Expressions();
+    return QList<Expression>();
 }
 
 /** The truth cannot be expanded */
@@ -1355,39 +1141,15 @@ bool AlwaysTrue::compareValues(const Complex&, const Complex&) const
 /////////// Implementation of AlwaysFalse
 ///////////
 
-static const RegisterMetaType<AlwaysFalse> r_alwaysfalse;
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const AlwaysFalse &alwaysfalse)
-{
-    writeHeader(ds, r_alwaysfalse, 1);
-    
-    ds << static_cast<const Condition&>(alwaysfalse);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, AlwaysFalse &alwaysfalse)
-{
-    VersionID v = readHeader(ds, r_alwaysfalse);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<Condition&>(alwaysfalse);
-    }
-    else
-        throw version_error( v, "1", r_alwaysfalse, CODELOC );
-        
-    return ds;
-}
+static const RegisterObject<AlwaysFalse> r_alwaysfalse;
 
 /** Constructor */
-AlwaysFalse::AlwaysFalse() : Condition()
+AlwaysFalse::AlwaysFalse() : Implements<AlwaysFalse,Condition>()
 {}
 
 /** Copy constructor */
-AlwaysFalse::AlwaysFalse(const AlwaysFalse &other) : Condition(other)
+AlwaysFalse::AlwaysFalse(const AlwaysFalse &other) 
+            : Implements<AlwaysFalse,Condition>(other)
 {}
 
 /** Destructor */
@@ -1408,14 +1170,18 @@ bool AlwaysFalse::operator==(const AlwaysFalse&) const
 }
 
 /** Comparison operator */
-bool AlwaysFalse::operator==(const ExBase &other) const
+bool AlwaysFalse::operator!=(const AlwaysFalse &other) const
 {
-    return dynamic_cast<const AlwaysFalse*>(&other) != 0;
+    return false;
 }
 
-const char* AlwaysFalse::typeName()
+void AlwaysFalse::stream(Stream &s)
 {
-    return QMetaType::typeName( qMetaTypeId<AlwaysFalse>() );
+    s.assertVersion<AlwaysFalse>(1);
+    
+    Schema schema = s.item<AlwaysFalse>();
+    
+    Condition::stream( schema.base() );
 }
 
 /** Return a string representation of truth */
@@ -1466,14 +1232,8 @@ bool AlwaysFalse::isCompound() const
     return false;
 }
 
-/** False is never empty */
-bool AlwaysFalse::isNull() const
-{
-    return false;
-}
-
 /** Hash false */
-uint AlwaysFalse::hash() const
+uint AlwaysFalse::hashCode() const
 {
     return 0;
 }
@@ -1485,21 +1245,15 @@ Expression AlwaysFalse::substitute(const Identities&) const
 }
 
 /** There are no symbols in false */
-Symbols AlwaysFalse::symbols() const
+QSet<Symbol> AlwaysFalse::symbols() const
 {
-    return Symbols();
-}
-
-/** There are no functions in false */
-Functions AlwaysFalse::functions() const
-{
-    return Functions();
+    return QSet<Symbol>();
 }
 
 /** False has no children */
-Expressions AlwaysFalse::children() const
+QList<Expression> AlwaysFalse::children() const
 {
-    return Expressions();
+    return QList<Expression>();
 }
 
 /** False cannot be expanded */
@@ -1554,43 +1308,10 @@ bool AlwaysFalse::compareValues(const Complex&, const Complex&) const
 /////////// Implementation of Conditional
 ///////////
 
-static const RegisterMetaType<Conditional> r_conditional;
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Conditional &conditional)
-{
-    writeHeader(ds, r_conditional, 1);
-    
-    SharedDataStream sds(ds);
-    
-    sds << conditional.cond
-        << conditional.true_expression << conditional.false_expression
-        << static_cast<const ExBase&>(conditional);
-        
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Conditional &conditional)
-{
-    VersionID v = readHeader(ds, r_conditional);
-    
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        
-        sds >> conditional.cond
-            >> conditional.true_expression >> conditional.false_expression
-            >> static_cast<ExBase&>(conditional);
-    }
-    else
-        throw version_error( v, "1", r_conditional, CODELOC );
-        
-    return ds;
-}
+static const RegisterObject<Conditional> r_conditional;
 
 /** Null constructor */
-Conditional::Conditional() : ExBase(), cond(AlwaysTrue())
+Conditional::Conditional() : Implements<Conditional,CASNode>(), cond(AlwaysTrue())
 {}
 
 /** Construct a conditional where if 'condition' is true, then 
@@ -1599,7 +1320,7 @@ Conditional::Conditional() : ExBase(), cond(AlwaysTrue())
 Conditional::Conditional(const Condition &condition, 
                          const Expression &t_expression,
                          const Expression &f_expression)
-            : ExBase(),
+            : Implements<Conditional,CASNode>(),
               cond(condition),
               true_expression(t_expression),
               false_expression(f_expression)
@@ -1622,7 +1343,7 @@ Conditional::Conditional(const Condition &condition,
             
 /** Copy constructor */
 Conditional::Conditional(const Conditional &other)
-            : ExBase(other), cond(other.cond),
+            : Implements<Conditional,CASNode>(other), cond(other.cond),
               true_expression(other.true_expression),
               false_expression(other.false_expression)
 {}
@@ -1636,6 +1357,7 @@ Conditional& Conditional::operator=(const Conditional &other)
 {
     if (this != &other)
     {
+        CASNode::operator=(other);
         cond = other.cond;
         true_expression = other.true_expression;
         false_expression = other.false_expression;
@@ -1648,34 +1370,34 @@ Conditional& Conditional::operator=(const Conditional &other)
 bool Conditional::operator==(const Conditional &other) const
 {
     return this == &other or
-           ( (cond == other.cond or 
-                *(static_cast<const ExBase*>(cond.constData())) == 
-                *(static_cast<const ExBase*>(other.cond.constData()))) and 
+           (cond.equals(other.cond) and 
             true_expression == other.true_expression and
             false_expression == other.false_expression );
 }
 
 /** Comparison operator */
-bool Conditional::operator==(const ExBase &other) const
+bool Conditional::operator!=(const Conditional &other) const
 {
-    const Conditional *othercond = dynamic_cast<const Conditional*>(&other);
-    
-    if (othercond)
-        return Conditional::operator==(*othercond);
-    else
-        return false;
+    return not Conditional::operator==(other);
 }
 
-const char* Conditional::typeName()
+void Conditional::stream(Stream &s)
 {
-    return QMetaType::typeName( qMetaTypeId<Conditional>() );
+    s.assertVersion<Conditional>(1);
+    
+    Schema schema = s.item<Conditional>();
+    
+    schema.data("true_expression") & true_expression;
+    schema.data("false_expression") & false_expression;
+    schema.data("condition") & cond;
+    
+    CASNode::stream( schema.base() );
 }
 
 /** Return the condition */
 const Condition& Conditional::condition() const
 {
-    BOOST_ASSERT( cond.constData() != 0 );
-    return *cond;
+    return cond->asA<Condition>();
 }
 
 /** Return the expression to be evaluated if the condition is true */
@@ -1723,12 +1445,12 @@ Expression Conditional::simplify(int options) const
                 return true_expression.simplify(options);
         }
         
-        if (not simple_cond.base().isA<Condition>())
-            throw SireError::program_bug( QObject::tr(
+        if (not simple_cond.node().isA<Condition>())
+            throw Siren::program_bug( QObject::tr(
                     "How have we lost the condition %1 and got %2 instead???")
                         .arg(cond->toString(), simple_cond.toString()), CODELOC );
         
-        ret.cond = simple_cond.base().asA<Condition>();
+        ret.cond = simple_cond.node().asA<Condition>();
         ret.true_expression = true_expression.simplify(options);
         ret.false_expression = false_expression.simplify(options);
         
@@ -1822,9 +1544,9 @@ bool Conditional::isCompound() const
 }
 
 /** Hash this conditional */
-uint Conditional::hash() const
+uint Conditional::hashCode() const
 {
-    return cond->hash() + true_expression.hash() + false_expression.hash();
+    return qHash( *cond ) + qHash(true_expression) + qHash(false_expression);
 }
 
 /** Return a string representation of this conditional */
@@ -1843,16 +1565,10 @@ QString Conditional::toString() const
     }
 }
 
-/** Return whether or not this is null */
-bool Conditional::isNull() const
-{
-    return condition().alwaysTrue() and true_expression.isZero();
-}
-
 /** Evaluate this expression for the passed values */
 double Conditional::evaluate(const Values &values) const
 {
-    if (cond->evaluateCondition(values))
+    if (cond->asA<Condition>().evaluateCondition(values))
     {
         return true_expression.evaluate(values);
     }
@@ -1865,7 +1581,7 @@ double Conditional::evaluate(const Values &values) const
 /** Evaluate this expresion for the passed values */
 Complex Conditional::evaluate(const ComplexValues &values) const
 {
-    if (cond->evaluateCondition(values))
+    if (cond->asA<Condition>().evaluateCondition(values))
     {
         return true_expression.evaluate(values);
     }
@@ -1882,8 +1598,8 @@ Expression Conditional::substitute(const Identities &identities) const
 
     Expression new_cond = cond->substitute(identities);
     
-    if (new_cond.base().isA<Condition>())
-        ret.cond = new_cond.base().asA<Condition>();
+    if (new_cond.node().isA<Condition>())
+        ret.cond = new_cond.node().asA<Condition>();
     else
     {
         if (new_cond.isConstant())
@@ -1894,14 +1610,14 @@ Expression Conditional::substitute(const Identities &identities) const
                 ret.cond = AlwaysTrue();
         }
         else
-            throw SireError::program_bug( QObject::tr(
+            throw Siren::program_bug( QObject::tr(
                     "How did the condition %1 turn into %2???")
                         .arg(cond->toString(), new_cond.toString()), CODELOC );
     }
 
     if (ret.cond->isConstant())
     {
-        if (ret.cond->alwaysTrue())
+        if (ret.cond->asA<Condition>().alwaysTrue())
         {
             ret.true_expression = true_expression.substitute(identities);
             ret.false_expression = Expression();
@@ -1924,7 +1640,7 @@ Expression Conditional::substitute(const Identities &identities) const
 }
 
 /** Return the symbols used in this expression */
-Symbols Conditional::symbols() const
+QSet<Symbol> Conditional::symbols() const
 {
     if (condition().alwaysTrue())
         return true_expression.symbols();
@@ -1935,30 +1651,15 @@ Symbols Conditional::symbols() const
     }
 }
 
-/** Return the functions used in this expression */
-Functions Conditional::functions() const
-{
-    if (condition().alwaysTrue())
-        return true_expression.functions();
-    else
-    {
-        return condition().functions() + 
-               true_expression.functions() + false_expression.functions();
-    }
-}
-
 /** Return the children of this expression */
-Expressions Conditional::children() const
+QList<Expression> Conditional::children() const
 {
     if (condition().alwaysTrue())
         return true_expression.children();
     else
     {
-        Expressions ret = condition().children();
-        ret.append(true_expression);
-        ret.append(false_expression);
-        
-        return ret;
+        return true_expression.children() + false_expression.children() +
+               cond->children();
     }
 }
 
@@ -1979,57 +1680,3 @@ QList<Factor> Conditional::expand(const Symbol &symbol) const
     
     return ret;
 }
-
-Conditional* Conditional::clone() const
-{
-    return new Conditional(*this);
-}
-
-
-LessOrEqualThan* LessOrEqualThan::clone() const
-{
-    return new LessOrEqualThan(*this);
-}
-
-
-GreaterOrEqualThan* GreaterOrEqualThan::clone() const
-{
-    return new GreaterOrEqualThan(*this);
-}
-
-
-GreaterThan* GreaterThan::clone() const
-{
-    return new GreaterThan(*this);
-}
-
-
-EqualTo* EqualTo::clone() const
-{
-    return new EqualTo(*this);
-}
-
-
-AlwaysTrue* AlwaysTrue::clone() const
-{
-    return new AlwaysTrue(*this);
-}
-
-
-LessThan* LessThan::clone() const
-{
-    return new LessThan(*this);
-}
-
-
-AlwaysFalse* AlwaysFalse::clone() const
-{
-    return new AlwaysFalse(*this);
-}
-
-
-NotEqualTo* NotEqualTo::clone() const
-{
-    return new NotEqualTo(*this);
-}
-

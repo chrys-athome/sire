@@ -29,46 +29,30 @@
 #include "complexvalues.h"
 #include "symbol.h"
 
-#include "SireStream/datastream.h"
+#include "SireMaths/complex.h"
 
-using namespace SireStream;
+#include "Siren/tostring.h"
+#include "Siren/stream.h"
+#include "Siren/streamqt.h"
+
+using namespace Siren;
+using namespace SireMaths;
 using namespace SireCAS;
 
-static const RegisterMetaType<ComplexValues> r_complexvals;
-
-/** Serialise to a binary data stream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ComplexValues &vals)
-{
-    writeHeader(ds, r_complexvals, 1) << vals.vals;
-
-    return ds;
-}
-
-/** Deserialise from a binary data stream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ComplexValues &vals)
-{
-    VersionID v = readHeader(ds, r_complexvals);
-
-    if (v == 1)
-    {
-        ds >> vals.vals;
-    }
-    else
-        throw version_error(v, "1", r_complexvals, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<ComplexValues> r_complexvals;
 
 /** Construct an empty set of values */
-ComplexValues::ComplexValues()
+ComplexValues::ComplexValues() : Implements<ComplexValues,Object>()
 {}
 
 /** Copy constructor */
-ComplexValues::ComplexValues(const ComplexValues &other) : vals(other.vals)
+ComplexValues::ComplexValues(const ComplexValues &other) 
+              : Implements<ComplexValues,Object>(other), vals(other.vals)
 {}
 
 /** Construct from a list of values */
 ComplexValues::ComplexValues(const QList<SymbolComplex> &values)
+              : Implements<ComplexValues,Object>()
 {
     for (QList<SymbolComplex>::const_iterator it = values.begin();
          it != values.end();
@@ -80,6 +64,7 @@ ComplexValues::ComplexValues(const QList<SymbolComplex> &values)
 
 /** Construct from a hash of values indexed by symbol */
 ComplexValues::ComplexValues(const QHash<Symbol,Complex> &values)
+              : Implements<ComplexValues,Object>()
 {
     for (QHash<Symbol,Complex>::const_iterator it = values.begin();
          it != values.end();
@@ -91,6 +76,7 @@ ComplexValues::ComplexValues(const QHash<Symbol,Complex> &values)
 
 /** Construct from Values */
 ComplexValues::ComplexValues(const Values &other)
+              : Implements<ComplexValues,Object>()
 {
     for (QHash<SymbolID,double>::const_iterator it = other.values().begin();
          it != other.values().end();
@@ -102,6 +88,7 @@ ComplexValues::ComplexValues(const Values &other)
 
 /** Construct from the passed values */
 ComplexValues::ComplexValues(const SymbolComplex &val0)
+              : Implements<ComplexValues,Object>()
 {
     add(val0);
 }
@@ -227,6 +214,7 @@ void ComplexValues::add(const SymbolComplex &val0, const SymbolComplex &val1,
 
 /** Construct from the passed values */
 ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1)
+              : Implements<ComplexValues,Object>()
 {
     add(val0,val1);
 }
@@ -234,6 +222,7 @@ ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val
 /** Construct from the passed values */
 ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1,
                              const SymbolComplex &val2)
+              : Implements<ComplexValues,Object>()
 {
     add(val0,val1,val2);
 }
@@ -241,6 +230,7 @@ ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val
 /** Construct from the passed values */
 ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1,
                              const SymbolComplex &val2, const SymbolComplex &val3)
+              : Implements<ComplexValues,Object>()
 {
     add(val0,val1,val2,val3);
 }
@@ -249,6 +239,7 @@ ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val
 ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1,
                              const SymbolComplex &val2, const SymbolComplex &val3,
                              const SymbolComplex &val4)
+              : Implements<ComplexValues,Object>()
 {
     add(val0,val1,val2,val3,val4);
 }
@@ -257,6 +248,7 @@ ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val
 ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val1,
                              const SymbolComplex &val2, const SymbolComplex &val3,
                              const SymbolComplex &val4, const SymbolComplex &val5)
+              : Implements<ComplexValues,Object>()
 {
     add(val0,val1,val2,val3,val4,val5);
 }
@@ -266,6 +258,7 @@ ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val
                              const SymbolComplex &val2, const SymbolComplex &val3,
                              const SymbolComplex &val4, const SymbolComplex &val5,
                              const SymbolComplex &val6)
+              : Implements<ComplexValues,Object>()
 {
     add(val0,val1,val2,val3,val4,val5,val6);
 }
@@ -275,6 +268,7 @@ ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val
                              const SymbolComplex &val2, const SymbolComplex &val3,
                              const SymbolComplex &val4, const SymbolComplex &val5,
                              const SymbolComplex &val6, const SymbolComplex &val7)
+              : Implements<ComplexValues,Object>()
 {
     add(val0,val1,val2,val3,val4,val5,val6,val7);
 }
@@ -285,6 +279,7 @@ ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val
                              const SymbolComplex &val4, const SymbolComplex &val5,
                              const SymbolComplex &val6, const SymbolComplex &val7,
                              const SymbolComplex &val8)
+              : Implements<ComplexValues,Object>()
 {
     add(val0,val1,val2,val3,val4,val5,val6,val7,val8);
 }
@@ -295,6 +290,7 @@ ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val
                              const SymbolComplex &val4, const SymbolComplex &val5,
                              const SymbolComplex &val6, const SymbolComplex &val7,
                              const SymbolComplex &val8, const SymbolComplex &val9)
+              : Implements<ComplexValues,Object>()
 {
     add(val0,val1,val2,val3,val4,val5,val6,val7,val8,val9);
 }
@@ -303,13 +299,63 @@ ComplexValues::ComplexValues(const SymbolComplex &val0, const SymbolComplex &val
 ComplexValues::~ComplexValues()
 {}
 
+ComplexValues& ComplexValues::operator=(const ComplexValues &other)
+{
+    vals = other.vals;
+    return *this;
+}
+
+bool ComplexValues::operator==(const ComplexValues &other) const
+{
+    return vals == other.vals;
+}
+
+bool ComplexValues::operator!=(const ComplexValues &other) const
+{
+    return vals != other.vals;
+}
+
+QString ComplexValues::toString() const
+{
+    return Siren::toString(vals);
+}
+
+uint ComplexValues::hashCode() const
+{
+    return qHash(ComplexValues::typeName()) + vals.count();
+}
+
+void ComplexValues::stream(Siren::Stream &s)
+{
+    s.assertVersion<ComplexValues>(1);
+    
+    Schema schema = s.item<ComplexValues>();
+    
+    schema.data("values") & vals;
+    
+    Object::stream( schema.base() );
+}
+
 /** Return the value of the Symbol with ID 'id', or 0.0 if there is no such symbol */
 Complex ComplexValues::value(const Symbol &sym) const
 {
     return vals.value(sym.ID(),Complex(0));
 }
 
-const char* ComplexValues::typeName()
+/** Add a SymbolComplex to the set of values */
+void ComplexValues::add(const SymbolComplex &val0)
 {
-    return QMetaType::typeName( qMetaTypeId<ComplexValues>() );
+    vals.insert(val0.first, val0.second);
+}
+
+/** Set the Symbol 'symbol' equal to 'value' */
+void ComplexValues::set(const Symbol &symbol, const Complex &value)
+{
+    vals.insert(symbol.ID(), value);
+}
+
+/** Return the hash mapping Symbol IDs to complex values */
+const QHash<SymbolID,Complex>& ComplexValues::values() const
+{
+    return vals;
 }

@@ -289,6 +289,9 @@ public:
     template<class T>
     const T& asA() const;
 
+    template<class T>
+    T& asA();
+
 protected:
     static const Class& createTypeInfo();
 
@@ -803,6 +806,29 @@ const T& Object::asA() const
         this->private_assertCanCast( T::typeName() );
 
         return *(static_cast<const T*>(this));
+    }
+}
+
+/** Cast this object to type 'T'. This raises a Siren::invalid_cast
+    exception if this cast is not possible 
+    
+    \throw Siren::invalid_cast
+*/
+template<class T>
+SIREN_INLINE_TEMPLATE
+T& Object::asA()
+{
+    T *obj = dynamic_cast<T*>(this);
+    
+    if (obj)
+    {
+        return *obj;
+    }
+    else
+    {
+        this->private_assertCanCast( T::typeName() );
+
+        return *(static_cast<T*>(this));
     }
 }
 

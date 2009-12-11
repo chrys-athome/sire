@@ -33,197 +33,59 @@
 #include "expression.h"
 #include "complexvalues.h"
 
-#include "SireStream/datastream.h"
+#include "SireMaths/complex.h"
 
-using namespace SireStream;
+#include "Siren/stream.h"
+
+using namespace Siren;
+using namespace SireMaths;
 using namespace SireCAS;
-
-////////////
-//////////// Register the trig functions
-////////////
-
-static const RegisterMetaType<Cosh> r_cosh;
-static const RegisterMetaType<Sinh> r_sinh;
-static const RegisterMetaType<Tanh> r_tanh;
-static const RegisterMetaType<Csch> r_csch;
-static const RegisterMetaType<Sech> r_sech;
-static const RegisterMetaType<Coth> r_coth;
-
-////////////
-//////////// Stream the trig functions
-////////////
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Cosh &cosh)
-{
-    writeHeader(ds, r_cosh, 1) << static_cast<const SingleFunc&>(cosh);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Cosh &cosh)
-{
-    VersionID v = readHeader(ds, r_cosh);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(cosh);
-    }
-    else
-        throw version_error(v, "1", r_cosh, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Sinh &sinh)
-{
-    writeHeader(ds, r_sinh, 1) << static_cast<const SingleFunc&>(sinh);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Sinh &sinh)
-{
-    VersionID v = readHeader(ds, r_sinh);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(sinh);
-    }
-    else
-        throw version_error(v, "1", r_sinh, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Tanh &tanh)
-{
-    writeHeader(ds, r_tanh, 1) << static_cast<const SingleFunc&>(tanh);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Tanh &tanh)
-{
-    VersionID v = readHeader(ds, r_tanh);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(tanh);
-    }
-    else
-        throw version_error(v, "1", r_tanh, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Csch &csch)
-{
-    writeHeader(ds, r_csch, 1) << static_cast<const SingleFunc&>(csch);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Csch &csch)
-{
-    VersionID v = readHeader(ds, r_csch);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(csch);
-    }
-    else
-        throw version_error(v, "1", r_csch, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Sech &sech)
-{
-    writeHeader(ds, r_sech, 1) << static_cast<const SingleFunc&>(sech);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Sech &sech)
-{
-    VersionID v = readHeader(ds, r_sech);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(sech);
-    }
-    else
-        throw version_error(v, "1", r_sech, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Coth &coth)
-{
-    writeHeader(ds, r_coth, 1) << static_cast<const SingleFunc&>(coth);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Coth &coth)
-{
-    VersionID v = readHeader(ds, r_coth);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(coth);
-    }
-    else
-        throw version_error(v, "1", r_coth, CODELOC);
-
-    return ds;
-}
 
 ////////////
 //////////// Implementation of Hyperbolic Cosine
 ////////////
 
+static const RegisterObject<Cosh> r_cosh;
+
 /** Null constructor */
-Cosh::Cosh() : SingleFunc()
+Cosh::Cosh() : Implements<Cosh,SingleFunc>()
 {}
 
-/** Construct cos(expression) */
-Cosh::Cosh(const Expression &expression) : SingleFunc(expression)
+/** Construct cosh(expression) */
+Cosh::Cosh(const Expression &expression) : Implements<Cosh,SingleFunc>(expression)
 {}
 
-/** Create cos(cos(expression)) */
-Cosh::Cosh(const Cosh &other) : SingleFunc(other)
+/** Copy constructor */
+Cosh::Cosh(const Cosh &other) : Implements<Cosh,SingleFunc>(other)
 {}
 
 /** Destructor */
 Cosh::~Cosh()
 {}
 
-/** Return the magic */
-uint Cosh::magic() const
+Cosh& Cosh::operator=(const Cosh &other)
 {
-    return r_cosh.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool Cosh::operator==(const ExBase &other) const
+bool Cosh::operator==(const Cosh &other) const
 {
-    const Cosh *other_cos = dynamic_cast<const Cosh*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool Cosh::operator!=(const Cosh &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void Cosh::stream(Stream &s)
+{
+    s.assertVersion<Cosh>(1);
+    
+    Schema schema = s.item<Cosh>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -236,6 +98,19 @@ double Cosh::evaluate(const Values &values) const
 Complex Cosh::evaluate(const ComplexValues &values) const
 {
     return SireMaths::cosh( x().evaluate(values) );
+}
+
+Expression Cosh::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return Cosh(arg);
+}
+
+QString Cosh::stringRep() const
+{
+    return QObject::tr("cosh");
 }
 
 /** The differential of cosh(x) = sinh(x) */
@@ -254,35 +129,47 @@ Expression Cosh::integ() const
 //////////// Implementation of hyperbolic sine
 ////////////
 
+static const RegisterObject<Sinh> r_sinh;
+
 /** Null constructor */
-Sinh::Sinh() : SingleFunc()
+Sinh::Sinh() : Implements<Sinh,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-Sinh::Sinh(const Expression &expression) : SingleFunc(expression)
+Sinh::Sinh(const Expression &expression) : Implements<Sinh,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-Sinh::Sinh(const Sinh &other) : SingleFunc(other)
+Sinh::Sinh(const Sinh &other) : Implements<Sinh,SingleFunc>(other)
 {}
 
 /** Destructor */
 Sinh::~Sinh()
 {}
 
-/** Return the magic */
-uint Sinh::magic() const
+Sinh& Sinh::operator=(const Sinh &other)
 {
-    return r_sinh.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool Sinh::operator==(const ExBase &other) const
+bool Sinh::operator==(const Sinh &other) const
 {
-    const Sinh *other_cos = dynamic_cast<const Sinh*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool Sinh::operator!=(const Sinh &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void Sinh::stream(Stream &s)
+{
+    s.assertVersion<Sinh>(1);
+    
+    Schema schema = s.item<Sinh>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -295,6 +182,19 @@ double Sinh::evaluate(const Values &values) const
 Complex Sinh::evaluate(const ComplexValues &values) const
 {
     return SireMaths::sinh( x().evaluate(values) );
+}
+
+Expression Sinh::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return Sinh(arg);
+}
+
+QString Sinh::stringRep() const
+{
+    return QObject::tr("sinh");
 }
 
 /** The differential of sinh(x) = cosh(x) */
@@ -313,35 +213,47 @@ Expression Sinh::integ() const
 //////////// Implementation of hyperbolic tangent
 ////////////
 
+static const RegisterObject<Tanh> r_tanh;
+
 /** Null constructor */
-Tanh::Tanh() : SingleFunc()
+Tanh::Tanh() : Implements<Tanh,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-Tanh::Tanh(const Expression &expression) : SingleFunc(expression)
+Tanh::Tanh(const Expression &expression) : Implements<Tanh,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-Tanh::Tanh(const Tanh &other) : SingleFunc(other)
+Tanh::Tanh(const Tanh &other) : Implements<Tanh,SingleFunc>(other)
 {}
 
 /** Destructor */
 Tanh::~Tanh()
 {}
 
-/** Return the magic */
-uint Tanh::magic() const
+Tanh& Tanh::operator=(const Tanh &other)
 {
-    return r_tanh.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool Tanh::operator==(const ExBase &other) const
+bool Tanh::operator==(const Tanh &other) const
 {
-    const Tanh *other_cos = dynamic_cast<const Tanh*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool Tanh::operator!=(const Tanh &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void Tanh::stream(Stream &s)
+{
+    s.assertVersion<Tanh>(1);
+    
+    Schema schema = s.item<Tanh>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -354,6 +266,19 @@ double Tanh::evaluate(const Values &values) const
 Complex Tanh::evaluate(const ComplexValues &values) const
 {
     return SireMaths::tanh( x().evaluate(values) );
+}
+
+Expression Tanh::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return Tanh(arg);
+}
+
+QString Tanh::stringRep() const
+{
+    return QObject::tr("tanh");
 }
 
 /** The differential of tanh(x) = sech^2(x) */
@@ -372,35 +297,47 @@ Expression Tanh::integ() const
 //////////// Implementation of hyperbolic cosecant
 ////////////
 
+static const RegisterObject<Csch> r_csch;
+
 /** Null constructor */
-Csch::Csch() : SingleFunc()
+Csch::Csch() : Implements<Csch,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-Csch::Csch(const Expression &expression) : SingleFunc(expression)
+Csch::Csch(const Expression &expression) : Implements<Csch,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-Csch::Csch(const Csch &other) : SingleFunc(other)
+Csch::Csch(const Csch &other) : Implements<Csch,SingleFunc>(other)
 {}
 
 /** Destructor */
 Csch::~Csch()
 {}
 
-/** Return the magic */
-uint Csch::magic() const
+Csch& Csch::operator=(const Csch &other)
 {
-    return r_csch.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool Csch::operator==(const ExBase &other) const
+bool Csch::operator==(const Csch &other) const
 {
-    const Csch *other_cos = dynamic_cast<const Csch*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool Csch::operator!=(const Csch &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void Csch::stream(Stream &s)
+{
+    s.assertVersion<Csch>(1);
+    
+    Schema schema = s.item<Csch>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -414,6 +351,19 @@ double Csch::evaluate(const Values &values) const
 Complex Csch::evaluate(const ComplexValues &values) const
 {
     return SireMaths::csch( x().evaluate(values) );
+}
+
+Expression Csch::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return Csch(arg);
+}
+
+QString Csch::stringRep() const
+{
+    return QObject::tr("csch");
 }
 
 /** The differential of csc(x) = -coth(x) csch(x) */
@@ -432,35 +382,47 @@ Expression Csch::integ() const
 //////////// Implementation of hyperbolic secant
 ////////////
 
+static const RegisterObject<Sech> r_sech;
+
 /** Null constructor */
-Sech::Sech() : SingleFunc()
+Sech::Sech() : Implements<Sech,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-Sech::Sech(const Expression &expression) : SingleFunc(expression)
+Sech::Sech(const Expression &expression) : Implements<Sech,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-Sech::Sech(const Sech &other) : SingleFunc(other)
+Sech::Sech(const Sech &other) : Implements<Sech,SingleFunc>(other)
 {}
 
 /** Destructor */
 Sech::~Sech()
 {}
 
-/** Return the magic */
-uint Sech::magic() const
+Sech& Sech::operator=(const Sech &other)
 {
-    return r_sech.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool Sech::operator==(const ExBase &other) const
+bool Sech::operator==(const Sech &other) const
 {
-    const Sech *other_cos = dynamic_cast<const Sech*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool Sech::operator!=(const Sech &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void Sech::stream(Stream &s)
+{
+    s.assertVersion<Sech>(1);
+    
+    Schema schema = s.item<Sech>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -474,6 +436,19 @@ double Sech::evaluate(const Values &values) const
 Complex Sech::evaluate(const ComplexValues &values) const
 {
     return SireMaths::sech( x().evaluate(values) );
+}
+
+Expression Sech::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return Sech(arg);
+}
+
+QString Sech::stringRep() const
+{
+    return QObject::tr("sech");
 }
 
 /** The differential of sec(x) = -sech(x) tanh(x) */
@@ -492,35 +467,47 @@ Expression Sech::integ() const
 //////////// Implementation of hyperbolic cotangent
 ////////////
 
+static const RegisterObject<Coth> r_coth;
+
 /** Null constructor */
-Coth::Coth() : SingleFunc()
+Coth::Coth() : Implements<Coth,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-Coth::Coth(const Expression &expression) : SingleFunc(expression)
+Coth::Coth(const Expression &expression) : Implements<Coth,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-Coth::Coth(const Coth &other) : SingleFunc(other)
+Coth::Coth(const Coth &other) : Implements<Coth,SingleFunc>(other)
 {}
 
 /** Destructor */
 Coth::~Coth()
 {}
 
-/** Return the magic */
-uint Coth::magic() const
+Coth& Coth::operator=(const Coth &other)
 {
-    return r_coth.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool Coth::operator==(const ExBase &other) const
+bool Coth::operator==(const Coth &other) const
 {
-    const Coth *other_cos = dynamic_cast<const Coth*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool Coth::operator!=(const Coth &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void Coth::stream(Stream &s)
+{
+    s.assertVersion<Coth>(1);
+    
+    Schema schema = s.item<Coth>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -536,6 +523,19 @@ Complex Coth::evaluate(const ComplexValues &values) const
     return SireMaths::coth( x().evaluate(values) );
 }
 
+Expression Coth::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return Coth(arg);
+}
+
+QString Coth::stringRep() const
+{
+    return QObject::tr("coth");
+}
+
 /** The differential of coth(x) = -csch^2(x) */
 Expression Coth::diff() const
 {
@@ -547,70 +547,3 @@ Expression Coth::integ() const
 {
     return Ln( Sinh(x()) );
 }
-
-
-const char* Cosh::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Cosh>() );
-}
-
-const char* Sinh::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Sinh>() );
-}
-
-const char* Tanh::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Tanh>() );
-}
-
-const char* Csch::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Csch>() );
-}
-
-const char* Sech::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Sech>() );
-}
-
-const char* Coth::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Coth>() );
-}
-
-Cosh* Cosh::clone() const
-{
-    return new Cosh(*this);
-}
-
-
-Tanh* Tanh::clone() const
-{
-    return new Tanh(*this);
-}
-
-
-Sinh* Sinh::clone() const
-{
-    return new Sinh(*this);
-}
-
-
-Coth* Coth::clone() const
-{
-    return new Coth(*this);
-}
-
-
-Csch* Csch::clone() const
-{
-    return new Csch(*this);
-}
-
-
-Sech* Sech::clone() const
-{
-    return new Sech(*this);
-}
-

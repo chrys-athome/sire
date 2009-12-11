@@ -158,175 +158,133 @@ bool CASNode::isCompound() const
 
 namespace SireCAS
 {
+    Expression SIRECAS_EXPORT operator+(const CASNode &node0, const CASNode &node1)
+    {
+        return Expression(node0) + Expression(node1);
+    }
 
-Expression SIRECAS_EXPORT operator+(const CASNode &node0, const CASNode &node1)
-{
-    return Expression(node0) + Expression(node1);
-}
+    Expression SIRECAS_EXPORT operator+(double val, const CASNode &node)
+    {
+        return Expression(node).add(val);
+    }
 
-Expression SIRECAS_EXPORT operator+(const Expression &ex, const CASNode &node)
-{
-    return ex.add(node);
-}
+    Expression SIRECAS_EXPORT operator+(const CASNode &node, double val)
+    {
+        return Expression(node).add(val);
+    }
 
-Expression SIRECAS_EXPORT operator+(const CASNode &node, const Expression &ex)
-{
-    return ex.add(node);
-}
+    Expression SIRECAS_EXPORT operator+(const Complex &val, const CASNode &node)
+    {
+        return Expression(node).add(val);
+    }
 
-Expression SIRECAS_EXPORT operator+(double val, const CASNode &node)
-{
-    return Expression(node).add(val);
-}
+    Expression SIRECAS_EXPORT operator+(const CASNode &node, const Complex &val)
+    {
+        return Expression(node).add(val);
+    }
 
-Expression SIRECAS_EXPORT operator+(const CASNode &node, double val)
-{
-    return Expression(node).add(val);
-}
+    Expression SIRECAS_EXPORT operator-(const CASNode &node0, const CASNode &node1)
+    {
+        return Expression(node0) - Expression(node1);
+    }
 
-Expression SIRECAS_EXPORT operator+(const Complex &val, const CASNode &node)
-{
-    return Expression(node).add(val);
-}
+    Expression SIRECAS_EXPORT operator-(double val, const CASNode &node)
+    {
+        return Expression(val).subtract(node);
+    }
 
-Expression SIRECAS_EXPORT operator+(const CASNode &node, const Complex &val)
-{
-    return Expression(node).add(val);
-}
+    Expression SIRECAS_EXPORT operator-(const CASNode &node, double val)
+    {
+        return Expression(node).subtract(val);
+    }
 
-Expression SIRECAS_EXPORT operator-(const CASNode &node0, const CASNode &node1)
-{
-    return Expression(node0) - Expression(node1);
-}
+    Expression SIRECAS_EXPORT operator-(const Complex &val, const CASNode &node)
+    {
+        return Expression(val).subtract(node);
+    }
 
-Expression SIRECAS_EXPORT operator-(const Expression &ex, const CASNode &node)
-{
-    return ex.subtract(node);
-}
+    Expression SIRECAS_EXPORT operator-(const CASNode &node, const Complex &val)
+    {
+        return Expression(node).subtract(val);
+    }
 
-Expression SIRECAS_EXPORT operator-(const CASNode &node, const Expression &ex)
-{
-    return Expression(node).subtract(ex);
-}
+    Expression SIRECAS_EXPORT operator*(const CASNode &node0, const CASNode &node1)
+    {
+        return Expression(node0) * Expression(node1);
+    }
 
-Expression SIRECAS_EXPORT operator-(double val, const CASNode &node)
-{
-    return Expression(val).subtract(node);
-}
+    Expression SIRECAS_EXPORT operator*(double val, const CASNode &node)
+    {
+        return Expression(node).multiply(val);
+    }
 
-Expression SIRECAS_EXPORT operator-(const CASNode &node, double val)
-{
-    return Expression(node).subtract(val);
-}
+    Expression SIRECAS_EXPORT operator*(const CASNode &node, double val)
+    {
+        return Expression(node).multiply(val);
+    }
 
-Expression SIRECAS_EXPORT operator-(const Complex &val, const CASNode &node)
-{
-    return Expression(val).subtract(node);
-}
+    Expression SIRECAS_EXPORT operator*(const Complex &val, const CASNode &node)
+    {
+        return Expression(node).multiply(val);
+    }
 
-Expression SIRECAS_EXPORT operator-(const CASNode &node, const Complex &val)
-{
-    return Expression(node).subtract(val);
-}
+    Expression SIRECAS_EXPORT operator*(const CASNode &node, const Complex &val)
+    {
+        return Expression(node).multiply(val);
+    }
 
-Expression SIRECAS_EXPORT operator*(const CASNode &node0, const CASNode &node1)
-{
-    return Expression(node0) * Expression(node1);
-}
+    Expression SIRECAS_EXPORT operator/(const CASNode &node0, const CASNode &node1)
+    {
+        return Expression(node0) / Expression(node1);
+    }
 
-Expression SIRECAS_EXPORT operator*(const Expression &ex, const CASNode &node)
-{
-    return ex.multiply(node);
-}
+    Expression SIRECAS_EXPORT operator/(double val, const CASNode &node)
+    {
+        return Expression(val).divide(node);
+    }
 
-Expression SIRECAS_EXPORT operator*(const CASNode &node, const Expression &ex)
-{
-    return ex.multiply(node);
-}
+    Expression SIRECAS_EXPORT operator/(const CASNode &node, double val)
+    {
+        return Expression(node).divide(val);
+    }
 
-Expression SIRECAS_EXPORT operator*(double val, const CASNode &node)
-{
-    return Expression(node).multiply(val);
-}
+    Expression SIRECAS_EXPORT operator/(const Complex &val, const CASNode &node)
+    {
+        return Expression(val).divide(node);
+    }
 
-Expression SIRECAS_EXPORT operator*(const CASNode &node, double val)
-{
-    return Expression(node).multiply(val);
-}
+    Expression SIRECAS_EXPORT operator/(const CASNode &node, const Complex &val)
+    {
+        return Expression(node).divide(val);
+    }
 
-Expression SIRECAS_EXPORT operator*(const Complex &val, const CASNode &node)
-{
-    return Expression(node).multiply(val);
-}
+    Expression SIRECAS_EXPORT pow(const CASNode &node, int n)
+    {
+        return Expression(node).pow(n);
+    }
 
-Expression SIRECAS_EXPORT operator*(const CASNode &node, const Complex &val)
-{
-    return Expression(node).multiply(val);
-}
+    Expression SIRECAS_EXPORT pow(const CASNode &node, const Rational &n)
+    {
+        return Expression(node).pow(n);
+    }
 
-Expression SIRECAS_EXPORT operator/(const CASNode &node0, const CASNode &node1)
-{
-    return Expression(node0) / Expression(node1);
-}
+    Expression SIRECAS_EXPORT pow(const CASNode &node, double n)
+    {
+        return Expression(node).pow(n);
+    }
 
-Expression SIRECAS_EXPORT operator/(const Expression &ex, const CASNode &node)
-{
-    return ex.divide(node);
-}
+    Expression SIRECAS_EXPORT pow(const CASNode &node, const Complex &n)
+    {
+        return Expression(node).pow(n);
+    }
 
-Expression SIRECAS_EXPORT operator/(const CASNode &node, const Expression &ex)
-{
-    return Expression(node).divide(ex);
-}
+    Expression SIRECAS_EXPORT pow(const CASNode &node, const Expression &n)
+    {
+        return Expression(node).pow(n);
+    }
 
-Expression SIRECAS_EXPORT operator/(double val, const CASNode &node)
-{
-    return Expression(val).divide(node);
-}
-
-Expression SIRECAS_EXPORT operator/(const CASNode &node, double val)
-{
-    return Expression(node).divide(val);
-}
-
-Expression SIRECAS_EXPORT operator/(const Complex &val, const CASNode &node)
-{
-    return Expression(val).divide(node);
-}
-
-Expression SIRECAS_EXPORT operator/(const CASNode &node, const Complex &val)
-{
-    return Expression(node).divide(val);
-}
-
-Expression SIRECAS_EXPORT pow(const CASNode &node, int n)
-{
-    return Expression(node).pow(n);
-}
-
-Expression SIRECAS_EXPORT pow(const CASNode &node, const Rational &n)
-{
-    return Expression(node).pow(n);
-}
-
-Expression SIRECAS_EXPORT pow(const CASNode &node, double n)
-{
-    return Expression(node).pow(n);
-}
-
-Expression SIRECAS_EXPORT pow(const CASNode &node, const Complex &n)
-{
-    return Expression(node).pow(n);
-}
-
-Expression SIRECAS_EXPORT pow(const CASNode &node, const Expression &n)
-{
-    return Expression(node).pow(n);
-}
-
-Expression SIRECAS_EXPORT pow(const CASNode &node, const CASNode &n)
-{
-    return Expression(node).pow(Expression(n));
-}
-
+    Expression SIRECAS_EXPORT pow(const CASNode &node, const CASNode &n)
+    {
+        return Expression(node).pow(Expression(n));
+    }
 }

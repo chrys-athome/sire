@@ -30,50 +30,60 @@
 #include "exp.h"
 #include "powerconstant.h"
 #include "values.h"
+#include "factor.h"
+#include "integrationconstant.h"
 #include "complexvalues.h"
 #include "identities.h"
-#include "integrationconstant.h"
+
+#include "SireCAS/errors.h"
 
 #include "SireMaths/complex.h"
 
-#include "SireError/errors.h"
-#include "SireCAS/errors.h"
-
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
+#include "Siren/errors.h"
 
 #include <QDebug>
 
-using namespace SireStream;
+using namespace Siren;
+using namespace SireMaths;
 using namespace SireCAS;
 
 ////////////
 //////////// Implementation of PowerFunction
 ////////////
 
-static const RegisterMetaType<PowerFunction> r_powerfunc(MAGIC_ONLY,
-                                                         "SireCAS::PowerFunction");
+static const RegisterObject<PowerFunction> r_powerfunc( VIRTUAL_CLASS );
 
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const PowerFunction &powerfunc)
+/** Constructor */
+PowerFunction::PowerFunction() : Extends<PowerFunction,CASNode>()
+{}
+
+/** Destructor */
+PowerFunction::~PowerFunction()
+{}
+
+QString PowerFunction::typeName()
 {
-    writeHeader(ds, r_powerfunc, 1) << static_cast<const ExBase&>(powerfunc);
-
-    return ds;
+    return "SireCAS::PowerFunction";
 }
 
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, PowerFunction &powerfunc)
+QSet<Symbol> PowerFunction::symbols() const
 {
-    VersionID v = readHeader(ds, r_powerfunc);
+    return core().symbols() + power().symbols();
+}
 
-    if (v == 1)
-    {
-        ds >> static_cast<ExBase&>(powerfunc);
-    }
-    else
-        throw version_error(v, "1", r_powerfunc, CODELOC);
+bool PowerFunction::isCompound() const
+{
+    return false;
+}
 
-    return ds;
+void PowerFunction::stream(Siren::Stream &s)
+{
+    s.assertVersion<PowerFunction>(1);
+    
+    Schema schema = s.item<PowerFunction>();
+    
+    CASNode::stream( schema.base() );
 }
 
 /** Return a string representation of this power */
@@ -199,12 +209,12 @@ Expression PowerFunction::integrate(const Symbol &symbol) const
     else if (pwr_is_func and not cre_is_func)
     {
         //what is integral of n^f(x)?
-        return ExBase::integrate(symbol);
+        return CASNode::integrate(symbol);
     }
     else if (cre_is_func and pwr_is_func)
     {
         //what is the integral of f(x)^g(x)?
-        return ExBase::integrate(symbol);
+        return CASNode::integrate(symbol);
     }
     else
         //this expression is constant with respect to symbol
@@ -212,11 +222,9 @@ Expression PowerFunction::integrate(const Symbol &symbol) const
 }
 
 /** Return the child expressions of this Power - this contains the core() and the power() */
-Expressions PowerFunction::children() const
+QList<Expression> PowerFunction::children() const
 {
-    Expressions expressions(core());
-    expressions.append(power());
-    return expressions;
+    return core().children() + power().children();
 }
 
 /** Return whether this is a function of 'symbol' */
@@ -239,9 +247,9 @@ Expression PowerFunction::reduce() const
     Expression ex = core();
     Expression pwr = power();
 
-    if (ex.base().isA<PowerFunction>())
+    if (ex.node().isA<PowerFunction>())
     {
-        const PowerFunction &powerfunc = ex.base().asA<PowerFunction>();
+        const PowerFunction &powerfunc = ex.node().asA<PowerFunction>();
 
         if (ex.factor() == 1)
         {
@@ -255,11 +263,11 @@ Expression PowerFunction::reduce() const
                    Power(powerfunc.core(), pwr * powerfunc.power() ).reduce();
         }
     }
-    else if (ex.base().isA<IntegrationConstant>())
+    else if (ex.node().isA<IntegrationConstant>())
     {
         if (pwr.isConstant())
             //IntegrationConstant ^ const_power  =  IntegrationConstant
-            return ex.base();
+            return ex.node();
         else
             return *this;
     }
@@ -289,6 +297,7 @@ Expression PowerFunction::reduce() const
             else
             {
                 double realpower = pwrval.real();
+                
                 if (SireMaths::areEqual(realpower,1.0))
                 {
                     return ex;
@@ -297,9 +306,9 @@ Expression PowerFunction::reduce() const
                 {
                     return IntegerPower(ex, int(realpower));
                 }
-                else if (SireMaths::isRational(realpower))
+                else if (Rational::isRational(realpower))
                 {
-                    return RationalPower(ex, SireMaths::toRational(realpower));
+                    return RationalPower(ex, Rational(realpower));
                 }
                 else
                 {
@@ -457,64 +466,68 @@ QList<Factor> PowerFunction::expand(const Symbol &symbol) const
 //////////// Implementation of Power
 ////////////
 
-static const RegisterMetaType<Power> r_power;
-
-/** Serialise a Power to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Power &power)
-{
-    writeHeader(ds, r_power, 1)
-          << power.ex << power.pwr << static_cast<const PowerFunction&>(power);
-
-    return ds;
-}
-
-/** Deserialise a Power from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Power &power)
-{
-    VersionID v = readHeader(ds, r_power);
-
-    if (v == 1)
-    {
-        ds >> power.ex >> power.pwr >> static_cast<PowerFunction&>(power);
-    }
-    else
-        throw version_error(v, "1", r_power, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<Power> r_power;
 
 /** Construct a null power */
-Power::Power() : PowerFunction()
+Power::Power() : Implements<Power,PowerFunction>()
 {}
 
 /** Construct a power that represents core^power */
 Power::Power(const Expression &core, const Expression &power)
-      : PowerFunction(), ex(core), pwr(power)
+      : Implements<Power,PowerFunction>(), ex(core), pwr(power)
 {}
 
 /** Copy constructor */
 Power::Power(const Power &other)
-      : PowerFunction(), ex(other.ex), pwr(other.pwr)
+      : Implements<Power,PowerFunction>(other), ex(other.ex), pwr(other.pwr)
 {}
 
 /** Destructor */
 Power::~Power()
 {}
 
-/** Comparison operator */
-bool Power::operator==(const ExBase &other) const
+Power& Power::operator=(const Power &other)
 {
-    const Power *other_power = dynamic_cast<const Power*>(&other);
-
-    return other_power != 0 and typeid(other).name() == typeid(*this).name()
-               and ex == other_power->ex and pwr == other_power->pwr;
+    if (this != &other)
+    {
+        ex = other.ex;
+        pwr = other.pwr;
+        PowerFunction::operator=(other);
+    }
+    
+    return *this;
 }
 
-/** Return a hash for this power */
-uint Power::hash() const
+bool Power::operator==(const Power &other) const
 {
-    return ( r_power.magicID() << 16 ) | ( ex.hash() & 0x0000FF00 )
-                | ( pwr.hash() & 0x000000FF );
+    return ex == other.ex and pwr == other.pwr;
+}
+
+bool Power::operator!=(const Power &other) const
+{
+    return not Power::operator==(other);
+}
+
+uint Power::hashCode() const
+{
+    return qHash(this->what()) + qHash(ex) + qHash(pwr);
+}
+
+void Power::stream(Stream &s)
+{
+    s.assertVersion<Power>(1);
+    
+    Schema schema = s.item<Power>();
+    
+    schema.data("core") & ex;
+    schema.data("power") & ex;
+    
+    PowerFunction::stream( schema.base() );
+}
+
+bool Power::isCompound() const
+{
+    return pwr.isCompound();
 }
 
 /** Evaluate this power - this could be dodgy for negative bases with
@@ -551,14 +564,3 @@ Complex Power::evaluate(const ComplexValues &values) const
             return SireMaths::pow(val, pwrval);
     }
 }
-
-const char* Power::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Power>() );
-}
-
-Power* Power::clone() const
-{
-    return new Power(*this);
-}
-

@@ -30,51 +30,31 @@
 #include "values.h"
 #include "complexvalues.h"
 #include "identities.h"
+#include "factor.h"
+
+#include "SireMaths/complex.h"
 
 #include "SireCAS/errors.h"
 
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
 
-using namespace SireStream;
+using namespace Siren;
 using namespace SireCAS;
 
-//register the pure virtual base class
-static const RegisterMetaType<SingleFunc> r_singlefunc(MAGIC_ONLY, "SireCAS::SingleFunc");
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const SingleFunc &func)
-{
-    writeHeader(ds, r_singlefunc, 1) << func.ex << static_cast<const ExBase&>(func);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, SingleFunc &func)
-{
-    VersionID v = readHeader(ds, r_singlefunc);
-
-    if (v == 1)
-    {
-        ds >> func.ex >> static_cast<ExBase&>(func);
-    }
-    else
-        throw version_error(v, "1", r_singlefunc, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<SingleFunc> r_singlefunc(VIRTUAL_CLASS);
 
 /** Null constructor */
-SingleFunc::SingleFunc() : ExBase()
+SingleFunc::SingleFunc() : Extends<SingleFunc,CASNode>()
 {}
 
 /** Construct a function that operates on the expression 'expression' */
-SingleFunc::SingleFunc(const Expression &expression) : ExBase(), ex(expression)
+SingleFunc::SingleFunc(const Expression &expression) 
+           : Extends<SingleFunc,CASNode>(), ex(expression)
 {}
 
 /** Copy constructor */
 SingleFunc::SingleFunc(const SingleFunc &other)
-           : ExBase(), ex(other.ex)
+           : Extends<SingleFunc,CASNode>(other), ex(other.ex)
 {}
 
 /** Destructor */
@@ -84,10 +64,23 @@ SingleFunc::~SingleFunc()
 /** Copy assignment */
 SingleFunc& SingleFunc::operator=(const SingleFunc &other)
 {
-    ExBase::operator=(other);
-    ex = other.ex;
-
+    if (this != &other)
+    {
+        CASNode::operator=(other);
+        ex = other.ex;
+    }
+    
     return *this;
+}
+
+bool SingleFunc::operator==(const SingleFunc &other) const
+{
+    return ex == other.ex;
+}
+
+bool SingleFunc::operator!=(const SingleFunc &other) const
+{
+    return ex != other.ex;
 }
 
 /** Return the conjugate of this function */
@@ -123,7 +116,23 @@ bool SingleFunc::isCompound() const
 /** Return a string representation of this function */
 QString SingleFunc::toString() const
 {
-    return QString("%1(%2)").arg(stringRep(), ex.toString());
+    return QString("%1( %2 )").arg(stringRep(), ex.toString());
+}
+
+uint SingleFunc::hashCode() const
+{
+    return qHash(stringRep()) + qHash(ex);
+}
+
+void SingleFunc::stream(Stream &s)
+{
+    s.assertVersion<SingleFunc>(1);
+    
+    Schema schema = s.item<SingleFunc>();
+    
+    schema.data("argument") & ex;
+    
+    CASNode::stream( schema.base() );
 }
 
 /** Substitute into this expression */
@@ -133,21 +142,18 @@ Expression SingleFunc::substitute(const Identities &identities) const
 }
 
 /** Return the symbols used in this function */
-Symbols SingleFunc::symbols() const
+QSet<Symbol> SingleFunc::symbols() const
 {
     return ex.symbols();
 }
 
-/** Return the functions used in this function */
-Functions SingleFunc::functions() const
-{
-    return ex.functions();
-}
-
 /** Return the child expression of this function */
-Expressions SingleFunc::children() const
+QList<Expression> SingleFunc::children() const
 {
-    return Expressions(ex);
+    QList<Expression> expressions;
+    expressions.append(ex);
+
+    return expressions;
 }
 
 /** Return the differential of this function with respect to 'symbol' */
@@ -202,4 +208,17 @@ QList<Factor> SingleFunc::expand(const Symbol &symbol) const
     ret.append( Factor(symbol, *this, 0) );
     
     return ret;
+}
+
+/** Return the single argument to this function */
+const Expression& SingleFunc::argument() const
+{
+    return ex;
+}
+
+/** Synonym for argument() - useful when doing calculus, and viewing
+    the function as being a pure f(x) */
+const Expression& SingleFunc::x() const
+{
+    return ex;
 }

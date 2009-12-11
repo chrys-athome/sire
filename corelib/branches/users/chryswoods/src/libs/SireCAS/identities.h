@@ -33,19 +33,9 @@
 #include <QSet>
 #include <QList>
 
-#include "symbolexpression.h"
-#include "functionsignature.h"
+#include "symbol.h"
 
 SIRE_BEGIN_HEADER
-
-namespace SireCAS
-{
-class Identities;
-}
-
-class QDataStream;
-QDataStream& operator<<(QDataStream&, const SireCAS::Identities&);
-QDataStream& operator>>(QDataStream&, SireCAS::Identities&);
 
 namespace SireCAS
 {
@@ -58,12 +48,8 @@ namespace SireCAS
 
     @author Christopher Woods
 */
-class SIRECAS_EXPORT Identities
+class SIRECAS_EXPORT Identities : public Siren::Implements<Identities,Siren::Object>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Identities&);
-friend QDataStream& ::operator>>(QDataStream&, Identities&);
-
 public:
     Identities();
     Identities(const QList<SymbolExpression> &expressions);
@@ -103,12 +89,14 @@ public:
 
     ~Identities();
 
-    static const char* typeName();
+    Identities& operator=(const Identities &other);
     
-    const char* what() const
-    {
-        return Identities::typeName();
-    }
+    bool operator==(const Identities &other) const;
+    bool operator!=(const Identities &other) const;
+
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     void add(const SymbolExpression &symex0);
     void add(const SymbolExpression &symex0, const SymbolExpression &symex1);
@@ -144,30 +132,12 @@ public:
     bool contains(const Symbol &sym) const;
     Expression expression(const Symbol &sym) const;
 
-    bool contains(const Function &func) const;
-    Function function(const Function &func) const;
-
     void set( const Symbol &symbol, const Expression &expression );
 
 private:
-
     /** Hash mapping a symbol to an expression */
     QHash<SymbolID, Expression> idhash;
-
-    /** Hash mapping the signatures of functions to the actual function
-        stored in this collection of identities */
-    QHash<FunctionSignature, Expression> funchash;
 };
-
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
-/** Add the SymbolExpression to this set of identities */
-inline void Identities::add(const SymbolExpression &symex0)
-{
-    set( symex0.symbol(), symex0.expression() );
-}
-
-#endif //SIRE_SKIP_INLINE_FUNCTIONS
 
 }
 

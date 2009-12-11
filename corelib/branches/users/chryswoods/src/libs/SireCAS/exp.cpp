@@ -29,72 +29,61 @@
 #include "exp.h"
 #include "values.h"
 #include "complexvalues.h"
-#include "integrationconstant.h"
 
-#include "SireStream/datastream.h"
+#include "SireMaths/complex.h"
 
-using namespace SireStream;
+#include "Siren/stream.h"
+
+using namespace Siren;
+using namespace SireMaths;
 using namespace SireCAS;
 
 /////////////
 ///////////// Implementation of Exp
 /////////////
 
-static const RegisterMetaType<Exp> r_exp;
-
-/** Serialise an Exp to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Exp &exp)
-{
-    writeHeader(ds, r_exp, 1)
-          << exp.pwr << static_cast<const PowerFunction&>(exp);
-
-    return ds;
-}
-
-/** Deserialise an Exp from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Exp &exp)
-{
-    VersionID v = readHeader(ds, r_exp);
-
-    if (v == 1)
-    {
-        ds >> exp.pwr >> static_cast<PowerFunction&>(exp);
-    }
-    else
-        throw version_error(v, "1", r_exp, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<Exp> r_exp;
 
 /** Construct an empty Exp (e^0) */
-Exp::Exp() : PowerFunction()
+Exp::Exp() : Implements<Exp,PowerFunction>()
 {}
 
 /** Construct e^power */
-Exp::Exp(const Expression &power) : PowerFunction(), pwr(power)
+Exp::Exp(const Expression &power) : Implements<Exp,PowerFunction>(), pwr(power)
 {}
 
 /** Copy constructor */
-Exp::Exp(const Exp &other) : PowerFunction(), pwr(other.pwr)
+Exp::Exp(const Exp &other) : Implements<Exp,PowerFunction>(other), pwr(other.pwr)
 {}
 
 /** Destructor */
 Exp::~Exp()
 {}
 
-/** Comparison operator */
-bool Exp::operator==(const ExBase &other) const
+Exp& Exp::operator=(const Exp &other)
 {
-    const Exp *other_exp = dynamic_cast<const Exp*>(&other);
-
-    return other_exp != 0 and typeid(other).name() == typeid(*this).name()
-             and pwr == other_exp->pwr;
+    if (this != &other)
+    {
+        pwr = other.pwr;
+        PowerFunction::operator=(other);
+    }
+    
+    return *this;
 }
 
-/** Return a hash of this Exp function */
-uint Exp::hash() const
+bool Exp::operator==(const Exp &other) const
 {
-    return ( r_exp.magicID() << 16) | (pwr.hash() & 0x0000FFFF);
+    return pwr == other.pwr and PowerFunction::operator==(other);
+}
+
+bool Exp::operator!=(const Exp &other) const
+{
+    return not Exp::operator==(other);
+}
+
+uint Exp::hashCode() const
+{
+   return qHash(Exp::typeName()) + pwr.hashCode(); 
 }
 
 /** Return a string representation of this function */
@@ -103,7 +92,18 @@ QString Exp::toString() const
     if (pwr.isZero())
         return "1";
     else
-        return QString("exp(%1)").arg(pwr.toString());
+        return QObject::tr("exp( %1 )").arg(pwr.toString());
+}
+
+void Exp::stream(Stream &s)
+{
+    s.assertVersion<Exp>(1);
+    
+    Schema schema = s.item<Exp>();
+    
+    schema.data("power") & pwr;
+    
+    PowerFunction::stream( schema.base() );
 }
 
 /** Evaluate this expression at 'values' */
@@ -143,68 +143,51 @@ Expression Exp::power() const
     return pwr;
 }
 
-const char* Exp::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Exp>() );
-}
-
 /////////////
 ///////////// Implementation of Ln
 /////////////
 
-static const RegisterMetaType<Ln> r_ln;
-
-/** Serialise to a binary datastream */
-QDataStream SIRE_EXPORT &operator<<(QDataStream &ds, const Ln &ln)
-{
-    writeHeader(ds, r_ln, 1) << static_cast<const SingleFunc&>(ln);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRE_EXPORT &operator>>(QDataStream &ds, Ln &ln)
-{
-    VersionID v = readHeader(ds, r_ln);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(ln);
-    }
-    else
-        throw version_error(v, "1", r_ln, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<Ln> r_ln;
 
 /** Construct an empty ln (ln(0)) */
-Ln::Ln() : SingleFunc()
+Ln::Ln() : Implements<Ln,SingleFunc>()
 {}
 
 /** Construct ln(expression) */
-Ln::Ln(const Expression &expression) : SingleFunc(expression)
+Ln::Ln(const Expression &expression) : Implements<Ln,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-Ln::Ln(const Ln &other) : SingleFunc(other)
+Ln::Ln(const Ln &other) : Implements<Ln,SingleFunc>(other)
 {}
 
 /** Destructor */
 Ln::~Ln()
 {}
 
-/** Comparison operator */
-bool Ln::operator==(const ExBase &other) const
+Ln& Ln::operator=(const Ln &other)
 {
-    const Ln *other_ln = dynamic_cast<const Ln*>(&other);
-    return other_ln != 0 and typeid(other).name() == typeid(*this).name()
-             and this->argument() == other_ln->argument();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Return the magic for this function */
-uint Ln::magic() const
+bool Ln::operator==(const Ln &other) const
 {
-    return r_ln.magicID();
+    return Ln::operator==(other);
+}
+
+bool Ln::operator!=(const Ln &other) const
+{
+    return Ln::operator!=(other);
+}
+
+void Ln::stream(Stream &s)
+{
+    s.assertVersion<Ln>(1);
+    
+    Schema schema = s.item<Ln>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -219,6 +202,19 @@ Complex Ln::evaluate(const ComplexValues &values) const
     return SireMaths::log( x().evaluate(values) );
 }
 
+Expression Ln::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return Ln(arg);
+}
+
+QString Ln::stringRep() const
+{
+    return QObject::tr("ln");
+}
+
 /** differential of ln(x) = 1/x */
 Expression Ln::diff() const
 {
@@ -231,20 +227,3 @@ Expression Ln::integ() const
 {
     return x()*Ln(x()) - x();
 }
-
-const char* Ln::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Ln>() );
-}
-
-Ln* Ln::clone() const
-{
-    return new Ln(*this);
-}
-
-
-Exp* Exp::clone() const
-{
-    return new Exp(*this);
-}
-

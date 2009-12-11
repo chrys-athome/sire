@@ -30,38 +30,38 @@
 #define SIRECAS_SYMBOL_H
 
 #include <QString>
+#include <QPair>
 
-#include "exbase.h"
-#include "symbolvalue.h"
-#include "symbolcomplex.h"
-#include "symbolexpression.h"
+#include "casnode.h"
 
 SIRE_BEGIN_HEADER
 
-namespace SireCAS
+namespace SireMaths
 {
-class Symbol;
+class Complex;
 }
 
-QDataStream& operator<<(QDataStream&, const SireCAS::Symbol&);
-QDataStream& operator>>(QDataStream&, SireCAS::Symbol&);
-
 namespace SireCAS
 {
 
-class Symbols;
+class ComplexValues;
+class Identities;
 class Values;
+class Factor;
+
+class Expression;
+
+typedef quint32 SymbolID;
+typedef QPair<SymbolID,double> SymbolValue;
+typedef QPair<SymbolID,SireMaths::Complex> SymbolComplex;
+typedef QPair<SymbolID,Expression> SymbolExpression;
 
 /** This class represents an algebraic symbol in the equation (e.g. 'x' or 'y')
 
     @author Christopher Woods
 */
-class SIRECAS_EXPORT Symbol : public ExBase
+class SIRECAS_EXPORT Symbol : public Siren::Implements<Symbol,CASNode>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Symbol&);
-friend QDataStream& ::operator>>(QDataStream&, Symbol&);
-
 public:
     Symbol();
     Symbol(SymbolID symid);
@@ -74,36 +74,34 @@ public:
     Symbol& operator=(const Symbol &other);
     Symbol& operator=(SymbolID symid);
 
-    /** Return the unique ID number of the symbol */
-    SymbolID ID() const
-    {
-        return id;
-    }
+    bool operator<(const Symbol &other) const;
+    bool operator>(const Symbol &other) const;
+    bool operator<=(const Symbol &other) const;
+    bool operator>=(const Symbol &other) const;
 
-    /** Convienient operator used to combine a symbol with a value */
-    SymbolValue operator==(double val) const
-    {
-        return SymbolValue(ID(), val);
-    }
+    bool operator==(const Symbol &other) const;
+    bool operator!=(const Symbol &other) const;
 
-    /** Convienient operator used to combine a symbol with a value */
-    SymbolValue operator==(int val) const
-    {
-        return SymbolValue(ID(), val);
-    }
+    SymbolValue operator==(double value) const;
+    SymbolValue operator==(int value) const;
 
-    /** Convienient operator used to combine a symbol with a Complex */
-    SymbolComplex operator==(const Complex &val) const
-    {
-        return SymbolComplex(ID(), val);
-    }
+    SymbolComplex operator==(const SireMaths::Complex &value) const;
 
-    /** Convieient operator used to combine a symbol with an equivalent
-        expression */
-    SymbolExpression operator==(const Expression &ex) const
-    {
-        return SymbolExpression(*this, ex);
-    }
+    SymbolExpression operator==(const Expression &expression) const;
+
+    SymbolID ID() const;
+
+    //////////////////////////////
+    // Implements Siren::Object //
+    //////////////////////////////
+    
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
+    
+    /////////////////////////////////
+    // Implements SireCAS::CASNode //
+    /////////////////////////////////
 
     Expression differentiate(const Symbol &symbol) const;
     Expression integrate(const Symbol &symbol) const;
@@ -111,41 +109,17 @@ public:
     bool isFunction(const Symbol&) const;
     bool isConstant() const;
 
-    bool operator==(const ExBase &other) const;
-
-    bool operator<(const Symbol &other) const;
-    bool operator>(const Symbol &other) const;
-    bool operator<=(const Symbol &other) const;
-    bool operator>=(const Symbol &other) const;
-
-    uint hash() const;
-
-    static const char* typeName();
-
-    const char* what() const
-    {
-        return Symbol::typeName();
-    }
-
-    Symbol* clone() const;
-
-    QString toString() const;
-
-    bool isNull() const;
-
     double evaluate(const Values &values) const;
-    Complex evaluate(const ComplexValues &values) const;
+    SireMaths::Complex evaluate(const ComplexValues &values) const;
 
     Expression substitute(const Identities &identities) const;
 
-    Symbols symbols() const;
-    Functions functions() const;
-    Expressions children() const;
+    QSet<Symbol> symbols() const;
+    QList<Expression> children() const;
 
     QList<Factor> expand(const Symbol &symbol) const;
 
-protected:
-
+private:
     static SymbolID getNewID(const QString &symbol);
     static QString getName(SymbolID symid);
 
@@ -156,64 +130,11 @@ protected:
     QString stringrep;
 };
 
-/** This is a small class that can hold the factor and power of a symbol
-
-    @author Christopher Woods
-*/
-class SIRECAS_EXPORT Factor
-{
-public:
-    Factor();
-    
-    Factor(const Symbol &symbol, double factor, double power);
-    Factor(const Symbol &symbol,
-           const Expression &factor, const Expression &power);
-    
-    Factor(const Factor &other);
-    
-    ~Factor();
-    
-    Factor& operator=(const Factor &other);
-    
-    bool operator==(const Factor &other) const;
-    bool operator!=(const Factor &other) const;
-    
-    QString toString() const;
-    
-    const Symbol& symbol() const
-    {
-        return s;
-    }
-    
-    const Expression& factor() const
-    {
-        return f;
-    }
-    
-    const Expression& power() const
-    {
-        return p;
-    }
-
-private:
-    /** The symbol for the factor */
-    Symbol s;
-
-    /** The factor and power */
-    Expression f, p;
-};
-
-inline uint qHash(const Symbol &symbol)
-{
-    return symbol.hash();
-}
-
 }
 
 Q_DECLARE_METATYPE(SireCAS::Symbol)
 
 SIRE_EXPOSE_CLASS( SireCAS::Symbol )
-SIRE_EXPOSE_CLASS( SireCAS::Factor )
 
 SIRE_END_HEADER
 

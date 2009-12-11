@@ -35,30 +35,17 @@ SIRE_BEGIN_HEADER
 
 namespace SireCAS
 {
-class Abs;
-}
 
-QDataStream& operator<<(QDataStream&, const SireCAS::Abs&);
-QDataStream& operator>>(QDataStream&, SireCAS::Abs&);
+/** This is the absolute value, abs.
 
-namespace SireCAS
-{
+    abs(x) returns x if x >= 0, else -x
 
-/**
-This is the absolute value, abs.
+    For complex values, this returns abs(x) + abs(y) i
 
-abs(x) returns x if x >= 0, else -x
-
-For complex values, this returns abs(x) + abs(y) i
-
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIRECAS_EXPORT Abs : public SingleFunc
+class SIRECAS_EXPORT Abs : public Siren::Implements<Abs,SingleFunc>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Abs&);
-friend QDataStream& ::operator>>(QDataStream&, Abs&);
-
 public:
     Abs();
     Abs(const Expression &power);
@@ -67,36 +54,19 @@ public:
 
     ~Abs();
 
-    bool operator==(const ExBase &other) const;
+    Abs& operator=(const Abs &other);
+    
+    bool operator==(const Abs &other) const;
+    bool operator!=(const Abs &other) const;
 
-    static const char* typeName();
-
-    const char* what() const
-    {
-        return Abs::typeName();
-    }
-
-    Abs* clone() const;
+    void stream(Siren::Stream &s);
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
 
 protected:
-
-    Expression functionOf(const Expression &arg) const
-    {
-        if (arg == argument())
-            return Expression(*this);
-        else
-            return Expression(Abs(arg));
-    }
-
-    QString stringRep() const
-    {
-        return "abs";
-    }
-
-    uint magic() const;
+    Expression functionOf(const Expression &arg) const;
+    QString stringRep() const;
 
     Expression diff() const;
     Expression integ() const;

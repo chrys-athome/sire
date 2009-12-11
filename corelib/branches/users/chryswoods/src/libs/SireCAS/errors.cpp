@@ -29,51 +29,128 @@
 #include "SireCAS/errors.h"
 
 using namespace SireCAS;
+using namespace Siren;
 
-const char* unregistered_expression::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<unregistered_expression>() );
-}
+//////////
+////////// Implementation of unavailable_differential
+//////////
 
-const char* unavailable_differential::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<unavailable_differential>() );
-}
+static const RegisterObject<unavailable_differential> r_unavailable_differential;
 
-const char* unavailable_integral::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<unavailable_integral>() );
-}
+unavailable_differential::unavailable_differential() 
+                 : ImplementsException<unavailable_differential, exception>()
+{}
 
-const char* rearrangement_error::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<rearrangement_error>() );
-}
+unavailable_differential::unavailable_differential(QString err, QString place)
+                 : ImplementsException<unavailable_differential,exception>(err, place)
+{}
 
-const char* invalid_symbol::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<invalid_symbol>() );
-}
+unavailable_differential::unavailable_differential(const unavailable_differential &other)
+                 : ImplementsException<unavailable_differential,exception>(other)
+{}
 
-const char* missing_symbol::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<missing_symbol>() );
-}
+unavailable_differential::~unavailable_differential() throw()
+{}
 
-static const
-RegisterMetaType<unregistered_expression> r_unreg;
+//////////
+////////// Implementation of unavailable_integral
+//////////
 
-static const
-RegisterMetaType<unavailable_differential> r_diff;
+static const RegisterObject<unavailable_integral> r_unavailable_integral;
 
-static const
-RegisterMetaType<unavailable_integral> r_int;
+unavailable_integral::unavailable_integral() 
+             : ImplementsException<unavailable_integral, exception>()
+{}
 
-static const
-RegisterMetaType<rearrangement_error> r_rearrange;
+unavailable_integral::unavailable_integral(QString err, QString place)
+                 : ImplementsException<unavailable_integral,exception>(err, place)
+{}
 
-static const
-RegisterMetaType<invalid_symbol> r_invalid_symbol;
+unavailable_integral::unavailable_integral(const unavailable_integral &other)
+                 : ImplementsException<unavailable_integral,exception>(other)
+{}
 
-static const
-RegisterMetaType<missing_symbol> r_missing_symbol;
+unavailable_integral::~unavailable_integral() throw()
+{}
+
+//////////
+////////// Implementation of unregistered_expression
+//////////
+
+static const RegisterObject<unregistered_expression> r_unregistered_expression;
+
+unregistered_expression::unregistered_expression() 
+                   : ImplementsException<unregistered_expression, exception>()
+{}
+
+unregistered_expression::unregistered_expression(QString err, QString place)
+                 : ImplementsException<unregistered_expression,exception>(err, place)
+{}
+
+unregistered_expression::unregistered_expression(const unregistered_expression &other)
+                 : ImplementsException<unregistered_expression,exception>(other)
+{}
+
+unregistered_expression::~unregistered_expression() throw()
+{}
+
+//////////
+////////// Implementation of invalid_symbol
+//////////
+
+static const RegisterObject<invalid_symbol> r_invalid_symbol;
+
+invalid_symbol::invalid_symbol() : ImplementsException<invalid_symbol, exception>()
+{}
+
+invalid_symbol::invalid_symbol(QString err, QString place)
+                 : ImplementsException<invalid_symbol,exception>(err, place)
+{}
+
+invalid_symbol::invalid_symbol(const invalid_symbol &other)
+                 : ImplementsException<invalid_symbol,exception>(other)
+{}
+
+invalid_symbol::~invalid_symbol() throw()
+{}
+
+//////////
+////////// Implementation of missing_symbol
+//////////
+
+static const RegisterObject<missing_symbol> r_missing_symbol;
+
+missing_symbol::missing_symbol() : ImplementsException<missing_symbol, exception>()
+{}
+
+missing_symbol::missing_symbol(QString err, QString place)
+                 : ImplementsException<missing_symbol,exception>(err, place)
+{}
+
+missing_symbol::missing_symbol(const missing_symbol &other)
+                 : ImplementsException<missing_symbol,exception>(other)
+{}
+
+missing_symbol::~missing_symbol() throw()
+{}
+
+//////////
+////////// Implementation of rearrangement_error
+//////////
+
+static const RegisterObject<rearrangement_error> r_rearrangement_error;
+
+rearrangement_error::rearrangement_error() 
+                 : ImplementsException<rearrangement_error, exception>()
+{}
+
+rearrangement_error::rearrangement_error(QString err, QString place)
+                 : ImplementsException<rearrangement_error,exception>(err, place)
+{}
+
+rearrangement_error::rearrangement_error(const rearrangement_error &other)
+                 : ImplementsException<rearrangement_error,exception>(other)
+{}
+
+rearrangement_error::~rearrangement_error() throw()
+{}

@@ -33,199 +33,60 @@
 #include "expression.h"
 #include "complexvalues.h"
 
+#include "SireMaths/complex.h"
 #include "SireMaths/errors.h"
 
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
 
-using namespace SireStream;
+using namespace Siren;
+using namespace SireMaths;
 using namespace SireCAS;
-
-////////////
-//////////// Register the functions
-////////////
-
-static const RegisterMetaType<ArcCos> r_arccos;
-static const RegisterMetaType<ArcSin> r_arcsin;
-static const RegisterMetaType<ArcTan> r_arctan;
-static const RegisterMetaType<ArcCsc> r_arccsc;
-static const RegisterMetaType<ArcSec> r_arcsec;
-static const RegisterMetaType<ArcCot> r_arccot;
-
-////////////
-//////////// Stream the functions
-////////////
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcCos &arccos)
-{
-    writeHeader(ds, r_arccos, 1) << static_cast<const SingleFunc&>(arccos);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcCos &arccos)
-{
-    VersionID v = readHeader(ds, r_arccos);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(arccos);
-    }
-    else
-        throw version_error(v, "1", r_arccos, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcSin &arcsin)
-{
-    writeHeader(ds, r_arcsin, 1) << static_cast<const SingleFunc&>(arcsin);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcSin &arcsin)
-{
-    VersionID v = readHeader(ds, r_arcsin);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(arcsin);
-    }
-    else
-        throw version_error(v, "1", r_arcsin, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcTan &arctan)
-{
-    writeHeader(ds, r_arctan, 1) << static_cast<const SingleFunc&>(arctan);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcTan &arctan)
-{
-    VersionID v = readHeader(ds, r_arctan);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(arctan);
-    }
-    else
-        throw version_error(v, "1", r_arctan, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcCsc &arccsc)
-{
-    writeHeader(ds, r_arccsc, 1) << static_cast<const SingleFunc&>(arccsc);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcCsc &arccsc)
-{
-    VersionID v = readHeader(ds, r_arccsc);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(arccsc);
-    }
-    else
-        throw version_error(v, "1", r_arccsc, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcSec &arcsec)
-{
-    writeHeader(ds, r_arcsec, 1) << static_cast<const SingleFunc&>(arcsec);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcSec &arcsec)
-{
-    VersionID v = readHeader(ds, r_arcsec);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(arcsec);
-    }
-    else
-        throw version_error(v, "1", r_arcsec, CODELOC);
-
-    return ds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const ArcCot &arccot)
-{
-    writeHeader(ds, r_arccot, 1) << static_cast<const SingleFunc&>(arccot);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, ArcCot &arccot)
-{
-    VersionID v = readHeader(ds, r_arccot);
-
-    if (v == 1)
-    {
-        ds >> static_cast<SingleFunc&>(arccot);
-    }
-    else
-        throw version_error(v, "1", r_arccot, CODELOC);
-
-    return ds;
-}
 
 ////////////
 //////////// Implementation of Inverse-cosine
 ////////////
 
+static const RegisterObject<ArcCos> r_arccos;
+
 /** Null constructor */
-ArcCos::ArcCos() : SingleFunc()
+ArcCos::ArcCos() : Implements<ArcCos,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-ArcCos::ArcCos(const Expression &expression) : SingleFunc(expression)
+ArcCos::ArcCos(const Expression &expression) : Implements<ArcCos,SingleFunc>(expression)
 {}
 
 /** Create cos(cos(expression)) */
-ArcCos::ArcCos(const ArcCos &other) : SingleFunc(other)
+ArcCos::ArcCos(const ArcCos &other) : Implements<ArcCos,SingleFunc>(other)
 {}
 
 /** Destructor */
 ArcCos::~ArcCos()
 {}
 
-/** Return the magic */
-uint ArcCos::magic() const
+ArcCos& ArcCos::operator=(const ArcCos &other)
 {
-    return r_arccos.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool ArcCos::operator==(const ExBase &other) const
+bool ArcCos::operator==(const ArcCos &other) const
 {
-    const ArcCos *other_cos = dynamic_cast<const ArcCos*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool ArcCos::operator!=(const ArcCos &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void ArcCos::stream(Stream &s)
+{
+    s.assertVersion<ArcCos>(1);
+    
+    Schema schema = s.item<ArcCos>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -247,6 +108,19 @@ Complex ArcCos::evaluate(const ComplexValues &values) const
     return SireMaths::arccos( x().evaluate(values) );
 }
 
+Expression ArcCos::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return ArcCos(arg);
+}
+
+QString ArcCos::stringRep() const
+{
+    return QObject::tr("arccos");
+}
+
 /** The differential of acos(x) = -1 / sqrt(1-x^2) */
 Expression ArcCos::diff() const
 {
@@ -263,35 +137,47 @@ Expression ArcCos::integ() const
 //////////// Implementation of Inverse-sine
 ////////////
 
+static const RegisterObject<ArcSin> r_arcsin;
+
 /** Null constructor */
-ArcSin::ArcSin() : SingleFunc()
+ArcSin::ArcSin() : Implements<ArcSin,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-ArcSin::ArcSin(const Expression &expression) : SingleFunc(expression)
+ArcSin::ArcSin(const Expression &expression) : Implements<ArcSin,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-ArcSin::ArcSin(const ArcSin &other) : SingleFunc(other)
+ArcSin::ArcSin(const ArcSin &other) : Implements<ArcSin,SingleFunc>(other)
 {}
 
 /** Destructor */
 ArcSin::~ArcSin()
 {}
 
-/** Return the magic */
-uint ArcSin::magic() const
+ArcSin& ArcSin::operator=(const ArcSin &other)
 {
-    return r_arcsin.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool ArcSin::operator==(const ExBase &other) const
+bool ArcSin::operator==(const ArcSin &other) const
 {
-    const ArcSin *other_cos = dynamic_cast<const ArcSin*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool ArcSin::operator!=(const ArcSin &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void ArcSin::stream(Stream &s)
+{
+    s.assertVersion<ArcSin>(1);
+    
+    Schema schema = s.item<ArcSin>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -313,6 +199,19 @@ Complex ArcSin::evaluate(const ComplexValues &values) const
     return SireMaths::arcsin( x().evaluate(values) );
 }
 
+Expression ArcSin::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return ArcSin(arg);
+}
+
+QString ArcSin::stringRep() const
+{
+    return QObject::tr("arcsin");
+}
+
 /** The differential of asin(x) = 1 / sqrt(1-x^2) */
 Expression ArcSin::diff() const
 {
@@ -329,35 +228,47 @@ Expression ArcSin::integ() const
 //////////// Implementation of Inverse-tangent
 ////////////
 
+static const RegisterObject<ArcTan> r_arctan;
+
 /** Null constructor */
-ArcTan::ArcTan() : SingleFunc()
+ArcTan::ArcTan() : Implements<ArcTan,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-ArcTan::ArcTan(const Expression &expression) : SingleFunc(expression)
+ArcTan::ArcTan(const Expression &expression) : Implements<ArcTan,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-ArcTan::ArcTan(const ArcTan &other) : SingleFunc(other)
+ArcTan::ArcTan(const ArcTan &other) : Implements<ArcTan,SingleFunc>(other)
 {}
 
 /** Destructor */
 ArcTan::~ArcTan()
 {}
 
-/** Return the magic */
-uint ArcTan::magic() const
+ArcTan& ArcTan::operator=(const ArcTan &other)
 {
-    return r_arctan.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool ArcTan::operator==(const ExBase &other) const
+bool ArcTan::operator==(const ArcTan &other) const
 {
-    const ArcTan *other_cos = dynamic_cast<const ArcTan*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool ArcTan::operator!=(const ArcTan &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void ArcTan::stream(Stream &s)
+{
+    s.assertVersion<ArcTan>(1);
+    
+    Schema schema = s.item<ArcTan>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -370,6 +281,19 @@ double ArcTan::evaluate(const Values &values) const
 Complex ArcTan::evaluate(const ComplexValues &values) const
 {
     return SireMaths::arctan( x().evaluate(values) );
+}
+
+Expression ArcTan::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return ArcTan(arg);
+}
+
+QString ArcTan::stringRep() const
+{
+    return QObject::tr("arctan");
 }
 
 /** The differential of atan(x) = 1 / (1+x^2) */
@@ -388,35 +312,47 @@ Expression ArcTan::integ() const
 //////////// Implementation of Inverse-cosecant
 ////////////
 
+static const RegisterObject<ArcCsc> r_arccsc;
+
 /** Null constructor */
-ArcCsc::ArcCsc() : SingleFunc()
+ArcCsc::ArcCsc() : Implements<ArcCsc,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-ArcCsc::ArcCsc(const Expression &expression) : SingleFunc(expression)
+ArcCsc::ArcCsc(const Expression &expression) : Implements<ArcCsc,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-ArcCsc::ArcCsc(const ArcCsc &other) : SingleFunc(other)
+ArcCsc::ArcCsc(const ArcCsc &other) : Implements<ArcCsc,SingleFunc>(other)
 {}
 
 /** Destructor */
 ArcCsc::~ArcCsc()
 {}
 
-/** Return the magic */
-uint ArcCsc::magic() const
+ArcCsc& ArcCsc::operator=(const ArcCsc &other)
 {
-    return r_arccsc.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool ArcCsc::operator==(const ExBase &other) const
+bool ArcCsc::operator==(const ArcCsc &other) const
 {
-    const ArcCsc *other_cos = dynamic_cast<const ArcCsc*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool ArcCsc::operator!=(const ArcCsc &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void ArcCsc::stream(Stream &s)
+{
+    s.assertVersion<ArcCsc>(1);
+    
+    Schema schema = s.item<ArcCsc>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -438,6 +374,19 @@ Complex ArcCsc::evaluate(const ComplexValues &values) const
     return SireMaths::arccsc( x().evaluate(values) );
 }
 
+Expression ArcCsc::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return ArcCsc(arg);
+}
+
+QString ArcCsc::stringRep() const
+{
+    return QObject::tr("arccsc");
+}
+
 /** The differential of acsc(x) = -1 / (x^2 sqrt(1 - x^-2)) */
 Expression ArcCsc::diff() const
 {
@@ -454,35 +403,47 @@ Expression ArcCsc::integ() const
 //////////// Implementation of inverse-secant
 ////////////
 
+static const RegisterObject<ArcSec> r_arcsec;
+
 /** Null constructor */
-ArcSec::ArcSec() : SingleFunc()
+ArcSec::ArcSec() : Implements<ArcSec,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-ArcSec::ArcSec(const Expression &expression) : SingleFunc(expression)
+ArcSec::ArcSec(const Expression &expression) : Implements<ArcSec,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-ArcSec::ArcSec(const ArcSec &other) : SingleFunc(other)
+ArcSec::ArcSec(const ArcSec &other) : Implements<ArcSec,SingleFunc>(other)
 {}
 
 /** Destructor */
 ArcSec::~ArcSec()
 {}
 
-/** Return the magic */
-uint ArcSec::magic() const
+ArcSec& ArcSec::operator=(const ArcSec &other)
 {
-    return r_arcsec.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool ArcSec::operator==(const ExBase &other) const
+bool ArcSec::operator==(const ArcSec &other) const
 {
-    const ArcSec *other_cos = dynamic_cast<const ArcSec*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool ArcSec::operator!=(const ArcSec &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void ArcSec::stream(Stream &s)
+{
+    s.assertVersion<ArcSec>(1);
+    
+    Schema schema = s.item<ArcSec>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -504,6 +465,19 @@ Complex ArcSec::evaluate(const ComplexValues &values) const
     return SireMaths::arcsec( x().evaluate(values) );
 }
 
+Expression ArcSec::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return ArcSec(arg);
+}
+
+QString ArcSec::stringRep() const
+{
+    return QObject::tr("arcsec");
+}
+
 /** The differential of asec(x) = 1 / ( x^2 sqrt( 1 - x^-2 ) ) */
 Expression ArcSec::diff() const
 {
@@ -520,35 +494,47 @@ Expression ArcSec::integ() const
 //////////// Implementation of Inverse-cotangent
 ////////////
 
+static const RegisterObject<ArcCot> r_arccot;
+
 /** Null constructor */
-ArcCot::ArcCot() : SingleFunc()
+ArcCot::ArcCot() : Implements<ArcCot,SingleFunc>()
 {}
 
 /** Construct cos(expression) */
-ArcCot::ArcCot(const Expression &expression) : SingleFunc(expression)
+ArcCot::ArcCot(const Expression &expression) : Implements<ArcCot,SingleFunc>(expression)
 {}
 
 /** Copy constructor */
-ArcCot::ArcCot(const ArcCot &other) : SingleFunc(other)
+ArcCot::ArcCot(const ArcCot &other) : Implements<ArcCot,SingleFunc>(other)
 {}
 
 /** Destructor */
 ArcCot::~ArcCot()
 {}
 
-/** Return the magic */
-uint ArcCot::magic() const
+ArcCot& ArcCot::operator=(const ArcCot &other)
 {
-    return r_arccot.magicID();
+    SingleFunc::operator=(other);
+    return *this;
 }
 
-/** Comparison operator */
-bool ArcCot::operator==(const ExBase &other) const
+bool ArcCot::operator==(const ArcCot &other) const
 {
-    const ArcCot *other_cos = dynamic_cast<const ArcCot*>(&other);
+    return SingleFunc::operator==(other);
+}
 
-    return other_cos != 0 and typeid(other).name() == typeid(*this).name()
-                 and this->argument() == other_cos->argument();
+bool ArcCot::operator!=(const ArcCot &other) const
+{
+    return SingleFunc::operator!=(other);
+}
+
+void ArcCot::stream(Stream &s)
+{
+    s.assertVersion<ArcCot>(1);
+    
+    Schema schema = s.item<ArcCot>();
+    
+    SingleFunc::stream( schema.base() );
 }
 
 /** Evaluate this function */
@@ -563,6 +549,19 @@ Complex ArcCot::evaluate(const ComplexValues &values) const
     return SireMaths::arccot( x().evaluate(values) );
 }
 
+Expression ArcCot::functionOf(const Expression &arg) const
+{
+    if (arg == argument())
+        return *this;
+    else
+        return ArcCot(arg);
+}
+
+QString ArcCot::stringRep() const
+{
+    return QObject::tr("arccot");
+}
+
 /** The differential of acot(x) = -1 / (1+x^2) */
 Expression ArcCot::diff() const
 {
@@ -573,70 +572,5 @@ Expression ArcCot::diff() const
 Expression ArcCot::integ() const
 {
     return x()*ArcCot(x()) + 0.5 * Ln( 1 + pow(x(),2) );
-}
-
-const char* ArcCos::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<ArcCos>() );
-}
-
-const char* ArcSin::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<ArcSin>() );
-}
-
-const char* ArcTan::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<ArcTan>() );
-}
-
-const char* ArcCsc::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<ArcCsc>() );
-}
-
-const char* ArcSec::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<ArcSec>() );
-}
-
-const char* ArcCot::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<ArcCot>() );
-}
-
-ArcCsc* ArcCsc::clone() const
-{
-    return new ArcCsc(*this);
-}
-
-
-ArcTan* ArcTan::clone() const
-{
-    return new ArcTan(*this);
-}
-
-
-ArcSin* ArcSin::clone() const
-{
-    return new ArcSin(*this);
-}
-
-
-ArcCot* ArcCot::clone() const
-{
-    return new ArcCot(*this);
-}
-
-
-ArcSec* ArcSec::clone() const
-{
-    return new ArcSec(*this);
-}
-
-
-ArcCos* ArcCos::clone() const
-{
-    return new ArcCos(*this);
 }
 

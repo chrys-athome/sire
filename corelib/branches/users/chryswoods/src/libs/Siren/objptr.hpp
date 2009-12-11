@@ -33,6 +33,7 @@
 #include "class.h"
 #include "datastream.h"
 #include "stream.h"
+#include "objref.h"
 
 #include "detail/sharedpolypointer.hpp"
 #include "detail/globalsharedpointer.hpp"
@@ -77,6 +78,9 @@ public:
     bool operator!=(const ObjPtrBase &other) const;
 
     void detach();
+
+    bool equals(const ObjPtrBase &other) const;
+    bool equals(const Object &object) const;
 
     bool unique() const;
 
@@ -191,6 +195,7 @@ public:
 
     ObjPtr<T>& operator=(const ObjPtr<T> &other);
     ObjPtr<T>& operator=(const ObjPtrBase &object);
+    ObjPtr<T>& operator=(const ObjRef &objref);
 
     const T* operator->() const;
     const T& operator*() const;
@@ -356,6 +361,13 @@ SIREN_OUTOFLINE_TEMPLATE
 ObjPtr<T>& ObjPtr<T>::operator=(const ObjPtrBase &object)
 {
     return this->operator=( ObjPtr<T>(object) );
+}
+
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+ObjPtr<T>& ObjPtr<T>::operator=(const ObjRef &object)
+{
+    return this->operator=(object.asA<T>());
 }
 
 template<class T>

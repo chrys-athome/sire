@@ -29,22 +29,10 @@
 #ifndef SIRECAS_SINGLEFUNC_H
 #define SIRECAS_SINGLEFUNC_H
 
-#include "exbase.h"
 #include "symbol.h"
-#include "symbols.h"
-#include "functions.h"
 #include "expression.h"
-#include "expressions.h"
 
 SIRE_BEGIN_HEADER
-
-namespace SireCAS
-{
-class SingleFunc;
-}
-
-QDataStream& operator<<(QDataStream&, const SireCAS::SingleFunc&);
-QDataStream& operator>>(QDataStream&, SireCAS::SingleFunc&);
 
 namespace SireCAS
 {
@@ -53,12 +41,8 @@ namespace SireCAS
 
     @author Christopher Woods
 */
-class SIRECAS_EXPORT SingleFunc : public ExBase
+class SIRECAS_EXPORT SingleFunc : public Siren::Extends<SingleFunc,CASNode>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const SingleFunc&);
-friend QDataStream& ::operator>>(QDataStream&, SingleFunc&);
-
 public:
     SingleFunc();
     SingleFunc(const Expression &ex);
@@ -67,9 +51,11 @@ public:
 
     ~SingleFunc();
 
-    SingleFunc& operator=(const SingleFunc &other);
+    static QString typeName();
 
-    uint hash() const;
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &s);
 
     const Expression& argument() const;
     const Expression& x() const;
@@ -81,12 +67,9 @@ public:
     bool isComplex() const;
     bool isCompound() const;
 
-    QString toString() const;
-
     Expression substitute(const Identities &identities) const;
-    Symbols symbols() const;
-    Functions functions() const;
-    Expressions children() const;
+    QSet<Symbol> symbols() const;
+    QList<Expression> children() const;
 
     Expression differentiate(const Symbol &symbol) const;
     Expression integrate(const Symbol &symbol) const;
@@ -94,10 +77,13 @@ public:
     QList<Factor> expand(const Symbol &symbol) const;
 
 protected:
+    SingleFunc& operator=(const SingleFunc &other);
+    
+    bool operator==(const SingleFunc &other) const;
+    bool operator!=(const SingleFunc &other) const;
 
     virtual Expression functionOf(const Expression &arg) const=0;
     virtual QString stringRep() const=0;
-    virtual uint magic() const=0;
 
     virtual Expression diff() const;
     virtual Expression integ() const;
@@ -106,32 +92,9 @@ protected:
     Expression ex;
 };
 
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
-/** Return the single argument to this function */
-inline const Expression& SingleFunc::argument() const
-{
-    return ex;
-}
-
-/** Synonym for argument() - useful when doing calculus, and viewing
-    the function as being a pure f(x) */
-inline const Expression& SingleFunc::x() const
-{
-    return ex;
-}
-
-/** Return a has for the function */
-inline uint SingleFunc::hash() const
-{
-    return (magic() << 16) | (ex.hash() & 0x0000FFFF);
-}
-
-#endif //SIRE_SKIP_INLINE_FUNCTIONS
-
 /** To declare a new function, copy the below;
 
-class MyFunc : public SingleFunc
+class MyFunc : public Siren::Implements<MyFunc,SingleFunc>
 {
 public:
     MyFunc();
@@ -146,29 +109,18 @@ public:
     //Expression simplify(int options=0) const;
 
     /// required functions
-    bool operator==(const ExBase &other) const;
-
-    const char* what() const
-    {
-        return "SireCAS::MyFunc";
-    }
+    void stream(Siren::Stream &s);
 
     double evaluate(const Values &values) const;
     Complex evaluate(const ComplexValues &values) const;
 
 protected:
-    //required functions
-    ExBase* clone() const
-    {
-        return new MyFunc(*this);
-    }
-
     Expression functionOf(const Expression &arg) const
     {
         if (arg == argument())
-            return toExpression();
+            return *this;
         else
-            return MyFunc(arg).toExpression();
+            return MyFunc(arg);
     }
 
     //optional
@@ -179,11 +131,13 @@ protected:
     {
         return "myfunc";
     }
-
-    uint magic() const;
 };
 
-static RegisterExpression<MyFunc> RegisterMyFunc;
+Q_DECLARE_METATYPE( MyFunc )
+
+SIRE_EXPOSE_CLASS( MyFunc )
+
+static RegisterObject<MyFunc> r_myfunc;
 
 */
 

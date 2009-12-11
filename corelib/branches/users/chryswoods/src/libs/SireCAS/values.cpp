@@ -415,9 +415,46 @@ Values& Values::operator+=(const Values &other)
     }
 }
 
-const char* Values::typeName()
+/** Reserve space for at least 'n' items */
+void Values::reserve(int n)
 {
-    return QMetaType::typeName( qMetaTypeId<Values>() );
+    vals.reserve(n);
+}
+
+/** Return whether or not this set of values is empty */
+bool Values::isEmpty() const
+{
+    return vals.isEmpty();
+}
+
+/** Return the number of specified values in this set */
+int Values::count() const
+{
+    return vals.count();
+}
+
+/** Add a SymbolValue to the set of values */
+void Values::add(const SymbolValue &val0)
+{
+    vals.insert(val0.ID(), val0.value());
+}
+
+/** Set the Symbol 'symbol' equal to 'value' */
+void Values::set(const Symbol &symbol, double value)
+{
+    vals.insert(symbol.ID(), value);
+}
+
+/** Return the hash mapping the symbol ID to a value */
+const QHash<SymbolID,double>& Values::values() const
+{
+    return vals;
+}
+
+/** Return whether or not a value for the symbol 'symbol' has been set */
+bool Values::contains(const Symbol &symbol) const
+{
+    return vals.contains(symbol.ID());
 }
 
 namespace SireCAS
