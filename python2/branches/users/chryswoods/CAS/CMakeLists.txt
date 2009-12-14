@@ -40,7 +40,6 @@ set_target_properties (CAS
 		       )
 		       
 target_link_libraries (CAS
-                       SirePython2
                        SIRE_SireCAS
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}

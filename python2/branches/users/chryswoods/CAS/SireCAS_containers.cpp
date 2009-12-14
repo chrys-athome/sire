@@ -34,17 +34,23 @@
 
 #include <boost/tuple/tuple.hpp>
 
-#include "Helpers/convertlist.hpp"
-#include "Helpers/convertdict.hpp"
-#include "Helpers/convertset.hpp"
-#include "Helpers/tuples.hpp"
+#include "Siren/convertlist.hpp"
+#include "Siren/convertdict.hpp"
+#include "Siren/convertset.hpp"
+#include "Siren/tuples.hpp"
 
 #include "SireCAS/symbol.h"
 #include "SireCAS/expression.h"
-#include "SireCAS/symbolvalue.h"
 #include "SireCAS/complexvalues.h"
+#include "SireCAS/identities.h"
+#include "SireCAS/complexvalues.h"
+#include "SireCAS/factor.h"
 
+#include "SireMaths/complex.h"
+
+using namespace Siren;
 using namespace SireCAS;
+using namespace SireMaths;
 
 using boost::python::register_tuple;
 
@@ -58,37 +64,9 @@ void register_SireCAS_containers()
     register_list< QList<Symbol> >();
     register_list< QVector<Symbol> >();
     
-    register_list< QList<SymbolValue> >();
-    register_list< QList<SymbolComplex> >();
-    register_list< QList<SymbolExpression> >();    
-    
-    #if QT_VERSION >= 0x402000
-    register_set< QSet<SymbolID> >();
     register_set< QSet<Symbol> >();
-
-    register_set< Symbols >();
-
-    register_dict< QHash<SymbolID,Complex> >();
-    register_dict< QHash<SymbolID,Expression> >();
-    register_dict< QHash<SymbolID,double> >();
 
     register_dict< QHash<Symbol,double> >();
     register_dict< QHash<Symbol,Complex> >();
     register_dict< QHash<Symbol,Expression> >();
-
-    #else
-    register_set< QSet<SymbolID>, SymbolID >();
-    register_set< QSet<Symbol>, Symbol >();
-    
-    register_set< Symbols, Symbol >();
-    
-    register_dict< QHash<SymbolID,Complex>, SymbolID, Complex >();
-    register_dict< QHash<SymbolID,Expression>, SymbolID, Expression >();
-    register_dict< QHash<SymbolID,double>, SymbolID, double >();
-    
-    register_dict< QHash<Symbol,double>, Symbol, double >();
-    register_dict< QHash<Symbol,Complex>, Symbol, Complex >();
-    register_dict< QHash<Symbol,Expression>, Symbol, Expression >();
-
-    #endif    
 }

@@ -228,7 +228,7 @@ message( STATUS  "Executable link flags  == ${CMAKE_EXE_LINKER_FLAGS}" )
 # Recurse into the module subdirectories 
 add_subdirectory (Qt)
 add_subdirectory (Base)
-#add_subdirectory (CAS)
+add_subdirectory (CAS)
 #add_subdirectory (Cluster)
 #add_subdirectory (DB)
 #add_subdirectory (FF)
