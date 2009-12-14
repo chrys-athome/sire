@@ -55,6 +55,8 @@ public:
     QString toString() const;
     void stream(Siren::Stream &s);
 
+    static QString typeName();
+
     const Expression& x() const;
     const Expression& y() const;
 

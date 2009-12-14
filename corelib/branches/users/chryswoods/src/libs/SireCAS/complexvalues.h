@@ -48,40 +48,8 @@ class SIRECAS_EXPORT ComplexValues
 {
 public:
     ComplexValues();
-
-    ComplexValues(const QList<SymbolComplex> &values);
+    ComplexValues(const Symbol &symbol, const SireMaths::Complex &value);
     ComplexValues(const QHash<Symbol,SireMaths::Complex> &values);
-
-    ComplexValues(const SymbolComplex &symval0);
-    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1);
-    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1,
-                  const SymbolComplex &symval2);
-    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1,
-                  const SymbolComplex &symval2, const SymbolComplex &symval3);
-    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1,
-                  const SymbolComplex &symval2, const SymbolComplex &symval3,
-                  const SymbolComplex &symval4);
-    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1,
-                  const SymbolComplex &symval2, const SymbolComplex &symval3,
-                  const SymbolComplex &symval4, const SymbolComplex &symval5);
-    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1,
-                  const SymbolComplex &symval2, const SymbolComplex &symval3,
-                  const SymbolComplex &symval4, const SymbolComplex &symval5,
-                  const SymbolComplex &symval6);
-    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1,
-                  const SymbolComplex &symval2, const SymbolComplex &symval3,
-                  const SymbolComplex &symval4, const SymbolComplex &symval5,
-                  const SymbolComplex &symval6, const SymbolComplex &symval7);
-    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1,
-                  const SymbolComplex &symval2, const SymbolComplex &symval3,
-                  const SymbolComplex &symval4, const SymbolComplex &symval5,
-                  const SymbolComplex &symval6, const SymbolComplex &symval7,
-                  const SymbolComplex &symval8);
-    ComplexValues(const SymbolComplex &symval0, const SymbolComplex &symval1,
-                  const SymbolComplex &symval2, const SymbolComplex &symval3,
-                  const SymbolComplex &symval4, const SymbolComplex &symval5,
-                  const SymbolComplex &symval6, const SymbolComplex &symval7,
-                  const SymbolComplex &symval8, const SymbolComplex &symval9);
 
     ComplexValues(const Values &other);
 
@@ -93,47 +61,19 @@ public:
     
     bool operator==(const ComplexValues &other) const;
     bool operator!=(const ComplexValues &other) const;
+
+    ComplexValues operator+(const ComplexValues &other) const;
     
     QString toString() const;
     uint hashCode() const;
     void stream(Siren::Stream &s);
 
-    void set(const Symbol &symbol, const SireMaths::Complex &value);
-
-    void add(const SymbolComplex &symval0);
-    void add(const SymbolComplex &symval0, const SymbolComplex &symval1);
-    void add(const SymbolComplex &symval0, const SymbolComplex &symval1,
-             const SymbolComplex &symval2);
-    void add(const SymbolComplex &symval0, const SymbolComplex &symval1,
-             const SymbolComplex &symval2, const SymbolComplex &symval3);
-    void add(const SymbolComplex &symval0, const SymbolComplex &symval1,
-             const SymbolComplex &symval2, const SymbolComplex &symval3,
-             const SymbolComplex &symval4);
-    void add(const SymbolComplex &symval0, const SymbolComplex &symval1,
-             const SymbolComplex &symval2, const SymbolComplex &symval3,
-             const SymbolComplex &symval4, const SymbolComplex &symval5);
-    void add(const SymbolComplex &symval0, const SymbolComplex &symval1,
-             const SymbolComplex &symval2, const SymbolComplex &symval3,
-             const SymbolComplex &symval4, const SymbolComplex &symval5,
-             const SymbolComplex &symval6);
-    void add(const SymbolComplex &symval0, const SymbolComplex &symval1,
-             const SymbolComplex &symval2, const SymbolComplex &symval3,
-             const SymbolComplex &symval4, const SymbolComplex &symval5,
-             const SymbolComplex &symval6, const SymbolComplex &symval7);
-    void add(const SymbolComplex &symval0, const SymbolComplex &symval1,
-             const SymbolComplex &symval2, const SymbolComplex &symval3,
-             const SymbolComplex &symval4, const SymbolComplex &symval5,
-             const SymbolComplex &symval6, const SymbolComplex &symval7,
-             const SymbolComplex &symval8);
-    void add(const SymbolComplex &symval0, const SymbolComplex &symval1,
-             const SymbolComplex &symval2, const SymbolComplex &symval3,
-             const SymbolComplex &symval4, const SymbolComplex &symval5,
-             const SymbolComplex &symval6, const SymbolComplex &symval7,
-             const SymbolComplex &symval8, const SymbolComplex &symval9);
-
     SireMaths::Complex value(const Symbol &sym) const;
 
-    const QHash<SymbolID,SireMaths::Complex>& values() const;
+    const QHash<SymbolID, SireMaths::Complex>& values() const;
+
+    QList<Symbol> keys() const;
+    QList<Symbol> symbols() const;
 
 private:
     /** Hash mapping Symbol IDs to actual numerical values */

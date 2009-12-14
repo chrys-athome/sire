@@ -52,38 +52,8 @@ class SIRECAS_EXPORT Identities : public Siren::Implements<Identities,Siren::Obj
 {
 public:
     Identities();
-    Identities(const QList<SymbolExpression> &expressions);
+    Identities(const Symbol &symbol, const Expression &expression);
     Identities(const QHash<Symbol,Expression> &expressions);
-    Identities(const SymbolExpression &symex0);
-    Identities(const SymbolExpression &symex0, const SymbolExpression &symex1);
-    Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
-               const SymbolExpression &symex2);
-    Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
-               const SymbolExpression &symex2, const SymbolExpression &symex3);
-    Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
-               const SymbolExpression &symex2, const SymbolExpression &symex3,
-               const SymbolExpression &symex4);
-    Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
-               const SymbolExpression &symex2, const SymbolExpression &symex3,
-               const SymbolExpression &symex4, const SymbolExpression &symex5);
-    Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
-               const SymbolExpression &symex2, const SymbolExpression &symex3,
-               const SymbolExpression &symex4, const SymbolExpression &symex5,
-               const SymbolExpression &symex6);
-    Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
-               const SymbolExpression &symex2, const SymbolExpression &symex3,
-               const SymbolExpression &symex4, const SymbolExpression &symex5,
-               const SymbolExpression &symex6, const SymbolExpression &symex7);
-    Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
-               const SymbolExpression &symex2, const SymbolExpression &symex3,
-               const SymbolExpression &symex4, const SymbolExpression &symex5,
-               const SymbolExpression &symex6, const SymbolExpression &symex7,
-               const SymbolExpression &symex8);
-    Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
-               const SymbolExpression &symex2, const SymbolExpression &symex3,
-               const SymbolExpression &symex4, const SymbolExpression &symex5,
-               const SymbolExpression &symex6, const SymbolExpression &symex7,
-               const SymbolExpression &symex8, const SymbolExpression &symex9);
 
     Identities(const Identities &other);
 
@@ -94,45 +64,19 @@ public:
     bool operator==(const Identities &other) const;
     bool operator!=(const Identities &other) const;
 
+    Identities operator+(const Identities &other) const;
+
     QString toString() const;
     uint hashCode() const;
     void stream(Siren::Stream &s);
 
-    void add(const SymbolExpression &symex0);
-    void add(const SymbolExpression &symex0, const SymbolExpression &symex1);
-    void add(const SymbolExpression &symex0, const SymbolExpression &symex1,
-             const SymbolExpression &symex2);
-    void add(const SymbolExpression &symex0, const SymbolExpression &symex1,
-             const SymbolExpression &symex2, const SymbolExpression &symex3);
-    void add(const SymbolExpression &symex0, const SymbolExpression &symex1,
-             const SymbolExpression &symex2, const SymbolExpression &symex3,
-             const SymbolExpression &symex4);
-    void add(const SymbolExpression &symex0, const SymbolExpression &symex1,
-             const SymbolExpression &symex2, const SymbolExpression &symex3,
-             const SymbolExpression &symex4, const SymbolExpression &symex5);
-    void add(const SymbolExpression &symex0, const SymbolExpression &symex1,
-             const SymbolExpression &symex2, const SymbolExpression &symex3,
-             const SymbolExpression &symex4, const SymbolExpression &symex5,
-             const SymbolExpression &symex6);
-    void add(const SymbolExpression &symex0, const SymbolExpression &symex1,
-             const SymbolExpression &symex2, const SymbolExpression &symex3,
-             const SymbolExpression &symex4, const SymbolExpression &symex5,
-             const SymbolExpression &symex6, const SymbolExpression &symex7);
-    void add(const SymbolExpression &symex0, const SymbolExpression &symex1,
-             const SymbolExpression &symex2, const SymbolExpression &symex3,
-             const SymbolExpression &symex4, const SymbolExpression &symex5,
-             const SymbolExpression &symex6, const SymbolExpression &symex7,
-             const SymbolExpression &symex8);
-    void add(const SymbolExpression &symex0, const SymbolExpression &symex1,
-             const SymbolExpression &symex2, const SymbolExpression &symex3,
-             const SymbolExpression &symex4, const SymbolExpression &symex5,
-             const SymbolExpression &symex6, const SymbolExpression &symex7,
-             const SymbolExpression &symex8, const SymbolExpression &symex9);
-
     bool contains(const Symbol &sym) const;
     Expression expression(const Symbol &sym) const;
 
-    void set( const Symbol &symbol, const Expression &expression );
+    QList<Symbol> keys() const;
+    QList<Symbol> symbols() const;
+
+    const QHash<SymbolID,Expression>& values() const;
 
 private:
     /** Hash mapping a symbol to an expression */

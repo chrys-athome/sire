@@ -60,6 +60,27 @@ CASNode::CASNode(const CASNode &other) : Extends<CASNode,Object>(other)
 CASNode::~CASNode()
 {}
 
+CASNode& CASNode::operator=(const CASNode &other)
+{
+    Object::operator=(other);
+    return *this;
+}
+
+bool CASNode::operator==(const CASNode&) const
+{
+    return true;
+}
+
+bool CASNode::operator!=(const CASNode&) const
+{
+    return false;
+}
+
+QString CASNode::typeName()
+{
+    return "SireCAS::CASNode";
+}
+
 double CASNode::operator()(const Values &values) const
 {
     return this->evaluate(values);
@@ -109,6 +130,24 @@ Expression CASNode::pow(const CASNode &node) const
     return Expression(*this).pow(node);
 }
 
+/** Return the square root of this expression */
+Expression CASNode::sqrt() const
+{
+    return Expression(*this).sqrt();
+}
+
+/** Return the cube root of this expression */
+Expression CASNode::cbrt() const
+{
+    return Expression(*this).cbrt();
+}
+
+/** Return the nth root of this expression */
+Expression CASNode::root(int n) const
+{
+    return Expression(*this).root(n);
+}
+
 /** Return 1 / expression */
 Expression CASNode::invert() const
 {
@@ -125,12 +164,6 @@ Expression CASNode::squared() const
 Expression CASNode::cubed() const
 {
     return Expression(*this).cubed();
-}
-
-/** Return the nth root of this expression */
-Expression CASNode::root(int n) const
-{
-    return Expression(*this).root(n);
 }
 
 /** Return the negative of this expression */
@@ -228,6 +261,44 @@ Expression CASNode::differentiate(const Symbol &symbol) const
     throw SireCAS::unavailable_differential(QObject::tr(
         "The differential of \"%1\" with respect to \"%2\" is not available.")
             .arg(toString(), symbol.toString()), CODELOC);
+}
+
+/** Return an expression that the differential of this CASNode
+    with respect to 'symbol'. Note an exception may
+    be thrown if this CASNode cannot be differentiated.
+
+    \throw SireCAS::unavailable_differential
+*/
+Expression CASNode::differentiate(const Symbol &symbol, int level) const
+{
+    if (level == 0)
+    {
+        return *this;
+    }
+    else if (level < 0)
+    {
+        //we want integration
+        Expression ret(*this);
+        
+        for (int i=0; i>level; --i)
+        {
+            ret = ret.integrate(symbol);
+        }
+        
+        return ret;
+    }
+    else
+    {
+        //we want differentiation
+        Expression ret(*this);
+        
+        for (int i=0; i<level; ++i)
+        {
+            ret = ret.differentiate(symbol);
+        }
+        
+        return ret;
+    }
 }
 
 /** Return the indefinite integral of this 'CASNode' with respect to
@@ -398,6 +469,21 @@ namespace SireCAS
     Expression SIRECAS_EXPORT operator/(const CASNode &node, const Complex &val)
     {
         return node.divide(val);
+    }
+
+    Expression SIRECAS_EXPORT sqrt(const CASNode &node)
+    {
+        return node.sqrt();
+    }
+
+    Expression SIRECAS_EXPORT cbrt(const CASNode &node)
+    {
+        return node.cbrt();
+    }
+
+    Expression SIRECAS_EXPORT root(const CASNode &node, int n)
+    {
+        return node.root(n);
     }
 
     Expression SIRECAS_EXPORT pow(const CASNode &node, int n)

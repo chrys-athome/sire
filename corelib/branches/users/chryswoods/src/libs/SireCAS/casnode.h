@@ -123,12 +123,14 @@ public:
     virtual Expression squared() const;
     virtual Expression cubed() const;
 
+    virtual Expression root(int n) const;
+    virtual Expression sqrt() const;
+    virtual Expression cbrt() const;
+
     virtual Expression pow(const SireMaths::Rational &n) const;
     virtual Expression pow(double n) const;
     virtual Expression pow(const SireMaths::Complex &n) const;
     virtual Expression pow(const CASNode &n) const;
-
-    virtual Expression root(int n) const;
 
     /** Evaluate this CASNode using values 'values'. Any
         missing symbols are assumed to equal zero.

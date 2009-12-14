@@ -28,26 +28,32 @@
 
 #include "factor.h"
 
+#include "Siren/stream.h"
+
 using namespace SireCAS;
+using namespace Siren;
 
 ////////
 //////// Implementation of Factor
 ////////
 
-Factor::Factor() : f(1), p(1)
+static const RegisterObject<Factor> r_factor;
+
+Factor::Factor() : Implements<Factor,Object>(), f(1), p(1)
 {}
 
 Factor::Factor(const Symbol &symbol,
                const Expression &factor, const Expression &power)
-       : s(symbol), f(factor), p(power)
+       : Implements<Factor,Object>(), s(symbol), f(factor), p(power)
 {}
 
 Factor::Factor(const Symbol &symbol, 
                double factor, double power) 
-       : s(symbol), f(factor), p(power)
+       : Implements<Factor,Object>(), s(symbol), f(factor), p(power)
 {}
 
-Factor::Factor(const Factor &other) : s(other.s), f(other.f), p(other.p)
+Factor::Factor(const Factor &other) 
+       : Implements<Factor,Object>(other), s(other.s), f(other.f), p(other.p)
 {}
 
 Factor::~Factor()
@@ -80,6 +86,39 @@ static QString get_string(const Expression &expression)
     }
     else
         return expression.toString();
+}
+
+const Symbol& Factor::symbol() const
+{
+    return s;
+}
+
+const Expression& Factor::factor() const
+{
+    return f;
+}
+
+const Expression& Factor::power() const
+{
+    return p;
+}
+
+uint Factor::hashCode() const
+{
+    return qHash( Factor::typeName() ) + qHash(s) + qHash(f) + qHash(p);
+}
+
+void Factor::stream(Stream &st)
+{
+    st.assertVersion<Factor>(1);
+    
+    Schema schema = st.item<Factor>();
+    
+    schema.data("symbol") & s;
+    schema.data("factor") & f;
+    schema.data("power") & p;
+    
+    Object::stream( schema.base() );
 }
 
 QString Factor::toString() const

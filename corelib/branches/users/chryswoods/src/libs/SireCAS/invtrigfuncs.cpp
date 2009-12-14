@@ -124,13 +124,13 @@ QString ArcCos::stringRep() const
 /** The differential of acos(x) = -1 / sqrt(1-x^2) */
 Expression ArcCos::diff() const
 {
-    return -1 / sqrt( 1 - SireCAS::pow(x(),2) );
+    return -1 / SireCAS::sqrt( 1 - SireCAS::pow(x(),2) );
 }
 
 /** Integral of acos(x) = x acos(x) - sqrt(1-x^2) */
 Expression ArcCos::integ() const
 {
-    return x()*ArcCos(x()) - sqrt(1 - SireCAS::pow(x(),2));
+    return x()*ArcCos(x()) - SireCAS::sqrt(1 - SireCAS::pow(x(),2));
 }
 
 ////////////
@@ -215,13 +215,13 @@ QString ArcSin::stringRep() const
 /** The differential of asin(x) = 1 / sqrt(1-x^2) */
 Expression ArcSin::diff() const
 {
-    return 1 / sqrt( 1 - SireCAS::pow(x(),2) );
+    return 1 / SireCAS::sqrt( 1 - SireCAS::pow(x(),2) );
 }
 
 /** Integral of asin(x) = x asin(x) + sqrt(1-x^2) */
 Expression ArcSin::integ() const
 {
-    return  x()*ArcSin(x()) + sqrt( 1 - SireCAS::pow(x(),2) );
+    return  x()*ArcSin(x()) + SireCAS::sqrt( 1 - SireCAS::pow(x(),2) );
 }
 
 ////////////
@@ -390,14 +390,15 @@ QString ArcCsc::stringRep() const
 /** The differential of acsc(x) = -1 / (x^2 sqrt(1 - x^-2)) */
 Expression ArcCsc::diff() const
 {
-    return -1 / ( SireCAS::pow(x(),2) * sqrt( 1 - SireCAS::pow(x(),-2) ) );
+    return -1 / ( SireCAS::pow(x(),2) * SireCAS::sqrt( 1 - SireCAS::pow(x(),-2) ) );
 }
 
 /** Integral of acsc(x) = x acsc(x) + Ln[ x ( 1 + sqrt( (x^2-1)/x^2 ) ) ] */
 Expression ArcCsc::integ() const
 {
     return x()*ArcCsc(x()) + 
-           Ln( x() * ( 1 + sqrt( (SireCAS::pow(x(),2)-1) / SireCAS::pow(x(),2) ) ) );
+           Ln( x() * ( 1 + SireCAS::sqrt( (SireCAS::pow(x(),2)-1) / 
+                                                SireCAS::pow(x(),2) ) ) );
 }
 
 ////////////
@@ -489,7 +490,8 @@ Expression ArcSec::diff() const
 Expression ArcSec::integ() const
 {
     return x()*ArcSec(x()) - 
-           Ln( x() * ( 1 + sqrt( (SireCAS::pow(x(),2) - 1) / SireCAS::pow(x(),2) ) ) );
+           Ln( x() * ( 1 + SireCAS::sqrt( (SireCAS::pow(x(),2) - 1) / 
+                                                SireCAS::pow(x(),2) ) ) );
 }
 
 ////////////

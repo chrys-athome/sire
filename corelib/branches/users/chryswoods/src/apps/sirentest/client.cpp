@@ -139,8 +139,8 @@ void Client::runNextTest()
     
     QTextStream ts(stdout);
     
-    ts.setFieldWidth(3);
-    ts.setRealNumberPrecision(0);
+    ts.setFieldWidth(4);
+    ts.setRealNumberPrecision(1);
     ts.setRealNumberNotation(QTextStream::FixedNotation);
     ts << ( (100.0*(current_test+1))/classes_to_test.count() );
     

@@ -490,6 +490,18 @@ Expression Expression::root(int n) const
     return this->pow( Rational(1,n) );
 }
 
+/** Return the square root of this expression */
+Expression Expression::sqrt() const
+{
+    return this->root(2);
+}
+
+/** Return the cube root of this expression */
+Expression Expression::cbrt() const
+{
+    return this->root(3);
+}
+
 /** Return this expression raised to the rational power 'n' */
 Expression Expression::pow(const Rational &n) const
 {

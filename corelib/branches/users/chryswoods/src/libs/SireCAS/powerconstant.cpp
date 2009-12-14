@@ -239,6 +239,11 @@ void IntegerPower::stream(Stream &s)
     ConstantPower::stream( schema.base() );
 }
 
+Expression IntegerPower::power() const
+{
+    return pwr;
+}
+
 /** Evaluate this power */
 double IntegerPower::evaluate(const Values &values) const
 {

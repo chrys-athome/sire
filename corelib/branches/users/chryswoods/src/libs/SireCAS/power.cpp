@@ -77,6 +77,12 @@ bool PowerFunction::isCompound() const
     return false;
 }
 
+uint PowerFunction::hashCode() const
+{
+    return qHash( PowerFunction::typeName() ) + 
+           qHash( core() ) + qHash( power() );
+}
+
 void PowerFunction::stream(Siren::Stream &s)
 {
     s.assertVersion<PowerFunction>(1);
@@ -522,9 +528,19 @@ void Power::stream(Stream &s)
     Schema schema = s.item<Power>();
     
     schema.data("core") & ex;
-    schema.data("power") & ex;
+    schema.data("power") & pwr;
     
     PowerFunction::stream( schema.base() );
+}
+
+Expression Power::core() const
+{
+    return ex;
+}
+
+Expression Power::power() const
+{
+    return pwr;
 }
 
 bool Power::isCompound() const

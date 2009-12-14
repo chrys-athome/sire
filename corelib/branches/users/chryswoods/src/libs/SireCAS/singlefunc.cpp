@@ -135,6 +135,11 @@ void SingleFunc::stream(Stream &s)
     CASNode::stream( schema.base() );
 }
 
+QString SingleFunc::typeName()
+{
+    return "SireCAS::SingleFunc";
+}
+
 /** Substitute into this expression */
 Expression SingleFunc::substitute(const Identities &identities) const
 {

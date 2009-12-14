@@ -237,6 +237,11 @@ void Condition::stream(Stream &s)
     CASNode::stream( schema.base() );
 }
 
+QString Condition::typeName()
+{
+    return "SireCAS::Condition";
+}
+
 /** Evalute this condition, returning whether or not it is true or false */
 bool Condition::evaluateCondition(const Values &values) const
 {

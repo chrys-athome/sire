@@ -97,16 +97,16 @@ private:
     Expression take(const Expression &core);
     Expression takeFirst(const Symbol &symbol);
 
-    void multiplyPvt(const Expression &ex);
+    void pvt_multiply(const Expression &ex);
 
-    void multiplyPvt(double val);
-    void multiplyPvt(const SireMaths::Complex &complex);
-    void multiplyPvt(double val, const Expression &power);
-    void multiplyPvt(const SireMaths::Complex &complex, const Expression &power);
-    void multiplyPvt(const Product &product, const Expression &power);
-    void multiplyPvt(const CASNode &core, const Expression &power);
+    void pvt_multiply(double val);
+    void pvt_multiply(const SireMaths::Complex &complex);
+    void pvt_multiply(double val, const Expression &power);
+    void pvt_multiply(const SireMaths::Complex &complex, const Expression &power);
+    void pvt_multiply(const Product &product, const Expression &power);
+    void pvt_multiply(const CASNode &core, const Expression &power);
 
-    void multiplyPvt(const Expression &ex, const Expression &power);
+    void pvt_multiply(const Expression &ex, const Expression &power);
 
     bool isPureProduct() const;
 

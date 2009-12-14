@@ -79,6 +79,7 @@ set_target_properties (SireCAS PROPERTIES
 # Link to other Sire libraries, and GSL
 target_link_libraries (SireCAS
                        SireMaths
+                       SireID
                        )
 
 # installation

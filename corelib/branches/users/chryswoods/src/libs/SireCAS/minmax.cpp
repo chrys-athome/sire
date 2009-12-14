@@ -125,6 +125,11 @@ Expression Min::functionOf(const Expression &ex, const Expression &ey) const
         return Expression(Min(ex, ey));
 }
 
+QString Min::stringRep() const
+{
+    return QObject::tr("min");
+}
+
 ////////
 //////// Implementation of Max
 ////////
@@ -208,4 +213,9 @@ Expression Max::functionOf(const Expression &ex, const Expression &ey) const
      }
      else
         return Expression(Max(ex, ey));
+}
+
+QString Max::stringRep() const
+{
+    return QObject::tr("max");
 }

@@ -126,6 +126,8 @@ public:
     Expression pow(const SireMaths::Complex &n) const;
     Expression pow(const CASNode &n) const;
 
+    Expression sqrt() const;
+    Expression cbrt() const;
     Expression root(int n) const;
 
     double evaluate(const Values &values) const;

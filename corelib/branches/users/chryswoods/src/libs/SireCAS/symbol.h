@@ -52,9 +52,6 @@ class Factor;
 class Expression;
 
 typedef quint32 SymbolID;
-typedef QPair<SymbolID,double> SymbolValue;
-typedef QPair<SymbolID,SireMaths::Complex> SymbolComplex;
-typedef QPair<SymbolID,Expression> SymbolExpression;
 
 /** This class represents an algebraic symbol in the equation (e.g. 'x' or 'y')
 
@@ -82,12 +79,12 @@ public:
     bool operator==(const Symbol &other) const;
     bool operator!=(const Symbol &other) const;
 
-    SymbolValue operator==(double value) const;
-    SymbolValue operator==(int value) const;
+    Values operator==(double value) const;
+    Values operator==(int value) const;
 
-    SymbolComplex operator==(const SireMaths::Complex &value) const;
+    ComplexValues operator==(const SireMaths::Complex &value) const;
 
-    SymbolExpression operator==(const Expression &expression) const;
+    Identities operator==(const Expression &expression) const;
 
     SymbolID ID() const;
 

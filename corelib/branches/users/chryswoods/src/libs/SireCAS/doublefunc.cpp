@@ -87,6 +87,35 @@ bool DoubleFunc::operator!=(const DoubleFunc &other) const
     return not DoubleFunc::operator==(other);
 }
 
+/** Return a string representation of this function */
+QString DoubleFunc::toString() const
+{
+    return QObject::tr("%1( %2, %3 )").arg(stringRep(), ex0.toString(), ex1.toString());
+}
+
+uint DoubleFunc::hashCode() const
+{
+    return qHash( DoubleFunc::typeName() ) +
+           qHash(ex0) + qHash(ex1);
+}
+
+void DoubleFunc::stream(Stream &s)
+{
+    s.assertVersion<DoubleFunc>(1);
+    
+    Schema schema = s.item<DoubleFunc>();
+    
+    schema.data("x_argument") & ex0;
+    schema.data("y_argument") & ex1;
+    
+    CASNode::stream( schema.base() );
+}
+
+QString DoubleFunc::typeName()
+{
+    return "SireCAS::DoubleFunc";
+}
+
 /** Return the conjugate of this function */
 Expression DoubleFunc::conjugate() const
 {
@@ -115,12 +144,6 @@ bool DoubleFunc::isComplex() const
 bool DoubleFunc::isCompound() const
 {
     return false;
-}
-
-/** Return a string representation of this function */
-QString DoubleFunc::toString() const
-{
-    return QObject::tr("%1( %2, %3 )").arg(stringRep(), ex0.toString(), ex1.toString());
 }
 
 /** Substitute into this expression */

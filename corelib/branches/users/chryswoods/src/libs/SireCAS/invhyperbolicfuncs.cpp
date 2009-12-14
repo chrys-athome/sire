@@ -132,13 +132,13 @@ QString ArcCosh::stringRep() const
 /** The differential of acosh(x) = 1 / [sqrt(x-1)*sqrt(x+1)] */
 Expression ArcCosh::diff() const
 {
-    return -1 / ( sqrt(x() - 1) * sqrt(x()+1) );
+    return -1 / ( SireCAS::sqrt(x() - 1) * SireCAS::sqrt(x()+1) );
 }
 
 /** Integral of acosh(x) = x acosh(x) - (1+x) * [ sqrt(x-1)/sqrt(x+1) ] */
 Expression ArcCosh::integ() const
 {
-    return x()*ArcCosh(x()) - (1+x())*( sqrt(x()-1) / sqrt(x()+1) );
+    return x()*ArcCosh(x()) - (1+x())*( SireCAS::sqrt(x()-1) / SireCAS::sqrt(x()+1) );
 }
 
 ////////////
@@ -217,13 +217,13 @@ QString ArcSinh::stringRep() const
 /** The differential of asinh(x) = 1 / sqrt(1+x^2) */
 Expression ArcSinh::diff() const
 {
-    return 1 / sqrt( 1 + SireCAS::pow(x(),2) );
+    return 1 / SireCAS::sqrt( 1 + SireCAS::pow(x(),2) );
 }
 
 /** Integral of asinh(x) = x*asinh(x) - sqrt(1+x^2) */
 Expression ArcSinh::integ() const
 {
-    return  x()*ArcSinh(x()) - sqrt( 1 + SireCAS::pow(x(),2) );
+    return  x()*ArcSinh(x()) - SireCAS::sqrt( 1 + SireCAS::pow(x(),2) );
 }
 
 ////////////
@@ -401,14 +401,15 @@ QString ArcCsch::stringRep() const
 /** The differential of acsch(x) = -1 / (x^2 sqrt(1 + x^-2)) */
 Expression ArcCsch::diff() const
 {
-    return -1 / ( SireCAS::pow(x(),2) * sqrt( 1 + SireCAS::pow(x(),-2) ) );
+    return -1 / ( SireCAS::pow(x(),2) * SireCAS::sqrt( 1 + SireCAS::pow(x(),-2) ) );
 }
 
 /** Integral of acsch(x) = x acsch(x) + Ln[ x ( 1 + sqrt( (x^2+1)/x^2 ) ) ] */
 Expression ArcCsch::integ() const
 {
     return x()*ArcCsch(x()) + 
-           Ln( x() * ( 1 + sqrt( (SireCAS::pow(x(),2)+1) / SireCAS::pow(x(),2) ) ) );
+           Ln( x() * ( 1 + SireCAS::sqrt( (SireCAS::pow(x(),2)+1) / 
+                                                        SireCAS::pow(x(),2) ) ) );
 }
 
 ////////////
@@ -494,13 +495,13 @@ QString ArcSech::stringRep() const
 /** The differential of asech(x) = 1 / [x (x+1) sqrt( (1-x)/(1+x) )] */
 Expression ArcSech::diff() const
 {
-    return 1 / ( x() * (x()+1) * sqrt( (1-x())/(1+x()) ) );
+    return 1 / ( x() * (x()+1) * SireCAS::sqrt( (1-x())/(1+x()) ) );
 }
 
 /** Integral of asech(x) = x arcsech(x) - arctan[ (x/(x-1)) * sqrt( (1-x)/(1+x) )] */
 Expression ArcSech::integ() const
 {
-    return x()*ArcSech(x()) - ArcTan( (x()/(x()-1)) * sqrt( (1-x())/(1+x())) );
+    return x()*ArcSech(x()) - ArcTan( (x()/(x()-1)) * SireCAS::sqrt( (1-x())/(1+x())) );
 }
 
 ////////////

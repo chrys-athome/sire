@@ -135,7 +135,7 @@ protected:
 
 Q_DECLARE_METATYPE( MyFunc )
 
-SIRE_EXPOSE_CLASS( MyFunc )
+SIRE _ EXPOSE_CLASS( MyFunc )
 
 static RegisterObject<MyFunc> r_myfunc;
 

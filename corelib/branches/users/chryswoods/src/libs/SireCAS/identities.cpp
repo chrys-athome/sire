@@ -42,16 +42,12 @@ static const RegisterObject<Identities> r_identities;
 Identities::Identities() : Implements<Identities,Object>()
 {}
 
-/** Construct from a list of passed expressions */
-Identities::Identities(const QList<SymbolExpression> &expressions)
+/** Construct just setting 'symbol' equal to 'value' */
+Identities::Identities(const Symbol &symbol, const Expression &expression)
            : Implements<Identities,Object>()
 {
-    for (QList<SymbolExpression>::const_iterator it = expressions.begin();
-         it != expressions.end();
-         ++it)
-    {
-        add(*it);
-    }
+    idhash.reserve(1);
+    idhash.insert(symbol.ID(), expression);
 }
 
 /** Construct with a hash of expressions indexed by symbol */
@@ -62,16 +58,8 @@ Identities::Identities(const QHash<Symbol,Expression> &expressions)
          it != expressions.end();
          ++it)
     {
-        set(it.key(), it.value());
+        idhash.insert(it.key().ID(), it.value());
     }
-}
-
-
-/** Construct with the passed expressions */
-Identities::Identities(const SymbolExpression &symex0)
-           : Implements<Identities,Object>()
-{
-    add(symex0);
 }
 
 /** Copy constructor */
@@ -82,6 +70,23 @@ Identities::Identities(const Identities &other)
 /** Destructor */
 Identities::~Identities()
 {}
+
+Identities& Identities::operator=(const Identities &other)
+{
+    idhash = other.idhash;
+    Object::operator=(other);
+    return *this;
+}
+
+bool Identities::operator==(const Identities &other) const
+{
+    return idhash == other.idhash;
+}
+
+bool Identities::operator!=(const Identities &other) const
+{
+    return not Identities::operator==(other);
+}
 
 uint Identities::hashCode() const
 {
@@ -99,10 +104,54 @@ void Identities::stream(Stream &s)
     Object::stream( schema.base() );
 }
 
-/** Set the Symbol 'symbol' equal to 'expression' */
-void Identities::set(const Symbol &symbol, const Expression &expression)
+/** Return a list of the symbols that are present in this set */
+QList<Symbol> Identities::symbols() const
 {
-    idhash.insert(symbol.ID(), expression);
+    QList<Symbol> s;
+    
+    for (QHash<SymbolID,Expression>::const_iterator it = idhash.constBegin();
+         it != idhash.constEnd();
+         ++it)
+    {
+        s.append( Symbol(it.key()) );
+    }
+
+    return s;
+}
+
+const QHash<SymbolID,Expression>& Identities::values() const
+{
+    return idhash;
+}
+
+/** Return a list of the symbols that are present in this set */
+QList<Symbol> Identities::keys() const
+{
+    return this->symbols();
+}
+
+QString Identities::toString() const
+{
+    QStringList words;
+    QStringList lines;
+    
+    QList<Symbol> syms = this->symbols();
+    
+    qSort(syms);
+    
+    foreach (const Symbol &sym, syms)
+    {
+        words.append( QString("%1 == %2").arg(sym.toString())
+                                         .arg(this->expression(sym).toString()) );
+
+        if (words.count() == 4)
+        {
+            lines.append( words.join(", ") );
+            words.clear();
+        }
+    }
+    
+    return QString("{ %1 }").arg( lines.join("\n  ") );
 }
 
 /** Return whether or not this set of identities contains an identity for
@@ -122,210 +171,30 @@ Expression Identities::expression(const Symbol &symbol) const
         return symbol;
 }
 
-/** Add the passed expressions */
-void Identities::add(const SymbolExpression &symex0, const SymbolExpression &symex1)
+/** Add the contents of 'other' to this set - this overwrites any
+    existing values that are also in 'other' */
+Identities Identities::operator+(const Identities &other) const
 {
-    add(symex0);
-    add(symex1);
-}
+    if (other.idhash.isEmpty())
+        return *this;
+    else if (idhash.isEmpty())
+    {
+        return other;
+    }
+    else
+    {
+        Identities ret;
+    
+        ret.idhash = idhash;
+        ret.idhash.reserve( idhash.count() + other.idhash.count() );
 
-/** Add the passed expressions */
-void Identities::add(const SymbolExpression &symex0, const SymbolExpression &symex1,
-                     const SymbolExpression &symex2)
-{
-    add(symex0);
-    add(symex1);
-    add(symex2);
-}
+        for (QHash<SymbolID,Expression>::const_iterator it = other.idhash.begin();
+             it != other.idhash.end();
+             ++it)
+        {
+            ret.idhash.insert( it.key(), it.value() );
+        }
 
-/** Add the passed expressions */
-void Identities::add(const SymbolExpression &symex0, const SymbolExpression &symex1,
-                     const SymbolExpression &symex2, const SymbolExpression &symex3)
-{
-    add(symex0);
-    add(symex1);
-    add(symex2);
-    add(symex3);
-}
-
-/** Add the passed expressions */
-void Identities::add(const SymbolExpression &symex0, const SymbolExpression &symex1,
-                     const SymbolExpression &symex2, const SymbolExpression &symex3,
-                     const SymbolExpression &symex4)
-{
-    add(symex0);
-    add(symex1);
-    add(symex2);
-    add(symex3);
-    add(symex4);
-}
-
-/** Add the passed expressions */
-void Identities::add(const SymbolExpression &symex0, const SymbolExpression &symex1,
-                     const SymbolExpression &symex2, const SymbolExpression &symex3,
-                     const SymbolExpression &symex4, const SymbolExpression &symex5)
-{
-    add(symex0);
-    add(symex1);
-    add(symex2);
-    add(symex3);
-    add(symex4);
-    add(symex5);
-}
-
-/** Add the passed expressions */
-void Identities::add(const SymbolExpression &symex0, const SymbolExpression &symex1,
-                     const SymbolExpression &symex2, const SymbolExpression &symex3,
-                     const SymbolExpression &symex4, const SymbolExpression &symex5,
-                     const SymbolExpression &symex6)
-{
-    add(symex0);
-    add(symex1);
-    add(symex2);
-    add(symex3);
-    add(symex4);
-    add(symex5);
-    add(symex6);
-}
-
-/** Add the passed expressions */
-void Identities::add(const SymbolExpression &symex0, const SymbolExpression &symex1,
-                     const SymbolExpression &symex2, const SymbolExpression &symex3,
-                     const SymbolExpression &symex4, const SymbolExpression &symex5,
-                     const SymbolExpression &symex6, const SymbolExpression &symex7)
-{
-    add(symex0);
-    add(symex1);
-    add(symex2);
-    add(symex3);
-    add(symex4);
-    add(symex5);
-    add(symex6);
-    add(symex7);
-}
-
-/** Add the passed expressions */
-void Identities::add(const SymbolExpression &symex0, const SymbolExpression &symex1,
-                     const SymbolExpression &symex2, const SymbolExpression &symex3,
-                     const SymbolExpression &symex4, const SymbolExpression &symex5,
-                     const SymbolExpression &symex6, const SymbolExpression &symex7,
-                     const SymbolExpression &symex8)
-{
-    add(symex0);
-    add(symex1);
-    add(symex2);
-    add(symex3);
-    add(symex4);
-    add(symex5);
-    add(symex6);
-    add(symex7);
-    add(symex8);
-}
-
-/** Add the passed expressions */
-void Identities::add(const SymbolExpression &symex0, const SymbolExpression &symex1,
-                     const SymbolExpression &symex2, const SymbolExpression &symex3,
-                     const SymbolExpression &symex4, const SymbolExpression &symex5,
-                     const SymbolExpression &symex6, const SymbolExpression &symex7,
-                     const SymbolExpression &symex8, const SymbolExpression &symex9)
-{
-    add(symex0);
-    add(symex1);
-    add(symex2);
-    add(symex3);
-    add(symex4);
-    add(symex5);
-    add(symex6);
-    add(symex7);
-    add(symex8);
-    add(symex9);
-}
-
-/** Construct from the passed values */
-Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &symex1)
-           : Implements<Identities,Object>()
-{
-    add(symex0,symex1);
-}
-
-/** Construct from the passed values */
-Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
-                       const SymbolExpression &symex2)
-           : Implements<Identities,Object>()
-{
-    add(symex0,symex1,symex2);
-}
-
-/** Construct from the passed values */
-Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
-                       const SymbolExpression &symex2, const SymbolExpression &symex3)
-           : Implements<Identities,Object>()
-{
-    add(symex0,symex1,symex2,symex3);
-}
-
-/** Construct from the passed values */
-Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
-                       const SymbolExpression &symex2, const SymbolExpression &symex3,
-                       const SymbolExpression &symex4)
-           : Implements<Identities,Object>()
-{
-    add(symex0,symex1,symex2,symex3,symex4);
-}
-
-/** Construct from the passed values */
-Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
-                       const SymbolExpression &symex2, const SymbolExpression &symex3,
-                       const SymbolExpression &symex4, const SymbolExpression &symex5)
-           : Implements<Identities,Object>()
-{
-    add(symex0,symex1,symex2,symex3,symex4,symex5);
-}
-
-/** Construct from the passed values */
-Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
-                       const SymbolExpression &symex2, const SymbolExpression &symex3,
-                       const SymbolExpression &symex4, const SymbolExpression &symex5,
-                       const SymbolExpression &symex6)
-           : Implements<Identities,Object>()
-{
-    add(symex0,symex1,symex2,symex3,symex4,symex5,symex6);
-}
-
-/** Construct from the passed values */
-Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
-                       const SymbolExpression &symex2, const SymbolExpression &symex3,
-                       const SymbolExpression &symex4, const SymbolExpression &symex5,
-                       const SymbolExpression &symex6, const SymbolExpression &symex7)
-           : Implements<Identities,Object>()
-{
-    add(symex0,symex1,symex2,symex3,symex4,symex5,symex6,symex7);
-}
-
-/** Construct from the passed values */
-Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
-                       const SymbolExpression &symex2, const SymbolExpression &symex3,
-                       const SymbolExpression &symex4, const SymbolExpression &symex5,
-                       const SymbolExpression &symex6, const SymbolExpression &symex7,
-                       const SymbolExpression &symex8)
-           : Implements<Identities,Object>()
-{
-    add(symex0,symex1,symex2,symex3,symex4,symex5,symex6,symex7,symex8);
-}
-
-/** Construct from the passed values */
-Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &symex1,
-                       const SymbolExpression &symex2, const SymbolExpression &symex3,
-                       const SymbolExpression &symex4, const SymbolExpression &symex5,
-                       const SymbolExpression &symex6, const SymbolExpression &symex7,
-                       const SymbolExpression &symex8, const SymbolExpression &symex9)
-           : Implements<Identities,Object>()
-{
-    add(symex0,symex1,symex2,symex3,symex4,symex5,symex6,symex7,symex8,symex9);
-}
-
-/** Add the SymbolExpression to this set of identities */
-void Identities::add(const SymbolExpression &symex0)
-{
-    set( symex0.first, symex0.second );
+        return ret;
+    }
 }

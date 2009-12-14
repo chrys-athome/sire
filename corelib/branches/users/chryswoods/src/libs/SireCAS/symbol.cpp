@@ -128,9 +128,24 @@ Symbol::~Symbol()
 /** Assignment operator */
 Symbol& Symbol::operator=(const Symbol &other)
 {
-    id = other.id;
-    stringrep = other.stringrep;
+    if (this != &other)
+    {
+        id = other.id;
+        stringrep = other.stringrep;
+        CASNode::operator=(other);
+    }
+    
     return *this;
+}
+
+bool Symbol::operator==(const Symbol &other) const
+{
+    return id == other.id;
+}
+
+bool Symbol::operator!=(const Symbol &other) const
+{
+    return id != other.id;
 }
 
 /** Assignment operator */
@@ -182,6 +197,14 @@ uint Symbol::hashCode() const
     return id;
 }
 
+/** Return the ID number of this symbol - this ID number
+    is just for this session - if this symbol is streamed
+    and loaded into another process then the ID will change */
+SymbolID Symbol::ID() const
+{
+    return id;
+}
+
 void Symbol::stream(Stream &s)
 {
     s.assertVersion<Symbol>(1);
@@ -202,6 +225,26 @@ void Symbol::stream(Stream &s)
 QList<Expression> Symbol::children() const
 {
     return QList<Expression>();
+}
+
+Values Symbol::operator==(double value) const
+{
+    return Values(*this, value);
+}
+
+Values Symbol::operator==(int value) const
+{
+    return Values(*this, value);
+}
+
+ComplexValues Symbol::operator==(const SireMaths::Complex &value) const
+{
+    return ComplexValues(*this, value);
+}
+
+Identities Symbol::operator==(const Expression &expression) const
+{
+    return Identities(*this, expression);
 }
 
 /** Evaluate this symbol - returns the value of the symbol in 'values' if

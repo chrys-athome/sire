@@ -39,6 +39,8 @@ SIRE_BEGIN_HEADER
 namespace SireCAS
 {
 
+class ComplexValues;
+
 /**
     This class holds a set of Symbols and their associated values. This is used
     when numerically evaluating an equation.
@@ -49,30 +51,9 @@ class SIRECAS_EXPORT Values : public Siren::Implements<Values,Siren::Object>
 {
 public:
     Values();
-    Values(const QList<SymbolValue> &values);
+    Values(const Symbol &symbol, double value);
     Values(const QHash<Symbol,double> &values);
-    Values(const SymbolValue &symval0);
-    Values(const SymbolValue &symval0, const SymbolValue &symval1);
-    Values(const SymbolValue &symval0, const SymbolValue &symval1, const SymbolValue &symval2);
-    Values(const SymbolValue &symval0, const SymbolValue &symval1, const SymbolValue &symval2,
-           const SymbolValue &symval3);
-    Values(const SymbolValue &symval0, const SymbolValue &symval1, const SymbolValue &symval2,
-           const SymbolValue &symval3, const SymbolValue &symval4);
-    Values(const SymbolValue &symval0, const SymbolValue &symval1, const SymbolValue &symval2,
-           const SymbolValue &symval3, const SymbolValue &symval4, const SymbolValue &symval5);
-    Values(const SymbolValue &symval0, const SymbolValue &symval1, const SymbolValue &symval2,
-           const SymbolValue &symval3, const SymbolValue &symval4, const SymbolValue &symval5,
-           const SymbolValue &symval6);
-    Values(const SymbolValue &symval0, const SymbolValue &symval1, const SymbolValue &symval2,
-           const SymbolValue &symval3, const SymbolValue &symval4, const SymbolValue &symval5,
-           const SymbolValue &symval6, const SymbolValue &symval7);
-    Values(const SymbolValue &symval0, const SymbolValue &symval1, const SymbolValue &symval2,
-           const SymbolValue &symval3, const SymbolValue &symval4, const SymbolValue &symval5,
-           const SymbolValue &symval6, const SymbolValue &symval7, const SymbolValue &symval8);
-    Values(const SymbolValue &symval0, const SymbolValue &symval1, const SymbolValue &symval2,
-           const SymbolValue &symval3, const SymbolValue &symval4, const SymbolValue &symval5,
-           const SymbolValue &symval6, const SymbolValue &symval7, const SymbolValue &symval8,
-           const SymbolValue &symval9);
+    Values(const ComplexValues &other);
 
     Values(const Values &other);
 
@@ -83,37 +64,11 @@ public:
     bool operator==(const Values &other) const;
     bool operator!=(const Values &other) const;
 
-    Values& operator+=(const SymbolValue &val);
-    Values& operator+=(const Values &other);
+    Values operator+(const Values &other) const;
 
     uint hashCode() const;
     QString toString() const;
     void stream(Siren::Stream &s);
-
-    void set(const Symbol &symbol, double value);
-
-    void add(const SymbolValue &symval0);
-    void add(const SymbolValue &symval0, const SymbolValue &symval1);
-    void add(const SymbolValue &symval0, const SymbolValue &symval1, const SymbolValue &symval2);
-    void add(const SymbolValue &symval0, const SymbolValue &symval1, const SymbolValue &symval2,
-             const SymbolValue &symval3);
-    void add(const SymbolValue &symval0, const SymbolValue &symval1, const SymbolValue &symval2,
-             const SymbolValue &symval3, const SymbolValue &symval4);
-    void add(const SymbolValue &symval0, const SymbolValue &symval1, const SymbolValue &symval2,
-             const SymbolValue &symval3, const SymbolValue &symval4, const SymbolValue &symval5);
-    void add(const SymbolValue &symval0, const SymbolValue &symval1, const SymbolValue &symval2,
-             const SymbolValue &symval3, const SymbolValue &symval4, const SymbolValue &symval5,
-             const SymbolValue &symval6);
-    void add(const SymbolValue &symval0, const SymbolValue &symval1, const SymbolValue &symval2,
-             const SymbolValue &symval3, const SymbolValue &symval4, const SymbolValue &symval5,
-             const SymbolValue &symval6, const SymbolValue &symval7);
-    void add(const SymbolValue &symval0, const SymbolValue &symval1, const SymbolValue &symval2,
-             const SymbolValue &symval3, const SymbolValue &symval4, const SymbolValue &symval5,
-             const SymbolValue &symval6, const SymbolValue &symval7, const SymbolValue &symval8);
-    void add(const SymbolValue &symval0, const SymbolValue &symval1, const SymbolValue &symval2,
-             const SymbolValue &symval3, const SymbolValue &symval4, const SymbolValue &symval5,
-             const SymbolValue &symval6, const SymbolValue &symval7, const SymbolValue &symval8,
-             const SymbolValue &symval9);
 
     double value(const Symbol &sym) const;
 
@@ -131,19 +86,10 @@ public:
 
     bool contains(const Symbol &symbol) const;
 
-    void reserve(int n);
-
 private:
     /** Hash mapping Symbol IDs to actual numerical values */
     QHash<SymbolID, double> vals;
 };
-
-Values operator+(const SymbolValue &val0, const SymbolValue &val1);
-
-Values operator+(const Values &vals, const SymbolValue &val);
-Values operator+(const SymbolValue &val, const Values &vals);
-
-Values operator+(const Values &vals0, const Values &vals1);
 
 }
 

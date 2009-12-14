@@ -28,11 +28,16 @@
 
 #include "values.h"
 #include "symbol.h"
+#include "complexvalues.h"
+
+#include "SireMaths/complex.h"
+#include "SireMaths/errors.h"
 
 #include "Siren/stream.h"
 #include "Siren/streamqt.h"
 
 using namespace Siren;
+using namespace SireMaths;
 using namespace SireCAS;
 
 static const RegisterObject<Values> r_values;
@@ -41,16 +46,12 @@ static const RegisterObject<Values> r_values;
 Values::Values() : Implements<Values,Object>()
 {}
 
-/** Construct from a list of values */
-Values::Values(const QList<SymbolValue> &values)
+/** Construct just setting 'symbol' equal to 'value' */
+Values::Values(const Symbol &symbol, double value)
        : Implements<Values,Object>()
 {
-    for (QList<SymbolValue>::const_iterator it = values.begin();
-         it != values.end();
-         ++it)
-    {
-        add(*it);
-    }
+    vals.reserve(1);
+    vals.insert(symbol.ID(), value);
 }
 
 /** Construct from a hash of values indexed by symbols */
@@ -65,10 +66,42 @@ Values::Values(const QHash<Symbol,double> &values)
     }
 }
 
+/** Construct from the passed complex values
+
+    \throw SireMaths::domain_error
+*/
+Values::Values(const ComplexValues &other)
+       : Implements<Values,Object>()
+{
+    vals.reserve(other.values().count());
+
+    for (QHash<SymbolID,Complex>::const_iterator it = other.values().constBegin();
+         it != other.values().constEnd();
+         ++it)
+    {
+        if (not it->isReal())
+            throw SireMaths::domain_error( QObject::tr(
+                "Cannot construct a 'Values' object from a 'ComplexValues' "
+                "object as some of the values are not real (e.g. %1).\n"
+                "%2")
+                    .arg(it->toString())
+                    .arg(other.toString()), CODELOC );
+    
+        vals.insert( it.key(), it->real() );
+    }
+}
+
 /** Copy constructor */
 Values::Values(const Values &other)
        : Implements<Values,Object>(other), vals(other.vals)
 {}
+
+Values& Values::operator=(const Values &other)
+{
+    vals = other.vals;
+    Object::operator=(other);
+    return *this;
+}
 
 /** Comparison operator */
 bool Values::operator==(const Values &other) const
@@ -128,199 +161,6 @@ QList<Symbol> Values::keys() const
     return this->symbols();
 }
 
-/** Construct from the passed values */
-Values::Values(const SymbolValue &val0)
-       : Implements<Values,Object>()
-{
-    add(val0);
-}
-
-/** Add the passed values */
-void Values::add(const SymbolValue &val0, const SymbolValue &val1)
-{
-    add(val0);
-    add(val1);
-}
-
-/** Add the passed values */
-void Values::add(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2)
-{
-    add(val0);
-    add(val1);
-    add(val2);
-}
-
-/** Add the passed values */
-void Values::add(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
-                 const SymbolValue &val3)
-{
-    add(val0);
-    add(val1);
-    add(val2);
-    add(val3);
-}
-
-/** Add the passed values */
-void Values::add(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
-                 const SymbolValue &val3, const SymbolValue &val4)
-{
-    add(val0);
-    add(val1);
-    add(val2);
-    add(val3);
-    add(val4);
-}
-
-/** Add the passed values */
-void Values::add(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
-                 const SymbolValue &val3, const SymbolValue &val4, const SymbolValue &val5)
-{
-    add(val0);
-    add(val1);
-    add(val2);
-    add(val3);
-    add(val4);
-    add(val5);
-}
-
-/** Add the passed values */
-void Values::add(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
-                 const SymbolValue &val3, const SymbolValue &val4, const SymbolValue &val5,
-                 const SymbolValue &val6)
-{
-    add(val0);
-    add(val1);
-    add(val2);
-    add(val3);
-    add(val4);
-    add(val5);
-    add(val6);
-}
-
-/** Add the passed values */
-void Values::add(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
-                 const SymbolValue &val3, const SymbolValue &val4, const SymbolValue &val5,
-                 const SymbolValue &val6, const SymbolValue &val7)
-{
-    add(val0);
-    add(val1);
-    add(val2);
-    add(val3);
-    add(val4);
-    add(val5);
-    add(val6);
-    add(val7);
-}
-
-/** Add the passed values */
-void Values::add(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
-                 const SymbolValue &val3, const SymbolValue &val4, const SymbolValue &val5,
-                 const SymbolValue &val6, const SymbolValue &val7, const SymbolValue &val8)
-{
-    add(val0);
-    add(val1);
-    add(val2);
-    add(val3);
-    add(val4);
-    add(val5);
-    add(val6);
-    add(val7);
-    add(val8);
-}
-
-/** Add the passed values */
-void Values::add(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
-                 const SymbolValue &val3, const SymbolValue &val4, const SymbolValue &val5,
-                 const SymbolValue &val6, const SymbolValue &val7, const SymbolValue &val8,
-                 const SymbolValue &val9)
-{
-    add(val0);
-    add(val1);
-    add(val2);
-    add(val3);
-    add(val4);
-    add(val5);
-    add(val6);
-    add(val7);
-    add(val8);
-    add(val9);
-}
-
-/** Construct from the passed values */
-Values::Values(const SymbolValue &val0, const SymbolValue &val1)
-       : Implements<Values,Object>()
-{
-    add(val0,val1);
-}
-
-/** Construct from the passed values */
-Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2)
-       : Implements<Values,Object>()
-{
-    add(val0,val1,val2);
-}
-
-/** Construct from the passed values */
-Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
-               const SymbolValue &val3)
-       : Implements<Values,Object>()
-{
-    add(val0,val1,val2,val3);
-}
-
-/** Construct from the passed values */
-Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
-               const SymbolValue &val3, const SymbolValue &val4)
-       : Implements<Values,Object>()
-{
-    add(val0,val1,val2,val3,val4);
-}
-
-/** Construct from the passed values */
-Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
-               const SymbolValue &val3, const SymbolValue &val4, const SymbolValue &val5)
-       : Implements<Values,Object>()
-{
-    add(val0,val1,val2,val3,val4,val5);
-}
-
-/** Construct from the passed values */
-Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
-               const SymbolValue &val3, const SymbolValue &val4, const SymbolValue &val5,
-               const SymbolValue &val6)
-       : Implements<Values,Object>()
-{
-    add(val0,val1,val2,val3,val4,val5,val6);
-}
-
-/** Construct from the passed values */
-Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
-               const SymbolValue &val3, const SymbolValue &val4, const SymbolValue &val5,
-               const SymbolValue &val6, const SymbolValue &val7)
-       : Implements<Values,Object>()
-{
-    add(val0,val1,val2,val3,val4,val5,val6,val7);
-}
-
-/** Construct from the passed values */
-Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
-               const SymbolValue &val3, const SymbolValue &val4, const SymbolValue &val5,
-               const SymbolValue &val6, const SymbolValue &val7, const SymbolValue &val8)
-       : Implements<Values,Object>()
-{
-    add(val0,val1,val2,val3,val4,val5,val6,val7,val8);
-}
-
-/** Construct from the passed values */
-Values::Values(const SymbolValue &val0, const SymbolValue &val1, const SymbolValue &val2,
-               const SymbolValue &val3, const SymbolValue &val4, const SymbolValue &val5,
-               const SymbolValue &val6, const SymbolValue &val7, const SymbolValue &val8,
-               const SymbolValue &val9)
-       : Implements<Values,Object>()
-{
-    add(val0,val1,val2,val3,val4,val5,val6,val7,val8,val9);
-}
-
 /** Destructor */
 Values::~Values()
 {}
@@ -359,43 +199,32 @@ double Values::operator()(const Symbol &sym) const
     return this->value(sym);
 }
 
-/** Add the value 'val' to this set */
-Values& Values::operator+=(const SymbolValue &val)
-{
-    this->add(val);
-    return *this;
-}
-
 /** Add the contents of 'other' to this set - this overwrites any
     existing values that are also in 'other' */
-Values& Values::operator+=(const Values &other)
+Values Values::operator+(const Values &other) const
 {
     if (other.vals.isEmpty())
         return *this;
     else if (vals.isEmpty())
     {
-        vals = other.vals;
-        return *this;
+        return other;
     }
     else
     {
-        vals.reserve( vals.count() + other.vals.count() );
+        Values ret;
+    
+        ret.vals = vals;
+        ret.vals.reserve( vals.count() + other.vals.count() );
 
         for (QHash<SymbolID,double>::const_iterator it = other.vals.begin();
              it != other.vals.end();
              ++it)
         {
-            vals.insert( it.key(), it.value() );
+            ret.vals.insert( it.key(), it.value() );
         }
 
-        return *this;
+        return ret;
     }
-}
-
-/** Reserve space for at least 'n' items */
-void Values::reserve(int n)
-{
-    vals.reserve(n);
 }
 
 /** Return whether or not this set of values is empty */
@@ -410,18 +239,6 @@ int Values::count() const
     return vals.count();
 }
 
-/** Add a SymbolValue to the set of values */
-void Values::add(const SymbolValue &val0)
-{
-    vals.insert(val0.first, val0.second);
-}
-
-/** Set the Symbol 'symbol' equal to 'value' */
-void Values::set(const Symbol &symbol, double value)
-{
-    vals.insert(symbol.ID(), value);
-}
-
 /** Return the hash mapping the symbol ID to a value */
 const QHash<SymbolID,double>& Values::values() const
 {
@@ -432,36 +249,4 @@ const QHash<SymbolID,double>& Values::values() const
 bool Values::contains(const Symbol &symbol) const
 {
     return vals.contains(symbol.ID());
-}
-
-namespace SireCAS
-{
-    Values SIRECAS_EXPORT operator+(const SymbolValue &val0, const SymbolValue &val1)
-    {
-        Values vals(val0);
-        vals += val1;
-        
-        return vals;
-    }
-
-    Values SIRECAS_EXPORT operator+(const Values &vals, const SymbolValue &val)
-    {
-        Values new_vals(vals);
-        new_vals += val;
-        return new_vals;
-    }
-    
-    Values SIRECAS_EXPORT operator+(const SymbolValue &val, const Values &vals)
-    {
-        Values new_vals(vals);
-        new_vals += val;
-        return new_vals;
-    }
-
-    Values SIRECAS_EXPORT operator+(const Values &vals0, const Values &vals1)
-    {
-        Values new_vals(vals0);
-        new_vals += vals1;
-        return new_vals;
-    }
 }

@@ -90,10 +90,10 @@ public:
     QList<Factor> expand(const Symbol &symbol) const;
 
 private:
-    void add(const Expression &ex);
+    void pvt_add(const Expression &ex);
 
-    Expression take(const CASNode &ex);
-    void add(double fac, const CASNode &ex);
+    Expression pvt_take(const CASNode &ex);
+    void pvt_add(double fac, const CASNode &ex);
 
     /** The positive parts of the sum, indexed by their core */
     QHash<Expression, Expression> posparts;
