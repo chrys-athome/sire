@@ -49,6 +49,7 @@ set ( SIREMOL_HEADERS
       chainname.h
       chainproperty.hpp
       chainresid.h
+      chargeperturbation.h
       connectivity.h
       cutgroup.h
       cuttingfunction.h
@@ -88,6 +89,7 @@ set ( SIREMOL_HEADERS
       mover.h
       mover.hpp
       partialmolecule.h
+      perturbation.h
       reseditor.h
       resid.h
       residentifier.h
@@ -140,6 +142,7 @@ set ( SIREMOL_SOURCES
       chainidentifier.cpp
       chainproperty.cpp
       chainresid.cpp
+      chargeperturbation.cpp
       connectivity.cpp
       cutgroup.cpp
       cuttingfunction.cpp
@@ -168,6 +171,7 @@ set ( SIREMOL_SOURCES
       molviewproperty.cpp
       mover.cpp
       partialmolecule.cpp
+      perturbation.cpp
       reseditor.cpp
       resid.cpp
       residentifier.cpp

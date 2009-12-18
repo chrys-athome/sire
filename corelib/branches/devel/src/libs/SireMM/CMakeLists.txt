@@ -34,6 +34,7 @@ set ( SIREMM_HEADERS
       ljpair.h
       ljparameter.h
       ljparameterdb.h
+      ljperturbation.h
       ljpotential.h
       restraint.h
       restraintcomponent.h
@@ -78,6 +79,7 @@ set ( SIREMM_SOURCES
       ljpair.cpp
       ljparameter.cpp
       ljparameterdb.cpp
+      ljperturbation.cpp
       ljpotential.cpp
       restraint.cpp
       restraintcomponent.cpp

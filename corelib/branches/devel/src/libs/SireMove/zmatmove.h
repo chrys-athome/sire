@@ -97,8 +97,12 @@ public:
     const MoleculeGroup& moleculeGroup() const;
 
     const PropertyName& zmatrixProperty() const;
-    
     void setZMatrixProperty(const PropertyName &property);
+
+    void setSynchronisedMotion(bool on);
+    void setSynchronisedBonds(bool on);
+    void setSynchronisedAngles(bool on);
+    void setSynchronisedDihedrals(bool on);
 
     void setGenerator(const RanGenerator &rangenerator);
 
@@ -108,13 +112,28 @@ protected:
     void _pvt_setTemperature(const SireUnits::Dimension::Temperature &temperature);
 
 private:
-    void move(SireMol::AtomIdx atom, ZMatrixCoords &zmatrix);
+    void move(SireMol::AtomIdx atom, ZMatrixCoords &zmatrix,
+              QHash< SireMol::AtomIdx, boost::tuple<SireUnits::Dimension::Length,
+                     SireUnits::Dimension::Angle,SireUnits::Dimension::Angle> > &deltas);
 
     /** The sampler used to select random molecules for the move */
     SamplerPtr smplr;
     
     /** The name of the property that contains the z-matrix */
     PropertyName zmatrix_property;
+    
+    /** Whether or not to move equivalent bonds in different
+        molecules by the same amount (equivalent is judged by 
+        AtomIdx) */
+    bool sync_bonds;
+    
+    /** Whether or not to move equivalent angles in different
+        molecules by the same amount */
+    bool sync_angles;
+    
+    /** Whether or not to move equivalent dihedrals in different
+        molecules by the same amount */
+    bool sync_dihedrals;
 };
 
 }

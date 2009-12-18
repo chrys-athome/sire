@@ -406,7 +406,9 @@ void Moves::setFugacity(const Pressure &fugacity)
     before the moves are run */
 void Moves::preCheck(System &system) const
 {
-    if (not system.constraintsSatisfied())
+    int ntries = 0;
+
+    while (not system.constraintsSatisfied())
     {
         QStringList unsatisfied_constraints;
     
@@ -425,12 +427,21 @@ void Moves::preCheck(System &system) const
             }
         }
         
-        throw SireSystem::constraint_error( QObject::tr(
+        ++ntries;
+
+        qDebug() << "WARNING - constraints not satisfied\n"
+                 << unsatisfied_constraints.join("\n");
+
+        if (ntries > 5)
+            throw SireSystem::constraint_error( QObject::tr(
                 "Cannot start running the moves as the system contains "
                 "unsatisfied constraints. The number of unsatisfied constraints "
                 "equals %1.\nHere are the unsatisfied constraints:\n%2")
                     .arg(unsatisfied_constraints.count())
                     .arg(unsatisfied_constraints.join("\n")), CODELOC );
+
+        //apply the constraints now
+        system.applyConstraints();
     }
 }
 
