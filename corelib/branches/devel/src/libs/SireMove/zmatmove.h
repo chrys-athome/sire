@@ -103,7 +103,12 @@ public:
     void setSynchronisedBonds(bool on);
     void setSynchronisedAngles(bool on);
     void setSynchronisedDihedrals(bool on);
-
+    
+    bool synchronisedMotion() const;
+    bool synchronisedBonds() const;
+    bool synchronisedAngles() const;
+    bool synchronisedDihedrals() const;
+    
     void setGenerator(const RanGenerator &rangenerator);
 
     void move(System &system, int nmoves, bool record_stats=true);

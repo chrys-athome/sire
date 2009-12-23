@@ -169,6 +169,60 @@ bool ConnectivityBase::operator!=(const ConnectivityBase &other) const
            connected_atoms != other.connected_atoms;
 }
 
+QString ConnectivityBase::toString() const
+{
+    QStringList lines;
+    
+    lines.append( QObject::tr("Connectivity: nConnections() == %1.")
+                        .arg(this->nConnections()) );
+
+    if (nConnections() == 0)
+        return lines.at(0);
+                        
+    if (not connected_res.isEmpty())
+    {
+        lines.append( QObject::tr("Connected residues:") );
+        
+        for (int i=0; i<connected_res.count(); ++i)
+        {
+            QStringList resnums;
+            
+            foreach (ResIdx j, connected_res.at(i))
+            {
+                resnums.append( QString::number(d->number(j).value()) );
+            }
+            
+            if (not connected_res.at(i).isEmpty())
+                lines.append( QObject::tr("  : Residue %1 bonded to %2.")
+                        .arg(d->number(ResIdx(i)).value()).arg(resnums.join(" ")) );
+        }
+    }
+    
+    if (not connected_atoms.isEmpty())
+    {
+        lines.append( QObject::tr("Connected atoms:") );
+        
+        for (int i=0; i<connected_atoms.count(); ++i)
+        {
+            QStringList atoms;
+            
+            foreach (AtomIdx j, connected_atoms.at(i))
+            {
+                atoms.append( QString("%1-%2").arg( d->name(j) )
+                                      .arg( d->number(d->parentResidue(j)).value()) );
+            }
+            
+            if (not connected_atoms.at(i).isEmpty())
+                lines.append( QObject::tr("  : Atom %1-%2 bonded to %3.")
+                        .arg( d->name(AtomIdx(i)) )
+                        .arg( d->number(d->parentResidue(AtomIdx(i))).value() )
+                        .arg( atoms.join(" ") ) );
+        }
+    }
+    
+    return lines.join("\n");
+}
+
 /** Return the total number of connections between atoms
     in this connectivity object */
 int ConnectivityBase::nConnections() const
@@ -1557,6 +1611,12 @@ ConnectivityEditor& ConnectivityEditor::disconnectAll(ResIdx residx)
 ConnectivityEditor& ConnectivityEditor::disconnectAll(const ResID &resid)
 {
     return this->disconnectAll( info().resIdx(resid) );
+}
+
+/** Return the editied connectivity */
+Connectivity ConnectivityEditor::commit() const
+{
+    return Connectivity(*this);
 }
 
 const char* ConnectivityEditor::typeName()

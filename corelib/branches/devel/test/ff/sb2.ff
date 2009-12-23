@@ -75,10 +75,10 @@ atom  HD4 FRG  3843 3540  CD4 FRG  CD3 FRG  CD5 FRG
 atom  HD5 FRG  3844 3541  CD5 FRG  CD4 FRG  CD6 FRG
 atom  FD3 FRG  3845 3542  CD3 FRG  CD2 FRG  CD4 FRG
 #variable geometry to pull methyl group into hydrogen
-#variable CM1 NRG bond  1.494   1.106
-#variable HM1 NRG bond  1.118   0.200
-#variable HM2 NRG bond  1.118   0.200
-#variable HM3 NRG bond  1.118   0.200
+variable CM1 NRG bond  1.494   1.106
+variable HM1 NRG bond  1.118   0.200
+variable HM2 NRG bond  1.118   0.200
+variable HM3 NRG bond  1.118   0.200
 #connectivity of SRG residue  - do not need energy of any bonds as inflexible
 bond O2  SRG  S1  SRG  param 0 0
 bond C1  SRG  S1  SRG  param 0 0

@@ -116,7 +116,7 @@ double LJParameter::B() const
 
     rmin = 2^(1/6) * sigma
 */
-double LJParameter::rmin() const
+Length LJParameter::rmin() const
 {
     // 2.0 ^ (1/6) = 1.122462048309372981439932526193103967671
     return sigma() * double(1.122462048309372981439932526193103967671);

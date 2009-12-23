@@ -298,6 +298,9 @@ def fix_SegID(c):
     for header in active_headers["segid.h"].dependencies():
         c.add_declaration_code( "#include %s" % header )
 
+def fix_PerturbationSymbols(c):
+    c.mem_funs("lambda").rename("Lambda")
+
 special_code = { "SireMol::Atom" : fix_Atom,
                  "SireMol::Editor<SireMol::AtomEditor, SireMol::Atom>" : fix_AtomEditorBase,
                  "SireMol::AtomEditor" : fix_AtomEditor,
@@ -390,6 +393,8 @@ special_code = { "SireMol::Atom" : fix_Atom,
                  "SireMol::MolName" : fix_MolName,
                  "SireMol::MolIdx" : fix_MolIdx,
                  "SireMol::MolInfo" : fix_MolInfo, 
+
+                 "SireMol::PerturbationSymbols" : fix_PerturbationSymbols,
 
                  "SireMol::CGIdx" : fix_CGIdx,
                  "SireMol::CGAtomIdx" : fix_CGAtomIdx }

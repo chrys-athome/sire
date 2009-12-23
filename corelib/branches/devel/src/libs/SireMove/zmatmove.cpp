@@ -228,6 +228,60 @@ void ZMatMove::setZMatrixProperty(const PropertyName &property)
     zmatrix_property = property;
 }
 
+/** Set whether or not to synchronise all motion for all molecules 
+    in the group */
+void ZMatMove::setSynchronisedMotion(bool on)
+{
+    sync_bonds = on;
+    sync_angles = on;
+    sync_dihedrals = on;
+}
+
+/** Set whether or not to synchronise all bond moves for all molecules */
+void ZMatMove::setSynchronisedBonds(bool on)
+{
+    sync_bonds = on;
+}
+
+/** Set whether or not to synchronise all angle moves for all molecules */
+void ZMatMove::setSynchronisedAngles(bool on)
+{
+    sync_angles = on;
+}
+
+/** Set whether or not to synchronise all dihedral moves for all molecules */
+void ZMatMove::setSynchronisedDihedrals(bool on)
+{
+    sync_dihedrals = on;
+}
+
+/** Return whether or not all moves for all molecules are synchronised */
+bool ZMatMove::synchronisedMotion() const
+{
+    return sync_bonds and sync_angles and sync_dihedrals;
+}
+
+/** Return whether or not all bond moves for all molecules
+    are synchronised */
+bool ZMatMove::synchronisedBonds() const
+{
+    return sync_bonds;
+}
+
+/** Return whether or not all angle moves for all molecules
+    are synchronised */
+bool ZMatMove::synchronisedAngles() const
+{
+    return sync_angles;
+}
+
+/** Return whether or not all dihedral moves for all molecules
+    are synchronised */
+bool ZMatMove::synchronisedDihedrals() const
+{
+    return sync_dihedrals;
+}
+
 /** Set the random number generator used to generate the random
     number used for this move */
 void ZMatMove::setGenerator(const RanGenerator &rangenerator)

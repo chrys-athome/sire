@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "perturbation.h"
+#include "geometryperturbation.h"
 #include "molecule.h"
 #include "moleditor.h"
 #include "mover.hpp"
@@ -145,6 +146,14 @@ const Expression& Perturbation::defaultFunction()
 
 /** Constructor */
 Perturbation::Perturbation() : Property(), mapping_eqn( defaultFunction() )
+{}
+
+Perturbation::Perturbation(const PropertyMap &m)
+             : Property(), mapping_eqn( defaultFunction() ), map(m)
+{}
+
+Perturbation::Perturbation(const Expression &equation, const PropertyMap &m)
+             : Property(), mapping_eqn(equation), map(m)
 {}
 
 /** Copy constructor */
@@ -327,11 +336,62 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Perturbations &perts)
         SharedDataStream sds(ds);
         
         sds >> perts.perts >> static_cast<Perturbation&>(perts);
+    
+        perts.makeSane();
     }
     else
         throw version_error(v, "1", r_perts, CODELOC);
         
     return ds;
+}
+
+/** This removes all null perturbations and collapses GeometryPerturbation
+    objects into a single GeometryPerturbations */
+void Perturbations::makeSane()
+{
+    bool is_sane = true;
+    
+    for (QList<PerturbationPtr>::const_iterator it = perts.constBegin();
+         it != perts.constEnd();
+         ++it)
+    {
+        if ((*it)->isA<NullPerturbation>())
+        {
+            is_sane = false;
+            break;
+        }
+        else if ((*it)->isA<GeometryPerturbation>() and
+                 not (*it)->isA<GeometryPerturbations>())
+        {
+            is_sane = false;
+            break;
+        }
+    }
+    
+    if (is_sane)
+        return;
+        
+    QList<GeomPertPtr> geomperts;
+    
+    QMutableListIterator<PerturbationPtr> it(perts);
+    
+    while (it.hasNext())
+    {
+        it.next();
+        
+        if (it.value()->isA<NullPerturbation>())
+        {
+            it.remove();
+        }
+        else if (it.value()->isA<GeometryPerturbation>() and
+            not it.value()->isA<GeometryPerturbations>())
+        {
+            geomperts.append( it.value() );
+            it.remove();
+        }
+    }
+    
+    perts.append( GeometryPerturbations(geomperts) );
 }
 
 /** Constructor */
@@ -343,13 +403,36 @@ Perturbations::Perturbations(const Perturbation &perturbation)
               : ConcreteProperty<Perturbations,Perturbation>()
 {
     perts.append(perturbation);
+    this->makeSane();
 }
 
 /** Construct to perform the passed perturbations */
 Perturbations::Perturbations(const QList<PerturbationPtr> &perturbations)
               : ConcreteProperty<Perturbations,Perturbation>(),
                 perts(perturbations)
-{}
+{
+    this->makeSane();
+}
+
+/** Construct to perform the passed perturbation using the passed expression
+    to change lambda */
+Perturbations::Perturbations(const Perturbation &perturbation, 
+                             const Expression &equation)
+              : ConcreteProperty<Perturbations,Perturbation>(equation)
+{
+    perts.append(perturbation);
+    this->makeSane();
+}
+
+/** Construct to perform the passed perturbations using the passed expression
+    to change lambda */
+Perturbations::Perturbations(const QList<PerturbationPtr> &perturbations, 
+                             const Expression &equation)
+              : ConcreteProperty<Perturbations,Perturbation>(equation),
+                perts(perturbations)
+{
+    this->makeSane();
+}
 
 /** Copy constructor */
 Perturbations::Perturbations(const Perturbations &other)
@@ -386,6 +469,23 @@ const char* Perturbations::typeName()
     return QMetaType::typeName( qMetaTypeId<Perturbations>() );
 }
 
+QString Perturbations::toString() const
+{
+    QStringList lines;
+    
+    if (perts.isEmpty())
+        return QObject::tr("Perturbations::null");
+    
+    lines.append( QObject::tr("Perturbations:") );
+    
+    foreach (PerturbationPtr pert, perts)
+    {
+        lines.append( QString("   %1").arg(pert->toString()) );
+    }
+    
+    return lines.join("\n");
+}
+
 /** Return a list of all perturbations performed by this object */
 QList<PerturbationPtr> Perturbations::perturbations() const
 {
@@ -402,9 +502,12 @@ void Perturbations::perturbMolecule(MolEditor &molecule, const Values &values) c
     //by specifying the new equation once here
     if ( this->mappingFunction() != Perturbation::defaultFunction() )
     {
-        double new_lambda = this->mappingFunction().evaluate(values);
+        Values new_values = values + ( symbols().initial() == 0.0 ) +
+                                     ( symbols().final() == 1.0 );
+    
+        double new_lambda = this->mappingFunction().evaluate(new_values);
         
-        Values new_values = values + (symbols().lambda() == new_lambda);
+        new_values = values + (symbols().lambda() == new_lambda);
         
         for (QList<PerturbationPtr>::const_iterator it = perts.constBegin();
              it != perts.constEnd();

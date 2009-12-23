@@ -383,6 +383,17 @@ bool PropertyMap::specified(const PropertyName &propname) const
     for any existing property of this name in this map */
 void PropertyMap::set(const QString &name, const PropertyName &source)
 {
+    if (not source.hasValue())
+    {
+        if (source.source() == name)
+        {
+            if (propmap.contains(name))
+                propmap.remove(name);
+                
+            return;
+        }
+    }
+
     propmap.insert(name, source);
 }
 

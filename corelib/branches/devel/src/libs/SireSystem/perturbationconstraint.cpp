@@ -26,10 +26,10 @@
   *
 \*********************************************/
 
-
+/*
  for each molecule in the group:
      perturbations equals the perturbations to apply to the molecule (map)
      perturbations.apply(molecule, lambda_value)
      
  perturbations.apply(molecule, lambda_value)
-     
+  */   

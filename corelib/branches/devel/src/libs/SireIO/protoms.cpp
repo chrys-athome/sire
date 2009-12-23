@@ -47,7 +47,9 @@
 #include "SireMol/resname.h"
 #include "SireMol/resnum.h"
 #include "SireMol/groupatomids.h"
-
+#include "SireMol/geometryperturbation.h"
+#include "SireMol/chargeperturbation.h"
+#include "SireMol/connectivity.h"
 #include "SireMol/mover.hpp"
 #include "SireMol/selector.hpp"
 
@@ -60,6 +62,7 @@
 #include "SireMM/ljparameter.h"
 #include "SireMM/atomljs.h"
 #include "SireMM/internalff.h"
+#include "SireMM/ljperturbation.h"
 
 #include "SireUnits/units.h"
 
@@ -97,6 +100,15 @@ ProtoMSParameters::~ProtoMSParameters()
 PropertyName ProtoMSParameters::charge_property( "charge" );
 PropertyName ProtoMSParameters::lj_property( "LJ" );
 
+PropertyName ProtoMSParameters::initial_charge_property( "initial_charge" );
+PropertyName ProtoMSParameters::initial_lj_property( "initial_LJ" );
+
+PropertyName ProtoMSParameters::final_charge_property( "final_charge" );
+PropertyName ProtoMSParameters::final_lj_property( "final_LJ" );
+
+PropertyName ProtoMSParameters::connectivity_property( "connectivity" );
+PropertyName ProtoMSParameters::coords_property( "coordinates" );
+
 PropertyName ProtoMSParameters::bond_property( "bond" );
 PropertyName ProtoMSParameters::angle_property( "angle" );
 PropertyName ProtoMSParameters::dihedral_property( "dihedral" );
@@ -104,6 +116,9 @@ PropertyName ProtoMSParameters::ub_property( "Urey-Bradley" );
 
 PropertyName ProtoMSParameters::zmatrix_property( "z-matrix" );
 PropertyName ProtoMSParameters::nb_property( "intrascale" );
+
+PropertyName ProtoMSParameters::anchors_property( "anchors" );
+PropertyName ProtoMSParameters::perts_property( "perturbations" );
 
 ///////////
 /////////// Implementation of ProtoMS
@@ -462,6 +477,119 @@ void ProtoMS::processZMatrixLine(const QStringList &words, const Molecule &mol,
     zmatrix.add( atom, bond, angle, dihedral );
 }
 
+void ProtoMS::processZMatrixPertLine(const QStringList &words, 
+                                     const Molecule &mol, int type,
+                                     QList<SireMol::GeomPertPtr> &geom_perturbations,
+                                     const ZMatrix &zmatrix,
+                                     const QString &coords_property,
+                                     const QString &connectivity_property,
+                                     const QString &anchors_property,
+                                     ProtoMSWorkspace &workspace) const
+{
+    //skip lines involving dummy atoms
+    if ( words[2] == "DUM" or words[4] == "DUM" )
+    {
+        return;
+    }
+    
+    AtomIdx atom;
+    
+    if (type == SOLVENT)
+        return;
+        
+    else if (type == SOLUTE)
+    {
+        atom = getSoluteAtom(mol, words[2], words[4], workspace);
+    }
+    else if (type == PROTEIN)
+    {
+        atom = getProteinAtom(mol, words[2], words[4], workspace);
+    }
+            
+    PropertyMap map;
+    map.set("coordinates", coords_property);
+    map.set("connectivity", connectivity_property);
+    map.set("anchors", anchors_property);
+
+    const ZMatrixLine &line = zmatrix[atom];
+    
+    bool ok1, ok2;
+    double initial = words[7].toDouble(&ok1);
+    double final = words[8].toDouble(&ok2);
+    
+    if (not (ok1 and ok2))
+        throw SireError::io_error( QObject::tr(
+            "Could not interpret the range of a variable perturbation "
+            "from the line \"%1\".")
+                .arg(words.join(" ")), CODELOC );
+
+    if ( words[6] == "BOND" )
+    {
+        geom_perturbations.append( BondPerturbation( line.atom(), line.bond(),
+                                                     initial*angstrom,
+                                                     final*angstrom,
+                                                     map ) );
+    }
+    else if ( words[6] == "ANGLE" )
+    {
+        geom_perturbations.append( AnglePerturbation( line.atom(), line.bond(),
+                                                      line.angle(),
+                                                      initial*radians,
+                                                      final*radians,
+                                                      map ) );
+    }
+    else if ( words[6] == "DIHEDRAL" )
+    {
+        geom_perturbations.append( DihedralPerturbation( line.atom(), line.bond(),
+                                                         line.angle(), line.dihedral(),
+                                                         initial*radians,
+                                                         final*radians,
+                                                         map ) );
+    }
+    else
+    {
+        throw SireError::io_error( QObject::tr(
+            "Could not interpret the variable type from the line \"%1\".")
+                .arg(words.join(" ")), CODELOC );
+    }
+}
+
+void ProtoMS::processAtomPertLine(const QStringList &words, 
+                                  MolEditor &mol, int type,
+                                  const QString &initial_charge_property,
+                                  const QString &final_charge_property,
+                                  const QString &initial_lj_property, 
+                                  const QString &final_lj_property,
+                                  detail::ProtoMSWorkspace &workspace) const
+{
+    AtomEditor atom;
+    
+    if (type == SOLUTE)
+        atom = getSoluteAtom(mol, words[2], words[4], workspace);
+                             
+    else if (type == SOLVENT)
+        atom = getSolventAtom(mol, words[2], workspace);
+        
+    else if (type == PROTEIN)
+        atom = getProteinAtom(mol, words[2], words[4], workspace);
+
+    atom.setProperty( initial_charge_property,
+                      words[7].toDouble() * mod_electron );
+    
+    atom.setProperty( final_charge_property,
+                      words[8].toDouble() * mod_electron );
+                      
+    atom.setProperty( initial_lj_property,
+                      LJParameter( words[10].toDouble() * angstrom,
+                                   words[13].toDouble() * kcal_per_mol ) );
+                                   
+    atom.setProperty( final_lj_property,
+                      LJParameter( words[11].toDouble() * angstrom,
+                                   words[14].toDouble() * kcal_per_mol ) );
+
+    mol = atom.molecule();
+}
+
 void ProtoMS::processBondDeltaLine(const QStringList &words, const Molecule &mol,
                                    int type, ZMatrix &zmatrix,
                                    ProtoMSWorkspace &workspace) const
@@ -603,16 +731,20 @@ void ProtoMS::processAtomLine(const QStringList &words, MolEditor &editmol,
     else if (type == PROTEIN)
         atom = getProteinAtom(editmol, words[2], words[4], workspace);
 
-    atom.setProperty( charge_property, words[7].toDouble() * mod_electron );
-    atom.setProperty( lj_property, LJParameter( words[9].toDouble() * angstrom,
-                                                words[11].toDouble() * kcal_per_mol ) );
+    SireUnits::Dimension::Charge chg = words[7].toDouble() * mod_electron;
+    LJParameter lj( words[9].toDouble() * angstrom,
+                    words[11].toDouble() * kcal_per_mol );
+
+    atom.setProperty( charge_property, chg );
+    atom.setProperty( lj_property, lj );
 
     editmol = atom.molecule();
 }
 
 /** This processes the output line that contains the bond parameters */
 void ProtoMS::processBondLine(const QStringList &words, const Molecule &mol,
-                              int type, TwoAtomFunctions &bondfuncs,
+                              int type, ConnectivityEditor &connectivity, 
+                              TwoAtomFunctions &bondfuncs,
                               ProtoMSWorkspace &workspace) const
 {
     if (type == SOLVENT)
@@ -632,8 +764,10 @@ void ProtoMS::processBondLine(const QStringList &words, const Molecule &mol,
 
     Symbol r = InternalPotential::symbols().bond().r();
     
-    Expression bondfunc = words[12].toDouble() 
-                                * SireMaths::pow_2( r - words[14].toDouble() );
+    double k = words[12].toDouble();
+    double r0 = words[14].toDouble();
+    
+    Expression bondfunc = k * SireMaths::pow_2( r - r0 );
 
     AtomIdx atom0, atom1;
 
@@ -649,6 +783,12 @@ void ProtoMS::processBondLine(const QStringList &words, const Molecule &mol,
     }
     
     bondfuncs.set( atom0, atom1, bondfunc );
+    
+    if ( k != 0 )
+    {
+        //this is a non-dummy bond, so the atoms must be connected
+        connectivity.connect(atom0, atom1);
+    }
 }
 
 /** This processes the output line that contains the angle parameters */
@@ -821,6 +961,11 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
     //get the names of the properties that we need
     QString charge_property = map[ parameters().charge() ].source();
     QString lj_property = map[ parameters().lj() ].source();
+
+    QString initial_charge_property = map[ parameters().initialCharge() ].source();
+    QString final_charge_property = map[ parameters().finalCharge() ].source();
+    QString initial_lj_property = map[ parameters().initialLJ() ].source();
+    QString final_lj_property = map[ parameters().finalLJ() ].source();
     
     QString bond_property = map[ parameters().bond() ].source();
     QString angle_property = map[ parameters().angle() ].source();
@@ -829,6 +974,12 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
     QString nb_property = map[ parameters().nonBonded() ].source();
     
     QString zmatrix_property = map[ parameters().zmatrix() ].source();
+    QString anchors_property = map[ parameters().anchors() ].source();
+    
+    QString coords_property = map[ parameters().coordinates() ].source();
+    QString connectivity_property = map[ parameters().connectivity() ].source();
+    
+    QString perts_property = map[ parameters().perturbations() ].source();
 
     //create a temporary directory in which to run ProtoMS
     QString tmppath = QDir::temp().absolutePath();
@@ -915,6 +1066,8 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
     FourAtomFunctions dihedralfuncs(molecule);
     TwoAtomFunctions ubfuncs(molecule);
     
+    ConnectivityEditor connectivity = Connectivity(molecule.data()).edit();
+    
     CLJNBPairs nbpairs;
     
     if (type == SOLUTE)
@@ -955,11 +1108,15 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
             }
         }
     }
-
     
     ProtoMSWorkspace workspace;
     
     QStringList fatal_errors;
+    
+    QList<GeomPertPtr> geom_perturbations;
+    QList<PerturbationPtr> perturbations;
+    
+    QList<QStringList> atom_pert_lines;
     
     while (not line.isNull())
     {
@@ -972,12 +1129,22 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
             if (words[1] == "ZMATRIX")
                 this->processZMatrixLine(words, editmol, type, zmatrix, workspace);
 
+            else if (words[1] == "ZMATRIXPERT")
+                this->processZMatrixPertLine(words, editmol, type, geom_perturbations, 
+                                             zmatrix, coords_property, 
+                                             connectivity_property,
+                                             anchors_property, workspace);
+
             else if (words[1] == "Atom")
                 this->processAtomLine(words, editmol, type,
                                       charge_property, lj_property, workspace);
             
+            else if (words[1] == "AtomPert")
+                atom_pert_lines.append(words);
+                
             else if (words[1] == "Bond")
-                this->processBondLine(words, molecule, type, bondfuncs, workspace);
+                this->processBondLine(words, molecule, type, 
+                                      connectivity, bondfuncs, workspace);
                 
             else if (words[1] == "BondDelta")
                 this->processBondDeltaLine(words, molecule, type, zmatrix, workspace);
@@ -1073,14 +1240,68 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
         throw SireError::process_error( errors.join("\n"), CODELOC );
     }
 
+    if (not atom_pert_lines.isEmpty())
+    {
+        //these are the charge and LJ perturbations - we need to
+        //copy the current charges and then apply the differences
+        editmol.setProperty( initial_charge_property, editmol.property(charge_property) );
+        editmol.setProperty( final_charge_property, editmol.property(charge_property) );
+        
+        editmol.setProperty( initial_lj_property, editmol.property(lj_property) );
+        editmol.setProperty( final_lj_property, editmol.property(lj_property) );
+        
+        foreach (QStringList words, atom_pert_lines)
+        {
+            this->processAtomPertLine(words, editmol, type,
+                                      initial_charge_property,
+                                      final_charge_property,
+                                      initial_lj_property,
+                                      final_lj_property,
+                                      workspace);
+        }
+        
+        PropertyMap charge_map;
+        charge_map.set("initial_charge", initial_charge_property);
+        charge_map.set("charge", charge_property);
+        charge_map.set("final_charge", final_charge_property);
+        
+        perturbations.append( ChargePerturbation(charge_map) );
+        
+        PropertyMap lj_map;
+        lj_map.set("initial_LJ", initial_lj_property);
+        lj_map.set("LJ", lj_property);
+        lj_map.set("final_LJ", final_lj_property);
+        
+        perturbations.append( LJPerturbation(lj_map) );
+    }
+
     if (type == SOLUTE or type == PROTEIN)
     {
         editmol.setProperty( zmatrix_property, zmatrix );
+        editmol.setProperty( connectivity_property, connectivity.commit() );
         editmol.setProperty( bond_property, bondfuncs );
         editmol.setProperty( angle_property, anglefuncs );
         editmol.setProperty( dihedral_property, dihedralfuncs );
         editmol.setProperty( ub_property, ubfuncs );
         editmol.setProperty( nb_property, nbpairs );
+        
+        if (not geom_perturbations.isEmpty())
+        {
+            //we need to anchor the first atom so that geometry 
+            //perturbations move the molecule as they would in ProtoMS
+            AtomSelection anchors(editmol);
+            anchors.deselectAll();
+            anchors.select( AtomIdx(0) );
+            
+            editmol.setProperty( anchors_property, anchors );
+            
+            perturbations.append( GeometryPerturbations(geom_perturbations) );
+        }
+        
+        if (not perturbations.isEmpty())
+        {
+            editmol.setProperty( perts_property, Perturbations(perturbations) );
+        }
     }
     
     return editmol.commit();

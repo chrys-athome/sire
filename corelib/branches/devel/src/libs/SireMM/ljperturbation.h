@@ -61,10 +61,27 @@ friend QDataStream& ::operator<<(QDataStream&, const LJPerturbation&);
 friend QDataStream& ::operator>>(QDataStream&, LJPerturbation&);
 
 public:
-    LJPerturbation();
-    LJPerturbation(const PropertyMap &map);
+    enum MapType { MAP_SIGMA_AND_EPSILON = 1,
+                   MAP_RMIN_AND_EPSILON = 2,
+                   MAP_A_AND_B = 3 };
+
+    LJPerturbation(const PropertyMap &map = PropertyMap());
+    LJPerturbation(MapType maptype, const PropertyMap &map = PropertyMap());
     
     LJPerturbation(const SireCAS::Expression &mapping_function,
+                   const PropertyMap &map = PropertyMap());
+    
+    LJPerturbation(const SireCAS::Expression &mapping_function,
+                   MapType maptype,
+                   const PropertyMap &map = PropertyMap());
+    
+    LJPerturbation(const SireCAS::Expression &sigma_mapping_function,
+                   const SireCAS::Expression &epsilon_mapping_function,
+                   const PropertyMap &map = PropertyMap());
+    
+    LJPerturbation(const SireCAS::Expression &sigma_mapping_function,
+                   const SireCAS::Expression &epsilon_mapping_function,
+                   MapType maptype,
                    const PropertyMap &map = PropertyMap());
     
     LJPerturbation(const LJPerturbation &other);
@@ -78,9 +95,31 @@ public:
     bool operator==(const LJPerturbation &other) const;
     bool operator!=(const LJPerturbation &other) const;
 
+    QString toString() const;
+
+    const SireCAS::Expression& mappingFunction() const;
+
+    const SireCAS::Expression& rMinMappingFunction() const;
+    const SireCAS::Expression& sigmaMappingFunction() const;
+    const SireCAS::Expression& epsilonMappingFunction() const;
+    
+    const SireCAS::Expression& A_MappingFunction() const;
+    const SireCAS::Expression& B_MappingFunction() const;
+    
+    bool mapSigmaEpsilon() const;
+    bool mapRMinEpsilon() const;
+    bool mapAB() const;
+
 protected:
     void perturbMolecule(SireMol::MolEditor &molecule, 
                          const SireCAS::Values &values) const;
+
+private:
+    /** Mapping function for sigma or A value */
+    SireCAS::Expression sigma_mapfunc;
+    
+    /** How the LJ parameter is mapped */
+    MapType maptype;
 };
 
 }

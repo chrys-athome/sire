@@ -73,7 +73,7 @@ using SireCAS::Expression;
 using SireCAS::Symbol;
 using SireCAS::Values;
 
-class PerturbationSymbols
+class SIREMOL_EXPORT PerturbationSymbols
 {
 public:
     PerturbationSymbols();
@@ -125,7 +125,7 @@ public:
 
 protected:
     Perturbation(const PropertyMap &map);
-    Perturbation(const Expression &equation, const PropertyMap &map);
+    Perturbation(const Expression &equation, const PropertyMap &map = PropertyMap());
 
     Perturbation& operator=(const Perturbation &other);
     
@@ -200,12 +200,16 @@ public:
     
     static const char* typeName();
     
+    QString toString() const;
+    
     QList<PerturbationPtr> perturbations() const;
 
 protected:    
     void perturbMolecule(MolEditor &molecule, const Values &values) const;
 
 private:
+    void makeSane();
+    
     /** All of the perturbations used in this object */
     QList<PerturbationPtr> perts;
 };
@@ -218,6 +222,7 @@ Q_DECLARE_METATYPE( SireMol::Perturbations )
 SIRE_EXPOSE_CLASS( SireMol::Perturbation )
 SIRE_EXPOSE_CLASS( SireMol::NullPerturbation )
 SIRE_EXPOSE_CLASS( SireMol::Perturbations )
+SIRE_EXPOSE_CLASS( SireMol::PerturbationSymbols )
 
 SIRE_EXPOSE_PROPERTY( SireMol::PerturbationPtr, SireMol::Perturbation )
 

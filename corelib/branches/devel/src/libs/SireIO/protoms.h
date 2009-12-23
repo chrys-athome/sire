@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2006  Christopher Woods
+  *  Copyright (C) 2009  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -60,6 +60,13 @@ namespace SireMol
 class Molecule;
 class Molecules;
 class MolEditor;
+class Perturbation;
+class GeometryPerturbation;
+class Connectivity;
+class ConnectivityEditor;
+
+typedef SireBase::PropPtr<Perturbation> PerturbationPtr;
+typedef SireBase::PropPtr<GeometryPerturbation> GeomPertPtr;
 }
 
 namespace SireMove
@@ -123,6 +130,66 @@ public:
     }
 
     /** Return the name of the property that will contain the 
+        initial partial atomic charges
+        
+        default == "initial_charge"
+    */
+    const PropertyName& initialCharge() const
+    {
+        return initial_charge_property;
+    }
+
+    /** Return the name of the property that will contain the 
+        initial atomic Lennard Jones parameters
+        
+        default == "initial_LJ"
+    */
+    const PropertyName& initialLJ() const
+    {
+        return initial_lj_property;
+    }
+
+    /** Return the name of the property that will contain the 
+        final_partial atomic charges
+        
+        default == "final_charge"
+    */
+    const PropertyName& finalCharge() const
+    {
+        return final_charge_property;
+    }
+
+    /** Return the name of the property that will contain the 
+        final atomic Lennard Jones parameters
+        
+        default == "final_LJ"
+    */
+    const PropertyName& finalLJ() const
+    {
+        return final_lj_property;
+    }
+
+    /** Return the name of the property that will contain the 
+        molecular connectivity
+        
+        default == "connectivity"
+    */
+    const PropertyName& connectivity() const
+    {
+        return connectivity_property;
+    }
+
+    /** Return the name of the property that will contain the 
+        coordinates
+        
+        default == "coordinates"
+    */
+    const PropertyName& coordinates() const
+    {
+        return coords_property;
+    }
+
+    /** Return the name of the property that will contain the 
         bond parameters
         
         default == "bond"
@@ -181,6 +248,26 @@ public:
     {
         return nb_property;
     }
+    
+    /** Return the name of the property that will contain the
+        anchors
+        
+        default == "anchors"
+    */
+    const PropertyName& anchors() const
+    {
+        return anchors_property;
+    }
+
+    /** Return the name of the property that will contain
+        the perturbations property
+        
+        default == "perturbations"
+    */
+    const PropertyName& perturbations() const
+    {
+        return perts_property;
+    }
 
 private:
     ///////
@@ -192,6 +279,24 @@ private:
 
     /** The default name of the LJ property */
     static PropertyName lj_property;
+    
+    /** The default name of the initial partial charge property */
+    static PropertyName initial_charge_property;
+
+    /** The default name of the initial LJ property */
+    static PropertyName initial_lj_property;
+    
+    /** The default name of the final partial charge property */
+    static PropertyName final_charge_property;
+
+    /** The default name of the final LJ property */
+    static PropertyName final_lj_property;
+
+    /** The default name of the connectivity property */
+    static PropertyName connectivity_property;
+
+    /** The default name of the coordinates property */
+    static PropertyName coords_property;
 
     /** The default name of the bond property */
     static PropertyName bond_property;
@@ -210,6 +315,12 @@ private:
     
     /** The default name of the non-bonded property */
     static PropertyName nb_property;
+    
+    /** The default name of the anchors property */
+    static PropertyName anchors_property;
+    
+    /** The default name of the perturbations property */
+    static PropertyName perts_property;
 };
 
 /** This class is used to read in ProtoMS parameter files and
@@ -269,15 +380,31 @@ private:
                             const Molecule &mol, int type,
                             ZMatrix &zmatrix,
                             detail::ProtoMSWorkspace &workspace) const;
-                            
+                     
+    void processZMatrixPertLine(const QStringList &words, const Molecule &mol, int type,
+                                QList<SireMol::GeomPertPtr> &geom_perturbations,
+                                const ZMatrix &zmatrix,
+                                const QString &coords_property,
+                                const QString &connectivity_property,
+                                const QString &anchors_property,
+                                detail::ProtoMSWorkspace &workspace) const;
+                                          
     void processAtomLine(const QStringList &words,
                          MolEditor &editmol, int type,
                          const QString &charge_property,
                          const QString &lj_property,
                          detail::ProtoMSWorkspace &workspace) const;
+
+    void processAtomPertLine(const QStringList &words, MolEditor &mol, int type,
+                             const QString &initial_charge_property,
+                             const QString &final_charge_property,
+                             const QString &initial_lj_property, 
+                             const QString &final_lj_property,
+                             detail::ProtoMSWorkspace &workspace) const;
     
     void processBondLine(const QStringList &words,
                          const Molecule &molecule, int type,
+                         SireMol::ConnectivityEditor &connectivity,
                          SireMM::TwoAtomFunctions &bondfuncs,
                          detail::ProtoMSWorkspace &workspace) const;
     

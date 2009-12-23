@@ -61,6 +61,7 @@ set ( SIREMOL_HEADERS
       errors.h
       evaluator.h
       improperid.h
+      geometryperturbation.h
       groupatomids.h
       groupgroupids.h
       mgid.h
@@ -151,6 +152,7 @@ set ( SIREMOL_SOURCES
       errors.cpp
       evaluator.cpp
       improperid.cpp
+      geometryperturbation.cpp
       groupatomids.cpp
       groupgroupids.cpp
       mgid.cpp
@@ -201,6 +203,7 @@ set_target_properties (SireMol PROPERTIES
 # Link to other Sire libraries, and GSL
 target_link_libraries (SireMol
                        SireVol
+                       SireCAS
                        SireID
                        SireDB
                        SireStream

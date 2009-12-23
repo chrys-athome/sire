@@ -89,7 +89,7 @@ public:
     double A() const;
     double B() const;
 
-    double rmin() const;
+    SireUnits::Dimension::Length rmin() const;
 
     QString toString() const;
 

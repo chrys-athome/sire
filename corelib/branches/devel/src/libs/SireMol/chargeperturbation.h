@@ -74,6 +74,8 @@ public:
     bool operator==(const ChargePerturbation &other) const;
     bool operator!=(const ChargePerturbation &other) const;
 
+    QString toString() const;
+
 protected:
     void perturbMolecule(MolEditor &molecule, const Values &values) const;
 };

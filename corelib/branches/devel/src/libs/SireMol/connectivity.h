@@ -91,6 +91,8 @@ public:
         return "SireMol::ConnectivityBase";
     }
 
+    QString toString() const;
+
     bool areConnected(AtomIdx atom0, AtomIdx atom1) const;
     bool areConnected(const AtomID &atom0, const AtomID &atom1) const;
 
@@ -300,6 +302,8 @@ public:
 
     ConnectivityEditor& disconnectAll(const AtomID &atomid);
     ConnectivityEditor& disconnectAll(const ResID &resid);
+    
+    Connectivity commit() const;
 };
 
 }

@@ -36,6 +36,7 @@
 #include "SireCAS/values.h"
 
 #include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 using namespace SireMM;
 using namespace SireMol;
@@ -51,7 +52,10 @@ QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
 {
     writeHeader(ds, r_ljpert, 1);
     
-    ds << static_cast<const Perturbation&>(ljpert);
+    SharedDataStream sds(ds);
+    
+    sds << ljpert.sigma_mapfunc << quint32(ljpert.maptype)
+        << static_cast<const Perturbation&>(ljpert);
     
     return ds;
 }
@@ -63,7 +67,25 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     
     if (v == 1)
     {
-        ds >> static_cast<Perturbation&>(ljpert);
+        SharedDataStream sds(ds);
+        
+        quint32 maptype;
+        sds >> ljpert.sigma_mapfunc >> maptype >> static_cast<Perturbation&>(ljpert);
+        
+        switch (maptype)
+        {
+            case LJPerturbation::MAP_SIGMA_AND_EPSILON:
+                ljpert.maptype = LJPerturbation::MAP_SIGMA_AND_EPSILON;
+                break;
+            case LJPerturbation::MAP_RMIN_AND_EPSILON:
+                ljpert.maptype = LJPerturbation::MAP_RMIN_AND_EPSILON;
+                break;
+            case LJPerturbation::MAP_A_AND_B:
+                ljpert.maptype = LJPerturbation::MAP_A_AND_B;
+                break;
+            default:
+                ljpert.maptype = LJPerturbation::MAP_SIGMA_AND_EPSILON;
+        }
     }
     else
         throw version_error(v, "1", r_ljpert, CODELOC);
@@ -75,15 +97,19 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
     perturbs from LJs in "initial_LJ" to LJs in
     "final_LJ", placing the current LJs in "LJ",
     and using Perturbation::defaultEquation() to map the
-    charges */
-LJPerturbation::LJPerturbation()
-               : ConcreteProperty<LJPerturbation,Perturbation>()
+    sigma and epsilon values of the LJ.  */
+LJPerturbation::LJPerturbation(const PropertyMap &map)
+               : ConcreteProperty<LJPerturbation,Perturbation>(map),
+                 sigma_mapfunc( Perturbation::defaultFunction() ),
+                 maptype( MAP_SIGMA_AND_EPSILON )
 {}
 
 /** Construct, using the passed map to find the properties used
     by this perturbation */
-LJPerturbation::LJPerturbation(const PropertyMap &map)
-               : ConcreteProperty<LJPerturbation,Perturbation>(map)
+LJPerturbation::LJPerturbation(MapType typ, const PropertyMap &map)
+               : ConcreteProperty<LJPerturbation,Perturbation>(map),
+                 sigma_mapfunc( Perturbation::defaultFunction() ),
+                 maptype(typ)
 {}
 
 /** Construct, using the passed map to find the properties used
@@ -91,12 +117,47 @@ LJPerturbation::LJPerturbation(const PropertyMap &map)
     the LJs between the states */
 LJPerturbation::LJPerturbation(const Expression &mapping_function,
                                const PropertyMap &map)
-               : ConcreteProperty<LJPerturbation,Perturbation>(mapping_function, map)
+               : ConcreteProperty<LJPerturbation,Perturbation>(mapping_function, map),
+                 sigma_mapfunc(mapping_function),
+                 maptype( MAP_SIGMA_AND_EPSILON )
+{}
+
+/** Construct, using the passed map to find the properties used
+    by this perturbation and the passed mapping function to map
+    the LJs between the states */
+LJPerturbation::LJPerturbation(const Expression &mapping_function, MapType typ,
+                               const PropertyMap &map)
+               : ConcreteProperty<LJPerturbation,Perturbation>(mapping_function, map),
+                 sigma_mapfunc(mapping_function),
+                 maptype(typ)
+{}
+
+/** Construct, using the passed map to find the properties used
+    by this perturbation and the passed mapping function to map
+    the LJs between the states */
+LJPerturbation::LJPerturbation(const Expression &sigma_function,
+                               const Expression &epsilon_function,
+                               const PropertyMap &map)
+               : ConcreteProperty<LJPerturbation,Perturbation>(epsilon_function, map),
+                 sigma_mapfunc(sigma_function),
+                 maptype( MAP_SIGMA_AND_EPSILON )
+{}
+
+/** Construct, using the passed map to find the properties used
+    by this perturbation and the passed mapping function to map
+    the LJs between the states */
+LJPerturbation::LJPerturbation(const Expression &sigma_function, 
+                               const Expression &epsilon_function,
+                               MapType typ,
+                               const PropertyMap &map)
+               : ConcreteProperty<LJPerturbation,Perturbation>(epsilon_function, map),
+                 sigma_mapfunc(sigma_function), maptype(typ)
 {}
 
 /** Copy constructor */
 LJPerturbation::LJPerturbation(const LJPerturbation &other)
-               : ConcreteProperty<LJPerturbation,Perturbation>(other)
+               : ConcreteProperty<LJPerturbation,Perturbation>(other),
+                 sigma_mapfunc(other.sigma_mapfunc), maptype(other.maptype)
 {}
 
 /** Destructor */
@@ -111,20 +172,172 @@ const char* LJPerturbation::typeName()
 /** Copy assignment operator */
 LJPerturbation& LJPerturbation::operator=(const LJPerturbation &other)
 {
-    Perturbation::operator=(other);
+    if (this != &other)
+    {
+        sigma_mapfunc = other.sigma_mapfunc;
+        maptype = other.maptype;
+        Perturbation::operator=(other);
+    }
+    
     return *this;
 }
 
 /** Comparison operator */
 bool LJPerturbation::operator==(const LJPerturbation &other) const
 {
-    return Perturbation::operator==(other);
+    return sigma_mapfunc == other.sigma_mapfunc and maptype == other.maptype and
+           Perturbation::operator==(other);
 }
 
 /** Comparison operator */
 bool LJPerturbation::operator!=(const LJPerturbation &other) const
 {
     return not LJPerturbation::operator==(other);
+}
+
+/** Return whether or not this maps sigma and epsilon */
+bool LJPerturbation::mapSigmaEpsilon() const
+{
+    return maptype == MAP_SIGMA_AND_EPSILON;
+}
+
+/** Return whether or not this maps r_min and epsilon */
+bool LJPerturbation::mapRMinEpsilon() const
+{
+    return maptype == MAP_RMIN_AND_EPSILON;
+}
+
+/** Return whether or not this maps A and B */
+bool LJPerturbation::mapAB() const
+{
+    return maptype == MAP_A_AND_B;
+}
+
+/** Return a string representation of this perturbation */
+QString LJPerturbation::toString() const
+{
+    if (sigma_mapfunc == Perturbation::mappingFunction())
+    {
+        switch (maptype)
+        {
+            case MAP_SIGMA_AND_EPSILON:
+                return QObject::tr("LJPerturbation( sigma+epsilon => %1 )")
+                            .arg(sigma_mapfunc.toString());
+            case MAP_RMIN_AND_EPSILON:
+                return QObject::tr("LJPerturbation( r_min+epsilon => %1 )")
+                            .arg(sigma_mapfunc.toString());
+            case MAP_A_AND_B:
+                return QObject::tr("LJPerturbation( A+B => %1 )")
+                            .arg(sigma_mapfunc.toString());
+        }
+    }
+    else
+    {
+        switch (maptype)
+        {
+            case MAP_SIGMA_AND_EPSILON:
+                return QObject::tr("LJPerturbation( sigma => %1, epsilon => %2 )")
+                            .arg(sigma_mapfunc.toString(), 
+                                 Perturbation::mappingFunction().toString());
+            case MAP_RMIN_AND_EPSILON:
+                return QObject::tr("LJPerturbation( r_min => %1, epsilon => %2 )")
+                            .arg(sigma_mapfunc.toString(), 
+                                 Perturbation::mappingFunction().toString());
+            case MAP_A_AND_B:
+                return QObject::tr("LJPerturbation( A => %1, B => %2 )")
+                            .arg(sigma_mapfunc.toString(), 
+                                 Perturbation::mappingFunction().toString());
+        }
+    }
+    
+    return QObject::tr( "LJParameter( ??? )" );
+}
+
+/** Return the mapping function
+
+    \throw SireError::invalid_state
+*/
+const Expression& LJPerturbation::mappingFunction() const
+{
+    if ( Perturbation::mappingFunction() != sigma_mapfunc )
+        throw SireError::invalid_state( QObject::tr(
+            "This LJ perturbation uses different functions to map the "
+            "two parts of the LJ parameter (%1 and %2). It is thus not "
+            "possible to return a single mapping function.")
+                .arg(sigma_mapfunc.toString(),
+                     Perturbation::mappingFunction().toString()), CODELOC );
+
+    return sigma_mapfunc;
+}
+
+/** Return the function used to map r_min
+
+    \throw SireError::invalid_state
+*/
+const Expression& LJPerturbation::rMinMappingFunction() const
+{
+    if (not mapRMinEpsilon())
+        throw SireError::invalid_state( QObject::tr(
+            "This LJ perturbation (%1) does not map r_min.")
+                .arg(toString()), CODELOC );
+
+    return sigma_mapfunc;
+}
+
+/** Return the function used to map sigma 
+
+    \throw SireError::invalid_state
+*/
+const Expression& LJPerturbation::sigmaMappingFunction() const
+{
+    if (not mapSigmaEpsilon())
+        throw SireError::invalid_state( QObject::tr(
+            "This LJ perturbation (%1) does not map sigma.")
+                .arg(toString()), CODELOC );
+
+    return sigma_mapfunc;
+}
+
+/** Return the function used to map epsilon
+
+    \throw SireError::invalid_state
+*/
+const Expression& LJPerturbation::epsilonMappingFunction() const
+{
+    if ( not (mapRMinEpsilon() or mapSigmaEpsilon()) )
+        throw SireError::invalid_state( QObject::tr(
+            "This LJ perturbation (%1) does not map epsilon.")
+                .arg(toString()), CODELOC );
+
+    return Perturbation::mappingFunction();
+}
+
+/** Return the function used to map 'A'
+
+    \throw SireError::invalid_state
+*/
+const Expression& LJPerturbation::A_MappingFunction() const
+{
+    if (not mapAB())
+        throw SireError::invalid_state( QObject::tr(
+            "This LJ perturbation (%1) does not map A.")
+                .arg(toString()), CODELOC );
+
+    return sigma_mapfunc;
+}
+
+/** Return the function used to map 'B'
+
+    \throw SireError::invalid_state
+*/
+const Expression& LJPerturbation::B_MappingFunction() const
+{
+    if (not mapAB())
+        throw SireError::invalid_state( QObject::tr(
+            "This LJ perturbation (%1) does not map B.")
+                .arg(toString()), CODELOC );
+
+    return Perturbation::mappingFunction();
 }
 
 /** Perturb the LJs in the passed molecule using the reaction
@@ -144,7 +357,8 @@ void LJPerturbation::perturbMolecule(MolEditor &molecule, const Values &values) 
                                             
     AtomLJs ljs(initial_ljs);
     
-    const Expression &f = this->mappingFunction();
+    const Expression &f0 = sigma_mapfunc;
+    const Expression &f1 = Perturbation::mappingFunction();
     const Symbol &initial = this->symbols().initial();
     const Symbol &final = this->symbols().final();
     
@@ -154,19 +368,62 @@ void LJPerturbation::perturbMolecule(MolEditor &molecule, const Values &values) 
         {
             CGAtomIdx atomidx(i,j);
 
-            Values atom_values = values + 
-                                    (initial == initial_ljs[atomidx].sigma().value()) +
-                                    (final == final_ljs[atomidx].sigma().value());
+            const LJParameter &initial_lj = initial_ljs[atomidx];
+            const LJParameter &final_lj = final_ljs[atomidx];
+
+            if (initial_lj != final_lj)
+            {
+                if ( mapSigmaEpsilon() )
+                {
+                    Values atom_values = values + 
+                                        (initial == initial_lj.sigma().value()) +
+                                        (final == final_lj.sigma().value());
         
-            double new_sigma = f(atom_values);
+                    double new_sigma = f0(atom_values);
             
-            atom_values = values +
-                            (initial == initial_ljs[atomidx].epsilon().value()) +
-                            (final == final_ljs[atomidx].epsilon().value());
+                    atom_values = values +
+                                (initial == initial_lj.epsilon().value()) +
+                                (final == final_lj.epsilon().value());
                             
-            double new_epsilon = f(atom_values);
+                    double new_epsilon = f1(atom_values);
         
-            ljs.set( atomidx, LJParameter(Length(new_sigma), MolarEnergy(new_epsilon)) );
+                    ljs.set( atomidx, LJParameter::fromSigmaAndEpsilon(Length(new_sigma), 
+                                                            MolarEnergy(new_epsilon)) );
+                }
+                else if ( mapAB() )
+                {
+                    Values atom_values = values + 
+                                        (initial == initial_lj.A()) +
+                                        (final == final_lj.A());
+        
+                    double new_A = f0(atom_values);
+            
+                    atom_values = values +
+                                (initial == initial_lj.B()) +
+                                (final == final_lj.B());
+                            
+                    double new_B = f1(atom_values);
+        
+                    ljs.set( atomidx, LJParameter::fromAAndB(new_A, new_B) );
+                }
+                else
+                {
+                    Values atom_values = values + 
+                                        (initial == initial_lj.rmin().value()) +
+                                        (final == final_lj.rmin().value());
+        
+                    double new_rmin = f0(atom_values);
+            
+                    atom_values = values +
+                                (initial == initial_lj.epsilon().value()) +
+                                (final == final_lj.epsilon().value());
+                            
+                    double new_epsilon = f1(atom_values);
+        
+                    ljs.set( atomidx, LJParameter::fromRMinAndEpsilon(Length(new_rmin), 
+                                                            MolarEnergy(new_epsilon)) );
+                }
+            }
         }
     }
     

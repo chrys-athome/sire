@@ -107,6 +107,13 @@ const char* ChargePerturbation::typeName()
     return QMetaType::typeName( qMetaTypeId<ChargePerturbation>() );
 }
 
+QString ChargePerturbation::toString() const
+{
+    return QObject::tr("ChargePerturbation( from %1 to %2 )")
+                .arg(propertyMap()["initial_charge"].source(),
+                     propertyMap()["final_charge"].source());
+}
+
 /** Copy assignment operator */
 ChargePerturbation& ChargePerturbation::operator=(const ChargePerturbation &other)
 {
@@ -153,10 +160,16 @@ void ChargePerturbation::perturbMolecule(MolEditor &molecule, const Values &valu
         {
             CGAtomIdx atomidx(i,j);
 
-            Values atom_values = values + (initial == initial_chgs[atomidx].value()) +
-                                          (final == final_chgs[atomidx].value());
+            double initial_chg = initial_chgs[atomidx].value();
+            double final_chg = final_chgs[atomidx].value();
+
+            if (initial_chg != final_chg)
+            {
+                Values atom_values = values + (initial == initial_chg) +
+                                              (final == final_chg);
         
-            chgs.set( atomidx, Charge(f(atom_values)) );
+                chgs.set( atomidx, Charge(f(atom_values)) );
+            }
         }
     }
     
