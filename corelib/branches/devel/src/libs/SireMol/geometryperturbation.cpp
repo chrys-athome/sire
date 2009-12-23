@@ -456,10 +456,8 @@ void BondPerturbation::perturbMolecule(Mover<Molecule> &molecule,
     //calculate the desired value of the bond
     Values new_vals = values + ( symbols().initial() == start_size.value() ) +
                                ( symbols().final() == end_size.value() );
-                               
-    Length new_length = Length( mappingFunction().evaluate(values) );
-    
-    Length old_length = Length( bondid.size(molecule.data(), propertyMap()) );
+
+    Length new_length = Length( mappingFunction().evaluate(new_vals) );
     
     molecule.set(bondid, new_length, propertyMap()).commit();
 }
@@ -636,9 +634,7 @@ void AnglePerturbation::perturbMolecule(Mover<Molecule> &molecule,
     Values new_vals = values + ( symbols().initial() == start_size.value() ) +
                                ( symbols().final() == end_size.value() );
                                
-    Angle new_angle = Angle( mappingFunction().evaluate(values) );
-    
-    Angle old_angle = Angle( angleid.size(molecule.data(), propertyMap()) );
+    Angle new_angle = Angle( mappingFunction().evaluate(new_vals) );
     
     molecule.set(angleid, new_angle, propertyMap()).commit();
 }
@@ -815,9 +811,7 @@ void DihedralPerturbation::perturbMolecule(Mover<Molecule> &molecule,
     Values new_vals = values + ( symbols().initial() == start_size.value() ) +
                                ( symbols().final() == end_size.value() );
                                
-    Angle new_dihedral = Angle( mappingFunction().evaluate(values) );
-    
-    Angle old_dihedral = Angle( dihedralid.size(molecule.data(), propertyMap()) );
+    Angle new_dihedral = Angle( mappingFunction().evaluate(new_vals) );
     
     molecule.set(dihedralid, new_dihedral, propertyMap()).commit();
 }

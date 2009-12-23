@@ -661,11 +661,8 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
             moldata.property(map["weight function"],
                              WeightFunction::null()).asA<WeightFunction>();
 
-        tuple<double,double> weights = weightfunc(moldata, group0,
-                                                  group1, map);
-
-        weight0 = weights.get<0>();
-        weight1 = weights.get<1>();
+        weight0 = weightfunc(moldata, group0, group1, map);
+        weight1 = weightfunc(moldata, group1, group0, map);
     }
 
     //now get property containing the coordinates of the atoms
@@ -788,11 +785,8 @@ void MoverBase::change(MoleculeData &moldata, const AngleID &angle,
                 moldata.property(map["weight function"],
                                  WeightFunction::null()).asA<WeightFunction>();
 
-        tuple<double,double> weights = weightfunc(moldata, group0,
-                                                  group1, map);
-
-        weight0 = weights.get<0>();
-        weight1 = weights.get<1>();
+        weight0 = weightfunc(moldata, group0, group1, map);
+        weight1 = weightfunc(moldata, group1, group0, map);
     }
 
     //get the coordinates that are to be changed
@@ -911,11 +905,8 @@ void MoverBase::change(MoleculeData &moldata, const DihedralID &dihedral,
                       moldata.property(map["weight function"],
                                        WeightFunction::null()).asA<WeightFunction>();
 
-        tuple<double,double> weights = weightfunc(moldata, group0,
-                                                  group1, map);
-
-        weight0 = weights.get<0>();
-        weight1 = weights.get<1>();
+        weight0 = weightfunc(moldata, group0, group1, map);
+        weight1 = weightfunc(moldata, group1, group0, map);
     }
 
     //get the coordinates to be moved
@@ -1026,11 +1017,8 @@ void MoverBase::change(MoleculeData &moldata, const BondID &bond,
                      moldata.property(map["weight function"],
                                       WeightFunction::null()).asA<WeightFunction>();
 
-        tuple<double,double> weights = weightfunc(moldata, group0,
-                                                  group1, map);
-
-        weight0 = weights.get<0>();
-        weight1 = weights.get<1>();
+        weight0 = weightfunc(moldata, group0, group1, map);
+        weight1 = weightfunc(moldata, group1, group0, map);
     }
 
     //get the coordinates to be moved
@@ -1150,11 +1138,8 @@ void MoverBase::change(MoleculeData &moldata, const ImproperID &improper,
                    moldata.property(map["weight function"],
                                     WeightFunction::null()).asA<WeightFunction>();
 
-        tuple<double,double> weights = weightfunc(moldata, group0,
-                                                  group1, map);
-
-        weight0 = weights.get<0>();
-        weight1 = weights.get<1>();
+        weight0 = weightfunc(moldata, group0, group1, map);
+        weight1 = weightfunc(moldata, group1, group0, map);
     }
 
     //get the coordinates to be moved
@@ -1210,7 +1195,6 @@ void MoverBase::set(MoleculeData &moldata, const BondID &bond,
                     const PropertyMap &map) const
 {
     SireUnits::Dimension::Length current_value( bond.size(moldata,map) );
-
     this->change(moldata, bond, value - current_value, map);
 }
 

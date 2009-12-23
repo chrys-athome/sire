@@ -117,7 +117,6 @@ PropertyName ProtoMSParameters::ub_property( "Urey-Bradley" );
 PropertyName ProtoMSParameters::zmatrix_property( "z-matrix" );
 PropertyName ProtoMSParameters::nb_property( "intrascale" );
 
-PropertyName ProtoMSParameters::anchors_property( "anchors" );
 PropertyName ProtoMSParameters::perts_property( "perturbations" );
 
 ///////////
@@ -481,9 +480,7 @@ void ProtoMS::processZMatrixPertLine(const QStringList &words,
                                      const Molecule &mol, int type,
                                      QList<SireMol::GeomPertPtr> &geom_perturbations,
                                      const ZMatrix &zmatrix,
-                                     const QString &coords_property,
-                                     const QString &connectivity_property,
-                                     const QString &anchors_property,
+                                     const PropertyMap &pert_map,
                                      ProtoMSWorkspace &workspace) const
 {
     //skip lines involving dummy atoms
@@ -505,11 +502,6 @@ void ProtoMS::processZMatrixPertLine(const QStringList &words,
     {
         atom = getProteinAtom(mol, words[2], words[4], workspace);
     }
-            
-    PropertyMap map;
-    map.set("coordinates", coords_property);
-    map.set("connectivity", connectivity_property);
-    map.set("anchors", anchors_property);
 
     const ZMatrixLine &line = zmatrix[atom];
     
@@ -528,7 +520,7 @@ void ProtoMS::processZMatrixPertLine(const QStringList &words,
         geom_perturbations.append( BondPerturbation( line.atom(), line.bond(),
                                                      initial*angstrom,
                                                      final*angstrom,
-                                                     map ) );
+                                                     pert_map ) );
     }
     else if ( words[6] == "ANGLE" )
     {
@@ -536,7 +528,7 @@ void ProtoMS::processZMatrixPertLine(const QStringList &words,
                                                       line.angle(),
                                                       initial*radians,
                                                       final*radians,
-                                                      map ) );
+                                                      pert_map ) );
     }
     else if ( words[6] == "DIHEDRAL" )
     {
@@ -544,7 +536,7 @@ void ProtoMS::processZMatrixPertLine(const QStringList &words,
                                                          line.angle(), line.dihedral(),
                                                          initial*radians,
                                                          final*radians,
-                                                         map ) );
+                                                         pert_map ) );
     }
     else
     {
@@ -743,7 +735,7 @@ void ProtoMS::processAtomLine(const QStringList &words, MolEditor &editmol,
 
 /** This processes the output line that contains the bond parameters */
 void ProtoMS::processBondLine(const QStringList &words, const Molecule &mol,
-                              int type, ConnectivityEditor &connectivity, 
+                              int type,
                               TwoAtomFunctions &bondfuncs,
                               ProtoMSWorkspace &workspace) const
 {
@@ -783,12 +775,42 @@ void ProtoMS::processBondLine(const QStringList &words, const Molecule &mol,
     }
     
     bondfuncs.set( atom0, atom1, bondfunc );
-    
-    if ( k != 0 )
+}
+
+void ProtoMS::processConnectLine(const QStringList &words, const Molecule &mol,
+                                 int type,
+                                 ConnectivityEditor &connectivity,
+                                 ProtoMSWorkspace &workspace) const
+{
+    if (type == SOLVENT)
+        return;
+
+    //skip lines involving dummy atoms
+    if ( words[2] == "DUM" or words[4] == "DUM" or
+         words[7] == "DUM" or words[9] == "DUM" )
     {
-        //this is a non-dummy bond, so the atoms must be connected
-        connectivity.connect(atom0, atom1);
+        return;
     }
+
+    if (words.count() < 11)
+        throw SireError::io_error( QObject::tr(
+            "Cannot understand the ProtoMS bond line\n%1")
+                .arg(words.join(" ")), CODELOC );
+
+    AtomIdx atom0, atom1;
+
+    if (type == SOLUTE)
+    {
+        atom0 = getSoluteAtom(mol, words[2], words[4], workspace);
+        atom1 = getSoluteAtom(mol, words[7], words[9], workspace);
+    }
+    else if (type == PROTEIN)
+    {
+        atom0 = getProteinAtom(mol, words[2], words[4], workspace);
+        atom1 = getProteinAtom(mol, words[7], words[9], workspace);
+    }
+
+    connectivity.connect(atom0, atom1);
 }
 
 /** This processes the output line that contains the angle parameters */
@@ -974,7 +996,6 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
     QString nb_property = map[ parameters().nonBonded() ].source();
     
     QString zmatrix_property = map[ parameters().zmatrix() ].source();
-    QString anchors_property = map[ parameters().anchors() ].source();
     
     QString coords_property = map[ parameters().coordinates() ].source();
     QString connectivity_property = map[ parameters().connectivity() ].source();
@@ -1118,6 +1139,14 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
     
     QList<QStringList> atom_pert_lines;
     
+    PropertyMap pert_map;
+    pert_map.set("coordinates", coords_property);
+    pert_map.set("connectivity", connectivity_property);
+
+    AtomSelection anchors(molecule);
+    anchors.selectOnly( AtomIdx(0) );
+    pert_map.set("anchors", anchors);
+    
     while (not line.isNull())
     {
         //qDebug() << line;
@@ -1131,9 +1160,7 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
 
             else if (words[1] == "ZMATRIXPERT")
                 this->processZMatrixPertLine(words, editmol, type, geom_perturbations, 
-                                             zmatrix, coords_property, 
-                                             connectivity_property,
-                                             anchors_property, workspace);
+                                             zmatrix, pert_map, workspace);
 
             else if (words[1] == "Atom")
                 this->processAtomLine(words, editmol, type,
@@ -1144,7 +1171,11 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
                 
             else if (words[1] == "Bond")
                 this->processBondLine(words, molecule, type, 
-                                      connectivity, bondfuncs, workspace);
+                                      bondfuncs, workspace);
+                
+            else if (words[1] == "Connect")
+                this->processConnectLine(words, molecule, type,
+                                         connectivity, workspace);
                 
             else if (words[1] == "BondDelta")
                 this->processBondDeltaLine(words, molecule, type, zmatrix, workspace);
@@ -1286,22 +1317,10 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
         editmol.setProperty( nb_property, nbpairs );
         
         if (not geom_perturbations.isEmpty())
-        {
-            //we need to anchor the first atom so that geometry 
-            //perturbations move the molecule as they would in ProtoMS
-            AtomSelection anchors(editmol);
-            anchors.deselectAll();
-            anchors.select( AtomIdx(0) );
-            
-            editmol.setProperty( anchors_property, anchors );
-            
             perturbations.append( GeometryPerturbations(geom_perturbations) );
-        }
         
         if (not perturbations.isEmpty())
-        {
             editmol.setProperty( perts_property, Perturbations(perturbations) );
-        }
     }
     
     return editmol.commit();

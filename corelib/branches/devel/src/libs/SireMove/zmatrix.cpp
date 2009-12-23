@@ -530,7 +530,7 @@ const ZMatrixLine& ZMatrix::operator[](const AtomID &atom) const
             "The atom with ID %1 does not appear in the z-matrix.")
                 .arg(atom.toString()), CODELOC );
 
-    return zmat.at(idx);
+    return zmat.at( atomidx_to_zmat.value(idx) );
 }
 
 /** Return the line for the atom identified by 'atom'. This

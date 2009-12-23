@@ -248,16 +248,6 @@ public:
     {
         return nb_property;
     }
-    
-    /** Return the name of the property that will contain the
-        anchors
-        
-        default == "anchors"
-    */
-    const PropertyName& anchors() const
-    {
-        return anchors_property;
-    }
 
     /** Return the name of the property that will contain
         the perturbations property
@@ -315,9 +305,6 @@ private:
     
     /** The default name of the non-bonded property */
     static PropertyName nb_property;
-    
-    /** The default name of the anchors property */
-    static PropertyName anchors_property;
     
     /** The default name of the perturbations property */
     static PropertyName perts_property;
@@ -384,9 +371,7 @@ private:
     void processZMatrixPertLine(const QStringList &words, const Molecule &mol, int type,
                                 QList<SireMol::GeomPertPtr> &geom_perturbations,
                                 const ZMatrix &zmatrix,
-                                const QString &coords_property,
-                                const QString &connectivity_property,
-                                const QString &anchors_property,
+                                const PropertyMap &pert_map,
                                 detail::ProtoMSWorkspace &workspace) const;
                                           
     void processAtomLine(const QStringList &words,
@@ -404,9 +389,13 @@ private:
     
     void processBondLine(const QStringList &words,
                          const Molecule &molecule, int type,
-                         SireMol::ConnectivityEditor &connectivity,
                          SireMM::TwoAtomFunctions &bondfuncs,
                          detail::ProtoMSWorkspace &workspace) const;
+
+    void processConnectLine(const QStringList &words,
+                            const Molecule &molecule, int type,
+                            SireMol::ConnectivityEditor &connectivity,
+                            detail::ProtoMSWorkspace &workspace) const;
     
     void processAngleLine(const QStringList &words,
                           const Molecule &molecule, int type,
