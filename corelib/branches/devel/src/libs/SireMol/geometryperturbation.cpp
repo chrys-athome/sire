@@ -180,38 +180,37 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
 
 /** Constructor */
 GeometryPerturbations::GeometryPerturbations()
-                      : ConcreteProperty<GeometryPerturbations,GeometryPerturbation>()
+    : ConcreteProperty<GeometryPerturbations,GeometryPerturbation>(Expression())
 {}
 
 /** Construct to hold just a single perturbation */
 GeometryPerturbations::GeometryPerturbations(const GeometryPerturbation &perturbation)
-                      : ConcreteProperty<GeometryPerturbations,GeometryPerturbation>()
+    : ConcreteProperty<GeometryPerturbations,GeometryPerturbation>(Expression())
 {
-    perts.append( perturbation );
-}
-
-/** Construct to hold a single perturbation, but where the value of lambda is
-    changed according to the passed mapping function */
-GeometryPerturbations::GeometryPerturbations(const GeometryPerturbation &perturbation,
-                                             const Expression &mapping_function)
-       : ConcreteProperty<GeometryPerturbations,GeometryPerturbation>(mapping_function)
-{
-    perts.append( perturbation );
+    if (perturbation.isA<GeometryPerturbations>())
+        perts = perturbation.asA<GeometryPerturbations>().perts;
+    else
+        perts.append( perturbation );
 }
 
 /** Construct to hold all of the passed perturbations */
 GeometryPerturbations::GeometryPerturbations(const QList<GeomPertPtr> &perturbations)
-                      : ConcreteProperty<GeometryPerturbations,GeometryPerturbation>(),
-                        perts(perturbations)
-{}
-
-/** Construct to hold all of the passed perturbations, but where the value of
-    lambda is changed according to the passed mapping function */
-GeometryPerturbations::GeometryPerturbations(const QList<GeomPertPtr> &perturbations,
-                                             const Expression &mapping_function)
-       : ConcreteProperty<GeometryPerturbations,GeometryPerturbation>(mapping_function),
-         perts(perturbations)
-{}
+    : ConcreteProperty<GeometryPerturbations,GeometryPerturbation>(Expression())
+{
+    for (QList<GeomPertPtr>::const_iterator it = perturbations.constBegin();
+         it != perturbations.constEnd();
+         ++it)
+    {
+        if ( (*it)->isA<GeometryPerturbations>() )
+        {
+            perts += (*it)->asA<GeometryPerturbations>().perts;
+        }
+        else
+        {
+            perts += *it;
+        }
+    }
+}
 
 /** Copy constructor */                      
 GeometryPerturbations::GeometryPerturbations(const GeometryPerturbations &other)

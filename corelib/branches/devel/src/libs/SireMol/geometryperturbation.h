@@ -120,12 +120,7 @@ public:
     GeometryPerturbations();
     
     GeometryPerturbations(const GeometryPerturbation &perturbation);
-    GeometryPerturbations(const GeometryPerturbation &perturbation,
-                          const SireCAS::Expression &mapping_function);
-    
     GeometryPerturbations(const QList<GeomPertPtr> &perturbations);
-    GeometryPerturbations(const QList<GeomPertPtr> &perturbations,
-                          const SireCAS::Expression &mapping_function);
                           
     GeometryPerturbations(const GeometryPerturbations &other);
     

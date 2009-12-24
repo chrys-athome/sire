@@ -475,12 +475,13 @@ void Perturbations::makeSane()
 }
 
 /** Constructor */
-Perturbations::Perturbations() : ConcreteProperty<Perturbations,Perturbation>()
+Perturbations::Perturbations()
+              : ConcreteProperty<Perturbations,Perturbation>(Expression())
 {}
 
 /** Construct just to perform the passed perturbation */
 Perturbations::Perturbations(const Perturbation &perturbation)
-              : ConcreteProperty<Perturbations,Perturbation>()
+              : ConcreteProperty<Perturbations,Perturbation>(Expression())
 {
     perts.append(perturbation);
     this->makeSane();
@@ -488,7 +489,7 @@ Perturbations::Perturbations(const Perturbation &perturbation)
 
 /** Construct to perform the passed perturbations */
 Perturbations::Perturbations(const QList<PerturbationPtr> &perturbations)
-              : ConcreteProperty<Perturbations,Perturbation>(),
+              : ConcreteProperty<Perturbations,Perturbation>(Expression()),
                 perts(perturbations)
 {
     this->makeSane();

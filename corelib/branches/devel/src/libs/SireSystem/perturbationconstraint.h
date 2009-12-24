@@ -29,7 +29,11 @@
 #ifndef SIRESYSTEM_PERTURBATIONCONSTRAINT_H
 #define SIRESYSTEM_PERTURBATIONCONSTRAINT_H
 
+#include <QSharedDataPointer>
+
 #include "moleculeconstraint.h"
+
+#include "SireMol/perturbation.h"
 
 SIRE_BEGIN_HEADER
 
@@ -43,6 +47,43 @@ QDataStream& operator>>(QDataStream&, SireSystem::PerturbationConstraint&);
 
 namespace SireSystem
 {
+
+using SireMol::Perturbation;
+using SireMol::PerturbationPtr;
+
+namespace detail
+{
+
+class PerturbationData : public QSharedData
+{
+public:
+    PerturbationData();
+    PerturbationData(const PerturbationPtr &perturbation);
+    
+    PerturbationData(const PerturbationData &other);
+    
+    ~PerturbationData();
+    
+    bool wouldChange(const Molecule &molecule) const;
+
+    Molecule perturb(const Molecule &molecule);
+    Molecule perturb(const Molecule &molecule, const Values &values);
+    
+private:
+    /** The actual perturbation */
+    PerturbationPtr pert;
+    
+    /** The symbols used by this perturbation, and their 
+        current values */
+    Values vals;
+    
+    /** The properties required, and the version of 
+        the property in the molecule the last time it
+        was updated */
+    QHash<QString,qint64> props;
+};
+
+}
 
 /** This constraint is used to constrain part or parts of a z-matrix
     to particular values - this is useful during single-topology
@@ -60,7 +101,7 @@ friend QDataStream& ::operator>>(QDataStream&, PerturbationConstraint&);
 public:
     PerturbationConstraint();
     PerturbationConstraint(const MoleculeGroup &molgroup, 
-                   const PropertyMap &map = PropertyMap());
+                           const PropertyMap &map = PropertyMap());
                    
     PerturbationConstraint(const PerturbationConstraint &other);
     
@@ -76,7 +117,8 @@ public:
     QString toString() const;
     
     const MoleculeGroup& moleculeGroup() const;
-    const PropertyMap& propertyMap() const;
+
+    SireBase::PropertyName perturbationProperty() const;
     
     bool involvesMolecule(MolNum molnum) const;
     bool involvesMoleculesFrom(const Molecules &molecules) const;
@@ -91,19 +133,28 @@ private:
     /** The molecule group containing the molecules that are affected
         by these perturbations */
     MolGroupPtr molgroup;
-    
-    /** The symbol containing the value of the lambda value 
-        for this perturbation */
-    Symbol lamda;
-    
-    /** The property map that is used to locate the perturbations
-        to apply - perurbations are applied using a 
-        'perturbations' property */
-    PropertyMap map;
+
+    /** The name of the property containing the perturbations
+        to be applied to each molecule in the group */
+    SireBase::PropertyName perts_property;
+
+    typedef QList< QSharedDataPointer<detail::PerturbationData> > PertDataList;
+    typedef QHash<MolNum,PertDataList> PertDataHash;
+
+    /** Information about all of the perturbations about each molecule */
+    PertDataHash pertdata;
+
+    /** Copies of the perturbed molecules - these are 
+        molecules that must be changed in the molecule group
+        to maintain the constraint */
+    QHash<MolNum,Molecule> perturbed_mols;
 };
 
 }
 
+Q_DECLARE_METATYPE( SireSystem::PerturbationConstraint )
+
+SIRE_EXPOSE_CLASS( SireSystem::PerturbationConstraint )
 
 SIRE_END_HEADER
 
