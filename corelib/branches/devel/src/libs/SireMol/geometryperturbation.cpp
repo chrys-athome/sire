@@ -115,6 +115,19 @@ bool GeometryPerturbation::operator!=(const GeometryPerturbation &other) const
     return Perturbation::operator!=(other);
 }
 
+/** Return the properties required or affected by this perturbation */
+QSet<QString> GeometryPerturbation::requiredProperties() const
+{
+    QSet<QString> props;
+ 
+    PropertyName coords_property = propertyMap()["coordinates"];
+    
+    if (coords_property.hasSource())
+        props.insert( coords_property.source() );
+
+    return props;
+}
+
 void GeometryPerturbation::perturbMolecule(MolEditor &molecule, 
                                            const Values &values) const
 {
@@ -257,33 +270,151 @@ QString GeometryPerturbations::toString() const
     return lines.join("\n");
 }
 
+/** Return the geometry perturbations in this collection */
+QList<GeomPertPtr> GeometryPerturbations::perturbations() const
+{
+    return perts;
+}
+
+/** Return a re-created version of this set of perturbations where all child
+    perturbations are changed to use the passed mapping function */
+PerturbationPtr GeometryPerturbations::recreate(const Expression &mapping_function) const
+{
+    QList<GeomPertPtr> new_perts;
+    
+    for (QList<GeomPertPtr>::const_iterator it = perts.constBegin();
+         it != perts.constEnd();
+         ++it)
+    {
+        new_perts.append( 
+            it->read().recreate(mapping_function)->asA<GeometryPerturbation>() );
+    }
+    
+    GeometryPerturbations ret(*this);
+    ret.perts = new_perts;
+    
+    return ret;
+}
+
+/** Return a re-created version of this set of perturbations where all child
+    perturbations are changed to use the passed property map */
+PerturbationPtr GeometryPerturbations::recreate(const PropertyMap &map) const
+{
+    QList<GeomPertPtr> new_perts;
+    
+    for (QList<GeomPertPtr>::const_iterator it = perts.constBegin();
+         it != perts.constEnd();
+         ++it)
+    {
+        new_perts.append( 
+            it->read().recreate(map)->asA<GeometryPerturbation>() );
+    }
+    
+    GeometryPerturbations ret(*this);
+    ret.perts = new_perts;
+    
+    return ret;
+}
+
+/** Return a re-created version of this set of perturbations where all child
+    perturbations are changed to use the passed mapping function and property map */
+PerturbationPtr GeometryPerturbations::recreate(const Expression &mapping_function,
+                                                const PropertyMap &map) const
+{
+    QList<GeomPertPtr> new_perts;
+    
+    for (QList<GeomPertPtr>::const_iterator it = perts.constBegin();
+         it != perts.constEnd();
+         ++it)
+    {
+        new_perts.append( 
+            it->read().recreate(mapping_function,map)->asA<GeometryPerturbation>() );
+    }
+    
+    GeometryPerturbations ret(*this);
+    ret.perts = new_perts;
+    
+    return ret;
+}
+
+/** Return the list of all child perturbations (and children of children) */
+QList<PerturbationPtr> GeometryPerturbations::children() const
+{
+    QList<PerturbationPtr> kids;
+    
+    for (QList<GeomPertPtr>::const_iterator it = perts.constBegin();
+         it != perts.constEnd();
+         ++it)
+    {
+        kids += it->read().children();
+    }
+    
+    return kids;
+}
+
+/** Return all of the symbols that need to be input to these perturbations */
+QSet<Symbol> GeometryPerturbations::requiredSymbols() const
+{
+    QSet<Symbol> syms;
+    
+    for (QList<GeomPertPtr>::const_iterator it = perts.constBegin();
+         it != perts.constEnd();
+         ++it)
+    {
+        syms += it->read().requiredSymbols();
+    }
+    
+    return syms;
+}
+
+/** Return all of the properties that are needed or affected by 
+    these perturbations */
+QSet<QString> GeometryPerturbations::requiredProperties() const
+{
+    QSet<QString> props;
+    
+    for (QList<GeomPertPtr>::const_iterator it = perts.constBegin();
+         it != perts.constEnd();
+         ++it)
+    {
+        props += it->read().requiredProperties();
+    }
+    
+    return props;
+}
+
+/** Return whether or not these perturbations with the passed values would
+    change the molecule 'molecule' */
+bool GeometryPerturbations::wouldChange(const Molecule &molecule,
+                                        const Values &values) const
+{
+    try
+    {
+        for (QList<GeomPertPtr>::const_iterator it = perts.constBegin();
+             it != perts.constEnd();
+             ++it)
+        {
+            if (it->read().wouldChange(molecule,values))
+                return true;
+        }
+        
+        return false;
+    }
+    catch(...)
+    {
+        //if an error occured, then the molecule won't be changed
+        return false;
+    }
+}
+
 void GeometryPerturbations::perturbMolecule(Mover<Molecule> &molecule, 
                                             const SireCAS::Values &values) const
 {
-    if (mappingFunction() == Perturbation::defaultFunction())
+    for (QList<GeomPertPtr>::const_iterator it = perts.constBegin();
+         it != perts.constEnd();
+         ++it)
     {
-        for (QList<GeomPertPtr>::const_iterator it = perts.constBegin();
-             it != perts.constEnd();
-             ++it)
-        {
-            it->read().perturbMolecule(molecule, values);
-        }
-    }
-    else
-    {
-        Values new_values = values + ( symbols().initial() == 0.0 ) +
-                                     ( symbols().final() == 1.0 );
-    
-        double new_lambda = mappingFunction().evaluate(new_values);
-        
-        new_values = values + (symbols().lambda() == new_lambda);
-        
-        for (QList<GeomPertPtr>::const_iterator it = perts.constBegin();
-             it != perts.constEnd();
-             ++it)
-        {
-            it->read().perturbMolecule(molecule, new_values);
-        }
+        it->read().perturbMolecule(molecule, values);
     }
 }
 
@@ -442,6 +573,27 @@ const SireUnits::Dimension::Length& BondPerturbation::start() const
 const SireUnits::Dimension::Length& BondPerturbation::end() const
 {
     return end_size;
+}
+
+/** Return whether or not this perturbation with the passed values would
+    change the molecule 'molecule' */
+bool BondPerturbation::wouldChange(const Molecule &molecule, const Values &values) const
+{
+    try 
+    {
+        Values new_vals = values + ( symbols().initial() == start_size.value() ) +
+                                   ( symbols().final() == end_size.value() );
+
+        Length new_length = Length( mappingFunction().evaluate(new_vals) );
+        
+        Length old_length( bondid.length(molecule, propertyMap()) );
+        
+        return std::abs(new_length - old_length) > 0.0001;
+    }
+    catch(...)
+    {
+        return false;
+    }
 }
 
 /** Apply this perturbation
@@ -621,6 +773,27 @@ const SireUnits::Dimension::Angle& AnglePerturbation::end() const
     return end_size;
 }
 
+/** Return whether or not this perturbation with the passed values would
+    change the molecule 'molecule' */
+bool AnglePerturbation::wouldChange(const Molecule &molecule, const Values &values) const
+{
+    try 
+    {
+        Values new_vals = values + ( symbols().initial() == start_size.value() ) +
+                                   ( symbols().final() == end_size.value() );
+
+        Angle new_size = Angle( mappingFunction().evaluate(new_vals) );
+        
+        Angle old_size( angleid.size(molecule, propertyMap()) );
+        
+        return std::abs(new_size.value() - old_size.value()) > 0.0001;
+    }
+    catch(...)
+    {
+        return false;
+    }
+}
+
 /** Apply this perturbation
 
     \throw SireBase::missing_property
@@ -796,6 +969,28 @@ const SireUnits::Dimension::Angle& DihedralPerturbation::start() const
 const SireUnits::Dimension::Angle& DihedralPerturbation::end() const
 {
     return end_size;
+}
+
+/** Return whether or not this perturbation with the passed values would
+    change the molecule 'molecule' */
+bool DihedralPerturbation::wouldChange(const Molecule &molecule, 
+                                       const Values &values) const
+{
+    try 
+    {
+        Values new_vals = values + ( symbols().initial() == start_size.value() ) +
+                                   ( symbols().final() == end_size.value() );
+
+        Angle new_size = Angle( mappingFunction().evaluate(new_vals) );
+        
+        Angle old_size( dihedralid.size(molecule, propertyMap()) );
+        
+        return std::abs(new_size.value() - old_size.value()) > 0.0001;
+    }
+    catch(...)
+    {
+        return false;
+    }
 }
 
 /** Apply this perturbation

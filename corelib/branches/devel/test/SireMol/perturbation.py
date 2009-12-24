@@ -25,7 +25,19 @@ perturbations = mol.property("perturbations")
 
 print perturbations
 
+print perturbations.requiredSymbols()
+print perturbations.requiredProperties()
+
 lam = perturbations.symbols().Lambda()
+
+print perturbations.wouldChange(mol, {lam:0.0})
+
+mol = perturbations.perturb(mol, {lam:0.0})
+
+print perturbations.wouldChange(mol, {lam:0.0})
+
+for perturbation in perturbations.children():
+    print perturbation, perturbation.wouldChange(mol, {lam:0.0})
 
 chgs = {}
 ljs = {}

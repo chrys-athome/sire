@@ -191,6 +191,88 @@ bool Perturbation::operator!=(const Perturbation &other) const
 {
     return not Perturbation::operator==(other);
 }
+    
+/** Recreate this perturbation - this has the same effect as .clone() */
+PerturbationPtr Perturbation::recreate() const
+{
+    return *this;
+}
+
+/** Recreate this perturbation, replacing its current mapping function
+    with 'mapping_function' */
+PerturbationPtr Perturbation::recreate(const Expression &mapping_function) const
+{
+    if (mapping_eqn == mapping_function)
+    {
+        return this->recreate();
+    }
+    else
+    {
+        PerturbationPtr new_pert(*this);
+        
+        new_pert.edit().mapping_eqn = mapping_function;
+        
+        return new_pert;
+    }
+}
+
+/** Recreate this perturbation, replacing the current property map with 'map' */
+PerturbationPtr Perturbation::recreate(const PropertyMap &new_map) const
+{
+    if (new_map == map)
+    {
+        return this->recreate();
+    }
+    else
+    {
+        PerturbationPtr new_pert(*this);
+        
+        new_pert.edit().map = new_map;
+        
+        return new_pert;
+    }
+}
+
+/** Recreate this perturbation, replacing both the mapping function and 
+    the property map */
+PerturbationPtr Perturbation::recreate(const Expression &mapping_function,
+                                       const PropertyMap &new_map) const
+{
+    if (mapping_function == mapping_eqn and new_map == map)
+    {
+        return this->recreate();
+    }
+    else
+    {
+        PerturbationPtr new_pert(*this);
+        
+        new_pert.edit().mapping_eqn = mapping_function;
+        new_pert.edit().map = new_map;
+        
+        return new_pert;
+    }
+}
+    
+/** Return all of the child perturbations that make up 
+    this perturbation */
+QList<PerturbationPtr> Perturbation::children() const
+{
+    QList<PerturbationPtr> ret;
+    ret.append( *this );
+    return ret;
+}
+
+/** Return all of the symbols that need to be supplied
+    to the mapping function (i.e. ignoring symbols().initial()
+    and symbols().final() ) */
+QSet<Symbol> Perturbation::requiredSymbols() const
+{
+    QSet<Symbol> syms = mapping_eqn.symbols();
+    syms.remove( symbols().initial() );
+    syms.remove( symbols().final() );
+    
+    return syms;
+}
 
 /** Return the equation used to control the mapping from the
     the initial value (represented using symbols().initial()) to
@@ -304,6 +386,21 @@ bool NullPerturbation::operator!=(const NullPerturbation &other) const
     return Perturbation::operator!=(other);
 }
 
+QSet<Symbol> NullPerturbation::requiredSymbols() const
+{
+    return QSet<Symbol>();
+}
+
+QSet<QString> NullPerturbation::requiredProperties() const
+{
+    return QSet<QString>();
+}
+    
+bool NullPerturbation::wouldChange(const Molecule&, const Values&) const
+{
+    return false;
+}
+
 void NullPerturbation::perturbMolecule(MolEditor&, const Values&) const
 {}
 
@@ -349,49 +446,32 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Perturbations &perts)
     objects into a single GeometryPerturbations */
 void Perturbations::makeSane()
 {
-    bool is_sane = true;
+    QList<PerturbationPtr> norm_perts;
+    QList<GeomPertPtr> geom_perts;
     
-    for (QList<PerturbationPtr>::const_iterator it = perts.constBegin();
-         it != perts.constEnd();
+    QList<PerturbationPtr> kids = this->children();
+    
+    for (QList<PerturbationPtr>::const_iterator it = kids.constBegin();
+         it != kids.constEnd();
          ++it)
     {
         if ((*it)->isA<NullPerturbation>())
-        {
-            is_sane = false;
-            break;
-        }
+            continue;
+            
         else if ((*it)->isA<GeometryPerturbation>() and
                  not (*it)->isA<GeometryPerturbations>())
         {
-            is_sane = false;
-            break;
+            geom_perts.append( (*it)->asA<GeometryPerturbation>() );
+        }
+        else if (not (*it)->isA<Perturbations>())
+        {
+            norm_perts.append(*it);
         }
     }
     
-    if (is_sane)
-        return;
-        
-    QList<GeomPertPtr> geomperts;
+    norm_perts.append( GeometryPerturbations(geom_perts) );
     
-    QMutableListIterator<PerturbationPtr> it(perts);
-    
-    while (it.hasNext())
-    {
-        it.next();
-        
-        if (it.value()->isA<NullPerturbation>())
-        {
-            it.remove();
-        }
-        else if (it.value()->isA<GeometryPerturbation>() and
-            not it.value()->isA<GeometryPerturbations>())
-        {
-            geomperts.append( it.value() );
-            it.remove();
-        }
-    }
-    
-    perts.append( GeometryPerturbations(geomperts) );
+    perts = norm_perts;
 }
 
 /** Constructor */
@@ -409,26 +489,6 @@ Perturbations::Perturbations(const Perturbation &perturbation)
 /** Construct to perform the passed perturbations */
 Perturbations::Perturbations(const QList<PerturbationPtr> &perturbations)
               : ConcreteProperty<Perturbations,Perturbation>(),
-                perts(perturbations)
-{
-    this->makeSane();
-}
-
-/** Construct to perform the passed perturbation using the passed expression
-    to change lambda */
-Perturbations::Perturbations(const Perturbation &perturbation, 
-                             const Expression &equation)
-              : ConcreteProperty<Perturbations,Perturbation>(equation)
-{
-    perts.append(perturbation);
-    this->makeSane();
-}
-
-/** Construct to perform the passed perturbations using the passed expression
-    to change lambda */
-Perturbations::Perturbations(const QList<PerturbationPtr> &perturbations, 
-                             const Expression &equation)
-              : ConcreteProperty<Perturbations,Perturbation>(equation),
                 perts(perturbations)
 {
     this->makeSane();
@@ -492,37 +552,142 @@ QList<PerturbationPtr> Perturbations::perturbations() const
     return perts;
 }
 
+/** Return a re-created version of this set of perturbations where all child
+    perturbations are changed to use the passed mapping function */
+PerturbationPtr Perturbations::recreate(const Expression &mapping_function) const
+{
+    QList<PerturbationPtr> new_perts;
+    
+    for (QList<PerturbationPtr>::const_iterator it = perts.constBegin();
+         it != perts.constEnd();
+         ++it)
+    {
+        new_perts.append( it->read().recreate(mapping_function) );
+    }
+    
+    Perturbations ret(*this);
+    ret.perts = new_perts;
+    
+    return ret;
+}
+
+/** Return a re-created version of this set of perturbations where all child
+    perturbations are changed to use the passed property map */
+PerturbationPtr Perturbations::recreate(const PropertyMap &map) const
+{
+    QList<PerturbationPtr> new_perts;
+    
+    for (QList<PerturbationPtr>::const_iterator it = perts.constBegin();
+         it != perts.constEnd();
+         ++it)
+    {
+        new_perts.append( it->read().recreate(map) );
+    }
+    
+    Perturbations ret(*this);
+    ret.perts = new_perts;
+    
+    return ret;
+}
+
+/** Return a re-created version of this set of perturbations where all child
+    perturbations are changed to use the passed mapping function and property map */
+PerturbationPtr Perturbations::recreate(const Expression &mapping_function,
+                                        const PropertyMap &map) const
+{
+    QList<PerturbationPtr> new_perts;
+    
+    for (QList<PerturbationPtr>::const_iterator it = perts.constBegin();
+         it != perts.constEnd();
+         ++it)
+    {
+        new_perts.append( it->read().recreate(mapping_function,map) );
+    }
+    
+    Perturbations ret(*this);
+    ret.perts = new_perts;
+    
+    return ret;
+}
+
+/** Return a list of all of the children of this perturbation
+    (and the children of these children etc.) */
+QList<PerturbationPtr> Perturbations::children() const
+{
+    QList<PerturbationPtr> kids;
+    
+    for (QList<PerturbationPtr>::const_iterator it = perts.constBegin();
+         it != perts.constEnd();
+         ++it)
+    {
+        kids += it->read().children();
+    }
+    
+    return kids;
+}
+
+/** Return all of the symbols that need to be input to these perturbations */
+QSet<Symbol> Perturbations::requiredSymbols() const
+{
+    QSet<Symbol> syms;
+    
+    for (QList<PerturbationPtr>::const_iterator it = perts.constBegin();
+         it != perts.constEnd();
+         ++it)
+    {
+        syms += it->read().requiredSymbols();
+    }
+    
+    return syms;
+}
+
+/** Return all of the properties that are needed or affected by 
+    these perturbations */
+QSet<QString> Perturbations::requiredProperties() const
+{
+    QSet<QString> props;
+    
+    for (QList<PerturbationPtr>::const_iterator it = perts.constBegin();
+         it != perts.constEnd();
+         ++it)
+    {
+        props += it->read().requiredProperties();
+    }
+    
+    return props;
+}
+
+/** Return whether or not these perturbations with the passed values would
+    change the molecule 'molecule' */
+bool Perturbations::wouldChange(const Molecule &molecule, const Values &values) const
+{
+    try
+    {
+        for (QList<PerturbationPtr>::const_iterator it = perts.constBegin();
+             it != perts.constEnd();
+             ++it)
+        {
+            if (it->read().wouldChange(molecule,values))
+                return true;
+        }
+        
+        return false;
+    }
+    catch(...)
+    {
+        //if an error occured, then the molecule won't be changed
+        return false;
+    }
+}
+
 /** Apply this perturbation to the passed molecule for the 
     specified lambda value */
 void Perturbations::perturbMolecule(MolEditor &molecule, const Values &values) const
 {
-    //if a new mapping equation is specified then change lambda to
-    //the result of the equation - this allows a non-linear change
-    //with respect to lambda to be applied to all of the perturbations
-    //by specifying the new equation once here
-    if ( this->mappingFunction() != Perturbation::defaultFunction() )
+    for (QList<PerturbationPtr>::const_iterator it = perts.constBegin();
+         it != perts.constEnd();
+         ++it)
     {
-        Values new_values = values + ( symbols().initial() == 0.0 ) +
-                                     ( symbols().final() == 1.0 );
-    
-        double new_lambda = this->mappingFunction().evaluate(new_values);
-        
-        new_values = values + (symbols().lambda() == new_lambda);
-        
-        for (QList<PerturbationPtr>::const_iterator it = perts.constBegin();
-             it != perts.constEnd();
-             ++it)
-        {
-            it->read().perturbMolecule(molecule, new_values);
-        }
-    }
-    else
-    {
-        for (QList<PerturbationPtr>::const_iterator it = perts.constBegin();
-             it != perts.constEnd();
-             ++it)
-        {
-            it->read().perturbMolecule(molecule, values);
-        }
+        it->read().perturbMolecule(molecule, values);
     }
 }

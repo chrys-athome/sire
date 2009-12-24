@@ -87,6 +87,8 @@ private:
     Symbol lam, init, finl;
 };
 
+typedef SireBase::PropPtr<Perturbation> PerturbationPtr;
+
 /** This is the base class of all perturbation objects. A Perturbation
     is a rule for changing a property of a molecule with respect
     to a driving (reaction) coordinate. Perturbations can be used
@@ -112,6 +114,17 @@ public:
     
     virtual Perturbation* clone() const=0;
     
+    virtual PerturbationPtr recreate() const;
+    virtual PerturbationPtr recreate(const SireCAS::Expression &mapping_function) const;
+    virtual PerturbationPtr recreate(const PropertyMap &map) const;
+    virtual PerturbationPtr recreate(const SireCAS::Expression &mapping_function,
+                                     const PropertyMap &map) const;
+    
+    virtual QList<PerturbationPtr> children() const;
+    
+    virtual QSet<Symbol> requiredSymbols() const;
+    virtual QSet<QString> requiredProperties() const=0;
+    
     static const Expression& defaultFunction();
     static const PerturbationSymbols& symbols();
     
@@ -120,6 +133,8 @@ public:
     const PropertyMap& propertyMap() const;
     
     Molecule perturb(const Molecule &molecule, const Values &values) const;
+
+    virtual bool wouldChange(const Molecule &molecule, const Values &values) const=0;
 
     static const NullPerturbation& null();
 
@@ -163,11 +178,14 @@ public:
     bool operator==(const NullPerturbation &other) const;
     bool operator!=(const NullPerturbation &other) const;
     
+    QSet<Symbol> requiredSymbols() const;
+    QSet<QString> requiredProperties() const;
+    
+    bool wouldChange(const Molecule &molecule, const Values &values) const;
+    
 protected:
     void perturbMolecule(MolEditor &molecule, const Values &values) const;
 };
-
-typedef SireBase::PropPtr<Perturbation> PerturbationPtr;
 
 /** This class holds a collection of perturbations that can
     be applied to a molecule
@@ -185,9 +203,6 @@ public:
     Perturbations();
     Perturbations(const Perturbation &perturbation);
     Perturbations(const QList<PerturbationPtr> &perturbations);
-
-    Perturbations(const Perturbation &perturbation, const Expression &equation);
-    Perturbations(const QList<PerturbationPtr> &perturbations, const Expression &equation);
     
     Perturbations(const Perturbations &other);
     
@@ -203,6 +218,18 @@ public:
     QString toString() const;
     
     QList<PerturbationPtr> perturbations() const;
+
+    PerturbationPtr recreate(const SireCAS::Expression &mapping_function) const;
+    PerturbationPtr recreate(const PropertyMap &map) const;
+    PerturbationPtr recreate(const SireCAS::Expression &mapping_function,
+                             const PropertyMap &map) const;
+    
+    QList<PerturbationPtr> children() const;
+    
+    QSet<Symbol> requiredSymbols() const;
+    QSet<QString> requiredProperties() const;
+
+    bool wouldChange(const Molecule &molecule, const Values &values) const;
 
 protected:    
     void perturbMolecule(MolEditor &molecule, const Values &values) const;

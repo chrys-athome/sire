@@ -76,6 +76,10 @@ public:
 
     QString toString() const;
 
+    QSet<QString> requiredProperties() const;
+    
+    bool wouldChange(const Molecule &molecule, const Values &values) const;
+
 protected:
     void perturbMolecule(MolEditor &molecule, const Values &values) const;
 };

@@ -110,6 +110,11 @@ public:
     bool mapRMinEpsilon() const;
     bool mapAB() const;
 
+    QSet<QString> requiredProperties() const;
+    
+    bool wouldChange(const SireMol::Molecule &molecule, 
+                     const SireCAS::Values &values) const;
+
 protected:
     void perturbMolecule(SireMol::MolEditor &molecule, 
                          const SireCAS::Values &values) const;

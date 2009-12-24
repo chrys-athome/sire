@@ -340,6 +340,135 @@ const Expression& LJPerturbation::B_MappingFunction() const
     return Perturbation::mappingFunction();
 }
 
+/** Return the properties required or changed by this perturbation */
+QSet<QString> LJPerturbation::requiredProperties() const
+{
+    QSet<QString> props;
+    
+    PropertyName prop = propertyMap()["LJ"];
+    
+    if (prop.hasSource())
+        props.insert( prop.source() );
+        
+    prop = propertyMap()["initial_LJ"];
+    
+    if (prop.hasSource())
+        props.insert( prop.source() );
+        
+    prop = propertyMap()["final_LJ"];
+    
+    if (prop.hasSource())
+        props.insert( prop.source() );
+        
+    return props;
+}
+
+/** Return whether or not this perturbation with the passed values would
+    change the molecule 'molecule' */
+bool LJPerturbation::wouldChange(const Molecule &molecule, 
+                                 const Values &values) const
+{
+    try
+    {
+        const AtomLJs &initial_ljs = molecule.property( 
+                                            propertyMap()["initial_LJ"] )
+                                                .asA<AtomLJs>();
+                                           
+        const AtomLJs &final_ljs = molecule.property( 
+                                            propertyMap()["final_LJ"] )
+                                                .asA<AtomLJs>();
+
+        const AtomLJs &ljs = molecule.property( 
+                                            propertyMap()["LJ"] )
+                                                .asA<AtomLJs>();
+                                                
+        const Expression &f0 = sigma_mapfunc;
+        const Expression &f1 = Perturbation::mappingFunction();
+        const Symbol &initial = this->symbols().initial();
+        const Symbol &final = this->symbols().final();
+    
+        for (CGIdx i(0); i<initial_ljs.nCutGroups(); ++i)
+        {
+            for (Index j(0); j<initial_ljs.nAtoms(i); ++j)
+            {
+                CGAtomIdx atomidx(i,j);
+
+                const LJParameter &initial_lj = initial_ljs[atomidx];
+                const LJParameter &final_lj = final_ljs[atomidx];
+                const LJParameter &lj = ljs[atomidx];
+
+                if (initial_lj != final_lj)
+                {
+                    if ( mapSigmaEpsilon() )
+                    {
+                        Values atom_values = values + 
+                                            (initial == initial_lj.sigma().value()) +
+                                            (final == final_lj.sigma().value());
+            
+                        double new_sigma = f0(atom_values);
+                
+                        atom_values = values +
+                                    (initial == initial_lj.epsilon().value()) +
+                                    (final == final_lj.epsilon().value());
+                                
+                        double new_epsilon = f1(atom_values);
+            
+                        if (lj != LJParameter(Length(new_sigma),MolarEnergy(new_epsilon)))
+                            return true;
+                    }
+                    else if ( mapAB() )
+                    {
+                        Values atom_values = values + 
+                                            (initial == initial_lj.A()) +
+                                            (final == final_lj.A());
+            
+                        double new_A = f0(atom_values);
+                
+                        atom_values = values +
+                                    (initial == initial_lj.B()) +
+                                    (final == final_lj.B());
+                                
+                        double new_B = f1(atom_values);
+            
+                        if (lj != LJParameter::fromAAndB(new_A, new_B))
+                            return true;
+                    }
+                    else
+                    {
+                        Values atom_values = values + 
+                                            (initial == initial_lj.rmin().value()) +
+                                            (final == final_lj.rmin().value());
+            
+                        double new_rmin = f0(atom_values);
+                
+                        atom_values = values +
+                                    (initial == initial_lj.epsilon().value()) +
+                                    (final == final_lj.epsilon().value());
+                                
+                        double new_epsilon = f1(atom_values);
+            
+                        if (lj != LJParameter::fromRMinAndEpsilon(Length(new_rmin), 
+                                                           MolarEnergy(new_epsilon)))
+                        {
+                            return true;
+                        }
+                    }
+                }
+                else if (initial_lj != lj)
+                {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    catch(...)
+    {
+        return false;
+    }
+}
+
 /** Perturb the LJs in the passed molecule using the reaction
     coordinate(s) in 'values' 
     

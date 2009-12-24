@@ -88,6 +88,8 @@ public:
     
     static const char* typeName();
     
+    QSet<QString> requiredProperties() const;
+
 protected:
     GeometryPerturbation(const PropertyMap &map = PropertyMap());
     GeometryPerturbation(const SireCAS::Expression &expression,
@@ -137,6 +139,20 @@ public:
     bool operator!=(const GeometryPerturbations &other) const;
     
     QString toString() const;
+    
+    QList<GeomPertPtr> perturbations() const;
+
+    PerturbationPtr recreate(const SireCAS::Expression &mapping_function) const;
+    PerturbationPtr recreate(const PropertyMap &map) const;
+    PerturbationPtr recreate(const SireCAS::Expression &mapping_function,
+                             const PropertyMap &map) const;
+    
+    QList<PerturbationPtr> children() const;
+    
+    QSet<Symbol> requiredSymbols() const;
+    QSet<QString> requiredProperties() const;
+
+    bool wouldChange(const Molecule &molecule, const Values &values) const;
     
 protected:
     void perturbMolecule(Mover<Molecule> &molecule, const SireCAS::Values &values) const;
@@ -205,6 +221,8 @@ public:
     
     const SireUnits::Dimension::Length& start() const;
     const SireUnits::Dimension::Length& end() const;
+
+    bool wouldChange(const Molecule &molecule, const Values &values) const;
 
 protected:
     void perturbMolecule(Mover<Molecule> &molecule, const Values &values) const;
@@ -279,6 +297,8 @@ public:
     const SireUnits::Dimension::Angle& start() const;
     const SireUnits::Dimension::Angle& end() const;
 
+    bool wouldChange(const Molecule &molecule, const Values &values) const;
+
 protected:
     void perturbMolecule(Mover<Molecule> &molecule, const Values &values) const;
 
@@ -351,6 +371,8 @@ public:
     
     const SireUnits::Dimension::Angle& start() const;
     const SireUnits::Dimension::Angle& end() const;
+
+    bool wouldChange(const Molecule &molecule, const Values &values) const;
 
 protected:
     void perturbMolecule(Mover<Molecule> &molecule, const Values &values) const;

@@ -133,6 +133,85 @@ bool ChargePerturbation::operator!=(const ChargePerturbation &other) const
     return not ChargePerturbation::operator==(other);
 }
 
+/** Return the properties required or changed by this perturbation */
+QSet<QString> ChargePerturbation::requiredProperties() const
+{
+    QSet<QString> props;
+    
+    PropertyName prop = propertyMap()["charge"];
+    
+    if (prop.hasSource())
+        props.insert( prop.source() );
+        
+    prop = propertyMap()["initial_charge"];
+    
+    if (prop.hasSource())
+        props.insert( prop.source() );
+        
+    prop = propertyMap()["final_charge"];
+    
+    if (prop.hasSource())
+        props.insert( prop.source() );
+        
+    return props;
+}
+
+/** Return whether or not this perturbation with the passed values would
+    change the molecule 'molecule' */
+bool ChargePerturbation::wouldChange(const Molecule &molecule, 
+                                     const Values &values) const
+{
+    try
+    {
+        const AtomCharges &initial_chgs = molecule.property( 
+                                            propertyMap()["initial_charge"] )
+                                                .asA<AtomCharges>();
+                                           
+        const AtomCharges &final_chgs = molecule.property( 
+                                            propertyMap()["final_charge"] )
+                                                .asA<AtomCharges>();
+
+        const AtomCharges &chgs = molecule.property( 
+                                            propertyMap()["charge"] )
+                                                .asA<AtomCharges>();
+                                                
+        const Expression &f = this->mappingFunction();
+        const Symbol &initial = this->symbols().initial();
+        const Symbol &final = this->symbols().final();
+    
+        for (CGIdx i(0); i<initial_chgs.nCutGroups(); ++i)
+        {
+            for (Index j(0); j<initial_chgs.nAtoms(i); ++j)
+            {
+                CGAtomIdx atomidx(i,j);
+
+                double initial_chg = initial_chgs[atomidx].value();
+                double final_chg = final_chgs[atomidx].value();
+                double chg = chgs[atomidx].value();
+
+                if (initial_chg != final_chg)
+                {
+                    Values atom_values = values + (initial == initial_chg) +
+                                                  (final == final_chg);
+        
+                    if (chg != f(atom_values))
+                        return true;
+                }
+                else if (initial_chg != chg)
+                {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+    catch(...)
+    {
+        return false;
+    }
+}
+
 /** Perturb the charges in the passed molecule using the reaction
     coordinate(s) in 'values' 
     
