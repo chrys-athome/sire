@@ -193,6 +193,13 @@ public:
     double componentValue(const Symbol &component);
     Values componentValues(const QSet<Symbol> &components);
     Values componentValues();
+
+    QSet<Symbol> constantSymbols() const;
+    bool hasConstant(const Symbol &component) const;
+    
+    double constant(const Symbol &component) const;
+    Values constants() const;
+    Values constants(const QSet<Symbol> &components) const;
     
     void force(ForceTable &forcetable, double scale_force=1);
     void force(ForceTable &forcetable, const Symbol &component,
@@ -213,6 +220,8 @@ public:
     
     void setComponent(const Symbol &symbol, double value);
     void setComponent(const Symbol &symbol, const SireCAS::Expression &expression);
+    
+    void setConstant(const Symbol &symbol, double value);
     
     Symbols components() const;
     

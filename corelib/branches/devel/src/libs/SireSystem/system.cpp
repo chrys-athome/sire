@@ -755,6 +755,46 @@ Values System::componentValues()
 {
     return this->energies();
 }
+    
+/** Return the symbols of all constants in the forcefield
+    expressions in this system */
+QSet<Symbol> System::constantSymbols() const
+{
+    return this->_pvt_forceFields().constantSymbols();
+}
+
+/** Return whether or not this system has a constant value in 
+    a forcefield expression with symbol 'component' */
+bool System::hasConstant(const Symbol &component) const
+{
+    return this->_pvt_forceFields().hasConstant(component);
+}
+
+/** Return the value of the constant associated with the symbol
+    'component'
+    
+    \throw SireFF::missing_component
+*/
+double System::constant(const Symbol &component) const
+{
+    return this->_pvt_forceFields().constant(component);
+}
+
+/** Return the values of the constants associated with the symbols
+    in 'components'
+    
+    \throw SireFF::missing_component
+*/
+Values System::constants(const QSet<Symbol> &components) const
+{
+    return this->_pvt_forceFields().constants(components);
+}
+
+/** Return the values of all constants attached to this forcefield */
+Values System::constants() const
+{
+    return this->_pvt_forceFields().constants();
+}
 
 /** Add the forces acting on the molecules in the forcetable 'forcetable'
     from this system onto this forcetable, scaled by the optionally 
@@ -880,7 +920,6 @@ void System::applyConstraints()
         Constraints constraints = cons;
     
         applying_constraints = true;
-    
         constraints.apply(*this);
 
         //copy back the constraints (they may have been
@@ -955,14 +994,27 @@ void System::setComponent(const Symbol &symbol, double value)
     try
     {
         _pvt_forceFields().setComponent(symbol, value);
-        this->applyConstraints();
         sysversion.incrementMajor();
+
+        this->applyConstraints();
     }
     catch(...)
     {
         old_state.restore(*this);
         throw;
     }
+}
+
+/** Set the constant value represented by the symbol 'component' to 
+    the value 'value'. This will replace any existing component with this value, 
+    although it is an error to try to replace an energy component of one of the
+    constituent forcefields
+    
+    \throw SireFF::duplicate_component
+*/
+void System::setConstant(const Symbol &component, double value)
+{
+    this->setComponent(component, value);
 }
 
 /** Set the energy component equal to the expression 'expression'. This will

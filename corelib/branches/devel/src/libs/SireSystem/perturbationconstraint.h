@@ -34,6 +34,7 @@
 #include "moleculeconstraint.h"
 
 #include "SireMol/perturbation.h"
+#include "SireMol/moleculegroup.h"
 
 SIRE_BEGIN_HEADER
 
@@ -48,8 +49,16 @@ QDataStream& operator>>(QDataStream&, SireSystem::PerturbationConstraint&);
 namespace SireSystem
 {
 
+using SireMol::Molecule;
+using SireMol::MoleculeGroup;
+using SireMol::MolGroupPtr;
+
 using SireMol::Perturbation;
 using SireMol::PerturbationPtr;
+
+using SireCAS::Values;
+
+using SireBase::PropertyMap;
 
 namespace detail
 {
@@ -66,21 +75,16 @@ public:
     
     bool wouldChange(const Molecule &molecule) const;
 
-    Molecule perturb(const Molecule &molecule);
     Molecule perturb(const Molecule &molecule, const Values &values);
     
 private:
     /** The actual perturbation */
     PerturbationPtr pert;
     
-    /** The symbols used by this perturbation, and their 
-        current values */
-    Values vals;
-    
     /** The properties required, and the version of 
         the property in the molecule the last time it
         was updated */
-    QHash<QString,qint64> props;
+    QHash<QString,quint64> props;
 };
 
 }
@@ -130,6 +134,14 @@ public:
     bool isSatisfied(const System &system) const;
 
 private:
+    void pvt_update(const Molecule &molecule, const System &system, bool is_new_system);
+
+    void pvt_update(const System &system, MolNum molnum);
+    void pvt_update(const System &system, const Molecules &changed_mols);
+    void pvt_update(const System &system, bool is_new_system);
+    
+    Molecules applyConstraint() const;
+
     /** The molecule group containing the molecules that are affected
         by these perturbations */
     MolGroupPtr molgroup;
@@ -148,6 +160,10 @@ private:
         molecules that must be changed in the molecule group
         to maintain the constraint */
     QHash<MolNum,Molecule> perturbed_mols;
+
+    /** The symbols used by the perturbations for each molecule, 
+        and their current values */
+    QHash<MolNum,Values> pert_vals;
 };
 
 }

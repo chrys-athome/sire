@@ -28,6 +28,17 @@
 
 #include "perturbationconstraint.h"
 
+#include "SireCAS/symbol.h"
+#include "SireCAS/values.h"
+
+#include "SireMol/moleculegroup.h"
+#include "SireMol/molecule.h"
+#include "SireMol/perturbation.h"
+#include "SireMol/mgname.h"
+#include "SireMol/mgnum.h"
+
+#include "SireSystem/system.h"
+
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
@@ -42,6 +53,51 @@ using namespace SireStream;
 ///////// Implementation of PerturbationData
 /////////
 
+PerturbationData::PerturbationData()
+{}
+
+PerturbationData::PerturbationData(const PerturbationPtr &perturbation)
+                 : pert(perturbation)
+{}
+    
+PerturbationData::PerturbationData(const PerturbationData &other)
+                 : pert(other.pert), props(other.props)
+{}
+    
+PerturbationData::~PerturbationData()
+{}
+    
+bool PerturbationData::wouldChange(const Molecule &molecule) const
+{
+    if (props.isEmpty())
+        return true;
+    else
+    {
+        for (QHash<QString,quint64>::const_iterator it = props.constBegin();
+             it != props.constEnd();
+             ++it)
+        {
+            if (molecule.version(it.key()) != it.value())
+                return true;
+        }
+        
+        return false;
+    }
+}
+
+Molecule PerturbationData::perturb(const Molecule &molecule, const Values &values)
+{
+    //apply the perturbation
+    Molecule perturbed_mol = pert.read().perturb(molecule, values);
+    
+    //now save the versions of the properties used by this perturbation
+    foreach (QString property, pert.read().requiredProperties())
+    {
+        props.insert(property, perturbed_mol.version(property));
+    }
+    
+    return perturbed_mol;
+}
 
 /////////
 ///////// Implementation of PerturbationConstraint
@@ -77,6 +133,8 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
             >> static_cast<MoleculeConstraint&>(pertcons);
             
         pertcons.pertdata.clear();
+        pertcons.perturbed_mols.clear();
+        pertcons.pert_vals.clear();
     }
     else
         throw version_error(v, "1", r_pertcons, CODELOC);
@@ -84,25 +142,77 @@ QDataStream SIRESYSTEM_EXPORT &operator>>(QDataStream &ds,
     return ds;
 }
 
-PerturbationConstraint::PerturbationConstraint();
-PerturbationConstraint::PerturbationConstraint(const MoleculeGroup &molgroup, 
-                       const PropertyMap &map = PropertyMap());
-               
-PerturbationConstraint::PerturbationConstraint(const PerturbationConstraint &other);
+/** Constructor */
+PerturbationConstraint::PerturbationConstraint()
+                       : ConcreteProperty<PerturbationConstraint,MoleculeConstraint>(),
+                         perts_property("perturbations")
+{}
 
-PerturbationConstraint::~PerturbationConstraint();
+/** Construct specifying the molecule group and perturbation property */
+PerturbationConstraint::PerturbationConstraint(const MoleculeGroup &mgroup, 
+                                               const PropertyMap &map)
+                       : ConcreteProperty<PerturbationConstraint,MoleculeConstraint>(),
+                         molgroup(mgroup), 
+                         perts_property( map["perturbations"] )
+{}
+            
+/** Copy constructor */
+PerturbationConstraint::PerturbationConstraint(const PerturbationConstraint &other)
+           : ConcreteProperty<PerturbationConstraint,MoleculeConstraint>(other),
+             molgroup(other.molgroup), perts_property(other.perts_property),
+             pertdata(other.pertdata), perturbed_mols(other.perturbed_mols),
+             pert_vals(other.pert_vals)
+{}
 
-PerturbationConstraint& PerturbationConstraint::operator=(const PerturbationConstraint &other);
+/** Destructor */
+PerturbationConstraint::~PerturbationConstraint()
+{}
 
-bool PerturbationConstraint::operator==(const PerturbationConstraint &other) const;
-bool PerturbationConstraint::operator!=(const PerturbationConstraint &other) const;
+/** Copy assignment operator */
+PerturbationConstraint& 
+PerturbationConstraint::operator=(const PerturbationConstraint &other)
+{
+    if (this != &other)
+    {
+        MoleculeConstraint::operator=(other);
+        molgroup = other.molgroup;
+        perts_property = other.perts_property;
+        pertdata = other.pertdata;
+        perturbed_mols = other.perturbed_mols;
+        pert_vals = other.pert_vals;
+    }
+    
+    return *this;
+}
+
+/** Comparison operator */
+bool PerturbationConstraint::operator==(const PerturbationConstraint &other) const
+{
+    return molgroup == other.molgroup and perts_property == other.perts_property;
+}
+
+/** Comparison operator */
+bool PerturbationConstraint::operator!=(const PerturbationConstraint &other) const
+{
+    return not PerturbationConstraint::operator==(other);
+}
 
 const char* PerturbationConstraint::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<PerturbationConstraint>() );
 }
 
-QString PerturbationConstraint::toString() const;
+/** Return a string representation of this constraint */
+QString PerturbationConstraint::toString() const
+{
+    if (molgroup.constData() == 0)
+        return QObject::tr("PerturbationConstraint::null");
+    else
+        return QObject::tr("PerturbationConstraint( [%1:%2], %3 )")
+                .arg(molgroup.read().name().value())
+                .arg(molgroup.read().number().value())
+                .arg(perts_property.toString());
+}
 
 /** Return the molecule group that is acted on by this constraint */
 const MoleculeGroup& PerturbationConstraint::moleculeGroup() const
@@ -110,7 +220,12 @@ const MoleculeGroup& PerturbationConstraint::moleculeGroup() const
     return *molgroup;
 }
 
-PropertyName PerturbationConstraint::perturbationProperty() const;
+/** Return the property used to find the perturbations to apply
+    to the molecules in this constraint */
+PropertyName PerturbationConstraint::perturbationProperty() const
+{
+    return perts_property;
+}
 
 /** Return whether or not this involves the molecule with number 'molnum' */
 bool PerturbationConstraint::involvesMolecule(MolNum molnum) const
@@ -150,7 +265,7 @@ bool PerturbationConstraint::involvesMoleculesFrom(const Molecules &molecules) c
     the perturbed_mols hash */
 void PerturbationConstraint::pvt_update(const Molecule &molecule, 
                                         const System &system,
-                                        bool new_system)
+                                        bool is_new_system)
 {
     //get the current version of the molecule in the molecule group
     const MoleculeGroup &mgroup = moleculeGroup();
@@ -163,10 +278,30 @@ void PerturbationConstraint::pvt_update(const Molecule &molecule,
     {
         new_values = true;
     }
-    else if (new_system)
+    else if (is_new_system)
     {
-        //check to see if the values of any symbols have changed... (later!)
-        new_values = true;
+        //check to see if the values of any symbols have changed...
+        QHash<MolNum,Values>::const_iterator it = pert_vals.constFind(molnum);
+        
+        if (it != pert_vals.constEnd())
+        {
+            const Values &values = *it;
+        
+            foreach (Symbol symbol, values.symbols())
+            {
+                if (values[symbol] != system.constant(symbol))
+                {
+                    //this symbol has changed - need to rebuild them all
+                    new_values = true;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            //we don't have the values for this molecule?
+            new_values = true;
+        }
     }
     else if (mgroup.contains(molnum))
     {
@@ -184,27 +319,30 @@ void PerturbationConstraint::pvt_update(const Molecule &molecule,
     {
         //the symbols may have changed, or the available 
         //perturbations may have changed, so rebuild everything from scratch
-        Values values = ...get values from system...
-        
         perturbed_mols.remove(molnum);
         pertdata.remove(molnum);
+        pert_vals.remove(molnum);
         
-        QList<PerturbationPtr> perts = molecule.property(perts_property)
-                                               .asA<Perturbation>().children();
+        const Perturbation &perturbation = molecule.property(perts_property)
+                                                   .asA<Perturbation>();
+
+        Values values = system.constants(perturbation.requiredSymbols());
+        pert_vals.insert(molnum, values);
+        
+        //perturb the molecule
+        Molecule perturbed_mol = perturbation.perturb(molecule, values);
+        
+        //now save information about all of the perturbations
+        //(so that they can be applied individually in future)
+        QList<PerturbationPtr> perts = perturbation.children();
                                                
         PertDataList &pertlist = pertdata[molnum];
-        
-        Molecule perturbed_mol = molecule;
         
         for (QList<PerturbationPtr>::const_iterator it = perts.constBegin();
              it != perts.constEnd();
              ++it)
         {
-            //store information about this perturbation and apply it to 
-            //the molecule
-            QSharedDataPointer d( new PerturbationData(*it) );
-            perturbed_mol = d->perturb(perturbed_mol, values);
-            
+            QSharedDataPointer<PerturbationData> d( new PerturbationData(*it) );
             pertlist.append(d);
         }
         
@@ -239,15 +377,15 @@ void PerturbationConstraint::pvt_update(const Molecule &molecule,
 
         //the molecule has changed, but does it still obey the constraints?
         {
-            PerturbationDataList perts = pertdata.value(molnum);
+            PertDataList perts = pertdata.value(molnum);
                 
             bool would_change = false;
                 
-            for (PerturbationDataList::const_iterator it2 = perts.constBegin();
-                 it2 != perts.constEnd();
-                 ++it2)
+            for (PertDataList::const_iterator it = perts.constBegin();
+                 it != perts.constEnd();
+                 ++it)
             {
-                if ( (*it2)->wouldChange(molecule) )
+                if ( (*it)->wouldChange(molecule) )
                 {
                     would_change = true;
                     break;
@@ -264,16 +402,19 @@ void PerturbationConstraint::pvt_update(const Molecule &molecule,
         //ok - we now know that the molecule will need to be updated
         // - apply the perturbation
         {
-            PerturbationDataList &perts = pertdata[molnum];
+            PertDataList &perts = pertdata[molnum];
             
             Molecule perturbed_mol = molecule;
+                
+            const Values &values = *(pert_vals.constFind(molnum));
             
-            for (PerturbationDataList::iterator it = perts.begin();
+            for (PertDataList::iterator it = perts.begin();
                  it != perts.end();
                  ++it)
             
             {
-                perturbed_mol = (*it)->perturb(perturbed_mol);
+                if ((*it)->wouldChange(molecule))
+                    perturbed_mol = (*it)->perturb(perturbed_mol,values);
             }
             
             if (perturbed_mol.version() != molecule.version())
@@ -300,9 +441,21 @@ void PerturbationConstraint::pvt_update(const System &system, MolNum molnum)
         {
             this->pvt_update(new_group[molnum].molecule(), system, false);
         }
+        else
+        {
+            //make sure we are not storing any information about this molecule
+            //any more
+            pertdata.remove(molnum);
+            perturbed_mols.remove(molnum);
+            pert_vals.remove(molnum);
+        }
         
         //update to the new molecule group
         molgroup = new_group;
+    }
+    else
+    {
+        this->pvt_update(system, false);
     }
 }
 
@@ -326,15 +479,26 @@ void PerturbationConstraint::pvt_update(const System &system,
             {
                 this->pvt_update( new_group[it.key()].molecule(), system, false );
             }
+            else
+            {
+                //make sure we are not storing any information about this molecule
+                pertdata.remove(it.key());
+                perturbed_mols.remove(it.key());
+                pert_vals.remove(it.key());
+            }
         }
         
         //update to the new molecule group
         molgroup = new_group;
     }
+    else
+    {
+        this->pvt_update(system, false);
+    }
 }
 
 /** Call to update the constraint with the new version of the passed system */
-void PerturbationConstraint::pvt_update(const System &system, bool new_system)
+void PerturbationConstraint::pvt_update(const System &system, bool is_new_system)
 {
     //do we have a new molecule group?
     const MoleculeGroup &old_group = moleculeGroup();
@@ -347,15 +511,21 @@ void PerturbationConstraint::pvt_update(const System &system, bool new_system)
         {
             //this is a new molecule group - check for any molecules that
             //have been removed
-            for (Molecules::const_iterator it = new_group.molecules().constBegin();
-                 it != new_group.molecules.constEnd();
-                 ++it)
+            foreach (MolNum molnum, pertdata.keys())
             {
-                if (pertdata.contains(it.key())
-                    pertdata.remove(it.key());
-                    
-                if (perturbed_mols.contains(it.key())
-                    perturbed_mols.remove(it.key());
+                if (not new_group.contains(molnum))
+                {
+                    pertdata.remove(molnum);
+                    pert_vals.remove(molnum);
+                }
+            }
+            
+            foreach (MolNum molnum, perturbed_mols.keys())
+            {
+                if (not new_group.contains(molnum))
+                {
+                    perturbed_mols.remove(molnum);
+                }
             }
         }
         
@@ -364,7 +534,7 @@ void PerturbationConstraint::pvt_update(const System &system, bool new_system)
              it != new_group.molecules().constEnd();
              ++it)
         {
-            this->pvt_update(it->molecule(), system, new_system);
+            this->pvt_update(it->molecule(), system, is_new_system);
         }
         
         //now save the new molecule group
@@ -374,12 +544,27 @@ void PerturbationConstraint::pvt_update(const System &system, bool new_system)
     {
         //there isn't a new molecule group, but check that the molecules
         //are still up to date
-        for (Molecules::const_iterator it = old_group.molecules().constBegin();
-             it != old_group.molecules().constEnd();
-             ++it)
+        MolGroupPtr new_group = molgroup;
+        QList<Molecule> new_mols = new_group.edit().update(system.molecules());
+
+        if (is_new_system)
         {
-            this->pvt_update(it->molecule(), system, new_system);
+            for (Molecules::const_iterator it = new_group.read().molecules().constBegin();
+                 it != new_group.read().molecules().constEnd();
+                 ++it)
+            {
+                this->pvt_update(it->molecule(), system, true);
+            }
         }
+        else
+        {
+            foreach (Molecule new_mol, new_mols)
+            {
+                this->pvt_update(new_mol, system, false);
+            }
+        }
+        
+        molgroup = new_group;
     }
 }
 
