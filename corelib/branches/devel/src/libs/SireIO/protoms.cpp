@@ -52,6 +52,7 @@
 #include "SireMol/connectivity.h"
 #include "SireMol/mover.hpp"
 #include "SireMol/selector.hpp"
+#include "SireMol/cgeditor.h"
 
 #include "SireMol/atomcharges.h"
 
@@ -448,13 +449,6 @@ void ProtoMS::processZMatrixLine(const QStringList &words, const Molecule &mol,
 {
     AtomIdx atom, bond, angle, dihedral;
     
-    //skip lines involving dummy atoms
-    if ( words[4] == "DUM" or words[9] == "DUM" or
-         words[14] == "DUM" or words[19] == "DUM" )
-    {
-        return;
-    }
-    
     if (type == SOLVENT)
         return;
         
@@ -483,12 +477,6 @@ void ProtoMS::processZMatrixPertLine(const QStringList &words,
                                      const PropertyMap &pert_map,
                                      ProtoMSWorkspace &workspace) const
 {
-    //skip lines involving dummy atoms
-    if ( words[2] == "DUM" or words[4] == "DUM" )
-    {
-        return;
-    }
-    
     AtomIdx atom;
     
     if (type == SOLVENT)
@@ -586,12 +574,6 @@ void ProtoMS::processBondDeltaLine(const QStringList &words, const Molecule &mol
                                    int type, ZMatrix &zmatrix,
                                    ProtoMSWorkspace &workspace) const
 {
-    //skip lines involving dummy atoms
-    if ( words[4] == "DUM" or words[9] == "DUM" )
-    {
-        return;
-    }
-
     AtomIdx atom, bond;
     
     if (type == SOLVENT)
@@ -624,12 +606,6 @@ void ProtoMS::processAngleDeltaLine(const QStringList &words, const Molecule &mo
                                     int type, ZMatrix &zmatrix,
                                     ProtoMSWorkspace &workspace) const
 {
-    //skip lines involving dummy atoms
-    if ( words[4] == "DUM" or words[9] == "DUM" or words[14] == "DUM" )
-    {
-        return;
-    }
-
     AtomIdx atom, bond, angle;
     
     if (type == SOLVENT)
@@ -664,13 +640,6 @@ void ProtoMS::processDihedralDeltaLine(const QStringList &words, const Molecule 
                                        int type, ZMatrix &zmatrix,
                                        ProtoMSWorkspace &workspace) const
 {
-    //skip lines involving dummy atoms
-    if ( words[4] == "DUM" or words[9] == "DUM" or
-         words[14] == "DUM" or words[19] == "DUM" )
-    {
-        return;
-    }
-
     AtomIdx atom, bond, angle, dihedral;
     
     if (type == SOLVENT)
@@ -742,13 +711,6 @@ void ProtoMS::processBondLine(const QStringList &words, const Molecule &mol,
     if (type == SOLVENT)
         return;
 
-    //skip lines involving dummy atoms
-    if ( words[2] == "DUM" or words[4] == "DUM" or
-         words[7] == "DUM" or words[9] == "DUM" )
-    {
-        return;
-    }
-
     if (words.count() < 15)
         throw SireError::io_error( QObject::tr(
             "Cannot understand the ProtoMS bond line\n%1")
@@ -785,13 +747,6 @@ void ProtoMS::processConnectLine(const QStringList &words, const Molecule &mol,
     if (type == SOLVENT)
         return;
 
-    //skip lines involving dummy atoms
-    if ( words[2] == "DUM" or words[4] == "DUM" or
-         words[7] == "DUM" or words[9] == "DUM" )
-    {
-        return;
-    }
-
     if (words.count() < 11)
         throw SireError::io_error( QObject::tr(
             "Cannot understand the ProtoMS bond line\n%1")
@@ -820,12 +775,6 @@ void ProtoMS::processAngleLine(const QStringList &words, const Molecule &mol,
 {
     if (type == SOLVENT)
         return;
-
-    //skip lines involving dummy atoms
-    if ( words[4] == "DUM" or words[9] == "DUM" or words[14] == "DUM" )
-    {
-        return;
-    }
 
     Symbol theta = InternalPotential::symbols().angle().theta();
     
@@ -887,13 +836,6 @@ QString ProtoMS::processDihedralLine(QTextStream &ts, const QStringList &words,
 {
     //read in the parameter - each cosine term is on a separate line
     QString line = ts.readLine();
-
-    //skip lines involving dummy atoms
-    if ( words[4] == "DUM" or words[9] == "DUM" or
-         words[14] == "DUM" or words[19] == "DUM" )
-    {
-        return line;
-    }
 
     Expression dihedralfunc;
     
@@ -1080,33 +1022,69 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
     
     MolEditor editmol = molecule.edit();
     
+    //if we are parameterising a solute, then we need to add dummy atoms
+    if (type == SOLUTE)
+    {
+        MolStructureEditor edit_structure_mol( editmol );
+    
+        ResStructureEditor dummies = edit_structure_mol.add( ResName("DUM") );
+        dummies.renumber( ResNum(0) );
+
+        AtomStructureEditor dm1 = dummies.add( AtomName("DM1") );
+        AtomStructureEditor dm2 = dummies.add( AtomName("DM2") );
+        AtomStructureEditor dm3 = dummies.add( AtomName("DM3") );
+
+        CGStructureEditor dummy_cg = edit_structure_mol.add( CGName("DUM") );
+
+        dm1.reparent( CGName("DUM") );
+        dm2.reparent( CGName("DUM") );
+        dm3.reparent( CGName("DUM") );
+
+        //get the center of the molecule
+        Vector center = molecule.evaluate().center();
+        
+        dm1.setProperty(coords_property, center);
+        dm2.setProperty(coords_property, center + Vector(1,0,0));
+        dm3.setProperty(coords_property, center + Vector(0,1,0));
+        
+        dm1.setProperty(charge_property, 0.0*mod_electron);
+        dm2.setProperty(charge_property, 0.0*mod_electron);
+        dm3.setProperty(charge_property, 0.0*mod_electron);
+        
+        dm1.setProperty(lj_property, LJParameter::dummy());
+        dm2.setProperty(lj_property, LJParameter::dummy());
+        dm3.setProperty(lj_property, LJParameter::dummy());
+        
+        editmol = edit_structure_mol;
+    }
+    
     ZMatrix zmatrix( editmol );
     
-    TwoAtomFunctions bondfuncs(molecule);
-    ThreeAtomFunctions anglefuncs(molecule);
-    FourAtomFunctions dihedralfuncs(molecule);
-    TwoAtomFunctions ubfuncs(molecule);
+    TwoAtomFunctions bondfuncs(editmol);
+    ThreeAtomFunctions anglefuncs(editmol);
+    FourAtomFunctions dihedralfuncs(editmol);
+    TwoAtomFunctions ubfuncs(editmol);
     
-    ConnectivityEditor connectivity = Connectivity(molecule.data()).edit();
+    ConnectivityEditor connectivity = Connectivity(editmol.data()).edit();
     
     CLJNBPairs nbpairs;
     
     if (type == SOLUTE)
     {
         //by default, say that all atom pairs are bonded
-        nbpairs = CLJNBPairs( molecule.data().info(), CLJScaleFactor(0,0) );
+        nbpairs = CLJNBPairs( editmol.data().info(), CLJScaleFactor(0,0) );
     }
     else if (type == PROTEIN)
     {
         //by default, say that all atom pairs are non-bonded...
-        nbpairs = CLJNBPairs( molecule.data().info(), CLJScaleFactor(1,1) );
+        nbpairs = CLJNBPairs( editmol.data().info(), CLJScaleFactor(1,1) );
         
         //...except for intra-residue pairs
-        int nres = molecule.nResidues();
+        int nres = editmol.nResidues();
         
         for (ResIdx i(0); i<nres; ++i)
         {
-            Residue residue = molecule.residue(i);
+            Residue residue = editmol.residue(i);
         
             int nats = residue.nAtoms();
             
@@ -1143,7 +1121,7 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
     pert_map.set("coordinates", coords_property);
     pert_map.set("connectivity", connectivity_property);
 
-    AtomSelection anchors(molecule);
+    AtomSelection anchors(editmol);
     anchors.selectOnly( AtomIdx(0) );
     pert_map.set("anchors", anchors);
     
@@ -1170,38 +1148,38 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
                 atom_pert_lines.append(words);
                 
             else if (words[1] == "Bond")
-                this->processBondLine(words, molecule, type, 
+                this->processBondLine(words, editmol, type, 
                                       bondfuncs, workspace);
                 
             else if (words[1] == "Connect")
-                this->processConnectLine(words, molecule, type,
+                this->processConnectLine(words, editmol, type,
                                          connectivity, workspace);
                 
             else if (words[1] == "BondDelta")
-                this->processBondDeltaLine(words, molecule, type, zmatrix, workspace);
+                this->processBondDeltaLine(words, editmol, type, zmatrix, workspace);
             
             else if (words[1] == "Angle")
-                this->processAngleLine(words, molecule, type, anglefuncs, workspace);
+                this->processAngleLine(words, editmol, type, anglefuncs, workspace);
                 
             else if (words[1] == "AngleDelta")
-                this->processAngleDeltaLine(words, molecule, type, zmatrix, workspace);
+                this->processAngleDeltaLine(words, editmol, type, zmatrix, workspace);
                 
             else if (words[1] == "UreyBradley")
-                this->processUBLine(words, molecule, type, ubfuncs, workspace);
+                this->processUBLine(words, editmol, type, ubfuncs, workspace);
             
             else if (words[1] == "Dihedral")
             {
-                line = this->processDihedralLine(ts, words, molecule, 
+                line = this->processDihedralLine(ts, words, editmol, 
                                                  type, dihedralfuncs, workspace);
                 continue;
             }
 
             else if (words[1] == "DihedralDelta")
-                this->processDihedralDeltaLine(words, molecule, type, 
+                this->processDihedralDeltaLine(words, editmol, type, 
                                                zmatrix, workspace);
 
             else if (words[1] == "NB")
-                this->processNBLine(words, molecule, type, nbpairs, workspace);
+                this->processNBLine(words, editmol, type, nbpairs, workspace);
         }
         else if (line.startsWith("FATAL"))
         {

@@ -288,7 +288,7 @@ CGStructureEditor& CGStructureEditor::setProperty(const QString &key,
     this->_pvt_createSpaceForProperty< CGProperty<T> >(key);
     
     //now set the value of the property
-    this->_pvt_setCGProperty(uid, key, QVariant(value));
+    this->_pvt_setCGProperty(uid, key, QVariant::fromValue<T>(value));
     
     return *this;
 }
@@ -309,7 +309,7 @@ CGStructureEditor& CGStructureEditor::setMetadata(const QString &metakey,
     this->_pvt_createSpaceForMetadata< CGProperty<T> >(metakey);
     
     //now set the value of this metadata
-    this->_pvt_setAtomMetadata(uid, metakey, QVariant(value));
+    this->_pvt_setAtomMetadata(uid, metakey, QVariant::fromValue<T>(value));
     
     return *this;
 }
@@ -332,7 +332,7 @@ CGStructureEditor& CGStructureEditor::setMetadata(const QString &key,
     this->_pvt_createSpaceForMetadata< CGProperty<T> >(key, metakey);
     
     //now set the value of this metadata
-    this->_pvt_setAtomMetadata(uid, key, metakey, QVariant(value));
+    this->_pvt_setAtomMetadata(uid, key, metakey, QVariant::fromValue<T>(value));
     
     return *this;
 }

@@ -40,8 +40,8 @@ system.add( PerturbationConstraint(solute) )
 
 print system.constraintsSatisfied()
 
-print "SET CONSTANT"
-system.setConstant(lam, 0.5)
+for i in range(0,101,10):
+    system.setConstant(lam, 0.01 * i)
 
-print system.constraintsSatisfied()
+    PDB().write(system.molecules(), "test_%003d.pdb" % i)
 

@@ -501,7 +501,7 @@ EditResData::EditResData()
 
 EditResData::EditResData(const MoleculeInfoData &molinfo, ResIdx i,
                          const EditMolData &editmol)
-            : name(molinfo.name(i)), number(molinfo.number(i))
+            : name(molinfo.name(i)), number(molinfo.number(i)), chain_parent(0)
 {
     foreach (AtomIdx atomidx, molinfo.getAtomsIn(i))
     {
@@ -2889,6 +2889,11 @@ StructureEditor& StructureEditor::operator=(const StructureEditor &other)
 {
     d = other.d;
     return *this;
+}
+
+Properties& StructureEditor::_pvt_properties()
+{
+    return d->properties;
 }
 
 CGAtomIdx EditMolData::cgAtomIdx(quint32 atomuid, const EditAtomData &atom) const
