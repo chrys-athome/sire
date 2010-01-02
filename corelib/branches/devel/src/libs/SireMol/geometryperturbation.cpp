@@ -143,6 +143,109 @@ const char* GeometryPerturbation::typeName()
     return "SireMol::GeometryPerturbation";
 }
 
+Q_GLOBAL_STATIC( QMutex, globalMutex )
+Q_GLOBAL_STATIC( SharedPolyPointer<GeometryPerturbation>, perturbationPtr );
+
+const NullGeometryPerturbation& GeometryPerturbation::null()
+{
+    SharedPolyPointer<GeometryPerturbation> *ptr = perturbationPtr();
+    
+    if (ptr->constData() == 0)
+    {
+        QMutexLocker lkr( globalMutex() );
+        
+        if (ptr->constData() == 0)
+            *ptr = new NullGeometryPerturbation();
+    }
+    
+    return ptr->constData()->asA<NullGeometryPerturbation>();
+}
+
+//////////
+////////// Implementation of NullGeometryPerturbation
+//////////
+
+static const RegisterMetaType<NullGeometryPerturbation> r_nullpert;
+
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, 
+                                       const NullGeometryPerturbation &nullpert)
+{
+    writeHeader(ds, r_nullpert, 1);
+    
+    ds << static_cast<const GeometryPerturbation&>(nullpert);
+    
+    return ds;
+}
+
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, 
+                                       NullGeometryPerturbation &nullpert)
+{
+    VersionID v = readHeader(ds, r_nullpert);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<GeometryPerturbation&>(nullpert);
+    }
+    else
+        throw version_error(v, "1", r_nullpert, CODELOC);
+        
+    return ds;
+}
+
+NullGeometryPerturbation::NullGeometryPerturbation() 
+        : ConcreteProperty<NullGeometryPerturbation,GeometryPerturbation>()
+{}
+
+NullGeometryPerturbation::NullGeometryPerturbation(const NullGeometryPerturbation &other)
+        : ConcreteProperty<NullGeometryPerturbation,GeometryPerturbation>(other)
+{}
+
+NullGeometryPerturbation::~NullGeometryPerturbation()
+{}
+
+const char* NullGeometryPerturbation::typeName()
+{
+    return QMetaType::typeName( qMetaTypeId<NullGeometryPerturbation>() );
+}
+
+NullGeometryPerturbation& 
+NullGeometryPerturbation::operator=(const NullGeometryPerturbation &other)
+{
+    GeometryPerturbation::operator=(other);
+    return *this;
+}
+
+bool NullGeometryPerturbation::operator==(const NullGeometryPerturbation &other) const
+{
+    return GeometryPerturbation::operator==(other);
+}
+
+bool NullGeometryPerturbation::operator!=(const NullGeometryPerturbation &other) const
+{
+    return GeometryPerturbation::operator!=(other);
+}
+
+QSet<Symbol> NullGeometryPerturbation::requiredSymbols() const
+{
+    return QSet<Symbol>();
+}
+
+QSet<QString> NullGeometryPerturbation::requiredProperties() const
+{
+    return QSet<QString>();
+}
+    
+bool NullGeometryPerturbation::wouldChange(const Molecule&, const Values&) const
+{
+    return false;
+}
+
+void NullGeometryPerturbation::perturbMolecule(MolEditor&, const Values&) const
+{}
+
+void NullGeometryPerturbation::perturbMolecule(Mover<Molecule>&, const Values&) const
+{}
+
 ///////////
 /////////// Implementation of GeometryPerturbations
 ///////////

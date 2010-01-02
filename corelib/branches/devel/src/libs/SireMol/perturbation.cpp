@@ -309,11 +309,11 @@ const char* Perturbation::typeName()
     return "SireMol::Perturbation";
 }
 
-Q_GLOBAL_STATIC( PerturbationPtr, perturbationPtr );
+Q_GLOBAL_STATIC( SharedPolyPointer<Perturbation>, perturbationPtr );
 
 const NullPerturbation& Perturbation::null()
 {
-    PerturbationPtr *ptr = perturbationPtr();
+    SharedPolyPointer<Perturbation> *ptr = perturbationPtr();
     
     if (ptr->constData() == 0)
     {

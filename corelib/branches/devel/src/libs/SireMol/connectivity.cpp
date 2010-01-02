@@ -1364,6 +1364,31 @@ ConnectivityBase::split(const ImproperID &improper,
 ///////// Implementation of Connectivity
 /////////
 
+static const RegisterMetaType<Connectivity> r_connectivity;
+
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Connectivity &conn)
+{
+    writeHeader(ds, r_connectivity, 1);
+    
+    ds << static_cast<const ConnectivityBase&>(conn);
+    
+    return ds;
+}
+
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Connectivity &conn)
+{
+    VersionID v = readHeader(ds, r_connectivity);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<ConnectivityBase&>(conn);
+    }
+    else
+        throw version_error(v, "1", r_connectivity, CODELOC);
+        
+    return ds;
+}
+
 /** Reduce the memory usage of this object to a minimum */
 void Connectivity::squeeze()
 {
@@ -1468,6 +1493,31 @@ const char* Connectivity::typeName()
 /////////
 ///////// Implementation of ConnectivityEditor
 /////////
+
+static const RegisterMetaType<ConnectivityEditor> r_conneditor;
+
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const ConnectivityEditor &conn)
+{
+    writeHeader(ds, r_conneditor, 1);
+    
+    ds << static_cast<const ConnectivityBase&>(conn);
+    
+    return ds;
+}
+
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ConnectivityEditor &conn)
+{
+    VersionID v = readHeader(ds, r_conneditor);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<ConnectivityBase&>(conn);
+    }
+    else
+        throw version_error(v, "1", r_conneditor, CODELOC);
+        
+    return ds;
+}
 
 /** Null constructor */
 ConnectivityEditor::ConnectivityEditor()

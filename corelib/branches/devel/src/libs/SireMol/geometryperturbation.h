@@ -45,6 +45,7 @@ class GeometryPerturbations;
 class BondPerturbation;
 class AnglePerturbation;
 class DihedralPerturbation;
+class NullGeometryPerturbation;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMol::GeometryPerturbation&);
@@ -61,6 +62,9 @@ QDataStream& operator>>(QDataStream&, SireMol::AnglePerturbation&);
 
 QDataStream& operator<<(QDataStream&, const SireMol::DihedralPerturbation&);
 QDataStream& operator>>(QDataStream&, SireMol::DihedralPerturbation&);
+
+QDataStream& operator<<(QDataStream&, const SireMol::NullGeometryPerturbation&);
+QDataStream& operator>>(QDataStream&, SireMol::NullGeometryPerturbation&);
 
 namespace SireMol
 {
@@ -90,6 +94,8 @@ public:
     
     QSet<QString> requiredProperties() const;
 
+    static const NullGeometryPerturbation& null();
+
 protected:
     GeometryPerturbation(const PropertyMap &map = PropertyMap());
     GeometryPerturbation(const SireCAS::Expression &expression,
@@ -104,6 +110,35 @@ protected:
     
     virtual void perturbMolecule(Mover<Molecule> &molecule,
                                  const SireCAS::Values &values) const=0;
+};
+
+class SIREMOL_EXPORT NullGeometryPerturbation
+        : public SireBase::ConcreteProperty<NullGeometryPerturbation,GeometryPerturbation>
+{
+
+friend QDataStream& ::operator<<(QDataStream&, const NullGeometryPerturbation&);
+friend QDataStream& ::operator>>(QDataStream&, NullGeometryPerturbation&);
+
+public:
+    NullGeometryPerturbation();
+    NullGeometryPerturbation(const NullGeometryPerturbation &other);
+    ~NullGeometryPerturbation();
+    
+    NullGeometryPerturbation& operator=(const NullGeometryPerturbation &other);
+    
+    bool operator==(const NullGeometryPerturbation &other) const;
+    bool operator!=(const NullGeometryPerturbation &other) const;
+    
+    static const char* typeName();
+
+    QSet<Symbol> requiredSymbols() const;
+    QSet<QString> requiredProperties() const;
+    
+    bool wouldChange(const Molecule&, const SireCAS::Values&) const;
+    void perturbMolecule(MolEditor&, const SireCAS::Values&) const;
+    
+protected:
+    void perturbMolecule(Mover<Molecule> &molecule, const SireCAS::Values &values) const;
 };
 
 typedef SireBase::PropPtr<GeometryPerturbation> GeomPertPtr;
@@ -382,12 +417,14 @@ private:
 
 }
 
+Q_DECLARE_METATYPE( SireMol::NullGeometryPerturbation )
 Q_DECLARE_METATYPE( SireMol::GeometryPerturbations )
 Q_DECLARE_METATYPE( SireMol::BondPerturbation )
 Q_DECLARE_METATYPE( SireMol::AnglePerturbation )
 Q_DECLARE_METATYPE( SireMol::DihedralPerturbation )
 
 SIRE_EXPOSE_CLASS( SireMol::GeometryPerturbation )
+SIRE_EXPOSE_CLASS( SireMol::NullGeometryPerturbation )
 SIRE_EXPOSE_CLASS( SireMol::GeometryPerturbations )
 SIRE_EXPOSE_CLASS( SireMol::BondPerturbation )
 SIRE_EXPOSE_CLASS( SireMol::AnglePerturbation )
