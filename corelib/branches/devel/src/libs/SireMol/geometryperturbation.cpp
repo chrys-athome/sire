@@ -690,7 +690,7 @@ bool BondPerturbation::wouldChange(const Molecule &molecule, const Values &value
         
         Length old_length( bondid.length(molecule, propertyMap()) );
         
-        return std::abs(new_length - old_length) > 0.0001;
+        return std::abs(new_length - old_length) > 0.000001;
     }
     catch(...)
     {
@@ -715,7 +715,7 @@ void BondPerturbation::perturbMolecule(Mover<Molecule> &molecule,
 
     Length old_length( bondid.length(molecule, propertyMap()) );
     
-    if (std::abs(new_length - old_length) > 0.0001)
+    if (std::abs(new_length - old_length) > 0.000001)
         molecule.set(bondid, new_length, propertyMap()).commit();
 }
 

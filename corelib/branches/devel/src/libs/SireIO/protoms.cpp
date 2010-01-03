@@ -739,6 +739,51 @@ void ProtoMS::processBondLine(const QStringList &words, const Molecule &mol,
     bondfuncs.set( atom0, atom1, bondfunc );
 }
 
+/** This processes the output line that contains the bond perturbation parameters */
+void ProtoMS::processBondPertLine(const QStringList &words, const Molecule &mol,
+                                  int type,
+                                  TwoAtomFunctions &bondfuncs,
+                                  ProtoMSWorkspace &workspace) const
+{
+    if (type == SOLVENT)
+        return;
+
+    if (words.count() < 19)
+        throw SireError::io_error( QObject::tr(
+            "Cannot understand the ProtoMS bond perturbation line\n%1")
+                .arg(words.join(" ")), CODELOC );
+
+    Symbol r = InternalPotential::symbols().bond().r();
+    
+    double kb = words[12].toDouble();
+    double r0b = words[14].toDouble();
+    
+    double kf = words[16].toDouble();
+    double r0f = words[18].toDouble();
+    
+    Expression bondfunc_b = kb * SireMaths::pow_2( r - r0b );
+    Expression bondfunc_f = kf * SireMaths::pow_2( r - r0f );
+
+    AtomIdx atom0, atom1;
+
+    if (type == SOLUTE)
+    {
+        atom0 = getSoluteAtom(mol, words[2], words[4], workspace);
+        atom1 = getSoluteAtom(mol, words[7], words[9], workspace);
+    }
+    else if (type == PROTEIN)
+    {
+        atom0 = getProteinAtom(mol, words[2], words[4], workspace);
+        atom1 = getProteinAtom(mol, words[7], words[9], workspace);
+    }
+    
+    if (bondfunc_f != bondfunc_b)
+    {
+        qDebug() << "MUST ADD BOND PERTURBATION FROM " << bondfunc_b.toString()
+                 << "TO" << bondfunc_f.toString();
+    }
+}
+
 void ProtoMS::processConnectLine(const QStringList &words, const Molecule &mol,
                                  int type,
                                  ConnectivityEditor &connectivity,
@@ -799,7 +844,47 @@ void ProtoMS::processAngleLine(const QStringList &words, const Molecule &mol,
     anglefuncs.set( atom0, atom1, atom2, anglefunc );
 }
 
-/** This processes the output line that contains the bond parameters */
+/** This processes the output line that contains the angle perturbation parameters */
+void ProtoMS::processAnglePertLine(const QStringList &words, const Molecule &mol,
+                                   int type, ThreeAtomFunctions &anglefuncs,
+                                   ProtoMSWorkspace &workspace) const
+{
+    if (type == SOLVENT)
+        return;
+
+    Symbol theta = InternalPotential::symbols().angle().theta();
+    
+    double kb = words[17].toDouble();
+    double t0b = (words[19].toDouble() * degrees).to(radians);
+    double kf = words[21].toDouble();
+    double t0f = (words[23].toDouble() * degrees).to(radians);
+    
+    Expression anglefunc_b = kb * SireMaths::pow_2( theta - t0b );
+    Expression anglefunc_f = kf * SireMaths::pow_2( theta - t0f );
+
+    AtomIdx atom0, atom1, atom2;
+
+    if (type == SOLUTE)
+    {
+        atom0 = getSoluteAtom(mol, words[2], words[4], workspace);
+        atom1 = getSoluteAtom(mol, words[7], words[9], workspace);
+        atom2 = getSoluteAtom(mol, words[12], words[14], workspace);
+    }
+    else if (type == PROTEIN)
+    {
+        atom0 = getProteinAtom(mol, words[2], words[4], workspace);
+        atom1 = getProteinAtom(mol, words[7], words[9], workspace);
+        atom2 = getProteinAtom(mol, words[12], words[14],workspace);
+    }
+    
+    if (anglefunc_b != anglefunc_f)
+    {
+        qDebug() << "MUST ADD ANGLE PERTURBATION FROM" << anglefunc_b.toString()
+                 << "TO" << anglefunc_f.toString();
+    }
+}
+
+/** This processes the output line that contains the UB parameters */
 void ProtoMS::processUBLine(const QStringList &words, const Molecule &mol,
                             int type, TwoAtomFunctions &ubfuncs,
                             ProtoMSWorkspace &workspace) const
@@ -828,6 +913,45 @@ void ProtoMS::processUBLine(const QStringList &words, const Molecule &mol,
     ubfuncs.set( atom0, atom1, ubfunc );
 }
 
+/** This processes the output line that contains the UB perturbation parameters */
+void ProtoMS::processUBPertLine(const QStringList &words, const Molecule &mol,
+                                int type, TwoAtomFunctions &ubfuncs,
+                                ProtoMSWorkspace &workspace) const
+{
+    if (type == SOLVENT)
+        return;
+
+    Symbol r = InternalPotential::symbols().ureyBradley().r();
+    
+    double kb = words[12].toDouble();
+    double r0b = words[14].toDouble();
+    
+    double kf = words[16].toDouble();
+    double r0f = words[18].toDouble();
+    
+    Expression ubfunc_b = kb * SireMaths::pow_2( r - r0b );
+    Expression ubfunc_f = kf * SireMaths::pow_2( r - r0f );
+
+    AtomIdx atom0, atom1;
+
+    if (type == SOLUTE)
+    {
+        atom0 = getSoluteAtom(mol, words[2], words[4], workspace);
+        atom1 = getSoluteAtom(mol, words[7], words[9], workspace);
+    }
+    else if (type == PROTEIN)
+    {
+        atom0 = getProteinAtom(mol, words[2], words[4], workspace);
+        atom1 = getProteinAtom(mol, words[7], words[9], workspace);
+    }
+    
+    if (ubfunc_b != ubfunc_f)
+    {
+        qDebug() << "MUST ADD UB PERTURBATION FROM" << ubfunc_b.toString()
+                 << ubfunc_f.toString();
+    }
+}
+
 /** This processes the lines that contain the dihedral parameters */
 QString ProtoMS::processDihedralLine(QTextStream &ts, const QStringList &words,
                                      const Molecule &mol, int type,
@@ -837,16 +961,36 @@ QString ProtoMS::processDihedralLine(QTextStream &ts, const QStringList &words,
     //read in the parameter - each cosine term is on a separate line
     QString line = ts.readLine();
 
-    Expression dihedralfunc;
+    Expression dihedralfunc, dihedralfunc_f, dihedralfunc_b;
     
     Symbol phi = InternalPotential::symbols().dihedral().phi();
+    
+    enum TYPE { REFERENCE, BACKWARDS, FORWARDS };
+    
+    bool have_perturbation = false;
     
     while (not line.isNull())
     {
         //qDebug() << line;
         QStringList words = line.split(" ", QString::SkipEmptyParts);
     
-        if (words[1] != "DihedralParameter")
+        TYPE type;
+        
+        if (words[1] == "DihedralParameter")
+        {
+            type = REFERENCE;
+        }
+        else if (words[1] == "DihedralParameterPertF")
+        {
+            type = FORWARDS;
+            have_perturbation = true;
+        }
+        else if (words[1] == "DihedralParameterPertB")
+        {
+            type = BACKWARDS;
+            have_perturbation = true;
+        }
+        else
             break;
         
         //there are four parameters, k0, k1, k2, k3
@@ -857,7 +1001,20 @@ QString ProtoMS::processDihedralLine(QTextStream &ts, const QStringList &words,
         double k2 = (words[7].toDouble() * radians).to(radians);
         double k3 = words[9].toDouble();
         
-        dihedralfunc += k0 * ( 1 + k1*( Cos(k2*phi + k3) ) );
+        Expression term = k0 * ( 1 + k1*( Cos(k2*phi + k3) ) );
+        
+        switch (type)
+        {
+            case REFERENCE:
+                dihedralfunc += term;
+                break;
+            case FORWARDS:
+                dihedralfunc_f += term;
+                break;
+            case BACKWARDS:
+                dihedralfunc_b += term;
+                break;
+        }
         
         line = ts.readLine();
     }
@@ -883,6 +1040,13 @@ QString ProtoMS::processDihedralLine(QTextStream &ts, const QStringList &words,
     }
     
     dihedralfuncs.set( atom0, atom1, atom2, atom3, dihedralfunc );
+
+    if (have_perturbation and dihedralfunc_f != dihedralfunc_b)
+    {
+        qDebug() << "MUST ADD DIHEDRAL PERTURBATION FROM"
+                 << dihedralfunc_b.toString() << "to"
+                 << dihedralfunc_f.toString();
+    }
 
     return line;
 }
@@ -1151,6 +1315,10 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
                 this->processBondLine(words, editmol, type, 
                                       bondfuncs, workspace);
                 
+            else if (words[1] == "BondPert")
+                this->processBondPertLine(words, editmol, type,
+                                          bondfuncs, workspace);
+                
             else if (words[1] == "Connect")
                 this->processConnectLine(words, editmol, type,
                                          connectivity, workspace);
@@ -1161,11 +1329,17 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
             else if (words[1] == "Angle")
                 this->processAngleLine(words, editmol, type, anglefuncs, workspace);
                 
+            else if (words[1] == "AnglePert")
+                this->processAnglePertLine(words, editmol, type, anglefuncs, workspace);
+                
             else if (words[1] == "AngleDelta")
                 this->processAngleDeltaLine(words, editmol, type, zmatrix, workspace);
                 
             else if (words[1] == "UreyBradley")
                 this->processUBLine(words, editmol, type, ubfuncs, workspace);
+                
+            else if (words[1] == "UreyBradleyPert")
+                this->processUBPertLine(words, editmol, type, ubfuncs, workspace);
             
             else if (words[1] == "Dihedral")
             {

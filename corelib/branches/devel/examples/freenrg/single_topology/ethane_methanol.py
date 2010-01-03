@@ -123,7 +123,7 @@ def createSystem():
     system.add(all)
 
     solventff = InterCLJFF("solvent:solvent")
-    solventff.add(solvent)
+    #solventff.add(solvent)
 
     solute_intraff = InternalFF("solute_intraff")
     solute_intraff.add(solute)
@@ -144,16 +144,16 @@ def createSystem():
     solute_bwd_intraclj.add(solute_bwd)
 
     solute_solventff = InterGroupCLJFF("solute:solvent")
-    solute_solventff.add(solute, MGIdx(0))
-    solute_solventff.add(solvent, MGIdx(1))
+    #solute_solventff.add(solute, MGIdx(0))
+    #solute_solventff.add(solvent, MGIdx(1))
 
     solute_fwd_solventff = InterGroupCLJFF("solute_fwd:solvent")
-    solute_fwd_solventff.add(solute_fwd, MGIdx(0))
-    solute_fwd_solventff.add(solvent, MGIdx(1))
+    #solute_fwd_solventff.add(solute_fwd, MGIdx(0))
+    #solute_fwd_solventff.add(solvent, MGIdx(1))
 
     solute_bwd_solventff = InterGroupCLJFF("solute_bwd:solvent")
-    solute_bwd_solventff.add(solute_bwd, MGIdx(0))
-    solute_bwd_solventff.add(solvent, MGIdx(1))
+    #solute_bwd_solventff.add(solute_bwd, MGIdx(0))
+    #solute_bwd_solventff.add(solvent, MGIdx(1))
 
     forcefields = [ solventff, solute_intraff, solute_intraclj, solute_solventff,
                                solute_fwd_intraff, solute_fwd_intraclj, solute_fwd_solventff,
@@ -180,15 +180,15 @@ def createSystem():
     e_bwd = Symbol("E_{bwd}")
 
     total_nrg = solventff.components().total() + \
-                solute_intraff.components().total() + solute_intraff.components().total() + \
+                solute_intraclj.components().total() + solute_intraff.components().total() + \
                 solute_solventff.components().total()
 
     fwd_nrg = solventff.components().total() + \
-              solute_fwd_intraff.components().total() + solute_fwd_intraff.components().total() + \
+              solute_fwd_intraclj.components().total() + solute_fwd_intraff.components().total() + \
               solute_fwd_solventff.components().total()
 
     bwd_nrg = solventff.components().total() + \
-              solute_bwd_intraff.components().total() + solute_bwd_intraff.components().total() + \
+              solute_bwd_intraclj.components().total() + solute_bwd_intraff.components().total() + \
               solute_bwd_solventff.components().total()
 
     system.setComponent( e_total, total_nrg )
@@ -216,15 +216,25 @@ def createSystem():
     system.add( "de_fwd", MonitorComponent(de_fwd, FreeEnergyAverage(temperature)) )
     system.add( "de_bwd", MonitorComponent(de_bwd, FreeEnergyAverage(temperature)) )
 
-    print "ARE CONSTRAINTS SATISFIED???"
-    print system.constraintsSatisfied()
-    print "SATISFYING CONSTRAINTS"
-    system.applyConstraints()
-    print "ARE CONSTRAINTS SATISFIED NOW???"
-    print system.constraintsSatisfied()
-
+    system.setComponent(lam, 1.0)
     printComponents(system.energies())
 
+    PDB().write( system[MGName("solutes")][MolIdx(0)], "test.pdb" )
+
+    system.setComponent(lam, 0.0)
+    print "LAMBDA=0   : Energy = %f kcal mol-1" % system.energy().to(kcal_per_mol)
+    print "             (%f, %f)" % (system.energy(e_fwd).to(kcal_per_mol),
+                                   system.energy(e_bwd).to(kcal_per_mol))
+
+    system.setComponent(lam, 0.5)
+    print "LAMBDA=0.5 : Energy = %f kcal mol-1" % system.energy().to(kcal_per_mol)
+    print "             (%f, %f)" % (system.energy(e_fwd).to(kcal_per_mol),
+                                   system.energy(e_bwd).to(kcal_per_mol))
+
+    system.setComponent(lam, 1.0)
+    print "LAMBDA=1.0 : Energy = %f kcal mol-1" % system.energy().to(kcal_per_mol)
+    print "             (%f, %f)" % (system.energy(e_fwd).to(kcal_per_mol),
+                                   system.energy(e_bwd).to(kcal_per_mol))
     return system
 
 

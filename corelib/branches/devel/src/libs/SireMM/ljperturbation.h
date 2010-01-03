@@ -97,6 +97,10 @@ public:
 
     QString toString() const;
 
+    SireMol::PerturbationPtr recreate(const SireCAS::Expression &mapping_function) const;
+    SireMol::PerturbationPtr recreate(const SireCAS::Expression &mapping_function,
+                                      const PropertyMap &map) const;
+
     const SireCAS::Expression& mappingFunction() const;
 
     const SireCAS::Expression& rMinMappingFunction() const;

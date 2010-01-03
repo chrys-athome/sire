@@ -195,6 +195,23 @@ bool LJPerturbation::operator!=(const LJPerturbation &other) const
     return not LJPerturbation::operator==(other);
 }
 
+PerturbationPtr LJPerturbation::recreate(const Expression &mapping_function) const
+{
+    PerturbationPtr ret = Perturbation::recreate(mapping_function);
+    ret.edit().asA<LJPerturbation>().sigma_mapfunc = mapping_function;
+    
+    return ret;
+}
+
+PerturbationPtr LJPerturbation::recreate(const Expression &mapping_function,
+                                         const PropertyMap &map) const
+{
+    PerturbationPtr ret = Perturbation::recreate(mapping_function, map);
+    ret.edit().asA<LJPerturbation>().sigma_mapfunc = mapping_function;
+    
+    return ret;
+}
+
 /** Return whether or not this maps sigma and epsilon */
 bool LJPerturbation::mapSigmaEpsilon() const
 {
@@ -515,7 +532,7 @@ void LJPerturbation::perturbMolecule(MolEditor &molecule, const Values &values) 
                                 (final == final_lj.epsilon().value());
                             
                     double new_epsilon = f1(atom_values);
-        
+
                     ljs.set( atomidx, LJParameter::fromSigmaAndEpsilon(Length(new_sigma), 
                                                             MolarEnergy(new_epsilon)) );
                 }

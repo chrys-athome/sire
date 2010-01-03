@@ -1,17 +1,20 @@
 # Parameter files
-parfile1 ../../../parameter/amber99.ff
-parfile2 ../../../parameter/solvents.ff
-parfile3 ../../../parameter/gaff.ff
+parfile1 /Users/chris/Work/ProtoMS/parameter/amber99.ff
+parfile2 /Users/chris/Work/ProtoMS/parameter/solvents.ff
+parfile3 /Users/chris/Work/ProtoMS/parameter/gaff.ff
 parfile4 ethane2methanol.par
 # PDB Files
+SIRE_COMPATIBILITY_MODE on
 solute1 ethane2methanol.pdb
-solvent1 boxT4P.pdb
+#solvent1 boxT4P.pdb
 #set the output files
-streamwarning warning
+streamwarning stdout
+streamfatal stdout
 streamfatal fatal
-streamheader off
-streaminfo off
+streamheader stdout
+streaminfo stdout
 streamdetail off
+streamenergy stdout
 streamaccept off
 cutoff 10.00
 feather 0.5
@@ -19,5 +22,8 @@ boundary solvent
 nptsim on
 pressure 1.0
 prefsampling 1 200.0
+lambda 1.0 0.0 0.5
 
-
+chunk1 singlepoint
+chunk2 soluteenergy 1
+chunk3 pdb all file=protoms_test.pdb

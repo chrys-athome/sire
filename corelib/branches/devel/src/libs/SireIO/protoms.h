@@ -391,6 +391,11 @@ private:
                          const Molecule &molecule, int type,
                          SireMM::TwoAtomFunctions &bondfuncs,
                          detail::ProtoMSWorkspace &workspace) const;
+    
+    void processBondPertLine(const QStringList &words,
+                             const Molecule &molecule, int type,
+                             SireMM::TwoAtomFunctions &bondfuncs,
+                             detail::ProtoMSWorkspace &workspace) const;
 
     void processConnectLine(const QStringList &words,
                             const Molecule &molecule, int type,
@@ -401,6 +406,11 @@ private:
                           const Molecule &molecule, int type,
                           SireMM::ThreeAtomFunctions &anglefuncs,
                           detail::ProtoMSWorkspace &workspace) const;
+    
+    void processAnglePertLine(const QStringList &words,
+                              const Molecule &molecule, int type,
+                              SireMM::ThreeAtomFunctions &anglefuncs,
+                              detail::ProtoMSWorkspace &workspace) const;
     
     QString processDihedralLine(QTextStream &ts,
                                 const QStringList &words,
@@ -427,6 +437,11 @@ private:
                        const Molecule &molecule, int type,
                        SireMM::TwoAtomFunctions &ubfuncs,
                        detail::ProtoMSWorkspace &workspace) const;
+    
+    void processUBPertLine(const QStringList &words,
+                           const Molecule &molecule, int type,
+                           SireMM::TwoAtomFunctions &ubfuncs,
+                           detail::ProtoMSWorkspace &workspace) const;
     
     void processNBLine(const QStringList &words,
                        const Molecule &molecule, int type,
