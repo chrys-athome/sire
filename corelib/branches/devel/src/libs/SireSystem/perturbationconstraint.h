@@ -73,7 +73,7 @@ public:
     
     ~PerturbationData();
     
-    bool wouldChange(const Molecule &molecule) const;
+    bool wouldChange(const Molecule &molecule, const Values &values) const;
 
     Molecule perturb(const Molecule &molecule, const Values &values);
     

@@ -712,8 +712,11 @@ void BondPerturbation::perturbMolecule(Mover<Molecule> &molecule,
                                ( symbols().final() == end_size.value() );
 
     Length new_length = Length( mappingFunction().evaluate(new_vals) );
+
+    Length old_length( bondid.length(molecule, propertyMap()) );
     
-    molecule.set(bondid, new_length, propertyMap()).commit();
+    if (std::abs(new_length - old_length) > 0.0001)
+        molecule.set(bondid, new_length, propertyMap()).commit();
 }
 
 ///////////

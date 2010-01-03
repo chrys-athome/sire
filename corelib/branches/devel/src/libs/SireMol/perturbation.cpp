@@ -111,7 +111,7 @@ QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Perturbation &pert)
 
 static Expression *default_equation(0);
 
-Q_GLOBAL_STATIC( QMutex, globalMutex )
+Q_GLOBAL_STATIC_WITH_ARGS( QMutex, globalMutex, (QMutex::Recursive) )
 Q_GLOBAL_STATIC( PerturbationSymbols, perturbationSymbols )
 
 /** Return the symbols object that contains the symbols used

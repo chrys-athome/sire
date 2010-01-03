@@ -71,6 +71,10 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Sum &sum)
     if (v == 1)
     {
         QList<Expression> posparts, negparts;
+        
+        sum.posparts.clear();
+        sum.negparts.clear();
+        
         ds >> posparts >> negparts >> sum.strtval
            >> static_cast<ExBase&>(sum);
 

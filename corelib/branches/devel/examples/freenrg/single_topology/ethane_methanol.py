@@ -209,12 +209,19 @@ def createSystem():
     de_fwd = Symbol("de_fwd")
     de_bwd = Symbol("de_bwd")
 
-    system.setComponent( de_fwd, e_fwd - e_total )
-    system.setComponent( de_bwd, e_total - e_bwd )
+    system.setComponent( de_fwd, fwd_nrg - total_nrg )
+    system.setComponent( de_bwd, total_nrg - bwd_nrg )
 
     system.add( "total_energy", MonitorComponent(e_total, Average()) )
     system.add( "de_fwd", MonitorComponent(de_fwd, FreeEnergyAverage(temperature)) )
     system.add( "de_bwd", MonitorComponent(de_bwd, FreeEnergyAverage(temperature)) )
+
+    print "ARE CONSTRAINTS SATISFIED???"
+    print system.constraintsSatisfied()
+    print "SATISFYING CONSTRAINTS"
+    system.applyConstraints()
+    print "ARE CONSTRAINTS SATISFIED NOW???"
+    print system.constraintsSatisfied()
 
     printComponents(system.energies())
 

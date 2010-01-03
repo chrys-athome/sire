@@ -67,7 +67,8 @@ PerturbationData::PerturbationData(const PerturbationData &other)
 PerturbationData::~PerturbationData()
 {}
     
-bool PerturbationData::wouldChange(const Molecule &molecule) const
+bool PerturbationData::wouldChange(const Molecule &molecule,
+                                   const Values &values) const
 {
     if (props.isEmpty())
         return true;
@@ -78,7 +79,11 @@ bool PerturbationData::wouldChange(const Molecule &molecule) const
              ++it)
         {
             if (molecule.version(it.key()) != it.value())
-                return true;
+            {
+                //one of the properties needed by this perturbation has
+                //changed - see if this will change the molecule
+                return pert.read().wouldChange(molecule, values);
+            }
         }
         
         return false;
@@ -87,6 +92,22 @@ bool PerturbationData::wouldChange(const Molecule &molecule) const
 
 Molecule PerturbationData::perturb(const Molecule &molecule, const Values &values)
 {
+    if (props.isEmpty())
+    {
+        if (not pert.read().wouldChange(molecule, values))
+        {
+            //now save the versions of the properties used by this perturbation
+            foreach (QString property, pert.read().requiredProperties())
+            {
+                props.insert(property, molecule.version(property));
+            }   
+            
+            return molecule;
+        }
+    }
+
+    qDebug() << pert.read().toString() << pert.read().wouldChange(molecule, values);
+
     //apply the perturbation
     Molecule perturbed_mol = pert.read().perturb(molecule, values);
     
@@ -95,6 +116,8 @@ Molecule PerturbationData::perturb(const Molecule &molecule, const Values &value
     {
         props.insert(property, perturbed_mol.version(property));
     }
+    
+    qDebug() << molecule.version() << perturbed_mol.version();
     
     return perturbed_mol;
 }
@@ -330,7 +353,10 @@ void PerturbationConstraint::pvt_update(const Molecule &molecule,
         pert_vals.insert(molnum, values);
         
         //perturb the molecule
-        Molecule perturbed_mol = perturbation.perturb(molecule, values);
+        Molecule perturbed_mol = molecule;
+        
+        if (perturbation.wouldChange(molecule, values))
+            perturbed_mol = perturbation.perturb(molecule, values);
         
         //now save information about all of the perturbations
         //(so that they can be applied individually in future)
@@ -375,6 +401,8 @@ void PerturbationConstraint::pvt_update(const Molecule &molecule,
             }
         }
 
+        const Values &values = *(pert_vals.constFind(molnum));
+
         //the molecule has changed, but does it still obey the constraints?
         {
             PertDataList perts = pertdata.value(molnum);
@@ -385,7 +413,7 @@ void PerturbationConstraint::pvt_update(const Molecule &molecule,
                  it != perts.constEnd();
                  ++it)
             {
-                if ( (*it)->wouldChange(molecule) )
+                if ( (*it)->wouldChange(molecule, values) )
                 {
                     would_change = true;
                     break;
@@ -405,15 +433,13 @@ void PerturbationConstraint::pvt_update(const Molecule &molecule,
             PertDataList &perts = pertdata[molnum];
             
             Molecule perturbed_mol = molecule;
-                
-            const Values &values = *(pert_vals.constFind(molnum));
             
             for (PertDataList::iterator it = perts.begin();
                  it != perts.end();
                  ++it)
             
             {
-                if ((*it)->wouldChange(molecule))
+                if ((*it)->wouldChange(molecule, values))
                     perturbed_mol = (*it)->perturb(perturbed_mol,values);
             }
             
@@ -715,6 +741,8 @@ bool PerturbationConstraint::isSatisfied(const System &system) const
     else
     {
         PerturbationConstraint c(*this);
-        return c.update(system).isEmpty();
+        Molecules changed_mols = c.update(system);
+        
+        return changed_mols.isEmpty();
     }
 }
