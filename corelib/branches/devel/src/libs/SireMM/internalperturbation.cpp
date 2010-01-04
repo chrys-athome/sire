@@ -129,10 +129,6 @@ void InternalPerturbation::buildPerturbExpression()
     }
     
     perturb_expression = base_expression.substitute(perturbed_idents);
-    
-    qDebug() << "BUILT" << perturb_expression.toString();
-    qDebug() << "FROM" << base_expression.toString();
-    qDebug() << "AND" << initial_forms.toString() << final_forms.toString() << "\n";
 }
 
 /** Null constructor */
