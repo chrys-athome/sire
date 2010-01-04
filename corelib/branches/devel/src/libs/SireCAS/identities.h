@@ -110,6 +110,9 @@ public:
         return Identities::typeName();
     }
 
+    bool operator==(const Identities &other) const;
+    bool operator!=(const Identities &other) const;
+    
     void add(const SymbolExpression &symex0);
     void add(const SymbolExpression &symex0, const SymbolExpression &symex1);
     void add(const SymbolExpression &symex0, const SymbolExpression &symex1,
@@ -144,8 +147,12 @@ public:
     bool contains(const Symbol &sym) const;
     Expression expression(const Symbol &sym) const;
 
+    Expression operator[](const Symbol &sym) const;
+
     bool contains(const Function &func) const;
     Function function(const Function &func) const;
+
+    QList<Symbol> symbols() const;
 
     void set( const Symbol &symbol, const Expression &expression );
 

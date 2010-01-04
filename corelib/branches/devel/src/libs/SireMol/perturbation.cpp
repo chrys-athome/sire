@@ -33,6 +33,7 @@
 #include "mover.hpp"
 
 #include "SireCAS/values.h"
+#include "SireCAS/identities.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -252,7 +253,41 @@ PerturbationPtr Perturbation::recreate(const Expression &mapping_function,
         return new_pert;
     }
 }
+
+/** Substitute the identities in 'identities' in all of the mapping functions 
+    used by this perturbation. This is useful if, for example, you want to 
+    switch from using 'lambda' to control the perturbation to using 'alpha', e.g.
     
+    alpha_perturbations = lambda_perturbations.substitute( lam == Expression(alpha) );
+*/
+PerturbationPtr Perturbation::substitute(const Identities &identities) const
+{
+    Expression new_mapping_eqn = mapping_eqn.substitute(identities);
+    
+    if (new_mapping_eqn != mapping_eqn)
+    {
+        PerturbationPtr new_pert(*this);
+        
+        new_pert.edit().mapping_eqn = new_mapping_eqn;
+        return new_pert;
+    }
+    else
+        return *this;
+}
+
+/** Substitute the symbol 'old_symbol' with the symbol 'new_symbol'
+    in all of the mapping functions used by this perturbation. This is
+    useful if, for example, you want to switch from using 
+    'lambda' to control the perturbation to using 'alpha', e.g.
+    
+    alpha_perturbations = lambda_perturbations.substitute(lam, alpha);
+*/
+PerturbationPtr Perturbation::substitute(const Symbol &old_symbol,
+                                         const Symbol &new_symbol) const
+{
+    return this->substitute( old_symbol == Expression(new_symbol) );
+}
+
 /** Return all of the child perturbations that make up 
     this perturbation */
 QList<PerturbationPtr> Perturbation::children() const
@@ -603,6 +638,29 @@ PerturbationPtr Perturbations::recreate(const Expression &mapping_function,
          ++it)
     {
         new_perts.append( it->read().recreate(mapping_function,map) );
+    }
+    
+    Perturbations ret(*this);
+    ret.perts = new_perts;
+    
+    return ret;
+}
+
+/** Substitute the identities in 'identities' in all of the mapping functions 
+    used by this perturbation. This is useful if, for example, you want to 
+    switch from using 'lambda' to control the perturbation to using 'alpha', e.g.
+    
+    alpha_perturbations = lambda_perturbations.substitute( lam == Expression(alpha) );
+*/
+PerturbationPtr Perturbations::substitute(const Identities &identities) const
+{
+    QList<PerturbationPtr> new_perts;
+    
+    for (QList<PerturbationPtr>::const_iterator it = perts.constBegin();
+         it != perts.constEnd();
+         ++it)
+    {
+        new_perts.append( it->read().substitute(identities) );
     }
     
     Perturbations ret(*this);

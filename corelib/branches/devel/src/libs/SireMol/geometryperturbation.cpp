@@ -439,6 +439,30 @@ PerturbationPtr GeometryPerturbations::recreate(const Expression &mapping_functi
     return ret;
 }
 
+/** Substitute the identities in 'identities' in all of the mapping functions 
+    used by this perturbation. This is useful if, for example, you want to 
+    switch from using 'lambda' to control the perturbation to using 'alpha', e.g.
+    
+    alpha_perturbations = lambda_perturbations.substitute( lam == Expression(alpha) );
+*/
+PerturbationPtr GeometryPerturbations::substitute(const Identities &identities) const
+{
+    QList<GeomPertPtr> new_perts;
+    
+    for (QList<GeomPertPtr>::const_iterator it = perts.constBegin();
+         it != perts.constEnd();
+         ++it)
+    {
+        new_perts.append( 
+            it->read().substitute(identities)->asA<GeometryPerturbation>() );
+    }
+    
+    GeometryPerturbations ret(*this);
+    ret.perts = new_perts;
+    
+    return ret;
+}
+
 /** Return the list of all child perturbations (and children of children) */
 QList<PerturbationPtr> GeometryPerturbations::children() const
 {

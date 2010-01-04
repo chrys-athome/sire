@@ -177,6 +177,8 @@ public:
     PerturbationPtr recreate(const SireCAS::Expression &mapping_function,
                              const PropertyMap &map) const;
     
+    PerturbationPtr substitute(const SireCAS::Identities &identities) const;
+    
     QList<PerturbationPtr> children() const;
     
     QSet<Symbol> requiredSymbols() const;

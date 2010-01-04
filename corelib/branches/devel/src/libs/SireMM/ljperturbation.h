@@ -101,6 +101,8 @@ public:
     SireMol::PerturbationPtr recreate(const SireCAS::Expression &mapping_function,
                                       const PropertyMap &map) const;
 
+    SireMol::PerturbationPtr substitute(const SireCAS::Identities &identities) const;
+
     const SireCAS::Expression& mappingFunction() const;
 
     const SireCAS::Expression& rMinMappingFunction() const;

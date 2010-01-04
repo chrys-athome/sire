@@ -83,9 +83,12 @@ def createSystem():
                 perturbation.recreate( (1-lam)*initial + lam*final ) ).commit()
 
     solute_fwd = solute.edit().renumber().setProperty("perturbations",
-                perturbation.recreate( (1-lam_fwd)*initial + lam_fwd*final ) ).commit()
+                perturbation.substitute( lam, lam_fwd ) ).commit()
     solute_bwd = solute.edit().renumber().setProperty("perturbations",
-                perturbation.recreate( (1-lam_bwd)*initial + lam_bwd*final ) ).commit()
+                perturbation.substitute( lam, lam_bwd ) ).commit()
+
+    print solute_fwd.property("perturbations")
+    print solute_bwd.property("perturbations")
 
     solvent = PDB().read(solvent_file)
 

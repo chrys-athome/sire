@@ -101,6 +101,16 @@ Identities::Identities(const Identities &other) : idhash(other.idhash)
 Identities::~Identities()
 {}
 
+bool Identities::operator==(const Identities &other) const
+{
+    return idhash == other.idhash;
+}
+
+bool Identities::operator!=(const Identities &other) const
+{
+    return idhash != other.idhash;
+}
+
 /** Set the Symbol 'symbol' equal to 'expression' */
 void Identities::set(const Symbol &symbol, const Expression &expression)
 {
@@ -129,6 +139,16 @@ bool Identities::contains(const Symbol &symbol) const
 /** Return the associated expression for 'symbol', or an expression containing
     this symbol if there is no such expression */
 Expression Identities::expression(const Symbol &symbol) const
+{
+    if ( idhash.contains(symbol.ID()) )
+        return idhash[symbol.ID()];
+    else
+        return symbol;
+}
+
+/** Return the associated expression for 'symbol', or an expression containing
+    this symbol if there is no such expression */
+Expression Identities::operator[](const Symbol &symbol) const
 {
     if ( idhash.contains(symbol.ID()) )
         return idhash[symbol.ID()];
@@ -349,4 +369,19 @@ Identities::Identities(const SymbolExpression &symex0, const SymbolExpression &s
 const char* Identities::typeName()
 {
     return QMetaType::typeName( qMetaTypeId<Identities>() );
+}
+
+/** Return a list of the symbols that are present in this set */
+QList<Symbol> Identities::symbols() const
+{
+    QList<Symbol> s;
+    
+    for (QHash<SymbolID,Expression>::const_iterator it = idhash.constBegin();
+         it != idhash.constEnd();
+         ++it)
+    {
+        s.append( Symbol(it.key()) );
+    }
+
+    return s;
 }

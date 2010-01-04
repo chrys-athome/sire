@@ -34,6 +34,7 @@
 #include "SireMol/mover.hpp"
 
 #include "SireCAS/values.h"
+#include "SireCAS/identities.h"
 
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
@@ -209,6 +210,21 @@ PerturbationPtr LJPerturbation::recreate(const Expression &mapping_function,
     PerturbationPtr ret = Perturbation::recreate(mapping_function, map);
     ret.edit().asA<LJPerturbation>().sigma_mapfunc = mapping_function;
     
+    return ret;
+}
+
+/** Substitute the identities in 'identities' in all of the mapping functions 
+    used by this perturbation. This is useful if, for example, you want to 
+    switch from using 'lambda' to control the perturbation to using 'alpha', e.g.
+    
+    alpha_perturbations = lambda_perturbations.substitute( lam == Expression(alpha) );
+*/
+PerturbationPtr LJPerturbation::substitute(const Identities &identities) const
+{
+    PerturbationPtr ret = Perturbation::substitute(identities);
+    
+    ret.edit().asA<LJPerturbation>().sigma_mapfunc = sigma_mapfunc.substitute(identities);
+
     return ret;
 }
 

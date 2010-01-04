@@ -58,6 +58,7 @@ QDataStream& operator>>(QDataStream&, SireMol::Perturbations&);
 
 namespace SireCAS
 {
+class Identities;
 class Values;
 }
 
@@ -119,6 +120,11 @@ public:
     virtual PerturbationPtr recreate(const PropertyMap &map) const;
     virtual PerturbationPtr recreate(const SireCAS::Expression &mapping_function,
                                      const PropertyMap &map) const;
+    
+    virtual PerturbationPtr substitute(const Symbol &old_symbol,
+                                       const Symbol &new_symbol) const;
+    
+    virtual PerturbationPtr substitute(const SireCAS::Identities &identities) const;
     
     virtual QList<PerturbationPtr> children() const;
     
@@ -223,6 +229,8 @@ public:
     PerturbationPtr recreate(const PropertyMap &map) const;
     PerturbationPtr recreate(const SireCAS::Expression &mapping_function,
                              const PropertyMap &map) const;
+
+    PerturbationPtr substitute(const SireCAS::Identities &identities) const;
     
     QList<PerturbationPtr> children() const;
     
