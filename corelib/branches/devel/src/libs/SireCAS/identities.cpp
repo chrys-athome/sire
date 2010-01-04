@@ -31,6 +31,7 @@
 #include "function.h"
 
 #include "SireStream/datastream.h"
+#include "SireStream/shareddatastream.h"
 
 using namespace SireStream;
 using namespace SireCAS;
@@ -40,7 +41,18 @@ static const RegisterMetaType<Identities> r_identities;
 /** Serialise to a binary data stream */
 QDataStream SIRECAS_EXPORT &operator<<(QDataStream &ds, const Identities &ids)
 {
-    writeHeader(ds, r_identities, 1) << ids.idhash << ids.funchash;
+    writeHeader(ds, r_identities, 2);
+    
+    SharedDataStream sds(ds);
+    
+    QList<Symbol> symbols = ids.symbols();
+    
+    sds << symbols;
+    
+    foreach (Symbol symbol, symbols)
+    {
+        sds << ids[symbol];
+    }
 
     return ds;
 }
@@ -50,7 +62,27 @@ QDataStream SIRECAS_EXPORT &operator>>(QDataStream &ds, Identities &ids)
 {
     VersionID v = readHeader(ds, r_identities);
 
-    if (v == 1)
+    if (v == 2)
+    {
+        SharedDataStream sds(ds);
+        
+        QList<Symbol> symbols;
+        
+        sds >> symbols;
+        
+        Identities new_ids;
+        
+        foreach (Symbol symbol, symbols)
+        {
+            Expression e;
+            sds >> e;
+            
+            new_ids.set(symbol, e);
+        }
+        
+        ids = new_ids;
+    }
+    else if (v == 1)
     {
         ds >> ids.idhash >> ids.funchash;
     }
@@ -109,6 +141,35 @@ bool Identities::operator==(const Identities &other) const
 bool Identities::operator!=(const Identities &other) const
 {
     return idhash != other.idhash;
+}
+
+QString Identities::toString() const
+{
+    QStringList words;
+    QStringList lines;
+    
+    QList<Symbol> syms = this->symbols();
+    
+    qSort(syms);
+    
+    foreach (const Symbol &sym, syms)
+    {
+        words.append( QString("%1 == %2").arg(sym.toString())
+                                         .arg(this->expression(sym).toString()) );
+
+        if (words.count() == 4)
+        {
+            lines.append( words.join(", ") );
+            words.clear();
+        }
+    }
+    
+    if (not words.isEmpty())
+    {
+        lines.append( words.join(", ") );
+    }
+    
+    return QString("{ %1 }").arg( lines.join("\n  ") );
 }
 
 /** Set the Symbol 'symbol' equal to 'expression' */

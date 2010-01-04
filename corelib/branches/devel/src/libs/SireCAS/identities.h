@@ -152,6 +152,8 @@ public:
     bool contains(const Function &func) const;
     Function function(const Function &func) const;
 
+    QString toString() const;
+
     QList<Symbol> symbols() const;
 
     void set( const Symbol &symbol, const Expression &expression );

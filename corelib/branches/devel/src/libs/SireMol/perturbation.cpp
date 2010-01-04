@@ -669,6 +669,12 @@ PerturbationPtr Perturbations::substitute(const Identities &identities) const
     return ret;
 }
 
+PerturbationPtr Perturbations::substitute(const SireCAS::Symbol &old_symbol,
+                                          const SireCAS::Symbol &new_symbol) const
+{
+    return Perturbation::substitute(old_symbol, new_symbol);
+}
+
 /** Return a list of all of the children of this perturbation
     (and the children of these children etc.) */
 QList<PerturbationPtr> Perturbations::children() const

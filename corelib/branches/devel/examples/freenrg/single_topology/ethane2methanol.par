@@ -35,17 +35,23 @@ bond H02 E2M C01 E2M param 0 0
 bond H03 E2M C01 E2M param 0 0
 bond H04 E2M C01 E2M param 0 0
 angle H06 E2M C05 E2M C01 E2M flex 0.5
-#angle H07 E2M C05 E2M C01 E2M param 0 0
-#angle H08 E2M C05 E2M C01 E2M param 0 0
-#angle H06 E2M C05 E2M H07 E2M param 0 0
-#angle H06 E2M C05 E2M H08 E2M param 0 0
-#angle H07 E2M C05 E2M H08 E2M param 0 0
+angle H07 E2M C05 E2M C01 E2M param 0 0
+angle H08 E2M C05 E2M C01 E2M param 0 0
+angle H06 E2M C05 E2M H07 E2M param 0 0
+angle H06 E2M C05 E2M H08 E2M param 0 0
+angle H07 E2M C05 E2M H08 E2M param 0 0
 angle H07 E2M C05 E2M C01 E2M flex 0.5
 angle H08 E2M C05 E2M C01 E2M flex 0.5
 angle H02 E2M C01 E2M C05 E2M flex 0.5
 angle H03 E2M C01 E2M C05 E2M flex 0.5
 angle H04 E2M C01 E2M C05 E2M flex 0.5
 dihedral H02 E2M C01 E2M C05 E2M H06 E2M flex 15.0
+dihedral H07 E2M C05 E2M C01 E2M H02 E2M param 0 0
+dihedral H07 E2M C05 E2M C01 E2M H03 E2M param 0 0
+dihedral H07 E2M C05 E2M C01 E2M H04 E2M param 0 0
+dihedral H08 E2M C05 E2M C01 E2M H02 E2M param 0 0
+dihedral H08 E2M C05 E2M C01 E2M H03 E2M param 0 0
+dihedral H08 E2M C05 E2M C01 E2M H04 E2M param 0 0
 variable C05 E2M bond 1.526 1.410
 variable H06 E2M bond 1.090 0.960
 variable H07 E2M bond 1.090 0.200

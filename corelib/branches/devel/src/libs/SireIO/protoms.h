@@ -392,10 +392,11 @@ private:
                          SireMM::TwoAtomFunctions &bondfuncs,
                          detail::ProtoMSWorkspace &workspace) const;
     
-    void processBondPertLine(const QStringList &words,
-                             const Molecule &molecule, int type,
-                             SireMM::TwoAtomFunctions &bondfuncs,
-                             detail::ProtoMSWorkspace &workspace) const;
+    SireMol::PerturbationPtr 
+    processBondPertLine(const QStringList &words,
+                        const Molecule &molecule, int type,
+                        const PropertyName &bond_property,
+                        detail::ProtoMSWorkspace &workspace) const;
 
     void processConnectLine(const QStringList &words,
                             const Molecule &molecule, int type,
@@ -407,15 +408,18 @@ private:
                           SireMM::ThreeAtomFunctions &anglefuncs,
                           detail::ProtoMSWorkspace &workspace) const;
     
-    void processAnglePertLine(const QStringList &words,
-                              const Molecule &molecule, int type,
-                              SireMM::ThreeAtomFunctions &anglefuncs,
-                              detail::ProtoMSWorkspace &workspace) const;
+    SireMol::PerturbationPtr
+    processAnglePertLine(const QStringList &words,
+                         const Molecule &molecule, int type,
+                         const PropertyName &angle_property,
+                         detail::ProtoMSWorkspace &workspace) const;
     
     QString processDihedralLine(QTextStream &ts,
                                 const QStringList &words,
                                 const Molecule &molecule, int type,
                                 SireMM::FourAtomFunctions &dihedralfuncs,
+                                const PropertyName &dihedral_property,
+                                QList<SireMol::PerturbationPtr> &perturbations,
                                 detail::ProtoMSWorkspace &workspace) const;
 
     void processBondDeltaLine(const QStringList &words,
@@ -438,10 +442,11 @@ private:
                        SireMM::TwoAtomFunctions &ubfuncs,
                        detail::ProtoMSWorkspace &workspace) const;
     
-    void processUBPertLine(const QStringList &words,
-                           const Molecule &molecule, int type,
-                           SireMM::TwoAtomFunctions &ubfuncs,
-                           detail::ProtoMSWorkspace &workspace) const;
+    SireMol::PerturbationPtr 
+    processUBPertLine(const QStringList &words,
+                      const Molecule &molecule, int type,
+                      const PropertyName &ub_property,
+                      detail::ProtoMSWorkspace &workspace) const;
     
     void processNBLine(const QStringList &words,
                        const Molecule &molecule, int type,

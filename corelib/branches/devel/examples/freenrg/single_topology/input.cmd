@@ -22,8 +22,10 @@ boundary solvent
 nptsim on
 pressure 1.0
 prefsampling 1 200.0
-lambda 1.0 0.0 0.5
+lambda 0.5 0.0 1.0
 
 chunk1 singlepoint
 chunk2 soluteenergy 1
-chunk3 pdb all file=protoms_test.pdb
+#chunk3 pdb all file=protoms_test.pdb
+#chunk4 printparameters
+

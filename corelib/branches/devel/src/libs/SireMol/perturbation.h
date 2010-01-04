@@ -231,6 +231,8 @@ public:
                              const PropertyMap &map) const;
 
     PerturbationPtr substitute(const SireCAS::Identities &identities) const;
+    PerturbationPtr substitute(const SireCAS::Symbol &old_symbol,
+                               const SireCAS::Symbol &new_symbol) const;
     
     QList<PerturbationPtr> children() const;
     

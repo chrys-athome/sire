@@ -33,6 +33,7 @@
 #include "mover.hpp"
 
 #include "SireCAS/values.h"
+#include "SireCAS/identities.h"
 
 #include "SireUnits/units.h"
 
@@ -461,6 +462,12 @@ PerturbationPtr GeometryPerturbations::substitute(const Identities &identities) 
     ret.perts = new_perts;
     
     return ret;
+}
+
+PerturbationPtr GeometryPerturbations::substitute(const SireCAS::Symbol &old_symbol,
+                                                  const SireCAS::Symbol &new_symbol) const
+{
+    return Perturbation::substitute(old_symbol, new_symbol);
 }
 
 /** Return the list of all child perturbations (and children of children) */

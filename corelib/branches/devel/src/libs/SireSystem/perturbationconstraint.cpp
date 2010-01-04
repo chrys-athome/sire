@@ -106,8 +106,6 @@ Molecule PerturbationData::perturb(const Molecule &molecule, const Values &value
         }
     }
 
-    qDebug() << pert.read().toString() << pert.read().wouldChange(molecule, values);
-
     //apply the perturbation
     Molecule perturbed_mol = pert.read().perturb(molecule, values);
     
@@ -116,8 +114,6 @@ Molecule PerturbationData::perturb(const Molecule &molecule, const Values &value
     {
         props.insert(property, perturbed_mol.version(property));
     }
-    
-    qDebug() << molecule.version() << perturbed_mol.version();
     
     return perturbed_mol;
 }

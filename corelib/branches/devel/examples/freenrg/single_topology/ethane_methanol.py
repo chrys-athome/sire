@@ -27,7 +27,7 @@ solvent_name = "T4P"
 temperature = 25 * celsius
 pressure = 1 * atm
 
-lambda_values = [ 0.0, 0.3, 0.6, 1.0 ]
+lambda_values = [ 0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0 ]
 
 delta_lambda = 0.001
 
@@ -38,7 +38,7 @@ lj_feather = 9.5 * angstrom
 
 combining_rules = "arithmetic"
 
-nsubmoves = 5
+nsubmoves = 5000
 
 random_seed = 140154
 
@@ -87,9 +87,6 @@ def createSystem():
     solute_bwd = solute.edit().renumber().setProperty("perturbations",
                 perturbation.substitute( lam, lam_bwd ) ).commit()
 
-    print solute_fwd.property("perturbations")
-    print solute_bwd.property("perturbations")
-
     solvent = PDB().read(solvent_file)
 
     tip4p = solvent.moleculeAt(0).molecule()
@@ -126,7 +123,7 @@ def createSystem():
     system.add(all)
 
     solventff = InterCLJFF("solvent:solvent")
-    #solventff.add(solvent)
+    solventff.add(solvent)
 
     solute_intraff = InternalFF("solute_intraff")
     solute_intraff.add(solute)
@@ -147,16 +144,16 @@ def createSystem():
     solute_bwd_intraclj.add(solute_bwd)
 
     solute_solventff = InterGroupCLJFF("solute:solvent")
-    #solute_solventff.add(solute, MGIdx(0))
-    #solute_solventff.add(solvent, MGIdx(1))
+    solute_solventff.add(solute, MGIdx(0))
+    solute_solventff.add(solvent, MGIdx(1))
 
     solute_fwd_solventff = InterGroupCLJFF("solute_fwd:solvent")
-    #solute_fwd_solventff.add(solute_fwd, MGIdx(0))
-    #solute_fwd_solventff.add(solvent, MGIdx(1))
+    solute_fwd_solventff.add(solute_fwd, MGIdx(0))
+    solute_fwd_solventff.add(solvent, MGIdx(1))
 
     solute_bwd_solventff = InterGroupCLJFF("solute_bwd:solvent")
-    #solute_bwd_solventff.add(solute_bwd, MGIdx(0))
-    #solute_bwd_solventff.add(solvent, MGIdx(1))
+    solute_bwd_solventff.add(solute_bwd, MGIdx(0))
+    solute_bwd_solventff.add(solvent, MGIdx(1))
 
     forcefields = [ solventff, solute_intraff, solute_intraclj, solute_solventff,
                                solute_fwd_intraff, solute_fwd_intraclj, solute_fwd_solventff,
@@ -218,11 +215,6 @@ def createSystem():
     system.add( "total_energy", MonitorComponent(e_total, Average()) )
     system.add( "de_fwd", MonitorComponent(de_fwd, FreeEnergyAverage(temperature)) )
     system.add( "de_bwd", MonitorComponent(de_bwd, FreeEnergyAverage(temperature)) )
-
-    system.setComponent(lam, 1.0)
-    printComponents(system.energies())
-
-    PDB().write( system[MGName("solutes")][MolIdx(0)], "test.pdb" )
 
     system.setComponent(lam, 0.0)
     print "LAMBDA=0   : Energy = %f kcal mol-1" % system.energy().to(kcal_per_mol)
