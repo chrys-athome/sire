@@ -515,16 +515,16 @@ void ProtoMS::processZMatrixPertLine(const QStringList &words,
     {
         geom_perturbations.append( AnglePerturbation( line.atom(), line.bond(),
                                                       line.angle(),
-                                                      initial*radians,
-                                                      final*radians,
+                                                      initial*degrees,
+                                                      final*degrees,
                                                       pert_map ) );
     }
     else if ( words[6] == "DIHEDRAL" )
     {
         geom_perturbations.append( DihedralPerturbation( line.atom(), line.bond(),
                                                          line.angle(), line.dihedral(),
-                                                         initial*radians,
-                                                         final*radians,
+                                                         initial*degrees,
+                                                         final*degrees,
                                                          pert_map ) );
     }
     else
@@ -1334,8 +1334,6 @@ Molecule ProtoMS::runProtoMS(const Molecule &molecule, int type,
     
     while (not line.isNull())
     {
-        //qDebug() << line;
-
         if (line.startsWith("PARAMS "))
         {
             QStringList words = line.split(" ", QString::SkipEmptyParts);

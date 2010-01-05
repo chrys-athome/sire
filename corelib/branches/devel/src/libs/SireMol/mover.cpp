@@ -46,10 +46,13 @@
 #include "SireVol/coordgroup.h"
 #include "SireVol/space.h"
 
+#include "SireUnits/units.h"
+
 #include "SireMol/errors.h"
 
 using namespace SireMol;
 using namespace SireVol;
+using namespace SireUnits;
 
 /** Constructor */
 MoverBase::MoverBase()
@@ -1229,7 +1232,7 @@ void MoverBase::set(MoleculeData &moldata, const AngleID &angle,
 {
     SireUnits::Dimension::Angle current_value = angle.size(moldata, map);
 
-    this->change(moldata, angle, current_value - value, map);
+    this->change(moldata, angle, value - current_value, map);
 }
 
 /** Set the size of the dihedral identified by 'dihedra' to 'value',

@@ -942,10 +942,12 @@ void AnglePerturbation::perturbMolecule(Mover<Molecule> &molecule,
     //calculate the desired value of the angle
     Values new_vals = values + ( symbols().initial() == start_size.value() ) +
                                ( symbols().final() == end_size.value() );
-                               
+
+    Angle old_size( angleid.size(molecule, propertyMap()) );
     Angle new_angle = Angle( mappingFunction().evaluate(new_vals) );
-    
-    molecule.set(angleid, new_angle, propertyMap()).commit();
+
+    if (std::abs(new_angle.value() - old_size.value()) > 0.0001)
+        molecule.set(angleid, new_angle, propertyMap()).commit();
 }
 
 ///////////
