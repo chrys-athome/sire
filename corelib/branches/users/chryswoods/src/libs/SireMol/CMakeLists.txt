@@ -49,6 +49,7 @@ set ( SIREMOL_HEADERS
       chainname.h
       chainproperty.hpp
       chainresid.h
+      chargeperturbation.h
       connectivity.h
       cutgroup.h
       cuttingfunction.h
@@ -60,6 +61,7 @@ set ( SIREMOL_HEADERS
       errors.h
       evaluator.h
       improperid.h
+      geometryperturbation.h
       groupatomids.h
       groupgroupids.h
       mgid.h
@@ -88,6 +90,7 @@ set ( SIREMOL_HEADERS
       mover.h
       mover.hpp
       partialmolecule.h
+      perturbation.h
       reseditor.h
       resid.h
       residentifier.h
@@ -138,6 +141,7 @@ set ( SIREMOL_SOURCES
       chainidentifier.cpp
       chainproperty.cpp
       chainresid.cpp
+      chargeperturbation.cpp
       connectivity.cpp
       cutgroup.cpp
       cuttingfunction.cpp
@@ -146,6 +150,7 @@ set ( SIREMOL_SOURCES
       errors.cpp
       evaluator.cpp
       improperid.cpp
+      geometryperturbation.cpp
       groupatomids.cpp
       groupgroupids.cpp
       mgid.cpp
@@ -166,6 +171,7 @@ set ( SIREMOL_SOURCES
       molviewproperty.cpp
       mover.cpp
       partialmolecule.cpp
+      perturbation.cpp
       reseditor.cpp
       resid.cpp
       residentifier.cpp
@@ -195,6 +201,7 @@ set_target_properties (SireMol PROPERTIES
 # Link to other Sire libraries, and GSL
 target_link_libraries (SireMol
                        SireVol
+                       SireCAS
                        SireID
                        SireDB
                        SireStream

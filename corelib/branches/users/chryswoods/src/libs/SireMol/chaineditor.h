@@ -295,7 +295,7 @@ ChainStructureEditor& ChainStructureEditor::setProperty(const QString &key,
     this->_pvt_createSpaceForProperty< ChainProperty<T> >(key);
     
     //now set the value of the property
-    this->_pvt_setChainProperty(uid, key, QVariant(value));
+    this->_pvt_setChainProperty(uid, key, QVariant::fromValue<T>(value));
     
     return *this;
 }
@@ -316,7 +316,7 @@ ChainStructureEditor& ChainStructureEditor::setMetadata(const QString &metakey,
     this->_pvt_createSpaceForMetadata< ChainProperty<T> >(metakey);
     
     //now set the value of this metadata
-    this->_pvt_setAtomMetadata(uid, metakey, QVariant(value));
+    this->_pvt_setAtomMetadata(uid, metakey, QVariant::fromValue<T>(value));
     
     return *this;
 }
@@ -339,7 +339,7 @@ ChainStructureEditor& ChainStructureEditor::setMetadata(const QString &key,
     this->_pvt_createSpaceForMetadata< ChainProperty<T> >(key, metakey);
     
     //now set the value of this metadata
-    this->_pvt_setAtomMetadata(uid, key, metakey, QVariant(value));
+    this->_pvt_setAtomMetadata(uid, key, metakey, QVariant::fromValue<T>(value));
     
     return *this;
 }

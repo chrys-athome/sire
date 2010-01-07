@@ -61,13 +61,13 @@ static const RegisterMetaType<RigidBodyMC> r_rbmc;
 QDataStream SIREMOVE_EXPORT &operator<<(QDataStream &ds,
                                         const RigidBodyMC &rbmc)
 {
-    writeHeader(ds, r_rbmc, 2);
+    writeHeader(ds, r_rbmc, 3);
 
     SharedDataStream sds(ds);
 
     sds << rbmc.smplr
         << rbmc.adel << rbmc.rdel
-        << rbmc.sync_trans << rbmc.sync_rot
+        << rbmc.sync_trans << rbmc.sync_rot << rbmc.common_center
         << static_cast<const MonteCarlo&>(rbmc);
 
     return ds;
@@ -78,7 +78,17 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
 {
     VersionID v = readHeader(ds, r_rbmc);
 
-    if (v == 2)
+    if (v == 3)
+    {
+        SharedDataStream sds(ds);
+        
+        sds >> rbmc.smplr
+            >> rbmc.adel >> rbmc.rdel
+            >> rbmc.sync_trans >> rbmc.sync_rot
+            >> rbmc.common_center
+            >> static_cast<MonteCarlo&>(rbmc);
+    }
+    else if (v == 2)
     {
         SharedDataStream sds(ds);
         
@@ -86,6 +96,8 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
             >> rbmc.adel >> rbmc.rdel
             >> rbmc.sync_trans >> rbmc.sync_rot
             >> static_cast<MonteCarlo&>(rbmc);
+            
+        rbmc.common_center = false;
     }
     else if (v == 1)
     {
@@ -97,9 +109,10 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
             
         rbmc.sync_trans = false;
         rbmc.sync_rot = false;
+        rbmc.common_center = false;
     }
     else
-        throw version_error(v, "1,2", r_rbmc, CODELOC);
+        throw version_error(v, "1,2,3", r_rbmc, CODELOC);
 
     return ds;
 }
@@ -108,7 +121,7 @@ QDataStream SIREMOVE_EXPORT &operator>>(QDataStream &ds, RigidBodyMC &rbmc)
 RigidBodyMC::RigidBodyMC() 
             : ConcreteProperty<RigidBodyMC,MonteCarlo>(),
               adel( 0.15 * angstrom ), rdel( 15 * degrees ),
-              sync_trans(false), sync_rot(false)
+              sync_trans(false), sync_rot(false), common_center(false)
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
 }
@@ -119,7 +132,7 @@ RigidBodyMC::RigidBodyMC(const Sampler &sampler)
               smplr(sampler),
               adel( 0.15 * angstrom ),
               rdel( 15 * degrees ),
-              sync_trans(false), sync_rot(false)
+              sync_trans(false), sync_rot(false), common_center(false)
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
     smplr.edit().setGenerator( this->generator() );
@@ -132,7 +145,7 @@ RigidBodyMC::RigidBodyMC(const MoleculeGroup &molgroup)
             : ConcreteProperty<RigidBodyMC,MonteCarlo>(), 
               smplr( UniformSampler(molgroup) ),
               adel( 0.15 * angstrom ), rdel( 15 * degrees ),
-              sync_trans(false), sync_rot(false)
+              sync_trans(false), sync_rot(false), common_center(false)
 {
     MonteCarlo::setEnsemble( Ensemble::NVT(25*celsius) );
     smplr.edit().setGenerator( this->generator() );
@@ -143,7 +156,8 @@ RigidBodyMC::RigidBodyMC(const RigidBodyMC &other)
             : ConcreteProperty<RigidBodyMC,MonteCarlo>(other), 
               smplr(other.smplr),
               adel(other.adel), rdel(other.rdel),
-              sync_trans(other.sync_trans), sync_rot(other.sync_rot)
+              sync_trans(other.sync_trans), sync_rot(other.sync_rot),
+              common_center(other.common_center)
 {}
 
 /** Destructor */
@@ -165,6 +179,7 @@ RigidBodyMC& RigidBodyMC::operator=(const RigidBodyMC &other)
         rdel = other.rdel;
         sync_trans = other.sync_trans;
         sync_rot = other.sync_rot;
+        common_center = other.common_center;
         MonteCarlo::operator=(other);
     }
     
@@ -177,6 +192,7 @@ bool RigidBodyMC::operator==(const RigidBodyMC &other) const
     return smplr == other.smplr and adel == other.adel and
            rdel == other.rdel and 
            sync_trans == other.sync_trans and sync_rot == other.sync_rot and
+           common_center == other.common_center and
            MonteCarlo::operator==(other);
 }
 
@@ -271,6 +287,13 @@ void RigidBodyMC::setSynchronisedRotation(bool on)
     sync_rot = on;
 }
 
+/** Set whether or not to use the same rotation center for all
+    synchronised molecules */
+void RigidBodyMC::setSharedRotationCenter(bool on)
+{
+    common_center = on;
+}
+
 /** Return whether or not translation of all molecules is synchronised */
 bool RigidBodyMC::synchronisedTranslation() const
 {
@@ -281,6 +304,13 @@ bool RigidBodyMC::synchronisedTranslation() const
 bool RigidBodyMC::synchronisedRotation() const
 {
     return sync_rot;
+}
+
+/** Return whether or not synchronised rotation uses the same
+    center of rotation for all molecules */
+bool RigidBodyMC::sharedRotationCenter() const
+{
+    return common_center;
 }
 
 /** This internal function is used to actually move the molecule(s) */
@@ -331,19 +361,47 @@ void RigidBodyMC::performMove(System &system,
 
             Molecules new_molecules = molecules;
 
-            for (Molecules::const_iterator it = molecules.constBegin();
-                 it != molecules.constEnd();
-                 ++it)
+            if (common_center)
             {
-                PartialMolecule newmol = it->move()
-                                            .rotate(rotdelta,
-                                                    it->evaluate().centerOfGeometry(map),
-                                                    map)
-                                            .translate(delta, map)
-                                            .commit();
+                AABox box;
+            
+                //rotate all molecules around the same center
+                for (Molecules::const_iterator it = molecules.constBegin();
+                     it != molecules.constEnd();
+                     ++it)
+                {
+                    box += it->evaluate().centerOfGeometry(map);
+                }
                 
-                new_molecules.update(newmol);
-            }            
+                for (Molecules::const_iterator it = molecules.constBegin();
+                     it != molecules.constEnd();
+                     ++it)
+                {
+                    PartialMolecule newmol = it->move()
+                                                .rotate(rotdelta, box.center(), map)
+                                                .translate(delta, map)
+                                                .commit();
+                    
+                    new_molecules.update(newmol);
+                }            
+                
+            }
+            else
+            {
+                for (Molecules::const_iterator it = molecules.constBegin();
+                     it != molecules.constEnd();
+                     ++it)
+                {
+                    PartialMolecule newmol = it->move()
+                                                .rotate(rotdelta,
+                                                        it->evaluate().centerOfGeometry(map),
+                                                        map)
+                                                .translate(delta, map)
+                                                .commit();
+                    
+                    new_molecules.update(newmol);
+                }            
+            }
             
             system.update(new_molecules);            
         }
@@ -395,38 +453,84 @@ void RigidBodyMC::performMove(System &system,
 
         Molecules new_molecules = molecules;
 
-        for (Molecules::const_iterator it = molecules.constBegin();
-             it != molecules.constEnd();
-             ++it)
-        {
-            PartialMolecule newmol = it->move()
-                                        .rotate(rotdelta,
-                                                it->evaluate().centerOfGeometry(map),
-                                                map)
-                                        .commit();
+        bool perform_translation = true;
 
-            new_molecules.update(newmol);
+        if (common_center)
+        {
+            //we cannot perform a move with synchronised rotation and
+            //individual rotation if a common center is used, as it 
+            //would be very hard to work out the probability of the 
+            //reverse move... So we will instead have a 50/50 chance
+            //of performing rotation only or translation only
+            perform_translation = generator().randBool();
+            
+            if (not perform_translation)
+            {
+                AABox box;
+                
+                for (Molecules::const_iterator it = molecules.constBegin();
+                     it != molecules.constEnd();
+                     ++it)
+                {
+                    box += it->evaluate().centerOfGeometry(map);
+                }
+            
+                for (Molecules::const_iterator it = molecules.constBegin();
+                     it != molecules.constEnd();
+                     ++it)
+                {
+                    PartialMolecule newmol = it->move()
+                                                .rotate(rotdelta, box.center(), map)
+                                                .commit();
+
+                    new_molecules.update(newmol);
+                }
+            }
+        }
+        else
+        {
+            for (Molecules::const_iterator it = molecules.constBegin();
+                 it != molecules.constEnd();
+                 ++it)
+            {
+                PartialMolecule newmol = it->move()
+                                            .rotate(rotdelta,
+                                                    it->evaluate().centerOfGeometry(map),
+                                                    map)
+                                            .commit();
+
+                new_molecules.update(newmol);
+            }
         }
 
         system.update(new_molecules);
 
-        //then translate a single random molecule
-        smplr.edit().updateFrom(system);
+        if (perform_translation)
+        {
+            //then translate a single random molecule
+            smplr.edit().updateFrom(system);
 
-        tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
+            tuple<PartialMolecule,double> mol_and_bias = smplr.read().sample();
 
-        const PartialMolecule &oldmol = mol_and_bias.get<0>();
-        old_bias = mol_and_bias.get<1>();
+            const PartialMolecule &oldmol = mol_and_bias.get<0>();
+            old_bias = mol_and_bias.get<1>();
 
-        PartialMolecule newmol = oldmol.move()
-                                       .translate(delta, map)
-                                       .commit();
+            PartialMolecule newmol = oldmol.move()
+                                           .translate(delta, map)
+                                           .commit();
 
-        //update the system with the new coordinates
-        system.update(newmol);
+            //update the system with the new coordinates
+            system.update(newmol);
 
-        //get the new bias on this molecule
-        new_bias = smplr.read().probabilityOf(newmol);
+            //get the new bias on this molecule
+            new_bias = smplr.read().probabilityOf(newmol);
+        }
+        else
+        {
+            old_bias = 1;
+            new_bias = 1;
+        }
+
     }
 }
 

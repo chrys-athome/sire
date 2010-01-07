@@ -202,7 +202,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void CGProperty<T>::assertCanConvert(const QVariant &value) const
 {
-    if (not value.canConvert<T>())
+    if (not (value.isNull() or value.canConvert<T>()))
     {
         throw SireError::invalid_cast( QObject::tr(
             "Cannot convert an object of type %1 to an object "
@@ -301,7 +301,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 bool CGProperty<T>::canConvert(const QVariant &value) const
 {
-    return value.canConvert<T>();
+    return value.isNull() or value.canConvert<T>();
 }
 
 template<class T>
@@ -340,7 +340,10 @@ void CGProperty<T>::assignFrom(const CGProperty<QVariant> &variant)
         const QVariant &value = variant_array[i];
         CGProperty<T>::assertCanConvert(value);
         
-        props_array[i] = value.value<T>();
+        if (value.isNull())
+            props_array[i] = T();
+        else
+            props_array[i] = value.value<T>();
     }
 }
 

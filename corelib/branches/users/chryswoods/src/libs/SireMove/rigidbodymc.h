@@ -100,9 +100,11 @@ public:
 
     void setSynchronisedTranslation(bool on);
     void setSynchronisedRotation(bool on);
+    void setSharedRotationCenter(bool on);
     
     bool synchronisedTranslation() const;
     bool synchronisedRotation() const;
+    bool sharedRotationCenter() const;
 
     SireUnits::Dimension::Length maximumTranslation() const;
     SireUnits::Dimension::Angle maximumRotation() const;
@@ -133,6 +135,11 @@ private:
     
     /** Whether or not to synchronise the rotation of all views */
     bool sync_rot;
+
+    /** Whether or not to use the same center of rotation for
+        all views - this only applies when synchronised rotation
+        is on */
+    bool common_center;
 };
 
 }

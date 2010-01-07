@@ -137,6 +137,11 @@ QString Values::toString() const
         }
     }
     
+    if (not words.isEmpty())
+    {
+        lines.append( words.join(", ") );
+    }
+    
     return QString("{ %1 }").arg( lines.join("\n  ") );
 }
 

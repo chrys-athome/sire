@@ -511,7 +511,7 @@ void StructureEditor::_pvt_createSpaceForProperty(const QString &key)
     {
         //a property of this name already exists - ensure that
         //it is of the correct type!
-        if (dynamic_cast<const T*>( &(it->constData()) ) == 0)
+        if (dynamic_cast<const T*>( it->constData() ) == 0)
             StructureEditor::_pvt_invalidPropertyCast(
                                                key, it.value()->what(),
                                                T::typeName());

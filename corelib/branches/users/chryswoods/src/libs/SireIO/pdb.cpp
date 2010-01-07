@@ -39,6 +39,7 @@
 #include "SireMol/atomcoords.h"
 #include "SireMol/atomelements.h"
 #include "SireMol/atomcharges.h"
+#include "SireMol/connectivity.h"
 
 #include "SireMol/mover.hpp"
 #include "SireMol/selector.hpp"
@@ -1394,6 +1395,8 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
     PropertyName chainmangler_property = map[PDB::parameters().chainNameMangler()];
     PropertyName segmangler_property = map[PDB::parameters().segmentNameMangler()];
     
+    PropertyName connectivity_property = map["connectivity"];
+    
     if (atommangler_property.hasValue())
         atommangler = atommangler_property.value().asA<StringMangler>();
     
@@ -1409,6 +1412,9 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
     AtomSelection selected_atoms = molview.selection();
     
     Molecule mol(molview);
+    
+    //map of AtomIdx to PDB atomnum
+    QHash<AtomIdx,int> atomidx_to_pdbnum;
     
     const AtomCoords &coords = mol.property(map[PDB::parameters().coordinates()])
                                   .asA<AtomCoords>();
@@ -1492,7 +1498,9 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
         
         pdbatom.serial = atomnum;
         
-        if (pdbatomname.isEmpty())
+        atomidx_to_pdbnum.insert(atom.index(), atomnum);
+        
+        if (pdbatomname.isEmpty() or pdbatomname[ atom.cgAtomIdx() ].isEmpty())
         {
             pdbatom.name = atommangler->mangle( atom.name() );
         }
@@ -1520,7 +1528,7 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
         {
             Residue residue = atom.residue();
             
-            if (pdbresname.isEmpty())
+            if (pdbresname.isEmpty() or pdbresname[ residue.index() ].isEmpty())
                 pdbatom.resname = resmangler->mangle(residue.name());
                 
             else
@@ -1535,7 +1543,7 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
             {
                 Chain chain = residue.chain();
                 
-                if (pdbchainname.isEmpty())
+                if (pdbchainname.isEmpty() or pdbchainname[ chain.index() ].isEmpty())
                     pdbatom.chainid = chainmangler->mangle(chain.name());
                     
                 else
@@ -1547,7 +1555,7 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
         {
             Segment segment = atom.segment();
             
-            if (pdbsegname.isEmpty())
+            if (pdbsegname.isEmpty() or pdbsegname[ segment.index() ].isEmpty())
                 pdbatom.segid = segmangler->mangle(segment.name());
                 
             else
@@ -1557,6 +1565,32 @@ int PDB::writeMolecule(QTextStream &ts, const MoleculeView &molview,
         //write the atom to the file
         ts << pdbatom.writeToLine() << "\n";
     }
+    
+    if (mol.hasProperty(connectivity_property))
+    {
+        const Connectivity &connectivity = mol.property(connectivity_property)
+                                              .asA<Connectivity>();
+                                              
+        for (AtomIdx i(0); i<mol.nAtoms(); ++i)
+        {
+            QSet<AtomIdx> bonded_atoms = connectivity.connectionsTo(i);
+            
+            if (not bonded_atoms.isEmpty())
+            {
+                ts << "CONECT";
+                ts.setFieldWidth(5);
+                
+                ts << atomidx_to_pdbnum.value(i);
+                
+                foreach (AtomIdx bonded_atom, bonded_atoms)
+                {
+                    ts << atomidx_to_pdbnum.value(bonded_atom);
+                }
+                
+                ts << "\n";
+            }
+        }
+    } 
     
     return atomnum;
 }

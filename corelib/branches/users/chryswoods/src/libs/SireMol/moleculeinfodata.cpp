@@ -676,7 +676,7 @@ MoleculeInfoData::MoleculeInfoData(const StructureEditor &editor)
     //ALL atoms must be placed into a CutGroup
     if (not atoms_missing_cutgroups.isEmpty())
         throw SireMol::missing_cutgroup( QObject::tr(
-            "ALL atoms in the molecule MUST be placed into a CutGroup. "
+            "All atoms in the molecule MUST be placed into a CutGroup. "
             "Atoms missing a CutGroup are %1.")
                 .arg( Sire::toString(atoms_missing_cutgroups) ), CODELOC );
 

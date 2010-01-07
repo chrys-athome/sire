@@ -169,6 +169,73 @@ bool ConnectivityBase::operator!=(const ConnectivityBase &other) const
            connected_atoms != other.connected_atoms;
 }
 
+static QString atomString(const MoleculeInfoData &molinfo, AtomIdx atom)
+{
+    if (molinfo.isWithinResidue(atom))
+        return QString("%1:%2:%3")
+                    .arg( molinfo.name(atom) )
+                    .arg( molinfo.name( molinfo.parentResidue(atom) ) )
+                    .arg( molinfo.number( molinfo.parentResidue(atom) ) );
+    else
+        return QString("%1:%2").arg(molinfo.name(atom)).arg(atom);
+}
+
+QString ConnectivityBase::toString() const
+{
+    QStringList lines;
+    
+    lines.append( QObject::tr("Connectivity: nConnections() == %1.")
+                        .arg(this->nConnections()) );
+
+    if (nConnections() == 0)
+        return lines.at(0);
+                        
+    if (not connected_res.isEmpty())
+    {
+        lines.append( QObject::tr("Connected residues:") );
+        
+        for (int i=0; i<connected_res.count(); ++i)
+        {
+            QStringList resnums;
+            
+            foreach (ResIdx j, connected_res.at(i))
+            {
+                resnums.append( QString("%1:%2")
+                                 .arg(d->name(j))
+                                 .arg(d->number(j)) );
+            }
+            
+            if (not connected_res.at(i).isEmpty())
+                lines.append( QObject::tr("  * Residue %1:%2 bonded to %3.")
+                        .arg(d->name(ResIdx(i)))
+                        .arg(d->number(ResIdx(i)))
+                        .arg(resnums.join(" ")) );
+        }
+    }
+    
+    if (not connected_atoms.isEmpty())
+    {
+        lines.append( QObject::tr("Connected atoms:") );
+        
+        for (int i=0; i<connected_atoms.count(); ++i)
+        {
+            QStringList atoms;
+            
+            foreach (AtomIdx j, connected_atoms.at(i))
+            {
+                atoms.append( ::atomString(info(),j) );
+            }
+            
+            if (not connected_atoms.at(i).isEmpty())
+                lines.append( QObject::tr("  * Atom %1 bonded to %2.")
+                        .arg( ::atomString(info(),AtomIdx(i)) )
+                        .arg( atoms.join(" ") ) );
+        }
+    }
+    
+    return lines.join("\n");
+}
+
 /** Return the total number of connections between atoms
     in this connectivity object */
 int ConnectivityBase::nConnections() const
@@ -412,9 +479,12 @@ void ConnectivityBase::traceRoute(AtomIdx start, AtomIdx root,
         {
             //ok, we've just found a ring!
             throw SireMol::ring_error( QObject::tr(
-                "Atoms %1-%2-%3 form part of ring and cannot be "
+                "Atoms %1-%2-%3 "
+                " form part of ring and cannot be "
                 "unambiguously split.")
-                    .arg(start.toString(), it->toString(), root.toString()),
+                    .arg( ::atomString(info(),start), 
+                          ::atomString(info(), *it), 
+                          ::atomString(info(), root) ),
                         CODELOC );
         }
         else
@@ -475,9 +545,12 @@ void ConnectivityBase::traceRoute(const AtomSelection &selected_atoms,
         {
             //ok, we've just found a ring!
             throw SireMol::ring_error( QObject::tr(
-                "Atoms %1-%2-%3 form part of ring and cannot be "
+                "Atoms %1-%2-%3 "
+                " form part of ring and cannot be "
                 "unambiguously split.")
-                    .arg(start.toString(), it->toString(), root.toString()),
+                    .arg( ::atomString(info(),start), 
+                          ::atomString(info(), *it), 
+                          ::atomString(info(), root) ),
                         CODELOC );
         }
         else
@@ -543,7 +616,7 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1) const
     if (atom0 == atom1)
         throw SireMol::ring_error( QObject::tr(
             "You cannot split a molecule into two parts using the same atom! (%1).")
-                .arg(atom0), CODELOC );
+                .arg( ::atomString(info(),atom0) ), CODELOC );
 
     //make sure that there is sufficient space for the
     //selections - this prevents mallocs while tracing
@@ -573,8 +646,9 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1) const
                 throw SireMol::ring_error( QObject::tr(
                     "Atoms %1-%2-%3 form part of ring and cannot be "
                     "unambiguously split.")
-                        .arg(atom0.toString(), bonded_atom.toString(), 
-                             atom1.toString()), CODELOC );
+                        .arg( ::atomString(info(),atom0), 
+                              ::atomString(info(),bonded_atom), 
+                              ::atomString(info(),atom1) ), CODELOC );
 
             this->traceRoute(bonded_atom, atom1, group0, group1);
         }
@@ -663,7 +737,7 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
     if (atom0 == atom1)
         throw SireMol::ring_error( QObject::tr(
             "You cannot split a molecule into two parts using the same atom! (%1).")
-                .arg(atom0), CODELOC );
+                .arg( ::atomString(info(),atom0) ), CODELOC );
 
     //add the two atoms to their respective groups
     group0.insert(atom0);
@@ -690,8 +764,9 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
                 throw SireMol::ring_error( QObject::tr(
                     "Atoms %1-%2-%3 form part of ring and cannot be "
                     "unambiguously split.")
-                        .arg(atom0.toString(), bonded_atom.toString(), 
-                             atom1.toString()), CODELOC );
+                        .arg( ::atomString(info(),atom0), 
+                              ::atomString(info(),bonded_atom), 
+                              ::atomString(info(),atom1) ), CODELOC );
                     
             this->traceRoute(selected_atoms, bonded_atom,
                              atom1, group0, group1);
@@ -771,7 +846,9 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2) const
         throw SireMol::ring_error( QObject::tr(
             "You cannot split a molecule into two parts using the same atoms! "
             "(%1, %2, %3).")
-                .arg(atom0).arg(atom1).arg(atom2), CODELOC );
+                .arg(::atomString(info(),atom0),
+                     ::atomString(info(),atom1),
+                     ::atomString(info(),atom2)), CODELOC );
 
     //make sure that there is sufficient space for the
     //selections - this prevents mallocs while tracing
@@ -801,8 +878,10 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2) const
                 throw SireMol::ring_error( QObject::tr(
                     "Atoms %1-%2-%3-%4 form part of ring and cannot be "
                     "unambiguously split.")
-                        .arg(atom0.toString(), bonded_atom.toString(), 
-                             atom1.toString(), atom2.toString()), CODELOC );
+                        .arg(::atomString(info(),atom0), 
+                             ::atomString(info(),bonded_atom), 
+                             ::atomString(info(),atom1), 
+                             ::atomString(info(),atom2)), CODELOC );
 
             this->traceRoute(bonded_atom, atom2, group0, group1);
         }
@@ -894,7 +973,9 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2,
         throw SireMol::ring_error( QObject::tr(
             "You cannot split a molecule into two parts using the same atoms! "
             "(%1, %2, %3).")
-                .arg(atom0).arg(atom1).arg(atom2), CODELOC );
+                .arg(::atomString(info(),atom0),
+                     ::atomString(info(),atom1),
+                     ::atomString(info(),atom2)), CODELOC );
 
     //add the two end atoms to their respective groups
     group0.insert(atom0);
@@ -921,8 +1002,10 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1, AtomIdx atom2,
                 throw SireMol::ring_error( QObject::tr(
                     "Atoms %1-%2-%3-%4 form part of ring and cannot be "
                     "unambiguously split.")
-                        .arg(atom0.toString(), bonded_atom.toString(), 
-                             atom1.toString(), atom2.toString()), CODELOC );
+                        .arg(::atomString(info(),atom0), 
+                             ::atomString(info(),bonded_atom), 
+                             ::atomString(info(),atom1), 
+                             ::atomString(info(),atom2)), CODELOC );
                     
             this->traceRoute(selected_atoms, bonded_atom,
                              atom2, group0, group1);
@@ -1012,8 +1095,10 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
         throw SireMol::ring_error( QObject::tr(
             "You cannot split a molecule into two parts using the same atoms! "
             "(%1, %2, %3, %4).")
-                .arg(atom0).arg(atom1)
-                .arg(atom2).arg(atom3), CODELOC );
+                .arg(::atomString(info(),atom0),
+                     ::atomString(info(),atom1),
+                     ::atomString(info(),atom2),
+                     ::atomString(info(),atom3)), CODELOC );
 
     //make sure that there is sufficient space for the
     //selections - this prevents mallocs while tracing
@@ -1043,9 +1128,11 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
                 throw SireMol::ring_error( QObject::tr(
                     "Atoms %1-%2-%3-%4-%5 form part of ring and cannot be "
                     "unambiguously split.")
-                        .arg(atom0.toString(), bonded_atom.toString(), 
-                             atom1.toString(), atom2.toString())
-                        .arg(atom3.toString()), CODELOC );
+                        .arg(::atomString(info(),atom0), 
+                             ::atomString(info(),bonded_atom), 
+                             ::atomString(info(),atom1), 
+                             ::atomString(info(),atom2))
+                        .arg(::atomString(info(),atom3)), CODELOC );
 
             this->traceRoute(bonded_atom, atom3, group0, group1);
         }
@@ -1154,8 +1241,10 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
         throw SireMol::ring_error( QObject::tr(
             "You cannot split a molecule into two parts using the same atoms! "
             "(%1, %2, %3, %4).")
-                .arg(atom0).arg(atom1)
-                .arg(atom2).arg(atom3), CODELOC );
+                .arg(::atomString(info(),atom0),
+                     ::atomString(info(),atom1),
+                     ::atomString(info(),atom2),
+                     ::atomString(info(),atom3)), CODELOC );
 
     //add the two end atoms to their respective groups
     group0.insert(atom0);
@@ -1182,9 +1271,11 @@ ConnectivityBase::split(AtomIdx atom0, AtomIdx atom1,
                 throw SireMol::ring_error( QObject::tr(
                     "Atoms %1-%2-%3-%4-%5 form part of ring and cannot be "
                     "unambiguously split.")
-                        .arg(atom0.toString(), bonded_atom.toString(), 
-                             atom1.toString(), atom2.toString())
-                        .arg(atom3.toString()), CODELOC );
+                        .arg(::atomString(info(),atom0), 
+                             ::atomString(info(),bonded_atom), 
+                             ::atomString(info(),atom1), 
+                             ::atomString(info(),atom2))
+                        .arg(::atomString(info(),atom3)), CODELOC );
                     
             this->traceRoute(selected_atoms, bonded_atom,
                              atom3, group0, group1);
@@ -1272,6 +1363,31 @@ ConnectivityBase::split(const ImproperID &improper,
 /////////
 ///////// Implementation of Connectivity
 /////////
+
+static const RegisterMetaType<Connectivity> r_connectivity;
+
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const Connectivity &conn)
+{
+    writeHeader(ds, r_connectivity, 1);
+    
+    ds << static_cast<const ConnectivityBase&>(conn);
+    
+    return ds;
+}
+
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, Connectivity &conn)
+{
+    VersionID v = readHeader(ds, r_connectivity);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<ConnectivityBase&>(conn);
+    }
+    else
+        throw version_error(v, "1", r_connectivity, CODELOC);
+        
+    return ds;
+}
 
 /** Reduce the memory usage of this object to a minimum */
 void Connectivity::squeeze()
@@ -1378,6 +1494,31 @@ const char* Connectivity::typeName()
 ///////// Implementation of ConnectivityEditor
 /////////
 
+static const RegisterMetaType<ConnectivityEditor> r_conneditor;
+
+QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds, const ConnectivityEditor &conn)
+{
+    writeHeader(ds, r_conneditor, 1);
+    
+    ds << static_cast<const ConnectivityBase&>(conn);
+    
+    return ds;
+}
+
+QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, ConnectivityEditor &conn)
+{
+    VersionID v = readHeader(ds, r_conneditor);
+    
+    if (v == 1)
+    {
+        ds >> static_cast<ConnectivityBase&>(conn);
+    }
+    else
+        throw version_error(v, "1", r_conneditor, CODELOC);
+        
+    return ds;
+}
+
 /** Null constructor */
 ConnectivityEditor::ConnectivityEditor()
                    : ConcreteProperty<ConnectivityEditor,ConnectivityBase>()
@@ -1436,6 +1577,21 @@ ConnectivityEditor& ConnectivityEditor::connect(AtomIdx atom0, AtomIdx atom1)
     connected_atoms_array[atomidx0].insert(atomidx1);
     connected_atoms_array[atomidx1].insert(atomidx0);
     
+    if (info().isWithinResidue(atomidx0) and
+        info().isWithinResidue(atomidx1))
+    {
+        QSet<ResIdx> *connected_res_array = connected_res.data();
+
+        ResIdx residx0 = info().parentResidue(atomidx0);
+        ResIdx residx1 = info().parentResidue(atomidx1);
+        
+        if (residx0 != residx1)
+        {
+            connected_res_array[residx0].insert(residx1);
+            connected_res_array[residx1].insert(residx0);
+        }
+    }
+    
     return *this;
 }
 
@@ -1449,18 +1605,7 @@ ConnectivityEditor& ConnectivityEditor::connect(AtomIdx atom0, AtomIdx atom1)
 ConnectivityEditor& ConnectivityEditor::connect(const AtomID &atom0,
                                                 const AtomID &atom1)
 {
-    AtomIdx atomidx0 = info().atomIdx(atom0);
-    AtomIdx atomidx1 = info().atomIdx(atom1);
-    
-    if (atomidx0 == atomidx1)
-        return *this;
-        
-    QSet<AtomIdx> *connected_atoms_array = connected_atoms.data();
-    
-    connected_atoms_array[atomidx0].insert(atomidx1);
-    connected_atoms_array[atomidx1].insert(atomidx0);
-    
-    return *this;
+    return this->connect( info().atomIdx(atom0), info().atomIdx(atom1) );
 }
 
 /** Remove the connection between the atoms at indicies 'atom0'
@@ -1557,6 +1702,12 @@ ConnectivityEditor& ConnectivityEditor::disconnectAll(ResIdx residx)
 ConnectivityEditor& ConnectivityEditor::disconnectAll(const ResID &resid)
 {
     return this->disconnectAll( info().resIdx(resid) );
+}
+
+/** Return the editied connectivity */
+Connectivity ConnectivityEditor::commit() const
+{
+    return Connectivity(*this);
 }
 
 const char* ConnectivityEditor::typeName()

@@ -286,7 +286,7 @@ AtomStructureEditor& AtomStructureEditor::setProperty(const QString &key,
     this->_pvt_createSpaceForProperty< AtomProperty<T> >(key);
     
     //now set the value of the property
-    this->_pvt_setAtomProperty(uid, key, QVariant(value));
+    this->_pvt_setAtomProperty(uid, key, QVariant::fromValue<T>(value));
     
     return *this;
 }
@@ -307,7 +307,7 @@ AtomStructureEditor& AtomStructureEditor::setMetadata(const QString &metakey,
     this->_pvt_createSpaceForMetadata< AtomProperty<T> >(metakey);
     
     //now set the value of this metadata
-    this->_pvt_setAtomMetadata(uid, metakey, QVariant(value));
+    this->_pvt_setAtomMetadata(uid, metakey, QVariant::fromValue<T>(value));
     
     return *this;
 }
@@ -330,7 +330,7 @@ AtomStructureEditor& AtomStructureEditor::setMetadata(const QString &key,
     this->_pvt_createSpaceForMetadata< AtomProperty<T> >(key, metakey);
     
     //now set the value of this metadata
-    this->_pvt_setAtomMetadata(uid, key, metakey, QVariant(value));
+    this->_pvt_setAtomMetadata(uid, key, metakey, QVariant::fromValue<T>(value));
     
     return *this;
 }

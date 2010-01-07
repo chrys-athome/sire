@@ -77,7 +77,7 @@ QUuid MPIFrontend::UID()
         QMutexLocker lkr(&datamutex);
 
         p2p.sendMessage( P2PComm::GETUID );
-        cached_uid = p2p.awaitResponse<QUuid>();
+        cached_uid = p2p.awaitResponse<QUuid>(true);
     }
     
     return cached_uid;
@@ -92,7 +92,7 @@ void MPIFrontend::startJob(const WorkPacket &workpacket)
 
         p2p.sendMessage( P2PComm::START, workpacket );
         
-        int result = p2p.awaitIntegerResponse();
+        int result = p2p.awaitIntegerResponse(true);
         
         if (result != 0)
             qDebug() << SireError::getPIDString()

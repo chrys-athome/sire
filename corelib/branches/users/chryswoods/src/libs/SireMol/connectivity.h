@@ -45,10 +45,18 @@ SIRE_BEGIN_HEADER
 namespace SireMol
 {
 class ConnectivityBase;
+class Connectivity;
+class ConnectivityEditor;
 }
 
 QDataStream& operator<<(QDataStream&, const SireMol::ConnectivityBase&);
 QDataStream& operator>>(QDataStream&, SireMol::ConnectivityBase&);
+
+QDataStream& operator<<(QDataStream&, const SireMol::Connectivity&);
+QDataStream& operator>>(QDataStream&, SireMol::Connectivity&);
+
+QDataStream& operator<<(QDataStream&, const SireMol::ConnectivityEditor&);
+QDataStream& operator>>(QDataStream&, SireMol::ConnectivityEditor&);
 
 namespace SireMol
 {
@@ -90,6 +98,8 @@ public:
     {
         return "SireMol::ConnectivityBase";
     }
+
+    QString toString() const;
 
     bool areConnected(AtomIdx atom0, AtomIdx atom1) const;
     bool areConnected(const AtomID &atom0, const AtomID &atom1) const;
@@ -237,6 +247,9 @@ class SIREMOL_EXPORT Connectivity
                                                 ConnectivityBase>
 {
 
+friend QDataStream& ::operator<<(QDataStream&, const SireMol::Connectivity&);
+friend QDataStream& ::operator>>(QDataStream&, SireMol::Connectivity&);
+
 public:
     Connectivity();
 
@@ -273,6 +286,10 @@ class SIREMOL_EXPORT ConnectivityEditor
         : public SireBase::ConcreteProperty<ConnectivityEditor,
                                             ConnectivityBase>
 {
+
+friend QDataStream& ::operator<<(QDataStream&, const SireMol::ConnectivityEditor&);
+friend QDataStream& ::operator>>(QDataStream&, SireMol::ConnectivityEditor&);
+
 public:
     ConnectivityEditor();
 
@@ -300,6 +317,8 @@ public:
 
     ConnectivityEditor& disconnectAll(const AtomID &atomid);
     ConnectivityEditor& disconnectAll(const ResID &resid);
+    
+    Connectivity commit() const;
 };
 
 }

@@ -1565,6 +1565,120 @@ bool ForceFields::hasComponent(const Symbol &symbol) const
     return ffsymbols.contains(symbol);
 }
 
+/** Return the symbols representing the constants in the forcefield
+    expressions */
+QSet<Symbol> ForceFields::constantSymbols() const
+{
+    QSet<Symbol> constant_symbols;
+
+    for (QHash<Symbol,FFSymbolPtr>::const_iterator it = ffsymbols.constBegin();
+         it != ffsymbols.constEnd();
+         ++it)
+    {
+        if ((*it)->isA<FFSymbolValue>())
+        {
+            constant_symbols.insert(it.key());
+        }
+    }
+    
+    return constant_symbols;
+}
+
+/** Return whether or not there is a constant value in the 
+    forcefield expressions with symbol 'component' */
+bool ForceFields::hasConstant(const Symbol &component) const
+{
+    if (ffsymbols.contains(component))
+    {
+        return ffsymbols.value(component)->isA<FFSymbolValue>();
+    }
+    else
+        return false;
+}
+
+/** Return the constant value associated with the symbol 'component'
+
+    \throw SireFF::missing_component
+*/
+double ForceFields::constant(const Symbol &component) const
+{
+    if (not ffsymbols.contains(component))
+    {
+        throw SireFF::missing_component( QObject::tr(
+            "There is no constant represented by the symbol %1. "
+            "Available constants are %2.")
+                .arg(component.toString(), 
+                        Sire::toString(this->constantSymbols())),
+                    CODELOC );
+    }
+    
+    FFSymbolPtr val = ffsymbols.value(component);
+    
+    if (not val->isA<FFSymbolValue>())
+    {
+        if (val->isA<FFSymbolFF>())
+        {
+            throw SireFF::missing_component( QObject::tr(
+                "There is no constant represented by the symbol %1. There is a "
+                "forcefield component with this symbol, but this is not constant! "
+                "Available constants are %2.")
+                    .arg(component.toString(), 
+                        Sire::toString(this->constantSymbols())),
+                            CODELOC );
+        }
+        else
+        {
+            throw SireFF::missing_component( QObject::tr(
+                "There is no constant represented by the symbol %1. There is a "
+                "forcefield expression with this symbol, but this is not constant! "
+                "Available constants are %2.")
+                    .arg(component.toString(), 
+                        Sire::toString(this->constantSymbols())),
+                            CODELOC );
+        }
+    }
+    
+    return val->asA<FFSymbolValue>().value();
+}
+
+/** Return the constant values associated with the symbols
+    in 'components'
+
+    \throw SireFF::missing_component
+*/
+Values ForceFields::constants(const QSet<Symbol> &components) const
+{
+    Values constant_values;
+    
+    for (QSet<Symbol>::const_iterator it = components.constBegin();
+         it != components.constEnd();
+         ++it)
+    {
+        constant_values.set( *it, this->constant(*it) );
+    }
+    
+    return constant_values;
+}
+
+/** Return the values of all constant values in the forcefield 
+    expressions */
+Values ForceFields::constants() const
+{
+    Values constant_values;
+
+    for (QHash<Symbol,FFSymbolPtr>::const_iterator it = ffsymbols.constBegin();
+         it != ffsymbols.constEnd();
+         ++it)
+    {
+        if ((*it)->isA<FFSymbolValue>())
+        {
+            constant_values.set(it.key(), (*it)->asA<FFSymbolValue>().value());
+        }
+    }
+    
+    return constant_values;
+}
+
 /** Return the forcefield component symbol, value or expression that matches
     the component represented by the symbol 'symbol'
     

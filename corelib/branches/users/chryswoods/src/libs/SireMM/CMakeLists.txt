@@ -27,6 +27,7 @@ set ( SIREMM_HEADERS
       internalcomponent.h
       internalff.h
       internalparameters.h
+      internalperturbation.h
       intersoftcljff.h
       intracljff.h
       intracoulombff.h
@@ -34,6 +35,7 @@ set ( SIREMM_HEADERS
       ljpair.h
       ljparameter.h
       ljparameterdb.h
+      ljperturbation.h
       ljpotential.h
       restraint.h
       restraintcomponent.h
@@ -69,6 +71,7 @@ set ( SIREMM_SOURCES
       internalcomponent.cpp
       internalff.cpp
       internalparameters.cpp
+      internalperturbation.cpp
       intersoftcljff.cpp
       intracljff.cpp
       intracoulombff.cpp
@@ -76,6 +79,7 @@ set ( SIREMM_SOURCES
       ljpair.cpp
       ljparameter.cpp
       ljparameterdb.cpp
+      ljperturbation.cpp
       ljpotential.cpp
       restraint.cpp
       restraintcomponent.cpp

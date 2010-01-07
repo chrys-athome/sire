@@ -397,6 +397,7 @@ AtomCharges AM1BCC::convertAM1MullikenToAM1BCC(const AtomCharges &mulliken_charg
     
     //all of this will be performed in a temporary directory!
     TempDir tmpdir;
+    //tmpdir.doNotDelete();
     
     const QString pdbfile = QString("%1/molecule.pdb").arg(tmpdir.path());
     const QString acfile = QString("%1/molecule.AC").arg(tmpdir.path());

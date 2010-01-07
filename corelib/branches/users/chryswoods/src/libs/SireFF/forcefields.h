@@ -133,8 +133,14 @@ public:
     SireUnits::Dimension::MolarEnergy energy(const Symbol &component);
     
     Symbols components() const;
-    
     bool hasComponent(const Symbol &symbol) const;
+
+    QSet<Symbol> constantSymbols() const;
+    bool hasConstant(const Symbol &component) const;
+    
+    double constant(const Symbol &component) const;
+    Values constants(const QSet<Symbol> &components) const;
+    Values constants() const;
     
     Values energies(const QSet<Symbol> &components);
     Values energies();

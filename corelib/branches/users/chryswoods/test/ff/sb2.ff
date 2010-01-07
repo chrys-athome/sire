@@ -75,63 +75,63 @@ atom  HD4 FRG  3843 3540  CD4 FRG  CD3 FRG  CD5 FRG
 atom  HD5 FRG  3844 3541  CD5 FRG  CD4 FRG  CD6 FRG
 atom  FD3 FRG  3845 3542  CD3 FRG  CD2 FRG  CD4 FRG
 #variable geometry to pull methyl group into hydrogen
-#variable CM1 NRG bond  1.494   1.106
-#variable HM1 NRG bond  1.118   0.200
-#variable HM2 NRG bond  1.118   0.200
-#variable HM3 NRG bond  1.118   0.200
-#connectivity of SRG residue  - do not need energy of any bonds as inflexible
-bond O2  SRG  S1  SRG  param 0 0
-bond C1  SRG  S1  SRG  param 0 0
-bond H1  SRG  C1  SRG  param 0 0
-bond H2  SRG  C1  SRG  param 0 0
-bond H3  SRG  C1  SRG  param 0 0
-bond S1  SRG  CA3 SRG  param 0 0
-bond CA3 SRG  CA2 SRG  param 0 0
-bond CA2 SRG  CA1 SRG  param 0 0
-bond CA1 SRG  CA6 SRG  param 0 0
-bond CA6 SRG  CA5 SRG  param 0 0
-bond CA5 SRG  CA4 SRG  param 0 0
-bond CA4 SRG  CA3 SRG  param 0 0
-bond CA2 SRG  HA2 SRG  param 0 0
-bond CA1 SRG  HA1 SRG  param 0 0
-bond CA4 SRG  HA4 SRG  param 0 0
-bond CA5 SRG  HA5 SRG  param 0 0
-bond CA6 SRG  CC2 CRG  param 0 0
+variable CM1 NRG bond  1.494   1.106
+variable HM1 NRG bond  1.118   0.200
+variable HM2 NRG bond  1.118   0.200
+variable HM3 NRG bond  1.118   0.200
+#connectivity of SRG residue
+bond O2  SRG  S1  SRG
+bond C1  SRG  S1  SRG
+bond H1  SRG  C1  SRG
+bond H2  SRG  C1  SRG
+bond H3  SRG  C1  SRG
+bond S1  SRG  CA3 SRG
+bond CA3 SRG  CA2 SRG
+bond CA2 SRG  CA1 SRG
+bond CA1 SRG  CA6 SRG
+bond CA6 SRG  CA5 SRG
+bond CA5 SRG  CA4 SRG
+bond CA4 SRG  CA3 SRG
+bond CA2 SRG  HA2 SRG
+bond CA1 SRG  HA1 SRG
+bond CA4 SRG  HA4 SRG
+bond CA5 SRG  HA5 SRG
+bond CA6 SRG  CC2 CRG
 #connectivity of the CRG residue
-bond CC2 CRG  NC1 CRG  param 0 0
-bond NC1 CRG  CC5 CRG  param 0 0
-bond CC5 CRG  CC4 CRG  param 0 0
-bond CC4 CRG  NC3 CRG  param 0 0
-bond NC3 CRG  CC2 CRG  param 0 0
-bond NC1 CRG  HN1 CRG  param 0 0
+bond CC2 CRG  NC1 CRG
+bond NC1 CRG  CC5 CRG
+bond CC5 CRG  CC4 CRG
+bond CC4 CRG  NC3 CRG
+bond NC3 CRG  CC2 CRG
+bond NC1 CRG  HN1 CRG
 #connectivity of the NRG residue
-bond CB4 NRG  CC5 CRG  param 0 0
-bond CB3 NRG  CB4 NRG  param 0 0
-bond CB2 NRG  CB3 NRG  param 0 0
-bond NB1 NRG  CB2 NRG  param 0 0
-bond CB6 NRG  NB1 NRG  param 0 0
-bond CB5 NRG  CB6 NRG  param 0 0
-bond CB4 NRG  CB5 NRG  param 0 0
-bond HB2 NRG  CB2 NRG  param 0 0
-bond HB3 NRG  CB3 NRG  param 0 0
-bond HB5 NRG  CB5 NRG  param 0 0
+bond CB4 NRG  CC5 CRG
+bond CB3 NRG  CB4 NRG
+bond CB2 NRG  CB3 NRG
+bond NB1 NRG  CB2 NRG
+bond CB6 NRG  NB1 NRG
+bond CB5 NRG  CB6 NRG
+bond CB4 NRG  CB5 NRG
+bond HB2 NRG  CB2 NRG
+bond HB3 NRG  CB3 NRG
+bond HB5 NRG  CB5 NRG
 bond CM1 NRG  CB6 NRG param 0 0  # use zero parameters 
 bond HM1 NRG  CM1 NRG param 0 0  # as varying bond length
 bond HM2 NRG  CM1 NRG param 0 0  # with lambda
 bond HM3 NRG  CM1 NRG param 0 0  #
 #connectivity of the FRG residue
-bond CD6 FRG  CC4 CRG  param 0 0
-bond CD1 FRG  CD6 FRG  param 0 0
-bond CD2 FRG  CD1 FRG  param 0 0
-bond CD3 FRG  CD2 FRG  param 0 0
-bond CD4 FRG  CD3 FRG  param 0 0
-bond CD5 FRG  CD4 FRG  param 0 0
-bond CD6 FRG  CD5 FRG  param 0 0
-bond FD3 FRG  CD3 FRG  param 0 0
-bond HD1 FRG  CD1 FRG  param 0 0
-bond HD2 FRG  CD2 FRG  param 0 0
-bond HD4 FRG  CD4 FRG  param 0 0
-bond HD5 FRG  CD5 FRG  param 0 0
+bond CD6 FRG  CC4 CRG
+bond CD1 FRG  CD6 FRG
+bond CD2 FRG  CD1 FRG
+bond CD3 FRG  CD2 FRG
+bond CD4 FRG  CD3 FRG
+bond CD5 FRG  CD4 FRG
+bond CD6 FRG  CD5 FRG
+bond FD3 FRG  CD3 FRG
+bond HD1 FRG  CD1 FRG
+bond HD2 FRG  CD2 FRG
+bond HD4 FRG  CD4 FRG
+bond HD5 FRG  CD5 FRG
 ## now all of the flexible angles (just inter-ring angles as rings are rigid)
 angle H1  SRG  C1  SRG  S1  SRG  flex 2.0
 angle C1  SRG  S1  SRG  CA3 SRG  flex 2.0

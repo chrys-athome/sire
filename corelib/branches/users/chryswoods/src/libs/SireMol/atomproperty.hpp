@@ -203,13 +203,15 @@ private:
     SireBase::PackedArray2D<T> props;
 };
 
+#ifndef SIRE_SKIP_INLINE_FUNCTIONS
+
 /** Return whether or not the variant 'value' can be converted to be
     held as an AtomProperty<T> */
 template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 bool AtomProperty<T>::canConvert(const QVariant &value) const
 {
-    return value.canConvert<T>();
+    return value.isNull() or value.canConvert<T>();
 }
 
 /** Assert that the passed variant value can be converted to be
@@ -221,7 +223,7 @@ template<class T>
 SIRE_OUTOFLINE_TEMPLATE
 void AtomProperty<T>::assertCanConvert(const QVariant &value) const
 {
-    if (not value.canConvert<T>())
+    if (not (value.isNull() or value.canConvert<T>()))
     {
         throw SireError::invalid_cast( QObject::tr(
             "It is not possible to convert the value of type %1 to "
@@ -264,8 +266,6 @@ AtomProperty<T>::AtomProperty(const MoleculeInfoData &molinfo)
         props = PackedArray2D<T>(tmp_props);
     }
 }
-
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
 
 /** Construct an Atom property that holds a single value (only
     suitable for a molecule that has just one atom in just one CutGroup) */

@@ -482,7 +482,7 @@ void P2PComm::_pvt_sendMessage(int message, const QByteArray &data)
 }
 
 /** Await an integer response from the slave */
-int P2PComm::awaitIntegerResponse()
+int P2PComm::awaitIntegerResponse(bool urgent)
 {
     if (::MPI::Is_finalized())
         return -1;
@@ -497,14 +497,16 @@ int P2PComm::awaitIntegerResponse()
 
     int message;
     
-    d->waitForResponse(P2PComm::SLAVE, 1);
+    if (not urgent)
+        d->waitForResponse(P2PComm::SLAVE, 1);
+
     d->private_comm.Recv(&message, 1, ::MPI::INT, P2PComm::SLAVE, 1);
 
     return message;
 }
 
 /** Await a float response from the slave */
-float P2PComm::awaitFloatResponse()
+float P2PComm::awaitFloatResponse(bool urgent)
 {
     if (::MPI::Is_finalized())
         return 0;
@@ -519,14 +521,16 @@ float P2PComm::awaitFloatResponse()
 
     float message;
     
-    d->waitForResponse(P2PComm::SLAVE, 1);
+    if (not urgent)
+        d->waitForResponse(P2PComm::SLAVE, 1);
+
     d->private_comm.Recv(&message, 1, ::MPI::FLOAT, P2PComm::SLAVE, 1);
 
     return message;
 }
 
 /** Internal function used to wait for a response from the slave */
-QByteArray P2PComm::_pvt_awaitResponse()
+QByteArray P2PComm::_pvt_awaitResponse(bool urgent)
 {
     if (::MPI::Is_finalized())
         return QByteArray();
@@ -541,7 +545,9 @@ QByteArray P2PComm::_pvt_awaitResponse()
 
     int size;
     
-    d->waitForResponse(P2PComm::SLAVE, 1);
+    if (not urgent)
+        d->waitForResponse(P2PComm::SLAVE, 1);
+
     d->private_comm.Recv(&size, 1, ::MPI::INT, P2PComm::SLAVE, 1);
     
     if (size <= 0)
