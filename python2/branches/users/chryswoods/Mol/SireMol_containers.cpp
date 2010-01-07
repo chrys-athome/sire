@@ -55,6 +55,8 @@
 #include "SireMol/mgname.h"
 #include "SireMol/mgidsandmaps.h"
 #include "SireMol/partialmolecule.h"
+#include "SireMol/perturbation.h"
+#include "SireMol/geometryperturbation.h"
 
 #include "Base/convertpackedarray.hpp"
 #include "SireBase/packedarray2d.hpp"
@@ -89,6 +91,9 @@ void register_SireMol_containers()
     register_list< QList<ResIdentifier> >();
     register_list< QList<CGIdentifier> >();
     register_list< QList<AtomIdentifier> >();
+
+    register_list< QList<PerturbationPtr> >();
+    register_list< QList<GeomPertPtr> >();
 
     register_list< QList< boost::tuple<MolGroupPtr,SireBase::PropertyMap> > >();
     register_list< QList< boost::tuple<MGIdentifier,SireBase::PropertyMap> > >();

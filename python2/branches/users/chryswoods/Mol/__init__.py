@@ -9,6 +9,7 @@ import Sire.Maths
 import Sire.Base
 import Sire.ID
 import Sire.Qt
+import Sire.CAS
 import Sire.Vol
 import Sire.Units
 
