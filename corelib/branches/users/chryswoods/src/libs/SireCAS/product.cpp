@@ -40,6 +40,9 @@
 
 #include "SireMaths/complex.h"
 
+#include "Siren/logger.h"
+#include "Siren/tester.h"
+#include "Siren/errors.h"
 #include "Siren/stream.h"
 #include "Siren/streamqt.h"
 
@@ -390,6 +393,7 @@ void Product::pvt_multiply(double val, const Expression &power)
     if (SireMaths::areEqual(val,1.0))
         //nothing needs doing as 1^n == 1, even if n is complex
         return;
+        
     else if (power.isConstant())
     {
         Complex powerval = power.evaluate(ComplexValues());
@@ -1077,4 +1081,55 @@ QList<Factor> Product::expand(const Symbol &symbol) const
     }
     
     return ::multiply(num_factors, denom_factors);
+}
+
+bool Product::test(Logger &logger) const
+{
+    Tester tester(*this, logger);
+    
+    try
+    {
+        Symbol x("x"), y("y"), z("z");
+        
+        /// test 1
+        {
+            Expression f = 3 * x * y;
+            
+            tester.nextTest();
+            
+            tester.expect_true( QObject::tr("3 * x * y contains x"),
+                                CODELOC,
+                                f.children().contains(x) );
+                                
+            tester.expect_true( QObject::tr("3 * x * y contains y"),
+                                CODELOC,
+                                f.children().contains(y) );
+                                
+            tester.expect_false( QObject::tr("3 * x * y doesn't contain z"),
+                                 CODELOC,
+                                 f.children().contains(z) );
+                                 
+            tester.expect_equal( QObject::tr("d 3xy / dx equals 3y"),
+                                 CODELOC,
+                                 f.differentiate(x), 3 * y );
+                                 
+            tester.expect_equal( QObject::tr("d 3xy / dy equals 3x"),
+                                 CODELOC,
+                                 f.differentiate(y), 3 * x );
+                                 
+            tester.expect_equal( QObject::tr("3xy = 150 if x == 5 and y == 10"),
+                                 CODELOC,
+                                 f( (x==5)+(y==10) ), double(150) );
+        }
+    }
+    catch(const Siren::exception &e)
+    {
+        tester.unexpected_error(e);
+    }
+    catch(...)
+    {
+        tester.unexpected_error( Siren::unknown_error(CODELOC) );
+    }
+    
+    return tester.allPassed();
 }

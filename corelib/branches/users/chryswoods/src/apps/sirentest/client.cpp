@@ -50,10 +50,31 @@ int Client::run(int argc, char **argv)
     /** Construct the Client object */
     Client *client = new Client();
 
+    client->print_to_screen = (argc != 1);
+
     client->startServerProcess();
 
-    //get the list of classes to test
-    QStringList test_classes = Class::registeredTypes();
+    QStringList registered_classes = Class::registeredTypes();
+    QStringList test_classes;
+
+    if (argc == 1)
+    {
+        //get the list of classes to test
+        test_classes = registered_classes;
+    }
+    else
+    {
+        QTextStream ts(stdout);
+    
+        for (int i=1; i<argc; ++i)
+        {
+            if (registered_classes.contains(argv[i]))
+                test_classes.append( argv[i] );
+            else
+                ts << QObject::tr("There is no class called \"%1\" that is "
+                                  "available to be tested!\n").arg(argv[i]);
+        }
+    }
     
     client->runTests(test_classes);
     
@@ -275,6 +296,9 @@ void Client::startServerProcess()
         env << QString("SIRENTEST_SHMEMKEY=%1").arg(shmem_key);
         env << "SIRENTEST_IS_SERVER=1";
         env << "SIRENTEST_VERSION=1";
+        
+        if (print_to_screen)
+            env << "SIRENTEST_PRINT_TO_SCREEN=1";
     
         server_process->setEnvironment(env);
     }

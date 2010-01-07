@@ -142,6 +142,8 @@ public:
     
     QList<Factor> expand(const Symbol &symbol) const;
 
+    bool test(Siren::Logger &logger) const;
+
 private:
     /** The base of this expression */
     CASNodePtr casnode;

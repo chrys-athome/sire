@@ -29,67 +29,31 @@
 #ifndef SIREVOL_ERRORS_H
 #define SIREVOL_ERRORS_H
 
-#include "SireError/exception.h"
+#include "Siren/exception.h"
+
+#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireVol
 {
 
-/** This is the base class of all SireVol errors */
-class SIREVOL_EXPORT sirevol_error : public SireError::exception
-{
-public:
-    sirevol_error() : exception()
-    {}
-
-    sirevol_error(QString err, QString place = QString::null) : exception(err,place)
-    {}
-
-    sirevol_error(const sirevol_error &other) : exception(other)
-    {}
-
-    ~sirevol_error() throw()
-    {}
-
-    static const char* typeName()
-    {
-        return "SireVol::sirevol_error";
-    }
-};
-
 /** This exception is thrown when an attempt is made
     to interface or switch between incompatible spaces
 
     @author Christopher Woods
 */
-class SIREVOL_EXPORT incompatible_space : public sirevol_error
+class SIREVOL_EXPORT incompatible_space
+        : public Siren::ImplementsException<incompatible_space,Siren::exception>
 {
 public:
-    incompatible_space() : sirevol_error()
-    {}
+    incompatible_space();
 
-    incompatible_space(QString err, QString place = QString::null)
-              : sirevol_error(err,place)
-    {}
+    incompatible_space(QString err, QString place = QString::null);
 
-    incompatible_space(const incompatible_space &other) : sirevol_error(other)
-    {}
+    incompatible_space(const incompatible_space &other);
 
-    ~incompatible_space() throw()
-    {}
-
-    static const char* typeName();
-
-    const char* what() const throw()
-    {
-        return incompatible_space::typeName();
-    }
-    
-    void throwSelf() const
-    {
-        throw incompatible_space(*this);
-    }
+    ~incompatible_space() throw();
 };
 
 }

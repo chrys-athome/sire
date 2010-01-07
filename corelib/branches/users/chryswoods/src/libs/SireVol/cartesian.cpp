@@ -44,53 +44,30 @@
 
 #include "SireMaths/rangenerator.h"
 
-#include "SireError/errors.h"
 #include "SireVol/errors.h"
 
-#include "SireStream/datastream.h"
+#include "Siren/logger.h"
+#include "Siren/tester.h"
+#include "Siren/errors.h"
+#include "Siren/stream.h"
 
 #include <QDebug>
 
 using namespace SireVol;
 using namespace SireBase;
 using namespace SireUnits::Dimension;
-using namespace SireStream;
+using namespace Siren;
 
 using boost::tuple;
 
-static const RegisterMetaType<Cartesian> r_cartesian;
-
-/** Serialise to a binary datastream */
-QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const Cartesian &cart)
-{
-    writeHeader(ds, r_cartesian, 1)
-                 << static_cast<const Space&>(cart);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, Cartesian &cart)
-{
-    VersionID v = readHeader(ds, r_cartesian);
-
-    if (v == 1)
-    {
-        ds >> static_cast<Space&>(cart);
-    }
-    else
-        throw version_error(v, "1", r_cartesian, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<Cartesian> r_cartesian;
 
 /** Construct a default Cartesian volume */
-Cartesian::Cartesian() : ConcreteProperty<Cartesian,Space>()
+Cartesian::Cartesian() : Implements<Cartesian,Space>()
 {}
 
 /** Copy constructor */
-Cartesian::Cartesian(const Cartesian &other) 
-          : ConcreteProperty<Cartesian,Space>(other)
+Cartesian::Cartesian(const Cartesian &other) : Implements<Cartesian,Space>(other)
 {}
 
 /** Destructor */
@@ -107,19 +84,72 @@ Cartesian& Cartesian::operator=(const Cartesian &other)
 /** Comparison operator */
 bool Cartesian::operator==(const Cartesian &other) const
 {
-    return other.what() == Cartesian::typeName();
+    return other.what() == this->what();
 }
 
 /** Comparison operator */
 bool Cartesian::operator!=(const Cartesian &other) const
 {
-    return other.what() != Cartesian::typeName();
+    return not Cartesian::operator==(other);
 }
 
 /** Return a string representation of this space */
 QString Cartesian::toString() const
 {
-    return QObject::tr("Infinite cartesian space");
+    return QObject::tr("Cartesian()");
+}
+
+void Cartesian::stream(Stream &s)
+{
+    s.assertVersion<Cartesian>(1);
+    
+    Schema schema = s.item<Cartesian>();
+    
+    Space::stream(schema.base());
+}
+
+bool Cartesian::test(Logger &logger) const
+{
+    Tester tester(*this, logger);
+    
+    try
+    {
+        /// test 1
+        {
+            tester.nextTest();
+            
+            Cartesian c;
+            
+            tester.expect_true( QObject::tr("Cartesian() is cartesian"),
+                                CODELOC,
+                                c.isCartesian() );
+                                
+            tester.expect_false( QObject::tr("Cartesian() is not periodic"),
+                                 CODELOC,
+                                 c.isPeriodic() );
+                                 
+            tester.expect_roughly_equal( QObject::tr(
+                        "Distance from 0,0,0 to 30,40,50 is sqrt(5000)"),
+                                 CODELOC,
+                                 c.calcDist( Vector(0,0,0), Vector(30,40,50) ),
+                                 std::sqrt(5000) );
+        }
+    }
+    catch(const Siren::exception &e)
+    {
+        tester.unexpected_error(e);
+    }
+    catch(...)
+    {
+        tester.unexpected_error( Siren::unknown_error(CODELOC) );
+    }
+    
+    return tester.allPassed();
+}
+
+uint Cartesian::hashCode() const
+{
+    return qHash(Cartesian::typeName());
 }
 
 /** A Cartesian space is not periodic */
@@ -819,9 +849,4 @@ Vector Cartesian::getBoxCenter(const Vector&) const
 Vector Cartesian::getBoxCenter(const Vector&, const Vector &center) const
 {
 	return center;
-}
-
-const char* Cartesian::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<Cartesian>() );
 }

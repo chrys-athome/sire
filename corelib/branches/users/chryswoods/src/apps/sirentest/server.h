@@ -57,6 +57,8 @@ public:
     Server(QObject *parent=0);
     ~Server();
 
+    void setPrintToScreen(bool print_to_screen);
+
 signals:
     void fatalError();
 
@@ -69,6 +71,9 @@ protected:
 private:
     /** Message queue used to communicate with the server */
     MessageQueue *message_q;
+    
+    /** Whether or not to print test results to the screen */
+    bool print_to_screen;
 };
 
 }

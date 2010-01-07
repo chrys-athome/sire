@@ -39,10 +39,16 @@
 #include "factor.h"
 #include "integrationconstant.h"
 
+#include "Siren/logger.h"
+#include "Siren/tester.h"
+#include "Siren/errors.h"
+
 #include "SireMaths/maths.h"
 #include "SireMaths/complex.h"
 
 #include "Siren/stream.h"
+
+#include <QDebug>
 
 using namespace Siren;
 using namespace SireCAS;
@@ -610,4 +616,59 @@ QList<Factor> Expression::expand(const Symbol &symbol) const
     }
     
     return factors;
+}
+
+bool Expression::test(Siren::Logger &logger) const
+{
+    Tester tester(*this, logger);
+
+    try
+    {
+        Symbol x("x"), y("y");
+    
+        // Test 1
+        {
+            tester.nextTest();
+
+            Expression f = x + y;
+            
+            for (int i=0; i<=10; ++i)
+            {
+                for (int j=0; j<=10; ++j)
+                {
+                    double result = f( (x==i) + (y==j) );
+                    
+                    tester.expect_equal( QObject::tr("f(x,y) equals x + y"),
+                                CODELOC,
+                                result, double(i+j) );
+                }
+            }
+        }
+        
+        // Test 2
+        {
+            tester.nextTest();
+
+            Expression f = x + y;
+            Expression inv = 1 / (x + y);
+
+            tester.expect_equal( QObject::tr("(x+y).invert() equals 1 / (x+y)"),
+                                 CODELOC,
+                                 f.invert(), inv );
+        }
+    }
+    catch(const Siren::exception &e)
+    {
+        tester.unexpected_error(e);
+    }
+    catch(const std::exception &e)
+    {
+        tester.unexpected_error( std_exception(e) );
+    }
+    catch(...)
+    {
+        tester.unexpected_error( unknown_error(CODELOC) );
+    }
+    
+    return tester.allPassed();
 }

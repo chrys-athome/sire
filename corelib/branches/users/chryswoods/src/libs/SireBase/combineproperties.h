@@ -77,12 +77,12 @@ public:
     static QString typeName();
 
     void stream(Siren::Stream &s);
+    QString toString() const;
+    uint hashCode() const;
 
     const PropertyName& operator[](int i) const;
 
     const PropertyName& at(int i) const;
-
-    QString toString() const;
 
     int nSources() const;
     int count() const;
@@ -96,16 +96,14 @@ public:
     const_iterator constEnd() const;
     const_iterator end() const;
     
-    const Object& combinedProperty() const;
-    
-    /** Update this combined property by fetching the necessary
+    /** Return the combined property by fetching the necessary
         properties to combine from 'properties'
         
         \throw SireBase::missing_property
-        \throw SireError::invalid_cast
-        \throw SireError::incompatible_error
+        \throw Siren::invalid_cast
+        \throw Siren::incompatible_error
     */
-    virtual void updateFrom(const Properties &properties)=0;
+    virtual Siren::ObjRef combine(const Properties &properties) const=0;
     
 protected:
     CombineProperties& operator=(const CombineProperties &other);
@@ -113,14 +111,9 @@ protected:
     bool operator==(const CombineProperties &other) const;
     bool operator!=(const CombineProperties &other) const;
 
-    void setCombinedProperty(const Object &property);
-
 private:
     /** The sources of the properties to be combined together */
     QVector<PropertyName> property_sources;
-
-    /** The combined property */
-    Siren::ObjectPtr combined_property;
 };
 
 }

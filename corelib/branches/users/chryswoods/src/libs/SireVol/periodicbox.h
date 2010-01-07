@@ -39,30 +39,16 @@ SIRE_BEGIN_HEADER
 
 namespace SireVol
 {
-class PeriodicBox;
-}
-
-QDataStream& operator<<(QDataStream&, const SireVol::PeriodicBox&);
-QDataStream& operator>>(QDataStream&, SireVol::PeriodicBox&);
-
-namespace SireVol
-{
 
 using SireMaths::Vector;
 
-/**
-A PeriodicBox is a volume  that represents standard periodic boundary conditions
-(a 3D box replicated to infinity along all three dimensions).
+/** A PeriodicBox is a volume  that represents standard periodic boundary conditions
+    (a 3D box replicated to infinity along all three dimensions).
 
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIREVOL_EXPORT PeriodicBox 
-        : public SireBase::ConcreteProperty<PeriodicBox,Cartesian>
+class SIREVOL_EXPORT PeriodicBox : public Siren::Implements<PeriodicBox,Cartesian>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const PeriodicBox&);
-friend QDataStream& ::operator>>(QDataStream&, PeriodicBox&);
-
 public:
     PeriodicBox();
     PeriodicBox(const Vector &extents);
@@ -77,23 +63,30 @@ public:
     bool operator==(const PeriodicBox &other) const;
     bool operator!=(const PeriodicBox &other) const;
 
+    //////////////////////////////
+    // Implements Siren::Object //
+    //////////////////////////////
+    
+    void stream(Siren::Stream &s);
+    QString toString() const;
+
+    uint hashCode() const;
+    bool test(Siren::Logger &logger) const;
+    
+    ///////////////////////////////
+    // Implements SireVol::Space //
+    ///////////////////////////////
+
     bool isPeriodic() const;
     bool isCartesian() const;
 
-    QString toString() const;
-
     SireUnits::Dimension::Volume volume() const;
     SpacePtr setVolume(SireUnits::Dimension::Volume volume) const;
-
-    void setDimensions(const Vector &dimensions);
-    void setDimensions(const Vector &mincoords, const Vector &maxcoords);
     
     const Vector& dimensions() const;
 
     Vector minCoords(const Vector &center = Vector(0)) const;
     Vector maxCoords(const Vector &center = Vector(0)) const;
-
-    static const char* typeName();
 
     double calcDist(const Vector &point0, const Vector &point1) const;
     double calcDist2(const Vector &point0, const Vector &point1) const;
@@ -151,6 +144,9 @@ public:
                                const CoordGroup &center, double dist) const;
 
 protected:
+
+    void setDimensions(const Vector &dimensions);
+    void setDimensions(const Vector &mincoords, const Vector &maxcoords);
 
     Vector wrapDelta(const Vector &v0, const Vector &v1) const;
 

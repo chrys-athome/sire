@@ -20,7 +20,7 @@ set ( SUBDIRS
            #   SireMove
            #   SireSystem
               SireUnits
-           #   SireVol
+              SireVol
               Siren
            #   Spier
            #   Squire

@@ -34,26 +34,18 @@
 #include <boost/tuple/tuple.hpp>
 
 #include "SireBase/pairmatrix.hpp"
-#include "SireBase/property.h"
-#include "SireBase/sharedpolypointer.hpp"
 
 #include "SireUnits/dimensions.h"
 
 #include "SireMaths/vector.h"
 #include "SireMaths/distvector.h"
 
+#include "Siren/object.h"
+#include "Siren/objptr.hpp"
+
 #include "coordgroup.h"
 
 SIRE_BEGIN_HEADER
-
-namespace SireVol
-{
-class Space;
-class Space;
-}
-
-QDataStream& operator<<(QDataStream&, const SireVol::Space&);
-QDataStream& operator>>(QDataStream&, SireVol::Space&);
 
 namespace SireMaths
 {
@@ -67,10 +59,6 @@ using SireMaths::Vector;
 using SireMaths::DistVector;
 using SireMaths::RanGenerator;
 
-class Cartesian;
-
-typedef SireBase::PropPtr<Space> SpacePtr;
-
 /** Define a distance matrix as being a PairMatrix of doubles */
 typedef SireBase::PairMatrix<double> DistMatrix;
 
@@ -78,63 +66,63 @@ typedef SireBase::PairMatrix<double> DistMatrix;
     (these are Vectors that have the magnitude and direction separated out) */
 typedef SireBase::PairMatrix<DistVector> DistVectorMatrix;
 
-/**
-This pure virtual base class represents the volume of space within which a SimSystem
-resides. This class provides functions that calculate the distances between CoordGroups
-in this volume, and has most of the optimisation (since most of the hard-work
-double distance loops occur in this class!). Key overloaded classes that inherit
-Space are Cartesian, which represents infinite 3D cartesian space, and
-PeriodicBox which represents a 3D periodic box.
+class Space;
+typedef Siren::ObjPtr<Space> SpacePtr;
 
-As this class is used right in the heart of the double loop it is very important
-that it is not implemented in a way that requires a lot of virtual function calls.
-This means that the class is implemented to calculate the distances of all pairs of points
-between two CoordGroups in a single virtual function call. The results are held
-in a special matrix that can be queried via read-only, inline, non-virtual
-functions, with the items ordered in memory in the same order that you would get
-by iterating over all pairs (group1 in outer loop, group2 in inner loop). An advantage
-of this approach is that as the distances are calculated in one go, it is possible for
-the Space class to find out whether two CoordGroups are within the non-bonded cutoff
-distance before any further calculation is performed.
+/** This pure virtual base class represents the volume of space within which a SimSystem
+    resides. This class provides functions that calculate the distances between CoordGroups
+    in this volume, and has most of the optimisation (since most of the hard-work
+    double distance loops occur in this class!). Key overloaded classes that inherit
+    Space are Cartesian, which represents infinite 3D cartesian space, and
+    PeriodicBox which represents a 3D periodic box.
 
-To prevent continual reallocation, the Space class works on an already-allocated
-matrix class. This is only reallocated if it is found that it is not sufficiently
-large to hold the pair of CoordGroups.
+    As this class is used right in the heart of the double loop it is very important
+    that it is not implemented in a way that requires a lot of virtual function calls.
+    This means that the class is implemented to calculate the distances of all pairs of points
+    between two CoordGroups in a single virtual function call. The results are held
+    in a special matrix that can be queried via read-only, inline, non-virtual
+    functions, with the items ordered in memory in the same order that you would get
+    by iterating over all pairs (group1 in outer loop, group2 in inner loop). An advantage
+    of this approach is that as the distances are calculated in one go, it is possible for
+    the Space class to find out whether two CoordGroups are within the non-bonded cutoff
+    distance before any further calculation is performed.
 
-As a further optimisation, the distance matrix may be populated with the interpoint
-distances, or the square of the interatomic distances, or the 1 / distances
-or 1 / distances^2
+    To prevent continual reallocation, the Space class works on an already-allocated
+    matrix class. This is only reallocated if it is found that it is not sufficiently
+    large to hold the pair of CoordGroups.
 
-The inheritors of this class should be the only parts of this code where
-distance calculations are calculated between and within CoordGroups. This will
-allow you to change the space of the system here, and have that space used in the
-rest of the code that uses CoordGroups.
+    As a further optimisation, the distance matrix may be populated with the interpoint
+    distances, or the square of the interatomic distances, or the 1 / distances
+    or 1 / distances^2
 
-This is a virtual class that is designed to be used with SharedPolyPointer.
+    The inheritors of this class should be the only parts of this code where
+    distance calculations are calculated between and within CoordGroups. This will
+    allow you to change the space of the system here, and have that space used in the
+    rest of the code that uses CoordGroups.
 
-@author Christopher Woods
+    This is a virtual class that is designed to be used with SharedPolyPointer.
+
+    @author Christopher Woods
 */
-class SIREVOL_EXPORT Space : public SireBase::Property
+class SIREVOL_EXPORT Space : public Siren::Extends<Space,Siren::Object>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Space&);
-friend QDataStream& ::operator>>(QDataStream&, Space&);
-
 public:
     Space();
     Space(const Space &other);
 
     ~Space();
 
-    virtual Space* clone() const=0;
-
-    static const char* typeName()
-    {
-        return "SireVol::Space";
-    }
-
-    /** Return a string representation of this space */
-    virtual QString toString() const=0;
+    ///////////////////////////
+    // Extends Siren::Object //
+    ///////////////////////////
+    
+    static QString typeName();
+    
+    void stream(Siren::Stream &s);
+    
+    ////////////////////
+    // SireVol::Space //
+    ////////////////////
 
     /** Return the volume of the central box of this space. This
         throws an exception if it is not possible to calculate the
@@ -329,9 +317,12 @@ public:
                     getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
                                     double dist) const=0;
 
-    static const Cartesian& null();
-
 protected:
+    Space& operator=(const Space &other);
+    
+    bool operator==(const Space &other) const;
+    bool operator!=(const Space &other) const;
+    
     void assertCompatible(const Space &other) const;
 };
 
@@ -339,11 +330,10 @@ protected:
 
 SIRE_EXPOSE_CLASS( SireVol::Space )
 
-SIRE_EXPOSE_PROPERTY( SireVol::SpacePtr, SireVol::Space )
+Q_DECLARE_METATYPE( SireVol::SpacePtr )
+
+SIRE_EXPOSE_OBJECT_PTR( SireVol::SpacePtr, SireVol::Space )
 
 SIRE_END_HEADER
-
-///need to include "cartesian.h" as it is needed to instantiate the null() function
-#include "cartesian.h"
 
 #endif

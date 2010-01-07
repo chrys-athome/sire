@@ -107,6 +107,9 @@ private:
 
     /** Whether or not to keep the child process alive */
     bool keep_alive;
+    
+    /** Whether or not to print to the screen */
+    bool print_to_screen;
 };
 
 }

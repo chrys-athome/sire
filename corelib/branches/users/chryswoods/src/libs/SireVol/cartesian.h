@@ -35,43 +35,39 @@ SIRE_BEGIN_HEADER
 
 namespace SireVol
 {
-class Cartesian;
-}
 
-QDataStream& operator<<(QDataStream&, const SireVol::Cartesian&);
-QDataStream& operator>>(QDataStream&, SireVol::Cartesian&);
+/** This class overloads SimVolume to provide an infinite Cartesian 
+    (3-dimensional, orthoganol dimensions) volume. This corresponds to 
+    a traditional gas-phase or no-boundary system.
 
-namespace SireVol
-{
-
-/**
-This class overloads SimVolume to provide an infinite Cartesian 
-(3-dimensional, orthoganol dimensions) volume. This corresponds to 
-a traditional gas-phase or no-boundary system.
-
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIREVOL_EXPORT Cartesian 
-          : public SireBase::ConcreteProperty<Cartesian,Space>
+class SIREVOL_EXPORT Cartesian : public Siren::Implements<Cartesian,Space> 
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const Cartesian&);
-friend QDataStream& ::operator>>(QDataStream&, Cartesian&);
-
 public:
     Cartesian();
     Cartesian(const Cartesian &other);
 
-    virtual ~Cartesian();
+    ~Cartesian();
 
     Cartesian& operator=(const Cartesian &other);
     
     bool operator==(const Cartesian &other) const;
     bool operator!=(const Cartesian &other) const;
 
-    static const char* typeName();
-
+    //////////////////////////////
+    // Implements Siren::Object //
+    //////////////////////////////
+    
+    void stream(Siren::Stream &s);
     QString toString() const;
+
+    uint hashCode() const;
+    bool test(Siren::Logger &logger) const;
+    
+    ///////////////////////////////
+    // Implements SireVol::Space //
+    ///////////////////////////////
 
     bool isPeriodic() const;
     bool isCartesian() const;

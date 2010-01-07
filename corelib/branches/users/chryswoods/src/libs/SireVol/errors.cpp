@@ -29,10 +29,25 @@
 #include "SireVol/errors.h"
 
 using namespace SireVol;
+using namespace Siren;
 
-const char* incompatible_space::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<incompatible_space>() );
-}
+//////////
+////////// Implementation of incompatible_space
+//////////
 
-static const RegisterMetaType<incompatible_space> r_incspace;
+static const RegisterObject<incompatible_space> r_incompatible_space;
+
+incompatible_space::incompatible_space() 
+                   : ImplementsException<incompatible_space, exception>()
+{}
+
+incompatible_space::incompatible_space(QString err, QString place)
+                   : ImplementsException<incompatible_space,exception>(err, place)
+{}
+
+incompatible_space::incompatible_space(const incompatible_space &other)
+                   : ImplementsException<incompatible_space,exception>(other)
+{}
+
+incompatible_space::~incompatible_space() throw()
+{}

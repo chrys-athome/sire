@@ -46,58 +46,20 @@
 
 #include "SireBase/countflops.h"
 
-#include "SireError/errors.h"
-#include "SireStream/datastream.h"
+#include "Siren/logger.h"
+#include "Siren/tester.h"
+#include "Siren/errors.h"
+#include "Siren/stream.h"
 
 #include <QDebug>
 
 using namespace SireVol;
 using namespace SireBase;
 using namespace SireMaths;
-using namespace SireStream;
+using namespace Siren;
+using namespace SireUnits::Dimension;
 
-static const RegisterMetaType<PeriodicBox> r_box;
-
-/** Serialise to a binary datastream */
-QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const PeriodicBox &box)
-{
-    writeHeader(ds, r_box, 2)
-               << box.boxlength
-               << static_cast<const Cartesian&>(box);
-
-               //no need to store anything else as it can be regenerated
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, PeriodicBox &box)
-{
-    VersionID v = readHeader(ds, r_box);
-    
-    if (v == 2)
-    {
-        Vector dimensions;
-    
-        ds >> dimensions >> static_cast<Cartesian&>(box);
-        
-        box.setDimensions(dimensions);
-    }
-    else if (v == 1)
-    {
-        Vector mincoords, maxcoords;
-
-        ds >> mincoords >> maxcoords
-           >> static_cast<Cartesian&>(box);
-
-        //regenerate the box dimensions
-        box.setDimensions( maxcoords - mincoords );
-    }
-    else
-        throw version_error(v, "1", r_box, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<PeriodicBox> r_box;
 
 /** This is the maximum dimension of the box (so that .volume() doesn't overflow) */
 const Vector max_boxlength( std::pow(0.9 * std::numeric_limits<double>::max(),
@@ -116,7 +78,7 @@ void PeriodicBox::setDimensions(const Vector &dimensions)
 
     if (boxlength.x() == 0 or boxlength.y() == 0 or boxlength.z() == 0)
     {
-        throw SireError::invalid_arg( QObject::tr(
+        throw Siren::invalid_arg( QObject::tr(
             "Cannot set the box size of dimension %1 as "
             "at least one side is equal to zero.")
                 .arg(boxlength.toString()), CODELOC );
@@ -143,7 +105,7 @@ void PeriodicBox::setDimensions(const Vector &mincoords, const Vector &maxcoords
 }
 
 /** Construct a default PeriodicBox volume (maximum volume) */
-PeriodicBox::PeriodicBox() : ConcreteProperty<PeriodicBox,Cartesian>()
+PeriodicBox::PeriodicBox() : Implements<PeriodicBox,Cartesian>()
 {
     //set this to be a ridiculously large box
     this->setDimensions( max_boxlength );
@@ -151,21 +113,21 @@ PeriodicBox::PeriodicBox() : ConcreteProperty<PeriodicBox,Cartesian>()
 
 /** Construct a PeriodicBox with the specified dimensions */
 PeriodicBox::PeriodicBox(const Vector &dimensions)
-            : ConcreteProperty<PeriodicBox,Cartesian>()
+            : Implements<PeriodicBox,Cartesian>()
 {
     this->setDimensions(dimensions);
 }
 
 /** Construct a PeriodicBox volume that goes from min to max */
 PeriodicBox::PeriodicBox(const Vector &minval, const Vector &maxval)
-            : ConcreteProperty<PeriodicBox,Cartesian>()
+            : Implements<PeriodicBox,Cartesian>()
 {
     this->setDimensions(minval, maxval);
 }
 
 /** Copy constructor */
 PeriodicBox::PeriodicBox(const PeriodicBox &other)
-            : ConcreteProperty<PeriodicBox,Cartesian>(other),
+            : Implements<PeriodicBox,Cartesian>(other),
               boxlength(other.boxlength),
               halflength(other.halflength), invlength(other.invlength)
 {}
@@ -191,13 +153,13 @@ PeriodicBox& PeriodicBox::operator=(const PeriodicBox &other)
 /** Comparison operator */
 bool PeriodicBox::operator==(const PeriodicBox &other) const
 {
-    return boxlength == other.boxlength;
+    return boxlength == other.boxlength and Cartesian::operator==(other);
 }
 
 /** Comparison operator */
 bool PeriodicBox::operator!=(const PeriodicBox &other) const
 {
-    return boxlength != other.boxlength;
+    return not PeriodicBox::operator==(other);
 }
 
 /** A Periodic box is periodic! */
@@ -235,6 +197,64 @@ QString PeriodicBox::toString() const
 {
     return QObject::tr("PeriodicBox( %1 )")
                 .arg( this->dimensions().toString() ); 
+}
+
+void PeriodicBox::stream(Siren::Stream &s)
+{
+    s.assertVersion<PeriodicBox>(1);
+    
+    Schema schema = s.item<PeriodicBox>();
+    
+    schema.data("box_dimensions") & boxlength;
+    
+    if (s.isLoading())
+    {
+        for (int i=0; i<3; ++i)
+        {
+            invlength.set(i, 1.0/boxlength[i]);
+            halflength.set(i, 0.5 * boxlength[i]);
+        }
+    }
+    
+    Cartesian::stream( schema.base() );
+}
+
+uint PeriodicBox::hashCode() const
+{
+    return qHash(PeriodicBox::typeName()) + qHash(boxlength);
+}
+
+bool PeriodicBox::test(Siren::Logger &logger) const
+{
+    Tester tester(*this, logger);
+    
+    try
+    {
+        /// test 1
+        {
+            tester.nextTest();
+            
+            PeriodicBox b;
+            
+            tester.expect_true( QObject::tr("PeriodicBox is cartesian"),
+                                CODELOC,
+                                b.isCartesian() );
+                                
+            tester.expect_true( QObject::tr("PeriodicBox is periodic(!)"),
+                                CODELOC,
+                                b.isPeriodic() );
+        }
+    }
+    catch(const Siren::exception &e)
+    {
+        tester.unexpected_error(e);
+    }
+    catch(...)
+    {
+        tester.unexpected_error( Siren::unknown_error(CODELOC) );
+    }
+    
+    return tester.allPassed();
 }
 
 /** Return the number of boxes that are covered by the distance 'del', where
@@ -283,7 +303,7 @@ SpacePtr PeriodicBox::setVolume(SireUnits::Dimension::Volume vol) const
     double new_volume = vol;
 
     if (new_volume < 0)
-        throw SireError::invalid_arg( QObject::tr(
+        throw Siren::invalid_arg( QObject::tr(
             "You cannot set the volume of a periodic box to a negative value! (%1)")
                 .arg(new_volume), CODELOC );
 
@@ -863,7 +883,7 @@ PeriodicBox::getCopiesWithin(const CoordGroup &group, const CoordGroup &center,
                              double dist) const
 {
     if (dist > max_boxlength.x())
-        throw SireError::invalid_arg( QObject::tr(
+        throw Siren::invalid_arg( QObject::tr(
             "You cannot use a distance (%1) that is greater than the "
             "maximum box length (%2).")
                 .arg(dist).arg(max_boxlength.x()), CODELOC );
@@ -967,9 +987,4 @@ Vector PeriodicBox::getBoxCenter(const Vector &p) const
 Vector PeriodicBox::getBoxCenter(const Vector &p, const Vector &center) const
 {
 	return wrapDelta( center, p );
-}
-
-const char* PeriodicBox::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<PeriodicBox>() );
 }

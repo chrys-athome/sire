@@ -139,8 +139,7 @@ CombineProperties::CombineProperties(const QVector<QString> &properties)
 /** Copy constructor */
 CombineProperties::CombineProperties(const CombineProperties &other)
                   : Extends<CombineProperties,Object>(other), 
-                    property_sources(other.property_sources),
-                    combined_property(other.combined_property)
+                    property_sources(other.property_sources)
 {}
 
 /** Destructor */
@@ -153,7 +152,6 @@ CombineProperties& CombineProperties::operator=(const CombineProperties &other)
     if (this != &other)
     {
         property_sources = other.property_sources;
-        combined_property = other.combined_property;
     }
     
     return *this;
@@ -163,8 +161,7 @@ CombineProperties& CombineProperties::operator=(const CombineProperties &other)
 bool CombineProperties::operator==(const CombineProperties &other) const
 {
     return this == &other or
-           ( property_sources == other.property_sources and
-             combined_property == other.combined_property );
+           ( property_sources == other.property_sources );
 }
 
 /** Comparison operator */
@@ -185,9 +182,13 @@ void CombineProperties::stream(Stream &s)
     Schema schema = s.item<CombineProperties>();
     
     schema.data("sources") & property_sources;
-    schema.data("combined_property") & combined_property;
     
     Object::stream( schema.base() );
+}
+
+uint CombineProperties::hashCode() const
+{
+    return qHash(this->what()) + property_sources.count();
 }
 
 /** Return the ith property source 
@@ -260,17 +261,4 @@ CombineProperties::const_iterator CombineProperties::constEnd() const
 CombineProperties::const_iterator CombineProperties::end() const
 {
     return property_sources.end();
-}
-
-/** Return the combined property. This will be null if this property
-    has not been updated, or if there are no properties to combine */
-const Object& CombineProperties::combinedProperty() const
-{
-    return combined_property;
-}
-
-/** Internal function used to set the combined property */
-void CombineProperties::setCombinedProperty(const Object &property)
-{
-    combined_property = property;
 }

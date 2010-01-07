@@ -33,16 +33,9 @@
 
 #include "SireMaths/vector.h"
 
+#include "Siren/primitive.h"
+
 SIRE_BEGIN_HEADER
-
-namespace SireVol
-{
-class AABox;
-}
-
-class QDataStream;
-QDataStream& operator<<(QDataStream&, const SireVol::AABox&);
-QDataStream& operator>>(QDataStream&, SireVol::AABox&);
 
 namespace SireMaths
 {
@@ -59,19 +52,17 @@ class CoordGroupBase;
 class CoordGroupArray;
 class CoordGroupArrayArray;
 
-/**
-An AABox is an axis-aligned bounding box that is the smallest box that is aligned with the three cartesian axes that completely encases a CoordGroup. It is trivial to obtain the bounding sphere from the AABox. The AABox is used by the distance calculators to quickly determine whether two CoordGroups are within the cutoff radius, and to obtain all CoordGroups that are within particular regions of space.
+/** An AABox is an axis-aligned bounding box that is the smallest box 
+    that is aligned with the three cartesian axes that completely encases 
+    a CoordGroup. It is trivial to obtain the bounding sphere from the AABox. 
+    The AABox is used by the distance calculators to quickly determine whether 
+    two CoordGroups are within the cutoff radius, and to obtain all CoordGroups
+    that are within particular regions of space.
 
-@author Christopher Woods
+    @author Christopher Woods
 */
-class SIREVOL_EXPORT AABox
+class SIREVOL_EXPORT AABox : public Siren::Primitive<AABox>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const AABox&);
-friend QDataStream& ::operator>>(QDataStream&, AABox&);
-
-friend class CoordGroupPvt;
-
 public:
     AABox();
     AABox(const Vector &point);
@@ -84,43 +75,35 @@ public:
     AABox(const CoordGroupArray &cgarray);
     AABox(const CoordGroupArrayArray &cgarrays);
 
+    AABox(const AABox &other);
+
     ~AABox();
 
-    static const char* typeName();
-    
-    const char* what() const
-    {
-        return AABox::typeName();
-    }
-
-    const AABox& operator=(const AABox &other);
+    AABox& operator=(const AABox &other);
 
     bool operator==(const AABox &other) const;
     bool operator!=(const AABox &other) const;
 
-    AABox& operator+=(const AABox &other);
-    AABox& operator+=(const Vector &point);
-    AABox& operator+=(const QVector<Vector> &points);
-
     AABox operator+(const AABox &other) const;
     AABox operator+(const Vector &point) const;
     AABox operator+(const QVector<Vector> &points) const;
+
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
+    
+    bool test() const;
+    bool test(Siren::Logger &logger) const;
 
     QString toString() const;
 
     bool isEmpty() const;
     bool isNull() const;
 
-    void add(const AABox &other);
-    void add(const Vector &point);
-    void add(const QVector<Vector> &points);
+    AABox add(const AABox &other) const;
+    AABox add(const Vector &point) const;
+    AABox add(const QVector<Vector> &points) const;
 
-    void recalculate(const CoordGroupBase &coordgroup);
-    void recalculate(const CoordGroupArray &cgarray);
-    void recalculate(const CoordGroupArrayArray &cgarrays);
-    void recalculate(const QVector<Vector> &coordinates);
-
-    void translate(const Vector &delta);
+    AABox translate(const Vector &delta) const;
 
     const Vector& center() const;
     const Vector& halfExtents() const;
@@ -145,8 +128,12 @@ protected:
     void recalculate(const Vector *coords, int size);
     void recalculate(const AABox *aaboxes, int size);
 
-private:
+    void recalculate(const CoordGroupBase &coordgroup);
+    void recalculate(const CoordGroupArray &cgarray);
+    void recalculate(const CoordGroupArrayArray &cgarrays);
+    void recalculate(const QVector<Vector> &coordinates);
 
+private:
     /** The coordinates of the center of this box */
     Vector cent;
 
@@ -159,15 +146,6 @@ private:
 };
 
 #ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
-/** Copy operator */
-inline const AABox& AABox::operator=(const AABox &box)
-{
-    cent = box.cent;
-    halfextents = box.halfextents;
-    rad = box.rad;
-    return *this;
-}
 
 /** Return the center of the box */
 inline const Vector& AABox::center() const
@@ -207,7 +185,7 @@ inline double AABox::radius() const
 Q_DECLARE_METATYPE(SireVol::AABox)
 Q_DECLARE_TYPEINFO(SireVol::AABox, Q_MOVABLE_TYPE);
 
-SIRE_EXPOSE_CLASS( SireVol::AABox )
+SIRE_EXPOSE_PRIMITIVE( SireVol::AABox )
 
 SIRE_END_HEADER
 

@@ -37,14 +37,6 @@ SIRE_BEGIN_HEADER
 
 namespace SireVol
 {
-class CombineSpaces;
-}
-
-QDataStream& operator<<(QDataStream&, const SireVol::CombineSpaces&);
-QDataStream& operator>>(QDataStream&, SireVol::CombineSpaces&);
-
-namespace SireVol
-{
 
 using SireBase::PropertyName;
 using SireBase::Properties;
@@ -56,12 +48,8 @@ using SireBase::Properties;
     @author Christopher Woods
 */
 class SIREVOL_EXPORT CombineSpaces 
-        : public SireBase::ConcreteProperty<CombineSpaces,SireBase::CombineProperties>
+        : public Siren::Implements<CombineSpaces,SireBase::CombineProperties>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const CombineSpaces&);
-friend QDataStream& ::operator>>(QDataStream&, CombineSpaces&);
-
 public:
     CombineSpaces();
 
@@ -83,9 +71,10 @@ public:
     bool operator==(const CombineSpaces &other) const;
     bool operator!=(const CombineSpaces &other) const;
     
-    static const char* typeName();
-    
-    void updateFrom(const Properties &properties);
+    Siren::ObjRef combine(const Properties &properties) const;
+
+    QString toString() const;
+    void stream(Siren::Stream &s);
 };
 
 }

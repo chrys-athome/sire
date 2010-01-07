@@ -39,6 +39,9 @@
 
 #include "SireMaths/complex.h"
 
+#include "Siren/logger.h"
+#include "Siren/tester.h"
+#include "Siren/errors.h"
 #include "Siren/stream.h"
 #include "Siren/streamqt.h"
 
@@ -58,8 +61,8 @@ Sum::Sum() : Implements<Sum,CASNode>(), strtval(0)
 Sum::Sum(const Expression &ex0, const Expression &ex1) 
     : Implements<Sum,CASNode>(), strtval(0)
 {
-    this->add(ex0);
-    this->add(ex1);
+    this->pvt_add(ex0);
+    this->pvt_add(ex1);
 }
 
 /** Construct the sum of the expressions in 'expressions' */
@@ -68,7 +71,7 @@ Sum::Sum(const QList<Expression> &expressions)
 {
     int n = expressions.count();
     for (int i=0; i<n; ++i)
-        this->add(expressions.at(i));
+        this->pvt_add(expressions.at(i));
 }
 
 /** Copy constructor */
@@ -674,4 +677,72 @@ QList<Factor> Sum::expand(const Symbol &symbol) const
     }
     
     return ret;
+}
+
+bool Sum::test(Logger &logger) const
+{
+    Tester tester(*this, logger);
+    
+    try
+    {
+        Symbol x("x");
+        Symbol y("y");
+        Symbol z("z");
+        
+        // test 1
+        {
+            tester.nextTest();
+            
+            Sum sum( x, y );
+            
+            tester.expect_true( QObject::tr("x + y contains x"),
+                                CODELOC,
+                                sum.symbols().contains(x) );
+
+            tester.expect_true( QObject::tr("x + y contains y"),
+                                CODELOC,
+                                sum.symbols().contains(y) );
+                                
+            tester.expect_false( QObject::tr("x + y doesn't contain z"),
+                                 CODELOC,
+                                 sum.symbols().contains(z) );
+                                 
+            tester.expect_equal( QObject::tr("d (x+y) / dx = 1"),
+                                 CODELOC,
+                                 sum.differentiate(x), Expression(1) );
+                                 
+            tester.expect_equal( QObject::tr("d (x+y) / dy = 1"),
+                                 CODELOC,
+                                 sum.differentiate(y), Expression(1) );
+                                 
+            tester.expect_equal( QObject::tr("d (x+y) / dz = 0"),
+                                 CODELOC,
+                                 sum.differentiate(z), Expression(0) );
+                                 
+            tester.expect_equal( QObject::tr("x + y = 5 if x == 3 and y == 2"),
+                                 CODELOC,
+                                 sum.evaluate( (x==3)+(y==2) ), double(5) );
+        }
+        
+        // test 2
+        {
+            tester.nextTest();
+            
+            Expression f = 3 + x - y;
+            
+            tester.expect_equal( QObject::tr("3 + x - y = 10 if x == 11 and y = 4"),
+                                 CODELOC,
+                                 f( (x==11)+(y==4) ), double(10) );
+        }
+    }
+    catch(const Siren::exception &e)
+    {
+        tester.unexpected_error(e);
+    }
+    catch(...)
+    {
+        tester.unexpected_error( unknown_error(CODELOC) );
+    }
+    
+    return tester.allPassed();
 }

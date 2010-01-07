@@ -62,8 +62,11 @@ int Server::run(int argc, char **argv)
     //now get the client version and key to the shared memory segment
     int client_version = QString(::getenv("SIRENTEST_VERSION")).toInt();
     QString shmem_key = QString( ::getenv("SIRENTEST_SHMEMKEY") );
+    bool print_to_screen = QString( ::getenv("SIRENTEST_PRINT_TO_SCREEN") ).toInt();
     
     Server *server = new Server();
+    
+    server->setPrintToScreen(print_to_screen);
 
     if (not server->connectClient(shmem_key, client_version))
     {
@@ -87,8 +90,13 @@ int Server::run(int argc, char **argv)
     return exit_code;
 }
 
+void Server::setPrintToScreen(bool on)
+{
+    print_to_screen = on;
+}
+
 /** Constructor */
-Server::Server(QObject *parent) : QObject(parent)
+Server::Server(QObject *parent) : QObject(parent), print_to_screen(false)
 {
     message_q = new MessageQueue(this);
     connect(message_q, SIGNAL(receivedMessage()), this, SLOT(receivedMessage()));
@@ -144,7 +152,10 @@ void Server::receivedMessage()
             passed = true;
         else
         {
-            Logger logger( new QTextStream(&test_output, QIODevice::WriteOnly) );
+            Logger logger;
+            
+            if (not print_to_screen)
+                logger = Logger( new QTextStream(&test_output, QIODevice::WriteOnly) );
         
             if (c.isHandle())
             {

@@ -38,14 +38,6 @@ SIRE_BEGIN_HEADER
 
 namespace SireVol
 {
-class CombinedSpace;
-}
-
-QDataStream& operator<<(QDataStream&, const SireVol::CombinedSpace&);
-QDataStream& operator>>(QDataStream&, SireVol::CombinedSpace&);
-
-namespace SireVol
-{
 
 /** This is a space which is built from the combination of a set
     of sub-spaces. This is useful for systems that are comprised
@@ -54,13 +46,8 @@ namespace SireVol
     
     @author Christopher Woods
 */
-class SIREVOL_EXPORT CombinedSpace 
-        : public SireBase::ConcreteProperty<CombinedSpace,Space>
+class SIREVOL_EXPORT CombinedSpace : public Siren::Implements<CombinedSpace,Space>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const CombinedSpace&);
-friend QDataStream& ::operator>>(QDataStream&, CombinedSpace&);
-
 public:
     typedef QVector<SpacePtr>::const_iterator const_iterator;
     typedef const_iterator iterator;
@@ -82,8 +69,6 @@ public:
     bool operator==(const CombinedSpace &other) const;
     bool operator!=(const CombinedSpace &other) const;
     
-    static const char* typeName();
-    
     const Space& operator[](int i) const;
     
     const Space& at(int i) const;
@@ -100,7 +85,19 @@ public:
     const_iterator constEnd() const;
     const_iterator end() const;
 
+    //////////////////////////////
+    // Implements Siren::Object //
+    //////////////////////////////
+    
+    void stream(Siren::Stream &s);
     QString toString() const;
+
+    uint hashCode() const;
+    bool test(Siren::Logger &logger) const;
+    
+    ///////////////////////////////
+    // Implements SireVol::Space //
+    ///////////////////////////////
 
     SireUnits::Dimension::Volume volume() const;
 

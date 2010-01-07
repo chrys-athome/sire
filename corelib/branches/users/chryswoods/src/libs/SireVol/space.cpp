@@ -33,58 +33,44 @@
 
 #include "SireMaths/rangenerator.h"
 
-#include "SireError/errors.h"
-
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
+#include "Siren/errors.h"
+#include "Siren/stream.h"
 
 using namespace SireVol;
 using namespace SireBase;
-using namespace SireStream;
+using namespace Siren;
 
 ///////////////
 /////////////// Implementation of Space
 ///////////////
 
-static const RegisterMetaType<Space> r_space(MAGIC_ONLY, "SireVol::Space");
-
-/** Serialise to a binary datastream */
-QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds,
-                                       const Space &space)
-{
-    writeHeader(ds, r_space, 1)
-            << static_cast<const Property&>(space);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds,
-                                       Space &space)
-{
-    VersionID v = readHeader(ds, r_space);
-
-    if (v == 1)
-    {
-        ds >> static_cast<Property&>(space);
-    }
-    else
-        throw version_error(v, "1", r_space, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<Space> r_space( VIRTUAL_CLASS );
 
 /** Construct a Space. */
-Space::Space() : Property()
+Space::Space() : Extends<Space,Object>()
 {}
 
 /** Copy constructor */
-Space::Space(const Space &other) : Property(other)
+Space::Space(const Space &other) : Extends<Space,Object>(other)
 {}
 
 /** Destructor */
 Space::~Space()
 {}
+
+QString Space::typeName()
+{
+    return "SireVol::Space";
+}
+
+void Space::stream(Stream &s)
+{
+    s.assertVersion<Space>(1);
+    
+    Schema schema = s.item<Space>();
+    
+    Object::stream( schema.base() );
+}
 
 /** Change the volume of this space by 'delta' */
 SpacePtr Space::changeVolume(SireUnits::Dimension::Volume delta) const
@@ -122,17 +108,9 @@ Vector Space::getRandomPoint() const
 */
 void Space::assertCompatible(const Space &other) const
 {
-    if ( QLatin1String(this->what()) != QLatin1String(other.what()) )
-        throw SireError::incompatible_error( QObject::tr(
+    if ( this->what() != other.what() )
+        throw Siren::incompatible_error( QObject::tr(
             "This space (of type \"%1\") is incompatible with "
             "a space of type \"%2\".")
                 .arg(this->what()).arg(other.what()), CODELOC );
-}
-
-Q_GLOBAL_STATIC( Cartesian, nullCartesian )
-
-/** Return the default space (Cartesian infinite box) */
-const Cartesian& Space::null()
-{
-    return *(nullCartesian());
 }

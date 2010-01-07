@@ -91,6 +91,8 @@ public:
 
     QList<Factor> expand(const Symbol &symbol) const;
 
+    bool test(Siren::Logger &logger) const;
+
 private:
     void rebuild();
 

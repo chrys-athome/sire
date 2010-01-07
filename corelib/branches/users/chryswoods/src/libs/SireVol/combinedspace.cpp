@@ -27,6 +27,7 @@
 \*********************************************/
 
 #include "combinedspace.h"
+#include "periodicbox.h"
 
 #include "coordgroup.h"
 
@@ -34,11 +35,13 @@
 
 #include "SireMaths/rangenerator.h"
 
-#include "SireError/errors.h"
+#include "Siren/errors.h"
 #include "SireVol/errors.h"
 
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
+#include "Siren/logger.h"
+#include "Siren/tester.h"
+#include "Siren/stream.h"
+#include "Siren/streamqt.h"
 
 #include <QDebug>
 
@@ -46,48 +49,19 @@ using namespace SireVol;
 using namespace SireBase;
 using namespace SireID;
 using namespace SireUnits::Dimension;
-using namespace SireStream;
+using namespace Siren;
 
 using boost::tuple;
 
-static const RegisterMetaType<CombinedSpace> r_combinedspace;
-
-/** Serialise to a binary datastream */
-QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const CombinedSpace &combined)
-{
-    writeHeader(ds, r_combinedspace, 1);
-    
-    SharedDataStream sds(ds);
-
-    sds << combined.spces << static_cast<const Space&>(combined);
-
-    return ds;
-}
-
-/** Deserialise from a binary datastream */
-QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, CombinedSpace &combined)
-{
-    VersionID v = readHeader(ds, r_combinedspace);
-
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        
-        sds >> combined.spces >> static_cast<Space&>(combined);
-    }
-    else
-        throw version_error(v, "1", r_combinedspace, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<CombinedSpace> r_combinedspace;
 
 /** Construct a default CombinedSpace volume */
-CombinedSpace::CombinedSpace() : ConcreteProperty<CombinedSpace,Space>()
+CombinedSpace::CombinedSpace() : Implements<CombinedSpace,Space>()
 {}
 
 /** Construct a combined space from just a single space */    
 CombinedSpace::CombinedSpace(const Space &space)
-              : ConcreteProperty<CombinedSpace,Space>()
+              : Implements<CombinedSpace,Space>()
 {
     spces.append(space);
     spces.squeeze();
@@ -95,7 +69,7 @@ CombinedSpace::CombinedSpace(const Space &space)
 
 /** Construct a combined space from the passed two spaces */
 CombinedSpace::CombinedSpace(const Space &space0, const Space &space1)
-              : ConcreteProperty<CombinedSpace,Space>()
+              : Implements<CombinedSpace,Space>()
 {
     spces.append(space0);
     spces.append(space1);
@@ -104,7 +78,7 @@ CombinedSpace::CombinedSpace(const Space &space0, const Space &space1)
 
 /** Construct a combined space from the passed spaces */
 CombinedSpace::CombinedSpace(const QList<SpacePtr> &spaces)
-              : ConcreteProperty<CombinedSpace,Space>()
+              : Implements<CombinedSpace,Space>()
 {
     if (not spaces.isEmpty())
     {
@@ -123,7 +97,7 @@ CombinedSpace::CombinedSpace(const QList<SpacePtr> &spaces)
 
 /** Construct a combined space from the passed spaces */
 CombinedSpace::CombinedSpace(const QVector<SpacePtr> &spaces)
-              : ConcreteProperty<CombinedSpace,Space>(),
+              : Implements<CombinedSpace,Space>(),
                 spces(spaces)
 {
     spces.squeeze();
@@ -131,7 +105,7 @@ CombinedSpace::CombinedSpace(const QVector<SpacePtr> &spaces)
 
 /** Copy constructor */
 CombinedSpace::CombinedSpace(const CombinedSpace &other) 
-              : ConcreteProperty<CombinedSpace,Space>(other), spces(other.spces)
+              : Implements<CombinedSpace,Space>(other), spces(other.spces)
 {}
 
 /** Destructor */
@@ -273,6 +247,64 @@ QString CombinedSpace::toString() const
         return QString( "CombinedSpace{ %1 }" )
                     .arg(space_strings.join(" : "));
     }
+}
+
+void CombinedSpace::stream(Stream &s)
+{
+    s.assertVersion<CombinedSpace>(1);
+    
+    Schema schema = s.item<CombinedSpace>();
+    
+    schema.data("spaces") & spces;
+    
+    Space::stream( schema.base() );
+}
+
+uint CombinedSpace::hashCode() const
+{
+    return qHash(CombinedSpace::typeName()) + spces.count();
+}
+
+bool CombinedSpace::test(Logger &logger) const
+{
+    Tester tester(*this, logger);
+    
+    try
+    {
+        ///first test
+        {
+            tester.nextTest();
+            
+            PeriodicBox b( Vector(10,20,30) );
+            Cartesian c;
+            
+            CombinedSpace s(b, c);
+            
+            tester.expect_equal( QObject::tr("Number of spaces is 2"),
+                                 CODELOC,
+                                 s.nSpaces(), 2 );
+                                 
+                                 
+            tester.expect_true( QObject::tr("First space is periodic"),
+                                 CODELOC,
+                                 s[0].equals(b) );
+                                 
+            tester.expect_true( QObject::tr("Second space is cartesian"),
+                                 CODELOC,
+                                 s[1].equals(c) );
+        }
+    
+    }
+    catch(const Siren::exception &e)
+    {
+        tester.unexpected_error(e);
+    }
+    catch(...)
+    {
+        tester.unexpected_error( Siren::unknown_error(CODELOC) );
+    }
+    
+    return tester.allPassed();
 }
 
 /** A CombinedSpace is only periodic of all of the contained
@@ -604,9 +636,4 @@ CombinedSpace::getCopiesWithin(const CoordGroup &group, const CoordGroup &center
 {
     this->assertSameSpace("Cannot get close copies", CODELOC);
     return spces.at(0).read().getCopiesWithin(group, center, dist);
-}
-
-const char* CombinedSpace::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<CombinedSpace>() );
 }

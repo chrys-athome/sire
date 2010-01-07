@@ -33,78 +33,52 @@
 
 #include "SireBase/properties.h"
 
-#include "SireStream/datastream.h"
+#include "Siren/stream.h"
 
 using namespace SireVol;
 using namespace SireBase;
-using namespace SireStream;
+using namespace Siren;
 
-static const RegisterMetaType<CombineSpaces> r_combinespaces;
-
-/** Serialise to a binary datastream */
-QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, 
-                                       const CombineSpaces &combinespaces)
-{
-    writeHeader(ds, r_combinespaces, 1);
-    
-    ds << static_cast<const CombineProperties&>(combinespaces);
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, CombineSpaces &combinespaces)
-{
-    VersionID v = readHeader(ds, r_combinespaces);
-    
-    if (v == 1)
-    {
-        ds >> static_cast<CombineProperties&>(combinespaces);
-    }
-    else
-        throw version_error( v, "1", r_combinespaces, CODELOC );
-        
-    return ds;
-}
+static const RegisterObject<CombineSpaces> r_combinespaces;
 
 /** Constructor */
-CombineSpaces::CombineSpaces() : ConcreteProperty<CombineSpaces,CombineProperties>()
+CombineSpaces::CombineSpaces() : Implements<CombineSpaces,CombineProperties>()
 {}
 
 /** Construct to use just as single space, from the supplied source */
 CombineSpaces::CombineSpaces(const PropertyName &source)
-              : ConcreteProperty<CombineSpaces,CombineProperties>(source)
+              : Implements<CombineSpaces,CombineProperties>(source)
 {}
 
 /** Construct to combine together the two spaces specified by the 
     two supplied sources */
 CombineSpaces::CombineSpaces(const PropertyName &source0, const PropertyName &source1)
-              : ConcreteProperty<CombineSpaces,CombineProperties>(source0, source1)
+              : Implements<CombineSpaces,CombineProperties>(source0, source1)
 {}
 
 /** Construct to combine together the spaces from the passed sources */
 CombineSpaces::CombineSpaces(const QList<PropertyName> &sources)
-              : ConcreteProperty<CombineSpaces,CombineProperties>(sources)
+              : Implements<CombineSpaces,CombineProperties>(sources)
 {}
 
 /** Construct to combine together the spaces from the passed sources */
 CombineSpaces::CombineSpaces(const QVector<PropertyName> &sources)
-              : ConcreteProperty<CombineSpaces,CombineProperties>(sources)
+              : Implements<CombineSpaces,CombineProperties>(sources)
 {}
 
 /** Construct to combine together the spaces from the passed sources */
 CombineSpaces::CombineSpaces(const QList<QString> &sources)
-              : ConcreteProperty<CombineSpaces,CombineProperties>(sources)
+              : Implements<CombineSpaces,CombineProperties>(sources)
 {}
 
 /** Construct to combine together the spaces from the passed sources */
 CombineSpaces::CombineSpaces(const QVector<QString> &sources)
-              : ConcreteProperty<CombineSpaces,CombineProperties>(sources)
+              : Implements<CombineSpaces,CombineProperties>(sources)
 {}
 
 /** Copy constructor */
 CombineSpaces::CombineSpaces(const CombineSpaces &other)
-              : ConcreteProperty<CombineSpaces,CombineProperties>(other)
+              : Implements<CombineSpaces,CombineProperties>(other)
 {}
 
 /** Destructor */
@@ -130,22 +104,45 @@ bool CombineSpaces::operator!=(const CombineSpaces &other) const
     return CombineProperties::operator!=(other);
 }
 
-/** Update this combined space by extracting the required space 
+QString CombineSpaces::toString() const
+{
+    QStringList sources;
+    
+    for (CombineProperties::const_iterator it = this->constBegin();
+         it != this->constEnd();
+         ++it)
+    {
+        sources.append( it->toString() );
+    }
+
+    return QObject::tr("CombineSpaces( from [ %1 ] )")
+                .arg(sources.join(", "));
+}
+
+void CombineSpaces::stream(Stream &s)
+{
+    s.assertVersion<CombineSpaces>(1);
+    
+    Schema schema = s.item<CombineSpaces>();
+    
+    CombineProperties::stream( schema.base() );
+}
+
+/** Return the combined space by extracting the required space 
     properties from 'properties'
     
     \throw SireBase::missing_property
     \throw SireError::invalid_cast
     \throw SireError::incompatible_error
 */
-void CombineSpaces::updateFrom(const Properties &properties)
+ObjRef CombineSpaces::combine(const Properties &properties) const
 {
     if (this->isEmpty())
-        return;
+        return ObjRef();
         
     else if (this->count() == 1)
     {
-        this->setCombinedProperty( properties.property(this->at(0))
-                                             .asA<Space>() );
+        return properties.property(this->at(0)).asA<Space>();
     }
     else
     {
@@ -158,11 +155,6 @@ void CombineSpaces::updateFrom(const Properties &properties)
             spaces.append( properties.property(*it).asA<Space>() );
         }
         
-        this->setCombinedProperty( CombinedSpace(spaces) );
+        return CombinedSpace(spaces);
     }
-}
-
-const char* CombineSpaces::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<CombineSpaces>() );
 }

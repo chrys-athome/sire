@@ -37,24 +37,6 @@
 
 SIRE_BEGIN_HEADER
 
-namespace SireVol
-{
-class CoordGroupBase;
-class CoordGroup;
-class CoordGroupEditor;
-class CoordGroupArray;
-class CoordGroupArrayArray;
-}
-
-QDataStream& operator<<(QDataStream&, const SireVol::CoordGroup&);
-QDataStream& operator>>(QDataStream&, SireVol::CoordGroup&);
-
-QDataStream& operator<<(QDataStream&, const SireVol::CoordGroupArray&);
-QDataStream& operator>>(QDataStream&, SireVol::CoordGroupArray&);
-
-QDataStream& operator<<(QDataStream&, const SireVol::CoordGroupArrayArray&);
-QDataStream& operator>>(QDataStream&, SireVol::CoordGroupArrayArray&);
-
 namespace SireMaths
 {
 class AxisSet;
@@ -68,138 +50,138 @@ namespace SireVol
 
 namespace detail
 {
-class CGArrayArrayData;
-class CGArrayData;
-class CGData;
-class CGMemory;
+    class CGArrayArrayData;
+    class CGArrayData;
+    class CGData;
+    class CGMemory;
 
-/** This is the implicitly shared pointer class that 
-    is used to hold any of the CGMemory allocated objects
-    
-    @author Christopher Woods
-*/
-template<class T>
-class CGSharedPtr
-{
+    /** This is the implicitly shared pointer class that 
+        is used to hold any of the CGMemory allocated objects
+        
+        @author Christopher Woods
+    */
+    template<class T>
+    class CGSharedPtr
+    {
 
-public:
-    CGSharedPtr() : ptr(0)
-    {}
+    public:
+        CGSharedPtr() : ptr(0)
+        {}
 
-    CGSharedPtr(const T *p)
-    {
-        ptr = const_cast<T*>(p);
-    
-        if (ptr)
-            ptr->incref();
-    }
-    
-    CGSharedPtr(const CGSharedPtr &other) : ptr(other.ptr)
-    {
-        if (ptr)
-            ptr->incref();
-    }
-    
-    ~CGSharedPtr()
-    {
-        if (ptr)
-            ptr->decref();
-    }
-    
-    CGSharedPtr<T>& operator=(const CGSharedPtr &other)
-    {
-        if (ptr != other.ptr)
+        CGSharedPtr(const T *p)
         {
-            T *new_ptr = other.ptr;
-            
-            //increment the other reference count
-            if (new_ptr)
-                new_ptr->incref();
+            ptr = const_cast<T*>(p);
+        
+            if (ptr)
+                ptr->incref();
+        }
+        
+        CGSharedPtr(const CGSharedPtr &other) : ptr(other.ptr)
+        {
+            if (ptr)
+                ptr->incref();
+        }
+        
+        ~CGSharedPtr()
+        {
+            if (ptr)
+                ptr->decref();
+        }
+        
+        CGSharedPtr<T>& operator=(const CGSharedPtr &other)
+        {
+            if (ptr != other.ptr)
+            {
+                T *new_ptr = other.ptr;
                 
-            //decrement our reference count
+                //increment the other reference count
+                if (new_ptr)
+                    new_ptr->incref();
+                    
+                //decrement our reference count
+                if (ptr)
+                    ptr->decref();
+                    
+                //set the new pointer
+                ptr = new_ptr;
+            }
+            
+            return *this;
+        }
+        
+        const T& operator*() const
+        {
+            return *ptr;
+        }
+        
+        const T* operator->() const
+        {
+            return ptr;
+        }
+        
+        T& operator*()
+        {
+            if (ptr)
+                ptr = ptr->detach();
+                
+            return *ptr;
+        }
+        
+        T* operator->()
+        {
+            if (ptr)
+                ptr = ptr->detach();
+                
+            return ptr;
+        }
+        
+        const T* data() const
+        {
+            return ptr;
+        }
+        
+        const T* constData() const
+        {
+            return ptr;
+        }
+        
+        T* data()
+        {
+            if (ptr)
+                ptr = ptr->detach();
+            
+            return ptr;
+        }
+        
+        /** Assign this pointer to point at 'weakptr' 
+            but *without* changing the reference count.
+            You ABSOLUTELY MUST ensure that you call 
+            CGSharedPtr::weakRelease() before this 
+            pointer is deleted or reassigned, so 
+            as to not decrement the reference count incorrectly! */
+        void weakAssign(T *weakptr)
+        {
             if (ptr)
                 ptr->decref();
                 
-            //set the new pointer
-            ptr = new_ptr;
+            ptr = weakptr;
         }
         
-        return *this;
-    }
-    
-    const T& operator*() const
-    {
-        return *ptr;
-    }
-    
-    const T* operator->() const
-    {
-        return ptr;
-    }
-    
-    T& operator*()
-    {
-        if (ptr)
-            ptr = ptr->detach();
-            
-        return *ptr;
-    }
-    
-    T* operator->()
-    {
-        if (ptr)
-            ptr = ptr->detach();
-            
-        return ptr;
-    }
-    
-    const T* data() const
-    {
-        return ptr;
-    }
-    
-    const T* constData() const
-    {
-        return ptr;
-    }
-    
-    T* data()
-    {
-        if (ptr)
-            ptr = ptr->detach();
+        /** Release the pointer *without* decrementing the
+            reference count. You should only call this
+            function if the pointer was assigned using 
+            the 'weakAssign()' function */
+        void weakRelease()
+        {
+            ptr = 0;
+        }
         
-        return ptr;
-    }
-    
-    /** Assign this pointer to point at 'weakptr' 
-        but *without* changing the reference count.
-        You ABSOLUTELY MUST ensure that you call 
-        CGSharedPtr::weakRelease() before this 
-        pointer is deleted or reassigned, so 
-        as to not decrement the reference count incorrectly! */
-    void weakAssign(T *weakptr)
-    {
-        if (ptr)
-            ptr->decref();
-            
-        ptr = weakptr;
-    }
-    
-    /** Release the pointer *without* decrementing the
-        reference count. You should only call this
-        function if the pointer was assigned using 
-        the 'weakAssign()' function */
-    void weakRelease()
-    {
-        ptr = 0;
-    }
-    
-private:
-    /** Actual pointer */
-    T *ptr;
-};
+    private:
+        /** Actual pointer */
+        T *ptr;
+    };
 
-};
+} // end of namespace detail
 
 using SireMaths::Vector;
 using SireMaths::Quaternion;
@@ -216,30 +198,18 @@ using SireMaths::AxisSet;
 
     @author Christopher Woods
 */
-class SIREVOL_EXPORT CoordGroupBase
+class SIREVOL_EXPORT CoordGroupBase 
+            : public Siren::Extends<CoordGroupBase,Siren::Object>
 {
-
-friend class detail::CGData; // so can see d pointer
-friend class detail::CGMemory; // so can see d pointer
-
-friend class CoordGroupArray;
-friend class CoordGroupArrayArray;
-
 public:
     ~CoordGroupBase();
 
-    static const char *typeName()
-    {
-        return "SireVol::CoordGroupBase";
-    }
-    
-    const char* what() const
-    {
-        return CoordGroupBase::typeName();
-    }
+    static QString typeName();
 
     bool operator==(const CoordGroupBase &other) const;
     bool operator!=(const CoordGroupBase &other) const;
+
+    void stream(Siren::Stream &s);
 
     bool maybeDifferent(const CoordGroupBase &other) const;
 
@@ -264,6 +234,12 @@ public:
     void assertSameSize(const CoordGroupBase &other) const;
 
 protected:
+    friend class detail::CGData; // so can see d pointer
+    friend class detail::CGMemory; // so can see d pointer
+
+    friend class CoordGroupArray;
+    friend class CoordGroupArrayArray;
+
     CoordGroupBase();
     CoordGroupBase(detail::CGData *data);
 
@@ -294,16 +270,9 @@ protected:
 
     @author Christopher Woods
 */
-class SIREVOL_EXPORT CoordGroup : public CoordGroupBase
+class SIREVOL_EXPORT CoordGroup 
+            : public Siren::Implements<CoordGroup,CoordGroupBase>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const CoordGroup&);
-friend QDataStream& ::operator>>(QDataStream&, CoordGroup&);
-
-friend class CoordGroupEditor;
-friend class detail::CGData; // so can see d pointer
-friend class detail::CGMemory; // so can see d pointer
-
 public:
     CoordGroup();
     CoordGroup(quint32 size);
@@ -313,23 +282,26 @@ public:
     CoordGroup(const CoordGroupArrayArray &cgarrays);
     CoordGroup(const QVector<Vector> &points);
 
+    CoordGroup(const CoordGroupEditor &editor);
+
     CoordGroup(const CoordGroup &other);
 
     ~CoordGroup();
-
-    static const char* typeName();
-    
-    const char* what() const
-    {
-        return CoordGroup::typeName();
-    }
 
     CoordGroup& operator=(const CoordGroup &other);
     CoordGroup& operator=(CoordGroupEditor &other);
 
     CoordGroupEditor edit() const;
 
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
+
 private:
+    friend class CoordGroupEditor;
+    friend class detail::CGData; // so can see d pointer
+    friend class detail::CGMemory; // so can see d pointer
+
     CoordGroup(const CoordGroupEditor &other);
 
     CoordGroup(detail::CGData *data);
@@ -363,7 +335,9 @@ private:
 
     @author Christopher Woods
 */
-class SIREVOL_EXPORT CoordGroupEditor : public CoordGroupBase
+class SIREVOL_EXPORT CoordGroupEditor 
+            : public Siren::Implements<CoordGroupEditor,CoordGroupBase>,
+              public Siren::Interfaces<CoordGroupEditor,Siren::Mutable>
 {
 public:
     CoordGroupEditor();
@@ -373,15 +347,14 @@ public:
 
     ~CoordGroupEditor();
 
-    static const char* typeName();
-    
-    const char* what() const
-    {
-        return CoordGroupEditor::typeName();
-    }
-
     CoordGroupEditor& operator=(const CoordGroup &cgroup);
     CoordGroupEditor& operator=(const CoordGroupEditor &other);
+
+    QString toString() const;
+    void stream(Siren::Stream &s);
+
+    Siren::ObjRef saveState() const;
+    void restoreState(const Siren::Object &object);
 
     Vector& operator[](quint32 i);
 
@@ -413,11 +386,6 @@ public:
 
     CoordGroup commit();
 
-    operator CoordGroup()
-    {
-        return this->commit();
-    }
-
 private:
     /** Whether or not the AABox needs to be recalculated */
     bool needsupdate;
@@ -442,17 +410,10 @@ private:
         
     @author Christopher Woods
 */
-class SIREMOL_EXPORT CoordGroupArray
+class SIREMOL_EXPORT CoordGroupArray 
+            : public Siren::Implements<CoordGroupArray,Siren::Object>,
+              public Siren::Interfaces<CoordGroupArray,Siren::Mutable>
 {
-
-friend class detail::CGArrayData; // so can see d pointer
-friend class detail::CGMemory; // so can see d pointer
-
-friend class CoordGroupArrayArray;
-
-friend QDataStream& ::operator<<(QDataStream&, const CoordGroupArray&);
-friend QDataStream& ::operator>>(QDataStream&, CoordGroupArray&);
-
 public:
     CoordGroupArray();
     CoordGroupArray(const CoordGroup &cgroup);
@@ -466,18 +427,18 @@ public:
     
     CoordGroupArray& operator=(const CoordGroupArray &other);
     
-    static const char* typeName();
-    
-    const char* what() const
-    {
-        return CoordGroupArray::typeName();
-    }
-    
     bool operator==(const CoordGroupArray &other) const;
     bool operator!=(const CoordGroupArray &other) const;
 
     const CoordGroup& operator[](quint32 i) const;
     const CoordGroup& at(quint32 i) const;
+
+    Siren::ObjRef saveState() const;
+    void restoreState(const Siren::Object &object);
+    
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     int count() const;
     int size() const;
@@ -524,6 +485,11 @@ public:
     void assertValidCoordinate(quint32 i) const;
 
 protected:
+    friend class detail::CGArrayData; // so can see d pointer
+    friend class detail::CGMemory; // so can see d pointer
+
+    friend class CoordGroupArrayArray;
+
     CoordGroupArray(detail::CGArrayData *data);
 
     /** Implicitly shared pointer to the data for this array */
@@ -541,11 +507,9 @@ protected:
     @author Christopher Woods
 */
 class SIREMOL_EXPORT CoordGroupArrayArray
+         : public Siren::Implements<CoordGroupArrayArray,Siren::Object>,
+           public Siren::Interfaces<CoordGroupArrayArray,Siren::Mutable>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const CoordGroupArrayArray&);
-friend QDataStream& ::operator>>(QDataStream&, CoordGroupArrayArray&);
-
 public:
     CoordGroupArrayArray();
     
@@ -560,17 +524,17 @@ public:
     
     ~CoordGroupArrayArray();
     
-    static const char* typeName();
-    
-    const char* what() const
-    {
-        return CoordGroupArrayArray::typeName();
-    }
-    
     CoordGroupArrayArray& operator=(const CoordGroupArrayArray &other);
     
     bool operator==(const CoordGroupArrayArray &other) const;
     bool operator!=(const CoordGroupArrayArray &other) const;
+
+    Siren::ObjRef saveState() const;
+    void restoreState(const Siren::Object &object);
+    
+    QString toString() const;
+    uint hashCode() const;
+    void stream(Siren::Stream &s);
 
     const CoordGroupArray& operator[](quint32 i) const;
     const CoordGroupArray& at(quint32 i) const;

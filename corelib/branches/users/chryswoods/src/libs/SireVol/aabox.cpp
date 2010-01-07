@@ -33,85 +33,85 @@
 
 #include <QDebug>
 
-#include "SireStream/datastream.h"
+#include "Siren/datastream.h"
+#include "Siren/logger.h"
+#include "Siren/tester.h"
+#include "Siren/errors.h"
 
-using namespace SireStream;
+using namespace Siren;
 using namespace SireVol;
 
-static const RegisterMetaType<AABox> r_aabox;
+static const RegisterPrimitive<AABox> r_aabox;
 
-/** Serialise an AABox to a binary datastream */
-QDataStream SIREVOL_EXPORT &operator<<(QDataStream &ds, const AABox &aabox)
-{
-    writeHeader(ds, r_aabox, 1) << aabox.cent << aabox.halfextents << aabox.rad;
-
-    return ds;
-}
-
-/** Deserialise an AABox from a binary datastream */
-QDataStream SIREVOL_EXPORT &operator>>(QDataStream &ds, AABox &aabox)
-{
-    VersionID v = readHeader(ds, r_aabox);
-
-    if (v == 1)
-    {
-        ds >> aabox.cent >> aabox.halfextents >> aabox.rad;
-    }
-    else
-        throw version_error(v, "1", r_aabox, CODELOC);
-
-    return ds;
-}
+namespace Siren{ template class PrimitiveObject<AABox>; }
 
 /** Construct an empty AABox */
-AABox::AABox() : cent(), halfextents(), rad(0)
+AABox::AABox() : Primitive<AABox>(), cent(), halfextents(), rad(0)
 {}
 
 /** Construct an AABox that completely encloses the point 'point' */
-AABox::AABox(const Vector &point) : cent(point), halfextents(), rad(0)
+AABox::AABox(const Vector &point) 
+      : Primitive<AABox>(), cent(point), halfextents(), rad(0)
 {}
 
 /** Construct an AABox with center at 'cent', and half-extents 'extents' */
-AABox::AABox(const Vector &c, const Vector &extents) : cent(c), halfextents(extents)
+AABox::AABox(const Vector &c, const Vector &extents) 
+      : Primitive<AABox>(), cent(c), halfextents(extents)
 {
     rad = halfextents.length();
 }
 
 /** Construct an AABox that completely encases the CoordGroup 'coordgroup' */
-AABox::AABox(const CoordGroupBase &coordgroup)
+AABox::AABox(const CoordGroupBase &coordgroup) : Primitive<AABox>()
 {
     recalculate(coordgroup);
 }
 
 /** Construct an AABox that completely encases all of the points in all of the
     CoordGroups in 'cgarray' */
-AABox::AABox(const CoordGroupArray &cgarray)
+AABox::AABox(const CoordGroupArray &cgarray) : Primitive<AABox>()
 {
     recalculate(cgarray.constAABoxData(), cgarray.nCoordGroups());
 }
 
 /** Construct an AABox that completely encases all of the points in all of the
     CoordGroups in all of the arrays in 'cgarrays' */
-AABox::AABox(const CoordGroupArrayArray &cgarrays)
+AABox::AABox(const CoordGroupArrayArray &cgarrays) : Primitive<AABox>()
 {
     recalculate(cgarrays.constAABoxData(), cgarrays.nCoordGroups());
 }
 
 /** Construct an AABox that completely encases the points  in 'coordinates' */
-AABox::AABox(const QVector<Vector> &coordinates)
+AABox::AABox(const QVector<Vector> &coordinates) : Primitive<AABox>()
 {
     recalculate(coordinates);
 }
 
 /** Construct an AABox that completely encases the points in 'coords' */
-AABox::AABox(const Vector *coords, int ncoords)
+AABox::AABox(const Vector *coords, int ncoords) : Primitive<AABox>()
 {
     recalculate(coords, ncoords);
 }
 
+/** Copy constructor */
+AABox::AABox(const AABox &other) : Primitive<AABox>(other)
+{}
+
 /** Destructor */
 AABox::~AABox()
 {}
+
+AABox& AABox::operator=(const AABox &other)
+{
+    if (this != &other)
+    {
+        cent = other.cent;
+        halfextents = other.halfextents;
+        rad = other.rad;
+    }
+    
+    return *this;
+}
 
 /** Comparison operator */
 bool AABox::operator==(const AABox &other) const
@@ -123,8 +123,7 @@ bool AABox::operator==(const AABox &other) const
 /** Comparison operator */
 bool AABox::operator!=(const AABox &other) const
 {
-    return this != &other and
-          (rad != other.rad or cent != other.cent or halfextents != other.halfextents);
+    return not AABox::operator==(other);
 }
 
 /** Return if the AABox is null */
@@ -168,6 +167,79 @@ AABox AABox::from(const CoordGroupArray &cgarray)
 AABox AABox::from(const CoordGroupArrayArray &cgarrays)
 {
     return AABox(cgarrays);
+}
+
+uint AABox::hashCode() const
+{
+    return qHash( AABox::typeName() ) + qHash(cent) + qHash(halfextents);
+}
+
+void AABox::stream(Stream &s)
+{
+    s.assertVersion<AABox>(1);
+
+    Schema schema = s.item<AABox>();
+    
+    schema.data("center") & cent;
+    schema.data("half_extents") & halfextents;
+    
+    if (s.isLoading())
+        rad = halfextents.length();
+}
+
+bool AABox::test(Siren::Logger &logger) const
+{
+    Tester tester(*this, logger);
+    
+    try
+    {
+        /// test 1
+        {
+            tester.nextTest();
+            
+            AABox a;
+            
+            tester.expect_true( QObject::tr("Null box is null"),
+                                CODELOC,
+                                a.isNull() );
+                            
+            tester.expect_true( QObject::tr("Null box is empty"),
+                                CODELOC,
+                                a.isEmpty() );
+                                
+            tester.expect_equal( QObject::tr("Null box has no radius"),
+                                 CODELOC,
+                                 a.radius(), 0.0 );
+                                 
+            tester.expect_equal( QObject::tr("Null box is at the origin"),
+                                 CODELOC,
+                                 a.center(), Vector(0,0,0) );
+                                 
+            tester.expect_equal( QObject::tr("Null box top is at the center"),
+                                 CODELOC,
+                                 a.maxCoords(), Vector(0,0,0) );
+                                 
+            tester.expect_equal( QObject::tr("Null box bottom is at the center"),
+                                 CODELOC,
+                                 a.maxCoords(), Vector(0,0,0) );
+        }
+    }
+    catch(const Siren::exception &e)
+    {
+        tester.unexpected_error(e);
+    }
+    catch(...)
+    {
+        tester.unexpected_error( unknown_error(CODELOC) );
+    }
+    
+    return tester.allPassed();
+}
+    
+bool AABox::test() const
+{
+    Logger l;
+    return this->test(l);
 }
 
 /** Return a string representation of this AABox */
@@ -308,126 +380,137 @@ bool AABox::intersects(const AABox &box) const
     return dx <= 0.0 and dy <= 0.0 and dz <= 0.0;
 }
 
-/** Translate this AABox by 'delta' */
-void AABox::translate(const Vector &delta)
+/** Return a copy of this box that has been translated by 'delta' */
+AABox AABox::translate(const Vector &delta) const
 {
-    cent += delta;
-}
+    AABox ret(*this);
 
-/** Add another AABox to this one - this forms the union of both of the
-    boxes. */
-AABox& AABox::operator+=(const AABox &other)
-{
-    Vector mincoords = this->minCoords();
-    Vector maxcoords = this->maxCoords();
-
-    Vector old_mincoords = mincoords;
-    Vector old_maxcoords = maxcoords;
-
-    mincoords.setMin( other.minCoords() );
-    maxcoords.setMax( other.maxCoords() );
-
-    if (mincoords != old_mincoords or
-        maxcoords != old_maxcoords)
-    {
-        cent = 0.5 * (maxcoords + mincoords);
-
-        halfextents = maxcoords - cent;
-
-        rad = halfextents.length();
-    }
-
-    return *this;
+    ret.cent += delta;
+    
+    return ret;
 }
 
 /** Add another AABox to this one - this forms the union of both of the
     boxes. */
 AABox AABox::operator+(const AABox &other) const
 {
-    AABox ret = *this;
-    ret += other;
-    return ret;
-}
+    Vector this_mincoords = this->minCoords();
+    Vector this_maxcoords = this->maxCoords();
+    
+    Vector other_mincoords = other.minCoords();
+    Vector other_maxcoords = other.maxCoords();
+    
+    Vector ret_mincoords = this_mincoords;
+    Vector ret_maxcoords = this_maxcoords;
+    
+    ret_mincoords.setMin(other_mincoords);
+    ret_maxcoords.setMax(other_maxcoords);
 
-/** Add another AABox to this one - this forms the union of both of the
-    boxes. */
-void AABox::add(const AABox &other)
-{
-    *this += other;
-}
+    ret_mincoords.setMin( other.minCoords() );
+    ret_maxcoords.setMax( other.maxCoords() );
 
-/** Add a point to this box */
-AABox& AABox::operator+=(const Vector &point)
-{
-    Vector mincoords = this->minCoords();
-    Vector maxcoords = this->maxCoords();
-
-    Vector old_mincoords = mincoords;
-    Vector old_maxcoords = maxcoords;
-
-    mincoords.setMin( point );
-    maxcoords.setMax( point );
-
-    if (old_mincoords != mincoords or
-        old_maxcoords != maxcoords)
+    if (ret_mincoords == this_mincoords and 
+        ret_maxcoords == this_maxcoords)
     {
-        cent = 0.5 * (maxcoords + mincoords);
-
-        halfextents = maxcoords - cent;
-
-        rad = halfextents.length();
+        return *this;
     }
+    else if (ret_mincoords == other_mincoords and
+             ret_maxcoords == other_maxcoords)
+    {
+        return other;
+    }
+    else
+    {
+        AABox ret;
 
-    return *this;
+        ret.cent = 0.5 * (ret_maxcoords + ret_mincoords);
+
+        ret.halfextents = ret_maxcoords - ret.cent;
+
+        ret.rad = ret.halfextents.length();
+
+        return ret;
+    }
 }
 
-/** Add a point to this box */
+/** Return an AABox that has this box added to 'other' */
+AABox AABox::add(const AABox &other) const
+{
+    return *this + other;
+}
+
+/** Return the addition of the point 'point' to this box */
 AABox AABox::operator+(const Vector &point) const
 {
-    AABox ret = *this;
-    ret += point;
-    return ret;
+    Vector this_mincoords = minCoords();
+    Vector this_maxcoords = maxCoords();
+    
+    Vector ret_mincoords = this_mincoords;
+    Vector ret_maxcoords = this_maxcoords;
+
+    ret_mincoords.setMin( point );
+    ret_maxcoords.setMax( point );
+
+    if (ret_mincoords != this_mincoords or
+        ret_maxcoords != this_maxcoords)
+    {
+        AABox ret;
+    
+        ret.cent = 0.5 * (ret_maxcoords + ret_mincoords);
+
+        ret.halfextents = ret_maxcoords - ret.cent;
+
+        ret.rad = ret.halfextents.length();
+    
+        return ret;
+    }
+    else
+        return *this;
 }
 
-/** Add a point to this box */
-void AABox::add(const Vector &point)
+/** Return the addition of the point 'point' to this box */
+AABox AABox::add(const Vector &point) const
 {
-    *this += point;
+    return *this + point;
 }
 
-/** Add lots of points to this box */
-AABox& AABox::operator+=(const QVector<Vector> &points)
+/** Return the addition of lots of points to this box */
+AABox AABox::operator+(const QVector<Vector> &points) const
 {
     if (points.isEmpty())
         return *this;
 
-    Vector mincoords = this->minCoords();
-    Vector maxcoords = this->maxCoords();
-
-    Vector old_mincoords = mincoords;
-    Vector old_maxcoords = maxcoords;
-
     int npoints = points.count();
     const Vector *points_array = points.constData();
+
+    Vector this_mincoords = minCoords();
+    Vector this_maxcoords = maxCoords();
+    
+    Vector ret_mincoords = this_mincoords;
+    Vector ret_maxcoords = this_maxcoords;
 
     for (int i=0; i<npoints; ++i)
     {
         const Vector &point = points_array[i];
-        mincoords.setMin(point);
-        maxcoords.setMax(point);
+        ret_mincoords.setMin(point);
+        ret_maxcoords.setMax(point);
     }
 
-    if (mincoords != old_mincoords or
-        maxcoords != old_maxcoords)
+    if (ret_mincoords != this_mincoords or
+        ret_maxcoords != this_maxcoords)
     {
-        cent = 0.5 * (maxcoords + mincoords);
+        AABox ret;
+    
+        ret.cent = 0.5 * (ret_maxcoords + ret_mincoords);
 
-        halfextents = maxcoords - cent;
+        ret.halfextents = ret_maxcoords - ret.cent;
 
-        rad = halfextents.length();
+        ret.rad = ret.halfextents.length();
+        
+        return ret;
     }
-
-    return *this;
+    else
+        return *this;
 }
 
 /** Construct a new AABox from the passed minimum and maximum coordinates */
@@ -445,27 +528,14 @@ AABox AABox::from(const Vector &mincoords, const Vector &maxcoords)
     return AABox(cent, halfextents);
 }
 
-/** Add lots of points to this box */
-AABox AABox::operator+(const QVector<Vector> &points) const
+/** Return the addition of lots of points to this box */
+AABox AABox::add(const QVector<Vector> &points) const
 {
-    AABox ret = *this;
-    ret += points;
-    return ret;
-}
-
-/** Add lots of points to this box */
-void AABox::add(const QVector<Vector> &points)
-{
-    *this += points;
+    return *this + points;
 }
 
 /** Return the sphere that just contains this AABox */
 Sphere AABox::boundingSphere() const
 {
     return Sphere( this->center(), this->radius() );
-}
-
-const char* AABox::typeName()
-{
-    return QMetaType::typeName( qMetaTypeId<AABox>() );
 }
