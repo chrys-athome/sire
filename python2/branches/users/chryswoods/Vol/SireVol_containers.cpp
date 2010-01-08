@@ -34,16 +34,10 @@
 
 #include <boost/tuple/tuple.hpp>
 
-#include "Helpers/convertlist.hpp"
-#include "Helpers/convertdict.hpp"
-#include "Helpers/convertset.hpp"
-#include "Helpers/tuples.hpp"
-
-#include "SireBase/property.h"
-
-#include "Base/convertproperty.hpp"
-
-#include "SireVol/space.h"
+#include "Siren/convertlist.hpp"
+#include "Siren/convertdict.hpp"
+#include "Siren/convertset.hpp"
+#include "Siren/tuples.hpp"
 
 using boost::python::register_tuple;
 

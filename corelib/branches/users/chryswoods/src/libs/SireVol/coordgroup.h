@@ -31,6 +31,9 @@
 
 #include <QSharedData>
 
+#include "Siren/object.h"
+#include "Siren/mutable.h"
+
 #include "SireMaths/vector.h"
 
 #include "aabox.h"
@@ -225,6 +228,7 @@ public:
 
     int count() const;
     int size() const;
+    int nCoords() const;
 
     QVector<Vector> toVector() const;
 
@@ -260,6 +264,10 @@ protected:
     detail::CGSharedPtr<detail::CGData> d;
 };
 
+class CoordGroupEditor;
+class CoordGroupArray;
+class CoordGroupArrayArray;
+
 /** This class holds a group of coordinates. This group forms the basis of the
     Molecular CutGroup, as defined in SireMol. A CoordGroup contains a list of
     coordinates, together with an AABox which provides information as to the
@@ -289,7 +297,7 @@ public:
     ~CoordGroup();
 
     CoordGroup& operator=(const CoordGroup &other);
-    CoordGroup& operator=(CoordGroupEditor &other);
+    CoordGroup& operator=(const CoordGroupEditor &other);
 
     CoordGroupEditor edit() const;
 
@@ -301,8 +309,6 @@ private:
     friend class CoordGroupEditor;
     friend class detail::CGData; // so can see d pointer
     friend class detail::CGMemory; // so can see d pointer
-
-    CoordGroup(const CoordGroupEditor &other);
 
     CoordGroup(detail::CGData *data);
 
@@ -352,6 +358,9 @@ public:
 
     QString toString() const;
     void stream(Siren::Stream &s);
+    uint hashCode() const;
+
+    static QString typeName();
 
     Siren::ObjRef saveState() const;
     void restoreState(const Siren::Object &object);
@@ -386,7 +395,16 @@ public:
 
     CoordGroup commit();
 
+protected:
+    friend class Siren::Implements<CoordGroupEditor,CoordGroupBase>;
+    static QStringList listInterfaces()
+    {
+        return Siren::Interfaces<CoordGroupEditor,Mutable>::listInterfaces();
+    }
+
 private:
+    friend class CoordGroup;
+
     /** Whether or not the AABox needs to be recalculated */
     bool needsupdate;
 };
@@ -429,6 +447,8 @@ public:
     
     bool operator==(const CoordGroupArray &other) const;
     bool operator!=(const CoordGroupArray &other) const;
+
+    static QString typeName();
 
     const CoordGroup& operator[](quint32 i) const;
     const CoordGroup& at(quint32 i) const;
@@ -490,6 +510,12 @@ protected:
 
     friend class CoordGroupArrayArray;
 
+    friend class Siren::Implements<CoordGroupArray,Siren::Object>;
+    static QStringList listInterfaces()
+    {
+        return Siren::Interfaces<CoordGroupArray,Mutable>::listInterfaces();
+    }
+
     CoordGroupArray(detail::CGArrayData *data);
 
     /** Implicitly shared pointer to the data for this array */
@@ -528,6 +554,8 @@ public:
     
     bool operator==(const CoordGroupArrayArray &other) const;
     bool operator!=(const CoordGroupArrayArray &other) const;
+
+    static QString typeName();
 
     Siren::ObjRef saveState() const;
     void restoreState(const Siren::Object &object);
@@ -598,6 +626,13 @@ public:
     
     void assertValidCoordGroup(quint32 i, quint32 j) const;
     
+protected:
+    friend class Siren::Implements<CoordGroupArrayArray,Siren::Object>;
+    static QStringList listInterfaces()
+    {
+        return Siren::Interfaces<CoordGroupArrayArray,Mutable>::listInterfaces();
+    }
+
 private:
     /** Implicitly shared pointer to the array data */
     detail::CGSharedPtr<detail::CGArrayArrayData> d;

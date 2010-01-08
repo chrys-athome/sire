@@ -63,6 +63,22 @@ QString Space::typeName()
     return "SireVol::Space";
 }
 
+Space& Space::operator=(const Space &other)
+{
+    Object::operator=(other);
+    return *this;
+}
+
+bool Space::operator==(const Space &other) const
+{
+    return true;
+}
+
+bool Space::operator!=(const Space &other) const
+{
+    return not Space::operator==(other);
+}
+
 void Space::stream(Stream &s)
 {
     s.assertVersion<Space>(1);

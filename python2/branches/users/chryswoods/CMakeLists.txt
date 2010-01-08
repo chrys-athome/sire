@@ -243,7 +243,7 @@ add_subdirectory (Siren)
 #add_subdirectory (Squire)
 #add_subdirectory (System)
 add_subdirectory (Units)
-#add_subdirectory (Vol)
+add_subdirectory (Vol)
 
 #also compile the sire_python executable
 #add_subdirectory (sire_python)

@@ -42,7 +42,6 @@ set_target_properties (Vol
 		       )
 		       
 target_link_libraries (Vol
-                       SirePython2
                        SIRE_SireVol
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}

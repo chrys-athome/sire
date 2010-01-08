@@ -156,7 +156,7 @@ const NullGeometryPerturbation& GeometryPerturbation::null()
         QMutexLocker lkr( globalMutex() );
         
         if (ptr->constData() == 0)
-            *ptr = new NullGeometryPerturbation();
+            *ptr = static_cast<GeometryPerturbation*>(new NullGeometryPerturbation());
     }
     
     return ptr->constData()->asA<NullGeometryPerturbation>();

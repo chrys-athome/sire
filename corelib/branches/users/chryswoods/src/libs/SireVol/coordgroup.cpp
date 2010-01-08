@@ -35,17 +35,15 @@
 
 #include "SireBase/quickcopy.hpp"
 
-#include "SireError/errors.h"
-
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
+#include "Siren/errors.h"
+#include "Siren/stream.h"
 
 #include <QDebug>
 
 using namespace SireVol;
 using namespace SireMaths;
 using namespace SireBase;
-using namespace SireStream;
+using namespace Siren;
 
 namespace SireVol
 {
@@ -347,6 +345,8 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
     //allocate this space
     char *storage = new char[sz];
     
+    qDebug() << "CREATED MEMORY" << (void*)storage << sz;
+    
     quint32 spare_space = 16;
     
     try
@@ -423,6 +423,8 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
         cgarrayarray->cgroup0 = idx;
         cgarrayarray->cgdata0 = idx + (ncgroups * sizeof(CoordGroup));
         
+        qDebug() << idx << sizeof(CoordGroup) << cgarrayarray->cgdata0;
+        
         if (ncgroups > 0)
         {
             quint32 dataidx = cgarrayarray->cgdata0;
@@ -486,6 +488,8 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
             //create space for the null CoordGroup
             quint32 dataidx = idx + sizeof(CoordGroup);
             
+            qDebug() << dataidx << idx;
+            
             CGData *cgroup = new (storage + dataidx) CGData(idx);
             new (storage + idx) CoordGroup(cgroup);
             
@@ -539,6 +543,8 @@ const char* CGMemory::getRoot(const char *this_ptr, quint32 this_idx)
 /** Destroy the object 'array' */
 void CGMemory::destroy(CGArrayArrayData *array)
 {
+    qDebug() << "DESTROY MEMORY" << array;
+
     //we need to delete it in the opposite order to creation - first
     //lets delete all of the vectors
     quint32 ncoords = array->nCoords();
@@ -779,6 +785,10 @@ const CGData* CGArrayArrayData::nullCGroup() const
 {
     BOOST_ASSERT( ncgroups == 0 );
     BOOST_ASSERT( cgdata0 != 0 );
+
+    qDebug() << (void*)(memory());
+    qDebug() << cgdata0;
+    qDebug() << (void*)(&(memory()[cgdata0]));
     
     return (const CGData*)( &(memory()[cgdata0]) );
 }
@@ -1402,13 +1412,20 @@ quint32 CGData::nCoords() const
 //////// Implementation of CoordGroupBase
 ////////
 
+static const RegisterObject<CoordGroupBase> r_cgbase( VIRTUAL_CLASS );
+
 static CGSharedPtr<CGArrayArrayData> shared_null;
 
 static const CGSharedPtr<CGArrayArrayData>& getSharedNull()
 {
     if (shared_null.constData() == 0)
     {
-        shared_null = (CGArrayArrayData*)( CGMemory::create(0,0,0) );
+        CGArrayArrayData *d = (CGArrayArrayData*)(CGMemory::create(0,0,0));
+        d->incref();
+    
+        qDebug() << "CGArrayArrayData" << d;
+    
+        shared_null = d;
         shared_null->close();
     }
     
@@ -1424,13 +1441,21 @@ static CGSharedPtr<CGData> getSharedNullCoordGroup()
 
 /** Null constructor */
 CoordGroupBase::CoordGroupBase()
-               : d( ::getSharedNullCoordGroup() )
-{}
+               : Extends<CoordGroupBase,Object>(), 
+                 d( ::getSharedNullCoordGroup() )
+{
+    qDebug() << "CREATED CoordGroupBase" << d.constData();
+}
 
 /** Private constructor used only by CGData */
 CoordGroupBase::CoordGroupBase(CGData *data)
 {
     d.weakAssign(data);
+}
+
+QString CoordGroupBase::typeName()
+{
+    return "SireVol::CoordGroupBase";
 }
 
 static CGSharedPtr<CGData> createCoordGroup(quint32 size)
@@ -1455,7 +1480,8 @@ static CGSharedPtr<CGData> createCoordGroup(quint32 size)
 /** Construct a CoordGroup that can hold up to 'size'
     coordinates, each of value 'value' */
 CoordGroupBase::CoordGroupBase(quint32 size, const Vector &value)
-                : d( createCoordGroup(size) )
+                : Extends<CoordGroupBase,Object>(),
+                  d( createCoordGroup(size) )
 {
     if (size > 0 and not value.isZero())
     {
@@ -1475,7 +1501,8 @@ CoordGroupBase::CoordGroupBase(quint32 size, const Vector &value)
 /** Construct a CoordGroup that holds the 'size' points
     copied from the array 'values' */
 CoordGroupBase::CoordGroupBase(quint32 size, const Vector *values)
-                : d( createCoordGroup(size) )
+               : Extends<CoordGroupBase,Object>(),
+                 d( createCoordGroup(size) )
 {
     if (size > 0)
     {
@@ -1491,7 +1518,8 @@ CoordGroupBase::CoordGroupBase(quint32 size, const Vector *values)
 /** Construct a CoordGroup from all of the coordinates in the 
     passed CoordGroupArray */
 CoordGroupBase::CoordGroupBase(const CoordGroupArray &cgarray)
-               : d( getSharedNullCoordGroup() )
+               : Extends<CoordGroupBase,Object>(),
+                  d( getSharedNullCoordGroup() )
 {
     if (cgarray.nCoordGroups() == 1)
     {
@@ -1514,7 +1542,8 @@ CoordGroupBase::CoordGroupBase(const CoordGroupArray &cgarray)
 /** Construct a CoordGroup from all of the coordinates in all
     of the arrays in the passed set of CoordGroupArrays */
 CoordGroupBase::CoordGroupBase(const CoordGroupArrayArray &cgarrays)
-               : d( getSharedNullCoordGroup() )
+               : Extends<CoordGroupBase,Object>(),
+                 d( getSharedNullCoordGroup() )
 {
     if (cgarrays.nCoordGroups() == 1)
     {
@@ -1536,7 +1565,8 @@ CoordGroupBase::CoordGroupBase(const CoordGroupArrayArray &cgarrays)
 
 /** Construct a CoordGroup from the specified coordinates */
 CoordGroupBase::CoordGroupBase(const QVector<Vector> &coordinates)
-                : d( createCoordGroup(coordinates.count()) )
+               : Extends<CoordGroupBase,Object>(),
+                 d( createCoordGroup(coordinates.count()) )
 {
     //how many coordinates are there?
     quint32 ncoords = coordinates.count();
@@ -1559,19 +1589,24 @@ CoordGroupBase::CoordGroupBase(const QVector<Vector> &coordinates)
 /** Copy constructor - this is fast as CoordGroupBase is implicitly
     shared */
 CoordGroupBase::CoordGroupBase(const CoordGroupBase &other)
-               : d(other.d)
+               : Extends<CoordGroupBase,Object>(other),
+                 d(other.d)
 {}
 
 /** Destructor - this will only delete the data if this
     is the only reference to it */
 CoordGroupBase::~CoordGroupBase()
-{}
+{
+    qDebug() << "DESTROYED CoordGroupBase" << d.constData();
+}
 
 /** Copy assignment operator - CoordGroupBase is implicitly
     shared so this will be fast */
 CoordGroupBase& CoordGroupBase::operator=(const CoordGroupBase &other)
 {
     d = other.d;
+    Object::operator=(other);
+    
     return *this;
 }
 
@@ -1651,6 +1686,12 @@ int CoordGroupBase::count() const
 }
 
 /** Return the number of coordinates in this group */
+int CoordGroupBase::nCoords() const
+{
+    return d->nCoords();
+}
+
+/** Return the number of coordinates in this group */
 int CoordGroupBase::size() const
 {
     return d->nCoords();
@@ -1677,7 +1718,7 @@ QVector<Vector> CoordGroupBase::toVector() const
 static inline void assertSame(quint32 sz, quint32 other)
 {
     if (sz != other)
-        throw SireError::incompatible_error( QObject::tr(
+        throw Siren::incompatible_error( QObject::tr(
             "The number of coordinates in this group is %1, while "
             "the number of coordinates in the other is %2!")
                 .arg(sz).arg(other), CODELOC );
@@ -1686,7 +1727,7 @@ static inline void assertSame(quint32 sz, quint32 other)
 /** Assert that the array of coordinates contains the same number of
     coordinates as are in this group
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 void CoordGroupBase::assertSameSize(const QVector<Vector> &coordinates) const
 {
@@ -1696,7 +1737,7 @@ void CoordGroupBase::assertSameSize(const QVector<Vector> &coordinates) const
 /** Assert that the CoordGroup 'other' contains the same number of
     coordinates as are in this group
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 void CoordGroupBase::assertSameSize(const CoordGroupBase &other) const
 {
@@ -1705,19 +1746,19 @@ void CoordGroupBase::assertSameSize(const CoordGroupBase &other) const
 
 /** Assert that 'i' is a valid index in this group
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupBase::assertValidIndex(quint32 i) const
 {
     if (i >= quint32(this->size()))
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
             "Invalid index: %1 - maximum index == %2.")
                 .arg(i).arg(this->size()), CODELOC );
 }
 
 /** Return the 'ith' coordinate of this group
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 const Vector& CoordGroupBase::at(quint32 i) const
 {
@@ -1727,7 +1768,7 @@ const Vector& CoordGroupBase::at(quint32 i) const
 
 /** Return the 'ith' coordinate of this group
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 const Vector& CoordGroupBase::operator[](quint32 i) const
 {
@@ -1735,100 +1776,123 @@ const Vector& CoordGroupBase::operator[](quint32 i) const
     return d->coordsData()[i];
 }
 
+void CoordGroupBase::stream(Stream &s)
+{
+    s.assertVersion<CoordGroupBase>(1);
+    
+    Schema schema = s.item<CoordGroupBase>();
+    
+    Object::stream(schema.base());
+}
+
 ////////
 //////// Implementation of CoordGroup
 ////////
 
-static const RegisterMetaType<CoordGroup> r_cgroup;
+static const RegisterObject<CoordGroup> r_cgroup;
 
-/** Serialise to a binary datastream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
-                                       const CoordGroup &cgroup)
+void CoordGroup::stream(Stream &s)
 {
-    writeHeader(ds, r_cgroup, 1);
-
-    SharedDataStream sds(ds);
-
-    sds << CoordGroupArrayArray(cgroup);
+    s.assertVersion<CoordGroup>(1);
     
-    return ds;
-}
+    Siren::SharedSchema shared = s.shared(*this);
 
-/** Extract from a binary datastream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
-                                       CoordGroup &cgroup)
-{
-    VersionID v = readHeader(ds, r_cgroup);
-    
-    if (v == 1)
+    if (shared.mustStream())
     {
-        SharedDataStream sds(ds);
-    
-        CoordGroupArrayArray array;
-        sds >> array;
+        //this CoordGroup has not yet been streamed
+        shared.data("coordinates");
 
-        BOOST_ASSERT( array.coordGroupData() != 0 );
+        qint32 ncoords = this->count();
+        
+        Siren::ArraySchema schema = s.array<Vector>(ncoords);
     
-        cgroup = array.coordGroupData()[0];
+        if (s.isSaving())
+        {
+            const Vector *array = this->constData();
+        
+            for (qint32 i=0; i<ncoords; ++i)
+            {
+                schema.index(i) << array[i];
+            }
+        }
+        else
+        {
+            ncoords = schema.count();
+        
+            CoordGroup new_group(ncoords);
+        
+            Vector *array = new_group.d->coordsData();
+        
+            for (int i=0; i<schema.count(); ++i)
+            {
+                schema.index(i) >> array[i];
+            }
+            
+            *(new_group.d->aaBox()) = AABox(new_group);
+            
+            this->operator=(new_group);
+        }
+        
+        CoordGroupBase::stream(shared.base());
     }
-    else
-        throw version_error(v, "1", r_cgroup, CODELOC);
-    
-    return ds;
 }
 
 /** Null constructor */
-CoordGroup::CoordGroup() : CoordGroupBase()
+CoordGroup::CoordGroup() : Implements<CoordGroup,CoordGroupBase>()
 {}
 
 /** Private constructor used only by CGData */
-CoordGroup::CoordGroup(CGData *data) : CoordGroupBase(data)
+CoordGroup::CoordGroup(CGData *data) 
+           : Implements<CoordGroup,CoordGroupBase>(data)
 {}
 
 /** Construct a CoordGroup that holds 'size' coordinates */
 CoordGroup::CoordGroup(quint32 size)
-           : CoordGroupBase(size)
+           : Implements<CoordGroup,CoordGroupBase>(size)
 {}
 
 /** Construct a CoordGroup that holds 'size' coordinates,
     all of which have the value 'value' */
 CoordGroup::CoordGroup(quint32 size, const Vector &value)
-           : CoordGroupBase(size,value)
+           : Implements<CoordGroup,CoordGroupBase>(size,value)
 {}
 
 /** Construct a CoordGroup that holds the 'size' points
     copied from the array 'values' */
 CoordGroup::CoordGroup(quint32 size, const Vector *values)
-           : CoordGroupBase(size, values)
+           : Implements<CoordGroup,CoordGroupBase>(size, values)
 {}
 
 /** Construct a CoordGroup from all of the coordinates contained
     in the passed CoordGroup array */
 CoordGroup::CoordGroup(const CoordGroupArray &cgarray)
-           : CoordGroupBase(cgarray)
+           : Implements<CoordGroup,CoordGroupBase>(cgarray)
 {}
 
 /** Construct a CoordGroup from all of the coordinates in the
     passed collection of CoordGroup arrays */
 CoordGroup::CoordGroup(const CoordGroupArrayArray &cgarrays)
-           : CoordGroupBase(cgarrays)
+           : Implements<CoordGroup,CoordGroupBase>(cgarrays)
 {}
 
 /** Construct a CoordGroup from the array of passed coordinates */
 CoordGroup::CoordGroup(const QVector<Vector> &points)
-           : CoordGroupBase(points)
+           : Implements<CoordGroup,CoordGroupBase>(points)
 {}
 
 /** Construct from a CoordGroupEditor (only CoordGroupEditor::commit()
     calls this function, and in this case it has already made sure that
     the AABox is up-to-date) */
 CoordGroup::CoordGroup(const CoordGroupEditor &editor)
-            : CoordGroupBase(editor)
-{}
+            : Implements<CoordGroup,CoordGroupBase>(editor)
+{
+    if (editor.needsupdate)
+        *(d->aaBox()) = AABox(*this);
+}
 
 /** Copy constructor */
 CoordGroup::CoordGroup(const CoordGroup &other)
-           : CoordGroupBase(other)
+           : Implements<CoordGroup,CoordGroupBase>(other)
 {}
 
 /** Destructor */
@@ -1837,7 +1901,7 @@ CoordGroup::~CoordGroup()
 
 void CoordGroup::throwInvalidCountError(uint nats0, uint nats1)
 {
-    throw SireError::invalid_state( QObject::tr(
+    throw Siren::invalid_state( QObject::tr(
         "You can only split a CoordGroup into groups if the total number "
         "of atoms in the single CoordGroup and the group of CoordGroups "
         "is the same. It isn't in this case! %1 vs. %2.")
@@ -1852,9 +1916,9 @@ CoordGroup& CoordGroup::operator=(const CoordGroup &other)
 }
 
 /** Copy assignment from a CoordGroupEditor */
-CoordGroup& CoordGroup::operator=(CoordGroupEditor &other)
+CoordGroup& CoordGroup::operator=(const CoordGroupEditor &other)
 {
-    return this->operator=( other.commit() );
+    return this->operator=( CoordGroup(other) );
 }
 
 /** Return an editor that can be used to edit the
@@ -1864,23 +1928,74 @@ CoordGroupEditor CoordGroup::edit() const
     return CoordGroupEditor(*this);
 }
 
-const char* CoordGroup::typeName()
+QString CoordGroup::toString() const
 {
-    return QMetaType::typeName( qMetaTypeId<CoordGroup>() );
+    return QObject::tr("CoordGroup( nCoords() == %1 )").arg(this->count());
+}
+
+uint CoordGroup::hashCode() const
+{
+    return qHash( CoordGroup::typeName() ) + this->count();
 }
 
 ////////
 //////// Implementation of CoordGroupEditor
 ////////
 
+static const RegisterObject<CoordGroupEditor> r_cgeditor;
+
+void CoordGroupEditor::stream(Stream &s)
+{
+    s.assertVersion<CoordGroup>(1);
+    
+    //this CoordGroup has not yet been streamed
+    qint32 ncoords = this->count();
+
+    Schema cgschema = s.item<CoordGroupEditor>();
+    cgschema.data("coordinates");
+
+    ArraySchema schema = s.array<Vector>(ncoords);
+    
+    if (s.isSaving())
+    {
+        const Vector *array = this->constData();
+        
+        for (qint32 i=0; i<ncoords; ++i)
+        {
+            schema.index(i) << array[i];
+        }
+    }
+    else
+    {
+        ncoords = schema.count();
+        
+        CoordGroup new_group(ncoords);
+        
+        Vector *array = new_group.d->coordsData();
+        
+        for (int i=0; i<schema.count(); ++i)
+        {
+            schema.index(i) >> array[i];
+        }
+            
+        *(new_group.d->aaBox()) = AABox(new_group);
+            
+        this->operator=(new_group);
+    }
+        
+    CoordGroupBase::stream(cgschema.base());
+}
+
 /** Null constructor */
 CoordGroupEditor::CoordGroupEditor() 
-                  : CoordGroupBase(), needsupdate(false)
+                  : Implements<CoordGroupEditor,CoordGroupBase>(), 
+                    needsupdate(false)
 {}
 
 /** Construct from a CoordGroup */
 CoordGroupEditor::CoordGroupEditor(const CoordGroup &other)
-                 : CoordGroupBase(other), needsupdate(false)
+                 : Implements<CoordGroupEditor,CoordGroupBase>(other), 
+                   needsupdate(false)
 {
     if (not other.count() == 0)
         d = other.d->extract()->cGroupData()[0].d;
@@ -1888,7 +2003,8 @@ CoordGroupEditor::CoordGroupEditor(const CoordGroup &other)
 
 /** Copy constructor */
 CoordGroupEditor::CoordGroupEditor(const CoordGroupEditor &other)
-                  : CoordGroupBase(other), needsupdate(other.needsupdate)
+                  : Implements<CoordGroupEditor,CoordGroupBase>(other), 
+                    needsupdate(other.needsupdate)
 {}
 
 /** Destructor */
@@ -1898,8 +2014,11 @@ CoordGroupEditor::~CoordGroupEditor()
 /** Copy assignment operator */
 CoordGroupEditor& CoordGroupEditor::operator=(const CoordGroupEditor &other)
 {
-    CoordGroupBase::operator=(other);
-    needsupdate = other.needsupdate;
+    if (this != &other)
+    {
+        CoordGroupBase::operator=(other);
+        needsupdate = other.needsupdate;
+    }
     
     return *this;
 }
@@ -1920,7 +2039,7 @@ CoordGroupEditor& CoordGroupEditor::operator=(const CoordGroup &other)
 /** Return a modifiable reference to the 'ith' coordinate in the group
     - this will throw an exception if 'i' refers to an invalid index
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 Vector& CoordGroupEditor::operator[](quint32 i)
 {
@@ -1967,7 +2086,7 @@ CoordGroupEditor& CoordGroupEditor::translate(const Vector &delta)
 
 /** Translate the 'ith' point in the group by 'delta'
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 CoordGroupEditor& CoordGroupEditor::translate(quint32 i, const Vector &delta)
 {
@@ -1997,7 +2116,7 @@ CoordGroupEditor& CoordGroupEditor::rotate(const Matrix &rotmat, const Vector &p
 /** Rotate the 'ith' point in the group using the matrix 'rotmat' about the
     point 'point'
 
-    \throw SireError::index
+    \throw Siren::index
 */
 CoordGroupEditor& CoordGroupEditor::rotate(quint32 i, const Matrix &rotmat, 
                                            const Vector &point)
@@ -2018,7 +2137,7 @@ CoordGroupEditor& CoordGroupEditor::rotate(const Quaternion &quat,
 /** Rotate the 'ith' point in the group using the quaternion 'quat' about the
     point 'point'
 
-    \throw SireError::index
+    \throw Siren::index
 */
 CoordGroupEditor& CoordGroupEditor::rotate(quint32 i, const Quaternion &quat, 
                                            const Vector &point)
@@ -2030,7 +2149,7 @@ CoordGroupEditor& CoordGroupEditor::rotate(quint32 i, const Quaternion &quat,
     have the same number of points as this CoordGroup or an exception
     will be thrown
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 CoordGroupEditor& CoordGroupEditor::setCoordinates(const QVector<Vector> &newcoords)
 {
@@ -2050,12 +2169,12 @@ CoordGroupEditor& CoordGroupEditor::setCoordinates(const QVector<Vector> &newcoo
 
 /** Set the coordinates of the ith atom to 'newcoords'
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 CoordGroupEditor& CoordGroupEditor::setCoordinates(quint32 i, const Vector &newcoords)
 {
     if (i >= quint32(this->count()))
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
             "Cannot update the coordinates of point %1 as the number "
             "of points available is just %2.")
                 .arg(i).arg(this->count()), CODELOC );
@@ -2072,7 +2191,7 @@ CoordGroupEditor& CoordGroupEditor::setCoordinates(quint32 i, const Vector &newc
     must have the same number of points as this CoordGroup or an
     exception will be thrown
 
-    \throw SireError::incompatible_error
+    \throw Siren::incompatible_error
 */
 CoordGroupEditor& CoordGroupEditor::setCoordinates(const CoordGroupBase &newcoords)
 {
@@ -2112,12 +2231,12 @@ CoordGroupEditor& CoordGroupEditor::mapInto(const AxisSet &axes)
 
 /** Map the coordinates of the ith point into the axis set 'axes'
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 CoordGroupEditor& CoordGroupEditor::mapInto(quint32 i, const AxisSet &axes)
 {
     if (i >= quint32(this->count()))
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
             "Cannot update the coordinates of point %1 as the number "
             "of points available is just %2.")
                 .arg(i).arg(this->count()), CODELOC );
@@ -2156,14 +2275,14 @@ CoordGroupEditor& CoordGroupEditor::changeFrame(const AxisSet &from_frame,
 /** Map the coordinates of the ith point from the frame
     'from_frame' to the frame 'to_frame'
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 CoordGroupEditor& CoordGroupEditor::changeFrame(quint32 i,
                                                 const AxisSet &from_frame,
                                                 const AxisSet &to_frame)
 {
     if (i >= quint32(this->count()))
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
             "Cannot update the coordinates of point %1 as the number "
             "of points available is just %2.")
                 .arg(i).arg(this->count()), CODELOC );
@@ -2189,51 +2308,81 @@ CoordGroup CoordGroupEditor::commit()
     return CoordGroup(*this);
 }
 
-const char* CoordGroupEditor::typeName()
+uint CoordGroupEditor::hashCode() const
 {
-    return QMetaType::typeName( qMetaTypeId<CoordGroupEditor>() );
+    return qHash( CoordGroupEditor::typeName() ) + this->count();
+}
+
+QString CoordGroupEditor::typeName()
+{
+    return Implements<CoordGroupEditor,CoordGroupBase>::typeName();
+}
+
+QString CoordGroupEditor::toString() const
+{
+    return QObject::tr("CoordGroupEditor( nCoords() == %1 )").arg(this->count());
+}
+
+ObjRef CoordGroupEditor::saveState() const
+{
+    return CoordGroupEditor(*this);
+}
+
+void CoordGroupEditor::restoreState(const Object &object)
+{
+    this->operator=( object.asA<CoordGroupEditor>() );
 }
 
 ////////
 //////// Implementation of CoordGroupArray
 ////////
 
-static const RegisterMetaType<CoordGroupArray> r_cgarray;
+static const RegisterObject<CoordGroupArray> r_cgarray;
 
-/** Serialise to a binary datastream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
-                                       const CoordGroupArray &cgarray)
+void CoordGroupArray::stream(Stream &s)
 {
-    writeHeader(ds, r_cgarray, 1);
+    s.assertVersion<CoordGroupArray>(1);
     
-    SharedDataStream sds(ds);
-    
-    sds << CoordGroupArrayArray(cgarray);
-    
-    return ds;
-}
+    SharedSchema shared = s.shared(*this);
 
-/** Extract from a binary datastream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds,
-                                       CoordGroupArray &cgarray)
-{
-    VersionID v = readHeader(ds, r_cgarray);
-    
-    if (v == 1)
+    if (shared.mustStream())
     {
-        SharedDataStream sds(ds);
+        //this CoordGroupArray has not yet been streamed
+        CoordGroupArray new_cgarray;
 
-        CoordGroupArrayArray array;
-        sds >> array;
+        qint32 ncgroups = this->nCoordGroups();
 
-        BOOST_ASSERT( array.data() != 0 );
+        shared.data("coordgroups");
+
+        ArraySchema schema = s.array<CoordGroup>(ncgroups);
         
-        cgarray = array.data()[0];
+        if (s.isSaving())
+        {
+            const CoordGroup *array = this->constData();
+        
+            for (qint32 i=0; i<ncgroups; ++i)
+            {
+                schema.index(i) << array[i];
+            }
+        }
+        else
+        {
+            ncgroups = schema.count();
+        
+            QVector<CoordGroup> new_cgroups(ncgroups);
+            
+            CoordGroup *array = new_cgroups.data();
+            
+            for (qint32 i=0; i<ncgroups; ++i)
+            {
+                schema.index(i) >> array[i];
+            }
+            
+            this->operator=( CoordGroupArray(new_cgroups) );
+        }
+        
+        Object::stream(shared.base());
     }
-    else
-        throw version_error(v, "1", r_cgarray, CODELOC);
-        
-    return ds;
 }
 
 static CGSharedPtr<CGArrayData> getSharedNullCGArray()
@@ -2245,17 +2394,23 @@ static CGSharedPtr<CGArrayData> getSharedNullCGArray()
 
 /** Null constructor */
 CoordGroupArray::CoordGroupArray()
-                : d( ::getSharedNullCGArray() )
+                : Implements<CoordGroupArray,Object>(),
+                  Interfaces<CoordGroupArray,Mutable>(),
+                  d( ::getSharedNullCGArray() )
 {}
 
 /** Private constructor used only by CGArrayData */
 CoordGroupArray::CoordGroupArray(CGArrayData *data)
+                : Implements<CoordGroupArray,Object>(),
+                  Interfaces<CoordGroupArray,Mutable>()
 {
     d.weakAssign(data);
 }
 
 /** Construct an array that holds just the passed CoordGroup */
 CoordGroupArray::CoordGroupArray(const CoordGroup &cgroup)
+                : Implements<CoordGroupArray,Object>(),
+                  Interfaces<CoordGroupArray,Mutable>()
 {
     d = cgroup.d->extract()->cgArrayData()[0].d;
 }
@@ -2275,6 +2430,8 @@ static CGSharedPtr<CGArrayData> createCGArray(quint32 ngroups, quint32 ncoords)
 
 /** Construct from an array of CoordGroups */
 CoordGroupArray::CoordGroupArray(const QVector<CoordGroup> &cgroups)
+                : Implements<CoordGroupArray,Object>(),
+                  Interfaces<CoordGroupArray,Mutable>()
 {
     //count the number of groups and coordinates
     quint32 ncoords = 0;
@@ -2328,6 +2485,8 @@ CoordGroupArray::CoordGroupArray(const QVector<CoordGroup> &cgroups)
 
 /** Construct from a double-vector */
 CoordGroupArray::CoordGroupArray(const QVector< QVector<Vector> > &points)
+                : Implements<CoordGroupArray,Object>(),
+                  Interfaces<CoordGroupArray,Mutable>()
 {
     if (points.isEmpty())
         return;
@@ -2344,7 +2503,9 @@ CoordGroupArray::CoordGroupArray(const QVector< QVector<Vector> > &points)
 
 /** Copy constructor */
 CoordGroupArray::CoordGroupArray(const CoordGroupArray &other)
-                : d(other.d)
+                : Implements<CoordGroupArray,Object>(),
+                  Interfaces<CoordGroupArray,Mutable>(),
+                  d(other.d)
 {}
 
 /** Destructor */
@@ -2387,12 +2548,12 @@ CoordGroup CoordGroupArray::merge() const
 
 /** Assert that the index i points to a valid CoordGroup 
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArray::assertValidCoordGroup(quint32 i) const
 {
     if (i >= d->nCGroups())
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
             "Cannot access the CoordGroup at index %1. The number "
             "of CoordGroups in this array is just %2.")
                 .arg(i).arg(d->nCGroups()), CODELOC );
@@ -2400,7 +2561,7 @@ void CoordGroupArray::assertValidCoordGroup(quint32 i) const
 
 /** Assert that the index i points to a valid CoordGroup 
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArray::assertValidIndex(quint32 i) const
 {
@@ -2409,12 +2570,12 @@ void CoordGroupArray::assertValidIndex(quint32 i) const
 
 /** Assert that the index i points a valid coordinate
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArray::assertValidCoordinate(quint32 i) const
 {
     if (i >= d->nCoords())
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
             "Cannot access the coordinate at index %1. The number "
             "of coordinates in this array is just %2.")
                 .arg(i).arg(d->nCoords()), CODELOC );
@@ -2422,7 +2583,7 @@ void CoordGroupArray::assertValidCoordinate(quint32 i) const
 
 /** Return a reference to the ith CoordGroup
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 const CoordGroup& CoordGroupArray::operator[](quint32 i) const
 {
@@ -2433,7 +2594,7 @@ const CoordGroup& CoordGroupArray::operator[](quint32 i) const
 
 /** Return a reference to the ith CoordGroup
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 const CoordGroup& CoordGroupArray::at(quint32 i) const
 {
@@ -2537,8 +2698,8 @@ const AABox* CoordGroupArray::constAABoxData() const
     There must contain the same number of coordinates as the existing
     CoordGroup at this index
     
-    \throw SireError::invalid_index
-    \throw SireError::incompatible_error
+    \throw Siren::invalid_index
+    \throw Siren::incompatible_error
 */
 void CoordGroupArray::update(quint32 i, const Vector *coords, int ncoords)
 {
@@ -2549,7 +2710,7 @@ void CoordGroupArray::update(quint32 i, const Vector *coords, int ncoords)
     CGData *cgdata = const_cast<CGData*>( this_cgroup.d.constData() );
     
     if (cgdata->nCoords() != quint32(ncoords))
-        throw SireError::incompatible_error( QObject::tr(
+        throw Siren::incompatible_error( QObject::tr(
             "Cannot update the CoordGroup at index %1 as this CoordGroup "
             "has a different number of coordinates (%2) than are "
             "provided (%3).")
@@ -2572,8 +2733,8 @@ void CoordGroupArray::update(quint32 i, const Vector *coords, int ncoords)
     There must contain the same number of coordinates as the existing
     CoordGroup at this index
     
-    \throw SireError::invalid_index
-    \throw SireError::incompatible_error
+    \throw Siren::invalid_index
+    \throw Siren::incompatible_error
 */
 void CoordGroupArray::update(quint32 i, const QVector<Vector> &coords)
 {
@@ -2584,8 +2745,8 @@ void CoordGroupArray::update(quint32 i, const QVector<Vector> &coords)
     that 'cgroup' must contain the same number of coordinates as the existing
     CoordGroup at this index
     
-    \throw SireError::invalid_index
-    \throw SireError::incompatible_error
+    \throw Siren::invalid_index
+    \throw Siren::incompatible_error
 */
 void CoordGroupArray::update(quint32 i, const CoordGroup &cgroup)
 {
@@ -2596,7 +2757,7 @@ void CoordGroupArray::update(quint32 i, const CoordGroup &cgroup)
     CGData *cgdata = const_cast<CGData*>( this_cgroup.d.constData() );
     
     if (cgdata->nCoords() != quint32(cgroup.count()))
-        throw SireError::incompatible_error( QObject::tr(
+        throw Siren::incompatible_error( QObject::tr(
             "Cannot update the CoordGroup at index %1 as this CoordGroup "
             "has a different number of coordinates (%2) than the "
             "new CoordGroup (%3).")
@@ -2693,7 +2854,7 @@ void CoordGroupArray::rotate(const Quaternion &quat, const Vector &point)
 /** Rotate all of the coordinates in the CoordGroup at index 'i' using 
     the matrix 'rotmat' about the point 'point'
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArray::rotate(quint32 i, const Matrix &rotmat, const Vector &point)
 {
@@ -2716,7 +2877,7 @@ void CoordGroupArray::rotate(quint32 i, const Matrix &rotmat, const Vector &poin
 /** Rotate all of the coordinates in the CoordGroup at index 'i' using 
     the quaternion 'quat' about the point 'point'
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArray::rotate(quint32 i, const Quaternion &quat, const Vector &point)
 {
@@ -2748,7 +2909,7 @@ void CoordGroupArray::mapInto(const AxisSet &axes)
 /** Map all of the coordinates of the CoordGroup at index 'i'
     into the coordinate frame represented by 'axes'
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArray::mapInto(quint32 i, const AxisSet &axes)
 {
@@ -2797,7 +2958,7 @@ void CoordGroupArray::changeFrame(const AxisSet &from_frame,
     the coordinate frame 'from_frame' to the coordinate frame
     'to_frame'
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArray::changeFrame(quint32 i, const AxisSet &from_frame, 
                                              const AxisSet &to_frame)
@@ -2818,52 +2979,82 @@ void CoordGroupArray::changeFrame(quint32 i, const AxisSet &from_frame,
     *(cgdata->aaBox()) = AABox(this_cgroup);
 }
 
-const char* CoordGroupArray::typeName()
+QString CoordGroupArray::typeName()
 {
-    return QMetaType::typeName( qMetaTypeId<CoordGroupArray>() );
+    return Implements<CoordGroupArray,Object>::typeName();
+}
+
+ObjRef CoordGroupArray::saveState() const
+{
+    return CoordGroupArray(*this);
+}
+
+void CoordGroupArray::restoreState(const Siren::Object &object)
+{
+    this->operator=( object.asA<CoordGroupArray>() );
+}
+    
+QString CoordGroupArray::toString() const
+{
+    return QObject::tr("CoordGroupArray( nCoordGroups() == %1, nCoords() == %2 )")
+            .arg(nCoordGroups()).arg(nCoords());
+}
+
+uint CoordGroupArray::hashCode() const
+{
+    return qHash( CoordGroupArray::typeName() ) + nCoords() + 123*nCoordGroups();
 }
 
 ////////
 //////// Implementation of CoordGroupArrayArray
 ////////
 
-static const RegisterMetaType<CoordGroupArrayArray> r_cgarrayarray;
+static const RegisterObject<CoordGroupArrayArray> r_cgarrayarray;
 
-QDataStream& operator<<(QDataStream &ds,
-                        const CGSharedPtr<CGArrayArrayData> &d)
+void CoordGroupArrayArray::stream(Stream &s)
 {
-    const CGArrayArrayData &array = *d;
+    s.assertVersion<CoordGroupArrayArray>(1);
+    
+    SharedSchema shared = s.shared(*this);
 
-    //serialise the prime metadata
-    ds << quint32( array.nCGArrays() ) 
-       << quint32( array.nCGroups() )
-       << quint32( array.nCoords() );
+    if (shared.mustStream())
+    {
+        //this CoordGroupArrayArray has not yet been streamed
+        CoordGroupArrayArray new_cgarray;
 
-    //serialise the number of CoordGroups in each CoordGroupArray
-    for (quint32 i=0; i<array.nCGArrays(); ++i)
-    {
-        ds << quint32(array.cgArrayDataData()[i].nCGroups());
+        qint32 narrays = this->nCoordGroupArrays();
+
+        shared.data("cgarrays");
+
+        ArraySchema schema = s.array<CoordGroupArray>(narrays);
+        
+        if (s.isSaving())
+        {
+            const CoordGroupArray *array = this->constData();
+        
+            for (qint32 i=0; i<narrays; ++i)
+            {
+                schema.index(i) << array[i];
+            }
+        }
+        else
+        {
+            narrays = schema.count();
+        
+            QVector<CoordGroupArray> new_arrays(narrays);
+            
+            CoordGroupArray *array = new_arrays.data();
+            
+            for (qint32 i=0; i<narrays; ++i)
+            {
+                schema.index(i) >> array[i];
+            }
+            
+            this->operator=( CoordGroupArrayArray(new_arrays) );
+        }
+        
+        Object::stream(shared.base());
     }
-    
-    //serialise the number of coordinates in each CoordGroup
-    for (quint32 i=0; i<array.nCGroups(); ++i)
-    {
-        ds << quint32(array.cgDataData()[i].nCoords());
-    }
-    
-    //now the AABoxes
-    for (quint32 i=0; i<array.nCGroups(); ++i)
-    {
-        ds << array.aaBoxData()[i];
-    }
-    
-    //finally the coordinates
-    for (quint32 i=0; i<array.nCoords(); ++i)
-    {
-        ds << array.coordsData()[i];
-    }
-    
-    return ds;
 }
 
 static CGSharedPtr<CGArrayArrayData> createCGArrayArray(quint32 narrays,
@@ -2880,152 +3071,32 @@ static CGSharedPtr<CGArrayArrayData> createCGArrayArray(quint32 narrays,
     return CGSharedPtr<CGArrayArrayData>(array);
 }
 
-QDataStream& operator>>(QDataStream &ds,
-                        CGSharedPtr<CGArrayArrayData> &d)
-{
-    quint32 ncgarrays, ncgroups, ncoords;
-    
-    //read the prime metadata
-    ds >> ncgarrays >> ncgroups >> ncoords;
-
-    //create space for this data
-    CGSharedPtr<CGArrayArrayData> d2 = createCGArrayArray(ncgarrays, ncgroups,
-                                                          ncoords);
-        
-    CGArrayArrayData &array = *d2;
-                                                                                                                                            
-    //dimension the arrays..
-    for (quint32 i=0; i<ncgarrays; ++i)
-    {
-        quint32 n;
-        ds >> n;
-        
-        array.setNCGroupsInArray(i, n);
-    }
-
-    for (quint32 i=0; i<ncgroups; ++i)
-    {
-        quint32 n;
-        ds >> n;
-        
-        array.setNPointsInCGroup(i, n);
-    }
-    
-    array.close();
-    
-    //copy in the AABoxes...
-    for (quint32 i=0; i<ncgroups; ++i)
-    {
-        ds >> array.aaBoxData()[i];
-    }
-    
-    //copy in the coordinates
-    for (quint32 i=0; i<ncoords; ++i)
-    {
-        ds >> array.coordsData()[i];
-    }
-    
-    d = d2;
-
-    return ds;
-}
-
-
-/** This is a helper class that helps the loading and saving of a
-    CGSharedPtr<CGArrayArrayData> */
-struct GetCGSharedDataPointer
-{
-    static bool isEmpty(const CGSharedPtr<CGArrayArrayData> &d)
-    {
-        return d.constData() == 0;
-    }
-
-    static const void* value(const CGSharedPtr<CGArrayArrayData> &d)
-    {
-        return d.constData();
-    }
-    
-    static void load(QDataStream &ds, CGSharedPtr<CGArrayArrayData> &d)
-    {
-        ds >> d;
-    }
-    
-    static void save(QDataStream &ds, const CGSharedPtr<CGArrayArrayData> &d)
-    {
-        //null pointers will have been caught before here
-        ds << d;
-    }
-};
-
-
-SharedDataStream& operator<<(SharedDataStream &sds,
-                             const CGSharedPtr<CGArrayArrayData> &d)
-{
-    sds.sharedSave< CGSharedPtr<CGArrayArrayData>, GetCGSharedDataPointer >(d);
-    
-    return sds;
-}
-
-SharedDataStream& operator>>(SharedDataStream &sds,
-                             CGSharedPtr<CGArrayArrayData> &d)
-{
-    sds.sharedLoad< CGSharedPtr<CGArrayArrayData>, GetCGSharedDataPointer >(d);
-
-    return sds;
-}
-
-/** Serialise to a binary datastream */
-QDataStream SIREMOL_EXPORT &operator<<(QDataStream &ds,
-                                       const CoordGroupArrayArray &cgarray)
-{
-    writeHeader(ds, r_cgarrayarray, 2);
-
-    SharedDataStream sds(ds);
-    
-    sds << cgarray.d;
-    
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIREMOL_EXPORT &operator>>(QDataStream &ds, 
-                                       CoordGroupArrayArray &cgarray)
-{
-    VersionID v = readHeader(ds, r_cgarrayarray);
-    
-    if (v == 2)
-    {
-        SharedDataStream sds(ds);
-        sds >> cgarray.d;
-    }
-    else if (v == 1)
-    {
-        ds >> cgarray.d;
-    }
-    else
-        throw version_error(v, "1,2", r_cgarrayarray, CODELOC);
-    
-    return ds;
-}
-
 /** Construct an empty array */
 CoordGroupArrayArray::CoordGroupArrayArray()
-                     : d( ::getSharedNull() )
+                     : Implements<CoordGroupArrayArray,Object>(),
+                       Interfaces<CoordGroupArrayArray,Mutable>(),
+                       d( ::getSharedNull() )
 {}
 
 /** Construct an array that contains just the CoordGroup 'cgroup'
     (in a single array that contains this group) */
 CoordGroupArrayArray::CoordGroupArrayArray(const CoordGroup &cgroup)
-                     : d( cgroup.d->extract() )
+                     : Implements<CoordGroupArrayArray,Object>(),
+                       Interfaces<CoordGroupArrayArray,Mutable>(),
+                       d( cgroup.d->extract() )
 {}
 
 /** Construct an array that contains just the CoordGroupArray 'cgarray' */
 CoordGroupArrayArray::CoordGroupArrayArray(const CoordGroupArray &cgarray)
-                     : d( cgarray.d->extract() )
+                     : Implements<CoordGroupArrayArray,Object>(),
+                       Interfaces<CoordGroupArrayArray,Mutable>(),
+                       d( cgarray.d->extract() )
 {}
 
 /** Construct an array from a vector of arrays */
 CoordGroupArrayArray::CoordGroupArrayArray(const QVector<CoordGroupArray> &cgarrays)
+                     : Implements<CoordGroupArrayArray,Object>(),
+                       Interfaces<CoordGroupArrayArray,Mutable>()
 {
     //count the number of arrays, groups and coords
     quint32 narrays = cgarrays.count();
@@ -3110,6 +3181,8 @@ CoordGroupArrayArray::CoordGroupArrayArray(const QVector<CoordGroupArray> &cgarr
 /** Construct from an array of array of CoordGroups */
 CoordGroupArrayArray::CoordGroupArrayArray(
                         const QVector< QVector<CoordGroup> > &cgarrays)
+                     : Implements<CoordGroupArrayArray,Object>(),
+                       Interfaces<CoordGroupArrayArray,Mutable>()
 {
     //count the number of arrays, groups and coords
     quint32 narrays = cgarrays.count();
@@ -3193,6 +3266,8 @@ CoordGroupArrayArray::CoordGroupArrayArray(
 /** Construct from a triple-vector */
 CoordGroupArrayArray::CoordGroupArrayArray(
                         const QVector< QVector< QVector<Vector> > > &points)
+                     : Implements<CoordGroupArrayArray,Object>(),
+                       Interfaces<CoordGroupArrayArray,Mutable>()
 {
     if (points.isEmpty())
         return;
@@ -3209,7 +3284,9 @@ CoordGroupArrayArray::CoordGroupArrayArray(
 
 /** Copy constructor */
 CoordGroupArrayArray::CoordGroupArrayArray(const CoordGroupArrayArray &other)
-                     : d(other.d)
+                     : Implements<CoordGroupArrayArray,Object>(),
+                       Interfaces<CoordGroupArrayArray,Mutable>(),
+                       d(other.d)
 {}
 
 /** Destructor */
@@ -3253,12 +3330,12 @@ CoordGroup CoordGroupArrayArray::merge() const
 
 /** Assert that i is a valid index for a CoordGroupArray 
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArrayArray::assertValidCoordGroupArray(quint32 i) const
 {
     if (i >= d->nCGArrays())
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
             "Cannot access the CoordGroupArray at index %1. The "
             "number of CoordGroupArrays in this array is %2.")
                 .arg(i).arg(d->nCGArrays()), CODELOC );
@@ -3266,7 +3343,7 @@ void CoordGroupArrayArray::assertValidCoordGroupArray(quint32 i) const
 
 /** Assert that i is a valid index for a CoordGroupArray 
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArrayArray::assertValidIndex(quint32 i) const
 {
@@ -3275,12 +3352,12 @@ void CoordGroupArrayArray::assertValidIndex(quint32 i) const
 
 /** Assert that i is a valid index for a CoordGroup
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArrayArray::assertValidCoordGroup(quint32 i) const
 {
     if (i >= d->nCGroups())
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
             "Cannot access the CoordGroup at index %1. The "
             "number of CoordGroups in this array is %2.")
                 .arg(i).arg(d->nCGroups()), CODELOC );
@@ -3288,12 +3365,12 @@ void CoordGroupArrayArray::assertValidCoordGroup(quint32 i) const
 
 /** Assert that i is a valid index for a coordinate
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArrayArray::assertValidCoordinate(quint32 i) const
 {
     if (i >= d->nCoords())
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
             "Cannot access the coordinate at index %1. The "
             "number of coordinates in this array is %2.")
                 .arg(i).arg(d->nCoords()), CODELOC );
@@ -3301,7 +3378,7 @@ void CoordGroupArrayArray::assertValidCoordinate(quint32 i) const
 
 /** Return the ith CoordGroupArray in this array
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 const CoordGroupArray& CoordGroupArrayArray::operator[](quint32 i) const
 {
@@ -3311,7 +3388,7 @@ const CoordGroupArray& CoordGroupArrayArray::operator[](quint32 i) const
 
 /** Return the ith CoordGroupArray in this array
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 const CoordGroupArray& CoordGroupArrayArray::at(quint32 i) const
 {
@@ -3431,8 +3508,8 @@ const AABox* CoordGroupArrayArray::constAABoxData() const
     of CoordGroups, with the same number of coordinates in 
     equivalent CoordGroups)
     
-    \throw SireError::invalid_index
-    \throw SireError::incompatible_error
+    \throw Siren::invalid_index
+    \throw Siren::incompatible_error
 */
 void CoordGroupArrayArray::update(quint32 i, const CoordGroupArray &array)
 {
@@ -3444,7 +3521,7 @@ void CoordGroupArrayArray::update(quint32 i, const CoordGroupArray &array)
     quint32 n = cgarraydata->nCoords();
 
     if (n != quint32(array.count()))
-        throw SireError::incompatible_error( QObject::tr(
+        throw Siren::incompatible_error( QObject::tr(
             "Cannot update the CoordGroupArray at index %1 as "
             "it contains %2 CoordGroups, but the new array has %3.")
                 .arg(i).arg(n).arg(array.count()), CODELOC );
@@ -3457,7 +3534,7 @@ void CoordGroupArrayArray::update(quint32 i, const CoordGroupArray &array)
         if (cgarraydata->cGroupData()[j].count() 
                 != new_cgarray->cGroupData()[j].count())
         {
-            throw SireError::incompatible_error( QObject::tr(
+            throw Siren::incompatible_error( QObject::tr(
                 "Cannot update the CoordGroupArray at index %1 as "
                 "the number of coordinates in the CoordGroup at index "
                 "%2 (%3) is not the same as the number of "
@@ -3488,8 +3565,8 @@ void CoordGroupArrayArray::update(quint32 i, const CoordGroupArray &array)
     the number of coordinates in this CoordGroup is the same as
     in 'cgroup'
     
-    \throw SireError::invalid_index
-    \throw SireError::incompatible_error
+    \throw Siren::invalid_index
+    \throw Siren::incompatible_error
 */
 void CoordGroupArrayArray::update(quint32 i, quint32 j, const CoordGroup &cgroup)
 {
@@ -3499,7 +3576,7 @@ void CoordGroupArrayArray::update(quint32 i, quint32 j, const CoordGroup &cgroup
     CGArrayData *cgarraydata = const_cast<CGArrayData*>( this_cgarray.d.constData() );
 
     if (j >= cgarraydata->nCGroups())
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
             "There is no CoordGroup at index %1 in the array at "
             "index %2. The number of CoordGroups in this array "
             "is %3.")
@@ -3509,7 +3586,7 @@ void CoordGroupArrayArray::update(quint32 i, quint32 j, const CoordGroup &cgroup
                                             .d.constData() );
     
     if (cgdata->nCoords() != quint32(cgroup.count()))
-        throw SireError::incompatible_error( QObject::tr(
+        throw Siren::incompatible_error( QObject::tr(
             "Cannot update the CoordGroup at index %1 in the array "
             "at index %2, as the number of coordinates in this "
             "CoordGroup (%3) is not equal to the new CoordGroup (%4).")
@@ -3552,7 +3629,7 @@ void CoordGroupArrayArray::translate(const Vector &delta)
 
 /** Translate all of the points in the ith array by delta
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArrayArray::translate(quint32 i, const Vector &delta)
 {
@@ -3583,14 +3660,14 @@ void CoordGroupArrayArray::translate(quint32 i, const Vector &delta)
 
 /** Assert that there is a jth CoordGroup in the ith array 
 
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArrayArray::assertValidCoordGroup(quint32 i, quint32 j) const
 {
     this->assertValidCoordGroupArray(i);
     
     if (j >= quint32(d->cgArrayData()[i].nCoordGroups()))
-        throw SireError::invalid_index( QObject::tr(
+        throw Siren::invalid_index( QObject::tr(
             "There is no CoordGroup at index %1 in the CoordGroupArray "
             "at index %2. The number of CoordGroups in this array is %3.")
                 .arg(j).arg(i).arg(d->cgArrayData()[i].nCoordGroups()), CODELOC );
@@ -3599,7 +3676,7 @@ void CoordGroupArrayArray::assertValidCoordGroup(quint32 i, quint32 j) const
 /** Translate all of the points in the jth CoordGroup of the ith
     array by 'delta'
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArrayArray::translate(quint32 i, quint32 j, const Vector &delta)
 {
@@ -3656,7 +3733,7 @@ void CoordGroupArrayArray::rotate(const Quaternion &quat, const Vector &point)
 /** Rotate all of the points in the ith array using the matrix 'rotmat'
     about the point 'point' 
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArrayArray::rotate(quint32 i, const Matrix &rotmat, 
                                   const Vector &point)
@@ -3686,7 +3763,7 @@ void CoordGroupArrayArray::rotate(quint32 i, const Matrix &rotmat,
 /** Rotate all of the points in the ith array using the quaternion 'quat'
     about the point 'point' 
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArrayArray::rotate(quint32 i, const Quaternion &quat, 
                                   const Vector &point)
@@ -3697,7 +3774,7 @@ void CoordGroupArrayArray::rotate(quint32 i, const Quaternion &quat,
 /** Rotate all of the points in the jth CoordGroup in the 
     ith array using the matrix 'rotmat' about the point 'point' 
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArrayArray::rotate(quint32 i, quint32 j,
                                   const Matrix &rotmat, const Vector &point)
@@ -3724,7 +3801,7 @@ void CoordGroupArrayArray::rotate(quint32 i, quint32 j,
 /** Rotate all of the points in the jth CoordGroup in the 
     ith array using the quaternion 'quat' about the point 'point' 
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArrayArray::rotate(quint32 i, quint32 j,
                                   const Quaternion &quat, const Vector &point)
@@ -3757,7 +3834,7 @@ void CoordGroupArrayArray::mapInto(const AxisSet &axes)
 /** Map all of the points in the ith array into the coordinate frame
     represented by 'axes'
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArrayArray::mapInto(quint32 i, const AxisSet &axes)
 {
@@ -3786,7 +3863,7 @@ void CoordGroupArrayArray::mapInto(quint32 i, const AxisSet &axes)
 /** Map all the points in the CoordGroup at index j in the array at 
     index i into the coordinate frame represented by 'axes'
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArrayArray::mapInto(quint32 i, quint32 j, const AxisSet &axes)
 {
@@ -3835,7 +3912,7 @@ void CoordGroupArrayArray::changeFrame(const AxisSet &from_frame,
 /** Map all of the points in this array from the coordinate frame
     'from_frame' to the coordinate frame 'to_frame'
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArrayArray::changeFrame(quint32 i, const AxisSet &from_frame, 
                                                   const AxisSet &to_frame)
@@ -3866,7 +3943,7 @@ void CoordGroupArrayArray::changeFrame(quint32 i, const AxisSet &from_frame,
     array at index i from the coordinate frame 'from_frame' to 
     the coordinate frame 'to_frame'
     
-    \throw SireError::invalid_index
+    \throw Siren::invalid_index
 */
 void CoordGroupArrayArray::changeFrame(quint32 i, quint32 j,
                                        const AxisSet &from_frame, 
@@ -3891,7 +3968,34 @@ void CoordGroupArrayArray::changeFrame(quint32 i, quint32 j,
     *(cgdata->aaBox()) = AABox(cgroup);
 }
 
-const char* CoordGroupArrayArray::typeName()
+QString CoordGroupArrayArray::typeName()
 {
-    return QMetaType::typeName( qMetaTypeId<CoordGroupArrayArray>() );
+    return Implements<CoordGroupArrayArray,Object>::typeName();
+}
+
+ObjRef CoordGroupArrayArray::saveState() const
+{
+    return CoordGroupArrayArray(*this);
+}
+
+void CoordGroupArrayArray::restoreState(const Object &object)
+{
+    this->operator=( object.asA<CoordGroupArrayArray>() );
+}
+
+QString CoordGroupArrayArray::toString() const
+{
+    return QObject::tr("CoordGroupArrayArray( nCoordGroupArrays() == %1, "
+                       "nCoordGroups() == %2, nCoords() == %3 )")
+                .arg(nCoordGroupArrays())
+                .arg(nCoordGroups())
+                .arg(nCoords());
+}
+
+uint CoordGroupArrayArray::hashCode() const
+{
+    return qHash( CoordGroupArrayArray::typeName() ) +
+           10023 * nCoordGroupArrays() +
+           127 * nCoordGroups() + 
+           nCoords();
 }

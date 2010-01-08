@@ -355,7 +355,7 @@ const NullPerturbation& Perturbation::null()
         QMutexLocker lkr( globalMutex() );
         
         if (ptr->constData() == 0)
-            *ptr = new NullPerturbation();
+            *ptr = static_cast<Perturbation*>(new NullPerturbation());
     }
     
     return ptr->constData()->asA<NullPerturbation>();
