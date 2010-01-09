@@ -37,82 +37,81 @@
 #include "workpacket.h"
 #include "promise.h"
 
-#include "SireError/errors.h"
+#include "Siren/errors.h"
 
 using namespace SireCluster;
+using namespace Siren;
 
 using boost::shared_ptr;
 
 namespace SireCluster
 {
-namespace detail
-{
-
-/** Private implementation of Node */
-class NodePvt
-{
-public:
-    NodePvt(const Frontend &f, const NodesPtr &n)
-          : frontend(f), nodes(n)
-    {}
-    
-    ~NodePvt()
+    namespace detail
     {
-        //abort any running jobs
-        frontend.abortJob();
-        frontend.wait();
-        
-        //grab any results - this clears the frontend
-        try
+        /** Private implementation of Node */
+        class NodePvt
         {
-            frontend.result();
-        }
-        catch(...)
-        {}
-    
-        //now return the frontend back home
-        nodes.returnFrontend(frontend);
-    }
-    
-    void forceRelease()
-    {
-        Frontend old_frontend = frontend;
-        NodesPtr old_nodes = nodes;
-        
-        frontend = Frontend();
-        nodes = NodesPtr();
-    
-        //abort any running jobs
-        old_frontend.abortJob();
-        old_frontend.wait();
+        public:
+            NodePvt(const Frontend &f, const NodesPtr &n)
+                  : frontend(f), nodes(n)
+            {}
+            
+            ~NodePvt()
+            {
+                //abort any running jobs
+                frontend.abortJob();
+                frontend.wait();
+                
+                //grab any results - this clears the frontend
+                try
+                {
+                    frontend.result();
+                }
+                catch(...)
+                {}
+            
+                //now return the frontend back home
+                nodes.returnFrontend(frontend);
+            }
+            
+            void forceRelease()
+            {
+                Frontend old_frontend = frontend;
+                NodesPtr old_nodes = nodes;
+                
+                frontend = Frontend();
+                nodes = NodesPtr();
+            
+                //abort any running jobs
+                old_frontend.abortJob();
+                old_frontend.wait();
 
-        //grab any results - this clears the frontend
-        try
-        {
-            old_frontend.result();
-        }
-        catch(...)
-        {}
-    
-        //return the frontend home
-        old_nodes.returnFrontend(old_frontend);
-    }
-    
-    Frontend frontend;
-    NodesPtr nodes;
-};
-
-} //end of namespace detail 
+                //grab any results - this clears the frontend
+                try
+                {
+                    old_frontend.result();
+                }
+                catch(...)
+                {}
+            
+                //return the frontend home
+                old_nodes.returnFrontend(old_frontend);
+            }
+            
+            Frontend frontend;
+            NodesPtr nodes;
+        };
+    } //end of namespace detail 
 } //end of namespace SireCluster
 
 using namespace SireCluster::detail;
 
 /** Null constructor */
-Node::Node()
+Node::Node() : ImplementsHandle< Node,Handles<NodePvt> >()
 {}
 
 /** Copy constructor */
-Node::Node(const Node &other) : d(other.d)
+Node::Node(const Node &other) : ImplementsHandle< Node,Handles<NodePvt> >(other)
 {}
 
 /** Destructor */
@@ -124,7 +123,7 @@ Node::~Node()
 Node Node::create(const Nodes &nodes, const Frontend &frontend)
 {
     Node node;
-    node.d.reset( new NodePvt(frontend, nodes) );
+    node.setResource( new NodePvt(frontend, nodes) );
     
     return node;
 }
@@ -134,10 +133,7 @@ Node Node::create(const Nodes &nodes, const Frontend &frontend)
     the Nodes object itself has removed the Node from it's registry */
 void Node::evict()
 {
-    if (not this->isNull())
-    {
-        d->nodes.reset();
-    }
+    this->dropResource();
 }
 
 /** Internal function called by 'Nodes' that tells this node that
@@ -147,14 +143,14 @@ void Node::rehome(const Nodes &nodes)
 {
     if (not this->isNull())
     {
-        Nodes old_nodes = d->nodes.lock();
+        Nodes old_nodes = resource().nodes.lock();
         
         if (not old_nodes.isEmpty())
         {
             old_nodes.remove(*this);
         }
         
-        d->nodes = nodes;
+        resource().nodes = nodes;
     }
 }
 
@@ -164,7 +160,7 @@ Frontend Node::frontend()
 {
     if (not this->isNull())
     {
-        return d->frontend;
+        return resource().frontend;
     }
     else
         return Frontend();

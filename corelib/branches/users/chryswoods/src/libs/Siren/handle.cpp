@@ -26,6 +26,8 @@
   *
 \*********************************************/
 
+#include <QWaitCondition>
+
 #include "handle.h"
 #include "hanref.h"
 #include "class.h"
@@ -233,6 +235,23 @@ bool Handle::test() const
     return this->test(logger);
 }
 
+/** Internal function used to return the lock */
+QMutex* Handle::resourceLock()
+{
+    return resource_lock.get();
+}
+
+/** Internal function used to return the lock */
+QMutex* Handle::resourceLock() const
+{
+    return const_cast<QMutex*>(resource_lock.get());
+}
+
+void Handle::dropResource()
+{
+    resource_lock.reset();
+}
+
 /** Lock this handle */
 void Handle::lock()
 {
@@ -266,6 +285,26 @@ bool Handle::tryLock(int ms)
 {
     if (not this->isNull())
         return resource_lock->tryLock(ms);
+    else
+        return true;
+}
+
+/** Sleep on this handle, using the passed WaitCondition. Note that
+    you must hold the lock on this resource */
+void Handle::sleep(QWaitCondition &waiter)
+{
+    if (not this->isNull())
+        waiter.wait(resource_lock.get());
+}
+
+/** Sleep on this handle, using the passed WaitCondition, waiting
+    for at most 'ms' milliseconds to be woken up. This returns
+    whether or not this was woken up. Note that you must hold
+    the lock on this resource */
+bool Handle::sleep(QWaitCondition &waiter, int ms)
+{
+    if (not this->isNull())
+        return waiter.wait(resource_lock.get(), ms);
     else
         return true;
 }

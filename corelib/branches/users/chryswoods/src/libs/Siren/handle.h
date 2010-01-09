@@ -160,6 +160,9 @@ public:
     void lock();
     void unlock();
     
+    void sleep(QWaitCondition &waiter);
+    bool sleep(QWaitCondition &waiter, int ms);
+    
     bool tryLock();
     bool tryLock(int ms);
 
@@ -197,7 +200,11 @@ protected:
         not the object being Handled. */
     virtual Handle* ptr_clone() const=0;
 
+    QMutex* resourceLock();
+    QMutex* resourceLock() const;
+
     void setValidResource();
+    void dropResource();
 
     friend class HandleLocker;
     friend class WeakHandle;
@@ -246,6 +253,7 @@ protected:
     const T& resource() const;
 
     void setResource( T *resource );
+    void dropResource();
 
     const T& constResource() const;
     
@@ -575,6 +583,15 @@ T& Handles<T>::resource()
 {
     Handle::assertNotNull();
     return *(resource_ptr.get());
+}
+
+/** Drop the resource */
+template<class T>
+SIREN_OUTOFLINE_TEMPLATE
+void Handles<T>::dropResource()
+{
+    resource_ptr.reset();
+    Handle::dropResource();
 }
 
 /** Return a reference to the shared resource - you should

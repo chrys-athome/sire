@@ -31,7 +31,10 @@
 
 #include <QByteArray>
 
-#include "SireStream/streamdata.hpp"
+#include "Siren/handle.h"
+#include "Siren/objptr.hpp"
+
+#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
@@ -40,6 +43,8 @@ namespace SireCluster
 
 class Node;
 class WorkPacket;
+
+typedef Siren::ObjPtr<WorkPacket> WorkPacketPtr;
 
 namespace detail
 {
@@ -52,11 +57,9 @@ class PromisePvt;
     
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT Promise
+class SIRECLUSTER_EXPORT Promise 
+        : public Siren::ImplementsHandle<Promise, Siren::Handles<detail::PromisePvt> >
 {
-
-friend class Node;
-
 public:
     Promise();
     
@@ -69,13 +72,14 @@ public:
     bool operator==(const Promise &other) const;
     bool operator!=(const Promise &other) const;
     
+    QString toString() const;
+    uint hashCode() const;
+    
     void abort();
     void stop();
     
     void wait();
     bool wait(int timeout);
-    
-    bool isNull() const;
     
     bool isRunning();
     
@@ -88,18 +92,18 @@ public:
     
     float progress();
 
-    WorkPacket input();
-    WorkPacket interimResult();
-    WorkPacket result();
+    WorkPacketPtr input();
+    WorkPacketPtr interimResult();
+    WorkPacketPtr result();
     
 protected:
+    friend class Node;
     Promise(const Node &node, const WorkPacket &initial_workpacket);
-    
-    /** Pointer to the private implementation */
-    boost::shared_ptr<detail::PromisePvt> d;
 };
 
 }
+
+Q_DECLARE_METATYPE( SireCluster::Promise )
 
 SIRE_EXPOSE_CLASS( SireCluster::Promise )
 

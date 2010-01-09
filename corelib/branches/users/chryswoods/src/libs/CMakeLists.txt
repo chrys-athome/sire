@@ -9,7 +9,7 @@
 set ( SUBDIRS 
               SireBase
               SireCAS
-           #   SireCluster
+              SireCluster
            #   SireDB
            #   SireFF
               SireID

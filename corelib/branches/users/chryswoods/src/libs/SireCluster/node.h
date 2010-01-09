@@ -29,11 +29,11 @@
 #ifndef SIRECLUSTER_NODE_H
 #define SIRECLUSTER_NODE_H
 
+#include "Siren/handle.h"
+
 #include "sireglobal.h"
 
 #include <QUuid>
-
-#include <boost/shared_ptr.hpp>
 
 SIRE_BEGIN_HEADER
 
@@ -53,6 +53,11 @@ class NodePvt;
 class PromisePvt;
 }
 
+I think that the best thing to do here is to remove NodePvt
+and make Node a handle for Frontend (and set Frontend as 
+a simple class, removing FrontendBase and its mutex). This
+is because Frontend does not seem to be doing anything useful
+
 /** This is a Node in a cluster. A Node is a resource that can
     be used to run WorkPackets. A Node is always part of a
     'Nodes' scheduler object, that coordinates the WorkPackets
@@ -66,14 +71,9 @@ class PromisePvt;
     
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT Node
+class SIRECLUSTER_EXPORT Node 
+        : public Siren::ImplementsHandle< Node,Siren::Handles<detail::NodePvt> >
 {
-
-friend class Nodes;
-
-friend class Promise;
-friend class detail::PromisePvt;
-
 public:
     Node();
     
@@ -87,6 +87,7 @@ public:
     bool operator!=(const Node &other) const;
     
     QString toString() const;
+    uint hashCode() const;
     
     Nodes nodes();
     
@@ -115,6 +116,10 @@ public:
     float progress();
 
 protected:
+    friend class Nodes;
+    friend class Promise;
+    friend class detail::PromisePvt;
+
     static Node create(const Nodes &nodes, 
                        const Frontend &frontend); // called by Nodes
     
@@ -123,15 +128,13 @@ protected:
 
     Frontend frontend(); // called by Nodes
 
-    WorkPacket interimResult(); // called by Promise
-    WorkPacket result();        // called by PromisePvt
-
-private:
-    /** Private implementation of Node */
-    boost::shared_ptr<detail::NodePvt> d;
+    WorkPacketPtr interimResult(); // called by Promise
+    WorkPacketPtr result();        // called by PromisePvt
 };
 
 }
+
+Q_DECLARE_METATYPE( SireCluster::Node )
 
 SIRE_EXPOSE_CLASS( SireCluster::Node )
 

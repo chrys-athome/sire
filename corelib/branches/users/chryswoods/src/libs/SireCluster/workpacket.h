@@ -29,40 +29,26 @@
 #ifndef SIRECLUSTER_WORKPACKET_H
 #define SIRECLUSTER_WORKPACKET_H
 
+#include "Siren/object.h"
+#include "Siren/objptr.hpp"
+
 #include "sireglobal.h"
 
 #include <QSharedData>
 
-#include "SireBase/sharedpolypointer.hpp"
-
 SIRE_BEGIN_HEADER
 
-namespace SireCluster
+namespace Siren
 {
-class WorkPacket;
-class WorkPacketBase;
-class ErrorPacket;
-class AbortPacket;
-class WorkTest;
+class exception;
 }
 
-QDataStream& operator<<(QDataStream&, const SireCluster::WorkPacketBase&);
-QDataStream& operator>>(QDataStream&, SireCluster::WorkPacketBase&);
-
-QDataStream& operator<<(QDataStream&, const SireCluster::ErrorPacket&);
-QDataStream& operator>>(QDataStream&, SireCluster::ErrorPacket&);
-
-QDataStream& operator<<(QDataStream&, const SireCluster::AbortPacket&);
-QDataStream& operator>>(QDataStream&, SireCluster::AbortPacket&);
-
-QDataStream& operator<<(QDataStream&, const SireCluster::WorkPacket&);
-QDataStream& operator>>(QDataStream&, SireCluster::WorkPacket&);
-
-QDataStream& operator<<(QDataStream&, const SireCluster::WorkTest&);
-QDataStream& operator>>(QDataStream&, SireCluster::WorkTest&);
-
 namespace SireCluster
 {
+
+class WorkPacket;
+
+typedef Siren::ObjPtr<WorkPacket> WorkPacketPtr;
 
 /** This is the base class of all WorkPackets. A WorkPacket
     contains all of the code and input data for a piece of work,
@@ -71,22 +57,25 @@ namespace SireCluster
     
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT WorkPacketBase : public QSharedData
+class SIRECLUSTER_EXPORT WorkPacket : public Siren::Extends<WorkPacket,Siren::Object>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const WorkPacketBase&);
-friend QDataStream& ::operator>>(QDataStream&, WorkPacketBase&);
-
 public:
-    WorkPacketBase();
-    WorkPacketBase(const WorkPacketBase &other);
+    WorkPacket();
+    WorkPacket(const WorkPacket &other);
     
-    virtual ~WorkPacketBase();
+    virtual ~WorkPacket();
+    
+    static QString typeName();
+    
+    void stream(Siren::Stream &s);
     
     virtual bool shouldPack() const;
     virtual int approximatePacketSize() const;
+
+    QByteArray pack() const;
+    static WorkPacketPtr unpack(const QByteArray &data);
     
-    void runChunk();
+    WorkPacketPtr runChunk() const;
     
     float progress() const;
     
@@ -96,110 +85,28 @@ public:
     virtual void throwError() const;
     
     virtual bool wasAborted() const;
-    
-    virtual WorkPacketBase* clone() const=0;
-    
-    static const char* typeName()
-    {
-        return "SireCluster::WorkPacketBase";
-    }
-    
-    virtual const char* what() const=0;
-
-    template<class T>
-    bool isA() const
-    {
-        return dynamic_cast<const T*>(this) != 0;
-    }
-    
-    template<class T>
-    const T& asA() const
-    {
-        return dynamic_cast<const T&>(*this);
-    }
 
 protected:
-    virtual float chunk()=0;
+    virtual WorkPacketPtr chunk() const=0;
 
-    WorkPacketBase& operator=(const WorkPacketBase&);
+    WorkPacket& operator=(const WorkPacket&);
+    
+    bool operator==(const WorkPacket &other) const;
+    bool operator!=(const WorkPacket &other) const;
+    
+    void setProgress(double new_progress);
     
 private:
     /** The current progress of the work */
     float current_progress;
 };
 
-/** This class is the generic holder for all work packets.
-    
-    @author Christopher Woods
-*/
-class SIRECLUSTER_EXPORT WorkPacket
-{
-
-friend QDataStream& ::operator<<(QDataStream&, const WorkPacket&);
-friend QDataStream& ::operator>>(QDataStream&, WorkPacket&);
-
-public:
-    WorkPacket();
-    WorkPacket(const WorkPacketBase &work);
-    WorkPacket(const WorkPacket &other);
-    
-    ~WorkPacket();
-    
-    WorkPacket& operator=(const WorkPacket &other);
-
-    static const char* typeName();
-    
-    const char* what() const
-    {
-        return WorkPacket::typeName();
-    }
-
-    QByteArray pack() const;
-    
-    static WorkPacket unpack(const QByteArray &data);
-
-    bool shouldPack() const;
-
-    bool isNull() const;
-
-    void abort();
-
-    void runChunk() throw();
-    
-    float progress() const;
-    
-    bool wasAborted() const;
-    
-    bool hasFinished() const;
-
-    bool isError() const;
-    void throwError() const;
-
-    const WorkPacketBase& base() const;
-
-    template<class T>
-    bool isA() const;
-    
-    template<class T>
-    const T& asA() const;
-
-private:
-    void setError(const SireError::exception &e) throw();
-
-    /** Implicitly shared pointer to the work */
-    SireBase::SharedPolyPointer<WorkPacketBase> d;
-};
-
 /** This is a packet that is sent if the job was aborted.
 
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT AbortPacket : public WorkPacketBase
+class SIRECLUSTER_EXPORT AbortPacket : public Siren::Implements<AbortPacket,WorkPacket>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const AbortPacket&);
-friend QDataStream& ::operator>>(QDataStream&, AbortPacket&);
-
 public:
     AbortPacket();
 
@@ -208,22 +115,19 @@ public:
     ~AbortPacket();
     
     AbortPacket& operator=(const AbortPacket &other);
-    
-    AbortPacket* clone() const;
-    
-    static const char* typeName();
-    
-    const char* what() const
-    {
-        return AbortPacket::typeName();
-    }
+
+    bool operator==(const AbortPacket &other) const;
+    bool operator!=(const AbortPacket &other) const;
+
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &stream);
     
     bool hasFinished() const;
-    
-    virtual bool wasAborted() const;
+    bool wasAborted() const;
 
 protected:
-    float chunk();
+    WorkPacketPtr chunk() const;
 };
 
 /** This is a packet that contains an error. This is returned
@@ -231,15 +135,12 @@ protected:
     
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT ErrorPacket : public WorkPacketBase
+class SIRECLUSTER_EXPORT ErrorPacket 
+        : public Siren::Implements<ErrorPacket,WorkPacket>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const ErrorPacket&);
-friend QDataStream& ::operator>>(QDataStream&, ErrorPacket&);
-
 public:
     ErrorPacket();
-    ErrorPacket(const SireError::exception &e);
+    ErrorPacket(const Siren::exception &e);
 
     ErrorPacket(const ErrorPacket &other);
     
@@ -247,14 +148,12 @@ public:
     
     ErrorPacket& operator=(const ErrorPacket &other);
     
-    ErrorPacket* clone() const;
-    
-    static const char* typeName();
-    
-    const char* what() const
-    {
-        return ErrorPacket::typeName();
-    }
+    bool operator==(const ErrorPacket &other) const;
+    bool operator!=(const ErrorPacket &other) const;
+
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &s);
     
     int approximatePacketSize() const;
     
@@ -264,7 +163,7 @@ public:
     bool hasFinished() const;
 
 protected:
-    float chunk();
+    WorkPacketPtr chunk() const;
     
 private:
     /** A binary representation of the error */
@@ -273,12 +172,9 @@ private:
 
 /** This is a small test packet that can be used to test
     that everything is working */
-class SIRECLUSTER_EXPORT WorkTest : public WorkPacketBase
+class SIRECLUSTER_EXPORT WorkTest 
+        : public Siren::Implements<WorkTest,WorkPacket>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const WorkTest&);
-friend QDataStream& ::operator>>(QDataStream&, WorkTest&);
-
 public:
     WorkTest();
     WorkTest(int start, int end, int step=1);
@@ -287,61 +183,38 @@ public:
     ~WorkTest();
     
     WorkTest& operator=(const WorkTest &other);
-    
-    WorkTest* clone() const;
-    
-    static const char* typeName();
-    
-    const char* what() const
-    {
-        return WorkTest::typeName();
-    }
+
+    bool operator==(const WorkTest &other) const;
+    bool operator!=(const WorkTest &other) const;
+
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &s);
     
     int approximatePacketSize() const;
     
     bool hasFinished() const;
 
 protected:
-    float chunk();
+    WorkPacketPtr chunk() const;
     
 private:
     /** The range to loop over */
     qint32 current, start, end, step;
 };
 
-#ifndef SIRE_SKIP_INLINE_FUNCTIONS
-
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-bool WorkPacket::isA() const
-{
-    if (this->isNull())
-        return false;
-    else
-        return this->base().isA<T>();
-}
-    
-template<class T>
-SIRE_OUTOFLINE_TEMPLATE
-const T& WorkPacket::asA() const
-{
-    return base().asA<T>();
 }
 
-#endif // SIRE_SKIP_INLINE_FUNCTIONS
-
-}
-
-Q_DECLARE_METATYPE( SireCluster::WorkPacket )
 Q_DECLARE_METATYPE( SireCluster::ErrorPacket )
 Q_DECLARE_METATYPE( SireCluster::AbortPacket )
 Q_DECLARE_METATYPE( SireCluster::WorkTest )
 
-SIRE_EXPOSE_CLASS( SireCluster::WorkPacketBase )
 SIRE_EXPOSE_CLASS( SireCluster::WorkPacket )
 SIRE_EXPOSE_CLASS( SireCluster::ErrorPacket )
 SIRE_EXPOSE_CLASS( SireCluster::AbortPacket )
 SIRE_EXPOSE_CLASS( SireCluster::WorkTest )
+
+SIRE_EXPOSE_OBJECT_PTR( SireCluster::WorkPacketPtr, SireCluster::WorkPacket )
 
 SIRE_END_HEADER
 

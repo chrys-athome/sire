@@ -97,8 +97,7 @@ set_target_properties (SireCluster PROPERTIES
 target_link_libraries (SireCluster
                        SireMaths
                        SireBase
-                       SireError
-                       SireStream
+                       Siren
                        ${SIRECLUSTER_EXTRA_LIBRARIES}
                        )
 
