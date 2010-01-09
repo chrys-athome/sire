@@ -50,7 +50,7 @@ int Client::run(int argc, char **argv)
     /** Construct the Client object */
     Client *client = new Client();
 
-    client->print_to_screen = (argc != 1);
+    client->print_to_screen = (argc == 2);
 
     client->startServerProcess();
 
@@ -62,17 +62,20 @@ int Client::run(int argc, char **argv)
         //get the list of classes to test
         test_classes = registered_classes;
     }
-    else
+    else if (argc == 2)
     {
-        QTextStream ts(stdout);
-    
-        for (int i=1; i<argc; ++i)
+        if (registered_classes.contains(argv[1]))
+            test_classes.append( argv[1] );
+    }
+    else if (argc > 2)
+    {
+        for (int i=2; i<argc; ++i)
         {
-            if (registered_classes.contains(argv[i]))
-                test_classes.append( argv[i] );
-            else
-                ts << QObject::tr("There is no class called \"%1\" that is "
-                                  "available to be tested!\n").arg(argv[i]);
+            foreach (QString registered_class, registered_classes)
+            {
+                if (registered_class.contains(argv[i]))
+                    test_classes.append(registered_class);
+            }
         }
     }
     

@@ -75,6 +75,7 @@ public:
 
     QString toString() const;
     void stream(Siren::Stream &s);
+    bool test(Siren::Logger &logger) const;
 };
 
 }

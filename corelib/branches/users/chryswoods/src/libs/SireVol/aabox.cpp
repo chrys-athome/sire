@@ -46,7 +46,7 @@ static const RegisterPrimitive<AABox> r_aabox;
 namespace Siren{ template class PrimitiveObject<AABox>; }
 
 /** Construct an empty AABox */
-AABox::AABox() : Primitive<AABox>(), cent(), halfextents(), rad(0)
+AABox::AABox() : Primitive<AABox>(), cent(0,0,0), halfextents(0,0,0), rad(0)
 {}
 
 /** Construct an AABox that completely encloses the point 'point' */

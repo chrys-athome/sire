@@ -494,13 +494,18 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
             
             cgroup->ncoords = 0;
             cgroup->coords0 = 0;
-            cgroup->aabox = 0;
             
-            cgarrayarray->aabox0 = 0;
+            idx += sizeof(CGData) + sizeof(CoordGroup);
+            
+            cgroup->aabox = idx;
+            
+            new (storage + idx) AABox();
+            
+            cgarrayarray->aabox0 = idx;
             cgarrayarray->coords0 = 0;
             cgarrayarray->ncgroups = 0;
             
-            idx += sizeof(CGData) + sizeof(CoordGroup) + sizeof(AABox);
+            idx += sizeof(AABox);
         }
         
         //we should now be at the end of the storage
@@ -1982,7 +1987,11 @@ bool CoordGroup::test(Logger &logger) const
                                 CODELOC,
                                 cgroup == CoordGroup(coords) );
                                 
-            tester.expect_false( QObject::tr("Not equals comparison works"),
+            tester.expect_false( QObject::tr("Equals comparison really works"),
+                                 CODELOC,
+                                 cgroup == CoordGroup() );
+                                
+            tester.expect_true( QObject::tr("Not equals comparison works"),
                                  CODELOC,
                                  cgroup != CoordGroup() );
 
@@ -2632,11 +2641,20 @@ bool CoordGroupArray::operator==(const CoordGroupArray &other) const
 {
     if (d.constData() == other.d.constData())
         return true;
+    
+    else if (this->nCoordGroups() != other.nCoordGroups())
+        return false;
         
-    for (quint32 i=0; i<d->nCGroups(); ++i)
+    else if (this->nCoordGroups() == 0)
+        return true;
+    
+    else
     {
-        if (this->data()[i] != other.data()[i])
-            return false;
+        for (quint32 i=0; i<d->nCGroups(); ++i)
+        {
+            if (this->data()[i] != other.data()[i])
+                return false;
+        }
     }
     
     return true;
@@ -3200,10 +3218,14 @@ bool CoordGroupArray::test(Logger &logger) const
             tester.expect_true( QObject::tr("Comparison operator works"), 
                                 CODELOC,
                                 cgroups == CoordGroupArray(groups) );
-                                
+
             tester.expect_false( QObject::tr("Comparison operator still works"),
                                  CODELOC,
-                                 cgroups != CoordGroupArray() );
+                                 cgroups == CoordGroupArray() );
+
+            tester.expect_true( QObject::tr("Anticomparison operator works"), 
+                                CODELOC,
+                                cgroups != CoordGroupArray() );
                                  
             tester.expect_equal( QObject::tr("CoordGroupArray::merge() works"),
                                  CODELOC,
@@ -3527,10 +3549,19 @@ bool CoordGroupArrayArray::operator==(const CoordGroupArrayArray &other) const
     if (this->coordGroupData() == other.coordGroupData())
         return true;
         
-    for (quint32 i=0; i<d->nCGroups(); ++i)
+    else if (this->nCoordGroupArrays() != other.nCoordGroupArrays())
+        return false;
+        
+    else if (this->nCoordGroupArrays() == 0)
+        return true;
+    
+    else
     {
-        if (this->coordGroupData()[i] != other.coordGroupData()[i])
-            return false;
+        for (quint32 i=0; i<d->nCGroups(); ++i)
+        {
+            if (this->coordGroupData()[i] != other.coordGroupData()[i])
+                return false;
+        }
     }
     
     return true;
@@ -4321,8 +4352,12 @@ bool CoordGroupArrayArray::test(Logger &logger) const
             tester.expect_true( QObject::tr("Comparison operator works"), 
                                 CODELOC,
                                 carrays == CoordGroupArrayArray(arrays) );
+                                 
+            tester.expect_false( QObject::tr("Comparison operator really works"), 
+                                CODELOC,
+                                carrays == CoordGroupArrayArray() );
                                 
-            tester.expect_false( QObject::tr("Comparison operator still works"),
+            tester.expect_true( QObject::tr("Comparison operator still works"),
                                  CODELOC,
                                  carrays != CoordGroupArrayArray() );
         }

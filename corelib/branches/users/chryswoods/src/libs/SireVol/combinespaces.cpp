@@ -33,6 +33,9 @@
 
 #include "SireBase/properties.h"
 
+#include "Siren/logger.h"
+#include "Siren/tester.h"
+#include "Siren/errors.h"
 #include "Siren/stream.h"
 
 using namespace SireVol;
@@ -157,4 +160,45 @@ ObjRef CombineSpaces::combine(const Properties &properties) const
         
         return CombinedSpace(spaces);
     }
+}
+
+bool CombineSpaces::test(Logger &logger) const
+{
+    Tester tester(*this, logger);
+
+    #ifndef SIREN_DISABLE_TESTS    
+    
+    try
+    {
+        /// test 1
+        {
+           tester.nextTest();
+           
+           CombineSpaces spaces("bound", "free");
+           
+           tester.expect_equal( QObject::tr("Number of spaces is two"),
+                                CODELOC,
+                                spaces.nSources(), 2 );
+                               
+           tester.expect_equal( QObject::tr("First space is bound"),
+                                CODELOC,
+                                spaces[0].source(), QString("bound") );
+                                
+           tester.expect_equal( QObject::tr("Second space is free"),
+                                CODELOC,
+                                spaces[1].source(), QString("free") );
+        }
+    }
+    catch(const Siren::exception &e)
+    {
+        tester.unexpected_error(e);
+    }
+    catch(...)
+    {
+        tester.unexpected_error( unknown_error(CODELOC) );
+    }
+    
+    #endif // SIREN_DISABLE_TESTS
+    
+    return tester.allPassed();
 }
