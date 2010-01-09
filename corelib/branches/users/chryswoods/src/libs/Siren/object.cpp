@@ -131,7 +131,7 @@ void Object::throwUnregisteredMetaTypeError(const QString &type_name)
 {
     throw Siren::program_bug( QObject::tr(
             "Cannot create the Class object for %1 as the programmer does "
-            "not appear to have created a RegisterMetaType<%1> object for "
+            "not appear to have created a RegisterObject<%1> object for "
             "this type.").arg(type_name), CODELOC );
 }
 
@@ -183,12 +183,20 @@ QString Object::toString() const
     of the tests passed */
 bool Object::test(Logger &logger) const
 {
+    #ifndef SIREN_DISABLE_TESTS
+
     logger.write( QObject::tr(
             "Testing of %1 failed as no unit tests have been written "
             "for this class. Please ask the author to provide some tests.")
                 .arg(this->what()) );
                 
     return false;
+    
+    #else
+    
+    return true;
+    
+    #endif
 }
 
 /** This is an overloaded class provided to run the unit tests
@@ -268,6 +276,8 @@ bool None::test(Logger &logger) const
 {
     Tester tester(*this, logger);
 
+    #ifndef SIREN_DISABLE_TESTS
+    
     try
     {
         // Test 1
@@ -318,6 +328,8 @@ bool None::test(Logger &logger) const
     {
         tester.unexpected_error( unknown_error(CODELOC) );
     }
+    
+    #endif // SIREN_DISABLE_TESTS
     
     return tester.allPassed();
 }

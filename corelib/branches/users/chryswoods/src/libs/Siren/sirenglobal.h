@@ -267,23 +267,29 @@ public:
         return is_concrete;
     }
 
+    virtual RegisterMetaType* clone() const=0;
+
 protected:
     RegisterMetaType(int subtype, const QString &name, 
                      bool reg=true) : type_name(name), sub_type(subtype)
     {
         if (reg)
-        {
             is_concrete = true;
-            RegisterMetaType::registerClassName(name, this);
-        }
         else
             is_concrete = false;
     }
+    
+    RegisterMetaType(const RegisterMetaType &other)
+          : type_name(other.type_name), sub_type(other.sub_type),
+            is_concrete(other.is_concrete)
+    {}
 
-private:
+    static const RegisterMetaType* getRegistration(const QString &classname);
+
     static void registerClassName(const QString &name, 
                                   const RegisterMetaType *metatype);
 
+private:
     QString type_name;
     qint8 sub_type;
     bool is_concrete;
@@ -317,33 +323,35 @@ public:
     {
         qRegisterMetaType<T>(this->typeName().toAscii().constData());
         qRegisterMetaTypeStreamOperators<T>(this->typeName().toAscii().constData());
-        
-        singleton = this;
+
+        RegisterMetaType::registerClassName(this->typeName(), this);
     }
 
     /** Use this constructor to register a virtual Object */
     RegisterObject( const detail::VIRTUAL_CLASS_TYPE& )
         : RegisterMetaType( RegisterMetaType::IS_OBJECT, T::typeName(), false )
     {
-        singleton = this;
+        RegisterMetaType::registerClassName(this->typeName(), this);
     }
+
+    RegisterObject(const RegisterObject<T> &other)
+        : RegisterMetaType(other)
+    {}
 
     /** Destructor */
     ~RegisterObject()
     {}
 
-    static const RegisterMetaType* getRegistration()
+    RegisterObject<T>* clone() const
     {
-        return singleton;
+        return new RegisterObject<T>(*this);
     }
 
-private:
-    /** Global shared pointer to this singleton object */
-    static const RegisterMetaType *singleton;
+    static const RegisterMetaType* getRegistration()
+    {
+        return RegisterMetaType::getRegistration( T::typeName() );
+    }
 };
-
-template<class T>
-const RegisterMetaType* RegisterObject<T>::singleton = 0;
 
 /** This is used to register a Siren::Handle of type 'T' - this
     needs to be called once for each public Siren::Handle
@@ -361,32 +369,33 @@ public:
                     QMetaType::typeName( qMetaTypeId<T>() ) )
     {
         qRegisterMetaType<T>(this->typeName().toAscii().constData());
-        singleton = this;
+        RegisterMetaType::registerClassName(this->typeName(), this);
     }
 
     /** Use this constructor to register a virtual Handle */
     RegisterHandle( const detail::VIRTUAL_CLASS_TYPE& )
         : RegisterMetaType( RegisterMetaType::IS_HANDLE, T::typeName(), false )
     {
-        singleton = this;
+        RegisterMetaType::registerClassName(this->typeName(), this);
     }
+    
+    RegisterHandle(const RegisterHandle<T> &other) : RegisterMetaType(other)
+    {}
 
     /** Destructor */
     ~RegisterHandle()
     {}
 
-    static const RegisterMetaType* getRegistration()
+    RegisterHandle<T>* clone() const
     {
-        return singleton;
+        return new RegisterHandle<T>(*this);
     }
 
-private:
-    /** Global shared pointer to this singleton object */
-    static const RegisterMetaType *singleton;
+    static const RegisterMetaType* getRegistration()
+    {
+        return RegisterMetaType::getRegistration( T::typeName() );
+    }
 };
-
-template<class T>
-const RegisterMetaType* RegisterHandle<T>::singleton = 0;
 
 template<class T> class PrimitiveObject;
 
@@ -405,6 +414,10 @@ public:
 protected:
     RegisterPrimitiveBase(int subtype, const QString &name)
             : RegisterMetaType(subtype, name, true)
+    {}
+
+    RegisterPrimitiveBase(const RegisterPrimitiveBase &other)
+            : RegisterMetaType(other), primitive_object(other.primitive_object)
     {}
 
     const RegisterMetaType *primitive_object;
@@ -428,30 +441,30 @@ public:
         qRegisterMetaType<T>(this->typeName().toAscii().constData());
         qRegisterMetaTypeStreamOperators<T>(this->typeName().toAscii().constData());
         
-        singleton = this;
-        primitive_object = &reg_object;
+        RegisterObject< PrimitiveObject<T> > reg_object;
+        primitive_object = RegisterObject< PrimitiveObject<T> >::getRegistration();
+
+        RegisterMetaType::registerClassName(this->typeName(), this);
     }
+
+    RegisterPrimitive(const RegisterPrimitive<T> &other)
+         : RegisterPrimitiveBase(other)
+    {}
 
     /** Destructor */
     ~RegisterPrimitive()
     {}
 
-    static const RegisterMetaType* getRegistration()
+    RegisterPrimitive<T>* clone() const
     {
-        return singleton;
+        return new RegisterPrimitive<T>(*this);
     }
 
-private:
-    /** The registration class for the PrimitiveObject<T> class that
-        can be used to hold and create this primitive */
-    RegisterObject< PrimitiveObject<T> > reg_object;
-
-    /** Global shared pointer to this singleton object */
-    static const RegisterMetaType *singleton;
+    static const RegisterMetaType* getRegistration()
+    {
+        return RegisterMetaType::getRegistration( QMetaType::typeName(qMetaTypeId<T>()) );
+    }
 };
-
-template<class T>
-const RegisterMetaType* RegisterPrimitive<T>::singleton = 0;
 
 } // end of namespace Siren
 

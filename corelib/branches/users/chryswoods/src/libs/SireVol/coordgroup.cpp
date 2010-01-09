@@ -35,6 +35,8 @@
 
 #include "SireBase/quickcopy.hpp"
 
+#include "Siren/logger.h"
+#include "Siren/tester.h"
 #include "Siren/errors.h"
 #include "Siren/stream.h"
 
@@ -345,8 +347,6 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
     //allocate this space
     char *storage = new char[sz];
     
-    qDebug() << "CREATED MEMORY" << (void*)storage << sz;
-    
     quint32 spare_space = 16;
     
     try
@@ -365,10 +365,9 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
         
         //the first CGArrayData lies at this index + narrays*sizeof(CoordGroupArray)
         if (narrays > 0)
+        {
             cgarrayarray->cgarraydata0 = idx + (narrays * sizeof(CoordGroupArray));
 
-        if (narrays > 0)
-        {
             quint32 dataidx = cgarrayarray->cgarraydata0;
         
             //loop over each CGArray and create it in its place
@@ -421,12 +420,11 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
         
         //we are now at the location of the first CGData
         cgarrayarray->cgroup0 = idx;
-        cgarrayarray->cgdata0 = idx + (ncgroups * sizeof(CoordGroup));
-        
-        qDebug() << idx << sizeof(CoordGroup) << cgarrayarray->cgdata0;
         
         if (ncgroups > 0)
         {
+            cgarrayarray->cgdata0 = idx + (ncgroups * sizeof(CoordGroup));
+
             quint32 dataidx = cgarrayarray->cgdata0;
         
             //loop over each CoordGroup and create it in its place
@@ -488,9 +486,7 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
             //create space for the null CoordGroup
             quint32 dataidx = idx + sizeof(CoordGroup);
             
-            qDebug() << dataidx << idx;
-            
-            CGData *cgroup = new (storage + dataidx) CGData(idx);
+            CGData *cgroup = new (storage + dataidx) CGData(dataidx);
             new (storage + idx) CoordGroup(cgroup);
             
             //tell the parent where this null CoordGroup is located
@@ -543,8 +539,6 @@ const char* CGMemory::getRoot(const char *this_ptr, quint32 this_idx)
 /** Destroy the object 'array' */
 void CGMemory::destroy(CGArrayArrayData *array)
 {
-    qDebug() << "DESTROY MEMORY" << array;
-
     //we need to delete it in the opposite order to creation - first
     //lets delete all of the vectors
     quint32 ncoords = array->nCoords();
@@ -786,10 +780,6 @@ const CGData* CGArrayArrayData::nullCGroup() const
     BOOST_ASSERT( ncgroups == 0 );
     BOOST_ASSERT( cgdata0 != 0 );
 
-    qDebug() << (void*)(memory());
-    qDebug() << cgdata0;
-    qDebug() << (void*)(&(memory()[cgdata0]));
-    
     return (const CGData*)( &(memory()[cgdata0]) );
 }
 
@@ -1420,12 +1410,7 @@ static const CGSharedPtr<CGArrayArrayData>& getSharedNull()
 {
     if (shared_null.constData() == 0)
     {
-        CGArrayArrayData *d = (CGArrayArrayData*)(CGMemory::create(0,0,0));
-        d->incref();
-    
-        qDebug() << "CGArrayArrayData" << d;
-    
-        shared_null = d;
+        shared_null = (CGArrayArrayData*)(CGMemory::create(0,0,0));
         shared_null->close();
     }
     
@@ -1443,9 +1428,7 @@ static CGSharedPtr<CGData> getSharedNullCoordGroup()
 CoordGroupBase::CoordGroupBase()
                : Extends<CoordGroupBase,Object>(), 
                  d( ::getSharedNullCoordGroup() )
-{
-    qDebug() << "CREATED CoordGroupBase" << d.constData();
-}
+{}
 
 /** Private constructor used only by CGData */
 CoordGroupBase::CoordGroupBase(CGData *data)
@@ -1596,9 +1579,7 @@ CoordGroupBase::CoordGroupBase(const CoordGroupBase &other)
 /** Destructor - this will only delete the data if this
     is the only reference to it */
 CoordGroupBase::~CoordGroupBase()
-{
-    qDebug() << "DESTROYED CoordGroupBase" << d.constData();
-}
+{}
 
 /** Copy assignment operator - CoordGroupBase is implicitly
     shared so this will be fast */
@@ -1936,6 +1917,98 @@ QString CoordGroup::toString() const
 uint CoordGroup::hashCode() const
 {
     return qHash( CoordGroup::typeName() ) + this->count();
+}
+
+bool CoordGroup::test(Logger &logger) const
+{
+    Tester tester(*this, logger);
+    
+    #ifndef SIREN_DISABLE_TESTS
+    
+    try
+    {
+        /// test 1
+        {
+            tester.nextTest();
+            
+            CoordGroup cgroup;
+            
+            tester.expect_true( QObject::tr("Null CoordGroup is empty"),
+                                 CODELOC,
+                                 cgroup.isEmpty() );
+                                 
+            tester.expect_equal( QObject::tr( "Null CoordGroup has no coordinates" ),
+                                 CODELOC,
+                                 cgroup.count(), 0 );
+                                 
+            tester.expect_equal( QObject::tr("Null CoordGroup::toVector() is empty"),
+                                 CODELOC,
+                                 cgroup.toVector(), QVector<Vector>() );
+                                 
+            tester.expect_equal( QObject::tr("Null CoordGroup has null AABox"),
+                                 CODELOC,
+                                 cgroup.aaBox(), AABox() );
+        }
+
+        /// test 2
+        {
+            tester.nextTest();
+            
+            QVector<Vector> coords;
+            coords.append( Vector(0,0,0) );
+            coords.append( Vector(1,2,3) );
+            coords.append( Vector(1,1,1) );
+            
+            CoordGroup cgroup(coords);
+            
+            tester.expect_false( QObject::tr("Populated CoordGroup is not empty"),
+                                 CODELOC,
+                                 cgroup.isEmpty() );
+                                 
+            tester.expect_equal( QObject::tr("Populated CoordGroup has 3 coordinates"),
+                                 CODELOC,
+                                 cgroup.count(), 3 );
+                                 
+            tester.expect_equal( QObject::tr("Populated CoordGroup::vector() returns "
+                                             "input"),
+                                 CODELOC,
+                                 cgroup.toVector(), coords );
+                                 
+            tester.expect_equal( QObject::tr("Populated CoordGroup AABox is correct"),
+                                 CODELOC,
+                                 cgroup.aaBox(), AABox(coords) );
+                                
+            tester.expect_true( QObject::tr("Equals comparison works"),
+                                CODELOC,
+                                cgroup == CoordGroup(coords) );
+                                
+            tester.expect_false( QObject::tr("Not equals comparison works"),
+                                 CODELOC,
+                                 cgroup != CoordGroup() );
+
+            CoordGroup cgroup2 = cgroup;
+            
+            tester.expect_false( QObject::tr("maybeDifferent works"),
+                                 CODELOC,
+                                 cgroup.maybeDifferent(cgroup2) );
+                                 
+            tester.expect_true( QObject::tr("maybeDifferent definitely works"),
+                                CODELOC,
+                                cgroup.maybeDifferent(CoordGroup()) );
+        }
+    }
+    catch(const Siren::exception &e)
+    {
+        tester.unexpected_error(e);
+    }
+    catch(...)
+    {
+        tester.unexpected_error( unknown_error(CODELOC) );
+    }
+    
+    #endif // SIREN_DISABLE_TESTS
+    
+    return tester.allPassed();
 }
 
 ////////
@@ -2313,6 +2386,41 @@ uint CoordGroupEditor::hashCode() const
     return qHash( CoordGroupEditor::typeName() ) + this->count();
 }
 
+bool CoordGroupEditor::test(Logger &logger) const
+{
+    Tester tester(*this, logger);
+    
+    #ifndef SIREN_DISABLE_TESTS
+    
+    try
+    {
+        /// test 1
+        {
+            CoordGroupEditor cgeditor;
+            
+            tester.expect_true( QObject::tr("Null editor is empty"),
+                                CODELOC,
+                                cgeditor.isEmpty() );
+                                
+            tester.expect_equal( QObject::tr("Null editor has no coordinates"),
+                                 CODELOC,
+                                 cgeditor.nCoords(), 0 );
+        }
+    }
+    catch (const Siren::exception &e)
+    {
+        tester.unexpected_error(e);
+    }
+    catch(...)
+    {
+        tester.unexpected_error( unknown_error(CODELOC) );
+    }
+
+    #endif // SIREN_DISABLE_TESTS
+    
+    return tester.allPassed();
+}
+
 QString CoordGroupEditor::typeName()
 {
     return Implements<CoordGroupEditor,CoordGroupBase>::typeName();
@@ -2599,6 +2707,12 @@ const CoordGroup& CoordGroupArray::operator[](quint32 i) const
 const CoordGroup& CoordGroupArray::at(quint32 i) const
 {
     return this->operator[](i);
+}
+
+/** Return whether or not this CoordGroupArray is empty */
+bool CoordGroupArray::isEmpty() const
+{
+    return d->nCGroups() == 0;
 }
 
 /** Return the number of CoordGroups in this array */
@@ -3005,6 +3119,112 @@ uint CoordGroupArray::hashCode() const
     return qHash( CoordGroupArray::typeName() ) + nCoords() + 123*nCoordGroups();
 }
 
+bool CoordGroupArray::test(Logger &logger) const
+{
+    Tester tester(*this, logger);
+    
+    #ifndef SIREN_DISABLE_TESTS
+    
+    try 
+    {
+        /// test 1
+        {
+            tester.nextTest();
+            
+            CoordGroupArray cgarray;
+            
+            tester.expect_true( QObject::tr("Null CoordGroupArray is empty"),
+                                CODELOC,
+                                cgarray.isEmpty() );
+                                
+            tester.expect_equal( QObject::tr("Null CoordGroupArray contains no "
+                                             "CoordGroups"),
+                                 CODELOC,
+                                 cgarray.count(), 0 );
+                                
+            tester.expect_equal( QObject::tr("Null CoordGroupArray contains no "
+                                             "CoordGroups"),
+                                 CODELOC,
+                                 cgarray.nCoordGroups(), 0 );
+                                
+            tester.expect_equal( QObject::tr("Null CoordGroupArray contains no "
+                                             "coordinates"),
+                                 CODELOC,
+                                 cgarray.nCoords(), 0 );
+        }
+        
+        /// test 2
+        {
+            tester.nextTest();
+            
+            QVector<Vector> coords0;
+            coords0.append( Vector(0,0,0) );
+            coords0.append( Vector(1,1,1) );
+            
+            QVector<Vector> coords1;
+            coords1.append( Vector(5,5,5) );
+            coords1.append( Vector(10,10,4) );
+            coords1.append( Vector(-3,-2,-1) );
+            
+            QVector<CoordGroup> groups;
+            groups.append( CoordGroup(coords0) );
+            groups.append( CoordGroup() );
+            groups.append( CoordGroup(coords1) );
+            groups.append( groups.at(0) );
+            
+            CoordGroupArray cgroups(groups);
+            
+            tester.expect_false( QObject::tr("Populated array is not empty"),
+                                 CODELOC,
+                                 cgroups.isEmpty() );
+                                 
+            tester.expect_equal( QObject::tr("Number of groups is 4"),
+                                 CODELOC,
+                                 cgroups.nCoordGroups(), 4 );
+                                 
+            tester.expect_equal( QObject::tr("Number of coordinates is 7"),
+                                 CODELOC,
+                                 cgroups.nCoords(), 7 );
+                                 
+            for (int i=0; i<4; ++i)
+            {
+                tester.expect_equal( QObject::tr("CoordGroups compare %1").arg(i),
+                                     CODELOC,
+                                     cgroups[i], groups[i] );
+            }
+            
+            tester.expect_equal( QObject::tr("Combined AABox is correct"),
+                                 CODELOC,
+                                 cgroups.aaBox(), AABox(coords0 + coords1) );
+                                 
+            tester.expect_true( QObject::tr("Comparison operator works"), 
+                                CODELOC,
+                                cgroups == CoordGroupArray(groups) );
+                                
+            tester.expect_false( QObject::tr("Comparison operator still works"),
+                                 CODELOC,
+                                 cgroups != CoordGroupArray() );
+                                 
+            tester.expect_equal( QObject::tr("CoordGroupArray::merge() works"),
+                                 CODELOC,
+                                 cgroups.merge(), 
+                                 CoordGroup(coords0 + coords1 + coords0) );
+        }
+    }
+    catch (const Siren::exception &e) 
+    {
+        tester.unexpected_error(e);
+    }
+    catch(...)
+    {
+        tester.unexpected_error( unknown_error(CODELOC) );
+    }
+    
+    #endif // SIREN_DISABLE_TESTS
+    
+    return tester.allPassed();
+}
+
 ////////
 //////// Implementation of CoordGroupArrayArray
 ////////
@@ -3393,6 +3613,12 @@ const CoordGroupArray& CoordGroupArrayArray::operator[](quint32 i) const
 const CoordGroupArray& CoordGroupArrayArray::at(quint32 i) const
 {
     return this->operator[](i);
+}
+
+/** Return whether or not this CoordGroupArrayArray is empty */
+bool CoordGroupArrayArray::isEmpty() const
+{
+    return d->nCGArrays() == 0;
 }
 
 /** Return the number of CoordGroupArrays in this array */
@@ -3998,4 +4224,119 @@ uint CoordGroupArrayArray::hashCode() const
            10023 * nCoordGroupArrays() +
            127 * nCoordGroups() + 
            nCoords();
+}
+
+bool CoordGroupArrayArray::test(Logger &logger) const
+{
+    Tester tester(*this, logger);
+    
+    #ifndef SIREN_DISABLE_TESTS
+    
+    try
+    {
+        /// test 1
+        {
+            tester.nextTest();
+            
+            CoordGroupArrayArray array;
+            
+            tester.expect_true( QObject::tr("Null array array is empty"),
+                                CODELOC,
+                                array.isEmpty() );
+                                
+            tester.expect_equal( QObject::tr("Null arrayarray contains no "
+                                             "arrays"),
+                                 CODELOC,
+                                 array.count(), 0 );
+                                
+            tester.expect_equal( QObject::tr("Null arrayarray contains no "
+                                             "arrays"),
+                                 CODELOC,
+                                 array.nCoordGroupArrays(), 0 );
+                                
+            tester.expect_equal( QObject::tr("Null arrayarray contains no "
+                                             "CoordGroups"),
+                                 CODELOC,
+                                 array.nCoordGroups(), 0 );
+                                
+            tester.expect_equal( QObject::tr("Null arrayarray contains no "
+                                             "coordinates"),
+                                 CODELOC,
+                                 array.nCoords(), 0 );
+        }
+        
+        /// test 2
+        {
+            tester.nextTest();
+            
+            QVector<Vector> coords0;
+            coords0.append( Vector(0,0,0) );
+            coords0.append( Vector(1,1,1) );
+            
+            QVector<Vector> coords1;
+            coords1.append( Vector(5,5,5) );
+            coords1.append( Vector(10,10,4) );
+            coords1.append( Vector(-3,-2,-1) );
+            
+            QVector<CoordGroup> groups;
+            groups.append( CoordGroup(coords0) );
+            groups.append( CoordGroup() );
+            groups.append( CoordGroup(coords1) );
+            groups.append( groups.at(0) );
+            
+            QVector<CoordGroupArray> arrays;
+            arrays.append( CoordGroupArray(groups) );
+            arrays.append( CoordGroupArray() );
+            arrays.append( CoordGroupArray( CoordGroup(coords1) ) );
+            
+            CoordGroupArrayArray carrays(arrays);
+            
+            tester.expect_false( QObject::tr("Populated array is not empty"),
+                                 CODELOC,
+                                 carrays.isEmpty() );
+                                 
+            tester.expect_equal( QObject::tr("Number of arrays is 3"),
+                                 CODELOC,
+                                 carrays.nCoordGroupArrays(), 3 );
+                                 
+            tester.expect_equal( QObject::tr("Number of groups is 5"),
+                                 CODELOC,
+                                 carrays.nCoordGroups(), 5 );
+                                 
+            tester.expect_equal( QObject::tr("Number of coordinates is 10"),
+                                 CODELOC,
+                                 carrays.nCoords(), 10 );
+                                 
+            for (int i=0; i<3; ++i)
+            {
+                tester.expect_equal( QObject::tr("arrays compare %1").arg(i),
+                                     CODELOC,
+                                     carrays[i], arrays[i] );
+            }
+            
+            tester.expect_equal( QObject::tr("Combined AABox is correct"),
+                                 CODELOC,
+                                 carrays.aaBox(), AABox(coords0 + coords1) );
+                                 
+            tester.expect_true( QObject::tr("Comparison operator works"), 
+                                CODELOC,
+                                carrays == CoordGroupArrayArray(arrays) );
+                                
+            tester.expect_false( QObject::tr("Comparison operator still works"),
+                                 CODELOC,
+                                 carrays != CoordGroupArrayArray() );
+        }
+    }
+    catch(const Siren::exception &e)
+    {
+        tester.unexpected_error(e);
+    }
+    catch(...)
+    {
+        tester.unexpected_error( unknown_error(CODELOC) );
+    }
+    
+    #endif // SIREN_DISABLE_TESTS
+    
+    return tester.allPassed();
 }

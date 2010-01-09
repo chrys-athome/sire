@@ -55,7 +55,18 @@ void SIREN_EXPORT RegisterMetaType::registerClassName(const QString &class_name,
     if (not reg)
         qDebug() << "CANNOT REGISTER" << class_name;
     else
-        reg->insert(class_name, metatype);
+        reg->insert(class_name, metatype->clone());
+}
+
+const RegisterMetaType SIREN_EXPORT *RegisterMetaType::getRegistration(
+                                                    const QString &class_name)
+{
+    MetaTypeRegistry *reg = metaTypeRegistry();
+    
+    if (reg)
+        return reg->value(class_name);
+    else
+        return 0;
 }
 
 /** Return the complete (sorted) list of all of the class types
@@ -482,6 +493,8 @@ bool Class::test(Logger &logger) const
 {
     Tester tester(*this, logger);
     
+    #ifndef SIREN_DISABLE_TESTS
+    
     try
     {
         Class c = this->getClass();
@@ -530,6 +543,8 @@ bool Class::test(Logger &logger) const
     {
         tester.unexpected_error( unknown_error(CODELOC) );
     }
+    
+    #endif // SIREN_DISABLE_TESTS
     
     return tester.allPassed();
 }

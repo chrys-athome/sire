@@ -167,6 +167,8 @@ bool GeneralUnit::test(Logger &logger) const
 {
     Tester tester(*this, logger);
     
+    #ifndef SIREN_DISABLE_TESTS
+    
     try
     {
         GeneralUnit unit;
@@ -191,6 +193,8 @@ bool GeneralUnit::test(Logger &logger) const
     {
         tester.unexpected_error(e);
     }
+    
+    #endif // SIREN_DISABLE_TESTS
     
     return tester.allPassed();
 }

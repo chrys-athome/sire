@@ -93,6 +93,8 @@ bool Unit::test(Logger &logger,
 {
     Tester tester( QString("SireUnits::Dimension::PhysUnit<%1,%2,%3,%4,%5,%6,%7>")
                         .arg(M).arg(L).arg(T).arg(C).arg(t).arg(Q).arg(A), logger );
+
+    #ifndef SIREN_DISABLE_TESTS
                         
     try
     {
@@ -103,6 +105,8 @@ bool Unit::test(Logger &logger,
     {
         tester.unexpected_error(e);
     }
+        
+    #endif // SIREN_DISABLE_TESTS
         
     return tester.allPassed();
 }

@@ -97,6 +97,8 @@ bool Vector::test(Logger &logger) const
 {
     Tester tester( *this, logger );
     
+    #ifndef SIREN_DISABLE_TESTS
+    
     try 
     {
         Vector v(1,2,3);
@@ -133,6 +135,8 @@ bool Vector::test(Logger &logger) const
     {
         tester.unexpected_error(e);
     }
+    
+    #endif // SIREN_DISABLE_TESTS
     
     return tester.allPassed();
 }

@@ -44,6 +44,55 @@ class exception;
 
 /** This class is used by the unit tests for each Siren::Object
     to report the progress and status of individual tests
+
+    To use this class properly, write your "test" function like this;
+    
+    <code>
+        bool MyClass::test(Logger &logger) const
+        {
+            Tester tester(*this, logger);
+
+            #ifndef SIREN_DISABLE_TESTS    
+            
+            try
+            {
+                /// test 1
+                {
+                   tester.nextTest();
+                   
+                   MyClass c;
+                   
+                   tester.expect_true( QObject::tr("Truth test..."),
+                                       CODELOC,
+                                       c.shouldBeTrue() );
+                                       
+                   tester.expect_false( QObject::tr("False test..."),
+                                        CODELOC,
+                                        c.shouldBeFalse() );
+                                        
+                   tester.expect_equal( QObject::tr("Equality test..."),
+                                        CODELOC,
+                                        c.foo(), c.bar() );
+                                        
+                   tester.expect_roughly_equal( QObject::tr("Numerical equality..."),
+                                                CODELOC,
+                                                c.foo2(), c.bar2() );
+                }
+            }
+            catch(const Siren::exception &e)
+            {
+                tester.unexpected_error(e);
+            }
+            catch(...)
+            {
+                tester.unexpected_error( unknown_error(CODELOC) );
+            }
+            
+            #endif // SIREN_DISABLE_TESTS
+            
+            return tester.allPassed();
+        }
+    </code>
     
     @author Christopher Woods
 */

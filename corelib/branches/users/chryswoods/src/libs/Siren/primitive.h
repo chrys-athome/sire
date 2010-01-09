@@ -335,16 +335,24 @@ template<class T>
 SIREN_OUTOFLINE_TEMPLATE
 bool Primitive<T>::test(Logger &logger) const
 {
+    #ifndef SIREN_DISABLE_TESTS
     detail::testNotImplemented(logger, T::typeName());
     return false;
+    #else
+    return true;
+    #endif
 }
 
 template<class T>
 SIREN_OUTOFLINE_TEMPLATE
 bool Primitive<T>::test() const
 {
+    #ifndef SIREN_DISABLE_TESTS
     detail::testNotImplemented( T::typeName() );
     return false;
+    #else
+    return true;
+    #endif
 }
 
 /////////

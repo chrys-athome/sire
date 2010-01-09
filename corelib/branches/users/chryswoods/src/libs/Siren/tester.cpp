@@ -161,6 +161,8 @@ QString Tester::typeName()
 bool Tester::test(Logger &logger) const
 {
     Tester tester(*this, logger);
+
+    #ifndef SIREN_DISABLE_TESTS    
     
     try
     {
@@ -178,6 +180,8 @@ bool Tester::test(Logger &logger) const
     {
         tester.unexpected_error( unknown_error(CODELOC) );
     }
+    
+    #endif // SIREN_DISABLE_TESTS
     
     return tester.allPassed();
 }

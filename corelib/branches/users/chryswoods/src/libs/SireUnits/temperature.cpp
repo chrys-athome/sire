@@ -32,11 +32,14 @@ using namespace SireUnits;
 using namespace SireUnits::Dimension;
 using namespace Siren;
 
+#include <QDebug>
+
 ///////////
 /////////// Implementation of detail::Temperature
 ///////////
 
-static const RegisterObject<Temperature> r_temperature( VIRTUAL_CLASS );
+static const RegisterObject<SireUnits::Dimension::detail::Temperature> 
+                                                r_temperature( VIRTUAL_CLASS );
 
 namespace SireUnits { namespace Dimension { namespace detail {
 

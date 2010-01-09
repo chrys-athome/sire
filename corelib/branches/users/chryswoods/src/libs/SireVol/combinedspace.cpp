@@ -269,6 +269,8 @@ bool CombinedSpace::test(Logger &logger) const
 {
     Tester tester(*this, logger);
     
+    #ifndef SIREN_DISABLE_TESTS
+    
     try
     {
         ///first test
@@ -303,6 +305,8 @@ bool CombinedSpace::test(Logger &logger) const
     {
         tester.unexpected_error( Siren::unknown_error(CODELOC) );
     }
+    
+    #endif // SIREN_DISABLE_TESTS
     
     return tester.allPassed();
 }

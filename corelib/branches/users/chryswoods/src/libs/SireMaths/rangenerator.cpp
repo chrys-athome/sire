@@ -597,6 +597,8 @@ bool RanGenerator::test(Logger &logger) const
 {
     Tester tester(*this, logger);
     
+    #ifndef SIREN_DISABLE_TESTS
+    
     try
     {
         throw Siren::incomplete_code( QObject::tr("NEED SOME TESTS!"), CODELOC );
@@ -605,6 +607,8 @@ bool RanGenerator::test(Logger &logger) const
     {
         tester.unexpected_error(e);
     }
+    
+    #endif // SIREN_DISABLE_TESTS
     
     return tester.allPassed();
 }

@@ -108,6 +108,10 @@ configure_file(
 
 set ( CMAKE_STRIP "${CMAKE_CURRENT_BINARY_DIR}/cmake_strip" )
 
+# Add option to disable the compilation of unit testing code
+option ( DISABLE_SIREN_UNITTESTS "Disable compilation of unit tests" OFF )
+save_sire_variable( "DISABLE_SIREN_UNITTESTS", "${DISABLE_SIREN_UNITTESTS}" )
+
 # Add option to turn on or off symbol hiding
 option ( SIRE_SYMBOL_HIDING "Turn on library symbol hiding" ON )
 save_sire_variable( "SIRE_SYMBOL_HIDING" "${SIRE_SYMBOL_HIDING}" )
@@ -397,6 +401,10 @@ message ( STATUS "SIRE_STATIC_LINK_FLAGS == ${SIRE_STATIC_LINK_FLAGS}" )
 message ( STATUS "SIRE_EXE_LINK_FLAGS    == ${SIRE_EXE_LINK_FLAGS}" )
 
 set( SIRE_COMPILE_FLAGS "${SIRE_WARNALL_FLAGS} ${SIRE_PLATFORM_FLAGS}" )
+
+if ( DISABLE_SIREN_UNITTESTS )
+  set ( SIRE_COMPILE_FLAGS "${SIRE_COMPILE_FLAGS} -DSIREN_DISABLE_TESTS" )
+endif()
 
 if ( SIRE_TIME_FLOPS )
   set ( SIRE_COMPILE_FLAGS "${SIRE_COMPILE_FLAGS} -DSIRE_TIME_ROUTINES" )

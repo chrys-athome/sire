@@ -209,12 +209,20 @@ QString Handle::toString() const
     of the tests passed */
 bool Handle::test(Logger &logger) const
 {
+    #ifndef SIREN_DISABLE_TESTS
+
     logger.write( QObject::tr(
             "Testing of %1 failed as no unit tests have been written "
             "for this class. Please ask the author to provide some tests.")
                 .arg(this->what()) );
                 
     return false;
+    
+    #else
+    
+    return true;
+    
+    #endif
 }
 
 /** This is an overloaded class provided to run the unit tests

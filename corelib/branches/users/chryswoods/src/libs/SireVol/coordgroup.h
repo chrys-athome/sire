@@ -304,6 +304,7 @@ public:
     QString toString() const;
     uint hashCode() const;
     void stream(Siren::Stream &s);
+    bool test(Siren::Logger &logger) const;
 
 private:
     friend class CoordGroupEditor;
@@ -359,6 +360,7 @@ public:
     QString toString() const;
     void stream(Siren::Stream &s);
     uint hashCode() const;
+    bool test(Siren::Logger &logger) const;
 
     static QString typeName();
 
@@ -459,6 +461,9 @@ public:
     QString toString() const;
     uint hashCode() const;
     void stream(Siren::Stream &s);
+    bool test(Siren::Logger &logger) const;
+
+    bool isEmpty() const;
 
     int count() const;
     int size() const;
@@ -563,9 +568,12 @@ public:
     QString toString() const;
     uint hashCode() const;
     void stream(Siren::Stream &s);
+    bool test(Siren::Logger &logger) const;
 
     const CoordGroupArray& operator[](quint32 i) const;
     const CoordGroupArray& at(quint32 i) const;
+
+    bool isEmpty() const;
 
     int count() const;
     int size() const;
