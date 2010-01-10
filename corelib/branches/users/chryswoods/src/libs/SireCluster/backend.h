@@ -40,86 +40,80 @@ SIRE_BEGIN_HEADER
 namespace SireCluster
 {
 
-class ActiveBackend;
-class Backend;
-
-class WorkPacket;
-
-namespace detail
-{
-class BackendPvt;
-class BackendLock;
-}
-
-/** This is the public interface for a Backend. A Backend is an object
+/** This is the base class of all backends. A Backend is an object
     that can receive a WorkPacket from a FrontEnd, can process that
     WorkPacket, and then returns the processed WorkPacket back to
-    the FrontEnd. A Backend is always created paired with a FrontEnd
+    the FrontEnd.
     
-    A Backend is explicitly shared and thread-safe.
+    A Backend is the resource that is held by DormantBackend and
+    ActiveBackend, and should not be used on its own
+    
+    Backends provide the compute resources that are available
+    in a cluster. Frontends provide the means by which to 
+    communicate with those resources.
+    
+    Backends can either be active or dormant. A dormant backend
+    represents a compute resource that is available, but that 
+    has not yet been assigned to any cluster. Active backends
+    are those that have been assigned to a cluster, and that
+    are connected to by the Frontends held in the Node and Nodes
+    objects.
     
     @author Christopher Woods
 */
-class Backend
+class SIRECLUSTER_EXPORT Backend : public boost::noncopyable
 {
-
-friend class ActiveBackend;
-
 public:
     Backend();
-    Backend(const Backend &other);
-    
-    ~Backend();
-    
-    Backend& operator=(const Backend &other);
-    
-    bool operator==(const Backend &other) const;
-    bool operator!=(const Backend &other) const;
-    
-    bool isNull() const;
+    virtual ~Backend();
     
     QUuid UID() const;
+    
+    virtual void startJob(const WorkPacket &workpacket)=0;
+    
+    virtual void stopJob()=0;
+    virtual void abortJob()=0;
+    
+    virtual void wait()=0;
+    virtual bool wait(int timeout)=0;
+    
+    virtual float progress()=0;
+    virtual WorkPacket interimResult()=0;
+    
+    virtual WorkPacket result()=0;
 
-    static Backend create();
-    static Backend createLocalOnly();
-    
-    ActiveBackend connect() const;
-    ActiveBackend tryConnect() const;
-    ActiveBackend tryConnect(int timeout) const;
-    
-    void shutdown();
-    
 private:
-    /** Private implementation */
-    boost::shared_ptr<detail::BackendPvt> d;
+    /** The unique ID for this backend */
+    QUuid uid;
 };
 
-/** This is an active backend - this is what is held and 
-    used by the Frontend (thus ensuring that only one
-    Frontend is connected to a backend at any one time)
-    
-    @author Christopher Woods
-*/
-class ActiveBackend
+/** This is a backend that runs in the current thread */
+class SIRECLUSTER_EXPORT LocalBackend : public Backend
 {
 public:
-    ActiveBackend();
-    ActiveBackend(const Backend &backend);
+    LocalBackend();
+    ~LocalBackend();
     
-    ActiveBackend(const ActiveBackend &other);
+    void startJob(const WorkPacket &workpacket);
     
-    ~ActiveBackend();
+    void stopJob();
+    void abortJob();
     
-    ActiveBackend& operator=(const ActiveBackend &other);
+    void wait();
+    bool wait(int timeout);
     
-    bool operator==(const ActiveBackend &other) const;
-    bool operator!=(const ActiveBackend &other) const;
+    float progress();
+    WorkPacket interimResult();
     
-    static ActiveBackend connect(const Backend &backend);
-    static ActiveBackend tryConnect(const Backend &backend);
-    static ActiveBackend tryConnect(const Backend &backend, int timeout);
-    
-    bool isNull() const;
+    WorkPacket result();
+};
+
+/** This is a backend that runs the job in its own thread */
+class SIRECLUSTER_EXPORT ThreadBackend : public Backend, private QThread
+{
+public:
+    ThreadBackend();
+    ~ThreadBackend();
     
     QUuid UID() const;
     
@@ -136,16 +130,69 @@ public:
     
     WorkPacket result();
 
-private:
-    /** Private implementation */
-    boost::shared_ptr<detail::BackendPvt> d;
+protected:
+    void run();
+};
 
-    /** Holder that is used to keep the connection 
-        to the backend */
-    boost::shared_ptr<detail::BackendLock> d_lock;
+/** This class holds a backend while it is not in use */
+class SIRECLUSTER_EXPORT DormantBackend
+      : public Siren::ImplementsHandle< DormantBackend, Siren::Handles<Backend> >
+{
+public:
+    DormantBackend();
+    DormantBackend(const DormantBackend &other);
+    
+    ~DormantBackend();
+    
+    DormantBackend& operator=(const DormantBackend &other);
+    
+    bool operator==(const DormantBackend &other) const;
+    bool operator!=(const DormantBackend &other) const;
+    
+    QUuid UID() const;
+    
+    ActiveBackend activate();
+    ActiveBackend tryActivate(int ms);
+};
+
+/** This class holds a backend that has been activate for use */
+class SIRECLUSTER_EXPORT ActiveBackend
+      : public Siren::ImplementsHandle< ActiveBackend, Siren::Handles<Backend> >
+{
+public:
+    ActiveBackend();
+    ActiveBackend(const ActiveBackend &other);
+    
+    ~ActiveBackend();
+    
+    ActiveBackend& operator=(const ActiveBackend &other);
+    
+    bool operator==(const ActiveBackend &other) const;
+    bool operator!=(const ActiveBackend &other) const;
+    
+    DormantBackend deactivate();
+    DormantBackend tryDeactivate(int ms);
+    
+    QUuid UID() const;
+    
+    void startJob(const WorkPacket &workpacket);
+    
+    void stopJob();
+    void abortJob();
+    
+    void wait();
+    bool wait(int timeout);
+    
+    float progress();
+    WorkPacketPtr interimResult();
+    
+    WorkPacketPtr result();
 };
 
 }
+
+Q_DECLARE_METATYPE( SireCluster::DormantBackend )
+Q_DECLARE_METATYPE( SireCluster::ActiveBackend )
 
 SIRE_END_HEADER
 

@@ -27,70 +27,68 @@
 \*********************************************/
 
 #include "frontend.h"
-#include "backend.h"
 #include "workpacket.h"
 
 #include <QDebug>
 
 using namespace SireCluster;
-
-using boost::shared_ptr;
+using namespace Siren;
 
 /////////
-///////// Implementation of FrontendBase
+///////// Implementation of Frontend
 /////////
 
 /** Constructor */
-FrontendBase::FrontendBase() : boost::noncopyable(), datamutex( QMutex::Recursive )
+Frontend::Frontend() : boost::noncopyable()
 {}
 
 /** Destructor */
-FrontendBase::~FrontendBase()
+Frontend::~Frontend()
 {}
+
+/** Call this function is signal that the front end is to 
+    be activated */
+void Frontend::activate()
+{
+    active_lock.lock();
+}
+
+/** Call this function to try to activate this front end */
+bool Frontend::tryActivate(int ms)
+{
+    return active_lock.tryLock(ms);
+}
+
+/** Call this function when the front end has been deactivated */
+void Frontend::deactivate()
+{
+    active_lock.unlock();
+}
+
+/** Internal function called by derived classes to set the UID
+    of the backend */
+void Frontend::setUID(const QUuid &uid)
+{
+    backend_uid = uid;
+}
+
+/** Return the (locally cached) UID of the backend to which this
+    frontend is connected */
+const QUuid& Frontend::UID()
+{
+    return backend_uid;
+}
 
 /////////
 ///////// Implementation of LocalFrontend
 /////////
 
-/** This private class implements the local Frontend that
-    is used to communicate with a Backend that is in the same
-    address space 
-    
-    @author Christopher Woods
-*/
-class LocalFrontend : public FrontendBase
-{
-
-public:
-    LocalFrontend(const ActiveBackend &backend);
-    ~LocalFrontend();
-    
-    bool isLocal() const;
-    
-    QUuid UID();
-    
-    void startJob(const WorkPacket &workpacket);
-    
-    void stopJob();
-    void abortJob();
-    
-    void wait();
-    bool wait(int timeout);
-    
-    float progress();
-    WorkPacket interimResult();
-    
-    WorkPacket result();
-
-private:
-    /** The active backend */
-    ActiveBackend backend;
-};
-
 /** Construct a Frontend for the local Backend 'backend' */
-LocalFrontend::LocalFrontend(const ActiveBackend &_backend)
-              : FrontendBase(), backend(_backend)
-{}
+LocalFrontend::LocalFrontend(const ActiveBackend &b)
+              : Frontend(), backend(b)
+{
+    this->setUID(backend.UID());
+}
 
 /** Destructor */
 LocalFrontend::~LocalFrontend()
@@ -99,11 +97,6 @@ LocalFrontend::~LocalFrontend()
 bool LocalFrontend::isLocal() const
 {
     return true;
-}
-
-QUuid LocalFrontend::UID()
-{
-    return backend.UID();
 }
 
 void LocalFrontend::startJob(const WorkPacket &workpacket)
@@ -136,154 +129,222 @@ float LocalFrontend::progress()
     return backend.progress();
 }
 
-WorkPacket LocalFrontend::interimResult()
+WorkPacketPtr LocalFrontend::interimResult()
 {
     return backend.interimResult();
 }
 
-WorkPacket LocalFrontend::result()
+WorkPacketPtr LocalFrontend::result()
 {
     return backend.result();
 }
 
 /////////
-///////// Implementation of Frontend
+///////// Implementation of DormantFrontend
 /////////
 
 /** Null constructor */
-Frontend::Frontend()
+DormantFrontend::DormantFrontend()
+                : ImplementsHandle< DormantFrontend,Handles<Frontend> >()
 {}
 
-/** Construct from the passed Frontend pointer */
-Frontend::Frontend(const boost::shared_ptr<FrontendBase> &ptr)
-         : d(ptr)
+/** Construct to hold the frontend 'frontend' (which must be connected to 
+    an active backend) */
+DormantFrontend::DormantFrontend(Frontend *frontend)
+                : ImplementsHandle< DormantFrontend,Handles<Frontend> >(frontend)
 {}
-
-/** Construct a local Frontend that talks to the local Backend 'backend'.
-    This will block while the backend is busy talking to another frontend */
-Frontend::Frontend(const Backend &backend)
-{
-    if (not backend.isNull())
-    {
-        d.reset( new LocalFrontend(backend.connect()) );
-    }
-}
-
-/** Construct a local Frontend that talks to the local Backend. This only
-    tries to make a connection - if the backend is busy then this gives
-    up and a null Frontend is returned */
-Frontend Frontend::tryAcquire(const Backend &backend)
-{
-    ActiveBackend active_backend = backend.tryConnect();
-    
-    Frontend frontend;
-    
-    if (not active_backend.isNull())
-    {
-        frontend.d.reset( new LocalFrontend(active_backend) );
-    }
-    
-    return frontend;
-}
 
 /** Copy constructor */
-Frontend::Frontend(const Frontend &other)
-         : d(other.d)
+DormantFrontend::DormantFrontend(const DormantFrontend &other)
+                : ImplementsHandle< DormantFrontend,Handles<Frontend> >(other)
 {}
 
 /** Destructor */
-Frontend::~Frontend()
+DormantFrontend::~DormantFrontend()
 {}
 
 /** Copy assignment operator */
-Frontend& Frontend::operator=(const Frontend &other)
+DormantFrontend& DormantFrontend::operator=(const DormantFrontend &other)
 {
-    d = other.d;
+    Handles<Frontend>::operator=(other);
+}
+
+/** Comparison operator */
+bool DormantFrontend::operator==(const DormantFrontend &other) const
+{
+    return Handles<Frontend>::operator==(other);
+}
+
+/** Comparison operator */
+bool DormantFrontend::operator!=(const DormantFrontend &other) const
+{
+    return Handles<Frontend>::operator!=(other);
+}
+
+QString DormantFrontend::toString() const
+{
+    if (this->isNull())
+        return QObject::tr( "DormantFrontend::null" );
+    else
+        return QObject::tr( "DormantFrontend( UID = %1 )")
+                    .arg(resource().UID().toString());
+}
+
+uint DormantFrontend::hashCode() const
+{
+    return qHash(DormantFrontend::typeName());
+}
+    
+/** Activate this frontend - this will block until the frontend
+    is free to be activated */
+ActiveFrontend DormantFrontend::activate()
+{
+    if (isNull())
+        return ActiveFrontend();
+        
+    resource().activate();
+    
+    return ActiveFrontend(*this);
+}
+
+/** Try to activate this frontend - this will block until the
+    frontend has been activated or until ms milliseconds has
+    passed. If the frontend wasn't activated then a null
+    ActiveFrontend is returned */
+ActiveFrontend DormantFrontend::tryActivate(int ms)
+{
+    if (isNull())
+        return ActiveFrontend();
+        
+    if (resource().tryActivate(ms))
+        return ActiveFrontend(*this);
+    else
+        return ActiveFrontend();
+}
+
+/////////
+///////// Implementation of ActiveFrontend
+/////////
+
+/** Null constructor */
+ActiveFrontend::ActiveFrontend() 
+               : ImplementsHandle< ActiveFrontend,Handles<Frontend> >() 
+{}
+
+ActiveFrontend::ActiveToken::ActiveToken(Frontend *f) : frontend(f)
+{}
+
+ActiveFrontend::ActiveToken::~ActiveToken()
+{
+    if (frontend)
+        frontend->deactivate();
+}
+
+/** Internal constructor used by DormantFrontend in activate() and tryActivate() */
+ActiveFrontend::ActiveFrontend(const DormantFrontend &frontend)
+               : ImplementsHandle< ActiveFrontend,Handles<Frontend> >(frontend)
+{
+    if (not this->isNull())
+        active_token.reset( new ActiveToken( &(resource()) ) );
+}
+
+/** Copy constructor */
+ActiveFrontend::ActiveFrontend(const ActiveFrontend &other)
+               : ImplementsHandle< ActiveFrontend,Handles<Frontend> >(other),
+                 active_token(other.active_token)
+{}
+
+/** Destructor */
+ActiveFrontend::~ActiveFrontend()
+{
+    //ensure that the token is lost first
+    active_token.reset();
+}
+
+/** Copy assignment operator */
+ActiveFrontend& ActiveFrontend::operator=(const ActiveFrontend &other)
+{
+    if (this != &other)
+    {
+        active_token = other.active_token;
+        Handles<Frontend>::operator=(other);
+    }
+    
     return *this;
 }
 
 /** Comparison operator */
-bool Frontend::operator==(const Frontend &other) const
+bool ActiveFrontend::operator==(const ActiveFrontend &other) const
 {
-    return d.get() == other.d.get();
+    return Handles<Frontend>::operator==(other);
 }
 
 /** Comparison operator */
-bool Frontend::operator!=(const Frontend &other) const
+bool ActiveFrontend::operator!=(const ActiveFrontend &other) const
 {
-    return d.get() != other.d.get();
+    return Handles<Frontend>::operator!=(other);
 }
 
 /** Return whether or not the Backend is local (running
     in the same address space as the Frontend) */
-bool Frontend::isLocal() const
+bool ActiveFrontend::isLocal() const
 {
-    if (this->isNull())
+    if (isNull())
         return false;
         
     else
-        return d->isLocal();
-}
-
-/** Return whether or not this is a null frontend */
-bool Frontend::isNull() const
-{
-    return d.get() == 0;
+        return resource().isLocal();
 }
 
 /** Return the UID of the backend */
-QUuid Frontend::UID()
+QUuid ActiveFrontend::UID()
 {
-    if (not this->isNull())
-    {
-        QMutexLocker lkr( &(d->datamutex) );
-        return d->UID();
-    }
+    if (not isNull())
+        return resource().UID();
+
     else
         return QUuid();
 }
 
 /** Perform the work in 'workpacket' on the backend - this 
     blocks until the work has started */
-void Frontend::startJob(const WorkPacket &workpacket)
+void ActiveFrontend::startJob(const WorkPacket &workpacket)
 {
-    if (not this->isNull())
+    if (not isNull())
     {
-        QMutexLocker lkr( &(d->datamutex) );
-        d->startJob(workpacket);
+        HandleLocker lkr(*this);
+        resource().startJob(workpacket);
     }
 }
 
 /** Stop the job running on the backend, and return the
     workpacket in the state it is now at now that the job
     has stopped */
-void Frontend::stopJob()
+void ActiveFrontend::stopJob()
 {
-    if (not this->isNull())
+    if (not isNull())
     {
-        QMutexLocker lkr( &(d->datamutex) );
-        d->stopJob();
+        HandleLocker lkr(*this);
+        resource().stopJob();
     }
 }
 
 /** Abort the job running on the backend and return the
     state of the work once it has been aborted */
-void Frontend::abortJob()
+void ActiveFrontend::abortJob()
 {
-    if (not this->isNull())
+    if (not isNull())
     {
-        QMutexLocker lkr( &(d->datamutex) );
-        d->abortJob();
+        HandleLocker lkr(*this);
+        resource().abortJob();
     }
 }
 
 /** Wait until the backend has finished processing the work */
-void Frontend::wait()
+void ActiveFrontend::wait()
 {
-    if (not this->isNull())
-    {
-        d->wait();
-    }
+    if (not isNull())
+        resource().wait();
 }
 
 /** Wait until the backend has finished processing the work, or
@@ -291,16 +352,15 @@ void Frontend::wait()
     whether or not the job has finished */
 bool Frontend::wait(int timeout)
 {
-    if (not this->isNull())
-    {
-        return d->wait(timeout);
-    }
+    if (not isNull())
+        return resource().wait(timeout);
+
     else
         return true;
 }
 
 /** Return the current progress of the job */
-float Frontend::progress()
+float ActiveFrontend::progress()
 {
     if (not this->isNull())
     {
@@ -312,25 +372,25 @@ float Frontend::progress()
 }
 
 /** Return the work as it is at the moment */
-WorkPacket Frontend::interimResult()
+WorkPacketPtr ActiveFrontend::interimResult()
 {
-    if (not this->isNull())
+    if (not isNull())
     {
-        QMutexLocker lkr( &(d->datamutex) );
-        return d->interimResult();
+        HandleLocker lkr(*this);
+        return resource().interimResult();
     }
     else
-        return WorkPacket();
+        return WorkPacketPtr();
 }
 
 /** Return the final result of the calculation */
-WorkPacket Frontend::result()
+WorkPacketPtr ActiveFrontend::result()
 {
-    if (not this->isNull())
+    if (not isNull())
     {
-        QMutexLocker lkr( &(d->datamutex) );
-        return d->result();
+        HandleLocker lkr(*this);
+        return resource().result();
     }
     else
-        return WorkPacket();
+        return WorkPacketPtr();
 }

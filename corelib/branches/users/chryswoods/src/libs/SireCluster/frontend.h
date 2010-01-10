@@ -29,13 +29,13 @@
 #ifndef SIRECLUSTER_FRONTEND_H
 #define SIRECLUSTER_FRONTEND_H
 
-#include "sireglobal.h"
+#include "Siren/handle.h"
+
+#include "backend.h"
 
 #include <QUuid>
-#include <QMutex>
 
 #include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
 
 SIRE_BEGIN_HEADER
 
@@ -49,23 +49,32 @@ class WorkPacket;
 
 /** This is the base class of all Frontends - a Frontend is an object
     that you can use locally that can control a Backend that is either
-    local or remote
+    local or remote. A Frontend is a resource that is held by either
+    ActiveFrontend or DormantFrontend. It may not be used on its own.
+    
+    Backends provide the compute resources that are available
+    in a cluster. Frontends provide the means by which to 
+    communicate with those resources.
+    
+    A Frontend can either be active or dormant. An dormant 
+    frontend is connected to an active backend, but this frontend
+    is currently not in use, and so is available (dormant frontends
+    are held in the 'Nodes' object). An active frontend is in active
+    use, and can be given jobs (an active frontend is held by a 
+    'Node' object)
     
     @author Christopher Woods
 */
-class FrontendBase : public boost::noncopyable
+class SIRECLUSTER_EXPORT Frontend : public boost::noncopyable
 {
-
-friend class Frontend;
-
 public:
-    FrontendBase();
+    Frontend();
     
-    virtual ~FrontendBase();
+    virtual ~Frontend();
     
     virtual bool isLocal() const=0;
     
-    virtual QUuid UID()=0;
+    const QUuid& UID() const;
     
     virtual void startJob(const WorkPacket &workpacket)=0;
     
@@ -76,44 +85,39 @@ public:
     virtual bool wait(int timeout)=0;
     
     virtual float progress()=0;
-    virtual WorkPacket interimResult()=0;
+    virtual WorkPacketPtr interimResult()=0;
     
-    virtual WorkPacket result()=0;
+    virtual WorkPacketPtr result()=0;
+
+    void activate();
+    bool tryActivate(int ms);
+    
+    void deactivate();
+
+protected:
+    void setUID(const QUuid &uid);
 
 private:
-    /** Mutex to protect access to this Frontend */
-    QMutex datamutex;
+    /** This mutex is locked when the Frontend is activated.
+        It is unlocked when the mutex is deactivated */
+    QMutex active_lock;
+    
+    /** A cache of the UID of the backend */
+    QUuid backend_uid;
 };
 
-/** This is the generic holder of a Frontend - a Frontend is an object
-    that allows us to communicate with Backend, which may be local or remote
-    
-    @author Christopher Woods
-*/
-class Frontend
+/** This is a local front end - this is a front end that communicates
+    with a backend that is in this address space (i.e. a backend 
+    that is running in the same process as this frontend) */
+class SIRECLUSTER_EXPORT LocalFrontend : public Frontend
 {
 public:
-    Frontend();
-    Frontend(const boost::shared_ptr<FrontendBase> &ptr);
+    LocalFrontend();
+    LocalFrontend(const ActiveBackend &backend);
     
-    Frontend(const Backend &backend);
-    
-    Frontend(const Frontend &other);
-    
-    ~Frontend();
-
-    Frontend& operator=(const Frontend &other);
-    
-    bool operator==(const Frontend &other) const;
-    bool operator!=(const Frontend &other) const;
-    
-    static Frontend tryAcquire(const Backend &backend);
+    ~LocalFrontend();
     
     bool isLocal() const;
-    
-    bool isNull() const;
-    
-    QUuid UID();
     
     void startJob(const WorkPacket &workpacket);
     
@@ -124,13 +128,98 @@ public:
     bool wait(int timeout);
     
     float progress();
-    WorkPacket interimResult();
+    WorkPacketPtr interimResult();
     
-    WorkPacket result();
-
+    WorkPacketPtr result();
+    
 private:
-    /** Pointer to the private implementation of this class */
-    boost::shared_ptr<FrontendBase> d;
+    /** The backend to which this frontend is connected */
+    ActiveBackend backend;
+};
+
+/** This is a holder for a Frontend that is not active - a non-active
+    frontend cannot do anything
+    
+    @author Christopher Woods
+*/
+class SIRECLUSTER_EXPORT DormantFrontend 
+    : public Siren::ImplementsHandle< DormantFrontend, Siren::Handles<Frontend> >
+{
+public:
+    DormantFrontend();
+    DormantFrontend(Frontend *frontend);
+    
+    DormantFrontend(const DormantFrontend &other);
+    
+    ~DormantFrontend();
+    
+    DormantFrontend& operator=(const DormantFrontend &other);
+    
+    bool operator==(const DormantFrontend &other) const;
+    bool operator!=(const DormantFrontend &other) const;
+    
+    const QUuid& UID() const;
+    
+    QString toString() const;
+    uint hashCode() const;
+    
+    ActiveFrontend activate();
+    ActiveFrontend tryActivate(int ms);
+};
+
+/** This is the holder for an active Frontend - an active frontend
+    is one that can send work to the backend for processing
+    
+    @author Christopher Woods
+*/
+class SIRECLUSTER_EXPORT ActiveFrontend
+        : public Siren::ImplementsHandle< ActiveFrontend,Siren::Handles<Frontend> >
+{
+public:
+    ActiveFrontend();
+    
+    ActiveFrontend(const ActiveFrontend &other);
+    
+    ~ActiveFrontend();
+    
+    ActiveFrontend& operator=(const ActiveFrontend &other);
+    
+    bool operator==(const ActiveFrontend &other) const;
+    bool operator!=(const ActiveFrontend &other) const;
+    
+    bool isLocal() const;
+    
+    const QUuid& UID();
+    
+    void startJob(const WorkPacket &workpacket);
+    
+    void stopJob();
+    void abortJob();
+    
+    void wait();
+    bool wait(int timeout);
+    
+    float progress();
+    WorkPacketPtr interimResult();
+    
+    WorkPacketPtr result();
+
+protected:
+    friend class DormantFrontend;
+    ActiveFrontend(const DormantFrontend &frontend);
+    
+private:
+    class ActiveToken
+    {
+    public:
+        ActiveToken(Frontend *frontend);
+        ~ActiveToken();
+    
+    private:
+        Frontend *frontend;
+    };
+
+    boost::shared_ptr<ActiveToken> active_token;
 };
 
 }
