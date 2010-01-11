@@ -75,6 +75,7 @@ public:
     virtual bool isLocal() const=0;
     
     const QUuid& UID() const;
+    const QString& description() const;
     
     virtual void startJob(const WorkPacket &workpacket)=0;
     
@@ -96,6 +97,7 @@ public:
 
 protected:
     void setUID(const QUuid &uid);
+    void setDescription(const QString &description);
 
 private:
     /** This mutex is locked when the Frontend is activated.
@@ -104,6 +106,9 @@ private:
     
     /** A cache of the UID of the backend */
     QUuid backend_uid;
+    
+    /** Description of the backend */
+    QString desc;
 };
 
 /** This is a local front end - this is a front end that communicates
@@ -137,6 +142,8 @@ private:
     ActiveBackend backend;
 };
 
+class ActiveFrontend;
+
 /** This is a holder for a Frontend that is not active - a non-active
     frontend cannot do anything
     
@@ -159,6 +166,7 @@ public:
     bool operator!=(const DormantFrontend &other) const;
     
     const QUuid& UID() const;
+    const QString& description() const;
     
     QString toString() const;
     uint hashCode() const;
@@ -187,9 +195,13 @@ public:
     bool operator==(const ActiveFrontend &other) const;
     bool operator!=(const ActiveFrontend &other) const;
     
+    QString toString() const;
+    uint hashCode() const;
+    
     bool isLocal() const;
     
-    const QUuid& UID();
+    const QUuid& UID() const;
+    const QString& description() const;
     
     void startJob(const WorkPacket &workpacket);
     
@@ -223,6 +235,9 @@ private:
 };
 
 }
+
+Q_DECLARE_METATYPE( SireCluster::DormantFrontend )
+Q_DECLARE_METATYPE( SireCluster::ActiveFrontend )
 
 SIRE_END_HEADER
 

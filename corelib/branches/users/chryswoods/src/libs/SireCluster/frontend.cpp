@@ -74,9 +74,16 @@ void Frontend::setUID(const QUuid &uid)
 
 /** Return the (locally cached) UID of the backend to which this
     frontend is connected */
-const QUuid& Frontend::UID()
+const QUuid& Frontend::UID() const
 {
     return backend_uid;
+}
+
+/** Return the (locally cached) description of the backend to 
+    which this frontend is connected */
+const QString& Frontend::description() const
+{
+    return desc;
 }
 
 /////////
@@ -88,6 +95,7 @@ LocalFrontend::LocalFrontend(const ActiveBackend &b)
               : Frontend(), backend(b)
 {
     this->setUID(backend.UID());
+    this->setDescription(backend.description());
 }
 
 /** Destructor */
@@ -167,6 +175,7 @@ DormantFrontend::~DormantFrontend()
 DormantFrontend& DormantFrontend::operator=(const DormantFrontend &other)
 {
     Handles<Frontend>::operator=(other);
+    return *this;
 }
 
 /** Comparison operator */
@@ -186,15 +195,41 @@ QString DormantFrontend::toString() const
     if (this->isNull())
         return QObject::tr( "DormantFrontend::null" );
     else
-        return QObject::tr( "DormantFrontend( UID = %1 )")
-                    .arg(resource().UID().toString());
+        return QObject::tr( "DormantFrontend( UID = %1, description = %2 )")
+                    .arg(resource().UID().toString())
+                    .arg(resource().description());
 }
 
 uint DormantFrontend::hashCode() const
 {
-    return qHash(DormantFrontend::typeName());
+    if (this->isNull())
+        return qHash(DormantFrontend::typeName());
+    else
+        return qHash(DormantFrontend::typeName()) + qHash(resource().UID());
 }
-    
+
+static QUuid null_uid;
+static QString null_description;
+
+/** Return the UID of the backend */
+const QUuid& DormantFrontend::UID() const
+{
+    if (not isNull())
+        return resource().UID();
+
+    else
+        return null_uid;
+}
+
+/** Return a description of the backend */
+const QString& DormantFrontend::description() const
+{
+    if (not isNull())
+        return resource().description();
+    else
+        return null_description;
+}
+
 /** Activate this frontend - this will block until the frontend
     is free to be activated */
 ActiveFrontend DormantFrontend::activate()
@@ -285,6 +320,24 @@ bool ActiveFrontend::operator!=(const ActiveFrontend &other) const
     return Handles<Frontend>::operator!=(other);
 }
 
+QString ActiveFrontend::toString() const
+{
+    if (this->isNull())
+        return QObject::tr( "ActiveFrontend::null" );
+    else
+        return QObject::tr( "ActiveFrontend( UID = %1, description = %2 )")
+                    .arg(resource().UID().toString())
+                    .arg(resource().description());
+}
+
+uint ActiveFrontend::hashCode() const
+{
+    if (this->isNull())
+        return qHash(ActiveFrontend::typeName());
+    else
+        return qHash(ActiveFrontend::typeName()) + qHash(resource().UID());
+}
+
 /** Return whether or not the Backend is local (running
     in the same address space as the Frontend) */
 bool ActiveFrontend::isLocal() const
@@ -297,13 +350,22 @@ bool ActiveFrontend::isLocal() const
 }
 
 /** Return the UID of the backend */
-QUuid ActiveFrontend::UID()
+const QUuid& ActiveFrontend::UID() const
 {
     if (not isNull())
         return resource().UID();
 
     else
-        return QUuid();
+        return null_uid;
+}
+
+/** Return a description of the backend */
+const QString& ActiveFrontend::description() const
+{
+    if (not isNull())
+        return resource().description();
+    else
+        return null_description;
 }
 
 /** Perform the work in 'workpacket' on the backend - this 
@@ -350,7 +412,7 @@ void ActiveFrontend::wait()
 /** Wait until the backend has finished processing the work, or
     until 'timeout' milliseconds have passed - this returns
     whether or not the job has finished */
-bool Frontend::wait(int timeout)
+bool ActiveFrontend::wait(int timeout)
 {
     if (not isNull())
         return resource().wait(timeout);
@@ -362,10 +424,10 @@ bool Frontend::wait(int timeout)
 /** Return the current progress of the job */
 float ActiveFrontend::progress()
 {
-    if (not this->isNull())
+    if (not isNull())
     {
-        QMutexLocker lkr( &(d->datamutex) );
-        return d->progress(); 
+        HandleLocker lkr(*this);
+        return resource().progress(); 
     }
     else
         return 0;

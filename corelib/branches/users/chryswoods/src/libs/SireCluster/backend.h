@@ -29,11 +29,12 @@
 #ifndef SIRECLUSTER_BACKEND_H
 #define SIRECLUSTER_BACKEND_H
 
-#include "sireglobal.h"
-
 #include <boost/shared_ptr.hpp>
 
+#include <QThread>
 #include <QUuid>
+
+#include "workpacket.h"
 
 SIRE_BEGIN_HEADER
 
@@ -64,10 +65,13 @@ namespace SireCluster
 class SIRECLUSTER_EXPORT Backend : public boost::noncopyable
 {
 public:
-    Backend();
+    Backend(const QString &description);
     virtual ~Backend();
     
-    QUuid UID() const;
+    const QUuid& UID() const;
+    const QString& description() const;
+    
+    virtual QString what() const=0;
     
     virtual void startJob(const WorkPacket &workpacket)=0;
     
@@ -78,13 +82,17 @@ public:
     virtual bool wait(int timeout)=0;
     
     virtual float progress()=0;
-    virtual WorkPacket interimResult()=0;
+    virtual WorkPacketPtr interimResult()=0;
     
-    virtual WorkPacket result()=0;
+    virtual WorkPacketPtr result()=0;
 
 private:
     /** The unique ID for this backend */
     QUuid uid;
+
+    /** A description of this backend - this can be used
+        as by the user to limit their choice of node */
+    QString desc;
 };
 
 /** This is a backend that runs in the current thread */
@@ -94,6 +102,8 @@ public:
     LocalBackend();
     ~LocalBackend();
     
+    QString what() const;
+    
     void startJob(const WorkPacket &workpacket);
     
     void stopJob();
@@ -103,9 +113,12 @@ public:
     bool wait(int timeout);
     
     float progress();
-    WorkPacket interimResult();
+    WorkPacketPtr interimResult();
     
-    WorkPacket result();
+    WorkPacketPtr result();
+
+private:
+    WorkPacketPtr job_in_progress;
 };
 
 /** This is a backend that runs the job in its own thread */
@@ -115,7 +128,7 @@ public:
     ThreadBackend();
     ~ThreadBackend();
     
-    QUuid UID() const;
+    QString what() const;
     
     void startJob(const WorkPacket &workpacket);
     
@@ -126,13 +139,39 @@ public:
     bool wait(int timeout);
     
     float progress();
-    WorkPacket interimResult();
+    WorkPacketPtr interimResult();
     
-    WorkPacket result();
+    WorkPacketPtr result();
 
 protected:
     void run();
+
+private:
+    /** Mutex used to protect access to the running thread */
+    QMutex datamutex;
+
+    /** This mutex is used to ensure that only one 
+        thread can try to start a job at a time */
+    QMutex startmutex;
+    
+    /** WaitCondition used to signal that the backend thread 
+        has started */
+    QWaitCondition startwaiter;
+
+    /** The current state of the job */
+    WorkPacketPtr job_in_progress;
+    
+    /** The final result of the job */
+    WorkPacketPtr result;
+    
+    /** Whether or not to keep running */
+    bool keep_running;
+    
+    /** A flag used to indicate whether or not a job is starting */
+    bool job_is_starting;
 };
+
+class ActiveBackend;
 
 /** This class holds a backend while it is not in use */
 class SIRECLUSTER_EXPORT DormantBackend
@@ -149,7 +188,11 @@ public:
     bool operator==(const DormantBackend &other) const;
     bool operator!=(const DormantBackend &other) const;
     
+    QString toString() const;
+    uint hashCode() const;
+    
     QUuid UID() const;
+    QString description() const;
     
     ActiveBackend activate();
     ActiveBackend tryActivate(int ms);
@@ -173,7 +216,11 @@ public:
     DormantBackend deactivate();
     DormantBackend tryDeactivate(int ms);
     
+    QString toString() const;
+    uint hashCode() const;
+    
     QUuid UID() const;
+    QString description() const;
     
     void startJob(const WorkPacket &workpacket);
     

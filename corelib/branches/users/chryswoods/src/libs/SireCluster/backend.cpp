@@ -38,183 +38,208 @@
 
 #include "SireMaths/rangenerator.h"
 
-#include "SireError/printerror.h"
-#include "SireError/errors.h"
+#include "Siren/errors.h"
 
 #include <QDebug>
 
 using namespace SireCluster;
+using namespace Siren;
 
-using boost::shared_ptr;
-using boost::weak_ptr;
+//////
+////// Implementation of Backend
+//////
 
-namespace SireCluster
-{
-namespace detail
-{
-
-/** A small object used as a token to say who's got hold
-    of a Backend */
-class BackendLock
-{
-public:
-    BackendLock(const shared_ptr<QWaitCondition> &w) : waiter(w)
-    {}
-    
-    ~BackendLock()
-    {
-        if (waiter.get() != 0)
-            waiter->wakeOne();
-    }
-
-    shared_ptr<QWaitCondition> waiter;
-};
-
-/** Private implementation of Backend */
-class BackendPvt : public QThread
-{
-public:
-    BackendPvt() : QThread(), keep_running(true), job_is_starting(false)
-    {
-        uid = QUuid::createUuid();
-        connectionwaiter.reset( new QWaitCondition() );
-    }
-    
-    ~BackendPvt()
-    {}
-    
-    shared_ptr<BackendLock> lock();
-    shared_ptr<BackendLock> tryLock();
-    shared_ptr<BackendLock> tryLock(int timeout);
-    
-    /** Mutex used to protect access to the data of 
-        this backend */
-    QMutex datamutex;
-
-    
-    /** This mutex is used to ensure that only one Frontend
-        at a time is connecting to this Backend */
-    QMutex connectionmutex;
-
-    /** This WaitCondition is used to signal when a Frontend
-        has disconnected from this Backend */
-    shared_ptr<QWaitCondition> connectionwaiter;
-
-    /** Weak pointer to the BackendLock that has locked this Backend */
-    weak_ptr<BackendLock> backend_lock;
-    
-    
-    /** This mutex is used to ensure that only one 
-        thread can try to start a job at a time */
-    QMutex startmutex;
-    
-    /** WaitCondition used to signal that the backend thread 
-        has started */
-    QWaitCondition startwaiter;
-    
-    /** The work packet being processed by this backend */
-    WorkPacket workpacket;
-    
-    /** The final results */
-    WorkPacket resultspacket;
-    
-    /** The unique ID of this backend */
-    QUuid uid;
-    
-    /** Whether or not to keep running */
-    bool keep_running;
-    
-    /** A flag used to indicate whether or not a job is starting */
-    bool job_is_starting;
-
-protected:
-    void run();
-};
-
-} // end of namespace detail
-} // end of namespace SireCluster
-
-using namespace SireCluster::detail;
-
-//////////
-////////// Implementation of Backend
-//////////
-
-/** Construct a null, unusable backend */
-Backend::Backend()
-{}
-
-/** Create a new, usable Backend */
-Backend Backend::create()
-{
-    Backend backend;
-    backend.d.reset( new BackendPvt() );
-    
-    Cluster::registerBackend(backend);
-    
-    return backend;
-}
-
-/** Create a new, usable Backend, but don't register this
-    backend with the Cluster. This is used when you want to
-    create quick temporary Backends that you don't want to be
-    made available to any other threads or remote processes */
-Backend Backend::createLocalOnly()
-{
-    Backend backend;
-    backend.d.reset( new BackendPvt() );
-    
-    return backend;
-}
-
-/** Copy constructor */
-Backend::Backend(const Backend &other) : d(other.d)
+/** Create the Backend whose resource description is in 'description' */
+Backend::Backend(const QString &description) 
+        : desc(description), uid( QUuid::createUuid() )
 {}
 
 /** Destructor */
 Backend::~Backend()
 {}
 
-/** Copy assignment operator */
-Backend& Backend::operator=(const Backend &other)
+/** Return the UID of the backend */
+const QUuid& Backend::UID() const
 {
-    d = other.d;
-    return *this;
+    return uid;
 }
 
-/** Comparison operator */
-bool Backend::operator==(const Backend &other) const
+/** Return the resource description of the backend */
+const QString& Backend::description() const
 {
-    return d.get() == other.d.get();
+    return desc;
 }
 
-/** Comparison operator */
-bool Backend::operator!=(const Backend &other) const
+//////
+////// Implementation of LocalBackend
+//////
+
+/** Construct a new local backend */
+LocalBackend::LocalBackend() : Backend( "local" )
+{}
+
+/** Destructor */
+LocalBackend::~LocalBackend()
+{}
+
+QString LocalBackend::what() const
 {
-    return d.get() != other.d.get();
+    return "SireCluster::LocalBackend";
 }
 
-/** Return whether or not this is a null backend */
-bool Backend::isNull() const
+/** Start the job on this backend (this actually runs the complete
+    job as this is the main thread) */
+void LocalBackend::startJob(const WorkPacket &workpacket)
 {
-    return d.get() == 0;
+    job_in_progress = workpacket;
+    
+    while (not job_in_progress.read().hasFinished())
+    {
+        job_in_progress = job_in_progress.read().runChunk();
+    }
 }
 
-/** Return the unique ID of this backend */
-QUuid Backend::UID() const
+/** Stop the job */
+void LocalBackend::stopJob()
 {
-    if (not this->isNull())
-        return d->uid;
-     
+    //no-op
+}
+
+/** Abort the job */
+void LocalBackend::abortJob()
+{
+    //no-op
+}
+
+/** Wait for the job to finish */
+void LocalBackend::wait()
+{
+    //no-op
+}
+
+/** Wait for the job to finish */
+bool LocalBackend::wait(int)
+{
+    return true;
+}
+
+/** Return the current progress of the job */
+float LocalBackend::progress()
+{
+    if (job_in_progress.isNull())
+        return 0;
     else
-        return QUuid();
+        return job_in_progress.read().progress();
 }
 
-/** Function used to actually run the job */
-void BackendPvt::run()
+/** Return the current state of the running job */
+WorkPacketPtr LocalBackend::interimResult()
 {
-    SireError::setThreadString( QString("Backend-%1")
-                                    .arg( toInt(QThread::currentThread()) ));
+    return job_in_progress;
+}
+
+/** Return the final state of the running job */
+WorkPacketPtr LocalBackend::result()
+{
+    return job_in_progress;
+}
+
+//////
+////// Implementation of ThreadBackend
+//////
+
+/** Construct a new thread backend */
+ThreadBackend::ThreadBackend() : Backend("thread"), QThread()
+{}
+
+/** Destructor */
+ThreadBackend::~ThreadBackend()
+{
+    QThread::wait();
+}
+
+QString ThreadBackend::what() const
+{
+    return "SireCluster::ThreadBackend";
+}
+
+/** Start a job on this backend - this blocks until the job 
+    has started */
+void ThreadBackend::startJob(const WorkPacket &workpacket)
+{
+    //block to ensure that only one job can be started 
+    //at a time
+    QMutexLocker lkr( &start_mutex );
+    
+    while (job_is_starting)
+    {
+        //another thread is trying to start a job - we have to wait
+        startwaiter.wait( &startmutex );
+    }
+    
+    //set the flag to say that *we* are starting a job
+    job_is_starting = true;
+    
+    //wait until the last job has finished
+    QThread::wait();
+    
+    //ok, we now know that we are the only thread trying to start
+    //a job, and we know that no job is currently running
+    {
+        QMutexLocker lkr2( &datamutex );
+
+        job_in_progress = workpacket;
+        result = WorkPacketPtr();
+        keep_running = true;
+    }
+    
+    //start the job
+    this->start();
+    
+    //wait until the job has started
+    startwaiter.wait( &startmutex );
+}
+
+/** Stop the job */
+void ThreadBackend::stopJob()
+{
+    QMutexLocker lkr(&datamutex);
+    keep_running = false;
+}
+
+/** Abort the job */
+void ThreadBackend::abortJob()
+{
+    QMutexLocker lkr(&datamutex);
+    keep_running = false;
+    result = AbortPacket();
+    job_in_progress = result;
+}
+
+/** Wait for the workpacket to complete */
+void ThreadBackend::wait()
+{
+    while (not QThread::wait(2000))
+    {
+        if (not QThread::isRunning())
+            //the job has stopped
+            return;
+    }
+}
+
+bool ThreadBackend::wait(int timeout);
+
+float ThreadBackend::progress();
+WorkPacketPtr ThreadBackend::interimResult();
+
+WorkPacketPtr ThreadBackend::result();
+
+/** Function run by the backend thread */
+void ThreadBackend::run()
+{
+    Siren::setThreadString( QString("ThreadBackend-%1")
+                              .arg( toInt(QThread::currentThread()) ));
+
     SireMaths::seed_qrand();
 
     //wake the thread that told us to run the job
@@ -222,7 +247,7 @@ void BackendPvt::run()
     
     if (not job_is_starting)
     {
-        qDebug() << SireError::getPIDString() << "How have we been started???"
+        qDebug() << Siren::getPIDString() << "How have we been started???"
                  << "job_is_started is false in BackendPvt::run()";
                  
         startwaiter.wakeAll();
@@ -239,7 +264,7 @@ void BackendPvt::run()
     {
         try
         {
-            WorkPacket local_packet;
+            WorkPacketPtr local_packet;
         
             //// copy the work packet into a local space
             {
@@ -248,44 +273,42 @@ void BackendPvt::run()
                 if (not keep_running)
                     break;
                 
-                if (workpacket.hasFinished())
+                if (job_in_progress.read().hasFinished())
                     break;
                 
-                local_packet = workpacket;
+                local_packet = job_in_progress;
             }
         
             //now perform the work on the local packet
-            local_packet.runChunk();
+            if (not local_packet.read().hasFinished())
+                local_packet = local_packet.read().runChunk();
         
             //// copy the local work back to the global work
             {
                 QMutexLocker lkr(&datamutex);
             
-                if (workpacket.hasFinished())    
-                    break;
-                
-                workpacket = local_packet;
+                job_in_progress = local_packet;
             
-                if (not keep_running)
+                if (job_in_progress.read().hasFinished() or not keep_running)
                     break;
             }
         }
-        catch(const SireError::exception &e)
+        catch(const Siren::exception &e)
         {
             QMutexLocker lkr(&datamutex);
-            workpacket = ErrorPacket(e);
+            job_in_progress = ErrorPacket(e);
             break;
         }
         catch(const std::exception &e)
         {
             QMutexLocker lkr(&datamutex);
-            workpacket = ErrorPacket(SireError::std_exception(e));
+            job_in_progress = ErrorPacket(Siren::std_exception(e));
             break;
         }
         catch(...)
         {
             QMutexLocker lkr(&datamutex);
-            workpacket = ErrorPacket(SireError::unknown_exception( QObject::tr(
+            job_in_progress = ErrorPacket(Siren::unknown_error( QObject::tr(
                     "An unknown error occured while running a workpacket."),
                         CODELOC ) );
             break;
@@ -294,8 +317,17 @@ void BackendPvt::run()
     
     //the work has finished - copy the results
     QMutexLocker lkr(&datamutex);
-    resultspacket = workpacket;
+    result = job_in_progress;
 }
+
+//////
+////// Implementation of DormantBackend
+//////
+
+//////
+////// Implementation of ActiveBackend
+//////
+
 
 /** This function is called by a Frontend which it connects to 
     this backend - this blocks until there are no other frontends

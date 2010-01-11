@@ -32,6 +32,8 @@
 #include <QMutex>
 #include <QStringList>
 
+class QWaitCondition;
+
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #include <boost/noncopyable.hpp>
