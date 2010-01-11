@@ -969,6 +969,8 @@ int main(int argc, char **argv)
                     printOut( QObject::tr("Running %1 simulation(s)...").arg(nrestarts) );
 
                     Nodes nodes = Cluster::getNodes(nrestarts);
+                    printOut( QObject::tr("Number of nodes in the cluster is %1")
+                                    .arg(nodes.count()) );
 
                     ThisThread this_thread = nodes.borrowThisThread();
 
@@ -1006,6 +1008,7 @@ int main(int argc, char **argv)
                         
                             Node node = nodes.getNode();
                         
+                            printOut( QObject::tr("Starting the job...") );
                             promises.append( node.startJob(workpacket) ); 
                             running_files.append( r.filename );
                             restart_idxs.append( i );
@@ -1028,11 +1031,16 @@ int main(int argc, char **argv)
                         break;
                     }
                 
+                    printOut( QObject::tr(
+                                    "Waiting for all submitted jobs to finish...") );
+                
                     //wait for them all to finish
                     for (int i=0; i < promises.count(); ++i)
                     {
                         promises[i].wait();
                     }
+
+                    printOut( QObject::tr("All submitted jobs have finished") );
 
                     //save the output for all processes that completed successfully
                     for (int i=0; i < promises.count(); ++i)
@@ -1117,18 +1125,30 @@ int main(int argc, char **argv)
 
             //exec the Cluster - this starts the cluster and then
             //blocks while it is running
+            printOut( QObject::tr("compute%1 waiting to start...")
+                                .arg(Cluster::getRank()) );
+                                
             #ifdef SIRE_USE_MPI
                 ::MPI::COMM_WORLD.Barrier();
             #endif
  
+            printOut( QObject::tr("compute%1 starting...").arg(Cluster::getRank()) );
+ 
             Cluster::start(ppn);
+
+            printOut( QObject::tr("compute%1 waiting to wait...")
+                                .arg(Cluster::getRank()) );
 
             #ifdef SIRE_USE_MPI
                 ::MPI::COMM_WORLD.Barrier();
             #endif
 
+            printOut( QObject::tr("compute%1 waiting...").arg(Cluster::getRank()) );
+
             Cluster::wait();
             status = 0;
+            
+            printOut( QObject::tr("compute%1 finished").arg(Cluster::getRank()) );
         }
     }
     catch(const SireError::exception &e)
