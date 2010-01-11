@@ -486,7 +486,7 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
             //create space for the null CoordGroup
             quint32 dataidx = idx + sizeof(CoordGroup);
             
-            CGData *cgroup = new (storage + dataidx) CGData(idx);
+            CGData *cgroup = new (storage + dataidx) CGData(dataidx);
             new (storage + idx) CoordGroup(cgroup);
             
             //tell the parent where this null CoordGroup is located
@@ -494,13 +494,18 @@ char* CGMemory::create(quint32 narrays, quint32 ncgroups, quint32 ncoords)
             
             cgroup->ncoords = 0;
             cgroup->coords0 = 0;
-            cgroup->aabox = 0;
+
+            idx += sizeof(CGData) + sizeof(CoordGroup);
             
-            cgarrayarray->aabox0 = 0;
+            cgroup->aabox = idx;
+            
+            new (storage + idx) AABox();
+            
+            cgarrayarray->aabox0 = idx;
             cgarrayarray->coords0 = 0;
             cgarrayarray->ncgroups = 0;
             
-            idx += sizeof(CGData) + sizeof(CoordGroup) + sizeof(AABox);
+            idx += sizeof(AABox);
         }
         
         //we should now be at the end of the storage
