@@ -219,11 +219,13 @@ WorkPacket createWorkPacket(const QString &filename,
                             int nmoves, bool record_stats)
 {
     //read the contents of the restart file into memory
+    printOut( QObject::tr("Opening %1...").arg(filename) );
     QFile f(filename);
 
     if (not f.open( QIODevice::ReadOnly) )
         throw SireError::file_error(f, CODELOC);
     
+    printOut( QObject::tr("Reading the file...") );
     QByteArray restart_data = f.readAll();
 
     if (restart_data.isEmpty())
@@ -234,7 +236,10 @@ WorkPacket createWorkPacket(const QString &filename,
 
     //sanity check the header
     {
+        printOut( QObject::tr("Reading the file header...") );
         FileHeader header = SireStream::getDataHeader(restart_data);
+    
+        printOut( QObject::tr("File Header ==\n%1").arg(header.toString()) );
     
         if (header.dataTypes().count() != 2)
         {
@@ -247,9 +252,13 @@ WorkPacket createWorkPacket(const QString &filename,
         }
     }
     
+    printOut( QObject::tr("Unpacking the data...") );
+    
     //unpack the binary data
     QList< boost::tuple<boost::shared_ptr<void>,QString> > objects 
                          = SireStream::load(restart_data);
+    
+    printOut( QObject::tr("Number of loaded objects equals %1").arg(objects.count()) );
     
     if (not objects.count() == 2)
         throw SireError::file_error( QObject::tr(
@@ -265,6 +274,8 @@ WorkPacket createWorkPacket(const QString &filename,
     //the first object should be derived from System or SupraSystem
     if (p0->isA<System>())
     {
+        printOut( QObject::tr("Creating a SimPacket simulation...") );
+    
         //the second object must be a 'Move' or 'Moves'
         if (p1->isA<Moves>())
         {
@@ -281,6 +292,8 @@ WorkPacket createWorkPacket(const QString &filename,
     }
     else if (p0->isA<SupraSystem>())
     {
+        printOut( QObject::tr("Creating a SupraSimPacket simulation...") );
+    
         //the second object must be a 'SupraMove' or 'SupraMoves'
         if (p1->isA<SupraMoves>())
         {
@@ -979,6 +992,8 @@ int main(int argc, char **argv)
                     QStringList running_files;
 
                     int nskipped = 0;
+
+                    printOut( QObject::tr("About to loop over simulations to submit") );
  
                     //submit all of the simulations
                     for (int i=0; i<nrestarts; ++i)
@@ -999,6 +1014,8 @@ int main(int argc, char **argv)
                         try 
                         {
                             //create a workpacket for this simulation
+                            printOut( QObject::tr("Creating workpacket %1...")
+                                                .arg(i+1) );
                             WorkPacket workpacket = createWorkPacket(r.filename,
                                                                      r.nmoves,
                                                                      r.record_stats);
