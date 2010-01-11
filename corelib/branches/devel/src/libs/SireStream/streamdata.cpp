@@ -1214,7 +1214,7 @@ QByteArray SIRESTREAM_EXPORT streamDataSave(
 
         //compress the object data (level 3 compression seems best, giving
         //about a ten-fold reduction for only a 30% increase in serialisation time)
-        QByteArray compressed_object_data = qCompress(object_data, 3);
+        QByteArray compressed_object_data = object_data; //qCompress(object_data, 3);
 
         //now write a header for the object
         header = FileHeader( type_names, compressed_object_data, object_data );
@@ -1327,7 +1327,7 @@ QByteArray SIRESTREAM_EXPORT streamDataSave(
 
         //compress the object data (level 3 compression seems best, giving
         //about a ten-fold reduction for only a 30% increase in serialisation time)
-        QByteArray compressed_object_data = qCompress(object_data, 3);
+        QByteArray compressed_object_data = object_data; //qCompress(object_data, 3);
 
         //now write a header for the object
         header = FileHeader( type_names, compressed_object_data, object_data );
@@ -1505,7 +1505,7 @@ QList< tuple<shared_ptr<void>,QString> > SIRESTREAM_EXPORT load(const QByteArray
         header.assertNotCorrupted(object_data);
     
         //uncompress the data
-        object_data = qUncompress(object_data);
+        //object_data = qUncompress(object_data);
     
         QDataStream ds2(object_data);
     

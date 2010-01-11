@@ -43,7 +43,6 @@ QDataStream SIRESTREAM_EXPORT &writeHeader(QDataStream &ds,
                                            const RegisterMetaTypeBase &r_type,
                                            VersionID version)
 {
-    qDebug() << "SAVING" << r_type.typeName();
     ds << r_type.magicID() << version;
     return ds;
 }
@@ -54,7 +53,6 @@ QDataStream SIRESTREAM_EXPORT &writeHeader(QDataStream &ds,
                                            MagicID magicid,
                                            VersionID version)
 {
-    qDebug() << "SAVING MAGIC" << magicid;
     ds << magicid << version;
     return ds;
 }
@@ -66,8 +64,6 @@ VersionID SIRESTREAM_EXPORT readHeader(QDataStream &ds,
 {
     MagicID id;
     VersionID v;
-
-    qDebug() << "READING" << r_type.typeName();
 
     ds >> id >> v;
 
@@ -85,8 +81,6 @@ VersionID SIRESTREAM_EXPORT readHeader(QDataStream &ds,
 {
     MagicID id;
     VersionID v;
-
-    qDebug() << "READING MAGIC" << magicid;
 
     ds >> id >> v;
 
