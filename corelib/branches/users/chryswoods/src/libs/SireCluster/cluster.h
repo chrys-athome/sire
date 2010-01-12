@@ -51,7 +51,7 @@ namespace MPI
 class ReservationManager;
 }
 
-/** This class provides the global registry for all nodes in the cluster.
+/** This static class provides the global registry for all nodes in the cluster.
     A node is defined as a resource that can run a WorkPacket. A node
     consists of a Backend (the object in which the WorkPacket is 
     run) and a Frontend (the object that allows the node to communicate

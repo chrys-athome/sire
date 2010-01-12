@@ -314,7 +314,7 @@ bool Process::wait(int ms)
                 {
                     //the job is still running - wait a 1s then
                     //try again
-                    sleep(1);
+                    ::sleep(1);
                 }
                 else
                 {

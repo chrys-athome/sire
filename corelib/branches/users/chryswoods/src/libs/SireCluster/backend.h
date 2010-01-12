@@ -78,6 +78,8 @@ public:
     virtual void stopJob()=0;
     virtual void abortJob()=0;
     
+    virtual bool isBusy()=0;
+    
     virtual void wait()=0;
     virtual bool wait(int timeout)=0;
     
@@ -86,7 +88,16 @@ public:
     
     virtual WorkPacketPtr result()=0;
 
+    void activate();
+    bool tryActivate(int ms);
+    
+    void deactivate();
+
 private:
+    /** This mutex is locked when the Backend is activated.
+        It is unlocked when the mutex is deactivated */
+    QMutex active_lock;
+
     /** The unique ID for this backend */
     QUuid uid;
 
@@ -109,6 +120,8 @@ public:
     void stopJob();
     void abortJob();
     
+    bool isBusy();
+    
     void wait();
     bool wait(int timeout);
     
@@ -119,6 +132,7 @@ public:
 
 private:
     WorkPacketPtr job_in_progress;
+    WorkPacketPtr resultpacket;
 };
 
 /** This is a backend that runs the job in its own thread */
@@ -134,6 +148,8 @@ public:
     
     void stopJob();
     void abortJob();
+    
+    bool isBusy();
     
     void wait();
     bool wait(int timeout);
@@ -162,7 +178,7 @@ private:
     WorkPacketPtr job_in_progress;
     
     /** The final result of the job */
-    WorkPacketPtr result;
+    WorkPacketPtr resultpacket;
     
     /** Whether or not to keep running */
     bool keep_running;
@@ -179,6 +195,8 @@ class SIRECLUSTER_EXPORT DormantBackend
 {
 public:
     DormantBackend();
+    DormantBackend(Backend *backend);
+    
     DormantBackend(const DormantBackend &other);
     
     ~DormantBackend();
@@ -213,9 +231,6 @@ public:
     bool operator==(const ActiveBackend &other) const;
     bool operator!=(const ActiveBackend &other) const;
     
-    DormantBackend deactivate();
-    DormantBackend tryDeactivate(int ms);
-    
     QString toString() const;
     uint hashCode() const;
     
@@ -234,6 +249,23 @@ public:
     WorkPacketPtr interimResult();
     
     WorkPacketPtr result();
+
+protected:
+    friend class DormantBackend;
+    ActiveBackend(const DormantBackend &other);
+
+private:
+    class ActiveToken
+    {
+    public:
+        ActiveToken(Backend *backend);
+        ~ActiveToken();
+    
+    private:
+        Backend *backend;
+    };
+
+    boost::shared_ptr<ActiveToken> active_token;
 };
 
 }
