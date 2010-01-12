@@ -321,8 +321,6 @@ QList< tuple<QString,quint32> > LibraryInfo::readLibraryHeader(const QByteArray 
 */
 void LibraryInfo::checkLibraryHeader(const QByteArray &header)
 {
-    return;
-
     QList< tuple<QString,quint32> > libraries = readLibraryHeader(header);
     
     QString report = getSupportReport(libraries);
@@ -1501,15 +1499,12 @@ QList< tuple<shared_ptr<void>,QString> > SIRESTREAM_EXPORT load(const QByteArray
         if (compressed_data.capacity() != RESERVE_SIZE)
             qWarning() << "Possible memory allocation error!";
     
-        qDebug() << "READING DATA";
         ds >> compressed_data;
     
         //validate that the data is correct
-        qDebug() << "CHECKING FOR CORRUPTION";
         header.assertNotCorrupted(compressed_data);
     
         //uncompress the data
-        qDebug() << "UNCOMPRESSING DATA";
         QByteArray object_data = qUncompress(compressed_data);
     
         QDataStream ds2(object_data);
@@ -1518,7 +1513,6 @@ QList< tuple<shared_ptr<void>,QString> > SIRESTREAM_EXPORT load(const QByteArray
         ds2.setVersion( QDataStream::Qt_4_2 );
 
         int nobjects = header.dataTypes().count();
-        qDebug() << "LOADING OBJECTS" << nobjects;
         
         std::auto_ptr<SharedDataStream> sds;
         

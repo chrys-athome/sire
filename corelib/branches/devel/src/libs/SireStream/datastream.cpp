@@ -57,6 +57,8 @@ QDataStream SIRESTREAM_EXPORT &writeHeader(QDataStream &ds,
     return ds;
 }
 
+static QString last_object;
+
 /** Read the header of the binary object to check that the type is correct
     and to obtain the binary data version */
 VersionID SIRESTREAM_EXPORT readHeader(QDataStream &ds,
@@ -64,6 +66,14 @@ VersionID SIRESTREAM_EXPORT readHeader(QDataStream &ds,
 {
     MagicID id;
     VersionID v;
+
+    if (QLatin1String(r_type.typeName()) == "SireFF::FFComponent")
+    {
+        qDebug() << "Loading" << r_type.typeName() 
+                 << "previous was" << last_object;
+    }
+
+    last_object = r_type.typeName();
 
     ds >> id >> v;
 
@@ -81,6 +91,8 @@ VersionID SIRESTREAM_EXPORT readHeader(QDataStream &ds,
 {
     MagicID id;
     VersionID v;
+
+    last_object = QString("unknown_%1").arg(magicid);
 
     ds >> id >> v;
 
