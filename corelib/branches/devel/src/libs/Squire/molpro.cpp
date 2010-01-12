@@ -583,11 +583,11 @@ QString Molpro::writeShellFile(const TempDir &tempdir) const
     {
         //the user hasn't specified a molpro executable - try to find one
         QString found_molpro = SireBase::findExe("molpro").absoluteFilePath();
-        ts << QString("%1 -d %2 molpro_input -o molpro_output\n")
+        ts << QString("%1 --no-xml-output -s -d %2 molpro_input -o molpro_output\n")
                     .arg(found_molpro, tempdir.path());
     }
     else
-        ts << QString("%1 -d %2 molpro_input -o molpro_output\n")
+        ts << QString("%1 --no-xml-output -s -d %2 molpro_input -o molpro_output\n")
                         .arg(molpro_exe, tempdir.path());
 
     ts << "sync\n";
