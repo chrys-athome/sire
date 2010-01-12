@@ -321,6 +321,8 @@ QList< tuple<QString,quint32> > LibraryInfo::readLibraryHeader(const QByteArray 
 */
 void LibraryInfo::checkLibraryHeader(const QByteArray &header)
 {
+    return;
+
     QList< tuple<QString,quint32> > libraries = readLibraryHeader(header);
     
     QString report = getSupportReport(libraries);
@@ -460,10 +462,10 @@ QDataStream SIRESTREAM_EXPORT &operator>>(QDataStream &ds,
         //Version 1 uses the Qt 4.2 data format
         ds.setVersion(QDataStream::Qt_4_2);
     
-        QByteArray data;
-        ds >> data;
+        QByteArray compressed_data;
+        ds >> compressed_data;
 
-        data = qUncompress(data);
+        QByteArray data = qUncompress(compressed_data);
     
         QDataStream ds2(data);
     
@@ -1214,7 +1216,7 @@ QByteArray SIRESTREAM_EXPORT streamDataSave(
 
         //compress the object data (level 3 compression seems best, giving
         //about a ten-fold reduction for only a 30% increase in serialisation time)
-        QByteArray compressed_object_data = object_data; //qCompress(object_data, 3);
+        QByteArray compressed_object_data = qCompress(object_data, 3);
 
         //now write a header for the object
         header = FileHeader( type_names, compressed_object_data, object_data );
@@ -1327,7 +1329,7 @@ QByteArray SIRESTREAM_EXPORT streamDataSave(
 
         //compress the object data (level 3 compression seems best, giving
         //about a ten-fold reduction for only a 30% increase in serialisation time)
-        QByteArray compressed_object_data = object_data; //qCompress(object_data, 3);
+        QByteArray compressed_object_data = qCompress(object_data, 3);
 
         //now write a header for the object
         header = FileHeader( type_names, compressed_object_data, object_data );
@@ -1493,19 +1495,22 @@ QList< tuple<shared_ptr<void>,QString> > SIRESTREAM_EXPORT load(const QByteArray
     if (header.version() == 1 or header.version() == 2)
     {
         //read in the binary data containing all of the objects
-        QByteArray object_data;
-        object_data.reserve( RESERVE_SIZE );
+        QByteArray compressed_data;
+        compressed_data.reserve( RESERVE_SIZE );
     
-        if (object_data.capacity() != RESERVE_SIZE)
+        if (compressed_data.capacity() != RESERVE_SIZE)
             qWarning() << "Possible memory allocation error!";
     
-        ds >> object_data;
+        qDebug() << "READING DATA";
+        ds >> compressed_data;
     
         //validate that the data is correct
-        header.assertNotCorrupted(object_data);
+        qDebug() << "CHECKING FOR CORRUPTION";
+        header.assertNotCorrupted(compressed_data);
     
         //uncompress the data
-        //object_data = qUncompress(object_data);
+        qDebug() << "UNCOMPRESSING DATA";
+        QByteArray object_data = qUncompress(compressed_data);
     
         QDataStream ds2(object_data);
     
@@ -1513,6 +1518,7 @@ QList< tuple<shared_ptr<void>,QString> > SIRESTREAM_EXPORT load(const QByteArray
         ds2.setVersion( QDataStream::Qt_4_2 );
 
         int nobjects = header.dataTypes().count();
+        qDebug() << "LOADING OBJECTS" << nobjects;
         
         std::auto_ptr<SharedDataStream> sds;
         
