@@ -51,17 +51,47 @@ using namespace Siren;
 
 /** Create the Backend whose resource description is in 'description' */
 Backend::Backend(const QString &description) 
-        : uid( QUuid::createUuid() ), desc(description)
+        : is_active(1), desc(description)
 {}
 
 /** Destructor */
 Backend::~Backend()
 {}
 
+/** Internal function called by the resource manager to set 
+    the UID of this backend */
+void Backend::setUID(const QUuid &id)
+{
+    uid = id;
+}
+
 /** Return the UID of the backend */
 const QUuid& Backend::UID() const
 {
     return uid;
+}
+
+/** Return whether or not this backend is registered - you can't
+    start any jobs on an unregistered backend */
+bool Backend::isRegistered() const
+{
+    return not uid.isNull();
+}
+
+/** Assert that the backend is registered
+
+    \throw Siren::unavailable_resource
+*/
+void Backend::assertIsRegistered() const
+{
+    if (uid.isNull())
+    {
+        throw Siren::unavailable_resource( QObject::tr(
+            "The resource \"%1\" is no longer available. It either has "
+            "not been registered, or it has been unregistered (possibly "
+            "because this resource is about to be released or has been "
+            "disconnected?").arg(desc), CODELOC );
+    }
 }
 
 /** Return the resource description of the backend */
@@ -73,20 +103,33 @@ const QString& Backend::description() const
 /** Activate this backend */
 void Backend::activate()
 {
-    active_lock.lock();
+    is_active.acquire();
+}
+
+/** Try to activate this backend - this returns
+    immediately if this backend is already active */
+bool Backend::tryActivate()
+{
+    return is_active.tryAcquire();
 }
 
 /** Try to activate this backend, returning whether
     or not we were successful */
 bool Backend::tryActivate(int ms)
 {
-    return active_lock.tryLock(ms);
+    return is_active.tryAcquire(1, ms);
+}
+
+/** Return whether or not this backend is activated */
+bool Backend::isActivated() const
+{
+    return is_active.available() == 0;
 }
 
 /** Deactivate this backend */
 void Backend::deactivate()
 {
-    active_lock.unlock();
+    is_active.release();
 }
 
 //////
@@ -475,6 +518,12 @@ QUuid DormantBackend::UID() const
         return resource().UID();
 }
 
+void DormantBackend::setUID(const QUuid &uid) const
+{
+    if (not isNull())
+        const_cast<Backend*>(&(resource()))->setUID(uid);
+}
+
 QString DormantBackend::description() const
 {
     if (isNull())
@@ -493,6 +542,20 @@ ActiveBackend DormantBackend::activate()
     resource().activate();
     
     return ActiveBackend(*this);
+}
+
+/** Try to activate this backend - this returns a null
+    ActiveBackend immediately if the backend cannot 
+    be activated */
+ActiveBackend DormantBackend::tryActivate()
+{
+    if (isNull())
+        return ActiveBackend();
+        
+    if (resource().tryActivate())
+        return ActiveBackend(*this);
+    else
+        return ActiveBackend();
 }
 
 /** Try to activate this backend - this blocks until the backend

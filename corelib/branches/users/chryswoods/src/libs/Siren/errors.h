@@ -59,6 +59,22 @@ public:
     ~program_bug() throw();
 };
 
+/** This exception is thrown when for-ages is interupted
+
+    @author Christopher Woods
+*/
+class SIREN_EXPORT interupted : public ImplementsException<interupted,exception>
+{
+public:
+    interupted();
+
+    interupted(QString err, QString place = QString::null);
+
+    interupted(const interupted &other);
+
+    ~interupted() throw();
+};
+
 /** This exception is thrown when unsupported hardware is detected (e.g. unsupported
     openGL system)
 
@@ -463,6 +479,7 @@ public:
 }
 
 Q_DECLARE_METATYPE(Siren::program_bug)
+Q_DECLARE_METATYPE(Siren::interupted)
 Q_DECLARE_METATYPE(Siren::unsupported)
 Q_DECLARE_METATYPE(Siren::id_error)
 Q_DECLARE_METATYPE(Siren::invalid_key)

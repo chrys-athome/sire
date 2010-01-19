@@ -33,6 +33,7 @@
 
 #include <QThread>
 #include <QUuid>
+#include <QSemaphore>
 
 #include "workpacket.h"
 
@@ -40,6 +41,8 @@ SIRE_BEGIN_HEADER
 
 namespace SireCluster
 {
+
+class ResourceManager;
 
 /** This is the base class of all backends. A Backend is an object
     that can receive a WorkPacket from a FrontEnd, can process that
@@ -88,17 +91,28 @@ public:
     
     virtual WorkPacketPtr result()=0;
 
+    bool isRegistered() const;
+
     void activate();
+    void tryActivate();
     bool tryActivate(int ms);
+
+    bool isActivated() const;
     
     void deactivate();
 
-private:
-    /** This mutex is locked when the Backend is activated.
-        It is unlocked when the mutex is deactivated */
-    QMutex active_lock;
+    void assertIsRegistered() const;
 
-    /** The unique ID for this backend */
+protected:
+    friend class DormantBackend;
+    void setUID(const QUuid &uid);
+
+private:
+    /** This semaphore is used to signal when the Backend is activated. */
+    QSemaphore is_active;
+
+    /** The unique ID for this backend - this is given to the 
+        backend when it registers with the resource manager */
     QUuid uid;
 
     /** A description of this backend - this can be used
@@ -213,7 +227,12 @@ public:
     QString description() const;
     
     ActiveBackend activate();
+    ActiveBackend tryActivate();
     ActiveBackend tryActivate(int ms);
+
+protected:
+    friend class ResourceManager;
+    void setUID(const QUuid &uid) const;
 };
 
 /** This class holds a backend that has been activate for use */
@@ -249,7 +268,7 @@ public:
     WorkPacketPtr interimResult();
     
     WorkPacketPtr result();
-
+    
 protected:
     friend class DormantBackend;
     ActiveBackend(const DormantBackend &other);

@@ -22,6 +22,8 @@ set ( SIREN_PUBLIC_HEADERS
       exception.h
       errors.h
 
+      forages.h
+
       logger.h
       tester.h
 
@@ -62,6 +64,8 @@ set ( SIREN_SOURCES
  
       exception.cpp
       errors.cpp
+
+      forages.cpp
 
       logger.cpp
       tester.cpp
