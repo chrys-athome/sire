@@ -863,9 +863,21 @@ QList<RestartFile> parseCommandLine(int argc, char **argv,
 
 int main(int argc, char **argv)
 {
+    QString hostname, username;
+
     #ifdef Q_OS_UNIX
         signal(SIGINT, fatal_error_signal);
         signal(SIGTERM, fatal_error_signal);
+
+        username = std::getenv("USER");
+
+        char buffer[128];
+        gethostname(buffer, 128);
+        hostname = buffer;
+    
+    #else
+        username = "unknown";
+        hostname = username;
     #endif // Q_OS_UNIX
 
     int status = 0;
@@ -895,9 +907,10 @@ int main(int argc, char **argv)
                 "http://siremol.org") );
 
             printBox( QObject::tr(
-                    "Starting master node (%1 of %2): nThreads()=%3")
+                    "%4@%5: Starting master node (%1 of %2): nThreads()=%3")
                        .arg(Cluster::getRank()).arg(Cluster::getCount())
-                       .arg(ppn) );
+                       .arg(ppn)
+                       .arg(username,hostname) );
 
             //name this process and thread
             SireError::setProcessString("master");
@@ -1132,9 +1145,10 @@ int main(int argc, char **argv)
         {
             //this is one of the compute nodes...
             printBox( QObject::tr(
-                        "Starting one of the compute nodes (%1 of %2): nThreads()=%3") 
+                        "%4@%5: Starting one of the compute nodes (%1 of %2): nThreads()=%3") 
                             .arg(Cluster::getRank()).arg(Cluster::getCount())
-                            .arg(ppn) );
+                            .arg(ppn)
+                            .arg(username,hostname) );
 
             //name this process
             SireError::setProcessString( QString("compute%1").arg(Cluster::getRank()) );
