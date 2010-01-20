@@ -366,6 +366,8 @@ WorkPacketPtr ThreadBackend::result()
 /** Function run by the backend thread */
 void ThreadBackend::run()
 {
+    Siren::register_this_thread();
+
     Siren::setThreadString( QString("ThreadBackend-%1")
                               .arg( toInt(QThread::currentThread()) ));
 
@@ -443,6 +445,8 @@ void ThreadBackend::run()
             break;
         }
     }
+
+    Siren::unregister_this_thread();
     
     //the work has finished - copy the results
     QMutexLocker lkr(&datamutex);

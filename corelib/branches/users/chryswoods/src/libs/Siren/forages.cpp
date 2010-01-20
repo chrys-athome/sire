@@ -67,6 +67,51 @@ Q_GLOBAL_STATIC( GlobalForAgesState, globalForAgesState )
 
 namespace Siren
 {
+    /** Call this function to register the current thread with for-ages.
+        Note that only QThread-based threads can be registered */
+    void SIREN_EXPORT register_this_thread()
+    {
+        GlobalForAgesState *s = globalForAgesState();
+
+        QThread *t = QThread::currentThread();
+        
+        if (s and t)
+        {
+            QMutexLocker lkr( &(s->pause_mutex) );
+            
+            if (s->thread_states.contains(t))
+                return;
+            
+            s->thread_state.setLocalData( new ForAgesState() );
+            s->thread_states[t] = s->thread_state.localData();
+        }
+    }
+
+    /** Unregister the current thread (which must be based on QThread) */
+    void SIREN_EXPORT unregister_this_thread()
+    {
+        GlobalForAgesState *s = globalForAgesState();
+
+        QThread *t = QThread::currentThread();
+        
+        if (s and t)
+        {
+            QMutexLocker lkr( &(s->pause_mutex) );
+            
+            if (not s->thread_states.contains(t))
+                return;
+            
+            bool is_paused = s->thread_states[t]->is_paused;
+            
+            s->thread_state.setLocalData(0);
+            s->thread_states.remove(t);
+            
+            if (is_paused and not s->global_state.is_paused)
+                //wake the thread up
+                s->pause_waiter.wakeAll();
+        }
+    }
+
     void throwInteruptedError()
     {
         throw Siren::interupted( QObject::tr(

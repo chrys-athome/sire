@@ -40,6 +40,9 @@ SIREN_BEGIN_HEADER
 namespace Siren
 {
 
+void register_this_thread();
+void unregister_this_thread();
+
 bool for_ages();
 
 void check_for_ages();
