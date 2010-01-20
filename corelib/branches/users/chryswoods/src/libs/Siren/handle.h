@@ -29,7 +29,6 @@
 #ifndef SIREN_HANDLE_H
 #define SIREN_HANDLE_H
 
-#include <QMutex>
 #include <QStringList>
 
 class QWaitCondition;
@@ -38,7 +37,7 @@ class QWaitCondition;
 #include <boost/weak_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
-#include "sirenglobal.h"
+#include "forages.h"
 
 SIREN_BEGIN_HEADER
 
@@ -182,7 +181,7 @@ public:
 protected:
     static const Class& createTypeInfo();
 
-    static QMutex& globalLock();
+    static Mutex& globalLock();
 
     static void throwUnregisteredMetaTypeError(const QString &type_name);
     
@@ -202,8 +201,8 @@ protected:
         not the object being Handled. */
     virtual Handle* ptr_clone() const=0;
 
-    QMutex* resourceLock();
-    QMutex* resourceLock() const;
+    Mutex* resourceLock();
+    Mutex* resourceLock() const;
 
     void setValidResource();
     void dropResource();
@@ -227,7 +226,7 @@ private:
 
     /** Shared pointer to the mutex used to 
         lock access to this resource */
-    boost::shared_ptr<QMutex> resource_lock;
+    boost::shared_ptr<Mutex> resource_lock;
 };
 
 /** Inherit from this class to provide your handle. */
@@ -288,7 +287,7 @@ public:
 
 private:
     /** Pointer to the mutex being locked */
-    QMutex *resource_mutex;
+    Mutex *resource_mutex;
     
     /** Whether or not the mutex is locked */
     bool is_locked;
@@ -329,7 +328,7 @@ private:
     void *weak_handle;
     
     /** Weak handle to the mutex used to lock this object */
-    boost::weak_ptr<QMutex> weak_lock;
+    boost::weak_ptr<Mutex> weak_lock;
 };
 
 
@@ -739,7 +738,7 @@ const Class& ExtendsHandle<Derived,Base>::createTypeInfo()
 {
     if ( ExtendsHandle<Derived,Base>::class_typeinfo == 0 )
     {
-        QMutexLocker lkr( &(Handle::globalLock()) );
+        MutexLocker lkr( &(Handle::globalLock()) );
      
         if ( ExtendsHandle<Derived,Base>::class_typeinfo == 0 )
         {
@@ -889,7 +888,7 @@ const Class& ImplementsHandle<Derived,Base>::createTypeInfo()
 {
     if ( ImplementsHandle<Derived,Base>::class_typeinfo == 0 )
     {
-        QMutexLocker lkr( &(Handle::globalLock()) );
+        MutexLocker lkr( &(Handle::globalLock()) );
         
         if ( ImplementsHandle<Derived,Base>::class_typeinfo == 0 )
         {

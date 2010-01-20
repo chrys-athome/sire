@@ -29,13 +29,12 @@
 #ifndef SIREN_OBJECT_H
 #define SIREN_OBJECT_H
 
-#include "sirenglobal.h"
-
 #include <QSharedData>
-#include <QMutex>
 #include <QStringList>
 
 #include <boost/assert.hpp>
+
+#include "sirenglobal.h"
 
 SIREN_BEGIN_HEADER
 
@@ -63,7 +62,7 @@ class ObjRef;
 }
 
 class QDomNode;
-class QMutex;
+class Mutex;
 
 inline uint qHash(double value)
 {
@@ -84,7 +83,10 @@ class GlobalSharedPointerBase;
 template<class T> class GlobalSharedPointer;
 }
 
-QMutex& globalRegistrationLock();
+class Mutex;
+class MutexLocker;
+
+Mutex& globalRegistrationLock();
 
 /** This is the base class of all Siren virtual objects.
     
@@ -295,7 +297,7 @@ public:
 protected:
     static const Class& createTypeInfo();
 
-    static QMutex& globalLock();
+    static Mutex& globalLock();
 
     static void throwUnregisteredMetaTypeError(const QString &type_name);
     
@@ -566,7 +568,7 @@ const Class& Extends<Derived,Base>::createTypeInfo()
 {
     if ( Extends<Derived,Base>::class_typeinfo == 0 )
     {
-        QMutexLocker lkr( &(Object::globalLock()) );
+        MutexLocker lkr( &(Object::globalLock()) );
      
         if ( Extends<Derived,Base>::class_typeinfo == 0 )
         {
@@ -716,7 +718,7 @@ const Class& Implements<Derived,Base>::createTypeInfo()
 {
     if ( Implements<Derived,Base>::class_typeinfo == 0 )
     {
-        QMutexLocker lkr( &(Object::globalLock()) );
+        MutexLocker lkr( &(Object::globalLock()) );
         
         if ( Implements<Derived,Base>::class_typeinfo == 0 )
         {

@@ -26,12 +26,10 @@
   *
 \*********************************************/
 
-#ifndef SIREN_FORAGES_H
-#define SIREN_FORAGES_H
+#ifndef SIREN_WAITCONDITION_H
+#define SIREN_WAITCONDITION_H
 
-#include <QMutex>
-
-class QThread;
+#include <QWaitCondition>
 
 #include "sirenglobal.h"
 
@@ -40,21 +38,31 @@ SIREN_BEGIN_HEADER
 namespace Siren
 {
 
-void register_this_thread();
-void unregister_this_thread();
+class Mutex;
 
-bool for_ages();
-
-void check_for_ages();
-
-void pause_for_ages();
-void pause_for_ages(const QThread *thread);
-
-void play_for_ages();
-void play_for_ages(const QThread *thread);
-
-void end_for_ages();
-void end_for_ages(const QThread *thread);
+/** This class provides a WaitCondition which respects the end
+    of for_ages (i.e. .wait() can be interupted
+    by signalling the end of for_ages, in which case it will
+    throw a Siren::interupted exception. In all other
+    respects, this is identical to a QWaitCondition
+    
+    @author Christopher Woods
+*/
+class SIREN_EXPORT WaitCondition
+{
+public:
+    WaitCondition();
+    ~WaitCondition();
+    
+    bool wait( Mutex *mutex, unsigned long time = ULONG_MAX );
+    bool wait( QMutex *mutex, unsigned long time = ULONG_MAX );
+    
+    void wakeOne();
+    void wakeAll();
+    
+private:
+    QWaitCondition w;
+};
 
 }
 

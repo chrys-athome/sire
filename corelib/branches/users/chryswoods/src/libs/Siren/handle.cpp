@@ -46,7 +46,7 @@ static const RegisterHandle<Handle> r_handle( VIRTUAL_CLASS );
 
 /** Return the mutex that can be used as a lock
     on all registration */
-QMutex& Handle::globalLock()
+Mutex& Handle::globalLock()
 {
     return globalRegistrationLock();
 }
@@ -89,7 +89,7 @@ const Class& Handle::createTypeInfo()
 {
     if ( class_typeinfo == 0 )
     {
-        QMutexLocker lkr( &(globalLock()) );
+        MutexLocker lkr( &(globalLock()) );
         
         if ( class_typeinfo == 0 )
         {
@@ -144,7 +144,7 @@ bool Handle::operator!=(const Handle &other) const
     tell Handle to create the resource lock */
 void Handle::setValidResource()
 {
-    resource_lock.reset( new QMutex(QMutex::Recursive) );
+    resource_lock.reset( new Mutex(QMutex::Recursive) );
 }
 
 /** Internal function used by WeakHandle to neuter (invalidate)
@@ -236,15 +236,15 @@ bool Handle::test() const
 }
 
 /** Internal function used to return the lock */
-QMutex* Handle::resourceLock()
+Mutex* Handle::resourceLock()
 {
     return resource_lock.get();
 }
 
 /** Internal function used to return the lock */
-QMutex* Handle::resourceLock() const
+Mutex* Handle::resourceLock() const
 {
-    return const_cast<QMutex*>(resource_lock.get());
+    return const_cast<Mutex*>(resource_lock.get());
 }
 
 void Handle::dropResource()

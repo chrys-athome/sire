@@ -43,6 +43,7 @@
 #endif
 
 #include "object.h"
+#include "mutex.h"
 
 SIREN_BEGIN_HEADER
 
@@ -316,7 +317,7 @@ const Class& ImplementsException<Derived,Base>::createTypeInfo()
 {
     if ( ImplementsException<Derived,Base>::class_typeinfo == 0 )
     {
-        QMutexLocker lkr( &(Object::globalLock()) );
+        MutexLocker lkr( &(Object::globalLock()) );
         
         if ( ImplementsException<Derived,Base>::class_typeinfo == 0 )
         {

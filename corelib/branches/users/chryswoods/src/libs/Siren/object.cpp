@@ -26,8 +26,6 @@
   *
 \*********************************************/
 
-#include <QMutex>
-
 #include "object.h"
 #include "class.h"
 #include "objref.h"
@@ -102,18 +100,18 @@ void Object::stream(Stream &s)
     s.item<Object>();
 }
 
-Q_GLOBAL_STATIC_WITH_ARGS( QMutex, objectGlobalMutex, (QMutex::Recursive) );
+Q_GLOBAL_STATIC_WITH_ARGS( Mutex, objectGlobalMutex, (QMutex::Recursive) );
 
-QMutex SIREN_EXPORT &Siren::globalRegistrationLock()
+Mutex SIREN_EXPORT &Siren::globalRegistrationLock()
 {
-    QMutex *m = objectGlobalMutex();
+    Mutex *m = objectGlobalMutex();
     BOOST_ASSERT( m );
     return *m;
 }
 
 /** Return the mutex that can be used as a lock
     on all object registration */
-QMutex& Object::globalLock()
+Mutex& Object::globalLock()
 {
     return globalRegistrationLock();
 }
@@ -156,7 +154,7 @@ const Class& Object::createTypeInfo()
 {
     if ( class_typeinfo == 0 )
     {
-        QMutexLocker lkr( &(globalLock()) );
+        MutexLocker lkr( &(globalLock()) );
         
         if ( class_typeinfo == 0 )
         {

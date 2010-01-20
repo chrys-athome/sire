@@ -26,38 +26,56 @@
   *
 \*********************************************/
 
-#ifndef SIREN_FORAGES_H
-#define SIREN_FORAGES_H
+#include "mutex.h"
+#include "forages.h"
 
-#include <QMutex>
+using namespace Siren;
 
-class QThread;
+Mutex::Mutex( QMutex::RecursionMode mode )
+      : m(mode)
+{}
 
-#include "sirenglobal.h"
+Mutex::~Mutex()
+{}
 
-SIREN_BEGIN_HEADER
-
-namespace Siren
+void Mutex::lock()
 {
-
-void register_this_thread();
-void unregister_this_thread();
-
-bool for_ages();
-
-void check_for_ages();
-
-void pause_for_ages();
-void pause_for_ages(const QThread *thread);
-
-void play_for_ages();
-void play_for_ages(const QThread *thread);
-
-void end_for_ages();
-void end_for_ages(const QThread *thread);
-
+    if (not m.tryLock())
+    {
+        while (for_ages())
+        {
+            if (m.tryLock(5000))
+                return;
+        }
+    }
 }
 
-SIREN_END_HEADER
+bool Mutex::tryLock()
+{
+    return m.tryLock();
+}
 
-#endif
+bool Mutex::tryLock(int ms)
+{
+    const int block = 5000;
+    
+    while (for_ages())
+    {
+        int wait = qMin(ms, block);
+        
+        if (m.tryLock(wait))
+            return true;
+            
+        ms -= wait;
+        
+        if (ms <= 0)
+            return false;
+    }
+    
+    return false;
+}
+
+void Mutex::unlock()
+{
+    m.unlock();
+}

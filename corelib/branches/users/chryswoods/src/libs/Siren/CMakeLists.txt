@@ -23,6 +23,8 @@ set ( SIREN_PUBLIC_HEADERS
       errors.h
 
       forages.h
+      mutex.h
+      waitcondition.h
 
       logger.h
       tester.h
@@ -66,6 +68,8 @@ set ( SIREN_SOURCES
       errors.cpp
 
       forages.cpp
+      mutex.cpp
+      waitcondition.cpp
 
       logger.cpp
       tester.cpp
