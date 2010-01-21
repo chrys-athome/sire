@@ -103,6 +103,17 @@ void register_CoordGroup_class(){
                 , ( bp::arg("s") ) );
         
         }
+        { //::SireVol::CoordGroup::test
+        
+            typedef bool ( ::SireVol::CoordGroup::*test_function_type )( ::Siren::Logger & ) const;
+            test_function_type test_function_value( &::SireVol::CoordGroup::test );
+            
+            CoordGroup_exposer.def( 
+                "test"
+                , test_function_value
+                , ( bp::arg("logger") ) );
+        
+        }
         { //::SireVol::CoordGroup::toString
         
             typedef ::QString ( ::SireVol::CoordGroup::*toString_function_type )(  ) const;

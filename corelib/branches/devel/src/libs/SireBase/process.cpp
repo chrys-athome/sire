@@ -273,7 +273,12 @@ bool Process::wait(int ms)
             {
                 status = waitpid(d->pid, &child_exit_status, WNOHANG);
 
-                if (status == -1)
+                if (status == 0)
+                {
+                    sleep(1);
+                    continue;
+                }
+                else if (status == -1)
                 {
                     qDebug() << "waitpid exited with status -1!" << strerror(errno);
                     return true;

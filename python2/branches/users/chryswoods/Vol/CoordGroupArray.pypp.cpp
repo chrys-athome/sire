@@ -305,6 +305,17 @@ void register_CoordGroupArray_class(){
                 , ( bp::arg("s") ) );
         
         }
+        { //::SireVol::CoordGroupArray::test
+        
+            typedef bool ( ::SireVol::CoordGroupArray::*test_function_type )( ::Siren::Logger & ) const;
+            test_function_type test_function_value( &::SireVol::CoordGroupArray::test );
+            
+            CoordGroupArray_exposer.def( 
+                "test"
+                , test_function_value
+                , ( bp::arg("logger") ) );
+        
+        }
         { //::SireVol::CoordGroupArray::toString
         
             typedef ::QString ( ::SireVol::CoordGroupArray::*toString_function_type )(  ) const;

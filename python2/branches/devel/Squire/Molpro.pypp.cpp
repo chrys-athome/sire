@@ -115,6 +115,16 @@ void register_Molpro_class(){
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }
+        { //::Squire::Molpro::maximumRunTime
+        
+            typedef int ( ::Squire::Molpro::*maximumRunTime_function_type )(  ) const;
+            maximumRunTime_function_type maximumRunTime_function_value( &::Squire::Molpro::maximumRunTime );
+            
+            Molpro_exposer.def( 
+                "maximumRunTime"
+                , maximumRunTime_function_value );
+        
+        }
         { //::Squire::Molpro::memoryRequirement
         
             typedef int ( ::Squire::Molpro::*memoryRequirement_function_type )(  ) const;
@@ -203,6 +213,17 @@ void register_Molpro_class(){
                 "setForceTemplate"
                 , setForceTemplate_function_value
                 , ( bp::arg("force_template") ) );
+        
+        }
+        { //::Squire::Molpro::setMaximumRunTime
+        
+            typedef void ( ::Squire::Molpro::*setMaximumRunTime_function_type )( int ) ;
+            setMaximumRunTime_function_type setMaximumRunTime_function_value( &::Squire::Molpro::setMaximumRunTime );
+            
+            Molpro_exposer.def( 
+                "setMaximumRunTime"
+                , setMaximumRunTime_function_value
+                , ( bp::arg("max_runtime") ) );
         
         }
         { //::Squire::Molpro::setMemoryRequirement

@@ -262,6 +262,17 @@ void register_CoordGroupEditor_class(){
                 , ( bp::arg("s") ) );
         
         }
+        { //::SireVol::CoordGroupEditor::test
+        
+            typedef bool ( ::SireVol::CoordGroupEditor::*test_function_type )( ::Siren::Logger & ) const;
+            test_function_type test_function_value( &::SireVol::CoordGroupEditor::test );
+            
+            CoordGroupEditor_exposer.def( 
+                "test"
+                , test_function_value
+                , ( bp::arg("logger") ) );
+        
+        }
         { //::SireVol::CoordGroupEditor::toString
         
             typedef ::QString ( ::SireVol::CoordGroupEditor::*toString_function_type )(  ) const;
