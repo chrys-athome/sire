@@ -458,7 +458,7 @@ QList<Frontend> Cluster::getFrontends(int n, int timeout)
 
     QList<Frontend> frontends;
 
-    n = qMax( n, Cluster::UIDs().count() );
+    n = qMin( n, Cluster::UIDs().count() );
 
     if (timeout < 0)
     {
