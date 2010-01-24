@@ -66,6 +66,8 @@ private:
 
 }
 
+SIREN_EXPOSE_CLASS( Siren::WaitCondition )
+
 SIREN_END_HEADER
 
 #endif

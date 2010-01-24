@@ -59,6 +59,9 @@ bool Mutex::tryLock(int ms)
 {
     const int block = 5000;
     
+    if (ms < block)
+        return m.tryLock(ms);
+    
     while (for_ages())
     {
         int wait = qMin(ms, block);

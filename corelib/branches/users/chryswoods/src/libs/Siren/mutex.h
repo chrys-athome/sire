@@ -139,6 +139,9 @@ private:
 
 }
 
+SIREN_EXPOSE_CLASS( Siren::Mutex )
+SIREN_EXPOSE_CLASS( Siren::MutexLocker )
+
 SIREN_END_HEADER
 
 #endif

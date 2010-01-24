@@ -27,8 +27,6 @@
 \*********************************************/
 
 #include <QThread>
-#include <QMutex>
-#include <QWaitCondition>
 
 #include <boost/weak_ptr.hpp>
 
@@ -38,6 +36,7 @@
 
 #include "SireMaths/rangenerator.h"
 
+#include "Siren/forages.h"
 #include "Siren/errors.h"
 
 #include <QDebug>
@@ -241,7 +240,7 @@ void ThreadBackend::startJob(const WorkPacket &workpacket)
 {
     //block to ensure that only one job can be started 
     //at a time
-    QMutexLocker lkr( &startmutex );
+    MutexLocker lkr( &startmutex );
     
     while (job_is_starting)
     {
@@ -258,7 +257,7 @@ void ThreadBackend::startJob(const WorkPacket &workpacket)
     //ok, we now know that we are the only thread trying to start
     //a job, and we know that no job is currently running
     {
-        QMutexLocker lkr2( &datamutex );
+        MutexLocker lkr2( &datamutex );
 
         while (not resultpacket.isNull())
         {
@@ -287,14 +286,14 @@ bool ThreadBackend::isBusy()
 /** Stop the job */
 void ThreadBackend::stopJob()
 {
-    QMutexLocker lkr(&datamutex);
+    MutexLocker lkr(&datamutex);
     keep_running = false;
 }
 
 /** Abort the job */
 void ThreadBackend::abortJob()
 {
-    QMutexLocker lkr(&datamutex);
+    MutexLocker lkr(&datamutex);
     keep_running = false;
     resultpacket = AbortPacket();
     job_in_progress = resultpacket;
@@ -320,14 +319,14 @@ bool ThreadBackend::wait(int timeout)
 /** Return the progress of the calculation */
 float ThreadBackend::progress()
 {
-    QMutexLocker lkr(&datamutex);
+    MutexLocker lkr(&datamutex);
     return job_in_progress.read().progress();
 }
 
 /** Return an interim result */
 WorkPacketPtr ThreadBackend::interimResult()
 {
-    QMutexLocker lkr(&datamutex);
+    MutexLocker lkr(&datamutex);
     return job_in_progress;
 }
 
@@ -337,7 +336,7 @@ WorkPacketPtr ThreadBackend::interimResult()
     will be blocked until the result is collected */
 WorkPacketPtr ThreadBackend::result()
 {
-    QMutexLocker lkr(&datamutex);
+    MutexLocker lkr(&datamutex);
     
     if (job_in_progress.isNull())
         //there is nothing being run
@@ -399,7 +398,7 @@ void ThreadBackend::run()
         
             //// copy the work packet into a local space
             {
-                QMutexLocker lkr(&datamutex);
+                MutexLocker lkr(&datamutex);
             
                 if (not keep_running)
                     break;
@@ -416,7 +415,7 @@ void ThreadBackend::run()
         
             //// copy the local work back to the global work
             {
-                QMutexLocker lkr(&datamutex);
+                MutexLocker lkr(&datamutex);
             
                 job_in_progress = local_packet;
             
@@ -426,19 +425,19 @@ void ThreadBackend::run()
         }
         catch(const Siren::exception &e)
         {
-            QMutexLocker lkr(&datamutex);
+            MutexLocker lkr(&datamutex);
             job_in_progress = ErrorPacket(e);
             break;
         }
         catch(const std::exception &e)
         {
-            QMutexLocker lkr(&datamutex);
+            MutexLocker lkr(&datamutex);
             job_in_progress = ErrorPacket(Siren::std_exception(e));
             break;
         }
         catch(...)
         {
-            QMutexLocker lkr(&datamutex);
+            MutexLocker lkr(&datamutex);
             job_in_progress = ErrorPacket(Siren::unknown_error( QObject::tr(
                     "An unknown error occured while running a workpacket."),
                         CODELOC ) );
@@ -449,7 +448,7 @@ void ThreadBackend::run()
     Siren::unregister_this_thread();
     
     //the work has finished - copy the results
-    QMutexLocker lkr(&datamutex);
+    MutexLocker lkr(&datamutex);
     resultpacket = job_in_progress;
 }
 
@@ -538,25 +537,34 @@ QString DormantBackend::description() const
 
 /** Activate this backend - this blocks until the backend
     is ready to be activated (and is not in use elsewhere) */
-ActiveBackend DormantBackend::activate()
+ActiveBackend DormantBackend::activate() const
 {
     if (isNull())
         return ActiveBackend();
         
-    resource().activate();
+    const_cast<Backend*>(&(resource()))->activate();
     
     return ActiveBackend(*this);
+}
+
+/** Return whether or not this backend is currently active */
+bool DormantBackend::isActivated() const
+{
+    if (isNull())
+        return false;
+        
+    return resource().isActivated();
 }
 
 /** Try to activate this backend - this returns a null
     ActiveBackend immediately if the backend cannot 
     be activated */
-ActiveBackend DormantBackend::tryActivate()
+ActiveBackend DormantBackend::tryActivate() const
 {
     if (isNull())
         return ActiveBackend();
         
-    if (resource().tryActivate())
+    if (const_cast<Backend*>(&(resource()))->tryActivate())
         return ActiveBackend(*this);
     else
         return ActiveBackend();
@@ -566,12 +574,12 @@ ActiveBackend DormantBackend::tryActivate()
     is ready to be activated (and is not in use elsewhere)
     or 'ms' milliseconds have passed. If the backend cannot
     be activated then a null active backend is returned */
-ActiveBackend DormantBackend::tryActivate(int ms)
+ActiveBackend DormantBackend::tryActivate(int ms) const
 {
     if (isNull())
         return ActiveBackend();
         
-    if (resource().tryActivate(ms))
+    if (const_cast<Backend*>(&(resource()))->tryActivate(ms))
         return ActiveBackend(*this);
     else
         return ActiveBackend();

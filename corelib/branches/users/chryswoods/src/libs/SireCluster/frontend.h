@@ -30,6 +30,7 @@
 #define SIRECLUSTER_FRONTEND_H
 
 #include "Siren/handle.h"
+#include "Siren/mutex.h"
 
 #include "backend.h"
 
@@ -102,7 +103,7 @@ protected:
 private:
     /** This mutex is locked when the Frontend is activated.
         It is unlocked when the mutex is deactivated */
-    QMutex active_lock;
+    Siren::Mutex active_lock;
     
     /** A cache of the UID of the backend */
     QUuid backend_uid;

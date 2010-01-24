@@ -57,6 +57,9 @@ bool WaitCondition::wait( Mutex *m, unsigned long time )
     }
     else
     {
+        if (time <= chunk)
+            return w.wait( &(m->m), time );
+    
         while (for_ages())
         {
             int wait = qMin(time, chunk);
@@ -91,6 +94,9 @@ bool WaitCondition::wait( QMutex *m, unsigned long time )
     }
     else
     {
+        if (time <= chunk)
+            return w.wait(m, time);
+    
         while (for_ages())
         {
             int wait = qMin(time, chunk);

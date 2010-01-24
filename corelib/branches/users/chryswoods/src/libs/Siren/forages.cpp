@@ -28,10 +28,12 @@
 
 #include <QThread>
 #include <QThreadStorage>
-#include <QWaitCondition>
 #include <QHash>
 
 #include "forages.h"
+#include "mutex.h"
+#include "waitcondition.h"
+
 #include "Siren/errors.h"
 
 struct ForAgesState
@@ -325,6 +327,34 @@ namespace Siren
         return true;
     }
 
+    /** Sleep for 'secs' seconds. This will pause for 'secs' seconds,
+        but can be interupted by calling 'end_for_ages()', in which case
+        a Siren::interupted exception will be raised */
+    void SIREN_EXPORT sleep(int secs)
+    {
+        if (secs <= 0)
+            return;
     
+        Mutex m;
+        MutexLocker lkr(&m);
+        
+        WaitCondition w;
+        w.wait(&m, 1000*secs);
+    }
+    
+    /** Sleep for 'ms' milliseconds. This will pause for 'ms' milliseconds,
+        but can be interupted by calling 'end_for_ages()', in which case
+        a Siren::interupted exception will be raised */
+    void SIREN_EXPORT msleep(int ms)
+    {
+        if (ms <= 0)
+            return;
+    
+        Mutex m;
+        MutexLocker lkr(&m);
+        
+        WaitCondition w;
+        w.wait(&m, ms);
+    }
 
 } // end of namespace Siren

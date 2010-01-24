@@ -35,6 +35,9 @@
 #include <QUuid>
 #include <QSemaphore>
 
+#include "Siren/mutex.h"
+#include "Siren/waitcondition.h"
+
 #include "workpacket.h"
 
 SIRE_BEGIN_HEADER
@@ -94,7 +97,7 @@ public:
     bool isRegistered() const;
 
     void activate();
-    void tryActivate();
+    bool tryActivate();
     bool tryActivate(int ms);
 
     bool isActivated() const;
@@ -178,15 +181,15 @@ protected:
 
 private:
     /** Mutex used to protect access to the running thread */
-    QMutex datamutex;
+    Siren::Mutex datamutex;
 
     /** This mutex is used to ensure that only one 
         thread can try to start a job at a time */
-    QMutex startmutex;
+    Siren::Mutex startmutex;
     
     /** WaitCondition used to signal that the backend thread 
         has started */
-    QWaitCondition startwaiter;
+    Siren::WaitCondition startwaiter;
 
     /** The current state of the job */
     WorkPacketPtr job_in_progress;
@@ -226,9 +229,11 @@ public:
     QUuid UID() const;
     QString description() const;
     
-    ActiveBackend activate();
-    ActiveBackend tryActivate();
-    ActiveBackend tryActivate(int ms);
+    bool isActivated() const;
+    
+    ActiveBackend activate() const;
+    ActiveBackend tryActivate() const;
+    ActiveBackend tryActivate(int ms) const;
 
 protected:
     friend class ResourceManager;

@@ -43,6 +43,9 @@ namespace Siren
 void register_this_thread();
 void unregister_this_thread();
 
+void msleep(int ms);
+void sleep(int secs);
+
 bool for_ages();
 
 void check_for_ages();
@@ -57,6 +60,14 @@ void end_for_ages();
 void end_for_ages(const QThread *thread);
 
 }
+
+SIREN_EXPOSE_FUNCTION( Siren::msleep )
+SIREN_EXPOSE_FUNCTION( Siren::sleep )
+SIREN_EXPOSE_FUNCTION( Siren::for_ages )
+SIREN_EXPOSE_FUNCTION( Siren::check_for_ages )
+SIREN_EXPOSE_FUNCTION( Siren::pause_for_ages )
+SIREN_EXPOSE_FUNCTION( Siren::play_for_ages )
+SIREN_EXPOSE_FUNCTION( Siren::end_for_ages )
 
 SIREN_END_HEADER
 

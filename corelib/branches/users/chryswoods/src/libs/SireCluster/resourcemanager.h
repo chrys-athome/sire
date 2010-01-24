@@ -29,18 +29,21 @@
 #ifndef SIRECLUSTER_RESOURCEMANAGER_H
 #define SIRECLUSTER_RESOURCEMANAGER_H
 
-#include <QMutex>
-#include <QTime>
 #include <QList>
 #include <QHash>
 #include <QUuid>
+#include <QPair>
+#include <QDateTime>
 
-#include "backend.h"
+#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireCluster
 {
+
+class ActiveBackend;
+class DormantBackend;
 
 /** This is a static class, and it is responsible
     for managing all of the Backend compute resources that are directly
@@ -53,11 +56,11 @@ namespace SireCluster
 */
 class SIRECLUSTER_EXPORT ResourceManager
 {
-    static const int DEFAULT_TIMEOUT = 5000;
+    static const int DEFAULT_TIMEOUT = 25000;
 
 public:
     static void registerBackend(const DormantBackend &backend);
-    static void unregisterBackend(const ActiveBackend &backend);
+    static void unregisterBackend(ActiveBackend &backend);
 
     static QHash<QUuid,QString> availableBackends();
 
@@ -79,38 +82,17 @@ public:
                                    const QString &description,
                                    int expires=DEFAULT_TIMEOUT);
 
-    static QList<QUuid> tryReserveBackends(int ms, int n, int expires=DEFAULT_TIMEOUT);
-    static QList<QUuid> tryReserveBackends(int ms, const QList<QUuid> &uids,
+    static QList<QUuid> tryReserveBackends(int n, int ms, int expires=DEFAULT_TIMEOUT);
+    static QList<QUuid> tryReserveBackends(const QList<QUuid> &uids, int ms,
                                            int expires=DEFAULT_TIMEOUT);
-    static QList<QUuid> tryReserveBackends(int ms,
-                                           const QString &description,
-                                           int n, int expires=DEFAULT_TIMEOUT);
+    static QList<QUuid> tryReserveBackends(const QString &description,
+                                           int n, int ms, int expires=DEFAULT_TIMEOUT);
     
     static ActiveBackend collectReservation(const QUuid &uids);
-    static QList<ActiveBackend> collectReservation(const QList<QUuid> &uids);
+    static QHash<QUuid,ActiveBackend> collectReservation(const QList<QUuid> &uids);
     
     static void releaseReservation(const QUuid &uid);
     static void releaseReservation(const QList<QUuid> &uids);
-    
-private:
-    class Data
-    {
-    public:
-        Data();
-        ~Data();
-        
-        /** Lock to serialise access to the data of this resource */
-        QMutex datamutex;
-    
-        /** The list of backends resources */
-        QList<DormantBackend> resources;
-        
-        /** The set of pending reservations */
-        QHash< QUuid,QPair<int,ActiveBackend> > reservations;
-        
-        /** Timer used to record the current time */
-        QTime t;
-    };
 };
 
 }
