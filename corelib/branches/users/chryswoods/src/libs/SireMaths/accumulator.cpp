@@ -26,8 +26,6 @@
   *
 \*********************************************/
 
-#include <QMutex>
-
 #include <cmath>
 
 #include "accumulator.h"

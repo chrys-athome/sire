@@ -27,7 +27,6 @@
 \*********************************************/
 
 #include <QStringList>
-#include <QMutex>
 #include <QHash>
 
 #include "generalunit.h"

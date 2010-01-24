@@ -26,7 +26,6 @@
   *
 \*********************************************/
 
-#include <QMutex>
 #include <QHash>
 
 #include "symbol.h"
@@ -39,6 +38,7 @@
 
 #include "SireCAS/errors.h"
 
+#include "Siren/mutex.h"
 #include "Siren/errors.h"
 #include "Siren/stream.h"
 
@@ -51,7 +51,7 @@ using namespace SireCAS;
 typedef QHash<QString,SymbolID> SymbolRegistry;
 
 Q_GLOBAL_STATIC( SymbolRegistry, symbolRegistry )
-Q_GLOBAL_STATIC( QMutex, registryMutex )
+Q_GLOBAL_STATIC( Mutex, registryMutex )
 
 /** Return an ID for the symbol with representation 'rep'. This
     creates a new ID if there is no symbol currently registered with
@@ -61,7 +61,7 @@ SymbolID Symbol::getNewID(const QString &rep)
     if (rep.isNull() or rep.isEmpty())
         return 0;
 
-    QMutexLocker lkr( registryMutex() );
+    MutexLocker lkr( registryMutex() );
 
     SymbolRegistry *registry = symbolRegistry();
 
@@ -81,7 +81,7 @@ SymbolID Symbol::getNewID(const QString &rep)
 */
 QString Symbol::getName(SymbolID symid)
 {
-    QMutexLocker lkr( registryMutex() );
+    MutexLocker lkr( registryMutex() );
 
     SymbolRegistry *registry = symbolRegistry();
 

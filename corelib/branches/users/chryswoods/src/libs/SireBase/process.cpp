@@ -26,12 +26,12 @@
   *
 \*********************************************/
 
-#include <QMutex>
 #include <QList>
 #include <QTime>
 
 #include "process.h"
 
+#include "Siren/mutex.h"
 #include "Siren/hanref.h"
 #include "Siren/errors.h"
 
@@ -66,8 +66,6 @@ public:
     
     ~ProcessData()
     {}
-    
-    QMutex datamutex;
 
     /** The command being run */
     QString command;
@@ -94,7 +92,7 @@ public:
 using namespace SireBase::detail;
 
 Q_GLOBAL_STATIC( QList<WeakHandle>, processRegistry );
-Q_GLOBAL_STATIC( QMutex, registryMutex );
+Q_GLOBAL_STATIC( Mutex, registryMutex );
 
 static const RegisterHandle<Process> r_process;
 
@@ -298,12 +296,18 @@ bool Process::wait(int ms)
             {
                 status = waitpid(resource().pid, &child_exit_status, WNOHANG);
 
-                if (status == -1)
+                if (status == 0)
+                {
+                    //we can't get the status - the job may still be running
+                    ::sleep(1);
+                    continue;
+                }
+                else if (status == -1)
                 {
                     qDebug() << "waitpid exited with status -1!" << strerror(errno);
                     return true;
                 }
-                else if (status != 0 and status != resource().pid)
+                else if (status != resource().pid)
                 {
                     qDebug() << "waitpid exited with the wrong PID (" << status
                              << "vs." << resource().pid << ")" << strerror(errno);
@@ -405,7 +409,7 @@ Process Process::run(const QString &command,  const QStringList &arguments)
         p.resource().arguments = arguments;
 
         //record this process in the list of running processes
-        QMutexLocker lkr( registryMutex() );
+        MutexLocker lkr( registryMutex() );
         processRegistry()->append( WeakHandle(p) );
 
         return p;
@@ -451,7 +455,7 @@ void Process::kill()
 /** Use this function to kill all of the jobs that are currently running */
 void Process::killAll()
 {
-    QMutexLocker lkr( registryMutex() );
+    MutexLocker lkr( registryMutex() );
     
     QList<WeakHandle> &process_list = *(processRegistry());
 

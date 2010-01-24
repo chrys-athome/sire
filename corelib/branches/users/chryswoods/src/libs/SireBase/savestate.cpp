@@ -27,10 +27,10 @@
 \*********************************************/
 
 #include <QThreadStorage>
-#include <QMutex>
 
 #include "savestate.h"
 
+#include "Siren/mutex.h"
 #include "Siren/objref.h"
 #include "Siren/errors.h"
 
@@ -39,19 +39,11 @@ using namespace SireBase;
 
 typedef QThreadStorage< QSet<const void*>* > StateRegistry;
 
-static StateRegistry *state_registry(0);
-
-Q_GLOBAL_STATIC( QMutex, globalMutex )
+Q_GLOBAL_STATIC( StateRegistry, getStateRegistry )
 
 static QSet<const void*>& stateRegistry()
 {
-    if (state_registry == 0)
-    {
-        QMutexLocker lkr( globalMutex() );
-        
-        if (state_registry == 0)
-            state_registry = new StateRegistry();
-    }
+    StateRegistry *state_registry = getStateRegistry();
     
     if (not state_registry->hasLocalData())
         state_registry->setLocalData( new QSet<const void*>() );

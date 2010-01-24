@@ -26,8 +26,6 @@
   *
 \*********************************************/
 
-#include <QMutex>
-
 #include "space.h"
 #include "cartesian.h"
 

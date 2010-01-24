@@ -33,7 +33,6 @@
 
 #include <QTime>
 #include <QVector>
-#include <QMutex>
 
 #ifdef SIRE_TIME_ROUTINES
 #include <pthread.h>  // CONDITIONAL_INCLUDE 

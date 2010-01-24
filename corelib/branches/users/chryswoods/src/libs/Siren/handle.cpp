@@ -26,12 +26,11 @@
   *
 \*********************************************/
 
-#include <QWaitCondition>
-
 #include "handle.h"
 #include "hanref.h"
 #include "class.h"
 #include "logger.h"
+#include "waitcondition.h"
 
 #include "Siren/errors.h"
 
@@ -291,7 +290,7 @@ bool Handle::tryLock(int ms)
 
 /** Sleep on this handle, using the passed WaitCondition. Note that
     you must hold the lock on this resource */
-void Handle::sleep(QWaitCondition &waiter)
+void Handle::sleep(WaitCondition &waiter)
 {
     if (not this->isNull())
         waiter.wait(resource_lock.get());
@@ -301,7 +300,7 @@ void Handle::sleep(QWaitCondition &waiter)
     for at most 'ms' milliseconds to be woken up. This returns
     whether or not this was woken up. Note that you must hold
     the lock on this resource */
-bool Handle::sleep(QWaitCondition &waiter, int ms)
+bool Handle::sleep(WaitCondition &waiter, int ms)
 {
     if (not this->isNull())
         return waiter.wait(resource_lock.get(), ms);

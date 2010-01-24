@@ -62,7 +62,7 @@ static const CASNode& getConstant()
 {
     if (constant_ptr.constData() == 0)
     {
-        QMutexLocker lkr( &Siren::globalRegistrationLock() );
+        MutexLocker lkr( &Siren::globalRegistrationLock() );
         
         if (constant_ptr.constData() == 0)
             constant_ptr = new Constant();

@@ -27,12 +27,12 @@
 \*********************************************/
 
 #include <QHash>
-#include <QMutex>
 
 #include "datastream.h"
 #include "hanref.h"
 #include "tester.h"
 #include "logger.h"
+#include "mutex.h"
 
 #include "Siren/errors.h"
 
@@ -40,7 +40,7 @@ using namespace Siren;
 
 typedef QHash<const QDataStream*,WeakHandle> DSRegistryType;
 
-Q_GLOBAL_STATIC( QMutex, registryMutex )
+Q_GLOBAL_STATIC( Mutex, registryMutex )
 Q_GLOBAL_STATIC( DSRegistryType, datastreamRegistry );
 
 static const RegisterHandle<DataStream> r_datastream;
@@ -49,7 +49,7 @@ void DataStream::registerDataStream()
 {
     ///// Register this DataStream against a global registry
     /////  This allows easy interconversion with QDataStream
-    QMutexLocker lkr( registryMutex() );
+    MutexLocker lkr( registryMutex() );
 
     QHash<const QDataStream*,WeakHandle> &registry = *(datastreamRegistry());
     

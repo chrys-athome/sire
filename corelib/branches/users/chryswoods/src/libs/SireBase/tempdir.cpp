@@ -27,12 +27,12 @@
 \*********************************************/
 
 #include <QUuid>
-#include <QMutex>
 
 #include "tempdir.h"
 
 #include "Siren/tostring.h"
 #include "Siren/errors.h"
+#include "Siren/mutex.h"
 
 #include <QDebug>
 
@@ -66,7 +66,7 @@ static QString getUserName()
     #endif
 }
 
-static QMutex tmpdir_mutex;
+Q_GLOBAL_STATIC( Mutex, tmpdirMutex );
 
 static QString createDirectory(const QString &temp_root, int ntries)
 {
@@ -74,7 +74,7 @@ static QString createDirectory(const QString &temp_root, int ntries)
                             .arg(temp_root, getUserName(),
                                  QUuid::createUuid().toString());
                                  
-    QMutexLocker lkr(&tmpdir_mutex);
+    MutexLocker lkr( tmpdirMutex() );
     
     QDir tmpdir;
     

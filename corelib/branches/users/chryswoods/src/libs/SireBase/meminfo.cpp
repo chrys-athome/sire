@@ -27,13 +27,13 @@
 \*********************************************/
 
 #include <QThread>
-#include <QMutex>
 
 #include <QFile>
 #include <QTextStream>
 
-#include "sire_config.h"
+#include "Siren/mutex.h"
 
+#include "sire_config.h"
 #include "meminfo.h"
 
 #include <stdio.h>
@@ -558,7 +558,7 @@ void MemoryMonitor::run()
     }
 }
 
-Q_GLOBAL_STATIC( QMutex, memMonitorMutex );
+Q_GLOBAL_STATIC( Mutex, memMonitorMutex );
 
 static boost::shared_ptr<MemoryMonitor> monitor;
 
@@ -566,7 +566,7 @@ static boost::shared_ptr<MemoryMonitor> monitor;
     out to the screen every 'ms' milliseconds */
 void MemInfo::startMonitoring(int ms)
 {
-    QMutexLocker lkr( memMonitorMutex() );
+    MutexLocker lkr( memMonitorMutex() );
     
     monitor.reset( new MemoryMonitor(ms) );
     
@@ -577,7 +577,7 @@ void MemInfo::startMonitoring(int ms)
     out to the file 'filename' every 'ms' milliseconds */
 void MemInfo::startMonitoring(const QString &filename, int ms)
 {
-    QMutexLocker lkr( memMonitorMutex() );
+    MutexLocker lkr( memMonitorMutex() );
     
     monitor.reset( new MemoryMonitor(filename,ms) );
     
@@ -587,7 +587,7 @@ void MemInfo::startMonitoring(const QString &filename, int ms)
 /** Stop monitoring the memory of this process */    
 void MemInfo::stopMonitoring()
 {
-    QMutexLocker lkr( memMonitorMutex() );
+    MutexLocker lkr( memMonitorMutex() );
     
     monitor.reset();
 }

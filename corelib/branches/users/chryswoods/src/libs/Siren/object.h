@@ -62,7 +62,6 @@ class ObjRef;
 }
 
 class QDomNode;
-class Mutex;
 
 inline uint qHash(double value)
 {

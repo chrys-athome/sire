@@ -26,8 +26,6 @@
   *
 \*********************************************/
 
-#include <QMutex>
-
 #include <limits>
 #include <cmath>
 

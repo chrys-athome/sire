@@ -31,18 +31,18 @@
 
 #include <QStringList>
 
-class QWaitCondition;
-
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #include <boost/noncopyable.hpp>
 
-#include "forages.h"
+#include "mutex.h"
 
 SIREN_BEGIN_HEADER
 
 namespace Siren
 {
+
+class WaitCondition;
 
 namespace detail{ class HanPtrBase; }
 
@@ -161,8 +161,8 @@ public:
     void lock();
     void unlock();
     
-    void sleep(QWaitCondition &waiter);
-    bool sleep(QWaitCondition &waiter, int ms);
+    void sleep(WaitCondition &waiter);
+    bool sleep(WaitCondition &waiter, int ms);
     
     bool tryLock();
     bool tryLock(int ms);

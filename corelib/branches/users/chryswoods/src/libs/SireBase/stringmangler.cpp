@@ -26,8 +26,6 @@
   *
 \*********************************************/
 
-#include <QMutex>
-
 #include "stringmangler.h"
 
 #include "Siren/stream.h"

@@ -31,6 +31,8 @@
 #include <QDebug>
 #include <cmath>
 
+#include "Siren/mutex.h"
+
 #include "Siren/errors.h"
 
 #ifdef SIRE_USE_SSE
@@ -42,6 +44,7 @@
 #endif
 
 using namespace SireBase;
+using namespace Siren;
 
 #ifdef SIRE_TIME_ROUTINES
 
@@ -51,17 +54,17 @@ using namespace SireBase;
 
 Q_GLOBAL_STATIC( QList<CountFlops::ThreadFlops*>, threadFlops );
 
-Q_GLOBAL_STATIC( QMutex, threadFlopsMutex );
+Q_GLOBAL_STATIC( Mutex, threadFlopsMutex );
 
 CountFlops::ThreadFlops::ThreadFlops() : nflops(0)
 {
-    QMutexLocker lkr( threadFlopsMutex() );
+    MutexLocker lkr( threadFlopsMutex() );
     threadFlops()->append(this);
 }
 
 CountFlops::ThreadFlops::~ThreadFlops()
 {
-    QMutexLocker lkr( threadFlopsMutex() );
+    MutexLocker lkr( threadFlopsMutex() );
     threadFlops()->removeAll(this);
 }
 
@@ -71,7 +74,7 @@ void CountFlops::createGlobalCounter()
 {
     CountFlops *flops = new CountFlops();
     
-    QMutexLocker lkr( threadFlopsMutex() );
+    MutexLocker lkr( threadFlopsMutex() );
     
     if (global_counter == 0)
         global_counter = flops;
@@ -97,7 +100,7 @@ FlopsMark CountFlops::mark()
     if (global_counter == 0)
         CountFlops::createGlobalCounter();
 
-    QMutexLocker lkr( threadFlopsMutex() );
+    MutexLocker lkr( threadFlopsMutex() );
 
     int nthreads = threadFlops()->count();
     
@@ -215,8 +218,10 @@ double FlopsMark::operator-(const FlopsMark &other) const
     return (1000.0 * dnflops) / dms;
 }
 
-Q_GLOBAL_STATIC_WITH_ARGS( double, benchmarkSum, (0.0) )
-Q_GLOBAL_STATIC( QMutex, benchmarkMutex )
+#ifdef SIRE_TIME_ROUTINES
+    Q_GLOBAL_STATIC_WITH_ARGS( double, benchmarkSum, (0.0) )
+    Q_GLOBAL_STATIC( Mutex, benchmarkMutex )
+#endif
 
 /** Perform a simple benchmark to work out what the realistic maximum
     FLOPS count for this processor (compiled with this compiler)
@@ -225,7 +230,7 @@ double FlopsMark::benchmarkSum()
 {
     #ifdef SIRE_TIME_ROUTINES
 
-    QMutexLocker lkr( benchmarkMutex() );
+    MutexLocker lkr( benchmarkMutex() );
 
     const int nvals = 1000;
     const int nloops = 100000;
@@ -312,7 +317,7 @@ double FlopsMark::benchmarkProduct()
 {
     #ifdef SIRE_TIME_ROUTINES
 
-    QMutexLocker lkr( benchmarkMutex() );
+    MutexLocker lkr( benchmarkMutex() );
 
     const int nvals = 1000;
     const int nloops = 100000;
@@ -399,7 +404,7 @@ double FlopsMark::benchmarkQuotient()
 {
     #ifdef SIRE_TIME_ROUTINES
 
-    QMutexLocker lkr( benchmarkMutex() );
+    MutexLocker lkr( benchmarkMutex() );
 
     const int nvals = 1000;
     const int nloops = 100000;
@@ -486,7 +491,7 @@ double FlopsMark::benchmark()
 {
     #ifdef SIRE_TIME_ROUTINES
 
-    QMutexLocker lkr( benchmarkMutex() );
+    MutexLocker lkr( benchmarkMutex() );
 
     const int nvals = 1000;
     const int nloops = 100000;

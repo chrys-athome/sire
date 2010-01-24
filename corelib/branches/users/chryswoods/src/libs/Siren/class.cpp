@@ -26,8 +26,6 @@
   *
 \*********************************************/
 
-#include <QMutex>
-
 #include "class.h"
 #include "objref.h"
 #include "hanref.h"

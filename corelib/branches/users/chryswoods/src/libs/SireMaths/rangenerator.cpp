@@ -26,7 +26,6 @@
   *
 \*********************************************/
 
-#include <QMutex>
 #include <QVector>
 #include <QUuid>
 
@@ -87,7 +86,7 @@ public:
     /** Copy constructor */
     RanGeneratorPvt(const RanGeneratorPvt &other) : mutex(QMutex::NonRecursive)
     {
-        QMutexLocker lkr( const_cast<QMutex*>( &(other.mutex) ) );
+        MutexLocker lkr( const_cast<Mutex*>( &(other.mutex) ) );
         
         mersenne_generator = other.mersenne_generator;
     }
@@ -97,7 +96,7 @@ public:
     {}
 
     /** Mutex to serialise access to the generator */
-    QMutex mutex;
+    Mutex mutex;
 
     /** The actual generator (Mersenne Twister) */
     MTRand mersenne_generator;
@@ -105,7 +104,7 @@ public:
     /** Randomly seed the generator */
     void seed()
     {
-        QMutexLocker lkr(&mutex);
+        MutexLocker lkr(&mutex);
 
         mersenne_generator.seed();
     }
@@ -119,7 +118,7 @@ public:
             return;
         }
 
-        QMutexLocker lkr(&mutex);
+        MutexLocker lkr(&mutex);
 
         //we need to convert this into an array of MTRand::uint32
         int sz = s.count();
@@ -135,7 +134,7 @@ public:
     /** Reseed the generator */
     void seed(quint32 s)
     {
-        QMutexLocker lkr(&mutex);
+        MutexLocker lkr(&mutex);
 
         mersenne_generator.seed(s);
     }
@@ -188,7 +187,7 @@ public:
         for (int i=0; i<state_size; ++i)
             array[i] = state_array[i];
 
-        QMutexLocker lkr(&mutex);
+        MutexLocker lkr(&mutex);
 
         mersenne_generator.load(array.get());
     }
@@ -347,7 +346,7 @@ namespace SireMaths
 /** Return a random real number on [0,1] */
 double RanGenerator::rand() const
 {
-    QMutexLocker lkr( &(nonconst_d().mutex) );
+    MutexLocker lkr( &(nonconst_d().mutex) );
     return nonconst_d().mersenne_generator.rand();
 }
 
@@ -366,7 +365,7 @@ double RanGenerator::rand(double minval, double maxval) const
 /** Return a high-precision random real number on [0,1) */
 double RanGenerator::rand53() const
 {
-    QMutexLocker lkr( &(nonconst_d().mutex) );
+    MutexLocker lkr( &(nonconst_d().mutex) );
     return nonconst_d().mersenne_generator.rand53();
 }
 
@@ -386,7 +385,7 @@ double RanGenerator::rand53(double minval, double maxval) const
     with supplied mean and variance. */
 double RanGenerator::randNorm(double mean, double variance) const
 {
-    QMutexLocker lkr( &(nonconst_d().mutex) );
+    MutexLocker lkr( &(nonconst_d().mutex) );
 
     return nonconst_d().mersenne_generator.randNorm(mean, variance);
 
@@ -408,7 +407,7 @@ Vector RanGenerator::vectorOnSphere() const
 {
     RanGeneratorPvt &ranpvt = nonconst_d();
 
-    QMutexLocker lkr( &(ranpvt.mutex) );
+    MutexLocker lkr( &(ranpvt.mutex) );
 
     while( true )
     {
@@ -438,7 +437,7 @@ Vector RanGenerator::vectorOnSphere(double radius) const
 /** Return a random 32bit unsigned integer in [0,2^32 - 1] */
 quint32 RanGenerator::randInt() const
 {
-    QMutexLocker lkr( &(nonconst_d().mutex) );
+    MutexLocker lkr( &(nonconst_d().mutex) );
     return nonconst_d().mersenne_generator.randInt();
 }
 
@@ -451,7 +450,7 @@ bool RanGenerator::randBool() const
 /** Return a random 32bit unsigned integer in [0,maxval] */
 quint32 RanGenerator::randInt(quint32 maxval) const
 {
-    QMutexLocker lkr( &(nonconst_d().mutex) );
+    MutexLocker lkr( &(nonconst_d().mutex) );
     return nonconst_d().mersenne_generator.randInt(maxval);
 }
 
@@ -477,14 +476,14 @@ static quint64 randInt64(MTRand &mersenne_generator)
 /** Return a random 64bit unsigned integer on [0,2^64 - 1] */
 quint64 RanGenerator::randInt64() const
 {
-    QMutexLocker lkr( &(nonconst_d().mutex) );
+    MutexLocker lkr( &(nonconst_d().mutex) );
     return ::randInt64(nonconst_d().mersenne_generator);
 }
 
 /** Return a random 64bit unsigned integer on [0,maxval] */
 quint64 RanGenerator::randInt64(quint64 maxval) const
 {
-    QMutexLocker lkr( &(nonconst_d().mutex) );
+    MutexLocker lkr( &(nonconst_d().mutex) );
 
     if (maxval <= std::numeric_limits<quint32>::max())
         //maxval can fit into a 32bit int - there is no

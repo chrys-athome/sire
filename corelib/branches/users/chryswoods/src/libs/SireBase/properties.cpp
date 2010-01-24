@@ -117,7 +117,7 @@ const QSharedDataPointer<PropertiesData>& PropertiesData::getNullData()
 {
     if (nulldata_ptr.constData() == 0)
     {
-        QMutexLocker lkr( &(Siren::globalRegistrationLock()) );
+        MutexLocker lkr( &(Siren::globalRegistrationLock()) );
         
         if (nulldata_ptr.constData() != 0)
             return nulldata_ptr;
