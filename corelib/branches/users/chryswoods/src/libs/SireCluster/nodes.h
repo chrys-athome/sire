@@ -29,12 +29,11 @@
 #ifndef SIRECLUSTER_NODES_H
 #define SIRECLUSTER_NODES_H
 
+#include "Siren/handle.h"
+
 #include "sireglobal.h"
 
 #include <QUuid>
-
-#include <boost/shared_ptr.hpp>
-#include <boost/weak_ptr.hpp>
 
 SIRE_BEGIN_HEADER
 
@@ -43,29 +42,22 @@ namespace SireCluster
 
 class Frontend;
 class Node;
-class NodesPtr;
 
 class ThisThread;
 
 namespace detail
 {
-class NodePvt;
-class NodesPvt;
-class ThisThreadPvt;
+class NodesData;
+class ThisThreadData;
 }
 
 /** This class holds, and schedules, a collection of Node objects.
     
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT Nodes
+class SIRECLUSTER_EXPORT Nodes 
+        : public Siren::ImplementsHandle< Nodes,Siren::Handles<detail::NodesData> >
 {
-
-friend class NodesPtr;
-friend class Cluster;
-
-friend class detail::ThisThreadPvt;
-
 public:
     Nodes();
     
@@ -98,66 +90,17 @@ public:
     int nNodes();
     int count();
 
+    void add(Frontend *frontend);
+
     void add(Node node);
     void remove(Node node);
 
     void add(Nodes &nodes);
-
-    void addNode();
-    void addNode(int timeout);
-    
-    void addNodes(int n);
-    void addNodes(int n, int timeout);
+    void remove(Nodes &nodes);
 
     void removeAll();
 
     ThisThread borrowThisThread();
-
-protected:
-    Nodes(const boost::shared_ptr<detail::NodesPvt> &ptr); // called by NodesPvt
-
-    Nodes(Frontend frontend);                // called by Cluster
-    Nodes(const QList<Frontend> &frontends); // called by Cluster
-
-    QUuid createThisThread();                  // called by ThisThreadPvt
-    void reclaimThisThread(const QUuid &uid);  // called by ThisThreadPvt
-
-private:
-    Node _pvt_getNode();
-
-    /** Private implementation of the Nodes */
-    boost::shared_ptr<detail::NodesPvt> d;
-};
-
-/** This class holds a weak pointer to the Nodes */
-class NodesPtr
-{
-
-friend class detail::NodePvt;
-
-public:
-    NodesPtr();
-    NodesPtr(const Nodes &nodes);
-    
-    NodesPtr(const NodesPtr &other);
-    
-    ~NodesPtr();
-    
-    NodesPtr& operator=(const NodesPtr &other);
-    
-    Nodes lock() const;
-    Nodes operator*() const;
-
-    bool expired() const;
-
-    void reset();
-    
-protected:
-    void returnFrontend(Frontend frontend);  // called by NodePvt
-
-private:
-    /** Weak pointer to the nodes */
-    boost::weak_ptr<detail::NodesPvt> d;
 };
 
 /** This simple class is used to allow the current thread
@@ -166,16 +109,18 @@ private:
     @author Christopher Woods
 */
 class SIRECLUSTER_EXPORT ThisThread
+  : public Siren::ImplementsHandle< ThisThread, Siren::Handles<detail::ThisThreadData> >
 {
 public:
     ThisThread();
     ThisThread(const ThisThread &other);
     
-    ThisThread(const Nodes &nodes);
+    ~ThisThread();
     
     ThisThread& operator=(const ThisThread &other);
     
-    ~ThisThread();
+    bool operator==(const ThisThread &other) const;
+    bool operator!=(const ThisThread &other) const;
     
     void reclaim();
 

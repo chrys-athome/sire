@@ -26,33 +26,20 @@
   *
 \*********************************************/
 
-#include <QMutex>
-#include <QSemaphore>
-#include <QWaitCondition>
-#include <QUuid>
-#include <QThreadStorage>
-
-#include <QHash>
-#include <QSet>
-#include <QList>
-
-#include <QTime>
-
 #include "nodes.h"
 #include "node.h"
 #include "frontend.h"
 #include "backend.h"
 #include "cluster.h"
 
-#include "SireError/errors.h"
-#include "SireError/printerror.h"
+#include "Siren/mutex.h"
+#include "Siren/waitcondition.h"
+#include "Siren/errors.h"
 
 #include <QDebug>
 
 using namespace SireCluster;
-
-using boost::shared_ptr;
-using boost::weak_ptr;
+using namespace Siren;
 
 namespace SireCluster
 {
@@ -60,30 +47,30 @@ namespace detail
 {
 
 /** Private implementation of Nodes */
-class NodesPvt
+class NodesData
 {
 public:
-    NodesPvt()
+    NodesData()
     {}
     
-    ~NodesPvt()
+    ~NodesData()
     {}
     
     /** Mutex to protect access to the main data
         (the busy and free queues) */
-    QMutex datamutex;
+    Mutex datamutex;
     
     /** Pointer to a semaphore that is used to control
         the reservation and allocation of nodes */
-    shared_ptr<QSemaphore> nodesem;
+    boost::shared_ptr<Semaphore> nodesem;
     
     /** WaitCondition used to wait until all of the nodes are free */
-    QWaitCondition waiter;
+    WaitCondition waiter;
     
     /** The collection of all non-null Frontends in this
         nodes object, indexed by the UID of the backend they
         are connected to */
-    QHash<QUuid,Frontend> frontends;
+    QHash<QUuid,DormantFrontend> frontends;
     
     /** The set of UIDs of the busy frontends */
     QSet<QUuid> busy_frontends;
@@ -103,7 +90,7 @@ using namespace SireCluster::detail;
 //////////////
 
 /** Construct an empty set of nodes */
-Nodes::Nodes()
+Nodes::Nodes() : ImplementsHandle< Nodes,Handles<NodesData> >()
 {}
 
 /** Construct to hold the node that connects to the backend

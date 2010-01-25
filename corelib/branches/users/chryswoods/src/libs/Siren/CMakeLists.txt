@@ -24,6 +24,7 @@ set ( SIREN_PUBLIC_HEADERS
 
       forages.h
       mutex.h
+      semaphore.h
       waitcondition.h
 
       logger.h
@@ -69,6 +70,7 @@ set ( SIREN_SOURCES
 
       forages.cpp
       mutex.cpp
+      semaphore.cpp
       waitcondition.cpp
 
       logger.cpp

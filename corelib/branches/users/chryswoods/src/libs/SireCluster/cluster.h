@@ -29,12 +29,11 @@
 #ifndef SIRECLUSTER_CLUSTER_H
 #define SIRECLUSTER_CLUSTER_H
 
-#include "sireglobal.h"
-
-#include <QUuid>
 #include <QList>
+#include <QHash>
+#include <QUuid>
 
-#include <boost/shared_ptr.hpp>
+#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
@@ -42,14 +41,6 @@ namespace SireCluster
 {
 
 class Nodes;
-
-class Backend;
-class Frontend;
-
-namespace MPI
-{
-class ReservationManager;
-}
 
 /** This static class provides the global registry for all nodes in the cluster.
     A node is defined as a resource that can run a WorkPacket. A node
@@ -61,21 +52,16 @@ class ReservationManager;
 */
 class SIRECLUSTER_EXPORT Cluster
 {
-
-friend class Backend;
-friend class SireCluster::MPI::ReservationManager;
-
 public:
-    static QList<QUuid> localUIDs();
-    
     static QList<QUuid> UIDs();
+    static QList<QUuid> localUIDs();
+
+    static QHash<QUuid,QString> descriptions();
+    static QHash<QUuid,QString> localDescriptions();
 
     static bool isLocal(const QUuid &uid);
 
-    static int getRank();
-    static int getCount();
-    
-    static void start(int ppn=1);
+    static void start();
 
     static void shutdown();
 
@@ -83,43 +69,41 @@ public:
     
     static bool isRunning();
 
-    static bool supportsMPI();
-
     static Nodes getNode();
     static Nodes getNode(int timeout);
 
+    static Nodes getLocalNode();
+    static Nodes getLocalNode(int timeout);
+
     static Nodes getNode(const QUuid &uid);
     static Nodes getNode(const QUuid &uid, int timeout);
+
+    static Nodes getLocalNode(const QUuid &uid);
+    static Nodes getLocalNode(const QUuid &uid, int timeout);
+    
+    static Nodes getNode(const QString &description);
+    static Nodes getNode(const QString &description, int timeout);
+    
+    static Nodes getLocalNode(const QString &description);
+    static Nodes getLocalNode(const QString &description, int timeout);
     
     static Nodes getNodes(int nnodes);
     static Nodes getNodes(int nnodes, int timeout);
     
+    static Nodes getLocalNodes(int nnodes);
+    static Nodes getLocalNodes(int nnodes, int timeout);
+    
     static Nodes getNodes(const QList<QUuid> &uids);
     static Nodes getNodes(const QList<QUuid> &uids, int timeout);
     
-    static Nodes getAllNodes();
-    static Nodes getAllNodes(int timeout);
-
-protected:    
-    static void registerBackend(const Backend &backend);  // called by Backend
+    static Nodes getLocalNodes(const QList<QUuid> &uids);
+    static Nodes getLocalNodes(const QList<QUuid> &uids, int timeout);
     
-    static QList<Frontend> localBackends(); // call by ReservationManager
-
-private:
-    static Frontend _pvt_getFrontend();
-    static Frontend _pvt_getFrontend(const QUuid &uid);
-
-    static QList<Frontend> _pvt_getFrontends(int n);
-    static QList<Frontend> _pvt_getFrontends(int n, const QUuid &uid);
-
-    static Frontend getFrontend();
-    static Frontend getFrontend(int timeout);
-
-    static QList<Frontend> getFrontends(int n);
-    static QList<Frontend> getFrontends(int n, int timeout);
+    static Nodes getNodes(const QString &description, int nnodes);
+    static Nodes getNodes(const QString &description, int nnodes, int timeout);
     
-    static Frontend getFrontend(const QUuid &uid);
-    static Frontend getFrontend(const QUuid &uid, int timeout);
+    static Nodes getLocalNodes(const QString &description, int nnodes);
+    static Nodes getLocalNodes(const QString &description, int nnodes, int timeout);
 };
 
 }

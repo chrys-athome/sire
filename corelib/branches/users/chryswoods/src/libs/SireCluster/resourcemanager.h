@@ -59,36 +59,37 @@ class SIRECLUSTER_EXPORT ResourceManager
     static const int DEFAULT_TIMEOUT = 25000;
 
 public:
-    static void registerBackend(const DormantBackend &backend);
-    static void unregisterBackend(ActiveBackend &backend);
+    static void registerResource(const DormantBackend &backend);
+    static void unregisterResource(ActiveBackend &backend);
 
-    static QHash<QUuid,QString> availableBackends();
+    static QHash<QUuid,QString> availableResources();
+    static int resourceListVersion();
 
-    static QUuid reserveBackend(int expires=DEFAULT_TIMEOUT);
-    static QUuid reserveBackend(const QUuid &uid, int expires=DEFAULT_TIMEOUT);
-    static QUuid reserveBackend(const QString &description,
-                                int expires=DEFAULT_TIMEOUT);
+    static QUuid reserveResource(int expires=DEFAULT_TIMEOUT);
+    static QUuid reserveResource(const QUuid &uid, int expires=DEFAULT_TIMEOUT);
+    static QUuid reserveResource(const QString &description,
+                                 int expires=DEFAULT_TIMEOUT);
 
-    static QList<QUuid> reserveBackends(int n, int expires=DEFAULT_TIMEOUT);
-    static QList<QUuid> reserveBackends(const QList<QUuid> &uids,
-                                        int expires=DEFAULT_TIMEOUT);
-    static QList<QUuid> reserveBackends(const QString &description,
-                                        int n, int expires=DEFAULT_TIMEOUT);
+    static QList<QUuid> reserveResources(int n, int expires=DEFAULT_TIMEOUT);
+    static QList<QUuid> reserveResources(const QList<QUuid> &uids,
+                                         int expires=DEFAULT_TIMEOUT);
+    static QList<QUuid> reserveResources(const QString &description,
+                                         int n, int expires=DEFAULT_TIMEOUT);
     
-    static QUuid tryReserveBackend(int ms, int expires=DEFAULT_TIMEOUT);
-    static QUuid tryReserveBackend(int ms, const QUuid &uid,
-                                   int expires=DEFAULT_TIMEOUT);
-    static QUuid tryReserveBackend(int ms,
-                                   const QString &description,
-                                   int expires=DEFAULT_TIMEOUT);
+    static QUuid tryReserveResource(int ms, int expires=DEFAULT_TIMEOUT);
+    static QUuid tryReserveResource(int ms, const QUuid &uid,
+                                    int expires=DEFAULT_TIMEOUT);
+    static QUuid tryReserveResource(int ms,
+                                    const QString &description,
+                                    int expires=DEFAULT_TIMEOUT);
 
-    static QList<QUuid> tryReserveBackends(int n, int ms, int expires=DEFAULT_TIMEOUT);
-    static QList<QUuid> tryReserveBackends(const QList<QUuid> &uids, int ms,
-                                           int expires=DEFAULT_TIMEOUT);
-    static QList<QUuid> tryReserveBackends(const QString &description,
-                                           int n, int ms, int expires=DEFAULT_TIMEOUT);
+    static QList<QUuid> tryReserveResources(int n, int ms, int expires=DEFAULT_TIMEOUT);
+    static QList<QUuid> tryReserveResources(const QList<QUuid> &uids, int ms,
+                                            int expires=DEFAULT_TIMEOUT);
+    static QList<QUuid> tryReserveResources(const QString &description,
+                                            int n, int ms, int expires=DEFAULT_TIMEOUT);
     
-    static ActiveBackend collectReservation(const QUuid &uids);
+    static ActiveBackend collectReservation(const QUuid &uid);
     static QHash<QUuid,ActiveBackend> collectReservation(const QList<QUuid> &uids);
     
     static void releaseReservation(const QUuid &uid);
