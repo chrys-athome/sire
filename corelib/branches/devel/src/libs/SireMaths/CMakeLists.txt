@@ -111,10 +111,41 @@ else()
   if (NOT CMAKE_GENERATOR STREQUAL "Xcode" )
     # We need to sort out the naming convention for the
     # fortran blas, lapack and linpack libraries
-    include( FortranCInterface )
-    create_fortran_c_interface( Sire SIRE_BLAS_FUNCTIONS sire_blas_f.h )
-    create_fortran_c_interface( Sire SIRE_LAPACK_FUNCTIONS sire_lapack_f.h )
-    create_fortran_c_interface( Sire SIRE_LINPACK_FUNCTIONS sire_linpack_f.h )
+    if ( USING_CMAKE_2_6 )
+      message( STATUS "Detecting C++/Fortran interface using cmake-2.6 code..." )
+      include( FortranCInterface )
+      create_fortran_c_interface( Sire SIRE_BLAS_FUNCTIONS sire_blas_f.h )
+      create_fortran_c_interface( Sire SIRE_LAPACK_FUNCTIONS sire_lapack_f.h )
+      create_fortran_c_interface( Sire SIRE_LINPACK_FUNCTIONS sire_linpack_f.h )
+    else()
+      message( STATUS "Detecting C++/Fortran interface using cmake-2.8 code..." )
+      include( FortranCInterface )
+
+      FortranCInterface_VERIFY( CXX QUIET )
+
+      if (FortranCInterface_VERIFIED_CXX AND FortranCInterface_GLOBAL_FOUND)
+        FortranCInterface_HEADER( sire_blas_f.h 
+                                  MACRO_NAMESPACE "Sire"
+                                  SYMBOL_NAMESPACE "Sire"
+                                  SYMBOLS ${SIRE_BLAS_FUNCTIONS} )
+
+        FortranCInterface_HEADER( sire_lapack_f.h
+                                  MACRO_NAMESPACE "Sire"
+                                  SYMBOL_NAMESPACE "Sire"
+                                  SYMBOLS ${SIRE_LAPACK_FUNCTIONS} )
+
+        FortranCInterface_HEADER( sire_linpack_f.h
+                                  MACRO_NAMESPACE "Sire"
+                                  SYMBOL_NAMESPACE "Sire"
+                                  SYMBOLS ${SIRE_LINPACK_FUNCTIONS} )
+
+        include_directories( BEFORE ${CMAKE_BINARY_DIR}/src/libs/SireMaths )
+      else()
+        message( STATUS "Fortran/C++ compilers are incompatible. Disabling Fortran code!" )
+        set( SIRE_DISABLE_FORTRAN ON )
+        add_definitions( "-DSIRE_DISABLE_FORTRAN" )        
+      endif()
+    endif()
   endif()
 endif()
 
