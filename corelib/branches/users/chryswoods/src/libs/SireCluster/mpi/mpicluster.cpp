@@ -611,6 +611,11 @@ QList<Frontend> MPICluster::getFrontends(int n)
     QList<QUuid> uids = reply.from( MPICluster::master() )
                              .asA< QList<QUuid> >();
 
+    while (uids.count() > n)
+    {
+        uids.removeLast();
+    }
+
     return ReservationManager::collectReservation(message, uids);
 }
 

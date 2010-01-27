@@ -335,5 +335,8 @@ void GlobalObjPtrBase::throwCastingError(QString got_type, QString want_type)
 ///////// Instantiate template classes
 /////////
 
-template class ObjPtr<Object>;
-template class GlobalObjPtr<Object>;
+namespace Siren
+{
+    template class ObjPtr<Object>;
+    template class GlobalObjPtr<Object>;
+}

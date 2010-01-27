@@ -219,11 +219,13 @@ WorkPacket createWorkPacket(const QString &filename,
                             int nmoves, bool record_stats)
 {
     //read the contents of the restart file into memory
+    printOut( QObject::tr("Opening %1...").arg(filename) );
     QFile f(filename);
 
     if (not f.open( QIODevice::ReadOnly) )
         throw SireError::file_error(f, CODELOC);
     
+    printOut( QObject::tr("Reading the file...") );
     QByteArray restart_data = f.readAll();
 
     if (restart_data.isEmpty())
@@ -234,7 +236,10 @@ WorkPacket createWorkPacket(const QString &filename,
 
     //sanity check the header
     {
+        printOut( QObject::tr("Reading the file header...") );
         FileHeader header = SireStream::getDataHeader(restart_data);
+    
+        printOut( QObject::tr("File Header ==\n%1").arg(header.toString()) );
     
         if (header.dataTypes().count() != 2)
         {
@@ -247,9 +252,13 @@ WorkPacket createWorkPacket(const QString &filename,
         }
     }
     
+    printOut( QObject::tr("Unpacking the data...") );
+    
     //unpack the binary data
     QList< boost::tuple<boost::shared_ptr<void>,QString> > objects 
                          = SireStream::load(restart_data);
+    
+    printOut( QObject::tr("Number of loaded objects equals %1").arg(objects.count()) );
     
     if (not objects.count() == 2)
         throw SireError::file_error( QObject::tr(
@@ -265,6 +274,8 @@ WorkPacket createWorkPacket(const QString &filename,
     //the first object should be derived from System or SupraSystem
     if (p0->isA<System>())
     {
+        printOut( QObject::tr("Creating a SimPacket simulation...") );
+    
         //the second object must be a 'Move' or 'Moves'
         if (p1->isA<Moves>())
         {
@@ -281,6 +292,8 @@ WorkPacket createWorkPacket(const QString &filename,
     }
     else if (p0->isA<SupraSystem>())
     {
+        printOut( QObject::tr("Creating a SupraSimPacket simulation...") );
+    
         //the second object must be a 'SupraMove' or 'SupraMoves'
         if (p1->isA<SupraMoves>())
         {
@@ -850,9 +863,21 @@ QList<RestartFile> parseCommandLine(int argc, char **argv,
 
 int main(int argc, char **argv)
 {
+    QString hostname, username;
+
     #ifdef Q_OS_UNIX
         signal(SIGINT, fatal_error_signal);
         signal(SIGTERM, fatal_error_signal);
+
+        username = std::getenv("USER");
+
+        char buffer[128];
+        gethostname(buffer, 128);
+        hostname = buffer;
+    
+    #else
+        username = "unknown";
+        hostname = username;
     #endif // Q_OS_UNIX
 
     int status = 0;
@@ -882,9 +907,10 @@ int main(int argc, char **argv)
                 "http://siremol.org") );
 
             printBox( QObject::tr(
-                    "Starting master node (%1 of %2): nThreads()=%3")
+                    "%4@%5: Starting master node (%1 of %2): nThreads()=%3")
                        .arg(Cluster::getRank()).arg(Cluster::getCount())
-                       .arg(ppn) );
+                       .arg(ppn)
+                       .arg(username,hostname) );
 
             //name this process and thread
             SireError::setProcessString("master");
@@ -969,6 +995,8 @@ int main(int argc, char **argv)
                     printOut( QObject::tr("Running %1 simulation(s)...").arg(nrestarts) );
 
                     Nodes nodes = Cluster::getNodes(nrestarts);
+                    printOut( QObject::tr("Number of nodes in the cluster is %1")
+                                    .arg(nodes.count()) );
 
                     ThisThread this_thread = nodes.borrowThisThread();
 
@@ -977,6 +1005,8 @@ int main(int argc, char **argv)
                     QStringList running_files;
 
                     int nskipped = 0;
+
+                    printOut( QObject::tr("About to loop over simulations to submit") );
  
                     //submit all of the simulations
                     for (int i=0; i<nrestarts; ++i)
@@ -997,6 +1027,8 @@ int main(int argc, char **argv)
                         try 
                         {
                             //create a workpacket for this simulation
+                            printOut( QObject::tr("Creating workpacket %1...")
+                                                .arg(i+1) );
                             WorkPacket workpacket = createWorkPacket(r.filename,
                                                                      r.nmoves,
                                                                      r.record_stats);
@@ -1006,6 +1038,7 @@ int main(int argc, char **argv)
                         
                             Node node = nodes.getNode();
                         
+                            printOut( QObject::tr("Starting the job...") );
                             promises.append( node.startJob(workpacket) ); 
                             running_files.append( r.filename );
                             restart_idxs.append( i );
@@ -1028,11 +1061,16 @@ int main(int argc, char **argv)
                         break;
                     }
                 
+                    printOut( QObject::tr(
+                                    "Waiting for all submitted jobs to finish...") );
+                
                     //wait for them all to finish
                     for (int i=0; i < promises.count(); ++i)
                     {
                         promises[i].wait();
                     }
+
+                    printOut( QObject::tr("All submitted jobs have finished") );
 
                     //save the output for all processes that completed successfully
                     for (int i=0; i < promises.count(); ++i)
@@ -1107,9 +1145,10 @@ int main(int argc, char **argv)
         {
             //this is one of the compute nodes...
             printBox( QObject::tr(
-                        "Starting one of the compute nodes (%1 of %2): nThreads()=%3") 
+                        "%4@%5: Starting one of the compute nodes (%1 of %2): nThreads()=%3") 
                             .arg(Cluster::getRank()).arg(Cluster::getCount())
-                            .arg(ppn) );
+                            .arg(ppn)
+                            .arg(username,hostname) );
 
             //name this process
             SireError::setProcessString( QString("compute%1").arg(Cluster::getRank()) );
@@ -1117,18 +1156,30 @@ int main(int argc, char **argv)
 
             //exec the Cluster - this starts the cluster and then
             //blocks while it is running
+            printOut( QObject::tr("compute%1 waiting to start...")
+                                .arg(Cluster::getRank()) );
+                                
             #ifdef SIRE_USE_MPI
                 ::MPI::COMM_WORLD.Barrier();
             #endif
  
+            printOut( QObject::tr("compute%1 starting...").arg(Cluster::getRank()) );
+ 
             Cluster::start(ppn);
+
+            printOut( QObject::tr("compute%1 waiting to wait...")
+                                .arg(Cluster::getRank()) );
 
             #ifdef SIRE_USE_MPI
                 ::MPI::COMM_WORLD.Barrier();
             #endif
 
+            printOut( QObject::tr("compute%1 waiting...").arg(Cluster::getRank()) );
+
             Cluster::wait();
             status = 0;
+            
+            printOut( QObject::tr("compute%1 finished").arg(Cluster::getRank()) );
         }
     }
     catch(const SireError::exception &e)

@@ -45,6 +45,7 @@
 #include "SireStream/datastream.h"
 #include "SireStream/shareddatastream.h"
 
+#include <QTime>
 #include <QDebug>
 
 using namespace Squire;
@@ -61,14 +62,15 @@ static const RegisterMetaType<Molpro> r_molpro;
 /** Serialise to a binary datastream */
 QDataStream SQUIRE_EXPORT &operator<<(QDataStream &ds, const Molpro &molpro)
 {
-    writeHeader(ds, r_molpro, 1);
+    writeHeader(ds, r_molpro, 2);
     
     SharedDataStream sds(ds);
     
     sds << molpro.env_variables
         << molpro.molpro_exe << molpro.basis_set << molpro.qm_method
         << molpro.energy_template << molpro.force_template
-        << molpro.total_charge << molpro.memory_requirement;
+        << molpro.total_charge << molpro.memory_requirement
+        << molpro.max_molpro_runtime;
         
     return ds;
 }
@@ -78,7 +80,7 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, Molpro &molpro)
 {
     VersionID v = readHeader(ds, r_molpro);
     
-    if (v == 1)
+    if (v <= 2)
     {
         SharedDataStream sds(ds);
         
@@ -86,9 +88,18 @@ QDataStream SQUIRE_EXPORT &operator>>(QDataStream &ds, Molpro &molpro)
             >> molpro.molpro_exe >> molpro.basis_set >> molpro.qm_method
             >> molpro.energy_template >> molpro.force_template
             >> molpro.total_charge >> molpro.memory_requirement;
+            
+        if (v == 2)
+        {
+            sds >> molpro.max_molpro_runtime;
+        }
+        else 
+        {
+            molpro.max_molpro_runtime = 15 * 60 * 1000;
+        }
     }
     else
-        throw version_error(v, "1", r_molpro, CODELOC);
+        throw version_error(v, "1,2", r_molpro, CODELOC);
         
     return ds;
 }
@@ -117,7 +128,8 @@ Molpro::Molpro()
          basis_set("vdz"), qm_method("HF"),
          energy_template(default_energy_template),
          force_template(default_force_template),
-         total_charge(0), memory_requirement( 8 * 1024 * 1024 * 4 )
+         total_charge(0), memory_requirement( 8 * 1024 * 1024 * 4 ),
+         max_molpro_runtime( 15 * 60 * 1000 )
 {}
 
 /** Construct, passing in the location of the Molpro executable */
@@ -126,7 +138,8 @@ Molpro::Molpro(const QString &molpro)
          basis_set("vdz"), qm_method("HF"),
          energy_template(default_energy_template),
          force_template(default_force_template),
-         total_charge(0), memory_requirement( 8 * 1024 * 1024 * 4 )
+         total_charge(0), memory_requirement( 8 * 1024 * 1024 * 4 ),
+         max_molpro_runtime( 15 * 60 * 1000 )
 {
     this->setExecutable(molpro);
 }
@@ -139,7 +152,8 @@ Molpro::Molpro(const Molpro &other)
          energy_template(other.energy_template),
          force_template(other.force_template),
          total_charge(other.total_charge),
-         memory_requirement(other.memory_requirement)
+         memory_requirement(other.memory_requirement),
+         max_molpro_runtime(other.max_molpro_runtime)
 {}
 
 /** Destructor */
@@ -159,6 +173,7 @@ Molpro& Molpro::operator=(const Molpro &other)
         force_template = other.force_template;
         total_charge = other.total_charge;
         memory_requirement = other.memory_requirement;
+        max_molpro_runtime = other.max_molpro_runtime;
     }
     
     return *this;
@@ -175,7 +190,8 @@ bool Molpro::operator==(const Molpro &other) const
             energy_template == other.energy_template and
             force_template == other.force_template and
             total_charge == other.total_charge and
-            memory_requirement == other.memory_requirement);
+            memory_requirement == other.memory_requirement and
+            max_molpro_runtime == other.max_molpro_runtime);
 }
 
 /** Comparison operator */
@@ -280,6 +296,24 @@ void Molpro::setMemoryRequirement(int nbytes)
 int Molpro::memoryRequirement() const
 {
     return memory_requirement;
+}
+
+/** Set the maximum allowed runtime for the molpro job - this is used
+    to detect hangs - if the molpro job takes longer than this 
+    time then it is killed and an exception raised. The maximum
+    runtime is measured in milliseconds */
+void Molpro::setMaximumRunTime(int ms)
+{
+    if (ms > 0)
+        max_molpro_runtime = ms;
+    else
+        max_molpro_runtime = 0;
+}
+
+/** Return the maximum runtime allowed for a molpro job, in milliseconds */
+int Molpro::maximumRunTime() const
+{
+    return max_molpro_runtime;
 }
 
 /** Set the template for the command file to be used to get
@@ -583,11 +617,11 @@ QString Molpro::writeShellFile(const TempDir &tempdir) const
     {
         //the user hasn't specified a molpro executable - try to find one
         QString found_molpro = SireBase::findExe("molpro").absoluteFilePath();
-        ts << QString("%1 -d %2 molpro_input -o molpro_output\n")
+        ts << QString("%1 --no-xml-output -s -d %2 molpro_input -o molpro_output\n")
                     .arg(found_molpro, tempdir.path());
     }
     else
-        ts << QString("%1 -d %2 molpro_input -o molpro_output\n")
+        ts << QString("%1 --no-xml-output -s -d %2 molpro_input -o molpro_output\n")
                         .arg(molpro_exe, tempdir.path());
 
     ts << "sync\n";
@@ -638,10 +672,23 @@ double Molpro::calculateEnergy(const QString &cmdfile, int ntries) const
     }
 
     //run the shell file...
+    QTime t;
+    qDebug() << "Running molpro...";
+    t.start();
     Process p = Process::run( "sh", shellfile );
 
     //wait until the job has finished
-    p.wait();
+    if (not p.wait(max_molpro_runtime))
+    {
+        qDebug() << "Maximum molpro runtime was exceeded - has it hung?";
+        p.kill();
+        
+        if (ntries > 0)
+            return this->calculateEnergy(cmdfile, ntries-1);
+    }
+    
+    int ms = t.elapsed();
+    qDebug() << "Molpro finised. Took" << ms << "ms";
     
     if (p.wasKilled())
     {

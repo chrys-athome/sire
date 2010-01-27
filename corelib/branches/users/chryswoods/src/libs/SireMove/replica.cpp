@@ -543,18 +543,29 @@ void Replica::setLambdaComponent(const Symbol &symbol)
         if (symbol == lambda_component)
             return;
             
+        double current_value = 0;
+            
         if (not symbol.isNull())
         {
-            System new_system = SupraSubSystem::subSystem();
+            if (SupraSubSystem::subSystem().hasComponent(symbol))
+            {
+                System new_system = SupraSubSystem::subSystem();
+                current_value = new_system.componentValue(symbol);
+            }
+            else 
+            {
+                System new_system = SupraSubSystem::subSystem();
         
-            //default always to lambda=0
-            new_system.setComponent(symbol, 0);
+                //default always to lambda=0
+                new_system.setComponent(symbol, 0);
+                current_value = new_system.componentValue(symbol);
 
-            SupraSubSystem::setSubSystem(new_system);
+                SupraSubSystem::setSubSystem(new_system);
+            }
         }
         
         lambda_component = symbol;
-        lambda_value = 0;
+        lambda_value = current_value;
     }
 }
 

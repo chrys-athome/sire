@@ -49,6 +49,7 @@ namespace Squire
 {
 class QMPotential;
 class QMProgram;
+class QMComponent;
 }
 
 QDataStream& operator<<(QDataStream&, const Squire::QMPotential&);
@@ -56,6 +57,9 @@ QDataStream& operator>>(QDataStream&, Squire::QMPotential&);
 
 QDataStream& operator<<(QDataStream&, const Squire::QMProgram&);
 QDataStream& operator>>(QDataStream&, Squire::QMProgram&);
+
+QDataStream& operator<<(QDataStream&, const Squire::QMComponent&);
+QDataStream& operator>>(QDataStream&, Squire::QMComponent&);
 
 namespace SireFF
 {

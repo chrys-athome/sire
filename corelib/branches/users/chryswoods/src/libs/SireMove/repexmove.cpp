@@ -967,11 +967,13 @@ void RepExMove::move(SupraSystem &system, int nmoves, bool record_stats)
     try
     {
         //try to get as many nodes as possible to run the moves
-        Nodes nodes = Cluster::getNodes( replicas.nReplicas() - 1, 500 );
+        Nodes nodes = Cluster::getNodes( replicas.nReplicas() - 1, 5000 );
         
         ///hold this_thread in a local scope to ensure it is deleted before 'nodes'
         {
             ThisThread this_thread = nodes.borrowThisThread();
+        
+            qDebug() << "RUNNING REPLICA EXCHANGE USING" << nodes.count() << "NODES";
         
             for (int i=0; i<nmoves; ++i)
             {

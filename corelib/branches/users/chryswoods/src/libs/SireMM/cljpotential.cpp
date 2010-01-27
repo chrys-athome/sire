@@ -49,6 +49,8 @@
 
 #include "SireStream/datastream.h"
 
+#undef SIRE_USE_SSE
+
 #ifdef SIRE_USE_SSE
     #ifdef __SSE__
         #include <emmintrin.h>   // CONDITIONAL_INCLUDE
@@ -580,6 +582,8 @@ InterCLJPotential::Parameters
 InterCLJPotential::getParameters(const PartialMolecule &molecule,
                                  const PropertyMap &map)
 {
+    need_update_ljpairs = true;
+
     return Parameters( molecule, map[parameters().coordinates()],
                        getCLJParameters(molecule, map[parameters().charge()],
                                         map[parameters().lj()]) );
@@ -628,6 +632,7 @@ InterCLJPotential::updateParameters(const InterCLJPotential::Parameters &old_par
     {
         new_params.setAtomicParameters( getCLJParameters(new_molecule,
                                                          chg_property, lj_property) );
+        need_update_ljpairs = true;
     }
 
     return new_params;
@@ -679,8 +684,12 @@ InterCLJPotential::updateParameters(const InterCLJPotential::Parameters &old_par
                                                         new_coords) );
 
     if (changed_clj)
+    {
         new_params.setAtomicParameters( getCLJParameters(new_molecule,
                                                          new_chg, new_lj) );
+        
+        need_update_ljpairs = true;
+    }
 
     return new_params;
 }
@@ -945,7 +954,7 @@ void InterCLJPotential::_pvt_calculateEnergy(const InterCLJPotential::Molecule &
                         const LJPair &ljpair = ljpairs.constData()[
                                                 ljpairs.map(param0.ljid,
                                                             param1.ljid)];
-                        
+
                         double sig_over_dist6 = pow_6(ljpair.sigma()*invdist);
                         double sig_over_dist12 = pow_2(sig_over_dist6);
     
@@ -1783,6 +1792,8 @@ IntraCLJPotential::Parameters
 IntraCLJPotential::getParameters(const PartialMolecule &molecule,
                                  const PropertyMap &map)
 {
+    need_update_ljpairs = true;
+
     return Parameters( AtomicParameters3D<CLJParameter>(
                                molecule, map[parameters().coordinates()],
                                getCLJParameters(molecule, 
@@ -1835,8 +1846,12 @@ IntraCLJPotential::updateParameters(const IntraCLJPotential::Parameters &old_par
                                                         coords_property) );
 
     if (new_clj)
+    {
         new_params.setAtomicParameters( getCLJParameters(new_molecule,
                                             chg_property, lj_property) );
+        
+        need_update_ljpairs = true;
+    }
 
     if (new_scl)
         new_params.setIntraScaleFactors( 
@@ -1896,8 +1911,12 @@ IntraCLJPotential::updateParameters(const IntraCLJPotential::Parameters &old_par
         new_params.setAtomicCoordinates( AtomicCoords3D(new_molecule, new_coords) );
 
     if (changed_clj)
+    {
         new_params.setAtomicParameters( getCLJParameters(new_molecule,
                                                          new_chg, new_lj) );
+                                                         
+        need_update_ljpairs = true;
+    }
 
     if (changed_scl)
         new_params.setIntraScaleFactors( 

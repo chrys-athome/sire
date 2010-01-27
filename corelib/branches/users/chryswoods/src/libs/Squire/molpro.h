@@ -89,6 +89,10 @@ public:
     
     int memoryRequirement() const;
     
+    void setMaximumRunTime(int max_runtime);
+    
+    int maximumRunTime() const;
+    
     QString executable() const;
     
     const QHash<QString,QString>& environment() const;
@@ -174,6 +178,10 @@ private:
     /** The amount of memory (in bytes) to reserve for the 
         QM calculation */
     quint32 memory_requirement;
+    
+    /** The maximum amount of time to wait for a molpro
+        job to complete (15 minutes) in milliseconds */
+    quint32 max_molpro_runtime;
 };
 
 }

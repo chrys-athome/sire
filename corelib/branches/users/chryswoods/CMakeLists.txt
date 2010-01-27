@@ -9,6 +9,14 @@
 # require cmake >= 2.6.4
 cmake_minimum_required(VERSION 2.6.4 FATAL_ERROR)
 
+# however, ensure we are compatible with cmake 2.8
+if("${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}" GREATER 2.6)
+   set ( USING_CMAKE_2_6 OFF )
+   cmake_policy(VERSION 2.8)
+else()
+   set ( USING_CMAKE_2_6 ON )
+endif()
+
 # use loose loop syntax in CMakeLists files
 set( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 
