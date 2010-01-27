@@ -532,6 +532,8 @@ InterLJPotential::Parameters
 InterLJPotential::getParameters(const PartialMolecule &molecule,
                                 const PropertyMap &map)
 {
+    need_update_ljpairs = true;
+    
     return Parameters( molecule, map[parameters().coordinates()],
                        getLJParamIDs(molecule, map[parameters().lj()]) );
 }
@@ -575,6 +577,7 @@ InterLJPotential::updateParameters(const InterLJPotential::Parameters &old_param
     if (new_lj)
     {
         new_params.setAtomicParameters( getLJParamIDs(new_molecule, lj_property) );
+        need_update_ljpairs = true;
     }
 
     return new_params;
@@ -622,7 +625,10 @@ InterLJPotential::updateParameters(const InterLJPotential::Parameters &old_param
                                                         new_coords) );
 
     if (changed_lj)
+    {
         new_params.setAtomicParameters( getLJParamIDs(new_molecule, new_lj) );
+        need_update_ljpairs = true;
+    }
 
     return new_params;
 }
@@ -1190,6 +1196,8 @@ IntraLJPotential::Parameters
 IntraLJPotential::getParameters(const PartialMolecule &molecule,
                                 const PropertyMap &map)
 {
+    need_update_ljpairs = true;
+
     return Parameters( AtomicParameters3D<LJParamID>(
                                molecule, map[parameters().coordinates()],
                                getLJParamIDs(molecule, map[parameters().lj()]) ),
@@ -1237,7 +1245,10 @@ IntraLJPotential::updateParameters(const IntraLJPotential::Parameters &old_param
                                                         coords_property) );
 
     if (new_lj)
+    {
         new_params.setAtomicParameters( getLJParamIDs(new_molecule, lj_property) );
+        need_update_ljpairs = true;
+    }
 
     if (new_scl)
         new_params.setIntraScaleFactors( 
@@ -1293,7 +1304,10 @@ IntraLJPotential::updateParameters(const IntraLJPotential::Parameters &old_param
         new_params.setAtomicCoordinates( AtomicCoords3D(new_molecule, new_coords) );
 
     if (changed_lj)
+    {
         new_params.setAtomicParameters( getLJParamIDs(new_molecule, new_lj) );
+        need_update_ljpairs = true;
+    }
 
     if (changed_scl)
         new_params.setIntraScaleFactors( 
