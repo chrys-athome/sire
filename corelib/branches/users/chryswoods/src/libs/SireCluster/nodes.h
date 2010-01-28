@@ -40,26 +40,23 @@ SIRE_BEGIN_HEADER
 namespace SireCluster
 {
 
-class Frontend;
-class Node;
+class WorkQueue;
 
-class ThisThread;
-
-namespace detail
-{
-class NodesData;
-class ThisThreadData;
-}
-
-/** This class holds, and schedules, a collection of Node objects.
+/** Nodes provides the frontend to a collection of resources
+    that may be used to run WorkPacket jobs. These jobs are
+    scheduled via the WorkQueue that is handled by this
+    Nodes object, from which Promise or Promises objects
+    are returned from which the results of the job
+    can be obtained
     
     @author Christopher Woods
 */
 class SIRECLUSTER_EXPORT Nodes 
-        : public Siren::ImplementsHandle< Nodes,Siren::Handles<detail::NodesData> >
+        : public Siren::ImplementsHandle< Nodes,Siren::Handles<WorkQueue> >
 {
 public:
     Nodes();
+    Nodes(const Node &node);
     
     Nodes(const Nodes &other);
     
@@ -73,66 +70,30 @@ public:
     bool isEmpty();
     
     QString toString() const;
-    
-    Node getNode();
-    QList<Node> getNodes(int n);
-    QList<Node> getAllNodes();
-    
-    Node getNode(int timeout);
-    QList<Node> getNodes(int n, int timeout);
-    QList<Node> getAllNodes(int timeout);
-    
-    void waitUntilAllFree();
-    bool waitUntilAllFree(int timeout);
+ 
+    Promise submit(const WorkPacket &workpacket);
+    Promises submit(const QList<WorkPacket> &workpackets);
     
     int nFree();
     int nBusy();
     int nNodes();
     int count();
 
-    void add(Frontend *frontend);
+    static Nodes merge(Nodes &nodes0, Nodes &nodes1);
+    static Nodes merge(Node &node0, Node &node1);
+    static Nodes merge(Nodes &nodes0, Node &node1);
+    static Nodes merge(Node &node0, Nodes &nodes1);
 
-    void add(Node node);
-    void remove(Node node);
-
-    void add(Nodes &nodes);
-    void remove(Nodes &nodes);
-
-    void removeAll();
-
-    ThisThread borrowThisThread();
-};
-
-/** This simple class is used to allow the current thread
-    to be made available to a Nodes object
-    
-    @author Christopher Woods
-*/
-class SIRECLUSTER_EXPORT ThisThread
-  : public Siren::ImplementsHandle< ThisThread, Siren::Handles<detail::ThisThreadData> >
-{
-public:
-    ThisThread();
-    ThisThread(const ThisThread &other);
-    
-    ~ThisThread();
-    
-    ThisThread& operator=(const ThisThread &other);
-    
-    bool operator==(const ThisThread &other) const;
-    bool operator!=(const ThisThread &other) const;
-    
-    void reclaim();
-
-private:
-    /** Pointer to the implementation */
-    boost::shared_ptr<detail::ThisThreadPvt> d;
+protected:
+    friend class Cluster;
+    Nodes( WorkQueue *workqueue );
 };
 
 }
 
+Q_DECLARE_METATYPE( SireCluster::Nodes )
+
 SIRE_EXPOSE_CLASS( SireCluster::Nodes )
-SIRE_EXPOSE_CLASS( SireCluster::ThisThread )
 
 SIRE_END_HEADER
 

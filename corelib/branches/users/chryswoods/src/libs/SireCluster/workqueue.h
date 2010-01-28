@@ -2,7 +2,7 @@
   *
   *  Sire - Molecular Simulation Framework
   *
-  *  Copyright (C) 2008  Christopher Woods
+  *  Copyright (C) 2010  Christopher Woods
   *
   *  This program is free software; you can redistribute it and/or modify
   *  it under the terms of the GNU General Public License as published by
@@ -26,67 +26,47 @@
   *
 \*********************************************/
 
-#ifndef SIRECLUSTER_NODE_H
-#define SIRECLUSTER_NODE_H
-
-#include "Siren/handle.h"
+#ifndef SIRECLUSTER_WORKQUEUE_H
+#define SIRECLUSTER_WORKQUEUE_H
 
 #include "sireglobal.h"
 
-#include <QUuid>
+#include <boost/noncopyable.h>
 
 SIRE_BEGIN_HEADER
-
-class QUuid;
 
 namespace SireCluster
 {
 
-class WorkQueue;
-class Promise;
-class Promises;
-
-/** Node provides the frontend to a single resource
-    that may be used to run WorkPacket jobs. These jobs are
-    scheduled via the WorkQueue that is handled by this
-    Nodes object, from which Promise or Promises objects
-    are returned from which the results of the job
-    can be obtained
+/** This is the base class of all WorkQueues. A WorkQueue
+    is a scheduler that schedules WorkPackets to be run
+    on ActiveFrontends. WorkQueue objects are non-copyable,
+    and are designed to be held by Node or Nodes objects.
     
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT Node : public Siren::ImplementsHandle<Node,WorkQueue>
+class SIRECLUSTER_EXPORT WorkQueue : public boost::noncopyable
 {
 public:
-    Node();
-    
-    Node(const Node &other);
-    
-    ~Node();
-    
-    Node& operator=(const Node &other);
-    
-    bool operator==(const Node &other) const;
-    bool operator!=(const Node &other) const;
-    
-    Promise submit(const WorkPacket &workpacket);
-    Promises submit(const QList<WorkPacket> &workpackets);
+    WorkQueue();
+    WorkQueue(const QList<DormantFrontend> &frontends);
 
-    static Nodes merge(Nodes &nodes0, Nodes &nodes1);
-    static Nodes merge(Node &node0, Node &node1);
-    static Nodes merge(Nodes &nodes0, Node &node1);
-    static Nodes merge(Node &node0, Nodes &nodes1);
+    ~WorkQueue();
+    
+    virtual QString what()=0;
+    
+    virtual QString toString()=0;
+    
+    virtual WorkQueue* merge(const WorkQueue &other)=0;
+    
+    virtual Promise submit(const WorkPacket &workpacket)=0;
+    virtual Promises submit(const QList<WorkPacket> &workpacket)=0;
 
-protected:
-    friend class Cluster;
-    Node(WorkQueue *workqueue);
+    virtual QPair<int,int> nBusyFree() const=0;
+    
 };
 
 }
-
-Q_DECLARE_METATYPE( SireCluster::Node )
-
-SIRE_EXPOSE_CLASS( SireCluster::Node )
 
 SIRE_END_HEADER
 

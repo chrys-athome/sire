@@ -68,6 +68,7 @@ set ( SIRECLUSTER_HEADERS
       promise.h      
       resourcemanager.h
       workpacket.h
+      workqueue.h
     )
 
 # Define the sources in SireCluster
@@ -81,7 +82,8 @@ set ( SIRECLUSTER_SOURCES
       promise.cpp
       resourcemanager.cpp
       workpacket.cpp
- 
+      workqueue.cpp 
+
       ${SIRECLUSTER_MPI_SOURCES}
       ${SIRECLUSTER_MPI_HEADERS}
 
