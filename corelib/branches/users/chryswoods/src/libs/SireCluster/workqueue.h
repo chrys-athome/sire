@@ -29,14 +29,18 @@
 #ifndef SIRECLUSTER_WORKQUEUE_H
 #define SIRECLUSTER_WORKQUEUE_H
 
-#include "sireglobal.h"
+#include <QList>
 
-#include <boost/noncopyable.h>
+#include <boost/noncopyable.hpp>
+
+#include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
 namespace SireCluster
 {
+
+class DormantFrontend;
 
 /** This is the base class of all WorkQueues. A WorkQueue
     is a scheduler that schedules WorkPackets to be run
@@ -53,14 +57,14 @@ public:
 
     ~WorkQueue();
     
-    virtual QString what()=0;
+    virtual QString what() const=0;
     
-    virtual QString toString()=0;
+    virtual QString toString() const=0;
     
     virtual WorkQueue* merge(const WorkQueue &other)=0;
     
     virtual Promise submit(const WorkPacket &workpacket)=0;
-    virtual Promises submit(const QList<WorkPacket> &workpacket)=0;
+    virtual Promises submit(const QList<WorkPacketPtr> &workpacket)=0;
 
     virtual QPair<int,int> nBusyFree() const=0;
     

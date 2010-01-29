@@ -47,25 +47,21 @@ namespace SireCluster
 {
     namespace detail
     {
-
+        
         /** Private implementation of Promise */
-        class PromisePvt : public QThread
+        class PromiseData
         {
         public:
-            PromisePvt() : QThread()
+            PromiseData()
             {}
     
-            ~PromisePvt()
+            ~PromiseData()
             {
-                this->wait();
+                waiter.wakeAll();
             }
-    
-            /** The front end on which the calculation is running */
-            ActiveFrontend frontend;
-    
-            /** The resource lock */
-            Mutex *datamutex;
-    
+
+            boost::shared_ptr<PromiseWatcher> watcher;
+
             /** Wait condition used to wait for a result of the calculation */
             WaitCondition waiter;
     
@@ -76,85 +72,202 @@ namespace SireCluster
     
             /** The final state of the WorkPacket */
             WorkPacketPtr result_packet;
+            
+            enum { IDLE=0, RUNNING=1, STOPPED=2, ABORTED=3, FINISHED=4 };
+            
+            /** The state of the job (waiting, running or finished) */
+            int state;
+            
+            /** Whether or not running in the local thread is forbidden */
+            bool local_running_forbidden;
+        };
 
+        class PromiseWatcher : public QThread
+        {
+        public:
+            PromiseWatcher(const ActiveFrontend &f, const Promise &p) 
+                    : QThread(), frontend(f), promise(p)
+            {
+                this->start();
+            }
+            
+            ~PromiseWatcher()
+            {
+                this->wait();
+            }
+    
+            /** The front end on which the calculation is running */
+            ActiveFrontend frontend;
+            
+            /** The promise containing the work being processed */
+            Promise promise;
+            
         protected:
             void run()
             {
+                if (promise.isNull())
+                    return;
+            
                 Siren::setThreadString("Promise");
                 Siren::register_this_thread();
                 SireMaths::seed_qrand();
-        
-                MutexLocker lkr(datamutex);
-        
-                //get a local copy of the node
-                ActiveFrontend my_frontend = frontend;
-                lkr.unlock();
-        
+
+                WorkPacketPtr initial_packet;
+                {
+                    HandleLocker lkr(promise);
+                    WorkPacketPtr initial_packet = promise.resource().initial_packet;
+                }
+
                 //submit the job
-                my_frontend.startJob(initial_packet);
+                frontend.startJob(initial_packet);
     
                 //save a packed copy if that is desired
                 if (initial_packet.read().shouldPack())
                 {
-                    initial_data = initial_packet.read().pack();
-                    initial_packet = WorkPacketPtr();
+                    HandleLocker lkr(promise);
+                    promise.resource().initial_data = initial_packet.read().pack();
+                    promise.resource().initial_packet = WorkPacketPtr();
                 }
         
                 //wait until the job has finished
-                my_frontend.wait();
+                frontend.wait();
         
                 //the node has finished - grab the result and
                 //drop our copy of the node
-                WorkPacketPtr my_result = my_frontend.result();
-        
-                if (my_result.isNull())
+                WorkPacketPtr my_result;
                 {
-                    //where did the result go???
-                    my_result = ErrorPacket( Siren::program_bug( QObject::tr(
+                    HandleLocker lkr(promise);
+                    
+                    if (promise.resource().state == PromiseData::ABORTED)
+                    {
+                        //no need to process the result as the job was aborted
+                        frontend = ActiveFrontend();
+                        promise.resource().waiter.wakeAll();
+                        return;
+                    }
+                    
+                    promise.resource().result_packet = frontend.result();
+        
+                    frontend = ActiveFrontend();
+        
+                    if (promise.resource().result_packet.isNull())
+                    {
+                        //where did the result go???
+                        promise.resource().result_packet = 
+                            ErrorPacket( Siren::program_bug( QObject::tr(
                                 "There was no result from the running calculation!!!"),
                                     CODELOC ) );
+                    }
+                    
+                    if (promise.resource().state == PromiseData::RUNNING)
+                        promise.resource().state = PromiseData::FINISHED;
+                        
+                    promise.resource().waiter.wakeAll();
                 }
-
-                my_frontend = ActiveFrontend();
-    
-                //copy the result to the promise
-                lkr.relock();
-                frontend = ActiveFrontend();
-                result_packet = my_result;
-        
-                //wake anyone waiting for a result
-                waiter.wakeAll();
             }
         };
+        
     } // end of namespace detail
 } // end of namespace SireCluster;
 
 using namespace SireCluster::detail;
 
+/** This internal function is called to start running the job 
+    on a remote resource connected to via 'f' */
+void Promise::runRemote(ActiveFrontend f)
+{
+    HandleLocker lkr(*this);
+    
+    if (resource().state != PromiseData::IDLE)
+        return;
+        
+    resource().state = PromiseData::RUNNING;
+    
+    resource().watcher.reset( new PromiseWatcher(f, *this) );
+}
+
+/** This internal function is called to run the job in the current thread */
+void Promise::runLocal()
+{
+    HandleLocker lkr(*this);
+    
+    if (resource().state != PromiseData::IDLE)
+        return;
+        
+    if (resource().local_running_forbidden)
+        //we are not allowed to steal the current thread
+        return;
+        
+    resource().state = PromiseData::RUNNING;
+    
+    WorkPacketPtr current_packet = resource().initial_packet;
+    
+    if (current_packet.read().shouldPack())
+    {
+        resource().initial_data = current_packet.read().pack();
+        resource().initial_packet = WorkPacketPtr();
+    }
+    
+    lkr.unlock();
+    
+    while (for_ages())
+    {
+        if (current_packet.read().hasFinished())
+        {
+            resource().state = PromiseData::FINISHED;
+            resource().result_packet = current_packet;
+            resource().waiter.wakeAll();
+            return;
+        }
+            
+        lkr.unlock();
+        current_packet = current_packet.read().runChunk();
+        lkr.relock();
+
+        if (resource().state == PromiseData::ABORTED)
+        {
+            resource().waiter.wakeAll();
+            return;
+        }
+        else
+        {
+            resource().result_packet = current_packet;
+            
+            if (current_packet.read().hasFinished())
+            {
+                resource().state = PromiseData::FINISHED;
+                resource().waiter.wakeAll();
+                return;
+            }
+            else if (resource().state == PromiseData::STOPPED)
+            {
+                resource().waiter.wakeAll();
+                return;
+            }
+        }
+    }
+}
+
 /** Construct a null promise */
-Promise::Promise() : ImplementsHandle< Promise,Handles<PromisePvt> >()
+Promise::Promise() : ImplementsHandle< Promise,Handles<PromiseData> >()
 {}
 
-/** Internal constructor called by WorkQueue that constructs a promise
-    that is following the progress of the work in 'initial_packet' 
-    as it is being processed on the frontend 'frontend'. */
-Promise::Promise(const ActiveFrontend &frontend, const WorkPacket &initial_workpacket)
-        : ImplementsHandle< Promise,Handles<PromisePvt> >(new PromisePvt())
+/** Internal constructor */
+Promise::Promise(const WorkPacket &workpacket, bool local_forbidden)
+        : ImplementsHandle< Promise,Handles<PromiseData> >(new PromiseData())
 {
-    BOOST_ASSERT( not frontend.isNull() );
+    resource().initial_packet = workpacket;
+    resource().local_running_forbidden = local_forbidden;
     
-    resource().frontend = frontend;
-    resource().initial_packet = initial_workpacket;
-    resource().datamutex = resourceLock();
-    
-    //now start a background thread that submits the work and grabs the result
-    //as soon as it is available
-    resource().start();
+    if (workpacket.hasFinished())
+        resource().state = PromiseData::FINISHED;
+    else
+        resource().state = PromiseData::IDLE;
 }
 
 /** Copy constructor */
 Promise::Promise(const Promise &other) 
-        : ImplementsHandle< Promise,Handles<PromisePvt> >(other)
+        : ImplementsHandle< Promise,Handles<PromiseData> >(other)
 {}
 
 /** Destructor */
@@ -164,14 +277,14 @@ Promise::~Promise()
 /** Copy assignment operator */
 Promise& Promise::operator=(const Promise &other)
 {
-    Handles<PromisePvt>::operator=(other);
+    Handles<PromiseData>::operator=(other);
     return *this;
 }
 
 /** Comparison operator */
 bool Promise::operator==(const Promise &other) const
 {
-    return Handles<PromisePvt>::operator==(other);
+    return Handles<PromiseData>::operator==(other);
 }
 
 /** Comparison operator */
@@ -187,7 +300,14 @@ void Promise::abort()
         return;
         
     HandleLocker lkr(*this);
-    resource().frontend.abortJob();
+    
+    if (resource().state <= PromiseData::RUNNING)
+    {
+        resource().state = PromiseData::ABORTED;
+        
+        if (resource().watcher.get())
+            resource().watcher->frontend.abortJob();
+    }
 }
 
 /** Stop this job */
@@ -197,7 +317,14 @@ void Promise::stop()
         return;
         
     HandleLocker lkr(*this);
-    resource().frontend.stopJob();
+    
+    if (resource().state <= PromiseData::RUNNING)
+    {
+        resource().state = PromiseData::STOPPED;
+        
+        if (resource().watcher.get())
+            resource().watcher->frontend.stopJob();
+    }
 }
 
 /** Wait for the job to have completed */
@@ -206,14 +333,19 @@ void Promise::wait()
     if (isNull())
         return;
 
+    //as we would be idle, try to run the work in this thread
+    this->runLocal();
+
     HandleLocker lkr(*this);
     
-    if (resource().result_packet.isNull())
+    if (resource().state <= PromiseData::RUNNING)
     {
-        //we still don't have the result
+        //we couldn't run locally - wait until the remote job has finished
         while (not this->sleep(resource().waiter, 2500))
         {
-            if (not resource().result_packet.isNull())
+            check_for_ages();
+            
+            if (resource().state > PromiseData::RUNNING)
                 //we've got the result!
                 return;
         }
@@ -229,12 +361,12 @@ bool Promise::wait(int timeout)
         
     HandleLocker lkr(*this);
     
-    if (resource().result_packet.isNull())
+    if (resource().state <= PromiseData::RUNNING)
     {
         //we still don't have the result
         this->sleep( resource().waiter, timeout );
         
-        return not resource().result_packet.isNull();
+        return resource().state > PromiseData::RUNNING;
     }
     else
         return true;
@@ -249,7 +381,7 @@ bool Promise::isRunning()
     HandleLocker lkr(*this);
     
     //if we are running, then we still have a handle on the node
-    return not resource().frontend.isNull();
+    return not resource().state <= PromiseData::RUNNING;
 }
 
 /** Return whether or not the result is an error.
@@ -265,7 +397,7 @@ bool Promise::isError()
     
     if (resource().result_packet.isNull())
         return false;
-    else    
+    else
         return resource().result_packet.read().isError();
 }
 
@@ -294,11 +426,7 @@ bool Promise::wasStopped()
     this->wait();
     
     HandleLocker lkr(*this);
-    
-    if (resource().result_packet.isNull())
-        return false;
-    else
-        return not resource().result_packet.read().hasFinished();
+    return resource().state == PromiseData::STOPPED;
 }
 
 /** Return whether or not the job was aborted.
@@ -313,11 +441,7 @@ bool Promise::wasAborted()
     this->wait();
     
     HandleLocker lkr(*this);
-    
-    if (resource().result_packet.isNull())
-        return false;
-    else
-        return resource().result_packet.read().wasAborted();
+    return resource().state == PromiseData::ABORTED;
 }
 
 /** Return the progress of the calculation */
@@ -328,23 +452,26 @@ float Promise::progress()
 
     HandleLocker lkr(*this);
     
-    if (resource().result_packet.isNull())
+    if (resource().state == PromiseData::RUNNING)
     {
-        ActiveFrontend frontend = resource().frontend;
-        lkr.unlock();
-        
-        float current_progress = frontend.progress();
-        
-        lkr.relock();
-        
-        if (not resource().result_packet.isNull())
-            //the result came in while we were getting the progress
-            return resource().result_packet.read().progress();
-        else
-            return current_progress;
+        if (resource().watcher)
+        {
+            ActiveFrontend frontend = resource().watcher->frontend;
+            lkr.unlock();
+            
+            float current_progress = frontend.progress();
+            
+            lkr.relock();
+            
+            if (resource().state == PromiseData::RUNNING)
+                return current_progress;
+        }
     }
-    else
+
+    if (not resource().result_packet.isNull())
         return resource().result_packet.read().progress();
+    else
+        return 0;
 }
 
 /** Return the WorkPacket in the state it was in at the 
@@ -376,25 +503,32 @@ WorkPacketPtr Promise::interimResult()
         
     HandleLocker lkr(*this);
     
-    if (not resource().result_packet.isNull())
-        //we already have the final result!
-        return resource().result_packet;
+    if (resource().state == PromiseData::RUNNING)
+    {
+        if (resource().watcher)
+        {
+            ActiveFrontend frontend = resource().watcher->frontend;
+            lkr.unlock();
         
+            WorkPacketPtr interim_result = frontend.interimResult();
+        
+            lkr.relock();
+        
+            if (resource().state == PromiseData::RUNNING)
+                return interim_result;
+        }
+    }
+        
+    if (not resource().result_packet.isNull())
+        return resource().result_packet;
+
+    else if (resource().initial_data.isEmpty())
+    {
+        return resource().initial_packet;
+    }
     else
     {
-        ActiveFrontend frontend = resource().frontend;
-        
-        lkr.unlock();
-        
-        WorkPacketPtr interim_result = frontend.interimResult();
-        
-        lkr.relock();
-        
-        if (not resource().result_packet.isNull())
-            //we got the final result while waiting for the interim result
-            return resource().result_packet;
-        else
-            return interim_result;
+        return WorkPacket::unpack( resource().initial_data );
     }
 }
 
@@ -408,7 +542,6 @@ WorkPacketPtr Promise::result()
     this->wait();
     
     HandleLocker lkr(*this);
-    
     return resource().result_packet;
 }
 
@@ -416,24 +549,7 @@ WorkPacketPtr Promise::result()
     a Promise that contains the completed result */
 Promise Promise::runLocal(const WorkPacket &workpacket)
 {
-    WorkPacketPtr initial_packet = workpacket;
-    QByteArray initial_data;
-    
-    WorkPacketPtr current_packet = initial_packet;
-    
-    if (initial_packet.read().shouldPack())
-    {
-        initial_data = initial_packet.read().pack();
-        initial_packet = WorkPacketPtr();
-    }
-        
-    while (for_ages())
-    {
-        if (current_packet.read().hasFinished())
-            break;
-            
-        current_packet = current_packet.read().runChunk();
-    }
-    
-    return Promise(initial_packet, initial_data, current_packet);
+    Promise promise(workpacket);
+    promise.runLocal();
+    return promise;
 }

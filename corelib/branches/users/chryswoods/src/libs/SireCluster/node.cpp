@@ -46,10 +46,12 @@ Node::Node() : ImplementsHandle< Node,Handles<WorkQueue> >()
 /** Internal constructor used to construct a node using the passed work queue */
 Node::Node(WorkQueue *workqueue) : ImplementsHandle< Node,Handles<WorkQueue> >(workqueue)
 {
-    if (resource().nResources() > 1)
+    QPair<int,int> r = resource().nBusyFree();
+
+    if (r.first + r.second != 1)
         throw Siren::program_bug( QObject::tr(
-                "It is a mistake to create a Node that contains more than "
-                "one resource! (%1)").arg(resource().nResources()), CODELOC );
+                "It is a mistake to create a Node that does not contain "
+                "just a single resource! (%1)").arg(r.first + r.second), CODELOC );
 }
 
 /** Copy constructor */
@@ -111,7 +113,7 @@ Promise Node::submit(const WorkPacket &workpacket)
     as the workpackets) is returned, which will hold the results
     of the jobs (and can be used to cancel, delay, stop or abort
     specific jobs or all of the jobs) */
-Promises Node::submit(const QList<WorkPacket> &workpackets)
+Promises Node::submit(const QList<WorkPacketPtr> &workpackets)
 {
     if (isNull())
     {
@@ -150,25 +152,25 @@ bool Node::isFree() const
 }
 
 /** Merge the passed nodes together, returning the combined resource. */
-Nodes Node::merge(Nodes &nodes0, Nodes &nodes1)
+Nodes Node::merge(Nodes nodes0, Nodes nodes1)
 {
     return Nodes::merge(nodes0, nodes1);
 }
 
 /** Merge the passed nodes together, returning the combined resource. */
-Nodes Node::merge(Node &node0, Node &node1)
+Nodes Node::merge(Node node0, Node node1)
 {
     return Nodes::merge(node0, node1);
 }
 
 /** Merge the passed nodes together, returning the combined resource. */
-Nodes Node::merge(Nodes &nodes0, Node &node1)
+Nodes Node::merge(Nodes nodes0, Node node1)
 {
     return Nodes::merge(nodes0, node1);
 }
 
 /** Merge the passed nodes together, returning the combined resource. */
-Nodes Node::merge(Node &node0, Nodes &nodes1)
+Nodes Node::merge(Node node0, Nodes nodes1)
 {
     return Nodes::merge(node0, nodes1);
 }

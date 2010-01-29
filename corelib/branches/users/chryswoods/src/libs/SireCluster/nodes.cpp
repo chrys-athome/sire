@@ -28,6 +28,9 @@
 
 #include "nodes.h"
 #include "node.h"
+#include "workqueue.h"
+#include "promise.h"
+#include "promises.h"
 
 #include "Siren/errors.h"
 
@@ -73,12 +76,12 @@ bool Nodes::operator==(const Nodes &other) const
 /** Comparison operator */
 bool Nodes::operator!=(const Nodes &other) const
 {
-    return Handels<WorkQueue>::operator!=(other);
+    return Handles<WorkQueue>::operator!=(other);
 }
 
 /** Return whether this Nodes object only contains the 
     local thread */
-bool Nodes::isOnlyLocal()
+bool Nodes::isLocalOnly() const
 {
     return Handles<WorkQueue>::isNull();
 }
@@ -112,7 +115,7 @@ Promise Nodes::submit(const WorkPacket &workpacket)
     as the workpackets) is returned, which will hold the results
     of the jobs (and can be used to cancel, delay, stop or abort
     specific jobs or all of the jobs) */
-Promises Nodes::submit(const QList<WorkPacket> &workpackets)
+Promises Nodes::submit(const QList<WorkPacketPtr> &workpackets)
 {
     if (isNull())
         return Promises::runLocal(workpackets);
@@ -148,14 +151,14 @@ int Nodes::nBusy() const
 }
 
 /** Return the total number of resources in this cluster of nodes */
-int Nodes::nNodes()
+int Nodes::nNodes() const
 {
     QPair<int,int> b = this->nBusyFree();
     return b.first + b.second;
 }
 
 /** Return the total number of resources in this cluster of nodes */
-int Nodes::count()
+int Nodes::count() const
 {
     return nNodes();
 }
@@ -164,7 +167,7 @@ int Nodes::count()
     This merges the work queues, and puts all of the pending jobs
     into the queue of the new Nodes object (which is returned).
     The passed nodes are cleared */
-Nodes Nodes::merge(Nodes &nodes0, Nodes &nodes1)
+Nodes Nodes::merge(Nodes nodes0, Nodes nodes1)
 {
     if (nodes0.isLocalOnly())
         return nodes1;
@@ -188,7 +191,7 @@ Nodes Nodes::merge(Nodes &nodes0, Nodes &nodes1)
     This merges the work queues, and puts all of the pending jobs
     into the queue of the new Nodes object (which is returned).
     The passed nodes are cleared */
-Nodes Nodes::merge(Node &node0, Node &node1)
+Nodes Nodes::merge(Node node0, Node node1)
 {
     return Nodes::merge( Nodes(node0), Nodes(node1) );
 }
@@ -197,7 +200,7 @@ Nodes Nodes::merge(Node &node0, Node &node1)
     This merges the work queues, and puts all of the pending jobs
     into the queue of the new Nodes object (which is returned).
     The passed nodes are cleared */
-Nodes Nodes::merge(Nodes &nodes0, Node &node1)
+Nodes Nodes::merge(Nodes nodes0, Node node1)
 {
     return Nodes::merge( Nodes(nodes0), Nodes(node1) );
 }
@@ -206,7 +209,7 @@ Nodes Nodes::merge(Nodes &nodes0, Node &node1)
     This merges the work queues, and puts all of the pending jobs
     into the queue of the new Nodes object (which is returned).
     The passed nodes are cleared */
-Nodes Nodes::merge(Node &node0, Nodes &nodes1)
+Nodes Nodes::merge(Node node0, Nodes nodes1)
 {
     return Nodes::merge( Nodes(node0), Nodes(nodes1) );
 }

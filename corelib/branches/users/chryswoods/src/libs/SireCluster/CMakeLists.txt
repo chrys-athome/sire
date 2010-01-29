@@ -66,6 +66,7 @@ set ( SIRECLUSTER_HEADERS
       node.h
       nodes.h
       promise.h      
+      promises.h
       resourcemanager.h
       workpacket.h
       workqueue.h
@@ -80,6 +81,7 @@ set ( SIRECLUSTER_SOURCES
       node.cpp
       nodes.cpp
       promise.cpp
+      promises.cpp
       resourcemanager.cpp
       workpacket.cpp
       workqueue.cpp 

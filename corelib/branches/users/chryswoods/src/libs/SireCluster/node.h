@@ -34,15 +34,21 @@
 #include "sireglobal.h"
 
 #include <QUuid>
+#include <QPair>
 
 SIRE_BEGIN_HEADER
 
 class QUuid;
 
+namespace Siren{ template<class T> class ObjPtr; }
+
 namespace SireCluster
 {
 
 class WorkQueue;
+class WorkPacket;
+typedef Siren::ObjPtr<WorkPacket> WorkPacketPtr;
+
 class Promise;
 class Promises;
 class Nodes;
@@ -75,15 +81,15 @@ public:
     uint hashCode() const;
     
     Promise submit(const WorkPacket &workpacket);
-    Promises submit(const QList<WorkPacket> &workpackets);
+    Promises submit(const QList<WorkPacketPtr> &workpackets);
 
     bool isBusy() const;
     bool isFree() const;
 
-    static Nodes merge(Nodes &nodes0, Nodes &nodes1);
-    static Nodes merge(Node &node0, Node &node1);
-    static Nodes merge(Nodes &nodes0, Node &node1);
-    static Nodes merge(Node &node0, Nodes &nodes1);
+    static Nodes merge(Nodes nodes0, Nodes nodes1);
+    static Nodes merge(Node node0, Node node1);
+    static Nodes merge(Nodes nodes0, Node node1);
+    static Nodes merge(Node node0, Nodes nodes1);
 
 protected:
     friend class Cluster;

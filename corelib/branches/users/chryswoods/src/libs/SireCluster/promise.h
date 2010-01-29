@@ -49,7 +49,8 @@ typedef Siren::ObjPtr<WorkPacket> WorkPacketPtr;
 
 namespace detail
 {
-class PromisePvt;
+class PromiseWatcher;
+class PromiseData;
 }
 
 /** This class provides a handle to the (future) result of
@@ -59,7 +60,7 @@ class PromisePvt;
     @author Christopher Woods
 */
 class SIRECLUSTER_EXPORT Promise 
-        : public Siren::ImplementsHandle<Promise, Siren::Handles<detail::PromisePvt> >
+        : public Siren::ImplementsHandle<Promise, Siren::Handles<detail::PromiseData> >
 {
 public:
     Promise();
@@ -101,10 +102,13 @@ public:
     
 protected:
     friend class WorkQueue;
-    Promise(const ActiveFrontend &frontend, const WorkPacket &initial_workpacket);
-    
-    Promise(const WorkPacketPtr &initial_packet, const QByteArray &initial_data,
-            const WorkPacketPtr &final_packet);
+    friend class Promises;
+    friend class detail::PromiseWatcher;
+
+    void runLocal();
+    void runRemote(ActiveFrontend frontend);
+
+    Promise(const WorkPacket &workpacket, bool forbid_local=false);
 };
 
 }

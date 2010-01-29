@@ -34,13 +34,22 @@
 #include "sireglobal.h"
 
 #include <QUuid>
+#include <QPair>
 
 SIRE_BEGIN_HEADER
+
+namespace Siren{ template<class T> class ObjPtr; }
 
 namespace SireCluster
 {
 
 class WorkQueue;
+class WorkPacket;
+typedef Siren::ObjPtr<WorkPacket> WorkPacketPtr;
+
+class Promise;
+class Promises;
+class Node;
 
 /** Nodes provides the frontend to a collection of resources
     that may be used to run WorkPacket jobs. These jobs are
@@ -67,12 +76,13 @@ public:
     bool operator==(const Nodes &other) const;
     bool operator!=(const Nodes &other) const;
     
-    bool isOnlyLocal();
+    bool isLocalOnly() const;
     
     QString toString() const;
+    uint hashCode() const;
  
     Promise submit(const WorkPacket &workpacket);
-    Promises submit(const QList<WorkPacket> &workpackets);
+    Promises submit(const QList<WorkPacketPtr> &workpackets);
     
     int nFree() const;
     int nBusy() const;
@@ -81,10 +91,10 @@ public:
     int nNodes() const;
     int count() const;
 
-    static Nodes merge(Nodes &nodes0, Nodes &nodes1);
-    static Nodes merge(Node &node0, Node &node1);
-    static Nodes merge(Nodes &nodes0, Node &node1);
-    static Nodes merge(Node &node0, Nodes &nodes1);
+    static Nodes merge(Nodes nodes0, Nodes nodes1);
+    static Nodes merge(Node node0, Node node1);
+    static Nodes merge(Nodes nodes0, Node node1);
+    static Nodes merge(Node node0, Nodes nodes1);
 
 protected:
     friend class Cluster;

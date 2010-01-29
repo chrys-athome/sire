@@ -26,3 +26,64 @@
   *
 \*********************************************/
 
+#ifndef SIRECLUSTER_PROMISES_H
+#define SIRECLUSTER_PROMISES_H
+
+#include "promise.h"
+
+SIRE_BEGIN_HEADER
+
+namespace SireCluster
+{
+
+/** This class holds a collection of promises, ordered 
+    in the same order as the workpackets that were 
+    submitted to be run
+    
+    @author Christopher Woods
+*/
+class SIRECLUSTER_EXPORT Promises
+        : public Siren::ImplementsHandle< Promises,Siren::Handles< QVector<Promise> > >
+{
+public:
+    Promises();
+    Promises(const Promises &other);
+    
+    ~Promises();
+    
+    Promises& operator=(const Promises &other);
+    
+    bool operator==(const Promises &other) const;
+    bool operator!=(const Promises &other) const;
+    
+    Promise operator[](int i) const;
+    
+    Promise at(int i) const;
+
+    bool isEmpty() const;
+    
+    int nPromises() const;
+    int count() const;
+    
+    QString toString() const;
+    uint hashCode() const;
+    
+    void wait();
+    bool wait(int ms);
+    
+    static Promises runLocal(const QList<WorkPacketPtr> &workpackets);
+
+protected:
+    friend class WorkQueue;
+    Promises(const QVector<Promise> &promises);
+};
+
+}
+
+Q_DECLARE_METATYPE( SireCluster::Promises )
+
+SIRE_EXPOSE_CLASS( SireCluster::Promises )
+
+SIRE_END_HEADER
+
+#endif
