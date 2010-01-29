@@ -27,15 +27,17 @@
 \*********************************************/
 
 #include <QThread>
-#include <QMutex>
-#include <QWaitCondition>
 
 #include "promise.h"
 #include "workpacket.h"
 #include "node.h"
+#include "frontend.h"
 
 #include "SireMaths/rangenerator.h"
 
+#include "Siren/waitcondition.h"
+#include "Siren/mutex.h"
+#include "Siren/forages.h"
 #include "Siren/errors.h"
 
 using namespace SireCluster;
@@ -58,14 +60,14 @@ namespace SireCluster
                 this->wait();
             }
     
-            /** The node on which the calculation is running */
-            Node node;
+            /** The front end on which the calculation is running */
+            ActiveFrontend frontend;
     
             /** The resource lock */
-            QMutex *datamutex;
+            Mutex *datamutex;
     
             /** Wait condition used to wait for a result of the calculation */
-            QWaitCondition waiter;
+            WaitCondition waiter;
     
             /** The initial state of the WorkPacket before the calculation.
                 It will either be in this packet, or compressed into binary */
@@ -79,20 +81,31 @@ namespace SireCluster
             void run()
             {
                 Siren::setThreadString("Promise");
+                Siren::register_this_thread();
                 SireMaths::seed_qrand();
         
-                QMutexLocker lkr(datamutex);
+                MutexLocker lkr(datamutex);
         
                 //get a local copy of the node
-                Node my_node = node;
+                ActiveFrontend my_frontend = frontend;
                 lkr.unlock();
         
+                //submit the job
+                my_frontend.startJob(initial_packet);
+    
+                //save a packed copy if that is desired
+                if (initial_packet.read().shouldPack())
+                {
+                    initial_data = initial_packet.read().pack();
+                    initial_packet = WorkPacketPtr();
+                }
+        
                 //wait until the job has finished
-                my_node.wait();
+                my_frontend.wait();
         
                 //the node has finished - grab the result and
                 //drop our copy of the node
-                WorkPacketPtr my_result = my_node.result();
+                WorkPacketPtr my_result = my_frontend.result();
         
                 if (my_result.isNull())
                 {
@@ -101,13 +114,13 @@ namespace SireCluster
                                 "There was no result from the running calculation!!!"),
                                     CODELOC ) );
                 }
-        
+
+                my_frontend = ActiveFrontend();
+    
                 //copy the result to the promise
                 lkr.relock();
+                frontend = ActiveFrontend();
                 result_packet = my_result;
-        
-                //drop the reference to the node
-                node = Node();
         
                 //wake anyone waiting for a result
                 waiter.wakeAll();
@@ -122,27 +135,19 @@ using namespace SireCluster::detail;
 Promise::Promise() : ImplementsHandle< Promise,Handles<PromisePvt> >()
 {}
 
-/** Internal constructor called by Node that constructs a promise
+/** Internal constructor called by WorkQueue that constructs a promise
     that is following the progress of the work in 'initial_packet' 
-    as it is being processed by the node 'node' */
-Promise::Promise(const Node &node, const WorkPacket &initial_workpacket)
+    as it is being processed on the frontend 'frontend'. */
+Promise::Promise(const ActiveFrontend &frontend, const WorkPacket &initial_workpacket)
         : ImplementsHandle< Promise,Handles<PromisePvt> >(new PromisePvt())
 {
-    BOOST_ASSERT( not node.isNull() );
+    BOOST_ASSERT( not frontend.isNull() );
     
-    resource().node = node;
+    resource().frontend = frontend;
+    resource().initial_packet = initial_workpacket;
     resource().datamutex = resourceLock();
     
-    if (initial_workpacket.shouldPack())
-    {
-        resource().initial_data = initial_workpacket.pack();
-    }
-    else
-    {
-        resource().initial_packet = initial_workpacket;
-    }
-    
-    //now start a background thread that grabs the result
+    //now start a background thread that submits the work and grabs the result
     //as soon as it is available
     resource().start();
 }
@@ -181,11 +186,8 @@ void Promise::abort()
     if (isNull())
         return;
         
-    this->lock();
-    Node my_node = resource().node;
-    this->unlock();
-    
-    my_node.abortJob();
+    HandleLocker lkr(*this);
+    resource().frontend.abortJob();
 }
 
 /** Stop this job */
@@ -194,11 +196,8 @@ void Promise::stop()
     if (isNull())
         return;
         
-    this->lock();
-    Node my_node = resource().node;
-    this->unlock();
-    
-    my_node.stopJob();
+    HandleLocker lkr(*this);
+    resource().frontend.stopJob();
 }
 
 /** Wait for the job to have completed */
@@ -250,7 +249,7 @@ bool Promise::isRunning()
     HandleLocker lkr(*this);
     
     //if we are running, then we still have a handle on the node
-    return not resource().node.isNull();
+    return not resource().frontend.isNull();
 }
 
 /** Return whether or not the result is an error.
@@ -331,10 +330,10 @@ float Promise::progress()
     
     if (resource().result_packet.isNull())
     {
-        Node my_node = resource().node;
+        ActiveFrontend frontend = resource().frontend;
         lkr.unlock();
         
-        float current_progress = my_node.progress();
+        float current_progress = frontend.progress();
         
         lkr.relock();
         
@@ -383,11 +382,11 @@ WorkPacketPtr Promise::interimResult()
         
     else
     {
-        Node my_node = resource().node;
+        ActiveFrontend frontend = resource().frontend;
         
         lkr.unlock();
         
-        WorkPacketPtr interim_result = my_node.interimResult();
+        WorkPacketPtr interim_result = frontend.interimResult();
         
         lkr.relock();
         
@@ -411,4 +410,30 @@ WorkPacketPtr Promise::result()
     HandleLocker lkr(*this);
     
     return resource().result_packet;
+}
+
+/** Run the passed work packet in the local thread, returning
+    a Promise that contains the completed result */
+Promise Promise::runLocal(const WorkPacket &workpacket)
+{
+    WorkPacketPtr initial_packet = workpacket;
+    QByteArray initial_data;
+    
+    WorkPacketPtr current_packet = initial_packet;
+    
+    if (initial_packet.read().shouldPack())
+    {
+        initial_data = initial_packet.read().pack();
+        initial_packet = WorkPacketPtr();
+    }
+        
+    while (for_ages())
+    {
+        if (current_packet.read().hasFinished())
+            break;
+            
+        current_packet = current_packet.read().runChunk();
+    }
+    
+    return Promise(initial_packet, initial_data, current_packet);
 }

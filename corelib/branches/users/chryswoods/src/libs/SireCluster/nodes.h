@@ -67,17 +67,19 @@ public:
     bool operator==(const Nodes &other) const;
     bool operator!=(const Nodes &other) const;
     
-    bool isEmpty();
+    bool isOnlyLocal();
     
     QString toString() const;
  
     Promise submit(const WorkPacket &workpacket);
     Promises submit(const QList<WorkPacket> &workpackets);
     
-    int nFree();
-    int nBusy();
-    int nNodes();
-    int count();
+    int nFree() const;
+    int nBusy() const;
+    QPair<int,int> nBusyFree() const;
+    
+    int nNodes() const;
+    int count() const;
 
     static Nodes merge(Nodes &nodes0, Nodes &nodes1);
     static Nodes merge(Node &node0, Node &node1);

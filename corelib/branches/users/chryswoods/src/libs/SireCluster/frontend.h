@@ -203,10 +203,6 @@ public:
     
     const QUuid& UID() const;
     const QString& description() const;
-
-protected:
-    friend class DormantFrontend;
-    ActiveFrontend(const DormantFrontend &frontend);
     
     void startJob(const WorkPacket &workpacket);
     
@@ -220,6 +216,10 @@ protected:
     WorkPacketPtr interimResult();
     
     WorkPacketPtr result();
+
+protected:
+    friend class DormantFrontend;
+    ActiveFrontend(const DormantFrontend &frontend);
     
 private:
     class ActiveToken

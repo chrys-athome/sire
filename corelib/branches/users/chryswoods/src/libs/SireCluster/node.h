@@ -45,6 +45,7 @@ namespace SireCluster
 class WorkQueue;
 class Promise;
 class Promises;
+class Nodes;
 
 /** Node provides the frontend to a single resource
     that may be used to run WorkPacket jobs. These jobs are
@@ -55,7 +56,8 @@ class Promises;
     
     @author Christopher Woods
 */
-class SIRECLUSTER_EXPORT Node : public Siren::ImplementsHandle<Node,WorkQueue>
+class SIRECLUSTER_EXPORT Node 
+        : public Siren::ImplementsHandle< Node,Siren::Handles<WorkQueue> >
 {
 public:
     Node();
@@ -69,8 +71,14 @@ public:
     bool operator==(const Node &other) const;
     bool operator!=(const Node &other) const;
     
+    QString toString() const;
+    uint hashCode() const;
+    
     Promise submit(const WorkPacket &workpacket);
     Promises submit(const QList<WorkPacket> &workpackets);
+
+    bool isBusy() const;
+    bool isFree() const;
 
     static Nodes merge(Nodes &nodes0, Nodes &nodes1);
     static Nodes merge(Node &node0, Node &node1);

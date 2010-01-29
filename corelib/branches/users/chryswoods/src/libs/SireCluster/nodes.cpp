@@ -28,1042 +28,185 @@
 
 #include "nodes.h"
 #include "node.h"
-#include "frontend.h"
-#include "backend.h"
-#include "cluster.h"
 
-#include "Siren/mutex.h"
-#include "Siren/semaphore.h"
-#include "Siren/waitcondition.h"
 #include "Siren/errors.h"
-
-#include <QDebug>
 
 using namespace SireCluster;
 using namespace Siren;
 
-namespace SireCluster
-{
-namespace detail
-{
+static const RegisterHandle<Nodes> r_nodes;
 
-/** Private implementation of Nodes */
-class NodesData
-{
-public:
-    NodesData()
-    {}
-    
-    ~NodesData()
-    {}
-    
-    /** Mutex to protect access to the main data
-        (the busy and free queues) */
-    Mutex datamutex;
-    
-    /** Pointer to a semaphore that is used to control
-        the reservation and allocation of nodes */
-    boost::shared_ptr<Semaphore> nodesem;
-    
-    /** WaitCondition used to wait until all of the nodes are free */
-    WaitCondition waiter;
-    
-    /** The collection of all non-null Frontends in this
-        nodes object, indexed by the UID of the backend they
-        are connected to */
-    QHash<QUuid,DormantFrontend> frontends;
-    
-    /** The set of UIDs of the busy frontends */
-    QSet<QUuid> busy_frontends;
-    
-    /** The list of UIDs of the free frontends - local front
-        ends will tend to be at the beginning of this list */
-    QList<QUuid> free_frontends;
-    
-    /** A Node representing the local thread - this is used
-        by the .waitUntilAllFree() function or Promises.waitForAll()
-        function to allow the waiting thread to participate in
-        running the workpackets */
-    Node waiting_thread;
-};
-
-} // end of namespace detail
-} // end of namespace SireCluster
-
-using namespace SireCluster::detail;
-
-//////////////
-////////////// Implementation of Nodes
-//////////////
-
-/** Construct an empty set of nodes */
-Nodes::Nodes() : ImplementsHandle< Nodes,Handles<NodesData> >()
+/** Construct a set of nodes that only contain the local thread */
+Nodes::Nodes() : ImplementsHandle< Nodes,Handles<WorkQueue> >()
 {}
 
-/** Construct to hold the node that connects to the backend
-    using 'frontend' */
-Nodes::Nodes(Frontend frontend)
-{
-    QUuid uid = frontend.UID();
-    
-    if (uid.isNull())
-        return;
-        
-    d.reset( new NodesPvt() );
-    
-    QMutexLocker lkr( &(d->datamutex) );
-    
-    d->frontends.insert( uid, frontend );
-    d->free_frontends.append(uid);
-    
-    d->nodesem.reset( new QSemaphore(d->frontends.count()) );
-}
-
-/** Construct to hold the nodes that connect to the backends
-    using the frontends in 'frontends' */
-Nodes::Nodes(const QList<Frontend> &frontends) : d( new NodesPvt() )
-{
-    ///// Add all of the frontends
-    {
-        QMutexLocker lkr( &(d->datamutex) );
-
-        foreach (Frontend frontend, frontends)
-        {
-            QUuid uid = frontend.UID();
-            
-            if (uid.isNull())
-                continue;
-                
-            d->frontends.insert( uid, frontend );
-            
-            if (frontend.isLocal())
-            {
-                d->free_frontends.prepend(uid);
-            }
-            else
-            {
-                d->free_frontends.append(uid);
-            }
-        }
-        
-        if (not d->frontends.isEmpty())
-        {
-            d->nodesem.reset( new QSemaphore(d->frontends.count()) );
-        }
-    }
-    
-    if (d->frontends.isEmpty())
-    {
-        //this is an empty set of Nodes
-        d.reset();
-    }
-}
-
-/** Construct from the passed pointer */
-Nodes::Nodes(const shared_ptr<NodesPvt> &ptr) : d(ptr)
+/** Construct to hold the resource in 'node' */
+Nodes::Nodes(const Node &node) : ImplementsHandle< Nodes,Handles<WorkQueue> >(node)
 {}
 
-/** Copy constructor - Nodes are explicitly shared */
-Nodes::Nodes(const Nodes &other) : d(other.d)
+/** Construct to handle the nodes in the passed work queue */
+Nodes::Nodes( WorkQueue *workqueue )
+      : ImplementsHandle< Nodes,Handles<WorkQueue> >(workqueue)
+{}
+
+/** Copy constructor */
+Nodes::Nodes(const Nodes &other) : ImplementsHandle< Nodes,Handles<WorkQueue> >(other)
 {}
 
 /** Destructor */
 Nodes::~Nodes()
-{
-    if (d.unique())
-    {
-        this->removeAll();
-    }
-}
+{}
 
-/** Copy assignment operator - Nodes are explicitly shared */
+/** Copy assignment operator */
 Nodes& Nodes::operator=(const Nodes &other)
 {
-    d = other.d;
+    Handles<WorkQueue>::operator=(other);
     return *this;
 }
 
 /** Comparison operator */
 bool Nodes::operator==(const Nodes &other) const
 {
-    return d.get() == other.d.get();
+    return Handles<WorkQueue>::operator==(other);
 }
 
 /** Comparison operator */
 bool Nodes::operator!=(const Nodes &other) const
 {
-    return d.get() != other.d.get();
+    return Handels<WorkQueue>::operator!=(other);
 }
 
-/** Return whether or not this is empty (contains no nodes) */
-bool Nodes::isEmpty()
+/** Return whether this Nodes object only contains the 
+    local thread */
+bool Nodes::isOnlyLocal()
 {
-    if (d.get() == 0)
-        return true;
-        
-    else
-    {
-        QMutexLocker lkr( &(d->datamutex) );
-        return d->frontends.isEmpty();
-    }
+    return Handles<WorkQueue>::isNull();
 }
 
-/** Return a string representation of these nodes */
+/** Return a string representation of the nodes */
 QString Nodes::toString() const
 {
-    if (d.get() == 0)
-    {
-        return QObject::tr("Nodes( nBusy() == 0, nFree() == 0 )");
-    }
+    if (isNull())
+        return QObject::tr("Nodes( local_thread )");
+    else 
+        return QObject::tr("Nodes( %1 )").arg( resource().toString() );
+}
+
+/** Submit the job held in 'workpacket' to be run on this node,
+    returning a Promise that will hold the result (and can be
+    used to cancel, delay, stop or abort the job) */
+Promise Nodes::submit(const WorkPacket &workpacket)
+{
+    if (isNull())
+        return Promise::runLocal(workpacket);
     else
     {
-        Nodes *nonconst_this = const_cast<Nodes*>(this);
-    
-        QStringList lines;
-        
-        QMutexLocker lkr( &(nonconst_this->d->datamutex) );
-    
-        lines.append( QObject::tr("Nodes( nBusy() == %1, nFree() == %2 )")
-                            .arg(nonconst_this->d->busy_frontends.count())
-                            .arg(nonconst_this->d->free_frontends.count()) );
-                            
-        if (nonconst_this->d->busy_frontends.count() > 0)
-        {
-            lines.append( QObject::tr("****** Busy nodes ******") );
-            
-            foreach (QUuid uid, nonconst_this->d->busy_frontends)
-            {
-                lines.append( QObject::tr("* Node %1").arg(uid.toString()) );
-            }
-        }
-
-        if (nonconst_this->d->free_frontends.count() > 0)
-        {
-            lines.append( QObject::tr("****** Free nodes ******") );
-            
-            foreach (QUuid uid, nonconst_this->d->free_frontends)
-            {
-                lines.append( QObject::tr("* Node %1").arg(uid.toString()) );
-            }
-        }
-        
-        if (lines.count() > 1)
-            lines.append( QObject::tr("************************") );
-            
-        return lines.join("\n");
+        HandleLocker lkr(*this);
+        return resource().submit(workpacket);
     }
 }
 
-/** Internal function used to return a Node - you must be
-    holding the datamutex to call this function */
-Node Nodes::_pvt_getNode()
+/** Submit all of the jobs in 'workpackets' to be run on this
+    node. There is no guarantee about the order in which the jobs
+    will be run. The set of promises (ordered in the same order
+    as the workpackets) is returned, which will hold the results
+    of the jobs (and can be used to cancel, delay, stop or abort
+    specific jobs or all of the jobs) */
+Promises Nodes::submit(const QList<WorkPacket> &workpackets)
 {
-    QUuid uid = d->free_frontends.takeFirst();
-    
-    if (uid.isNull())
-        throw SireError::program_bug( QObject::tr(
-            "How have we managed to reserve a node, but there are no "
-            "free nodes available???"), CODELOC );
-        
-    d->busy_frontends.insert(uid);
-    
-    Frontend frontend = d->frontends.value(uid);
-
-    return Node::create(*this, frontend);
-}
-
-/** Return a free node - this blocks until a free node
-    is available. In certain circumstances this will fail
-    and return a null Node (e.g. at program shutdown, or
-    if all nodes are removed from this set)
-*/
-Node Nodes::getNode()
-{
-    if (this->isEmpty())
-        return Node();
-    
-    QMutexLocker lkr( &(d->datamutex) );
-    shared_ptr<QSemaphore> nodesem = d->nodesem;
-
-    bool reserved_node = false;
-    
-    //keep trying to reserve a node
-    while (not reserved_node)
-    {
-        lkr.unlock();
-
-        if (nodesem.get() == 0)
-            //all of the nodes have been removed
-            return Node();
-
-        //reserve a node
-        #if QT_VERSION >= 0x040300
-        while (not nodesem->tryAcquire(1, 1000))
-        #else
-        while (not nodesem->tryAcquire(1))
-        #endif
-        {
-            lkr.relock();
-            nodesem = d->nodesem;
-            lkr.unlock();
-            
-            if (nodesem.get() == 0)
-                //all of the nodes have been removed
-                return Node();
-
-            #if QT_VERSION < 0x40300
-            sleep(1);
-            #endif
-        }
-
-        lkr.relock();
-        
-        //check that the semaphore hasn't changed while we were waiting
-        if (d->nodesem.get() != nodesem.get())
-        {
-            //yes - it has changed - we didn't get the node
-            nodesem->release();
-            nodesem = d->nodesem;
-        }
-        else
-            //we got a valid reservation
-            reserved_node = true;
-    }
-
-    //now collect the reservation
-    return this->_pvt_getNode();
-}
-
-/** Return 'n' free nodes - this blocks until all of the 
-    nodes are available. In some circumstances this will fail,
-    e.g. if there aren't enough nodes to fulfill this request
-*/
-QList<Node> Nodes::getNodes(int n)
-{
-    QList<Node> nodes;
-
-    if (n <= 0 or this->isEmpty())
-    {
-        return nodes;
-    }
-    else if (n == 1)
-    {
-        nodes.append( this->getNode() );
-    }
+    if (isNull())
+        return Promises::runLocal(workpackets);
     else
     {
-        QMutexLocker lkr( &(d->datamutex) );
-        
-        shared_ptr<QSemaphore> nodesem = d->nodesem;
-        
-        bool reserved_nodes = false;
-        
-        while (not reserved_nodes)
-        {
-            lkr.unlock();
-            
-            if (nodesem.get() == 0)
-                //all of the nodes have been removed!
-                return nodes;
-                
-            //reserve n nodes
-            #if QT_VERSION >= 0x040300
-            while (not nodesem->tryAcquire(n, 2000))
-            #else
-            while (not nodesem->tryAcquire(n))
-            #endif
-            {
-                lkr.relock();
-                nodesem = d->nodesem;
-                lkr.unlock();
-                
-                if (nodesem.get() == 0)
-                    //all of the nodes have been removed!
-                    return nodes;
-                    
-                #if QT_VERSION < 0x40300
-                sleep(2);
-                #endif
-            }
-            
-            lkr.relock();
-            
-            if (nodesem.get() != d->nodesem.get())
-            {
-                //the nodes available changed while we were making
-                //this reservation - we've got to try again!
-                nodesem->release(n);
-                nodesem = d->nodesem;
-            }
-            else
-                //we got the reservation!
-                reserved_nodes = true;
-        }
-
-        //now grab all n nodes
-        for (int i=0; i<n; ++i)
-        {
-            nodes.append( this-> _pvt_getNode() );
-        }
+        HandleLocker lkr(*this);
+        return resource().submit(workpackets);
     }
-    
-    return nodes;
 }
 
-/** Return all of the nodes - this blocks until all of the 
-    nodes are available. Remember that this will return an
-    empty list if there are no nodes.
-*/
-QList<Node> Nodes::getAllNodes()
+/** Return the pair of (busy nodes, free nodes) */
+QPair<int,int> Nodes::nBusyFree() const
 {
-    if (this->isEmpty())
-        return QList<Node>();
-
-    QMutexLocker lkr( &(d->datamutex) );
-    
-    shared_ptr<QSemaphore> nodesem = d->nodesem;
-    
-    bool reserved_nodes = false;
-    
-    while (not reserved_nodes)
+    if (isNull())
+        return QPair<int,int>(0,1);
+    else 
     {
-        lkr.unlock();
-        
-        if (nodesem.get() == 0)
-            //all of the nodes have been removed!
-            return QList<Node>();
-            
-        //reserve all nodes
-        #if QT_VERSION >= 0x040300
-        while (not nodesem->tryAcquire( nodesem->available(), 2000 ))
-        #else
-        while (not nodesem->tryAcquire( nodesem->available() ))
-        #endif
-        {
-            lkr.relock();
-            nodesem = d->nodesem;
-            lkr.unlock();
-            
-            if (nodesem.get() == 0)
-                //all of the nodes have been rmeoved
-                return QList<Node>();
-                
-            #if QT_VERSION < 0x40300
-            sleep(2);
-            #endif
-        }
-        
-        lkr.relock();
-        
-        if (nodesem.get() != d->nodesem.get())
-        {
-            //the nodes available changed while we were making
-            //this reservation - we've got to try again!
-            nodesem->release( nodesem->available() );
-            nodesem = d->nodesem;
-        }
-        else
-            //we got the reservation!
-            reserved_nodes = true;
+        HandleLocker lkr(*this);
+        return resource().nBusyFree();
     }
-
-    //now grab all n nodes
-    QList<Node> nodes;
-
-    int n = nodesem->available();
-
-    for (int i=0; i<n; ++i)
-    {
-        nodes.append( this-> _pvt_getNode() );
-    }
-    
-    return nodes;
 }
 
-/** Try to get a free node - giving only 'timeout' milliseconds
-    to get that node. This returns a null node if the call
-    is unsuccessful */
-Node Nodes::getNode(int timeout)
+/** Return the number of free resources */
+int Nodes::nFree() const
 {
-    QTime t;
-    t.start();
-    
-    if (timeout <= 0)
-        return this->getNode();
-
-    if (this->isEmpty())
-        return Node();
-    
-    QMutexLocker lkr( &(d->datamutex) );
-    
-    shared_ptr<QSemaphore> nodesem = d->nodesem;
-    
-    bool reserved_node = false;
-    
-    while (not reserved_node)
-    {
-        lkr.unlock();
-        
-        if (nodesem.get() == 0)
-            //all of the nodes have gone!
-            return Node();
-            
-        int new_timeout = timeout - t.elapsed();
-        if (new_timeout <= 0)
-            //we've run out of time
-            return Node();
-        
-        #if QT_VERSION >= 0x040300
-            //try to reserve a node
-            if (not nodesem->tryAcquire(1, new_timeout))
-                //we ran out of time
-                return Node();
-        #else
-            if (not nodesem->tryAcquire(1))
-            {
-                bool acquired_node = false;
-            
-                while (new_timeout > 0)
-                {
-                    if (nodesem->tryAcquire(1))
-                    {
-                        acquired_node = true;
-                        break;
-                    }
-                    
-                    --new_timeout;
-                    sleep(1);
-                }
-                
-                if (not acquired_node)
-                    //we ran out of time
-                    return Node();
-            }
-        #endif
-            
-        lkr.relock();
-        
-        if (t.elapsed() >= timeout)
-        {
-            //we've run out of time
-            nodesem->release();
-            return Node();
-        }
-        
-        if (nodesem.get() != d->nodesem.get())
-        {
-            //the nodes changed while we were waiting 
-            //our reservation isn't valid
-            nodesem->release();
-            nodesem = d->nodesem;
-        }
-        else
-            //we've got a valid reservation!
-            reserved_node = true;
-    }
-
-    //collect the reservation
-    return this->_pvt_getNode();
+    return nBusyFree().second;
 }
 
-/** Try to get 'n' free nodes, within the time 'timeout'.
-    If this fails, then *no* nodes are returned */
-QList<Node> Nodes::getNodes(int n, int timeout)
+/** Return the number of busy resources */
+int Nodes::nBusy() const
 {
-    QTime t;
-    t.start();
-
-    if (timeout <= 0)
-        return this->getNodes(n);
-
-    QList<Node> nodes;
-    
-    if (n <= 0)
-    {
-        return nodes;
-    }
-    else if (n == 1)
-    {
-        nodes.append( this->getNode(timeout) );
-    }
-    else
-    {
-        QMutexLocker lkr( &(d->datamutex) );
-
-        shared_ptr<QSemaphore> nodesem = d->nodesem;
-        
-        bool reserved_nodes = false;
-        
-        while (not reserved_nodes)
-        {
-            lkr.unlock();
-            
-            if (nodesem.get() == 0)
-                //there are no nodes
-                return nodes;
-                
-            int new_timeout = timeout - t.elapsed();
-            if (new_timeout <= 0)
-                //we've run out of time
-                return nodes;
-                
-            //reserve the nodes
-            if (not nodesem->tryAcquire(n))
-                //we ran out of time
-                return nodes;
-            
-            lkr.relock();
-                
-            if (t.elapsed() >= timeout)
-            {
-                //we've run out of time
-                nodesem->release(n);
-                return nodes;
-            }
-            
-            if (nodesem.get() != d->nodesem.get())
-            {
-                //the nodes changed, so our reservation isn't valid
-                nodesem->release(n);
-                nodesem = d->nodesem;
-            }
-            else
-                //we've got a reservation!
-                reserved_nodes = true;
-        }
-
-        //grab onto our reserved nodes
-        for (int i=0; i<n; ++i)
-        {
-            nodes.append( _pvt_getNode() );
-        }
-    }
-    
-    return nodes;
+    return nBusyFree().first;
 }
 
-/** Try to get all the nodes, within the time 'timeout'.
-    If this fails, then *no* nodes are returned */
-QList<Node> Nodes::getAllNodes(int timeout)
-{
-    QTime t;
-    t.start();
-
-    if (timeout <= 0)
-        return this->getAllNodes();
-
-    if (this->isEmpty())
-        return QList<Node>();
-
-    QMutexLocker lkr( &(d->datamutex) );
-
-    shared_ptr<QSemaphore> nodesem = d->nodesem;
-    
-    bool reserved_nodes = false;
-    
-    while (not reserved_nodes)
-    {
-        lkr.unlock();
-        
-        if (nodesem.get() == 0)
-            //there are no nodes
-            return QList<Node>();
-            
-        int new_timeout = timeout - t.elapsed();
-        if (new_timeout <= 0)
-            //we've run out of time
-            return QList<Node>();
-            
-        //reserve the nodes
-        if (not nodesem->tryAcquire( nodesem->available()) )
-            //we ran out of time
-            return QList<Node>();
-        
-        lkr.relock();
-            
-        if (t.elapsed() >= timeout)
-        {
-            //we've run out of time
-            nodesem->release( nodesem->available() );
-            return QList<Node>();
-        }
-        
-        if (nodesem.get() != d->nodesem.get())
-        {
-            //the nodes changed, so our reservation isn't valid
-            nodesem->release( nodesem->available() );
-            nodesem = d->nodesem;
-        }
-        else
-            //we've got a reservation!
-            reserved_nodes = true;
-    }
-
-    //grab onto our reserved nodes
-    QList<Node> nodes;
-
-    int n = nodesem->available();
-
-    for (int i=0; i<n; ++i)
-    {
-        nodes.append( _pvt_getNode() );
-    }
-    
-    return nodes;
-}
-
-/** Wait until all of the nodes are free */
-void Nodes::waitUntilAllFree()
-{
-    if (d.get() == 0)
-        return;
-
-    QMutexLocker lkr( &(d->datamutex) );
-
-    while (not d->busy_frontends.isEmpty())
-    {
-        d->waiter.wait( &(d->datamutex) );
-    }
-}
-
-/** Wait until all of the nodes are free, or until
-    timeout milliseconds have passed - this returns
-    whether or not all of the nodes are free */
-bool Nodes::waitUntilAllFree(int timeout)
-{
-    QTime t;
-    t.start();
-
-    if (timeout < 0)
-    {
-        this->waitUntilAllFree();
-        return true;
-    }
-
-    if (d.get() == 0)
-        return true;
-        
-    QMutexLocker lkr( &(d->datamutex) );
-    
-    while (not d->busy_frontends.isEmpty())
-    {
-        int new_timeout = timeout - t.elapsed();
-        if (new_timeout <= 0)
-            return false;
-    
-        if (not d->waiter.wait( &(d->datamutex), new_timeout) )
-            return false;
-    }
-    
-    return true;
-}
-
-/** Return the number of free nodes */
-int Nodes::nFree()
-{
-    QMutexLocker lkr( &(d->datamutex) );
-    return d->free_frontends.count();
-}
-
-/** Return the number of busy nodes */
-int Nodes::nBusy()
-{
-    QMutexLocker lkr( &(d->datamutex) );
-    return d->busy_frontends.count();
-}
-
-/** Return the total number of nodes available */
+/** Return the total number of resources in this cluster of nodes */
 int Nodes::nNodes()
 {
-    if (d.get() == 0)
-    {
-        return 0;
-    }
-    else
-    {
-        QMutexLocker lkr( &(d->datamutex) );
-        return d->frontends.count();
-    }
+    QPair<int,int> b = this->nBusyFree();
+    return b.first + b.second;
 }
 
-/** Return the total number of nodes available */
+/** Return the total number of resources in this cluster of nodes */
 int Nodes::count()
 {
-    return this->nNodes();
+    return nNodes();
 }
 
-/** Add the node 'node' to this set. This will be added as a busy
-    Node (as obviously someone is holding onto it!) This does
-    nothing if this node is already part of this set */
-void Nodes::add(Node node)
+/** Merge the two sets of nodes in 'nodes0' and 'nodes1' together.
+    This merges the work queues, and puts all of the pending jobs
+    into the queue of the new Nodes object (which is returned).
+    The passed nodes are cleared */
+Nodes Nodes::merge(Nodes &nodes0, Nodes &nodes1)
 {
-    if (node.isNull())
-        return;
+    if (nodes0.isLocalOnly())
+        return nodes1;
+
+    else if (nodes1.isLocalOnly())
+        return nodes0;
+    
+    else if (nodes0 == nodes1)
+        return nodes0;
+    
+    else
+    {
+        HandleLocker lkr0(nodes0);
+        HandleLocker lkr1(nodes1);
         
-    if (d.get() == 0)
-    {
-        d.reset( new NodesPvt() );
-    }
-    
-    QUuid uid = node.UID();
-
-    if (uid.isNull())
-        //something is dodgy with this node...
-        return;
-    
-    QMutexLocker lkr( &(d->datamutex) );
-    
-    Nodes old_nodes = node.nodes();
-    
-    //are we 'old_nodes'?
-    if (old_nodes.d.get() == d.get())
-    {
-        //yes we are! - but are we sure?
-        if (not d->frontends.contains(uid))
-            throw SireError::program_bug( QObject::tr(
-                "The node %1 thinks it is part of this Nodes object, but "
-                "this Nodes object isn't so sure!").arg(uid.toString()),
-                    CODELOC );
-    
-        //nothing to do
-        return;
-    }
-    
-    //remove the node from its old set
-    old_nodes.remove(node);
-    
-    //add it to this set
-    d->frontends.insert(uid, node.frontend());
-    d->busy_frontends.insert(uid);
-    
-    //increase the semaphore count
-    shared_ptr<QSemaphore> old_nodesem = d->nodesem;
-
-    d->nodesem.reset( new QSemaphore(d->frontends.count()) );
-    
-    if (old_nodesem.get() != 0)
-    {
-        old_nodesem->release( old_nodesem->available() );
-    }
-    
-    //tell the node that it is now living here
-    node.rehome(*this);
-}
-
-/** Add all of the nodes in 'nodes' to this set */
-void Nodes::add(Nodes &nodes)
-{
-    while (nodes.nNodes() > 0)
-    {
-        Node node = nodes.getNode(250);
-        
-        if (not node.isNull())
-            this->add(node);
+        return Nodes( nodes0.resource().merge(nodes1.resource()) );
     }
 }
 
-/** Try to add one more node to this set by taking a node from the 
-    pool - this only looks for immediately available nodes, and may
-    not work! */
-void Nodes::addNode()
+/** Merge the two sets of nodes in 'nodes0' and 'nodes1' together.
+    This merges the work queues, and puts all of the pending jobs
+    into the queue of the new Nodes object (which is returned).
+    The passed nodes are cleared */
+Nodes Nodes::merge(Node &node0, Node &node1)
 {
-    Nodes newnode = Cluster::getNode();
-    this->add(newnode);
+    return Nodes::merge( Nodes(node0), Nodes(node1) );
 }
 
-/** Try to add one more node to this set by taking a node from the
-    pool - this only tries to find an available node for 
-    'timeout' milliseconds, and so it may fail */
-void Nodes::addNode(int timeout)
+/** Merge the two sets of nodes in 'nodes0' and 'nodes1' together.
+    This merges the work queues, and puts all of the pending jobs
+    into the queue of the new Nodes object (which is returned).
+    The passed nodes are cleared */
+Nodes Nodes::merge(Nodes &nodes0, Node &node1)
 {
-    Nodes newnode = Cluster::getNode(timeout);
-    this->add(newnode);
+    return Nodes::merge( Nodes(nodes0), Nodes(node1) );
 }
 
-/** Try to add up to 'n' nodes to this set, by taking the nodes
-    from the pool - this only looks for immediately available
-    nodes, so you may get less than 'n' (you may even get zero!) */
-void Nodes::addNodes(int n)
+/** Merge the two sets of nodes in 'nodes0' and 'nodes1' together.
+    This merges the work queues, and puts all of the pending jobs
+    into the queue of the new Nodes object (which is returned).
+    The passed nodes are cleared */
+Nodes Nodes::merge(Node &node0, Nodes &nodes1)
 {
-    Nodes newnodes = Cluster::getNodes(n);
-    this->add(newnodes);
+    return Nodes::merge( Nodes(node0), Nodes(nodes1) );
 }
-
-/** Try to add up to 'n' nodes to this set, by taking the nodes
-    from the pool - this only looks for available
-    nodes for 'timeout' milliseconds, so you may get less 
-    than 'n' (you may even get zero!) */
-void Nodes::addNodes(int n, int timeout)
-{
-    Nodes newnodes = Cluster::getNodes(n, timeout);
-    this->add(newnodes);
-}
-
-/** Remove the node 'node' from this set. This doesn't abort
-    the job running on the node, but the node will be automatically
-    returned to the Cluster pool once it is destroyed.
-      
-    This does nothing if this node isn't in this set.
-*/
-void Nodes::remove(Node node)
-{
-    if (d.get() == 0)
-        return;
-        
-    QUuid uid = node.UID();
-        
-    QMutexLocker lkr( &(d->datamutex) );
-    
-    if (d->frontends.contains(uid))
-    {
-        //remove this frontend
-        d->frontends.remove(uid);
-        d->busy_frontends.remove(uid);
-        d->free_frontends.removeAll(uid);
-        
-        //reset the semaphore
-        if (d->frontends.isEmpty())
-        {
-            d->nodesem.reset();
-        }
-        else
-            d->nodesem.reset( new QSemaphore(d->frontends.count()) );
-    
-        //tell the node!
-        node.evict();
-    }
-}
-
-/** Remove all nodes from this set - this aborts any running
-    jobs, then disconnects from all of the backends. 
-    Note that this does not block  */
-void Nodes::removeAll()
-{
-    if (d.get() == 0)
-        return;
-
-    QMutexLocker lkr( &(d->datamutex) );
-
-    //remove the current semaphore - this stop anyone asking for more nodes
-    shared_ptr<QSemaphore> old_nodesem = d->nodesem;
-    d->nodesem.reset();
-
-    QList<Frontend> frontends = d->frontends.values();
-    
-    d->frontends.clear();
-    d->busy_frontends.clear();
-    d->free_frontends.clear();
-    
-    //wake anyone waiting for all the nodes to become free
-    d->waiter.wakeAll();
-    
-    lkr.unlock();
-
-    //wake up everyone waiting for a node, as they are now
-    //out of luck
-    if (old_nodesem.get() != 0)
-        old_nodesem->release( old_nodesem->available() );
-    
-    //finally, tell each frontend to abort it current job,
-    //so that the node will exit and the backend will be
-    //returned to the pool
-    foreach (Frontend frontend, frontends)
-    {
-        frontend.abortJob();
-    }
-}
-
-
-
-//////////////
-////////////// Implementation of NodesPtr
-//////////////
-
-/** Construct a null pointer */
-NodesPtr::NodesPtr()
-{}
-
-/** Construct to point to 'nodes' */
-NodesPtr::NodesPtr(const Nodes &nodes) : d( nodes.d )
-{}
-
-/** Copy constructor */
-NodesPtr::NodesPtr(const NodesPtr &other) : d( other.d )
-{}
-
-/** Destructor */
-NodesPtr::~NodesPtr()
-{}
-
-/** Copy assignment operator */
-NodesPtr& NodesPtr::operator=(const NodesPtr &other)
-{
-    d = other.d;
-    return *this;
-}
-
-/** Return the Nodes object - an empty set of Nodes will
-    be returned if this is a null pointer */
-Nodes NodesPtr::operator*() const
-{
-    return Nodes( d.lock() );
-}
-
-/** Return the Nodes object - an empty set of Nodes will
-    be returned if this is a null pointer */
-Nodes NodesPtr::lock() const
-{
-    return Nodes( d.lock() );
-}
-
-/** Return whether or not this pointer is null */
-bool NodesPtr::expired() const
-{
-    return d.expired();
-}
-
-/** Reset this pointer to null */
-void NodesPtr::reset()
-{
-    d.reset();
-}
-
-/** Function called by the destructor of NodePvt to return
-    a front end back to the Nodes from whence it came */
-void NodesPtr::returnFrontend(Frontend frontend)
-{
-    shared_ptr<NodesPvt> nodes = d.lock();
-    
-    if (nodes.get() == 0)
-        //we don't have a parent Nodes object any more
-        return;
-    
-    QUuid uid = frontend.UID();
-                
-    QMutexLocker lkr( &(nodes->datamutex) );
-    
-    if (nodes->busy_frontends.contains(uid))
-    {
-        //the parent Nodes object still contains this Node
-    
-        //put the local front ends at the beginning of 
-        //the list so that they are used first
-
-        if (frontend.isLocal())
-            nodes->free_frontends.prepend(uid);
-        else
-            nodes->free_frontends.append(uid);
-    
-        nodes->busy_frontends.remove(uid);
-        
-        if (nodes->busy_frontends.isEmpty())
-        {
-            //wake up anyone waiting for all of the nodes to become free
-            nodes->waiter.wakeAll();
-        }
-        
-        if (nodes->nodesem.get() != 0)
-            nodes->nodesem->release();
-    }
-}
-

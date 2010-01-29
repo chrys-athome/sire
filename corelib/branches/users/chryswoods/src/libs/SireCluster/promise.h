@@ -41,8 +41,9 @@ SIRE_BEGIN_HEADER
 namespace SireCluster
 {
 
-class Node;
+class ActiveFrontend;
 class WorkPacket;
+class WorkQueue;
 
 typedef Siren::ObjPtr<WorkPacket> WorkPacketPtr;
 
@@ -96,9 +97,14 @@ public:
     WorkPacketPtr interimResult();
     WorkPacketPtr result();
     
+    static Promise runLocal(const WorkPacket &workpacket);
+    
 protected:
-    friend class Node;
-    Promise(const Node &node, const WorkPacket &initial_workpacket);
+    friend class WorkQueue;
+    Promise(const ActiveFrontend &frontend, const WorkPacket &initial_workpacket);
+    
+    Promise(const WorkPacketPtr &initial_packet, const QByteArray &initial_data,
+            const WorkPacketPtr &final_packet);
 };
 
 }

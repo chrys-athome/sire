@@ -79,6 +79,15 @@ bool Node::operator!=(const Node &other) const
     return Handles<WorkQueue>::operator!=(other);
 }
 
+/** Return a string representation of the node */
+QString Node::toString() const
+{
+    if (isNull())
+        return QObject::tr("Node( local_thread )");
+    else
+        return QObject::tr("Node( %1 )").arg( resource().toString() );
+}
+
 /** Submit the job held in 'workpacket' to be run on this node,
     returning a Promise that will hold the result (and can be
     used to cancel, delay, stop or abort the job) */
@@ -113,6 +122,30 @@ Promises Node::submit(const QList<WorkPacket> &workpackets)
     {
         HandleLocker lkr(*this);
         return resource().submit(workpackets);
+    }
+}
+
+/** Return whether or not this node is busy */
+bool Node::isBusy() const
+{
+    if (isNull())
+        return false;
+    else
+    {
+        HandleLocker lkr(*this);
+        return resource().nBusyFree().first > 0;
+    }
+}
+
+/** Return whether or not this node is free */
+bool Node::isFree() const
+{
+    if (isNull())
+        return true;
+    else
+    {
+        HandleLocker lkr(*this);
+        return resource().nBusyFree().second > 0;
     }
 }
 

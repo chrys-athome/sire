@@ -158,14 +158,14 @@ public:
     */
     virtual uint hashCode() const=0;
 
-    void lock();
-    void unlock();
+    void lock() const;
+    void unlock() const;
     
-    void sleep(WaitCondition &waiter);
-    bool sleep(WaitCondition &waiter, int ms);
+    void sleep(WaitCondition &waiter) const;
+    bool sleep(WaitCondition &waiter, int ms) const;
     
-    bool tryLock();
-    bool tryLock(int ms);
+    bool tryLock() const;
+    bool tryLock(int ms) const;
 
     template<class T>
     bool isA() const;
@@ -278,7 +278,7 @@ class SIREN_EXPORT HandleLocker : public boost::noncopyable
 {
 public:
     HandleLocker();
-    HandleLocker(Handle &handle);
+    HandleLocker(const Handle &handle);
     
     ~HandleLocker();
     

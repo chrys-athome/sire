@@ -252,26 +252,26 @@ void Handle::dropResource()
 }
 
 /** Lock this handle */
-void Handle::lock()
+void Handle::lock() const
 {
     if (not this->isNull())
-        resource_lock->lock();
+        const_cast<Mutex*>(resource_lock.get())->lock();
 }
 
 /** Unlock this handle */
-void Handle::unlock()
+void Handle::unlock() const
 {
     if (not this->isNull())
-        resource_lock->unlock();
+        const_cast<Mutex*>(resource_lock.get())->unlock();
 }
 
 /** Try to lock this handle. This returns whether or not 
     this succeeds - if it does, then you must unlock the 
     handle once you have finished with it */
-bool Handle::tryLock()
+bool Handle::tryLock() const
 {
     if (not this->isNull())
-        return resource_lock->tryLock();
+        return const_cast<Mutex*>(resource_lock.get())->tryLock();
     else
         return true;
 }
@@ -280,30 +280,30 @@ bool Handle::tryLock()
     to get the lock. This returns whether or not 
     this succeeds - if it does, then you must unlock the 
     handle once you have finished with it */
-bool Handle::tryLock(int ms)
+bool Handle::tryLock(int ms) const
 {
     if (not this->isNull())
-        return resource_lock->tryLock(ms);
+        return const_cast<Mutex*>(resource_lock.get())->tryLock(ms);
     else
         return true;
 }
 
 /** Sleep on this handle, using the passed WaitCondition. Note that
     you must hold the lock on this resource */
-void Handle::sleep(WaitCondition &waiter)
+void Handle::sleep(WaitCondition &waiter) const
 {
     if (not this->isNull())
-        waiter.wait(resource_lock.get());
+        waiter.wait( const_cast<Mutex*>(resource_lock.get()) );
 }
 
 /** Sleep on this handle, using the passed WaitCondition, waiting
     for at most 'ms' milliseconds to be woken up. This returns
     whether or not this was woken up. Note that you must hold
     the lock on this resource */
-bool Handle::sleep(WaitCondition &waiter, int ms)
+bool Handle::sleep(WaitCondition &waiter, int ms) const
 {
     if (not this->isNull())
-        return waiter.wait(resource_lock.get(), ms);
+        return waiter.wait( const_cast<Mutex*>(resource_lock.get()), ms);
     else
         return true;
 }
@@ -317,8 +317,8 @@ HandleLocker::HandleLocker() : resource_mutex(0), is_locked(false)
 {}
 
 /** Construct from the passed Handle, in so doing locking that handle */
-HandleLocker::HandleLocker(Handle &handle) 
-             : resource_mutex( handle.resource_lock.get() ),
+HandleLocker::HandleLocker(const Handle &handle) 
+             : resource_mutex( const_cast<Mutex*>(handle.resource_lock.get()) ),
                is_locked(false)
 {
     if (resource_mutex)
