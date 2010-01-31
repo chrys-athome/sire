@@ -38,12 +38,13 @@
 
 struct ForAgesState
 {
-    ForAgesState() : is_interupted(false), is_paused(false)
+    ForAgesState() : ID(0), is_interupted(false), is_paused(false)
     {}
     
     ~ForAgesState()
     {}
 
+    int ID;
     bool is_interupted;
     bool is_paused;
 };
@@ -65,13 +66,15 @@ struct GlobalForAgesState
     QWaitCondition pause_waiter;
 };
 
+int last_id(0);
+
 Q_GLOBAL_STATIC( GlobalForAgesState, globalForAgesState )
 
 namespace Siren
 {
     /** Call this function to register the current thread with for-ages.
         Note that only QThread-based threads can be registered */
-    void SIREN_EXPORT register_this_thread()
+    int SIREN_EXPORT register_this_thread()
     {
         GlobalForAgesState *s = globalForAgesState();
 
@@ -82,10 +85,14 @@ namespace Siren
             QMutexLocker lkr( &(s->pause_mutex) );
             
             if (s->thread_states.contains(t))
-                return;
+                return s->thread_states[t]->ID;
             
             s->thread_state.setLocalData( new ForAgesState() );
             s->thread_states[t] = s->thread_state.localData();
+            ++last_id;
+            s->thread_states[t]->ID = last_id;
+            
+            return last_id;
         }
     }
 

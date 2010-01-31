@@ -26,12 +26,10 @@
   *
 \*********************************************/
 
-#ifndef SIREN_FORAGES_H
-#define SIREN_FORAGES_H
+#ifndef SIREN_THREAD_H
+#define SIREN_THREAD_H
 
-#include <QMutex>
-
-class QThread;
+#include <QThread>
 
 #include "sirenglobal.h"
 
@@ -40,34 +38,31 @@ SIREN_BEGIN_HEADER
 namespace Siren
 {
 
-int register_this_thread();
-void unregister_this_thread();
+/** This is a thin wrapper around QThread that provides
+    automatic registration of Siren functions, and also
+    provides a catch for any uncaught exceptions from
+    the thread. This prevents a background thread from 
+    crashing the entire program if it loses an exception.
+    The exception is passed to the global error handler 
+    
+    Note that derived classes must reimplement
+    Thread::threadMain rather than QThread::run
+    
+    @author Christopher Woods
+*/
+class SIREN_EXPORT Thread : public QThread
+{
+public:
+    Thread(QObject *parent=0);
+    virtual ~Thread();
 
-void msleep(int ms);
-void sleep(int secs);
-
-bool for_ages();
-
-void check_for_ages();
-
-void pause_for_ages();
-void pause_for_ages(const QThread *thread);
-
-void play_for_ages();
-void play_for_ages(const QThread *thread);
-
-void end_for_ages();
-void end_for_ages(const QThread *thread);
+protected:
+    void run();
+    
+    virtual void threadMain()=0;
+};
 
 }
-
-SIREN_EXPOSE_FUNCTION( Siren::msleep )
-SIREN_EXPOSE_FUNCTION( Siren::sleep )
-SIREN_EXPOSE_FUNCTION( Siren::for_ages )
-SIREN_EXPOSE_FUNCTION( Siren::check_for_ages )
-SIREN_EXPOSE_FUNCTION( Siren::pause_for_ages )
-SIREN_EXPOSE_FUNCTION( Siren::play_for_ages )
-SIREN_EXPOSE_FUNCTION( Siren::end_for_ages )
 
 SIREN_END_HEADER
 

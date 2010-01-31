@@ -30,17 +30,27 @@
 #define SIRECLUSTER_WORKQUEUE_H
 
 #include <QList>
+#include <QHash>
+#include <QQueue>
 
 #include <boost/noncopyable.hpp>
+
+#include "Siren/thread.h"
 
 #include "sireglobal.h"
 
 SIRE_BEGIN_HEADER
 
+namespace Siren{ template<class T> class ObjPtr; }
+
 namespace SireCluster
 {
 
 class DormantFrontend;
+class Promise;
+class Promises;
+class WorkPacket;
+typedef Siren::ObjPtr<WorkPacket> WorkPacketPtr;
 
 /** This is the base class of all WorkQueues. A WorkQueue
     is a scheduler that schedules WorkPackets to be run
@@ -53,21 +63,82 @@ class SIRECLUSTER_EXPORT WorkQueue : public boost::noncopyable
 {
 public:
     WorkQueue();
-    WorkQueue(const QList<DormantFrontend> &frontends);
 
-    ~WorkQueue();
+    virtual ~WorkQueue();
+    
+    virtual WorkQueue* create(const DormantFrontend &frontend) const=0;
+    virtual WorkQueue* create(const QList<DormantFrontend> &frontends) const=0;
     
     virtual QString what() const=0;
     
     virtual QString toString() const=0;
     
-    virtual WorkQueue* merge(const WorkQueue &other)=0;
+    virtual WorkQueue* merge(WorkQueue &other)=0;
     
     virtual Promise submit(const WorkPacket &workpacket)=0;
-    virtual Promises submit(const QList<WorkPacketPtr> &workpacket)=0;
+    virtual Promises submit(const QList<WorkPacketPtr> &workpackets)=0;
 
     virtual QPair<int,int> nBusyFree() const=0;
+    virtual int nJobsToRun() const=0;
+
+protected:
+    static Promise createPromise(const WorkPacket &workpacket, 
+                                 bool forbid_local=false);
+    static Promises createPromises(const QList<WorkPacketPtr> &workpackets,
+                                   bool forbid_local=false);
+};
+
+/** This is a simple WorkQueue that just assigns WorkPackets to 
+    backends without any care or consideration of the compatibility
+    of the packets or resources
     
+    @author Christopher Woods
+*/
+class SIRECLUSTER_EXPORT SimpleQueue : public WorkQueue, private Siren::Thread
+{
+public:
+    SimpleQueue();
+    ~SimpleQueue();
+    
+    SimpleQueue* create(const DormantFrontend &frontend) const;
+    SimpleQueue* create(const QList<DormantFrontend &frontends) const;
+    
+    QString what() const;
+    
+    QString toString() const;
+    
+    WorkQueue* merge(WorkQueue &other);
+    
+    Promise submit(const WorkPacket &workpacket);
+    Promises submit(const QList<WorkPacketPtr> &workpackets);
+    
+    QPair<int,int> nBusyFree() const;
+    int nJobsToRun() const;
+
+protected:
+    void threadMain();
+
+private:
+    void kill();
+
+    /** Mutex to protect access to the queue */
+    Mutex datamutex;
+
+    /** Waitcondition used to hold the scheduling thread until
+        there is some work to schedule */
+    WaitCondition waiter;
+
+    /** The list of frontends for the available resources */
+    QHash<QUuid,DormantFrontend> frontends;
+    
+    /** The IDs of busy frontends */
+    QList<QUuid> busy_frontends;
+    
+    /** The IDs of idle frontends */
+    QList<QUuid> idle_frontends;
+    
+    /** The list of promises still to process */
+    QQueue<Promise> promises_to_process;
 };
 
 }

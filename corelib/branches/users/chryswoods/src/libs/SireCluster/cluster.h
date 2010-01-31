@@ -40,6 +40,7 @@ SIRE_BEGIN_HEADER
 namespace SireCluster
 {
 
+class Node;
 class Nodes;
 
 /** This static class provides the global registry for all nodes in the cluster.
@@ -69,23 +70,23 @@ public:
     
     static bool isRunning();
 
-    static Nodes getNode();
-    static Nodes getNode(int timeout);
+    static Node getNode();
+    static Node getNode(int timeout);
 
-    static Nodes getLocalNode();
-    static Nodes getLocalNode(int timeout);
+    static Node getLocalNode();
+    static Node getLocalNode(int timeout);
 
-    static Nodes getNode(const QUuid &uid);
-    static Nodes getNode(const QUuid &uid, int timeout);
+    static Node getNode(const QUuid &uid);
+    static Node getNode(const QUuid &uid, int timeout);
 
-    static Nodes getLocalNode(const QUuid &uid);
-    static Nodes getLocalNode(const QUuid &uid, int timeout);
+    static Node getLocalNode(const QUuid &uid);
+    static Node getLocalNode(const QUuid &uid, int timeout);
     
-    static Nodes getNode(const QString &description);
-    static Nodes getNode(const QString &description, int timeout);
+    static Node getNode(const QString &description);
+    static Node getNode(const QString &description, int timeout);
     
-    static Nodes getLocalNode(const QString &description);
-    static Nodes getLocalNode(const QString &description, int timeout);
+    static Node getLocalNode(const QString &description);
+    static Node getLocalNode(const QString &description, int timeout);
     
     static Nodes getNodes(int nnodes);
     static Nodes getNodes(int nnodes, int timeout);

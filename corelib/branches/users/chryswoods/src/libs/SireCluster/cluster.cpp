@@ -28,6 +28,8 @@
 
 #include "cluster.h"
 #include "resourcemanager.h"
+#include "node.h"
+#include "nodes.h"
 
 #include "Siren/mutex.h"
 #include "Siren/waitcondition.h"
@@ -101,8 +103,6 @@ void Cluster::start()
     if (data->cluster_is_running)
         //this has already been started
         return;
-
-    MutexLocker lkr2( &(data->run_waiter_mutex) );
     
     // start the different means of communication with
     // other nodes
@@ -229,10 +229,8 @@ bool Cluster::isLocal(const QUuid &uid)
 }
 
 /** Return any local node - this blocks until a local node is available */
-Nodes Cluster::getLocalNode()
+Node Cluster::getLocalNode()
 {
-    Nodes nodes;
-
     while (for_ages())
     {
         QUuid reservation = ResourceManager::reserveResource();
@@ -243,13 +241,12 @@ Nodes Cluster::getLocalNode()
             
             if (not resource.isNull())
             {
-                nodes.add( new LocalFrontend(resource) );
-                break;
+                return Node( new
             }
         }
     }
-     
-    return nodes;
+
+    return Node();
 }
 
 /** Return any local node, but only waiting up to 'ms' milliseconds.
