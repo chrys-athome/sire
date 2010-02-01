@@ -775,7 +775,7 @@ bool System::hasConstant(const Symbol &component) const
     
     \throw SireFF::missing_component
 */
-double System::constant(const Symbol &component) const
+double System::getConstant(const Symbol &component) const
 {
     return this->_pvt_forceFields().constant(component);
 }
@@ -785,13 +785,13 @@ double System::constant(const Symbol &component) const
     
     \throw SireFF::missing_component
 */
-Values System::constants(const QSet<Symbol> &components) const
+Values System::getConstants(const QSet<Symbol> &components) const
 {
     return this->_pvt_forceFields().constants(components);
 }
 
 /** Return the values of all constants attached to this forcefield */
-Values System::constants() const
+Values System::getConstants() const
 {
     return this->_pvt_forceFields().constants();
 }
@@ -993,6 +993,12 @@ void System::setComponent(const Symbol &symbol, double value)
         
     try
     {
+        if (this->hasConstant(symbol))
+        {
+            if (this->getConstant(symbol) == value)
+                return;
+        }
+    
         _pvt_forceFields().setComponent(symbol, value);
         sysversion.incrementMajor();
 
@@ -1025,6 +1031,12 @@ void System::setConstant(const Symbol &component, double value)
 */
 void System::setComponent(const Symbol &symbol, const SireCAS::Expression &expression)
 {
+    if (expression.isConstant())
+    {
+        this->setConstant(symbol, expression.evaluate(Values()) );
+        return;
+    }
+
     SaveState old_state = SaveState::save(*this);
 
     try

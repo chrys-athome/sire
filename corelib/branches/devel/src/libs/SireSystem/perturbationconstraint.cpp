@@ -308,7 +308,7 @@ void PerturbationConstraint::pvt_update(const Molecule &molecule,
         
             foreach (Symbol symbol, values.symbols())
             {
-                if (values[symbol] != system.constant(symbol))
+                if (values[symbol] != system.getConstant(symbol))
                 {
                     //this symbol has changed - need to rebuild them all
                     new_values = true;
@@ -345,7 +345,7 @@ void PerturbationConstraint::pvt_update(const Molecule &molecule,
         const Perturbation &perturbation = molecule.property(perts_property)
                                                    .asA<Perturbation>();
 
-        Values values = system.constants(perturbation.requiredSymbols());
+        Values values = system.getConstants(perturbation.requiredSymbols());
         pert_vals.insert(molnum, values);
         
         //perturb the molecule
@@ -625,7 +625,7 @@ Molecules PerturbationConstraint::update(const System &system)
         bool new_system = (system.UID() != this->sysUID() or
                            system.version().majorVersion() 
                                             != this->sysVersion().majorVersion());
-        
+
         try
         {
             this->updatedFrom(system);

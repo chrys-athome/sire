@@ -197,9 +197,9 @@ public:
     QSet<Symbol> constantSymbols() const;
     bool hasConstant(const Symbol &component) const;
     
-    double constant(const Symbol &component) const;
-    Values constants() const;
-    Values constants(const QSet<Symbol> &components) const;
+    double getConstant(const Symbol &component) const;
+    Values getConstants() const;
+    Values getConstants(const QSet<Symbol> &components) const;
     
     void force(ForceTable &forcetable, double scale_force=1);
     void force(ForceTable &forcetable, const Symbol &component,
