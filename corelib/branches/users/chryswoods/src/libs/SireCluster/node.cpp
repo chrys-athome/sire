@@ -113,7 +113,7 @@ Promise Node::submit(const WorkPacket &workpacket)
     as the workpackets) is returned, which will hold the results
     of the jobs (and can be used to cancel, delay, stop or abort
     specific jobs or all of the jobs) */
-Promises Node::submit(const QList<WorkPacketPtr> &workpackets)
+Promises Node::submit(const QVector<WorkPacketPtr> &workpackets)
 {
     if (isNull())
     {
@@ -125,6 +125,17 @@ Promises Node::submit(const QList<WorkPacketPtr> &workpackets)
         HandleLocker lkr(*this);
         return resource().submit(workpackets);
     }
+}
+
+/** Submit all of the jobs in 'workpackets' to be run on this
+    node. There is no guarantee about the order in which the jobs
+    will be run. The set of promises (ordered in the same order
+    as the workpackets) is returned, which will hold the results
+    of the jobs (and can be used to cancel, delay, stop or abort
+    specific jobs or all of the jobs) */
+Promises Node::submit(const QList<WorkPacketPtr> &workpackets)
+{
+    return this->submit( workpackets.toVector() );
 }
 
 /** Return whether or not this node is busy */

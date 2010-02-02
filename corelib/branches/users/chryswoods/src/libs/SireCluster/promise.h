@@ -105,8 +105,8 @@ protected:
     friend class Promises;
     friend class detail::PromiseWatcher;
 
-    void runLocal();
-    void runRemote(ActiveFrontend frontend);
+    bool runLocal();
+    bool runRemote(ActiveFrontend frontend);
 
     Promise(const WorkPacket &workpacket, bool forbid_local=false);
 };

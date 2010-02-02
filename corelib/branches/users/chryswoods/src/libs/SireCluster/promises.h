@@ -72,6 +72,7 @@ public:
     bool wait(int ms);
     
     static Promises runLocal(const QList<WorkPacketPtr> &workpackets);
+    static Promises runLocal(const QVector<WorkPacketPtr> &workpackets);
 
 protected:
     friend class WorkQueue;

@@ -92,6 +92,7 @@ public:
     virtual WorkPacketPtr result()=0;
 
     void activate();
+    bool tryActivate();
     bool tryActivate(int ms);
     
     void deactivate();
@@ -172,7 +173,10 @@ public:
     QString toString() const;
     uint hashCode() const;
     
+    bool isActive() const;
+    
     ActiveFrontend activate();
+    ActiveFrontend tryActivate();
     ActiveFrontend tryActivate(int ms);
 };
 

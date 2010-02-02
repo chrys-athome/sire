@@ -174,29 +174,31 @@ using namespace SireCluster::detail;
 
 /** This internal function is called to start running the job 
     on a remote resource connected to via 'f' */
-void Promise::runRemote(ActiveFrontend f)
+bool Promise::runRemote(ActiveFrontend f)
 {
     HandleLocker lkr(*this);
     
     if (resource().state != PromiseData::IDLE)
-        return;
+        return false;
         
     resource().state = PromiseData::RUNNING;
     
     resource().watcher.reset( new PromiseWatcher(f, *this) );
+    
+    return true;
 }
 
 /** This internal function is called to run the job in the current thread */
-void Promise::runLocal()
+bool Promise::runLocal()
 {
     HandleLocker lkr(*this);
     
     if (resource().state != PromiseData::IDLE)
-        return;
+        return false;
         
     if (resource().local_running_forbidden)
         //we are not allowed to steal the current thread
-        return;
+        return false;
         
     resource().state = PromiseData::RUNNING;
     
@@ -217,7 +219,7 @@ void Promise::runLocal()
             resource().state = PromiseData::FINISHED;
             resource().result_packet = current_packet;
             resource().waiter.wakeAll();
-            return;
+            return true;
         }
             
         lkr.unlock();
@@ -227,7 +229,7 @@ void Promise::runLocal()
         if (resource().state == PromiseData::ABORTED)
         {
             resource().waiter.wakeAll();
-            return;
+            return true;
         }
         else
         {
@@ -237,15 +239,17 @@ void Promise::runLocal()
             {
                 resource().state = PromiseData::FINISHED;
                 resource().waiter.wakeAll();
-                return;
+                return true;
             }
             else if (resource().state == PromiseData::STOPPED)
             {
                 resource().waiter.wakeAll();
-                return;
+                return true;
             }
         }
     }
+    
+    return true;
 }
 
 /** Construct a null promise */

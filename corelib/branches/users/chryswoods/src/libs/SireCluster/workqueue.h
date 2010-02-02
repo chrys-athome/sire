@@ -29,13 +29,17 @@
 #ifndef SIRECLUSTER_WORKQUEUE_H
 #define SIRECLUSTER_WORKQUEUE_H
 
+#include <QVector>
 #include <QList>
 #include <QHash>
 #include <QQueue>
+#include <QUuid>
 
 #include <boost/noncopyable.hpp>
 
 #include "Siren/thread.h"
+#include "Siren/mutex.h"
+#include "Siren/waitcondition.h"
 
 #include "sireglobal.h"
 
@@ -46,6 +50,7 @@ namespace Siren{ template<class T> class ObjPtr; }
 namespace SireCluster
 {
 
+class ActiveFrontend;
 class DormantFrontend;
 class Promise;
 class Promises;
@@ -76,7 +81,7 @@ public:
     virtual WorkQueue* merge(WorkQueue &other)=0;
     
     virtual Promise submit(const WorkPacket &workpacket)=0;
-    virtual Promises submit(const QList<WorkPacketPtr> &workpackets)=0;
+    virtual Promises submit(const QVector<WorkPacketPtr> &workpackets)=0;
 
     virtual QPair<int,int> nBusyFree() const=0;
     virtual int nJobsToRun() const=0;
@@ -84,8 +89,10 @@ public:
 protected:
     static Promise createPromise(const WorkPacket &workpacket, 
                                  bool forbid_local=false);
-    static Promises createPromises(const QList<WorkPacketPtr> &workpackets,
+    static Promises createPromises(const QVector<WorkPacketPtr> &workpackets,
                                    bool forbid_local=false);
+
+    static bool runPromise(Promise promise, ActiveFrontend frontend);
 };
 
 /** This is a simple WorkQueue that just assigns WorkPackets to 
@@ -101,7 +108,7 @@ public:
     ~SimpleQueue();
     
     SimpleQueue* create(const DormantFrontend &frontend) const;
-    SimpleQueue* create(const QList<DormantFrontend &frontends) const;
+    SimpleQueue* create(const QList<DormantFrontend> &frontends) const;
     
     QString what() const;
     
@@ -110,7 +117,7 @@ public:
     WorkQueue* merge(WorkQueue &other);
     
     Promise submit(const WorkPacket &workpacket);
-    Promises submit(const QList<WorkPacketPtr> &workpackets);
+    Promises submit(const QVector<WorkPacketPtr> &workpackets);
     
     QPair<int,int> nBusyFree() const;
     int nJobsToRun() const;
@@ -119,14 +126,16 @@ protected:
     void threadMain();
 
 private:
+    bool checkForFinishedNodes();
+    
     void kill();
 
     /** Mutex to protect access to the queue */
-    Mutex datamutex;
+    Siren::Mutex datamutex;
 
     /** Waitcondition used to hold the scheduling thread until
         there is some work to schedule */
-    WaitCondition waiter;
+    Siren::WaitCondition waiter;
 
     /** The list of frontends for the available resources */
     QHash<QUuid,DormantFrontend> frontends;
@@ -135,10 +144,13 @@ private:
     QList<QUuid> busy_frontends;
     
     /** The IDs of idle frontends */
-    QList<QUuid> idle_frontends;
+    QQueue<QUuid> idle_frontends;
     
     /** The list of promises still to process */
     QQueue<Promise> promises_to_process;
+    
+    /** Set this flag to stop the queue from running */
+    bool kill_queue;
 };
 
 }

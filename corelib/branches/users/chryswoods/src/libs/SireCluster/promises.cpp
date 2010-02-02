@@ -210,7 +210,7 @@ bool Promises::wait(int ms)
 
 /** Run all of the passed workpackets in the local thread, returning
     promises for the completed work */
-Promises Promises::runLocal(const QList<WorkPacketPtr> &workpackets)
+Promises Promises::runLocal(const QVector<WorkPacketPtr> &workpackets)
 {
     if (workpackets.isEmpty())
         return Promises();
@@ -230,4 +230,11 @@ Promises Promises::runLocal(const QList<WorkPacketPtr> &workpackets)
     }
     
     return promises;
+}
+
+/** Run all of the passed workpackets in the local thread, returning
+    promises for the completed work */
+Promises Promises::runLocal(const QList<WorkPacketPtr> &workpackets)
+{
+    return Promises::runLocal(workpackets.toVector());
 }

@@ -53,6 +53,14 @@ void Frontend::activate()
     active_lock.lock();
 }
 
+/** Call this function to try to activate this front end
+      - this returns immediately, returning false if this
+        frontend cannot be activated */
+bool Frontend::tryActivate()
+{
+    return active_lock.tryLock();
+}
+
 /** Call this function to try to activate this front end */
 bool Frontend::tryActivate(int ms)
 {
@@ -240,6 +248,37 @@ ActiveFrontend DormantFrontend::activate()
     resource().activate();
     
     return ActiveFrontend(*this);
+}
+
+/** Return whether or not this frontend is currently active */
+bool DormantFrontend::isActive() const
+{
+    if (isNull())
+        return false;
+
+    Frontend *f = const_cast<Frontend*>( &(resource()) );
+        
+    if (f->tryActivate())
+    {
+        f->deactivate();
+        return false;
+    }
+    else
+        return true;
+}
+
+/** Try to activate this frontend - this will return immediately,
+    either returning the frontend if it has been activated
+    or a null ActiveFrontend if not */
+ActiveFrontend DormantFrontend::tryActivate()
+{
+    if (isNull())
+        return ActiveFrontend();
+        
+    if (resource().tryActivate())
+        return ActiveFrontend(*this);
+    else
+        return ActiveFrontend();
 }
 
 /** Try to activate this frontend - this will block until the

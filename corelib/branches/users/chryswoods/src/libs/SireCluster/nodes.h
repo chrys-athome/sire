@@ -83,6 +83,7 @@ public:
  
     Promise submit(const WorkPacket &workpacket);
     Promises submit(const QList<WorkPacketPtr> &workpackets);
+    Promises submit(const QVector<WorkPacketPtr> &workpackets);
     
     int nFree() const;
     int nBusy() const;

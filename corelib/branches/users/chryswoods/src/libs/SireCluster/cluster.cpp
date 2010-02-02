@@ -30,6 +30,9 @@
 #include "resourcemanager.h"
 #include "node.h"
 #include "nodes.h"
+#include "frontend.h"
+#include "backend.h"
+#include "workqueue.h"
 
 #include "Siren/mutex.h"
 #include "Siren/waitcondition.h"
@@ -89,7 +92,7 @@ ClusterData::ClusterData()
 {}
 
 /** Destructor */
-ClusterPvt::~ClusterPvt()
+ClusterData::~ClusterData()
 {}
 
 /** Start the cluster - you need to call this function once at the
@@ -163,39 +166,47 @@ QList<QUuid> Cluster::localUIDs()
     if (clusterData()->local_resource_version != version)
     {
         QHash<QUuid,QString> resources = ResourceManager::availableResources();
-        clusterData()->local_resources = resources.keys();
+        clusterData()->local_resources = resources.keys().toSet();
         clusterData()->local_resource_version = version;
     }
 
-    return clusterData()->local_resources;
+    return clusterData()->local_resources.toList();
 }
 
 /** Return the UIDs of all resources */
 QList<QUuid> Cluster::UIDs()
 {
     MutexLocker lkr( &(clusterData()->datamutex) );
+
+    QList<QUuid> resources;
     
-    int version = SireCluster::MPI::MPICluster::resourceListVersion()
-    
-    if (clusterData()->mpi_resource_version != version)
+    #ifdef SIRE_USE_MPI
     {
-        QHash<QUuid,QString> resources = 
-            SireCluster::MPI::MPICluster::availableResources();
-            
-        QList<QUuid> mpi_resources = resources.keys();
-        
-        QList<QUuid> local_resources = Cluster::localUIDs();
-        
-        foreach (QUuid local_resource, local_resources)
+        int version = SireCluster::MPI::MPICluster::resourceListVersion()
+    
+        if (clusterData()->mpi_resource_version != version)
         {
-            mpi_resources.removeAll(local_resource);
+            QHash<QUuid,QString> resources = 
+                SireCluster::MPI::MPICluster::availableResources();
+            
+            QList<QUuid> mpi_resources = resources.keys();
+        
+            QList<QUuid> local_resources = Cluster::localUIDs();
+        
+            foreach (QUuid local_resource, local_resources)
+            {
+                mpi_resources.removeAll(local_resource);
+            }
+        
+            clusterData()->mpi_resources = mpi_resources;
+            clusterData()->mpi_resource_version = version;
         }
         
-        clusterData()->mpi_resources = mpi_resources;
-        clusterData()->mpi_resource_version = version;
+        resources += clusterData()->mpi_resources;
     }
+    #endif // SIRE_USE_MPI
     
-    return clusterData()->local_resources + clusterData()->mpi_resources;
+    return clusterData()->local_resources.toList() + resources;
 }
 
 /** Return the descriptions of the local resources in the cluster */
@@ -207,18 +218,23 @@ QHash<QUuid,QString> Cluster::localDescriptions()
 /** Return the descriptions of all of the resources available in the cluster */
 QHash<QUuid,QString> Cluster::descriptions()
 {
-    QHash<QUuid,QString> local = ResourceManager::availableResources();
-    QHash<QUuid,QString> mpi = SireCluster::MPI::MPICluster::availableResources();
-    
-    for (QHash<QUuid,QString>::const_iterator it = mpi.constBegin();
-         it != mpi.constEnd();
-         ++it)
+    QHash<QUuid,QString> descs = ResourceManager::availableResources();
+
+    #ifdef SIRE_USE_MPI
     {
-        if (not local.contains(it.key()))
-            local.insert(it.key(), it.value());
-    }
+        QHash<QUuid,QString> mpi = SireCluster::MPI::MPICluster::availableResources();
     
-    return mpi;
+        for (QHash<QUuid,QString>::const_iterator it = mpi.constBegin();
+             it != mpi.constEnd();
+             ++it)
+        {
+            if (not descs.contains(it.key()))
+                descs.insert(it.key(), it.value());
+        }
+    }
+    #endif // SIRE_USE_MPI
+
+    return descs;
 }
 
 /** Return whether or not the resource identified with UID 'uid'
@@ -241,7 +257,8 @@ Node Cluster::getLocalNode()
             
             if (not resource.isNull())
             {
-                return Node( new
+                return Node( SimpleQueue().create( 
+                                DormantFrontend(new LocalFrontend(resource)) ) );
             }
         }
     }
@@ -250,11 +267,9 @@ Node Cluster::getLocalNode()
 }
 
 /** Return any local node, but only waiting up to 'ms' milliseconds.
-    If no local node is available, then this returns an empty Nodes set */
-Nodes Cluster::getLocalNode(int ms)
+    If no local node is available, then this returns an empty (local-thread) Node */
+Node Cluster::getLocalNode(int ms)
 {
-    Nodes nodes;
-    
     QTime t;
     t.start();
     
@@ -268,8 +283,8 @@ Nodes Cluster::getLocalNode(int ms)
             
             if (not resource.isNull())
             {
-                nodes.add( new LocalFrontend(resource) );
-                break;
+                return Node( SimpleQueue().create(
+                                DormantFrontend(new LocalFrontend(resource)) ) );
             }
         }
         
@@ -279,5 +294,5 @@ Nodes Cluster::getLocalNode(int ms)
             break;
     }
     
-    return nodes;
+    return Node();
 }
