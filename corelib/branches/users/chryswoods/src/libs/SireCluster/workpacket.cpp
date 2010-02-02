@@ -61,6 +61,11 @@ WorkPacket::WorkPacket(const WorkPacket &other)
 WorkPacket::~WorkPacket()
 {}
 
+QString WorkPacket::typeName()
+{
+    return "SireCluster::WorkPacket";
+}
+
 /** Copy assignment operator */
 WorkPacket& WorkPacket::operator=(const WorkPacket &other)
 {
@@ -139,6 +144,12 @@ void WorkPacket::stream(Stream &s)
     schema.data("current_progress") & current_progress;
     
     Object::stream( schema.base() );
+}
+
+/** Internal function used to save the current progress */
+void WorkPacket::setProgress(double new_progress)
+{
+    current_progress = new_progress;
 }
 
 /** Perform one chunk of the calculation and return a workpacket

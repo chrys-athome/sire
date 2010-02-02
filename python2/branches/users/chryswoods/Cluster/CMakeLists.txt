@@ -45,8 +45,8 @@ set_target_properties (Cluster
 		       )
 		       
 target_link_libraries (Cluster
-                       SirePython2
                        SIRE_SireCluster
+                       SIRE_Siren
                        ${BOOST_PYTHON_LIBRARY}
                        ${PYTHON_LIBRARIES}
                       )

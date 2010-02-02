@@ -64,6 +64,8 @@ public:
 
     static void start();
 
+    static void addThread();
+
     static void shutdown();
 
     static void wait();

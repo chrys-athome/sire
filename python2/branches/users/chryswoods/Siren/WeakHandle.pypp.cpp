@@ -17,6 +17,8 @@ namespace bp = boost::python;
 
 #include "logger.h"
 
+#include "waitcondition.h"
+
 #include "handle.h"
 
 #include "Siren/logger.h"

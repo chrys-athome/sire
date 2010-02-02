@@ -9,6 +9,8 @@ namespace bp = boost::python;
 
 #include "temperature.h"
 
+#include <QDebug>
+
 #include "temperature.h"
 
 #include "Siren/logger.h"

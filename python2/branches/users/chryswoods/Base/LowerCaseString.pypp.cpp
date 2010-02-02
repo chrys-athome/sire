@@ -11,8 +11,6 @@ namespace bp = boost::python;
 
 #include "stringmangler.h"
 
-#include <QMutex>
-
 #include "stringmangler.h"
 
 #include "Siren/logger.h"

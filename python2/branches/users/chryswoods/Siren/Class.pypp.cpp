@@ -23,8 +23,6 @@ namespace bp = boost::python;
 
 #include <QDebug>
 
-#include <QMutex>
-
 #include "class.h"
 
 #include "Siren/logger.h"

@@ -25,8 +25,6 @@ namespace bp = boost::python;
 
 #include <QDebug>
 
-#include <QMutex>
-
 #include <cmath>
 
 #include <limits>

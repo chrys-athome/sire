@@ -146,7 +146,7 @@ namespace Siren
     }
     
     /** Pause the thread 'thread' */
-    void pause_for_ages(const QThread *thread)
+    void SIREN_EXPORT pause_for_ages(const QThread *thread)
     {
         GlobalForAgesState *s = globalForAgesState();
 
@@ -184,7 +184,7 @@ namespace Siren
     }
     
     /** Play (wake) the thread 'thread' if it is paused */
-    void play_for_ages(const QThread *thread)
+    void SIREN_EXPORT play_for_ages(const QThread *thread)
     {
         GlobalForAgesState *s = globalForAgesState();
         

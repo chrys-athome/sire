@@ -9,6 +9,8 @@ namespace bp = boost::python;
 
 #include "Siren/errors.h"
 
+#include "Siren/mutex.h"
+
 #include "countflops.h"
 
 #include <QDebug>

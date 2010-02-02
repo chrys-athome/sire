@@ -19,7 +19,11 @@ namespace bp = boost::python;
 
 #include "Siren/errors.h"
 
+#include "Siren/logger.h"
+
 #include "Siren/stream.h"
+
+#include "Siren/tester.h"
 
 #include "coordgroup.h"
 
@@ -174,6 +178,16 @@ void register_CoordGroupArrayArray_class(){
             CoordGroupArrayArray_exposer.def( 
                 "hashCode"
                 , hashCode_function_value );
+        
+        }
+        { //::SireVol::CoordGroupArrayArray::isEmpty
+        
+            typedef bool ( ::SireVol::CoordGroupArrayArray::*isEmpty_function_type )(  ) const;
+            isEmpty_function_type isEmpty_function_value( &::SireVol::CoordGroupArrayArray::isEmpty );
+            
+            CoordGroupArrayArray_exposer.def( 
+                "isEmpty"
+                , isEmpty_function_value );
         
         }
         { //::SireVol::CoordGroupArrayArray::mapInto

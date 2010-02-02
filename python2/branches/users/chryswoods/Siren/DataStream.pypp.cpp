@@ -15,11 +15,11 @@ namespace bp = boost::python;
 
 #include "logger.h"
 
+#include "mutex.h"
+
 #include "tester.h"
 
 #include <QHash>
-
-#include <QMutex>
 
 #include "datastream.h"
 

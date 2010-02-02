@@ -9,7 +9,6 @@
 #include "Siren/streamqt.h"
 #include "accumulator.h"
 #include <QDebug>
-#include <QMutex>
 #include <cmath>
 #include "accumulator.h"
 void register_SireMaths_properties()

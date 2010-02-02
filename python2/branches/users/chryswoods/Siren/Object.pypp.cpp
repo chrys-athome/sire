@@ -23,8 +23,6 @@ namespace bp = boost::python;
 
 #include "tester.h"
 
-#include <QMutex>
-
 #include "object.h"
 
 #include "Siren/logger.h"

@@ -9,13 +9,13 @@ namespace bp = boost::python;
 
 #include "Siren/errors.h"
 
+#include "Siren/mutex.h"
+
 #include "Siren/tostring.h"
 
 #include "tempdir.h"
 
 #include <QDebug>
-
-#include <QMutex>
 
 #include <QUuid>
 

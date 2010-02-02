@@ -297,6 +297,21 @@ bool Promise::operator!=(const Promise &other) const
     return not Promise::operator==(other);
 }
 
+uint Promise::hashCode() const
+{
+    return qHash(Promise::typeName());
+}
+
+QString Promise::toString() const
+{
+    if (isNull())
+        return QObject::tr("Promise::null");
+    else
+    {
+        return Promise::typeName();
+    }
+}
+
 /** Abort this job */
 void Promise::abort()
 {

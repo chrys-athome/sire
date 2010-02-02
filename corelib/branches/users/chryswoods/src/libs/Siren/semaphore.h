@@ -46,7 +46,7 @@ namespace Siren
     
     @author Christopher Woods
 */
-class Semaphore
+class SIREN_EXPORT Semaphore
 {
 public:
     Semaphore(int n=0);

@@ -32,22 +32,6 @@
 #include <QVector>
 #include <QSet>
 
-#include <boost/tuple/tuple.hpp>
-
-#include "Helpers/convertlist.hpp"
-#include "Helpers/convertdict.hpp"
-#include "Helpers/convertset.hpp"
-#include "Helpers/tuples.hpp"
-
-#include "SireBase/property.h"
-
-#include "Base/convertproperty.hpp"
-
-#include "SireCluster/node.h"
-
-using boost::python::register_tuple;
-
 void register_SireCluster_containers()
 {
-    register_list< QList<SireCluster::Node> >();
 }

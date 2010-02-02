@@ -36,6 +36,8 @@
 #include "Siren/mutex.h"
 #include "Siren/errors.h"
 
+#include <QDebug>
+
 using namespace SireCluster;
 using namespace Siren;
 
@@ -452,6 +454,7 @@ QList<QUuid> ResourceManager::reserveResources(const QString &description,
 static QUuid pvt_tryReserveResource(int ms, int expires,
                                     boost::function< QList<QUuid>() > getResources )
 {
+    qDebug() << CODELOC << ms;
     QTime t;
     t.start();
 
@@ -459,12 +462,23 @@ static QUuid pvt_tryReserveResource(int ms, int expires,
     {
         ::clearExpiredReservations();
 
+        qDebug() << CODELOC << t.elapsed();
+
         QList<QUuid> free_resources = getResources();
         
         if (free_resources.isEmpty())
         {
-            Siren::sleep(60);
-            continue;
+            int wait = qMin( 1 + (ms / 2), 60000 );
+        
+            qDebug() << wait;
+        
+            Siren::msleep(wait);
+            ms -= t.restart();
+            
+            if (ms <= 0)
+                break;
+            else
+                continue;
         }
 
         ms -= t.restart();

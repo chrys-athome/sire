@@ -21,8 +21,6 @@ namespace bp = boost::python;
 
 #include <QHash>
 
-#include <QMutex>
-
 #include <QStringList>
 
 #include "generalunit.h"

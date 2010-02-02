@@ -31,6 +31,7 @@
 #include "promise.h"
 #include "promises.h"
 #include "workqueue.h"
+#include "workpacket.h"
 
 #include "Siren/errors.h"
 
@@ -79,6 +80,11 @@ bool Node::operator==(const Node &other) const
 bool Node::operator!=(const Node &other) const
 {
     return Handles<WorkQueue>::operator!=(other);
+}
+
+uint Node::hashCode() const
+{
+    return qHash( Node::typeName() );
 }
 
 /** Return a string representation of the node */

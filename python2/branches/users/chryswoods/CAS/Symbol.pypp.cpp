@@ -13,6 +13,8 @@ namespace bp = boost::python;
 
 #include "Siren/errors.h"
 
+#include "Siren/mutex.h"
+
 #include "Siren/stream.h"
 
 #include "complexvalues.h"
@@ -28,8 +30,6 @@ namespace bp = boost::python;
 #include <QDebug>
 
 #include <QHash>
-
-#include <QMutex>
 
 #include "symbol.h"
 

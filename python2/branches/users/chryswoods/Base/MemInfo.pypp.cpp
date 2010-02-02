@@ -7,6 +7,8 @@
 
 namespace bp = boost::python;
 
+#include "Siren/mutex.h"
+
 #include "meminfo.h"
 
 #include "sire_config.h"
@@ -14,8 +16,6 @@ namespace bp = boost::python;
 #include <QDebug>
 
 #include <QFile>
-
-#include <QMutex>
 
 #include <QTextStream>
 

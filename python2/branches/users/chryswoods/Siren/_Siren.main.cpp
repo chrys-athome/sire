@@ -21,6 +21,10 @@
 
 #include "Mutable.pypp.hpp"
 
+#include "Mutex.pypp.hpp"
+
+#include "MutexLocker.pypp.hpp"
+
 #include "None.pypp.hpp"
 
 #include "Number.pypp.hpp"
@@ -33,6 +37,8 @@
 
 #include "Object.pypp.hpp"
 
+#include "Semaphore.pypp.hpp"
+
 #include "Stream.pypp.hpp"
 
 #include "String.pypp.hpp"
@@ -42,6 +48,8 @@
 #include "StringObject.pypp.hpp"
 
 #include "Tester.pypp.hpp"
+
+#include "WaitCondition.pypp.hpp"
 
 #include "WeakHandle.pypp.hpp"
 
@@ -86,6 +94,10 @@ BOOST_PYTHON_MODULE(_Siren){
 
     register_Mutable_class();
 
+    register_Mutex_class();
+
+    register_MutexLocker_class();
+
     register_None_class();
 
     register_NumberBase_class();
@@ -100,9 +112,13 @@ BOOST_PYTHON_MODULE(_Siren){
 
     register_StringObject_class();
 
+    register_Semaphore_class();
+
     register_String_class();
 
     register_Tester_class();
+
+    register_WaitCondition_class();
 
     register_WeakHandle_class();
 

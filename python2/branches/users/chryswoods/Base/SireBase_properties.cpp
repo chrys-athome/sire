@@ -4,7 +4,6 @@
 
 #include "Siren/stream.h"
 #include "stringmangler.h"
-#include <QMutex>
 #include "stringmangler.h"
 void register_SireBase_properties()
 {

@@ -11,13 +11,13 @@ namespace bp = boost::python;
 
 #include "Siren/hanref.h"
 
+#include "Siren/mutex.h"
+
 #include "process.h"
 
 #include <QDebug>
 
 #include <QList>
-
-#include <QMutex>
 
 #include <QTime>
 

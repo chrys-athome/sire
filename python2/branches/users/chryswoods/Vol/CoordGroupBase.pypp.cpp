@@ -19,7 +19,11 @@ namespace bp = boost::python;
 
 #include "Siren/errors.h"
 
+#include "Siren/logger.h"
+
 #include "Siren/stream.h"
+
+#include "Siren/tester.h"
 
 #include "coordgroup.h"
 

@@ -9,7 +9,13 @@ namespace bp = boost::python;
 
 #include "SireBase/properties.h"
 
+#include "Siren/errors.h"
+
+#include "Siren/logger.h"
+
 #include "Siren/stream.h"
+
+#include "Siren/tester.h"
 
 #include "combinedspace.h"
 
@@ -73,6 +79,17 @@ void register_CombineSpaces_class(){
                 "stream"
                 , stream_function_value
                 , ( bp::arg("s") ) );
+        
+        }
+        { //::SireVol::CombineSpaces::test
+        
+            typedef bool ( ::SireVol::CombineSpaces::*test_function_type )( ::Siren::Logger & ) const;
+            test_function_type test_function_value( &::SireVol::CombineSpaces::test );
+            
+            CombineSpaces_exposer.def( 
+                "test"
+                , test_function_value
+                , ( bp::arg("logger") ) );
         
         }
         { //::SireVol::CombineSpaces::toString

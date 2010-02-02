@@ -17,8 +17,6 @@ namespace bp = boost::python;
 
 #include "space.h"
 
-#include <QMutex>
-
 #include "space.h"
 
 #include "Siren/logger.h"

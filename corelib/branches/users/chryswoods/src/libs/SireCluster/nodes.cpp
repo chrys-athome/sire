@@ -29,6 +29,7 @@
 #include "nodes.h"
 #include "node.h"
 #include "workqueue.h"
+#include "workpacket.h"
 #include "promise.h"
 #include "promises.h"
 
@@ -77,6 +78,11 @@ bool Nodes::operator==(const Nodes &other) const
 bool Nodes::operator!=(const Nodes &other) const
 {
     return Handles<WorkQueue>::operator!=(other);
+}
+
+uint Nodes::hashCode() const
+{
+    return qHash(Nodes::typeName());
 }
 
 /** Return whether this Nodes object only contains the 

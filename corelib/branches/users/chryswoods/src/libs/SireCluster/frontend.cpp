@@ -80,6 +80,12 @@ void Frontend::setUID(const QUuid &uid)
     backend_uid = uid;
 }
 
+/** Internal function called by derived classes to set the description */
+void Frontend::setDescription(const QString &description)
+{
+    desc = description;
+}
+
 /** Return the (locally cached) UID of the backend to which this
     frontend is connected */
 const QUuid& Frontend::UID() const

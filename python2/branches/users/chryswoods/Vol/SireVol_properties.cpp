@@ -7,7 +7,6 @@
 #include "Siren/stream.h"
 #include "cartesian.h"
 #include "space.h"
-#include <QMutex>
 #include "space.h"
 void register_SireVol_properties()
 {

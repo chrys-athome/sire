@@ -123,6 +123,12 @@ bool Cluster::isRunning()
     return clusterData()->cluster_is_running;
 }
 
+/** Add a new ThreadBackend to the current process */
+void Cluster::addThread()
+{
+    ResourceManager::registerResource( DormantBackend( new ThreadBackend() ) );
+}
+
 /** Wait for the global cluster to stop running */
 void Cluster::wait()
 {
@@ -275,7 +281,8 @@ Node Cluster::getLocalNode(int ms)
     
     while (for_ages())
     {
-        QUuid reservation = ResourceManager::reserveResource(ms);
+        qDebug() << CODELOC << ms;
+        QUuid reservation = ResourceManager::tryReserveResource(ms);
         
         if (not reservation.isNull())
         {
@@ -295,4 +302,114 @@ Node Cluster::getLocalNode(int ms)
     }
     
     return Node();
+}
+
+Node Cluster::getNode()
+{
+    return Node();
+}
+
+Node Cluster::getNode(int timeout)
+{
+    return Node();
+}
+
+Node Cluster::getNode(const QUuid &uid)
+{
+    return Node();
+}
+
+Node Cluster::getNode(const QUuid &uid, int timeout)
+{
+    return Node();
+}
+
+Node Cluster::getLocalNode(const QUuid &uid)
+{
+    return Node();
+}
+
+Node Cluster::getLocalNode(const QUuid &uid, int timeout)
+{
+    return Node();
+}
+
+Node Cluster::getNode(const QString &description)
+{
+    return Node();
+}
+
+Node Cluster::getNode(const QString &description, int timeout)
+{
+    return Node();
+}
+
+Node Cluster::getLocalNode(const QString &description)
+{
+    return Node();
+}
+
+Node Cluster::getLocalNode(const QString &description, int timeout)
+{
+    return Node();
+}
+
+Nodes Cluster::getNodes(int nnodes)
+{
+    return Nodes();
+}
+
+Nodes Cluster::getNodes(int nnodes, int timeout)
+{
+    return Nodes();
+}
+
+Nodes Cluster::getLocalNodes(int nnodes)
+{
+    return Nodes();
+}
+
+Nodes Cluster::getLocalNodes(int nnodes, int timeout)
+{
+    return Nodes();
+}
+
+Nodes Cluster::getNodes(const QList<QUuid> &uids)
+{
+    return Nodes();
+}
+
+Nodes Cluster::getNodes(const QList<QUuid> &uids, int timeout)
+{
+    return Nodes();
+}
+
+Nodes Cluster::getLocalNodes(const QList<QUuid> &uids)
+{
+    return Nodes();
+}
+
+Nodes Cluster::getLocalNodes(const QList<QUuid> &uids, int timeout)
+{
+    return Nodes();
+}
+
+Nodes Cluster::getNodes(const QString &description, int nnodes)
+{
+    return Nodes();
+}
+
+Nodes Cluster::getNodes(const QString &description, int nnodes, int timeout)
+{
+    return Nodes();
+}
+
+Nodes Cluster::getLocalNodes(const QString &description, int nnodes)
+{
+    return Nodes();
+}
+
+Nodes Cluster::getLocalNodes(const QString &description, int nnodes, int timeout)
+{
+    return Nodes();
 }
