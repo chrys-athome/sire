@@ -208,14 +208,14 @@ void register_Class_class(){
                 , registeredTypes_function_value );
         
         }
-        { //::Siren::Class::super
+        { //::Siren::Class::superClass
         
-            typedef ::Siren::Class const & ( ::Siren::Class::*super_function_type )(  ) const;
-            super_function_type super_function_value( &::Siren::Class::super );
+            typedef ::Siren::Class const & ( ::Siren::Class::*superClass_function_type )(  ) const;
+            superClass_function_type superClass_function_value( &::Siren::Class::superClass );
             
             Class_exposer.def( 
-                "super"
-                , super_function_value
+                "superClass"
+                , superClass_function_value
                 , bp::return_value_policy< bp::copy_const_reference >() );
         
         }

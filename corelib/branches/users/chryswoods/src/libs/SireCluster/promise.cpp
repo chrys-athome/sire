@@ -569,6 +569,14 @@ WorkPacketPtr Promise::result()
 Promise Promise::runLocal(const WorkPacket &workpacket)
 {
     Promise promise(workpacket);
-    promise.runLocal();
+
+    if (promise.resource().state == PromiseData::FINISHED)
+        return promise;
+
+    if (not promise.runLocal())
+        throw Siren::unsupported( QObject::tr(
+                "It is not possible to run the WorkPacket %1 in the local thread!")
+                    .arg(workpacket.toString()), CODELOC );
+
     return promise;
 }

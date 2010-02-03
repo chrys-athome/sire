@@ -144,7 +144,7 @@ Mutex& globalRegistrationLock();
 
     obj.getClass();   // Return information about the type of this object
 
-    obj.getClass().super();  // Return information about the superclass type
+    obj.getClass().superClass();  // Return information about the superclass type
     
     obj.getClass().UID();  // Return the unique ID number for this class type
     
@@ -374,8 +374,7 @@ public:
 protected:
     static const Class& createTypeInfo();
 
-    Base& super();
-    const Base& super() const;
+    typedef Base super;
 
 private:
     static const Class* class_typeinfo;
@@ -436,8 +435,7 @@ protected:
 
     Implements<Derived,Base>* ptr_clone() const;
 
-    Base& super();
-    const Base& super() const;
+    typedef Base super;
 
 private:
     static const Class* class_typeinfo;
@@ -545,20 +543,6 @@ template<class Derived, class Base>
 SIREN_OUTOFLINE_TEMPLATE
 Extends<Derived,Base>::~Extends()
 {}
-
-template<class Derived, class Base>
-SIREN_OUTOFLINE_TEMPLATE
-Base& Extends<Derived,Base>::super()
-{
-    return *this;
-}
-
-template<class Derived, class Base>
-SIREN_OUTOFLINE_TEMPLATE
-const Base& Extends<Derived,Base>::super() const
-{
-    return *this;
-}
 
 /** Return the class typeinfo object for 'Derived' */
 template<class Derived, class Base>
@@ -750,22 +734,6 @@ Implements<Derived,Base>&
 Implements<Derived,Base>::operator=(const Object &other)
 {
     return static_cast<Derived*>(this)->operator=( other.asA<Derived>() );
-}
-
-/** Return the superclass of this type */
-template<class Derived, class Base>
-SIREN_OUTOFLINE_TEMPLATE
-Base& Implements<Derived,Base>::super()
-{
-    return *this;
-}
-
-/** Return the superclass of this type */
-template<class Derived, class Base>
-SIREN_OUTOFLINE_TEMPLATE
-const Base& Implements<Derived,Base>::super() const
-{
-    return *this;
 }
 
 //////

@@ -63,7 +63,7 @@ namespace SireMaths
 std::pair<NVector,NMatrix> SIREMATHS_EXPORT dsyev(const NMatrix &A, bool upper)
 {
     #ifdef SIRE_DISABLE_FORTRAN
-    throw SireError::unsupported( QObject::tr(
+    throw Siren::unsupported( QObject::tr(
             "dsyev not available as LAPACK does not work with this version of Sire."),
                     CODELOC );
 
@@ -119,7 +119,7 @@ NVector SIREMATHS_EXPORT dsyev_eigenvalues(const NMatrix &A, bool upper)
 {
     #ifdef SIRE_DISABLE_FORTRAN
     
-    throw SireError::unsupported( QObject::tr(
+    throw Siren::unsupported( QObject::tr(
             "dsyev_eigenvalues not available as LAPACK does not work "
             "with this version of Sire."),
                     CODELOC );

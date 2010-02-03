@@ -228,9 +228,13 @@ ErrorPacket::ErrorPacket() : Implements<ErrorPacket,WorkPacket>()
 ErrorPacket::ErrorPacket(const Siren::exception &e)
             : Implements<ErrorPacket,WorkPacket>()
 {
-    DataStream ds(error_data);
-    e.save(ds);
-    qCompress(error_data);
+    //save the data
+    {
+        DataStream ds(&error_data, QIODevice::WriteOnly);
+        e.save(ds);
+    }
+    
+    error_data = qCompress(error_data);
 }
 
 /** Copy constructor */
@@ -416,7 +420,16 @@ WorkTest::WorkTest() : Implements<WorkTest,WorkPacket>(),
 WorkTest::WorkTest(int _start, int _end, int _step)
          : Implements<WorkTest,WorkPacket>(), 
            current(_start), start(_start), end(_end), step(_step)
-{}
+{
+    if (_step == 0)
+        _step = 1;
+
+    if (_start > _end and _step > 0)
+        _step *= -1;
+        
+    else if (_start < _end and _step < 0)   
+        _step *= -1;
+}
 
 /** Copy constructor */
 WorkTest::WorkTest(const WorkTest &other)

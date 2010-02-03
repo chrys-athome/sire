@@ -94,6 +94,8 @@ namespace Siren
             
             return last_id;
         }
+        else
+            return 0;
     }
 
     /** Unregister the current thread (which must be based on QThread) */

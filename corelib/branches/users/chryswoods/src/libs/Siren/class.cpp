@@ -232,7 +232,7 @@ Class& Class::operator=(const Class &other)
 {
     if (this != &other)
     {
-        Object::operator=(other);
+        super::operator=(other);
         
         metatype = other.metatype;
         super_class = other.super_class;
@@ -288,7 +288,7 @@ bool Class::hasSuper() const
 
 /** Return the superclass of this type - this returns the 
     same type if it doesn't have a super class */
-const Class& Class::super() const
+const Class& Class::superClass() const
 {
     if (super_class)
         return *super_class;
@@ -419,7 +419,7 @@ void Class::stream(Stream &s)
     
     schema.data("class_name") & class_name;
     
-    Object::stream( schema.base() );
+    super::stream( schema.base() );
     
     if (s.isLoading())
     {
@@ -522,7 +522,7 @@ bool Class::test(Logger &logger) const
             tester.expect_true( QObject::tr("Class::getClass() has a super type."),
                                 CODELOC, c.hasSuper() );
             
-            Class o = c.super();
+            Class o = c.superClass();
             
             tester.expect_equal( QObject::tr("Super class is object."),
                                  CODELOC,
