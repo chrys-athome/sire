@@ -153,7 +153,7 @@ public:
     
     static const VectorPoint& null();
 
-    static bool intraMoleculePoints(const Point &point0, const Point &point1);
+    static bool areIntraMoleculePoints(const Point &point0, const Point &point1);
     
 protected:
     Point(const Vector &point);

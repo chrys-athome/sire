@@ -90,11 +90,11 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, DihedralRestraint &dihres
             >> dihrest.force_expression
             >> static_cast<ExpressionRestraint3D&>(dihrest);
 
-        dihrest.intra_molecule_points = Point::intraMoleculePoints(dihrest.p[0],
+        dihrest.intra_molecule_points = Point::areIntraMoleculePoints(dihrest.p[0],
                                                                    dihrest.p[1]) and
-                                        Point::intraMoleculePoints(dihrest.p[0],
+                                        Point::areIntraMoleculePoints(dihrest.p[0],
                                                                    dihrest.p[2]) and
-                                        Point::intraMoleculePoints(dihrest.p[0],
+                                        Point::areIntraMoleculePoints(dihrest.p[0],
                                                                    dihrest.p[3]);
     }
     else
@@ -155,9 +155,9 @@ DihedralRestraint::DihedralRestraint(const PointRef &point0, const PointRef &poi
     if (force_expression.isConstant())
         force_expression = force_expression.evaluate(Values());
     
-    intra_molecule_points = Point::intraMoleculePoints(p[0], p[1]) and
-                            Point::intraMoleculePoints(p[0], p[2]) and
-                            Point::intraMoleculePoints(p[0], p[3]);
+    intra_molecule_points = Point::areIntraMoleculePoints(p[0], p[1]) and
+                            Point::areIntraMoleculePoints(p[0], p[2]) and
+                            Point::areIntraMoleculePoints(p[0], p[3]);
 
     this->calculatePhi();
 }
@@ -181,9 +181,9 @@ DihedralRestraint::DihedralRestraint(const PointRef &point0, const PointRef &poi
     if (force_expression.isConstant())
         force_expression = force_expression.evaluate(Values());
     
-    intra_molecule_points = Point::intraMoleculePoints(p[0], p[1]) and
-                            Point::intraMoleculePoints(p[0], p[2]) and
-                            Point::intraMoleculePoints(p[0], p[3]);
+    intra_molecule_points = Point::areIntraMoleculePoints(p[0], p[1]) and
+                            Point::areIntraMoleculePoints(p[0], p[2]) and
+                            Point::areIntraMoleculePoints(p[0], p[3]);
 
     this->calculatePhi();
 }
@@ -216,9 +216,9 @@ DihedralRestraint::DihedralRestraint(const PointRef &point0, const PointRef &poi
                           Sire::toString(restraintFunction().symbols()) ), CODELOC );
     }
     
-    intra_molecule_points = Point::intraMoleculePoints(p[0], p[1]) and
-                            Point::intraMoleculePoints(p[0], p[2]) and
-                            Point::intraMoleculePoints(p[0], p[3]);
+    intra_molecule_points = Point::areIntraMoleculePoints(p[0], p[1]) and
+                            Point::areIntraMoleculePoints(p[0], p[2]) and
+                            Point::areIntraMoleculePoints(p[0], p[3]);
 
     this->calculatePhi();
 }

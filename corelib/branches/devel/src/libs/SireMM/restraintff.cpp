@@ -105,7 +105,7 @@ void RestraintFF::rebuildProperties()
     props.clear();
     
     props.setProperty( "space", spce );
-    
+
     foreach (Symbol symbol, user_values.symbols())
     {
         props.setProperty( symbol.toString(), 
@@ -169,6 +169,7 @@ RestraintFF::RestraintFF(const RestraintFF &other)
               restraints_by_molnum(other.restraints_by_molnum),
               user_values(other.user_values),
               builtin_symbols(other.builtin_symbols),
+              props(other.props),
               recalc_from_scratch(other.recalc_from_scratch)
 {}
 
@@ -192,6 +193,7 @@ RestraintFF& RestraintFF::operator=(const RestraintFF &other)
         restraints_by_molnum = other.restraints_by_molnum;
         user_values = other.user_values;
         builtin_symbols = other.builtin_symbols;
+        props = other.props;
         recalc_from_scratch = other.recalc_from_scratch;
         
         G1FF::operator=(other);

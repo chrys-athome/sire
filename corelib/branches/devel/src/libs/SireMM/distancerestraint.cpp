@@ -86,8 +86,8 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, DistanceRestraint &distre
             >> distrest.force_expression
             >> static_cast<ExpressionRestraint3D&>(distrest);
 
-        distrest.intra_molecule_points = Point::intraMoleculePoints(distrest.p[0],
-                                                                    distrest.p[1]);
+        distrest.intra_molecule_points = Point::areIntraMoleculePoints(distrest.p[0],
+                                                                       distrest.p[1]);
     }
     else
         throw version_error( v, "1", r_distrest, CODELOC );
@@ -124,7 +124,7 @@ DistanceRestraint::DistanceRestraint(const PointRef &point0, const PointRef &poi
     if (force_expression.isConstant())
         force_expression = force_expression.evaluate(Values());
     
-    intra_molecule_points = Point::intraMoleculePoints(p[0], p[1]);
+    intra_molecule_points = Point::areIntraMoleculePoints(p[0], p[1]);
     
     this->calculateR();
 }
@@ -146,7 +146,7 @@ DistanceRestraint::DistanceRestraint(const PointRef &point0, const PointRef &poi
     if (force_expression.isConstant())
         force_expression = force_expression.evaluate(Values());
     
-    intra_molecule_points = Point::intraMoleculePoints(p[0], p[1]);
+    intra_molecule_points = Point::areIntraMoleculePoints(p[0], p[1]);
     
     this->calculateR();
 }
@@ -180,7 +180,7 @@ DistanceRestraint::DistanceRestraint(const PointRef &point0, const PointRef &poi
                           Sire::toString(restraintFunction().symbols()) ), CODELOC );
     }
     
-    intra_molecule_points = Point::intraMoleculePoints(p[0], p[1]);
+    intra_molecule_points = Point::areIntraMoleculePoints(p[0], p[1]);
     
     this->calculateR();
 }
@@ -677,11 +677,11 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
             >> doubledistrest.force23_expression
             >> static_cast<ExpressionRestraint3D&>(doubledistrest);
 
-        doubledistrest.intra_molecule_points01 = Point::intraMoleculePoints(
+        doubledistrest.intra_molecule_points01 = Point::areIntraMoleculePoints(
                                                                     doubledistrest.p[0],
                                                                     doubledistrest.p[1]);
                                                                     
-        doubledistrest.intra_molecule_points23 = Point::intraMoleculePoints(
+        doubledistrest.intra_molecule_points23 = Point::areIntraMoleculePoints(
                                                                     doubledistrest.p[2],
                                                                     doubledistrest.p[3]);
     }
@@ -766,8 +766,8 @@ DoubleDistanceRestraint::DoubleDistanceRestraint(const PointRef &point0,
     if (force23_expression.isConstant())
         force23_expression = force23_expression.evaluate(Values());
     
-    intra_molecule_points01 = Point::intraMoleculePoints(p[0], p[1]);
-    intra_molecule_points23 = Point::intraMoleculePoints(p[2], p[3]);
+    intra_molecule_points01 = Point::areIntraMoleculePoints(p[0], p[1]);
+    intra_molecule_points23 = Point::areIntraMoleculePoints(p[2], p[3]);
 
     this->calculateR();
 }
@@ -797,8 +797,8 @@ DoubleDistanceRestraint::DoubleDistanceRestraint(const PointRef &point0,
     if (force23_expression.isConstant())
         force23_expression = force23_expression.evaluate(Values());
     
-    intra_molecule_points01 = Point::intraMoleculePoints(p[0], p[1]);
-    intra_molecule_points23 = Point::intraMoleculePoints(p[2], p[3]);
+    intra_molecule_points01 = Point::areIntraMoleculePoints(p[0], p[1]);
+    intra_molecule_points23 = Point::areIntraMoleculePoints(p[2], p[3]);
 
     this->calculateR();
 }
@@ -1199,15 +1199,15 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds,
             >> tripledistrest.force45_expression
             >> static_cast<ExpressionRestraint3D&>(tripledistrest);
 
-        tripledistrest.intra_molecule_points01 = Point::intraMoleculePoints(
+        tripledistrest.intra_molecule_points01 = Point::areIntraMoleculePoints(
                                                                     tripledistrest.p[0],
                                                                     tripledistrest.p[1]);
                                                                     
-        tripledistrest.intra_molecule_points23 = Point::intraMoleculePoints(
+        tripledistrest.intra_molecule_points23 = Point::areIntraMoleculePoints(
                                                                     tripledistrest.p[2],
                                                                     tripledistrest.p[3]);
                                                                     
-        tripledistrest.intra_molecule_points45 = Point::intraMoleculePoints(
+        tripledistrest.intra_molecule_points45 = Point::areIntraMoleculePoints(
                                                                     tripledistrest.p[4],
                                                                     tripledistrest.p[5]);
     }
@@ -1319,9 +1319,9 @@ TripleDistanceRestraint::TripleDistanceRestraint(const PointRef &point0,
     if (force45_expression.isConstant())
         force45_expression = force45_expression.evaluate(Values());
     
-    intra_molecule_points01 = Point::intraMoleculePoints(p[0], p[1]);
-    intra_molecule_points23 = Point::intraMoleculePoints(p[2], p[3]);
-    intra_molecule_points45 = Point::intraMoleculePoints(p[4], p[5]);
+    intra_molecule_points01 = Point::areIntraMoleculePoints(p[0], p[1]);
+    intra_molecule_points23 = Point::areIntraMoleculePoints(p[2], p[3]);
+    intra_molecule_points45 = Point::areIntraMoleculePoints(p[4], p[5]);
 
     this->calculateR();
 }
@@ -1358,9 +1358,9 @@ TripleDistanceRestraint::TripleDistanceRestraint(const PointRef &point0,
     if (force45_expression.isConstant())
         force45_expression = force45_expression.evaluate(Values());
     
-    intra_molecule_points01 = Point::intraMoleculePoints(p[0], p[1]);
-    intra_molecule_points23 = Point::intraMoleculePoints(p[2], p[3]);
-    intra_molecule_points45 = Point::intraMoleculePoints(p[4], p[5]);
+    intra_molecule_points01 = Point::areIntraMoleculePoints(p[0], p[1]);
+    intra_molecule_points23 = Point::areIntraMoleculePoints(p[2], p[3]);
+    intra_molecule_points45 = Point::areIntraMoleculePoints(p[4], p[5]);
 
     this->calculateR();
 }

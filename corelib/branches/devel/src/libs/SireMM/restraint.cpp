@@ -272,7 +272,7 @@ ExpressionRestraint3D::ExpressionRestraint3D(const Expression &expression,
         if (not values.isEmpty())
         {
             //put in any missing values into 'user_vals'
-            foreach (Symbol symbol, this->userSymbols())
+            foreach (Symbol symbol, nrg_expression.symbols())
             {
                 if (values.contains(symbol))
                     vals.set( symbol, values[symbol] );

@@ -66,6 +66,17 @@ void register_Point_class(){
                 , ( bp::arg("forces"), bp::arg("force") ) );
         
         }
+        { //::SireFF::Point::areIntraMoleculePoints
+        
+            typedef bool ( *areIntraMoleculePoints_function_type )( ::SireFF::Point const &,::SireFF::Point const & );
+            areIntraMoleculePoints_function_type areIntraMoleculePoints_function_value( &::SireFF::Point::areIntraMoleculePoints );
+            
+            Point_exposer.def( 
+                "areIntraMoleculePoints"
+                , areIntraMoleculePoints_function_value
+                , ( bp::arg("point0"), bp::arg("point1") ) );
+        
+        }
         { //::SireFF::Point::contains
         
             typedef bool ( ::SireFF::Point::*contains_function_type )( ::SireMol::MolNum ) const;
@@ -86,17 +97,6 @@ void register_Point_class(){
                 "contains"
                 , contains_function_value
                 , ( bp::arg("molid") ) );
-        
-        }
-        { //::SireFF::Point::intraMoleculePoints
-        
-            typedef bool ( *intraMoleculePoints_function_type )( ::SireFF::Point const &,::SireFF::Point const & );
-            intraMoleculePoints_function_type intraMoleculePoints_function_value( &::SireFF::Point::intraMoleculePoints );
-            
-            Point_exposer.def( 
-                "intraMoleculePoints"
-                , intraMoleculePoints_function_value
-                , ( bp::arg("point0"), bp::arg("point1") ) );
         
         }
         { //::SireFF::Point::molecules
@@ -272,7 +272,7 @@ void register_Point_class(){
                 , ( bp::arg("molgroups") ) );
         
         }
-        Point_exposer.staticmethod( "intraMoleculePoints" );
+        Point_exposer.staticmethod( "areIntraMoleculePoints" );
         Point_exposer.staticmethod( "null" );
         Point_exposer.staticmethod( "typeName" );
         Point_exposer.def( "__rlshift__", &__rlshift__QDataStream< ::SireFF::Point >,

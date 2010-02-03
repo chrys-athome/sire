@@ -174,7 +174,7 @@ void Point::setSpace(const Space &space)
 
 /** Return whether or not the points 'point0' and 'point1' are
     both within the same molecule (so together are intra-molecule points) */
-bool Point::intraMoleculePoints(const Point &point0, const Point &point1)
+bool Point::areIntraMoleculePoints(const Point &point0, const Point &point1)
 {
     if (point0.nMolecules() != 1 or point1.nMolecules() != 1)
     {

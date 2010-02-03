@@ -326,7 +326,7 @@ bool PropertyConstraint::isSatisfied(const System &system) const
 	    //does the system have a property with the right value?
 	    double current_val = system.property(ffid, propname).asA<VariantProperty>()
     	                                                    .convertTo<double>();
-                                                   
+
 	    //evaluate the equation
 	    System system_copy(system);
         

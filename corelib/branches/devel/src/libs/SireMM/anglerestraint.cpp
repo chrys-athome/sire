@@ -90,9 +90,9 @@ QDataStream SIREMM_EXPORT &operator>>(QDataStream &ds, AngleRestraint &angrest)
             >> angrest.force_expression
             >> static_cast<ExpressionRestraint3D&>(angrest);
 
-        angrest.intra_molecule_points = Point::intraMoleculePoints(angrest.p[0],
+        angrest.intra_molecule_points = Point::areIntraMoleculePoints(angrest.p[0],
                                                                    angrest.p[1]) and
-                                        Point::intraMoleculePoints(angrest.p[0],
+                                        Point::areIntraMoleculePoints(angrest.p[0],
                                                                    angrest.p[2]);
     }
     else
@@ -150,8 +150,8 @@ AngleRestraint::AngleRestraint(const PointRef &point0, const PointRef &point1,
     if (force_expression.isConstant())
         force_expression = force_expression.evaluate(Values());
     
-    intra_molecule_points = Point::intraMoleculePoints(p[0], p[1]) and
-                            Point::intraMoleculePoints(p[0], p[2]);
+    intra_molecule_points = Point::areIntraMoleculePoints(p[0], p[1]) and
+                            Point::areIntraMoleculePoints(p[0], p[2]);
 
     this->calculateTheta();
 }
@@ -174,8 +174,8 @@ AngleRestraint::AngleRestraint(const PointRef &point0, const PointRef &point1,
     if (force_expression.isConstant())
         force_expression = force_expression.evaluate(Values());
     
-    intra_molecule_points = Point::intraMoleculePoints(p[0], p[1]) and
-                            Point::intraMoleculePoints(p[0], p[2]);
+    intra_molecule_points = Point::areIntraMoleculePoints(p[0], p[1]) and
+                            Point::areIntraMoleculePoints(p[0], p[2]);
 
     this->calculateTheta();
 }
@@ -207,8 +207,8 @@ AngleRestraint::AngleRestraint(const PointRef &point0, const PointRef &point1,
                           Sire::toString(restraintFunction().symbols()) ), CODELOC );
     }
     
-    intra_molecule_points = Point::intraMoleculePoints(p[0], p[1]) and
-                            Point::intraMoleculePoints(p[0], p[2]);
+    intra_molecule_points = Point::areIntraMoleculePoints(p[0], p[1]) and
+                            Point::areIntraMoleculePoints(p[0], p[2]);
 
     this->calculateTheta();
 }
