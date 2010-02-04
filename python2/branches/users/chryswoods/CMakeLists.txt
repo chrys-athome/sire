@@ -246,10 +246,10 @@ add_subdirectory (Units)
 add_subdirectory (Vol)
 
 #also compile the sire_python executable
-#add_subdirectory (sire_python)
+add_subdirectory (sire_python)
 
 #and the sire_ipython executable
-#add_subdirectory (sire_ipython)
+add_subdirectory (sire_ipython)
 
 install( FILES __init__.py
          DESTINATION ${SIRE_PYTHON}/Sire 

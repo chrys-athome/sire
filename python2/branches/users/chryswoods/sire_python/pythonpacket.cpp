@@ -40,47 +40,15 @@
 
 #include "pythonpacket.h"
 
-#include "SireError/errors.h"
-
-#include "SireStream/datastream.h"
-#include "SireStream/shareddatastream.h"
+#include "Siren/errors.h"
+#include "Siren/stream.h"
 
 #include <QDebug>
 
 using namespace SireCluster;
-using namespace SireStream;
+using namespace Siren;
 
-static const RegisterMetaType<PythonPacket> r_pypacket;
-
-/** Serialise to a binary datastream */
-QDataStream SIRE_EXPORT &operator<<(QDataStream &ds, const PythonPacket &pypacket)
-{
-    writeHeader(ds, r_pypacket, 1);
-
-    SharedDataStream sds(ds);
-
-    sds << pypacket.script_contents
-        << static_cast<const WorkPacketBase&>(pypacket);
-
-    return ds;
-}
-
-/** Extract from a binary datastream */
-QDataStream SIRE_EXPORT &operator>>(QDataStream &ds, PythonPacket &pypacket)
-{
-    VersionID v = readHeader(ds, r_pypacket);
-
-    if (v == 1)
-    {
-        SharedDataStream sds(ds);
-        sds >> pypacket.script_contents 
-            >> static_cast<WorkPacketBase&>(pypacket);
-    }
-    else
-        throw version_error(v, "1", r_pypacket, CODELOC);
-
-    return ds;
-}
+static const RegisterObject<PythonPacket> r_pypacket;
 
 /** Small RAII class to hold a Python thread state object */
 class PyThreadStateHolder
@@ -133,7 +101,7 @@ private:
 };
 
 /** Null constructor */
-PythonPacket::PythonPacket() : WorkPacketBase()
+PythonPacket::PythonPacket() : Implements<PythonPacket,WorkPacket>()
 {}
 
 /** Construct a PythonPacket that executes the python script 
@@ -142,13 +110,13 @@ PythonPacket::PythonPacket() : WorkPacketBase()
     between constructing this PythonPacket and running this
     packet are ignored */
 PythonPacket::PythonPacket(const QString &filename)
-             : WorkPacketBase()
+             : Implements<PythonPacket,WorkPacket>()
 {
     QFile f(filename);
 
     if (not f.open( QIODevice::ReadOnly ))
     {
-        throw SireError::file_error(f, CODELOC);
+        throw Siren::file_error(f, CODELOC);
     }
 
     //read the entire file
@@ -159,7 +127,7 @@ PythonPacket::PythonPacket(const QString &filename)
 
 /** Copy constructor */
 PythonPacket::PythonPacket(const PythonPacket &other)
-             : WorkPacketBase(other),
+             : Implements<PythonPacket,WorkPacket>(other),
                script_contents(other.script_contents)
 {}
 
@@ -173,10 +141,47 @@ PythonPacket& PythonPacket::operator=(const PythonPacket &other)
     if (this != &other)
     {
         script_contents = other.script_contents;
-        WorkPacketBase::operator=(other);
+        super::operator=(other);
     }
 
     return *this;
+}
+
+/** Comparison operator */
+bool PythonPacket::operator==(const PythonPacket &other) const
+{
+    return script_contents == other.script_contents and
+           super::operator==(other);
+}
+
+/** Comparison operator */
+bool PythonPacket::operator!=(const PythonPacket &other) const
+{
+    return not PythonPacket::operator==(other);
+}
+
+uint PythonPacket::hashCode() const
+{
+    return qHash(PythonPacket::typeName()) + qHash(script_contents);
+}
+
+QString PythonPacket::toString() const
+{
+    if (script_contents.isEmpty())
+        return QObject::tr("PythonPacket::null");
+
+    return QObject::tr("#PythonPacket:\n%1").arg(script_contents);
+}
+
+void PythonPacket::stream(Stream &s)
+{
+    s.assertVersion<PythonPacket>(1);
+
+    Schema schema = s.item<PythonPacket>();
+
+    schema.data("script_contents") & script_contents;
+
+    super::stream( schema.base() );
 }
 
 /** Return whether or not the packet has finished */
@@ -186,23 +191,26 @@ bool PythonPacket::hasFinished() const
 }
 
 /** Run the script */
-float PythonPacket::chunk()
+WorkPacketPtr PythonPacket::chunk() const
 {
     if (script_contents.isEmpty())
-        return 1;
+        return *this;
 
     //create a Python thread to run this code
     PyThreadStateHolder pythread;
     
-    char *argv = "sire_python";
+    QByteArray argv_string = "sire_python";
+
+    char *argv = argv_string.data();
 
     PySys_SetArgv(0, &argv);
 
     //we are now free to run our code
     PyRun_SimpleString( script_contents.toAscii().constData() );
     
-    //the script has finished, so clear the contents
-    script_contents.clear();
-
-    return 1;
+    PythonPacket next_state(*this);
+    next_state.setProgress(100);
+    next_state.script_contents.clear();
+    
+    return next_state;
 }

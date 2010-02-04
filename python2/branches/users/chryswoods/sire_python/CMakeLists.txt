@@ -24,6 +24,8 @@ endif()
 set ( SIREPYTHON_SOURCES
 
       main.cpp
+      pythonpacket.cpp
+      pythonpacket.h
 
     )
 
@@ -36,14 +38,9 @@ set_target_properties (sire_python
                       )
 		       
 target_link_libraries (sire_python
-                       SirePython2
                        SIRE_SireCluster
-                       SIRE_Squire
-                       SIRE_SireMol
-                       SIRE_SireMove
-                       SIRE_SireSystem
-                       SIRE_SireIO
-                       SIRE_SireError
+                       SIRE_SireBase
+                       SIRE_Siren
                        ${SIRECLUSTER_EXTRA_LIBRARIES}
                        ${PYTHON_LIBRARIES}
                       )

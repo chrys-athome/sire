@@ -8,21 +8,22 @@
 
 #include <cstdio>
 
-#include "SireError/errors.h"
-#include "SireError/printerror.h"
+#include "Siren/errors.h"
 
 #include "SireCluster/cluster.h"
 #include "SireCluster/nodes.h"
 #include "SireCluster/node.h"
 #include "SireCluster/promise.h"
+#include "SireCluster/promises.h"
 
 #include "SireBase/process.h"
 
-#include "Helpers/pythonpacket.h"
+#include "pythonpacket.h"
 
 using std::printf;
 
 using namespace SireCluster;
+using namespace Siren;
 
 #include <QDebug>
 
@@ -95,9 +96,6 @@ int main(int argc, char **argv)
         //thread per node
         int ppn = 1;
 
-        //now read the number of OpenMP threads per process
-        int nomp = 1;
-
         #ifdef SIRE_USE_MPI
             //start MPI - ABSOLUTELY must use multi-threaded MPI
             ::MPI::Init_thread(argc, argv, MPI_THREAD_MULTIPLE);
@@ -110,8 +108,8 @@ int main(int argc, char **argv)
                        Cluster::getRank(), Cluster::getCount(), ppn);
 
             //name this process and thread
-            SireError::setProcessString("master");
-            SireError::setThreadString("main");
+            Siren::setProcessString("master");
+            Siren::setThreadString("main");
 
             //start the cluster - on the master we need one extra
             //thread for the Python interpreter
@@ -119,7 +117,7 @@ int main(int argc, char **argv)
                 //::MPI::COMM_WORLD.Barrier();
             #endif
 
-            Cluster::start(ppn);
+            Cluster::start();
 
             #ifdef SIRE_USE_MPI
                 //::MPI::COMM_WORLD.Barrier();
@@ -132,23 +130,21 @@ int main(int argc, char **argv)
 
                 printf("Running %d python script(s)...\n", nscripts);
 
-                Nodes nodes = Cluster::getNodes(nscripts);
+                Nodes nodes = Cluster::getNodes(nscripts, 500);
 
-                QList<Promise> promises;
- 
-                //submit all of the scripts
+                QVector<WorkPacketPtr> workpackets;
+                workpackets.reserve(nscripts);
+
                 for (int i=0; i<nscripts; ++i)
                 {
-                    Node node = nodes.getNode();
-                    printf("\nRunning script %d of %d: %s\n", i+1, nscripts, argv[i+1]);
-                    promises.append( node.startJob( PythonPacket(argv[i+1]) ) );
+                    workpackets.append( PythonPacket(argv[i+1]) );
                 }
+
+                //submit all of the scripts
+                Promises promises = nodes.submit(workpackets);
                 
                 //wait for them all to finish
-                for (int i=0; i<nscripts; ++i)
-                {
-                    promises[i].wait();
-                }
+                promises.wait();
 
                 //did any script finish in error?
                 for (int i=0; i<nscripts; ++i)
@@ -161,9 +157,9 @@ int main(int argc, char **argv)
                         {
                             promises[i].throwError();
                         }
-                        catch(const SireError::exception &e)
+                        catch(const Siren::exception &e)
                         {
-                            SireError::printError(e);
+                            Siren::printError(e);
                         }
                     }
                 }
@@ -176,8 +172,8 @@ int main(int argc, char **argv)
                         Cluster::getRank(), Cluster::getCount(), ppn);
 
             //name this process
-            SireError::setProcessString( QString("compute%1").arg(Cluster::getRank()) );
-            SireError::setThreadString( "main" );
+            Siren::setProcessString( QString("compute%1").arg(Cluster::getRank()) );
+            Siren::setThreadString( "main" );
 
             //exec the Cluster - this starts the cluster and then
             //blocks while it is running
@@ -185,7 +181,7 @@ int main(int argc, char **argv)
                 //::MPI::COMM_WORLD.Barrier();
             #endif
  
-            Cluster::start(ppn);
+            Cluster::start();
 
             #ifdef SIRE_USE_MPI
                 //::MPI::COMM_WORLD.Barrier();
@@ -195,20 +191,20 @@ int main(int argc, char **argv)
             status = 0;
         }
     }
-    catch(const SireError::exception &e)
+    catch(const Siren::exception &e)
     {
-        SireError::printError(e);
+        Siren::printError(e);
         status = -1;
     }
     catch(const std::exception &e)
     {
-        SireError::printError( SireError::std_exception(e) );
+        Siren::printError( Siren::std_exception(e) );
         status = -1;
     }
     catch(...)
     {
-        SireError::printError(SireError::unknown_exception(
-                                 QObject::tr("An unknown error occurred!"), CODELOC ) );
+        Siren::printError(Siren::unknown_error(
+                            QObject::tr("An unknown error occurred!"), CODELOC ) );
 
         status = -1;
     }

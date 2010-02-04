@@ -35,15 +35,12 @@ SIRE_BEGIN_HEADER
 
 class PythonPacket;
 
-QDataStream& operator<<(QDataStream&, const PythonPacket&);
-QDataStream& operator>>(QDataStream&, PythonPacket&);
+using SireCluster::WorkPacket;
 
 /** This class provides a WorkPacket that runs a supplied Python script */
-class SIRE_EXPORT PythonPacket : public SireCluster::WorkPacketBase
+class SIRE_EXPORT PythonPacket
+        : public Siren::Implements<PythonPacket,WorkPacket>
 {
-
-friend QDataStream& ::operator<<(QDataStream&, const PythonPacket&);
-friend QDataStream& ::operator>>(QDataStream&, PythonPacket&);
 
 public:
     PythonPacket();
@@ -56,25 +53,17 @@ public:
 
     PythonPacket& operator=(const PythonPacket &other);
 
-    static const char* typeName()
-    {
-        return QMetaType::typeName( qMetaTypeId<PythonPacket>() );
-    }
-
-    const char* what() const
-    {
-        return PythonPacket::typeName();
-    }
-
-    PythonPacket* clone() const
-    {
-        return new PythonPacket(*this);
-    }
+    bool operator==(const PythonPacket &other) const;
+    bool operator!=(const PythonPacket &other) const;
 
     bool hasFinished() const;
 
+    uint hashCode() const;
+    QString toString() const;
+    void stream(Siren::Stream &s);
+
 protected:
-    float chunk();
+    SireCluster::WorkPacketPtr chunk() const;
 
 private:
     /** The contents of the script to execute */

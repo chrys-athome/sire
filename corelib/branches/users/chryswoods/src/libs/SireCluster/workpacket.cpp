@@ -421,14 +421,14 @@ WorkTest::WorkTest(int _start, int _end, int _step)
          : Implements<WorkTest,WorkPacket>(), 
            current(_start), start(_start), end(_end), step(_step)
 {
-    if (_step == 0)
-        _step = 1;
+    if (step == 0)
+        step = 1;
 
-    if (_start > _end and _step > 0)
-        _step *= -1;
+    if (start > end and step > 0)
+        step *= -1;
         
-    else if (_start < _end and _step < 0)   
-        _step *= -1;
+    else if (start < end and step < 0)   
+        step *= -1;
 }
 
 /** Copy constructor */
