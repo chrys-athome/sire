@@ -138,11 +138,13 @@ void LocalFrontend::abortJob()
 
 void LocalFrontend::wait()
 {
+    qDebug() << CODELOC;
     backend.wait();
 }
 
 bool LocalFrontend::wait(int timeout)
 {
+    qDebug() << CODELOC;
     return backend.wait(timeout);
 }
 
@@ -450,6 +452,8 @@ void ActiveFrontend::abortJob()
 /** Wait until the backend has finished processing the work */
 void ActiveFrontend::wait()
 {
+    qDebug() << CODELOC;
+
     if (not isNull())
         resource().wait();
 }
@@ -459,9 +463,10 @@ void ActiveFrontend::wait()
     whether or not the job has finished */
 bool ActiveFrontend::wait(int timeout)
 {
+    qDebug() << CODELOC;
+
     if (not isNull())
         return resource().wait(timeout);
-
     else
         return true;
 }

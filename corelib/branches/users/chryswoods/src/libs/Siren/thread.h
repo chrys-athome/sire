@@ -54,12 +54,17 @@ class SIREN_EXPORT Thread : public QThread
 {
 public:
     Thread(QObject *parent=0);
+    Thread(QString name, QObject *parent=0);
     virtual ~Thread();
 
 protected:
     void run();
     
     virtual void threadMain()=0;
+
+private:
+    /** The name of this thread */
+    QString thread_name;
 };
 
 }

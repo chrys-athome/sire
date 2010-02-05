@@ -34,6 +34,8 @@
 
 #include "Siren/forages.h"
 
+#include <QDebug>
+
 using namespace SireCluster;
 using namespace Siren;
 
@@ -79,10 +81,9 @@ bool WorkQueue::runPromise(Promise promise, ActiveFrontend frontend)
 ///////// Implementation of SimpleQueue
 /////////
 
-SimpleQueue::SimpleQueue() : WorkQueue(), Thread()
+SimpleQueue::SimpleQueue() : WorkQueue(), Thread(QObject::tr("SimpleQueue"))
 {
     kill_queue = false;
-    this->start();
 }
 
 SimpleQueue::~SimpleQueue()
@@ -100,6 +101,8 @@ SimpleQueue* SimpleQueue::create(const DormantFrontend &frontend) const
         
         s->frontends.insert(frontend.UID(), frontend);
         s->idle_frontends.append(frontend.UID());
+
+        s->start();
     }
     catch(...)
     {

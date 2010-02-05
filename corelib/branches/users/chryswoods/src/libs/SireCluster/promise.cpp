@@ -26,8 +26,6 @@
   *
 \*********************************************/
 
-#include <QThread>
-
 #include "promise.h"
 #include "workpacket.h"
 #include "node.h"
@@ -35,10 +33,13 @@
 
 #include "SireMaths/rangenerator.h"
 
+#include "Siren/thread.h"
 #include "Siren/waitcondition.h"
 #include "Siren/mutex.h"
 #include "Siren/forages.h"
 #include "Siren/errors.h"
+
+#include <QDebug>
 
 using namespace SireCluster;
 using namespace Siren;
@@ -82,11 +83,11 @@ namespace SireCluster
             bool local_running_forbidden;
         };
 
-        class PromiseWatcher : public QThread
+        class PromiseWatcher : public Thread
         {
         public:
             PromiseWatcher(const ActiveFrontend &f, const Promise &p) 
-                    : QThread(), frontend(f), promise(p)
+                    : Thread(QObject::tr("PromiseWatcher")), frontend(f), promise(p)
             {
                 this->start();
             }
@@ -103,19 +104,20 @@ namespace SireCluster
             Promise promise;
             
         protected:
-            void run()
+            void threadMain()
             {
                 if (promise.isNull())
                     return;
-            
-                Siren::setThreadString("Promise");
-                Siren::register_this_thread();
-                SireMaths::seed_qrand();
 
                 WorkPacketPtr initial_packet;
                 {
                     HandleLocker lkr(promise);
-                    WorkPacketPtr initial_packet = promise.resource().initial_packet;
+                    initial_packet = promise.resource().initial_packet;
+                    
+                    if (initial_packet.isNull())
+                        throw Siren::program_bug( QObject::tr(
+                                "How has the promise been started without a valid "
+                                "initial WorkPacket?"), CODELOC );
                 }
 
                 //submit the job
@@ -147,8 +149,10 @@ namespace SireCluster
                     }
                     
                     promise.resource().result_packet = frontend.result();
-        
+
+                    qDebug() << CODELOC;
                     frontend = ActiveFrontend();
+                    qDebug() << CODELOC;
         
                     if (promise.resource().result_packet.isNull())
                     {
@@ -164,6 +168,8 @@ namespace SireCluster
                         
                     promise.resource().waiter.wakeAll();
                 }
+                
+                qDebug() << CODELOC;
             }
         };
         
@@ -182,7 +188,6 @@ bool Promise::runRemote(ActiveFrontend f)
         return false;
         
     resource().state = PromiseData::RUNNING;
-    
     resource().watcher.reset( new PromiseWatcher(f, *this) );
     
     return true;

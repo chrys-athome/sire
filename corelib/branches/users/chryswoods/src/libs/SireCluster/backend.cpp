@@ -165,7 +165,7 @@ void LocalBackend::startJob(const WorkPacket &workpacket)
 /** Return whether or not this backend is busy */
 bool LocalBackend::isBusy()
 {
-    return not resultpacket.isNull();
+    return resultpacket.isNull();
 }
 
 /** Stop the job */
@@ -220,14 +220,14 @@ WorkPacketPtr LocalBackend::result()
 //////
 
 /** Construct a new thread backend */
-ThreadBackend::ThreadBackend() : Backend("thread"), QThread()
+ThreadBackend::ThreadBackend() : Backend("thread"), 
+                                 Thread( QObject::tr("ThreadBackend") ),
+                                 job_is_starting(false)
 {}
 
 /** Destructor */
 ThreadBackend::~ThreadBackend()
-{
-    QThread::wait();
-}
+{}
 
 QString ThreadBackend::what() const
 {
@@ -252,7 +252,7 @@ void ThreadBackend::startJob(const WorkPacket &workpacket)
     job_is_starting = true;
     
     //wait until the last job has finished
-    QThread::wait();
+    Thread::wait();
     
     //ok, we now know that we are the only thread trying to start
     //a job, and we know that no job is currently running
@@ -280,7 +280,7 @@ void ThreadBackend::startJob(const WorkPacket &workpacket)
 /** Return if this backend is busy */
 bool ThreadBackend::isBusy()
 {
-    return (not resultpacket.isNull()) or QThread::isRunning();
+    return Thread::isRunning();
 }
 
 /** Stop the job */
@@ -302,18 +302,13 @@ void ThreadBackend::abortJob()
 /** Wait for the workpacket to complete */
 void ThreadBackend::wait()
 {
-    while (not QThread::wait(2000))
-    {
-        if (not QThread::isRunning())
-            //the job has stopped
-            return;
-    }
+    Thread::wait();
 }
 
 /** Wait for the workpacket to complete */
 bool ThreadBackend::wait(int timeout)
 {
-    return QThread::wait(timeout);
+    return Thread::wait(timeout);
 }
 
 /** Return the progress of the calculation */
@@ -345,7 +340,7 @@ WorkPacketPtr ThreadBackend::result()
     lkr.unlock();
     
     //wait for the job to finish
-    QThread::wait();
+    Thread::wait();
     
     lkr.relock();
     
@@ -354,24 +349,21 @@ WorkPacketPtr ThreadBackend::result()
         return WorkPacketPtr();
     else
     {
+        qDebug() << CODELOC;
         WorkPacketPtr final_result = resultpacket;
+        qDebug() << CODELOC;
         job_in_progress = WorkPacketPtr();
+        qDebug() << CODELOC;
         resultpacket = WorkPacketPtr();
+        qDebug() << CODELOC;
         
         return final_result;
     }
 }
 
 /** Function run by the backend thread */
-void ThreadBackend::run()
+void ThreadBackend::threadMain()
 {
-    Siren::register_this_thread();
-
-    Siren::setThreadString( QString("ThreadBackend-%1")
-                              .arg( toInt(QThread::currentThread()) ));
-
-    SireMaths::seed_qrand();
-
     //wake the thread that told us to run the job
     startmutex.lock();
     
@@ -411,7 +403,9 @@ void ThreadBackend::run()
         
             //now perform the work on the local packet
             if (not local_packet.read().hasFinished())
+            {
                 local_packet = local_packet.read().runChunk();
+            }
         
             //// copy the local work back to the global work
             {
@@ -444,8 +438,6 @@ void ThreadBackend::run()
             break;
         }
     }
-
-    Siren::unregister_this_thread();
     
     //the work has finished - copy the results
     MutexLocker lkr(&datamutex);
@@ -580,9 +572,13 @@ ActiveBackend DormantBackend::tryActivate(int ms) const
         return ActiveBackend();
         
     if (const_cast<Backend*>(&(resource()))->tryActivate(ms))
+    {
         return ActiveBackend(*this);
+    }
     else
+    {
         return ActiveBackend();
+    }
 }
 
 //////

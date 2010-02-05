@@ -31,12 +31,12 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <QThread>
 #include <QUuid>
-#include <QSemaphore>
 
+#include "Siren/thread.h"
 #include "Siren/mutex.h"
 #include "Siren/waitcondition.h"
+#include "Siren/semaphore.h"
 
 #include "workpacket.h"
 
@@ -112,7 +112,7 @@ protected:
 
 private:
     /** This semaphore is used to signal when the Backend is activated. */
-    QSemaphore is_active;
+    Siren::Semaphore is_active;
 
     /** The unique ID for this backend - this is given to the 
         backend when it registers with the resource manager */
@@ -153,7 +153,7 @@ private:
 };
 
 /** This is a backend that runs the job in its own thread */
-class SIRECLUSTER_EXPORT ThreadBackend : public Backend, private QThread
+class SIRECLUSTER_EXPORT ThreadBackend : public Backend, private Siren::Thread
 {
 public:
     ThreadBackend();
@@ -177,7 +177,7 @@ public:
     WorkPacketPtr result();
 
 protected:
-    void run();
+    void threadMain();
 
 private:
     /** Mutex used to protect access to the running thread */

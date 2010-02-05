@@ -36,6 +36,8 @@
 
 #include "Siren/errors.h"
 
+#include <QDebug>
+
 using namespace Siren;
 
 Thread::Thread(QObject *parent) : QThread(parent)
@@ -43,18 +45,23 @@ Thread::Thread(QObject *parent) : QThread(parent)
     this->setTerminationEnabled(false);
 }
 
+Thread::Thread(QString name, QObject *parent) : QThread(parent), thread_name(name)
+{
+    this->setTerminationEnabled(false);
+}
+
 Thread::~Thread()
 {
-    if (not this->wait(10000))
+    if (not QThread::wait(10000))
     {
         //kill this thread by interupting for-ages
-        end_for_ages(this);
+        Siren::end_for_ages(this);
         
-        if (not this->wait(20000))
+        if (not QThread::wait(20000))
         {
             //still not dead - kill this thread
-            this->setTerminationEnabled(true);
-            this->terminate();
+            QThread::setTerminationEnabled(true);
+            QThread::terminate();
         }
     }
 }
@@ -65,7 +72,10 @@ void Thread::run()
 
     try
     {
-        setThreadString( QObject::tr("Thread{%1}").arg(ID) );
+        if (thread_name.isEmpty())
+            setThreadString( QObject::tr("Thread{%1}").arg(ID) );
+        else
+            setThreadString( QString("%1{%2}").arg(thread_name).arg(ID) );
 
         #ifdef Q_OS_UNIX
             //QUuid *very annoyingly* calls qsrand using the current time.
@@ -106,7 +116,9 @@ void Thread::run()
             QUuid::createUuid();
         #endif
     
-        this->run();
+        qDebug() << Siren::getThreadString() << "threadMain()";
+        this->threadMain();
+        qDebug() << Siren::getThreadString() << "threadMain() completed";
     }
     catch(const Siren::exception &e)
     {

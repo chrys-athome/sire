@@ -143,7 +143,8 @@ bool Handle::operator!=(const Handle &other) const
     tell Handle to create the resource lock */
 void Handle::setValidResource()
 {
-    resource_lock.reset( new Mutex(QMutex::Recursive) );
+    // MUST NOT be a recursive Mutex as otherwise .sleep() won't work!
+    resource_lock.reset( new Mutex() );
 }
 
 /** Internal function used by WeakHandle to neuter (invalidate)

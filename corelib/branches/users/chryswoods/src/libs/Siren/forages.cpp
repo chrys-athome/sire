@@ -36,6 +36,8 @@
 
 #include "Siren/errors.h"
 
+#include <QDebug>
+
 struct ForAgesState
 {
     ForAgesState() : ID(0), is_interupted(false), is_paused(false)
@@ -218,6 +220,8 @@ namespace Siren
         
         if (s)
         {
+            qDebug() << "Siren::end_for_ages()";
+
             QMutexLocker lkr( &(s->pause_mutex) );
             
             s->global_state.is_interupted = true;

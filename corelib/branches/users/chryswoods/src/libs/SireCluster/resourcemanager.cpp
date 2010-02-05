@@ -86,6 +86,8 @@ int ResourceManager::resourceListVersion()
 /** Call this function to register a backend with this resource manager */
 void ResourceManager::registerResource(const DormantBackend &backend)
 {
+    qDebug() << "Registering" << backend.toString();
+
     MutexLocker lkr( &(data()->datamutex) );
 
     if (not data()->resources.contains(backend.UID()))
@@ -98,6 +100,8 @@ void ResourceManager::registerResource(const DormantBackend &backend)
                     .arg(backend.UID().toString()), CODELOC );
 
         backend.setUID( QUuid::createUuid() );
+
+        qDebug() << "Registered" << backend.UID();
 
         data()->resources.insert(backend.UID(),backend);
         data()->free_resources.append(backend.UID());
@@ -163,6 +167,8 @@ static ActiveBackend reserveResource(const QList<QUuid> &backends,
     }
     else if (backends.count() == 1)
     {
+        qDebug() << "tryActivate(" << ms << ")";
+        
         if (ms <= 0)
             return data()->resources.value( backends.at(0) ).tryActivate();
         else
@@ -213,7 +219,7 @@ static void clearExpiredReservations()
     {
         it.next();
         
-        if (it.value().first < now)
+        if (it.value().first > now)
         {
             //the reservation has expired
             data()->free_resources.append( it.value().second.UID() );
@@ -240,7 +246,9 @@ static QUuid pvt_reserveResource(int expires,
         ::clearExpiredReservations();
 
         QList<QUuid> free_resources = getResources();
-        
+     
+        qDebug() << "FREE RESOURCES ==" << free_resources;
+              
         if (free_resources.isEmpty())
         {
             Siren::sleep(60);
@@ -264,7 +272,9 @@ static QUuid pvt_reserveResource(int expires,
                                             active ) );
                                
             data()->free_resources.removeAll(active.UID());
-                                                                      
+                                          
+            qDebug() << "CREATED RESERVATION" << reservation_uid;
+                                                                                                                              
             return reservation_uid;
         }
     }
@@ -650,15 +660,22 @@ QList<QUuid> ResourceManager::tryReserveResources(const QString &description,
     if this reservation doesn't exist or has expired */
 ActiveBackend ResourceManager::collectReservation(const QUuid &uid)
 {
+    qDebug() << "COLLECT RESERVATION" << uid;
+
     MutexLocker lkr( &(data()->datamutex) );
     
     QPair<QDateTime,ActiveBackend> reservation = data()->reservations.take(uid);
     
-    if (reservation.first < QDateTime::currentDateTime())
+    qDebug() << reservation.first << QDateTime::currentDateTime();
+    
+    if (reservation.first > QDateTime::currentDateTime())
         return reservation.second;
     
     else
+    {
+        qDebug() << "RESERVATION EXPIRED!";
         return ActiveBackend();
+    }
 }
 
 /** Collect the reservations with UIDs in 'uids'. This returns null ActiveBackends
@@ -675,7 +692,7 @@ QHash<QUuid,ActiveBackend> ResourceManager::collectReservation(const QList<QUuid
     {
         QPair<QDateTime,ActiveBackend> reservation = data()->reservations.take(uid);
         
-        if (reservation.first < now)
+        if (reservation.first > now)
             backends.insert( uid, reservation.second );
         else
             backends.insert( uid, ActiveBackend() );

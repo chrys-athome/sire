@@ -126,6 +126,7 @@ bool Cluster::isRunning()
 /** Add a new ThreadBackend to the current process */
 void Cluster::addThread()
 {
+    qDebug() << "REGISTERING NEW THREADBACKEND";
     ResourceManager::registerResource( DormantBackend( new ThreadBackend() ) );
 }
 
